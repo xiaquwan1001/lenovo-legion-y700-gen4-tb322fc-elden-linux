@@ -1,0 +1,13 @@
+[Unit]
+Description=Start the TB322FC ADSP after firmware is available
+After=local-fs.target
+Before=upower.service sound.target graphical.target
+ConditionPathExists=/lib/firmware/qcom/sm8750/elden/adsp.mdt
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/elden-start-adsp
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
