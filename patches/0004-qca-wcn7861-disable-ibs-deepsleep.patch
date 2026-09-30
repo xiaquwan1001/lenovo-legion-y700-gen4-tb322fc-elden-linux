@@ -1,0 +1,22 @@
+diff --git a/drivers/bluetooth/btqca.c b/drivers/bluetooth/btqca.c
+index 58b560fef..4c8ae884e 100644
+--- a/drivers/bluetooth/btqca.c
++++ b/drivers/bluetooth/btqca.c
+@@ -458,7 +458,16 @@ static int qca_tlv_check_data(struct hci_dev *hdev,
+ 				if (soc_type == QCA_WCN7861) {
+ 					if (tag_len < 2)
+ 						return -EINVAL;
+-					tlv_nvm->data[1] |= 0x01;
++					/*
++					 * elden: the QCA "Brahma v2" BT firmware auto-sleeps
++					 * (IBS) far too aggressively on this SoC: the controller
++					 * enters/exits sleep on every packet, giving ~50-190 ms
++					 * BR/EDR latency and dropping ACL links after ~20-50
++					 * packets (HCI 0x13 remote-terminated).  Keep the IBS
++					 * enable bit clear so the controller stays awake; cost is
++					 * higher idle power, win is a usable link.
++					 */
++					tlv_nvm->data[1] &= ~0x01;
+ 					break;
+ 				}
+ 
