@@ -1,0 +1,85 @@
+#!/bin/sh
+# Bring up a USB composite gadget: CDC-NCM (network, Windows 11 in-box
+# UsbNcm driver) + two CDC-ACM ports:
+#   GS0 = kernel console (matched by console=ttyGS0)  -> host /dev/ttyACM0
+#   GS1 = out-of-band root shell (respawn getty)      -> host /dev/ttyACM1
+# Keeping them separate means the interactive shell is not polluted by
+# dmesg/printk traffic (and vice versa).
+G=/sys/kernel/config/usb_gadget/g1
+
+wait_udc() {
+	local i=0
+	while [ -z "$(ls /sys/class/udc 2>/dev/null)" ] && [ $i -lt 200 ]; do
+		sleep 0.1
+		i=$((i + 1))
+	done
+	UDC=$(ls /sys/class/udc | head -n1)
+	if [ -z "$UDC" ]; then
+		echo "[usb-gadget] no UDC after 20s" > /dev/kmsg
+		exit 1
+	fi
+	# Keep the controller out of runtime suspend: after a host-initiated
+	# bus suspend/resume the NCM TX path was observed to stay stalled.
+	echo on > "$(readlink -f /sys/class/udc/$UDC/device)/power/control" 2>/dev/null
+}
+
+start() {
+	[ -d "$G" ] && return 0
+	wait_udc
+	mkdir -p "$G" || exit 1
+	cd "$G"
+	echo 0x1d6b > idVendor        # Linux Foundation
+	echo 0x0104 > idProduct       # Multifunction Composite Gadget
+	echo 0x0200 > bcdUSB
+	echo 0x0100 > bcdDevice
+	# Composite with IADs: class/subclass/protocol EF/02/01
+	echo 0xEF > bDeviceClass
+	echo 0x02 > bDeviceSubClass
+	echo 0x01 > bDeviceProtocol
+
+	mkdir -p strings/0x409
+	echo "HA2CB1KY"          > strings/0x409/serialnumber
+	echo "Lenovo"            > strings/0x409/manufacturer
+	echo "TB322FC mainline"  > strings/0x409/product
+
+	mkdir -p configs/c.1/strings/0x409
+	echo "NCM + ACM" > configs/c.1/strings/0x409/configuration
+	echo 250 > configs/c.1/MaxPower
+
+	mkdir -p functions/ncm.usb0
+	echo 02:1e:5e:ed:e1:01 > functions/ncm.usb0/dev_addr
+	echo 02:1e:5e:ed:e1:02 > functions/ncm.usb0/host_addr
+
+	mkdir -p functions/acm.GS0
+	echo 1 > functions/acm.GS0/console 2>/dev/null
+
+	# GS1: OOB shell channel (no console flag -> not the printk console)
+	mkdir -p functions/acm.GS1
+
+	ln -s functions/ncm.usb0 configs/c.1/
+	ln -s functions/acm.GS0  configs/c.1/
+	ln -s functions/acm.GS1  configs/c.1/
+
+	echo "$UDC" > UDC
+	echo "[usb-gadget] bound to $UDC" > /dev/kmsg
+}
+
+stop() {
+	[ -d "$G" ] || return 0
+	UDC=$(ls /sys/class/udc | head -n1)
+	cd "$G"
+	echo "" > UDC
+	rm -f configs/c.1/ncm.usb0 configs/c.1/acm.GS0 configs/c.1/acm.GS1
+	rmdir configs/c.1/strings/0x409 configs/c.1
+	rmdir functions/ncm.usb0 functions/acm.GS0 functions/acm.GS1
+	rmdir strings/0x409
+	cd /
+	rmdir "$G"
+}
+
+case "$1" in
+	start) start ;;
+	stop) stop ;;
+	restart) stop; start ;;
+	*) echo "usage: $0 start|stop|restart"; exit 1 ;;
+esac
