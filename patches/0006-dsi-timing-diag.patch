@@ -1,0 +1,26 @@
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 3197d4ea1..819fe87d5 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -21,6 +21,7 @@
+ #include <video/mipi_display.h>
+ 
+ #include <drm/display/drm_dsc_helper.h>
++#include <drm/drm_modes.h>
+ #include <drm/drm_of.h>
+ 
+ #include "dsi.h"
+@@ -1165,6 +1166,13 @@ static void dsi_timing_setup(struct msm_dsi_host *msm_host, bool is_bonded_dsi)
+ 		dsi_write(msm_host, REG_DSI_ACTIVE_VSYNC_VPOS,
+ 			DSI_ACTIVE_VSYNC_VPOS_START(vs_start) |
+ 			DSI_ACTIVE_VSYNC_VPOS_END(vs_end));
++
++		dev_info(&msm_host->pdev->dev,
++			 "timing %ux%u@%uHz clk=%u htot=%u vtot=%u -> h_total=%u ha=[%u..%u] v_total=%u (bonded=%d dsc=%d wide=%d)\n",
++			 mode->hdisplay, mode->vdisplay, drm_mode_vrefresh(mode),
++			 mode->clock, mode->htotal, mode->vtotal, h_total,
++			 ha_start, ha_end, v_total, is_bonded_dsi,
++			 !!msm_host->dsc, wide_bus_enabled);
+ 	} else {		/* command mode */
+ 		if (msm_host->dsc)
+ 			dsi_update_dsc_timing(msm_host, true);
