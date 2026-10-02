@@ -1,0 +1,69 @@
+--- /home/xuqianhui1001/.pi/agent/npm/node_modules/pi-messenger-swarm/dist/swarm/spawn.js.orig	2026-10-02 10:29:01.141775672 +0800
++++ /home/xuqianhui1001/.pi/agent/npm/node_modules/pi-messenger-swarm/dist/swarm/spawn.js	2026-10-02 10:29:18.962668031 +0800
+@@ -241,8 +241,11 @@
+         // Best effort cleanup
+     }
+ }
+-function attachHandlers(proc, state, promptTmpDir, sessionId) {
+-    proc.stdout?.on('data', (data) => {
++function attachHandlers(proc, state, promptTmpDir, sessionId, progressStream) {
++    // LOCAL PATCH (y700-elden): progressStream allows parsing worker output from a
++    // tailed log file instead of the child's stdout pipe, so a harness restart does
++    // not SIGPIPE-kill the worker.
++    (progressStream ?? proc.stdout)?.on('data', (data) => {
+         state.buffer += data.toString();
+         const lines = state.buffer.split('\n');
+         state.buffer = lines.pop() ?? '';
+@@ -408,10 +411,42 @@
+     };
+     const args = createArgs(spawnState, agentFileModel);
+     const promptTmpDir = args._promptTmpDir;
++    // LOCAL PATCH (y700-elden): the shared harness daemon can be SIGTERM'd by other
++    // projects sharing this machine. A piped stdout then breaks and the worker dies
++    // from SIGPIPE. Redirect the worker's stdout/stderr to a log file and run it
++    // detached so it survives harness restarts; the new server reattaches via
++    // reconcileAndRestoreOrphans(). Progress is parsed by tailing the file.
++    const agentLogDir = path.join(tmpdir(), 'pi-messenger-swarm-agent-logs');
++    try {
++        fs.mkdirSync(agentLogDir, { recursive: true });
++    }
++    catch {
++        /* best effort */
++    }
++    const agentLogPath = path.join(agentLogDir, `${name.replace(/[^\w.-]/g, '_')}-${id}.log`);
++    const outFd = fs.openSync(agentLogPath, 'a');
+     const proc = spawn('pi', args, {
+         cwd,
+-        stdio: ['ignore', 'pipe', 'pipe'],
++        stdio: ['ignore', outFd, outFd],
+         env,
++        detached: true,
++    });
++    try {
++        fs.closeSync(outFd);
++    }
++    catch {
++        /* child keeps its own copy */
++    }
++    const progressTail = spawn('tail', ['-n', '+1', '-f', agentLogPath], {
++        stdio: ['ignore', 'pipe', 'ignore'],
++    });
++    proc.on('close', () => {
++        try {
++            progressTail.kill('SIGTERM');
++        }
++        catch {
++            /* already gone */
++        }
+     });
+     record.pid = proc.pid;
+     appendEvent(cwd, sessionId, {
+@@ -420,7 +455,7 @@
+         timestamp: startedAt,
+         agent: { pid: proc.pid },
+     });
+-    attachHandlers(proc, spawnState, promptTmpDir, sessionId);
++    attachHandlers(proc, spawnState, promptTmpDir, sessionId, progressTail.stdout);
+     runtimes.set(id, {
+         process: proc,
+         record,
