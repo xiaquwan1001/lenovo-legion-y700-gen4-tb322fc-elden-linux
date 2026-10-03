@@ -1,8 +1,8 @@
 # 工作区索引 — TB322FC "elden"（SM8750P）固件与驱动研究
 
-> **入口。** 新会话按顺序读：本文件 §1（使命）→ §2（文档分层）→ 需要细节再进专题档案。
-> 2026-10-03：**建立 git 版本控制**（分支 `main`，只纳管文本/脚本/补丁/记忆，大二进制忽略）→ 边界与可清理标记见 **`FILES.md`**；内核工作树已导出权威补丁（`patches/elden-working-tree-ba28ec16f-2026-10-03.patch`）。
-> 2026-10-03（续）：**知识库化**——`LESSONS.md`（经验总入口）、`SESSION-INDEX.md`（会话/进度）、`db/`（SQLite：sessions/pitfalls/tasks/references_）。新会话建议顺序：本文件 → `LESSONS.md` → `db/README.md`。
+> **入口。** 新会话：本文件 §1（使命）→ §2（文档分层）→ §3（现状）→ 需要细节再进对应文档/专题档案。
+> **唯一入口 = 本文件**；根目录只有 **6 份维护文档**（§2）+ `AGENTS.md`。
+> 2026-10-03：git 纳管 + 文档收敛（12→6）；自检 `scripts/check-doctor.sh`；不再有 SQLite/生成物。
 
 ---
 
@@ -19,37 +19,43 @@
 
 ---
 
-## 2. ★ 文档分层（三个平面，边界显式）
+## 2. ★ 文档分层（入口最少）
 
-> **单一事实源（SSOT）**：每个数字/结论只在一个文件维护，其余用链接引用；口径冲突时按本表定权威。
-> 生成物（`LESSONS.md`、`db/elden.db`）**禁止手改**，由 `db/build.py` 重建。
+> **单一事实源（SSOT）**：每个数字/结论只在一个文件维护，其余用链接引用。
+> 根目录只有 6 份维护文档：`INDEX`（本文件）· `DEVICE` · `TASKS` · `RESOURCES` · `RUNBOOK-BRINGUP` · `PITFALLS`。
+> **推荐阅读顺序**：本文件 → `TASKS.md`（任务/进度/未解）→ `PITFALLS.md`（动手前扫）→ 需要时再进 `DEVICE`/`RESOURCES`/`RUNBOOK`。
 
-### 平面 1 — 领域层（唯一维护面）
+### 入口（唯一）
+
+| 文件 | 装什么 |
+|---|---|
+| **`INDEX.md`** | 使命与范围、分层地图、现状快照、快速命令、专题档案索引 |
+
+### 领域层（4 份，唯一维护面）
 
 | 角度 | 文件（权威） | 装什么 |
 |---|---|---|
-| **设备状态 + 设备描述** | **`DEVICE.md`** | 机型规格、固件清单与通路、驱动矩阵（529 compatible/297 `.ko` 分级）、单元台账 U1/U2、状态→任务分派、GPT 参数、**§3 Linux 容量策略与体量估算** |
-| **任务拆解 + 进度** | **`TASKS.md`** | **唯一任务台账 + 进度权威**：G1-1…24、C1…C9、主机并行 A11–A18、旧任务线作废登记、下一步顺序 |
-| **参考资源 + 本地资源** | **`RESOURCES.md`** | 上游/社区参考、构建链、可上机资产、大容量资产、归档区、**§2.5 资产瘦身优先级** |
-| **查漏补缺** | **`GAPS.md`** | Q1–Q23 未解问题（每条含最小实验）、缺口补救路径、环境流程待办、风险登记、勾销规则 |
-| **G2 专项设计** | **`ANDROID-COMPAT.md`** | 无安卓前提下的兼容方案：R1 容器 / R1' redroid / R2 VM / R3 原生 + 5 维评估 + `elden-droid` 五件事 |
-| **上机手册** | **`RUNBOOK-BRINGUP.md`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase 0–8 |
+| **设备状态 + 设备描述** | **`DEVICE.md`** | 机型规格、固件清单与通路、驱动矩阵、单元台账 U1/U2、状态→任务分派、GPT 参数、**§3 Linux 容量策略** |
+| **任务 / 进度 / 未解 / 方案** | **`TASKS.md`** | **唯一任务台账 + 进度权威**（§0）；G1/C/A 任务（§1–4）；**§5 查漏补缺（GAPS/Q1–Q23）**；**§6 G2 安卓兼容方案** |
+| **资源 / 资产 / 会话轨迹** | **`RESOURCES.md`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · **§4 会话索引（51 会话 + 实机边界）** |
+| **上机手册** | **`RUNBOOK-BRINGUP.md`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase −1…9 |
 
-### 平面 2 — 元层（知识管理，服务平面 1）
+### 经验层（1 份）
 
-| 文件 | 装什么 | 权威性 |
-|---|---|---|
-| **`FILES.md`** | 版本控制边界 / 顶层资产台账 / 可清理标记 / 内核补丁回导纪律 | 资产分类权威 |
-| **`PITFALLS.md`** | 踩坑经验**正文**（#1–#88，按主题） | 经验正文权威 |
-| **`LESSONS.md`** | 经验统一入口 + 零号纪律 | ⚠️ **生成物**（`db/build.py --lessons`） |
-| **`SESSION-INDEX.md`** | 历史会话索引 + 实机验证边界 | 会话轨迹权威 |
-| **`db/`** | SQLite 结构化索引：`sessions`/`pitfalls`/`tasks`/`references_`/`docs` | ⚠️ **生成物**（可丢弃重建） |
-| **`scripts/check-doctor.sh`** | 结构自检：计数漂移 / 死链 / db 过期 / 口径冲突 | 校验器 |
+| 文件 | 装什么 |
+|---|---|
+| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做三件事）+ 踩坑正文 #1–#88（按主题） |
 
-### 平面 3 — 证据层（`archive/`，只增不改、不改结论）
+### 证据层（`archive/`，只增不改、不改结论）
 
-> 专题档案＝**过程证据**；结论一律以平面 1 为准，archive 不得被引用为「当前结论」。
-> 新证据只追加，不回头改写；被平面 1 采纳的结论以平面 1 的文字为权威。
+> 专题档案＝**过程证据**；结论一律以领域层为准，archive 不得被引用为「当前结论」。
+> 新证据只追加，不回头改写。
+
+### 机器可查（无 SQLite，无生成物）
+
+- 文本搜索：`rg` / `grep`（`PITFALLS.md` 找踩坑、`RESOURCES.md` 找资源、`TASKS.md` 找任务）。
+- 会话回忆：pi 原生会话选择器（`/resume`）+ `rg .pi/sessions`。
+- 结构自检：`scripts/check-doctor.sh`（计数/死链/口径冲突）。
 
 ---
 
@@ -63,7 +69,7 @@
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
 - **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline vk40 持久直启**（`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。
-  ⚠️ **未解故障**：桌面空闲**熄屏→整机重启**；本轮末改 `idle-delay=10` 后陷入重启环、**设备当前不可达** → 先按 `archive/topics/复盘-2026-10-03-持久化与睡眠.md` §5 恢复（详见 `GAPS` Q21 / `TASKS` G1-22）。
+  ⚠️ **未解故障**：桌面空闲**熄屏→整机重启**；本轮末改 `idle-delay=10` 后陷入重启环、**设备当前不可达** → 先按 `archive/topics/复盘-2026-10-03-持久化与睡眠.md` §5 恢复（详见 `TASKS.md` §5 Q21 / G1-22）。
   ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
 
 ---
@@ -72,9 +78,8 @@
 
 ```bash
 cd ~/y700-elden
-# 【收尾自检】计数漂移 / 死链 / db 过期 / 口径冲突（全绿再收工）
-scripts/check-doctor.sh          # 校验
-python3 db/build.py --lessons    # 过期则重建 db + LESSONS
+# 【收尾自检】计数漂移 / 死链 / 口径冲突（全绿再收工）
+scripts/check-doctor.sh
 # 【动手前 30 秒】引导链类问题（解锁/AVB/降级/GPT/EDL）先查本地 7、8 月已有结论（#87）
 grep -rn -iE "unlock|解锁|sn\.img|1\.1\.11\.|rollback|testkey|073|\.120" \
   .pi/skills/*/references/*.md *.md archive/topics/*.md | grep -v '^Binary'
@@ -103,10 +108,9 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 |---|---|
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
-**`FILES.md`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`LESSONS.md`** | **经验总入口（新会话动手前先读）**：三条零号纪律 + `PITFALLS` 全量分类索引 + 其它经验来源
-**`SESSION-INDEX.md`** | **历史会话索引 + 实机验证边界**（当前收录 45/51，catalog `archive/sessions-catalog-2026-10-03.jsonl`）
-**`db/`** | **结构化知识库（SQLite）**：`sessions`/`pitfalls`/`tasks`/`references_`；`python3 db/build.py --lessons` 重建（见 `db/README.md`）
+**`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
+**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#88
+**`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（51 会话）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
 `backup/` | 原厂分区/固件/GPT 快照（**按容量档隔离**）；`backup/fw/README.md` 说明来源
@@ -136,7 +140,7 @@ AOSP 迁盘校验 | `archive/topics/AOSP-MIGRATE-CHECK-2026-10-02.md`
 踩坑总表（**动手前扫**） | `PITFALLS.md`（#80/#81＝“把机器当角色”“状态才是前置条件”；**#87＝引导链问题先 grep 本地既有结论**）
 BL 解锁（**要不要 / 怎么**——已定稿，别再重推） | `RUNBOOK-BRINGUP.md` §0.5 ★权威顺序·`archive/topics/复盘-2026-10-03-BL解锁.md`（时线 + 7/8 月对照 + 根因）·`archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md`（签名链取证）
 操作史/复盘 | `archive/topics/HANDOFF.md` `archive/topics/复盘.md` `archive/topics/复盘-2026-09-29-夜.md` `archive/topics/复盘-2026-09-30-日.md` `archive/topics/复盘-2026-10-02-swarm.md` **`archive/topics/复盘-2026-10-03-BL解锁.md`** `archive/topics/PAUSE-2026-10-02-android.md`
-**内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`SESSION-INDEX.md`** 配套
+**内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`RESOURCES.md §4`** 配套
 换机迁移包 | `flashing-bundle/` + `flashing-bundle-2026-09-29.tar.gz`
 
 ---

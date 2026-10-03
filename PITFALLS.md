@@ -6,6 +6,12 @@
 
 ---
 
+## 0. 零号纪律（动手前先做这三件事）
+
+1. **先查本地既有结论再取证**：`grep -rn -iE "unlock|解锁|rollback|testkey|GPT|EDL" ~/y700-elden/*.md archive/topics/*.md .pi/skills/*/references/*.md`（PITFALLS #87）。
+2. **动分区/刷写前备份**：`fastboot fetch <分区>` + GPT 双表 dump；**写后读回校验**（不看"传输完成"）。
+3. **单一远程通道的持久系统上不做自锁式实验**（电源/熄屏/网络）；先 RAM 引导验证（#87、复盘-持久化与睡眠）。
+
 ## 一、引导 / fastboot / 重启交接
 
 1. **A/B 槽会漂移**：进过 Android/TWRP/多次 `fastboot boot` 后，`current-slot` 可能 a↔b。

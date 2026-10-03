@@ -16,3 +16,8 @@
 ## Memory - 2026-09-30
 
 本机有 Motrix-next 下载加速器：RPC 端口 29100，密钥 "motrix"（aria2 JSON-RPC，http://127.0.0.1:29100/jsonrpc，params 首项 "token:motrix"）。大文件下载优先用它，默认目录 ~/下载/。
+
+
+## Memory - 2026-10-03
+
+y700-elden 文档架构偏好（2026-10-03 用户定）：入口越少越好。根目录只保留 6 份维护文档——唯一入口 INDEX.md + DEVICE/TASKS/RESOURCES/RUNBOOK-BRINGUP/PITFALLS；不引入第二索引、生成物或 SQLite（db/、LESSONS.md 已删除）。查询用 `rg`，会话回忆用 pi 原生会话选择器 + `rg .pi/sessions`，结构一致性用 `scripts/check-doctor.sh`。新证据只进 archive/（只增不改）。

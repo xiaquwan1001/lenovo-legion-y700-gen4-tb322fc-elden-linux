@@ -13,7 +13,7 @@
 | `memory/` | **持久记忆**（跨会话）：`USER.md`(用户偏好) · `HINDSIGHT.md`(阶段决策) · `FAILURES.md`(反复踩的坑) | ✅ track | 由 `profile_memory` 追加，按 `## Memory - <date>` 分块 |
 | `missions/` | **swarm 任务卡**（喂给子代理的任务说明，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
 | `agents/` | **swarm 子代理定义**（`role`/`model`/`objective`，输入） | ✅ track | 一个 mission 可对应多个 agent 角色 |
-| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | 索引见 `SESSION-INDEX.md`；归档策略见 `FILES.md` H1 |
+| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | 索引见 `RESOURCES.md §4`；归档策略见 `RESOURCES.md §3` H1 |
 | `messenger/` | pi-messenger **运行时状态**（channels/registry/tasks/agents） | ❌ ignore | 可安全删除，harness 重建 |
 
 ## `missions/` vs `agents/`（易混）
