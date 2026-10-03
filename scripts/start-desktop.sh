@@ -47,6 +47,15 @@ fi
 # seatd: DRM/input seat for phoc (libseat).
 pgrep -x seatd >/dev/null 2>&1 || seatd -g root >/run/seatd.log 2>&1 &
 
+# elogind: provides the logind D-Bus API (org.freedesktop.login1) that
+# gnome-session/phosh use for Power Off / Restart.  This rootfs has no
+# systemd; without elogind the power menu just times out
+# ("phosh-session-manager: Failed to shutdown: Timeout was reached").
+# Package: `apk add elogind elogind-openrc` (2026-10-03).
+if [ -x /usr/libexec/elogind/elogind ] && ! pgrep -x elogind-daemon >/dev/null 2>&1; then
+	/usr/libexec/elogind/elogind >/run/elogind.log 2>&1 &
+fi
+
 # /init inherits HOME=/ from the kernel (PID 1 env); phosh/phoc/gsd-* then
 # resolve XDG config against '/' -> dconf user db lands in /.config/dconf/user,
 # not /root/.config (2026-09-30: dark-mode/gtk-theme 'not persisting'). Pin it.
