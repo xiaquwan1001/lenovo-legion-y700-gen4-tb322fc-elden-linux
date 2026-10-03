@@ -85,3 +85,66 @@
 
 > 纪律提醒：任何变更上机前先 `fastboot fetch` + GPT 双表 dump；在不可回滚的持久系统上不做熄屏/电源类实验
 > （`GAPS` 风险登记 / `archive/topics/复盘-2026-10-03-持久化与睡眠.md`）。
+
+---
+
+## 5. 已执行（2026-10-03，主机侧，可回滚）
+
+### 5.1 固存 + 唯一版本号（修 F1/F4）
+
+`geekidos-linux` 新增两个本地分支（内核仓库自己的 git，未推送）：
+
+| 分支 | commit | 内容 |
+|---|---|---|
+| `elden/vk40-2026-10-03` | `6ef87e6a8` | vk40 现场原样（含 DBG 插桩），作为回归对照 |
+| `elden/vk34-recon` | `e72a036ed` | 回退 §1 五个文件（q6apm/audioreach/q6prm/q6apm-lpass-dais/DTS 热 trip） |
+
+- `.config` 已有 `CONFIG_LOCALVERSION_AUTO=y` → **提交后 uname 自动带唯一 commit**：
+  `7.2.0-debug-g6ef87e6a8868`（vk40re） / `7.2.0-debug-ge72a036ed4be`（vk34recon）。
+  从此设备上 `uname -r` 即可分辨版本（**修 F1**）。
+- 音频/QDSP6 驱动全部 `=y`（内建）→ A/B 测试**不受** `.ko` vermagic 影响。
+
+### 5.2 校验（recon 是否真≈vk34）
+
+从真机镜像 `out/boot-elden-vk34.img` 抽内核/DTB 对比：
+
+| 项 | vk34 实机镜像 | recon 重建 |
+|---|---|---|
+| DBG 字符串 | 无 | **无** ✅ |
+| 分级热 trip（DTB） | 无 | **无** ✅ |
+| `sm8750-lenovo-elden.dtb` | 136346 B | **逐字节相同** ✅ |
+| vk40 实机镜像 | 有 DBG | 有分级热 trip |
+
+→ recon **忠实重建了 vk34 的 DTS/D TB**，可作为 vk34 基线。
+
+### 5.3 产物（`out/`，RAM 可引导，未签名不影响 `fastboot boot`）
+
+| 镜像 | uname | sha256（前16） |
+|---|---|---|
+| `boot-elden-vk34recon.img`（持久根） | `…-ge72a036ed4be` | `5397af38cf55480c` |
+| `boot-elden-vk34recon-ram.img`（纯 RAM） | 同上 | `99a7d05c0498d813` |
+| `boot-elden-vk40re.img`（持久根） | `…-g6ef87e6a8868` | `1a2315b8450f1103` |
+| `boot-elden-vk40re-ram.img`（纯 RAM） | 同上 | `ba5d1e4988c370de` |
+
+### 5.4 A/B 隔离实验（下一步，需设备；等你确认设备可用）
+
+目标：判定 vk40 的新 bug（尤其熄屏→重启）是否来自 §1 的 post-vk34 内核增量。
+
+```
+# 0. 备份（纪律）
+fastboot fetch boot_b  backup/<SN>-16+512/boot_b.pre-ab.img
+# 1. 进 fastboot，确认活跃槽的 dtbo 已 blank（否则卡 logo，见 RUNBOOK §3）
+fastboot --set-active=b && fastboot flash dtbo_b bootslot-b/dtbo_b.img
+# 2. RAM 引导 vk34recon（用磁盘上的持久根，不写 flash）
+fastboot boot out/boot-elden-vk34recon.img
+# 3. 起机后确认版本
+ssh root@192.168.7.1 'uname -r'      # 期望 …-ge72a036ed4be
+# 4. 复现可疑症状（熄屏：先设 idle-delay=10，SSH 常 ping 观察是否重启）
+# 5. 重启回 vk40 对照：改回 idle-delay=0 → reboot → 对 vk40re 重复 2-4
+```
+
+判据：
+- **vk34recon 不重启 / vk40re 重启** → 回归源在 §1 的 post-vk34 增量，继续在分支上逐项二分（先试只保留 DTS 热 trip、或只保留音频）。
+- **两者都重启** → 与内核增量无关，转向 10-03 持久化 initramfs / rootfs（`start-desktop.sh`、UCSI 电源路径）。
+
+⚠️ RAM 引导非持久：万一回归重启，回到的是 flash 里的 boot_b（vk40），可恢复；但 `idle-delay` 写在持久根 **会留存**，测完必须改回 0。
