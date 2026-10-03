@@ -43,3 +43,20 @@ DEVICE_SG_ADD(audioreach/subgraph-device-i2s-playback.m4, `Secondary', SECONDARY
 dnl
 STREAM_DEVICE_PLAYBACK_MIXER(SECONDARY_MI2S_RX, ``SECONDARY_MI2S_RX'', ``MultiMedia1'', ``MultiMedia2'')
 STREAM_DEVICE_PLAYBACK_ROUTE(SECONDARY_MI2S_RX, ``SECONDARY_MI2S_RX Audio Mixer'', ``MultiMedia1, stream0.logger1'', ``MultiMedia2, stream1.logger1'')
+
+#
+# Capture: 4x DMIC on the VA macro (FE MultiMedia3)
+#   [RD_SH] <- [PCM ENC] <- [PCM CONV] <- [MFC] <- [LOG]  - Mixer -
+#   -> VA codec-DMA TX0 -> DMIC
+#
+STREAM_SG_PCM_ADD(audioreach/subgraph-stream-capture.m4, FRONTEND_DAI_MULTIMEDIA3,
+	`S16_LE', 48000, 48000, 2, 2,
+	0x00004003, 0x00004003, 0x00006020, `110000')
+dnl
+DEVICE_SG_ADD(audioreach/subgraph-device-codec-dma-capture.m4, `VA_CODEC_DMA_TX_0', VA_CODEC_DMA_TX_0,
+	`S16_LE', 48000, 48000, 2, 2,
+	LPAIF_INTF_TYPE_VA, CODEC_INTF_IDX_TX0, 0, DATA_FORMAT_FIXED_POINT,
+	0x00004007, 0x00004007, 0x00006070, `VA_CODEC_DMA_TX_0')
+dnl
+STREAM_DEVICE_CAPTURE_MIXER(FRONTEND_DAI_MULTIMEDIA3, ``VA_CODEC_DMA_TX_0'')
+STREAM_DEVICE_CAPTURE_ROUTE(FRONTEND_DAI_MULTIMEDIA3, ``MultiMedia3 Mixer'', ``VA_CODEC_DMA_TX_0, device110.logger1'')
