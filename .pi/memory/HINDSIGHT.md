@@ -1127,3 +1127,141 @@ ssh root@192.168.7.1 'uname -r'      # 期望 …-ge72a036ed4be
 ## Memory - 2026-10-03
 
 内核回归定位法（可复用）：①从实机 boot 镜像解包内核/DTB，用 `strings`/DTB 逐字节对比确定"最后实机验证版本"到底含哪些改动；②用文件 mtime 锁定边界之后的增量文件集；③重建时把重建 DTB 与实机 vk34 DTB 逐字节比对来证明重建忠实；④内核树开 CONFIG_LOCALVERSION_AUTO=y 并**每版一 commit**，uname 即自动带唯一 commit（否则所有构建共用同一 uname，回归无法归因）。
+
+
+## Automatic settled outcome - 2026-10-03
+
+三项整理全部完成，工作树干净。结论先行。
+
+## 实机结论（本 session 主任务收口）
+
+**`vk34recon` 睡眠正常、不自动重启；`vk40` 复现重启 → 回归源锁定在 vk34 之后的 5 文件内核增量内**（与 10-03 持久化 rootfs 无关）。已记入 `GAPS` Q22、`TASKS` G1-22/G1-23、`AUDIT` §5；逐项二分（只回退 DTS 热 trip / 只回退音频）留待将来。
+
+## 整理三项
+
+**① 经验统一入口 → `LESSONS.md`**
+- 开篇「零号纪律」三条（先查本地结论 / 刷写前备份+读回校验 / 持久系统不做自锁实验）
+- `PITFALLS.md` **#1–#87 共 88 条**按主题分类索引
+- 并列其他来源：`.pi/memory/{FAILURES,HINDSIGHT}`、`archive/topics/复盘-*`、`GAPS` 风险、技能 `references/`
+
+**② 进度与描述用 git 管理（复用子代理成果）→ `db/`**
+- SQLite `db/elden.db`：`sessions` **45**（进度轨迹，来自 `archive/sessions-catalog-*.jsonl`）、`tasks` **32**（TASKS 台账）
+- 结构化 + 可查询，取代纯文字；`db/build.py` 从 git 文本源重建，**已验证确定性**（两次构建 sha 相同）
+
+**③ 参考文献数据库索引 → `references_` 表**
+- **127 条**：`RESOURCES.md` 的外部参考/本地资源（kind=ext/local）+ 全仓库 `*.md` 里的 URL（kind=url，已过滤本机/私网噪声）
+- `db/schema.sql`（5 表）+ `db/build.py` + `db/README.md`（查询手册）
+
+## 状态
+
+| 项 | 数值 |
+|---|---|
+| git 提交 | **6 条**（边界 → 会话索引 → 审计 → 回归准备 → 知识库 → 重建） |
+| 纳管文件 | **301**（`.git` 4.9 M，工作树干净） |
+| 知识库 | `db/` 224 K，5 表 |
+| 可复现 | `python3 db/build.py --lessons` → 重建 DB + 刷新 `LESSONS.md` |
+
+常用查询（见 `db/README.md`）：
+```bash
+sqlite3 db/elden.db "SELECT num,title FROM pitfalls WHERE body LIKE '%关键词%';"
+sqlite3 -header -column db/elden.db "SELECT substr(id,1,8),start,name FROM sessions WHERE hardware_verified='yes';"
+sqlite3 -header -column db/elden.db "SELECT kind,title,locator FROM references_ WHERE title LIKE '%redroid%';"
+```
+
+新会话建议读取顺序：`INDEX.md → LESSONS.md → db/README.md`（已写入 INDEX 顶部）。
+
+后续改动分析（vk34 增量的逐项二分）按你的要求不再展开，入口与 A/B 镜像（`out/boot-elden-vk34recon*.img` / `vk40re*.img`）已备好留将来。
+
+
+## Automatic settled outcome - 2026-10-03
+
+我已把 post-vk34 增量全部逐 hunk 分类，并在串口日志里找到一条**先前没被记录的关键证据**。先给结论。
+
+## 审计结果：post-vk34 增量逐 hunk 分类
+
+边界固定：`git diff elden/vk34-recon → elden/vk40-2026-10-03` = **仅 5 文件**（已 DTB 逐字节比对确认 recon 忠实）。
+
+| 文件 | 功能性改动 | 纯调试 | 风险 |
+|---|---|---|---|
+| `sm8750-lenovo-elden.dts` | **24 个热区**全部改成 4 级 passive trip（70/82/90/105 ℃）+ 4 条 cooling-map | 0 | 🟡 纯策略，空闲低温不触发；**从未单独验证** |
+| `q6apm.c` | **3 处 GPR 命令** `alloc_apm_pkt` → `alloc_apm_cmd_pkt`（GET_SPF_STATE / SHARED_MEM_MAP / UNMAP，多 8 字节 APM cmd header） | 3（其中 2 个有副作用） | 🔴 见 N1/N2 |
+| `q6apm-lpass-dais.c` | 新增 `q6i2s_prepare`：**MI2S BE graph 提前到 prepare 启动** | 3 | 🟠 见 N3 |
+| `audioreach.c` | **无**（13 行全是 print） | 3 | 🟡 见 N4 |
+| `q6prm.c` | **无**（`int ret` + 1 行 print） | 1 | 🟢 |
+
+## 发现的实质问题（不止"未验证"，是真隐患）
+
+- **N1（副作用写进日志）**：`q6apm.c` 把 `q6apm_get_apm_state(apm)` **当作 `dev_info` 的实参**调用，位置在 `apm_probe` 和 `q6apm_graph_open`。即：**每开一次 graph / 每次 probe 都额外向 ADSP 发一条 GET_SPF_STATE 并可能阻塞 5 s**。日志不该有副作用。
+- **N2（最可疑）**：3 处命令换成 `alloc_apm_cmd_pkt` —— 它给包**加了 8 字节 APM command header**。而 vk34 的原注释白纸黑字写着 *"GET_SPF_STATE has no APM command header or payload"*，vk40 直接推翻了它。这是**唯一会改变发给 ADSP 的字节流的改动**。
+- **N3**：`q6i2s_prepare` 把 BE graph 启动从 trigger 挪到 prepare，`is_port_started` 语义随之改变；启动顺序/重复启动无对上机验证。
+- **N4**：`audioreach.c` 残留 `print_hex_dump` 整包 + 3 条 DBG；`q6apm-lpass-dais.c` 的 `set_sysclk` 打印用 `%px`。上机日志被灌爆（serial 里大量串行噪声即与此有关）。
+
+## 新证据（复盘里没有的）
+
+`logs/serial-20261003-192121.log` 段 B：**ADSP 真的崩了**，不是只有 UCSI 报错：
+
+```
+[ 20.874] [drm] vblank timeout: 400000 / wait for commit done -110
+[ 21.165] qcom_q6v5_pas 6800000.remoteproc: fatal error received:
+          sys_m_smsm.c:322:err fatal notification received from TZ
+[ 21.165] remoteproc remoteproc0: crash detected in adsp: type fatal error
+[ 21.165] remoteproc remoteproc0: recovering adsp
+[ 21.165] ucsi_g
+
+
+## Automatic settled outcome - 2026-10-03
+
+设备已在 fastboot。我停手，给当前状态（不强行解释）：
+
+## 已确立的事实（可复现）
+
+| 内核 | 显示 on/off 提交后 dmesg 计数 |
+|---|---|
+| vk34recon（基线） | vblank=0, PPM=0, adsp=0 |
+| vk40re | **vblank=6, PPM=1**, adsp=0 |
+
+→ **DPU `vblank timeout` + `UCSI PPM init failed` 是 vk40 可量化的回归**（比间歇重启更适合二分）。
+
+## 未定 / 需谨慎
+
+- **V1(热区)/V2(音频) 是否引发该回归**：尚未取到（上一次测 V1 的命令中途卡死）。
+- **复位根因**：vk40re 时而 ~1 min 一次、时而稳定 400 s → **单次观测无统计意义**；上一次 vk34recon/V1 卡死更要说明：不稳定未必只属于 vk40。
+- **钩子副作用**：你提的这点无法排除——加钩子后 vk40re 从"1 min 一次"变"400 s 稳定"。钩子已撤、`start-desktop.sh` 已还原。
+
+## 对设备的残留（无害，可清理）
+
+- 设备持久根：`/usr/local/sbin/start-desktop.sh.bak-eldroid`、`/var/log/kmsg-*.log`（取证文件）。
+
+## 建议
+
+不再碰持久系统，只用 `fastboot boot` + SSH(`192.168.7.1`) 读 `dmesg`，**一次只测一版、你看着**。最有价值的一刀：测 **V1（热区 only）**——若 V1 也出 vblank → 归因热区（70 ℃ 提前限频拖慢 DPU 提交），与音频无关。
+
+要我现在只测这一版 V1，还是先停下把已有结论落盘归档？
+
+
+## Automatic settled outcome - 2026-10-03
+
+归档完成。已落盘并提交（`12843c7`）：
+
+## 写入内容
+
+| 产物 | 内容 |
+|---|---|
+| **`archive/topics/AUDIT2-post-vk34-bisect-2026-10-03.md`** | 第二遍审核全文：逐 hunk 分类（N1–N4）、V1/V2 二分变体表、实机结果、方法学坑、钩子事件 |
+| **`GAPS.md` Q22** | 补充第二遍进展 + vblank 可量化回归 + 间歇性告警 + 钩子副作用嫌疑 |
+| **`TASKS.md` G1-23** | ✅→🟡 第二遍进行中；判据改为"同口径 dmesg 计数，V1/V2 各 ≥1 有效样本"；G1-22 补记伴生回归 |
+| **`profile_memory`** | 新增失败教训：间歇性故障的**观察者效应**（取证钩子改变被测行为）+ ModemManager 占 ttyACM |
+
+## 归档的硬结论
+
+- **post-vk34 增量 = 5 文件**；其中 N1（日志内副作用调用 `q6apm_get_apm_state`）、N2（`alloc_apm_cmd_pkt` 加 8 B APM cmd header，与 vk34 注释矛盾）、N3（提前启动 BE graph）是实质改动，N4 是残留 DBG 打印。
+- **可量化回归**：`vk40re` 显示 on/off 后 `DPU vblank timeout`=6、`UCSI PPM init failed`=1；`vk34recon` 同操作 **0/0**。
+- **静默硬复位是间歇性的**（1 min/次 与 400 s 稳定都出现）→ 单次观测无统计意义，不强行解释。
+- **钩子副作用不可排除**，已回退；V1/V2 同口径样本未取到。
+
+## 设备侧
+
+- 设备在 **fastboot**；持久根残留两个无害取证文件（`start-desktop.sh.bak-eldroid`、`/var/log/kmsg-*.log`），文档已列。
+- 二分镜像已备好：`out/boot-elden-v1-thermal.img`、`out/boot-elden-v2-audio.img`（uname 唯一、已验证组成）。
+
+下次要推进时，入口就是 `AUDIT2` §8 的"单变量、长时窗、最小侵入"三条。
