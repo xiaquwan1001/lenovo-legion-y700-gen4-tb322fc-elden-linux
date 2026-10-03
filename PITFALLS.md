@@ -575,3 +575,17 @@
       ③ 引用任何「以前成功过」的记录，**先查它属于哪台单元、当时什么固件/锁状态**（状态不同 ≠ 机型不同，见 #80/#81）；
       ④ 动手前先写下「期望判据 + 停手特征串 + 失败后走哪条」，别在失败之后才查。
     - 全文复盘：`archive/topics/复盘-2026-10-03-BL解锁.md`（含 7/8 月记录 ↔ 10-03 实测的逐条对照表）。
+
+88. **★能力缺口：本机没有「Linux→fastboot」的可靠工具（2026-10-03 实测）**。
+    - 现状：`cycle.sh --soft`（纯 `reboot -f`）在 b 槽主线可直启后**不再落 fastboot**（PITFALLS #65）；
+      `cycle.sh --fastboot`（写 `misc` 的 BCB `bootonce-bootloader`）**未被 ABL 采纳**——
+      2026-10-03 实测：misc 首 20 字节确为 `bootonce-bootloader`，`reboot -f` 后仍正常启 Linux；
+      过去「reboot 必落 fastboot」是 a 槽 AVB 校验失败的副产物（HANDOFF §19），不是 BCB 生效。
+      ⇒ 想进 fastboot，目前只有**物理键**（或从 fastboot 内的 `fastboot reboot bootloader`）。
+    - **A/B 内核测试不需要这个能力**：用 `scripts/flash-b.sh <img> --reboot`（自签 + `dd` 写 `boot_b` + 回读校验 + 重启），
+      全程不开 fastboot；每版 uname 唯一即可版本归属；复位后回退到**同一个**已烧内核（uname 不变，靠 uptime 判复位）。
+    - **必须先做**：`python3 scripts/slot-attr.py mark-successful b`（给 b 槽 `boot_b` 置 `BOOT_SUCCESSFUL`），
+      否则主线无 `markBootSuccessful`，retry 每次 -0x08，约 7 次后 `boot_b` 变 unbootable → 停在 fastboot（见 `GPT槽位元数据-2026-09-30.md`）。
+    - 若要**造**这个能力（一般没必要）：候选 = ① ABL 认可的其它 BCB 命令；② IMEM `restart_reason`=fastboot 魔术（Android `reboot bootloader` 之道）；
+      ③ 故意耗尽 `boot_b` retry 让 ABL 回退 fastboot（用 `slot-attr.py` 可控，但有风险）。**均需另立专项 + 保守实验**，不要在测试脚本里即兴。
+    - 纪律：任何"从 Linux 切 fastboot"的记录，**先确认是物理键还是软件**，别把用户的手动操作误记成工具生效（本次即因此误判一次）。

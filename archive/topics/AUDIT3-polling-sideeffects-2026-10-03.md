@@ -175,3 +175,34 @@ PY
 
 （第一遍脚本输出的 4 条「循环体内」命中经逐条核对全为假阳性；命中原文见会话
 `2026-10-03T12-31-04…` cmd#16 与 `2026-09-30T12-13-51…` cmd#32/#33。）
+
+---
+
+## 7. 追加（2026-10-03 晚）：**「Linux→fastboot」能力缺口**
+
+测试编排时暴露一个此前未写清的能力缺口：**本机没有可靠的「从 Linux 切到 fastboot」工具**。
+
+- `cycle.sh --soft`（纯 `reboot -f`）：b 槽主线可直启后**不再落 fastboot**（HANDOFF §19/§24、PITFALLS #65）。
+- `cycle.sh --fastboot`（写 `misc` 的 BCB `bootonce-bootloader`）：**2026-10-03 实测 ABL 未采纳**——
+  写过、读过 misc 首 20 字节确为 `bootonce-bootloader`，`reboot -f` 后仍正常启 Linux。
+  过去「reboot 必落 fastboot」其实是 **a 槽 AVB 校验失败**的副产物（HANDOFF §19），不是 BCB 生效。
+- 因此进 fastboot 目前**只有物理键**；本次测试过程中就发生了「误把用户手动物理重启当成 BCB 生效」的错误归因。
+
+### 对 A/B 测试的影响与对策
+
+**A/B 内核测试并不需要 Linux→fastboot**：把测试内核用 `scripts/flash-b.sh <img> --reboot`
+（自签 + `dd` 写 `boot_b` + sha256 回读校验 + 重启）写进 b 槽即可，全程不开 fastboot：
+
+- 每版 uname 唯一 ⇒ 版本归属精确；
+- 测试中若复位，ABL 回退到**同一个**已烧内核（uname 不变）⇒ 靠 uptime 回退/SSH 断判定复位，归因干净；
+- **前置必做**：`python3 scripts/slot-attr.py mark-successful b`（置 `boot_b` 的 `BOOT_SUCCESSFUL` bit6），
+  否则主线无 `markBootSuccessful`、retry 每次 -0x08，约 7 次后 b 槽 unbootable → 停在 fastboot
+  （机理见 `GPT槽位元数据-2026-09-30.md`）。
+- `boot_b` 的写是**持久但可逆**（b 槽专用、自签、回读校验）；收尾时烧回已知基线。
+
+**若要真正造出 Linux→fastboot 能力**（另立专项，不在测试脚本里即兴）：
+① 试 ABL 认可的其它 BCB 命令（如 `boot-fastboot`）；② 反查 IMEM `restart_reason`=fastboot 魔术（Android `reboot bootloader` 之道）；
+③ 用 `slot-attr.py` 可控地耗尽 `boot_b` retry 逼 ABL 回退 fastboot（有风险）。
+候选②需要从 XBL/ABL 取证，当前离线不可得（`abl_a.img` 只有 1 MB 且无明文串）。
+
+已写进 `PITFALLS.md` #88。

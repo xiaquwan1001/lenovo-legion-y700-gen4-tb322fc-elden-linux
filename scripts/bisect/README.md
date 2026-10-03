@@ -21,13 +21,23 @@
 scripts/bisect/eldtest.sh baseline      # 打印精确步骤（你亲自执行）
 ```
 
+## 重要：本机没有可靠的 Linux→fastboot 工具（PITFALLS #88）
+
+- `cycle.sh --soft`（`reboot -f`）不再落 fastboot；`misc` BCB `bootonce-bootloader` **未被 ABL 采纳**（实测）。
+- 进 fastboot 只有**物理键**。
+- **A/B 测试不依赖它**：用 `flash` 子命令（`flash-b.sh` 写 `boot_b` + 重启，全程不开 fastboot）。
+- **前置必做**：`python3 scripts/slot-attr.py mark-successful b`（否则 b 槽 retry 耗尽会停在 fastboot）。
+
 ## 跑一轮
 
 ```bash
-# 完整：fastboot boot + 渐进触发观测
-scripts/bisect/eldtest.sh one vk34recon
+# 从 Linux：把测试内核写进 b 槽 + 重启 + 渐进触发观测（推荐，不需要 fastboot）
+scripts/bisect/eldtest.sh flash vk40re
 
-# 或你手动 fastboot boot 好之后，只跑观测
+# 备选：设备已在 fastboot（你手动进去）时 RAM 引导 + 观测
+scripts/bisect/eldtest.sh one vk40re
+
+# 或你手动 boot 好之后，只跑观测
 scripts/bisect/eldtest.sh observe vk40re
 ```
 

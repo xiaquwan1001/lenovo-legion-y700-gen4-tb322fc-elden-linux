@@ -11,9 +11,9 @@
 # 用法：
 #   scripts/bisect/eldtest.sh matrix                     # 打印版本表 + sha256（不碰设备）
 #   scripts/bisect/eldtest.sh baseline                   # 打印/执行 b 槽基线（vk34recon）烧写步骤
-#   scripts/bisect/eldtest.sh one <label>                # fastboot boot + 渐进触发观测（完整）
+#   scripts/bisect/eldtest.sh one <label>                # 设备已在 fastboot：fastboot boot + 观测
+#   scripts/bisect/eldtest.sh flash <label>              # 从 Linux：flash-b 写 b 槽 + 重启 + 观测（不需要 fastboot）
 #   scripts/bisect/eldtest.sh observe <label>            # 只观测（设备已由你手动 boot 好）
-#   scripts/bisect/eldtest.sh postcheck <label>          # 观测完后读一次计数（可选）
 #
 # 环境：设备 USB NCM 已在 host 起 192.168.7.2/24（enx…），SSH root@192.168.7.1；
 #       kernel console = /dev/ttyACM0（可选，缺省也能跑，只是少一路证据）。
@@ -199,6 +199,22 @@ cmd_one() {
   stop_cap
 }
 
+# flash = 用 flash-b.sh 把测试内核写进 b 槽并重启（不需要 fastboot；AUDIT3/PITFALLS#88）
+# 注意：flash-b.sh 会把签名后的镜像写到 bootslot-b/boot_b.img（覆盖），并带 sha256 回读校验。
+cmd_flash() {
+  local label=$1
+  [ -n "${IMG[$label]:-}" ] || { echo "unknown label: $label"; exit 1; }
+  mkdir -p "$OUTDIR"
+  start_cap
+  log "== flash-b $label -> boot_b + reboot =="
+  if ! scripts/flash-b.sh "${IMG[$label]}" --reboot 2>&1 | tee -a "$OUTDIR/journal.log" | tail -6; then
+    log "flash-b 失败"; stop_cap; return 1
+  fi
+  wait_banner "${UNAME[$label]}" 200
+  cmd_observe "$label"
+  stop_cap
+}
+
 # ---------- prepare：只读地准备/核验测试版本 ----------
 cmd_prepare() {
   mkdir -p "$ROOT/logs/bisect"
@@ -233,6 +249,7 @@ case "${1:-}" in
   prepare)  cmd_prepare ;;
   baseline) cmd_baseline ;;
   one)      cmd_one "${2:-}" ;;
+  flash)    cmd_flash "${2:-}" ;;
   observe)  cmd_observe "${2:-}" ;;
   *) sed -n '2,30p' "$0" ;;
 esac
