@@ -1,6 +1,6 @@
 # 工作区索引 — TB322FC "elden"（SM8750P）固件与驱动研究
 
-> **入口。** 新会话按顺序读：本文件 §1（使命）→ §2（六视角文档集）→ 需要细节再进专题档案。
+> **入口。** 新会话按顺序读：本文件 §1（使命）→ §2（文档分层）→ 需要细节再进专题档案。
 > 2026-10-03：**建立 git 版本控制**（分支 `main`，只纳管文本/脚本/补丁/记忆，大二进制忽略）→ 边界与可清理标记见 **`FILES.md`**；内核工作树已导出权威补丁（`patches/elden-working-tree-ba28ec16f-2026-10-03.patch`）。
 > 2026-10-03（续）：**知识库化**——`LESSONS.md`（经验总入口）、`SESSION-INDEX.md`（会话/进度）、`db/`（SQLite：sessions/pitfalls/tasks/references_）。新会话建议顺序：本文件 → `LESSONS.md` → `db/README.md`。
 
@@ -19,22 +19,43 @@
 
 ---
 
-## 2. ★ 六视角文档集（唯一维护面）
+## 2. ★ 文档分层（三个平面，边界显式）
 
-| 角度 | 文件 | 装什么 |
+> **单一事实源（SSOT）**：每个数字/结论只在一个文件维护，其余用链接引用；口径冲突时按本表定权威。
+> 生成物（`LESSONS.md`、`db/elden.db`）**禁止手改**，由 `db/build.py` 重建。
+
+### 平面 1 — 领域层（唯一维护面）
+
+| 角度 | 文件（权威） | 装什么 |
 |---|---|---|
 | **设备状态 + 设备描述** | **`DEVICE.md`** | 机型规格、固件清单与通路、驱动矩阵（529 compatible/297 `.ko` 分级）、单元台账 U1/U2、状态→任务分派、GPT 参数、**§3 Linux 容量策略与体量估算** |
-| **任务拆解 + 进度** | **`TASKS.md`** | 唯一任务台账：G1-1…21、G2 的 C1…C9、主机并行 A11–A18、旧任务线作废登记、**下一步顺序** |
-| **参考资源 + 本地资源** | **`RESOURCES.md`** | 上游/社区参考（**含容器跑 GMS 的社区先例取证**）、构建链、可上机资产（vk40/rootfs 归档/Mesa/相机 `.ko`/固件包/AVF）、大容量资产、归档区、**§2.5 资产瘦身优先级（P0–P3，未执行）** |
-| **查漏补缺** | **`GAPS.md`** | Q1–Q12 未解问题（每条含最小实验）、缺口补救路径、环境流程待办、风险登记、勾销规则 |
-| **G2 专项设计** | **`ANDROID-COMPAT.md`** | 无安卓前提下的兼容方案：R1 容器（Waydroid）/ R1' redroid / R2 VM / R3 原生 + 5 维评估 + `elden-droid` 兼容层五件事 + **a 槽可弃的风险对冲** |
-| **上机手册** | **`RUNBOOK-BRINGUP.md`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase 0–8（零写盘验收 → GPT 手术 → 恢复 rootfs → 固化） |
+| **任务拆解 + 进度** | **`TASKS.md`** | **唯一任务台账 + 进度权威**：G1-1…24、C1…C9、主机并行 A11–A18、旧任务线作废登记、下一步顺序 |
+| **参考资源 + 本地资源** | **`RESOURCES.md`** | 上游/社区参考、构建链、可上机资产、大容量资产、归档区、**§2.5 资产瘦身优先级** |
+| **查漏补缺** | **`GAPS.md`** | Q1–Q23 未解问题（每条含最小实验）、缺口补救路径、环境流程待办、风险登记、勾销规则 |
+| **G2 专项设计** | **`ANDROID-COMPAT.md`** | 无安卓前提下的兼容方案：R1 容器 / R1' redroid / R2 VM / R3 原生 + 5 维评估 + `elden-droid` 五件事 |
+| **上机手册** | **`RUNBOOK-BRINGUP.md`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase 0–8 |
 
-> 专题档案（下列）＝**过程证据，不再更新**；结论一律以上面六份为准。口径冲突时以六视角文档为准。
+### 平面 2 — 元层（知识管理，服务平面 1）
+
+| 文件 | 装什么 | 权威性 |
+|---|---|---|
+| **`FILES.md`** | 版本控制边界 / 顶层资产台账 / 可清理标记 / 内核补丁回导纪律 | 资产分类权威 |
+| **`PITFALLS.md`** | 踩坑经验**正文**（#1–#88，按主题） | 经验正文权威 |
+| **`LESSONS.md`** | 经验统一入口 + 零号纪律 | ⚠️ **生成物**（`db/build.py --lessons`） |
+| **`SESSION-INDEX.md`** | 历史会话索引 + 实机验证边界 | 会话轨迹权威 |
+| **`db/`** | SQLite 结构化索引：`sessions`/`pitfalls`/`tasks`/`references_`/`docs` | ⚠️ **生成物**（可丢弃重建） |
+| **`scripts/check-doctor.sh`** | 结构自检：计数漂移 / 死链 / db 过期 / 口径冲突 | 校验器 |
+
+### 平面 3 — 证据层（`archive/`，只增不改、不改结论）
+
+> 专题档案＝**过程证据**；结论一律以平面 1 为准，archive 不得被引用为「当前结论」。
+> 新证据只追加，不回头改写；被平面 1 采纳的结论以平面 1 的文字为权威。
 
 ---
 
-## 3. 现状速览（详见 `TASKS.md` §0）
+## 3. 现状速览（数字权威在 `TASKS.md` §0，本节仅为快照）
+
+> **SSOT**：进度百分比与任务状态以 `TASKS.md` §0 为准；本节若与之不符，以 `TASKS.md` 为准。
 
 - **G1 ≈80%**：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、触觉、带外串口）。
   新基线 **vk40** 已编好未上机；**当前无单元在机 mainline**（最后在机基线 vk39，U1 已逆手术回 stock）。**剩 4 个硬缺口**：音频听声、相机出流、TF 卡、BT 配对。
@@ -51,6 +72,9 @@
 
 ```bash
 cd ~/y700-elden
+# 【收尾自检】计数漂移 / 死链 / db 过期 / 口径冲突（全绿再收工）
+scripts/check-doctor.sh          # 校验
+python3 db/build.py --lessons    # 过期则重建 db + LESSONS
 # 【动手前 30 秒】引导链类问题（解锁/AVB/降级/GPT/EDL）先查本地 7、8 月已有结论（#87）
 grep -rn -iE "unlock|解锁|sn\.img|1\.1\.11\.|rollback|testkey|073|\.120" \
   .pi/skills/*/references/*.md *.md archive/topics/*.md | grep -v '^Binary'
@@ -81,7 +105,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`FILES.md`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
 **`LESSONS.md`** | **经验总入口（新会话动手前先读）**：三条零号纪律 + `PITFALLS` 全量分类索引 + 其它经验来源
-**`SESSION-INDEX.md`** | **45 个历史会话索引 + 实机验证边界**；机器副本 `archive/sessions-catalog-2026-10-03.jsonl`
+**`SESSION-INDEX.md`** | **历史会话索引 + 实机验证边界**（当前收录 45/51，catalog `archive/sessions-catalog-2026-10-03.jsonl`）
 **`db/`** | **结构化知识库（SQLite）**：`sessions`/`pitfalls`/`tasks`/`references_`；`python3 db/build.py --lessons` 重建（见 `db/README.md`）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
@@ -92,7 +116,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 
 ---
 
-## 6. 专题档案地图（证据，不再维护）
+## 6. 专题档案地图（证据层，只增不改）
 
 | 主题 | 文件 |
 |---|---|

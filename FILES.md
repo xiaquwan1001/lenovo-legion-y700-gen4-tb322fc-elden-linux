@@ -17,9 +17,9 @@
 
 | 路径 | 体积 | 版本控制 | 说明 / 处置 |
 |---|---|---|---|
-| `INDEX/DEVICE/TASKS/RESOURCES/GAPS/ANDROID-COMPAT/RUNBOOK/PITFALLS.md` `AGENTS.md` | <200 K | ✅ track | 唯一维护面（六视角 + 踩坑 + 指令） |
-| `.pi/{skills,memory,missions,agents}` `.pi/settings.json` `.pi/pi-messenger.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/任务卡/模型配置 |
-| `.pi/sessions/`（38 个） | 45 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
+| 领域层 `INDEX/DEVICE/TASKS/RESOURCES/GAPS/ANDROID-COMPAT/RUNBOOK.md` + `PITFALLS.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2 |
+| `.pi/{skills,memory,missions,agents}` `.pi/README.md` `.pi/settings.json` `.pi/pi-messenger.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/任务卡/模型配置（分工见 `.pi/README.md`） |
+| `.pi/sessions/`（51 个 jsonl） | 52 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
 | `.pi/messenger/` | 748 K | ignore | 运行时状态 |
 | `scripts/` | 448 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集 |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + **新：工作树全量 patch** |

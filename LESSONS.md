@@ -1,5 +1,6 @@
 # 经验总入口（LESSONS）
 
+> ⚠️ **本文件是生成物，禁止手改**（`python3 db/build.py --lessons` 重建）。经验正文改 `PITFALLS.md`。
 > 新会话**动手前先读本文件**；它是散落在 `PITFALLS.md`、`.pi/memory/*`、`archive/topics/复盘-*`、
 > `GAPS.md` 风险登记、`.pi/skills/*/references/` 里的踩坑经验的**统一入口**。
 > 由 `db/build.py --lessons` 从 `PITFALLS.md` 生成索引；正文与细节仍以原文为准。
@@ -154,5 +155,6 @@
 - **#85** locked b 槽链：现有 bootslot-b/ 自造密钥链不适用，必须 testkey 重打全链（2026-10-03）。
 - **#86** ★联想四代「1.5 高版本堵解锁、降级 1.1 才放行」已实物验证（2026-10-03，U2=HA2EXB0E 实测）。
 - **#87** ★流程坑：引导链问题先「本地检索」再「外部取证」再「自研」——解锁这事 7、8 月就答完了，10-03 重推了一遍（2026-10-03 复盘）。
+- **#88** ★能力缺口：本机没有「Linux→fastboot」的可靠工具（2026-10-03 实测）。
 
 > 查询：`sqlite3 db/elden.db "SELECT num,title FROM pitfalls WHERE body LIKE '%关键词%'"`

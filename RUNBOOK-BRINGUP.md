@@ -1,6 +1,6 @@
 # 上机手册（RUNBOOK-BRINGUP）— 任一单元从原厂状态到 mainline 持久直启
 
-> 六视角文档集之一（`DEVICE.md` / `TASKS.md` / `RESOURCES.md` / `GAPS.md` / `ANDROID-COMPAT.md` / `INDEX.md`）。
+> 领域层活文档之一；文档分三层（领域 / 元 / 证据），定义与 SSOT 见 `INDEX.md` §2。
 > **适用 = 任一 TB322FC / elden / SM8750(P) 单元**（台账 `DEVICE.md` §2.2）。它们**物理等价**，
 > 唯一差异 = 容量 → GPT 数值；所有容量相关值**运行时读实际 GPT**。
 > （文件历史：原 `BRINGUP-NEW-TABLET-2026-10-02.md`；“新机接力/旧机留 Android”的角色划分已作废。）

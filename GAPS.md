@@ -1,6 +1,6 @@
 # 查漏补缺（GAPS）— 未解问题 · 待验证 · 待调查 · 风险
 
-> 六视角文档集之一（`DEVICE.md` / `TASKS.md` / `RESOURCES.md` / `ANDROID-COMPAT.md` / `INDEX.md`）。
+> 领域层活文档之一；文档分三层（领域 / 元 / 证据），定义与 SSOT 见 `INDEX.md` §2。
 > **规则**：任何"不确定/未验证/暂不下结论"的事只在这里登记，写清「未知什么 + 怎么测 + 谁做 + 何时」；
 > 一旦有结论，写进 `DEVICE.md`（设备事实）或 `ANDROID-COMPAT.md`（兼容方案），并从本表勾销。
 

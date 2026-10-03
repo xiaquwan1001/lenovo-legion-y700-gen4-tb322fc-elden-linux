@@ -1,6 +1,6 @@
 # 资源清单（RESOURCES）— 参考资源 + 本地资源
 
-> 六视角文档集之一（`DEVICE.md` / `TASKS.md` / `GAPS.md` / `ANDROID-COMPAT.md` / `INDEX.md`）。
+> 领域层活文档之一；文档分三层（领域 / 元 / 证据），定义与 SSOT 见 `INDEX.md` §2。
 > **本文件是唯一资产清单**：外部参考（含本轮取证的社区先例）与本地已有资产都在这里，含路径与校验状态。
 
 ---
@@ -161,7 +161,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | **P3** | AOSP `.repo/project-objects` + `projects` | **435 G** → 0 | 剪 git 历史（**工作树照常编译**，但此后不能 `repo sync`） | **先**导出 `.repo/local_manifests/`（`00-remotes`/`01-removes`/`02-waydroid`.xml）+ `device/waydroid/waydroid/waydroid_arm64_only/BoardConfig.mk`（唯一改动，+10/−2）|
 | **P3** | AOSP 工作树 + `out` | 89 G + 12 G → 0 | 整树删（合计 **523 G**） | 决策：G2 是否还要自编 Waydroid。替代 = `~/下载/lineage-20.0-…-GAPPS-waydroid_arm64_only-system.zip`（1.1 G，官方现成） |
 | **P3** | `l2/`（`./l2`）super + system_a + system_a.pristine | 45 G → 13 K | 回收 36–45 G | **两道闸**：① 先做 `GAPS` Q13 的 AVF 重提取（源 `system_a.pristine.img`，U1 仍 stock 是唯一窗口）② 核验云包含 `super.img@1.5.10.259`。无论结论如何，先把 `lp_tool.py` + `dump-super.sh` + `trim-delete-only.cmds`（13 K，唯一副本）挪进 `tools/` |
-| **不瘦** | `.pi/`（记忆+会话）· `archive/` · 六视角文档 · `stock-src/`(402 M GPL 源码) · `rootfs/`(193 M 部署基) · `y700四代工具/`(271 M) · `qdl/` · `backup/{gpt,fw,misc,sde-gpt-*,dtbo_a}` · `patches/` · `scripts/` · `/mnt/Samsung/{ccache,mesa-out}` | ≈1.6 G | 保留 | — |
+| **不瘦** | `.pi/`（记忆+会话）· `archive/` · 领域层文档 · `stock-src/`(402 M GPL 源码) · `rootfs/`(193 M 部署基) · `y700四代工具/`(271 M) · `qdl/` · `backup/{gpt,fw,misc,sde-gpt-*,dtbo_a}` · `patches/` · `scripts/` · `/mnt/Samsung/{ccache,mesa-out}` | ≈1.6 G | 保留 | — |
 
 **回收上限**：根盘 ≈18 G（P0–P2 全做）｜外置盘 4.1 G（仅 P0）→ 439 G（P3 剪历史）→ 523 G（P3 整树）+ 45 G（l2）。
 

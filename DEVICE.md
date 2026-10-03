@@ -1,7 +1,6 @@
 # 设备描述与设备状态（DEVICE）
 
-> 六视角文档集之一（其余：`TASKS.md` 任务与进度、`RESOURCES.md` 参考与本地资源、`GAPS.md` 查漏补缺、
-> `ANDROID-COMPAT.md` 无安卓前提下的安卓兼容、`RUNBOOK-BRINGUP.md` 上机手册；入口 `INDEX.md`）。
+> 领域层活文档之一；文档分三层（领域 / 元 / 证据），定义与 SSOT 见 `INDEX.md` §2。
 > **本文件是设备层唯一权威**；旧专题文档中的设备结论以本文件为准。
 
 ---

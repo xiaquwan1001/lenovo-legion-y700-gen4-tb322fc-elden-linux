@@ -4,6 +4,7 @@
 
 用法:  python3 db/build.py          # 生成 db/elden.db
         python3 db/build.py --lessons   # 另生成 LESSONS.md 统一入口
+        python3 db/build.py --check     # 只校验 db 是否与文本源同步（不重建）
 
 源（都是 git 纳管的文本）:
   PITFALLS.md                              -> pitfalls
@@ -210,6 +211,7 @@ def gen_lessons(con):
     for num, section, title, body in rows:
         by.setdefault(section, []).append((num, title, body))
     out = ["# 经验总入口（LESSONS）", "",
+           "> ⚠️ **本文件是生成物，禁止手改**（`python3 db/build.py --lessons` 重建）。经验正文改 `PITFALLS.md`。",
            "> 新会话**动手前先读本文件**；它是散落在 `PITFALLS.md`、`.pi/memory/*`、`archive/topics/复盘-*`、",
            "> `GAPS.md` 风险登记、`.pi/skills/*/references/` 里的踩坑经验的**统一入口**。",
            "> 由 `db/build.py --lessons` 从 `PITFALLS.md` 生成索引；正文与细节仍以原文为准。", "",
@@ -237,7 +239,31 @@ def gen_lessons(con):
     return len(rows)
 
 
+def cmd_check():
+    """校验 db 是否与文本源同步（不重建）。退出码 0=同步，1=过期/缺失。"""
+    if not os.path.exists(DB):
+        print("FAIL: db/elden.db 不存在 → python3 db/build.py --lessons")
+        return 1
+    srcs = [os.path.join(ROOT, f) for f in ("PITFALLS.md", "TASKS.md", "RESOURCES.md")]
+    srcs += sorted(glob.glob(os.path.join(ROOT, "archive", "sessions-catalog-*.jsonl")))
+    dbt = os.path.getmtime(DB)
+    stale = [os.path.relpath(s, ROOT) for s in srcs if os.path.exists(s) and os.path.getmtime(s) > dbt]
+    con = sqlite3.connect(DB)
+    counts = {t: con.execute("select count(*) from %s" % t).fetchone()[0]
+              for t in ("sessions", "pitfalls", "tasks", "references_", "docs")}
+    con.close()
+    if stale:
+        print("STALE: db 比以下源旧 → python3 db/build.py --lessons")
+        for s in stale:
+            print("  - " + s)
+        return 1
+    print("OK: db 与文本源同步  " + "  ".join("%s=%d" % kv for kv in counts.items()))
+    return 0
+
+
 def main():
+    if "--check" in sys.argv:
+        sys.exit(cmd_check())
     os.makedirs(os.path.dirname(DB), exist_ok=True)
     if os.path.exists(DB):
         os.remove(DB)

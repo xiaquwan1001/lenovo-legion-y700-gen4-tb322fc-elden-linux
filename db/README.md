@@ -6,8 +6,12 @@
 ```bash
 cd ~/y700-elden
 python3 db/build.py --lessons     # 重建 db/elden.db 并刷新根目录 LESSONS.md
+python3 db/build.py --check       # 只校验同步性（过期则退 1，不重建）
 sqlite3 db/elden.db ".tables"
 ```
+
+> ⚠️ `db/elden.db` 与 `LESSONS.md` 都是**生成物**：不要手改，改文本源后重跑上面第一条。
+> `scripts/check-doctor.sh` 会检查它们是否过期。
 
 ## 表
 
