@@ -1,0 +1,162 @@
+#!/bin/busybox sh
+# Bring-up initramfs for Lenovo TB322FC (SM8750) mainline kernel.
+# Goal: get a shell on the USB serial gadget (ttyGS0) and, if the firmware
+# framebuffer is available, on the screen (tty1).
+
+/bin/busybox --install -s /bin
+export PATH=/bin
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mountpoint -q /dev || mount -t devtmpfs devtmpfs /dev
+mkdir -p /dev/pts /tmp /mnt /run /sys/kernel/config
+mount -t devpts devpts /dev/pts
+mount -t tmpfs tmpfs /tmp
+mount -t tmpfs tmpfs /run
+mount -t configfs configfs /sys/kernel/config 2>/dev/null
+
+# Bring up the USB composite gadget (CDC-NCM network + CDC-ACM serial). The
+# kernel's legacy g_serial is disabled, so ttyGS0 only exists once userspace
+# has built the configfs gadget; do it in the background so it can wait for
+# the dwc3 UDC without blocking the rest of init.
+if [ -x /bin/usb-gadget ]; then
+	/bin/usb-gadget start >/dev/kmsg 2>&1 &
+fi
+
+# Kernel messages to every console at full verbosity.
+echo 8 > /proc/sys/kernel/printk
+
+log() {
+	echo "[initramfs] $*" > /dev/kmsg
+}
+
+log "elden initramfs started, kernel $(uname -r)"
+log "cmdline: $(cat /proc/cmdline)"
+
+# --- bring-up diagnostic probe (display-independent) ---------------------
+# Shout a banner on the framebuffer console and, if elden_diag_reboot=1 is on
+# the cmdline, reboot after ~40s. If the tablet reboots by itself the kernel
+# reached userspace; if it stays dark, init never ran.
+diag_reboot=0
+for arg in $(cat /proc/cmdline); do
+	case "$arg" in elden_diag_reboot=*) diag_reboot=${arg#elden_diag_reboot=} ;; esac
+done
+(
+	i=0
+	while [ $i -lt 20 ]; do
+		for t in tty1 tty0 ttyGS0; do
+			[ -c "/dev/$t" ] && echo "=== ELDEN MAINLINE INIT REACHED ($t) kernel=$(uname -r) ===" > "/dev/$t" 2>/dev/null
+		done
+		sleep 0.5
+		i=$((i + 1))
+	done
+) &
+if [ "$diag_reboot" = 1 ]; then
+	(
+		i=0
+		while [ ! -e /tmp/elden-dump.done ] && [ $i -lt 150 ]; do sleep 1; i=$((i+1)); done
+		sleep 2
+		log "elden diag: rebooting to signal success (dump done=$([ -e /tmp/elden-dump.done ] && echo yes || echo no))"
+		reboot -f
+	) &
+fi
+
+# --- dump dmesg to a UFS partition so it can be recovered over EDL --------
+(
+	sleep 15		# let deferred/async probe messages land in the ring buffer
+	# Wait for any UFS/NVMe block device to show up (devtmpfs).
+	i=0
+	while [ -z "$(ls /dev/sd* /dev/nvme* /dev/mmcblk* 2>/dev/null)" ] && [ $i -lt 250 ]; do sleep 0.2; i=$((i+1)); done
+
+	# devtmpfs has no /dev/disk/by-partlabel (that is udev); find the target
+	# partition via the GPT PARTNAME= line in each block device's uevent.
+	TARGET=""
+	for p in rawdump pstoredump logfs misc; do
+		for u in /sys/class/block/*/uevent; do
+			[ -e "$u" ] || continue
+			if grep -q "^PARTNAME=$p\$" "$u" 2>/dev/null; then
+				TARGET="/dev/$(basename "$(dirname "$u")")"
+				break
+			fi
+		done
+		[ -n "$TARGET" ] && break
+	done
+
+	{
+		echo "=== ELDEN DMESG DUMP target=$TARGET ==="
+		echo "--- /proc/partitions ---"; cat /proc/partitions
+		echo "--- block uevents ---"; for u in /sys/class/block/*/uevent; do echo "# $u"; cat "$u"; done
+		echo "--- cmdline ---"; cat /proc/cmdline
+		echo "--- dmesg ---"; dmesg
+	} > /tmp/elden-dump.txt 2>&1
+
+	[ -n "$TARGET" ] && dd if=/tmp/elden-dump.txt of="$TARGET" bs=4096 conv=fsync 2>/dev/null
+	touch /tmp/elden-dump.done
+) &
+
+ubuntu_root=""
+for arg in $(cat /proc/cmdline); do
+	case "$arg" in
+		ubuntu_root=/dev/*) ubuntu_root=${arg#ubuntu_root=} ;;
+	esac
+done
+
+if [ -n "$ubuntu_root" ]; then
+	i=0
+	while [ ! -b "$ubuntu_root" ] && [ "$i" -lt 100 ]; do
+		sleep 0.1
+		i=$((i + 1))
+	done
+
+	mkdir -p /newroot
+	if [ -b "$ubuntu_root" ] &&
+	   mount -t ext4 -o rw,noatime "$ubuntu_root" /newroot &&
+	   [ -x /newroot/sbin/init ]; then
+		log "switching to Ubuntu on $ubuntu_root"
+		mkdir -p /newroot/dev /newroot/proc /newroot/sys /newroot/run
+		umount /tmp
+		mount --move /dev /newroot/dev
+		mount --move /proc /newroot/proc
+		mount --move /sys /newroot/sys
+		mount --move /run /newroot/run
+		exec switch_root /newroot /sbin/init
+	fi
+	log "WARNING: failed to boot Ubuntu from $ubuntu_root"
+	umount /newroot 2>/dev/null
+fi
+
+# Wait for the configfs gadget (started above) to bind the UDC and create
+# ttyGS0. Give it ~20s: the dwc3/PHY probe can take a few seconds.
+i=0
+while [ ! -e /dev/ttyGS0 ] && [ $i -lt 100 ]; do
+	sleep 0.2
+	i=$((i + 1))
+done
+[ -e /dev/ttyGS0 ] && log "ttyGS0 present" || log "WARNING: ttyGS0 missing (USB gadget not bound)"
+
+# Save a dmesg snapshot; handy if only the shell is reachable later.
+dmesg > /tmp/dmesg-boot.txt
+
+# Try to bring up the UFS root candidates read-only for inspection.
+for d in /dev/sd?; do
+	[ -b "$d" ] && log "block device: $d"
+done
+
+spawn_shell() {
+	tty=$1
+	while true; do
+		if [ -c "/dev/$tty" ]; then
+			setsid sh -c "exec sh </dev/$tty >/dev/$tty 2>&1"
+		fi
+		sleep 1
+	done
+}
+
+spawn_shell ttyGS0 &
+spawn_shell tty1 &
+
+# Keep PID 1 alive; reboot on ctrl-alt-del / SIGINT
+trap 'reboot -f' INT TERM
+while true; do
+	sleep 3600
+done

@@ -1,0 +1,128 @@
+diff --git a/drivers/input/misc/aw86927.c b/drivers/input/misc/aw86927.c
+index d6074fa77..1ac99ecde 100644
+--- a/drivers/input/misc/aw86927.c
++++ b/drivers/input/misc/aw86927.c
+@@ -70,6 +70,11 @@
+ #define AW86927_PLAYCFG4_STOP			BIT(1)
+ #define AW86927_PLAYCFG4_GO			BIT(0)
+ 
++/* AW8693X continuous (auto-sine) playback registers (from vendor haptic.ko). */
++#define AW8693X_CONTCFG6_REG			0x1d
++#define AW8693X_CONTCFG7_REG			0x1e
++#define AW8693X_CONTCFG9_REG			0x20
++
+ #define AW86927_WAVCFG1_REG			0x0a
+ #define AW86927_WAVCFG1_WAVSEQ1_MASK		GENMASK(6, 0)
+ 
+@@ -431,6 +436,61 @@ static int aw86927_play_sine(struct aw86927_data *haptics, u16 level)
+ 	return 0;
+ }
+ 
++/*
++ * Vendor AW8693X continuous (auto dynamic sine) playback path, reverse
++ * engineered from Lenovo's stock haptic.ko (aw8693x_cont_config).
++ * The chip generates the drive waveform internally at f0, so no SRAM
++ * waveform needs to be streamed. Parameters match the elden device tree
++ * (haptic_hv_l/r: cont_drv1_lvl=0x7f, cont_drv1_time=0x04).
++ */
++static int aw8693x_cont_play(struct aw86927_data *haptics)
++{
++	int err;
++
++	/* PLAYCFG3[1:0] = 2 -> continuous mode; bit2 = 1 (vendor quirk). */
++	err = regmap_update_bits(haptics->regmap, AW86927_PLAYCFG3_REG,
++				 GENMASK(1, 0), 2);
++	if (err)
++		return err;
++	err = regmap_update_bits(haptics->regmap, AW86927_PLAYCFG3_REG,
++				 BIT(2), BIT(2));
++	if (err)
++		return err;
++
++	/* PLAYCFG1 bit5 = 0 (vendor BST config). */
++	err = regmap_update_bits(haptics->regmap, AW86927_PLAYCFG1_REG,
++				 BIT(5), 0);
++	if (err)
++		return err;
++
++	/* VBATCTRL bit6 = 1. */
++	err = regmap_update_bits(haptics->regmap, AW86927_VBATCTRL_REG,
++				 BIT(6), BIT(6));
++	if (err)
++		return err;
++
++	/* CONTCFG6: bit7 flag = 0, [6:0] = drive level (DT cont_drv1_lvl). */
++	err = regmap_update_bits(haptics->regmap, AW8693X_CONTCFG6_REG, BIT(7), 0);
++	if (err)
++		return err;
++	err = regmap_update_bits(haptics->regmap, AW8693X_CONTCFG6_REG,
++				 GENMASK(6, 0), 0x7f);
++	if (err)
++		return err;
++
++	/* CONTCFG7 = cont_drv1_time, CONTCFG9 = 0xff (vendor values). */
++	err = regmap_write(haptics->regmap, AW8693X_CONTCFG7_REG, 0x04);
++	if (err)
++		return err;
++	err = regmap_write(haptics->regmap, AW8693X_CONTCFG9_REG, 0xff);
++	if (err)
++		return err;
++
++	/* GO */
++	return regmap_write(haptics->regmap, AW86927_PLAYCFG4_REG,
++			    AW86927_PLAYCFG4_GO);
++}
++
+ static void aw86927_close(struct input_dev *input)
+ {
+ 	struct aw86927_data *haptics = input_get_drvdata(input);
+@@ -453,10 +513,14 @@ static void aw86927_haptics_play_work(struct work_struct *work)
+ 	u16 level = READ_ONCE(haptics->level);
+ 	int err;
+ 
+-	if (level)
+-		err = aw86927_play_sine(haptics, level);
+-	else
++	if (level) {
++		if (haptics->model == AW86927)
++			err = aw86927_play_sine(haptics, level);
++		else
++			err = aw8693x_cont_play(haptics);
++	} else {
+ 		err = aw86927_stop(haptics);
++	}
+ 
+ 	if (err)
+ 		dev_err(dev, "Failed to execute work command: %d\n", err);
+@@ -700,6 +764,14 @@ static int aw86927_ram_load(struct aw86927_data *haptics, const char *name)
+ 	u8 readback[16];
+ 	u16 checksum = 0;
+ 	unsigned int base, first, start, end, i;
++	/*
++	 * AW86927 exposes a 4 KiB SRAM window (base 0x800..0x1000).
++	 * AW86937/AW86938 use the same base with a larger window; the
++	 * Lenovo Y700-Gen4 (AW86937) vendor waveform reaches 0x1ef5, so
++	 * accept up to 0x2000 for those parts instead of rejecting the
++	 * firmware outright (which broke probe with -EINVAL).
++	 */
++	unsigned int sram_end = haptics->model == AW86927 ? 0x1000 : 0x2000;
+ 	int err, disable_err;
+ 
+ 	err = request_firmware(&fw, name, haptics->dev);
+@@ -707,14 +779,14 @@ static int aw86927_ram_load(struct aw86927_data *haptics, const char *name)
+ 		return err;
+ 
+ 	err = -EINVAL;
+-	if (fw->size < 9 || fw->size > 4096)
++	if (fw->size < 9 || fw->size > sram_end - AW86927_RAM_BASE_ADDR)
+ 		goto release;
+ 	for (i = 2; i < fw->size; i++)
+ 		checksum += fw->data[i];
+ 	base = get_unaligned_be16(fw->data + 2);
+ 	first = get_unaligned_be16(fw->data + 5);
+ 	if (checksum != get_unaligned_be16(fw->data) ||
+-	    base < 0x800 || base + fw->size - 4 > 0x1000 ||
++	    base < 0x800 || base + fw->size - 4 > sram_end ||
+ 	    first <= base || (first - base - 1) % 4 ||
+ 	    first >= base + fw->size - 4 ||
+ 	    haptics->waveform_index > (first - base - 1) / 4)

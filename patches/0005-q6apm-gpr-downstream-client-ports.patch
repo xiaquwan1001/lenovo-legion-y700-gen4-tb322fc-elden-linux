@@ -1,0 +1,129 @@
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 365812563..c72a03057 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2330,9 +2330,16 @@ gpr {
+ 					#address-cells = <1>;
+ 					#size-cells = <0>;
+ 
+-					q6apm: service@1 {
++					/*
++					 * The SM8750 ADSP firmware only answers the downstream
++					 * static GPR client ports (APM 3, PRM 7) and silently
++					 * drops requests from any other source port, so the
++					 * q6apm/q6prm drivers take their GPR source port from
++					 * this "reg".
++					 */
++					q6apm: service@3 {
+ 						compatible = "qcom,q6apm";
+-						reg = <GPR_APM_MODULE_IID>;
++						reg = <3>;
+ 						#sound-dai-cells = <0>;
+ 						qcom,protection-domain = "avs/audio",
+ 									 "msm/adsp/audio_pd";
+@@ -2349,9 +2356,9 @@ q6apmdai: dais {
+ 						};
+ 					};
+ 
+-					q6prm: service@2 {
++					q6prm: service@7 {
+ 						compatible = "qcom,q6prm";
+-						reg = <GPR_PRM_MODULE_IID>;
++						reg = <7>;
+ 						qcom,protection-domain = "avs/audio",
+ 									 "msm/adsp/audio_pd";
+ 
+diff --git a/sound/soc/qcom/qdsp6/audioreach.c b/sound/soc/qcom/qdsp6/audioreach.c
+index 41282e876..29af46e1d 100644
+--- a/sound/soc/qcom/qdsp6/audioreach.c
++++ b/sound/soc/qcom/qdsp6/audioreach.c
+@@ -285,9 +285,30 @@ void *audioreach_alloc_cmd_pkt(int payload_size, uint32_t opcode, uint32_t token
+ }
+ EXPORT_SYMBOL_GPL(audioreach_alloc_cmd_pkt);
+ 
++/*
++ * APM GPR source port.  Most ADSP firmwares answer the mainline static
++ * client port (GPR_APM_MODULE_IID == 1), but some (e.g. the SM8750 ADSP)
++ * only answer their downstream static client port and silently drop
++ * requests from any other port.  q6apm sets this from the "reg" of the
++ * q6apm DT service node so it can follow the device tree.
++ */
++static uint32_t audioreach_apm_src_port = GPR_APM_MODULE_IID;
++
++void audioreach_set_apm_src_port(uint32_t port)
++{
++	audioreach_apm_src_port = port;
++}
++EXPORT_SYMBOL_GPL(audioreach_set_apm_src_port);
++
++uint32_t audioreach_get_apm_src_port(void)
++{
++	return audioreach_apm_src_port;
++}
++EXPORT_SYMBOL_GPL(audioreach_get_apm_src_port);
++
+ void *audioreach_alloc_apm_cmd_pkt(int pkt_size, uint32_t opcode, uint32_t token)
+ {
+-	return __audioreach_alloc_pkt(pkt_size, opcode, token, GPR_APM_MODULE_IID,
++	return __audioreach_alloc_pkt(pkt_size, opcode, token, audioreach_apm_src_port,
+ 				       APM_MODULE_INSTANCE_ID, true);
+ }
+ EXPORT_SYMBOL_GPL(audioreach_alloc_apm_cmd_pkt);
+diff --git a/sound/soc/qcom/qdsp6/audioreach.h b/sound/soc/qcom/qdsp6/audioreach.h
+index 62a2fd79b..e7da77444 100644
+--- a/sound/soc/qcom/qdsp6/audioreach.h
++++ b/sound/soc/qcom/qdsp6/audioreach.h
+@@ -912,6 +912,8 @@ struct audioreach_module_config {
+ };
+ 
+ /* Packet Allocation routines */
++void audioreach_set_apm_src_port(uint32_t port);
++uint32_t audioreach_get_apm_src_port(void);
+ void *audioreach_alloc_apm_cmd_pkt(int pkt_size, uint32_t opcode, uint32_t
+ 				    token);
+ void audioreach_set_default_channel_mapping(u8 *ch_map, int num_channels);
+diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
+index e8e6d0d1c..e95b2c8b6 100644
+--- a/sound/soc/qcom/qdsp6/q6apm.c
++++ b/sound/soc/qcom/qdsp6/q6apm.c
+@@ -154,7 +154,7 @@ static int q6apm_get_apm_state(struct q6apm *apm)
+ 
+ 	/* GET_SPF_STATE has no APM command header or payload. */
+ 	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(0,
+-				APM_CMD_GET_SPF_STATE, 0, GPR_APM_MODULE_IID);
++				APM_CMD_GET_SPF_STATE, 0, audioreach_get_apm_src_port());
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+ 
+@@ -230,7 +230,7 @@ static int __q6apm_map_memory_fixed_region(struct device *dev, unsigned int grap
+ 	void *p;
+ 	uint32_t pos_mask = is_pos_buf ? APM_MMAP_TOKEN_MAP_TYPE_POS_BUF : 0;
+ 	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(payload_size,
+-			APM_CMD_SHARED_MEM_MAP_REGIONS, graph_id | pos_mask, GPR_APM_MODULE_IID);
++			APM_CMD_SHARED_MEM_MAP_REGIONS, graph_id | pos_mask, audioreach_get_apm_src_port());
+ 
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+@@ -342,7 +342,7 @@ static int __q6apm_unmap_memory_fixed_region(struct device *dev, unsigned int gr
+ 	uint32_t mem_map_handle;
+ 	u32 pos_mask = is_pos_buf ? APM_MMAP_TOKEN_MAP_TYPE_POS_BUF : 0;
+ 	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(sizeof(*cmd),
+-			APM_CMD_SHARED_MEM_UNMAP_REGIONS, graph_id | pos_mask, GPR_APM_MODULE_IID);
++			APM_CMD_SHARED_MEM_UNMAP_REGIONS, graph_id | pos_mask, audioreach_get_apm_src_port());
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+ 
+@@ -892,6 +892,13 @@ static int apm_probe(gpr_device_t *gdev)
+ 
+ 	g_apm = apm;
+ 
++	/*
++	 * Some ADSP firmwares (e.g. SM8750) only answer the downstream static
++	 * APM GPR client port instead of the mainline one.  Follow the "reg"
++	 * of the q6apm DT node.
++	 */
++	audioreach_set_apm_src_port(gdev->svc_id);
++
+ 	ret = snd_soc_register_component(dev, &q6apm_audio_component, NULL, 0);
+ 	if (ret < 0) {
+ 		dev_err(dev, "failed to register q6apm: %d\n", ret);

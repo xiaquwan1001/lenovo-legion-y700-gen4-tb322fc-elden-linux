@@ -1,0 +1,21 @@
+diff --git a/waydroid_arm64_only/BoardConfig.mk b/waydroid_arm64_only/BoardConfig.mk
+index 7fae36b..0c5212f 100644
+--- a/waydroid_arm64_only/BoardConfig.mk
++++ b/waydroid_arm64_only/BoardConfig.mk
+@@ -35,6 +35,14 @@ MALLOC_SVELTE := true
+ AUDIOSERVER_MULTILIB := first
+ 
+ ifneq ($(TARGET_USE_MESA),false)
+-BOARD_MESA3D_GALLIUM_DRIVERS += freedreno v3d vc4 etnaviv tegra panfrost lima
+-BOARD_MESA3D_VULKAN_DRIVERS += broadcom freedreno panfrost
++# y700-elden: this device only needs freedreno. Override (not +=) to drop the
++# base BoardConfig's llvmpipe/swrast/r300/zink set, which forces
++# MESON_GEN_LLVM_STUB -> -Dllvm=enabled -> libLLVM22 (hours). Narrowing to a
++# single driver avoids the LLVM stub and cuts the build to minutes.
++BOARD_MESA3D_GALLIUM_DRIVERS := freedreno
++BOARD_MESA3D_VULKAN_DRIVERS := freedreno
++# mesa3d_cross.mk passes -Dgallium-va= / -Dvideo-codecs= unconditionally;
++# empty values are rejected by meson >=1.10 (feature/array options).
++BOARD_MESA3D_GALLIUM_VA := disabled
++BOARD_MESA3D_VIDEO_CODECS := all_free
+ endif

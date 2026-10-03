@@ -1,0 +1,22 @@
+diff --git a/drivers/net/wireless/ath/ath12k/mhi.c b/drivers/net/wireless/ath/ath12k/mhi.c
+index ee87f00bc..b2e90c691 100644
+--- a/drivers/net/wireless/ath/ath12k/mhi.c
++++ b/drivers/net/wireless/ath/ath12k/mhi.c
+@@ -13,7 +13,16 @@
+ #include "mhi.h"
+ #include "pci.h"
+ 
+-#define MHI_TIMEOUT_DEFAULT_MS	90000
++/*
++ * WCN7861 "Peach" on this board is not ready this early during boot: the
++ * first ath12k PCI probe always waits out this timeout, and because the probe
++ * runs synchronously in the kernel initcall phase it blocks /init (and thus
++ * the USB gadget / console) for the whole duration. 90000 here meant a ~90s
++ * boot delay. The driver is re-probed later via sysfs `bind` once the WCN is
++ * up, which succeeds in well under a second, so a short timeout is safe and
++ * turns the 90s boot stall into ~3s.
++ */
++#define MHI_TIMEOUT_DEFAULT_MS	3000
+ #define OTP_INVALID_BOARD_ID	0xFFFF
+ #define OTP_VALID_DUALMAC_BOARD_ID_MASK		0x1000
+ #define MHI_CB_INVALID	0xff

@@ -1,0 +1,80 @@
+#!/bin/sh
+# Start the SM8750 ADSP after the Ubuntu root filesystem makes its firmware
+# available. The built-in remoteproc driver probes before switch_root and its
+# automatic request cannot be retried once that early request returns ENOENT.
+set -eu
+
+find_adsp()
+{
+	for remoteproc in /sys/class/remoteproc/remoteproc*; do
+		[ -r "$remoteproc/name" ] || continue
+		if [ "$(cat "$remoteproc/name")" = "adsp" ]; then
+			printf '%s\n' "$remoteproc"
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+remoteproc=""
+i=0
+while [ "$i" -lt 100 ]; do
+	remoteproc=$(find_adsp || true)
+	[ -n "$remoteproc" ] && break
+	sleep 0.1
+	i=$((i + 1))
+done
+
+if [ -z "$remoteproc" ]; then
+	echo "elden-start-adsp: ADSP remoteproc did not appear" >&2
+	exit 1
+fi
+
+state=$(cat "$remoteproc/state")
+case "$state" in
+	running)
+		;;
+	offline)
+		echo start > "$remoteproc/state"
+		;;
+	crashed)
+		echo stop > "$remoteproc/state"
+		echo start > "$remoteproc/state"
+		;;
+	*)
+		echo "elden-start-adsp: cannot start ADSP from state '$state'" >&2
+		exit 1
+		;;
+esac
+
+i=0
+while [ "$i" -lt 100 ]; do
+	state=$(cat "$remoteproc/state")
+	[ "$state" = "running" ] && break
+	sleep 0.1
+	i=$((i + 1))
+done
+
+if [ "$state" != "running" ]; then
+	echo "elden-start-adsp: ADSP failed to reach the running state" >&2
+	exit 1
+fi
+
+# The battery manager becomes usable only after this RPMSG channel binds to
+# qcom_pmic_glink_rpmsg. Waiting here keeps UPower from caching an empty device.
+i=0
+while [ "$i" -lt 100 ]; do
+	for endpoint in /sys/bus/rpmsg/devices/*; do
+		[ -r "$endpoint/name" ] || continue
+		if [ "$(cat "$endpoint/name")" = "PMIC_RTR_ADSP_APPS" ]; then
+			echo "elden-start-adsp: ADSP and PMIC GLINK are ready"
+			exit 0
+		fi
+	done
+	sleep 0.1
+	i=$((i + 1))
+done
+
+echo "elden-start-adsp: PMIC_RTR_ADSP_APPS did not appear" >&2
+exit 1

@@ -1,0 +1,12 @@
+{
+  "sessionDir": ".pi/sessions",
+  "defaultProvider": "deepseek",
+  "defaultModel": "deepseek-flash",
+  "defaultThinkingLevel": "low",
+  "retry": {
+    "enabled": true,
+    "maxRetries": 8,
+    "baseDelayMs": 3000,
+    "maxAgentDelayMs": 60000
+  }
+}

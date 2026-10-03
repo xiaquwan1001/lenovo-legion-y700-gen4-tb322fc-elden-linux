@@ -1,0 +1,57 @@
+#!/bin/bash
+# apply-kernel-fragment.sh — 把配置片段合并进内核树 .config，并导出新快照
+#
+# 用法：
+#   bash apply-kernel-fragment.sh                      # 用默认片段
+#   FRAG=~/y700-elden/patches/xxx.config bash apply-kernel-fragment.sh
+#
+# 行为：
+#   1. 备份当前 .config 到 patches/config-<旧名>-<时间>.bak
+#   2. merge_config.sh 合并片段
+#   3. 若有交叉 gcc，跑 make olddefconfig 解析依赖；否则只合并并提示
+#   4. 导出新快照 patches/config-vk28-netd-ipv6-xfrm
+set -euo pipefail
+
+K="${K:-$HOME/y700-elden/linux}"
+FRAG="${FRAG:-$HOME/y700-elden/patches/fragment-netd-ipv6-xfrm.config}"
+PATCHES="${PATCHES:-$HOME/y700-elden/patches}"
+SNAP="${SNAP:-$PATCHES/config-vk28-netd-ipv6-xfrm}"
+CROSS="${CROSS:-aarch64-linux-gnu-}"
+export PATH="$HOME/bin:$PATH"   # 本机 gcc 只有版本化名，~/bin 里放了 aarch64-linux-gnu-gcc 软链
+
+log()  { echo -e "\033[1;36m[kconf]\033[0m $*"; }
+warn() { echo -e "\033[1;33m[kconf] ⚠️  $*\033[0m"; }
+die()  { echo -e "\033[1;31m[kconf] ❌ $*\033[0m" >&2; exit 1; }
+
+[ -d "$K" ]     || die "内核树不存在: $K"
+[ -f "$FRAG" ]  || die "片段不存在: $FRAG"
+[ -f "$K/.config" ] || die "$K/.config 不存在（先 make defconfig）"
+[ -x "$K/scripts/kconfig/merge_config.sh" ] || die "缺 merge_config.sh"
+
+cd "$K"
+BK="$PATCHES/config-before-fragment-$(date +%Y%m%d-%H%M%S).bak"
+cp -a .config "$BK"
+log "已备份当前 .config → $BK"
+
+log "合并片段: $(basename "$FRAG")"
+ARCH=arm64 CROSS_COMPILE="$CROSS" ./scripts/kconfig/merge_config.sh -m -O . .config "$FRAG"
+
+if command -v "${CROSS}gcc" >/dev/null 2>&1; then
+  log "解析依赖：make olddefconfig"
+  make ARCH=arm64 CROSS_COMPILE="$CROSS" olddefconfig >/dev/null
+else
+  warn "没装 ${CROSS}gcc → 跳过 olddefconfig（依赖未解析）"
+  warn "装好后跑： sudo apt install -y gcc-15-aarch64-linux-gnu"
+  warn "然后： cd $K && make ARCH=arm64 CROSS_COMPILE=$CROSS olddefconfig"
+fi
+
+cp -a .config "$SNAP"
+log "新快照: $SNAP"
+
+echo
+log "校验关键符号："
+for s in XFRM XFRM_USER IP6_NF_IPTABLES IP6_NF_FILTER IP6_NF_NAT NETFILTER_XT_MATCH_OWNER; do
+  printf "  %-30s %s\n" "$s" "$(grep -E "^CONFIG_${s}=" .config | head -1 || echo '# 未生效')"
+done
+echo
+log "下一步重建内核：  bash $(dirname "$0")/build-kernel.sh && bash $(dirname "$0")/build-boot.sh"

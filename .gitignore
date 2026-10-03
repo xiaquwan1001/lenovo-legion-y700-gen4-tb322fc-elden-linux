@@ -1,0 +1,68 @@
+# ============================================================
+# y700-elden 版本控制边界
+# 纳管：文档 / 脚本 / 内核补丁与 config / AI 记忆与技能 / 小体积证据
+# 排除：大二进制、可再生成产物、上游 clone、运行时状态、设备敏感数据
+# 台账与清理标记见 FILES.md；清理优先级见 RESOURCES.md §2.5
+# 注意：gitignore 注释必须独占一行；整目录忽略会阻止 `!` 复活子文件
+# ============================================================
+
+# ---- 上游 clone / 可重下（含巨大构建产物）----
+# geekidos-linux = 上游 GEEKiDoS/linux（13G，含构建产物）；内核进度以 patches/ 为准
+/geekidos-linux/
+/Y700-elden-linux/
+/stock-src/
+/qdl/
+/tools/
+
+# ---- 构建产物 / 可再生成 ----
+/out/
+/bootslot-b-u2/
+/logs/
+/pkgs/
+/pkgs-phosh/
+/pkgs-x86/
+/probe/
+/twrp/
+/y700四代工具/
+/flashing-bundle/
+/rootfs/alpine/
+/rootfs/dl/
+/rootfs/debs/
+
+# ---- 大目录但保留少量文本 ----
+/env-pass/*
+!/env-pass/scripts/
+!/env-pass/tools/
+
+/bootslot-b/*
+!/bootslot-b/README.md
+
+/backup/*
+!/backup/fw/
+/backup/fw/*
+!/backup/fw/README.md
+
+/restore-259/*
+!/restore-259/*.md
+
+# ---- 归档快照（内容已在别处；清理见 RESOURCES §2.5 P2）----
+/y700-elden-docs-*.tar.gz
+/flashing-bundle-*.tar.gz
+
+# ---- 设备敏感 / 外部挂载 ----
+# sn.img 含本机序列号，禁止入库
+/sn.img
+# l2 -> /mnt/Samsung/l2 外置盘
+/l2
+
+# ---- 运行时状态 ----
+/.pi/sessions/
+/.pi/messenger/
+
+# ---- 通用 ----
+__pycache__/
+*.pyc
+*.o
+*.ko
+*.tmp
+.DS_Store
