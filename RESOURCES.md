@@ -327,7 +327,7 @@ git log --oneline -10
 | 2026-10-03 | `01a101f3` | 引导：Linux→fastboot能力核实 | flashctl | ◐ | superseded | 本地检索确认BCB bootonce不被采纳、ABL无明文串；给出flash-b.sh免fastboot做A/B | vk40,vk34 | 「能力不存在」结论后被PSCI vendor reset推翻（见01a1021c） |
 | 2026-10-03 | `01a1021c` | 刷机控制+桌面：PSCI reboot与elogind | flashctl-power | ✅ | active | 实机确认 PSCI SYSTEM_RESET2 vendor reset 生效：`eldroid-bootctl reboot bootloader` 真进fastboot；另修elogind关机（HandlePowerKey占位致shutdown inhibitor卡in-progress） | vk41,vk40 | EDL/recovery的vendor reset未测；长按关机待实测；配置重启持久性待复核 |
 | 2026-10-03 | `01a10224` | 会话：项目架构整理与文档分层 | docs-reorg | ✗ | active | 审查12份根文档；定三层架构(领域/元/证据)+SSOT规则；新增scripts/check-doctor.sh；启动全面收敛到6份 | - | 收敛重构进行中；db/LESSONS拟删除 |
-| 2026-10-03 | `01a10264` | 复盘：logind 关机 + 音频/温控重落与出声 | power-audio | ✅ | active | ①logind 关机假成功真根因=busybox helper 不带 `-f` 只 `kill(1)`，PID1 是 shell→假成功；落 `fix-logind-poweroff.sh`。②建 `devlogs.sh` 运行日志采集。③vk39 两增量（音频 0009/0011 + 温控 0010）被 vk34-recon 回退→新分支 vk42 干净重落（uname `geb432f18a0d1`）。④音频无声根因=tplg MI2S **SD 线错**（SD0→SD1，功放接 `i2s1_data1`）→ tplg 修正 + ramdisk 字节替换 → **vk43 出声** ✅ | vk43,vk42,vk41 | 熄屏→重启仍未解；UI 音频服务（PipeWire）未装；录音/双功放未分测
+| 2026-10-03 | `01a10264` | 复盘：logind 关机 + 音频/温控重落与出声 | power-audio | ✅ | active | ①logind 关机假成功真根因=busybox helper 不带 `-f` 只 `kill(1)`，PID1 是 shell→假成功；落 `fix-logind-poweroff.sh`。②建 `devlogs.sh` 运行日志采集。③vk39 两增量（音频 0009/0011 + 温控 0010）被 vk34-recon 回退→新分支 vk42 干净重落（uname `geb432f18a0d1`）。④音频无声根因=tplg MI2S **SD 线错**（SD0→SD1，功放接 `i2s1_data1`）→ tplg 修正 + ramdisk 字节替换 → **vk43 出声** ✅ | vk43,vk42,vk41 | 熄屏→重启仍未解；**输入端❌**（实测本机麦克风=模拟麦接 WCD939x，非 DMIC；需 WCD939x bring-up）；温控四级 trip ✅
 
 ---
 

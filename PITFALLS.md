@@ -636,6 +636,14 @@
       PipeWire 由 `/etc/xdg/autostart/pipewire.desktop` 自启；`install.sh` 由 `start-desktop.sh` 幂等调用。
       另：本卡**无 capture DAI**（`arecord -l` 空）→ 输入设备为空，麦克风是另立的 bring-up。
 
+91. **★音频输入：本机麦克风不是 DMIC，是模拟麦接 WCD939x**（2026-10-04 实测，未打通）。
+    - 我们按上游 SM8750-MTP 做了 **VA macro DMIC** 采集（DTS `va-dai-link` + `dmic01/23` pinmux + tplg 采集子图 + `vdd-micb`）：
+      ALSA `MultiMedia3 Capture` 出现、APM/DAPM 图全 On、VA macro 寄存器 `084=0x1`（DMIC0 使能/DIV2）、LPASS pinmux gpio6-9 已 mux、`vdd-micb` 也 On，**但录音 4 通道全 0**。
+    - 真根因（原厂设备树 `backup/stock-elden/elden.dts` line 16249）：原厂 `qcom,audio-routing` **全是模拟麦 `AMIC1..5`/`VA AMIC1..5` + `MIC BIAS1..4`，无一条 `VA DMIC`**。
+      本机音频栈 = **Awinic smart PA（I2S）+ WCD939x 编解码器（SoundWire）**；麦是**模拟麦**，偏置由 **WCD939x MIC BIAS** 提供，ADC 在 WCD，经 SWR 给 ADSP。
+    - **主线 DTS 未启用 WCD939x**（无 SWR master、无 wcd 节点）→ 输入必须另做 WCD939x bring-up（镜像 `sm8750-mtp.dts` 的 wcd939x + rx/va SWR master + 稳压 + capture dai-link + tplg + UCM）。详见 `archive/topics/AUDIO-INPUT-2026-10-04.md`。
+    - **操作细节**：`arecord -D hw:0,2` 需先 `numid=15 MultiMedia3 Mixer VA_CODEC_DMA_TX_0=on`，否则 open EINVAL；UCM 加 `SectionDevice."Mic"` 会**弄坏 HiFi verb**（扬声器 sink 丢失），撤回后重启恢复——加 UCM 设备前先验证 verb 可解析。
+
 ---
 
 ## 十五、过时 / 废弃 / 功能缺陷登记（DEPRECATED）

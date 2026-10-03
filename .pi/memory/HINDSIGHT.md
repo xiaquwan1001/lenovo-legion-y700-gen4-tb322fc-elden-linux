@@ -3,388 +3,7 @@
 Techniques and root causes proven on Qualcomm/Lenovo tablet flashing. Host-machine
 
 <!-- Older entries compacted -->
-` = **本机 `ro.boot.bootload_sn` 逐字节一致** ✅ |
-| 签名 | 256 B RSA-2048；四代 ABL 内嵌公钥 ≠ 三代 key，离线验不过是**预期内** |
-
-## 3. 下一步：一条命令判定（你执行，失败无损）
-
-```bash
-fastboot -s HA2EXB0E oem unlock-go        # ★判定行
-```
-
-- **屏上出 UNLOCK 确认菜单** = 生效 → 音量键选 UNLOCK、电源键确认（⚠ 擦 `/data`，Widevine L1 基线已拍）
-- 报 `Download is not allowed on locked devices` / `Unlock command not allowed` = **不生效** → 停手，别重复刷，转下面的路 C
-- 报 OEM 解锁被禁 → 回系统开「开发者选项 → OEM 解锁」再来（不丢数据）
-
-## 4. fetch 被拒 → Q19 dump 转走 EDL read（零风险只读）
-
-```bash
-adb -s HA2EXB0E reboot edl
-qdl/build/qdl -s ufs ~/下载/tb322fc/xbl_s_devprg_ns.melf read backup/HA2EXB0E-16+512/stock/boot_b.img 0x6000000
-# vbmeta_b 0x10000 / dtbo_b 0x2000000 / vbmeta_system_b 0x10000 同理
-# 读回后我来跑 build-locked-chain.sh（核对 Q19：U2 的 vbmeta_b 公钥/rollback 是否与 U1 一致）
-```
-（分区长度以 `gpt-dump`/by-name 表为准，上面是 U1 布局的期望值；你执行前我先把四条 read 的精确命令和长度整理给你。）
-
-**顺序建议**：先跑 `oem unlock-go`（一发即判，成本为零）。出菜单 = 走解锁路（后面 fastboot 全通）；报错 = 停手告诉我输出，我整理 EDL read 四条命令 → 生成 locked 链 → 路 C 直写 b 槽（G1 不受影响）。
-
-
-## Automatic settled outcome - 2026-10-03
-
-我的命令给错了——qdl 的语法是 `read <地址> <文件>`（地址在前），address 支持**裸 GPT 分区名**（自动加载全 LUN GPT 表解析起止扇区，源码 `gpt_find_by_name` 已核实）。它把你给的第一参数（文件路径）当成了分区名去查，所以报 `no partition found`。
-
-## 修正后的命令（四条 read，一次会话跑完）
-
-```bash
-cd ~/y700-elden
-mkdir -p backup/HA2EXB0E-16+512/stock
-qdl/build/qdl -s ufs ~/下载/tb322fc/xbl_s_devprg_ns.melf \
-  read boot_b          backup/HA2EXB0E-16+512/stock/boot_b.img \
-  read dtbo_b          backup/HA2EXB0E-16+512/stock/dtbo_b.img \
-  read vbmeta_b        backup/HA2EXB0E-16+512/stock/vbmeta_b.img \
-  read vbmeta_system_b backup/HA2EXB0E-16+512/stock/vbmeta_system_b.img \
-  read recovery_b      backup/HA2EXB0E-16+512/stock/recovery_b.img
-```
-
-- 总量 ≈ 232 MiB（100+32+0.06+0.06+100），EDL 下几分钟
-- 想逐条跑也行：每次 `qdl ... read <分区名> <输出文件>`（裸分区名，不带路径不带长度）
-- 程序员（firehose）还驻留在设备上，重复调用会自动接上，不用重进 EDL
-
-跑完我来做两件事：
-1. `build-locked-chain.sh` 用 **U2 自己的 dump** 生成 locked 链（核对 Q19：U2 vbmeta_b 顶层公钥是否 = U1 的 8fcb864f、rollback 是否 = 1738713600）
-2. `sha256sum` 读回校验 + 与 U1 同分区 diff（确认 b 槽原厂内容一致性）
-
-## 顺带：`oem unlock-go` 还没跑
-
-你上条只跑了 EDL read，还没回 fastboot 试判定行。**不急**——EDL 采集完、locked 链验证过之后，如果不想解锁可以直接走路 C；解锁 img 到手前后任何时候在 fastboot 里跑 `fastboot oem unlock-go` 都是一发判定（成功出菜单，失败零损失）。两条路不冲突，先看 EDL read 结果。
-
-
-## Memory - 2026-10-03
-
-联想拯救者平板 BL 解锁机制（2026-10-03 U2=TB322FC/HA2EXB0E 实测）：**1.5 高版本（如 1.5.10.259/Android16）堵死官方解锁通道**——第三方签名 sn.img 的 `fastboot flash unlock` 显示 OKAY 但 `oem unlock-go` 失败（四代 ABL 换了密钥，社区三代 blob 无效）；**线刷降级到出厂 1.1（TB322FU_ZUXOS_1.1.11.073，Android15）后直接 `fastboot oem unlock` 一次成功**，无需 sn.img（`getvar unlocked: yes`、`oem device-info: Device unlocked=true/critical unlocked=true`）。代价：解锁+降级都擦 /data、Widevine L1→L3。跨版本 AVB 参数不变：vbmeta 顶层/boot chain = AOSP testkey sha1 2597c218（私钥公开）、boot rollback 1738713600、vbmeta rollback 0。1.1 与 259 差异仅在 vbmeta flags（1.1=0）与 vbmeta_system chain key（1.1=cdbb7717）。本地 7/8 月记录早有预警（ROM基地："新版屏蔽解锁指令可回退旧版恢复"；"甜点位=1.1 终版+unlocked+Magisk"）。
-
-
-## Memory - 2026-10-03
-
-引导链类问题（BL 解锁/AVB 签名/固件降级/GPT/EDL）必须「先本地检索 → 再外部取证 → 最后自研」：技能 references/*.md 正文不进上下文，不 grep 等于不存在。y700-elden 案例：TB322FC 解锁的答案（版本门 = 仅 ≤1.1.11.073/.076 有解锁命令；1.1.11.120 是 trap；1.5.x 上任何 sn.img 全无效；正解 = 全量降级 073 后 `fastboot oem unlock`）在 2026-08 的记录里已完整写过且同型号已成功过一次，2026-10-03 仍在 1.5.10.259 上白试一轮第三方签名 blob。纪律：① 开场跑 grep -rn -iE "unlock|解锁|sn\.img|1\.1\.11\.|rollback|testkey|073|\.120" .pi/skills/*/references/*.md *.md archive/topics/*.md；② 命中即只做确认/推翻；③ 引用旧成功记录先查它属于哪台单元 + 当时固件/锁态；④ 动手前写下期望判据与停手特征串（如 `Download is not allowed on locked devices`；`flash unlock` 的 OKAY 不算判定行）。
-
-
-## Automatic settled outcome - 2026-10-03
-
-整理完成。**结论先行：解锁的答案 7、8 月记录里已完整存在，且同型号 U1 早在 2026-08-16 用这条路解成功过一次；10-03 白花的是"检索顺序"，不是"力气"。**
-
-## 1. 本轮产出（1 份新复盘 + 11 处口径统一）
-
-| 文件 | 改了什么 |
-|---|---|
-| **`archive/topics/复盘-2026-10-03-BL解锁.md`**（新，152 行） | 主交付：时间线+成本 → **7/8 月记录 ↔ 10-03 实测逐条对照表** → 要不要解锁判定框架 → 唯一权威流程 → 5 条根因 → 防复发机制 |
-| `RUNBOOK-BRINGUP.md` §0.5 | 顶部新增 **★权威顺序（0→5）**：判版本门 → 拍基线 → 全量降级 073 → `oem unlock`（中间不重启）→ `unlock_critical` → 校验回填；A/A3/B/D 四条备选路**折进 `<details>` 并把"先试"改成 ⛔已判死/⚪仅旧固件** |
-| `PITFALLS.md` | 新增 **#87**（技能 `references/` 正文不进上下文 ⇒ 不 grep 等于不存在；含开场 grep 命令 + 引用旧记录先查单元态） |
-| `GAPS.md` | **Q16 / Q18 关闭**（三代模板、第三方 blob 在四代 1.5.x 均判死）；**Q17 降为可选**；**新增 Q20** 跟踪本流程病；风险行改「已发生 → 已解决」 |
-| `TASKS.md` | G1-0 行补「已判死」；**§4 第 1 步从"先试 A3"改成 ✅已关闭 + 以后不再碰解锁** |
-| `RESOURCES.md` | 签名服务 ⛔不再使用、官网入口 ⚪无需申请（避免下轮又当"当前最优"） |
-| `INDEX.md` | §3 标"解锁议题已定稿，不要重新论证"；§4 加**动手前 30 秒 grep**；§6 加解锁专题行 |
-| `AGENTS.md` | 新增规则：引导链问题「先本地检索 → 再外部取证 → 最后自研」 |
-| `.pi/skills/qualcomm-edl-flashing/references/tb322fc-y700-gen4.md` | §version gates 顶部加 **TWICE-CONFIRMED（U1 08-16 / U2 10-03）** 块，让下次 grep 第一屏就命中 |
-| `.pi/skills/gsi-device-adaptation/references/tb322fc-zuxos-ota-root.md` | 追加终局结论（1.5.x 上任何 sn.img 无效） |
-| `scripts/bl-unlock.sh` | 头部加适用前提（未过版本门就别跑） |
-| 全局 `profile_memory` | 跨项目教训一条 |
-
-## 2. 8 月早已写明、10 月重新"发现"的三条
-
-1. **版本门**：解锁命令只存在于 **≤ 1.1.11.073/.076**；`1.1.11.120` 是 trap（显成功但回滚）；1.5.x 通道被堵 → 原文明确写「**Do NOT attempt unlock from .120**」「Error `Download is not allowed on locked devices` = wrong/newer ABL → **downgrade first**」。
-2. **实操序列**：8/16 U1 记录已含「LUN4 全量降到 073 → `flash unlock` → `oem unlock` → 音量下×2+电源 → `flashing unlock_critical`」+「**flash 与 oem unlock 之间不得重启**」+「stock 120 ABL 会让 `oem unlock-go` 返回 OKAY 但 `unlocked` 恒 no」。
-3. **AVB = 公开 testkey `2597c218`**：8/10、8/17 两次记录都有，同时已写明「手动造 flags=2 disable vbmeta 在 CN ABL 上是死
-
-
-## Automatic settled outcome - 2026-10-03
-
-已按「先本地检索」把六视角文档与**实机 HA2EXB0E**逐条对过。下面是核对结果与路线确认。
-
-## 1. 实机核对（刚跑，U2 当前在线 adb）
-
-| 项 | 实机 | 文档（DEVICE §2.2 / RUNBOOK §0.0） | 判定 |
-|---|---|---|---|
-| BL 锁 | `flash.locked=0`、`verifiedbootstate=orange` | U2 已解锁 ✅（但 RUNBOOK §0.0 表仍写 `U2=1 locked`） | **文档部分过期** |
-| 固件 | `ZUXOS_1.5.10.259_ST_260611`（内核 6.6.118，**a 槽**） | U2 = **1.1.11.073**（Android15） | **不一致，需你确认** |
-| Widevine prop | `L1` | 预期 L1→L3 | 记录待复测（prop 静态值不等于实测级别） |
-| 容量/GPT | `16+512_13`，`/data` 450G，**无 linux17** | U2 未手术 | 一致 ✅ |
-| root | 无 su（shell） | U2 无 root | 一致 ✅ |
-
-即：**U2 现在是「已解锁 + 原厂 259 完整系统」，不是文档写的 073**。这大概率就是你说的"情况更新"——如果是你手动刷回 259 的，请确认（a 槽 259 / b 槽是不是仍是 073？我这边不加设备操作只能看到运行槽 = a）。
-
-主机侧资产齐全：`vk40{,-ram}.img`、`bootslot-b/`（vk40 持久+RAM+flags3 vbmeta）、`modules-*.tar.gz`、`camera-modules-*.tar.gz`、rootfs 归档 3.44 GB、EDL `qdl` + `xbl_s_devprg_ns.melf`、073 降级包都在。
-
-## 2. 确认接下来的路线（TASKS §4，按当前真实状态校正）
-
-**关键路径 = U2 首次上机（G1-1…3）**——设备已连、已解锁，`fastboot boot`/`fetch` 全通，正好走标准 RUNBOOK：
-
-```
-Phase 0 采集  → getvar all / gpt-dump（现 dump BACKUP_LBA，勿套 U1）
-Phase 1 备份  → fastboot fetch boot_b/dtbo_b/vbmeta_b/vbmeta_system_b + GPT 双表
-Phase 2 RAM   → fastboot boot out/boot-elden-vk40-ram.img（★零写盘验收，解锁后可用）
-Phase 3 手术  → GPT 加 linux17（512 档建议 160–200 GiB，读本机 dump）
-Phase 4 建分区 + 恢复 rootfs（3.44 GB 归档）
-Phase 5 持久化 → b 槽直启 vk40 持久版
-```
-§0.5 解锁对 U2 **整段跳过**（已 unlocked）。
-
-并行/前置于此（不冲突）：
-1. **C0 真 Android 对照取证（U1，HA2ABH62）**——a 槽覆盖前唯一机会，U1 现在没连，建议在任何 GPT Phase B 之前抓一次。
-2. G1-4 音频听声 / G1-5 相机出流（各需你 1 次现场确认）。
-3. C1 → C3 → C2（Waydroid 复跑 → 身份/DRM 取证 → Play 登录）。
-
-## 3. 需你拍板 / 我下一步
-
-1. **U2 固件口径**：确认是"你已刷回 259 且保持 unlocked"吗？确认后我把 `DEVICE.md §2.2` 与 `RUNBOOK §0.0/§0.5` 的过期字段一并更正（顺带把已解锁状态写死，避免下轮又按 locked 走一遍）。
-2. **是否现在就上机 U2**？你点头后我先出 **Phase 0 逐条命令**（只读、零风险），并把 `LINUX_GIB` 按 512 档定下来（建议 176 GiB 起步）。
-
-要我先更正文档里的 U2 状态，还是先出 Phase 0 命令？
-
-
-## Automatic settled outcome - 2026-10-03
-
-明白。已按你的口径处理：**U2 = 259 + unlocked 为唯一事实**，上一轮 AI 留下的「073 / locked」条目按作废处理，相关待办不再执行。
-
-## 已更正的文档（防下轮再按错态走）
-
-| 文件 | 改法 |
-|---|---|
-| `DEVICE.md` §2.2 U2 行 | 固件 → `ZUXOS_1.5.10.259`（Android15/6.6.118，a 槽）；GPT → **无 `linux17`、施工时现 dump**；加「旧 073/locked 条目已作废」说明 |
-| `RUNBOOK` §0.0 | `BL 锁` 行 → **U1=0、U2=0，§0.5 对两台均跳过** |
-| `RUNBOOK` §0.5 顶部 | 加「当前状态：两台均已解锁，本节仅对新到货 locked 单元」 |
-| `INDEX.md` §3 | U2 行 → 259 + unlocked + 无 `linux17` |
-| `GAPS.md` Q15 / 风险行 | 「唯一 locked 单元」→ **两台均已解锁**；风险行注明 U2 现态已回 259 unlocked |
-
-> 附带实测：U2 解锁后 `sys.lenovo.widevine_security_level` **仍报 L1**（不是预期的永久 L3）——prop 静态值≠实际 DRM 级别，`GAPS` Q1/Q5 的实测项保留待复测，**不预设结论**。
-> `archive/topics/复盘-2026-10-03-BL解锁.md` 与技能里的解锁机制（版本门/降级路）**保留为已索引经验**，不删；删掉的只是"当前态"的过时待办。
-
-## 确认接下来的路线（TASKS §4，按真实状态）
-
-**关键路径 = U2 首次上机 G1-1…3**：设备已连（adb HA2EXB0E）、已解锁 → 可直接跑标准 RUNBOOK，且 `fastboot boot/fetch` 可用。
-
-```
-Phase 0  采集   : getvar all / gpt-dump（现 dump BACKUP_LBA，禁套 U1）
-Phase 1  备份   : fetch boot_b/dtbo_b/vbmeta_b/vbmeta_system_b + GPT 双表
-Phase 2  RAM    : fastboot boot out/boot-elden-vk40-ram.img   ★零写盘验收
-Phase 3  手术   : GPT 加 linux17（512 档建议 160–200 GiB，读本机 dump）
-Phase 4  建分区 : mkfs + 恢复 rootfs 归档（3.44 GB）
-Phase 5  固化   : b 槽直启 vk40 持久版
-```
-主机侧资产已核验齐全（vk40 双版、bootslot-b、modules、相机模块、rootfs 归档、EDL、073 包）。
-
-**并行/前置于此**：C0 真 Android 对照取证（U1，a 槽覆盖前唯一机会）、G1-4 听声、G1-5 相机出流、C1→C3→C2。
-
-## 请你拍板
-
-1. 现在上机 U2 走 Phase 0–5？点头我就出 **Phase 0 逐条命令**（只读、零风险），并把 `LINUX_GIB` 按 512 档定为 **176 GiB** 起步。
-2. 还是先安排 **U1 的 C0 取证**（需把 U1 接上）？
-
-我的建议：**先 Phase 0–2（零风险，拿到 U2 的 GPT 与 b 槽原厂镜像 + RAM 验收），再决定 Phase 3 给多大的 `linux17`**；C0 在有 U1 的窗口再插。
-
-
-## Automatic settled outcome - 2026-10-03
-
-开始。先把能安全做的做完，然后把需要你动手的 fastboot 段整理出来。
-
-## 已做（主机侧 + adb 只读，零风险）
-
-- **U2 实机采集** → `backup/HA2EXB0E-16+512/current-259/`（getprop 1052 行、by-name 121 项、df）
-- **b 槽原厂备份核验**：`backup/HA2EXB0E-16+512/stock/` 五件套是**真镜像**，`boot_b` AVB 指纹 = `ZUXOS_1.5.10.229_260514`（Android15）→ 即 **b 槽是上一版 229，a 槽才是运行中的 259**（A/B 常态，符合预期）
-- ⚠️ `backup/HA2EXB0E-16+512/stock-1.1/*.img` 全是 **0 字节**（上轮失败的残留）→ **作废，不作为依据**
-- 资产就位：`out/boot-elden-vk40-ram.img`（83 MB 纯 boot，无 AVB，适合 `fastboot boot`）、`bootslot-b/`（vk40 RAM+持久+flags3 vbmeta）、`bootslot-b-u2/`（locked 链，本轮不用）
-
-## 你来执行（一轮，含 ★零写盘 RAM 验收）
-
-```bash
-cd ~/y700-elden
-adb -s HA2EXB0E reboot bootloader
-fastboot devices                       # 应出现 HA2EXB0E
-fastboot getvar current-slot           # 期望 a
-fastboot getvar unlocked               # 期望 yes
-fastboot getvar partition-size:boot_b  # 期望 0x6000000
-fastboot getvar partition-size:dtbo_b  # 期望 0x2000000
-
-# 校验手上的 b 槽备份 = 设备现状（只读）
-fastboot fetch boot_b /tmp/u2_boot_b.img
-sha256sum /tmp/u2_boot_b.img backup/HA2EXB0E-16+512/stock/boot_b.img
-
-# ★零写盘 RAM 启动（不碰任何分区/GPT）
-fastboot boot out/boot-elden-vk40-ram.img
-```
-
-等约 15 s，然后在**另一个终端**：
-
-```bash
-sudo bash ~/y700-elden/elden-net.sh
-ping -c3 192.168.7.1
-ssh -o StrictHostKeyChecking=no root@192.168.7.1 'uname -r; findmnt /; ls /dev/sd*'
-```
-
-**期望**：`uname -r` = `7.2.0-debug-…-dirty`；`findmnt /` = RAM/initramfs。
-
-把上面 fastboot 段的输出（尤其 `sha256sum` 两行、`fastboot boot` 返回、`uname -r`）贴回来，之后 **GPT dump + 硬件验收（显示/触屏/固件加载）由我经 ssh 接管**；确认 GPT 后可谈 Phase 3 的 `linux17` 容量。
-
-> 回退：RAM 启动失败会停在 bootloader，`fastboot reboot` 即回 Android，a 槽与数据不变。
-> 若 `fastboot boot` 被 ABL 拒（返回 Load Error），改走 RUNBOOK Phase 2 的「写 b 槽再重启」路线——那需要写 b 槽，届时我再确认。
-
-
-## Automatic settled outcome - 2026-10-03
-
-已定位并修复，**U2 现在跑起来了**（b 槽 mainline vk40，RAM 根）。
-
-## 根因：不是内核问题，是 **ABL 应用了 Android 的 dtbo overlay**
-
-- stock `dtbo_a/b` 是含 **76 个 Android overlay** 的合法 dtbo（平台 `kera`）。`fastboot boot <img>` 时 ABL 会把这些 overlay 合并进内核 DT → 模型/面板不匹配 → **卡联想 logo**，随后 ABL 判定启动失败回 fastboot。
-- 这正是 2026-09-28 就记录过的结论（`archive/topics/复盘.md` §一：*"写假 dtbo 后，屏幕从卡 logo 变成黑屏，ABL 成功把控制权交给内核"*）。
-- 所以 `fastboot boot` 单靠一颗 boot 镜像不够——必须**先把目标槽的 dtbo 清空**（或刷 mainline dtbo）。
-
-## 处置（我已执行）
-
-```bash
-fastboot flash dtbo_b   bootslot-b/dtbo_b.img          # 32 MiB 全零 = blank dtbo
-fastboot flash boot_b   bootslot-b/boot_b_vk40-ram.img # vk40 RAM
-fastboot flash vbmeta_b bootslot-b/vbmeta_b_flags3.img
-fastboot --set-active=b && fastboot reboot
-```
-结果：**NCM 网卡 ~24 s 起来，`ping 192.168.7.1` 通，ssh 进 mainline**（`uname -r`=`7.2.0-debug-gba28ec16f01f-dirty`，`findmnt /`=rootfs）。
-
-## Phase 0–2 验收（全绿）
-
-| 项 | 结果 |
-|---|---|
-| b 槽直启 | ✅ RAM 根；b 槽原厂镜像已在 `backup/HA2EXB0E-16+512/stock/`（=1.5.10.229），可回退 |
-| **GPT dump** | ✅ **U2 自己的**：`backup_lba=123871231`、`last_usable=123871226`、`userdata`=449.7 GiB、free slots 16–31 → `backup/HA2EXB0E-16+512/gpt_{main0,backup0}.bin` |
-| 显示/GPU | ✅ `card0-DSI-1`、adreno 载入 `gen80000_{sqe,gmu,aqe}.fw`、backlight `aw99706` 在 |
-| ADSP | ✅ `remoteproc0` running（`adsp.mdt`），GPR/APR 起来 |
-| 蓝牙 | ✅ `wcn7850` hci0 setting up |
-| 触摸 | `/dev/input/event0-6` 在位（**请你看一眼屏幕确认显示/触控**） |
-| 日志存档 | `backup/HA2EXB0E-16+512/vk40-ram-acceptance-dmesg.txt` |
-
-文档已同步：`DEVICE.md §2.2/§2.5`（U2 GPT 实测值）、`TASKS.md G1-1/G1-2`。
-
-## 请你拍板 Phase 3 的两个参数
-
-**① `linux17` 容量**：建议 **176 GiB**（§3.1 体量合计 105–180 GB；512 档留余量）。
-
-**② 手术后 a 槽 Android 怎么办**（缩 `userdata` 后 f2fs 不匹配，a 槽会 bootloop）：
-- **A** 弃 Android，不管 a 槽（后续 Phase B 还能回收 `super` 22 GiB 等）；
-- **B（我建议）** 手术后 `fastboot erase userdata && fastboot erase metadata` 重建 `/data`（≈273 GiB）
-
-
-## Automatic settled outcome - 2026-10-03
-
-已恢复，并且顺势把 **U2 做成了持久 Linux（b 槽直启 + Phosh）**。下面按「结论 → 原因 → 处置 → 下一步」说。
-
-## 现状（实机核验）
-
-| 项 | 值 |
-|---|---|
-| b 槽 | mainline **vk40 持久直启**，`findmnt /` = `/dev/sda17 ext4` |
-| 桌面 | **Phosh 已自启**（phoc/phosh/gnome-session 7 个进程在跑） |
-| 持久性 | 已重启一次验证：仍从 `/dev/sda17` 起来 |
-| a 槽 | stock 259 Android（原样，未动；`/data` 待重建） |
-| GPT | `userdata` 449.7→**256.7 GiB**、新增 **`linux17`=193.0 GiB**（写后重 dump CRC OK） |
-
-## 为什么会 panic、一直重启
-
-屏幕那句是 `Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)`——含义是 **initramfs 的 PID 1 在切换持久根那一步没能继续**（`exec switch_root /newroot /init` 之后进程退出），内核只好回头挂 root，失败即 panic。
-
-副作用：每失败一次 ABL 就把 `boot_b` 的重试计数扣 1。实测 `slot-attr.py show`：**`boot_b` byte6 从 7 被扣到 4**（`0x27`，succ=0），所以它会反复重启并最终落到 fastboot。
-
-根因还没 100% 钉死（首次挂载/switch_root 的时序最可疑）；但**带“早期初始化 USB 控制台”的版本能稳定切根成功**，这点已复现两次。
-
-## 我做了什么
-
-1. **先救回**：fastboot 回刷 RAM 核到 b 槽 → 拿回可用系统。
-2. **诊断镜像**：在原 persistent ramdisk 的 `/init` 里提前初始化 USB 控制台并打点日志，重打包 → `dd` 到 `boot_b`。
-3. 启动 → dmesg 实测 `[init] switching root to /dev/sda17 (/init)` → Phosh。
-4. **`slot-attr.py mark-successful b`**：把 `boot_b` 写回 `succ=1/retry=7`，防止 ABL 再把 b 判成不可启动。
-5. 重启回归验证通过。
-
-另外最初"卡联想 logo"是**另一件事**：`fastboot boot` 不清 dtbo 时，ABL 会把 stock 的 76 个 Android overlay 合进内核 DT → 卡 logo；刷 blank `dtbo_b` 后即正常（已把这条写进 `RUNBOOK §3`/`INDEX §4`）。
-
-## 待你确认 / 下一步
-
-1. **看一眼屏幕**：现在应该是 Phosh 桌面——显示/触屏正常吗？
-2. **a 槽 Android 回退**：我们清过 `userdata`+`metadata`，它下次启动会重建 256.7 GiB 的 `/data`。要不要现在切 `active=a` 实测一次能进 Android（测完切回 b）？
-3. **b 槽镜像收口**：现在用的是"诊断版"（早初始化 USB 控制台），很可能是它救了 switch_root。要不要我重建一个干净版（去掉 DIAG 打点、保留早 USB 等待）再固化？建议保留早 USB 等待。
-
-文档已同步：`DEVICE.md §2.2/§2.5`、`TASKS.md G1-1/2/3 ✅`、`INDEX.md §3`。
-
-
-## Automatic settled outcome - 2026-10-03
-
-屏幕正常 ✅。U2 = **b 槽 mainline 持久 + Phosh**，这已经是可以日常用的状态了。下面给下一步规划（按「先稳固基线 → 再刷 G1 收官 → 再进 G2」）。
-
-## 现况一句话
-
-- U2：Linux 持久可用（`/dev/sda17`）、Phosh、SSH、USB-NCM；a 槽 Android 259 原样（`/data` 待重建）。
-- 工具链在位：`amixer/speaker-test/v4l2-ctl/media-ctl/waydroid` 都有；持久根里 `/dev/disk/by-partlabel/` 有了 → **后续内核迭代可全程在 Linux 内 `dd boot_b`，不再需要 fastboot**。
-- 唯一遗留：b 槽现在跑的是"诊断版"镜像（含早 USB 打点）。
-
-## 建议路线
-
-**A. 先稳固基线（1 轮，低风险，之后才敢放心改内核）**
-1. 重建**干净版持久镜像**（保留"早 USB 等待"、去掉调试 echo）→ `flash-b.sh` 写 b 槽 → 哈希回读 → 重启验证；把它定成 vk40 正式基线。
-2. 核验持久态自启项：温控分级、充电/旁路、串口、Wi-Fi/BT 服务。
-   → 产出：一条命令刷内核 + 自动验证的稳定闭环（`scripts/flash-b.sh --reboot`）。
-
-**B. G1 收官（U2 在机；多数我可独立做，2 项需你现场确认）**
-3. **G1-5 相机出流**：`v4l2-ctl`/`media-ctl` 取 10 帧（前后摄）——我可独立跑。
-4. **G1-4 音频听声**：`amixer numid=8 on; speaker-test` —— **需你听 + 录音回放**。
-5. G1-7 BT 配对、G1-6 TF 卡、G1-8 CPU/GPU 基准（脚本已备，零交互）。
-6. 低优先：G1-9 DP、G1-10 NFC、G1-11 CDSP。
-
-**C. G2 主线（Linux 稳定后）**
-7. C1 Waydroid 端到端复跑（去掉旧 workaround）→ **C3 身份/DRM 取证** → C2 Play 登录（需你给上行+代理+凭据）→ C4 传感器链路部署验证。
-
-**并行 / 前置**
-- **a 槽 Android 回退验证**：切 `active=a` 让它重建 `/data`(256.7 GiB) 进一次系统，成功即说明回退通道可用。
-- **C0 真 Android 对照取证**：U1（stock+root，未连）或 U2 a 槽；覆盖 a 槽前唯一机会。
-- Q13 AVF 资产复采（U1）。
-
-## 我的建议
-
-先做 **A（固化干净基线）**，紧接着 **B3（相机出流，我能独立完成）**；然后 **B4（需要你花 2 分钟听声）**。G2 的 C1 也可以现在就并行启动（设备就在手边）。
-
-请拍板：
-1. 先跑 **A + B3**？（我这就开始重建干净镜像）
-2. 还是先把 **a 槽 Android 回退**实测一次再说？
-3. G2 的 C1 是否现在就并行开跑？
-
-
-## Automatic settled outcome - 2026-10-03
-
-已停止操作，全部记录完毕。下面是本轮总结（数字在前，一页内）。
-
-## 本轮成果（U2）
-
-| 项 | 结果 |
-|---|---|
-| GPT 手术 | ✅ `userdata` 449.7→**256.7 GiB**、新增 `linux17`=**193.0 GiB**（`/dev/sda17`）；写后重 dump CRC OK |
-| 持久 rootfs | ✅ 归档 30852 项 / 8.3 GB 解包到位 |
-| 持久直启 | ✅ `findmnt /`=`/dev/sda17`，**Phosh 自启**，重启保持（G1-1/2/3 达成） |
-| 内核迭代 | ✅ 持久根有 `/dev/disk/by-partlabel/` → 后续可 `dd boot_b`，免 fastboot |
-
-关键复用经验：`fastboot boot` 必须先 blank `dtbo_b`（否则卡 logo）；`slot-attr.py mark-successful b` 复位槽位重试计数。
-
-## 未解故障（本轮终结于此）
-
-**桌面空闲熄屏（DPMS blank）→ 整机重启**。串口证据：重启前 `ucsi_glink … PPM init failed`，**无 kernel panic 打印**（像 ADSP/PMIC 级复位）。规避方向 = **禁止空闲熄屏**（`idle-delay=0` / caffeine），`CONFIG_SUSPEND=n` 无 `mem_sleep` 可设。
-
-**当前状态**：我把 `idle-delay` 改成 10s 复现后，设备陷入**重启环、SSH 窗口过短，未能改回** → **现在不可达**（无 adb/fastboot USB）。
-
-## 记录（已落盘）
-
-| 文件 | 内容 |
-|---|---|
-| `archive/topics/复盘-2026-10-03-持久化与睡眠.md` | **主复盘**：时间线、已确认事实、故障证据与推测、当前危险状态、**§5 恢复方案**、教训 |
-| `DEVICE.md` §2.2 / `INDEX.md` §3 | U2 现态：持久可跑但熄屏即重启、当前不可达 |
-| `TASKS.md` | G1-1/2/3 ✅；新增 **G1-22 熄屏/睡眠稳定性**（🔴）；§4 第 1 步改为「先救机器」 |
-| `GAPS.md` | 新增 **Q21**（熄屏→重启）+ 风险登记行 |
-| `RUNBOOK` §3 | 加「持久根禁止空闲熄屏」的强制步骤与命令 |
-| 全局 memory | 教训：单一远程通道的持久系统上不做自锁式实验 |
+自锁式实验 |
 
 ## 下次开工第一件事（无需现在做）
 
@@ -1584,3 +1203,141 @@ scripts/flash-b.sh out/boot-elden-vk43.img --reboot
 - 「熄屏→重启」仍未解（本轮 vk42/vk43 暂未复现）。
 
 下一个做哪个？我建议先把 **PipeWire/WirePlumber** 装上（让设置界面和浏览器等应用有声音），这是"功能健全"的必要一块。
+
+
+## Automatic settled outcome - 2026-10-03
+
+音频这块收口完成 ✅
+
+## 结果（冷启持久已验证）
+
+| 项 | 状态 |
+|---|---|
+| ALSA 出声 | ✅（tplg SD1 修正） |
+| **桌面音频服务** | ✅ **PipeWire + WirePlumber + pipewire-pulse**，由 `/etc/xdg/autostart` 自启 |
+| **输出设备** | ✅ `Active Profile=HiFi`，sink = `HiFi__Speaker__sink`（GNOME 显示 **"Built-in Audio Speaker playback"**） |
+| UCM2 | ✅ `scripts/audio-ucm/`（自动开 `numid8` 路由 + 抬功放音量；`start-desktop.sh` 幂等安装） |
+| 输入设备 | ❌ **仍缺**：本卡只有 Secondary MI2S 播放 DAI，`arecord -l` 为空 |
+
+提交：`9934f7b`（PipeWire+UCM）、`34394bc`（文档收口）。`check-doctor` FAIL=0/WARN=0。
+
+## 建议先确认一步
+
+请打开 **设置 → 声音**，应能看到输出设备「Built-in Audio Speaker playback」，并可播放测试音。看一眼对不对。
+
+## 下一步（二选一）
+
+1. **补麦克风/录音（输入设备）**：需要在机器驱动加 capture DAI（VA/TX macro → DMIC）、tplg 加采集子图、内核配置补齐——是新一轮 bring-up（中等工作量），做完"输入输出设备"就齐了。
+2. **回到「熄屏→重启」**（G1-22，稳定性阻塞）：用 `devlogs.sh watch` 抓 `boot_id` 做长时窗复现与定位。
+
+你说哪个，我就开工。（也可以先只做个小验证：用 `arecord` 确认确实无 capture PCM。）
+
+
+## Automatic settled outcome - 2026-10-03
+
+vk44 就绪（含 DMIC capture）。**请你刷入**：
+
+```bash
+cd ~/y700-elden
+scripts/flash-b.sh out/boot-elden-vk44.img --reboot
+```
+回退：`scripts/flash-b.sh out/boot-elden-vk43.img --reboot`
+
+| 项 | 值 |
+|---|---|
+| 镜像 | `out/boot-elden-vk44.img`（sha256 `001516a0…`） |
+| 内核 | vk43 + **VA capture dai-link**（cpu=`VA_CODEC_DMA_TX_0`/110，codec=`lpass_vamacro`）+ VA macro **DMIC pinmux**（dmic01+dmic23，4 麦） |
+| tplg | 加采集子图：FE **MultiMedia3** → **VA codec-DMA TX0** → DMIC（10436→15380B，ramdisk 已重打包） |
+
+## 依据（与上游 SM8750-MTP 完全同构）
+
+- 原厂 DT 已有 `dmic01-default-state`/`dmic23-default-state`（gpio6-9）+ VA macro 节点 → 硬件是 **4×DMIC 接 VA macro**。
+- 主线 `sm8750-mtp.dts`：`&lpass_vamacro { pinctrl-0 = <&dmic01_default>, <&dmic23_default>; }` + `va-dai-link`（`VA_CODEC_DMA_TX_0`）。
+- DMIC 的 mux/DEC 选择由 UCM `cset` 完成（`codecs/qcom-lpass/va-macro/DMIC0/1EnableSeq.conf` 模板已有）。
+- macro 驱动（`VA/TX/RX/WSA_MACRO=y`）本就编进内核。
+
+刷好回 SSH 后我查 `arecord -l` 与卡 link，再补 UCM 的 `Mic` 设备并现场录一段验证。
+
+
+## Automatic settled outcome - 2026-10-03
+
+## 两个问题的诊断结果
+
+### ① 音频输入端：ALSA 已通，差最后两步
+
+| 检查 | 结果 |
+|---|---|
+| **采集 PCM** | ✅ `arecord -l` 出现 `device 2: MultiMedia3 Capture`（vk44 的 DTS+tplg 生效）|
+| 设置界面看不到 | 缺 **UCM Mic 段**（已补 `scripts/audio-ucm/HiFi.conf` 并部署到设备）|
+| 录音全 0 | ❌ 根因：**`vdd-micb` 偏置 = Off**（DAPM 实测）→ 缺 `vdd-micb-supply` + `"VA DMIC0..3","vdd-micb"` 路由 |
+| 修法 | 已补进 DTS（对齐上游 MTP：`vreg_l1b_1p8` + `qcom,dmic-sample-rate=4800000`）→ **vk45** |
+
+另外 debug 时发现：**`numid=15 MultiMedia3 Mixer VA_CODEC_DMA_TX_0` 默认 off** 会让 `arecord` open 直接 EINVAL——UCM 的 Mic 段已含这条 `cset`。
+
+**vk45 已就绪**：`out/boot-elden-vk45.img`（sha256 `f46de05d…`）。回退 vk43/vk44。
+
+### ② 马达反馈：硬件正常，是 feedback profile 的问题
+
+- **硬件好**：直接调 `org.sigxcpu.Feedback.Haptic.Vibrate` 返回 `true`（应已震）。
+- 原因：feedbackd 的 **profile = "full"**（默认），而默认主题里 `full` 只映射 **Sound**，Vibra\*（震动）只在 **"quiet"** profile 里。
+- 已修：`gsettings set org.sigxcpu.feedbackd profile quiet` + 重启 feedbackd → 现在 `Profile=quiet`。**按键应当有震动了**（quiet = 震动代替声音；两者不能同时对同一事件）。
+
+> 所以不是包缺失（`feedbackd`/`feedbackd-device-themes` 都在）。若你想要"震动+声音"同时，需要给本机写一个自定义 device theme（feedbackd 每个事件只能一种类型，得权衡）。
+
+## 请你刷入（修麦克风）
+
+```bash
+cd ~/y700-elden
+scripts/flash-b.sh out/boot-elden-vk45.img --reboot
+```
+
+刷好回 SSH 后我验证：`arecord` 录一段（应非静音）+ 设置界面出现麦克风输入设备。同时你可试试按键震动是否回来了。
+
+
+## Automatic settled outcome - 2026-10-03
+
+**找到"没有 input"的真正原因了**——麦克风根本不是 DMIC。
+
+## 关键发现（原厂设备树 `backup/stock-elden/elden.dts`）
+
+原厂 `sound` 节点的 `qcom,audio-routing`（line 16249）里**全是模拟麦，没有一条 "VA DMIC"**：
+
+```
+"AMIC1","Analog Mic1","AMIC1","MIC BIAS1",  ... "AMIC5","MIC BIAS4",
+"VA AMIC1","Analog Mic1","VA AMIC1","VA MIC BIAS1", ...
+"VA SWR_INPUT","WCD_TX_OUTPUT", "VA_AIF1 CAP","VA_SWR_CLK", ...
+```
+
+- 本机音频栈 = **Awinic smart PA（I2S 功放，我们已打通）+ WCD939x 编解码器**（SoundWire TX/RX）。
+- 麦克风是**模拟麦（Analog Mic）**，偏置由 **WCD939x 的 MIC BIAS1–4** 提供，ADC 在 WCD 里，经 **SoundWire** 送给 ADSP。
+- **主线 DTS 里没有启用 WCD939x**（只有 I2S 的 aw88461 功放）。
+
+### 这解释了我们所有现象
+
+| 观察 | 解释 |
+|---|---|
+| ALSA `MultiMedia3 Capture` 出现、整条 APM/DAPM 图 On | 图/软件链路没问题 |
+| `vdd-micb` 加了我们 DTS 的 `vreg_l1b_1p8`，regulator 也 enabled | 但硬件上根本没接 DMIC，偏置来源也应是 WCD |
+| 4 个 DMIC 通道全 0 | **硬件没有 DMIC 麦**（原厂 routing 里也没有） |
+
+> 所以 vk45 的 DMIC 方向是错的（软件对、硬件不对）。要出声必须走 **WCD939x**。
+
+## 可选路线
+
+**A. 上 WCD939x（正确路线，中等偏大工作量）**
+镜像主线 `sm8750-mtp.dts` 的 WCD939x 配置移植：
+1. DTS：`wcd939x` 节点（SWR slave + `cdc-vdd-rx/tx/buck/px/mic-bias` 稳压 + reset GPIO + pinctrl）+ 启用 rx-macro / va-macro 的 SWR master。
+2. 加 `wcd-capture-dai-link`（cpu `TX_CODEC_DMA_TX_3`，codec `wcd939x`+`txmacro`）。
+3. tplg 加 WCD 采集子图；UCM 加 Mic。
+4. 稳压映射照原厂（`L15B`=WCD vdd、`BOB1`=mic-bias）。
+
+**B. 先用 USB/Type-C 或蓝牙麦兜底**（当前可用，快速让"输入设备"不为空）。
+
+## 顺带：haptics 已定位（不是包缺失）
+
+- 硬件正常（`Haptic.Vibrate` 返回 true）。
+- 原因：feedback profile='full'（默认，只映射 Sound）。**已设 `org.sigxcpu.feedbackd profile=quiet`**（震动代替声音）。
+
+> 想要 LineageOS 那种"声音+震动强度分开"：feedbackd 每个事件只能一种类型（Sound **或** Vibra）。要两者兼得，需要写自定义 device theme（例如按键走 Vibra、其他走 Sound），并可用 `max-haptic-strength` 调强度——可以做，但要权衡。
+
+**要我开始做 A（WCD939x）吗？** 这是麦克风/耳麦正路。或者先做 B 兜底、再排期 A？
