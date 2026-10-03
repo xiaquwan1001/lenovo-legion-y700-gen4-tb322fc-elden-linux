@@ -109,6 +109,7 @@ AOSP 迁盘校验 | `archive/topics/AOSP-MIGRATE-CHECK-2026-10-02.md`
 踩坑总表（**动手前扫**） | `PITFALLS.md`（#80/#81＝“把机器当角色”“状态才是前置条件”；**#87＝引导链问题先 grep 本地既有结论**）
 BL 解锁（**要不要 / 怎么**——已定稿，别再重推） | `RUNBOOK-BRINGUP.md` §0.5 ★权威顺序·`archive/topics/复盘-2026-10-03-BL解锁.md`（时线 + 7/8 月对照 + 根因）·`archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md`（签名链取证）
 操作史/复盘 | `archive/topics/HANDOFF.md` `archive/topics/复盘.md` `archive/topics/复盘-2026-09-29-夜.md` `archive/topics/复盘-2026-09-30-日.md` `archive/topics/复盘-2026-10-02-swarm.md` **`archive/topics/复盘-2026-10-03-BL解锁.md`** `archive/topics/PAUSE-2026-10-02-android.md`
+**内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`SESSION-INDEX.md`** 配套
 换机迁移包 | `flashing-bundle/` + `flashing-bundle-2026-09-29.tar.gz`
 
 ---
