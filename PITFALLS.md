@@ -616,6 +616,20 @@
     - **✅ 已验证（2026-10-03 深夜，U2）**：长按电源键 → phosh 菜单「立即关机」**真断电**（USB 拔掉后）；重启后包装持久（`start-desktop.sh` 幂等重装）。
       ⚠️ **USB 连着时 `loginctl poweroff` 会立即重启**（疑以 VBUS/充电检测触发自动开机）——关机前先断 USB。
 
+90. **★音频无声：tplg 的 MI2S SD 数据线选错（SD0 vs 硬件 SD1）**（2026-10-04 实测修复）。
+    - 现象：ALSA 直放（`speaker-test`）→ 整条 APM/DAPM 图全 On（`device18.i2s_rx1`、`Secondary MI2S Playback`、aw88461 全 On）、`SEC_MI2S_IBIT`=1.536MHz 在走、功放未静音/音量最大且 PLL+ready 就绪，**但一点声也没有**。
+    - 根因：功放 I2S DIN 接在 **`gpio124 = i2s1_data1`（=SD1）**（主 DTS 与原厂 DT dump `probe/result/devicetree.dts:4636` 一致），
+      但 tplg 是从 **Google SC7180 SEC-I2S 模板抄的 `SD_LINE_IDX_I2S_SD0`**（`audioreach.m4` 定义 SD0=1 / SD1=2）
+      → ADSP 往 SD0/gpio122 发数据，功放挂在 SD1 永远收不到。
+    - 定位关键指标：功放 **SYSST 的 bit8 = SWITCHING**。没数据时 SYSST=`0x0215`（SWITCHING=0），
+      修好后变 **`0x2315`（SWITCHING=1）**。即：DAPM On + 时钟在跑 ≠ 有数据，要看 SWITCHING。
+    - 修复：`scripts/audio-tplg/SM8750-Lenovo-Y700-Gen4.m4` 的 `DEVICE_SG_ADD` 改用 `SD_LINE_IDX_I2S_SD1`；
+      产物 `scripts/audio-tplg/out/Lenovo-Y700-Gen4-tplg.bin` sha `db7e16e7…`（同尺寸 10436B）。
+    - 部署：tplg 在 **boot 早期从 initramfs 加载**，故必须**冷启**；ramdisk（`out/rootfs-overlaid.cpio.gz`，可**字节级替换**同尺寸 tplg）
+      + 持久 root `/lib/firmware/qcom/sm8750/` 两处都要换，重建 boot（vk43）。运行期 unbind/bind 重载会 ADSP 图残留，不可用。
+    - 操作前提：冷启后 `amixer -c0 cset numid=8 on` + 音量 `numid=1/2=1023`（默认 0=静音）。
+    - 详见 `archive/topics/AUDIO-SDLINE-2026-10-04.md`、`TASKS.md` G1-4。
+
 ---
 
 ## 十五、过时 / 废弃 / 功能缺陷登记（DEPRECATED）

@@ -1406,3 +1406,154 @@ ssh root@192.168.7.1 loginctl poweroff
 > 回退：若真断电失败而设备卡住（PSCI `SYSTEM_OFF` 极少数固件不支持会转 `machine_halt` 自旋），长按电源键硬复位即可。
 
 跑完告诉我结果。成功的话我把 G1-25 标 ✅ 收口。
+
+
+## Automatic settled outcome - 2026-10-03
+
+收口完成 ✅
+
+## 结论
+
+**电源键关机已跑通**：长按电源键 → phosh 菜单 →「立刻关机」= **真断电**。重启后包装脚本仍在（`start-desktop.sh` 开机幂等重装，落在 `/dev/sda17`，已实测）。
+
+## 真根因（与 vk41 内核无关）
+
+| | |
+|---|---|
+| 机制 | elogind 执行 `/sbin/{poweroff,reboot,halt}`（编译期绝对路径） |
+| 缺陷 | 这些是 busybox applet，**不带 `-f` 只给 PID 1 发信号**（`SIGUSR2/TERM/USR1`）后 exit 0 |
+| 后果 | 本机 PID 1 是 `/init`（shell，不处理）→ 关机假成功，且 elogind 永久卡 `OperationInProgress` |
+| 修复 | 换成 `busybox <applet> -f` 包装 → 直调 `reboot(2)`（`strace -e inject` 已证） |
+
+## 一个边角（已记录）
+
+`loginctl poweroff` 在 **USB 连着时**会让设备立即重启——你判断为平板探测到数据线插入（VBUS/充电检测自动开机），这是独立行为，不是 elogind 的问题。**正式关机先拔 USB** 即可。
+
+## 提交
+
+- `47c14aa` 真根因定位+修复（脚本/`PITFALLS #89`/专题/TASKS）
+- `1be1acf` G1-25 真机验证通过 + USB 边角
+- `check-doctor` **FAIL=0 / WARN=0**
+
+G1-25 已标 ✅ 收口。下一个待办回到未解项：**「熄屏→整机重启」**（G1-22/Q21）和 **vk34 后增量回归二分**（G1-23/Q22）。
+
+
+## Automatic settled outcome - 2026-10-03
+
+日志采集方法已就位（`scripts/devlogs.sh`，已提交 `18bbf08`）：
+
+| 子命令 | 用途 |
+|---|---|
+| `pull [tag]` | 单次 SSH 抓设备快照（`dmesg`、`/run/*.log`、`/var/log/kmsg`、`pstore`、uname/boot_id/uptime/power）→ `logs/devlogs-<tag>-<ts>/` |
+| `watch [秒] [间隔]` | 周期 pull，并靠 `boot_id` 变化**自动标记复位**（抓"熄屏→重启"这类瞬时事件） |
+| `pstore` | 读 ramoops 崩溃日志（survives 复位，无需设备侧写入器 → 无观察者效应） |
+| `tail` / `serial` | 实时 dmesg / 主机串口 `/dev/ttyACM0` |
+
+冒烟已通过。顺带一个日志发现：**vk41 的 `CONFIG_SUSPEND` 未开** → `/sys/power/mem_sleep` 不存在、`/sys/power/state` 为空（suspend 被整个拿掉了），这本身就是个待确认的改动。
+
+不过——**"这两个改动"具体指哪两项？** 我不敢猜错，列几个候选请你点一下：
+
+1. **logind 电源**：`HandlePowerKey=ignore` + `/sbin/{poweroff,reboot,halt}` 包装（本轮已验关机；短按熄屏/唤醒还未单独验）
+2. **vk41 PSCI**：`reboot bootloader` / `reboot edl` 两个 vendor reset（只验了 bootloader，edl 未测）
+3. **G1-23 二分**：`vk34-recon` ↔ `vk40` 两个内核版本/增量是否正常
+4. **G1-22**：熄屏→重启 的修复改动
+
+你指哪两个？（如果是别的，直接说改动内容即可。）确定后我就用 `devlogs.sh` 建基线、跑对照、出功能验证结论。
+
+
+## Automatic settled outcome - 2026-10-03
+
+已就绪。**vk42 = 当前 vk41（含 PSCI）＋ 干净重落这两项改动，不带 vk40 调试插桩**，已编译并校验内容：
+
+| 项 | 证据 |
+|---|---|
+| 产物 | `out/boot-elden-vk42.img`（sha256 `40c87976…`，83 MB） |
+| 内核 | `7.2.0-debug-geb432f18a0d1`（唯一 uname，便于版本归属）；含 `q6i2s_prepare` 符号、**0 处 DBG** |
+| 音频修复 | `q6apm.c` 3 处改用 `audioreach_alloc_apm_cmd_pkt`；`q6apm-lpass-dais.c` 加了 `q6i2s_prepare`（BE graph 在 prepare 起） |
+| 温控 | DTB 四级 trip `0x11170/0x14050/0x15f90/0x19a28` = **70/82/90/105 ℃**（当前 vk41 是单级 105） |
+| tplg | ramdisk + 持久 root 都是自定义 10436 B 版（音频前提具备） |
+
+## 请你刷入（设备侧断联操作，你来执行）
+
+```bash
+cd ~/y700-elden
+scripts/flash-b.sh out/boot-elden-vk42.img --reboot
+```
+约 1–3 分钟回 SSH。**回退**：`scripts/flash-b.sh out/boot-elden-vk41-psci.img --reboot`
+
+> 我也可以只跑"写入+回读校验"（不重启），你再单独重启——你选。
+> 注意：这两项正是"熄屏→重启"的**嫌疑增量**，刷回后可能重现；我会用 `devlogs.sh watch` 盯 `boot_id`。
+
+## 刷好后我来跑验证
+
+- **温控**：`/sys/class/thermal/*/trip_point_*` 应现 70/82/90/105；跑 `thermal-stress.sh` + `thermal-watch.sh`，出稳态温度/频点与 cdev state。
+- **音频**：`amixer -c0 cset numid=8 on` + `speaker-test`；抓 `dmesg` 的 q6apm 图状态（`GRAPH_OPEN/START status`），**由你确认是否出声**。
+- **回归监控**：全程 `devlogs.sh watch`，捕捉熄屏/复位。
+
+要我现在就把 vk42 写入 boot_b（不重启）吗？还是你直接跑上面那条？
+
+
+## Automatic settled outcome - 2026-10-03
+
+温控侧已确认生效；音频侧技术上链路是通的（MI2S bclk 在走），且发现两个功放音量 `numid=1/2` **默认是 0**（可能原来就没声）。我刚把它拉到 1023 并播了 8 秒 1 kHz 正弦。
+
+**关键问题：你刚才听到扬声器出声了吗？**（1 kHz 蜂鸣/正弦音）
+
+同时把目前证据汇总如下：
+
+## 温控 ✅（功能正常）
+
+| 检查 | 结果 |
+|---|---|
+| CPU/GPU 热区 trip | 全部 `120000 125000 70000 82000 90000 105000`（hot/critical + 四级 passive）|
+| cooling device | `cpufreq-cpu0` 0/15、`cpufreq-cpu6` 0/15、`devfreq-3d00000.gpu` 0/13 |
+| 空闲温度 | CPU 38–44 ℃ |
+
+下一步我会跑 `thermal-stress.sh` + `thermal-watch.sh`（约 6 min），看四级 trip 是否按预期逐级降频。
+
+## 音频 ◐（链路通、待听声）
+
+| 检查 | 结果 |
+|---|---|
+| 声卡/控件 | `Lenovo-Y700-Gen4`；`numid=8` MM1→SECONDARY_MI2S_RX 路由 ✅ |
+| **`SEC_MI2S_IBIT` 时钟** | **enable=1 / 1.536 MHz，consumer `dai@12` bclk** ← 0011 修复的直接证据 |
+| PCM | state=RUNNING，指针推进 |
+| dmesg | 无 q6apm graph 报错；仅有 `wsa_macro … flat cache` 无害告警 |
+| 音量 | `Left/Right Playback Volume` 默认 **0**，已拉到 1023 |
+
+## 一个已确认的"非回归"
+
+`dmesg` 里 boot 6.8 s 的 `qcom-apm … CMD timeout for [1001021] opcode` 在 **vk41 也有**（vk41 快照里有 5 处），不是 vk42 引入的。
+
+> 另外这两项正是"熄屏→重启"的嫌疑增量。要不要我同时开 `devlogs.sh watch` 盯 `boot_id`，边测边抓？
+
+
+## Automatic settled outcome - 2026-10-03
+
+修复已提交（`31cde62`）。新 boot 镜像已就绪：
+
+| 项 | 值 |
+|---|---|
+| 产物 | `out/boot-elden-vk43.img`（sha256 `f3e53fe4…`，83 MB） |
+| 内容 | vk42 + **tplg SD 线修正**（SD0→SD1，`db7e16e7…`，已同时写入 ramdisk 和持久 root） |
+| 内核 | 同 vk42（`geb432f18a0d1`，音频 0009/0011 + 温控 0010 都在） |
+
+## 请你刷入
+
+```bash
+cd ~/y700-elden
+scripts/flash-b.sh out/boot-elden-vk43.img --reboot
+```
+回退：`scripts/flash-b.sh out/boot-elden-vk42.img --reboot`
+
+> 理论上这一步**必须冷启**（运行期重载 tplg 会 ADSP 图残留，文档已记）。刷好回 SSH 后我来开 mixer、音量拉满、放测试音，**由你听声**。
+
+## 这次修复的根据
+
+- 功放 I2S 数据脚 = `gpio124 = i2s1_data1`（**SD1**），主 DTS 与原厂 DT dump（`probe/result/devicetree.dts`）**完全一致**。
+- 但 tplg 是从 Google SC7180 SEC-I2S 模板抄来的 `SD_LINE_IDX_I2S_SD0`（=值 1），ADSP 便往 SD0/gpio122 发数据 → 功放挂在 SD1 收不到。
+- 证据链：整条 DAPM 图全 On、`SEC_MI2S_IBIT` 时钟 1.536 MHz 在走、功放未静音/音量最大且 PLL+ready 就绪，**但 SYSST 的 SWITCHING 位不置位**（无输入信号）= 数据没到功放。
+
+刷好后我来跑验证；若仍无声，下一步查 WORDSELECT/数据格式或功放 I2SCTRL。
+
+> 另：设置界面输入输出设备为空是**独立问题**（系统里没装 PipeWire/PulseAudio 守护进程，只有库）。ALSA 出声确认后再装音频服务补上 UI。
