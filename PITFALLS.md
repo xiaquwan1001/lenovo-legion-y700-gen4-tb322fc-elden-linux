@@ -596,6 +596,24 @@
       ③ 故意耗尽 `boot_b` retry 让 ABL 回退 fastboot（用 `slot-attr.py` 可控，但有风险）。**均需另立专项 + 保守实验**，不要在测试脚本里即兴。
     - 纪律：任何"从 Linux 切 fastboot"的记录，**先确认是物理键还是软件**，别把用户的手动操作误记成工具生效（本次即因此误判一次）。
 
+89. **★关机/重启假成功：busybox `poweroff`/`reboot`/`halt` 不带 `-f` 只给 PID 1 发信号，而本机 PID 1 是 shell**（2026-10-03 实测，G1-25 真根因）。
+    - 链路：elogind 执行**编译期绝对路径** helper `/sbin/{poweroff,reboot,halt}`（`meson poweroff-path`，**与 PATH 无关**）；
+      Alpine 把它们做成 busybox applet 符号链接。busybox **不带 `-f` 时根本不调 `reboot(2)`**：
+      `poweroff`→`kill(1,SIGUSR2)`、`reboot`→`kill(1,SIGTERM)`、`halt`→`kill(1,SIGUSR1)`，然后 **exit 0**。
+      本机 PID 1 = `/init`（`sh` 脚本，非 busybox-init），不实现该协议 → 信号被忽略、**机器永不断电**。
+      证据（`strace -e trace=reboot,kill`）：`kill(1, SIGUSR2) = 0; +++ exited with 0 +++`；dmesg 有
+      `elogind: System is powering down.` 但**从无 `reboot: Power down`**（从未进内核关机路径）。
+    - **连带假死**：elogind 对 poweroff/reboot/halt 这类**非 sleep** 动作，只在**子进程**里清 `action_job/delayed_action`，
+      父进程的 SIGCHLD 清理分支要求 `sleep_operation != INVALID`（poweroff 恰为 INVALID）→ 父进程**永不复位**，
+      之后所有 `PowerOff`/`PrepareForSleep` 都返回 `org.freedesktop.login1.OperationInProgress`（`PreparingForShutdown=true`），
+      phosh 关机菜单表现为"无反应 / Operation was cancelled"。`kill -9` elogind 可暂时清，但下次假成功又卡。
+    - **修复**：`scripts/fix-logind-poweroff.sh`（由 `start-desktop.sh` 在启动 elogind 前调用，幂等）
+      把 `/sbin/{poweroff,reboot,halt}` 从 busybox 符号链接换成 `exec /bin/busybox <applet> -f "$@"` 包装脚本。
+      用 `strace -e inject=reboot:error=EINVAL` 验证：现在直调 `reboot(...CMD_POWER_OFF/RESTART/HALT)`。
+    - **坑**：`cat > /sbin/poweroff`（符号链接）会**穿透去截断 `/bin/busybox`**（报 `Text file busy` 才没坏）——必须先 `rm -f` 符号链接再写。
+    - **另**：`HandlePowerKey=ignore`（`/etc/elogind/logind.conf`）保留——否则开机那一下电源键（`pmic_pwrkey` 会上报 KEY_POWER）
+      就会触发真关机；桌面态交 phosh（持 `handle-power-key` block inhibitor，长按→电源菜单）。
+
 ---
 
 ## 十五、过时 / 废弃 / 功能缺陷登记（DEPRECATED）

@@ -52,6 +52,13 @@ pgrep -x seatd >/dev/null 2>&1 || seatd -g root >/run/seatd.log 2>&1 &
 # systemd; without elogind the power menu just times out
 # ("phosh-session-manager: Failed to shutdown: Timeout was reached").
 # Package: `apk add elogind elogind-openrc` (2026-10-03).
+#
+# 2026-10-03: elogind's helpers /sbin/{poweroff,reboot,halt} are busybox
+# applets that *without -f* only signal PID 1 instead of calling reboot(2).
+# PID 1 here is the /init shell, so Power Off / Restart silently no-op'd and
+# left elogind wedged (OperationInProgress).  Wrap them with -f first.
+[ -x /usr/local/sbin/fix-logind-poweroff.sh ] && \
+	/usr/local/sbin/fix-logind-poweroff.sh || true
 if [ -x /usr/libexec/elogind/elogind ] && ! pgrep -x elogind-daemon >/dev/null 2>&1; then
 	/usr/libexec/elogind/elogind >/run/elogind.log 2>&1 &
 fi

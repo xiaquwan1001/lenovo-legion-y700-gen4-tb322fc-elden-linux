@@ -1325,3 +1325,46 @@ y700-elden/
 查询方式变为：`rg` 搜文本、pi 原生 `/resume` 找会话、`rg .pi/sessions` 搜轨迹——**无自建索引**。
 
 > 说明：`.pi/memory/HINDSIGHT.md` 仍保持未提交（它是 harness 自动追加的活跃记忆，与本轮整理无关）；你刚定的「入口越少」偏好已存入项目记忆。
+
+
+## Automatic settled outcome - 2026-10-03
+
+完成并提交（`bea4c1b`），自检 FAIL=0 / WARN=0。
+
+## 一、git 追踪审计
+
+**结论：所有 durable 文本本来就在 git；漏网的是 `backup/` 下的"证据文本"，已补进。**
+
+| 类别 | 状态 |
+|---|---|
+| 文档、脚本、内核补丁/config、`.pi/memory`、`.pi/skills`、`.pi/missions`、`archive/`、`AGENTS.md` | ✅ 早已 track |
+| **`backup/` 证据文本**（本次新纳入） | `elden-dump.txt`、`HA2EXB0E-16+512/{getvar-locked,getvar-unlocked-1.1,gpt-list-pre-surgery,vk40-ram-acceptance-dmesg}.txt`、`pre-unlock/` 全部基线（getprop/by-name/sensorservice/packages/settings…）+ `SHA256SUMS` |
+| 仍 ignore | 二进制分区/GPT dump、`sn-neko-zuxos.img`（含签名 blob，敏感）、`sn.img` |
+
+git 追踪文件数 **306 → 316**。
+
+**仍被 ignore 的"文本但运行时/大"**（需你拍板是否要）：
+- `.pi/sessions/` **54 M**（51 个会话 jsonl，即 `RESOURCES.md §4` 的原始素材）
+- `logs/` **90 M**（串口/构建/agent 日志）
+- `.pi/messenger/`（swarm 运行时任务卡）
+- `backup/pi-assets-*`、`flashing-bundle/`（迁移快照，内容已在 `.pi/`）
+
+> 我倾向**不**把 sessions/logs 入 git：体量大且可能含工具输出里的敏感信息；会话已有 `RESOURCES.md §4` 索引 + pi 原生会话文件。要不要纳入，你说一句。
+
+## 二、过时/废弃/功能缺陷列表
+
+放在 **`PITFALLS.md §15（DEPRECATED）`**（不新增根文件，维持"入口最少"），git 管理。五个子表：
+
+| 子节 | 内容 |
+|---|---|
+| **15.1 废弃/合并/删除的文档** | GAPS/ANDROID-COMPAT/FILES/SESSION-INDEX/LESSONS/db/catalog 各自的"现在看哪" |
+| **15.2 迁移/退役的外部资产** | `~/y700类原生安卓/` 退役、profile/技能/会话内聚迁移、迁移前备份与 flashing-bundle |
+| **15.3 被取代/无效的会话** | 3 个 superseded（`01a0ed5b`/`01a100d9`/`01a101f3`）+ 5 个 junk（空/测试会话） |
+| **15.4 技能参考中过时结论** | `grub-uefi-dual-boot.md`（sn.img 解锁已失效）、`tb321fu-*`（Gen3 勿套 Gen4）、两份 `community-tool-status-2026-08`、`gsi-device-adaptation/*`（a 槽路线已弃） |
+| **15.5 已知功能缺陷** | 12 项（熄屏重启、vk34 回归、音频/相机/TF/BT/DP/NFC/CDSP、reboot recovery 无解、reboot edl 未测、60 Hz 黑屏）各带权威指针 |
+
+已同步：`INDEX.md §2` 标注 PITFALLS 含 §15；`check-doctor.sh` 的过期字样扫描**排除 PITFALLS**（§15 故意登记旧文件名），其余活跃文档仍严格查。
+
+---
+
+两个待你决定：**①`.pi/sessions`/`logs` 是否入 git？②§15 是否要单独拆成 `DEPRECATED.md`？**（我建议都保持现状：不入 git / 不拆，以符合"入口最少"。）
