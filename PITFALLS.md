@@ -613,6 +613,8 @@
     - **坑**：`cat > /sbin/poweroff`（符号链接）会**穿透去截断 `/bin/busybox`**（报 `Text file busy` 才没坏）——必须先 `rm -f` 符号链接再写。
     - **另**：`HandlePowerKey=ignore`（`/etc/elogind/logind.conf`）保留——否则开机那一下电源键（`pmic_pwrkey` 会上报 KEY_POWER）
       就会触发真关机；桌面态交 phosh（持 `handle-power-key` block inhibitor，长按→电源菜单）。
+    - **✅ 已验证（2026-10-03 深夜，U2）**：长按电源键 → phosh 菜单「立即关机」**真断电**（USB 拔掉后）；重启后包装持久（`start-desktop.sh` 幂等重装）。
+      ⚠️ **USB 连着时 `loginctl poweroff` 会立即重启**（疑以 VBUS/充电检测触发自动开机）——关机前先断 USB。
 
 ---
 

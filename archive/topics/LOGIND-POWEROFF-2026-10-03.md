@@ -91,13 +91,19 @@ done
   （`reboot`/`halt` 同理映射到 `CMD_RESTART`/`CMD_HALT`）。
 - 内核侧 `pm_power_off = psci_sys_poweroff`（`psci_0_2_set_functions()` 无条件注册）→ 最终走 PSCI `SYSTEM_OFF`。
 
-## 6. 待办 / 未核实
+## 6. 验证结果（2026-10-03 深夜，U2）
 
-- [ ] **真机验证**：`ssh root@192.168.7.1 loginctl poweroff`（应真断电）；以及长按电源键→phosh 电源菜单→「立刻关机」。
-- [ ] 若 PSCI `SYSTEM_OFF` 在本固件不被支持（pm_power_off 返回），arm64 会转入 `machine_halt()` 自旋 → 需长按硬件复位；届时改用别的关机路径（如 vendor reset 到某低功耗态）再议。
+- ✅ **长按电源键 → phosh 电源菜单 →「立刻关机」= 真断电**（USB 拔掉后）。
+- ✅ 重启后 `/sbin/poweroff` 包装仍在（`start-desktop.sh` 开机幂等重装，落在 `/dev/sda17`）。
+- ⚠️ **USB 连着时 `loginctl poweroff` 会立即重启**（用户观察：平板探测到数据线插入 → 自动开机）。
+  这是 USB/VBUS 充电检测的独立行为，**不是** elogind 的问题；正式关机请先断 USB。
+
+## 7. 未核实 / 备注
+
+- [ ] 若 PSCI `SYSTEM_OFF` 在本固件不被支持（pm_power_off 返回），arm64 会转入 `machine_halt()` 自旋 → 需长按硬件复位；届时改用别的关机路径（如 vendor reset 到某低功耗态）再议。（本次真断电成功，说明 SYSTEM_OFF 可用）
 - [ ] `elogind 卡死` 的 R2 只在**关机失败**时才有意义（成功关机=断电，状态无意义）；若将来关机偶发失败，需重启 elogind 清态。
 
-## 7. 操作记录
+## 8. 操作记录
 
 - elogind 重启若干次排查；曾用假 `poweroff`（`/usr/local/sbin/poweroff`）验证 PATH 无关（elogind 走绝对路径，未命中），
   该假桩**已删除**。

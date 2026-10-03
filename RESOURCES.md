@@ -327,7 +327,7 @@ git log --oneline -10
 | 2026-10-03 | `01a101f3` | 引导：Linux→fastboot能力核实 | flashctl | ◐ | superseded | 本地检索确认BCB bootonce不被采纳、ABL无明文串；给出flash-b.sh免fastboot做A/B | vk40,vk34 | 「能力不存在」结论后被PSCI vendor reset推翻（见01a1021c） |
 | 2026-10-03 | `01a1021c` | 刷机控制+桌面：PSCI reboot与elogind | flashctl-power | ✅ | active | 实机确认 PSCI SYSTEM_RESET2 vendor reset 生效：`eldroid-bootctl reboot bootloader` 真进fastboot；另修elogind关机（HandlePowerKey占位致shutdown inhibitor卡in-progress） | vk41,vk40 | EDL/recovery的vendor reset未测；长按关机待实测；配置重启持久性待复核 |
 | 2026-10-03 | `01a10224` | 会话：项目架构整理与文档分层 | docs-reorg | ✗ | active | 审查12份根文档；定三层架构(领域/元/证据)+SSOT规则；新增scripts/check-doctor.sh；启动全面收敛到6份 | - | 收敛重构进行中；db/LESSONS拟删除 |
-| 2026-10-03 | `01a10264` | 复盘：logind 关机假成功（busybox/PID1） | logind-power | ✅ | active | 复查「vk41 电源键仍不关机」：真根因=elogind helper `/sbin/{poweroff,reboot,halt}` 是 busybox applet，**不带 `-f` 只 `kill(1,SIGUSR2/TERM/USR1)`**，本机 PID1=`/init`(shell) 不处理→关机/重启假成功且 elogind 卡 `OperationInProgress`；落 `fix-logind-poweroff.sh`(start-desktop 调用)，`strace -e inject=reboot:error=EINVAL` 证直调 `reboot(2)` | vk41 | 真机断电验证待用户执行；修复重启持久（在 /sda17） |
+| 2026-10-03 | `01a10264` | 复盘：logind 关机假成功（busybox/PID1） | logind-power | ✅ | active | 复查「vk41 电源键仍不关机」：真根因=elogind helper `/sbin/{poweroff,reboot,halt}` 是 busybox applet，**不带 `-f` 只 `kill(1,SIGUSR2/TERM/USR1)`**，本机 PID1=`/init`(shell) 不处理→关机/重启假成功且 elogind 卡 `OperationInProgress`；落 `fix-logind-poweroff.sh`(start-desktop 调用)，`strace -e inject=reboot:error=EINVAL` 证直调 `reboot(2)` | vk41 | ✅ 已真机验证：长按电源键→菜单→真断电（USB 已拔）；USB 连着时 loginctl poweroff 会立即重启（VBUS 检测） |
 
 ---
 

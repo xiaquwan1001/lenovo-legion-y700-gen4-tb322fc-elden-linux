@@ -1368,3 +1368,41 @@ git 追踪文件数 **306 → 316**。
 ---
 
 两个待你决定：**①`.pi/sessions`/`logs` 是否入 git？②§15 是否要单独拆成 `DEPRECATED.md`？**（我建议都保持现状：不入 git / 不拆，以符合"入口最少"。）
+
+
+## Automatic settled outcome - 2026-10-03
+
+复查完成，找到真根因并已修复（**与 vk41 内核无关**）。
+
+## 结论（数字先行）
+
+| 项 | 结果 |
+|---|---|
+| 真根因 | elogind 的 helper `/sbin/{poweroff,reboot,halt}` 是 **busybox applet**，**不带 `-f` 时根本不调 `reboot(2)`** |
+| 实证 | `strace`：`poweroff` → `kill(1, SIGUSR2)` 后 **exit 0**（`reboot`/`halt` 同理 SIGTERM/SIGUSR1）；dmesg 有 `System is powering down.` 却**从无 `reboot: Power down`** |
+| 为什么无效 | 本机 **PID 1 = `/bin/sh /init`**（不是 busybox-init），不处理这些信号 → 关机假成功 |
+| 连带假死 | elogind 对 poweroff/reboot/halt 这类**非 sleep** 动作不清 `delayed_action` → 之后所有关机都回 `OperationInProgress`（phosh 菜单"无反应"就是这个） |
+| 修复 | `/sbin/{poweroff,reboot,halt}` 换成 `busybox <applet> -f` 包装 → 直调 `reboot(2)`，`strace -e inject` 已验证 |
+
+> 前一轮把根因归给"电源键被 elogind 占位"，只 `kill -9` 治了症状；这次是**真根因**。v41 只改 `psci_sys_reset`，不碰 POWER_OFF。
+
+## 已落地
+
+- 设备已装：`/sbin/{poweroff,reboot,halt}` 包装脚本 + `/usr/local/sbin/fix-logind-poweroff.sh`；`start-desktop.sh` 启动 elogind 前调用（幂等，**在 `/dev/sda17` 上持久**）。
+- 仓库提交 `47c14aa`：脚本 + `PITFALLS #89` + `archive/topics/LOGIND-POWEROFF-2026-10-03.md` + TASKS/DEVICE/RESOURCES。`check-doctor` **FAIL=0/WARN=0**。
+- elogind 当前是排查用的 debug 实例（状态干净，`PreparingForShutdown=false`）；重启后由 start-desktop.sh 正常拉起。
+
+## 请你做真机验证（关键最后一步）
+
+**测试 1（后端，最直接）**：
+```bash
+ssh root@192.168.7.1 loginctl poweroff
+```
+预期：设备**真断电**（屏幕灭、SSH 断）。再按电源键开机。
+
+**测试 2（你的原目标，电源键）**：
+长按电源键 → phosh 电源菜单 → 点「立刻关机」→ 真断电。
+
+> 回退：若真断电失败而设备卡住（PSCI `SYSTEM_OFF` 极少数固件不支持会转 `machine_halt` 自旋），长按电源键硬复位即可。
+
+跑完告诉我结果。成功的话我把 G1-25 标 ✅ 收口。
