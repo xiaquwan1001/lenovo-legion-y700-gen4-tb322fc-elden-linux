@@ -204,7 +204,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `tools/` | 14 M | ignore | `venv-avb` + 上游 `mkbootimg`（可重建） |
 | `out/` | 4.6 G | ignore | boot 产物 / cpio / modules |
 | `bootslot-b/` `bootslot-b-u2/` | 905 M | ignore | 自签 b 槽包（含 `avb.key` 私钥，禁止入库） |
-| `backup/` | 1.5 G | ignore | 原厂分区/固件/GPT dump（不可替代，留盘） |
+| `backup/` | 1.5 G | 混合 | 原厂分区/固件/GPT dump（不可替代，留盘）。**证据文本已纳入 git**（`elden-dump.txt`、`HA2EXB0E-16+512/*.txt`、`pre-unlock/`、`vk40-ram-acceptance-dmesg.txt`）；二进制与 `sn-neko-zuxos.img` 仍 ignore |
 | `env-pass/`（余） | 3.8 G | ignore | 过环境栈 + rootfs 归档 |
 | `logs/` | 86 M | ignore | 串口/构建/agent 日志 |
 | `pkgs/ pkgs-phosh/ pkgs-x86/` | 639 M | ignore | apk/deb 缓存（可重下） |

@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-03（**#82–#87 = BL 解锁专题**；#87 = 「先查本地既有结论」流程教训）。
+> 最后更新：2026-10-03（**#82–#87 = BL 解锁专题**；#87 = 「先查本地既有结论」流程教训；**§15 = 过时/废弃/功能缺陷登记**）。
 
 ---
 
@@ -595,3 +595,74 @@
     - 若要**造**这个能力（一般没必要）：候选 = ① ABL 认可的其它 BCB 命令；② IMEM `restart_reason`=fastboot 魔术（Android `reboot bootloader` 之道）；
       ③ 故意耗尽 `boot_b` retry 让 ABL 回退 fastboot（用 `slot-attr.py` 可控，但有风险）。**均需另立专项 + 保守实验**，不要在测试脚本里即兴。
     - 纪律：任何"从 Linux 切 fastboot"的记录，**先确认是物理键还是软件**，别把用户的手动操作误记成工具生效（本次即因此误判一次）。
+
+---
+
+## 十五、过时 / 废弃 / 功能缺陷登记（DEPRECATED）
+
+> **用途**：登记已过时/废弃/被取代的**文件、会话、技能结论**，以及**已知功能缺陷**。
+> **规则**：发现新的过时项就追加（不删，保留追溯）；引用其它内容前先看本节。
+> **权威**：状态以 `TASKS.md`/`RESOURCES.md` 为准；本节只做「别再依赖」的索引。
+
+### 15.1 已废弃 / 合并 / 删除的文档与文件
+
+| 旧路径 | 处置 | 现在看 |
+|---|---|---|
+| `GAPS.md` | 并入 `TASKS.md` §5 | `TASKS.md` §5 |
+| `ANDROID-COMPAT.md` | 并入 `TASKS.md` §6 | `TASKS.md` §6 |
+| `FILES.md` | 并入 `RESOURCES.md` §3 | `RESOURCES.md` §3 |
+| `SESSION-INDEX.md` | 并入 `RESOURCES.md` §4 | `RESOURCES.md` §4 |
+| `LESSONS.md` | 删除（生成索引，冗余） | `PITFALLS.md` §0 + 正文 |
+| `db/`（SQLite 知识库） | 删除（无原生查询需求） | `rg` + pi 会话选择器 |
+| `archive/sessions-catalog-2026-10-03.jsonl` | 删除（db 数据源） | `RESOURCES.md` §4 |
+| `archive/2026-10-02-merged/*` | 旧文档原文（证据，非废弃） | `INDEX.md` §6 |
+
+### 15.2 已迁移 / 退役的外部资产
+
+| 来源 | 处置 | 日期 |
+|---|---|---|
+| `~/y700类原生安卓/` | 退役并入本 repo；文档进 `archive/topics/`；**类原生路线不做** | 2026-10-02 |
+| profile/技能/会话 → `.pi/` | 内聚迁移（会话 `01a0f22e`） | 2026-09-30 |
+| `backup/pi-assets-20260930-200129/`、`backup/pi-sessions-20260930/` | 迁移前备份（已 ignore） | 2026-09-30 |
+| `flashing-bundle/` + `flashing-bundle-*.tar.gz` | 换机迁移包快照（已 ignore） | 2026-09-29 |
+
+### 15.3 被取代 / 无效的会话
+
+| ID | 名称 | 状态 | 说明 |
+|---|---|---|---|
+| `01a0ed5b` | 分区：安卓GPT缩容与游戏备份 | superseded | 65G 缩容方案被持久根方案取代 |
+| `01a100d9` | 解锁：sn.img 解密 blob 取证 | superseded | blob 路线未采用；解锁由降级 1.1 达成 |
+| `01a101f3` | 引导：Linux→fastboot 能力核实 | superseded | 「能力不存在」被 PSCI vendor reset 推翻（见 `01a1021c`） |
+| `01a0f533` | 会话：微信端汇报进度 | junk | 空会话 |
+| `01a0f608` | 下载：续传（1T 盘暂缓） | junk | 无实质结论 |
+| `01a0fa4b` | 会话：OK 测试 / 测试：仅回 OK | junk | 空（重复 2 条） |
+| `01a0fabe` | 会话：测试 OK | junk | 空 |
+| `01a101b5` | 会话：问候（空） | junk | 空 |
+
+### 15.4 技能参考中已过时 / 待复核的结论
+
+| 文件 | 过时点 | 现状 |
+|---|---|---|
+| `qualcomm-android-flashing/.../grub-uefi-dual-boot.md` | 把 `fastboot flash unlock sn.img` 当解锁法 | 四代 1.5.x 无效；改用降级 `1.1.11.073` + `oem unlock`（PITFALLS #86–87） |
+| `qualcomm-android-flashing/.../tb321fu-region-lock.md`、`tb321fu-mod-package-boot.md` | TB321FU（Gen3）结论 | 仅作 Gen3 参考，**勿套 Gen4/TB322FC** |
+| `qualcomm-android-flashing/.../community-tool-status-2026-08.md`、`qualcomm-edl-flashing/.../community-tool-status-2026-08.md` | 2026-08 社区工具状态 | 可能过期，引用前复核 |
+| `gsi-device-adaptation/*` | 面向 **a 槽 Android/GSI** 的适配 | 项目已转容器路线（a 槽可弃）；仅历史参考 |
+
+> 本表仅列**已知**项；其余 skill references 未逐篇审计。发现过时就补入。
+
+### 15.5 已知功能缺陷（索引；详情见权威文档）
+
+| 缺陷 | 状态 | 权威 |
+|---|---|---|
+| 桌面空闲熄屏 → 整机重启 | 未解（规避：禁空闲熄屏） | `TASKS.md` §5 Q21 / G1-22 |
+| vk34 之后内核增量回归（vblank/PPM） | 二分中 | `TASKS.md` §5 Q22 / G1-23 |
+| 音频不可听 | 未收口 | `TASKS.md` G1-4 |
+| 相机不出流 | 未收口 | `TASKS.md` G1-5 |
+| TF 卡写丢失 | 未定性 | `TASKS.md` G1-6 |
+| BT 配对 / 回连 | 未收口 | `TASKS.md` G1-7 |
+| DP 输出（UCSI/altmode） | 未启用 | `TASKS.md` G1-9 |
+| NFC | 未修 | `TASKS.md` G1-10 |
+| CDSP | 未启用 | `TASKS.md` G1-11 |
+| `reboot recovery`（进 TWRP） | 无 vendor reset，不可用 | `archive/topics/FLASHCTL-2026-10-03.md` |
+| `reboot edl` | PSCI 已具备，未实测 | `TASKS.md` G1-24 |
+| 60 Hz 切黑屏 | 面板固件仅适配 120 Hz | `PITFALLS.md` #10/#14 相关 |

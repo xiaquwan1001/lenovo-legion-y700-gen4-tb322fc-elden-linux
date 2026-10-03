@@ -2,7 +2,7 @@
 # y700-elden 版本控制边界
 # 纳管：文档 / 脚本 / 内核补丁与 config / AI 记忆与技能 / 小体积证据
 # 排除：大二进制、可再生成产物、上游 clone、运行时状态、设备敏感数据
-# 台账与清理标记见 FILES.md；清理优先级见 RESOURCES.md §2.5
+# 台账与清理标记见 RESOURCES.md §3；清理优先级见 RESOURCES.md §2.5
 # 注意：gitignore 注释必须独占一行；整目录忽略会阻止 `!` 复活子文件
 # ============================================================
 
@@ -41,6 +41,16 @@
 !/backup/fw/
 /backup/fw/*
 !/backup/fw/README.md
+
+# 保留证据文本（分区列表 / getvar / pre-unlock 基线 / dmesg）
+!/backup/elden-dump.txt
+!/backup/HA2EXB0E-16+512/
+/backup/HA2EXB0E-16+512/*
+!/backup/HA2EXB0E-16+512/*.txt
+!/backup/HA2EXB0E-16+512/SHA256SUMS.unlock
+!/backup/HA2EXB0E-16+512/pre-unlock/
+!/backup/HA2EXB0E-16+512/pre-unlock/*.txt
+!/backup/HA2EXB0E-16+512/pre-unlock/SHA256SUMS
 
 /restore-259/*
 !/restore-259/*.md

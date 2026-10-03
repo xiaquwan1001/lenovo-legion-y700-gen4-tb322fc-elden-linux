@@ -78,9 +78,10 @@ PY
 echo
 echo "== 3. 过期字样扫描 =="
 stale=0
+# 注：PITFALLS.md 的 §15 故意登记旧文件名，故排除在本扫描外
 for pat in 'LESSONS\.md' 'GAPS\.md' 'ANDROID-COMPAT\.md' 'FILES\.md' 'SESSION-INDEX\.md' \
            'sessions-catalog' 'db/elden' 'db/build' 'db/README' '六视角文档集之一'; do
-  hit=$(grep -rlE "$pat" INDEX.md AGENTS.md DEVICE.md TASKS.md RESOURCES.md PITFALLS.md RUNBOOK-BRINGUP.md 2>/dev/null || true)
+  hit=$(grep -rlE "$pat" INDEX.md AGENTS.md DEVICE.md TASKS.md RESOURCES.md RUNBOOK-BRINGUP.md 2>/dev/null || true)
   if [ -n "$hit" ]; then
     bad "仍引用已删除/合并的 \`$pat\`: $(echo $hit | tr '\n' ' ')"
     stale=$((stale+1))

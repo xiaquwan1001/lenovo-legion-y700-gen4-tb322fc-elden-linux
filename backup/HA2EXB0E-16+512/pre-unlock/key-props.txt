@@ -1,0 +1,14 @@
+ro.serialno=HA2EXB0E
+ro.boot.serialno=HA2EXB0E
+ro.boot.hwboardid=SM8750P_16+512_13
+ro.boot.bootload_sn=EBC74CD1B224948C1FCD6511E393324757633D4B859984878EDB81E26975502E
+ro.build.display.id=TB322FC_CN_OPEN_USER_Q00041.1_W_ZUXOS_1.5.10.259_ST_260611
+ro.build.version.security_patch=2026-05-05
+ro.product.model=TB322FC
+ro.boot.flash.locked=1
+ro.boot.vbmeta.device_state=locked
+ro.boot.verifiedbootstate=green
+ro.boot.slot_suffix=_a
+sys.lenovo.widevine_security_level=L1
+ro.odm.lenovo.supported_csr_type=tee,widevine,strongbox
+ro.boot.bootloader=

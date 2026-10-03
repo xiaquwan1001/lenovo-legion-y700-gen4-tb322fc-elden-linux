@@ -1,0 +1,292 @@
+Captured at: 14:28:09.457
+Sensor Device:
+Total 42 h/w sensors, 42 running 0 disabled clients:
+0x0000000b) active-count = 1; sampling_period(ms) = {200.0}, selected = 200.00 ms; batching_period(ms) = {2000.0}, selected = 2000.00 ms
+0x00000110) active-count = 1; sampling_period(ms) = {66.7}, selected = 66.67 ms; batching_period(ms) = {0.0}, selected = 0.00 ms
+0x000003fe) active-count = 1; sampling_period(ms) = {200.0}, selected = 200.00 ms; batching_period(ms) = {0.0}, selected = 0.00 ms
+0x01000001) active-count = 1; sampling_period(ms) = {1.0}, selected = 1.00 ms; batching_period(ms) = {0.0}, selected = 0.00 ms
+Sensor List:
+0x0000000b) icm4x6xa Accelerometer Non-wakeup | TDK-Invensense  | ver: 514 | type: android.sensor.accelerometer(1) | perm: n/a | flags: 0x00000980
+	continuous | minRate=1.00Hz | maxRate=400.00Hz | FIFO (max,reserved) = (10000, 3000) events | non-wakeUp | 
+	highest rate level = 3, support shared mem: gralloc, 
+0x0000000c) icm4x6xa Accelerometer Wakeup | TDK-Invensense  | ver: 514 | type: android.sensor.accelerometer(1) | perm: n/a | flags: 0x00000981
+	continuous | minRate=1.00Hz | maxRate=400.00Hz | FIFO (max,reserved) = (10000, 3000) events | wakeUp | 
+	highest rate level = 3, support shared mem: gralloc, 
+0x00000015) qmc6308 Magnetometer Non-wakeup | qst             | ver: 196866 | type: android.sensor.magnetic_field(2) | perm: n/a | flags: 0x00000880
+	continuous | minRate=1.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (10000, 600) events | non-wakeUp | 
+	highest rate level = 1, support shared mem: gralloc, 
+0x00000016) qmc6308 Magnetometer Wakeup | qst             | ver: 196866 | type: android.sensor.magnetic_field(2) | perm: n/a | flags: 0x00000881
+	continuous | minRate=1.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (10000, 600) events | wakeUp | 
+	highest rate level = 1, support shared mem: gralloc, 
+0x00000029) icm4x6xa Gyroscope Non-wakeup | TDK-Invensense  | ver: 514 | type: android.sensor.gyroscope(4) | perm: n/a | flags: 0x000009c0
+	continuous | minRate=1.00Hz | maxRate=400.00Hz | FIFO (max,reserved) = (10000, 0) events | non-wakeUp | has-additional-info, 
+	highest rate level = 3, support shared mem: gralloc, 
+0x0000002a) icm4x6xa Gyroscope Wakeup | TDK-Invensense  | ver: 514 | type: android.sensor.gyroscope(4) | perm: n/a | flags: 0x000009c1
+	continuous | minRate=1.00Hz | maxRate=400.00Hz | FIFO (max,reserved) = (10000, 0) events | wakeUp | has-additional-info, 
+	highest rate level = 3, support shared mem: gralloc, 
+0x00000033) mn Ambient Light Sensor Non-wakeup | eminent         | ver: 512 | type: android.sensor.light(5) | perm: n/a | flags: 0x00000002
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 0) events | non-wakeUp | 
+0x00000034) mn Ambient Light Sensor Wakeup | eminent         | ver: 512 | type: android.sensor.light(5) | perm: n/a | flags: 0x00000003
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 0) events | wakeUp | 
+0x00000051) mn Proximity Sensor Non-wakeup | eminent         | ver: 512 | type: android.sensor.proximity(8) | perm: n/a | flags: 0x00000002
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 300) events | non-wakeUp | 
+0x00000052) mn Proximity Sensor Wakeup | eminent         | ver: 512 | type: android.sensor.proximity(8) | perm: n/a | flags: 0x00000003
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 300) events | wakeUp | 
+0x0000005b) gravity  Non-wakeup       | QTI             | ver: 1 | type: android.sensor.gravity(9) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=200.00Hz | FIFO (max,reserved) = (10000, 300) events | non-wakeUp | 
+0x0000005c) gravity  Wakeup           | QTI             | ver: 1 | type: android.sensor.gravity(9) | perm: n/a | flags: 0x00000001
+	continuous | minRate=5.00Hz | maxRate=200.00Hz | FIFO (max,reserved) = (10000, 300) events | wakeUp | 
+0x00000065) linear_acceleration       | QTI             | ver: 1 | type: android.sensor.linear_acceleration(10) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=200.00Hz | FIFO (max,reserved) = (10000, 300) events | non-wakeUp | 
+0x00000066) linear_acceleration_wakeup | QTI             | ver: 1 | type: android.sensor.linear_acceleration(10) | perm: n/a | flags: 0x00000001
+	continuous | minRate=5.00Hz | maxRate=200.00Hz | FIFO (max,reserved) = (10000, 300) events | wakeUp | 
+0x0000006f) Rotation Vector  Non-wakeup | QTI             | ver: 1 | type: android.sensor.rotation_vector(11) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=200.00Hz | FIFO (max,reserved) = (10000, 0) events | non-wakeUp | 
+0x00000070) Rotation Vector  Wakeup   | QTI             | ver: 1 | type: android.sensor.rotation_vector(11) | perm: n/a | flags: 0x00000001
+	continuous | minRate=5.00Hz | maxRate=200.00Hz | FIFO (max,reserved) = (10000, 0) events | wakeUp | 
+0x0000008d) qmc6308 Magnetometer-Uncalibrated Non-wakeup | qst             | ver: 196866 | type: android.sensor.magnetic_field_uncalibrated(14) | perm: n/a | flags: 0x00000880
+	continuous | minRate=1.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (10000, 600) events | non-wakeUp | 
+	highest rate level = 1, support shared mem: gralloc, 
+0x0000008e) qmc6308 Magnetometer-Uncalibrated Wakeup | qst             | ver: 196866 | type: android.sensor.magnetic_field_uncalibrated(14) | perm: n/a | flags: 0x00000881
+	continuous | minRate=1.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (10000, 600) events | wakeUp | 
+	highest rate level = 1, support shared mem: gralloc, 
+0x00000097) Game Rotation Vector  Non-wakeup | QTI             | ver: 1 | type: android.sensor.game_rotation_vector(15) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=200.00Hz | FIFO (max,reserved) = (10000, 300) events | non-wakeUp | 
+0x00000098) Game Rotation Vector  Wakeup | QTI             | ver: 1 | type: android.sensor.game_rotation_vector(15) | perm: n/a | flags: 0x00000001
+	continuous | minRate=5.00Hz | maxRate=200.00Hz | FIFO (max,reserved) = (10000, 300) events | wakeUp | 
+0x000000a1) icm4x6xa Gyroscope-Uncalibrated Non-wakeup | TDK-Invensense  | ver: 514 | type: android.sensor.gyroscope_uncalibrated(16) | perm: n/a | flags: 0x000009c0
+	continuous | minRate=1.00Hz | maxRate=400.00Hz | FIFO (max,reserved) = (10000, 0) events | non-wakeUp | has-additional-info, 
+	highest rate level = 3, support shared mem: gralloc, 
+0x000000a2) icm4x6xa Gyroscope-Uncalibrated Wakeup | TDK-Invensense  | ver: 514 | type: android.sensor.gyroscope_uncalibrated(16) | perm: n/a | flags: 0x000009c1
+	continuous | minRate=1.00Hz | maxRate=400.00Hz | FIFO (max,reserved) = (10000, 0) events | wakeUp | has-additional-info, 
+	highest rate level = 3, support shared mem: gralloc, 
+0x000000ac) sns_smd  Wakeup           | QTI             | ver: 1 | type: android.sensor.significant_motion(17) | perm: n/a | flags: 0x00000005
+	one-shot | maxDelay=0us | minDelay=-1us | no batching | wakeUp | 
+0x000000b5) step_detect  Non-wakeup   | QTI             | ver: 1 | type: android.sensor.step_detector(18) | perm: android.permission.ACTIVITY_RECOGNITION | flags: 0x00000006
+	special-trigger | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 300) events | non-wakeUp | 
+0x000000b6) step_detect  Wakeup       | QTI             | ver: 1 | type: android.sensor.step_detector(18) | perm: android.permission.ACTIVITY_RECOGNITION | flags: 0x00000007
+	special-trigger | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 300) events | wakeUp | 
+0x000000bf) pedometer  Non-wakeup     | QTI             | ver: 1 | type: android.sensor.step_counter(19) | perm: android.permission.ACTIVITY_RECOGNITION | flags: 0x00000002
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 300) events | non-wakeUp | 
+0x000000c0) pedometer  Wakeup         | QTI             | ver: 1 | type: android.sensor.step_counter(19) | perm: android.permission.ACTIVITY_RECOGNITION | flags: 0x00000003
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 300) events | wakeUp | 
+0x000000c9) sns_geomag_rv  Non-wakeup | QTI             | ver: 1 | type: android.sensor.geomagnetic_rotation_vector(20) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (10000, 0) events | non-wakeUp | 
+0x000000ca) sns_geomag_rv  Wakeup     | QTI             | ver: 1 | type: android.sensor.geomagnetic_rotation_vector(20) | perm: n/a | flags: 0x00000001
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (10000, 0) events | wakeUp | 
+0x000000de) ccd_tilt  Wakeup          | QTI             | ver: 256 | type: android.sensor.tilt_detector(22) | perm: n/a | flags: 0x00000007
+	special-trigger | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 0) events | wakeUp | 
+0x000000e8) wake_gesture  Wakeup      | lenovo          | ver: 1 | type: android.sensor.wake_gesture(23) | perm: n/a | flags: 0x00000005
+	one-shot | maxDelay=0us | minDelay=-1us | no batching | wakeUp | 
+0x0000010f) Device Orientation  Non-wakeup | QTI             | ver: 1 | type: android.sensor.device_orientation(27) | perm: n/a | flags: 0x00000002
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 0) events | non-wakeUp | 
+0x00000110) Device Orientation  Wakeup | QTI             | ver: 1 | type: android.sensor.device_orientation(27) | perm: n/a | flags: 0x00000003
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 0) events | wakeUp | 
+0x00000123) stationary_detect         | QTI             | ver: 1 | type: android.sensor.stationary_detect(29) | perm: n/a | flags: 0x00000004
+	one-shot | maxDelay=0us | minDelay=-1us | no batching | non-wakeUp | 
+0x00000124) stationary_detect_wakeup  | QTI             | ver: 1 | type: android.sensor.stationary_detect(29) | perm: n/a | flags: 0x00000005
+	one-shot | maxDelay=0us | minDelay=-1us | no batching | wakeUp | 
+0x0000012d) motion_detect             | QTI             | ver: 1 | type: android.sensor.motion_detect(30) | perm: n/a | flags: 0x00000004
+	one-shot | maxDelay=0us | minDelay=-1us | no batching | non-wakeUp | 
+0x0000012e) motion_detect_wakeup      | QTI             | ver: 1 | type: android.sensor.motion_detect(30) | perm: n/a | flags: 0x00000005
+	one-shot | maxDelay=0us | minDelay=-1us | no batching | wakeUp | 
+0x0000015f) icm4x6xa Accelerometer-Uncalibrated Non-wakeup | TDK-Invensense  | ver: 514 | type: android.sensor.accelerometer_uncalibrated(35) | perm: n/a | flags: 0x00000980
+	continuous | minRate=1.00Hz | maxRate=400.00Hz | FIFO (max,reserved) = (10000, 3000) events | non-wakeUp | 
+	highest rate level = 3, support shared mem: gralloc, 
+0x00000160) icm4x6xa Accelerometer-Uncalibrated Wakeup | TDK-Invensense  | ver: 514 | type: android.sensor.accelerometer_uncalibrated(35) | perm: n/a | flags: 0x00000981
+	continuous | minRate=1.00Hz | maxRate=400.00Hz | FIFO (max,reserved) = (10000, 3000) events | wakeUp | 
+	highest rate level = 3, support shared mem: gralloc, 
+0x000003fd) bu52053nvx Hall Effect Sensor Non-wakeup | ROHM            | ver: 393250 | type: qti.sensor.hall_effect(33171002) | perm: n/a | flags: 0x00000002
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 0) events | non-wakeUp | 
+0x000003fe) bu52053nvx Hall Effect Sensor Wakeup | ROHM            | ver: 393250 | type: qti.sensor.hall_effect(33171002) | perm: n/a | flags: 0x00000003
+	on-change | maxDelay=0us | minDelay=0us | FIFO (max,reserved) = (10000, 0) events | wakeUp | 
+0x01000001) Dynamic Sensor Manager    | Google          | ver: 1 | type: android.sensor.dynamic_sensor_meta(32) | perm: n/a | flags: 0x00000007
+	special-trigger | minRate=1000.00Hz | maxRate=1000.00Hz | no batching | wakeUp | 
+0x5f636779) Corrected Gyroscope Sensor | AOSP            | ver: 1 | type: android.sensor.gyroscope(4) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=400.00Hz | no batching | non-wakeUp | 
+0x5f676172) Game Rotation Vector Sensor | AOSP            | ver: 3 | type: android.sensor.game_rotation_vector(15) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=400.00Hz | no batching | non-wakeUp | 
+0x5f676273) Gyroscope Bias (debug)    | AOSP            | ver: 1 | type: android.sensor.accelerometer(1) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=400.00Hz | no batching | non-wakeUp | 
+0x5f67656f) GeoMag Rotation Vector Sensor | AOSP            | ver: 3 | type: android.sensor.geomagnetic_rotation_vector(20) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=400.00Hz | no batching | non-wakeUp | 
+0x5f677276) Gravity Sensor            | AOSP            | ver: 3 | type: android.sensor.gravity(9) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=400.00Hz | no batching | non-wakeUp | 
+0x5f6c696e) Linear Acceleration Sensor | AOSP            | ver: 3 | type: android.sensor.linear_acceleration(10) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=400.00Hz | no batching | non-wakeUp | 
+0x5f726f76) Rotation Vector Sensor    | AOSP            | ver: 3 | type: android.sensor.rotation_vector(11) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=400.00Hz | no batching | non-wakeUp | 
+0x5f797072) Orientation Sensor        | AOSP            | ver: 1 | type: android.sensor.orientation(3) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=400.00Hz | no batching | non-wakeUp | 
+Fusion States:
+9-axis fusion disabled (0 clients), gyro-rate= 200.00Hz, q=< 0, 0, 0, 0 > (0), b=< 0, 0, 0 >
+game fusion(no mag) disabled (0 clients), gyro-rate= 200.00Hz, q=< 0, 0, 0, 0 > (0), b=< 0, 0, 0 >
+geomag fusion (no gyro) disabled (0 clients), gyro-rate= 200.00Hz, q=< 0, 0, 0, 0 > (0), b=< 0, 0, 0 >
+Recent Sensor events:
+Device Orientation  Wakeup: last 10 events
+	 1 (ts=36.397979945, wall=14:07:39.129) 1.00, 
+	 2 (ts=95.997980390, wall=14:08:38.780) 1.00, 
+	 3 (ts=99.597980390, wall=14:08:42.247) 2.00, 
+	 4 (ts=100.497980390, wall=14:08:43.177) 1.00, 
+	 5 (ts=559.397980363, wall=14:16:22.087) 1.00, 
+	 6 (ts=658.197980495, wall=14:18:00.976) 3.00, 
+	 7 (ts=779.797980189, wall=14:20:02.860) 1.00, 
+	 8 (ts=809.397979750, wall=14:20:32.049) 2.00, 
+	 9 (ts=811.647979750, wall=14:20:34.458) 1.00, 
+	10 (ts=1259.347979571, wall=14:28:02.364) 1.00, 
+icm4x6xa Accelerometer Non-wakeup: last 50 events
+	 1 (ts=834.692543656, wall=14:20:58.470) 1.38, -0.15, 9.78, 
+	 2 (ts=834.893335531, wall=14:20:58.470) 1.38, -0.15, 9.78, 
+	 3 (ts=835.094132250, wall=14:20:58.470) 1.37, -0.15, 9.78, 
+	 4 (ts=835.294925114, wall=14:20:58.470) 1.37, -0.15, 9.78, 
+	 5 (ts=835.495686208, wall=14:20:58.470) 1.37, -0.15, 9.78, 
+	 6 (ts=835.696454802, wall=14:20:58.470) 1.37, -0.15, 9.78, 
+	 7 (ts=835.897233968, wall=14:21:00.156) 1.38, -0.15, 9.78, 
+	 8 (ts=836.098016572, wall=14:21:00.156) 1.37, -0.15, 9.78, 
+	 9 (ts=836.298762197, wall=14:21:00.156) 1.37, -0.15, 9.78, 
+	10 (ts=836.499494489, wall=14:21:00.156) 1.38, -0.15, 9.78, 
+	11 (ts=836.700232562, wall=14:21:00.156) 1.37, -0.15, 9.78, 
+	12 (ts=836.900979489, wall=14:21:00.156) 1.37, -0.14, 9.78, 
+	13 (ts=837.101738135, wall=14:21:00.156) 1.37, -0.15, 9.78, 
+	14 (ts=837.302506052, wall=14:21:00.156) 1.37, -0.14, 9.78, 
+	15 (ts=1259.197206289, wall=14:28:02.432) 7.95, -2.06, 5.09, 
+	16 (ts=1259.393227956, wall=14:28:02.432) 6.20, 0.39, 7.70, 
+	17 (ts=1259.589307539, wall=14:28:02.432) 5.18, 0.79, 8.62, 
+	18 (ts=1259.786171446, wall=14:28:03.046) 3.45, 1.74, 8.88, 
+	19 (ts=1259.983608164, wall=14:28:03.046) 4.38, 1.25, 8.77, 
+	20 (ts=1260.181496550, wall=14:28:03.046) 3.97, 0.89, 8.89, 
+	21 (ts=1260.379944675, wall=14:28:05.047) 3.25, 0.84, 9.31, 
+	22 (ts=1260.579198998, wall=14:28:05.047) 3.01, 0.93, 9.75, 
+	23 (ts=1260.779101446, wall=14:28:05.047) 3.53, 0.23, 8.95, 
+	24 (ts=1260.979660612, wall=14:28:05.047) 3.83, 0.52, 8.94, 
+	25 (ts=1261.180858112, wall=14:28:05.047) 3.95, 0.32, 8.97, 
+	26 (ts=1261.382650560, wall=14:28:05.047) 4.00, 0.47, 8.92, 
+	27 (ts=1261.584972435, wall=14:28:05.047) 4.13, 0.59, 8.90, 
+	28 (ts=1261.787739779, wall=14:28:05.047) 4.23, 0.84, 8.78, 
+	29 (ts=1261.990853893, wall=14:28:05.047) 4.10, 0.84, 8.89, 
+	30 (ts=1262.194213737, wall=14:28:05.047) 4.06, 0.82, 8.82, 
+	31 (ts=1262.397740352, wall=14:28:07.051) 4.04, 0.77, 8.90, 
+	32 (ts=1262.600729206, wall=14:28:07.051) 4.03, 0.69, 8.89, 
+	33 (ts=1262.802320977, wall=14:28:07.051) 3.90, 0.55, 8.98, 
+	34 (ts=1263.003102175, wall=14:28:07.051) 3.89, 0.54, 8.95, 
+	35 (ts=1263.203883893, wall=14:28:07.051) 3.92, 0.56, 8.99, 
+	36 (ts=1263.404666446, wall=14:28:07.051) 3.76, 0.28, 9.13, 
+	37 (ts=1263.605450612, wall=14:28:07.051) 4.56, 1.10, 8.69, 
+	38 (ts=1263.806236966, wall=14:28:07.051) 5.16, 1.41, 7.89, 
+	39 (ts=1264.007025560, wall=14:28:07.051) 4.94, 1.18, 8.42, 
+	40 (ts=1264.207816237, wall=14:28:07.051) 4.90, 1.21, 8.42, 
+	41 (ts=1264.408608789, wall=14:28:09.047) 4.92, 1.29, 8.31, 
+	42 (ts=1264.609402800, wall=14:28:09.047) 5.01, 1.43, 8.21, 
+	43 (ts=1264.810198008, wall=14:28:09.047) 4.75, 1.31, 8.43, 
+	44 (ts=1265.010994258, wall=14:28:09.047) 4.31, 1.20, 8.90, 
+	45 (ts=1265.211791237, wall=14:28:09.047) 4.34, 1.25, 8.55, 
+	46 (ts=1265.412582956, wall=14:28:09.047) 4.18, 1.22, 8.79, 
+	47 (ts=1265.613366758, wall=14:28:09.047) 4.21, 1.22, 8.72, 
+	48 (ts=1265.814151185, wall=14:28:09.047) 4.21, 1.26, 8.85, 
+	49 (ts=1266.014936602, wall=14:28:09.047) 3.99, 0.98, 8.82, 
+	50 (ts=1266.215723425, wall=14:28:09.047) 3.83, 0.85, 9.00, 
+bu52053nvx Hall Effect Sensor Wakeup: last 1 events
+	 1 (ts=5.681187653, wall=14:07:08.288) 1.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 
+mn Proximity Sensor Wakeup: last 14 events
+	 1 (ts=7.389070986, wall=14:07:09.996) 0.00, 0.00, 0.00, 
+	 2 (ts=9.349830830, wall=14:07:11.957) 5.00, 0.00, 0.00, 
+	 3 (ts=86.865108202, wall=14:08:29.472) 5.00, 0.00, 0.00, 
+	 4 (ts=551.077659425, wall=14:16:13.690) 5.00, 0.00, 0.00, 
+	 5 (ts=553.312650675, wall=14:16:15.919) 5.00, 0.00, 0.00, 
+	 6 (ts=555.157097446, wall=14:16:17.764) 5.00, 0.00, 0.00, 
+	 7 (ts=557.460510206, wall=14:16:20.067) 5.00, 0.00, 0.00, 
+	 8 (ts=779.615763105, wall=14:20:02.223) 5.00, 0.00, 0.00, 
+	 9 (ts=780.200404407, wall=14:20:02.810) 0.00, 0.00, 0.00, 
+	10 (ts=784.294027584, wall=14:20:06.901) 5.00, 0.00, 0.00, 
+	11 (ts=784.488993730, wall=14:20:07.096) 0.00, 0.00, 0.00, 
+	12 (ts=784.674235293, wall=14:20:07.281) 5.00, 0.00, 0.00, 
+	13 (ts=785.259043470, wall=14:20:07.867) 0.00, 0.00, 0.00, 
+	14 (ts=1259.120978529, wall=14:28:01.728) 5.00, 0.00, 0.00, 
+Active sensors:
+icm4x6xa Accelerometer Non-wakeup (handle=0x0000000b, connections=1)
+Device Orientation  Wakeup (handle=0x00000110, connections=1)
+bu52053nvx Hall Effect Sensor Wakeup (handle=0x000003fe, connections=1)
+Dynamic Sensor Manager (handle=0x01000001, connections=1)
+Socket Buffer size = 984 events
+WakeLock Status: not held 
+Mode : NORMAL
+Sensor Privacy: disabled
+4 open event connections
+Connection Number: 0 
+	Operating Mode: NORMAL
+	 com.zui.server.policy.ZuiPhoneWindowManager$4 | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 bu52053nvx Hall Effect Sensor Wakeup 0x000003fe | first flush pending: false | pending flush events 0 
+Connection Number: 1 
+	Operating Mode: NORMAL
+	 com.android.server.power.FaceDownDetector | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 icm4x6xa Accelerometer Non-wakeup 0x0000000b | first flush pending: false | pending flush events 0 
+Connection Number: 2 
+	Operating Mode: NORMAL
+	 com.android.server.SensorNotificationService | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Dynamic Sensor Manager 0x01000001 | first flush pending: false | pending flush events 0 
+Connection Number: 3 
+	Operating Mode: NORMAL
+	 com.android.server.wm.WindowOrientationListener$OrientationSensorJudge | WakeLockRefCount 0 | uid 1000 | cache size 0 | max cache size 0 | has sensor access: true
+	 Device Orientation  Wakeup 0x00000110 | first flush pending: false | pending flush events 0 
+0 open direct connections
+Previous Registrations:
+14:28:03 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:28:01 + 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:28:01 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:28:01 + 0x0000000b pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod= 2000000us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:21:00 - 0x0000000b pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:21:00 - 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:20:26 - 0x0000000b pid= 3408 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:20:25 + 0x0000000b pid= 3408 uid= 1000 samplingPeriod=  200000us batchingPeriod=       0us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:20:20 - 0x0000000b pid= 3408 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:20:19 + 0x0000000b pid= 3408 uid= 1000 samplingPeriod=  200000us batchingPeriod=       0us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:20:18 - 0x0000000b pid= 3408 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:20:17 + 0x0000000b pid= 3408 uid= 1000 samplingPeriod=  200000us batchingPeriod=       0us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:20:08 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:20:07 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:20:07 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:20:02 + 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:20:02 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:20:02 + 0x0000000b pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod= 2000000us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:19:37 - 0x0000000b pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:19:37 - 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:16:22 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:16:20 + 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:16:20 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:16:20 + 0x0000000b pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod= 2000000us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:16:18 - 0x0000000b pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:16:18 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:16:18 - 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:16:17 + 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:16:17 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:16:17 + 0x0000000b pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod= 2000000us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:16:17 - 0x0000000b pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:16:16 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:16:16 - 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:16:15 + 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:16:15 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:16:15 + 0x0000000b pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod= 2000000us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:16:15 - 0x0000000b pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:16:14 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:16:14 - 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:16:13 + 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:16:13 + 0x0000000b pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod= 2000000us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:16:13 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:09:21 - 0x0000000b pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:09:21 - 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:09:06 - 0x0000000b pid= 3408 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:09:05 + 0x0000000b pid= 3408 uid= 1000 samplingPeriod=  200000us batchingPeriod=       0us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:08:30 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:08:29 + 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:08:29 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:08:29 + 0x0000000b pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod= 2000000us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:08:18 - 0x0000000b pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:08:18 - 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:07:32 - 0x0000000b pid= 4952 uid=10136 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:07:31 + 0x0000000b pid= 4952 uid=10136 samplingPeriod=  200000us batchingPeriod=       0us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, android.view.OrientationEventListener)
+14:07:12 - 0x00000052 pid= 3177 uid=10191 samplingPeriod=   N/A  us batchingPeriod=   N/A  us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:07:09 + 0x00000052 pid= 3177 uid=10191 samplingPeriod=   20000us batchingPeriod=       0us result=OK (sensor, package): (mn Proximity Sensor Wakeup , com.android.systemui.util.sensors.ThresholdSensorImpl$1)
+14:07:09 + 0x00000110 pid= 2657 uid= 1000 samplingPeriod=   66667us batchingPeriod=       0us result=OK (sensor, package): (Device Orientation  Wakeup , com.android.server.wm.WindowOrientationListener$OrientationSensorJudge)
+14:07:09 + 0x01000001 pid= 2657 uid= 1000 samplingPeriod=    1000us batchingPeriod=       0us result=OK (sensor, package): (Dynamic Sensor Manager     , com.android.server.SensorNotificationService)
+14:07:08 + 0x0000000b pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod= 2000000us result=OK (sensor, package): (icm4x6xa Accelerometer Non-wakeup, com.android.server.power.FaceDownDetector)
+14:07:08 + 0x000003fe pid= 2657 uid= 1000 samplingPeriod=  200000us batchingPeriod=       0us result=OK (sensor, package): (bu52053nvx Hall Effect Sensor Wakeup, com.zui.server.policy.ZuiPhoneWindowManager$4)

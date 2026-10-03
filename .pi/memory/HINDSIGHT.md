@@ -3,559 +3,7 @@
 Techniques and root causes proven on Qualcomm/Lenovo tablet flashing. Host-machine
 
 <!-- Older entries compacted -->
-论：5 个来源 = 2 条互不相干的线
-
-| 线 | 来源 | 本质 | 对本机（SM8750P） |
-|---|---|---|---|
-| **A. Linux 桌面线** | denial、droidloom | 主线 Linux 上把 Android 应用当原生 Wayland 窗口跑 | ⚠️ ARM64 未打包；是 Waydroid 的替代形态 |
-| **B. Android 虚拟化线** | DroidVM、AOSP custom_vm.md、lfdevs 讨论#2 | 宿主 Android 上经 Gunyah/GenieZone/KVM 跑真 VM | ✅ **正对本机，且官方推荐就是 SM8750** |
-
-## 关键发现
-
-**① DroidVM 直接接上本机的 `EL2-VIRT` 结论。** 本机 EL2 被签名 Gunyah 占死，主线 Linux 拿不到 KVM；而 DroidVM 在 **Android 侧**用现成的 `/dev/gunyah` 跑 crosvm/QEMU，**绕开了"移植 downstream gunyah 主 VM 驱动"这个数天～数周的大坑**。它明说推荐 SoC = Snapdragon 8 Elite (SM8750)，要求 root（本机 KSU 已有）。这把 `EL2-VIRT` §6 的"唯一路线"从数周降到数小时。
-
-**② 本地核对的一个硬缺口**：本机 `stock-src/android_kernel_lenovo_sm8750`（仅 1670 文件）**连 `drivers/virt/gunyah` 都没有**，`arch/arm64/gunyah` 也缺 —— 主线移植路线连源码都得先去别处取。更坐实了"走 Android 侧"。
-
-**③ 8 Elite 的免 pvmfw 红利**：polygraphene 指南（环境就是本机 Y700 gen4）证实 8 Elite 支持 `--protected-vm-without-firmware`，无需按 pvmfw 要求给 guest 内核做 avbtool 签名（8 Gen2/3 才必须）。附注：Y700 的 pvmfw 内嵌 AOSP testkey，公钥 sha1 `2597c218`，与本机 boot AVB key 同源。
-
-**④ 已收集的坑清单（DroidVM wiki + polygraphene）**：`ulimit -l unlimited`（Android 默认 locked-mem 仅 64 kB → OOM）、guest 内核需 `CONFIG_DMA_RESTRICT_POOL`（Alpine/Debian 云镜像常缺，用它的内置内核）、Gunyah RM 拒绝 → 切 "Prepare Lend mTHP"、Windows 需 `gunyah-guest-drivers-windows`。**图形加速（virtio_gpu/VirGL）是这栈最不确定项**——polygraphene 在 SM8750 上实测未通。
-
-**⑤ 无 root 方案**：Podroid（Alpine+docker，AVF/QEMU 双后端）、TerminalAppPlus（AOSP17，U-Boot/qcow2/KMS 采集绕 SELinux，无 3D）。本机已有 root，走 DroidVM 更省事；无 root 的意义主要在"不动系统/不过检测"。
-
-## 建议优先级（仅建议）
-宿主 Android + DroidVM **>** denial 作桌面壳 **>** droidloom **>** 主线 Gunyah 驱动移植。
-
-需要的话，下一步可做**只读验证**（`/dev/gunyah`、`/apex/com.android.virt/bin/{vm,crosvm}`、`vm list`）来确认本机 AVF 工具链是否齐全。
-
-
-## Memory - 2026-10-02
-
-TB322FC 新机（同型号 16+512）bring-up 策略（2026-10-02 定）：选「只动 b 槽 + LUN0 GPT、不碰 a 槽」路线——b 槽直启自签 mainline（boot_b/dtbo_b/vbmeta_b flags3 + 自签 avb.key），a 槽 stock Android 作安全网；512G 与旧机唯一差异是 GPT 布局，GPT 手术脚本已按「读实际 GPT」参数化，需先 dump。首次进入 mainline 用「纯 RAM 版」boot.img（cmdline 去掉 elden_root，`ROOTARGS=` 即空；build-boot.sh 已用 `${ROOTARGS-…}` 支持空值）：它仍会无条件起 USB-NCM+SSH(192.168.7.1)，足够做 GPT dump/手术/恢复 rootfs，避免先覆盖 a 槽 dtbo（ABL 会用 stock dtbo overlay 内嵌 DTB → 卡 logo，故 fastboot boot 需 dummy dtbo）。GPT dump：442G 级 4096B 扇区，主表取 LBA0..5，备表取 [backup_lba-4 .. backup_lba]（无头 0x20 8B LE 读 backup_lba）。备份 b 槽原厂分区用 `fastboot fetch <part> <out>`（只读）。
-
-
-## Memory - 2026-10-02
-
-无 sudo 检查/提取 Android 分区镜像：`debugfs`（e2fsprogs 自带）可直接读 raw ext4，无需 loop mount/root。用法：`debugfs -R 'ls -l /path' img`、`debugfs -R 'dump /path/file /tmp/out' img`。Android APEX 是 zip，`unzip -l xxx.apex` 里有 `apex_payload.img`（ext4），再 debugfs 进去即可查 `bin/`、`etc/`。据此可从 stock ROM 的 system.img 离线提取 AVF 全套（crosvm/vm/microdroid kernel/initrd/u-boot）。读取 build.prop 判镜像来源：`debugfs -R 'dump /system/build.prop /tmp/bp' img`。
-
-
-## Automatic settled outcome - 2026-10-02
-
-A1/A4/A7 已落地并验证。汇报如下。
-
-## 完成清单（数字先行）
-
-| 项 | 产出 | 状态 |
-|---|---|---|
-| **A1 内核** | `out/boot-elden-vk40.img`（持久根）+ `out/boot-elden-vk40-ram.img`（纯 RAM） | ✅ 编成 |
-| A1 模块 | `out/modules-7.2.0-debug-….tar.gz`（strip 后 20M，**1484** 个 `.ko`） | ✅ |
-| A1 配置 | `patches/config-vk40-bringup`（netd+camera+thermal+audio 全合，补丁 0001–0011 全在树） | ✅ |
-| **A4 runbook** | `BRINGUP-NEW-TABLET-2026-10-02.md` + `scripts/gpt-dump.sh` + b 槽签名包 `bootslot-b/boot_b_vk40{,-ram}.img` | ✅ |
-| **A7 基准** | `scripts/bench-run.sh`（CPU/mem/disk/GLES/Vulkan，工具自适应+温控采样）+ `bench-install.sh` | ✅ 主机冒烟通过 |
-| A2/A3/A5/A9 | Mesa 26.1.8、Waydroid 镜像、rootfs 归档、相机 20 `.ko` | ✅ 已复核 |
-| 文档 | `PLAN-NODEV-2026-10-02.md`、`INDEX.md` 已登记 | ✅ |
-
-## 关键设计（去掉了原方案的一个坑）
-
-发现 **b 槽直启比 `fastboot boot` 干净**：`fastboot boot` 走 a 槽，ABL 会用 stock dtbo overlay 内嵌 DTB → 卡 logo，必须先覆盖 `dtbo_a`。改用新路线后**全程不碰 a 槽**：
-
-1. **RAM 版 vk40 刷 b 槽**做首次 bring-up（仍无条件起 USB-NCM + SSH `192.168.7.1`，足够 dump GPT / 手术 / 恢复 rootfs）→ 确认已读 `rootfs/init`：usb-gadget/sshd 不受 `on_initramfs` 限制。
-2. b 槽原厂分区用 **`fastboot fetch`** 只读备份（fastboot 36 支持）。
-3. GPT dump 用新 `scripts/gpt-dump.sh`（4096B 扇区，主表 LBA0..5、备表 `backup_lba-4..backup_lba`；已用旧机 dump 验证 `od` 解出 `backup_lba=61390847` 正确）。
-4. 手术脚本**已按实际 GPT 参数化**，512G 只需现 dump（`--linux-gib 128` 建议）。
-5. 固化为 b 槽持久直启 → 改内核不再需要 fastboot。
-
-顺带修了 `scripts/build-boot.sh`：`ROOTARGS` 改用 `${ROOTARGS-…}`，支持显式空值 = 纯 RAM 镜像。
-
-## sudo 清单（未变）
-- **建议**：`sudo bash scripts/fix-fstab-samsung.sh`（唯一遗留）。
-- 实测 **avbtool 签名无需 pycryptodome**（本机已能签出 `boot_b_vk40`），其余可选包都不是必需。
-
-## 请你拍板（到货当天用）
-1. **Linux 分区大小**：128 GiB（建议）还是更大？
-2. **a 槽 Android 保不保**：要保则手术后需 `fastboot erase userdata` 重建 `/data`（约 300G+）；纯 Linux 可跳过。
-3. 目标：到 RAM 验收（Phase 2）还是走到持久 Linux + Waydroid（Phase 5）？
-
-细节全在 `BRINGUP-NEW-TABLET-2026-10-02.md`。
-
-
-## Automatic settled outcome - 2026-10-02
-
-分析完成，已作为 **§9 结合本地研发流程与现有资源** 追加进 `ARM-VIRT-RESEARCH-2026-10-02.md`（INDEX 已更新）。核心结论如下。
-
-## 最重要的发现：核心资产我们**已经握有**，不用下载
-
-从本项目自己的 **stock ROM 备份**（`/mnt/Samsung/l2/system_a.pristine.img`，经 `debugfs` 无 sudo 确认 = `TB322FC_…_259`, **Android 16**）里，离线提取出了 `com.android.virt.apex`（87.8 MB），内含：
-
-| 组件 | 证据 |
-|---|---|
-| `bin/crosvm` 10.7 MB | strings 出 `hypervisor/src/gunyah/*`、`HypervisorKind::Gunyah`、`qcom_trusted_vm_id/pas_id` |
-| `bin/vm` 1.2 MB | `run`/`run-microdroid`/`console`/`list`/`info`，VmConfig 字段与 AOSP 文档一致 |
-| `microdroid_kernel` 12.2 MB (`6.6.77-android15`) + initrd | guest 内核/initrd |
-| `u-boot.bin` 719 KB | U-Boot 启动路径 |
-| `virtualizationservice`/`virtmgr`/`vmnic`… | AVF 服务 |
-
-**这意味着 DroidVM/Podroid 只是 APK 封装**；底层 `crosvm`+`vm` 我们自有（polygraphene 才需要从 Release 下 `crosvm-a16`）。我们要补的只有 **guest rootfs + guest 内核 + 磁盘工具**。
-
-## 与本地流程的契合点
-
-- **双槽策略天然对齐**：D 轨只动 **a 槽 stock Android**、不碰 b 槽 mainline，与 `BRINGUP-NEW-TABLET`「全程不动 a 槽/绝不动安全鞋」一致；最坏 guest 崩，不动 hyp/XBL/GPT。
-- **A 轨可预置**：下 Debian nocloud rootfs、按 `microdroid_defconfig` 思路编带 `CONFIG_DMA_RESTRICT_POOL` 的 guest 内核、装 `qemu-utils` —— 全在主机。
-- **任务制可套用**：建议新增与 F0–F5 解耦的 **「D 轨」**，拆 `task-14` 只读勘察 → `task-15` microdroid 最小 VM → `task-16` Debian guest → `task-17` DroidVM APK 实测；沿用「worker 只报原始日志、编排者独立复跑」。
-- **坑已归档**：`ulimit -l unlimited`、SWIOTLB、RM/mTHP、8 Elite 免 pvmfw、图形最不确定。
-
-## 差距（都不阻塞）
-
-- 本地 AOSP 树是 **Lineage 20 / AOSP 13**，`external/crosvm` **只有 KVM 无 Gunyah** → 仅参考，不能直接搬。
-- 主机缺 `qemu-img`/`virt-resize`/`pycryptodome`；guest rootfs/kernel 待备。
-- 设备侧需 root（旧机 a 槽已有 KSU；新机 a 槽待定）。
-
-## 需你拍板（决定 D 轨落在哪台）
-
-1. **新机 vs 旧机角色**：新机做 mainline 主力、旧机当 Android VM 宿主？还是新机双系统都上？
-2. **新机 a 槽是否保 stock Android 安全网**（若保，D 轨可跑在其上或旧机）。
-3. D 轨是否立项（我建议**先手动 `vm run` 最小验证**，再考虑 DroidVM APK）。
-
-只要你选定设备角色，我就可以按 A 轨把 guest 镜像/内核在主机侧备好，等设备上线做只读勘察。
-
-
-## Automatic settled outcome - 2026-10-02
-
-路线决定已落盘 `ROUTE-DECISION-2026-10-02.md`（INDEX/PLAN-NODEV 已登记）。核心如下。
-
-## 决定：两轨分机（不是替代）
-
-| | **新机 16+512** | **旧机 12+256** |
-|---|---|---|
-| a 槽 | stock Android 安全网（手术后重建 /data，暂不 root） | stock Android **已 root** → **D 轨宿主** |
-| b 槽 | **mainline Linux**（接力主线） | stock（备用） |
-| 用途 | Waydroid / 桌面 / 相机 / 音频 / 基准 / Win-x86 | Android 日常 + **AVF/Gunyah 真 VM** |
-
-## 为什么（正反各一遍）
-- **旧机做 D 轨** ✅：root 现成（SUSFS/KSU）、`/data` 211G、ROM 就是 AVF 资产来源机（`com.android.virt.apex` 已提取）；与新机主线**互不抢设备锁**。
-- **新机做 D 轨** ❌：① 与「GPT 手术要 `erase userdata`」冲突；② 一机双轨抢设备锁；③ 新机 a 槽还要额外 root。收益全无。
-
-## 合并后的资产/冲突收口
-- **Waydroid 留在新机 mainline**（Mesa 26.1.8 就绪）→ 不变。
-- **Win-x86 留新机**；DroidVM 的 Windows 是另一路线，并列比较。
-- **新机 BRINGUP 无需改**（本就"只动 b 槽、a 槽保安全网"），且 D 轨跑旧机 → **两轨可真正并行**。
-- `stock-src` 无 `drivers/virt/gunyah`、AOSP 树 crosvm 无 Gunyah → 再次坐实**主线移植路线放弃、走 Android 侧**。
-
-## D 轨任务拆解（task-14…17，操作对象=旧机）
-14 只读勘察 → 15 最小 headless VM（microdroid）→ 16 Debian guest → 17 DroidVM APK 实测。均为用户态，风险面不碰 hyp/XBL/ABL/GPT。
-
-## 待你确认（3 条）
-1. **设备角色**是否按上表（新机=mainline，旧机=Android+D 轨）？
-2. **D 轨立项**，先走 **① 手动 `vm run` 最小验证** 还是直接 **② DroidVM APK**？（建议 ①→②）
-3. 是否现在开始**主机 A 轨预置**：A11 下 Debian nocloud arm64 rootfs、A12 编带 `CONFIG_DMA_RESTRICT_POOL` 的 guest 内核（都不碰设备）；A13 的 `qemu-utils` 需你 sudo。
-
-
-## Memory - 2026-10-02
-
-y700-elden 任务定位（2026-10-02 用户重述，已落盘 MISSION-SCOPE.md 为总纲）：① 机型唯一 = TB322FC/elden/SM8750(P)，研究内容只有固件+驱动；② **同型号多台单元物理地位完全等价，唯一差异是容量（内存/UFS→GPT 数值）**，身份用 (SN, hwboardid, 容量) 记于 DEVICES.md，"新机/旧机"不是角色，任务按单元当前状态分派，原"两轨分机"决定作废（D 轨更名 G2-S2，task-14..17 → T5/T6）；③ 双目标：G1 = 功能健全的 Linux 且正常驱动原厂全部固件（8 条硬验收，缺口=音频听声/相机出流/TF卡/BT配对）；G2 = 最大化兼容安卓（四层并存：S0 两槽直启 Android / S1 Waydroid / S2 Android 侧 AVF-Gunyah VM / S3 denial-droidloom 观察），设计文档 ANDROID-COMPAT-PLAN.md。文件改名：BRINGUP-NEW-TABLET-2026-10-02.md → BRINGUP-UNIT-2026-10-02.md（设备无关+容量参数化 $SN/$CAP/$BLK/$BACKUP_LBA/$LINUX_GIB/$BAK）。备份目录规范 backup/<SN>-<容量档>/，禁用 new-tablet 命名；禁止跨容量档复用 GPT 二进制。
-
-
-## Automatic settled outcome - 2026-10-02
-
-文档集已按新定位整体重构。数字结论先给：
-
-## 变更总账（12 个文件，3 新建 + 1 改名 + 8 修订）
-
-| 动作 | 文件 | 核心内容 |
-|---|---|---|
-| **新建·总纲** | `MISSION-SCOPE.md` (194 行) | 机型唯一（TB322FC×SM8750P，只研究**固件+驱动**）/ **§2 设备等价原则** / **§3 G1 八条硬验收 + 固件清单 + 驱动缺口分级** / G2 入口 / 6 条决策原则 / **§7 术语统一** / **§8 被覆盖旧结论清单** |
-| **新建·台账** | `DEVICES.md` | U1=`HA2ABH62` 12+256、U2=16+512；**容量差异参数表**（扇区 4096、`backup_lba`、`userdata`、建议 `linux17`）；按状态分派快照；命名规范 `backup/<SN>-<容量档>/` |
-| **新建·G2 设计** | `ANDROID-COMPAT-PLAN.md` | 四层并存 **S0 两槽直启 / S1 Waydroid / S2 AVF-Gunyah VM / S3 观察** + 5 维兼容度打分 + **`elden-droid` 兼容层**（传感器注入、相机 `v4l2loopback` 共享、音频、身份伪装边界）+ 任务 **T1–T8** |
-| **改名+改写** | `BRINGUP-NEW-TABLET-…` → **`BRINGUP-UNIT-2026-10-02.md`** | 新增 **§0.0 单元参数表**（`$SN/$CAP/$BLK/$SECTOR/$BACKUP_LBA/$LINUX_GIB/$BAK`）；命令里的 `backup/new-tablet/`→`$BAK`、`/dev/sda`→`$BLK`；GPT 校验改「读实际输出不预设」；Phase 2 验收并入 G1（含固件加载） |
-| 修订 v2 | `ROUTE-DECISION-2026-10-02.md` | **「两轨分机」作废**（§2/§3/§7 重写为按状态分派）；技术结论保留；task-14…17 → **T5/T6** |
-| 修订 | `PLAN-NODEV-2026-10-02.md` | 去掉「到货前/新机角色」框架；A11–A13 更名 G2-S2 预置；**新增 A14 传感器注入、A15 验收用例** |
-| 加注 | `ARM-VIRT-RESEARCH-2026-10-02.md` | §9.4 D 轨→G2-S2 且不绑旧机；§9.6「角色先定」作废 |
-| 重写入口 | `INDEX.md` | 新增 **§M 使命与范围（6 行）**；§0 现状改 G1/G2 口径 + U1 现状覆盖块（原 vk19/`sda17` 标为历史）；文档地图 +3 总纲文件、ROUTE-DECISION 标 ⚠️v2；§3 命令改 vk40 + 台账采集 + `gpt-dump.sh`；§4 优先级按目标重排 |
-| 修订 | `AGENTS.md` | 开头改为机型唯一 + G1/G2 + **设备等价** + 术语规则；规则补「不跨单元复用 GPT / 先 `fetch` 备份 / 不动 a 槽 / 主线优先」 |
-| 加导航 | `HANDOFF.md` | 顶部指向总纲/台账/兼容方案；§1 标注「本文的设备 = 台账 U1」 |
-| 追加 | `PITFALLS.md` **#80/#81** | #80 把「第几台机器」当角色的三类代价；#81「状态才是前置条件」 |
-| 记录 | `DOCS-CHANGELOG-2026-10-02.md` | 逐文件变更表 + 未改动的历史档案清单 + 遗留 3 项 |
-
-## 新设定（写入所有入口）
-1. **机型唯一**：只研究 TB322FC/elden/SM8750(P)；内容只有固件 + 驱动。
-2. **设备等价**：同型号多台**物理地位完全等价**，唯一差异 = 容量（→ 仅 GPT 数值不同）。身份 = `(SN, hwboardid, 容量)`，**"新机/旧机"不是角色**，任务**按单元当前状态
-
-
-## Memory - 2026-10-02
-
-y700-elden 前提更新（2026-10-02 用户决定，已落盘六视角文档集）：① **a 槽 Android 可以不要**——G2 的目标正是"没有安卓时用 ARM Linux 侧参考社区资源完成安卓兼容"，主路线=容器（Waydroid，备胎 redroid），VM 因本机无 KVM（EL2 被签名 Gunyah 占）只作调研；回退靠 backup/stock-259 + EDL 全量包，不靠槽位常驻；覆盖 a 槽前必须先做"真 Android 对照取证"（属性/DRM 级别/传感器读数/App 行为），不可复得。② **Linux 分区容量不固定**，按项目体量估算后一次给足（估算表在 DEVICE.md §3），扩容首选回收 Android 专属分区（super_a/b 等），不是二次缩 userdata。③ **G2 边界不得预设结论**：容器可跑 GMS 有社区先例（redroid GMS via OpenGApps/MicroG/MindTheGapps；casualsnek/waydroid_script 有 gapps+Widevine L3+`certified` 未认证注册流程；WayDroid-ATV 内置 GApps+Widevine L3），故 Play Integrity/Widevine 一律记为待调查 GAPS Q1。④ 文档已按六视角合并：INDEX/DEVICE/TASKS/RESOURCES/GAPS/ANDROID-COMPAT + RUNBOOK-BRINGUP；旧文档进 archive/topics（41 个）与 archive/2026-10-02-merged（6 个）。
-
-
-## Automatic settled outcome - 2026-10-02
-
-三点前提更新已落地，文档按你要的六视角合并完成。
-
-## 1. 前提更新（写进所有入口）
-
-| 你的指示 | 落地方式 |
-|---|---|
-| **Linux 容量不固定，按项目体量决定** | `DEVICE.md` §3 新建**体量估算表**（rootfs 15–20 G / Waydroid 30–50 G / x86 chroot 10–15 G / 每 VM 镜像 20–60 G / 设备侧构建 25–40 G / 日志 5–15 G ⇒ **合计 105–180 G**）+ 4 条决策规则：**一次给足**（GPT 缩容不可逆，二次代价高）、可再生大对象留主机、**扩容首选回收 Android 专属分区**而不是二次缩 `userdata`。写死的 65/128 GiB 全部删除，改为 `LINUX_GIB` 变量 + GAPS Q7「上机后 `du` 实测回填」。 |
-| **a 槽 Android 可以不要** | 目标形态改为「**b 槽 mainline 是唯一工作系统**」；回退从"槽位常驻"改为 `backup/stock-259/` + EDL 全量包（一次 EDL 可整机复原，非不可逆）。`RUNBOOK-BRINGUP.md` 新增 **Phase B：回收 `super_a/b`、`boot_a`、`recovery_a`、`metadata`… 腾数十~上百 GiB**，并列出**不可动清单**（xbl/abl/tz/hyp/modem/安全存列）。原「S0 两槽直启=100% 兼容下限」层级取消。 |
-| **G2 边界不得立刻断言** | 改为**取证任务 C3**，并实际抓到了先例证据（见 §3）：`ANDROID-COMPAT.md` §1 的 C2「身份兼容」格一律填 **"待调查"**，不再是"只能 BASIC/L3"。 |
-
-## 2. 文档合并（49 → 9 份活文档）
-
-**根目录 9 份**：`INDEX.md`（入口+使命 6 行）· **`DEVICE.md`**（设备描述＋设备状态：规格/固件清单/驱动矩阵/单元台账/状态分派/GPT 参数/容量策略）· **`TASKS.md`**（任务拆解＋进度＋待办规划）· **`RESOURCES.md`**（参考资源＋本地资源）· **`GAPS.md`**（查漏补缺 Q1–Q12＋风险＋勾销规则）· **`ANDROID-COMPAT.md`**（G2 专项）· **`RUNBOOK-BRINGUP.md`**（上机手册）· `PITFALLS.md` · `AGENTS.md`。
-
-**归档**：`archive/topics/`（43 个日期型专题文档＝过程证据，不再更新，引用路径已批量改写）＋ `archive/2026-10-02-merged/`（6 份被合并掉的原文：MISSION-SCOPE / DEVICES / ANDROID-COMPAT-PLAN / ROUTE-DECISION / PLAN-NODEV / DOCS-CHANGELOG）。引用完整性已脚本校验：除归档原文名与 AOSP `custom_vm.md` 外**无悬空引用**。
-
-## 3. 社区先例取证（本轮直连 GitHub API 实测，代理 7897 仍故障）
-
-| 项目 | 抓到的事实 | 意义 |
-|---|---|---|
-| `casualsnek/waydroid_script` 3.8k★ | 一键装 gapps/magisk/libndk/microg + **Widevine L3**；有 **`certified` 子命令**：打印 Android ID → `google.com/android/uncertified` 注册 → 清 GMS 缓存即登录 | **直接适用**，C3 首要复现对象 |
-| `remote-android/redroid-doc` 6.9k★ | **arm64+amd64**，GMS 经 OpenGApps/MicroG/MindTheGapps；宿主需 `binder_linux`（**vk40 已开 `CONFIG_ANDROID_BINDERFS`**） | 定为 **R1'
-
-
-## Automatic settled outcome - 2026-10-02
-
-通读了 9 份活文档（INDEX/DEVICE/TASKS/GAPS/RESOURCES/ANDROID-COMPAT/RUNBOOK/PITFALLS/AGENTS），并做了实际核验：41 个归档引用、20+ 资产路径、config 快照、关键产物逐一对照。
-
-**结论：引用完整性很好（无悬空引用、关键产物全在），但有 9 处不准确/过时（其中 2 处实质问题）、6 项待用户输入。**
-
-## 一、不准确/过时（建议修）
-
-| # | 问题 | 位置 | 核验结果 |
-|---|---|---|---|
-| 1 | **AVF 资产虚记（最重要）** | `RESOURCES.md` §2.2 | 声称已提取 `crosvm(10.7M 带 Gunyah)/vm/microdroid_kernel/u-boot.bin`，但全机 find（`~` + `/mnt/Samsung`）**找不到任何提取产物**——只有 AOSP 13 树里无 Gunyah 的 crosvm 源码。要么已丢，要么没拷回主机。U1 现仍是 stock+root，可重提取，应登记 GAPS |
-| 2 | **`CONFIG_IP_ADVANCED_ROUTER` 并未进内核** | `GAPS.md` Q2、`TASKS.md` C1 | Q2 写"已进内核”；实际 `patches/config-vk40-bringup` 是 `not set`（vk20/vk26/bak 同样未开）。Waydroid 真正需要的 iptables/NAT（`IP_NF_FILTER/NAT`、`NF_NAT_MASQ`、`XT_MATCH_COMMENT`）vk40 **已开** ✅，但 Q2 括号依据写反了 |
-| 3 | **“在机 vk39”过时** | `INDEX.md` §3、`DEVICE.md` §1.1 | U1 已逆手术回 stock（b 槽原厂已刷回），当前无任何单元跑 mainline（`DEVICE.md` §2.3 自己也说“满足单元=暂无”）。应改为“最后一个在机基线（逆手术前）" |
-| 4 | **qemu-utils 已装，3 处文档仍说“需 sudo"** | `TASKS.md` §0/A13、`GAPS.md` §3 | 实测 `/usr/bin/qemu-img`、`qemu-nbd` 已存在，应勾销 |
-| 5 | **RUNBOOK 章节号重复** | `RUNBOOK-BRINGUP.md` | 两个 `## 7`（Phase 6 验证清单 + Phase B）、两个 `## 8`（回退 + 待你拍板）——合并编辑残留 |
-| 6 | **RUNBOOK 残留旧容量口径** | `RUNBOOK-BRINGUP.md` §0.0 示例、§4 注释 | 示例 `LINUX_GIB=128`、注释“256 档 65；512 档 128" 与 `DEVICE.md` §3.2（512 档 160–200、256 档 64–96）矛盾；同文件表格和 DEVICE 是新口径，仅这两处是旧的 |
-| 7 | **C2/C3 顺序矛盾** | `INDEX.md` §3 vs `TASKS.md` §4 | INDEX："C1→C2 登录→C3 取证”；TASKS："C1→C3→C2"（TASKS 合理：先取证再动配置） |
-| 8 | 旧编号/默认值残留 | `RUNBOOK` §7 "bench-run.sh（A7）"（A7=已作废编号，现 G1-8）；`scripts/flash-b.sh` 默认仍 `vk13`；`PITFALLS.md` 头部"最后更新 2026-09-29"（实含 #80/#81=10-02） | 小 |
-| 9 | 单位混用 | RESOURCES/DEVICE "3.44 GB"（实测=3.21 GiB ✅）vs RUNBOOK "3.3G" | 数字都对，建议统一写法 |
-
-## 二、未完成/待用户输入（文档已登记，点名确认）
-
-- **U2 到货状态未登记**：`DEVICE.md` §2.2 台账 U2 “待登记”，但 G1-1（当前关键路径）依赖 U2——U2 到了吗？
-- **A18** `
-
-
-## Automatic settled outcome - 2026-10-02
-
-9 处全部修复并验证完毕。
-
-## 修复总账（8 个文件）
-
-| # | 问题 | 修法 | 验证 |
-|---|---|---|---|
-| 1 | **AVF 资产虚记** | `RESOURCES.md` §2.2 改为"⛔ 原记虚记，主机无产物"；新增 **GAPS Q13**（含重提取命令：`pm path com.android.virt` → 解 apex_payload → scp 回主机，随 C0 同批） | ✅ |
-| 2 | `CONFIG_IP_ADVANCED_ROUTER` 口径反了 | `GAPS.md` Q2 改为"vk40 已开 iptables/NAT ✅；ADVANCED_ROUTER 仍 not set，若需策略路由再补" | ✅ |
-| 3 | "在机 vk39"过时 | `INDEX.md` §3、`DEVICE.md` §1.1 改为"**当前无单元在机 mainline**（最后在机基线 vk39，U1 已逆手术回 stock）" | ✅ |
-| 4 | qemu-utils 已装 | `TASKS.md` §0/A13、`GAPS.md` §3、`RESOURCES.md` §2.1 四处改 ✅（`qemu-img`/`qemu-nbd` 在位） | ✅ |
-| 5 | RUNBOOK 章节号重复 | Phase B → **§9**、待你拍板 → **§10**，头部"见 §7”同步改 §9；章节序列 0.0/0/1…8/9/10 无重复 | ✅ |
-| 6 | 残留旧容量口径 | §0.0 示例 `LINUX_GIB=128` → 占位符“按 DEVICE.md §3.2 一次给足"；§4 注释 → "256G 档 64–96；512G 档 160–200" | ✅ |
-| 7 | C2/C3 顺序矛盾 | `INDEX.md` §3 改为"C1 → C3 → C2"，与 TASKS §4 对齐 | ✅ |
-| 8 | 旧编号/默认值 | RUNBOOK "（A7）"→"（G1-8）"；`flash-b.sh` 默认 vk13→**vk40**；`PITFALLS.md` 头部 → 2026-10-02 | ✅ |
-| 9 | 单位统一 | RUNBOOK "3.3G" → "3.44 GB"（全库现统一 3.44 GB） | ✅ |
-
-**A18（/mnt/Samsung fstab）**：已按要求在 `TASKS.md`、`GAPS.md` §3、`RESOURCES.md` §2.1 三处标记 ✅ 完成（2026-10-02）。
-
-**剩余待你输入的 4 项**（文档已登记，无阻塞改动）：
-1. **U2 到货状态** → 回填 `DEVICE.md` §2.2 台账（G1-1 关键路径依赖它）
-2. **C0 真机取证 + AVF 重提取（Q13）**：趁 U1 还在 stock+root，覆盖 a 槽前做，不可复得
-3. **C2 上行 + 代理 + 谷歌凭据**
-4. **`LINUX_GIB` 具体值**：U2 上机 `du` 实测后定（GAPS Q7）
-
-
-## Automatic settled outcome - 2026-10-02
-
-**不是 PC 意义上的 UEFI 启动，但底层借用了 UEFI 技术。**
-
-- **启动链**：PBL → **XBL**（高通基于 EDK II/UEFI 实现的引导固件）→ **ABL**（一个 UEFI 应用，负责 fastboot + AVB 校验）→ 加载 `boot`/`dtbo`（Android boot image + 设备树）。
-- **有 UEFI 痕迹**：分区表里有 `uefi` 分区（UEFI 变量），XBL 日志在 `logfs`（`UefiLog1.txt`）——本机 PITFALLS 里就用它排过 dtbo 校验失败。
-- **不是标准 UEFI**：没有 ESP 分区、没有 Boot#### 启动项/UEFI 启动管理器、不给 OS 导出 Boot Services、无 ACPI（mainline 走设备树）。启动路径是固定的 Android/AVB 链，ABL 只是“长得像 UEFI 程序”的加载器。
-- 社区跑 Linux 的做法通常是把 **U-Boot 当 EFI 应用链在 ABL 后面**，用它模拟出标准 UEFI 环境再引导 GRUB/内核——即“标准 UEFI”是后装的，不是原厂的。
-
-
-## Automatic settled outcome - 2026-10-02
-
-已落盘 `RESOURCES.md` §1.2（+3 行：postmarketOS 主流做法注记、Linaro U-Boot 链入、edk2-msm）。
-
-**一句话回答**：UEFI 只在启动那几秒经过（XBL→ABL），不提供任何运行时服务；G1 要驱动全部固件走的是 Linux remoteproc + TrustZone PAS + 原厂签名固件，**与 UEFI 解耦，不需要做任何事**。U-Boot 链入是社区可选增强（GRUB/启动菜单/TF 卡引导/突破 96 MiB boot.img 限制），已记为观察项——只有将来需要启动管理器时才评估。
-
-
-## Memory - 2026-10-02
-
-主线 ARM 社区命名陷阱（2026-10-02 调查时差点误判）：Qualcomm 补丁系列里的 **kodiak = QCM6490**（sc7280 家族 dev kit：qcm6490-idp/qcs6490-rb3gen2），**不是 SM8750**；SM8750 的 vendor 代号是 Kera/KeraP（DT 名 "Qualcomm Kera SoC"）。kodiak-el2.dtso 等 `-el2.dtb` overlay 系列（v11 2026-08）只适用 Qualcomm dev kit 的 EL2 引导，不适用消费者 Y700（XBL 在 secure-boot 链内加载 hyp，加载点在 ABL 上一级）。另：本地 7.2 内核树无 drivers/virt/gunyah（主线独立 gunyah 驱动未合入），但 drivers/watchdog/gunyah_wdt.c + qcom_scm.c 的 gunyah UUID 探测在；CONFIG_DMA_RESTRICTED_POOL=y 已开。
-
-
-## Automatic settled outcome - 2026-10-02
-
-纯调查 4 项全部完成（不占设备，全部落盘）。**数字结论：新增/更新 4 份文档 + 存 1 条记忆；G2 完成度 35% → 40%；1 个结论被证据维持，1 个结论被修正。**
-
-## 本轮成果
-
-| # | 调查项 | 结论 | 落盘位置 |
-|---|---|---|---|
-| 1 | **C8/Q4 — VM 路线书面评估** | **维持低优先、不立项**：① 设备侧 KVM 不可达（XBL 在 secure-boot 链内加载 hyp，主线 `-el2.dtb` overlay 模式只适用 Qualcomm **dev kit**，ABL 重签救不了——hyp 加载点在 ABL 上一级）；② 独立 gunyah 驱动（v17）未进主线（本地 7.2 树 `drivers/virt/` 无 gunyah 目录）；③ **唯一新路线 = KVM-in-EL1 + Gunyah backend**（Linaro RFC 00/34，2025-04，配 `qemu-for-gunyah`，WIP：pinned pages/无 guest_memfd/禁 swap）——需数周 port 且 SM8750 固件 ABI 兼容性未验证。**决定性零成本实验**：vk40 上机后 `dmesg \| grep -i gunyah`（本地 qcom_scm 已带 UUID 探测） | `TASKS.md` C8、`GAPS.md` Q4、`ANDROID-COMPAT.md` R2、`RESOURCES.md` **新增 §1.5** |
-| 2 | **Q3 — droidloom 可行性** | **结论修正**：repo（denialwm/droidloom，251★活跃）声称支持 arm64 平台，但**预览包只发 x86_64 Arch**；INSTALL 的"experimental ARM64"指 x86 上跑 ARM64 APK（翻译层）。arm64 宿主 = 自构建一条命令（Rust+rootless podman+AOSP pin），但 pacman 包格式需适配本 rootfs。对 ARM64 设备反而更简单（应用原生跑、无需翻译）。剩 2 个未知：arm64 自构建是否干净、freedreno+Phosh 下 GPU/输入路径 | `GAPS.md` Q3、`ANDROID-COMPAT.md` R3、`RESOURCES.md` §1.3 |
-| 3 | **Q1/C3 社区侧补充** | WayDroid-ATV **有 arm64 GAPPS 镜像**（2026-01 SourceForge，可作 C2 第二镜像源）但 **Widevine L3 仍仅 x86-64**；官方 licensing 页明确 GApps/Widevine 受限、建议开源替代；PlayIntegrityFork(pif.json) 仍是主流过 PI 手段（v18 在手）；L1 需芯片商+GMS 认证，**L3 是默认必测项不需额外申请** | `GAPS.md` Q1、`RESOURCES.md` §1.3 |
-| 4 | **C9/A15 — 验收用例集** | **定稿 10 条用例+阈值**（Play 登录/安装/地图旋转/视频通话/流媒体/游戏/相机/音频/多窗口/休眠唤醒+切槽），含 5 维打分口径与依赖列 | `ANDROID-COMPAT.md` **新增 §5**、`GAPS.md` Q6 勾销、`TASKS.md` A15 ✅ |
-
-## 顺带核验的本地事实（已记账）
-
-- `CONFIG_DMA_RESTRICTED_POOL=y` **vk40 已开**（protected VM guest 前置，A12 部分预置）✅
-- Gunyah watchdog 补丁系列的实测平台就是 SM8750（2026-05 邮件列表原文）——印证设备 Gunyah 生态与主线关注点对齐
-- 差点误判并防住：**kodiak = QCM6490 ≠ SM8750**（SM8750 = Kera/KeraP），已存记忆
-
-## 剩余需设备/你的输入（不变）
-
-U2 台账登记 → C0 真机取证（含 AVF 重提取 Q13）→ 
-
-
-## Automatic settled outcome - 2026-10-03
-
-全部完成。**数字结论：A14/A17 两项落地 + C4 前提重大修正（uinput 方案作废→UDP HAL 真实现）；新增 7 个文件、编译 1 个 HAL；G2 40% → 45%。**
-
-## 本轮成果
-
-### C4 前提修正（本轮最重要的发现）
-
-| 发现 | 证据 |
-|---|---|
-| **uinput 方案作废**：Waydroid 传感器 HAL 是 stub，不读 evdev | 镜像里 service=16KB stub（`waydroid.stub_sensors_hal`）；上游 `Sensors.cpp` 的 `getSensorsList` 返回**空** |
-| **stub prop 不能复用** | framework 0027 补丁见 `waydroid.stub_sensors_hal=true` 会默认锁旋转 |
-| **真值通路改 UDP 直达** | 容器经 waydroid0 网桥与宿主互通，无共享文件系统问题 |
-
-### A14 — 传感器链（✅ 代码全就绪，待上机部署）
-
-| 产物 | 状态 |
-|---|---|
-| `scripts/eldroid-sensord.c`（数据源 daemon：fake/stdin→UDP） | ✅ selftest **7/7**；UDP 环回冒烟 3s/96 行 |
-| `scripts/build-sensord.sh`（native + aarch64 static） | ✅ |
-| `scripts/deploy-sensors-hal.sh`（Waydroid **overlay** 部署，不改 vendor.img） | ✅ 语法 OK |
-| `env-pass/scripts/sensor-send-termux.sh`（真值来源：另一单元 Termux:API 转发） | ✅ 管道冒烟通过 |
-| **HAL 真实现**（waydroid-build 树 `Sensors.cpp`：UDP 收值→喂 framework，5 传感器） | ✅ **编译成功 32s**（产物 25KB）；原文件备份 `*.orig` |
-
-### A17 — env-pass provision（✅）
-
-`env-pass/scripts/envpass-provision.sh`：**状态预检**（TB322FC 系+root，不绑 SN）→ 产物缺失**自动 repack** → 推送**读回校验** → 幂等执行；`--check` 干跑通过。`envpass-ondevice.sh` 同步幂等化（已装模块跳过 + Shamiko **-patched 优先**——避开 KSU 版本校验 abort 坑）。
-
-### 文档更新（6 处）
-
-`TASKS.md`（A14/A17 ✅、C4 重定义）、`ANDROID-COMPAT.md` §2①（UDP HAL 替代 uinput）、`GAPS.md` **新增 Q14**（C4 上机三未知：容器 UDP 可达性/SELinux context/Termux 传感器名）、`RESOURCES.md`（新脚本+HAL 产物）、`INDEX.md`（G2 ≈45%）、新增证据文件 `archive/topics/SENSORS-WAYDROID-STUB-2026-10-03.md`。
-
-## 剩余需设备/你的输入（不变）
-
-U2 台账登记 → C0 真机取证（含 AVF 重提取）→ G1-1…3 上机 → C4 部署验证（`deploy-sensors-hal.sh --restart`）→ C2 上行+凭据。
-
-
-## Memory - 2026-10-03
-
-联想拯救者 Y700 四代(TB322FC, ZUXOS)解锁 BL 唯一可行路径：官网 https://www.zui.com/iunlock 申请 sn.img（四代起官方改 ABL，传统强解/泄露 sn 全部失效）。申请表需 SN(8位=ro.serialno) + ZUX OS 特有的 Bootloader_SN=`getprop ro.boot.bootload_sn`(64位hex)；1 账号/年 3 台限额，Gmail 可能收不到附件；sn.img 一机一码但可重复使用。命令：`fastboot flash unlock sn.img`（by-name 里无 unlock 分区属正常，ABL 特殊处理）→ `fastboot oem unlock-go` → 屏上音量键选 UNLOCK+电源确认 → 自动擦数据 3–5 分钟。不可逆代价：保修、FOTA、Widevine L1→L3（先 `getprop sys.lenovo.widevine_security_level` 拍基线）。免解锁重签包只给 root 不给 fastboot 写权限，做不了需要 flash/boot 的主线项目。新版(1.5/Android16)有屏蔽解锁指令先例，失败则 EDL 降级旧版再解。
-
-
-## Automatic settled outcome - 2026-10-03
-
-已完成核验 + 取证 + 文档落盘。先给数字结论：
-
-## 数字结论
-- **当前在机单元 = U2**：SN `HA2EXB0E`、`ro.boot.hwboardid=SM8750P_16+512_13`（正是台账预期的 16+512）、`df /data`=450 G、ZUXOS **1.5.10.259**（Android 16，patch 2026-05-05）。
-- **锁状态 = locked**：`flash.locked=1`、`vbmeta.device_state=locked`、`verifiedbootstate=green`、**Widevine=L1**。
-- **U2 是全项目唯一 locked 单元**（U1 已解）→ 解锁动作不可逆项必须**先拍证**，已拍完（10 个文件 + SHA256SUMS）。
-
-## 解锁方法（四代唯一可行路径；过往 skill 已核实并补注）
-四代起官方改了 `abl`，**传统强解/泄露 sn 法全部失效**；`1.5.10.259免解锁重签.zip` 只给 root 不给 flash 权限 → 做不了 G1（要 `fastboot boot/flash`）。唯一通道 = **官网申请一机一码的 `sn.img`**：
-
-**① 申请（需要你，助手不能代办：账号+邮箱）** — https://www.zui.com/iunlock （已实测可直连）
-| 表单项 | 值 |
-|---|---|
-| 序列号 SN | `HA2EXB0E` |
-| Bootloader_SN（ZUXOS 必填） | `EBC74CD1B224948C1FCD6511E393324757633D4B859984878EDB81E26975502E` |
-
-大陆邮箱（Gmail 收不到附件）；1 账号/年 3 台；sn.img **一机一码但可永久复用**。
-
-**② 解锁（你按键；命令逐条，勿批量——PITFALLS #1）**
-```bash
-cd ~/y700-elden && mv ~/下载/sn.img backup/HA2EXB0E-16+512/ && adb -s HA2EXB0E reboot bootloader
-fastboot getvar all | grep -iE "serialno|unlocked|secure|product"   # 期望 DEVICE STATE - locked
-fastboot flash unlock backup/HA2EXB0E-16+512/sn.img                 # by-name 里没有 unlock 分区 = 正常(ABL 特判)
-fastboot oem unlock-go                                              # 屏上音量键选 UNLOCK，电源键确认
-```
-自动重启 + 擦除全部数据，**3–5 分钟勿拔线**。或直接 `SN_EXPECT=HA2EXB0E scripts/bl-unlock.sh <sn.img>`（已内置 SN 比对，防刷错机）。
-
-**③ 校验**：`fastboot getvar unlocked`=yes → `flash.locked`=0、`verifiedbootstate`=orange。
-
-## 已知风险（须你知悉，均已登记）
-1. **Widevine L1 → 大概
-
-
-## Automatic settled outcome - 2026-10-03
-
-接着上次被切断处补完（内容已全部落盘，无需重跑）：
-
-## 已知风险（续）
-1. **Widevine L1 → L3 大概率不可逆**（TEE 内密钥）。U2 是唯一 locked 单元，解锁前基线已拍：`sys.lenovo.widevine_security_level=L1` 存于 `backup/HA2EXB0E-16+512/pre-unlock/key-props.txt` → 这是 G2 的 Q1（容器 DRM 上限）与 Q5（真机对照）的「标准答案」，事后无法复得。
-2. **保修失效 + FOTA 不可用**（官方免责条款；本项目不吃 OTA，影响=少一条升级退路）。
-3. **1.5.10.259 可能屏蔽解锁指令**（社区已知风险，Q16）：若 `flash unlock` 报 unsupported / 无响应 → 按 `RUNBOOK-BRINGUP.md` §0.5 ⑤ 用现成 `restore-259/` + `qdl/build/qdl` + `xbl_s_devprg_ns.melf` EDL 降级旧版 ZUXOS 再解，**不额外下载**；不推荐第三方付费"秒解"。
-4. 解锁**只写 unlock 标志 + 擦 `/data`**，a 槽系统与 `abl` 内容不变 → 不影响 Phase 0–3；root 需重做（走 `env-pass/`）。
-5. 操作前置：电量 ≥50%、原装线、开发者选项里 **OEM 解锁** 开关打开（若存在）。
-
-## 本轮落盘（6 处文档 + 2 个脚本 + 1 份取证）
-| 位置 | 内容 |
-|---|---|
-| `RUNBOOK-BRINGUP.md` **新增 §0.5 Phase −1** | 解锁全流程 5 步（取证→申请→解锁→校验→被屏蔽时的降级退路）；`§0.0` 参数表加 U2 SN/CAP/锁状态 |
-| `scripts/bl-preunlock-evidence.sh`（新） | 设备无关：读实际 `hwboardid` 定备份目录、纯 adb 只读采集、打印申请表两项。已跑通 |
-| `scripts/bl-unlock.sh`（新） | 校 SN（`SN_EXPECT` 不符即拒）→ `getvar all` 存档 → 确认提示 → `flash unlock` → `oem unlock-go` 逐条执行 |
-| `backup/HA2EXB0E-16+512/pre-unlock/`（新） | getprop 全量(1047 行)/by-name 119 项/传感器清单/settings/packages/key-props + `SHA256SUMS` |
-| `DEVICE.md` §2.2/§2.3/§2.5 | U2 台账登记（SN、`SM8750P_16+512_13`、locked、L1），状态表新增「原厂未动+BL locked」行 |
-| `TASKS.md` §1/§4 | 新增 **G1-0 = U2 BL 解锁（前置门）**，G1-1 要求改为「U2 已解锁」；下一步顺序改为 G1-0 与 C0 并行 |
-| `GAPS.md` | 新增 **Q15**（不可逆代价+已拍基线）、**Q16**（新版屏蔽解锁→降级退路）；风险登记 +2 行 |
-| `PITFALLS.md` #82 | 四代解锁唯一通道、`unlock` 分区不存在属正常、免解锁包不满足 G1、L1 不可逆、降级退路 |
-| `RESOURCES.md` §1.1/§2.1 | 官方入口 + 两篇教程（已消化，付费服务不用）+ 新脚本与取证目录 |
-| `.pi/skills/gsi-device-adaptation/references/tb322fc-zuxos-ota-root.md` | 第 7 条补注（`bootload_sn` 形态、by-name 无 unlock 分区、L1 不可逆、sn.img 可复用） |
-| 全局 profile_memory | 存了一条跨项目可复用的「联想四代解锁 BL」条目 |
-
-## 现在等你的两个动作
-1. **申请 sn.img**（账号/邮箱类，我不代办）→ 到手后放 `backup/
-
-
-## Memory - 2026-10-03
-
-联想 Y700 四代(TB322FC)解锁 BL —— 更正「官网申请 sn.img 是唯一路径」的说法：① AVB 镜像链用的是谷歌公开的 AOSP testkey（avbtool info_image 实测原厂 vbmeta/boot/recovery pubkey sha1=2597c218…），自签镜像本就被 ABL 认可；② 解锁标志链用 Lenovo 自签证书(serial 804940DE79164B1A, RSA-2048, 非谷歌 key)，但解锁 blob 是**通用模板**：SN 明文在偏移 0x2048、签名只覆盖前 0x1000，四代的校验字段是模板内 `Bootloader_SN Part1+Part2`(=本机 ro.boot.bootload_sn 两段 32 hex) ⇒ 改 hex 即可**自制**解锁文件，属"免签"而非"自签"；③ EDL(qdl) 写分区不看 lock 位 ⇒ 需要 fastboot/刷机的项目**不必先解锁**。失败特征串 `Download is not allowed on locked devices` = ABL 较新，先降级。教训：下"唯一路径"结论前先 grep 本项目 skill 与本地工具包实物。
-
-
-## Automatic settled outcome - 2026-10-03
-
-文档已按你的更正改口完毕（未实现任何脚本）。
-
-## 数字结论
-**你的说法一半成立、一半需修正**——关键是两条链要分开：
-
-| 链 | 实测签名密钥 | 能自己做吗 |
-|---|---|---|
-| **AVB 镜像链**（`vbmeta`/`boot`/`recovery`） | **谷歌公开的 AOSP testkey**，pubkey sha1 `2597c218…`（`tools/avbtool.py info_image` 打原厂 259 备份实测；`recovery`/`vbmeta_system` 的 chain 是 OEM key `8fcb864f`） | ✅ **成立**。自签镜像本就被 ABL 认可——我们 `bootslot-b/` 一直这么干 |
-| **BL 解锁标志**（`flash unlock` 的 blob） | **Lenovo 自签证书** serial `804940DE79164B1A`、`C=CN/ST=BEIJING/L=Lenovo/O=Android/OU=PAD`、RSA-2048、2020→2047（modulus sha256 `3a12b26b`，与 AOSP build testkey `b446c577`、avb testkey2048 `f6e43242` 均**不同**） | ✅ **但机制不是「自己签」而是「免签」**：模板通用，改 hex 即可 |
-
-## 两条实物证据（本地已有，没下载东西）
-1. **`y700四代工具/解BL/Y700 三代解锁工具箱by某贼.zip` → `bin/res/sn.img`**（5386 B）：签名块在 `0x1000..0x150A`，内含 `PrintableString "/boot" + INTEGER 0x1000` ⇒ **签名只覆盖前 4 KiB**；工具箱只改**偏移 `0x2048` 的 8 字节 ASCII SN**（在覆盖范围外）→ 一份通杀模板，**不需要申请**。
-2. **我先前漏读了本项目自己的记录**：`.pi/skills/qualcomm-edl-flashing/references/tb322fc-y700-gen4.md` 早已写着「sn.img = 官网申请 **or modify LoGen0110's sn.img template hex (Bootloader_SN Part1+Part2)** — must match own `bootload_sn`」，并给出失败特征串 `Download is not allowed on locked devices`。⇒ 四代自制的正确补丁字段是 **`Bootloader_SN` 两段 32 hex**（U2 = `EBC74CD1…6975502E`），比三代只改 SN 更贴 ABL 校验点。
-
-## 最重要的一条：G1 不必卡在解锁上
-`qdl` 走 EDL 写分区**不看 lock 位**，AVB 又是公开 testkey ⇒ **路 C（不解锁直写 b 槽）可让整个 G1 照跑**，Widevine L1、保修、FOTA 全保住。已登记为 **GAPS Q17**（首轮上机即可判定，可取代 G1-0）。
-
-## 落盘（8 处）
-| 文件 | 改动 |
-|---|---|
-| `archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md` | **新建**：结构表、证书身份、密钥比对表、§2.4 项目内既有结论、四路对照、A 路生成命令 |
-| `RUNBOOK-BRINGUP.md` §0.5 | 「唯一路径」→ **A/B/C/D 四路表**（A1 改 SN / A2 改 Bootloader_SN → B 官网 → C EDL → D 重签包）+ A 路命令；⑤ 改为「不为解锁停摆，转 C」+ 失败特征串 |
-| `PITFALLS.md` | #82 重写（两链两密钥 / 「必须先解锁」是错的）；**新增 #83**（自制补丁字段 = `Bootloader_SN Part1+Part2`） |
-| `GAPS.md` | Q16 改为「三代模板法在四代是否有效（一发
-
-
-## Automatic settled outcome - 2026-10-03
-
-已做完本地取证。设备现在就在 fastboot 里（`unlocked:no` / `secure:yes` / `product:elden_prc_wifi`），我把结论和下一步给你。
-
-## 数字结论
-**文件本身是"对的那一种"，`flash unlock` 的 OKAY 不算证据，生效与否 = 下一条命令一发即判，且失败无损。**
-
-| 检查项 | 结果 |
-|---|---|
-| 大小/格式 | **356 B**，四代新格式（不是三代 5386 B 的 PKCS#7 模板） |
-| magic `0x00` | `1a2blenovo3c4d5e` |
-| 头部 | u32 = `0/1/**256**/**32**/1` —— `256` 正好等于尾部签名长度、`32` = SN 每段 hex 长 ⇒ **结构自洽** |
-| `Bootloader_SN` @`0x24` | `EBC74CD1…6975502E` — **与本机 `ro.boot.bootload_sn` 逐字节一致** ✅（说明是按 U2 现值签的，不是通用模板） |
-| 签名 @`0x64` | 256 B = RSA-2048 |
-| 离线验签 | 用三代模板内嵌的 Lenovo 证书（serial `804940DE79164B1A`，modulus `b7448bed…`）穷举 PKCS1/PSS × SHA1/256/384/512/MD5 × 9 种 payload —— **全部验不过**，恢复块无 PKCS#1 结构 ⇒ **签名密钥 ≠ 三代那把** |
-
-## 三点判读
-1. **你看到的 OKAY 什么也没证明。** `unlock` 在 by-name 里不存在（分区 size=0，ABL 特判缓冲），刷进去的是垃圾也是同样的 `Sending 'unlock' (0 KB) OKAY / Writing OKAY`。真正的验签发生在 `oem unlock-go`。
-2. **四代 blob 里没有证书**（公钥烧在 ABL 内）⇒ 三代那把 key 验不过是**预期内**的（四代官方改过 `abl`），不等于无效；但也让我**无法离线确认**服务端真持有联想私钥。
-3. **试的成本为零**：验签失败 → ABL 直接报错，**不擦机、不改锁状态**；验签成功 → 屏出 UNLOCK 菜单，还要你按键确认才擦 `/data`。双重闸门。
-
-## 下一步（你执行，逐条）
-```bash
-cd /home/xuqianhui1001/y700-elden
-fastboot -s HA2EXB0E flash unlock backup/HA2EXB0E-16+512/sn-neko-zuxos.img   # 已归档+SHA256 的那份
-fastboot -s HA2EXB0E oem unlock-go        # ★判定行；屏上音量键选 UNLOCK，电源键确认
-```
-- 出现 UNLOCK 菜单 = **生效**；报 `Download is not allowed on locked devices` / `Unlock command not allowed` = **不生效**，停手转路 C（EDL，`qdl` 不看 lock 位，G1 不受影响），**别重复刷**。
-- 报 OEM 解锁被禁用 → 回系统开「开发者选项 → OEM 解锁」再重来（不丢数据）。
-- 按确认前想清楚：擦 `/data` 不可逆；Widevine **L1 基线已拍**（`backup/HA2EXB0E-16+512/pre-unlock/key-props.txt`），解锁后预期永久掉 L3。
-
-## 落盘（6 处）
-`archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md` **§5**（新格式结构表＋验签失败记录＋风险边界）· `RUNBOOK-BRINGUP.md` §0.5 新增**路 A3**（先试）+ ③ 加注「OKAY ≠ 生效」· `GAPS.md` **Q18** · `PITFALLS.md` **#84** · `RESOURCES.md` §1.1 服
-
-
-## Memory - 2026-10-03
-
-TB322FC locked 单元 b 槽 mainline 链（2026-10-03 管线落地）：联想原厂信任谷歌公开 AOSP testkey（env-pass/keys/testkey_rsa4096.pem 公钥 sha1 2597c218 = 原厂 vbmeta_a 顶层公钥），qdl EDL 写分区不看 lock 位 → locked 单元不解锁也能刷 b 槽 mainline。现有 bootslot-b 自造密钥链（fc1e3b33+flags3+rollback0）只适用 unlocked orange 宽容态，locked/green 过不了 root-of-trust。修法 = scripts/build-locked-chain.sh：从本单元 stock dump 自动读参数（boot rollback 1738713600 + 3 props；vbmeta flags=1 原厂自关 hashtree + 14 props）生成 testkey 全链（vbmeta_b 顶层 2597c218 + chain boot:3 + recovery:1/vbmeta_system:2 原样公钥）。avbtool 四坑：--chain_partition 要 .avbpubkey 非 PEM；AVB header 全字段大端；公钥 blob 偏移 = 256+auth_block+pub_off（漏加 auth_block 则 sha1 全错）；verify_image 加 --follow_chain_partitions。公钥提取工具 extract-avbpubkey.py（自动搜 AVB0 magic，支持裸 vbmeta 与 hash-footer 两种布局）。fastboot boot（RAM 兜底）locked 下不可用 → b 槽写入=真写盘，失败靠 EDL 恢复，a 槽 stock 原样不受影响。
-
-
-## Automatic settled outcome - 2026-10-03
-
-全部就绪。回答你的两个问题：
-
-## 结论
-
-**Q1：locked 下能否 AOSP 签名 + 9008 刷写？——能，且管线已建好、验证全绿。**
-
-| 环节 | 结论 | 依据 |
-|---|---|---|
-| EDL 9008 读/写 | ✅ 与锁无关 | firehose 用官方签名 programmer（`xbl_s_devprg_ns.melf` 在手），锁只挡 ABL fastboot，不挡 EDL 裸写 |
-| **AOSP testkey = 原厂受信密钥** | ✅ 实测确认 | `env-pass/keys/testkey_rsa4096.pem` 公钥 sha1 = `2597c218...` = 原厂 vbmeta_a 顶层公钥（联想确认谷歌公开密钥，眼见为实） |
-| **现有 bootslot-b 链** | ⛔ **不适用 locked** | fc1e3b33 自造密钥 + flags3 + rollback0 只在 unlocked（orange 宽容）下能用；locked green 过不了 root-of-trust |
-| **新管线（本轮建）** | ✅ 验证全绿 | `build-locked-chain.sh` 从 stock dump 自动读参数 → testkey 全链 → `avbtool verify --follow_chain_partitions` 全绿 |
-
-原厂结构已从 U1 dump 复刻：vbmeta = testkey + **flags=1（原厂自己关 hashtree）** + rollback=0；boot footer = rollback **1738713600** + 3 条 props；**dtbo 无 descriptor**（只有 fingerprint prop → fake 4KB 全零 locked 下也能容忍）。
-
-**Q2：先做 fastboot 能做的？——对，Phase 0 只读采集先行，而且 locked 下 fastboot boot（RAM 兜底）不可用，所以 b 槽写入=真写盘，必须先备份。**
-
-## 操作序列（你执行，我出资产）
-
-**Phase 0 — 只读采集（零风险，先做）**
-```bash
-cd ~/y700-elden
-adb -s HA2EXB0E reboot bootloader
-fastboot getvar all 2>&1 | tee backup/HA2EXB0E-16+512/getvar-locked.txt
-fastboot fetch boot_b   backup/HA2EXB0E-16+512/stock/boot_b.img
-fastboot fetch dtbo_b   backup/HA2EXB0E-16+512/stock/dtbo_b.img
-fastboot fetch vbmeta_b backup/HA2EXB0E-16+512/stock/vbmeta_b.img
-fastboot fetch vbmeta_system_b backup/HA2EXB0E-16+512/stock/vbmeta_system_b.img
-```
-（fetch 被拒就 `adb reboot edl` 走 EDL read，效果相同）
-
-**Phase 1 — 我跑：生成 locked 链 + 核对 Q19 三未知**（U2 vbmeta_b 公钥/rollback 是否与 U1 一致）
-```bash
-scripts/build-locked-chain.sh out/boot-elden-vk40.img backup/HA2EXB0E-16+512/stock/{boot_b,vbmeta_b,vbmeta_system_b,recovery_b}.img --out bootslot-b-locked-HA2EXB0E
-```
-
-**Phase 2 — 你执行：EDL 写 b 槽三件套（只写 b！a 槽 stock 原样）+ 读回校验 + 启动**
-```bash
-adb -s HA2EXB0E reboot edl
-qdl/build/qdl -s ufs ~/下载/
-
-
-## Automatic settled outcome - 2026-10-03
-
-Continue from where you left off.
-
-
-## Automatic settled outcome - 2026-10-03
-
-两个发现都核对完了，**你的解读要反过来看——那个输出恰恰说明刷进去了，而且这份文件是对的**。
-
-## 1. `flash unlock` 的 OKAY 是预期行为，不是“找不到分区”
-
-- `Warning: skip copying unlock image avb footer (unlock partition size: 0)` = GPT 的 by-name 里**本来就没有** unlock 分区（size=0，ABL 特判处理这条命令，blob 进的是特判缓冲，不是普通分区）——`PITFALLS` #82/#84 已记录，**属正常**。
-- `OKAY/OKAY/Finished` = 传输和写入路径都走完了。但正如 #84 记的：**这行 OKAY 什么也没证明**——刷垃圾也是同样输出。真正的验签发生在下一条命令。
-
-## 2. 你下的 sn.img = 另一轮已取证归档的那份（同一服务）
-
-md5 完全一致（`3a7007a1...`）：lenovobl.neko.ink 就是 `sn-neko-zuxos.img` 的来源站点。那份 blob 的取证结论（`archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md` §5）：
-
-| 检查项 | 结果 |
-|---|---|
-| 格式 | 356 B 四代新格式（magic `1a2blenovo3c4d5e`），不是三代 5386B 模板 |
-| `Bootloader_SN` @0x24 | `EBC74CD1…6975502E` = **本机 `ro.boot.bootload_sn` 逐字节一致** ✅ |
+` = **本机 `ro.boot.bootload_sn` 逐字节一致** ✅ |
 | 签名 | 256 B RSA-2048；四代 ABL 内嵌公钥 ≠ 三代 key，离线验不过是**预期内** |
 
 ## 3. 下一步：一条命令判定（你执行，失败无损）
@@ -1265,3 +713,615 @@ sqlite3 -header -column db/elden.db "SELECT kind,title,locator FROM references_ 
 - 二分镜像已备好：`out/boot-elden-v1-thermal.img`、`out/boot-elden-v2-audio.img`（uname 唯一、已验证组成）。
 
 下次要推进时，入口就是 `AUDIT2` §8 的"单变量、长时窗、最小侵入"三条。
+
+
+## Automatic settled outcome - 2026-10-03
+
+审查完成。结论先行。
+
+## 1. 你担心的「副作用放进轮询内部」——**没有发生**
+
+扫描 `~/y700-elden/.pi/sessions/**/*.jsonl` **全部 49 个会话**的 bash 调用：含副作用的命令 132 条，其中同时含循环的 69 条；**副作用字面出现在 `do…done` 循环体内 = 0 条**（另 4 条正则命中经逐条核对全是假阳性：grep 自身模式、`adb dd` 备份 uefivarstore/devinfo）。仓库脚本同样为 0：`cycle.sh` 的 `wait_fastboot/wait_linux`、`serial-log.sh`、`dpms-watch.sh`、`thermal-watch.sh`、`/tmp/cap-loop.sh` 全是纯读/纯探测；`iterate.sh`、`flash-b.sh --reboot` 都是「先动作、后轮询」的线性结构。
+
+## 2. 但找到同源的**真隐患**：「副作用 + 长轮询同处一条命令，被 harness 超时杀死」
+
+本次二分会话里 AI 反复写 `写misc+reboot -f` ⏎ `for…轮询fastboot…done` ⏎ `[ $OK=1 ] && fastboot boot X`。这类命令 10 条，**4 条 `Command aborted`**（#77 reboot→boot vk40re；#113 boot vk34recon；#127 reboot→boot v1；#80 纯轮询）。被 SIGTERM 时可能停在轮询中（boot 没发），也可能停在 `fastboot boot` 传输中途——**副作用发没发无法判定**。不是「重复执行」，是「执行点不可判定」。
+
+## 3. 新发现（比你担心的更严重）：**持久 b 槽烧的就是 vk40 内核**
+
+解出每个 boot 镜像的内核 payload（gzip 流）sha256：
+
+| 镜像 | uname | kernel payload |
+|---|---|---|
+| `bootslot-b/boot_b.img`（当前 b 槽） | `…gba28ec16f01f-dirty` | **d16ab35ce4a57afa** |
+| `bootslot-b/boot_b_vk40-ram.img`（10-03 实烧） | 同上 | **d16ab35ce4a57afa** |
+| `out/boot-elden-vk40.img` | 同上 | **d16ab35ce4a57afa** |
+| `out/boot-elden-vk34recon.img` | `…ge72a036ed4be` | ecfa53db763c57fe |
+
+⇒ **b 槽 = vk40 现场内核**；且 `vk30…vk40` 全部共用同一 dirty uname（F1/F4 的根源）。
+串口捕获 `logs/console-v1-1003-204530.log`（20:45–21:01）16 分钟内启动 8 次，**其中 5 次是 vk40**，每次只活 **20→40 s**。
+⇒ **任何复位都回退到 vk40**，所以「复位次数/复位后行为」的跨版本比较天然被污染。
+
+## 4. 对现有结论的裁决
+- ✅ `vk40re` vblank=6/PPM=1 vs `vk34recon` 0/0 —— **版本归属可信**（per-uname 的 kmsg 文件）。
+- ⚠️ 「vk40 会静默硬复位 / vk34 不会」—— **存疑**（复位后落回 vk40，无法归因）。
+- ⛔ V1/V2 —— 未取到（#127 中断）。
+- ❌ 「vk40 vs vk40re 两个对照」—— 同一 commit `6ef87e6a8`，仅重打包。
+
+## 5. 已落地 + 下一步
+- 新增 `archive/topics/AUDIT3-polling-sideeffects-2026-10-03.md`（含复现脚本）；更新 `GAPS` Q22、`TASKS` G1-23；提交 `3f7604b`/`1040228`。
+- **资产已备（host 侧，未碰设备）**：`
+
+
+## Automatic settled outcome - 2026-10-03
+
+已按你的要求准备好。数字先行。
+
+## 1. 测试版本（已备齐，uname 全唯一，`matrix` 可复核）
+
+| label | 镜像 | uname | sha256(前16) |
+|---|---|---|---|
+| `vk34recon` | `out/boot-elden-vk34recon.img` | `…ge72a036ed4be` | `5397af38cf55480c` |
+| `v1-thermal` | `out/boot-elden-v1-thermal.img` | `…gf681b616a3af` | `d6cb6e2b29a86718` |
+| `v2-audio` | `out/boot-elden-v2-audio.img` | `…g951c5f1c2ca5` | `5e6d71df1f687d7d` |
+| `vk40re` | `out/boot-elden-vk40re.img` | `…g6ef87e6a8868` | `1a2315b8450f1103` |
+| **b 槽基线** | `bootslot-b/boot_b-vk34recon.img`（已签名） | 同 vk34recon | `53e5857a581e77a3` |
+
+## 2. 自动化脚本 `scripts/bisect/eldtest.sh`（已提交 `28d6860`）
+
+针对 AUDIT3 的教训做了三件事：
+- **减少轮询**：等待启动改成**事件驱动**（`tail -F` 串口日志，等 `Linux version <uname>` 横幅出现），不再 tight `fastboot devices` 轮询。
+- **渐进触发**：`idle0(45s)` → `on` → `off` → `on/off×5` → `idle2(120s)`，每级之间只读一次 `dmesg` 计数，逐级加压。
+- **单步副作用**：`fastboot boot` 单独成步并落 journal；任何等待循环里**没有** reboot/boot。
+
+常用命令：
+```bash
+scripts/bisect/eldtest.sh matrix      # 版本表（不碰设备）
+scripts/bisect/eldtest.sh prepare     # 生成 manifest 到 logs/bisect/
+scripts/bisect/eldtest.sh baseline    # 打印 b 槽基线烧写步骤
+scripts/bisect/eldtest.sh one vk34recon   # fastboot boot + 渐进触发观测
+scripts/bisect/eldtest.sh observe vk40re  # 你手动 boot 好后只观测
+```
+结果落 `logs/bisect/<ts>/{results.tsv,journal.log,console.log}`；复位判据 = uname 变化 / uptime 回退 / SSH 断。
+
+## 3. 建议的第一刀（你亲自操作设备）
+
+```bash
+fastboot flash boot_b bootslot-b/boot_b-vk34recon.img
+fastboot boot out/boot-elden-vk34recon.img          # 临时起来做读回校验
+ssh root@192.168.7.1 'dd if=/dev/disk/by-partlabel/boot_b bs=1M count=96 2>/dev/null | sha256sum'
+sha256sum bootslot-b/boot_b-vk34recon.img           # 两个 sha 必须一致
+```
+这一步把「复位回退目标」从被测的 vk40 换成已知基线，之后测 vk40re 时若复位，会看到 uname 变成 vk34recon，归因才干净。
+
+## 4. 两个待你拍板的点
+
+1. **是否加温度压测级**：V1 是热区改动，光靠显示 on/off 未必触到 70 ℃ passive trip。可加一个可选级 `s4:load`（设
+
+
+## Automatic settled outcome - 2026-10-03
+
+你说得对，是我归因错了——**刚才那次是你物理重启进的 fastboot**，我把手动操作误记成 BCB 生效。本地检索后确认：
+
+## 结论：Linux→fastboot 能力确实不存在
+
+| 途径 | 事实 |
+|---|---|
+| `cycle.sh --soft`（纯 `reboot -f`） | b 槽主线可直启后**不再落 fastboot**（HANDOFF §19/§24、PITFALLS #65） |
+| `cycle.sh --fastboot`（写 `misc` BCB `bootonce-bootloader`） | **实测 ABL 未采纳**：misc 首 20 字节确为 `bootonce-bootloader`，`reboot -f` 后仍正常启 Linux |
+| 历史「reboot 必落 fastboot」 | 是当时 **a 槽 AVB 校验失败**的副产物（HANDOFF §19），不是 BCB 生效 |
+| 现在进 fastboot | **只有物理键**（或 fastboot 内的 `fastboot reboot bootloader`） |
+
+`abl_a.img` 只有 1 MB 且无明文串，离线反查 ABL 接受的 BCB 命令不可行。
+
+## 好消息：A/B 测试**不需要**这个能力
+
+`scripts/flash-b.sh <img> --reboot` 从 Linux 里自签 + `dd` 写 `boot_b` + sha256 回读校验 + 重启，**全程不开 fastboot**：
+- 每版 uname 唯一 ⇒ 版本归属精确；
+- 测试中复位 → ABL 回退到**同一个**已烧内核（uname 不变）⇒ 靠 uptime/SSH 断判定复位，归因干净；
+- **前置必做**：`python3 scripts/slot-attr.py mark-successful b`——否则主线没有 `markBootSuccessful`，retry 每次 -0x08，约 7 次后 b 槽 unbootable 也会停 fastboot（机理见 `GPT槽位元数据-2026-09-30.md`）。
+
+## 已落地
+- 脚本 `eldtest.sh`：**移除不可靠的 `cycle`(BCB)，新增 `flash` 子命令**（flash-b → 重启 → 渐进触发观测）。`one`（fastboot 已就绪时 RAM 引导）与 `observe` 保留。
+- `PITFALLS.md` **#88** + `AUDIT3` §7 记录该缺口与对策；提交 `b4f92f1`。
+- 附带教训：任何「Linux 切 fastboot」的记录，**先分清是物理键还是软件**，别把用户的手动操作记成工具生效。
+
+## 待你拍板
+1. **走 flash-b 路线继续测试**（推荐，无需新能力）：我会把前置 `slot-attr.py mark-successful b` 也纳入脚本，然后按 `vk34recon → vk40re → v1-thermal → v2-audio` 各 3 轮跑。设备现在是你 RAM 引导的 vk40re（uptime 已 160s+，可当第一轮 vk40re 样本）。
+2. **另立专项造 Linux→fastboot**（可选）：候选 ① ABL 认可的其它 BCB 命令；② IMEM `restart_reason`=fastboot 魔术；③ 用 `slot-attr.py` 可控耗尽 retry 逼 ABL 回退 fastboot（有风险）。需要 XBL/ABL 取证，建议单独会话。
+
+你选哪条？
+
+
+## Automatic settled outcome - 2026-10-03
+
+已把这条决策记入会话笔记（基座甲/乙待你选，音频在纯 vk34 上不可用的原因）。等你回复选甲还是乙 + 第一个要测的功能项。
+
+
+## Automatic settled outcome - 2026-10-03
+
+调研完成，已落盘（`ee2b0c5`）：`archive/topics/FLASHCTL-2026-10-03.md` + `TASKS.md G1-24` + `GAPS.md Q23`。数字先行。
+
+## 三条能力，现状完全不同
+
+| 能力 | 现状 | 机制 | 缺口 |
+|---|---|---|---|
+| **reboot→fastboot** | 🟢 机制**已在设备上** | DT `reboot-mode`(nvmem-reboot-mode) → PMIC SDAM `reboot-reason@48`；`mode-bootloader=0x02`；驱动**已绑定** | 只缺 userspace：以 reason 调 `reboot(2)` RESTART2 |
+| **reboot→EDL** | 🔴 主线 7.2 树**无通路** | 需 PSCI `SYSTEM_RESET2` vendor reset（`mode-edl=<0x80000000 0x1>`）或 TCSR dload cookie | 移植驱动+DT，`psci.c` 现在只发 architectural reset |
+| **选槽/成功位/清次数** | 🟢 已有 `scripts/slot-attr.py` | GPT 分区项 byte6（`boot_*` 在 **LUN4 `/dev/sde`**） | 包成 CLI；与 **C7** 合并 |
+
+关键证据：`/sys/bus/platform/drivers/nvmem-reboot-mode/reboot-mode` 已绑定；`reboot-mode.c` 靠 **reason 字符串**匹配 DT 的 `mode-*`（所以 busybox `reboot` 无参不行，必须 RESTART2）。`/sys/kernel/reboot/mode` 是 cold/warm 那个，**无关**，别用。
+
+## 关于你指的 TWRP
+
+`twrp/twrp.img` 是 Android bootimg（header v4，ramdisk 52 MB **LZ4**）；TWRP 的「重启到 EDL」走的是**厂商内核**的 reboot handler，属私有实现，**不能直接移植到 mainline**——但它印证了用户侧行为。主机暂无 `lz4`（python lz4 被 PEP668 拦），ramdisk 内脚本待解，只作行为对照用。
+
+## 设计：一个 `eldroid-bootctl`
+
+```
+eldroid-bootctl reboot <bootloader|recovery|edl|system>
+eldroid-bootctl slot {info|active|set-active <a|b>|mark-successful [a|b]|set-retry <n> [a|b]}
+```
+- reboot = `libc.reboot(...RESTART2, reason)`（ctypes，免编译）；slot 复用 `slot-attr.py`。
+- 写操作要 root，写前自动备份 GPT 前后 34 扇区、写后读回校验。
+
+## 分阶段
+
+- **S1（免内核，可立刻测）**：先只验 `reboot bootloader` —— 机制已在，最坏结果只是进 fastboot，`fastboot reboot bootloader`/`fastboot reboot` 或物理键即回。
+- **S2（需内核构建）**：EDL 要么移植上游 `psci-reboot-mode`（2026-05 系列 + `psci.c` vendor 出口 + DT），要么加 `qcom,dload-mode=<&tcsr 0x19000>` + 自加触发。建议以内核基座 **`elden/vk34-recon`** 出 `vk41-flashctl`（本特性与音频/热区增量正交）。
+- **S3**：slot 子命令上机验证。
+
+## 需要你拍板
+
+1. **现在就走 S1**？我把 `eldroid-bootctl`（先带 reboot+slot）备好，你在设备上跑 `eld
+
+
+## Automatic settled outcome - 2026-10-03
+
+审查完成。先给数字，再说结构问题，最后给目标架构与可执行清单。
+
+## 一、现状盘点（数字）
+
+| 维度 | 数量 |
+|---|---|
+| 根目录 `.md` | **12 份**（INDEX/DEVICE/TASKS/RESOURCES/GAPS/ANDROID-COMPAT/RUNBOOK-BRINGUP/PITFALLS/LESSONS/SESSION-INDEX/FILES/AGENTS） |
+| 全仓 `.md` | 300（archive/topics 51、archive 层 57、.pi/missions 11、.pi/agents 6、skills 3） |
+| 会话 jsonl | **51**（SESSION-INDEX/db 仍写 45） |
+| git 纳管 | 306 文件（scripts 78、.pi 61、archive 61、patches 31） |
+| 顶层条目 | **40+**（源码树/产物/缓存/备份/文档 tar 全部平铺） |
+
+结论：**内容已经很丰富，缺的不是文档，是"分层"。** 现在 12 份根文档属于两个不同平面，却平级摆放、互相登记计数，已经开始漂移。
+
+## 二、审查发现（按严重度）
+
+1. **维护面定义过时且自相矛盾。** INDEX §2 仍写"六视角=唯一维护面"，但 §5 又列出 LESSONS/SESSION-INDEX/FILES/db。TASKS/GAPS 的表头还写"六视角文档集之一"，INDEX 已改口径。**三处对同一定义各说各话。**
+
+2. **同一事实多处维护，漂移已发生。**
+   - 会话数：`.pi/sessions` 实有 **51**，SESSION-INDEX/db 写 **45**。
+   - 主题数：INDEX 写 49，实为 51。
+   - db docs 表 127，全仓 `.md` 实为 300（口径未定义）。
+   - "G1 ≈80%" 同时存在于 INDEX §3、TASKS §0、DEVICE、GAPS——四处，无指定权威。
+
+3. **元层知识散落根目录。** `PITFALLS.md`（正文，591 行）+ `LESSONS.md`（生成索引）+ `db/pitfalls` 表 = **同一知识的第三份拷贝**，且 db 最后重建 20:03、PITFALLS 改到 22:11 → **已不同步**。
+
+4. **根目录资产/源码/产物/文档混放。** 5 个 `y700-elden-docs-*.tar.gz`、flashing-bundle tar、`sn.img`、40+ 顶层目录；**脚本两处**：根 `build.sh/cycle.sh/iterate.sh/pack.sh/elden-net.sh` vs `scripts/` 78 个。
+
+5. **过程证据 vs 活文档边界被打破。** INDEX §6 声明 archive/topics"**不再更新**"，但 AUDIT3 昨天还在加、GAPS 持续引用它当活文档。
+
+6. **`.pi/` 内部无说明。** missions/agents 存在同名文件（audio-graphopen.md 两处）、messenger 运行时状态、sessions 轨迹，彼此关系与是否纳管均未记录。
+
+7. **记忆单体化。** `HINDSIGHT.md` **80 KB**、`FAILURES.md` 17 KB，按 `## Memory - <date>` 追加大块，检索靠 grep，已接近上下文成本上限。
+
+## 三、建议目标架构：三个平面，边界显式
+
+```
+y700-elden/
+├── INDEX.md              ← 唯一入口；只做路由 + 分层定义
+├── docs/                 ← 【平面1】领域活文档（唯一维护面，状态只此一处）
+│   DEVICE  TASKS  RESOURCES  GAPS  ANDROID-COMPAT  RUNBOOK-BRINGUP
+├── meta/                 ← 【平面2】知识管理/元数据
+│   FILES(资产台账)  PITFALLS(经
+
+
+## Automatic settled outcome - 2026-10-03
+
+收到，方案按这个改。已交付并 commit（`0f90f1c`）。
+
+## S1 交付物（已上设备只读验证）
+
+| 文件 | 作用 |
+|---|---|
+| `scripts/eldroid-bootctl` | `reboot <bootloader\|recovery\|system\|edl>`（ctypes `reboot(2)` RESTART2；EDL 占位、默认拒绝）+ `slot info/active/set-active/mark-successful/set-retry`（转发 `slot-attr.py`，**写前自动备份 GPT 前 34 扇区**） |
+| `scripts/flash-recovery.sh` | Linux 内 `dd` 写 `recovery_b` + sha 回读 + 可选 `--reboot` |
+
+设备上已放 `/usr/local/bin/`，`slot info`/`active` 实跑通过。
+
+## 实读暴露的两个关键事实
+
+1. **⚠️ `boot_b` 正在倒计时**：`byte6=0x2f → retry=5, succ=0`。mainline 从不调 `markBootSuccessful`，再启动 5 次 ABL 就置 unbootable 停 fastboot。这也正是你要的"重置启动次数"功能——**建议立刻**：
+   ```bash
+   ssh root@192.168.7.1 eldroid-bootctl slot mark-successful b
+   ```
+2. **TWRP 其实还没装**：设备 `recovery_a`/`recovery_b` 都是原厂（ramdisk ~16 MB）；`twrp/twrp.img` 才是 TWRP（ramdisk 52 MB）。另外 `backup/stock-259/recovery_{a,b}.img` 与 `twrp.img **同 sha**` —— 命名误导，它们不是原厂，恢复时别用。
+
+## 为什么 recovery 目标选 `recovery_b`（免签）
+
+`current-slot=b`（GPT 实测）；`vbmeta_b` 已被我们的 key 重签且 **Flags=3**、描述符**不含 recovery** ⇒ 写 `recovery_b` 不用签名。`vbmeta_a` 是原厂含 recovery 描述符，动它还要切槽，不值。
+
+## 请你执行的验证（可逆，最坏进 fastboot/recovery）
+
+```bash
+# 0) 先止血
+ssh root@192.168.7.1 eldroid-bootctl slot mark-successful b
+# 1) 验 ABL 是否采纳 PMIC SDAM reason（这决定后面走 S2 还是移植 PSCI）
+ssh root@192.168.7.1 eldroid-bootctl reboot bootloader
+#    → 进 fastboot 即成功；fastboot reboot 回来
+# 2) 装 TWRP 到 recovery_b
+scripts/flash-recovery.sh twrp/twrp.img
+# 3) 验 reboot recovery → TWRP
+ssh root@192.168.7.1 eldroid-bootctl reboot recovery
+```
+
+## 待你拍板
+
+1. 先跑 1) 验 `reboot bootloader`，还是直接连 TWRP（2→3）一起做？
+2. TWRP 装好后是否要顺手做一次"从 TWRP 里重启到 EDL"的对照（记录 TWRP 如何触发 EDL，为将来 EDL 立项留证）？
+
+（细节与证据在 `archive/topics/FLASHCTL-2026-10-03.md`；TASKS G1-24 / GAPS Q23 已更新。）
+
+
+## Automatic settled outcome - 2026-10-03
+
+A 已全部落地并提交（`e5e20df`）。自检全绿（仅剩 1 条真实待办）。数字先行：
+
+## 已交付
+
+| 项 | 产出 | 说明 |
+|---|---|---|
+| **分层定义** | `INDEX.md` §2 重写 | 「六视角」→ **三平面**：领域层(唯一维护面) / 元层 / 证据层；明确 **SSOT** 与生成物禁手改 |
+| **表头统一** | 6 份领域文档 + `AGENTS.md` | 「六视角文档集之一」→「领域层活文档之一；分层见 INDEX §2」 |
+| **自检脚本** | `scripts/check-doctor.sh` | 4 类检查：计数漂移 / 死链 / db 新鲜度 / 口径冲突；退出码可入 CI |
+| **生成物纪律** | `db/build.py --check` + `db/README.md` + `LESSONS.md` 横幅 | 标注 `LESSONS.md`/`elden.db` 为生成物，禁手改 |
+| **`.pi` 说明** | `.pi/README.md` | 分清 skills/memory/missions/agents/sessions/messenger，含 track 状态 |
+
+`check-doctor.sh` 当前输出：**FAIL=0，WARN=1**——唯一 WARN 是 `.pi/sessions` 实有 **51** 个、而 `SESSION-INDEX`/catalog 只收录 **45**（6 个新会话未入索引）。这是真实待办，不是假警报。
+
+## 两处我**没动**，需要你知悉
+
+1. **`HINDSIGHT.md` 未拆分。** 我核实了：项目 `.pi/memory/` 就是本项目会话的**活跃 profile 记忆**（由 pi 按固定文件名加载，不是普通文档）。按主题拆成 `memory/decisions/` 有**加载不到而丢记忆**的风险，违背"先确认不破坏可用系统"。所以只做了 `.pi/README.md` 说明，**拆分留作 B 项另行验证加载机制后再做**。
+2. **`HINDSIGHT.md` 的工作区改动未纳入本次提交。** 它在会话开始前就已是 dirty（疑似上一轮 harness 的压缩/追加），与本轮整理无关，故未替它背书。
+
+## 下一步（等你选）
+
+- **补 6 个会话进索引**（消掉最后的 WARN）：读 6 个新 jsonl，补进 `SESSION-INDEX.md` + catalog → 重建 db。
+- **B 项**（低风险、改路径）：建 `meta/` 移入 FILES/PITFALLS/LESSONS/SESSION-INDEX/db；5 个根脚本并入 `scripts/`。
+- **C 项**（需决策）：领域文档是否也进 `docs/`；`archive/topics` 是否真冻结；旧会话归档。
+
+要我接着做"补 6 个会话索引"吗？这能把 doctor 打到全绿。
+
+
+## Automatic settled outcome - 2026-10-03
+
+明白，目标改成**入口最小化**。现状是「1 个入口 + 11 个根文档」，其中不少是**索引/台账/说明**类冗余入口。下面给一个收敛方案，确认后执行。
+
+## 现状：根目录 12 个 `.md`，真正的「内容」与「索引/说明」混在一起
+
+| 类 | 文件 | 问题 |
+|---|---|---|
+| 入口 | `INDEX.md` | 唯一入口 ✓ |
+| 内容(领域) | DEVICE / TASKS / RESOURCES / GAPS / ANDROID-COMPAT / RUNBOOK-BRINGUP | 六份，各有独立价值 |
+| 索引/台账 | `PITFALLS.md`(正文) · **`LESSONS.md`(生成索引)** · **`FILES.md`(台账)** · **`SESSION-INDEX.md`(索引)** | 后三者＝同一批知识的第二入口 |
+| 说明 | `AGENTS.md`(pi 必需) · `.pi/README.md` · `db/README.md` | 可下沉 |
+
+**可收敛的正是「索引/台账」层**——它们不是内容，只是内容的另一个入口。
+
+## 建议：根文档 12 → 6（+AGENTS.md）
+
+| 保留 | 从哪来 | 合并动作 |
+|---|---|---|
+| **`INDEX.md`** | 入口 | 保持唯一入口；`.pi/README.md` 的要点并入 §5 后删除该文件 |
+| **`DEVICE.md`** | 设备 | 不变 |
+| **`TASKS.md`** | 任务 | **并入 `GAPS.md`**（未解问题/风险）**+ `ANDROID-COMPAT.md`**（G2 方案） |
+| **`RUNBOOK-BRINGUP.md`** | 操作 | 不变 |
+| **`PITFALLS.md`** | 经验 | **并入 `LESSONS.md` 的零号纪律**，删除 `LESSONS.md`（它本就是 PITFALLS 的生成索引） |
+| **`RESOURCES.md`** | 资源 | **并入 `FILES.md`（资产/版本控制边界）+ `SESSION-INDEX.md`（会话索引）** |
+
+结果：根目录只剩 `INDEX / DEVICE / TASKS / RUNBOOK-BRINGUP / PITFALLS / RESOURCES`（+必需 `AGENTS.md`），**入口仍只有 INDEX 一个**；`db/` 继续做机器可查索引，不再需要有同义的人读第二份。
+
+## 取舍（需要你知道）
+
+- 合并后 `TASKS.md` ≈ 280 行、`RESOURCES.md` ≈ 410 行、`PITFALLS.md` ≈ 600 行——**文件变长**，但"入口"变少。这两者是此消彼长，我按你的偏好取"入口少"。
+- `LESSONS.md` 由 `db/build.py --lessons` 生成。删除后我会把生成逻辑改为「不写根文件」或输出到 `db/`，并更新 `check-doctor`（不再检查 LESSONS 新鲜度）。
+- `SESSION-INDEX.md` 是逐会话摘要（156 行），并入 `RESOURCES.md` 末尾作为"会话轨迹"节；`db/elden.db` 的 `sessions` 表保留。
+- 所有跨文件引用（含 `INDEX`/`check-doctor`/`db/build.py`）会一并改写，`check-doctor.sh` 做死链兜底。
+
+## 更激进（可选，若你要求再少）
+
+再砍到 **4 份**：`INDEX`（使命+状态+路由）+ `TASKS`（任务+未解+G2+上机手册）+ `PITFALLS` + `RESOURCES`。代价：`TASKS.md` 会到 ~700 行（把 RUNBOOK 也吞进去），定位信息会变难。**我不建议**，但你要就做。
+
+---
+
+**按推荐方案（6 份）执行吗？** 还是你要更激进的 4 份？定了我就一次性重写 + 修引用 + 跑 `check-doctor` 验证。
+
+
+## Automatic settled outcome - 2026-10-03
+
+已更新会话笔记，等你选 A / B。
+
+
+## Automatic settled outcome - 2026-10-03
+
+查了 pi 的文档与本地扩展，结论先给：**pi 没有等价的结构化知识库服务**；`db/` 属于它自己 `extensions.md` 里定义的「External storage」。但 db **可以整体删掉**，因为它的功能都能被更少的东西覆盖。顺带发现一个关于记忆的重要事实。
+
+## pi 原生能提供什么
+
+| 原生设施 | 实际能力 | 能否替代 db |
+|---|---|---|
+| **profile memory**（`pi-profile-memory.ts`） | 只认 3 个固定文件 `USER/HINDSIGHT/FAILURES.md`，**追加式**，加载时**只取每文件尾部**（USER/FAILURES 各 4 KB、HINDSIGHT 8 KB），超 64 KB 自动压缩 | ❌ 不能查询，只适合少量durable偏好 |
+| **`context_history`** | 搜/读 transcript 里的消息，**scope 仅当前会话**（branch/session） | ❌ 跨会话索引它不做 |
+| **session manager**（`/resume`、`/name`、会话选择器） | 存会话、搜索/改名/删除 | ◐ 替代 db 的 `sessions` 表 |
+| **`pi.appendEntry()`** | 会话内durable、不进模型上下文 | ❌ 单会话，非项目库 |
+| **`grep` 工具 / `rg`** | 文件内容搜索 | ✅ 替代 db 的 `pitfalls`/`references_`/`tasks`/`docs` 查询 |
+
+**关键点**：没有 SQLite/向量/索引类原生服务；要"原生查询"只能写**扩展**（反而增加基建，与"入口最少"相反）。
+
+## db 的五张表 → 替代方案
+
+| db 表 | 原用途 | 替代 |
+|---|---|---|
+| `sessions` | 跨会话轨迹、是否实机 | pi 会话选择器 + `rg '关键词' .pi/sessions/*.jsonl`（原生数据，零基建） |
+| `pitfalls` | 关键词找踩坑 | `rg #关键词 PITFALLS.md` |
+| `tasks` | 任务状态查询 | `rg` / `TASKS.md` 表格 |
+| `references_` | 参考资源索引 | `rg 'url\|关键词' RESOURCES.md` |
+| `docs` | 文档清单 | `git ls-files '*.md'` |
+
+也就是说，db 提供的"机器可查"在**文档收敛到 6 份后，`rg` 已经够用**；唯一独有的是预计算的交叉统计，而那正是 `check-doctor.sh` 已经在做的轻量一致性检查。
+
+## 建议：把 db 也一起删掉
+
+- 删除 `db/`（4 个文件）与生成物 `LESSONS.md`；`db/build.py --lessons` 改为**不写根文件**或整体退役。
+- `SESSION-INDEX` 内容并入 `RESOURCES.md` 会话轨迹节；会话回忆走 pi 原生选择器 + `rg .pi/sessions`。
+- `check-doctor.sh` 保留，但去掉"db 新鲜度"检查（改为纯文本一致性检查）。
+- 结果：根文档 12 → **6**（INDEX/DEVICE/TASKS/RUNBOOK/PITFALLS/RESOURCES + AGENTS），且**不再有生成物与第二索引**。
+
+## 顺带一个纠正（关于 HINDSIGHT）
+
+`pi-profile-memory.ts` 的 `readMemory()` 只把每个文件**最后 4–8 KB** 注入系统提示。所以：
+- 之前担心的"拆分丢记忆"其实不成立——**只有尾部会加载**，拆成子目录反而更读不到。
+- 正确做法是让 `HINDSIGHT.md` **保持小**（主动修剪旧条目），而不是拆分。现在 85 KB 里 90% 永远不进上下文。
+
+---
+
+要不要我把「删 db + 删 LESSONS + 6 份文档合并 + check-doctor 改造」作为
+
+
+## Automatic settled outcome - 2026-10-03
+
+SDAM 路线确认死亡，但我在 ABL 固件里找到了真正的机制线索。
+
+## 已查明
+
+1. **PMIC SDAM reason 不被采纳**：`reboot recovery` 后 SDAM cell 复位为 `0x00`，设备正常起 Linux（vk34recon）。→ `nvmem-reboot-mode` 这条链对 ABL 无效。
+2. **ABL 认的是 DLOAD cookie（TCSR 寄存器）**：`uefi_a` 里有 `DloadCookieAddr / DloadCookieValue / EDLCookieAddr / "ERROR: Failed to set DLOAD cookie"` → 正好对应主线 `qcom,dload-mode = <&tcsr 0x19000>`。这是 **EDL** 的触发点（留档）。
+3. **`misc` 在 LUN0 `/dev/sda7`**（boot/recovery 在 LUN4 `/dev/sde`），ABL 按分区名跨 LUN 读，所以 BCB 位置没错。
+
+## 正在做零成本测试：BCB `boot-recovery`
+
+`bootonce-bootloader` 不生效 ≠ `boot-recovery` 不生效（前者是 fastboot 的一次性命令，后者是 recovery 的经典命令）。我已：
+- 备份 `misc` → `/root/misc-bak/`
+- 写入 `misc` 首字段 = `boot-recovery`（已读回确认）
+
+**请跑一条重启**（普通重启即可，不需要 reason——BCB 会留着）：
+
+```bash
+ssh root@192.168.7.1 'sync; reboot -f'
+```
+
+预期二选一：
+- **进 TWRP** → 这条路通了：Linux 侧只需"写 BCB + 重启"，**零内核改动**，我把它包进 `eldroid-bootctl`。
+- **仍进 Linux** → BCB 也被 ABL 忽略。下一步走 **DT-only 修**：给 `pmk8550_pon` 节点加 `mode-recovery = <0x01>`（上游标准写法，`qcom-pon` 驱动本树已编译 `=y`），即改用 **PMIC PON spare** 写 reason；只需重编 DTB 重打包。再不行才移植 PSCI vendor reset。
+
+跑完告诉我进了哪个。
+
+
+## Automatic settled outcome - 2026-10-03
+
+三连否定后找到正解。汇总与下一步。
+
+## 触发机制结论（全部实测）
+
+| 机制 | 结果 |
+|---|---|
+| PMIC SDAM `reboot-reason@48`（DT 已绑的 `nvmem-reboot-mode`） | ❌ 不采纳 |
+| `misc` BCB `bootonce-bootloader` | ❌ |
+| `misc` BCB **`boot-recovery`**（本次新测） | ❌ |
+| **TCSR DLOAD cookie** | ✅ 是 **EDL** 的触发点（`uefi_a` 里 `DloadCookieAddr/Value`、`EDLCookieAddr`；↔ 主线 `qcom,dload-mode=<&tcsr 0x19000>`） |
+| **PSCI `SYSTEM_RESET2` vendor reset** | ✅ **SM8750 的上游正解**（`mode-bootloader=<0x80010001 0x2>`、`mode-edl=<0x80000000 0x1>`） |
+
+上游正解是个 **13 补丁 / 559 行**的大系列（`psci-reboot-mode`+64bit reboot-mode+PSCI-MFD），**7.2 未合并**；而且它**没有 `mode-recovery`**，只有 bootloader/edl。
+
+## 已交付：`elden/vk41-psci-reboot`（最小钩子）
+
+只改 `drivers/firmware/psci/psci.c` **~35 行**：把 `reboot(2)` 的 reason 字符串映射成 SM8750 的 `SYSTEM_RESET2` vendor reset；**SMC 若返回（固件不支持）就回退普通重启**，不会卡死。正常重启路径不变。
+
+- commit `4b643f169`（基于 `elden/vk34-recon`）
+- 镜像 `out/boot-elden-vk41-psci.img`：image sha `f2038fb20f666263`，Image sha `e79dd77f0303b01c`，uname `7.2.0-debug-ge72a036ed4be-dirty`
+- 已确认钩子字符串在镜像内核里
+
+## 请你执行
+
+```bash
+cd ~/y700-elden
+scripts/flash-b.sh out/boot-elden-vk41-psci.img --reboot
+# ~30s 后确认在跑新内核：
+ssh root@192.168.7.1 uname -r        # 期望 7.2.0-debug-ge72a036ed4be-dirty
+# 测试：
+ssh root@192.168.7.1 eldroid-bootctl reboot bootloader
+```
+
+预期：**真进 fastboot**（主机 `fastboot devices` 可见）。回退主机侧 `fastboot reboot`。
+失败（仍进 Linux）：说明 TZ 不接受该 vendor reset，届时再议。
+（`reboot edl` 也可测，但退出 EDL 需长按电源或 qdl；你说过 EDL 暂缓，先不动。）
+
+## 注意
+
+- **没有 recovery 的 vendor reset** → `reboot recovery` 不会进 TWRP。以后进 TWRP 的路线 = `reboot bootloader` → fastboot → `fastboot reboot recovery` / 直接刷写。
+- 回退基线：`dd` 回 `bootslot-b/boot_b-vk34recon.img`（sha `53e5857a…`）。
+- `misc` 里还留着我写的 `boot-recovery`（ABL 忽略、无害），需要的话我帮你还原备份。
+
+跑完告诉我进的是 fastboot 还是 Linux。
+
+
+## Automatic settled outcome - 2026-10-03
+
+✅ **成功** —— Linux 侧 `reboot bootloader` 真进 fastboot（`HA2EXB0E`，current-slot=b）。PSCI `SYSTEM_RESET2` vendor reset 被 TZ/ABL 采纳，机制坐实。
+
+## 现状与回退
+
+- 设备当前在 **fastboot**。回 Linux：`fastboot reboot`
+- b 槽现有内核 = **vk41-psci**（`uname` `7.2.0-debug-ge72a036ed4be-dirty`）；回退基线 `bootslot-b/boot_b-vk34recon.img`
+- 已登记：`archive/topics/FLASHCTL-2026-10-03.md` §7–§9、TASKS G1-24、GAPS Q23、DEVICE U2
+
+## 现在可用的 Linux 侧能力
+
+| 命令（设备内） | 结果 |
+|---|---|
+| `eldroid-bootctl reboot bootloader` | ✅ 实测进 fastboot |
+| `eldroid-bootctl reboot edl` | 同机制（`0x80000000/0x1`），**未测**（退出 EDL 需长按电源/qdl） |
+| `eldroid-bootctl slot info/active/set-active/mark-successful/set-retry` | ✅ 已验证（GPT attribute） |
+| `eldroid-bootctl reboot recovery` | ⚠️ **不行**：上游 sm8750 无 recovery 的 vendor reset |
+
+## 建议下一步（你在 fastboot，正合适）
+
+1. **回 Linux**：`fastboot reboot`
+2. **测 TWRP**（recovery_b 已刷 TWRP）：
+   ```bash
+   fastboot reboot recovery
+   ```
+   - 进 TWRP → 你的原目标（TWRP 接管）达成；
+   - 若起不来 → 说明 TWRP 那 52 MB ramdisk 借的是 `boot` 内核、而 boot_b 现在是 mainline；那就 `fastboot reboot` 回来再议。
+3. **可选**：我写个主机侧 `scripts/to-recovery.sh`（`reboot bootloader` → 等 fastboot → `fastboot reboot recovery`），把"进 recovery"包成一条命令。
+
+另外两个未决项仍在：桌面**关机/锁屏**（缺 elogind 守护进程）、熄屏→重启。
+
+先试 `fastboot reboot recovery`？还是先回 Linux？
+
+
+## Automatic settled outcome - 2026-10-03
+
+## 电源关机：根因已定位并修复，需重启一次生效
+
+**根因（两个叠加）**
+1. **只装了 `libelogind`，没装 `elogind` 守护进程** → phosh 关机菜单调 logind 超时（日志 `phosh-session-manager: Failed to shutdown: Timeout was reached`）；且 gnome-session 在**会话启动时**就探测 logind，当时没有 → 缓存 `CanShutdown=false`。
+2. `idle-delay=10` + `lock-enabled=true`（上一轮复现熄屏时设的）→ 10 秒熄屏即锁；root 空密码 + phosh 解锁断言失败 → **一直卡锁屏**。
+
+**已做**
+| 项 | 结果 |
+|---|---|
+| `apk add elogind elogind-openrc` | ✅ 已装，`elogind-daemon` 在跑 |
+| `org.freedesktop.login1` | ✅ `CanPowerOff`/`CanReboot` = **yes** |
+| `start-desktop.sh` 在 phosh-session **之前**启动 elogind | ✅ 已落（持久） |
+| `gsettings`：`idle-delay=0`、`lock-enabled=false`、`idle-activation-enabled=false` | ✅ 已设（dconf 持久） |
+| 即时解锁 | ✅ `ScreenSaver.GetActive=false`，桌面现在应该可以用了 |
+| 内核 `pm_power_off=psci_sys_poweroff` | ✅ 已确认（SYSTEM_OFF 可用） |
+
+**当前 `CanShutdown` 仍是 false** —— 因为 gnome-session 是在 elogind 起来**之前**启动的，缓存了失败。所以要**重启一次**，让 elogind 先于会话启动。
+
+## 请你执行一次重启
+
+```bash
+ssh root@192.168.7.1 eldroid-bootctl reboot
+```
+
+回来后我验证 `CanShutdown=true`；然后你测**长按电源键 → 关机**（或电源菜单"立刻关机"）。
+
+> 兜底（现在就能用）：`ssh root@192.168.7.1 eldroid-bootctl reboot --poweroff`
+
+若重启后菜单仍不工作，我再把关机直接接到 logind（绕过 gnome-session 的 CanShutdown 门）。另外 TWRP 那次失败已记录在案、不深究。
+
+提交：`20cc135`（elogind+关锁屏）、`79a4327`（TASKS G1-25）。
+
+
+## Automatic settled outcome - 2026-10-03
+
+第二轮根因找到并处理了。
+
+## 真正卡住关机的原因
+
+重启后 `CanShutdown` 已变 `true`，但**elogind 进程内部卡在「一个 shutdown 操作已在进行中」**：
+- 任何 `Inhibit("shutdown", …)` 都返回 `OperationInProgress`（`sleep` 的却正常）；
+- 于是 gnome-session / `gsd-power` 的关机路径（先取 shutdown delay inhibitor，再 `PowerOff`）全被拒，表现就是"点了立刻关机没反应"。
+
+**诱因**：elogind 默认 `HandlePowerKey=poweroff`，电源键事件被它抢先�“占位”，与 phosh（持 `handle-power-key` block inhibitor）冲突，留下 in-progress 状态。
+
+**处理**：
+| 步骤 | 结果 |
+|---|---|
+| `kill -9` + 重启 elogind | ✅ `Inhibit("shutdown")` 立即恢复正常（返回 fd） |
+| `/etc/elogind/logind.conf` 加 `HandlePowerKey=ignore` / `HandlePowerKeyLongPress=ignore` | ✅ 已落，elogind 不再接管电源键（交回 phosh） |
+| elogind 以新配置重启 | ✅ `pid=5343`，`CanPowerOff=yes`，shutdown inhibitor 可获取 |
+
+## 请你现在测一下
+
+**长按电源键 → 「立刻关机」**（应该是真断电了）。
+若菜单仍不行，直接测后端：`ssh root@192.168.7.1 loginctl poweroff`。
+
+- 成功 → 我再确认**重启后是否仍有效**（配置已落盘，但 elogind 的启动顺序要复核）。
+- 仍失败 → 我绕过 gnome-session：把 gsd-power/电源菜单直接接到 `eldroid-bootctl reboot --poweroff`。
+
+兜底一直可用：`ssh root@192.168.7.1 eldroid-bootctl reboot --poweroff`。
+
+（`logind.conf` 两行 + rootfs 重建须知已记入 `archive/topics/复盘-2026-10-03-持久化与睡眠.md` §6.1，commit `e9d03f9`。）
+
+
+## Automatic settled outcome - 2026-10-03
+
+整套重构完成并提交（`183477b`）。自检 **FAIL=0 / WARN=0**。
+
+## 结果
+
+| 指标 | 前 | 后 |
+|---|---|---|
+| 根目录 `.md` | 12 | **6 维护文档 + `AGENTS.md` = 7** |
+| 入口 | INDEX + 11 份 | **唯一入口 `INDEX.md`** |
+| SQLite/生成物 | `db/` 4 文件 + `LESSONS.md` | **0（全删）** |
+| 第二索引 | FILES / SESSION-INDEX / LESSONS / catalog | **0** |
+| 会话索引覆盖 | 45/51 | **51/51** |
+
+## 具体动作
+
+**合并（内容零丢失，只降级标题后追加）**
+- `GAPS.md` + `ANDROID-COMPAT.md` → **`TASKS.md §5 / §6`**
+- `FILES.md` + `SESSION-INDEX.md` → **`RESOURCES.md §3 / §4`**
+- `LESSONS.md` 的零号纪律 → **`PITFALLS.md §0`**
+
+**删除**：`GAPS.md`、`ANDROID-COMPAT.md`、`FILES.md`、`SESSION-INDEX.md`、`LESSONS.md`、`db/`（schema/build/README/elden.db）、`archive/sessions-catalog-2026-10-03.jsonl`
+
+**新会话补录**（6 个，全部进 `RESOURCES.md §4`）
+- `01a101b5` 问候（junk）
+- `01a101bf` AUDIT2：vk34 后增量第二遍 + v1/v2 二分
+- `01a101ee` AUDIT3：工具调用审计 + boot_b=vk40 混淆
+- `01a101f3` Linux→fastboot 能力核实（后被推翻）
+- `01a1021c` **PSCI vendor reset 实测进 fastboot + elogind 关机修复**
+- `01a10224` 本次架构整理
+
+**重写** `scripts/check-doctor.sh`：去掉 db 检查，改为「会话覆盖 / 死链 / 过期字样」三项，当前全绿。
+
+## 现在的终态
+
+```
+y700-elden/
+├── INDEX.md              ← 唯一入口（使命/分层/现状/命令/专题地图）
+├── DEVICE.md             设备描述+状态
+├── TASKS.md              任务/进度/未解(§5)/G2方案(§6)
+├── RESOURCES.md          参考/本地资源/资产台账(§3)/会话索引(§4)
+├── RUNBOOK-BRINGUP.md    上机手册
+├── PITFALLS.md           零号纪律(§0) + 踩坑 #1–#88
+├── AGENTS.md             pi 项目指令
+├── scripts/check-doctor.sh
+└── archive/              证据层（只增不改）
+```
+
+查询方式变为：`rg` 搜文本、pi 原生 `/resume` 找会话、`rg .pi/sessions` 搜轨迹——**无自建索引**。
+
+> 说明：`.pi/memory/HINDSIGHT.md` 仍保持未提交（它是 harness 自动追加的活跃记忆，与本轮整理无关）；你刚定的「入口越少」偏好已存入项目记忆。
