@@ -32,6 +32,11 @@ LINUX_REBOOT_MAGIC1 = 0xFEE1DEAD
 LINUX_REBOOT_MAGIC2 = 672274793
 LINUX_REBOOT_CMD_RESTART = 0x01234567
 LINUX_REBOOT_CMD_RESTART2 = 0xA1B2C3D4
+LINUX_REBOOT_CMD_POWER_OFF = 0x4321FEDC
+
+# 注意：musl 的 `reboot()` 是 **单参数** 封装（int reboot(int cmd)），用 4 参数调它会把
+# magic1 当成 cmd → 内核返回 EINVAL(22)。必须直接走 syscall(SYS_reboot, ...)。
+SYS_REBOOT = {"aarch64": 142, "armv7l": 88, "x86_64": 169}.get(os.uname().machine, 142)
 
 # reason 字符串 -> DT mode-* 的 magic（pmk8550.dtsi；仅供显示核对）
 MODE_MAGIC = {"recovery": 0x01, "bootloader": 0x02}
@@ -49,12 +54,22 @@ def _require_root(what: str) -> None:
         sys.exit(f"eldroid-bootctl: {what} 需要 root（当前 uid={os.geteuid()}）")
 
 
+def _do_reboot(cmd: int, reason: str | None) -> int:
+    """直调 syscall(SYS_reboot, ...)；成功不返回，失败返回 errno。"""
+    libc = ctypes.CDLL("libc.so.6", use_errno=True)
+    libc.syscall.restype = ctypes.c_long
+    os.sync()
+    arg = ctypes.c_char_p(reason.encode()) if reason else None
+    libc.syscall(SYS_REBOOT, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, arg)
+    return ctypes.get_errno()  # 成功则不会到这里
+
+
 def cmd_reboot(args) -> int:
     target = args.target
-    if target not in REBOOT_REASON:
+    if target is not None and target not in REBOOT_REASON:
         sys.exit(f"未知目标 {target!r}；可选 {', '.join(REBOOT_REASON)}")
     _require_root("reboot")
-    reason = REBOOT_REASON[target]
+    reason = REBOOT_REASON[target] if target else None
 
     if target == "edl":
         print("⚠️  本内核 DT 无 mode-edl，EDL 未支持（见 archive/topics/FLASHCTL-2026-10-03.md）。",
@@ -63,28 +78,23 @@ def cmd_reboot(args) -> int:
         if not args.force:
             return 1
 
-    if reason:
+    if args.poweroff:
+        print("[reboot] 关机（POWER_OFF）")
+    elif reason:
         magic = MODE_MAGIC.get(reason)
         print(f"[reboot] 目标={target} reason={reason!r} "
               f"magic={('0x%02x' % magic) if magic is not None else '?'}（写 PMIC SDAM reboot-reason）")
     else:
-        print(f"[reboot] 目标={target}（普通重启，无 reason）")
+        print("[reboot] 普通重启（无 reason）")
 
     if args.dry_run:
         print("  (dry-run: 不执行 reboot(2))")
         return 0
 
-    libc = ctypes.CDLL("libc.so.6", use_errno=True)
-    os.sync()
-    if reason:
-        ret = libc.reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
-                          LINUX_REBOOT_CMD_RESTART2, reason.encode())
-    else:
-        ret = libc.reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
-                          LINUX_REBOOT_CMD_RESTART, 0)
-    err = ctypes.get_errno()
-    # reboot(2) 成功则不会返回
-    print(f"reboot(2) 失败: ret={ret} errno={err} ({os.strerror(err)})", file=sys.stderr)
+    cmd = LINUX_REBOOT_CMD_POWER_OFF if args.poweroff else \
+        (LINUX_REBOOT_CMD_RESTART2 if reason else LINUX_REBOOT_CMD_RESTART)
+    err = _do_reboot(cmd, reason)
+    print(f"reboot(2) 失败: errno={err} ({os.strerror(err)})", file=sys.stderr)
     return 1
 
 
@@ -136,9 +146,10 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("reboot", help="带 reason 重启到 bootloader/recovery/system")
-    p.add_argument("target", choices=list(REBOOT_REASON))
+    p.add_argument("target", nargs="?", choices=list(REBOOT_REASON))
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--force", action="store_true", help="edl 未支持时也继续")
+    p.add_argument("--poweroff", action="store_true", help="关机而非重启（忽略 target）")
     p.set_defaults(func=cmd_reboot)
 
     p = sub.add_parser("slot", help="A/B 槽位元数据（GPT attribute byte6）")
