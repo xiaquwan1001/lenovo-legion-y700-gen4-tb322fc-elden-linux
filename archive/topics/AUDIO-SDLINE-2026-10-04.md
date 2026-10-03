@@ -77,3 +77,26 @@ vk42 冷启后 ALSA 直放（`amixer -c0 cset numid=8 on` + `speaker-test -D hw:
 
 - `devlogs.sh`（运行日志采集：snapshot/pstore/tail/serial/watch）建立，见 `TASKS`/工具头注释。
 - 期间 elogind 调试实例已在电源验证收口时清理；本专题只动内核/ramdisk tplg，未改持久 root 其他内容。
+
+## 9. 桌面音频服务（PipeWire + UCM2）— 2026-10-04
+
+承 §6"UI/应用音频"。`pulseaudio` 其实早已装（只是没跑）；本次改装 **PipeWire**：
+
+- 包：`apk add pipewire pipewire-pulse pipewire-alsa wireplumber`（会替换 pulseaudio）。
+- 但 ACP 只给 `Dummy Output` / `Pro Audio`：本卡机器驱动没有可用 port
+  （唯一 port 是 "analog-output-headphones" 且 unavailable），`api.acp.auto-profile=false`。
+- 正解：给卡写 **UCM2**
+  - `scripts/audio-ucm/HiFi.conf`：`SectionVerb` + `SectionDevice."Speaker"`，
+    EnableSequence `cset` 开 `SECONDARY_MI2S_RX Audio Mixer MultiMedia1` 并把
+    `Left/Right Playback Volume` 抬到 1023（默认 0=静音）；`PlaybackPCM "hw:${CardId},0"`。
+  - `scripts/audio-ucm/Lenovo-Y700-Gen4.conf`（Syntax 4，HiFi use case）→ 装到
+    `/usr/share/alsa/ucm2/conf.d/sm8750/Lenovo-Y700-Gen4.conf`。
+  - `scripts/audio-ucm/install.sh` 幂等安装，由 `start-desktop.sh` 调用。
+- PipeWire 自启：Alpine 装了 `/etc/xdg/autostart/pipewire.desktop`
+  → `pipewire-launcher` → pipewire + wireplumber + pipewire-pulse，gnome-session 拉起。
+- **冷启实测**：`Active Profile=HiFi`；sink `alsa_output.platform-sound.HiFi__Speaker__sink`
+  （GNOME 显示 "Built-in Audio Speaker playback"）；UCM 自动 `numid8=on`、音量=1023；
+  经 PipeWire 播放 SYSST `0x0315`（SWITCHING 置位）。
+
+**仍缺**：**输入设备**——本卡只有 Secondary MI2S 播放 DAI，`arecord -l` 为空；
+麦克风（VA/TX macro DMIC）是另立的 bring-up，不在本轮。

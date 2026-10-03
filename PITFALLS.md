@@ -629,6 +629,12 @@
       + 持久 root `/lib/firmware/qcom/sm8750/` 两处都要换，重建 boot（vk43）。运行期 unbind/bind 重载会 ADSP 图残留，不可用。
     - 操作前提：冷启后 `amixer -c0 cset numid=8 on` + 音量 `numid=1/2=1023`（默认 0=静音）。
     - 详见 `archive/topics/AUDIO-SDLINE-2026-10-04.md`、`TASKS.md` G1-4。
+    - **UI/应用音频（2026-10-04）**：装 `pipewire`/`pipewire-pulse`/`pipewire-alsa`/`wireplumber`（会替换 pulseaudio）。
+      但本卡机器驱动无可用 port，ACP 只给 `Dummy Output`/`Pro Audio`；必须给 `Lenovo-Y700-Gen4` 写 **UCM2**
+      （`scripts/audio-ucm/`：HiFi verb + Speaker device，自动 `cset` 开 numid8 路由 + 抬功放音量）。
+      装了 UCM 后 `Active Profile=HiFi`、sink=`...HiFi__Speaker__sink`（GNOME 显示 "Built-in Audio Speaker playback"）。
+      PipeWire 由 `/etc/xdg/autostart/pipewire.desktop` 自启；`install.sh` 由 `start-desktop.sh` 幂等调用。
+      另：本卡**无 capture DAI**（`arecord -l` 空）→ 输入设备为空，麦克风是另立的 bring-up。
 
 ---
 

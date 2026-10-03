@@ -1557,3 +1557,30 @@ scripts/flash-b.sh out/boot-elden-vk43.img --reboot
 刷好后我来跑验证；若仍无声，下一步查 WORDSELECT/数据格式或功放 I2SCTRL。
 
 > 另：设置界面输入输出设备为空是**独立问题**（系统里没装 PipeWire/PulseAudio 守护进程，只有库）。ALSA 出声确认后再装音频服务补上 UI。
+
+
+## Automatic settled outcome - 2026-10-03
+
+收口完成 ✅
+
+## 结果
+
+| 改动 | 状态 | 关键证据 |
+|---|---|---|
+| **温控**（0010，四级 trip） | ✅ 功能正常 | 所有 CPU/GPU 热区 `70/82/90/105 ℃`；cdev `cpufreq-cpu0/6`、`devfreq-gpu` 就位 |
+| **音频**（0009/0011 + tplg SD 线） | ✅ **出声** | `SEC_MI2S_IBIT` 1.536 MHz；功放 SYSST `0x0215`→**`0x2315`（SWITCHING 置位）** |
+
+**过程要点**：
+1. 这两项在原 vk41 里被 `vk34-recon`（隔离熄屏重启）整批回退 → 新分支 **vk42** 干净重落（`geb432f18a0d1`），保留 PSCI。
+2. 音频图全通但无声，真根因不在内核改动，而在 **tplg 的 MI2S SD 线抄错**：功放接 `gpio124=i2s1_data1`（SD1），tplg 却用 SD0 → ADSP 往 gpio122 发。改 `SD_LINE_IDX_I2S_SD1` 后出声（**vk43**）。
+3. tplg 在 boot 早期从 initramfs 加载，故用**字节级替换**改了 ramdisk + 持久 root。
+
+**提交**：`31cde62`（tplg 修复）、`cddb1ca`（收口：`PITFALLS #90`、`archive/topics/AUDIO-SDLINE-2026-10-04.md`、TASKS/DEVICE/RESOURCES）。`check-doctor` **FAIL=0/WARN=0**。当前设备 = vk43。
+
+## 剩余待办（音频侧）
+
+- **UI/应用音频**：系统只装了 `pipewire-libs`/`libpulse`（库），没有音频服务守护进程 → 设置界面"输入输出设备"为空。需装并启用 **PipeWire + WirePlumber**（或 PulseAudio）。
+- 左/右两片 AW88461 分别验证、录音通路。
+- 「熄屏→重启」仍未解（本轮 vk42/vk43 暂未复现）。
+
+下一个做哪个？我建议先把 **PipeWire/WirePlumber** 装上（让设置界面和浏览器等应用有声音），这是"功能健全"的必要一块。
