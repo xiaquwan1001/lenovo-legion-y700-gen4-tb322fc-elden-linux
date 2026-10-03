@@ -30,12 +30,15 @@ STREAM_SG_PCM_ADD(audioreach/subgraph-stream-vol-playback.m4, FRONTEND_DAI_MULTI
 #   Mixer -> [LOG] -> [I2S EP]
 #
 dnl DEVICE_SG_ADD(m4, stream-name, stream-dai-id,
-dnl   format, min-rate, max-rate, min-ch, max-ch,
-dnl   interface-type, interface-index, sd-line-idx, data-format,
-dnl   sg-iid, cont-iid, mod-iid, dai-name)
+#	dnl   format, min-rate, max-rate, min-ch, max-ch,
+#	dnl   interface-type, interface-index, sd-line-idx, data-format,
+#	dnl   sg-iid, cont-iid, mod-iid, dai-name)
+# SD line: the amp I2S DIN is on gpio124 = i2s1_data1 = SD1 (confirmed by the
+# stock DT dump, probe/result/devicetree.dts).  The original SD0 copy from the
+# Google SC7180 template drove gpio122 instead -> amp received no data.
 DEVICE_SG_ADD(audioreach/subgraph-device-i2s-playback.m4, `Secondary', SECONDARY_MI2S_RX,
 	`S16_LE', 48000, 48000, 2, 2,
-	LPAIF_INTF_TYPE_LPAIF, I2S_INTF_TYPE_SECONDARY, SD_LINE_IDX_I2S_SD0, DATA_FORMAT_FIXED_POINT,
+	LPAIF_INTF_TYPE_LPAIF, I2S_INTF_TYPE_SECONDARY, SD_LINE_IDX_I2S_SD1, DATA_FORMAT_FIXED_POINT,
 	0x00004005, 0x00004005, 0x00006050, `SECONDARY_MI2S_RX')
 dnl
 STREAM_DEVICE_PLAYBACK_MIXER(SECONDARY_MI2S_RX, ``SECONDARY_MI2S_RX'', ``MultiMedia1'', ``MultiMedia2'')
