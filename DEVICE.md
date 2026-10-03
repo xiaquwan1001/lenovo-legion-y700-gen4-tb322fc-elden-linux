@@ -69,7 +69,7 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · a 槽 stock **259** · b 槽 **mainline vk40 持久直启**（`/`=`/dev/sda17`，Phosh 自启）——但**「熄屏即重启」**（见下） | 原厂未动 | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | ⚠️ **当前不可达**（本轮末 `idle-delay=10` 造成重启环）→ 先按 `archive/topics/复盘-2026-10-03-持久化与睡眠.md` §5 恢复 |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · a 槽 stock **259** · b 槽 **mainline `vk41-psci` 持久直启**（`/`=`/dev/sda17`，Phosh 自启；**Linux→fastboot 已打通** `eldroid-bootctl reboot bootloader`）——但**「熄屏即重启」**、**桌面无 elogind（关机/锁屏有问题）**（见下）；`recovery_b` 已刷 TWRP | 原厂未动 | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **fastboot**（本轮末）；回 Linux 用 `fastboot reboot`。基线回退：`bootslot-b/boot_b-vk34recon.img` |
 
 > **★ 未解故障（2026-10-03）**：桌面空闲**熄屏（DPMS blank）→ 整机重启**（用户描述“直接关机并重启”）。
 > 串口证据：重启前 `ucsi_glink … PPM init failed`，**无 kernel panic 打印**。
