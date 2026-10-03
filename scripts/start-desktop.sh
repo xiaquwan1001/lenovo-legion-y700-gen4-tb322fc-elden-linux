@@ -59,6 +59,12 @@ pgrep -x seatd >/dev/null 2>&1 || seatd -g root >/run/seatd.log 2>&1 &
 # left elogind wedged (OperationInProgress).  Wrap them with -f first.
 [ -x /usr/local/sbin/fix-logind-poweroff.sh ] && \
 	/usr/local/sbin/fix-logind-poweroff.sh || true
+
+# audio: UCM2 so WirePlumber exposes the AW88461 "Speakers" sink (the card's
+# machine driver has no usable port, so ACP would otherwise give Dummy Output).
+# PipeWire itself is started by its own /etc/xdg/autostart desktop entry.
+[ -x /usr/local/sbin/audio-ucm/install.sh ] && \
+	/usr/local/sbin/audio-ucm/install.sh || true
 if [ -x /usr/libexec/elogind/elogind ] && ! pgrep -x elogind-daemon >/dev/null 2>&1; then
 	/usr/libexec/elogind/elogind >/run/elogind.log 2>&1 &
 fi
