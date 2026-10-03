@@ -2,6 +2,7 @@
 
 > **入口。** 新会话按顺序读：本文件 §1（使命）→ §2（六视角文档集）→ 需要细节再进专题档案。
 > 2026-10-03：**建立 git 版本控制**（分支 `main`，只纳管文本/脚本/补丁/记忆，大二进制忽略）→ 边界与可清理标记见 **`FILES.md`**；内核工作树已导出权威补丁（`patches/elden-working-tree-ba28ec16f-2026-10-03.patch`）。
+> 2026-10-03（续）：**知识库化**——`LESSONS.md`（经验总入口）、`SESSION-INDEX.md`（会话/进度）、`db/`（SQLite：sessions/pitfalls/tasks/references_）。新会话建议顺序：本文件 → `LESSONS.md` → `db/README.md`。
 
 ---
 
@@ -79,7 +80,9 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`FILES.md`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`SESSION-INDEX.md`** | **45 个历史会话索引 + 实机验证边界（任务 #2 的界）**；机器副本 `archive/sessions-catalog-2026-10-03.jsonl`
+**`LESSONS.md`** | **经验总入口（新会话动手前先读）**：三条零号纪律 + `PITFALLS` 全量分类索引 + 其它经验来源
+**`SESSION-INDEX.md`** | **45 个历史会话索引 + 实机验证边界**；机器副本 `archive/sessions-catalog-2026-10-03.jsonl`
+**`db/`** | **结构化知识库（SQLite）**：`sessions`/`pitfalls`/`tasks`/`references_`；`python3 db/build.py --lessons` 重建（见 `db/README.md`）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
 `backup/` | 原厂分区/固件/GPT 快照（**按容量档隔离**）；`backup/fw/README.md` 说明来源

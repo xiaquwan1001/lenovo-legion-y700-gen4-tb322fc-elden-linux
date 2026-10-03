@@ -126,13 +126,16 @@
 | `boot-elden-vk40re.img`（持久根） | `…-g6ef87e6a8868` | `1a2315b8450f1103` |
 | `boot-elden-vk40re-ram.img`（纯 RAM） | 同上 | `ba5d1e4988c370de` |
 
-### 5.4 A/B 隔离实验（下一步，需设备；等你确认设备可用）
+### 5.4 A/B 隔离实验（**已完成 2026-10-03 实机**）
 
-目标：判定 vk40 的新 bug（尤其熄屏→重启）是否来自 §1 的 post-vk34 内核增量。
+**结果：`vk34recon` 睡眠正常、不自动重启；`vk40` 复现重启。**
+→ **回归源锁定在 §1 的 post-vk34 内核增量（5 文件）**，与 10-03 持久化 initramfs/rootfs 无关。
+后续逐项二分（只回退哪一文件能恢复）留待将来（用户 2026-10-03 定：本 session 只做整理）。
+
+原始步骤与判据（保留存档）：
 
 ```
-# 0. 备份（纪律）
-fastboot fetch boot_b  backup/<SN>-16+512/boot_b.pre-ab.img
+# 0. 备份（纪律）fastboot fetch boot_b  backup/<SN>-16+512/boot_b.pre-ab.img
 # 1. 进 fastboot，确认活跃槽的 dtbo 已 blank（否则卡 logo，见 RUNBOOK §3）
 fastboot --set-active=b && fastboot flash dtbo_b bootslot-b/dtbo_b.img
 # 2. RAM 引导 vk34recon（用磁盘上的持久根，不写 flash）

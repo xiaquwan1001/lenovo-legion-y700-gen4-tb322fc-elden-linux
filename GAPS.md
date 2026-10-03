@@ -10,7 +10,7 @@
 
 | ID | 未知 | 为什么要知道 | 怎么测（最小实验） | 关联任务 |
 |---|---|---|---|---|
-| **Q22** | **vk34（2026-10-01）之后未逐版验证的内核增量**：5 文件（DTS 分级热 trip、q6apm.c/q6prm.c/audioreach.c/q6apm-lpass-dais.c 音频）+ `config-vk40-bringup`，全部只在 vk40 叠加体上上过机，与「vk40 新 bug（含熄屏→重启）」可能因果相关 | 决定 G1 基线是否可信；是「AI 难以稳固推进」的核心 | 已做静态取证（`archive/topics/AUDIT-since-vk34-2026-10-03.md`）。**待做**：① 确认边界 vk34/vk39；② 以 vk34 为基线分批加回增量或反向移除音频改动，逐批上机隔离回归源 | **G1-1/G1-22**；见审核文档 |
+| **Q22** | **vk34（2026-10-01）之后未逐版验证的内核增量**：5 文件（DTS 分级热 trip、q6apm.c/q6prm.c/audioreach.c/q6apm-lpass-dais.c 音频）+ `config-vk40-bringup`，全部只在 vk40 叠加体上上过机，与「vk40 新 bug（含熄屏→重启）」可能因果相关 | 决定 G1 基线是否可信；是「AI 难以稳固推进」的核心 | 静态取证：`archive/topics/AUDIT-since-vk34-2026-10-03.md`。**✅ 2026-10-03 实机确认**：`vk34recon` 睡眠正常、不重启，`vk40` 重启 ⇒ **回归源锁定在这 5 文件增量内**（与 10-03 持久化 rootfs 无关）。**待将来**：逐项二分到具体文件（只回退 DTS 热 trip / 只回退音频） | **G1-23**；审核文档 §5 |
 | **Q21** | **桌面空闲熄屏（DPMS blank）→ 整机重启**（2026-10-03 U2 实测；`idle-delay=10` 必触发）。重启前串口最后 3 行为 `ucsi_glink … timeout waiting for UCSI read response / failed to reset PPM / PPM init failed`，**无 kernel panic** | 直接阻塞持久系统的日常使用；且与 DP/altmode（G1-9）疑似同源 | 已做：串口日志 `logs/serial-20261003-192121.log`；复现 2 次。**待做**：① 先禁止空闲熄屏（`idle-delay=0`/caffeine）→ 看是否不再重启；② 抓 `dpms-watch.sh` 日志 + 必要时抓 ADSP/PDR 日志定位 UCSI PPM；③ 试在熄屏前 `echo 1 > /sys/class/drm/card0/card0-DSI-1/...` 逐步隔离 | **G1-22** |
 | **Q1** | **容器内的 GMS 身份/Play Integrity/Widevine 能做到哪一级**（不作废猜测，先取证） | 决定 G2 兼容上限与是否需要 VM/换路线 | 复现社区三条做法各一次，只变一个变量：① Waydroid + GApps（OpenGApps/MindTheGapps）；② 未认证设备注册流程（Android ID → `google.com/android/uncertified` → 清 GMS 缓存）；③ Widevine L3 库注入。记录 `getprop` 关键项 + `drminfo` + Play 状态。**社区侧已补证（2026-10-02）**：WayDroid-ATV 有 arm64 GAPPS 镜像（2026-01 SourceForge）但 **L3 仍仅 x86-64**（release notes 原文）；官方 licensing 页明确 GApps/Widevine 受许可限制、建议开源替代；PlayIntegrityFork(pif.json) 仍是主流过 PI 手段（v18 在手）；L1 需芯片商+GMS 认证（L3 是默认必测项，不需额外申请） | **C3** |
 | Q2 | Waydroid 在 **vk40** 上是否不再需要旧 workaround（vk40 已开 iptables/NAT：`IP_NF_FILTER/NAT`、`NF_NAT_MASQ`、`XT_MATCH_COMMENT` ✅；`CONFIG_IP_ADVANCED_ROUTER` 仍 not set，若需策略路由再补） | 少一处 bind-mount 脆弱点 | 起容器看 `ip route` 是否自动有默认路由；不通再启用 workaround 并记因 | **C1** |
@@ -72,7 +72,7 @@
 | GPT 手术/回收分区写坏 LUN0 | 低 / **高** | 手术前 `fastboot fetch` + GPT 双表 dump + EDL 包在手；只写主/备表两处；写后读回校验 |
 | 设备热失控（曾 103 °C） | 低 / 高 | 分级 trips 已在线；压测必带 `thermal-watch`，超 90 °C 自动降级 |
 | **空闲熄屏→重启（U2 实测）** | **已发生 / 高** | 禁止空闲熄屏（`idle-delay=0` 或 phosh caffeine 常开）作为临时规避，并把它写进 `start-desktop.sh`/rootfs 归档；根治前 **不要**在不可回滚的持久系统上做熄屏实验（详见 `archive/topics/复盘-2026-10-03-持久化与睡眠.md`） |
-| **未验证内核增量（vk34 之后）** | 已发生 / 高 | 见 `Q22` + `archive/topics/AUDIT-since-vk34-2026-10-03.md`；vk40 是把 10-02 音频/DTS 增量与 10-03 持久化 initramfs 叠加的结果 |
+| **未验证内核增量（vk34 之后）** | 已发生 / 高 | **✅ 已定位（2026-10-03）**：vk34recon 正常 / vk40 回归 ⇒ 源在 vk34 之后的 5 文件内核增量；逐项二分留将来。见 `Q22` + `archive/topics/AUDIT-since-vk34-2026-10-03.md` |
 | 边充边跑掉电（PMIC 默认 100 mA） | 中 / 中 | 上机前 `charge-ctl.sh` 拉满输入电流；长任务挂充电器并监控 |
 | 单一路线依赖（只押 Waydroid） | 中 / 中 | 保留 redroid 作 R1' 备胎（`ANDROID-COMPAT` §0） |
 

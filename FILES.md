@@ -24,7 +24,9 @@
 | `scripts/` | 448 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集 |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + **新：工作树全量 patch** |
 | `archive/` | 752 K | ✅ track | 过程证据（49 篇专题 + 2 截图）+ `sessions-catalog-2026-10-03.jsonl`，不再更新 |
-| `SESSION-INDEX.md` | 21 K | ✅ track | 45 会话索引 + 内核实机验证边界（任务 #2） |
+| `LESSONS.md` | 小 | ✅ track | 经验总入口（由 `db/build.py --lessons` 生成） |
+| `SESSION-INDEX.md` | 21 K | ✅ track | 45 会话索引 + 内核实机验证边界 |
+| `db/` | ~200 K | ✅ track | SQLite 知识库：schema.sql + build.py + README.md + elden.db（由文本源重建） |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |

@@ -1068,3 +1068,62 @@ vk34 之前的 8 个文件改动都已上机。**vk40 = vk34 基线 + 这 5 文�
 3. **重命名 + 删除**（任务 #3）：索引 §5 已列 38 条建议重命名、§4 列删除候选（5 junk + 2 superseded）。**等 #2 收口后再执行**——你要不要我先批量应用重命名（可逆）？
 
 `git log` 已有 3 条提交（边界 → 会话索引 → 审计），工作树干净，296 文件纳管，`.git` 4.6 M。
+
+
+## Automatic settled outcome - 2026-10-03
+
+下一步已执行（全部主机侧、可回滚）。结论先行。
+
+## 做了什么
+
+**1. 内核树固存 + 修 F1/F4**（`geekidos-linux` 自己的 git）：
+
+| 分支 | commit | 含义 |
+|---|---|---|
+| `elden/vk40-2026-10-03` | `6ef87e6a8` | vk40 现场原样（含 DBG 插桩）——回归对照 |
+| `elden/vk34-recon` | `e72a036ed` | 回退 vk34 之后的 5 文件增量 |
+
+因为 `.config` 早已有 `CONFIG_LOCALVERSION_AUTO=y`，**一提交 uname 就自动唯一**：
+- vk40re → `7.2.0-debug-g6ef87e6a8868`
+- vk34recon → `7.2.0-debug-ge72a036ed4be`
+
+→ 设备上 `uname -r` 终于能分辨在跑哪版（这就是「进步不稳固」的根，已修）。
+
+**2. 用真机镜像校验重建的 vk34**（关键可信度）：
+
+| 项 | vk34 实机镜像 | 重建 recon |
+|---|---|---|
+| DBG 字符串 | 无 | **无** ✅ |
+| 分级热 trip（DTB） | 无（单一 max 状态） | **无** ✅ |
+| `sm8750-lenovo-elden.dtb` | 136346 B | **逐字节相同** ✅ |
+
+→ recon 忠实重建了 vk34；顺带**确定**：DBG 插桩与分级热 trip 都是 vk34 之后的增量。
+
+**3. 产出 A/B RAM 镜像**（`out/`，`fastboot boot` 即可，不写 flash）：`vk34recon.img`/`-ram`、`vk40re.img`/`-ram`。音频/QDSP6 全是 `=y`，不受 vermagic 影响。
+
+## 请你上机做隔离实验（判据明确）
+
+```bash
+cd ~/y700-elden
+fastboot fetch boot_b backup/HA2EXB0E-16+512/boot_b.pre-ab.img   # 备份
+# 进 fastboot；确认活跃槽 dtbo 已 blank（否则卡 logo）
+fastboot --set-active=b && fastboot flash dtbo_b bootslot-b/dtbo_b.img
+fastboot boot out/boot-elden-vk34recon.img                       # 先跑 vk34
+ssh root@192.168.7.1 'uname -r'      # 期望 …-ge72a036ed4be
+# 复现熄屏：设 idle-delay=10，SSH 常 ping 观察是否重启；测完改回 0
+# 再 reboot 回 vk40，对 vk40re 重复对照
+```
+
+- **vk34recon 不重启 / vk40re 重启** → 回归源就在那 5 个文件里，继续二分（先只留 DTS 热 trip，或只留音频）。
+- **两者都重启** → 与内核增量无关，转向 10-03 持久化 initramfs / `start-desktop.sh` / UCSI 电源路径。
+
+⚠️ RAM 引导非持久，万一重启回到 flash 的 boot_b（vk40）可恢复；但 `idle-delay` 写在持久根**会留存**，务必改回。
+
+完整步骤与哈希记在 `archive/topics/AUDIT-since-vk34-2026-10-03.md` §5；父仓库 4 条提交、内核仓库 2 分支，均已固存。
+
+**一个前提想跟你确认**：设备现在是从先前的「重启环」里救回来了吗、fastboot 可用？如果暂时不方便上机，我可以先把「只回退音频 / 只回退热 trip」的中间变体也编好备着。
+
+
+## Memory - 2026-10-03
+
+内核回归定位法（可复用）：①从实机 boot 镜像解包内核/DTB，用 `strings`/DTB 逐字节对比确定"最后实机验证版本"到底含哪些改动；②用文件 mtime 锁定边界之后的增量文件集；③重建时把重建 DTB 与实机 vk34 DTB 逐字节比对来证明重建忠实；④内核树开 CONFIG_LOCALVERSION_AUTO=y 并**每版一 commit**，uname 即自动带唯一 commit（否则所有构建共用同一 uname，回归无法归因）。
