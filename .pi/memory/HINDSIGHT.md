@@ -943,3 +943,80 @@ fastboot --set-active=b && fastboot reboot
 物理键进 fastboot（关机后长按 电源+音量下）→ 回刷 `bootslot-b/boot_b_vk40-ram.img` 拿回可达 RAM 环境 → 把持久根 `idle-delay` 改回 0（或写进 `start-desktop.sh`）→ 再谈继续。命令与判据都在复盘 §5。
 
 设备现在在重启环里等人工介入，本轮不再动。
+
+
+## Automatic settled outcome - 2026-10-03
+
+完成。结论先行。
+
+## 结果
+
+| 项 | 数值 |
+|---|---|
+| 建立 git 仓库 | 分支 `main`，**293 文件 / 7.9 M** 纳管，`.git` 仅 4.5 M |
+| 排除资产 | `geekidos-linux` 13 G、`out` 4.6 G、`env-pass` 3.8 G、`backup` 1.5 G、`l2` 45 G 外置等全部 ignore |
+| `git status` 耗时 | 0.004 s（大目录被忽略，不再刷屏） |
+| 发现并修复的一个真问题 | `patches/0001–0011` **不能完整重建内核工作树**（5 个文件有差异，`q6prm.c` 根本没 patch） |
+| 导出权威补丁 | `patches/elden-working-tree-ba28ec16f-2026-10-03.patch`（13 文件，反向 apply 校验通过）|
+
+## 做了什么
+
+1. **`.gitignore`（版本控制边界）**
+   - 纳管：八份文档、`scripts/`、`patches/`、`archive/`、`.pi/{skills,memory,missions,agents,settings}`、`initramfs/`、`rootfs/` 脚本、`env-pass/{scripts,tools}`、几个关键 README。
+   - 排除：上游 clone、构建产物、大二进制 dump、运行时状态（`.pi/sessions`、`.pi/messenger`）、**`sn.img`（含本机序列号）** 与 `l2` 外置挂载。
+   - 踩坑记录：gitignore **不支持行尾注释**，`#` 必须独占一行，否则模式静默失效（第一次就栽在这）。
+
+2. **`FILES.md`（新台账，已接入 `INDEX.md`）**：顶层逐项分类（体积 / 是否纳管 / 说明）+ 可清理标记表（P0–P3 + H1）+ 内核补丁回导纪律。
+
+3. **内核进度固存**：把真实工作树导出为补丁。这是本仓库版本控制覆盖不到的唯一边界——之前进度只存在于 dirty tree。
+
+4. 更新 `RESOURCES.md §2.5`：**P0-b 前置闸已解除**，`geekidos-linux make clean` 现在可安全执行。
+
+## 可清理标记（未动手，等你确认）
+
+| 标记 | 目标 | 可回收 | 风险 |
+|---|---|---|---|
+| P0-a | `/mnt/Samsung/fiotest/` | 4.1 G | 无 |
+| P0-b | `geekidos-linux` 构建产物 `make clean` | ~11.4 G | 低（补丁已存） |
+| P1-a | `out/`+`bootslot-b/` 旧 boot（留 vk40/vk39） | ~4.7 G | 低 |
+| P1-b | `pkgs*` 包缓存 638 M | 0.6 G | 无 |
+| P3 | AOSP 树 + `l2`（外置） | 568 G | 需先做 Q13 取证 |
+
+根盘 P0–P2 合计约 **18 G** 可回收。
+
+## 关于「轨迹变复杂」
+
+38 个会话 / 45 M 在 `.pi/sessions/`（H1 标记）——这部分也影响 AI 上下文稳固度。可用 `session-librarian` 技能归档非活跃会话，只留最近若干。
+
+## 请你拍板
+
+1. 现在就执行 **P0（fiotest + `make clean`，约 15 G）**？（我可以先 `df -h` 记录、执行后再核）
+2. 要不要顺手做 **P1（旧 boot 镜像 + 包缓存，约 5.3 G）**？——vk39 建议等 vk40 上机验收后再删。
+3. H1 会话归档现在做吗？
+
+`git log` 已有一条初始提交，工作树干净；后续每轮改动 `git add -A && git commit` 即可。
+
+
+## Automatic settled outcome - 2026-10-03
+
+DONE batch3: 9
+
+
+## Automatic settled outcome - 2026-10-03
+
+DONE batch1: 9
+
+
+## Automatic settled outcome - 2026-10-03
+
+DONE batch2: 9
+
+
+## Automatic settled outcome - 2026-10-03
+
+DONE batch4: 9
+
+
+## Automatic settled outcome - 2026-10-03
+
+DONE batch5: 9

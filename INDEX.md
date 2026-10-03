@@ -79,6 +79,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`FILES.md`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
+**`SESSION-INDEX.md`** | **45 个历史会话索引 + 实机验证边界（任务 #2 的界）**；机器副本 `archive/sessions-catalog-2026-10-03.jsonl`
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
 `backup/` | 原厂分区/固件/GPT 快照（**按容量档隔离**）；`backup/fw/README.md` 说明来源

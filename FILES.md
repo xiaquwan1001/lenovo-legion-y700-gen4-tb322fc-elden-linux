@@ -23,7 +23,8 @@
 | `.pi/messenger/` | 748 K | ignore | 运行时状态 |
 | `scripts/` | 448 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集 |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + **新：工作树全量 patch** |
-| `archive/` | 752 K | ✅ track | 过程证据（49 篇专题 + 2 截图），不再更新 |
+| `archive/` | 752 K | ✅ track | 过程证据（49 篇专题 + 2 截图）+ `sessions-catalog-2026-10-03.jsonl`，不再更新 |
+| `SESSION-INDEX.md` | 21 K | ✅ track | 45 会话索引 + 内核实机验证边界（任务 #2） |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
@@ -64,7 +65,7 @@
 | P2-d | `backup/stock-259/` 13 分区 | 443 M | 须先核对云全量包含 abl/dtbo/recovery/vbmeta 且 =1.5.10.259 | ⬜ |
 | P3-a | AOSP `.repo` 历史 + 工作树（外置） | 523 G | 决策 G2 是否自编 Waydroid；先导出 local_manifests | ⬜ |
 | P3-b | `l2/` super/system 镜像 | 45 G | 先做 GAPS Q13 AVF 重提取 + 核验云包 | ⬜ |
-| H1 | `.pi/sessions/` 旧会话 | 45 M | 归档非活跃会话（保留最近若干） | ⬜ |
+| H1 | `.pi/sessions/` 旧会话 | 45 M | 归档非活跃会话（保留最近若干） | ⬜ **索引已完成（`SESSION-INDEX.md`）；删除待任务 #2 完成 + 用户确认** |
 
 **纪律**：按 P0→P3 逐级、不并行；每级前后记 `df -h`；删前先导出独有内容；删后回改
 `RESOURCES.md §2.5` 与本节状态、并记 `archive/topics/清理清单-<date>.md`。
