@@ -18,20 +18,20 @@ KERNEL=$ROOT/linux/arch/arm64/boot/Image.gz
 [ -f "$KERNEL" ] || { echo "missing $KERNEL" >&2; exit 1; }
 
 # 内核 UTS（尽力探测）与 boot_b 分区大小
-UTS=$(strings "$KERNEL" 2>/dev/null | grep -m1 -o 'Linux version [^ ]*' || echo 'Linux version ?')
+UTS=$(gzip -dc "$KERNEL" 2>/dev/null | strings 2>/dev/null | grep -m1 -o 'Linux version [^ ]*' || echo 'Linux version ?')
 BOOT_B_SZ=$(printf '%d' 0x6000000)   # 96 MiB = 100663296
 
 echo "[slim] kernel : $UTS"
 echo "[slim] boot_b : $BOOT_B_SZ B (96 MiB)"
 echo "[slim] 提示：确认磁盘 root 的 /lib/modules/<同版本> 存在，否则改用对应内核重打。"
 
-RAMDISK_KIND=busybox VERSION="$VERSION" sh "$ROOT/scripts/build-boot.sh"
+RAMDISK_KIND=busybox VERSION="$VERSION" bash "$ROOT/scripts/build-boot.sh"
 
 IMG=$ROOT/out/boot-elden-$VERSION.img
 SZ=$(stat -c %s "$IMG")
 echo "[slim] image  : $SZ B / $BOOT_B_SZ B"
 [ "$SZ" -le "$BOOT_B_SZ" ] || { echo "[slim] FAIL: 超过 boot_b 分区" >&2; exit 1; }
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-sh "$SCRIPT_DIR/grubfat-inspect.sh" "$IMG" | head -12
+bash "$SCRIPT_DIR/grubfat-inspect.sh" "$IMG" | head -12
 echo "[slim] OK  sha256=$(sha256sum "$IMG" | cut -d' ' -f1)"
 echo "[slim] 回退: fastboot flash boot_b out/boot_b-vk49.img   （或 fastboot boot 零写盘试）"
