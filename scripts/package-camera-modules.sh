@@ -44,16 +44,18 @@ while read -r ko; do
 	n=$((n+1))
 done < "$list"
 
-# Pre-generate modules.dep for the bundled subset so the device does not have to
-# rely on busybox depmod.  modinfo's "depends" field is exactly the .dep format.
-: > "$tmpd/modules.dep"
-while read -r ko; do
-	[ -n "$ko" ] || continue
-	rel=${ko#$STAGE/lib/modules/$KV/}
-	deps=$(modinfo -F depends "$ko" 2>/dev/null | tr ',' ' ')
-	echo "$rel: $deps" >> "$tmpd/modules.dep"
-done < "$list"
-sort "$tmpd/modules.dep" -o "$tmpd/modules.dep"
+# Generate a kmod-compatible index (modules.dep with full-path deps +
+# modules.dep.bin) for the bundled subset.  Do NOT hand-write it from
+# `modinfo -F depends`: that yields bare names, and the device's kmod then
+# fails to resolve any dependency ("Module <x> not found").  depmod wants the
+# canonical <base>/lib/modules/<KV>/kernel/... layout, so stage one.
+lay=$(mktemp -d)
+trap 'rm -f "$list"; rm -rf "$tmpd" "$lay"' EXIT
+mkdir -p "$lay/lib/modules/$KV"
+cp -a "$tmpd/kernel" "$lay/lib/modules/$KV/"
+depmod -b "$lay" "$KV" 2>/dev/null || true
+cp "$lay/lib/modules/$KV/modules.dep" "$tmpd/" 2>/dev/null || true
+cp "$lay/lib/modules/$KV/modules.dep.bin" "$tmpd/" 2>/dev/null || true
 
 ( cd "$tmpd" && tar czf "$OUT" . )
 echo "packed $n modules -> $OUT ($(du -h "$OUT" | cut -f1))"

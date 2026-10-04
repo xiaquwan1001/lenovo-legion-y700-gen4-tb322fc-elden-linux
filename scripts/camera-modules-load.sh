@@ -21,10 +21,12 @@ KV=$(uname -r)
 MODDIR=/lib/modules/$KV
 [ -d "$MODDIR/kernel" ] || { echo "[camera] no modules for $KV" >&2; exit 0; }
 
-# (Re)generate modules.dep only if the bundle did not ship one.  A bundled
-# modules.dep (host modinfo) is preferred: busybox depmod on the RAM root is
-# less reliable than the host toolchain.
-[ -f "$MODDIR/modules.dep" ] || depmod -a "$KV" 2>/dev/null || depmod -a 2>/dev/null || true
+# Always (re)generate the module index with the device's depmod.  This is
+# REQUIRED: the device uses kmod, whose modules.dep uses full relative paths
+# (and a modules.dep.bin index); a hand-written "bare name" modules.dep makes
+# modprobe report "Module qcom-camss not found" for any module with deps.
+# 20 modules regenerate in well under a second.
+depmod -a "$KV" 2>/dev/null || depmod -a 2>/dev/null || true
 
 load() {
 	if lsmod 2>/dev/null | grep -q "^$1 "; then

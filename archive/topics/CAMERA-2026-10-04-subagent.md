@@ -156,3 +156,31 @@ fastboot reboot
 - 产物（`out/`，gitignore）：`boot-elden-vk49{,-ram}.img`、`boot_b-vk49.img`、
   `camera-modules-7.2.0-debug-g5a70ade46a88.tar.gz`、`rootfs-overlaid-camera.cpio.gz`、
   基座备份 `rootfs-overlaid.cpio.gz.bak-vk48`
+
+---
+
+## 9. 上机首验发现并修复：modules.dep 格式与 kmod 不兼容（2026-10-04）
+
+**现象**：`fastboot boot out/boot-elden-vk49.img` 后 `lsmod` 只有
+`camcc_sm8750`/`cambistmclkcc_sm8750`/`i2c_qcom_cci`/`wl2868c_regulator` 四个（均无依赖），
+`qcom-camss` 与所有 media/sensor 模块缺失；`/dev/media*`、`/dev/video*` 不存在。
+
+**根因（决定性）**：设备用的是 **kmod 34.2**（`/sbin/modprobe -> /bin/kmod`），
+其 `modules.dep` 依赖项必须是**完整相对路径**（`kernel/.../x.ko`），且带 `modules.dep.bin` 索引。
+本 bundle 的 `modules.dep` 由 `modinfo -F depends` 生成，是**裸模块名**（`videodev mc v4l2-async …`）
+→ kmod `modprobe qcom-camss` 解析依赖失败，报 `FATAL: Module qcom-camss not found`。
+无依赖的 4 个模块可按左列路径直接加载，故恰好卡在第一个有依赖的模块。
+
+**复现/确认**：在设备上对有依赖问题的 staging 树跑一次 kmod `depmod -b`，再
+`modprobe --show-depends qcom-camss` → 正确列出完整 `insmod …mc.ko …videodev.ko …qcom-camss.ko`。
+
+**修复**：
+1. `scripts/camera-modules-load.sh`：**无条件** `depmod -a "$KV"`（不再信任随包 modules.dep；
+   kmod depmod 在设备上生成正确格式，20 模块 <1s）。
+2. `scripts/package-camera-modules.sh`：改为用 kmod `depmod` 在规范布局上生成
+   `modules.dep` + `modules.dep.bin`（弃用 `modinfo -F depends` 的裸名写法）。
+
+**重打包产物（2026-10-04 13:50，内核未变 g5a70ade46a88）**：
+`out/boot-elden-vk49.img`=`b98487b7de`、`vk49-ram`=`68932e7401`、
+`boot_b-vk49.img`=`ae15737410`、`camera-modules-…tar.gz`=`25cc6c474a`。
+（首版 vk49 = `249ee683`/`ddeb5735`/`1c44343c` 因该 bug 不可用，已被替换。）
