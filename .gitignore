@@ -15,7 +15,9 @@
 /tools/
 
 # ---- 构建产物 / 可再生成 ----
-/out/
+# /out 用 /* 而非整目录忽略：否则 `!` 无法复活子文件（git 规则）；manifest 是可复现指纹，要入库
+/out/*
+!/out/*.manifest
 /bootslot-b-u2/
 /logs/
 /pkgs/

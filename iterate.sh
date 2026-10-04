@@ -1,12 +1,9 @@
 #!/bin/bash
-# One-command iteration: build -> pack -> soft-reboot to fastboot -> boot new image -> wait SSH.
-# usage: iterate.sh [rootfs.cpio.gz]
-set -eu
-cd "$(dirname "$0")"
-ROOTFS=${1:-out/rootfs-vk7.cpio.gz}
-OUT=out/boot-elden-latest.img
-./build.sh
-./pack.sh "$ROOTFS" "$OUT"
-./cycle.sh --soft          # device currently in Linux -> fastboot (no physical button)
-./cycle.sh "$OUT"          # fastboot -> new Linux
-echo "[iterate] done; ssh root@192.168.7.1"
+# 根目录兼容入口 —— 委托给 scripts/iterate.sh（四档环：mod / dtb / kernel / ram）。
+#
+# 旧用法 `iterate.sh [rootfs.cpio.gz]`（build→pack→cycle，无设备锁）已废弃。
+# 新用法请优先：
+#   scripts/iterate.sh mod <driver-dir>      # 模块快环 ~30s 不重启
+#   scripts/iterate.sh dtb|kernel [--kexec|--boot|--flash]
+#   scripts/iterate.sh ram  VERSION=vkNN-ram # 零写盘纯 RAM 变体
+exec bash "$(dirname "$0")/scripts/iterate.sh" "$@"
