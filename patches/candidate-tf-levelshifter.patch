@@ -1,0 +1,63 @@
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index d62a7be..dc3cabb 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -2685,6 +2685,9 @@
+ 	 */
+ 	no-1-8-v;
+ 
++	/* Downstream SD_HS level-shifter cap (see sdhci-msm.c port). */
++	qcom,uses-level-shifter;
++
+ 	no-sdio;
+ 	no-mmc;
+ 
+diff --git a/drivers/mmc/host/sdhci-msm.c b/drivers/mmc/host/sdhci-msm.c
+index 0882ce7..2705c3e 100644
+--- a/drivers/mmc/host/sdhci-msm.c
++++ b/drivers/mmc/host/sdhci-msm.c
+@@ -120,6 +120,9 @@
+ 
+ #define DDR_CONFIG_POR_VAL	0x80040873
+ 
++/* Downstream: level-shifter boards must not exceed 37.5 MHz in SD_HS mode. */
++#define LEVEL_SHIFTER_HIGH_SPEED_FREQ	37500000
++
+ 
+ #define INVALID_TUNING_PHASE	-1
+ #define SDHCI_MSM_MIN_CLOCK	400000
+@@ -310,6 +313,7 @@ struct sdhci_msm_host {
+ 	bool uses_tassadar_dll;
+ 	u32 dll_config;
+ 	u32 ddr_config;
++	bool uses_level_shifter;
+ 	bool vqmmc_enabled;
+ 	bool non_cqe_ice_init_done;
+ };
+@@ -389,6 +393,16 @@ static void msm_set_clock_rate_for_bus_mode(struct sdhci_host *host,
+ 
+ 	mult = msm_get_clock_mult_for_bus_mode(host, clock, timing);
+ 	desired_rate = clock * mult;
++
++	/*
++	 * Downstream caps the SD_HS clock at 37.5 MHz when a level shifter is
++	 * present on the SD lines.  This device already reaches the same cap via
++	 * max-sd-hs-hz = 37500000 in sm8750.dtsi, so this is DT parity only;
++	 * it is NOT expected to change behaviour on its own.
++	 */
++	if (timing == MMC_TIMING_SD_HS && msm_host->uses_level_shifter)
++		desired_rate = LEVEL_SHIFTER_HIGH_SPEED_FREQ;
++
+ 	rc = dev_pm_opp_set_rate(mmc_dev(host->mmc), desired_rate);
+ 	if (rc) {
+ 		pr_err("%s: Failed to set clock at rate %u at timing %d\n",
+@@ -2599,6 +2613,9 @@ static inline void sdhci_msm_get_of_property(struct platform_device *pdev,
+ 
+ 	of_property_read_u32(node, "qcom,dll-config", &msm_host->dll_config);
+ 
++	msm_host->uses_level_shifter =
++		of_property_read_bool(node, "qcom,uses-level-shifter");
++
+ 	if (of_device_is_compatible(node, "qcom,msm8916-sdhci"))
+ 		host->quirks2 |= SDHCI_QUIRK2_BROKEN_64_BIT_DMA;
+ }

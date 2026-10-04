@@ -1,0 +1,22 @@
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index d62a7be..fe86477 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -2683,7 +2683,16 @@
+ 	 * signalling so the card only negotiates High-Speed (SDR104/SDR50/
+ 	 * DDR50 all need 1.8V and are therefore disabled). Slower, but stable.
+ 	 */
+-	no-1-8-v;
++	/*
++	 * EXPERIMENT: allow 1.8V signalling / UHS-I.  vqmmc (vreg_l8b_1p8) is
++	 * already a variable 1.8-3.0V rail.  Downstream uses UHS; the mainline
++	 * note says SDR104 silently corrupted, so this is expected to be worse,
++	 * but it isolates "3.3V HS" vs "1.8V UHS" signalling.
++	 */
++	sd-uhs-sdr12;
++	sd-uhs-sdr25;
++	sd-uhs-sdr50;
++	sd-uhs-sdr104;
+ 
+ 	no-sdio;
+ 	no-mmc;
