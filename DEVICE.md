@@ -69,10 +69,10 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；实跑 **`vk46-dirty`**）。功能状态：音频播放+输入✅、温控四级✅、桌面关机/重启已修（#89）、**熄屏→重启已解**（G1-22，vk42 起内核免疫）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`bootslot-b/boot_b-vk34recon.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=干净内核 **`vk47clean`**）。功能状态：音频播放+输入✅、温控四级✅、桌面关机/重启已修（#89）、**熄屏→重启=未解/间歇性**（G1-22/Q24）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`bootslot-b/boot_b-vk34recon.img` |
 
-> **★ 熄屏→整机重启：已定位并已修复（2026-10-05）**。受控复现：`vk40` 原始内核 + DPMS off **硬复位 3/3**（不熄屏稳定 ≥151s）；根因 = vk40 音频改动的**调试插桩**（`dev_info` 里同步阻塞调用 `q6apm_get_apm_state`）+ 热区 DTS 组合；`vk42` “干净重落”后**免疫**，**当前 boot_b（`g4c68eb5ed4e3`）10 轮 + 持续 90s 熄屏不复位**。
-> 详细矩阵/方法/源码二分见 `archive/topics/G1-22-2026-10-05.md`、`scripts/g1-22-dpms-test.sh`。持久根 `idle-delay=0` 规避可择机解除。
+> **★ 熄屏→整机重启：仍未解（间歇性，2026-10-05 反转）**。受控复现：`vk40` 原始内核 + DPMS off **硬复位 3/3**（不熄屏稳定 ≥151s）。但 `vk42`/«干净重建»各 2 轮「免疫」为少样本观测，**不可信**——刷干净内核到 boot_b + 模块后**仍观察到复位** ⇒ 「`-dirty` 镜像为根因」**未证实**。**停止深究（用户定）**；若再续须长时窗+多样本+单变量。
+> 详细矩阵/方法/源码二分见 `archive/topics/G1-22-2026-10-05.md`、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9、`scripts/g1-22-dpms-test.sh`。持久根 `idle-delay=0` 规避**暂时保留**。
 
 > **口径纠正（2026-10-03）**：旧记录把 U2 现态写成「固件 1.1.11.073 / locked」，来自上轮 AI 未命中 7、8 月技能而留下的过时条目，**已作废**——以本表实机核验值为准（259 + unlocked）。
 

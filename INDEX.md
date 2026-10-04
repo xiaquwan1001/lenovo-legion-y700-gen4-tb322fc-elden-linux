@@ -68,8 +68,8 @@
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
-- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（实跑 `vk46-dirty`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
-  ✅ **熄屏→重启（G1-22）已定位；修复待刷（2026-10-05）**：根因 = boot_b 烧的是 `-dirty` 的 vk47 镜像（非源码问题）；**干净重建实测免疫**，就绪包 `bootslot-b/boot_b-clean.img` **待用户 `fastboot flash boot_b`**。见 `TASKS.md` §5 Q24、`archive/topics/G1-22-2026-10-05.md`。
+- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=干净内核 `vk47clean`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
+  🟠 **熄屏→重启（G1-22/Q24）仍未解（间歇性）**：受控复现成立，但 vk42 与干净重建的少样本「免疫」不可信；**刷入干净内核到 boot_b 后仍复位** ⇒ 「`-dirty` 镜像为根因」假设**未证实**。**停止深究（2026-10-05 用户定）**；若再续须长时窗+多样本+单变量。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
   🟠 **桌面用户态四问已定根因（G1-26/27/28，2026-10-05）**：`gtk-theme=Adwaita-dark` 解析回退浅色（应 `Adwaita`）⇒ 深色/图标反色/accent 同源；亮度=elogind 无 session。见 `archive/topics/DT-UI-2026-10-05.md`，修复待上机。
   ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
 
@@ -137,7 +137,7 @@ Waydroid / Play / 容器网络 | `archive/topics/WAYDROID-2026-10-01.md` `archiv
 Win-x86 转译 PoC | `archive/topics/WIN-X86-POC-2026-10-02.md`（截图 2 张）`archive/topics/WIN-X86-2026-10-02.md`
 虚拟化（EL2/Gunyah/AVF/生态） | `archive/topics/EL2-VIRT-2026-10-02.md` `archive/topics/ARM-VIRT-RESEARCH-2026-10-02.md`
 驱动主线覆盖审计 / 厂商源码 | `archive/topics/DRIVER-MAINLINE-AUDIT-2026-10-02.md` `archive/topics/STOCK-DRIVERS-2026-09-30.md` `archive/topics/STOCK-KERNEL-2026-09-30.md`
-持久化上机 + 熄屏重启故障 | `archive/topics/复盘-2026-10-03-持久化与睡眠.md` **`archive/topics/G1-22-2026-10-05.md`**（受控复现+根因定位）
+持久化上机 + 熄屏重启故障 | `archive/topics/复盘-2026-10-03-持久化与睡眠.md` **`archive/topics/G1-22-2026-10-05.md`**（受控复现；根因未证实） **`archive/topics/REBOOT-5MIN-2026-10-05.md`**（§7.9 收尾）
 过环境 / 隐藏模块 | `archive/topics/ENV-PASS-2026-10-02.md` `archive/topics/SUSFS-KERNEL-2026-10-02.md` `archive/topics/YUEHONG-MODULE-2026-10-02.md` `archive/topics/GPT槽位元数据-2026-09-30.md`
 存储手术与回退 | `archive/topics/LINUX-REMOVE-2026-10-02.md` `restore-259/`（AVB/KSU/EDL 救砖）
 带外调试 / 出网 | `archive/topics/OOB-CONSOLE-2026-10-02.md` `archive/topics/NET-EGRESS-PLAN-2026-10-01.md`

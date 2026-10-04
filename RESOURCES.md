@@ -350,9 +350,9 @@ git log --oneline -10
 | 2026-10-04 | `01a105fb` | 子代理：只读审计（会话清理候选） | audit | ✗ | reference | 会话/复盘覆盖归属审计，产出可删候选清单（未删） | - | 子会话；被 01a105f5 采纳 |
 | 2026-10-04 | `01a105fb` | 子代理：只读审计（文档精简） | audit | ✗ | reference | 6 份文档全读：过时数字（51/59/68 会话数、33/57 镜像数）、死链（`extract-avfpubkey.py`、`config-vk-modular`、`net-up-manual.sh`、flashing-bundle 路径）、SSOT 违规 | - | 子会话；多数已修 |
 | 2026-10-04 | `01a105fb` | 子代理：只读审计（.pi 配置） | audit | ✗ | reference | agents/missions/skills/settings 审计：93 处路径引用 0 真死链（missions/agents）、**2 处 SKILL 死链**（已修）、HINDSIGHT +5 行值得提交 | - | 子会话；check-doctor 已扩覆盖 SKILL |
-| 2026-10-04 | `01a10635` | 会话：相机出流 + kexec 定论 + G1-22 根因 | camera-kernel | ✅ | active | **G1-5 前后摄连续出帧**（根因=csiphy/vfe 默认格式与 sensor raw 不匹配+链路未使能）；**kexec 定论硬挂不可用**；vk50 `LOCALVERSION=-vk50` 重建 1513 模块对齐；**G1-22 根因=vk40 音频调试插桩+热区**、vk42 干净重落免疫 | vk50 | `CAMERA-2026-10-05.md`、`G1-22-2026-10-05.md` |
+| 2026-10-04 | `01a10635` | 会话：相机出流 + kexec 定论 + G1-22 初判 | camera-kernel | ✅ | active | **G1-5 前后摄连续出帧**（根因=csiphy/vfe 默认格式与 sensor raw 不匹配+链路未使能）；**kexec 定论硬挂不可用**；vk50 `LOCALVERSION=-vk50` 重建 1513 模块对齐；G1-22 初判=vk40 音频插桩+热区（**2026-10-05 反转：未证实，见 Q24**） | vk50 | `CAMERA-2026-10-05.md`、`G1-22-2026-10-05.md` |
 | 2026-10-04 | `01a1068c` | 会话：并发任务基线+fork 工作流 | vcs | ✗ | reference | `lane.sh`/`.githooks/commit-msg`/`versions/vk-registry.tsv`/`.pi/CONCURRENCY.md` 落地（提交 `bfe0002`）；修「扫 out 猜版本号」撞车根因 | - | 冒烟验证通过 |
-| 2026-10-04 | `01a106b9` | 会话：持久根模块对齐 + 干净内核判定 | kmod-clean | ✅ | active | 25 模块部署到运行内核 → 相机/音频在持久根复现；确认 **boot_b=vk47 `-dirty` 镜像**；**干净重建实测免疫**（Q24）；出 `bootslot-b/boot_b-clean.img`（待用户刷） | vk47 | 待用户 `fastboot flash boot_b`；`KMOD-ALIGN-2026-10-05.md` |
+| 2026-10-04 | `01a106b9` | 会话：持久根模块对齐 + 干净内核判定 | kmod-clean | ✅ | active | 25 模块部署到运行内核 → 相机/音频在持久根复现；确认 **boot_b=vk47 `-dirty` 镜像**；出 `bootslot-b/boot_b-clean.img` 并刷入（Q24）。⚠️ **后续反转**：刷后仍复位 ⇒「dirty 镜像为根因」**未证实**，转间歇性未解 | vk47 | `KMOD-ALIGN-2026-10-05.md`；结论见 Q24/REBOOT-5MIN §7.9 |
 | 2026-10-04 | `01a1071b` | 会话：（空「可以继续了」） | session-meta | ✗ | junk | 仅一句用户消息，无助手产出 | - | - |
 | 2026-10-04 | `01a1072e` | 会话：编排桌面四问+bootchain（内联侦察） | desktop-bootchain | ◐ | active | 编排 G1-26/27/28（dt-ui）+ G1-29（bootchain）；内联定位：dconf 未落错 HOME、**无 logind 会话**、gsd-power 在 **session bus**、elogind SetBrightness 任意 name 均 EISDIR | - | 子代理受预算墙；转内联 |
 | 2026-10-04 | `01a10736` | 子代理：bootchain（G1-29 间接引导层） | bootchain | ✗ | reference | 四代 UEFI **被拆成 `uefi_a`/`imagefv_a`/`abl_a` 由 XBL 加载**、ABL 自身不扫 FAT；路线 C（min initramfs）现在可做、A（自建可自举 UEFI 壳）有原型；交付 `scripts/grubfat-*.sh`；`BOOTCHAIN-2026-10-05.md`；vk51 | vk51 | lane 已 merge；E1/E3→E4→E5 待排期 |
@@ -387,7 +387,7 @@ git log --oneline -10
 
 **边界判定**：最后**有明确实机确认**的版本 = **vk45（2026-10-04，当前在跑）**；
 播放出声已在 **vk43** 确认（tplg SD1），温控四级在 **vk42** 确认。
-「熄屏→重启」源已锁定在 **vk34 之后的 5 文件内核增量**（vk34recon 睡眠正常 / vk40 重启；详见 `TASKS.md` §5 Q22），尚未根治。
+「熄屏→重启」现象仍在（受控复现成立），但**根因未证实、间歇性未解**（vk42/干净重建各 2 轮「免疫」不可信；详见 `TASKS.md` §5 Q24）。
 
 ---
 
