@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | **G1** 健全 Linux + 驱动原厂固件 | 23 项（显示/图形/触屏/网络/电源/相机驱动栈/音频播放+输入/温控/串口/基准脚本…） | 3（相机出流、TF 卡、BT 配对） | 3（DP、NFC、CDSP） | **~85%** |
 | **G2** 无安卓前提下的安卓兼容 | 6（Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC/**C9 用例集**） | 4（Play 登录收口、切槽脚本、C8 上机探测、**C4 部署验证**——代码/编译全就绪） | 4（相机共享、音频容器、C3 实测…） | **~45%** |
-| 运维/资产 | 内核 vk45、rootfs 归档、Mesa 包、文档集重构、`qemu-utils` 已装（A13）、fstab nofail 已修（A18）、**C4 传感器链（A14）**、**env-pass provision（A17）** | — | — | ✅ |
+| 运维/资产 | 内核 vk50、rootfs 归档、Mesa 包、文档集重构、`qemu-utils` 已装（A13）、fstab nofail 已修（A18）、**C4 传感器链（A14）**、**env-pass provision（A17）** | — | — | ✅ |
 
 ---
 
@@ -89,7 +89,7 @@
 
 > 2026-10-04 刷新：旧第 1 步「⛔ 先救机器」已完成（10-03 深夜恢复，U2 持久直启在跑，规避=禁空闲熄屏）；旧第 4 步的音频听声已 ✅（G1-4）。
 
-1. **快环接通（vk50，一次性）**：fragment 已应用 → 全量构建 → kexec 首测 → 音频 30s mod 环首测；顺带用镜像指纹标定 boot_b 实际内容（当前设备实跑 **vk46-dirty**，与文档口径 vk47 不符，待对账）。
+1. **快环接通（vk50）——kexec 首测失败（2026-10-04 用户确认）**：fragment 已应用、vk50 全量构建 ✅，但 **kexec 未换动内核（无反馈、未排查，半成品）**；音频 30s mod 环未测。boot_b 实际内容已标定 = **vk46-dirty**（文档口径 vk47 有误，已更正 INDEX/DEVICE）。下一步：排查 kexec 静默失败（可先用 `--boot` 环对照验证）。
 2. **G1-5 相机出流**：media-ctl 格式协商断点定位（`UYVY8_1X16` vs `SRGGB10`）；任务书 `.pi/missions/camera.md`。
 3. **G1-22 熄屏/睡眠稳定性**：先烧 vk34recon 作 boot_b 已知基线，再二分 vk40 后 5 文件增量；产出「空闲不重启」自动验收。
 4. **C0 真 Android 对照取证**（U1 stock+root；覆盖 a 槽前必做，不可复得）。
@@ -114,8 +114,8 @@
 | Q4 | **无 KVM 前提下 VM 路线值不值得投**（**书面评估已完成 2026-10-02**，结论见 TASKS C8） | 决定要不要开第二条腿 | 结论：**维持低优先**。① 设备侧 KVM 不可达（XBL 在 secure-boot 链内加载 hyp，主线 `-el2.dtb` overlay 只适用 Qualcomm dev kit，ABL 重签救不了——hyp 加载点在 ABL 上一级）；② 独立 gunyah 驱动（v17）未进主线（本地 7.2 树 `drivers/virt/` 无 gunyah 目录）；③ 唯一新路线 = KVM-in-EL1+Gunyah backend（RFC 00/34，Linaro，2025-04，配 `qemu-for-gunyah`），WIP（pinned pages/无 guest_memfd/禁 swap）。**决定性上机实验**：vk40 起机后 `dmesg \| grep -i gunyah`（本地 qcom_scm 已带 gunyah UUID 探测）——通则路线第一步成立，败则归档 | **C8**（🟡 书面结论已出） |
 | **Q5** | **真 Android 对照基线**（一旦覆盖 a 槽就不可复得）：GMS 属性 8 段、Widevine 级别、7 颗传感器读数曲线、目标 App 行为 | 兼容层的"标准答案"，也是判定容器是否等价的尺子 | 在 U1（当前仍 stock+root）一次采完：`getprop` 全量、`dumpsys media.drm`、传感器 30 s 采样 CSV、5 个目标 App 关键流程录屏 | **建议立刻插入（覆盖 a 槽前）** |
 | Q6 | 兼容层验收的**量化判据**——**已定稿（2026-10-02，A15）**：10 条用例+阈值见 `TASKS.md §6` §5 | 避免"看起来能用"的自欺 | 上机后按用例表逐条实测打分（打分模板同处） | **C9**（模板就绪） |
-| Q7 | Linux 分区到底要多大（**本轮已定"按项目体量决定"**） | 决定 GPT 手术一次给多少，避免二次缩容 | 按 `DEVICE.md` §3.1 估算表，上机后 `du` 实测各组成 → 回填表 → 定 `--linux-gib` | G1-2 前完成 |
-| Q8 | 音频是否真的可听 + 有无录音通路（`GRAPH_START status=0` 只是控制面） | G1 硬验收 #4 | 上机 `amixer cset numid=8 on; speaker-test -c2`；录音需另找 ADC 通路 | G1-4 |
+| Q7 | ~~Linux 分区到底要多大~~ **已解决（2026-10-03 G1-2）** | GPT 手术一次给足，避免二次缩容 | 实测划定：`linux17`=193 GiB（CRC 校验过），估算表在 `DEVICE.md` §3.1 | G1-2 ✅ |
+| Q8 | ~~音频是否真的可听 + 有无录音通路~~ **已解决（2026-10-04 G1-4）** | G1 硬验收 #4 | 实测：`amixer cset numid=8 on` 后扬声器出声 ✅；`arecord -D hw:0,2`（AMIC1）采集 ✅，UCM2 Mic | G1-4 ✅ |
 | Q9 | 相机能否真正出流（graph ENABLED ≠ 有帧） | G1 硬验收 #5 | `qcam`/`gst-launch-1.0 v4l2src` 取 10 帧存盘 | G1-5 |
 | **Q15** | **解锁 U2 的两个不可逆代价**：① Widevine **L1→L3**（现 `sys.lenovo.widevine_security_level=L1`，属 TEE 内密钥，社区主流案例为永久降级）——它正是 Q1/Q5 容器侧 DRM 上限的「标准答案」；② 保修 + FOTA。**两台单元现均已解锁**（U1 2026-08-16 / U2 2026-10-03；U2 实机现 `flash.locked=0`） | 先拍基线再解锁，否则事后无法对照；且影响 G2 的 U5 用例上限 | ✅ **已执行（2026-10-03）**：`scripts/bl-preunlock-evidence.sh HA2EXB0E` → `backup/HA2EXB0E-16+512/pre-unlock/`（getprop 全量/by-name/传感器清单/settings/Widevine=L1 + SHA256SUMS）；解锁后重测同一项做对照 | **G1-0**、Q1/Q5 |
 | ~~**Q16**~~ | ~~三代「模板改 SN 自造解锁 blob」在四代 259 上是否有效~~ **已结（2026-10-03）：无效。** 四代 1.5.x ABL 换内嵌 key，**任何** sn.img（官网/三代免签模板/第三方签名）都过不了；且 **1.1.11.120 / 1.5.x 本身就不开放解锁命令**（版本门）。正解 = 降级 1.1.11.073 后 `fastboot oem unlock`（U2 已实测一次成功，无需 sn.img） | 不影响 G1（EDL 路不受 lock 位限制） | 已验证；`PITFALLS` #86、`RUNBOOK` §0.5 ★权威顺序、复盘 `archive/topics/复盘-2026-10-03-BL解锁.md` | 已结 |
@@ -136,7 +136,7 @@
 | 缺口 | 类别 | 补救 | 状态 |
 |---|---|---|---|
 | 相机出流 | config/部署 | 开 `CONFIG_V4L2_FLASH_LED_CLASS` 之类逐项补齐 + 部署 `.ko` | 🟡 到 graph 就绪 |
-| 音频出声/录音 | tplg + 驱动时序 | 已修 BE graph 时序（`patches/0011`）；录音通路待查 | 🟡 Q8 |
+| 音频出声/录音 | tplg + 驱动时序 | 已修 BE graph 时序（`patches/0011`）+ WCD939x AMIC1 采集（UCM2 Mic） | ✅ G1-4（Q8 已闭） |
 | TF 卡 | 驱动 bug 或卡 | 换卡 A/B 定性后再决定补丁方向 | ⛔ Q10 |
 | DP 输出 | bring-up（非缺驱动） | 修 `pmic_glink` UCSI/altmode | ⬜ Q11 |
 | NFC | DT compatible 不匹配 | 改 compatible + config | ⬜ 低优先 |

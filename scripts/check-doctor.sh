@@ -37,10 +37,13 @@ if [ "$sessions" -eq "$indexed" ]; then ok "会话目录与 RESOURCES §4 收录
 echo
 echo "== 2. 死链检查（活跃文档）=="
 python3 - "$ROOT" <<'PY'
-import re, os, sys
+import re, os, sys, glob
 root = sys.argv[1]
 active = ["INDEX.md","AGENTS.md","DEVICE.md","TASKS.md","RESOURCES.md","PITFALLS.md",
           "RUNBOOK-BRINGUP.md",".pi/README.md"]
+active += sorted(glob.glob(os.path.join(root, '.pi/missions/*.md')))
+active += sorted(glob.glob(os.path.join(root, '.pi/agents/*.md')))
+active += sorted(glob.glob(os.path.join(root, '.pi/skills/*/SKILL.md')))
 allmd = set()
 for dirpath, dirnames, filenames in os.walk(root):
     dirnames[:] = [d for d in dirnames if d not in
@@ -59,7 +62,8 @@ for f in active:
         if '*' in m or '{' in m or m.startswith('http'): continue
         m = m.lstrip('./')
         if any(os.path.exists(c) for c in
-               (os.path.join(root, m), os.path.join(root, os.path.dirname(f), m))):
+               (os.path.join(root, m), os.path.normpath(os.path.join(root, os.path.dirname(f), m)))):
+            continue
             continue
         if '/' not in m: continue
         if os.path.basename(m) in allmd: continue
@@ -70,7 +74,7 @@ if missing:
     for f, m in sorted(missing):
         print("         %s -> %s" % (f, m))
     sys.exit(1)
-print("  [ok]   活跃文档无死链（%d 份）" % len(active))
+print("  [ok]   活跃文档无死链（%d 份：6 维护 + .pi README/missions/agents/SKILL）" % len(active))
 PY
 [ $? -ne 0 ] && fail=$((fail+1))
 

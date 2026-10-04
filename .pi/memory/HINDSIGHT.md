@@ -1245,3 +1245,73 @@ P0+P1（无设备项）全部落地并推送。总结：
 - **P2**：RESOURCES §4 补 14 个会话；提交 HINDSIGHT 的 +51 行；TASKS §4 删过期的"⛔ 先救机器"；根目录散件归档（`sn.img`/`dtc-*.whl`/5 个 docs tar.gz）；doctor 加 G1% 口径检查。
 
 上机那轮开始时说一声，我把 P1⑤ 和 G1-22/G1-5 的验证合并进同一次会话计划。
+
+
+## Memory - 2026-10-04
+
+y700-elden 镜像版本归属：boot 镜像文件名 vkNN 与内部内核无关——"vk47.img" 实为 vk46-dirty 内核（commit 在构建后补记），连内核流 sha 也只证"与哪个文件相同"不证版本名。唯一可靠链 = manifest（构建时生成）+ uname 内嵌 LOCALVERSION=-vkNN（2026-10-04 起）；对历史镜像解 gzip 内核流取 "Linux version" UTS 串定性。
+
+
+## Automatic settled outcome - 2026-10-04
+
+审计完成。全部只读（ls/test/rg/git log/read），未删改任何文件。
+
+# 只读审计报告 — ~/y700-elden（2026-10-05）
+
+**先数结论**：`.pi` 路径引用 93 处核实 **0 真死链**（missions/agents）；SKILL.md 引用 **2 处问题**；无引用脚本 **10 个**（其中 7 个死脚本候选）；HINDSIGHT 有 5 行值得提交；settings/README 无过时。
+
+---
+
+## 一、.pi 配置（agents / missions / skills / settings / README）
+
+| 路径 | 问题 | 证据 | 建议 |
+|---|---|---|---|
+| `.pi/missions/` + `.pi/agents/`（16 份） | ✅ 健康：93 处路径引用 `test -e` 全部存在（含通配符 `AUDIO-*`、`0011-*` 均命中）；状态全部写 vk47/vk49，与 INDEX §3 一致，**无 vk34/vk40 过期残留**（vk43 均为历史事实表述） | python 提取全部反引号路径核实 | 保留 |
+| `.pi/missions/`（覆盖缺口） | bench.md / el2-virt.md / gplay.md 3 份**活跃任务书无对应 agents/ 角色定义**（agents 仅 5 个：audio-graphopen/camera/proxy-waydroid/thermal/win-x86-poc） | `ls .pi/agents/` 对比 `ls .pi/missions/` | 更新：补 3 个角色或派发时用 general-purpose |
+| `.pi/missions/thermal.md`（墓碑+残余） | 残余动作（其余热点 passive 盘点、GPU 分级复核）**未并入 TASKS.md**（rg ‘GPU 热区’/‘其余热点’ 在 TASKS 无独立行） | `rg 'GPU 热区' TASKS.md` 空 | 保留（有独特残余判据） |
+| `.pi/missions/proxy-waydroid.md`（墓碑+残余） | 残余（netd 原生路由核实/workaround 退役判据）TASKS §2 无独立行（仅 §6 图景一句） | `rg 'netd' TASKS.md` | 保留 |
+| `.pi/missions/audio-graphopen.md` | 根因链已被 `audio.md`「现状（已完成，勿重做）」段 + TASKS G1-4 完整覆盖，残余指向 audio.md | 两文件对照 | **可删候选**（低优先） |
+| `.pi/missions/stock-camgrav.md` | 纯路标：相机→camera.md、传感器→C4（TASKS §2 C4 均在） | 6 行 | **可删候选**（低优先） |
+| `.pi/missions/win-x86.md` | 纯墓碑，指向 archive + win-x86-poc.md；TASKS 59 行 C-历史已覆盖 | 4 行 | **可删候选**（低优先） |
+| `.pi/missions/win-x86-poc.md` | 护栏（cgroup/timeout/trap）已进 `FAILURES.md`（Box64 记录）；残余“游戏兼容未排期”TASKS 196 行有 | 对照 | **可删候选**（低优先） |
+| `.pi/skills/qualcomm-android-flashing/SKILL.md:81` | **真死链**：`references/dual-boot-complete-2026-08-10.md` 不存在（本 skill references 有 `tb322fc-dualboot-2026-09.md`，疑似改名/从未建） | `test -e` MISS | 更新：改指 2026-09 文档或补建 |
+| `.pi/skills/qualcomm-android-flashing/SKILL.md:77` | 路径缺 `../`：写
+
+
+## Automatic settled outcome - 2026-10-04
+
+审计完成。以下为发现清单（全部只读核实，未动任何文件）。
+
+# 只读审计发现清单 — y700-elden 文档精简（2026-10-04）
+
+**核实方法**：6 份文档全读 + 90+ 个引用路径逐一 `test -e` + `du`/`ls` 对账 + 会话文件计数。
+
+## 1. 引用不存在的文件（doctor 查不到的正文反引号路径）
+
+| 位置 | 问题 | 证据 | 建议 |
+|---|---|---|---|
+| RESOURCES §2.1（locked 链构建行）+ PITFALLS #85 | **`scripts/extract-avfpubkey.py` 不存在** | `test -e` MISS；两处引用均称"提取工具" | 更新（确认改名或已并入其他脚本） |
+| RUNBOOK-BRINGUP.md:375 | **`patches/config-vk-modular` 不存在**，实际名为 `config-vk50-modular` | `ls patches/` 只有 config-vk50-modular | ★只需改一个名字 |
+| PITFALLS #74（约 :467） | **`scripts/net-up-manual.sh` 不存在** | `test -e` MISS | 更新（NM 版已取代则删引用） |
+| INDEX.md:148 | `flashing-bundle-2026-09-29.tar.gz` 已不在根目录 | 实际在 `archive/2026-10-04-root-strays/`（10-04 归档） | ★只需改路径 |
+| RESOURCES §3 顶层台账 "flashing-bundle/ + flashing-bundle-\*.tar.gz \| 19 M" | 同上，tar.gz 已归档 | 同上；台账同节已有 root-strays 行，两行重复 | 合并两行 |
+| 其余 85+ 引用（INDEX §6 全部专题档案、TASKS/RUNBOOK 全部脚本、backup/avf/stock、外部 ~/mesa-out、~/下载/tb322fc、~/文档/TB322FU…） | 全部存在 ✅ | test -e 全 OK | 无需动 |
+
+## 2. 过时的数字/状态（含已知“51 会话”同类）
+
+| 位置 | 问题 | 证据 | 建议 |
+|---|---|---|---|
+| INDEX.md:40、:117 | 会话数 **"51 会话"** | RESOURCES §4 自称 68 条；实际 `.pi/sessions` 递归 **72** jsonl（顶层 63） | ★只需改数字 |
+| RESOURCES.md:190 vs :270 vs :195 | 同文档三处会话数 **59 / 68 / 54 互不一致** | 实际递归 72 / 顶层 63 | 统一为一处权威（§4），§3 台账改链接 |
+| RESOURCES.md:193 | "archive/ 1.1 M \| 57 篇专题" | 实际 5.4 M / **62** 篇 topics md | ★只改数字 |
+| RESOURCES.md:157（§2.5 P1） | "其余 **33 个** boot 镜像" | `out/` 实际 **57 个** boot-elden-\*.img | ★只改数字 |
+| TASKS.md:15 | "运维/资产：内核 **vk45**" | out/ 已有 vk46–vk50 + `vk50.manifest`；§4 也述 vk50 | ★只需改数字 |
+| TASKS.md:92（§4 步骤 1） | "快环接通（vk50）…kexec 首测" 仍列为下一步，但 RESOURCES §4 表 01a105d1（最新会话）已记 "vk50 构建+kexec 首测”；且同条说“设备实跑 vk46-dirty" | 两处互斥 | **需用户确认**后勾销或改写 |
+| INDEX §3 vs TASKS §4 vs RESOURCES §4§3 vs DEVICE §2.2 | **U2 在跑版本四处口径：vk47 / vk46
+
+
+## Automatic settled outcome - 2026-10-04
+
+这是会话审计子代理的超限失败通知——该维度我在主会话已用脚本补齐并整合进清单（S1–S4），无新增发现。
+
+审计三轮通知全部收官，状态不变：**等你审批** `archive/topics/清理清单-2026-10-04-精简审计.md` 里的编号项（E1–E6 产物 ~7.3 G、S1–S4 会话、D1–D19 文档、C1–C7 配置/脚本）。回复编号即可执行。

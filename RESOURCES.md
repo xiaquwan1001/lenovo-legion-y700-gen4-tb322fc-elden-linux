@@ -94,6 +94,7 @@
 | AVF 离线提取 | `scripts/extract-avf-assets.sh`（从原厂 system 镜像 debugfs 取 crosvm/vm/microdroid_kernel/u-boot.bin，无需设备） |
 | C0 真机取证 | `scripts/c0-android-evidence.sh`（adb 采身份/DRM/传感器/分区，输出 `backup/<SN>-<档>/c0-baseline/` + SHA256SUMS；手工项见脚本尾提示） |
 | 磁盘/挂载工具 | `qemu-img`/`qemu-nbd` 已装（A13 ✅）；fstab nofail 已修（A18 ✅） |
+| **全量脚本** | 上表仅列构建/刷机链骨干；全量见 `ls scripts/*.sh`（含快环 `scripts/iterate.sh` 四档环、`mod-loop/kexec-boot/to-fastboot/flash-b/cycle` 均自锁、`device-lock.sh` 设备锁、`build-manifest.sh` 版本指纹、`audio-alsa-init.sh` 裸 ALSA 路由、`apply-kernel-fragment.sh` 模块化片段等） |
 
 ### 2.2 可上机资产（**设备无关**，任一单元通用）
 
@@ -154,7 +155,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 |---|---|---|---|---|
 | **P0** | `/mnt/Samsung/fiotest/` | 4.1 G → 0 | 直接删（fio 临时文件） | 无 |
 | **P0** | `geekidos-linux/` 构建产物 | 13 G → 1.6 G | `make clean`（源码/config/diff 全留） | ✅ **已解除**：13 modified 文件已导出 `patches/elden-working-tree-ba28ec16f-2026-10-03.patch` + `.config` 快照 + `HEAD=ba28ec16f`（见本节顶部注） |
-| **P1** | `out/` + `out/archive` + `bootslot-b/` | 5.3 G → ~0.6 G | boot 镜像只留 **vk40(+ram) / vk39** + README + `avb.avbpubkey` | vk40 上机（G1-1）通过后才删 vk39；其余 33 个可按 `patches/config-vk*` + 脚本重建 |
+| **P1** | `out/` + `out/archive`（E1/E2） | 5.3 G → ~0.6 G | ✅ **已执行（2026-10-04 精简审计，用户批）**：删 47 个旧镜像 + out/archive（~5.0 G）；只留 vk46/vk47/vk47a/vk50 基线 + vk34recon + V1/V2 二分 + boot_b-vk49 + dtbo-dummy；清单外保留理由见 `archive/topics/清理清单-2026-10-04-精简审计.md` | 其余可按 `patches/config-vk*` + 脚本重建；**`bootslot-b/` 历史签名包未批（E3）** |
 | **P1** | `pkgs/` `pkgs-phosh/` `pkgs-x86/`（508 apk/deb） | 638 M → 0 | 删 | 无（上游可重下；`rootfs/debs-manifest.txt` 已记版本） |
 | **P2** | `env-pass/build` + `env-pass/kernel-susfs` | 494 M → 0 | 删中间物 | **保留** `env-pass/backup-20261002/linux17-rootfs.tar.gz`（3.3 G＝过环境栈成功态里程碑，不瘦身） |
 | **P2** | `backup/rawdump.img` | 257 M → ~30 M | `zstd`（sda14 日志型 dump，结论已进 PITFALLS） | 无 |
@@ -185,14 +186,14 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 
 | 路径 | 体积 | 版本控制 | 说明 / 处置 |
 |---|---|---|---|
-| 领域层 `INDEX/DEVICE/TASKS/RESOURCES/GAPS/ANDROID-COMPAT/RUNBOOK.md` + `PITFALLS.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2 |
+| 领域层 `INDEX/DEVICE/TASKS/RESOURCES/RUNBOOK.md` + `PITFALLS.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2（GAPS/ANDROID-COMPAT 已并入 `TASKS.md` §5/§6） |
 | `.pi/{skills,memory,missions,agents}` `.pi/README.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/子代理任务卡/模型配置（分工见 `.pi/README.md`）。⚠️ `pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
-| `.pi/sessions/`（59 个 jsonl） | 67 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
+| `.pi/sessions/`（66 个 jsonl） | ~66 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档） |
-| `archive/` | 1.1 M | ✅ track | 过程证据（57 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
+| `archive/` | ~5.5 M | ✅ track | 过程证据（63 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
 | `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#98 + §0 零号纪律 + §15 废弃登记 |
-| `RESOURCES.md §4` | 21 K | ✅ track | 54 会话索引 + 内核实机验证边界 |
+| `RESOURCES.md §4` | 21 K | ✅ track | 68 条会话索引（权威，§4）+ 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
@@ -211,7 +212,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `logs/` | 92 M | ignore | 串口/构建/agent 日志 |
 | `pkgs/ pkgs-phosh/ pkgs-x86/` | 639 M | ignore | apk/deb 缓存（可重下） |
 | `probe/` `twrp/` `y700四代工具/` | 552 M | ignore | 探针数据 / TWRP 镜像 / 厂商工具 |
-| `flashing-bundle/` + `flashing-bundle-*.tar.gz` | 19 M | ignore | 换机迁移包快照 |
+| `flashing-bundle/` | 15 M | ignore | 换机迁移包快照（tar.gz 已归档 `2026-10-04-root-strays/`） |
 | `restore-259/`（二进制） | 254 M | ignore | AVB/KSU/EDL 救砖资产 |
 | `archive/2026-10-04-root-strays/y700-elden-docs-*.tar.gz`（5 个） | 240 K | 已入库 | 旧文档快照；2026-10-04 自根目录归档 |
 | `backup/HA2EXB0E-16+512/sn.img` | 356 B | ignore | **含本机序列号，禁止入库**；2026-10-04 自根目录迁入 |
@@ -229,7 +230,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | P1-b | `pkgs/ pkgs-phosh/ pkgs-x86/` | 638 M | 无（`rootfs/debs-manifest.txt` 已记版本） | ⬜ |
 | P2-a | `env-pass/{build,kernel-susfs}` 中间物 | 494 M | 保留 `env-pass/backup-20261002/linux17-rootfs.tar.gz` | ⬜ |
 | P2-b | `backup/rawdump.img` 压缩 | 257 M→~30 M | 无 | ⬜ |
-| P2-c | 重复快照（`flashing-bundle/`+tar、`y700-elden-docs-*.tar.gz`） | ~30 M | 保留最新一套 | ⬜ |
+| P2-c | 重复快照（`flashing-bundle/`、`y700-elden-docs-*.tar.gz`） | ~30 M | 保留最新一套 | ◐ **tar.gz 已于 10-04 归档** `archive/2026-10-04-root-strays/`；`flashing-bundle/` 目录仍在根目录 |
 | P2-d | `backup/stock-259/` 13 分区 | 443 M | 须先核对云全量包含 abl/dtbo/recovery/vbmeta 且 =1.5.10.259 | ⬜ |
 | P3-a | AOSP `.repo` 历史 + 工作树（外置） | 523 G | 决策 G2 是否自编 Waydroid；先导出 local_manifests | ⬜ |
 | P3-b | `l2/` super/system 镜像 | 45 G | 先做 `TASKS.md` §5 Q13 AVF 重提取 + 核验云包 | ⬜ |

@@ -346,13 +346,13 @@ fastboot reboot
 
 | 项 | 命令 | 期望 |
 |---|---|---|
-| 内核 | `uname -r` / `cat /proc/version` | `7.2.0-debug-gba28ec16f01f-dirty` |
+| 内核 | `uname -r` / `cat /proc/version` | 以镜像内嵌 `LOCALVERSION=-vkNN` + `vkNN.manifest` 为准（vk42 起 uname 与版本名分离） |
 | 模块 | `lsmod \| wc -l` | 模块可加载（1484 个在手） |
 | 显示 | `ls /dev/dri`；Phosh 起来 | card0/renderD128 |
 | Waydroid 图形 | 部署 `~/mesa-out` 包 + `waydroid session start` | SurfaceFlinger running（Mesa 26.1.8） |
 | Waydroid 网络 | `waydroid status` 的 IP | 不再是 UNKNOWN（vk40 已含 netd IPv6/XFRM） |
 | 相机 | `v4l2-ctl --list-devices` + `media-ctl -p` | media0 + video0-16 + subdev |
-| 音频 | `amixer -c0 cset numid=8 on; speaker-test` | **待现场听声** |
+| 音频 | `amixer -c0 cset numid=8 on; speaker-test` | **✅ 出声已验收**（G1-4，vk43+）；裸 ALSA 默认路由 `scripts/audio-alsa-init.sh` |
 | 温控 | `scripts/thermal-watch.sh`（主机推） | trip 70/82/90/105 |
 | 基准 | `bash scripts/bench-run.sh`（G1-8） | 出 CPU/GPU 分数 |
 
@@ -372,7 +372,7 @@ fastboot reboot
 
 **前置（一次性）**：应用模块化片段，否则环 0 不可用——
 ```bash
-FRAG=patches/fragment-modular.config SNAP=patches/config-vk-modular \
+FRAG=patches/fragment-modular.config SNAP=patches/config-vk50-modular \
   bash scripts/apply-kernel-fragment.sh
 bash scripts/iterate.sh kernel --boot      # 全量重编一次；此后驱动改动走环 0
 ```

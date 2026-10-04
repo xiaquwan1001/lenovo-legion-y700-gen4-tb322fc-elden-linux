@@ -37,7 +37,7 @@
 |---|---|---|
 | **设备状态 + 设备描述** | **`DEVICE.md`** | 机型规格、固件清单与通路、驱动矩阵、单元台账 U1/U2、状态→任务分派、GPT 参数、**§3 Linux 容量策略** |
 | **任务 / 进度 / 未解 / 方案** | **`TASKS.md`** | **唯一任务台账 + 进度权威**（§0）；G1/C/A 任务（§1–4）；**§5 查漏补缺（GAPS/Q1–Q23）**；**§6 G2 安卓兼容方案**；**§7 上游化（M1–M5）** |
-| **资源 / 资产 / 会话轨迹** | **`RESOURCES.md`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · **§4 会话索引（51 会话 + 实机边界）** |
+| **资源 / 资产 / 会话轨迹** | **`RESOURCES.md`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · **§4 会话索引（68 条 + 实机边界）** |
 | **上机手册** | **`RUNBOOK-BRINGUP.md`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase −1…9 |
 
 ### 经验层（1 份）
@@ -64,11 +64,11 @@
 > **SSOT**：进度百分比与任务状态以 `TASKS.md` §0 为准；本节若与之不符，以 `TASKS.md` 为准。
 
 - **G1 ≈85%**（对齐 TASKS §0）：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、**音频出声 + 桌面 PipeWire/UCM2**、触觉、带外串口）。
-  **U2 在跑 vk47**（b 槽持久直启）。**剩 3 个硬缺口**：相机出流、TF 卡、BT 配对（音频播放+输入均✅）。
+  **U2 实跑 vk46-dirty**（b 槽持久直启；vk50 kexec 首测失败未换动，见 `TASKS.md` §4）。**剩 3 个硬缺口**：相机出流、TF 卡、BT 配对（音频播放+输入均✅）。
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
-- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline `vk47` 持久直启**（`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。音频**播放**✅（tplg SD1 + UCM2）、**输入**✅（WCD939x AMIC1，UCM2 Mic）、温控四级 ✅、桌面关机/重启已修（`PITFALLS` #89）、Linux→fastboot 已打通（G1-24）。
+- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（实跑 `vk46-dirty`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
   ⚠️ **未解**：桌面空闲**熄屏→整机重启**（G1-22，禁空闲熄屏规避）。
   ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
 
@@ -114,7 +114,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
 **`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#98
-**`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（51 会话）
+**`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（68 条）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
 `backup/` | 原厂分区/固件/GPT 快照（**按容量档隔离**）；`backup/fw/README.md` 说明来源
@@ -145,7 +145,7 @@ AOSP 迁盘校验 | `archive/topics/AOSP-MIGRATE-CHECK-2026-10-02.md`
 BL 解锁（**要不要 / 怎么**——已定稿，别再重推） | `RUNBOOK-BRINGUP.md` §0.5 ★权威顺序·`archive/topics/复盘-2026-10-03-BL解锁.md`（时线 + 7/8 月对照 + 根因）·`archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md`（签名链取证）
 操作史/复盘 | `archive/topics/HANDOFF.md` `archive/topics/复盘.md` `archive/topics/复盘-2026-09-29-夜.md` `archive/topics/复盘-2026-09-30-日.md` `archive/topics/复盘-2026-10-02-swarm.md` **`archive/topics/复盘-2026-10-03-BL解锁.md`** `archive/topics/PAUSE-2026-10-02-android.md`
 **内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`RESOURCES.md §4`** 配套
-换机迁移包 | `flashing-bundle/` + `flashing-bundle-2026-09-29.tar.gz`
+换机迁移包 | `flashing-bundle/`（tar.gz 已归档 `archive/2026-10-04-root-strays/`）
 **退场的入口**（快捷方式 + 已卸载插件 `pi-messenger-swarm` 全套，含恢复步骤） | `archive/2026-10-04-retired-entrypoints/README.md`
 **上游化审查**（内核树 vs 主线 v7.2 全量 diff，A/B/C/D 分级） | `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`（任务 `TASKS.md` §7 M1–M5）
 

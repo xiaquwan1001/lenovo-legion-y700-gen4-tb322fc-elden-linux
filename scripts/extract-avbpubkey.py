@@ -1,34 +1,38 @@
 #!/usr/bin/env python3
-"""extract-avbpubkey.py — 从 AVB 镜像提取顶层公钥 blob（.avbpubkey 格式），
-供 avbtool make_vbmeta_image --chain_partition 使用。
-支持：裸 vbmeta（make_vbmeta_image 产物）、hash-footer 镜像（boot/recovery，
-AVB0 block 在文件中部，由尾部 footer 描述）——自动搜 AVB0 magic。
-用法：python3 extract-avbpubkey.py <image> <out.avbpubkey>
+"""从带 AVB vbmeta header 的镜像提取 public key blob（.avbpubkey）。
+
+用途：`scripts/build-locked-chain.sh` 的 recovery chain 提取（原脚本曾丢失，2026-10-04 重建）。
+用法：extract-avbpubkey.py <vbmeta-or-signed-image> <output.avbpubkey>
+原理：AVB0 header 256 B；public_key_offset 相对 auxiliary block 开头，
+      blob 绝对位置 = 256 + authentication_data_block_size + public_key_offset，长 public_key_size。
+自测：对自签 vbmeta_b_flags0.img 提取应与 `bootslot-b/avb.avbpubkey` 逐字节一致。
 """
-import hashlib, struct, sys
+import struct
+import sys
 
-def main(img_path, out_path):
-    with open(img_path, 'rb') as f:
-        data = f.read()
-    i = data.find(b'AVB0')
-    if i < 0:
-        raise SystemExit(f'{img_path}: 无 AVB0 magic')
-    h = data[i:i + 256]
-    # AVB header 全部字段 big-endian:
-    # magic(4) ver_major(4) ver_minor(4) auth_block(8) aux_block(8) alg(4)
-    # hash_off(8) hash_sz(8) sig_off(8) sig_sz(8) pubkey_off(8) pubkey_sz(8) ...
-    auth_block = struct.unpack_from('>Q', h, 12)[0]
-    pub_off, pub_len = struct.unpack_from('>QQ', h, 64)
-    # 公钥 blob 位于 AVB0 block 起点 + 256(header) + auth_block(hash+sig) + pub_off
-    blob_start = i + 256 + auth_block + pub_off
-    blob = data[blob_start:blob_start + pub_len]
-    if len(blob) != pub_len or pub_len == 0:
-        raise SystemExit(f'{img_path}: 公钥长度异常 pub_off={pub_off} pub_len={pub_len}')
-    with open(out_path, 'wb') as f:
-        f.write(blob)
-    print(f'{img_path}: public key {pub_len}B sha1={hashlib.sha1(blob).hexdigest()} -> {out_path}')
 
-if __name__ == '__main__':
+def extract_pubkey(blob: bytes) -> bytes:
+    if blob[:4] != b"AVB0":
+        sys.exit(f"ERROR: not an AVB image (magic={blob[:4]!r})")
+    # magic@0 u32 major@4 u32 minor@8 → auth_blk@12 aux_blk@20 algo@28
+    # hash@32/40 sig@48/56 pubkey@64/72 pubkey_meta@80/88（全部大端）
+    (auth_blk, _aux, _algo, _h_off, _h_sz, _s_off, _s_sz,
+     pk_off, pk_len, _pkm_off, _pkm_len) = struct.unpack_from(">QQLQQQQQQQQ", blob, 12)
+    start = 256 + auth_blk + pk_off
+    return blob[start:start + pk_len]
+
+
+def main() -> None:
     if len(sys.argv) != 3:
-        raise SystemExit('usage: extract-avbpubkey.py <image> <out.avbpubkey>')
-    main(sys.argv[1], sys.argv[2])
+        sys.exit(__doc__)
+    with open(sys.argv[1], "rb") as f:
+        pubkey = extract_pubkey(f.read())
+    if not pubkey:
+        sys.exit("ERROR: empty public key")
+    with open(sys.argv[2], "wb") as f:
+        f.write(pubkey)
+    print(f"{len(pubkey)} bytes -> {sys.argv[2]}")
+
+
+if __name__ == "__main__":
+    main()

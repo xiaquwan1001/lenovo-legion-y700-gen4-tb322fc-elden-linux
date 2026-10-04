@@ -40,8 +40,9 @@
 4. **`fastboot boot` 失败后 bootloader 会进"脏"状态**（连续报 `Load Error`）；`fastboot reboot bootloader` 可清。
    `fastboot boot` 报 `Failed to load/authenticate boot image: Load Error` 时同理。
 
-5. **不要指望 `kexec` 换内核**：`CONFIG_KEXEC=y`，`kexec -l`/`-s -l` 都能**装载成功**，
+5. **不要指望 `kexec` 换内核（旧 syscall 限制）**：`CONFIG_KEXEC=y`，`kexec -l`/`-s -l` 都能**装载成功**，
    但 **`kexec -e` 执行会黑屏挂死**（新内核未起、无 USB gadget，需物理重启）。arm64/Qualcomm 平台限制。
+   （结论已收窄：file-based `kexec -s -l --kexec-file-syscall` + 未压缩 Image 已验证可行，见 #94 与 RUNBOOK §8。）
 
 6. **boot.img 必须 ≤96 MiB**（`boot_a`=0x6000000）；超了 `fastboot boot` 会 `Bad Buffer Size`。
 
@@ -464,7 +465,7 @@
     - 建一次 profile 即自动重连：`nmcli device wifi connect "<ssid>" password "<psk>"`
       （存 `/etc/NetworkManager/system-connections/*.nmconnection`，autoconnect=yes）。
     - 开机：`net-up.sh` 改成 NM 版（先等 dbus socket → 起 NM → 等 wlan0 有 IP；
-      80s 没 IP 就自动回退到 `net-up-manual.sh`）。`scripts/net-up-nm.sh` 是规范副本。
+      80s 没 IP 就自动回退到 `net-up.sh`（manual wpa_supplicant+udhcpc 路径）。`scripts/net-up-nm.sh` 是规范副本。
     - 实测：重启后 ~16s（SSH 上线后）NM 已连上、能 ping 外网。手工备份在 `/root/net-backup-20260930/`。
 
 75. **开机 D-Bus 竞态：两个脚本各起一个 `dbus-daemon --system` → 路径 socket 消失**
@@ -651,7 +652,7 @@
       PipeWire 由 `/etc/xdg/autostart/pipewire.desktop` 自启；`install.sh` 由 `start-desktop.sh` 幂等调用。
       另：本卡**无 capture DAI**（`arecord -l` 空）→ 输入设备为空，麦克风是另立的 bring-up。
 
-91. **★音频输入：本机麦克风不是 DMIC，是模拟麦接 WCD939x**（2026-10-04 实测，未打通）。
+91. **★音频输入：本机麦克风不是 DMIC，是模拟麦接 WCD939x**（2026-10-04 实测，已打通）。
     - 我们按上游 SM8750-MTP 做了 **VA macro DMIC** 采集（DTS `va-dai-link` + `dmic01/23` pinmux + tplg 采集子图 + `vdd-micb`）：
       ALSA `MultiMedia3 Capture` 出现、APM/DAPM 图全 On、VA macro 寄存器 `084=0x1`（DMIC0 使能/DIV2）、LPASS pinmux gpio6-9 已 mux、`vdd-micb` 也 On，**但录音 4 通道全 0**。
     - 真根因（原厂设备树 `backup/stock-elden/elden.dts` line 16249）：原厂 `qcom,audio-routing` **全是模拟麦 `AMIC1..5`/`VA AMIC1..5` + `MIC BIAS1..4`，无一条 `VA DMIC`**。
@@ -739,7 +740,7 @@
 |---|---|---|
 | 桌面空闲熄屏 → 整机重启 | 未解（规避：禁空闲熄屏） | `TASKS.md` §5 Q21 / G1-22 |
 | vk34 之后内核增量回归（vblank/PPM） | 二分中 | `TASKS.md` §5 Q22 / G1-23 |
-| 音频不可听 | ✅ 已出声（vk43）；**输入端**未通（WCD939x） | `TASKS.md` G1-4 |
+| 音频不可听 | ✅ 已出声（vk43）；输入端 ✅ 已打通（WCD939x AMIC1，UCM2 Mic） | `TASKS.md` G1-4 |
 | 相机不出流 | 未收口 | `TASKS.md` G1-5 |
 | TF 卡写丢失 | 未定性 | `TASKS.md` G1-6 |
 | BT 配对 / 回连 | 未收口 | `TASKS.md` G1-7 |

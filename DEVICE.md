@@ -23,17 +23,17 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- 内核树：`linux -> geekidos-linux`（GEEKiDoS/linux `v7.2-elden`，**Linux 7.2.0**）+ 本地补丁 `patches/0001–0011`。
-- 配置快照：`patches/config-vk40-bringup`（netd/XFRM + camera + thermal + audio 全合）。
-- 待上机新基线 **vk40**：`out/boot-elden-vk40.img`（持久根）/ `out/boot-elden-vk40-ram.img`（纯 RAM）+ 1484 个 `.ko`。
-- **最后在机基线 vk39**（音频修复；U1 已逆手术回 stock，**当前无单元在机 mainline**）；`CONFIG_LOCALVERSION` 一变，相机 20 个 `.ko` 必须整套重编（vermagic 耦合）。
+- 内核树：`linux -> geekidos-linux`（GEEKiDoS/linux `v7.2-elden`，**Linux 7.2.0**）+ 本地补丁 `patches/0001–0011`；模块化片段已应用（`patches/config-vk50-modular`）。
+- 配置快照：`patches/config-vk50-modular`（netd/XFRM + camera + thermal + audio 全合 + 模块化）；`config-vk40-bringup` 为历史基线。
+- **U2 在机基线 = vk46-dirty**（b 槽持久直启，镜像指纹标定；文档口径 vk47 已更正）。最新构建 **vk50**（含 `vk50.manifest`）；vk50 kexec 首测**失败未换动**（见 `TASKS.md` §4）。
+- `CONFIG_LOCALVERSION` 一变，相机 20 个 `.ko` 必须整套重编（vermagic 耦合）；vk50 起模块化后驱动可单独重编。
 
 ### 1.2 固件清单与通路（"正常驱动原厂全部固件"的分解）
 
 | 固件 | 来源分区 | 本地资产 | 主线通路 | 状态 |
 |---|---|---|---|---|
 | ADSP `adsp.mdt`+`adsp_dtb` | LUN4 `modem_a` | `backup/fw/modem/` | `qcom_q6v5_pas`；DT 期望 `/lib/firmware/qcom/sm8750/adsp.mdt` | ✅ 起（音频 graph 已通） |
-| AudioReach **tplg** | vendor 自研 | 自编 `Lenovo-Y700-Gen4-tplg.bin` | ASoC `q6apm` + `patches/0011` | 🟡 `GRAPH_START status=0`，**待听声** |
+| AudioReach **tplg** | vendor 自研 | 自编 `Lenovo-Y700-Gen4-tplg.bin` | ASoC `q6apm` + `patches/0011` | ✅ 出声+录音（G1-4） |
 | CDSP `cdsp.mbn` | `modem_a` | `backup/fw/modem/` | DT `status=disabled` | ➖ 未启用（G1 加分项） |
 | WiFi Peach（`amss.bin`/`bdwlan`/BDF） | `modem_a/peach` | `backup/fw/modem/peach/` | `ath12k` + MHI 重试补丁 | ✅ |
 | BT（`brhbtfw20.tlv`/`brhbtnv20.bin`） | `bluetooth_a` | `backup/fw/bluetooth/` | `hci_qca` + IBS 补丁 | ✅ 起（配对待收口） |
@@ -49,7 +49,7 @@
 |---|---|---|
 | **已通** | CPU/GPU/显示/USB/PCIe/UFS/WiFi/BT/触屏/触觉/背光/充电旁路/相机驱动栈/温控分级 | — |
 | **P0** | 相机出流（camss + s5kjns + gc08a8 + wl2868c + flash） | 只差 config/部署 |
-| **P1** | 音频可听+麦克风；TF 卡写稳定性；DP 输出（驱动在树被 `disabled`，缺 ADSP altmode/UCSI） | bug / bring-up |
+| **P1** | TF 卡写稳定性；DP 输出（驱动在树被 `disabled`，缺 ADSP altmode/UCSI） | bug / bring-up（音频已 ✅，G1-4） |
 | **P2** | NFC（主线 `st21nfca` 在，改 compatible）、BT 配对收口 | 小 |
 | **P3** | 温控 OEM 增强（`lenovo,sys-temp`/BCL/QMI cooling） | 可用通用框架近似 |
 | **✗ 不投入** | SLPI 7 传感器、TEE/SPU/hw-fence/mem-buf、FM RTC6226、ST54 SE、Gunyah/PMIH010x | 架构性/无源码 |
@@ -69,7 +69,7 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · a 槽 stock **259** · b 槽 **mainline `vk47`（audio+thermal+WCD939x采集）持久直启**（`/`=`/dev/sda17`，Phosh 自启；**Linux→fastboot 已打通** `eldroid-bootctl reboot bootloader`）——**音频播放 + 桌面 PipeWire 扬声器 sink** ✅（G1-4，tplg SD1 + UCM2）、**温控四级 trip** ✅、**WCD939x 编解码器已枚举**（RX/TX bound，声卡注册、播放不受影响）、**WCD939x 采集已打通 ✅**（codec RX/TX bound、DTS+tplg+UCM2 Mic 设备；`arecord -D hw:0,2` 出真实音频、`wpctl` 有 Source）；已去 VA DMIC（硬件伪）；G1-22/G1-23 增量已重落、**桌面关机/重启已修**（`PITFALLS` #89）；**「熄屏→重启」**未解；`recovery_b` 已刷 TWRP | 原厂未动 | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`bootslot-b/boot_b-vk34recon.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；实跑 **`vk46-dirty`**）。功能状态：音频播放+输入✅、温控四级✅、桌面关机/重启已修（#89）、**熄屏→重启未解**（G1-22）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`bootslot-b/boot_b-vk34recon.img` |
 
 > **★ 未解故障（2026-10-03）**：桌面空闲**熄屏（DPMS blank）→ 整机重启**（用户描述“直接关机并重启”）。
 > 串口证据：重启前 `ucsi_glink … PPM init failed`，**无 kernel panic 打印**。
@@ -82,7 +82,7 @@
 
 | 前置状态 | 满足单元 | 可做 |
 |---|---|---|
-| mainline（b 槽直启 + 持久根） | **暂无**（U1 逆手术、U2 未动） | G1 上机项、G2 容器路线 |
+| mainline（b 槽直启 + 持久根） | **U2**（b 槽持久直启在跑，vk46-dirty） | U1 已逆手术，mainline 需重做手术 |
 | stock Android + root | **U1** | 固件对照提取、过环境、AVF 资产复采（可选路线） |
 | 原厂未动 + **BL locked** | （暂无） | 路 C（EDL 直写）不依赖解锁——管线 `scripts/build-locked-chain.sh` 保留作资产；**U2 已走完解锁，不再命中此行** |
 | 原厂未动（**已解锁**，首次手术） | **U2** | GPT dump + 手术 + **RAM 零写盘验收**（`fastboot boot` 可用）；b 槽链已就绪 `bootslot-b-u2/` |
