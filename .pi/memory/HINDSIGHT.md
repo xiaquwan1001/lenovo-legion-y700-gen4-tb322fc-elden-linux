@@ -1427,3 +1427,118 @@ scripts/flash-b.sh out/boot-elden-vk45.img --reboot
 **我的建议**：先 **P0 收口（10 分钟）**，然后 **P1（U1 取证，过期作废）**——趁 U1 还是 stock，把不可复得的东西先采下来；之后回 U2 攻 **WCD939x**。
 
 要我先执行 P0 收口吗？或者你直接指定 P1/P2 哪条开工。
+
+
+## Automatic settled outcome - 2026-10-04
+
+## P0 + P1（主机侧）完成
+
+**P0 文档收口** — 提交 `4d69c47`，`check-doctor` **FAIL=0 / WARN=0**
+- `INDEX §3`、`TASKS §0` 对齐 vk45 现状（G1 80%→82%，音频听声→已完成）
+- `RESOURCES §4` 补第 53 会话（53=53）、修正统计与"最后确认版本=vk45"、补 vk41–45 内核时间线
+- `PITFALLS`/`RESOURCES` 正文 #1–#88 → #1–#91；§15.5 音频条目更新
+
+**P1 主机侧（不占设备）** — 提交 `1ba016b`
+- **AVF 资产已复原**（GAPS Q13 资产部分闭合）：从原厂 259 镜像 `/mnt/Samsung/l2/system_a.pristine.img` 离线 debugfs 提取 → `backup/avf/`
+  - `bin/crosvm`（**含 Gunyah/Geniezone/KVM 后端**）、`vm`、`virtmgr`、`virtualizationservice`…
+  - `etc-fs/microdroid_kernel`（**6.6.77-android15-8**）、`microdroid_super.img`、`u-boot.bin`、`rialto.bin`、initrd ×2
+  - 重跑脚本 `scripts/extract-avf-assets.sh` 可复原，**不需要设备**（同 259 build，与 U1 a 槽等价）
+- **C0 取证采集器就绪**：`scripts/c0-android-evidence.sh`（adb 采 getprop/DRM/传感器清单/分区 → `backup/<SN>-<档>/c0-baseline/` + SHA256SUMS）
+
+## P1 设备侧：阻塞，需要你接入 U1
+
+当前 USB 只有 U2 的 NCM 网关（`1d6b:0104`），**U1 未连接**。a 槽覆盖前真正不可复得的只剩 C0 真机数据，越早采越好。
+
+**请这样操作：**
+1. U1 用 USB 连主机，打开「USB 调试」并授权。
+2. 告诉我，我跑 `scripts/c0-android-evidence.sh`（自动识别 SN/容量档）。
+
+**两项需你亲自补（采集器尾已打印提示）：**
+- **7 颗传感器 30 s CSV**：设备 Termux 里 `pkg install termux-api` → `termux-sensor -l` 列出后逐颗 `termux-sensor -s <名> -n 300 > c0-<名>.csv`
+- **5 个目标 App 关键流程录屏**：`adb shell screenrecord --time-limit 30 /sdcard/c0-app-N.mp4` 后 pull
+
+## 下一步选择
+
+U1 就绪前，主机侧能做的已做完。**要不要现在就在 U2 上开工 P2 的 WCD939x bring-up（音频输入正路）？** 
+这是你上轮定的方向，且 U2 现在空闲（uptime >7 h 稳定）。或者你先把 U1 接上，我立刻跑 C0。
+
+
+## Automatic settled outcome - 2026-10-04
+
+先给你判断依据——C0 采集的**每一项、来源、是否已有等价数据**：
+
+## C0 采集清单与"稀缺性"评估
+
+| # | 采集项 | 已有等价物？ | 真正需要 U1 吗 |
+|---|---|---|---|
+| 1 | `getprop` 全量 / dalvik 属性 | ✅ 已有 U2 解锁前基线 `backup/HA2EXB0E-16+512/pre-unlock/getprop-locked.txt`；原厂镜像在手 | ❌ |
+| 2 | DRM 级别 / Widevine（`dumpsys media.drm`） | ◐ pre-unlock 只记了 `sys.lenovo.widevine_security_level=L1`；U1 已解锁（2026-08-16）→ 大概率 L3，**不新增 L1 参照** | ❌（L1 参照 U2 基线已占） |
+| 3 | 分区 `by-name` / `packages` / `proc-partitions` | ✅ pre-unlock 基线 + 原厂镜像 | ❌ |
+| 4 | 传感器**清单** | ✅ pre-unlock 基线有传感器清单 | ❌ |
+| 5 | AVF / virt | ✅ 今天已从镜像离线提取（crosvm+u-boot+microdroid） | ❌ |
+| 6 | **7 颗传感器 30 s 采样 CSV** | ❌ 无 | ✅ **唯一真数据**（但见下） |
+| 7 | **5 个目标 App 关键流程录屏/表现** | ❌ 无 | ✅ **唯一真数据**（但见下） |
+
+## 关键判断点
+
+1. **C0 的"自动采集"部分（#1–#5）基本冗余**——已有 U2 解锁前基线 + 原厂镜像 + 今天的离线 AVF 提取覆盖。
+2. **真正不可复得的只有 #6/#7（运行时行为）**，它们是 G2 容器兼容度的"尺子"。
+3. **但运行时证据不必用 U1**：U2 的 **a 槽仍是 stock 259 Android**（BL 已解锁），随时可启动 Android 采同样的 #6/#7。而 Phase B（回收 a 槽）尚远、未拍板。⇒ 用 U1 只是"免得动 U2"，不是唯一来源。
+4. 项目原则是**设备等价**，任何单元状态满足就能干活。
+
+## 结论（供你拍板）
+
+**不建议为 C0 专门接 U1。** 理由：自动项冗余；运行时项（传感器/App）可在 U2 a 槽做，且在 Phase B 前任何时间都来得及，**不阻塞 G1，也不阻塞容器主线**。
+
+- 若你愿意顺手接 U1：我可以 5 分钟跑完自动项 + 你在 U1 上录 5 段、采 7 段，落一份"真机参照"，成本也就一次接线。
+- 若嫌麻烦：**跳过 U1**，我直接开 **U2 的 P2（WCD939x 音频输入正路）**；运行时 C0 等哪次切 U2 a 槽再补。
+
+你倾向哪种？
+
+
+## Automatic settled outcome - 2026-10-04
+
+P2 第一版已就绪。以下是本次完成内容与上机步骤。
+
+## 已完成（主机侧，vk46）
+
+**DTS**（`linux/.../sm8750-lenovo-elden.dts`，已 commit `4c68eb5ed`）
+- 新增 `wcd939x` codec 节点：reset = **TLMM gpio101**（原厂 base dtb 证实）、稳压 **L15B**（buck/rxtx/io）+ **BOB1**（mic-bias）+ **L2I**（px）、micbias 2.0/2.7/1.8/2.0 V（照原厂）
+- `sound` 新增 **`WCD Capture`** dai-link：cpu `TX_CODEC_DMA_TX_3`，codec `wcd939x + swr2 + lpass_txmacro`
+- audio-routing 加 `AMIC1–5 → MIC BIAS*` + `TX SWR_INPUT1 ← ADC2_OUTPUT`
+- `&swr1/&swr2` 使能并挂 `wcd_rx`/`wcd_tx`（端口映射照 MTP/原厂）
+
+**tplg**（`scripts/audio-tplg/*.m4`，commit `819cfc9`）
+- MultiMedia3 capture 增加 `TX_CODEC_DMA_TX_3` device 子图（与 VA DMIC 并列），重建 **16860 B `3bd05394…`**
+
+**产物**
+| 文件 | 用途 | sha256 |
+|---|---|---|
+| `out/boot-elden-vk46.img` | 持久 b 槽 | `1ddf239b…`（签名后 `0f96e381…`） |
+| `out/boot-elden-vk46-ram.img` | **零写盘 RAM 验收** | `57d99228…` |
+| `bootslot-b/boot_b.img` | 已签名的持久 boot_b | 96 MiB |
+
+**已顺手更新持久根 tplg** → `/lib/firmware/qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin`（旧版备份到 `/root/Lenovo-Y700-Gen4-tplg.vk45.bak`）。
+
+## 请你上机（推荐先 RAM 试，零风险）
+
+```bash
+cd ~/y700-elden
+# 1) 进 fastboot（vk45 已带 PSCI vendor reset）
+ssh root@192.168.7.1 'eldroid-bootctl reboot bootloader'
+# 2) 零写盘 RAM 启动 vk46（不动 boot_b；失败掉电即回 vk45）
+fastboot boot out/boot-elden-vk46-ram.img
+```
+
+回到 Linux（SSH `192.168.7.1`）后我验证：
+- `dmesg | grep -iE 'wcd|swr|soundwire'`（编解码器是否枚举）
+- `arecord -l` / `aplay -l`（是否出现 `WCD Capture`）
+- `amixer -c0 sget 'ADC2 MUX'` + `arecord` 录一段看是否非静音
+
+**若确认无碍**，再落持久版（我来或你来均可）：
+```bash
+scripts/flash-b.sh out/boot-elden-vk46.img --reboot
+```
+**回滚**：`scripts/flash-b.sh out/boot-elden-vk45.img --reboot`（boot_b），tplg 从设备 `/root/Lenovo-Y700-Gen4-tplg.vk45.bak` 还原。
+
+⚠️ 风险提示：新增 WCD dai-link 若编解码器未枚举，声卡可能整体注册失败（连播放一起挂）——所以**先 RAM 试**。fastboot 因涉及物理恢复，按惯例请你亲自执行；要不要我通过 SSH 直接把持久版刷上（`flash-b.sh` 带读回校验）？

@@ -64,12 +64,12 @@
 > **SSOT**：进度百分比与任务状态以 `TASKS.md` §0 为准；本节若与之不符，以 `TASKS.md` 为准。
 
 - **G1 ≈82%**：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、**音频出声 + 桌面 PipeWire/UCM2**、触觉、带外串口）。
-  **U2 在跑 vk45**（b 槽持久直启，实测 uptime >7 h 稳定）。**剩 4 个硬缺口**：音频**输入**（本机麦=模拟麦接 WCD939x，非 DMIC）、相机出流、TF 卡、BT 配对。
+  **U2 在跑 vk47**（b 槽持久直启）。**剩 4 个硬缺口**：音频**输入**（WCD939x 已枚举、声卡/播放正常，但采集 I/O error 未打通）、相机出流、TF 卡、BT 配对。
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
-- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline `vk45` 持久直启**（`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。音频**播放**✅（tplg SD1 + UCM2）、温控四级 ✅、桌面关机/重启已修（`PITFALLS` #89）、Linux→fastboot 已打通（G1-24）。
-  ⚠️ **未解故障**：桌面空闲**熄屏→整机重启**（G1-22）；当前靠禁止空闲熄屏规避（实测 uptime >7 h 稳定）。**音频输入 ❌**：本机麦=模拟麦接 WCD939x，非 DMIC（`PITFALLS` #91），正路=WCD939x bring-up。
+- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline `vk47` 持久直启**（`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。音频**播放**✅（tplg SD1 + UCM2）、温控四级 ✅、桌面关机/重启已修（`PITFALLS` #89）、Linux→fastboot 已打通（G1-24）。
+  ⚠️ **未解**：桌面空闲**熄屏→整机重启**（G1-22，禁空闲熄屏规避）；**音频输入**：WCD939x 已枚举（RX/TX bound）、声卡注册/播放正常，但 WCD 采集 `arecord`=I/O error（`PITFALLS` #91、`archive/topics/WCD939X-2026-10-04.md`）。
   ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
 
 ---
