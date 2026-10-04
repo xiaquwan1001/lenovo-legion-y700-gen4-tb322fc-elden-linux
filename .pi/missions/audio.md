@@ -1,42 +1,31 @@
-# 任务：打通音频出声 —— tplg 设备子图未注册（AudioReach / AW88461）
+# 任务：音频残余包（R1 有线耳麦 / R2 双麦 / UI 收尾）
 
-你是 y700-elden（联想 Y700 四代 TB322FC / SM8750）项目的音频内核工程师。工作目录 `~/y700-elden`。
-**先完整读** `AUDIO-2026-10-01.md`、`AUDIO-2026-09-30.md`、`AUDIO-scout-2026-09-30.md`、`INDEX.md`。
+> 状态与进度的**唯一权威 = `TASKS.md` §1 行 G1-4**；本任务书只是派工背景。2026-10-04 现代化。
 
-## 已有进展（不要重做）
-- GPR 源端口已修（APM=3/PRM=7，patch `patches/0005-*`）。
-- APM 命令头已修（`alloc_apm_cmd_pkt`，patch `patches/0009-*`）：`GET_SPF_STATE` 有应答、共享内存 map 不再报错。
-- 设备当前内核 **vk34**（`out/boot-elden-vk34.img`），声卡注册成功，`aplay -l` 有 MultiMedia1/2，但 `aplay -D hw:0,0` 仍 **EINVAL**。
+你是 y700-elden（联想 Y700 四代 TB322FC / SM8750 / AudioReach）的音频内核工程师。工作目录 `~/y700-elden`。
 
-## 当前阻塞（你的主攻方向）
-DAPM 显示 **FE 子图已注册，但 tplg 的 I2S 设备子图未注册**：
-```
-MultiMedia1 Playback: ASoC: no valid Playback path
-MultiMedia1 Playback: ASoC: found 0 new BE paths
-no backend DAIs enabled for MultiMedia1 Playback
-```
-- `amixer -c0 controls` **没有** `SECONDARY_MI2S_RX Audio Mixer MultiMedia1`。
-- tplg 二进制里**有** `SECONDARY_MI2S_RX` 等字符串 → 包没丢，是**加载/匹配**阶段被丢弃。
-- 可疑点：tplg 设备子图的 DAI 名（`DEVICE_SG_ADD(..., 'SECONDARY_MI2S_RX')`）与内核 BE DAI 名（DTS `link-name = "Secondary MI2S"` → `Secondary MI2S Playback`）是否一致；`sound/soc/qcom/qdsp6/topology.c` 的 `audioreach_route_load` / mixer 控件创建；`subgraph-device-i2s-playback.m4` 的 `DEVICE_PLAYBACK_ROUTE`。
+## 现状（已完成，勿重做）
+主任务线**已收官**：播放 ✅（vk43 听声，根因=tplg MI2S SD 线 SD0→SD1）、采集 ✅（WCD939x AMIC1 模拟麦 + UCM2）、裸 ALSA 默认 ✅（R3，`scripts/audio-alsa-init.sh`，保守增益 400）。桌面 PipeWire/UCM2 就绪。
+证据链：`archive/topics/AUDIO-SDLINE-2026-10-04.md`、`WCD939X-2026-10-04.md`、`AUDIO-INPUT-2026-10-04.md`、`MIC-ARRAY-2026-10-04.md`、`HEADSET-HW-2026-10-04.md`。
+
+## 残余工作（按价值排序，均需用户确认后才开工）
+1. **R1 有线耳麦听声验收——进度冻结在硬件**：本机无 3.5mm，需 USB-C 模拟耳机/转接头（用户采购）。代码侧前置：本机 USB-C 模拟开关 = **FSA4480**（`&i2c5` typec-mux@42/43，已启用），驱动 `CONFIG_TYPEC_MUX_FSA4480=m` 在 RAM 启动不可用 → 需 built-in 或补匹配模块。RX 播放子图/路由已就绪（vk48 验证控件全部出现）。
+2. **R2 双麦双路采集（低价值可选）**：本机 AMIC1+AMIC4 双麦阵列，Linux 现单路 AMIC1。
+3. UI 层小项：UCM2 设备切换的边角（`wpctl` 已见 Source）。
+
+## 先读（顺序）
+`TASKS.md` §1 G1-4 → `INDEX.md` §3 → 上列 `archive/topics/AUDIO-*` 与 `HEADSET-HW-2026-10-04.md`。
 
 ## 资产
-- tplg 源：`scripts/audio-tplg/SM8750-Lenovo-Y700-Gen4.m4`；构建 `scripts/audio-tplg/build.sh`（m4 + alsatplg）。
-- 上游参考：`stock-src/audioreach-topology/audioreach/subgraph-device-i2s-playback.m4`、`util/mixer.m4`、`util/route.m4`、`Google-SC7180-WSA-Speakers-SEC-I2S-VA-DMIC-WCD-TX3.m4`（与我们的写法逐字对比）。
-- 内核：`geekidos-linux/sound/soc/qcom/qdsp6/topology.c`、`q6apm-dai.c`、`q6apm-lpass-dais.c`；DTS `geekidos-linux/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts`（sound 节点 ~488、aw88461 ~1400、q6apmbedai ~2000）。
-- 厂商参考：`stock-src/android_kernel_lenovo_sm8750-modules/qcom/opensource/audio-kernel/asoc/pineapple.c`。
-- 构建/刷写：`scripts/build-kernel.sh`、`scripts/build-boot.sh`、`scripts/flash-b.sh [img] --reboot`（写 boot_b，SSH 内完成，会重启设备）。
+- tplg：`scripts/audio-tplg/`（m4 源 + `build.sh`，m4+alsatplg）；UCM2：`scripts/audio-ucm/`。
+- 内核补丁：`patches/0011-*` 及更早音频补丁；DTS `linux/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts`。
+- 设备：U2 = b 槽 vk47 持久直启（Phosh），最新镜像 vk49；`ssh root@192.168.7.1`。
+- 快环：音频驱动现为 `=y`，首次需一次性 `scripts/apply-kernel-fragment.sh patches/fragment-modular.config` + 全量构建，之后 `scripts/iterate.sh mod sound/soc/...` 走 30s 环。
 
-## 方法建议
-1. **先只读复现**：`ssh root@192.168.7.1`，抓 `dmesg | grep -i -E "asoc|tplg|audioreach|apm|mi2s|mixer|dai"`、`amixer -c0 controls`、`cat /sys/kernel/debug/asoc/*/dapm/*`，确认哪些 widget 建了、哪些没建。
-2. **对比上游**：本树 `topology.c` 与上游 v6.12/master、以及 blu-sharky/linux-piano（SM8750 已出声）的差异；重点看 tplg widget/route 加载与 BE 名匹配。
-3. 用 **ftrace/dynamic_debug**（debug 内核 vk20 能力可用）追 tplg 加载，定位被丢弃的具体 widget。
-4. 定位后改 tplg（m4）/内核 patch，**小步验证**：先只改 tplg 重刷固件文件（不必重刷内核），再改内核。
-
-## 设备纪律（重要）
-- 设备被 Google Play（task-5）等任务共享。**任何 `flash-b.sh --reboot` 前先 `send SageYak` 报告并等待确认**，避免打断别人。
-- SSH 不要长 `sleep`；后台任务用 `nohup ... &`，再短命令轮询。
-- 改内核前备份当前 `.config` 与旧 boot.img。
-
-## 交付物
-- 文档 `AUDIO-2026-10-02.md`：根因证据链、patch/tplg 改动、验证结果（`aplay` 出声日志）、回退镜像。
-- 结论与证据写入 `task progress` / `task done`；完成后 `task done` 退出。
+## 纪律（2026-10-04 约定）
+- 设备是串行资源：写操作一律走自锁脚本（`mod-loop`/`kexec-boot`/`to-fastboot`/`flash-b`/`cycle` 已自动 flock），或包 `scripts/device-lock.sh <cmd>`；`--status` 查占用。
+- 一条命令只做一件事：副作用（reboot/刷写/fastboot boot）与长轮询**不同条命令**（`AUDIT3` 教训）；轮询自带 `timeout` 自限。
+- 迭代统一 `scripts/iterate.sh`（mod/dtb/kernel/ram）；内核树内**绝不** `make olddefconfig`（会删 `CONFIG_ARCH_QCOM`）。
+- 最终回复即交付物：结论 + 命令 + 原始日志。**不要改 `TASKS.md`**（编排者独立复跑后更新）；专题证据追加到 `archive/topics/<主题>-<YYYY-MM-DD>-subagent.md`（只增不改），不落根目录。
+- 放音测试前先把音量调低（用户要求；裸 ALSA 满增益 1023 过响，脚本默认 400）。
+- 有失联风险、超出任务书、涉及采购/凭据决策 → 停下上报。

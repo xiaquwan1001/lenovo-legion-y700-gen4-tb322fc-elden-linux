@@ -1,32 +1,14 @@
-# 任务：Win x86 转译 PoC（glibc 环境 + Box64 + Wine）
+# 任务：Win x86 转译 PoC（已收官，墓碑+残余）
 
-你是 y700-elden 的转译可行性工程师。**先读** `WIN-X86-2026-10-02.md`（上一轮调研结论）、`INDEX.md`。
+> 状态权威 = `TASKS.md` §2「C-历史」行（Win-x86 PoC ✅）。2026-10-04 现代化。
 
-## 上一轮结论
-- 本机宿主是 **musl 1.2.6，无 glibc**；Box64/FEX/Hangover/Steam 全是 glibc 生态。
-- **一切方案第一步：建 glibc aarch64 rootfs**（chroot/LXC/proot）。
-- 首选 **Box64(DynaRec NEON) + Wine(wow64)**；图形栈（Adreno 830 / Turnip / Vulkan 1.4）通路已成立；无 AVX（Box64 默认模拟暴露）；无 /dev/kvm 不影响用户态 JIT。
+**主线不再执行。** PoC 成功：Ubuntu 24.04 arm64 glibc rootfs + **Pi-Apps-Coders Box64 0.4.5**（noble 自带 0.2.6 与 Wine 9 不兼容 → explorer.exe fork 风暴，教训见下）+ Wine 9 wow64；notepad/桌面无截图证据在 `archive/topics/WIN-X86-POC-2026-10-02.md`（WIN-X86-POC-*.png）。可复用脚本：`scripts/win-x86-rootfs.sh`、`scripts/win-x86-run.sh`。
 
-## 目标
-把上一轮的方案**推进到可运行 PoC**：在设备上用一个 **glibc aarch64 环境**跑通 **Box64 + Wine**，并运行一个最小的 Windows x86 程序（如 notepad / 一个 Win32 hello world / `winecfg`）。
+## 关键护栏（若在此线上继续任何 Wine/box64 实验，必守）
+设备上用 cgroup v2（`/sys/fs/cgroup/guard` 设 `pids.max`）+ `timeout -k` + trap 按 comm 名 pkill（explorer.exe/services.exe/wineserver64），防 fork 风暴拖垮设备；外部 exe 必须放进 chroot 内。
 
-## 步骤建议
-1. **构建 glibc aarch64 rootfs**（主机侧）：`debootstrap --arch=arm64` + `qemu-user-static`（主机是 x86_64，可交叉构建）；或直接用 Ubuntu/Debian arm64 最小 rootfs。产出可 chroot 的目录。
-2. 部署到设备（放 `sda17` 剩余空间），用 **proot 或 chroot** 进入（宿主 musl，注意 `env -u PYTHONPATH` 等）。
-3. 安装 **Box64**（预编译 aarch64 或源码构建）与 **Wine wow64**（或 Hangover 单 tar）。
-4. 跑最小 Win x86 程序，记录是否成功、报错、性能。
-5. 若 chroot 受限，退回 **LXC**；记录每一步的阻塞。
+## 残余
+无立项工作。游戏兼容/性能 = 未排期（用户点头才开）。
 
-## 交付物
-- 文档 `WIN-X86-POC-2026-10-02.md`：环境构建步骤、部署命令、PoC 结果、下一步（Steam/游戏）。
-- 可复用脚本 `scripts/win-x86-rootfs.sh`（构建 rootfs）与运行包装脚本。
-- 结论写 `task progress` / `task done`。
-
-## 设备纪律
-- 大部分是**主机侧构建**，不占设备；在设备上跑 PoC 时会占 CPU，先 `send SageYak` 报备（避免与音频刷 boot 冲突）。
-- 不刷机、不动 boot；设备上只写 `sda17` 的工作目录（建议 `~/` 或专用目录），用完可清理。
-- SSH 禁长 sleep，后台任务 `nohup ... &` 后短命令轮询。
-
-## 上一轮进度（2026-10-02，勿重做）
-- **阶段A 已完成**：Ubuntu 24.04 arm64 glibc rootfs 已构建并部署到设备 `/root/glibc-rootfs`（sha256 校验 OK）；bind-mount `/dev /proc /sys /dev/shm /run` 后 chroot 验证：`ldd`=glibc 2.39（非 musl）、`uname -m`=aarch64。
-- **接续**：直接进入阶段B——在 chroot 内装 **Box64(DynaRec NEON)** + **Wine wow64**（或 Hangover 单 tar），跑最小 Win x86 程序并记录结果。
+## 纪律（2026-10-04 约定）
+- 最终回复即交付物（命令+原始日志）；**不改 `TASKS.md`**；证据追加 `archive/topics/win-x86-<YYYY-MM-DD>-subagent.md`。
