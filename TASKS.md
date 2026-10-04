@@ -46,7 +46,7 @@
 
 | ID | 任务 | 状态 | 层 | 验收 | 备注 |
 |---|---|---|---|---|---|
-| **C0** | **真 Android 对照取证**（趁 U1 还是 stock+root，**覆盖 a 槽前必做，不可复得**） | ⬜ **建议立刻插入** | 基线 | `getprop` 全量、`dumpsys media.drm` 级别、7 颗传感器 30 s 采样 CSV、5 个目标 App 关键流程录屏 | 兼容层的“标准答案”；见 `TASKS.md §5` Q5 |
+| **C0** | **真 Android 对照取证**（趁 U1 还是 stock+root，**覆盖 a 槽前必做，不可复得**） | 🟡 **采集器已就绪，待 U1 接入**：`scripts/c0-android-evidence.sh` | 基线 | `getprop` 全量、`dumpsys media.drm` 级别、7 颗传感器 30 s 采样 CSV、5 个目标 App 关键流程录屏 | 兼容层的“标准答案”；见 `TASKS.md §5` Q5。传感器 CSV + App 录屏需人工（脚本尾有提示） |
 | **C1** | Waydroid 在 vk40 端到端复跑（去掉旧的 bind-mount 路由 workaround） | ⬜ 下一步 | 容器 | `waydroid status` 有 IP、SurfaceFlinger running、桌面可点 | Mesa 26.1.8 + GAPPS 镜像在手 |
 | C2 | Play / GMS 登录收口（旧结论：卡在外部上行与代理） | ⬜ 需你给上行+凭据 | 容器 | Play Store 登录成功 + 装 3 个目标 App | `archive/topics/PROXY-WAYDROID-2026-10-02.md` |
 | C3 | **身份兼容性取证**（GMS/Play Integrity/Widevine 能做到哪一级）——**不预设结论** | 🟡 社区侧取证已补全（2026-10-02，见 `RESOURCES.md` §1.3） | 容器 | 出「社区先例 × 本机实测」对照表 + 回填 `TASKS.md §6` §1 的 C2 格 | 先例：redroid / waydroid_script `certified` / WayDroid-ATV（arm64 GAPPS 有、L3 仅 x86-64） / PlayIntegrityFork；**实测需设备+上行** |
@@ -122,7 +122,7 @@
 | Q10 | TF 卡间歇写丢失是卡、还是 `sdhci-msm` flush/cache | G1 硬验收 #8 | 换卡 A/B + `fio verify` 长跑 | G1-6 |
 | Q11 | DP 输出被 `disabled` 的 ADSP altmode/UCSI 能否修好 | 外接显示能力 | 先只读勘察 `pmic_glink`/`ucsi` 日志与 DT 依赖 | G1-9 |
 | Q12 | 温控缺 OEM 层（`lenovo,sys-temp`/BCL）会不会在长期负载下露短板 | 安全边界 | 长时压测（≥2 h）+ `thermal-watch` 采样，看壳温与限频层级 | G1-8 附带 |
-| **Q13** | **AVF 资产（crosvm/vm/microdroid_kernel/u-boot.bin）主机上找不到**：文档曾记"已提取"，2026-10-02 全盘核验（`~` + `/mnt/Samsung`）无任何产物（仅 AOSP 树内无 Gunyah 的 crosvm 源码）——要么已丢要么没拷回 | C8/R2 VM 路线的地基资产 | U1 仍 stock+root 时重提取：`pm path com.android.virt` 定位 APEX → 解包 `apex_payload.img`（debugfs）→ 取 crosvm/vm/microdroid_kernel/u-boot.bin → scp 回主机，路径登记 `RESOURCES.md` §2.2 | 随 C0 同批（覆盖 a 槽前，不可复得） |
+| **Q13** | ~~AVF 资产（crosvm/vm/microdroid_kernel/u-boot.bin）主机上找不到~~ **已解决（2026-10-04，离线提取）** | C8/R2 VM 路线的地基资产 | 不需设备：从原厂 259 system 镜像 `/mnt/Samsung/l2/system_a.pristine.img` 的 `/system/apex/com.android.virt.apex`（87.8 MB）debugfs 提取 → `backup/avf/`（crosvm 含 **Gunyah** 后端、microdroid_kernel **6.6.77-android15-8**、u-boot.bin/rialto.bin/initrd 全；SHA256SUMS）；`scripts/extract-avf-assets.sh` 可重跑 | ✅ 资产部分已闭；**a 槽覆盖前真正不可复得的只剩 C0（真机 getprop/DRM/传感器/App 行为）** |
 | **Q14** | **C4 UDP HAL 上机三未知**：① 容器 UDP 52012 从 waydroid0 网桥是否可达（容器防火墙）；② overlay 的 .rc/.so SELinux context；③ Termux 转发器实际传感器名与映射 | C4 验收前置 | 部署后逐项：`deploy-sensors-hal.sh --restart` → `dumpsys sensorservice`（5 个 elden 传感器?）→ 宿主 `sensord --send 容器IP --fake` → `dumpsys sensorservice` 事件计数增长；不通则查 `waydroid shell iptables -L` 与 logcat HAL 日志 | **C4**（代码/编译全就绪） |
 | ~~**Q19**~~ | ~~locked b 槽实验三未知~~ **已结（2026-10-03）**：U2 走降级路解锁成功（`fastboot oem unlock`），locked 实验不再需要；三未知答案归档：① U2(259) vbmeta_b 顶层=8fcb864f；② 1.1 与 259 的 vbmeta 顶层/boot chain key 均为 **AOSP testkey 2597c218**（私钥在手），rollback 均 1738713600/0；③ dtbo 无 hash 校验需求由自造 vbmeta 控制。路 C 管线保留作资产 | — | — | 已结 |
 | **Q20** | **流程病：引导链问题先外部取证/自研、后本地检索** ⇒ 把 7、8 月已定的结论（版本门、.120 trap、失败特征串、**U1 已于 2026-08-16 用降级路解成功一次**）在 10-03 重新发现一遍，多花一轮必败实验。根因：`references/*.md` 正文不入上下文，**不 grep 等于不存在**（`PITFALLS` #87） | 上不设防就会再犯（下次是新 ROM 版本 / 新单元 / AVB 参数） | 已落：① `AGENTS.md` 新增「本地优先」规则；② `RUNBOOK` §0.5 ★权威顺序置顶（含版本门与停手串）；③ 本文末一条 grep 命令作开场强制动作；④ 引用旧成功记录先查单元+固件态 | 流程（无单元依赖） |
