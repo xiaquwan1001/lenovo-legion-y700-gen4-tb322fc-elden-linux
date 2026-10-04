@@ -72,6 +72,15 @@ for arg in $(cat /proc/cmdline); do
 	esac
 done
 
+# --- mainline camera stack (TB322FC) ---------------------------------------
+# Load the camera modules from the ramdisk's /lib/modules BEFORE switch_root.
+# Synchronous (with a timeout) so no ramdisk files are held open when
+# switch_root frees the initramfs; insmod returns after module_init, so the
+# async sensor probes are merely *scheduled* here.  Non-fatal by design.
+if [ -x /usr/local/sbin/camera-modules-load.sh ]; then
+	timeout 20 /usr/local/sbin/camera-modules-load.sh >/run/camera-modules.log 2>&1 || true
+fi
+
 if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 	root_dev=""
 	i=0
