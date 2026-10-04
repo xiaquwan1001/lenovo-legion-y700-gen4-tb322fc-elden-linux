@@ -88,9 +88,12 @@ grep -rn -iE "unlock|解锁|sn\.img|1\.1\.11\.|rollback|testkey|073|\.120" \
 ```bash
 # 目标形态：b 槽直启 Linux（~5–9 s 进 Phosh），日常不需 fastboot
 sudo bash elden-net.sh && ssh -o StrictHostKeyChecking=no root@192.168.7.1
-# 内核迭代（不需 fastboot）：自签 → dd boot_b → 哈希回读 → 重启
-scripts/sign-boot-b.sh out/boot-elden-vkNN.img && scripts/flash-b.sh out/boot-elden-vkNN.img
-cd linux && make -j16 Image.gz dtbs        # ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM）
+# 内核迭代＝统一入口 scripts/iterate.sh（四档环，细则 RUNBOOK §迭代；mod-loop/kexec/to-fastboot/flash-b/cycle 均已自锁）
+scripts/iterate.sh mod <driver-dir>              # 环0：=m 模块热载 ~30s 不重启（需先应用 fragment-modular）
+scripts/iterate.sh kernel --kexec VERSION=vkNN   # 环2：全量重编 + kexec 热重载（无 fastboot/无按钮）
+scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（内部 sign+flash-b，哈希回读校验）
+scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
+# ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM）
 ./cycle.sh --soft                          # 软回 fastboot（免按电源键）
 fastboot boot out/boot-elden-vk40-ram.img  # 零写盘·纯RAM（无桌面/服务），仅内核/引导/分区级验证；先 blank 活跃槽 dtbo（否则卡 logo）
 fastboot boot out/boot-elden-vk40.img      # 零写盘·RAM内核+磁盘根（有桌面/服务），功能测试用（见 PITFALLS #93）
