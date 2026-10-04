@@ -3,473 +3,7 @@
 Techniques and root causes proven on Qualcomm/Lenovo tablet flashing. Host-machine
 
 <!-- Older entries compacted -->
- 加 WCD 采集子图；UCM 加 Mic。
-4. 稳压映射照原厂（`L15B`=WCD vdd、`BOB1`=mic-bias）。
 
-**B. 先用 USB/Type-C 或蓝牙麦兜底**（当前可用，快速让"输入设备"不为空）。
-
-## 顺带：haptics 已定位（不是包缺失）
-
-- 硬件正常（`Haptic.Vibrate` 返回 true）。
-- 原因：feedback profile='full'（默认，只映射 Sound）。**已设 `org.sigxcpu.feedbackd profile=quiet`**（震动代替声音）。
-
-> 想要 LineageOS 那种"声音+震动强度分开"：feedbackd 每个事件只能一种类型（Sound **或** Vibra）。要两者兼得，需要写自定义 device theme（例如按键走 Vibra、其他走 Sound），并可用 `max-haptic-strength` 调强度——可以做，但要权衡。
-
-**要我开始做 A（WCD939x）吗？** 这是麦克风/耳麦正路。或者先做 B 兜底、再排期 A？
-
-
-## Automatic settled outcome - 2026-10-03
-
-收到——**input 未打通，到此停下**。
-
-## 技术报告已落盘
-
-- `archive/topics/AUDIO-INPUT-2026-10-04.md`（本日全量技术报告）
-- 提交 `5d70996`；`check-doctor` **FAIL=0/WARN=0**
-
-## 结论汇总
-
-| 项 | 状态 | 一句话 |
-|---|---|---|
-| **音频播放** | ✅ | 真根因＝tplg MI2S **SD 线错**（SD0→SD1），修 tplg 后出声（vk43） |
-| **桌面音频** | ✅ | PipeWire+WirePlumber+UCM2 → "Built-in Audio Speaker playback" |
-| **温控** | ✅ | 四级热 trip 70/82/90/105 ℃ + cdev 生效（vk42） |
-| **音频输入** | ❌ **未打通** | **本机麦克风是模拟麦接 WCD939x，不是 DMIC**；主线 DTS 未启用 WCD939x |
-| **按键震动** | ◐ | 硬件正常；根因 profile='full'，已设 **quiet** |
-| **日志方法** | ✅ | `scripts/devlogs.sh` |
-
-## 输入未通的根因（关键）
-
-原厂设备树 `backup/stock-elden/elden.dts` 的 `qcom,audio-routing` **全是 `AMIC*`/`VA AMIC*` + `MIC BIAS*`，没有一条 `VA DMIC`**：
-
-- 本机音频栈 ＝ Awinic smart PA（I2S，已通）＋ **WCD939x 编解码器（SoundWire）**；
-- 麦克风偏置来自 **WCD939x 的 MIC BIAS**，ADC 在 WCD，经 SWR 送 ADSP；
-- 我们按上游 MTP 做的 VA DMIC 采集虽然 **ALSA/APM 图全绿**（`MultiMedia3 Capture`、DAPM 全 On、`vdd-micb` On、寄存器正确），但硬件无 DMIC → 录音恒 0。
-
-⇒ 正路是 **WCD939x bring-up**（镜像 `sm8750-mtp.dts`：wcd939x + rx/va SWR master + 稳压 + capture dai-link + tplg + UCM），**本轮未做**。
-
-## 设备当前状态
-
-- 内核 **vk45**（`7.2.0-debug-g26cc186e9485-dirty`），播放正常（HiFi 扬声器 sink）。
-- 期间 UCM 加 `Mic` 段曾弄坏 HiFi verb，**已撤回并重启恢复**（`PITFALLS #91` 已记这个坑）。
-
-停止。下一步若要继续，从 **WCD939x bring-up** 开工。
-
-
-## Automatic settled outcome - 2026-10-04
-
-## 项目进度快照（实测 + 文档核对）
-
-**设备实测（U2，刚 SSH 确认在线）**
-| 项 | 实测值 |
-|---|---|
-| 内核 | `7.2.0-debug-g26cc186e9485-dirty` = **vk45** |
-| 持久根 | `/dev/sda17` ext4 ✅ |
-| 运行时长 | **up 7h20m**（当前无重启环） |
-| 采集 PCM | `MultiMedia3 Capture` 在，但录音恒 0（硬件是模拟麦→WCD939x，非 DMIC） |
-| adb/fastboot | 空（U1 未接入） |
-
-**目标完成度**
-| 目标 | 完成度 | 本轮变化 |
-|---|---|---|
-| **G1** | **≈82%**（22 ✅ / 3 🟡 相机·TF·BT / 3 ⬜ DP·NFC·CDSP） | 音频**播放**听声 ✅、桌面 PipeWire+UCM2 ✅、温控四级 ✅、关机/重启 ✅ |
-| **G2** | ≈45%（C4 代码全就绪待上机、C9 用例定稿） | 无 |
-
-**硬缺口（4 个）**：① 音频**输入**（WCD939x，正路未做，v45 DMIC 方向已证伪）② 相机出流 ③ TF 卡写稳定 ④ BT 配对收口。
-**稳定性阻塞**：熄屏→重启（G1-22，源锁定在 vk34 后 5 文件增量，未根治，靠禁空闲熄屏规避）。
-
-## 文档漂移（已发现，需收口）
-
-- `INDEX.md §3`：仍写"vk40 未上机 / 无单元在机 mainline / 剩 4 缺口含音频听声"——**过时**（现 U2=vk45）。
-- `TASKS.md §0`：进行中仍列"音频听声"——**过时**（G1-4 已 ✅）。
-- `check-doctor`：**WARN=1**（会话 jsonl 53 ≠ 索引 52）。
-- `.pi/memory/HINDSIGHT.md` 有**未提交**改动。
-
-## 下一步规划（按性价比排序）
-
-**P0 · 零设备成本（本会话即可做完）**
-1. 文档收口：改 `INDEX §3` + `TASKS §0` 数字，`RESOURCES §4` 补第 53 会话，提交 HINDSIGHT，跑 `check-doctor` 到 FAIL=0/WARN=0。
-
-**P1 · 占 U1（"覆盖 a 槽前不可复得"，越早越值）**
-2. **C0 真 Android 对照取证 + Q13 AVF 资产复采**：U1 仍 stock+root。`getprop` 全量 / Widevine 级别 / 7 传感器采样 CSV / 目标 App 录屏 + AVF APEX 解包。这是兼容层的"标准答案"，U1 一旦动手术就没了。
-
-**P2 · 占 U2（主线技术攻坚，二选一）**
-3. **WCD939x bring-up（音频输入正路）**：镜像 `sm8750-mtp.dts` 的 wcd939x + rx/va SWR master + 稳压 + capture dai-link + tplg + UCM。中等偏大工作量，是你上轮定的下一步。
-4. **G1-22 熄屏→重启根治**：现 uptime 7h20m 稳定（规避生效），但要日常可用必须解；可在有带外串口+EDL 回退前提下做 vk34→vk40 五文件二分（已有 V1/V2 镜像）。
-
-**P3 · 常规缺口**：G1-5 相机出流（只差 config/部署）→ G1-6 TF 卡 → G1-7 BT。
-
-**我的建议**：先 **P0 收口（10 分钟）**，然后 **P1（U1 取证，过期作废）**——趁 U1 还是 stock，把不可复得的东西先采下来；之后回 U2 攻 **WCD939x**。
-
-要我先执行 P0 收口吗？或者你直接指定 P1/P2 哪条开工。
-
-
-## Automatic settled outcome - 2026-10-04
-
-## P0 + P1（主机侧）完成
-
-**P0 文档收口** — 提交 `4d69c47`，`check-doctor` **FAIL=0 / WARN=0**
-- `INDEX §3`、`TASKS §0` 对齐 vk45 现状（G1 80%→82%，音频听声→已完成）
-- `RESOURCES §4` 补第 53 会话（53=53）、修正统计与"最后确认版本=vk45"、补 vk41–45 内核时间线
-- `PITFALLS`/`RESOURCES` 正文 #1–#88 → #1–#91；§15.5 音频条目更新
-
-**P1 主机侧（不占设备）** — 提交 `1ba016b`
-- **AVF 资产已复原**（GAPS Q13 资产部分闭合）：从原厂 259 镜像 `/mnt/Samsung/l2/system_a.pristine.img` 离线 debugfs 提取 → `backup/avf/`
-  - `bin/crosvm`（**含 Gunyah/Geniezone/KVM 后端**）、`vm`、`virtmgr`、`virtualizationservice`…
-  - `etc-fs/microdroid_kernel`（**6.6.77-android15-8**）、`microdroid_super.img`、`u-boot.bin`、`rialto.bin`、initrd ×2
-  - 重跑脚本 `scripts/extract-avf-assets.sh` 可复原，**不需要设备**（同 259 build，与 U1 a 槽等价）
-- **C0 取证采集器就绪**：`scripts/c0-android-evidence.sh`（adb 采 getprop/DRM/传感器清单/分区 → `backup/<SN>-<档>/c0-baseline/` + SHA256SUMS）
-
-## P1 设备侧：阻塞，需要你接入 U1
-
-当前 USB 只有 U2 的 NCM 网关（`1d6b:0104`），**U1 未连接**。a 槽覆盖前真正不可复得的只剩 C0 真机数据，越早采越好。
-
-**请这样操作：**
-1. U1 用 USB 连主机，打开「USB 调试」并授权。
-2. 告诉我，我跑 `scripts/c0-android-evidence.sh`（自动识别 SN/容量档）。
-
-**两项需你亲自补（采集器尾已打印提示）：**
-- **7 颗传感器 30 s CSV**：设备 Termux 里 `pkg install termux-api` → `termux-sensor -l` 列出后逐颗 `termux-sensor -s <名> -n 300 > c0-<名>.csv`
-- **5 个目标 App 关键流程录屏**：`adb shell screenrecord --time-limit 30 /sdcard/c0-app-N.mp4` 后 pull
-
-## 下一步选择
-
-U1 就绪前，主机侧能做的已做完。**要不要现在就在 U2 上开工 P2 的 WCD939x bring-up（音频输入正路）？** 
-这是你上轮定的方向，且 U2 现在空闲（uptime >7 h 稳定）。或者你先把 U1 接上，我立刻跑 C0。
-
-
-## Automatic settled outcome - 2026-10-04
-
-先给你判断依据——C0 采集的**每一项、来源、是否已有等价数据**：
-
-## C0 采集清单与"稀缺性"评估
-
-| # | 采集项 | 已有等价物？ | 真正需要 U1 吗 |
-|---|---|---|---|
-| 1 | `getprop` 全量 / dalvik 属性 | ✅ 已有 U2 解锁前基线 `backup/HA2EXB0E-16+512/pre-unlock/getprop-locked.txt`；原厂镜像在手 | ❌ |
-| 2 | DRM 级别 / Widevine（`dumpsys media.drm`） | ◐ pre-unlock 只记了 `sys.lenovo.widevine_security_level=L1`；U1 已解锁（2026-08-16）→ 大概率 L3，**不新增 L1 参照** | ❌（L1 参照 U2 基线已占） |
-| 3 | 分区 `by-name` / `packages` / `proc-partitions` | ✅ pre-unlock 基线 + 原厂镜像 | ❌ |
-| 4 | 传感器**清单** | ✅ pre-unlock 基线有传感器清单 | ❌ |
-| 5 | AVF / virt | ✅ 今天已从镜像离线提取（crosvm+u-boot+microdroid） | ❌ |
-| 6 | **7 颗传感器 30 s 采样 CSV** | ❌ 无 | ✅ **唯一真数据**（但见下） |
-| 7 | **5 个目标 App 关键流程录屏/表现** | ❌ 无 | ✅ **唯一真数据**（但见下） |
-
-## 关键判断点
-
-1. **C0 的"自动采集"部分（#1–#5）基本冗余**——已有 U2 解锁前基线 + 原厂镜像 + 今天的离线 AVF 提取覆盖。
-2. **真正不可复得的只有 #6/#7（运行时行为）**，它们是 G2 容器兼容度的"尺子"。
-3. **但运行时证据不必用 U1**：U2 的 **a 槽仍是 stock 259 Android**（BL 已解锁），随时可启动 Android 采同样的 #6/#7。而 Phase B（回收 a 槽）尚远、未拍板。⇒ 用 U1 只是"免得动 U2"，不是唯一来源。
-4. 项目原则是**设备等价**，任何单元状态满足就能干活。
-
-## 结论（供你拍板）
-
-**不建议为 C0 专门接 U1。** 理由：自动项冗余；运行时项（传感器/App）可在 U2 a 槽做，且在 Phase B 前任何时间都来得及，**不阻塞 G1，也不阻塞容器主线**。
-
-- 若你愿意顺手接 U1：我可以 5 分钟跑完自动项 + 你在 U1 上录 5 段、采 7 段，落一份"真机参照"，成本也就一次接线。
-- 若嫌麻烦：**跳过 U1**，我直接开 **U2 的 P2（WCD939x 音频输入正路）**；运行时 C0 等哪次切 U2 a 槽再补。
-
-你倾向哪种？
-
-
-## Automatic settled outcome - 2026-10-04
-
-P2 第一版已就绪。以下是本次完成内容与上机步骤。
-
-## 已完成（主机侧，vk46）
-
-**DTS**（`linux/.../sm8750-lenovo-elden.dts`，已 commit `4c68eb5ed`）
-- 新增 `wcd939x` codec 节点：reset = **TLMM gpio101**（原厂 base dtb 证实）、稳压 **L15B**（buck/rxtx/io）+ **BOB1**（mic-bias）+ **L2I**（px）、micbias 2.0/2.7/1.8/2.0 V（照原厂）
-- `sound` 新增 **`WCD Capture`** dai-link：cpu `TX_CODEC_DMA_TX_3`，codec `wcd939x + swr2 + lpass_txmacro`
-- audio-routing 加 `AMIC1–5 → MIC BIAS*` + `TX SWR_INPUT1 ← ADC2_OUTPUT`
-- `&swr1/&swr2` 使能并挂 `wcd_rx`/`wcd_tx`（端口映射照 MTP/原厂）
-
-**tplg**（`scripts/audio-tplg/*.m4`，commit `819cfc9`）
-- MultiMedia3 capture 增加 `TX_CODEC_DMA_TX_3` device 子图（与 VA DMIC 并列），重建 **16860 B `3bd05394…`**
-
-**产物**
-| 文件 | 用途 | sha256 |
-|---|---|---|
-| `out/boot-elden-vk46.img` | 持久 b 槽 | `1ddf239b…`（签名后 `0f96e381…`） |
-| `out/boot-elden-vk46-ram.img` | **零写盘 RAM 验收** | `57d99228…` |
-| `bootslot-b/boot_b.img` | 已签名的持久 boot_b | 96 MiB |
-
-**已顺手更新持久根 tplg** → `/lib/firmware/qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin`（旧版备份到 `/root/Lenovo-Y700-Gen4-tplg.vk45.bak`）。
-
-## 请你上机（推荐先 RAM 试，零风险）
-
-```bash
-cd ~/y700-elden
-# 1) 进 fastboot（vk45 已带 PSCI vendor reset）
-ssh root@192.168.7.1 'eldroid-bootctl reboot bootloader'
-# 2) 零写盘 RAM 启动 vk46（不动 boot_b；失败掉电即回 vk45）
-fastboot boot out/boot-elden-vk46-ram.img
-```
-
-回到 Linux（SSH `192.168.7.1`）后我验证：
-- `dmesg | grep -iE 'wcd|swr|soundwire'`（编解码器是否枚举）
-- `arecord -l` / `aplay -l`（是否出现 `WCD Capture`）
-- `amixer -c0 sget 'ADC2 MUX'` + `arecord` 录一段看是否非静音
-
-**若确认无碍**，再落持久版（我来或你来均可）：
-```bash
-scripts/flash-b.sh out/boot-elden-vk46.img --reboot
-```
-**回滚**：`scripts/flash-b.sh out/boot-elden-vk45.img --reboot`（boot_b），tplg 从设备 `/root/Lenovo-Y700-Gen4-tplg.vk45.bak` 还原。
-
-⚠️ 风险提示：新增 WCD dai-link 若编解码器未枚举，声卡可能整体注册失败（连播放一起挂）——所以**先 RAM 试**。fastboot 因涉及物理恢复，按惯例请你亲自执行；要不要我通过 SSH 直接把持久版刷上（`flash-b.sh` 带读回校验）？
-
-
-## Automatic settled outcome - 2026-10-04
-
-串口核心发现 + WCD 进展已收口。汇报：
-
-## 1. 你遇到的"没进桌面"——**不是 vk46 内核故障**
-
-串口显示设备停在 initramfs（`findmnt /`=`rootfs`），`/proc/cmdline` **没有 `elden_root=LABEL=linux17`**。原因：`scripts/build-boot.sh` 每次会把最后产物覆盖为 `out/boot-elden.img`；我先建持久版再建 RAM 版 → `out/boot-elden.img` 变成了 **RAM 变体**。RAM 变体按设计**不切持久根、不启桌面**。已记 `PITFALLS #92`。
-
-## 2. WCD939x 音频输入 bring-up（本次实质进展）
-
-| 项 | 结果 |
-|---|---|
-| DTS 新增 `wcd939x` codec（reset=TLMM101、L15B/BOB1/L2I 稳压、micbias 照原厂）+ `&swr1/&swr2` + `wcd-capture-dai-link`（TX_CODEC_DMA_TX_3） | ✅ |
-| tplg 新增 WCD TX3 采集子图 | ✅ |
-| **codec 枚举** | ✅ `bound sdw:2:…00:4` / `sdw:3:…00:3`（RX/TX 都绑定） |
-| **声卡注册 / 播放** | ✅ `Lenovo-Y700-Gen4`、`arecord -l` 出现 `MultiMedia3 Capture`、`speaker-test` 正常 |
-| **WCD 采集** | ❌ `arecord` → `pcm_read I/O error`（APM 图启动**无报错**、无数据） |
-
-**已排除**：RAM 模式、双采集 BE（去 VA 仍错）、DAPM mux 未设（按序设 mux 仍错）、codec 未枚举。
-**新证据**：原厂 Android 用 HAL `mixer_paths_sun_*.xml`（非 ALSA tplg）。提取 `primary-mic` 权威序列 = **ADC1/AMIC1 → SWR_MIC4 → SMIC MUX2 → DEC2 → AIF1**（我们走 ADC2/SWR_INPUT1 + TX3）。
-
-## 3. 设备当前状态
-
-已刷 **持久 vk47**：**桌面正常（Phosh）+ 播放正常**；WCD codec 在位；输入仍未打通（与之前一样，实际无回归）。回退：`bootslot-b/boot_b-vk34recon.img` 或重刷 vk45。
-
-## 4. 已提交
-
-- 内核：`4c68eb5ed`(vk46)、`bd114ca33`(vk47)
-- 主仓：tplg `819cfc9`/`5430be8`；文档 `fc7077c`（含 `archive/topics/WCD939X-2026-10-04.md`、`PITFALLS #92`）
-- `check-doctor` **FAIL=0 / WARN=0**
-
-## 5. 建议下一步（详见专题档案 §4）
-
-1. **对齐原厂索引**：capture BE 改到 AIF1 对应 codec-DMA，DTS 路由改 `TX SWR_INPUT4 ← ADC1_OUTPUT`，按 `primary-mic` 序列设 mux。
-2. **ADSP 侧取证**：抓 ADSP 日志看 TX3 容器是否被拒。
-3. **兜底**：USB/Type-C 或蓝牙麦（不依赖 ADSP 静态图）。
-
-要我从第 1 条继续，还是先做兜底（BT/USB 麦）让"输入设备"可用？
-
-
-## Automatic settled outcome - 2026-10-04
-
-已侦察完（文档/任务台账/git 状态/设备实测）。先给结论，再给编排方案。
-
-## 一、数字结论
-
-**真正能并发的只有「主机侧、且不碰同一资源」的 3 条 lane；设备相关一律串行。** 约束来自三把锁：
-
-| 锁 | 现状 | 后果 |
-|---|---|---|
-| **设备锁** | 仅 U2 在线（`192.168.7.1`，uptime 28 min）；U1 未接（adb/fastboot 空）；刷写按惯例由你操作 | 所有上机/复现任务**串行**，且需人 |
-| **内核树锁** | `geekidos-linux`（13 G）**单一工作树**，非 submodule，HEAD=`bd114ca33`；主库 `.gitignore` 排除整树 | 两个 agent 同时改内核 = 冲突；并发须 `git worktree` |
-| **文档 SSOT 锁** | 每文件单写者；主库单 index，无 remote | 多 agent 同时 `git commit` = `index.lock` 竞争；文档并行改 = 冲突 |
-
-## 二、当前可并发的 3 条主机 lane（互补、零资源重叠）
-
-| Lane | 内容 | 资源占用 | 建议执行者 |
-|---|---|---|---|
-| **L1 内核草稿**（单写者） | G1-5 相机 DTS/config 补齐 **或** WCD939x 采集修复草稿（二选一，不可同时） | **独立 worktree**（`git -C geekidos-linux worktree add ../wt-camera -b elden/camera-wip`），只改 DTS/驱动，不 build 全量 | 子 agent（camera 角色）+ 主 agent 复核 |
-| **L2 脚本/工具**（主库独立目录） | C7 `slot-switch.sh`、A16 残留 `new-tablet` 参数化 | `scripts/` 独立文件，**不碰文档/内核** | 子 agent（脚本角色） |
-| **L3 只读研究**（零写入） | C3 身份/DRM 社区×本机取证对照表；G1-9 DP 的 `pmic_glink`/UCSI 只读勘察（日志+DTS 依赖） | 只读 `archive/`、`RESOURCES §1.3`、web | 子 agent（research 角色），产出**草稿到独立路径** |
-
-**设备 lane（串行、主 agent 协调+你操作）**：WCD939x 采集正路 或 G1-22/23 二分，**同一时刻只做一件**。
-
-## 三、主 agent 编排 / 子 agent 执行 分工
-
-```
-主 agent（编排者 + 唯一设备协调者 + 唯一 git 提交者 + 独立验证者）
- ├─ 设备 lane：串行发指令 → 你上机 → 主 agent 独立复跑验收（不信子 agent 自报）
- ├─ 子 agent ×3（后台，并发上限 ≤3，deepseek-flash 已默认）
- │    ├─ L1: worktree 内改内核 → 产出 patch 到 patches/（不 commit 内核）
- │    ├─ L2: 写 scripts/ 新文件（不动既有文档）
- │    └─ L3: 只读研究 → 草稿写 archive/ 或 .pi/drafts/
- └─ 收口：主 agent 统一 git add/commit + check-doctor + 更新 TASKS/RESOURCES
-```
-
-铁律（写进 `.pi/README.md`/AGENTS）：
-1. **子 agent 一律不 commit、不改领域层文档**——避免单 index 竞争与 SSOT 破坏；
-2. 内核改动走 **worktree**，主 agent 验后 `git -C geekidos-linux diff` 回导 `patches/`；
-3. 设备 lane 与"改内核 DTS 的 L1"**互斥**（同树），要并行须给设备任务也开 worktree；
-4. 并发 ≤3，避免 ustc_ai/budget 式 429（deepse
-
-
-## Automatic settled outcome - 2026-10-04
-
-音频输入**彻底打通并持久化**。本轮总结：
-
-## 🎉 核心成果：WCD939x 麦克风可用
-
-**G1 从 82% → 85%**（硬缺口 4 → 3：剩相机出流、TF 卡、BT 配对）。
-
-| 项 | 结果 |
-|---|---|
-| WCD939x codec | ✅ RX/TX SoundWire 均 bound、声卡注册 |
-| 播放 | ✅ 扬声器 sink 正常（未回归） |
-| **输入** | ✅ **`HiFi__Mic__source` 在桌面可用**（`arecord -D default` rc=0 出数据） |
-| 重启持久 | ✅ 重启后自动可用 |
-
-## 两个关键根因（都已记档）
-
-1. **"没进桌面"** = 刷/启的是 **RAM 变体**（`build-boot.sh` 覆盖 `out/boot-elden.img`），cmdline 无 `elden_root` → 停在 initramfs。**非 vk46 内核故障**。→ `PITFALLS #92`
-
-2. **采集 I/O error** = 缺采集路径的 **DAPM mixer/mux 控件**（尤其 `ADC2_MIXER Switch`），**不是 ADSP 问题**（kretprobe 证明图命令全返回 0、厂商 `resourcemanager` 也印证 TX-3 索引正确）。→ `PITFALLS #91`
-   - 另：UCM 加 capture 段会被 **ACP 探测**（打开 PCM）拒绝——因 DPCM 采集 PCM 在 FE-BE 未连时打不开；解法是把 FE-BE 路由放进 **`SectionVerb.EnableSequence`**。
-
-## 交付
-
-- **内核**：`4c68eb5ed`(vk46)、`bd114ca33`(vk47，去 VA DMIC + WCD 采集)
-- **tplg**：`819cfc9`/`5430be8`
-- **UCM2 Mic**：`11f06ac` + 修正 `f2bf682`
-- **文档**：`archive/topics/WCD939X-2026-10-04.md`、`PITFALLS #91/#92`
-- `check-doctor` **FAIL=0 / WARN=0**
-
-## 设备现状
-
-持久 **vk47**：Phosh 桌面 + 扬声器 + **麦克风源**均可用。可在「设置 → 声音」看到输入设备，或直接录音测试。
-
-**下一步可选**：① non-PipeWire 场景的 ALSA mixer 默认；② 双麦/阵列（AMIC2–5）；③ Type-C 耳麦（需 `wcd939x-usbss`）。或回到 G1 缺口：相机出流 / TF 卡 / BT 配对。
-
-
-## Automatic settled outcome - 2026-10-04
-
-我已经把「音频剩下的问题」摸清并动手了。先给结论。
-
-## 一、现状核验（U2 在线，持久 vk47，实时查）
-
-| 项 | 状态 |
-|---|---|
-| 扬声器 sink | ✅ `HiFi__Speaker__sink`，Active Profile=HiFi |
-| 麦克风 source | ✅ `HiFi__Mic__source`（现在被「设置」的 peak-detect 占用，故 raw ALSA `hw:0,2` 会 busy） |
-| 双功放 | ✅ 两片 `aw88461` 都在 i2c9（0x34/0x37）且驱动已绑定 |
-| 卡控制 | ✅ 有 `Headphone Jack`/`Mic Jack`（MBHC）、`HPHL/HPHR Switch` 等 |
-
-## 二、剩余音频问题（4 项）
-
-| # | 问题 | 性质 | 需要你 |
-|---|---|---|---|
-| **R1** | **有线耳机/耳麦**：WCD939x 的 HPHL/HPHR 放着没接（缺 `RX_CODEC_DMA_RX_0` 播放 dai-link），耳机插上也无声；耳麦麦(AMIC2)未路由 | 功能缺口 | 要 |
-| R2 | 双麦/阵列 AMIC2–5 | 增强 | 要（环境声） |
-| R3 | 非 PipeWire 的裸 ALSA 默认混音 | 收尾 | 否 |
-| R4 | C6 容器（Waydroid）音频 | G2 | 要 |
-
-**注意**：GSMArena 规格写 **本机无 3.5mm 耳机孔**（双 USB-C）。所以 R1 只能是 **USB-C 模拟耳机**（或模拟转接头，非带 DAC 的数字 dongle）。请你看一眼机器确认——如果有 3.5mm 请纠正我。
-
-## 三、本轮已做（R1 第一半：耳机输出）
-
-根因：声卡上 `RX_MACRO RX0 MUX`、`HPHL/HPHR Switch` 等 **RX 宏控件一个都没有**——因为没有任何 dai-link 把 `lpass_rxmacro` 挂进卡。而 rootfs 里恰好自带 **上游 SM8750-MTP 的 WCD939x UCM**（同 codec 同 sndcard），是权威配方。
-
-改动（已 commit 前，待验证）：
-- **DTS**：新增 `wcd-playback-dai-link`（cpu `RX_CODEC_DMA_RX_0`；codec `wcd939x(0)+swr1+lpass_rxmacro`）+ 路由 `IN1_HPHL←HPHL_OUT`、`IN2_HPHR←HPHR_OUT`（照 MTP）
-- **tplg**：新增 `RX_CODEC_DMA_RX_0` 播放子图 + `... Audio Mixer MultiMedia1` 路由（18236 B `c6fffdbd…`）
-- 已构建 **`out/boot-elden-vk48-ram.img`**（`fc59031d…`，零写盘，含新内核+新 tplg）
-
-## 四、请你上机（RAM 试，零风险）
-
-```bash
-cd ~/y700-elden
-ssh root@192.168.7.1 'eldroid-bootctl reboot bootloader'
-fastboot boot out/boot-elden-vk48-ram.img
-# 启动后插上 USB-C 模拟耳机
-```
-回到 Linux（SSH `192.168.7.1`）后我来跑：查 RX 宏控件是否出现 → `RX_CODEC_DMA_RX_0 Audio Mixer MultiMedia1 on` + HPH 序列 → `aplay hw:0,0` 放音，**你听耳机有没有声**。
-
-**问一句**：你有 USB-C **模拟**耳机/转接头吗？没有的话 R1 没法验证，我就先做 R3 并转 R2/G1 其它缺口。
-
-
-## Automatic settled outcome - 2026-10-04
-
-进入 **R2：双麦/阵列（AMIC2–5）**。先把「下一项」的可选范围说清，再给静态勘察结果。
-
-## 下一项候选（R1 已记录跳过）
-
-| # | 项 | 能否纯串口检查 | 备注 |
-|---|---|---|---|
-| R2 | 双麦/阵列 AMIC2–5 | ✅（录各级电平，你敲击机身） | 本次主攻 |
-| R3 | 非 PipeWire 裸 ALSA 默认 | ✅ | 低价值收尾 |
-| R4 | C6 容器音频 | ❌ | 设备上**未装 Waydroid**，暂不可做 |
-| — | BT 音频（G1-7） | 需 BT 耳机 | 有线耳机缺失时的替代，但也要外设 |
-
-## R2 静态勘察（原厂 `mixer_paths_sun_qrd_sku2.xml` 权威麦克风图）
-
-| 用途 | 物理麦 | ADC | DEC | TX SWR | SMIC MUX |
-|---|---|---|---|---|---|
-| **primary-mic** | **AMIC1** | ADC1 | DEC2 | SWR_MIC4 | MUX2 |
-| **secondary-mic** | **AMIC4** | ADC3 | DEC5 | SWR_MIC8 | MUX5 |
-| **headset-mic** | **AMIC2** | ADC2 | DEC0 | SWR_MIC5 | MUX0 |
-| amic3 | AMIC3 | ADC2 | DEC2 | SWR_MIC5 | MUX2 |
-
-关键点：本机卡上 `ADC2 MUX` 的枚举是 `CH2_AMIC_DISABLE / AMIC1 / AMIC2 / AMIC3 / AMIC4 / AMIC5` —— **5 个模拟麦都能经 ADC2 路由**，所以我能只切 `ADC2 MUX` 就逐路测电平，不必动 DEC/SMIC。
-
-我们当前工作路径 = **ADC2/AMIC1 + TX SWR_INPUT1（即 primary 麦）**；原厂次级麦是 **AMIC4**。要确认本机到底有几颗实体麦、次级在哪，需要一次实测。
-
-## 请你配合（实测 AMIC1–5 电平）
-
-**回复「开始」**，我就跑：
-```
-切 ADC2 MUX = CH2_AMIC1..5 各录 3 s → 打印 peak/rms
-```
-**期间（约 15–20 s）请持续用指甲敲击机身顶部/底部、并对着机器说话**，好让各麦都收到声音。
-
-如果你不想做外设/敲击类测试，直接说，我就先做 **R3（裸 ALSA 默认，纯软件）**。
-
-
-## Automatic settled outcome - 2026-10-04
-
-查清了，问题确实在文档。先给结论。
-
-## 结论
-
-**根因：文档把「RAM 启动」当成单一概念，而实际有两种镜像，副作用完全不同。** `fastboot boot` 既可零写盘、又可带桌面——"要零写盘就必须用 RAM 变体"是错误推论。
-
-| 镜像 | cmdline | 根文件系统 | 桌面/系统服务 | 用途 |
-|---|---|---|---|---|
-| `out/boot-elden-vkNN.img`（持久变体） | 含 `elden_root=LABEL=linux17` | 挂磁盘根、`switch_root` | ✅ Phosh/PipeWire/bluetoothd/Waydroid 全有 | **功能/服务级测试（零写盘）** |
-| `out/boot-elden-vkNN-ram.img`（纯 RAM） | 无 `elden_root` | 停在 initramfs | ❌ 只起 getty、不启桌面 | 内核/DTS/分区级验证、首次 bring-up |
-
-设备 `rootfs/init` 里所有服务都带 `[ "$on_initramfs" = 0 ]` 门（`start-desktop.sh`、`bt-up.sh`、`net-up.sh`…），所以纯 RAM 变体下蓝牙音频这类测试**必然失败，且现象像功能坏了**。
-
-## 错在哪（三处强制约束 + 一处命令示例）
-
-1. `PITFALLS.md` **§0 零号纪律 #3**："…先 RAM 引导验证"——被当作通则，未区分变体。
-2. `PITFALLS.md` **#92 纪律**："RAM 验收用 `…-ram.img`"——直接把纯 RAM 指定为验收镜像。
-3. `RUNBOOK-BRINGUP.md` **Phase 2**：把"RAM 版"当验收步骤，未标注其无桌面。
-4. `INDEX.md` **命令示例**：只列了 `-ram` 保底。
-
-实锤：会话 `01a10440` 音频 bring-up 就是先建了 `vk47-ram` 启动 → 停在 initramfs → 误以为内核/功能故障，切回持久才通；与 BL 解锁记录里"locked 无 RAM 兜底"的焦虑叠加，放大了"必须纯 RAM"的印象。
-
-## 已改（4 文件，未提交）
-
-- `PITFALLS.md`：§0 #3 改写（零写盘用 `fastboot boot`，区分变体）；#92 纪律修正；**新增 #93** 完整记录两种镜像 + 选择规则 + 判断方法；表头更新。
-- `RUNBOOK-BRINGUP.md` Phase 2：加警示「本 Phase 纯 RAM 无桌面，功能验收用持久根或持久变体」。
-- `INDEX.md`：命令示例补持久变体的零写盘用法。
-- `AGENTS.md`：「规则」新增测试环境选择一条；`#1–#88` → `#1–#93`。
-
-`check-doctor`：**FAIL=0 / WARN=1**（唯一 WARN 是 `RESOURCES §4` 会话索引 57≠54，与本次无关，pre-existing）。
-
-要我把这次修正提交吗？另外可顺手把 `-ram` 变体的行为加一行提示（打印"纯 RAM：无桌面"），或改 `build-boot.sh` 让 `-ram` 后缀自动带提示——需要的话一起做。
-
-
-## Automatic settled outcome - 2026-10-04
-
-已提交。
-
-**`2c765a6`** — `docs: 厘清「RAM 启动」两种镜像，修正测试环境约束`
-
-- 提交内容：`AGENTS.md`、`INDEX.md`、`PITFALLS.md`、`RUNBOOK-BRINGUP.md`（4 文件，+25/−7）。
-- `.pi/memory/HINDSIGHT.md` 未纳入——它在会话开始前就已是 dirty（harness 自动追加），非本次改动。
-
-`check-doctor` 仍为 **FAIL=0 / WARN=1**（唯一 WARN 为 `RESOURCES §4` 会话索引 57≠54，pre-existing）。
-
-要不要我顺手做那两项可选改进（`-ram` 变体启动时打印"纯 RAM：无桌面"提示；或 `build-boot.sh` 对 `-ram` 后缀自动加提示）？
 
 
 ## Automatic settled outcome - 2026-10-04
@@ -1405,3 +939,98 @@ y700-elden 镜像版本归属：boot 镜像文件名 vkNN 与内部内核无关�
 所以旧的"kexec 未换动内核、无反馈"= **执行阶段把 SoC 挂死**，不是配置缺失。kexec 快环在这台机器上当前不可用。
 
 复位后告诉我一声（或我检测到设备自动继续）。
+
+
+## Automatic settled outcome - 2026-10-04
+
+## 本轮成果（先数字）
+
+| 项 | 结果 |
+|---|---|
+| 提交 | **`99d49aa` 已推送** origin/main；doctor **FAIL=0** |
+| **G1-5 相机出流** | ✅ **前后摄均连续出帧**（此前一直卡在 `-32`） |
+| **kexec** | ❌ 定论**不可用**（`-e` 硬挂整机，非配置问题） |
+| vk50 模块 | ✅ 用 `LOCALVERSION=-vk50` 重建 **1513 个**，vermagic 与内核一致 |
+
+### G1-5 关键结论
+- **前摄** `gc08a8`：`SRGGB10_1X10` 3264×2448 → csiphy4→csid0→vfe0_rdi0→`/dev/video0`（pRAA），10 帧 `<<<<<<<<<<`
+- **后摄** `s5kjns`：`SGRBG10_1X10` 4080×3072 → csiphy3→csid1→vfe1_rdi0→`/dev/video3`（pgAA），3 帧 `<<<`
+- 帧尺寸精确吻合（9,987,840 = 4080×2448；15,679,488 = 5104×3072）
+- **根因**：csiphy/vfe 默认 `UYVY8_1X16` 与 sensor raw 不匹配 + 链路未使能。用 `media-ctl` 整链统一格式 + `-l` 使能即解——**与 3A/供电/时钟无关**。
+- 固化：`scripts/camera-stream-up.sh {front|rear} [stream N]`（幂等）
+
+### kexec 定论
+`kexec -s -l` **成功**（RC=0、`kexec_loaded=1`），但 `kexec -e` **硬挂整机**：串口 t≈182s 戛然而止、无 panic、无看门狗、USB/网络/fastboot 全消失、pstore 空，需物理强制重启。旧"未换动内核、无反馈"= 这次硬挂。→ 内核迭代改用 **fastboot 零写盘 `boot`/`flash`**。
+
+### 当前设备状态与遗留
+- 设备正跑 **vk50**（`fastboot boot`，RAM 内核 + 磁盘根 vk46），SSH 通、双摄可用；**一重启即回 boot_b=vk46**。
+- ⚠️ 两个待办：
+  1. **镜像超分区**：vk50 镜像 101 MB > boot_b 96 MiB（`build-camera-overlay.sh` 忘了给 `BASE=` 重复叠加）。要刷槽需用 `BASE=out/rootfs-overlaid.cpio.gz.bak-vk48` 重建到 <96 MiB。
+  2. **音频模块加载器缺失**：vk50 起音频等驱动改 `=m`，目前无人加载（相机不受影响）。这是 mod 环迁移的另一半。
+
+---
+
+下一步建议二选一：
+
+- **A. 继续 G1-22**（熄屏重启）基线：零写盘 `fastboot boot` vk34recon / vk40 对照 + 空闲熄屏复现。耗时长、会重启，但符合你之前"合并进同一次会话"的意图。
+- **B. 先收尾**：把 vk50 重建成可刷的 <96 MiB 版本（并补音频加载器），再做 G1-22。
+
+你要 A 还是 B？（设备目前也能直接停在这，重启回 vk46 即可）
+
+
+## Automatic settled outcome - 2026-10-04
+
+已落地并推送 `bfe0002`。先给结论，再给约束。
+
+## 已完成（含冒烟验证）
+
+| 产物 | 作用 | 验证 |
+|---|---|---|
+| `scripts/lane.sh` | `new/list/done/merge/remove/install/alloc`：worktree+分支+元数据 | ✅ 建/删 lane、hook 生效、清理无残留 |
+| `.githooks/commit-msg` | lane 分支强制 trailer；lane 名与分支一致性校验 | ✅ 无 trailer→FAIL；错 lane→FAIL；齐 trailer→PASS |
+| `versions/vk-registry.tsv` | vk 号 **SSOT**，`flock` 原子分配 | ✅ 已 seed vk50，下次给 vk51 |
+| `scripts/iterate.sh` | `next_vk` 改调 `lane.sh alloc`（不再扫 `out/` 猜号） | ✅ 语法检查 |
+| `.pi/CONCURRENCY.md` | 约束正文 | ✅ `check-doctor` FAIL=0 |
+
+## 模型：single integrator + forked lanes
+
+```
+main ─ base/<date>-<sha> ─┬─ lane/c3-id   (worktree) ─ commits ─┐
+                          ├─ lane/c7-slot  (worktree) ─ commits ─┤ 父 merge --no-ff
+                          └─ lane/upstream (worktree) ─ commits ─┘  解冲突+doctor+tag
+```
+
+## 约束（不可变式）
+
+1. **单写者**：只有父写 `main`、领域层 5 文档、`.githooks`、`versions/`。
+2. **文件归属不重叠**：lane 只写自己路径；跨路径回父协调。
+3. **lane 只从 baseline 前进**，不 rebase、不 merge main 进来。
+4. **内核改动必走 worktree**（`geekidos-linux` 13 G，禁止主 checkout 并发改）。
+5. **设备单一串行**：上机/刷写走 `device-lock.sh`，同一时刻一个 lane 持设备。
+6. **并发 ≤3**。
+
+## 子代理提交格式（可区分）
+
+```
+camera: 前摄出流打通（vk52）
+
+Lane: camera
+Agent: camera              # .pi/agents/<role>.md
+Baseline: base/20261005-99d49aa
+Task: G1-5
+VK: vk52
+```
+`git log --format='%(trailers:key=Lane,valueonly)'` 可机器归集。绕过：`LANE_HOOK_SKIP=1`。
+
+## 版本号：修掉撞车根因
+
+旧 `next_vk()` 扫 `out/boot-elden-vk*.img` → 两个并发构建必取同一个 N。现改为对 `versions/vk-registry.tsv` `flock` 后取 `max+1` 并追加一行，台账入库，父在 merge 时一并提交。
+
+## 当前并行 lane 规划
+
+| lane | 任务 | 只写 | 设备 |
+|---|---|---|---|
+| `c3-id` | C3 身份/DRM 取证+社区对照 | `archive/topics/c3-*`、`.pi/drafts/` | 无 |
+| `c7-slot` | C7 slot 脚本 + A16 `new-tablet` 参数化 | `scripts/` | 无 |
+| `upstream` | M1–M5 上游化补丁整理 | `patches/` | 无 |
+| （设备 lane） | G1-22 二分 / BT H1·H2 / G1-8 基准 / C1 | 内核 worktree | *

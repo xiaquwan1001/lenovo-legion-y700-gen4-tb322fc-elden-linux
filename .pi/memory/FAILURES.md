@@ -157,3 +157,8 @@ CN 网络抓取 GitHub 技术文档：raw.githubusercontent.com 常被 DNS 污�
 ## Memory - 2026-10-03
 
 设备实验脚本禁忌（y700-elden 2026-10-03 审计）：①不要把 reboot/fastboot boot 等副作用与长轮询写进同一条 bash 命令——harness 会按超时杀死整条命令（"Command aborted"），副作用是否发出、fastboot boot 是否传输中途被打断都无法判定。一条命令只做一件事，轮询内部自加 timeout 自限。②设备持久槽/回退内核要用 kernel payload 指纹确认（解 boot 镜像 gzip 内核流算 sha256），不能信文件名：vk30–vk40 镜像共用同一 uname（dirty 构建），实测 boot_b 烧的其实是 vk40 内核，导致复位后回退到被测版本，使"复位次数/复位后行为"的跨版本归因失效。per-uname 的 kmsg 日志才能可靠做版本归属。
+
+
+## Memory - 2026-10-04
+
+y700-elden (TB322FC/SM8750) kexec 不可用：`kexec -s -l`（kexec_file_load）返回 RC=0、/sys/kernel/kexec_loaded=1，但 `kexec -e` 会硬挂整机——串口日志戛然而止，无新内核横幅、无 panic、无看门狗复位、USB/网络/fastboot 全消失，需物理强制重启；复位后 pstore 为空（非 panic 路径）。旧“kexec 未换动内核、无反馈”实为该硬挂。结论：内核迭代改用 fastboot 零写盘 `fastboot boot`/`--flash`，放弃 kexec 快环。
