@@ -24,8 +24,16 @@ ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 KDIR=$ROOT/linux
 OUT=$ROOT/out
 
-# 自动版本号：out/boot-elden-vk<N>.img 里最大 N + 1（找不到就从 1 起）。
+# 自动版本号：SSOT = versions/vk-registry.tsv（lane.sh alloc 原子分配，flock）。
+# 绝不扫 out/ 猜号——并发两个构建必扫出同一个数（旧 bug）。
 next_vk() {
+	if [ -x "$ROOT/scripts/lane.sh" ]; then
+		local v
+		if v=$(bash "$ROOT/scripts/lane.sh" alloc "${VK_LANE:-adhoc}" "iterate.sh" 2>/dev/null); then
+			echo "$v"; return
+		fi
+	fi
+	# 兜底：registry 不可用时退回扫描（仅单进程安全）
 	local n
 	n=$(ls "$OUT"/boot-elden-vk*.img 2>/dev/null | sed -n 's/.*vk\([0-9]\+\)\.img$/\1/p' | sort -n | tail -1)
 	echo "vk$(( ${n:-0} + 1 ))"

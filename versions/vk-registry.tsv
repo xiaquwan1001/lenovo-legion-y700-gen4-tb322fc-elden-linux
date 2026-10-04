@@ -1,0 +1,3 @@
+# vk-registry.tsv — global monotonic version ledger (SSOT for vkN)
+# vk	lane	date	note
+vk50	seed	2026-10-04	seed: 既有最高版本（out/boot-elden-vk50.img）；后继从 vk51 起

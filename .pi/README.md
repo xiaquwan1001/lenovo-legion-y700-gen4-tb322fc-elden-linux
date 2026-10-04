@@ -8,6 +8,8 @@
 | 路径 | 内容 | 版本控制 | 说明 |
 |---|---|---|---|
 | `settings.json` | 本项目模型/会话/重试配置（`sessionDir`、provider、`retry`） | ✅ track | 项目级覆盖全局 |
+| `CONCURRENCY.md` | **并发任务约束**（基线+fork / 提交 trailer / vk 分配 / lane 归属 / 父合并；入口 `scripts/lane.sh`） | ✅ track | 派子代理前必读 |
+| `lanes/` | lane 运行时元数据（worktree/分支/baseline/状态） | ❌ ignore | 由 `scripts/lane.sh new` 写；机器本地 |
 | `skills/` | **项目技能**（`SKILL.md` + `references/`）。与全局 `~/.pi/agent/skills/` 叠加 | ✅ track | `qualcomm-android-flashing` / `qualcomm-edl-flashing` / `gsi-device-adaptation`。references 正文不入上下文，**用时 grep** |
 | `memory/` | **持久记忆**（跨会话）：`USER.md`(用户偏好) · `HINDSIGHT.md`(阶段决策) · `FAILURES.md`(反复踩的坑) | ✅ track | 由 `profile_memory` 追加；⚠️ **只有尾部 4–8 KB 注入系统提示**，故要主动修剪 |
 | `missions/` | **子代理任务卡**（喂给 `Agent` 的任务背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |

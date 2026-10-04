@@ -41,6 +41,7 @@
   **不 grep 等于不存在**；命中既有结论则本轮只做「确认或推翻」，不许从零重推；引用旧成功记录先查它属于哪台单元、
   当时固件版本与锁状态（状态不同 ≠ 机型不同）。参 `PITFALLS` #87、`archive/topics/复盘-2026-10-03-BL解锁.md`。
 - 不硬编码其他机器的 home 路径；用 `~` 和项目相对路径。
+- **并发任务一律走基线+fork**（`.pi/CONCURRENCY.md`）：父 agent 打 `base/*` 标签 → `scripts/lane.sh new <lane> <base> [--kernel]` 建 worktree+分支 → 子 agent 只在自己的 lane 分支提交（trailer `Lane/Agent/Baseline/Task/VK`，`.githooks/commit-msg` 强制）→ 父 `lane.sh merge <lane>` 解冲突并 `check-doctor`。**领域层 5 份文档 + `.githooks` + `versions/` 只有父能写**；版本号统一由 `scripts/lane.sh alloc`（registry `versions/vk-registry.tsv`，flock）分配，禁止扫 `out/` 猜号。并发上限 3。
 - 刷写失败先写复盘（操作时间线 / 根因 / 文件清单），再换方案。
 
 ## 其他

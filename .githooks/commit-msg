@@ -1,0 +1,78 @@
+#!/bin/sh
+# commit-msg — enforce sub-agent commit provenance on lane branches.
+#
+# Baseline+fork workflow (see .pi/CONCURRENCY.md): every commit on a lane
+# branch must carry machine-readable trailers so the parent integrator can
+# attribute work to a lane/agent/baseline and reconstruct merge order.
+#
+# Required on branches matching lane/* or elden/lane-*:
+#   Lane: <lane-id>          same lane id as the branch
+#   Agent: <agent-role>      .pi/agents/<role>.md or "parent"
+#   Baseline: <base tag>     the tag the lane forked from (base/...)
+# One of:
+#   Task: <TASKS id>         e.g. G1-22, C3
+#
+# Bypass (rare, e.g. tooling commits): set LANE_HOOK_SKIP=1 or put [skip-lane]
+# in the message. Non-lane branches (main, dense history) are not checked.
+
+msg_file=$1
+branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+
+case "$branch" in
+	lane/*|elden/lane-*) ;;
+	*) exit 0 ;;
+esac
+
+if [ "${LANE_HOOK_SKIP:-0}" = "1" ] || grep -q '\[skip-lane\]' "$msg_file"; then
+	exit 0
+fi
+
+lane_id=${branch#lane/}
+lane_id=${lane_id#elden/lane-}
+
+# Strip comment lines, then look for trailers anywhere in the message body.
+body=$(grep -v '^#' "$msg_file")
+missing=""
+
+require() {
+	if ! printf '%s\n' "$body" | grep -qiE "^$1:[[:space:]]*.+"; then
+		missing="$missing $1"
+	fi
+}
+
+require "Lane"
+require "Agent"
+require "Baseline"
+if ! printf '%s\n' "$body" | grep -qiE '^Task:[[:space:]]*.+'; then
+	require "Task"
+fi
+
+# Lane trailer must match the branch it is committed on.
+got=$(printf '%s\n' "$body" | sed -n 's/^[Ll]ane:[[:space:]]*//p' | head -1 | tr -d '[:space:]')
+if [ -n "$got" ] && [ "$got" != "$lane_id" ]; then
+	echo "commit-msg: Lane trailer '$got' != branch lane '$lane_id'" >&2
+	exit 1
+fi
+
+if [ -n "$missing" ]; then
+	cat >&2 <<EOF
+commit-msg: missing required trailer(s) on $branch:$missing
+
+Add a trailer block at the end of the message, e.g.:
+
+  <type>(<lane>): <subject>
+
+  Body...
+
+  Lane: $lane_id
+  Agent: camera
+  Baseline: base/20261005-99d49aa
+  Task: G1-5
+  VK: vk51
+
+See .pi/CONCURRENCY.md. Bypass: LANE_HOOK_SKIP=1 or [skip-lane].
+EOF
+	exit 1
+fi
+
+exit 0

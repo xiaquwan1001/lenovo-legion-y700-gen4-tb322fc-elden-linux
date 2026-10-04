@@ -69,6 +69,9 @@
 
 # ---- 运行时状态 ----
 /.pi/sessions/
+# lane 运行时协调状态（worktree 元数据，机器本地）与 vk 分配锁；台账本体 versions/ 入库
+/.pi/lanes/
+versions/*.lock
 # 已退场插件 pi-messenger-swarm 的运行时状态（2026-10-04 归档 archive/2026-10-04-retired-entrypoints/）；规则保留以防重装时污染 git status
 /.pi/messenger/
 
