@@ -186,13 +186,13 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 |---|---|---|---|
 | 领域层 `INDEX/DEVICE/TASKS/RESOURCES/GAPS/ANDROID-COMPAT/RUNBOOK.md` + `PITFALLS.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2 |
 | `.pi/{skills,memory,missions,agents}` `.pi/README.md` `.pi/settings.json` `.pi/pi-messenger.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/任务卡/模型配置（分工见 `.pi/README.md`） |
-| `.pi/sessions/`（53 个 jsonl） | 52 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
+| `.pi/sessions/`（54 个 jsonl） | 52 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
 | `.pi/messenger/` | 748 K | ignore | 运行时状态 |
 | `scripts/` | 448 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集 |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + **新：工作树全量 patch** |
 | `archive/` | 752 K | ✅ track | 过程证据（51 篇专题 + 2 截图），只增不改 |
 | `PITFALLS.md` | 52 K | ✅ track | 踩坑正文 #1–#91 + §0 零号纪律 |
-| `RESOURCES.md §4` | 21 K | ✅ track | 53 会话索引 + 内核实机验证边界 |
+| `RESOURCES.md §4` | 21 K | ✅ track | 54 会话索引 + 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
@@ -265,9 +265,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 24 / ◐ 部分 3 / ✗ 未上机 26 |
-| 状态 | active 29 / reference 15 / junk 6 / superseded 3 |
-| 时间跨度 | 2026-09-29 → 2026-10-04（53 会话，46 在 flat、7 在 slug 目录、2 个重复测试） |
+| 实机验证 | ✅ 实机 24 / ◐ 部分 3 / ✗ 未上机 27 |
+| 状态 | active 30 / reference 15 / junk 6 / superseded 3 |
+| 时间跨度 | 2026-09-29 → 2026-10-04（54 会话，47 在 flat、7 在 slug 目录、2 个重复测试） |
 
 ---
 
@@ -331,6 +331,7 @@ git log --oneline -10
 | 2026-10-03 | `01a10224` | 会话：项目架构整理与文档分层 | docs-reorg | ✗ | active | 审查12份根文档；定三层架构(领域/元/证据)+SSOT规则；新增scripts/check-doctor.sh；启动全面收敛到6份 | - | 收敛重构进行中；db/LESSONS拟删除 |
 | 2026-10-03 | `01a10264` | 复盘：logind 关机 + 音频/温控重落与出声 | power-audio | ✅ | active | ①logind 关机假成功真根因=busybox helper 不带 `-f` 只 `kill(1)`，PID1 是 shell→假成功；落 `fix-logind-poweroff.sh`。②建 `devlogs.sh` 运行日志采集。③vk39 两增量（音频 0009/0011 + 温控 0010）被 vk34-recon 回退→新分支 vk42 干净重落（uname `geb432f18a0d1`）。④音频无声根因=tplg MI2S **SD 线错**（SD0→SD1，功放接 `i2s1_data1`）→ tplg 修正 + ramdisk 字节替换 → **vk43 出声** ✅ | vk43,vk42,vk41 | 熄屏→重启仍未解；**输入端❌**（实测本机麦克风=模拟麦接 WCD939x，非 DMIC；需 WCD939x bring-up）；温控四级 trip ✅
 | 2026-10-04 | `01a10440` | 会话：进度盘点与下一步规划 | session-meta | ✗ | active | 实测 U2=vk45 持久根 up 7h20m；发现 INDEX §3/TASKS §0 文档漂移；定优先级 P0 收口→P1（U1 C0 取证）→P2（WCD939x / 熄屏重启） | - | P1 需 U1 接入；WCD939x 与 G1-22 未开工 |
+| 2026-10-04 | `01a104a2` | 会话：并发版本协作任务规划（swarm→subagent） | session-meta | ✗ | active | 确认可并发的版本协作任务，定主 agent 编排 + 子 agent 执行形态，给下一步建议（未执行） | - | 仅规划 |
 
 ---
 
