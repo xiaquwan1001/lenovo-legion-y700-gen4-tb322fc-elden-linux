@@ -78,7 +78,9 @@ done
 # switch_root frees the initramfs; insmod returns after module_init, so the
 # async sensor probes are merely *scheduled* here.  Non-fatal by design.
 if [ -x /usr/local/sbin/camera-modules-load.sh ]; then
-	timeout 20 /usr/local/sbin/camera-modules-load.sh >/run/camera-modules.log 2>&1 || true
+	# Log to /dev/kmsg, not /run: on a disk-root boot the persistent /init
+	# remounts a fresh tmpfs over /run, which hides a ramdisk /run file.
+	timeout 20 /usr/local/sbin/camera-modules-load.sh >/dev/kmsg 2>&1 || true
 fi
 
 if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then

@@ -184,3 +184,6 @@ fastboot reboot
 `out/boot-elden-vk49.img`=`b98487b7de`、`vk49-ram`=`68932e7401`、
 `boot_b-vk49.img`=`ae15737410`、`camera-modules-…tar.gz`=`25cc6c474a`。
 （首版 vk49 = `249ee683`/`ddeb5735`/`1c44343c` 因该 bug 不可用，已被替换。）
+
+**再版（13:53）**：loader 日志改写 `/dev/kmsg`（持久启动时持久 `/init` 会重新 mount `/run`，盖掉 ramdisk 里的日志文件），最终产物
+`out/boot-elden-vk49.img`=`53d22cee83`、`vk49-ram`=`ee432c4b00`、`boot_b-vk49.img`=`87a1f8f2ab`。
