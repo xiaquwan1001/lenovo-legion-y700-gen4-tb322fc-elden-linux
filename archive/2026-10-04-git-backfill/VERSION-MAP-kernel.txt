@@ -1,0 +1,23 @@
+# 内核仓（~/y700-elden/linux）vk ↔ commit 映射与留白
+#
+# 背景：内核树是上游 GEEKiDoS/linux 的浅克隆，历史只覆盖 elden 分支的 vk40–vk48。
+# vk34–vk39 只以反推分支 `elden/vk34-recon`（e72a036ed）存在，无法还原逐个中间态。
+# 标签为 annotated；`git show <tag>` 可见说明。
+
+vk40  6ef87e6a8  bring-up 现场状态（含未清理调试插桩）
+vk41  4b643f169  minimal PSCI SYSTEM_RESET2 vendor-reset（reboot bootloader/edl）
+vk42  eb432f18a  干净重落 vk39 两项改动（音频 + 温控）
+vk43  ———        ★留白：out/boot-elden-vk43.img 存在，但无对应源码 commit；中间态不可复原
+vk44  26cc186e9  DMIC capture（VA macro + VA Capture dai-link）
+vk45  a923477be  VA macro vdd-micb supply + DMIC sample rate
+vk46  4c68eb5ed  启用 WCD939x 音频编解码（模拟麦采集正路）
+vk47  bd114ca33  WCD939x 采集（去 VA DMIC，单 WCD capture link）
+vk48  5a70ade46  WCD939x 耳机播放通路 draft（= 当前内核 HEAD，KV=7.2.0-debug-g5a70ade46a88）
+vk49  ———        ★留白：vk49 内核 == vk48 HEAD；其「相机模块 + .config」变更落在**顶层仓** commit 8c16ea4，内核树无新 commit
+
+# 基线
+ba28ec16f  power: supply: qcom_battmgr: omit SM8750 maximum-load power reading（上游基底/浅克隆 graft 点）
+
+# 复核命令
+#   git -C ~/y700-elden/linux log --oneline --decorate -12
+#   git -C ~/y700-elden/linux tag -l 'vk4*' | sort -V

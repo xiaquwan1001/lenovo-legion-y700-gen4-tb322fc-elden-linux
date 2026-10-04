@@ -36,7 +36,7 @@
 | 角度 | 文件（权威） | 装什么 |
 |---|---|---|
 | **设备状态 + 设备描述** | **`DEVICE.md`** | 机型规格、固件清单与通路、驱动矩阵、单元台账 U1/U2、状态→任务分派、GPT 参数、**§3 Linux 容量策略** |
-| **任务 / 进度 / 未解 / 方案** | **`TASKS.md`** | **唯一任务台账 + 进度权威**（§0）；G1/C/A 任务（§1–4）；**§5 查漏补缺（GAPS/Q1–Q23）**；**§6 G2 安卓兼容方案** |
+| **任务 / 进度 / 未解 / 方案** | **`TASKS.md`** | **唯一任务台账 + 进度权威**（§0）；G1/C/A 任务（§1–4）；**§5 查漏补缺（GAPS/Q1–Q23）**；**§6 G2 安卓兼容方案**；**§7 上游化（M1–M5）** |
 | **资源 / 资产 / 会话轨迹** | **`RESOURCES.md`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · **§4 会话索引（51 会话 + 实机边界）** |
 | **上机手册** | **`RUNBOOK-BRINGUP.md`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase −1…9 |
 
@@ -44,7 +44,7 @@
 
 | 文件 | 装什么 |
 |---|---|
-| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做三件事）+ 踩坑正文 #1–#93（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
+| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做三件事）+ 踩坑正文 #1–#98（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
 
 ### 证据层（`archive/`，只增不改、不改结论）
 
@@ -110,7 +110,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#93
+**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#98
 **`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（51 会话）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
@@ -144,6 +144,7 @@ BL 解锁（**要不要 / 怎么**——已定稿，别再重推） | `RUNBOOK-B
 **内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`RESOURCES.md §4`** 配套
 换机迁移包 | `flashing-bundle/` + `flashing-bundle-2026-09-29.tar.gz`
 **退场的入口**（快捷方式 + 已卸载插件 `pi-messenger-swarm` 全套，含恢复步骤） | `archive/2026-10-04-retired-entrypoints/README.md`
+**上游化审查**（内核树 vs 主线 v7.2 全量 diff，A/B/C/D 分级） | `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`（任务 `TASKS.md` §7 M1–M5）
 
 ---
 

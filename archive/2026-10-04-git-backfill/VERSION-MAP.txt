@@ -1,0 +1,49 @@
+76b2c0f 2026-10-03 19:31:14 +0800  (history/pre-vk34 pre-git: 10-02~10-03 收尾（vk40 之后至 git 纳管前）
+06952ca 2026-10-02 20:02:02 +0800  vk40-ram bringup: vk40 RAM-only 变体（救援/回退）
+a2f9d65 2026-10-02 19:43:01 +0800  vk40 bringup: vk40 配置（config-vk40-bringup）
+5fcdc6f 2026-10-02 12:01:36 +0800  vk39 bringup: vk39 基线（thermal 0010 + MI2S 0011）
+1fe34ce 2026-10-02 11:32:34 +0800  vk38debug, tag: vk38 audio: vk38 debug 变体
+3fd112c 2026-10-02 11:14:01 +0800  vk37 audio: 0011 q6apm MI2S prepare 时启动图
+59da16b 2026-10-02 10:57:17 +0800  vk36debug thermal: vk36 debug 变体
+ee9ebfe 2026-10-02 10:48:51 +0800  vk36 thermal: 0010 分级 trips
+050b7d6 2026-10-02 01:40:16 +0800  vk35 thermal: 过热限频会话（ss h 读数）
+66b7758 2026-10-01 23:12:57 +0800  vk34 audio: 0009 alloc_apm_cmd_pkt 带 APM 头 → GET_SPF_STATE 应答、超时消除
+d8df006 2026-10-01 23:06:27 +0800  vk33 audio: kprobe 抓 GPR GET_SPF_STATE（24B vs 上游 40B）
+6f825c8 2026-10-01 22:58:09 +0800  vk32 panel: 0008 165Hz 档移至 modes 首位 → 165Hz 默认
+de66c5b 2026-10-01 22:42:15 +0800  vk31 panel: force_hz=0 暴露 8 档 / preferred=120Hz（phoc 钉 preferred）
+3b85cc2 2026-10-01 22:39:48 +0800  vk30 panel: 0006 DSI 时序诊断 + 0007 force_hz 钩子（冷启 165Hz 无报错）
+4d0981d 2026-10-01 22:10:02 +0800  vk29 audio: 0005 q6apm 可配置 APM 源端口（service@1→3,2→7）
+bc2c0b7 2026-10-01 20:52:23 +0800  vk28 net: netd IPv6/XFRM 片段（IP6_NF_*/XFRM_USER）
+6bce3e6 2026-10-01 10:55:20 +0800  vk27 container: netfilter legacy + waydroid0/dnsmasq（SF 图形仍崩）
+e735696 2026-09-30 23:36:13 +0800  vk26 container: binderfs/PSI/netfilter NAT 内核前置（binderfs 可用）
+455f1ea 2026-09-30 23:16:58 +0800  vk25 bt: 0004 btqca WCN7861 关 IBS 深睡（控制器睡眠↓，链路无效）
+02a4437 2026-09-30 21:44:21 +0800  vk24 audio: 强制 sid=-1（DSP 仍报错，否定）
+4cd5134 2026-09-30 21:41:33 +0800  vk23 audio: 加 DBG 打印纠正地址/SID 误读
+1ceb525 2026-09-30 21:37:48 +0800  vk22 audio: DT <4GiB shared-dma-pool + memory-region（未生效，否定）
+9da74c6 2026-09-30 21:34:41 +0800  vk21 audio: 尝试 DMA 32-bit 掩码（地址未受限，否定）
+2a4782e 2026-09-30 21:21:00 +0800  vk20 debug: 开启 ftrace/kprobes/kgdb/DWARF5（config-vk20-debug）
+77daaf7 2026-09-30 19:54:35 +0800  vk19 haptics: 0003 定稿（SRAM+CONT），vk19 干净基线
+707c53e 2026-09-30 19:47:05 +0800  vk18 haptics: 移植厂商 AW86937 CONT 模式 → 马达震动
+8f87015 2026-09-30 19:32:02 +0800  vk17 haptics: aw86927 寄存器级 debug（命令执行但不震）
+378c279 2026-09-30 19:28:48 +0800  vk16 haptics: aw86927 play work 加 debug 打印（定位）
+3e84df3 2026-09-30 19:16:28 +0800  vk15 haptics: 0003 aw86927 SRAM 窗口修复（probe 过但不震）
+bf9c585 2026-09-30 19:08:13 +0800  vk14 display: 0002 dspp .gc gamma → Night Light 可用
+2419885 2026-09-29 23:39:39 +0800  vk13 power: 关 SUSPEND/HIBERNATION + 自签 boot_b 直启 Linux
+19674fc 2026-09-29 22:54:12 +0800  vk12 gpt: userdata 缩容 + 新增 sda17 linux17(65GiB)，持久根切换
+4c37e5c 2026-09-29 20:18:18 +0800  vk11 desktop: glycin bwrap shim 修 phosh abort → Phosh 冷启全自动
+6ed9666 2026-09-29 19:02:07 +0800  vk10 wifi: 冷启 WiFi 全自动 + DTB sdhc_2 no-1-8-v（TF 降速试验）
+4b8874f 2026-09-29 18:50:16 +0800  vk9 wifi: 0001 ath12k MHI 超时 90s→3s，WiFi 打通（phy0/wlan0）
+f42eca2 2026-09-29 18:41:48 +0800  vk8 wifi: ATH12K=m 模块化，启动 99s→8s（PCIe 链路未起）
+4383f79 2026-09-28 23:43:42 +0800  vk7 rootfs: 持久根基线（/dev/sde79）+ init 硬化（uid=0）
+cbe9525 2026-09-28 23:37:28 +0800  vk6 rootfs: init 支持 elden_root=LABEL=linux 切磁盘根（首次持久根）
+a4492d6 2026-09-28 23:20:07 +0800  vk5 audio: 功放 ACF + MTP tplg + alsa-utils（card0 建立，speaker EINVAL）
+6216374 2026-09-28 23:15:11 +0800  vk4 rootfs: init 自动挂载 /persist（sde79 ext4）
+7b4b186 2026-09-28 22:55:53 +0800  vk3 firmware: rootfs 内建触屏/BT/ADSP 固件，开机自动 probe
+fe2fb6c 2026-09-28 22:35:47 +0800  vk2 gpu: 撤销 Mesa chip-id 补丁 → Turnip Vulkan 1.4.354（Adreno 830）
+24caa09 2026-09-28 22:34:05 +0800  vk1 gpu: Alpine+Turnip 窄 rootfs 首版（chip-id 补丁误伤）
+214e06b 2026-09-28 22:22:15 +0800  gpu3 gpu: 换设备签名 gen80000 固件 → GMU v5.1.25 + renderD128
+4ca87e2 2026-09-28 21:58:21 +0800  alpine rootfs: 换 Alpine in-RAM 根，USB-NCM 192.168.7.1 + 免密 SSH
+4629a30 2026-09-28 21:46:29 +0800  fixed4 display: 禁用 &mdss_dp0 解 DRM 绑定死锁 → 显示打通
+d387b82 2026-09-28 21:35:20 +0800  fixed3 bringup: 恢复 ARCH_QCOM/splash_region/eUSB2/背光 → 首次进 userspace+USB+UFS
+8f128d8 2026-09-28 21:03:04 +0800  diag diag: 诊断 initramfs 暴露出 olddefconfig 误删 ARCH_QCOM
+343a7fe 2026-09-28 20:05:59 +0800  base1 bringup: 首次打包内核+busybox initramfs（build-boot.sh）

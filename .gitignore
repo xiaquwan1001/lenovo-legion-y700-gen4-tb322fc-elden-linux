@@ -77,3 +77,6 @@ __pycache__/
 *.ko
 *.tmp
 .DS_Store
+
+# 下载的 python wheel（可再生成）
+*.whl
