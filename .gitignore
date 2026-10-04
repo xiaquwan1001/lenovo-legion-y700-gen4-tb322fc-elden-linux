@@ -82,3 +82,6 @@ __pycache__/
 
 # 下载的 python wheel（可再生成）
 *.whl
+
+# 根目录散件归档（2026-10-04）：4MB 迁移包不入库，可由 pack.sh 重打
+/archive/2026-10-04-root-strays/flashing-bundle-*.tar.gz

@@ -1139,3 +1139,109 @@ ssh root@192.168.7.1 'mount /dev/mmcblk0p1 /mnt/tf 2>/dev/null; sh /tmp/tf-stres
 查看：`git log --oneline history/pre-vk34`、`git show vk9`。撤销嫁接：`git replace -d e3ec468`。
 
 该目录目前是 untracked；要我把它作为一个提交纳入 main 吗？
+
+
+## Memory - 2026-10-04
+
+学校 GitLab = git.ustc.edu.cn（SSH Host 别名已配；账号 @xqh；key ~/.ssh/id_ed25519_gitlab_ustc）。个人命名空间支持 push-to-create：直接 `git push git@git.ustc.edu.cn:xqh/<repo>.git main` 即自动建私有项目（无需网页/API token），SSH 测试 `ssh -T git@git.ustc.edu.cn` 返回 Welcome, @xqh。限制：GitLab 服务器拒绝 shallow push（"shallow update not allowed"）——浅克隆仓需先 `git fetch --unshallow`，或改用「合成根」（`git commit-tree <base>^{tree}` 造无父提交 + cherry-pick 增量）推非 shallow 镜像，或改用 format-patch 补丁集留档。
+
+
+## Automatic settled outcome - 2026-10-04
+
+全部落地。总结如下：
+
+## 已完成（无需设备，均已推送异地）
+
+**V — 版本控制与异地备份** 🔴→🟢
+- 顶层仓 `origin` → **https://git.ustc.edu.cn/xqh/y700-elden**（2 分支 + 全部标签，SSH push-to-create 自动建仓）
+- 内核仓 `gitlab` → **https://git.ustc.edu.cn/xqh/y700-elden-kernel**（分支 `main`）
+  - 浅克隆被 GitLab 拒绝直推 → 用**合成根**（根提交树=上游 `ba28ec16f` 树 + 9 个 elden 增量重放），非 shallow、可正常 clone
+- 另有保险：`patches/kernel-history/` — 6 支 elden 分支的 `format-patch` 增量（脱离 git 也能 `git am` 复原）
+- `archive/2026-10-04-git-backfill/VERSION-MAP.txt`：原 sha → 镜像 sha 映射 + 复原步骤
+- `scripts/build-manifest.sh`：每个 vk 产出 {内核/DTB/config/ramdisk sha、cmdline、mkbootimg argv、镜像 sha256} → 构建可复现可审计
+
+**I — 迭代快环** 🔴→🟢
+- `scripts/env-build.sh`：ccache 接入 `CROSS_COMPILE`（此前装了但缓存 0）
+- `patches/fragment-modular.config`：音频/ATH12K/触觉/触屏/背光 `y→m`（实测 merge_config+olddefconfig 可翻，模块数 1319→1355）；`fragment-modular-video.config` 可选（DRM/panel，牺牲启动早期显示）
+- `scripts/mod-loop.sh` + `iterate.sh mod <dir>`：改驱动 → 编单模块 → scp → rmmod/modprobe，**~30s 不重启**
+- `scripts/iterate.sh dtb`：改 DTS 只重编 DTB
+
+**K / F — 去物理重启**
+- `scripts/kexec-boot.sh`：用未压缩 `Image` + `--dtb` 走 `kexec_file_load` 热重载（`KEXEC_FILE=y`、kexec-tools 设备已装）
+- `scripts/to-fastboot.sh`：`--boot` 零写盘 fastboot / `--flash` Linux 内 dd 进 boot_b 再重启；补上 PSCI vendor reset 进 fastboot
+
+**C — 并发**
+- `scripts/device-lock.sh` + 三个设备脚本自锁（flock，防嵌套死锁）：并行子代理串行化单台设备访问
+
+`check-doctor`：FAIL=0。
+
+> 更正一条审计原话：`cycle.sh` **确实存在**（在仓库根，非 `scripts/`），已同步修正。
+
+## 需要你/设备的下一步（一次性）
+
+1. **切换模块化**：跑一次全量构建应用 fragment
+   ```
+   scripts/apply-kernel-fragment.sh patches/fragment-modular.config   # 一次性
+   scripts/iterate.sh kernel --boot VERSION=vk50        # fastboot 零写盘验证
+   ```
+   之后驱动改动就进 `iterate.sh mod ...` 的 30s 环。
+2. **首次 kexec 实测**（用已知good的 vk49/vk50 镜像先验证不崩外设）：
+   ```
+   scripts/iterate.sh kernel --kexec VERSION=vk51
+   ```
+3. 若要我把内核仓也做成完整非浅历史（需 `git fetch --unshall
+
+
+## Automatic settled outcome - 2026-10-04
+
+## 复核结论（先数字）
+
+| 维度 | 判定 | 关键数字 |
+|---|---|---|
+| 1 可记录可溯源 | 🟡 骨架好，**2 个闭环漏洞** | doctor FAIL=0/WARN=1；git 纳管 391 文件、双仓双远程、回填 107 提交+49 tag；**manifest 生成数=0 且被 .gitignore 吞** |
+| 2 规划/并发/子代理 | 🔴 **子代理定义整体过期** | 6 角色+11 任务书 **100% 仍引用已退役 swarm**（`send SageYak`/`task done`/SWARM-PLAN 旧路径）；设备锁覆盖 **3/5**（flash-b.sh、cycle.sh 无锁） |
+| 3 迭代/忙等 | 🟡 工具全在，**快环未接通** | ccache 缓存 **8 KB（从未命中）**；`WCD939X=y` 未模块化 ⇒ 音频进不了 30s 环；kexec 实测 **0 次**；轮询已全部有界 ✅ |
+
+---
+
+## 维度 1：可记录可溯源
+
+**做得对**：6 文档分层 + SSOT 声明、archive 只增不改、git 回填+graft+VERSION-MAP、双异地备份、`check-doctor` 守门、.gitignore 边界有注释台账。
+
+**漏洞**：
+1. **manifest 闭环断裂**：`scripts/build-manifest.sh:9` 自己写着 "Commit the manifests"，但产物写到 `out/`，而 `.gitignore:18` 整目录忽略 `/out/`，且无 `!/out/*.manifest` 例外 → **每版可复现指纹永远进不了 git**。vk49 及之前的版本也还没有 manifest（生成数=0）。
+2. **入口目录混散件**：根目录有 `sn.img`（BL 解锁证据，UNTRACKED）、`dtc-*.whl`、5 个 `y700-elden-docs-*.tar.gz`——与"根目录只有 6 文档+AGENTS"纪律冲突，且都不在 git 里。
+3. 小项：RESOURCES §4 收录 54 ≠ 实际 68 会话（doctor 已 WARN）；`.pi/memory/HINDSIGHT.md` 有 +51 行未提交。
+
+## 维度 2：规划任务 / 并发 / 冲突合并 / 子代理
+
+**做得对**：TASKS 唯一台账+§2.1 主机侧并行清单、`device-lock.sh` flock 语义正确（自锁可嵌套、`DEVICE_LOCK_HELD` 透传）、AUDIT3 教训（副作用与轮询不同条命令）已写进任务书、retry 参数已按限流调好、默认模型已切 deepseek。
+
+**漏洞（按危害排序）**：
+1. **子代理不可用级过期**：`.pi/agents/*.md` 6 个角色与 `.pi/missions/*.md` 11 个任务书全部是 swarm 时代原文——`send SageYak`、`task done task-12`、"先读 `AUDIO-2026-10-01.md`"（实际在 `archive/topics/`）、`SWARM-PLAN-2026-10-02.md`（同）。`smoke.md` 还绑在已不存在的 task-12。**现在派生这些 Agent 类型，子代理会先浪费多轮去执行不存在的命令/读不存在的路径**，且任务书里"设备当前 vk34"等状态已落后 13 个版本。
+2. **锁旁路**：`mod-loop/kexec-boot/to-fastboot` 自锁，但 `flash-b.sh`（写 boot_b+重启）与 `cycle.sh`（reboot/fastboot）无锁——而 **INDEX §4 快速命令恰恰推荐的就是这两条无锁路径**。并发子代理照 INDEX 行事即可撞车。
+3. **规划项过期**：TASKS §4 第 1 步"⛔ 先救机器：U2 不可达"与 INDEX §3"U2=vk47 持久直启在跑"矛盾（§4 未随 10-03 深夜恢复刷新）；INDEX §3 快照 82% vs §0 的 85%（SSOT 已声
+
+
+## Automatic settled outcome - 2026-10-04
+
+P0+P1（无设备项）全部落地并推送。总结：
+
+## 已完成（3 个提交 → origin/main）
+
+| 项 | 内容 | 验证 |
+|---|---|---|
+| ① 子代理现代化 | 11 份任务书+5 份角色全部重写：**4 条活跃线**（audio 残余/bench/camera 出流/gplay+el2 收口动作）状态对齐 vk49 并指向 `archive/topics/` 真路径；**7 条已收官线**改为「墓碑+残余」，误派时先报告"已收官"不空转；删 `smoke.md` | `send SageYak`/`task done`/`SWARM-PLAN`/`task-N` **0 残留**；新引用路径**全部存在** |
+| ② 锁旁路消除 | `flash-b.sh`/`cycle.sh` 补与 mod-loop 同款自锁；INDEX §4 快速命令从 sign+flash-b 改为 `scripts/iterate.sh` 四档环 + `device-lock.sh --status` | 实测三态：空闲拿锁 ✅、被占 1s 报 busy 退出 ✅、`device-lock.sh` 外层持锁时内层透传不死锁 ✅ |
+| ③ manifest 闭环 | `.gitignore` 改 `/out/*` + `!/out/*.manifest` | `check-ignore`：img/子目录仍忽略、`.manifest` 放行 ✅ |
+| ④ 双 iterate | 根 `iterate.sh` 改为 `exec scripts/iterate.sh`（带新用法注释） | `bash -n` ✅ |
+| 顺手 | 修了一个**复核时新发现的 TASKS 原生死引用**：`build-camera-overlay.sh` 实际在 `rootfs/` 而非 `scripts/`（TASKS G1-5 + 任务书同改） | 存在性核实 ✅ |
+
+`check-doctor` FAIL=0（WARN=1 仍是既知的会话索引 54≠68，属 P2）。
+
+## 剩余（下次上机/收工时顺手）
+
+- **P1⑤ 快环接通**（唯一需设备的一次性动作）：`scripts/apply-kernel-fragment.sh patches/fragment-modular.config` → 全量构建一次（带暖 ccache）→ `iterate.sh kernel --kexec` 首测 → 音频 30s mod 环首测。
+- **P2**：RESOURCES §4 补 14 个会话；提交 HINDSIGHT 的 +51 行；TASKS §4 删过期的"⛔ 先救机器"；根目录散件归档（`sn.img`/`dtc-*.whl`/5 个 docs tar.gz）；doctor 加 G1% 口径检查。
+
+上机那轮开始时说一声，我把 P1⑤ 和 G1-22/G1-5 的验证合并进同一次会话计划。

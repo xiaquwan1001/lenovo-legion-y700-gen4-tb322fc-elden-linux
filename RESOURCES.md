@@ -213,8 +213,8 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `probe/` `twrp/` `y700四代工具/` | 552 M | ignore | 探针数据 / TWRP 镜像 / 厂商工具 |
 | `flashing-bundle/` + `flashing-bundle-*.tar.gz` | 19 M | ignore | 换机迁移包快照 |
 | `restore-259/`（二进制） | 254 M | ignore | AVB/KSU/EDL 救砖资产 |
-| `y700-elden-docs-*.tar.gz`（5 个） | 240 K | ignore | 旧文档快照（冗余） |
-| `sn.img` | 356 B | ignore | **含本机序列号，禁止入库** |
+| `archive/2026-10-04-root-strays/y700-elden-docs-*.tar.gz`（5 个） | 240 K | 已入库 | 旧文档快照；2026-10-04 自根目录归档 |
+| `backup/HA2EXB0E-16+512/sn.img` | 356 B | ignore | **含本机序列号，禁止入库**；2026-10-04 自根目录迁入 |
 | `l2 -> /mnt/Samsung/l2` | 45 G（外置） | ignore | 外置盘 super/system 镜像 |
 
 ### 3. 可清理标记（不动手，等确认）
@@ -265,9 +265,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 24 / ◐ 部分 3 / ✗ 未上机 27 |
-| 状态 | active 30 / reference 15 / junk 6 / superseded 3 |
-| 时间跨度 | 2026-09-29 → 2026-10-04（54 会话，47 在 flat、7 在 slug 目录、2 个重复测试） |
+| 实机验证 | ✅ 实机 31 / ◐ 部分 4 / ✗ 未上机 33 |
+| 状态 | active 40 / reference 18 / junk 6 / superseded 4 |
+| 时间跨度 | 2026-09-29 → 2026-10-04（68 条 jsonl / 55 个独立 ID；`01a10527`×3、`01a10596`×2 为同 ID 子代理拆分会话） |
 
 ---
 
@@ -332,6 +332,20 @@ git log --oneline -10
 | 2026-10-03 | `01a10264` | 复盘：logind 关机 + 音频/温控重落与出声 | power-audio | ✅ | active | ①logind 关机假成功真根因=busybox helper 不带 `-f` 只 `kill(1)`，PID1 是 shell→假成功；落 `fix-logind-poweroff.sh`。②建 `devlogs.sh` 运行日志采集。③vk39 两增量（音频 0009/0011 + 温控 0010）被 vk34-recon 回退→新分支 vk42 干净重落（uname `geb432f18a0d1`）。④音频无声根因=tplg MI2S **SD 线错**（SD0→SD1，功放接 `i2s1_data1`）→ tplg 修正 + ramdisk 字节替换 → **vk43 出声** ✅ | vk43,vk42,vk41 | 熄屏→重启仍未解；**输入端❌**（实测本机麦克风=模拟麦接 WCD939x，非 DMIC；需 WCD939x bring-up）；温控四级 trip ✅
 | 2026-10-04 | `01a10440` | 会话：进度盘点与下一步规划 | session-meta | ✗ | active | 实测 U2=vk45 持久根 up 7h20m；发现 INDEX §3/TASKS §0 文档漂移；定优先级 P0 收口→P1（U1 C0 取证）→P2（WCD939x / 熄屏重启） | - | P1 需 U1 接入；WCD939x 与 G1-22 未开工 |
 | 2026-10-04 | `01a104a2` | 会话：并发版本协作任务规划（swarm→subagent） | session-meta | ✗ | active | 确认可并发的版本协作任务，定主 agent 编排 + 子 agent 执行形态，给下一步建议（未执行） | - | 仅规划 |
+| 2026-10-04 | `01a104e1` | 会话：音频剩余问题专攻 | audio | ✅ | active | 主任务线收官转入残余（R1 耳麦/R2 双麦）；证据 `archive/topics/AUDIO-*`、`WCD939X-2026-10-04.md` | vk44–vk48 | R1 受硬件限制挂起 |
+| 2026-10-04 | `01a104e2` | 会话：TF 卡 + 相机并行（vk47 基线，三子代理） | tfcard-camera | ✅ | active | 派相机/存储/蓝牙三子代理并行；产出见 `*-2026-10-04-subagent.md` | vk47–vk49 | — |
+| 2026-10-04 | `01a104f1` | 会话：测试环境约束修正（RAM vs 持久变体） | docs-reorg | ◐ | active | 修正「RAM 启动缺桌面服务被误判功能故障」→ PITFALLS #93 + AGENTS 测试环境选择条款 | vk47 | — |
+| 2026-10-04 | `01a10500` | 会话：音频收尾（R2 双麦/R3 裸 ALSA） | audio | ✅ | active | R2 定位 AMIC1+AMIC4 双麦；R3 `audio-alsa-init.sh` 裸 ALSA 开箱可用（保守增益 400） | vk47,vk48 | 双路采集未做（低价值） |
+| 2026-10-04 | `01a10504` | 会话：pi 启动入口差异说明 | session-meta | ✗ | superseded | 两种入口差异解释；后续旧 cd 包装已移除 | - | PITFALLS §15.1 |
+| 2026-10-04 | `01a10527` | 子代理：相机 vk49 基线 + 冷启加载 | camera | ✅ | active | 20 模块全载、graph ENABLED、出流 -EPIPE 待续；`CAMERA-2026-10-04-subagent.md` | vk49 | 子会话 |
+| 2026-10-04 | `01a10527` | 子代理：TF 卡根因定性 + 5 候选补丁 | tfcard | ✅ | active | 卡本身 70–80%；`max-sd-hz` 等价厂商 shifter；`TF卡-2026-10-04-subagent.md` | vk47 | 子会话；待换卡 A/B |
+| 2026-10-04 | `01a10527` | 子代理：BT 根因重定位 + KEEPALIVE A/B | bt | ✅ | active | H4 不成立、H3 排除，剩 H1/H2 单变量待测；`BT-2026-10-04-subagent.md` | vk47a | 子会话 |
+| 2026-10-04 | `01a1056c` | 审查：上游化全量 diff 分级（M 系列） | upstream | ✗ | reference | 内核树 vs 主线 v7.2 全量 diff，A/B/C/D 分级 → `UPSTREAM-REVIEW-2026-10-04.md` + TASKS §7 | - | — |
+| 2026-10-04 | `01a1058b` | 迭代快环工具链 + 双仓异地备份 | vcs-iterate | ✗ | active | `iterate.sh` 四档环、`device-lock.sh`、kexec/to-fastboot、模块化片段、GitLab 双仓 | vk49,vk50 | 实机首测见 `01a105d1` |
+| 2026-10-04 | `01a1058e` | git 历史回填 vk1–vk40（史记官编排） | vcs | ✗ | active | 分支 `history/pre-vk34` 49 提交 + 49 tag + graft；`archive/2026-10-04-git-backfill/` | 回填 | mtime 归因局限（见 README） |
+| 2026-10-04 | `01a10596` | 子代理：史记官 vk1–vk13 史料 | vcs | ✗ | reference | 为回填供版本史料（base1–vk13） | - | 子会话 |
+| 2026-10-04 | `01a10596` | 子代理：史记官 vk14–vk34 史料 | vcs | ✗ | reference | 为回填供版本史料（vk14–vk34） | - | 子会话 |
+| 2026-10-04 | `01a105d1` | 会话：重构复核三维度 + P0/P1 落地 + 快环接通 | docs-reorg | ✅ | active | 复核（子代理过期/锁旁路/manifest 断链）→ agents+missions 重写、flash-b/cycle 补锁、`!out/*.manifest`、fragment 应用、vk50 构建+kexec 首测 | vk50 | 本会话 |
 
 ---
 

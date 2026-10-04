@@ -33,7 +33,13 @@ else
 fi
 export ARCH KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
+# Per-build uname label (e.g. LOCALVERSION=-vk50).  Export it and every ring —
+# kernel/dtb builds, kexec fingerprint, and mod-loop's vermagic check — stays
+# consistent, because they all go through kbuild().  Without this, a
+# LOCALVERSION-tagged kernel makes mod-loop refuse its own modules.
+: "${LOCALVERSION:=}"
+
 kbuild() {
 	# Run make in the kernel tree with the shared env.
-	make -C "$ROOT/linux" -j"${JOBS:-$(nproc)}" "$@"
+	make -C "$ROOT/linux" -j"${JOBS:-$(nproc)}" ${LOCALVERSION:+LOCALVERSION=$LOCALVERSION} "$@"
 }

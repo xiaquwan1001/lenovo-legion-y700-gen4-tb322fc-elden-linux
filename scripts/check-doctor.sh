@@ -89,6 +89,32 @@ for pat in 'LESSONS\.md' 'GAPS\.md' 'ANDROID-COMPAT\.md' 'FILES\.md' 'SESSION-IN
 done
 [ "$stale" -eq 0 ] && ok "无过期文件引用"
 
+# ---------------------------------------------------------------- 3.5 进度百分比口径（INDEX 快照 vs TASKS §0 权威）
+echo
+echo "== 3.5 进度百分比口径 =="
+python3 - <<'PY'
+import re, sys
+T=open('TASKS.md').read(); I=open('INDEX.md').read()
+def first(pat, s, grp=1):
+    m=re.search(pat, s)
+    return int(m.group(grp)) if m else None
+t1=first(r'\|\s*\*\*G1\*\*[^\n]*?(\d+)%', T)
+t2=first(r'\|\s*\*\*G2\*\*[^\n]*?(\d+)%', T)
+i1=first(r'G1\s*[≈~]?\s*(\d+)%', I)
+i2=first(r'G2\s*[≈~]?\s*(\d+)%', I)
+bad=0
+for name,tv,iv in (("G1",t1,i1),("G2",t2,i2)):
+    if tv is None or iv is None:
+        print("  [warn] %s 百分比无法解析（TASKS=%s INDEX=%s）" % (name,tv,iv)); bad=-1
+    elif tv!=iv:
+        print("  [warn] %s 口径漂移：TASKS §0=%s%%（权威） vs INDEX §3 快照=%s%% → 刷 INDEX" % (name,tv,iv)); bad=1
+if bad==0: print("  [ok]   G1/G2 百分比 INDEX ≡ TASKS")
+sys.exit(1 if bad else 0)
+PY
+case $?
+  in 0) ;; *) warn=$((warn+1)) ;;
+esac
+
 # ---------------------------------------------------------------- 4. 已退场入口不得复辟
 echo
 echo "== 4. 已退场入口（2026-10-04 清理，见 archive/2026-10-04-retired-entrypoints/）=="
