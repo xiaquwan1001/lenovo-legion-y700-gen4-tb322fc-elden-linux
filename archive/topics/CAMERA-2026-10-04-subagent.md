@@ -187,3 +187,19 @@ fastboot reboot
 
 **再版（13:53）**：loader 日志改写 `/dev/kmsg`（持久启动时持久 `/init` 会重新 mount `/run`，盖掉 ramdisk 里的日志文件），最终产物
 `out/boot-elden-vk49.img`=`53d22cee83`、`vk49-ram`=`ee432c4b00`、`boot_b-vk49.img`=`87a1f8f2ab`。
+
+## 10. 实机复验：probe ✅ / 出流 ❌（2026-10-04）
+
+`fastboot boot out/boot-elden-vk49.img` 后：
+- dmesg `[camera] loaded …` × 20，收尾 `[camera] done: 1 media, 17 video nodes`。
+- `lsmod` 含 `qcom_camss`/`videodev`/`s5kjns`/`gc08a8`/`v4l2_cci`。
+- `media-ctl -p`：`/dev/media0` driver=qcom-camss；sensor `s5kjns 11-0056`（SGRBG10_1X10/4080x3072）、
+  `gc08a8 12-0031`（SRGGB10_1X10/3264x2448）、`gt9764 11-000c`、`white:flash` 均注册；
+  链路 `gc08a8→csiphy4→csid0→vfe0_rdi0→/dev/video0` 为 `[ENABLED]`。
+- **出流未通**：`v4l2-ctl -d /dev/video0 --stream-mmap --stream-count=5` → `VIDIOC_STREAMON returned -1 (Broken pipe)`，
+  dmesg `qcom-camss ad27000.isp: Failed to start media pipeline: -32`（-EPIPE）。
+  主因：csiphy 默认 `UYVY8_1X16/1920x1080` 与 sensor 实际 `SRGGB10` 不匹配，需手工
+  `media-ctl` 配 csiphy/csid/vfe 的 mbus format+selection 并使能链路，再 `v4l2-ctl` 设 format 后 STREAMON。
+  **属下一轮大工程（VFE/CSID 抓帧、3A、tuning）。**
+
+**G1-5 本轮闭环 = "sensor probe + media graph 注册" ✅**；"实际出流" 明确留待下一轮。
