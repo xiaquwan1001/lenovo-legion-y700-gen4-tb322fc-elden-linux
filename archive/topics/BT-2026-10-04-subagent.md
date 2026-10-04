@@ -174,3 +174,30 @@ Product/SoC/ROM ID 行——**这是判定 F8 那个 helper 是否命中、从�
     无效"这个实验接近空操作，不能据此认为主机睡眠已被充分测试（F2/F3）。
   - WCN7861 的运行波特率由 **PERI 协议**决定，DT `max-speed` 可能不起作用（F7/F8）。
 - 相关文件：`patches/candidate-bt-*.patch`（4）、`scripts/bt-link-test.sh`（1）。
+
+---
+
+## 11. 上机实测：iQOO TWS 2（2026-10-04，vk47a；零写盘）
+
+对端 `4C:99:92:32:D6:65`（iQOO TWS 2）已 `Paired/Bonded/Trusted`，`Connected: no`。
+`bluetoothctl connect` → `org.bluez.Error.Failed br-connection-unknown`（用户所述"能配对不能持续连接"）；
+但 `l2ping` 可自建 ACL（`hcitool con` 见 `ACL … state 1 lm CENTRAL`）。
+
+| 实验 | RTT min/avg/max/mdev (ms) | loss | ibs_sent_wakes_delta | ibs_recv_wakes_delta |
+|---|---|---|---|---|
+| A `KEEPALIVE=0`（-c15 -i0.2） | 7.8/**44.4**/110.8/26.8 | 0% | **1** | 20 |
+| B `KEEPALIVE=1` | 3.9/**35.3**/62.4/15.6 | 0% | **1** | 293 |
+| 突发 `-c100 -i0.05` | — | — | — | 20s 内跑不完，链路停摆 |
+| `hciconfig` errors | — | — | RX/TX errors 均 0 | — |
+
+**判读**：
+- **H4（控制器固件深睡）不成立**：KEEPALIVE 只把 avg 44→35 ms，未塌到 <10 ms（max 111→62、mdev 27→16，仅轻度改善）。
+- **H3（主机 IBS 握手）排除**：`ibs_sent_wakes_delta=1` 两种情形都一样 → 主机 TX 全程 AWAKE（与 F3 一致）。
+- 突发停摆 + hci errors=0 → 丢在空口/控制器侧，非主机 UART。
+- **剩余候选：H1（8 Mbps 误码）/ H2（控制器 CTS 反拉）** → 需用
+  `patches/candidate-bt-maxspeed-3000k.patch`（H1）/ `candidate-bt-no-flow-control.patch`（H2）
+  做**单变量**测试内核（各一次 boot）。
+
+**脚本修复**（本轮）：`IBS_DIR` 指向 `.../hci0/ibs`（原指向父目录→全 n/a）；
+RTT 由 per-packet `time Xms` 自算（bluez l2ping 无汇总行）；`errors:` 解析；counter 名对齐
+（`ibs_recv_sleeps`/`wake_acks`）。

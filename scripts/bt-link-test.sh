@@ -31,7 +31,7 @@ BTMON_SECS="${BTMON_SECS:-8}"
 KEEPALIVE="${KEEPALIVE:-0}"   # 1 = 跑 l2ping 期间每 50ms 发一条无害 HCI 命令，测「控制器深睡」假设
 MAX_TOTAL="${MAX_TOTAL:-60}"
 IBS_TX_IDLE="${IBS_TX_IDLE:-}"      # 空 = 不动；数字 = 临时改并在退出时恢复
-IBS_DIR="/sys/kernel/debug/bluetooth/hci0"
+IBS_DIR="/sys/kernel/debug/bluetooth/hci0/ibs"
 
 TMPD="$(mktemp -d /tmp/bt-link-test.XXXXXX)" || exit 1
 BTMON_PID=""
@@ -165,11 +165,16 @@ ibs_read > "$TMPD/ibs_after.txt"
 # hciconfig 统计
 hci_get() { sed -n "s/.*$1:\([0-9]*\).*/\1/p" "$TMPD/hci_after.txt" | head -1; }
 RX_BYTES="$(hci_get 'RX bytes')";  TX_BYTES="$(hci_get 'TX bytes')"
-RX_ERR="$(hci_get 'RX errors')";   TX_ERR="$(hci_get 'TX errors')"
+# hciconfig prints "RX bytes:... errors:N" / "TX bytes:... errors:N" (one
+# errors field per line), not "RX errors:".
+RX_ERR="$(sed -n 's/^[[:space:]]*RX bytes:.*errors:\([0-9]*\).*/\1/p' "$TMPD/hci_after.txt" | head -1)"
+TX_ERR="$(sed -n 's/^[[:space:]]*TX bytes:.*errors:\([0-9]*\).*/\1/p' "$TMPD/hci_after.txt" | head -1)"
 
 # l2ping 汇总：X sent, Y received, Z% loss, time Wms / rtt min/avg/max/mdev
 LOSS="$(sed -n 's/.*, \([0-9]*%\) loss.*/\1/p' "$L2OUT" | head -1)"
-RTT="$(sed -n 's/.*rtt \([0-9./]*\) ms.*/\1/p' "$L2OUT" | head -1)"
+# bluez l2ping prints one "time Xms" per reply and no summary rtt line, so
+# compute min/avg/max from the per-packet times.
+RTT="$(awk '/time [0-9.]+ms/{v=$NF; sub(/ms.*/,"",v); v+=0; if(min==""||v<min)min=v; if(v>max)max=v; s+=v; n++; m2+=(v)*(v)} END{if(n){avg=s/n; mdev=sqrt(m2/n-avg*avg); printf "%.1f/%.1f/%.1f/%.1f",min,avg,max,mdev}}' "$L2OUT")"
 N_SENT="$(sed -n 's/^\([0-9]*\) sent.*/\1/p' "$L2OUT" | head -1)"
 N_RECV="$(sed -n 's/.*sent, \([0-9]*\) received.*/\1/p' "$L2OUT" | head -1)"
 
@@ -194,10 +199,10 @@ printf 'hci_rx_bytes\t%s\n'    "${RX_BYTES:-?}"
 printf 'hci_tx_bytes\t%s\n'    "${TX_BYTES:-?}"
 printf 'ibs_recv_wakes_delta\t%s\n'  "$(ibs_delta ibs_recv_wakes)"
 printf 'ibs_sent_wakes_delta\t%s\n'  "$(ibs_delta ibs_sent_wakes)"
-printf 'ibs_recv_slps_delta\t%s\n'   "$(ibs_delta ibs_recv_slps)"
-printf 'ibs_sent_slps_delta\t%s\n'   "$(ibs_delta ibs_sent_slps)"
-printf 'ibs_recv_wacks_delta\t%s\n'  "$(ibs_delta ibs_recv_wacks)"
-printf 'ibs_sent_wacks_delta\t%s\n'  "$(ibs_delta ibs_sent_wacks)"
+printf 'ibs_recv_sleeps_delta\t%s\n' "$(ibs_delta ibs_recv_sleeps)"
+printf 'ibs_sent_sleeps_delta\t%s\n' "$(ibs_delta ibs_sent_sleeps)"
+printf 'ibs_recv_wake_acks_delta\t%s\n' "$(ibs_delta ibs_recv_wake_acks)"
+printf 'ibs_sent_wake_acks_delta\t%s\n' "$(ibs_delta ibs_sent_wake_acks)"
 printf 'ibs_wake_retrans_setting\t%s\n' "$(ibs_val wake_retrans ibs_after.txt)"
 printf 'ibs_tx_idle_delay_setting\t%s\n' "$(ibs_val tx_idle_delay ibs_after.txt)"
 printf 'ibs_tx_ibs_state_after\t%s\n'   "$(ibs_val tx_ibs_state ibs_after.txt)"
