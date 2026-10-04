@@ -95,3 +95,27 @@ WCD939x RX/TX 均 bound。**结论：vk48 改动在寄存器/DAPM 层面有效�
 - [ ] 有耳机后按 §4 听声，闭环后加 UCM 并落持久。
 - [ ] USB-C 模拟耳机还需要 `wcd939x-usbss`（i2c typec-mux@0x0e + pmic_glink SBU 图）才能把模拟信号路由到
       WCD939x——本机 `&i2c3` 尚未启用，stock overlay `fragment@22` 证明原厂确实配了 `wcd_usbss`。
+
+---
+
+## 6. 更正与阻塞点（2026-10-04 二次勘察，附带期间 R3 收尾）
+
+上游 §2/§5 假设本机 USB-C 模拟音频走 `wcd939x-usbss`（i2c typec-mux@0x0e）。**实测 DTS 否定了该假设**：
+
+- 本机模拟开关是 **FSA4480**（`fcs,fsa4480`），在 **`&i2c5`** 的 `typec-mux@42`/`typec-mux@43`，DTS 已启用：
+  `fsa4480_sbu_mux` → `pmic_glink_sbu`（connector@0）、`fsa4480_hs_sbu_mux` → `pmic_glink_hs_sbu`（connector@1）。
+  即 `i2c3`/`wcd_usbss` 那条路与本机无关，**不要再按 §5 去启用 i2c3**。
+- 内核 `CONFIG_TYPEC_MUX_FSA4480=m`（模块）。当前 vk47/48 用 RAM 启动（无 `/lib/modules`）加载不了；
+  持久根 `/dev/sda17` 的 `/lib/modules/7.2.0-debug-gba28ec16f01f-dirty/` 是**旧内核**版本、且不含 `fsa4480.ko`
+  → **FSA4480 目前在任何启动方式下都用不上**。结论：要用它需 `CONFIG_TYPEC_MUX_FSA4480=y`（built-in），
+  或为现用内核 `gbd114ca33` 补齐匹配的模块目录。
+- 仍未确定：谁把 FSA4480 切到 **AUDIO** 模式。mainline `fsa4480.c` 只提供 typec-mux/switch 端口；
+  模拟附件检测后的 audio-mode 请求通常由 codec 的 MBHC/下游 `wcd_usbss` API 发起，本机是否需补 glue 待查。
+
+**硬件阻塞（2026-10-04）**：无 USB-C 模拟耳机/转接头，R1 听声验收无法进行，进度到此为止。
+数字 DAC dongle 是另一条更简单的路（USB-Audio class，插上即枚举），但同样需硬件验证。
+
+## 7. 期间顺带完成：R3 裸 ALSA 默认（2026-10-04）
+
+见 `scripts/audio-alsa-init.sh` 与 `TASKS.md` G1-4：无桌面/PipeWire 时 `aplay -D default`/`arecord` 开箱可用，
+`/init` 在 RAM 与持久根都调用，默认硬件增益取保守值 400（满值 1023 过响）。已 commit `4aacf40`。
