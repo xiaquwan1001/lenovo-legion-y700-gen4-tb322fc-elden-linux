@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-05（**#99–#102 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信**；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
+> 最后更新：2026-10-05（**#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus**；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
 
 ---
 
@@ -201,6 +201,10 @@
     - 现象：boot_b 跑 `7.2.0-debug-g4c68eb5ed4e3-dirty`，**熄屏（DPMS off）即硬复位**；但 vk42 镜像免疫、`git diff vk42..vk47` **仅 DTS**、内嵌 config `diff`=0、ramdisk 内容相同、换 vk42 DTB 仍复位。
     - 判定：用**已提交源码 + 同一 config**干净重建 ⇒ **免疫**。⇒ boot_b 是**脏树构建**（带未提交改动，疑残留音频调试插桩），git 提交历史里看不到、也无法从任何提交复现。
     - 纪律：① **只烧 `kernel_git_state=clean` 的镜像**；② manifest 必记 `kernel_git_state` 并据此判定可信度（vk50 起已记）；③ 遇 G1-22 类「熄屏复位」，**先查 boot_b 二进制的 dirty 状态**，不要从源码二分。见 `TASKS.md` Q24、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.8。
+103. **★`gsettings set` 必须有活的 session bus，否则**静默不落盘**（2026-10-05，`dt-ui` 踩坑；#48 的补充）。
+    - 现象：SSH 里裸 `gsettings set ...` 返回 rc=0，但**读回不变**（写到过期/不存在的总线）⇒ 据此得出的"改了也没变化"结论全部作废（手套误判）。
+    - 可靠写法：`HOME=/root dbus-run-session -- gsettings set <schema> <key> <val>`；读回同样 `HOME=/root`。
+    - 纪律：**不要用裸 `gsettings set` 判定 dconf 是否生效**；phosh 会话内的持久值应写 `/root/.config/dconf/user`（非 PID1 时代的 `/`）。见 `archive/topics/DT-UI-2026-10-05.md`。
 
 ---
 

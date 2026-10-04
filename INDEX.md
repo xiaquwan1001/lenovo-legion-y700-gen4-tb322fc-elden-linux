@@ -69,7 +69,8 @@
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
 - **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（实跑 `vk46-dirty`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
-  ✅ **熄屏→重启（G1-22）已定位并已修复（2026-10-05）**：vk40 熄屏 3/3 硬复位，当前内核已免疫；证据 `archive/topics/G1-22-2026-10-05.md`。
+  ✅ **熄屏→重启（G1-22）已定位；修复待刷（2026-10-05）**：根因 = boot_b 烧的是 `-dirty` 的 vk47 镜像（非源码问题）；**干净重建实测免疫**，就绪包 `bootslot-b/boot_b-clean.img` **待用户 `fastboot flash boot_b`**。见 `TASKS.md` §5 Q24、`archive/topics/G1-22-2026-10-05.md`。
+  🟠 **桌面用户态四问已定根因（G1-26/27/28，2026-10-05）**：`gtk-theme=Adwaita-dark` 解析回退浅色（应 `Adwaita`）⇒ 深色/图标反色/accent 同源；亮度=elogind 无 session。见 `archive/topics/DT-UI-2026-10-05.md`，修复待上机。
   ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
 
 ---

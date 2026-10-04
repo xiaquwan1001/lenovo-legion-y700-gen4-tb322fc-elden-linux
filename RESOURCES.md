@@ -61,6 +61,9 @@
 | `karim-manaouil/qemu-for-gunyah` | 配套 QEMU fork（KVM API → Gunyah hypercall） | 同上 |
 | `quic/gunyah-hypervisor` | Gunyah hypervisor 开源仓（RM ABI 参考） | guest 驱动 ABI 对照 |
 | kodiak-el2.dtso 系列（**v11，2026-08**，Mukesh Ojha） | Qualcomm **dev kit**（qcm6490-idp/rb3gen2/qcs615/purwa-x1）的 EL2 引导 overlay 模式；[1]=官方 boot-developer-touchpoints 文档 | 证明"boot EL2"机制只对 dev kit 开放，**不适用消费者 Y700**（XBL 链内加载 hyp，ABL 上一级）；另证 Gunyah watchdog 补丁实测平台=SM8750 |
+| **`Droid-VM/edk2-gunyah`**（本地 clone `edk2-gunyah/`，1.8 M） | 基于 ArmVirtPkg 的 **crosvm + Gunyah guest UEFI 固件**（`GunyahPkg/GunyahKernel.dsc` → `edk2-gunyah.fd`；README **明确测试平台含 Lenovo Y700 Gen4 = TB322FC/SM8750**）；跑法 `/apex/com.android.virt/bin/crosvm run --protected-vm-without-firmware ... edk2-gunyah.fd` | **若将来走 Gunyah VM（C8）**，这是现成的 SM8750 guest 固件；但 crosvm/AVF 需 Android 宿主 ⇒ 与新前提冲突，仅观察 |
+| **`qemu-gunyah/edk2-gunyah-qemu`**（本地 clone `edk2-gunyah-qemu/`，469 M） | EDK2 + `ArmVirtPkg: add Gunyah QEMU support`（2026-03） | 配合 RFC 00/34 的 `qemu-for-gunyah`（KVM-in-EL1 + Gunyah backend，C8 唯一"无 Android"硬件虚拟化路线）的 guest 固件 |
+| **`AnyLaySys/edk2-aarch64-gunyah`**（本地 clone `edk2-aarch64-gunyah/`，1.5 G） | aarch64 EDK2，构建 `ArmVirtPkg/ArmVirtGunyah.dsc`（含 `GunyahIoMmuDxe`/`GunyahRestrictedDmaPoolAcpiDxe`）；近期提交含 **"启动 Microsoft Windows 改 ramfb"** | **Windows-on-ARM64 guest 固件**（Gunyah VM 内起 Windows）；与 win-x86/DroidVM 方向相关，仅观察 |
 
 ### 1.4 方法论 / 运维参考
 
@@ -206,7 +209,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `stock-src/` | 350 M | ignore | 联想 GPL 源码 clone（可重下） |
 | `qdl/` | 3.2 M | ignore | 上游 qdl（`qdl/build/qdl` 为构建物） |
 | `tools/` | 14 M | ignore | `venv-avb` + 上游 `mkbootimg`（可重建） |
-| `edk2-gunyah/` `edk2-gunyah-qemu/` | 78 M | ignore | 2026-10-05 bootchain lane 研究 clone（`Droid-VM/edk2-gunyah`、`qemu-gunyah/edk2-gunyah-qemu`；可重下，**可清理**） |
+| `edk2-gunyah/` `edk2-gunyah-qemu/` `edk2-aarch64-gunyah/` | 2.0 G | ignore | 2026-10-05 研究 clone（`Droid-VM/edk2-gunyah`、`qemu-gunyah/edk2-gunyah-qemu`、`AnyLaySys/edk2-aarch64-gunyah`；Gunyah VM/Windows guest 固件参考，**可重下、可清理**）。前两者由 bootchain lane clone；`edk2-aarch64-gunyah` 由并发会话 clone。详见 §1.5 |
 | `out/` | 4.6 G | ignore | boot 产物 / cpio / modules |
 | `bootslot-b/` `bootslot-b-u2/` | 905 M | ignore | 自签 b 槽包（含 `avb.key` 私钥，禁止入库） |
 | `backup/` | 1.5 G | 混合 | 原厂分区/固件/GPT dump（不可替代，留盘）。**证据文本已纳入 git**（`elden-dump.txt`、`HA2EXB0E-16+512/*.txt`、`pre-unlock/`、`vk40-ram-acceptance-dmesg.txt`）；二进制与 `sn-neko-zuxos.img` 仍 ignore |
@@ -268,9 +271,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 31 / ◐ 部分 4 / ✗ 未上机 33 |
-| 状态 | active 40 / reference 18 / junk 6 / superseded 4 |
-| 时间跨度 | 2026-09-29 → 2026-10-04（68 条 jsonl / 55 个独立 ID；`01a10527`×3、`01a10596`×2 为同 ID 子代理拆分会话） |
+| 实机验证 | ✅ 实机 34 / ◐ 部分 5 / ✗ 未上机 38 |
+| 状态 | active 45 / reference 24 / junk 4 / superseded 4 |
+| 时间跨度 | 2026-09-29 → 2026-10-04（**77 条 jsonl / 71 个独立 ID**；`01a10527`×3、`01a105fb`×3、`01a10596`×2、`01a10736`×2 为同 ID 拆分会话） |
 
 ---
 
@@ -294,10 +297,8 @@ git log --oneline -10
 | 2026-09-30 | `01a0f292` | 存储：TF卡UHS与A2支持评估 | other | ✗ | reference | 控制器仅UHS-I(上限SDR104)、无UHS-II；主线/厂商内核都会启用A2 cache特性；现被3.3V降速workaround压到约1 | - | 结论基于既有 dmesg 与静态分析；白牌卡是否真A2无保证；SDR104静态写坏未解 |
 | 2026-09-30 | `01a0f29e` | WiFi-BT: 驱动支持与充电旁路 | wifi-bt | ✅ | active | vk26上机验证binderfs可用；BT频繁断连定位为QCA WCN7861 IBS深度睡眠；充电'净掉电'为USB输入限流100mA；Way | vk19,vk25,vk26 | Waydroid系统镜像未下成、容器未跑通；BT IBS睡眠调参未收口；充电限制依赖ADSP |
 | 2026-09-30 | `01a0f2be` | 虚拟化:EL2与安卓模拟器调研 | virtualization | ✗ | reference | 结论：SM8850 efisp漏洞不适用SM8750、hyp由XBL验签加载不可绕；EL2仍不可达，建议Waydroid容器+Alpine有包( | - | EL2/KVM判定为不可达属静态分析；Alpine包可用性未上机验证 |
-| 2026-10-01 | `01a0f533` | 会话：微信端汇报进度(空) | session-meta | ✗ | junk | 会话空，无实质助手结论 | - | - |
 | 2026-10-01 | `01a0f537` | 容器：Waydroid 编译与 Mesa 卡点 | waydroid | ✅ | active | 系统/vendor 镜像下载校验完成、waydroid init 成功，容器进到 Android 系统层；SurfaceFlinger 因 Me | vk27 | 8 字节补丁绕过 GPU 查表后引发 gpu hangcheck lockup；AOSP 树 sync 未完成，容器尚不可用。 |
 | 2026-10-01 | `01a0f5a0` | 音频:主线vs厂商AudioReach分析 | audio | ✗ | active | 发现厂商Android内核本身自带q6apm/audioreach(AudioReach SPF路径),正在diff厂商与主线APM协议实现,未 | - | 结论未闭环;主线apr按protection-domain门控/GPR_SVC_ADSP_CORE值待确认;tplg I2S子图未注册根因改动未 |
-| 2026-10-01 | `01a0f608` | 下载:续传(1T盘暂缓) | download-mirror | ✗ | junk | 会话无助手结论输出,任务未收口(1T盘测试中) | - | 1T盘仍在测试勿用;下载进度未报告 |
 | 2026-10-01 | `01a0f61c` | 下载:盘符纠正与sync续传 | download-mirror | ✗ | active | 纠正NVMe盘符漂移(系统盘/新盘互换),改用by-id定位;定位sync失败=Clash代理整体挂,直连恢复,下载续传 | - | 1T盘被fio全盘覆写且累计写扇区超7%,建议回读校验;盘符漂移易误擦系统盘 |
 | 2026-10-01 | `01a0f71b` | 下载:教育网出口矩阵+AOSP迁移 | download-mirror | ◐ | active | 修正http_proxy污染后实测出口矩阵:USTC镜像IPv6约100MB/s,GitHub只能走代理1.3-1.9MB/s;AOSP.git | - | GitHub仅代理1.3-1.9MB/s为瓶颈;CERNET路由未持久化;代理时好时坏致误判 |
 | 2026-10-01 | `01a0f779` | 审计：Waydroid sync 进度与前置 | probe-audit | ✗ | reference | sync 未完成约 48%，为真进度非卡死；构建依赖树约一半未检出故不能开工；发现看门狗停与 23G 废弃 repo。 | - | 在途 tmp_pack 129G，重启会丢失；盘空间看门狗未运行。 |
@@ -310,10 +311,7 @@ git log --oneline -10
 | 2026-10-01 | `01a0f845` | 文档:资源就绪盘点(Mesa/设备) | probe-audit | ✗ | reference | Mesa 26.1.8已构建并部署到设备(含A830表项),AOSP树550G;设备SSH在线内核7.2.0;新Mesa尚未上机验证 | - | 残留sync进程仍在跑;新Mesa未实测;内核树11文件未提交 |
 | 2026-10-01 | `01a0f868` | 会话:swarm规划与子代理派遣 | session-meta | ◐ | active | 规划并发并派出多worker;抢修harness宕机;修复项目分桶被劫持到lobcorp;回收EL2与Play报告 | - | harness曾掉线;分桶劫持靠父PID修复可能复发;子代理产出未独立验证 |
 | 2026-10-02 | `01a0fa45` | 温控:过热限频与并发限流 | thermal-charge | ✅ | active | ssh 47；CPU热区93–103°C而passive trip=105°C几乎不降温，负载52；执行限频后降至42–44°C；记录ustc_ | vk39,vk38 | 温控passive trip贴SoC上限、无有效cdev绑定，未固化降温策略 |
-| 2026-10-02 | `01a0fa4b` | 会话:OK测试 | session-meta | ✗ | junk | 6条消息，助手回复OK，无实质内容 | - | - |
-| 2026-10-02 | `01a0fa4b` | 测试：仅回 OK | session-meta | ✗ | junk | 仅回复 OK，无实质内容。 | - | - |
 | 2026-10-02 | `01a0fa6f` | 审计：未进主线驱动盘点 | probe-audit | ✗ | reference | 对比厂商529 compatible/297 ko，SoC层已越过；缺SLPI传感器栈(架构性放弃)、OEM私有、FM/SE；温控/旁路/DP实 | - | DP 被 DT disabled 因缺 ADSP altmode/UCSI 会 defer；相机差 config 是最高性价比下一步 |
-| 2026-10-02 | `01a0fabe` | 会话: 测试OK | session-meta | ✗ | junk | 返回OK，无实际工作 | - | - |
 | 2026-10-02 | `01a0fadc` | 环境:过检测env-pass与SukiSU | other | ✅ | active | adb 583/fastboot 614；装SukiSU 4.2.0与envpass_props模块、隐藏KSU管理器包名后Native Det | vk39 | 刷入第三方SUSFS boot_a后ABL拒启已回刷原厂；后门模块经用户决定不装；收尾未完成（设备仍在fastboot） |
 | 2026-10-02 | `01a0fc02` | 文档: AOSP资料迁移校验 | other | ✗ | reference | 1219裸库fsck全OK、1254项目齐全、24仓库抽检干净，数据零损失；清理23G冗余与4.1G tmp_pack；fstab加固需sudo | - | gcc-4.9仓库损坏(repo sync唯一失败源)已用remove-project规避；fstab nofail需用户sudo收尾 |
 | 2026-10-02 | `01a0fc50` | 路线：两轨分机决定与vk40准备 | bringup | ✗ | active | 落盘 ROUTE-DECISION：新机跑mainline/Waydroid、旧机做Android+AVF D轨；定全程不碰a槽、b槽纯RAM根 | vk40,vk39,vk38 | 仅有准备与结论，vk40 未上机；GPT手术未执行；D轨(旧机)未开工 |
@@ -326,7 +324,6 @@ git log --oneline -10
 | 2026-10-03 | `01a10110` | 解锁：BL解锁经验整理定稿 | unlock-avb | ✗ | reference | 出复盘-2026-10-03-BL解锁.md并统一11处口径：流程=降073→oem unlock→unlock_critical；关闭G1-0 | - | 流程依赖固件≤1.1.11.073 版本门；判定行易误读(flash unlock OKAY 非判定) |
 | 2026-10-03 | `01a10158` | 持久根:U2上机与GPT手术 | persistence | ✅ | active | ssh 247；userdata 449.7→256.7GiB、新增linux17=193GiB写后CRC OK；vk40持久b槽直启Phosh | vk40,vk39,vk38 | 熄屏/睡眠→整机重启未解（G1-22/Q21）；改idle-delay复现致重启环、SSH窗口过短，设备一度不可达 |
 | 2026-10-03 | `01a10185` | 会话: 项目整理与git纳管 | session-meta | ✗ | active | git init纳管293文件；导出权威内核补丁；建RESOURCES.md §3台账；发现patches 0001-011不能完整重建内核树；发起swarm | vk40,vk39,vk38 | vk40引入未上机验证的历史新bug；旧会话归档与清理未执行；patch回导边界依赖单份导出 |
-| 2026-10-03 | `01a101b5` | 会话：问候（空） | session-meta | ✗ | junk | 仅「你好」，无实质内容 | - | - |
 | 2026-10-03 | `01a101bf` | 审计：vk34后增量第二遍（AUDIT2） | kernel-audit | ✅ | active | 逐hunk分类N1–N4；建V1/V2二分镜像；取得可量化回归 vk40re vblank=6/PPM=1 vs vk34recon 0/0；落盘AUDIT2 | vk40,vk34 | 静默复位间歇；V1/V2未取有效样本；取证钩子有观察者效应已回退 |
 | 2026-10-03 | `01a101ee` | 审计：vk34后增量第三遍（AUDIT3） | kernel-audit | ✅ | active | 审计前序工具调用；排除「副作用在轮询内」(0条)；查明boot_b实为vk40内核致版本归属污染；备vk34recon基线 | vk40,vk34 | reboot与轮询同命令被harness杀死(4/10)；跨版本复位比较作废 |
 | 2026-10-03 | `01a101f3` | 引导：Linux→fastboot能力核实 | flashctl | ◐ | superseded | 本地检索确认BCB bootonce不被采纳、ABL无明文串；给出flash-b.sh免fastboot做A/B | vk40,vk34 | 「能力不存在」结论后被PSCI vendor reset推翻（见01a1021c） |
@@ -349,6 +346,21 @@ git log --oneline -10
 | 2026-10-04 | `01a10596` | 子代理：史记官 vk1–vk13 史料 | vcs | ✗ | reference | 为回填供版本史料（base1–vk13） | - | 子会话 |
 | 2026-10-04 | `01a10596` | 子代理：史记官 vk14–vk34 史料 | vcs | ✗ | reference | 为回填供版本史料（vk14–vk34） | - | 子会话 |
 | 2026-10-04 | `01a105d1` | 会话：重构复核三维度 + P0/P1 落地 + 快环接通 | docs-reorg | ✅ | active | 复核（子代理过期/锁旁路/manifest 断链）→ agents+missions 重写、flash-b/cycle 补锁、`!out/*.manifest`、fragment 应用、vk50 构建+kexec 首测 | vk50 | 本会话 |
+| 2026-10-04 | `01a105f5` | 会话：精简审计执行（产物 -6G） | cleanup | ✗ | reference | 执行 E1/E2/E4/E5/S1/C1/C2：out 旧镜像/中间物/死脚本/junk 会话清理；**补回 `extract-avfpubkey.py`**（自测 PASS）；check-doctor FAIL=0；提交 `76c444c` | vk50 | E3/E6/S2-S4 未批；`archive/topics/清理清单-2026-10-04-精简审计.md` |
+| 2026-10-04 | `01a105fb` | 子代理：只读审计（会话清理候选） | audit | ✗ | reference | 会话/复盘覆盖归属审计，产出可删候选清单（未删） | - | 子会话；被 01a105f5 采纳 |
+| 2026-10-04 | `01a105fb` | 子代理：只读审计（文档精简） | audit | ✗ | reference | 6 份文档全读：过时数字（51/59/68 会话数、33/57 镜像数）、死链（`extract-avfpubkey.py`、`config-vk-modular`、`net-up-manual.sh`、flashing-bundle 路径）、SSOT 违规 | - | 子会话；多数已修 |
+| 2026-10-04 | `01a105fb` | 子代理：只读审计（.pi 配置） | audit | ✗ | reference | agents/missions/skills/settings 审计：93 处路径引用 0 真死链（missions/agents）、**2 处 SKILL 死链**（已修）、HINDSIGHT +5 行值得提交 | - | 子会话；check-doctor 已扩覆盖 SKILL |
+| 2026-10-04 | `01a10635` | 会话：相机出流 + kexec 定论 + G1-22 根因 | camera-kernel | ✅ | active | **G1-5 前后摄连续出帧**（根因=csiphy/vfe 默认格式与 sensor raw 不匹配+链路未使能）；**kexec 定论硬挂不可用**；vk50 `LOCALVERSION=-vk50` 重建 1513 模块对齐；**G1-22 根因=vk40 音频调试插桩+热区**、vk42 干净重落免疫 | vk50 | `CAMERA-2026-10-05.md`、`G1-22-2026-10-05.md` |
+| 2026-10-04 | `01a1068c` | 会话：并发任务基线+fork 工作流 | vcs | ✗ | reference | `lane.sh`/`.githooks/commit-msg`/`versions/vk-registry.tsv`/`.pi/CONCURRENCY.md` 落地（提交 `bfe0002`）；修「扫 out 猜版本号」撞车根因 | - | 冒烟验证通过 |
+| 2026-10-04 | `01a106b9` | 会话：持久根模块对齐 + 干净内核判定 | kmod-clean | ✅ | active | 25 模块部署到运行内核 → 相机/音频在持久根复现；确认 **boot_b=vk47 `-dirty` 镜像**；**干净重建实测免疫**（Q24）；出 `bootslot-b/boot_b-clean.img`（待用户刷） | vk47 | 待用户 `fastboot flash boot_b`；`KMOD-ALIGN-2026-10-05.md` |
+| 2026-10-04 | `01a1071b` | 会话：（空「可以继续了」） | session-meta | ✗ | junk | 仅一句用户消息，无助手产出 | - | - |
+| 2026-10-04 | `01a1072e` | 会话：编排桌面四问+bootchain（内联侦察） | desktop-bootchain | ◐ | active | 编排 G1-26/27/28（dt-ui）+ G1-29（bootchain）；内联定位：dconf 未落错 HOME、**无 logind 会话**、gsd-power 在 **session bus**、elogind SetBrightness 任意 name 均 EISDIR | - | 子代理受预算墙；转内联 |
+| 2026-10-04 | `01a10736` | 子代理：bootchain（G1-29 间接引导层） | bootchain | ✗ | reference | 四代 UEFI **被拆成 `uefi_a`/`imagefv_a`/`abl_a` 由 XBL 加载**、ABL 自身不扫 FAT；路线 C（min initramfs）现在可做、A（自建可自举 UEFI 壳）有原型；交付 `scripts/grubfat-*.sh`；`BOOTCHAIN-2026-10-05.md`；vk51 | vk51 | lane 已 merge；E1/E3→E4→E5 待排期 |
+| 2026-10-04 | `01a10736` | 子代理：dt-ui（G1-26/27/28 桌面用户态） | desktop-ui | ✅ | reference | **GTK3 无头探针证实 `Adwaita-dark`→回退浅色**（应 `Adwaita`+prefer-dark）；accent 被 phosh guard 拦（同名问题）；亮度=elogind 无 session/VT；gsettings 须 `dbus-run-session`。**lane 未提交、会话中断** → 证据父代落 `DT-UI-2026-10-05.md` | - | lane `dt-ui` 仍 open（无改动） |
+| 2026-10-04 | `01a10744` | 会话：dt-ui 重派（空） | session-meta | ✗ | junk | 仅派发词，0 助手消息（预算墙/模型解析失败） | - | - |
+| 2026-10-04 | `01a1074a` | 会话：dt-ui 重派（空） | session-meta | ✗ | junk | 仅派发词，0 助手消息 | - | - |
+| 2026-10-04 | `01a10759` | 会话：编排（预算墙中断） | session-meta | ✗ | junk | 编排被 `ustc-ai-3` 预算墙打断；结论被 01a1072e 取代 | - | - |
+| 2026-10-04 | `01a10789` | 会话：进度整理 + 卡点 + 会话成果汇总 | session-meta | ✗ | active | 汇总 12 个未收录会话的成果；补 `DT-UI-2026-10-05.md`、PITFALLS #103、TASKS G1-26/27/28、登记 3 份 EDK2-Gunyah 参考 | - | 本会话 |
 
 ---
 
@@ -379,7 +391,9 @@ git log --oneline -10
 
 ---
 
-### 4. 删除候选（**等任务 #2 完成后再执行**，需你确认）
+### 4. 删除候选（**S1 已执行**：junk 会话已删；其余待确认）
+
+> **2026-10-04**：S1 的 6 条 junk/空会话（`01a0f533`/`01a0f608`/`01a0fa4b`×2/`01a0fabe`/`01a101b5`）**已删除**（见 `archive/topics/清理清单-2026-10-04-精简审计.md`），本表仅留未批项。
 
 | 类型 | ID | 日期 | 现名 | 处置建议 |
 |---|---|---|---|---|
