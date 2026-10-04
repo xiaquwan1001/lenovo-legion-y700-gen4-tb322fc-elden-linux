@@ -178,6 +178,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 - **纳管（track）**：文档、脚本、内核补丁与 config、AI 记忆/技能/任务、小体积证据。
 - **排除（ignore）**：上游 clone、构建产物、可再生成物、大二进制 dump、运行时状态、设备敏感数据。
 - git 仓库根 = 本目录；分支 `main`。上游内核树 `geekidos-linux/` **不是** submodule，其进度以 `patches/` 为准。
+- **异地备份（2026-10-04 起）**：顶层仓 `origin` = `git@git.ustc.edu.cn:xqh/y700-elden`（@xqh，SSH key `~/.ssh/id_ed25519_gitlab_ustc`，全分支+标签）；内核仓 `gitlab` remote = `git@git.ustc.edu.cn:xqh/y700-elden-kernel`（分支 `main` = 合成根 + 9 增量，因 shallow 不能直推）。映射见 `archive/2026-10-04-git-backfill/VERSION-MAP.txt`，内核增量补丁集见 `patches/kernel-history/`。
 - ⚠️ gitignore 注释必须独占一行（行尾 `#` 会被当作模式一部分，静默失效）。
 
 ### 2. 顶层台账
@@ -188,7 +189,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `.pi/{skills,memory,missions,agents}` `.pi/README.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/子代理任务卡/模型配置（分工见 `.pi/README.md`）。⚠️ `pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
 | `.pi/sessions/`（59 个 jsonl） | 67 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
-| `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + **新：工作树全量 patch** |
+| `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档） |
 | `archive/` | 1.1 M | ✅ track | 过程证据（57 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
 | `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#98 + §0 零号纪律 + §15 废弃登记 |
 | `RESOURCES.md §4` | 21 K | ✅ track | 54 会话索引 + 内核实机验证边界 |

@@ -1,0 +1,1187 @@
+From f681b616a3af54d3c98f011a477e1ea030f9fdea Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sat, 3 Oct 2026 20:39:34 +0800
+Subject: [PATCH 3/3] =?UTF-8?q?elden:=20v1=20=3D=20vk34=20=E5=9F=BA?=
+ =?UTF-8?q?=E7=BA=BF=20+=20DTS=20=E5=88=86=E7=BA=A7=E7=83=AD=20trip=20only?=
+ =?UTF-8?q?=EF=BC=88=E9=9F=B3=E9=A2=91=204=20=E6=96=87=E4=BB=B6=E5=85=A8?=
+ =?UTF-8?q?=E9=83=A8=E5=9B=9E=E9=80=80=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 828 ++++++++++++++++--
+ 1 file changed, 733 insertions(+), 95 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 863c95b90..3d7dd71b2 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -26,11 +26,39 @@ / {
+ 
+ 	/* Stock CPU/GPU thermal HAL junction limit: 105 C, 5 C hysteresis. */
+ 	thermal-zones {
++		/*
++		 * Graded passive cooling (recalibrated 2026-10-02).
++		 * State == cpufreq/devfreq cdev level (higher = lower freq).
++		 *   perf cluster (cpu0, max 3.53 GHz):
++		 *     70 C -> ~2400 MHz (68%)  82 C -> ~1786 MHz (51%)
++		 *     90 C -> ~1363 MHz (39%) 105 C -> min 384 MHz
++		 *   prime cluster (cpu6, max 4.09 GHz):
++		 *     70 C -> ~2842 MHz (69%)  82 C -> ~1958 MHz (48%)
++		 *     90 C -> ~1402 MHz (34%) 105 C -> min 1018 MHz
++		 *   GPU (max 1100 MHz):
++		 *     70 C -> 734 MHz  82 C -> 525 MHz  90 C -> 389 MHz  105 C -> 160 MHz
++		 * hot(120)/critical(125) trips inherited from sm8750.dtsi, untouched.
++		 */
+ 		cpu-0-0-0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_0_0_passive: passive {
++				cpu_0_0_0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_0_0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_0_0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_0_0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -39,17 +67,43 @@ cpu_0_0_0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_0_0_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_0_0_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_0_0_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_0_0_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_0_0_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-0-1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_0_1_passive: passive {
++				cpu_0_0_1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_0_1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_0_1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_0_1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -58,17 +112,43 @@ cpu_0_0_1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_0_1_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_0_1_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_0_1_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_0_1_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_0_1_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-1-0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_1_0_passive: passive {
++				cpu_0_1_0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_1_0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_1_0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_1_0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -77,17 +157,43 @@ cpu_0_1_0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_1_0_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_1_0_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_1_0_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_1_0_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_1_0_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-1-1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_1_1_passive: passive {
++				cpu_0_1_1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_1_1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_1_1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_1_1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -96,17 +202,43 @@ cpu_0_1_1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_1_1_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_1_1_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_1_1_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_1_1_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_1_1_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-2-0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_2_0_passive: passive {
++				cpu_0_2_0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_2_0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_2_0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_2_0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -115,17 +247,43 @@ cpu_0_2_0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_2_0_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_2_0_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_2_0_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_2_0_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_2_0_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-2-1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_2_1_passive: passive {
++				cpu_0_2_1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_2_1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_2_1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_2_1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -134,17 +292,43 @@ cpu_0_2_1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_2_1_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_2_1_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_2_1_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_2_1_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_2_1_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-3-0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_3_0_passive: passive {
++				cpu_0_3_0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_3_0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_3_0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_3_0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -153,17 +337,43 @@ cpu_0_3_0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_3_0_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_3_0_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_3_0_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_3_0_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_3_0_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-3-1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_3_1_passive: passive {
++				cpu_0_3_1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_3_1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_3_1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_3_1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -172,17 +382,43 @@ cpu_0_3_1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_3_1_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_3_1_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_3_1_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_3_1_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_3_1_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-4-0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_4_0_passive: passive {
++				cpu_0_4_0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_4_0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_4_0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_4_0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -191,17 +427,43 @@ cpu_0_4_0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_4_0_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_4_0_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_4_0_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_4_0_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_4_0_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-4-1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_4_1_passive: passive {
++				cpu_0_4_1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_4_1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_4_1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_4_1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -210,17 +472,43 @@ cpu_0_4_1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_4_1_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_4_1_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_4_1_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_4_1_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_4_1_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-5-0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_5_0_passive: passive {
++				cpu_0_5_0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_5_0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_5_0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_5_0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -229,17 +517,43 @@ cpu_0_5_0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_5_0_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_5_0_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_5_0_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_5_0_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_5_0_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-0-5-1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_0_5_1_passive: passive {
++				cpu_0_5_1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_5_1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_5_1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_0_5_1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -248,17 +562,43 @@ cpu_0_5_1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_0_5_1_passive>;
+-					cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_0_5_1_passive0>;
++					cooling-device = <&cpu0 5 5>;
++				};
++				map1 {
++					trip = <&cpu_0_5_1_passive1>;
++					cooling-device = <&cpu0 8 8>;
++				};
++				map2 {
++					trip = <&cpu_0_5_1_passive2>;
++					cooling-device = <&cpu0 10 10>;
++				};
++				map3 {
++					trip = <&cpu_0_5_1_passive3>;
++					cooling-device = <&cpu0 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-1-0-0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_1_0_0_passive: passive {
++				cpu_1_0_0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_0_0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_0_0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_0_0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -267,17 +607,43 @@ cpu_1_0_0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_1_0_0_passive>;
+-					cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_1_0_0_passive0>;
++					cooling-device = <&cpu6 7 7>;
++				};
++				map1 {
++					trip = <&cpu_1_0_0_passive1>;
++					cooling-device = <&cpu6 11 11>;
++				};
++				map2 {
++					trip = <&cpu_1_0_0_passive2>;
++					cooling-device = <&cpu6 13 13>;
++				};
++				map3 {
++					trip = <&cpu_1_0_0_passive3>;
++					cooling-device = <&cpu6 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-1-0-1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_1_0_1_passive: passive {
++				cpu_1_0_1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_0_1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_0_1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_0_1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -286,17 +652,43 @@ cpu_1_0_1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_1_0_1_passive>;
+-					cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_1_0_1_passive0>;
++					cooling-device = <&cpu6 7 7>;
++				};
++				map1 {
++					trip = <&cpu_1_0_1_passive1>;
++					cooling-device = <&cpu6 11 11>;
++				};
++				map2 {
++					trip = <&cpu_1_0_1_passive2>;
++					cooling-device = <&cpu6 13 13>;
++				};
++				map3 {
++					trip = <&cpu_1_0_1_passive3>;
++					cooling-device = <&cpu6 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-1-1-0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_1_1_0_passive: passive {
++				cpu_1_1_0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_1_0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_1_0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_1_0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -305,17 +697,43 @@ cpu_1_1_0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_1_1_0_passive>;
+-					cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_1_1_0_passive0>;
++					cooling-device = <&cpu6 7 7>;
++				};
++				map1 {
++					trip = <&cpu_1_1_0_passive1>;
++					cooling-device = <&cpu6 11 11>;
++				};
++				map2 {
++					trip = <&cpu_1_1_0_passive2>;
++					cooling-device = <&cpu6 13 13>;
++				};
++				map3 {
++					trip = <&cpu_1_1_0_passive3>;
++					cooling-device = <&cpu6 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		cpu-1-1-1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				cpu_1_1_1_passive: passive {
++				cpu_1_1_1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_1_1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_1_1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				cpu_1_1_1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -324,17 +742,43 @@ cpu_1_1_1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&cpu_1_1_1_passive>;
+-					cooling-device = <&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&cpu_1_1_1_passive0>;
++					cooling-device = <&cpu6 7 7>;
++				};
++				map1 {
++					trip = <&cpu_1_1_1_passive1>;
++					cooling-device = <&cpu6 11 11>;
++				};
++				map2 {
++					trip = <&cpu_1_1_1_passive2>;
++					cooling-device = <&cpu6 13 13>;
++				};
++				map3 {
++					trip = <&cpu_1_1_1_passive3>;
++					cooling-device = <&cpu6 15 15>;
+ 				};
+ 			};
+ 		};
+-
+ 		gpuss0-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				gpuss0_passive: passive {
++				gpuss0_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss0_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss0_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss0_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -343,17 +787,43 @@ gpuss0_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&gpuss0_passive>;
+-					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&gpuss0_passive0>;
++					cooling-device = <&gpu 5 5>;
++				};
++				map1 {
++					trip = <&gpuss0_passive1>;
++					cooling-device = <&gpu 8 8>;
++				};
++				map2 {
++					trip = <&gpuss0_passive2>;
++					cooling-device = <&gpu 10 10>;
++				};
++				map3 {
++					trip = <&gpuss0_passive3>;
++					cooling-device = <&gpu 13 13>;
+ 				};
+ 			};
+ 		};
+-
+ 		gpuss1-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				gpuss1_passive: passive {
++				gpuss1_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss1_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss1_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss1_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -362,17 +832,43 @@ gpuss1_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&gpuss1_passive>;
+-					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&gpuss1_passive0>;
++					cooling-device = <&gpu 5 5>;
++				};
++				map1 {
++					trip = <&gpuss1_passive1>;
++					cooling-device = <&gpu 8 8>;
++				};
++				map2 {
++					trip = <&gpuss1_passive2>;
++					cooling-device = <&gpu 10 10>;
++				};
++				map3 {
++					trip = <&gpuss1_passive3>;
++					cooling-device = <&gpu 13 13>;
+ 				};
+ 			};
+ 		};
+-
+ 		gpuss2-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				gpuss2_passive: passive {
++				gpuss2_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss2_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss2_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss2_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -381,17 +877,43 @@ gpuss2_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&gpuss2_passive>;
+-					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&gpuss2_passive0>;
++					cooling-device = <&gpu 5 5>;
++				};
++				map1 {
++					trip = <&gpuss2_passive1>;
++					cooling-device = <&gpu 8 8>;
++				};
++				map2 {
++					trip = <&gpuss2_passive2>;
++					cooling-device = <&gpu 10 10>;
++				};
++				map3 {
++					trip = <&gpuss2_passive3>;
++					cooling-device = <&gpu 13 13>;
+ 				};
+ 			};
+ 		};
+-
+ 		gpuss3-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				gpuss3_passive: passive {
++				gpuss3_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss3_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss3_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss3_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -400,17 +922,43 @@ gpuss3_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&gpuss3_passive>;
+-					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&gpuss3_passive0>;
++					cooling-device = <&gpu 5 5>;
++				};
++				map1 {
++					trip = <&gpuss3_passive1>;
++					cooling-device = <&gpu 8 8>;
++				};
++				map2 {
++					trip = <&gpuss3_passive2>;
++					cooling-device = <&gpu 10 10>;
++				};
++				map3 {
++					trip = <&gpuss3_passive3>;
++					cooling-device = <&gpu 13 13>;
+ 				};
+ 			};
+ 		};
+-
+ 		gpuss4-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				gpuss4_passive: passive {
++				gpuss4_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss4_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss4_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss4_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -419,17 +967,43 @@ gpuss4_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&gpuss4_passive>;
+-					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&gpuss4_passive0>;
++					cooling-device = <&gpu 5 5>;
++				};
++				map1 {
++					trip = <&gpuss4_passive1>;
++					cooling-device = <&gpu 8 8>;
++				};
++				map2 {
++					trip = <&gpuss4_passive2>;
++					cooling-device = <&gpu 10 10>;
++				};
++				map3 {
++					trip = <&gpuss4_passive3>;
++					cooling-device = <&gpu 13 13>;
+ 				};
+ 			};
+ 		};
+-
+ 		gpuss5-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				gpuss5_passive: passive {
++				gpuss5_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss5_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss5_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss5_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -438,17 +1012,43 @@ gpuss5_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&gpuss5_passive>;
+-					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&gpuss5_passive0>;
++					cooling-device = <&gpu 5 5>;
++				};
++				map1 {
++					trip = <&gpuss5_passive1>;
++					cooling-device = <&gpu 8 8>;
++				};
++				map2 {
++					trip = <&gpuss5_passive2>;
++					cooling-device = <&gpu 10 10>;
++				};
++				map3 {
++					trip = <&gpuss5_passive3>;
++					cooling-device = <&gpu 13 13>;
+ 				};
+ 			};
+ 		};
+-
+ 		gpuss6-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				gpuss6_passive: passive {
++				gpuss6_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss6_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss6_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss6_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -457,17 +1057,43 @@ gpuss6_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&gpuss6_passive>;
+-					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&gpuss6_passive0>;
++					cooling-device = <&gpu 5 5>;
++				};
++				map1 {
++					trip = <&gpuss6_passive1>;
++					cooling-device = <&gpu 8 8>;
++				};
++				map2 {
++					trip = <&gpuss6_passive2>;
++					cooling-device = <&gpu 10 10>;
++				};
++				map3 {
++					trip = <&gpuss6_passive3>;
++					cooling-device = <&gpu 13 13>;
+ 				};
+ 			};
+ 		};
+-
+ 		gpuss7-thermal {
+ 			polling-delay-passive = <100>;
+ 
+ 			trips {
+-				gpuss7_passive: passive {
++				gpuss7_passive0: passive0 {
++					temperature = <70000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss7_passive1: passive1 {
++					temperature = <82000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss7_passive2: passive2 {
++					temperature = <90000>;
++					hysteresis = <3000>;
++					type = "passive";
++				};
++				gpuss7_passive3: passive3 {
+ 					temperature = <105000>;
+ 					hysteresis = <5000>;
+ 					type = "passive";
+@@ -476,8 +1102,20 @@ gpuss7_passive: passive {
+ 
+ 			cooling-maps {
+ 				map0 {
+-					trip = <&gpuss7_passive>;
+-					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++					trip = <&gpuss7_passive0>;
++					cooling-device = <&gpu 5 5>;
++				};
++				map1 {
++					trip = <&gpuss7_passive1>;
++					cooling-device = <&gpu 8 8>;
++				};
++				map2 {
++					trip = <&gpuss7_passive2>;
++					cooling-device = <&gpu 10 10>;
++				};
++				map3 {
++					trip = <&gpuss7_passive3>;
++					cooling-device = <&gpu 13 13>;
+ 				};
+ 			};
+ 		};

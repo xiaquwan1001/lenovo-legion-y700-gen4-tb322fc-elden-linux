@@ -1,0 +1,55 @@
+From 5a70ade46a886dc1edd98519149e02e44a9fc879 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sun, 4 Oct 2026 11:18:20 +0800
+Subject: [PATCH 9/9] =?UTF-8?q?elden:=20vk48=20draft=20=E2=80=94=20WCD939x?=
+ =?UTF-8?q?=20=E8=80=B3=E6=9C=BA=E6=92=AD=E6=94=BE=E9=80=9A=E8=B7=AF?=
+ =?UTF-8?q?=EF=BC=88RX=5FCODEC=5FDMA=5FRX=5F0=EF=BC=8C=E6=9C=AA=E9=AA=8C?=
+ =?UTF-8?q?=E8=AF=81=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+照上游 SM8750-MTP：新增 wcd-playback-dai-link（cpu RX_CODEC_DMA_RX_0，
+codec wcd939x(0)+swr1+lpass_rxmacro）+ 路由 IN1_HPHL/IN2_HPHR。
+本机无 3.5mm、缺 USB-C 模拟耳机硬件，听声未验收。见
+archive/topics/HEADSET-HW-2026-10-04.md
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts      | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 12a13defb..d62a7be0a 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1129,6 +1129,8 @@ sound {
+ 		widgets = "Speaker", "Left Speaker", "Speaker", "Right Speaker";
+ 		audio-routing = "Left Speaker", "Left OUT",
+ 				"Right Speaker", "Right OUT",
++				"IN1_HPHL", "HPHL_OUT",
++				"IN2_HPHR", "HPHR_OUT",
+ 				"AMIC1", "MIC BIAS1",
+ 				"AMIC2", "MIC BIAS2",
+ 				"AMIC3", "MIC BIAS3",
+@@ -1149,6 +1151,22 @@ platform {
+ 			};
+ 		};
+ 
++		/* WCD939x headphone playback: ADSP RX_CODEC_DMA_RX_0 -> RX macro
++		 * (swr1) -> WCD939x DAC -> HPHL/HPHR.  Mirrors the upstream
++		 * SM8750-MTP wcd-playback-dai-link. */
++		wcd-playback-dai-link {
++			link-name = "WCD Playback";
++			cpu {
++				sound-dai = <&q6apmbedai RX_CODEC_DMA_RX_0>;
++			};
++			codec {
++				sound-dai = <&wcd939x 0>, <&swr1 0>, <&lpass_rxmacro 0>;
++			};
++			platform {
++				sound-dai = <&q6apm>;
++			};
++		};
++
+ 		/* Analog mic capture: AMIC -> WCD939x ADC -> SWR TX (swr2) -> TX
+ 		 * macro -> ADSP.  This is the real mic path on the Y700 Gen4 (the
+ 		 * stock audio-routing only lists AMIC and MIC BIAS, no DMIC). */

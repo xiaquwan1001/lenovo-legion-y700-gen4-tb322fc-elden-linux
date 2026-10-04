@@ -47,3 +47,33 @@ fe2fb6c 2026-09-28 22:35:47 +0800  vk2 gpu: 撤销 Mesa chip-id 补丁 → Turni
 d387b82 2026-09-28 21:35:20 +0800  fixed3 bringup: 恢复 ARCH_QCOM/splash_region/eUSB2/背光 → 首次进 userspace+USB+UFS
 8f128d8 2026-09-28 21:03:04 +0800  diag diag: 诊断 initramfs 暴露出 olddefconfig 误删 ARCH_QCOM
 343a7fe 2026-09-28 20:05:59 +0800  base1 bringup: 首次打包内核+busybox initramfs（build-boot.sh）
+
+# ============================================================================
+# 2026-10-04 异地备份（学校 GitLab，SSH key id_ed25519_gitlab_ustc，账号 @xqh）
+# ============================================================================
+# 顶层仓  https://git.ustc.edu.cn/xqh/y700-elden        (origin, 全部分支+标签)
+# 内核仓  https://git.ustc.edu.cn/xqh/y700-elden-kernel (gitlab remote, 分支 main)
+#
+# 内核仓为何是「合成根」：本地内核树是 SHALLOW clone（.git/shallow 嫁接于
+#   ba28ec16f01f59ba8f5099e8af9e95b061fc5c78），GitLab 服务器拒绝 shallow push
+#   （shallow update not allowed）。故镜像 main = 合成根 1fd8b9e91（树 = 上游
+#   ba28ec16f 的树，仅此一个提交，无父）+ 9 个 elden 增量提交重放。非 shallow、
+#   可正常 clone。上游全量祖先仍见 https://github.com/GEEKiDoS/linux。
+#   本地 gitlab remote: git@git.ustc.edu.cn:xqh/y700-elden-kernel.git
+#
+# 原（浅克隆）sha -> GitLab 镜像 sha：
+6ef87e6a88689f72339bddfd47237c82c9f510ee 11cd1dbd4f48d45218ce6467f24dc7192751b6fe  elden: vk40 现场状态
+e72a036ed4beb3e72f0d22b85e8216b112123426 bd46a3317b39b6aff82698be2705b96b91b094fc  elden/vk34-recon: 回退 vk34 之后增量
+4b643f1695c530e37cd726b4e82677f6c947cb9c e7453f538e285d2faeaf27db1306c759e84a3385  elden: vk41 PSCI reset hook
+eb432f18a0d1e8bd21b6222e029a43c33c1ae9cc 33a5ab8189bb6532672b8700af65ad5e6925e5e4  elden: vk42 干净重落
+26cc186e94851028f828890e8cef1c57532e857e ab827c9cd3e852068a01d4b4b0db1c4e2550316b  elden: vk44 DMIC capture
+a923477be3a9a63fbfd2e54b747f7c2d690cca2f ed0999550e21c27db78c52cff67ac3ae042a3f6c  elden: vk45 VA macro supply
+4c68eb5ed4e3677090c4619b20987f608b0f8ad8 a393a088d4d72fef5240191900aa59d68690290c  elden: vk46 WCD939x 音频编解码
+bd114ca335e1b233c89800703cfa710d8a371641 b905585bc02d3473da9e21c292fcf78ccbcd78d2  elden: vk47 WCD939x 采集
+5a70ade46a886dc1edd98519149e02e44a9fc879 fe54fcfffee81608b378ce4481919ee06fddef30  elden: vk48 draft
+# 合成根：1fd8b9e91882d5be3792896b561b9583fe1416ae
+#
+# 增量补丁集（可脱离 git 恢复）：patches/kernel-history/<branch>/*.patch
+#   每支 = format-patch <base>..<branch>，在原树（或 v7.2-elden）上 git am 即还原。
+#   elden/vk42-audio-thermal=9, vk41-psci-reboot=3, vk34-recon=2,
+#   v1-thermal-only=3, v2-audio-only=3, vk40-2026-10-03=1

@@ -1,0 +1,225 @@
+From 951c5f1c2ca537d4910d1633545f5aed1fde8da9 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sat, 3 Oct 2026 20:39:34 +0800
+Subject: [PATCH 3/3] =?UTF-8?q?elden:=20v2=20=3D=20vk34=20=E5=9F=BA?=
+ =?UTF-8?q?=E7=BA=BF=20+=20post-vk34=20=E9=9F=B3=E9=A2=91=204=20=E6=96=87?=
+ =?UTF-8?q?=E4=BB=B6=20only=EF=BC=88DTS=20=E7=83=AD=20trip=20=E5=9B=9E?=
+ =?UTF-8?q?=E9=80=80=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ sound/soc/qcom/qdsp6/audioreach.c       | 13 ++++++++
+ sound/soc/qcom/qdsp6/q6apm-lpass-dais.c | 40 ++++++++++++++++++++++++-
+ sound/soc/qcom/qdsp6/q6apm.c            | 24 ++++++++++-----
+ sound/soc/qcom/qdsp6/q6prm.c            |  6 +++-
+ 4 files changed, 73 insertions(+), 10 deletions(-)
+
+diff --git a/sound/soc/qcom/qdsp6/audioreach.c b/sound/soc/qcom/qdsp6/audioreach.c
+index 29af46e1d..e10706909 100644
+--- a/sound/soc/qcom/qdsp6/audioreach.c
++++ b/sound/soc/qcom/qdsp6/audioreach.c
+@@ -593,6 +593,12 @@ void *audioreach_alloc_graph_pkt(struct q6apm *apm,
+ 
+ 	audioreach_populate_graph(apm, info, &params, sg_list, num_sub_graphs);
+ 
++	dev_info(apm->dev, "GRAPH_OPEN pkt: info->id=%u sgs=%d cont=%d mods=%d conns=%d payload=%d pkt_size=%d\n",
++		 info->id, num_sub_graphs, num_containers, num_modules, num_connections,
++		 payload_size, pkt->hdr.pkt_size);
++	print_hex_dump(KERN_INFO, "GRAPH_OPEN: ", DUMP_PREFIX_OFFSET, 16, 1,
++		       pkt, pkt->hdr.pkt_size, false);
++
+ 	return pkt;
+ }
+ EXPORT_SYMBOL_GPL(audioreach_alloc_graph_pkt);
+@@ -636,6 +642,8 @@ int audioreach_send_cmd_sync(struct device *dev, gpr_device_t *gdev,
+ 		/* DSP successfully finished the command */
+ 		rc = 0;
+ 	}
++	dev_info(dev, "DBG cmd op=%x rsp=%x status=%x rc=%d\n", hdr->opcode,
++		 result->opcode, result->status, rc);
+ 
+ err:
+ 	mutex_unlock(cmd_lock);
+@@ -1060,6 +1068,11 @@ static int audioreach_i2s_set_media_format(struct q6apm_graph *graph,
+ 	param_data->param_size = fs_sz - APM_MODULE_PARAM_DATA_SIZE;
+ 	fs_cfg->frame_size_factor = 1;
+ 
++	dev_info(graph->dev, "DBG i2s_media_fmt iid=%x lpaif=%u idx=%u sd=%u ws_src=%u rate=%u bw=%u ch=%u dfmt=%u\n",
++		 module->instance_id, module->hw_interface_type, module->hw_interface_idx,
++		 module->sd_line_idx, intf_cfg->cfg.ws_src, cfg->sample_rate, cfg->bit_width,
++		 cfg->num_channels, module->data_format);
++
+ 	return q6apm_send_cmd_sync(graph->apm, pkt, 0);
+ }
+ 
+diff --git a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
+index e68e8b000..f80ef3873 100644
+--- a/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
++++ b/sound/soc/qcom/qdsp6/q6apm-lpass-dais.c
+@@ -211,6 +211,7 @@ static int q6apm_lpass_dai_trigger(struct snd_pcm_substream *substream, int cmd,
+ 	case SNDRV_PCM_TRIGGER_RESUME:
+ 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+ 		if (!dai_data->is_port_started[dai->id]) {
++			dev_info(dai->dev, "DBG BE trigger graph_start id=%d\n", dai->id);
+ 			ret = q6apm_graph_start(dai_data->graph[dai->id]);
+ 			if (ret < 0)
+ 				dev_err(dai->dev, "Failed to start APM port %d\n", dai->id);
+@@ -325,6 +326,8 @@ static int q6i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id, unsigned int fr
+ 		return -EINVAL;
+ 	}
+ 
++	dev_info(dai->dev, "DBG set_sysclk clk_id=%d freq=%u sysclk=%px\n", clk_id, freq, sysclk);
++
+ 	if (sysclk) {
+ 		ret = clk_set_rate(sysclk, freq);
+ 		if (ret) {
+@@ -345,9 +348,44 @@ static int q6i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id, unsigned int fr
+ 		*enabled = true;
+ 	}
+ 
++	dev_info(dai->dev, "DBG set_sysclk done ret=%d enabled=%d\n", ret, sysclk ? 1 : 0);
+ 	return ret;
+ }
+ 
++static int q6i2s_prepare(struct snd_pcm_substream *substream, struct snd_soc_dai *dai)
++{
++	struct q6apm_lpass_dai_data *dai_data = dev_get_drvdata(dai->dev);
++	int rc;
++
++	rc = q6apm_lpass_dai_prepare(substream, dai);
++	if (rc)
++		return rc;
++
++	/*
++	 * Start the graph at prepare time, like the vendor q6apm stack and
++	 * the legacy q6afe stack do.  The MI2S interface clocks only drive
++	 * the pads once APM_CMD_GRAPH_START has completed, so the codec DAPM
++	 * power-up (which runs later, at trigger time) needs a live bit
++	 * clock; and the ADSP expects the sink (BE) graph to be started
++	 * before the source (FE) graph, which also starts in its own prepare.
++	 * The trigger callback keeps its start as a fallback, guarded by
++	 * is_port_started.
++	 */
++	rc = q6apm_graph_start(dai_data->graph[dai->id]);
++	if (rc < 0) {
++		dev_err(dai->dev, "Failed to start APM port %d\n", dai->id);
++		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
++			q6apm_graph_close(dai_data->graph[dai->id]);
++			dai_data->graph[dai->id] = NULL;
++		}
++		return rc;
++	}
++
++	dai_data->is_port_started[dai->id] = true;
++
++	return 0;
++}
++
+ static int q6i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+ {
+ 	struct q6apm_lpass_dai_data *dai_data = dev_get_drvdata(dai->dev);
+@@ -368,7 +406,7 @@ static const struct snd_soc_dai_ops q6dma_ops = {
+ };
+ 
+ static const struct snd_soc_dai_ops q6i2s_ops = {
+-	.prepare	= q6apm_lpass_dai_prepare,
++	.prepare	= q6i2s_prepare,
+ 	.startup	= q6i2s_dai_startup,
+ 	.shutdown	= q6i2s_lpass_dai_shutdown,
+ 	.set_channel_map  = q6dma_set_channel_map,
+diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
+index e95b2c8b6..cb3a4dfcb 100644
+--- a/sound/soc/qcom/qdsp6/q6apm.c
++++ b/sound/soc/qcom/qdsp6/q6apm.c
+@@ -55,6 +55,10 @@ static struct audioreach_graph *q6apm_get_audioreach_graph(struct q6apm *apm, ui
+ 
+ 	info = idr_find(&apm->graph_info_idr, graph_id);
+ 
++	dev_info(apm->dev, "DBG graph_open graph_id=%d info=%px sgs=%d src=%x dst=%x\n",
++		 graph_id, info, info ? info->num_sub_graphs : -1,
++		 info ? info->src_mod_inst_id : 0, info ? info->dst_mod_inst_id : 0);
++
+ 	if (!info)
+ 		return ERR_PTR(-ENODEV);
+ 
+@@ -151,10 +155,8 @@ static void q6apm_put_audioreach_graph(struct kref *ref)
+ static int q6apm_get_apm_state(struct q6apm *apm)
+ {
+ 	int ret;
+-
+-	/* GET_SPF_STATE has no APM command header or payload. */
+-	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(0,
+-				APM_CMD_GET_SPF_STATE, 0, audioreach_get_apm_src_port());
++	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_cmd_pkt(0,
++						APM_CMD_GET_SPF_STATE, 0);
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+ 
+@@ -229,8 +231,8 @@ static int __q6apm_map_memory_fixed_region(struct device *dev, unsigned int grap
+ 	uint32_t buf_sz;
+ 	void *p;
+ 	uint32_t pos_mask = is_pos_buf ? APM_MMAP_TOKEN_MAP_TYPE_POS_BUF : 0;
+-	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(payload_size,
+-			APM_CMD_SHARED_MEM_MAP_REGIONS, graph_id | pos_mask, audioreach_get_apm_src_port());
++	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_cmd_pkt(payload_size,
++					APM_CMD_SHARED_MEM_MAP_REGIONS, graph_id | pos_mask);
+ 
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+@@ -341,8 +343,8 @@ static int __q6apm_unmap_memory_fixed_region(struct device *dev, unsigned int gr
+ 	struct audioreach_graph_info *info;
+ 	uint32_t mem_map_handle;
+ 	u32 pos_mask = is_pos_buf ? APM_MMAP_TOKEN_MAP_TYPE_POS_BUF : 0;
+-	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(sizeof(*cmd),
+-			APM_CMD_SHARED_MEM_UNMAP_REGIONS, graph_id | pos_mask, audioreach_get_apm_src_port());
++	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_cmd_pkt(sizeof(*cmd),
++					APM_CMD_SHARED_MEM_UNMAP_REGIONS, graph_id | pos_mask);
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+ 
+@@ -738,6 +740,9 @@ struct q6apm_graph *q6apm_graph_open(struct device *dev, q6apm_cb cb,
+ 	struct q6apm_graph *graph;
+ 	int ret, iid = 0;
+ 
++	dev_info(dev, "DBG q6apm_graph_open id=%d SPF_STATE=%d\n", graph_id,
++		 q6apm_get_apm_state(apm));
++
+ 	ar_graph = q6apm_get_audioreach_graph(apm, graph_id);
+ 	if (IS_ERR(ar_graph)) {
+ 		dev_err(dev, "No graph found with id %d\n", graph_id);
+@@ -899,6 +904,9 @@ static int apm_probe(gpr_device_t *gdev)
+ 	 */
+ 	audioreach_set_apm_src_port(gdev->svc_id);
+ 
++	dev_info(dev, "DBG APM SPF state at probe = %d (src_port=%u)\n",
++		 q6apm_get_apm_state(apm), audioreach_get_apm_src_port());
++
+ 	ret = snd_soc_register_component(dev, &q6apm_audio_component, NULL, 0);
+ 	if (ret < 0) {
+ 		dev_err(dev, "failed to register q6apm: %d\n", ret);
+diff --git a/sound/soc/qcom/qdsp6/q6prm.c b/sound/soc/qcom/qdsp6/q6prm.c
+index 04892fb44..e5aeb372a 100644
+--- a/sound/soc/qcom/qdsp6/q6prm.c
++++ b/sound/soc/qcom/qdsp6/q6prm.c
+@@ -107,6 +107,7 @@ EXPORT_SYMBOL_GPL(q6prm_unvote_lpass_core_hw);
+ static int q6prm_request_lpass_clock(struct device *dev, int clk_id, int clk_attr, int clk_root,
+ 				     unsigned int freq)
+ {
++	int ret;
+ 	struct q6prm *prm = dev_get_drvdata(dev->parent);
+ 	struct apm_module_param_data *param_data;
+ 	struct prm_cmd_request_rsc *req;
+@@ -133,7 +134,10 @@ static int q6prm_request_lpass_clock(struct device *dev, int clk_id, int clk_att
+ 	req->clock_id.clock_attri = clk_attr;
+ 	req->clock_id.clock_root = clk_root;
+ 
+-	return q6prm_send_cmd_sync(prm, pkt, PRM_CMD_RSP_REQUEST_HW_RSC);
++	ret = q6prm_send_cmd_sync(prm, pkt, PRM_CMD_RSP_REQUEST_HW_RSC);
++	dev_info(dev, "DBG prm_request_clk id=%d attr=%d root=%d freq=%u ret=%d status=%d\n",
++		 clk_id, clk_attr, clk_root, freq, ret, prm->result.status);
++	return ret;
+ }
+ 
+ static int q6prm_release_lpass_clock(struct device *dev, int clk_id, int clk_attr, int clk_root,
