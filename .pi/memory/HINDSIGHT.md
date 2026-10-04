@@ -3,392 +3,7 @@
 Techniques and root causes proven on Qualcomm/Lenovo tablet flashing. Host-machine
 
 <!-- Older entries compacted -->
-
-
-
-## Automatic settled outcome - 2026-10-04
-
-已实测两处的实际定义与配置。结论先行。
-
-## 一、数字结论
-
-**两者完全等价，差别 = 0**——`flashing` 不是 profile，只是 4 行的 `cd` 包装脚本：
-
-```bash
-# /home/xuqianhui1001/.local/bin/flashing   (2026-09-30 生成)
-cd "/home/xuqianhui1001/y700-elden" || exit 1
-exec pi "$@"
-```
-
-所以在 `~/y700-elden` 里输 `pi` 和在任何地方输 `flashing`，加载的东西一模一样。**差别只在「你在别处输 `pi`」时才出现**，而且不是 `flashing` 有什么魔力，纯粹是 cwd 决定加载范围。
-
-同类快捷方式还有 `eacndev`、`lob-remake`，形态完全相同。
-
-## 二、cwd 决定加载范围（真正的差别）
-
-| 项目 | cwd = `~/y700-elden`（= `flashing`） | cwd = 家目录 / 别处裸 `pi` |
-|---|---|---|
-| 项目指令 `<repo>/AGENTS.md` | ✅ | ❌（只有全局 `~/.pi/agent/AGENTS.md`） |
-| 项目技能 `.pi/skills/`（`qualcomm-android-flashing`、`qualcomm-edl-flashing`、`gsi-device-adaptation`） | ✅ 与全局技能叠加 | ❌ 只剩全局 `~/.pi/agent/skills/` |
-| `.pi/settings.json`（`sessionDir=.pi/sessions`、默认 `deepseek/deepseek-flash`、thinking low、retry 8） | ✅ 覆盖全局 | ❌ 用全局（`ustc_ai/deepseek-flash-2`） |
-| `profile_memory` 落盘 | `.pi/memory/`（HINDSIGHT 76 KB 的设备结论） | `~/.pi/agent/memory/`（另一套，标题是 "main agent (default profile)"） |
-| 会话存储 | `~/y700-elden/.pi/sessions/` | `~/.pi/agent/sessions/--home-…--/` |
-| `pi -c` / `-r` 看到的历史 | 刷机全部会话 | **空的/错的**——这是最容易误判的一条 |
-| swarm 任务卡 `.pi/missions/` + `.pi/agents/`（6 角色） | ✅ | ❌ |
-
-（当前会话 `PI_PROVIDER=ustc_ai PI_MODEL=qwen3.8-flash-next-2` 是显式覆盖，不代表默认值。）
-
-## 三、一个反直觉的特例：项目**子目录**里输 `pi`
-
-按 pi 文档（`docs/configuration.md`）两类文件解析规则不同：
-
-- **AGENTS.md**：从 cwd **向上找**，所以在 `flashing-bundle/` 里也能读到 → 看起来"项目生效了"。
-- **`.pi` 配置**：只认**工作目录下**的 `.pi`，不向上找。
-
-后果：子目录启动 = 有项目说明，但**项目技能不加载、`sessionDir` 不生效（会话落错桶）、默认模型回到全局**。→ 在子目录里也该 `cd ~ && flashing`，或 `flashing -c`。
-
-> **【2026-10-04 更正】**上述 `flashing`/`eacndev`/`lob-remake` 三个包装入口**已删除**；现役写法 = `cd ~/y700-elden && pi`。本节其余（cwd 决定加载范围、子目录特例）仍然成立。见 `archive/2026-10-04-retired-entrypoints/`。
-
-## 四、名字的历史包袱（别被误导）
-
-`flashing` 这名字来自旧机制 **pi-profile-switch** 的 `flashing` profile（`flashing-bundle/README.md` §2 记着）。现已废弃：`~/.pi-profile-switch` **在本机不存在**，改为「按工作目录叠加加载，无需切 profile」（`AGENTS.md` 亦如此写）。两处残留是纯化石：
-
-- `.pi/memory/*.md` 标题 `# … — flashing`
-- `f
-
-
-## Automatic settled outcome - 2026-10-04
-
-**音频收尾（R3）完成并提交** `4aacf40`。
-
-## 做了什么
-
-| 项 | 结果 |
-|---|---|
-| `scripts/audio-alsa-init.sh` | 新增：幂等地设好播放（`SECONDARY_MI2S_RX`+增益）与采集（AMIC1→ADC2→DEC0→TX3）路由 |
-| `/init` 钩子 | RAM 根与持久根都在 `dmesg` 之后后台调用（与 UCM/PipeWire 同值幂等共存） |
-| `build-rootfs.sh` | 脚本纳入 RAM 镜像打包清单 |
-| 持久根 `/dev/sda17` | 已**离线挂载装入**脚本 + `/init` 钩子（`sh -n` 语法通过），无需刷机 |
-| 默认音量 | **400**（可 `ALSA_PLAYBACK_VOLUME` 覆盖）——上次 1023 满值太吵，抱歉 |
-| 实测 | U2 **RAM** 环境 `aplay -D default` rc=0 + 扬声器听声 ✅；`arecord` 路径同样设定 |
-| 文档 | `TASKS.md` G1-4 记录 R3；`check-doctor` **FAIL=0 / WARN=1**（会话计数 59≠54，pre-existing） |
-
-## 音频剩余（未闭环，均非本轮可解）
-
-- **R1 有线耳麦**：代码就绪（vk48：`wcd-playback-dai-link`+RX 宏控件静态检查✅），**缺 USB-C 模拟耳机硬件**无法听声；另需 `wcd939x-usbss`（i2c TYPEC mux）。
-- **R2 双麦**：已实测为 AMIC1+AMIC4 阵列，双路采集价值低，文档记录不做。
-- **R4 容器音频**：设备未装 Waydroid，暂不可做。
-
-## 唯一待确认
-
-持久根的改动**尚未经历一次持久启动验证**（我只离线写入+语法校验）。你下次正常重启到持久系统时，`/run/audio-alsa-init.log` 应有一行输出，桌面音频不受影响。
-
-要不要我现在就做 R1 的 UCM `Headphones`/`Headset` 段（照上游 MTP 配方，代码完成待硬件验收），还是转去 G1 其它缺口（相机出流 / TF 卡 / BT 配对）？
-
-
-## Automatic settled outcome - 2026-10-04
-
-状态核清了，给你**决定路径的判断方法**——先插上试 2 分钟就能分岔。
-
-## 当前设备状态
-
-| 项 | 状态 |
-|---|---|
-| 运行镜像 | **vk48 RAM**（R1 播放 DTS 已加载：RX 宏控件 29 个 ✅、`HPHL Switch`/`RX_HPH PWR Mode` 在） |
-| USB-C 模拟开关 | 本机是 **FSA4480**（`fcs,fsa4480` @ i2c5 0x42/0x43），**不是** `wcd_usbss` |
-| FSA4480 驱动 | 内核 `CONFIG_TYPEC_MUX_FSA4480=m`（模块）→ **当前 RAM 启动无 `/lib/modules`，加载不了**；持久根模块版本还停在旧内核 `gba28ec16f01f`，与现用 `gbd114ca33` 不匹配 |
-
-## 关键分岔：插上你的耳机，回我结果
-
-请把耳机/转接头插到**设备上没接线的那个 USB-C 口**（另一个口在跑 USB-NCM 到主机），然后告诉我哪个现象出现：
-
-| 现象 | 类型 | 结论 |
-|---|---|---|
-| 插上后 `dmesg` 出现 **`new full-speed USB device` / `USB Audio`**；`aplay -l` 多出一个 **USB 声卡** | **数字**（自带 DAC） | 大概率**开箱即用**，我直接帮你切到它出声 |
-| 插上后**没有** USB 声卡出现，只有 Type-C/UCSI 事件 | **模拟**（无 DAC） | 需补工作：把 FSA4480 编成 **built-in** + 处理"谁把它切到 AUDIO 模式" |
-
-你插上后回我一句（或直接把 `dmesg | tail` 贴给我），我这边同时查。**先说结论：如果是数字耳机，R1 今天就能听声闭环；如果是模拟，我们要多一步改内核。**
-
-你手上的是哪一种？
-
-
-## Automatic settled outcome - 2026-10-04
-
-**音频收尾到此为一个干净的停顿点。** 两个提交：
-
-| commit | 内容 |
-|---|---|
-| `4aacf40` | **R3 裸 ALSA 默认**：`scripts/audio-alsa-init.sh`，无桌面/PipeWire 时 `aplay`/`arecord` 开箱可用；`/init` 在 RAM+持久根调用；默认增益 400；U2 RAM 实测听声 ✅；持久根 `/dev/sda17` 已离线装入 |
-| `2d4408d` | **R1 冻结 + 更正**：本机 USB-C 模拟开关是 **FSA4480**（`&i2c5` @0x42/0x43），非之前假设的 `wcd_usbss`/i2c3；驱动 `=m` 且 RAM 无模块、持久根模块旧版本 → 需编 built-in；无耳机硬件，听声验收冻结 |
-
-`check-doctor`：**FAIL=0 / WARN=1**（会话计数 59≠54，pre-existing，与本次无关）。
-
-## 音频总账
-
-- **输出**：扬声器 ✅（G1-4 已闭环，桌面 PipeWire/UCM + 裸 ALSA 双通路）。
-- **输入**：内置麦 AMIC1 ✅（UCM `Mic`）。
-- **耳机（R1）**：代码就绪，**硬件冻结**。日后拿到 USB-C 耳机后：数字 dongle → 大概率即插即用；模拟耳机 → 先编 `CONFIG_TYPEC_MUX_FSA4480=y`，见 `archive/topics/HEADSET-HW-2026-10-04.md` §6。
-- **R2 双麦**：实测 AMIC1+AMIC4 阵列，双路价值低，不做。
-- **R4 容器音频**：设备无 Waydroid，不可做。
-
-下一步若继续 G1，剩余缺口是 **相机出流 / TF 卡写稳定 / BT 配对** 三项。要不要挑一个？
-
-
-## Memory - 2026-10-04
-
-2026-10-04 入口清理（eld/y700-elden）：现役启动入口 = `cd ~/y700-elden && pi`；`~/.local/bin/{flashing,eacndev,lob-remake}` 三个 cd 包装已删除（pi-profile-switch 机制早废，本机无 ~/.pi-profile-switch）。并发子代理 = `Agent` 工具 + `.pi/agents/*.md`（插件 @tintinweb/pi-subagents），**无 harness 守护进程**；旧 `pi-messenger-swarm` 已卸载，其 6 脚本+2 补丁+`.pi/pi-messenger.json`+`.pi/messenger/` 全部移入 `archive/2026-10-04-retired-entrypoints/`（判据 §3、恢复 §4、被移出记忆区的原文附录 §6）。`scripts/check-doctor.sh` 新增第 4 项：这些路径若回到活跃树即 FAIL，机器层快捷入口复辟则 WARN。判据教训：**卸载插件后其脚本会静默失效（node ENOENT）而不报错**，故凡引用 `~/.pi/agent/npm/node_modules/<pkg>/` 的仓库脚本必须纳入 doctor 存在性检查。
-
-
-## Automatic settled outcome - 2026-10-04
-
-**清理完成并提交 `c5351c3`；`check-doctor` FAIL=0 / WARN=1（唯一 WARN 是清理前就存在的会话索引 54 vs 实有 59）。**
-
-## 一、移除与归档了什么
-
-| 类 | 内容 | 去向 |
-|---|---|---|
-| **shell 快捷入口 3 个** | `~/.local/bin/{flashing,eacndev,lob-remake}`（同为 4 行 `cd` 包装，pi-profile-switch 时代命名）| 已删除，副本 → `archive/2026-10-04-retired-entrypoints/bin/` |
-| **死插件 `pi-messenger-swarm` 资产 10 项** | 6 脚本（`swarm.sh`/`swarm-monitor.sh`/`y700-swarm-reset.sh`/`y700-harness-restart.sh`/`start-y700-harness.sh`/`apply-swarm-patch.sh`）+ 2 补丁 + `.pi/pi-messenger.json` + `.pi/messenger/`(848K) + `logs/swarm-monitor.log` | 脚本/补丁 `git mv` 入归档；运行时目录 tar 留证（96K）；日志删 |
-| **不存在的插件经验** | `FAILURES.md` 的 `## Memory - 2026-10-02` swarm 块（600 字符，全是挂在已卸载插件上的修法）| 原文 + 「仍有效的抽象结论」→ 归档 §6 |
-
-判据（写进归档 §3）：`pi list` 无此包 → `node_modules` 无此目录 → 脚本硬编码的 `…/pi-messenger-swarm/dist/harness/server.js` 不存在 = **静默失效而非报错**；`AGENTS.md` 旧引用的 `swarm.py`、`.pi/messenger/agent-card.json` **从未在本机存在过**。
-
-## 二、防止复辟 + 文档收口
-
-- `scripts/check-doctor.sh` 新增**第 4 项**：上述路径若回到活跃树 → **FAIL**；`~/.local/bin/*` 复辟 → **WARN**（13 项全 ok）。
-- `AGENTS.md` §其他 明确现役入口 `cd ~/y700-elden && pi` + 并发形态 = `Agent` + `.pi/agents/`（**无守护进程**）；`INDEX.md` §4 加注、§6 补归档行、#91→**#93**。
-- `PITFALLS §15.1` +5 行废弃登记、`§15.2` 登记 7 处孤儿目录；`RESOURCES §3` 台账体积/计数刷新；`.pi/README.md` 删 `pi-messenger.json`/`messenger/` 两行、`missions/agents` 改挂 pi-subagents；`.gitignore` 保留规则但注明出处。
-- 记忆区：三份标题去掉废弃 profile 名 `flashing` → `elden（y700-elden）`；HINDSIGHT 旧「用 flashing」段加**行内更正指针**（不改写原文）。
-
-## 三、两件需要你知道 / 拍板的事
-
-1. **并发会话抢提交**：我的 8 个 `git mv` + 1 个 `git rm` 被**同时运行的另一个 pi 会话**（R1 耳机取证，`archive/topics/HEADSET-HW-2026-10-04.md`）的提交 `2d4408d` 一起扫走入库——路径变更完整无损，只是提交信息不匹配，已在归档 README 记明原因。教训：**同 worktree 并发会话下禁用 `git commit -a`**（本次我全程显式列路径）。
-2. **机器层孤儿目录 12.2 M 待授权清理**（`grep` node_modules 无任何已安装包引用）：`~/.pi/agent/pi-sessions/` 12 M、`~/.pi/
-
-
-## Automatic settled outcome - 2026-10-04
-
-三个子代理已并行派发（后台运行，完成后会通知我）：
-
-| 子代理 | 缺口 | 绑定 key | 本轮范围 |
-|---|---|---|---|
-| `camera-vk49` | G1-5 相机出流 | `ustc_ai_2` | 构建**内核+相机模块匹配**的新 boot 镜像、冷启自动加载、精确验收步骤 |
-| `tf-card` | G1-6 TF 卡写稳定 | `ustc_ai_3` | 厂商 `uses_level_shifter` 移植分析、候选补丁、A/B 实验设计与压测脚本 |
-| `bt-link` | G1-7 BT 链路高延迟 | `ustc_ai_4` | 排除 IBS 后重定位根因、上游修复检索、候选补丁与测试脚本 |
-
-主会话保留 `ustc_ai` key，四 key 均在用（负载均衡）。
-
-**协作约束（已写进各自 prompt）**：只做主机侧、不刷机/不重启/不写设备；不 `git commit`；不改根目录 6 份维护文档（结论各写 `archive/topics/*-2026-10-04-subagent.md`）；共享内核树构建用 `flock /tmp/y700-kbuild.lock` 串行；TF/BT 只产出 `patches/candidate-*.patch` 提案，不直接改 `linux/`。
-
-**设备侧**：U2 现在停在 **fastboot**。等三个代理交回资产后，我会汇总成一份串行的上机验收清单（相机镜像 / TF 压测 / BT 测试），由你逐项执行——符合"用户操作设备"。
-
-我现在不轮询，等它们完成通知。三个都回来后我会独立复核产物（不采信自报成功），再给你收口计划。
-
-
-## Memory - 2026-10-04
-
-判定 node_modules「孤立依赖」的正确方法（2026-10-04 教训）：不能对 `ls node_modules` 数条目——scoped 包是**作用域目录**（`@aws`/`@babel`/`@google` 本身不是包，展开后可能只剩 1 个子包，卸载后残留空壳会让 `du` 显示 40K–128K）。正确判据 = 用 `package.json` 的直接依赖 + `package-lock.json`(v3 `packages` 字段) 的传递依赖求闭包，与磁盘**展开 scoped 后的包名**比对；`npm prune --dry-run` 只认 lockfile，lockfile 已清则报 "up to date" 而磁盘残留仍在（或反之）。据此本机结论：pi 扩展 node_modules 11 包 = lockfile 闭包 11 包，无需清理。
-
-
-## Automatic settled outcome - 2026-10-04
-
-三项全部落地，两个提交。
-
-## 数字
-
-| 项 | 结果 |
-|---|---|
-| `~/.bash_profile` 修正 | `导出 PATH=` → `export PATH=`；登录 shell 不再报错，`~/.dotnet/tools` 已进 PATH；备份 `~/.bash_profile.bak-20261004` |
-| `~/.pi` 孤儿目录 | 9 处 → **移动到** `~/.pi/_trash-2026-10-04/`（**13 M**，未硬删） |
-| `node_modules` 疑似孤立依赖 | **判定为不需要清**（见下） |
-| `check-doctor` | FAIL=0 / WARN=1（唯一 WARN 仍是会话索引 54 vs 实有 59，与本次无关） |
-| 提交 | `c5351c3`（清理+归档）、`3812b39`（机器层收尾登记）；工作树干净 |
-
-## 一、孤儿目录（回收目录，可回滚）
-
-`~/.pi/agent/pi-sessions/`(12 M，含已卸载 swarm 的 `messaging/broker.log`) · `~/.pi/wechat/`(1.1 M，含该渠道 `credentials.json`) · `~/.pi/todos/`(11 个) · `agent/pi-agent-profiles/` · `session-control/` · `_wtest` · `agent/{_cron_backup,missions,git}/`。
-确认无影响后你自己执行：`rm -rf ~/.pi/_trash-2026-10-04`
-
-⚠️ **回收前看一眼**：`_trash…/agent__cron_backup/crontab.2026-10-04-preclean.bak` 是今早 08:51 另一个会话清空 crontab 前的**唯一备份**（lobcorp-remake 的 swarm 看门狗 `*/10 … swarm_watch.sh`；当前 `crontab -l` 为空）。若 lobcorp 还要它，从该文件恢复。
-
-## 二、一处更正：node_modules 其实没有孤立依赖
-
-我上一条把 `@aws`/`@babel`/`@google` 当包数了——**scoped 目录是作用域，不是包**（`@aws` 已空、`@babel/types` 只是残留空壳）。按正确判据算：`package.json` 7 个直接依赖 + lockfile 传递闭包 = **11 个包**，与磁盘展开后 **11 个完全一致**（`croner`/`nanoid`/`typebox` 都是 `pi-subagents` 的传递依赖）。故未动 `npm/node_modules`。判据已写入持久记忆，避免下次重犯。
-
-`~/.pi/workflows/` 按承诺**保留**（pi-subagents 的 `SubagentWorkflow` 保存位）。
-
-## 三、现役入口（今后只需这一条）
-
-```bash
-cd ~/y700-elden && pi        # 并发 = Agent 工具 + .pi/agents/*.md，无 harness 守护进程
-```
-
-
-## Automatic settled outcome - 2026-10-04
-
-## 汇报 — TF 卡写稳定性（主机侧静态分析 + 资产）
-
-**改动文件 7 项，全部未 commit；未刷机/未写设备/未编内核/未改根 6 文档。**
-新增：`scripts/tf-stress.sh`、`patches/candidate-tf-{levelshifter,drop-dma-coherent,uhs-1p8,lower-hs-hz,bus-width-1}.patch`、`archive/topics/TF卡-2026-10-04-subagent.md`。（`git status` 里 `HINDSIGHT.md/rootfs/init/camera-*` 是并发会话的，非本轮。）
-
-### 1. 根因判定倾向
-**卡本身 ~70–80%**。硬证据：尺寸相关性（64 MB 大块多轮全对 vs 8 MB 小写间歇丢）、`err_stats` 全 0、`e2fsck` 前后一致（坏在卡上）、白牌 `NCard`/date 2010/`OEM 0x0303`、已在最保守 3.3V/SD_HS 档仍坏。**相干性/DMA 错误会按字节随机发生，不会只挑小写** → 强烈指向卡。最终仍须换卡 A/B 定性。
-
-### 2. `qcom,uses_level_shifter` 精确结论（本轮最硬发现）
-厂商该属性**唯一功能 = SD_HS 时钟封顶 37.5 MHz**（`sdhci-msm.c` L638-640，`LEVEL_SHIFTER_HIGH_SPEED_FREQ=37500000`）；**不碰 DLL/DDR 寄存器**（DLL config 两边一致 `0x0007442c`/`0x80040868`）。主线靠 `sm8750.dtsi` 的 `max-sd-hs-hz=<37500000>` 达到**完全相同数值**（实机 ios 也确认 37.5 MHz）→ **无效移植，不能作为根因候选**。厂商另有 `qcom,external-fb-clk`（VENDOR_SPEC_FUNC4.EXTERN_FB_CLK，主线缺）但本机 DT 未使用。
-
-### 3. 候选补丁（按代价排序，均已 `git apply --check` 通过）
-| 补丁 | 代价 | 区分什么 | 预期 |
-|---|---|---|---|
-| a levelshifter | 低 | 时钟源一致性 | **无变化**（留档） |
-| b drop-dma-coherent | 低 | 一致性声明错误 | PASS→相干性根因 |
-| d lower-hs-hz(12.5M) | 低 | 时序/信号余量 | PASS→余量问题 |
-| c uhs-1p8 | 中 | 3.3V-HS vs 1.8V-UHS | 预期更差（对照） |
-| e bus-width-1 | 低 | DAT1-3 信号完整 | PASS→数据线 |
-
-（只改 DT 的补丁重编 DTB 即可；构建须 `flock /tmp/y700-kbuild.lock`。）
-
-### 4. 用户 A/B 实验步骤
-1. 启动 Linux（`fastboot boot out/boot-elden-vk48.img` 或 b 槽），TF 挂到 `/mnt/tf`；
-2. `scp scripts/tf-stress.sh root@192.168.7.1:/tmp/ && ssh root@192.168.7.1 'sh /tmp/tf-stress.sh -r 3 --fsck /mnt/tf'` → 记基线；
-3. **换已知良好卡**重跑同一步（决定性）；
-4. 本卡插安卓/PC 读卡器跑等价写后读回；
-5. （建议）全卡写满再读回排除扩容黑片。
-
-### 5. 压测脚本
-`scripts/tf-stress.sh` — 幂等/低干扰（只写 `.tf-stress.$pid/` 临时文件、退出自清）、自限（总 `timeout` + 单 dd 超时）、防假阳性（`sync`+`drop_caches` 后回读哈希）、快照 `cid/ios/err_stats`、可选 `--fsck`。
-用法：`tf-stress.sh [-r 轮][-n 块][-m Mi
-
-
-## Automatic settled outcome - 2026-10-04
-
-`tf-card` 完成，我已**独立复核**（未采信自报）：
-
-- 7 个文件都在；`tf-stress.sh` 语法 OK；5 个 `candidate-tf-*.patch` 对 `linux` 树 `git apply --check` **全部 OK**。
-- 抽验其最硬结论：主线 `sm8750.dtsi` 确有 `max-sd-hs-hz = <37500000>`，与厂商 `LEVEL_SHIFTER_HIGH_SPEED_FREQ 37500000` **数值相同** → "移植 level-shifter 无效" 的判定成立。
-- 根因倾向 **卡本身 70–80%**（小写丢/大块全对、`err_stats` 全 0、`e2fsck` 前后一致、已是最保守 3.3V-HS 档），最终仍需**换卡 A/B** 定性——需要你一张已知良好的 TF 卡。
-
-**提交策略**：先挂起，等 `camera-vk49` 与 `bt-link` 都回来，我统一复核后按主题分批提交（避免并发半成品混进 git）。
-
-`camera-vk49`（要编内核，最慢）与 `bt-link` 仍在跑，我等通知。
-
-
-## Automatic settled outcome - 2026-10-04
-
-## 汇报（相机 G1-5 主机侧）
-
-### 数字结论
-| 产物 | 大小 | sha256（前 8） |
-|---|---|---|
-| `out/boot-elden-vk49.img`（持久） | 88.1 MiB | `249ee683` |
-| `out/boot-elden-vk49-ram.img`（纯 RAM） | 88.1 MiB | `ddeb5735` |
-| `out/boot_b-vk49.img`（b 槽签名，pad 96 MiB） | 96 MiB | `1c44343c` |
-| `out/camera-modules-7.2.0-debug-g5a70ade46a88.tar.gz` | 8.6 MiB | `7cd5835c` |
-
-- 内核 `uname -r` = **`7.2.0-debug-g5a70ade46a88`**（`#46` 12:31）；模块 **20/20** vermagic 全等，同一次构建。
-- 镜像内内核 DTB 含 `s5kjns/gc08a8/gt9764/qcom,sm8750-camss/wl2868c`；ramdisk 第二段含 20 `.ko` + `modules.dep` + 加载器 + `/init` 钩子（逐项列验）。
-- 体积 < 96 MiB boot 分区；曾因叠加基座错误涨到 101 MB，已用 `.bak-vk48` 重建修正。
-
-### 证据摘要
-- `modinfo -F vermagic` 20 模块 = `…g5a70ade46a88 SMP preempt mod_unload aarch64`。
-- 解 boot 镜像内核流：`strings` 得同串 uname；追加段 `cpio -t` 得 20 `.ko` + `/usr/local/sbin/camera-modules-load.sh` + `modules.dep`。
-- `sign-boot-b.sh`：公钥 sha1 `fc1e3b33…`，与 `vbmeta_b_flags3.img` 链一致。
-
-### 冷启方案
-`rootfs/init` 在 `switch_root` **前**调 `scripts/camera-modules-load.sh`（幂等、`timeout 20`、非致命，日志 `/run/camera-modules.log`）→ 持久与纯 RAM 两变体冷启均自动加载，无需手工 modprobe。新增 `rootfs/build-camera-overlay.sh` 以第二段 cpio 追加（不重建 Alpine）。闭包 17→20（补 `leds-qcom-flash` 链）。
-
-### 用户验收（设备已在 fastboot，零写盘优先）
-1. `fastboot boot ~/y700-elden/out/boot-elden-vk49.img`（持久根+相机；`-ram` 为纯 RAM 仅验 probe）。
-2. 采证：`cat /run/camera-modules.log`、`dmesg | grep -iE 'camss|csiphy|cci|s5k|gc08|gt9764|wl2868|dependency cycle'`、`ls /dev/video* /dev/media*`、`ls /sys/bus/i2c/devices/`、`media-ctl -p`、`v4l2-ctl --list-devices`。
-3. 成功：日志以 `[camera] done: N media` 收尾；i2c 出 `0-0056/1-0031/0-000c`；`/dev/media0` 且 graph 含 sensor↔csiphy/csid/vfe。
-4. 失败：`invalid module format`→重建；sensor `-517` 循环→查 LDO1/4/7、MCLK、reset-gpio。
-5. 可选刷 b：先验 vk49 再 `fastboot flash boot_b out/boot_b-vk49.img`。
-
-### fwnode 依赖环判断
-`camera@56 ↔ isp@ad27000` 的 `Fixe
-
-
-## Automatic settled outcome - 2026-10-04
-
-相机子代理复核完毕，**关键回归已排除**：
-
-| 复核项 | 结果 |
-|---|---|
-| vk49 DTB vs vk48 DTB | **逐字节相同**（`461fe072…`）→ 音频/WCD939x/热区 DTS 改动**全部保留**，无回归 |
-| 相机模块 vermagic | 20/20 模块 = `7.2.0-debug-g5a70ade46a88`，与内核 `kernelrelease` 一致 |
-| vk49 ramdisk | 第二段含 20 `.ko` + `camera-modules-load.sh` + 当前 `init`；`init` 同时含**相机钩子**（switch_root 前）与**我的音频 R3 钩子** |
-| 产物 | `out/boot-elden-vk49{,-ram}.img`（88.1 MiB）、`out/boot_b-vk49.img`（96 MiB，b 槽签名）、`camera-modules-…g5a70ade46a88.tar.gz` 均在，sha256 前缀与自报一致（`249ee683` / `ddeb5735` / `1c44343c`） |
-| 相机 loader 脚本 | 幂等、`lsmod` 去重、优先用随包 `modules.dep`、按 clk→cci→pmic→camss→sensor 顺序 |
-
-**发现一处小缺口（非回归）**：vk49 的 RAM 基座 `out/rootfs.cpio.gz` 是旧构建，**不含 `audio-alsa-init.sh`** → 纯 RAM 变体下 R3 不生效（持久根 `/init` 已有该脚本，桌面/PipeWire 路径不受影响）。等三个代理收完，我在汇总步骤里用一行 overlay 补上并重打包，不单独动 vk49 哈希。
-
-`bt-link` 仍在跑。等它回来我一并汇总、分批提交，并给出串行上机验收清单。
-
-
-## Automatic settled outcome - 2026-10-04
-
-## 汇报
-
-**结论先行：既有证据链排除了"主机 IBS 握手"这个方向。** 本轮读代码发现两个关键事实，二者合力把根因指向**控制器侧**：
-
-| # | 新发现的代码事实 | 影响 |
-|---|---|---|
-| F2 | `IBS_HOST_TX_IDLE_TIMEOUT_MS = 2000`（`hci_qca.c:80`），**不是 100 ms** | archive 里"调大 tx_idle_delay 无效"这个实验接近空操作，没真正测到主机睡眠 |
-| F3 | `qca_enqueue()` 每次发包都 `mod_timer(tx_idle_timer, +2000ms)` | `l2ping -i 0.2` 期间主机 TX **全程 AWAKE** ⇒ 主机→控制器 WAKE 握手不在每包路径 |
-| F4 | vk25 后无 SLEEP_IND ⇒ 主机 `rx_ibs_state` 恒 AWAKE | 主机 RX 侧握手也不在每包路径 |
-| F7/F8 | 运行波特率由 **PERI 协议硬编码 8 Mbps**；`qca_wcn7861_uses_current_baudrate()` 命中时**跳过** `qca_set_speed` | **DT `max-speed` 可能完全不生效**（取决于 helper 返回值） |
-| F9 | `qca_port_reopen()` 注释点名"RTS/CTS 同步问题"，但 WCN7861/Peach 路径**从不调用它** | H2 有据 |
-
-**假设排序（每条附判别手段）：**
-1. **H4 控制器固件自身深睡**（vk25 只停了 SLEEP_IND 通报，没停睡眠）——首推；零内核改动判别：`KEEPALIVE=1`。
-2. **H2 控制器 CTS 反拉致 geni TX 停顿**——判别：关硬件流控补丁。
-3. **H1 8 Mbps 时钟余量/误码**——判别：降到 3 Mbps；但 PERI 固件下载在 8M 下成功，削弱此假设。
-4. **H3 主机 IBS 握手**——逻辑上已排除（F2/F3/F4），补丁仅作量化收尾。
-5. H6 geni RX DMA 水位——低概率。
-
-**候选补丁**（均 `git apply --check` 通过；未改 `linux/`、未 commit）：
-
-| 路径 | 区分 | 风险 |
-|---|---|---|
-| `patches/candidate-bt-maxspeed-3000k.patch` | H1（PERI 字面量 0x15→0x0e + 实参 + DTS 三处） | 控制器不支持 ⇒ PERI EIO，hci0 不出现，重启回退 |
-| `patches/candidate-bt-no-flow-control.patch` | H2 | 突发冲垮控制器 RX |
-| `patches/candidate-bt-host-ibs-awake.patch` | H3 残差 | 空闲功耗略增 |
-| `patches/candidate-bt-ibs-wait-stats.patch` | H3 量化（`ibs/tx_wait_ms|_cnt`，纯诊断） | 无 |
-
-**测试脚本** `scripts/bt-link-test.sh`（幂等、`timeout` + `trap` 自限、只读、不留后台进程）：
-```sh
-PEER=AA:BB:... scripts/bt-link-test.sh          # 基线：RTT/loss + ibs_* 差值
-PEER=... KEEPALIVE=1 scripts/bt-link-test.sh    # 测 H4（每 50ms 发 Read_Local_Version）
-```
-判读：`ibs_sent_wakes_delta≈0 && tx_wait_cnt_delta≈0` ⇒ H3 结案；`KEEPALIVE=1` 使 RTT 塌回 <10ms ⇒ H4 成立。脚本同时 dump `dmesg` 的 Product/SoC/ROM ID（判定 F8 helper 是否命中，进而判定 DT 改动是否有效）。
-
-*
-
-
-## Automatic settled outcome - 2026-10-04
-
-三路全部收口并提交（4 个 commit）。四个 key 全程并行、主会话未互相打爆限流。
-
-```
-6ad19ec docs: TASKS G1-5/6/7 记录三路并行子代理结论与上机验收判据
-6f38865 bt: 根因重定位 + 4 候选补丁 + 测试脚本（G1-7）
-fa7c3f2 tfcard: 换卡 A/B 定性资产 + 5 候选补丁（G1-6）
-8c16ea4 camera: vk49 内核+模块匹配基线与冷启自动加载（G1-5 主机侧就绪）
-```
-
-## 串行上机验收清单（一次 vk49 会话可做完三项）
-
-设备现在还在 fastboot。**推荐先零写盘 `fastboot boot`**：
-
-**① 相机 probe（G1-5，零写盘）**
-```
-fastboot boot ~/y700-elden/out/boot-elden-vk49.img      # 持久根 + 相机
-ssh root@192.168.7.1
-cat /run/camera-modules.log                              # 应见 [camera] loaded ... / done: N media
-dmesg | grep -iE 'camss|csiphy|cci|s5k|gc08|gt9764|wl2868'
-ls /dev/video* /dev/media*; media-ctl -p; v4l2-ctl --list-devices
-```
-成功判据：日志以 `[camera] done: N media` 收尾；i2c 出现 `0-0056`/`1-0031`/`0-000c`；`/dev/media0` graph 含 sensor↔csiphy/csid/vfe。
+ `0-0056`/`1-0031`/`0-000c`；`/dev/media0` graph 含 sensor↔csiphy/csid/vfe。
 
 **② BT 根因判别（G1-7，零写盘、零编译，需一个 BT 对端如你的 PC）**
 ```
@@ -1206,3 +821,272 @@ VK: vk52
 3. dmesg 跨复位落盘（注意"取证装置本身是变量"的旧教训）。
 
 需要时再从 Q24 接着做；当前设备同一 boot 已稳跑 ~8 min，未再重启。
+
+
+## Automatic settled outcome - 2026-10-04
+
+已确认并落档。结论先行。
+
+## 根因确认（受控复现）
+
+**触发 = 熄屏（DPMS off）→ 整机硬复位。电源键只是触发入口。**
+
+| 实验 | 结果 |
+|---|---|
+| 受控 `wlr-randr --output DSI-1 --off` | SSH 立即断、`boot_id` 改变 ⇒ **硬复位** |
+| 单击电源键（跨重启 `dmesg -w` 抓取） | `elogind: Power key pressed short.`（**无** poweroff）→ 4.2s 后 `qcom-battmgr-usb online -110` → USB 掉线 ⇒ 复位 |
+| 卸载相机栈（`camss`=0）后再熄屏 | **仍复位** ⇒ **排除**本轮新加的相机自动加载 |
+
+复位性质：**硬复位**（pstore 空、无 panic/suspend/poweroff、无看门狗）。elogind 是 `HandlePowerKey=ignore`，**不是它发起的**——是 phosh 熄屏（DPMS off）本身把机器带崩。
+
+## 与旧结论的矛盾（关键）
+
+- 当前 boot_b 解包核对 = **`out/boot-elden-vk47.img`**，UTS `7.2.0-debug-g4c68eb5ed4e3-dirty`。
+- **这正是 G1-22 声称"同一 UTS、10 轮+90s 熄屏已免疫"的那个内核** ⇒ 与本次直接矛盾，**"免疫"结论必须重审**。
+- 镜像身份实测：`vk42`=`…vk42-geb432f18a0d1` · `vk46`=`…ga923477be3a9-dirty` · `vk47`=`…g4c68eb5ed4e3-dirty` · `vk34recon`=`…ge72a036ed4be`。
+- `git diff vk42..vk46` **仅 DTS（+111 行：WCD939x / SoundWire / VA-macro / regulator）**，驱动代码与 vk42 一致。
+
+已记录：`archive/topics/REBOOT-5MIN-2026-10-05.md` §7、`TASKS.md` Q24、`PITFALLS` §15.5（提交 `d860655`）。
+
+## 建议的下一步（单变量，零写盘）
+
+用 **`fastboot boot` 依次引导 vk42 / vk34recon 镜像**（**同一持久 rootfs**），各跑一次 `g1-22-dpms-test.sh`：
+
+- vk42 免疫、vk47 复位 ⇒ 回归源锁定在 **DTS 增量**，再逐块（WCD939x / SWR / VA-macro）二分；
+- vk42 也复位 ⇒ 早先"免疫"判断本身有误，回到 vk34recon 基线重查。
+
+命令（你操作设备侧 fastboot，其余我经 SSH 驱动）：
+```sh
+# 设备（SSH）：进 fastboot
+eldroid-bootctl reboot bootloader
+# 主机：零写盘引导（一条一条来）
+fastboot devices
+fastboot boot ~/y700-elden/out/boot-elden-vk42.img
+```
+
+## 临时规避
+
+熄屏即复位 ⇒ **先别按电源键**；空闲自动熄屏若也生效，可把 `idle-delay` 设 0 规避（要我做吗？）。
+
+要我现在带你跑 vk42 对照实验吗？
+
+
+## Automatic settled outcome - 2026-10-04
+
+已按更正后的口径编排完毕，两条 lane 已在后台开跑。汇报如下。
+
+## 先纠正一个关键事实
+`boot.img` 顶到上限**不是内核变大，是 ramdisk**：
+- 内核 `Image.gz` 仅 **20.5 MB**；随 boot.img 打进的是**完整 Alpine rootfs 当 ramdisk ≈ 80 MB**；boot_b 分区 **96 MiB**。
+- 所以除了你要的间接引导层，还有一条**立刻见效的缓解**（G1-30）：持久启动改最小 initramfs（busybox 挂 `linux17` → switch_root），boot.img 可从 ~101 MB 降到 ~22 MB。
+
+## 任务编排（4 条 + 1 缓解）
+
+| ID | 问题 | lane | 设备 | 状态 |
+|---|---|---|---|---|
+| **G1-26** | 深色模式无效 / 主题配色不可切 | `dt-ui` | U2 | 🟡 后台诊断中 |
+| **G1-27** | 电源菜单四图标反色（黑到分不清） | `dt-ui`（同批） | U2 | 🟡 后台诊断中 |
+| **G1-28** | 状态栏亮度滑块无效 | `dt-ui`（同批） | U2 | 🟡 后台诊断中 |
+| **G1-29** | **间接引导层**（GRUB 类，尽量符合 UEFI） | `bootchain` | 只读 | 🟡 后台研究中 |
+| **G1-30** | boot.img 瘦身（短期缓解） | 待排 | U2 | ⬜ 未开工 |
+
+## 两条 lane 已在跑
+- **`dt-ui`**（占 U2）：先诊断再最小修复。已把三条硬线索交给它——① 设备 `/usr/share/themes/` 只有 `Default`+`Emacs`（**没有 Adwaita-dark 目录**）；② dconf 可能落错 HOME（`/root` vs `/`）；③ 背光设备本身可写，但 `upower` 的 `DisplayDevice` **没有 `Brightness` 属性** ⇒ Phosh↔elogind 集成断链。四个问题一次只变一个变量，不自行重启持久系统。
+- **`bootchain`**（host-only，不占设备）：已读本地三代权威记录——GUF296 的链是 `ABL → boot.img 内完整 Qualcomm UEFI DXE → bootloader LUN 上的 FAT → GRUB`，而**四代没有 `vm-bootsys` 分区**（我用实机 `lsblk` 已确认），三代链不能照搬。它会给出机制判定 + 路线排序（含 `uefi_a/b`、`imagefv_a/b`、`logfs/qmcs/spunvm` 等 FAT 载体的可行性）+ 需设备验证清单。
+
+## 并发骨架
+- baseline `base/20261005-d860655`；worktree：`~/wt-dt-ui`、`~/wt-bootchain`；角色定义 `.pi/agents/{dt-ui,bootchain}.md`。
+- `TASKS.md` 新增 G1-26…G1-30；`CONCURRENCY.md` §5 已登记；父提交 `9bbfc1a`。`check-doctor` **FAIL=0**（WARN=会话计数，既有）。
+
+## 两点提请注意
+1. 我侦察期间**另一个会话在 main 上提交了 `d860655`（Q24：熄屏→硬复位受控复现）**——说明有并发写者，merge 时我会以 lane 语义为准收口。
+2. 两条 lane 完成后我会独立复跑验证再 merge，不会只信它们的自报。有结果我通知你；你也可以随时插别的活。
+
+
+## Automatic settled outcome - 2026-10-04
+
+## 状态：编排被外部预算墙打断
+
+**`dt-ui` 已死，零工作量** —— 不是推理失败，而是 key 超预算：
+```
+429 ExceededBudget: Key over 12h budget. Spend=$70.02, Limit=$70.00
+```
+- 这个 $70/12h 限额挂在 **`ustc-ai-3`**（当前会话与子代理同 key），旧的「3h/$30」记忆不准，我已更正到长期记忆。
+- **`bootchain` 仍在跑**，随时可能撞同一面墙；若它中断，完整 transcript 已存 `/tmp/pi-subagents-.../tasks/928d57ff-....output`，预算恢复后可按 lane 续。
+
+## 好在设备空闲，我内联抓到了真线索（只读，未改任何东西）
+
+| 问题 | 证据 | 推断 |
+|---|---|---|
+| **G1-26 深色无效** | phosh(765) 环境 `HOME=/root`；`/root/.config/dconf` 里 **确已** `color-scheme=prefer-dark`、`gtk-theme=Adwaita-dark` | **不是 dconf 落错**；是 GTK 根本没应用该主题（待 GUI 确认） |
+| **G1-27 电源菜单图标反色** | Adwaita 的 `system-shutdown/log-out-symbolic.svg` **都在** | 与 G1-26 **同源**：主题/symbolic 前景色没生效 → 图标取默认黑色，深底不可辨 |
+| **G1-28 亮度滑块** | `loginctl list-sessions` = **No sessions**；`/etc/pam.d` 无 `pam_elogind`，无登录管理器（greetd/lightdm）；`gsd-power` 确实在跑(1206) | **缺 logind 会话** → gsd-power 的 backlight(logind `SetBrightness`) 路径断链，滑块死；`upower DisplayDevice` 无 `Brightness` 是同一病征 |
+| 主题资源 | `/usr/share/themes/` 只有 `Default`+`Emacs`；但 GTK3 的 Adwaita 是**内建 GResource**，故缺目录≠必然无效 | 仍需在会话内确认主题是否真被应用 |
+
+（我先前用 **system bus** 测 gsd-power 是错的——它在 **session bus**；后续要在 phosh 会话环境里测 `org.gnome.SettingsDaemon.Power.Screen.Brightness`。）
+
+## 需要你拍板（一条外部决定）
+
+预算墙只能换 key 或等窗口，我无法自行绕：
+
+1. **换 key**：把本会话/子代理切到 `ustc-ai-1 / 2 / 4` 里的一个有余额的 key（或 `deepseek`，但 `auth.json` 里我只看到 `ustc-ai-1..4`，没见到 deepseek 凭据）。→ 我立刻重启 `dt-ui`（设备已空闲、锁 free）。
+2. **等窗口**：`ustc-ai-3` 12h 窗口滚出后自动恢复，期间我只做**主机侧**、不派子代理的活。
+3. **继续内联**：我在主会话自己把桌面 UI 查完（风险：主会话同 key，随时 429；且 GUI 类问题在纯 SSH 下判断力有限）。
+
+你选哪个？另外 `bootchain` 一旦回报我会独立复核再 merge。
+
+
+## Automatic settled outcome - 2026-10-04
+
+已切换并重启。
+
+- **Key**：`PI_PROVIDER=ustc-ai-2`，本会话已生效。
+- **`dt-ui` 已重新派发**（新 agent `a6fe93c2`，lane 仍干净在 baseline）；我把本轮内联证据（dconf 已正确、缺 logind 会话、symbolic 图标在位、gsd-power 在 session bus）都喂给了它，避免重复侦察。
+- **`bootchain`** 仍在跑（62 次工具调用，未死）。
+
+两条 lane 完成时我会独立复核再 merge，届时汇报。期间你可以插别的活。
+
+
+## Automatic settled outcome - 2026-10-04
+
+vk42 对照**免疫**，回归源已锁定在 **DTB/DTS 增量**。现在做最后一步隔离。
+
+## 结果
+
+| 镜像 | 内核 | 熄屏(DPMS off) |
+|---|---|---|
+| `vk42` | `7.2.0-debug-vk42-geb432f18a0d1` | ✅ **免疫**（2 轮 off/on 同一 boot 存活） |
+| `vk47`（boot_b） | `…g4c68eb5ed4e3-dirty` | ❌ 熄屏即硬复位 |
+
+`git diff vk42..vk47` 只改了 **DTS**（C 代码/驱动相同）⇒ 嫌疑锁定 **DTB**。
+
+## 已备好隔离镜像（等你引导）
+
+`out/boot-elden-vk47-dtb42.img` = **vk47 内核 + vk47 ramdisk + vk42 DTB**（DTB 段逐字节 == vk42，已校验）。
+保持内核/config/ramdisk 不变，**只换 DTB**：
+- 免疫 ⇒ 触发在 DTS（WCD939x / SoundWire / VA-macro 实例化），随后逐块二分；
+- 仍复位 ⇒ 不在 DTB，转查 config/其他。
+
+命令（你操作设备侧 fastboot，其余我经 SSH 驱动）：
+```sh
+# 设备（SSH）
+eldroid-bootctl reboot bootloader
+# 主机
+fastboot devices
+fastboot boot ~/y700-elden/out/boot-elden-vk47-dtb42.img
+```
+
+引导起来（进桌面）后跟我说一声，我跑 `g1-22-dpms-test.sh`。
+
+
+## Automatic settled outcome - 2026-10-04
+
+根因找到并修好了——**不是你的 key，是我埋的坑**。
+
+## 两次 `dt-ui` 猝死的真因
+- 我在角色文件里写了 `model: deepseek/deepseek-flash`，插件的 `resolveModel` 把它 **fuzzy 解析成 `ustc-ai-1/deepseek-flash`**，
+- 而超预算的正是 **`ustc-ai-1`**（`Spend=$70.0224 / Limit=$70.00`）——证据来自 transcript 里子代理实际用的 `"provider":"ustc-ai-1"`。
+- 你切到的 **`ustc-ai-2` 一直是好的**（本会话主循环就用它）。
+
+## 修复
+- 已从 `.pi/agents/{dt-ui,bootchain}.md` 去掉钉死的 `model:`（父提交 `8e4061d`），子代理改为继承父会话模型；
+- **`dt-ui` 已重新派发**（agent `c9078261`），并**显式指定 `model: ustc-ai-2/deepseek-flash`**，确保落在新 key。
+- `bootchain` 用的是 `ustc-ai-3`（另一把 key，未超额），60 次工具调用仍在跑，不受影响。
+
+两条 lane 完成时我会独立复核再 merge。你继续忙别的即可。
+
+
+## Automatic settled outcome - 2026-10-04
+
+完成。已提交（`1eb269c`，分支 `lane/bootchain`，trailer 齐全，VK=vk51），lane 已 `done`。原始证据在 `archive/topics/BOOTCHAIN-2026-10-05.md`。
+
+---
+
+## ① 机制判定（四代 TB322FC）
+
+**四代 UEFI 是"有的"，但被拆成独立分区、由 XBL 加载——不是三代那种"塞进 boot.img 内核槽"。**
+
+| 分区 | 内容（本轮实机固件包 `~/下载/tb322fc/` 亲手解析） | 读它的是谁 |
+|---|---|---|
+| `uefi_a`(5M) | `uefi.elf` = ELF64 aarch64，内含 **EDK2 核**（`DxeCore.efi`/`uefiplat.cfg`） | **XBL** |
+| `imagefv_a`(2M) | DXE 驱动卷（LZMA→~32 MB，4×PE） | XBL |
+| `abl_a`(1M) | **LinuxLoader 应用**（解出 663 KB 可读：AVB+slot+直接内核启动） | XBL |
+| `toolsfv`(1M) | 工具 FV | XBL |
+
+- **四代 stock `boot.img` = 真 Linux arm64 Image**（magic `0x644d5241@56`，含 "Linux version"），**无 UEFI 载荷**。即 ABL 走的是"直接内核启动"，**ABL 自身不扫任何 FAT**（解出的 ABL 无 BDS/`SimpleFileSystem`，未发现 0x10000381 字面量）。
+- **三代 GUF296 `boot.img`**（亲手拉取解析）：v3，内核段 = gzip(**arm64 壳 `code0=0x10000381` + 完整 EDK2 FV，41×PE**)；其自带平台 BDS（`DefaultBDSBootApp="LinuxLoader"`, `EnableShell=1`）才去扫 FAT 起 GRUB。**真正扫 FAT 的是"载荷里的" BDS。**
+- **`logfs`/`qmcs`/`spunvm` 都是固件数据分区（GPT type=raw），不是被扫描的启动 FAT**；uefivarstore 里也没有 `Boot####`。→ **四代没有任何现成分区今天会被当启动 FAT；要 GRUB 起来必须先自供一套 UEFI(BDS+FS 驱动)。**
+
+## ② 路线排序表
+
+| 路线 | 所需产物 | 烧写/回退 | 验证判据 | 风险 |
+|---|---|---|---|---|
+| **C〔现在就能做〕** 最小 initramfs→`switch_root` 到 `linux17` | busybox(~1M) initramfs + Image.gz(20.5M) 打 boot.img | `fastboot flash boot_b`；回退 `out/boot_b-vk49.img` | `findmnt /`=linux17、相机模块自动加载不回归、**boot.img 由 96M→~22M** | **低** |
+| **A〔GRUB/UEFI 间接层，Gen3 同构〕** 自建 SM8750 可自举 UEFI 载荷塞 boot.img | ①SM8750 可自举 UEFI 卷（**缺环**：Mu-Silicium 移植 / 或重组四代`uefi.elf`+`imagefv.elf`）②小 FAT(放 GRUB) ③`linux17`(放 kernel+initramfs) | `fastboot flash boot_b`；GPT 若动→`backup/gpt*` 回退 | 出现 GRUB/BDS 菜单、`root=LABEL=linux17`、boot.img 内不再有 ramdisk | **中高**（壳机制三代已证；四代 ABL 接受自编 boot.img，"倾向可行"但**未验证**） |
+| **B〔最符合 UEFI 标准〕** 替换 `uefi_a` 为 U-Boot/Mu-Silicium | SM8750 U-B
+
+
+## Automatic settled outcome - 2026-10-04
+
+## 子代理路线：确认不可用（工具层，非你的 key）
+三次 `dt-ui` 全部 transcript `provider=ustc-ai-1`、`Spend=$70.0224` 一字不差；**删 frontmatter + 显式传 `model=ustc-ai-2/...` 都无效**。我停止重试。要么你修插件/provider 映射，要么我**继续主会话内联**（现在就是这么做）。
+
+## 桌面四项：内联已拿到一手定位
+
+**G1-28 亮度 —— 根因已抓到并复现**
+- Phosh 日志：`phosh-backlight-WARNING: Setting backlight on DSI-1 failed: GDBus.Error:System.Error.EISDIR: Is a directory`
+- 我用 `dbus-send` 直调 **elogind 的 `Session.SetBrightness`**，对**任意** name（含空串）都返回 `System.Error.EISDIR` ⇒ **不是设备名/滑块绑定问题，是 elogind 端**。
+- elogind **255.24**；其 `logind-brightness.c` 用「brightness writer 子进程 + `/sys/class/tty/tty0/active`」，并带串 `Only owner of session may change brightness.`；本机 **`loginctl list-sessions` 为空、无 VT/active tty0** ⇒ 该机制走不通。
+- Phosh 其实**自带 sysfs 后端**（`PhoshBacklightSysfs`/`backlight-sysfs.c`），但优先走 logind；且 `/sys/class/drm/card0-DSI-1/backlight` 符号链接**不存在**。
+- 可修方向（择一）：**A** 起真 session+VT（greetd/`pam_elogind`，或让 phoc 占 tty1）；**B** 换/降级 elogind（走简单 sysfs 写）；**C** 让 Phosh 走 sysfs 后端（补 DRM connector backlight 链接或 patch phosh）；**D** 小 root 守护桥接。**我推荐先试 A**（也顺带补齐 logind 生态）。
+
+**G1-26/27 深色 / 主题色 / 电源菜单图标 —— 部分定位**
+- dconf 正确（`/root/.config/dconf/user`：`prefer-dark`/`Adwaita-dark`/`accent=pink`，phosh `HOME=/root`）。
+- 日志见到 GTK4 应用加载 dark css（`Adwaita: style-dark.css is deprecated…`）⇒ **GTK4/libadwaita 侧深色是生效的**；问题集中在 **phosh 本体（GTK3）**。
+- `accent-color` 是 GNOME 47+/libadwaita 机制，**GTK3 的 phosh 不消费** ⇒ "主题色无法切换"很可能是 phosh 0.55 的能力边界（需 patch 或换壳）。
+- 电源菜单图标"反色"：symbolic 图标资源都在，疑似 **GTK3/GTK4 深色状态不一致** → 前景取错。**这一条需要你在屏幕上确认一次**（我 SSH 看不到画面）。
+- 待做：查 phosh 0.55 是否消费 `color-scheme`（源码/libhandy）；可能需 patch phosh。
+
+## 仍等你拍板的三件事
+1. **子代理**：修 provider 映射，还是我就内联干？
+2. **亮度**：走 A / B / C / D 哪条（我建议 A，但 A 要动 session/启动链，需你同意）？
+3. **E5（slim 上机）**：目标内核选 `vk50` 还是 `vk46`？要不要先用 `fastboot boot` 零写盘试？
+
+你给个方向，我就继续（或先只做你点名的某一条
+
+
+## Automatic settled outcome - 2026-10-04
+
+镜像本身正确（内核 UTS `7.2.0-debug-g4c68eb5ed4e3-dirty`），但设备目前**仍跑 vk42**（boot_id 未变），测试镜像还没引导。
+
+请在设备/主机上执行：
+
+```sh
+# ① 设备（SSH，当前 vk42 系统）
+eldroid-bootctl reboot bootloader
+
+# ② 主机（等设备进 fastboot 后，一条一条）
+fastboot devices
+fastboot boot ~/y700-elden/out/boot-elden-vk47-dtb42.img
+```
+
+引导完（SSH 应换成 `uname -r` = `7.2.0-debug-g4c68eb5ed4e3-dirty`）告诉我，我立刻跑 `g1-22-dpms-test.sh` 判定。
+
+
+## Automatic settled outcome - 2026-10-04
+
+干净重建镜像已就绪：`out/boot-elden-clean.img`（**已提交源码 + vk47 config** 重新编译的内核，vk47 ramdisk/DTB）。请引导它做判定。
+
+```sh
+# 设备（SSH）
+eldroid-bootctl reboot bootloader
+# 主机
+fastboot devices
+fastboot boot ~/y700-elden/out/boot-elden-clean.img
+```
+
+**判定逻辑**：
+- 若**免疫** ⇒ 当前 boot_b 那份 `-dirty` 构建是坏的（含未提交改动），修复 = 用干净内核重刷 boot_b；
+- 若**仍复位** ⇒ 已提交源码本身有该 bug，vk42 的"免疫"需重查（我们继续二分）。
+
+（旁证已完成：vk42/vk47 的 **config 完全相同**、内核字符串几乎相同、ramdisk 内容相同、只换 DTB 无效——所以这次干净重建是决定性一步。）

@@ -162,3 +162,13 @@ CN 网络抓取 GitHub 技术文档：raw.githubusercontent.com 常被 DNS 污�
 ## Memory - 2026-10-04
 
 y700-elden (TB322FC/SM8750) kexec 不可用：`kexec -s -l`（kexec_file_load）返回 RC=0、/sys/kernel/kexec_loaded=1，但 `kexec -e` 会硬挂整机——串口日志戛然而止，无新内核横幅、无 panic、无看门狗复位、USB/网络/fastboot 全消失，需物理强制重启；复位后 pstore 为空（非 panic 路径）。旧“kexec 未换动内核、无反馈”实为该硬挂。结论：内核迭代改用 fastboot 零写盘 `fastboot boot`/`--flash`，放弃 kexec 快环。
+
+
+## Memory - 2026-10-04
+
+provider `ustc-ai-3` 的预算上限实测为 12h/$70（不是旧记忆的 3h/$30）：超限时子代理 0 次工具调用即死，报 `429 ExceededBudget: Key over 12h budget. Spend=$X, Limit=$70.00`。同一 key 下所有会话/子代理共享，主会话与子代理同 key。对策：换 key（ustc-ai-1/2/4）或等窗口滚出，调 retry 无效；派子代理前先估算。
+
+
+## Memory - 2026-10-04
+
+pi-subagents 子代理模型解析实测：即使 (a) 删除角色文件 .pi/agents/<x>.md 的 `model:` frontmatter、(b) 在 Agent 调用里显式传 model="ustc-ai-2/deepseek-flash"，子代理仍落在 `ustc-ai-1`（三次一致）。症状：子代理 0 工具调用即死，报 `ExceededBudget ... Spend=$70.0224, Limit=$70.00`。判断依据：看 transcript 里 `"provider":"..."`。模型注册表在 `~/.pi/agent/models.json`（ustc-ai-1..4 均有 deepseek-flash），项目 `~/.pi/agent/auth.json` 无 `deepseek` provider。结论：override 不可靠，选区/派发前先看 transcript 的 provider；不可靠时改主会话内联。

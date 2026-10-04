@@ -91,3 +91,6 @@ __pycache__/
 # 根目录散件归档（2026-10-04）：4MB 迁移包不入库，可由 pack.sh 重打
 /archive/2026-10-04-root-strays/flashing-bundle-*.tar.gz
 /patches/*.bak
+
+# 并发会话 clone 的上游仓库（2026-10-05 用户移走）：忽略
+/edk2-aarch64-gunyah/

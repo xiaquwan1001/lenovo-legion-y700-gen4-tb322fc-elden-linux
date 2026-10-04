@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-05（**#99–#101 = 持久根模块对齐 / PipeWire 占相机 / boot 加载接线**；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
+> 最后更新：2026-10-05（**#99–#102 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信**；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
 
 ---
 
@@ -197,6 +197,10 @@
 101. **★持久根 boot 不会自动加载相机模块——`/init` 需接线**（2026-10-05）。
     - 设备旧 `/init` 缺相机加载块（`rootfs/init` 已有），且 `modules` init.d 服务**不在任何 runlevel**（runlevels 全空，非标准 OpenRC 引导）⇒ `/etc/modules-load.d/camera.conf` 从未生效。
     - 修法：部署 `rootfs/init`（其相机块**未加 `on_initramfs` 守卫** ⇒ `switch_root` 后在持久根也会跑一次）+ `/usr/local/sbin/camera-modules-load.sh`。
+102. **★`kernel_git_state=dirty` 的 boot 镜像不可信：源码“干净”却被烧上了带未提交改动的二进制**（2026-10-05，G1-22 复发根因）。
+    - 现象：boot_b 跑 `7.2.0-debug-g4c68eb5ed4e3-dirty`，**熄屏（DPMS off）即硬复位**；但 vk42 镜像免疫、`git diff vk42..vk47` **仅 DTS**、内嵌 config `diff`=0、ramdisk 内容相同、换 vk42 DTB 仍复位。
+    - 判定：用**已提交源码 + 同一 config**干净重建 ⇒ **免疫**。⇒ boot_b 是**脏树构建**（带未提交改动，疑残留音频调试插桩），git 提交历史里看不到、也无法从任何提交复现。
+    - 纪律：① **只烧 `kernel_git_state=clean` 的镜像**；② manifest 必记 `kernel_git_state` 并据此判定可信度（vk50 起已记）；③ 遇 G1-22 类「熄屏复位」，**先查 boot_b 二进制的 dirty 状态**，不要从源码二分。见 `TASKS.md` Q24、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.8。
 
 ---
 
@@ -756,7 +760,7 @@
 
 | 缺陷 | 状态 | 权威 |
 |---|---|---|
-| 桌面空闲熄屏 → 整机重启 | ⚠️ **复发/未结（2026-10-05 受控复现）**：当前 boot_b（vk47 / UTS `g4c68eb5ed4e3-dirty`）**熄屏（DPMS off）即硬复位**——单击电源键或 `wlr-randr --off` 均触发；相机已排除；与「同一 UTS 已免疫」矛盾 | `TASKS.md` §5 Q21/**Q24** / G1-22；`archive/topics/REBOOT-5MIN-2026-10-05.md` §7 |
+| 桌面空闲熄屏 → 整机重启 | ⚠️ **根因已定位（2026-10-05）**：boot_b 烧的是 `kernel_git_state=dirty` 的 vk47 镜像（带未提交改动）；**干净重建已实测免疫**，修复=重刷干净内核 | `TASKS.md` §5 Q24/G1-22；`PITFALLS` #102；`archive/topics/REBOOT-5MIN-2026-10-05.md` §7 |
 | vk34 之后内核增量回归（vblank/PPM） | vblank 残留（不致复位）；主因已归 vk40 插桩 | `TASKS.md` §5 Q22 / G1-23 |
 | 音频不可听 | ✅ 已出声（vk43）；输入端 ✅ 已打通（WCD939x AMIC1，UCM2 Mic） | `TASKS.md` G1-4 |
 | 相机不出流 | ✅ 已出流（2026-10-05 G1-5，前后摄） | `TASKS.md` G1-5 / Q9 |
