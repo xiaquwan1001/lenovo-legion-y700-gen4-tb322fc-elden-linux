@@ -17,9 +17,20 @@ MANIFEST=$OUT/boot-elden-$VERSION.manifest
 
 sha() { [ -e "$1" ] && sha256sum "$1" | cut -d' ' -f1 || echo "(absent)"; }
 
-# Kernel release as the tree would report it (best effort; no build triggered).
+# Kernel release as the tree would report it (must honor LOCALVERSION to match the build).
 KV=$(make -s -C "$KDIR" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE:-aarch64-linux-gnu-}" \
-	kernelrelease 2>/dev/null || echo "(unknown)")
+	${LOCALVERSION:+LOCALVERSION=$LOCALVERSION} kernelrelease 2>/dev/null || echo "(unknown)")
+
+# Ground truth: the UTS string baked INTO the image (decisive; file names lie).
+UTS=$(python3 - "$IMG" <<'PY' 2>/dev/null || echo "(unknown)"
+import sys, zlib, re
+data = open(sys.argv[1], 'rb').read()
+i = data.find(b'\x1f\x8b\x08')
+k = zlib.decompress(data[i:], 16 + zlib.MAX_WBITS)
+m = re.search(rb'Linux version [0-9][^\x00]+', k)
+print(m.group(0).split(b')')[0].strip().decode() if m else '(unknown)')
+PY
+)
 
 KHEAD=$(git -C "$KDIR" rev-parse HEAD 2>/dev/null || echo "(none)")
 KDIRTY=$(git -C "$KDIR" status --porcelain 2>/dev/null | head -1 || true)
@@ -34,6 +45,7 @@ PHEAD=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo "(none)")
 	echo "image_sha256=$(sha "$IMG")"
 	echo "image_size=$( [ -e "$IMG" ] && stat -c%s "$IMG" || echo 0 )"
 	echo "kernel_release=$KV"
+	echo "kernel_uts=$UTS"
 	echo "kernel=$KDIR/arch/arm64/boot/Image.gz"
 	echo "kernel_sha256=$(sha "$KDIR/arch/arm64/boot/Image.gz")"
 	echo "kernel_image_sha256=$(sha "$KDIR/arch/arm64/boot/Image")"
@@ -50,4 +62,4 @@ PHEAD=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo "(none)")
 } > "$MANIFEST"
 
 echo "[manifest] $MANIFEST"
-grep -E '^(version|kernel_release|image_sha256|ramdisk|cmdline)=' "$MANIFEST"
+grep -E '^(version|kernel_release|kernel_uts|image_sha256|ramdisk|cmdline)=' "$MANIFEST"
