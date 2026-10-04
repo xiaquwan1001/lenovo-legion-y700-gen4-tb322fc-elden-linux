@@ -97,7 +97,7 @@
 > 2026-10-05 晚刷新：**新增两条并发 lane**（`.pi/CONCURRENCY.md` 模型，baseline `base/20261005-d860655`）：
 > - `dt-ui`（占 U2）= **G1-26 深色/主题配色 + G1-27 电源菜单图标反色 + G1-28 亮度滑块**——三个用户态问题同批诊断+最小修复；
 > - `bootchain`（host-only）= **G1-29 间接引导层（GRUB 类/UEFI）**——摆脱 `boot.img` 96 MiB 限制；先出机制判定+路线。
-> - **G1-30**（短期缓解，待排）：持久启动改**最小 initramfs**（busybox 挂 `linux17` → `switch_root`），boot.img 可从 ~101 MB 降到 ~22 MB（**瓶颈是 ramdisk，不是内核**）。
+> - **G1-30**（短期缓解）：✅ **主机侧已交付（lane `bootslim`，VK=vk52）**——min initramfs 使 `boot.img` 从 ~101 MB→**20.8 MiB**（`findfs` fallback + `scripts/build-boot-slim.sh`）；**E5 上机待定**（须用与磁盘 `/lib/modules` 同版本的内核重打）。
 
 1. **快环——kexec 已定论不可用（2026-10-05，实机）**：fragment 已应用、vk50 全量构建 ✅。**`kexec -s -l` 成功（RC=0，`/sys/kernel/kexec_loaded=1`），但 `kexec -e` 硬挂整机**——串口在 t≈182s 处戛然而止，无新内核横幅、无 panic、无看门狗复位，USB/网络/fastboot 全消失，需物理强制重启；复位后 pstore 为空（非 panic）。⇒ **放弃 kexec 快环**，改用 **`--boot`（fastboot 零写盘）/ `--flash`**。vk50 已用 `fastboot boot` 零写盘实跑验证（相机出流即在 vk50 上完成）。**mod 环前提已补齐**：vk50 起用 `LOCALVERSION=-vk50` 重建全量模块 **1513 个**（vermagic 与内核一致），`scripts/iterate.sh mod` 可用（需在 vk50 上跑且目标模块为 `=m`）。⚠️ **镜像纪律**：`build-camera-overlay.sh` 必给 `BASE=out/rootfs-overlaid.cpio.gz.bak-vk48`，否则重复叠加→boot.img 101MB 超 boot_b 96MiB 分区（当前 vk50 镜像即此状态，`fastboot boot` 可用但不可 flash）。boot_b 实际内容 = **vk46-dirty**。
 2. ~~**G1-5 相机出流**~~ ✅ **已打通（2026-10-05）**：前后摄连续出帧 rc=0，脚本 `scripts/camera-stream-up.sh`；剩 3A/调优与 C5 容器共享（非阻塞）。
