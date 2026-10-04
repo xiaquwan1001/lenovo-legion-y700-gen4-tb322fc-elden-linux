@@ -1,0 +1,64 @@
+From: elden-bt-subagent
+Subject: [PATCH] Bluetooth: hci_qca: test-only disable of HW flow control (H2 probe)
+
+WOULD-BE CANDIDATE PATCH — DO NOT COMMIT, NOT VALIDATED ON HARDWARE.
+
+改动点
+======
+在 qca_setup() 成功完成 PERI + BT 固件下载后，显式把操作链路上的硬件
+RTS/CTS 关掉（hci_uart_set_flow_control(hu, true) 的语义是「关闭硬件流控」，
+见 hci_ldisc.c:329-338 的 !enable 取反）。
+
+预期影响
+========
+若根因是「控制器在自身 UART RX 忙时把 CTS 拉低，导致 geni TX 引擎停顿
+数十 ms」，本补丁会消除该停顿 ⇒ l2ping RTT 由 30-190 ms 收敛到 <10 ms。
+
+能区分哪个假设
+==============
+H2（UART 流控 / CTS 停顿）。与 candidate-bt-maxspeed-3000k 的区别：
+- maxspeed 补丁改的是时钟余量（误码），RTT 应变成「偶发丢包但常态快」；
+- 本补丁改的是 CTS 阻塞，RTT 应变成「常态快」。
+两者若都无效 ⇒ 剩下 H4（控制器固件自身深睡/轮询）。
+
+风险
+====
+关闭 CTS 后，主机在突发写时可能冲垮控制器 UART RX ⇒ HCI 层出现
+乱序/CRC，表现为 hciconfig 的 RX/TX errors 上升、甚至 HCI 0x13 断连。
+因此本补丁只作为一次性判别，观察期必须盯 hciconfig errors 与 btmon。
+功耗无变化。恢复方式：删除本补丁重新编译，或把 true 改回 false。
+
+证据/动机
+=========
+- hci_qca.c:1849-1874 qca_port_reopen() 注释：「Without this, we will have
+  RTS and CTS synchronization issues.」该函数只在 wcn399x/6750 的
+  qca_regulator_init() 路径被调用（hci_qca.c:1941），WCN7861/Peach 走
+  qca_power_on()+qca_peripheral_setup()，从不调用它。
+- qca_peripheral_request() 在切到 8 Mbps 后调用
+  hci_uart_set_flow_control(hu, false) 打开硬件流控，此后没有任何代码
+  再核对流控是否真的生效。
+- geni 侧 RTS 修复（upstream 0b57d096a223）已在树内；pinctrl 的
+  cts 引脚带 bias-pull-up，静态看是对的 ⇒ 剩下的可能是控制器行为，
+  只能靠「关掉 CTS 看是否变快」来判别。
+
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -2384,6 +2384,17 @@ static int qca_setup(struct hci_uart *hu)
+ 	if (!ret) {
+ 		clear_bit(QCA_IBS_DISABLED, &qca->flags);
+ 		qca_debugfs_init(hdev);
++		/*
++		 * elden candidate test (H2): disable hardware RTS/CTS on the
++		 * operational link.  If the controller deasserts CTS while its
++		 * UART RX is busy, geni TX stalls for tens of ms, matching the
++		 * 30-190 ms RTT spread that IBS changes did not affect.
++		 * Risk: without CTS the host may overrun controller RX on
++		 * bursts -> watch hciconfig TX/RX errors.
++		 */
++		if (hu->serdev)
++			dev_info(&hu->serdev->dev, "QCA: HW flow control disabled (test)\n");
++		hci_uart_set_flow_control(hu, true);
+ 		hu->hdev->hw_error = qca_hw_error;
+ 		hu->hdev->reset = qca_reset;
+ 		if (hu->serdev) {

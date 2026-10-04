@@ -1,0 +1,25 @@
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -649,7 +649,20 @@ static int qca_open(struct hci_uart *hu)
+ 	init_completion(&qca->drop_ev_comp);
+ 
+ 	/* Assume we start with both sides asleep -- extra wakes OK */
+-	qca->tx_ibs_state = HCI_IBS_TX_ASLEEP;
++	/*
++	 * elden candidate test: start the TX side AWAKE.
++	 *
++	 * With the stock ASLEEP start, the first ACL frame -- and any frame
++	 * after the host TX idle timer has fired -- is parked in tx_wait_q
++	 * until the controller answers HCI_IBS_WAKE_IND with
++	 * HCI_IBS_WAKE_ACK.  On this unit wake_retrans was measured at ~88%
++	 * of wakes (100 ms retransmit timeout), which by itself accounts for
++	 * the observed 30-190 ms l2ping RTT and the ~20-packet burst death.
++	 * If RTT collapses with this patch the wake handshake was the
++	 * bottleneck; if it is unchanged the cost is elsewhere (UART baud
++	 * margin or ACL credit starvation).  Cost: slightly higher idle power.
++	 */
++	qca->tx_ibs_state = HCI_IBS_TX_AWAKE;
+ 	qca->rx_ibs_state = HCI_IBS_RX_ASLEEP;
+ 
+ 	qca->vote_last_jif = jiffies;

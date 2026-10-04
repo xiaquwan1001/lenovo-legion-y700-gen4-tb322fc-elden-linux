@@ -1,0 +1,94 @@
+From: elden-bt-subagent
+Subject: [PATCH] Bluetooth: hci_qca + DTS: lower WCN7861 operating UART rate to 3 Mbps (H1 probe)
+
+WOULD-BE CANDIDATE PATCH — DO NOT COMMIT, NOT VALIDATED ON HARDWARE.
+
+改动点（两文件三处）
+====================
+1) hci_qca.c:2159  PERI（peripheral）协议里硬编码的波特率索引字面量
+   0x15 (=QCA_BAUDRATE_8000000, 见 btqca.h:78) → 0x0e (=QCA_BAUDRATE_3000000,
+   见 btqca.h:72)。
+2) hci_qca.c:2178  同一条 PERI 命令里主机侧 serdev 波特率实参
+   8000000 → 3000000。
+3) DTS sm8750-lenovo-elden.dts:3004  max-speed 8000000 → 3000000。
+
+为什么必须同时改 (1)(2)，而不能只改 DTS
+========================================
+hci_qca.c:2020-2029 有一个 WCN7861 专用 helper
+qca_wcn7861_uses_current_baudrate()：当 (soc_id,rom_ver,product_id) 命中
+(0x40210100,0x0100) / (0x40210200,0x0200) 且 product_id∈{0x1e,0x21} 时，
+hci_qca.c:2347 会**跳过** qca_set_speed(QCA_OPER_SPEED)（即跳过 HCI VS 0xfc48）
+——此时运行波特率完全由 PERI 协议在 qca_peripheral_setup() 中决定，
+**DT 的 max-speed 只被用来填 NVM 里的 baud 索引，不影响实际线路速率**。
+因为本机 (soc_id/rom_ver/product_id) 尚未在设备上确认，只改 DT 可能完全是空操作，
+所以补丁同时改 PERI 的两处，保证无论 helper 走哪条分支线路速率都降到 3 Mbps。
+
+预期影响
+========
+若根因是 8 Mbps 下主机 geni 时钟与控制器 PLL 的微小频差累积成偶发字节错，
+本补丁把速率降到 3 Mbps（仍远高于 EDR ACL 所需 ~2.1 Mbps）后，
+RTT 尖峰与突发断连应显著减少、hciconfig 的 RX/TX errors 应保持 0。
+
+能区分哪个假设
+==============
+H1（UART 时钟余量 / 8 Mbps 误码）。判据：
+- RTT 从「常态 30-190 ms + 偶发丢包」变成「常态 <10 ms、无丢包」⇒ H1 成立；
+- RTT 形状不变 ⇒ H1 否，剩 H2（CTS 停顿）/H4（控制器固件深睡）。
+
+风险
+====
+- 3 Mbps 下 HCI 吞吐下降（约 8→3 Mbps），对 BT 音频/EDR 仍足够，但大批量
+  文件传输会慢；纯测试用途，验证完应回退。
+- 若控制器固件对 3 Mbps 索引 (§1 的 0x0e) 不支持，PERI 会返回非 1 ⇒
+  qca_peripheral_setup() 返回 -EIO，BT 初始化失败（表现为 hci0 不出现）。
+  这是可预期的失败模式，不是「刷坏」，重启回退即可。
+
+证据/动机
+=========
+- btqca.h:58-80 波特率索引表同时含 3000000/4000000/3200000/8000000，
+  说明这些档位控制器侧是支持的。
+- 上游大量 QCA 板级 DTS 用 max-speed = <3000000>；本机用 8000000 属激进档。
+- 8 Mbps 目前无法从「hciconfig errors=0」判定好坏：HCI 层的字节错会被
+  控制器/主机静默重传，只体现为延迟与突发丢包。
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -3001,6 +3001,16 @@ &uart14 {
+ 		vddrfa1p2-supply = <&vreg_wlan_pmu_rfa_1p2>;
+ 		vddrfa1p8-supply = <&vreg_wlan_pmu_rfa_1p8>;
+ 
+-		max-speed = <8000000>;
++		/*
++		 * elden candidate test (H1): 8 Mbps -> 3 Mbps.  The host geni
++		 * clock and the controller PLL are independent; at 8 Mbps a
++		 * small frequency offset accumulates into occasional byte
++		 * errors that HCI silently retransmits (0 hciconfig errors, but
++		 * 30-190 ms RTT and burst collapse).  3 Mbps is still well above
++		 * EDR ACL.  Note: for WCN7861 the runtime rate is set by the PERI
++		 * protocol, so this DTS change only matters when the PERI baud
++		 * patch below is in effect.
++		 */
++		max-speed = <3000000>;
+ 	};
+ };
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -2158,4 +2158,5 @@ static int qca_peripheral_setup(struct hci_uart *hu)
+ 	static const u8 version[] = { 0x31, 0x00, 0xf0, 0xff, 0x02, 0x05, 0x00 };
+-	static const u8 baud[] = { 0x31, 0x00, 0xf1, 0xff, 0x02, 0x02, 0x15 };
++	/* elden H1 test: 0x15 = QCA_BAUDRATE_8000000 -> 0x0e = QCA_BAUDRATE_3000000 */
++	static const u8 baud[] = { 0x31, 0x00, 0xf1, 0xff, 0x02, 0x02, 0x0e };
+ 	static const u8 tme_version[] = { 0x31, 0, 0xf0, 0xff, 2, 5, 3 };
+ 	static const u8 tme[] = { 0x31, 0, 0xf0, 0xff, 3, 8, 3, 0 };
+@@ -2173,8 +2173,8 @@ static int qca_peripheral_setup(struct hci_uart *hu)
+ 	ret = qca_peripheral_request(hu, version, sizeof(version), 0, true);
+ 	if (ret)
+ 		return ret;
+ 	if (!qca->peri_supported)
+ 		return -ENODEV;
+-	ret = qca_peripheral_request(hu, baud, sizeof(baud), 8000000, true);
++	ret = qca_peripheral_request(hu, baud, sizeof(baud), 3000000, true);
+ 	if (ret != 1)
+ 		return ret ? ret : -EIO;

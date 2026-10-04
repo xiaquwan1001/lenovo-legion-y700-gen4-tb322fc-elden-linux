@@ -1,0 +1,44 @@
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -212,6 +212,12 @@ struct qca_data {
+ 	u64 ibs_recv_wacks;
+ 	u64 ibs_recv_slps;
+ 	u64 ibs_recv_wakes;
++	/* elden diagnostic: time HCI frames spend parked in tx_wait_q
++	 * waiting for a controller HCI_IBS_WAKE_ACK.
++	 */
++	unsigned long tx_wait_start;
++	u64 tx_wait_ms;
++	u64 tx_wait_cnt;
+ 	u64 vote_last_jif;
+ 	u32 vote_on_ms;
+ 	u32 vote_off_ms;
+@@ -717,5 +723,7 @@ static void qca_debugfs_init(struct hci_dev *hdev)
+ 	debugfs_create_u64("ibs_recv_wake_acks", mode, ibs_dir,
+ 			   &qca->ibs_recv_wacks);
++	debugfs_create_u64("tx_wait_ms", mode, ibs_dir, &qca->tx_wait_ms);
++	debugfs_create_u64("tx_wait_cnt", mode, ibs_dir, &qca->tx_wait_cnt);
+ 	debugfs_create_bool("tx_vote", mode, ibs_dir, &qca->tx_vote);
+ 	debugfs_create_u64("tx_votes_on", mode, ibs_dir, &qca->tx_votes_on);
+ 	debugfs_create_u64("tx_votes_off", mode, ibs_dir, &qca->tx_votes_off);
+@@ -905,6 +913,11 @@ static void device_woke_up(struct hci_uart *hu)
+ 
+ 	case HCI_IBS_TX_WAKING:
+ 		/* Send pending packets */
++		if (!skb_queue_empty(&qca->tx_wait_q)) {
++			qca->tx_wait_ms +=
++				jiffies_to_msecs(jiffies - qca->tx_wait_start);
++			qca->tx_wait_cnt++;
++		}
+ 		while ((skb = skb_dequeue(&qca->tx_wait_q)))
+ 			skb_queue_tail(&qca->txq, skb);
+ 
+@@ -963,6 +976,7 @@ static int qca_enqueue(struct hci_uart *hu, struct sk_buff *skb)
+ 	case HCI_IBS_TX_ASLEEP:
+ 		BT_DBG("Device asleep, waking up and queueing packet");
+ 		/* Save packet for later */
++		qca->tx_wait_start = jiffies;
+ 		skb_queue_tail(&qca->tx_wait_q, skb);
+ 
+ 		qca->tx_ibs_state = HCI_IBS_TX_WAKING;
