@@ -1175,3 +1175,34 @@ VK: vk52
 - **G1-6 TF 卡**状态已按你的更正更新为"新卡已在位，可测"，下一步可直接跑 `scripts/tf-stress.sh`。
 
 下一步你要：**A** 重启验证开机自动加载；**B** 根治 WirePlumber 相机冲突；**C** 跑 TF 卡新卡 A/B？
+
+
+## Automatic settled outcome - 2026-10-04
+
+已记录，未再深挖。结论如下。
+
+## 归档内容（提交 `f6e77e2`）
+
+**新增** `archive/topics/REBOOT-5MIN-2026-10-05.md` —— 原始观测 + 假设 + 受控实验建议：
+
+| 项 | 记录 |
+|---|---|
+| 现象 | U2 boot_b 持久直启，内核 `g4c68eb5ed4e3`（vk46 + 未提交 vk47 DTS）；**进桌面后 ~5 min 整机硬重启，用户观察 2 次** |
+| 复位性质 | **硬复位**：pstore 空、无 panic；无 `/dev/watchdog*`（`watchdog: Hard watchdog permanently disabled`）→ 排除看门狗 |
+| 关键对照 | `git diff vk42..vk46` **仅 DTS（+111 行，WCD939x/SWR/DMIC）**，驱动代码与"免疫"的 vk42 完全一致 ⇒ **不是旧 G1-22 的 N1/N4 插桩**；但"免疫"从未在 vk46/vk47 DTS 上复检 |
+| **未受控复现** | 同机桌面态 `idle-delay=300` 连续稳定 **≥60 min 未重启**；盯守到 uptime **304 s 时 `dpms` 仍为 `On`**，同一 boot 跑到 **475 s 仍未重启** ⇒ 无法用"等 5 min"稳定复现 |
+| 候选假设（未验证） | H1 DPMS off→复位（新 DTS 电源域）；H2 相机自动加载与显示电源切换交互；H3 其他 ~5 min 定时（`PPM init failed` t≈324 s，已知良性） |
+
+**同步落账**：`TASKS.md` §5 新增 **Q24**、G1-22 行加"复检"标记；`PITFALLS.md` §15.5 缺陷索引更新。
+
+## 附带确认（正面）
+
+- 本轮**相机 boot 自动加载已由多次自然重启验证**：重启后 `lsmod | grep -c camss`=8，`/dev/media0`、`/dev/video0`、`/dev/video3` 均在 → `/init` 接线有效（原先那条"待重启验证"已勾销）。
+
+## 留待后续（写进 Q24 的受控实验清单）
+
+1. `g1-22-dpms-test.sh` 多轮 DPMS off，**相机加载 vs 卸载** 单变量；
+2. boot_b 临时切 `vk42`/`vk34recon` 同口径对照（`bootslot-b/` 有签名资产）；
+3. dmesg 跨复位落盘（注意"取证装置本身是变量"的旧教训）。
+
+需要时再从 Q24 接着做；当前设备同一 boot 已稳跑 ~8 min，未再重启。
