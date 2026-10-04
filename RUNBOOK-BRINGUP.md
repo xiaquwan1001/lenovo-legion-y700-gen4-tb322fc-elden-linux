@@ -257,16 +257,15 @@ fastboot reboot
 **验证清单（此步就要过 = G1 验收矩阵的硬件部分）**：显示/触屏、SSH、WiFi（若要）、CPU/温度、`ls $BLK*`、**`dmesg` 里原厂固件加载（ADSP / WCN / GPU zap / 触屏 FW）无失败**。
 OOB 串口：`bash scripts/serial-run.sh 'uname -r; id'`。
 
-> ★ **持久根（Phase 4/5）上电前后必做：禁止空闲熄屏**。内核 `CONFIG_SUSPEND=n`（无 `mem_sleep` 可设），
-> 而桌面默认 `idle-delay=300` → 5 分钟熄屏；2026-10-03 U2 实测 **一熄屏就整机重启**（重启前 `ucsi_glink PPM init failed`，无 panic；`GAPS` Q21 / `TASKS` G1-22）。
-> 规避（至少做完这一条再上持久根长期运行）：
+> ★ **持久根（Phase 4/5）熄屏稳定性**：2026-10-05 已定位并修复「熄屏→整机重启」（G1-22；根因=vk40 音频调试插桩 + 热区组合，`vk42` 起内核免疫）。旧规避在新内核上**非必需**，但若跑旧内核/未确认，仍建议先禁空闲熄屏再长跳。
+> 规避（旧内核/未确认时用）：
 > ```bash
 > # 持久根上（拿到 phoc 的 session bus 后）
 > DBUS_SESSION_BUS_ADDRESS=$(tr '\0' '\n' </proc/$(ps -eo pid,args|awk '/[p]hoc -v/{print $1;exit}')/environ | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p') \
 >   gsettings set org.gnome.desktop.session idle-delay 0
 > ```
 > 并把它（或 phosh caffeine 常开）写进 `scripts/start-desktop.sh`，随 rootfs 归档固化。
-> ⚠️ **不要在只能黔 SSH 进入的持久系统上做“把 idle-delay 改成 10”这类实验**——会直接把自己锁在外面。
+> ⚠️ **不要在只能靠 SSH 进入的持久系统上做“把 idle-delay 改成 10”这类实验**——会直接把自己锁在外面。
 
 ---
 
