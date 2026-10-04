@@ -184,13 +184,13 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 |---|---|---|---|
 | 领域层 `INDEX/DEVICE/TASKS/RESOURCES/GAPS/ANDROID-COMPAT/RUNBOOK.md` + `PITFALLS.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2 |
 | `.pi/{skills,memory,missions,agents}` `.pi/README.md` `.pi/settings.json` `.pi/pi-messenger.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/任务卡/模型配置（分工见 `.pi/README.md`） |
-| `.pi/sessions/`（51 个 jsonl） | 52 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
+| `.pi/sessions/`（53 个 jsonl） | 52 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
 | `.pi/messenger/` | 748 K | ignore | 运行时状态 |
 | `scripts/` | 448 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集 |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + **新：工作树全量 patch** |
 | `archive/` | 752 K | ✅ track | 过程证据（51 篇专题 + 2 截图），只增不改 |
-| `PITFALLS.md` | 52 K | ✅ track | 踩坑正文 #1–#88 + §0 零号纪律 |
-| `RESOURCES.md §4` | 21 K | ✅ track | 51 会话索引 + 内核实机验证边界 |
+| `PITFALLS.md` | 52 K | ✅ track | 踩坑正文 #1–#91 + §0 零号纪律 |
+| `RESOURCES.md §4` | 21 K | ✅ track | 53 会话索引 + 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
@@ -263,9 +263,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 23 / ◐ 部分 3 / ✗ 未上机 25 |
-| 状态 | active 27 / reference 15 / junk 6 / superseded 3 |
-| 时间跨度 | 2026-09-29 → 2026-10-03（51 会话，36 在 flat、7 在 slug 目录、2 重复测试） |
+| 实机验证 | ✅ 实机 24 / ◐ 部分 3 / ✗ 未上机 26 |
+| 状态 | active 29 / reference 15 / junk 6 / superseded 3 |
+| 时间跨度 | 2026-09-29 → 2026-10-04（53 会话，46 在 flat、7 在 slug 目录、2 个重复测试） |
 
 ---
 
@@ -328,13 +328,15 @@ git log --oneline -10
 | 2026-10-03 | `01a1021c` | 刷机控制+桌面：PSCI reboot与elogind | flashctl-power | ✅ | active | 实机确认 PSCI SYSTEM_RESET2 vendor reset 生效：`eldroid-bootctl reboot bootloader` 真进fastboot；另修elogind关机（HandlePowerKey占位致shutdown inhibitor卡in-progress） | vk41,vk40 | EDL/recovery的vendor reset未测；长按关机待实测；配置重启持久性待复核 |
 | 2026-10-03 | `01a10224` | 会话：项目架构整理与文档分层 | docs-reorg | ✗ | active | 审查12份根文档；定三层架构(领域/元/证据)+SSOT规则；新增scripts/check-doctor.sh；启动全面收敛到6份 | - | 收敛重构进行中；db/LESSONS拟删除 |
 | 2026-10-03 | `01a10264` | 复盘：logind 关机 + 音频/温控重落与出声 | power-audio | ✅ | active | ①logind 关机假成功真根因=busybox helper 不带 `-f` 只 `kill(1)`，PID1 是 shell→假成功；落 `fix-logind-poweroff.sh`。②建 `devlogs.sh` 运行日志采集。③vk39 两增量（音频 0009/0011 + 温控 0010）被 vk34-recon 回退→新分支 vk42 干净重落（uname `geb432f18a0d1`）。④音频无声根因=tplg MI2S **SD 线错**（SD0→SD1，功放接 `i2s1_data1`）→ tplg 修正 + ramdisk 字节替换 → **vk43 出声** ✅ | vk43,vk42,vk41 | 熄屏→重启仍未解；**输入端❌**（实测本机麦克风=模拟麦接 WCD939x，非 DMIC；需 WCD939x bring-up）；温控四级 trip ✅
+| 2026-10-04 | `01a10440` | 会话：进度盘点与下一步规划 | session-meta | ✗ | active | 实测 U2=vk45 持久根 up 7h20m；发现 INDEX §3/TASKS §0 文档漂移；定优先级 P0 收口→P1（U1 C0 取证）→P2（WCD939x / 熄屏重启） | - | P1 需 U1 接入；WCD939x 与 G1-22 未开工 |
 
 ---
 
 ### 3. 内核版本时间线与「实机验证边界」（任务 #2 的界）
 
-**关键缺陷**：所有 vkNN 构建共用同一 `uname -r` = `7.2.0-debug-gba28ec16f01f-dirty`（localversion 未改）
+**关键缺陷（vk7–vk41）**：早期 vkNN 构建共用同一 `uname -r` = `7.2.0-debug-gba28ec16f01f-dirty`（localversion 未改）
 → 设备上无法从内核自报分辨在跑哪个 vk；版本只能靠**镜像文件名 + 刷入命令**追溯。
+**vk42 起已分离**：vk42=`geb432f18a0d1`、vk45=`g26cc186e9485`（不再是同一 uname）。
 
 构建时间线（`out/boot-elden-vk*.img`）：
 
@@ -347,10 +349,13 @@ git log --oneline -10
 | vk35 | 10-02 01:40 | 温控限频会话前后 | 10-02 ⚠️ 仅 ssh 读数，未见明确 vk35 确认 |
 | vk36–vk39 | 10-02 10:48 → 12:01 | 0010 thermal-graded-trips、0011 q6apm-mi2s、config-vk40-bringup | ⚠️ INDEX 称『最后在机基线 vk39』但**无会话级确认** |
 | vk40 / vk40-ram | 10-02 19:43 / 20:02 | vk39 之后 + 10-03 initramfs 持久化改动 | 10-03 ✅ 上机（U2 持久 Phosh），**但曝熄屏即重启等新 bug** |
+| vk40re / vk41-psci | 10-03 19:51 / 22:46 | vk40 热区重落；`psci.c` vendor reset（→fastboot） | 10-03 ✅ `eldroid-bootctl reboot bootloader` 真进 fastboot（G1-24 S2） |
+| vk42 | 10-04 00:04 | vk34-recon 基础上干净重落音频/温控增量 | 10-04 ✅ 上机 |
+| vk43 / vk44 / vk45 | 10-04 00:20 / 00:42 / 00:49 | vk43：tplg MI2S SD0→SD1（出声）；vk44：VA DMIC 采集尝试；vk45：DMIC 偏置 | 10-04 ✅ **vk43 出声**；vk44/45 采集图全绿但录音恒 0（本机无 DMIC，方向证伪） |
 
-**边界判定（待你确认）**：最后一个**有明确实机确认**的版本 = **vk34（2026-10-01 23:12）**；
-vk35–vk40 的改动（尤其 0010/0011 与 10-03 initramfs/持久化）**未逐版单独上机验证**，
-vk40 是把它们叠加后的结果 → 这是「以前没有的新 bug」的最可能来源。
+**边界判定**：最后**有明确实机确认**的版本 = **vk45（2026-10-04，当前在跑）**；
+播放出声已在 **vk43** 确认（tplg SD1），温控四级在 **vk42** 确认。
+「熄屏→重启」源已锁定在 **vk34 之后的 5 文件内核增量**（vk34recon 睡眠正常 / vk40 重启；详见 `TASKS.md` §5 Q22），尚未根治。
 
 ---
 

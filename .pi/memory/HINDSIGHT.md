@@ -1341,3 +1341,89 @@ scripts/flash-b.sh out/boot-elden-vk45.img --reboot
 > 想要 LineageOS 那种"声音+震动强度分开"：feedbackd 每个事件只能一种类型（Sound **或** Vibra）。要两者兼得，需要写自定义 device theme（例如按键走 Vibra、其他走 Sound），并可用 `max-haptic-strength` 调强度——可以做，但要权衡。
 
 **要我开始做 A（WCD939x）吗？** 这是麦克风/耳麦正路。或者先做 B 兜底、再排期 A？
+
+
+## Automatic settled outcome - 2026-10-03
+
+收到——**input 未打通，到此停下**。
+
+## 技术报告已落盘
+
+- `archive/topics/AUDIO-INPUT-2026-10-04.md`（本日全量技术报告）
+- 提交 `5d70996`；`check-doctor` **FAIL=0/WARN=0**
+
+## 结论汇总
+
+| 项 | 状态 | 一句话 |
+|---|---|---|
+| **音频播放** | ✅ | 真根因＝tplg MI2S **SD 线错**（SD0→SD1），修 tplg 后出声（vk43） |
+| **桌面音频** | ✅ | PipeWire+WirePlumber+UCM2 → "Built-in Audio Speaker playback" |
+| **温控** | ✅ | 四级热 trip 70/82/90/105 ℃ + cdev 生效（vk42） |
+| **音频输入** | ❌ **未打通** | **本机麦克风是模拟麦接 WCD939x，不是 DMIC**；主线 DTS 未启用 WCD939x |
+| **按键震动** | ◐ | 硬件正常；根因 profile='full'，已设 **quiet** |
+| **日志方法** | ✅ | `scripts/devlogs.sh` |
+
+## 输入未通的根因（关键）
+
+原厂设备树 `backup/stock-elden/elden.dts` 的 `qcom,audio-routing` **全是 `AMIC*`/`VA AMIC*` + `MIC BIAS*`，没有一条 `VA DMIC`**：
+
+- 本机音频栈 ＝ Awinic smart PA（I2S，已通）＋ **WCD939x 编解码器（SoundWire）**；
+- 麦克风偏置来自 **WCD939x 的 MIC BIAS**，ADC 在 WCD，经 SWR 送 ADSP；
+- 我们按上游 MTP 做的 VA DMIC 采集虽然 **ALSA/APM 图全绿**（`MultiMedia3 Capture`、DAPM 全 On、`vdd-micb` On、寄存器正确），但硬件无 DMIC → 录音恒 0。
+
+⇒ 正路是 **WCD939x bring-up**（镜像 `sm8750-mtp.dts`：wcd939x + rx/va SWR master + 稳压 + capture dai-link + tplg + UCM），**本轮未做**。
+
+## 设备当前状态
+
+- 内核 **vk45**（`7.2.0-debug-g26cc186e9485-dirty`），播放正常（HiFi 扬声器 sink）。
+- 期间 UCM 加 `Mic` 段曾弄坏 HiFi verb，**已撤回并重启恢复**（`PITFALLS #91` 已记这个坑）。
+
+停止。下一步若要继续，从 **WCD939x bring-up** 开工。
+
+
+## Automatic settled outcome - 2026-10-04
+
+## 项目进度快照（实测 + 文档核对）
+
+**设备实测（U2，刚 SSH 确认在线）**
+| 项 | 实测值 |
+|---|---|
+| 内核 | `7.2.0-debug-g26cc186e9485-dirty` = **vk45** |
+| 持久根 | `/dev/sda17` ext4 ✅ |
+| 运行时长 | **up 7h20m**（当前无重启环） |
+| 采集 PCM | `MultiMedia3 Capture` 在，但录音恒 0（硬件是模拟麦→WCD939x，非 DMIC） |
+| adb/fastboot | 空（U1 未接入） |
+
+**目标完成度**
+| 目标 | 完成度 | 本轮变化 |
+|---|---|---|
+| **G1** | **≈82%**（22 ✅ / 3 🟡 相机·TF·BT / 3 ⬜ DP·NFC·CDSP） | 音频**播放**听声 ✅、桌面 PipeWire+UCM2 ✅、温控四级 ✅、关机/重启 ✅ |
+| **G2** | ≈45%（C4 代码全就绪待上机、C9 用例定稿） | 无 |
+
+**硬缺口（4 个）**：① 音频**输入**（WCD939x，正路未做，v45 DMIC 方向已证伪）② 相机出流 ③ TF 卡写稳定 ④ BT 配对收口。
+**稳定性阻塞**：熄屏→重启（G1-22，源锁定在 vk34 后 5 文件增量，未根治，靠禁空闲熄屏规避）。
+
+## 文档漂移（已发现，需收口）
+
+- `INDEX.md §3`：仍写"vk40 未上机 / 无单元在机 mainline / 剩 4 缺口含音频听声"——**过时**（现 U2=vk45）。
+- `TASKS.md §0`：进行中仍列"音频听声"——**过时**（G1-4 已 ✅）。
+- `check-doctor`：**WARN=1**（会话 jsonl 53 ≠ 索引 52）。
+- `.pi/memory/HINDSIGHT.md` 有**未提交**改动。
+
+## 下一步规划（按性价比排序）
+
+**P0 · 零设备成本（本会话即可做完）**
+1. 文档收口：改 `INDEX §3` + `TASKS §0` 数字，`RESOURCES §4` 补第 53 会话，提交 HINDSIGHT，跑 `check-doctor` 到 FAIL=0/WARN=0。
+
+**P1 · 占 U1（"覆盖 a 槽前不可复得"，越早越值）**
+2. **C0 真 Android 对照取证 + Q13 AVF 资产复采**：U1 仍 stock+root。`getprop` 全量 / Widevine 级别 / 7 传感器采样 CSV / 目标 App 录屏 + AVF APEX 解包。这是兼容层的"标准答案"，U1 一旦动手术就没了。
+
+**P2 · 占 U2（主线技术攻坚，二选一）**
+3. **WCD939x bring-up（音频输入正路）**：镜像 `sm8750-mtp.dts` 的 wcd939x + rx/va SWR master + 稳压 + capture dai-link + tplg + UCM。中等偏大工作量，是你上轮定的下一步。
+4. **G1-22 熄屏→重启根治**：现 uptime 7h20m 稳定（规避生效），但要日常可用必须解；可在有带外串口+EDL 回退前提下做 vk34→vk40 五文件二分（已有 V1/V2 镜像）。
+
+**P3 · 常规缺口**：G1-5 相机出流（只差 config/部署）→ G1-6 TF 卡 → G1-7 BT。
+
+**我的建议**：先 **P0 收口（10 分钟）**，然后 **P1（U1 取证，过期作废）**——趁 U1 还是 stock，把不可复得的东西先采下来；之后回 U2 攻 **WCD939x**。
+
+要我先执行 P0 收口吗？或者你直接指定 P1/P2 哪条开工。
