@@ -48,6 +48,15 @@ codec、同机器驱动（`qcom,sm8750-sndcard`）。其 `Headphones` / `Headset
 
 ## 4. 一旦有硬件，如何验收
 
+### 4.0 串口静态检查（2026-10-04 已做 ✅，vk48 RAM）
+
+在 headless vk48 RAM 镜像上验证：新增 `wcd-playback-dai-link` 后 **RX 宏控件全部出现**（`RX_MACRO RX0..RX5 MUX`、
+`RX INT0_1 MIX1 INP0..2`、`RX INT0/1 DEM MUX`、`RX_HPH PWR Mode`、`RX_HPH HD2 Mode Switch` 等，
+numid 126–165），声卡正常注册（`/proc/asound/cards`、`aplay -l` 的 MultiMedia1/2 无误），
+WCD939x RX/TX 均 bound。**结论：vk48 改动在寄存器/DAPM 层面有效，仅差听声**（听声需耳机，挂起）。
+
+### 4.1 听声（需耳机）
+
 1. RAM 试（零写盘）：`fastboot boot out/boot-elden-vk48-ram.img`，插 USB-C 模拟耳机。
 2. 串口/SSH 静态检查（无耳机也能做）：
    - `dmesg | grep -iE 'wcd|soundwire'`（RX/TX 均 bound）；
@@ -82,7 +91,7 @@ codec、同机器驱动（`qcom,sm8750-sndcard`）。其 `Headphones` / `Headset
 
 ## 5. 待办（若日后拿到硬件）
 
-- [ ] vk48 串口静态检查（RX 宏控件出现 / 卡注册不受影响）——**即使无耳机也可先做**。
+- [x] vk48 串口静态检查（RX 宏控件出现 / 卡注册不受影响）——✅ 2026-10-04 已做（§4.0）。
 - [ ] 有耳机后按 §4 听声，闭环后加 UCM 并落持久。
 - [ ] USB-C 模拟耳机还需要 `wcd939x-usbss`（i2c typec-mux@0x0e + pmic_glink SBU 图）才能把模拟信号路由到
       WCD939x——本机 `&i2c3` 尚未启用，stock overlay `fragment@22` 证明原厂确实配了 `wcd_usbss`。
