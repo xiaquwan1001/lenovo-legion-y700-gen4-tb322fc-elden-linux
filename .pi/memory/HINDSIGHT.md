@@ -1542,3 +1542,86 @@ scripts/flash-b.sh out/boot-elden-vk46.img --reboot
 **回滚**：`scripts/flash-b.sh out/boot-elden-vk45.img --reboot`（boot_b），tplg 从设备 `/root/Lenovo-Y700-Gen4-tplg.vk45.bak` 还原。
 
 ⚠️ 风险提示：新增 WCD dai-link 若编解码器未枚举，声卡可能整体注册失败（连播放一起挂）——所以**先 RAM 试**。fastboot 因涉及物理恢复，按惯例请你亲自执行；要不要我通过 SSH 直接把持久版刷上（`flash-b.sh` 带读回校验）？
+
+
+## Automatic settled outcome - 2026-10-04
+
+串口核心发现 + WCD 进展已收口。汇报：
+
+## 1. 你遇到的"没进桌面"——**不是 vk46 内核故障**
+
+串口显示设备停在 initramfs（`findmnt /`=`rootfs`），`/proc/cmdline` **没有 `elden_root=LABEL=linux17`**。原因：`scripts/build-boot.sh` 每次会把最后产物覆盖为 `out/boot-elden.img`；我先建持久版再建 RAM 版 → `out/boot-elden.img` 变成了 **RAM 变体**。RAM 变体按设计**不切持久根、不启桌面**。已记 `PITFALLS #92`。
+
+## 2. WCD939x 音频输入 bring-up（本次实质进展）
+
+| 项 | 结果 |
+|---|---|
+| DTS 新增 `wcd939x` codec（reset=TLMM101、L15B/BOB1/L2I 稳压、micbias 照原厂）+ `&swr1/&swr2` + `wcd-capture-dai-link`（TX_CODEC_DMA_TX_3） | ✅ |
+| tplg 新增 WCD TX3 采集子图 | ✅ |
+| **codec 枚举** | ✅ `bound sdw:2:…00:4` / `sdw:3:…00:3`（RX/TX 都绑定） |
+| **声卡注册 / 播放** | ✅ `Lenovo-Y700-Gen4`、`arecord -l` 出现 `MultiMedia3 Capture`、`speaker-test` 正常 |
+| **WCD 采集** | ❌ `arecord` → `pcm_read I/O error`（APM 图启动**无报错**、无数据） |
+
+**已排除**：RAM 模式、双采集 BE（去 VA 仍错）、DAPM mux 未设（按序设 mux 仍错）、codec 未枚举。
+**新证据**：原厂 Android 用 HAL `mixer_paths_sun_*.xml`（非 ALSA tplg）。提取 `primary-mic` 权威序列 = **ADC1/AMIC1 → SWR_MIC4 → SMIC MUX2 → DEC2 → AIF1**（我们走 ADC2/SWR_INPUT1 + TX3）。
+
+## 3. 设备当前状态
+
+已刷 **持久 vk47**：**桌面正常（Phosh）+ 播放正常**；WCD codec 在位；输入仍未打通（与之前一样，实际无回归）。回退：`bootslot-b/boot_b-vk34recon.img` 或重刷 vk45。
+
+## 4. 已提交
+
+- 内核：`4c68eb5ed`(vk46)、`bd114ca33`(vk47)
+- 主仓：tplg `819cfc9`/`5430be8`；文档 `fc7077c`（含 `archive/topics/WCD939X-2026-10-04.md`、`PITFALLS #92`）
+- `check-doctor` **FAIL=0 / WARN=0**
+
+## 5. 建议下一步（详见专题档案 §4）
+
+1. **对齐原厂索引**：capture BE 改到 AIF1 对应 codec-DMA，DTS 路由改 `TX SWR_INPUT4 ← ADC1_OUTPUT`，按 `primary-mic` 序列设 mux。
+2. **ADSP 侧取证**：抓 ADSP 日志看 TX3 容器是否被拒。
+3. **兜底**：USB/Type-C 或蓝牙麦（不依赖 ADSP 静态图）。
+
+要我从第 1 条继续，还是先做兜底（BT/USB 麦）让"输入设备"可用？
+
+
+## Automatic settled outcome - 2026-10-04
+
+已侦察完（文档/任务台账/git 状态/设备实测）。先给结论，再给编排方案。
+
+## 一、数字结论
+
+**真正能并发的只有「主机侧、且不碰同一资源」的 3 条 lane；设备相关一律串行。** 约束来自三把锁：
+
+| 锁 | 现状 | 后果 |
+|---|---|---|
+| **设备锁** | 仅 U2 在线（`192.168.7.1`，uptime 28 min）；U1 未接（adb/fastboot 空）；刷写按惯例由你操作 | 所有上机/复现任务**串行**，且需人 |
+| **内核树锁** | `geekidos-linux`（13 G）**单一工作树**，非 submodule，HEAD=`bd114ca33`；主库 `.gitignore` 排除整树 | 两个 agent 同时改内核 = 冲突；并发须 `git worktree` |
+| **文档 SSOT 锁** | 每文件单写者；主库单 index，无 remote | 多 agent 同时 `git commit` = `index.lock` 竞争；文档并行改 = 冲突 |
+
+## 二、当前可并发的 3 条主机 lane（互补、零资源重叠）
+
+| Lane | 内容 | 资源占用 | 建议执行者 |
+|---|---|---|---|
+| **L1 内核草稿**（单写者） | G1-5 相机 DTS/config 补齐 **或** WCD939x 采集修复草稿（二选一，不可同时） | **独立 worktree**（`git -C geekidos-linux worktree add ../wt-camera -b elden/camera-wip`），只改 DTS/驱动，不 build 全量 | 子 agent（camera 角色）+ 主 agent 复核 |
+| **L2 脚本/工具**（主库独立目录） | C7 `slot-switch.sh`、A16 残留 `new-tablet` 参数化 | `scripts/` 独立文件，**不碰文档/内核** | 子 agent（脚本角色） |
+| **L3 只读研究**（零写入） | C3 身份/DRM 社区×本机取证对照表；G1-9 DP 的 `pmic_glink`/UCSI 只读勘察（日志+DTS 依赖） | 只读 `archive/`、`RESOURCES §1.3`、web | 子 agent（research 角色），产出**草稿到独立路径** |
+
+**设备 lane（串行、主 agent 协调+你操作）**：WCD939x 采集正路 或 G1-22/23 二分，**同一时刻只做一件**。
+
+## 三、主 agent 编排 / 子 agent 执行 分工
+
+```
+主 agent（编排者 + 唯一设备协调者 + 唯一 git 提交者 + 独立验证者）
+ ├─ 设备 lane：串行发指令 → 你上机 → 主 agent 独立复跑验收（不信子 agent 自报）
+ ├─ 子 agent ×3（后台，并发上限 ≤3，deepseek-flash 已默认）
+ │    ├─ L1: worktree 内改内核 → 产出 patch 到 patches/（不 commit 内核）
+ │    ├─ L2: 写 scripts/ 新文件（不动既有文档）
+ │    └─ L3: 只读研究 → 草稿写 archive/ 或 .pi/drafts/
+ └─ 收口：主 agent 统一 git add/commit + check-doctor + 更新 TASKS/RESOURCES
+```
+
+铁律（写进 `.pi/README.md`/AGENTS）：
+1. **子 agent 一律不 commit、不改领域层文档**——避免单 index 竞争与 SSOT 破坏；
+2. 内核改动走 **worktree**，主 agent 验后 `git -C geekidos-linux diff` 回导 `patches/`；
+3. 设备 lane 与"改内核 DTS 的 L1"**互斥**（同树），要并行须给设备任务也开 worktree；
+4. 并发 ≤3，避免 ustc_ai/budget 式 429（deepse
