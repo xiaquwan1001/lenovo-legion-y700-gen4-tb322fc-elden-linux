@@ -46,5 +46,7 @@
 ## 其他
 
 - 项目专属技能：`.pi/skills/`（`qualcomm-android-flashing`、`qualcomm-edl-flashing`、`gsi-device-adaptation`）。
+- **启动入口**：`cd ~/y700-elden && pi`。`flashing` / `eacndev` / `lob-remake` 三个 `cd` 包装（旧 pi-profile-switch 时代遗留）**已于 2026-10-04 移除**，归档 `archive/2026-10-04-retired-entrypoints/`。
+- **并发子代理** = `Agent` 工具（插件 `@tintinweb/pi-subagents`）+ `.pi/agents/<role>.md` 角色定义 + `.pi/missions/<topic>.md` 任务背景；**无 harness 守护进程**。旧 swarm harness（`pi-messenger-swarm`，已卸载）的脚本与补丁在同一归档目录，其**限流与「worker 自报不可信」结论仍适用**，命令已失效。
 - 项目记忆：`.pi/memory/`。EDL 工具：`qdl/build/qdl`（项目相对路径）。
 - 通用方法论放全局技能；设备/资产细节留本项目。

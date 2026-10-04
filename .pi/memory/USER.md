@@ -1,4 +1,4 @@
-# User Memory — flashing
+# User Memory — elden（y700-elden）
 
 ## 刷机操作偏好
 - fastboot/EDL 类断联场景：用户偏好**亲自执行命令**、助手只做分析（避开工具断联）。
@@ -21,3 +21,8 @@
 ## Memory - 2026-10-03
 
 y700-elden 文档架构偏好（2026-10-03 用户定）：入口越少越好。根目录只保留 6 份维护文档——唯一入口 INDEX.md + DEVICE/TASKS/RESOURCES/RUNBOOK-BRINGUP/PITFALLS；不引入第二索引、生成物或 SQLite（db/、LESSONS.md 已删除）。查询用 `rg`，会话回忆用 pi 原生会话选择器 + `rg .pi/sessions`，结构一致性用 `scripts/check-doctor.sh`。新证据只进 archive/（只增不改）。
+
+
+## Memory - 2026-10-04
+
+y700-elden 音频测试：扬声器硬件增益满值 1023 在无软件衰减(裸 ALSA)时非常吵，用户明确要求"控制音量"。任何放音测试/默认增益用保守值（脚本默认 400，可用 ALSA_PLAYBACK_VOLUME 覆盖）；测试前先调低再播。

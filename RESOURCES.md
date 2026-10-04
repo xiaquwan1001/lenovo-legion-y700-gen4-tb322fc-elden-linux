@@ -70,7 +70,7 @@
   解锁标志链 = Lenovo 自签证书（serial `804940DE79164B1A`），但 SN 明文在偏移 `0x2048`、签名只覆盖前 `0x1000`
   ⇒ **通用模板改 SN 即可自造解锁文件（免签）**；四路对照：A 自造 / B 官网 / **C EDL（不依赖解锁）** / D 第三方重签包。
   实物模板：`y700四代工具/解BL/Y700 三代解锁工具箱by某贼.zip` → `bin/res/sn.img`（附 `HexTool.exe`/`hexconvetor.exe`）。
-- swarm 并发与 API 限流复盘：`archive/topics/复盘-2026-10-02-swarm.md`、全局 `~/.pi/agent/AGENTS.md`（ustc_ai 20 req/窗口 + $30/3h 预算；现用 provider `deepseek`）。
+- 并发 worker 的限流与 SIGPIPE 复盘：`archive/topics/复盘-2026-10-02-swarm.md`、全局 `~/.pi/agent/AGENTS.md`（ustc_ai 20 req/窗口 + $30/3h 预算；现用 provider `deepseek`）。⚠️ 该轮 harness `pi-messenger-swarm` 已卸载 → 脚本失效、结论有效（`archive/2026-10-04-retired-entrypoints/README.md` §3）。
 - 社区通用：`gsi-device-adaptation`、`qualcomm-*-flashing` 技能（`.pi/skills/`）。
 
 ---
@@ -185,13 +185,12 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | 路径 | 体积 | 版本控制 | 说明 / 处置 |
 |---|---|---|---|
 | 领域层 `INDEX/DEVICE/TASKS/RESOURCES/GAPS/ANDROID-COMPAT/RUNBOOK.md` + `PITFALLS.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2 |
-| `.pi/{skills,memory,missions,agents}` `.pi/README.md` `.pi/settings.json` `.pi/pi-messenger.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/任务卡/模型配置（分工见 `.pi/README.md`） |
-| `.pi/sessions/`（54 个 jsonl） | 52 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
-| `.pi/messenger/` | 748 K | ignore | 运行时状态 |
-| `scripts/` | 448 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集 |
+| `.pi/{skills,memory,missions,agents}` `.pi/README.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/子代理任务卡/模型配置（分工见 `.pi/README.md`）。⚠️ `pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
+| `.pi/sessions/`（59 个 jsonl） | 67 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
+| `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + **新：工作树全量 patch** |
-| `archive/` | 752 K | ✅ track | 过程证据（51 篇专题 + 2 截图），只增不改 |
-| `PITFALLS.md` | 52 K | ✅ track | 踩坑正文 #1–#91 + §0 零号纪律 |
+| `archive/` | 1.1 M | ✅ track | 过程证据（57 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
+| `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#93 + §0 零号纪律 + §15 废弃登记 |
 | `RESOURCES.md §4` | 21 K | ✅ track | 54 会话索引 + 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
@@ -208,7 +207,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `bootslot-b/` `bootslot-b-u2/` | 905 M | ignore | 自签 b 槽包（含 `avb.key` 私钥，禁止入库） |
 | `backup/` | 1.5 G | 混合 | 原厂分区/固件/GPT dump（不可替代，留盘）。**证据文本已纳入 git**（`elden-dump.txt`、`HA2EXB0E-16+512/*.txt`、`pre-unlock/`、`vk40-ram-acceptance-dmesg.txt`）；二进制与 `sn-neko-zuxos.img` 仍 ignore |
 | `env-pass/`（余） | 3.8 G | ignore | 过环境栈 + rootfs 归档 |
-| `logs/` | 86 M | ignore | 串口/构建/agent 日志 |
+| `logs/` | 92 M | ignore | 串口/构建/agent 日志 |
 | `pkgs/ pkgs-phosh/ pkgs-x86/` | 639 M | ignore | apk/deb 缓存（可重下） |
 | `probe/` `twrp/` `y700四代工具/` | 552 M | ignore | 探针数据 / TWRP 镜像 / 厂商工具 |
 | `flashing-bundle/` + `flashing-bundle-*.tar.gz` | 19 M | ignore | 换机迁移包快照 |

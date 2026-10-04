@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# pi shortcut: 在 /home/xuqianhui1001/lobcorp-remake 下启动 pi（按项目目录加载 AGENTS.md / .pi）
+cd "/home/xuqianhui1001/lobcorp-remake" || { echo "目录不存在: /home/xuqianhui1001/lobcorp-remake" >&2; exit 1; }
+exec pi "$@"

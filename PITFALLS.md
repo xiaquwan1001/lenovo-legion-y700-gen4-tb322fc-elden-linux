@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-04（**#93 = 「RAM 启动」两种镜像之辨（#92 续）**；#89–#92 = 电源/音频/UCM/镜像纪律；**§15 = 过时/废弃/功能缺陷登记**）。
+> 最后更新：2026-10-04（**#93 = 「RAM 启动」两种镜像之辨（#92 续）**；#89–#92 = 电源/音频/UCM/镜像纪律；**§15 = 过时/废弃/功能缺陷登记**，15.1 末 5 行 = 当日退场的插件入口与快捷方式）。
 
 ---
 
@@ -681,6 +681,11 @@
 | `db/`（SQLite 知识库） | 删除（无原生查询需求） | `rg` + pi 会话选择器 |
 | `archive/sessions-catalog-2026-10-03.jsonl` | 删除（db 数据源） | `RESOURCES.md` §4 |
 | `archive/2026-10-02-merged/*` | 旧文档原文（证据，非废弃） | `INDEX.md` §6 |
+| `.pi/pi-messenger.json` + `.pi/messenger/` + `scripts/{swarm,swarm-monitor,y700-swarm-reset,y700-harness-restart,start-y700-harness,apply-swarm-patch}.sh` + `patches/pi-messenger-swarm-*` | **插件 `pi-messenger-swarm` 已卸载**→脚本静默失效（`node …/server.js` ENOENT），全部移入归档 | `archive/2026-10-04-retired-entrypoints/`（判据 §3、恢复 §4） |
+| `AGENTS.md` 旧「并行 subagent」段的 `swarm.py` 与 `.pi/messenger/agent-card.json` | 引用**从未存在的文件**，已改写为 `Agent` 工具 + `.pi/agents/` | `AGENTS.md` §其他 |
+| `~/.local/bin/{flashing,eacndev,lob-remake}` | 三个 `cd` 包装（pi-profile-switch 时代命名），功能与 `cd <repo> && pi` 等价 → 已删除，副本留 `bin/` | `cd ~/y700-elden && pi` |
+| `~/.pi-profile-switch/`（profile 机制） | 本机不存在；配置改为**按 cwd 叠加加载**，无需切 profile | `.pi/README.md` 首段 |
+| `flashing-bundle/profile/flashing.json`、`backup/pi-assets-*/flashing.json` | 旧 profile 定义化石；**不要据此重建 profile** | `AGENTS.md` §其他 |
 
 ### 15.2 已迁移 / 退役的外部资产
 
@@ -690,6 +695,7 @@
 | profile/技能/会话 → `.pi/` | 内聚迁移（会话 `01a0f22e`） | 2026-09-30 |
 | `backup/pi-assets-20260930-200129/`、`backup/pi-sessions-20260930/` | 迁移前备份（已 ignore） | 2026-09-30 |
 | `flashing-bundle/` + `flashing-bundle-*.tar.gz` | 换机迁移包快照（已 ignore） | 2026-09-29 |
+| `~/.pi/agent/pi-sessions/`(12 M) `~/.pi/wechat/`(1.1 M) `~/.pi/todos/` `~/.pi/agent/pi-agent-profiles/` `~/.pi/{session-control,_wtest}/` `~/.pi/agent/{_cron_backup,missions,git}/` | 已卸载插件的孤儿运行时目录，无任何已安装包引用（`grep` node_modules 无命中）→ **机器层待授权清理** | 2026-10-04 登记 |
 
 ### 15.3 被取代 / 无效的会话
 

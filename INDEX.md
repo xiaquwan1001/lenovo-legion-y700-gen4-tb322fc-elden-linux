@@ -44,7 +44,7 @@
 
 | 文件 | 装什么 |
 |---|---|
-| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做三件事）+ 踩坑正文 #1–#91（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
+| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做三件事）+ 踩坑正文 #1–#93（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
 
 ### 证据层（`archive/`，只增不改、不改结论）
 
@@ -77,7 +77,7 @@
 ## 4. 快速入口命令
 
 ```bash
-cd ~/y700-elden
+cd ~/y700-elden          # ★ 启动入口即此（旧 flashing/eacndev/lob-remake 三个 cd 包装 2026-10-04 移除 → PITFALLS §15.1）
 # 【收尾自检】计数漂移 / 死链 / 口径冲突（全绿再收工）
 scripts/check-doctor.sh
 # 【动手前 30 秒】引导链类问题（解锁/AVB/降级/GPT/EDL）先查本地 7、8 月已有结论（#87）
@@ -110,7 +110,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#91
+**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#93
 **`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（51 会话）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
@@ -143,6 +143,7 @@ BL 解锁（**要不要 / 怎么**——已定稿，别再重推） | `RUNBOOK-B
 操作史/复盘 | `archive/topics/HANDOFF.md` `archive/topics/复盘.md` `archive/topics/复盘-2026-09-29-夜.md` `archive/topics/复盘-2026-09-30-日.md` `archive/topics/复盘-2026-10-02-swarm.md` **`archive/topics/复盘-2026-10-03-BL解锁.md`** `archive/topics/PAUSE-2026-10-02-android.md`
 **内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`RESOURCES.md §4`** 配套
 换机迁移包 | `flashing-bundle/` + `flashing-bundle-2026-09-29.tar.gz`
+**退场的入口**（快捷方式 + 已卸载插件 `pi-messenger-swarm` 全套，含恢复步骤） | `archive/2026-10-04-retired-entrypoints/README.md`
 
 ---
 

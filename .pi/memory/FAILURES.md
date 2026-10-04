@@ -1,4 +1,4 @@
-# Failures — flashing
+# Failures — elden（y700-elden）
 
 - 用 qfil/默认全量刷而漏写关键分区（vbmeta/super/init_boot）→ 看似成功但 boot 链不配套。
   必须 EDL 逐分区补并读回哈希。
@@ -112,11 +112,6 @@ y700-elden 设备 SSH 操作：不要在一条 ssh 里 `sleep` 长等（如 slee
 ## Memory - 2026-10-01
 
 本机反复踩的坑：在 bash 里用 `pgrep -f`/`pkill -f "模式"` 时，若模式字符串（如 server.js、PI_AGENT_NAME=X）也出现在当前命令行里，会匹配到执行中的 shell 自身并把它杀掉（命令中途 exit 143，后续步骤不执行）。改用变量拼接破坏字面量（如 'ser''ver.js'）、`pgrep -x`、或先写脚本文件再执行。
-
-
-## Memory - 2026-10-02
-
-pi-messenger-swarm 子代理"秒退/agent crashed"（2026-10-02）两个真因：①ustc_ai 每 key 限 20 请求/滚动窗口，pi 默认 retry.maxRetries=3（2/4/8s）在窗口复位前放弃→exitCode 0。修：settings.json 加 retry{maxRetries:8,baseDelayMs:3000,maxAgentDelayMs:60000}，并降 maxConcurrentSpawns。②本机多项目共用 node_modules 与 /tmp/pi-messenger-swarm.log；别的项目 SIGTERM 其 harness 时本项目的也被重启，worker stdout 是管道→SIGPIPE 死。修：给 dist/swarm/spawn.js 打 spawn detached+stdout 落文件的 LOCAL PATCH（scripts/apply-swarm-patch.sh 重新应用），重启 harness 用 kill -TERM（preserve）而非 --stop。另：swarm.sh 须每次钉回 .pi/messenger/session-id 原桶，且 PI_AGENT_NAME 用 ${..:-SageYak} 不硬编码。
 
 
 ## Memory - 2026-10-02

@@ -67,6 +67,7 @@
 
 # ---- 运行时状态 ----
 /.pi/sessions/
+# 已退场插件 pi-messenger-swarm 的运行时状态（2026-10-04 归档 archive/2026-10-04-retired-entrypoints/）；规则保留以防重装时污染 git status
 /.pi/messenger/
 
 # ---- 通用 ----

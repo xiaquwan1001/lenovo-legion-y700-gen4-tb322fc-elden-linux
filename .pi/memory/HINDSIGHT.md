@@ -1,465 +1,9 @@
-# Hindsight — flashing
+# Hindsight — elden（y700-elden）
 
 Techniques and root causes proven on Qualcomm/Lenovo tablet flashing. Host-machine
 
 <!-- Older entries compacted -->
-自锁式实验 |
-
-## 下次开工第一件事（无需现在做）
-
-物理键进 fastboot（关机后长按 电源+音量下）→ 回刷 `bootslot-b/boot_b_vk40-ram.img` 拿回可达 RAM 环境 → 把持久根 `idle-delay` 改回 0（或写进 `start-desktop.sh`）→ 再谈继续。命令与判据都在复盘 §5。
-
-设备现在在重启环里等人工介入，本轮不再动。
-
-
-## Automatic settled outcome - 2026-10-03
-
-完成。结论先行。
-
-## 结果
-
-| 项 | 数值 |
-|---|---|
-| 建立 git 仓库 | 分支 `main`，**293 文件 / 7.9 M** 纳管，`.git` 仅 4.5 M |
-| 排除资产 | `geekidos-linux` 13 G、`out` 4.6 G、`env-pass` 3.8 G、`backup` 1.5 G、`l2` 45 G 外置等全部 ignore |
-| `git status` 耗时 | 0.004 s（大目录被忽略，不再刷屏） |
-| 发现并修复的一个真问题 | `patches/0001–0011` **不能完整重建内核工作树**（5 个文件有差异，`q6prm.c` 根本没 patch） |
-| 导出权威补丁 | `patches/elden-working-tree-ba28ec16f-2026-10-03.patch`（13 文件，反向 apply 校验通过）|
-
-## 做了什么
-
-1. **`.gitignore`（版本控制边界）**
-   - 纳管：八份文档、`scripts/`、`patches/`、`archive/`、`.pi/{skills,memory,missions,agents,settings}`、`initramfs/`、`rootfs/` 脚本、`env-pass/{scripts,tools}`、几个关键 README。
-   - 排除：上游 clone、构建产物、大二进制 dump、运行时状态（`.pi/sessions`、`.pi/messenger`）、**`sn.img`（含本机序列号）** 与 `l2` 外置挂载。
-   - 踩坑记录：gitignore **不支持行尾注释**，`#` 必须独占一行，否则模式静默失效（第一次就栽在这）。
-
-2. **`FILES.md`（新台账，已接入 `INDEX.md`）**：顶层逐项分类（体积 / 是否纳管 / 说明）+ 可清理标记表（P0–P3 + H1）+ 内核补丁回导纪律。
-
-3. **内核进度固存**：把真实工作树导出为补丁。这是本仓库版本控制覆盖不到的唯一边界——之前进度只存在于 dirty tree。
-
-4. 更新 `RESOURCES.md §2.5`：**P0-b 前置闸已解除**，`geekidos-linux make clean` 现在可安全执行。
-
-## 可清理标记（未动手，等你确认）
-
-| 标记 | 目标 | 可回收 | 风险 |
-|---|---|---|---|
-| P0-a | `/mnt/Samsung/fiotest/` | 4.1 G | 无 |
-| P0-b | `geekidos-linux` 构建产物 `make clean` | ~11.4 G | 低（补丁已存） |
-| P1-a | `out/`+`bootslot-b/` 旧 boot（留 vk40/vk39） | ~4.7 G | 低 |
-| P1-b | `pkgs*` 包缓存 638 M | 0.6 G | 无 |
-| P3 | AOSP 树 + `l2`（外置） | 568 G | 需先做 Q13 取证 |
-
-根盘 P0–P2 合计约 **18 G** 可回收。
-
-## 关于「轨迹变复杂」
-
-38 个会话 / 45 M 在 `.pi/sessions/`（H1 标记）——这部分也影响 AI 上下文稳固度。可用 `session-librarian` 技能归档非活跃会话，只留最近若干。
-
-## 请你拍板
-
-1. 现在就执行 **P0（fiotest + `make clean`，约 15 G）**？（我可以先 `df -h` 记录、执行后再核）
-2. 要不要顺手做 **P1（旧 boot 镜像 + 包缓存，约 5.3 G）**？——vk39 建议等 vk40 上机验收后再删。
-3. H1 会话归档现在做吗？
-
-`git log` 已有一条初始提交，工作树干净；后续每轮改动 `git add -A && git commit` 即可。
-
-
-## Automatic settled outcome - 2026-10-03
-
-DONE batch3: 9
-
-
-## Automatic settled outcome - 2026-10-03
-
-DONE batch1: 9
-
-
-## Automatic settled outcome - 2026-10-03
-
-DONE batch2: 9
-
-
-## Automatic settled outcome - 2026-10-03
-
-DONE batch4: 9
-
-
-## Automatic settled outcome - 2026-10-03
-
-DONE batch5: 9
-
-
-## Automatic settled outcome - 2026-10-03
-
-三件事的进展如下（数字先行，一页）。
-
-## 任务 #1：会话条目整理 ✅
-
-| 项 | 结果 |
-|---|---|
-| 派子代理 | **5 个**（batch1–5，各 9 会话），全部 `completed` |
-| 产出 | `SESSION-INDEX.md`（全量 45 会话）+ `archive/sessions-catalog-2026-10-03.jsonl`（机器可读） |
-| 独立复核 | 条目 45/45 合法唯一、字段齐全；抽查 09-29/09-30 两条**证实子代理准确**（非臆造） |
-| 分类 | 实机验证 **20 ✅ / 2 ◐ / 23 ✗**；状态 **active 23 / reference 15 / junk 5 / superseded 2** |
-
-会话分布在两处：`.pi/sessions/*.jsonl`（36）+ slug 子目录（7）+ 2 个重复测试。
-
-## 任务 #2：以「最后一版实机验证」为界审核 ✅（第一遍）
-
-**边界判定：vk34（2026-10-01 23:12）** 是最后一个有明确会话级实机确认的版本；INDEX 曾写「最后在机基线 vk39」但**无会话确认**（待你核）。
-
-**未验证增量精确到 5 个文件 + config**（全部 10-02 10:48–12:12，mtime 取证）：
-
-| 文件 | 内容 | 单独上机 |
-|---|---|---|
-| `sm8750-lenovo-elden.dts` | 分级热 trip 70/82/90/105 ℃ | ❌ |
-| `q6apm.c` | APM 命令头 + **残留 `DBG` 打印** | ❌ |
-| `q6prm.c` | 5 行（**`patches/0001–0011` 里根本没有**） | ❌ |
-| `audioreach.c` | 35 行 | ❌ |
-| `q6apm-lpass-dais.c` | MI2S BE graph 提前到 prepare（patch 0011） | ❌ |
-
-vk34 之前的 8 个文件改动都已上机。**vk40 = vk34 基线 + 这 5 文件 + 10-03 持久化 initramfs**，是「新 bug」的最可能来源。
-
-**4 条结构性缺陷（比单条改动更值得修）**：
-- **F1** 所有 vk 共用同一 `uname -r` → 设备上**无法分辨在跑哪版**（回归无法归因，正是「进步不稳固」的根）
-- **F2** `patches/0001–0011` 不能忠实重建工作树
-- **F3** `q6apm.c` 残留调试打印
-- **F4** 无 per-version git commit → 不能 bisect
-
-已落盘：`archive/topics/AUDIT-since-vk34-2026-10-03.md`；登记 **GAPS Q22**、**TASKS G1-23**。
-
-## 待你拍板
-
-1. **边界确认**：10-01 之后到 10-03 之间，mainline 上机你是否**亲眼确认过任何一版**？若没有，就以 **vk34** 为界。
-2. **任务 #2 下一步**（我建议）：`geekidos-linux` 建 `elden/` 分支提交现状 + 唯一 localversion（修 F1/F4）→ 以 vk34 为基线**反向移除音频 4 文件改动**，看 vk40 症状是否消失，直接定位回归源。
-3. **重命名 + 删除**（任务 #3）：索引 §5 已列 38 条建议重命名、§4 列删除候选（5 junk + 2 superseded）。**等 #2 收口后再执行**——你要不要我先批量应用重命名（可逆）？
-
-`git log` 已有 3 条提交（边界 → 会话索引 → 审计），工作树干净，296 文件纳管，`.git` 4.6 M。
-
-
-## Automatic settled outcome - 2026-10-03
-
-下一步已执行（全部主机侧、可回滚）。结论先行。
-
-## 做了什么
-
-**1. 内核树固存 + 修 F1/F4**（`geekidos-linux` 自己的 git）：
-
-| 分支 | commit | 含义 |
-|---|---|---|
-| `elden/vk40-2026-10-03` | `6ef87e6a8` | vk40 现场原样（含 DBG 插桩）——回归对照 |
-| `elden/vk34-recon` | `e72a036ed` | 回退 vk34 之后的 5 文件增量 |
-
-因为 `.config` 早已有 `CONFIG_LOCALVERSION_AUTO=y`，**一提交 uname 就自动唯一**：
-- vk40re → `7.2.0-debug-g6ef87e6a8868`
-- vk34recon → `7.2.0-debug-ge72a036ed4be`
-
-→ 设备上 `uname -r` 终于能分辨在跑哪版（这就是「进步不稳固」的根，已修）。
-
-**2. 用真机镜像校验重建的 vk34**（关键可信度）：
-
-| 项 | vk34 实机镜像 | 重建 recon |
-|---|---|---|
-| DBG 字符串 | 无 | **无** ✅ |
-| 分级热 trip（DTB） | 无（单一 max 状态） | **无** ✅ |
-| `sm8750-lenovo-elden.dtb` | 136346 B | **逐字节相同** ✅ |
-
-→ recon 忠实重建了 vk34；顺带**确定**：DBG 插桩与分级热 trip 都是 vk34 之后的增量。
-
-**3. 产出 A/B RAM 镜像**（`out/`，`fastboot boot` 即可，不写 flash）：`vk34recon.img`/`-ram`、`vk40re.img`/`-ram`。音频/QDSP6 全是 `=y`，不受 vermagic 影响。
-
-## 请你上机做隔离实验（判据明确）
-
-```bash
-cd ~/y700-elden
-fastboot fetch boot_b backup/HA2EXB0E-16+512/boot_b.pre-ab.img   # 备份
-# 进 fastboot；确认活跃槽 dtbo 已 blank（否则卡 logo）
-fastboot --set-active=b && fastboot flash dtbo_b bootslot-b/dtbo_b.img
-fastboot boot out/boot-elden-vk34recon.img                       # 先跑 vk34
-ssh root@192.168.7.1 'uname -r'      # 期望 …-ge72a036ed4be
-# 复现熄屏：设 idle-delay=10，SSH 常 ping 观察是否重启；测完改回 0
-# 再 reboot 回 vk40，对 vk40re 重复对照
-```
-
-- **vk34recon 不重启 / vk40re 重启** → 回归源就在那 5 个文件里，继续二分（先只留 DTS 热 trip，或只留音频）。
-- **两者都重启** → 与内核增量无关，转向 10-03 持久化 initramfs / `start-desktop.sh` / UCSI 电源路径。
-
-⚠️ RAM 引导非持久，万一重启回到 flash 的 boot_b（vk40）可恢复；但 `idle-delay` 写在持久根**会留存**，务必改回。
-
-完整步骤与哈希记在 `archive/topics/AUDIT-since-vk34-2026-10-03.md` §5；父仓库 4 条提交、内核仓库 2 分支，均已固存。
-
-**一个前提想跟你确认**：设备现在是从先前的「重启环」里救回来了吗、fastboot 可用？如果暂时不方便上机，我可以先把「只回退音频 / 只回退热 trip」的中间变体也编好备着。
-
-
-## Memory - 2026-10-03
-
-内核回归定位法（可复用）：①从实机 boot 镜像解包内核/DTB，用 `strings`/DTB 逐字节对比确定"最后实机验证版本"到底含哪些改动；②用文件 mtime 锁定边界之后的增量文件集；③重建时把重建 DTB 与实机 vk34 DTB 逐字节比对来证明重建忠实；④内核树开 CONFIG_LOCALVERSION_AUTO=y 并**每版一 commit**，uname 即自动带唯一 commit（否则所有构建共用同一 uname，回归无法归因）。
-
-
-## Automatic settled outcome - 2026-10-03
-
-三项整理全部完成，工作树干净。结论先行。
-
-## 实机结论（本 session 主任务收口）
-
-**`vk34recon` 睡眠正常、不自动重启；`vk40` 复现重启 → 回归源锁定在 vk34 之后的 5 文件内核增量内**（与 10-03 持久化 rootfs 无关）。已记入 `GAPS` Q22、`TASKS` G1-22/G1-23、`AUDIT` §5；逐项二分（只回退 DTS 热 trip / 只回退音频）留待将来。
-
-## 整理三项
-
-**① 经验统一入口 → `LESSONS.md`**
-- 开篇「零号纪律」三条（先查本地结论 / 刷写前备份+读回校验 / 持久系统不做自锁实验）
-- `PITFALLS.md` **#1–#87 共 88 条**按主题分类索引
-- 并列其他来源：`.pi/memory/{FAILURES,HINDSIGHT}`、`archive/topics/复盘-*`、`GAPS` 风险、技能 `references/`
-
-**② 进度与描述用 git 管理（复用子代理成果）→ `db/`**
-- SQLite `db/elden.db`：`sessions` **45**（进度轨迹，来自 `archive/sessions-catalog-*.jsonl`）、`tasks` **32**（TASKS 台账）
-- 结构化 + 可查询，取代纯文字；`db/build.py` 从 git 文本源重建，**已验证确定性**（两次构建 sha 相同）
-
-**③ 参考文献数据库索引 → `references_` 表**
-- **127 条**：`RESOURCES.md` 的外部参考/本地资源（kind=ext/local）+ 全仓库 `*.md` 里的 URL（kind=url，已过滤本机/私网噪声）
-- `db/schema.sql`（5 表）+ `db/build.py` + `db/README.md`（查询手册）
-
-## 状态
-
-| 项 | 数值 |
-|---|---|
-| git 提交 | **6 条**（边界 → 会话索引 → 审计 → 回归准备 → 知识库 → 重建） |
-| 纳管文件 | **301**（`.git` 4.9 M，工作树干净） |
-| 知识库 | `db/` 224 K，5 表 |
-| 可复现 | `python3 db/build.py --lessons` → 重建 DB + 刷新 `LESSONS.md` |
-
-常用查询（见 `db/README.md`）：
-```bash
-sqlite3 db/elden.db "SELECT num,title FROM pitfalls WHERE body LIKE '%关键词%';"
-sqlite3 -header -column db/elden.db "SELECT substr(id,1,8),start,name FROM sessions WHERE hardware_verified='yes';"
-sqlite3 -header -column db/elden.db "SELECT kind,title,locator FROM references_ WHERE title LIKE '%redroid%';"
-```
-
-新会话建议读取顺序：`INDEX.md → LESSONS.md → db/README.md`（已写入 INDEX 顶部）。
-
-后续改动分析（vk34 增量的逐项二分）按你的要求不再展开，入口与 A/B 镜像（`out/boot-elden-vk34recon*.img` / `vk40re*.img`）已备好留将来。
-
-
-## Automatic settled outcome - 2026-10-03
-
-我已把 post-vk34 增量全部逐 hunk 分类，并在串口日志里找到一条**先前没被记录的关键证据**。先给结论。
-
-## 审计结果：post-vk34 增量逐 hunk 分类
-
-边界固定：`git diff elden/vk34-recon → elden/vk40-2026-10-03` = **仅 5 文件**（已 DTB 逐字节比对确认 recon 忠实）。
-
-| 文件 | 功能性改动 | 纯调试 | 风险 |
-|---|---|---|---|
-| `sm8750-lenovo-elden.dts` | **24 个热区**全部改成 4 级 passive trip（70/82/90/105 ℃）+ 4 条 cooling-map | 0 | 🟡 纯策略，空闲低温不触发；**从未单独验证** |
-| `q6apm.c` | **3 处 GPR 命令** `alloc_apm_pkt` → `alloc_apm_cmd_pkt`（GET_SPF_STATE / SHARED_MEM_MAP / UNMAP，多 8 字节 APM cmd header） | 3（其中 2 个有副作用） | 🔴 见 N1/N2 |
-| `q6apm-lpass-dais.c` | 新增 `q6i2s_prepare`：**MI2S BE graph 提前到 prepare 启动** | 3 | 🟠 见 N3 |
-| `audioreach.c` | **无**（13 行全是 print） | 3 | 🟡 见 N4 |
-| `q6prm.c` | **无**（`int ret` + 1 行 print） | 1 | 🟢 |
-
-## 发现的实质问题（不止"未验证"，是真隐患）
-
-- **N1（副作用写进日志）**：`q6apm.c` 把 `q6apm_get_apm_state(apm)` **当作 `dev_info` 的实参**调用，位置在 `apm_probe` 和 `q6apm_graph_open`。即：**每开一次 graph / 每次 probe 都额外向 ADSP 发一条 GET_SPF_STATE 并可能阻塞 5 s**。日志不该有副作用。
-- **N2（最可疑）**：3 处命令换成 `alloc_apm_cmd_pkt` —— 它给包**加了 8 字节 APM command header**。而 vk34 的原注释白纸黑字写着 *"GET_SPF_STATE has no APM command header or payload"*，vk40 直接推翻了它。这是**唯一会改变发给 ADSP 的字节流的改动**。
-- **N3**：`q6i2s_prepare` 把 BE graph 启动从 trigger 挪到 prepare，`is_port_started` 语义随之改变；启动顺序/重复启动无对上机验证。
-- **N4**：`audioreach.c` 残留 `print_hex_dump` 整包 + 3 条 DBG；`q6apm-lpass-dais.c` 的 `set_sysclk` 打印用 `%px`。上机日志被灌爆（serial 里大量串行噪声即与此有关）。
-
-## 新证据（复盘里没有的）
-
-`logs/serial-20261003-192121.log` 段 B：**ADSP 真的崩了**，不是只有 UCSI 报错：
-
-```
-[ 20.874] [drm] vblank timeout: 400000 / wait for commit done -110
-[ 21.165] qcom_q6v5_pas 6800000.remoteproc: fatal error received:
-          sys_m_smsm.c:322:err fatal notification received from TZ
-[ 21.165] remoteproc remoteproc0: crash detected in adsp: type fatal error
-[ 21.165] remoteproc remoteproc0: recovering adsp
-[ 21.165] ucsi_g
-
-
-## Automatic settled outcome - 2026-10-03
-
-设备已在 fastboot。我停手，给当前状态（不强行解释）：
-
-## 已确立的事实（可复现）
-
-| 内核 | 显示 on/off 提交后 dmesg 计数 |
-|---|---|
-| vk34recon（基线） | vblank=0, PPM=0, adsp=0 |
-| vk40re | **vblank=6, PPM=1**, adsp=0 |
-
-→ **DPU `vblank timeout` + `UCSI PPM init failed` 是 vk40 可量化的回归**（比间歇重启更适合二分）。
-
-## 未定 / 需谨慎
-
-- **V1(热区)/V2(音频) 是否引发该回归**：尚未取到（上一次测 V1 的命令中途卡死）。
-- **复位根因**：vk40re 时而 ~1 min 一次、时而稳定 400 s → **单次观测无统计意义**；上一次 vk34recon/V1 卡死更要说明：不稳定未必只属于 vk40。
-- **钩子副作用**：你提的这点无法排除——加钩子后 vk40re 从"1 min 一次"变"400 s 稳定"。钩子已撤、`start-desktop.sh` 已还原。
-
-## 对设备的残留（无害，可清理）
-
-- 设备持久根：`/usr/local/sbin/start-desktop.sh.bak-eldroid`、`/var/log/kmsg-*.log`（取证文件）。
-
-## 建议
-
-不再碰持久系统，只用 `fastboot boot` + SSH(`192.168.7.1`) 读 `dmesg`，**一次只测一版、你看着**。最有价值的一刀：测 **V1（热区 only）**——若 V1 也出 vblank → 归因热区（70 ℃ 提前限频拖慢 DPU 提交），与音频无关。
-
-要我现在只测这一版 V1，还是先停下把已有结论落盘归档？
-
-
-## Automatic settled outcome - 2026-10-03
-
-归档完成。已落盘并提交（`12843c7`）：
-
-## 写入内容
-
-| 产物 | 内容 |
-|---|---|
-| **`archive/topics/AUDIT2-post-vk34-bisect-2026-10-03.md`** | 第二遍审核全文：逐 hunk 分类（N1–N4）、V1/V2 二分变体表、实机结果、方法学坑、钩子事件 |
-| **`GAPS.md` Q22** | 补充第二遍进展 + vblank 可量化回归 + 间歇性告警 + 钩子副作用嫌疑 |
-| **`TASKS.md` G1-23** | ✅→🟡 第二遍进行中；判据改为"同口径 dmesg 计数，V1/V2 各 ≥1 有效样本"；G1-22 补记伴生回归 |
-| **`profile_memory`** | 新增失败教训：间歇性故障的**观察者效应**（取证钩子改变被测行为）+ ModemManager 占 ttyACM |
-
-## 归档的硬结论
-
-- **post-vk34 增量 = 5 文件**；其中 N1（日志内副作用调用 `q6apm_get_apm_state`）、N2（`alloc_apm_cmd_pkt` 加 8 B APM cmd header，与 vk34 注释矛盾）、N3（提前启动 BE graph）是实质改动，N4 是残留 DBG 打印。
-- **可量化回归**：`vk40re` 显示 on/off 后 `DPU vblank timeout`=6、`UCSI PPM init failed`=1；`vk34recon` 同操作 **0/0**。
-- **静默硬复位是间歇性的**（1 min/次 与 400 s 稳定都出现）→ 单次观测无统计意义，不强行解释。
-- **钩子副作用不可排除**，已回退；V1/V2 同口径样本未取到。
-
-## 设备侧
-
-- 设备在 **fastboot**；持久根残留两个无害取证文件（`start-desktop.sh.bak-eldroid`、`/var/log/kmsg-*.log`），文档已列。
-- 二分镜像已备好：`out/boot-elden-v1-thermal.img`、`out/boot-elden-v2-audio.img`（uname 唯一、已验证组成）。
-
-下次要推进时，入口就是 `AUDIT2` §8 的"单变量、长时窗、最小侵入"三条。
-
-
-## Automatic settled outcome - 2026-10-03
-
-审查完成。结论先行。
-
-## 1. 你担心的「副作用放进轮询内部」——**没有发生**
-
-扫描 `~/y700-elden/.pi/sessions/**/*.jsonl` **全部 49 个会话**的 bash 调用：含副作用的命令 132 条，其中同时含循环的 69 条；**副作用字面出现在 `do…done` 循环体内 = 0 条**（另 4 条正则命中经逐条核对全是假阳性：grep 自身模式、`adb dd` 备份 uefivarstore/devinfo）。仓库脚本同样为 0：`cycle.sh` 的 `wait_fastboot/wait_linux`、`serial-log.sh`、`dpms-watch.sh`、`thermal-watch.sh`、`/tmp/cap-loop.sh` 全是纯读/纯探测；`iterate.sh`、`flash-b.sh --reboot` 都是「先动作、后轮询」的线性结构。
-
-## 2. 但找到同源的**真隐患**：「副作用 + 长轮询同处一条命令，被 harness 超时杀死」
-
-本次二分会话里 AI 反复写 `写misc+reboot -f` ⏎ `for…轮询fastboot…done` ⏎ `[ $OK=1 ] && fastboot boot X`。这类命令 10 条，**4 条 `Command aborted`**（#77 reboot→boot vk40re；#113 boot vk34recon；#127 reboot→boot v1；#80 纯轮询）。被 SIGTERM 时可能停在轮询中（boot 没发），也可能停在 `fastboot boot` 传输中途——**副作用发没发无法判定**。不是「重复执行」，是「执行点不可判定」。
-
-## 3. 新发现（比你担心的更严重）：**持久 b 槽烧的就是 vk40 内核**
-
-解出每个 boot 镜像的内核 payload（gzip 流）sha256：
-
-| 镜像 | uname | kernel payload |
-|---|---|---|
-| `bootslot-b/boot_b.img`（当前 b 槽） | `…gba28ec16f01f-dirty` | **d16ab35ce4a57afa** |
-| `bootslot-b/boot_b_vk40-ram.img`（10-03 实烧） | 同上 | **d16ab35ce4a57afa** |
-| `out/boot-elden-vk40.img` | 同上 | **d16ab35ce4a57afa** |
-| `out/boot-elden-vk34recon.img` | `…ge72a036ed4be` | ecfa53db763c57fe |
-
-⇒ **b 槽 = vk40 现场内核**；且 `vk30…vk40` 全部共用同一 dirty uname（F1/F4 的根源）。
-串口捕获 `logs/console-v1-1003-204530.log`（20:45–21:01）16 分钟内启动 8 次，**其中 5 次是 vk40**，每次只活 **20→40 s**。
-⇒ **任何复位都回退到 vk40**，所以「复位次数/复位后行为」的跨版本比较天然被污染。
-
-## 4. 对现有结论的裁决
-- ✅ `vk40re` vblank=6/PPM=1 vs `vk34recon` 0/0 —— **版本归属可信**（per-uname 的 kmsg 文件）。
-- ⚠️ 「vk40 会静默硬复位 / vk34 不会」—— **存疑**（复位后落回 vk40，无法归因）。
-- ⛔ V1/V2 —— 未取到（#127 中断）。
-- ❌ 「vk40 vs vk40re 两个对照」—— 同一 commit `6ef87e6a8`，仅重打包。
-
-## 5. 已落地 + 下一步
-- 新增 `archive/topics/AUDIT3-polling-sideeffects-2026-10-03.md`（含复现脚本）；更新 `GAPS` Q22、`TASKS` G1-23；提交 `3f7604b`/`1040228`。
-- **资产已备（host 侧，未碰设备）**：`
-
-
-## Automatic settled outcome - 2026-10-03
-
-已按你的要求准备好。数字先行。
-
-## 1. 测试版本（已备齐，uname 全唯一，`matrix` 可复核）
-
-| label | 镜像 | uname | sha256(前16) |
-|---|---|---|---|
-| `vk34recon` | `out/boot-elden-vk34recon.img` | `…ge72a036ed4be` | `5397af38cf55480c` |
-| `v1-thermal` | `out/boot-elden-v1-thermal.img` | `…gf681b616a3af` | `d6cb6e2b29a86718` |
-| `v2-audio` | `out/boot-elden-v2-audio.img` | `…g951c5f1c2ca5` | `5e6d71df1f687d7d` |
-| `vk40re` | `out/boot-elden-vk40re.img` | `…g6ef87e6a8868` | `1a2315b8450f1103` |
-| **b 槽基线** | `bootslot-b/boot_b-vk34recon.img`（已签名） | 同 vk34recon | `53e5857a581e77a3` |
-
-## 2. 自动化脚本 `scripts/bisect/eldtest.sh`（已提交 `28d6860`）
-
-针对 AUDIT3 的教训做了三件事：
-- **减少轮询**：等待启动改成**事件驱动**（`tail -F` 串口日志，等 `Linux version <uname>` 横幅出现），不再 tight `fastboot devices` 轮询。
-- **渐进触发**：`idle0(45s)` → `on` → `off` → `on/off×5` → `idle2(120s)`，每级之间只读一次 `dmesg` 计数，逐级加压。
-- **单步副作用**：`fastboot boot` 单独成步并落 journal；任何等待循环里**没有** reboot/boot。
-
-常用命令：
-```bash
-scripts/bisect/eldtest.sh matrix      # 版本表（不碰设备）
-scripts/bisect/eldtest.sh prepare     # 生成 manifest 到 logs/bisect/
-scripts/bisect/eldtest.sh baseline    # 打印 b 槽基线烧写步骤
-scripts/bisect/eldtest.sh one vk34recon   # fastboot boot + 渐进触发观测
-scripts/bisect/eldtest.sh observe vk40re  # 你手动 boot 好后只观测
-```
-结果落 `logs/bisect/<ts>/{results.tsv,journal.log,console.log}`；复位判据 = uname 变化 / uptime 回退 / SSH 断。
-
-## 3. 建议的第一刀（你亲自操作设备）
-
-```bash
-fastboot flash boot_b bootslot-b/boot_b-vk34recon.img
-fastboot boot out/boot-elden-vk34recon.img          # 临时起来做读回校验
-ssh root@192.168.7.1 'dd if=/dev/disk/by-partlabel/boot_b bs=1M count=96 2>/dev/null | sha256sum'
-sha256sum bootslot-b/boot_b-vk34recon.img           # 两个 sha 必须一致
-```
-这一步把「复位回退目标」从被测的 vk40 换成已知基线，之后测 vk40re 时若复位，会看到 uname 变成 vk34recon，归因才干净。
-
-## 4. 两个待你拍板的点
-
-1. **是否加温度压测级**：V1 是热区改动，光靠显示 on/off 未必触到 70 ℃ passive trip。可加一个可选级 `s4:load`（设
-
-
-## Automatic settled outcome - 2026-10-03
-
-你说得对，是我归因错了——**刚才那次是你物理重启进的 fastboot**，我把手动操作误记成 BCB 生效。本地检索后确认：
-
-## 结论：Linux→fastboot 能力确实不存在
-
-| 途径 | 事实 |
-|---|---|
-| `cycle.sh --soft`（纯 `reboot -f`） | b 槽主线可直启后**不再落 fastboot**（HANDOFF §19/§24、PITFALLS #65） |
-| `cycle.sh --fastboot`（写 `misc` BCB `bootonce-bootloader`） | **实测 ABL 未采纳**：misc 首 20 字节确为 `bootonce-bootloader`，`reboot -f` 后仍正常启 Linux |
-| 历史「reboot 必落 fastboot」 | 是当时 **a 槽 AVB 校验失败**的副产物（HANDOFF §19），不是 BCB 生效 |
-| 现在进 fastboot | **只有物理键**（或 fastboot 内的 `fastboot reboot bootloader`） |
-
-`abl_a.img` 只有 1 MB 且无明文串，离线反查 ABL 接受的 BCB 命令不可行。
-
-## 好消息：A/B 测试**不需要**这个能力
-
-`scripts/flash-b.sh <img> --reboot` 从 Linux 里自签 + `dd` 写 `boot_b` + sha256 回读校验 + 重启，**全程不开 fastboot**：
-- 每版 uname 唯一 ⇒ 版本归属精确；
-- 测试中复位 → ABL 回退到**同一个**已烧内核（uname 不变）⇒ 靠 uptime/SSH 断判定复位，归因干净；
-- **前置必做**：`python3 scripts/slot-attr.py mark-successful b`——否则主线没有 `markBootSuccessful`，retry 每次 -0x08，约 7 次后 b 槽 unbootable 也会停 fastboot（机理见 `GPT槽位元数据-2026-09-30.md`）。
-
-## 已落地
-- 脚本 `eldtest.sh`：**移除不可靠的 `cycle`(BCB)，新增 `flash` 子命令**（flash-b → 重启 → 渐进触发观测）。`one`（fastboot 已就绪时 RAM 引导）与 `observe` 保留。
-- `PITFALLS.md` **#88** + `AUDIT3` §7 记录该缺口与对策；提交 `b4f92f1`。
-- 附带教训：任何「Linux 切 fastboot」的记录，**先分清是物理键还是软件**，别把用户的手动操作记成工具生效。
-
-## 待你拍板
-1. **走 flash-b 路线继续测试**（推荐，无需新能力）：我会把前置 `slot-attr.py mark-successful b` 也纳入脚本，然后按 `vk34recon → vk40re → v1-thermal → v2-audio` 各 3 轮跑。设备现在是你 RAM 引导的 vk40re（uptime 已 160s+，可当第一轮 vk40re 样本）。
-2. **另立专项造 Linux→fastboot**（可选）：候选 ① ABL 认可的其它 BCB 命令；② IMEM `restart_reason`=fastboot 魔术；③ 用 `slot-attr.py` 可控耗尽 retry 逼 ABL 回退 fastboot（有风险）。需要 XBL/ABL 取证，建议单独会话。
-
-你选哪条？
-
-
-## Automatic settled outcome - 2026-10-03
-
-已把这条决策记入会话笔记（基座甲/乙待你选，音频在纯 vk34 上不可用的原因）。等你回复选甲还是乙 + 第一个要测的功能项。
-
-
-## Automatic settled outcome - 2026-10-03
-
-调研完成，已落盘（`ee2b0c5`）：`archive/topics/FLASHCTL-2026-10-03.md` + `TASKS.md G1-24` + `GAPS.md Q23`。数字先行。
+topics/FLASHCTL-2026-10-03.md` + `TASKS.md G1-24` + `GAPS.md Q23`。数字先行。
 
 ## 三条能力，现状完全不同
 
@@ -1625,3 +1169,306 @@ scripts/flash-b.sh out/boot-elden-vk46.img --reboot
 2. 内核改动走 **worktree**，主 agent 验后 `git -C geekidos-linux diff` 回导 `patches/`；
 3. 设备 lane 与"改内核 DTS 的 L1"**互斥**（同树），要并行须给设备任务也开 worktree；
 4. 并发 ≤3，避免 ustc_ai/budget 式 429（deepse
+
+
+## Automatic settled outcome - 2026-10-04
+
+音频输入**彻底打通并持久化**。本轮总结：
+
+## 🎉 核心成果：WCD939x 麦克风可用
+
+**G1 从 82% → 85%**（硬缺口 4 → 3：剩相机出流、TF 卡、BT 配对）。
+
+| 项 | 结果 |
+|---|---|
+| WCD939x codec | ✅ RX/TX SoundWire 均 bound、声卡注册 |
+| 播放 | ✅ 扬声器 sink 正常（未回归） |
+| **输入** | ✅ **`HiFi__Mic__source` 在桌面可用**（`arecord -D default` rc=0 出数据） |
+| 重启持久 | ✅ 重启后自动可用 |
+
+## 两个关键根因（都已记档）
+
+1. **"没进桌面"** = 刷/启的是 **RAM 变体**（`build-boot.sh` 覆盖 `out/boot-elden.img`），cmdline 无 `elden_root` → 停在 initramfs。**非 vk46 内核故障**。→ `PITFALLS #92`
+
+2. **采集 I/O error** = 缺采集路径的 **DAPM mixer/mux 控件**（尤其 `ADC2_MIXER Switch`），**不是 ADSP 问题**（kretprobe 证明图命令全返回 0、厂商 `resourcemanager` 也印证 TX-3 索引正确）。→ `PITFALLS #91`
+   - 另：UCM 加 capture 段会被 **ACP 探测**（打开 PCM）拒绝——因 DPCM 采集 PCM 在 FE-BE 未连时打不开；解法是把 FE-BE 路由放进 **`SectionVerb.EnableSequence`**。
+
+## 交付
+
+- **内核**：`4c68eb5ed`(vk46)、`bd114ca33`(vk47，去 VA DMIC + WCD 采集)
+- **tplg**：`819cfc9`/`5430be8`
+- **UCM2 Mic**：`11f06ac` + 修正 `f2bf682`
+- **文档**：`archive/topics/WCD939X-2026-10-04.md`、`PITFALLS #91/#92`
+- `check-doctor` **FAIL=0 / WARN=0**
+
+## 设备现状
+
+持久 **vk47**：Phosh 桌面 + 扬声器 + **麦克风源**均可用。可在「设置 → 声音」看到输入设备，或直接录音测试。
+
+**下一步可选**：① non-PipeWire 场景的 ALSA mixer 默认；② 双麦/阵列（AMIC2–5）；③ Type-C 耳麦（需 `wcd939x-usbss`）。或回到 G1 缺口：相机出流 / TF 卡 / BT 配对。
+
+
+## Automatic settled outcome - 2026-10-04
+
+我已经把「音频剩下的问题」摸清并动手了。先给结论。
+
+## 一、现状核验（U2 在线，持久 vk47，实时查）
+
+| 项 | 状态 |
+|---|---|
+| 扬声器 sink | ✅ `HiFi__Speaker__sink`，Active Profile=HiFi |
+| 麦克风 source | ✅ `HiFi__Mic__source`（现在被「设置」的 peak-detect 占用，故 raw ALSA `hw:0,2` 会 busy） |
+| 双功放 | ✅ 两片 `aw88461` 都在 i2c9（0x34/0x37）且驱动已绑定 |
+| 卡控制 | ✅ 有 `Headphone Jack`/`Mic Jack`（MBHC）、`HPHL/HPHR Switch` 等 |
+
+## 二、剩余音频问题（4 项）
+
+| # | 问题 | 性质 | 需要你 |
+|---|---|---|---|
+| **R1** | **有线耳机/耳麦**：WCD939x 的 HPHL/HPHR 放着没接（缺 `RX_CODEC_DMA_RX_0` 播放 dai-link），耳机插上也无声；耳麦麦(AMIC2)未路由 | 功能缺口 | 要 |
+| R2 | 双麦/阵列 AMIC2–5 | 增强 | 要（环境声） |
+| R3 | 非 PipeWire 的裸 ALSA 默认混音 | 收尾 | 否 |
+| R4 | C6 容器（Waydroid）音频 | G2 | 要 |
+
+**注意**：GSMArena 规格写 **本机无 3.5mm 耳机孔**（双 USB-C）。所以 R1 只能是 **USB-C 模拟耳机**（或模拟转接头，非带 DAC 的数字 dongle）。请你看一眼机器确认——如果有 3.5mm 请纠正我。
+
+## 三、本轮已做（R1 第一半：耳机输出）
+
+根因：声卡上 `RX_MACRO RX0 MUX`、`HPHL/HPHR Switch` 等 **RX 宏控件一个都没有**——因为没有任何 dai-link 把 `lpass_rxmacro` 挂进卡。而 rootfs 里恰好自带 **上游 SM8750-MTP 的 WCD939x UCM**（同 codec 同 sndcard），是权威配方。
+
+改动（已 commit 前，待验证）：
+- **DTS**：新增 `wcd-playback-dai-link`（cpu `RX_CODEC_DMA_RX_0`；codec `wcd939x(0)+swr1+lpass_rxmacro`）+ 路由 `IN1_HPHL←HPHL_OUT`、`IN2_HPHR←HPHR_OUT`（照 MTP）
+- **tplg**：新增 `RX_CODEC_DMA_RX_0` 播放子图 + `... Audio Mixer MultiMedia1` 路由（18236 B `c6fffdbd…`）
+- 已构建 **`out/boot-elden-vk48-ram.img`**（`fc59031d…`，零写盘，含新内核+新 tplg）
+
+## 四、请你上机（RAM 试，零风险）
+
+```bash
+cd ~/y700-elden
+ssh root@192.168.7.1 'eldroid-bootctl reboot bootloader'
+fastboot boot out/boot-elden-vk48-ram.img
+# 启动后插上 USB-C 模拟耳机
+```
+回到 Linux（SSH `192.168.7.1`）后我来跑：查 RX 宏控件是否出现 → `RX_CODEC_DMA_RX_0 Audio Mixer MultiMedia1 on` + HPH 序列 → `aplay hw:0,0` 放音，**你听耳机有没有声**。
+
+**问一句**：你有 USB-C **模拟**耳机/转接头吗？没有的话 R1 没法验证，我就先做 R3 并转 R2/G1 其它缺口。
+
+
+## Automatic settled outcome - 2026-10-04
+
+进入 **R2：双麦/阵列（AMIC2–5）**。先把「下一项」的可选范围说清，再给静态勘察结果。
+
+## 下一项候选（R1 已记录跳过）
+
+| # | 项 | 能否纯串口检查 | 备注 |
+|---|---|---|---|
+| R2 | 双麦/阵列 AMIC2–5 | ✅（录各级电平，你敲击机身） | 本次主攻 |
+| R3 | 非 PipeWire 裸 ALSA 默认 | ✅ | 低价值收尾 |
+| R4 | C6 容器音频 | ❌ | 设备上**未装 Waydroid**，暂不可做 |
+| — | BT 音频（G1-7） | 需 BT 耳机 | 有线耳机缺失时的替代，但也要外设 |
+
+## R2 静态勘察（原厂 `mixer_paths_sun_qrd_sku2.xml` 权威麦克风图）
+
+| 用途 | 物理麦 | ADC | DEC | TX SWR | SMIC MUX |
+|---|---|---|---|---|---|
+| **primary-mic** | **AMIC1** | ADC1 | DEC2 | SWR_MIC4 | MUX2 |
+| **secondary-mic** | **AMIC4** | ADC3 | DEC5 | SWR_MIC8 | MUX5 |
+| **headset-mic** | **AMIC2** | ADC2 | DEC0 | SWR_MIC5 | MUX0 |
+| amic3 | AMIC3 | ADC2 | DEC2 | SWR_MIC5 | MUX2 |
+
+关键点：本机卡上 `ADC2 MUX` 的枚举是 `CH2_AMIC_DISABLE / AMIC1 / AMIC2 / AMIC3 / AMIC4 / AMIC5` —— **5 个模拟麦都能经 ADC2 路由**，所以我能只切 `ADC2 MUX` 就逐路测电平，不必动 DEC/SMIC。
+
+我们当前工作路径 = **ADC2/AMIC1 + TX SWR_INPUT1（即 primary 麦）**；原厂次级麦是 **AMIC4**。要确认本机到底有几颗实体麦、次级在哪，需要一次实测。
+
+## 请你配合（实测 AMIC1–5 电平）
+
+**回复「开始」**，我就跑：
+```
+切 ADC2 MUX = CH2_AMIC1..5 各录 3 s → 打印 peak/rms
+```
+**期间（约 15–20 s）请持续用指甲敲击机身顶部/底部、并对着机器说话**，好让各麦都收到声音。
+
+如果你不想做外设/敲击类测试，直接说，我就先做 **R3（裸 ALSA 默认，纯软件）**。
+
+
+## Automatic settled outcome - 2026-10-04
+
+查清了，问题确实在文档。先给结论。
+
+## 结论
+
+**根因：文档把「RAM 启动」当成单一概念，而实际有两种镜像，副作用完全不同。** `fastboot boot` 既可零写盘、又可带桌面——"要零写盘就必须用 RAM 变体"是错误推论。
+
+| 镜像 | cmdline | 根文件系统 | 桌面/系统服务 | 用途 |
+|---|---|---|---|---|
+| `out/boot-elden-vkNN.img`（持久变体） | 含 `elden_root=LABEL=linux17` | 挂磁盘根、`switch_root` | ✅ Phosh/PipeWire/bluetoothd/Waydroid 全有 | **功能/服务级测试（零写盘）** |
+| `out/boot-elden-vkNN-ram.img`（纯 RAM） | 无 `elden_root` | 停在 initramfs | ❌ 只起 getty、不启桌面 | 内核/DTS/分区级验证、首次 bring-up |
+
+设备 `rootfs/init` 里所有服务都带 `[ "$on_initramfs" = 0 ]` 门（`start-desktop.sh`、`bt-up.sh`、`net-up.sh`…），所以纯 RAM 变体下蓝牙音频这类测试**必然失败，且现象像功能坏了**。
+
+## 错在哪（三处强制约束 + 一处命令示例）
+
+1. `PITFALLS.md` **§0 零号纪律 #3**："…先 RAM 引导验证"——被当作通则，未区分变体。
+2. `PITFALLS.md` **#92 纪律**："RAM 验收用 `…-ram.img`"——直接把纯 RAM 指定为验收镜像。
+3. `RUNBOOK-BRINGUP.md` **Phase 2**：把"RAM 版"当验收步骤，未标注其无桌面。
+4. `INDEX.md` **命令示例**：只列了 `-ram` 保底。
+
+实锤：会话 `01a10440` 音频 bring-up 就是先建了 `vk47-ram` 启动 → 停在 initramfs → 误以为内核/功能故障，切回持久才通；与 BL 解锁记录里"locked 无 RAM 兜底"的焦虑叠加，放大了"必须纯 RAM"的印象。
+
+## 已改（4 文件，未提交）
+
+- `PITFALLS.md`：§0 #3 改写（零写盘用 `fastboot boot`，区分变体）；#92 纪律修正；**新增 #93** 完整记录两种镜像 + 选择规则 + 判断方法；表头更新。
+- `RUNBOOK-BRINGUP.md` Phase 2：加警示「本 Phase 纯 RAM 无桌面，功能验收用持久根或持久变体」。
+- `INDEX.md`：命令示例补持久变体的零写盘用法。
+- `AGENTS.md`：「规则」新增测试环境选择一条；`#1–#88` → `#1–#93`。
+
+`check-doctor`：**FAIL=0 / WARN=1**（唯一 WARN 是 `RESOURCES §4` 会话索引 57≠54，与本次无关，pre-existing）。
+
+要我把这次修正提交吗？另外可顺手把 `-ram` 变体的行为加一行提示（打印"纯 RAM：无桌面"），或改 `build-boot.sh` 让 `-ram` 后缀自动带提示——需要的话一起做。
+
+
+## Automatic settled outcome - 2026-10-04
+
+已提交。
+
+**`2c765a6`** — `docs: 厘清「RAM 启动」两种镜像，修正测试环境约束`
+
+- 提交内容：`AGENTS.md`、`INDEX.md`、`PITFALLS.md`、`RUNBOOK-BRINGUP.md`（4 文件，+25/−7）。
+- `.pi/memory/HINDSIGHT.md` 未纳入——它在会话开始前就已是 dirty（harness 自动追加），非本次改动。
+
+`check-doctor` 仍为 **FAIL=0 / WARN=1**（唯一 WARN 为 `RESOURCES §4` 会话索引 57≠54，pre-existing）。
+
+要不要我顺手做那两项可选改进（`-ram` 变体启动时打印"纯 RAM：无桌面"提示；或 `build-boot.sh` 对 `-ram` 后缀自动加提示）？
+
+
+## Automatic settled outcome - 2026-10-04
+
+已实测两处的实际定义与配置。结论先行。
+
+## 一、数字结论
+
+**两者完全等价，差别 = 0**——`flashing` 不是 profile，只是 4 行的 `cd` 包装脚本：
+
+```bash
+# /home/xuqianhui1001/.local/bin/flashing   (2026-09-30 生成)
+cd "/home/xuqianhui1001/y700-elden" || exit 1
+exec pi "$@"
+```
+
+所以在 `~/y700-elden` 里输 `pi` 和在任何地方输 `flashing`，加载的东西一模一样。**差别只在「你在别处输 `pi`」时才出现**，而且不是 `flashing` 有什么魔力，纯粹是 cwd 决定加载范围。
+
+同类快捷方式还有 `eacndev`、`lob-remake`，形态完全相同。
+
+## 二、cwd 决定加载范围（真正的差别）
+
+| 项目 | cwd = `~/y700-elden`（= `flashing`） | cwd = 家目录 / 别处裸 `pi` |
+|---|---|---|
+| 项目指令 `<repo>/AGENTS.md` | ✅ | ❌（只有全局 `~/.pi/agent/AGENTS.md`） |
+| 项目技能 `.pi/skills/`（`qualcomm-android-flashing`、`qualcomm-edl-flashing`、`gsi-device-adaptation`） | ✅ 与全局技能叠加 | ❌ 只剩全局 `~/.pi/agent/skills/` |
+| `.pi/settings.json`（`sessionDir=.pi/sessions`、默认 `deepseek/deepseek-flash`、thinking low、retry 8） | ✅ 覆盖全局 | ❌ 用全局（`ustc_ai/deepseek-flash-2`） |
+| `profile_memory` 落盘 | `.pi/memory/`（HINDSIGHT 76 KB 的设备结论） | `~/.pi/agent/memory/`（另一套，标题是 "main agent (default profile)"） |
+| 会话存储 | `~/y700-elden/.pi/sessions/` | `~/.pi/agent/sessions/--home-…--/` |
+| `pi -c` / `-r` 看到的历史 | 刷机全部会话 | **空的/错的**——这是最容易误判的一条 |
+| swarm 任务卡 `.pi/missions/` + `.pi/agents/`（6 角色） | ✅ | ❌ |
+
+（当前会话 `PI_PROVIDER=ustc_ai PI_MODEL=qwen3.8-flash-next-2` 是显式覆盖，不代表默认值。）
+
+## 三、一个反直觉的特例：项目**子目录**里输 `pi`
+
+按 pi 文档（`docs/configuration.md`）两类文件解析规则不同：
+
+- **AGENTS.md**：从 cwd **向上找**，所以在 `flashing-bundle/` 里也能读到 → 看起来"项目生效了"。
+- **`.pi` 配置**：只认**工作目录下**的 `.pi`，不向上找。
+
+后果：子目录启动 = 有项目说明，但**项目技能不加载、`sessionDir` 不生效（会话落错桶）、默认模型回到全局**。→ 在子目录里也该 `cd ~ && flashing`，或 `flashing -c`。
+
+> **【2026-10-04 更正】**上述 `flashing`/`eacndev`/`lob-remake` 三个包装入口**已删除**；现役写法 = `cd ~/y700-elden && pi`。本节其余（cwd 决定加载范围、子目录特例）仍然成立。见 `archive/2026-10-04-retired-entrypoints/`。
+
+## 四、名字的历史包袱（别被误导）
+
+`flashing` 这名字来自旧机制 **pi-profile-switch** 的 `flashing` profile（`flashing-bundle/README.md` §2 记着）。现已废弃：`~/.pi-profile-switch` **在本机不存在**，改为「按工作目录叠加加载，无需切 profile」（`AGENTS.md` 亦如此写）。两处残留是纯化石：
+
+- `.pi/memory/*.md` 标题 `# … — flashing`
+- `f
+
+
+## Automatic settled outcome - 2026-10-04
+
+**音频收尾（R3）完成并提交** `4aacf40`。
+
+## 做了什么
+
+| 项 | 结果 |
+|---|---|
+| `scripts/audio-alsa-init.sh` | 新增：幂等地设好播放（`SECONDARY_MI2S_RX`+增益）与采集（AMIC1→ADC2→DEC0→TX3）路由 |
+| `/init` 钩子 | RAM 根与持久根都在 `dmesg` 之后后台调用（与 UCM/PipeWire 同值幂等共存） |
+| `build-rootfs.sh` | 脚本纳入 RAM 镜像打包清单 |
+| 持久根 `/dev/sda17` | 已**离线挂载装入**脚本 + `/init` 钩子（`sh -n` 语法通过），无需刷机 |
+| 默认音量 | **400**（可 `ALSA_PLAYBACK_VOLUME` 覆盖）——上次 1023 满值太吵，抱歉 |
+| 实测 | U2 **RAM** 环境 `aplay -D default` rc=0 + 扬声器听声 ✅；`arecord` 路径同样设定 |
+| 文档 | `TASKS.md` G1-4 记录 R3；`check-doctor` **FAIL=0 / WARN=1**（会话计数 59≠54，pre-existing） |
+
+## 音频剩余（未闭环，均非本轮可解）
+
+- **R1 有线耳麦**：代码就绪（vk48：`wcd-playback-dai-link`+RX 宏控件静态检查✅），**缺 USB-C 模拟耳机硬件**无法听声；另需 `wcd939x-usbss`（i2c TYPEC mux）。
+- **R2 双麦**：已实测为 AMIC1+AMIC4 阵列，双路采集价值低，文档记录不做。
+- **R4 容器音频**：设备未装 Waydroid，暂不可做。
+
+## 唯一待确认
+
+持久根的改动**尚未经历一次持久启动验证**（我只离线写入+语法校验）。你下次正常重启到持久系统时，`/run/audio-alsa-init.log` 应有一行输出，桌面音频不受影响。
+
+要不要我现在就做 R1 的 UCM `Headphones`/`Headset` 段（照上游 MTP 配方，代码完成待硬件验收），还是转去 G1 其它缺口（相机出流 / TF 卡 / BT 配对）？
+
+
+## Automatic settled outcome - 2026-10-04
+
+状态核清了，给你**决定路径的判断方法**——先插上试 2 分钟就能分岔。
+
+## 当前设备状态
+
+| 项 | 状态 |
+|---|---|
+| 运行镜像 | **vk48 RAM**（R1 播放 DTS 已加载：RX 宏控件 29 个 ✅、`HPHL Switch`/`RX_HPH PWR Mode` 在） |
+| USB-C 模拟开关 | 本机是 **FSA4480**（`fcs,fsa4480` @ i2c5 0x42/0x43），**不是** `wcd_usbss` |
+| FSA4480 驱动 | 内核 `CONFIG_TYPEC_MUX_FSA4480=m`（模块）→ **当前 RAM 启动无 `/lib/modules`，加载不了**；持久根模块版本还停在旧内核 `gba28ec16f01f`，与现用 `gbd114ca33` 不匹配 |
+
+## 关键分岔：插上你的耳机，回我结果
+
+请把耳机/转接头插到**设备上没接线的那个 USB-C 口**（另一个口在跑 USB-NCM 到主机），然后告诉我哪个现象出现：
+
+| 现象 | 类型 | 结论 |
+|---|---|---|
+| 插上后 `dmesg` 出现 **`new full-speed USB device` / `USB Audio`**；`aplay -l` 多出一个 **USB 声卡** | **数字**（自带 DAC） | 大概率**开箱即用**，我直接帮你切到它出声 |
+| 插上后**没有** USB 声卡出现，只有 Type-C/UCSI 事件 | **模拟**（无 DAC） | 需补工作：把 FSA4480 编成 **built-in** + 处理"谁把它切到 AUDIO 模式" |
+
+你插上后回我一句（或直接把 `dmesg | tail` 贴给我），我这边同时查。**先说结论：如果是数字耳机，R1 今天就能听声闭环；如果是模拟，我们要多一步改内核。**
+
+你手上的是哪一种？
+
+
+## Automatic settled outcome - 2026-10-04
+
+**音频收尾到此为一个干净的停顿点。** 两个提交：
+
+| commit | 内容 |
+|---|---|
+| `4aacf40` | **R3 裸 ALSA 默认**：`scripts/audio-alsa-init.sh`，无桌面/PipeWire 时 `aplay`/`arecord` 开箱可用；`/init` 在 RAM+持久根调用；默认增益 400；U2 RAM 实测听声 ✅；持久根 `/dev/sda17` 已离线装入 |
+| `2d4408d` | **R1 冻结 + 更正**：本机 USB-C 模拟开关是 **FSA4480**（`&i2c5` @0x42/0x43），非之前假设的 `wcd_usbss`/i2c3；驱动 `=m` 且 RAM 无模块、持久根模块旧版本 → 需编 built-in；无耳机硬件，听声验收冻结 |
+
+`check-doctor`：**FAIL=0 / WARN=1**（会话计数 59≠54，pre-existing，与本次无关）。
+
+## 音频总账
+
+- **输出**：扬声器 ✅（G1-4 已闭环，桌面 PipeWire/UCM + 裸 ALSA 双通路）。
+- **输入**：内置麦 AMIC1 ✅（UCM `Mic`）。
+- **耳机（R1）**：代码就绪，**硬件冻结**。日后拿到 USB-C 耳机后：数字 dongle → 大概率即插即用；模拟耳机 → 先编 `CONFIG_TYPEC_MUX_FSA4480=y`，见 `archive/topics/HEADSET-HW-2026-10-04.md` §6。
+- **R2 双麦**：实测 AMIC1+AMIC4 阵列，双路价值低，不做。
+- **R4 容器音频**：设备无 Waydroid，不可做。
+
+下一步若继续 G1，剩余缺口是 **相机出流 / TF 卡写稳定 / BT 配对** 三项。要不要挑一个？
+
+
+## Memory - 2026-10-04
+
+2026-10-04 入口清理（eld/y700-elden）：现役启动入口 = `cd ~/y700-elden && pi`；`~/.local/bin/{flashing,eacndev,lob-remake}` 三个 cd 包装已删除（pi-profile-switch 机制早废，本机无 ~/.pi-profile-switch）。并发子代理 = `Agent` 工具 + `.pi/agents/*.md`（插件 @tintinweb/pi-subagents），**无 harness 守护进程**；旧 `pi-messenger-swarm` 已卸载，其 6 脚本+2 补丁+`.pi/pi-messenger.json`+`.pi/messenger/` 全部移入 `archive/2026-10-04-retired-entrypoints/`（判据 §3、恢复 §4、被移出记忆区的原文附录 §6）。`scripts/check-doctor.sh` 新增第 4 项：这些路径若回到活跃树即 FAIL，机器层快捷入口复辟则 WARN。判据教训：**卸载插件后其脚本会静默失效（node ENOENT）而不报错**，故凡引用 `~/.pi/agent/npm/node_modules/<pkg>/` 的仓库脚本必须纳入 doctor 存在性检查。
