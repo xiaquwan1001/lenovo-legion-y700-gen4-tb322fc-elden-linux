@@ -1472,3 +1472,49 @@ exec pi "$@"
 ## Memory - 2026-10-04
 
 2026-10-04 入口清理（eld/y700-elden）：现役启动入口 = `cd ~/y700-elden && pi`；`~/.local/bin/{flashing,eacndev,lob-remake}` 三个 cd 包装已删除（pi-profile-switch 机制早废，本机无 ~/.pi-profile-switch）。并发子代理 = `Agent` 工具 + `.pi/agents/*.md`（插件 @tintinweb/pi-subagents），**无 harness 守护进程**；旧 `pi-messenger-swarm` 已卸载，其 6 脚本+2 补丁+`.pi/pi-messenger.json`+`.pi/messenger/` 全部移入 `archive/2026-10-04-retired-entrypoints/`（判据 §3、恢复 §4、被移出记忆区的原文附录 §6）。`scripts/check-doctor.sh` 新增第 4 项：这些路径若回到活跃树即 FAIL，机器层快捷入口复辟则 WARN。判据教训：**卸载插件后其脚本会静默失效（node ENOENT）而不报错**，故凡引用 `~/.pi/agent/npm/node_modules/<pkg>/` 的仓库脚本必须纳入 doctor 存在性检查。
+
+
+## Automatic settled outcome - 2026-10-04
+
+**清理完成并提交 `c5351c3`；`check-doctor` FAIL=0 / WARN=1（唯一 WARN 是清理前就存在的会话索引 54 vs 实有 59）。**
+
+## 一、移除与归档了什么
+
+| 类 | 内容 | 去向 |
+|---|---|---|
+| **shell 快捷入口 3 个** | `~/.local/bin/{flashing,eacndev,lob-remake}`（同为 4 行 `cd` 包装，pi-profile-switch 时代命名）| 已删除，副本 → `archive/2026-10-04-retired-entrypoints/bin/` |
+| **死插件 `pi-messenger-swarm` 资产 10 项** | 6 脚本（`swarm.sh`/`swarm-monitor.sh`/`y700-swarm-reset.sh`/`y700-harness-restart.sh`/`start-y700-harness.sh`/`apply-swarm-patch.sh`）+ 2 补丁 + `.pi/pi-messenger.json` + `.pi/messenger/`(848K) + `logs/swarm-monitor.log` | 脚本/补丁 `git mv` 入归档；运行时目录 tar 留证（96K）；日志删 |
+| **不存在的插件经验** | `FAILURES.md` 的 `## Memory - 2026-10-02` swarm 块（600 字符，全是挂在已卸载插件上的修法）| 原文 + 「仍有效的抽象结论」→ 归档 §6 |
+
+判据（写进归档 §3）：`pi list` 无此包 → `node_modules` 无此目录 → 脚本硬编码的 `…/pi-messenger-swarm/dist/harness/server.js` 不存在 = **静默失效而非报错**；`AGENTS.md` 旧引用的 `swarm.py`、`.pi/messenger/agent-card.json` **从未在本机存在过**。
+
+## 二、防止复辟 + 文档收口
+
+- `scripts/check-doctor.sh` 新增**第 4 项**：上述路径若回到活跃树 → **FAIL**；`~/.local/bin/*` 复辟 → **WARN**（13 项全 ok）。
+- `AGENTS.md` §其他 明确现役入口 `cd ~/y700-elden && pi` + 并发形态 = `Agent` + `.pi/agents/`（**无守护进程**）；`INDEX.md` §4 加注、§6 补归档行、#91→**#93**。
+- `PITFALLS §15.1` +5 行废弃登记、`§15.2` 登记 7 处孤儿目录；`RESOURCES §3` 台账体积/计数刷新；`.pi/README.md` 删 `pi-messenger.json`/`messenger/` 两行、`missions/agents` 改挂 pi-subagents；`.gitignore` 保留规则但注明出处。
+- 记忆区：三份标题去掉废弃 profile 名 `flashing` → `elden（y700-elden）`；HINDSIGHT 旧「用 flashing」段加**行内更正指针**（不改写原文）。
+
+## 三、两件需要你知道 / 拍板的事
+
+1. **并发会话抢提交**：我的 8 个 `git mv` + 1 个 `git rm` 被**同时运行的另一个 pi 会话**（R1 耳机取证，`archive/topics/HEADSET-HW-2026-10-04.md`）的提交 `2d4408d` 一起扫走入库——路径变更完整无损，只是提交信息不匹配，已在归档 README 记明原因。教训：**同 worktree 并发会话下禁用 `git commit -a`**（本次我全程显式列路径）。
+2. **机器层孤儿目录 12.2 M 待授权清理**（`grep` node_modules 无任何已安装包引用）：`~/.pi/agent/pi-sessions/` 12 M、`~/.pi/
+
+
+## Automatic settled outcome - 2026-10-04
+
+三个子代理已并行派发（后台运行，完成后会通知我）：
+
+| 子代理 | 缺口 | 绑定 key | 本轮范围 |
+|---|---|---|---|
+| `camera-vk49` | G1-5 相机出流 | `ustc_ai_2` | 构建**内核+相机模块匹配**的新 boot 镜像、冷启自动加载、精确验收步骤 |
+| `tf-card` | G1-6 TF 卡写稳定 | `ustc_ai_3` | 厂商 `uses_level_shifter` 移植分析、候选补丁、A/B 实验设计与压测脚本 |
+| `bt-link` | G1-7 BT 链路高延迟 | `ustc_ai_4` | 排除 IBS 后重定位根因、上游修复检索、候选补丁与测试脚本 |
+
+主会话保留 `ustc_ai` key，四 key 均在用（负载均衡）。
+
+**协作约束（已写进各自 prompt）**：只做主机侧、不刷机/不重启/不写设备；不 `git commit`；不改根目录 6 份维护文档（结论各写 `archive/topics/*-2026-10-04-subagent.md`）；共享内核树构建用 `flock /tmp/y700-kbuild.lock` 串行；TF/BT 只产出 `patches/candidate-*.patch` 提案，不直接改 `linux/`。
+
+**设备侧**：U2 现在停在 **fastboot**。等三个代理交回资产后，我会汇总成一份串行的上机验收清单（相机镜像 / TF 压测 / BT 测试），由你逐项执行——符合"用户操作设备"。
+
+我现在不轮询，等它们完成通知。三个都回来后我会独立复核产物（不采信自报成功），再给你收口计划。

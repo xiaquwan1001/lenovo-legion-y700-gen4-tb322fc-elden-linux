@@ -114,3 +114,18 @@ worker stdout 是管道→SIGPIPE 死。修：给 dist/swarm/spawn.js 打 spawn 
 
 **仍然有效的抽象结论**（与插件无关，留在全局 `AGENTS.md` §API 限流）：
 worker 自报成功不可信 → 编排者独立复跑；429 有两种（请求窗口 / 3h 预算），后者只能等或换 key。
+
+## 7. 机器层收尾（同轮，2026-10-04 追加授权后执行）
+
+| 项 | 处置 | 体积 |
+|---|---|---|
+| `~/.bash_profile` 第 2 行 `导出 PATH=` | 改为 `export PATH=`（原行每次登录打印「导出: 未找到命令」，dotnet tools 从未进 PATH）。备份 `~/.bash_profile.bak-20261004` | — |
+| `~/.pi/agent/pi-sessions/`(12 M) · `~/.pi/wechat/`(1.1 M，含已卸载渠道的 `credentials.json`) · `~/.pi/todos/`(11 个) · `~/.pi/agent/pi-agent-profiles/` · `~/.pi/{session-control,_wtest}/` · `~/.pi/agent/{_cron_backup,missions,git}/` | **移动到回收目录**（未硬删）`~/.pi/_trash-2026-10-04/`，共 **13 M**；确认无影响后 `rm -rf` 该目录即可 | 13 M |
+| `~/.pi/agent/npm/node_modules/` 疑似孤立依赖 | **判定为不需要清理**：`package.json` 7 个直接依赖 + lockfile 传递闭包 = 11 个包，与磁盘实际 11 个完全一致；`croner`/`nanoid`/`typebox` 是 `pi-subagents` 的传递依赖。此前"孤立依赖"的判断源于把 scoped 目录（`@aws`、`@babel` 等）当作**包**计数，实际它们已随 lockfile 清除 | — |
+| `~/.pi/workflows/` | **保留**（`@tintinweb/pi-subagents` 的 `SubagentWorkflow` 保存位） | — |
+
+⚠️ **回收前必读**：`_trash-2026-10-04/agent__cron_backup/crontab.2026-10-04-preclean.bak` 是当日
+`crontab` 清空前（08:51，另一个会话的 preclean）的**唯一备份**，内容 = lobcorp-remake 的 swarm 看门狗
+`*/10 * * * * … bash tools/swarm_watch.sh`。当前 `crontab -l` 为空。若 lobcorp 项目仍需要它，从该文件恢复。
+
+回收命令（确认无误后你自己执行）：`rm -rf ~/.pi/_trash-2026-10-04`
