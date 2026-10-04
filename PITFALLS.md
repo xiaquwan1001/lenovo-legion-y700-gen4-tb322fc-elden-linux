@@ -644,6 +644,7 @@
     - **主线 DTS 未启用 WCD939x**（无 SWR master、无 wcd 节点）→ 输入必须另做 WCD939x bring-up（镜像 `sm8750-mtp.dts` 的 wcd939x + rx/va SWR master + 稳压 + capture dai-link + tplg + UCM）。详见 `archive/topics/AUDIO-INPUT-2026-10-04.md`。
     - **操作细节**：`arecord -D hw:0,2` 需先 `numid=15 MultiMedia3 Mixer VA_CODEC_DMA_TX_0=on`，否则 open EINVAL；UCM 加 `SectionDevice."Mic"` 会**弄坏 HiFi verb**（扬声器 sink 丢失），撤回后重启恢复——加 UCM 设备前先验证 verb 可解析。
     - **已于 2026-10-04 打通 ✅**：做 WCD939x bring-up（DTS codec+swr1/2+TX3 dai-link）后，**关键是设对采集路径的 DAPM mixer/mux 控件**（`ADC2_MIXER Switch`、`TX SMIC MUX0`、`TX DEC0 MUX`、`TX_AIF1_CAP Mixer DEC0`）——ADSP 图其实一直成功，只是 DAPM 未点亮。已固化到 UCM2 `SectionDevice."Mic"`。见 `archive/topics/WCD939X-2026-10-04.md`。
+    - **UCM 加 capture 段的坑（ACP 探测）**：ACP/WirePlumber 会**探测 UCM profile**（实际打开 PCM）；DPCM 采集 PCM 在 **FE-BE 未连时打不开** → profile 被标 not supported（卡只剩 `off`/`pro-audio`，扬声器 sink 也没了）。解法：把采集 FE-BE 路由 cset（如 `MultiMedia3 Mixer TX_CODEC_DMA_TX_3 on`）+ 关键 mux 放进 **`SectionVerb.EnableSequence`**。
 
 92. **★`build-boot.sh` 会把每次产物覆盖成 `out/boot-elden.img`——持久与 RAM 变体混用会刷错/启错镜像**（2026-10-04 实测）。
     - 现象：先 `VERSION=vk46` 建持久（cmdline 含 `elden_root=LABEL=linux17`），再 `VERSION=vk46-ram ROOTARGS=` 建 RAM（无 `elden_root`）→ `out/boot-elden.img` 变成 **RAM 变体**。据此 boot 后：`init` 检测到 `on_initramfs=1` 且无 `elden_root` → **不 switch_root、不启桌面**，串口停在 initramfs shell；`findmnt /`=`rootfs`、cmdline 无 `elden_root`。
