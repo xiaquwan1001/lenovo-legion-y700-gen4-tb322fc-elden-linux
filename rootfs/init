@@ -136,6 +136,12 @@ chmod 755 /var/empty 2>/dev/null
 
 dmesg > /run/dmesg-boot.txt
 
+# Audio: put the sound card into a usable default mixer state for bare ALSA
+# (RAM/initramfs bring-up, headless shells).  Harmless alongside PipeWire/UCM,
+# which re-apply the same values per device.  Runs in both RAM and disk roots.
+[ -x /usr/local/sbin/audio-alsa-init.sh ] && \
+	setsid /usr/local/sbin/audio-alsa-init.sh >/run/audio-alsa-init.log 2>&1 &
+
 respawn() {
 	while true; do
 		[ -c "/dev/$1" ] && setsid getty -n -l /bin/sh -L "$1" 115200 vt100
