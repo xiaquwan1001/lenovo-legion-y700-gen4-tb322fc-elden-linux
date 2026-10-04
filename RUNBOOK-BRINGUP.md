@@ -358,7 +358,42 @@ fastboot reboot
 
 ---
 
-## 8. 回退（任一步）
+## 8. 迭代快环（kexec / 模块热载 / Linux→fastboot）
+
+> 2026-10-04 起。目标：把「改一行驱动 → 重启 → fastboot」从 20–40 min 压到 30 s–2 min。
+> 统一入口 **`scripts/iterate.sh`**（根目录 `build.sh`/`pack.sh`/`cycle.sh` 为兼容保留）。
+
+| 环 | 命令 | 何时用 | 代价 |
+|---|---|---|---|
+| **0 模块热载** | `scripts/iterate.sh mod <driver-dir>` | 改的是 `=m` 驱动的 `.c`/寄存器序列 | **~30 s，不重启** |
+| **1 DTB** | `scripts/iterate.sh dtb` | 改 DTS（pinctrl/regulator/面板时序） | `make dtbs` 秒级 + kexec ~1 min |
+| **2 内核** | `scripts/iterate.sh kernel` | 改 `=y` 代码 / 新补丁 | 全量编译（ccache 暖后复用）+ kexec ~2–5 min |
+| **3 RAM 兜底** | `scripts/iterate.sh ram` | 零写盘取证 / 回退验证 | fastboot boot（**需主机 USB**） |
+
+**前置（一次性）**：应用模块化片段，否则环 0 不可用——
+```bash
+FRAG=patches/fragment-modular.config SNAP=patches/config-vk-modular \
+  bash scripts/apply-kernel-fragment.sh
+bash scripts/iterate.sh kernel --boot      # 全量重编一次；此后驱动改动走环 0
+```
+
+**kexec 热重载**（`--kexec`，kernel/dtb 默认）：
+- 前置已就绪：内核 `CONFIG_KEXEC_FILE=y`（`KEXEC_SIG` 关）、设备 `kexec-tools 2.0.32`。
+- 关键约束：**只能喂未压缩 `Image`**（`Image.gz` 不行）；`scripts/kexec-boot.sh` 已处理。
+- 先验安全：`scripts/kexec-boot.sh --load-only`（只加载不切换）；失败时当前内核照常运行。
+- 首测务必用一个**已知可启**的内核，并保留 `to-fastboot.sh` + `fastboot boot` 作为带外回退。
+
+**Linux → fastboot**（必要时）：`scripts/to-fastboot.sh [--flash out/x.img] [--boot out/x.img]`
+- 走 PSCI vendor reset（`eldroid-bootctl reboot bootloader`，vk41+）——这是唯一可靠路径；
+  `cycle.sh --soft` 不再落 fastboot，`cycle.sh --fastboot`（misc BCB）ABL 不认（PITFALLS #65/#66）。
+- `--flash` 先在 Linux 内 `dd` 写 boot_b 再重启（无需主机 fastboot 参与写盘）。
+
+**每条 boot 镜像都有 manifest**：`out/boot-elden-<ver>.manifest`（内核/DTB/config/ramdisk 哈希 + cmdline +
+`mkbootimg` argv + 两个 git HEAD），解决「vk49 打包命令丢失」。构建即生成，应随提交进 git。
+
+---
+
+## 9. 回退（任一步）
 
 | 目的 | 命令 |
 |---|---|
@@ -369,7 +404,7 @@ fastboot reboot
 
 ---
 
-## 9. Phase B（可选）— 回收 Android 专属分区给 Linux
+## 10. Phase B（可选）— 回收 Android 专属分区给 Linux
 
 > 目的：一次解决容量（而不是二次缩 `userdata`）。**仅在 G1 全绿 + 已做 Q5 取证 + EDL 备份在手时执行。**
 
@@ -385,7 +420,7 @@ fastboot reboot
 
 ---
 
-## 10. 待你拍板（仅两项，均为容量/目标参数）
+## 11. 待你拍板（仅两项，均为容量/目标参数）
 
 1. **`LINUX_GIB` 具体值**：上机后用 `du` 实测各组成回填 `DEVICE.md` §3.1（GAPS Q7），再定；默认按上界一次给足。
 2. **本次目标**：只到 Phase 2（RAM 零写盘验收）还是走到 Phase 5（持久 Linux + Waydroid）？

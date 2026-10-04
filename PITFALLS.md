@@ -166,6 +166,18 @@
 32. **主机编内核依赖**：`gcc-aarch64-linux-gnu flex bison libssl-dev libelf-dev libncurses-dev bc`。
 33. **主机代理**：`http://127.0.0.1:7897`（env 已设）；GitHub 大文件易截断，走代理。
 34. **`apk info -W <file>`** 可查文件属于哪个包；`apk fix` 重装。
+94. **kexec 只能喂未压缩 `Image`**：arm64 `kexec_file_load` 拒绝 `Image.gz`（报 invalid image）。
+    用 `linux/arch/arm64/boot/Image`（未压缩）；设备已有 `kexec-tools 2.0.32`。`CONFIG_KEXEC`（旧 syscall）未开，
+    所以必须 file-based（`kexec -s`）。先 `scripts/kexec-boot.sh --load-only` 验加载（失败不切内核）。
+95. **模块热载的 vermagic 必须匹配**：设备 `uname -r` ≠ 内核树 `make -s kernelrelease` 时，push 的 `.ko` insmod 会失败。
+    `scripts/mod-loop.sh` 检测到不一致会**拒绝执行**——先 kexec/fastboot 到同源内核再做模块环。
+96. **ccache 必须显式接入 `CROSS_COMPILE`**：装了 ccache 但 `CROSS_COMPILE=aarch64-linux-gnu-` 时缓存恒为 0。
+    统一用 `scripts/env-build.sh`（`CROSS_COMPILE="ccache aarch64-linux-gnu-"`，缓存 `~/.cache/ccache-elden`）。
+97. **模块化时 bool 子项会把父项拉回 `=y`**：如 `SND_SOC_WCD939X_SDW=y` select `SND_SOC_WCD939X` → 父项无法变 `=m`。
+    翻 `=m` 必须连**所有 `=y` 的子项**一起翻（`fragment-modular*.config` 已用 merge_config+olddefconfig 实测）。
+    例外：`BT_HCIUART_QCA` 是 **bool** 且 `select BT_QCA` → `BT_QCA` 无法模块化（hci_qca.c 仍内置）。
+98. **不要在同一命令里混合长轮询与副作用**（见 #26）：`iterate.sh`/`to-fastboot.sh` 已把 `reboot`/`bboot`
+    与等待拆成独立步骤；`kexec -e` 后 SSH 必断，等待期由脚本内部自限。
 
 ---
 

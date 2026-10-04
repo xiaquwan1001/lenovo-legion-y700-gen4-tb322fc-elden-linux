@@ -37,12 +37,18 @@ mknod -m 600 "$ROOTFS/dev/console" c 5 1 2>/dev/null || true
 ( cd "$ROOTFS" && find . -print0 | cpio --null -o -H newc --owner=0:0 2>/dev/null | gzip -9 ) > "$OUT/initramfs.cpio.gz"
 echo "initramfs(busybox): $(du -h "$OUT/initramfs.cpio.gz" | cut -f1)"
 
-# --- 选择 ramdisk：默认用 Alpine rootfs（与 vk27 一致）------------------
-if [ "${RAMDISK_KIND:-rootfs}" = busybox ]; then
+# --- 选择 ramdisk -------------------------------------------------------
+# 显式优先：RAMDISK=/path/to.cpio.gz 覆盖一切（可复现构建要求记录到 manifest）。
+# 默认候选把 **camera 覆盖层放在首位**，否则默认构建会漏掉相机模块（vk49 的教训）。
+#   RAMDISK_KIND=busybox   只打最小 busybox initramfs
+#   RAMDISK_KIND=rootfs    用磁盘根 rootfs（默认）
+if [ -n "${RAMDISK:-}" ]; then
+	:   # 显式指定
+elif [ "${RAMDISK_KIND:-rootfs}" = busybox ]; then
 	RAMDISK="$OUT/initramfs.cpio.gz"
 else
 	RAMDISK=""
-	for c in "$OUT/rootfs-overlaid.cpio.gz" "$OUT/rootfs.cpio.gz" "$OUT/rootfs-vk11.cpio.gz"; do
+	for c in "$OUT/rootfs-overlaid-camera.cpio.gz" "$OUT/rootfs-overlaid.cpio.gz" "$OUT/rootfs.cpio.gz" "$OUT/rootfs-vk11.cpio.gz"; do
 		[ -e "$c" ] && { RAMDISK="$c"; break; }
 	done
 	[ -n "$RAMDISK" ] || { echo "⚠️ 找不到 rootfs cpio，回退 busybox"; RAMDISK="$OUT/initramfs.cpio.gz"; }
@@ -60,8 +66,10 @@ echo "cmdline: $CMDLINE"
 
 dd if=/dev/zero of="$OUT/dtbo-dummy.img" bs=4096 count=1 2>/dev/null
 
-python3 "$MKBOOTIMG" \
-	--header_version 2 \
+# 可复现：固定时间戳（默认取内核 Image.gz 的 mtime，可用 env 覆盖）。
+export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(stat -c %Y "$KERNEL")}
+
+MKBOOTIMG_ARGS=(--header_version 2 \
 	--os_version 15.0.0 --os_patch_level 2025-08 \
 	--kernel "$KERNEL" \
 	--ramdisk "$RAMDISK" \
@@ -74,11 +82,18 @@ python3 "$MKBOOTIMG" \
 	--tags_offset 0x00000100 \
 	--dtb_offset 0x01f00000 \
 	--pagesize 4096 \
-	-o "$OUT/boot-elden-$VERSION.img"
+	-o "$OUT/boot-elden-$VERSION.img")
+python3 "$MKBOOTIMG" "${MKBOOTIMG_ARGS[@]}"
 
 cp -a "$OUT/boot-elden-$VERSION.img" "$OUT/boot-elden.img"
 echo
 ls -la "$OUT/boot-elden-$VERSION.img"
 echo "sha256: $(sha256sum "$OUT/boot-elden-$VERSION.img" | cut -d' ' -f1)"
+
+# --- 记录 manifest（可复现/审计，提交进 git）--------------------------
+RAMDISK_FILE=$RAMDISK MKBOOTIMG_ARGS="${MKBOOTIMG_ARGS[*]}" CMDLINE="$CMDLINE" \
+	bash "$ROOT/scripts/build-manifest.sh" "$VERSION" "$OUT/boot-elden-$VERSION.img" || \
+	echo "⚠️ manifest 生成失败"
+
 echo
-echo "Next: adb reboot bootloader && fastboot boot $OUT/boot-elden-$VERSION.img"
+echo "Next: fastboot boot $OUT/boot-elden-$VERSION.img   （或 scripts/kexec-boot.sh 热重载）"

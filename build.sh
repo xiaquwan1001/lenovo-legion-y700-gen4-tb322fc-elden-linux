@@ -1,9 +1,8 @@
 #!/bin/bash
-# Incremental kernel build (elden). Never run olddefconfig — it deletes CONFIG_ARCH_QCOM.
-set -eu
-cd "$(dirname "$0")"
-cd linux
-export ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
-grep -q '^CONFIG_ARCH_QCOM=y' .config || { echo "ERROR: CONFIG_ARCH_QCOM missing (.config corrupted by olddefconfig?)"; exit 1; }
-make -j"$(nproc)" Image.gz dtbs
-echo "[build] OK: $(ls -la arch/arm64/boot/Image.gz | awk '{print $5}') bytes"
+# 根目录兼容入口 —— 委托给 scripts/build-kernel.sh（ccache + CONFIG_ARCH_QCOM 校验）。
+#
+# 新用法请优先：
+#   scripts/iterate.sh mod <driver-dir>   # 模块快环，不重启（~30s）
+#   scripts/iterate.sh dtb|kernel         # kexec 热重载
+# 本脚本保留仅为兼容旧文档/肌肉记忆。
+exec bash "$(dirname "$0")/scripts/build-kernel.sh" "$@"
