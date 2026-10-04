@@ -13,6 +13,8 @@
 /stock-src/
 /qdl/
 /tools/
+/edk2-gunyah/
+/edk2-gunyah-qemu/
 
 # ---- 构建产物 / 可再生成 ----
 # /out 用 /* 而非整目录忽略：否则 `!` 无法复活子文件（git 规则）；manifest 是可复现指纹，要入库
