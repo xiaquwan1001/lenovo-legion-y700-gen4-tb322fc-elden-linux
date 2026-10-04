@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-03（**#82–#87 = BL 解锁专题**；#87 = 「先查本地既有结论」流程教训；**§15 = 过时/废弃/功能缺陷登记**）。
+> 最后更新：2026-10-04（**#93 = 「RAM 启动」两种镜像之辨（#92 续）**；#89–#92 = 电源/音频/UCM/镜像纪律；**§15 = 过时/废弃/功能缺陷登记**）。
 
 ---
 
@@ -10,7 +10,10 @@
 
 1. **先查本地既有结论再取证**：`grep -rn -iE "unlock|解锁|rollback|testkey|GPT|EDL" ~/y700-elden/*.md archive/topics/*.md .pi/skills/*/references/*.md`（PITFALLS #87）。
 2. **动分区/刷写前备份**：`fastboot fetch <分区>` + GPT 双表 dump；**写后读回校验**（不看"传输完成"）。
-3. **单一远程通道的持久系统上不做自锁式实验**（电源/熄屏/网络）；先 RAM 引导验证（#87、复盘-持久化与睡眠）。
+3. **单一远程通道的持久系统上不做自锁式实验**（电源/熄屏/网络）；用 `fastboot boot` **零写盘**验证，而非直接改 flash。
+   ⚠️ **两种「RAM 启动」别混**（#92/#93）：`-ram` 纯 RAM 变体**不启桌面/会话服务**，只适合内核/引导/分区级验证；
+   **功能/服务级测试（桌面、PipeWire、蓝牙音频、Waydroid、相机出流）必须 `fastboot boot` 持久变体**（RAM 内核 + 磁盘根，同样零写盘）。
+   参 #87、#92、#93、复盘-持久化与睡眠。
 
 ## 一、引导 / fastboot / 重启交接
 
@@ -649,7 +652,14 @@
 92. **★`build-boot.sh` 会把每次产物覆盖成 `out/boot-elden.img`——持久与 RAM 变体混用会刷错/启错镜像**（2026-10-04 实测）。
     - 现象：先 `VERSION=vk46` 建持久（cmdline 含 `elden_root=LABEL=linux17`），再 `VERSION=vk46-ram ROOTARGS=` 建 RAM（无 `elden_root`）→ `out/boot-elden.img` 变成 **RAM 变体**。据此 boot 后：`init` 检测到 `on_initramfs=1` 且无 `elden_root` → **不 switch_root、不启桌面**，串口停在 initramfs shell；`findmnt /`=`rootfs`、cmdline 无 `elden_root`。
     - 判断依据：串口/SSH `cat /proc/cmdline` **是否含 `elden_root=`**；`findmnt /` 是 `/dev/sda17` 还是 `rootfs`。
-    - 纪律：建镜像用**显式文件名**（`VERSION=`），刷机用 `out/boot-elden-vkNN.img`（持久）而非 `out/boot-elden.img`；RAM 验收用 `fastboot boot out/boot-elden-vkNN-ram.img`。
+    - 纪律：建镜像用**显式文件名**（`VERSION=`），刷机用 `out/boot-elden-vkNN.img`（持久）而非 `out/boot-elden.img`；**零写盘选哪种镜像见 #93**（功能测试用持久变体，纯 RAM 只做内核/引导级验证）。
+
+93. **★「RAM 启动」有歧义：`fastboot boot` 有两种镜像，选错得到「无桌面」环境**（2026-10-04 实测；音频 bring-up 曾据此误判）。
+    - **A. 持久变体** `out/boot-elden-vkNN.img`（cmdline 含 `elden_root=LABEL=linux17`）：内核在 RAM，initramfs **挂磁盘根并 `switch_root`** → **桌面/Phosh、PipeWire、bluetoothd、Waydroid 等系统服务齐全**；**不写 flash**。
+    - **B. 纯 RAM 变体** `out/boot-elden-vkNN-ram.img`（`ROOTARGS=`，无 `elden_root`）：停在 initramfs，`rootfs/init` 因 `on_initramfs=1` **只起 getty、不 `switch_root`、不启桌面**（`start-desktop.sh`/`bt-up.sh` 等条件均为 `on_initramfs=0`）。
+    - **后果**：蓝牙音频、桌面音频栈、Waydroid、相机出流等**依赖会话/系统服务**的测试在 B 下必然失败，现象像「功能坏了」，实为环境缺失。
+    - **选择规则**：内核/DTS/驱动早期验证、GPT/分区手术、首次 bring-up、防持久根污染 → **B**；**功能/服务级验收 → A（零写盘）**；长期固化 → `scripts/flash-b.sh out/boot-elden-vkNN.img` 写 b 槽。
+    - 判断当前是哪种：`cat /proc/cmdline` 是否含 `elden_root=`；`findmnt /` 是 `/dev/sda17`（磁盘）还是 `rootfs`（RAM）。
 
 ---
 

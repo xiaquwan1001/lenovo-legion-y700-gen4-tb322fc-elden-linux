@@ -224,6 +224,9 @@ scp root@192.168.7.1:/tmp/gpt-new-backup.bin  "$BAK"/gpt_backup0.bin
 
 ## 3. Phase 2 — b 槽直启「RAM 版 vk40」（首次上机，零写盘）
 
+> ⚠️ **本 Phase 的「RAM 版」= 纯 RAM 变体（无桌面/会话服务，`findmnt /`=`rootfs`）**，只用于硬件/引导首验。
+> **功能/服务级验收（桌面、PipeWire、蓝牙音频、Waydroid）必须用持久根**（Phase 4/5）或 `fastboot boot` **持久变体**（零写盘，见 `PITFALLS` #93）。
+
 只覆盖 **b 槽**（原厂已备份）：
 
 ```bash

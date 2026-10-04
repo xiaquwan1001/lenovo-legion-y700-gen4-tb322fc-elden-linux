@@ -92,7 +92,8 @@ sudo bash elden-net.sh && ssh -o StrictHostKeyChecking=no root@192.168.7.1
 scripts/sign-boot-b.sh out/boot-elden-vkNN.img && scripts/flash-b.sh out/boot-elden-vkNN.img
 cd linux && make -j16 Image.gz dtbs        # ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM）
 ./cycle.sh --soft                          # 软回 fastboot（免按电源键）
-fastboot boot out/boot-elden-vk40-ram.img  # 零写盘 RAM 保底，但必须先 blank 当前活跃槽的 dtbo（否则卡 logo）
+fastboot boot out/boot-elden-vk40-ram.img  # 零写盘·纯RAM（无桌面/服务），仅内核/引导/分区级验证；先 blank 活跃槽 dtbo（否则卡 logo）
+fastboot boot out/boot-elden-vk40.img      # 零写盘·RAM内核+磁盘根（有桌面/服务），功能测试用（见 PITFALLS #93）
 # 新单元开工三件套（先写台账，再备份，再手术）
 fastboot getvar serialno; adb shell getprop ro.boot.hwboardid   # → 写进 DEVICE.md §2.2
 sh scripts/gpt-dump.sh                                          # 打印本单元 backup_lba（禁跨容量档复用）
