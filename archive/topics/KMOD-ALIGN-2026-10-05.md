@@ -60,7 +60,8 @@ G1-5 之前是在 **vk50 RAM 启动 + 自带 overlay** 下验的，持久根的�
 
 - **boot 加载**：设备 `/init` 比 `rootfs/init` 旧、**缺相机加载块**；已部署 `rootfs/init`（含 `camera-modules-load.sh` 调用，未加 `on_initramfs` 守卫 ⇒ switch_root 后在持久根也会跑一次）+ `/usr/local/sbin/camera-modules-load.sh`。旧 `/init` 备份为 `/init.bak-kmod-align`。
 - **资产**：`out/camera-modules-7.2.0-debug-g4c68eb5ed4e3-dirty.tar.gz`（sha256 `4146dfd0cdfa1664…`）。
-- **待办**：下次重启验证开机自动加载（本轮未重启，避免在 SSH-only 持久系统上自锁）。
+- **待办**：~~下次重启验证开机自动加载~~ **✅ 已验证（2026-10-05）**：多次自然重启后，boot 后 `lsmod | grep -c camss`=8、`/dev/media0`/`video0`/`video3` 均在。
+  ⚠️ **未解释旁证**：同内核被报告「进桌面 ~5 min 硬重启 2 次」（未受控复现）——见 `archive/topics/REBOOT-5MIN-2026-10-05.md`、`TASKS.md` Q24。不排除与本轮相机自动加载有关（H2），待单变量排查。
 
 ## 5. 复现命令（备忘）
 

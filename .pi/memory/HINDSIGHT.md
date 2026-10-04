@@ -1145,3 +1145,33 @@ VK: vk52
 | 5 | **C1 Waydroid 复跑** → C3 身份取证 → C2 Play | C2 需你恢复上行+凭据 | |
 | 6 | **C4 传感器 HAL 部署验证** | 需先 `waydroid init` | GAPS Q14 三未知 |
 | 6' | **C8 Gunyah 探测
+
+
+## Automatic settled outcome - 2026-10-04
+
+按方案 A 完成。结论先行。
+
+## 完成情况（U2，boot_b 持久系统，零写盘）
+
+| 项 | 结果 |
+|---|---|
+| 根因 | 持久根 `/lib/modules/` 只有旧内核 `…gba28ec16f01f-dirty`，运行内核 `…g4c68eb5ed4e3-dirty` **无匹配模块** → 相机/音频"消失"是配置缺失，非功能回归 |
+| 对齐 | 按运行内核 config 重建模块（MODVERSIONS/SIG 均关 ⇒ **只需 vermagic 匹配**），部署 **25 个 `.ko`** |
+| **G1-5 相机** | ✅ 前摄 `/dev/video0`、后摄 `/dev/video3` 各 **10 帧 `<<<<<<<<<<`，rc=0** |
+| **G1-4 音频** | ✅ `audio-alsa-init` 设 L/R=400；`speaker-test -D hw:0,0 -c2` **rc=0** |
+| boot 持久化 | `/init` 接入 `camera-modules-load.sh`（旧 `/init` 备份为 `/init.bak-kmod-align`），模块+loader 均在盘上 |
+| 资产/文档 | `out/camera-modules-…g4c68eb5ed4e3-dirty.tar.gz`（sha256 `4146dfd0…`）；提交 `cf14411`，doctor FAIL=0 |
+
+## 过程中发现的两个真问题（已入 PITFALLS #99–#101）
+
+1. **构建**：`setlocalversion` 在环境变量 `LOCALVERSION` **未设置**时会补尾 `+`（vermagic 变 `…-dirty+` ≠ 运行内核 `…-dirty`）——必须 `export LOCALVERSION=` 才精确匹配。
+2. **运行**：持久桌面上 **PipeWire/WirePlumber 占用 `/dev/media0`** → `media-ctl` 报 `Resource busy`（纯 RAM 无桌面时不存在）。这是持久系统上相机应用会踩的真实冲突，**根治需让 WirePlumber 忽略 V4L2**。
+   - 另一坑：模块**开机很久后热载**会撞 `deferred_probe` 超时（`power domains -110`）；**必须开机加载**——已由 `/init` 接线解决。
+
+## 待确认 / 遗留
+
+- **未重启验证开机自动加载**：按项目纪律（SSH-only 持久系统、用户操作设备），我没有自行重启。当前靠热载已验证功能；重启后 `/init` 应自动加载。**要我引导你重启验证吗？**
+- **WirePlumber↔相机冲突**未根治（当前是停 wireplumber 才取流）——建议下一步做成 WirePlumber 配置，否则桌面相机应用会间歇 `Resource busy`。
+- **G1-6 TF 卡**状态已按你的更正更新为"新卡已在位，可测"，下一步可直接跑 `scripts/tf-stress.sh`。
+
+下一步你要：**A** 重启验证开机自动加载；**B** 根治 WirePlumber 相机冲突；**C** 跑 TF 卡新卡 A/B？
