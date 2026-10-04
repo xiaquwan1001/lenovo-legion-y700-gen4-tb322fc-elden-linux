@@ -41,8 +41,20 @@ DEVICE_SG_ADD(audioreach/subgraph-device-i2s-playback.m4, `Secondary', SECONDARY
 	LPAIF_INTF_TYPE_LPAIF, I2S_INTF_TYPE_SECONDARY, SD_LINE_IDX_I2S_SD1, DATA_FORMAT_FIXED_POINT,
 	0x00004005, 0x00004005, 0x00006050, `SECONDARY_MI2S_RX')
 dnl
+#
+# Device SubGraph for WCD939x RX (headphone/earpiece) — RX_CODEC_DMA_RX_0
+#   Mixer -> [LOG] -> [CODEC_DMA RX0 EP] -> RX macro (swr1) -> WCD939x DAC -> HPHL/HPHR
+#   interface LPAIF_INTF_TYPE_RXTX / CODEC_INTF_IDX_RX0, as in the upstream
+#   Google-SC7180-...-WCD-TX3.m4 and SM8750-MTP.
+DEVICE_SG_ADD(audioreach/subgraph-device-codec-dma-playback.m4, `RX_CODEC_DMA_RX_0', RX_CODEC_DMA_RX_0,
+	`S16_LE', 48000, 48000, 2, 2,
+	LPAIF_INTF_TYPE_RXTX, CODEC_INTF_IDX_RX0, 0, DATA_FORMAT_FIXED_POINT,
+	0x00004006, 0x00004006, 0x00006060, `RX_CODEC_DMA_RX_0')
+dnl
 STREAM_DEVICE_PLAYBACK_MIXER(SECONDARY_MI2S_RX, ``SECONDARY_MI2S_RX'', ``MultiMedia1'', ``MultiMedia2'')
+STREAM_DEVICE_PLAYBACK_MIXER(RX_CODEC_DMA_RX_0, ``RX_CODEC_DMA_RX_0'', ``MultiMedia1'', ``MultiMedia2'')
 STREAM_DEVICE_PLAYBACK_ROUTE(SECONDARY_MI2S_RX, ``SECONDARY_MI2S_RX Audio Mixer'', ``MultiMedia1, stream0.logger1'', ``MultiMedia2, stream1.logger1'')
+STREAM_DEVICE_PLAYBACK_ROUTE(RX_CODEC_DMA_RX_0, ``RX_CODEC_DMA_RX_0 Audio Mixer'', ``MultiMedia1, stream0.logger1'', ``MultiMedia2, stream1.logger1'')
 
 #
 # Capture: 4x DMIC on the VA macro (FE MultiMedia3)
