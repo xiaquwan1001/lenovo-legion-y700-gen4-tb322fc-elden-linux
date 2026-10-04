@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-04（**#93 = 「RAM 启动」两种镜像之辨（#92 续）**；#89–#92 = 电源/音频/UCM/镜像纪律；**§15 = 过时/废弃/功能缺陷登记**，15.1 末 5 行 = 当日退场的插件入口与快捷方式）。
+> 最后更新：2026-10-05（**#99–#101 = 持久根模块对齐 / PipeWire 占相机 / boot 加载接线**；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
 
 ---
 
@@ -179,6 +179,24 @@
     例外：`BT_HCIUART_QCA` 是 **bool** 且 `select BT_QCA` → `BT_QCA` 无法模块化（hci_qca.c 仍内置）。
 98. **不要在同一命令里混合长轮询与副作用**（见 #26）：`iterate.sh`/`to-fastboot.sh` 已把 `reboot`/`bboot`
     与等待拆成独立步骤；`kexec -e` 后 SSH 必断，等待期由脚本内部自限。
+99. **★持久根没有与运行内核匹配的 `/lib/modules` → 相机/音频"消失"**（2026-10-05 实测修复，见 `archive/topics/KMOD-ALIGN-2026-10-05.md`）。
+    - 现象：boot_b 跑 `7.2.0-debug-g4c68eb5ed4e3-dirty`，但 `/lib/modules/` 只有旧内核 `...gba28ec16f01f-dirty`；
+      `modprobe qcom-camss` → "not found in directory"；`lsmod` 仅表头，`/dev/media0`、声卡控件全无 ⇒ 误判为功能回归。
+    - 前提：`CONFIG_MODVERSIONS`/`MODULE_SIG` **未开** ⇒ 只要 **vermagic 精确匹配**即可加载，无需符号 CRC/签名。
+    - 修法：从**运行内核**的 `/proc/config.gz` 取 config + worktree 检出对应 commit + **强制 LOCALVERSION** 重建模块集。
+    - **构建陷阱**：`scripts/setlocalversion` 在**环境变量 `LOCALVERSION` 未设置**时会补一个 `+`（vermagic 变 `...-dirty+` ≠ 运行内核 `...-dirty`）
+      ⇒ 构建时必须 `export LOCALVERSION=`（空但已设）+ 删 `include/config/kernel.release`/`include/generated/utsrelease.h` 重生成。
+    - 新 worktree 无 `vmlinux` ⇒ 无 `Module.symvers` ⇒ modpost 报海量未解析符号；借主树 `Module.symvers` + `KBUILD_MODPOST_WARN=1` 通过（MODVERSIONS 关闭）。
+    - **加载时机陷阱**：模块在开机很久后热载，`deferred_probe` 已超时 ⇒ `qcom-camss: Failed to configure power domains: -110`；
+      `rmmod`+`modprobe`（或**开机时加载**）即好。
+100. **★PipeWire/WirePlumber 占用 `/dev/media0` → 相机 `Resource busy`**（2026-10-05 实测）。
+    - 持久桌面（Phosh/PipeWire）里 `wireplumber` 打开 `/dev/media0`、`/dev/video0` ⇒ `media-ctl --set-v4l2`/`-l` 报
+      `Unable to parse link: Resource busy (16)`；**纯 RAM（无桌面）不存在此问题**。
+    - 取证：`for p in /proc/[0-9]*; do for f in $p/fd/*; do readlink "$f"; done; done | grep -E 'media0|video0'`。
+    - 临时解：停 wireplumber（先存 `/proc/<pid>/environ` 以便原环境重启）；根治：让 WirePlumber 忽略 V4L2/相机，或在取流前协调释放。
+101. **★持久根 boot 不会自动加载相机模块——`/init` 需接线**（2026-10-05）。
+    - 设备旧 `/init` 缺相机加载块（`rootfs/init` 已有），且 `modules` init.d 服务**不在任何 runlevel**（runlevels 全空，非标准 OpenRC 引导）⇒ `/etc/modules-load.d/camera.conf` 从未生效。
+    - 修法：部署 `rootfs/init`（其相机块**未加 `on_initramfs` 守卫** ⇒ `switch_root` 后在持久根也会跑一次）+ `/usr/local/sbin/camera-modules-load.sh`。
 
 ---
 

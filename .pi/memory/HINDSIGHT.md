@@ -1076,3 +1076,72 @@ VK: vk52
 - **A**：再建一个变体把 N1 与 N4 谁为主钉死（多一次内核构建 + 一轮上机）；
 - **B**：就此收尾——当前 G1-22 已足够定论；
 - **C**：先处理别的事（比如把 vk50 的音频模块加载器补上，让 vk50 能起桌面）。
+
+
+## Automatic settled outcome - 2026-10-04
+
+收尾完成。
+
+## 本次会话总览（`76c444c` → `3b00711`，全部已推 origin/main；doctor FAIL=0 WARN=0）
+
+| # | 事项 | 结果 |
+|---|---|---|
+| 1 | **G1-5 相机出流** | ✅ **前后摄均连续出帧**（此前卡 `-32`）；根因=csiphy/vfe 默认格式与 sensor raw 不匹配+链路未使能；固化 `scripts/camera-stream-up.sh` |
+| 2 | **kexec** | ❌ 定论**不可用**：`-s -l` 成功但 `-e` 硬挂整机（无 panic/无看门狗/pstore 空）→ 改用 fastboot 零写盘 |
+| 3 | **vk50 模块/版本一致性** | ✅ 用 `LOCALVERSION=-vk50` 重建 **1513 模块**，内核↔模块 vermagic 一致（此前不一致导致相机/音频模块无法加载） |
+| 4 | **G1-22 熄屏→重启** | ✅ **彻底查清**：受控复现（vk40+DPMS off **3/3 硬复位**，不熄屏稳定 ≥151s）；根因=**vk40 音频调试插桩**（`dev_info` 内同步阻塞调用 `q6apm_get_apm_state`）+**热区组合**；**N2 已排除**；`vk42` 干净重落即修复，**当前 boot_b 已免疫**（10 轮+90s 熄屏不复位） |
+
+### 关键产物
+- 脚本：`scripts/camera-stream-up.sh`、`scripts/g1-22-dpms-test.sh`
+- 证据：`archive/topics/CAMERA-2026-10-05.md`、`archive/topics/G1-22-2026-10-05.md`
+- SSOT 全文同步：TASKS（§0/§1/§4/Q9/Q21）、INDEX（§3/§6）、DEVICE、RUNBOOK、PITFALLS
+- 内核树已恢复原状（`5a70ade46`，`.config` = `config-vk50-modular`）
+
+### 当前设备状态
+- U2 跑 **boot_b 持久直启**（`7.2.0-debug-g4c68eb5ed4e3-dirty`，`/`=`/dev/sda17`，Phosh 在跑），SSH 可达 → 直接可用。
+- 工作区干净；临时构建物已清理。
+
+### 留待以后（非阻塞）
+- 解除持久根 `idle-delay=0` 规避并做一次长时空闲验证；
+- 把 vk50 的音频/背光模块加载器补上（让模块化内核能起桌面）；
+- G1-22 若要钉死 N1 vs N4，可再建一个变体（本轮已判定修复点，非必需）。
+
+需要我以后处理其中任一项时，随时说。
+
+
+## Automatic settled outcome - 2026-10-04
+
+设备在线，我把现状和上机队列捋清楚了。先说结论。
+
+## 一、现状快照（只读实测，U2）
+
+| 项 | 实测值 |
+|---|---|
+| 内核 | `7.2.0-debug-g4c68eb5ed4e3-dirty`（= vk42 干净重落，G1-22 免疫版） |
+| 根 | `/dev/sda17` ext4，Phosh 在跑，uptime 8 min，SSH 经 usb0 通 |
+| 模块 | ⚠️ `/lib/modules/` **只有** `...gba28ec16f01f-dirty`（旧），**没有运行内核的目录**；`lsmod`=1；`modprobe qcom-camss` → **not found** |
+| 相机/音频 | `/dev/media0`、`/dev/video0/3` **不存在**；`amixer controls` 空 |
+| Waydroid | `Session: STOPPED`，`Vendor: MAINLINE` |
+| 磁盘 | `/` 8.6G/189G |
+| 其他 | wlan0 已连；dmesg 有 `pmic_glink ucsi PPM init failed`（已知 DP/altmode 缺，G1-9） |
+
+**即时发现（阻塞复测）**：持久 boot_b 的内核 `g4c68eb5ed4e3` 在持久根里**没有匹配的 `/lib/modules`**（config 里 `CONFIG_VIDEO_QCOM_CAMSS=m`）。所以 **G1-5 相机、G1-4 音频在这套持久系统上现在都复现不出来**——它们是上一轮在 **vk50 RAM 启动 + 自带 overlay** 下验的。这不是新 bug，是「模块化内核 ↔ rootfs 模块」尚未对齐（HINDSIGHT 里记的"vk50 音频/背光模块加载器缺失"同一根问题）。
+
+## 二、进度（TASKS §0）
+
+- **G1 ~88%**：显示/图形/触屏/WiFi/充电/温控/串口/**相机出流✅**/音频播放+输入✅；剩 3 硬缺口 = **TF 卡、BT 配对**（进行中）+ **DP/NFC/CDSP**（未开始）。
+- **G2 ~45%**：容器通路就绪，待 C1→C3→C2；C4 代码全就绪待部署。
+- 上一轮 AI 的 vk40 结论已闭环：**G1-22 熄屏→硬复位**根因 = vk40 音频调试插桩（N1 同步阻塞 `q6apm_get_apm_state`）+ 热区组合；`vk42` 干净重落即免疫，当前 boot_b 已扩证 10 轮+90s 不复位。
+
+## 三、需要上机的环节（按依赖排序）
+
+| 优先 | 环节 | 前置/条件 | 备注 |
+|---|---|---|---|
+| **0** | **对齐持久根模块**（修复上面那条） | 主机侧用 `g4c68eb5ed4e3` 的 LOCALVERSION 重编模块并部署，或改刷一个内核↔模块成套的 boot_b | **是所有功能复测的地基**；也可顺手把 vk50 的音频/背光加载器补上 |
+| 1 | **G1-22 收尾**：解除 `idle-delay` 规避 → 长时空闲 ≥2×idle 不复位 | 无（内核已免疫） | 低风险 |
+| 2 | **G1-6 TF 卡 换卡 A/B** | **需你物理换卡** | 定性"卡 vs 驱动" |
+| 3 | **G1-7 BT H1/H2 单变量** | 蓝牙耳机 + 编 `candidate-bt-maxspeed-3000k` / `no-flow-control` 内核 | RTT 常态 <10ms / 无丢包 |
+| 4 | **C0 真 Android 对照取证（U1）** | U1 steam+root 接入 | **覆盖 a 槽前必做、不可复得** |
+| 5 | **C1 Waydroid 复跑** → C3 身份取证 → C2 Play | C2 需你恢复上行+凭据 | |
+| 6 | **C4 传感器 HAL 部署验证** | 需先 `waydroid init` | GAPS Q14 三未知 |
+| 6' | **C8 Gunyah 探测
