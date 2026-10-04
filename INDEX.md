@@ -63,8 +63,8 @@
 
 > **SSOT**：进度百分比与任务状态以 `TASKS.md` §0 为准；本节若与之不符，以 `TASKS.md` 为准。
 
-- **G1 ≈85%**（对齐 TASKS §0）：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、**音频出声 + 桌面 PipeWire/UCM2**、触觉、带外串口）。
-  **U2 实跑 vk46-dirty**（b 槽持久直启；vk50 kexec 首测失败未换动，见 `TASKS.md` §4）。**剩 3 个硬缺口**：相机出流、TF 卡、BT 配对（音频播放+输入均✅）。
+- **G1 ≈88%**（对齐 TASKS §0）：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、**音频出声 + 桌面 PipeWire/UCM2**、**相机前后摄出流**、触觉、带外串口）。
+  **U2 实跑 vk46-dirty**（b 槽持久直启；vk50 经 `fastboot boot` 零写盘实跑验证，kexec 热重载**硬挂不可用**，见 `TASKS.md` §4）。**剩 2 个硬缺口**：TF 卡、BT 配对（音频播放+输入均✅，相机出流 ✅ 2026-10-05）。
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
