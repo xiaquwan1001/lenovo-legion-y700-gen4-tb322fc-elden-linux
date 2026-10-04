@@ -1,6 +1,5 @@
 ---
 role: BootChainEngineer
-model: deepseek/deepseek-v4-pro
 objective: 为 TB322FC 设计「间接引导层」（GRUB 类，尽量符合 UEFI），使 kernel+initramfs 脱离 boot.img 的 96 MiB(100663296 B) 限制；先出可行性+路线，不动设备。
 ---
 
