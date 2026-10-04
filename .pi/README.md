@@ -12,14 +12,14 @@
 | `lanes/` | lane 运行时元数据（worktree/分支/baseline/状态） | ❌ ignore | 由 `scripts/lane.sh new` 写；机器本地 |
 | `skills/` | **项目技能**（`SKILL.md` + `references/`）。与全局 `~/.pi/agent/skills/` 叠加 | ✅ track | `qualcomm-android-flashing` / `qualcomm-edl-flashing` / `gsi-device-adaptation`。references 正文不入上下文，**用时 grep** |
 | `memory/` | **持久记忆**（跨会话）：`USER.md`(用户偏好) · `HINDSIGHT.md`(阶段决策) · `FAILURES.md`(反复踩的坑) | ✅ track | 由 `profile_memory` 追加；⚠️ **只有尾部 4–8 KB 注入系统提示**，故要主动修剪 |
-| `missions/` | **子代理任务卡**（喂给 `Agent` 的任务背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
-| `agents/` | **子代理角色定义**（`role`/`model`/`objective`） | ✅ track | 由 `@tintinweb/pi-subagents` 加载为 `Agent` 可选类型；**无 harness 守护进程** |
+| `missions/` | **子代理任务卡**（喂给 `subagent` 的任务背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
+| `agents/` | **子代理角色定义**（必填 `name`/`description`；`advertise: true` 才进父提示；`role`/`objective` 仅人读） | ✅ track | 由 `pi-subagents`（nicobailon）加载为 `subagent` 工具的可选 agent；**不 pin model，继承会话默认** |
 | `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | 索引见 `RESOURCES.md §4`；归档策略见 `RESOURCES.md §3` H1 |
 
 ## `missions/` vs `agents/`（易混）
 
 - `missions/<x>.md` = **做什么**：某专题的完整背景、已有进展、验收判据（长文）。
-- `agents/<x>.md` = **谁来做**：front-matter（`role`/`model`/`objective`）+ 角色提示（短文）。
+- `agents/<x>.md` = **谁来做**：front-matter（**必须有 `name`/`description`，否则插件静默跳过**）+ 角色提示（短文）。`role`/`objective` 只是人读注释，插件不解析；要出现在父系统提示需 `advertise: true`。
   同名（如 `audio-graphopen.md`）只是同一专题的两种文件，并非重复。
 
 ## 约定

@@ -1,6 +1,8 @@
 ---
+name: bench
+description: CPU/GPU 基准测试与结果归档
+advertise: true
 role: BenchRunner
-model: deepseek/deepseek-flash
 objective: 执行 .pi/missions/bench.md（CPU/GPU 基准，TASKS G1-8 ⬜）。
 ---
 

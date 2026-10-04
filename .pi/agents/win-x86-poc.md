@@ -1,6 +1,8 @@
 ---
+name: win-x86-poc
+description: Win-x86 转译 PoC 残余（游戏兼容/性能待用户点头）
+advertise: true
 role: TranslationEngineer
-model: deepseek/deepseek-flash
 objective: Win-x86 转译 PoC 已成功收官；无立项残余，游戏兼容/性能须用户点头才开工。
 ---
 

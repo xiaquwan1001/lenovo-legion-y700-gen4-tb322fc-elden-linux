@@ -1090,3 +1090,115 @@ fastboot boot ~/y700-elden/out/boot-elden-clean.img
 - 若**仍复位** ⇒ 已提交源码本身有该 bug，vk42 的"免疫"需重查（我们继续二分）。
 
 （旁证已完成：vk42/vk47 的 **config 完全相同**、内核字符串几乎相同、ramdisk 内容相同、只换 DTB 无效——所以这次干净重建是决定性一步。）
+
+
+## Automatic settled outcome - 2026-10-04
+
+修复资产已就绪。
+
+## 根因（已定位，已落档 `4495828`）
+
+**boot_b 烧的是 `kernel_git_state=dirty` 的 vk47 镜像**——带**未提交的改动**（git 历史里看不到，很可能是残留的音频调试插桩）。所以：
+- config 完全相同、DTB 无关、ramdisk 相同——差的是那份"脏"二进制；
+- **用已提交源码干净重建 ⇒ 实测免疫**（2 轮熄屏同一 boot 存活）。
+
+## 修复（等你执行写盘）
+
+**镜像（已签名，key `fc1e3b33` 匹配 vbmeta_b 链）**：`bootslot-b/boot_b-clean.img`
+
+```sh
+# 设备（SSH）
+eldroid-bootctl reboot bootloader
+# 主机：一条一条
+fastboot devices
+fastboot flash boot_b ~/y700-elden/bootslot-b/boot_b-clean.img
+fastboot reboot
+```
+
+**随后我会**：部署与该干净内核（UTS `7.2.0-debug-vk47clean-gbd114ca335e1`）匹配的相机模块到持久根（模块正在后台重建中），恢复相机。
+
+## 验证判据（刷完我来跑）
+- `uname -r` = `7.2.0-debug-vk47clean-gbd114ca335e1`；
+- `g1-22-dpms-test.sh` 多轮熄屏**不复位**；
+- 单击电源键熄屏**不再关机**。
+
+## 两点提醒
+1. **并发**：另一会话正持设备锁（`/tmp/elden-device-root_192_168_7_1_.lock`，GTK 诊断）——刷机前最好确认它不在跑，或由你协调。
+2. 我误把并发会话的 `edk2-aarch64-gunyah` 收进了提交，已 `git rm --cached` 修正并把 `/edk2-aarch64-gunyah/` 加进 `.gitignore`；`out/boot-elden-vk52-slim.manifest` 是 bootslim lane 的产物，我保留未动。
+
+要我现在就绪后直接驱动（模块部署 + DPMS 复测），还是你先刷？
+
+
+## Automatic settled outcome - 2026-10-04
+
+明白，从现在起我只描述、不碰设备。
+
+## 已完成（主机侧 + 已部署）
+- 干净内核**实测免疫**；已签名持久镜像：`bootslot-b/boot_b-clean.img`（UTS `7.2.0-debug-vk47clean-gbd114ca335e1`）。
+- 匹配的相机模块已部署到持久根：`/lib/modules/7.2.0-debug-vk47clean-gbd114ca335e1/`（25 个 `.ko`），`camera-modules-load.sh` 已确认加载（1 media / 17 video 节点，`/dev/media0`、`video0`、`video3` 在）。
+
+## 需要你执行（一条一条来）
+
+**① 刷 boot_b（持久固化）**
+```sh
+# 设备（SSH，当前跑的就是干净内核）
+eldroid-bootctl reboot bootloader
+```
+等设备进 fastboot 后，在**主机**：
+```sh
+fastboot devices
+fastboot flash boot_b ~/y700-elden/bootslot-b/boot_b-clean.img
+fastboot reboot
+```
+
+**② 回退手段（万一）**：若刷完起不来，`fastboot boot ~/y700-elden/out/boot-elden-vk42.img`（已证免疫）可零写盘进系统。
+
+## 刷完告诉我这三点，我来判定
+1. `uname -r`（应为 `7.2.0-debug-vk47clean-gbd114ca335e1`）；
+2. 单击电源键熄屏后**是否还关机**；
+3. `ls /dev/media0 /dev/video0 /dev/video3`（相机节点是否在）。
+
+需要我把这几条验证命令也写成"你复制即可运行"的单条形式，就说一声。
+
+
+## Automatic settled outcome - 2026-10-04
+
+已整理完毕。先给数字结论。
+
+## 一、本次整理动了什么
+
+| 项 | 结果 |
+|---|---|
+| 未收录会话 | **15 个 jsonl / 12 个独立 ID**（索引 68→**77**，与实有文件一致）；删 6 条已清理 junk 行 |
+| 新建证据档 | `archive/topics/DT-UI-2026-10-05.md`（**dt-ui lane 的全部成果原本只在会话里，未提交、未入档**） |
+| 文档更新 | `TASKS`（G1-26/27/28 定根因 + §4 下一步重排）、`PITFALLS` #103、`RESOURCES` §1.5/§3/§4、`INDEX` §3 |
+| 自检 | `check-doctor` **FAIL=0 WARN=0**；提交 `8b1293f` |
+| 新参考登记 | 3 个 `edk*` 文件夹已入 `RESOURCES` §1.5/§3 |
+
+## 二、卡点（按优先级）
+
+1. **🔴 G1-22/Q24 熄屏→硬复位（U2 日常不可用）**——根因已锁定：boot_b 烧的是 **`-dirty` 的 vk47 镜像**（带未提交改动），**干净重建实测免疫**。`bootslot-b/boot_b-clean.img` 已签名、匹配的 25 个相机模块**已部署到持久根**。**只差用户执行 `fastboot flash boot_b`**（回退 `boot_b.img`）。这是当前第一卡点。
+2. **🔴 桌面用户态四问（G1-26/27/28）**——**dt-ui lane 已查出根因但会话中断、无提交**：
+   - 深色无效 + 电源菜单图标反色 + accent 无效**同一根因**：`gtk-theme='Adwaita-dark'` 在 GTK3 **解析失败→回退浅色**（无头探针证实：`Adwaita-dark`→fg 近黑/浅底；`Adwaita`→fg 白/深底）。**修复=`gtk-theme='Adwaita'`**（accent 也因 phosh 的 name guard 一并放行）。
+   - 亮度滑块：背光可写，但 **elogind 无 session/VT** ⇒ `SetBrightness` 返回 `EISDIR`；A/B/C/D 四方案待你拍板。
+   - ⚠️ 操作坑：`gsettings` 必须 `dbus-run-session`，否则**静默不落盘**（之前"改了没变化"的结论因此作废）→ PITFALLS #103。
+3. **🟡 G1-6 TF 卡 A/B**：新卡已在位、脚本就绪，**始终没跑**（会话被打断）。可直接 `scripts/tf-stress.sh`。
+4. **🟡 G1-7 BT**：剩 H1(8Mbps)/H2(CTS) 单变量补丁未测。
+5. **🟡 G2 主线**：**C0 真机对照取证未做**（U1 覆盖前唯一不可复得项）；C1/C3/C2 未推进；C4 待上机部署验证。
+6. **🟢 G1-29/30**：机制判定与 slim 镜像（101 MB→20.8 MiB）主机侧已交付，**上机实验 E1/E3→E4→E5 待排期**（E5 需用目标内核重打）。
+
+## 三、会话成果汇总（重点：未入档的）
+
+| 会话 | 成果 | 是否入档 |
+|---|---|---|
+| `01a10736-a2dd` **dt-ui** | GTK3 根因 + 修复 + elogind 亮度根因 | ❌→**已补档** |
+| `01a1072e` 编排+内联 | dconf 未落错、无 logind 会话、gsd-power 在 session bus | ❌→已补档 |
+| `01a106b9` | 25 模块对齐、boot_b=`-dirty`、干净内核免疫 | ✅ Q24/KMOD-ALIGN |
+| `01a10635` | 相机出流、kexec 定论、G1-22 根因 | ✅ |
+| `01a10736-a2c7` bootchain | 四代 UEFI 分区机制 + 路线 A–D + grindfat 脚本 | ✅ BOOTCHAIN |
+| `01a1068c
+
+## 2026-10-04 子代理插件迁移（影响本项目派工）
+
+子代理插件由 `@tintinweb/pi-subagents` 换成 `pi-subagents`（nicobailon），**工具名从 `Agent`/`SubagentWorkflow` 变为 `subagent`**（另有 `bg_wait`、`/subagents-*` 命令）。
+本项目 `.pi/agents/*.md` 已迁移：新增必填 `name:`/`description:`（**缺则新插件静默跳过该 agent**）、`advertise: true`；删掉死引用 `model: deepseek/deepseek-flash`（该 provider 无凭据）→ 子代理继承会话默认模型。`role`/`objective` 保留为人读注释（插件不解析）。详见 `.pi/README.md` 与全局 `~/.pi/agent/memory/HINDSIGHT.md`。

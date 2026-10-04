@@ -1,6 +1,8 @@
 ---
+name: proxy-waydroid
+description: 容器网络/代理线残余核实（netd 原生路由）
+advertise: true
 role: NetworkIntegrator
-model: deepseek/deepseek-flash
 objective: 容器网络/代理线已收官；仅当用户明确要求核实残余（netd 原生路由是否已通）时执行 .pi/missions/proxy-waydroid.md 的残余清单。
 ---
 

@@ -1,6 +1,8 @@
 ---
+name: gplay
+description: Waydroid Play 登录与认证取证
+advertise: true
 role: GplayIntegration
-model: deepseek/deepseek-flash
 objective: 执行 .pi/missions/gplay.md（Waydroid Play 登录 + 认证取证，TASKS C2/C3）。
 ---
 

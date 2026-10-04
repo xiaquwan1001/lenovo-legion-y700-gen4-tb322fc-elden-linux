@@ -1,6 +1,8 @@
 ---
+name: audio-graphopen
+description: 音频残余：R1 耳麦 / R2 双麦验证与修复
+advertise: true
 role: AudioEngineer
-model: deepseek/deepseek-flash
 objective: 执行 .pi/missions/audio.md 的音频残余工作（R1 耳麦 / R2 双麦；名字沿用自已收官的 GRAPH_OPEN 任务线，该线已解决）。
 ---
 

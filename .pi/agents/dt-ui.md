@@ -1,4 +1,7 @@
 ---
+name: dt-ui
+description: Phosh 桌面用户态四问题修复（深色模式/主题配色/亮度滑块/电源图标）
+advertise: true
 role: DesktopUIEngineer
 objective: 修 U2 持久 Phosh 桌面的四个用户态问题——深色模式无效、主题配色不可切、状态栏亮度滑块无效、电源菜单图标反色（黑到分不清）。
 ---
