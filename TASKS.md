@@ -10,7 +10,7 @@
 
 | 目标 | 已完成 | 进行中 | 未开始 | 完成度 |
 |---|---|---|---|---|
-| **G1** 健全 Linux + 驱动原厂固件 | 24 项（显示/图形/触屏/网络/电源/**相机出流**/音频播放+输入/温控/串口/基准脚本…） | 2（TF 卡、BT 配对） | 3（DP、NFC、CDSP） | **~88%** |
+| **G1** 健全 Linux + 驱动原厂固件 | 24 项（显示/图形/触屏/网络/电源/**相机出流**/音频播放+输入/温控/串口/基准脚本…） | 5（TF 卡、BT 配对、**DP、NFC、CDSP**——后三项已实现待上机） | 0 | **~88%** |
 | **G2** 无安卓前提下的安卓兼容 | 6（Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC/**C9 用例集**） | 4（Play 登录收口、切槽脚本、C8 上机探测、**C4 部署验证**——代码/编译全就绪） | 4（相机共享、音频容器、C3 实测…） | **~45%** |
 | 运维/资产 | 内核 vk50、rootfs 归档、Mesa 包、文档集重构、`qemu-utils` 已装（A13）、fstab nofail 已修（A18）、**C4 传感器链（A14）**、**env-pass provision（A17）**、**持久根内核↔模块对齐（2026-10-05）** | — | — | ✅ |
 
@@ -38,9 +38,9 @@
 | **G1-6** | TF 卡写稳定性 | 🟡 **根因倾向卡本身 70–80%（2026-10-04 子代理）**：尺寸相关性（64MB 大块全对 / 8MB 小写间歇丢）、`err_stats` 全 0、`e2fsck` 前后一致、已是最保守 3.3V/SD_HS 档仍坏。**关键更正**：厂商 `qcom,uses_level_shifter` 唯一作用=SD_HS 封顶 37.5MHz，主线 `max-sd-hs-hz=<37500000>` 已等价 ⇒ 无效移植。5 个候选补丁（`patches/candidate-tf-*.patch`，按代价排序）+ 压测脚本 `scripts/tf-stress.sh` 就绪。**新卡已装入（2026-10-05 用户确认），测试条件就绪，待跑 A/B** | 任一 | 新卡连续 ≥3 轮 0 不一致 + `e2fsck -fn` 干净 | `archive/topics/TF卡-2026-10-04-subagent.md`、`scripts/tf-stress.sh` |
 | G1-7 | BT 配对收口 | 🟡 **根因重定位（2026-10-04 子代理）**：表面「配对后几秒断」，实为 BR/EDR 高延迟。**排除主机 IBS 握手**——新代码事实：`IBS_HOST_TX_IDLE_TIMEOUT_MS=2000`（旧「调大 tx_idle_delay」实验近空操作）、`qca_wcn7861_uses_current_baudrate()` 命中时**跳过 `qca_set_speed`** 使 DT `max-speed` 可能失效、PERI 协议**硬编码 8Mbps**、`qca_port_reopen()` 的 RTS/CTS 同步问题 WCN7861 路径不调用。假设排序 H4 控制器固件深睡 > H2 CTS 反拉 > H1 8Mbps 误码 > H3 主机握手(已排除)。4 个候选补丁（`patches/candidate-bt-*.patch`）+ `scripts/bt-link-test.sh` 就绪。**2026-10-04 实机 A/B（iQOO TWS 2 `4C:99:92:32:D6:65`，vk47a，零写盘）**：基线 RTT 7.8/**44.4**/110.8 mdev 26.8 ms（0% loss），`KEEPALIVE=1` 仅 44→35 ms（未塌 <10）⇒ **H4 不成立**；`ibs_sent_wakes_delta=1` 两种情形相同 ⇒ **H3 排除**；`-c100 -i0.05` 20s 内跑不完 ⇒ 突发停摆复现，`hciconf errors=0`。剩 **H1(8Mbps)/H2(CTS)**，需单变量测试内核（`candidate-bt-maxspeed-3000k` / `no-flow-control`） | 任一 | `KEEPALIVE=1` 使 RTT <10ms ⇒ H4 成立；或补丁后 RTT 常态 <10ms、无丢包 | `archive/topics/BT-2026-10-04-subagent.md`、`scripts/bt-link-test.sh` |
 | G1-8 | CPU/GPU 基准（脚本已备） | ⬜ | 任一 mainline | `bench-run.sh` 出分；温控不破 82 °C | `scripts/bench-run.sh`、`scripts/bench-install.sh` |
-| G1-9 | DP 输出（解锁 `mdss_dp0`） | ⬜ P1 | 任一 | `/sys/class/drm/*-1` connected | `DRIVER-MAINLINE-AUDIT` §3 |
-| G1-10 | NFC compatible 修正 | ⬜ P2 | 任一 | `nfc-list` 可见 | 同上 §2.3 |
-| G1-11 | CDSP 启用（可选加分） | ⬜ P3 | 任一 | `remoteproc1` running | `backup/fw/modem/` |
+| G1-9 | DP 输出（解锁 `mdss_dp0`） | 🟡 **根因链三闸已定位（2026-10-05 实机）**：① **FSA4480 typec-mux 模块未部署** → `pmic_glink_altmode` 永久 defer（`failed to acquire mode-switch`）；insmod 同 vermagic 的 `fsa4480.ko` 后 **altmode 立即绑定（已证）**。② `&usb { /delete-property/ usb-role-switch; }` → DWC3 不注册 per-endpoint role switch → UCSI `ucsi_init` 反复 defer → `PPM init failed, stop trying`、**无 `/sys/class/typec`**。③ `mdss_dp0 status=disabled`（`aux_bridge: failed to acquire drm_bridge`）。**修复顺序 = mux → role-switch/UCSI → dp0**；vk53 已把 `TYPEC_MUX_FSA4480=y` 编入内核；role-switch/dp0 留 **vk54** 单变量。见 `PITFALLS` #104/#105 | 任一 | `/sys/class/drm/*-1` connected | `archive/topics/DRIVER-MAINLINE-AUDIT-2026-10-02.md` §3、`PITFALLS` #104/#105 |
+| G1-10 | NFC compatible 修正 | 🟡 **vk53 已实现待上机（2026-10-05）**：`elden.dts` 新增 `&i2c0`（QUPV3_SE0）+ `st21nfca-i2c@8`——vendor `st,st21nfc` → 主线 `st,st21nfca-i2c`，`enable-gpios=<&tlmm 34>`、`interrupts=<75 EDGE_FALLING>`、pinctrl 4 组取自原厂 base DTB；config `NFC=y/NFC_HCI=y/NFC_SHDLC=y/NFC_ST21NFCA_I2C=y/CRC_CCITT=y`。镜像 `out/boot-elden-vk53.img` 已构建 | 任一 | `nfc-list` 可见 / `st21nfca` 驱动绑定 i2c-0 | 内核分支 `elden/vk53-hw` @`2b5badef0` |
+| G1-11 | CDSP 启用（可选加分） | 🟡 **vk53 已实现待上机（2026-10-05）**：`firmware-name` 由 `qcom/sm8750/LENOVO/elden/cdsp.mbn` 改为实际安装路径 `qcom/sm8750/cdsp.mbn`+`cdsp_dtb.mbn`（设备 `/lib/firmware/qcom/sm8750/` 已有 `.zst`）、`status="okay"` | 任一 | `/sys/class/remoteproc/remoteproc1` running | `backup/fw/modem/`、内核分支 `elden/vk53-hw` |
 | ✅ G1-12…21 | 显示 165 Hz、图形 A830、触屏、WiFi、BT 基础、充电+旁路、温控分级、带外串口、启动 ~5 s、触觉 | **已完成** | — | 见 `DEVICE.md` §1.3 | `PANEL-REFRESH`/`THERMAL`/`CHARGE`/`OOB-CONSOLE` |
 
 ---
@@ -101,6 +101,7 @@
 
 > **2026-10-05 本轮范围（用户定）**：主线 = **尽可能覆盖硬件驱动**——G1 剩余硬件项（**G1-6 TF 卡 / G1-7 BT / G1-9 DP / G1-10 NFC / G1-11 CDSP**）+「驱动在树但未实测」项的验证；每项判据 = 「命令 + 原始输出」可复现证据（§5 §5 勾销规则）。
 > **本轮不做**：桌面用户态交互（G1-26/27/28）、内核服务类熄屏/关机（G1-22/Q24）、间接引导层 UEFI（G1-29 已搁置）——只登记，不投入。
+> **2026-10-05 硬件批次进展**：`out/boot-elden-vk53.img` 已构建（内核 `7.2.0-debug-vk53-g2b5badef00fb`，分支 `elden/vk53-hw`）= NFC + CDSP + `TYPEC_MUX_FSA4480=y`；待 `fastboot boot` 上机。**vk54 计划**（DP 单变量）：删 `/delete-property/ usb-role-switch;` + `&mdss_dp0 status="okay"`，复用 vk53 的 `Image.gz` 只重编 DTB 打第二个镜像。
 
 1. **快环——kexec 已定论不可用（2026-10-05，实机）**：fragment 已应用、vk50 全量构建 ✅。**`kexec -s -l` 成功（RC=0，`/sys/kernel/kexec_loaded=1`），但 `kexec -e` 硬挂整机**——串口在 t≈182s 处戛然而止，无新内核横幅、无 panic、无看门狗复位，USB/网络/fastboot 全消失，需物理强制重启；复位后 pstore 为空（非 panic）。⇒ **放弃 kexec 快环**，改用 **`--boot`（fastboot 零写盘）/ `--flash`**。vk50 已用 `fastboot boot` 零写盘实跑验证（相机出流即在 vk50 上完成）。**mod 环前提已补齐**：vk50 起用 `LOCALVERSION=-vk50` 重建全量模块 **1513 个**（vermagic 与内核一致），`scripts/iterate.sh mod` 可用（需在 vk50 上跑且目标模块为 `=m`）。⚠️ **镜像纪律**：`build-camera-overlay.sh` 必给 `BASE=out/rootfs-overlaid.cpio.gz.bak-vk48`，否则重复叠加→boot.img 101MB 超 boot_b 96MiB 分区（当前 vk50 镜像即此状态，`fastboot boot` 可用但不可 flash）。boot_b 实际内容 = **vk47 `-dirty`**（见 Q24）。
 2. ~~**G1-5 相机出流**~~ ✅ **已打通（2026-10-05）**：前后摄连续出帧 rc=0，脚本 `scripts/camera-stream-up.sh`；剩 3A/调优与 C5 容器共享（非阻塞）。

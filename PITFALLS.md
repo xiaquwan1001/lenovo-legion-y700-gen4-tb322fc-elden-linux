@@ -205,6 +205,16 @@
     - 现象：SSH 里裸 `gsettings set ...` 返回 rc=0，但**读回不变**（写到过期/不存在的总线）⇒ 据此得出的"改了也没变化"结论全部作废（手套误判）。
     - 可靠写法：`HOME=/root dbus-run-session -- gsettings set <schema> <key> <val>`；读回同样 `HOME=/root`。
     - 纪律：**不要用裸 `gsettings set` 判定 dconf 是否生效**；phosh 会话内的持久值应写 `/root/.config/dconf/user`（非 PID1 时代的 `/`）。见 `archive/topics/DT-UI-2026-10-05.md`。
+104. **★DP/altmode 的第一道闸＝FSA4480 typec-mux 驱动**（2026-10-05 实测，G1-9）。
+    - 现象：`pmic_glink.altmode.0` 永久 defer：`failed to acquire mode-switch for port: 0`（该文案由 `dev_err_probe` 记为 deferred 原因，**不是**即时打印的错误）。
+    - 关键机制：`fwnode_typec_mux_get()` 会遍历连接器图里**所有**匹配（`TYPEC_MUX_MAX_DEVS`），**任何一个** mux 未注册就整体返回 `-EPROBE_DEFER` ⇒ QMP combo PHY 自己的 mux 即使已注册也不够，`&i2c5/typec-mux@42,43`（FSA4480）缺驱动就全卡。
+    - `CONFIG_TYPEC_MUX_FSA4480=m` 但该 `.ko` **不在设备的 `/lib/modules/` 里**（持久根只部署了相机闭包 25 个）。验证：用**与运行内核同 vermagic**的 `fsa4480.ko` `insmod` → `5-0042/43` 绑定、`pmic_glink.altmode.0` 立即可绑定。
+    - 纪律：设备上缺的 `.ko` 不要从头编整树——先 `zcat /proc/config.gz > .config` + 对应 `LOCALVERSION` 复现 vermagic（本树预编 `.ko` 是 vk50，与在跑的 vk47clean 不匹配）。
+105. **★DP/altmode 的第二道闸＝DWC3 role switch + 第三道＝`mdss_dp0`**（2026-10-05，G1-9）。
+    - `&usb { /delete-property/ usb-role-switch; }` 让 `dwc3_drd_init()` 跳过 `dwc3_setup_role_switch()` ⇒ 不注册 per-endpoint role switch；而端点上的 `usb-role-switch; mux-state=<n>` 正需要它（本树是定制双口 mux 补丁）。
+    - 后果：UCSI 的 `usb_role_switch_at_endpoint()` 命中端点属性但查不到 role-switch 对象 → `ERR_PTR(-EPROBE_DEFER)` → `ucsi_init` 反复 defer → `PPM init failed, stop trying` → **无 `/sys/class/typec`**（DP HPD/连接态因此永远不触发）。
+    - 第三道：`&mdss_dp0 { status="disabled" }` ⇒ `aux_bridge.aux_bridge.0: failed to acquire drm_bridge`；且 `mdss_dp0` 是 DRM 组件，贸然开而 altmode 未就绪会拖垮 `msm_drm_bind`（黑屏）。**修复顺序：先 mux → 再 role switch/UCSI → 最后 dp0**。
+    - 相关：`archive/topics/DRIVER-MAINLINE-AUDIT-2026-10-02.md` §3/§4.4（旧口径写“DP 属 ADSP bring-up”，本轮定位到 DTS + 模块部署，非 ADSP 缺失）。
 
 ---
 
