@@ -3,334 +3,7 @@
 Techniques and root causes proven on Qualcomm/Lenovo tablet flashing. Host-machine
 
 <!-- Older entries compacted -->
- `0-0056`/`1-0031`/`0-000c`；`/dev/media0` graph 含 sensor↔csiphy/csid/vfe。
-
-**② BT 根因判别（G1-7，零写盘、零编译，需一个 BT 对端如你的 PC）**
-```
-PEER=<对端MAC> sh /tmp/bt-link-test.sh          # 基线 RTT/loss + ibs_* 差值
-PEER=<对端MAC> KEEPALIVE=1 sh /tmp/bt-link-test.sh   # 测 H4 控制器深睡
-```
-判读：`KEEPALIVE=1` 使 RTT 从 30–190ms 塌到 <10ms ⇒ **H4 成立**（控制器固件深睡），再上 `patches/candidate-bt-*` 编译。
-
-**③ TF 卡 A/B（G1-6，需一张已知良好 TF 卡 + 本卡读卡器对照）**
-```
-scp scripts/tf-stress.sh root@192.168.7.1:/tmp/
-ssh root@192.168.7.1 'sh /tmp/tf-stress.sh -r 3 --fsck /mnt/tf'   # 本卡基线
-# 换已知良好卡，重跑同一条（决定性）
-```
-新卡连续 ≥3 轮 0 不一致 + `e2fsck -fn` 干净 ⇒ **卡不良，任务闭环=换卡**；新卡也坏 ⇒ 上 `candidate-tf-lower-hs-hz` 等补丁。
-
-## 两处已知小缺口（不阻塞）
-
-- vk49 的**纯 RAM 变体**基座是旧 ramdisk，不含 `audio-alsa-init.sh` → R3 在纯 RAM 下不生效（**持久根 `/dev/sda17` 已有，桌面不受影响**）；下次内核重建时补齐。
-- `patches/candidate-*.patch` 均为**提案**（已标 DO NOT COMMIT ON HARDWARE），未入树；按验收结果再决定应用哪个。
-
-你要我先做哪一步？我可以把 ①②③ 合成一个一键上机脚本，或直接陪你逐条执行。
-
-
-## Automatic settled outcome - 2026-10-04
-
-**根因已修 + 重打包完成**。设备现在跑在 vk47a（b 槽，之前重启回落的），要验新 vk49 需重新 boot。
-
-## 复验步骤（零写盘）
-
-```
-# 设备 Linux 里：
-reboot bootloader                      # G1-24 已打通；或主机 adb reboot bootloader
-# 主机：
-fastboot boot ~/y700-elden/out/boot-elden-vk49.img
-```
-
-起来后采证（**日志现在进 dmesg 了**）：
-```
-ssh root@192.168.7.1 'dmesg | grep "\[camera\]"; echo ---; lsmod | grep -E "qcom_camss|videodev|s5kjns"; echo ---; ls /dev/media* /dev/video*; media-ctl -p'
-```
-
-**成功判据**：dmesg 出现 `[camera] loaded qcom-camss` 直到 `[camera] done: N media, M video nodes`；`lsmod` 有 `qcom_camss`/`videodev`；出现 `/dev/media0`，`media-ctl -p` 的 graph 含 sensor↔csiphy/csid/vfe。
-
-## 本轮修的到底是什么
-
-| 项 | 内容 |
-|---|---|
-| 根因 | 设备用 **kmod 34.2**，`modules.dep` 依赖必须是**完整相对路径 + `modules.dep.bin`**；bundle 里由 `modinfo -F depends` 生成的**裸名**格式 → `modprobe qcom-camss` 解析依赖失败（无依赖的 4 个模块却正常，所以恰好卡在 `qcom-camss`） |
-| 修复 | `camera-modules-load.sh` 改为**无条件 `depmod -a`**；`package-camera-modules.sh` 改用 `depmod` 生成索引 |
-| 可诊断性 | loader 日志改写 `/dev/kmsg`（持久启动会重新 mount `/run` 盖掉文件） |
-| 最终产物 | vk49=`53d22cee83`、vk49-ram=`ee432c4b00`、boot_b=`87a1f8f2ab`（内核未变 g5a70ade46a88） |
-
-提交：`acf16c3` + `a2d7ebc`（连同之前的 `6ad19ec`/`6f38865`/`fa7c3f2`/`8c16ea4`）。
-
-相机 probe 一旦过了，同一次会话就能接着跑 **BT 的 KEEPALIVE A/B**；TF 还差你一张已知良好的卡。你先 boot 试一下？
-
-
-## Automatic settled outcome - 2026-10-04
-
-审查完成。已落盘。
-
-**数字结论**（只审未改）：本地 `geekidos-linux` 相对主线 v7.2 的完整增量 = **125 个改动文件 + 11 个新增驱动/DTS 文件**（≈12.4k 行）。机械检查全绿：
-
-| 检查 | 结果 |
-|---|---|
-| 9 个新驱动 `checkpatch --strict` | **0 error / 0 warning** |
-| elden 系列 9 补丁 | 唯一 ERROR = 全缺 `Signed-off-by`（其余 17 warning 多为转载描述超列） |
-| bindings（改 19 + 新 6）`dt-doc-validate` | **全过**，仅缺 `giantec,gt9764` |
-| 板 DTS `dtc` + `dt-validate` | 0 warning；**仅 1 红点** `usb@a600000`（vendor-only dwc3 属性） |
-
-**可上游性分级**（A 直发 / B 需重构 / C 外部阻塞 / D 永不上游）：
-- **约 60% 是主线本就缺的硬件支持**（板 DTS、camss 新代、ath12k PEACH/WCN7861、panel、新 codec/regulator）——方向对，可分批立项。
-- **~25% 需先重构结构**：`psci.c` vendor 钩子→reboot-mode DT；音频 `audioreach.c` 全局 `apm_src_port` 变量（上游必 NAK）；DSI 散落的 `of_device_is_compatible`。
-- **~15% 永远不进上游**：调试打印、`force_hz`/`btqca IBS`/`MHI 90s→3s`、config 片段、`dm-default-key`(Android vendor ABI)。
-
-**流程性缺口**（比代码更要命）：① 9 个 commit 全中文、0 个 SoB；② 浅克隆历史只有 1 commit，GEEKiDoS 基底不可追溯；③ 是发行版内核，上游化须另起干净树重放，不在本树做。
-
-**落盘**：
-- `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`（完整 A/B/C/D 分类表 + 复现命令 + sha256）
-- `TASKS.md §7` M1–M5 任务 + `INDEX.md`/`AGENTS.md` 交叉引用
-- 建议推进顺序：M1 干净树 → **M2 首发小系列 A1(GC块)+A2(battmgr)+A3(aw86927)**（各 1 补丁、独立可测、建立与 ML 联系）→ M3 板支持 → M4 camss/wifi/bt 大件 → M5 剥离 dm-default-key。
-
-未做任何重构。下一步若你要动，最省力是先把 A1–A3 三个小补丁整编成英文带 SoB 的系列——要我现在起草 M2 吗？
-
-
-## Automatic settled outcome - 2026-10-04
-
-**G1-5 相机：probe 里程碑达成** ✅（`9eb77c8`）。设备现在正跑 vk49 持久系统，是同一会话把 BT / TF 也做掉的好窗口。
-
-## 建议现在就做的两项（同一 vk49 会话）
-
-**① BT 基线判别（零写盘，需一个已配对的对端）**
-```
-scp ~/y700-elden/scripts/bt-link-test.sh root@192.168.7.1:/tmp/
-# 先配对（如你的 PC 8C:C6:81:EA:E1:69），拿到对端 MAC 后：
-ssh root@192.168.7.1 'PEER=<对端MAC> sh /tmp/bt-link-test.sh'            # 基线
-ssh root@192.168.7.1 'PEER=<对端MAC> KEEPALIVE=1 sh /tmp/bt-link-test.sh' # H4 判别
-```
-判读：`KEEPALIVE=1` 让 RTT 从 30–190ms 塌到 <10ms ⇒ H4（控制器固件深睡）成立。
-
-**② TF 压测基线（当前卡，随后换卡 A/B）**
-```
-scp ~/y700-elden/scripts/tf-stress.sh root@192.168.7.1:/tmp/
-ssh root@192.168.7.1 'mount /dev/mmcblk0p1 /mnt/tf 2>/dev/null; sh /tmp/tf-stress.sh -r 3 --fsck /mnt/tf'
-```
-
-> ⚠️ 记得这个持久系统有「空闲熄屏→重启」未解 bug——测完别让它闲太久，或手动保持唤醒。
-
-## 相机"实际出流"要不要现在就上？
-
-`v4l2-ctl --stream-mmap` 的 `-EPIPE` 是 csiphy 默认格式（`UYVY8_1X16`）与 sensor 实际输出（`SRGGB10`）不匹配所致，需要手工 `media-ctl` 配全链路 mbus format/selection 再 STREAMON。这可以：
-- 派一个**专注子代理**（挂 `ustc_ai_2`）在你上机期间迭代调 pipeline，或
-- 留到下一轮。
-
-你想先跑 ① 还是 ②？相机出流我可以同时起一个子代理。
-
-
-## Automatic settled outcome - 2026-10-04
-
-能，而且项目里已经验证过半条路线（相机 20 个 `.ko` 热加载）。先给结论，再分层说清哪些改动本来就**不需要**重编内核。
-
-## 数字结论
-
-| 改动类型 | 现在每次的代价 | 目标代价 | 手段 |
-|---|---|---|---|
-| 驱动代码（音频/相机/触摸/BT/WiFi/panel/马达…） | 全量内核 + 重签 + 刷机 ≈ 20–40 min | **scp + modprobe ≈ 30 s** | 编成 `=m`，`.ko` 运行时加载 |
-| DTS | 同上（其实内核从未重编） | **≈ 2 min** | `make dtbs`(秒级) → `mkbootimg --dtb` → `fastboot boot`（零写盘） |
-| DT 微扰（使能节点/改一个属性） | 同上 | **0 重启** | configfs overlay（本机 `CONFIG_OF_OVERLAY=y` 已开） |
-| 换内核核心（psci/clk/dwc3/audioreach 头） | 全量 | 全量（不可省） | 但可用 **kexec** 省掉 fastboot 往返 |
-
-关键事实（都已在本地核实）：
-- `build-boot.sh` 里 **DTB 本来就是 boot.img 的独立分区**（`mkbootimg --dtb`）——改 DTS 时 `Image.gz` 逐字节不变，重编内核纯属浪费。
-- `CONFIG_KEXEC_FILE=y` 且 `KEXEC_SIG` 未开 → **从运行中的系统直接 kexec 新内核+新 dtb**，完全绕过 fastboot/ABL/AVB，一条 SSH 命令完成换内核。
-- 相机模块路线已跑通并踩过全部坑（kmod 34.2 要 `depmod` 生成 `modules.dep.bin`、loader 按 clk→cci→camss→sensor 顺序）。
-
-## 建议的三层开发环（由快到慢）
-
-**第 1 环 · 模块环（最常用）**——把当前 `=y` 的 payload 翻成 `=m`：
-- 现在编译进内核的：`SND_SOC_SC8280XP`、`WCD939X`、`AW88461`、`BT_QCA`、`ATH12K`、`DRM_MSM`、`PANEL_NT36536`、`AW86927`、`NVT36XXX`（camss/wl2868c/cci 已是 `m`）。
-- 必须保持 `=y` 的只有**启动路径**：`USB_DWC3`/`CONFIGFS`（rootfs 靠 USB 网络）、UFS、串口、clk/pinctrl/GCC、PSI 核心。
-- 做法：加一个 `arch/arm64/configs/elden-dev.config` 片段（就是现有 fragment 机制），把上面列表 y→m；`scripts/package-camera-modules.sh` 泛化成通用 `package-modules.sh`（打包 + `depmod` + scp + 按序加载），音频/gpr 总线有依赖序，但 `modules.dep` + deferred probe 能兜住。
-- **纪律**：模块环期间 boot 里的内核固定不动（如 vk49），否则 vermagic 失配——这正好也防住「改动越界到核心文件却不自知」。
-
-**第 2 环 · DT 环**：`make dtbs`（秒级）→ `mkbootimg` → `sign` → `fastboot boot`。可以做成 `iterate.sh --dtb-only`：检测 `Image.gz` 哈希没变就跳过内核构建。另外 `CONFIG_OF_OVERLAY=y` 意味着小改动可以直接 `/sys/kernel/config/device-tree/overlays/` 打补丁试，满意了再回写 DTS。
-
-**第 3 环 · 内核环（不可避免时）**：boot_b 放一个稳定基座，新内核编好后 `kexec --load --dtb=... && kexec` 起来验证，省掉 fastboot 往返与 ABL 校验；**验证通过才** 走正式签刷。注意 kexec 不重走 A
-
-
-## Automatic settled outcome - 2026-10-04
-
-**诊断闭环（记录在 `8d9f888`）**——iQOO TWS 2 的问题复现并收窄了：
-
-## 实测数字（vk47a，零写盘）
-
-| 实验 | RTT min/avg/max/mdev | loss | 主机唤醒 | 控制器唤醒 |
-|---|---|---|---|---|
-| 基线（-c15 -i0.2） | 7.8/**44.4**/110.8/26.8 ms | 0% | `ibs_sent_wakes`=**1** | `ibs_recv_wakes`=20 |
-| `KEEPALIVE=1` | 3.9/**35.3**/62.4/15.6 ms | 0% | **1**（不变） | 293 |
-| 突发 `-c100 -i0.05` | **20s 内跑不完**（应 ~5s） | — | — | — |
-| `hciconfig` errors | RX/TX 均 **0** | — | — | — |
-
-## 结论（推翻了原来的首选假设）
-
-- **H4「控制器固件深睡」不成立**：KEEPALIVE 只把 avg 44→35ms，没塌到 <10ms。
-- **H3「主机 IBS 握手」排除**：`ibs_sent_wakes_delta=1` 两种情形一样（主机 TX 全程 awake）。
-- 突发直接停摆、且 `errors=0` → **丢在空口/控制器侧**。
-- 剩 **H1（8 Mbps 误码）/ H2（控制器 CTS 反拉）**——两者都改不了运行期，**需单变量测试内核**：
-  - `patches/candidate-bt-maxspeed-3000k.patch`（H1）
-  - `patches/candidate-bt-no-flow-control.patch`（H2）
-
-顺带修了测试脚本 4 个 bug（IBS 路径、RTT 自算、errors 解析、counter 名）。
-
-## 下一步
-
-建议构建 **vk50 = vk49 内核 + `candidate-bt-maxspeed-3000k`**（单变量先测 H1，风险=控制器不支持 3Mbps 则 hci0 不出现，重启回退），`fastboot boot` 后用同一脚本复测 RTT/突发。
-
-要我**现在构建 vk50**（主机侧，~10min）并给你精确 boot 命令吗？还是先派子代理并行把 H1/H2 两个测试内核都备好？
-
-
-## Automatic settled outcome - 2026-10-04
-
-审计完成，写入 `archive/topics/ITERATION-AUDIT-2026-10-04.md`。核心数字与结论：
-
-## 一句话
-**最高杠杆 = 把 payload 驱动 `y→m`（一次性全量重编），此后驱动改动进入 scp+modprobe ≈30s 环；第二杠杆 = 接入 ccache（现在装了但缓存为 0）。**
-
-## 版本控制（🔴 高）
-- 顶层仓 **58 commit，无 remote**（无异地备份）；无 tag，vk↔sha 只存在 commit message 里。
-- 内核仓 **浅克隆**（`.git/shallow`，grafted 于 `ba28ec16f`）→ 无法向上 bisect，GEEKiDoS 基底不可追溯。
-- **vk34–v39、vk43、vk49 无 commit**；提交只覆盖 vk40–v48（分支名 `elden/vk42-audio-thermal` 却含 vk42–48，名实不符）。
-- **构建不可复现**：`build-boot.sh` 默认 ramdisk 候选**不含** `rootfs-overlaid-camera.cpio.gz`，vk49 的打包命令已丢失 → 无法用默认命令重建。`mkbootimg` 未设 `SOURCE_DATE_EPOCH`。
-- `patches/elden-working-tree-*.patch` 已过期，与 git 形成**双真源**。
-
-## 迭代流程（🔴 高）
-- 驱动几乎全 `=y`：SC8280XP/WCD939X/QDSP6、BT_QCA、ATH12K、DRM_MSM、panel、AW86927、NVT36XXX、QCOM_Q6V5_PAS。
-- ccache 已装但 **0.0 GiB**，`build-kernel.sh` 的 `CROSS_COMPILE` 未包 ccache → 纯冷编译。
-- 模块热加载**已半通**：`package-camera-modules.sh`(depmod 修好的) + `deploy-camera-modules.sh`(**不刷机不重启**) + `camera-modules-load.sh` —— 通用化即得快环。
-
-## Linux→fastboot（🟢 基本就绪）
-- `eldroid-bootctl reboot bootloader`（PSCI 钩子 vk41）已通；`flash-b.sh` 可在 Linux 内 dd 写 b 槽。
-- **缺口**：文档多处引用 `scripts/cycle.sh`，该文件**不存在**（死引用）。
-
-## kexec（🟡 只差脚本+首测）
-前置条件**全部满足**：`KEXEC_FILE=y` + `KEXEC_SIG` 关；arm64 加载器只认**未压缩 `Image`**（已有 62MB）；kexec-tools **设备上已装**（持久根 + Alpine rootfs 都有）。
-> 注意：`Image.gz` 不能用于 kexec；`CONFIG_KEXEC` 旧 syscall 未置 → 须走 `kexec_file_load`（`-s`）。
-
-## 建议顺序
-**V1–V3 + I1**（加 remote/tag/manifest + ccache，零风险立竿见影）→ **I2→I3**（模块快环）→ **K1/I4**（kexec/DTB-only 并行验证）→ **F1/C1**（to-fastboot + 设备锁）。
-
-要不要我现在就开始落地 **V1（加 remote+tag+补 vk43/vk49 commit）** 和 **I1（ccache）**？这两项零风险。remote 需要你给一个（GitHub/GitLab/校内），或我先只做本地 tag + manifest。
-
-
-## Automatic settled outcome - 2026-10-04
-
-# vk14–vk34 逐版本时间线（2026-09-30 ~ 10-01）
-
-只读研究结论。构建时间取自 `out/boot-elden-vk*.img` mtime；sha256 为**当前 out/ 原始镜像**哈希（session 里另存的 boot_b 签名镜像哈希不同）。构建/打包命令除注明外统一为：`./build.sh` → `./pack.sh out/rootfs-vk11.cpio.gz out/boot-elden-vkN.img` → `scripts/sign-boot-b.sh` → `scripts/flash-b.sh ... --reboot`。hk14–19 rootfs 固定 `rootfs-vk11.cpio.gz`（62,842,080 B）。全程 uname 恒为 `7.2.0-debug-gba28ec16f01f-dirty`（无 per-version localversion，见 RESOURCES §4.3）。
-
-## 1. 版本表
-
-| vk | 时间(09-30起) | 相对上一版的内核/DT/config 改动 | 编/打包/上机命令 | 真机结果 | 证据文件 |
-|---|---|---|---|---|---|
-| **vk14** | 09-30 19:08 | `sm8750_dspp_sblk` catalog 补 `.gc = {.base=0x17c0,.len=0x40,.version=0x10008}`（DSPP GAMMA_LUT）。**补丁 0002**。config 基线=去 suspend/hibernate/kexec 的 vk13 树 | `./build.sh`（5m20 全量）→ `./pack.sh`（77 MiB, sha 9c32c9a9…）→ flash-b | ✅ Night Light 面板出现、可调、按钮可用 → 内核 gamma 链路打通。踩坑：裸 `make` 覆坏 `linux/.config`，用设备 `zcat /proc/config.gz` 拉回修复（PITFALLS 9b） | ROADMAP-dep §3/§4；PITFALLS #9b；patches/0002；session 01a0f1ee |
-| **vk15** | 19:16 | `aw86927.c` SRAM 上界修复（固件超 4KB 被写死窗口拒；按型号区分 SRAM 窗口）。补丁初版名 `0003-…-sram-window.patch` | build→pack（77 MiB, sha 741fa5a3…）→flash-b | ✅ probe 无报错，但 **不震**（回退 vk14） | session 01a0f1ee；STOCK-KERNEL §4 |
-| **vk16** | 19:28 | `aw86927_haptics_play_work` 加临时 `dev_info` debug 打印 | build→pack（77 MiB, sha fae1568c…）→flash-b | 播放路径执行、寄存器可见，**仍不震** | session 01a0f1ee |
-| **vk17** | 19:32 | 加深寄存器级 debug（play 路径逐寄存器） | build→pack（77 MiB, sha 11809365…）→flash-b | 播放命令确实执行，马达不动；保留 debug 版继续观察 | session 01a0f1ee |
-| **vk18** | 19:47 | 移植厂商 `haptic.ko` 反汇编出的 **AW86937 CONT 连续模式**序列（PLAYCFG3[1:0]=2、VBATCTRL bit6、CONTCFG 等） | build→pack（77 MiB, sha 600b4c72…）→flash-b | ✅ 用户确认**马达震动**（FF path 执行） | STOCK-KERNEL §5；session 01a0f1ee |
-| **vk19** | 19:54 | 去 debug 打印，出**干净基线**；补丁定稿 `0003-aw86927-aw86937-haptics
-
-
-## Automatic settled outcome - 2026-10-04
-
-# vk1–vk13 逐版本时间线（09-28 ~ 09-29）
-
-> 重要前提：**vk1–vk13 全部共用内核字符串 `7.2.0-debug-gba28ec16f01f-dirty`**（localversion 未改），设备上无法自报区分；版本只能靠镜像文件名+打包时间追溯（`RESOURCES.md §3`）。下面时间＝`out/` 文件 mtime（主机 CST）。
-> 证据缩写：`928/复盘`=`/tmp/hist928/复盘.md`；`928/SESSION`=`/tmp/hist928/SESSION-2026-09-28.md`；`928/HANDOFF`=`/tmp/hist928/HANDOFF.md`；`929/HANDOFF`=`/tmp/hist929/HANDOFF.md`；`929/INDEX`=`/tmp/hist929/INDEX.md`；`929夜`=`archive/topics/复盘-2026-09-29-夜.md`；`S1`=`.pi/agent/sessions/2026-09-28T11-23-20…jsonl`；`S2`=`.pi/agent/sessions/2026-09-28T14-40-54…jsonl`；`S3`=`.pi/agent/sessions/2026-09-29T05-38-12…jsonl`。
-
-## A. 09-28 白天：从零到显示/USB（命名镜像）
-
-| 版本 | 时间 | 内核/DT/init 改动（自上一版） | 编/打包 | 真机结果 | 证据 |
-|---|---|---|---|---|---|
-| base1 | 20:05 | 首次用作者 build-boot.sh：内核+最小 busybox initramfs；`--base 0x10000000` | `scripts/build-boot.sh` → `out/boot-elden-base1.img` | ABL/地址实验用，未进 userspace | 928/HANDOFF §4.3；S1 12:05–12:21 |
-| diag–diag6 | 20:27–21:03 | 诊断 initramfs 加 `elden_diag_reboot=1`（跑完 40s 自 `reboot -f`）；diag 起 `-d DRM_MSM` | `scripts/build-boot.sh` 覆写 initramfs | **全部废配置**：改 config 后跑 `olddefconfig` 连带删掉 `CONFIG_ARCH_QCOM` → 无 QCOM 平台支持，显示/USB/UFS 全灭 | 928/复盘 §六–七；928/HANDOFF §5 坑1 |
-| fixed | 21:09 | 恢复 `.config.panel`（ARCH_QCOM=y）；DTS 节点 `splash-region`→`splash_region`；`CONFIG_PHY_NXP_PTN3222=y`；`CONFIG_BACKLIGHT_AW99706=y` | 同上 | 待验 | 928/复盘 §七 |
-| fixed2 | 21:19 | fixed 迭代（config/DT 微调） | 同上 | 同上 | 928/复盘 §八 |
-| fixed3 | 21:35 | fixed2 收敛；`boot-elden.img` 为同刻 build-boot.sh 输出 | 同上 | ✅ **首次决定性成功**：Linux 7.2.0 进 userspace；`/dev/ttyACM0` 串口 shell（`[usb-gadget] bound to a600000.usb`）；UFS `sda1..sda15`；背光 probe 成功 | 928/复盘 §八；S1 13:xx |
-| fixed4 | 21:46 | **`&mdss_dp0 { status="disabled" }`**（DP 是永远 defer 的 DRM component，卡死 `msm_drm_bind`→无 card0） | 同上 | ✅ **显示打通**：logo→闪→Linux 终端页 | 928/复盘 §八；9
-
-
-## Automatic settled outcome - 2026-10-04
-
-已完成。git 历史从 58 个提交补到 **107 个**，`vk1`–`vk40` 每个版本都有对应提交与标签。
-
-## 结果
-
-| 项 | 值 |
-|---|---|
-| 新分支 | `history/pre-vk34`（49 个提交，根 = `base1` 2026-09-28） |
-| 新标签 | 49 个：`base1 diag fixed3 fixed4 alpine gpu3 vk1…vk40 vk36debug vk38 vk38debug vk40-ram` |
-| 嫁接 | `git replace --graft e3ec468 <回填末提交>` → `git log HEAD` 连续显示 107 个提交 |
-| 嫁接处一致性 | 回填末提交树与 `e3ec468` 树**逐字节相同**（`git diff e3ec468 history/pre-vk34` 为空） |
-| 既有提交 | **未改动**，`e3ec468` 及之后所有 sha 保持原样（文档里的引用不失效） |
-
-## 怎么做的
-
-- 用 `out/boot-elden-*.img` 的 **mtime** 排出 49 个版本边界，逐个用纯 plumbing（临时索引 + `commit-tree`）生成提交，工作树/索引零改动。
-- 文件集与内容取自 **`e3ec468` 的树**（git 纳管时的 293 文件快照）；每个文件归属最早的「epoch ≥ mtime」的版本。
-- 对 11 个补丁 + 6 个 config 做了**显式归属**（如 `patches/0001-ath12k-*.patch` → `vk9`、`0009` → `vk34`），修正 mtime 相邻导致的 ±1 版本漂移。
-- 10-02~10-03 纳管前的收尾并入一个桥接提交。
-
-## 局限（已写进 README）
-
-1. mtime 只记「最后一次修改」——同一文件被多版反复改，只能落在最后时刻那个提交，**早期中间态无法还原**；因此有若干**空提交**（只承载版本叙事/标签），这是诚实的「该版本无文件存留到此形态」。
-2. 内核源码树与 `out/` 编译产物不在 git 内，回填只覆盖被跟踪的项目文件。
-
-## 落盘
-
-- refs：`refs/heads/history/pre-vk34`、49 个 tag、`refs/replace/e3ec468`（本地引用，clone 不携带，README 给了重挂命令）。
-- `archive/2026-10-04-git-backfill/`：`README.md`（方法/局限/复现/撤销）、`plan.tsv`、`gen_plan.py`、`bf_build.sh`、`bf_manifest_all.txt`、`VERSION-MAP.txt`。
-
-查看：`git log --oneline history/pre-vk34`、`git show vk9`。撤销嫁接：`git replace -d e3ec468`。
-
-该目录目前是 untracked；要我把它作为一个提交纳入 main 吗？
-
-
-## Memory - 2026-10-04
-
-学校 GitLab = git.ustc.edu.cn（SSH Host 别名已配；账号 @xqh；key ~/.ssh/id_ed25519_gitlab_ustc）。个人命名空间支持 push-to-create：直接 `git push git@git.ustc.edu.cn:xqh/<repo>.git main` 即自动建私有项目（无需网页/API token），SSH 测试 `ssh -T git@git.ustc.edu.cn` 返回 Welcome, @xqh。限制：GitLab 服务器拒绝 shallow push（"shallow update not allowed"）——浅克隆仓需先 `git fetch --unshallow`，或改用「合成根」（`git commit-tree <base>^{tree}` 造无父提交 + cherry-pick 增量）推非 shallow 镜像，或改用 format-patch 补丁集留档。
-
-
-## Automatic settled outcome - 2026-10-04
-
-全部落地。总结如下：
-
-## 已完成（无需设备，均已推送异地）
-
-**V — 版本控制与异地备份** 🔴→🟢
-- 顶层仓 `origin` → **https://git.ustc.edu.cn/xqh/y700-elden**（2 分支 + 全部标签，SSH push-to-create 自动建仓）
-- 内核仓 `gitlab` → **https://git.ustc.edu.cn/xqh/y700-elden-kernel**（分支 `main`）
-  - 浅克隆被 GitLab 拒绝直推 → 用**合成根**（根提交树=上游 `ba28ec16f` 树 + 9 个 elden 增量重放），非 shallow、可正常 clone
-- 另有保险：`patches/kernel-history/` — 6 支 elden 分支的 `format-patch` 增量（脱离 git 也能 `git am` 复原）
-- `archive/2026-10-04-git-backfill/VERSION-MAP.txt`：原 sha → 镜像 sha 映射 + 复原步骤
-- `scripts/build-manifest.sh`：每个 vk 产出 {内核/DTB/config/ramdisk sha、cmdline、mkbootimg argv、镜像 sha256} → 构建可复现可审计
-
-**I — 迭代快环** 🔴→🟢
-- `scripts/env-build.sh`：ccache 接入 `CROSS_COMPILE`（此前装了但缓存 0）
-- `patches/fragment-modular.config`：音频/ATH12K/触觉/触屏/背光 `y→m`（实测 merge_config+olddefconfig 可翻，模块数 1319→1355）；`fragment-modular-video.config` 可选（DRM/panel，牺牲启动早期显示）
-- `scripts/mod-loop.sh` + `iterate.sh mod <dir>`：改驱动 → 编单模块 → scp → rmmod/modprobe，**~30s 不重启**
-- `scripts/iterate.sh dtb`：改 DTS 只重编 DTB
-
-**K / F — 去物理重启**
-- `scripts/kexec-boot.sh`：用未压缩 `Image` + `--dtb` 走 `kexec_file_load` 热重载（`KEXEC_FILE=y`、kexec-tools 设备已装）
-- `scripts/to-fastboot.sh`：`--boot` 零写盘 fastboot / `--flash` Linux 内 dd 进 boot_b 再重启；补上 PSCI vendor reset 进 fastboot
-
-**C — 并发**
-- `scripts/device-lock.sh` + 三个设备脚本自锁（flock，防嵌套死锁）：并行子代理串行化单台设备访问
-
-`check-doctor`：FAIL=0。
-
-> 更正一条审计原话：`cycle.sh` **确实存在**（在仓库根，非 `scripts/`），已同步修正。
-
-## 需要你/设备的下一步（一次性）
-
-1. **切换模块化**：跑一次全量构建应用 fragment
-   ```
-   scripts/apply-kernel-fragment.sh patches/fragment-modular.config   # 一次性
+   # 一次性
    scripts/iterate.sh kernel --boot VERSION=vk50        # fastboot 零写盘验证
    ```
    之后驱动改动就进 `iterate.sh mod ...` 的 30s 环。
@@ -1385,3 +1058,34 @@ fastboot reboot
 - 中文社区这条线**到此为止**，按你说的"不行就算了"。
 
 要我把本轮两条线（GitHub 资源清单 + 中文社区无果）合并落一页 `archive/topics/UEFI-RESOURCES-2026-10-06.md` 并更新 `RESOURCES.md §1.5/§3` 吗？或者直接开 lane 去 clone + 构建冒烟？
+
+
+## Automatic settled outcome - 2026-10-05
+
+完成。本会话只做**资源收集 + 社区经验记录**，未 clone/未构建/未上机。
+
+## 交付
+
+**新增档案** `archive/topics/UEFI-RESOURCES-2026-10-05.md`（过程证据，只增不改）：
+- **§2 可用资源清单**（均 API 核实）：`sunflower2333/mu_wide_platforms` 的 `Platforms/PakalaPkg/Device/lenovo-y700g4/`（518 文件：真实内存映射/DT/DSDT/patched DXE/原厂 DXE 全集）+ `Project-Aloha/UEFIFirmwareBackup/lenovo-y700g4/`（480 文件原厂 DXE 备份）+ Mu-Silicium `PakalaPkg`/`dodgePkg` 备选。
+- **§3 机制**：`build_uefi.py -d lenovo-y700g4` → `Build/PakalaPkg/lenovo-y700g4.img`（BootShim + UEFI FD 塞 boot kernel 槽）＝Route A 要的产物。
+- **§4 中文社区检索记录**：B站/必应/百度/搜狗/贴吧/酷安/XDA/4pda 全渠道；唯一 UEFI 线索 `BV1FNKtzLEmM` 已由评论区自证是串流/Winlator；**中文社区无 TB322FC 独立 UEFI/WoA/U-Boot 产出**。
+- **§5 检索经验**（B站 cookie-bootstrap API、Bing 长尾兜底、`gh auth token` 绕 GitHub 搜索限流、fork 内容用 contents API、`web_search` 全灭时改 curl 直连）。
+
+**领域层更新**：
+- `RESOURCES.md` §1.6 新增「间接引导层 / SM8750 UEFI」资源表；§4 补本会话索引行 + 统计。
+- `TASKS.md` G1-29 增 ⑤：**设备包已现成，Route A 由「自造 UEFI」转「取用+构建+验证」**。
+- `INDEX.md` §6 登记新档案。
+
+**提交** `e76413a`。`check-doctor`：**FAIL=0**。
+
+## 一处待你决定的卫生问题
+
+`check-doctor` **WARN=1**（改动前就是 WARN=1）：它用 `find .pi/sessions -name '*.jsonl'` 计数 = **79**，而 §4 索引 **78** 行。差异来自 `.pi/sessions/--home-…--/` 下 **9 个与顶层重复的旧会话 jsonl**（属 `fold-evidence`/历史副本），doctor 把嵌套文件也算成会话。这是**既有漂移**，本次编辑把差距从 2 缩到 1。
+
+三个选项（都不属本会话既定范围，待你定）：
+1. 让 doctor 只统计**顶层**会话 jsonl（改 1 行 `-maxdepth 1`）；
+2. 清掉那 9 个重复的嵌套 jsonl；
+3. 维持现状（已知、不影响内容）。
+
+要处理吗？

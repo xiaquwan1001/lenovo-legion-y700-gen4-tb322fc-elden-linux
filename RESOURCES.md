@@ -284,9 +284,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 34 / ◐ 部分 5 / ✗ 未上机 39 |
-| 状态 | active 45 / reference 25 / junk 4 / superseded 4 |
-| 时间跨度 | 2026-09-29 → 2026-10-05（磁盘 jsonl **79**（顶层 70 + `fold-evidence` 嵌套 9）；本索引 **78** 行；70 个顶层会话 ID；`01a10527`×3、`01a105fb`×3、`01a10596`×2、`01a10736`×2 为同 ID 拆分会话） |
+| 实机验证 | ✅ 实机 34 / ◐ 部分 5 / ✗ 未上机 40 |
+| 状态 | active 45 / reference 26 / junk 4 / superseded 4 |
+| 时间跨度 | 2026-09-29 → 2026-10-05（磁盘 jsonl **79**（顶层 70 + `fold-evidence` 嵌套 9）；本索引 **79** 行；73 个磁盘唯一 ID；5 行对应已删会话（保留作史）；`01a10527`×3、`01a105fb`×3、`01a10596`×2、`01a10736`×2 为同 ID 拆分会话） |
 
 ---
 
@@ -374,6 +374,7 @@ git log --oneline -10
 | 2026-10-04 | `01a1074a` | 会话：dt-ui 重派（空） | session-meta | ✗ | junk | 仅派发词，0 助手消息 | - | - |
 | 2026-10-04 | `01a10759` | 会话：编排（预算墙中断） | session-meta | ✗ | junk | 编排被 `ustc-ai-3` 预算墙打断；结论被 01a1072e 取代 | - | - |
 | 2026-10-04 | `01a10789` | 会话：进度整理 + 卡点 + 会话成果汇总 | session-meta | ✗ | active | 汇总 12 个未收录会话的成果；补 `DT-UI-2026-10-05.md`、PITFALLS #103、TASKS G1-26/27/28、登记 3 份 EDK2-Gunyah 参考 | - | - |
+| 2026-10-04 | `01a107a2` | 会话：EDK2-Gunyah 三仓资产分析 | uefi-gunyah | ✗ | reference | 通读 `edk2-gunyah`/`edk2-gunyah-qemu`/`edk2-aarch64-gunyah` 三仓；结论：**均为 guest 侧 ArmVirt UEFI，无 SM8750 裸机平台代码** → G1≈0、G1-29 只提供「打包/瘦身」技巧（缺环不变）、C8 Gunyah VM 有现成 guest 固件；登记 `RESOURCES.md` §1.5 | - | 纯主机侧文档；未上机 |
 | 2026-10-05 | `01a10996` | 资源：SM8750 UEFI 资源收集 + 中文社区检索 | uefi-resources | ✗ | reference | 定位 TB322FC 设备包**已现成**（`mu_wide_platforms` → `lenovo-y700g4`）+ 原厂 DXE 备份（`UEFIFirmwareBackup`）；证实 `build_uefi.py` 原生产出 `boot.img`（BootShim + FD）；中文社区无 UEFI/WoA/U-Boot 产出；落 `UEFI-RESOURCES-2026-10-05.md`、`RESOURCES.md` §1.6 | - | 未 clone/未构建/未上机；本设备无验证记录、容量档差异待核 |
 
 ---
