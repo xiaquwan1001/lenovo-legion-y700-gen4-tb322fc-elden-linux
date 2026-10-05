@@ -365,7 +365,7 @@ fastboot reboot
 | 环 | 命令 | 何时用 | 代价 |
 |---|---|---|---|
 | **0 模块热载** | `scripts/iterate.sh mod <driver-dir>` | 改的是 `=m` 驱动的 `.c`/寄存器序列 | **~30 s，不重启** |
-| **1 DTB** | `scripts/iterate.sh dtb` | 改 DTS（pinctrl/regulator/面板时序） | `make dtbs` 秒级 + kexec ~1 min |
+| **1 DTB** | `scripts/iterate.sh dtb --boot` | 改 DTS（pinctrl/regulator/面板时序） | `make dtbs` 秒级 + `--boot` ~1 min（**kexec 不传 DT**，见下） |
 | **2 内核** | `scripts/iterate.sh kernel` | 改 `=y` 代码 / 新补丁 | 全量编译（ccache 暖后复用）+ kexec ~2–5 min |
 | **3 RAM 兜底** | `scripts/iterate.sh ram` | 零写盘取证 / 回退验证 | fastboot boot（**需主机 USB**） |
 
@@ -376,11 +376,17 @@ FRAG=patches/fragment-modular.config SNAP=patches/config-vk50-modular \
 bash scripts/iterate.sh kernel --boot      # 全量重编一次；此后驱动改动走环 0
 ```
 
-**kexec 热重载**（`--kexec`，kernel/dtb 默认）：
+**kexec 热重载**（`--kexec`，kernel 默认；**⚠️ 本机已定论不可用**）：
+- ⚠️ **2026-10-05 定论**：`kexec -s -l` 装载成功，但 `kexec -e` **硬挂整机**（无 panic / 无看门狗 / pstore 空，需物理复位）；
+  挂死分支点**尚未定位**（旧"串口戛然而止"不可用——`console=ttyGS0` 是 USB gadget，跨不过 kexec）。
+  **日常改用 `--boot`（fastboot 零写盘）/ `--flash`。**
+- ⚠️ **DTB 不能走 kexec**：`kexec_file_load(2)` 无 DTB 形参，新内核 FDT 由**运行内核的 live DT** 重建
+  （`drivers/of/kexec.c: of_kexec_alloc_and_setup_fdt`）⇒ `--dtb` 是空操作，`iterate.sh dtb` 环经 kexec 不成立。
 - 前置已就绪：内核 `CONFIG_KEXEC_FILE=y`（`KEXEC_SIG` 关）、设备 `kexec-tools 2.0.32`。
 - 关键约束：**只能喂未压缩 `Image`**（`Image.gz` 不行）；`scripts/kexec-boot.sh` 已处理。
 - 先验安全：`scripts/kexec-boot.sh --load-only`（只加载不切换）；失败时当前内核照常运行。
-- 首测务必用一个**已知可启**的内核，并保留 `to-fastboot.sh` + `fastboot boot` 作为带外回退。
+- 首测务必用**与运行内核同源（同 config、同 `LOCALVERSION`）且已知可启**的内核，并保留 `to-fastboot.sh` + `fastboot boot` 作为带外回退。
+- 取证与根因分析：`archive/topics/KEXEC-2026-10-05.md`。
 
 **Linux → fastboot**（必要时）：`scripts/to-fastboot.sh [--flash out/x.img] [--boot out/x.img]`
 - 走 PSCI vendor reset（`eldroid-bootctl reboot bootloader`，vk41+）——这是唯一可靠路径；

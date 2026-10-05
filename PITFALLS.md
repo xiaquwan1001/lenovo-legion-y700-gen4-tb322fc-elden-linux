@@ -43,6 +43,8 @@
 5. **不要指望 `kexec` 换内核（旧 syscall 限制）**：`CONFIG_KEXEC=y`，`kexec -l`/`-s -l` 都能**装载成功**，
    但 **`kexec -e` 执行会黑屏挂死**（新内核未起、无 USB gadget，需物理重启）。arm64/Qualcomm 平台限制。
    （结论已收窄：file-based `kexec -s -l --kexec-file-syscall` + 未压缩 Image 已验证可行，见 #94 与 RUNBOOK §8。）
+   （2026-10-05 取证：**挂死分支点未定位**——`console=ttyGS0` 是 USB gadget，kexec 时必断，不能据"无输出"下结论；
+   待带存活 console 上机定位。见 `archive/topics/KEXEC-2026-10-05.md`。）
 
 6. **boot.img 必须 ≤96 MiB**（`boot_a`=0x6000000）；超了 `fastboot boot` 会 `Bad Buffer Size`。
 
@@ -170,6 +172,7 @@
 94. **kexec 只能喂未压缩 `Image`**：arm64 `kexec_file_load` 拒绝 `Image.gz`（报 invalid image）。
     用 `linux/arch/arm64/boot/Image`（未压缩）；设备已有 `kexec-tools 2.0.32`。`CONFIG_KEXEC`（旧 syscall）未开，
     所以必须 file-based（`kexec -s`）。先 `scripts/kexec-boot.sh --load-only` 验加载（失败不切内核）。
+    ⚠️ file-load **没有 DTB 形参**：`--dtb` 不进入新内核 DT（内核用运行内核 live DT 重建）⇒ DTB 迭代只能走 `--boot`/`--flash`。
 95. **模块热载的 vermagic 必须匹配**：设备 `uname -r` ≠ 内核树 `make -s kernelrelease` 时，push 的 `.ko` insmod 会失败。
     `scripts/mod-loop.sh` 检测到不一致会**拒绝执行**——先 kexec/fastboot 到同源内核再做模块环。
 96. **ccache 必须显式接入 `CROSS_COMPILE`**：装了 ccache 但 `CROSS_COMPILE=aarch64-linux-gnu-` 时缓存恒为 0。
