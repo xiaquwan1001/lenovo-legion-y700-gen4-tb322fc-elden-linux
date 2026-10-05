@@ -9,7 +9,7 @@
 # and both git HEADs.  Commit the manifests (they are tiny, text-only).
 set -euo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
-KDIR=$ROOT/linux
+KDIR=${KDIR:-$ROOT/linux}
 OUT=$ROOT/out
 VERSION=${1:?usage: build-manifest.sh <version> [image]}
 IMG=${2:-$OUT/boot-elden-$VERSION.img}

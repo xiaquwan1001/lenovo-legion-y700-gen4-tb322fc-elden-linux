@@ -10,7 +10,7 @@
 #       已用 vk27 原内核 + 原 ramdisk 复现验证：输出与 out/boot-elden-vk27.img **逐字节相同**。
 set -e
 ROOT=${ROOT:-$HOME/y700-elden}
-KDIR=$ROOT/linux
+KDIR=${KDIR:-$ROOT/linux}
 OUT=$ROOT/out
 IRAM=$ROOT/initramfs
 MKBOOTIMG=$ROOT/tools/mkbootimg/mkbootimg.py
@@ -99,7 +99,7 @@ ls -la "$OUT/boot-elden-$VERSION.img"
 echo "sha256: $(sha256sum "$OUT/boot-elden-$VERSION.img" | cut -d' ' -f1)"
 
 # --- 记录 manifest（可复现/审计，提交进 git）--------------------------
-RAMDISK_FILE=$RAMDISK MKBOOTIMG_ARGS="${MKBOOTIMG_ARGS[*]}" CMDLINE="$CMDLINE" \
+RAMDISK_FILE=$RAMDISK MKBOOTIMG_ARGS="${MKBOOTIMG_ARGS[*]}" CMDLINE="$CMDLINE" KDIR="$KDIR" \
 	bash "$ROOT/scripts/build-manifest.sh" "$VERSION" "$OUT/boot-elden-$VERSION.img" || \
 	echo "⚠️ manifest 生成失败"
 

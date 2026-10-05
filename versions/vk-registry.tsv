@@ -6,3 +6,7 @@ vk52	bootslim	2026-10-04	G1-30 slim initramfs
 vk53	hw-drivers	2026-10-05	G1-10 NFC ST21NFCA + G1-11 CDSP 启用 + TYPEC_MUX_FSA4480=y（DP 前置）；**⚠️ 未上机验证**（仅主机侧构建 + DTB/镜像指纹校验）
 vk54	kexec-va52	2026-10-05	kexec H4 对照：trans_pgd_create_copy 用 _PAGE_OFFSET(vabits_actual)（上游 1537e55728ec）+ ramoops 取证 DT（record-size/max-reason）；**kexec 仍未成功、设备不稳已停手**（见 KEXEC-ONDEVICE-2026-10-05）
 vk55	userland-session	2026-10-05	会话 overhaul 路径A + 用户/系统服务包补全
+vk56	kexec-va52	2026-10-05	（补录）kexec R2 ad-hoc slim 实验镜像（out/boot-elden-vk56-slim.img，未登记）
+vk57	kexec-va52	2026-10-05	（补录）kexec R2 ad-hoc slim 实验镜像（未登记）
+vk58	kexec-va52	2026-10-05	（补录）vk58/vk58b/vk58c slim：带 trans_pgd fix 的运行内核，vk58c 为可用 slim（未登记）
+vk59	hw-driver	2026-10-05	G1-9/10/11 驱动验证：vk53 内核（NFC+CDSP+FSA4480=y）重打 slim + 设备实测

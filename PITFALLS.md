@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-05（**#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus**；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
+> 最后更新：2026-10-06（**#108 = vk53/vk54 DTS 改动导致整机启动失败**；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
 
 ---
 
@@ -237,6 +237,11 @@
     - 修：`build-boot.sh` 为 applet 建符号链接 + 新增 `initramfs/busybox-applets.txt`（272 项）。
       坑：设备 busybox 链接表里没有 `mount`/`mountpoint`（属 util-linux）、`ip`（属 iproute2），必须手工补。
     - 教训：slim 路径此前**从未真机验证**；任何 boot 打包改动都要有一次 `fastboot boot` 冒烟。
+108. **★vk53/vk54 的 DTS 改动会导致整机启动失败（2026-10-06 上机定位）**。
+    - 现象：`fastboot boot`（零写盘）报 `Booting OKAY`，但整机随即**复位回 b 槽**（运行 `uname` 仍是 b 槽的 vk47clean）；`panic=15` 生效、APSS 看门狗永久禁用。
+    - 单变量（同 vk59 内核）：**HEAD DTB 挂 / vk47 DTB 过** ⇒ 元凶是 DTS，**不是** NFC/`FSA4480` 的 config。HEAD DTB 上**单独关 NFC 仍挂、单独关 CDSP 仍挂**（ramoops 改动未单独验证）⇒ 驱动批次 vk53 若真刷入会启动失败。
+    - 教训：`build-boot.sh`/`build-manifest.sh` 的 `KDIR` 原为硬编码 `linux/`，用外部 Image/DTB 打镜像会**静默用错内核**（本轮首版 vk59 即中招）；已改为 `KDIR=${KDIR:-…}` 并透传 manifest。
+    - 证据：`archive/topics/DRIVER-VERIFY-2026-10-06.md`；相关 `#106`/#107。
 
 ---
 
