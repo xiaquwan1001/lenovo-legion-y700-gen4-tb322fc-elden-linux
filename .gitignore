@@ -15,6 +15,9 @@
 /tools/
 /edk2-gunyah/
 /edk2-gunyah-qemu/
+# G1-29 资源：SM8750/TB322FC UEFI 设备包 + 原厂 DXE 备份（2026-10-05 落盘，见 RESOURCES §1.6/§3）
+/mu_wide_platforms/
+/uefi-firmware-backup/
 
 # ---- 构建产物 / 可再生成 ----
 # /out 用 /* 而非整目录忽略：否则 `!` 无法复活子文件（git 规则）；manifest 是可复现指纹，要入库

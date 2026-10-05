@@ -130,3 +130,40 @@ README §SM8750 Pakala 表列：`Lenovo y700 gen4 = lenovo-y700g4`、`Oneplus 13
 
 - 本会话**只做资源收集 + 经验记录**：**未 clone 仓库、未构建、未上机、未改任何分区/设备**。
 - 下一步（另会话）：主机构建 `lenovo-y700g4.img` → 设备侧 **E4（零写盘 `fastboot boot`）** 判 ABL 接受性 → 再谈持久/刷入。
+
+---
+
+## 8. 落盘记录（2026-10-05，本次追加）
+
+> 本节记录「资源从"定位到"到"落到磁盘"」这一步。**仍未 clone 的部分、未构建、未上机**。
+
+### 8.1 完成
+
+| 资源 | 来源 | 本地路径 | 体积 | 方式 |
+|---|---|---|---|---|
+| 设备包 + 平台 | **fork** `xiaquwan1001/mu_wide_platforms` ← `sunflower2333/mu_wide_platforms` | `~/y700-elden/mu_wide_platforms/` | 1.0 G | `gh repo fork` + `git clone --depth 1 --no-tags` |
+| 原厂 UEFI DXE 备份 | `Project-Aloha/UEFIFirmwareBackup` | `~/y700-elden/uefi-firmware-backup/` | 1.3 G | `git clone --depth 1 --no-tags` |
+
+- fork 地址：<https://github.com/xiaquwan1001/mu_wide_platforms>；clone 已配 remote `origin`=fork、`upstream`=`sunflower2333`。
+- 两者已进 `.gitignore`（`/mu_wide_platforms/`、`/uefi-firmware-backup/`）与 `RESOURCES.md` §1.6/§3 台账。
+- 网络：**直连与 `http://127.0.0.1:7897` 均可用**；用户给的 `127.0.0.1:9097` 实测无响应（`curl` 000 / 连接被拒），未使用。
+- 未 clone：`Project-Silicium/Mu-Silicium`（备选基线；本设备包不依赖它构建，暂略）。
+
+### 8.2 校验
+
+- 设备包 `Platforms/PakalaPkg/Device/lenovo-y700g4/`：391 文件（`find -type f`）；GitHub tree 518「路径」＝391 文件 + 127 目录，一致。
+- **A 的 `Binaries/` ≡ B 的原厂提取物**：`QcomPkg/Drivers/UFSDxe/UFSDxe.efi`、`PmicDxe/PmicDxeLa.efi` 两份 **sha256 逐字节一致** ⇒ 确认设备包驱动来源＝原厂固件。
+- `ACPI/DSDT.aml` = 3988 B 合法 AML（magic `DSDT`，OEM `QCOMM`）。
+- `PatchedBinaries/` 为真实 EFI（如 `ClockDxe.efi` 278,528 B、`UFSDxe.efi` 151,552 B）。
+- `build_cfg/sm8750.json`：`UEFI_BASE=0xFF300000`、`UEFI_SIZE=0x400000`。
+
+### 8.3 新发现的缺口（写入 `RESOURCES.md` §1.6）
+
+1. **DTB 是占位符**：`DeviceTreeBlob/Linux/linux-y700g4.dtb`（及各同族设备）均为 **6 字节 `dummy\n`**。但 `Platforms/PakalaPkg/PythonLibs/PostBuild.py:makeAndroidImage()` 构建 payload = **`BootShim.bin` + `FV/SM8750_EFI.fd` → gzip**，`mkbootimg` 仅设 `--kernel`（无 `--ramdisk`/`--dtb`）⇒ **DTB 不被引用，不阻塞 `lenovo-y700g4.img` 产出**。Linux 侧 DT 需用我们自己的主线 DT。
+2. **容量档**：平台默认 `PcdSystemMemorySize=0x300000000`（12 GiB）≠ 本单元（16 GB）；内存映射须按实际单元核。
+3. **固件线不同**：备份 `uefi.elf` = 2,793,948 B（sha256 `5a91d4df…`），与本机 `~/下载/tb322fc/uefi.elf` = 5,242,880 B（sha256 `fc68d2f9…`）不同 ⇒ 两份来自不同固件版本；用哪份驱动需按目标单元固件版本对齐（设备等价原则：版本不同 ≠ 机型不同）。
+
+### 8.4 未做（边界）
+
+- 未 `git submodule update`（`MU_BASECORE`/`mu_plus`/`mu_tiano_plus`/`openssl` 等 11 个子模块仍未取；构建时由 stuart/setup 处理）。
+- 未构建 `lenovo-y700g4.img`；未上机；未改设备。
