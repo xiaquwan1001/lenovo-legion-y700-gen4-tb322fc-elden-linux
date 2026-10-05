@@ -29,6 +29,14 @@ rm -rf "$ROOTFS"
 mkdir -p "$ROOTFS"/{bin,dev,proc,sys,tmp,mnt,etc}
 cp "$IRAM/busybox" "$ROOTFS/bin/busybox"
 chmod 755 "$ROOTFS/bin/busybox"
+# busybox applet 符号链接：/init 的 shebang 是 `#!/bin/sh`，且 init/usb-gadget
+# 直接调用裸 applet。缺它们时内核报 "Failed to execute /init (error -2)" →
+# "No working init found" → 15s panic 复位（2026-10-05 实机定位，G1-30 slim 从未验证）。
+if [ -f "$IRAM/busybox-applets.txt" ]; then
+	while read -r _a; do
+		[ -n "$_a" ] && ln -sf busybox "$ROOTFS/bin/$_a"
+	done < "$IRAM/busybox-applets.txt"
+fi
 sed 's/\r$//' "$IRAM/init" > "$ROOTFS/init"
 chmod 755 "$ROOTFS/init"
 sed 's/\r$//' "$IRAM/usb-gadget" > "$ROOTFS/bin/usb-gadget"

@@ -50,6 +50,9 @@
    ⇒ 死挂**不会自复位**；④ 装 vk54（含 2 行 trans_pgd 修复）后 `kexec -e` 由「死挂」变为「**掉电→ABL→fastboot**」；
    ⑤ **kexec 复位会扣 `boot_b` retry**（无 `markBootSuccessful`）——**做任何 kexec/重启实验前先 `slot-attr.py mark-successful b`**，否则 ~7 次后 b 变 unbootable；
    ⑥ **重复 `fastboot boot`/图形启动使设备不稳定**（掉电重启回 b 槽）→ 已停手。见 `archive/topics/KEXEC-ONDEVICE-2026-10-05.md`。）
+   （**2026-10-05 R2**：**trans_pgd fix 不是充分条件**——用**带 fix 的运行内核 vk58** 发起 kexec 仍失败：`kexec -e` 表现为**直接掉电**（非死挂），
+   后靠 USB VBUS 自动开机回 boot_b；落盘 kmsg 抓取（用户态读 `/dev/kmsg` 逐行 fsync）最后一条 t≈183.4s，**无** `Starting new kernel`/`Bye!`
+   ⇒ 掉电点在里程碑之前或来不及落盘，疑 **B1**，非定论；定死 B1/B2/B3 只剩**物理 UART**。见 `archive/topics/KEXEC-ONDEVICE-R2-2026-10-05.md`。）
 
 6. **boot.img 必须 ≤96 MiB**（`boot_a`=0x6000000）；超了 `fastboot boot` 会 `Bad Buffer Size`。
 
@@ -228,6 +231,12 @@
     - 已知边界：**纯 RAM 变体不启桌面**——RAM initramfs 的 `init` 在 `on_initramfs=1` 时只 `respawn ttyGS0/tty1`，**无 `start-desktop.sh`**；故无图形需求时用 `ROOTARGS=` 纯 RAM 即可绕开。
     - 未定性：历史偶发、次数少；疑属会话/合成器用户态（与 U1–U7、Q24 同类），**按「用户态冻结」策略暂不深挖**。
     - 相关硬事实：本机 **APSS 看门狗被永久禁用**（dmesg `Hard watchdog permanently disabled`）⇒ 这类死挂**不会自复位**，必须物理复位；取证优先用无 GUI 环境 + OOB 串口。
+107. **★G1-30 slim 最小 initramfs 缺 `/bin/sh` —— 所有 slim 镜像从来起不来（2026-10-05 定位）**。
+    - `build-boot.sh` 的 busybox 最小 initramfs 只放 `bin/busybox`，而 `initramfs/init` 是 `#!/bin/sh` ⇒ 内核 `Run /init … Failed to execute /init (error -2)`
+      → `No working init found` → 15s panic 复位（也表现为“掉电重启”）。`vk52/54/56/57-slim` 全中；与内核无关。
+    - 修：`build-boot.sh` 为 applet 建符号链接 + 新增 `initramfs/busybox-applets.txt`（272 项）。
+      坑：设备 busybox 链接表里没有 `mount`/`mountpoint`（属 util-linux）、`ip`（属 iproute2），必须手工补。
+    - 教训：slim 路径此前**从未真机验证**；任何 boot 打包改动都要有一次 `fastboot boot` 冒烟。
 
 ---
 
