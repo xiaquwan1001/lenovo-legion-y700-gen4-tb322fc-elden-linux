@@ -59,6 +59,8 @@ PHEAD=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo "(none)")
 	echo "kernel_git_head=$KHEAD"
 	echo "kernel_git_state=$KDIRTY"
 	echo "project_git_head=$PHEAD"
+	# 上机验证状态：构建物默认是「未上机验证」，只有真机跑过并由用户确认后才改。
+	echo "verification=${VERIFICATION:-NOT_TESTED_ON_DEVICE}"
 } > "$MANIFEST"
 
 echo "[manifest] $MANIFEST"

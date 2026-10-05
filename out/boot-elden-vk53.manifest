@@ -19,3 +19,4 @@ mkbootimg_args=--header_version 2 --os_version 15.0.0 --os_patch_level 2025-08 -
 kernel_git_head=2b5badef00fbae15feff29677b26dec90b21906b
 kernel_git_state=clean
 project_git_head=5f1dcf039e83c02b8c778d9e261693cad8bc898d
+verification=NOT_TESTED_ON_DEVICE

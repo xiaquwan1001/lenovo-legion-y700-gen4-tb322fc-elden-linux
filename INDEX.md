@@ -68,6 +68,7 @@
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-7 BT / G1-9 DP / G1-10 NFC / G1-11 CDSP + 在树未实测项；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 已搁置）。
+  - 本批交付 **vk53**（`out/boot-elden-vk53.img`，内核 `7.2.0-debug-vk53-g2b5badef00fb`，分支 `elden/vk53-hw`）= **NFC ST21NFCA + CDSP 启用 + TYPEC_MUX_FSA4480=y**（DP 前置）。**⚠️ 该版未上机验证**——仅主机侧构建与 DTB/镜像指纹校验，**无任何设备侧证据**，不得引用为“已可用”；逐项状态见 `TASKS.md` §1。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
 - **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=干净内核 `vk47clean`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
   🟠 **熄屏→重启（G1-22/Q24）仍未解（间歇性）**：受控复现成立，但 vk42 与干净重建的少样本「免疫」不可信；**刷入干净内核到 boot_b 后仍复位** ⇒ 「`-dirty` 镜像为根因」假设**未证实**。**停止深究（2026-10-05 用户定）**；若再续须长时窗+多样本+单变量。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
