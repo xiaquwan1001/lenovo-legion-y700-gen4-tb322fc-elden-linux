@@ -65,7 +65,7 @@ pgrep -x seatd >/dev/null 2>&1 || seatd -g root >/run/seatd.log 2>&1 &
 # PipeWire itself is started by its own /etc/xdg/autostart desktop entry.
 [ -x /usr/local/sbin/audio-ucm/install.sh ] && \
 	/usr/local/sbin/audio-ucm/install.sh || true
-if [ -x /usr/libexec/elogind/elogind ] && ! pgrep -x elogind-daemon >/dev/null 2>&1; then
+if [ -x /usr/libexec/elogind/elogind ] && ! pgrep -x elogind >/dev/null 2>&1; then
 	/usr/libexec/elogind/elogind >/run/elogind.log 2>&1 &
 fi
 
@@ -79,6 +79,33 @@ export XDG_CURRENT_DESKTOP=Phosh:GNOME
 export XDG_SESSION_DESKTOP=phosh
 export GDK_BACKEND=wayland
 export MOZ_ENABLE_WAYLAND=1
+
+# --- session mode switch: /etc/elden-session = "greetd" | "phosh"(default) --
+# 2026-10-05 (line A): greetd+elogind gives a REAL logind session
+# (fixes U1 brightness / U2 PIN / U5 seatd / U7 HOME-dconf).  Mode A (chosen by
+# user): greetd [initial_session] auto-logins root via
+# /usr/local/sbin/elden-session-root (no phrog greeter, no PIN).  The legacy
+# ad-hoc phosh-session loop stays the default/rollback.  Seat backend MUST be
+# seatd: the logind backend deactivates the session and phoc drops DRM
+# (CRTC off -> panel hang).
+session_mode=$(cat /etc/elden-session 2>/dev/null || echo phosh)
+case "$session_mode" in
+	greetd)
+		adduser greetd seat 2>/dev/null || true
+		mkdir -p /run/greetd
+		chown greetd:greetd /run/greetd 2>/dev/null || true
+		chmod 700 /run/greetd
+		export LIBSEAT_BACKEND=seatd
+		CONF=/etc/greetd/config.toml
+		[ -f "$CONF" ] || CONF=/etc/phrog/greetd-config.toml
+		echo "[start-desktop] launching greetd ($CONF) LIBSEAT_BACKEND=seatd" > /dev/kmsg
+		while true; do
+			XDG_RUNTIME_DIR=/run/greetd /usr/sbin/greetd -c "$CONF"
+			echo "[start-desktop] greetd exited ($?), restarting in 2s ($(date))" > /dev/kmsg
+			sleep 2
+		done
+		;;
+esac
 
 while true; do
 	: > /run/phosh.log
