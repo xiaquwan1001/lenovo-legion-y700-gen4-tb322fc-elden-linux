@@ -1202,3 +1202,186 @@ fastboot reboot
 
 子代理插件由 `@tintinweb/pi-subagents` 换成 `pi-subagents`（nicobailon），**工具名从 `Agent`/`SubagentWorkflow` 变为 `subagent`**（另有 `bg_wait`、`/subagents-*` 命令）。
 本项目 `.pi/agents/*.md` 已迁移：新增必填 `name:`/`description:`（**缺则新插件静默跳过该 agent**）、`advertise: true`；删掉死引用 `model: deepseek/deepseek-flash`（该 provider 无凭据）→ 子代理继承会话默认模型。`role`/`objective` 保留为人读注释（插件不解析）。详见 `.pi/README.md` 与全局 `~/.pi/agent/memory/HINDSIGHT.md`。
+
+
+## Automatic settled outcome - 2026-10-04
+
+收尾完成。数字结论先行。
+
+## 本次结论
+
+| 项 | 结果 |
+|---|---|
+| 现象 | 熄屏（DPMS off，含单击电源键）→ **整机硬复位**；**间歇性** |
+| 判定 | 受控复现成立；但 vk42 与"干净重建"各 2 轮"免疫"的少样本观测**不可信**——**刷入干净内核到 boot_b 后仍复位** ⇒ 「`-dirty` 镜像为根因」**假设未证实** |
+| 处理 | 按你的指示**停止深究** |
+
+## 设备现状（收尾态）
+- boot_b = **干净内核** `7.2.0-debug-vk47clean-gbd114ca335e1`（已刷、已签，key `fc1e3b33` 匹配 vbmeta_b 链）；
+- 匹配 **25 个相机模块**已部署到持久根，相机 boot 自动加载 OK（`/dev/media0`、`video0/3` 在）；
+- **熄屏→复位仍未解**（仅此一项遗留）。
+
+## 资产与文档（已落档）
+- 镜像：`bootslot-b/boot_b-clean.img`（96 MiB 签名）、`out/boot-elden-vk47clean.img`；模块包 `out/camera-modules-vk47clean.tar.gz`。
+- 提交 `5d59788`：`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9（收尾证据）、`TASKS.md` Q24/G1-22（转「未解/间歇性」）、`PITFALLS.md` #102（保留"`-dirty` 镜像不可复现"的卫生纪律，**去掉因果断言**，并记"少样本不可判定免疫"）。
+- `scripts/check-doctor.sh`：**FAIL=0 WARN=0**。
+
+## 并发处置（未越界）
+- 只提交了自己的 3 个文件（避免再误收）；
+- 误收的 `edk2-aarch64-gunyah` 已从提交移除 + 加入 `.gitignore`；
+- 清掉我自建的游离 worktree `wt-clean`（回收 13 G）；**未碰** bootslim/bootchain/dt-ui 三个并发 lane 与它们的产出的文件。
+
+## 若日后重启调查（已写入 Q24）
+须按 **长时窗 + 多样本 + 单变量** 重做（参 G1-23/Q22 的方法论教训），例如：`g1-22-dpms-test.sh` 连续 ≥10 轮、跨多次 boot，并固定"是否加载音频/相机"等变量，再谈面板/DPU/ADSP 的因果。
+
+需要我把「熄屏复位」这条在 `INDEX.md` §3 快照里也加一句状态吗？（现已在 TASKS §5 Q24 / §1 G1-22 与 PITFALLS §15.5 有索引）
+
+
+## Automatic settled outcome - 2026-10-04
+
+已按反转后的结论修正完毕。
+
+## 修正情况
+
+并发会话 `5d59788` 已改 TASKS Q24/G1-22 与 PITFALLS #102，但它**没覆盖**我上一轮和更早写入的几处，仍留着"已修复/免疫"的口径。本轮全部清除并统一：
+
+| 文件 | 原（错误） | 现（已改） |
+|---|---|---|
+| `DEVICE.md` §2 U2 行 + ★注 | "熄屏→重启**已解**，vk42 起内核免疫" | **未解/间歇性**；`-dirty` 根因**未证实**；停止深究 |
+| `INDEX.md` §3/§6 | "已定位；修复待刷；干净重建实测免疫" | 同上；boot_b 现状=干净内核 `vk47clean` |
+| `RUNBOOK-BRINGUP.md` §7 | "已定位并修复；旧规避非必需" | 根因未证实；**规避必须保留** |
+| `TASKS.md` Q21 | "已解决（2026-10-05）… ✅" | **仍未解（2026-10-05 反转）** |
+| `RESOURCES.md` §4 会话行 + §3 时间线 | "干净重建实测免疫 / 根因=vk40 插桩" | 标为"后续反转：未证实" |
+
+提交 `26d31c0`；`check-doctor` **FAIL=0 WARN=0**。
+
+## 反转后的卡点重排
+
+1. **🔴 G1-22/Q24 熄屏→硬复位** —— 受控复现成立，但 **vk42 / 干净重建各 2 轮"免疫"是少样本、不可信**；**刷入干净内核到 boot_b + 相机模块后仍复位** ⇒ 「`-dirty` 镜像为根因」**假设未证实**。**已停止深究（你定）**。现状：boot_b=干净内核 `vk47clean`（相机正常），`idle-delay=0` 规避保留。若重启调查须**长时窗+多样本+单变量**。
+   - 注意：这条现在是"**已复现但未解、且不打算再投入**"，不再是"只差刷机"。所以原第一卡点从"待你刷机"变成"**维持现状**"。
+2. **🔴 桌面四问（G1-26/27/28）** —— 根因已定（dt-ui 会话，已补档），**可上机落 `gtk-theme='Adwaita'`**；亮度方案待拍板。
+3. **🟡 G1-6 TF 卡 A/B**、**G1-7 BT H1/H2** —— 条件就绪、未跑。
+4. **🟡 G2**：C0 真机取证未做（不可复得）、C1/C3/C2/C4 未推进。
+
+需要我把 `gtk-theme` 修复写成上机单条命令，或继续推进某一项吗？
+
+
+## Automatic settled outcome - 2026-10-04
+
+读完了三个仓库（含各自的 git 历史、README、补丁、构建配置），并对照了上一轮的 `EL2-VIRT-2026-10-02.md` / `ARM-VIRT-RESEARCH-2026-10-02.md` / `BOOTCHAIN-2026-10-05.md` 与 `RESOURCES.md §1.5` 的登记。结论先行。
+
+## 一、一句话结论
+
+**这三个全是"guest 侧（ArmVirt 虚拟平台）UEFI 固件"，没有一个含 SM8750 裸机平台代码。**
+
+| 用途 | 价值 |
+|---|---|
+| G1（裸机主线 Linux + 原厂固件） | **≈0**：它们期望的是 QEMU/Gunyah 的虚拟硬件，不是真机 |
+| G1-29 路线 A（自建可自举 UEFI 塞 `boot.img`） | **只提供"打壳/瘦身"技巧**，缺环（SM8750 平台初始化）依旧缺 |
+| C8 / G2 的 Gunyah VM 路线 | **现成的 guest 固件**，但受"需 gunyah 主 VM 驱动 / 需 Android 宿主"卡点不变 |
+| Windows-on-ARM 方向 | 有一个专用 fork（`edk2-aarch64-gunyah`），仅当该方向复活才有用 |
+
+上一轮 `RESOURCES.md §1.5` 把三者定性为"仅观察、可重下、可清理"——**该定性成立**，下面是把"里面到底有什么能用"讲清楚。
+
+## 二、三个仓库画像
+
+| 仓库 | 上游 | 体量/提交 | 本质 | 独有内容 |
+|---|---|---|---|---|
+| `edk2-gunyah` | `Droid-VM/edk2-gunyah` | 1.8 M / 50 提交 | **crosvm+Gunyah 的 guest UEFI**（`GunyahPkg/GunyahKernel.dsc`→`edk2-gunyah.fd`），README **明列测试平台含 Lenovo Y700 Gen4 = TB322FC/SM8750** | `patches/edk2/` 5 个 ACPI 补丁；`SimpleFbDxe`/`GunyahVirtioGpuDxe`（双队列）/`VirtioFs` 等 crosvm 适配；CI 直接把 `.fd` 推到 `DroidVM-Prebuilt-Root` |
+| `edk2-gunyah-qemu` | `qemu-gunyah/edk2-gunyah-qemu` | 469 M / 35523 提交 | 完整 tianocore EDK2 + **一个 Gunyah QEMU 支持大补丁**（`50c9eb78fa`，38 文件/3920 行） | 给 `qemu-for-gunyah`（KVM-in-EL1 + Gunyah backend，C8 另一条腿）用的 guest 固件：`GunyahIoMmuDxe`、`GunyahRestrictedDmaPoolAcpiDxe`、SMBIOS、`PatchedSerialPortLib16550`、`PrePi/FdtParser`、`QemuRamfb` |
+| `edk2-aarch64-gunyah` | `AnyLaySys/edk2-aarch64-gunyah` | 1.5 G / 12 提交 | 整片 aarch64 EDK2，构建 `ArmVirtPkg/ArmVirtGunyah.dsc`；面向 **Windows-on-ARM64 guest**（提交"启动 Microsoft Windows 改 ramfb"） | **FD 瘦身 3 MB→860 KB**、ramfb、中文提交、`GunyahIoMmuDxe`+`GunyahRestrictedDmaPoolAcpiDxe`（与 qemu 那份**逐字节相同**） |
+
+**共享谱系**：`GunyahIoMmuDxe.c`(608 行) 与 `GunyahRestrictedDmaPoolAcpiDxe.c` 在 `edk2-gunyah-qemu` 和 `edk2-aarch64-gunyah` 里完全相同；`edk2-gunyah` 
+
+
+## Automatic settled outcome - 2026-10-05
+
+调查完成。本地已有 2026-10-05 的机制判定；本轮做的是**外部取证 + 推翻其中一处"缺环"**。结论先行。
+
+## 一、一句话结论
+
+**UEFI 启动（间接引导层）从"机制可行但缺一个 SM8750 可自举 UEFI"升级为"基座已存在、只差 TB322FC 设备包"。** 可行性评级：Route A 由**中高 → 高**（SoC 级已解）；Route B（替换 `uefi_a`）不变=**高险**；Route C（min-initramfs）不受影响。
+
+## 二、新证据（相对 `BOOTCHAIN-2026-10-05.md` 的推翻/补充）
+
+原判定"**缺环 = 一个 SM8750 可自举 UEFI 卷，需 Mu-Silicium TB322FC 移植**"——**前半句已被证伪**：
+
+| # | 事实 | 出处 |
+|---|---|---|
+| N1 | Mu-Silicium **已有 SM8750 SoC 级支持**：`Silicon/Qualcomm/PakalaPkg`（Pakala = SM8750 家族） | Mu-Silicium tree |
+| N2 | **已有可用的 SM8750 设备端口**：`Platforms/OnePlus/dodgePkg`（OnePlus 13 = dodge），Status 表 **Linux Boot ✅ / Internal Storage ✅ / 显示 ✅ / 触屏 ✅ / Mass Storage ✅** | `Status.md` |
+| N3 | **更关键——Mu 的输出本来就是 `boot.img`**：`build_uefi.py:create_android_boot_img()` 把 `SILICIUM_UEFI.fd`（可前置 `BootShim.bin`）gzip 后塞进 **Android boot image 的 kernel 槽**（`{device}-kernel`），另有 `requires_kernel_header`（BootShim 会补 `ARM\x64` 头） | `build_uefi.py` L237–316；`BootShim.S` |
+| N4 | 即：**Mu 原生走的就是三代 GUF296/我们 Route A 的"arm64 壳 + ABL chainload"机制**，不是替换 `uefi_a` | N3 |
+| N5 | 第二个 SM8750 UEFI 工程活跃：Xiaomi 15（dada）workspace，基于 `Project-Aloha/mu_aloha_platforms` + `BootShim v2-d1` + `repack_d1.py`，**明确"只 `fastboot boot`、不刷机"**；dada 的 dsc 同样 `!include PakalaPkg` | `wumai2580/xiaomi-dada-manifest`（2026-09-28） |
+| N6 | 移植面**小且有模板**：设备包 = `.dec/.dsc/.fdf` + `Include/{APRIORI,DXE,RAW}.inc` + `Library/{MemoryMapLib,ConfigurationMapLib}` + `FdtBlob/<dtb>` + `DeviceBuild.py`；Mu 里有 **两个 Lenovo 设备包**（`9707fPkg`=Y700 2023、`j706fPkg`）可照抄厂商约定 | Mu-Silicium `Platforms/Lenovo/` |
+| N7 | 设备驱动来源 = **从原厂 `uefi/xbl` 提取的 DXE 二进制**（UEFIReader）。**我们本机已有 `~/下载/tb322fc/{uefi.elf,imagefv.elf,tools.fv,abl.elf}`**（`BOOTCHAIN` §2.2 已解析） | 移植指南 |
+
+**缺口收窄为**：只差一个 **TB322FC 设备包**（内存映射 + ConfigurationMap + 设备 DTB + dsc/fdf）。SoC 级（Pakala）与"能跑的 SM8
+
+
+## Automatic settled outcome - 2026-10-05
+
+联网检索完成（GitHub API 直连可用；web_search 后端全灭——代理 TLS 故障，未能搜中文社区/预构建产物）。**结论：需要的资源基本可以"直接用现成的"，不必从零移植。**
+
+## 一、一句话结论
+
+之前判定的"缺环 = TB322FC 设备包"**已经在公开仓库里完整存在**：
+- **设备包**：`sunflower2333/mu_wide_platforms` → `Platforms/PakalaPkg/Device/lenovo-y700g4/`（518 个文件）
+- **原厂 DXE 驱动源**：`Project-Aloha/UEFIFirmwareBackup` → `lenovo-y700g4/BOOT.MXF.2.5.1-00240.1-PAKALA-1/`
+- **构建脚本原生输出 `lenovo-y700g4.img`**（Android boot 镜像 = BootShim+UEFI FD）——正是 Route A 要的产物。
+
+## 二、资源清单（已核实存在）
+
+| 资源 | 位置 | 内容/证据 |
+|---|---|---|
+| SM8750 平台包 | `sunflower2333/mu_wide_platforms` `Platforms/PakalaPkg/` | `PakalaNoSb.dsc`：`TARGET_DEVICE` 选设备；`Silicon/QC/Sm8750/QcomPkg` |
+| **TB322FC 设备包** | 同上 `Device/lenovo-y700g4/` | `PlatformMemoryMapLib.c`（**真实 SM8750/Y700g4 内存映射**）、`PlatformConfigurationMapLib`、`ACPI/DSDT.aml`、`DeviceTreeBlob/Linux/linux-y700g4.dtb` |
+| 设备专属 patched 驱动 | 同上 `PatchedBinaries/` | Clock/UFS/PMIC/SPMI/WDog/UsbConfig/FeatureEnabler 的 `.efi+.inf` |
+| Qualcomm DXE 全集 | 同上 `Binaries/` | ArmPkg/EmbeddedPkg/**FatPkg**/MdeModulePkg/QcomPkg/RawFiles |
+| 显示/SMBIOS | `PcdsFixedAtBuild.dsc.inc` | 1904×3040 framebuffer；SMBIOS `Lenovo / Y700 / 4` |
+| BootShim 参数 | `build_cfg/sm8750.json` | `UEFI_BASE=0xFF300000, UEFI_SIZE=0x400000` |
+| 原厂 UEFI 备份 | `Project-Aloha/UEFIFirmwareBackup/lenovo-y700g4/` | 480 文件，`BOOT.MXF.2.5.1-00240.1-PAKALA-1`（提取 Binaries 的来源） |
+| 同族 SM8750 参考 | `Device/{oneplus-dodge,oneplus-erhai,xiaomi-piano,nubia-nx789j}` | xiaomi-piano 有独立 CI 工作流 + 现存产物 |
+
+**构建命令**（README 明确）：`./build_uefi.py -d lenovo-y700g4` → 产物 `Build/PakalaPkg/lenovo-y700g4.img`。`build_uefi.py` 自动按 `Device/` 目录发现设备、按 `build_cfg/*.json` 定平台，我们的设备名会被解析到 Sm8750/PakalaPkg。
+
+## 三、仍缺 / 风险（无法靠联网补）
+
+1. **无该设备的验证记录**：GitHub 上找不到 `lenovo-y700g4` 的可用性报告/CI 工作流（只有 bulk commit "add pakala pkg."，作者 KancyJoe，2026-07-19）；同族 `xiaomi-p
+
+
+## Memory - 2026-10-05
+
+中文社区检索方法（本机实测）：①B 站可用——先 curl https://www.bilibili.com/ 拿 cookie(buvid)，再 curl -b 调 api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=<urlencoded> 带 Referer，code=0 正常返回；view?bvid= 取详情、x/v2/reply 取评论。②cn.bing.com 对长尾/技术查询返回“热门兜底”（不同查询结果完全相同）不可用；baidu/sogou 被 SEO 污染；tieba/coolapk 403、xda 直连 000、4pda 403。③中国站点 direct 与 proxy 均可 200，但 GitHub api 直连需重试（间歇 000/200）。④GitHub 搜索 API 未认证限 10/min；用 `gh auth token` 取 token 后 curl -H "Authorization: Bearer $TOKEN" 走 search/code 与 /search/repositories，可绕限。
+
+
+## Automatic settled outcome - 2026-10-05
+
+中文社区这次查到位了。结论先行。
+
+## 结论：中文社区**没有** TB322FC 的 UEFI / U-Boot / Windows-on-ARM 资源
+
+本轮用 B 站官方 API（先取 cookie 再搜）+ 贴吧/酷安/百度/必应/搜狗，结果是**否**：
+
+| 渠道 | 结果 |
+|---|---|
+| **B 站**（API 可用） | 无 UEFI/U-Boot/WoA 移植；检索词 `TB322FC/UEFI/uboot/双系统/Windows` 命中的都是别的主题 |
+| cn.bing / baidu / sogou | 长尾查询返回"热门兜底"（4 组不同查询结果完全相同）或 SEO 污染，不可用 |
+| 贴吧 / 酷安 / XDA / 4pda | 403/404（反爬），未能进入 |
+
+**唯一像 UEFI 的线索已排除**：`BV1FNKtzLEmM《让拯救者y700四代用上Windows系统》`（UP 夏折腾1118，2025-06-25）——其评论区自证是**串流/远程 + Winlator 类**，不是本地 UEFI WoA（评论在问"为什么骁龙 8E 不行、只支持到 K20"）。
+
+## 中文社区实际在做的是（与本项目相邻）
+
+- **澎湃 OS 移植**（免解锁 root）：悲伤的压缩包等，多条 2026 视频——纯 Android。
+- **主线 Linux**：`BV1stYX66EKG` GEEKiDoS《Y700 四代主线 Linux 7.2 KDE Plasma》= 与本仓 `geekidos-linux/` 同源；`BV1q2N46WEXs` 三代 Linux（作者 **酷安@GUF296**）。
+- **一加 Pad2Pro / 橘子系统移植**、**Winlator/盖世游戏**跑 PC 游戏（Android 侧转译，非真 Windows）。
+
+⇒ 中文社区**只有 Android 侧 OS 移植与模拟器**，没有我们 Route A 需要的那类产出。
+
+## 因此
+
+- **可用资源仍是上一轮那批 GitHub 的东西**（`sunflower2333/mu_wide_platforms` 的 `lenovo-y700g4` 设备包 + `Project-Aloha/UEFIFirmwareBackup`）——那看起来也是中文开发者（sunflower2333/KancyJoe）在 GitHub 上做的，但**没有在中文字区公开/发教程**。
+- 中文社区这条线**到此为止**，按你说的"不行就算了"。
+
+要我把本轮两条线（GitHub 资源清单 + 中文社区无果）合并落一页 `archive/topics/UEFI-RESOURCES-2026-10-06.md` 并更新 `RESOURCES.md §1.5/§3` 吗？或者直接开 lane 去 clone + 构建冒烟？

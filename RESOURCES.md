@@ -65,6 +65,19 @@
 | **`qemu-gunyah/edk2-gunyah-qemu`**（本地 clone `edk2-gunyah-qemu/`，469 M） | EDK2 + `ArmVirtPkg: add Gunyah QEMU support`（2026-03） | 配合 RFC 00/34 的 `qemu-for-gunyah`（KVM-in-EL1 + Gunyah backend，C8 唯一"无 Android"硬件虚拟化路线）的 guest 固件 |
 | **`AnyLaySys/edk2-aarch64-gunyah`**（本地 clone `edk2-aarch64-gunyah/`，1.5 G） | aarch64 EDK2，构建 `ArmVirtPkg/ArmVirtGunyah.dsc`（含 `GunyahIoMmuDxe`/`GunyahRestrictedDmaPoolAcpiDxe`）；近期提交含 **"启动 Microsoft Windows 改 ramfb"** | **Windows-on-ARM64 guest 固件**（Gunyah VM 内起 Windows）；与 win-x86/DroidVM 方向相关，仅观察 |
 
+### 1.6 间接引导层 / SM8750 UEFI（G1-29，2026-10-05 取证）
+
+> 承接 `archive/topics/BOOTCHAIN-2026-10-05.md`（机制判定）。**本轮只定位资源，未 clone/未构建/未上机**；完整清单与检索记录见 **`archive/topics/UEFI-RESOURCES-2026-10-05.md`**。
+
+| 资源 | 关键点 | 我们用它的哪一块 |
+|---|---|---|
+| **`sunflower2333/mu_wide_platforms`**（fork of `Project-Aloha/mu_aloha_platforms`；307 M；2026-07-19 建 / 2026-10-01 更新） | 含 **`Platforms/PakalaPkg/Device/lenovo-y700g4/`（TB322FC 设备包，518 文件）**：真实内存映射 `PlatformMemoryMapLib`、`PlatformConfigurationMapLib`、`ACPI/DSDT.aml`、`DeviceTreeBlob/Linux/linux-y700g4.dtb`、`Binaries/`（原厂 DXE 全集）、`PatchedBinaries/`（Clock/UFS/PMIC/SPMI/WDog/UsbConfig/FeatureEnabler）、1904×3040 framebuffer + SMBIOS `Lenovo/Y700/4`；另含 `Silicon/QC/Sm8750/`、同族 `Device/{oneplus-dodge,oneplus-erhai,xiaomi-piano,nubia-nx789j}` | **G1-29 路线 A 的现成设备包**（此前判定为「缺环」）；`./build_uefi.py -d lenovo-y700g4` → **`Build/PakalaPkg/lenovo-y700g4.img`**（Android boot 镜像 ＝ BootShim + UEFI FD，BootShim 参数 `build_cfg/sm8750.json`：`UEFI_BASE=0xFF300000, UEFI_SIZE=0x400000`） |
+| **`Project-Aloha/UEFIFirmwareBackup`** → `lenovo-y700g4/BOOT.MXF.2.5.1-00240.1-PAKALA-1/`（480 文件，`3a48f03cf` 2026-04-21） | 从原厂固件提取的 **Y700g4 UEFI DXE 二进制备份**；README §SM8750 Pakala 表：`Lenovo y700 gen4 = lenovo-y700g4`、`Oneplus 13 = oneplus-pjz110`、`Xiaomi Piano = xiaomi-piano` | 上述 `Binaries/` 的来源；也可离线核对设备自带 DXE |
+| `Project-Silicium/Mu-Silicium`（`Silicon/Qualcomm/PakalaPkg` + `Platforms/OnePlus/dodgePkg`） | SM8750 备选基线；`Status.md`：OnePlus 13 `Linux Boot ✅ / Internal Storage ✅ / Display ✅ / Touchscreen ✅` | 备选基线 + BootShim（`REQUIRES_KERNEL_HEADER` 补 `ARM\x64` 头的 arm64 壳）参考 |
+
+> **要点**：资源已「现成」⇒ G1-29 Route A 由「自造 UEFI」变为「取用 + 主机构建 + 设备侧零写盘 `fastboot boot` 验证」。
+> **仍未解**：① `lenovo-y700g4` 无 CI/产物/公开验证记录；② 平台默认 `PcdSystemMemorySize=12 GiB` ≠ 本单元 16 GB（按容量档需核对内存映射）；③ 四代 ABL 是否接受 BootShim 壳（BOOTCHAIN **E4** 未做）。
+
 ### 1.4 方法论 / 运维参考
 
 - 本项目坑表：`PITFALLS.md`（**动手前扫一眼**，#80/#81 是本轮新增的流程坑）。
@@ -271,9 +284,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 34 / ◐ 部分 5 / ✗ 未上机 38 |
-| 状态 | active 45 / reference 24 / junk 4 / superseded 4 |
-| 时间跨度 | 2026-09-29 → 2026-10-04（**77 条 jsonl / 71 个独立 ID**；`01a10527`×3、`01a105fb`×3、`01a10596`×2、`01a10736`×2 为同 ID 拆分会话） |
+| 实机验证 | ✅ 实机 34 / ◐ 部分 5 / ✗ 未上机 39 |
+| 状态 | active 45 / reference 25 / junk 4 / superseded 4 |
+| 时间跨度 | 2026-09-29 → 2026-10-05（磁盘 jsonl **79**（顶层 70 + `fold-evidence` 嵌套 9）；本索引 **78** 行；70 个顶层会话 ID；`01a10527`×3、`01a105fb`×3、`01a10596`×2、`01a10736`×2 为同 ID 拆分会话） |
 
 ---
 
@@ -360,7 +373,8 @@ git log --oneline -10
 | 2026-10-04 | `01a10744` | 会话：dt-ui 重派（空） | session-meta | ✗ | junk | 仅派发词，0 助手消息（预算墙/模型解析失败） | - | - |
 | 2026-10-04 | `01a1074a` | 会话：dt-ui 重派（空） | session-meta | ✗ | junk | 仅派发词，0 助手消息 | - | - |
 | 2026-10-04 | `01a10759` | 会话：编排（预算墙中断） | session-meta | ✗ | junk | 编排被 `ustc-ai-3` 预算墙打断；结论被 01a1072e 取代 | - | - |
-| 2026-10-04 | `01a10789` | 会话：进度整理 + 卡点 + 会话成果汇总 | session-meta | ✗ | active | 汇总 12 个未收录会话的成果；补 `DT-UI-2026-10-05.md`、PITFALLS #103、TASKS G1-26/27/28、登记 3 份 EDK2-Gunyah 参考 | - | 本会话 |
+| 2026-10-04 | `01a10789` | 会话：进度整理 + 卡点 + 会话成果汇总 | session-meta | ✗ | active | 汇总 12 个未收录会话的成果；补 `DT-UI-2026-10-05.md`、PITFALLS #103、TASKS G1-26/27/28、登记 3 份 EDK2-Gunyah 参考 | - | - |
+| 2026-10-05 | `01a10996` | 资源：SM8750 UEFI 资源收集 + 中文社区检索 | uefi-resources | ✗ | reference | 定位 TB322FC 设备包**已现成**（`mu_wide_platforms` → `lenovo-y700g4`）+ 原厂 DXE 备份（`UEFIFirmwareBackup`）；证实 `build_uefi.py` 原生产出 `boot.img`（BootShim + FD）；中文社区无 UEFI/WoA/U-Boot 产出；落 `UEFI-RESOURCES-2026-10-05.md`、`RESOURCES.md` §1.6 | - | 未 clone/未构建/未上机；本设备无验证记录、容量档差异待核 |
 
 ---
 

@@ -136,6 +136,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 Waydroid / Play / 容器网络 | `archive/topics/WAYDROID-2026-10-01.md` `archive/topics/WAYDROID-AOSP-AUDIT-2026-10-01.md` `archive/topics/GPLAY-2026-10-02.md` `archive/topics/PROXY-WAYDROID-2026-10-02.md`
 Win-x86 转译 PoC | `archive/topics/WIN-X86-POC-2026-10-02.md`（截图 2 张）`archive/topics/WIN-X86-2026-10-02.md`
 虚拟化（EL2/Gunyah/AVF/生态） | `archive/topics/EL2-VIRT-2026-10-02.md` `archive/topics/ARM-VIRT-RESEARCH-2026-10-02.md`
+间接引导层 / SM8750 UEFI（G1-29 资源+社区检索） | `archive/topics/BOOTCHAIN-2026-10-05.md`（机制） `archive/topics/UEFI-RESOURCES-2026-10-05.md`（可用资源+中文社区检索）
 驱动主线覆盖审计 / 厂商源码 | `archive/topics/DRIVER-MAINLINE-AUDIT-2026-10-02.md` `archive/topics/STOCK-DRIVERS-2026-09-30.md` `archive/topics/STOCK-KERNEL-2026-09-30.md`
 持久化上机 + 熄屏重启故障 | `archive/topics/复盘-2026-10-03-持久化与睡眠.md` **`archive/topics/G1-22-2026-10-05.md`**（受控复现；根因未证实） **`archive/topics/REBOOT-5MIN-2026-10-05.md`**（§7.9 收尾）
 过环境 / 隐藏模块 | `archive/topics/ENV-PASS-2026-10-02.md` `archive/topics/SUSFS-KERNEL-2026-10-02.md` `archive/topics/YUEHONG-MODULE-2026-10-02.md` `archive/topics/GPT槽位元数据-2026-09-30.md`
