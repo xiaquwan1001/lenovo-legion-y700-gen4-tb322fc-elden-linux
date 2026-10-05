@@ -69,6 +69,7 @@
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-7 BT / G1-9 DP / G1-10 NFC / G1-11 CDSP + 在树未实测项；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 已搁置）。
   - 本批交付 **vk53**（`out/boot-elden-vk53.img`，内核 `7.2.0-debug-vk53-g2b5badef00fb`，分支 `elden/vk53-hw`）= **NFC ST21NFCA + CDSP 启用 + TYPEC_MUX_FSA4480=y**（DP 前置）。**⚠️ 该版未上机验证**——仅主机侧构建与 DTB/镜像指纹校验，**无任何设备侧证据**，不得引用为“已可用”；逐项状态见 `TASKS.md` §1。
+- **本轮合并决议（2026-10-05，三调查并联；优先级：kexec ＞ 装完整发行版 ＞ 驱动）**：见 `TASKS.md` §4 与 `archive/topics/MERGE-2026-10-05.md`。要点：① **kexec 快环已死**，迭代统一 `--boot`/`--flash`，kexec 取证排第 1 上机项；② **不整体换发行版**，现 Alpine 加 `greetd+phrog+elogind` 会话清 U1–U7（userland backlog 冻结）；③ **boot_b 保持瘦身**（~20.8 MiB，rootfs/模块/固件放 `linux17`），`--flash` 用 slim 且内核↔模块同版；④ 驱动验证一律 `fastboot boot`。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
 - **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=干净内核 `vk47clean`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
   🟠 **熄屏→重启（G1-22/Q24）仍未解（间歇性）**：受控复现成立，但 vk42 与干净重建的少样本「免疫」不可信；**刷入干净内核到 boot_b 后仍复位** ⇒ 「`-dirty` 镜像为根因」假设**未证实**。**停止深究（2026-10-05 用户定）**；若再续须长时窗+多样本+单变量。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
@@ -140,6 +141,8 @@ Win-x86 转译 PoC | `archive/topics/WIN-X86-POC-2026-10-02.md`（截图 2 张�
 虚拟化（EL2/Gunyah/AVF/生态） | `archive/topics/EL2-VIRT-2026-10-02.md` `archive/topics/ARM-VIRT-RESEARCH-2026-10-02.md`
 间接引导层 / SM8750 UEFI（**G1-29 路线 A 已搁置 2026-10-05**） | `archive/topics/BOOTCHAIN-2026-10-05.md`（机制） `archive/topics/UEFI-RESOURCES-2026-10-05.md`（可用资源+中文社区检索） **`archive/topics/UEFI-UFS-BRINGUP-2026-10-05.md`（上机实验矩阵 + UFS 阻塞根因）** **`archive/topics/UEFI-UFS-UPSTREAM-ASK-2026-10-05.md`（上游 issue #12）**
 驱动主线覆盖审计 / 厂商源码 | `archive/topics/DRIVER-MAINLINE-AUDIT-2026-10-02.md` `archive/topics/STOCK-DRIVERS-2026-09-30.md` `archive/topics/STOCK-KERNEL-2026-09-30.md`
+**用户态发行版选型 + 硬盘布局** | **`archive/topics/USERLAND-STACK-2026-10-05.md`**（Phosh 新鲜度 / U1–U14 用户态 bug 单 / 不换发行版 + 会话 overhaul / boot 分区布局 / UEFI 搁置）
+**本轮三调查合并决议**（kexec / 发行版+布局 / 驱动补全；优先级裁决） | **`archive/topics/MERGE-2026-10-05.md`**
 持久化上机 + 熄屏重启故障 | `archive/topics/复盘-2026-10-03-持久化与睡眠.md` **`archive/topics/G1-22-2026-10-05.md`**（受控复现；根因未证实） **`archive/topics/REBOOT-5MIN-2026-10-05.md`**（§7.9 收尾）
 过环境 / 隐藏模块 | `archive/topics/ENV-PASS-2026-10-02.md` `archive/topics/SUSFS-KERNEL-2026-10-02.md` `archive/topics/YUEHONG-MODULE-2026-10-02.md` `archive/topics/GPT槽位元数据-2026-09-30.md`
 存储手术与回退 | `archive/topics/LINUX-REMOVE-2026-10-02.md` `restore-259/`（AVB/KSU/EDL 救砖）

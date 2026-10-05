@@ -103,6 +103,15 @@
 > **本轮不做**：桌面用户态交互（G1-26/27/28）、内核服务类熄屏/关机（G1-22/Q24）、间接引导层 UEFI（G1-29 已搁置）——只登记，不投入。
 > **2026-10-05 硬件批次进展**：`out/boot-elden-vk53.img` 已构建（内核 `7.2.0-debug-vk53-g2b5badef00fb`，分支 `elden/vk53-hw`）= NFC + CDSP + `TYPEC_MUX_FSA4480=y`；**⚠️ 该版仅主机侧构建，尚未上机验证**（无任何设备侧证据；不得引用为“已可用”），待 `fastboot boot`。**vk54 计划**（DP 单变量）：删 `/delete-property/ usb-role-switch;` + `&mdss_dp0 status="okay"`，复用 vk53 的 `Image.gz` 只重编 DTB 打第二个镜像。
 
+> **★★ 2026-10-05 合并决议（三调查并联；优先级：① kexec 解决方案 ＞ ② 装完整发行版解决用户态 ＞ ③ 补全驱动）**
+> 完整冲突表与依据见 **`archive/topics/MERGE-2026-10-05.md`**（输入 = `KEXEC-2026-10-05` / `USERLAND-STACK-2026-10-05` / vk53 硬件批次）。**低优先级项不取消，但其通道/镜像形态/发行版前提/设备时序服从高优先级项**：
+> - **C1（kexec 胜）**：迭代统一 `fastboot boot`/`--flash`，**DTB 只能走 `--boot`/`--flash`**（file-load 无 DTB 形参）；**禁止把 kexec 当迭代通道**；kexec 取证排**第 1 优先上机项**。
+> - **C2（发行版/布局胜）**：`--flash` 必须用 **slim** 镜像且内核↔`linux17:/lib/modules` 同版本；`fastboot boot` 不受 boot_b 96 MiB 限制，可先验驱动（vk53=96.8 MiB 只能 boot）。**boot_b 保持瘦身**（kernel+~1 MB initramfs+DTB ≈ 20.8 MiB，rootfs/模块/固件放 `linux17`）。
+> - **C3（发行版/布局胜）**：**不整体换更大发行版**；用户态 U1–U14 backlog **冻结**；现 Alpine 加 `greetd+phrog+elogind` **会话 overhaul** 作为驱动收尾的**前置**（host-side 可先做）。
+> - **C4（kexec 胜）**：上机次序 = **kexec 取证 → 驱动验证**；发行版/布局项全部 host-side，随时并行。
+> - **C5（交集）**：Q24 隔离实验列入上机最小实验；驱动测试期间**禁止熄屏**、只用 `fastboot boot`。
+> **合并后执行顺序**：Phase 0 主机侧（打 `1537e55728ec` 对照 + 修 `kexec-boot.sh`；出 greetd 会话方案；构建 vk54；保 boot slim + 版本对齐）→ Phase 1 上机（kexec 取证最前 → vk53/vk54/驱动验证 → Q24 隔离）→ Phase 2 用户态会话 overhaul。
+
 1. **快环——kexec 已定论不可用（2026-10-05，实机）**：fragment 已应用、vk50 全量构建 ✅。**`kexec -s -l` 成功（RC=0，`/sys/kernel/kexec_loaded=1`），但 `kexec -e` 硬挂整机**——串口在 t≈182s 处戛然而止，无新内核横幅、无 panic、无看门狗复位，USB/网络/fastboot 全消失，需物理强制重启；复位后 pstore 为空（非 panic）。⇒ **放弃 kexec 快环**，改用 **`--boot`（fastboot 零写盘）/ `--flash`**。vk50 已用 `fastboot boot` 零写盘实跑验证（相机出流即在 vk50 上完成）。**mod 环前提已补齐**：vk50 起用 `LOCALVERSION=-vk50` 重建全量模块 **1513 个**（vermagic 与内核一致），`scripts/iterate.sh mod` 可用（需在 vk50 上跑且目标模块为 `=m`）。⚠️ **镜像纪律**：`build-camera-overlay.sh` 必给 `BASE=out/rootfs-overlaid.cpio.gz.bak-vk48`，否则重复叠加→boot.img 101MB 超 boot_b 96MiB 分区（当前 vk50 镜像即此状态，`fastboot boot` 可用但不可 flash）。boot_b 实际内容 = **vk47 `-dirty`**（见 Q24）。**主机侧复核（2026-10-05，未上机）**：① file-load 的 `--dtb` 为空操作（`iterate.sh dtb` 环不成立）；② 本树缺上游 `1537e55728ec`（`VA_BITS_52`+!LPA2 的 `trans_pgd` 修复）；**挂死分支点未定位**，取证方案见 `archive/topics/KEXEC-2026-10-05.md`。
 2. ~~**G1-5 相机出流**~~ ✅ **已打通（2026-10-05）**：前后摄连续出帧 rc=0，脚本 `scripts/camera-stream-up.sh`；剩 3A/调优与 C5 容器共享（非阻塞）。
 3. 🟠 **（本轮不做，仅登记）G1-22 / Q24（熄屏→硬复位）仍未解**：boot_b 已刷干净内核 `vk47clean`（`bootslot-b/boot_b-clean.img`，已签）+ 匹配 25 相机模块已部署（相机 OK）；用户刷后**仍观察到熄屏复位** ⇒ 间歇性，假设未证实。**停止深究（用户定）**。证据 `archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
