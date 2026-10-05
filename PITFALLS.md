@@ -45,6 +45,11 @@
    （结论已收窄：file-based `kexec -s -l --kexec-file-syscall` + 未压缩 Image 已验证可行，见 #94 与 RUNBOOK §8。）
    （2026-10-05 取证：**挂死分支点未定位**——`console=ttyGS0` 是 USB gadget，kexec 时必断，不能据"无输出"下结论；
    待带存活 console 上机定位。见 `archive/topics/KEXEC-2026-10-05.md`。）
+   （**2026-10-05 上机**：① **H2（次级 CPU offline 失败→BUG_ON）排除**——可逆 hotplug 7→1 全 `psci: CPUx killed` 干净下线；
+   ② 运行期 VA=**48 位**（`/proc/cpuinfo` 无 `lpa2`）、却 `CONFIG_ARM64_VA_BITS=52` ⇒ 命中上游 `1537e55728ec`；③ **APSS 看门狗被永久禁用**
+   ⇒ 死挂**不会自复位**；④ 装 vk54（含 2 行 trans_pgd 修复）后 `kexec -e` 由「死挂」变为「**掉电→ABL→fastboot**」；
+   ⑤ **kexec 复位会扣 `boot_b` retry**（无 `markBootSuccessful`）——**做任何 kexec/重启实验前先 `slot-attr.py mark-successful b`**，否则 ~7 次后 b 变 unbootable；
+   ⑥ **重复 `fastboot boot`/图形启动使设备不稳定**（掉电重启回 b 槽）→ 已停手。见 `archive/topics/KEXEC-ONDEVICE-2026-10-05.md`。）
 
 6. **boot.img 必须 ≤96 MiB**（`boot_a`=0x6000000）；超了 `fastboot boot` 会 `Bad Buffer Size`。
 
@@ -218,6 +223,11 @@
     - 后果：UCSI 的 `usb_role_switch_at_endpoint()` 命中端点属性但查不到 role-switch 对象 → `ERR_PTR(-EPROBE_DEFER)` → `ucsi_init` 反复 defer → `PPM init failed, stop trying` → **无 `/sys/class/typec`**（DP HPD/连接态因此永远不触发）。
     - 第三道：`&mdss_dp0 { status="disabled" }` ⇒ `aux_bridge.aux_bridge.0: failed to acquire drm_bridge`；且 `mdss_dp0` 是 DRM 组件，贸然开而 altmode 未就绪会拖垮 `msm_drm_bind`（黑屏）。**修复顺序：先 mux → 再 role switch/UCSI → 最后 dp0**。
     - 相关：`archive/topics/DRIVER-MAINLINE-AUDIT-2026-10-02.md` §3/§4.4（旧口径写“DP 属 ADSP bring-up”，本轮定位到 DTS + 模块部署，非 ADSP 缺失）。
+106. **★罕见「图形启动即挂」：进 GUI（Phosh/锁屏）时整机卡死——无 panic、SSH/网络不通（2026-10-05，两次，未定性）**。
+    - 观测（用户）：**持久图形变体**启动时，一次卡在锁屏、一次卡在「CLI→图形亮屏」瞬间；整机无响应。
+    - 已知边界：**纯 RAM 变体不启桌面**——RAM initramfs 的 `init` 在 `on_initramfs=1` 时只 `respawn ttyGS0/tty1`，**无 `start-desktop.sh`**；故无图形需求时用 `ROOTARGS=` 纯 RAM 即可绕开。
+    - 未定性：历史偶发、次数少；疑属会话/合成器用户态（与 U1–U7、Q24 同类），**按「用户态冻结」策略暂不深挖**。
+    - 相关硬事实：本机 **APSS 看门狗被永久禁用**（dmesg `Hard watchdog permanently disabled`）⇒ 这类死挂**不会自复位**，必须物理复位；取证优先用无 GUI 环境 + OOB 串口。
 
 ---
 

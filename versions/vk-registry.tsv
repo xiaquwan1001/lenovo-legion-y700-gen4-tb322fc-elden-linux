@@ -4,3 +4,4 @@ vk50	seed	2026-10-04	seed: 既有最高版本（out/boot-elden-vk50.img）；后
 vk51	bootchain	2026-10-04	G1-29 引导链机制判定+路线（间接引导/UEFI）
 vk52	bootslim	2026-10-04	G1-30 slim initramfs
 vk53	hw-drivers	2026-10-05	G1-10 NFC ST21NFCA + G1-11 CDSP 启用 + TYPEC_MUX_FSA4480=y（DP 前置）；**⚠️ 未上机验证**（仅主机侧构建 + DTB/镜像指纹校验）
+vk54	kexec-va52	2026-10-05	kexec H4 对照：trans_pgd_create_copy 用 _PAGE_OFFSET(vabits_actual)（上游 1537e55728ec）+ ramoops 取证 DT（record-size/max-reason）；**kexec 仍未成功、设备不稳已停手**（见 KEXEC-ONDEVICE-2026-10-05）
