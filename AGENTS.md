@@ -20,6 +20,8 @@
 
 ## 文档结构（入口最少，2026-10-03 起）
 
+与 hermes 项目记忆同源，此处为准（子代理读不到可检索记忆）。
+
 **唯一入口 `INDEX.md`**（含 §2 分层定义与 SSOT 规则）。根目录只有 6 份维护文档：
 - **`DEVICE.md`** 设备描述+状态 · **`TASKS.md`** 任务/进度/未解(§5)/G2方案(§6)/上游化(§7) ·
 - **`RESOURCES.md`** 参考+本地资源+资产台账(§3)+会话索引(§4) · **`RUNBOOK-BRINGUP.md`** 上机手册 ·
@@ -35,19 +37,17 @@
 - 默认只动 **b 槽 + LUN0 GPT**；回收 Android 专属分区（Phase B）需 G1 全绿 + EDL 备份在手。
 - **覆盖 a 槽 Android 前先做一轮真机对照取证**（`TASKS.md §5` Q5，不可复得）。
 - 主线优先：厂商私有 compatible 先查主线等效驱动，只补 DT/config/固件命名；主线没有则分"架构性不可做 / 私有 / 可自研"，只有第三类立项。
-- 用户操作设备；助手准备资产并给出精确步骤。
+- **设备操作**：fastboot/EDL 类命令由用户亲自执行，助手只做分析并给可直接手敲的**单条**命令；不要用封装脚本跑 fastboot（`to-fastboot.sh`/`cycle.sh` 等：命令有限、深层嵌套难预测、故障率高），脚本只用于主机侧构建/打包。每次进 fastboot 后、任何操作前先 `fastboot --set-active=a`。简单、可观测的脚本可直接执行，不必先要授权。
 - **测试环境选择**：零写盘优先 `fastboot boot`；但必须区分 **`-ram` 纯 RAM 变体（停在 initramfs，无桌面/会话服务）** 与 **持久变体（RAM 内核 + 磁盘根，有桌面/Phosh/PipeWire/bluetoothd/Waydroid）**。功能/服务级测试（蓝牙音频、桌面音频栈、Waydroid、相机出流）**必须用持久变体或持久系统**，否则缺系统服务会误判为功能故障（`PITFALLS` #93）。
 - **引导链问题（BL 解锁 / AVB 签名 / 降级 / GPT / EDL）先本地检索再取证**：技能 `references/*.md` 正文不入上下文，
   **不 grep 等于不存在**；命中既有结论则本轮只做「确认或推翻」，不许从零重推；引用旧成功记录先查它属于哪台单元、
   当时固件版本与锁状态（状态不同 ≠ 机型不同）。参 `PITFALLS` #87、`archive/topics/复盘-2026-10-03-BL解锁.md`。
 - 不硬编码其他机器的 home 路径；用 `~` 和项目相对路径。
 - **并发任务一律走基线+fork**（`.pi/CONCURRENCY.md`）：父 agent 打 `base/*` 标签 → `scripts/lane.sh new <lane> <base> [--kernel]` 建 worktree+分支 → 子 agent 只在自己的 lane 分支提交（trailer `Lane/Agent/Baseline/Task/VK`，`.githooks/commit-msg` 强制）→ 父 `lane.sh merge <lane>` 解冲突并 `check-doctor`。**领域层 5 份文档 + `.githooks` + `versions/` 只有父能写**；版本号统一由 `scripts/lane.sh alloc`（registry `versions/vk-registry.tsv`，flock）分配，禁止扫 `out/` 猜号。并发上限 3。
-- 刷写失败先写复盘（操作时间线 / 根因 / 文件清单），再换方案。
 
 ## 其他
 
 - 项目专属技能：`.pi/skills/`（`qualcomm-android-flashing`、`qualcomm-edl-flashing`、`gsi-device-adaptation`）。
 - **启动入口**：`cd ~/y700-elden && pi`。`flashing` / `eacndev` / `lob-remake` 三个 `cd` 包装（旧 pi-profile-switch 时代遗留）**已于 2026-10-04 移除**，归档 `archive/2026-10-04-retired-entrypoints/`。
-- **并发子代理** = `Agent` 工具（插件 `@tintinweb/pi-subagents`）+ `.pi/agents/<role>.md` 角色定义 + `.pi/missions/<topic>.md` 任务背景；**无 harness 守护进程**。旧 swarm harness（`pi-messenger-swarm`，已卸载）的脚本与补丁在同一归档目录，其**限流与「worker 自报不可信」结论仍适用**，命令已失效。
-- 项目记忆：`.pi/memory/`。EDL 工具：`qdl/build/qdl`（项目相对路径）。
+- **并发子代理** = `Agent` 工具（插件 `pi-subagents`，nicobailon）+ `.pi/agents/<role>.md` 角色定义 + `.pi/missions/<topic>.md` 任务背景；**无 harness 守护进程**。旧 swarm harness（`pi-messenger-swarm`，已卸载）的脚本与补丁在归档目录，命令已失效。
 - 通用方法论放全局技能；设备/资产细节留本项目。
