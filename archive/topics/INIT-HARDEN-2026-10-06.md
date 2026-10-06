@@ -63,3 +63,50 @@
 
 - `initramfs/init`、`scripts/check-init.sh`、`rootfs/build-rootfs.sh`
 - `PITFALLS` #107/#109；`TASKS.md` §1 G1-30
+
+---
+
+## 7. 开机刷屏真因（2026-10-06 实机定位）★
+
+用户看到的「进桌面之前的 mount / VFS / `/bin/sh` 之类告警」，原文是：
+
+```
+/init: line 35: sleep: not found                      （约 60+ 次）
+/init: line 36: can't create /dev/null: nonexistent directory
+/init: line 39: can't create /dev/kmsg: nonexistent directory
+```
+
+**不是**内核报错，也不是 `/bin/sh` 缺失，而是 **`switch_root` 与后台任务竞态**：
+
+1. boot_b 的 RAM init（10-02 旧版，5869 B）把「等 `/dev/sde79` 挂 `/persist`」写成
+   **后台子 shell**（`( … ) &`，见其 line 34-45）。
+2. 主流程很快找到 `linux17` 并 `exec switch_root`；内核随即释放 initramfs。
+3. 孤儿子 shell 仍在旧根里循环：`sleep` 二进制随 initramfs 删除 → `not found`；
+   重定向 `2>/dev/null`、`> /dev/kmsg` 也随 `mount --move /dev` 失效 → `nonexistent directory`。
+4. 直到 `i>=100`（10 s）循环结束，噪音停止。
+
+**为什么一直没被串口抓到**：取证走的是 USB ACM（`ttyGS0`），而该 console
+要到 `usb-gadget` 起来（≈8.8 s）才注册，刚好错过这几行。**正确取证＝读屏幕缓冲
+`/dev/vcs1`**（`cat /dev/vcs1`），它保存了进桌面前的最后 47 行 VT 内容。
+
+**修复**：`initramfs/init` 里 `/persist` 改 **同步 + 有界等待（5 s）**，且只在
+「纯 RAM 启动（`elden_root` 为空）」时执行——磁盘根启动本来就会 `switch_root`
+掉它，后台挂载纯属竞态源。
+
+**验证资产**：
+- `out/boot-elden-vk60.img`：内核 + DTB 与 boot_b **逐字节相同**（vk47clean，保证
+  `/lib/modules` 匹配），仅把 60 MB 全家桶 ramdisk 换成 1.1 MB 最小 initramfs +
+  修好的 init。21,516,288 B（20.5 MiB）。
+- `out/boot_b-live.img`：改动前 boot_b 的完整 96 MiB 备份（回滚用）。
+- 主机侧：`dash -n` + `busybox ash -n` + `check-init.sh` 全绿；cpio 内 `/init` == 真源。
+
+**待上机**：`fastboot boot out/boot-elden-vk60.img`（零写盘）→ 确认无刷屏且进桌面；
+通过后可 `fastboot flash boot_b` 永久生效（回滚 `fastboot flash boot_b out/boot_b-live.img`）。
+
+## 8. 次要发现：ttyGS0 上 getty 与内核 console 混流
+
+USB 串口（`/dev/ttyACM0` = `ttyGS0`）既是内核 console 又跑着 `getty -n -l /bin/sh`，
+内核 printk 会被该 shell 当输入读走，产生 `/bin/sh: syntax error: unexpected ")"`、
+`/: Permission denied` 等（`PITFALLS` #8 的救急通道即此）。这是**另一类**「/bin/sh 告警」，
+只在 USB 串口出现、不在屏幕。原设计 `ttyGS1` 才是「回显不被 dmesg 污染」的带外 shell
+（本轮已恢复 `respawn ttyGS1`）；是否停掉 `ttyGS0` getty 待用户拍板（#8 的救急配方依赖它）。

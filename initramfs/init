@@ -141,25 +141,9 @@ fi
 [ "$on_initramfs" = 0 ] && echo 1 > /proc/sys/kernel/softlockup_panic 2>/dev/null
 # --- end elden sleep policy --------------------------------------------------
 
-# --- persistent data partition ----------------------------------------------
-# LUN4 trailing 'last_parti' repurposed as ext4 'linux' (/dev/sde79, ~2.3 GiB).
-# Only mount at /persist when running from the RAM initramfs; when /dev/sde79
-# itself is the root, this must be skipped.
-if [ "$on_initramfs" = 1 ]; then
-	(
-		i=0
-		while [ ! -b /dev/sde79 ] && [ "$i" -lt 100 ]; do sleep 0.1; i=$((i + 1)); done
-		if [ -b /dev/sde79 ] && mnt ext4 /dev/sde79 /persist rw,noatime; then
-			log "/persist mounted from /dev/sde79"
-		else
-			warn "/dev/sde79 not present or unmountable; /persist unavailable"
-		fi
-	) &
-fi
-
-# --- boot a persistent on-disk root -----------------------------------------
+# --- boot a persistent on-disk root: parse the request ------------------------
 #   elden_root=LABEL=linux | UUID=... | PARTLABEL=... | /dev/sde79 ...
-# Falls back to the in-RAM environment if discovery/switch_root fails.
+# Parsed before /persist so we know whether a switch_root is coming.
 elden_root=""
 for arg in $(cat /proc/cmdline); do
 	case "$arg" in
@@ -167,6 +151,25 @@ for arg in $(cat /proc/cmdline); do
 		ubuntu_root=*) elden_root=${arg#ubuntu_root=} ;;
 	esac
 done
+
+# --- persistent data partition (RAM-root boots only) -----------------------
+# LUN4 trailing 'last_parti' repurposed as ext4 'linux' (/dev/sde79, ~2.3 GiB).
+# Only meaningful when we are going to stay on the RAM root: a disk-root boot
+# switch_root's away and /persist is not carried over.  MUST be synchronous —
+# an earlier version backgrounded this wait, and after switch_root freed the
+# initramfs the orphaned subshell spammed the console every boot with
+#   /init: line 35: sleep: not found
+#   /init: line 36: can't create /dev/null: nonexistent directory
+#   /init: line 39: can't create /dev/kmsg: nonexistent directory
+if [ "$on_initramfs" = 1 ] && [ -z "$elden_root" ]; then
+	i=0
+	while [ ! -b /dev/sde79 ] && [ "$i" -lt 50 ]; do sleep 0.1; i=$((i + 1)); done
+	if [ -b /dev/sde79 ] && mnt ext4 /dev/sde79 /persist rw,noatime; then
+		log "/persist mounted from /dev/sde79"
+	else
+		warn "/persist unavailable (/dev/sde79 not present or unmountable)"
+	fi
+fi
 
 # --- mainline camera stack (TB322FC) ----------------------------------------
 # Load the camera modules for the running kernel.  On a RAM boot this reads the

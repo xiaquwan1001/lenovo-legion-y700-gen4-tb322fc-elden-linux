@@ -249,6 +249,13 @@
     - 固化（本轮）：唯一真源 = `initramfs/init`（两种 root 用 `on_initramfs` 分支共存）；`rootfs/init` 删除、`build-rootfs.sh` 改从 `initramfs/init` 安装 `/init`；6 个 `patch-init-*.sh` 退休；新增 `scripts/check-init.sh`（单一真源 / `dash -n`+`busybox ash -n` / applet 覆盖 / 挂钩存在性）。
     - 加固：`log()/warn()/fatal()` 同时写 console 与 `/dev/kmsg`（USB ACM 控制台要到 `usb-gadget` 才出现，早期 userspace 输出否则全丢）；`mnt()` 幂等+重试+失败告警；preflight 缺工具时 `rescue` 丢 shell 而非盲目继续（#107 的 userspace 版）；`switch_root` 失败显式告警并留在 RAM 根；`/var/log/elden-boot.log` 留可跨复位取证的开机快照。
     - 证据：`archive/topics/INIT-HARDEN-2026-10-06.md`；自检 `scripts/check-init.sh`。
+110. **★开机刷屏 `/init: line 35: sleep: not found` + `/dev/null|/dev/kmsg: nonexistent directory` 的真因＝`switch_root` 与后台 `/persist` 任务竞态（2026-10-06 实机定位）**。
+    - 现象：每次开机进桌面之前屏幕（VT）刷几十行 `/init: line 35: sleep: not found`，末尾 `line 36: can't create /dev/null`、`line 39: can't create /dev/kmsg`。看着像 init 坏了，实为无害噪音。
+    - 根因：boot_b 的 RAM init（10-02 旧版）把「等 `/dev/sde79` 挂 `/persist`」的等待做成**后台子 shell**（`( … ) &`）；主流程随即 `exec switch_root`，initramfs 被释放——孤儿子 shell 还在旧根里找 `sleep`（已随 initramfs 删除）→ `not found`；重定向 `/dev/null`、`/dev/kmsg` 也已随 `mount --move /dev` 消失。
+    - 为什么以前没发现：取证靠 USB ACM 串口，而 `ttyGS0` 要到 `usb-gadget` 起来（≈8.8s）才注册，刚好错过；**正确取证取 `/dev/vcsN` 屏幕缓冲**（`cat /dev/vcs1`），它保存了进桌面前的最后屏幕。
+    - 修：`/persist` 改 **同步 + 有界等待**，且只在「纯 RAM 启动（`elden_root` 为空）」时执行（磁盘根启动本来就会 switch_root 掉它，挂了也白挂）。任何 `switch_root` 之前的 `&` 后台任务都要怀疑同类竞态。
+    - 验证资产：`out/boot-elden-vk60.img`（内核+DTB 与 boot_b 逐字节相同，仅换最小 initramfs＋修好的 init）；备份 `out/boot_b-live.img`。
+    - 证据：`archive/topics/INIT-HARDEN-2026-10-06.md` §7。
 
 ---
 
