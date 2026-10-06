@@ -313,7 +313,11 @@
     - **两条拆链路径可独立关闭**：①驱动 `connection_loss_work`（关掉后 `lost` 归零）；②mac80211 的 AP-probe 超时（不发 deauth、不打印 `lost`，因此**只看 `lost` 计数会误判「已修复」**）。实测只关 ①，关联次数照旧（6 次/200 s）。上游同症状修法是关 ① 且只针对 MLO（2026-08 ath12k 邮件列表，仍在 review）。
     - 已排除（单变量，各 45 s 窗口）：`power_save` 开/关（2 vs 2 次掉线）、持续流量（2–3 次）；**单次手动扫描在稳定链路上不触发 bmiss/掉线**（90 s 无新关联）。
     - 纪律：**「WiFi 慢/掉线」先看 `iw station dump` 的 `beacon rx` 与固件 roam reason，再谈 DHCP/管理器**；`nmcli getting IP configuration` 是受害者不是根因。
-    - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md`；相关 #117/#109。
+    - **★后续定位（同日追加）**：黑屏期的第一现场指标应是 **`beacon rx` 速率**（不是 `lost` 次数，后者会混入两条拆链路径）。5/6 轮复现：开机后前 ~130 s `beacon rx` ≈ **0.5/s**（固件对已关联 STA 的上送/睡眠调度受限），~130–150 s 自行校正到 5–10/s。
+    - **PS 已用正确指标彻底排除**：关联前就 `802-11-wireless.powersave 2`（PS 关）重启，黑屏与恢复点**完全不变**。
+    - **同一次开机**在黑屏窗口内扫描能得到 **33–41 个 BSS**（含该 AP 信道）⇒ **RF/beacon 接收本身正常**，坏的是「已关联 STA」这条路径。因此「开机扫一次」不能当修复（复测黑屏照旧）。
+    - 因此「WiFi 慢」的驱动/固件修复方向：换 PEACH 固件（`ath12k/PEACH/hw2.0/amss.bin` 等）或关联后重发 vdev 参数/信道重设复现自愈动作；日常用真 AP 可立即避开。
+    - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md`（§11 追加）；相关 #117/#109。
 
 119. **★同 UTS 候选内核的启动验证：`uname -r` 不可用，要用 `uname -v`；`debug_mask=2` 会冲掉 dmesg 计数（2026-10-06）**。
     - 为保持 `/lib/modules` 的 vermagic 兼容，候选内核刻意锁同一 `UTS_RELEASE`（`7.2.0-debug-vk47clean-gbd114ca335e1`）⇒ `uname -r` 在 vk61 与各候选间**逐字相同**，不能用它证明「新内核已启动」。可用判别器 = `uname -v`（`#N SMP PREEMPT <构建时间戳>`，随每次 make 递增）。
