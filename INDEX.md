@@ -67,11 +67,11 @@
 > **SSOT**：进度百分比与任务状态以 `TASKS.md` §0 为准；本节若与之不符，以 `TASKS.md` 为准。
 
 - **G1 ≈88%**（对齐 TASKS §0）：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、**音频出声 + 桌面 PipeWire/UCM2**、**相机前后摄出流**、触觉、带外串口）。
-  **U2 实跑 `vk47clean`**（b 槽持久直启；kexec 热重载**不可用**，见 `TASKS.md` §4）。**剩 2 个硬缺口**：TF 卡、BT 配对（音频播放+输入均✅，相机出流 ✅ 2026-10-05）。
+  **U2 实跑 `vk47clean`**（b 槽持久直启；kexec 热重载**不可用**，见 `TASKS.md` §4）。**剩硬缺口**：TF 卡；**相机仅 `v4l2-ctl` 出帧、缺 App 实测**；**WiFi 到可用 ~2 分钟（Q26）仍需排查**。**BT 配对 + TWS 实听已经用户实测可用✅**（音频播放+输入✅，相机出流 ✅ 2026-10-05）。
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-7 BT / G1-9 DP / G1-10 NFC / G1-11 CDSP + 在树未实测项；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 搁置）。裁决与沿革见 `TASKS.md` §4 + `archive/topics/MERGE-2026-10-05.md`。
-- **2026-10-06 上机**：`fastboot boot` 正常；**vk53/vk54 的 DTS 改动导致整机启动失败（复位回 b）**——同 vk59 内核 HEAD DTB 挂 / vk47 DTB 过 ⇒ 元凶是 DTS，G1-10/11 **无设备侧成功证据**（`archive/topics/DRIVER-VERIFY-2026-10-06.md`）。boot_b 形态=`vk61`（原完整 ramdisk 只换 `/init`，83.3 MB）；min initramfs slim 无固件→驱动全废（`PITFALLS` #113），不用。
+- **2026-10-06 上机**：`fastboot boot` 正常；**曾判「vk53/vk54 的 DTS 改动导致整机启动失败（复位回 b）」——该归因已撤回**（用户更正：当时跑的是坏 init + 用户态服务干扰，#108），G1-10/11 回落为**未上机验证**，须用 vk61 载具重测。目标 boot_b 形态=`vk61`（原完整 ramdisk 只换 `/init`，83.3 MB，零写盘验收通过、待刷）；min initramfs slim 无固件→驱动全废（`PITFALLS` #113），不用。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
 - **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=干净内核 `vk47clean`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
   🟠 **G1-22/Q24 熄屏→关机：未解 / 间歇性**；`vk47clean` 亦复现 ⇒ 与 `-dirty` 无关；**停止深究**（规避 `idle-delay=0`）。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
@@ -145,7 +145,7 @@ Win-x86 转译 PoC | `archive/topics/WIN-X86-POC-2026-10-02.md`（截图 2 张�
 驱动主线覆盖审计 / 厂商源码 | `archive/topics/DRIVER-MAINLINE-AUDIT-2026-10-02.md` `archive/topics/STOCK-DRIVERS-2026-09-30.md` `archive/topics/STOCK-KERNEL-2026-09-30.md`
 **用户态发行版选型 + 硬盘布局** | **`archive/topics/USERLAND-STACK-2026-10-05.md`**（Phosh 新鲜度 / U1–U14 用户态 bug 单 / 不换发行版 + 会话 overhaul / boot 分区布局 / UEFI 搁置）
 **本轮三调查合并决议**（kexec / 发行版+布局 / 驱动补全；优先级裁决） | **`archive/topics/MERGE-2026-10-05.md`**
-**驱动批次上机验证**（vk53/vk54 DTS 破坏启动定位；`fastboot boot` 矩阵） | **`archive/topics/DRIVER-VERIFY-2026-10-06.md`**
+**驱动批次上机验证**（vk53/vk54 启动失败与**归因撤回**；`fastboot boot` 矩阵） | **`archive/topics/DRIVER-VERIFY-2026-10-06.md`**
 持久化上机 + 熄屏重启故障 | `archive/topics/复盘-2026-10-03-持久化与睡眠.md` **`archive/topics/G1-22-2026-10-05.md`**（受控复现；根因未证实） **`archive/topics/REBOOT-5MIN-2026-10-05.md`**（§7.9 收尾）
 过环境 / 隐藏模块 | `archive/topics/ENV-PASS-2026-10-02.md` `archive/topics/SUSFS-KERNEL-2026-10-02.md` `archive/topics/YUEHONG-MODULE-2026-10-02.md` `archive/topics/GPT槽位元数据-2026-09-30.md`
 存储手术与回退 | `archive/topics/LINUX-REMOVE-2026-10-02.md` `restore-259/`（AVB/KSU/EDL 救砖）

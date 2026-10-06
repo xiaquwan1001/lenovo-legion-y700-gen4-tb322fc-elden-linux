@@ -36,7 +36,7 @@
 | AudioReach **tplg** | vendor 自研 | 自编 `Lenovo-Y700-Gen4-tplg.bin` | ASoC `q6apm` + `patches/0011` | ✅ 出声+录音（G1-4） |
 | CDSP `cdsp.mbn` | `modem_a` | `backup/fw/modem/` | DT `status=disabled` | ➖ 未启用（G1 加分项） |
 | WiFi Peach（`amss.bin`/`bdwlan`/BDF） | `modem_a/peach` | `backup/fw/modem/peach/` | `ath12k` + MHI 重试补丁 | ✅ |
-| BT（`brhbtfw20.tlv`/`brhbtnv20.bin`） | `bluetooth_a` | `backup/fw/bluetooth/` | `hci_qca` + IBS 补丁 | ✅ 起（配对待收口） |
+| BT（`brhbtfw20.tlv`/`brhbtnv20.bin`） | `bluetooth_a` | `backup/fw/bluetooth/` | `hci_qca` + IBS 补丁 | ✅ 配对 + TWS 实听通过（用户 2026-10-06 实测） |
 | GPU gen80000 `zap/sqe/gmu/aqe` | vendor | `backup/fw/gen80000_*` | `msm` + freedreno | ✅ |
 | 触屏 `novatek_ts_csot_3k_fw.bin` | vendor | `backup/fw/vendor/` | `nt36536` | ✅ |
 | 触觉 FW / 功放 ACF | vendor | 改名喂入 `awinic/y700-gen4-*.bin` | `aw86927` / `aw88461` | ✅ |
@@ -48,9 +48,9 @@
 | 级别 | 项 | 性质 |
 |---|---|---|
 | **已通** | CPU/GPU/显示/USB/PCIe/UFS/WiFi/BT/触屏/触觉/背光/充电旁路/相机驱动栈/温控分级 | — |
-| **P0** | 相机出流（camss + s5kjns + gc08a8 + wl2868c + flash） | 只差 config/部署 |
+| **P0** | 相机出流（camss + s5kjns + gc08a8 + wl2868c + flash） | 驱动链已通（`v4l2-ctl` 出帧）；**缺相机 App 实测** |
 | **P1** | TF 卡写稳定性；DP 输出（驱动在树被 `disabled`，缺 ADSP altmode/UCSI） | bug / bring-up（音频已 ✅，G1-4） |
-| **P2** | NFC（主线 `st21nfca` 在，改 compatible）、BT 配对收口 | 小 |
+| **P2** | NFC（主线 `st21nfca` 在，改 compatible）；**BT 已收口** | 小 |
 | **P3** | 温控 OEM 增强（`lenovo,sys-temp`/BCL/QMI cooling） | 可用通用框架近似 |
 | **✗ 不投入** | SLPI 7 传感器、TEE/SPU/hw-fence/mem-buf、FM RTC6226、ST54 SE、Gunyah/PMIH010x | 架构性/无源码 |
 
@@ -69,7 +69,7 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=原始 **`vk47clean`** 镜像，**待刷 vk61**）。功能状态：音频播放+输入✅、温控四级✅、相机✅、触屏✅、WiFi✅、电池✅、桌面关机/重启已修（#89）、**熄屏→重启=未解/间歇性**（G1-22/Q24）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`bootslot-b/boot_b-vk34recon.img`；boot_b 改动前完整备份 `out/boot_b-live.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=原始 **`vk47clean`** 镜像，**待刷 vk61**）。功能状态：音频播放+输入✅、温控四级✅、相机✅（**仅 `v4l2-ctl` 出帧，缺 App 实测**）、触屏✅、WiFi✅（**到可用 ~2 min 待排查，Q26**）、BT 配对+TWS✅（用户 2026-10-06）、电池✅、桌面关机/重启已修（#89）、**熄屏→重启=未解/间歇性**（G1-22/Q24）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`bootslot-b/boot_b-vk34recon.img`；boot_b 改动前完整备份 `out/boot_b-live.img` |
 
 > **★ 熄屏→整机重启：仍未解（间歇性，2026-10-05 反转）**。受控复现：`vk40` 原始内核 + DPMS off **硬复位 3/3**（不熄屏稳定 ≥151s）。但 `vk42`/«干净重建»各 2 轮「免疫」为少样本观测，**不可信**——刷干净内核到 boot_b + 模块后**仍观察到复位** ⇒ 「`-dirty` 镜像为根因」**未证实**。**停止深究（用户定）**；若再续须长时窗+多样本+单变量。
 > 详细矩阵/方法/源码二分见 `archive/topics/G1-22-2026-10-05.md`、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9、`scripts/g1-22-dpms-test.sh`。持久根 `idle-delay=0` 规避**暂时保留**。

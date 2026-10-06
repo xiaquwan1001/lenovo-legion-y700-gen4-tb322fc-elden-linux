@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-06（**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-06（**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ⛔vk53/vk54「DTS 破坏启动」归因已撤回（坏 init+用户态干扰）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -230,11 +230,12 @@
     - 修：`build-boot.sh` 为 applet 建符号链接 + 新增 `initramfs/busybox-applets.txt`（272 项）。
       坑：设备 busybox 链接表里没有 `mount`/`mountpoint`（属 util-linux）、`ip`（属 iproute2），必须手工补。
     - 教训：slim 路径此前**从未真机验证**；任何 boot 打包改动都要有一次 `fastboot boot` 冒烟。
-108. **★vk53/vk54 的 DTS 改动会导致整机启动失败（2026-10-06 上机定位）**。
-    - 现象：`fastboot boot`（零写盘）报 `Booting OKAY`，但整机随即**复位回 b 槽**（运行 `uname` 仍是 b 槽的 vk47clean）；`panic=15` 生效、APSS 看门狗永久禁用。
-    - 单变量（同 vk59 内核）：**HEAD DTB 挂 / vk47 DTB 过** ⇒ 元凶是 DTS，**不是** NFC/`FSA4480` 的 config。HEAD DTB 上**单独关 NFC 仍挂、单独关 CDSP 仍挂**（ramoops 改动未单独验证）⇒ 驱动批次 vk53 若真刷入会启动失败。
-    - 教训：`build-boot.sh`/`build-manifest.sh` 的 `KDIR` 原为硬编码 `linux/`，用外部 Image/DTB 打镜像会**静默用错内核**（本轮首版 vk59 即中招）；已改为 `KDIR=${KDIR:-…}` 并透传 manifest。
-    - 证据：`archive/topics/DRIVER-VERIFY-2026-10-06.md`；相关 `#106`/#107。
+108. **⛔superseded —— vk53/vk54「DTS 改动导致整机启动失败」的归因已撤回（用户 2026-10-06 更正）**。
+    - 旧结论（保留备查）：`fastboot boot` 报 `Booting OKAY` 却复位回 b 槽；同 vk59 内核 HEAD DTB 挂 / vk47 DTB 过 ⇒ 曾判元凶是 DTS（非 NFC/`FSA4480` 的 config）。
+    - **撤回原因**：当时测试载具跑的是**坏 init**（最小 initramfs 缺 `/bin/sh` #107 + `switch_root`×后台 `/persist` 竞态 #110）且受**用户态服务干扰**（#106 图形启动挂/会话 overhaul）。这些与 DTB 无关，足以解释「复位回 b」⇒ DTB 不是根因。
+    - **当前判据**：vk53/vk54 驱动项回落为「未上机验证」；**用 vk61 载具（完整 ramdisk + 修好 init）零写盘重测**后再判定。不要再用旧矩阵的「换 vk47 DTB 就好」推定 DTS。
+    - 仍成立的教训：`build-boot.sh`/`build-manifest.sh` 的 `KDIR` 原为硬编码 `linux/`，用外部 Image/DTB 打镜像会**静默用错内核**（首版 vk59 中招）；已改为 `KDIR=${KDIR:-…}` 并透传 manifest。
+    - 证据：`archive/topics/DRIVER-VERIFY-2026-10-06.md`（本轮更正追加）、`ATTRIBUTION-AUDIT-2026-10-06.md` §1；相关 `#106`/#107/#110/#115。
 109. **★init 曾有「三份分叉 + awk 原地打补丁」——已固化（2026-10-06）**。
     - 旧状态：`initramfs/init`（boot 镜像用）、`rootfs/init`（磁盘根构建用）= 设备 `/init` 三者内容不同（相机预载/音频/`ttyGS1` 各不相同）；磁盘 `/init` 还是 `scripts/patch-init-*.sh` 在设备上 awk 原地拼出来的，不可复现。
     - 后果：改 boot 镜像的 init ≠ 改磁盘的 init；任何 init 加固只做一半就会分叉复发。

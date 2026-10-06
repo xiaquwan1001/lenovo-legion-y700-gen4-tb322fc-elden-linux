@@ -78,3 +78,17 @@
 
 - `MERGE-2026-10-05.md`、`KEXEC-ONDEVICE-R2-2026-10-05.md`（#107 slim bug）、`USERLAND-PKGS-2026-10-05.md`（会话 overhaul）。
 - `TASKS.md` §1 G1-9/10/11、§4；`PITFALLS` #106/#107/**#108**；`versions/vk-registry.tsv` vk59。
+
+---
+
+## 7. 归因撤回（2026-10-06 用户更正，追加不删旧文）★
+
+**用户设备侧更正**：§0/§3 的「vk53/vk54 的 DTS 改动导致整机启动失败」**不成立**——
+当时跑的是**坏 init**（最小 initramfs 缺 `/bin/sh`，`PITFALLS` #107；`switch_root`×后台 `/persist` 竞态，#110）
+且受**用户态服务干扰**（#106 图形启动挂/会话 overhaul），这些与 DTB 无关，足以解释「复位回 b」。
+
+- ⇒ §3 矩阵的「HEAD DTB 挂 / vk47 DTB 过」**不能推出 DTS 是根因**；本文件的 DTS 结论作废。
+- ⇒ vk53/vk54（G1-9/10/11：DP/NFC/CDSP）状态**回落为「未上机验证」**，须用 **vk61 载具（完整 ramdisk + 修好 init）** 零写盘重测后再判定。
+- 权威口径见 `TASKS.md` §0/§1/§4 与 `PITFALLS` #108（已标 ⛔superseded）；归因分层见 `ATTRIBUTION-AUDIT-2026-10-06.md` §1（同轮更正）。
+
+仍成立的部分：§2 的 `KDIR` 硬编码坑、§4 中「ramoops-only/NFC-only/CDSP-only 二分」应改为**在 vk61 载具上重做**、§5 init 稳固化（已由 `INIT-HARDEN-2026-10-06.md` 落地）。

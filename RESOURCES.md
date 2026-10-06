@@ -387,10 +387,10 @@ git log --oneline -10
 | 2026-10-05 | `01a109ed` | 会话：冒烟（只回 OK） | session-meta | ✗ | junk | 空测试 | - | 冒烟测试 |
 | 2026-10-05 | `01a109f5` | 会话：UEFI 路线 A 本地编译链前置（依赖/网络） | uefi-build | ◐ | active | ① 定位本地构建依赖走 **Azure DevOps 内网 feed**（mono TLS 过不去）、代理对大文件**静默截断**（解释了 GitHub artifact 下不完）⇒ curl 直抓 nupkg + 断点续传；② 从 GitHub artifact 取到 `uefi-images-lenovo-y700g4-DEBUG.zip` 并**首次上机**（U7–U9 同步异常刷屏，无结论）。后半在 `01a10aab` 完成 | - | 本会话无设备侧结论；`UEFI-UFS-BRINGUP-2026-10-05.md` 含合并结论 |
 | 2026-10-05 | `01a10aab` | 会话：UEFI 路线 A 上机 A–G 矩阵 + 上游 issue | uefi-bringup | ✅ | active | 本地编译链打通；壳机制成立、**能进 BDS**；A–G 实验定位硬墙 = **UFS 初始化**（UFSDxe ASSERT / `Sync Exception` + SCM mailbox/QBSS/CPU_Vectors 缺失）⇒ Mu Pakala 移植层系统性缺口，非单点补丁可解；发上游 issue `sunflower2333/mu_wide_platforms#12`；最佳基线 `out/local-exp/expB-ufs-unpatched.img`；落 `UEFI-UFS-BRINGUP`/`UEFI-UFS-UPSTREAM-ASK` | - | 路线 A 搁置，待上游回复（Q25） |
-| 2026-10-05 | `01a10b60` | 会话：硬件驱动覆盖（G1-9/10/11，vk53） | hw-drivers | ✅ | active | **G1-9 DP 根因链三闸**实机定位（① FSA4480 mux 未部署→altmode 永久 defer，insmod 后**立即绑定已证**；② `usb-role-switch` 删除→UCSI defer；③ `mdss_dp0 disabled`）；G1-10 NFC / G1-11 CDSP 实现并构建 vk53（**仅主机侧**）；UEFI 搁置 + 本轮范围定为主线硬件驱动；提交 `5f1dcf0`/`69edbbd`/`86665ec` | vk53 | vk53 未上机；**2026-10-06 证其 DTS 破坏启动**（见 `01a10bd0`） |
+| 2026-10-05 | `01a10b60` | 会话：硬件驱动覆盖（G1-9/10/11，vk53） | hw-drivers | ✅ | active | **G1-9 DP 根因链三闸**实机定位（① FSA4480 mux 未部署→altmode 永久 defer，insmod 后**立即绑定已证**；② `usb-role-switch` 删除→UCSI defer；③ `mdss_dp0 disabled`）；G1-10 NFC / G1-11 CDSP 实现并构建 vk53（**仅主机侧**）；UEFI 搁置 + 本轮范围定为主线硬件驱动；提交 `5f1dcf0`/`69edbbd`/`86665ec` | vk53 | vk53 未上机；**2026-10-06 曾记其 DTS 破坏启动，该归因已撤回（用户更正：坏 init+用户态干扰，#108）** |
 | 2026-10-05 | `01a10ba5` | 会话：kexec 热重载失败（R1 取证 + R2 上机） | kexec | ✅ | active | R1 主机侧：`--dtb` 空操作、缺上游 `1537e55728ec`；R2 上机：带 trans_pgd fix 的 **vk58 仍失败 ⇒ fix 不充分**；`kexec -e` = **直接掉电**（非死挂），落盘 kmsg 无里程碑（疑 B1）；**附带修真 bug** = slim initramfs 缺 `/bin/sh`（#107）；`vk54-ram` 反复掉电→用户停手；提交 `7cc6407` | vk54,vk58 | kexec 分支点仍未定位；快环放弃 |
 | 2026-10-05 | `01a10ba8` | 会话：发行版/用户态选型 + 会话 overhaul | userland-session | ✅ | active | ① 选型：**不整体换发行版**（~14 个用户态 bug 中 ~7 个是会话/PAM/logind 类，现 Alpine 加 `greetd+phrog+elogind` 会话可一次清）；② 补 28+ 包（portal/gvfs/rtkit/BT 音频/PAM）；③ **路径 A 上机 + 重启验证**：`greetd initial_session` → 真 logind 会话 c1/root/tty7 + 24 个会话服务，**亮度 `SetBrightness` 511→1800 解 EISDIR**；lane `userland-session` → `ee72844`/`03b4777`，VK=vk55 | vk55 | 落 `USERLAND-STACK`/`USERLAND-PKGS`；`/tmp` 不可写致 `phrog-dbg.log` 权限坑 |
-| 2026-10-05 | `01a10bd0` | 会话：三调查合并 + 驱动上机验证 + Q24 更正 | merge-verify | ✅ | active | 合并 kexec/发行版/驱动（优先级裁决）；Phase1 上机：**vk53/vk54 DTS 改动致整机启动失败→复位回 b**（同 vk59 内核 HEAD DTB 挂 / vk47 DTB 过 ⇒ 元凶 DTS；单独关 NFC/CDSP 仍挂，ramoops 未单验）；**Q24 更正**：`vk47clean` 本身也会熄屏→关机（用户口述）⇒ `-dirty` 根因彻底排除；提交 `de59ebd`/`84899ba` | vk59,vk58,vk47clean | ramoops-only/NFC-only/CDSP-only 二分未完成；init 稳固化未开工 |
+| 2026-10-05 | `01a10bd0` | 会话：三调查合并 + 驱动上机验证 + Q24 更正 | merge-verify | ✅ | active | 合并 kexec/发行版/驱动（优先级裁决）；Phase1 上机：**vk53/vk54「DTS 改动致启动失败」结论已撤回**（用户 2026-10-06 更正：当时坏 init+用户态干扰，#108）⇒ 回落为未上机验证；提交 `de59ebd`/`84899ba` | vk59,vk58,vk47clean | ramoops-only/NFC-only/CDSP-only 二分未完成；init 稳固化未开工 |
 | 2026-10-06 | `01a10ebb` | 会话：近三日进度整理（索引补齐 + 记录更正） | session-meta | ✗ | active | 补 RESOURCES §4 缺失 13 行、更新统计/时间线；更正 TASKS §0「DP/NFC/CDSP 已实现待上机」口径。本会话（进行中） | - | 进行中 |
 | 2026-10-06 | `01a10ee1` | init 固化：唯一真源 + 开机刷屏真因 + vk60/vk61 | init/boot | ✅ | active | 定位开机刷屏=`switch_root`×后台 `/persist` 竞态（突然 vcs 取证）；init 合为唯一真源+日志/自检/回退；发现真机 busybox 有 findfs、无 blkid/mountpoint（名单手写错误）；slim（vk60）无固件驱动全废→蛮弃；**vk61**（原 ramdisk 仅换 /init）零写盘验收通过（触屏/WiFi/电池/BT 均正常），待刷 boot_b | vk61 | boot_b 待刷；BT 「恢复正常」机制未证，需旧/新 RAM init 单变量 A/B |
 | 2026-10-06 | `01a10f2c` | 会话：近四天会话审查（失败方向/排查思路/文档精简） | session-audit | ✗ | active | 审查 10-02→10-06 会话：成功 ~30 / 失败卡墙 ~8 / 未解 ~6 / 中断 ~14；提炼错误方向 F1–F9（检索顺序、主机侧假阳性、观察者效应、小样本定论、混淆变量、基础设施误判…）；落地文档瘦身（TASKS §1/§4、INDEX §3、PITFALLS §0 纪律 4） | - | `archive/topics/SESSION-AUDIT-2026-10-06.md` |
@@ -421,17 +421,17 @@ git log --oneline -10
 | vk48 / vk49 / vk50 | 10-04 日间 → 17:45 | vk48：R1 有线耳麦 tplg RX 播放子图；vk49：相机模块冷启自动加载；**vk50：相机出流 + `LOCALVERSION=-vk50` + kexec 首测** | ✅ vk49 20 模块全载；**vk50 前后摄连续出帧**；❌ vk50 kexec `-e` 硬挂 |
 | vk47clean | 10-04 23:52 | Q24 对照：干净重建内核（清除 `-dirty`） | 10-05 ✅ 持久在跑；但**熄屏→关机仍复现** ⇒ Q24 根因排除 |
 | vk51 / vk52 | 10-04 晚 | vk51：bootchain（G1-29 机制/路线）；vk52：slim initramfs（G1-30） | 均主机侧；vk52 slim=20.8 MiB，E5 上机待定 |
-| vk53 | 10-05 19:09 | NFC（ST21NFCA）+ CDSP + `TYPEC_MUX_FSA4480=y` | ❌ 仅主机侧构建；**上机证 DTS 致整机启动失败→复位回 b**（#108） |
+| vk53 | 10-05 19:09 | NFC（ST21NFCA）+ CDSP + `TYPEC_MUX_FSA4480=y` | ❌ 仅主机侧构建；曾判「上机 DTS 致启动失败」**已撤回**（当时坏 init+用户态干扰，#108），待 vk61 载具重测 |
 | vk54 | 10-05 20:19 | kexec H4 对照（trans_pgd fix）+ DP 单变量 DTB + ramoops 取证 DT | ❌ kexec 仍失败；ram 版反复掉电→用户停手 |
 | vk55 | 10-05 | 会话 overhaul（greetd `initial_session` + 用户/系统服务包） | ✅ 上机 + 重启验证（真 logind 会话、亮度 API 修复） |
 | vk56 / vk57 / vk58 / vk58c | 10-05 22:18 → 23:11 | kexec R2 ad-hoc slim；vk58=带 trans_pgd fix 的运行内核；vk58c=可用 slim | ✅ vk58c `fastboot boot` 启动；❌ 从 vk58 发起 kexec 仍失败（fix 不充分） |
-| vk59 | 10-05 23:58 | 驱动验证：vk53 内核（NFC+CDSP+FSA4480=y）重打 slim | ✅ **vk47 DTB 可启动**；❌ **HEAD DTB 挂**（单独关 NFC/CDSP 仍挂，ramoops 未单验） |
+| vk59 | 10-05 23:58 | 驱动验证：vk53 内核（NFC+CDSP+FSA4480=y）重打 slim | ⚠️ **旧矩阵已失效**：曾记「vk47 DTB 可启动 / HEAD DTB 挂」⇒ 已撤回 DTS 归因（当时坏 init+用户态干扰，#108）；待 vk61 载具重测 |
 
 **边界判定**：最后**持久在机**的版本 = **`vk47clean`（b 槽，2026-10-05 至今）**；
 **经 `fastboot boot` 确认启动**的版本 = vk58 / vk58c / vk59-vk47DTB；**经重刷确认在机**的含 vk55 会话 overhaul。
 播放出声在 **vk43** 确认，温控四级在 **vk42** 确认，**DP 三闸根因在 vk53 内核侧实机证**（FSA4480 模块 insmod）。
 「熄屏→重启/关机」（Q24）在 `vk47clean` 上仍复现（用户口述，`idle-delay=0` 规避），**根因未证实、间歇性未解**；
-vk53/vk54 的 DTS 增量**当前不得作为「已实现」引用**（`PITFALLS` #108）。
+vk53/vk54 的驱动项（DP/NFC/CDSP）**回落为「未上机验证」**：2026-10-06 的「DTS 破坏启动」归因已撤回（坏 init+用户态干扰，#108），**待 vk61 载具重测**后再引用。**相机仅 `v4l2-ctl` 出帧、缺 App 实测**；**WiFi 到可用 ~2 min（Q26）仍需排查**；**BT 配对+TWS 已用户实测可用**。
 
 ---
 
