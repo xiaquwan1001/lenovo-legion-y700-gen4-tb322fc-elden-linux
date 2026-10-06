@@ -10,7 +10,7 @@
 #         versions/vk-registry.tsv、archive/topics/VK-LEDGER-AUDIT-2026-10-06.md
 #
 # vk	编译成果	上机验证	已知bug	排查成果	处置	备注
-vk34	img(out/boot-elden-vk34recon.img,+ram; bootslot-b/boot_b-vk34recon.img)	✅在跑/回归基线	音频BE未通	有	闭环	BE 路由由 vk43 修复
+vk34	img(out/boot-elden-vk34recon.img,+ram; bootslot-b/boot_b-vk34recon.img)	✅在跑/回归基线；持久根已实测	音频BE未通	有	闭环	BE 路由由 vk43 修复；2026-10-06 用户实测持久根(linux17)直启 OK
 vk34recon-ram	img(out/boot-elden-vk34recon-ram.img)	✅2026-10-06 fastboot boot	—	—	闭环	RAM根（无 elden_root，设计如此）；UART+SSH 通、rootfs rw、linux17 fsck clean
 vk35	无	—	—	—	跳过	仅会话读数
 vk36/vk36debug	仅rootfs片段(out/rootfs-thermal-vk36.cpio.gz, 无boot镜像)	—	—	—	跳过	无boot成果
@@ -25,9 +25,9 @@ vk42	img+manifest(out/boot-elden-vk42.img)	✅上机(10-04)	熄屏→重启(Q24)
 vk43	无(UNREPRODUCIBLE)	✅出声	—	—	闭环	本号改动=rootfs tplg，无内核源
 vk44	无	✅	DMIC采集恒0	有(本机无DMIC,方向证伪)	闭环	硬件限制
 vk45	无	✅	同上	有	闭环	硬件限制
-vk46	img(out/boot-elden-vk46.img,-ram; bootslot-b/boot_b.img)	✅模块对齐(10-04)	—	—	闭环	
-vk47	img(out/boot-elden-vk47.img,+a-ram,+dtb42)	✅持久根基线	TF卡(硬件~70-80%)/BT	有(BT已批量收口)	闭环	TF 受硬件限制；BT 用户实测可用
-vk47-ram	img(out/boot-elden-vk47-ram.img)	未记录	—	—	补测	零写盘可快测
+vk46	img(out/boot-elden-vk46.img,-ram; bootslot-b/boot_b.img)	✅模块对齐(10-04)	—	—	闭环	【命名漂移】镜像内核实为 vk45（UTS ga923477be3a9-dirty）；vk46-ram 同内核同 ramdisk
+vk47	img(out/boot-elden-vk47.img,+a-ram,+dtb42)	✅持久根基线	TF卡(硬件~70-80%)/BT	有(BT已批量收口)	闭环	TF 受硬件限制；BT 用户实测可用。【命名漂移】镜像内核实为 vk46（UTS g4c68eb5ed4e3-dirty），真 vk47 内核仅见 vk47clean
+vk47-ram	img(out/boot-elden-vk47-ram.img)	未记录	—	—	补测	=vk47.img 去 elden_root（同内核同 ramdisk）；内核实为 vk46（UTS g4c68eb5ed4e3-dirty）
 vk47-dtb42	img(out/boot-elden-vk47-dtb42.img)	✅(硬复位)	—	有(DTB无关)	闭环	单变量对照已用
 vk47clean	img(out/boot-elden-vk47clean.img; boot_b-clean; out/boot_b-live.img)	✅当前在机	熄屏→重启(Q24)	有	已知未解	Q24 排除 -dirty 因素
 vk48	无boot镜像(仅 out/rootfs-vk48.cpio.gz,tplg-overlay)	未验证	R1耳麦硬件	有	闭环	硬件限制挂起
