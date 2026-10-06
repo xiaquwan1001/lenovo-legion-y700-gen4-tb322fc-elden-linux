@@ -112,13 +112,13 @@
 > - **C5（交集）**：Q24 隔离实验列入上机最小实验；驱动测试期间**禁止熄屏**、只用 `fastboot boot`。
 > **合并后执行顺序**：Phase 0 主机侧（打 `1537e55728ec` 对照 + 修 `kexec-boot.sh`；出 greetd 会话方案；构建 vk54；保 boot slim + 版本对齐）→ Phase 1 上机（kexec 取证最前 → vk53/vk54/驱动验证 → Q24 隔离）→ Phase 2 用户态会话 overhaul。
 
-> **2026-10-06 上机进展（本轮，设备独占 / agent fastboot；用户中途指示「不要继续」→ 停在只读结论）**：设备基线 = b 槽持久 vk47clean + **greetd 会话 overhaul 已在线**（`loginctl`=c1/root/tty7），`boot_b`=`0x7f` 健康。**`fastboot boot` 机制正常**（vk58c-slim 实测接管）。**★新结论：vk53/vk54 的 DTS 改动导致整机启动失败（复位回 b）**——单变量：同 vk59 内核 **HEAD DTB 挂 / vk47 DTB 过** ⇒ 元凶是 DTS（非 NFC/FSA config）；HEAD DTB 上**单独关 NFC 仍挂、单独关 CDSP 仍挂**，ramoops 改动未单独验证。⇒ **G1-10/G1-11 无任何设备侧成功证据，修复前不得引用为已实现。** 工具修正：`build-boot.sh`/`build-manifest.sh` 的 `KDIR` 改为可 env 覆盖。待续：ramoops-only 变体 → NFC-only/CDSP-only 二分。另：用户要求 **init 稳固化**（启动时挂载/`/bin`/VFS 告警），未开工。证据 `archive/topics/DRIVER-VERIFY-2026-10-06.md`、`PITFALLS` #108。
+> **2026-10-06 上机进展（本轮，设备独占 / agent fastboot；用户中途指示「不要继续」→ 停在只读结论）**：设备基线 = b 槽持久 vk47clean + **greetd 会话 overhaul 已在线**（`loginctl`=c1/root/tty7），`boot_b`=`0x7f` 健康。**`fastboot boot` 机制正常**（vk58c-slim 实测接管）。**★新结论：vk53/vk54 的 DTS 改动导致整机启动失败（复位回 b）**——单变量：同 vk59 内核 **HEAD DTB 挂 / vk47 DTB 过** ⇒ 元凶是 DTS（非 NFC/FSA config）；HEAD DTB 上**单独关 NFC 仍挂、单独关 CDSP 仍挂**，ramoops 改动未单独验证。⇒ **G1-10/G1-11 无任何设备侧成功证据，修复前不得引用为已实现。** 工具修正：`build-boot.sh`/`build-manifest.sh` 的 `KDIR` 改为可 env 覆盖。待续：ramoops-only 变体 → NFC-only/CDSP-only 二分。另：用户要求 **init 稳固化**（启动时挂载/`/bin`/VFS 告警）——**2026-10-06 主机侧已落地**（唯一真源 + 日志/自检/回退，见 `archive/topics/INIT-HARDEN-2026-10-06.md`），真机验收待做。证据 `archive/topics/DRIVER-VERIFY-2026-10-06.md`、`PITFALLS` #108。
 
 > **2026-10-06 近三日（10-04 → 10-06）失败/半成品盘点（会话索引补录时整理；结论权威仍在各 ID 条目）**：
 > - **UEFI 路线 A（G1-29 / Q25）**：本地编译链打通、平台能进 BDS，但 **UFS 初始化过不去**（Mu Pakala 移植层系统性缺口）⇒ 搁置；已开上游 `sunflower2333/mu_wide_platforms#12`。**半成品**：A–G 矩阵中 ramoops/其它组合未穷尽；可用基线仅 `out/local-exp/expB-ufs-unpatched.img`。
 > - **kexec 快环**：确证不可用；R2 后 **trans_pgd fix 不充分**，**失败分支点未定位**（无存活 console + 看门狗禁用）。
 > - **vk53/vk54 驱动批次（G1-9/10/11）**：主机侧已实现，但 **DTS 增量致整机启动失败**；二分只做到「单独关 NFC / 单独关 CDSP 各一」，**ramoops-only 未做** ⇒ 根因未定位到 hunk；**G1-10/11 无设备侧成功证据**。
-> - **init 稳固化（用户 10-06 要求）**：**未开工**（挂载失败显式报错/重试、`/bin`/applet 自检、`switch_root` 回退、固件探测延后到 switch_root 后）。
+> - **init 稳固化（用户 10-06 要求）**：🟢 **主机侧已落地（2026-10-06）**——三份 init 合并为唯一真源 `initramfs/init`（`rootfs/init` 删除、6 个 `patch-init-*.sh` 退休）；加 `log()/warn()/fatal()`（console+kmsg）、`mnt()` 幂等重试、preflight applet 自检 + `rescue` shell、`switch_root` 失败显式告警、`/var/log/elden-boot.log`。自检 `scripts/check-init.sh` 全绿 + slim 打包冒烟通过；**真机部署/重启验收待做**（恢复路径=纯 RAM 变体拷回 `/init.bak-*`）。见 `archive/topics/INIT-HARDEN-2026-10-06.md`、`PITFALLS` #109。
 > - **Q24 熄屏→关机**：`vk47clean` 仍复现；根因未证实，**停止深究**（用户定）；规避 = `idle-delay=0`。
 > - **G1-6 TF 卡 / G1-7 BT H1/H2**：补丁与脚本就绪，A/B 未跑（新卡已在位）。
 > - **G1-26/27/28 桌面用户态**：G1-26/27 根因已定、修复未落盘（lane `dt-ui` 无改动）；**G1-28 亮度核心链路已解**（`greetd` 真会话后 `SetBrightness` 不再 `EISDIR`），剩滑块 UI 联动。

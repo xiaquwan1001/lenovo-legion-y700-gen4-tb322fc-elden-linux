@@ -243,6 +243,12 @@
     - 单变量（同 vk59 内核）：**HEAD DTB 挂 / vk47 DTB 过** ⇒ 元凶是 DTS，**不是** NFC/`FSA4480` 的 config。HEAD DTB 上**单独关 NFC 仍挂、单独关 CDSP 仍挂**（ramoops 改动未单独验证）⇒ 驱动批次 vk53 若真刷入会启动失败。
     - 教训：`build-boot.sh`/`build-manifest.sh` 的 `KDIR` 原为硬编码 `linux/`，用外部 Image/DTB 打镜像会**静默用错内核**（本轮首版 vk59 即中招）；已改为 `KDIR=${KDIR:-…}` 并透传 manifest。
     - 证据：`archive/topics/DRIVER-VERIFY-2026-10-06.md`；相关 `#106`/#107。
+109. **★init 曾有「三份分叉 + awk 原地打补丁」——已固化（2026-10-06）**。
+    - 旧状态：`initramfs/init`（boot 镜像用）、`rootfs/init`（磁盘根构建用）= 设备 `/init` 三者内容不同（相机预载/音频/`ttyGS1` 各不相同）；磁盘 `/init` 还是 `scripts/patch-init-*.sh` 在设备上 awk 原地拼出来的，不可复现。
+    - 后果：改 boot 镜像的 init ≠ 改磁盘的 init；任何 init 加固只做一半就会分叉复发。
+    - 固化（本轮）：唯一真源 = `initramfs/init`（两种 root 用 `on_initramfs` 分支共存）；`rootfs/init` 删除、`build-rootfs.sh` 改从 `initramfs/init` 安装 `/init`；6 个 `patch-init-*.sh` 退休；新增 `scripts/check-init.sh`（单一真源 / `dash -n`+`busybox ash -n` / applet 覆盖 / 挂钩存在性）。
+    - 加固：`log()/warn()/fatal()` 同时写 console 与 `/dev/kmsg`（USB ACM 控制台要到 `usb-gadget` 才出现，早期 userspace 输出否则全丢）；`mnt()` 幂等+重试+失败告警；preflight 缺工具时 `rescue` 丢 shell 而非盲目继续（#107 的 userspace 版）；`switch_root` 失败显式告警并留在 RAM 根；`/var/log/elden-boot.log` 留可跨复位取证的开机快照。
+    - 证据：`archive/topics/INIT-HARDEN-2026-10-06.md`；自检 `scripts/check-init.sh`。
 
 ---
 

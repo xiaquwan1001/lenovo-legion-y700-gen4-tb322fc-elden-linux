@@ -58,7 +58,9 @@ EOF
 umount $ROOT/proc 2>/dev/null || true
 
 # --- our init, gadget script, dhcp server config ----------------------------
-sed 's/\r$//' $R/init       > $ROOT/init;                    chmod 755 $ROOT/init
+# Single source of truth: initramfs/init (shared with the boot-image build).
+# rootfs/init used to be a second copy and drifted; it is retired.
+sed 's/\r$//' $R/../initramfs/init > $ROOT/init;              chmod 755 $ROOT/init
 mkdir -p $ROOT/usr/local/sbin
 sed 's/\r$//' $R/usb-gadget > $ROOT/usr/local/sbin/usb-gadget; chmod 755 $ROOT/usr/local/sbin/usb-gadget
 aarch64-linux-gnu-gcc -static -Os -o $ROOT/usr/local/sbin/reboot2 $R/reboot2.c
@@ -68,8 +70,6 @@ aarch64-linux-gnu-gcc -static -Os -o $ROOT/usr/local/sbin/reboot2 $R/reboot2.c
 # were scp'd onto the device ad-hoc, so the rootfs was not reproducible.
 for s in ath12k-load.sh ath12k-retry.sh audio-alsa-init.sh bt-up.sh charge-ctl.sh charge-watch.sh \
          dpms-watch.sh net-up-manual.sh net-up.sh net-up-nm.sh \
-         patch-init-ath12k.sh patch-init-bt.sh patch-init-charge.sh \
-         patch-init-dbus.sh patch-init-net.sh patch-init-time.sh \
          start-desktop.sh time-sync.sh slot-attr.py 99-unmanaged.conf; do
 	src=$R/../scripts/$s
 	if [ -f "$src" ]; then
