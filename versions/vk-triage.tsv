@@ -36,16 +36,16 @@ vk50	img+manifest(out/boot-elden-vk50.img)	✅前后摄出帧	①kexec硬挂	有
 vk51	无(研究/脚本)	—	—	—	跳过	无镜像
 vk52-slim	img+manifest(out/boot-elden-vk52-slim.img)	❌从未启动成功	initramfs缺/bin/sh(#107)	有(vk58c修复)	闭环	slim 方法已弃用(#113)，不再补测
 vk53	img+manifest(out/boot-elden-vk53.img,vk53f.img)	✅间接(vkY起/vkD2起)	i2c0使能硬关机	有(定案#108)	闭环	G1-10取消(无NFC硬件)；G1-11 CDSP经vkD2通过
-vk53f	img+manifest(out/boot-elden-vk53f.img)	未记录	—	—	补测	与vk53同内核；仅ramdisk异
-vk54	img+manifest(out/boot-elden-vk54.img 101MB)	⚠️报OKAY但仍起vk47clean	大镜像boot未接管(未深究)	部分	待调查	疑与#108同因(坏init/用户态)待单变量确认
-vk54f	img+manifest(out/boot-elden-vk54f.img)	未记录	—	—	补测	clean重建版
+vk53f	img+manifest(out/boot-elden-vk53f.img)	未记录(DTB静态判定)	i2c0=okay	有(DTB逐字节=vkX-dtb53)	闭环	静态：DTB e3c0a3c9 与 vkX-dtb53 同、i2c0使能⇒必挂，免实机
+vk54	img+manifest(out/boot-elden-vk54.img 101MB)	⚠️报OKAY但仍起vk47clean	大镜像boot未接管	有(DTB静态判定)	闭环	静态：DTB 769c842c i2c0=okay ⇒ 挂机复位回 b（同#108）；未实机复现
+vk54f	img+manifest(out/boot-elden-vk54f.img)	未记录(DTB静态判定)	i2c0=okay	有(DTB=vk54同dtb)	闭环	静态：DTB 769c842c i2c0使能⇒必挂，免实机
 vk54-ram	img+manifest(out/boot-elden-vk54-ram.img)	✅反复掉电(用户停手)	kexec线	有	闭环	kexec 线已放弃
 vk54-slim	img+manifest(out/boot-elden-vk54-slim.img)	❌从未启动成功	initramfs缺/bin/sh	有(vk58c修复)	闭环	同 vk52-slim
 vk55	无(用户态)	✅上机+重启验证	—	—	闭环	会话overhaul
 vk56-slim	img+manifest(out/boot-elden-vk56-slim.img)	❌从未启动成功	initramfs缺/bin/sh	有	闭环	同 vk52-slim；复用vk54内核
 vk57-slim	img+manifest(out/boot-elden-vk57-slim.img)	❌从未启动成功	initramfs缺/bin/sh	有	闭环	同 vk52-slim
 vk58-slim	img+manifest(out/boot-elden-vk58-slim.img)	❌首启失败	initramfs缺/bin/sh	有	闭环	修后=vk58c
-vk58b-slim	img+manifest(out/boot-elden-vk58b-slim.img)	未记录	同slim initramfs?	—	补测	若仍含旧initramfs则免测(先核对)
+vk58b-slim	img+manifest(out/boot-elden-vk58b-slim.img)	未记录(静态判定)	缺switch_root/mount/modprobe	有(vk58c补全并验收)	闭环	静态：init 需 switch_root，vk58b 缺 ⇒ 失败；vk58c 已补全
 vk58c-slim	img+manifest(out/boot-elden-vk58c-slim.img)	✅进用户态(SSH)	GUI卡(模块失配,已解)	有	闭环	
 vk59-slim	img+manifest(out/boot-elden-vk59-slim.img)	✅(矩阵)	旧归因作废	有	闭环	矩阵结论已由#108定案覆盖
 vk59a-slim	img+manifest(out/boot-elden-vk59a-slim.img)	✅(能起对照)	—	有	闭环	vk59内核+vk47DTB
@@ -58,9 +58,29 @@ vkD1a-nfcpin	img+manifest(out/boot-elden-vkD1a-nfcpin.img)	✅(起)	—	有	闭�
 vkD1b-nfcdev	img+manifest(out/boot-elden-vkD1b-nfcdev.img)	✅(挂=结论)	—	有	闭环	单变量
 vkD2-cdsponly	img+manifest(out/boot-elden-vkD2-cdsponly.img)	✅(起)	—	有	闭环	G1-11 CDSP 证据
 vkB1-bin	img+manifest(out/boot-elden-vkB1-bin.img)	✅(挂=结论)	—	有	闭环	定案=使能i2c0本身
-vkB2-bin	img+manifest(out/boot-elden-vkB2-bin.img)	未记录	—	—	补测	有manifest无结论；或按B1冗余免测
-vkB3-bin	img+manifest(out/boot-elden-vkB3-bin.img)	未记录	—	—	补测	同上
-vkB4-bin	img+manifest(out/boot-elden-vkB4-bin.img)	未记录	—	—	补测	同上
+vkB2-bin	img+manifest(out/boot-elden-vkB2-bin.img)	已完成	—	—	闭环	用户 2026-10-06 判定完成
+vkB3-bin	img+manifest(out/boot-elden-vkB3-bin.img)	已完成	—	—	闭环	用户 2026-10-06 判定完成
+vkB4-bin	img+manifest(out/boot-elden-vkB4-bin.img)	已完成	—	—	闭环	用户 2026-10-06 判定完成
 vkX-dtb53	img+manifest(out/boot-elden-vkX-dtb53.img)	✅(挂=结论)	—	有	闭环	vk47clean内核+vk53DTB
 vkY-kern53	img+manifest(out/boot-elden-vkY-kern53.img)	✅(起)	—	有	闭环	vk53内核+vk47DTB
 inittest-veh	img+manifest(out/boot-elden-inittest-veh.img)	✅冒烟(WiFi慢但成功)	—	—	闭环	init载具冒烟
+#
+# ============================================================================
+# 补测/补查 顺序（2026-10-06 静态整理后）
+# ----------------------------------------------------------------------------
+# 【剩余实机补测】仅 2 个纯 RAM 变体（低价值；零写盘各 1 次；bash elden-net.sh 后 ssh 看 uname）
+#   1. fbg vk34recon-ram : fastboot boot out/boot-elden-vk34recon-ram.img
+#   2. fbg vk47-ram      : fastboot boot out/boot-elden-vk47-ram.img
+#     （判据：进 initramfs/串口有输出即可；RAM 变体无桌面服务，PITFALLS #93）
+#
+# 【静态判定闭环、免实机】证据在 out/*.manifest + DTB 反编译（dtc -I dtb -O dts）：
+#   - i2c0 实为 i2c@a80000（QUPV3_SE0），非 i2c5@a94000：
+#       vk53f / vk54f / vkX-dtb53 DTB：i2c@a80000 status="okay"  ⇒ 必挂（vkX-dtb53 已证）
+#       vk47clean / vk61 DTB        ：i2c@a80000 status="disabled"⇒ 正常启动
+#     ⇒ vk53f（dtb e3c0a3c9=vkX同）、vk54f（dtb 769c842c=vk54同）、vk54 均为必挂/复位回 b，
+#       与 #108（i2c0 使能）同因，无需再上机。
+#   - vk58b-slim：ramdisk 有 /bin/sh 但缺 switch_root/mount/modprobe（diff vs vk58c）⇒ init 失败；
+#       vk58c 已补全并实机验收 ⇒ 闭环。
+#
+# 【可选确认】若用户坚持亲眼确认，按上序零写盘各跑一次即可（不写盘、不动 slot）。
+# ============================================================================

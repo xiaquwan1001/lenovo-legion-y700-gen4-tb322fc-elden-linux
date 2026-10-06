@@ -439,7 +439,7 @@ vk53/vk54 启动失败**已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬�
 **版本账目机读校验 + 不可复现号登记（2026-10-06）**：`archive/topics/VK-LEDGER-AUDIT-2026-10-06.md`——
 `vk43` = 全账唯一零证据号（无源/镜像/manifest）；`vk52/vk54/vk56/vk57` slim 镜像**错包内核**（陈旧 `Image.gz`，
 与 vk52-slim 同 bug 类）；`scripts/check-doctor.sh` §5 现已硬校验「registry 单调唯一 / registry 号必有 manifest /
-树自称内核 ≡ 镜像内 UTS」，历史项经 `versions/vk-ledger-known-issues.tsv` 降 WARN。**`vk53` 已定案（2026-10-06，#108）**：实机失败真因 = 使能 `&i2c0`（与 NFC 驱动/pinctrl 无关），且本机无 NFC 硬件 ⇒ G1-10 取消；内核已补 annotated tag `vk53`@`2b5badef0`，registry 更正见 `versions/vk-registry.tsv` 注释块。**版本处置台账**（按「有成果未上机→补测、无成果→跳过、有 bug 无排查→待调查、bug 已由后续修复→闭环」）见 **`versions/vk-triage.tsv`**（54 行：补测 8 / 待调查 1 / 已知未解 3 / 待刷 1 / 跳过 7 / 闭环 34）。
+树自称内核 ≡ 镜像内 UTS」，历史项经 `versions/vk-ledger-known-issues.tsv` 降 WARN。**`vk53` 已定案（2026-10-06，#108）**：实机失败真因 = 使能 `&i2c0`（与 NFC 驱动/pinctrl 无关），且本机无 NFC 硬件 ⇒ G1-10 取消；内核已补 annotated tag `vk53`@`2b5badef0`，registry 更正见 `versions/vk-registry.tsv` 注释块。**版本处置台账**（按「有成果未上机→补测、无成果→跳过、有 bug 无排查→待调查、bug 已由后续修复→闭环」）见 **`versions/vk-triage.tsv`**（54 行：补测 2 / 已知未解 3 / 待刷 1 / 跳过 7 / 闭环 41；另末尾附补测顺序 + DTB 静态判定依据）。
 
 ---
 
