@@ -155,3 +155,16 @@ vk53/vk54 启动失败归因三次反转（DTS → initramfs+用户态 → `&i2c
 | D7 | TASKS §0 内核 vk50→vk61；INDEX §4 示例镜像 vk40→`boot_b-clean.img`。 |
 
 **新入口结构**：项目描述=`AGENTS.md`；agent 行为/授权=`.pi/AGENT-OPS.md`；开发经验=`PITFALLS.md`；并发细则=`.pi/CONCURRENCY.md`；状态与地图=`INDEX.md`。
+
+---
+
+## 10. 更正（2026-10-06 同日，用户放宽授权）★
+
+§9 的 D1/D2 处置**作废**：用户定 **agent 默认自主执行**，不再按动作类别限定「由用户手敲」。
+
+- 新口径：**自主优先 → 有写坏风险先备份再执行 → 只有出现超出预期的错误才要求用户检查**；
+  仅**物理上必须人做**的动作（按键进 fastboot/EDL、插拔线缆/耳机、断电、EDL 短接）请求用户。
+- `fastboot --set-active`、分区/槽/固件写入均不再禁止；改为要求「先 `fastboot fetch` + GPT 双表 dump + 记回退路径 → 再执行 → 写后读回校验」。
+- 「已知失败模式」（PITFALLS/RUNBOOK）作为「预期」基准；不符即升级用户。
+- 同步地点：`.pi/AGENT-OPS.md` §1/§2、`PITFALLS` #1/#3、`.pi/agents/*.md`、用户自订 `STANDING.md` 第 5 条。
+- 权威：`.pi/AGENT-OPS.md` §1。

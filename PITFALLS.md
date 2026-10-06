@@ -27,7 +27,7 @@
    ★★ **Android 卡启动动画（动画还在动、机身发热、数据没坏）→ 十有八九只是漂到了「引导链不配套」的槽。**
    2026-09-29 实测：`current-slot=b` 卡动画，仅 `fastboot --set-active=a` + `fastboot reboot` 就完好进系统、数据无损。
    **所以「进不去 Android」第一步 = 切另一个槽试试，别急着重刷/清数据。** a/b 都试一遍。
-   ⚠️ **主语**：上面的 `--set-active` 是**用户在设备恢复时**的手动动作；**agent 不改 active slot**（写操作）——见 `.pi/AGENT-OPS.md` §2。
+   ⚠️ **主语**：`--set-active` 属设备写操作，按 `.pi/AGENT-OPS.md` §1「先备份 GPT + 记当前 slot 再执行」；不再限定谁执行。
 
 2. **内核 `reboot` 后总落 fastboot，是 ABL 的正常回退**，不是故障：
    - ABL 对**当前 Android 槽**做 AVB 校验，`boot_b` 公钥不匹配 / `dtbo_b` hash 不匹配 → 无法启动 → 回退 **fastboot**。
@@ -42,7 +42,7 @@
    报 **`Write to device failed (No such file or directory)`** 时：先单条 `fastboot reboot bootloader`，等待，再单条 `fastboot boot`。
    （`cycle.sh` 已按此简化：`--soft`/`--dtbo`/`--recover`/`<img>`。）
    ★ **经验事实（非授权规则）**：`to-fastboot.sh`/`cycle.sh` 类**封装脚本代跑 fastboot** 在本机故障率高，属禁忌；
-   「谁执行 fastboot」见 `.pi/AGENT-OPS.md` §1（默认用户手敲单条）。
+   「谁执行 fastboot」见 `.pi/AGENT-OPS.md` §1（自主优先；写前先备份，异常才上报）。
 
 4. **`fastboot boot` 失败后 bootloader 会进"脏"状态**（连续报 `Load Error`）；`fastboot reboot bootloader` 可清。
    `fastboot boot` 报 `Failed to load/authenticate boot image: Load Error` 时同理。

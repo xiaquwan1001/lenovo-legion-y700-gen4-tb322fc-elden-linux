@@ -8,7 +8,7 @@
 | 路径 | 内容 | 版本控制 | 说明 |
 |---|---|---|---|
 | `settings.json` | 本项目模型/会话/重试配置（`sessionDir`、provider、`retry`） | ✅ track | 项目级覆盖全局 |
-| `AGENT-OPS.md` | **agent 行为/授权规范（唯一入口）**：自主分级 / 用户物理干预边界 / 设备安全 / 写入权限 / 汇报时间盒 | ✅ track | 所有会话与子代理必读 |
+| `AGENT-OPS.md` | **agent 行为/授权规范（唯一入口）**：自主优先 / 风险先备份 / 异常才上报 / 物理干预边界 / 写入权限 / 汇报时间盒 | ✅ track | 所有会话与子代理必读 |
 | `CONCURRENCY.md` | **并发细则**（基线+fork / 提交 trailer / vk 分配 / lane 归属 / 父合并；入口 `scripts/lane.sh`） | ✅ track | `AGENT-OPS` 的下级；派子代理前必读 |
 | `lanes/` | lane 运行时元数据（worktree/分支/baseline/状态） | ❌ ignore | 由 `scripts/lane.sh new` 写；机器本地 |
 | `skills/` | **项目技能**（`SKILL.md` + `references/`）。与全局 `~/.pi/agent/skills/` 叠加 | ✅ track | `qualcomm-android-flashing` / `qualcomm-edl-flashing` / `gsi-device-adaptation`。references 正文不入上下文，**用时 grep** |

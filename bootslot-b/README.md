@@ -42,7 +42,7 @@
 > 判定依据：直接对镜像解 gzip 抽 `Linux version`（与 `scripts/build-manifest.sh` 同法）。
 > 版本账与已知混淆项：`archive/topics/VK-LEDGER-AUDIT-2026-10-06.md`、`versions/vk-registry.tsv`。
 
-## 三、测试序列（用户逐条执行，先确认槽位）
+## 三、测试序列（逐条执行，先确认槽位；按 `.pi/AGENT-OPS.md` agent 可先备份后自主执行）
 
 ### T1（首选，flags=3）
 ```bash

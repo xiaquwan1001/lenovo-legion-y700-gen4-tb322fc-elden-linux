@@ -38,7 +38,7 @@
 
 | 入口 | 文件（权威） | 装什么 |
 |---|---|---|
-| **行为/授权规范** | **`.pi/AGENT-OPS.md`** | agent 自主执行分级、用户物理干预边界、设备安全纪律、研发纪律、文档写入权限、汇报/时间盒；并发细则见 `.pi/CONCURRENCY.md` |
+| **行为/规范** | **`.pi/AGENT-OPS.md`** | agent **自主优先**（写坏风险先备份，超出预期的错误才上报）、物理干预边界、设备安全纪律、研发纪律、文档写入权限、汇报/时间盒；并发细则见 `.pi/CONCURRENCY.md` |
 
 > 项目描述（机型/目标/设备等价）在 `AGENTS.md`；根目录 6 份维护文档不再复述规范与经验。
 
@@ -105,7 +105,7 @@ sudo bash elden-net.sh && ssh -o StrictHostKeyChecking=no root@192.168.7.1
 # 内核迭代＝统一入口 scripts/iterate.sh（四档环，细则 RUNBOOK §迭代；mod-loop/kexec/to-fastboot/flash-b/cycle 均已自锁）
 scripts/iterate.sh mod <driver-dir>              # 环0：=m 模块热载 ~30s 不重启（需先应用 fragment-modular）
 scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（迭代通道见 RUNBOOK；kexec 快环未闭环，勿默认）
-scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 由用户执行）
+scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 先备份后执行）
 scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
 # ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM）
 ./cycle.sh --soft                          # 软回 fastboot（免按电源键）
