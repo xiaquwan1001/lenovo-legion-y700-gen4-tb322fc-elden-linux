@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-06（**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-06（**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -284,6 +284,14 @@
     - 根因三处：① GNU cpio 2.15 的 `--reproducible` 只归零 inode/设备号，**不归零 mtime**（旧 `build-boot.sh` 每跑一次 `sed`/`cp` 都刷新 mtime，字节偏差恰好落在 mtime 字段）；② `find` 未排序（readdir 顺序不保证）；③ `gzip` 默认写入时间戳/原名。
     - 修（`scripts/build-boot.sh`、`rootfs/build-rootfs.sh`）：全树 `touch -h -d @$SOURCE_DATE_EPOCH` + `find | LC_ALL=C sort -z` + `cpio --null --reproducible` + `gzip -n`。修后同输入两次 sha 一致；`scripts/check-init.sh` 加「内嵌 /init==真源 + 可复现重建」门（`CHECK_INIT_DEEP=1`）。
     - 纪律：版本台账的「唯一变量」只有在**打包可复现**时才成立；见「同输入不同 sha」先查这三处，别当成内容差异。
+
+117. **★WiFi 双管理器并存（NM + 手动 wpa_supplicant）＋ NM DHCP 反复重激活（2026-10-06 实机）**。
+    - 现象：开机后 `wlan0` **每 ~16–18 s 掉线一次**（`ath12k: failed to flush transmit queue, data pkts pending N` + `wlan0: Connection to AP 00:00:00:00:00:00 lost`），`nmcli` 恒 `getting IP configuration`，IPv4 到 ~140 s 才拿到（clean boot 28 s 已关联）。
+    - 真因：`net-up.sh`（NM 版）等地址 80 s 超时后 `exec net-up-manual.sh` → 起**第二个** `wpa_supplicant -B -i wlan0`，与 NM 的 `wpa_supplicant -u` 抢同一接口；掉线周期 = NM 的 DHCP 重激活循环（`nmcli connection up … IP configuration could not be reserved`）。
+    - 排除：`power_save`（关掉仍 5 次/80 s）、NM `dhcp=dhcpcd` 后端（仍 `could not be reserved`）。环境变量：手机热点 DHCP 后段也无 offer。
+    - 纪律：**一张网卡只允许一个 supplicant/管理器**；回退路径必须在启动另一个之前先停掉前一个（`net-up-manual.sh` 应先停 NM）。
+    - 另分叉：设备 `/usr/local/sbin/net-up.sh` = 仓库 `scripts/net-up-nm.sh`，而仓库 `scripts/net-up.sh` 是手动版（#109 同类），需对齐 SSOT。
+    - 证据：`archive/topics/WIFI-SLOW-2026-10-06.md`；相关 #109/#113。
 
 ---
 
