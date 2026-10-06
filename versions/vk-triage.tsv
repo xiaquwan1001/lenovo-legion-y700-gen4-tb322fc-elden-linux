@@ -1,0 +1,66 @@
+# vk-triage.tsv — vk34→latest 版本处置台账（2026-10-06 整理）
+#
+# 规则（用户 2026-10-06 定）：
+#   - 有编译成果、无上机验证            → 补测（fastboot boot 零写盘）
+#   - 无编译成果                        → 跳过（留空）
+#   - 有成果、有 bug、无排查成果        → 待调查（下一个会话）；**除非 bug 已被后续版本明确修复**
+#   - 有成果、有 bug、有排查成果        → 闭环（或入「已知未解」）
+# 处置码：补测 / 待调查 / 跳过 / 闭环 / 已知未解 / 待刷
+# 证据源：out/*.img+manifest、bootslot-b/、RESOURCES §3、archive/topics/*、
+#         versions/vk-registry.tsv、archive/topics/VK-LEDGER-AUDIT-2026-10-06.md
+#
+# vk	编译成果	上机验证	已知bug	排查成果	处置	备注
+vk34	img(out/boot-elden-vk34recon.img,+ram; bootslot-b/boot_b-vk34recon.img)	✅在跑/回归基线	音频BE未通	有	闭环	BE 路由由 vk43 修复
+vk34recon-ram	img(out/boot-elden-vk34recon-ram.img)	未记录	—	—	补测	纯RAM变体，零写盘可快测
+vk35	无	—	—	—	跳过	仅会话读数
+vk36/vk36debug	仅rootfs片段(out/rootfs-thermal-vk36.cpio.gz, 无boot镜像)	—	—	—	跳过	无boot成果
+vk37	无	—	—	—	跳过	无boot成果
+vk38/vk38debug	无	—	—	—	跳过	无boot成果
+vk39	无	—	—	—	跳过	无boot成果（旧INDEX称基线，镜像已失）
+vk40	img(bootslot-b/boot_b_vk40.img,-ram,-persist-diag)	✅U2持久(10-03)	熄屏→重启(Q24)	有(多轮)	已知未解	Q24 在 vk47clean 仍复现，根因未证
+vk40re	无(仅 logs/bisect)	—	—	—	跳过	二分对照，无镜像
+vk40-ram	img(bootslot-b/boot_b_vk40-ram.img)	✅救援变体	—	—	闭环	
+vk41	无(镜像10-04清理时删)	✅reboot bootloader	—	—	闭环	有成果需求已由 tag/补丁覆盖；无镜像可补测
+vk42	img+manifest(out/boot-elden-vk42.img)	✅上机(10-04)	熄屏→重启(Q24)	有	已知未解	老号唯一有 manifest
+vk43	无(UNREPRODUCIBLE)	✅出声	—	—	闭环	本号改动=rootfs tplg，无内核源
+vk44	无	✅	DMIC采集恒0	有(本机无DMIC,方向证伪)	闭环	硬件限制
+vk45	无	✅	同上	有	闭环	硬件限制
+vk46	img(out/boot-elden-vk46.img,-ram; bootslot-b/boot_b.img)	✅模块对齐(10-04)	—	—	闭环	
+vk47	img(out/boot-elden-vk47.img,+a-ram,+dtb42)	✅持久根基线	TF卡(硬件~70-80%)/BT	有(BT已批量收口)	闭环	TF 受硬件限制；BT 用户实测可用
+vk47-ram	img(out/boot-elden-vk47-ram.img)	未记录	—	—	补测	零写盘可快测
+vk47-dtb42	img(out/boot-elden-vk47-dtb42.img)	✅(硬复位)	—	有(DTB无关)	闭环	单变量对照已用
+vk47clean	img(out/boot-elden-vk47clean.img; boot_b-clean; out/boot_b-live.img)	✅当前在机	熄屏→重启(Q24)	有	已知未解	Q24 排除 -dirty 因素
+vk48	无boot镜像(仅 out/rootfs-vk48.cpio.gz,tplg-overlay)	未验证	R1耳麦硬件	有	闭环	硬件限制挂起
+vk49	img(out/boot_b-vk49.img)	✅20模块全载	相机-EPIPE	有(vk50修复)	闭环	出流由 vk50 解决
+vk50	img+manifest(out/boot-elden-vk50.img)	✅前后摄出帧	①kexec硬挂	有(kexec定论不可用)	闭环	①结论=不可用，放弃
+vk51	无(研究/脚本)	—	—	—	跳过	无镜像
+vk52-slim	img+manifest(out/boot-elden-vk52-slim.img)	❌从未启动成功	initramfs缺/bin/sh(#107)	有(vk58c修复)	闭环	slim 方法已弃用(#113)，不再补测
+vk53	img+manifest(out/boot-elden-vk53.img,vk53f.img)	✅间接(vkY起/vkD2起)	i2c0使能硬关机	有(定案#108)	闭环	G1-10取消(无NFC硬件)；G1-11 CDSP经vkD2通过
+vk53f	img+manifest(out/boot-elden-vk53f.img)	未记录	—	—	补测	与vk53同内核；仅ramdisk异
+vk54	img+manifest(out/boot-elden-vk54.img 101MB)	⚠️报OKAY但仍起vk47clean	大镜像boot未接管(未深究)	部分	待调查	疑与#108同因(坏init/用户态)待单变量确认
+vk54f	img+manifest(out/boot-elden-vk54f.img)	未记录	—	—	补测	clean重建版
+vk54-ram	img+manifest(out/boot-elden-vk54-ram.img)	✅反复掉电(用户停手)	kexec线	有	闭环	kexec 线已放弃
+vk54-slim	img+manifest(out/boot-elden-vk54-slim.img)	❌从未启动成功	initramfs缺/bin/sh	有(vk58c修复)	闭环	同 vk52-slim
+vk55	无(用户态)	✅上机+重启验证	—	—	闭环	会话overhaul
+vk56-slim	img+manifest(out/boot-elden-vk56-slim.img)	❌从未启动成功	initramfs缺/bin/sh	有	闭环	同 vk52-slim；复用vk54内核
+vk57-slim	img+manifest(out/boot-elden-vk57-slim.img)	❌从未启动成功	initramfs缺/bin/sh	有	闭环	同 vk52-slim
+vk58-slim	img+manifest(out/boot-elden-vk58-slim.img)	❌首启失败	initramfs缺/bin/sh	有	闭环	修后=vk58c
+vk58b-slim	img+manifest(out/boot-elden-vk58b-slim.img)	未记录	同slim initramfs?	—	补测	若仍含旧initramfs则免测(先核对)
+vk58c-slim	img+manifest(out/boot-elden-vk58c-slim.img)	✅进用户态(SSH)	GUI卡(模块失配,已解)	有	闭环	
+vk59-slim	img+manifest(out/boot-elden-vk59-slim.img)	✅(矩阵)	旧归因作废	有	闭环	矩阵结论已由#108定案覆盖
+vk59a-slim	img+manifest(out/boot-elden-vk59a-slim.img)	✅(能起对照)	—	有	闭环	vk59内核+vk47DTB
+vk59-cdspoff-slim	img+manifest(out/boot-elden-vk59-cdspoff-slim.img)	✅(挂=结论)	—	有	闭环	单变量
+vk59-nfcoff-slim	img+manifest(out/boot-elden-vk59-nfcoff-slim.img)	✅(挂=结论)	—	有	闭环	单变量
+vk60	img+manifest(out/boot-elden-vk60.img)	✅进桌面但驱动全废	无/lib/firmware(#113)	有	闭环	slim 弃用，勿日常用
+vk61	img+manifest(out/boot-elden-vk61.img)	✅零写盘验收	—	—	待刷	boot_b 替换版；待 fastboot flash boot_b
+vkD1-nfconly	img+manifest(out/boot-elden-vkD1-nfconly.img)	✅(挂=结论)	—	有	闭环	单变量
+vkD1a-nfcpin	img+manifest(out/boot-elden-vkD1a-nfcpin.img)	✅(起)	—	有	闭环	单变量
+vkD1b-nfcdev	img+manifest(out/boot-elden-vkD1b-nfcdev.img)	✅(挂=结论)	—	有	闭环	单变量
+vkD2-cdsponly	img+manifest(out/boot-elden-vkD2-cdsponly.img)	✅(起)	—	有	闭环	G1-11 CDSP 证据
+vkB1-bin	img+manifest(out/boot-elden-vkB1-bin.img)	✅(挂=结论)	—	有	闭环	定案=使能i2c0本身
+vkB2-bin	img+manifest(out/boot-elden-vkB2-bin.img)	未记录	—	—	补测	有manifest无结论；或按B1冗余免测
+vkB3-bin	img+manifest(out/boot-elden-vkB3-bin.img)	未记录	—	—	补测	同上
+vkB4-bin	img+manifest(out/boot-elden-vkB4-bin.img)	未记录	—	—	补测	同上
+vkX-dtb53	img+manifest(out/boot-elden-vkX-dtb53.img)	✅(挂=结论)	—	有	闭环	vk47clean内核+vk53DTB
+vkY-kern53	img+manifest(out/boot-elden-vkY-kern53.img)	✅(起)	—	有	闭环	vk53内核+vk47DTB
+inittest-veh	img+manifest(out/boot-elden-inittest-veh.img)	✅冒烟(WiFi慢但成功)	—	—	闭环	init载具冒烟
