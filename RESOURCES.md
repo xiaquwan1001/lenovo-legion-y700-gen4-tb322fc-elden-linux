@@ -417,7 +417,7 @@ git log --oneline -10
 | vk40re / vk41-psci | 10-03 19:51 / 22:46 | vk40 热区重落；`psci.c` vendor reset（→fastboot） | 10-03 ✅ `eldroid-bootctl reboot bootloader` 真进 fastboot（G1-24 S2） |
 | vk42 | 10-04 00:04 | vk34-recon 基础上干净重落音频/温控增量 | 10-04 ✅ 上机 |
 | vk43 / vk44 / vk45 | 10-04 00:20 / 00:42 / 00:49 | vk43：tplg MI2S SD0→SD1（出声）；vk44：VA DMIC 采集尝试；vk45：DMIC 偏置 | 10-04 ✅ **vk43 出声**；vk44/45 采集图全绿但录音恒 0（本机无 DMIC，方向证伪） |
-| vk46 / vk47 / vk47a | 10-04 09:00 / 09:20 / 09:31 | vk46：持久根内核↔模块对齐；vk47：持久根基线；vk47a：BT A/B | 10-04 ✅ 模块对齐后相机/音频在持久根复现；vk47a BT 零写盘 A/B |
+| vk46 / vk47 / vk47a | 10-04 09:00 / 09:20 / 09:31 | vk46：持久根内核↔模块对齐；vk47：持久根基线；vk47a：BT A/B | 10-04 ✅ 模块对齐后相机/音频在持久根复现；vk47a BT 零写盘 A/B。⚠️ **镜像内核命名漂移**（2026-10-06 两法抽取 UTS）：`vk46`/`vk46-ram` 实为 **vk45**、`vk47`/`vk47-ram`/`vk47-dtb42` 实为 **vk46**；真 vk47 仅见 `vk47clean` |
 | vk48 / vk49 / vk50 | 10-04 日间 → 17:45 | vk48：R1 有线耳麦 tplg RX 播放子图；vk49：相机模块冷启自动加载；**vk50：相机出流 + `LOCALVERSION=-vk50` + kexec 首测** | ✅ vk49 20 模块全载；**vk50 前后摄连续出帧**；❌ vk50 kexec `-e` 硬挂 |
 | vk47clean | 10-04 23:52 | Q24 对照：干净重建内核（清除 `-dirty`） | 10-05 ✅ 持久在跑；但**熄屏→关机仍复现** ⇒ Q24 根因排除 |
 | vk51 / vk52 | 10-04 晚 | vk51：bootchain（G1-29 机制/路线）；vk52：slim initramfs（G1-30） | 均主机侧；vk52 slim=20.8 MiB，E5 上机待定 |
@@ -439,7 +439,7 @@ vk53/vk54 启动失败**已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬�
 **版本账目机读校验 + 不可复现号登记（2026-10-06）**：`archive/topics/VK-LEDGER-AUDIT-2026-10-06.md`——
 `vk43` = 全账唯一零证据号（无源/镜像/manifest）；`vk52/vk54/vk56/vk57` slim 镜像**错包内核**（陈旧 `Image.gz`，
 与 vk52-slim 同 bug 类）；`scripts/check-doctor.sh` §5 现已硬校验「registry 单调唯一 / registry 号必有 manifest /
-树自称内核 ≡ 镜像内 UTS」，历史项经 `versions/vk-ledger-known-issues.tsv` 降 WARN。**`vk53` 已定案（2026-10-06，#108）**：实机失败真因 = 使能 `&i2c0`（与 NFC 驱动/pinctrl 无关），且本机无 NFC 硬件 ⇒ G1-10 取消；内核已补 annotated tag `vk53`@`2b5badef0`，registry 更正见 `versions/vk-registry.tsv` 注释块。**版本处置台账**（按「有成果未上机→补测、无成果→跳过、有 bug 无排查→待调查、bug 已由后续修复→闭环」）见 **`versions/vk-triage.tsv`**（54 行：补测 1 / 已知未解 3 / 待刷 1 / 跳过 7 / 闭环 42；另末尾附补测顺序 + DTB 静态判定依据）。
+树自称内核 ≡ 镜像内 UTS」，历史项经 `versions/vk-ledger-known-issues.tsv` 降 WARN。**`vk53` 已定案（2026-10-06，#108）**：实机失败真因 = 使能 `&i2c0`（与 NFC 驱动/pinctrl 无关），且本机无 NFC 硬件 ⇒ G1-10 取消；内核已补 annotated tag `vk53`@`2b5badef0`，registry 更正见 `versions/vk-registry.tsv` 注释块。**版本处置台账**（按「有成果未上机→补测、无成果→跳过、有 bug 无排查→待调查、bug 已由后续修复→闭环」）见 **`versions/vk-triage.tsv`**（54 行：补测 0 / 已知未解 3 / 待刷 1 / 跳过 7 / 闭环 43；另末尾附补测结论 + DTB 静态判定依据）。
 
 ---
 

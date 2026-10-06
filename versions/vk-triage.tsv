@@ -27,7 +27,7 @@ vk44	无	✅	DMIC采集恒0	有(本机无DMIC,方向证伪)	闭环	硬件限制
 vk45	无	✅	同上	有	闭环	硬件限制
 vk46	img(out/boot-elden-vk46.img,-ram; bootslot-b/boot_b.img)	✅模块对齐(10-04)	—	—	闭环	【命名漂移】镜像内核实为 vk45（UTS ga923477be3a9-dirty）；vk46-ram 同内核同 ramdisk
 vk47	img(out/boot-elden-vk47.img,+a-ram,+dtb42)	✅持久根基线	TF卡(硬件~70-80%)/BT	有(BT已批量收口)	闭环	TF 受硬件限制；BT 用户实测可用。【命名漂移】镜像内核实为 vk46（UTS g4c68eb5ed4e3-dirty），真 vk47 内核仅见 vk47clean
-vk47-ram	img(out/boot-elden-vk47-ram.img)	未记录	—	—	补测	=vk47.img 去 elden_root（同内核同 ramdisk）；内核实为 vk46（UTS g4c68eb5ed4e3-dirty）
+vk47-ram	img(out/boot-elden-vk47-ram.img)	✅2026-10-06 fastboot boot	—	—	闭环	=vk47.img 去 elden_root（同内核同 ramdisk）；实测 uname=g4c68eb5ed4e3-dirty(vk46)、RAM rootfs、无 elden_root（符合预期）
 vk47-dtb42	img(out/boot-elden-vk47-dtb42.img)	✅(硬复位)	—	有(DTB无关)	闭环	单变量对照已用
 vk47clean	img(out/boot-elden-vk47clean.img; boot_b-clean; out/boot_b-live.img)	✅当前在机	熄屏→重启(Q24)	有	已知未解	Q24 排除 -dirty 因素
 vk48	无boot镜像(仅 out/rootfs-vk48.cpio.gz,tplg-overlay)	未验证	R1耳麦硬件	有	闭环	硬件限制挂起
@@ -66,12 +66,12 @@ vkY-kern53	img+manifest(out/boot-elden-vkY-kern53.img)	✅(起)	—	有	闭环	v
 inittest-veh	img+manifest(out/boot-elden-inittest-veh.img)	✅冒烟(WiFi慢但成功)	—	—	闭环	init载具冒烟
 #
 # ============================================================================
-# 补测/补查 顺序（2026-10-06 静态整理后）
+# 补测/补查 顺序（2026-10-06）—— **实机补测已全部完成**
 # ----------------------------------------------------------------------------
-# 【剩余实机补测】仅 2 个纯 RAM 变体（低价值；零写盘各 1 次；bash elden-net.sh 后 ssh 看 uname）
-#   1. fbg vk34recon-ram : fastboot boot out/boot-elden-vk34recon-ram.img
-#   2. fbg vk47-ram      : fastboot boot out/boot-elden-vk47-ram.img
-#     （判据：进 initramfs/串口有输出即可；RAM 变体无桌面服务，PITFALLS #93）
+#   ✅ vk34recon-ram : 2026-10-06 fastboot boot 通过；RAM root、UART+SSH 通（用户跑）
+#   ✅ vk47-ram      : 2026-10-06 fastboot boot 通过；uname=g4c68eb5ed4e3-dirty(vk46)、
+#                       无 elden_root、sda17 未挂（均符合 -ram 预期；独立 SSH 复核）
+#   剩余待实机项：无。待刷 = vk61（→ boot_b）；已知未解 = Q24（vk40/42/47clean）。
 #
 # 【静态判定闭环、免实机】证据在 out/*.manifest + DTB 反编译（dtc -I dtb -O dts）：
 #   - i2c0 实为 i2c@a80000（QUPV3_SE0），非 i2c5@a94000：
