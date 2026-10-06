@@ -50,7 +50,7 @@
 | **已通** | CPU/GPU/显示/USB/PCIe/UFS/WiFi/BT/触屏/触觉/背光/充电旁路/相机驱动栈/温控分级 | — |
 | **P0** | 相机出流（camss + s5kjns + gc08a8 + wl2868c + flash） | 驱动链已通（`v4l2-ctl` 出帧）；**缺相机 App 实测** |
 | **P1** | TF 卡写稳定性；DP 输出（驱动在树被 `disabled`，缺 ADSP altmode/UCSI） | bug / bring-up（音频已 ✅，G1-4） |
-| **P2** | NFC（主线 `st21nfca` 在，改 compatible）；**BT 已收口** | 小 |
+| **P2** | ~~NFC~~ **取消：本机无 NFC 硬件**（vendor 无 nfc feature/HAL/固件）；**BT 已收口** | — |
 | **P3** | 温控 OEM 增强（`lenovo,sys-temp`/BCL/QMI cooling） | 可用通用框架近似 |
 | **✗ 不投入** | SLPI 7 传感器、TEE/SPU/hw-fence/mem-buf、FM RTC6226、ST54 SE、Gunyah/PMIH010x | 架构性/无源码 |
 

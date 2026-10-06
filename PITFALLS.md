@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-06（**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ⛔vk53/vk54「DTS 破坏启动」归因已撤回（坏 init+用户态干扰）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-06（**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -230,12 +230,18 @@
     - 修：`build-boot.sh` 为 applet 建符号链接 + 新增 `initramfs/busybox-applets.txt`（272 项）。
       坑：设备 busybox 链接表里没有 `mount`/`mountpoint`（属 util-linux）、`ip`（属 iproute2），必须手工补。
     - 教训：slim 路径此前**从未真机验证**；任何 boot 打包改动都要有一次 `fastboot boot` 冒烟。
-108. **⛔superseded —— vk53/vk54「DTS 改动导致整机启动失败」的归因已撤回（用户 2026-10-06 更正）**。
-    - 旧结论（保留备查）：`fastboot boot` 报 `Booting OKAY` 却复位回 b 槽；同 vk59 内核 HEAD DTB 挂 / vk47 DTB 过 ⇒ 曾判元凶是 DTS（非 NFC/`FSA4480` 的 config）。
-    - **撤回原因**：当时测试载具跑的是**坏 init**（最小 initramfs 缺 `/bin/sh` #107 + `switch_root`×后台 `/persist` 竞态 #110）且受**用户态服务干扰**（#106 图形启动挂/会话 overhaul）。这些与 DTB 无关，足以解释「复位回 b」⇒ DTB 不是根因。
-    - **当前判据**：vk53/vk54 驱动项回落为「未上机验证」；**用 vk61 载具（完整 ramdisk + 修好 init）零写盘重测**后再判定。不要再用旧矩阵的「换 vk47 DTB 就好」推定 DTS。
+108. **★vk53/vk54「DTS 破坏启动」根因 = 使能了 `&i2c0`（本机无 NFC 硬件）——已定案（2026-10-06 单变量二分）**。
+    - **二分链**（均 vk61 full 载具 + vk53 kernel，零写盘）：
+      1. `vkX-dtb53`（vk53 DTB）挂 / `vkY-kern53`（vk53 kernel + vk47 DTB）起 ⇒ 元凶在 DTB，kernel/config 洗清。
+      2. `vkD1-nfconly` 挂 / `vkD2-cdsponly` 起 ⇒ 元凶 = **NFC 组**（CDSP 清白）。
+      3. `vkD1a-nfcpin`（仅 pinctrl 节点，无 i2c0）起 / `vkD1b-nfcdev`（仅 `&i2c0`+`nfc@8`）挂 ⇒ 不在 pinctrl。
+      4. **`vkB1-bin`（仅 `&i2c0 { status="okay"; }`，无任何子设备）挂** ⇒ 元凶 = **使能 i2c0 本身**，与 NFC 驱动/GPIO 无关。
+    - 现象：`fastboot boot` 报 OKAY 后**硬关机**（非 panic、非熄屏）；USB 串口来不及注册，抓不到日志。
+    - **本机（TB322FC）无 NFC 硬件**（否掉 G1-10 的前提）：vendor 无 `android.hardware.nfc.xml`（feature 未声明）、vintf manifest（sun/tuna/kera/elden）无 NFC HAL、`/lib64(/hw)` 无 NFC HAL 库、`/firmware` 无 NFC 固件；原厂 Android 运行服务无 NFC；GSMArena 规格 `NFC: No`。`ro.nfc.port=I2C` 是通用 Qualcomm 属性；`elden.dts` 的 `st21nfc` 是**总线 `disabled` 的共用模板**，`stm_nfc_i2c.ko`/`st54spi_gpio` 为多 SKU 共用。
+    - **教训**：① 使能本板不存在的 QUP/总线可致**硬关机**（比 panic 更难捕捉）；② 判断设备存在与否要看原厂 DTB 的 **`status`**，不看节点是否存在；③ 归因必须做单变量（本轮 3 层二分才落到 i2c0）。
+    - 前两次口径（10-06 早「DTS 破坏启动」、后按用户口述改「坏 init+用户态」）**均已收窄/作废**：坏 init（#107/#110）确实干扰了 10-06 首轮矩阵，但**不是**本故障根因。
     - 仍成立的教训：`build-boot.sh`/`build-manifest.sh` 的 `KDIR` 原为硬编码 `linux/`，用外部 Image/DTB 打镜像会**静默用错内核**（首版 vk59 中招）；已改为 `KDIR=${KDIR:-…}` 并透传 manifest。
-    - 证据：`archive/topics/DRIVER-VERIFY-2026-10-06.md`（本轮更正追加）、`ATTRIBUTION-AUDIT-2026-10-06.md` §1；相关 `#106`/#107/#110/#115。
+    - 证据：`archive/topics/DRIVER-VERIFY-2026-10-06.md` §7/§8、`ATTRIBUTION-AUDIT-2026-10-06.md` §4/§5；相关 `#104/#105/#106/#107/#110/#115`。
 109. **★init 曾有「三份分叉 + awk 原地打补丁」——已固化（2026-10-06）**。
     - 旧状态：`initramfs/init`（boot 镜像用）、`rootfs/init`（磁盘根构建用）= 设备 `/init` 三者内容不同（相机预载/音频/`ttyGS1` 各不相同）；磁盘 `/init` 还是 `scripts/patch-init-*.sh` 在设备上 awk 原地拼出来的，不可复现。
     - 后果：改 boot 镜像的 init ≠ 改磁盘的 init；任何 init 加固只做一半就会分叉复发。

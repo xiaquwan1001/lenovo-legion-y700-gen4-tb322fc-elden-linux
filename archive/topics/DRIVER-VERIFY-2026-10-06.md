@@ -92,3 +92,25 @@
 - 权威口径见 `TASKS.md` §0/§1/§4 与 `PITFALLS` #108（已标 ⛔superseded）；归因分层见 `ATTRIBUTION-AUDIT-2026-10-06.md` §1（同轮更正）。
 
 仍成立的部分：§2 的 `KDIR` 硬编码坑、§4 中「ramoops-only/NFC-only/CDSP-only 二分」应改为**在 vk61 载具上重做**、§5 init 稳固化（已由 `INIT-HARDEN-2026-10-06.md` 落地）。
+
+---
+
+## 8. 定案（2026-10-06 追加）：根因 = 使能 `&i2c0`，且本机无 NFC 硬件 ★
+
+§0/§3 的「DTS 破坏启动」与 §7 的「坏 init+用户态」两个口径**都作废**。vk61 full 载具 + vk53 kernel 零写盘单变量二分：
+
+| 镜像 | DTB | 结果 |
+|---|---|---|
+| vkX-dtb53 | vk53 DTB（NFC+CDSP） | ❌ 挂 |
+| vkY-kern53 | vk53 kernel + vk47 DTB | ✅ 起 |
+| vkD1-nfconly | vk47+NFC（CDSP disabled） | ❌ 挂 |
+| vkD2-cdsponly | vk47+CDSP（无 NFC） | ✅ 起 |
+| vkD1a-nfcpin | 仅 4 个 nfc pinctrl 节点 | ✅ 起 |
+| vkD1b-nfcdev | 仅 `&i2c0`+`nfc@8` | ❌ 挂 |
+| **vkB1-bin** | **仅 `&i2c0 { status="okay"; }`** | **❌ 挂** |
+
+⇒ 元凶 = **使能 i2c0 本身**（与 NFC 驱动、pinctrl、GPIO 无关）。现象是 `fastboot boot` 报 OKAY 后**硬关机**，串口来不及注册。
+
+**本机无 NFC 硬件**（否掉 G1-10 前提）：vendor `/etc/permissions` 无 `android.hardware.nfc.xml`；`/etc/vintf/manifest*` 无 NFC HAL；`/lib64(/hw)` 无 NFC HAL 库；`/firmware` 无 NFC 固件；原厂 Android 运行服务无 NFC；GSMArena `NFC: No`。`elden.dts` 的 `st21nfc` 为**总线 disabled 的共用模板**；`ro.nfc.port=I2C` 为通用属性。
+
+**结论**：G1-10 NFC 取消；G1-11 CDSP 经 vkD2 通过（待 `remoteproc1` 取证）；G1-9 DP 的 role-switch/`mdss_dp0` DTB 待做。权威：`TASKS.md` §0/§1/§4、`PITFALLS` #108。

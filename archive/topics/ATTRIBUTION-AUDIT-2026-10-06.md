@@ -52,3 +52,15 @@
 - 正确层 = **C（initramfs/打包）+ D（用户态服务）**；A（DTS）**未获证据**。
 - ⇒ vk53/vk54 驱动项（DP/NFC/CDSP）回落「未上机验证」，须用 vk61 载具重测。
 - 权威：`TASKS.md` §0/§1/§4、`PITFALLS` #108（⛔superseded）、`DRIVER-VERIFY-2026-10-06.md` §7 追加。
+
+---
+
+## 5. 再更正（2026-10-06，单变量定案）★
+
+§4 把 vk53/vk54 归到「C（initramfs）+D（用户态）」**仍不准确**。
+
+单变量二分（vk61 full 载具 + vk53 kernel）定案：根因 = **使能 `&i2c0`**（`&i2c0 { status="okay"; }` 单独即可硬关机），**正确层 = A（DTS，QUP/总线使能）**——但是 DTS 里「**本板不存在的设备**」被点亮所致，**不是** NFC 驱动/GPIO。
+
+并且 **TB322FC 本机无 NFC 硬件**（vendor 无 nfc feature XML / 无 vintf NFC HAL / 无 NFC HAL 库 / 无固件；stock 无 NFC 服务；GSMArena NFC:No）⇒ G1-10 取消。
+
+修正 §1 表：vk53/vk54 → **A（DTS：使能了不存在的 i2c0）**，非 C/D。权威 `PITFALLS` #108。
