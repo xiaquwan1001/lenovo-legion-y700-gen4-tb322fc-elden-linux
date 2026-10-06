@@ -1,0 +1,66 @@
+diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
+index bf8e8a6ee..73a94ec3b 100644
+--- a/drivers/net/wireless/ath/ath12k/core.h
++++ b/drivers/net/wireless/ath/ath12k/core.h
+@@ -329,6 +329,7 @@ struct ath12k_link_vif {
+ 	u8 bssid[ETH_ALEN];
+ 	struct cfg80211_bitrate_mask bitrate_mask;
+ 	struct delayed_work connection_loss_work;
++	bool beacon_seen;
+ 	int num_legacy_stations;
+ 	int rtscts_prot_mode;
+ 	int txpower;
+diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
+index a09288906..6817cd3b8 100644
+--- a/drivers/net/wireless/ath/ath12k/mac.c
++++ b/drivers/net/wireless/ath/ath12k/mac.c
+@@ -1955,6 +1955,11 @@ static void ath12k_mac_handle_beacon_iter(void *data, u8 *mac,
+ 	if (!ether_addr_equal(mgmt->bssid, vif->bss_conf.bssid))
+ 		return;
+ 
++	/* The firmware really does forward beacons for this link, which is the
++	 * only thing that can cancel connection_loss_work.
++	 */
++	arvif->beacon_seen = true;
++
+ 	cancel_delayed_work(&arvif->connection_loss_work);
+ }
+ 
+@@ -1981,9 +1986,19 @@ void ath12k_mac_handle_beacon_miss(struct ath12k *ar,
+ 	 * (done by mac80211) succeeds but beacons do not resume then it
+ 	 * doesn't make sense to continue operation. Queue connection loss work
+ 	 * which can be cancelled when beacon is received.
++	 *
++	 * Only arm that fallback timer while the cancellation path is actually
++	 * functional, i.e. while the firmware forwards beacons for this link to
++	 * the host. Some firmware/AP combinations stop forwarding beacons
++	 * entirely (observed on WCN7850 "peach" with a phone hotspot: "beacon
++	 * rx" stays at 1 while the firmware reports beacon miss every ~17 s at
++	 * -32 dBm RSSI). The work can then never be cancelled and every
++	 * beacon-miss report tears the link down, so rely on the mac80211 AP
++	 * probe triggered above instead, as mt76 and rtw89 do.
+ 	 */
+-	ieee80211_queue_delayed_work(hw, &arvif->connection_loss_work,
+-				     ATH12K_CONNECTION_LOSS_HZ);
++	if (arvif->beacon_seen)
++		ieee80211_queue_delayed_work(hw, &arvif->connection_loss_work,
++					     ATH12K_CONNECTION_LOSS_HZ);
+ }
+ 
+ static void ath12k_mac_vif_sta_connection_loss_work(struct work_struct *work)
+@@ -4016,6 +4031,7 @@ static void ath12k_bss_assoc(struct ath12k *ar,
+ 	}
+ 
+ 	arvif->is_up = true;
++	arvif->beacon_seen = false;
+ 	arvif->rekey_data.enable_offload = false;
+ 
+ 	ath12k_dbg(ar->ab, ATH12K_DBG_MAC,
+@@ -4069,6 +4085,7 @@ static void ath12k_bss_disassoc(struct ath12k *ar,
+ 			    arvif->vdev_id, ret);
+ 
+ 	arvif->is_up = false;
++	arvif->beacon_seen = false;
+ 
+ 	memset(&arvif->rekey_data, 0, sizeof(arvif->rekey_data));
+ 
