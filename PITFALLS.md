@@ -316,8 +316,10 @@
     - **★后续定位（同日追加）**：黑屏期的第一现场指标应是 **`beacon rx` 速率**（不是 `lost` 次数，后者会混入两条拆链路径）。5/6 轮复现：开机后前 ~130 s `beacon rx` ≈ **0.5/s**（固件对已关联 STA 的上送/睡眠调度受限），~130–150 s 自行校正到 5–10/s。
     - **PS 已用正确指标彻底排除**：关联前就 `802-11-wireless.powersave 2`（PS 关）重启，黑屏与恢复点**完全不变**。
     - **同一次开机**在黑屏窗口内扫描能得到 **33–41 个 BSS**（含该 AP 信道）⇒ **RF/beacon 接收本身正常**，坏的是「已关联 STA」这条路径。因此「开机扫一次」不能当修复（复测黑屏照旧）。
-    - 因此「WiFi 慢」的驱动/固件修复方向：换 PEACH 固件（`ath12k/PEACH/hw2.0/amss.bin` 等）或关联后重发 vdev 参数/信道重设复现自愈动作；日常用真 AP 可立即避开。
-    - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md`（§11 追加）；相关 #117/#109。
+    - **被动扫描定案（2026-10-06 深夜）**：黑屏窗口内 `iw dev wlan0 scan passive`（只听 beacon）仍能听到该 AP（BSS=36）⇒ **AP 在发 beacon、射频无辜**；症结 = 固件对已关联 vdev 的休眠/唤醒调度（~2 s 拍子），~130 s 自校正。**换 stock 非-20 固件变体会让 MHI POWER_ON 直接 -110（不兼容）**；关联后补发 `BEACON_INTERVAL`/`DTIM_PERIOD` 亦无效。
+    - 纪律：判「AP 是否在发 beacon」**必须用被动扫描**（`iw dev wlan0 scan passive`）；主动扫描会收到 probe response，会伪造「AP 正常」的结论。
+    - 下一步方向（方法见专题 §13）：试 `CONFIG_ATH12K=m` 让 WCN **只探一次**（避开「首探失败 + 二次 bind + `qmi TME-L hardware-restricted`」的半初始化态）。
+    - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md`（§11/§12 追加、§13 下一步手册）；相关 #117/#109。
 
 119. **★同 UTS 候选内核的启动验证：`uname -r` 不可用，要用 `uname -v`；`debug_mask=2` 会冲掉 dmesg 计数（2026-10-06）**。
     - 为保持 `/lib/modules` 的 vermagic 兼容，候选内核刻意锁同一 `UTS_RELEASE`（`7.2.0-debug-vk47clean-gbd114ca335e1`）⇒ `uname -r` 在 vk61 与各候选间**逐字相同**，不能用它证明「新内核已启动」。可用判别器 = `uname -v`（`#N SMP PREEMPT <构建时间戳>`，随每次 make 递增）。

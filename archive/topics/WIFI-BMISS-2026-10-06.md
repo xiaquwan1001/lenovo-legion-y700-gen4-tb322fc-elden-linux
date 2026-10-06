@@ -274,4 +274,92 @@ ath12k-retry: bind write failed (try 1…19)      # 19 次全失败，phy0 永�
 - FASTBOOT 流程改由 agent 直执行已验证：`reboot2 bootloader` →（host）`fastboot boot <img>`
   （注：设备 `/sbin/reboot` 被包装成 `busybox reboot -f`，不入 fastboot；须用 `/usr/local/sbin/reboot2`）。
 
+---
+
+## 13. ★收口快照与下一步操作手册（handoff，2026-10-06 深夜）
+
+### 13.1 一句话现状
+
+「WiFi 到可用 ~2 min」= **开机头 ~100 s 固件对已关联 vdev 只上送 ~0.5 beacon/s（≈2 s 唤醒拍子），
+导致固件报 bmiss → 链路被拆 → DHCP 慢**；**~130 s 自校正**；**AP 与射频无辜（被动扫描已证）**。
+已试三条修复（拆链语义×2、时序参数、固件换版）均未解决；双管理器为独立 bug 已修；下一步 = `=m` 单次探针。
+
+### 13.2 设备与资产现状（handoff 起点）
+
+| 项 | 状态 |
+|---|---|
+| 设备 | `HA2EXB0E`（U2），当前是 `fastboot boot out/boot-elden-vk61.img` 的**临时启动**（重启回 boot_b 原始 `vk47clean`） |
+| 固件 | `/lib/firmware/ath12k/PEACH/hw2.0/` = stock `amss20` 套（`848a2f04…`）；备份在 `/root/fw-backup/` |
+| 已部署修复 | `/usr/local/sbin/net-up.sh`（`4dad8ea5…`，NM 独占、无回退）、`net-up-manual.sh`（`e4d2b322…`） |
+| NM 配置 | `P40 Pro`（`powersave`=默认）；`ustcnet` 存在但 `autoconnect=no` |
+| 候选镜像 | `out/boot-elden-wifi-bmiss-1/2.img`（拆链语义，均无效/无可见收益）、`out/boot-elden-wifi-timing-1.img`（时序补发，无效） |
+| 内核构建树 | `~/wt-wifibmiss`（分支 `wifitim`=`6ac05658d`；`wifibmiss-v1v2`=`5e173b60`；基底 `bd114ca33`） |
+| 诊断脚本 | `scripts/blackout-passive-scan.sh`（scp 到设备 `/tmp` 再 `sh` 跑；`/tmp` 是 tmpfs，每启动清空） |
+| 专题档案 | 本文（§3–§6 实验矩阵、§11 黑屏定象、§12 三条尝试、§13 本手册） |
+
+### 13.3 下一步方法（按推荐顺序，每步都有终止判据）
+
+**Step A（推荐、本轮未做）：`CONFIG_ATH12K=m` 单次干净探针**
+
+假设：每次启动都是「内建首探 8.16 s `MHI POWER_ON -110` 失败 → `ath12k-retry` 21.5 s 二次 `sysfs bind`
+→ 固件以 `qmi TME-L power-on hardware-restricted (stock-compatible, continuing)` 起来」，半初始化态是 2 s 拍子的头号嫌疑。让 WCN 在芯片就绪后**只探一次**。
+
+1. 构建（基底仍是 `bd114ca33`，另开 worktree；`CONFIG_ATH12K=m` 即项目自带的 `patches/config-vk50-modular` 口径）：
+   ```
+   git -C ~/y700-elden/linux worktree add --detach ~/wt-athm bd114ca33
+   ssh root@192.168.7.1 cat /proc/config.gz > /tmp/cfg.gz && zcat /tmp/cfg.gz > ~/wt-athm/.config
+   # .config: CONFIG_ATH12K=y → m（连同 ATH12K_PCI / wifi7 子项）；CONFIG_LOCALVERSION_AUTO=n
+   make -C ~/wt-athm -j16 LOCALVERSION=-vk47clean-gbd114ca335e1 Image.gz dtbs modules
+   ```
+2. 部署（磁盘根，单一变量）：把 `ath12k*.ko`（+ `mac80211.ko`/`cfg80211.ko` 若也随之 `=m`）拷到
+   `/lib/modules/7.2.0-debug-vk47clean-gbd114ca335e1/`（**现无该目录**，需建 `extra/` 并 `depmod -a`），
+   同时确保 `ath12k-load.sh` 已部署（它本来就为此写的：`modprobe ath12k_pci` + 失败时 `bind` 重试）。
+   ⚠️ 注意：内置探针没了以后，`/init` 的 `ath12k-retry.sh` 仍会 bind —— 先确认两者不打架（`ath12k-load.sh` 是 `modprobe` 路径）。
+3. 零写盘验收（agent 自己执行）：
+   ```
+   ssh root@192.168.7.1 'sync; setsid /usr/local/sbin/reboot2 bootloader'
+   sleep 20; fastboot devices            # 期望 HA2EXB0E
+   fastboot boot out/boot-elden-<candidate>.img
+   ```
+   然后 scp `scripts/blackout-passive-scan.sh` 到 `/tmp` 并 `sh` 跑（或在关联后每 10 s 采 `beacon rx`）。
+
+   **终止判据**：首 130 s `beacon rx` ≥ 5/s 且 0 次 `Connection to AP 00:00` / `failed to flush transmit`，
+   `nmcli` 在 ~40 s 内 connected + IPv4 ⇒ **修好**，按 G1-12 收口并考虑向上游提交（上游对应：
+   ath12k 2026-08「skip connection_loss_work for MLO beacon miss」系列的空白——非-MLD 固件不转发 beacon 的情形）。
+   **失败判据**：`beacon rx` 仍在首 130 s ≈0.5/s ⇒ 进 Step B。
+
+**Step B（若 A 失败）：加一层“探针后重启/FLR”对照**
+
+同一 worktree 改为「首探成功后不二次 bind」的另一个等价实现，或试 `echo 1 > /sys/bus/pci/devices/0000:01:00.0/remove; echo 1 > /sys/bus/pci/rescan` 后**一次干净探针**
+（⚠️ 项目纪律：对**在用** ath12k 设备 `remove`/`rescan` 曾观测到挂内核，仅可在确认挂起可接受时试）。
+
+**Step C（若 A/B 均失败）：按已知限制归档 + 环境绕过**
+
+- 把「P40 Pro 热点 + WCN7850 首 ~130 s 黑屏」写成 Q26 的终态（已有 6/7 轮复现率、判据、被动扫描证据）；
+- 日常使用改真 AP（`ustcnet` 首 90 s **0 bmiss / 0 掉线**，已实测）；
+- 用户态缓解（不治本，但把“可用”从 ~140 s 提到 ~40 s 的方向）：让首个 DHCP 事务存活到恢复点
+  —— 例如 `ipv4.may-fail=yes`（已默认）+ 不要因为拆链重算 activation；实测 NM 自己最终能拿到 IP，
+  所以**不要**再加第二套管理器（那是 #117 的返祖）。
+
+### 13.4 复现与取数的最小命令集（供后续任何一轮直接复制）
+
+```
+# 零写盘启动后立刻（usb0 一通就能 ssh，uptime ~10 s）
+ssh root@192.168.7.1 'uname -v; cut -d. -f1 /proc/uptime'
+ssh root@192.168.7.1 'for i in $(seq 1 14); do printf "t=%s %s\n" "$(cut -d. -f1 /proc/uptime)" "$(iw dev wlan0 station dump 2>/dev/null | grep -E "beacon rx|connected time" | tr -s " " | tr "\n" " ")"; sleep 10; done'
+# 固件侧证据（短窗开，别忘了关）
+ssh root@192.168.7.1 'echo 2 > /sys/module/ath12k/parameters/debug_mask; sleep 30; dmesg | grep -aE "roam event|scan event started" | tail; echo 0 > /sys/module/ath12k/parameters/debug_mask'
+# AP 是否在发 beacon（被动扫描，含恢复后对照）
+scp scripts/blackout-passive-scan.sh root@192.168.7.1:/tmp/ && ssh root@192.168.7.1 'sh /tmp/blackout-passive-scan.sh'
+```
+
+### 13.5 不要重走的路（已验证无效）
+
+1. `power_save`（关联前就关也一样）；持续流量；`dhcpcd` 后端；单次手动扫描。
+2. 只在 bmiss 语义上打补丁（`patches/0012` 两版）：`lost` 归零但 mac80211 的 probe 超时接手，关联次数不变。
+3. 关联后补发 `BEACON_INTERVAL`/`DTIM_PERIOD`（`wifi-timing-1`）：无效。
+4. stock 非-20 固件变体：MHI POWER_ON `-110`，不兼容。
+5. 把「换 AP 能好」当成修复：真 AP 只是**绕过**（`ustcnet` 不触发），不解决该 AP 组合。
+
+
 
