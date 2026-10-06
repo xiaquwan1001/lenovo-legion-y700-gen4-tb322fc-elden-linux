@@ -47,12 +47,18 @@ fi
 
 # wait for an IPv4 address (NM auto-connects the saved profile)
 i=0
-while [ "$i" -lt 40 ]; do
+while [ "$i" -lt 100 ]; do
 	have_addr && { log "$IF up via NM: $(ip -4 addr show $IF | grep -o 'inet [0-9.]*')"; exit 0; }
 	sleep 2; i=$((i+1))
 done
 
-# fallback: manual path (also useful if NM is not installed/working)
-log "NM did not bring up $IF in ~80s; falling back to manual"
-[ -x "$MANUAL" ] && exec "$MANUAL"
+# No automatic fallback to the manual wpa_supplicant + udhcpc path anymore.
+#
+# 2026-10-06 实测：NM 自己的 DHCP 会成功（只是链路在头 ~2 min 抖动时慢），而自动回退起
+# 第二套管理器是确定性 bug（PITFALLS #117）：手动脚本先 pkill wpa_supplicant 杀掉 NM 的
+# 实例、NM 0.75 s 内又拉起自己的；若手动脚本再按「一个网卡一个管理器」把 wlan0 从 NM
+# 摘成 unmanaged，一旦手动路径失败就留下「谁都不管」的死状态（实测出现过）。
+#
+# net-up-manual.sh 仍保留，供「没有 NetworkManager」的设备单独调用。
+log "NM did not bring up $IF in ~200s; leaving it to NM (no manual fallback)"
 exit 1

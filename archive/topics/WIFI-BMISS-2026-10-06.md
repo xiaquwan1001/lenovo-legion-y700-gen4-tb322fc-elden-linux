@@ -208,3 +208,70 @@ t=148 PS=off  beacon rx: 45 → 128 → 185      # 仍在 ~140 s 自行恢复
 4. 若 1/2 都不成：按「该 AP 组合的已知限制」归档，日常用真 AP（`ustcnet` 首 90 s 0 bmiss 已实测），
    并把 2 分钟黑屏作为 G1-12 的残留项。
 
+---
+
+## 12. 追加（2026-10-06 深夜）：固件变体排除、时序补发失败、被动扫描定案「AP 无辜」
+
+### 12.1 固件变体 A/B（stock 两套）——非-20 变体不兼容
+
+stock ROM `backup/fw/modem/image/peach/` 带两套：设备在用 `amss20.bin`(6,959,168 B, `848a2f04…`)
++ `phy_ucode20.elf`(→`m3.bin`) + `aux_ucode20.elf`(→`aux_ucode.bin`)；另一套 `amss.bin`(7,041,088 B,
+`2dc20cdc…`)+`phy_ucode.elf`+`aux_ucode.elf`。
+在设备上换成非-20 套（备份在 `/root/fw-backup/`）后重启：
+
+```
+failed to set mhi state: POWER_ON(2) → failed to start mhi: -110 → probe failed with error -110
+ath12k-retry: bind write failed (try 1…19)      # 19 次全失败，phy0 永不出现
+```
+
+⇒ 该变体与本芯片不兼容；已按备份回滚（`amss.bin` sha 回到 `848a2f04…`）。**固件换版不是可行路线**（除非找到其它来源且能过 MHI）。
+
+### 12.2 候选 `wifi-timing-1`（关联后补发 beacon interval / DTIM）——未解决
+
+- 假设：黑屏期 `beacon rx ≈ 0.5/s` ≈ **每 2 s 醒一次**，而 AP 为 `beacon int 100 TU` + `dtim 2`
+  （正常 200 ms ⇒ 5/s）；2 s ≈ DTIM × 1000 TU ⇒ 固件在用**时序默认值**。而 mac80211 的
+  `BSS_CHANGED_BEACON_INT`/`BSS_CHANGED_BEACON_INFO` 在 vdev 建立过程中下发（`mlme.c:9724` 早于
+  `sta_info_insert`），可能落在 vdev/peer 不存在时被丢弃。
+- 补丁：`ath12k_bss_assoc()` 在 vdev up + BSS peer 授权之后补发 `WMI_VDEV_PARAM_BEACON_INTERVAL`
+  与 `WMI_VDEV_PARAM_DTIM_PERIOD`（内核 `6ac05658d`，镜像 `out/boot-elden-wifi-timing-1.img`）。
+- 实测（`uname -v`=`#3 …20:13:34`）：首窗口仍 `lost=5`（75.7/99.4/117.0 s…），节奏不变；
+  两条补发命令无 `failed to set …` 警告（被固件接受但不是杠杆）。**⇒ 时序参数不是症结。**
+
+### 12.3 ★被动扫描定案：AP 在发 beacon，问题在客户端「已关联 STA」的睡眠拍子
+
+黑屏窗口内跑 **`iw dev wlan0 scan passive`（只听 beacon，不发 probe request）**：
+
+| 时机 | 结果 |
+|---|---|
+| t=58 s（黑屏，首次尝试） | `rc=240`、BSS=0（扫描被占用/未跑成，无效样本） |
+| **t=88 s（黑屏）** | `rc=0`、**BSS=36、SSID 命中 `P40 Pro`=1** |
+| t=114 s（已恢复，对照） | `rc=0`、BSS=34、命中=1 |
+
+⇒ **AP 的 beacon 在黑屏期就在空中**（被动扫描不带 probe request，能听到就只能来自 beacon）
+⇒ 射频/AP 无辜；同一时刻已关联 STA 只上送 ~0.5 beacon/s。**结论锁定在客户端固件对已关联 vdev
+的休眠/唤醒调度（~2 s 周期），~130 s 后自校正。**
+（方法学：诊断这一步必须用**被动**扫描，主动扫描会伪造「AP 正常」的结论。）
+
+### 12.4 嫌疑方向：首次探针失败 + 二次 bind 留下的半初始化状态
+
+每次启动的序列固定为：内建探针 8.16 s `MHI POWER_ON -110` 失败（设备 unbound）→
+`ath12k-retry.sh` 21.5 s 用 sysfs `bind` **二次探针**成功 → 固件以
+**`qmi TME-L power-on hardware-restricted (stock-compatible, continuing)`** 起来。
+半初始化 + 容错继续 很可能是「调度拍子不对、~2 min 后自校正」的来源。
+
+下一步（需构建 + 部署）：**把 `CONFIG_ATH12K` 改为 `=m`**（项目 `patches/config-vk50-modular` 本就
+是 `=m`，且 `ath12k-load.sh` 就是为它写的），让 WCN 在芯片就绪后**只探一次**（无失败首探、无二次 bind）
+→ 零写盘启动比 `beacon rx` 速率。需要的额外工作：构建 `ath12k*.ko` 并部署到磁盘根
+`/lib/modules/7.2.0-debug-vk47clean-gbd114ca335e1/`（现无该目录）。
+
+### 12.5 本轮附带交付
+
+- `scripts/net-up.sh`（NM 版）**删除自动回退**，等待改 ~200 s：实测「NM 独占」在本机是可用终态
+  （本次启动 connected + IP，1 个 supplicant、0 个 udhcpc）；自动回退既制造双 supplicant，也可能
+  在手动路径失败时留下 unmanaged 死状态（已实测到）。`net-up-manual.sh` 保留为独立工具。
+- `scripts/blackout-passive-scan.sh`：本次黑屏判定用的可复跑被动扫描脚本（含恢复后对照）。
+- 设备侧已部署：`/usr/local/sbin/net-up.sh`（sha `4dad8ea5…`）、`net-up-manual.sh`（sha `e4d2b322…`）。
+- FASTBOOT 流程改由 agent 直执行已验证：`reboot2 bootloader` →（host）`fastboot boot <img>`
+  （注：设备 `/sbin/reboot` 被包装成 `busybox reboot -f`，不入 fastboot；须用 `/usr/local/sbin/reboot2`）。
+
+
