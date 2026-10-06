@@ -37,7 +37,7 @@
 - 默认只动 **b 槽 + LUN0 GPT**；回收 Android 专属分区（Phase B）需 G1 全绿 + EDL 备份在手。
 - **覆盖 a 槽 Android 前先做一轮真机对照取证**（`TASKS.md §5` Q5，不可复得）。
 - 主线优先：厂商私有 compatible 先查主线等效驱动，只补 DT/config/固件命名；主线没有则分"架构性不可做 / 私有 / 可自研"，只有第三类立项。
-- **设备操作**：fastboot/EDL 类命令由用户亲自执行，助手只做分析并给可直接手敲的**单条**命令；不要用封装脚本跑 fastboot（`to-fastboot.sh`/`cycle.sh` 等：命令有限、深层嵌套难预测、故障率高），脚本只用于主机侧构建/打包。每次进 fastboot 后、任何操作前先 `fastboot --set-active=a`。简单、可观测的脚本可直接执行，不必先要授权。
+- **设备操作**：fastboot/EDL 类命令由用户亲自执行，助手只做分析并给可直接手敲的**单条**命令；不要用封装脚本跑 fastboot（`to-fastboot.sh`/`cycle.sh` 等：命令有限、深层嵌套难预测、故障率高），脚本只用于主机侧构建/打包。**不要改 active slot**（b 槽是当前可用系统，`fastboot --set-active` 属未授权写操作）。简单、可观测的脚本可直接执行，不必先要授权。
 - **测试环境选择**：零写盘优先 `fastboot boot`；但必须区分 **`-ram` 纯 RAM 变体（停在 initramfs，无桌面/会话服务）** 与 **持久变体（RAM 内核 + 磁盘根，有桌面/Phosh/PipeWire/bluetoothd/Waydroid）**。功能/服务级测试（蓝牙音频、桌面音频栈、Waydroid、相机出流）**必须用持久变体或持久系统**，否则缺系统服务会误判为功能故障（`PITFALLS` #93）。
 - **引导链问题（BL 解锁 / AVB 签名 / 降级 / GPT / EDL）先本地检索再取证**：技能 `references/*.md` 正文不入上下文，
   **不 grep 等于不存在**；命中既有结论则本轮只做「确认或推翻」，不许从零重推；引用旧成功记录先查它属于哪台单元、

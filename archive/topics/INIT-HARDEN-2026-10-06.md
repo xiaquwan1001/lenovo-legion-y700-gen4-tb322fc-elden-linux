@@ -147,3 +147,42 @@ initramfs 永远解析不到 `LABEL=linux17`。
 
 **待上机**：`fastboot boot out/boot-elden-vk60.img` → 无刷屏 + 进桌面 + `uname` = vk47clean；
 通过后 `fastboot flash boot_b`（回滚 `out/boot_b-live.img`）。
+
+---
+
+## 10. vk60 能进桌面但驱动全废 ⇒ 弃 slim 路线，改 vk61（2026-10-06）
+
+**现象（vk60 实机）**：进 Phosh 成功，但触屏无响应、电池 0%、WiFi 不工作、无音频。
+dmesg 铁证——RAM 阶段 1–3 s 内固件加载全失败：
+
+```
+remoteproc0: Direct firmware load for qcom/sm8750/adsp.mdt failed with error -2
+aw88461 …: Direct firmware load for awinic/y700-gen4-speakers.bin failed with error -2
+novatek-nvt36xxx-spi: … Direct firmware load for novatek_ts_csot_3k_fw.bin failed with error -2
+mhi mhi0: Direct firmware load for ath12k/PEACH/hw2.0/amss.bin failed with error -2
+msm_dpu: Direct firmware load for qcom/gen80000_sqe.fw failed with error -2
+```
+
+**根因**：触屏/功放/ADSP/ath12k 在 vk47clean 里是 **built-in**，在自己的 initcall 探测；
+此时根是最小 initramfs，**没有 `/lib/firmware`**（本机 40 MB：qcom 30 M + ath12k 9.3 M
++ awinic/novatek）。`-ENOENT` 后不重试（只有 ath12k 有 `ath12k-retry.sh` 补探）。
+switch_root 后才有固件，为时已晚。
+
+**结论**：G1-30「20 MB 超瘦 boot.img」与本机「开机即需 40 MB 固件」不相容；
+最小 initramfs 只适合无桌面/无外设的研究场景，**不能作 boot_b 日常启动**。
+
+**vk61（boot_b 替换版，推荐）**：`out/boot-elden-vk61.img`
+- kernel / DTB = boot_b **逐字节相同**；
+- ramdisk = boot_b 原 60 MB ramdisk，**只把 `/init` 换成唯一真源**（一个文件的最小 diff）；
+- 83,337,216 B（79.5 MiB）< boot_b 96 MiB；ramdisk 内 `/init` == 真源（已校验）。
+- 同时修掉 §7 的 `/persist` 竞态（RAM init 也换成新版）。
+
+**上机步骤**：
+```
+fastboot boot  out/boot-elden-vk61.img     # 零写盘：验驱动回归 + 无刷屏
+fastboot flash boot_b out/boot-elden-vk61.img
+```
+回滚：`fastboot flash boot_b out/boot_b-live.img`。
+
+**规则更正**：项目 AGENTS.md «进 fastboot 后先 `fastboot --set-active=a`» 已删除
+（本意为不动在用的 b 槽，`--set-active` 反而是未授权写操作）。

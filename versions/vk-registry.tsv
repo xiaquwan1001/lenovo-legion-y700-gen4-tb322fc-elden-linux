@@ -11,3 +11,4 @@ vk57	kexec-va52	2026-10-05	（补录）kexec R2 ad-hoc slim 实验镜像（未�
 vk58	kexec-va52	2026-10-05	（补录）vk58/vk58b/vk58c slim：带 trans_pgd fix 的运行内核，vk58c 为可用 slim（未登记）
 vk59	hw-driver	2026-10-05	G1-9/10/11 驱动验证：vk53 内核（NFC+CDSP+FSA4480=y）重打 slim + 设备实测
 vk60	init-hardening	2026-10-06	init 固化：唯一真源+日志留痕+/persist 竞态修复（boot_b slim 候选）
+vk61	init-hardening	2026-10-06	boot_b 复刻：完整 ramdisk 仅换修好的 /init（驱动零回归）

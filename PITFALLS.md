@@ -266,6 +266,12 @@
     - 坑：`--list` 含 `busybox` 自身；`ln -sf busybox bin/busybox` 会把真二进制替换成自指链接 ⇒ ramdisk 从 1.1 MB 缩成 **12 K** 且内核“找不到 init”。修：`build-boot.sh` 跳过 `busybox` + 建链后断言 `bin/busybox` 是常规文件。
     - 真机 busybox 1.38 无 `blkid`/`mountpoint`；`init` 因此改为 **`findfs` 主解析**、且 `mnt()` 用 `grep -qs " $target " /proc/mounts` 判已挂载（不再依赖 `mountpoint`）。
     - 证据：`archive/topics/INIT-HARDEN-2026-10-06.md` §9。
+113. **★最小 initramfs 不带 `/lib/firmware` ⇒ 内置驱动早期探测全失败且不重试（2026-10-06 vk60 实机）**。
+    - vk60（最小 busybox initramfs）能进 Phosh，但**触屏无响应、电池显 0、WiFi 不工作、无声音**。dmesg 铁证：1–3 s 内 `Direct firmware load for qcom/sm8750/adsp.mdt / awinic/*.bin / novatek_ts_*_fw.bin / ath12k/PEACH/hw2.0/amss.bin / qcom/gen80000_sqe.fw` 全部 `failed with error -2`。
+    - 根因：这些驱动在 vk47clean 内核里是 **built-in（=y）**，在自己的 initcall 就探测；此时根还是最小 initramfs，`/lib/firmware` 不存在（本机共 **40 MB**：qcom 30 M + ath12k 9.3 M + awinic/novatek）。`-ENOENT` 后**不会重试**（只有 ath12k 有 `ath12k-retry.sh` 补探）。switch_root 后才有的 `/lib/firmware` 没用。
+    - 结论：**“20 MB 超瘦 boot.img”与“开机即需要 40 MB 固件”不相容**（除非把 40 M 固件塞进 initramfs，那就不叫瘦了）。
+    - 正确做法（vk61）：boot_b 替换版 = **原完整 ramdisk 只换 `/init`**（一个文件的最小 diff），内核/DTB/固件/模块全部保持已验证状态。
+    - 取证方法：先在能用的系统上 `grep -iE "firmware|Direct firmware" dmesg` 建基线，与坏启动对比。
 
 ---
 
