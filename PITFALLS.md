@@ -256,6 +256,16 @@
     - 修：`/persist` 改 **同步 + 有界等待**，且只在「纯 RAM 启动（`elden_root` 为空）」时执行（磁盘根启动本来就会 switch_root 掉它，挂了也白挂）。任何 `switch_root` 之前的 `&` 后台任务都要怀疑同类竞态。
     - 验证资产：`out/boot-elden-vk60.img`（内核+DTB 与 boot_b 逐字节相同，仅换最小 initramfs＋修好的 init）；备份 `out/boot_b-live.img`。
     - 证据：`archive/topics/INIT-HARDEN-2026-10-06.md` §7。
+111. **★boot.img 的 kernel 载荷可能已经是 gzip，别再压一次（2026-10-06 vk60 首版卡 logo）**。
+    - vk60 首版：我用 `unpack_bootimg.py` 从 boot_b 抽出 `kernel`，见 `file` 报 gzip 就以为是「压缩过的 Image」，`gzip -9` 再压一轮放进 boot.img ⇒ **双层压缩**；ABL 解一层得到的是 gzip 流而不是内核 ⇒ 卡在联想 logo、屏幕无输出。
+    - 正确做法：抽出什么就放什么（`Image.gz` 位就放那个 gzip 文件）；**先 `gzip -dc` 解一层看是否为 `ARM64 boot executable Image`**，是则原文件就是已压缩内核。
+    - 校验：新镜像 `unpack_bootimg.py` 后 `gzip -dc` 出来的 Image 应与 boot_b 的 `gzip -dc kernel` **逐字节相同**（vk60 终版已如此）。
+112. **★`initramfs/busybox-applets.txt` 必须由二进制生成，不得手写；且 `busybox` 自身不能建自指链接（2026-10-06）**。
+    - 旧名单 272 项与真实 busybox **不一致**：含两个不存在的小程序 `blkid`、`mountpoint`，又漏掉 40+ 真项（含 `findfs`）；而 G1-30 slim 的 LABEL 解析正靠 `findfs`，写错的名单会让 slim 永远 switch_root 失败。
+    - 权威生成：`qemu-aarch64 initramfs/busybox --list | LC_ALL=C sort -u > initramfs/busybox-applets.txt`（282 项，已入 `scripts/check-init.sh` 一致性门）。
+    - 坑：`--list` 含 `busybox` 自身；`ln -sf busybox bin/busybox` 会把真二进制替换成自指链接 ⇒ ramdisk 从 1.1 MB 缩成 **12 K** 且内核“找不到 init”。修：`build-boot.sh` 跳过 `busybox` + 建链后断言 `bin/busybox` 是常规文件。
+    - 真机 busybox 1.38 无 `blkid`/`mountpoint`；`init` 因此改为 **`findfs` 主解析**、且 `mnt()` 用 `grep -qs " $target " /proc/mounts` 判已挂载（不再依赖 `mountpoint`）。
+    - 证据：`archive/topics/INIT-HARDEN-2026-10-06.md` §9。
 
 ---
 

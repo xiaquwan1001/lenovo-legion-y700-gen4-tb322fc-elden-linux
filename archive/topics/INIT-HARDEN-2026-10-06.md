@@ -110,3 +110,40 @@ USB 串口（`/dev/ttyACM0` = `ttyGS0`）既是内核 console 又跑着 `getty -
 `/: Permission denied` 等（`PITFALLS` #8 的救急通道即此）。这是**另一类**「/bin/sh 告警」，
 只在 USB 串口出现、不在屏幕。原设计 `ttyGS1` 才是「回显不被 dmesg 污染」的带外 shell
 （本轮已恢复 `respawn ttyGS1`）；是否停掉 `ttyGS0` getty 待用户拍板（#8 的救急配方依赖它）。
+
+---
+
+## 9. vk60 首版失败复盘（两层 bug）与终版
+
+**现象**：`fastboot boot out/boot-elden-vk60.img` → 卡联想 logo、屏幕无输出；用户重置回 fastboot。
+
+**Bug 1 — 内核双层 gzip**：boot_b 的 boot.img 里 kernel 载荷**本身就是 gzip**
+（`file` 报 *gzip compressed data … original size 62540288*）。我从 boot_b 抽出后误
+当成「压缩过的 Image」再 `gzip -9` 一次 → ABL 解一层只得到 gzip 流，不是内核。
+修：抽出什么放什么；校验法 = 新镜像解一层后 `gzip -dc` 出的 Image 与 boot_b 的
+'gzip -dc kernel` **逐字节相同**。
+
+**Bug 2 — applet 名单与真二进制不符**：`initramfs/busybox-applets.txt` 旧版 272 项里
+**`blkid`、`mountpoint` 根本不存在**（真机 busybox 1.38：`blkid: applet not found` /
+`mountpoint: applet not found`），而**真正可用的 `findfs` 不在名单里**。这会让最小
+initramfs 永远解析不到 `LABEL=linux17`。
+修：
+- 名单权威生成：`qemu-aarch64 initramfs/busybox --list | LC_ALL=C sort -u`（282 项）；
+  `scripts/check-init.sh` 加「名单 == 二进制 --list」一致性门。
+- `init` 改 `findfs` 主解析（`findfs LABEL=…` 实测支持），`mnt()` 改用
+  `grep -qs " $target " /proc/mounts` 判已挂载（不再依赖 `mountpoint`）。
+- 坑：`--list` 含 `busybox` 自身，`ln -sf busybox bin/busybox` 会**替换掉真二进制**
+  ⇒ ramdisk 1.1 MB → 12 K；`build-boot.sh` 已跳过 `busybox` 并对 `bin/busybox`
+  加「常规文件」断言。
+
+**vk60 终版**（`out/boot-elden-vk60.img`，21,790,720 B，sha256 `aae5f053…`）：
+- kernel = boot_b 的 gzip 载荷（逐字节相同）；dtb = boot_b（逐字节相同）；
+- ramdisk = 1.1 MB 最小 busybox initramfs，`bin/busybox` = 2.0 MB 常规文件，
+  `findfs`/`sh`/`mount` 等 282 项 applet 符号链接齐全；
+- `/init` == 真源（含 `/persist` 同步修复）。
+
+**主机侧预检**（qemu-aarch64 + 真二进制）：`--list` 一致、`grep -qs`/`stat -f -c %T`/
+`command -v` 在 busybox ash 下均正常、preflight 无缺失。
+
+**待上机**：`fastboot boot out/boot-elden-vk60.img` → 无刷屏 + 进桌面 + `uname` = vk47clean；
+通过后 `fastboot flash boot_b`（回滚 `out/boot_b-live.img`）。

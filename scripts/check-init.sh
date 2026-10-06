@@ -64,7 +64,7 @@ echo
 echo "== 3. 最小 initramfs 的 applet 覆盖（PITFALLS #107）=="
 if [ -f "$APPLETS" ]; then
 	# preflight 强制要求的核心工具：必须在 busybox applet 名单里
-	core="sh mount umount mountpoint switch_root mkdir cat sleep grep"
+	core="sh mount umount switch_root mkdir cat sleep grep"
 	miss=""
 	for c in $core; do
 		grep -qx -- "$c" "$APPLETS" || miss="$miss $c"
@@ -74,10 +74,23 @@ if [ -f "$APPLETS" ]; then
 	else
 		bad "busybox-applets.txt 缺核心工具：$miss"
 	fi
-	if grep -qx 'blkid' "$APPLETS" || grep -qx 'findfs' "$APPLETS"; then
-		ok "根设备解析器存在（blkid 或 findfs）"
+	# 根解析器：真机 busybox 有 findfs、没有 blkid/mountpoint（2026-10-06 实测）
+	if grep -qx 'findfs' "$APPLETS" || grep -qx 'blkid' "$APPLETS"; then
+		ok "根设备解析器存在（findfs 或 blkid）"
 	else
-		bad "无 blkid 也无 findfs：LABEL/UUID 根解析会失败"
+		bad "无 findfs 也无 blkid：LABEL/UUID 根解析会失败"
+	fi
+	# 名单必须与真实 busybox 一致（2026-10-06 发现旧名单含假的 blkid/mountpoint）
+	if command -v qemu-aarch64 >/dev/null 2>&1 && [ -x "$ROOT/initramfs/busybox" ]; then
+		qemu-aarch64 "$ROOT/initramfs/busybox" --list 2>/dev/null | LC_ALL=C sort -u > /tmp/ck-init-applets.$$
+		if diff -q /tmp/ck-init-applets.$$ "$APPLETS" >/dev/null 2>&1; then
+			ok "busybox-applets.txt 与实际二进制 --list 一致（$(wc -l < "$APPLETS") 项）"
+		else
+			bad "busybox-applets.txt 与二进制 --list 不一致（跑 qemu-aarch64 initramfs/busybox --list | sort -u 重建）"
+		fi
+		rm -f /tmp/ck-init-applets.$$
+	else
+		warnf "无 qemu-aarch64，跳过 applet 名单与二进制一致性检查"
 	fi
 else
 	bad "$APPLETS 缺失"

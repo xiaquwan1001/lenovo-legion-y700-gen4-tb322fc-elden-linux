@@ -34,8 +34,15 @@ chmod 755 "$ROOTFS/bin/busybox"
 # "No working init found" → 15s panic 复位（2026-10-05 实机定位，G1-30 slim 从未验证）。
 if [ -f "$IRAM/busybox-applets.txt" ]; then
 	while read -r _a; do
-		[ -n "$_a" ] && ln -sf busybox "$ROOTFS/bin/$_a"
+		# `busybox` itself is in `busybox --list`; linking it would replace the
+		# real binary with a self-referential symlink and shrink the ramdisk to ~0.
+		[ -n "$_a" ] && [ "$_a" != busybox ] && ln -sf busybox "$ROOTFS/bin/$_a"
 	done < "$IRAM/busybox-applets.txt"
+fi
+# sanity: the real busybox binary must survive the applet-link pass.
+if [ ! -f "$ROOTFS/bin/busybox" ] || [ -L "$ROOTFS/bin/busybox" ]; then
+	echo "[boot] FATAL: $ROOTFS/bin/busybox is missing or a symlink — applet list broke it" >&2
+	exit 1
 fi
 sed 's/\r$//' "$IRAM/init" > "$ROOTFS/init"
 chmod 755 "$ROOTFS/init"

@@ -61,13 +61,14 @@ rescue() {
 # reported "No working init found" + panic.  Catch the userspace half of that
 # here, with a message that says what is actually missing.
 missing=
-for c in sh mount umount mountpoint switch_root mkdir cat sleep grep; do
+for c in sh mount umount switch_root mkdir cat sleep grep; do
 	command -v "$c" >/dev/null 2>&1 || missing="$missing $c"
 done
-# A root-device resolver: the full images have blkid, the slim busybox
-# initramfs only has findfs.  Need at least one.
-if ! command -v blkid >/dev/null 2>&1 && ! command -v findfs >/dev/null 2>&1; then
-	missing="$missing root-resolver(blkid|findfs)"
+# A root-device resolver.  The minimal busybox initramfs has neither blkid nor
+# mountpoint (see initramfs/busybox-applets.txt) but DOES have findfs, so findfs
+# is the primary resolver and blkid only a bonus in the full rootfs.
+if ! command -v findfs >/dev/null 2>&1 && ! command -v blkid >/dev/null 2>&1; then
+	missing="$missing root-resolver(findfs|blkid)"
 fi
 if [ -n "$missing" ]; then
 	fatal "missing essential tool(s):$missing"
@@ -76,12 +77,14 @@ if [ -n "$missing" ]; then
 fi
 
 # --- mount helper -----------------------------------------------------------
-# Idempotent (skips an already-mounted target, so the disk-root pass after
-# switch_root does not spam EBUSY), retrying, and loud on failure.
+# Idempotent, retrying, loud on failure.  Must NOT depend on the `mountpoint`
+# applet: the minimal busybox build does not have it (only findfs/mount), so we
+# ask /proc/mounts instead.  The first call (proc) runs before /proc exists,
+# where grep simply fails and we proceed to mount.
 mnt() { # mnt <fstype> <source> <target> [options]
 	_m_fs=$1; _m_src=$2; _m_tgt=$3; _m_opt=$4
 	[ -d "$_m_tgt" ] || mkdir -p "$_m_tgt" 2>/dev/null
-	mountpoint -q "$_m_tgt" 2>/dev/null && return 0
+	grep -qs " $_m_tgt " /proc/mounts && return 0
 	_m_i=0
 	while [ "$_m_i" -lt 3 ]; do
 		if [ -n "$_m_opt" ]; then
@@ -98,7 +101,7 @@ mnt() { # mnt <fstype> <source> <target> [options]
 # --- pseudo filesystems -----------------------------------------------------
 mnt proc proc /proc          || rescue "mount proc failed"
 mnt sysfs sysfs /sys         || rescue "mount sysfs failed"
-mountpoint -q /dev || mnt devtmpfs devtmpfs /dev || warn "devtmpfs not mounted on /dev"
+grep -qs ' /dev ' /proc/mounts || mnt devtmpfs devtmpfs /dev || warn "devtmpfs not mounted on /dev"
 mnt devpts devpts /dev/pts gid=5,mode=620 || warn "devpts not mounted on /dev/pts"
 mnt tmpfs tmpfs /dev/shm     || warn "tmpfs not mounted on /dev/shm"
 mnt tmpfs tmpfs /run         || rescue "mount /run failed"
@@ -192,8 +195,8 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 	i=0
 	while [ -z "$root_dev" ] && [ "$i" -lt 150 ]; do
 		case "$elden_root" in
-			UUID=*) root_dev=$(blkid -t "$elden_root" -o device 2>/dev/null | head -n1); [ -n "$root_dev" ] || root_dev=$(findfs "$elden_root" 2>/dev/null) ;;
-			LABEL=*) root_dev=$(blkid -L "${elden_root#LABEL=}" 2>/dev/null); [ -n "$root_dev" ] || root_dev=$(findfs "$elden_root" 2>/dev/null) ;;
+			UUID=*) root_dev=$(findfs "$elden_root" 2>/dev/null); [ -n "$root_dev" ] || root_dev=$(blkid -t "$elden_root" -o device 2>/dev/null | head -n1) ;;
+			LABEL=*) root_dev=$(findfs "$elden_root" 2>/dev/null); [ -n "$root_dev" ] || root_dev=$(blkid -L "${elden_root#LABEL=}" 2>/dev/null) ;;
 			PARTLABEL=*) root_dev=$(blkid -t "$elden_root" -o device 2>/dev/null | head -n1) ;;
 			/dev/*) [ -b "$elden_root" ] && root_dev=$elden_root ;;
 		esac
