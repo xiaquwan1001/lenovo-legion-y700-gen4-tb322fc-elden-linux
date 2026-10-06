@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-06（**#108 = vk53/vk54 DTS 改动导致整机启动失败**；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
+> 最后更新：2026-10-06（**#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单**；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
 
 ---
 
@@ -272,6 +272,14 @@
     - 结论：**“20 MB 超瘦 boot.img”与“开机即需要 40 MB 固件”不相容**（除非把 40 M 固件塞进 initramfs，那就不叫瘦了）。
     - 正确做法（vk61）：boot_b 替换版 = **原完整 ramdisk 只换 `/init`**（一个文件的最小 diff），内核/DTB/固件/模块全部保持已验证状态。
     - 取证方法：先在能用的系统上 `grep -iE "firmware|Direct firmware" dmesg` 建基线，与坏启动对比。
+114. **★口径更正清单（防误导，2026-10-06 init 固化收尾）——发现旧文档/旧结论以下五处不准确，引用前先改口径**。
+    1. **「boot.img 瘦身到 ~21 MB 是 G1-30 的成果、E5 待上机」→ 对日常启动不成立**（#113）。最小 initramfs 无 `/lib/firmware`（本机 40 MB），内置驱动 1–3 s 探测失败且不重试：能进桌面但触屏/电池/WiFi/音频全废。**slim 仅作无外设研究场景**，不作 boot_b。
+    2. **「USB 串口（ttyGS0/ttyACM0）能取证早期启动」→ 错**（#110）。该 console 到 `usb-gadget` 起来（≈8.8 s）才注册，**早期输出/panic 前面那段它抓不到**；早期取证唯一可用通道是**读 `/dev/vcsN` 屏幕缓冲**。涉及 kexec/启动挂死「串口无输出」的旧结论要加此保留。
+    3. **「最小 busybox 缺 `blkid` 所以加 `findfs` fallback」→ 口径反了**（#112）。真机 busybox 1.38 **有 `findfs`（可作主解析器）**、**没有 `blkid`/`mountpoint`**；旧 `busybox-applets.txt` 手写名单两项都是假的。名单必须用 `qemu-aarch64 busybox --list` 生成（主机有 qemu-aarch64 可直接跑）。
+    4. **「`/init: line 35: sleep: not found` 是内核/VFS/init 损坏」→ 错**（#110）。它是**已退役的 `switch_root` × 后台 `/persist` 任务竞态**造成的无害噪音（boot_b 旧 RAM init 才有）；新 init 已改同步。
+    5. **「BT 配对待收口 / 无法连接」→ vk61 上观测到恢复，但机制未证**（`TASKS.md` G1-7）。**不得写“已解决”**；需旧/新 RAM init 单变量 A/B 两次冷启复现。
+    - 另：项目 `AGENTS.md` 原「进 fastboot 后先 `fastboot --set-active=a`」**已删除**（错误规则，本意是不动在用的 b 槽；已改为「不要改 active slot」）。
+    - **推而广之的排查纪律**：① 任何 `switch_root` 之前的 `&` 后台任务都是竞态候选，必须同步化或显式确认已退出；② 换 initramfs/换启动方式后，先查内置驱动探测时刻缺不缺固件/模块与自己依赖的文件；③ 得出结论前先看「这个取证通道在故障发生的那一刻真的存在吗」（如 ttyGS0、/run）——不存在就得换通道（`/dev/vcsN`、落盘 kmsg）。
 
 ---
 

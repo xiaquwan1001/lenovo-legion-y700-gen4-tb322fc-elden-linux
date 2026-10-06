@@ -186,3 +186,41 @@ fastboot flash boot_b out/boot-elden-vk61.img
 
 **规则更正**：项目 AGENTS.md «进 fastboot 后先 `fastboot --set-active=a`» 已删除
 （本意为不动在用的 b 槽，`--set-active` 反而是未授权写操作）。
+
+---
+
+## 11. 收尾：结论、口径更正与后续方向（2026-10-06）
+
+### 11.1 最终结论
+- **vk61 验证通过**（用户口头验收：「绝大部分功能正常」）：`fastboot boot` 零写盘启动
+  → Phosh 桌面、触屏 `NVTCapacitiveTouchScreen`、WiFi 已连、电池 100%/Charging、
+  `hci0 UP RUNNING`、`uname` = `vk47clean`；**不再刷 `/init: line 35`**。
+- vk61 = boot_b 原 60 MB ramdisk **仅把 `/init` 换成唯一真源**（内核/固件/模块零回归）。
+- **boot_b 尚未刷写**（header ramdisk 仍 62593750）；待用户 `fastboot flash boot_b out/boot-elden-vk61.img`。
+
+### 11.2 五处口径更正（防误导，详见 `PITFALLS` #109–#114）
+1. slim/最小 initramfs **不能**作日常启动（内置驱动开机即需 40 MB 固件，`PITFALLS` #113）。
+2. USB 串口**不能**取证早期启动（8.8 s 才注册）；用 `/dev/vcsN`（#110）。
+3. busybox **有 `findfs`、没有 `blkid`/`mountpoint`**；applet 名单必须由二进制生成（#112）。
+4. `/init: line 35 …` 是 **switch_root × 后台 `/persist` 竞态**，非内核/init 损坏（#110）。
+5. BT「无法连接」在 vk61 上观测到恢复但**机制未证**，不得写「已解决」（`TASKS.md` G1-7）。
+- 附：项目 `AGENTS.md` 删除「进 fastboot 先 `--set-active=a`」错误规则。
+
+### 11.3 新排查方向
+- **A/B 复现 BT**：boot_b（旧 RAM init）+ 同一磁盘 `/init` ↔ vk61（新 RAM init），
+  各两次冷启做配对/回连 + `scripts/bt-link-test.sh`；先确认可复现再定位（候选：RAM 阶段
+  差异 / 去掉 `/persist` 孤儿进程 / 服务时序）。dmesg 的 BT 部分两边逐行相同，说明
+  不在驱动 bring-up 层。
+- **若将来重启 slim 路线**：需解决内置驱动的固件时序——候选 `CONFIG_FW_LOADER_USER_HELPER`
+  用户态回退、把相关驱动改 `=m` 并在 switch_root 后加载、或把 40 MB 固件放进 initramfs。
+- **通用纪律**：`switch_root` 前一切后台任务都是竞态源；换启动方式先查“故障发生那一刻
+  这个取证通道/文件真的存在吗”。
+
+### 11.4 资产清单
+| 资产 | 用途 |
+|---|---|
+| `out/boot-elden-vk61.img` | boot_b 替换版（已验证，待刷）；sha256 `78422c95…` |
+| `out/boot_b-live.img` | 改动前 boot_b 完整 96 MiB 备份（回滚） |
+| `out/boot-elden-vk60.img` | 最小 initramfs 试验版（驱动废，**勿用于日常启动**） |
+| `initramfs/init` | 唯一真源（RAM/磁盘共用）；`scripts/check-init.sh` 自检 |
+| `scripts/build-boot.sh` | applet 名单/双层 gzip/busybox 自指 三处防呆已加 |

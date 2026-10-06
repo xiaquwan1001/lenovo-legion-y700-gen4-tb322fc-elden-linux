@@ -211,7 +211,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档） |
 | `archive/` | ~5.5 M | ✅ track | 过程证据（80 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
 | `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#108 + §0 零号纪律 + §15 废弃登记 |
-| `RESOURCES.md §4` | 21 K | ✅ track | 92 条会话索引（权威，§4）+ 内核实机验证边界 |
+| `RESOURCES.md §4` | 21 K | ✅ track | 93 条会话索引（权威，§4）+ 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
@@ -287,9 +287,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 39 / ◐ 部分 6 / ✗ 未上机 47 |
-| 状态 | active 51 / reference 27 / junk 10 / superseded 4 |
-| 时间跨度 | 2026-09-29 → 2026-10-06（磁盘 jsonl **92**（顶层 83 + 嵌套 9）；本索引 **92** 行；84 个磁盘唯一 ID；`01a10527`×3、`01a105fb`×3、`01a10596`×2、`01a10736`×2、`01a109e8`×2、`01a109ec`×2 为同 ID 拆分会话；另有 5 行对应已删会话（保留作史）） |
+| 实机验证 | ✅ 实机 40 / ◐ 部分 6 / ✗ 未上机 47 |
+| 状态 | active 52 / reference 27 / junk 10 / superseded 4 |
+| 时间跨度 | 2026-09-29 → 2026-10-06（磁盘 jsonl **93**（顶层 84 + 嵌套 9）；本索引 **93** 行；85 个磁盘唯一 ID；`01a10527`×3、`01a105fb`×3、`01a10596`×2、`01a10736`×2、`01a109e8`×2、`01a109ec`×2 为同 ID 拆分会话；另有 5 行对应已删会话（保留作史）） |
 
 ---
 
@@ -392,6 +392,7 @@ git log --oneline -10
 | 2026-10-05 | `01a10ba8` | 会话：发行版/用户态选型 + 会话 overhaul | userland-session | ✅ | active | ① 选型：**不整体换发行版**（~14 个用户态 bug 中 ~7 个是会话/PAM/logind 类，现 Alpine 加 `greetd+phrog+elogind` 会话可一次清）；② 补 28+ 包（portal/gvfs/rtkit/BT 音频/PAM）；③ **路径 A 上机 + 重启验证**：`greetd initial_session` → 真 logind 会话 c1/root/tty7 + 24 个会话服务，**亮度 `SetBrightness` 511→1800 解 EISDIR**；lane `userland-session` → `ee72844`/`03b4777`，VK=vk55 | vk55 | 落 `USERLAND-STACK`/`USERLAND-PKGS`；`/tmp` 不可写致 `phrog-dbg.log` 权限坑 |
 | 2026-10-05 | `01a10bd0` | 会话：三调查合并 + 驱动上机验证 + Q24 更正 | merge-verify | ✅ | active | 合并 kexec/发行版/驱动（优先级裁决）；Phase1 上机：**vk53/vk54 DTS 改动致整机启动失败→复位回 b**（同 vk59 内核 HEAD DTB 挂 / vk47 DTB 过 ⇒ 元凶 DTS；单独关 NFC/CDSP 仍挂，ramoops 未单验）；**Q24 更正**：`vk47clean` 本身也会熄屏→关机（用户口述）⇒ `-dirty` 根因彻底排除；提交 `de59ebd`/`84899ba` | vk59,vk58,vk47clean | ramoops-only/NFC-only/CDSP-only 二分未完成；init 稳固化未开工 |
 | 2026-10-06 | `01a10ebb` | 会话：近三日进度整理（索引补齐 + 记录更正） | session-meta | ✗ | active | 补 RESOURCES §4 缺失 13 行、更新统计/时间线；更正 TASKS §0「DP/NFC/CDSP 已实现待上机」口径。本会话（进行中） | - | 进行中 |
+| 2026-10-06 | `01a10ee1` | init 固化：唯一真源 + 开机刷屏真因 + vk60/vk61 | init/boot | ✅ | active | 定位开机刷屏=`switch_root`×后台 `/persist` 竞态（突然 vcs 取证）；init 合为唯一真源+日志/自检/回退；发现真机 busybox 有 findfs、无 blkid/mountpoint（名单手写错误）；slim（vk60）无固件驱动全废→蛮弃；**vk61**（原 ramdisk 仅换 /init）零写盘验收通过（触屏/WiFi/电池/BT 均正常），待刷 boot_b | vk61 | boot_b 待刷；BT 「恢复正常」机制未证，需旧/新 RAM init 单变量 A/B |
 
 ---
 

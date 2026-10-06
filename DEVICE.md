@@ -25,7 +25,7 @@
 ### 1.1 内核与软件基线
 - 内核树：`linux -> geekidos-linux`（GEEKiDoS/linux `v7.2-elden`，**Linux 7.2.0**）+ 本地补丁 `patches/0001–0011`；模块化片段已应用（`patches/config-vk50-modular`）。
 - 配置快照：`patches/config-vk50-modular`（netd/XFRM + camera + thermal + audio 全合 + 模块化）；`config-vk40-bringup` 为历史基线。
-- **U2 在机基线 = vk46-dirty**（b 槽持久直启，镜像指纹标定；文档口径 vk47 已更正）。最新构建 **vk50**（含 `vk50.manifest`）；vk50 kexec 首测**失败未换动**（见 `TASKS.md` §4）。
+- **U2 在机基线 = `vk47clean`**（`uname` = `7.2.0-debug-vk47clean-gbd114ca335e1`；2026-10-06 实测标定，取代旧口径 vk46-dirty/vk47）。b 槽 boot_b 现仍为**原始 vk47clean 镜像**（ramdisk 里是旧 init）；**vk61**（=原 ramdisk 仅换修好的 `/init`）已 `fastboot boot` 零写盘验证，**待刷入 boot_b**。最新构建 **vk61**；kexec 已定论不可用（见 `TASKS.md` §4）。
 - `CONFIG_LOCALVERSION` 一变，相机 20 个 `.ko` 必须整套重编（vermagic 耦合）；vk50 起模块化后驱动可单独重编。
 
 ### 1.2 固件清单与通路（"正常驱动原厂全部固件"的分解）
@@ -69,7 +69,7 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=干净内核 **`vk47clean`**）。功能状态：音频播放+输入✅、温控四级✅、桌面关机/重启已修（#89）、**熄屏→重启=未解/间歇性**（G1-22/Q24）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`bootslot-b/boot_b-vk34recon.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=原始 **`vk47clean`** 镜像，**待刷 vk61**）。功能状态：音频播放+输入✅、温控四级✅、相机✅、触屏✅、WiFi✅、电池✅、桌面关机/重启已修（#89）、**熄屏→重启=未解/间歇性**（G1-22/Q24）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`bootslot-b/boot_b-vk34recon.img`；boot_b 改动前完整备份 `out/boot_b-live.img` |
 
 > **★ 熄屏→整机重启：仍未解（间歇性，2026-10-05 反转）**。受控复现：`vk40` 原始内核 + DPMS off **硬复位 3/3**（不熄屏稳定 ≥151s）。但 `vk42`/«干净重建»各 2 轮「免疫」为少样本观测，**不可信**——刷干净内核到 boot_b + 模块后**仍观察到复位** ⇒ 「`-dirty` 镜像为根因」**未证实**。**停止深究（用户定）**；若再续须长时窗+多样本+单变量。
 > 详细矩阵/方法/源码二分见 `archive/topics/G1-22-2026-10-05.md`、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9、`scripts/g1-22-dpms-test.sh`。持久根 `idle-delay=0` 规避**暂时保留**。
