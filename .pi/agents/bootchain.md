@@ -37,5 +37,5 @@ objective: 为 TB322FC 设计「间接引导层」（GRUB 类，尽量符合 UEF
 
 - **本 lane 只做研究 + 主机侧原型，不写设备**。设备只读侦察（`fastboot getvar all`、`lsblk`、读 GPT dump）在派发词允许时做。
 - 产物落 lane `bootchain`（merge 后入 `archive/topics/`）+ 必要时 `.pi/drafts/` + 主机侧脚本 `scripts/grubfat-*.sh`（新文件名）。
-- 不碰领域层 5 份文档、`.githooks`、`versions/`；提交带 trailer（`Lane: bootchain`），版本号用 `scripts/lane.sh alloc`。
+- 不碰领域层 4 份 + `PITFALLS`、`.githooks`、`versions/`；提交带 trailer（`Lane: bootchain`），版本号用 `scripts/lane.sh alloc`。
 - `web` 抓取若代理 7897 故障：`curl --noproxy '*'` + GitHub API（见全局记忆）。

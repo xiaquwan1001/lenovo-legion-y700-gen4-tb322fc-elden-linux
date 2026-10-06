@@ -26,7 +26,7 @@
 
 > **单一事实源（SSOT）**：每个数字/结论只在一个文件维护，其余用链接引用。
 > 根目录只有 6 份维护文档：`INDEX`（本文件）· `DEVICE` · `TASKS` · `RESOURCES` · `RUNBOOK-BRINGUP` · `PITFALLS`。
-> **推荐阅读顺序**：本文件 → `TASKS.md`（任务/进度/未解）→ `PITFALLS.md`（动手前扫）→ 需要时再进 `DEVICE`/`RESOURCES`/`RUNBOOK`。
+> **推荐阅读顺序**：本文件 → `.pi/AGENT-OPS.md`（做事规范）→ `TASKS.md`（任务/进度/未解）→ `PITFALLS.md`（动手前扫）→ 需要时再进 `DEVICE`/`RESOURCES`/`RUNBOOK`。
 
 ### 入口（唯一）
 
@@ -34,20 +34,28 @@
 |---|---|
 | **`INDEX.md`** | 使命与范围、分层地图、现状快照、快速命令、专题档案索引 |
 
+### 规范入口（agent 行为唯一入口）
+
+| 入口 | 文件（权威） | 装什么 |
+|---|---|---|
+| **行为/授权规范** | **`.pi/AGENT-OPS.md`** | agent 自主执行分级、用户物理干预边界、设备安全纪律、研发纪律、文档写入权限、汇报/时间盒；并发细则见 `.pi/CONCURRENCY.md` |
+
+> 项目描述（机型/目标/设备等价）在 `AGENTS.md`；根目录 6 份维护文档不再复述规范与经验。
+
 ### 领域层（4 份，唯一维护面）
 
 | 角度 | 文件（权威） | 装什么 |
 |---|---|---|
 | **设备状态 + 设备描述** | **`DEVICE.md`** | 机型规格、固件清单与通路、驱动矩阵、单元台账 U1/U2、状态→任务分派、GPT 参数、**§3 Linux 容量策略** |
 | **任务 / 进度 / 未解 / 方案** | **`TASKS.md`** | **唯一任务台账 + 进度权威**（§0）；G1/C/A 任务（§1–4）；**§5 查漏补缺（GAPS/Q1–Q25）**；**§6 G2 安卓兼容方案**；**§7 上游化（M1–M5）** |
-| **资源 / 资产 / 会话轨迹** | **`RESOURCES.md`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · **§4 会话索引（94 条 + 实机边界）** |
+| **资源 / 资产 / 会话轨迹** | **`RESOURCES.md`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · **§4 会话索引（数字 SSOT；实机边界）** |
 | **上机手册** | **`RUNBOOK-BRINGUP.md`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase −1…9 |
 
 ### 经验层（1 份）
 
 | 文件 | 装什么 |
 |---|---|
-| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做四件事）+ 踩坑正文 #1–#115（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
+| **`PITFALLS.md`** | **开发经验唯一入口**：**§0 零号纪律**（动手前先做四件事）+ 踩坑正文 #1–#117（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
 
 ### 证据层（`archive/`，只增不改、不改结论）
 
@@ -96,13 +104,13 @@ grep -rn -iE "unlock|解锁|sn\.img|1\.1\.11\.|rollback|testkey|073|\.120" \
 sudo bash elden-net.sh && ssh -o StrictHostKeyChecking=no root@192.168.7.1
 # 内核迭代＝统一入口 scripts/iterate.sh（四档环，细则 RUNBOOK §迭代；mod-loop/kexec/to-fastboot/flash-b/cycle 均已自锁）
 scripts/iterate.sh mod <driver-dir>              # 环0：=m 模块热载 ~30s 不重启（需先应用 fragment-modular）
-scripts/iterate.sh kernel --kexec VERSION=vkNN   # 环2：全量重编 + kexec 热重载（无 fastboot/无按钮）
-scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（内部 sign+flash-b，哈希回读校验）
+scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（迭代通道见 RUNBOOK；kexec 快环未闭环，勿默认）
+scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 由用户执行）
 scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
 # ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM）
 ./cycle.sh --soft                          # 软回 fastboot（免按电源键）
-fastboot boot out/boot-elden-vk40-ram.img  # 零写盘·纯RAM（无桌面/服务），仅内核/引导/分区级验证；先 blank 活跃槽 dtbo（否则卡 logo）
-fastboot boot out/boot-elden-vk40.img      # 零写盘·RAM内核+磁盘根（有桌面/服务），功能测试用（见 PITFALLS #93）
+fastboot boot bootslot-b/boot_b-clean.img  # 零写盘·持久变体（RAM 内核+磁盘根，有桌面/服务），功能测试用（见 PITFALLS #93）
+fastboot boot <img>                        # 零写盘·纯RAM变体（无桌面/服务）仅内核/引导级验证；先 blank 活跃槽 dtbo 否则卡 logo（PITFALLS #1/#10）
 # 新单元开工三件套（先写台账，再备份，再手术）
 fastboot getvar serialno; adb shell getprop ro.boot.hwboardid   # → 写进 DEVICE.md §2.2
 sh scripts/gpt-dump.sh                                          # 打印本单元 backup_lba（禁跨容量档复用）
@@ -119,8 +127,10 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#115
-**`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（94 条；无产出/冒烟会话以 `junk` 标注可整行忽略）
+**`PITFALLS.md`** | **开发经验唯一入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#117
+**`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（数字 SSOT；无产出/冒烟会话以 `junk` 标注可整行忽略）
+**`.pi/AGENT-OPS.md`** | **agent 行为/授权规范（唯一入口）**：自主分级 / 物理干预边界 / 写入权限
+**`.pi/CONCURRENCY.md`** | 并发任务约束（lane/fork/registry；AGENT-OPS 下级细则）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
 `backup/` | 原厂分区/固件/GPT 快照（**按容量档隔离**）；`backup/fw/README.md` 说明来源

@@ -2,6 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
+> **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
 > 最后更新：2026-10-06（**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
@@ -16,6 +17,8 @@
 4. **无设备证据不得写「已修复/已解决」**（2026-10-06 新增）：主机侧构建/编译/能进 BDS 一律只算「未上机验证」；间歇性故障**单次样本无效**（须同口径量化 + 单变量 + 长时窗）。见 `archive/topics/SESSION-AUDIT-2026-10-06.md` §3（F2/F4）。
    参 #87、#92、#93、复盘-持久化与睡眠。
 
+> **行为/授权（谁手敲 fastboot、何时停下请用户物理干预、何时可自主执行）见 `.pi/AGENT-OPS.md` §1；本节只讲「动手前该掌握的事实」。**
+
 ## 一、引导 / fastboot / 重启交接
 
 1. **A/B 槽会漂移**：进过 Android/TWRP/多次 `fastboot boot` 后，`current-slot` 可能 a↔b。
@@ -24,6 +27,7 @@
    ★★ **Android 卡启动动画（动画还在动、机身发热、数据没坏）→ 十有八九只是漂到了「引导链不配套」的槽。**
    2026-09-29 实测：`current-slot=b` 卡动画，仅 `fastboot --set-active=a` + `fastboot reboot` 就完好进系统、数据无损。
    **所以「进不去 Android」第一步 = 切另一个槽试试，别急着重刷/清数据。** a/b 都试一遍。
+   ⚠️ **主语**：上面的 `--set-active` 是**用户在设备恢复时**的手动动作；**agent 不改 active slot**（写操作）——见 `.pi/AGENT-OPS.md` §2。
 
 2. **内核 `reboot` 后总落 fastboot，是 ABL 的正常回退**，不是故障：
    - ABL 对**当前 Android 槽**做 AVB 校验，`boot_b` 公钥不匹配 / `dtbo_b` hash 不匹配 → 无法启动 → 回退 **fastboot**。
@@ -37,6 +41,8 @@
    一律**拆成单条简单命令**（`fastboot flash dtbo_a ...` / `fastboot boot ...` 各自单独）。
    报 **`Write to device failed (No such file or directory)`** 时：先单条 `fastboot reboot bootloader`，等待，再单条 `fastboot boot`。
    （`cycle.sh` 已按此简化：`--soft`/`--dtbo`/`--recover`/`<img>`。）
+   ★ **经验事实（非授权规则）**：`to-fastboot.sh`/`cycle.sh` 类**封装脚本代跑 fastboot** 在本机故障率高，属禁忌；
+   「谁执行 fastboot」见 `.pi/AGENT-OPS.md` §1（默认用户手敲单条）。
 
 4. **`fastboot boot` 失败后 bootloader 会进"脏"状态**（连续报 `Load Error`）；`fastboot reboot bootloader` 可清。
    `fastboot boot` 报 `Failed to load/authenticate boot image: Load Error` 时同理。

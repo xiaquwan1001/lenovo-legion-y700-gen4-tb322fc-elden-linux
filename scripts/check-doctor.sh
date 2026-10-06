@@ -42,7 +42,7 @@ python3 - "$ROOT" <<'PY'
 import re, os, sys, glob
 root = sys.argv[1]
 active = ["INDEX.md","AGENTS.md","DEVICE.md","TASKS.md","RESOURCES.md","PITFALLS.md",
-          "RUNBOOK-BRINGUP.md",".pi/README.md"]
+          "RUNBOOK-BRINGUP.md",".pi/README.md",".pi/AGENT-OPS.md",".pi/CONCURRENCY.md"]
 active += sorted(glob.glob(os.path.join(root, '.pi/missions/*.md')))
 active += sorted(glob.glob(os.path.join(root, '.pi/agents/*.md')))
 active += sorted(glob.glob(os.path.join(root, '.pi/skills/*/SKILL.md')))
@@ -76,7 +76,7 @@ if missing:
     for f, m in sorted(missing):
         print("         %s -> %s" % (f, m))
     sys.exit(1)
-print("  [ok]   活跃文档无死链（%d 份：6 维护 + .pi README/missions/agents/SKILL）" % len(active))
+print("  [ok]   活跃文档无死链（%d 份：6 维护 + .pi README/AGENT-OPS/CONCURRENCY/missions/agents/SKILL）" % len(active))
 PY
 [ $? -ne 0 ] && fail=$((fail+1))
 
@@ -94,6 +94,10 @@ for pat in 'LESSONS\.md' 'GAPS\.md' 'ANDROID-COMPAT\.md' 'FILES\.md' 'SESSION-IN
   fi
 done
 [ "$stale" -eq 0 ] && ok "无过期文件引用"
+
+# 术语一致性：领域层只有 4 份（DEVICE/TASKS/RESOURCES/RUNBOOK）+ 经验层 1 份（PITFALLS）
+term=$(grep -rln "领域层 *[5五] *份" INDEX.md AGENTS.md TASKS.md DEVICE.md RESOURCES.md RUNBOOK-BRINGUP.md PITFALLS.md .pi/AGENT-OPS.md .pi/CONCURRENCY.md 2>/dev/null || true)
+if [ -n "$term" ]; then bad "术语漂移「领域层 5 份」（应为领域层 4 + 经验层 1）: $(echo $term | tr '\n' ' ')"; else ok "术语「领域层 4 份 + 经验层 1 份」一致"; fi
 
 # ---------------------------------------------------------------- 3.5 进度百分比口径（INDEX 快照 vs TASKS §0 权威）
 echo

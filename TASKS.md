@@ -14,7 +14,7 @@
 | **G2** 安卓容器（可用性 + 风控/完整性等级） | 6（Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC/**C9 用例集**） | 4（Play 登录收口、切槽脚本、C8 上机探测、**C4 部署验证**——代码/编译全就绪） | 4（相机共享、音频容器、C3 实测…） | **~45%** |
 | **G3** x86 模拟（Steam 载体） | 1（Box64 0.4.5 + Wine 9 **PoC 成功**） | 0 | Steam 游戏端到端（图形/音频/性能） | PoC ✅ / Steam 未上机 |
 | **拓展** UEFI 间接引导 · Gunyah VM | 0 | 0 | 2（UEFI 路线 A 已搜置；Gunyah 待上机探测） | ⬜ 非主线 |
-| 运维/资产 | 内核 vk50、rootfs 归档、Mesa 包、文档集重构、`qemu-utils` 已装（A13）、fstab nofail 已修（A18）、**C4 传感器链（A14）**、**env-pass provision（A17）**、**持久根内核↔模块对齐（2026-10-05）** | — | — | ✅ |
+| 运维/资产 | 内核 vk61、rootfs 归档、Mesa 包、文档集重构、`qemu-utils` 已装（A13）、fstab nofail 已修（A18）、**C4 传感器链（A14）**、**env-pass provision（A17）**、**持久根内核↔模块对齐（2026-10-05）** | — | — | ✅ |
 
 ---
 

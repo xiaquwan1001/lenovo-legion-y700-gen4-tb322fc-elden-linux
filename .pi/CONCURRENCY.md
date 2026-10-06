@@ -3,6 +3,7 @@
 > 2026-10-05 定。取代旧「子 agent 一律不 commit」的口径（旧规划会话 `01a104a2`）。
 > 目标：子代理提交可区分、并发各走独立分支、版本号不再撞车、冲突由父 agent 收口。
 > 相关：`scripts/lane.sh`、`.githooks/commit-msg`、`versions/vk-registry.tsv`；分层见 `INDEX.md` §2。
+> **行为/授权标准统一见 `.pi/AGENT-OPS.md`**（本文件只是其下级并发细则）。
 
 ## 1. 模型（single integrator + forked lanes）
 
@@ -21,7 +22,7 @@ main ──base/<date>-<sha>──┬── lane/c3-id    (worktree) ── comm
 
 ## 2. 不可变式（违反即回退）
 
-1. **单写者**：任何时刻一个文件只有一个写者。领域层 5 份文档 + `.githooks` + `versions/` = 父专属。
+1. **单写者**：任何时刻一个文件只有一个写者。领域层 4 份 + `PITFALLS` + `.githooks` + `versions/` = 父专属。
 2. **文件归属不重叠**：lane 只写自己的路径（见 §5）；跨路径需求 → 回父 agent 协调，不得私自扩权。
 3. **不 rebase / 不 merge main 进 lane**：lane 只从 baseline 前进；需要上游新基线时由父决定是否重开 lane。
 4. **内核改动必走 worktree**：`geekidos-linux`（13 G）绝不在主 checkout 上多 agent 同时改。

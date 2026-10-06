@@ -205,13 +205,13 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | 路径 | 体积 | 版本控制 | 说明 / 处置 |
 |---|---|---|---|
 | 领域层 `INDEX/DEVICE/TASKS/RESOURCES/RUNBOOK.md` + `PITFALLS.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2（GAPS/ANDROID-COMPAT 已并入 `TASKS.md` §5/§6） |
-| `.pi/{skills,memory,missions,agents}` `.pi/README.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：技能/持久记忆/子代理任务卡/模型配置（分工见 `.pi/README.md`）。⚠️ `pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
-| `.pi/sessions/`（92 个 jsonl） | ~108 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
+| `.pi/{skills,missions,agents}` `.pi/README.md` `.pi/AGENT-OPS.md` `.pi/CONCURRENCY.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：行为规范/并发细则/技能/子代理/模型配置（分工见 `.pi/README.md`）。⚠️ `.pi/memory/` 已于 2026-10-05 删除（迁 hermes）；`pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
+| `.pi/sessions/`（100 个 jsonl，含会话子目录副本） | ~108 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档） |
-| `archive/` | ~5.5 M | ✅ track | 过程证据（80 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
-| `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#115 + §0 零号纪律 + §15 废弃登记 |
-| `RESOURCES.md §4` | 21 K | ✅ track | 93 条会话索引（权威，§4）+ 内核实机验证边界 |
+| `archive/` | ~5.5 M | ✅ track | 过程证据（87 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
+| `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#117 + §0 零号纪律 + §15 废弃登记 |
+| `RESOURCES.md §4` | 21 K | ✅ track | 100 行会话索引（数字 SSOT，§4）+ 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
@@ -287,9 +287,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 40 / ◐ 部分 6 / ✗ 未上机 47 |
-| 状态 | active 53 / reference 27 / junk 10 / superseded 4 |
-| 时间跨度 | 2026-09-29 → 2026-10-06（磁盘 jsonl **94**；本索引 **94** 行；85+ 个磁盘唯一 ID；`01a10527`×3、`01a105fb`×3、`01a10596`×2、`01a10736`×2、`01a109e8`×2、`01a109ec`×2 为同 ID 拆分会话；另有 5 行对应已删会话（保留作史）；无产出/冒烟行标 `junk`，可整行忽略） |
+| 实机验证 | ✅ 实机 42 / ◐ 部分 8 / ✗ 未上机 50 |
+| 状态 | active 59 / reference 27 / junk 10 / superseded 4 |
+| 时间跨度 | 2026-09-29 → 2026-10-06（磁盘 jsonl **100**；本索引 **100** 行；**92** 个磁盘唯一 ID，多个 ID 有拆分会话/子目录副本；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
 
 ---
 
@@ -394,6 +394,12 @@ git log --oneline -10
 | 2026-10-06 | `01a10ebb` | 会话：近三日进度整理（索引补齐 + 记录更正） | session-meta | ✗ | active | 补 RESOURCES §4 缺失 13 行、更新统计/时间线；更正 TASKS §0「DP/NFC/CDSP 已实现待上机」口径。本会话（进行中） | - | 进行中 |
 | 2026-10-06 | `01a10ee1` | init 固化：唯一真源 + 开机刷屏真因 + vk60/vk61 | init/boot | ✅ | active | 定位开机刷屏=`switch_root`×后台 `/persist` 竞态（突然 vcs 取证）；init 合为唯一真源+日志/自检/回退；发现真机 busybox 有 findfs、无 blkid/mountpoint（名单手写错误）；slim（vk60）无固件驱动全废→蛮弃；**vk61**（原 ramdisk 仅换 /init）零写盘验收通过（触屏/WiFi/电池/BT 均正常），待刷 boot_b | vk61 | boot_b 待刷；BT 「恢复正常」机制未证，需旧/新 RAM init 单变量 A/B |
 | 2026-10-06 | `01a10f2c` | 会话：近四天会话审查（失败方向/排查思路/文档精简） | session-audit | ✗ | active | 审查 10-02→10-06 会话：成功 ~30 / 失败卡墙 ~8 / 未解 ~6 / 中断 ~14；提炼错误方向 F1–F9（检索顺序、主机侧假阳性、观察者效应、小样本定论、混淆变量、基础设施误判…）；落地文档瘦身（TASKS §1/§4、INDEX §3、PITFALLS §0 纪律 4） | - | `archive/topics/SESSION-AUDIT-2026-10-06.md` |
+| 2026-10-06 | `01a10f5e` | initramfs：载具固化 + 可复现打包 | init/boot | ◐ | active | 修 `cpio --reproducible`/`sort -z`/`gzip -n` 使打包可复现；定 slim/full 两载具；真机 `inittest-veh` 进桌面、init 日志干净 | vk61 | WiFi 慢归 Q26 |
+| 2026-10-06 | `01a10fdd` | 设备：BT PAN 不可用 + CDSP 验证准备 | device-net | ◐ | active | 平板无 PAN/NAP 服务 ⇒ SSH 不能走蓝牙；U1/U2 均离线；给出 CDSP 上机验证命令（NCM/串口两路） | - | 待用户接 USB |
+| 2026-10-06 | `01a10ff8` | 版本：vk40–61 号审查 + tag 补录 | vk-ledger | ✗ | active | 补 `vk54`@`26cd13b1c`；vk43/49/50 无源不伪造 tag；`check-doctor` 新增 §5 机读校验（FAIL=0） | vk40-61 | vk53 全程排除 |
+| 2026-10-06 | `01a11012` | 版本：vk1–40 审查 + fastboot 侦察 | vk-ledger | ✅ | active | 审 vk1–40 功能/日志/上机；fastboot 侦察：current-slot=b、unlocked、max-download 768 MiB；该 ABL 不支持 `fastboot fetch` | vk1-40 | 无 |
+| 2026-10-06 | `01a1106e` | 文档：语义漂移审查 | docs-audit | ✗ | active | 排查「偏好→规则升格 / 来源不明 / 前后翻转」共 7 项；落 `archive/topics/SEMANTIC-DRIFT-AUDIT-2026-10-06.md` | - | 待处置 |
+| 2026-10-06 | `01a11074` | 版本：vk61 刷入“报错”澄清 | vk-ledger | ✅ | active | 非故障：vk61 是 initramfs 载具号，`uname` 仍 `vk47clean` 是正确签名；kernel/dtb 与 `boot_b-live` 逐字节同 | vk61 | 无 |
 
 ---
 

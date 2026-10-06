@@ -40,4 +40,4 @@ objective: 修 U2 持久 Phosh 桌面的四个用户态问题——深色模式�
 - 持 `scripts/device-lock.sh` 再用设备；副作用与长轮询不要写进同一条命令（会被 harness 杀）。
 - 不破坏当前可用系统：改前备份（`cp` 原文件/`gsettings` 原值），改后立即验证；**不要自行重启持久系统**（SSH 单通道，失联风险）——需要重启验证时写清楚让用户执行。
 - 产物：设备侧改动同步回 lane 的 `rootfs/`、`scripts/`（新文件名 `dt-*.sh` 优先）；证据落 lane 内 `archive/topics/`（merge 后入主库）。
-- 不碰领域层 5 份文档、`.githooks`、`versions/`；提交带 trailer（`Lane: dt-ui`）。
+- 不碰领域层 4 份 + `PITFALLS`、`.githooks`、`versions/`；提交带 trailer（`Lane: dt-ui`）。
