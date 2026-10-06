@@ -11,7 +11,7 @@
 #
 # vk	编译成果	上机验证	已知bug	排查成果	处置	备注
 vk34	img(out/boot-elden-vk34recon.img,+ram; bootslot-b/boot_b-vk34recon.img)	✅在跑/回归基线	音频BE未通	有	闭环	BE 路由由 vk43 修复
-vk34recon-ram	img(out/boot-elden-vk34recon-ram.img)	未记录	—	—	补测	纯RAM变体，零写盘可快测
+vk34recon-ram	img(out/boot-elden-vk34recon-ram.img)	✅2026-10-06 fastboot boot	—	—	闭环	RAM根（无 elden_root，设计如此）；UART+SSH 通、rootfs rw、linux17 fsck clean
 vk35	无	—	—	—	跳过	仅会话读数
 vk36/vk36debug	仅rootfs片段(out/rootfs-thermal-vk36.cpio.gz, 无boot镜像)	—	—	—	跳过	无boot成果
 vk37	无	—	—	—	跳过	无boot成果
