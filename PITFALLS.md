@@ -2,17 +2,18 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-06（**#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单**；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§15 = 过时/废弃/功能缺陷登记**）。
+> 最后更新：2026-10-06（**#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单**；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
-## 0. 零号纪律（动手前先做这三件事）
+## 0. 零号纪律（动手前先做这四件事）
 
 1. **先查本地既有结论再取证**：`grep -rn -iE "unlock|解锁|rollback|testkey|GPT|EDL" ~/y700-elden/*.md archive/topics/*.md .pi/skills/*/references/*.md`（PITFALLS #87）。
 2. **动分区/刷写前备份**：`fastboot fetch <分区>` + GPT 双表 dump；**写后读回校验**（不看"传输完成"）。
 3. **单一远程通道的持久系统上不做自锁式实验**（电源/熄屏/网络）；用 `fastboot boot` **零写盘**验证，而非直接改 flash。
    ⚠️ **两种「RAM 启动」别混**（#92/#93）：`-ram` 纯 RAM 变体**不启桌面/会话服务**，只适合内核/引导/分区级验证；
    **功能/服务级测试（桌面、PipeWire、蓝牙音频、Waydroid、相机出流）必须 `fastboot boot` 持久变体**（RAM 内核 + 磁盘根，同样零写盘）。
+4. **无设备证据不得写「已修复/已解决」**（2026-10-06 新增）：主机侧构建/编译/能进 BDS 一律只算「未上机验证」；间歇性故障**单次样本无效**（须同口径量化 + 单变量 + 长时窗）。见 `archive/topics/SESSION-AUDIT-2026-10-06.md` §3（F2/F4）。
    参 #87、#92、#93、复盘-持久化与睡眠。
 
 ## 一、引导 / fastboot / 重启交接
@@ -40,19 +41,10 @@
 4. **`fastboot boot` 失败后 bootloader 会进"脏"状态**（连续报 `Load Error`）；`fastboot reboot bootloader` 可清。
    `fastboot boot` 报 `Failed to load/authenticate boot image: Load Error` 时同理。
 
-5. **不要指望 `kexec` 换内核（旧 syscall 限制）**：`CONFIG_KEXEC=y`，`kexec -l`/`-s -l` 都能**装载成功**，
-   但 **`kexec -e` 执行会黑屏挂死**（新内核未起、无 USB gadget，需物理重启）。arm64/Qualcomm 平台限制。
-   （结论已收窄：file-based `kexec -s -l --kexec-file-syscall` + 未压缩 Image 已验证可行，见 #94 与 RUNBOOK §8。）
-   （2026-10-05 取证：**挂死分支点未定位**——`console=ttyGS0` 是 USB gadget，kexec 时必断，不能据"无输出"下结论；
-   待带存活 console 上机定位。见 `archive/topics/KEXEC-2026-10-05.md`。）
-   （**2026-10-05 上机**：① **H2（次级 CPU offline 失败→BUG_ON）排除**——可逆 hotplug 7→1 全 `psci: CPUx killed` 干净下线；
-   ② 运行期 VA=**48 位**（`/proc/cpuinfo` 无 `lpa2`）、却 `CONFIG_ARM64_VA_BITS=52` ⇒ 命中上游 `1537e55728ec`；③ **APSS 看门狗被永久禁用**
-   ⇒ 死挂**不会自复位**；④ 装 vk54（含 2 行 trans_pgd 修复）后 `kexec -e` 由「死挂」变为「**掉电→ABL→fastboot**」；
-   ⑤ **kexec 复位会扣 `boot_b` retry**（无 `markBootSuccessful`）——**做任何 kexec/重启实验前先 `slot-attr.py mark-successful b`**，否则 ~7 次后 b 变 unbootable；
-   ⑥ **重复 `fastboot boot`/图形启动使设备不稳定**（掉电重启回 b 槽）→ 已停手。见 `archive/topics/KEXEC-ONDEVICE-2026-10-05.md`。）
-   （**2026-10-05 R2**：**trans_pgd fix 不是充分条件**——用**带 fix 的运行内核 vk58** 发起 kexec 仍失败：`kexec -e` 表现为**直接掉电**（非死挂），
-   后靠 USB VBUS 自动开机回 boot_b；落盘 kmsg 抓取（用户态读 `/dev/kmsg` 逐行 fsync）最后一条 t≈183.4s，**无** `Starting new kernel`/`Bye!`
-   ⇒ 掉电点在里程碑之前或来不及落盘，疑 **B1**，非定论；定死 B1/B2/B3 只剩**物理 UART**。见 `archive/topics/KEXEC-ONDEVICE-R2-2026-10-05.md`。）
+5. **`kexec` 换内核：不可用（已定论；⛔superseded 中间态）**——`kexec -l`/`-s -l` 均装载成功，但 **`kexec -e` 失败**：早期「黑屏挂死」，补 trans_pgd（vk54/vk58）后转为**直接掉电**；**分支点未定位**（无存活 console + APSS 看门狗永久禁用，只剩物理 UART）。⇒ **不作迭代通道**，改用 `fastboot boot`/`--flash`。
+   - 取证要点（勿再重复）：`console=ttyGS0` 是 USB gadget，kexec 时必断，**不能据「无输出」判挂死**；H2（CPU offline BUG_ON）已排除；运行期 VA=48 位却 `VA_BITS=52`。
+   - ⚠️ **kexec/重启实验前先 `slot-attr.py mark-successful b`**，否则扣 `boot_b` retry，~7 次后 b 变 unbootable。
+   - 全量证据：`archive/topics/KEXEC-ONDEVICE-2026-10-05.md`、`KEXEC-ONDEVICE-R2-2026-10-05.md`、`KEXEC-2026-10-05.md`、`RUNBOOK §8`。
 
 6. **boot.img 必须 ≤96 MiB**（`boot_a`=0x6000000）；超了 `fastboot boot` 会 `Bad Buffer Size`。
 

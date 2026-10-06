@@ -37,14 +37,14 @@
 |---|---|---|
 | **设备状态 + 设备描述** | **`DEVICE.md`** | 机型规格、固件清单与通路、驱动矩阵、单元台账 U1/U2、状态→任务分派、GPT 参数、**§3 Linux 容量策略** |
 | **任务 / 进度 / 未解 / 方案** | **`TASKS.md`** | **唯一任务台账 + 进度权威**（§0）；G1/C/A 任务（§1–4）；**§5 查漏补缺（GAPS/Q1–Q25）**；**§6 G2 安卓兼容方案**；**§7 上游化（M1–M5）** |
-| **资源 / 资产 / 会话轨迹** | **`RESOURCES.md`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · **§4 会话索引（92 条 + 实机边界）** |
+| **资源 / 资产 / 会话轨迹** | **`RESOURCES.md`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · **§4 会话索引（94 条 + 实机边界）** |
 | **上机手册** | **`RUNBOOK-BRINGUP.md`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase −1…9 |
 
 ### 经验层（1 份）
 
 | 文件 | 装什么 |
 |---|---|
-| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做三件事）+ 踩坑正文 #1–#108（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
+| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做四件事）+ 踩坑正文 #1–#114（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
 
 ### 证据层（`archive/`，只增不改、不改结论）
 
@@ -64,16 +64,15 @@
 > **SSOT**：进度百分比与任务状态以 `TASKS.md` §0 为准；本节若与之不符，以 `TASKS.md` 为准。
 
 - **G1 ≈88%**（对齐 TASKS §0）：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、**音频出声 + 桌面 PipeWire/UCM2**、**相机前后摄出流**、触觉、带外串口）。
-  **U2 实跑 vk46-dirty**（b 槽持久直启；vk50 经 `fastboot boot` 零写盘实跑验证，kexec 热重载**硬挂不可用**，见 `TASKS.md` §4）。**剩 2 个硬缺口**：TF 卡、BT 配对（音频播放+输入均✅，相机出流 ✅ 2026-10-05）。
+  **U2 实跑 `vk47clean`**（b 槽持久直启；kexec 热重载**不可用**，见 `TASKS.md` §4）。**剩 2 个硬缺口**：TF 卡、BT 配对（音频播放+输入均✅，相机出流 ✅ 2026-10-05）。
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
-- **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-7 BT / G1-9 DP / G1-10 NFC / G1-11 CDSP + 在树未实测项；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 已搁置）。
-  - 本批交付 **vk53**（`out/boot-elden-vk53.img`，内核 `7.2.0-debug-vk53-g2b5badef00fb`，分支 `elden/vk53-hw`）= **NFC ST21NFCA + CDSP 启用 + TYPEC_MUX_FSA4480=y**（DP 前置）。**⚠️ 该版未上机验证**——仅主机侧构建与 DTB/镜像指纹校验，**无任何设备侧证据**，不得引用为“已可用”；逐项状态见 `TASKS.md` §1。
-- **本轮合并决议（2026-10-05，三调查并联；优先级：kexec ＞ 装完整发行版 ＞ 驱动）**：见 `TASKS.md` §4 与 `archive/topics/MERGE-2026-10-05.md`。要点：① **kexec 快环已死**，迭代统一 `--boot`/`--flash`，kexec 取证排第 1 上机项；② **不整体换发行版**，现 Alpine 加 `greetd+phrog+elogind` 会话清 U1–U7（userland backlog 冻结）；③ **boot_b 不再瘦身**（2026-10-06 更正）：改用 **vk61 = 原完整 ramdisk 仅换修好的 `/init`**（内核/固件/模块零回归，83.3 MB < 96 MiB）；min initramfs slim（~20.8 MiB）因无 `/lib/firmware` 导致驱动全废，**仅作研究**（`PITFALLS` #113），不进日常启动；④ 驱动验证一律 `fastboot boot`。**2026-10-06 上机**：`fastboot boot` 正常；**vk53/vk54 的 DTS 改动导致整机启动失败（复位回 b）**——同 vk59 内核 HEAD DTB 挂 / vk47 DTB 过 ⇒ 元凶是 DTS；G1-10/11 无设备侧成功证据。见 `archive/topics/DRIVER-VERIFY-2026-10-06.md`。
+- **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-7 BT / G1-9 DP / G1-10 NFC / G1-11 CDSP + 在树未实测项；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 搁置）。裁决与沿革见 `TASKS.md` §4 + `archive/topics/MERGE-2026-10-05.md`。
+- **2026-10-06 上机**：`fastboot boot` 正常；**vk53/vk54 的 DTS 改动导致整机启动失败（复位回 b）**——同 vk59 内核 HEAD DTB 挂 / vk47 DTB 过 ⇒ 元凶是 DTS，G1-10/11 **无设备侧成功证据**（`archive/topics/DRIVER-VERIFY-2026-10-06.md`）。boot_b 形态=`vk61`（原完整 ramdisk 只换 `/init`，83.3 MB）；min initramfs slim 无固件→驱动全废（`PITFALLS` #113），不用。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
 - **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=干净内核 `vk47clean`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
-  🟠 **熄屏→重启（G1-22/Q24）仍未解（间歇性）**：受控复现成立，但 vk42 与干净重建的少样本「免疫」不可信；**刷入干净内核到 boot_b 后仍复位** ⇒ 「`-dirty` 镜像为根因」假设**未证实**。**停止深究（2026-10-05 用户定）**；若再续须长时窗+多样本+单变量。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。**2026-10-06 用户补充：`vk47clean` 本身也会熄屏→关机，现不复现仅因手动关了 5 分钟闲置熄屏 ⇒ 与 `-dirty` 无关。**
-  🟠 **桌面用户态四问已定根因（G1-26/27/28，2026-10-05）**：`gtk-theme=Adwaita-dark` 解析回退浅色（应 `Adwaita`）⇒ 深色/图标反色/accent 同源；亮度=elogind 无 session。见 `archive/topics/DT-UI-2026-10-05.md`，修复待上机。
+  🟠 **G1-22/Q24 熄屏→关机：未解 / 间歇性**；`vk47clean` 亦复现 ⇒ 与 `-dirty` 无关；**停止深究**（规避 `idle-delay=0`）。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
+  🟠 **G1-26/27/28 桌面用户态：根因已定**（`gtk-theme='Adwaita'`；亮度=logind 无 session，`greetd` 真会话后 `SetBrightness` 已解 EISDIR），修复待上机。见 `archive/topics/DT-UI-2026-10-05.md`。
   ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
 
 ---
@@ -117,8 +116,8 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#108
-**`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（92 条）
+**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#114
+**`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（94 条；无产出/冒烟会话以 `junk` 标注可整行忽略）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
 `backup/` | 原厂分区/固件/GPT 快照（**按容量档隔离**）；`backup/fw/README.md` 说明来源
@@ -152,6 +151,7 @@ AOSP 迁盘校验 | `archive/topics/AOSP-MIGRATE-CHECK-2026-10-02.md`
 踩坑总表（**动手前扫**） | `PITFALLS.md`（#80/#81＝“把机器当角色”“状态才是前置条件”；**#87＝引导链问题先 grep 本地既有结论**）
 BL 解锁（**要不要 / 怎么**——已定稿，别再重推） | `RUNBOOK-BRINGUP.md` §0.5 ★权威顺序·`archive/topics/复盘-2026-10-03-BL解锁.md`（时线 + 7/8 月对照 + 根因）·`archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md`（签名链取证）
 操作史/复盘 | `archive/topics/HANDOFF.md` `archive/topics/复盘.md` `archive/topics/复盘-2026-09-29-夜.md` `archive/topics/复盘-2026-09-30-日.md` `archive/topics/复盘-2026-10-02-swarm.md` **`archive/topics/复盘-2026-10-03-BL解锁.md`** `archive/topics/PAUSE-2026-10-02-android.md`
+**近四天会话审查**（失败方向特征 F1–F9 + 排查思路 + 文档精简结论） | **`archive/topics/SESSION-AUDIT-2026-10-06.md`**
 **内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`RESOURCES.md §4`** 配套
 换机迁移包 | `flashing-bundle/`（tar.gz 已归档 `archive/2026-10-04-root-strays/`）
 **退场的入口**（快捷方式 + 已卸载插件 `pi-messenger-swarm` 全套，含恢复步骤） | `archive/2026-10-04-retired-entrypoints/README.md`
