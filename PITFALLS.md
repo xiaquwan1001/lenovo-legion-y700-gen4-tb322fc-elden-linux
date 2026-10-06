@@ -306,6 +306,23 @@
     - 另分叉：设备 `/usr/local/sbin/net-up.sh` = 仓库 `scripts/net-up-nm.sh`，而仓库 `scripts/net-up.sh` 是手动版（#109 同类），需对齐 SSOT。
     - 证据：`archive/topics/WIFI-SLOW-2026-10-06.md`；相关 #109/#113。
 
+118. **★WiFi「到可用约 2 分钟」的真根因 = 固件 beacon-miss + 两条独立的拆链路径（2026-10-06，vk61 基线实机）**。
+    - 现象：clean boot 28 s 关联成功，之后**每 ~16.4–17.7 s 掉线一次**（`Connection to AP 00:00:00:00:00:00 lost`，bssid 全零是 ath12k/MLO 不填 `vif.cfg.ap_addr` 的显示假象），~129 s 自行稳定；IPv4 因此要 ~2 min。
+    - 直接推手：固件 `wmi roam event reason 2`（= `WMI_ROAM_REASON_BEACON_MISS`，`ath12k debug_mask=2` 可见）；ath12k 把它变成 **3 s `connection_loss_work`**（`ATH12K_CONNECTION_LOSS_HZ`），而该 work **只能被「真 beacon 交主机」取消**（`ath12k_mac_handle_beacon_iter`）。
+    - 为什么会误报：主机在**关联后前 ~100 s 基本收不到 beacon**（`iw station dump` 的 `beacon rx: 1`，而固件的 `beacon signal avg` 却在更新），之后自行恢复（`beacon rx` → ~6–7/s，<10/s 但固件已容忍）。**换基础设施 AP（ustcnet）首 90 s 0 bmiss / 0 掉线 / beacon rx 9.3/s** ⇒ 触发条件在「手机热点 AP + WCN7850」这一组合。
+    - **两条拆链路径可独立关闭**：①驱动 `connection_loss_work`（关掉后 `lost` 归零）；②mac80211 的 AP-probe 超时（不发 deauth、不打印 `lost`，因此**只看 `lost` 计数会误判「已修复」**）。实测只关 ①，关联次数照旧（6 次/200 s）。上游同症状修法是关 ① 且只针对 MLO（2026-08 ath12k 邮件列表，仍在 review）。
+    - 已排除（单变量，各 45 s 窗口）：`power_save` 开/关（2 vs 2 次掉线）、持续流量（2–3 次）；**单次手动扫描在稳定链路上不触发 bmiss/掉线**（90 s 无新关联）。
+    - 纪律：**「WiFi 慢/掉线」先看 `iw station dump` 的 `beacon rx` 与固件 roam reason，再谈 DHCP/管理器**；`nmcli getting IP configuration` 是受害者不是根因。
+    - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md`；相关 #117/#109。
+
+119. **★同 UTS 候选内核的启动验证：`uname -r` 不可用，要用 `uname -v`；`debug_mask=2` 会冲掉 dmesg 计数（2026-10-06）**。
+    - 为保持 `/lib/modules` 的 vermagic 兼容，候选内核刻意锁同一 `UTS_RELEASE`（`7.2.0-debug-vk47clean-gbd114ca335e1`）⇒ `uname -r` 在 vk61 与各候选间**逐字相同**，不能用它证明「新内核已启动」。可用判别器 = `uname -v`（`#N SMP PREEMPT <构建时间戳>`，随每次 make 递增）。
+    - 代价：**vermagic 兼容性依赖 LOCALVERSION 逐字对齐**；做法 = 用设备 `/proc/config.gz` 作构建配置（保留 `CONFIG_LOCALVERSION="-debug"`）+ `CONFIG_LOCALVERSION_AUTO=n` + `make LOCALVERSION=-vk47clean-gbd114ca335e1`，并保持 DTB/ramdisk 逐字节不变（单一变量）。
+    - `ath12k debug_mask=2` 每个信道产 7–8 行 scan 事件，一次扫描上百行 ⇒ **`dmesg | grep -c` 的差分计数会因 ring buffer 回卷而变成负数**（本次实测 `assoc=-2`）。
+    - 纪律：低音量指标（`wlan0: associated` / `Connection to AP`）可在开 debug 前先差分；高频指标一律用**时间窗口过滤**（`awk` 比较 `[ 1234.567]` 时间戳）或直接用 `iw station dump` 计数器，不要依赖累计 `grep -c` 的差值。
+    - 另：`out/` 存在其他写者（本次 `out/boot-elden.img` 在无我方操作的情况下被改过），打包前先备份该别名、打包后按原样恢复。
+    - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md` §2/§7。
+
 ---
 
 ## 七、Wayland / 桌面（weston）
