@@ -47,7 +47,7 @@
 
 | 文件 | 装什么 |
 |---|---|
-| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做四件事）+ 踩坑正文 #1–#114（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
+| **`PITFALLS.md`** | **§0 零号纪律**（动手前先做四件事）+ 踩坑正文 #1–#115（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
 
 ### 证据层（`archive/`，只增不改、不改结论）
 
@@ -119,7 +119,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#114
+**`PITFALLS.md`** | **经验总入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#115
 **`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（94 条；无产出/冒烟会话以 `junk` 标注可整行忽略）
 `scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
 `out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
@@ -157,7 +157,7 @@ BL 解锁（**要不要 / 怎么**——已定稿，别再重推） | `RUNBOOK-B
 **近四天会话审查**（失败方向特征 F1–F9 + 排查思路 + 文档精简结论） | **`archive/topics/SESSION-AUDIT-2026-10-06.md`**
 **内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`RESOURCES.md §4`** 配套
 换机迁移包 | `flashing-bundle/`（tar.gz 已归档 `archive/2026-10-04-root-strays/`）
-**退场的入口**（快捷方式 + 已卸载插件 `pi-messenger-swarm` 全套，含恢复步骤） | `archive/2026-10-04-retired-entrypoints/README.md`
+**退场的入口**（快捷方式副本 + 已卸载插件 `pi-messenger-swarm` 登记；**插件工作流已删**） | `archive/2026-10-04-retired-entrypoints/README.md`
 **上游化审查**（内核树 vs 主线 v7.2 全量 diff，A/B/C/D 分级） | `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`（任务 `TASKS.md` §7 M1–M5）
 
 ---

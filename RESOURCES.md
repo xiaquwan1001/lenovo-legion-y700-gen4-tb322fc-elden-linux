@@ -210,7 +210,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档） |
 | `archive/` | ~5.5 M | ✅ track | 过程证据（80 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
-| `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#114 + §0 零号纪律 + §15 废弃登记 |
+| `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#115 + §0 零号纪律 + §15 废弃登记 |
 | `RESOURCES.md §4` | 21 K | ✅ track | 93 条会话索引（权威，§4）+ 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |

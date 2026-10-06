@@ -34,7 +34,7 @@
 | **G1-27** | **长按电源键菜单图标反色**（关机/紧急联系/锁屏等图标非常黑、深色背景分不清） | 🟠 **与 G1-26 同一根因**（symbolic 图标取主题前景色；浅色主题→近黑前景画在深色弹窗上）。修复同上 | U2 | 电源菜单四图标在深色背景下清晰可辨 | 同 G1-26 |
 | **G1-28** | **状态栏亮度滑块无效**（亮度固定） | 🟠 **根因定位（2026-10-05，`dt-ui`+父内联）**：背光 `/sys/class/backlight/aw99706-backlight`（max 4095）**可写且生效**，但 elogind `Session.SetBrightness` 对**任意** name 均返回 `EISDIR`；elogind 255.24 走「writer 子进程 + `/sys/class/tty/tty0/active`」，本机 **`loginctl list-sessions` 空、无 VT** ⇒ 链路断。候选 A/B/C/D（起 session+VT / 换 elogind / 走 Phosh sysfs 后端 / root 守护桥接）**待拍板**。**↳ 候选 A 已实机取证（2026-10-05，`01a10ba8`/lane `userland-session`）**：`greetd initial_session` 建真 logind 会话后，`login1.Session.SetBrightness backlight aw99706-backlight 1800` → sysfs **511→1800**（此前无 session 恒 `EISDIR`）⇒ **核心链路已解**；剩 Phosh 滑块 UI 联动待确认 | U2 | 滑块拖动即改变 `actual_brightness` 且 UI 同步 | `archive/topics/DT-UI-2026-10-05.md` §4、`archive/topics/USERLAND-PKGS-2026-10-05.md` §U1 |
 | **G1-29** | **间接引导层（GRUB 类/UEFI）——摆脱 boot.img 96 MiB 限制** | ⛔ **路线 A 上机失败 ⇒ 搁置（2026-10-05 用户定）**。机制（lane `bootchain`）：四代 UEFI 被拆成 `uefi_a`/`imagefv_a`/`abl_a` 由 XBL 加载，ABL 不扫 FAT、无现成启动 FAT。**上机：本地编译链通、壳机制成立、能进 BDS，但 UFS 初始化过不去**（UFSDxe ASSERT / Sync Exception + SCM mailbox/QBSS/CPU_Vectors 缺失）⇒ Mu Pakala 移植层系统性缺口，非单点可解；已发上游 `mu_wide_platforms#12`。**96 MiB 限制已被 G1-30/vk61 实际解决 ⇒ UEFI 不构成主线依赖** | U2（只读） | 出现 GRUB/BDS 菜单 + `root=LABEL=linux17` | `archive/topics/BOOTCHAIN-2026-10-05.md`、`UEFI-UFS-BRINGUP-2026-10-05.md`、`UEFI-UFS-UPSTREAM-ASK-2026-10-05.md`、`TASKS §5 Q25` |
-| **G1-30** | **boot.img 立即瘦身（=G1-29 路线 C）** | ❌ **口径更正（2026-10-06）**：slim 能打到 20.8 MiB，但 **vk60 实机=进桌面、驱动全废**（最小 initramfs 无 `/lib/firmware`，`PITFALLS` #113）⇒ **slim 不作日常启动**。boot_b 替换版改走 **vk61**=原完整 ramdisk 只换修好的 `/init`（内核/固件/模块零回归，83.3 MB < 96 MiB，已零写盘验收）。真机 busybox **有 findfs、无 blkid/mountpoint**（#112） | U2 | —（slim 不用于日常启动） | `archive/topics/BOOTSLIM-2026-10-05.md`、`INIT-HARDEN-2026-10-06.md` §9–§11、`out/boot-elden-vk61.img` |
+| **G1-30** | **boot.img 立即瘦身（=G1-29 路线 C）** | ❌ **口径更正（2026-10-06）**：slim 能打到 20.8 MiB，但 **vk60 实机=进桌面、外设全不可用**——**归因 = initramfs 打包（最小 initramfs 无 `/lib/firmware`），不是驱动/内核**（`PITFALLS` #113/#115、`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`）⇒ **slim 不作日常启动**。boot_b 替换版改走 **vk61**=原完整 ramdisk 只换修好的 `/init`（内核/固件/模块零回归，83.3 MB < 96 MiB，已零写盘验收）。真机 busybox **有 findfs、无 blkid/mountpoint**（#112） | U2 | —（slim 不用于日常启动） | `archive/topics/BOOTSLIM-2026-10-05.md`、`INIT-HARDEN-2026-10-06.md` §9–§11、`out/boot-elden-vk61.img` |
 | **G1-4** | **音频可听（播放+输入）** | ✅ **播放 2026-10-04 实测听声**：根因=tplg MI2S **SD 线错**（SD0→SD1，`PITFALLS` #90）；PipeWire+UCM2 桌面链路 ✅。**输入 ✅ 2026-10-04**：本机麦克风=**模拟麦接 WCD939x**（非 DMIC）；WCD939x bring-up（DTS codec+swr1/2+TX3、去 VA DMIC）+采集 DAPM 控件 → `arecord -D default` 出数据并持久化 UCM2 `Mic`。**R3 裸 ALSA**：`scripts/audio-alsa-init.sh` 幂等设路由，无桌面 `aplay/arecord -D default` 开箱可用（增益 400）。R1 有线耳麦：代码就绪、**硬件缺失（无 3.5mm/转接头）冻结**；FSA4480（非 `wcd_usbss`）需编 built-in。R2 双麦=AMIC1+AMIC4（未做，低价值） | 任一 mainline | 扬声器出声 ✅；`arecord`/`aplay -D default` rc=0 ✅ | `archive/topics/AUDIO-SDLINE-2026-10-04.md`、`WCD939X-2026-10-04.md`、`HEADSET-HW-2026-10-04.md`、`MIC-ARRAY-2026-10-04.md`、`patches/0011`、`scripts/audio-alsa-init.sh` |
 | **G1-5** | **相机出流** | ✅ **已打通（2026-10-05，vk50 实机）**：前后摄连续取帧 rc=0（前 `gc08a8` 3264×2448 SRGGB10→csiphy4→video0；后 `s5kjns` 4080×3072 SGRBG10→csiphy3→video3）。根因=csiphy/vfe 默认 `UYVY8/1920x1080` 与 sensor raw 不匹配且链路未使能 ⇒ 旧 `-32`；`media-ctl --set-v4l2` 统一格式 + `-l` 使能即解。**已固化** `scripts/camera-stream-up.sh`。前提：内核与 20 相机模块须同构建（vk50 起 `LOCALVERSION=-vk50` 重建 1513 模块）。持久根已复现（各 10 帧 rc=0，`PITFALLS` #99–#101）。剩 3A/调优、C5 容器共享 | 任一 mainline | `v4l2-ctl --stream-mmap` 连续出帧 rc=0 | `archive/topics/CAMERA-2026-10-05.md`、`CAMERA-2026-10-04-subagent.md`、`scripts/camera-stream-up.sh` |
 | **G1-6** | TF 卡写稳定性 | 🟡 **根因倾向卡本身 70–80%（2026-10-04 子代理）**：尺寸相关性（64MB 大块全对 / 8MB 小写间歇丢）、`err_stats` 全 0、`e2fsck` 前后一致、已是最保守 3.3V/SD_HS 档仍坏。**关键更正**：厂商 `qcom,uses_level_shifter` 唯一作用=SD_HS 封顶 37.5MHz，主线 `max-sd-hs-hz=<37500000>` 已等价 ⇒ 无效移植。5 个候选补丁（`patches/candidate-tf-*.patch`，按代价排序）+ 压测脚本 `scripts/tf-stress.sh` 就绪。**新卡已装入（2026-10-05 用户确认），测试条件就绪，待跑 A/B** | 任一 | 新卡连续 ≥3 轮 0 不一致 + `e2fsck -fn` 干净 | `archive/topics/TF卡-2026-10-04-subagent.md`、`scripts/tf-stress.sh` |
@@ -80,15 +80,10 @@
 
 ---
 
-## 3. 已作废/合并的旧任务线（只登记，不再展开）
+## 3. 已作废/合并的旧任务线
 
-| 旧 ID | 现状 |
-|---|---|
-| swarm `task-1…13`（2026-10-02 那轮 13 项） | **12/13 完成**，仅 task-7 基准未派 → 并入 **G1-8**；日志 `logs/agent-logs-2026-10-02/`、复盘 `archive/topics/复盘-2026-10-02-swarm.md` |
-| `task-14…17`（D 轨 AVF） | 改 **C8**（且因"无 Android"新前提降级为低优先调研） |
-| `PLAN-NODEV` A 轨/B 轨 | A 轨并入 §2.1；B 轨并入 `RUNBOOK-BRINGUP.md` + G1-1…3 |
-| 「两轨分机」路线决定 | 作废（设备等价）；技术结论并入 `DEVICE.md` §1.2/`TASKS.md §6` |
-| 「新机 = mainline、旧机 = D 轨宿主」角色表 | 作废 → 按状态分派（`DEVICE.md` §2.3） |
+> 2026-10-06 归档：`设备等价` 原则确立后，2026-09-30…10-02 的旧任务线 / swarm 批次 / "两轨分机" 角色表全部作废，原文已移出本文件。
+> 见 **`archive/topics/RETIRED-PLANS-2026-10-06.md` §1**（含 swarm task-1…13、task-14…17、PLAN-NODEV、两轨分机、新机/旧机角色表）。本文件不再展开。
 
 ---
 
@@ -102,6 +97,7 @@
 - **迭代通道**：`fastboot boot`（零写盘）/ `--flash`；**kexec 快环已死**（见下 1）。
 - **boot_b 形态** = `vk61`（原完整 ramdisk 只换 `/init`，83.3 MB）；**不用 min initramfs slim**（无固件→驱动全废，#113）。
 - **上机纪律**：驱动测试期间 `idle-delay=0` 禁熄屏；写操作前查 `scripts/device-lock.sh`；fastboot 命令拆单条（PITFALLS #3）。
+- **归因分层**（2026-10-06）：报「驱动/内核坏」前先分清 **initramfs/rootfs 打包** 与 **用户态配置**（如 vk60「驱动全废」实为 initramfs 缺固件）——见 `PITFALLS` #115、`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`。
 
 **下一步（按顺序）**
 1. **上机最小实验**：kexec 取证排第 1（分支点未定位，须带存活 console，见 `PITFALLS` #5/#106）→ 驱动验证（先解 vk53/vk54 DTS 破坏启动：ramoops-only / NFC-only / CDSP-only 二分）→ Q24 隔离（纯 DRM `wlr-randr --off`）。

@@ -56,19 +56,11 @@ VK: vk52                 # lane.sh alloc 产出，可多个
 - registry 由父在 merge 时一并提交；lane 自己**不提交** registry（避免分叉）。
 - 命名沿用 `vk<N>`；一次性实验变体加后缀（`vk52-ram`、`vk52a`），后缀不进 registry。
 
-## 5. 当前可并发的 lane 规划（2026-10-05）
+## 5. lane 排产
 
-| lane | 任务 | 路径归属（只写这些） | 设备 | 执行者 |
-|---|---|---|---|---|
-| `c3-id` | C3 身份/DRM 取证 + 社区对照 | `archive/topics/c3-*.md`、`.pi/drafts/` | 无 | gplay |
-| `c7-slot` | C7 slot 切换脚本 + A16 `new-tablet` 参数化 | `scripts/`（新文件为主） | 无 | general |
-| `upstream` | M1–M5 上游化补丁整理 | `patches/` | 无 | general |
-| `dt-ui` | **G1-26/27/28** 深色模式 · 主题配色 · 亮度滑块 · 电源菜单图标 | `rootfs/`、`scripts/dt-*.sh`、lane 内 `archive/topics/` | **U2** | dt-ui |
-| `bootchain` | **G1-29** 间接引导层（GRUB 类/UEFI）摆脱 boot.img 96 MiB | lane 内 `archive/topics/`、`.pi/drafts/`、`scripts/grubfat-*.sh` | 只读 | bootchain |
-| （设备 lane） | G1-22 二分 / BT H1·H2 / G1-8 基准 / C1 Waydroid | 内核 worktree + `scripts/` | **U2 串行** | 父协调 |
-
-**设备 lane 天然不并发**：同一时刻只放行一件（`device-lock.sh` + 父排程）；需要改内核时同样 `lane.sh new <lane> <base> --kernel` 开 worktree，但持设备者唯一。
-**U1（stock Android）未接**：C0/C3-Android/C7 验证在 U1 接入后可成为与 U2 并行的第二条设备线。
+> lane 是「**需要并发时才用**」的工具，不是常设分工；具体派发时现列。
+> 2026-10-05 那份一次性 lane 排产（`c3-id`/`c7-slot`/`upstream`/`dt-ui`/`bootchain`）已结束或未开跑，原文归档：
+> **`archive/topics/RETIRED-PLANS-2026-10-06.md` §2**。
 
 ## 6. 冲突收口（父 agent）
 

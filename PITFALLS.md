@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-06（**#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单**；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-06（**#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单**；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -272,6 +272,12 @@
     5. **「BT 配对待收口 / 无法连接」→ vk61 上观测到恢复，但机制未证**（`TASKS.md` G1-7）。**不得写“已解决”**；需旧/新 RAM init 单变量 A/B 两次冷启复现。
     - 另：项目 `AGENTS.md` 原「进 fastboot 后先 `fastboot --set-active=a`」**已删除**（错误规则，本意是不动在用的 b 槽；已改为「不要改 active slot」）。
     - **推而广之的排查纪律**：① 任何 `switch_root` 之前的 `&` 后台任务都是竞态候选，必须同步化或显式确认已退出；② 换 initramfs/换启动方式后，先查内置驱动探测时刻缺不缺固件/模块与自己依赖的文件；③ 得出结论前先看「这个取证通道在故障发生的那一刻真的存在吗」（如 ttyGS0、/run）——不存在就得换通道（`/dev/vcsN`、落盘 kmsg）。
+
+115. **★归因分层：报「驱动/内核坏」前先分清 initramfs/rootfs 打包 与 用户态配置（2026-10-06 复核）**。
+    - 本项目多次把 **C 层（initramfs/rootfs 打包）** 或 **D 层（用户态）** 的问题记成 **A 层（驱动/内核）**，导致修错方向。复核表见 `archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`。
+    - 典型：vk60 slim「驱动全废」= initramfs 缺 `/lib/firmware`（#113）；「没进桌面」= 刷了 `-ram` 变体（#92）；模块加载失败 = 内核↔模块/rootfs 不对齐（#99–#101）；相机 `-32` = media 链路配置（D）；音频 = tplg SD 线（B）。
+    - **报「XX 驱动坏」前先问**：故障发生时根/固件/模块可见吗？cmdline 是哪种变体？模块与内核同构建吗？**报「内核 bug」前先排除用户态服务/配置**（Q24 熄屏→关机即未在「内核 DSI blank vs 用户态电源路径」之间裁决，不得记作驱动根因）。
+    - 归因层：A 内核/驱动/DTS · B 固件与资源文件 · C initramfs/rootfs 打包 · D 用户态服务/配置 · E 工具/流程。
 
 ---
 
@@ -787,11 +793,11 @@
 | `db/`（SQLite 知识库） | 删除（无原生查询需求） | `rg` + pi 会话选择器 |
 | `archive/sessions-catalog-2026-10-03.jsonl` | 删除（db 数据源） | `RESOURCES.md` §4 |
 | `archive/2026-10-02-merged/*` | 旧文档原文（证据，非废弃） | `INDEX.md` §6 |
-| `.pi/pi-messenger.json` + `.pi/messenger/` + `scripts/{swarm,swarm-monitor,y700-swarm-reset,y700-harness-restart,start-y700-harness,apply-swarm-patch}.sh` + `patches/pi-messenger-swarm-*` | **插件 `pi-messenger-swarm` 已卸载**→脚本静默失效（`node …/server.js` ENOENT），全部移入归档 | `archive/2026-10-04-retired-entrypoints/`（判据 §3、恢复 §4） |
-| `AGENTS.md` 旧「并行 subagent」段的 `swarm.py` 与 `.pi/messenger/agent-card.json` | 引用**从未存在的文件**，已改写为 `Agent` 工具 + `.pi/agents/` | `AGENTS.md` §其他 |
+| `.pi/pi-messenger.json` + `.pi/messenger/` + `scripts/{swarm,swarm-monitor,y700-swarm-reset,y700-harness-restart,start-y700-harness,apply-swarm-patch}.sh` + `patches/pi-messenger-swarm-*` | **插件 `pi-messenger-swarm` 已卸载**→脚本静默失效（`node …/server.js` ENOENT），**2026-10-06 工作流资产（脚本/补丁/运行时）已删除** | `archive/2026-10-04-retired-entrypoints/README.md`（入口副本+机器层登记；历史见 git） |
+| `AGENTS.md` 旧「并行 subagent」段的 `swarm.py` 与 `.pi/messenger/agent-card.json` | 引用**从未存在的文件**，已改写为 `Agent` 工具 + `.pi/agents/` | `AGENTS.md` §协作 |
 | `~/.local/bin/{flashing,eacndev,lob-remake}` | 三个 `cd` 包装（pi-profile-switch 时代命名），功能与 `cd <repo> && pi` 等价 → 已删除，副本留 `bin/` | `cd ~/y700-elden && pi` |
 | `~/.pi-profile-switch/`（profile 机制） | 本机不存在；配置改为**按 cwd 叠加加载**，无需切 profile | `.pi/README.md` 首段 |
-| `flashing-bundle/profile/flashing.json`、`backup/pi-assets-*/flashing.json` | 旧 profile 定义化石；**不要据此重建 profile** | `AGENTS.md` §其他 |
+| `flashing-bundle/profile/flashing.json`、`backup/pi-assets-*/flashing.json` | 旧 profile 定义化石；**不要据此重建 profile** | `AGENTS.md` §协作 |
 
 ### 15.2 已迁移 / 退役的外部资产
 
