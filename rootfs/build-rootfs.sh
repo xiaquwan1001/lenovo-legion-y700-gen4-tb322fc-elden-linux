@@ -93,6 +93,7 @@ rm -f $ROOT/etc/resolv.conf
 
 # --- pack -----------------------------------------------------------------
 mkdir -p /home/xuqianhui1001/y700-elden/out
-( cd $ROOT && find . -print0 | cpio --null -o -H newc --owner=0:0 2>/dev/null | gzip -6 ) > /home/xuqianhui1001/y700-elden/out/rootfs.cpio.gz
+# 可复现：--reproducible（mtime/inode/设备号归零）+ 固定顺序 + gzip -n（无时间戳）。
+( cd $ROOT && find . -print0 | LC_ALL=C sort -z | cpio --null --reproducible -o -H newc --owner=0:0 2>/dev/null | gzip -n -6 ) > /home/xuqianhui1001/y700-elden/out/rootfs.cpio.gz
 du -sh $ROOT | cut -f1 | xargs echo "rootfs size:"
 ls -la /home/xuqianhui1001/y700-elden/out/rootfs.cpio.gz

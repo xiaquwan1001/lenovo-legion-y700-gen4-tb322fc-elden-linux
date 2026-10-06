@@ -25,48 +25,29 @@ for f in "$KERNEL" "$DTB" "$IRAM/busybox" "$IRAM/init" "$IRAM/usb-gadget"; do
 done
 
 # --- 最小 initramfs（fallback）-----------------------------------------
-rm -rf "$ROOTFS"
-mkdir -p "$ROOTFS"/{bin,dev,proc,sys,tmp,mnt,etc}
-cp "$IRAM/busybox" "$ROOTFS/bin/busybox"
-chmod 755 "$ROOTFS/bin/busybox"
-# busybox applet 符号链接：/init 的 shebang 是 `#!/bin/sh`，且 init/usb-gadget
-# 直接调用裸 applet。缺它们时内核报 "Failed to execute /init (error -2)" →
-# "No working init found" → 15s panic 复位（2026-10-05 实机定位，G1-30 slim 从未验证）。
-if [ -f "$IRAM/busybox-applets.txt" ]; then
-	while read -r _a; do
-		# `busybox` itself is in `busybox --list`; linking it would replace the
-		# real binary with a self-referential symlink and shrink the ramdisk to ~0.
-		[ -n "$_a" ] && [ "$_a" != busybox ] && ln -sf busybox "$ROOTFS/bin/$_a"
-	done < "$IRAM/busybox-applets.txt"
-fi
-# sanity: the real busybox binary must survive the applet-link pass.
-if [ ! -f "$ROOTFS/bin/busybox" ] || [ -L "$ROOTFS/bin/busybox" ]; then
-	echo "[boot] FATAL: $ROOTFS/bin/busybox is missing or a symlink — applet list broke it" >&2
-	exit 1
-fi
-sed 's/\r$//' "$IRAM/init" > "$ROOTFS/init"
-chmod 755 "$ROOTFS/init"
-sed 's/\r$//' "$IRAM/usb-gadget" > "$ROOTFS/bin/usb-gadget"
-chmod 755 "$ROOTFS/bin/usb-gadget"
-mknod -m 600 "$ROOTFS/dev/console" c 5 1 2>/dev/null || true
-( cd "$ROOTFS" && find . -print0 | cpio --null -o -H newc --owner=0:0 2>/dev/null | gzip -9 ) > "$OUT/initramfs.cpio.gz"
-echo "initramfs(busybox): $(du -h "$OUT/initramfs.cpio.gz" | cut -f1)"
+# 唯一实现见 scripts/build-initramfs.sh（可复现 + 内嵌 /init 校验 + applet 合法性）。
+# 这里不再重复逻辑，避免两份实现漂移（PITFALLS #109 同类教训）。
+bash "$ROOT/scripts/build-initramfs.sh" slim
 
 # --- 选择 ramdisk -------------------------------------------------------
 # 显式优先：RAMDISK=/path/to.cpio.gz 覆盖一切（可复现构建要求记录到 manifest）。
 # 默认候选把 **camera 覆盖层放在首位**，否则默认构建会漏掉相机模块（vk49 的教训）。
-#   RAMDISK_KIND=busybox   只打最小 busybox initramfs
+#   RAMDISK_KIND=busybox   只打最小 busybox initramfs（out/initramfs-slim.cpio.gz）
+#   RAMDISK_KIND=full      用完整 test 载具（out/initramfs-full-elden.cpio.gz，含固件）
 #   RAMDISK_KIND=rootfs    用磁盘根 rootfs（默认）
 if [ -n "${RAMDISK:-}" ]; then
 	:   # 显式指定
 elif [ "${RAMDISK_KIND:-rootfs}" = busybox ]; then
-	RAMDISK="$OUT/initramfs.cpio.gz"
+	RAMDISK="$OUT/initramfs-slim.cpio.gz"
+elif [ "${RAMDISK_KIND:-rootfs}" = full ]; then
+	RAMDISK="$OUT/initramfs-full-elden.cpio.gz"
+	[ -e "$RAMDISK" ] || { echo "缺 $RAMDISK，先跑 scripts/build-initramfs.sh full" >&2; exit 1; }
 else
 	RAMDISK=""
 	for c in "$OUT/rootfs-overlaid-camera.cpio.gz" "$OUT/rootfs-overlaid.cpio.gz" "$OUT/rootfs.cpio.gz" "$OUT/rootfs-vk11.cpio.gz"; do
 		[ -e "$c" ] && { RAMDISK="$c"; break; }
 	done
-	[ -n "$RAMDISK" ] || { echo "⚠️ 找不到 rootfs cpio，回退 busybox"; RAMDISK="$OUT/initramfs.cpio.gz"; }
+	[ -n "$RAMDISK" ] || { echo "⚠️ 找不到 rootfs cpio，回退 busybox"; RAMDISK="$OUT/initramfs-slim.cpio.gz"; }
 fi
 echo "ramdisk: $RAMDISK ($(du -h "$RAMDISK" | cut -f1))"
 
@@ -82,6 +63,7 @@ echo "cmdline: $CMDLINE"
 dd if=/dev/zero of="$OUT/dtbo-dummy.img" bs=4096 count=1 2>/dev/null
 
 # 可复现：固定时间戳（默认取内核 Image.gz 的 mtime，可用 env 覆盖）。
+# SOURCE_DATE_EPOCH 已在上面打包 initramfs 时设定；此处不会再变。
 export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(stat -c %Y "$KERNEL")}
 
 MKBOOTIMG_ARGS=(--header_version 2 \

@@ -113,6 +113,35 @@ done
 [ "$missing_hook" -eq 0 ] || true
 
 echo
+# ---------------------------------------------------------- 5. initramfs 资产
+echo "== 5. initramfs 资产（内嵌 /init == 真源）=="
+_asset_check() {
+	_a=$ROOT/$1
+	[ -f "$_a" ] || { warnf "$(basename "$1") 不存在（先跑 scripts/build-initramfs.sh slim|full）"; return; }
+	_t=/tmp/ck-init-asset.$$
+	rm -rf "$_t"; mkdir -p "$_t"
+	( cd "$_t" && gzip -dc "$_a" | cpio -idm --quiet 2>/dev/null )
+	if [ -f "$_t/init" ] && diff -q <(sed 's/\r$//' "$INIT") <(sed 's/\r$//' "$_t/init") >/dev/null 2>&1; then
+		ok "$(basename "$_a") 内嵌 /init == 真源（$(stat -c%s "$_a") B）"
+	else
+		bad "$(basename "$_a") 内嵌 /init != 真源（或无法解开）"
+	fi
+	rm -rf "$_t"
+}
+_asset_check out/initramfs-slim.cpio.gz
+_asset_check out/initramfs-full-elden.cpio.gz
+if [ "${CHECK_INIT_DEEP:-0}" = 1 ]; then
+	if bash scripts/build-initramfs.sh verify >/tmp/ck-init-repro.$$ 2>&1; then
+		ok "资产可复现（deep）：$(grep -c '可复现 OK' /tmp/ck-init-repro.$$) 项"
+	else
+		bad "资产不可复现（deep）：$(tail -1 /tmp/ck-init-repro.$$)"
+	fi
+	rm -f /tmp/ck-init-repro.$$
+else
+	warnf "跳过可复现性重建（CHECK_INIT_DEEP=1 开启，约 15s）"
+fi
+
+echo
 if [ "$fail" -eq 0 ]; then
 	echo "== check-init: 全绿 =="
 	exit 0

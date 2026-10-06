@@ -2,7 +2,7 @@
 
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
-> 最后更新：2026-10-06（**#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单**；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-06（**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = vk53/vk54 DTS 改动导致整机启动失败；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -278,6 +278,12 @@
     - 典型：vk60 slim「驱动全废」= initramfs 缺 `/lib/firmware`（#113）；「没进桌面」= 刷了 `-ram` 变体（#92）；模块加载失败 = 内核↔模块/rootfs 不对齐（#99–#101）；相机 `-32` = media 链路配置（D）；音频 = tplg SD 线（B）。
     - **报「XX 驱动坏」前先问**：故障发生时根/固件/模块可见吗？cmdline 是哪种变体？模块与内核同构建吗？**报「内核 bug」前先排除用户态服务/配置**（Q24 熄屏→关机即未在「内核 DSI blank vs 用户态电源路径」之间裁决，不得记作驱动根因）。
     - 归因层：A 内核/驱动/DTS · B 固件与资源文件 · C initramfs/rootfs 打包 · D 用户态服务/配置 · E 工具/流程。
+
+116. **★boot.img 连打两次 sha 不同＝不可复现打包；GNU cpio `--reproducible` 不归零 mtime（2026-10-06）**。
+    - 现象：同一内核/DTB/内容连打两次，`out/boot-elden-*.img` sha 不同；manifest 的 `ramdisk_sha256` 每次都变。据此曾误把 vk59 矩阵里的 ramdisk 当作变量——实际内容逐文件相同（`diff -r --no-dereference` 零差异），只差打包元数据。
+    - 根因三处：① GNU cpio 2.15 的 `--reproducible` 只归零 inode/设备号，**不归零 mtime**（旧 `build-boot.sh` 每跑一次 `sed`/`cp` 都刷新 mtime，字节偏差恰好落在 mtime 字段）；② `find` 未排序（readdir 顺序不保证）；③ `gzip` 默认写入时间戳/原名。
+    - 修（`scripts/build-boot.sh`、`rootfs/build-rootfs.sh`）：全树 `touch -h -d @$SOURCE_DATE_EPOCH` + `find | LC_ALL=C sort -z` + `cpio --null --reproducible` + `gzip -n`。修后同输入两次 sha 一致；`scripts/check-init.sh` 加「内嵌 /init==真源 + 可复现重建」门（`CHECK_INIT_DEEP=1`）。
+    - 纪律：版本台账的「唯一变量」只有在**打包可复现**时才成立；见「同输入不同 sha」先查这三处，别当成内容差异。
 
 ---
 

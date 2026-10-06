@@ -224,3 +224,48 @@ fastboot flash boot_b out/boot-elden-vk61.img
 | `out/boot-elden-vk60.img` | 最小 initramfs 试验版（驱动废，**勿用于日常启动**） |
 | `initramfs/init` | 唯一真源（RAM/磁盘共用）；`scripts/check-init.sh` 自检 |
 | `scripts/build-boot.sh` | applet 名单/双层 gzip/busybox 自指 三处防呆已加 |
+
+---
+
+## 12. initramfs 载具固化：可复现打包 + 两种标准形态（2026-10-06 续）
+
+动因：为接下来的内核/DTS 版本验证排除 **C 层干扰**（打包/固件可见性）。此前
+`VERSION=a`/`VERSION=b` 同内容连打两次镜像 sha 不同，manifest 的 `ramdisk_sha256`
+每次都变，曾被误当成「ramdisk 也是变量」。
+
+### 12.1 可复现打包（三处根因，缺一不可）
+- GNU cpio 2.15 的 `--reproducible` **只归零 inode/设备号，不归零 mtime**；旧
+  `build-boot.sh` 每跑一次 `sed`/`cp` 都刷新 mtime，字节偏差恰好落在 mtime 字段。
+- `find` 输出未排序；`gzip` 默认写时间戳/原名。
+- 修：全树 `touch -h -d @$SOURCE_DATE_EPOCH` + `find | LC_ALL=C sort -z` +
+  `cpio --null --reproducible` + `gzip -n`。落点 `scripts/build-boot.sh`、
+  `rootfs/build-rootfs.sh`。修后同输入两次 sha 一致。
+
+### 12.2 新脚本 `scripts/build-initramfs.sh`（唯一实现）
+| 形态 | 输出 | 用途 |
+|---|---|---|
+| `slim` | `out/initramfs-slim.cpio.gz`（1.06 MB） | 纯 RAM 研究。**无 `/lib/firmware`，不得用于驱动/DTS 验证**（#113） |
+| `full [BASE]` | `out/initramfs-full-elden.cpio.gz`（62.6 MB） | **驱动/DTS 版本验证的标准载具**：含 `/lib/firmware`，仅把 `/init` 换成唯一真源 |
+| `verify` | — | 重建并比 sha（可复现门）+ 内嵌 `/init`==真源 |
+
+BASE 默认 `out/boot-elden-vk61.img`（已验证）。`scripts/build-boot.sh` 新增
+`RAMDISK_KIND=full`；`busybox` 分支改用 `out/initramfs-slim.cpio.gz`（消除重复实现）。
+
+### 12.3 独立校验与资产
+- full 载具与 **vk61 ramdisk 内容逐文件完全一致**（`diff -rq --no-dereference` 零差异），
+  即「boot_b 原 60 MB ramdisk 仅换 `/init`」，只差已确定化的打包元数据。
+- 冒烟镜像 `out/boot-elden-inittest-veh.img`：kernel/dtb 与 vk61 **逐字节相同**，
+  ramdisk = full 载具；供零写盘确认载具本身无回归。
+- 自检：`scripts/check-init.sh` §5 新增「内嵌 /init==真源」；`CHECK_INIT_DEEP=1`
+  追加可复现重建门。当前全绿（FAIL=0）。
+
+### 12.4 待上机（用户执行）
+```
+fastboot boot out/boot-elden-inittest-veh.img    # 载具冒烟：应无刷屏、进桌面、uname=vk47clean
+```
+通过后，后续 vk53/vk54/i2c0 等版本验证统一用 `RAMDISK_KIND=full`（ramdisk 为固定常量，
+唯一变量 = 内核 + DTB）。
+
+### 12.5 引用
+- `scripts/build-initramfs.sh`、`scripts/build-boot.sh`、`scripts/check-init.sh`
+- `PITFALLS` #116（打包可复现）/ #112 / #113；`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`
