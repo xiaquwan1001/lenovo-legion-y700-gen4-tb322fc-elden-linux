@@ -12,3 +12,28 @@ vk58	kexec-va52	2026-10-05	（补录）vk58/vk58b/vk58c slim：带 trans_pgd fix
 vk59	hw-driver	2026-10-05	G1-9/10/11 驱动验证：vk53 内核（NFC+CDSP+FSA4480=y）重打 slim + 设备实测
 vk60	init-hardening	2026-10-06	init 固化：唯一真源+日志留痕+/persist 竞态修复（boot_b slim 候选）
 vk61	init-hardening	2026-10-06	boot_b 复刻：完整 ramdisk 仅换修好的 /init（驱动零回归）
+#
+# ============================================================================
+# 账目更正（2026-10-06 审查；行不可改写，更正一律以注释追加）
+# 完整证据：archive/topics/VK-LEDGER-AUDIT-2026-10-06.md
+# ----------------------------------------------------------------------------
+# 内核源：tag 已打的号 = vk40 vk41 vk42 vk44 vk45 vk46 vk47 vk48 vk54
+#   vk43  无内核提交（本号改动=rootfs tplg overlay，未留档）⇒ UNREPRODUCIBLE
+#   vk49  无内核提交（相机模块+.config；树=vk48 5a70ade46，KV 同串）
+#   vk50  无内核提交（树=vk48 5a70ade46 + LOCALVERSION=-vk50）
+#   vk53  提交 2b5badef0 暂无 tag —— 该号正在独立审查，本轮不动
+#   vk55/vk60/vk61 无内核改动（用户态 / 只换 initramfs·init）
+# 纠正：
+#   vk52  该号 slim 镜像内**实为 vk42 内核**（UTS=vk42-geb432f18a0d1）；
+#        当时设备模块对齐的是 vk50 ⇒ 「内核与 /lib/modules 同版本」前提未满足。
+#        slim 失败归因（缺 /bin/sh）不受影响。
+#   vk54  vk54/vk54-ram/vk54-slim 均构建自 dirty 树（vabits fix 前）——
+#        违「只烧 kernel_git_state=clean」纪律；vk56/57-slim 复用同一内核
+#        (kernel_image_sha256 相同)，仅换 ramdisk ⇒ 号不唯一标识内核。
+#   vk59  实际内核 = vk59-g26cd13b1c4a2（= vk54 提交，vk53 内容的超集），
+#        非上行所写「vk53 内核」；cdspoff/nfcoff/vk59a 变体 kernel 哈希缺失。
+#   vk60  slim 已弃用（无 /lib/firmware ⇒ 驱动全废，PITFALLS #113）。
+#        本行 note 保留原样，弃用结论以此为准。
+#   registry 覆盖从 vk50 seed 起；vk40–vk49 无 registry 行（版本账见
+#   RESOURCES §3 与 archive/topics/ITERATION-AUDIT-2026-10-04.md §5）。
+# ============================================================================

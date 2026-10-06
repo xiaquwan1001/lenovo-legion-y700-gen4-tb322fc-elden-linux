@@ -1,0 +1,16 @@
+# vk-ledger-known-issues.tsv — check-doctor §5 的已知问题白名单
+#
+# 用途：§5 检出的「打包内核 ≠ 构建时树内核 / registry 号无 manifest」若是**已审查在案的历史项**，
+#       在此登记后降级为 WARN；未登记的同类问题一律 FAIL（防止新事故混过）。
+# 格式：<镜像basename>\t<kind>\t<理由>
+#   kind ∈ tree_drift | dirty_drift | no_manifest
+# 证据：archive/topics/VK-LEDGER-AUDIT-2026-10-06.md §2
+#
+# 内核 payload 与构建时树不一致（同一 bug 类：#111 双层 gzip 之外的「Image.gz 陈旧」）
+vk52-slim	tree_drift	包入 vk42 内核（geb432f18a0d1），当时树=vk48/vk50；slim 失败归因（缺 /bin/sh）不受影响
+vk54-slim	tree_drift	复用 vk54-dirty 内核镜像（b3b87ed1），非当时树（vk54 提交 g26cd13b1c4a2）
+vk56-slim	tree_drift	同 vk54-slim 内核（仅换 ramdisk）
+vk57-slim	tree_drift	同 vk54-slim 内核（仅换 ramdisk）
+# 同 commit、镜像含未提交改动（dirty 位漂移）
+vk58b-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；vk58c 已实机 fastboot boot 验收
+vk58c-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；已实机 fastboot boot 验收

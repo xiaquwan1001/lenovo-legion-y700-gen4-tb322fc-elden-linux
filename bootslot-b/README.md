@@ -22,13 +22,25 @@
 | 文件 | 内容 |
 |---|---|
 | `avb.key` / `avb.avbpubkey` | 自签 RSA-4096 密钥（公钥 sha1 `fc1e3b33…`） |
-| `boot_b.img` | `out/boot-elden-vk12.img` + `add_hash_footer`（partition `boot`，100 663 296 B） |
+| `boot_b.img` | **历史 dump**（2026-09-29 时 = `out/boot-elden-vk12.img` + `add_hash_footer`）；**已被后续 dump 覆盖** ⇒ 切勿按名字当作“当前槽内容”，实际身份见下方《现状》表 |
 | `dtbo_b.img` | `out/dtbo-dummy.img` + `add_hash_footer`（partition `dtbo`，33 554 432 B） |
 | `vbmeta_b_flags3.img` | 自签 vbmeta，**flags=3（verification + hashtree 全关）** ← 首选 |
 | `vbmeta_b_flags0.img` | 自签 vbmeta，flags=0，**带 dtbo hash 描述符 + boot chain 描述符（指向我们的 key）** ← 干净通过 |
 
 三个文件的 digest 已互相校验一致（`avbtool verify/info` 通过）。
 `avb.key` 只在本机、只用于这台设备的 b 槽（丢了也能重新生成一套）。
+
+### 现状（2026-10-06 账目审查修正；本节为权威，上方历史表仅存沿革）
+
+| 文件 | 镜像 sha256（前 12） | 镜像内 UTS 实测 | 说明 |
+|---|---|---|---|
+| `boot_b.img` | `db2d6afbb049` | `7.2.0-debug-g4c68eb5ed4e3-dirty` | **vk46 时代 dump**（与 `out/boot-elden-vk46.img` 同源）；非当前 b 槽 |
+| `boot_b-clean.img` = `out/boot_b-live.img` | `e0e453dbb8d6` | `7.2.0-debug-vk47clean-gbd114ca335e1` | **当前 b 槽在机内核（vk47clean）** |
+| `boot_b_vk40{,-ram,-persist-diag}.img` | — | `7.2.0-debug-gba28ec16f01f-dirty` | vk40 系列（UTS 与 vk7–vk41 同串，设备自证不了版本） |
+| **目标形态** | 见 `out/boot-elden-vk61.img`（`78422c95e3a9`） | `7.2.0-debug-vk47clean-gbd114ca335e1` | vk61 = 原完整 ramdisk 仅换修好的 `/init`，零写盘验收通过、**待刷**（`INDEX` §U2、`TASKS` G1-30） |
+
+> 判定依据：直接对镜像解 gzip 抽 `Linux version`（与 `scripts/build-manifest.sh` 同法）。
+> 版本账与已知混淆项：`archive/topics/VK-LEDGER-AUDIT-2026-10-06.md`、`versions/vk-registry.tsv`。
 
 ## 三、测试序列（用户逐条执行，先确认槽位）
 

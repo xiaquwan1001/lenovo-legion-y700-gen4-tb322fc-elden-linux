@@ -433,6 +433,11 @@ git log --oneline -10
 「熄屏→重启/关机」（Q24）在 `vk47clean` 上仍复现（用户口述，`idle-delay=0` 规避），**根因未证实、间歇性未解**；
 vk53/vk54 的驱动项（DP/NFC/CDSP）**回落为「未上机验证」**：2026-10-06 的「DTS 破坏启动」归因已撤回（坏 init+用户态干扰，#108），**待 vk61 载具重测**后再引用。**相机仅 `v4l2-ctl` 出帧、缺 App 实测**；**WiFi 到可用 ~2 min（Q26）仍需排查**；**BT 配对+TWS 已用户实测可用**。
 
+**版本账目机读校验 + 不可复现号登记（2026-10-06）**：`archive/topics/VK-LEDGER-AUDIT-2026-10-06.md`——
+`vk43` = 全账唯一零证据号（无源/镜像/manifest）；`vk52/vk54/vk56/vk57` slim 镜像**错包内核**（陈旧 `Image.gz`，
+与 vk52-slim 同 bug 类）；`scripts/check-doctor.sh` §5 现已硬校验「registry 单调唯一 / registry 号必有 manifest /
+树自称内核 ≡ 镜像内 UTS」，历史项经 `versions/vk-ledger-known-issues.tsv` 降 WARN。`vk53` 独立审查中，本账不裁决。
+
 ---
 
 ### 4. 删除候选（**S1 已执行**：junk 会话已删；其余待确认）
