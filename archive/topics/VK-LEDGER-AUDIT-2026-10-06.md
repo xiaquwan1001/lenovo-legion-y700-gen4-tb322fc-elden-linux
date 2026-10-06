@@ -131,3 +131,20 @@ scripts/check-doctor.sh                    # §5 = vk 版本账；FAIL=0 才算�
 mv versions/vk-ledger-known-issues.tsv /tmp/ && scripts/check-doctor.sh; echo $?   # → 1
 mv /tmp/vk-ledger-known-issues.tsv versions/
 ```
+
+---
+
+## 6. 追加（2026-10-06 晚）：vk53 独立审查结束，本账补齐
+
+> 追加不改前文；§0/§1 的「范围排除 vk53」以本段更新后的口径为准。
+
+- **vk53 定案**（commit `d650ed4`，`PITFALLS` #108）：`fastboot boot` OKAY 后硬关机，
+  单变量矩阵（vk61 full 载具 + vk53 内核，零写盘）定位 = **仅 `&i2c0 { status="okay"; }` 即挂（vkB1-bin）**，
+  与 NFC 驱动/pinctrl/GPIO 无关；**本机无 NFC 硬件** ⇒ G1-10 取消；**G1-11 CDSP 经 `vkD2-cdsponly` 通过**。
+- **补 tag**：内核仓已打 annotated `vk53`@`2b5badef0`（源=镜像可证：`out/boot-elden-vk53.manifest`
+  `kernel_git_head=2b5badef0`、`clean`、UTS=`vk53-g2b5badef00fb`）。
+  至此 vk40–vk54 中除 vk43/vk49/vk50（非内核源，见 §3）与 vk47clean（同源重建）外，内核源均有 tag。
+- **registry**：`versions/vk-registry.tsv` 追加注释块更正 vk53 口径（上行 note 不复写）。
+- **RESOURCES §3**：时间线补 vk60/vk61 与 vkD/vkB/vkX/vkY 载具行；结尾「vk53 独立审查中」已改。
+- **未并入本账的留白**：`vkB2-bin/vkB3-bin/vkB4-bin` 已有 manifest 但**无设备结论留档**；
+  `vk41/43/44/45/48` 仍无 boot 镜像（§3）。

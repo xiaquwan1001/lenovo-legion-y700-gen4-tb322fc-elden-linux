@@ -36,4 +36,12 @@ vk61	init-hardening	2026-10-06	boot_b 复刻：完整 ramdisk 仅换修好的 /i
 #        本行 note 保留原样，弃用结论以此为准。
 #   registry 覆盖从 vk50 seed 起；vk40–vk49 无 registry 行（版本账见
 #   RESOURCES §3 与 archive/topics/ITERATION-AUDIT-2026-10-04.md §5）。
+# ----------------------------------------------------------------------------
+# vk53 定案并补 tag（2026-10-06，独立审查结束）：
+#   源=镜像可证 ⇒ 已打 annotated tag `vk53`@`2b5badef0`（clean，UTS=vk53-g2b5badef00fb）。
+#   #108 单变量矩阵（vk61 full 载具 + vk53 内核，零写盘）：仅 `&i2c0{status="okay"}` 即硬关机（vkB1）
+#   ⇒ 真因 = 使能 i2c0 本身，与 NFC 驱动/pinctrl/GPIO 无关。
+#   本机无 NFC 硬件（vendor 无 HAL/firmware、GSMArena NFC: No）⇒ G1-10 取消。
+#   G1-11 CDSP 经 vkD2-cdsponly 设备侧通过（待 remoteproc1 取证）。
+#   上行 vk53 note 的「⚠️ 未上机验证」与上文「独立审查中」表述作废，以本段为准。
 # ============================================================================

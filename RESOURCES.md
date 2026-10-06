@@ -426,6 +426,9 @@ git log --oneline -10
 | vk55 | 10-05 | 会话 overhaul（greetd `initial_session` + 用户/系统服务包） | ✅ 上机 + 重启验证（真 logind 会话、亮度 API 修复） |
 | vk56 / vk57 / vk58 / vk58c | 10-05 22:18 → 23:11 | kexec R2 ad-hoc slim；vk58=带 trans_pgd fix 的运行内核；vk58c=可用 slim | ✅ vk58c `fastboot boot` 启动；❌ 从 vk58 发起 kexec 仍失败（fix 不充分） |
 | vk59 | 10-05 23:58 | 驱动验证：vk53 内核（NFC+CDSP+FSA4480=y）重打 slim | ⚠️ **旧矩阵作废**：真因 = `&i2c0` 使能（#108）；**vkD1/D2/B1 单变量已定案**；CDSP-only 可启动 |
+| vk60 | 10-06 | init 固化（唯一真源 + 日志 + `/persist` 竞态）+ 最小 initramfs slim 候选 | ❌ **slim 弃用**：无 `/lib/firmware` ⇒ 驱动全废（#113）；能进桌面但触屏/电池/WiFi/声音全无 |
+| vk61 | 10-06 | boot_b 复刻 = 原完整 ramdisk 仅换修好 `/init`（内核/固件/模块零回归，83.3 MB < 96 MiB） | ✅ `fastboot boot` 零写盘验收（触屏/WiFi/电池/BT 正常）；**待刷 boot_b** |
+| vkD1/D1a/D1b/D2 · vkB1–B4 · vkX/vkY | 10-06 | vk53 单变量二分载具（vk61 full initramfs + vk53 内核，零写盘；非 vk 号命名，不进 registry） | ✅ **定案**：仅 `&i2c0{status="okay"}` 即挂（vkB1）；nfc-pinctrl-only 起（vkD1a）、nfcdev 挂（vkD1b）、CDSP-only 起（vkD2）；vkX(dtb53) 挂 / vkY(kern53) 起。vkB2–B4 有 manifest 无结论留档 |
 
 **边界判定**：最后**持久在机**的版本 = **`vk47clean`（b 槽，2026-10-05 至今）**；
 **经 `fastboot boot` 确认启动**的版本 = vk58 / vk58c / vk59-vk47DTB；**经重刷确认在机**的含 vk55 会话 overhaul。
@@ -436,7 +439,7 @@ vk53/vk54 启动失败**已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬�
 **版本账目机读校验 + 不可复现号登记（2026-10-06）**：`archive/topics/VK-LEDGER-AUDIT-2026-10-06.md`——
 `vk43` = 全账唯一零证据号（无源/镜像/manifest）；`vk52/vk54/vk56/vk57` slim 镜像**错包内核**（陈旧 `Image.gz`，
 与 vk52-slim 同 bug 类）；`scripts/check-doctor.sh` §5 现已硬校验「registry 单调唯一 / registry 号必有 manifest /
-树自称内核 ≡ 镜像内 UTS」，历史项经 `versions/vk-ledger-known-issues.tsv` 降 WARN。`vk53` 独立审查中，本账不裁决。
+树自称内核 ≡ 镜像内 UTS」，历史项经 `versions/vk-ledger-known-issues.tsv` 降 WARN。**`vk53` 已定案（2026-10-06，#108）**：实机失败真因 = 使能 `&i2c0`（与 NFC 驱动/pinctrl 无关），且本机无 NFC 硬件 ⇒ G1-10 取消；内核已补 annotated tag `vk53`@`2b5badef0`，registry 更正见 `versions/vk-registry.tsv` 注释块。
 
 ---
 

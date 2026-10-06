@@ -28,8 +28,8 @@ git clone git@git.ustc.edu.cn:xqh/y700-elden-kernel.git
 
 ## vk40–vk54 → commit 对照（2026-10-06 账目审查回填）
 
-内核仓 tag 已打：`vk40 vk41 vk42 vk44 vk45 vk46 vk47 vk48 vk54`。
-**未打 tag 的号及其原因**（不伪造 tag，缺源就留白；证据见
+内核仓 tag 已打：`vk40 vk41 vk42 vk44 vk45 vk46 vk47 vk48 vk53 vk54`。
+**版本→内核源对照**（不伪造 tag，缺源就留白；证据见
 `archive/topics/VK-LEDGER-AUDIT-2026-10-06.md`）：
 
 | vk | 内核源 | 说明 |
@@ -38,7 +38,7 @@ git clone git@git.ustc.edu.cn:xqh/y700-elden-kernel.git
 | vk47clean | `bd114ca33` 重建（`LOCALVERSION=-vk47clean`） | 与 vk47 同源，仅去 `-dirty` + 本地版本串；当前在机内核 |
 | vk49 | 无提交，树 = vk48 `5a70ade46` | 本号改动是相机模块打包 + `.config`（非内核源）；KV = `g5a70ade46a88`，与 vk48 同串 |
 | vk50 | 无提交，树 = vk48 `5a70ade46` + `LOCALVERSION=-vk50` | 相机出流会话；1 513 模块按 vk50 KV 重建 |
-| vk53 | 提交 `2b5badef0`（分支 `elden/vk53-hw`） | NFC ST21NFCA + CDSP + `TYPEC_MUX_FSA4480=y`；**该号正在独立审查，暂不 tag** |
+| vk53 | tag `vk53`@`2b5badef0`（分支 `elden/vk53-hw`） | NFC ST21NFCA + CDSP + `TYPEC_MUX_FSA4480=y`；**已补 tag**（2026-10-06 定案 `#108`：本机无 NFC 硬件 ⇒ G1-10 取消；实机失败真因 = 使能 `&i2c0`；G1-11 CDSP 经 `vkD2-cdsponly` 通过）。源=镜像可证（UTS=`vk53-g2b5badef00fb`，`clean`） |
 | vk55 | 无内核改动 | 用户态会话 overhaul（主库 commit `ee72844`/`03b4777`） |
 | vk60/vk61 | 无内核改动，内核 = vk47clean `bd114ca33` | 只换 initramfs/`init`（`out/boot-elden-vk60.img`/`vk61.img`） |
 
