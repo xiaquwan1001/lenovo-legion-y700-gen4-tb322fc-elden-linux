@@ -72,7 +72,7 @@
 - **本轮合并决议（2026-10-05，三调查并联；优先级：kexec ＞ 装完整发行版 ＞ 驱动）**：见 `TASKS.md` §4 与 `archive/topics/MERGE-2026-10-05.md`。要点：① **kexec 快环已死**，迭代统一 `--boot`/`--flash`，kexec 取证排第 1 上机项；② **不整体换发行版**，现 Alpine 加 `greetd+phrog+elogind` 会话清 U1–U7（userland backlog 冻结）；③ **boot_b 保持瘦身**（~20.8 MiB，rootfs/模块/固件放 `linux17`），`--flash` 用 slim 且内核↔模块同版；④ 驱动验证一律 `fastboot boot`。**2026-10-06 上机**：`fastboot boot` 正常；**vk53/vk54 的 DTS 改动导致整机启动失败（复位回 b）**——同 vk59 内核 HEAD DTB 挂 / vk47 DTB 过 ⇒ 元凶是 DTS；G1-10/11 无设备侧成功证据。见 `archive/topics/DRIVER-VERIFY-2026-10-06.md`。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
 - **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=干净内核 `vk47clean`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
-  🟠 **熄屏→重启（G1-22/Q24）仍未解（间歇性）**：受控复现成立，但 vk42 与干净重建的少样本「免疫」不可信；**刷入干净内核到 boot_b 后仍复位** ⇒ 「`-dirty` 镜像为根因」假设**未证实**。**停止深究（2026-10-05 用户定）**；若再续须长时窗+多样本+单变量。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
+  🟠 **熄屏→重启（G1-22/Q24）仍未解（间歇性）**：受控复现成立，但 vk42 与干净重建的少样本「免疫」不可信；**刷入干净内核到 boot_b 后仍复位** ⇒ 「`-dirty` 镜像为根因」假设**未证实**。**停止深究（2026-10-05 用户定）**；若再续须长时窗+多样本+单变量。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。**2026-10-06 用户补充：`vk47clean` 本身也会熄屏→关机，现不复现仅因手动关了 5 分钟闲置熄屏 ⇒ 与 `-dirty` 无关。**
   🟠 **桌面用户态四问已定根因（G1-26/27/28，2026-10-05）**：`gtk-theme=Adwaita-dark` 解析回退浅色（应 `Adwaita`）⇒ 深色/图标反色/accent 同源；亮度=elogind 无 session。见 `archive/topics/DT-UI-2026-10-05.md`，修复待上机。
   ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
 
