@@ -75,14 +75,14 @@
 > **SSOT**：进度百分比与任务状态以 `TASKS.md` §0 为准；本节若与之不符，以 `TASKS.md` 为准。
 
 - **G1 ≈90%**（对齐 TASKS §0）：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、**音频出声 + 桌面 PipeWire/UCM2**、**相机前后摄出流**、触觉、带外串口）。
-  **U2 实跑 `vk47clean`**（b 槽持久直启；kexec 热重载**不可用**，见 `TASKS.md` §4）。**剩硬缺口**：TF 卡；**相机仅 `v4l2-ctl` 出帧、缺 App 实测**；**WiFi 到可用 ~2 分钟：Q26 根因已定（固件对已关联 STA 的 ~2 s 唤醒拍子；被动扫描证 AP 无辜），三条修复未通，下一步 `CONFIG_ATH12K=m` 单次探针（专题 §13）**。**BT 配对 + TWS 实听已经用户实测可用✅**（音频播放+输入✅，相机出流 ✅ 2026-10-05）。
+  **U2 实跑 `vk62`**（vk47clean 内核 + H1 DTB；b 槽持久直启；kexec 热重载**不可用**，见 `TASKS.md` §4）。**剩硬缺口**：TF 卡；**相机 × 熄屏共存（Q24 根因=单模块 `cambistmclkcc-sm8750`，H1 DTB 7/9 未根治）**；**WiFi 到可用 ~2 分钟：Q26 根因已定（固件对已关联 STA 的 ~2 s 唤醒拍子；被动扫描证 AP 无辜），三条修复未通，下一步 `CONFIG_ATH12K=m` 单次探针（专题 §13）**。**BT 配对 + TWS 实听已经用户实测可用✅**（音频播放+输入✅，相机出流 ✅ 2026-10-05）。
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
 - **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-9 DP + 在树未实测项 + **相机 App 实测**（**G1-11 CDSP 已完成 2026-10-07：split 固件 + initramfs，见 `archive/topics/CDSP-FIX-2026-10-07.md`**；**G1-10 NFC 已取消：本机无 NFC 硬件**；G1-7 BT 已收口）；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 搁置）。裁决与沿革见 `TASKS.md` §4 + `archive/topics/MERGE-2026-10-05.md`。
-- **2026-10-06→07 上机**：`fastboot boot` 正常；**vk53/vk54 启动失败已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬件，`PITFALLS` #108）**——非 DTS 整体、非 init/用户态。**CDSP 已于 2026-10-07 修复起来（split 固件 + initramfs，非 PAS id）并刷入 boot_b**；**DP：使能 `mdss_dp0` 会阻塞 `msm_drm_bind`→背光亮无显示，已回退 disabled（#128），DP 实验走独立載具**。boot_b=`cdsp-vk47clean`（**vk47clean 内核**（模块一致→相机齐）+ 完整 ramdisk + 修好 `/init` + split CDSP + dp0 disabled，读回校验通过）；min initramfs slim 无固件→驱动全废（`PITFALLS` #113），不用。
+- **2026-10-06→07 上机**：`fastboot boot` 正常；**vk53/vk54 启动失败已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬件，`PITFALLS` #108）**——非 DTS 整体、非 init/用户态。**CDSP 已于 2026-10-07 修复起来（split 固件 + initramfs，非 PAS id）并刷入 boot_b**；**DP：使能 `mdss_dp0` 会阻塞 `msm_drm_bind`→背光亮无显示，已回退 disabled（#128），DP 实验走独立載具**。boot_b=**`vk62`**（vk47clean 内核 + dp5 DTB 的 H1 变体（dp0 okay/otg/rotation，cambist 去 power-domains）+ 完整 ramdisk + 修好 `/init` + split CDSP；cmdline `elden_nocamera=1` ⇒ 相机零自动加载/熄屏安全，DP 可用；读回校验通过）；min initramfs slim 无固件→驱动全废（`PITFALLS` #113），不用。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
-- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=干净内核 `vk47clean`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
-  🟠 **G1-22/Q24 熄屏→关机：未解 / 间歇性**；`vk47clean` 亦复现 ⇒ 与 `-dirty` 无关；**停止深究**（规避 `idle-delay=0`）。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
+- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=**`vk62`**，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
+  🟡 **G1-22/Q24 熄屏→硬复位：根因已定位到单模块 `cambistmclkcc-sm8750`**（60+ 轮二分；H1 DTB 7/9 存活未根治，下一步 D1 驱动 `use_rpm=false`）。见 `TASKS.md` §5 Q24、`.pi/plans/2026-10-07-dp5基线-相机补全-加速度.md`、`scripts/sleep-sweep.sh`。
   🟠 **G1-26/27/28 桌面用户态：根因已定**（`gtk-theme='Adwaita'`；亮度=logind 无 session，`greetd` 真会话后 `SetBrightness` 已解 EISDIR），修复待上机。见 `archive/topics/DT-UI-2026-10-05.md`。
   ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
 

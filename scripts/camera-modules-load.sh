@@ -27,6 +27,11 @@
 # ENOMEM.  Keep cma_heap unloaded so libcamera falls through to `system`.
 set -u
 
+# elden_nocamera=1 (kernel cmdline) suppresses auto-load.  Used for the
+# camera-module-set ⇄ screen-blank power-off bisection (Q24) — a clean boot
+# with zero camera modules lets us add groups cumulatively.
+grep -q "elden_nocamera=1" /proc/cmdline && exit 0
+
 KV=$(uname -r)
 MODDIR=/lib/modules/$KV
 [ -d "$MODDIR/kernel" ] || { echo "[camera] no modules for $KV" >&2; exit 0; }

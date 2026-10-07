@@ -45,3 +45,4 @@ vk61	init-hardening	2026-10-06	boot_b 复刻：完整 ramdisk 仅换修好的 /i
 #   G1-11 CDSP 经 vkD2-cdsponly 设备侧通过（待 remoteproc1 取证）。
 #   上行 vk53 note 的「⚠️ 未上机验证」与上文「独立审查中」表述作废，以本段为准。
 # ============================================================================
+vk62	sleepdeath	2026-10-07	DP 可用 + cambist H1(去 power-domains) + 相机零自动加载；sleep-safe 基线；Q24 根因=cambistmclkcc

@@ -155,10 +155,12 @@ fi
 #   elden_root=LABEL=linux | UUID=... | PARTLABEL=... | /dev/sde79 ...
 # Parsed before /persist so we know whether a switch_root is coming.
 elden_root=""
+elden_nocamera=""
 for arg in $(cat /proc/cmdline); do
 	case "$arg" in
 		elden_root=*) elden_root=${arg#elden_root=} ;;
 		ubuntu_root=*) elden_root=${arg#ubuntu_root=} ;;
+		elden_nocamera=*) elden_nocamera=${arg#elden_nocamera=} ;;
 	esac
 done
 
@@ -190,7 +192,9 @@ fi
 # there too: the OpenRC `modules` service is not in any runlevel on this tree,
 # so /init is the only thing that auto-loads the camera stack (G1-5).
 # Non-fatal by design; absent in the minimal busybox initramfs.
-if [ -x /usr/local/sbin/camera-modules-load.sh ]; then
+# elden_nocamera=1 (kernel cmdline) suppresses the auto-load; used for
+# module-set bisection (camera stack ⇄ screen-blank power-off, Q24).
+if [ "${elden_nocamera:-0}" != 1 ] && [ -x /usr/local/sbin/camera-modules-load.sh ]; then
 	# Log to /dev/kmsg, not /run: on a disk-root boot the persistent /init
 	# remounts a fresh tmpfs over /run, which hides a ramdisk /run file.
 	timeout 20 /usr/local/sbin/camera-modules-load.sh >"$KLOG" 2>&1 || warn "camera-modules-load failed/timed out"
