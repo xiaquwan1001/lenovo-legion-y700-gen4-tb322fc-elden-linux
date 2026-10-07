@@ -77,3 +77,41 @@ S1 与 D5 外设条件相同（DP 插、无 USB）而结果相反 ⇒ 变量在*
 - 触发用 `ScreenSaver.SetActive`；取证用 `blankspy.sh` + `/root/powerlog.txt`（用户态关机标记）+ `kmsg`。
 - 断电后：USB 插着会长按 VBUS **自动开机**（表现为"重启"）；纯电池则真关机，需物理按键。
 - 每次切镜像都要插 USB（fastboot），这本身引入 VBUS —— 单变量时注意。
+
+---
+
+## 2026-10-07 收盘：根因实锤 = 相机模块链（dp5/dp6/dp7 控制变量 A/B）
+
+### 数字结论
+- **根因 = 相机模块链（camss/system_heap 与面板 disable 路径交互）**。模块不装即免，装即熄屏→关机。
+
+### 控制变量矩阵（同 vk47clean 系内核，真实熄屏路径 ScreenSaver.SetActive(true)）
+| 载具 | 内核 | DTB | /init | 相机模块 | 熄屏结果 |
+|---|---|---|---|---|---|
+| dp5 | 重建 g26cd13b（release 不匹配模块目录） | 新（otg/dp0） | 新 OpenRC | 空（release 不匹配，modprobe 找不到） | ✅ 3/3 存活（远程实测） |
+| dp6 | 同 dp5 | 旧基线 | 同 | 空 | ✅ 3/3 存活（用户实测） |
+| sd-base（历史 ×8）| vk47 | 旧 | 旧 | 空 | ✅ 存活 |
+| **dp7** | **原版 vk47clean**（从 camrot2.img 提取，sha 2321e3b9… = vk61 账目一致） | 旧基线 | 同新 | **真加载**（release 匹配 ⇒ OpenRC modprobe camss+system_heap） | ❌ **熄屏→关机**（用户实测） |
+| boot_b（历史）| vk47clean | 旧 | 新 | 真加载 | ❌ 熄屏→断电 |
+
+四行对照唯一残差 = 相机模块在位。**内核构建（-dirty）、DTB（otg/dp0）、init（OpenRC）全部单变量排除。**
+
+### 机制推断（待复验）
+camss/system_heap 加载后改变内存/CMA/供电布局（camera reserved-mem nomap 8 MiB×2、cma_heap 抩
+DmaHeap 探测序），面板 disable 序列（vreg_6v1_vsp / vreg_5v8_vsn / vreg_1v8_vddio）在模块在位时
+走不同路径 ⇒ 断电。与 §7.9「嫌疑在面板 disable/供电序列」交叉一致。
+
+### 修复方向（后续，非本轮）
+- 短期规避：不装相机模块（驱动测试）；或 `idle-delay=0` 禁自动熄屏。
+- 共存路线：修 camss disable 路径（printk 定位 + 逐轨拨供电，需重建内核）；
+  或 cma_heap 不加载（PITFALLS #130 已证它有害）+ 验证仅 camss 是否触发。
+
+### 载具资产
+`out/boot-elden-dp7.img`（sha d78df604…，boot_b 形态零写盘复刻）；
+`out/Image-vk47clean.gz`、`out/sm8750-lenovo-elden-vk47.dtb` 提取自 camrot2.img。
+
+### 附：本轮方法学收获
+- 熄屏类单变量 A/B 必须先核实「模块是否真加载」：uname release 与 /lib/modules 目录不匹配时
+  modprobe 静默跳过（dp5/dp6 因此意外成了「无模块」对照组）。
+- 多变量 DTS 实验逐轮 git checkout 会把上轮已验证改动一起回退（dp5 曾两次被回退，
+  靠 image sha256 与 dp3 相同拦下）：一次改齐 + 构建前核验 + sha256 比对。
