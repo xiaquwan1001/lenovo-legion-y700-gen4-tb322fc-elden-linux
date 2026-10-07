@@ -1,0 +1,95 @@
+total 860
+-rw-r--r-- 1 root root    297 Sep 30  2026 99-unmanaged.conf
+-rwxr-xr-x 1 root root   1467 Jan  2 06:15 ath12k-load.sh
+-rwxr-xr-x 1 root root   1514 Jan  2 07:07 ath12k-retry.sh
+-rwxr-xr-x 1 root root   3317 Oct  4  2026 audio-alsa-init.sh
+drwxr-xr-x 2 root root   4096 Oct  4  2026 audio-ucm
+-rwxr-xr-x 1 root root   1806 Sep 30  2026 bt-up.sh
+-rwxr-xr-x 1 root root   2073 Oct  4  2026 camera-modules-load.sh
+-rwxr-xr-x 1 root root   2857 Sep 30  2026 charge-ctl.sh
+-rwxr-xr-x 1 root root   1518 Sep 30  2026 charge-watch.sh
+-rwxr-xr-x 1 root root    773 Jan  2 11:31 dpms-watch.sh
+-rwxr-xr-x 1 root root    552 Jan  2 12:25 elden-session-root
+-rwxr-xr-x 1 root root   1969 Oct  5  2026 fix-logind-poweroff.sh
+-rwxr-xr-x 1 root root   3399 Jan  2 12:25 greetd-initial-session.sh
+-rwxr-xr-x 1 root root   2492 Jan  3 12:17 net-up-manual.sh
+-rwxr-xr-x 1 root root   2281 Oct  6  2026 net-up-manual.sh.bak-20261006
+-rwxr-xr-x 1 root root   2183 Sep 30  2026 net-up-nm.sh
+-rwxr-xr-x 1 root root   2711 Jan  3 11:25 net-up.sh
+-rwxr-xr-x 1 root root    521 Jan  2 01:29 patch-init-ath12k.sh
+-rwxr-xr-x 1 root root    607 Sep 30  2026 patch-init-bt.sh
+-rwxr-xr-x 1 root root    637 Sep 30  2026 patch-init-charge.sh
+-rwxr-xr-x 1 root root   1538 Jan  3 01:19 patch-init-dbus.sh
+-rwxr-xr-x 1 root root    569 Jan  2 06:54 patch-init-net.sh
+-rwxr-xr-x 1 root root    567 Sep 30  2026 patch-init-time.sh
+-rwxrwxr-x 1 1000 1000 709320 Sep 28  2026 reboot2
+-rwxr-xr-x 1 root root   2983 Oct  5  2026 setup-session-greetd.sh
+-rwxr-xr-x 1 root root  10905 Sep 30  2026 slot-attr.py
+-rwxr-xr-x 1 root root   5381 Jan  3 12:17 start-desktop.sh
+-rwxr-xr-x 1 root root   3946 Oct  4  2026 start-desktop.sh.bak-20261005
+-rwxr-xr-x 1 root root   5105 Oct  5  2026 start-desktop.sh.bak-20261006
+-rwxr-xr-x 1 root root   2745 Oct 24  1970 start-desktop.sh.bak-eldroid
+-rwxr-xr-x 1 root root    390 Jan  2 09:06 start-desktop.sh.weston.bak
+-rwxr-xr-x 1 root root   1252 Sep 30  2026 time-sync.sh
+-rwxr-xr-x 1 1000 1000   2529 Jan  4  1970 usb-gadget
+-rwxr-xr-x 1 1000 1000   2125 Sep 28  2026 usb-gadget.bak-gs1
+-rwxr-xr-x 1 root root    265 Jan  3  1970 waydroid-session.sh
+-rwxr-xr-x 1 root root    195 Jan  3  1970 waydroid-ui.sh
+-rwxr-xr-x 1 root root   3431 Jan  4  1970 wd-ctl.sh
+-rwxr-xr-x 1 root root    816 Jan  3  1970 wd-restart.sh
+===
+greetd
+===
+# /etc/greetd/config.toml — TB322FC path A: auto-login root, no greeter.
+# Start: /usr/sbin/greetd -c /etc/greetd/config.toml  (LIBSEAT_BACKEND=seatd)
+# NOTE: greetd requires a [default_session]; we set it to the same session so
+# that after phosh exits the session is simply restarted (appliance-like),
+# instead of dropping to a greeter (which would need a login user).
+[terminal]
+vt = 7
+
+[initial_session]
+command = "/usr/local/sbin/elden-session-root"
+user = "root"
+
+[default_session]
+command = "/usr/local/sbin/elden-session-root"
+user = "root"
+===
+[keyfile]
+# Keep the USB-NCM gadget (SSH lifeline) and loopback out of NetworkManager.
+# usb0 is configured statically by /init (192.168.7.1) — NM must NOT touch it,
+# or the recovery SSH path would break whenever NM reconfigures devices.
+unmanaged-devices=interface-name:usb0;interface-name:lo
+===
+99-unmanaged.conf
+===
+===
+--- /sbin/poweroff ---
+#!/bin/sh
+exec /bin/busybox poweroff -f "$@"
+--- /sbin/reboot ---
+#!/bin/sh
+exec /bin/busybox reboot -f "$@"
+--- /sbin/halt ---
+#!/bin/sh
+exec /bin/busybox halt -f "$@"
+===
+chfn
+chpasswd
+chsh
+greetd
+groupmems
+newusers
+polkit-1
+shadow-utils
+===
+/etc/runlevels/boot:
+
+/etc/runlevels/default:
+
+/etc/runlevels/nonetwork:
+
+/etc/runlevels/shutdown:
+
+/etc/runlevels/sysinit:

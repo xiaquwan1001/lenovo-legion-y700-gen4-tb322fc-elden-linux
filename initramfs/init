@@ -133,6 +133,13 @@ case "$roottype" in
 esac
 log "root fs type=$roottype on_initramfs=$on_initramfs"
 
+# --- init mode: legacy ad-hoc services vs native OpenRC -----------------------
+# /etc/elden-init-mode = "openrc" makes the disk-root branch hand PID1 over to
+# /sbin/init (busybox) once the recovery lifeline is up, so /etc/inittab runs
+# openrc sysinit/boot/default.  Anything else (or a missing file) keeps the
+# pre-2026-10-06 behaviour.  Wired up by /usr/local/sbin/openrc-enable.sh.
+init_mode=$(cat /etc/elden-init-mode 2>/dev/null || echo legacy)
+
 # --- elden sleep policy (PITFALLS §64) -------------------------------------
 # Prefer s2idle: "deep" (PSCI system suspend) is not supported by this tree and
 # hangs the machine on first suspend. Only switch if the kernel offers s2idle.
@@ -282,7 +289,9 @@ if [ "$on_initramfs" = 1 ] && [ -x /root/probe.sh ]; then
 	( /root/probe.sh > /root/probe.log 2>&1; log "probe finished" ) &
 fi
 
-if [ "$on_initramfs" = 0 ]; then
+# OpenRC mode: /sbin/init owns dbus/elogind/seatd/greetd/NetworkManager and
+# /etc/local.d/elden-bringup, so skip this hand-rolled orchestration entirely.
+if [ "$on_initramfs" = 0 ] && [ "$init_mode" != openrc ]; then
 	# --- system D-Bus: single early owner (NM/UPower/polkit depend on it) ---
 	mkdir -p /run/dbus
 	chown root:messagebus /usr/libexec/dbus-daemon-launch-helper 2>/dev/null
@@ -312,8 +321,12 @@ fi
 respawn ttyGS0 &
 respawn ttyGS1 &
 
-if [ "$on_initramfs" = 0 ] && [ -x /usr/local/sbin/start-desktop.sh ]; then
-	/usr/local/sbin/start-desktop.sh &
+if [ "$on_initramfs" = 0 ]; then
+	if [ "$init_mode" = openrc ]; then
+		: # /sbin/init (exec'd below, after the boot log) owns the session
+	elif [ -x /usr/local/sbin/start-desktop.sh ]; then
+		/usr/local/sbin/start-desktop.sh &
+	fi
 else
 	respawn tty1 &
 fi
@@ -322,6 +335,15 @@ fi
 # boot is unrecoverable once the ring buffer rolls over).
 if [ "$on_initramfs" = 0 ] && [ -d /var/log ]; then
 	{ date; echo "--- dmesg (init snapshot) ---"; dmesg; } >/var/log/elden-boot.log 2>/dev/null || true
+fi
+
+# Hand PID1 to busybox init so /etc/inittab runs openrc sysinit/boot/default.
+# Deliberately last: usb0 + sshd + ttyGS0/GS1 are up (recovery over SSH if the
+# OpenRC boot fails) and the boot log above has been written.  Wired by
+# /usr/local/sbin/openrc-enable.sh; revert with `openrc-enable.sh revert`.
+if [ "$on_initramfs" = 0 ] && [ "$init_mode" = openrc ]; then
+	log "openrc mode: handing PID1 to /sbin/init"
+	exec /sbin/init
 fi
 
 trap 'reboot -f' INT TERM

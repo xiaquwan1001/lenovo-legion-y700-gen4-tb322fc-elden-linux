@@ -33,7 +33,9 @@ apk update -q
 apk add -q openssh openssh-server util-linux e2fsprogs f2fs-tools dosfstools \
 	iproute2 iputils ethtool evtest i2c-tools usbutils pciutils \
 	htop nano bash tmux file strace dtc \
-	dhcpcd busybox-extras
+	dhcpcd busybox-extras \
+	coreutils findutils grep sed gawk procps-ng curl wget jq rsync socat \
+	tcpdump zstd xz tree less
 # This link is a private USB-only network to the bring-up host, so root logs
 # in with no credentials at all: an empty password field plus
 # PermitEmptyPasswords makes sshd accept the "none" method, and
@@ -70,7 +72,9 @@ aarch64-linux-gnu-gcc -static -Os -o $ROOT/usr/local/sbin/reboot2 $R/reboot2.c
 # were scp'd onto the device ad-hoc, so the rootfs was not reproducible.
 for s in ath12k-load.sh ath12k-retry.sh audio-alsa-init.sh bt-up.sh charge-ctl.sh charge-watch.sh \
          dpms-watch.sh net-up-manual.sh net-up.sh \
-         start-desktop.sh time-sync.sh slot-attr.py 99-unmanaged.conf; do
+         start-desktop.sh time-sync.sh slot-attr.py 99-unmanaged.conf \
+         openrc-enable.sh fix-logind-poweroff.sh elden-powerlog.initd blankspy.sh kmsgspy.sh \
+         greetd-initial-session.sh elden-session-root camera-modules-load.sh usb-gadget; do
 	src=$R/../scripts/$s
 	if [ -f "$src" ]; then
 		install -m 755 "$src" "$ROOT/usr/local/sbin/$s"

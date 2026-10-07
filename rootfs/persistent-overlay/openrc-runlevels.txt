@@ -1,0 +1,74 @@
+agetty |                                        
+alsa |                                        
+binfmt |                                        
+bluetooth |      default                           
+bootmisc | boot                                   
+cgroups |                                 sysinit
+chronyd |                                        
+consolefont |                                        
+dbus |      default                           
+devfs |                                 sysinit
+dhcpcd |                                        
+dmesg |                                 sysinit
+dnsmasq |                                        
+ebtables |                                        
+elden-powerlog |                        shutdown        
+elogind |      default                           
+firstboot |                                        
+fsck |                                        
+fuse |                                        
+greetd |      default                           
+hostname |                                 sysinit
+hwclock | boot                                   
+hwdrivers |                                        
+ip6tables |                                        
+iptables |                                        
+killprocs |                                        
+local |      default                           
+localmount | boot                                   
+loopback |                                        
+lxc |                                        
+machine-id |                                        
+modloop |                                        
+modules |                                 sysinit
+mount-ro |                                        
+mtab |                                        
+net-online |                                        
+netmount |                                        
+networking |                                        
+networkmanager |      default                           
+networkmanager-dispatcher |                                        
+numlock |                                        
+openrc-settingsd |                                        
+osclock |                                        
+polkit |      default                           
+procfs |                                 sysinit
+rfcomm |                                        
+rfkill |                                        
+root |                                        
+rsyncd |                                        
+rtkit |      default                           
+runsvdir |                                        
+s6-svscan |                                        
+save-keymaps |                                        
+save-termencoding |                                        
+savecache |                                        
+seatd |      default                           
+seedrng | boot                                   
+sshd |                                        
+staticroute |                                        
+swap |                                        
+swclock |                                        
+sysctl |                                 sysinit
+sysfs |                                 sysinit
+sysfsconf |                                        
+termencoding |                                        
+udev | boot                                   
+udev-postmount |                                        
+udev-settle | boot                                   
+udev-trigger | boot                                   
+udisks2 |      default                           
+user |                                        
+waydroid-container |                                        
+wpa_cli |                                        
+wpa_supplicant |                                        

@@ -18,6 +18,12 @@ set -u
 mkdir -p /run/udev /run/phosh /run/dbus
 chmod 700 /run/phosh
 
+# busybox `pgrep -x NAME` matches the *whole* argv[0], so it silently fails for
+# processes started by absolute path (/sbin/udevd, /usr/libexec/elogind/elogind)
+# -> the guards below were no-ops (2026-10-06).  Match on comm instead; this
+# works under both busybox ps and procps-ng.
+have() { ps -eo comm 2>/dev/null | grep -qx "$1"; }
+
 # System D-Bus: required by gsd-power / UPower / polkit (idle + wake path).
 # /init starts it early (before net-up/start-desktop) — check the SOCKET, not a
 # process name: two concurrent `dbus-daemon --system` starts each passed the
@@ -37,7 +43,7 @@ chown root:messagebus /usr/libexec/dbus-daemon-launch-helper 2>/dev/null
 chmod 4750 /usr/libexec/dbus-daemon-launch-helper 2>/dev/null
 
 # udev: phoc's libinput backend only sees the touchscreen if udevd has run.
-if ! pgrep -x udevd >/dev/null 2>&1; then
+if ! have udevd; then
 	/sbin/udevd --daemon 2>/dev/null
 	sleep 1
 	/sbin/udevadm trigger --action=add 2>/dev/null
@@ -45,7 +51,7 @@ if ! pgrep -x udevd >/dev/null 2>&1; then
 fi
 
 # seatd: DRM/input seat for phoc (libseat).
-pgrep -x seatd >/dev/null 2>&1 || seatd -g root >/run/seatd.log 2>&1 &
+have seatd || seatd -g root >/run/seatd.log 2>&1 &
 
 # elogind: provides the logind D-Bus API (org.freedesktop.login1) that
 # gnome-session/phosh use for Power Off / Restart.  This rootfs has no
@@ -65,7 +71,7 @@ pgrep -x seatd >/dev/null 2>&1 || seatd -g root >/run/seatd.log 2>&1 &
 # PipeWire itself is started by its own /etc/xdg/autostart desktop entry.
 [ -x /usr/local/sbin/audio-ucm/install.sh ] && \
 	/usr/local/sbin/audio-ucm/install.sh || true
-if [ -x /usr/libexec/elogind/elogind ] && ! pgrep -x elogind >/dev/null 2>&1; then
+if [ -x /usr/libexec/elogind/elogind ] && ! have elogind; then
 	/usr/libexec/elogind/elogind >/run/elogind.log 2>&1 &
 fi
 

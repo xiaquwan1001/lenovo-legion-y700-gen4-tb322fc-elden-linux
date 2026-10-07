@@ -15,9 +15,11 @@
 #   permanently wedges: every later PowerOff/PrepareForSleep returns
 #   "org.freedesktop.login1.OperationInProgress".
 #
-# FIX: replace the three applet symlinks with tiny wrappers that pass -f, so
-#   busybox calls reboot(LINUX_REBOOT_CMD_*) directly (verified via strace
-#   fault injection: reboot(...POWER_OFF/RESTART/HALT)).
+# FIX: replace the three applet symlinks with tiny wrappers.  Since
+#   2026-10-06 the device can run native OpenRC with busybox init as PID 1
+#   (`/etc/elden-init-mode=openrc`), which DOES implement the PID 1 signal
+#   protocol -> a clean, non-force shutdown (services stopped, shift to the
+#   shutdown runlevel) works.  Keep `-f` only for the legacy /init shell.
 #
 # Idempotent; called from start-desktop.sh before elogind is started.  A
 # freshly rebuilt rootfs needs this again (persistent root is /dev/sda17).
@@ -27,8 +29,9 @@ set -e
 
 for a in poweroff reboot halt; do
 	f="/sbin/$a"
-	# Already our wrapper?  leave it.
-	if [ -f "$f" ] && head -1 "$f" 2>/dev/null | grep -q busybox; then
+	# Already our wrapper (current version)?  leave it.  The version tag is
+	# `USERLAND-` (only present since the 2026-10-06 marker change).
+	if [ -f "$f" ] && grep -q 'USERLAND-' "$f" 2>/dev/null; then
 		continue
 	fi
 	# Preserve the original (busybox applet symlink) once.
@@ -38,6 +41,18 @@ for a in poweroff reboot halt; do
 	# NB: writing through the symlink would truncate /bin/busybox itself
 	# ("Text file busy"); remove the link first.
 	rm -f "$f"
-	printf '#!/bin/sh\nexec /bin/busybox %s -f "$@"\n' "$a" > "$f"
+	cat > "$f" <<EOF
+#!/bin/sh
+# elden-powerwrap: clean shutdown under busybox init, -f under the legacy /init.
+# Also records a durable marker: G1-22/Q24 must tell a *userland-initiated*
+# shutdown from a hard reset (USB VBUS auto-powers-on, so "it rebooted" proves
+# nothing).  Marker present after the event => userland; absent => kernel died.
+printf 'USERLAND-%s %s uptime=%s boot_id=%s\n' "$a" "\$(date '+%F %T')" "\$(cut -d. -f1 /proc/uptime)" "\$(cat /proc/sys/kernel/random/boot_id 2>/dev/null)" >>/root/powerlog.txt 2>/dev/null
+sync 2>/dev/null
+if [ "\$(cat /etc/elden-init-mode 2>/dev/null)" = openrc ]; then
+	exec /bin/busybox $a "\$@"
+fi
+exec /bin/busybox $a -f "\$@"
+EOF
 	chmod 755 "$f"
 done

@@ -46,7 +46,11 @@ fi
 if [ "$nm_running" = 1 ]; then
 	# NM's D-Bus supplicant (`wpa_supplicant -u`); wlan0 is unmanaged now, so
 	# NM will not use it again for this interface.
-	pkill -x wpa_supplicant 2>/dev/null
+	# busybox `pkill -x NAME` matches the whole argv[0] and misses
+	# /sbin/wpa_supplicant (2026-10-06); kill by comm instead.
+	for _p in $(ps -eo pid,comm 2>/dev/null | awk '$2=="wpa_supplicant"{print $1}'); do
+		kill "$_p" 2>/dev/null || true
+	done
 else
 	# no NM: only ever kill a previous manual instance of ours
 	pkill -f "wpa_supplicant -B -i $IF" 2>/dev/null

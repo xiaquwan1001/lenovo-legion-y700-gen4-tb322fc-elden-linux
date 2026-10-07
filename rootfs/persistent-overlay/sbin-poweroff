@@ -1,0 +1,6 @@
+#!/bin/sh
+# elden-powerwrap: clean shutdown under busybox init, -f under the legacy /init.
+if [ "$(cat /etc/elden-init-mode 2>/dev/null)" = openrc ]; then
+	exec /bin/busybox poweroff "$@"
+fi
+exec /bin/busybox poweroff -f "$@"

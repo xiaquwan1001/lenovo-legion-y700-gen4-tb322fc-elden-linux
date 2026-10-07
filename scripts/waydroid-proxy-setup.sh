@@ -47,7 +47,7 @@ rsh "cd /var/lib/waydroid/lxc/waydroid && \
 say "3. 重启 waydroid（container + session）"
 rsh "bash -s" <<EOS
 export XDG_RUNTIME_DIR=/run/phosh WAYLAND_DISPLAY=wayland-0 DISPLAY=:0 HOME=/root
-BUS=\$(grep -z DBUS_SESSION_BUS_ADDRESS /proc/\$(pgrep -x phosh | head -1)/environ 2>/dev/null | tr -d '\\0' | cut -d= -f2-)
+BUS=\$(grep -z DBUS_SESSION_BUS_ADDRESS /proc/\$(ps -eo pid,comm | awk '\$2=="phosh"{print \$1; exit}')/environ 2>/dev/null | tr -d '\\0' | cut -d= -f2-)
 export DBUS_SESSION_BUS_ADDRESS="\$BUS"
 waydroid session stop >/dev/null 2>&1 || true
 waydroid container stop >/dev/null 2>&1 || true
@@ -68,7 +68,7 @@ say "4. 设置容器全局 http_proxy（走 adb，绕开 waydroid shell settings
 rsh "bash -s" <<EOS
 set -e
 export HOME=/root XDG_RUNTIME_DIR=/run/phosh WAYLAND_DISPLAY=wayland-0 DISPLAY=:0
-BUS=\$(grep -z DBUS_SESSION_BUS_ADDRESS /proc/\$(pgrep -x phosh | head -1)/environ 2>/dev/null | tr -d '\\0' | cut -d= -f2-)
+BUS=\$(grep -z DBUS_SESSION_BUS_ADDRESS /proc/\$(ps -eo pid,comm | awk '\$2=="phosh"{print \$1; exit}')/environ 2>/dev/null | tr -d '\\0' | cut -d= -f2-)
 export DBUS_SESSION_BUS_ADDRESS="\$BUS"
 command -v adb >/dev/null 2>&1 || apk add --no-cache android-tools >/dev/null 2>&1
 mkdir -p /root/.android

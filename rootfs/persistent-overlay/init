@@ -1,0 +1,350 @@
+#!/bin/sh
+# ============================================================================
+# elden init — PID 1 for Lenovo TB322FC (Y700 Gen4), mainline bring-up.
+#
+# SINGLE SOURCE OF TRUTH.  This one file runs in BOTH worlds:
+#   * RAM/initramfs root  (on_initramfs=1)  — mounts pseudo-fs, finds the disk
+#     root and switch_root's into it.
+#   * persistent disk root (on_initramfs=0) — skips the switch_root path and
+#     starts the userland services (dbus, sshd, USB gadget, desktop, ...).
+#
+# It is installed by  scripts/build-boot.sh  (RAM initramfs) and by
+# rootfs/build-rootfs.sh (as /init on the disk root).  Never edit /init on the
+# device: change this file and redeploy, otherwise the two copies drift.
+#
+# Historical note: before 2026-10-06 the device /init was assembled by
+# scripts/patch-init-*.sh (awk in-place edits) and had silently diverged from
+# the boot-image copy.  Those patches are now folded in here and retired.
+# ============================================================================
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+
+KLOG=/dev/kmsg
+
+# --- logging ----------------------------------------------------------------
+# Every init message is printed on the console *and* written to the kernel ring
+# so it survives in dmesg / /run/dmesg-boot.txt / /var/log/elden-boot.log.
+# (The USB ACM console only appears once usb-gadget runs, so early userspace
+# output is otherwise lost.)
+log() {
+	printf '[init] %s\n' "$*"
+	[ -w "$KLOG" ] && printf '[init] %s\n' "$*" >"$KLOG"
+	return 0
+}
+warn() {
+	printf '[init] WARNING: %s\n' "$*" >&2
+	[ -w "$KLOG" ] && printf '[init] WARNING: %s\n' "$*" >"$KLOG"
+	return 0
+}
+fatal() {
+	printf '[init] FATAL: %s\n' "$*" >&2
+	[ -w "$KLOG" ] && printf '[init] FATAL: %s\n' "$*" >"$KLOG"
+	return 0
+}
+
+# --- rescue shell -----------------------------------------------------------
+# Drop to an interactive shell as PID 1 instead of panicking or silently
+# continuing with a half-mounted system.  Kept non-fatal on purpose: the
+# getty respawn loops will not be running yet, so this is the only console.
+rescue() {
+	fatal "dropping to rescue shell (PID 1): $*"
+	for _sh in /bin/sh /usr/bin/sh /bin/busybox; do
+		[ -x "$_sh" ] && exec "$_sh"
+	done
+	fatal "no shell available; idling as PID 1 (power cycle to recover)"
+	while :; do sleep 3600 || :; done
+}
+
+# --- preflight: essential tools --------------------------------------------
+# The classic failure mode (PITFALLS #107) was a minimal busybox initramfs
+# without /bin/sh symlinks: /init's shebang could not be exec'd and the kernel
+# reported "No working init found" + panic.  Catch the userspace half of that
+# here, with a message that says what is actually missing.
+missing=
+for c in sh mount umount switch_root mkdir cat sleep grep; do
+	command -v "$c" >/dev/null 2>&1 || missing="$missing $c"
+done
+# A root-device resolver.  The minimal busybox initramfs has neither blkid nor
+# mountpoint (see initramfs/busybox-applets.txt) but DOES have findfs, so findfs
+# is the primary resolver and blkid only a bonus in the full rootfs.
+if ! command -v findfs >/dev/null 2>&1 && ! command -v blkid >/dev/null 2>&1; then
+	missing="$missing root-resolver(findfs|blkid)"
+fi
+if [ -n "$missing" ]; then
+	fatal "missing essential tool(s):$missing"
+	fatal "this initramfs/rootfs is incomplete - check the applet symlinks"
+	rescue "missing tools:$missing"
+fi
+
+# --- mount helper -----------------------------------------------------------
+# Idempotent, retrying, loud on failure.  Must NOT depend on the `mountpoint`
+# applet: the minimal busybox build does not have it (only findfs/mount), so we
+# ask /proc/mounts instead.  The first call (proc) runs before /proc exists,
+# where grep simply fails and we proceed to mount.
+mnt() { # mnt <fstype> <source> <target> [options]
+	_m_fs=$1; _m_src=$2; _m_tgt=$3; _m_opt=$4
+	[ -d "$_m_tgt" ] || mkdir -p "$_m_tgt" 2>/dev/null
+	grep -qs " $_m_tgt " /proc/mounts && return 0
+	_m_i=0
+	while [ "$_m_i" -lt 3 ]; do
+		if [ -n "$_m_opt" ]; then
+			mount -t "$_m_fs" -o "$_m_opt" "$_m_src" "$_m_tgt" 2>/dev/null && return 0
+		else
+			mount -t "$_m_fs" "$_m_src" "$_m_tgt" 2>/dev/null && return 0
+		fi
+		_m_i=$((_m_i + 1))
+		sleep 0.1
+	done
+	return 1
+}
+
+# --- pseudo filesystems -----------------------------------------------------
+mnt proc proc /proc          || rescue "mount proc failed"
+mnt sysfs sysfs /sys         || rescue "mount sysfs failed"
+grep -qs ' /dev ' /proc/mounts || mnt devtmpfs devtmpfs /dev || warn "devtmpfs not mounted on /dev"
+mnt devpts devpts /dev/pts gid=5,mode=620 || warn "devpts not mounted on /dev/pts"
+mnt tmpfs tmpfs /dev/shm     || warn "tmpfs not mounted on /dev/shm"
+mnt tmpfs tmpfs /run         || rescue "mount /run failed"
+mnt tmpfs tmpfs /tmp         || warn "tmpfs not mounted on /tmp"
+mnt configfs configfs /sys/kernel/config || log "configfs unavailable"
+mnt debugfs debugfs /sys/kernel/debug    || log "debugfs unavailable"
+
+# cgroup2 single hierarchy — required by LXC/Waydroid containers. Mounted here
+# so it is moved into the new root by switch_root and reused by /init there.
+mnt cgroup2 none /sys/fs/cgroup || warn "cgroup2 unavailable (Waydroid/LXC will fail)"
+
+# binderfs — Android/Waydroid binder devices (binder/hwbinder/vndbinder are
+# created via binder-control by waydroid's setupBinderNodes at init/session).
+mnt binder binder /dev/binderfs || warn "binderfs unavailable (Waydroid will fail)"
+
+echo 8 > /proc/sys/kernel/printk 2>/dev/null
+hostname elden
+
+# --- which root are we on? --------------------------------------------------
+# Guards below must not run twice (else /persist would mount over the root).
+roottype=$(stat -f -c %T / 2>/dev/null)
+if [ -z "$roottype" ]; then
+	# stat without -c support: read the fstype of / from the mount table.
+	roottype=$(while read -r _d _m _f _o; do [ "$_m" = "/" ] && { echo "$_f"; break; }; done < /proc/mounts)
+fi
+case "$roottype" in
+	rootfs|tmpfs|ramfs) on_initramfs=1 ;;
+	*) on_initramfs=0 ;;
+esac
+log "root fs type=$roottype on_initramfs=$on_initramfs"
+
+# --- init mode: legacy ad-hoc services vs native OpenRC -----------------------
+# /etc/elden-init-mode = "openrc" makes the disk-root branch hand PID1 over to
+# /sbin/init (busybox) once the recovery lifeline is up, so /etc/inittab runs
+# openrc sysinit/boot/default.  Anything else (or a missing file) keeps the
+# pre-2026-10-06 behaviour.  Wired up by /usr/local/sbin/openrc-enable.sh.
+init_mode=$(cat /etc/elden-init-mode 2>/dev/null || echo legacy)
+
+# --- elden sleep policy (PITFALLS §64) -------------------------------------
+# Prefer s2idle: "deep" (PSCI system suspend) is not supported by this tree and
+# hangs the machine on first suspend. Only switch if the kernel offers s2idle.
+if [ -w /sys/power/mem_sleep ] && grep -q "s2idle" /sys/power/mem_sleep 2>/dev/null; then
+	echo s2idle > /sys/power/mem_sleep 2>/dev/null
+	log "sleep policy: mem_sleep=$(cat /sys/power/mem_sleep)"
+fi
+# Make a soft lockup fatal so a hang is preserved in ramoops (pstore).
+[ "$on_initramfs" = 0 ] && echo 1 > /proc/sys/kernel/softlockup_panic 2>/dev/null
+# --- end elden sleep policy --------------------------------------------------
+
+# --- boot a persistent on-disk root: parse the request ------------------------
+#   elden_root=LABEL=linux | UUID=... | PARTLABEL=... | /dev/sde79 ...
+# Parsed before /persist so we know whether a switch_root is coming.
+elden_root=""
+for arg in $(cat /proc/cmdline); do
+	case "$arg" in
+		elden_root=*) elden_root=${arg#elden_root=} ;;
+		ubuntu_root=*) elden_root=${arg#ubuntu_root=} ;;
+	esac
+done
+
+# --- persistent data partition (RAM-root boots only) -----------------------
+# LUN4 trailing 'last_parti' repurposed as ext4 'linux' (/dev/sde79, ~2.3 GiB).
+# Only meaningful when we are going to stay on the RAM root: a disk-root boot
+# switch_root's away and /persist is not carried over.  MUST be synchronous —
+# an earlier version backgrounded this wait, and after switch_root freed the
+# initramfs the orphaned subshell spammed the console every boot with
+#   /init: line 35: sleep: not found
+#   /init: line 36: can't create /dev/null: nonexistent directory
+#   /init: line 39: can't create /dev/kmsg: nonexistent directory
+if [ "$on_initramfs" = 1 ] && [ -z "$elden_root" ]; then
+	i=0
+	while [ ! -b /dev/sde79 ] && [ "$i" -lt 50 ]; do sleep 0.1; i=$((i + 1)); done
+	if [ -b /dev/sde79 ] && mnt ext4 /dev/sde79 /persist rw,noatime; then
+		log "/persist mounted from /dev/sde79"
+	else
+		warn "/persist unavailable (/dev/sde79 not present or unmountable)"
+	fi
+fi
+
+# --- mainline camera stack (TB322FC) ----------------------------------------
+# Load the camera modules for the running kernel.  On a RAM boot this reads the
+# ramdisk's /lib/modules BEFORE switch_root (synchronous, with a timeout, so no
+# ramdisk files are held open when switch_root frees the initramfs; insmod
+# returns after module_init, so the async sensor probes are merely *scheduled*).
+# On the persistent root it reads the disk /lib/modules instead — this MUST run
+# there too: the OpenRC `modules` service is not in any runlevel on this tree,
+# so /init is the only thing that auto-loads the camera stack (G1-5).
+# Non-fatal by design; absent in the minimal busybox initramfs.
+if [ -x /usr/local/sbin/camera-modules-load.sh ]; then
+	# Log to /dev/kmsg, not /run: on a disk-root boot the persistent /init
+	# remounts a fresh tmpfs over /run, which hides a ramdisk /run file.
+	timeout 20 /usr/local/sbin/camera-modules-load.sh >"$KLOG" 2>&1 || warn "camera-modules-load failed/timed out"
+fi
+
+if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
+	log "disk root requested: $elden_root"
+	root_dev=""
+	i=0
+	while [ -z "$root_dev" ] && [ "$i" -lt 150 ]; do
+		case "$elden_root" in
+			UUID=*) root_dev=$(findfs "$elden_root" 2>/dev/null); [ -n "$root_dev" ] || root_dev=$(blkid -t "$elden_root" -o device 2>/dev/null | head -n1) ;;
+			LABEL=*) root_dev=$(findfs "$elden_root" 2>/dev/null); [ -n "$root_dev" ] || root_dev=$(blkid -L "${elden_root#LABEL=}" 2>/dev/null) ;;
+			PARTLABEL=*) root_dev=$(blkid -t "$elden_root" -o device 2>/dev/null | head -n1) ;;
+			/dev/*) [ -b "$elden_root" ] && root_dev=$elden_root ;;
+		esac
+		[ -n "$root_dev" ] || sleep 0.1
+		i=$((i + 1))
+	done
+
+	if [ -z "$root_dev" ]; then
+		warn "elden_root=$elden_root did not resolve to a block device in 15s; staying on RAM root"
+		blkid 2>/dev/null | sed 's/^/[init]   candidate: /' || true
+	else
+		log "resolved $elden_root -> $root_dev"
+		mkdir -p /newroot
+		if mount -t ext4 -o rw,noatime "$root_dev" /newroot; then
+			newinit=""
+			[ -x /newroot/init ] && newinit=/init
+			[ -z "$newinit" ] && [ -x /newroot/sbin/init ] && newinit=/sbin/init
+			[ -z "$newinit" ] && [ -x /newroot/bin/sh ] && newinit=/bin/sh
+			if [ -n "$newinit" ]; then
+				log "switching root to $root_dev ($newinit)"
+				mkdir -p /newroot/dev /newroot/proc /newroot/sys /newroot/run
+				umount /tmp 2>/dev/null || true
+				mount --move /dev   /newroot/dev   || warn "move /dev failed"
+				mount --move /proc  /newroot/proc  || warn "move /proc failed"
+				mount --move /sys   /newroot/sys   || warn "move /sys failed"
+				mount --move /run   /newroot/run   || warn "move /run failed"
+				exec switch_root /newroot "$newinit"
+				warn "switch_root returned; staying on RAM root"
+			else
+				warn "$root_dev mounted but has no /init, /sbin/init or /bin/sh; staying on RAM root"
+			fi
+			umount /newroot 2>/dev/null || true
+		else
+			warn "failed to mount $root_dev on /newroot (ext4); staying on RAM root"
+		fi
+	fi
+fi
+
+log "Alpine rootfs up, kernel $(uname -r)"
+
+# --- USB: NCM network + ACM console composite (see /usr/local/sbin/usb-gadget)
+# Waits for the dwc3 UDC to appear, so run it in the background and set up
+# networking once usb0 exists.
+ip link set lo up
+(
+	/usr/local/sbin/usb-gadget start
+	i=0
+	while [ ! -d /sys/class/net/usb0 ] && [ "$i" -lt 50 ]; do sleep 0.1; i=$((i + 1)); done
+	if [ -d /sys/class/net/usb0 ]; then
+		ip link set usb0 up
+		ip addr add 192.168.7.1/24 dev usb0
+		udhcpd -S /etc/udhcpd.conf
+		log "usb0 up: 192.168.7.1, ssh root@192.168.7.1 (no password)"
+	else
+		warn "usb0 never appeared"
+	fi
+) &
+
+# sshd (host keys generated at image build time)
+# sshd refuses to start unless /var/empty is root-owned and not group/world
+# writable. A tree copied with tar/rsync may carry foreign uids, so enforce it.
+mkdir -p /var/empty
+chown 0:0 /var/empty 2>/dev/null
+chmod 755 /var/empty 2>/dev/null
+[ -x /usr/sbin/sshd ] && /usr/sbin/sshd -E /run/sshd.log
+
+dmesg > /run/dmesg-boot.txt
+
+# Audio: put the sound card into a usable default mixer state for bare ALSA
+# (RAM/initramfs bring-up, headless shells).  Harmless alongside PipeWire/UCM,
+# which re-apply the same values per device.  Runs in both RAM and disk roots.
+[ -x /usr/local/sbin/audio-alsa-init.sh ] && \
+	setsid /usr/local/sbin/audio-alsa-init.sh >/run/audio-alsa-init.log 2>&1 &
+
+respawn() {
+	while true; do
+		[ -c "/dev/$1" ] && setsid getty -n -l /bin/sh -L "$1" 115200 vt100
+		sleep 1
+	done
+}
+# B1 environment probe: harvest firmware/DT/config and inventory UFS.
+if [ "$on_initramfs" = 1 ] && [ -x /root/probe.sh ]; then
+	( /root/probe.sh > /root/probe.log 2>&1; log "probe finished" ) &
+fi
+
+# OpenRC mode: /sbin/init owns dbus/elogind/seatd/greetd/NetworkManager and
+# /etc/local.d/elden-bringup, so skip this hand-rolled orchestration entirely.
+if [ "$on_initramfs" = 0 ] && [ "$init_mode" != openrc ]; then
+	# --- system D-Bus: single early owner (NM/UPower/polkit depend on it) ---
+	mkdir -p /run/dbus
+	chown root:messagebus /usr/libexec/dbus-daemon-launch-helper 2>/dev/null
+	chmod 4750 /usr/libexec/dbus-daemon-launch-helper 2>/dev/null
+	if [ ! -S /run/dbus/system_bus_socket ]; then
+		setsid dbus-daemon --system >/run/dbus.log 2>&1
+		i=0
+		while [ ! -S /run/dbus/system_bus_socket ] && [ "$i" -lt 50 ]; do sleep 0.1; i=$((i + 1)); done
+	fi
+	if [ -S /run/dbus/system_bus_socket ]; then
+		log "system dbus: up"
+	else
+		warn "system dbus: socket missing (NM/UPower/polkit will fail)"
+	fi
+
+	# --- bring-up helpers (each logs to its own /run/*.log) ---
+	[ -x /usr/local/sbin/ath12k-retry.sh ] && setsid /usr/local/sbin/ath12k-retry.sh >/run/ath12k-retry.log 2>&1 &
+	[ -x /usr/local/sbin/net-up.sh ]        && setsid /usr/local/sbin/net-up.sh        >/run/net-up.log 2>&1 &
+	[ -x /usr/local/sbin/time-sync.sh ]     && setsid /usr/local/sbin/time-sync.sh     >/dev/null 2>&1 &
+	[ -x /usr/local/sbin/charge-watch.sh ]  && setsid /usr/local/sbin/charge-watch.sh  >/run/charge-watch.log 2>&1 &
+	[ -x /usr/local/sbin/bt-up.sh ]         && setsid /usr/local/sbin/bt-up.sh         >/run/bt-up.log 2>&1 &
+fi
+
+# Serial consoles: ttyGS0 is the kernel console, ttyGS1 is an out-of-band root
+# shell whose echo is not mixed into dmesg.  respawn() just waits if the device
+# has not been created yet.
+respawn ttyGS0 &
+respawn ttyGS1 &
+
+if [ "$on_initramfs" = 0 ]; then
+	if [ "$init_mode" = openrc ]; then
+		: # /sbin/init (exec'd below, after the boot log) owns the session
+	elif [ -x /usr/local/sbin/start-desktop.sh ]; then
+		/usr/local/sbin/start-desktop.sh &
+	fi
+else
+	respawn tty1 &
+fi
+
+# Bounded on-disk boot log for post-mortem across reboots (PITFALLS: a wasted
+# boot is unrecoverable once the ring buffer rolls over).
+if [ "$on_initramfs" = 0 ] && [ -d /var/log ]; then
+	{ date; echo "--- dmesg (init snapshot) ---"; dmesg; } >/var/log/elden-boot.log 2>/dev/null || true
+fi
+
+# Hand PID1 to busybox init so /etc/inittab runs openrc sysinit/boot/default.
+# Deliberately last: usb0 + sshd + ttyGS0/GS1 are up (recovery over SSH if the
+# OpenRC boot fails) and the boot log above has been written.  Wired by
+# /usr/local/sbin/openrc-enable.sh; revert with `openrc-enable.sh revert`.
+if [ "$on_initramfs" = 0 ] && [ "$init_mode" = openrc ]; then
+	log "openrc mode: handing PID1 to /sbin/init"
+	exec /sbin/init
+fi
+
+trap 'reboot -f' INT TERM
+while true; do sleep 3600; done
