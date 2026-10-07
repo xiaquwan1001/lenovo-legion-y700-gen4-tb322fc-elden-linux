@@ -56,3 +56,15 @@ dmesg：
 - 设备固件现场已**恢复原状**（`cdsp_dtb.mbn.zst` 复位，vendor split 文件移除）。
 - 后续最小实验：DT 去掉 cdsp 的 dtb firmware-name → 冷启看 `cdsp.mbn` 能否单独 running；
   若可，则 CDSP 可用、无需 DTB；若不可，再试枚举 `dtb_pas_id`。
+
+---
+
+## 5. 后续更正（2026-10-07，追加；本文 §3「PAS id 待定」假设已被否证）
+
+本文不是终局。2026-10-07 复排并修好 CDSP，结论改写：
+- **「dtb_pas_id 不匹配」假设否证**：反汇编 stock `qcom_q6v5_pas.ko` 的 `sun_cdsp_resource`
+  → pas_id=18 / dtb_pas_id=0x25，与主线 `sm8650_cdsp_resource` 完全一致。
+- **真根因 = 固件变体 + 载具**：DTS 用非 stock 单文件 `cdsp_dtb.mbn`（被 TZ 拒 `-22`），
+  且固件由 initramfs 加载（磁盘副本不生效）。改用 stock **split** `cdsp.mdt`/`cdsp_dtb.mdt`
+  并注入 initramfs 后 `remoteproc1 state=running`。
+- 详见 **`CDSP-FIX-2026-10-07.md`**、`PITFALLS` #127、`TASKS.md` G1-11。

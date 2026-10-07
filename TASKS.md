@@ -10,7 +10,7 @@
 
 | 目标 | 已完成 | 进行中 | 未开始 | 完成度 |
 |---|---|---|---|---|
-| **G1** 完整 Linux + 上游化（驱动原厂固件 + 上游提交） | 25 项（显示/图形/触屏/网络/电源/**相机出流**/音频播放+输入/温控/串口/基准脚本/**BT 配对+TWS 实听**…） | 3（TF 卡、**DP**、**CDSP**（取证结果：**未起来，`-22` @ SCM dtb pas，PAS id 待定**，见 `archive/topics/CDSP-PROBE-2026-10-06.md`）——**NFC 已取消（本机无硬件）**；另 **相机 App 实测**、**WiFi 到可用**（Q26 根因已定：固件对已关联 STA 的 ~2 s 唤醒拍子，前 ~130 s 自愈；三条修复尝试未通，下一步见专题 §13））；**上游化 M1–M5 未开工**（`§7`） | 0 | **~88%** |
+| **G1** 完整 Linux + 上游化（驱动原厂固件 + 上游提交） | 26 项（显示/图形/触屏/网络/电源/**相机出流**/音频播放+输入/温控/串口/基准脚本/**CDSP**/**BT 配对+TWS 实听**…） | 2（TF 卡、**DP**；另 **相机 App 实测**、**WiFi 到可用**（Q26 根因已定：固件对已关联 STA 的 ~2 s 唤醒拍子，前 ~130 s 自愈；三条修复尝试未通，下一步见专题 §13））；**上游化 M1–M5 未开工**（`§7`） | 0 | **~90%** |
 | **G2** 安卓容器（可用性 + 风控/完整性等级） | 6（Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC/**C9 用例集**） | 4（Play 登录收口、切槽脚本、C8 上机探测、**C4 部署验证**——代码/编译全就绪） | 4（相机共享、音频容器、C3 实测…） | **~45%** |
 | **G3** x86 模拟（Steam 载体） | 1（Box64 0.4.5 + Wine 9 **PoC 成功**） | 0 | Steam 游戏端到端（图形/音频/性能） | PoC ✅ / Steam 未上机 |
 | **拓展** UEFI 间接引导 · Gunyah VM | 0 | 0 | 2（UEFI 路线 A 已搜置；Gunyah 待上机探测） | ⬜ 非主线 |
@@ -44,7 +44,7 @@
 | G1-8 | CPU/GPU 基准（脚本已备） | ⬜ | 任一 mainline | `bench-run.sh` 出分；温控不破 82 °C | `scripts/bench-run.sh`、`scripts/bench-install.sh` |
 | G1-9 | DP 输出（解锁 `mdss_dp0`） | 🟡 **DTS 链已打通、卡在 ADSP UCSI/altmode（2026-10-06/07 实机）**：① 旧根因——主树 DTS `&i2c0 status="okay"`（#108 硬关机根因，文档误记已移除）**已改 disabled**（修复前任何本树 DTB 启动必失败）；② 恢复 `usb-role-switch`；③ 使能 `&mdss_dp0`。**dp2 结果**：启动正常、`card0-DP-1` 出现、`msm_dpu bound af54000.displayport-controller`、DSI 不黑屏；但插 DP 线（含翻转）**零 HPD**，`status=disconnected`。**真根因**：`ucsi_glink...: PPM init failed, stop trying`（20.8 s）⇒ ADSP 侧 UCSI/altmode 未起 ⇒ 无 connector 通知。**DP 是 ADSP bring-up，非缺驱动**（同原 audit） | 任一 | `/sys/class/drm/*-1` connected | `archive/topics/DP-2026-10-06.md`、`PITFALLS` #104/#105/#108 |
 | G1-10 | ~~NFC compatible 修正~~ **取消：本机无 NFC 硬件（2026-10-06 取证）** | ❌ **不成立**：TB322FC vendor **无 `android.hardware.nfc.xml`**（feature 未声明）、vintf manifest 无 NFC HAL、`/lib64(/hw)` 无 NFC HAL 库、`/firmware` 无 NFC 固件、原厂运行服务无 NFC；GSMArena `NFC: No`。`elden.dts` 的 `st21nfc` 是**总线 `disabled` 的共用模板**，`stm_nfc_i2c.ko`/`st54spi_gpio` 多 SKU 共用；`ro.nfc.port=I2C` 为通用属性。**vk53 的 `&i2c0` 使能反而致硬关机（#108），已从驱动批次移除** | — | — | `PITFALLS` #108 |
-| G1-11 | CDSP 启用（可选加分） | 🟡 **未起来（2026-10-06 深夜独立取证，推翻旧口径）**：vkD2-cdsponly 实机 `remoteproc1(cdsp) state=offline`——`cdsp.mbn` 主固件装载成功，但 `cdsp_dtb.mbn` 在 `qcom_scm_pas_init_image` 报 **`-22 (EINVAL)`**（ADSP 同 boot `running` 作对照）。已排除：文件缺失/路径、vendor **split** 格式（`cdsp_dtb.mdt`+`.b00/b01/b02` 冷启仍 `-22`）。**剩余假设=PAS id 不匹配**（sm8750 复用 `sm8650_cdsp_resource` 的 `dtb_pas_id=0x25`，而 SM8750 TZ 可能不同；或 DTB 不应单独 PAS 加载）。需改 DT 重建验证。固件现场已恢复原状 | 任一 | `/sys/class/remoteproc/remoteproc1` running | `archive/topics/CDSP-PROBE-2026-10-06.md`、`backup/fw/modem/` |
+| G1-11 | CDSP 启用（可选加分） | ✅ **已启用（2026-10-07 实机）**：`remoteproc1(cdsp) state=running`、`fw=qcom/sm8750/cdsp.mdt`，dmesg `remote processor cdsp is now up`（1.40 s）。**根因=固件变体+载具，非 PAS id**：① 原 DTS 用非 stock 单文件 `cdsp.mbn`/`cdsp_dtb.mbn`，单文件 `cdsp_dtb.mbn` 被 TZ PAS init 拒（`-22`）；stock SunP DTS 用 **split** `cdsp.mdt`/`cdsp_dtb.mdt`（DTS 已改，内核提交 `c132a1bc7`）。② **固件由 initramfs 加载**（switch_root 前 ~1.16 s），磁盘 rootfs 副本不生效 ⇒ split 必须打进 ramdisk（`build-initramfs.sh full` 已加注入）。**「PAS id 不匹配」假设否证**：反汇编 stock `qcom_q6v5_pas.ko` 的 `sun_cdsp_resource` = pas_id **18** / dtb_pas_id **0x25**，与主线 `sm8650_cdsp_resource` 完全一致。伙：boot_b 持久化（当前 boot_b=vk47clean 无 split ⇒ 持久系统仍 offline，候选 `out/boot-elden-cdsp-split-1.img` 已实测） | 任一 | `/sys/class/remoteproc/remoteproc1` running ✅ | `archive/topics/CDSP-FIX-2026-10-07.md`、`CDSP-PROBE-2026-10-06.md`、`PITFALLS` #127 |
 | ✅ G1-12…21 | 显示 165 Hz、图形 A830、触屏、WiFi、BT 基础、充电+旁路、温控分级、带外串口、启动 ~5 s、触觉 | **已完成** | — | 见 `DEVICE.md` §1.3 | `PANEL-REFRESH`/`THERMAL`/`CHARGE`/`OOB-CONSOLE` |
 
 ---
@@ -94,7 +94,7 @@
 > **历史裁决与沿革**见 `archive/topics/MERGE-2026-10-05.md`（三调查合并/优先级）、`archive/topics/KEXEC-ONDEVICE-R2-2026-10-05.md`、`archive/topics/DRIVER-VERIFY-2026-10-06.md`、`archive/topics/SESSION-AUDIT-2026-10-06.md`。本节只留当前口径与下一步。
 
 **当前口径（2026-10-06）**
-- **本轮主线（用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-9 DP / G1-11 CDSP + 在树未实测项 + **相机 App 实测**；判据 =「命令 + 原始输出」可复现。**G1-10 NFC 取消（本机无 NFC 硬件）**；**G1-7 BT 已收口（用户实测配对+TWS 可用）**；**Q26 WiFi 到可用：根因=固件对已关联 vdev 的唤醒拍子（~0.5 beacon/s）；`CONFIG_ATH12K=m` 单次探针已试且**证伪**（探测时序非变量，详见 Q26/专题），按「P40 Pro 热点组合已知限制」归档，日常用真 AP**。
+- **本轮主线（用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-9 DP + 在树未实测项 + **相机 App 实测**；判据 =「命令 + 原始输出」可复现。**G1-11 CDSP 已完成（2026-10-07，split 固件+initramfs，见专题）**；**G1-10 NFC 取消（本机无 NFC 硬件）**；**G1-7 BT 已收口（用户实测配对+TWS 可用）**；**Q26 WiFi 到可用：根因=固件对已关联 vdev 的唤醒拍子（~0.5 beacon/s）；`CONFIG_ATH12K=m` 单次探针已试且**证伪**（探测时序非变量，详见 Q26/专题），按「P40 Pro 热点组合已知限制」归档，日常用真 AP**。
 - **不做**：桌面用户态（G1-26/27/28）、内核熄屏/关机（G1-22/Q24）、UEFI（G1-29 搁置）。
 - **迭代通道**：`fastboot boot`（零写盘）/ `--flash`；**kexec 快环已死**（见下 1）。
 - **boot_b 形态** = `vk61`（原完整 ramdisk 只换 `/init`，83.3 MB）；**不用 min initramfs slim**（无固件→驱动全废，#113）。
@@ -102,7 +102,7 @@
 - **归因分层**（2026-10-06）：报「驱动/内核坏」前先分清 **initramfs/rootfs 打包** 与 **用户态配置**（如 vk60「驱动全废」实为 initramfs 缺固件）——见 `PITFALLS` #115、`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`。
 
 **下一步（按顺序）**
-1. **上机最小实验**：kexec 取证排第 1（分支点未定位，须带存活 console，见 `PITFALLS` #5/#106）→ 驱动验证（**vk53/vk54 的「DTS 破坏启动」归因已撤回**，改用 **vk61 载具**零写盘重测 DP/NFC/CDSP）→ Q24 隔离（纯 DRM `wlr-randr --off`）。
+1. **上机最小实验**：kexec 取证排第 1（分支点未定位，须带存活 console，见 `PITFALLS` #5/#106）→ 驱动验证（**vk53/vk54 的「DTS 破坏启动」归因已撤回**，改用 **vk61 载具**零写盘重测 DP；**CDSP 已用载具验毕 ✅**）→ Q24 隔离（**真实触发 = `ScreenSaver.SetActive(true)`**，2026-10-07 更正）。
 2. ✅ **G1-5 相机出流**已完成（2026-10-05）；剩 3A/调优、C5 容器共享（非阻塞）。
 3. 🟠 仅登记：**G1-22/Q24** 熄屏→硬复位未解（`vk47clean` 亦复现 ⇒ 与 `-dirty` 无关，停止深究，规避 `idle-delay=0`）；**G1-26/27/28** 根因已定（`gtk-theme='Adwaita'`；亮度核心链路已解），修复待上机。
 4. **C0 真 Android 对照取证**（U1 stock+root；覆盖 a 槽前必做，不可复得）。

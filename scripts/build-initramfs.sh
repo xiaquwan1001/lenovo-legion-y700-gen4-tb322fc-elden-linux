@@ -92,6 +92,22 @@ build_full() {
 	( cd "$R/root" && gzip -dc "$rd" | cpio -idm --quiet 2>/dev/null ) || die "解开 ramdisk 失败"
 	[ -f "$R/root/init" ] || die "基底 ramdisk 没有 /init"
 	sed 's/\r$//' "$INIT" > "$R/root/init"; chmod 755 "$R/root/init"
+	# --- 注入 stock split CDSP 固件（2026-10-07 G1-11）---------------------------
+	# mainline q6v5_pas 在 switch_root 之前从 initramfs 加载固件；磁盘 rootfs 副本
+	# 不生效。CDSP 必须用 stock split 镜像（cdsp.mdt + cdsp.bNN + cdsp_dtb.mdt +
+	# cdsp_dtb.bNN）；单文件 cdsp_dtb.mbn 被 TZ PAS init 拒（-22）。见
+	# archive/topics/CDSP-FIX-2026-10-07.md、PITFALLS #127。
+	FWDIR="$R/root/lib/firmware/qcom/sm8750"
+	FWBAK="$ROOT/backup/fw/modem/image"
+	if [ -d "$FWDIR" ] && [ -f "$FWBAK/cdsp.mdt" ]; then
+		cp -f "$FWBAK/cdsp.mdt" "$FWDIR"/
+		cp -f "$FWBAK"/cdsp.b[0-9][0-9] "$FWDIR"/ 2>/dev/null || true
+		cp -f "$FWBAK/cdsp_dtb.mdt" "$FWDIR"/
+		cp -f "$FWBAK"/cdsp_dtb.b[0-9][0-9] "$FWDIR"/ 2>/dev/null || true
+		echo "[initramfs] + stock split CDSP firmware (cdsp.mdt / cdsp_dtb.mdt)"
+	else
+		echo "[initramfs] WARN: 未注入 split CDSP 固件（缺 $FWBAK/cdsp.mdt 或无 $FWDIR）" >&2
+	fi
 	pack "$R/root" "$OUT/initramfs-full-elden.cpio.gz.new"
 	mv "$OUT/initramfs-full-elden.cpio.gz.new" "$OUT/initramfs-full-elden.cpio.gz"
 	rm -rf "$R"

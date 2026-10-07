@@ -34,7 +34,7 @@
 |---|---|---|---|---|
 | ADSP `adsp.mdt`+`adsp_dtb` | LUN4 `modem_a` | `backup/fw/modem/` | `qcom_q6v5_pas`；DT 期望 `/lib/firmware/qcom/sm8750/adsp.mdt` | ✅ 起（音频 graph 已通） |
 | AudioReach **tplg** | vendor 自研 | 自编 `Lenovo-Y700-Gen4-tplg.bin` | ASoC `q6apm` + `patches/0011` | ✅ 出声+录音（G1-4） |
-| CDSP `cdsp.mbn` | `modem_a` | `backup/fw/modem/` | DT `status=disabled` | ➖ 未启用（G1 加分项） |
+| CDSP `cdsp.mdt`+seg / `cdsp_dtb.mdt`+seg | `modem_a` | `backup/fw/modem/image/`（**split**；`cdsp_dtb.mbn` 单文件被 TZ 拒） | `qcom_q6v5_pas` + DTS `firmware-name`（split）；固件须在 **initramfs** | ✅ 起（`remoteproc1 running`，2026-10-07，G1-11） |
 | WiFi Peach（`amss.bin`/`bdwlan`/BDF） | `modem_a/peach` | `backup/fw/modem/image/peach/`（两套：在用 `amss20.bin` sha `848a2f04…`；**非-20 `amss.bin` 不兼容**：MHI POWER_ON `-110`） | `ath12k` + MHI 重试补丁 | ✅（到可用 ~2 min，见 Q26） |
 | BT（`brhbtfw20.tlv`/`brhbtnv20.bin`） | `bluetooth_a` | `backup/fw/bluetooth/` | `hci_qca` + IBS 补丁 | ✅ 配对 + TWS 实听通过（用户 2026-10-06 实测） |
 | GPU gen80000 `zap/sqe/gmu/aqe` | vendor | `backup/fw/gen80000_*` | `msm` + freedreno | ✅ |
@@ -47,7 +47,7 @@
 
 | 级别 | 项 | 性质 |
 |---|---|---|
-| **已通** | CPU/GPU/显示/USB/PCIe/UFS/WiFi/BT/触屏/触觉/背光/充电旁路/相机驱动栈/温控分级 | — |
+| **已通** | CPU/GPU/显示/USB/PCIe/UFS/WiFi/BT/触屏/触觉/背光/充电旁路/相机驱动栈/温控分级/**CDSP** | — |
 | **P0** | 相机出流（camss + s5kjns + gc08a8 + wl2868c + flash） | 驱动链已通（`v4l2-ctl` 出帧）；**缺相机 App 实测** |
 | **P1** | TF 卡写稳定性；DP 输出（驱动在树被 `disabled`，缺 ADSP altmode/UCSI） | bug / bring-up（音频已 ✅，G1-4） |
 | **P2** | ~~NFC~~ **取消：本机无 NFC 硬件**（vendor 无 nfc feature/HAL/固件）；**BT 已收口** | — |

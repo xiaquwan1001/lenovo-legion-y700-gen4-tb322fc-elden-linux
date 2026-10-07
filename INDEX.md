@@ -78,8 +78,8 @@
   **U2 实跑 `vk47clean`**（b 槽持久直启；kexec 热重载**不可用**，见 `TASKS.md` §4）。**剩硬缺口**：TF 卡；**相机仅 `v4l2-ctl` 出帧、缺 App 实测**；**WiFi 到可用 ~2 分钟：Q26 根因已定（固件对已关联 STA 的 ~2 s 唤醒拍子；被动扫描证 AP 无辜），三条修复未通，下一步 `CONFIG_ATH12K=m` 单次探针（专题 §13）**。**BT 配对 + TWS 实听已经用户实测可用✅**（音频播放+输入✅，相机出流 ✅ 2026-10-05）。
 - **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
   待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
-- **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-9 DP / G1-11 CDSP + 在树未实测项（**G1-10 NFC 已取消：本机无 NFC 硬件**；G1-7 BT 已收口）；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 搁置）。裁决与沿革见 `TASKS.md` §4 + `archive/topics/MERGE-2026-10-05.md`。
-- **2026-10-06 上机**：`fastboot boot` 正常；**vk53/vk54 启动失败已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬件，`PITFALLS` #108）**——非 DTS 整体、非 init/用户态。CDSP-only（vk53 kernel + vk47 DTB）**零写盘正常启动**；DP 的 role-switch/`mdss_dp0` DTB 待做。目标 boot_b 形态=`vk61`（原完整 ramdisk 只换 `/init`，83.3 MB，零写盘验收通过、待刷）；min initramfs slim 无固件→驱动全废（`PITFALLS` #113），不用。
+- **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-9 DP + 在树未实测项 + **相机 App 实测**（**G1-11 CDSP 已完成 2026-10-07：split 固件 + initramfs，见 `archive/topics/CDSP-FIX-2026-10-07.md`**；**G1-10 NFC 已取消：本机无 NFC 硬件**；G1-7 BT 已收口）；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 搁置）。裁决与沿革见 `TASKS.md` §4 + `archive/topics/MERGE-2026-10-05.md`。
+- **2026-10-06 上机**：`fastboot boot` 正常；**vk53/vk54 启动失败已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬件，`PITFALLS` #108）**——非 DTS 整体、非 init/用户态。**CDSP 已于 2026-10-07 修复起来（split 固件 + initramfs，非 PAS id）**；DP 的 role-switch/`mdss_dp0` DTB 待做。目标 boot_b 形态=`vk61`（原完整 ramdisk 只换 `/init`，83.3 MB，零写盘验收通过、待刷）；min initramfs slim 无固件→驱动全废（`PITFALLS` #113），不用。
 - **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
 - **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=干净内核 `vk47clean`，`/`=`/dev/sda17` ext4，Phosh 自启）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态（音频/温控/熄屏重启 G1-22/G1-24）与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
   🟠 **G1-22/Q24 熄屏→关机：未解 / 间歇性**；`vk47clean` 亦复现 ⇒ 与 `-dirty` 无关；**停止深究**（规避 `idle-delay=0`）。见 `TASKS.md` §5 Q24、`PITFALLS` #102、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9。
@@ -148,6 +148,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 相机 + 重力计拆解 | `archive/topics/CAMERA-2026-10-02.md` `archive/topics/STOCK-CAMERA-GRAVITY-2026-10-02.md`
 显示/刷新率 | `archive/topics/PANEL-REFRESH-2026-10-01.md`
 温控 / 充电 | `archive/topics/THERMAL-2026-10-02.md` `archive/topics/CHARGE-2026-09-30.md`
+**CDSP（G1-11 修复：split 固件 + initramfs）** | `archive/topics/CDSP-FIX-2026-10-07.md` `archive/topics/CDSP-PROBE-2026-10-06.md`
 Waydroid / Play / 容器网络 | `archive/topics/WAYDROID-2026-10-01.md` `archive/topics/WAYDROID-AOSP-AUDIT-2026-10-01.md` `archive/topics/GPLAY-2026-10-02.md` `archive/topics/PROXY-WAYDROID-2026-10-02.md`
 Win-x86 转译 PoC | `archive/topics/WIN-X86-POC-2026-10-02.md`（截图 2 张）`archive/topics/WIN-X86-2026-10-02.md`
 虚拟化（EL2/Gunyah/AVF/生态） | `archive/topics/EL2-VIRT-2026-10-02.md` `archive/topics/ARM-VIRT-RESEARCH-2026-10-02.md`
