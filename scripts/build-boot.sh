@@ -57,7 +57,12 @@ echo "ramdisk: $RAMDISK ($(du -h "$RAMDISK" | cut -f1))"
 #   VERSION=vk40-ram ROOTARGS= bash build-boot.sh   -> pure-RAM bring-up image
 CONSOLES="${CONSOLES:-console=ttyGS0,115200 console=tty0}"
 ROOTARGS="${ROOTARGS-elden_root=LABEL=linux17}"
-CMDLINE="$CONSOLES loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 $ROOTARGS${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}"
+# Slot suffix for A/B tooling (qbootctl).  The mainline cmdline has no
+# `androidboot.slot_suffix`, so `qbootctl -m`/`-u` without an explicit SLOT
+# argument silently fall back to slot a.  This device boots from slot b.
+# Override with SLOT_SUFFIX= when a build targets slot a (or drop the arg).
+SLOT_SUFFIX="${SLOT_SUFFIX:-_b}"
+CMDLINE="$CONSOLES loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 $ROOTARGS androidboot.slot_suffix=$SLOT_SUFFIX${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}"
 echo "cmdline: $CMDLINE"
 
 dd if=/dev/zero of="$OUT/dtbo-dummy.img" bs=4096 count=1 2>/dev/null
