@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-07（**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-07（**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -398,6 +398,12 @@
     - 修复：DTS `firmware-name = "qcom/sm8750/cdsp.mdt", "qcom/sm8750/cdsp_dtb.mdt";`（内核提交 `c132a1bc7`）+ `build-initramfs.sh full` 注入 split 文件。
     - 纪律：**改固件名/变体前先解编译 stock DTB（`backup/stock-elden/dtb/`）+ 反汇编 vendor `.ko`**，别猜 PAS id/格式。
     - 证据：`archive/topics/CDSP-FIX-2026-10-07.md`；对照 `archive/topics/CDSP-PROBE-2026-10-06.md`（其「PAS id 待定」被否证）。
+
+128. **★使能 `mdss_dp0` 会阻塞 `msm_drm_bind` → 背光亮但无显示（2026-10-07 实机）**。
+    - 现象：`&mdss_dp0 status="okay"` 的 DTB 启动后屏幕**背光亮但无画面**、SSH 极慢；dmesg 狂刷 `msm_dpu ae01000.display-controller: [drm] vblank wait timed out on crtc 0` + `drm_crtc_wait_one_vblank` WARNING（约 1/s）。
+    - 根因：`msm_dp` 是 DRM 组件，ADSP UCSI/altmode 未起时**永久 defer** ⇒ `msm_drm_bind` 失败 ⇒ 无 `card0`。（该结论原本就写在 vk47clean DTS 注释里，DP2 实验时被去掉。）
+    - 判据：`ls /sys/class/drm/` 有 `card0-DSI-1`；`dmesg | grep -c "vblank wait timed out"` = **0**；`pgrep phosh` 在。
+    - 处置：主树 DTS `&mdss_dp0 status="disabled"`（回退，内核提交 `08791078c`）；**DP 实验走独立零写盘載具，不进 boot_b**。`usb-role-switch` 同步回退 `/delete-property/`。
 
 ---
 
