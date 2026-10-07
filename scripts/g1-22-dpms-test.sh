@@ -25,14 +25,25 @@ done
 echo "CONN=$CONN"
 echo "DPMS_BEFORE=$(cat /sys/class/drm/card*-"$CONN"/dpms 2>/dev/null | head -1)"
 
-# 会话环境（wlr-randr 需连到 phoc 的 wayland/session bus）
-export XDG_RUNTIME_DIR=/run/phosh
-PID=$(pidof phosh 2>/dev/null || pidof phoc 2>/dev/null || true)
+# 会话环境（phoc 的 wayland/session bus）。2026-10-07: 实测 wlr-randr --off 与
+# modetest -w 36:DPMS:3 在本机都是空操作（dpms 仍 On）——真实熄屏路径是
+# org.gnome.ScreenSaver.SetActive（gsd-screensaver），本脚本改用后触发。
+export XDG_RUNTIME_DIR=/run/user/0
+PID=$(pidof phoc 2>/dev/null || pidof phosh 2>/dev/null || true)
 if [ -n "$PID" ]; then
 	export DBUS_SESSION_BUS_ADDRESS=$(tr '\0' '\n' < /proc/"$PID"/environ | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p')
 fi
-echo "PHOSH_PID=${PID:-none}"
-echo "WAYLAND_DISPLAY=$(basename /run/phosh/wayland-* 2>/dev/null | head -1)"
+for w in /run/user/0/wayland-*; do case "$w" in *.lock) continue;; esac; export WAYLAND_DISPLAY=$(basename "$w"); break; done
+echo "PHOC_PID=${PID:-none}"
+echo "WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-none}"
+
+# 真实熄屏/唤醒（返回 rc）
+ss() {
+	timeout 10 gdbus call --session --dest org.gnome.ScreenSaver \
+		--object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.SetActive "$1" \
+		>/dev/null 2>&1
+}
+dpms_now() { cat /sys/class/drm/card*-DSI-*/dpms 2>/dev/null | head -1; }
 
 cnt() { dmesg 2>/dev/null | grep -cE "$1"; }
 echo "BASE_VBLANK=$(cnt 'vblank timeout')"
@@ -42,12 +53,12 @@ echo "BASE_DPU_WAIT=$(cnt 'wait for commit done returned -110')"
 # 触发循环：真实合成器提交 on/off
 i=1
 while [ "$i" -le "$CYCLES" ]; do
-	wlr-randr --output "$CONN" --off >/dev/null 2>&1
-	echo "CYCLE_${i}_OFF_RC=$?"
+	ss true; rc=$?
 	sleep 5
-	wlr-randr --output "$CONN" --on >/dev/null 2>&1
-	echo "CYCLE_${i}_ON_RC=$?"
+	echo "CYCLE_${i}_OFF_RC=$rc OFF_DPMS=$(dpms_now)"
+	ss false
 	sleep 3
+	echo "CYCLE_${i}_ON_RC=$? ON_DPMS=$(dpms_now)"
 	i=$((i + 1))
 done
 

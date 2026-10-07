@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-06（**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-06（**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -248,6 +248,10 @@
     - 前两次口径（10-06 早「DTS 破坏启动」、后按用户口述改「坏 init+用户态」）**均已收窄/作废**：坏 init（#107/#110）确实干扰了 10-06 首轮矩阵，但**不是**本故障根因。
     - 仍成立的教训：`build-boot.sh`/`build-manifest.sh` 的 `KDIR` 原为硬编码 `linux/`，用外部 Image/DTB 打镜像会**静默用错内核**（首版 vk59 中招）；已改为 `KDIR=${KDIR:-…}` 并透传 manifest。
     - 证据：`archive/topics/DRIVER-VERIFY-2026-10-06.md` §7/§8、`ATTRIBUTION-AUDIT-2026-10-06.md` §4/§5；相关 `#104/#105/#106/#107/#110/#115`。
+    - **★复发（2026-10-06/07 DP 工作中）**：`TASKS`/文档虽写「已从驱动批次移除」，但主树 DTS 的
+      `&i2c0 { status="okay"; nfc@8{} }` **一直在**（未提交移除）⇒ 由本树构建的任何 DTB 启动必失败。
+      dp1 镜像因此启动失败回退 boot_b，误导为「role-switch 破坏启动」。改 `disabled` 后 dp1b 正常。
+      **纪律：改结论前先 `grep` 当前树核实，不信文档的「已移除」**。证据 `archive/topics/DP-2026-10-06.md` §1。
 109. **★init 曾有「三份分叉 + awk 原地打补丁」——已固化（2026-10-06）**。
     - 旧状态：`initramfs/init`（boot 镜像用）、`rootfs/init`（磁盘根构建用）= 设备 `/init` 三者内容不同（相机预载/音频/`ttyGS1` 各不相同）；磁盘 `/init` 还是 `scripts/patch-init-*.sh` 在设备上 awk 原地拼出来的，不可复现。
     - 后果：改 boot 镜像的 init ≠ 改磁盘的 init；任何 init 加固只做一半就会分叉复发。
@@ -328,6 +332,55 @@
     - 纪律：低音量指标（`wlan0: associated` / `Connection to AP`）可在开 debug 前先差分；高频指标一律用**时间窗口过滤**（`awk` 比较 `[ 1234.567]` 时间戳）或直接用 `iw station dump` 计数器，不要依赖累计 `grep -c` 的差值。
     - 另：`out/` 存在其他写者（本次 `out/boot-elden.img` 在无我方操作的情况下被改过），打包前先备份该别名、打包后按原样恢复。
     - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md` §2/§7。
+
+120. **★busybox `pgrep -x NAME` / `pkill -x NAME` 恒假阴性——它匹配的是 argv[0] 全串，不是 comm（2026-10-06）**。
+    - 实证：`pgrep -x udevd` rc=1，而 `/proc/<pid>/comm` = `udevd`；`pgrep udevd`（无 `-x`）rc=0。因为进程以 `/sbin/udevd` 启动，`-x`（整串精确）对 `udevd` 不成立。GNU procps 的 `-x` 匹配 comm，语义**相反**。
+    - 后果：`start-desktop.sh` 的 `pgrep -x udevd/seatd/elogind` 三条守卫**长期是空操作**（永不阻止二次启动）；`net-up-manual.sh` 的 `pkill -x wpa_supplicant` 杀不掉旧实例（正是 Q26「双 supplicant」的温床之一）。
+    - 修：① 装 `procps-ng`（`/usr/bin/pgrep` 覆盖 busybox symlink，语义变 GNU）；② 脚本改 shell-agnostic：`ps -eo comm | grep -qx NAME`（busybox/procps 都成立），kill 用 `ps -eo pid,comm | awk '$2=="NAME"{print $1}'`。
+    - 纪律：**设备脚本里出现 `pgrep -x`/`pkill -x` 一律当 bug**；`dpms-watch.sh` 早就注释过此坑，但只改了它自己。
+    - 证据：`.pi/plans/2026-10-06-用户态查漏补缺.md` §0；2026-10-06 实机（U2）。
+
+121. **★PID1（自研 `/init`）与 ssh 会话的 PATH 完全相同 ⇒ 装 GNU 工具会同时 shadow busybox 的 init 上下文（2026-10-06）**。
+    - 实测 `/proc/1/environ` 的 PATH = `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`，与 ssh 一致；`/usr/bin` 在 `/bin` 之前 ⇒ `apk add coreutils grep sed findutils` 后 **`/init`、`start-desktop.sh` 也改用 GNU**。
+    - 本例无害且通过（重启 ×2），但这是一条**通用风险**：任何装包改工具语义的动作都必须**重启回归**，不能只验 ssh 会话。
+    - 纪律：设备「装包 → 重启 → 复核 PID1 起的服务」三步走；`chronyd` 这类依赖网络的服务的缺席不要与装包混淆（本次是**无默认路由**所致）。
+    - 证据：`.pi/plans/2026-10-06-用户态查漏补缺.md` §1 P1。
+
+122. **设备无默认路由时（WiFi 掉线），用主机代理给设备装包（2026-10-06）**。
+    - 现象：`wlan0 DOWN/NO-CARRIER` + USB gadget 只有 `192.168.7.0/24` ⇒ **无 default route**；`apk add` 报 `DNS: transient error`（`apk update` 看似成功只因索引缓存）。
+    - 无需 sudo/NAT 的绕行：主机代理监听在 `*:7897`（含 192.168.7.2）⇒ 设备侧 `http_proxy=http://192.168.7.2:7897 apk add …` 直接可用。
+    - 附带后果：`time-sync.sh` 卡在“等网络”⇒ `chronyd` 不起、**时钟停 1970**、TLS/git 全废。**不要**把这归因到用户态/装包。
+    - 纪律：在设备无路由时，先 `ip route show default` 确认，再决定“联网装包”还是“主机离线 fetch（qemu-aarch64 + apk --root，见 HINDSIGHT #771）”。
+
+123. **★Alpine 的 OpenRC 装好了但不启用；把 PID1 交给 `busybox init` 才能修好关机链（2026-10-06）**。
+    - 现象：`openrc 0.63.2` + 82 个 `/etc/init.d` + 全部 `*-openrc` 包**全已装**，但 `/etc/runlevels/*` **全空**、`rc-update show` 无输出、PID1 = 自研 `/bin/sh /init`（手工 `setsid` 拉 dbus/udev/seatd/elogind/greetd）。
+    - 关键认知：Alpine 的 `openrc` 包**不含 `openrc-shutdown`**，关机链 = `/etc/inittab` 的 `::shutdown:/sbin/openrc shutdown` + **busybox init 收信号**（busybox `poweroff` 非-`f` → SIGUSR2 给 PID1）。**shell PID1 不实现该协议** ⇒ 只能靠 `busybox poweroff -f` 补丁（G1-25）。
+    - 低风险交接：`/init` 先建好生命线（usb-gadget/usb0/sshd/ttyGS0），**最后**再 `exec /sbin/init`；并用磁盘标记 `/etc/elden-init-mode=openrc` 控制，出错可 SSH 改回 `legacy` 重启。**不要把 `exec` 放在写 boot log 之前**（否则 `elden-boot.log` 不刷新）。
+    - 强制项：`LIBSEAT_BACKEND=seatd` 要同时给 **greetd 本身**（`/etc/conf.d/greetd`）与 session 脚本；否则 greetd 选 logind 后端 → deactivate session → phoc 释放 DRM → 面板黑（Q24 类）。
+    - 白名单：**不** enable `networking/dhcpcd/wpa_supplicant`（Q26 双管理器）、`chronyd`（由 `time-sync.sh` 先步进 1970 时钟）、`sshd`（`/init` 保生命线）。
+    - 证据：`scripts/openrc-enable.sh`、`TASKS.md` G1-32、`.pi/plans/2026-10-06-用户态查漏补缺.md` P3。
+
+124. **★「熄屏→掉电」到底是用户态关机还是内核硬复位：必须用标记判别（2026-10-06）**。
+    - 难处：USB 插着时 **VBUS 自动开机**，真关机/硬复位都表现为“又起来了”；pstore 对 DSI 硬复位也是空的。
+    - 判别套件（已入库）：① `/sbin/{poweroff,reboot,halt}` = `elden-powerwrap` 在 exec 前写 `USERLAND-<action> <time> uptime=… boot_id=…` 到 `/root/powerlog.txt` 并 sync；② `/etc/init.d/elden-powerlog`（shutdown runlevel）写 `CLEAN-STOP` + 当时 `rc-status`；③ `blankspy.sh` 每秒把 dpms/亮度/phoc/phosh/session/电池 sync 到 `/root/blankspy.log`。
+    - 判据：事件后 **有** `USERLAND-*`/`CLEAN-STOP` = 用户态发起的干净关机；**无** 且心跳截断 = 内核硬复位。
+    - 实测（U2，2026-10-06）：① 全桌面 `wlr-randr --output DSI-1 --off` → 无标记、心跳止于 `dpms=On`；② **停 greetd（phoc/phosh/gsd 全无）后 `modetest -M msm -w 36:DPMS:3`** → 同样硬复位。⇒ **纯 DRM DSI blank 即复位 = 内核路径**，与合成器/会话/gsd/UPower/logind 无关。
+    - 否掉的反假设：`/etc/elogind/logind.conf` 已 `HandlePowerKey=ignore`；UPower 98%/charging；`sleep-inactive-*-type=nothing`（无挂起）→ 与 2026-10-06 的 init/OpenRC 改动**无关**。
+    - 附：旧结论「vk42/干净重建免疫」与本次“必复位”矛盾 ⇒ 必须长时窗+多样本（n≥3）验证，单次观测不作数。
+    - 工具：`scripts/blankspy.sh`、`scripts/elden-powerlog.initd`、`scripts/fix-logind-poweroff.sh`。
+    - **★更正（2026-10-06 用户实拔 USB 确认）：是「真关机」不是「硬复位」**。`boot_id` 变化不能当 reset 证据——那是 **VBUS 自动开机**造成的假象；标记得只能证明「**未走用户态关机**」。区分法：拔 USB 后触发，**保持关断**=真关机，**自行重启**=硬复位。
+    - **进一步定位（U2）**：`kmsg -w` 持续落盘后复现，**内核在掉电前零输出**（最后一行是 wlan0 关联消息，离掉电 ~1s）⇒ 非 panic（pstore 也空）、非 thermal（会打日志）、非驱动打印；呈**瞬时断电**。
+    - **E3 二分**：仅关背光（`echo 4 > /sys/class/backlight/aw99706-backlight/bl_power`，不动 DSI）**幸存** ⇒ 背光路无辜，嫌疑在 **DSI/面板 disable 序列**。
+    - 面板 DT：`panel@0` = `csot,pp8807hb1-1`/`novatek,nt36536`，供电 `vsp-supply` / `vsn-supply` / `vddio-supply`；sysfs 可看到 `vreg_6v1_vsp` / `vreg_5v8_vsn` / `vreg_1v8_vddio` 均为 `enabled`。**下一步**：在面板 disable / regulator off 路径加 printk（需重建内核）+ 逐个拨供电以定位是哪条轨道拉低声造成整机断电。
+    - 证据留档：`archive/evidence/kmsg-live-E1b-2026-10-06.log`（1191 行，掉电前无相关内核信息）。
+    - **★方法学更正（2026-10-07，重要）**：本条的 E1/E2 用 `wlr-randr --off` / `modetest -w 36:DPMS:3` 触发 blank —— 实测这两个命令在本机**是空操作**（rc=0 但 `card0-DSI-1/dpms` 仍 `On`；`modetest -c` 的 DPMS value 仍 0）。⇒ **E1/E2 并未真正熄屏，其「blank 即复位」的结论不可信**。正确的真实路径 = `org.gnome.ScreenSaver.SetActive(true)`（gsd-screensaver，实测 dpms 变 Off）。用真实路径在 boot_b 上可稳定复现断电（瞬时、`powerlog` 空、无 kmsg、pstore 空）；但已排除 USB/VBUS/电池/DP 单变量，且**未判定**根因（唯一存活样本是 `fastboot boot sd-base`，未复现到 boot_b）。详见 `archive/topics/SLEEPDEATH-REALBLANK-2026-10-07.md`。工具 `scripts/g1-22-dpms-test.sh` 已改用真实触发。
+
+125. **★`CONFIG_ATH12K=m` 会经 Kconfig `select` 把 `PCI_PWRCTRL_PWRSEQ` 拉成 `=m` ⇒ PCIe 起不来、wifi 全无（2026-10-06）**。
+    - 现象：改了 `ATH12K=y→m` 并 `make olddefconfig`，启动进桌面、SSH 通，但 **`/sys/bus/pci/devices/` 空**，无 wlan0；极易误判成「wifi 驱动坏」。
+    - 根因：`drivers/net/wireless/ath/ath12k/Kconfig: select PCI_PWRCTRL_PWRSEQ if HAVE_PWRCTRL`。Kconfig 里 `select` 由 `=m` 的选择者触发会把被选符号**压成 `m`（无法手工设 `y`，`olddefconfig` 会改回）**。于是 WCN 的 PCIe 电源序列驱动变模块，而内置 `qcom-pcie` 在 initcall 阶段 probe，模块尚未加载 ⇒ `1c00000.pcie  qcom-pcie: cannot initialize host`（deferred），无 PCI 设备。
+    - 验证：把 `pci-pwrctrl-pwrseq.ko`(+`pwrseq-pcie-m2.ko`) `modprobe` 进去，deferred-probe 立即重试成功，`0000:00:00.0`/`0000:01:00.0` 出现、ath12k 正常 probe。
+    - 纪律：**任何驱动 `=y→m` 后必须 `grep '^CONFIG_...'` 检查被它 `select` 的符号是否跟着降级**；PCIe/电源/时钟这类「早于模块加载就必须在」的供应商驱动，模块化后必须进 **initramfs**（早加载）或另找内置路径，不能只放磁盘 `/lib/modules`（#113 同类）。
+    - 证据：`archive/topics/WIFI-ATHM-PROBE-2026-10-06.md` §2；`scripts/build-athm-probe.sh`。
 
 ---
 

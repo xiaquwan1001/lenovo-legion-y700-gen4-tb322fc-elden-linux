@@ -26,7 +26,7 @@
 | 资源 | 关键点 | 我们用它的哪一块 |
 |---|---|---|
 | linux-piano（AudioReach 上游 PR/系列） | 43+ 个 AGL/APM 修复 commit | 音频 `patches/0011` 的上游对照 |
-| freedreno / Mesa 上游 | A830 (`gen80000`) 支持、turnip | 自编 Mesa 26.1.8（解 Waydroid chip-id） |
+| freedreno / Mesa 上游 | A830 (`gen80000`) 支持、turnip | **宿主**：Alpine apk 预制（`mesa-dri-gallium` + `mesa-vulkan-freedreno`），**零编译**、**不打 chip-id 补丁**（原版才对）；**Android/bionic**：自编 Mesa 26.1.8 解 Waydroid chip-id（清单见 §2.2） |
 | `ath12k`（WCN7850/Peach 通路） | MHI 超时需本地重试补丁 | WiFi 稳定性补丁 |
 | `qcom_battmgr` / PMIC-GLINK | 充电与**旁路供电**两个旋钮 | `scripts/charge-ctl.sh` |
 | mainline `camss` + `s5kjns`/`gc08a8`/`gt9764`/`wl2868c` | SM8750 camss 已在树 | 相机 20 个 `.ko` |
@@ -123,7 +123,7 @@
 | 相机模块包（20 个） | `out/camera-modules/` + tar | ✅ 冷启自加载已在机验证 |
 | **运行内核对齐模块包**（25 个，g4c68eb5ed4e3） | `out/camera-modules-7.2.0-debug-g4c68eb5ed4e3-dirty.tar.gz` | ✅ sha256 `4146dfd0…`；持久根相机/音频已复现（`archive/topics/KMOD-ALIGN-2026-10-05.md`） |
 | **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | 3.44 GB / 30852 项，tar/gzip 完好 |
-| Waydroid Mesa 26.1.8 | `~/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz` | sha256 全 OK，含 DRM chip-id 魔数 |
+| **Waydroid Mesa 26.1.8（bionic，自编）** | `~/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz`（6.9 M，**11 个 .so**：`libgallium_dri` / `libgbm_mesa` / `dri_gbm` / `libgbm_mesa_wrapper` / `egl/{libEGL,libGLESv1_CM,libGLESv2,libGLES}_mesa` / `hw/{vulkan.freedreno,gralloc.minigbm_gbm_mesa,gralloc.gbm}` + `manifest.txt`） | sha256 全 OK，含 DRM chip-id 魔数 `0xffff44050000`；**重建** = `scripts/mesa-build.sh`（freedreno-only 定向 make，5.5 min；ccache 热 ~10 min）；部署 = `extract-mesa-libs.sh`+`waydroid-mesa-swap.sh`（bind-mount，可回退） |
 | Waydroid 镜像 | `~/下载/` GAPPS `system.zip`(1.17 G) + MAINLINE `vendor.zip`(77 M) | ✅ |
 | x86 chroot 资产 | `pkgs-x86/`（ubuntu-base-arm64、box64 0.4.5、Strings64） | ✅ PoC 已通 |
 | 原厂分区备份 | `backup/stock-259/`（abl/boot/dtbo/init_boot/recovery 双槽 + SHA256SUMS） | ✅ |
@@ -143,9 +143,13 @@
 |---|---|---|
 | `/mnt/Samsung/waydroid-build` | Waydroid AOSP 树（1254 项目 / 1219 对象库 fsck 全 OK） | 550 G |
 | `/mnt/Samsung/l2`（本 repo `./l2`） | 原厂 super / system_a / system_a.pristine（sha256 逐侧一致）；**stock-259 13 分区备份里没 super，这里是唯一一份**；自研 `lp_tool.py`（LP v1.2 dump/extract/splice）唯一副本 | 45 G |
-| `~/mesa-out` | Mesa 构建产物 + manifest | — |
+| `~/mesa-out` | Waydroid bionic Mesa 构建产物（11 `.so` + `manifest.txt`），即上表自编产物的落地包 | ~7 M |
 | `~/下载/tb322fc` | EDL 全量包 | 599 M |
 | `stock-src/` | 联想 GPL 源码 | 400 M |
+
+> **GPU 栈编译账（2026-10-06）**：宿主用户态 **0 编译**（Alpine apk），内核属 G1 主线；
+> Android 用户态 = **1 组 11 库（已交付）**；剩余仅偶发 Mesa 重编（~10 min）与可选 `make vendorimage`（1–3h）。
+> 逐层表见 `TASKS.md` §6 §6-C。
 
 ### 2.4 归档区（本轮合并结果，不再更新）
 
@@ -180,7 +184,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | **P2** | 重复快照：`flashing-bundle/`(+tar) · `backup/pi-assets-*` · `backup/pi-sessions-*` · 5 个 `y700-elden-docs-*.tar.gz` | ~30 M → ~10 M | 只留最新一套 | 无 |
 | **P2** | `backup/stock-259/` 13 分区 | 443 M → 0 | 删（云全量包已覆盖） | **须先核对云包清单含 abl/dtbo/recovery/vbmeta 且版本 = 1.5.10.259** |
 | **P3** | AOSP `.repo/project-objects` + `projects` | **435 G** → 0 | 剪 git 历史（**工作树照常编译**，但此后不能 `repo sync`） | **先**导出 `.repo/local_manifests/`（`00-remotes`/`01-removes`/`02-waydroid`.xml）+ `device/waydroid/waydroid/waydroid_arm64_only/BoardConfig.mk`（唯一改动，+10/−2）|
-| **P3** | AOSP 工作树 + `out` | 89 G + 12 G → 0 | 整树删（合计 **523 G**） | 决策：G2 是否还要自编 Waydroid。替代 = `~/下载/lineage-20.0-…-GAPPS-waydroid_arm64_only-system.zip`（1.1 G，官方现成） |
+| **P3** | AOSP 工作树 + `out` | 89 G + 12 G → 0 | 整树删（合计 **523 G**） | **❌ 裁决保留（2026-10-06）**：原闸「G2 是否还要自编 Waydroid」已答——**保留**，因 Mesa 偶发重编仍需此树（与是否换安卓版本无关，见 `TASKS.md` §6 §6）；真不要了再删，替代 = `~/下载/lineage-20.0-…-GAPPS-waydroid_arm64_only-system.zip`（1.1 G，官方现成） |
 | **P3** | `l2/`（`./l2`）super + system_a + system_a.pristine | 45 G → 13 K | 回收 36–45 G | **两道闸**：① 先做 `TASKS.md` §5 Q13 的 AVF 重提取（源 `system_a.pristine.img`，U1 仍 stock 是唯一窗口）② 核验云包含 `super.img@1.5.10.259`。无论结论如何，先把 `lp_tool.py` + `dump-super.sh` + `trim-delete-only.cmds`（13 K，唯一副本）挪进 `tools/` |
 | **不瘦** | `.pi/`（记忆+会话）· `archive/` · 领域层文档 · `stock-src/`(402 M GPL 源码) · `rootfs/`(193 M 部署基) · `y700四代工具/`(271 M) · `qdl/` · `backup/{gpt,fw,misc,sde-gpt-*,dtbo_a}` · `patches/` · `scripts/` · `/mnt/Samsung/{ccache,mesa-out}` | ≈1.6 G | 保留 | — |
 
