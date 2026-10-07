@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-07（**#131 = ★boot 镜像重打包必须 unpack 原镜像取 kernel（manifest kernel 列误导）**；**#130 = ★dma-buf 只加载 system_heap、绝不 cma_heap（DmaHeap 探测序 CMA 优先）**；**#129 = 华为 P40 Pro 热点 5 GHz 平板连不上/2.4 GHz 正常（仅记录）**；**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-07（**#132 = ★Q24 熄屏→硬复位单模块根因 `cambistmclkcc-sm8750`（H1 去 power-domains 3/3→7/9，驱动 D1/D2 无效）**；**#133 = ★A/B 槽位必须 `qbootctl -m b`（否则 ABL 抛 fastboot，勿误判“启动慢”）**；**#134 = ★长测试脚本必须实时落盘（工具被取消时看不到输出）**；**#131 = ★boot 镜像重打包必须 unpack 原镜像取 kernel（manifest kernel 列误导）**；**#130 = ★dma-buf 只加载 system_heap、绝不 cma_heap（DmaHeap 探测序 CMA 优先）**；**#129 = 华为 P40 Pro 热点 5 GHz 平板连不上/2.4 GHz 正常（仅记录）**；**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -424,6 +424,21 @@
     - 根因：boot_b 实际打包的 kernel 是 build-boot 的 `--kernel` 覆盖路径（当时 `/tmp/vk47clean-unpack/kernel`，sha `2321e3b9…`），而 `build-manifest.sh` 的 `kernel_sha256`/`kernel=` 记录的是 **linux/ 树的 Image.gz**（sha `f5868d0a…` = g26cd13b1c，另一个内核）。即旧 manifest 的 kernel 列是误导性的——`kernel_uts` 是开箱取证、`kernel_sha256` 是树文件，两者指向不同内核。
     - 修复：从原镜像 `unpack_bootimg.py` 解出 kernel（sha=2321e3b9=vk47clean）+ 新 DTB + 原 ramdisk 重打包（`cdsp-vk47clean-camrot2`），实机 `uname -r`=vk47clean 恢复。
     - 纪律：**任何 boot 镜像重打包，kernel 来源必须 = 原镜像 unpack 出的 kernel（或同 sha 的可复现构建产物）；不得用「同一棵树」的 Image.gz 代替**。改 `build-manifest.sh`：`kernel=`/`kernel_sha256` 应记录实际打包的 kernel 文件。
+
+132. **★Q24 熄屏→硬复位/掉电的单模块根因 = `cambistmclkcc-sm8750`（相机 BIST MCLK 时钟控制器）（2026-10-07，60+ 轮二分）**。
+    - 二分结论（每项 ≥3 轮，真实熄屏 `org.gnome.ScreenSaver.SetActive(true)`）：`qcom-camss` 单独 / `camcc-sm8750`+camss / `i2c-qcom-cci`+camss / `wl2868c-regulator`+camss 各 **3/3 存活**；**`cambistmclkcc-sm8750` 单独 3/3 掉电**；**零相机模块对照 3/3 存活**；`system_heap` 无罪；pstore/kmsg 无痕（硬复位型）。
+    - 修复实验：**H1**（DT 去该节点 `power-domains=<&rpmhpd RPMHPD_MMCX>,<&rpmhpd RPMHPD_MX>` + `required-opps=low_svs`，对齐厂商用 `vdd_mx-supply` 的写法）→ cambist 单独 **7/9 存活（2/9 掉电）**；**D1** 驱动 `use_rpm=false` → 6/9；**D2** 去 `critical_cbcrs`(SLEEP_CLK 强制常开) → 7/9。⇒ **MMCX/MX 耦合是主因，但残留 ~20% 间歇未根治**；驱动侧两个开关无效。
+    - 纪律：**A/B 现象必须重复 ≥3 轮且带对照组**（本研究一开始单次样本曾把凶手误判到 `s5kjns`/`system_heap`）。
+    - 复现协议：`scripts/sleep-sweep.sh`（boot_b=可自动恢复的镜像；改 `/etc/modules-load.d/camera.conf` 限定模块集 + `reboot` + 熄屏；每轮 `qbootctl -m b`）。
+    - 规避：当前 `vk62`（H1 DTB）+ 空 `camera.conf` ⇒ 零相机模块 = 熄屏安全。
+
+133. **★A/B 槽位的 `mark-successful` 必须每轮置位；否则 ABL 把槽判为 unbootable 抛到 fastboot（2026-10-07，用户纠正）**。
+    - 现象：boot_b 刷入后有时“起不来/很久才起”，实为 **retry 计数递减/耗尽 → ABL 停驻 fastboot**；不是启动慢、不是镜像坏。
+    - 处置：每次成功启动后 `qbootctl -m b`（cmdline 无 `slot_suffix`，**务必显式写 b**）；也可用 `python3 /usr/local/sbin/slot-attr.py show` 核 retry/succ。详见技能 `qbootctl-slot-management`。
+
+134. **★长测试脚本必须实时落盘；agent 看不到被用户取消的工具调用输出（2026-10-07，用户要求）**。
+    - 后果：长扫掠脚本只靠 stdout，一旦被取消/超时，中断前的数据全丢，导致重复劳动或误判。
+    - 纪律：所有长测试/扫掠脚本内部 `exec > >(tee -a "$LOG") 2>&1`（或至少 `bash script > log 2>&1` 持续追加），agent 从 `$LOG` 读结果并在汇报里给出日志路径。`scripts/sleep-sweep.sh` 已照此改。
 
 ---
 

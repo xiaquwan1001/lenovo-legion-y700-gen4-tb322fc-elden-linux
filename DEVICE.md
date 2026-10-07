@@ -25,7 +25,7 @@
 ### 1.1 内核与软件基线
 - 内核树：`linux -> geekidos-linux`（GEEKiDoS/linux `v7.2-elden`，**Linux 7.2.0**）+ 本地补丁 `patches/0001–0011`；模块化片段已应用（`patches/config-vk50-modular`）。
 - 配置快照：`patches/config-vk50-modular`（netd/XFRM + camera + thermal + audio 全合 + 模块化）；`config-vk40-bringup` 为历史基线。
-- **U2 在机基线 = `vk47clean` 内核 + `vk62` boot_b**（`uname` = `7.2.0-debug-vk47clean-gbd114ca335e1`）。b 槽 boot_b **现为 `vk62`**（2026-10-07 刷入，sha `8518a57f…`）：**vk47clean 内核（与磁盘模块一致）** + **dp5 DTB 的 H1 变体**（`mdss_dp0` okay + dr_mode otg + 相机 rotation；cambist 节点去 `power-domains`/`required-opps`） + 完整 ramdisk + 修好的 `/init` + split CDSP 固件；cmdline 带 `elden_nocamera=1` ⇒ **不自动加载相机 ⇒ 熄屏安全，DP 可用**（相机按需）。回退资产：`out/boot-elden-camdp-nocam.img`、`out/boot-elden-cdsp-vk47clean.img`、`out/boot_b-before-cdsp-20261007.img`（sha `2b4aa291…`）、`bootslot-b/boot_b-clean.img`。kexec 已定论不可用（见 `TASKS.md` §4）。
+- **U2 在机基线 = `vk47clean` 内核 + `vk62` boot_b**（`uname` = `7.2.0-debug-vk47clean-gbd114ca335e1`）。b 槽 boot_b **现为 `vk62`**（2026-10-07 刷入，sha `8518a57f…`）：**vk47clean 内核（与磁盘模块一致）** + **dp5 DTB 的 H1 变体**（`mdss_dp0` okay + dr_mode otg + 相机 rotation；cambist 节点去 `power-domains`/`required-opps`） + 完整 ramdisk + 修好的 `/init` + split CDSP 固件；cmdline 带 `elden_nocamera=1`（loader 不自动加载）**且 `/etc/modules-load.d/camera.conf` 置空**（否则 OpenRC `modules` 服务仍会加载相模块）⇒ **不自动加载相机 ⇒ 熄屏安全，DP 可用**（相机按需）。回退资产：`out/boot-elden-camdp-nocam.img`、`out/boot-elden-cdsp-vk47clean.img`、`out/boot_b-before-cdsp-20261007.img`（sha `2b4aa291…`）、`bootslot-b/boot_b-clean.img`。kexec 已定论不可用（见 `TASKS.md` §4）。
 - `CONFIG_LOCALVERSION` 一变，相机 20 个 `.ko` 必须整套重编（vermagic 耦合）；vk50 起模块化后驱动可单独重编。
 
 ### 1.2 固件清单与通路（"正常驱动原厂全部固件"的分解）
