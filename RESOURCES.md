@@ -304,7 +304,7 @@ git log --oneline -10
 |---|---|
 | 实机验证 | ✅ 实机 42 / ◐ 部分 8 / ✗ 未上机 50 |
 | 状态 | active 59 / reference 27 / junk 10 / superseded 4 |
-| 时间跨度 | 2026-09-29 → 2026-10-06（磁盘 jsonl **100**；本索引 **100** 行；**92** 个磁盘唯一 ID，多个 ID 有拆分会话/子目录副本；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
+| 时间跨度 | 2026-09-29 → 2026-10-07（磁盘 jsonl **103**；本索引 **110** 行；**92**+ 磁盘唯一 ID，多个 ID 有拆分会话/子目录副本；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
 
 ---
 
@@ -415,6 +415,16 @@ git log --oneline -10
 | 2026-10-06 | `01a11012` | 版本：vk1–40 审查 + fastboot 侦察 | vk-ledger | ✅ | active | 审 vk1–40 功能/日志/上机；fastboot 侦察：current-slot=b、unlocked、max-download 768 MiB；该 ABL 不支持 `fastboot fetch` | vk1-40 | 无 |
 | 2026-10-06 | `01a1106e` | 文档：语义漂移审查 | docs-audit | ✗ | active | 排查「偏好→规则升格 / 来源不明 / 前后翻转」共 7 项；落 `archive/topics/SEMANTIC-DRIFT-AUDIT-2026-10-06.md` | - | 待处置 |
 | 2026-10-06 | `01a11074` | 版本：vk61 刷入“报错”澄清 | vk-ledger | ✅ | active | 非故障：vk61 是 initramfs 载具号，`uname` 仍 `vk47clean` 是正确签名；kernel/dtb 与 `boot_b-live` 逐字节同 | vk61 | 无 |
+| 2026-10-06 | `01a11100` | 内核：reboot edl / 刷机控制取证 | flashctl | ✅ | active | `reboot edl`/recovery 路径取证：vk41 钩子映射 bootloader/edl → PSCI RESTART2；recovery 落 nvmem-reboot-mode 未覆盖 | - | reboot edl 实测待做 |
+| 2026-10-06 | `01a11132` | 用户态：G1-31 GNU 工具 + G1-32 OpenRC | userland | ✅ | active | GNU 工具补装（735→760 包，重启回归 ×2）；OpenRC 交接打通（PID1=/sbin/init，rc-status 全 started，loginctl reboot 干净重启） | - | 提交 G1-31/32 收口 |
+| 2026-10-06 | `01a111ad` | 排查：Q22/Q26 下一步方法手册 | method-plan | ◐ | active | Q26 三条修复未通 → 下一步方法落 `plan`/专题 §13；提交两仓 | - | 方法未执行 |
+| 2026-10-06 | `01a111cd` | 文档：RESOURCES 资产口径更正 | docs | ✗ | active | §1.2 Mesa 宿主=Alpine 等 4 处口径更正，只动文档 | - | 无 |
+| 2026-10-07 | `01a11407` | 审计：Widevine/G2 口径核实 | widevine-audit | ✗ | active | PITFALLS #126 + §15.6、TASKS §6/§5 Widevine 口径更正，提交 `2ce1cf3` | - | 无 |
+| 2026-10-07 | `01a11466` | 内核：CDSP 修复 + boot_b 持久化 + DP0 回归 | cdsp/boot | ✅ | active | CDSP 起（split 固件+initramfs，提交 `c132a1bc7`）；boot_b 持久化 `cdsp-vk47clean`；发现并回退 DP0 黑屏回归（#128）；boot_b 内核改回 vk47clean 对齐模块 | vk47clean | 尾段 stopReason:aborted（方案 A：bd114ca33 worktree 构建 Module.symvers 未执行；dma-buf 后由 `01a11518` 别路解决，无损失） |
+| 2026-10-07 | `01a11518` | 相机：G1-5 完整收口（dma-buf→软件 ISP→App） | camera | ✅ | active | dma-buf 补齐 → libcamera 软件 ISP → Snapshot 预览/拍照/录像全通，180° 朝向修正，App 实测通过 | - | 剩 C5 容器共享（非阻塞） |
+| 2026-10-07 | `01a115a8` | 收盘：G1-9 DP 打通 + Q21/Q24 根因 | dp/sleep | ✅ | active | DP 打通（`dr_mode=otg`+`usb-role-switch`+`mdss_dp0` 同批，提交 `6c1376907`，外接实测出画面）；Q24 根因实锤=相机模块链（dp5/dp6/dp7 控制变量 A/B） | - | DP 放缩/横竖屏残余（桌面侧，非阻塞） |
+| 2026-10-07 | `01a11650` | 会话：测试接续（中断，无产出） | stress-prep | ◐ | junk | 任务=继续未验证项（linux→安卓→x86）；止于温控/基准压测准备（读 charge-ctl.sh），**无终报无提交**；温控/基准压测**确认未执行**（全仓无运行记录） | - | 遗留未提交：`scripts/bench-run.sh`、`scripts/thermal-stress.sh`（压测脚本就绪待跑）；.pi/settings.json 为 settings 精简正常残留 |
+| 2026-10-07 | `01a11667` | 审计：近两天会话一致性审计 | session-audit | ✗ | active | 修死链误报（check-doctor 正则把 adsp.mdt 截成 adsp.md）；INDEX 88%→90%；TASKS §0 DP/Q24 状态对齐；RESOURCES §4 补 9 行（另：§2 有重复行段，待后续去重） | - | 本会话 |
 
 ---
 

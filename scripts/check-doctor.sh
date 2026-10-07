@@ -53,7 +53,7 @@ for dirpath, dirnames, filenames in os.walk(root):
                     'env-pass','out','backup','logs')]
     allmd |= {fn for fn in filenames if fn.endswith('.md')}
 topdirs = set(os.listdir(root))
-tok = re.compile(r'[A-Za-z0-9_./+\-\u4e00-\u9fa5]+\.md')
+tok = re.compile(r'[A-Za-z0-9_./+\-\u4e00-\u9fa5]+\.md(?![A-Za-z0-9_])')
 missing = []
 for f in active:
     p = os.path.join(root, f)
