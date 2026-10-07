@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-06（**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-07（**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -381,6 +381,14 @@
     - 验证：把 `pci-pwrctrl-pwrseq.ko`(+`pwrseq-pcie-m2.ko`) `modprobe` 进去，deferred-probe 立即重试成功，`0000:00:00.0`/`0000:01:00.0` 出现、ath12k 正常 probe。
     - 纪律：**任何驱动 `=y→m` 后必须 `grep '^CONFIG_...'` 检查被它 `select` 的符号是否跟着降级**；PCIe/电源/时钟这类「早于模块加载就必须在」的供应商驱动，模块化后必须进 **initramfs**（早加载）或另找内置路径，不能只放磁盘 `/lib/modules`（#113 同类）。
     - 证据：`archive/topics/WIFI-ATHM-PROBE-2026-10-06.md` §2；`scripts/build-athm-probe.sh`。
+
+126. **★槽位元数据改用 `qbootctl`（标准 boot_control HAL），别再手搓 `slot-attr.py`（2026-10-07 设备实测）**。
+    - 背景：#88 要求 `slot-attr.py mark-successful b`。实测自研脚本的**常用操作**（读状态、mark successful）可由 Alpine 官方包 **`qbootctl`** 完全取代：扇区大小走 `ioctl(BLKSSZGET)`（4K 无误判）、**按盘提交**（支持 boot_a/b 在 LUN4 `/dev/sde`）、`-m` 同时改 primary+backup GPT + CRC，**不碰 UFS BSG**。
+    - 实测（U2，`vk47clean`）：`apk add qbootctl`；只读 `qbootctl` vs `slot-attr.py show` **逐项一致**；`qbootctl -m b` 把 boot_b byte6 `0x0f`(retry=1) → `0x4f`(succ=1)，独立解析确认 primary idx44 与 backup idx44 都置位、boot_a 未动；内核重扫 78 分区无 CRC 错误。
+    - **坑 1（危险）**：mainline cmdline 无 `androidboot.slot_suffix` ⇒ `getCurrentSlot()` 失败返 0，`qbootctl -m`/`-u` **不带槽位会作用到 slot a**。必须显式 `-m b`；已给 `scripts/build-boot.sh` 的 CMDLINE 加 `androidboot.slot_suffix=_b`（可 `SLOT_SUFFIX=` 覆盖）。
+    - **坑 2（迷惑）**：qbootctl 写 GPT 会触发内核分区重扫，紧跟其后的 `qbootctl -n/-b` 可能瞬时报 `No slots found, is this an A/B device?`（by-partlabel 在重扫窗口暂不可见）；等 1–2 s 重读即正常，**非 GPT 损坏**。
+    - 保留 `slot-attr.py`：**离线 dump 编辑**（`--image`）与 **retry 计数单改**（`set --retry`）qbootctl 没有。`-s`（set active，走 `/dev/sgY` 的 UFS boot-LUN BSG 切 xbl）本项目不需要、勿用。
+    - 技能：`qbootctl-slot-management`；审计：`.pi/plans/2026-10-07-造轮子审计.md` §7.1。
 
 ---
 
@@ -952,3 +960,19 @@
 | `reboot recovery`（进 TWRP） | 无 vendor reset，不可用 | `archive/topics/FLASHCTL-2026-10-03.md` |
 | `reboot edl` | PSCI 已具备，未实测 | `TASKS.md` G1-24 |
 | 60 Hz 切黑屏 | 面板固件仅适配 120 Hz | `PITFALLS.md` #10/#14 相关 |
+
+### 15.6 已评估并排除的生态方案（勿重推，2026-10-07）
+
+> 来源：`.pi/plans/2026-10-07-造轮子审计.md`（联网对比）。登记「已看过并否掉」的生态工具，避免日后当新发现重推（#87 同类代价）。
+
+| 生态方案 | 结论 | 一句话理由 |
+|---|---|---|
+| **`qbootctl`** | ✅ **已采纳** | 取代 `slot-attr.py` 的读状态/mark-successful（#126） |
+| Alpine `mkinitfs` | ❌ 不采用 | 本项目 initramfs 刻意不含模块/固件（switch_root 到磁盘根），其头号能力用不上；依赖 `nlplug-findfs`/`lddtree`/apk，与自定义 `/init` 冲突 |
+| `pmbootstrap` / `pmaports` | ❌ 不迁移 | 可取代构建/刷写层，但与 lane/vk 版本体系、kexec/mod-loop 快环、自定义槽位处理冲突；除非目标改为发行镜像/上游进 pmaports |
+| `alpine-make-rootfs` | ❌ 不引入（仅借思路） | 默认只给 x86_64 apk-tools，跨架构仍需自备；借鉴其 `apk --root --arch` 免 chroot 思路 |
+| `msm-firmware-loader` | ❌ 不需要 | 固件已打包进 rootfs（pmOS 官方也更推打包） |
+| `pil-squasher` | ❌ 反向 | 主线 qcom PIL 要的就是 `.mdt`+`.bXX` 拆分文件 |
+| `casualsnek/waydroid_script` | ◐ G2 候选（待验） | GApps(A13 arm64，GitHub 源)/Magisk/MicroG 注入；**不改变 A13 arm64 无 Widevine L3 的判定**（arm64 仅 A11 有 prebuilt） |
+| `FEX-Emu` | ◐ 仅对照 | G3 用 Box64 路线不变，可在基准里加对照 |
+| `iio-sensor-proxy` + `libssc` | ◐ 未采纳（有意识） | 本项目明确不做 SLPI/QMI-SNS（`TASKS.md` §6①） |

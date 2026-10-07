@@ -79,6 +79,17 @@
 > **已落盘（2026-10-05）**：`mu_wide_platforms/`（fork `xiaquwan1001/mu_wide_platforms`，1.0 G，含设备包 391 文件）+ `uefi-firmware-backup/`（`Project-Aloha/UEFIFirmwareBackup`，1.3 G）；二者同名驱动 sha256 逐字节一致。**未 clone**：Mu-Silicium（备选基线，本设备包不依赖）。
 > **仍未解**：① `lenovo-y700g4` 无 CI/产物/公开验证记录；② `DeviceTreeBlob/Linux/*.dtb` 均为 **6 字节 `dummy` 占位符**（但 `PakalaPkg/PostBuild.py` 构建只用 `BootShim+SM8750_EFI.fd`，**不引用 DTB**，故不阻塞 boot.img 产出）；③ 平台默认 `PcdSystemMemorySize=12 GiB` ≠ 本单元 16 GB（按容量档需核内存映射）；④ 四代 ABL 是否接受 BootShim 壳（BOOTCHAIN **E4** 未做）；⑤ 备份 `uefi.elf`（2.79 MB）≠ 本机 `~/下载/tb322fc/uefi.elf`（5.24 MB，不同固件线）。
 
+### 1.7 生态工具评估（2026-10-07，联网对比）
+
+> 结论与理由详见 `.pi/plans/2026-10-07-造轮子审计.md`；已排除项登记见 `PITFALLS.md` §15.6。
+
+| 工具 | 用途 | 结论 |
+|---|---|---|
+| **`qbootctl`**（Alpine community） | Qualcomm A/B slot 的 boot_control HAL（读状态 / mark-successful） | ✅ **已采纳**（取代 `slot-attr.py` 常用操作，`PITFALLS` #126） |
+| `casualsnek/waydroid_script` | Waydroid 后装注入：GApps / Magisk / MicroG | ◐ G2 候选（A13 arm64 GApps 走 GitHub 源） |
+| `mkinitfs` · `pmbootstrap` · `alpine-make-rootfs` · `msm-firmware-loader` · `pil-squasher` | initramfs / 构建 / 固件 | ❌ 不采用（理由见 `PITFALLS` §15.6） |
+| `FEX-Emu` | x86 转译（G3） | ◐ 仅作 Box64 对照 |
+
 ### 1.4 方法论 / 运维参考
 
 - 本项目坑表：`PITFALLS.md`（**动手前扫一眼**，#80/#81 是本轮新增的流程坑）。

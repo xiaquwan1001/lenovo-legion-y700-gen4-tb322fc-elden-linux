@@ -55,7 +55,7 @@
 
 | 文件 | 装什么 |
 |---|---|
-| **`PITFALLS.md`** | **开发经验唯一入口**：**§0 零号纪律**（动手前先做四件事）+ 踩坑正文 #1–#117（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
+| **`PITFALLS.md`** | **开发经验唯一入口**：**§0 零号纪律**（动手前先做四件事）+ 踩坑正文 #1–#126（按主题）+ **§15 过时/废弃/功能缺陷登记**（DEPRECATED） |
 
 ### 证据层（`archive/`，只增不改、不改结论）
 
@@ -127,7 +127,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
 `patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
 **`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`PITFALLS.md`** | **开发经验唯一入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#117
+**`PITFALLS.md`** | **开发经验唯一入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文 #1–#126
 **`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（数字 SSOT；无产出/冒烟会话以 `junk` 标注可整行忽略）
 **`.pi/AGENT-OPS.md`** | **agent 行为/授权规范（唯一入口）**：自主分级 / 物理干预边界 / 写入权限
 **`.pi/CONCURRENCY.md`** | 并发任务约束（lane/fork/registry；AGENT-OPS 下级细则）
