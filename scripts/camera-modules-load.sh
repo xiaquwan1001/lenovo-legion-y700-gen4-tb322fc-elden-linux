@@ -12,9 +12,19 @@
 #   media: qcom-camss                            (CSIPHY/CSID/VFE)
 #   i2c:   s5kjns (rear), gc08a8 (front), gt9764 (rear AF VCM)
 #   led:   leds-qcom-flash                       (flash subdev, sensor async dep)
+#   dma:   system_heap                           (/dev/dma_heap/system provider)
 #
 # modprobe resolves the ordering from modules.dep (built by depmod); the list
 # below is only the non-media roots that must be probed explicitly.
+#
+# dma-buf heap (libcamera software ISP): the simple pipeline + soft ISP needs a
+# dma-buf provider; without one it aborts with
+#   "DmaBufAllocator ... Could not open any dma-buf provider"
+# and never debayers.  `system_heap` gives /dev/dma_heap/system, which works.
+# Do NOT load `cma_heap`: it also creates /dev/dma_heap/reserved (a 32 MiB CMA
+# area from DT), and libcamera's DmaHeap probes linux,cma -> reserved -> system
+# in that order, so `reserved` wins and then fails the ~30 MiB frame alloc with
+# ENOMEM.  Keep cma_heap unloaded so libcamera falls through to `system`.
 set -u
 
 KV=$(uname -r)
@@ -39,7 +49,8 @@ load() {
 	fi
 }
 
-# Clocks/regulators/control bus first, then the platform + sensors.
+# dma-buf provider first (libcamera soft ISP), then clocks/regulators/bus.
+load system_heap
 for m in camcc-sm8750 cambistmclkcc-sm8750 i2c-qcom-cci wl2868c-regulator; do
 	load "$m"
 done

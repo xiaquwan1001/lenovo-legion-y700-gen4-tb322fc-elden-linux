@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-07（**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-07（**#131 = ★boot 镜像重打包必须 unpack 原镜像取 kernel（manifest kernel 列误导）**；**#130 = ★dma-buf 只加载 system_heap、绝不 cma_heap（DmaHeap 探测序 CMA 优先）**；**#129 = 华为 P40 Pro 热点 5 GHz 平板连不上/2.4 GHz 正常（仅记录）**；**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -404,6 +404,26 @@
     - 根因：`msm_dp` 是 DRM 组件，ADSP UCSI/altmode 未起时**永久 defer** ⇒ `msm_drm_bind` 失败 ⇒ 无 `card0`。（该结论原本就写在 vk47clean DTS 注释里，DP2 实验时被去掉。）
     - 判据：`ls /sys/class/drm/` 有 `card0-DSI-1`；`dmesg | grep -c "vblank wait timed out"` = **0**；`pgrep phosh` 在。
     - 处置：主树 DTS `&mdss_dp0 status="disabled"`（回退，内核提交 `08791078c`）；**DP 实验走独立零写盘載具，不进 boot_b**。`usb-role-switch` 同步回退 `/delete-property/`。
+
+129. **★WiFi 频段兼容性：华为 P40 Pro 热点 5 GHz 平板连不上，2.4 GHz 正常（2026-10-07，待根因）**。
+    - 现象：P40 Pro 热点开在 5 GHz（ch149，信号 100）时，U2 的 `wlan0` 保持 **DOWN**，`nmcli con up "P40 Pro"` 报 `Connection activation failed: The base network connection was interrupted`，无默认路由。热点切到 **2.4 GHz 后连接正常**。
+    - 对照：**vivo X200 Ultra** 热点 5 GHz / 2.4 GHz **两频段均可**连。⇒ 不是平板 ath12k 单方面禁 5 GHz，指向 AP/频段/信道/加密的特定组合。
+    - 现状：**仅记录，未定位**（未抓 supplicant/dmesg 失败帧）。怀疑点：ch149 高信道 + 华为 AP 的 802.11 行为/带宽/WPA2 参数。
+    - 排查入口：连 5 GHz 失败时看 `wpa_supplicant`/`ath12k` dmesg（关联失败 reason code）、`iw phy` 支持信道、AP 的 BW/HE/VHT 设置；参 `wifi-link-flap-triage` 技能。
+    - 规避：设备联网改用 **2.4 GHz 热点**（或 vivo 热点）。
+
+130. **★dma-buf heap：必须只加载 `system_heap`，绝不能加载 `cma_heap`（2026-10-07 实机，G1-5 相机）**。
+    - 现象：libcamera 软件 ISP 两段报错——先 `Could not open any dma-buf provider`（无任何 heap 模块时），部署 `system_heap`+`cma_heap` 后变 `dma-heap allocation failure for frame-0`（ENOMEM）。
+    - 根因：libcamera 0.7.1 `DmaHeap` 探测路径序是 **`linux,cma` → `reserved` → `system`**（strace 实证，`/dev/dma_heap/system` 第三个才被试）。`cma_heap.ko` 会为 DT reserved-memory 造出 `/dev/dma_heap/reserved`（本机仅 32 MiB CMA，可用 7168 页），它被优先选中后装不下 ~30 MiB 帧（req 7803 页）⇒ ENOMEM。
+    - 修复：**只 modprobe `system_heap`**（`camera-modules-load.sh` 已改 + 从设备删去 `cma_heap.ko`）；libcamera 落到 `system` 即出帧。
+    - 判据：`ls /dev/dma_heap/` 只有 `system`（+ 非探测序的 `adsp-rpc-remote-heap`）；`cam --capture=1` 出帧；strace 里 openat 命中 `system`。
+    - 纪律：**给 libcamera 铺 dma-buf 时先 strace 看 DmaHeap 探测序**，别假设「system 优先」。
+
+131. **★boot_b 真实内核 ≠ manifest 的 `kernel_sha256`；重打包必须 unpack 原镜像取 kernel（2026-10-07 实机事故）**。
+    - 事故：按 build-boot.sh 默认 `KERNEL_IMG=linux/arch/arm64/boot/Image.gz` 重打包（只改 DTB）→ 刷入后设备跑 **g26cd13b1c4a2**（非 vk47clean），`/lib/modules` 无该版本 ⇒ 相机全废。
+    - 根因：boot_b 实际打包的 kernel 是 build-boot 的 `--kernel` 覆盖路径（当时 `/tmp/vk47clean-unpack/kernel`，sha `2321e3b9…`），而 `build-manifest.sh` 的 `kernel_sha256`/`kernel=` 记录的是 **linux/ 树的 Image.gz**（sha `f5868d0a…` = g26cd13b1c，另一个内核）。即旧 manifest 的 kernel 列是误导性的——`kernel_uts` 是开箱取证、`kernel_sha256` 是树文件，两者指向不同内核。
+    - 修复：从原镜像 `unpack_bootimg.py` 解出 kernel（sha=2321e3b9=vk47clean）+ 新 DTB + 原 ramdisk 重打包（`cdsp-vk47clean-camrot2`），实机 `uname -r`=vk47clean 恢复。
+    - 纪律：**任何 boot 镜像重打包，kernel 来源必须 = 原镜像 unpack 出的 kernel（或同 sha 的可复现构建产物）；不得用「同一棵树」的 Image.gz 代替**。改 `build-manifest.sh`：`kernel=`/`kernel_sha256` 应记录实际打包的 kernel 文件。
 
 ---
 
