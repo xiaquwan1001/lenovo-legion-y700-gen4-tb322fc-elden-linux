@@ -25,7 +25,7 @@
 ### 1.1 内核与软件基线
 - 内核树：`linux -> geekidos-linux`（GEEKiDoS/linux `v7.2-elden`，**Linux 7.2.0**）+ 本地补丁 `patches/0001–0011`；模块化片段已应用（`patches/config-vk50-modular`）。
 - 配置快照：`patches/config-vk50-modular`（netd/XFRM + camera + thermal + audio 全合 + 模块化）；`config-vk40-bringup` 为历史基线。
-- **U2 在机基线 = `vk47clean` 内核**（`uname` = `7.2.0-debug-g26cd13b1c4a2`，构建于 vk47 线；2026-10-06 实测标定）。b 槽 boot_b **现为 `cdsp-clean-1`**（2026-10-07 刷入）：完整 ramdisk + 修好的 `/init` + **split CDSP 固件** + `mdss_dp0` 回退 disabled（=原 vk61 載具 + CDSP 修复 + 显示回归修复）。刷前备份 `out/boot_b-before-cdsp-20261007.img`（sha `2b4aa291…`）；回退候选 `bootslot-b/boot_b-clean.img`。kexec 已定论不可用（见 `TASKS.md` §4）。
+- **U2 在机基线 = `vk47clean`**（`uname` = `7.2.0-debug-vk47clean-gbd114ca335e1`）。b 槽 boot_b **现为 `cdsp-vk47clean`**（2026-10-07 刷入）：**vk47clean 内核（与磁盘模块一致⇒相机/驱动齐）** + 完整 ramdisk + 修好的 `/init` + **split CDSP 固件** + `mdss_dp0` 回退 disabled。刷前备份 `out/boot_b-before-cdsp-20261007.img`（sha `2b4aa291…`）；回退候选 `bootslot-b/boot_b-clean.img`。kexec 已定论不可用（见 `TASKS.md` §4）。
 - `CONFIG_LOCALVERSION` 一变，相机 20 个 `.ko` 必须整套重编（vermagic 耦合）；vk50 起模块化后驱动可单独重编。
 
 ### 1.2 固件清单与通路（"正常驱动原厂全部固件"的分解）
@@ -69,7 +69,7 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=**`cdsp-clean-1`**，2026-10-07 刷入，ADSP+CDSP running、无 vblank 警告）。功能状态：音频播放+输入✅、温控四级✅、相机✅（**仅 `v4l2-ctl` 出帧，缺 App 实测**）、触屏✅、WiFi✅（**到可用 ~2 min：根因已定 = 固件对已关联 STA 的 ~2 s 唤醒拍子，前 ~130 s 自愈；Q26 未闭，方法见专题 §13**）、BT 配对+TWS✅（用户 2026-10-06）、**CDSP✅（2026-10-07）**、电池✅、桌面关机/重启已修（#89）、**熄屏→重启=未解/间歇性**（G1-22/Q24）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=**`cdsp-vk47clean`**，2026-10-07 刷入：ADSP+CDSP running、`/dev/video*`×17、无 vblank 警告）。功能状态：音频播放+输入✅、温控四级✅、相机✅（**仅 `v4l2-ctl` 出帧，缺 App 实测**）、触屏✅、WiFi✅（**到可用 ~2 min：根因已定 = 固件对已关联 STA 的 ~2 s 唤醒拍子，前 ~130 s 自愈；Q26 未闭，方法见专题 §13**）、BT 配对+TWS✅（用户 2026-10-06）、**CDSP✅（2026-10-07）**、电池✅、桌面关机/重启已修（#89）、**熄屏→重启=未解/间歇性**（G1-22/Q24）、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
 
 > **★ 熄屏→整机重启：仍未解（间歇性，2026-10-05 反转）**。受控复现：`vk40` 原始内核 + DPMS off **硬复位 3/3**（不熄屏稳定 ≥151s）。但 `vk42`/«干净重建»各 2 轮「免疫」为少样本观测，**不可信**——刷干净内核到 boot_b + 模块后**仍观察到复位** ⇒ 「`-dirty` 镜像为根因」**未证实**。**停止深究（用户定）**；若再续须长时窗+多样本+单变量。
 > 详细矩阵/方法/源码二分见 `archive/topics/G1-22-2026-10-05.md`、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9、`scripts/g1-22-dpms-test.sh`。持久根 `idle-delay=0` 规避**暂时保留**。

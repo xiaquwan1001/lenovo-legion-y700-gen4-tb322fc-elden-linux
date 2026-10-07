@@ -18,8 +18,8 @@ ROOTFS=$OUT/initramfs-root
 VERSION=${VERSION:-vk28}
 mkdir -p "$OUT"
 
-KERNEL=$KDIR/arch/arm64/boot/Image.gz
-DTB=$KDIR/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+KERNEL=${KERNEL_IMG:-$KDIR/arch/arm64/boot/Image.gz}
+DTB=${DTB_FILE:-$KDIR/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb}
 for f in "$KERNEL" "$DTB" "$IRAM/busybox" "$IRAM/init" "$IRAM/usb-gadget"; do
 	[ -e "$f" ] || { echo "missing: $f"; exit 1; }
 done
