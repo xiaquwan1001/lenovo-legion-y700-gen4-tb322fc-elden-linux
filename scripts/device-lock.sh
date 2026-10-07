@@ -17,6 +17,7 @@
 # Scripts mod-loop.sh / kexec-boot.sh / to-fastboot.sh already self-lock, so
 # they compose safely without an outer wrapper.
 set -euo pipefail
+. "$(dirname "$0")/lib-device-lock.sh"
 TAB=${TAB:-root@192.168.7.1}
 LOCK=${DEVICE_LOCK:-/tmp/elden-device-$(echo "$TAB" | tr -c 'A-Za-z0-9' '_').lock}
 WAIT=${LOCK_WAIT:-300}
@@ -35,11 +36,9 @@ esac
 # Advertise the holder for --status (best effort, informational).
 printf 'holder pid=%s cmd=%s\n' "$$" "$*" > "$LOCK" 2>/dev/null || true
 
-exec 9>>"$LOCK"
-if ! flock -w "$WAIT" 9; then
-	echo "[lock] device busy >${WAIT}s ($LOCK) — another agent holds it" >&2
-	exit 1
-fi
+# Single source of truth: lib-device-lock.sh (holds fd 9 for our lifetime).
+DEVICE_LOCK=$LOCK LOCK_WAIT=$WAIT
+export DEVICE_LOCK LOCK_WAIT
+device_lock_acquire
 echo "[lock] acquired ($LOCK)"
-export DEVICE_LOCK_HELD=1
 "$@"

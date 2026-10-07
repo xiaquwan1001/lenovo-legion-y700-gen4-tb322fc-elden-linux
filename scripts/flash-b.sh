@@ -13,11 +13,8 @@ cd "$(dirname "$0")/.."
 TAB=${TABLET:-root@192.168.7.1}
 
 # --- device lock (serialize across concurrent agents; see scripts/device-lock.sh) ---
-if [ "${DEVICE_LOCK_HELD:-0}" != 1 ]; then
-	exec 9>>"${DEVICE_LOCK:-/tmp/elden-device-$(echo "$TAB" | tr -c 'A-Za-z0-9' '_').lock}"
-	flock -w "${LOCK_WAIT:-300}" 9 || { echo "[lock] device busy — another agent holds it" >&2; exit 1; }
-	export DEVICE_LOCK_HELD=1
-fi
+. "$(dirname "$0")/lib-device-lock.sh"
+device_lock_acquire
 REBOOT=0
 IN=out/boot-elden-vk40.img
 for a in "$@"; do

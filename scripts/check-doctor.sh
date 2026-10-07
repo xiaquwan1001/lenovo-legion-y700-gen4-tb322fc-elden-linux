@@ -268,6 +268,56 @@ else
   done <<< "$ledger"
 fi
 
+# ---------------------------------------------------------------- 6. 静态卫生（防造轮回退）
+echo
+echo "== 6. 静态卫生（重复 / 死代码 / bashism）=="
+# 依据：.pi/plans/2026-10-07-造轮子审计.md（P0 防回归门）
+
+# 6a. 设备锁必须单一真源：除 lib-device-lock.sh 外不得内联锁块
+lockdup=$(grep -rl 'DEVICE_LOCK_HELD' --include='*.sh' scripts cycle.sh build.sh iterate.sh 2>/dev/null | grep -v 'lib-device-lock.sh' | grep -v 'check-doctor.sh' || true)
+if [ -n "$lockdup" ]; then
+  bad "设备锁块被复制（应只用 scripts/lib-device-lock.sh）: $(echo $lockdup | tr '\n' ' ')"
+else
+  ok "设备锁单一真源（lib-device-lock.sh）"
+fi
+
+# 6b/6c. bashism 与死脚本（Python，避免 shell 误判）
+static=$(python3 - "$ROOT" <<'PY'
+import glob, os, re, sys
+root = sys.argv[1]
+scripts = sorted(glob.glob(os.path.join(root, 'scripts', '*.sh')))
+# 引用语料：全仓 md/脚本（排除归档快照与生成物），避免把「仅被文档引用」误判为死代码。
+SKIP = {'.git', 'node_modules', 'out', 'logs', 'backup', 'flashing-bundle', 'linux', 'geekidos-linux', 'Y700-elden-linux', 'stock-src', 'qdl', 'env-pass', 'edk2-aarch64-gunyah', 'edk2-gunyah', 'edk2-gunyah-qemu', 'mu_wide_platforms'}
+corpus_files = []
+for dirpath, dirnames, filenames in os.walk(root):
+    dirnames[:] = [d for d in dirnames if d not in SKIP]
+    for fn in filenames:
+        if fn.endswith(('.md', '.sh', '.py', '.tsv', '.json')):
+            corpus_files.append(os.path.join(dirpath, fn))
+text = {}
+for cf in set(corpus_files):
+    try:
+        text[cf] = open(cf, encoding='utf-8', errors='replace').read()
+    except OSError:
+        pass
+bashism = []
+for f in scripts:
+    body = open(f, encoding='utf-8', errors='replace').read()
+    if body.startswith('#!/bin/sh') and re.search(r"\[\[(?!:)|declare -|[A-Za-z_][A-Za-z0-9_]*=\(", body):
+        bashism.append(os.path.basename(f))
+dead = [os.path.basename(f) for f in scripts
+        if not any(os.path.basename(f) in t for cf, t in text.items() if cf != f)]
+print('BASHISM\t' + (','.join(bashism) or '-'))
+print('DEAD\t' + (','.join(dead) or '-'))
+PY
+)
+while IFS=$'\t' read -r st msg; do
+  case "$st" in
+    BASHISM) [ "$msg" = "-" ] && ok "#!/bin/sh 脚本无常见 bashism" || warnf "bashism 风险（改 #!/bin/bash 或改写法）: $msg" ;;
+    DEAD)    [ "$msg" = "-" ] && ok "scripts/*.sh 无死脚本" || warnf "疑似死脚本（无任何活跃引用，核实后删/标 legacy）: $msg" ;;
+  esac
+done <<< "$static"
+
 echo
 echo "== 汇总: FAIL=$fail  WARN=$warn =="
 [ $fail -eq 0 ] && exit 0 || exit 1

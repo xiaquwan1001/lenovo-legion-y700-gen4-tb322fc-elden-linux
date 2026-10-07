@@ -9,11 +9,8 @@ DUMMY=out/dtbo-dummy.img
 
 # --- device lock (serialize across concurrent agents; see scripts/device-lock.sh) ---
 TAB=${TABLET:-root@192.168.7.1}
-if [ "${DEVICE_LOCK_HELD:-0}" != 1 ]; then
-	exec 9>>"${DEVICE_LOCK:-/tmp/elden-device-$(echo "$TAB" | tr -c 'A-Za-z0-9' '_').lock}"
-	flock -w "${LOCK_WAIT:-300}" 9 || { echo "[lock] device busy — another agent holds it" >&2; exit 1; }
-	export DEVICE_LOCK_HELD=1
-fi
+. "$(dirname "$0")/scripts/lib-device-lock.sh"
+device_lock_acquire
 
 wait_fastboot() { for i in $(seq 1 60); do sleep 2; timeout 6 fastboot devices 2>/dev/null | grep -q . && { echo "[cycle] fastboot ok (~$((i*2))s)"; return 0; }; done; echo "[cycle] fastboot timeout"; return 1; }
 wait_linux()   { for i in $(seq 1 60); do sleep 3; ping -c1 -W1 192.168.7.1 >/dev/null 2>&1 && timeout 8 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 root@192.168.7.1 true 2>/dev/null && { echo "[cycle] linux up (~$((i*3))s): ssh root@192.168.7.1"; return 0; }; done; echo "[cycle] linux timeout"; return 1; }
