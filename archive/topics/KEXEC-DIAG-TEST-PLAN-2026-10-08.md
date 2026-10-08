@@ -153,3 +153,32 @@ mask=1 跳转后设备约 20s 以 **vk64(boot_b 持久)**回来（经 ABL，非 
 
 ### 7.3 现实评估
 `device_shutdown` 整段跳过（sysfs mask=1）已能让 kexec 走通到 machine_kexec，是**可用的 kexec 快环修复**；§7.2 是为「更干净的上游修法 + 搞清是哪块硬件」而做，属锦上添花。
+
+---
+
+## §8 实机二分结果（vk65–vk69，2026-10-08，判据=kexec 是否跳转 + 本地 kmsg 落盘）
+
+内核诊断设施：`kexec_diag`(跳 syscore/device_shutdown 掩码) + `stop_after`(device_shutdown 只真关前 N 个,其余跳过) + `settle_ms`(每个真关机后 msleep) 三个 sysfs 旋钮；本地 `kd-dump.py` 落盘 kmsg 到 UFS（抗 kexec 会话中断）。
+
+| 变体 | 配置 | 结果 |
+|---|---|---|
+| vk65 | mask 跳过 device_shutdown | kexec 跳转成功（`Starting new kernel`） |
+| vk66 | 逐设备 SD trace | 117 个真关机干净配对，日志停在 ~#118 |
+| vk67 | stop_after=117 | 遍历 117 真+458 跳过仅 **130ms**；掉电落在 idx576（异步落电时刻，红鲱鱼）；**跳过 #118(sde50) 不阻止掉电** |
+| vk68 | +settle_ms=250 | **我引入的自旋锁双重加锁死锁**（msleep 块误 spin_unlock/lock，撞上循环底 spin_lock）→ CPU5 lockup、背光常亮挂起 |
+| vk69 | 修死锁 +settle=250 | **117 个真关机全部完成**（各自 250ms 内不掉电、无单设备阻塞>2s）；掉电落在 skip-walk idx318（`wcn7861-pmu`/regulator 一带，均被跳过）；11a→掉电 ~30s |
+
+### 8.1 排除项（本轮钉死）
+- **非单设备即时/短延迟关机**：117 个真关机各自 settle 250ms 均未掉电。
+- **非看门狗**：设备无 `/dev/watchdog`，`watchdog: Hard watchdog permanently disabled`。
+- **非 panic**：停点无 panic 回溯；`panic=15` 未触发重启特征。
+
+### 8.2 现象规律
+掉电只在 **[1,117] 真关机跑过之后**发生（跳全部→不掉电、能跳转），且与 device_shutdown **墙钟耗时相关**（无 settle 0.13s 掉电、有 settle 30s 掉电，掉电点随遍历进度浮动）→ 指向**多设备关机的累积/延迟效应**（疑似某 regulator 软关后 rail 延时跌落致 PMIC 掉电），非单点同步触发。
+
+### 8.3 ★关键路径判断
+**跳过整个 device_shutdown 已能让 kexec 跳转（m1/vk65 到 `Starting new kernel`），但目标内核 `Image.kd` 仍起不来 → 约 20s 回 vk64。** 故 **device_shutdown 掉电不在"kexec 真正可用"的关键路径上**；真正的拦路虎是**目标内核经 kexec 引导失败**（§6.4 遗留）。继续二分 device_shutdown 元凶只服务「更干净的上游修法 + 硬件理解」，不解锁可用 kexec。
+
+### 8.4 遗留二问题
+1. device_shutdown 累积/延迟掉电的确切触发设备类（需 `stop_after` 二分 [1,117]，约 7 轮；或 PON 备存寄存器心跳）。
+2. **目标内核 kexec 引导失败**（关键路径；需早期串口可见性：DT 预留 pstore/ramoops 让目标早期挂载，或物理 UART）。
