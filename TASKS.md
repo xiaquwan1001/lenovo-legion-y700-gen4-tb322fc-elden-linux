@@ -107,7 +107,7 @@
   各项功能状态**只在 §1 任务行维护**（DP G1-9 / CDSP G1-11 / 相机 G1-5 / BT G1-7 已收口，NFC G1-10 取消，
   未解见 §5 Q28/Q24/Q26 与 G1-6）。
 - **本轮不投入**：桌面用户态（G1-26/27/28，根因已定、修复待上机）、Q24 熄屏**根治**（保持规避 + 等上游回复，只做回归扫测＝下 3）、UEFI（G1-29 搁置）。
-- **迭代通道**：`fastboot boot`（零写盘）/ `--flash`；**kexec 快环：掉电根因已定位**（2026-10-08，见下 10 与 `archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md` §6）= `device_shutdown()` 触发整机掉电；跳过它即走通到 `Starting new kernel`。目标内核二阶段仍待排查。
+- **迭代通道**：`fastboot boot`（零写盘）/ `--flash`；**kexec 快环：掉电根因已定位（非单一元凶）**（2026-10-08，`archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md` §8/§9）= `device_shutdown()` 内 `cpufreq_suspend()` 与设备 `.shutdown()` 遍历**多触发叠加**的延迟 PMIC 掉电；**任何部分执行都掉电，唯一可靠规避 = 整段跳过 device_shutdown（mask=1）→ 到 `Starting new kernel`**。目标内核 kexec 引导仍失败＝**关键路径遗留**（需早期串口，本机不具备）。
 - **boot_b 形态**：镜像构成、sha、回退资产与「不用 slim」口径**只在 `DEVICE.md` §1.1 维护**；本文件不复述。
 - **上机纪律**：驱动测试期间 `idle-delay=0` 禁熄屏；写操作前查 `scripts/device-lock.sh`；fastboot 命令拆单条（PITFALLS #3）。
 - **归因分层**（2026-10-06）：报「驱动/内核坏」前先分清 **initramfs/rootfs 打包** 与 **用户态配置**（如 vk60「驱动全废」实为 initramfs 缺固件）——见 `PITFALLS` #115、`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`。
@@ -122,8 +122,8 @@
 7. **C1 → C3 → C2**（G2）：Waydroid 复跑 → 身份/DRM 取证 → Play 登录（C2 需上行+代理+凭据）。
 8. 顺路上机（低占时）：C4 传感器 HAL 部署验证、C8 Gunyah UUID 探测、G1-8 基准、C7 切槽脚本。
 9. 不占设备：**上游化 M1–M5**（§7）；相机 3A/IPA 调优（缺 s5kjns 校准 yaml）；G1-26/27/28 修复落盘（本轮不做，根因已定）。
-10. **kexec（Q11）**：掉电根因已定位 = `device_shutdown()`（诊断内核 `[KD]` 阶段标记 + setsid 本地落盘；m0 停在 `11a before device_shutdown`，m1 跳过后走到 `Starting new kernel`+CPU kill；syscore 无罪）。**下一步**：(a) 在 `device_shutdown` 循环逐个打 `dev_name` 落盘、二分出触发电源的具体 `.shutdown()`（比整段跳更干净的修法）；(b) 目标内核二阶段（跳转后目标 Image 早期失败→20s 回 boot_b、pstore 空）。详见 `archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md` §6。可选/已降级：G1-7 BT RTT 单变量（H1 8Mbps / H2 CTS）与 `bt-link-test.sh` 长测（功能已收口）；G1-34 SLPI 传感器。
-8. **失败/半成品登记**（权威在各 ID 条目）：UEFI A（UFS 墙，上游 #12）；kexec（**掉电根因已定位=`device_shutdown()`**，2026-10-08；遗留：元凶设备二分 + 目标内核二阶段）；**G1-10 NFC 取消（无硬件）**；**vk53/vk54 启动失败根因 = `&i2c0` 使能（#108，已单变量定案）**；G1-6 TF（补丁就绪，A/B 未跑）；**相机 App 实测缺**；**WiFi 到可用约 2 分钟（Q26，重开：撤销「P40 Pro 组合已知限制」；用户观测早期版本可正常连接 ⇒ 怀疑 DTB 增量连带副作用；机制=固件对已关联 STA 的 ~0.5 beacon/s 唤醒拍子、~130 s 自愈；`patches/0012` 两版 / 关联后补发时序 / stock 固件换版 三条均未解决；双管理器为独立 bug 已修并部署；`CONFIG_ATH12K=m` 单次探针证伪（探测时序非变量））**。
+10. **kexec（Q11）**：掉电根因已定位（2026-10-08 实机二分，vk65–vk70，判据=日志 `Starting new kernel`）。**device_shutdown 掉电非单一元凶**：反向遍历顺序每次启动变（异步 probe，红鲱鱼）；`stop_after=0`（零真关机）仍掉电 ⇒ `cpufreq_suspend()`（pre-loop）是触发点；mask=4 跳 cpufreq + 117 真关机全跑仍掉电 ⇒ 设备关机遍历独立触发。**多触发叠加**，唯一可靠规避=整段跳过 device_shutdown（mask=1）。**(b) 目标内核 kexec 引导失败＝关键路径遗留**（跳转后目标 Image 早期失败→回 boot_b、pstore 空；需早期串口可见性，本机不具备→已排除）。诊断设施 `scripts/kexec-bs-cycle.sh`；进 fastboot 用 SysRq-b 组合（RESTART2 被 kexec 测写坏）。详见 `archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md` §6。可选/已降级：G1-7 BT RTT 单变量（H1 8Mbps / H2 CTS）与 `bt-link-test.sh` 长测（功能已收口）；G1-34 SLPI 传感器。
+8. **失败/半成品登记**（权威在各 ID 条目）：UEFI A（UFS 墙，上游 #12）；kexec（**掉电根因已定位=device_shutdown 内 cpufreq_suspend+关机遍历多触发叠加、非单元凶；唯一规避=整段跳 device_shutdown**，2026-10-08 §8/§9；遗留：目标内核 kexec 引导失败=关键路径、需早期串口）；**G1-10 NFC 取消（无硬件）**；**vk53/vk54 启动失败根因 = `&i2c0` 使能（#108，已单变量定案）**；G1-6 TF（补丁就绪，A/B 未跑）；**相机 App 实测缺**；**WiFi 到可用约 2 分钟（Q26，重开：撤销「P40 Pro 组合已知限制」；用户观测早期版本可正常连接 ⇒ 怀疑 DTB 增量连带副作用；机制=固件对已关联 STA 的 ~0.5 beacon/s 唤醒拍子、~130 s 自愈；`patches/0012` 两版 / 关联后补发时序 / stock 固件换版 三条均未解决；双管理器为独立 bug 已修并部署；`CONFIG_ATH12K=m` 单次探针证伪（探测时序非变量））**。
 
 ---
 
