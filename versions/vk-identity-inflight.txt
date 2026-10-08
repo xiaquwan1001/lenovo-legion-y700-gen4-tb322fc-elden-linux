@@ -4,5 +4,3 @@
 #       （scripts/vk-identity.py --check，check-doctor §5d）跳过它们，避免跨会话误击。
 # 纪律：**收口（烧录验收 + registry 行提交）后必须从本文件删掉**，否则等于长期免检。
 # 登记原因写在行尾注释里。
-boot-elden-vk64.img	# Q28 面板 retry 轮在用（2026-10-08 登记；17:07 已被重打一次，sha 15964160）
-boot-elden.img		# vk64 的无版本号「当前拷贝」，随 vk64 一起重打；同时踩 naming 规则（见 PITFALLS）

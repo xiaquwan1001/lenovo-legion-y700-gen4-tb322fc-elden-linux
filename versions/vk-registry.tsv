@@ -85,3 +85,15 @@ vk64	q28-panel-retry	2026-10-08	vk47clean 基线 + commit d02658e63(be79b256d H2
 #    为 repack 新增的 archive/* ref（不是构建号，勿与 vkN 混用）：
 #      archive/vk43-honest-gap   = 找回被删 ref 的 annotated tag 对象（vk43 诚实留白正文）
 #      archive/wip-2026-10-08-fa9ae91ad = 固定仅存 reflog 的 stash/WIP（属 vk64 会话；其收口后可删）
+#
+# ── vk64 收口 + 工具口径修复（2026-10-08，版本账整理会话）────────────────────
+#  1. tag vk64：目标提交不变（d02658e63cf6），由别的会话打的 **lightweight** 转为本项目惯例的
+#     **annotated**，正文写入 image_sha256=15964160… / kernel_payload=8efb2731… / UTS。
+#  2. versions/vk-identity-inflight.txt 已清空（vk64 与其无版本号拷贝不再豁免）。
+#  3. unversioned 从硬错降为 WARN 并单列一条：out/boot-elden.img 是 scripts/build-boot.sh 的
+#     默认输出名（每次构建重生），拦构建是打错对象；「号必须入名」靠命名规则约束人。
+#  4. num_ne_tag 判定修正：改为「源提交上指向它的 ref（分支头+tag，archive/* 除外）里
+#     **无任何** vkNN 与本构建号相同」才判错。旧实现取排序后第一个 ref，会把源提交恰为
+#     分支头的构建（vk64 即是：分支 elden/vk53-hw 排在前）误判。历史 24 个判定不变。
+#  5. 现状：--gate = OK（新构建 0 硬错，豁免 0）；存量欠账 45 个镜像（口径：含 uts_dup5 这类
+#     带计数后缀的 flag），逐镜像见 versions/vk-kernel-identity.tsv。

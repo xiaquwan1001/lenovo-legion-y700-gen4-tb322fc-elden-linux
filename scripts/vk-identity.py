@@ -15,9 +15,9 @@ registry 号、manifest 记录、内核仓 ref 状态四列对齐，输出 TSV�
 
 命名/溯源规则（2026-10-08 生效，只约束生效时刻之后新打的镜像）：
   硬错（FAIL，除非登记不可）：tree_drift dirty_drift src_missing src_unreachable
-                                  uts_dup（同串不同二进制）num_ne_tag（号与内核源不同号）
+                                  uts_dup（同串不同二进制）num_ne_tag（源提交上无任何同名 vkNN ref）
                                   unversioned（无版本号的“当前拷贝”）
-  软问题（WARN）：no_manifest tree_head_missing tree_head_diff src_no-sha kbin_shared
+  软问题（WARN）：no_manifest tree_head_missing tree_head_diff src_no-sha kbin_shared unversioned
   生效时刻之前的存量一律汇总为 WARN（欠账清单就在表里，逐镜像登记在
   versions/vk-ledger-known-issues.tsv）。可用 VK_RULE_EPOCH 覆盖生效时刻。
 """
@@ -74,13 +74,34 @@ def containing_refs(full):
     return [r for r in out if not r.startswith('archive/')] or out
 
 
-def tag_map():
+def _ref_deref(pattern):
     m = {}
-    for line in git('for-each-ref', '--format=%(refname:short)\t%(*objectname)').splitlines():
+    for line in git('for-each-ref', pattern,
+                    '--format=%(refname:short)\t%(objectname)\t%(*objectname)').splitlines():
         parts = line.split('\t')
-        if len(parts) == 2 and parts[1]:
-            m.setdefault(parts[1], []).append(parts[0])
+        if len(parts) != 3:
+            continue
+        name, obj, deref = parts
+        sha = deref or obj          # annotated → 指向的 commit；lightweight/分支 → 就是 commit
+        if sha:
+            m.setdefault(sha, []).append(name)
     return m
+
+
+def tag_map():
+    """{commit: [tag名]}，**只 refs/tags**。annotated 走 %(*objectname)，
+    **lightweight 只有 %(objectname)**，两者都得收（vk64 就是别的会话打的 lightweight tag）。"""
+    return _ref_deref('refs/tags')
+
+
+def points_at_map():
+    """{commit: [ref名]} = 所有**指在**该提交上的 ref（分支头 + tag，archive/* 除外）。
+    号↔源对齐用它：分支头也是证据（elden/vk53-hw 的头就是 vk64 提交）。"""
+    m = {}
+    for pat in ('refs/heads', 'refs/tags'):
+        for sha, names in _ref_deref(pat).items():
+            m.setdefault(sha, []).extend(n for n in names if not n.startswith('archive/'))
+    return {k: sorted(set(v)) for k, v in m.items()}
 
 
 def payload(path):
@@ -112,21 +133,27 @@ def manifest(path):
 
 
 HARD = ('tree_drift', 'dirty_drift', 'payload_mismatch', 'src_missing', 'src_unreachable',
-        'uts_dup', 'num_ne_tag', 'unversioned')
+        'uts_dup', 'num_ne_tag')
+# unversioned = out/boot-elden.img 这类**无版本号当前拷贝**。它是 scripts/build-boot.sh 的
+# 默认输出名（-o $OUT/boot-elden.img），每次构建都会重生，不是人忘改名 —— 所以**不拦构建**，
+# 只汇成一条 WARN 提请收口（改名/删除）。“号必须入名”靠命名规则约束，不靠罚这个兵物。
+NOTE = ('unversioned',)
 EPOCH = float(os.environ.get('VK_RULE_EPOCH', 1791388800))     # 2026-10-08 00:00 本地时区
 
 
 def is_hard(flag):
-    return any(flag.startswith(h) for h in HARD)
+    return any(flag.startswith(h) for h in HARD) and not flag.startswith(NOTE)
 
 
 def gate(rows, skip_names):
     """只拦住新构建；存量欠账汇总成 WARN。输出契约同 check-doctor §5。"""
-    new_hard, legacy, held = [], 0, []
+    new_hard, legacy, held, noted = [], 0, [], []
     for r in rows:
         img = os.path.join(OUT, r[1])
         name = r[0] if r[0] != '(unversioned)' else r[1]
         flags = r[10].split('|')
+        if any(f.startswith(NOTE) for f in flags):
+            noted.append(r[1])
         hard = [f for f in flags if is_hard(f)]
         if not hard:
             continue
@@ -146,6 +173,9 @@ def gate(rows, skip_names):
     if legacy:
         print('WARN\t存量欠账 %d 个镜像有硬错（逐镜像见 vk-kernel-identity.tsv / '
               'vk-ledger-known-issues.tsv）' % legacy)
+    if noted:
+        print('WARN\t无版本号构建拷贝 %d 个（build-boot.sh 默认产物，不拦构建；收口时改名或删）：%s'
+              % (len(noted), ' '.join(noted)))
     return 0
 
 
@@ -155,6 +185,7 @@ def main():
     reg = load_registry()
     head, allrefs = kernel_refs()
     tags = tag_map()
+    points = points_at_map()
     head12 = {x[:12] for x in head}
     all12 = {x[:12] for x in allrefs}
 
@@ -195,6 +226,7 @@ def main():
         else:
             ref, full = resolve(src)
         tg = ','.join(sorted(tags.get(full, []))) if full else ''
+        onref = ','.join(points.get(full, [])) if full else ''
         tree_head = mf.get('kernel_git_head', '')[:12]
         tree_state = mf.get('kernel_git_state', '')
 
@@ -219,9 +251,12 @@ def main():
         mp = mf.get('kernel_payload_sha256', '')
         if re.fullmatch(r'[0-9a-f]{16,}', mp or '') and mp[:12] != kbin:
             flags.append('payload_mismatch')   # manifest 自记的内核载荷≠镜像里的（伪造/错文件）
-        mm = re.search(r'vk(\d+)', tg) if tg else None
-        if num is not None and mm and int(mm.group(1)) != num:
-            flags.append('num_ne_tag(vk%d)' % int(mm.group(1)))   # 号与内核实为另一号的源
+        # 号↔源 对齐：该源提交上的 ref（分支名 + tag 名）里**任何一个** vkNN 与本构建号相同即算对齐。
+        # 不能只看第一个：主线分支叫 elden/vk53-hw，它携带了 vk40→vk64 所有构建，
+        # 只比第一个会把 vk42/vk64 这种本来对齐的误判成错（早期版本就这么误判过）。
+        nums = {int(x) for x in re.findall(r'vk(\d+)', onref)}
+        if num is not None and onref and num not in nums:
+            flags.append('num_ne_tag(%s)' % onref)   # 该源提交无同名号 ⇒ 复用了别的号的内核
         rows.append([build, base, regr, uts, kbin, src + ('-dirty' if dirty else ''),
                      ref, tg, tree_head, tree_state or '-',
                      'ok' if not flags else '|'.join(flags)])
