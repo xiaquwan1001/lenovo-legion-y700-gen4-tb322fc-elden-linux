@@ -966,6 +966,12 @@
     - **选择规则**：内核/DTS/驱动早期验证、GPT/分区手术、首次 bring-up、防持久根污染 → **B**；**功能/服务级验收 → A（零写盘）**；长期固化 → `scripts/flash-b.sh out/boot-elden-vkNN.img` 写 b 槽。
     - 判断当前是哪种：`cat /proc/cmdline` 是否含 `elden_root=`；`findmnt /` 是 `/dev/sda17`（磁盘）还是 `rootfs`（RAM）。
 
+94. **★`kexec -e` 静默整机掉电的触发点 = `device_shutdown()`（Q11，2026-10-08 实机定位）**。
+    - **结论**：`kernel_kexec()` 里 `kernel_restart_prepare()` 内的 `device_shutdown()`（反向遍历到 UFS/SCSI `Synchronizing SCSI cache` 附近）会触发 PMIC 整机掉电；`syscore_shutdown()` 无罪（stage=14 干净通过）；kexec 机制本身正常（trans_pgd/CPU offline 都对）。跳过 `device_shutdown` 即一路走到 `Starting new kernel`+`psci CPU killed`（R1/R2 从未越过的墙）。
+    - **取证方法学（关键，可复用）**：抓「掉电前最后几条内核日志」时，dumper 必须 **`setsid nohup` 脱离 SSH** 且逐行 `fsync` 写磁盘根。R2 用 SSH 子进程 `python` 读 `/dev/kmsg`，在 `reboot_notifier` 跑 `SYS_RESTART`（网络 teardown）时随 SSH 一起被杀，只抓到 `wlan deauth`。UFS 是早期 probe 设备、`device_shutdown` 反向遍历里最后关 → device_shutdown 早期日志能落盘。诊断内核在 `kernel_kexec()`/`kernel_restart_prepare()` 每阶段打 `[KD] stage=N` 标记，读日志最后一行即定位。
+    - **注意**：`mainline kernel_kexec()` 的 `kmsg_dump` 在 else 块外（`machine_kexec` 前才调），掉电在关机阶段时 pstore/ramoops 也拿不到 —— 解释了历史 `dmesg-ramoops-0` 恒空。
+    - **诊断开关**：sysfs `/sys/kernel/kexec_diag/kexec_diag`（读/写 int，bit1=跳 device_shutdown，bit2=跳 syscore）。本树 `kexec_dbg=` **cmdline 解析不生效**（回显 mask=0），务必用 sysfs。诊断内核 `ge70d0b660`；证据/方案 `archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md` §6。
+
 ---
 
 ## 十五、过时 / 废弃 / 功能缺陷登记（DEPRECATED）
