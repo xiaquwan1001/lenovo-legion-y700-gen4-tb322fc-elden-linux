@@ -4,3 +4,20 @@
 #       （scripts/vk-identity.py --check，check-doctor §5d）跳过它们，避免跨会话误击。
 # 纪律：**收口（烧录验收 + registry 行提交）后必须从本文件删掉**，否则等于长期免检。
 # 登记原因写在行尾注释里。
+# ---- 2026-10-08 版本账二次对账登记（kexec-diag / Q11 lane，在途）----
+# 有界通配：只覆盖 vk65–vk69（vk70 及以后不匹配，会照常报）。用通配的理由：该 lane
+# 在一个子会话内连续 alloc（vk65→vk69 实测在十几分钟内发生），逐文件追登记会让门禁
+# 在每个新生成的瞬间误报。**收口（烧录验收 + registry 行提交）后整段删除。**
+boot-elden-vk6[5-9]*.img	# kexec-diag(Q11) 在途段 vk65–vk69
+#
+# 当前成员与收口时必须做的事（逐号，摘自 versions/vk-kernel-identity.tsv）：
+#   vk65-m0/m1/m2/m3  UTS g6cbe1ffa7622 / kbin 756b9113e00b（registry vk65 已 alloc）
+#   vk65b             UTS ge70d0b660b74 / kbin 8f407c7b2fd1 —— **与 m* 不是同一个内核**，
+#                     同号两内核，收口时须分列（改号或写清变体口径）
+#   vk66              UTS gda0d8fe20891；registry **无 vk66 行** → 补行
+#   vk67              UTS gc583f4537258；registry **无 vk67 行** → 补行
+#   vk68/vk69         踩 num_ne_tag(elden/vk53-hw)（源提交上无任何同名 vkNN ref）
+#                     + registry 无行 → 补行并定源（先 commit 再 build，或给源提交打 tag）
+#
+# 另：out/boot-elden.img（build-boot.sh 默认输出名，无版本号）已改为**结构性不参与**，
+# 不再靠本文件豁免——它在 §5d 只出 unversioned WARN，且不参与身份表新鲜度比对。

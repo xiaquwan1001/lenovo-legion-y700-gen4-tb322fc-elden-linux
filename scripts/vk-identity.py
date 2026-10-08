@@ -16,10 +16,22 @@ registry 号、manifest 记录、内核仓 ref 状态四列对齐，输出 TSV�
 命名/溯源规则（2026-10-08 生效，只约束生效时刻之后新打的镜像）：
   硬错（FAIL，除非登记不可）：tree_drift dirty_drift src_missing src_unreachable
                                   uts_dup（同串不同二进制）num_ne_tag（源提交上无任何同名 vkNN ref）
+                                  uts_lvs（镜像内 LOCALVERSION 的 vkNN ≠ 源提交 vk tag ⇒ uname 会说谎）
                                   unversioned（无版本号的“当前拷贝”）
   软问题（WARN）：no_manifest tree_head_missing tree_head_diff src_no-sha kbin_shared unversioned
+                                  slot_dump（A/B 槽转储，见下）
   生效时刻之前的存量一律汇总为 WARN（欠账清单就在表里，逐镜像登记在
   versions/vk-ledger-known-issues.tsv）。可用 VK_RULE_EPOCH 覆盖生效时刻。
+
+两类补充口径（2026-10-08 二次对账，见 vk-registry.tsv 注记）：
+  * **uts_lvs**：`uname -r` 里写着 `-vkNN-` 而该内核源提交的 vk tag 集合里没有 NN，就是
+    「设备侧读到假号」。历史 14 个镜像（vk50 / vk54 系列 / vk56-57-slim / vk58* / vk59*）
+    全在生效时刻之前 → 计为存量欠账；此后新构建踩到即 FAIL。
+    源提交尚无 vk tag 时不判（无从判），所以在途未收口的号不受影响。
+  * **槽位转储**：`out/` 里非 `boot-elden*` 的镜像此前被整类跳过，理由是「boot_b-*/dtbo-dummy
+    无内核载荷」——实测**只有 dtbo-dummy 真无载荷**，`boot_b-live` / `boot_b-before-cdsp-*` /
+    `boot_b-vk49` 里都压着内核，属于账外资产。现以 `(slot-dump)` 行入账：只登记事实
+    （UTS / kbin / 源 tag），不参与构建号规则（永不 FAIL），因为命名规则约束的是构建载具。
 """
 import collections
 import glob
@@ -55,12 +67,27 @@ def load_registry():
     return nums
 
 
-def inflight_images():
-    """在途构建清单（被其它会话反复重建的镜像 basename）：不进新鲜度门，避免误击。"""
+def inflight_patterns():
+    """在途构建清单原始条目（一行一个 basename，含 `*`/`[`/`?` 的按 glob 处）。
+
+    为什么要 glob：在途 lane 会连续 alloc 新号（2026-10-08 观察到 vk65→vk69 在一个
+    子会话内连发），逐文件登记等于每天追写、而且新生成的那一瞬间门禁会误报。
+    责任形式：登记人必须把范围写窄（如 `vk6[5-9]` 只覆盖 vk65–vk69）并写明收口后删除。
+    """
     if not os.path.exists(INFLIGHT):
-        return set()
-    return {l.split('#')[0].strip() for l in open(INFLIGHT)
-            if l.strip() and not l.startswith('#')}
+        return []
+    return [l.split('#')[0].strip() for l in open(INFLIGHT)
+            if l.strip() and not l.strip().startswith('#')]
+
+
+def inflight_images():
+    """展开后的在途镜像 basename 集合：不进新鲜度门，也不进硬拦，避免跨会话误击。"""
+    pats = inflight_patterns()
+    magic = lambda p: any(c in p for c in '*?[')        # 不依赖 glob.has_magic（新版本已废弃）
+    out = {p for p in pats if not magic(p)}
+    for p in (p for p in pats if magic(p)):
+        out |= {os.path.basename(x) for x in glob.glob(os.path.join(OUT, p))}
+    return out
 
 
 def kernel_refs():
@@ -133,7 +160,7 @@ def manifest(path):
 
 
 HARD = ('tree_drift', 'dirty_drift', 'payload_mismatch', 'src_missing', 'src_unreachable',
-        'uts_dup', 'num_ne_tag')
+        'uts_dup', 'num_ne_tag', 'uts_lvs')
 # unversioned = out/boot-elden.img 这类**无版本号当前拷贝**。它是 scripts/build-boot.sh 的
 # 默认输出名（-o $OUT/boot-elden.img），每次构建都会重生，不是人忘改名 —— 所以**不拦构建**，
 # 只汇成一条 WARN 提请收口（改名/删除）。“号必须入名”靠命名规则约束，不靠罚这个兵物。
@@ -154,6 +181,9 @@ def gate(rows, skip_names):
         flags = r[10].split('|')
         if any(f.startswith(NOTE) for f in flags):
             noted.append(r[1])
+            # NOTE 类（目前 = 无版本号默认拷贝）不参与硬拦：它无号可校，内容跟着本次构建漂，
+            # 拦它等于拦构建本身（同一构建的带号镜像已被校）。“号必须入名”靠命名规则约束人。
+            continue
         hard = [f for f in flags if is_hard(f)]
         if not hard:
             continue
@@ -206,7 +236,7 @@ def main():
     for img in sorted(glob.glob(os.path.join(OUT, '*.img'))):
         base = os.path.basename(img)
         if not base.startswith('boot-elden'):
-            continue                          # dtbo-dummy 等：无内核载荷
+            continue                          # 槽位转储/dtbo：见下方 (slot-dump) 段单独入账
         build = base[len('boot-elden'):-len('.img')].lstrip('-') or '(unversioned)'
         uts, kbin = payload(img)
         if not uts:
@@ -257,6 +287,12 @@ def main():
         nums = {int(x) for x in re.findall(r'vk(\d+)', onref)}
         if num is not None and onref and num not in nums:
             flags.append('num_ne_tag(%s)' % onref)   # 该源提交无同名号 ⇒ 复用了别的号的内核
+        # uname 会说谎：镜像内 LOCALVERSION 写着 -vkNN-，但该源提交的 vk tag 里没有 NN。
+        # num_ne_tag 看的是「构建号 ↔ 源」，抓不到这个——它错在**镜像自带的字符串**上，
+        # 设备上一句 uname -r 就能把人导向错误的号（vk58/vk59 系列即如此）。无 tag 时不判。
+        lv = re.search(r'-(vk\d+[a-z]?)-g', uts)
+        if lv and tg and lv.group(1) not in set(tg.split(',')):
+            flags.append('uts_lvs(%s≠%s)' % (lv.group(1), tg))
         rows.append([build, base, regr, uts, kbin, src + ('-dirty' if dirty else ''),
                      ref, tg, tree_head, tree_state or '-',
                      'ok' if not flags else '|'.join(flags)])
@@ -273,6 +309,31 @@ def main():
         if extra:
             r[10] += '|' + '|'.join(extra)
 
+    # ---- 槽位转储入账（不参与构建号规则，也不计入 kbin_shared/uts_dup 口径）----
+    for img in sorted(glob.glob(os.path.join(OUT, '*.img'))):
+        base = os.path.basename(img)
+        if base.startswith('boot-elden'):
+            continue
+        uts, kbin = payload(img)
+        if not uts:
+            rows.append(['(no-payload)', base, '-', '(无内核载荷)', kbin, '', '', '', '', '-',
+                         'skip'])
+            continue
+        s = re.search(r'g([0-9a-f]{7,})(-dirty)?', uts)
+        src = s.group(1) if s else ''
+        ref, full = (resolve(src) if src else ('no-sha', ''))
+        tg = ','.join(sorted(tags.get(full, []))) if full else ''
+        onref = ','.join(points.get(full, [])) if full else ''
+        flags = ['slot_dump']
+        mnum = re.search(r'vk(\d+)', base)
+        if mnum and onref:
+            if int(mnum.group(1)) not in {int(x) for x in re.findall(r'vk(\d+)', onref)}:
+                # 文件名里的号与该内核源提交上的 ref 无一对得上（boot_b-vk49 即如此：
+                # 内核实为 vk48 提交）。前缀 slot_ ⇒ 永不落进 HARD，只作事实登记。
+                flags.append('slot_num_ne_tag(%s)' % onref)
+        rows.append(['(slot-dump)', base, '-', uts, kbin, src + ('-dirty' if s and s.group(2) else ''),
+                     ref, tg, '', '-', '|'.join(flags)])
+
     body = '\n'.join('\t'.join(str(c) for c in r) for r in rows)
     text = '\t'.join(COLS) + '\n' + body + '\n'
     if '--gate' in sys.argv[1:]:
@@ -282,9 +343,17 @@ def main():
 
         def keep(line):
             p = line.split('\t')
-            return len(p) < 2 or p[1] not in skip_names
-        a = [keep(l) for l in old.split('\n', 1)[1].splitlines() if l]
-        b = [keep(l) for l in text.split('\n', 1)[1].splitlines() if l]
+            if len(p) < 2:
+                return True
+            # (unversioned) = out/boot-elden.img，build-boot.sh 的默认输出名，**每次构建都重生**，
+            # 内容跟着最新一次构建漂。拿它比新鲜度等于「谁最后构建谁让表过期」，是打错对象
+            # （行照生成、§5d 仍以 unversioned WARN 提请收口），故排除在比对之外。
+            return p[1] not in skip_names and p[0] != '(unversioned)'
+        # 注：这里原先写成 `[keep(l) for l in ...]` —— 把过滤谓词当映射用，a/b 变成**布尔列表**，
+        # 于是“行数相同但内容不同”永远相等 → 新鲜度门对内容漂移**完全空转**（只能报新增/减少）。
+        # 2026-10-08 二次对账发现并改为真过滤；负向验证：往表里注入一个假 kbin 必须 rc=1。
+        a = [l for l in old.split('\n', 1)[1].splitlines() if l and keep(l)]
+        b = [l for l in text.split('\n', 1)[1].splitlines() if l and keep(l)]
         if a != b:
             print('vk-kernel-identity.tsv 过期：镜像/registry 变了但表未重生成', file=sys.stderr)
             return 1

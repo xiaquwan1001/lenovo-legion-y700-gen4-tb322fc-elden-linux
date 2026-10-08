@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-08（**#138 = ★shallow 仓推不上普通服务器（force 也不行）→ 备份走 bundle/云盘；本地禁推用 `pushurl`**；**#137 = ★内核仓 pack 局部损坏（inflate error）→ 工作树干净时可本地重建 loose 对象自给修复；repack 前必须先固定仅存 reflog 的对象**；**#135 = ★`vkN` 是构建/载具号不是内核版本；内核身份唯一判据 = 镜像内核载荷解压 sha256（全量对账：76 个带内核载荷的镜像只含 26 个不同内核）**；**#136 = ★「改完不提交就重编」是版本账混乱的生成机制（号+1、sha 停在上一号、带 -dirty）**；以上两条的工具入口：`scripts/vk-identity.py` + `versions/vk-kernel-identity.tsv` + `check-doctor` §5d。
+> 最后更新：2026-10-08（**#139 = ★「整类跳过」的镜像就是账外资产（boot_b-* 被当成“无内核载荷”实则 3/4 有内核）；“uname 会说谎”（LOCALVERSION 的 vkNN ≠ 源提交 tag，14 例）只能机检，已上 `uts_lvs` 硬拦**；**#138 = ★shallow 仓推不上普通服务器（force 也不行）→ 备份走 bundle/云盘；本地禁推用 `pushurl`**；**#137 = ★内核仓 pack 局部损坏（inflate error）→ 工作树干净时可本地重建 loose 对象自给修复；repack 前必须先固定仅存 reflog 的对象**；**#135 = ★`vkN` 是构建/载具号不是内核版本；内核身份唯一判据 = 镜像内核载荷解压 sha256（全量对账：76 个带内核载荷的镜像只含 26 个不同内核）**；**#136 = ★「改完不提交就重编」是版本账混乱的生成机制（号+1、sha 停在上一号、带 -dirty）**；以上两条的工具入口：`scripts/vk-identity.py` + `versions/vk-kernel-identity.tsv` + `check-doctor` §5d。
 > 末更新 2026-10-07：**#132 = ★Q24 熄屏→硬复位单模块根因 `cambistmclkcc-sm8750`（H1 去 power-domains 3/3→7/9，驱动 D1/D2 无效）**；**#133 = ★A/B 槽位必须 `qbootctl -m b`（否则 ABL 抛 fastboot，勿误判“启动慢”）**；**#134 = ★长测试脚本必须实时落盘（工具被取消时看不到输出）**；**#131 = ★boot 镜像重打包必须 unpack 原镜像取 kernel（manifest kernel 列误导）**；**#130 = ★dma-buf 只加载 system_heap、绝不 cma_heap（DmaHeap 探测序 CMA 优先）**；**#129 = 华为 P40 Pro 热点 5 GHz 平板连不上/2.4 GHz 正常（仅记录）**；**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记（§15.5 已改为纯指针表：状态/样本数只在 `TASKS.md` 维护，本表不写状态）**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
@@ -471,6 +471,14 @@
     - 出路只有两条：① `git fetch --unshallow origin` 补全历史后重推（要下 GB 级，与「避免重复下大文件」相左，需拍板）；② **走 bundle + 云盘**（零 git 约束，本项目选这条）。
     - 我踩的新坑：想把镜像 remote 改成“推不动”直接写了 `remote.<n>.push=no-push://…` ⇒ 非法 refspec 让 **`git remote -v` 和 fetch 一起 fatal**（把只读能力也弄坏了）。正确做法：`git config remote.<n>.pushurl no-push://archived-…` ⇒ push 在本地以 remote helper 错终止（不发网络），fetch 照常。
     - 另：`git -C <repo> bundle create <相对路径>` 的相对路径按 **<repo>** 解析，不是按当前目录 —— 本次因此把备份写到了不存在的路径（报错后被 `rc=0` 掩盖，靠 `bundle verify` 才发现）。备份一律用绝对路径 + 事后 `bundle verify` 验收。
+
+139. **★「整类跳过」的镜像 = 账外资产；“uname 会说谎”这一类只能机检（2026-10-08 二次对账）**。
+    - 实锤一：`scripts/vk-identity.py` 按 `boot-elden*` 前缀扫 `out/`，其余整类 `continue`，理由写在注释与 registry 注记里——「`boot_b-*`/`dtbo-dummy` 无内核载荷」。**实测只有 dtbo-dummy 真无载荷**：`boot_b-live`、`boot_b-before-cdsp-20261007`（都是 vk47clean 内核 kbin `55883e0cdfb2`）、`boot_b-vk49`（UTS `g5a70ade46a88` = **vk48 提交**，文件名却说 vk49）三个里都压着内核，且 mtime 均早于身份表生成时刻，却不在 76/26 口径里。⇒ **任何按名字/类别的整类排除，必须附实测判据（逐个抽载荷）；否则一个写错的口径会身兼两职——既当排除理由，又当“不需要查”的凭据，错得自给自足。** 现在这类以 `(slot-dump)` 行入账（只登记事实、不参与构建号规则）。
+    - 实锤二：**`uname -r` 会直接读出假号**——14 个镜像内 LOCALVERSION 写着 `-vkNN-`，但其内核源提交的 vk tag 里没有 NN（vk50→源 vk48；vk54 系列与 vk56/57-slim→源 vk53；vk58*→源 vk54；vk59*+inittest→源 vk54）。这一类**不可能靠 manifest 自校发现**（manifest 的 `kernel_uts` 本就取自镜像，永远相等），`num_ne_tag` 也拓不到（它比“构建号↔源”，错的是**镜像自带字符串**）。⇒ 已新增硬拦 `uts_lvs`（仅对生效时刻后新构建；源提交无 tag 时不判，不误伤在途号）。**经验：凡是“人会从设备上直接读到”的标识串，必须有与官方账本的等式校验；只校文件/manifest 不校串，等于没人校。**
+    - 默认输出名（`out/boot-elden.img`，build-boot.sh 的 `-o` 默认产物）**不能进任何“账实一致”判据**：它每次构建重生（实测 20:00 后已被换成 vk67 内核），拿它比新鲜度 = 谁最后构建谁让表过期。已改为结构性不参与（仍出 WARN 提请收口），代价写明：**回退只能用带号文件名或表内 `kbin_sha`**。
+    - 实锤三（**门自己也会空转**）：`vk-identity.py --check` 里 `a = [keep(l) for l in ...]` 把过滤谓词当映射用，a/b 是**布尔列表** ⇒ 只比行数不比内容 ⇒ “新鲜度门”只能报新增/减少镜像，**对内容漂移全盲**（已有镜像重编、kbin 变了它都不报）。这类缺陷不会自己报错，因为“没报”与“正常”长得一模一样。⇒ **任何校验上线前必做负向验证：故意注入一个错值，确认它真的 FAIL**（本轮四个负向例：假 kbin→rc=1；截行→rc=1；§5 白名单缺席→8 条 FAIL；`VK_RULE_EPOCH=0`→46 条 FAIL）。
+    - 并发在途的豁免形式：允许**有界通配**（如 `boot-elden-vk6[5-9]*.img`），但必须满两条：范围写窄（vk70 不匹配会照常报）+ 写明删除条件（收口后整段删）。无界通配等于把门禁关掉。
+
 
 ---
 

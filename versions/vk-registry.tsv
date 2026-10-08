@@ -102,3 +102,46 @@ vk64	q28-panel-retry	2026-10-08	vk47clean 基线 + commit d02658e63(be79b256d H2
 #     verification 由构建默认值 NOT_TESTED_ON_DEVICE 回写为 FLASHED_BOOT_B_HEALTHY（原值补在
 #     verification_src）。Q28 结论：面板 retry 不足以根治（DSI host 楔死），见 TASKS Q28。
 vk65	kexec-diag	2026-10-08	Q11 kexec bisect diag kernel
+#
+# ── 版本账二次对账（2026-10-08 晚，只读审查 → 机制修复；逐镜像证据 = versions/vk-kernel-identity.tsv）──
+#  独立取证复核（不用项目脚本，直接从每个镜像首段 gzip 抽 UTS + 解压载荷 sha256）：
+#     已入账段口径 out/ 76 镜像 / 26 个不同内核二进制 / 23 个 UTS 串、24 个镜像 vk 号 ≠ 其内核
+#     提交所属号 —— **与上行注记 #2 及 RESOURCES「号与内核解耦」段公布的数字逐项一致**，无虚账。
+#  本轮更正与新增（不动任何在途镜像/manifest；vk65+ 产物一律不碰）：
+#   1. 更正上行注记 #2 的一句话：「另 4 个 boot_b-*/dtbo-dummy **无内核载荷**」不实——实测
+#      **只有 dtbo-dummy 真无载荷**；`boot_b-live.img`（kbin 55883e0cdfb2=vk47clean）、
+#      `boot_b-before-cdsp-20261007.img`（同）、`boot_b-vk49.img`（UTS g5a70ade46a88=kbin
+#      f943821355a7）三个都压着内核，此前被 vk-identity.py 整类跳过 = 账外资产。
+#      其中 boot_b-vk49.img **文件名说 vk49、内核实为 vk48 提交**（又一处号≠内核）。
+#      现已以 `(slot-dump)` 行入账：只登记事实，不参与构建号规则（命名规则约束的是构建载具）。
+#   2. 新增硬拦 `uts_lvs`：**镜像内 LOCALVERSION 写着 -vkNN- 而该源提交的 vk tag 里没有 NN**，
+#      即「设备上一句 `uname -r` 会读出假号」。它与 num_ne_tag 不重叠（后者比「构建号↔源」，
+#      这个错在**镜像自带字符串**上）。历史命中 **14 个**：vk50(说 vk50→源 vk48)、
+#      vk54/vk54-ram/vk54-slim(说 vk54→源 vk53)、vk56-slim/vk57-slim(UTS 说 vk54→源 vk53)、
+#      vk58/vk58b/vk58c(说 vk58→源 vk54)、vk59-slim/vk59a/vk59-cdspoff/vk59-nfcoff/inittest
+#      (说 vk59→源 vk54)。全部在生效时刻之前 → 计存量欠账；此后新构建踩到即 FAIL。
+#      源提交尚无 vk tag 时不判（无从判），故在途未收口的号不受影响。
+#   3. `out/boot-elden.img`（build-boot.sh 默认输出名，无版本号）改为**结构性不参与**：
+#      它每次构建重生、内容跟着最新构建漂（实测 20:00 后已被换成 vk67 内核），拿它比新鲜度
+#      等于「谁最后构建谁让表过期」。现：不参与身份表过期比对、不参与硬拦，§5d 仍出
+#      unversioned WARN 提请收口。**代价写明**：若有人把这个默认名文件当回退资产用，取到的
+#      是「最后一次构建」的内核，不保证是账上任何一个 —— 回退一律用带号文件名或表内 kbin_sha。
+#   4. 在途豁免支持**有界通配**（只覆盖写明的范围）：当前登记 `boot-elden-vk6[5-9]*.img`
+#      （kexec-diag/Q11 lane 的 vk65–vk69；该 lane 实测十几分钟内连续 alloc vk65→vk69，
+#      逐文件登记会让门禁在每次新生成的瞬间误报）。**该 lane 收口后必须整段删除**。
+#      待收口清单（收口时必须补的行）：registry 现仍**只有 vk65 行**，vk66/67/68/69 有镜像
+#      + manifest 但**无 registry 行**；vk65 名下 m0–m3 与 vk65b 是**两个不同内核**
+#      （756b9113e00b vs 8f407c7b2fd1），同号两内核须分列。
+#   5. 更正上行注记 #5 的数字：存量欠账 **45 → 46 个镜像**（+1 = inittest，因 `uts_lvs` 首次
+#      入硬错类）。按类计数（一镜像可多类）：uts_dup5 18 / tree_drift 18 / num_ne_tag 24 /
+#      uts_lvs 14 / dirty_drift 2。
+#   6. ★修一个**门禁本身空转**的缺陷（早于本轮就存在）：`vk-identity.py --check` 里把过滤谓词
+#      当映射用了——`a = [keep(l) for l in ...]` 得到的是**布尔列表**，于是只比行数、不比内容。
+#      后果：§5d 新鲜度门只能报「新增/减少镜像」，**对内容漂移全盲**（boot-elden.img 被换成
+#      vk67 内核、或任何已有镜像重编后 kbin 变了，它都不会报）。已改为真过滤。
+#      负向验证（零写入，脚本在 /tmp）：往表里注入一个假 kbin → rc=1；只改 (unversioned) 行
+#      → rc=0；截掉两行 → rc=1；真表 → rc=0。另：§5 白名单缺席时出 8 条 FAIL（在场 0 条），
+#      `VK_RULE_EPOCH=0` 时出 46 条 FAIL（默认 OK）——两个门的非空转都已证。
+#   7. 交叉引用歧义：本文件与技能里写的「版本时间线见 RESOURCES §3」实指 `RESOURCES.md` 的
+#      **小节** `### 3. 内核版本时间线与「实机验证边界」`（约 433 行），与顶级 `## 3. 文件与
+#      资产台账（FILES）` 同号，死链检查抓不到这种歧义。今后引用写小节全名，勿只写「§3」。
