@@ -14,3 +14,7 @@ vk57-slim	tree_drift	同 vk54-slim 内核（仅换 ramdisk）
 # 同 commit、镜像含未提交改动（dirty 位漂移）
 vk58b-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；vk58c 已实机 fastboot boot 验收
 vk58c-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；已实机 fastboot boot 验收
+# #131：manifest 的 kernel 列记录 linux/ 树的 Image.gz，而实际打包的是「原镜像 unpack 出的 kernel」
+#       （vk62/vk63 实际 kernel = vk47clean sha 2321e3b9；boot_b 实跑即 vk47clean，非真 drift）
+vk62	tree_drift	#131 manifest kernel 列=树 Image.gz；实际打包=vk47clean（sha 2321e3b9），boot_b 实跑 vk47clean
+vk63	tree_drift	同 vk62（#131；同内核 vk47clean，仅换 H2 DTB）

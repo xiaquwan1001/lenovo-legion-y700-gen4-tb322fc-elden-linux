@@ -321,6 +321,7 @@
     - **PS 已用正确指标彻底排除**：关联前就 `802-11-wireless.powersave 2`（PS 关）重启，黑屏与恢复点**完全不变**。
     - **同一次开机**在黑屏窗口内扫描能得到 **33–41 个 BSS**（含该 AP 信道）⇒ **RF/beacon 接收本身正常**，坏的是「已关联 STA」这条路径。因此「开机扫一次」不能当修复（复测黑屏照旧）。
     - **被动扫描定案（2026-10-06 深夜）**：黑屏窗口内 `iw dev wlan0 scan passive`（只听 beacon）仍能听到该 AP（BSS=36）⇒ **AP 在发 beacon、射频无辜**；症结 = 固件对已关联 vdev 的休眠/唤醒调度（~2 s 拍子），~130 s 自校正。**换 stock 非-20 固件变体会让 MHI POWER_ON 直接 -110（不兼容）**；关联后补发 `BEACON_INTERVAL`/`DTIM_PERIOD` 亦无效。
+    - **⚠️ 2026-10-08 口径更正**：「触发条件在『手机热点 AP + WCN7850』组合」**不作为终态**——用户指出同一 P40 Pro 在早期版本可正常连接 ⇒ 假设改为**版本/DTB 增量连带副作用**；本条的机制观测（beacon rx ~0.5/s、~130 s 自校正、bmiss 拆链）仍有效。见 `TASKS.md §5 Q26`。
     - 纪律：判「AP 是否在发 beacon」**必须用被动扫描**（`iw dev wlan0 scan passive`）；主动扫描会收到 probe response，会伪造「AP 正常」的结论。
     - 下一步方向（方法见专题 §13）：试 `CONFIG_ATH12K=m` 让 WCN **只探一次**（避开「首探失败 + 二次 bind + `qmi TME-L hardware-restricted`」的半初始化态）。
     - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md`（§11/§12 追加、§13 下一步手册）；相关 #117/#109。
@@ -411,6 +412,7 @@
     - 现状：**仅记录，未定位**（未抓 supplicant/dmesg 失败帧）。怀疑点：ch149 高信道 + 华为 AP 的 802.11 行为/带宽/WPA2 参数。
     - 排查入口：连 5 GHz 失败时看 `wpa_supplicant`/`ath12k` dmesg（关联失败 reason code）、`iw phy` 支持信道、AP 的 BW/HE/VHT 设置；参 `wifi-link-flap-triage` 技能。
     - 规避：设备联网改用 **2.4 GHz 热点**（或 vivo 热点）。
+    - **⚠️ 2026-10-08 补充**：本条（同一 AP 的 5 GHz 连不上 / 2.4 GHz 正常）与 Q26「~2 min 到可用」可能是**同一版本/DTB 变量的两个表现**；用户指出该 P40 Pro 在早期版本可正常连接，故不再按「AP 组合已知限制」归档，并入 `TASKS.md §5 Q26` 的版本/DTB bisect 一起查。
 
 130. **★dma-buf heap：必须只加载 `system_heap`，绝不能加载 `cma_heap`（2026-10-07 实机，G1-5 相机）**。
     - 现象：libcamera 软件 ISP 两段报错——先 `Could not open any dma-buf provider`（无任何 heap 模块时），部署 `system_heap`+`cma_heap` 后变 `dma-heap allocation failure for frame-0`（ENOMEM）。
@@ -430,7 +432,7 @@
     - 修复实验：**H1**（DT 去该节点 `power-domains=<&rpmhpd RPMHPD_MMCX>,<&rpmhpd RPMHPD_MX>` + `required-opps=low_svs`，对齐厂商用 `vdd_mx-supply` 的写法）→ cambist 单独 **7/9 存活（2/9 掉电）**；**D1** 驱动 `use_rpm=false` → 6/9；**D2** 去 `critical_cbcrs`(SLEEP_CLK 强制常开) → 7/9。⇒ **MMCX/MX 耦合是主因，但残留 ~20% 间歇未根治**；驱动侧两个开关无效。
     - 纪律：**A/B 现象必须重复 ≥3 轮且带对照组**（本研究一开始单次样本曾把凶手误判到 `s5kjns`/`system_heap`）。
     - 复现协议：`scripts/sleep-sweep.sh`（boot_b=可自动恢复的镜像；改 `/etc/modules-load.d/camera.conf` 限定模块集 + `reboot` + 熄屏；每轮 `qbootctl -m b`）。
-    - 规避：当前 `vk62`（H1 DTB）+ 空 `camera.conf` ⇒ 零相机模块 = 熄屏安全。
+    - 规避：当前 `vk62`（H1 DTB）/ **`vk63`（H2 DTB，最优）** + 空 `camera.conf` ⇒ 零相机模块 = 熄屏安全。**H2 后续（2026-10-07 用户实机确认）：cambist 单挂 `RPMHPD_MX` ⇒ 加载 cambist + 真实熄屏存活、多次电源键循环无掉电（上游报告已发，`be79b256d`）**；H1 残留 ~20% 间歇由 H2 接管。
 
 133. **★A/B 槽位的 `mark-successful` 必须每轮置位；否则 ABL 把槽判为 unbootable 抛到 fastboot（2026-10-07，用户纠正）**。
     - 现象：boot_b 刷入后有时“起不来/很久才起”，实为 **retry 计数递减/耗尽 → ABL 停驻 fastboot**；不是启动慢、不是镜像坏。

@@ -363,3 +363,14 @@ scp scripts/blackout-passive-scan.sh root@192.168.7.1:/tmp/ && ssh root@192.168.
 
 
 
+
+---
+
+## ⚠️ 2026-10-08 口径更正（只增不改，目标结论以 `TASKS.md §5 Q26` 为准）
+
+**§0 第 4 条「触发条件在 P40 Pro 手机热点这一侧」与「P40 Pro 已知限制」结论已撤销**：
+
+- 用户指出 **同一 P40 Pro 热点在早期（≤2026-10-04）版本可正常连接**（`archive/topics/PROXY-WAYDROID-2026-10-02.md` 即以该热点为上行、设备 `wlan0` 正常 DHCP，会话索引中设备多次拿到 `192.168.43.78`）。
+- 故本文「换真 AP（ustcnet/vivo）即正常」只能证明**触发需 AP 侧时序配合**，**不能**排除**版本/DTB 变量**——若为 DTB 增量连带副作用，则只在特定 AP 的 beacon/DTIM 时序下暴露是合理的。
+- 本文关于**机制**的观测（`beacon rx` ~0.5/s、每 ~16.4–17.7 s bmiss、~130 s 自校正、被动扫描能收到该 AP、双管理器/PS/DHCP 已排除）**仍然有效**，保留作证据。
+- **下一步**：版本/DTB 单变量 bisect（`fastboot boot` vk40/vk47/vk53/vk61/vk63 零写盘），见 `TASKS.md §5 Q26`。

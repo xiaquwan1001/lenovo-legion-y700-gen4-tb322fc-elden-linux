@@ -46,3 +46,4 @@ vk61	init-hardening	2026-10-06	boot_b 复刻：完整 ramdisk 仅换修好的 /i
 #   上行 vk53 note 的「⚠️ 未上机验证」与上文「独立审查中」表述作废，以本段为准。
 # ============================================================================
 vk62	sleepdeath	2026-10-07	DP 可用 + cambist H1(去 power-domains) + 相机零自动加载；sleep-safe 基线；Q24 根因=cambistmclkcc
+vk63	sleepdeath	2026-10-07	H2 收盘：cambist 单挂 MX 电源域（实验提交 86ea33c25 / 上游化 be79b256d）；vk62 同内核+ramdisk + H2 DTB；用户实机确认熄屏健康；仅零写盘 fastboot boot，未刷 boot_b
