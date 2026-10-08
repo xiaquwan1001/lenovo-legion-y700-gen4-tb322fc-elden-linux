@@ -182,3 +182,31 @@ mask=1 跳转后设备约 20s 以 **vk64(boot_b 持久)**回来（经 ABL，非 
 ### 8.4 遗留二问题
 1. device_shutdown 累积/延迟掉电的确切触发设备类（需 `stop_after` 二分 [1,117]，约 7 轮；或 PON 备存寄存器心跳）。
 2. **目标内核 kexec 引导失败**（关键路径；需早期串口可见性：DT 预留 pstore/ramoops 让目标早期挂载，或物理 UART）。
+
+## §9 stop_after 二分 + cpufreq 守卫结论（vk69–vk70，2026-10-08）
+
+判据：落盘日志是否出现 `Starting new kernel`（出现=device_shutdown 返回=跳转；不出现=掉电）。复用 vk69（含 stop_after/settle_ms/kexec_diag 旋钮），SysRq-b 组合（`eldroid-bootctl reboot bootloader` 写 ABL magic + `echo b>/proc/sysrq-trigger` 硬重启）绕开被我们 kexec 测写坏的 RESTART2 reboot-mode 通路进 fastboot。
+
+| K(stop_after) | mask | 真关机数 | 结果 |
+|---|---|---|---|
+| 59 | 0 | 59 | POWERED-OFF |
+| 30 | 0 | 30 | POWERED-OFF |
+| 15 | 0 | 15 | POWERED-OFF |
+| 8 | 0 | 8 | POWERED-OFF |
+| 4 | 0 | 4 | POWERED-OFF |
+| 2 | 0 | 2 | POWERED-OFF |
+| 1 | 0 | 1 | POWERED-OFF |
+| **0** | 0 | **0** | **POWERED-OFF** ← 零真关机仍掉电 |
+| 117 | **4**(跳 cpufreq_suspend) | 117 | **POWERED-OFF** ← 跳 cpufreq 仍掉电 |
+
+### 9.1 关键结论
+1. **反向遍历顺序每次启动会变**（异步 probe，同 idx 跨启动不是同一设备）→ 按 idx 的"单设备二分"跨启动不可比，"元凶=某 idx"不成立（顺序漂移 + 掉电落点随墙钟浮动 = 双红鲱鱼）。
+2. **K=0 零真关机仍掉电** → 触发在遍历**之前**：`device_shutdown()` 入口的 `cpufreq_suspend()`（唯一 pre-loop 触电源）。
+3. **mask=4 跳 cpufreq + 117 真关机全跑仍掉电** → 设备 `.shutdown()`/运行时挂起遍历是**独立**触发点。
+4. **唯一可靠规避 = 整段跳过 device_shutdown（mask=1）**（=m1，到 `Starting new kernel`）。任何"部分执行" device_shutdown 都掉电。
+
+### 9.2 交付判定（任务 B 收口）
+device_shutdown 掉电**非单一可命名元凶**，而是 `cpufreq_suspend()` 与设备关机遍历**多触发叠加**的延迟掉电；工程上以 mask=1 整段跳过规避（已实现）。上游化若要保留 device_shutdown，需同时屏蔽 cpufreq_suspend 且解决关机遍历触发的 regulator/PMIC 掉电——属深度硬件+驱动工作。
+
+### 9.3 仍未解锁可用 kexec（重申 §8.3）
+即使整段跳过 device_shutdown（mask=1）跳转成功，目标 `Image.kd` 经 kexec 引导仍失败→回 vk64。**目标内核 kexec 引导**才是"可用 kexec"的关键路径（需早期串口可见性，本机不具备 → 见 §8.4 遗留 2）。
