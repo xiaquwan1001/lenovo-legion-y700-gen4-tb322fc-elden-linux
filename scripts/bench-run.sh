@@ -42,10 +42,11 @@ sample & SPID=$!
 
 # Wayland 会话（GLES/Vulkan 需要）
 HAVE_WL=0
-if [ -S /run/phosh/wayland-0 ]; then
-	export XDG_RUNTIME_DIR=/run/phosh WAYLAND_DISPLAY=wayland-0
-	HAVE_WL=1
-fi
+for wl in /run/user/0/wayland-0 /run/phosh/wayland-0 /run/user/1000/wayland-0; do
+	[ -S "$wl" ] || continue
+	export XDG_RUNTIME_DIR=$(dirname "$wl") WAYLAND_DISPLAY=wayland-0
+	HAVE_WL=1; break
+done
 
 say "=== bench-run $TS  nproc=$N dur=${DUR}s wayland=$HAVE_WL ==="
 say "kernel: $(uname -r)"

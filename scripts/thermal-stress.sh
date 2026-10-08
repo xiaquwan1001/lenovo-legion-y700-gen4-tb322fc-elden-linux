@@ -14,6 +14,11 @@ DURATION=${DURATION:-420}
 CPUS=${CPUS:-$(nproc 2>/dev/null || echo 8)}
 GPU_N=${GPU_N:-1}
 INTERVAL=${INTERVAL:-2}
+# Wayland socket autodetect (rootfs uses /run/user/0/wayland-0; older notes say /run/phosh)
+WL=""
+for w in /run/user/0/wayland-0 /run/phosh/wayland-0 /run/user/1000/wayland-0; do
+	[ -S "$w" ] && { WL="$w"; break; }
+done
 LOG=${LOG:-/var/log/thermal-watch.log}
 WATCH=${WATCH:-/tmp/thermal-watch.sh}
 
@@ -38,10 +43,10 @@ sp=$!
 
 # 3) GPU 负载（Wayland 会话）。找不到显示则跳过，仅做 CPU 压测。
 gpu_pids=""
-if [ "$GPU_N" -gt 0 ] && [ -S /run/phosh/wayland-0 ]; then
+if [ "$GPU_N" -gt 0 ] && [ -n "$WL" ]; then
 	i=0
 	while [ $i -lt "$GPU_N" ]; do
-		XDG_RUNTIME_DIR=/run/phosh WAYLAND_DISPLAY=wayland-0 \
+		XDG_RUNTIME_DIR=$(dirname "$WL") WAYLAND_DISPLAY=wayland-0 \
 			timeout "$((DURATION-3))"s es2gears_wayland >/dev/null 2>&1 &
 		gpu_pids="$gpu_pids $!"
 		i=$((i+1))
