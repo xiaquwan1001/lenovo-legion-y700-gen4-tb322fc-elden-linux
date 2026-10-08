@@ -132,3 +132,24 @@ mask=1 跳转后设备约 20s 以 **vk64(boot_b 持久)**回来（经 ABL，非 
 ### 6.5 资产更新
 - 内核 `e70d0b660`（sysfs 开关 + 加固解析）；`out/boot-elden-vk65b.img`；`out/kexec-diag/{Image.kd,elden.dtb,kmsg-*.log}`
 - 落盘 dumper：设备 `/root/kd-dump.py`（setsid 版）。
+
+---
+
+## 7. device_shutdown 逐设备 trace（vk66 `da0d8fe20`，mask=0）—— 撞观测墙
+
+给 `device_shutdown()` 循环加 `[KD] SD-start/SD-done: <dev_name>`（pr_warn，仅 kexec 路径），本地落盘。结果：
+
+- **117 个设备 SD-start / SD-done 完美配对、无孤立**；反向遍历先关后 probe 的外设（`hwmon57/wlan0/phy0/displayport-controller/vcs*…`），
+  一路干净关到最后一个 **`sde51`**，然后设备 **#118 的 SD-start 都没落盘** → 掉电/断流。
+- **UFS host controller `1d84000.ufs` 与 `sda..sdf` 均不在这 117 里** → 遍历死在到达它们之前，#118 属**基础驱动区**（interconnect/regulator/clock/pinctrl/iommu 一类），非外设。
+- m0 已证 device_shutdown 未返回（无 11b）→ 掉电发生在 **#118 的 `.shutdown()` 内**，且快到其前置 `pr_warn` 都来不及被 python dumper 下一轮 read+fsync 抓到。
+
+### 7.1 观测墙（为何盘日志到此为止）
+本地 dumper 写 **UFS**、ramoops 在 **DRAM**，两者都不抗 PMIC 整机掉电；而 #118 的 `.shutdown()` 是「微秒级即时掉电」型，**任何 RAM/存储背书的日志都无法可靠抓到触发掉电那一行的设备名**。→ 要继续必须用**抗掉电通道**。
+
+### 7.2 两个可选的下一步（二选一或都要）
+- **A. PON 备用寄存器心跳**：`device_shutdown` 每步把递增计数写 PMIC `PON_SOFT_RB_SPARE`（qcom-pon regmap，always-on 域，抗整机掉电）；重启后读回计数 → 直接得到 #118 的序号，再与 1-117 的名字序列对齐即锁定元凶。需在 core.c 拿 PMIC regmap（qcom-pon 是 module，不能直接链接，需按 compatible 运行时取 regmap）。
+- **B. 选择性 skip 二分（推荐，无需抗掉电通道）**：给 `device_shutdown` 加 `skip_glob` sysfs；`mask=0`（让 device_shutdown 正常跑）+ `skip=<候选>`，**判据 = kexec 是否成功（稳、无日志竞态）**。按类二分（interconnect / regulator / clock / pinctrl / iommu / ufs…）即可在几次内锁定含元凶的类，再细分到设备。
+
+### 7.3 现实评估
+`device_shutdown` 整段跳过（sysfs mask=1）已能让 kexec 走通到 machine_kexec，是**可用的 kexec 快环修复**；§7.2 是为「更干净的上游修法 + 搞清是哪块硬件」而做，属锦上添花。
