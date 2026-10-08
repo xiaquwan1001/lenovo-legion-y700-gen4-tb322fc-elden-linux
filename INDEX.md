@@ -95,7 +95,7 @@
 ## 4. 快速入口命令
 
 ```bash
-cd ~/y700-elden          # ★ 启动入口即此（旧 flashing/eacndev/lob-remake 三个 cd 包装 2026-10-04 移除 → PITFALLS §15.1）
+cd ~/y700-elden          # ★ 启动入口即此（旧 cd 包装与根目录兼容包装 build.sh/iterate.sh/pack.sh 均已移除 → PITFALLS §15.1）
 # 【收尾自检】计数漂移 / 死链 / 口径冲突（全绿再收工）
 scripts/check-doctor.sh
 # 【版本对账】“这个 boot.img 里到底是哪个内核” / 重生成对齐表

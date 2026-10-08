@@ -69,7 +69,7 @@
 
 9. **`make olddefconfig` 会删掉 `CONFIG_ARCH_QCOM` 整行！** 改 `.config` 后**绝不**跑它。
    用 `scripts/config -e/-d` 后直接 `make`，并每次 `grep ^CONFIG_ARCH_QCOM= .config` 验证。
-   （`build.sh` 已内置校验。）
+   （`scripts/build-kernel.sh` 已内置校验；根目录兼容包装 `build.sh`/`iterate.sh`/`pack.sh` 已删除。）
 
 9b. **★ 编内核忘了 `export ARCH=arm64` 会毁掉 `.config`**（2026-09-30 实际踩到）：
   裸跑 `make Image.gz dtbs` 时 Kbuild 按**宿主机**（x86_64）解析，把 arm64 的 `.config` 当垃圾、
@@ -991,6 +991,7 @@
 | `~/.local/bin/{flashing,eacndev,lob-remake}` | 三个 `cd` 包装（pi-profile-switch 时代命名），功能与 `cd <repo> && pi` 等价 → 已删除，副本留 `bin/` | `cd ~/y700-elden && pi` |
 | `~/.pi-profile-switch/`（profile 机制） | 本机不存在；配置改为**按 cwd 叠加加载**，无需切 profile | `.pi/README.md` 首段 |
 | `flashing-bundle/profile/flashing.json`、`backup/pi-assets-*/flashing.json` | 旧 profile 定义化石；**不要据此重建 profile** | `AGENTS.md` §协作 |
+| 根目录 `build.sh`/`iterate.sh`/`pack.sh` | 三个纯委托兼容包装（2026-10-08 删除，`pack.sh` 本就 DEPRECATED；唯一实现分别是 `scripts/build-kernel.sh`/`scripts/iterate.sh`/`scripts/build-boot.sh`，肌肉记忆加 `scripts/` 前缀即可） | `scripts/iterate.sh`（统一迭代入口） |
 
 ### 15.2 已迁移 / 退役的外部资产
 
