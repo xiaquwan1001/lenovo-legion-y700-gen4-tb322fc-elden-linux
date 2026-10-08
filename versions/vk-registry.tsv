@@ -47,3 +47,6 @@ vk61	init-hardening	2026-10-06	boot_b 复刻：完整 ramdisk 仅换修好的 /i
 # ============================================================================
 vk62	sleepdeath	2026-10-07	DP 可用 + cambist H1(去 power-domains) + 相机零自动加载；sleep-safe 基线；Q24 根因=cambistmclkcc
 vk63	sleepdeath	2026-10-07	H2 收盘：cambist 单挂 MX 电源域（实验提交 86ea33c25 / 上游化 be79b256d）；vk62 同内核+ramdisk + H2 DTB；用户实机确认熄屏健康；仅零写盘 fastboot boot，未刷 boot_b
+# 更正（2026-10-08）：vk63 已由用户烧录 boot_b（Linux 侧只读读回，截断至镜像大小 sha 2f34e887 与
+# out/boot-elden-vk63.img 逐字节一致）；dtbo_b=全零 payload+AVB footer（无 overlay 内容）。
+# 已知问题：面板 init 间歇失败 ~4/7 boot（DSI DCS -110 → 只有背光，Q28/PITFALLS #16）。

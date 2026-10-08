@@ -94,8 +94,11 @@
 15. **不要打作者的 Mesa chip-id 补丁**（`...44050000`→`...44050001`）：本机内核报 `0xE844050000`（patchid **00**），
     正好匹配 Mesa **原版** wildcard；打补丁反而 unsupported。
 
-16. **显示间歇性坏**：偶见 `drm_crtc_wait_one_vblank` call trace 刷屏（DPU 等不到 vblank → 只有背光无文字）。
-    疑似 DSI/panel vblank 中断丢失，冷启/重来可恢复；暂未定位。
+16. **★显示间歇性坏：根因 = 面板 init 失败（DSI DCS 首写超时）→ DPU vblank 超时刷屏（2026-10-08 定位，vk63）**。
+    - 现象（同前）：偶见 `drm_crtc_wait_one_vblank` call trace 刷屏，只有背光无文字/无桌面；冷启/重来可恢复。
+    - **根因（2026-10-08 可见）**：`panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -110` → `Failed to initialize panel: -110`（DSI DCS 首写超时）→ 面板从未使能 → DPU 所有提交 `reset failure: -22` + `vblank timeout`（几百次刷屏）——call trace 全是受害者不是根因。失败 boot 上 greetd/phosh 会话可能不起（`phosh=0`）。
+    - 实测：vk63 基线 7 boot 中 4 失败（~57%）；同一镜像 `fastboot boot` 与正常 reboot 都触发 ⇒ **与烧录路径/dtbo_b（全零+AVB footer）无关**，属间歇性 DSI/panel init 竞态；失败时面板三供电（`vreg_1v8_vddio/6v1_vsp/5v8_vsn`）均 enabled、DSI 连接器 `connected/enabled/dpms=On`。
+    - 待查：失败时 `dsi host`/PHY 上下文；旧基线（vk62）是否同样存在（历史 #16 即「偶见」，应非 vk63 引入）；是否与快速连续 reboot（面板无冷却）相关——下次可试完全断电冷启对比。详见 `TASKS.md` §5 Q28、`logs/kmsg-vk63-nodesktop-2026-10-08.log`。
 
 ---
 
