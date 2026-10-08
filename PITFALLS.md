@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-07（**#132 = ★Q24 熄屏→硬复位单模块根因 `cambistmclkcc-sm8750`（H1 去 power-domains 3/3→7/9，驱动 D1/D2 无效）**；**#133 = ★A/B 槽位必须 `qbootctl -m b`（否则 ABL 抛 fastboot，勿误判“启动慢”）**；**#134 = ★长测试脚本必须实时落盘（工具被取消时看不到输出）**；**#131 = ★boot 镜像重打包必须 unpack 原镜像取 kernel（manifest kernel 列误导）**；**#130 = ★dma-buf 只加载 system_heap、绝不 cma_heap（DmaHeap 探测序 CMA 优先）**；**#129 = 华为 P40 Pro 热点 5 GHz 平板连不上/2.4 GHz 正常（仅记录）**；**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-07（**#132 = ★Q24 熄屏→硬复位单模块根因 `cambistmclkcc-sm8750`（H1 去 power-domains 3/3→7/9，驱动 D1/D2 无效）**；**#133 = ★A/B 槽位必须 `qbootctl -m b`（否则 ABL 抛 fastboot，勿误判“启动慢”）**；**#134 = ★长测试脚本必须实时落盘（工具被取消时看不到输出）**；**#131 = ★boot 镜像重打包必须 unpack 原镜像取 kernel（manifest kernel 列误导）**；**#130 = ★dma-buf 只加载 system_heap、绝不 cma_heap（DmaHeap 探测序 CMA 优先）**；**#129 = 华为 P40 Pro 热点 5 GHz 平板连不上/2.4 GHz 正常（仅记录）**；**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记（§15.5 已改为纯指针表：状态/样本数只在 `TASKS.md` 维护，本表不写状态）**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -973,6 +973,7 @@
 | profile/技能/会话 → `.pi/` | 内聚迁移（会话 `01a0f22e`） | 2026-09-30 |
 | `backup/pi-assets-20260930-200129/`、`backup/pi-sessions-20260930/` | 迁移前备份（已 ignore） | 2026-09-30 |
 | `flashing-bundle/` + `flashing-bundle-*.tar.gz` | 换机迁移包快照（已 ignore） | 2026-09-29 |
+| `scripts/sleep-bisect.sh`、`scripts/sleep-cumulative.sh` | **不删，降为 legacy**：它们是定位 Q24 根因（单模块 `cambistmclkcc-sm8750`）的设备侧模块二分/累积工具；**新扫测请用主机侧 `scripts/sleep-sweep.sh`**（`TASKS.md` §1 G1-33）；若将来需重新二分再取用 | 2026-10-08 登记 |
 | `~/.pi/agent/pi-sessions/`(12 M) `~/.pi/wechat/`(1.1 M) `~/.pi/todos/` `~/.pi/agent/pi-agent-profiles/` `~/.pi/{session-control,_wtest}/` `~/.pi/agent/{_cron_backup,missions,git}/` | 已卸载插件的孤儿运行时目录，无任何已安装包引用（`grep` node_modules 无命中）→ **机器层待授权清理** | 2026-10-04 登记 |
 
 ### 15.3 被取代 / 无效的会话
@@ -999,22 +1000,25 @@
 
 > 本表仅列**已知**项；其余 skill references 未逐篇审计。发现过时就补入。
 
-### 15.5 已知功能缺陷（索引；详情见权威文档）
+### 15.5 已知功能缺陷（纯索引；**本表不写状态**）
 
-| 缺陷 | 状态 | 权威 |
-|---|---|---|
-| 桌面空闲熄屏 → 整机重启 | ⚠️ **未解 / 间歇性（2026-10-05）**：受控复现（DPMS off/电源键熄屏）；干净重建刷入后仍复位 ⇒ 假设未证实，已停止深究 | `TASKS.md` §5 Q24/G1-22；`PITFALLS` #102；`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9 |
-| vk34 之后内核增量回归（vblank/PPM） | vblank 残留（不致复位）；主因已归 vk40 插桩 | `TASKS.md` §5 Q22 / G1-23 |
-| 音频不可听 | ✅ 已出声（vk43）；输入端 ✅ 已打通（WCD939x AMIC1，UCM2 Mic） | `TASKS.md` G1-4 |
-| 相机不出流 | ✅ 已出流（2026-10-05 G1-5，前后摄） | `TASKS.md` G1-5 / Q9 |
-| TF 卡写丢失 | 未定性 | `TASKS.md` G1-6 |
-| BT 配对 / 回连 | 未收口 | `TASKS.md` G1-7 |
-| DP 输出（UCSI/altmode） | 未启用 | `TASKS.md` G1-9 |
-| NFC | 未修 | `TASKS.md` G1-10 |
-| CDSP | 未启用 | `TASKS.md` G1-11 |
-| `reboot recovery`（进 TWRP） | 无 vendor reset，不可用 | `archive/topics/FLASHCTL-2026-10-03.md` |
-| `reboot edl` | PSCI 已具备，未实测 | `TASKS.md` G1-24 |
-| 60 Hz 切黑屏 | 面板固件仅适配 120 Hz | `PITFALLS.md` #10/#14 相关 |
+> **为什么不写状态**：本表曾长期与 `TASKS.md` 漂移（把已完成的 DP/CDSP/BT 写成「未启用/未收口」）。
+> 状态/样本数的唯一入口 = `TASKS.md` §0/§1/§5；本表只登记「存在这个已知缺陷」+ 去哪看。
+> **已闭合 / 已取消的缺陷不入本表**（音频 G1-4、相机出流 G1-5、BT G1-7、DP G1-9、CDSP G1-11、NFC 取消 G1-10 → 去 `TASKS.md` §1 查任务行）。
+
+| 缺陷 | 权威入口 |
+|---|---|
+| 桌面熄屏 → 整机硬复位（间歇，× 相机模块共存） | `TASKS.md` §5 Q24、§1 G1-22/G1-33；`PITFALLS` #102/#124/#132 |
+| 面板 init 间歇失败 → 只有背光无桌面 | `TASKS.md` §5 Q28；`PITFALLS` #16 |
+| WiFi 关联后到可用时长（beacon miss 拆链） | `TASKS.md` §5 Q26 |
+| TF 卡间歇写丢失 | `TASKS.md` §1 G1-6 / §5 Q10 |
+| SLPI 7 传感器 AP 侧不可见（无 IIO 节点） | `TASKS.md` §1 G1-34 |
+| 桌面深色主题/accent 不生效、电源菜单图标反色、亮度滑块 | `TASKS.md` §1 G1-26/27/28 |
+| vk34 之后内核增量残留（vblank/PPM 计数） | `TASKS.md` §1 G1-23 / §5 Q22 |
+| `reboot recovery`（进 TWRP）无 vendor reset → 不可用 | `archive/topics/FLASHCTL-2026-10-03.md` |
+| `reboot edl` PSCI 已具备、未实测 | `TASKS.md` §1 G1-24 |
+| 60 Hz 切换黑屏（面板固件只适配 120 Hz） | `PITFALLS` #10/#14 |
+| slim initramfs 无固件 → 外设全不可用（不得作日常启动） | `PITFALLS` #113；`TASKS.md` §1 G1-30 |
 
 ### 15.6 已评估并排除的生态方案（勿重推，2026-10-07）
 

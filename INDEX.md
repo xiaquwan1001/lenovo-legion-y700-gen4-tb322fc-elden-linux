@@ -70,21 +70,22 @@
 
 ---
 
-## 3. 现状速览（数字权威在 `TASKS.md` §0，本节仅为快照）
+## 3. 现状速览（指针，不复述状态）
 
-> **SSOT**：进度百分比与任务状态以 `TASKS.md` §0 为准；本节若与之不符，以 `TASKS.md` 为准。
+> **SSOT**：任务状态、完成度、样本数一律以 `TASKS.md` §0（总览）/ §1（G1）/ §5（Q 项）为准；
+> 单元与镜像形态以 `DEVICE.md` §1.1/§2.2 为准。**本节只回答「现在还没解决什么」，任何数字都不在此维护。**
 
-- **G1 ≈90%**（对齐 TASKS §0）：mainline 已在真机全线可用（冷启 ~5 s 进 Phosh、165 Hz、A830 + Mesa 26.1.8、触屏、WiFi、BT、充电+旁路、温控分级 70/82/90/105 °C、**音频出声 + 桌面 PipeWire/UCM2**、**相机前后摄出流**、触觉、带外串口）。
-  **U2 实跑 `vk63`（在机 boot_b，2026-10-08 用户烧录，读回 sha 校验）**（vk47clean 内核 + H2 DTB；b 槽持久直启；kexec 热重载**不可用**，见 `TASKS.md` §4）。**剩硬缺口**：TF 卡；**面板 init 间歇失败（Q28，4/7 boot → 只有背光，`PITFALLS` #16）**；**G1-22/Q24 熄屏→复位已收盘（H2/vk63，用户实机确认）**；**WiFi：Q26 重开——「P40 Pro 组合已知限制」口径已撤销；**vk63 + P40 Pro 实测干净**（beacon loss 0、rx≈10/s、1 min 拿到 IP）⇒ 假设=版本/DTB 增量连带副作用，下一步版本/DTB 单变量 bisect（`TASKS.md` §5 Q26）**。**BT 配对 + TWS 实听已经用户实测可用✅**（音频播放+输入✅，相机出流 ✅ 2026-10-05）。
-- **G2 ≈45%**：Waydroid 容器+内核+Mesa+GAPPS 镜像+代理通路就绪；Win-x86（Box64 0.4.5+Wine 9）PoC 成功；C9 用例集定稿；C4 传感器链（UDP HAL 实现+宿主数据源+部署脚本）全就绪待上机验证。
-  待办：C1 复跑 → **C3 身份/DRM 取证** → C2 Play 登录 → C4 部署验证（与 `TASKS.md` §4 对齐）。
-- **本轮主线（2026-10-05 用户定）= 尽可能覆盖硬件驱动**：G1-6 TF 卡 / G1-9 DP + 在树未实测项 + **相机 App 实测**（**G1-11 CDSP 已完成 2026-10-07：split 固件 + initramfs，见 `archive/topics/CDSP-FIX-2026-10-07.md`**；**G1-10 NFC 已取消：本机无 NFC 硬件**；G1-7 BT 已收口）；**不做**桌面用户态（G1-26/27/28）、熄屏/关机（G1-22/Q24）、UEFI（G1-29 搁置）。裁决与沿革见 `TASKS.md` §4 + `archive/topics/MERGE-2026-10-05.md`。
-- **2026-10-06→07 上机**：`fastboot boot` 正常；**vk53/vk54 启动失败已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬件，`PITFALLS` #108）**——非 DTS 整体、非 init/用户态。**CDSP 已于 2026-10-07 修复起来（split 固件 + initramfs，非 PAS id）并刷入 boot_b**；**DP：使能 `mdss_dp0` 会阻塞 `msm_drm_bind`→背光亮无显示，已回退 disabled（#128），DP 实验走独立載具**。boot_b=**`vk63`**（在机，2026-10-08 烧录，读回 sha 一致；vk47clean 内核 + H2 DTB（cambist 单挂 MX 电源域，dp0 okay/otg/rotation）+ 完整 ramdisk + 修好 `/init` + split CDSP；cmdline `elden_nocamera=1` ⇒ 相机零自动加载/熄屏安全，DP 可用；**已知问题：面板 init 间歇失败 ~4/7 boot → 只有背光，Q28**）；min initramfs slim 无固件→驱动全废（`PITFALLS` #113），不用。
-- **U1** 当前 = stock Android + root + **无 Linux 分区**（已逆手术，`/data` 211 GiB）；Linux 侧归档 3.44 GB 可无损恢复。
-- **U2** = **BL 已解锁** + a 槽 stock 259 + **b 槽 mainline 持久直启**（当前 boot_b=**`vk63`**，`/`=`/dev/sda17` ext4，Phosh 自启；2026-10-08 烧录+读回校验）；GPT 已手术（`linux17`=193 GiB / `userdata`=256.7 GiB），双表 dump 在 `backup/HA2EXB0E-16+512/`。功能状态与任务进度**权威在 `TASKS.md` §0/§4**，此处不复述。
-  🟢 **G1-22/Q24 熄屏→硬复位：已收盘（H2/vk63，用户实机确认）**（根因=单模块 `cambistmclkcc-sm8750`；修复=DT 单挂 MX 电源域，H1 去 power-domains 7/9 → H2 确认健康）。见 `TASKS.md` §5 Q24、`.pi/plans/2026-10-07-dp5基线-相机补全-加速度.md`、`scripts/sleep-sweep.sh`。
-  🟠 **G1-26/27/28 桌面用户态：根因已定**（`gtk-theme='Adwaita'`；亮度=logind 无 session，`greetd` 真会话后 `SetBrightness` 已解 EISDIR），修复待上机。见 `archive/topics/DT-UI-2026-10-05.md`。
-  ⇒ **解锁议题已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`；**不要重新论证**。
+- **完成度**：G1 ≈90% · G2 ≈45% · G3 PoC ✅（数字权威 = `TASKS.md` §0）。
+- **Linux 侧未解（5，按影响排序）**：
+  ① **Q28 面板 init 间歇失败**（只有背光无桌面，DSI/panel 竞态未定性）→ 日常可用性第一道门；
+  ② **Q24 熄屏→整机硬复位**（已锁单模块 `cambistmclkcc-sm8750` × DT 电源域，H1/D1/D2/H2 未根治；无相机态安全）；
+  ③ **Q26 WiFi 到可用**（重开；假设=版本/DTB 增量连带，待单变量 bisect）；
+  ④ **G1-6 TF 卡间歇写丢失**（未定性，新卡 A/B 待跑）；
+  ⑤ **G1-34 加速度计/重力传感器**（SLPI 私有 I2C，未开工）。
+- **未开工**：上游化 **M1–M5**（`TASKS.md` §7）、G1-8 CPU/GPU 基准。
+- **已定不做 / 搁置 / 取消**（勿重推）：**G1-26/27/28 桌面用户态三问题**（深色主题 / 电源菜单图标 / 亮度滑块 —— 根因已定、修复待上机，但本轮主线不做）、G1-29 UEFI（卡 UFS 初始化）、G1-10 NFC（**本机无 NFC 硬件**）、G1-30 slim initramfs（无固件→外设全废）、kexec 快环（已定论不可用）。
+- **单元**：U1 = stock Android + root（无 Linux 分区，可做 Android 侧对照取证 C0）；U2 = b 槽 mainline 持久直启（在机镜像与回退资产见 `DEVICE.md` §1.1）。
+  🟢 解锁议题**已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`，**不要重新论证**。
 
 ---
 

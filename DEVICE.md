@@ -25,7 +25,7 @@
 ### 1.1 内核与软件基线
 - 内核树：`linux -> geekidos-linux`（GEEKiDoS/linux `v7.2-elden`，**Linux 7.2.0**）+ 本地补丁 `patches/0001–0011`；模块化片段已应用（`patches/config-vk50-modular`）。
 - 配置快照：`patches/config-vk50-modular`（netd/XFRM + camera + thermal + audio 全合 + 模块化）；`config-vk40-bringup` 为历史基线。
-- **U2 在机基线 = `vk47clean` 内核 + `vk63` boot_b**（`uname` = `7.2.0-debug-vk47clean-gbd114ca335e1`）。b 槽 boot_b **现为 `vk63`**（2026-10-08 用户烧录，读回 sha `2f34e887…` 与 `out/boot-elden-vk63.img` 逐字节一致）：**vk47clean 内核（与磁盘模块一致）** + **H2 DTB**（cambist 单挂 `RPMHPD_MX`；`mdss_dp0` okay + dr_mode otg + 相机 rotation） + 完整 ramdisk + 修好的 `/init` + split CDSP 固件；cmdline 带 `elden_nocamera=1`（loader 不自动加载）**且 `/etc/modules-load.d/camera.conf` 置空**（否则 OpenRC `modules` 服务仍会加载相模块）⇒ **不自动加载相机 ⇒ 熄屏安全，DP 可用**（相机按需）。**已知问题：面板 init 间歇失败 ~4/7 boot → 只有背光（Q28，`PITFALLS` #16）**。回退资产：`out/boot-elden-vk62.img`（H1）、`out/boot-elden-camdp-nocam.img`、`out/boot-elden-cdsp-vk47clean.img`、`out/boot_b-before-cdsp-20261007.img`（sha `2b4aa291…`）、`bootslot-b/boot_b-clean.img`。kexec 已定论不可用（见 `TASKS.md` §4）。**当前最优基线 = `vk63`**（已在 boot_b，2026-10-08 烧录+读回校验）：同内核/ramdisk + **H2 DTB**（cambist 单挂 `RPMHPD_MX`）；⚠ 熄屏安全性未根治（2026-10-08 扫测相机加载态 3 轮 2 掉电），见 `TASKS.md` §5 Q24。
+- **U2 在机基线 = `vk47clean` 内核 + `vk63` boot_b**（`uname` = `7.2.0-debug-vk47clean-gbd114ca335e1`）。b 槽 boot_b **现为 `vk63`**（2026-10-08 用户烧录，读回 sha `2f34e887…` 与 `out/boot-elden-vk63.img` 逐字节一致）：**vk47clean 内核（与磁盘模块一致）** + **H2 DTB**（cambist 单挂 `RPMHPD_MX`；`mdss_dp0` okay + dr_mode otg + 相机 rotation） + 完整 ramdisk + 修好的 `/init` + split CDSP 固件；cmdline 带 `elden_nocamera=1`（loader 不自动加载）**且 `/etc/modules-load.d/camera.conf` 置空**（否则 OpenRC `modules` 服务仍会加载相模块）⇒ **不自动加载相机 ⇒ 熄屏安全，DP 可用**（相机按需）。**已知问题：面板 init 间歇失败 → 只有背光（Q28，`PITFALLS` #16；概率与样本数以 `TASKS` §5 Q28 为准）**。回退资产：`out/boot-elden-vk62.img`（H1）、`out/boot-elden-camdp-nocam.img`、`out/boot-elden-cdsp-vk47clean.img`、`out/boot_b-before-cdsp-20261007.img`（sha `2b4aa291…`）、`bootslot-b/boot_b-clean.img`。**不用 min initramfs slim**（无固件→驱动全废，`PITFALLS` #113）。kexec 已定论不可用（见 `TASKS.md` §4）。提交号：实验版 `86ea33c25`，上游化版 `be79b256d`（Linux 侧提交的唯一入口 = `TASKS.md` §7）。⚠ 熄屏安全性未根治（2026-10-08 扫测相机加载态 3 轮 2 掉电），见 `TASKS.md` §5 Q24。
 - `CONFIG_LOCALVERSION` 一变，相机 20 个 `.ko` 必须整套重编（vermagic 耦合）；vk50 起模块化后驱动可单独重编。
 
 ### 1.2 固件清单与通路（"正常驱动原厂全部固件"的分解）
@@ -40,19 +40,20 @@
 | GPU gen80000 `zap/sqe/gmu/aqe` | vendor | `backup/fw/gen80000_*` | `msm` + freedreno | ✅ |
 | 触屏 `novatek_ts_csot_3k_fw.bin` | vendor | `backup/fw/vendor/` | `nt36536` | ✅ |
 | 触觉 FW / 功放 ACF | vendor | 改名喂入 `awinic/y700-gen4-*.bin` | `aw86927` / `aw88461` | ✅ |
-| SLPI 传感器固件 + QMI-SNS | `modem_a` | 仅 `.json` 配置 | **主线无栈 + AP 无总线** | ⛔ 架构性放弃（G2 用软传感器补） |
+| SLPI 传感器固件 + QMI-SNS | `modem_a` | 仅 `.json` 配置 | **主线无栈 + AP 无私有 I2C 总线**（需 QRTR + `qcom_smgr`） | ⛔ 不阻塞主线：G2 走容器软传感器；Linux 原生侧为可选自研（`TASKS` G1-34，未开工） |
 | Modem / SDSP / SPU / TEE / Gunyah hyp | 各分区 | 有 blob | 主线无客户端 | ➖ 不立项 |
 
-### 1.3 驱动矩阵（数字：厂商 529 compatible / 297 `.ko`；主线 SM8750 覆盖 146 compatible）
+### 1.3 驱动面与投入边界（数字：厂商 529 compatible / 297 `.ko`；主线 SM8750 覆盖 146 compatible）
 
-| 级别 | 项 | 性质 |
+> **本节只定“硬件面归类 + 要不要做”；具体功能状态（✅/🟡/⬜）一律看 `TASKS.md` §0/§1，本表不维护状态。**
+
+| 面 | 项 | 性质 / 边界 |
 |---|---|---|
-| **已通** | CPU/GPU/显示/USB/PCIe/UFS/WiFi/BT/触屏/触觉/背光/充电旁路/相机驱动栈/温控分级/**CDSP** | — |
-| **P0** | 相机出流（camss + s5kjns + gc08a8 + wl2868c + flash） | 驱动链已通（`v4l2-ctl` 出帧）；**缺相机 App 实测** |
-| **P1** | TF 卡写稳定性；DP 输出（驱动在树被 `disabled`，缺 ADSP altmode/UCSI） | bug / bring-up（音频已 ✅，G1-4） |
-| **P2** | ~~NFC~~ **取消：本机无 NFC 硬件**（vendor 无 nfc feature/HAL/固件）；**BT 已收口** | — |
-| **P3** | 温控 OEM 增强（`lenovo,sys-temp`/BCL/QMI cooling） | 可用通用框架近似 |
-| **✗ 不投入** | SLPI 7 传感器、TEE/SPU/hw-fence/mem-buf、FM RTC6226、ST54 SE、Gunyah/PMIH010x | 架构性/无源码 |
+| **主线在跑** | CPU/GPU/显示/USB/PCIe/UFS/WiFi/BT/触屏/触觉/背光/充电旁路/温控分级/音频/相机驱动栈/CDSP/DP | 驱动均在树，无缺失 |
+| **在树但需调** | TF 卡写稳定性；面板 init 竞态；WiFi 到可用时长；熄屏×相机共存 | bug / DT 电源域，非缺驱动（G1-6/Q28/Q26/Q24） |
+| **低优先增强** | 温控 OEM 层（`lenovo,sys-temp`/BCL/QMI cooling）；SLPI 传感器原生栈（G1-34） | 前者可用通用框架近似；后者需 QRTR+`qcom_smgr` 栈 |
+| **不成立** | ~~NFC~~ | **本机无 NFC 硬件**（vendor 无 nfc feature/HAL/固件，`PITFALLS` #108） |
+| **✗ 不投入** | TEE/SPU/hw-fence/mem-buf、FM RTC6226、ST54 SE、Gunyah/PMIH010x | 私有或无源码 |
 
 ---
 
@@ -69,10 +70,10 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=**`vk63`**（2026-10-08 烧录+读回 sha 校验：vk47clean 内核 + H2 DTB（cambist 单挂 MX）+ split CDSP；cmdline `elden_nocamera=1` 不自动加载相机）。功能状态：音频播放+输入✅、温控四级✅、相机✅（`v4l2-ctl` 出帧 + App 实测，需手动加载相机模块）、触屏✅、WiFi✅（**vk63 + P40 Pro 实测干净（beacon loss 0、rx≈10/s、1 min 拿 IP）；Q26 重开=版本/DTB 增量连带副作用假设，见 `TASKS` §5 Q26**）、BT 配对+TWS✅（用户 2026-10-06）、**CDSP✅（2026-10-07）**、电池✅、桌面关机/重启已修（#89）、**DP✅**、**面板 init 间歇失败 ~4/7 boot → 只有背光（Q28，#16）**、**G1-22/Q24 熄屏→硬复位：🟡 重开（2026-10-08 SSH 扫测相机加载态 3 轮 2 掉电，H2 未根治；根因=单模块 `cambistmclkcc-sm8750`；无相机态安全）**、`recovery_b` 已刷 TWRP——细节与任务状态**权威在 `TASKS.md` §0/§4** | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=**`vk63`**（2026-10-08 烧录+读回 sha 校验：vk47clean 内核 + H2 DTB（cambist 单挂 MX）+ split CDSP；cmdline `elden_nocamera=1` 不自动加载相机）；`recovery_b` 已刷 TWRP。**外设/驱动功能状态不在本表维护**，一律看 `TASKS.md` §0/§1（当前未解：Q28 面板间歇、Q24 熄屏×相机、Q26 WiFi、G1-6 TF 卡） | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
 
-> **★ 熄屏→整机重启：仍未解（间歇性，2026-10-05 反转）**。受控复现：`vk40` 原始内核 + DPMS off **硬复位 3/3**（不熄屏稳定 ≥151s）。但 `vk42`/«干净重建»各 2 轮「免疫」为少样本观测，**不可信**——刷干净内核到 boot_b + 模块后**仍观察到复位** ⇒ 「`-dirty` 镜像为根因」**未证实**。**停止深究（用户定）**；若再续须长时窗+多样本+单变量。
-> 详细矩阵/方法/源码二分见 `archive/topics/G1-22-2026-10-05.md`、`archive/topics/REBOOT-5MIN-2026-10-05.md` §7.9、`scripts/g1-22-dpms-test.sh`。持久根 `idle-delay=0` 规避**暂时保留**。
+> **★ 熄屏→整机硬复位：未解（间歇性）**。根因已锁定为单模块 `cambistmclkcc-sm8750` × DT 电源域耦合（H1/D1/D2/H2 均未根治）；**无相机模块态安全**。设备侧规避（持久根现状，不得轻改）：cmdline `elden_nocamera=1` + `/etc/modules-load.d/camera.conf` 置空 + `idle-delay=0`。
+> 状态/样本数以 `TASKS.md` §5 Q24 为准；历史二分过程见 `archive/topics/G1-22-2026-10-05.md`、`REBOOT-5MIN-2026-10-05.md` §7.9。
 
 > **口径纠正（2026-10-03）**：旧记录把 U2 现态写成「固件 1.1.11.073 / locked」，来自上轮 AI 未命中 7、8 月技能而留下的过时条目，**已作废**——以本表实机核验值为准（259 + unlocked）。
 
@@ -80,7 +81,7 @@
 
 | 前置状态 | 满足单元 | 可做 |
 |---|---|---|
-| mainline（b 槽直启 + 持久根） | **U2**（b 槽持久直启在跑，vk46-dirty） | U1 已逆手术，mainline 需重做手术 |
+| mainline（b 槽直启 + 持久根） | **U2**（b 槽持久直启在跑；当前镜像版本看 §1.1） | U1 已逆手术，mainline 需重做手术 |
 | stock Android + root | **U1** | 固件对照提取、过环境、AVF 资产复采（可选路线） |
 | 原厂未动 + **BL locked** | （暂无） | 路 C（EDL 直写）不依赖解锁——管线 `scripts/build-locked-chain.sh` 保留作资产；**U2 已走完解锁，不再命中此行** |
 | 原厂未动（**已解锁**，首次手术） | **U2** | GPT dump + 手术 + **RAM 零写盘验收**（`fastboot boot` 可用）；b 槽链已就绪 `bootslot-b-u2/` |
