@@ -19,4 +19,6 @@ mkbootimg_args=--header_version 2 --os_version 15.0.0 --os_patch_level 2025-08 -
 kernel_git_head=d02658e63cf607e71231b077ddd73f42408463c0
 kernel_git_state=clean
 project_git_head=d550fbe70a5d48d8355dcc9edb25f6503e52feb2
-verification=NOT_TESTED_ON_DEVICE
+verification=FLASHED_BOOT_B_HEALTHY
+verification_note=U2 boot_b 烧录 + 启动健康 + qbootctl -m b mark successful（2026-10-08）；
+verification_src=DEVICE.md「U2 在机基线 = vk64 v2 boot_b」/ commit faac615（构建时默认值由后续上机回写）

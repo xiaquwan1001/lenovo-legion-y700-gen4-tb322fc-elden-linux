@@ -97,3 +97,7 @@ vk64	q28-panel-retry	2026-10-08	vk47clean 基线 + commit d02658e63(be79b256d H2
 #     分支头的构建（vk64 即是：分支 elden/vk53-hw 排在前）误判。历史 24 个判定不变。
 #  5. 现状：--gate = OK（新构建 0 硬错，豁免 0）；存量欠账 45 个镜像（口径：含 uts_dup5 这类
 #     带计数后缀的 flag），逐镜像见 versions/vk-kernel-identity.tsv。
+#  6. vk64 上机事实（行内未记，事实以 DEVICE.md 为准）：U2 boot_b = vk64 v2，2026-10-08 烧录 +
+#     启动健康 + `qbootctl -m b` mark successful（证据 commit faac615 / DEVICE.md）。manifest 的
+#     verification 由构建默认值 NOT_TESTED_ON_DEVICE 回写为 FLASHED_BOOT_B_HEALTHY（原值补在
+#     verification_src）。Q28 结论：面板 retry 不足以根治（DSI host 楔死），见 TASKS Q28。
