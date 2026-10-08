@@ -212,7 +212,9 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 - **纳管（track）**：文档、脚本、内核补丁与 config、AI 记忆/技能/任务、小体积证据。
 - **排除（ignore）**：上游 clone、构建产物、可再生成物、大二进制 dump、运行时状态、设备敏感数据。
 - git 仓库根 = 本目录；分支 `main`。上游内核树 `geekidos-linux/` **不是** submodule，其进度以 `patches/` 为准。
-- **异地备份（2026-10-04 起）**：顶层仓 `origin` = `git@git.ustc.edu.cn:xqh/y700-elden`（@xqh，SSH key `~/.ssh/id_ed25519_gitlab_ustc`，全分支+标签）；内核仓 `gitlab` remote = `git@git.ustc.edu.cn:xqh/y700-elden-kernel`（分支 `main` = 合成根 + 9 增量，因 shallow 不能直推）。映射见 `archive/2026-10-04-git-backfill/VERSION-MAP.txt`，内核增量补丁集见 `patches/kernel-history/`。
+- **异地备份（2026-10-04 起）**：顶层仓 `origin` = `git@git.ustc.edu.cn:xqh/y700-elden`（@xqh，SSH key `~/.ssh/id_ed25519_gitlab_ustc`，全分支+标签）——**这条仍然现役**。
+- **内核 gitlab 镜像 = 已归档（2026-10-08 冻结）**：`xqh/y700-elden-kernel`（本地 remote 已改名 `gitlab-archived`，`pushurl=no-push://…` 本地拦截，fetch 仍可用）。它的内容是 **2026-10-04 的回填合成线**（tip `fe54fcfff` = vk48 draft，10 提交含一个合成 base 提交），与现役线 `elden/vk53-hw`（19 提交）**无祖先关系**（已实测 merge-base 为空）；该线在本地由分支 `archive/gitlab-mirror-vk48` 固定。**为何不能更新**：`geekidos-linux/` 是 **shallow 仓**（`.git/shallow` graft 于 `ba28ec16f`），服务器拒绝任何 shallow 更新（实测 `! [remote rejected] … (shallow update not allowed)`，**force push 同样不行**）——与 10-04 当时记的「因 shallow 不能直推」同一回事。映射见 `archive/2026-10-04-git-backfill/VERSION-MAP.txt`，内核增量补丁集见 `patches/kernel-history/`（这两者才是内核历史的权威文本记录）。
+- ⚠️ **内核仓现役线目前无站外 git 备份**（镜像冻结、`origin` 是上游 GEEKiDoS 不是我们的）。现役可用备份 = `backup/kernel-git-repair-2026-10-08/elden-all-refs-1820.bundle`（**265 MB / 41 ref**，`bundle verify` 判为「完整历史」，含 vk40→vk64 + 5 个 `archive/*`；旧的 1743 那份 279 MB/38 ref 没有 vk43 留白 tag，保留作修复前留存）。要恢复站外备份只有两条路：① 把 bundle 传云盘（技能 `ustc-cloud-drive`，零 git 约束）；② `git fetch --unshallow origin` 补全上游历史后新建项目推（要下 1–2 GB，与「避免重复下载大文件」相左，需拍板）。
 - ⚠️ gitignore 注释必须独占一行（行尾 `#` 会被当作模式一部分，静默失效）。
 
 ### 2. 顶层台账
