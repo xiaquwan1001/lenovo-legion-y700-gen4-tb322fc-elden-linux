@@ -21,16 +21,34 @@ sha() { [ -e "$1" ] && sha256sum "$1" | cut -d' ' -f1 || echo "(absent)"; }
 KV=$(make -s -C "$KDIR" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE:-aarch64-linux-gnu-}" \
 	${LOCALVERSION:+LOCALVERSION=$LOCALVERSION} kernelrelease 2>/dev/null || echo "(unknown)")
 
-# Ground truth: the UTS string baked INTO the image (decisive; file names lie).
-UTS=$(python3 - "$IMG" <<'PY' 2>/dev/null || echo "(unknown)"
-import sys, zlib, re
-data = open(sys.argv[1], 'rb').read()
-i = data.find(b'\x1f\x8b\x08')
-k = zlib.decompress(data[i:], 16 + zlib.MAX_WBITS)
-m = re.search(rb'Linux version [0-9][^\x00]+', k)
-print(m.group(0).split(b')')[0].strip().decode() if m else '(unknown)')
+# Ground truth: the UTS string AND the kernel-payload hash baked INTO the image
+# (decisive; file names and tree-side hashes both lie — see PITFALLS #131/#160).
+# kernel_payload_sha256 是「内核身份」的唯一可靠判据：同一 UTS 串可以对应不同二进制
+#（athm / wifi-* 沿用 vk47clean 的 LOCALVERSION 但重编过），只有解压后的字节不会骗人。
+UTS='(unknown)'; KPAYLOAD='(unknown)'
+eval "$(python3 - "$IMG" <<'PY' 2>/dev/null || true
+import sys, zlib, re, hashlib
+try:
+    data = open(sys.argv[1], 'rb').read()
+    i = data.find(b'\x1f\x8b\x08')
+    k = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(data[i:], 128 << 20)
+    m = re.search(rb'Linux version (\S+)', k)
+    print('UTS="Linux version %s"' % (m.group(1).decode() if m else '(unknown)'))
+    print('KPAYLOAD="%s"' % hashlib.sha256(k).hexdigest())
+except Exception:
+    pass
 PY
-)
+)"
+
+# 真正打进 boot.img 的 kernel/dtb 文件（从 mkbootimg argv 里读，而不是猜树里的路径）。
+pick_arg() { printf '%s\n' "${1:-}" | tr ' ' '\n' | awk -v k="--$2" '$0==k{getline; print; exit}'; }
+PK_KERNEL=$(pick_arg "${MKBOOTIMG_ARGS:-}" kernel)
+PK_DTB=$(pick_arg "${MKBOOTIMG_ARGS:-}" dtb)
+resolve() { [ -n "$1" ] || return 0; [ -e "$1" ] && printf '%s' "$1" || printf '%s' "$ROOT/$1"; }
+PK_KERNEL=$(resolve "$PK_KERNEL"); PK_DTB=$(resolve "$PK_DTB")
+# 构建时那棵树的内核 ≟ 镜像里那个内核（vk52 类事故的现场自证）
+if [ "$KV" = '(unknown)' ] || [ "$UTS" = '(unknown)' ]; then K_MATCH=unknown
+else K_MATCH=$([ "${KV}" = "${UTS#Linux version }" ] && echo yes || echo no); fi
 
 KHEAD=$(git -C "$KDIR" rev-parse HEAD 2>/dev/null || echo "(none)")
 KDIRTY=$(git -C "$KDIR" status --porcelain 2>/dev/null | head -1 || true)
@@ -46,9 +64,15 @@ PHEAD=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo "(none)")
 	echo "image_size=$( [ -e "$IMG" ] && stat -c%s "$IMG" || echo 0 )"
 	echo "kernel_release=$KV"
 	echo "kernel_uts=$UTS"
+	echo "kernel_payload_sha256=$KPAYLOAD"
+	echo "kernel_release_matches_image=$K_MATCH"
 	echo "kernel=$KDIR/arch/arm64/boot/Image.gz"
 	echo "kernel_sha256=$(sha "$KDIR/arch/arm64/boot/Image.gz")"
 	echo "kernel_image_sha256=$(sha "$KDIR/arch/arm64/boot/Image")"
+	echo "kernel_packed_from=${PK_KERNEL:-(unknown)}"
+	echo "kernel_packed_sha256=$(sha "${PK_KERNEL:-/nonexistent}")"
+	echo "dtb_packed_from=${PK_DTB:-(unknown)}"
+	echo "dtb_packed_sha256=$(sha "${PK_DTB:-/nonexistent}")"
 	echo "dtb=$KDIR/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb"
 	echo "dtb_sha256=$(sha "$KDIR/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb")"
 	echo "config_sha256=$(sha "$KDIR/.config")"

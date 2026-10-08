@@ -66,7 +66,10 @@
 
 - 文本搜索：`rg` / `grep`（`PITFALLS.md` 找踩坑、`RESOURCES.md` 找资源、`TASKS.md` 找任务）。
 - 会话回忆：pi 原生会话选择器（`/resume`）+ `rg .pi/sessions`。
-- 结构自检：`scripts/check-doctor.sh`（计数/死链/口径冲突）。
+- 结构自检：`scripts/check-doctor.sh`（计数/死链/口径冲突/vk 版本账 §5+§5d）。
+- 版本对账：**`versions/vk-kernel-identity.tsv`**（构建号 ↔ 内核二进制 ↔ 源提交，含每个镜像的失真标记）。
+  它是本目录**唯一入 git 的派生表**（破例理由：兼作版本欠账账本）；由 `scripts/vk-identity.py` 重生成，
+  `check-doctor` §5d 强新鲜度（过期即 FAIL）。“vkN 是什么”的口径见 `PITFALLS` #135。
 
 ---
 
@@ -95,6 +98,9 @@
 cd ~/y700-elden          # ★ 启动入口即此（旧 flashing/eacndev/lob-remake 三个 cd 包装 2026-10-04 移除 → PITFALLS §15.1）
 # 【收尾自检】计数漂移 / 死链 / 口径冲突（全绿再收工）
 scripts/check-doctor.sh
+# 【版本对账】“这个 boot.img 里到底是哪个内核” / 重生成对齐表
+python3 scripts/vk-identity.py --gate                    # 只看命名/溯源规则结果
+python3 scripts/vk-identity.py > versions/vk-kernel-identity.tsv   # 重生成（随后连表一起提交）
 # 【动手前 30 秒】引导链类问题（解锁/AVB/降级/GPT/EDL）先查本地 7、8 月已有结论（#87）
 grep -rn -iE "unlock|解锁|sn\.img|1\.1\.11\.|rollback|testkey|073|\.120" \
   .pi/skills/*/references/*.md *.md archive/topics/*.md | grep -v '^Binary'

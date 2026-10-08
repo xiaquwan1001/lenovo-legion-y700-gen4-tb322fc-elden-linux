@@ -10,6 +10,8 @@
 #   3. 过期字样        已删除/合并的旧文件与旧计数是否又被引用
 #   5. vk 版本账        registry 单调唯一 / registry 号必有 manifest / 树自称 ≡ 镜像内内核
 #                        （已审在案的历史项见 versions/vk-ledger-known-issues.tsv，降为 WARN）
+#   5d. 内核身份表      versions/vk-kernel-identity.tsv 新鲜度 + 命名/溯源规则门
+#                        （号↔内核二进制↔源提交 对齐；由 scripts/vk-identity.py 生成）
 set -uo pipefail
 cd "$(dirname "$0")/.."
 ROOT=$PWD
@@ -266,6 +268,30 @@ else
       FAIL) bad  "$msg" ;;
     esac
   done <<< "$ledger"
+fi
+
+# ---------------------------------------------------------------- 5d. 内核身份表
+# §5 只看 boot-elden-vk*.img、且只比 manifest 内部两个同源字段（永远相等），抓不到
+# 「同 UTS 串不同二进制」和「vk 号其实装的是别的号的内核」。这里补上。
+echo
+echo "== 5d. 内核身份表（号 ↔ 内核二进制 ↔ 源提交）=="
+ident=$(python3 scripts/vk-identity.py --gate 2>&1)
+if [ -z "$ident" ]; then
+  warnf "内核身份检查未产出结果（python3 / geekidos-linux 缺失？）"
+else
+  while IFS=$'\t' read -r st msg; do
+    case "$st" in
+      OK)    ok   "$msg" ;;
+      WARN)  warnf "$msg" ;;
+      FAIL)  bad  "$msg" ;;
+      *)     warnf "身份表检查输出无法解析：$st $msg" ;;
+    esac
+  done <<< "$ident"
+fi
+if python3 scripts/vk-identity.py --check 2>/dev/null; then
+  ok "versions/vk-kernel-identity.tsv 与当前镜像/registry/内核 ref 一致"
+else
+  bad "内核身份表已过期 → 跑 scripts/vk-identity.py > versions/vk-kernel-identity.tsv 并重提交"
 fi
 
 # ---------------------------------------------------------------- 6. 静态卫生（防造轮回退）

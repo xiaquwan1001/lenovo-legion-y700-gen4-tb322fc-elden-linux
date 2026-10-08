@@ -50,3 +50,38 @@ vk63	sleepdeath	2026-10-07	H2 收盘：cambist 单挂 MX 电源域（实验提�
 # 更正（2026-10-08）：vk63 已由用户烧录 boot_b（Linux 侧只读读回，截断至镜像大小 sha 2f34e887 与
 # out/boot-elden-vk63.img 逐字节一致）；dtbo_b=全零 payload+AVB footer（无 overlay 内容）。
 # 已知问题：面板 init 间歇失败 ~4/7 boot（DSI DCS -110 → 只有背光，Q28/PITFALLS #16）。
+vk64	q28-panel-retry	2026-10-08	vk47clean 基线 + commit d02658e63(be79b256d H2 DTS + panel nt36536 init retry on -110)；v1 sha 0e292273… 从坏 config(.config.old，缺 DRM_MSM 等 3000+ 项)构建→过 BL 不起内核(只充电标志)已作废；v2 修正 = 从 vk63 镜像内 extract-ikconfig 恢复真配置(与 vk63 diff 0)；sha 15964160…；UTS 7.2.0-debug-vk64-gd02658e63cf6；H2 DTB + full ramdisk + elden_nocamera=1
+#
+# ============================================================================
+# 命名与溯源规则（2026-10-08 全量对账后定；逐镜像证据 = versions/vk-kernel-identity.tsv，
+# 机制与教训 = PITFALLS #135/#136；对账范围 out/ 76 镜像 × 61 manifest × 内核仓 ref）
+# ----------------------------------------------------------------------------
+# 1. 口径：vkN = **构建/载具流水号**，不表示内核版本。内核身份唯一可靠判据 = 镜像内核
+#    载荷（首段 gzip）解压字节的 sha256（表列 kbin_sha）；源码身份看 src_sha + src_tag。
+# 2. 实测规模：80 个镜像里只有 **27 个不同内核二进制**；`7.2.0-debug-vk47clean-gbd114ca335e1`
+#    这一个 UTS 串对应 **5 个不同二进制**（athm / wifi-bmiss-1 / wifi-bmiss-2 / wifi-timing-1
+#    沿用 LOCALVERSION 但重编过）；**24 个镜像的 vk 号 ≠ 其内核提交所属的 vk tag**。
+# 3. 上行 note 的可读性纠正（行不改写，以本段为准）：
+#    vk60 / vk61 / vk62 / vk63 的内核二进制**同一个**（kbin 55883e0cdfb2 = vk47clean，
+#      src vk47 @ bd114ca335e1）；vk62→vk63 的差异全在 DTB（cambist H1→H2），内核没重编。
+#    vk54 / vk54-ram / vk54-slim / vk56-slim / vk57-slim 的内核实为 **vk53 提交 + dirty**；
+#      tag `vk54`（vabits fix @26cd13b1c4a2）只出现在未登记的 vk54f 与 dp3–dp6 / cdsp-* 里。
+#    vk58* / vk59* 的内核 = vk54 提交（tag vk54），不是 vk53 内容（与 vk59 行 note 一致）。
+#    vk46*/vk47*/vk47a 同理各差一号（详见身份表 num_ne_tag 列）。
+# 4. 纪律（check-doctor §5d 自 2026-10-08 00:00 起对**新打**的镜像硬拦，历史存量降 WARN）：
+#    先 commit 再 build（kernel_git_state=clean 才可上机）；号在 commit 之后 alloc；
+#    禁止用变体名当 LOCALVERSION（sd-* 那 7 个镜像 UTS 里无 git sha，已不可回溯）；
+#    实验镜像走 vkD*/vkB* 后缀不占号；重打包必须 unpack 原镜像取 kernel（#131）。
+# 5. 内核仓悬空提交已抢救：tag `archive/vk63-tree` @1389ed11b063、
+#    `archive/vk63-exp-H2` @86ea33c25（rebase 遗留，防 gc 丢失；主线等价提交 c53e471be / be79b256d）。
+# 6. 在途豁免（不进 §5d 新鲜度门，收口后必须从 versions/vk-identity-inflight.txt 删）：
+#    vk64 及其无版本号拷贝 boot-elden.img。
+# ============================================================================
+# ----------------------------------------------------------------------------
+# 7. 内核仓对象库修复记录（2026-10-08，详见 PITFALLS #137）：唯一 pack 在偏移 74771299
+#    处局部损坏（blob drivers/gpu/drm/amd/display/dc/link/link_resource.c），已用工作树
+#    完好副本重建 loose 对象 → repack -a -d 完成；fsck 现全清，HEAD/工作树未变。
+#    备份（不入 git）：backup/kernel-git-repair-2026-10-08/{elden-all-refs-*.bundle, corrupt-pack-3ed827c2.pack}
+#    为 repack 新增的 archive/* ref（不是构建号，勿与 vkN 混用）：
+#      archive/vk43-honest-gap   = 找回被删 ref 的 annotated tag 对象（vk43 诚实留白正文）
+#      archive/wip-2026-10-08-fa9ae91ad = 固定仅存 reflog 的 stash/WIP（属 vk64 会话；其收口后可删）

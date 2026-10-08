@@ -3,7 +3,8 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-07（**#132 = ★Q24 熄屏→硬复位单模块根因 `cambistmclkcc-sm8750`（H1 去 power-domains 3/3→7/9，驱动 D1/D2 无效）**；**#133 = ★A/B 槽位必须 `qbootctl -m b`（否则 ABL 抛 fastboot，勿误判“启动慢”）**；**#134 = ★长测试脚本必须实时落盘（工具被取消时看不到输出）**；**#131 = ★boot 镜像重打包必须 unpack 原镜像取 kernel（manifest kernel 列误导）**；**#130 = ★dma-buf 只加载 system_heap、绝不 cma_heap（DmaHeap 探测序 CMA 优先）**；**#129 = 华为 P40 Pro 热点 5 GHz 平板连不上/2.4 GHz 正常（仅记录）**；**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记（§15.5 已改为纯指针表：状态/样本数只在 `TASKS.md` 维护，本表不写状态）**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
+> 最后更新：2026-10-08（**#137 = ★内核仓 pack 局部损坏（inflate error）→ 工作树干净时可本地重建 loose 对象自给修复；repack 前必须先固定仅存 reflog 的对象**；**#135 = ★`vkN` 是构建/载具号不是内核版本；内核身份唯一判据 = 镜像内核载荷解压 sha256（全量对账：76 镜像只有 27 个不同内核）**；**#136 = ★「改完不提交就重编」是版本账混乱的生成机制（号+1、sha 停在上一号、带 -dirty）**；以上两条的工具入口：`scripts/vk-identity.py` + `versions/vk-kernel-identity.tsv` + `check-doctor` §5d。
+> 末更新 2026-10-07：**#132 = ★Q24 熄屏→硬复位单模块根因 `cambistmclkcc-sm8750`（H1 去 power-domains 3/3→7/9，驱动 D1/D2 无效）**；**#133 = ★A/B 槽位必须 `qbootctl -m b`（否则 ABL 抛 fastboot，勿误判“启动慢”）**；**#134 = ★长测试脚本必须实时落盘（工具被取消时看不到输出）**；**#131 = ★boot 镜像重打包必须 unpack 原镜像取 kernel（manifest kernel 列误导）**；**#130 = ★dma-buf 只加载 system_heap、绝不 cma_heap（DmaHeap 探测序 CMA 优先）**；**#129 = 华为 P40 Pro 热点 5 GHz 平板连不上/2.4 GHz 正常（仅记录）**；**#128 = ★使能 `mdss_dp0` 阻塞 `msm_drm_bind` → 背光亮无显示（已回退）**；**#127 = ★CDSP 用 stock split 固件且必须打进 initramfs（G1-11 已起，PAS id 假设否证）**；**#126 = 槽位元数据改用 `qbootctl`（+ slot_suffix/重扫两坑）**；**#125 = `ATH12K=m` 经 select 把 `PCI_PWRCTRL_PWRSEQ` 拉成 m ⇒ PCIe 起不来**；**#124 = 熄屏掉电判别法**；**#117 = WiFi 双管理器/NM DHCP 重激活（Q26）**；**#116 = 打包可复现（cpio `--reproducible` 不归零 mtime）＋initramfs 载具固化**；#109–#114 = init 固化/开机刷屏真因/slim 无固件/BT 新观测/口径更正清单；#108 = ★vk53/vk54 启动失败根因=使能 i2c0（本机无 NFC 硬件，三分层单变量定案）；#99–#103 = 持久根模块对齐 / PipeWire 占相机 / boot 接线 / `-dirty` 镜像不可信 / `gsettings` 需 session bus；#93 = 「RAM 启动」两种镜像之辨；**§0 新增零号纪律 4（无设备证据不得写「已修复」）**；**#115 = 归因分层（驱动/内核 vs initramfs/rootfs vs 用户态）**；**§15 = 过时/废弃/功能缺陷登记（§15.5 已改为纯指针表：状态/样本数只在 `TASKS.md` 维护，本表不写状态）**；已收窄/被推翻的条目在正文内以「⛔superseded」标记，只保留当前判据与指针）。
 
 ---
 
@@ -441,9 +442,29 @@
     - 现象：boot_b 刷入后有时“起不来/很久才起”，实为 **retry 计数递减/耗尽 → ABL 停驻 fastboot**；不是启动慢、不是镜像坏。
     - 处置：每次成功启动后 `qbootctl -m b`（cmdline 无 `slot_suffix`，**务必显式写 b**）；也可用 `python3 /usr/local/sbin/slot-attr.py show` 核 retry/succ。详见技能 `qbootctl-slot-management`。
 
+
 134. **★长测试脚本必须实时落盘；agent 看不到被用户取消的工具调用输出（2026-10-07，用户要求）**。
     - 后果：长扫掠脚本只靠 stdout，一旦被取消/超时，中断前的数据全丢，导致重复劳动或误判。
     - 纪律：所有长测试/扫掠脚本内部 `exec > >(tee -a "$LOG") 2>&1`（或至少 `bash script > log 2>&1` 持续追加），agent 从 `$LOG` 读结果并在汇报里给出日志路径。`scripts/sleep-sweep.sh` 已照此改。
+
+135. **★`vkN` 是「构建/载具号」不是内核版本；内核身份唯一判据 = 镜像内核载荷解压后的 sha256（2026-10-08 全量对账 76 镜像/61 manifest）**。
+    - 实测三类失真同时存在：**同号不同内核二进制**（`vk47clean` 这一个 UTS 串背后 5 个不同二进制：athm / wifi-bmiss-1 / wifi-bmiss-2 / wifi-timing-1 沿用了 LOCALVERSION 但重编过）；**不同号同一内核**（80 镜像只有 27 个不同内核；vk60/61/62/63 四个正式号装的是同一个 vk47clean 二进制，vk42 == vk52-slim）；**号与内核源不同号**（24 个镜像的 vk 号 ≠ 其内核提交所属的 vk tag）。
+    - 后果：拿镜像名/UTS 串做归因会错到另一个内核上去（历史事故：vk52-slim 实为 vk42 内核，见 registry 2026-10-06 更正；vk61 “uname 仍是 vk47clean” 不是故障而是载具号的正确签名，见 RESOURCES §4 `01a11074`）。
+    - 判据与工具：**内核身份 = 镜像首段 gzip 解压字节的 sha256**（`scripts/vk-identity.py` 已实现）。全量对齐表 `versions/vk-kernel-identity.tsv`（号↔内核二进制↔源提交↔flag）；机读门 `scripts/check-doctor.sh` §5d（在途构建走 `versions/vk-identity-inflight.txt` 豁免，收口后必须删）；manifest 新增 `kernel_payload_sha256` / `kernel_release_matches_image` / `kernel_packed_from`（#131 的根治）。
+    - 命名口径（2026-10-08 起约束新构建）：`vkN` 只作构建流水号；**内核源码版本一律看 `src_sha`+tag，不看镜像名**；禁止用变体名当 LOCALVERSION（`sd-*` 那套 UTS 里没有 git sha，已 7 个镜像无法回溯）。
+
+136. **★「改完不提交就重编」是版本账混乱的生成机制：号 +1、sha 停在上一号、还带 `-dirty`（2026-10-08 对账实锤）**。
+    - 证据：`vk46.img`/`vk46-ram`/`vk47a-ram` 内核实为 **vk45 提交 + dirty**；`vk47*.img` 实为 **vk46 提交 + dirty**；`vk54*.img` 实为 **vk53 提交 + dirty**（tag `vk54` 那个 vabits 提交只在未登记的 `vk54f` 里跑过）；vk58/vk59 系列实为 vk54 提交。
+    - 后果：①「vkNN 修好了」这种话无法复现（源码状态在 dirty 里）；② `-dirty` 镜像不可信（#103）；③ 事后 rebase 会让 manifest 记的 head 变悬空提交（vk63 的 `1389ed11b063` 与 `86ea33c25` 已靠 tag `archive/vk63-tree`、`archive/vk63-exp-H2` 抢救）。
+    - 纪律：**先 commit 再 build**（`kernel_git_state=clean` 才可上机，既有纪律）；号在 commit 之后由 `lane.sh alloc` 分配；若必须用 dirty 树做实验，镜像名一律加实验后缀（`vkD*/vkB*` 惯例）且**不占 registry 号**。
+
+137. **★内核仓唯一 pack 局部损坏（`inflate: data stream error`）；工作树干净时可本地自给修复（2026-10-08）**。
+    - 现场：`git cherry`/`repack` 报 `inflate: data stream error (invalid literal/lengths set)`；`git fsck` 报 pack checksum mismatch + 单对象 CRC 坏（偏移 74771299）。坏对象是 **blob `drivers/gpu/drm/amd/display/dc/link/link_resource.c`**（与本项目无关的 AMD 文件）。
+    - 陷阱：**“逐 ref 走 `rev-list --objects` 零错”是假阴性** —— blob 只被列名不被解压，所以看起来“不可达/无影响”；repack 要写它才暴雷。判可达要看 `rev-list --objects --all | grep ^<sha>`，不是看 walk 有无错。
+    - 为什么 fetch 修不了：`git fetch --refetch` 也不行 —— 本地 idx 声称“已有该对象”，index-pack 会直接中止（`fatal: 打包对象 … 已损坏`）。
+    - **修复（零联网）**：工作树是 clean 的 ⇒ 该文件在盘上就是完好内容。`git ls-tree HEAD -- <path>` 与 `git hash-object <path>` 均 = 坏对象 sha ⇒ 手写一个 loose 对象（`zlib.compress(b'blob %N\0'+data, 1)` 写到 `.git/objects/xx/…`），loose 优先于 pack ⇒ `git fsck` 不再报错 ⇒ `git repack -a -d` 能写出新 pack 并删除坏包。**`git hash-object -w` 在这里会静默跳过（认为对象已存在），所以必须手写 loose 文件**。
+    - 事前备份（必做，顺序不能错）：① `git bundle create … --all`（38 ref，“完整历史”）；② 把坏 pack 的 `.pack/.idx` 物理拷一份；③ 才动 repack。地点 `backup/kernel-git-repair-2026-10-08/`（不入 git）。
+    - 副作用控场：`repack -a -d` 会丢仅存在于 reflog 的对象——本次发现一个 **未固定的 stash/WIP 提交 `ec173aec8`**（属并发的 vk64 会话）和一个被删了 ref 的 annotated tag 对象（内容正是 vk43 诚实留白）；先各给一个 `archive/*` ref 固定，再 repack。结果：fsck 全清、HEAD/工作树未变。
 
 ---
 
