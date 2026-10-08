@@ -461,7 +461,7 @@
 137. **★内核仓唯一 pack 局部损坏（`inflate: data stream error`）；工作树干净时可本地自给修复（2026-10-08）**。
     - 现场：`git cherry`/`repack` 报 `inflate: data stream error (invalid literal/lengths set)`；`git fsck` 报 pack checksum mismatch + 单对象 CRC 坏（偏移 74771299）。坏对象是 **blob `drivers/gpu/drm/amd/display/dc/link/link_resource.c`**（与本项目无关的 AMD 文件）。
     - 陷阱：**“逐 ref 走 `rev-list --objects` 零错”是假阴性** —— blob 只被列名不被解压，所以看起来“不可达/无影响”；repack 要写它才暴雷。判可达要看 `rev-list --objects --all | grep ^<sha>`，不是看 walk 有无错。
-    - 为什么 fetch 修不了：`git fetch --refetch` 也不行 —— 本地 idx 声称“已有该对象”，index-pack 会直接中止（`fatal: 打包对象 … 已损坏`）。
+    - 为什么 fetch 修不了：`git fetch --refetch` 也不行 —— 本地 idx 声称“已有该对象”，index-pack 会直接中止（`fatal: 打包对象 … 已损坏`）。副作用：中止会在 `.git/objects/pack/` 留 `tmp_pack_*` 残骸（每个 ~73 MB，本次堆了 218 MB）；确认 `pgrep -af "git (fetch|clone|index-pack)"` 为空后 `rm` 即可，git 不引用它们。
     - **修复（零联网）**：工作树是 clean 的 ⇒ 该文件在盘上就是完好内容。`git ls-tree HEAD -- <path>` 与 `git hash-object <path>` 均 = 坏对象 sha ⇒ 手写一个 loose 对象（`zlib.compress(b'blob %N\0'+data, 1)` 写到 `.git/objects/xx/…`），loose 优先于 pack ⇒ `git fsck` 不再报错 ⇒ `git repack -a -d` 能写出新 pack 并删除坏包。**`git hash-object -w` 在这里会静默跳过（认为对象已存在），所以必须手写 loose 文件**。
     - 事前备份（必做，顺序不能错）：① `git bundle create … --all`（38 ref，“完整历史”）；② 把坏 pack 的 `.pack/.idx` 物理拷一份；③ 才动 repack。地点 `backup/kernel-git-repair-2026-10-08/`（不入 git；修复后重建的 bundle = 41 ref/265 MB，见 RESOURCES §3.1）。
     - 副作用控场：`repack -a -d` 会丢仅存在于 reflog 的对象——本次发现一个 **未固定的 stash/WIP 提交 `ec173aec8`**（属并发的 vk64 会话）和一个被删了 ref 的 annotated tag 对象（内容正是 vk43 诚实留白）；先各给一个 `archive/*` ref 固定，再 repack。结果：fsck 全清、HEAD/工作树未变。
