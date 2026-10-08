@@ -94,3 +94,41 @@ H. [agent] 重连后 adb pull /root/kmsg-diag.log → 读最后 [KD] stage=
 - 每轮上机前 `python3 scripts/slot-attr.py mark-successful b`（`boot_b` 维持 0x7f，防 retry 耗尽）。
 - `fastboot boot` 零写盘；掉电靠 VBUS 自动开机回 boot_b。
 - 长跑上机段设 `timeout` 盒，`pgrep` 核实进程退出。
+
+---
+
+## 6. 上机结果（2026-10-08 深夜，U2/HA2EXB0E）—— P0 达成
+
+内核：m0/m1b = `g6cbe1ffa7622`；m1c（带 sysfs 开关）= `ge70d0b660b74`。
+落盘通道：`setsid nohup python3 kd-dump.py`（脱离 SSH，逐行 fsync 到 linux17 磁盘根）→ **成功抓到掉电点**（修复了 R2「SSH 子进程随 SYS_RESTART 被杀」的致命伤）。
+
+### 6.1 m0（mask=0，全跑）：掉电点在 device_shutdown 内部
+最后标记停在 `[KD] stage=11a before device_shutdown`，**无 11b**。尾迹：
+```
+stage=10 → 11a before device_shutdown
+→ dwc3-qcom usb teardown → sd 0:0:0:0 [sda] Synchronizing SCSI cache → （掉电）
+```
+即 `device_shutdown()` 反向遍历到 UFS/SCSI 附近时触发整机掉电。
+
+### 6.2 m1c（sysfs 设 mask=1，跳 device_shutdown）：整条路径全通 🎯
+```
+stage=10 skip_mask=1 → 11a SKIP device_shutdown → 11 → 12(migrate)
+→ 13 before syscore → 14 after syscore → "Starting new kernel"
+→ psci: CPU1..6 killed   （已进入 machine_kexec）
+```
+`Starting new kernel` 是 R1/R2 从未越过的里程碑，本次首次到达。
+
+### 6.3 结论（Q11 关机阶段掉电 = 已定位并给出规避）
+1. **`device_shutdown()` 是静默掉电的唯一触发点**。跳过它即走通 notifier→migrate→syscore→CPU offline→machine_kexec 全程。
+2. **`syscore_shutdown` 无罪**（stage=14 干净通过）。
+3. kexec 机器本身正常（trans_pgd、CPU offline 均对）。
+4. `kexec_dbg=` cmdline 解析在本树不生效（回显 mask=0）；改用 sysfs `/sys/kernel/kexec_diag/kexec_diag` 运行时设定+读回（`g e70d0b660`）。
+
+### 6.4 遗留（第二个、更窄的正交问题，非 Q11 本体）
+mask=1 跳转后设备约 20s 以 **vk64(boot_b 持久)**回来（经 ABL，非 kexec 落地），pstore 空
+⇒ 目标内核（Image.kd）在跳转后早期失败/复位，未起来。这与「关机阶段掉电」是两码事，
+属「kexec 二阶段/目标早期」问题，需单独立项排查（候选：目标 cmdline/内存/KASLR/DTB 交接）。
+
+### 6.5 资产更新
+- 内核 `e70d0b660`（sysfs 开关 + 加固解析）；`out/boot-elden-vk65b.img`；`out/kexec-diag/{Image.kd,elden.dtb,kmsg-*.log}`
+- 落盘 dumper：设备 `/root/kd-dump.py`（setsid 版）。
