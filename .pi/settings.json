@@ -1,12 +1,14 @@
 {
   "sessionDir": ".pi/sessions",
-  "defaultProvider": "deepseek",
-  "defaultModel": "deepseek-flash",
-  "defaultThinkingLevel": "low",
-  "retry": {
-    "enabled": true,
-    "maxRetries": 8,
-    "baseDelayMs": 3000,
-    "maxAgentDelayMs": 60000
+  "subagents": {
+    "defaultModel": "ustc-pool/ustc",
+    "agentOverrides": {
+      "researcher": {
+        "tools": ["read", "write", "grep", "ls", "web_search", "web_fetch", "web_providers"]
+      },
+      "evidence-auditor": {
+        "tools": ["read", "grep", "ls", "web_search", "web_fetch", "web_providers"]
+      }
+    }
   }
 }

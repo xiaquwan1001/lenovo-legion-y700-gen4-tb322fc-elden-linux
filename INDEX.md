@@ -79,12 +79,12 @@
 > 单元与镜像形态以 `DEVICE.md` §1.1/§2.2 为准。**本节只回答「现在还没解决什么」，任何数字都不在此维护。**
 
 - **完成度**：G1 ≈90% · G2 ≈45% · G3 PoC ✅（数字权威 = `TASKS.md` §0）。
-- **Linux 侧未解（5，按影响排序）**：
-  ① **Q28 面板 init 间歇失败**（只有背光无桌面，DSI/panel 竞态未定性）→ 日常可用性第一道门；
+- **Linux 侧未解（4，按影响排序；G1-34 重力已通移出）**：
+  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门；近因收窄=DPU 上电 `pm_runtime_get_sync` 吞错竞态（`research-q28-dpu-powerup-race-2026-10-09.md`），**本轮暂停**；
   ② **Q24 熄屏→整机硬复位**（已锁单模块 `cambistmclkcc-sm8750` × DT 电源域，H1/D1/D2/H2 未根治；无相机态安全）；
   ③ **Q26 WiFi 到可用**（重开；假设=版本/DTB 增量连带，待单变量 bisect）；
   ④ **G1-6 TF 卡间歇写丢失**（未定性，新卡 A/B 待跑）；
-  ⑤ **G1-34 加速度计/重力传感器**（SLPI 私有 I2C，未开工）。
+  ~~⑤ G1-34 加速度计/重力传感器~~ ✅ 重力/自动旋转已可用（SSC/QRTR svc400 + iio-sensor-proxy，开机时序竞态已修持久化，见 `PITFALLS` §十六）；prox/als/compass 待核，已从本列移出未解。
 - **未开工**：上游化 **M1–M5**（`TASKS.md` §7）、G1-8 CPU/GPU 基准。
 - **已定不做 / 搁置 / 取消**（勿重推）：**G1-26/27/28 桌面用户态三问题**（深色主题 / 电源菜单图标 / 亮度滑块 —— 根因已定、修复待上机，但本轮主线不做）、G1-29 UEFI（卡 UFS 初始化）、G1-10 NFC（**本机无 NFC 硬件**）、G1-30 slim initramfs（无固件→外设全废）、kexec 快环（**根因已定位 2026-10-08**：device_shutdown 内 cpufreq_suspend+关机遍历多触发叠加掉电、非单元凶，唯一规避=整段跳 device_shutdown；目标内核 kexec 引导失败＝关键路径遗留、需早期串口→本机不具备故搁置；详见 `archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md` §8/§9）。
 - **单元**：U1 = stock Android + root（无 Linux 分区，可做 Android 侧对照取证 C0）；U2 = b 槽 mainline 持久直启（在机镜像与回退资产见 `DEVICE.md` §1.1）。

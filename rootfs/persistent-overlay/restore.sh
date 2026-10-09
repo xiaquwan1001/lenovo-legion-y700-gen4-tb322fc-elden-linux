@@ -26,6 +26,14 @@ tar xzf etc-conf.d.tar.gz       -C /etc/conf.d --owner=0 --group=0
 tar xzf etc-greetd.tar.gz       -C /etc/greetd --owner=0 --group=0
 tar xzf etc-NM-conf.d.tar.gz    -C /etc/NetworkManager/conf.d --owner=0 --group=0
 
+echo "== iio-sensor-proxy timing override (auto-rotate stuck OFF) =="
+# Override the packaged init script so the proxy waits for QRTR svc 400 (SSC)
+# before launching; otherwise it scans once, gives up (G1-34), and phosh's
+# rotation-manager stays MODE_OFF. Only applies when the package is installed.
+if [ -x /etc/init.d/iio-sensor-proxy ] || apk info -e iio-sensor-proxy >/dev/null 2>&1; then
+	install -m755 iio-sensor-proxy.initd /etc/init.d/iio-sensor-proxy
+fi
+
 echo "== /init (single source of truth is initramfs/init in the repo) =="
 install -m755 init /init
 

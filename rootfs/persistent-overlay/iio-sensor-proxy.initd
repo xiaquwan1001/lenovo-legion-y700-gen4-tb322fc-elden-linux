@@ -1,0 +1,30 @@
+#!/sbin/openrc-run
+
+supervisor=supervise-daemon
+command="/usr/libexec/iio-sensor-proxy"
+
+depend() {
+	need dbus
+	after hexagonrpcd-adsp-sensorspd
+}
+
+# Timing fix (auto-rotate stuck OFF / direction locked).
+# The SSC accelerometer is served by QRTR svc 400 on the ADSP. iio-sensor-proxy
+# 3.9 scans once at start and gives up if the sensor isn't ready yet (G1-34), so
+# a cold boot where this service wins the race against ADSP/SSC boot leaves
+# net.hadess.SensorProxy without an accelerometer, and phosh's rotation-manager
+# stays in MODE_OFF -> auto-rotate tile greyed and orientation locked.
+# Wait (bounded) for QRTR svc 400 before launching the proxy. If svc 400 never
+# appears we still start it (behaviour no worse than before this fix).
+start_pre() {
+	local i=0
+	while [ "$i" -lt 60 ]; do
+		if qrtr-lookup 2>/dev/null | grep -qw 400; then
+			return 0
+		fi
+		i=$((i + 1))
+		sleep 1
+	done
+	ewarn "iio-sensor-proxy: QRTR svc 400 (SSC) not seen after ${i}s; starting anyway"
+	return 0
+}

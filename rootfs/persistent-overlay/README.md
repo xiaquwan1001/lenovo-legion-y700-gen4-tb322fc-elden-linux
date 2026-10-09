@@ -53,3 +53,10 @@ ssh root@192.168.7.1 'sh -s' < rootfs/persistent-overlay/restore.sh
 | `openrc-runlevels.txt` | `rc-update show -v` 快照 | 参照 `openrc-enable.sh` |
 
 判别法：事件后 `/root/powerlog.txt` 有 `USERLAND-*`/`CLEAN-STOP` = 用户态干净关机；无 + `blankspy.log` 截断 = 内核硬复位。
+
+## 追加（2026-10-09）：自动旋转时序修复
+| 文件 | 内容 | 还原方式 |
+|---|---|---|
+| `iio-sensor-proxy.initd` | 覆盖 `/etc/init.d/iio-sensor-proxy`：加 `start_pre()` 等 QRTR svc 400（SSC）就绪再拉起（封顶 60s）、`after hexagonrpcd-adsp-sensorspd` | restore.sh 已在装包后 `install -m755` 覆盖 |
+
+根因：本 build 的 iio-sensor-proxy 经 SSC/QRTR 后端（`/sys/bus/iio` 恒空但 `HasAccelerometer=true`）；SSC 加速度计要 ADSP 起来出 svc400（冷启数十秒）。iio 3.9「只扫一次即放弃」（G1-34），若开机时 proxy 抢在 svc400 之前起，`net.hadess.SensorProxy` 整轮无加速度计 → phosh `rotation-manager` 停 `MODE_OFF` → 自动旋转 tile 置灰、方向锁死。修复=proxy 等 svc400 再起。设备侧运行时已改（备份 `/etc/init.d/iio-sensor-proxy.bak-timing-*`）；**待下次冷启最终验证**。UI 说明：phosh 无独立“自动旋转”开关，只有“方向锁定”tile（自动旋转开着时不显示方向选择栏），属 phosh 正常模型。
