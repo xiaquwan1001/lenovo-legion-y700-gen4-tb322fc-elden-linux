@@ -18,6 +18,19 @@ TAB=${TAB:-root@192.168.7.1}
 OUT=logs/gui-stress-$(date +%Y%m%d-%H%M%S); mkdir -p "$OUT"
 S() { timeout "${2:-60}" scripts/device-lock.sh ssh -o StrictHostKeyChecking=no "$TAB" "$1"; }
 
+# 本脚本会**占用平板屏幕**（反复点亮/熄灭 + 在桌面起窗口）。主机侧被 timeout/Ctrl-C 杀掉时，
+# 设备侧那个循环不会自己死 —— 2026-10-09 就是这样把用户的平板留在「反复亮暗 + foot 刷 tick」
+# 的状态被人当场抓住（PITFALLS #149）。所以：① 开跑前预告（可 Ctrl-C）；② trap 兜底清设备侧。
+cleanup() {
+	timeout 25 scripts/device-lock.sh ssh -o StrictHostKeyChecking=no "$TAB" \
+		'pkill -9 -f "dev[-]stress"; for c in foot footclient btop chromium; do pkill -9 -x $c; done' \
+		>/dev/null 2>&1 || true
+	echo "[stress] 设备侧已清理（屏幕/窗口归还用户）"
+}
+trap cleanup EXIT INT TERM
+echo "[stress] 注意：接下来 ${SECS}s 内会反复点亮/熄灭屏幕并在桌面起窗口（占用平板）。"
+echo "[stress] 不想被占用请现在 Ctrl-C（5 s 后开跑）。"; sleep 5
+
 cat > "$OUT/dev-stress.sh" <<'EOS'
 #!/bin/sh
 # 会话身份从 phoc 进程取（greetd 会话在 UID 1000，root 连不上它的总线：PITFALLS #140）
