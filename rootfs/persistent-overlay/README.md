@@ -60,3 +60,10 @@ ssh root@192.168.7.1 'sh -s' < rootfs/persistent-overlay/restore.sh
 | `iio-sensor-proxy.initd` | 覆盖 `/etc/init.d/iio-sensor-proxy`：加 `start_pre()` 等 QRTR svc 400（SSC）就绪再拉起（封顶 60s）、`after hexagonrpcd-adsp-sensorspd` | restore.sh 已在装包后 `install -m755` 覆盖 |
 
 根因：本 build 的 iio-sensor-proxy 经 SSC/QRTR 后端（`/sys/bus/iio` 恒空但 `HasAccelerometer=true`）；SSC 加速度计要 ADSP 起来出 svc400（冷启数十秒）。iio 3.9「只扫一次即放弃」（G1-34），若开机时 proxy 抢在 svc400 之前起，`net.hadess.SensorProxy` 整轮无加速度计 → phosh `rotation-manager` 停 `MODE_OFF` → 自动旋转 tile 置灰、方向锁死。修复=proxy 等 svc400 再起。设备侧运行时已改（备份 `/etc/init.d/iio-sensor-proxy.bak-timing-*`）；**待下次冷启最终验证**。UI 说明：phosh 无独立“自动旋转”开关，只有“方向锁定”tile（自动旋转开着时不显示方向选择栏），属 phosh 正常模型。
+
+## freeze-trace（2026-10-09 新增，PITFALLS #106 死挂取证）
+
+- `freeze-trace.conf` → `/etc/sysctl.d/99-freeze-trace.conf`：`softlockup_panic=1`、`softlockup_all_cpu_backtrace=1`、`panic=20`、`sysrq=1`。本机 APSS 硬看门狗被永久禁用，死挂永不自复位；这四项把它变成「panic → 20 s **暖**复位 → ramoops 留全 CPU 栈」（断电会丢 ramoops）。
+- `pstore-catch.initd` → `/etc/init.d/pstore-catch`（boot runlevel）：挂载 pstore 并把记录带时间戳归档到 `/var/log/pstore/`（只留最近 10 份），这样后续任何断电都不会丢掉已抓到的现场。
+- 判读：`ls /var/log/pstore/`；关掉：删 sysctl 文件 + `sysctl -w kernel.softlockup_panic=0 kernel.panic=0`。
+- 已在 U2 生效并回读核实（1/1/20/1；服务 `pstore-catch | boot`；`/etc/sysctl.conf` 改前备份在 `/root/`）。
