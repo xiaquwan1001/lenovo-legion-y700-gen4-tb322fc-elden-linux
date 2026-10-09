@@ -30,11 +30,26 @@ set -u
 # elden_nocamera=1 (kernel cmdline) suppresses auto-load.  Used for the
 # camera-module-set ⇄ screen-blank power-off bisection (Q24) — a clean boot
 # with zero camera modules lets us add groups cumulatively.
-grep -q "elden_nocamera=1" /proc/cmdline && exit 0
+# 不能静默退：静默 rc=0 会把「配置态」读成「驱动坏」（2026-10-09 深夜在 payload loader
+# 上已经栽过一次，这是同型）。手动测试用 CAM_FORCE=1 显式绕过。
+if grep -q "elden_nocamera=1" /proc/cmdline; then
+	if [ "${CAM_FORCE:-0}" = 1 ]; then
+		echo "[camera] cmdline says elden_nocamera=1 but CAM_FORCE=1 -> loading anyway"
+	else
+		echo "[camera] SKIPPED: cmdline has elden_nocamera=1 (override with CAM_FORCE=1)"
+		exit 0
+	fi
+fi
 
 KV=$(uname -r)
 MODDIR=/lib/modules/$KV
-[ -d "$MODDIR/kernel" ] || { echo "[camera] no modules for $KV" >&2; exit 0; }
+# 判“有没有模块”不能要求 kernel/ 前缀：`M=<dir> modules_install` 装出来的布局就是没有
+# kernel/（2026-10-09 深夜 mod-loop 的 tar 刚栽在同一件事上，今天相机线又被它误挡一次）。
+# 按目录下实际存在 .ko 判。
+if ! find "$MODDIR" -name '*.ko*' -print -quit 2>/dev/null | grep -q .; then
+	echo "[camera] no modules for $KV (nothing under $MODDIR)" >&2
+	exit 0
+fi
 
 # Always (re)generate the module index with the device's depmod.  This is
 # REQUIRED: the device uses kmod, whose modules.dep uses full relative paths
@@ -44,7 +59,10 @@ MODDIR=/lib/modules/$KV
 depmod -a "$KV" 2>/dev/null || depmod -a 2>/dev/null || true
 
 load() {
-	if lsmod 2>/dev/null | grep -q "^$1 "; then
+	# lsmod 里模块名是**下划线**，传进来的是连字符 —— 不转换就永远匹配不上，
+	# 幂等检查形同虚设（已加载也会重新 modprobe 并谎报 “loaded”）。
+	if lsmod 2>/dev/null | grep -q "^$(echo "$1" | tr '-' '_') "; then
+		echo "[camera] already loaded $1"
 		return 0
 	fi
 	if modprobe "$1" 2>/dev/null; then
