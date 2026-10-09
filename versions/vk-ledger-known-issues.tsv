@@ -48,3 +48,9 @@ vk73-q28diag	uts_dup	同 vk72
 vk74-q28power	tree_drift	同 vk72（Q28 诊断：power-on 路径 pm_runtime 返回值现形 + dsi_host power_on 传播）
 vk74-q28power	num_ne_tag	同 vk72
 vk74-q28power	uts_dup	同 vk72
+vk75-q28ab	tree_drift	同 vk73（Q28 诊断：cmd-DMA 成功侧也 dump，做 good/bad 对拍；内核 e3c5e9fea）
+vk75-q28ab	num_ne_tag	同 vk72（UTS 刻意复用 vk64 串，为零写盘加载在机模块）
+vk75-q28ab	uts_dup	同 vk72（同上，清理条件见本表头）
+vk76-freezetrace	tree_drift	同 vk75（内核未重编，仅 cmdline 加 softlockup_panic/panic=20 取弹）
+vk76-freezetrace	num_ne_tag	同 vk72（UTS 刻意复用 vk64 串）
+vk76-freezetrace	uts_dup	同 vk72（同上，清理条件见本表头）
