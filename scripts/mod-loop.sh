@@ -61,9 +61,15 @@ fi
 NAMES=$(echo "$KO_LIST" | xargs -n1 basename | sed 's/\.ko$//')
 echo "[mod] staged: $(echo "$NAMES" | tr '\n' ' ')"
 
-# tar only the staged module subtree, preserving kernel/<path> layout.
+# tar only the staged module subtree, preserving whatever layout modules_install
+# produced.  NOTE (2026-10-09 fix): `M=<dir> modules_install` does NOT always create
+# a `kernel/` prefix -- for single-dir M= builds it stages the .ko flat (or under
+# extra/), so taping the literal `kernel` dir failed with "kernel: cannot stat".
+# Tar the .ko files by relative path instead; the device extracts to the same layout
+# and `depmod -a` rebuilds the index anyway.
 TAR=$(mktemp --suffix=.tar.gz); trap 'rm -rf "$STAGE" "$TAR"' EXIT
-( cd "$STAGE/lib/modules/$KV" && tar czf "$TAR" kernel )
+( cd "$STAGE/lib/modules/$KV" && find . -name '*.ko' -print0 | tar czf "$TAR" --null -T - )
+[ -s "$TAR" ] || { echo "[mod] staging tarball empty (no .ko under $STAGE/lib/modules/$KV)" >&2; exit 1; }
 
 echo "[mod] uploading to /lib/modules/$KV ..."
 $SSH "mkdir -p /lib/modules/$KV"

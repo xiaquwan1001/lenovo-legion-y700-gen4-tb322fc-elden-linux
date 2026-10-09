@@ -79,15 +79,17 @@
 > 单元与镜像形态以 `DEVICE.md` §1.1/§2.2 为准。**本节只回答「现在还没解决什么」，任何数字都不在此维护。**
 
 - **完成度**：G1 ≈90% · G2 ≈45% · G3 PoC ✅（数字权威 = `TASKS.md` §0）。
-- **Linux 侧未解（5，按影响排序；G1-34 重力已通移出）**：
-  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。**机制已两轮收窄**：稳态上电竞态被 80 轮 DPMS 复现否掉；vk74 上机 4/4 复现并**当场否掉两个假说**（`pm_runtime` 吞错没报、`dpu pm: status 0 usage 3`=超时时 DPU 是带电 active）；冷启对照又把 4 个「差异项」否掉 3 个（`dsi1vco=0`/`dsi1_isr=0`/byte 时钟 好发一模一样）⇒ **只剩「开机首次 modeset 的某个状态」这一条**；vk75（成功侧也 dump）已拿到好发基线 `logs/q28-BASELINE-good-vk75-dmesg.txt`，**缺一发坏发对拍**（`2026-10-09-Q28-密集复现与vk74.md` §9）；
+- **Linux 侧未解（5 = 4 个任务 ID + #106 无 ID，按影响排序；G1-34 重力已通移出）**：
+  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。**已拿到首个好/坏同口径差分**：断点 = 面板首条 DCS 写走 **bonded 命令 DMA 超时**（不是 DPU modeset），只有 `STATUS0 0x0→0x20003`、`CLK_STATUS 0x2343→0x3743`（多 `DYN_PCLK_ACTIVE`+`DYN_CMD_PCLK_ACTIVE`）、`cmd_dma_busy/cmd_engine_busy 0→1` 四项不同 ⇒ 假说收窄到「首次 modeset 命令引擎撞 DYN 像素时钟域切换」；**dmesg 级判据**：`command DMA timeout`+`panel init attempt failed`（同批 5 坏/2 好零误报；`vblank timeout` 单独用会误判）；剩三个单变量实验（delay / busy 重触发 / 查谁开 DYN pclk）。详见 `.pi/plans/2026-10-09-深夜-Q28寄存器差分-模块化在机验证-槽位险情.md` §1；
   ② **Q24 熄屏→整机硬复位**（已锁单模块 `cambistmclkcc-sm8750` × DT 电源域，H1/D1/D2/H2 未根治；无相机态安全）；
   ③ **Q26 WiFi 到可用**（重开；假设=版本/DTB 增量连带，待单变量 bisect）；
   ④ **G1-6 TF 卡间歇写丢失**（未定性，新卡 A/B 待跑）；
   ⑤ **进 GUI 后整机卡死**（PITFALLS #106；10-05 两次 + 10-09 一次，桌面显示正常时发生，**与 Q28 不同因**）。历史抓不到栈的原因=APSS 硬看门狗永久禁用 ⇒ 死挂不自复位、只能物理断电。**已常驻装弹**（`/etc/sysctl.d/99-freeze-trace.conf` + `pstore-catch` 开机归档 ramoops 到 `/var/log/pstore/`）⇒ 命中即自动 panic→暖复位→带回全 CPU 栈；60 轮合成负载压测（峰值 66.1 ℃）暂未复现；
-  ~~⑤ G1-34 加速度计/重力传感器~~ ✅ 重力/自动旋转已可用（SSC/QRTR svc400 + iio-sensor-proxy，开机时序竞态已修持久化，见 `PITFALLS` §十六）；prox/als/compass 亦已核（冷/温启后 `Has*` 全 true，无需手动重启），已从本列移出未解；仅剩用户物理横转确认画面旋转。
-- **未开工**：上游化 **M1–M5**（`TASKS.md` §7）、G1-8 CPU/GPU 基准。
-- **已定不做 / 搁置 / 取消**（勿重推）：**G1-26/27/28 桌面用户态三问题**（深色主题 / 电源菜单图标 / 亮度滑块 —— 根因已定、修复待上机，但本轮主线不做）、G1-29 UEFI（卡 UFS 初始化）、G1-10 NFC（**本机无 NFC 硬件**）、G1-30 slim initramfs（无固件→外设全废）、kexec 快环（**根因已定位 2026-10-08**：device_shutdown 内 cpufreq_suspend+关机遍历多触发叠加掉电、非单元凶，唯一规避=整段跳 device_shutdown；目标内核 kexec 引导失败＝关键路径遗留、需早期串口→本机不具备故搁置；详见 `archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md` §8/§9）。
+  ~~G1-34 加速度计/重力传感器~~ ✅ 重力/自动旋转已可用（SSC/QRTR svc400 + iio-sensor-proxy，开机时序竞态已修持久化，见 `PITFALLS` §十六）；prox/als/compass 亦已核（冷/温启后 `Has*` 全 true，无需手动重启），已从本列移出未解；Phosh 原生“方向锁定”磁贴已可用。
+- **未开工**：上游化 **M1–M5**（`TASKS.md` §7）、G1-8 CPU/GPU 基准（GPU 已确认工作 Adreno 830 GLES3.2，待装 glmark2/vkmark 跑数）。
+- **模块化载荷线（2026-10-09 深夜已在机验收）**：`/init` 自加载 7 个载荷驱动（1.5–4.4 s）、WiFi 扫描 25 AP + 自动重连、声卡/背光/触屏/触觉全在；`scripts/mod-loop.sh` 热换驱动 **7 s** 上机。两个待决定见 `TASKS.md` §5 条 8.5。
+- **上机纪律硬约束（本轮踩出来的，`PITFALLS` #150–#152）**：坏发现场 `reboot`/`reboot -f` **全挂**，只能用 `reboot2 <mode>` 或 SysRq-b；OpenRC 下 `reboot bootloader` 不进 fastboot（会变成 halt + VBUS 自开机）；**温启循环必须自带 `slot-attr.py mark-successful b`/retry 预检**（RAM 直启不置 succ、真开机扣次数，本轮 boot_b 已被耗到 retry=6/succ=0）。
+- **已定不做 / 搁置 / 取消**（勿重推）：**G1-26/27/28 桌面用户态三问题**（深色主题 / 电源菜单图标 / 亮度滑块 —— 根因已定、修复待上机，但本轮主线不做）、G1-29 UEFI（卡 UFS 初始化）、G1-10 NFC（**本机无 NFC 硬件**）、G1-30 slim initramfs（无固件→外设全废）、kexec 快环（**根因已定位 2026-10-08**；2026-10-09 补充：trans_pgd bug 与当前路径无关；crashkernel=64M + kexec -p + SysRq-c 已实机尝试，缺串口观察不确定 crash kernel 是否引导，待下次用 ttyACM0 串口捕获重做；`out/boot-elden-vk77-modkdump.img` 就绪）。
 - **单元**：U1 = stock Android + root（无 Linux 分区，可做 Android 侧对照取证 C0）；U2 = b 槽 mainline 持久直启（在机镜像与回退资产见 `DEVICE.md` §1.1）。
   🟢 解锁议题**已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`，**不要重新论证**。
 

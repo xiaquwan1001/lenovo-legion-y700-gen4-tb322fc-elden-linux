@@ -196,6 +196,16 @@ if [ -x /usr/local/sbin/camera-modules-load.sh ]; then
 	timeout 20 /usr/local/sbin/camera-modules-load.sh >"$KLOG" 2>&1 || warn "camera-modules-load failed/timed out"
 fi
 
+# --- modularized payload drivers (TB322FC) -----------------------------------
+# ATH12K / QDSP6 audio / haptics / touch / backlight are =m (fragment-modular.config).
+# Same mechanism as the camera stack: /init is the only auto-loader on this
+# tree (no OpenRC `modules` service in runlevels). Non-fatal by design.
+# NOT gated on elden_nocamera: WiFi/audio/touch/backlight have nothing to do
+# with the camera stack, and `elden_nocamera=1` must keep WiFi working.
+if [ -x /usr/local/sbin/payload-modules-load.sh ]; then
+	timeout 20 /usr/local/sbin/payload-modules-load.sh >"$KLOG" 2>&1 || warn "payload-modules-load failed/timed out"
+fi
+
 if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 	log "disk root requested: $elden_root"
 	root_dev=""
