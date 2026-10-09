@@ -8,10 +8,12 @@
 # 把整链 pad 格式统一，并使能链路，然后即可 `v4l2-ctl -d /dev/videoN
 # --stream-mmap`。非破坏性（不改内核/不改持久盘），重复运行安全。
 #
-# 用法（设备上）：
-#   sh /tmp/camera-stream-up.sh front            # gc08a8 -> csiphy4 -> csid0 -> vfe0_rdi0 -> /dev/video0
-#   sh /tmp/camera-stream-up.sh rear             # s5kjns -> csiphy3 -> csid1 -> vfe1_rdi0 -> /dev/video3
-#   sh /tmp/camera-stream-up.sh front stream 5   # 配置并抓 5 帧（注意顺序：是 `<哪个> stream [N]`）
+# 用法（设备上，scp 上去后；⚠️ 未部署到 /usr/local/sbin，属主机 repo 的采集/验证助手）：
+#   sh camera-stream-up.sh front            # gc08a8 -> csiphy4 -> csid0 -> vfe0_rdi0 -> /dev/video0
+#   sh camera-stream-up.sh rear             # s5kjns -> csiphy3 -> csid1 -> vfe1_rdi0 -> /dev/video3
+#   sh camera-stream-up.sh front stream 5   # 配置并抓 5 帧（注意顺序：是 `<哪个> stream [N]`）
+#
+# 2026-10-09 23:14 实机验证：双摄各出真实帧（前 distinct=255/stddev=36.8，后 243/34.7，见 G1-5）。
 set -eu
 WHICH=${1:-front}
 DO_STREAM=${2:-}

@@ -1,6 +1,12 @@
 #!/bin/sh
 # 临时：把会话的熄屏/挂起全部关掉（Q24：相机模块加载后熄屏有硬复位风险）。
-# 在设备上当 root 跑。用法：sh /tmp/keep-awake.sh
+# 在设备上当 root 跑。用法：sh scripts/keep-awake.sh
+#
+# NOTE（2026-10-10 整理）：本脚本与 `cam-mode.sh blank disable` 功能重叠（同一组
+# gsettings 键），但本脚本**不加载相机栈、不存档原值**，是「只要设备保持清醒」的
+# 独立工具。优先路径 = `cam-mode.sh on`（它会先做等价的 blank_disable 再加载栈）。
+# 本脚本保留：① 2026-10-09 深夜在机实测用过（G1-22 口径提醒）；② 不想动相机时单独禁熄屏。
+# ⚠️ 未部署到 /usr/local/sbin（需要时 scp 上去，或直接用已上机的 cam-mode.sh）。
 U=xuqianhui1001
 R=/run/user/1000
 # 会话总线地址要**从会话自己的进程 environ 里拿**，不能猜：phosh 用 dbus-launch 起的私有总线

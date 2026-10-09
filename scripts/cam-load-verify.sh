@@ -1,6 +1,10 @@
 #!/bin/sh
 # 在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。
 # 有硬截止时间盒；只加载模块，不动燄屏设置（先跑 keep-awake.sh）。
+#
+# NOTE（2026-10-10 整理）：⚠️ 未部署到 /usr/local/sbin，属主机 repo 的验证助手。
+# 日常操作用 `cam-mode.sh on`（已上机，会先禁熄屏再加载）；本脚本保留为
+# 「加载 + dmesg 前后差分 + #130 cma_heap 合规断言」的取证工具（PITFALLS #159 判真画面口径配套）。
 L=${1:-/usr/local/sbin/camera-modules-load.sh}
 export CAM_FORCE=${CAM_FORCE:-1}
 PAT='camss|cci|camcc|bist|wl2868c|s5kjns|gc08a8|gt9764|leds_qcom|qcom_flash|system_heap'
