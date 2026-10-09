@@ -18,3 +18,33 @@ vk58c-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；已实机 fast
 #       （vk62/vk63 实际 kernel = vk47clean sha 2321e3b9；boot_b 实跑即 vk47clean，非真 drift）
 vk62	tree_drift	#131 manifest kernel 列=树 Image.gz；实际打包=vk47clean（sha 2321e3b9），boot_b 实跑 vk47clean
 vk63	tree_drift	同 vk62（#131；同内核 vk47clean，仅换 H2 DTB）
+# 2026-10-09 Q24 变体：DTB-only，刻意复用 vk47clean 内核（sha 2321e3b9）以保持单变量
+vk71-mxc	tree_drift	#131同类：打包内核=vk47clean（仅换 cambist DTB），构建时树 HEAD=0d4bedf55383；实验需固定内核
+vk71-mxnom	tree_drift	同 vk71-mxc（A/B 仅 DTB 的 power-domains/required-opps 不同）
+# ---- 2026-10-09 Q28 显示间歇：诊断/修复测试内核的「刻意复用 UTS」例外（经审计，永久）----
+# 背景：Q28 测试内核要能在**零写盘** `fastboot boot` 下加载持久盘已装的 1610 个模块，
+#   就必须让镜像内烤死的 UTS 串 ≡ 设备 /lib/modules/<uname -r> 目录名
+#   （=7.2.0-debug-vk64-gd02658e63cf6）。做法：CONFIG_LOCALVERSION="-debug-vk64-gd02658e63cf6"
+#   + CONFIG_LOCALVERSION_AUTO=n + make LOCALVERSION=（空但已设置，去掉 +dirty）。
+#   代价（全是设计后果、非事故）：① 一次性诊断内核的源提交永不打 vkNN tag（最终修复会以正式
+#   vk 号上机）=> num_ne_tag；② 同 UTS 串对应多个不同二进制 => uts_dup；③ 构建时树 HEAD ≠
+#   镜像内内核 => tree_drift。三个 kind 一并登记。
+#   反向：boot_b 权威镜像 vk64 被这些测试内核牵连成 uts_dup，它本体无错（见下行）。
+# 清理条件：Q28 根因定案 + 最终修复以正式 vk 号（自己的 UTS + 配套 /lib/modules）上机后，
+#   删除这批一次性诊断镜像并删掉本段（连带 vk64 的 uts_dup 行）。
+vk64	uts_dup	本体=在机 boot_b 权威镜像（DEVICE.md §2.2，2026-10-08 烧录 + mark successful）；uts_dup 由下面 Q28 测试内核刻意复用其 UTS 串造成，非 vk64 自身问题
+vk72	tree_drift	Q28 测试内核（DSI cmd 闩锁恢复补丁）：UTS 刻意=vk64 以匹配在机模块，构建时树 HEAD=0d4bedf55383
+vk72	num_ne_tag	同上：一次性诊断内核，源提交不打 vk72 tag
+vk72	uts_dup	同上：刻意复用 vk64 的 UTS 串
+vk72-q28dsi	tree_drift	同 vk72（变体 1，含 G1-34 fastrpc DTB）
+vk72-q28dsi	num_ne_tag	同 vk72
+vk72-q28dsi	uts_dup	同 vk72
+vk72-q28dsi2	tree_drift	同 vk72（变体 2，恢复路径实测在跑）
+vk72-q28dsi2	num_ne_tag	同 vk72
+vk72-q28dsi2	uts_dup	同 vk72
+vk73-q28diag	tree_drift	同 vk72（Q28 诊断：cmd-DMA 超时点 DSI 寄存器 dump）
+vk73-q28diag	num_ne_tag	同 vk72
+vk73-q28diag	uts_dup	同 vk72
+vk74-q28power	tree_drift	同 vk72（Q28 诊断：power-on 路径 pm_runtime 返回值现形 + dsi_host power_on 传播）
+vk74-q28power	num_ne_tag	同 vk72
+vk74-q28power	uts_dup	同 vk72

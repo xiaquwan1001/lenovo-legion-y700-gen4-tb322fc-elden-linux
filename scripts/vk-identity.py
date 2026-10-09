@@ -90,6 +90,31 @@ def inflight_images():
     return out
 
 
+def known_issues():
+    """versions/vk-ledger-known-issues.tsv → {build: {kind, ...}}。
+
+    check-doctor §5c 早先就用这张表把已审在案的 tree_drift/dirty_drift/no_manifest 降为 WARN；
+    §5d 的硬错门过去只认「在途豁免」（vk-identity-inflight.txt，语义=还没收口的在途构建），
+    于是「**已定案但故意保留**的硬错」无处登记（典型：为让零写盘 fastboot boot 能加载在机模块，
+    测试内核刻意复用 boot_b 的 UTS 串 ⇒ boot_b 被牵连成 uts_dup）。
+    现让两个门共用同一张表：在版本账本里显式登记 kind（前缀匹配 flag）才降级，
+    没登记一律 FAIL。豁免面从「临时在途」扩到「经审计的例外」，仍需人往受控文件里写一行。
+    """
+    p = os.path.join(ROOT, 'versions', 'vk-ledger-known-issues.tsv')
+    out = collections.defaultdict(set)
+    try:
+        with open(p, errors='replace') as fh:
+            for line in fh:
+                if line.startswith('#') or not line.strip():
+                    continue
+                cols = line.rstrip('\n').split('\t')
+                if len(cols) >= 2 and cols[1].strip():
+                    out[cols[0].strip()].add(cols[1].strip())
+    except OSError:
+        pass
+    return out
+
+
 def kernel_refs():
     """(主线可达集, 任意 ref 可达集) —— 用来判定镜像内 sha 属于哪条线。"""
     return set(git('rev-list', 'HEAD').split()), set(git('rev-list', '--all').split())
@@ -174,7 +199,8 @@ def is_hard(flag):
 
 def gate(rows, skip_names):
     """只拦住新构建；存量欠账汇总成 WARN。输出契约同 check-doctor §5。"""
-    new_hard, legacy, held, noted = [], 0, [], []
+    new_hard, legacy, held, noted, exempt = [], 0, [], [], []
+    known = known_issues()
     for r in rows:
         img = os.path.join(OUT, r[1])
         name = r[0] if r[0] != '(unversioned)' else r[1]
@@ -185,6 +211,12 @@ def gate(rows, skip_names):
             # 拦它等于拦构建本身（同一构建的带号镜像已被校）。“号必须入名”靠命名规则约束人。
             continue
         hard = [f for f in flags if is_hard(f)]
+        # 版本账本已登记的例外（kind 前缀匹配）→ 降 WARN，不拦构建也不静默吞掉
+        kinds = known.get(name, ())
+        reg = [f for f in hard if any(f.startswith(k) for k in kinds)]
+        if reg:
+            exempt.append('%s(%s)' % (name, ','.join(reg)))
+            hard = [f for f in hard if f not in reg]
         if not hard:
             continue
         if r[1] in skip_names:
@@ -200,6 +232,8 @@ def gate(rows, skip_names):
         print('OK\t生效时刻之后的镜像无硬错（在途豁免 %d 个）' % len(held))
     if held:
         print('WARN\t在途豁免（收口后从 vk-identity-inflight.txt 删掉）：%s' % ' '.join(held))
+    if exempt:
+        print('WARN\t账本已登记的例外（理由见 vk-ledger-known-issues.tsv）：%s' % ' '.join(exempt))
     if legacy:
         print('WARN\t存量欠账 %d 个镜像有硬错（逐镜像见 vk-kernel-identity.tsv / '
               'vk-ledger-known-issues.tsv）' % legacy)
