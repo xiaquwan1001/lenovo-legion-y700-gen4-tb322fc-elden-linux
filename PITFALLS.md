@@ -1106,3 +1106,9 @@
     `No such interface`（`gdbus Properties.Get` 同样报错，容易误判成「传感器又没了」）。
     正确做法：先 `busctl --system tree net.hadess.SensorProxy` + `introspect` 看真实接口再取值；
     且它在**系统总线**（会话总线上查会 `ServiceUnknown`）。
+
+143. **`reboot2 bootloader`（PSCI SYSTEM_RESET2 vendor reason）偶发把设备打进「USB 完全消失」态**：
+    2026-10-09 从 RAM 诊断内核发起，90 s 内既无 fastboot 设备、SSH 不通、`lsusb` 也没有任何
+    18d1/05c6（连 EDL 9008 都没有）、ping 不通 ⇒ 远程通道全断，只能长按电源 20 s 强制关机再短按开机
+    （**别带音量键，否则又进 fastboot**）。所以自动化温启循环必须：① 每轮失败即停，不连打；
+    ② 明确「90 s 无 fastboot = 交给用户物理冷启」，别把等待时间堆到几分钟。

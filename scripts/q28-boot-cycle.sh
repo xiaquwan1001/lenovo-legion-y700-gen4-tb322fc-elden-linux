@@ -64,7 +64,8 @@ PMON=$(grep -c "mdss_gdsc *on" "$OUT/power.txt")
 	if [ "$((VB + PU + PI))" -gt 0 ] || echo "$DPMS" | grep -qi "off"; then V=BAD; else V=GOOD; fi
 	echo "VERDICT=$V"
 } | tee "$OUT/summary.txt"
-grep -E "power-up failed|resume dsi host|dpu pm:|vblank timeout|Failed to initialize|bonded|PLL.*lock fail" "$OUT/dmesg.txt" | head -20
+grep -E "power-up failed|resume dsi host|dpu pm:|vblank timeout|Failed to initialize|bonded|PLL.*lock fail|Q28 " "$OUT/dmesg.txt" | head -24
+echo "Q28_OK_DUMPS=$(grep -c "Q28 ok-master" $OUT/dmesg.txt) Q28_BAD_DUMPS=$(grep -cE "Q28 (master|slave)" $OUT/dmesg.txt)"
 [ "$((VB + PU + PI))" -gt 0 ] && exit 10
 echo "$DPMS" | grep -qi "off" && exit 10
 exit 0

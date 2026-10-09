@@ -1,0 +1,148 @@
+From e3c5e9fea66eb5e833f4003f4ca9c4dac9d61e70 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Fri, 9 Oct 2026 18:20:11 +0800
+Subject: [PATCH] exp(q28): dump the cmd-DMA register set on success as well,
+ for a good/bad diff
+
+The timeout-only dump left every "difference" unqualified: measured on
+2026-10-09, dsi1vco rate=0, dsi1_isr=0 and the byte-clock value (108 MHz vs
+the 133 MHz this mode computes) were all identical on a cold-booted good
+display, so three candidate root causes evaporated as soon as a control was
+taken.  Dump the same registers right after the first successful bonded
+command DMA (separate 2-shot budget) so a good boot leaves a baseline behind
+and only genuine deltas survive.
+---
+ drivers/gpu/drm/msm/dsi/dsi_host.c | 89 ++++++++++++++++++++++++++++++
+ 1 file changed, 89 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 817d5a608..8b455e971 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -17,6 +17,7 @@
+ #include <linux/regmap.h>
+ #include <linux/regulator/consumer.h>
+ #include <linux/spinlock.h>
++#include <linux/atomic.h>
+ 
+ #include <video/mipi_display.h>
+ 
+@@ -2585,6 +2586,91 @@ int msm_dsi_host_bonded_cmd_arm_master(struct mipi_dsi_host *host)
+ 		0 : -EIO;
+ }
+ 
++/*
++ * Q28 diagnostic register dump.
++ *
++ * Called from the bonded command-DMA wait helpers just before they return
++ * -ETIMEDOUT.  CONFIG_STRICT_DEVMEM=y makes /dev/mem unusable, so the only
++ * way to see whether the command DMA engine actually ran is to read the DSI
++ * host registers from the driver itself at the moment of the timeout.
++ *
++ * The dump is rate-limited to two per boot (one global atomic budget shared
++ * by master and slave call sites).  On the observed failure the slave poll
++ * succeeds (peer=0), so the budget is consumed by the master timeout on
++ * panel-init attempt 1 and, once the recover patch retries, attempt 2 -
++ * exactly the diagnostic window we need.
++ */
++static atomic_t q28_cmd_timeout_dumps = ATOMIC_INIT(2);
++/*
++ * Q28 A/B pair: dump the very same register set right after a *successful*
++ * bonded command DMA too, so a good boot leaves behind a baseline that can be
++ * diffed against the timeout dump.  This matters: on 2026-10-09 three
++ * "differences" read off failure logs alone (dsi1vco rate=0, dsi1_isr=0,
++ * byte-clock 108 vs 133 MHz) all turned out to be identical on good boots.
++ */
++static atomic_t q28_cmd_ok_dumps = ATOMIC_INIT(2);
++
++static void q28_dump_cmd_regs_body(struct msm_dsi_host *msm_host, const char *role)
++{
++	u32 ctrl, status0, fifo, cmd_dma_ctrl, cmd_dma_ctrl1, dma_base;
++	u32 dma_len, trig, trig_dma, clk_ctrl, clk_status, intr;
++	u32 lane_status, timeout, ack_err, phy_reset;
++
++	if (atomic_dec_if_positive(&q28_cmd_timeout_dumps) < 0)
++		return;
++
++	ctrl          = dsi_read(msm_host, REG_DSI_CTRL);
++	status0       = dsi_read(msm_host, REG_DSI_STATUS0);
++	fifo          = dsi_read(msm_host, REG_DSI_FIFO_STATUS);
++	cmd_dma_ctrl  = dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL);
++	cmd_dma_ctrl1 = dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL1);
++	dma_base      = dsi_read(msm_host, REG_DSI_DMA_BASE);
++	dma_len       = dsi_read(msm_host, REG_DSI_DMA_LEN);
++	trig          = dsi_read(msm_host, REG_DSI_TRIG_CTRL);
++	trig_dma      = dsi_read(msm_host, REG_DSI_TRIG_DMA);
++	clk_ctrl      = dsi_read(msm_host, REG_DSI_CLK_CTRL);
++	clk_status    = dsi_read(msm_host, REG_DSI_CLK_STATUS);
++	intr          = dsi_read(msm_host, REG_DSI_INTR_CTRL);
++	lane_status   = dsi_read(msm_host, REG_DSI_LANE_STATUS);
++	timeout       = dsi_read(msm_host, REG_DSI_TIMEOUT_STATUS);
++	ack_err       = dsi_read(msm_host, REG_DSI_ACK_ERR_STATUS);
++	phy_reset     = dsi_read(msm_host, REG_DSI_PHY_RESET);
++
++	dev_err(&msm_host->pdev->dev,
++		"Q28 %s DSI%d CTL=%#x STATUS0=%#x FIFO=%#x CMD_DMA_CTRL=%#x CMD_DMA_CTRL1=%#x\n",
++		role, msm_host->id, ctrl, status0, fifo, cmd_dma_ctrl, cmd_dma_ctrl1);
++	dev_err(&msm_host->pdev->dev,
++		"Q28 %s DMA_BASE=%#x DMA_LEN=%#x TRIG_CTRL=%#x TRIG_DMA=%#x INTR_CTRL=%#x PHY_RESET=%#x\n",
++		role, dma_base, dma_len, trig, trig_dma, intr, phy_reset);
++	dev_err(&msm_host->pdev->dev,
++		"Q28 %s CLK_CTRL=%#x CLK_STATUS=%#x LANE_STATUS=%#x TIMEOUT_STATUS=%#x ACK_ERR_STATUS=%#x\n",
++		role, clk_ctrl, clk_status, lane_status, timeout, ack_err);
++	dev_err(&msm_host->pdev->dev,
++		"Q28 %s ctx: ch=%u lanes=%u bonded=%d en=%d cmd=%d vid=%d cmd_dma_busy=%d cmd_engine_busy=%d pll_unlock=%d\n",
++		role, msm_host->channel, msm_host->lanes, msm_host->bonded_polling,
++		!!(ctrl & DSI_CTRL_ENABLE), !!(ctrl & DSI_CTRL_CMD_MODE_EN),
++		!!(ctrl & DSI_CTRL_VID_MODE_EN),
++		!!(status0 & DSI_STATUS0_CMD_MODE_DMA_BUSY),
++		!!(status0 & DSI_STATUS0_CMD_MODE_ENGINE_BUSY),
++		!!(clk_status & DSI_CLK_STATUS_PLL_UNLOCKED));
++}
++
++static void q28_dump_cmd_regs(struct msm_dsi_host *msm_host, const char *role)
++{
++	if (atomic_dec_if_positive(&q28_cmd_timeout_dumps) < 0)
++		return;
++
++	q28_dump_cmd_regs_body(msm_host, role);
++}
++
++static void q28_dump_cmd_regs_ok(struct msm_dsi_host *msm_host, const char *role)
++{
++	if (atomic_dec_if_positive(&q28_cmd_ok_dumps) < 0)
++		return;
++
++	q28_dump_cmd_regs_body(msm_host, role);
++}
++
+ int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+@@ -2599,6 +2685,7 @@ int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ 	if (completed || completion_done(&msm_host->dma_comp)) {
+ 		if (READ_ONCE(msm_host->dma_done_seq) != msm_host->dma_submit_seq)
+ 			return -EIO;
++		q28_dump_cmd_regs_ok(msm_host, "ok-master");
+ 		return len;
+ 	}
+ 
+@@ -2612,6 +2699,7 @@ int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ 		return len;
+ 	}
+ 
++	q28_dump_cmd_regs(msm_host, "master");
+ 	dev_err(&msm_host->pdev->dev, "command DMA timeout: status=%#x\n", status);
+ 	return -ETIMEDOUT;
+ }
+@@ -2631,6 +2719,7 @@ int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host)
+ 		udelay(10);
+ 	}
+ 
++	q28_dump_cmd_regs(msm_host, "slave");
+ 	dev_err(&msm_host->pdev->dev, "peer command DMA timeout: status=%#x\n", status);
+ 	return -ETIMEDOUT;
+ }
+-- 
+2.53.0
+
