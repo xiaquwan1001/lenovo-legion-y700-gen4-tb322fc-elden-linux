@@ -1167,6 +1167,10 @@
      头 34 + 尾 34 扇区）；③ **任何温启循环脚本每轮开头必须自带 mark-successful 或 retry-count 预检**（<3 就停）。
      附坑：设备侧 busybox `dd` 的 `skip` 按 512 B 计（`bs=4096 skip=N` 报 `cannot skip: Invalid argument`）、
      `/usr/bin/dd` 不存在 ⇒ 读尾部扇区直接用 `python3` + `os.lseek`，别跟 dd 较劲。
+     **更正（同日半夜实测）**：ABL **只在 succ=0 时**才扣 tries（`slot-attr.py` 自己的文档串就写了 unless bit6，
+     我没读完就下结论）——把 boot_b 置成 `succ=1` 后连续七次真开机 retry **一直是 7**。⇒ 真正的风脸不是
+     “RAM 实验偷次数”，而是 **“succ=0 这个状态本身”**：只要它掉到 0，之后每次开机都在倒计时。
+     处置也从“补 retry”改成“**保证 succ=1**”（一次就永久止血，除非再被 RAM 启动覆盖）。
 153. **ramdisk 层叠构建里「钩子在 /init」≠「脚本在包里」**：vk77-modular 的 `lsmod` 空，上一轮归因成
      "持久根没有该版本模块"，真因是 **ramdisk 里没有 `/usr/local/sbin/payload-modules-load.sh`**（`/init` 的
      `[ -x … ]` 判假 ⇒ 静默跳过，一点错误都不留）。⇒ 层叠 cpio 打包后必须**从产物镜像读回**断言
@@ -1174,7 +1178,15 @@
      同类：`M=<dir> modules_install` 对单目录**不产出 `kernel/` 前缀**，`mod-loop.sh` 原来的
      `tar czf … kernel` 因此报 `kernel：无法 stat`；按相对路径 `find -name '*.ko' -print0 | tar --null -T -` 才对。
      另：`lsmod` 里模块名是**下划线**，用带连字符的名字 grep 会漏计（loader 的收尾计数就这么把 7 报成 4）。
-154. **`vblank timeout` 不能单独当 Q28 判据**：好发也出现过 4 条，正常**熄屏**也会产生（实测 `dpms=Off` 时新增）。
-     可靠判据是 `command DMA timeout` + `panel init attempt … failed`（同批 5 坏 / 2 好零误报，见
+155. **命令模式 DSI 面板空闲时不推帧 ⇒ `/proc/interrupts` 的 dsi_isr **增量**不能判屏幕死活**：
+     nt36536 是 command-mode + DSC，DPU 只在有新帧时 trigger，桌面静止时 vsync 中断恒为 0（好发也一样）。
+     本轮差点把一发好发误判成坏发（要求 delta>100 结果只 41）。正确读法：用**累计值**（实测好发 41、
+     坏发 **0**，开机就没出过一帧）或直接靠 dmesg 判据（#154）。要拿增量做实验，得先强制持续重绘。
+     另：`ScreenSaver.SetActive true` 不一定真熄屏（本轮 dpms 仍是 On，被抑制策略/活动会话挡了），
+     别把“发了 D-Bus 命令”当“屏已变”。
+156. **`grep -c pattern /dev/kmsg` 会永久挂住**：/dev/kmsg 是流式设备，读了就跟着日志一直读下去，
+     把整条 ssh 命令卡到超时（本轮一次取证因此丢掉了后半段输出）。统计用 `dmesg | grep -c`，
+     要实时跟随才用 /dev/kmsg，且必须配 `head -c`/`timeout`。：好发也出现过 4 条，正常**熄屏**也会产生（实测 `dpms=Off` 时新增）。
+     可靠判据是 `command DMA timeout` + `panel init attempt … failed`（同批 7 样本零误报，见
      `.pi/plans/2026-10-09-深夜-Q28寄存器差分-模块化在机验证-槽位险情.md` §1）。老脚本 `q28-boot-cycle.sh`
      用 `VB+PU+PI` 三者相加判 BAD，方向没错但会把"熄屏产生的 vblank 噪声"记成失败 ⇒ 计数要分开看。
