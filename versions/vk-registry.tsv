@@ -155,3 +155,5 @@ vk71	q24	2026-10-09	cambistmclkcc 电源域变体：A=vk71-mxc（RPMHPD_MXC）/ 
 #      **小节** `### 3. 内核版本时间线与「实机验证边界」`（约 433 行），与顶级 `## 3. 文件与
 #      资产台账（FILES）` 同号，死链检查抓不到这种歧义。今后引用写小节全名，勿只写「§3」。
 vk72	q24	2026-10-09	G1-34：ADSP fastrpc 加 qcom,non-secure-domain（生成 /dev/fastrpc-adsp 供 hexagonrpcd sensorspd）
+vk73	q28	2026-10-09	Q28 诊断内核：bonded 命令 DMA 超时点 dump DSI 寄存器（patches/q28-dsi-regdump.patch，+64 行诊断打印）；镜像 out/boot-elden-vk73-q28diag.img sha 8596f1c7…；UTS 刻意=vk64 以零写盘加载在机模块（口径见 vk-ledger-known-issues.tsv）；上机一发=好温启（Q28 未复现），判读表 .pi/plans/2026-10-09-Q28-诊断上机包.md
+vk74	q28	2026-10-09	Q28 电源上电路径鲁棒化+取证：dpu_kms_enable_commit/dpu_crtc_enable/msm_dsi_host_power_on 的 pm_runtime_get_sync→pm_runtime_resume_and_get 并上报/传播（patches/q28-poweron-propagate.patch，内核 ca81318f2）+ commit 失败点打印 DPU runtime-PM 状态；镜像 out/boot-elden-vk74-q28power.img sha 277aec4b…（DTB/ramdisk/cmdline 与 vk73 逐字段一致，含 elden_nocamera=1）；UTS 刻意=vk64（同上）；**未上机**

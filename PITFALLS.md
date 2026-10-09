@@ -1084,3 +1084,25 @@
 - **真因**：iio-sensor-proxy 与 `hexagonrpcd-adsp-sensorspd` 同在 default runlevel 并行起；SSC 加速度计要 ADSP 起来出 svc400（冷启数十秒）。iio 3.9「只扫一次即放弃」（G1-34）→ 开机时 proxy 抢在 svc400 前起则整轮无加速度计 → phosh `rotation-manager` 停 `MODE_OFF`（tile 置灰/锁死）。
 - **修复**：`/etc/init.d/iio-sensor-proxy` 加 `start_pre()` 等 `qrtr-lookup|grep -qw 400`（封顶 60s、超时照起不退化）+ `after hexagonrpcd-adsp-sensorspd`；仓库真源 `rootfs/persistent-overlay/iio-sensor-proxy.initd`（restore.sh 装包后覆盖）。诊断时临时 `rc-service iio-sensor-proxy restart`（svc400 已在则秒过）后 phosh 重启即恢复——但重启 phosh 会话会重跑一次完整 KMS modeset，Q28 bonded-DSI 有「背光亮无画面」复发风险（本次未触发），非必要不重启动 compositor。
 - **UI 说明**：phosh 无独立“自动旋转”开关，只有单个“方向锁定”tile；自动旋转开着时不显示方向选择栏（phosh 正常模型，非 bug）。“开关去哪了”多为模型误解。
+
+## 十七、设备侧自动化踩坑：会话总线 / DPMS / 传感器总线（2026-10-09 实测）
+
+140. **★greetd 起的桌面会话跑在 UID 1000，其临时 session bus 拒绝 root 连接**：
+    root 直接 `gdbus call --session …`（哪怕从 phoc 的 `/proc/<pid>/environ` 里取到
+    `DBUS_SESSION_BUS_ADDRESS`）报 `Error connecting: The connection is closed`（迷惑点：地址是对的、
+    socket 还是 `srwxrwxrwx`）。⇒ 所有要走会话总线的操作（真实熄屏 = `org.gnome.ScreenSaver.SetActive`、
+    gsettings、phosh D-Bus）必须降权到会话属主：
+    `U=$(sed -n 's/^Uid:[[:space:]]*\([0-9]*\).*/\1/p' /proc/$(pidof phoc)/status | head -1);
+     setpriv --reuid=$U --regid=$(…Gid…) --clear-groups env DBUS_SESSION_BUS_ADDRESS=$A XDG_RUNTIME_DIR=/run/user/$U gdbus …`。
+    **旧脚本 `scripts/sleep-sweep.sh` 里 root 直连的写法在新会话形态下会静默失效 ⇒ 假样本**：
+    任何「熄屏类」自动化必须先做 `PATHCHECK`（实测 `dpms` 真变 Off 再变 On）再开始计数。
+141. **root 写 `/sys/class/drm/card0-DSI-1/dpms` = `Permission denied`（DRM 拒绝，和 uid 无关）**：
+    所以熄屏**没有 sysfs 退路**，唯一真实路径是会话总线 `ScreenSaver.SetActive`（`modetest -w :DPMS:` 也是空操作，
+    见 G1-22 记录）。判「有没有画面」用 `dpms` + dmesg `vblank timeout`，不要用亮度节点（背光在坏发里也亮）。
+142. **`iio-sensor-proxy` 的能力属性挂在管理器对象本身**：`/net/hadess/SensorProxy` 上的
+    `HasAccelerometer / HasAmbientLight / HasProximity / AccelerometerOrientation`（罗盘另在
+    `/net/hadess/SensorProxy/Compass`）。**不存在** `net.hadess.SensorProxy.Accelerometer` 接口，
+    照文档抄 `busctl get-property … net.hadess.SensorProxy.Accelerometer HasAccelerometer` 会
+    `No such interface`（`gdbus Properties.Get` 同样报错，容易误判成「传感器又没了」）。
+    正确做法：先 `busctl --system tree net.hadess.SensorProxy` + `introspect` 看真实接口再取值；
+    且它在**系统总线**（会话总线上查会 `ServiceUnknown`）。

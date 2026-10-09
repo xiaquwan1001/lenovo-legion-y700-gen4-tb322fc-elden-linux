@@ -1,0 +1,121 @@
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+index 199ec7712..bbe075088 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -53,6 +53,7 @@ int msm_dsi_manager_connector_init(struct msm_dsi *msm_dsi,
+ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg);
+ int msm_dsi_manager_cmd_xfer_trigger(int id, u32 dma_base, u32 len);
+ bool msm_dsi_manager_cmd_failed(void);
++void msm_dsi_manager_cmd_reset(void);
+ int msm_dsi_manager_register(struct msm_dsi *msm_dsi);
+ void msm_dsi_manager_unregister(struct msm_dsi *msm_dsi);
+ void msm_dsi_manager_tpg_enable(void);
+@@ -105,6 +106,7 @@ void msm_dsi_host_set_phy_mode(struct mipi_dsi_host *host,
+ int msm_dsi_host_set_src_pll(struct mipi_dsi_host *host,
+ 			struct msm_dsi_phy *src_phy);
+ void msm_dsi_host_reset_phy(struct mipi_dsi_host *host);
++void msm_dsi_host_reset(struct mipi_dsi_host *host);
+ void msm_dsi_host_get_phy_clk_req(struct mipi_dsi_host *host,
+ 	struct msm_dsi_phy_clk_request *clk_req,
+ 	bool is_bonded_dsi);
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 819fe87d5..efcf80e1d 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -2896,6 +2896,18 @@ void msm_dsi_host_reset_phy(struct mipi_dsi_host *host)
+ 	udelay(100);
+ }
+ 
++/* elden Q28: full host recovery (sw_reset + phy reset) so the panel
++ * driver's init retry can actually re-arm the command path.  The
++ * bonded-command failure latch in dsi_manager is cleared by the caller.
++ */
++void msm_dsi_host_reset(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	dsi_sw_reset(msm_host);
++	msm_dsi_host_reset_phy(host);
++}
++
+ void msm_dsi_host_get_phy_clk_req(struct mipi_dsi_host *host,
+ 			struct msm_dsi_phy_clk_request *clk_req,
+ 			bool is_bonded_dsi)
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 246ce37ee..be86bca9a 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -39,6 +39,7 @@ static struct msm_dsi_manager msm_dsim_glb = {
+ 
+ static DEFINE_MUTEX(dsi_bonded_cmd_lock);
+ static bool dsi_bonded_cmd_failed;
++static int dsi_bonded_cmd_recovery_tries;
+ 
+ #define IS_BONDED_DSI()		(msm_dsim_glb.is_bonded_dsi)
+ #define IS_SYNC_NEEDED()	(msm_dsim_glb.is_sync_needed)
+@@ -54,6 +55,11 @@ bool msm_dsi_manager_cmd_failed(void)
+ 	return dsi_mgr_uses_bonded_cmd() && READ_ONCE(dsi_bonded_cmd_failed);
+ }
+ 
++void msm_dsi_manager_cmd_reset(void)
++{
++	WRITE_ONCE(dsi_bonded_cmd_failed, false);
++}
++
+ static inline struct msm_dsi *dsi_mgr_get_dsi(int id)
+ {
+ 	return msm_dsim_glb.dsi[id];
+@@ -646,6 +652,8 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 		return ret;
+ 	}
+ 
++	dsi_bonded_cmd_recovery_tries = 0;
++
+ restore_pair:
+ 	msm_dsi_host_bonded_xfer_restore(master);
+ 	msm_dsi_host_bonded_xfer_restore(slave);
+@@ -655,6 +663,26 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 	return ret;
+ }
+ 
++/* Q28: bounded one-shot recovery of the bonded command path.  After a
++ * bonded command failure the global latch makes every later transfer
++ * return -EIO, so the panel driver's init retry can never succeed until a
++ * fresh boot.  Reset both hosts' command path/PHY and clear the latch.
++ */
++static int dsi_mgr_bonded_cmd_recover(void)
++{
++	struct msm_dsi *master_dsi, *slave_dsi;
++
++	master_dsi = dsi_mgr_get_dsi(msm_dsim_glb.master_dsi_link_id);
++	slave_dsi = dsi_mgr_get_other_dsi(msm_dsim_glb.master_dsi_link_id);
++	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host)
++		return -ENODEV;
++
++	msm_dsi_host_reset(master_dsi->host);
++	msm_dsi_host_reset(slave_dsi->host);
++	msm_dsi_manager_cmd_reset();
++	return 0;
++}
++
+ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+ {
+ 	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
+@@ -672,8 +700,15 @@ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+ 		mutex_lock(&dsi_bonded_cmd_lock);
+ 
+ 	if (lock_pair && msm_dsi_manager_cmd_failed()) {
+-		ret = -EIO;
+-		goto out_unlock;
++		if (dsi_bonded_cmd_recovery_tries++ < 3 &&
++		    dsi_mgr_bonded_cmd_recover() == 0) {
++			dev_warn(&dsi_mgr_get_dsi(id)->pdev->dev,
++				 "bonded cmd failed; host/phy reset, retrying (%d)\n",
++				 dsi_bonded_cmd_recovery_tries);
++		} else {
++			ret = -EIO;
++			goto out_unlock;
++		}
+ 	}
+ 
+ 	if (lock_pair && !is_read && (msg->flags & MIPI_DSI_MSG_REQ_ACK)) {
