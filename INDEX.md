@@ -82,7 +82,7 @@
 - **Linux 侧未解（5 = 4 个任务 ID + #106 无 ID，按影响排序；G1-34 重力已通移出）**：
   ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。**已拿到首个好/坏同口径差分**：断点 = 面板首条 DCS 写走 **bonded 命令 DMA 超时**（不是 DPU modeset），只有 `STATUS0 0x0→0x20003`、`CLK_STATUS 0x2343→0x3743`（多 `DYN_PCLK_ACTIVE`+`DYN_CMD_PCLK_ACTIVE`）、`cmd_dma_busy/cmd_engine_busy 0→1` 四项不同 ⇒ 假说收窄到「首次 modeset 命令引擎撞 DYN 像素时钟域切换」；**dmesg 级判据**：`command DMA timeout`+`panel init attempt failed`（同批 5 坏/2 好零误报；`vblank timeout` 单独用会误判）；剩三个单变量实验（delay / busy 重触发 / 查谁开 DYN pclk）。详见 `.pi/plans/2026-10-09-深夜-Q28寄存器差分-模块化在机验证-槽位险情.md` §1；
   ② **Q24 熄屏→整机硬复位**（已锁单模块 `cambistmclkcc-sm8750` × DT 电源域，H1/D1/D2/H2 未根治；无相机态安全）；**用户裁决 2026-10-09 深夜：相机在位时熄屏掉电=常态 ⇒ 相机与熄屏互斥**，日常态零相机模块、需要时 `cam-mode.sh on`（先禁熄屏再加载）用完 `off`；DT 变体（H1/H2/mxnom）扫测不再排期，根治改挂 RPMh/驱动侧真修（上游报告已发）；
-  ③ **Q26 WiFi 到可用**（重开；假设=版本/DTB 增量连带，待单变量 bisect）；
+  ③ ~~**Q26 WiFi 到可用**~~ ✅ **已关闭（2026-10-10 用户实机确认 WiFi 正常）**；
   ④ ~~G1-6 TF 卡间歇写丢失~~ ⚪ **用户裁决搁置（2026-10-09 深夜：“tf 卡忽略”）**，不再占未解项；结论与 5 个候选补丁/`tf-stress.sh` 保留备查；
   ⑤ **进 GUI 后整机卡死**（PITFALLS #106；10-05 两次 + 10-09 一次，桌面显示正常时发生，**与 Q28 不同因**）。历史抓不到栈的原因=APSS 硬看门狗永久禁用 ⇒ 死挂不自复位、只能物理断电。**已常驻装弹**（`/etc/sysctl.d/99-freeze-trace.conf` + `pstore-catch` 开机归档 ramoops 到 `/var/log/pstore/`）⇒ 命中即自动 panic→暖复位→带回全 CPU 栈；60 轮合成负载压测（峰值 66.1 ℃）暂未复现；
   ~~G1-34 加速度计/重力传感器~~ ✅ 重力/自动旋转已可用（SSC/QRTR svc400 + iio-sensor-proxy，开机时序竞态已修持久化，见 `PITFALLS` §十六）；prox/als/compass 亦已核（冷/温启后 `Has*` 全 true，无需手动重启），已从本列移出未解；Phosh 原生“方向锁定”磁贴已可用。
