@@ -1,0 +1,29 @@
+Description: Start polling for clients that claimed during driver open
+ The SSC backend opens its sensors with a nested main loop.  A client
+ (gnome-settings-daemon) that claims the accelerometer while that loop
+ runs is recorded, but polling is only switched on for claims made after
+ the driver is set up, so the orientation stays "undefined" and the
+ light level 0 until the client claims again.  Once every driver is open,
+ enable polling for each sensor type that already has clients.
+Author: piano mainline contributors
+Forwarded: no
+Last-Update: 2026-09-29
+---
+diff -ruN isp-orig/src/iio-sensor-proxy.c iio-sensor-proxy-3.9/src/iio-sensor-proxy.c
+--- a/src/iio-sensor-proxy.c
++++ b/src/iio-sensor-proxy.c
+@@ -781,6 +781,14 @@
+ 		DEVICE_FOR_TYPE(i) = sensor_device;
+ 	}
+ 
++	/* Opening a sensor can iterate the main loop (e.g. the synchronous SSC
++	 * calls), so clients may have claimed a sensor before its device was
++	 * open. Start those sensors now. */
++	for (i = 0; i < NUM_SENSOR_TYPES; i++) {
++		if (DEVICE_FOR_TYPE(i) && g_hash_table_size (data->clients[i]) > 0)
++			driver_set_polling (DEVICE_FOR_TYPE(i), TRUE);
++	}
++
+ 	if (!any_sensors_left (data))
+ 		goto bail;
+ 
