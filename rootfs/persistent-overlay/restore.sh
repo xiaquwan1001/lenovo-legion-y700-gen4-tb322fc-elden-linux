@@ -48,6 +48,14 @@ echo "== dbus launch helper ownership (alpine ships root:root 4750) =="
 chown root:messagebus /usr/libexec/dbus-daemon-launch-helper 2>/dev/null || true
 chmod 4750 /usr/libexec/dbus-daemon-launch-helper 2>/dev/null || true
 
+echo "== freeze-trace 装弹（PITFALLS #106 死挂取证：panic→暖复位→ramoops）=="
+install -d /etc/sysctl.d
+install -m 0644 freeze-trace.conf /etc/sysctl.d/99-freeze-trace.conf
+grep -q 99-freeze-trace /etc/sysctl.conf 2>/dev/null || \
+	printf '\n# see /etc/sysctl.d/99-freeze-trace.conf (PITFALLS #106)\n' >> /etc/sysctl.conf
+install -m 0755 pstore-catch.initd /etc/init.d/pstore-catch
+rc-update add pstore-catch boot 2>/dev/null || true
+
 echo "== openrc runlevels + mode =="
 /usr/local/sbin/openrc-enable.sh enable
 

@@ -173,6 +173,7 @@
 |---|---|---|---|
 | TF 卡间歇写丢失 | 卡本身 或 `sdhci-msm` flush/cache（未定性） | 新卡 A/B 定性 → 再决定 5 个候选补丁方向（`patches/candidate-tf-*.patch`） | G1-6 / Q10 |
 | 熄屏 × 相机共存 | DT 电源域耦合（已锁单模块 `cambistmclkcc-sm8750`） | 等上游回复 + 单变量续修；现规避 `elden_nocamera=1` + `idle-delay=0` | G1-33 / Q24 |
+| 进 GUI 后整机卡死（PITFALLS #106，10-05 两次 + 今日 1 次） | 未定性；**非 Q28 专属**（卡死那次桌面显示正常，用户 2026-10-09 确认）；APSS 硬看门狗被永久禁用 ⇒ 死挂不自复位，故一直抓不到栈 | **已常驻装弹**：`/etc/sysctl.d/99-freeze-trace.conf`（softlockup_panic+all_cpu_backtrace+panic=20+sysrq）+ `pstore-catch`（开机把 ramoops 归档到 `/var/log/pstore/`）⇒ 真实使用/压测中命中即自动 panic→暖复位→带回全 CPU 栈；压力器 `scripts/gui-stress.sh`（PATHCHECK=mdss vsync 增量） | — |
 | 面板 init 间歇失败（只有背光） | 收窄：**只有开机首次 modeset 触发**（80 轮 DPMS 上电循环 0 命中）；机制候选=首次上电被吞错 + ABL 遗留态（`research-q28-dpu-powerup-race` / `2026-10-09-Q28-密集复现与vk74`） | **温启跑 vk74**（`fastboot boot out/boot-elden-vk74-q28power.img`）看是否自报 `power-up failed -X`；无自报则去 `clk_ignore_unused` 单变量 | Q28 |
 | WiFi 到可用 | 版本/DTB 增量连带副作用（假设） | 版本/DTB 单变量 bisect（vk40→vk63 零写盘） | Q26 |
 | SLPI 7 传感器（Linux 侧原生） | AP 侧无总线，需 QRTR + `qcom_smgr` 栈 | 可选自研（路线见 G1-34，未开工）；**G2 侧不等它**——走容器虚拟传感器（§6 §2①） | G1-34 |
