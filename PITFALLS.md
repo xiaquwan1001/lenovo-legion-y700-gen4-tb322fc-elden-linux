@@ -1288,5 +1288,7 @@
       - **`loginctl poweroff`（OpenRC 模式）不完成断电**：它确实触发了 OpenRC 停服务（`/root/powerlog.txt` 里有 NetworkManager/polkit/rtkit/seatd 停服务记录），但**卡在停服务阶段，永不进 poweroff** ⇒ 现象 = “对关机不响应”。
       - **`/bin/busybox poweroff -f` 有效**：直接调内核 poweroff（绕过 init/OpenRC）；实测 USB 重枚举 + SSH 断开约 18 s + 回来后 `uptime` 归零、`boot_id` 换新 ⇒ **真断电 + VBUS 自开机**，可当软件 POR。
       - **但 automatic 密循环不安全**：run1（GOOD）后，再下发 `poweroff -f` 时设备**未重启、GUI 卡死、音量键无响应**（内核卡死征兆），主机侧 SSH/`fastboot` 全无响应 ⇒ 只能长按电源键物理断电。run1 run2 已入 `reports/trials/`。
-    - ⇒ **用法**：软件 POR 每断言上限 1–2 发，每发之间必须由人确认“GUI 正常、`uptime` 小、`q28-devprobe.sh` 可跑”；`poweroff -f` 下发前先确认 SSH 活。**禁**像普通 reboot 那样盲跑 N 轮。是否等价真 POR（冷/暖性）仍未定：run1=GOOD 而 `fastboot reboot` 基线=STORM，需与用户实 POR 做同口径多样本比较。
+    - ⇒ **用法**：软件 POR 每断言上限 1–2 发，每发之间必须由人确认“GUI 正常、`uptime` 小、`q28-devprobe.sh` 可跑”；`poweroff -f` 下发前先确认 SSH 活。**禁**像普通 reboot 那样盲跑 N 轮。
+    - **补充实测（同日，修正上条乐观）**：从**严重 STORM 态**（`storm_sig=267`、dmesg 持续 vblank/ctl reset）再发 `busybox poweroff -f`，**设备不重启、SSH 不断、uptime 连续递增**——即命令执行了但**内核关机路径被 DRM storm 卡住而无效**（同 `#150` 机理）。已排除 SIGHUP：同一后台方式跑 `(sleep 6; touch /tmp/x)`，SSH 断开 9 s 后 marker 正常落盘 ⇒ 后台任务能活；所以不是命令没跑，是**跑不成**。⇒ **坏发态下任何软复位/poweroff 都不可靠，只能物理强制断电**（`reboot2`/SysRq-b 也仅能“重启”不能“断电”）。
+    - **复位深度阶（n 小，待定量）**：物理 POR（最深）→ **STORM**（复现坏发）；`fastboot reboot`（从 fastboot 起 boot_b）→ STORM；`busybox poweroff -f`（浅，PMIC 断电但疑似不清 DSI PHY/PLL 态）→ **GOOD**（run1）。与 `#166`（`reboot2` 暖复位粘 NOCARD）并列读：**决定显示好坏的不是“重启/断电”，而是该复位有没有把 DSI PLL/PHY 态彻底清掉**；物理 POR 清得最干净反而最坏。
     - 参考：`#151`（VBUS 自开机）、G1-25（USB 连着时 loginctl poweroff 会立即重启）——本次实测把“立即重启”细化为“OpenRC 下 loginctl poweroff 会卡停服务，要 `busybox poweroff -f` 才真断电”。

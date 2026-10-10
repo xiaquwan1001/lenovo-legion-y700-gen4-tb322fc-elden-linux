@@ -1,0 +1,18 @@
+{
+  "label": "realpor-run1",
+  "ts": "2026-10-10T12:52:41Z",
+  "vk": "vk64",
+  "image": "out/boot-elden-vk64.img",
+  "image_sha256": "15964160bed002b05621d90379c12fd68d0ae4dd4fdbcecbc94903eeefd7a20d",
+  "manifest": "/home/xuqianhui1001/y700-elden/out/boot-elden-vk64.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk64-gd02658e63cf6 (elden@y700",
+  "kernel_payload_sha256": "",
+  "config_sha256": "a383cdb99dfee7a9f7a21c915541af05edf6efa3d2bb7cda552b270a263cbf4d",
+  "dtb_packed_sha256": "",
+  "reset_type": "por",
+  "deploy": "physical power-off then power-on (user)",
+  "probe": "q28",
+  "verdict": "STORM",
+  "log_dir": "reports/trials/20261010T125240Z-realpor-run1",
+  "note": "user POR: screen=backlight only; SSH alive; classify"
+}
