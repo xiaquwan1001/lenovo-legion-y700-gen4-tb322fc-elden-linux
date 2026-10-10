@@ -1,0 +1,3 @@
+uname=7.2.0-debug-vk64-gd02658e63cf6 uptime=22.17s
+DSI_PLL_lockfail=4  device_link_fail=8  storm_sig=15  card0=1  connectors: card0-DP-1=disconnected card0-DSI-1=connected card0-Writeback-1=unknown
+VERDICT=STORM   (card0 在但 bring-up 风暴 sig=15)

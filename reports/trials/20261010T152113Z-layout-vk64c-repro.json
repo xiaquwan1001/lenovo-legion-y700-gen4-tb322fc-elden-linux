@@ -1,0 +1,18 @@
+{
+  "label": "layout-vk64c-repro",
+  "ts": "2026-10-10T15:21:13Z",
+  "vk": "vk64c-repro",
+  "image": "out/q28-layout/boot-q28-vk64c-repro.img",
+  "image_sha256": "6d87888c894f254871120035cf1ffc5de241b61e29fbad132521554c2c95e2f4",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "NOCARD",
+  "log_dir": "reports/trials/20261010T152113Z-layout-vk64c-repro",
+  "note": "kernel_payload_sha=?"
+}

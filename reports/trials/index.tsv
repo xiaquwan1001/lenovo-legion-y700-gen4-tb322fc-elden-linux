@@ -8,3 +8,19 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-10T13:02:42Z	coldfb-vk86base	vk86-base	cold	fastboot boot (cold fastboot after user POR)	NOCARD	ded13a47c469	reports/trials/20261010T130242Z-coldfb-vk86base
 2026-10-10T13:04:52Z	coldfb-vk64	vk64	cold	fastboot boot (cold fastboot after user POR)	STORM	15964160bed0	reports/trials/20261010T130444Z-coldfb-vk64
 2026-10-10T13:06:32Z	coldfb-vk87round2	vk87-round2-v64	cold	fastboot boot (cold fastboot after user POR)	NOCARD	39f22252b97e	reports/trials/20261010T130632Z-coldfb-vk87round2
+2026-10-10T15:01:05Z	layout-oct8		warm	reboot2+fastboot-boot	GOOD	a5ace41622f3	reports/trials/20261010T150104Z-layout-oct8
+2026-10-10T15:07:02Z	layout-oct8-HANG		warm	reboot2+fastboot-boot	HANG	a5ace41622f3	reports/trials/20261010T150701Z-layout-oct8-HANG
+2026-10-10T15:10:06Z	layout-a		warm	fastboot-boot	NOCARD	86e34874ca47	reports/trials/20261010T151006Z-layout-a
+2026-10-10T15:10:56Z	layout-aa		warm	fastboot-boot	NOCARD	2b3dbad9d992	reports/trials/20261010T151056Z-layout-aa
+2026-10-10T15:11:44Z	layout-vk64c-repro	vk64c-repro	warm	fastboot-boot	NOCARD	6d87888c894f	reports/trials/20261010T151144Z-layout-vk64c-repro
+2026-10-10T15:12:34Z	layout-oct8		warm	fastboot-boot	STORM	a5ace41622f3	reports/trials/20261010T151232Z-layout-oct8
+2026-10-10T15:13:41Z	layout-oct8		warm	fastboot-boot	STORM	a5ace41622f3	reports/trials/20261010T151334Z-layout-oct8
+2026-10-10T15:14:32Z	layout-a		warm	fastboot-boot	NOCARD	86e34874ca47	reports/trials/20261010T151432Z-layout-a
+2026-10-10T15:15:17Z	layout-oct8		warm	fastboot-boot	GOOD	a5ace41622f3	reports/trials/20261010T151517Z-layout-oct8
+2026-10-10T15:19:43Z	layout-a		warm	fastboot-boot	NOCARD	86e34874ca47	reports/trials/20261010T151943Z-layout-a
+2026-10-10T15:20:28Z	layout-aa		warm	fastboot-boot	NOCARD	2b3dbad9d992	reports/trials/20261010T152028Z-layout-aa
+2026-10-10T15:21:13Z	layout-vk64c-repro	vk64c-repro	warm	fastboot-boot	NOCARD	6d87888c894f	reports/trials/20261010T152113Z-layout-vk64c-repro
+2026-10-10T15:21:58Z	layout-a		warm	fastboot-boot	NOCARD	86e34874ca47	reports/trials/20261010T152157Z-layout-a
+2026-10-10T15:22:43Z	layout-aa		warm	fastboot-boot	NOCARD	2b3dbad9d992	reports/trials/20261010T152242Z-layout-aa
+2026-10-10T15:23:27Z	layout-vk64c-repro	vk64c-repro	warm	fastboot-boot	NOCARD	6d87888c894f	reports/trials/20261010T152327Z-layout-vk64c-repro
+2026-10-10T15:24:22Z	layout-oct8		warm	fastboot-boot	STORM	a5ace41622f3	reports/trials/20261010T152417Z-layout-oct8

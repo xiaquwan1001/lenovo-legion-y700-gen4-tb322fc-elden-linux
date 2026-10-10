@@ -1,0 +1,18 @@
+{
+  "label": "layout-oct8",
+  "ts": "2026-10-10T15:12:34Z",
+  "vk": "",
+  "image": "out/q28-layout/boot-q28-oct8.img",
+  "image_sha256": "a5ace41622f306e57a7a998e6f19afe56e6fbb1c968c3f72af92062506697b4b",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "STORM",
+  "log_dir": "reports/trials/20261010T151232Z-layout-oct8",
+  "note": "kernel_payload_sha=8efb2731"
+}

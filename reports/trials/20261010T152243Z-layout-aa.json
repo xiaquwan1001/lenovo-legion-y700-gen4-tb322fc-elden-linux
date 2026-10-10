@@ -1,0 +1,18 @@
+{
+  "label": "layout-aa",
+  "ts": "2026-10-10T15:22:43Z",
+  "vk": "",
+  "image": "out/q28-layout/boot-q28-aa.img",
+  "image_sha256": "2b3dbad9d9922d32bf7b489f17dbd185ad27df58f273d7ba7748c4043f8607a0",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "NOCARD",
+  "log_dir": "reports/trials/20261010T152242Z-layout-aa",
+  "note": "kernel_payload_sha=?"
+}

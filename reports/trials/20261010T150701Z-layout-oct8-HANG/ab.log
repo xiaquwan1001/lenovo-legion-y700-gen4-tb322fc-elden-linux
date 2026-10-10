@@ -1,0 +1,8 @@
+[ab] SEQ=oct8 a aa vk64c-repro vk64c-repro aa a oct8  2026-10-10T23:01:08+08:00
+==== run 1 tag=oct8 img=out/q28-layout/boot-q28-oct8.img 2026-10-10T23:01:08+08:00
+[ab] NO-FASTBOOT tag=oct8
+==== run 2 tag=a img=out/q28-layout/boot-q28-a.img 2026-10-10T23:02:38+08:00
+[ab] NO-FASTBOOT tag=a
+==== run 3 tag=aa img=out/q28-layout/boot-q28-aa.img 2026-10-10T23:04:17+08:00
+[ab] NO-FASTBOOT tag=aa
+==== run 4 tag=vk64c-repro img=out/q28-layout/boot-q28-vk64c-repro.img 2026-10-10T23:05:55+08:00
