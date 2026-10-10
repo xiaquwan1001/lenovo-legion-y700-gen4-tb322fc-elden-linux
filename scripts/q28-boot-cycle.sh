@@ -23,6 +23,16 @@ S() { timeout "${2:-25}" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 "$T
 echo "IMG=$IMG TAG=$TAG OUT=$OUT"
 echo "before: $(S 'echo uptime=$(cut -d" " -f1 /proc/uptime) uname=$(uname -r)')"
 
+# --- 设备健康门 + 复位口径提醒（PITFALLS #152/#166）-----------------------
+# 本脚本走 reboot2（暖复位）+ fastboot boot；对 Q28 冷起 A/B **无效**（#166），只供诊断内核
+# 取证。真冷起 A/B 请用 `scripts/trial.sh run --reset por ...`（需用户物理 POR）。
+bash scripts/trial.sh gate; _g=$?
+if [ "$_g" = 1 ]; then
+	echo "[q28-cycle] 槽位健康门 FAIL —— 中止；先 scripts/trial.sh gate --fix" >&2
+	exit 1
+fi
+echo "[q28-cycle] ⚠️  暖复位循环：对 Q28 冷起结论无效（PITFALLS #166），仅诊断取证。"
+
 echo "== 1) reboot2 bootloader（进 fastboot，无需按键）=="
 S '(sleep 2; reboot2 bootloader) >/dev/null 2>&1 &' || true
 
@@ -42,6 +52,8 @@ i=0; while [ $i -lt 30 ]; do
 	sleep 5; i=$((i + 1))
 done
 S 'echo up' | grep -q up || { echo "FAIL=no-ssh（150 s；可能停在无桌面/引导失败）"; exit 1; }
+# 成功真开机即置 succ=1 止血（PITFALLS #152；ABL 只在 succ=0 时扣 retry）。
+S 'python3 /usr/local/sbin/slot-attr.py mark-successful b' 40 >/dev/null 2>&1 || true
 
 echo "== 5) 取证 =="
 S 'cat /proc/cmdline; echo "--- uname ---"; uname -a' >"$OUT/cmdline-uname.txt" 2>&1
@@ -71,6 +83,11 @@ case "$HAS0" in ''|*[!0-9]*) HAS0=0;; esac
 } | tee "$OUT/summary.txt"
 grep -E "power-up failed|resume dsi host|dpu pm:|vblank timeout|Failed to initialize|bonded|PLL.*lock fail|Q28 " "$OUT/dmesg.txt" | head -24
 echo "Q28_OK_DUMPS=$(grep -c "Q28 ok-master" $OUT/dmesg.txt) Q28_BAD_DUMPS=$(grep -cE "Q28 (master|slave)" $OUT/dmesg.txt)"
+# 机器可读 record（无 record 不得写 verdict；reset=warm 已声明）。
+_V=$(sed -n 's/^VERDICT=//p' "$OUT/summary.txt" | head -1)
+bash scripts/trial.sh record --label "q28-cycle-$TAG" --image "$IMG" --reset warm \
+	--deploy fastboot-boot --probe q28 --verdict "${_V:-UNKNOWN}" --logdir "$OUT" \
+	--note "warm reboot2 loop (#166: invalid for cold A/B)" >/dev/null 2>&1 || true
 [ "$HAS0" -eq 0 ] && exit 10
 [ "$((VB + PU + PI))" -gt 0 ] && exit 10
 echo "$DPMS" | grep -qi "off" && exit 10

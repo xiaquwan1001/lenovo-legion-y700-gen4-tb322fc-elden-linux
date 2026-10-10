@@ -20,7 +20,8 @@ boot_ok() {
 }
 
 # 每次成功启动后置槽位成功标志：否则 boot_b retry 递减/耗尽 → ABL 抛到 fastboot
-mark_slot() { S 'qbootctl -m b' >/dev/null 2>&1 || true; }
+# 首选 slot-attr.py（权威，真源；PITFALLS #152），qbootctl 仅当回退。
+mark_slot() { S 'python3 /usr/local/sbin/slot-attr.py mark-successful b' >/dev/null 2>&1 || S 'qbootctl -m b' >/dev/null 2>&1 || true; }
 
 wait_booted() {
 	local t kicked=0
@@ -39,6 +40,13 @@ wait_booted() {
 printf '%s\n' $CONF > /tmp/sleepsweep.conf
 S 'cat > /etc/modules-load.d/camera.conf' < /tmp/sleepsweep.conf
 
+# ---- 前置健康门（PITFALLS #152）：succ=0 时每次真开机倒计时 → 先止血 -------
+TS="$(dirname "$0")/trial.sh"
+if [ -x "$TS" ]; then
+	bash "$TS" gate --fix || echo "[sleep-sweep] ⚠️ 槽位门返回非 0，继续但风险自负" >&2
+fi
+RUNKV=$(S 'uname -r' | tr -d '\r')
+
 for i in $(seq 1 "$N"); do
 	wait_booted || { echo "CONF[$CONF] run$i NOBOOT"; continue; }
 	S '(sleep 1; reboot) >/dev/null 2>&1 &' >/dev/null 2>&1
@@ -49,7 +57,11 @@ for i in $(seq 1 "$N"); do
 	if [ "${r//$'\r'/}" = "ALIVE" ]; then
 		echo "CONF[$CONF] run$i ALIVE"
 		S 'P=$(pidof phoc); export DBUS_SESSION_BUS_ADDRESS=$(tr "\0" "\n" < /proc/$P/environ | sed -n "s/^DBUS_SESSION_BUS_ADDRESS=//p"); export XDG_RUNTIME_DIR=/run/user/0; timeout 10 gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.SetActive false >/dev/null 2>&1' >/dev/null 2>&1
+		_V=ALIVE
 	else
 		echo "CONF[$CONF] run$i DEAD"
+		_V=DEAD
 	fi
+	[ -x "$TS" ] && bash "$TS" record --label "sleep-sweep-run$i" --image "device:$RUNKV" \
+		--reset warm --verdict "$_V" --logdir "$LOG" --note "conf=[$CONF] run$i uts=$RUNKV" >/dev/null 2>&1 || true
 done

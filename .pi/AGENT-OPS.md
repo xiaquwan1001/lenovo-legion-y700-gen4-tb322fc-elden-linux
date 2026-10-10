@@ -42,6 +42,7 @@
 
 - **先查本地既有结论**：引导链（BL/AVB/降级/GPT/EDL）及反复出现的问题，先 `grep` 技能 `references/` + `archive/topics/` + `PITFALLS`；命中则本轮只做「确认或推翻」，差量重推（`PITFALLS` #87）。
 - **判据在设备侧**：主机侧构建/编译/能进 BDS 一律只算「未上机验证」；**无设备证据不得写「已修复/已解决」**（`PITFALLS` §0 纪律 4）。间歇性故障**单次样本无效**（须同口径量化 + 单变量 + 长时窗）。
+- **上机结论必须落 record**：一次设备实验 = `scripts/trial.sh` 一条机器可读记录（`reports/trials/`）；**无 record 不得写 verdict**；`--reset` 类型必填（`por`/`cold`/`warm`），复位敏感问题（如 Q28）禁暖复位样本。构建产物身份由打包前硬门 `scripts/assert-kernel-sane.sh` + `check-doctor §5e` 保证。
 - **归因分层**：报「驱动/内核坏」前先分清 initramfs/rootfs 打包（C）与用户态配置（D）（`PITFALLS` #115）。
 - **主线优先**（服务上游化）：厂商私有 compatible 先找主线等效驱动，只补 DT/config/固件命名；主线没有则分「架构性不可做 / 私有 / 可自研」，只立第三类。
 - **一次正反判断**：同一方案/推理/建议只做一次正反判断，不重复论证。

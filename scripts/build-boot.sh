@@ -24,6 +24,10 @@ for f in "$KERNEL" "$DTB" "$IRAM/busybox" "$IRAM/init" "$IRAM/usb-gadget"; do
 	[ -e "$f" ] || { echo "missing: $f"; exit 1; }
 done
 
+# 打包前硬门：拒绝死内核 / 陈旧内核 / 异树内核（PITFALLS #162；见 scripts/assert-kernel-sane.sh）。
+# 绕过：SKIP_KERNEL_ASSERT=1 bash build-boot.sh ...
+bash "$ROOT/scripts/assert-kernel-sane.sh" "$KERNEL" || { echo "== 打包中止：内核未通过身份闸门 =="; exit 1; }
+
 # --- 最小 initramfs（fallback）-----------------------------------------
 # 唯一实现见 scripts/build-initramfs.sh（可复现 + 内嵌 /init 校验 + applet 合法性）。
 # 这里不再重复逻辑，避免两份实现漂移（PITFALLS #109 同类教训）。

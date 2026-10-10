@@ -2,20 +2,32 @@
 # apply-kernel-fragment.sh — 把配置片段合并进内核树 .config，并导出新快照
 #
 # 用法：
-#   bash apply-kernel-fragment.sh                      # 用默认片段
-#   FRAG=~/y700-elden/patches/xxx.config bash apply-kernel-fragment.sh
+#   FRAG=patches/<fragment>.config bash apply-kernel-fragment.sh
+#   FRAG=... SNAP=patches/<snapshot> bash apply-kernel-fragment.sh
+#   （未指定 FRAG 会列出可选项并退出；不再有隐式默认片段/SNAP）
 #
 # 行为：
-#   1. 备份当前 .config 到 patches/config-<旧名>-<时间>.bak
+#   1. 备份当前 .config 到 patches/config-before-fragment-<时间>.bak
 #   2. merge_config.sh 合并片段
-#   3. 若有交叉 gcc，跑 make olddefconfig 解析依赖；否则只合并并提示
-#   4. 导出新快照 patches/config-vk28-netd-ipv6-xfrm
+#   3. 若有交叉 gcc，跑 make olddefconfig 解析依赖，并回钉 ARCH_QCOM 等锚点
+#   4. 导出新快照（SNAP；默认 patches/config-<时间戳>）
 set -euo pipefail
 
 K="${K:-$HOME/y700-elden/linux}"
-FRAG="${FRAG:-$HOME/y700-elden/patches/fragment-netd-ipv6-xfrm.config}"
+if [ -z "${FRAG:-}" ]; then
+	cat >&2 <<'EOF'
+usage: FRAG=patches/<fragment>.config [SNAP=patches/<snapshot>] bash apply-kernel-fragment.sh
+
+未指定 FRAG（要合并的配置片段）。可用片段：
+EOF
+	ls -1 "${PATCHES:-$HOME/y700-elden/patches}"/fragment-*.config 2>/dev/null | sed 's/^/  /' >&2 || true
+	echo "（旧默认指向 vk28 netd 片段，已移除——裸跑会静默覆盖旧快照，见 PITFALLS #162 同类教训）" >&2
+	exit 2
+fi
+FRAG="$FRAG"
 PATCHES="${PATCHES:-$HOME/y700-elden/patches}"
-SNAP="${SNAP:-$PATCHES/config-vk28-netd-ipv6-xfrm}"
+# SNAP 默认改为时间戳路径，避免无声覆盖历史快照（旧默认硬编码 config-vk28-netd-ipv6-xfrm）。
+SNAP="${SNAP:-$PATCHES/config-$(date +%Y%m%d-%H%M%S)}"
 CROSS="${CROSS:-aarch64-linux-gnu-}"
 export PATH="$HOME/bin:$PATH"   # 本机 gcc 只有版本化名，~/bin 里放了 aarch64-linux-gnu-gcc 软链
 

@@ -1,0 +1,11 @@
+# manifest-incomplete-allowlist.txt — check-doctor §5e 的历史豁免名单
+#
+# 用途：`out/*.manifest` 缺 `config_sha256`（构建产物身份不可对账）在 §5e 一律 FAIL；
+#       已审查在案的**历史**事故在此登记后降级 WARN，避免新事故混过。
+# 格式：<manifest basename>  # 理由（可带注释行）
+#
+# 背景：正常 `scripts/build-manifest.sh` **始终**写 config_sha256；缺号 = 被手写 manifest 旁路。
+#       2026-10-10 #162 事故里，vk81/82/83 三个死内核的 manifest 全部缺号 → 事后无从对账。
+boot-elden-vk81-e0e4a.manifest  # 手写旁路；olddefconfig 删 ARCH_QCOM 的死内核（PITFALLS #162），镜像已删、仅 manifest 存留
+boot-elden-vk82-fix3.manifest   # 同上（死内核作废）
+boot-elden-vk83-fix2.manifest   # 同上（死内核作废）
