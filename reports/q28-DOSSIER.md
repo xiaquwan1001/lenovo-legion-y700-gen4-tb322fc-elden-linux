@@ -182,3 +182,10 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 - **可复用资产**：分支 `q28/vk86`：`d02658e63`(vk86-base=vk64 内核)→`71bc68462`(+round)→`a8c09a723`(+无条件遥测)；镜像 `out/boot-elden-vk86-{base,round,round2}.img`（manifest 齐全，config a383cdb9=与 vk64/vk84 对逐字节同）；完整 ramdisk 重建命令 `scripts/build-initramfs.sh full out/boot-elden-vk61.img`（sha d6ad1321）；round 补丁 `patches/q28-round-vk86.patch`；遥测判读 `dmesg | grep "Q28 byte clk"`（`no-op=YES` ⇒ 取整在 SM8750 是空操作，直接放弃 round）。
 - **设备态**：boot_b 全程未写（仍 vk64 日常）；会话结束时设备 RAM 里跑 vk86-base，**POR 一次即回日常**。
 - **唯一下一步（先于任何修法）**：同一镜像 `vk86-round2` 冷起 **2** 次（每次间隔真实 POR，禁 `reboot2`）→ 模式不同 ⇒ 非确定性 ⇒ **停 Q28 转 Q24（FIX-2 臂现成：vk84-base/exp）**；模式相同 ⇒ `/init` 时序杠杆 ⇒ 静态调 `/init` 时序后再 A/B。若任一 round 样本到 STORM：读 `Q28 byte clk` 遥测判 no-op。
+
+## j) 2026-10-10 第二会话追加：真实 POR 确定性 + 复位深度阶（PITFALLS #170）
+- **真实物理 POR（用户手动，vk64 日常 boot_b）2/2 = STORM**：run1 `storm_sig=267`（uptime 226s）、run2 `storm_sig=18`（uptime 22s）；两次均在 ~0.88s `DSI PLL(0) lock failed`×4、~9.07–9.14s `command DMA timeout status=0x2200200` + `bonded command DMA failed master=-110 peer=-110` + `Failed to initialize panel -5` + `ctl 1 reset failure -22` + `frame done timeout`。模式与签名时序一致。证据 `reports/trials/*-realpor-run{1,2}/`。
+- ⇒ **real-POR 路径确定性复现 STORM**；§i 遗留的「同镜像冷起一次 STORM 一次 NOCARD」应归因于**复位类型混淆**（暖复位粘 NOCARD，`#166`），而非同路径二进制非确定性。**确定性门在 POR 路径上=通过（2/2 同模式）**。
+- **复位深度 → 显示 阶（实测，n 小）**：物理 POR（最深）→ STORM；`fastboot reboot`→boot_b → STORM；`busybox poweroff -f`+VBUS 自开机（浅）→ GOOD；`reboot2` 暖复位→fastboot boot → NOCARD 粘态。⇒ 决定显示的不是「重启/断电」动作，而是该复位有没有清掉 DSI PLL/PHY 态。
+- **坏发态软复位不可用**：严重 STORM（sig=267）下发 `busybox poweroff -f`，命令执行但**不生效**（uptime 连续、SSH 不断）＝内核关机路径被 DRM storm 卡死（`#150`）。已排除 SIGHUP。⇒ 坏发态只能物理强制断电。
+- **对下一步的影响**：real-POR 可靠产坏发，但物理 POR 只能启动**固定的 boot_b**。要冷起一个实验镜像（如 vk86-round2），只有两条路：(a) 把镜像写进 boot_b 再 POR（写盘，需备份，且 slot 次数风险）；(b) 用户 POR **进 fastboot**（按键）后 `fastboot boot <实验镜像>` —— DOSSIER §h C2 已证 cold-fastboot→`fastboot boot` = STORM，且零写盘。**推荐 (b)** 作为 A/B 采样台，但需用户配合“POR 进 fastboot”这一动作。

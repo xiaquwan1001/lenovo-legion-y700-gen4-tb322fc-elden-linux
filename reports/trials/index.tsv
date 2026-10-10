@@ -4,3 +4,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-10T12:47:25Z	softpor-run2-HANG	vk64	por	busybox poweroff -f + VBUS auto-on	HANG	15964160bed0	reports/trials/20261010T124724Z-softpor-run2-HANG
 2026-10-10T12:52:41Z	realpor-run1	vk64	por	physical power-off then power-on (user)	STORM	15964160bed0	reports/trials/20261010T125240Z-realpor-run1
 2026-10-10T12:53:23Z	softpor-recover	vk64	warm	busybox poweroff -f from STORM	STORM	15964160bed0	reports/trials/20261010T125322Z-softpor-recover
+2026-10-10T12:55:58Z	realpor-run2	vk64	por	physical power-off then power-on (user)	STORM	15964160bed0	reports/trials/20261010T125555Z-realpor-run2
