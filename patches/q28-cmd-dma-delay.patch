@@ -1,0 +1,68 @@
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index eda7ca625..1a15f90d1 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -37,6 +37,40 @@
+ 
+ #define DSI_RESET_TOGGLE_DELAY_MS 20
+ 
++/*
++ * Q28 single-variable experiment knob (device-local, NOT upstreamable).
++ *
++ * Q28 = the panel's first DCS write fails with a bonded command-DMA completion
++ * timeout; the failing boot shows DYN_PCLK_ACTIVE | DYN_CMD_PCLK_ACTIVE in
++ * REG_DSI_CLK_STATUS at trigger time while the working boot does not. To A/B
++ * that correlation with one variable only, an optional settle delay may be
++ * inserted right before REG_DSI_TRIG_DMA is asserted.
++ *
++ * Default 0 == feature completely off, i.e. byte-for-byte the previous
++ * behaviour; no existing logic is touched. Enabled from the kernel cmdline
++ * (e.g. `dsi_cmd_delay_us=1000`) because DRM_MSM is built-in (=y), so
++ * early_param()/kstrtouint is used instead of module_param(): the value must
++ * be parsed before the panel is probed, and there is no module to load.
++ */
++static unsigned int dsi_cmd_delay_us;
++
++static int __init parse_dsi_cmd_delay_us(char *s)
++{
++	unsigned int val;
++	int ret;
++
++	if (!s || !*s)
++		return -EINVAL;
++
++	ret = kstrtouint(s, 0, &val);
++	if (ret)
++		return ret;
++
++	dsi_cmd_delay_us = val;
++	return 0;
++}
++early_param("dsi_cmd_delay_us", parse_dsi_cmd_delay_us);
++
+ static int dsi_populate_dsc_params(struct msm_dsi_host *msm_host, struct drm_dsc_config *dsc);
+ 
+ static int dsi_get_version(const void __iomem *base, u32 *major, u32 *minor)
+@@ -2592,6 +2626,22 @@ void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
+ void msm_dsi_host_bonded_cmd_trigger(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	u32 clk_pre = 0, clk_post = 0;
++
++	/*
++	 * Q28 experiment: optional pre-trigger settle delay (default 0 => the
++	 * whole block is skipped, keeping the original code path untouched).
++	 * Callers (dsi_mgr_bonded_cmd_xfer()) hold no lock and already sleep in
++	 * msm_dsi_host_bonded_wait_video(), so usleep_range() is safe here.
++	 */
++	if (dsi_cmd_delay_us) {
++		clk_pre = dsi_read(msm_host, REG_DSI_CLK_STATUS);
++		usleep_range(dsi_cmd_delay_us, dsi_cmd_delay_us + 50);
++		clk_post = dsi_read(msm_host, REG_DSI_CLK_STATUS);
++		dev_err(&msm_host->pdev->dev,
++			"Q28 delay=%uu pre CLK_STATUS=%#x post=%#x\n",
++			dsi_cmd_delay_us, clk_pre, clk_post);
++	}
+ 
+ 	dsi_write(msm_host, REG_DSI_TRIG_DMA, 1);
+ }

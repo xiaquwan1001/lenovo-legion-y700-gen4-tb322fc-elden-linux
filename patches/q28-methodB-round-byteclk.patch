@@ -1,0 +1,48 @@
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c	2026-10-10 13:47:58.355220183 +0800
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c	2026-10-10 13:47:58.352656003 +0800
+@@ -482,6 +482,45 @@
+ 	 * also needs a valid cached VCO rate before the first prepare attempt.
+ 	 */
+ 	if (of_device_is_compatible(dev->of_node, "qcom,sm8750-dsi-ctrl")) {
++		unsigned long ideal = msm_host->byte_clk_rate;
++		unsigned long intf = msm_host->byte_intf_clk_rate;
++		bool intf_div2 = intf && (intf != ideal);
++		long rounded;
++
++		/*
++		 * Round the byte clock to a rate the DSI PLL can actually achieve
++		 * before programming it.  Passing the unrounded, pixel-derived
++		 * (ideal) rate makes the common clock framework re-evaluate and
++		 * re-lock the DSI PLL on every modeset.  On a cold boot the PLL/PHY
++		 * lock state is not preserved across reset, so the first modeset
++		 * takes the fragile re-lock path and the re-lock collides with the
++		 * first command-DMA trigger (cmd engine stays busy, -110 timeout).
++		 * Feeding clk_set_rate() the PLL-achievable rate makes the call a
++		 * CCF no-op once the PLL is locked -- the same path warm resets
++		 * already take successfully.
++		 *
++		 * Upstream: 6cd33b6f4155 ("drm/msm/dsi: round 6G byte clock rate to
++		 * the PLL-achievable value"), reverted by bc484ede914d, then
++		 * reworked by Dmitry Baryshkov's "round the byte clock rate after
++		 * reparenting to the PHY PLL" series.  This is the SM8750 port in
++		 * dsi_link_clk_set_rate_6g_v2_9().
++		 */
++		rounded = clk_round_rate(msm_host->dsi_pll_byte_clk, ideal);
++		if (rounded > 0 && (unsigned long)rounded != ideal) {
++			DBG("round dsi byte clk %lu -> %ld (PLL-achievable)\n",
++			    ideal, rounded);
++			msm_host->byte_clk_rate = rounded;
++			/*
++			 * Keep byte_intf in lock-step with byte_clk so the later
++			 * clk_set_rate(byte_intf_clk) in dsi_link_clk_set_rate_6g()
++			 * cannot drag the freshly locked PLL back toward the
++			 * unachievable ideal rate.  Preserve the /2 relationship
++			 * when the PHY requested byte_intf_clk_div_2 (not the case
++			 * for the 3nm SM8750 PHY, but kept for correctness).
++			 */
++			msm_host->byte_intf_clk_rate = intf_div2 ? rounded / 2 : rounded;
++		}
++
+ 		ret = clk_set_rate(msm_host->dsi_pll_byte_clk,
+ 				   msm_host->byte_clk_rate);
+ 		if (ret) {

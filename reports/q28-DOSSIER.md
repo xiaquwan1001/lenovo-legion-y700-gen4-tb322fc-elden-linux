@@ -1,0 +1,158 @@
+# Q28 显示问题 — 单一事实源（SSOT 合订卷）
+
+> 本文件是 **Q28 显示 bring-up 问题的唯一事实源（SSOT）**。散落的过程稿（`reports/q28-*-20261010.md`）
+> 收敛于此；旧报告只作证据附件保留（见 `reports/q28-INDEX.md`）。
+> 定稿日期：2026-10-10。每条结论标证据来源（PITFALLS 条目 / 报告 § / 日志文件:行 / 寄存器值 / 源码行）。
+> 本文档**不改设备、不改内核、不改任何已有 git 跟踪文件**，仅整理进度。
+
+---
+
+## a) 一句话现状
+
+Q28 = 设备**冷起（display bring-up）间歇性无画面**，根因候选已定案在 **DSI 冷起首次 PLL/PHY 锁不稳**：
+轻则在**首条 DCS 命令的命令 DMA 上 hang（STORM）**，重则 **DSI host probe 就没出 card0（NOCARD）**；
+两条候选修法（`cmd_trigger` settle delay / 取整 byte-clk）都**未编、未上机、未判定**，冷 A/B 只跑了 **1 次且撞 NOCARD**。
+
+---
+
+## b) 已定案结论（6 条，逐条标证据）
+
+**B1 — Q28 的真实变量是「冷/暖复位」，不是时间/温度。**
+冷起基本失败（用户实机约 ~60%，"有时能进桌"）；暖起（`reboot→fastboot boot` / ABL 已初始化）基本成功。
+- 推翻 2026-10-09「强时间相关（下午好/夜里坏）」的初判（用户实机纠正）。
+- 硬约束：**A/B 样本必须固定复位类型**；纯暖起循环（今天暖起 9/9 干净、`q28-ab-delay.sh` 8/8 GOOD）**不能**当"未复现"结论，只能说明暖路径本没撞上触发条件。要复现高坏发态须走**冷起（用户 POR 进 fastboot → `fastboot boot`，零写 boot_b）**。
+- 证据：`PITFALLS.md #163`（"修正本条初稿方向写反"）；`reports/q28-handoff-20261010.md` §0 口径纠正；`logs/q28-ab-20261010-130712.log`（暖起 A/B）。
+
+**B2 — 根因 L1 = bonded 双 DSI「首条 DCS 命令（`ff 20`）」的命令 DMA 引擎 hang；L2 是 L1 的下游。**
+坏发瞬间：面板首条 DCS `dcs data ff 20` 即超时，主/peer 报 `command DMA timeout status=0x2200200 master=-110 peer=-110`，
+init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys_vid … ctl 1 reset failure -22` / frame done / vblank 风暴 → 自发重启。
+- **完美共现 ⇒ L2（DPU CTL 卡死 -22）= L1 的下游后果，非独立 bug。根因 = L1。**
+- hang 瞬间寄存器：`STATUS0=0x20003`（正常=0x0）、`TRIG_DMA=0x1` 自不清；CTL/CMD_DMA_CTRL/FIFO 好与坏相同。
+- 同日志 15 boot 分段差分：GOOD 4 次（`commandDMA=0/initfail=0/ctlreset=0/framedone=0`）、BAD 11 次（全部先 cmd DMA timeout）。
+- 面板 `csot,pp8807hb1-1`(=`novatek,nt36536`) `mode_flags = …VIDEO_BURST…DSC`（`drivers/gpu/drm/panel/panel-novatek-nt36536.c:530`），init 仍走 DCS；背光是 init 成功之后才开 → 以 dmesg `Failed to init panel` 为准，不能凭"有背光"判 init 成功。
+- 证据：`PITFALLS.md #164`；`reports/q28-two-layers-20261010.md`「★根因确认」段；`logs/q28-BAD-vk75dump-20261009-222932/q28-dumps.txt:1-2`（STATUS0/TRIG_DMA/INTR_CTRL 值）；同目录 `dmesg.txt:988-999`（timeout + `ff 20` -110→-5）；`logs/q28-BAD-live-20261009-221729/serial.log:269-272`。
+
+**B3 — 冷起显示失效至少两种独立模式：NOCARD（无 card0）与 STORM（cmd-DMA 风暴）。**
+- **NOCARD**：无 `/sys/class/drm/card0`；dmesg 早期 `DSI PLL(0) lock failed, status=0x00000000`（~0.86 s）+ `Failed to create device link … for …panel@0` → display-subsystem 组件没聚齐 → **根本没 card0**，管道没跑到 cmd-DMA 阶段，所以风暴签名=0（只数签名会误判 GOOD）。
+- **STORM**：有 card0，但 cmd-DMA 超时/ctl reset/frame done/vblank 风暴（即 B2）。
+- 两模式**同指一个根：冷起首次 DSI PLL/PHY 不能稳定锁定**；`cmd_trigger` 处的 delay 只盖 STORM 子窗口（远晚于 0.86 s 的 DSI host probe），**盖不住 NOCARD**。
+- 证据：`PITFALLS.md #165`；`scripts/q28-devprobe.sh`（三态探针实现）；`logs/q28-forensics-20261010-125030/02-dmesg.txt:719`（`DSI PLL(0) lock failed …`）。
+
+**B4 — 判据必须三态（NOCARD/STORM/GOOD），且须 SSH 读完整 dmesg + 查 card0。**
+- 三态：无 `card0` ⇒ **NOCARD**；有 card0 但有风暴签名 ⇒ **STORM**；有 card0 + connector connected + 无风暴 ⇒ **GOOD**。
+- 旧"只 grep `command DMA timeout`"的分类器**漏判** vblank/frame-done 风暴（`scripts/q28-verdict.sh` 已扩到 L1+L2 六类签名），更漏判 NOCARD。
+- **不能靠串口 logger 判显示**：logger 重连会漏 0–20 s，正好盖住 NOCARD 的 0.86 s 现场。
+- 证据：`scripts/q28-devprobe.sh`（三态）；`scripts/q28-verdict.sh`（六类签名，L1/L2 都数）；`PITFALLS.md #164`（方法论教训）/ `#165`（基建修正）。
+
+**B5 — 候选修法：vk84-exp（`cmd_trigger` delay=1000 us）与 Method B（取整 byte-clk）。冷 A/B 仅 1 次，撞 NOCARD。**
+- **vk84-exp**：`msm_dsi_host_bonded_cmd_trigger()` 写 `REG_DSI_TRIG_DMA` 前 `usleep_range(1000)`（`early_param dsi_cmd_delay_us`，默认 0=现状）。镜像 `out/boot-elden-vk84-q28delay-{base,exp}.img`，载荷逐字节同、唯一差 cmdline。补丁 `patches/q28-cmd-dma-delay.patch`。**只可能影响 STORM，不影响 NOCARD**。
+- **Method B**：取整 byte-clk 使后续 `clk_set_rate` 成 CCF no-op、不再 retrigger PLL。草稿 `patches/q28-methodB-round-byteclk.patch` + `patches/q28-methodB-NOTES.md`；**落点须按上游校准到 generic `dsi_link_clk_set_rate_6g()`、对象 `msm_host->byte_clk`（不是 `_v2_9` 内 SM8750 分支、不是 `dsi_calc_clk_rate_6g`）**。**未编、未 apply、未上机**。
+- 冷 A/B 记录：**T1 = vk84-exp(delay=1000) = NOCARD（n=1，不作定论）**。
+- 证据：`PITFALLS.md #164`（修复靶点）/ `#165`（T1 记录 + delay 盖不住 NOCARD）；`reports/q28-upstream-diff-20261010.md` §4–5（Method B 正确落点）；`reports/q28-orchestration-20261010.md` §3（vk84 单变量对）。
+
+**B6 — 上游 `round byte clock after reparenting`（Dmitry）与本树机制吻合，但「逐字 cherry-pick 对本树无效」。**
+- 上游正解 = commit `2028280686f4`（Dmitry Baryshkov，2026-09-03，`fix-eliza-dsi` 系列，**已进 mainline v7.3-rc4**）；经 qualcomm-linux **PR #1867** backport（merge `9511cf8cf5f2`，diff 与 lore 逐字一致）。机制：6G v2.9 主机在 reparent 到 PHY PLL 后取整 byte_clk，避免每次 transfer 重触 PLL。
+- 因果链：Kavan `6cd33b6f4155`（reparent **前**取整 = 灌 19.2 MHz 废值破屏）→ Kozlowski `bc484ede914d` revert → Dmitry `2028280686f4` 正解。
+- **对本树的裁决**：本树 = **前置 Kavan 的 7.2 基线**，三 commit 全 NOT-IN-TREE；`2028280686f4` 的"删除型 hunks"应用不上，且它修的是 Kavan 引入的 7.3-rc2 恒定回归（与复位类型无关），**不等于我们的冷起竞态**。"取整"对本树仍是合理**加固**（等价"加"部分、不含"删"部分），但**能否消 Q28 仍是经验问题**。
+- 证据：`reports/q28-upstream-diff-20261010.md` §1–4（一手原文 + 逐条对树核实）；`reports/q28-upstream-research-20261010.md` §1.1（早期"机制完全吻合"判断，已被 upstream-diff 收窄，见 §"不一致"）。
+
+---
+
+## c) 证据索引（结论 → 具体来源）
+
+| # | 证据 | 类型 | 精确来源 |
+|---|------|------|----------|
+| C1 | 冷/暖复位为真变量，非时间 | 定案条目 | `PITFALLS.md #163` |
+| C2 | 暖起 A/B 8/8 GOOD（测错变量，不判别） | 日志 | `logs/q28-ab-20261010-130712.log`；`reports/q28-orchestration-20261010.md` §4 表 |
+| C3 | L1 命令 DMA timeout 寄存器值 | 寄存器 | `logs/q28-BAD-vk75dump-20261009-222932/q28-dumps.txt:1-2`（`STATUS0=0x20003`、`TRIG_DMA=0x1`、`INTR_CTRL=0x2200200`） |
+| C4 | 首条 DCS `ff 20` 超时 -110→-5 | dmesg | 同目录 `dmesg.txt:988-999`；`logs/q28-BAD-live-20261009-221729/serial.log:269-272` |
+| C5 | GOOD(4)/BAD(11) 差分、L2=L1 下游 | 日志差分 | `PITFALLS.md #164`；`reports/q28-two-layers-20261010.md`「★根因确认」 |
+| C6 | 面板 VIDEO_BURST+DSC，init 走 DCS | 源码 | `drivers/gpu/drm/panel/panel-novatek-nt36536.c:530`（见 two-layers §关键源码事实） |
+| C7 | 显示时序（bonded/DSC/wide，bitclk 1064606 kHz） | dmesg | `logs/q28-BAD-vk75dump-20261009-222932/dmesg.txt:986`；`logs/q28-forensics-20261010-125030/02-dmesg.txt:987` |
+| C8 | DSI byte-clk 实际达成 108.108 MHz | clk_summary | `logs/q28-forensics-20261010-125030/03-clk-dsi-mdss-raw.txt:43`（`108107958`）；`logs/q28-control-coldboot-181758/control.txt`（byte0/1=108107958） |
+| C9 | "请求 133.076 MHz / 差 23%"（派生值，见 §g） | 推断 | `reports/q28-orchestration-20261010.md` §2（133.076 = bitclk 1064606÷8 推得；clk_summary 只记达成 108.108） |
+| C10 | NOCARD 现场：DSI PLL(0) lock failed（0.86 s） | dmesg | `logs/q28-forensics-20261010-125030/02-dmesg.txt:719`；三态判据 `scripts/q28-devprobe.sh` |
+| C11 | 三态判据实现 | 脚本 | `scripts/q28-devprobe.sh`（NOCARD/STORM/GOOD/NOROUTE）；`scripts/q28-verdict.sh`（六类风暴签名） |
+| C12 | 冷 A/B T1=exp=NOCARD（n=1） | 定案条目 | `PITFALLS.md #165`（冷 A/B trial 记录）；`reports/q28-handoff-20261010.md` 顶部「冷 A/B 已开始」横幅 |
+| C13 | vk84 单变量对（唯一差 cmdline delay） | 镜像+补丁 | `out/boot-elden-vk84-q28delay-{base,exp}.img`(+`.manifest`)；`patches/q28-cmd-dma-delay.patch` |
+| C14 | Method B 草稿 + 复核（未编未上机） | 补丁 | `patches/q28-methodB-round-byteclk.patch`；`patches/q28-methodB-NOTES.md` |
+| C15 | 上游正解 + PR #1867 + NOT-IN-TREE 裁决 | 一手对树 | `reports/q28-upstream-diff-20261010.md` §1–3 |
+| C16 | 死内核事故（vk81/82/83 无 QCOM 驱动）与守卫修复 | 定案条目 | `PITFALLS.md #162`；`scripts/build-kernel.sh`（编后符号守卫）、`scripts/apply-kernel-fragment.sh`（回钉/回滚） |
+
+---
+
+## d) 两种失效模式对比表
+
+| 维度 | NOCARD（更早 / 更根本） | STORM（较晚 = B2 主证据） |
+|---|---|---|
+| card0 | **无**（`/sys/class/drm` 只有 `version`） | 有 |
+| 首个现场时刻 | **~0.86 s**（DSI host probe） | ~9 s（modeset / init 首条 DCS） |
+| 关键签名 | `DSI PLL(0) lock failed, status=0x00000000`；`Failed to create device link … panel@0` | `command DMA timeout status=0x2200200 master=-110 peer=-110`；`ff 20` 失败；`ctl 1 reset failure -22`；frame done/vblank 风暴 |
+| 风暴签名计数 | **0**（管道没跑到 cmd-DMA） | >0 |
+| GUI/桌面 | 无 | 无（背光可能亮、面板不刷） |
+| 与 delay 的关系 | **盖不住**（probe 阶段，早于 cmd_trigger） | 可能盖（cmd_trigger settle delay 正作用于此窗口） |
+| 共同根 | 冷起首次 **DSI PLL/PHY 未稳定锁定** | 冷起首次 **DSI PLL/PHY 未稳定锁定** |
+| 判据 | `q28-devprobe.sh`：无 card0 ⇒ NOCARD | `q28-devprobe.sh`：有 card0 + 风暴 ⇒ STORM |
+| 现场日志 | T1（`#165`/handoff 横幅记录；仓库内**未见独立 NOCARD 日志目录**，见 §g-3） | `logs/q28-BAD-vk75dump-20261009-222932/`、`logs/q28-BAD-live-20261009-221729/` |
+
+---
+
+## e) 候选修法与状态
+
+| 修法 | 作用点 | 目标模式 | 状态 | 证据 |
+|---|---|---|---|---|
+| **vk84-exp**（`dsi_cmd_delay_us=1000`） | `msm_dsi_host_bonded_cmd_trigger()` 写 TRIG_DMA 前 `usleep_range` | **仅 STORM**（盖不住 NOCARD） | 镜像已出（base/exp 单变量对）；**冷 A/B 仅 T1=NOCARD(n=1)，暖 A/B 8/8 GOOD 不判别** | C12/C13；`#165` |
+| **Method B（取整 byte-clk）** | generic `dsi_link_clk_set_rate_6g()`、对象 `msm_host->byte_clk`（**非** `_v2_9` 分支、**非** `dsi_calc_clk_rate_6g`） | 主要 STORM（降 re-lock churn 概率）；能否消 Q28 **未定** | 草稿 + 父代复核完成；**未编、未 apply、未上机**；需按上游校准落点后编 vk85 | C14/C15；upstream-diff §4–5 |
+| Method A 变体（触发前轮询 `REG_DSI_CLK_STATUS` 等 DYN 位清零） | cmd_trigger 前 | STORM | **未实现**（比固定 delay 更贴上游语义，候选） | upstream-research §2.1 方案A |
+| 上游 `2028280686f4` 逐字 cherry-pick | — | — | **裁决：对本树无效**（缺前置 Kavan，本树在 7.2 良好侧，删除型 hunks 用不上） | C15；upstream-diff §3 |
+
+---
+
+## f) 未决问题与下一步
+
+**未决问题：**
+1. **fastboot-boot 冷路径是否真等价于用户物理 POR 冷起。** 若 base 也 NOCARD 不重现，就得改用真 POR（用户断电）做 A/B。（`PITFALLS #163`、handoff 顶部横幅「下次先定」）
+2. **GOOD 启动的 `DSI_PLL_lockfail` / `device_link_fail` 基线。** `#165` 提出"待对实：这两行是 GOOD 也有的良性噪声、还是 NOCARD 独有因果"。现有 GOOD 样本已给出强提示（见 §g-2）：
+   - `logs/q28-control-coldboot-181758/control.txt`：**一次 GOOD 冷起**（`card0-DSI-1 connected`、phosh=1）却 `pllfail=8`、`cmdadma=0`。
+   - `logs/q28-forensics-20261010-125030/02-dmesg.txt`：有 card0 的 GOOD 现场里 `DSI PLL(0) lock failed`=**4**、`Failed to create device link`=**8**。
+   - ⇒ 初步：**这两行在 GOOD 启动也出现（良性/会重试成功），card0 有无才是判据，不是这两行本身**。仍需一个受控 GOOD 冷/暖回读正式坐实。
+3. **NOCARD 是否有对应上游修法。** 上游 `fix-eliza-dsi` 针对 cmd 侧取整，未见直接治"probe 期 PLL lock 不稳 → 无 card0"的上游补丁；SM8750+Linux 装机量近乎为零，公开社区无先例（upstream-research §3.2）。
+4. **取整到底能不能消 Q28。** Kavan 回归是"恒定破屏、与复位类型无关"，Q28 强依赖冷/暖复位 → 未必同一根因（upstream-diff §4）。
+
+**下一步（按 handoff/upstream-diff §5 优先级，冷起需用户配合断电）：**
+1. 先定 fastboot-boot 冷路径是否等价真 POR；不等价则用真 POR 做 A/B。
+2. Method B 按上游"加"部分重出（generic 落点、byte_clk 对象、派生 byte_intf、不动 `dsi_calc_clk_rate_6g`）→ 编 **vk85**。
+3. 三臂冷起 A/B：base vs round vs（delay / CLK_STATUS 轮询），**用 `scripts/q28-devprobe.sh` 三态判 + SSH 读全 dmesg + 查 card0**，各 N 次物理冷起看坏发率。
+4. 若取整冷启仍高坏发 ⇒ 转 CMD engine 编程序 / PHY `save/restore_pll_state` 冷-暖差异 / `dsi_cmd_link_clk_set_rate` 的 `-ESTALE` 路径；串口常驻 + pstore-catch 抓真实现场栈。
+5. 采一个确认 GOOD 的冷/暖启动，正式回记 DSI_PLL/device-link 基线（回答未决 2）。
+
+---
+
+## g) 旧报告里发现、未被"已定案 6 条"覆盖的不一致（整理时发现，非新增结论）
+
+1. **冷/暖方向在 `reports/q28-orchestration-20261010.md` 正文里是反的。** 该文件 §0/§4 写"**暖复位基本失败、冷起基本成功**"，与权威 `PITFALLS #163`（"修正本条初稿方向写反"：**冷起基本失败、暖起基本成功**）**恰好相反**。handoff §"口径纠正"声称已纠正 orchestration §4/§5，但**磁盘上该文件正文仍是旧的反向表述**。本 DOSSIER 以 `#163`/B1 为准（冷失败、暖成功）。
+2. **`DSI_PLL_lockfail`/`device_link_fail` 的因果定位存疑（良性噪声 vs NOCARD 独有）。** 有 card0 的 GOOD 现场（forensics、control-coldboot）同样出现这两行（见 §f-2），提示它们**不是 NOCARD 判据本身**。旧报告（#165/handoff）把 NOCARD 直接归因于这两行；card0 有无才是判据。列为未决 2，DOSSIER 不据此改根因。
+3. **NOCARD（T1）无独立落盘日志目录。** 冷 A/B T1=NOCARD 的证据目前只在 `PITFALLS #165` 与 handoff 顶部横幅（文字转述），仓库 `logs/` 下 `grep VERDICT=NOCARD` 无命中。n=1 且无原始 dmesg 落盘，判定强度弱；正式 A/B 应每轮 `q28-devprobe.sh` 输出落盘。
+4. **upstream-research 的"机制完全吻合 / 移植方向明确"已被 upstream-diff 收窄。** `q28-upstream-research` §1.1「置信度：高」「机制与 Q28 现象完全吻合」与其"方案 B：直接 cherry-pick fix-eliza-dsi"结论，被 `q28-upstream-diff` §3–4 推翻（逐字移植无效、且未必同一根因）。以 upstream-diff 为准。
+5. **"133.076 MHz / 差 23%" 是派生值，非直接测得的坏-好差。** clk_summary 只记**达成** 108.108 MHz（C8）；133.076 = bitclk 1064606÷8（C7）推得（C9）。orchestration §2 称"取整缺口直接坐实根因"，但同时 good/bad clk_summary 完全一致（#164/两-layers 据此判"不是时钟树状态差异"）——两者需并列读：取整是合理加固假设，尚非坏-好实测差值。
+6. **`reports/q28-two-layers-20261010.md` 正文含已被自身顶部横幅推翻的初判。** 其"结论先行/建议下一步"段主张"L2 DPU CTL -22 是当前主因、byte-clk/delay 非优先级"，而顶部「★根因确认」段 + `#164` 已定为"L1 是根、L2 是下游"。读该文件须以顶部段为准。
+
+---
+
+## g) 上游核验（2026-10-10 research lane + 本树静态核，**含对一条热门假说的否定**）
+
+来源：`reports/q28-nocard-research-20261010.md`（8 次网络访问，一手 diff/commit 已取）。
+
+**G1 — Q1：Dmitry byte-clk 取整修复的精确 ref（拿到，但对本树不适用）**
+- 主线 `2028280686f4fa78e2f1f6dede4b6c1fd782b9e3`「drm/msm/dsi: round the byte clock rate after reparenting to the PHY PLL」，首个包含 tag **v7.3-rc4→v7.3**；stable 随 **6.18.54**（`78cb2ee9…`）。patchwork 750496 / lore `<20260903-fix-eliza-dsi-v1-1-…>`。
+- **适用性判定：不可干净 apply** —— 该 commit 的 diff 是把 `clk_round_rate()` 从 `dsi_calc_clk_rate_6g()` 搬走，而**本树 `dsi_host.c` 全文无 `clk_round_rate`**（grep 命中 0），即本树 base 早于其 `Fixes: 6cd33b6f4155`。⇒ Method B 若做，是**按机制自己落**（把取整放 generic `dsi_link_clk_set_rate_6g`），不是 cherry-pick。
+
+**G2 — Q2：上游「power up digital top before 7nm PLL」补丁：错误串逐字相同，但**已核实不是本树 NOCARD 根因****
+- 补丁 Dmitry 2026-09-24（**未合入**，作者自陈会打挂 SM8350 HDMI 未接场景）。其报错 `DSI PLL(0) lock failed, status=0x00000000` 与我 NOCARD 日志**逐字相同**，一度高度可疑。
+- **本树静态核验三条前提全不满足 ⇒ 否定**：① 本树**不含**触发 commit `acf7a91d0b0e`；② elden/sm8750 DT **无** dsi phy/pixel 的 `assigned-clock-parents`；③ 我 NOCARD dmesg（`logs/q28-T1-nocard-vk84exp-dmesg.txt`）**没有**该补丁失败签名要求的 `dsi0_phy_pll_out_dsiclk already disabled` + `clk_core_disable` WARNING + `of_clk_set_defaults` 栈。
+- 反证闭环：这与既有记忆「`DSI PLL(0) lock failed` ×4 是好/坏启动**都有**的开机 probe 良性噪声」一致。**NOCARD 判据仍是 card0 缺失，与这几行无关。**
+
+**G3 — NOCARD 真因**已收窄**（GOOD vs NOCARD 干净差分）**
+- GOOD(vk75 基线, `logs/q28-BASELINE-good-vk75-dmesg.txt`)：8.70s `msm_dpu ae01000: bound ae94000.dsi / ae96000.dsi / af54000 / 3d00000.gpu` → 组件聚齐 → card0。
+- NOCARD(vk84-exp)：**无任何 `bound ae94000.dsi`**、无 -517 defer、无 bind failed —— DPU master 组件聚合**从未完成**（静静没聚齐）。
+- **下一步定根所需**（非本轮能定，需冷起）：同内核 GOOD-vs-BAD 冷起 dmesg 对（消 vk75/vk84 混淆）+ 坏发起 `drivers/gpu/drm` / component probe 动态调试或 `CMN_CTRL_0` 读值；先证「DSI host 自身 probe 是否失败」还是「master 聚合时序问题」。
