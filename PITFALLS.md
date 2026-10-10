@@ -48,7 +48,7 @@
 4. **`fastboot boot` 失败后 bootloader 会进"脏"状态**（连续报 `Load Error`）；`fastboot reboot bootloader` 可清。
    `fastboot boot` 报 `Failed to load/authenticate boot image: Load Error` 时同理。
 
-5. **`kexec` 换内核：不可用（已定论；⛔superseded 中间态）**——`kexec -l`/`-s -l` 均装载成功，但 **`kexec -e` 失败**：早期「黑屏挂死」，补 trans_pgd（vk54/vk58）后转为**直接掉电**；**分支点未定位**（无存活 console + APSS 看门狗永久禁用，只剩物理 UART）。⇒ **不作迭代通道**，改用 `fastboot boot`/`--flash`。
+5. **`kexec` 换内核：不可用（已定论；⛔superseded 中间态）**——`kexec -l`/`-s -l` 均装载成功，但 **`kexec -e` 失败**：早期「黑屏挂死」，补 trans_pgd（vk54/vk58）后转为**直接掉电**；**分支点已于 2026-10-08 定位（→#166）= `device_shutdown()`**（本条当年写「未定位」系受限于无存活 console + APSS 看门狗永久禁用）。⇒ **不作迭代通道**，改用 `fastboot boot`/`--flash`。
    - 取证要点（勿再重复）：`console=ttyGS0` 是 USB gadget，kexec 时必断，**不能据「无输出」判挂死**；H2（CPU offline BUG_ON）已排除；运行期 VA=48 位却 `VA_BITS=52`。
    - ⚠️ **kexec/重启实验前先 `slot-attr.py mark-successful b`**，否则扣 `boot_b` retry，~7 次后 b 变 unbootable。
    - 全量证据：`archive/topics/KEXEC-ONDEVICE-2026-10-05.md`、`KEXEC-ONDEVICE-R2-2026-10-05.md`、`KEXEC-2026-10-05.md`、`RUNBOOK §8`。
@@ -70,6 +70,7 @@
 9. **`make olddefconfig` 会删掉 `CONFIG_ARCH_QCOM` 整行！** 改 `.config` 后**绝不**跑它。
    用 `scripts/config -e/-d` 后直接 `make`，并每次 `grep ^CONFIG_ARCH_QCOM= .config` 验证。
    （`scripts/build-kernel.sh` 已内置校验；根目录兼容包装 `build.sh`/`iterate.sh`/`pack.sh` 已删除。）
+   ⚠ **收窄（#162）**：`olddefconfig` 不止手动跑——`apply-kernel-fragment.sh` 合并片段后会**自动**跑它并删 `ARCH_QCOM`（致 vk81/82/83 无 QCOM 驱动的死内核）。原 `grep ^ARCH_QCOM` 守卫只**编前**查、有漏；现已升级为**编后符号守卫**（缺 gcc_sm8750/msm_dsi_host_bonded_cmd_trigger/rpmh → exit 1）+ 片段后回钉。详见 #162。
 
 9b. **★ 编内核忘了 `export ARCH=arm64` 会毁掉 `.config`**（2026-09-30 实际踩到）：
   裸跑 `make Image.gz dtbs` 时 Kbuild 按**宿主机**（x86_64）解析，把 arm64 的 `.config` 当垃圾、
@@ -100,6 +101,7 @@
     - **根因（2026-10-08 可见）**：`panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -110` → `Failed to initialize panel: -110`（DSI DCS 首写超时）→ 面板从未使能 → DPU 所有提交 `reset failure: -22` + `vblank timeout`（几百次刷屏）——call trace 全是受害者不是根因。失败 boot 上 greetd/phosh 会话可能不起（`phosh=0`）。
     - 实测：vk63 基线 8 boot 中 5 失败（~62%）；同一镜像 `fastboot boot` 与正常 reboot 都触发 ⇒ **与烧录路径/dtbo_b（全零+AVB footer）无关**，属间歇性 DSI/panel init 竞态；失败时面板三供电（`vreg_1v8_vddio/6v1_vsp/5v8_vsn`）均 enabled、DSI 连接器 `connected/enabled/dpms=On`。
     - 待查：失败时 `dsi host`/PHY 上下文；旧基线（vk62）是否同样存在（历史 #16 即「偶见」，应非 vk63 引入）；是否与快速连续 reboot（面板无冷却）相关——下次可试完全断电冷启对比。详见 `TASKS.md` §5 Q28、`logs/kmsg-vk63-nodesktop-2026-10-08.log`。
+    ⚠ **收窄/推翻（#164、#165）**：根因细化为 bonded 双 DSI 首条 DCS 的**命令 DMA 引擎 hang**（L1）；vblank/CTL reset 风暴是其**下游**（L2），非独立 bug（#164）。冷起另有 **NOCARD**（无 card0、DSI PLL 未锁）模式，「无风暴签名」≠「显示好」，GOOD/BAD 判据须三态（NOCARD/STORM/GOOD，#165）。且真实变量是**冷/暖复位**而非时间（#163）。
 
 ---
 
@@ -646,6 +648,7 @@
     （`vbmeta_b` 用 `8fcb864f…`，a 槽是 `2597c218…`），b 槽永远起不来**。
     → **每次进 fastboot 后、任何操作前，先 `fastboot --set-active=a`**；
     `fastboot boot` 报 `Status read failed` 时，接 `fastboot reboot bootloader`，等 6~8 秒再单条重试。
+    ⚠ **已作废（#114）**：上方「先 `fastboot --set-active=a`」是**错误规则，AGENTS 已删除**，现口径 = **不要改 active slot**（保护在用的 b 槽）。槽位读状态/mark-successful 改用 `qbootctl`（#126/#133）。本动作勿再照做。
 
 61. **本机两个槽的 AVB 密钥不同**：a 槽 `vbmeta`/`boot`/`recovery` 用 `2597c218aae470a130f61162feaae70afd97f011`，
     b 槽 `vbmeta`/`vbmeta_system` 用 `8fcb864f11f53ed11284615fb67685522085d3a2`。
@@ -974,7 +977,7 @@
     - **选择规则**：内核/DTS/驱动早期验证、GPT/分区手术、首次 bring-up、防持久根污染 → **B**；**功能/服务级验收 → A（零写盘）**；长期固化 → `scripts/flash-b.sh out/boot-elden-vkNN.img` 写 b 槽。
     - 判断当前是哪种：`cat /proc/cmdline` 是否含 `elden_root=`；`findmnt /` 是 `/dev/sda17`（磁盘）还是 `rootfs`（RAM）。
 
-94. **★`kexec -e` 静默整机掉电的触发点 = `device_shutdown()`（Q11，2026-10-08 实机定位）**。
+166. **★`kexec -e` 静默整机掉电的触发点 = `device_shutdown()`（Q11，2026-10-08 实机定位；2026-10-10 整理轮由重复的 #94 重编号为 #166——原文误占 #94，与「kexec 只能喂未压缩 Image」条目撞号）**。
     - **结论**：`kernel_kexec()` 里 `kernel_restart_prepare()` 内的 `device_shutdown()`（反向遍历到 UFS/SCSI `Synchronizing SCSI cache` 附近）会触发 PMIC 整机掉电；`syscore_shutdown()` 无罪（stage=14 干净通过）；kexec 机制本身正常（trans_pgd/CPU offline 都对）。跳过 `device_shutdown` 即一路走到 `Starting new kernel`+`psci CPU killed`（R1/R2 从未越过的墙）。
     - **取证方法学（关键，可复用）**：抓「掉电前最后几条内核日志」时，dumper 必须 **`setsid nohup` 脱离 SSH** 且逐行 `fsync` 写磁盘根。R2 用 SSH 子进程 `python` 读 `/dev/kmsg`，在 `reboot_notifier` 跑 `SYS_RESTART`（网络 teardown）时随 SSH 一起被杀，只抓到 `wlan deauth`。UFS 是早期 probe 设备、`device_shutdown` 反向遍历里最后关 → device_shutdown 早期日志能落盘。诊断内核在 `kernel_kexec()`/`kernel_restart_prepare()` 每阶段打 `[KD] stage=N` 标记，读日志最后一行即定位。
     - **注意**：`mainline kernel_kexec()` 的 `kmsg_dump` 在 else 块外（`machine_kexec` 前才调），掉电在关机阶段时 pstore/ramoops 也拿不到 —— 解释了历史 `dmesg-ramoops-0` 恒空。
@@ -998,6 +1001,8 @@
 | `SESSION-INDEX.md` | 并入 `RESOURCES.md` §4 | `RESOURCES.md` §4 |
 | `LESSONS.md` | 删除（生成索引，冗余） | `PITFALLS.md` §0 + 正文 |
 | `db/`（SQLite 知识库） | 删除（无原生查询需求） | `rg` + pi 会话选择器 |
+| kexec 作迭代快环通道（决策登记） | 已放弃：不可用（#5）且掉电触发点=`device_shutdown()`（#166），勿再投入迭代通道 | PITFALLS #5/#166、`TASKS.md` §4 |
+| 「进 fastboot 先 `fastboot --set-active=a`」操作规则 | **错误规则已作废**：会动在用的 b 槽 active；现口径=不改 active slot，槽位管理用 `qbootctl` | PITFALLS #114/#60更正行、技能 qbootctl-slot-management |
 | `archive/sessions-catalog-2026-10-03.jsonl` | 删除（db 数据源） | `RESOURCES.md` §4 |
 | `archive/2026-10-02-merged/*` | 旧文档原文（证据，非废弃） | `INDEX.md` §6 |
 | `.pi/pi-messenger.json` + `.pi/messenger/` + `scripts/{swarm,swarm-monitor,y700-swarm-reset,y700-harness-restart,start-y700-harness,apply-swarm-patch}.sh` + `patches/pi-messenger-swarm-*` | **插件 `pi-messenger-swarm` 已卸载**→脚本静默失效（`node …/server.js` ENOENT），**2026-10-06 工作流资产（脚本/补丁/运行时）已删除** | `archive/2026-10-04-retired-entrypoints/README.md`（入口副本+机器层登记；历史见 git） |
@@ -1006,7 +1011,7 @@
 | `~/.pi-profile-switch/`（profile 机制） | 本机不存在；配置改为**按 cwd 叠加加载**，无需切 profile | `.pi/README.md` 首段 |
 | `flashing-bundle/profile/flashing.json`、`backup/pi-assets-*/flashing.json` | 旧 profile 定义化石；**不要据此重建 profile** | `AGENTS.md` §协作 |
 | 根目录 `build.sh`/`iterate.sh`/`pack.sh` | 三个纯委托兼容包装（2026-10-08 删除，`pack.sh` 本就 DEPRECATED；唯一实现分别是 `scripts/build-kernel.sh`/`scripts/iterate.sh`/`scripts/build-boot.sh`，肌肉记忆加 `scripts/` 前缀即可） | `scripts/iterate.sh`（统一迭代入口） |
-| **`out/boot-elden-vk81-e0e4a.img` / `vk82-fix3.img` / `vk83-fix2.img`（2026-10-10 上午）** | **死内核 = 不带 QCOM 平台驱动**：编这三版时 `linux/.config` 被 `apply-kernel-fragment.sh` 的 `make olddefconfig` 删了 `CONFIG_ARCH_QCOM`（连带 MSM/DRM_MSM/dispcc/gcc_sm8750 全没），现有 System.map 里 `gcc_sm8750`/`msm_dsi_host_bonded_cmd_trigger`/`qcom_rpmh_probe` 全 0 符号；看着能编过、能打包，**上机不可能点屏**。其短 manifest 无 `config_sha256`。**勿上机/勿据此判相机**（vk82「卡 logo」很可能是「无显示」而非 probe hang，归因作废）。恢复用 `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb，ARCH_QCOM=y+DRM_MSM=y）。构建侧已加守卫（见 `#` 新条目）| `reports/q28-orchestration-20261010.md` §3；`scripts/build-kernel.sh` 符号守卫 |
+| **`out/boot-elden-vk81-e0e4a.img` / `vk82-fix3.img` / `vk83-fix2.img`（2026-10-10 上午）** | **死内核 = 不带 QCOM 平台驱动**：编这三版时 `linux/.config` 被 `apply-kernel-fragment.sh` 的 `make olddefconfig` 删了 `CONFIG_ARCH_QCOM`（连带 MSM/DRM_MSM/dispcc/gcc_sm8750 全没），现有 System.map 里 `gcc_sm8750`/`msm_dsi_host_bonded_cmd_trigger`/`qcom_rpmh_probe` 全 0 符号；看着能编过、能打包，**上机不可能点屏**。其短 manifest 无 `config_sha256`。**勿上机/勿据此判相机**（vk82「卡 logo」很可能是「无显示」而非 probe hang，归因作废）。恢复用 `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb，ARCH_QCOM=y+DRM_MSM=y）。构建侧已加守卫（见 #162）| `reports/q28-orchestration-20261010.md` §3；`scripts/build-kernel.sh` 符号守卫 |
 
 ### 15.2 已迁移 / 退役的外部资产
 
@@ -1182,7 +1187,7 @@
 155. **命令模式 DSI 面板空闲时不推帧 ⇒ `/proc/interrupts` 的 dsi_isr **增量**不能判屏幕死活**：
      nt36536 是 command-mode + DSC，DPU 只在有新帧时 trigger，桌面静止时 vsync 中断恒为 0（好发也一样）。
      本轮差点把一发好发误判成坏发（要求 delta>100 结果只 41）。正确读法：用**累计值**（实测好发 41、
-     坏发 **0**，开机就没出过一帧）或直接靠 dmesg 判据（#154）。要拿增量做实验，得先强制持续重绘。
+     坏发 **0**，开机就没出过一帧）或直接靠 dmesg 判据（#164 STORM 共现签名；原引 #154 系编号未落条）。要拿增量做实验，得先强制持续重绘。
      另：`ScreenSaver.SetActive true` 不一定真熄屏（本轮 dpms 仍是 On，被抑制策略/活动会话挡了），
      别把“发了 D-Bus 命令”当“屏已变”。
 156. **`grep -c pattern /dev/kmsg` 会永久挂住**：/dev/kmsg 是流式设备，读了就跟着日志一直读下去，
@@ -1197,7 +1202,7 @@
 157. **★"守卫不通过就静默 `exit 0`"是本日第三次同型事故**（前两次：payload loader 缺脚本、
      `mod-loop` 的 tar 布局）。`scripts/camera-modules-load.sh` 里一次踩到三处：
      ① `grep -q "elden_nocamera=1" /proc/cmdline && exit 0` —— **一句提示都没有**地 rc=0 退出，
-        于是"相机不可用"被当成驱动问题（实际是配置态，#299/#300 的老教训又一遍）；
+        于是"相机不可用"被当成驱动问题（实际是配置态，#115 归因分层的老教训又一遍）；
      ② `[ -d /lib/modules/$KV/kernel ]` 硬要求 `kernel/` 前缀，而 `M=<dir> modules_install`
         装出来的布局是 `drivers/...`（**和 `mod-loop` 的 tar 完全同一件事**）⇒ 明明有 `.ko`
         却报 `no modules for <KV>`；

@@ -80,8 +80,8 @@
 
 - **完成度**：G1 ≈90% · G2 ≈45% · G3 PoC ✅（数字权威 = `TASKS.md` §0）。
 - **Linux 侧未解（3 = 2 个任务 ID + #106 无 ID，按影响排序；G1-34 重力已通、Q26 WiFi 已关闭、G1-6 TF 卡搁置移出）**：
-  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。**已拿到首个好/坏同口径差分**：断点 = 面板首条 DCS 写走 **bonded 命令 DMA 超时**（不是 DPU modeset），只有 `STATUS0 0x0→0x20003`、`CLK_STATUS 0x2343→0x3743`（多 `DYN_PCLK_ACTIVE`+`DYN_CMD_PCLK_ACTIVE`）、`cmd_dma_busy/cmd_engine_busy 0→1` 四项不同 ⇒ 假说收窄到「首次 modeset 命令引擎撞 DYN 像素时钟域切换」；**dmesg 级判据**：`command DMA timeout`+`panel init attempt failed`（同批 5 坏/2 好零误报；`vblank timeout` 单独用会误判）；剩三个单变量实验（delay / busy 重触发 / 查谁开 DYN pclk）。详见 `.pi/plans/2026-10-09-深夜-Q28寄存器差分-模块化在机验证-槽位险情.md` §1；
-  ② **Q24 熄屏→整机硬复位**（已锁单模块 `cambistmclkcc-sm8750` × DT 电源域，H1/D1/D2/H2 未根治；无相机态安全）；**用户裁决 2026-10-09 深夜：相机在位时熄屏掉电=常态 ⇒ 相机与熄屏互斥**，日常态零相机模块、需要时 `cam-mode.sh on`（先禁熄屏再加载）用完 `off`；DT 变体（H1/H2/mxnom）扫测不再排期。**2026-10-10 根治三路全部无效**：换轨（E4a MXC 单票 vk81 熄屏即死）+ 驱动侧（FIX-3 vk82 卡 logo 已 revert、FIX-2 vk83 破启动）⇒ 剩定位手段 = ttyACM0 串口；v2 上游报告已重发（10-08 原邮件未进 lore 归档）；
+  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。**根因已定案**=bonded 双 DSI 首条 DCS 命令的命令 DMA 引擎 hang（冷起 ~60%；冷起失效有 NOCARD/STORM 两模式；判据=SSH 读全 dmesg + 查 card0）。细节/样本/下一步一律不在此复述，权威=`TASKS.md` §5 Q28 与 `reports/q28-DOSSIER.md`（SSOT）；
+  ② **Q24 熄屏→整机硬复位**（已锁单模块 `cambistmclkcc-sm8750` × DT 电源域，H1/D1/D2/H2 未根治；无相机态安全）；**用户裁决 2026-10-09 深夜：相机在位时熄屏掉电=常态 ⇒ 相机与熄屏互斥**，日常态零相机模块、需要时 `cam-mode.sh on`（先禁熄屏再加载）用完 `off`；DT 变体（H1/H2/mxnom）扫测不再排期。**2026-10-10 根治三路验证作废（`PITFALLS #162`）**：E4a vk81 / FIX-3 vk82 / FIX-2 vk83 三条都是在无 QCOM 驱动的死内核上测的，症状即无 QCOM 内核的预期表现，非「根治无效」证据 ⇒ 作废、需恢复好档重做（历史 H1/H2/D1/D2 样本不受影响）；v2 上游报告已重发（10-08 原邮件未进 lore 归档）；
   ③ ~~**Q26 WiFi 到可用**~~ ✅ **已关闭（2026-10-10 用户实机确认 WiFi 正常）**；
   ④ ~~G1-6 TF 卡间歇写丢失~~ ⚪ **用户裁决搁置（2026-10-09 深夜：“tf 卡忽略”）**，不再占未解项；结论与 5 个候选补丁/`tf-stress.sh` 保留备查；
   ⑤ **进 GUI 后整机卡死**（PITFALLS #106；10-05 两次 + 10-09 一次，桌面显示正常时发生，**与 Q28 不同因**）。历史抓不到栈的原因=APSS 硬看门狗永久禁用 ⇒ 死挂不自复位、只能物理断电。**已常驻装弹**（`/etc/sysctl.d/99-freeze-trace.conf` + `pstore-catch` 开机归档 ramoops 到 `/var/log/pstore/`）⇒ 命中即自动 panic→暖复位→带回全 CPU 栈；60 轮合成负载压测（峰值 66.1 ℃）暂未复现；
@@ -148,6 +148,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `stock-src/` | 联想 GPL 源码（厂商驱动/DT/固件名反查依据）
 `env-pass/` | 过环境栈 + **Linux rootfs 归档**（3.44 GB）
 `archive/2026-10-02-merged/` | **本轮合并掉的旧文档原文**（MISSION-SCOPE/DEVICES/ANDROID-COMPAT-PLAN/ROUTE-DECISION/PLAN-NODEV/DOCS-CHANGELOG）
+`reports/` | **活跃主题工作区**：进行中主题的专题/取证稿所在（如 `reports/q28-DOSSIER.md` 为 Q28 单一事实源）；主题定案后证据迁 `archive/topics/` 归档层
 
 ---
 

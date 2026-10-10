@@ -117,6 +117,7 @@
 | 自研 EDL 客户端 | `qdl/build/qdl`（+ `~/下载/tb322fc/xbl_s_devprg_ns.melf` loader） |
 | locked 链构建（路 C） | `scripts/build-locked-chain.sh`（testkey 重打全链，从本单元 stock dump 自动读参数）+ `scripts/extract-avbpubkey.py`（从 AVB 镜像提公钥 blob，大端 header）+ `env-pass/keys/testkey_rsa4096.pem`（= 原厂受信 key 2597c218，私钥公开） |
 | 设备端操作 | `scripts/{flash-b,thermal-watch,thermal-stress,bench-run,bench-install,serial-run,serial-log,oob-gs1-activate,win-x86-rootfs,win-x86-run,waydroid-proxy-setup,charge-ctl,charge-watch}.sh` |
+| Q28 显示取证 + 跨重启串口抓取（2026-10-09/10 新增） | `scripts/q28-boot-cycle.sh`（温启→零写盘 `fastboot boot` 诊断内核→取证，单轮 GOOD/BAD，SSH over USB-NCM，本机无 adbd）、`scripts/q28-ab-delay.sh`（同时间窗 base/exp 各 N 轮统计坏发率，判 delay 能否压制 Q28）、`scripts/q28-verdict.sh`（串口日志三层判 GOOD/BAD：L1 cmd-DMA/panel-init、L2 ctl-reset/frame-done/vblank）、`scripts/q28-devprobe.sh`（设备端三态 NOCARD/STORM/GOOD，POSIX sh，只数风暴签名会把「无 card0」误判 GOOD）、`scripts/q28-race-hunt.sh`（设备端 rpm tracepoints 密集复现 power-on 竞态、零构建）、`scripts/serial-logger.sh`（ttyACM 跨重启自动重连抓取，pid `/tmp/q28_serial_logger.pid`） |
 | BL 解锁（**未解锁单元前置**） | `scripts/bl-preunlock-evidence.sh`（locked 基线取证 + 打印申请表两项）、`scripts/bl-unlock.sh`（校 SN → `flash unlock` → `oem unlock-go`，逐条执行） | U2 基线已采：`backup/HA2EXB0E-16+512/pre-unlock/`（Widevine **L1**、by-name 119 项、传感器清单、getprop 全量 + SHA256SUMS） |
 | C4 传感器链 | `scripts/eldroid-sensord.c`（数据源 daemon：fake/stdin→UDP，selftest 7/7）+ `scripts/build-sensord.sh`（native+aarch64 static）+ `scripts/deploy-sensors-hal.sh`（Waydroid overlay 部署）+ `env-pass/scripts/sensor-send-termux.sh`（真值转发） |
 | AVF 离线提取 | `scripts/extract-avf-assets.sh`（从原厂 system 镜像 debugfs 取 crosvm/vm/microdroid_kernel/u-boot.bin，无需设备） |
@@ -225,15 +226,17 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `.pi/{skills,missions,agents}` `.pi/README.md` `.pi/AGENT-OPS.md` `.pi/CONCURRENCY.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：行为规范/并发细则/技能/子代理/模型配置（分工见 `.pi/README.md`）。⚠️ `.pi/memory/` 已于 2026-10-05 删除（迁 hermes）；`pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
 | `.pi/sessions/`（100 个 jsonl，含会话子目录副本） | ~108 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
-| `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档） |
+| `patches/` | 3.7 M | ✅ track（q28 delay/methodB 草稿未入库） | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档）。**Q28 显示诊断补丁系列**（均设备无关诊断/实验件，非 G1 交付）：已 RAM 上机取证 = `q28-dsi-regdump.patch`/`q28-dsi-regdump-with-baseline.patch`（vk72/vk73/vk75 好坏寄存器差分）、`q28-poweron-propagate.patch`（vk74 4/4 复现）、`q28-cmd-dma-delay.patch`（vk84-{base,exp} 单变量对，暖 8/8 GOOD 不判别、冷 A/B 仅 T1=NOCARD 未定案）；候选未独立上机 = `q28-dsi-cmd-recover.patch`（vk64 源有界复位）；草稿未编未 apply = `q28-methodB-round-byteclk.patch`+`q28-methodB-NOTES.md`（取整 byte-clk，落点待按上游校准） |
 | `archive/` | ~5.5 M | ✅ track | 过程证据（87 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
+| `reports/` | 132 K | ⚠️ 未入库（`?? reports/`，working；主题收口时随迁 `archive/topics/` 再入库） | **活跃主题的工作区证据**（活跃期可读可改；主题定案后整体迁 `archive/topics/`，归档层只增不改）。现含 **Q28 显示线过程稿**（`q28-DOSSIER.md`=SSOT、`q28-INDEX.md`=文档地图、`q28-{handoff,two-layers,upstream-diff,orchestration,upstream-research,nocard-research}-20261010.md`）、本地清理审计 `local-cleanup-audit-20261010.md`、本轮整理提案 `tidy-20261010/`（`resources-edits.md`/`cleanup-candidates.md` + T1/T2/T3 简报） |
 | `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#161 + §0 零号纪律 + §15 废弃登记 |
 | `RESOURCES.md §4` | 21 K | ✅ track | 100 行会话索引（数字 SSOT，§4）+ 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
 | `bootslot-b/README.md` `backup/fw/README.md` `restore-259/*.md` | ~15 K | ✅ track | 关键说明文档（其余二进制 ignore） |
-| `net/ build/ waydroid-ota/` | <220 K | ✅ track | 小体积资产 |
+| `net/ waydroid-ota/` | <220 K | ✅ track | 小体积资产 |
+| `build/` | 4.0 G | ignore（`.gitignore` 第 24 行 `/build/` 已在） | **2026-10-10 起内核构建目录**（`scripts/build-kernel.sh` 工作区；体量集中在 `build/m1-upstream`，`build/glibc-arm64` 近空）。**可再生**：`make clean`/整目录删后下次构建重建，无独有内容需留（简报称「父将补 .gitignore」——实测已补，无需再补） |
 | `linux -> geekidos-linux` | 符号链接 | ✅ track | 目录约定 |
 | `geekidos-linux/` | 13 G | ignore | 上游 `GEEKiDoS/linux` v7.2-elden + 构建产物 |
 | `Y700-elden-linux/` | 15 M | ignore | 旧迭代上游 clone |
@@ -243,7 +246,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `edk2-gunyah/` `edk2-gunyah-qemu/` `edk2-aarch64-gunyah/` | 2.0 G | ignore | 2026-10-05 研究 clone（`Droid-VM/edk2-gunyah`、`qemu-gunyah/edk2-gunyah-qemu`、`AnyLaySys/edk2-aarch64-gunyah`；Gunyah VM/Windows guest 固件参考，**可重下、可清理**）。前两者由 bootchain lane clone；`edk2-aarch64-gunyah` 由并发会话 clone。详见 §1.5 |
 | `mu_wide_platforms/` | 1.0 G | ignore | **G1-29 主资源（2026-10-05 落盘）**：fork `xiaquwan1001/mu_wide_platforms` ← `sunflower2333/mu_wide_platforms`；含 **TB322FC 设备包** `Platforms/PakalaPkg/Device/lenovo-y700g4/`（391 文件）。可重下；详见 §1.6 |
 | `uefi-firmware-backup/` | 1.3 G | ignore | `Project-Aloha/UEFIFirmwareBackup`（2026-10-05 落盘，shallow）；`lenovo-y700g4/` 原厂 UEFI DXE 备份（含 `uefi.elf`、`BOOT.MXF.2.5.1-00240.1-PAKALA-1/`），即设备包 `Binaries/` 的来源。可重下；详见 §1.6 |
-| `out/` | 4.6 G | ignore | boot 产物 / cpio / modules |
+| `out/` | ~3.5 G（41 个 img） | ignore（`*.manifest` 入库） | boot 产物 / cpio / modules。**2026-10-10 清理审计已回收 ~6.28 G（9.4→3.6）**；留盘口径同 `versions/vk-identity-inflight.txt`：vk64=持久 boot_b 内核（+`Image-vk64.gz`）、**在途留**=vk84-q28delay-{base,exp}+vk74-q28power（Q28 冷 A/B 未定案）、vk77/vk78 modular 线；**用户已判死可删**=vk71-mxc/mxnom（Q24 变体）。逐项见 `reports/local-cleanup-audit-20261010.md` 与 `reports/tidy-20261010/cleanup-candidates.md` |
 | `bootslot-b/` `bootslot-b-u2/` | 905 M | ignore | 自签 b 槽包（含 `avb.key` 私钥，禁止入库） |
 | `backup/` | 1.5 G | 混合 | 原厂分区/固件/GPT dump（不可替代，留盘）。**证据文本已纳入 git**（`elden-dump.txt`、`HA2EXB0E-16+512/*.txt`、`pre-unlock/`、`vk40-ram-acceptance-dmesg.txt`）；二进制与 `sn-neko-zuxos.img` 仍 ignore |
 | `env-pass/`（余） | 3.8 G | ignore | 过环境栈 + rootfs 归档 |
@@ -427,6 +430,14 @@ git log --oneline -10
 | 2026-10-07 | `01a115a8` | 收盘：G1-9 DP 打通 + Q21/Q24 根因 | dp/sleep | ✅ | active | DP 打通（`dr_mode=otg`+`usb-role-switch`+`mdss_dp0` 同批，提交 `6c1376907`，外接实测出画面）；Q24 根因实锤=相机模块链（dp5/dp6/dp7 控制变量 A/B） | - | DP 放缩/横竖屏残余（桌面侧，非阻塞） |
 | 2026-10-07 | `01a11650` | 会话：测试接续（中断，无产出） | stress-prep | ◐ | junk | 任务=继续未验证项（linux→安卓→x86）；止于温控/基准压测准备（读 charge-ctl.sh），**无终报无提交**；温控/基准压测**确认未执行**（全仓无运行记录） | - | 遗留未提交：`scripts/bench-run.sh`、`scripts/thermal-stress.sh`（压测脚本就绪待跑）；.pi/settings.json 为 settings 精简正常残留 |
 | 2026-10-07 | `01a11667` | 审计：近两天会话一致性审计 | session-audit | ✗ | active | 修死链误报（check-doctor 正则把 adsp.mdt 截成 adsp.md）；INDEX 88%→90%；TASKS §0 DP/Q24 状态对齐；RESOURCES §4 补 9 行（另：§2 有重复行段，待后续去重） | - | 本会话 |
+| 2026-10-09 | `01a11fe1` | 会话：10-09 中断项目接续与多线编排 | session-meta | ◐ | active | 「继续之前中断的项目」→编排子代理推进文档口径/GPU·相机/旋转/kexec/UEFI/模块化多线；对齐 10-09 午后 Q28 密集复现（vk74/75/76）、GUI 死挂取证两件套、持久装弹常驻等提交（`d35088e`→`0915c4a`） | vk74,vk75,vk76 | 与 01a12093/01a120fe 多线并行、边界待厘清；主题待据正文核定 |
+| 2026-10-09 | `01a12093` | 会话：子代理派发（文档/GPU·相机/旋转/kexec/UEFI/模块化） | session-meta | ◐ | active | 首条指令=分派 6 类子代理（文档进度口径审核、GPU 驱动与相机、重力旋转用户级开关、kexec 可行性、UEFI 启动、驱动模块化），高难任务用高上下文模型 | vk* | 编排会话，实机结论归各子线；主题据首条指令 |
+| 2026-10-09 | `01a120fe` | 会话：接手上一轮并处理待办 | session-meta | ◐ | active | 首条=接手上次会话（设备在 linux）逐项处理待办 | - | 多线接续，主题待据正文核定 |
+| 2026-10-09 | `01a12140` | 相机：模块驱动收尾 + "camera not found" 根因 | camera | ✅ | active | 收尾相机模块驱动 + 查「模块已装仍报 camera not found」→ 根因=现役 cmdline `elden_nocamera=1` 使模块根本没加载（配置态非驱动坏，`c377ac2`/`d8ba26d`；PITFALLS #157 类误判） | vk64 | 相机⇄熄屏互斥（Q24）为已知约束；主题据首条指令+提交标题 |
+| 2026-10-09 | `01a12157` | 审计：当前版本基线与可安全烧录集合 | version-audit | ◐ | active | 首条=「现在版本基线是多少？哪些是安全的」→盘点在机/在途 vk 基线与可安全烧录集 | vk64,vk71,vk74 | 口径与 §4.3 时间线 / `versions/` 账本一致；短会话（315 行） |
+| 2026-10-09 | `01a12302` | Q28 密集取证：寄存器差分 + 好/坏基线（vk74–76） | display/q28 | ✅ | active | **Q28 密集取证 / vk74–76**：首个好/坏寄存器差分到手（否掉 dsi1vco/dsi1_isr/byte-clk 三个假差异）、模块化线在机验收通过、U2 A/B 槽位险情处置；判据更正（dsi_isr **增量**不可判屏幕死活→改累计值+dmesg，`b4616d5`/`372dda8`） | vk74,vk75,vk76 | 会话跨 10-09 深夜→10-10 12:37；Q28 根因终定在后续 01a1241b |
+| 2026-10-10 | `01a1241b` | Q28 定案：死内核事故修复 + vk84 单变量 A/B | q28/build | ✅ | active | **死内核事故 + vk84 + Q28 定案**：`make olddefconfig` 误删 ARCH_QCOM 致 vk81/82/83 无 QCOM 驱动死内核（作废，PITFALLS #162），build/apply 脚本加符号守卫+回钉；vk84-q28delay-{base,exp} 单变量对（唯一差 cmdline）；Q28 根因=bonded 双 DSI 首条 DCS 命令 DMA hang（冷起 ~60%，L2 DPU ctl reset 为下游，#164）；上游正解 `2028280686f4` 逐字移植对本树无效 | vk84 | 冷 A/B 未跑完（T1 vk84-exp=NOCARD，n=1）；vk84 实验镜像在途未收口 |
+| 2026-10-10 | `01a12529` | 会话：新一轮项目整理（文档/参考/规划/工作史） | session-meta | ✗ | active | **本轮整理**：发起项目整理（进度文档/参考资料/下一步规划/git 工作史），派 T1/T2/T3 子代理；本行即 T2 资产台账同步所在会话 | - | 本会话；T1/T2/T3 提案待 integrator 落领域层文档 |
 
 ---
 
