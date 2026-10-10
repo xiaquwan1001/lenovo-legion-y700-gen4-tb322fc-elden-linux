@@ -1,35 +1,27 @@
 build	image	reg	img_uts	kbin_sha	src_sha	src_ref	src_tag	tree_head	tree_state	flag
 athm	boot-elden-athm.img	-	7.2.0-debug-vk47clean-gbd114ca335e1	1b48c10e3f90	bd114ca335e1	main	vk47	bd114ca335e1	clean	ok|uts_dup2
-clean	boot-elden-clean.img	-	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47		-	no_manifest|kbin_shared8|uts_dup2
-vk42	boot-elden-vk42.img	-	7.2.0-debug-vk42-geb432f18a0d1	7ac1699b27fc	eb432f18a0d1	main	vk42	eb432f18a0d1	clean	ok|kbin_shared2
+clean	boot-elden-clean.img	-	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47		-	no_manifest|kbin_shared6|uts_dup2
+vk42	boot-elden-vk42.img	-	7.2.0-debug-vk42-geb432f18a0d1	7ac1699b27fc	eb432f18a0d1	main	vk42	eb432f18a0d1	clean	ok
 vk47-dtb42	boot-elden-vk47-dtb42.img	-	7.2.0-debug-g4c68eb5ed4e3-dirty	191c698c4150	4c68eb5ed4e3-dirty	main	vk46		-	no_manifest|num_ne_tag(vk46)|kbin_shared3
 vk47-ram	boot-elden-vk47-ram.img	-	7.2.0-debug-g4c68eb5ed4e3-dirty	191c698c4150	4c68eb5ed4e3-dirty	main	vk46		-	no_manifest|num_ne_tag(vk46)|kbin_shared3
 vk47	boot-elden-vk47.img	-	7.2.0-debug-g4c68eb5ed4e3-dirty	191c698c4150	4c68eb5ed4e3-dirty	main	vk46		-	no_manifest|num_ne_tag(vk46)|kbin_shared3
-vk47clean	boot-elden-vk47clean.img	-	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47		-	no_manifest|kbin_shared8|uts_dup2
+vk47clean	boot-elden-vk47clean.img	-	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47		-	no_manifest|kbin_shared6|uts_dup2
 vk50	boot-elden-vk50.img	vk50	7.2.0-debug-vk50-g5a70ade46a88	b3ffb93cc078	5a70ade46a88	branch:elden/vk42-audio-thermal,vk48	vk48	5a70ade46a88	clean	num_ne_tag(elden/vk42-audio-thermal,vk48)|uts_lvs(vk50≠vk48)
-vk52-slim	boot-elden-vk52-slim.img	vk52	7.2.0-debug-vk42-geb432f18a0d1	7ac1699b27fc	eb432f18a0d1	main	vk42	5a70ade46a88	clean	tree_drift|tree_head_diff|num_ne_tag(vk42)|kbin_shared2
 vk53	boot-elden-vk53.img	vk53	7.2.0-debug-vk53-g2b5badef00fb	4d7202018f03	2b5badef00fb	main	vk53	2b5badef00fb	clean	ok
 vk53f	boot-elden-vk53f.img	vk53	7.2.0-debug-g2b5badef00fb	99466f7d9680	2b5badef00fb	main	vk53	2b5badef00fb	clean	ok
-vk54-ram	boot-elden-vk54-ram.img	vk54	7.2.0-debug-vk54-g2b5badef00fb-dirty	b3b87ed14e53	2b5badef00fb-dirty	main	vk53	2b5badef00fb	dirty	num_ne_tag(vk53)|uts_lvs(vk54≠vk53)|kbin_shared5
-vk54-slim	boot-elden-vk54-slim.img	vk54	7.2.0-debug-vk54-g2b5badef00fb-dirty	b3b87ed14e53	2b5badef00fb-dirty	main	vk53	26cd13b1c4a2	clean	tree_drift|tree_head_diff|num_ne_tag(vk53)|uts_lvs(vk54≠vk53)|kbin_shared5
-vk54	boot-elden-vk54.img	vk54	7.2.0-debug-vk54-g2b5badef00fb-dirty	b3b87ed14e53	2b5badef00fb-dirty	main	vk53	2b5badef00fb	dirty	num_ne_tag(vk53)|uts_lvs(vk54≠vk53)|kbin_shared5
+vk54-ram	boot-elden-vk54-ram.img	vk54	7.2.0-debug-vk54-g2b5badef00fb-dirty	b3b87ed14e53	2b5badef00fb-dirty	main	vk53	2b5badef00fb	dirty	num_ne_tag(vk53)|uts_lvs(vk54≠vk53)|kbin_shared2
+vk54	boot-elden-vk54.img	vk54	7.2.0-debug-vk54-g2b5badef00fb-dirty	b3b87ed14e53	2b5badef00fb-dirty	main	vk53	2b5badef00fb	dirty	num_ne_tag(vk53)|uts_lvs(vk54≠vk53)|kbin_shared2
 vk54f	boot-elden-vk54f.img	vk54	7.2.0-debug-g26cd13b1c4a2	96494ccc66ad	26cd13b1c4a2	branch:elden/vk54-kexec-va52,vk54	vk54	26cd13b1c4a2	clean	ok
-vk56-slim	boot-elden-vk56-slim.img	vk56	7.2.0-debug-vk54-g2b5badef00fb-dirty	b3b87ed14e53	2b5badef00fb-dirty	main	vk53	26cd13b1c4a2	dirty	tree_drift|tree_head_diff|num_ne_tag(vk53)|uts_lvs(vk54≠vk53)|kbin_shared5
-vk57-slim	boot-elden-vk57-slim.img	vk57	7.2.0-debug-vk54-g2b5badef00fb-dirty	b3b87ed14e53	2b5badef00fb-dirty	main	vk53	26cd13b1c4a2	dirty	tree_drift|tree_head_diff|num_ne_tag(vk53)|uts_lvs(vk54≠vk53)|kbin_shared5
-vk58-slim	boot-elden-vk58-slim.img	vk58	7.2.0-debug-vk58-g26cd13b1c4a2-dirty	e7dca9a5eac8	26cd13b1c4a2-dirty	branch:elden/vk54-kexec-va52,vk54	vk54	26cd13b1c4a2	dirty	num_ne_tag(elden/vk54-kexec-va52,vk54)|uts_lvs(vk58≠vk54)|kbin_shared3
-vk58b-slim	boot-elden-vk58b-slim.img	vk58	7.2.0-debug-vk58-g26cd13b1c4a2-dirty	e7dca9a5eac8	26cd13b1c4a2-dirty	branch:elden/vk54-kexec-va52,vk54	vk54	26cd13b1c4a2	clean	dirty_drift|num_ne_tag(elden/vk54-kexec-va52,vk54)|uts_lvs(vk58≠vk54)|kbin_shared3
-vk58c-slim	boot-elden-vk58c-slim.img	vk58	7.2.0-debug-vk58-g26cd13b1c4a2-dirty	e7dca9a5eac8	26cd13b1c4a2-dirty	branch:elden/vk54-kexec-va52,vk54	vk54	26cd13b1c4a2	clean	dirty_drift|num_ne_tag(elden/vk54-kexec-va52,vk54)|uts_lvs(vk58≠vk54)|kbin_shared3
+vk58-slim	boot-elden-vk58-slim.img	vk58	7.2.0-debug-vk58-g26cd13b1c4a2-dirty	e7dca9a5eac8	26cd13b1c4a2-dirty	branch:elden/vk54-kexec-va52,vk54	vk54	26cd13b1c4a2	dirty	num_ne_tag(elden/vk54-kexec-va52,vk54)|uts_lvs(vk58≠vk54)
 vk59-cdspoff-slim	boot-elden-vk59-cdspoff-slim.img	vk59	7.2.0-debug-vk59-g26cd13b1c4a2	0278a25e421c	26cd13b1c4a2	branch:elden/vk54-kexec-va52,vk54	vk54	(none)	clean	tree_head_missing|num_ne_tag(elden/vk54-kexec-va52,vk54)|uts_lvs(vk59≠vk54)|kbin_shared4
 vk59-nfcoff-slim	boot-elden-vk59-nfcoff-slim.img	vk59	7.2.0-debug-vk59-g26cd13b1c4a2	0278a25e421c	26cd13b1c4a2	branch:elden/vk54-kexec-va52,vk54	vk54	(none)	clean	tree_head_missing|num_ne_tag(elden/vk54-kexec-va52,vk54)|uts_lvs(vk59≠vk54)|kbin_shared4
 vk59-slim	boot-elden-vk59-slim.img	vk59	7.2.0-debug-vk59-g26cd13b1c4a2	0278a25e421c	26cd13b1c4a2	branch:elden/vk54-kexec-va52,vk54	vk54	26cd13b1c4a2	clean	num_ne_tag(elden/vk54-kexec-va52,vk54)|uts_lvs(vk59≠vk54)|kbin_shared4
 vk59a-slim	boot-elden-vk59a-slim.img	vk59	7.2.0-debug-vk59-g26cd13b1c4a2	0278a25e421c	26cd13b1c4a2	branch:elden/vk54-kexec-va52,vk54	vk54	(none)	clean	tree_head_missing|num_ne_tag(elden/vk54-kexec-va52,vk54)|uts_lvs(vk59≠vk54)|kbin_shared4
-vk60	boot-elden-vk60.img	vk60	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	(none)	clean	tree_head_missing|num_ne_tag(vk47)|kbin_shared8|uts_dup2
-vk61	boot-elden-vk61.img	vk61	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	(none)	clean	tree_head_missing|num_ne_tag(vk47)|kbin_shared8|uts_dup2
-vk62	boot-elden-vk62.img	vk62	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	6c1376907dec	dirty	tree_drift|tree_head_diff|num_ne_tag(vk47)|kbin_shared8|uts_dup2
-vk63	boot-elden-vk63.img	vk63	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	1389ed11b063	dirty	tree_drift|tree_head_diff|num_ne_tag(vk47)|kbin_shared8|uts_dup2
+vk60	boot-elden-vk60.img	vk60	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	(none)	clean	tree_head_missing|num_ne_tag(vk47)|kbin_shared6|uts_dup2
+vk61	boot-elden-vk61.img	vk61	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	(none)	clean	tree_head_missing|num_ne_tag(vk47)|kbin_shared6|uts_dup2
+vk62	boot-elden-vk62.img	vk62	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	6c1376907dec	dirty	tree_drift|tree_head_diff|num_ne_tag(vk47)|kbin_shared6|uts_dup2
+vk63	boot-elden-vk63.img	vk63	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	1389ed11b063	dirty	tree_drift|tree_head_diff|num_ne_tag(vk47)|kbin_shared6|uts_dup2
 vk64	boot-elden-vk64.img	vk64	7.2.0-debug-vk64-gd02658e63cf6	8efb2731efb6	d02658e63cf6	main	baseline/clean-base,vk64	d02658e63cf6	clean	ok|uts_dup2
-vk71-mxc	boot-elden-vk71-mxc.img	vk71	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	0d4bedf55383	clean	tree_drift|tree_head_diff|num_ne_tag(vk47)|kbin_shared8|uts_dup2
-vk71-mxnom	boot-elden-vk71-mxnom.img	vk71	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	0d4bedf55383	clean	tree_drift|tree_head_diff|num_ne_tag(vk47)|kbin_shared8|uts_dup2
 vk74-q28power	boot-elden-vk74-q28power.img	vk74	7.2.0-debug-vk64-gd02658e63cf6	5c35cf5fe0ff	d02658e63cf6	main	baseline/clean-base,vk64	ca81318f2efd	clean	tree_head_diff|num_ne_tag(baseline/clean-base,clean/base,vk64)|uts_dup2
 vk77-modkdump	boot-elden-vk77-modkdump.img	vk77	7.2.0-debug-ge3c5e9fea66e	d41fadecf965	e3c5e9fea66e	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	clean	ok|kbin_shared3
 vk77-modular	boot-elden-vk77-modular.img	vk77	7.2.0-debug-ge3c5e9fea66e	d41fadecf965	e3c5e9fea66e	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	clean	ok|kbin_shared3
@@ -38,10 +30,8 @@ vk79-E0	boot-elden-vk79-E0.img	vk79	7.2.0-debug-ge3c5e9fea66e-dirty	ba995afefde6
 vk80-e4amxc	boot-elden-vk80-e4amxc.img	vk80	7.2.0-debug-ge3c5e9fea66e-dirty	ba995afefde6	e3c5e9fea66e-dirty	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	dirty	ok|kbin_shared2
 vk84-q28delay-base	boot-elden-vk84-q28delay-base.img	vk84	7.2.0-debug-vk84-g86193a58a095-dirty	c6a9e52325a9	86193a58a095-dirty	branch:elden/vk53-hw,stash,vk83	vk83	86193a58a095	dirty	num_ne_tag(vk83)|uts_lvs(vk84≠vk83)|kbin_shared2
 vk84-q28delay-exp	boot-elden-vk84-q28delay-exp.img	vk84	7.2.0-debug-vk84-g86193a58a095-dirty	c6a9e52325a9	86193a58a095-dirty	branch:elden/vk53-hw,stash,vk83	vk83	86193a58a095	dirty	num_ne_tag(vk83)|uts_lvs(vk84≠vk83)|kbin_shared2
-vk86-base	boot-elden-vk86-base.img	vk86	7.2.0-debug-vk86-base-gd02658e63cf6	1b3953393453	d02658e63cf6	main	baseline/clean-base,vk64	d02658e63cf6	clean	num_ne_tag(baseline/clean-base,clean/base,vk64)|kbin_shared2
+vk86-base	boot-elden-vk86-base.img	vk86	7.2.0-debug-vk86-base-gd02658e63cf6	1b3953393453	d02658e63cf6	main	baseline/clean-base,vk64	d02658e63cf6	clean	num_ne_tag(baseline/clean-base,clean/base,vk64)
 vk86-round	boot-elden-vk86-round.img	vk86	7.2.0-debug-vk86-round-g71bc6846247c	f87b66dbee45	71bc6846247c	main		71bc6846247c	clean	ok
-vk86-round2	boot-elden-vk86-round2.img	vk86	7.2.0-debug-vk86r2-g71bc6846247c-dirty	0af7b3fd8529	71bc6846247c-dirty	main		71bc6846247c	dirty	ok|kbin_shared2
-vk87-round2-v64	boot-elden-vk87-round2-v64.img	vk87	7.2.0-debug-vk86r2-g71bc6846247c-dirty	0af7b3fd8529	71bc6846247c-dirty	main		a8c09a723254	clean	tree_drift|tree_head_diff|kbin_shared2
-vk88-base-v64	boot-elden-vk88-base-v64.img	vk88	7.2.0-debug-vk86-base-gd02658e63cf6	1b3953393453	d02658e63cf6	main	baseline/clean-base,vk64	a8c09a723254	clean	tree_drift|tree_head_diff|num_ne_tag(baseline/clean-base,clean/base,vk64)|kbin_shared2
+vk86-round2	boot-elden-vk86-round2.img	vk86	7.2.0-debug-vk86r2-g71bc6846247c-dirty	0af7b3fd8529	71bc6846247c-dirty	main		71bc6846247c	dirty	ok
 (slot-dump)	boot_b-live-20261010.img	-	7.2.0-debug-vk64-gd02658e63cf6	8efb2731efb6	d02658e63cf6	main	baseline/clean-base,vk64		-	slot_dump
 (no-payload)	dtbo-dummy.img	-	(无内核载荷)						-	skip

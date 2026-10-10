@@ -176,5 +176,5 @@ vk82	q24	2026-10-10	（补登）FIX-3（源 e1d2c658a，内核仓已打 tag vk82
 vk83	q24	2026-10-10	（补登）FIX-2（源 86193a58a，内核仓已打 tag vk83）；同上死内核作废（#162），镜像已删；**该提交后被 vk84 复用为内核基（+delay 补丁）**
 vk84	q28	2026-10-10	（补登·在途）q28delay base/exp 单变量对（内核=vk83 提交 86193a58a + dsi_cmd_delay_us 补丁，dirty）；收口见 versions/vk-identity-inflight.txt
 vk86	q28	2026-10-10	（补登·在途）STORM 台架 base/round/round2（内核基=vk64 d02658e63 / round 提交 71bc6846247c）；收口见 versions/vk-identity-inflight.txt
-vk87	q28	2026-10-10	（补登·在途）STORM 台架 round2 重打（载荷内核=vk86-round2 提交 71bc6846247c-dirty）；**manifest kernel_release 记构建树 HEAD a8c09a723 ≠ 镜像内 UTS ⇒ tree_drift**（Image.gz 未随 HEAD 重编，属陈旧载荷，非死内核）；收口见 versions/vk-identity-inflight.txt
-vk88	q28	2026-10-10	（补登·在途）STORM 台架 base 重打（载荷内核 = vk64 d02658e63）；tree_drift 同 vk87；收口见 versions/vk-identity-inflight.txt
+vk87	q28	2026-10-10	（补登·在途）STORM 台架 round2 重打（载荷内核=vk86-round2 提交 71bc6846247c-dirty）；**manifest kernel_release 记构建树 HEAD a8c09a723 ≠ 镜像内 UTS ⇒ tree_drift**（Image.gz 未随 HEAD 重编，属陈旧载荷，非死内核）；**2026-10-10 用户裁决：镜像与描述对不上 ⇒ 已删 .img（manifest 留档）**
+vk88	q28	2026-10-10	（补登·在途）STORM 台架 base 重打（载荷内核 = vk64 d02658e63）；tree_drift 同 vk87；**2026-10-10 用户裁决：已删 .img（manifest 留档）**
