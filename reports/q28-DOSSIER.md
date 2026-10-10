@@ -207,6 +207,12 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 
 ## k) 2026-10-10 夜复核：Q28 与「内核二进制」绑定，收窄「冷/暖」与「~60%」口径
 
+> **⚠️ 本节已被溯源审计降级（2026-10-10，`reports/q28-binary-determinism-provenance-20261010.md`、`PITFALLS #171`）。**
+> ① 21 发台账**仅 7 发有原始日志**（GOOD×2=`logs/q28-path-iso-vk64-220502`；NOCARD×5=`logs/q28-vk89-loop-*`/`q28-vk89plain-*`），其余 14 发无证据、`.img` 已删。
+> ② 「内核二进制差 5,040,884 B」**主要是假象**：35.2–41.1 MiB 段 94.72% 满足 `b[i]==a[i-4]`（`.rodata` 平移 4 字节），源头=`LOCALVERSION` `-vk64`→`-vk64c` 多 1 字符；`.text` 仅 26 个 word 不同、全为 ADD/LDR 地址立即数，**无指令语义改变**。
+> ③ **反证**：同一 vk64.img 在冷 POR/冷 fastboot 路径 3/3=STORM（`trials/*-realpor-run{1,2}`、`*-coldfb-vk64`）⇒「不是冷/暖」不成立；固定路径 reboot2 正是 `#166` 的 NOCARD 粘态机制。
+> ⇒ **现口径**：在 reboot2 暖路径上 vk64 亮、vk89/vk64c 不亮；真因未定（4B 布局 / 复位粘态 / vk89 config 差）。本节下表与结论仅作旧记录保留。
+
 > 过程稿全文：`reports/q28-binary-determinism-20261010.md`；经验条目：`PITFALLS #171`。
 > 触发：用户指出「冷/暖无法定性，怀疑该说法本身可靠」。遂抛开标签，固定路径观察。
 

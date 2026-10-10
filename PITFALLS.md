@@ -1294,6 +1294,7 @@
     - 参考：`#151`（VBUS 自开机）、G1-25（USB 连着时 loginctl poweroff 会立即重启）——本次实测把“立即重启”细化为“OpenRC 下 loginctl poweroff 会卡停服务，要 `busybox poweroff -f` 才真断电”。
 
 171. **★Q28 在本机当前状态是「按内核二进制确定性」的，不是「冷/暖」也不是 ~60% 随机（2026-10-10 夜，同一路径连测 21 发）。**
+    - **⚠️ 2026-10-10 溯源审计降级（`reports/q28-binary-determinism-provenance-20261010.md`）**：① 原台账 21 发**仅 7 发有仓库原始日志**（GOOD×2=logs/q28-path-iso-vk64-220502；NOCARD×5=vk89-loop/vk89plain），其余 14 发（含 vk64 GOOD×5、vk64c 系 NOCARD×7）无 per-run 证据且 `.img` 已删。② 声称的「内核二进制差 5,040,884 B(8%)」**主要是假象**：35.2–41.1 MiB 段 94.72% 满足 `b[i]==a[i-4]`（整段 `.rodata` 平移 4 字节），源头=`LOCALVERSION` `-vk64`→`-vk64c` 多 1 字符；`.text` 仅 26 个 word 不同、全是 ADD/LDR 立即数地址偏移，**无指令语义改变**。③ **反证**：同一 vk64.img（sha 15964160bed0）在冷 POR/冷 fastboot 路径 3/3 = STORM（trials realpor-run1/2、coldfb-vk64），故「不是冷/暖」不成立；固定路径 reboot2 恰是 `#166` 的「NOCARD 粘态」机制。⇒ 降级为「在 reboot2 暖路径上 vk64 亮/vk89·vk64c 不亮，真因未定（4B 布局 or 复位粘态 or vk89 config 差）」。
     - 路径固定 = `Linux → /usr/local/sbin/reboot2 bootloader → fastboot boot <img>`；判据 = SSH 读 `card0`（`/sys/class/drm` 含 card0=GOOD；只有 `version`=NOCARD）。`fastboot boot` 确为 RAM 起（cmdline token `elden_probe=FBK64` 实证），无 boot_b 回退。
     - **台账**：`out/boot-elden-vk64.img`（Oct-8 内核 `8efb2731`）= **GOOD ×7**；所有**新编**镜像（vk89 / vk89-plain / vk64c / vk64c+旧ramdisk / vk64c `make clean` 全量）= **NOCARD ×14**。
     - **变量逐个钉死**：同源码提交（`gd02658e63`，无 dirty）、同 config（ikconfig 从 vk64 内核抽出与 `a383cdb9` **0 差异**）、同 ramdisk（vk64c 用 vk64 原 ramdisk 仍 NOCARD）、同工具链（gcc 15.2.0-16ubuntu1 / ld 2.46）、`make clean` 全量重编仍 NOCARD。⇒ **只剩内核二进制本体**。
