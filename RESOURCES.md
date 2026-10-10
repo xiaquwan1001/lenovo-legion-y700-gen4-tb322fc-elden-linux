@@ -227,7 +227,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
 | `patches/` | 3.7 M | ✅ track | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档） |
 | `archive/` | ~5.5 M | ✅ track | 过程证据（87 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
-| `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#117 + §0 零号纪律 + §15 废弃登记 |
+| `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#161 + §0 零号纪律 + §15 废弃登记 |
 | `RESOURCES.md §4` | 21 K | ✅ track | 100 行会话索引（数字 SSOT，§4）+ 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
@@ -467,7 +467,7 @@ git log --oneline -10
 **经 `fastboot boot` 确认启动**的版本 = vk58 / vk58c / vk59-vk47DTB；**经重刷确认在机**的含 vk55 会话 overhaul。
 播放出声在 **vk43** 确认，温控四级在 **vk42** 确认，**DP 三闸根因在 vk53 内核侧实机证**（FSA4480 模块 insmod）。
 「熄屏→重启/关机」（Q24）在 `vk47clean` 上仍复现（用户口述，`idle-delay=0` 规避），**根因未证实、间歇性未解**；
-vk53/vk54 启动失败**已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬件，#108）**：**G1-10 NFC 取消**，**G1-11 CDSP 设备侧已启动**（`vkD2-cdsponly`，待 `remoteproc1` 取证），**G1-9 DP 的 role-switch/`mdss_dp0` DTB 待做**。**相机仅 `v4l2-ctl` 出帧、缺 App 实测**；**WiFi 到可用 ~2 min（Q26）仍需排查**；**BT 配对+TWS 已用户实测可用**。
+vk53/vk54 启动失败**已单变量定案 = 使能 `&i2c0`（本机无 NFC 硬件，#108）**：**G1-10 NFC 取消**，**G1-11 CDSP 设备侧已启动**（`vkD2-cdsponly`，待 `remoteproc1` 取证），**G1-9 DP 的 role-switch/`mdss_dp0` DTB 待做**。**相机仅 `v4l2-ctl` 出帧、缺 App 实测**；**WiFi 到可用（Q26）✅ 已关闭（2026-10-10 用户实机确认关联即可用）**；**BT 配对+TWS 已用户实测可用**。
 
 **版本账目机读校验 + 不可复现号登记（2026-10-06）**：`archive/topics/VK-LEDGER-AUDIT-2026-10-06.md`——
 `vk43` = 全账唯一零证据号（无源/镜像/manifest）；`vk52/vk54/vk56/vk57` slim 镜像**错包内核**（陈旧 `Image.gz`，

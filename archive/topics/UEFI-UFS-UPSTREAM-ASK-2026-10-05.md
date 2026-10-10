@@ -67,3 +67,10 @@ gh issue create --repo sunflower2333/mu_wide_platforms \
   --title "SM8750 (Pakala) Lenovo Y700 Gen4: vendor UFSDxe fails UEFI_DEVICE_ERROR — which platform config is it missing?" \
   --body-file <(sed -n '/^\*\*Title:/,/^---$/p' ~/y700-elden/archive/topics/UEFI-UFS-UPSTREAM-ASK-2026-10-05.md | tail -n +2 | head -n -1)
 ```
+
+## 回复（2026-10-10，GitHub 通知，sunflower2333 在 issue #12 留言）
+
+> Marked. It's a problem related to firmware version. Need a special patch on UFSDxe.
+
+**上游裁决**：UFSDxe `UFS_DEVICE_ERROR` 不是缺平台 config tag，而是**固件版本相关**——需要针对 UFSDxe 打**专用补丁**。
+含义：① G1-29 搁置维持正确（非单点配置可解）；② 若将来重启 UEFI 方向，入口 = 拿 U1/a 槽 stock 侧对照 UFS 初始化差异 + 向上游要/自写 UFSDxe 固件版本适配补丁；③ Q25「静态定位 config tag 0x402」路线降级——上游已给出更高层解释。

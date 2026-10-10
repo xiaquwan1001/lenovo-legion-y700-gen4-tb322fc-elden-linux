@@ -1,6 +1,8 @@
 # 上游报告草稿 — SM8750 cambistmclkcc 电源域导致 display blank 时硬复位
 
 > 状态：**✅ 已发送（2026-10-08 09:16，用户验收）** — 通过 Outlook 网页 SMTP 通道发至 linux-arm-msm@vger.kernel.org，Cc Taniya Das / Bjorn Andersson / Konrad Dybcio / Abel Vesa / linux-clk / devicetree / 自己留底。
+> ⚠️ **2026-10-10 取证：该邮件未进 lore 归档**（搜 cambistmclkcc 共 166 条，最新 10-02 upstream RFC，无本 Regression 帖）——SMTP 发出 ≠ 已进列表（vger 首帖有审核门）。
+> 状态 2：**✅ v2 已重发（2026-10-10，用户手动验收）** — Outlook 网页重发 `[Regression v2] … MX-only binding insufficient`（收件人 linux-arm-msm@vger + Cc Taniya/Bjorn/Konrad/Abel Vesa 5 块、正文 2939 字符含 10-08 后全部新数据：MX-only 3 轮 2 掉电、bare clock controller 半成品态机理链、MX_AO/MXC_AO + PM lifecycle 两问）。**agent 代填全部就绪后点发送被风控拦下（邮件落草稿夹），用户手动重发成功**——浏览器高频自动化操作触发 Outlook 风控，发送类动作需用户手动执行（教训）。正文存 `out/q24-regression-v2-email.txt`；后续盯 lore 归档 + 回复（预期被问 MX_AO 语义与 PM lifecycle 修复可上游性，E4a 结论 MXC 单票可直接回填）。
 > 发送所用干净 patch（纯 ASCII）：内核提交 `be79b256d`（实验版 `86ea33c25`）。
 > 后续：盯 lore.kernel.org/linux-arm-msm 回复（可能要求 rebase 到 v7.1-rc1+ 或改 `vdd_mx-supply` 写法）。
 > 相关上游系列：`[PATCH v4] arm64: dts: qcom: sm8750: Add camera clock controller`

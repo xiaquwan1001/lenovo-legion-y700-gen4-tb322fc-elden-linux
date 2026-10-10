@@ -35,7 +35,7 @@
 | ADSP `adsp.mdt`+`adsp_dtb` | LUN4 `modem_a` | `backup/fw/modem/` | `qcom_q6v5_pas`；DT 期望 `/lib/firmware/qcom/sm8750/adsp.mdt` | ✅ 起（音频 graph 已通） |
 | AudioReach **tplg** | vendor 自研 | 自编 `Lenovo-Y700-Gen4-tplg.bin` | ASoC `q6apm` + `patches/0011` | ✅ 出声+录音（G1-4） |
 | CDSP `cdsp.mdt`+seg / `cdsp_dtb.mdt`+seg | `modem_a` | `backup/fw/modem/image/`（**split**；`cdsp_dtb.mbn` 单文件被 TZ 拒） | `qcom_q6v5_pas` + DTS `firmware-name`（split）；固件须在 **initramfs** | ✅ 起（`remoteproc1 running`，2026-10-07，G1-11） |
-| WiFi Peach（`amss.bin`/`bdwlan`/BDF） | `modem_a/peach` | `backup/fw/modem/image/peach/`（两套：在用 `amss20.bin` sha `848a2f04…`；**非-20 `amss.bin` 不兼容**：MHI POWER_ON `-110`） | `ath12k` + MHI 重试补丁 | ⚠️（到可用 ~2 min；**Q26 重开**=版本/DTB 增量连带副作用假设，见 `TASKS` §5 Q26） |
+| WiFi Peach（`amss.bin`/`bdwlan`/BDF） | `modem_a/peach` | `backup/fw/modem/image/peach/`（两套：在用 `amss20.bin` sha `848a2f04…`；**非-20 `amss.bin` 不兼容**：MHI POWER_ON `-110`） | `ath12k` + MHI 重试补丁 | ✅（**Q26 已关闭**：2026-10-10 用户实机确认关联即可用，见 `TASKS` §5 Q26） |
 | BT（`brhbtfw20.tlv`/`brhbtnv20.bin`） | `bluetooth_a` | `backup/fw/bluetooth/` | `hci_qca` + IBS 补丁 | ✅ 配对 + TWS 实听通过（用户 2026-10-06 实测） |
 | GPU gen80000 `zap/sqe/gmu/aqe` | vendor | `backup/fw/gen80000_*` | `msm` + freedreno | ✅ |
 | 触屏 `novatek_ts_csot_3k_fw.bin` | vendor | `backup/fw/vendor/` | `nt36536` | ✅ |
@@ -50,7 +50,7 @@
 | 面 | 项 | 性质 / 边界 |
 |---|---|---|
 | **主线在跑** | CPU/GPU/显示/USB/PCIe/UFS/WiFi/BT/触屏/触觉/背光/充电旁路/温控分级/音频/相机驱动栈/CDSP/DP | 驱动均在树，无缺失 |
-| **在树但需调** | TF 卡写稳定性；面板 init 竞态；WiFi 到可用时长；熄屏×相机共存 | bug / DT 电源域，非缺驱动（G1-6/Q28/Q26/Q24） |
+| **在树但需调** | TF 卡写稳定性；面板 init 竞态；熄屏×相机共存 | bug / DT 电源域，非缺驱动（G1-6/Q28/Q24） |
 | **低优先增强** | 温控 OEM 层（`lenovo,sys-temp`/BCL/QMI cooling）；SLPI 传感器原生栈（G1-34） | 前者可用通用框架近似；后者需 QRTR+`qcom_smgr` 栈 |
 | **不成立** | ~~NFC~~ | **本机无 NFC 硬件**（vendor 无 nfc feature/HAL/固件，`PITFALLS` #108） |
 | **✗ 不投入** | TEE/SPU/hw-fence/mem-buf、FM RTC6226、ST54 SE、Gunyah/PMIH010x | 私有或无源码 |
@@ -70,7 +70,7 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=**`vk64` v2**（2026-10-08 烧录+mark successful：vk47clean 同款 config + 配套模块目录 + H2 DTB + panel retry + split CDSP；cmdline `elden_nocamera=1` 不自动加载相机）；`recovery_b` 已刷 TWRP。**外设/驱动功能状态不在本表维护**，一律看 `TASKS.md` §0/§1（当前未解：Q28 DSI host 楔死、Q24 熄屏×相机、Q26 WiFi、G1-6 TF 卡） | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259** | **mainline 持久直启**（`/`=`/dev/sda17`，Phosh 自启；当前 boot_b=**`vk64` v2**（2026-10-08 烧录+mark successful：vk47clean 同款 config + 配套模块目录 + H2 DTB + panel retry + split CDSP；cmdline `elden_nocamera=1` 不自动加载相机）；`recovery_b` 已刷 TWRP。**外设/驱动功能状态不在本表维护**，一律看 `TASKS.md` §0/§1（当前未解：Q28 DSI host 楔死、Q24 熄屏×相机（权威 = `TASKS.md` §0/§5）） | **已手术**：`linux17`=193.0 GiB（idx16）、`userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/` | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
 
 > **★ 熄屏→整机硬复位：未解（间歇性）**。根因已锁定为单模块 `cambistmclkcc-sm8750` × DT 电源域耦合（H1/D1/D2/H2 均未根治）；**无相机模块态安全**。设备侧规避（持久根现状，不得轻改）：cmdline `elden_nocamera=1` + `/etc/modules-load.d/camera.conf` 置空 + `idle-delay=0`。
 > 状态/样本数以 `TASKS.md` §5 Q24 为准；历史二分过程见 `archive/topics/G1-22-2026-10-05.md`、`REBOOT-5MIN-2026-10-05.md` §7.9。
