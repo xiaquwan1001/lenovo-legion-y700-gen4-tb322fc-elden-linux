@@ -146,7 +146,7 @@ python3 scripts/slot-attr.py show                               # 槽位属性�
 `stock-src/` | 联想 GPL 源码（厂商驱动/DT/固件名反查依据）
 `env-pass/` | 过环境栈 + **Linux rootfs 归档**（3.44 GB）
 `archive/2026-10-02-merged/` | **本轮合并掉的旧文档原文**（MISSION-SCOPE/DEVICES/ANDROID-COMPAT-PLAN/ROUTE-DECISION/PLAN-NODEV/DOCS-CHANGELOG）
-`reports/` | **活跃主题工作区**：进行中主题的专题/取证稿所在（如 `reports/q28-DOSSIER.md` 为 Q28 单一事实源）；主题定案后证据迁 `archive/topics/` 归档层
+`reports/` | **活跃主题工作区**：进行中主题的专题/取证稿所在（如 `reports/q28-DOSSIER.md` 为 Q28 单一事实源、`reports/Q24-Q28-INDEX.md` 为 Q24+Q28 会话/进度/产物合并台账）；主题定案后证据迁 `archive/topics/` 归档层
 
 ---
 

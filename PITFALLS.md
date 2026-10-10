@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-10。**条目编号 #1–#168**（#1–#161 为 `N. **标题**` 列表，§二十二 #162–#168 为 `**#N = **` 段；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-10。**条目编号 #1–#168**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十二；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1240,40 +1240,40 @@
 
 ## 二十二、构建守卫 & Q28 变量纠正（2026-10-10 编排轮）
 
-**#162 = `make olddefconfig` 删 `CONFIG_ARCH_QCOM` → 静默产出无 QCOM 驱动的死内核（vk81/82/83 作废）。**
-- 机制：`apply-kernel-fragment.sh` 合并片段后跑 `make olddefconfig`，它把 `CONFIG_ARCH_QCOM` 从 =y 降为未设（连带 `DRM_MSM`/`dispcc-sm8750`/`gcc_sm8750`/DSI 全没）。这样编出的 Image 能编过、能打包成 boot.img，但 `System.map` 里 `gcc_sm8750`/`msm_dsi_host_bonded_cmd_trigger`/`qcom_rpmh_probe` **全 0 符号** → **上机永不可能点屏**。
-- 陷阱：`build-kernel.sh` 原有 `grep ^CONFIG_ARCH_QCOM=y` 只在**开编前**查；若 olddefconfig 是在**编后**某步跑的，守卫漏。且 manifest 用短格式时**不记 `config_sha256`** → 事后无从对账哪版 config 坏的。
-- 判据（编完必查）：`grep -c '^CONFIG_ARCH_QCOM=y' linux/.config`=1 且 `grep gcc_sm8750 linux/System.map`>0。
-- 已修：`build-kernel.sh` 加**编后符号守卫**（缺 gcc_sm8750/msm_dsi_host_bonded_cmd_trigger/rpmh → exit 1）；`apply-kernel-fragment.sh` olddefconfig 后回钉 `ARCH_QCOM/DRM_MSM/DRM_MSM_DSI/SMD_RPM/QCOM_RPMHPD`、仍缺则回滚备份并 die。恢复好档 = `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb）。详见 `reports/q28-orchestration-20261010.md` §3。
+162. **`make olddefconfig` 删 `CONFIG_ARCH_QCOM` → 静默产出无 QCOM 驱动的死内核（vk81/82/83 作废）。**
+    - 机制：`apply-kernel-fragment.sh` 合并片段后跑 `make olddefconfig`，它把 `CONFIG_ARCH_QCOM` 从 =y 降为未设（连带 `DRM_MSM`/`dispcc-sm8750`/`gcc_sm8750`/DSI 全没）。这样编出的 Image 能编过、能打包成 boot.img，但 `System.map` 里 `gcc_sm8750`/`msm_dsi_host_bonded_cmd_trigger`/`qcom_rpmh_probe` **全 0 符号** → **上机永不可能点屏**。
+    - 陷阱：`build-kernel.sh` 原有 `grep ^CONFIG_ARCH_QCOM=y` 只在**开编前**查；若 olddefconfig 是在**编后**某步跑的，守卫漏。且 manifest 用短格式时**不记 `config_sha256`** → 事后无从对账哪版 config 坏的。
+    - 判据（编完必查）：`grep -c '^CONFIG_ARCH_QCOM=y' linux/.config`=1 且 `grep gcc_sm8750 linux/System.map`>0。
+    - 已修：`build-kernel.sh` 加**编后符号守卫**（缺 gcc_sm8750/msm_dsi_host_bonded_cmd_trigger/rpmh → exit 1）；`apply-kernel-fragment.sh` olddefconfig 后回钉 `ARCH_QCOM/DRM_MSM/DRM_MSM_DSI/SMD_RPM/QCOM_RPMHPD`、仍缺则回滚备份并 die。恢复好档 = `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb）。详见 `reports/q28-orchestration-20261010.md` §3。
 
-**#163 = ★Q28 的真实变量是**冷/暖复位**，不是时间/温度（推翻 10-09「强时间相关」推断，用户实机纠正）。**
-- 旧口径（作废）：「下午好/夜里坏、强时间相关」。
-- 正确口径（2026-10-10 日志差分定案，修正本条初稿方向写反）：**冷起基本失败（~60%，用户实机：有时能进桌）、暖起（reboot→fastboot boot / ABL 已初始化）基本成功**。今天 12:48 暖起 fastboot A/B 9/9 干净；冷 fastboot 上下文 `fastboot boot` vk75 会复现。**与时间无关。**
-- 对实验设计的硬影响：**A/B 样本必须固定复位类型**。`reboot2 bootloader`→`fastboot boot` 是**暖复位**，与持久 boot_b 冷起不是同一变量 ⇒ 纯暖复位的循环（如本轮 `scripts/q28-ab-delay.sh` 8 轮全 GOOD）**不能**当“未复现”结论，只能说明“暖复位+RAM 直启这条路径本发没撞上”。要复现高坏发态：要么固定**持久 boot_b 暖复位**连续启多次，要么做 **冷/暖对照**（冷需用户断电）。这其实与 #1 研究“PLL/PHY 暖复位未彻底清态→首条 cmd DMA 撞 re-lock”高度吻合。
-- 复现条件定案：**纯暖起 `reboot2 bootloader`→`fastboot boot` 不复现（今天 9/9 干净）；从 POR/冷 fastboot 上下文 `fastboot boot` 会复现**。⇒ A/B 必须走冷起（用户 POR 进 fastboot → `fastboot boot`，零写 boot_b）。
+163. **★Q28 的真实变量是**冷/暖复位**，不是时间/温度（推翻 10-09「强时间相关」推断，用户实机纠正）。**
+    - 旧口径（作废）：「下午好/夜里坏、强时间相关」。
+    - 正确口径（2026-10-10 日志差分定案，修正本条初稿方向写反）：**冷起基本失败（~60%，用户实机：有时能进桌）、暖起（reboot→fastboot boot / ABL 已初始化）基本成功**。今天 12:48 暖起 fastboot A/B 9/9 干净；冷 fastboot 上下文 `fastboot boot` vk75 会复现。**与时间无关。**
+    - 对实验设计的硬影响：**A/B 样本必须固定复位类型**。`reboot2 bootloader`→`fastboot boot` 是**暖复位**，与持久 boot_b 冷起不是同一变量 ⇒ 纯暖复位的循环（如本轮 `scripts/q28-ab-delay.sh` 8 轮全 GOOD）**不能**当“未复现”结论，只能说明“暖复位+RAM 直启这条路径本发没撞上”。要复现高坏发态：要么固定**持久 boot_b 暖复位**连续启多次，要么做 **冷/暖对照**（冷需用户断电）。这其实与 #1 研究“PLL/PHY 暖复位未彻底清态→首条 cmd DMA 撞 re-lock”高度吻合。
+    - 复现条件定案：**纯暖起 `reboot2 bootloader`→`fastboot boot` 不复现（今天 9/9 干净）；从 POR/冷 fastboot 上下文 `fastboot boot` 会复现**。⇒ A/B 必须走冷起（用户 POR 进 fastboot → `fastboot boot`，零写 boot_b）。
 
-**#164 = ★Q28 根因定案：bonded 双 DSI 首条 DCS 命令的命令 DMA 引擎 hang（~60% 冷起）；“背光无画面”有两层但 L2 是 L1 下游。**
-- 日志差分铁证（同 log 15 boot：GOOD 4 次 `commandDMA=0/initfail=0/ctlreset=0`、BAD 11 次**全部**先 `ae94000+ae96000 command DMA timeout status=0x2200200 master=-110 peer=-110`，面板首条 DCS `dcs data ff 20` 即超时 → init 重试 3 次仍败(-110→-5) → **4ms 后**才 `dpu_encoder_phys_vid ctl 1 reset failure -22`/frame done/vblank 风暴→自发重启）。
-- **完美共现 ⇒ L2（DPU CTL 卡死）= L1 的下游后果，非独立 bug**。根因=L1：首条命令 DMA 触发但引擎从不推进。hang 瞬间寄存器：**STATUS0=0x20003（正常=0x0）、TRIG_DMA=0x1 自不清**；CTL/CMD_DMA_CTRL/FIFO 好与坏相同。
-- 面板 `csot,pp8807hb1-1`(nt36536) mode_flags=**VIDEO_BURST**+DSC（`nt36536.c:530`）；init 走 DCS（视频面板也照常），所以首条 DCS 写在 cmd DMA 上 hang。背光在 init 成功之后才开→看到背光≠init成功（init 失败时也可能因 DPU 重试路径亮背光，以 dmesg `Failed to init panel` 为准）。
-- 修复靶点：`msm_dsi_host_bonded_cmd_trigger` 写 REG_DSI_TRIG_DMA 前后（settle delay / byte-clk 取整减少每次 xfer retrigger PLL）。已有候选：vk84-exp(delay=1000us) / Method B(待改到 generic `dsi_link_clk_set_rate_6g`、对象 `msm_host->byte_clk`)。详 `reports/q28-two-layers-20261010.md`。
-- ★方法论教训：（1）旧 Q28 分类器只 grep `command DMA timeout`，**漏判** vblank/frame-done 风暴那一类，导致“暖起 8/8 GOOD”高估——判据要同时看 `Failed to init panel`+`ctl reset failure`+`frame done timeout`；（2）同一问题可能多层签名，先做同日志 GOOD/BAD boot 差分再定性，别拿一次启动定结论。
+164. **★Q28 根因定案：bonded 双 DSI 首条 DCS 命令的命令 DMA 引擎 hang（~60% 冷起）；“背光无画面”有两层但 L2 是 L1 下游。**
+    - 日志差分铁证（同 log 15 boot：GOOD 4 次 `commandDMA=0/initfail=0/ctlreset=0`、BAD 11 次**全部**先 `ae94000+ae96000 command DMA timeout status=0x2200200 master=-110 peer=-110`，面板首条 DCS `dcs data ff 20` 即超时 → init 重试 3 次仍败(-110→-5) → **4ms 后**才 `dpu_encoder_phys_vid ctl 1 reset failure -22`/frame done/vblank 风暴→自发重启）。
+    - **完美共现 ⇒ L2（DPU CTL 卡死）= L1 的下游后果，非独立 bug**。根因=L1：首条命令 DMA 触发但引擎从不推进。hang 瞬间寄存器：**STATUS0=0x20003（正常=0x0）、TRIG_DMA=0x1 自不清**；CTL/CMD_DMA_CTRL/FIFO 好与坏相同。
+    - 面板 `csot,pp8807hb1-1`(nt36536) mode_flags=**VIDEO_BURST**+DSC（`nt36536.c:530`）；init 走 DCS（视频面板也照常），所以首条 DCS 写在 cmd DMA 上 hang。背光在 init 成功之后才开→看到背光≠init成功（init 失败时也可能因 DPU 重试路径亮背光，以 dmesg `Failed to init panel` 为准）。
+    - 修复靶点：`msm_dsi_host_bonded_cmd_trigger` 写 REG_DSI_TRIG_DMA 前后（settle delay / byte-clk 取整减少每次 xfer retrigger PLL）。已有候选：vk84-exp(delay=1000us) / Method B(待改到 generic `dsi_link_clk_set_rate_6g`、对象 `msm_host->byte_clk`)。详 `reports/q28-two-layers-20261010.md`。
+    - ★方法论教训：（1）旧 Q28 分类器只 grep `command DMA timeout`，**漏判** vblank/frame-done 风暴那一类，导致“暖起 8/8 GOOD”高估——判据要同时看 `Failed to init panel`+`ctl reset failure`+`frame done timeout`；（2）同一问题可能多层签名，先做同日志 GOOD/BAD boot 差分再定性，别拿一次启动定结论。
 
-**#165 = ★冷起显示失效至少两种独立模式：NOCARD（无 card0）与 STORM（cmd-DMA 风暴）；“无风暴签名”≠“显示好”。**
-- 实锤（2026-10-10 冷 A/B 第1轮 vk84-exp delay=1000us 冷 fastboot boot）：六类风暴签名全 0，看似 GOOD；但 SSH 进去发现 **`/sys/class/drm/` 只有 `version`，无 card0/connector/fb/GUI 进程**。dmesg：`DSI PLL(0) lock failed status=0x00000000`×4（~0.86s）+ `Failed to create device link (0x180) with supplier ae96000.dsi for .../panel@0`×6 → display-subsystem 组件没聚齐 → **根本没 card0**，管道没跑到 cmd-DMA 阶段所以风暴=0。⇒ 旧只数风暴签名的 GOOD 判据有盲区。
-- delay 只作用于 cmd_trigger（远晚于 0.86s 的 DSI host probe），**不可能导致 NOCARD**；NOCARD = 本次冷起撞上更早的 **DSI PLL/PHY 未锁定**失效。⇒ 冷起显示失效 ≥ 2 模式（NOCARD 更早更根本 / STORM 较晚），**两者同指一个根：冷起首次 DSI PLL/PHY 不能稳定锁定**。cmd_trigger 处的 delay 只盖 STORM 子窗口，盖不住 NOCARD。
-- ★调试基建修正：GOOD/BAD 必须**三态**，`scripts/q28-devprobe.sh` 已改：无 `/sys/class/drm/card0`⇒NOCARD；有 card0 但有风暴签名⇒STORM；有 card0 + connector connected + 无风暴⇒GOOD。**判显示必须 SSH 读完整 dmesg + 查 card0**，不能靠串口时序（logger 重连会漏 0–20s）也不能只数签名。
-- 待对实：需一个确认 GOOD 的冷/暖启动回读 `DSI_PLL_lockfail`/`device_link_fail` 基线（判断这两行是“GOOD 启动也有的良性噪声”还是“NOCARD 独有因果”）。
-- 冷 A/B trial 记录：T1 vk84-exp(delay=1000)=**NOCARD**（n=1，不作定论）。
+165. **★冷起显示失效至少两种独立模式：NOCARD（无 card0）与 STORM（cmd-DMA 风暴）；“无风暴签名”≠“显示好”。**
+    - 实锤（2026-10-10 冷 A/B 第1轮 vk84-exp delay=1000us 冷 fastboot boot）：六类风暴签名全 0，看似 GOOD；但 SSH 进去发现 **`/sys/class/drm/` 只有 `version`，无 card0/connector/fb/GUI 进程**。dmesg：`DSI PLL(0) lock failed status=0x00000000`×4（~0.86s）+ `Failed to create device link (0x180) with supplier ae96000.dsi for .../panel@0`×6 → display-subsystem 组件没聚齐 → **根本没 card0**，管道没跑到 cmd-DMA 阶段所以风暴=0。⇒ 旧只数风暴签名的 GOOD 判据有盲区。
+    - delay 只作用于 cmd_trigger（远晚于 0.86s 的 DSI host probe），**不可能导致 NOCARD**；NOCARD = 本次冷起撞上更早的 **DSI PLL/PHY 未锁定**失效。⇒ 冷起显示失效 ≥ 2 模式（NOCARD 更早更根本 / STORM 较晚），**两者同指一个根：冷起首次 DSI PLL/PHY 不能稳定锁定**。cmd_trigger 处的 delay 只盖 STORM 子窗口，盖不住 NOCARD。
+    - ★调试基建修正：GOOD/BAD 必须**三态**，`scripts/q28-devprobe.sh` 已改：无 `/sys/class/drm/card0`⇒NOCARD；有 card0 但有风暴签名⇒STORM；有 card0 + connector connected + 无风暴⇒GOOD。**判显示必须 SSH 读完整 dmesg + 查 card0**，不能靠串口时序（logger 重连会漏 0–20s）也不能只数签名。
+    - 待对实：需一个确认 GOOD 的冷/暖启动回读 `DSI_PLL_lockfail`/`device_link_fail` 基线（判断这两行是“GOOD 启动也有的良性噪声”还是“NOCARD 独有因果”）。
+    - 冷 A/B trial 记录：T1 vk84-exp(delay=1000)=**NOCARD**（n=1，不作定论）。
 
-**#166 = ★`reboot2 bootloader`=暖复位不清 DSI PHY/PLL 态；连续快环把 Q28 粘死在 NOCARD ⇒ 暖机 A/B 不可判别，每样本必须真实 POR 断电。**
-- 实锤（2026-10-10）：从已开机态反复 `reboot2 bootloader`→`fastboot boot <img>`（reboot2=PSCI SYSTEM_RESET2=暖复位，**不经完全断电**），**vk86-round 连 4/4 NOCARD**、round 分支从不执行；同 vk74 历史「连续温复位 4/4 全坏、彻底断电即恢复」同源。⇒ 判 Q28（冷起竞态）**每个样本之间必须物理 POR（拔电/长按电源完全关机）**，暖复位得到的 NOCARD/GOOD 全是暖复位粘态伪影。
-- ★连带推翻：本轮中途「干净 vk64 自己也 NOCARD」「A 打错靶」等结论均源自 `reboot2` 暖机样本，已作废（详 `reports/q28-DOSSIER.md` §h）。
+166. **★`reboot2 bootloader`=暖复位不清 DSI PHY/PLL 态；连续快环把 Q28 粘死在 NOCARD ⇒ 暖机 A/B 不可判别，每样本必须真实 POR 断电。**
+    - 实锤（2026-10-10）：从已开机态反复 `reboot2 bootloader`→`fastboot boot <img>`（reboot2=PSCI SYSTEM_RESET2=暖复位，**不经完全断电**），**vk86-round 连 4/4 NOCARD**、round 分支从不执行；同 vk74 历史「连续温复位 4/4 全坏、彻底断电即恢复」同源。⇒ 判 Q28（冷起竞态）**每个样本之间必须物理 POR（拔电/长按电源完全关机）**，暖复位得到的 NOCARD/GOOD 全是暖复位粘态伪影。
+    - ★连带推翻：本轮中途「干净 vk64 自己也 NOCARD」「A 打错靶」等结论均源自 `reboot2` 暖机样本，已作废（详 `reports/q28-DOSSIER.md` §h）。
 
-**#167 = `scripts/q28-boot-cycle.sh` 判据缺陷：不查 card0，把 NOCARD 误报 GOOD（与 #165 同坑，但脚本未同步修）。**
-- 实锤：vk86-round 暖机被 q28-boot-cycle.sh 报 `VERDICT=GOOD`，实为 NOCARD（`/sys/class/drm` 只有 `version`）。该脚本只数六种风暴签名 + dpms，**不检查 `[ -e /sys/class/drm/card0 ]`**。
-- ⇒ **Q28 判显示一律用 `scripts/q28-devprobe.sh`（三态）**；已给 q28-boot-cycle.sh 补 card0 硬门（无 card0 直接 rc=10 BAD/NOCARD）。教训：修判据要**跨脚本同步**，一份改了另一份会悄悄漂移。
+167. **`scripts/q28-boot-cycle.sh` 判据缺陷：不查 card0，把 NOCARD 误报 GOOD（与 #165 同坑，但脚本未同步修）。**
+    - 实锤：vk86-round 暖机被 q28-boot-cycle.sh 报 `VERDICT=GOOD`，实为 NOCARD（`/sys/class/drm` 只有 `version`）。该脚本只数六种风暴签名 + dpms，**不检查 `[ -e /sys/class/drm/card0 ]`**。
+    - ⇒ **Q28 判显示一律用 `scripts/q28-devprobe.sh`（三态）**；已给 q28-boot-cycle.sh 补 card0 硬门（无 card0 直接 rc=10 BAD/NOCARD）。教训：修判据要**跨脚本同步**，一份改了另一份会悄悄漂移。
 
-**#168 = ★Q28 冷起复现的敏感点尚未定性：同一内核+DTB 逐字节相同、仅 initramfs `/init` 差一个模块加载器，冷 fastboot 路径一次 STORM(C2) 一次 NOCARD(A2)。**
-- 静态坐实（2026-10-10）：`boot-elden-vk64.img` 与 `vk86-base.img` 内核 config（ikconfig sha a383cdb9）、DTB（386cc9bd）**逐字节相同**、git commit 同为 `gd02658e63`；面板 `CONFIG_DRM_PANEL_NOVATEK_NT36536=y`+`DRM_MSM=y` built-in ⇒ NOCARD（0.86s DSI PLL lock fail）与模块/ramdisk 内容无关。唯一差 = vk86 的 `/init` 多一段 `payload-modules-load.sh`（≤20s 超时加载 WiFi/音频/触觉/触控，挪动开机用户态时序）。
-- ⇒ 冷起落 NOCARD 还是 STORM 二选一：**要么同二进制冷起非确定性（掷骰子选模式）⇒ 单样本 Q28 修法 A/B 本质=概率采样（应避免），要么首次 modeset 的开机时序是杠杆（可控、值得查）**。区分二者 = 把**同一镜像**冷起 2 次看模式是否一致（确定性门，非采样）。本轮未做，留下次开场先钉。
+168. **★Q28 冷起复现的敏感点尚未定性：同一内核+DTB 逐字节相同、仅 initramfs `/init` 差一个模块加载器，冷 fastboot 路径一次 STORM(C2) 一次 NOCARD(A2)。**
+    - 静态坐实（2026-10-10）：`boot-elden-vk64.img` 与 `vk86-base.img` 内核 config（ikconfig sha a383cdb9）、DTB（386cc9bd）**逐字节相同**、git commit 同为 `gd02658e63`；面板 `CONFIG_DRM_PANEL_NOVATEK_NT36536=y`+`DRM_MSM=y` built-in ⇒ NOCARD（0.86s DSI PLL lock fail）与模块/ramdisk 内容无关。唯一差 = vk86 的 `/init` 多一段 `payload-modules-load.sh`（≤20s 超时加载 WiFi/音频/触觉/触控，挪动开机用户态时序）。
+    - ⇒ 冷起落 NOCARD 还是 STORM 二选一：**要么同二进制冷起非确定性（掷骰子选模式）⇒ 单样本 Q28 修法 A/B 本质=概率采样（应避免），要么首次 modeset 的开机时序是杠杆（可控、值得查）**。区分二者 = 把**同一镜像**冷起 2 次看模式是否一致（确定性门，非采样）。本轮未做，留下次开场先钉。

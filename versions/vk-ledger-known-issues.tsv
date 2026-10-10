@@ -6,6 +6,11 @@
 #   kind ∈ tree_drift | dirty_drift | no_manifest
 # 证据：archive/topics/VK-LEDGER-AUDIT-2026-10-06.md §2
 #
+# 注：本表按 build 名登记，与 images 生命周期无关。下列镜像已从 out/ 删除（仅 manifest 存留），
+#     其行保留作历史留档：vk72 / vk72-q28dsi / vk72-q28dsi2 / vk73-q28diag / vk75-q28ab /
+#     vk76-freezetrace（Q28 诊断链）/ vk71-mxc / vk71-mxnom（Q24 变体，已裁决收口）。
+#     若同名镜像重建，行自动重新生效。
+#
 # 内核 payload 与构建时树不一致（同一 bug 类：#111 双层 gzip 之外的「Image.gz 陈旧」）
 vk52-slim	tree_drift	包入 vk42 内核（geb432f18a0d1），当时树=vk48/vk50；slim 失败归因（缺 /bin/sh）不受影响
 vk54-slim	tree_drift	复用 vk54-dirty 内核镜像（b3b87ed1），非当时树（vk54 提交 g26cd13b1c4a2）
