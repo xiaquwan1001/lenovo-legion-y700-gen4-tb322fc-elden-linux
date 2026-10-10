@@ -1,0 +1,18 @@
+{
+  "label": "layout-a-ram",
+  "ts": "2026-10-10T15:56:45Z",
+  "vk": "",
+  "image": "out/q28-layout/boot-q28-a-ram.img",
+  "image_sha256": "80ec53eb56ca8c6fb51207d9cac67915395205c2cdcf5639d17d8e469d0d02e4",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot RAM-only(no elden_root)",
+  "probe": "q28",
+  "verdict": "HANG",
+  "log_dir": "",
+  "note": "150s no SSH; USB gadget gone; no desktop; not probed"
+}

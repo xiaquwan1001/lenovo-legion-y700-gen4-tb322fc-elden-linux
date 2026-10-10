@@ -80,7 +80,7 @@
 
 - **完成度**：G1 ≈90% · G2 ≈45% · G3 PoC ✅（数字权威 = `TASKS.md` §0）。
 - **Linux 侧未解（3 项，按影响排序）**：
-  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。根因已定案=冷起首次 DSI PLL/PHY 未稳定锁定 → bonded 双 DSI 首条 DCS 的 cmd-DMA hang（冷起 ~60%，冷起失效有 NOCARD/STORM 两模式）。**⚠️ 2026-10-10 夜「按内核二进制确定性」说法已被溯源审计降级（`reports/q28-binary-determinism-provenance-20261010.md`、`PITFALLS #171`）：原台账 21 发仅 7 发有原始日志；所谓 5,040,884 B 二进制差主要是 `LOCALVERSION` 长度导致的 4 字节 `.rodata` 平移（`.text` 仅 26 个 word、全为地址立即数）；且同一 vk64.img 在冷 POR 路径 3/3=STORM。⇒ 现口径=「在 reboot2 暖路径上 vk64 亮、vk89/vk64c 不亮，真因未定」。** 现状/判据/下一步只读 SSOT `reports/q28-DOSSIER.md` 与 `TASKS.md` §5 Q28；
+  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。根因已定案=冷起首次 DSI PLL/PHY 未稳定锁定 → bonded 双 DSI 首条 DCS 的 cmd-DMA hang（冷起 ~60%，冷起失效有 NOCARD/STORM 两模式）。**⚠️ 2026-10-10 夜「按内核二进制确定性」说法已被溯源审计降级（`reports/q28-binary-determinism-provenance-20261010.md`、`PITFALLS #171`）：原台账 21 发仅 7 发有原始日志；所谓 5,040,884 B 二进制差主要是 `LOCALVERSION` 长度导致的 4 字节 `.rodata` 平移（`.text` 仅 26 个 word、全为地址立即数）；且同一 vk64.img 在冷 POR 路径 3/3=STORM。⇒ 现口径=「在 reboot2 暖路径上 vk64 亮、vk89/vk64c 不亮，真因未定」。** **【2026-10-10 夜②：同一 `boot-q28-oct8.img` 同晚同路径 5 发=GOOD/STORM/STORM/GOOD/STORM ⇒ 同镜像非确定；且 `storm=0` 的干净 GOOD 3/3 数秒内整机冻死、`storm>0` STORM 4/4 存活 ⇒ 判 GOOD 必须加**存活门**（`PITFALLS #172`、`reports/q28-layout-ab-20261010.md`）。】** 现状/判据/下一步只读 SSOT `reports/q28-DOSSIER.md` 与 `TASKS.md` §5 Q28；
   ② **Q24 熄屏 × 相机**（单模块 `cambistmclkcc-sm8750` × DT 电源域）→ 用户裁决=互斥二选一：日常零相机模块（熄屏安全），需要时 `cam-mode.sh on/off`。详见 `TASKS.md` G1-33 / §5 Q24；
   ③ **进 GUI 后整机卡死**（`PITFALLS #106`，与 Q28 不同因）→ 已常驻自动取证（`/etc/sysctl.d/99-freeze-trace.conf` + `pstore-catch`），命中即 panic→暖复位→带回全 CPU 栈；暂未复现。
 - **本轮已关闭 / 搁置**（不再占未解）：✅ Q26 WiFi（2026-10-10 用户确认）、⚪ G1-6 TF 卡（用户裁决忽略）、✅ G1-34 重力/自动旋转（SSC/QRTR + iio-sensor-proxy；prox/als/compass 已核）。

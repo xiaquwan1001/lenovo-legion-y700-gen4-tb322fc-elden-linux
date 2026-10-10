@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-10。**条目编号 #1–#171**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-10。**条目编号 #1–#172**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十二；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -236,6 +236,7 @@
     - 已知边界：**纯 RAM 变体不启桌面**——RAM initramfs 的 `init` 在 `on_initramfs=1` 时只 `respawn ttyGS0/tty1`，**无 `start-desktop.sh`**；故无图形需求时用 `ROOTARGS=` 纯 RAM 即可绕开。
     - 未定性：历史偶发、次数少；疑属会话/合成器用户态（与 U1–U7、Q24 同类），**按「用户态冻结」策略暂不深挖**。
     - 相关硬事实：本机 **APSS 看门狗被永久禁用**（dmesg `Hard watchdog permanently disabled`）⇒ 这类死挂**不会自复位**，必须物理复位；取证优先用无 GUI 环境 + OOB 串口。
+    - **2026-10-10 夜新增实锤（见 `#172` / `reports/q28-layout-ab-20261010.md`）**：`fastboot boot` 后**显示干净上来（`storm=0`）的 GOOD 会在数秒内冻死**（3/3，含 RAM-only 无桌面一例）；`storm>0` 的 STORM 反存活。⇒ 它与「显示 bring-up 成功」强相关，不只限于 GUI；且**「有 card0」不等于可用**，判 GOOD 必须加**存活门**。
 107. **★G1-30 slim 最小 initramfs 缺 `/bin/sh` —— 所有 slim 镜像从来起不来（2026-10-05 定位）**。
     - `build-boot.sh` 的 busybox 最小 initramfs 只放 `bin/busybox`，而 `initramfs/init` 是 `#!/bin/sh` ⇒ 内核 `Run /init … Failed to execute /init (error -2)`
       → `No working init found` → 15s panic 复位（也表现为“掉电重启”）。`vk52/54/56/57-slim` 全中；与内核无关。
@@ -1302,3 +1303,10 @@
     - **含义**：① 用户对「冷/暖」的怀疑成立——至少它不是当前判别变量；② Q28 = **对内存/时序极敏感的首发竞态**，内核布局的微小漂移即可把同一源的两构建分别推到 GOOD / NOCARD 侧；③ Oct-8 `vk64.img` 落在 GOOD 侧，保留作 **Q28 GOOD 参照**。
     - **口径更新**：收窄/取代 `#168` 的「同二进制冷起非确定性」与 DOSSIER 的「冷起 ~60%」——在**当前设备状态**下，同一二进制**可复现**（不是掷骰子）。追因下一步（dump 两侧 `/proc/kallsyms` 定位位移区、单因素改构建推 GOOD/NOCARD）见 `reports/q28-binary-determinism-20261010.md`。
     - 附工具修复：`assert-kernel-sane.sh` 第 4 项 mtime 陈旧检测对**外部 `KERNEL_IMG=`** 误伤，已改为仅对本树默认 `Image.gz` 生效（外部内核靠 UTS 对齐保身份）。
+
+172. **★Q28 判 GOOD 必须加「存活门」：`storm=0` 的干净 GOOD 会在数秒内把整机冻死（与 #106 同签名）；`storm>0` 的 STORM 反而存活（2026-10-10 夜，`reports/q28-layout-ab-20261010.md`）。**
+    - 台架：同一 `fastboot boot` 路径，判据三态 + SSH 存活采样。同一镜像 `boot-q28-oct8.img`（内核 `8efb2731`）同晚 5 发 = **GOOD(hang)/STORM/STORM/GOOD(hang)/STORM** ⇒ **同镜像同路径非确定**，直接否掉 `#171` 的「同一二进制恒定复现」。
+    - **相关**：`storm=0` 的干净 GOOD **3/3 数秒内 HANG**（含 disk-root ×2 与 **RAM-only 无桌面 ×1**）；`storm>0` 的 STORM **4/4 存活**；NOCARD 存活。⇒ **「有 card0」≠「能用」**；`card0` 二元判据废除，GOOD 必须 = 有 card0 + 无风暴 + **存活 ≥60 s 且可交互**。
+    - **hang 与桌面无关**：RAM-only（cmdline 去 `elden_root`、不起 Phaser/Phosh）同样冻死（USB gadget 一并消失）⇒ 只要显示 bring-up 触发 modeset 就可能死。
+    - **构建侧定性**：声称的「内核二进制差 5,040,884 B」是 `UTS_VERSION`（版本串/构建号/时间戳）长度变化导致的 **整段 `.rodata` 平移 4 字节**（`.text` 仅 26 word、全为地址立即数），**功能代码实质相同**；见 `reports/q28-binary-determinism-provenance-20261010.md`。
+    - **`reboot2` 暖复位不可当 A/B 台架**：STORM 态下 `reboot2 bootloader` 无效（无 fastboot），只能物理断电；原报告「固定路径 × 21 发连测」在机制上不可能不间断进行。

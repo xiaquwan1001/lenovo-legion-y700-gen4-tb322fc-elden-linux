@@ -24,3 +24,5 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-10T15:22:43Z	layout-aa		warm	fastboot-boot	NOCARD	2b3dbad9d992	reports/trials/20261010T152242Z-layout-aa
 2026-10-10T15:23:27Z	layout-vk64c-repro	vk64c-repro	warm	fastboot-boot	NOCARD	6d87888c894f	reports/trials/20261010T152327Z-layout-vk64c-repro
 2026-10-10T15:24:22Z	layout-oct8		warm	fastboot-boot	STORM	a5ace41622f3	reports/trials/20261010T152417Z-layout-oct8
+2026-10-10T15:56:45Z	layout-vk64img-oldinit	vk64	warm	fastboot-boot(old /init)	STORM	15964160bed0	
+2026-10-10T15:56:45Z	layout-a-ram		warm	fastboot-boot RAM-only(no elden_root)	HANG	80ec53eb56ca	

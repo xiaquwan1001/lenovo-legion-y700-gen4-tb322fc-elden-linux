@@ -252,3 +252,28 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 
 **工具修复**：`scripts/assert-kernel-sane.sh` 第 4 项 mtime 陈旧检测对显式 `KERNEL_IMG=`（外部预编内核）误伤，
 已改为仅对本树默认 `Image.gz` 生效（外部内核身份由 UTS 对齐保证）。
+
+---
+
+## l) 2026-10-10 夜②：逆转说法证伪 + GOOD→HANG 存活门（`PITFALLS #171/#172`）
+
+> 过程稿全文：`reports/q28-layout-ab-20261010.md`、`reports/q28-binary-determinism-provenance-20261010.md`。
+
+**1. 逆转说法（§k）已证伪**：
+- **构建侧**：声称的「5,040,884 B(8%) 内核二进制差」= `UTS_VERSION`（版本串/构建号/时间戳）长度变化导致的
+  **整段 `.rodata` 平移 4 字节**（区间 94.72% 满足 `b[i]==a[i-4]`）；`.text` 仅 26 个 word、全为
+  ADD/LDR 地址立即数，**无指令语义改变**。控制对 `q28a` vs `q28aa`（仅标签差 1 字符）= 466 B、无平移。
+- **设备侧**：同一 `boot-q28-oct8.img`（内核 `8efb2731`）同晚同路径 5 发 = **GOOD/STORM/STORM/GOOD/STORM** ⇒
+  **同镜像同路径非确定**，「同一二进制恒定复现」不成立。
+
+**2. 新增判据：存活门（取代 `card0` 二元判据）**：
+- `storm=0` 的干净 GOOD → **3/3 数秒内整机冻死**（disk-root ×2 + **RAM-only 无桌面 ×1**）；
+  `storm>0` 的 STORM → **4/4 存活**；NOCARD → 存活。
+- ⇒ **GOOD 必须 = 有 `card0` + 无风暴 + 存活 ≥60 s 且可交互**。
+- hang 与「桌面」无关（RAM-only 亦死）⇒ 与 `#106` 同签名，但触发面更宽（任何成功 modeset 后）。
+
+**3. 台架限制**：`reboot2` 暖复位在 STORM 态下无效（无 fastboot），只能物理断电；
+每发 `storm=0` 的 GOOD 之后都要用户物理恢复 ⇒ 设备采样很贵。
+
+**4. 现行口径（覆盖 §k）**：Q28 在本机当前状态下**非确定**，且「判 GOOD」必须先过 survives-gate；
+`out/boot-elden-vk64.img` 不再能当「GOOD 参照」（它当发可能 STORM 也可能 GOOD→HANG）。
