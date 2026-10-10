@@ -25,11 +25,4 @@
 
 ---
 
-> 修订 2026-10-06：本文件收敛为**纯项目描述**。原「规则 · 设备与刷写」「规则 · 研发流程」「协作」三段
-> 迁入 `.pi/AGENT-OPS.md`（行为/授权标准）与 `PITFALLS.md`（经验）；文档结构复述归 `INDEX.md` §2，并发全文归 `.pi/CONCURRENCY.md`。
-
-## API 限流与模型选择（ustc_ai，派发子代理前必读）
-
-- 端点 `https://api.llm.ustc.edu.cn/` 限流与预算规则见全局 `~/.pi/agent/AGENTS.md`「API 限流」章节（每 key 20 请求/窗口、429 两种表现、retry 对策）。
-- **模型用量/延迟**：网关日用量 `deepseek-flash` 是第二名约 **10 倍**（热门默认模型，高峰期上游排队，空载 TTFT 实测 45–111 s；同刻 `deepseek-flash-2`/`glm-5.3-flash`/`qwen3.8-flash-next` 均 <4 s）。
-- **派发子代理/写 settings 时**：优先低用量同档模型（`deepseek-flash-2` 功能等价，支持 tools + reasoning_content）；必须用 `deepseek-flash` 时先 `curl --noproxy '*'` 实测一次 TTFT，>10 s 就换模型或错峰。主会话「收消息→回显变慢」先测模型 TTFT 再怀疑网络。
+> API 限流 / 模型选择见全局 `~/.pi/agent/AGENTS.md`「API 网关与限流」（本文件不重复）。
