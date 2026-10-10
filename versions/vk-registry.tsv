@@ -157,4 +157,22 @@ vk71	q24	2026-10-09	cambistmclkcc 电源域变体：A=vk71-mxc（RPMHPD_MXC）/ 
 vk72	q24	2026-10-09	G1-34：ADSP fastrpc 加 qcom,non-secure-domain（生成 /dev/fastrpc-adsp 供 hexagonrpcd sensorspd）
 vk73	q28	2026-10-09	Q28 诊断内核：bonded 命令 DMA 超时点 dump DSI 寄存器（patches/q28-dsi-regdump.patch，+64 行诊断打印）；镜像 out/boot-elden-vk73-q28diag.img sha 8596f1c7…；UTS 刻意=vk64 以零写盘加载在机模块（口径见 vk-ledger-known-issues.tsv）；上机一发=好温启（Q28 未复现），判读表 .pi/plans/2026-10-09-Q28-诊断上机包.md
 vk74	q28	2026-10-09	Q28 电源上电路径鲁棒化+取证：dpu_kms_enable_commit/dpu_crtc_enable/msm_dsi_host_power_on 的 pm_runtime_get_sync→pm_runtime_resume_and_get 并上报/传播（patches/q28-poweron-propagate.patch，内核 ca81318f2）+ commit 失败点打印 DPU runtime-PM 状态；镜像 out/boot-elden-vk74-q28power.img sha 277aec4b…（DTB/ramdisk/cmdline 与 vk73 逐字段一致，含 elden_nocamera=1）；UTS 刻意=vk64（同上）；**未上机**
+vk75	q28	2026-10-09	（补登）Q28 good/bad 对拍诊断内核（cmd-DMA 成功侧也 dump）；UTS 刻意=vk64 串；镜像 out/boot-elden-vk75-q28ab.img 已删除，manifest 存留
 vk76	q28-freeze	2026-10-09	同 vk75 内核（e3c5e9fea，未重编）；仅 cmdline 加装弹 softlockup_panic=1 softlockup_all_cpu_backtrace=1 kernel.sysrq=1 panic=20 ⇒ PITFALLS #106「进 GUI 整机卡死」若属 soft lockup 即自动 panic + 20 s 暖复位，ramoops(4 MiB@0xc2000000，本 DT 自带) 留最后 printk；**未上机**
+# ── 版本账三次对账（2026-10-10，integrator 审查）：补登 vk75 / vk77–vk84 / vk86 ──────
+# 背景（发现的缺陷）：scripts/lane.sh alloc 只按本表现有最大号发号，而本表此前止于 vk76、
+#   且缺 vk75，但 out/ 早有到 vk86 的构建 ⇒ 下一次 alloc 会发出 vk77，与现存
+#   vk77-modkdump / vk77-modular 撞号（registry 自己在 vk65–70 段记录过的“误发旧号”复发）。
+# 处置：按「行不可改写、补登附加」惯例补齐（vk75 插入 vk74/vk76 之间以保号序单调；同 vk56/57/58
+#   补录先例）；alloc 现已看得到 vk86。在途镜像（vk84 / vk86）收口时**勿重复登行**，只更新 note。
+#   独立复算（2026-10-10 out/ 快照）：40 个带内核载荷的 boot-elden-vkNN 镜像 / 18 个不同内核
+#   二进制 / 17 个不同 UTS 串；legacy 硬错（经 known-issues 豁免后）= 24 个镜像。
+vk77	kexec-modular	2026-10-09	（补登）vk77-modkdump（Q11 kexec modkdump）+ vk77-modular（模块化载荷）；内核 e3c5e9fea
+vk78	modular	2026-10-09	（补登）vk78-modular：同 vk77 内核（未重编），仅重做载荷 ramdisk（loader 入包 + 钩子无条件）
+vk79	q28	2026-10-10	（补登）vk79-E0：Q28 E0 诊断增强（源提交 97b8ee3c7，内核仓已打 tag vk79）；镜像 out/boot-elden-vk79-E0.img
+vk80	q28	2026-10-10	（补登）vk80-e4amxc：Q28 E4a cambist 挂 MXC 变体（内核 e3c5e9fea + dirty）；镜像 out/boot-elden-vk80-e4amxc.img
+vk81	q24	2026-10-10	（补登）E4a FIX-1（源提交 68e8ab2c0，内核仓已打 tag vk81）；**镜像 vk81-e0e4a 系 olddefconfig 删 ARCH_QCOM 的死内核，已作废/删除（PITFALLS #162）**，仅 manifest 存留
+vk82	q24	2026-10-10	（补登）FIX-3（源 e1d2c658a，内核仓已打 tag vk82）；同上死内核作废（#162），镜像已删
+vk83	q24	2026-10-10	（补登）FIX-2（源 86193a58a，内核仓已打 tag vk83）；同上死内核作废（#162），镜像已删；**该提交后被 vk84 复用为内核基（+delay 补丁）**
+vk84	q28	2026-10-10	（补登·在途）q28delay base/exp 单变量对（内核=vk83 提交 86193a58a + dsi_cmd_delay_us 补丁，dirty）；收口见 versions/vk-identity-inflight.txt
+vk86	q28	2026-10-10	（补登·在途）STORM 台架 base/round/round2（内核基=vk64 d02658e63 / round 提交 71bc6846247c）；收口见 versions/vk-identity-inflight.txt

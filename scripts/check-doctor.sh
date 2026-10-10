@@ -12,6 +12,7 @@
 #                        （已审在案的历史项见 versions/vk-ledger-known-issues.tsv，降为 WARN）
 #   5d. 内核身份表      versions/vk-kernel-identity.tsv 新鲜度 + 命名/溯源规则门
 #                        （号↔内核二进制↔源提交 对齐；由 scripts/vk-identity.py 生成）
+#                        + registry 号覆盖现存构建号（有镜像必入 registry，否则 alloc 撞号）
 set -uo pipefail
 cd "$(dirname "$0")/.."
 ROOT=$PWD

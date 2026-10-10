@@ -450,7 +450,7 @@
     - 纪律：所有长测试/扫掠脚本内部 `exec > >(tee -a "$LOG") 2>&1`（或至少 `bash script > log 2>&1` 持续追加），agent 从 `$LOG` 读结果并在汇报里给出日志路径。`scripts/sleep-sweep.sh` 已照此改。
 
 135. **★`vkN` 是「构建/载具号」不是内核版本；内核身份唯一判据 = 镜像内核载荷解压后的 sha256（2026-10-08 全量对账 76 镜像/61 manifest）**。
-    - 实测三类失真同时存在：**同号不同内核二进制**（`vk47clean` 这一个 UTS 串背后 5 个不同二进制：athm / wifi-bmiss-1 / wifi-bmiss-2 / wifi-timing-1 沿用了 LOCALVERSION 但重编过）；**不同号同一内核**（76 个带内核载荷的镜像只含 26 个不同内核；vk60/61/62/63 四个正式号装的是同一个 vk47clean 二进制，vk42 == vk52-slim）；**号与内核源不同号**（24 个镜像的 vk 号 ≠ 其内核提交所属的 vk tag）。
+    - 实测三类失真同时存在：**同号不同内核二进制**（`vk47clean` 这一个 UTS 串背后 5 个不同二进制：athm / wifi-bmiss-1 / wifi-bmiss-2 / wifi-timing-1 沿用了 LOCALVERSION 但重编过）；**不同号同一内核**（2026-10-08 快照 76 个带内核载荷的镜像只含 26 个不同内核，2026-10-10 复算 = 40 镜像/18 内核；镜像被清理过，数字随快照变；vk60/61/62/63 四个正式号装的是同一个 vk47clean 二进制，vk42 == vk52-slim）；**号与内核源不同号**（24 个镜像的 vk 号 ≠ 其内核提交所属的 vk tag）。
     - 后果：拿镜像名/UTS 串做归因会错到另一个内核上去（历史事故：vk52-slim 实为 vk42 内核，见 registry 2026-10-06 更正；vk61 “uname 仍是 vk47clean” 不是故障而是载具号的正确签名，见 RESOURCES §4 `01a11074`）。
     - 判据与工具：**内核身份 = 镜像首段 gzip 解压字节的 sha256**（`scripts/vk-identity.py` 已实现）。全量对齐表 `versions/vk-kernel-identity.tsv`（号↔内核二进制↔源提交↔flag）；机读门 `scripts/check-doctor.sh` §5d（在途构建走 `versions/vk-identity-inflight.txt` 豁免，收口后必须删）；manifest 新增 `kernel_payload_sha256` / `kernel_release_matches_image` / `kernel_packed_from`（#131 的根治）。
     - 命名口径（2026-10-08 起约束新构建）：`vkN` 只作构建流水号；**内核源码版本一律看 `src_sha`+tag，不看镜像名**；禁止用变体名当 LOCALVERSION（`sd-*` 那套 UTS 里没有 git sha，已 7 个镜像无法回溯）。

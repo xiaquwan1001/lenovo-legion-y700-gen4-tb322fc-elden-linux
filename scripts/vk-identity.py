@@ -240,6 +240,24 @@ def gate(rows, skip_names):
     if noted:
         print('WARN\t无版本号构建拷贝 %d 个（build-boot.sh 默认产物，不拦构建；收口时改名或删）：%s'
               % (len(noted), ' '.join(noted)))
+    # 号↔registry 覆盖：有镜像的构建号必须在 registry，否则 lane.sh alloc（只读本表 max）
+    # 会发出已存在的旧号 → 撞号（vk65–70 段记录过的“误发旧号”事故）。
+    reg = load_registry()
+    unreg = []
+    for r in rows:
+        m = re.match(r'^vk(\d+)', r[0])
+        if not m:
+            continue
+        if int(m.group(1)) <= 50:        # vk50 = registry seed，之前的 vk42/47 历史号不回溯
+            continue
+        if int(m.group(1)) in reg or r[1] in skip_names:
+            continue
+        unreg.append(r[0])
+    if unreg:
+        print('FAIL\t有镜像但 registry 无号（收口必补登，否则 alloc 会撞号）：%s'
+              % ' '.join(sorted(set(unreg))))
+    else:
+        print('OK\tregistry 覆盖所有 ≥vk51 的现存构建号')
     return 0
 
 

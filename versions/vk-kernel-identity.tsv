@@ -31,16 +31,16 @@ vk64	boot-elden-vk64.img	vk64	7.2.0-debug-vk64-gd02658e63cf6	8efb2731efb6	d02658
 vk71-mxc	boot-elden-vk71-mxc.img	vk71	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	0d4bedf55383	clean	tree_drift|tree_head_diff|num_ne_tag(vk47)|kbin_shared8|uts_dup2
 vk71-mxnom	boot-elden-vk71-mxnom.img	vk71	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47	0d4bedf55383	clean	tree_drift|tree_head_diff|num_ne_tag(vk47)|kbin_shared8|uts_dup2
 vk74-q28power	boot-elden-vk74-q28power.img	vk74	7.2.0-debug-vk64-gd02658e63cf6	5c35cf5fe0ff	d02658e63cf6	main	vk64	ca81318f2efd	clean	tree_head_diff|num_ne_tag(vk64)|uts_dup2
-vk77-modkdump	boot-elden-vk77-modkdump.img	-	7.2.0-debug-ge3c5e9fea66e	d41fadecf965	e3c5e9fea66e	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	clean	ok|kbin_shared3
-vk77-modular	boot-elden-vk77-modular.img	-	7.2.0-debug-ge3c5e9fea66e	d41fadecf965	e3c5e9fea66e	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	clean	ok|kbin_shared3
-vk78-modular	boot-elden-vk78-modular.img	-	7.2.0-debug-ge3c5e9fea66e	d41fadecf965	e3c5e9fea66e	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	clean	ok|kbin_shared3
-vk79-E0	boot-elden-vk79-E0.img	-	7.2.0-debug-ge3c5e9fea66e-dirty	ba995afefde6	e3c5e9fea66e-dirty	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	dirty	ok|kbin_shared2
-vk80-e4amxc	boot-elden-vk80-e4amxc.img	-	7.2.0-debug-ge3c5e9fea66e-dirty	ba995afefde6	e3c5e9fea66e-dirty	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	dirty	ok|kbin_shared2
-vk84-q28delay-base	boot-elden-vk84-q28delay-base.img	-	7.2.0-debug-vk84-g86193a58a095-dirty	c6a9e52325a9	86193a58a095-dirty	branch:elden/vk53-hw,stash,vk83	vk83	86193a58a095	dirty	num_ne_tag(vk83)|uts_lvs(vk84≠vk83)|kbin_shared2
-vk84-q28delay-exp	boot-elden-vk84-q28delay-exp.img	-	7.2.0-debug-vk84-g86193a58a095-dirty	c6a9e52325a9	86193a58a095-dirty	branch:elden/vk53-hw,stash,vk83	vk83	86193a58a095	dirty	num_ne_tag(vk83)|uts_lvs(vk84≠vk83)|kbin_shared2
-vk86-base	boot-elden-vk86-base.img	-	7.2.0-debug-vk86-base-gd02658e63cf6	1b3953393453	d02658e63cf6	main	vk64	d02658e63cf6	clean	num_ne_tag(vk64)
-vk86-round	boot-elden-vk86-round.img	-	7.2.0-debug-vk86-round-g71bc6846247c	f87b66dbee45	71bc6846247c	main		71bc6846247c	clean	ok
-vk86-round2	boot-elden-vk86-round2.img	-	7.2.0-debug-vk86r2-g71bc6846247c-dirty	0af7b3fd8529	71bc6846247c-dirty	main		71bc6846247c	dirty	ok|kbin_shared2
+vk77-modkdump	boot-elden-vk77-modkdump.img	vk77	7.2.0-debug-ge3c5e9fea66e	d41fadecf965	e3c5e9fea66e	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	clean	ok|kbin_shared3
+vk77-modular	boot-elden-vk77-modular.img	vk77	7.2.0-debug-ge3c5e9fea66e	d41fadecf965	e3c5e9fea66e	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	clean	ok|kbin_shared3
+vk78-modular	boot-elden-vk78-modular.img	vk78	7.2.0-debug-ge3c5e9fea66e	d41fadecf965	e3c5e9fea66e	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	clean	ok|kbin_shared3
+vk79-E0	boot-elden-vk79-E0.img	vk79	7.2.0-debug-ge3c5e9fea66e-dirty	ba995afefde6	e3c5e9fea66e-dirty	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	dirty	ok|kbin_shared2
+vk80-e4amxc	boot-elden-vk80-e4amxc.img	vk80	7.2.0-debug-ge3c5e9fea66e-dirty	ba995afefde6	e3c5e9fea66e-dirty	branch:elden/vk53-hw,stash,vk79,vk81,vk82,vk83		e3c5e9fea66e	dirty	ok|kbin_shared2
+vk84-q28delay-base	boot-elden-vk84-q28delay-base.img	vk84	7.2.0-debug-vk84-g86193a58a095-dirty	c6a9e52325a9	86193a58a095-dirty	branch:elden/vk53-hw,stash,vk83	vk83	86193a58a095	dirty	num_ne_tag(vk83)|uts_lvs(vk84≠vk83)|kbin_shared2
+vk84-q28delay-exp	boot-elden-vk84-q28delay-exp.img	vk84	7.2.0-debug-vk84-g86193a58a095-dirty	c6a9e52325a9	86193a58a095-dirty	branch:elden/vk53-hw,stash,vk83	vk83	86193a58a095	dirty	num_ne_tag(vk83)|uts_lvs(vk84≠vk83)|kbin_shared2
+vk86-base	boot-elden-vk86-base.img	vk86	7.2.0-debug-vk86-base-gd02658e63cf6	1b3953393453	d02658e63cf6	main	vk64	d02658e63cf6	clean	num_ne_tag(vk64)
+vk86-round	boot-elden-vk86-round.img	vk86	7.2.0-debug-vk86-round-g71bc6846247c	f87b66dbee45	71bc6846247c	main		71bc6846247c	clean	ok
+vk86-round2	boot-elden-vk86-round2.img	vk86	7.2.0-debug-vk86r2-g71bc6846247c-dirty	0af7b3fd8529	71bc6846247c-dirty	main		71bc6846247c	dirty	ok|kbin_shared2
 (unversioned)	boot-elden.img	-	7.2.0-debug-vk86r2-g71bc6846247c-dirty	0af7b3fd8529	71bc6846247c-dirty	main			-	unversioned|no_manifest|kbin_shared2
 (slot-dump)	boot_b-live-20261010.img	-	7.2.0-debug-vk64-gd02658e63cf6	8efb2731efb6	d02658e63cf6	main	vk64		-	slot_dump
 (no-payload)	dtbo-dummy.img	-	(无内核载荷)						-	skip
