@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-10。**条目编号 #1–#169**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-10。**条目编号 #1–#170**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十二；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1282,3 +1282,11 @@
     - 证据（关键词计数）：`PITFALLS` 里 `静默` 14 处、`误判` 14 处、`作废` 8 处；四类高频事故 = ①构建产物身份静默腐化（`make olddefconfig` 删 `ARCH_QCOM`，vk81/82/83 死内核 `#162`；manifest 被手写旁路、缺 `config_sha256` ⇒ 事后无从对账）；②判据静默撒谎（守卫裸 `exit 0` `#153/#157/#161`、分类器漏 NOCARD `#165/#167`）；③部署/复位态失控（坏发 `reboot` 全挂 `#150`、暖复位粘 NOCARD `#166`、`succ=0` 倒计时 `#152`）；④实验设计（单样本 A/B、冷/暖变量混采）。
     - 处置（本轮落地）：**打包前**内核身份硬门 `scripts/assert-kernel-sane.sh`（config 锚点 + System.map 符号 + UTS 对齐 + 陈旧检测；`build-boot.sh` 调用）；manifest 完整性进 `check-doctor §5e`（≥2026-10-10 的手写旁路 FAIL，历史 grandfather）；统一记录器 `scripts/trial.sh`（device-gate succ/retry + **reset 必填** + 机器可读 JSON）。
     - 纪律：**无 record 不得写 verdict**；守卫退出必须打印原因 + 显式绕过开关；判据只认一个真源（`q28-devprobe.sh` 三态）；A/B 前先预登记（变量 / 复位类型 / N / 判据 / 停止门）。流程细节见 `.pi/plans/2026-10-10-迭代流程优化.md`。
+
+170. **★软件 POR 可行但不可无人值守：`busybox poweroff -f` + 常连 VBUS 自开机 = 真断电重启；但冷起后设备会 hang，hang 后已无法再执行 poweroff（只能物理强制断电）。**
+    - 实测（2026-10-10，U2 HA2EXB0E，boot_b=vk64）：
+      - **`loginctl poweroff`（OpenRC 模式）不完成断电**：它确实触发了 OpenRC 停服务（`/root/powerlog.txt` 里有 NetworkManager/polkit/rtkit/seatd 停服务记录），但**卡在停服务阶段，永不进 poweroff** ⇒ 现象 = “对关机不响应”。
+      - **`/bin/busybox poweroff -f` 有效**：直接调内核 poweroff（绕过 init/OpenRC）；实测 USB 重枚举 + SSH 断开约 18 s + 回来后 `uptime` 归零、`boot_id` 换新 ⇒ **真断电 + VBUS 自开机**，可当软件 POR。
+      - **但 automatic 密循环不安全**：run1（GOOD）后，再下发 `poweroff -f` 时设备**未重启、GUI 卡死、音量键无响应**（内核卡死征兆），主机侧 SSH/`fastboot` 全无响应 ⇒ 只能长按电源键物理断电。run1 run2 已入 `reports/trials/`。
+    - ⇒ **用法**：软件 POR 每断言上限 1–2 发，每发之间必须由人确认“GUI 正常、`uptime` 小、`q28-devprobe.sh` 可跑”；`poweroff -f` 下发前先确认 SSH 活。**禁**像普通 reboot 那样盲跑 N 轮。是否等价真 POR（冷/暖性）仍未定：run1=GOOD 而 `fastboot reboot` 基线=STORM，需与用户实 POR 做同口径多样本比较。
+    - 参考：`#151`（VBUS 自开机）、G1-25（USB 连着时 loginctl poweroff 会立即重启）——本次实测把“立即重启”细化为“OpenRC 下 loginctl poweroff 会卡停服务，要 `busybox poweroff -f` 才真断电”。
