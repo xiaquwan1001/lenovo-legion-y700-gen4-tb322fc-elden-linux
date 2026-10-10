@@ -37,3 +37,13 @@ boot-elden-vk74-q28power.img	# Q28 诊断：power-on 路径 pm_runtime 返回值
 #   等价性」未定（DOSSIER §f-1），A/B 未收口 ⇒ 本段保留，后续以 vk85 三臂为准再裁决。
 boot-elden-vk84-q28delay-base.img	# Q28 delay A/B 基线（delay=0=现状）
 boot-elden-vk84-q28delay-exp.img	# Q28 delay A/B 实验（cmdline dsi_cmd_delay_us=1000）
+#
+# ---- 2026-10-10 Q28 STORM 修法单变量对（vk86-base / vk86-round / vk86-round2）----
+# 性质：刻意建在 vk64 干净基线（d02658e63，无 vk73-85 诊断链）上出 STORM 台架；
+#       UTS 号 -vk86-* ≠ 源提交 tag(vk64) 属**刻意**（=「vk64 内核 + round 实验」的
+#       构建序号），触发 num_ne_tag(vk64)。config a383cdb9、DTB 与 vk64 逐字节同。
+# 状态：只 fastboot boot 做 A/B，永不作日常 boot_b。收口 = 「同一镜像冷起 2 次」
+#       确定性门（DOSSIER §i）出结论后：有效→按 elden/* 提交+打 tag；死线→删镜像与本段。
+boot-elden-vk86-base.img	# Q28 STORM 台架基线（= vk64 内核，d02658e63）
+boot-elden-vk86-round.img	# Q28 + round(byte-clk 取整, msg46766 语义)
+boot-elden-vk86-round2.img	# 同上 + 无条件遥测 pr_info(ideal/rounded/no-op)

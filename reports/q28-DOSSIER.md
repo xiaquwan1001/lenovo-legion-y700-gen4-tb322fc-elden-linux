@@ -47,7 +47,8 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 **B5 — 候选修法：vk84-exp（`cmd_trigger` delay=1000 us）与 Method B（取整 byte-clk）。冷 A/B 仅 1 次，撞 NOCARD。**
 - **vk84-exp**：`msm_dsi_host_bonded_cmd_trigger()` 写 `REG_DSI_TRIG_DMA` 前 `usleep_range(1000)`（`early_param dsi_cmd_delay_us`，默认 0=现状）。镜像 `out/boot-elden-vk84-q28delay-{base,exp}.img`，载荷逐字节同、唯一差 cmdline。补丁 `patches/q28-cmd-dma-delay.patch`。**只可能影响 STORM，不影响 NOCARD**。
 - **Method B**：取整 byte-clk 使后续 `clk_set_rate` 成 CCF no-op、不再 retrigger PLL。草稿 `patches/q28-methodB-round-byteclk.patch` + `patches/q28-methodB-NOTES.md`；**落点须按上游校准到 generic `dsi_link_clk_set_rate_6g()`、对象 `msm_host->byte_clk`（不是 `_v2_9` 内 SM8750 分支、不是 `dsi_calc_clk_rate_6g`）**。**未编、未 apply、未上机**。
-- 冷 A/B 记录：**T1 = vk84-exp(delay=1000) = NOCARD（n=1，不作定论）**。
+- 冷 A/B 记录：**T1 = vk84-exp(delay=1000) = NOCARD（n=1）**；**T2 = vk84-base 冷起（用户 POR→按键进 fastboot→`fastboot boot`，2026-10-10 18:04）= NOCARD（n=1，15 s 判读：无 card0、`DSI PLL(0) lock failed`×4、devlink fail×6、风暴签名 0）**。两臂冷 fastboot 上下文**同坏**，delay 无法区分（本就不治 NOCARD，符合预期）；「fastboot-boot 冷路径 ≟ 真 POR」仍未决（§f 未决 1），但 NOCARD 在该路径 2/2 重现 ⇒ **它可作三臂 A/B 的公共判据**（round 若连 NOCARD 都消 = 强信号）。证据 `logs/q28-coldAB-20261010/T2-base-180434/`。
+- **Method B 已按上游真 diff 落地 = vk85-round**：真 diff 已从邮件列表取回（freedreno msg46766，`20260903-fix-eliza-dsi` change-id）；实现 = generic `dsi_link_clk_set_rate_6g()` 顶部对 `msm_host->byte_clk` `clk_round_rate` 回写 + `byte_intf` 由取整值派生（div-2 用运行时探测等价本树字段）；内核提交 `392b4897e`；树内旧草稿 `patches/q28-methodB-round-byteclk.patch`（落点错在 `_v2_9` 分支+PLL 对象）**作废**。
 - 证据：`PITFALLS.md #164`（修复靶点）/ `#165`（T1 记录 + delay 盖不住 NOCARD）；`reports/q28-upstream-diff-20261010.md` §4–5（Method B 正确落点）；`reports/q28-orchestration-20261010.md` §3（vk84 单变量对）。
 
 **B6 — 上游 `round byte clock after reparenting`（Dmitry）与本树机制吻合，但「逐字 cherry-pick 对本树无效」。**
@@ -111,7 +112,16 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 ## f) 未决问题与下一步
 
 **未决问题：**
-1. **fastboot-boot 冷路径是否真等价于用户物理 POR 冷起。** 若 base 也 NOCARD 不重现，就得改用真 POR（用户断电）做 A/B。（`PITFALLS #163`、handoff 顶部横幅「下次先定」）
+**★ C 配对对照定案（2026-10-10 晚，台架有效性）：同内核 vk64 × 两条冷路径。**
+- **C1 = vk64 真实 POR 盘启（断电→按电源正常开机，boot_b，完整 rootfs）= 失败（仅背光无输出，用户目测）**。
+- **C2 = vk64 冷 fastboot 路径（断电→按键 fastboot→`fastboot boot out/boot-elden-vk64.img`，同内核）= STORM**（card0=1、DSI-1=connected、dpms=On、风暴 sig=16：`command DMA timeout status=0x2200200`+`bonded command DMA failed master=-110 peer=-110`+`panel init attempt1 -110 → attempt2 -5 → Failed to initialize panel -5`+`vblank wait timed out`×13），phosh=0。证据 `logs/q28-coldAB-20261010/C2-vk64-185754/`。
+- ⇒ **未决 1 定案：fastboot-boot 冷路径≡真实 POR 冷起（两者都坏），台架有效，T1/T2/T3 NOCARD 样本有效**。
+- ~~基线分层：vk64=STORM、vk84/vk85=NOCARD，差=诊断补丁推早~~ **【已被后续证伪】**：vk86 就建在干净 vk64 基线上，暖机 fastboot boot **仍 4/4 NOCARD**（modeset 从未到达）⇒ NOCARD 不是诊断补丁引入的，干净 vk64 自己也会 NOCARD。
+- **新坑（本轮实测，影合射 vk74 旧记录）**：**连续 `reboot2 bootloader`→`fastboot boot`（reboot2=暖复位，不清 DSI PHY/PLL 态）会把状态粘死在 NOCARD**，与内核/补丁无关 ⇒ **暖机 A/B 不可判别**；只有 POR（完全断电）能清粘态。vk74「4/4 全坏、断电即恢复」= 同一现象。
+- **round 补丁现状**：已出 vk86-base（干净 vk64）/ vk86-round / vk86-round2（round 改**无条件 `pr_info` 带 ideal/rounded/no-op**），内核提交 `71bc68462`，`git apply --check` 干净落 vk64，config=a383cdb9（与 vk84 对一致）、同完整 ramdisk（`build-initramfs.sh full BASE=boot-elden-vk61`，sha d6ad1321）。**但 NOCARD 粘态下 modeset 从不到达→round 分支从不执行→暖机测不到 round**；要测 round 只能 POR 隔离冷起且需能落到 STORM 模式（STORM 才进 modeset），而冷起落 NOCARD/STORM 本身随机 ⇒ **round 的干净 A/B = 概率采样，属应避免类**。
+
+1. **fastboot-boot 冷路径是否真等价于用户物理 POR 冷起。**【已定案见上方 C 横幅：等价】 若 base 也 NOCARD 不重现，就得改用真 POR（用户断电）做 A/B。（`PITFALLS #163`、handoff 顶部横幅「下次先定」）
+1.5. **（新）reboot2 暖复位粘 NOCARD 态的确切机理与清除方式。** 已实测连续暖复位粘 NOCARD（vk86 4/4）、断电可恢复（vk74）；但未定位“什么硬件态被粘住”。下次若要用 fastboot 台架做 A/B，**每臂之间必须 POR**，不能连续 reboot2。
 2. **GOOD 启动的 `DSI_PLL_lockfail` / `device_link_fail` 基线。** `#165` 提出"待对实：这两行是 GOOD 也有的良性噪声、还是 NOCARD 独有因果"。现有 GOOD 样本已给出强提示（见 §g-2）：
    - `logs/q28-control-coldboot-181758/control.txt`：**一次 GOOD 冷起**（`card0-DSI-1 connected`、phosh=1）却 `pllfail=8`、`cmdadma=0`。
    - `logs/q28-forensics-20261010-125030/02-dmesg.txt`：有 card0 的 GOOD 现场里 `DSI PLL(0) lock failed`=**4**、`Failed to create device link`=**8**。
@@ -121,7 +131,7 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 
 **下一步（按 handoff/upstream-diff §5 优先级，冷起需用户配合断电）：**
 1. 先定 fastboot-boot 冷路径是否等价真 POR；不等价则用真 POR 做 A/B。
-2. Method B 按上游"加"部分重出（generic 落点、byte_clk 对象、派生 byte_intf、不动 `dsi_calc_clk_rate_6g`）→ 编 **vk85**。
+2. ~~Method B 按上游"加"部分重出~~ ✅ 已做（真 diff msg46766 校准、generic 落点 + `byte_clk` 对象，内核提交 `392b4897e`，已编 vk85-round）。
 3. 三臂冷起 A/B：base vs round vs（delay / CLK_STATUS 轮询），**用 `scripts/q28-devprobe.sh` 三态判 + SSH 读全 dmesg + 查 card0**，各 N 次物理冷起看坏发率。
 4. 若取整冷启仍高坏发 ⇒ 转 CMD engine 编程序 / PHY `save/restore_pll_state` 冷-暖差异 / `dsi_cmd_link_clk_set_rate` 的 `-ESTALE` 路径；串口常驻 + pstore-catch 抓真实现场栈。
 5. 采一个确认 GOOD 的冷/暖启动，正式回记 DSI_PLL/device-link 基线（回答未决 2）。
@@ -156,3 +166,19 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 - GOOD(vk75 基线, `logs/q28-BASELINE-good-vk75-dmesg.txt`)：8.70s `msm_dpu ae01000: bound ae94000.dsi / ae96000.dsi / af54000 / 3d00000.gpu` → 组件聚齐 → card0。
 - NOCARD(vk84-exp)：**无任何 `bound ae94000.dsi`**、无 -517 defer、无 bind failed —— DPU master 组件聚合**从未完成**（静静没聚齐）。
 - **下一步定根所需**（非本轮能定，需冷起）：同内核 GOOD-vs-BAD 冷起 dmesg 对（消 vk75/vk84 混淆）+ 坏发起 `drivers/gpu/drm` / component probe 动态调试或 `CMN_CTRL_0` 读值；先证「DSI host 自身 probe 是否失败」还是「master 聚合时序问题」。
+
+## h) ★ 2026-10-10 深夜定案：真实日常失败 = STORM（覆盖本轮中途所有 NOCARD 慌乱）
+- **C1real**（用户真实 POR → 正常开机 → 磁盘 vk64 日常）= **STORM**：card0=1、DSI-1=connected、dpms=On、`msm_dsi bonded command DMA failed master=-110 peer=0`+`command DMA timeout status=0x2200200`+`panel init attempt1 -110→attempt2 -5→Failed to initialize panel -5`+`vblank wait timed out`×12、phosh=0。证据 `logs/q28-coldAB-20261010/C1real-vk64-*`。
+- 与 C2（POR→fastboot→fastboot boot vk64=STORM）**两条真实冷路径 2/2 STORM 一致** ⇒ **用户真实坏发就是 STORM（DOSSIER L1 cmd-DMA hang），A 的靶（delay/round 打 STORM）本就没打错**。
+- **纠正本轮中途错误**：
+  1. 中途「A 打错靶（修 STORM 但只产 NOCARD）」**作废**——那是我误用 `reboot2` 连续暖复位（粘态产 NOCARD）+ 用了带诊断的 vk84/vk85。
+  2. 中途「干净 vk64 自己也会 NOCARD（vk86 暖机 4/4 NOCARD 推翻诊断补丁推早说）」**也作废**——那 4/4 是 `reboot2` 暖复位粘态，非 POR 冷起，样本无效。
+  3. **有效对照仍在**：POR 冷 fastboot 路径 vk64=STORM（C2）vs vk84/vk85=NOCARD（T2/T3），差 = vk64→HEAD 的诊断 commit（`ca81318f2` 传播 power-up 失败 等）⇒ **那批诊断 commit 会把 STORM 变成 NOCARD，不能进 STORM 修法测试台**。
+- **正确的 A 测试台**：`vk86-base`（干净 vk64，无诊断）做 STORM 对照；`vk86-round2`（+可观测 round，`pr_info` 无条件打 ideal/rounded/no-op）做实验。**每个样本之间必须真实 POR 断电**（reboot2 暖复位无效，会粘 NOCARD）。判据三态：vk86-base 冷起应稳定 STORM；vk86-round 若取整消 STORM→GOOD = 正解。round 补丁已验干净落 vk64、config=a383cdb9、同完整 ramdisk。
+
+## i) 2026-10-10 深夜收尾（会话交接：资产/设备/分支/唯一下一步）
+- **本轮净结论**：① 台架有效（fastboot 冷路径≡真 POR，C1real+C2 两条真实路径 2/2 STORM）；② **用户真实日常失败=STORM（L1 cmd-DMA hang），delay/round 靶没错**；③ NOCARD 全部是暖复位粘态（`#166`）或带 vk73-85 诊断链（`ca81318f2`）的伪影；④ **未定性敏感点**：内核+DTB 逐字节同、仅 `/init` 差 `payload-modules-load.sh`（挪时序），冷起一次 STORM(C2) 一次 NOCARD(A2)（`#168`）。
+- **作废**：T1/T2/T3（带诊断链镜像+部分暖复位）、vk85 及其结论、本轮中途「A 打错靶/干净 vk64 也 NOCARD」两条推断、`patches/q28-methodB-round-byteclk.patch`（落点错）。
+- **可复用资产**：分支 `q28/vk86`：`d02658e63`(vk86-base=vk64 内核)→`71bc68462`(+round)→`a8c09a723`(+无条件遥测)；镜像 `out/boot-elden-vk86-{base,round,round2}.img`（manifest 齐全，config a383cdb9=与 vk64/vk84 对逐字节同）；完整 ramdisk 重建命令 `scripts/build-initramfs.sh full out/boot-elden-vk61.img`（sha d6ad1321）；round 补丁 `patches/q28-round-vk86.patch`；遥测判读 `dmesg | grep "Q28 byte clk"`（`no-op=YES` ⇒ 取整在 SM8750 是空操作，直接放弃 round）。
+- **设备态**：boot_b 全程未写（仍 vk64 日常）；会话结束时设备 RAM 里跑 vk86-base，**POR 一次即回日常**。
+- **唯一下一步（先于任何修法）**：同一镜像 `vk86-round2` 冷起 **2** 次（每次间隔真实 POR，禁 `reboot2`）→ 模式不同 ⇒ 非确定性 ⇒ **停 Q28 转 Q24（FIX-2 臂现成：vk84-base/exp）**；模式相同 ⇒ `/init` 时序杠杆 ⇒ 静态调 `/init` 时序后再 A/B。若任一 round 样本到 STORM：读 `Q28 byte clk` 遥测判 no-op。

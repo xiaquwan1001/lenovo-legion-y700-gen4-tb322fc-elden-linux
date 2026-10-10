@@ -1265,3 +1265,15 @@
 - ★调试基建修正：GOOD/BAD 必须**三态**，`scripts/q28-devprobe.sh` 已改：无 `/sys/class/drm/card0`⇒NOCARD；有 card0 但有风暴签名⇒STORM；有 card0 + connector connected + 无风暴⇒GOOD。**判显示必须 SSH 读完整 dmesg + 查 card0**，不能靠串口时序（logger 重连会漏 0–20s）也不能只数签名。
 - 待对实：需一个确认 GOOD 的冷/暖启动回读 `DSI_PLL_lockfail`/`device_link_fail` 基线（判断这两行是“GOOD 启动也有的良性噪声”还是“NOCARD 独有因果”）。
 - 冷 A/B trial 记录：T1 vk84-exp(delay=1000)=**NOCARD**（n=1，不作定论）。
+
+**#166 = ★`reboot2 bootloader`=暖复位不清 DSI PHY/PLL 态；连续快环把 Q28 粘死在 NOCARD ⇒ 暖机 A/B 不可判别，每样本必须真实 POR 断电。**
+- 实锤（2026-10-10）：从已开机态反复 `reboot2 bootloader`→`fastboot boot <img>`（reboot2=PSCI SYSTEM_RESET2=暖复位，**不经完全断电**），**vk86-round 连 4/4 NOCARD**、round 分支从不执行；同 vk74 历史「连续温复位 4/4 全坏、彻底断电即恢复」同源。⇒ 判 Q28（冷起竞态）**每个样本之间必须物理 POR（拔电/长按电源完全关机）**，暖复位得到的 NOCARD/GOOD 全是暖复位粘态伪影。
+- ★连带推翻：本轮中途「干净 vk64 自己也 NOCARD」「A 打错靶」等结论均源自 `reboot2` 暖机样本，已作废（详 `reports/q28-DOSSIER.md` §h）。
+
+**#167 = `scripts/q28-boot-cycle.sh` 判据缺陷：不查 card0，把 NOCARD 误报 GOOD（与 #165 同坑，但脚本未同步修）。**
+- 实锤：vk86-round 暖机被 q28-boot-cycle.sh 报 `VERDICT=GOOD`，实为 NOCARD（`/sys/class/drm` 只有 `version`）。该脚本只数六种风暴签名 + dpms，**不检查 `[ -e /sys/class/drm/card0 ]`**。
+- ⇒ **Q28 判显示一律用 `scripts/q28-devprobe.sh`（三态）**；已给 q28-boot-cycle.sh 补 card0 硬门（无 card0 直接 rc=10 BAD/NOCARD）。教训：修判据要**跨脚本同步**，一份改了另一份会悄悄漂移。
+
+**#168 = ★Q28 冷起复现的敏感点尚未定性：同一内核+DTB 逐字节相同、仅 initramfs `/init` 差一个模块加载器，冷 fastboot 路径一次 STORM(C2) 一次 NOCARD(A2)。**
+- 静态坐实（2026-10-10）：`boot-elden-vk64.img` 与 `vk86-base.img` 内核 config（ikconfig sha a383cdb9）、DTB（386cc9bd）**逐字节相同**、git commit 同为 `gd02658e63`；面板 `CONFIG_DRM_PANEL_NOVATEK_NT36536=y`+`DRM_MSM=y` built-in ⇒ NOCARD（0.86s DSI PLL lock fail）与模块/ramdisk 内容无关。唯一差 = vk86 的 `/init` 多一段 `payload-modules-load.sh`（≤20s 超时加载 WiFi/音频/触觉/触控，挪动开机用户态时序）。
+- ⇒ 冷起落 NOCARD 还是 STORM 二选一：**要么同二进制冷起非确定性（掷骰子选模式）⇒ 单样本 Q28 修法 A/B 本质=概率采样（应避免），要么首次 modeset 的开机时序是杠杆（可控、值得查）**。区分二者 = 把**同一镜像**冷起 2 次看模式是否一致（确定性门，非采样）。本轮未做，留下次开场先钉。

@@ -58,14 +58,20 @@ PU=$(grep -cE "power-up failed|failed to resume dsi host" "$OUT/dmesg.txt")
 PI=$(grep -cE "Failed to initialize panel|dcs data .* failed" "$OUT/dmesg.txt")
 DPMS=$(grep -oE "dpms=[A-Za-z]+" "$OUT/drm.txt" | head -1)
 PMON=$(grep -c "mdss_gdsc *on" "$OUT/power.txt")
+# NOCARD hard gate (PITFALLS #167): the storm/panel/dpms counters are all 0 when
+# there is no card0 at all (DSI/PLL probe failed before cmd-DMA), which the old
+# verdict mis-scored as GOOD. card0 presence is the authoritative display check.
+HAS0=$(S 'ls /sys/class/drm 2>/dev/null | grep -c "^card0$"')
+case "$HAS0" in ''|*[!0-9]*) HAS0=0;; esac
 {
 	echo "TAG=$TAG UTS=$(sed -n 's/^Linux version \([^ ]*\).*/\1/p' "$OUT/dmesg.txt" | head -1)"
-	echo "VBLANK_TIMEOUT=$VB POWERUP_FAIL=$PU PANEL_INIT_FAIL=$PI $DPMS MDSS_GDSC_ON=$PMON"
-	if [ "$((VB + PU + PI))" -gt 0 ] || echo "$DPMS" | grep -qi "off"; then V=BAD; else V=GOOD; fi
+	echo "VBLANK_TIMEOUT=$VB POWERUP_FAIL=$PU PANEL_INIT_FAIL=$PI $DPMS MDSS_GDSC_ON=$PMON CARD0=$HAS0"
+	if [ "$HAS0" -eq 0 ]; then V=NOCARD; elif [ "$((VB + PU + PI))" -gt 0 ] || echo "$DPMS" | grep -qi "off"; then V=STORM; else V=GOOD; fi
 	echo "VERDICT=$V"
 } | tee "$OUT/summary.txt"
 grep -E "power-up failed|resume dsi host|dpu pm:|vblank timeout|Failed to initialize|bonded|PLL.*lock fail|Q28 " "$OUT/dmesg.txt" | head -24
 echo "Q28_OK_DUMPS=$(grep -c "Q28 ok-master" $OUT/dmesg.txt) Q28_BAD_DUMPS=$(grep -cE "Q28 (master|slave)" $OUT/dmesg.txt)"
+[ "$HAS0" -eq 0 ] && exit 10
 [ "$((VB + PU + PI))" -gt 0 ] && exit 10
 echo "$DPMS" | grep -qi "off" && exit 10
 exit 0
