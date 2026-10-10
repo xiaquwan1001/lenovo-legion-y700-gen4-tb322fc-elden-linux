@@ -68,9 +68,15 @@ PY
 	fi
 fi
 
-# --- 4. 陈旧检测：Image.gz 必须不早于 System.map ---------------------------
-if [ -f "$KIMG" ] && [ -f "$SMAP" ] && [ "$KIMG" -ot "$SMAP" ]; then
-	die "Image.gz 比 System.map 旧 → 正在打包上一次构建的内核；重跑 scripts/build-kernel.sh Image.gz"
+# --- 4. 陈旧检测：仅对「树自己编的默认 Image.gz」有效 -----------------------
+# 该项用 mtime(KIMG) < mtime(System.map) 判「是否在改完源码后又重编」。它只在 KIMG 就是
+# 本树默认产物时成立；当调用方显式 KERNEL_IMG=<外部预编内核> 时（mtime 与树无关），
+# 该判据是假阳性 —— 此时的正确闸门是上面的 UTS 对齐 + config 锚点 + System.map 符号。
+KIMG_DEFAULT="$ROOT/linux/arch/arm64/boot/Image.gz"
+if [ "$KIMG" = "$KIMG_DEFAULT" ] && [ -f "$KIMG" ] && [ -f "$SMAP" ] && [ "$KIMG" -ot "$SMAP" ]; then
+	die "$KIMG 比 System.map 旧 → 正在打包上一次构建的内核；重跑 scripts/build-kernel.sh Image.gz"
+elif [ "$KIMG" != "$KIMG_DEFAULT" ]; then
+	echo "[assert] ℹ️ KIMG=$KIMG 非本树默认产物 → 跳过 mtime 陈旧检测（依赖 UTS 对齐保证身份）"
 fi
 
 if [ "$fail" -eq 0 ]; then

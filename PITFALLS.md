@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-10。**条目编号 #1–#170**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-10。**条目编号 #1–#171**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十二；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1292,3 +1292,12 @@
     - **补充实测（同日，修正上条乐观）**：从**严重 STORM 态**（`storm_sig=267`、dmesg 持续 vblank/ctl reset）再发 `busybox poweroff -f`，**设备不重启、SSH 不断、uptime 连续递增**——即命令执行了但**内核关机路径被 DRM storm 卡住而无效**（同 `#150` 机理）。已排除 SIGHUP：同一后台方式跑 `(sleep 6; touch /tmp/x)`，SSH 断开 9 s 后 marker 正常落盘 ⇒ 后台任务能活；所以不是命令没跑，是**跑不成**。⇒ **坏发态下任何软复位/poweroff 都不可靠，只能物理强制断电**（`reboot2`/SysRq-b 也仅能“重启”不能“断电”）。
     - **复位深度阶（n 小，待定量）**：物理 POR（最深）→ **STORM**（复现坏发）；`fastboot reboot`（从 fastboot 起 boot_b）→ STORM；`busybox poweroff -f`（浅，PMIC 断电但疑似不清 DSI PHY/PLL 态）→ **GOOD**（run1）。与 `#166`（`reboot2` 暖复位粘 NOCARD）并列读：**决定显示好坏的不是“重启/断电”，而是该复位有没有把 DSI PLL/PHY 态彻底清掉**；物理 POR 清得最干净反而最坏。
     - 参考：`#151`（VBUS 自开机）、G1-25（USB 连着时 loginctl poweroff 会立即重启）——本次实测把“立即重启”细化为“OpenRC 下 loginctl poweroff 会卡停服务，要 `busybox poweroff -f` 才真断电”。
+
+171. **★Q28 在本机当前状态是「按内核二进制确定性」的，不是「冷/暖」也不是 ~60% 随机（2026-10-10 夜，同一路径连测 21 发）。**
+    - 路径固定 = `Linux → /usr/local/sbin/reboot2 bootloader → fastboot boot <img>`；判据 = SSH 读 `card0`（`/sys/class/drm` 含 card0=GOOD；只有 `version`=NOCARD）。`fastboot boot` 确为 RAM 起（cmdline token `elden_probe=FBK64` 实证），无 boot_b 回退。
+    - **台账**：`out/boot-elden-vk64.img`（Oct-8 内核 `8efb2731`）= **GOOD ×7**；所有**新编**镜像（vk89 / vk89-plain / vk64c / vk64c+旧ramdisk / vk64c `make clean` 全量）= **NOCARD ×14**。
+    - **变量逐个钉死**：同源码提交（`gd02658e63`，无 dirty）、同 config（ikconfig 从 vk64 内核抽出与 `a383cdb9` **0 差异**）、同 ramdisk（vk64c 用 vk64 原 ramdisk 仍 NOCARD）、同工具链（gcc 15.2.0-16ubuntu1 / ld 2.46）、`make clean` 全量重编仍 NOCARD。⇒ **只剩内核二进制本体**。
+    - **二进制差异**：两 `Image` 同大小(62,540,288 B)、payload sha 不同(`8efb2731` vs `ccc0a284`)，差异 **5,040,884 B（~8%）且高度集中在 32–44 MiB 区**；该区字符串集合一致，差异字节多为相邻小偏移(±4/±16) ⇒ 形态像**数据/指针重定位（布局漂移）**，非大面积代码改写。
+    - **含义**：① 用户对「冷/暖」的怀疑成立——至少它不是当前判别变量；② Q28 = **对内存/时序极敏感的首发竞态**，内核布局的微小漂移即可把同一源的两构建分别推到 GOOD / NOCARD 侧；③ Oct-8 `vk64.img` 落在 GOOD 侧，保留作 **Q28 GOOD 参照**。
+    - **口径更新**：收窄/取代 `#168` 的「同二进制冷起非确定性」与 DOSSIER 的「冷起 ~60%」——在**当前设备状态**下，同一二进制**可复现**（不是掷骰子）。追因下一步（dump 两侧 `/proc/kallsyms` 定位位移区、单因素改构建推 GOOD/NOCARD）见 `reports/q28-binary-determinism-20261010.md`。
+    - 附工具修复：`assert-kernel-sane.sh` 第 4 项 mtime 陈旧检测对**外部 `KERNEL_IMG=`** 误伤，已改为仅对本树默认 `Image.gz` 生效（外部内核靠 UTS 对齐保身份）。
