@@ -11,19 +11,29 @@
 # vk65-m* 与 vk65b 同号两内核口径已写进 registry vk65 行。→ 本段不再有成员。
 #
 # ---- 2026-10-09 Q24 cambist 电源域变体（vk71-mxc / vk71-mxnom）----
-# 性质：**DTB-only 单变量实验**，刻意继承 vk63 的 vk47clean 内核二进制 + full ramdisk
-#       （只换 cambist 的 power-domains / required-opps），因此触发 kbin_shared/uts_dup/
-#       tree_drift/num_ne_tag 系列硬错。为保持 Q24「只变量 DTB」的实验纯度，**不为其单独
-#       重编内核**（重编会引入 LOCALVERSION/内核二进制新变量）。
-# 状态：待设备侧 ≥9 轮「装载相机 + 真实熄屏」计数验收。**验收后必须收口**：二选一——
-#       (a) 补一个 vk71 专属内核构建（源提交打 vk71 tag + LOCALVERSION=-vk71），或
-#       (b) 若该实验证明无益，直接删除 vk71-mxc/mxnom 并从本文件移除。
-boot-elden-vk71-mxc.img	# Q24 变体 A（RPMHPD_MXC），待上机验收
-boot-elden-vk71-mxnom.img	# Q24 变体 B（MX + required-opps=nom），待上机验收
+# **已于 2026-10-10 项目整理轮收口**（走上述纪律的 (b) 路）：用户裁决「相机与熄屏互斥、
+#   DT 变体（H1/H2/mxnom）扫测不再排期」（2026-10-09 深夜，INDEX §3/G1-33 已记）⇒ 本实验
+#   验收条件永不再满足，白名单条目删除。镜像暂留磁盘，其残余硬错（num_ne_tag(vk47)/uts_dup2）
+#   已随 tree_drift 一并登记 vk-ledger-known-issues.tsv（同 vk74-q28power 先例）；是否删镜像
+#   随 reports/tidy-20261010/cleanup-candidates.md 复核定。
 #
 # ---- 2026-10-09 Q28 显示间歇：正在反复重打的诊断内核（vk74-q28power）----
 # 性质：UTS 刻意 = 设备在机模块目录串 7.2.0-debug-vk64-gd02658e63cf6（零写盘 fastboot boot
 #       要能加载已装模块）。其 tree_drift/uts_dup/num_ne_tag 的**永久**口径已登记在
 #       versions/vk-ledger-known-issues.tsv；本段只为「正在迭代重打」的镜像免新鲜度门。
 # 状态：只 fastboot boot 取证，永不作为日常 boot_b。收口 = Q28 定案后删除本段与镜像。
+# 2026-10-10 注：Q28 根因已定案（reports/q28-DOSSIER.md），但 NOCARD 分支与 vk85 冷 A/B
+#   未收尾（NOCARD 取证仍可能复用本诊断内核），故本段保留。
 boot-elden-vk74-q28power.img	# Q28 诊断：power-on 路径 pm_runtime 返回值现形 + dsi_host power_on 传播
+#
+# ---- 2026-10-10 Q28 delay 单变量 A/B（vk84-q28delay-base / -exp）----
+# 性质：Q28「命令 DMA 触发前插可配 settle delay」实验；同一 Image 只换 cmdline
+#       (base 无 dsi_cmd_delay_us / exp =1000)，载荷逐字节同。HEAD=vk83 tag(86193a58a)+
+#       50 行 dsi_host.c 延时补丁(未提交) → 触发 num_ne_tag(elden/vk53-hw,vk83)+uts_lvs(vk84≠vk83)。
+#       config 用恢复的好档 a80cbabb（ARCH_QCOM=y，非 vk81-83 的坏档）。
+# 状态：只 fastboot boot 做 A/B，永不作日常 boot_b。收口 = 高坏发窗判别性 A/B 定案后
+#       据结论：有效→按 elden/* 分支提交+打 vk84 tag；无效→删镜像与本段。
+# 2026-10-10 注：exp 臂首轮冷起=NOCARD（delay 盖不住，PITFALLS #165）；base 臂与「冷路径
+#   等价性」未定（DOSSIER §f-1），A/B 未收口 ⇒ 本段保留，后续以 vk85 三臂为准再裁决。
+boot-elden-vk84-q28delay-base.img	# Q28 delay A/B 基线（delay=0=现状）
+boot-elden-vk84-q28delay-exp.img	# Q28 delay A/B 实验（cmdline dsi_cmd_delay_us=1000）

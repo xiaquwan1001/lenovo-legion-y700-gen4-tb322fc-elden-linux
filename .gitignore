@@ -20,6 +20,8 @@
 /uefi-firmware-backup/
 
 # ---- 构建产物 / 可再生成 ----
+# /build = 2026-10-10 起内核构建目录（scripts/build-kernel.sh 工作区，~4G 可再生）
+/build/
 # /out 用 /* 而非整目录忽略：否则 `!` 无法复活子文件（git 规则）；manifest 是可复现指纹，要入库
 /out/*
 !/out/*.manifest

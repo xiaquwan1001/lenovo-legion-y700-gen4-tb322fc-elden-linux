@@ -57,3 +57,7 @@ vk76-freezetrace	uts_dup	同 vk72（同上，清理条件见本表头）
 vk77-modkdump	num_ne_tag(elden/vk53-hw)	VERSION override (vk77-modkdump); 内核未重新打 tag，同 vk75/vk76 模式
 vk77-modular	num_ne_tag(elden/vk53-hw)	VERSION override; 同 vk77-modkdump 同内核
 vk78-modular	num_ne_tag(elden/vk53-hw)	VERSION 覆盖 vk78-modular；内核未重编（与 vk77-modular 同 kbin d41fadecf965），仅重做载荷 ramdisk（loader 入包 + 钩子无条件）
+vk71-mxc	num_ne_tag(vk47)	Q24 DTB-only 变体刻意复用 vk47clean 内核（实验纯度），实验已按用户裁决收口（2026-10-10 整理轮），存档留档口径
+vk71-mxc	uts_dup2	同 vk71-mxc num_ne_tag：UTS 恒为 vk47clean 是刻意设计，见 vk-identity-inflight.txt 收口注记
+vk71-mxnom	num_ne_tag(vk47)	同 vk71-mxc（A/B 仅 DTB power-domains/required-opps 不同）
+vk71-mxnom	uts_dup2	同 vk71-mxnom num_ne_tag
