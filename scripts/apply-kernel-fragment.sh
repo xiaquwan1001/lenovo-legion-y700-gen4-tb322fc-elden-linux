@@ -45,6 +45,24 @@ else
   warn "然后： cd $K && make ARCH=arm64 CROSS_COMPILE=$CROSS olddefconfig"
 fi
 
+# PITFALLS/FAILURE 2026-10-10: `make olddefconfig` silently DROPS CONFIG_ARCH_QCOM
+# (which cascades away the whole MSM / DRM_MSM / dispcc / gcc_sm8750 stack),
+# producing a kernel that builds fine but has ZERO qcom symbols on-device ->
+# a dead image (vk81/vk82/vk83 were bricked this way). Re-pin the platform
+# anchors olddefconfig is known to strip, WITHOUT re-running olddefconfig
+# (the build path never runs olddefconfig, so the over-specified line sticks).
+repin() { # $1 = CONFIG_...
+  grep -qE "^${1}=y" .config || { warn "olddefconfig 丢了 ${1}=y → 回钉"; printf '%s=y\n' "$1" >> .config; }
+}
+for anchor in CONFIG_ARCH_QCOM CONFIG_DRM_MSM CONFIG_DRM_MSM_DSI CONFIG_SMD_RPM CONFIG_QCOM_RPMHPD; do
+  grep -qE "^${anchor}=" "$BK" && repin "$anchor"   # only re-pin what the pre-fragment config had set
+done
+# Hard guard: if the pre-fragment backup had ARCH_QCOM=y but we still lack it, abort.
+if grep -qE '^CONFIG_ARCH_QCOM=y' "$BK" && ! grep -qE '^CONFIG_ARCH_QCOM=y' .config; then
+  cp -a "$BK" .config
+  die "olddefconfig 仍删掉了 CONFIG_ARCH_QCOM，已回滚到备份 $BK。请检查 $FRAG 是否 unselected 了 ARCH_QCOM 的依赖。"
+fi
+
 cp -a .config "$SNAP"
 log "新快照: $SNAP"
 

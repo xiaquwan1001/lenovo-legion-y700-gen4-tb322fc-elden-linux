@@ -28,4 +28,19 @@ kbuild "${TARGETS[@]}"
 
 ls -la "$ROOT/linux/arch/arm64/boot/Image.gz" \
        "$ROOT/linux/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb" 2>/dev/null || true
+
+# Post-build symbol guard (FAILURE 2026-10-10): a config stripped of ARCH_QCOM
+# builds fine but yields a kernel with ZERO qcom platform symbols -> dead image
+# (vk81/82/83). Assert the platform actually linked in before shipping.
+SMP="$ROOT/linux/System.map"
+if [ -f "$SMP" ]; then
+  for sym in gcc_sm8750 msm_dsi_host_bonded_cmd_trigger rpmh; do
+    if ! grep -q "$sym" "$SMP"; then
+      echo "ERROR: '$sym' MISSING in System.map -> .config lost ARCH_QCOM/DRM_MSM (olddefconfig?). This Image is DEAD (no QCOM drivers). Restore .config from patches/config-before-fragment-*.bak and rebuild." >&2
+      exit 1
+    fi
+  done
+  echo "[build] symbol guard OK: gcc_sm8750 / msm_dsi_host_bonded_cmd_trigger / rpmh present in System.map"
+fi
+
 command -v ccache >/dev/null 2>&1 && ccache -s 2>/dev/null | sed -n '1,6p' || true
