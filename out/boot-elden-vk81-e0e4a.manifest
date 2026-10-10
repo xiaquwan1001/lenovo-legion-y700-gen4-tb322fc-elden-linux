@@ -1,0 +1,10 @@
+# boot image manifest
+version=vk81-e0e4a
+generated=2026-10-10T01:19:06Z
+image=/home/xuqianhui1001/y700-elden/out/boot-elden-vk81-e0e4a.img
+image_sha256=194f1347fadf3fe741a567de16cabfb7aa62b697cfcd0bc7473e27b87b2bc6e7
+kernel_release=7.2.0-debug-g68e8ab2c050b
+kernel_git_head=68e8ab2c050b (vk64-11)
+kernel_git_state=clean
+notes=E0(q28 diag 97b8ee3c7) + E4a(q24 cambist MXC) committed; vermagic clean g68e8ab2c050b; modules tar /tmp/vk81-fullmods.tar.gz vermagic-matched
+verification=NOT_TESTED_ON_DEVICE

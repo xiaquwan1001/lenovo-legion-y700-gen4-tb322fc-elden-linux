@@ -1,0 +1,10 @@
+# boot image manifest
+version=vk83-fix2
+generated=2026-10-10T03:54:55Z
+image=/home/xuqianhui1001/y700-elden/out/boot-elden-vk83-fix2.img
+image_sha256=e771c826e9fb3727f995bbb100b8845164799fff24847ed86ac486938728902e
+kernel_release=7.2.0-debug-g86193a58a095
+kernel_git_head=86193a58a (vk64-14; revert 67fcff7f0 + FIX-2 86193a58a)
+kernel_git_state=clean
+notes=FIX-2 hold runtime vote for block lifetime (no zero-vote half-built state); FIX-3 reverted (probe-without-rpm broke early boot, stuck at logo); MXC DT unchanged
+verification=NOT_TESTED_ON_DEVICE

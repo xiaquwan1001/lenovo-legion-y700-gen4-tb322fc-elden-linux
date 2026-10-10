@@ -1,0 +1,10 @@
+# boot image manifest
+version=vk82-fix3
+generated=2026-10-10T03:32:00Z
+image=/home/xuqianhui1001/y700-elden/out/boot-elden-vk82-fix3.img
+image_sha256=7e2004c8591a760cf2e6a355c13c7af4337ac7efcd586d97751cafba9645458e
+kernel_release=7.2.0-debug-ge1d2c658ad29
+kernel_git_head=e1d2c658a (vk64-12)
+kernel_git_state=clean
+notes=FIX-3 cambist PM lifecycle (lazy-on + suspend quiesce, 72+/17-); MXC DT (68e8ab2c0) unchanged; full mods tar /tmp/vk82-fullmods.tar.gz vermagic-matched
+verification=NOT_TESTED_ON_DEVICE
