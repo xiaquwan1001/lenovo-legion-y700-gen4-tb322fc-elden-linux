@@ -114,6 +114,7 @@
   未解见 §5 Q28/Q24/Q26 与 G1-6）。
 - **本轮不投入**：桌面用户态（G1-26/27/28，根因已定、修复待上机）、Q24 熄屏**根治**（保持规避 + 等上游回复，只做回归扫测＝下 3）、UEFI（G1-29 搁置）。
 - **迭代通道**：`fastboot boot`（零写盘）/ `--flash`；**kexec 快环：掉电根因已定位（非单一元凶）**（2026-10-08，`archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md` §8/§9）= `device_shutdown()` 内 `cpufreq_suspend()` 与设备 `.shutdown()` 遍历**多触发叠加**的延迟 PMIC 掉电；**任何部分执行都掉电，唯一可靠规避 = 整段跳过 device_shutdown（mask=1）→ 到 `Starting new kernel`**。目标内核 kexec 引导仍失败＝**关键路径遗留**（需早期串口，本机不具备）。
+- **内核基线口径（2026-10-10，分界线）**：内核树以 **`clean/base`（= vk64 内核源 `d02658e63`，tag `baseline/clean-base`）为唯一功能基线**；其上一切提交（Q28 round/delay/诊断、Q24 E4a/FIX、kexec 实验、sd-* 显示实验…）为**实验层**，只作实验引用、不得当功能基线。纯功能对照点 = `baseline/feature-only`（`6c1376907`）。新测试从 `clean/base` 起、实验开独立分支并打 tag。理由/清单见 `reports/BOUNDARY-2026-10-10-clean-base.md`（裁决：整合而不退到 vk34——vk34→HEAD 净差仅 7 文件/1043 行，混乱在构建/身份管线而非内核代码）。
 - **boot_b 形态**：镜像构成、sha、回退资产与「不用 slim」口径**只在 `DEVICE.md` §1.1 维护**；本文件不复述。
 - **上机纪律**：驱动测试期间 `idle-delay=0` 禁熄屏；写操作前查 `scripts/device-lock.sh`；fastboot 命令拆单条（PITFALLS #3）。
 - **归因分层**（2026-10-06）：报「驱动/内核坏」前先分清 **initramfs/rootfs 打包** 与 **用户态配置**（如 vk60「驱动全废」实为 initramfs 缺固件）——见 `PITFALLS` #115、`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`。

@@ -89,6 +89,7 @@
 - **相机（2026-10-09 深夜零写盘复验）**：现役 boot_b(vk64/H2) 上 `CAM_FORCE=1 camera-modules-load.sh` 加载全栈 20 模块（18 s）→ 1 media/17 video/32 subdev，**前后摄各出帧且内容是真图像**；之前"相机不可用"的真因 = cmdline `elden_nocamera=1` + loader 三处静默守卫（`PITFALLS` #157–#159）。**用户裁决：相机在位时熄屏掉电 = 常态 ⇒ 相机与熄屏互斥**：日常态零相机模块，需要时 `cam-mode.sh on`（先禁熄屏再加载）、用完 `off`；**相机不固化进日常态**（`PITFALLS` #160）。
 - **上机纪律硬约束（本轮踩出来的，`PITFALLS` #150–#152）**：坏发现场 `reboot`/`reboot -f` **全挂**，只能用 `reboot2 <mode>` 或 SysRq-b；OpenRC 下 `reboot bootloader` 不进 fastboot（会变成 halt + VBUS 自开机）；**温启循环必须自带 `slot-attr.py mark-successful b`/retry 预检**（RAM 直启不置 succ、真开机扣次数，本轮 boot_b 已被耗到 retry=6/succ=0）。
 - **已定不做 / 搁置 / 取消**（勿重推）：**G1-26/27/28 桌面用户态三问题**（深色主题 / 电源菜单图标 / 亮度滑块 —— 根因已定、修复待上机，但本轮主线不做）、G1-29 UEFI（卡 UFS 初始化）、G1-10 NFC（**本机无 NFC 硬件**）、G1-30 slim initramfs（无固件→外设全废）、kexec 快环（**根因已定位 2026-10-08**；2026-10-09 补充：trans_pgd bug 与当前路径无关；crashkernel=64M + kexec -p + SysRq-c 已实机尝试，缺串口观察不确定 crash kernel 是否引导，待下次用 ttyACM0 串口捕获重做；`out/boot-elden-vk77-modkdump.img` 就绪）。
+- **内核分界线（2026-10-10，新增）**：内核树功能基线 = **`clean/base`（vk64 源 `d02658e63`，tag `baseline/clean-base`）**；其上为**实验层**（Q28/Q24/kexec/显示实验），只作实验引用。纯功能对照点 = `baseline/feature-only`（`6c1376907`）。细则与理由见 `reports/BOUNDARY-2026-10-10-clean-base.md`，口径在 `TASKS.md` §4。
 - **单元**：U1 = stock Android + root（无 Linux 分区，可做 Android 侧对照取证 C0）；U2 = b 槽 mainline 持久直启（在机镜像与回退资产见 `DEVICE.md` §1.1）。
   🟢 解锁议题**已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`，**不要重新论证**。
 
