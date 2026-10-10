@@ -1,0 +1,18 @@
+{
+  "label": "coldfb-vk87round2",
+  "ts": "2026-10-10T13:06:32Z",
+  "vk": "vk87-round2-v64",
+  "image": "out/boot-elden-vk87-round2-v64.img",
+  "image_sha256": "39f22252b97e7a5633f23480a4ba4ce821f9a81dda21cb5de7b910960adaa1b5",
+  "manifest": "/home/xuqianhui1001/y700-elden/out/boot-elden-vk87-round2-v64.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk86r2-g71bc6846247c-dirty",
+  "kernel_payload_sha256": "0af7b3fd85291f07e97f5fa048cca000417ccbd29b28e3e59466b6dcca1143fc",
+  "config_sha256": "a383cdb99dfee7a9f7a21c915541af05edf6efa3d2bb7cda552b270a263cbf4d",
+  "dtb_packed_sha256": "386cc9bd5d243425dd342a9acd703f839bcb133318430b77be5ba675b90d10cb",
+  "reset_type": "cold",
+  "deploy": "fastboot boot (cold fastboot after user POR)",
+  "probe": "q28",
+  "verdict": "NOCARD",
+  "log_dir": "reports/trials/20261010T130632Z-coldfb-vk87round2",
+  "note": "round2 kernel + vk64 ramdisk/cmdline; single-variable vs vk64"
+}

@@ -5,3 +5,6 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-10T12:52:41Z	realpor-run1	vk64	por	physical power-off then power-on (user)	STORM	15964160bed0	reports/trials/20261010T125240Z-realpor-run1
 2026-10-10T12:53:23Z	softpor-recover	vk64	warm	busybox poweroff -f from STORM	STORM	15964160bed0	reports/trials/20261010T125322Z-softpor-recover
 2026-10-10T12:55:58Z	realpor-run2	vk64	por	physical power-off then power-on (user)	STORM	15964160bed0	reports/trials/20261010T125555Z-realpor-run2
+2026-10-10T13:02:42Z	coldfb-vk86base	vk86-base	cold	fastboot boot (cold fastboot after user POR)	NOCARD	ded13a47c469	reports/trials/20261010T130242Z-coldfb-vk86base
+2026-10-10T13:04:52Z	coldfb-vk64	vk64	cold	fastboot boot (cold fastboot after user POR)	STORM	15964160bed0	reports/trials/20261010T130444Z-coldfb-vk64
+2026-10-10T13:06:32Z	coldfb-vk87round2	vk87-round2-v64	cold	fastboot boot (cold fastboot after user POR)	NOCARD	39f22252b97e	reports/trials/20261010T130632Z-coldfb-vk87round2

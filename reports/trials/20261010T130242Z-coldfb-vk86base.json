@@ -1,0 +1,18 @@
+{
+  "label": "coldfb-vk86base",
+  "ts": "2026-10-10T13:02:42Z",
+  "vk": "vk86-base",
+  "image": "out/boot-elden-vk86-base.img",
+  "image_sha256": "ded13a47c4694f84ba68691244814cf5b7a79c3e8cc12314793547db68b35df0",
+  "manifest": "/home/xuqianhui1001/y700-elden/out/boot-elden-vk86-base.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk86-base-gd02658e63cf6",
+  "kernel_payload_sha256": "1b3953393453efe8008a438b1a9bbcf75e6d88ffe7df0ab0feda86683de657cb",
+  "config_sha256": "a383cdb99dfee7a9f7a21c915541af05edf6efa3d2bb7cda552b270a263cbf4d",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "cold",
+  "deploy": "fastboot boot (cold fastboot after user POR)",
+  "probe": "q28",
+  "verdict": "NOCARD",
+  "log_dir": "reports/trials/20261010T130242Z-coldfb-vk86base",
+  "note": "harness validation: clean vk64 kernel, expect STORM"
+}

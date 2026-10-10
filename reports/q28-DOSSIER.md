@@ -189,3 +189,9 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 - **复位深度 → 显示 阶（实测，n 小）**：物理 POR（最深）→ STORM；`fastboot reboot`→boot_b → STORM；`busybox poweroff -f`+VBUS 自开机（浅）→ GOOD；`reboot2` 暖复位→fastboot boot → NOCARD 粘态。⇒ 决定显示的不是「重启/断电」动作，而是该复位有没有清掉 DSI PLL/PHY 态。
 - **坏发态软复位不可用**：严重 STORM（sig=267）下发 `busybox poweroff -f`，命令执行但**不生效**（uptime 连续、SSH 不断）＝内核关机路径被 DRM storm 卡死（`#150`）。已排除 SIGHUP。⇒ 坏发态只能物理强制断电。
 - **对下一步的影响**：real-POR 可靠产坏发，但物理 POR 只能启动**固定的 boot_b**。要冷起一个实验镜像（如 vk86-round2），只有两条路：(a) 把镜像写进 boot_b 再 POR（写盘，需备份，且 slot 次数风险）；(b) 用户 POR **进 fastboot**（按键）后 `fastboot boot <实验镜像>` —— DOSSIER §h C2 已证 cold-fastboot→`fastboot boot` = STORM，且零写盘。**推荐 (b)** 作为 A/B 采样台，但需用户配合“POR 进 fastboot”这一动作。
+
+### j-附) round 补丁静态审查（2026-10-10 第二会话；不碰设备）
+- **落点/因果窗口：正确**。`q28-round-vk86.patch`（内核提交 `392b4897e`）改的是 generic `dsi_link_clk_set_rate_6g`；SM8750 经 `dsi_link_clk_set_rate_6g_v2_9`（`dsi_cfg.c:288`→`dsi_host.c:507`）到达它，且它在 `msm_dsi_host_power_on` 内**紧接 `link_clk_enable`（PLL 上锁点）之前**执行 ⇒ **在 PLL 上锁的因果窗口内**。方向上与上游 `2028280686f4`（reparent 后取整）一致。
+- **★纠正一条先前错误结论（div2）**：`patches/q28-methodB-NOTES.md` 断言“SM8750 3nm PHY **不**置 `byte_intf_clk_div_2`”，并据此怀疑补丁的 `intf != byte → /2` 有 bug。实测代码链：SM8750 → `dsi_phy_3nm_8750_cfgs` → `msm_dsi_dphy_timing_calc_v4`（`dsi_phy_7nm.c:1018`）→ `dsi_phy.c:461` **置 `byte_intf_clk_div_2 = true`**。⇒ **SM8750 div2 = true**，补丁派生 `byte_intf = rounded/2` **对本板是对的**；NOTES 前提写反。附带：该写法在“no-div2 + 取整改速率”的板上会错误减半（通用脆弱，对本板无影响）。
+- **台账状态：round = 未测（非被否证）**。vk87（round2 内核 + vk64 ramdisk）落 NOCARD，但 **不可归因**：既可能是 round 改变了 PLL 上锁，也可能是复位状态遗留（证据：vk64 与 vk86-base 内核字符串几乎一致却一个 STORM 一个 NOCARD，n=1）。⇒ **不归档、不排修法 A/B，挂起为“未测/阻塞于测试台”**。
+- **测试台三条件（重启本线前必须满足）**：① 复位类型可证且固定（真 POR 判据：`boot_id` 变 + 设备真断电，不接受软关机/暖复位）；② 每臂 N≥3；③ 镜像过 `scripts/assert-kernel-sane.sh` 且 manifest 完整（`vk86-base.manifest ramdisk=(unknown)` 即不合格）**。

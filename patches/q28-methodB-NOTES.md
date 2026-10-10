@@ -146,3 +146,15 @@ Pixel/DSC pclk come straight from the mode and are unrelated.
   both are commit-metadata artifacts of a header-less draft and are intentionally
   left for the parent to add after calibrating with the upstream diff. No
   code-style defects remain (the earlier filename-in-comment warning was fixed).
+
+---
+
+## ⚠️ 2026-10-10 更正（第二会话静态审查）
+
+本文档第 3 节表格里「SM8750 3nm PHY **不**设 `byte_intf_clk_div_2`」是**错的**。实测代码链：
+SM8750 → `dsi_phy_3nm_8750_cfgs` → `msm_dsi_dphy_timing_calc_v4`（`dsi_phy_7nm.c:1018`）
+→ `dsi_phy.c:461` **置 `byte_intf_clk_div_2 = true`**。
+
+⇒ 实际落地补丁 `q28-round-vk86.patch` 的 `intf != byte → /2` 在 SM8750 上**产出正确的
+`byte_intf = rounded/2`**。（该写法对“no-div2 + 取整改速率”的板仍会错误减半，属通用脆弱。）
+本文件其余内容为历史草稿；当前口径以 `reports/q28-DOSSIER.md` §j / §j-附 为准。
