@@ -13,12 +13,20 @@ Q28 = 设备**冷起（display bring-up）间歇性无画面**，根因候选已
 轻则在**首条 DCS 命令的命令 DMA 上 hang（STORM）**，重则 **DSI host probe 就没出 card0（NOCARD）**；
 两条候选修法（`cmd_trigger` settle delay / 取整 byte-clk）都**未编、未上机、未判定**，冷 A/B 只跑了 **1 次且撞 NOCARD**。
 
+> **🆕 2026-10-10 夜复核（§k，`PITFALLS #171`）**：上述「冷起 ~60%」口径被**收窄**。固定路径
+> `Linux → reboot2 bootloader → fastboot boot` 连测 21 发：`out/boot-elden-vk64.img`（Oct-8 内核）**GOOD×7**，
+> 而**所有新编镜像**（vk89/vk89-plain/vk64c/vk64c+旧ramdisk/`make clean` 全量）**NOCARD×14**。
+> ⇒ 在当前设备状态，**Q28 与「内核二进制」绑定（同一二进制恒定复现）**，不是冷/暖、也不是 ~60% 随机。
+
 ---
 
 ## b) 已定案结论（6 条，逐条标证据）
 
 **B1 — Q28 的真实变量是「冷/暖复位」，不是时间/温度。**
 冷起基本失败（用户实机约 ~60%，"有时能进桌"）；暖起（`reboot→fastboot boot` / ABL 已初始化）基本成功。
+> **⚠️ 收窄（2026-10-10 夜，§k / `PITFALLS #171`）**：固定路径下 Q28 与**内核二进制**绑定——
+> 同一内核恒定复现（非掷骰子），换一个同源构建即可从 NOCARD 翻到 GOOD。故「冷/暖」至少不是当前判别变量；
+> 本条的「~60%」是早期在 vk63 上跨复位类型混采的旧口径，观已不适用。
 - 推翻 2026-10-09「强时间相关（下午好/夜里坏）」的初判（用户实机纠正）。
 - 硬约束：**A/B 样本必须固定复位类型**；纯暖起循环（今天暖起 9/9 干净、`q28-ab-delay.sh` 8/8 GOOD）**不能**当"未复现"结论，只能说明暖路径本没撞上触发条件。要复现高坏发态须走**冷起（用户 POR 进 fastboot → `fastboot boot`，零写 boot_b）**。
 - 证据：`PITFALLS.md #163`（"修正本条初稿方向写反"）；`reports/q28-handoff-20261010.md` §0 口径纠正；`logs/q28-ab-20261010-130712.log`（暖起 A/B）。
@@ -182,6 +190,7 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 - **可复用资产**：分支 `q28/vk86`：`d02658e63`(vk86-base=vk64 内核)→`71bc68462`(+round)→`a8c09a723`(+无条件遥测)；镜像 `out/boot-elden-vk86-{base,round,round2}.img`（manifest 齐全，config a383cdb9=与 vk64/vk84 对逐字节同）；完整 ramdisk 重建命令 `scripts/build-initramfs.sh full out/boot-elden-vk61.img`（sha d6ad1321）；round 补丁 `patches/q28-round-vk86.patch`；遥测判读 `dmesg | grep "Q28 byte clk"`（`no-op=YES` ⇒ 取整在 SM8750 是空操作，直接放弃 round）。
 - **设备态**：boot_b 全程未写（仍 vk64 日常）；会话结束时设备 RAM 里跑 vk86-base，**POR 一次即回日常**。
 - **唯一下一步（先于任何修法）**：同一镜像 `vk86-round2` 冷起 **2** 次（每次间隔真实 POR，禁 `reboot2`）→ 模式不同 ⇒ 非确定性 ⇒ **停 Q28 转 Q24（FIX-2 臂现成：vk84-base/exp）**；模式相同 ⇒ `/init` 时序杠杆 ⇒ 静态调 `/init` 时序后再 A/B。若任一 round 样本到 STORM：读 `Q28 byte clk` 遥测判 no-op。
+  ⚠️ **本节「唯一下一步」已被 §j / §k 覆盖**：§k（2026-10-10 夜）证明 Q28 与**内核二进制**绑定、同一二进制恒定复现，故「冷起 2 次看是否非确定」已不必做；新下一步见 §k。
 
 ## j) 2026-10-10 第二会话追加：真实 POR 确定性 + 复位深度阶（PITFALLS #170）
 - **真实物理 POR（用户手动，vk64 日常 boot_b）2/2 = STORM**：run1 `storm_sig=267`（uptime 226s）、run2 `storm_sig=18`（uptime 22s）；两次均在 ~0.88s `DSI PLL(0) lock failed`×4、~9.07–9.14s `command DMA timeout status=0x2200200` + `bonded command DMA failed master=-110 peer=-110` + `Failed to initialize panel -5` + `ctl 1 reset failure -22` + `frame done timeout`。模式与签名时序一致。证据 `reports/trials/*-realpor-run{1,2}/`。
@@ -195,3 +204,45 @@ init 重试 3 次仍败（-110→-5），**4 ms 后**才出现 `dpu_encoder_phys
 - **★纠正一条先前错误结论（div2）**：`patches/q28-methodB-NOTES.md` 断言“SM8750 3nm PHY **不**置 `byte_intf_clk_div_2`”，并据此怀疑补丁的 `intf != byte → /2` 有 bug。实测代码链：SM8750 → `dsi_phy_3nm_8750_cfgs` → `msm_dsi_dphy_timing_calc_v4`（`dsi_phy_7nm.c:1018`）→ `dsi_phy.c:461` **置 `byte_intf_clk_div_2 = true`**。⇒ **SM8750 div2 = true**，补丁派生 `byte_intf = rounded/2` **对本板是对的**；NOTES 前提写反。附带：该写法在“no-div2 + 取整改速率”的板上会错误减半（通用脆弱，对本板无影响）。
 - **台账状态：round = 未测（非被否证）**。vk87（round2 内核 + vk64 ramdisk）落 NOCARD，但 **不可归因**：既可能是 round 改变了 PLL 上锁，也可能是复位状态遗留（证据：vk64 与 vk86-base 内核字符串几乎一致却一个 STORM 一个 NOCARD，n=1）。⇒ **不归档、不排修法 A/B，挂起为“未测/阻塞于测试台”**。
 - **测试台三条件（重启本线前必须满足）**：① 复位类型可证且固定（真 POR 判据：`boot_id` 变 + 设备真断电，不接受软关机/暖复位）；② 每臂 N≥3；③ 镜像过 `scripts/assert-kernel-sane.sh` 且 manifest 完整（`vk86-base.manifest ramdisk=(unknown)` 即不合格）**。
+
+## k) 2026-10-10 夜复核：Q28 与「内核二进制」绑定，收窄「冷/暖」与「~60%」口径
+
+> 过程稿全文：`reports/q28-binary-determinism-20261010.md`；经验条目：`PITFALLS #171`。
+> 触发：用户指出「冷/暖无法定性，怀疑该说法本身可靠」。遂抛开标签，固定路径观察。
+
+**方法**：固定 `Linux → /usr/local/sbin/reboot2 bootloader → fastboot boot <img>`；判据 = SSH 读
+`card0`（`/sys/class/drm` 含 `card0`=GOOD；只有 `version`=NOCARD）。`fastboot boot` 确为 RAM 起
+（cmdline token `elden_probe=FBK64` 实证，无 boot_b 回退）。
+
+**台账（21 发）**：
+
+| 镜像 | 内核 | 结果 |
+|---|---|---|
+| `out/boot-elden-vk64.img`（Oct-8 内核 `8efb2731`） | Oct-8 | **GOOD ×7** |
+| `vk89`（clean/base 模块化，新编） | vk89 | NOCARD ×5 |
+| `vk89-plain`（vk89 内核 + base ramdisk） | vk89 | NOCARD ×2 |
+| `vk64c`（vk64 config 新编 + 当前 ramdisk） | vk64c | NOCARD ×2 |
+| `vk64c-oldrd`（vk64c 内核 + **vk64 原 ramdisk**） | vk64c | NOCARD ×2 |
+| `vk64c-clean`（`make clean` 全量重编） | vk64c | NOCARD ×3 |
+
+**变量逐个钉死**：路径（token 证明 RAM 起）、ramdisk（vk64c-oldrd 用与 vk64 逐字节同的 ramdisk 仍 NOCARD）、
+config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具链（双方 gcc 15.2.0-16ubuntu1 / ld 2.46）、
+源码提交（双方 `-g d02658e63`、无 `-dirty`）、陈旧对象（`make clean` 全量仍 NOCARD）——**全部排除**。
+
+**唯一差异 = 内核二进制本体**：两 `Image` **同大小**（62,540,288 B）、payload sha `8efb2731` vs `ccc0a284`，
+字节差 **5,040,884 B（~8%）且高度集中在 32–44 MiB 区**；该区字符串集合一致，差异字节多为相邻小偏移（±4/±16）
+⇒ 形态像**数据/指针重定位（布局漂移）**，非大面积代码改写。
+
+**修正后的定案**：
+1. **Q28 在当前设备状态 = 「按内核二进制确定性」**：同一二进制该路径恒定复现（非掷骰子），
+   换一个同源构建即可整体翻面。→ **冷/暖不是当前判别变量**；B1「~60%」为 vk63 时代跨复位混采旧口径，收窄。
+2. Q28 = **对内存/时序极敏感的首发竞态**；内核镜像布局的微小漂移即足以把它推到 GOOD / NOCARD 一侧。
+3. Oct-8 `vk64.img` 落在 GOOD 侧 → 保留作 **Q28 GOOD 参照**（新编镜像默认 NOCARD 侧）。
+
+**下一步（二选一，待裁决）**：
+- **A 定位机制**：分别 dump 两内核 `/proc/kallsyms`，找 32–44 MiB 区地址位移的函数/表，判定「纯布局」vs「真代码差」。
+- **B 借 A/B 搜变量**：以「同源两构建一 GOOD 一 NOCARD」为现象，单因素改构建（`-j`、无害 config 项、
+  `KBUILD_BUILD_TIMESTAMP`）看能否把新编推到 GOOD 侧。
+
+**工具修复**：`scripts/assert-kernel-sane.sh` 第 4 项 mtime 陈旧检测对显式 `KERNEL_IMG=`（外部预编内核）误伤，
+已改为仅对本树默认 `Image.gz` 生效（外部内核身份由 UTS 对齐保证）。
