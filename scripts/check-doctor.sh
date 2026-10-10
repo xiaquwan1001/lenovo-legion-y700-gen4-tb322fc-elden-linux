@@ -101,6 +101,20 @@ done
 term=$(grep -rln "领域层 *[5五] *份" INDEX.md AGENTS.md TASKS.md DEVICE.md RESOURCES.md RUNBOOK-BRINGUP.md PITFALLS.md .pi/AGENT-OPS.md .pi/CONCURRENCY.md 2>/dev/null || true)
 if [ -n "$term" ]; then bad "术语漂移「领域层 5 份」（应为领域层 4 + 经验层 1）: $(echo $term | tr '\n' ' ')"; else ok "术语「领域层 4 份 + 经验层 1 份」一致"; fi
 
+# ---------------------------------------------------------------- 3.6 PITFALLS 编号范围
+# 单一事实源 = PITFALLS.md 头部「条目编号 #1–#N」；实际编号有两种格式（N. / **#N =）
+echo
+echo "== 3.6 PITFALLS 编号范围（头部声明 vs 实际最大编号）=="
+pit_max=$(grep -oE '^[0-9]+\. |^\*\*#[0-9]+' PITFALLS.md | grep -oE '[0-9]+' | sort -n | tail -1)
+declared=$(grep -oE '条目编号 #1–#[0-9]+' PITFALLS.md | grep -oE '[0-9]+$' | head -1)
+if [ -z "$pit_max" ] || [ -z "$declared" ]; then
+  warnf "PITFALLS 编号范围无法解析（实际最大=$pit_max 声明=$declared）"
+elif [ "$pit_max" != "$declared" ]; then
+  bad "PITFALLS 头部声明 #1–#$declared ≠ 实际最大编号 #$pit_max → 刷 PITFALLS 头部"
+else
+  ok "PITFALLS 头部声明 #1–#$declared ≡ 实际最大编号"
+fi
+
 # ---------------------------------------------------------------- 3.5 进度百分比口径（INDEX 快照 vs TASKS §0 权威）
 echo
 echo "== 3.5 进度百分比口径 =="

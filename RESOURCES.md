@@ -228,9 +228,9 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
 | `patches/` | 3.7 M | ✅ track（q28 delay/methodB 草稿未入库） | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档）。**Q28 显示诊断补丁系列**（均设备无关诊断/实验件，非 G1 交付）：已 RAM 上机取证 = `q28-dsi-regdump.patch`/`q28-dsi-regdump-with-baseline.patch`（vk72/vk73/vk75 好坏寄存器差分）、`q28-poweron-propagate.patch`（vk74 4/4 复现）、`q28-cmd-dma-delay.patch`（vk84-{base,exp} 单变量对，暖 8/8 GOOD 不判别、冷 A/B 仅 T1=NOCARD 未定案）；候选未独立上机 = `q28-dsi-cmd-recover.patch`（vk64 源有界复位）；草稿未编未 apply = `q28-methodB-round-byteclk.patch`+`q28-methodB-NOTES.md`（取整 byte-clk，落点待按上游校准） |
 | `archive/` | ~5.5 M | ✅ track | 过程证据（87 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），只增不改 |
-| `reports/` | 132 K | ⚠️ 未入库（`?? reports/`，working；主题收口时随迁 `archive/topics/` 再入库） | **活跃主题的工作区证据**（活跃期可读可改；主题定案后整体迁 `archive/topics/`，归档层只增不改）。现含 **Q28 显示线过程稿**（`q28-DOSSIER.md`=SSOT、`q28-INDEX.md`=文档地图、`q28-{handoff,two-layers,upstream-diff,orchestration,upstream-research,nocard-research}-20261010.md`）、本地清理审计 `local-cleanup-audit-20261010.md`、本轮整理提案 `tidy-20261010/`（`resources-edits.md`/`cleanup-candidates.md` + T1/T2/T3 简报） |
-| `PITFALLS.md` | 64 K | ✅ track | 踩坑正文 #1–#161 + §0 零号纪律 + §15 废弃登记 |
-| `RESOURCES.md §4` | 21 K | ✅ track | 100 行会话索引（数字 SSOT，§4）+ 内核实机验证边界 |
+| `reports/` | 216 K | ⚠️ 未入库（`?? reports/`，working；主题收口时随迁 `archive/topics/` 再入库） | **活跃主题的工作区证据**（活跃期可读可改；主题定案后整体迁 `archive/topics/`，归档层只增不改）。现含 **Q28 显示线过程稿**（`q28-DOSSIER.md`=SSOT、`q28-INDEX.md`=文档地图、`q28-{handoff,two-layers,upstream-diff,orchestration,upstream-research,nocard-research}-20261010.md`）、本地清理审计 `local-cleanup-audit-20261010.md`、本轮整理提案 `tidy-20261010/`（`resources-edits.md`/`cleanup-candidates.md` + T1/T2/T3 简报） |
+| `PITFALLS.md` | 164 K | ✅ track | 踩坑正文（按主题编号）+ §0 零号纪律 + §15 废弃登记 |
+| `RESOURCES.md §4` | 21 K | ✅ track | 118 条会话索引（数字 SSOT，§4）+ 内核实机验证边界 |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
@@ -309,7 +309,7 @@ git log --oneline -10
 |---|---|
 | 实机验证 | ✅ 实机 42 / ◐ 部分 8 / ✗ 未上机 50 |
 | 状态 | active 59 / reference 27 / junk 10 / superseded 4 |
-| 时间跨度 | 2026-09-29 → 2026-10-07（磁盘 jsonl **103**；本索引 **110** 行；**92**+ 磁盘唯一 ID，多个 ID 有拆分会话/子目录副本；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
+| 时间跨度 | 2026-09-29 → 2026-10-07（磁盘 jsonl **248**；本索引 **118** 条；**索引覆盖至 2026-10-07，其后会话尚未逐条收录**；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
 
 ---
 
