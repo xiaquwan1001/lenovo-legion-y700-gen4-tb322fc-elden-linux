@@ -3,8 +3,8 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-10。**条目编号 #1–#172**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
-> 最新条目集中在文末分节 §十六–§二十二；**编号范围只在本行维护**，其它文档不复述具体数字。
+> 最后更新：2026-10-11。**条目编号 #1–#179**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
 
@@ -1310,3 +1310,42 @@
     - **hang 与桌面无关**：RAM-only（cmdline 去 `elden_root`、不起 Phaser/Phosh）同样冻死（USB gadget 一并消失）⇒ 只要显示 bring-up 触发 modeset 就可能死。
     - **构建侧定性**：声称的「内核二进制差 5,040,884 B」是 `UTS_VERSION`（版本串/构建号/时间戳）长度变化导致的 **整段 `.rodata` 平移 4 字节**（`.text` 仅 26 word、全为地址立即数），**功能代码实质相同**；见 `reports/q28-binary-determinism-provenance-20261010.md`。
     - **`reboot2` 暖复位不可当 A/B 台架**：STORM 态下 `reboot2 bootloader` 无效（无 fastboot），只能物理断电；原报告「固定路径 × 21 发连测」在机制上不可能不间断进行。
+
+---
+
+## 二十三、Q24 复现定案 + Q28「版本串」变量 + 测试协议陷阱（2026-10-11 实测）
+
+173. **★Q24 最小触发 = `{camcc-sm8750, cambistmclkcc-sm8750}` 两时钟控制器同时在位 + 真实熄屏；单独任一都不触发（否证历史「cambist 单模块」结论）。**
+    - 同一 GOOD 启动上的最小对 bisect（`logs/q24-bisect-20261011-084135/`）：`{}` 熄屏×2 存活；`{cambist}` 熄屏 **12** 次全存活；`{camcc}` 熄屏×3 存活；**`{cambist,camcc}`（任一顺序）首次熄屏即整机硬复位**；两模块都在位但**不熄屏**等 60 s 存活。
+    - ⇒ 历史 `TASKS` G1-22/G1-33 写的「单模块 `cambistmclkcc-sm8750` 触发」**被 12/12 存活否证**；真实触发需要 **camcc + cambist 配对**。用户口径：**以本轮实验现象为准**（历史取证不干净）。
+    - 复现配方：GOOD 启动 + `modprobe camcc-sm8750 cambistmclkcc-sm8750` + `org.gnome.ScreenSaver.SetActive(true)`（DPMS off，不进 s2idle）。
+
+174. **RPMh 电源票/地址映射要用 `cmd-db` 反查，不要靠猜（`addr` 与设备名毫无字面关系）。**
+    - 读法：`cat /sys/kernel/debug/cmd-db`（是**文件**不是目录）。SM8750 关键映射：`0x30010=mx.lvl`、`0x30050=gfx.lvl`、`0x30080=mmcx.lvl`、`0x300a0=mxc.lvl`、`0x300d0=gmxc.lvl`、`0x30000=cx.lvl`、`0x50000+=MC0/SH0/SH1…(NoC/BCM)`。
+    - 取证手段（本轮跑通）：`/sys/kernel/debug/tracing/events/rpmh/rpmh_send_msg` + **SSH 把 `trace_pipe` 实时流到主机**——设备即使瞬间硬复位，主机文件已留住最后一帧票。
+    - **死前共同签名**（两次独立死亡逐行相同）：第二个 CC 加载时 RPMh 一次性把 `ebi/gfx/lcx/lmx/mss/nsp/nsp2/gmxc/mxc` 投到 0、`mmcx→6`、`mx→5`；随后熄屏，`mxc.lvl` 被投到 0，接着噪声批（`0x500xx`）后硬复位。
+    - ⚠️ 本轮曾把 `0x30050/0x300d0` 误当「cambist 的票」——那是 **gfx/gmxc（GPU）**；查 `cmd-db` 后已纠正（`PITFALLS #174` 就是为记这条）。
+
+175. **★Q28 的 `NOCARD`（无 card0）在**新编镜像**上高度疑似由构建版本串（`LOCALVERSION`）决定 —— 同一源码、同一 `.config`，只改版本串就翻转 GOOD/NOCARD。**
+    - 本日实测（全部走 `reboot2 bootloader` → `fastboot boot` 同一路径，同一 vk89 ramdisk 基座）：`vk93-cleanctl`（`LOCALVERSION=-vk93-cleanctl`，内核=clean/base）**NOCARD 3/3**；`vk93-lv64`（**同源码同 config**，只把 `LOCALVERSION=-vk64`）→ **GOOD 1/1**（UTS 与旧 `boot-elden-vk64.img` 逐字相同）。另 `vk90/vk92/vk93-nocam` 各 NOCARD 3–4 发。
+    - 与 `#171/#172` 的「`UTS_VERSION` 长度导致整段 `.rodata` 平移」一致：**布局漂移的触发点已收窄到版本串**；`boot-elden-vk64.img` 落在 GOOD 侧。**n 小（GOOD 仅 1 发），需复核**，但与 `#166`（暖复位粘 NOCARD）不矛盾——本对照两侧**同为暖路径**，唯一变量是 `LOCALVERSION`。
+    - ⇒ **可复用的 Q28 GOOD 台架**：`LOCALVERSION=-vk64` 构建（UTS = `7.2.0-debug-vk64-gd02658e63cf6`）。**推论：`vk90/vk92` 上轮「NOCARD」判定全部作废（构建伪影），臂本身未被证伪。**
+
+176. **★测「驱动类」改动时模块必须与运行内核 vermagic 逐字匹配，否则 `modprobe` 静默不加载 → 实验全成假阳性。**
+    - 实锤：FIX-3 只改 `cambistmclkcc-sm8750.ko`（内核 Image 不变）。默认构建（`LOCALVERSION=-vk91-fix3mx`）得到的 vermagic 是 `…-vk91-fix3mx-g9fba4689e5a2`，与台架内核 `…-vk64-gd02658e63cf6` **不匹配**；若直接塞进持久根，`/init` 的 auto-load 会**静默失败**，于是「camcc 单独在位 = 本来就不掉电」⇒ 会得出「修复有效」的**假结论**。
+    - 正确做法：**只重编该 `.ko`**，且用
+      `CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6`（`CONFIG_LOCALVERSION="-debug"` 保持）→ `vermagic=7.2.0-debug-vk64-gd02658e63cf6` 逐字匹配。命令：
+      `make ARCH=arm64 CROSS_COMPILE="ccache aarch64-linux-gnu-" LOCALVERSION="-vk64-gd02658e63cf6" drivers/clk/qcom/cambistmclkcc-sm8750.ko`（改完 `.config` 记得备份/还原）。
+    - 通用纪律：**换 `.ko` 前先 `strings <ko> | grep vermagic` 与 `uname -r` 对表**；不等就不要测。
+
+177. **FIX-3（cambist lazy-on + suspend quiesce）会让 probe 在**未上电域**上读写 MMIO → 整机挂死——这不是死内核（内核是好的）。**
+    - 实锤（2026-10-11）：用匹配 vermagic 的 FIX-3 模块装入持久根，重启后 `modprobe cambistmclkcc-sm8750` **当场挂死**（ping/SSH/fastboot 全无）。机理=「lazy-on」去掉了 probe 时的电源票，但 `qcom_cc_really_probe()` 仍无条件读写该块的寄存器 → NoC hang。与历史 vk82「卡 logo」同源，当时被 `#162` 的**死内核误判**掩盖。
+    - ⇒ **修「半成品块」的驱动改法不能只删 resume/加 quiesce**：要么保留 probe 期持票（FIX-2 路线），要么把**寄存器访问整体搬进持票的 `runtime_resume`**（含 probe 期只注册不触碰）。**任何在掉电域上 mmio 的窗口都是挂死点。**
+
+178. **相机 auto-load 来自 ramdisk `/init` 调 `camera-modules-load.sh`，按 `uname -r` 找 `/lib/modules/<KV>`；ramdisk 里没有该 KV 的模块时**静默失败**（=旧控制组 `cam=0` 的真因）。**
+    - 所以「`fastboot boot` 一个自编镜像」时，ramdisk 决定开机自动装哪些模块；`elden_nocamera=1` 只是 `camera-modules-load.sh` 的判据之一（`[camera] SKIPPED: cmdline has elden_nocamera=1`）。
+    - **post-`switch_root` 生效的 `/lib/modules` 是持久根（磁盘）的**，ramdisk 里的模块目录在切换后不可见 ⇒ 想「开机后手动 `modprobe`」必须把 `.ko` 放进**持久根** `/lib/modules/<KV>/`（本机布局是 `<KV>/drivers/...`，**没有 `kernel/` 前缀**）+ `depmod -a <KV>`。改前先备份（本轮备份在设备 `/root/q24bak/`）。
+
+179. **`pkill -f <pattern>` 会匹配到**自己这条命令行**并自杀（本轮两次 `exit 143` / 工具调用中断）。**
+    - 触发场景：`pkill -f "trace_pipe"`、`pkill -f "q24rail"` 等——`bash -c` 包装进程的 cmdline 里含同一字面量。`pkill` 只排除自身 PID，**不排除父 shell**。
+    - 规避：按 **PID** 杀（记录 `$!`）、或把 pattern 拆开/加字符类（`'[t]race_pipe'`）、或直接 `kill` 文件里的 pid。详见技能 `pkill-self-match`。

@@ -277,3 +277,33 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 
 **4. 现行口径（覆盖 §k）**：Q28 在本机当前状态下**非确定**，且「判 GOOD」必须先过 survives-gate；
 `out/boot-elden-vk64.img` 不再能当「GOOD 参照」（它当发可能 STORM 也可能 GOOD→HANG）。
+
+---
+
+## m) 2026-10-11：NOCARD 与**构建版本串**强相关（`PITFALLS #175`，n 小待复核）
+
+**背景**：做 Q24 三臂 A/B 时，所有「新编镜像」都落 NOCARD，怀疑台架不干净，于是做了一组**同源同 config、只改版本串**的对照。
+
+| 镜像 | 源码 | `LOCALVERSION` | 结果 |
+|---|---|---|---|
+| `vk93-cleanctl` | clean/base (`d02658e63`) | `-vk93-cleanctl` | **NOCARD 3/3** |
+| `vk93-nocam` | 同上 | `-vk93-cleanctl` | NOCARD 1/1 |
+| `vk90-e4amxc` | E4a（DT-only） | `-vk90-e4amxc` | NOCARD 4/4 |
+| `vk92-fix2mx` | FIX-2（driver-only） | `-vk92-fix2mx` | NOCARD 3/3 |
+| **`vk93-lv64`** | **同上 clean/base** | **`-vk64`** | **GOOD 1/1**（UTS 与旧 `boot-elden-vk64.img` 逐字相同） |
+
+**路径与基座完全相同**：都是 `reboot2 bootloader` → `fastboot boot <img>`（同一暖路径）；ramdisk 基座同为 vk89 的 `rootfs-base-golden.cpio.gz`。**唯一变量 = `LOCALVERSION`（及其导致的版本串长度/`.rodata` 平移）**。
+
+**判据**：SSH 读 `/sys/class/drm/` 是否含 `card0`（只有 `version` = NOCARD）。
+
+**与既往口径的关系**：
+- 与 `#171/#172`（§k/§l）「差异主因是 `UTS_VERSION` 长度 → 整段 `.rodata` 平移 4 字节」**一致**；本组把「触发点」进一步收紧到**变量本身只是版本串**。
+- 与 `#166`（暖复位粘 NOCARD）**不冲突**：本对照两侧同为暖路径，一侧 GOOD 一侧 NOCARD。
+- 与 §l「同镜像同路径非确定」（5 发 GOOD/STORM/STORM/GOOD/STORM）**并列**：**同镜像可能非确定，但不同构建的"GOOD 倾向"明显不同** ⇒ 需要的是「多构建 × 多发」的矩阵，不是单发定论。
+
+**⚠️ 局限**：GOOD 侧 **n=1**；只做了一个对照点（clean/base 两个版本串）。**不能据此宣布「改版本串即可修 Q28」**，但足以支撑两件实用结论：
+
+1. **做臂测试的干净台架 = `LOCALVERSION=-vk64` 构建**（本轮已用其完成 Q24 最小对 bisect）；
+2. **上轮 `vk90/vk92` 的 NOCARD 判定作废**——那是构建伪影，不是臂的缺陷。
+
+**下一步（若要推进 Q28 本身）**：固定一个源码提交，扫 `LOCALVERSION` 串长（多个等长/不同长标签）看 GOOD 率是否随串长/`.rodata` 对齐跳变；或按 §l 的「多构建 × 多发」矩阵做统计（贵，需用户配合 POR）。

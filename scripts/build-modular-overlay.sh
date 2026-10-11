@@ -28,12 +28,12 @@ MODDIR=$STAGE/lib/modules/$KV
 [ -d "$MODDIR/kernel" ] || { echo "no staged modules at $MODDIR (run modules_install)" >&2; exit 1; }
 
 # --- closure: payload roots + camera roots (new vermagic rebuild) ------------
-ROOTS="qcom-camss s5kjns gc08a8 gt9764 wl2868c-regulator i2c-qcom-cci \
+ROOTS="${ROOTS:-qcom-camss s5kjns gc08a8 gt9764 wl2868c-regulator i2c-qcom-cci \
 camcc-sm8750 cambistmclkcc-sm8750 leds-qcom-flash \
 snd-soc-sc8280xp snd-q6apm q6apm-dai q6apm-lpass-dais q6asm-dai q6routing \
 q6afe q6afe-dai q6afe-clocks q6asm q6adm q6core q6prm q6prm-clocks q6usb \
 snd-soc-wcd939x snd-soc-wcd939x-sdw \
-ath12k ath12k_wifi7 aw86927 novatek-nvt36xxx-spi aw99706"
+ath12k ath12k_wifi7 aw86927 novatek-nvt36xxx-spi aw99706}"
 
 list=$(mktemp); trap 'rm -f "$list"' EXIT
 : > "$list"

@@ -51,3 +51,11 @@ boot-elden-vk86-round2.img	# 同上 + 无条件遥测 pr_info(ideal/rounded/no-o
 # ---- 2026-10-10 Q28 STORM 台架重打（vk87-round2-v64 / vk88-base-v64）----
 # **2026-10-10 用户裁决：镜像与描述对不上（Image.gz 陈旧、未随 HEAD 重编，payload≠名字）
 #   ⇒ 已删 .img（manifest 留档）。本段无在途成员，不再有免新鲜度门效果。**
+
+# ---- 2026-10-11 Q24 三臂 + Q28 版本串对照（lane: Q24 深研）----
+boot-elden-vk90-e4amxc.img	# Q24 E4a：cambist DT MX→MXC（好档重建，待 -vk64 台架重测）
+boot-elden-vk91-fix3mx.img	# Q24 FIX-3：lazy-on+quiesce（实测挂死，保留作证据）
+boot-elden-vk92-fix2mx.img	# Q24 FIX-2：probe 常持票（待 -vk64 台架重测）
+boot-elden-vk93-cleanctl.img	# Q28 台架对照：clean/base + LOCALVERSION=-vk93-cleanctl（NOCARD 3/3）
+boot-elden-vk93-nocam.img	# Q28 台架对照：无相机 auto-load（NOCARD 1/1）
+boot-elden-vk93-lv64.img	# ★Q28 GOOD 台架：clean/base + LOCALVERSION=-vk64（GOOD 1/1）
