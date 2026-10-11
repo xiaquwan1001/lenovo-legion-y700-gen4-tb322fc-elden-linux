@@ -366,3 +366,7 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 ### o-附) 2026-10-11：法则可控性验证（vk102-c1pin）——冷起 A/B 恢复可用
 
 把版本串**钉死**回 `7.2.0-debug-vk64-gd02658e63cf6`（`.config` 里 `CONFIG_LOCALVERSION_AUTO=n`，构建时 `LOCALVERSION=-vk64-gd02658e63cf6`）后：**改内核源码（`5d01d3324`）+ 改 `.config`（`IP_ADVANCED_ROUTER/IP_MULTIPLE_TABLES`…）仍冷起 GOOD 1/1**（`ip rule` 生效）。⇒ §o 第 3 条的「冷起 A/B 作废」**只对『版本串随源码/git sha 漂移』的默认构建成立**；**钉死后冷起 A/B 恢复可用**。镜像 `out/boot-elden-vk102-c1pin.img`；构建法见 `scripts/q28-build-arm-lv64.sh`（`PINUTS=` 支持）。详见 `PITFALLS #192`。
+
+### o-附2) 旧报告追溯审计（2026-10-11，`reports/q28-retro-audit-20261011.md`）
+
+以本卷 §o/§o-附 为基准重审旧现象报告：`§k「按内核二进制确定性」`**作废**；`§l「同镜像非确定」`**事实成立但须标注"暖路径/旧镜像"**；`§m`**方向正确但收窄**（内容也足够，非仅长度）；`~60% 冷起坏发率`**被构建身份混淆（NOCARD/STORM 未分）**；`vk90/vk92 NOCARD`、`round/Method-B NOCARD=修复无效`、`T1/T2/T3 冷 A/B` 均**作废**（PINUTS 后需重建重测）；`§h STORM 靶`、`§B4 三态判据`、上游 `2028280686f4` 裁决、`§n Q24 耦合`**仍有效**。`§B3 NOCARD 因果（DSI PLL lock failed→无 card0）`**待重测**（其样本全在非基准 UTS 上）。
