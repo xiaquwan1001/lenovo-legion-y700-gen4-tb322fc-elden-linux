@@ -66,7 +66,7 @@ ROOTARGS="${ROOTARGS-elden_root=LABEL=linux17}"
 # argument silently fall back to slot a.  This device boots from slot b.
 # Override with SLOT_SUFFIX= when a build targets slot a (or drop the arg).
 SLOT_SUFFIX="${SLOT_SUFFIX:-_b}"
-CMDLINE="$CONSOLES loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 $ROOTARGS androidboot.slot_suffix=$SLOT_SUFFIX${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}"
+CMDLINE="${CMDLINE_OVERRIDE:-$CONSOLES loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 $ROOTARGS androidboot.slot_suffix=$SLOT_SUFFIX${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}}"
 echo "cmdline: $CMDLINE"
 
 dd if=/dev/zero of="$OUT/dtbo-dummy.img" bs=4096 count=1 2>/dev/null
