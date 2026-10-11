@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#180**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#181**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1355,3 +1355,10 @@
     - 与历史 H1（7/9）/H2（3轮2掉）/D1（6/9）/D2（7/9）合读：**「改票/轨名/运行时计数」这一整族只能降频，不可能根治**；根治必须处理 **camcc × cambist 的相互作用**（两者都是相机时钟控制器：camcc 有 GDSC + `MMCX/MXC` 双票，cambist 无 GDSC + `MX` 单票）。
     - **新线索（未验证）**：死前 dmesg 一直有 `camcc-sm8750 ade0000.clock-controller: sync_state() pending due to ad27000.isp / ac7c000.cci / ac7b000.cci` ⇒ **camcc 永远停在 pre-`sync_state` 夹持态**（消费者 ISP/CCI 从未 probe）；叠加 cmdline `pd_ignore_unused`，两个相机 CC 的电源票可能长期是「未 sync 的钳制值」。待查：抓两 CC 的 `state_synced` 与 RPMh 实际投票（`#174` 的 trace 法）；试「让 camcc 的 sync_state 完成」；`pd_ignore_unused` 单变量对照。
     - **教训**：当「单点修复」反复只降频不根治时，先回头验**触发体是不是单点**——本项在配对 bisect 之前，整个社区/本项目都把 cambist 当唯一元凶（连 `TASKS` G1-22 都这么写）。
+
+181. **★「启动次数用尽卡 fastboot」的真因：Alpine 自带的 `/etc/init.d/qbootctl` **不在任何 runlevel**，所以每次启动都没把 A/B 槽标记成功。**
+    - 机理（2026-10-11 实测，U2）：`slot-attr.py` 的 GPT 属性里 `boot_b` 的 `BOOT_SUCCESSFUL`（byte6 bit6）**永远不被置位** ⇒ ABL 每次启动把 `tries_remaining`（byte6 bits3..5，默认 7）**减 1** ⇒ **~7 次重启后计数归零、槽被标 `UNBOOTABLE` ⇒ 设备停在 fastboot**。受 Q28 所迫频繁重启的机器**必然**踩到（本轮用户就撞上）。
+    - 判据：`python3 /usr/local/sbin/slot-attr.py show | grep "boot_b "` → 看 `retry=` 与 `succ=`；`ls -l /etc/runlevels/default/qbootctl` → 无此符号链接即**未启用**。
+    - **修**：`scripts/fix-ab-mark-successful.sh`（幂等）——重写 initd 为显式 `start(){ ebegin … eend $?; }` + `rc-update add qbootctl default`。**已验证**：把槽改成 `succ=0 retry=3` 后跑服务 → `succ=1`（retry 不动）。
+    - 次坑：原 initd 用 `command="qbootctl"` + `default_start`，对「跑完即退」的命令 OpenRC `status` 报 **crashed**（无 pidfile）——功能上仍会标记，但状态误导、易被当成没生效。改成显式 `start()` 后 `status` = `started`。
+    - ⇒ **任何新装/恢复的 rootfs 之后都要跑一次这个脚本**（典型把「~7 次重启」变成「永不掉 fastboot」）；Q28 未根治期间尤其重要。
