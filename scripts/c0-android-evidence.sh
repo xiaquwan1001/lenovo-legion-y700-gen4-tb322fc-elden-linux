@@ -28,7 +28,8 @@ HB=$($ADB shell getprop ro.boot.hwboardid 2>/dev/null | tr -d '\r')
 echo "设备 serial=$SER  hwboardid=${HB:-未知}"
 
 # 容量档 → 目录名（与 backup/<SN>-<容量档> 规范一致）
-CAP="${HB##*_}"           # 如 12+256
+# hwboardid 形如 SM8750P_16+512_13 / TB322FC_SM8750P_12+256，容量档 = 其中的 NNN+NNN 字段。
+CAP=$(printf '%s' "$HB" | grep -oE '[0-9]+\+[0-9]+' | head -1)
 [ -n "$CAP" ] || CAP=unknown
 OUT="$ROOT/backup/${SER}-${CAP}/c0-baseline"
 mkdir -p "$OUT"
@@ -55,9 +56,14 @@ cap getprop-dalvik.txt getprop -Z
 } > "$OUT/key-props.txt"
 
 echo "== 2/6 DRM / Widevine =="
+# Android 16 起服务名变化：media.drm/drm 可能不存在，回退 drm.drmManager + IDrmFactory dump。
 cap dumpsys-media.drm.txt dumpsys media.drm
 cap drm-info.txt dumpsys drm
+$ADB shell dumpsys drm.drmManager > "$OUT/dumpsys-drmManager.txt" 2>&1 || true
+$ADB shell dumpsys android.hardware.drm.IDrmFactory/widevine > "$OUT/dumpsys-drmFactory-widevine.txt" 2>&1 || true
 $ADB shell getprop 2>/dev/null | tr -d '\r' | grep -iE 'widevine|drm|media\.drm' > "$OUT/widevine-props.txt" 2>&1
+$ADB shell getprop 2>/dev/null | tr -d '\r' | grep -iE 'virt|gunyah|crosvm|avf|pvm' > "$OUT/virt-props.txt" 2>&1
+$ADB shell getprop 2>/dev/null | tr -d '\r' | grep -iE 'keybox|attest|keymint|keystore|strongbox|csr' > "$OUT/keystore-props.txt" 2>&1
 
 echo "== 3/6 传感器 =="
 cap dumpsys-sensorservice.txt dumpsys sensorservice

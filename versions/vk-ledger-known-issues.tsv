@@ -71,3 +71,8 @@ vk71-mxnom	uts_dup2	同 vk71-mxnom num_ne_tag
 #   （System.map 有 QCOM 符号）。属在途（见 vk-identity-inflight.txt），收口后退场。
 vk87-round2-v64	tree_drift	Q28 STORM 台架 round2 重打；载荷=vk86r2 71bc6846247c-dirty（Image.gz 陈旧），在途见 vk-identity-inflight.txt
 vk88-base-v64	tree_drift	Q28 STORM 台架 base 重打；载荷=vk64 d02658e63（Image.gz 陈旧），在途见 vk-identity-inflight.txt
+# 2026-10-11 传感器恢复版 vk94：**DTB-only**（ADSP fastrpc 补 qcom,non-secure-domain，内核提交 5d01d3324），
+#   刻意复用 vk64 内核 out/Image-vk64.gz（d02658e63）以保持在机模块 vermagic 单变量（同 vk62/vk63/vk71/vk72 模式）。
+#   设备已验证：/dev/fastrpc-adsp 出现、HasAccelerometer/AmbientLight/Proximity=true、monitor-sensor 实时出数（PITFALLS #186）。
+vk94	tree_drift	DTB-only 传感器恢复版：打包内核=out/Image-vk64.gz（d02658e63）；构建时树 HEAD=5d01d3324（ADSP non-secure DT 提交）
+vk94	uts_dup5	刻意复用 vk64 的 UTS 串（同 vk62/vk63/vk71/vk72 模式）；非 vk94 自身问题

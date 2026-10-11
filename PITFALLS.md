@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#183**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#186**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1387,3 +1387,26 @@
     - 模板资源：`gtk_widget_class_set_template_from_resource` 路径必须 == gresource 前缀 + `qs.ui`，类名必须匹配 `G_DECLARE_FINAL_TYPE` 的类型名，否则只报 critical warning（磁贴空白而非崩溃）。
     - 离线写用户 dconf：`su -s /bin/sh <user> -c "HOME=... dbus-run-session -- gsettings set ..."`（不需真会话在跑）。
     - 实例：`patches-userland/0003-phosh-auto-rotation-quick-setting.patch` + `reports/userland-auto-rotation-toggle-20261011.md`。
+
+184. **★部署的 vk64 模块目录漏了核心网模块 `net/`——`CONFIG_BRIDGE=m` 却无 `bridge.ko`，Waydroid 网络起不来（2026-10-11 定位+已补）。**
+    - 现象：`waydroid container start` 报 `RuntimeError: Command failed: % /usr/lib/waydroid/data/scripts/waydroid-net.sh start`；手工 `sh -x` 见 `ip link add dev waydroid0 type bridge` → **`Error: Unknown device type.`**。
+    - 根因：设备 `/lib/modules/7.2.0-debug-vk64-gd02658e63cf6/` 有 1217 个 `.ko`，但**没有任何 `net/`（或 `kernel/net/`）子树，只有 `drivers/`** ⇒ `bridge`/`llc`/`stp`/`8021q` 全缺；`modprobe bridge` → `FATAL: Module bridge not found in directory …`（而 `zcat /proc/config.gz` 明写 `CONFIG_BRIDGE=m`）。
+    - **修**：`geekidos-linux`（HEAD=`d02658e63`、`.config` sha=`a383cdb9` **与设备逐字节同**）里 `. scripts/env-build.sh`（`ARCH=arm64`+ccache cross）→ `LOCALVERSION=-vk64 kbuild modules_prepare` → 逐个 `LOCALVERSION=-vk64 KBUILD_MODPOST_WARN=1 make ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" M=net/{llc,802,bridge,8021q} modules`。`CONFIG_MODVERSIONS` 未开 ⇒ 跨目录未定义符号（llc/stp）用 `KBUILD_MODPOST_WARN=1` 放行，运行期由已加载模块符号表解析。vermagic 全部 = `7.2.0-debug-vk64-gd02658e63cf6`。产物 `out/netmods-vk64/`。
+    - 部署：设备模块布局**无 `kernel/` 前缀**（放 `$M/net/...`）+ `depmod -a $(uname -r)`。修后 `modprobe bridge` rc=0、`ip link add type bridge` OK、Waydroid 容器 RUNNING（IP `192.168.240.112`）。详见 `archive/topics/C1-WAYDROID-2026-10-11.md`。
+    - **坑**：`make modules_prepare`/`make` **不带 `ARCH`/`CROSS_COMPILE` 会被当本机 x86 编译**，把 `.config` 覆盖成 x86 默认（本轮 `a383cdb9`→`5dee2b27`）并让 `include/generated/utsrelease.h` 丢掉 `-vk64` ⇒ 之后所有模块 vermagic 都不对。恢复：`ssh root@192.168.7.1 'zcat /proc/config.gz' > linux/.config`（设备 `/proc/config.gz` 是权威 vk64 config）。
+    - ⇒ **部署管线应把 `net/` 核心模块纳入 `modules_install`/closure**，否则每次重装 rootfs 都复现「Waydroid 网络起不来」。
+
+185. **★Waydroid overlay 机制默认是关的（`mount_overlays=False`）+ 内核缺 `overlay`/`fuse` 模块 ⇒ 写进 `/var/lib/waydroid/overlay/` 的东西从不上线（2026-10-11 C4 定位+补齐）。**
+    - 现象：把定制 HAL 放进 `/var/lib/waydroid/overlay/vendor/bin/hw/...` 后，容器里该路径仍是镜像原版二进制（大小/日期不同）——overlay 目录根本没被挂。
+    - 两个根因：① `/var/lib/waydroid/waydroid.cfg` 里 **`mount_overlays = False`**（历史为绕开缺模块而关）；② 设备模块目录无 `fs/` 子树，`CONFIG_OVERLAY_FS=m`/`CONFIG_FUSE_FS=m` 但 `overlay.ko`/`fuse.ko` 未部署（`modprobe: not found`）。开着 `mount_overlays=True` 启动时 waydroid 会 `mount -t overlay …` 报 **`unknown filesystem type 'overlay'`** 然后自己把该特性关掉。
+    - 附带：OpenRC `waydroid-container` 服务 `start_pre()` 会 `modprobe fuse`，缺 fuse 则直接 **失败启动**（`Filesystem in Userspace support is not available`）。
+    - **修**：重编 `fs/overlayfs/overlay.ko`、`fs/fuse/fuse.ko`（与 `net/` 同法，`LOCALVERSION=-vk64`），部署到 `$M/fs/...` + `depmod`；`mount_overlays=True` 后 `/vendor` 变 overlayfs、overlay 生效。
+    - **但注意（教训）**：本项目**原本靠显式 `lxc.mount.entry` bind**（如 `/root/wd/mesa/...` 系列）覆盖 `/vendor` 文件，**不走 overlay**——所以“overlay 能用”不等于“该用”；开 overlay 会让整个 rootfs/vendor 走 overlayfs，改变启动路径（本轮开了 overlay 后遇 HAL 卡 boot，尚未排除与 overlay 本身有关）。改前先备份 `waydroid.cfg`。
+    - 详见 `archive/topics/C4-SENSORS-2026-10-11.md`、`C1-WAYDROID-2026-10-11.md`。
+
+186. **★ADSP fastrpc 缺 `qcom,non-secure-domain` ⇒ 无 `/dev/fastrpc-adsp` ⇒ SSC 传感器（G1-34）静默全废；1 行 DT 修复且上游一致（2026-10-11 定位+已修+已上机）。**
+    - 现象：`/sys/bus/iio/devices/` 空、`net.hadess.SensorProxy` 的 `HasAccelerometer/HasAmbientLight/HasProximity=false`；`/dev/` 下**只有 `/dev/fastrpc-adsp-secure`**（没非 secure）；`rc-service hexagonrpcd-adsp-sensorspd` 起不来（initd 硬编码 `-f /dev/fastrpc-adsp`）。
+    - 根因：`arch/arm64/boot/dts/qcom/sm8750.dtsi` 的 **ADSP fastrpc 节点（`label="adsp"`）缺 `qcom,non-secure-domain`**，而 **CDSP 节点有** ⇒ 内核 `fastrpc.c: secure_dsp=!of_property_read_bool(node,"qcom,non-secure-domain")` ⇒ ADSP 只出 secure 节点。
+    - **修**：给 ADSP fastrpc 节点加 `qcom,non-secure-domain;`（1 行；内核提交 `5d01d3324`）→ 重编 DTB `5d658a2c…` → 打包 `vk94`（= 当年 vk72 逐字节相同）→ 刷 boot_b。实测：`/dev/fastrpc-adsp` 出现、`HasAccelerometer/AmbientLight/Proximity=true`、`monitor-sensor` 实时出 accel/light/compass。
+    - **上游一致**：Linux 其它 Qualcomm SoC（eliza/sc8280xp/agatti/sdm630/660…）的 ADSP fastrpc 节点都带该属性 ⇒ 这一行是上游风格、应随 M3 板支持系列向上游提。
+    - **教训（重要）**：这行 2026-10-09 本地加过（DTB 产物 `out/sm8750-lenovo-elden-adsp-nonsec.dtb` = 旧 vk72 用的），但**未提交**，2026-10-10「clean/base」重置时丢失 ⇒ 传感器静默回退而无人察觉。**设备级修好就提交进树**（本次已提交）。判据：`ls /dev/fastrpc-adsp` + `dbus-send … HasAccelerometer`。

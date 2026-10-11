@@ -183,7 +183,14 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 
 口径前提：**原安卓系统以云盘全量线刷包为准**（用户 2026-10-02 确认）。本地 `~/下载/tb322fc`（63 文件 / 599 M）
 **不含 super / dtbo / vendor_boot / recovery**（§PITFALLS:198），`y700四代工具/…1.5.10.259/` 仅 40 M 重签 zip
-→ **云包 = 唯一全系统副本**，本地 `l2/super.img.raw` = 本地唯一全系统副本。当前占用：根盘 25 G、外置盘 572 G。
+→ **云包 = 唯一全系统副本**，本地 `l2/super.img.raw` = 本地唯一全系统副本。
+
+> **★ 2026-10-11 审计 + 已提取（`reports/android-required-resources-audit-20261011.md`）**：EDL 包 `rawprogram_save_persist_unsparse0.xml`/`rawprogram5.xml` 把
+> **设备独有分区留空（不刷、保留）** ⇒ 全量刷机**不恢复**它们，必须从本机 dump。
+> **✅ 已提取 21 个 → `backup/HA2EXB0E-16+512/unique/`（133 MB，含 `MANIFEST.txt`+`SHA256SUMS`，双端 md5 21/21 一致）**：
+> `persist proinfo lenovolock ssd keystore frp misc modemst1 modemst2 fsg fsc secdata mdcompress connsec tzsc spunvm xbl_sc_test_mode dpm qmcs devinfo uefivarstore`。
+> 已 dump 的还有 `backup/misc/`（misc/devinfo/uefivarstore）+ GPT。未提 `lenovoraw`/`lenovocust`（包内有 filename）/`rawdump`/`pstoredump`（日志）。
+> **云包核对（用户 2026-10-11 确认）**：版本 = `1.5.10.259`、含 `super`/`dtbo`/`recovery`/`vendor_boot` ⇒ §P2 `backup/stock-259/`、§P3 `l2/` 的**云包闸已清**（删除仍需单独下令）。当前占用：根盘 25 G、外置盘 572 G。
 
 | 优先级 | 目标 | 体积 → 剩 | 动作 | 前置闸（不满足就别动） |
 |---|---|---|---|---|
