@@ -1,7 +1,9 @@
 # 上游提交草案（phoc + phosh）
 
-> 两个补丁都已对**上游 `main`（2026-10-11：phoc 0.58.0 / phosh）实测可干净 apply**。
-> 本目录的 `.patch` 是 `git diff`（不含作者/S-o-b），便于你用自己身份重新 commit；草案文案如下。
+> **状态：待发（blocked on account）— 2026-10-11**
+> `gitlab.gnome.org` 对**本机出口 IP 拦截了注册**（GNOME GitLab 反垃圾），必须等申诉/换出口。
+> 补丁 + commit message + MR 文案已全部备好；一旦能登录（账号/PAT/换出口），只需推分支 + 开 MR。
+> 本目录的 `.patch` 是对 **`main`（2026-10-11：phoc 0.58.0）实测可干净 apply** 的 `git diff`。
 >
 > ⚠️ **需要你处理的部分**：GitLab 账号/fork、`Signed-off-by` 的真实姓名+邮箱、push 与点「Create MR」。
 > agent 不代填凭据/账号（STANDING 规则）。

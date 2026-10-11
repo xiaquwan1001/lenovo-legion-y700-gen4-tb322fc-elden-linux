@@ -119,7 +119,8 @@ pulseaudio-dev qrcodegen-dev upower-dev
 - **上游**：`patches-userland/upstream/`（对 phoc/phosh `main` 的 `git diff` + commit message/MR 草案）。
   关键发现：phoc 的 `47099669`（2026-03，修 issue #429）**只修了一半**——它那台笔记本两个档都是 `preferred`；
   单 preferred 面板（本机）仍走 else 分支。故我们的补丁是它的泛化。
-  提交仍需用户处理账号/fork/`Signed-off-by`（见 `patches-userland/upstream/README.md` §3）。
+  提交仍需账号/fork/`Signed-off-by`（见 `patches-userland/upstream/README.md` §3）。
+  **2026-10-11 阻塞**：`gitlab.gnome.org` 对本机出口 IP 拦截注册，需申诉/换出口；资产封存为「待发」。
 
 ## 8. 设备侧验证（第二轮：走 rootfs 安装脚本重建后）
 

@@ -389,3 +389,6 @@
 | M3 | 板支持系列（DTS+qcom.yaml；先修 usb@a600000 schema 红点、去 vendor-only 属性） | ⬜ | M1 | dtbs_check CI 绿 | 同上 §3.4 |
 | M4 | 大件立项：B8 camss（media）/ B6 ath12k PEACH（wifi）/ B3 hci_qca PERI（bt） | ⬜ | M1 | 各成多轮 review 工程 | 同上 §1-B |
 | M5 | C2 dm-default-key 从上游包剥离 → 持久根 out-of-tree patchset | ⬜ | — | 上游包内无 Android vendor ABI | 同上 §1-C |
+
+**用户态上游（独立于 M 系列，2026-10-11 新增）**：phoc/phosh 两个显示显示修正（刷新率恒 165Hz、非整数比例显 100%）已备好对上游 `main` 的 patch + MR 草案（`patches-userland/upstream/`），**待发**。
+阻塞：`gitlab.gnome.org` **按 IP 拦截注册**（2026-10-11，本机出口在该黑名单上），只能等申诉/换出口。资产已封存成「一键待发」。
