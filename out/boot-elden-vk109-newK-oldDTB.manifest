@@ -1,0 +1,12 @@
+# boot image manifest — Q28 STORM E2 DTB 轴（repack，零重编译；generated 2026-10-12）
+version=vk109-newK-oldDTB
+image=out/boot-elden-vk109-newK-oldDTB.img
+image_sha256=9bdd1feca1c702b2acc6863e9691eed20e24298f9dd0f4c17c4cbd13f3a4ddbc
+image_size=107593728
+kernel_uts=Linux version 7.2.0-debug-vk64-gd02658e63cf6
+kernel_packed_sha256=5de979985001f0fbd40d31e7ef7e25f7e79278128dafb74b6189d2a66126fab4
+dtb_packed_sha256=5d658a2ce48cdda9a0451aaef28b6c668fb76607f76e2f0648ee9194c0008c0d
+config_sha256=af8a2d697755d5948669e4089bdccc9de5bbcd680b45a1c6a4c84ebb21a6b159
+ramdisk_sha256=28c026226d0c5a20ae87a8964c44bebbb6c9c6a9974b72d9f718c8bbc10cb66d
+cmdline=(vk104 cmdline, no elden_nocamera)
+note=E2 新K + 旧DTB（旧K=旧源码DTB）

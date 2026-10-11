@@ -102,3 +102,9 @@ vk106-newK-oldR	num_ne_tag	Q28 STORM 2×2 repack 臂（刻意复用 vk64 UTS）�
 vk106-newK-oldR	uts_dup	同上：内核复用 vk104，UTS 与 vk64 同串
 vk107-oldK-newR	num_ne_tag	Q28 STORM 2×2 repack 臂（内核复用 vk94）；无独立内核提交
 vk107-oldK-newR	uts_dup	同上：UTS 与 vk64 同串
+vk108-oldrep-pin	num_ne_tag	STORM E1 臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交
+vk108-oldrep-pin	uts_dup	同上：PINUTS 刻意钉回 vk64 UTS 串
+vk109-newK-oldDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk104）；无独立提交
+vk109-newK-oldDTB	uts_dup	同上：UTS 与 vk64 同串
+vk110-oldK-newDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk94）；无独立提交
+vk110-oldK-newDTB	uts_dup	同上：UTS 与 vk64 同串

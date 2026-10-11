@@ -65,3 +65,6 @@ boot-elden-lv64-nopd.img	# Q24 单变量#1：去 cmdline pd_ignore_unused（其�
 # ---- 2026-10-11 Q28 STORM 2×2 因子臂（repack，本轮构建）----
 boot-elden-vk106-newK-oldR.img	# STORM 2×2 臂 B：新内核 + 旧 ramdisk
 boot-elden-vk107-oldK-newR.img	# STORM 2×2 臂 D：旧内核 + 新 ramdisk
+boot-elden-vk108-oldrep-pin.img	# STORM E1：旧源码重编 + PINUTS（等上机冷起系列）
+boot-elden-vk109-newK-oldDTB.img	# STORM E2：新K+旧DTB
+boot-elden-vk110-oldK-newDTB.img	# STORM E2：旧K+新DTB
