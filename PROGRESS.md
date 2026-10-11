@@ -17,6 +17,8 @@
 | 2026-10-10 | 立内核分界线 `clean/base`；模块化内核 `vk89` | 构建/身份管线收口 |
 | 2026-10-10 夜 | Q28「按内核二进制确定性」结论 | **次日经溯源审计后被降级**（见 §4） |
 | 2026-10-10 夜 | 发现 **clean-GOOD → 整机卡死**（`#106`）的强相关 | 见 §4 |
+| 2026-10-11 | **容器传感器打通**（路线 C：宿主 gbinder 注入 + 真值 `ssccli`→UDP）；桌面深色/亮度闭环；`C1` 策略路由内核修复 | 见 `TASKS.md` C4/G1-28/C1 |
+| 2026-10-11 | **M1 干净上游资产树**建成并通过干净构建 | `build/m1-upstream/clean-tree`，见 `reports/m1-clean-tree-20261011.md` |
 
 ---
 
@@ -25,7 +27,7 @@
 | 目标 | 完成度 | 关键限定 |
 |---|---|---|
 | **G1** 功能健全的 Linux | **≈ 90%** | 按“驱动 bring-up 完整性”度量；**上游化 M1–M5 = 0/5 未开始** |
-| **G2** 安卓容器（Waydroid） | **≈ 45%** | 图形/内核/GAPPS/代理可用；Play 登录、Play Integrity/SafetyNet、Widevine 等级仍在收口 |
+| **G2** 安卓容器（Waydroid） | **≈ 50%** | 图形/内核/GAPPS/代理可用，**容器传感器 HAL 已打通**；Play 登录、Play Integrity/SafetyNet、Widevine 等级仍在收口 |
 | **G3** x86 模拟（Steam） | **PoC ✅** | Box64 + Wine 成功；Steam 游戏端到端未上机 |
 
 ---
@@ -37,6 +39,8 @@
 - **网络**：WiFi（WCN7861/ath12k）+ 蓝牙配对/TWS；USB-NCM 网卡（`192.168.7.1`）+ ACM 串口控制台。
 - **音频**：WCD939x 播放 + 输入（DMIC）走 QDSP6/ADSP。
 - **相机**：后摄按需加载模块可出流并抓帧（与熄屏互斥，见 `Q24`）。
+- **安卓容器传感器**：加速/陀螺/光/磁/接近进容器；真值走 `ssccli`（Qualcomm SSC）→ UDP → 宿主 gbinder HAL（`TASKS.md` C4）。
+- **桌面用户态**：深色模式、亮度滑块、自动旋转磁贴、非整数缩放/刷新率（`TASKS.md` G1-26/27/28）。
 - **温控**：分级 trips。
 - **存储/启动**：持久磁盘根 + A/B 槽（`qbootctl`）+ 零写盘 `fastboot boot` 迭代。
 
@@ -107,7 +111,7 @@
 
 1. **Q28**：用「存活门 + 三态 + 真 POR」重做对照；重点验证 `/init` 时序杠杆与 byte-clock 取整。
 2. **#106**：把判据升级为「GOOD 需 ≥60 s 存活/可交互」；尝试让死挂**自动 panic 带栈**（ramoops 或 OOB）。
-3. **上游化 M1–M5**：把已定案的 DTS/驱动按模块整理提交（`checkpatch`/`dtbs_check` 绿）。
+3. **上游化 M1–M5**：M1 干净资产树已建、构建通过；下一步 M2 首发小系列（`checkpatch`/`dtbs_check` 绿）。
 4. **G2**：Waydroid Play 登录与完整性等级取证。
 5. **G3**：Steam 端到端。
 
