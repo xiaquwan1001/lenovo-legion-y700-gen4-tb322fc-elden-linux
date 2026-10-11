@@ -17,9 +17,10 @@ D8="$TREE/prebuilts/sdk/tools/lib/d8.jar"
 OUT=${OUT:-/tmp/wd-audio-test}
 mkdir -p "$OUT"
 cd "$HERE"
-for M in TestAudio TestCodec ListCodecs; do
-    javac -source 8 -target 8 -bootclasspath "$AJ" -classpath "$AJ" -d "$OUT" "$M.java" 2>/dev/null
+for M in TestAudio TestCodec TestRecord ListCodecs; do
+    javac -source 8 -target 8 -bootclasspath "$AJ" -classpath "$AJ" -d "$OUT" "$M.java"
     mkdir -p "$OUT/$M"
+    rm -f "$OUT/$M/classes.dex"
     java -cp "$D8" com.android.tools.r8.D8 --min-sdk-version 30 --output "$OUT/$M" "$OUT/$M.class" >/dev/null
     (cd "$OUT/$M" && jar cf "$OUT/$M.jar" classes.dex)
     echo "built $OUT/$M.jar"

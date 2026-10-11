@@ -16,6 +16,7 @@
 | 媒体编解码器数（`MediaCodecList`） | **0** | **53**（含 `c2.android.vorbis.decoder`） |
 | 播放闹钟 | 无 sink-input | 宿主 `pactl list sink-inputs` 出现 `s16le 2ch 48000Hz`（出声） |
 | 开机持久 | — | ✅（干净重启 container 后复测 codec=53、闹钟出声） |
+| 容器内录音 | 未测 | ✅ **可用**：`TestRecord` 5s → `samples=232800 rms≈457 peak=1815`（另一次 376800/rms≈495/peak=2350）；宿主出现 `source-output 364 51 356 s32le 2ch 16000Hz` |
 
 ---
 
@@ -115,6 +116,7 @@ Android AudioTrack
 `scripts/wd-audio-test/`（Java 源码 + 构建/推送脚本）：
 - `TestAudio` — AudioTrack 裸 PCM（验证输出链路）。
 - `TestCodec` — 逐个 `MediaCodec.createDecoderByType` configure+start（验证解码器）。
+- `TestRecord` — `AudioRecord(MIC)` 采集 N 秒，打印 samples/rms/peak（验证录音通路）。
 - `ListCodecs` — 打印 `MediaCodecList` 全部 codec（验证 ccodec 配置）。
 - `TestRing3` — MediaPlayer 播 OGG（**注意**：裸 `app_process` 无 Context，
   `setDataSource` 会 NPE；只有 DeskClock 等真 app 能测整链，故落盘仅作记录）。
@@ -134,10 +136,33 @@ Android AudioTrack
 
 ---
 
+## 5.5 容器内录音（2026-10-11 已测）
+
+- **音频采集链路（与播放反向）**：Android `AudioRecord(MIC)` → Waydroid audio HAL
+  （`snd_pcm_open("pulse", CAPTURE)`，HAL 固定 16 kHz）→ host PipeWire **source
+  `alsa_input.platform-sound.HiFi__Mic__source`**。
+- **实测（`TestRecord`，裸 `app_process` 跑 `AudioRecord`，无 Context 需求）**：
+  `AudioRecord.getMinBufferSize`=1280、state=1、recordingState=3；5 s → `samples=232800 rms≈457 peak=1815`
+  （另一次 8 s → 376800 / rms≈495 / peak≈2350，**非零**）；同时宿主
+  `pactl list source-outputs` 出现 `364 51 356 PipeWire s32le 2ch 16000Hz`（=容器采集流）。
+  ⇒ **容器内录音通路可用**（含权限：root/app_process 下 RECORD_AUDIO 通过）。
+- **“合适的 app”核实**：镜像自带 **`org.lineageos.recorder`**（LineageOS Recorder，UI 名 `RecorderActivity`），
+  且带 **`SoundRecorderService`，可用无头 intent 驱动**：
+  `am start-foreground-service -n org.lineageos.recorder/.service.SoundRecorderService -a org.lineageos.recorder.service.{START,STOP,PAUSE,RESUME}`。
+  **但在本容器里崩**：`getExternalFilesDir()` 返回 null → `SoundRecorderService.createNewAudioFile` NPE，
+  因为 **emulated storage 没挂上**（`sm list-volumes all` = `emulated;0 unmountable`；
+  `vold: Failed to find mounted volume for /storage/emulated/0/...`）。
+  ⚠️ **这是容器存储缺口（vold 无 fstab/FUSE 挂 emulated），与音频无关**；
+  同一原因也会让任何依赖 `getExternalFilesDir()`/外部存储的录音 app 崩溃。
+- 建议：音频验收用 `TestRecord`；若要“app 级”验收，需先补 emulated 存储（vold fstab/FUSE，另立任务），
+  或换一个写 **internal/MediaStore** 的录音 app。
+
+---
+
 ## 6. 未做 / 待确认
 
 - **宿主整机重启**回归（本轮只做了 `rc-service waydroid-container restart` 级别的干净重启；
   `/etc/modules`、`base.prop`、`config_nodes` 都在持久盘，理论必过，但未整机验证）。
 - `system_heap` 常驻是否与 Q24（相机×熄屏）有交互：Q24 已定「日常零相机模块」，`system_heap` 单独加载
   在历史相机 bring-up 中本就是必需的，预计无影响；未做长时空闲对照。
-- 录音（容器内 capture）未测；`TASKS.md` U8 要求「录音通路单独记」。
+- ~~录音（容器内 capture）未测~~ → 2026-10-11 已测可用（见 §5.5）；剩「app 级」验收受容器 emulated storage 阻塞（另立）。
