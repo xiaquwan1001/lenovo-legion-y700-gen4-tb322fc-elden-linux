@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#193**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#194**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1499,3 +1499,11 @@
     - 现象：日常态（无相机）`lsmod` 无 cam/camcc/cambist、`/dev/media*`/`/dev/video*` 皆空，但 `cam-mode.sh status` 仍打印 `camera modules = 1 … CAM-ON：不要熄屏`。
     - 根因：`scripts/cam-mode.sh`（部署 `/usr/local/sbin/cam-mode.sh`）的 `PAT='camss|cci|camcc|bist|wl2868c|s5kjns|gc08a8|gt9764|leds_qcom|system_heap'` 含 `system_heap`，而它由 `/etc/modules` 常驻加载。
     - 判真相机：别用该计数——看 `/dev/media*`、`/dev/video*` 数量，或 `lsmod | grep -E 'camcc|cambistmclkcc|qcom_camss'`。
+
+194. **★Waydroid 容器无默认路由 / netd 不建表 = 内核缺 `CONFIG_IPV6_MULTIPLE_TABLES`（连带 IPv4 多路由表）；补上后 netd `RouteController` 自建 per-network 路由（2026-10-11 定案+治本）。**
+    - 根因链：netd 启动向内核下发 IPv4+IPv6 `fib rule`，**IPv6 条被拒**（`EAFNOSUPPORT, Address family not supported by protocol`）⇒ `E netd: Failed to initialize RouteController` ⇒ per-network 路由/表全不建 ⇒ `E Netd: failed to add interface eth0 to netId 100` / `interface eth0 not assigned to any netId` ⇒ `ConnectivityService networkAddRouteParcel ... No such device (code 19)` / `[100 ETHERNET] validation failed` ⇒ 容器只有链路路由、无默认路由。
+    - **日常内核（config `a383cdb9`）同时缺** `CONFIG_IP_ADVANCED_ROUTER`/`IP_MULTIPLE_TABLES`/`IPV6_MULTIPLE_TABLES`（`ip rule` → `Not supported`）⇒ `RouteController` 更早死在 IPv4 fib rule；**只补 IPv4（vk95/c1pin）仍不通**（IPv6 条仍被拒）。**必须两套都补**：`CONFIG_IP_ADVANCED_ROUTER=y` + `CONFIG_IP_MULTIPLE_TABLES=y` + `CONFIG_IPV6_MULTIPLE_TABLES=y`（`IPV6_ADVANCED_ROUTER` 在本树无此符号）。
+    - **实证（vk103-c1r6 = clean/base `5d01d3324` + 上述 config + **PINUTS 钉死 UTS=`7.2.0-debug-vk64-gd02658e63cf6`**）**：容器 `ip rule` 出完整 netd 规则集（10000/11000/15998/16000/17000/18000…）、**table 1002 自建 `default via 192.168.240.1 dev eth0 proto static`**、**未注入任何 workaround 即 `curl baidu=200`**。
+    - **可复用**：历史 workaround（`/root/wd/blank_screen.rc` 往主表塞默认路由）**生效不可靠且不贴 AOSP fwmark 设计**，降为回退；宿主侧可靠注入=`wd-ctl.sh route`（工具已入仓）。构建法=`scripts/q28-build-arm-lv64.sh`（`ARM=c1pin PINUTS=… CONFIGFILE=…`），片段 `patches/fragment-c1-iprule6.config`、快照 `patches/config-vk103-c1routing6.bak`。
+    - **附带**：修好后容器 DNS 默认 `8.8.8.8` 被墙需改；容器境外出网走**宿主 Clash 代理**（容器内 `curl -x http://<宿主USB IP>:7897` 可用，实测 google=302/github=200），**在平板本地跑同订阅代理不可行**（校园 wlan 到境外节点直连 fail）。
+    - 证据：`reports/wd-netd-route-20261011.md`、`reports/wd-net-baseline-20261011.md`、`TASKS.md §2 C1`；子代理报告已由父代订正（其 `ip rule` 证据实抓于 c1pin）。

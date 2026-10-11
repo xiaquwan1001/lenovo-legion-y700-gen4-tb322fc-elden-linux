@@ -197,3 +197,28 @@ waydroid shell -- settings put global private_dns_mode off
 
 ---
 *只写本文件；未改其它文档、未改 kernel/config、未刷机、未写设备。设备锁已释放（flock -n 成功验证）。*
+
+---
+
+## 6. 父代补：治本验证（vk103，2026-10-11 22:19 实机）
+
+构建 `vk103-c1r6` = clean/base `5d01d3324` + `IP_ADVANCED_ROUTER` / `IP_MULTIPLE_TABLES` / `IPV6_MULTIPLE_TABLES` + **PINUTS 钉死 UTS**（`CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6`），冷起 **GOOD**；跑 `scripts/wd-c1-verify.dev.sh`（**不注入任何 workaround**）：
+
+```
+=== container ip rule ===
+0: from all lookup local
+10000: from all fwmark 0xc0000/0xd0000 lookup legacy_system
+11000: from all iif lo oif eth0 uidrange 0-0 lookup eth0
+15998: from all fwmark 0x10064/0x1ffff iif lo uidrange 0-2147483647 lookup eth0
+16000: from all fwmark 0x10063/0x1ffff iif lo lookup local_network
+16000: from all fwmark 0x10064/0x1ffff iif lo lookup eth0
+17000: from all fwmark 0xc0000/0xc0000 iif lo oif eth0 lookup eth0
+18000: from all fwmark 0x0/0x10000 lookup legacy_system
+=== container route ===
+[main] default via 192.168.240.1 dev eth0
+[1002] default via 192.168.240.1 dev eth0 proto static      ← netd 自建（proto static）
+       192.168.240.0/24 dev eth0 proto static scope link
+=== egress w/o workaround ===
+curl baidu : code=200
+```
+无 `RouteController failed`。⇒ **根因（本报告 §0 行1）= `CONFIG_IPV6_MULTIPLE_TABLES`（+ IPv4 多路由表）确认；治本 = 补内核 config**，不再需要 `blank_screen.rc` workaround。
