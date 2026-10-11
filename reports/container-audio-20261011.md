@@ -176,8 +176,25 @@ Android AudioTrack
   `vold: Failed to find mounted volume for /storage/emulated/0/...`）。
   ⚠️ **这是容器存储缺口（vold 无 fstab/FUSE 挂 emulated），与音频无关**；
   同一原因也会让任何依赖 `getExternalFilesDir()`/外部存储的录音 app 崩溃。
-- 建议：音频验收用 `TestRecord`；若要“app 级”验收，需先补 emulated 存储（vold fstab/FUSE，另立任务），
-  或换一个写 **internal/MediaStore** 的录音 app。
+- ~~崩~~ → **已修（见 §5.6），现可正常录音**：`am start-foreground-service … -a …service.START --es extra_filename testrec`
+  → `/storage/emulated/0/Android/data/org.lineageos.recorder/files/Recordings/testrec`（发送 STOP 后 m4a 含 `moov`+`mdat`，21954→29821 B）。
+  注意：START 不带 `extra_filename` 会 NPE（`String.format(null,…)`）；playback 的完整命令追加 `--es extra_filename <name>` 即可。
+
+---
+
+## 5.6 容器 emulated storage 修复（2026-10-11，TASKS Q30）
+
+- **现象**：`sm list-volumes all` = `emulated;0 unmountable`；`/storage/emulated/0` 不是 FUSE 挂载；
+  `vold: Failed to find mounted volume for /storage/emulated/0/...`
+  ⇒ 所有 `getExternalFilesDir()`/外部存储的 app 崩（含自带 Recorder）。
+- **根因**：容器**缺 `/dev/fuse`**。Waydroid `lxc.py` 本有 `make_entry("/dev/fuse")`，
+  但 `config_nodes` 是在宿主 `/dev/fuse` 还不存在时生成的（Alpine 由 udevd 在 fuse 模块加载后创建该节点），
+  于是这一条被（optional）跳过；之后 `config_nodes` 未重生成。
+- **修**：`config_nodes` 补 `lxc.mount.entry = /dev/fuse dev/fuse none bind,create=file,optional 0 0`；
+  `/etc/modules` 加 `fuse`（确保开机有 `/dev/fuse`）。
+- **验证**：容器内 `/dev/fuse` 存在；`sm list-volumes`=`emulated;0 mounted`；
+  `/storage/emulated`、`/mnt/user/0/emulated` 为 fuse 挂载；Recorder 出 m4a。
+- 备注：该修复**不在 vendor.img 内**（host+LXC 配置），故与 §5 镜像收口独立。
 
 ---
 
@@ -185,12 +202,10 @@ Android AudioTrack
 
 - **宿主整机重启**回归：本轮做过 `waydroid-container restart` + 换 vendor.img 后的干净重启；
   `/etc/modules`、`base.prop`、`config_nodes` 全在持久盘，理论必过，但未整机 cold boot 验证。
-- **容器 emulated storage**：`sm list-volumes all` = `emulated;0 unmountable`，
-  `/storage/emulated/0` 非 FUSE 挂载（vold 无 fstab/FUSE）；导致 `getExternalFilesDir()` 返回 null，
-  **所有写外部存储的录音 app（含自带 `org.lineageos.recorder`）都崩**（属存储缺口，与音频无关，另立任务）。
-  注意：本轮 `apply-waydroid-patches` 里有 `system/vold/0007-vold-Disable-AbortFuseConnections.patch`，
-  但 vold 在 **system.img**，重建 vendor 不会更新它。
+- ~~容器 emulated storage~~ → **2026-10-11 已修（§5.6，TASKS Q30）**：容器缺 `/dev/fuse` 所致；
+  修后 `emulated;0 mounted`、自带 Recorder 可录音。（本轮 `apply-waydroid-patches` 的
+  `system/vold/...fuse...` 补丁不影响此修复；vold 在 system.img，未重建。）
 - `system_heap` 常驻是否与 Q24（相机×熄屏）有交互：Q24 已定「日常零相机模块」，`system_heap` 单独加载
   在历史相机 bring-up 中本就是必需的，预计无影响；未做长时空闲对照。
-- Mesa bind mount（`/root/wd/mesa/lib64/*`）现在与镜像内 Mesa 重叠（镜像已烘入 26.1.8）；
-  未核对两者是否逐字节相同，暂保留 bind（无害）。
+- **（待办 Q29）** Mesa bind mount（`/root/wd/mesa/lib64/*`）现在与镜像内 Mesa 重叠（镜像已烘入 26.1.8）；
+  未核对两者是否逐字节相同，暂保留 bind（无害）；核对相同后应移除这些 bind。

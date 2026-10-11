@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#190**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#191**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1460,3 +1460,15 @@
       **别只看大小就以为镜像不全**，要 `comm` 对比文件清单。
     - 上机换镜像前先 `waydroid container stop`（否则不能覆 vendor.img），并备份 `/var/lib/waydroid/images/vendor.img`；
       换后把已烘入镜像的 bind（manifest/XML）从 `config_nodes` 删掉。
+
+191. **★容器 emulated storage 不可挂 → 所有写外存的 app 崩（`getExternalFilesDir()` 返 null）= 容器缺 `/dev/fuse`（2026-10-11 修，TASKS Q30）。**
+    - 现象：`sm list-volumes all` = `emulated;0 unmountable`；`/storage/emulated/0` 非 FUSE 挂载；
+      `vold: Failed to find mounted volume for /storage/emulated/0/...`；自带 `org.lineageos.recorder` 起动即
+      `SoundRecorderService.createNewAudioFile` NPE（`getExternalFilesDir` 为 null）。
+    - 根因：Waydroid `lxc.py` 本有 `make_entry("/dev/fuse")`，但 **容器 `config_nodes` 是宿主 `/dev/fuse` 还不存在时生成的**
+      （Alpine 由 udevd 在 fuse 模块加载后才造该节点）⇒ 这条被 optional 跳过且此后未重生成。
+    - 修：`config_nodes` 补 `/dev/fuse` bind + `/etc/modules` 加 `fuse` ⇒ `emulated;0 mounted`。
+    - 复盘方法：容器内 `ls -l /dev/fuse`（应 10:229）+ 宿主 `ls -l /dev/fuse` + `grep fuse config_nodes`，
+      若宿主有、容器无、config_nodes 也没那条 = 命中本坑。
+    - 附带坑：无头驱动 `org.lineageos.recorder` 必须带 `--es extra_filename <name>`，
+      否则 `startRecording(null)` → `String.format(null,…)` NPE（不是存储问题）。
