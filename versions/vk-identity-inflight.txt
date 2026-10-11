@@ -60,3 +60,4 @@ boot-elden-vk93-cleanctl.img	# Q28 台架对照：clean/base + LOCALVERSION=-vk9
 boot-elden-vk93-nocam.img	# Q28 台架对照：无相机 auto-load（NOCARD 1/1）
 boot-elden-vk93-lv64.img	# ★Q28 GOOD 台架：clean/base + LOCALVERSION=-vk64（GOOD 1/1）
 boot-elden-e4a-lv64.img	# Q24 E4a 臂（DT-only）在 -vk64 台架上的镜像（UTS 与 vk64 同；实测首次熄屏即死）
+boot-elden-lv64-nopd.img	# Q24 单变量#1：去 cmdline pd_ignore_unused（其余同 vk93-lv64；实测仍死）
