@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#181**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#182**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -799,6 +799,12 @@
     g-c-c 用这个 logical scale 去 supported 列表精确匹配，匹配不上就回退显示 **100%**。
     另外：`phoc.ini` 里写不在支持列表的值（如 `scale = 2.5`）会被**整个忽略**、回退默认 3.199。
     **做法**：用整数 scale（2 或 4）；`scripts/scale.sh 2`（含 `WAYLAND_DISPLAY=wayland-0`）+ 写 `/etc/phosh/phoc.ini`。
+    ★**根因定案 + 已修（2026-10-11）**：真因是 `GetCurrentState` 的 logical scale 直接取 `head->scale`，而它是
+    wlroots output-management 的 **24.8 定点**（`wl_fixed`）叠加 phoc 1/120 取整后的值（如 2.66796875），
+    与 phosh 经 `phosh_util_calculate_supported_mode_scales()` 公布的 supported_scales（DPI 有理数 8/3 等）**不相等**；
+    g-c-c 用 `G_APPROX_VALUE(..., DBL_EPSILON)` 精确匹配 → 匹配失败回退 100%（整数档恰在 1/256 网格上故正常）。
+    **修** = `patches-userland/0002-phosh-report-supported-scale.patch`（上报前吸附到最近 supported scale，误差 ≤0.01 才吸附；
+    真实应用的 scale 不变）。实测上报值 ∈ supported_scales。详见 `reports/userland-display-scale-refresh-20261011.md`。
 
 78. **★蓝牙：QCA WCN7861 驱动强制开启控制器 IBS 深度睡眠 → BR/EDR 高延迟+断连**（2026-09-30）。
     现象：配对正常，但 ACL 链路 RTT 30–190 ms、持续速率仅 ~1–2 包/秒，突发 20~50 包即
@@ -1362,3 +1368,13 @@
     - **修**：`scripts/fix-ab-mark-successful.sh`（幂等）——重写 initd 为显式 `start(){ ebegin … eend $?; }` + `rc-update add qbootctl default`。**已验证**：把槽改成 `succ=0 retry=3` 后跑服务 → `succ=1`（retry 不动）。
     - 次坑：原 initd 用 `command="qbootctl"` + `default_start`，对「跑完即退」的命令 OpenRC `status` 报 **crashed**（无 pidfile）——功能上仍会标记，但状态误导、易被当成没生效。改成显式 `start()` 后 `status` = `started`。
     - ⇒ **任何新装/恢复的 rootfs 之后都要跑一次这个脚本**（典型把「~7 次重启」变成「永不掉 fastboot」）；Q28 未根治期间尤其重要。
+
+182. **★phoc 只认 preferred mode：运行时可切的刷新率档（144/120/90…）全部被丢弃，屏恒 165 Hz（2026-10-11 定案+已修）。**
+    - 现象：Settings→Displays 的刷新率行改了无效；`wlr-randr --output DSI-1 --mode 1904x3040@120` 返回 rc=0 但 `current` 仍是 165。DRM `modetest -c` 8 档齐全 ⇒ 限制在合成器。
+    - 根因（phoc 0.55.1 `src/output.c` `phoc_output_config_head_to_output_config()`）：把 `zwlr_output_configuration_head_v1`
+      的 `state.mode` 转内部 `PhocOutputConfig` 时判成 `head->state.mode && head->state.mode->preferred`；
+      **非 preferred** 的 mode 落进 else 读**空的 `custom_mode`（0x0@0）** ⇒ `phoc_output_fill_state()` 见 `oc->mode.width==0` 回退 `preferred_mode`。
+      历史绕法（`patches/0008` 把 165 移到 mode table 首位）只是把「钉死」从 120 换成 165，非修复。
+    - **修** = `patches-userland/0001-phoc-honor-any-mode.patch`（`if (head->state.mode)`，1 行）。已验证 144/120/90/60 均可切。
+    - 上游核对（2026-10-11）：phoc `main` 仍是旧写法 ⇒ 仍是上游未修 bug。
+    - **复现 g-c-c 行为的坑**：phosh 只在 ApplyMonitorsConfig `method==2(PERSISTENT)` 时真正应用；`method=1` 只校验后返回 OK（看似成功实则没生效）。
