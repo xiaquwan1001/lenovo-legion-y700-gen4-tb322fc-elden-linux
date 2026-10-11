@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#189**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#190**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1441,4 +1441,22 @@
     - **层③ codec=0**：`MediaCodecList` 恒 0 ⇒ `NuPlayer: Failed to create audio/vorbis decoder`。两个原因叠加：**(a)** vendor `/vendor/etc/media_codecs_google_*.xml` 只有 `OMX.google.*`，而 `Codec2InfoBuilder`（`sfplugin/Codec2InfoBuilder.cpp:534`）要求 XML 有 `c2.android.*` 条目才认 Codec2 软件编解码器（否则 `component '...' not found in xml` → 跳过）⇒ 用 AOSP `frameworks/av/libstagefright/data/media_codecs_google_c2_{audio,video,telephony}.xml` 覆盖；**(b)** **`debug.stagefright.ccodec=0`**（Waydroid 写死在宿主 `/var/lib/waydroid/waydroid_base.prop`，由 lxc.py `props.append("debug.stagefright.ccodec=0")` 生成）⇒ `Codec2InfoBuilder` 的 `switch(option)` **`case 0: continue`** 跳过全部 Codec2 codec。**修**：`waydroid_base.prop` 里改 `=4`。**这一条最能解释「重启 mediaserver 后 codec=53、重启容器又回 0」的诡异现象——别误判成 boot race。**
     - **层④ 解码器 start 失败 err=-12**：`TestCodec` configure OK 但 start 全 FAIL；日志 `CCodecBufferChannel: ... allocatorID 16`（=DMABUFHEAPS）+ `E DMABUFHEAPS: No ion heap of name system exists` + `start: cannot allocate memory at all` + `NO_MEMORY`。真根因 = 容器**无 `/dev/dma_heap`**：宿主 `system_heap.ko` 未加载（无 `/dev/dma_heap/system`）且 LXC `config_nodes` 未挂。**修**：宿主 `modprobe system_heap`（并写 `/etc/modules` 持久）+ `lxc.mount.entry = /dev/dma_heap dev/dma_heap none bind,create=dir,optional 0 0`。注意 PITFALLS #130：**只加 `system_heap`，不要加载 `cma_heap`**（后者造 `/dev/dma_heap/reserved` 会干扰 libcamera）。
     - **操作坑**：(1) vendor.img **满盘 0 空间**，`open(w)` 原地改文件会 `ENOSPC` 截成 0 字节——改 `/vendor` 一律走 bind mount，别动镜像（本轮曾误截，已从备份还原校验）。(2) `lxc.mount.entry` 的 `create=file` 在**只读** `/system`/`/vendor` 上，仅当目标文件**已存在**才成功；新造 rc 文件必然失败并让 LXC 「Failed to setup mount entries」（`blank_screen.rc` 能挂是因为镜像里本就有该文件）。要给 init 加 action，可**追加到已 bind 的既有 rc**（如 `/root/wd/blank_screen.rc`）。(3) `setprop ctl.restart media` 在服务处于 `init.svc.media=stopping` 时不生效；要强制重建用 `kill -9 $(pidof mediaserver)`。(4) 裸 `app_process` 跑 `MediaPlayer` 会因无 `Context` 在 `setDataSource→FileUtils.convertToModernFd` NPE——MediaPlayer 整链只能用真 app（如 DeskClock timer）测。
-    - 全量配方/持久化清单/构建侧收口建议：`reports/container-audio-20261011.md`；测试工具 `tools/wd-audio-test/`。
+    - 全量配方/持久化清单/构建侧收口建议：`reports/container-audio-20261011.md`；测试工具 `scripts/wd-audio-test/`。
+
+190. **★Waydroid 镜像（lineage-20 `m vendorimage`）在本树重建的 3 个必须先修的树漂移（2026-10-11 实机出镜像）。**
+    - **① 必须先 `apply-waydroid-patches`**（`/mnt/Samsung/waydroid-build`，envsetup 后为 shell 函数）。
+      不跑的话 `hardware/waydroid/hwcomposer/wayland-hwc.cpp` 报 `fractional-scale-v1-client-protocol.h` 找不到
+      （补丁向 `external/wayland-protocols` 加 staging fractional-scale）。`mesa-build.sh` 有调用，**`m vendorimage` 不会自动应用**。
+    - **② gatekeeper 编译不过**：`hardware/waydroid/gatekeeper/SoftGateKeeper.h|Device.cpp` 直访
+      `gatekeeper::SizedBuffer::buffer/length`，而树里 `system/gatekeeper/.../gatekeeper_messages.h` 已把它们改私有
+      ⇒ 改用 `size()` / `Data<uint8_t>()`（enroll/verify 改拷贝 `new uint8_t[]`+memcpy，不要再用 `buffer.release()`）。
+    - **③ Mesa 报 `Program 'mesa_clc' not found`**：`device/waydroid/waydroid/BoardConfig.mk` 写死
+      `-Dmesa-clc=system -Dprecomp-compiler=system`。本机无 `mesa_clc`/`vtn_bindgen2` ⇒ 改 `-Dmesa-clc=auto -Dprecomp-compiler=auto`
+      （freedreno 不依赖 OpenCL C 编译器；`auto` 时 `with_clc=false`，不会去构建/要求它）。
+    - 构建脚本：`/mnt/Samsung/waydroid-build/build-vendor-c2.sh`（envsetup+lunch+apply-patches+`m vendorimage -j16`）；
+      全量本地改动快照 `patches/waydroid-buildtree-local-20261011.patch`。
+    - 镜像大小坑：重建的 vendor.img 82 MiB vs OTA 225 MiB——少的只有 `libLLVM22.so`(82M, 软渲)
+      与 `vulkan.{broadcom,lvp,panfrost,radeon,virtio}.so`、`libdrm_{amdgpu,radeon}.so`（非 Adreno，无关）；多了 `egl/libGLES_mesa.so`。
+      **别只看大小就以为镜像不全**，要 `comm` 对比文件清单。
+    - 上机换镜像前先 `waydroid container stop`（否则不能覆 vendor.img），并备份 `/var/lib/waydroid/images/vendor.img`；
+      换后把已烘入镜像的 bind（manifest/XML）从 `config_nodes` 删掉。

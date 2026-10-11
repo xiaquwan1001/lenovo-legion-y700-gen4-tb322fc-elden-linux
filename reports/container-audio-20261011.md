@@ -125,14 +125,36 @@ Android AudioTrack
 
 ---
 
-## 5. 「正确收口」建议（构建侧，替代手工 bind mount）
+## 5. 构建侧收口（2026-10-11 已落地 + 上机验证）
 
-根因都在镜像/设备构建配置，长期应改 `device/waydroid/waydroid/`：
-1. `device.mk`：用 `media_codecs_google_c2_{audio,video,telephony}.xml` 取代 OMX 版 XML。
-2. `manifest.xml`：删掉 `android.hardware.media.omx`（除非把 OMX 服务一并打进 vendor）。
-3. `device.mk`/`init`：`setprop debug.stagefright.ccodec 4`（或改 `waydroid_base.prop` 生成逻辑）。
-4. `init`/device 配置：确保 `system_heap` 加载且 `/dev/dma_heap` 进容器（或让 Android 走 memfd）。
-5. 默认声音设置：启动后种 `alarm_alert/notification_sound/ringtone`。
+镜像侧改动（`/mnt/Samsung/waydroid-build`，lineage-20）：
+1. `device/waydroid/waydroid/device.mk`：3 个 `PRODUCT_COPY_FILES` 改用
+   `media_codecs_google_c2_{audio,telephony,video}.xml`（目标名不变，`media_codecs.xml` 的 include 不用改）。
+2. `device/waydroid/waydroid/manifest.xml`：删掉 `android.hardware.media.omx` `<hal>`。
+3. 补丁：`patches/waydroid-c2-codecs-drop-omx.patch`；本地全量快照 `patches/waydroid-buildtree-local-20261011.patch`。
+
+**构建 `m vendorimage` 踩到的树漂移（非音频，但必须修才能出镜像）**：
+- `hardware/waydroid/gatekeeper/*` 用 `gatekeeper::SizedBuffer` 私有成员 `buffer/length` 编译不过
+  ⇒ 改用公共 API `size()`/`Data<uint8_t>()`（enroll/verify 改拷贝）。
+- Mesa 报 `Program 'mesa_clc' not found`（`BoardConfig.mk` 写死 `-Dmesa-clc=system`）
+  ⇒ 改 `-Dmesa-clc=auto -Dprecomp-compiler=auto`（freedreno 不需要 OpenCL C 编译器）。
+- hwcomposer 报缺 `fractional-scale-v1-client-protocol.h` ⇒ **构建前必须 `apply-waydroid-patches`**
+  （Waydroid 补丁给 `external/wayland-protocols` 加 staging fractional-scale；脚本见
+   `vendor/extra/waydroid-patches/apply-patches.sh`，`mesa-build.sh` 有调用，`m vendorimage` 不会自动调用）。
+- 构建命令：`bash /mnt/Samsung/waydroid-build/build-vendor-c2.sh`（内部 source envsetup + lunch +
+  apply-waydroid-patches + `m vendorimage -j16`）。
+
+**产物与上机**：
+- `out/target/product/waydroid_arm64_only/vendor.img`（82 MiB；原 OTA 镜像 225 MiB）。
+  差异：少了 `libLLVM22.so`(82M) 与 `vulkan.{broadcom,lvp,panfrost,radeon,virtio}.so`、`libdrm_{amdgpu,radeon}.so`
+  （软渲/非 Adreno 用，本机无关），多了 `egl/libGLES_mesa.so`；Mesa 26.1.8(freedreno) 直接烘进镜像。
+- 已换到设备 `/var/lib/waydroid/images/vendor.img`（备份 `/root/vendor.img.pre-c2build-*`），
+  并从 `config_nodes` **删掉** manifest-nomx + 3×codec XML 这 4 条 bind。
+- 上机复测：`boot_completed=1`、`grep media.omx /vendor/etc/vintf/manifest.xml`=0、
+  codec=**53**、SurfaceFlinger running、**闹钟出声**（宿主 sink-input 出现 + `DMABUFHEAPS: Using DMA-BUF heap named: system`）。
+
+**仍需 host 侧（不在镜像内）**：`waydroid_base.prop` 里 `debug.stagefright.ccodec=4`、
+`/etc/modules` 加 `system_heap`、`config_nodes` 保留 `/dev/dma_heap` bind（见 §3）。
 
 ---
 
@@ -161,8 +183,14 @@ Android AudioTrack
 
 ## 6. 未做 / 待确认
 
-- **宿主整机重启**回归（本轮只做了 `rc-service waydroid-container restart` 级别的干净重启；
-  `/etc/modules`、`base.prop`、`config_nodes` 都在持久盘，理论必过，但未整机验证）。
+- **宿主整机重启**回归：本轮做过 `waydroid-container restart` + 换 vendor.img 后的干净重启；
+  `/etc/modules`、`base.prop`、`config_nodes` 全在持久盘，理论必过，但未整机 cold boot 验证。
+- **容器 emulated storage**：`sm list-volumes all` = `emulated;0 unmountable`，
+  `/storage/emulated/0` 非 FUSE 挂载（vold 无 fstab/FUSE）；导致 `getExternalFilesDir()` 返回 null，
+  **所有写外部存储的录音 app（含自带 `org.lineageos.recorder`）都崩**（属存储缺口，与音频无关，另立任务）。
+  注意：本轮 `apply-waydroid-patches` 里有 `system/vold/0007-vold-Disable-AbortFuseConnections.patch`，
+  但 vold 在 **system.img**，重建 vendor 不会更新它。
 - `system_heap` 常驻是否与 Q24（相机×熄屏）有交互：Q24 已定「日常零相机模块」，`system_heap` 单独加载
   在历史相机 bring-up 中本就是必需的，预计无影响；未做长时空闲对照。
-- ~~录音（容器内 capture）未测~~ → 2026-10-11 已测可用（见 §5.5）；剩「app 级」验收受容器 emulated storage 阻塞（另立）。
+- Mesa bind mount（`/root/wd/mesa/lib64/*`）现在与镜像内 Mesa 重叠（镜像已烘入 26.1.8）；
+  未核对两者是否逐字节相同，暂保留 bind（无害）。
