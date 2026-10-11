@@ -78,7 +78,7 @@
 > **SSOT**：任务状态、完成度、样本数一律以 `TASKS.md` §0（总览）/ §1（G1）/ §5（Q 项）为准；
 > 单元与镜像形态以 `DEVICE.md` §1.1/§2.2 为准。**本节只回答「现在还没解决什么」，任何数字都不在此维护。**
 
-- **完成度**：G1 ≈90% · G2 ≈45% · G3 PoC ✅（数字权威 = `TASKS.md` §0）。
+- **完成度**：G1 ≈90% · G2 ≈50% · G3 PoC ✅（数字权威 = `TASKS.md` §0）。
 - **Linux 侧未解（3 项，按影响排序）**：
   ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。根因已定案=冷起首次 DSI PLL/PHY 未稳定锁定 → bonded 双 DSI 首条 DCS 的 cmd-DMA hang（冷起 ~60%，冷起失效有 NOCARD/STORM 两模式）。**⚠️ 2026-10-10 夜「按内核二进制确定性」说法已被溯源审计降级（`reports/q28-binary-determinism-provenance-20261010.md`、`PITFALLS #171`）：原台账 21 发仅 7 发有原始日志；所谓 5,040,884 B 二进制差主要是 `LOCALVERSION` 长度导致的 4 字节 `.rodata` 平移（`.text` 仅 26 个 word、全为地址立即数）；且同一 vk64.img 在冷 POR 路径 3/3=STORM。⇒ 现口径=「在 reboot2 暖路径上 vk64 亮、vk89/vk64c 不亮，真因未定」。** **【2026-10-10 夜②：同一 `boot-q28-oct8.img` 同晚同路径 5 发=GOOD/STORM/STORM/GOOD/STORM ⇒ 同镜像非确定；且 `storm=0` 的干净 GOOD 3/3 数秒内整机冻死、`storm>0` STORM 4/4 存活 ⇒ 判 GOOD 必须加**存活门**（`PITFALLS #172`、`reports/q28-layout-ab-20261010.md`）。】** 现状/判据/下一步只读 SSOT `reports/q28-DOSSIER.md` 与 `TASKS.md` §5 Q28；**【2026-10-11 新增：NOCARD 与新编镜像的 `LOCALVERSION` 强相关（同源同 config，`-vk64` GOOD 1/1 vs `-vk93-cleanctl` NOCARD 3/3）；见 `reports/q28-DOSSIER.md` §m、`PITFALLS #175`。】**
   ② **Q24 熄屏 × 相机**（🆕 2026-10-11 最小触发重定 = **`camcc-sm8750` + `cambistmclkcc-sm8750` 配对 + 真实熄屏**；单独任一不触发，历史「cambist 单模块」否证；FIX-3 实测挂死）→ 用户裁决=互斥二选一：日常零相机模块（熄屏安全），需要时 `cam-mode.sh on/off`。详见 `TASKS.md` G1-33 / §5 Q24、`reports/q24-repro-20261011.md`、`PITFALLS #173–#179`；
