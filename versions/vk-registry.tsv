@@ -188,3 +188,4 @@ vk99	q28	2026-10-11	Q28 构建身份实验臂 sham2：base + 一行常量 pr_inf
 vk100	q28	2026-10-11	Q28 构建身份实验臂 base2：与 vk97 同源码重编（仅 build counter 不同）；冷起 **GOOD 2/2** ⇒ 决定因素是版本串内容、非重编随机性
 vk101	q28	2026-10-11	Q28 构建身份实验臂 empty：base + 空提交（零代码，提交 8d5bdc16705f）；冷起 NOCARD 1/1 ⇒ 空提交亦翻，坐实版本串身份法则
 vk102	c1	2026-10-11	**C1 路由内核（钉死 UTS）**：clean/base `5d01d3324` + `patches/config-vk95-c1routing.bak`（IP_ADVANCED_ROUTER/IP_MULTIPLE_TABLES…）+ `CONFIG_LOCALVERSION_AUTO=n` 且 `LOCALVERSION=-vk64-gd02658e63cf6` ⇒ **UTS 逐字=GOOD 串**；冷起 **GOOD 1/1**、`ip rule` 上机生效（0/32766/32767）；镜像 out/boot-elden-vk102-c1pin.img（107.7 MB 只能 fastboot boot）。**实证 #192 法则可控**：改内核/config 只要钉死版本串仍 GOOD ⇒ 冷起 A/B 可测补丁。容器端 netd 装路由失败（待查）
+vk103	c1	2026-10-11	C1 路由内核（IPv4+IPv6 多路由表）：clean/base `5d01d3324` + `patches/config-vk103-c1routing6.bak`（IP_ADVANCED_ROUTER/IP_MULTIPLE_TABLES/IPV6_MULTIPLE_TABLES）+ PINUTS 钉死 UTS=vk64 串；目标=让 netd RouteController 自建 per-network 路由（去 workaround）；镜像 out/boot-elden-vk103-c1r6.img

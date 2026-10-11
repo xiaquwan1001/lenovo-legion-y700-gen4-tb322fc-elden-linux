@@ -91,3 +91,5 @@ vk101-empty-lv64	num_ne_tag	Q28 构建身份实验臂 empty（base + 空提交�
 #   以验证「改内核/改 config 只要版本串一致仍冷起 GOOD」（PITFALLS #192）。源提交不打 vk102 tag ⇒ num_ne_tag。
 vk102-c1pin	num_ne_tag	钉死 UTS 的 C1 路由内核（源 5d01d3324 含 ADSP DT），刻意复用 vk64 串
 vk102-c1pin	uts_dup	同上：刻意复用 vk64 的 UTS 串（验证版本串身份法则可控）
+vk103-c1r6	num_ne_tag	C1 路由内核(IPv4+IPv6)，刻意钉死 UTS=vk64 串（PINUTS）；源提交不打 vk103 tag
+vk103-c1r6	uts_dup	同上：刻意复用 vk64 的 UTS 串
