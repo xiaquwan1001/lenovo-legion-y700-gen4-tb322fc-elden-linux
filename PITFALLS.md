@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#187**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#188**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1421,3 +1421,10 @@
       `dbus-send --system --print-reply --dest=org.freedesktop.login1 /org/freedesktop/login1/session/<ID> org.freedesktop.login1.Session.SetBrightness string:backlight string:aw99706-backlight uint32:1200`，读 `/sys/class/backlight/aw99706-backlight/brightness` 核对。（`busctl call` 同参可能因签名自检返回 rc=1，用 `dbus-send` 更稳。）
     - **坑 3：本机 `CONFIG_INPUT_UINPUT` 未开、无 `/dev/uinput`** ⇒ **不能注入触摸** ⇒ 无法自动打开 Phosh 快速设置/拖滑块；纯 GUI 交互类验收（拖拽、点击磁贴）仍需人手或用其它注入通道。
     - **坑 4：主题态要判对**：`color-scheme` 三态 `default`→portal `uint32 0`→**浅色**；`prefer-dark`→`1`→深色；`prefer-light`→`2`→浅色。`gtk-theme` 必须是 **`Adwaita`**（不是 `Adwaita-dark`，后者 GTK3 解析失败回退浅色，见 G1-26 根因）。验证命令：`gdbus call --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop --method org.freedesktop.portal.Settings.Read org.freedesktop.appearance color-scheme`。证据 `reports/userland-dark-brightness-verify-20261011.md`、`reports/ui-20261011/`。
+
+188. **★Waydroid 传感器三条路线的死结（2026-10-11 实机复核，C4）：路线 A 确定性不可用；装 `waydroid-sensors` 会关 stub 且无 HAL ⇒ 容器卡 boot。**
+    - **本机传感器数据只在用户态**：SSC/QRTR（hexagonrpcd-adsp-sensorspd）+ `iio-sensor-proxy`/`libssc` 挂 `net.hadess.SensorProxy`；**内核 `/sys/bus/iio` 恒空**。
+    - **路线 A（上游 `waydroid-sensord` + `sensorfw`）= 确定性死**：`waydroid-sensord` 用 **system D-Bus `com.nokia.SensorService`（sensorfw）** 取数；Alpine `sensorfw` 0.15.1-r2 的 24 个 adaptor **无 SSC/libssc 后端**，只有 `iiosensorsadaptor`（直读内核 IIO，本机空）⇒ 即使 sensorfw 起了也只能注册**空列表** HAL。实机：装了 `waydroid-sensors` 包后跑了 `waydroid-sensord /dev/hwbinder` — **先崩在 sensorfw 后端创建**（`com.nokia.SensorService` 未提供 → `Failed to create …Sensor` → GLib-CRITICAL → `Aborted`），**早于** servicemanager wait。具体到「只用错 binder 设备所以 hang」的假说：本机 `/dev/anbox-hwbinder` 与 `/dev/hwbinder` 在容器起后**都存在**，但 daemon 根本没活到那一步。
+    - **`waydroid-sensord` 取 argv[1] 作 binder 设备**（上游 `service.cpp`），缺省 `/dev/anbox-hwbinder`；要注到容器的 hwservicemanager 得显式 `waydroid-sensord /dev/hwbinder`（两个 binder 域不同）。但仅修 argv 不够（见上）。
+    - **装 `waydroid-sensors` 的副作用（实机复现）**：包一装，Waydroid `images.py:155` 不再设 `waydroid.stub_sensors_hal`；若没有能注册的 HAL ⇒ `sensorservice` 起不来 ⇒ **容器卡 bootanim**（`waydroid shell -- getprop sys.boot_completed` 长时拿不到）。回退 `apk del waydroid-sensors` + 重启 container/session ⇒ `boot_completed=1`、`dumpsys sensorservice` = `No Sensors on the device`（stub）。
+    - **结论/下一步**：不碰 `/vendor` 的 **gbinder 注入 daemon**（路线 C）是唯一稳路——复用上游 `service.cpp` 的 HIDL 1.0 注册段 + 我们已验证的宿主数据源（`scripts/eldroid-sensord` UDP / `libssc`）。若走自编 HIDL service（路线 B）则至少要改三处（加 `SENSOR_FLAG_DATA_INJECTION`、`poll` 不要无限阻塞用 `wait_for(100ms)` 空返、flush 返回 OK）。**证据：`reports/waydroid-sensors-next-20261011.md`（含 §5 编排者复核）、`archive/topics/C4-SENSORS-2026-10-11.md`、`PITFALLS #185`。
