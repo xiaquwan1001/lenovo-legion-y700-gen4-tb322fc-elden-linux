@@ -45,7 +45,14 @@ load aw86927
 load novatek-nvt36xxx-spi
 load aw99706
 
+# net: Waydroid container networking (PITFALLS #184). bridge pulls llc/stp via
+# modules.dep; veth is the container end of the bridge. On a RAM boot these MUST
+# load before switch_root or the initramfs module files are gone afterwards.
+load bridge
+load veth
+load fuse
+
 # NOTE 2026-10-09: lsmod prints names with '_' (dashes become underscores), so the
 # counter below must use underscore spellings -- the original pattern used dashes for
 # snd-soc-sc8280xp/novatek-nvt36xxx-spi and under-reported 4 of 7.
-echo "[payload] done: $(lsmod 2>/dev/null | grep -cE '^(ath12k|ath12k_wifi7|snd_soc_sc8280xp|snd_q6apm|aw86927|novatek_nvt36xxx_spi|aw99706) ') payload modules loaded"
+echo "[payload] done: $(lsmod 2>/dev/null | grep -cE '^(ath12k|ath12k_wifi7|snd_soc_sc8280xp|snd_q6apm|aw86927|novatek_nvt36xxx_spi|aw99706|bridge|veth|fuse) ') payload modules loaded"
