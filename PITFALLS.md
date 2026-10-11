@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#186**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#187**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1410,3 +1410,14 @@
     - **修**：给 ADSP fastrpc 节点加 `qcom,non-secure-domain;`（1 行；内核提交 `5d01d3324`）→ 重编 DTB `5d658a2c…` → 打包 `vk94`（= 当年 vk72 逐字节相同）→ 刷 boot_b。实测：`/dev/fastrpc-adsp` 出现、`HasAccelerometer/AmbientLight/Proximity=true`、`monitor-sensor` 实时出 accel/light/compass。
     - **上游一致**：Linux 其它 Qualcomm SoC（eliza/sc8280xp/agatti/sdm630/660…）的 ADSP fastrpc 节点都带该属性 ⇒ 这一行是上游风格、应随 M3 板支持系列向上游提。
     - **教训（重要）**：这行 2026-10-09 本地加过（DTB 产物 `out/sm8750-lenovo-elden-adsp-nonsec.dtb` = 旧 vk72 用的），但**未提交**，2026-10-10「clean/base」重置时丢失 ⇒ 传感器静默回退而无人察觉。**设备级修好就提交进树**（本次已提交）。判据：`ls /dev/fastrpc-adsp` + `dbus-send … HasAccelerometer`。
+
+187. **★桌面用户态「客观截屏复核」方法 + 两个易误判点（gsd-power Screen 接口 / g-c-c 需 GNOME 身份）（2026-10-11，G1-26/27/28 收口时摸清）。**
+    - **设备侧截屏**：`grim` 已装（无输入注入也能截）。用会话用户+Wayland 环境跑：
+      `setpriv --reuid=1000 --regid=1000 --init-groups env XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 grim /tmp/x.png`；再 `scp` 回主机目视。
+      ⇒ 从此「深色是否生效 / 滑块在不在 / 磁贴在不在」不用靠猜，截屏即证据（比 GTK 无头探针更直接）。注意 **Phosh shell 自身恒深色**，判 GTK 应用主题要开一个真 GTK4 应用（如 `gnome-control-center`）再截。
+    - **坑 1：`gnome-control-center` 拒绝在非 GNOME/Unity 下启动**（`Running gnome-control-center is only supported under GNOME and Unity, exiting`）⇒ 启动时要显式给 `XDG_CURRENT_DESKTOP=GNOME XDG_SESSION_TYPE=wayland`（Phosh 会话里是 `Phosh:GNOME`，我们手工 setsid 起时必须自带）。
+    - **坑 2：`gsd-power` 不导出 `org.gnome.SettingsDaemon.Power.Screen` 接口**（本机 `gdbus introspect /org/gnome/SettingsDaemon/Power` 只见 `…Power.Keyboard`）⇒ **g-c-c 的 Power 面板没有亮度行、`gdbus … Power.Screen Brightness` 报 `No such interface`**。这**不等于**「亮度坏」：Phosh 的快速设置滑块走的是**自己的 `PhoshBacklight`**（`src/backlight-sysfs.c`，只调 logind `Session.SetBrightness`），与 gsd-power 无关。别拿 g-c-c 没有亮度行当 G1-28 失败证据。
+    - **亮度复现的正规调用**（root 或会话用户均可，需**真 logind 会话**否则早期会返回 `EISDIR`）：
+      `dbus-send --system --print-reply --dest=org.freedesktop.login1 /org/freedesktop/login1/session/<ID> org.freedesktop.login1.Session.SetBrightness string:backlight string:aw99706-backlight uint32:1200`，读 `/sys/class/backlight/aw99706-backlight/brightness` 核对。（`busctl call` 同参可能因签名自检返回 rc=1，用 `dbus-send` 更稳。）
+    - **坑 3：本机 `CONFIG_INPUT_UINPUT` 未开、无 `/dev/uinput`** ⇒ **不能注入触摸** ⇒ 无法自动打开 Phosh 快速设置/拖滑块；纯 GUI 交互类验收（拖拽、点击磁贴）仍需人手或用其它注入通道。
+    - **坑 4：主题态要判对**：`color-scheme` 三态 `default`→portal `uint32 0`→**浅色**；`prefer-dark`→`1`→深色；`prefer-light`→`2`→浅色。`gtk-theme` 必须是 **`Adwaita`**（不是 `Adwaita-dark`，后者 GTK3 解析失败回退浅色，见 G1-26 根因）。验证命令：`gdbus call --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop --method org.freedesktop.portal.Settings.Read org.freedesktop.appearance color-scheme`。证据 `reports/userland-dark-brightness-verify-20261011.md`、`reports/ui-20261011/`。
