@@ -338,3 +338,27 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 ### n-4 一句话（供引用）
 
 > **Q24 与 Q28 是两条独立根因**：Q28 = 冷起 DSI PLL/PHY/命令 DMA 的 bring-up 竞态；Q24 = 相机双时钟控制器扰动 RPMh 电源域后、真实熄屏触发的硬复位。**关联只体现在"Q28 决定 Q24 能否被测"这一层**。
+
+## o) ★2026-10-11 深夜定案：冷起 GOOD/NOCARD = 内核构建身份（UTS 版本串）法则；冷起 A/B 测补丁作废
+
+**方法**：全部**物理 POR → Vol-+电源 进 fastboot → `fastboot boot`**（零写盘，`boot_b` 全程未动）；判定=`scripts/q28-devprobe.sh` 三态 + `card0` 硬门 + **65 s 存活门**；一键取样脚本 `scripts/q28-cold-run.sh`；臂构建脚本 `scripts/q28-build-arm-lv64.sh`；原始证据 `logs/q28-cold-*`、`reports/trials/index.tsv`（`*q28cold*`）。
+
+**十二发冷起结果**（同提交 `d02658e63`、同 config `a383cdb9`、同 DTB、同 `LOCALVERSION=-vk64`）：
+
+| 臂(vk) | 相对 base 的改动 | UTS | 冷起 |
+|---|---|---|---|
+| base `vk97` | —（未改源码） | `7.2.0-debug-vk64-gd02658e63cf6` | **GOOD 3/3** |
+| base2 `vk100` | 同源码重编（仅 build counter） | 同上 | **GOOD 2/2** |
+| empty `vk101` | **空提交（零代码）** | `…-vk64-g8d5bdc16705f` | NOCARD 1/1 |
+| sham2 `vk99` | **+一行常量 `pr_info`** | `…-vk64-g94e9232e1eb4` | NOCARD 2/2 |
+| sham1 `vk98` | +`clk_round_rate` 查询（不赋值） | `…-vk64-g31e652c57d2d` | NOCARD 1/1 |
+| round `vk96` | +round(byte-clk 取整) 补丁 | `…-vk64-g66b5604d1898` | NOCARD 3/3 |
+
+**结论**：
+1. **UTS 逐字=`…-vk64-gd02658e63cf6` ⇒ GOOD（5/5）；其它任何构建身份 ⇒ NOCARD（7/7）。**
+2. base 与 base2 版本串逐字相同、二进制不同（build counter/时间戳）却都 GOOD ⇒ 决定因素是**版本串内容**，非「重编随机性」；**空提交（零代码）也翻** ⇒ **非补丁逻辑**。机理猜测=版本串内容→`Image.gz` 压缩尺寸/启动镜像布局微异→落在 DSI probe 竞态刀刃两侧（延续 §k/§m、`PITFALLS #171/#172/#175`；本轮把「长度」升级为「内容」）。
+3. **方法学后果**：**冷起 A/B 无法评估 Q28 补丁**（改代码即改变被观测对象）。`round`/Method-B 的 NOCARD **不构成「修复无效」证据**；`vk90/vk92` 的 NOCARD 判定同样作废。
+4. **可复用台架** = `d02658e63`+`-vk64`（`out/boot-elden-vk97-base-lv64.img` / `vk100-base2-lv64.img`），冷起 GOOD 5/5。**设备日常 boot_b 即该身份**，本次「纯净冷起（不 fastboot 任何镜像）」实测 GOOD（`card0`+`DSI-1 connected`+`phoc/phosh=1`+`storm=0`）。
+5. **Q28 不构成日常 / Waydroid(G2) 的现实阻塞**；此前「Q28 挡 Waydroid」实为在 RAM 起实验内核（NOCARD 倾向）上验证所致。
+
+**未决 / 若要真正修 Q28**：需要一个「改代码但不改构建身份」的对照手段（当前无），或改为**失败触发的鲁棒恢复**（如 d02658e63 的 `nt36536` 重试已使该身份冷起 GOOD）而非时序微调；或走 §"解耦"路线（如 `vkms` 虚拟显示让上层不依赖面板）。详见 `PITFALLS #192`。

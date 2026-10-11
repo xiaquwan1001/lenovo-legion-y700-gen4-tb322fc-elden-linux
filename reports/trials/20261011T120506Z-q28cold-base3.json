@@ -1,0 +1,18 @@
+{
+  "label": "q28cold-base3",
+  "ts": "2026-10-11T12:05:06Z",
+  "vk": "vk97-base-lv64",
+  "image": "out/boot-elden-vk97-base-lv64.img",
+  "image_sha256": "8f3548578c20be1b5b77a175f68796b82a0812096ee53d2c95c5e726f047c90f",
+  "manifest": "/home/xuqianhui1001/y700-elden/out/boot-elden-vk97-base-lv64.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk64-gd02658e63cf6",
+  "kernel_payload_sha256": "e832da24d78e5fc017e6fa87e6c18cb014dbe33364ae9e7dd991148a01d56609",
+  "config_sha256": "a383cdb99dfee7a9f7a21c915541af05edf6efa3d2bb7cda552b270a263cbf4d",
+  "dtb_packed_sha256": "386cc9bd5d243425dd342a9acd703f839bcb133318430b77be5ba675b90d10cb",
+  "reset_type": "por",
+  "deploy": "fastboot boot (cold fb after user POR)",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-200326-q28cold-base3",
+  "note": "cold POR; survival gate 65s; see logs"
+}

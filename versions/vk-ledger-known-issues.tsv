@@ -75,4 +75,15 @@ vk88-base-v64	tree_drift	Q28 STORM 台架 base 重打；载荷=vk64 d02658e63（
 #   刻意复用 vk64 内核 out/Image-vk64.gz（d02658e63）以保持在机模块 vermagic 单变量（同 vk62/vk63/vk71/vk72 模式）。
 #   设备已验证：/dev/fastrpc-adsp 出现、HasAccelerometer/AmbientLight/Proximity=true、monitor-sensor 实时出数（PITFALLS #186）。
 vk94	tree_drift	DTB-only 传感器恢复版：打包内核=out/Image-vk64.gz（d02658e63）；构建时树 HEAD=5d01d3324（ADSP non-secure DT 提交）
-vk94	uts_dup5	刻意复用 vk64 的 UTS 串（同 vk62/vk63/vk71/vk72 模式）；非 vk94 自身问题
+vk94	uts_dup	刻意复用 vk64 的 UTS 串（同 vk62/vk63/vk71/vk72 模式）；非 vk94 自身问题（kind 写前缀以容忍 uts_dupN 计数后缀）
+# 2026-10-11 Q28 构建身份法则实验臂（结论见 reports/q28-DOSSIER.md §o、PITFALLS #192）：
+#   均刻意使用 -vk64 版本串（单变量=构建身份），源提交在 q28/* 分支未打 vk tag ⇒ num_ne_tag；
+#   其中 base/base2 与 vk64 同 UTS 串 ⇒ uts_dup。镜像留作台架/证据，臂可经 scripts/q28-build-arm-lv64.sh 重建。
+vk96-round-lv64	num_ne_tag	Q28 构建身份实验臂 round（clean/base d02658e63 + byte-clk 取整补丁 66b5604d1898）；冷起 NOCARD 3/3
+vk97-base-lv64	num_ne_tag	Q28 GOOD 台架 = clean/base d02658e63 未改源码 + LOCALVERSION=-vk64（UTS 逐字 7.2.0-debug-vk64-gd02658e63cf6）；冷起 GOOD 3/3
+vk97-base-lv64	uts_dup	刻意复用 vk64 的 UTS 串（与 vk64 同串不同二进制）
+vk98-sham-lv64	num_ne_tag	Q28 构建身份实验臂 sham（base + clk_round_rate 查询 + pr_info 无赋值，零逻辑改动，提交 31e652c57d2d）；冷起 NOCARD 1/1
+vk99-sham2-lv64	num_ne_tag	Q28 构建身份实验臂 sham2（base + 一行常量 pr_info，提交 94e9232e1eb4）；冷起 NOCARD 2/2
+vk100-base2-lv64	num_ne_tag	Q28 构建身份实验臂 base2（与 vk97 同源码重编，仅 build counter 不同）；冷起 GOOD 2/2 ⇒ 决定因素是版本串内容、非重编随机性
+vk100-base2-lv64	uts_dup	刻意复用 vk64 的 UTS 串
+vk101-empty-lv64	num_ne_tag	Q28 构建身份实验臂 empty（base + 空提交零代码 8d5bdc16705f）；冷起 NOCARD 1/1 ⇒ 空提交亦翻

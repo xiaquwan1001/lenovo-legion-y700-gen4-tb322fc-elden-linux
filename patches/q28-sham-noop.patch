@@ -1,0 +1,18 @@
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 819fe87d5..879bc863b 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -401,8 +401,13 @@ int msm_dsi_runtime_resume(struct device *dev)
+ int dsi_link_clk_set_rate_6g(struct msm_dsi_host *msm_host)
+ {
+ 	struct device *dev = &msm_host->pdev->dev;
++	long q28_sham;
+ 	int ret;
+ 
++	q28_sham = clk_round_rate(msm_host->byte_clk, msm_host->byte_clk_rate);
++	pr_info("q28 sham(no-op): byte %lu -> %ld\n",
++		msm_host->byte_clk_rate, q28_sham);
++
+ 	DBG("Set clk rates: pclk=%lu, byteclk=%lu",
+ 	    msm_host->pixel_clk_rate, msm_host->byte_clk_rate);
+ 

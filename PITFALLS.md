@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#191**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#193**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1472,3 +1472,28 @@
       若宿主有、容器无、config_nodes 也没那条 = 命中本坑。
     - 附带坑：无头驱动 `org.lineageos.recorder` 必须带 `--es extra_filename <name>`，
       否则 `startRecording(null)` → `String.format(null,…)` NPE（不是存储问题）。
+
+---
+
+## 二十四、Q28 冷起判定 = 内核构建身份（版本串）法则 + 冷起 A/B 测补丁作废（2026-10-11 实测）
+
+192. **★Q28「冷起只有背光」的 GOOD/NOCARD 由内核构建身份（UTS 版本串）决定，与补丁逻辑无关；12 发冷起实证。**
+    - 方法/判据（全部**物理 POR → Vol-+电源 进 fastboot → `fastboot boot`**，零写盘；判定=`scripts/q28-devprobe.sh` 三态 + `card0` 硬门 + 65 s 存活门；一键取样=`scripts/q28-cold-run.sh <img> <label>`；原始证据 `logs/q28-cold-*`、`reports/trials/*q28cold*`）：
+      | 臂(vk) | 相对 base 的改动 | UTS | 冷起 |
+      |---|---|---|---|
+      | base `vk97` | —（d02658e63 未改源码） | `7.2.0-debug-vk64-gd02658e63cf6` | **GOOD 3/3** |
+      | base2 `vk100` | 同源码重编（仅 build counter） | 同上 | **GOOD 2/2** |
+      | empty `vk101` | **空提交（零代码）** | `7.2.0-debug-vk64-g8d5bdc16705f` | NOCARD 1/1 |
+      | sham2 `vk99` | **+一行常量 `pr_info`** | `…-vk64-g94e9232e1eb4` | NOCARD 2/2 |
+      | sham1 `vk98` | +`clk_round_rate` 查询（不赋值） | `…-vk64-g31e652c57d2d` | NOCARD 1/1 |
+      | round `vk96` | +round(byte-clk 取整) 补丁 | `…-vk64-g66b5604d1898` | NOCARD 3/3 |
+    - 规律：**UTS 逐字=`…-vk64-gd02658e63cf6` → GOOD（5/5）；其它任何构建身份 → NOCARD（7/7）**。base 与 base2 **版本串逐字相同、内核二进制不同**（build counter/时间戳）却都 GOOD ⇒ 决定因素是**版本串内容**，不是「重编随机性」；**空提交（零代码改动）也翻** ⇒ **不是补丁逻辑**。
+    - 机理猜测：版本串内容不同 → 内核 `Image.gz` 压缩后尺寸/启动镜像布局微异 → 落在 **DSI probe 竞态**的刀刃两侧（与 `#171/#172/#175` 同源；`#175` 只测到「长度」，本轮证明「内容」同样足够）。
+    - **推论（方法学，重要）**：**冷起 A/B 不能用来评估 Q28 补丁**——改代码本身就改变被观测对象（observer effect）。`round`/Method-B 的 NOCARD **不能**当「修复无效」证据（同理 `vk90/vk92` 的 NOCARD 判定作废）。若确要做冷起对照，须先有「改代码但不改构建身份」的手段——当前无。
+    - **可复用台架**：`d02658e63`+`-vk64`（UTS 逐字 `7.2.0-debug-vk64-gd02658e63cf6`），冷起 GOOD 5/5，产物 `out/boot-elden-vk97-base-lv64.img`（`vk97`）/ `vk100-base2-lv64.img`（`vk100`）；臂可经 `scripts/q28-build-arm-lv64.sh` 重建。
+    - **设备日常 boot_b 即该身份**（会话初已稳定跑 3h；本次「纯净冷起」亦 GOOD：`card0`+`DSI-1 connected`+`phoc/phosh=1`+`storm=0`）⇒ **Q28 不构成日常 / Waydroid 的现实阻塞**；此前「Q28 挡 Waydroid」实为在 **RAM 起实验内核（NOCARD 倾向）** 上做验证所致。
+
+193. **`cam-mode.sh status` 恒误报 `CAM-ON`**（显示/Waydroid 必需模块 `system_heap` 被当成相机模块）。
+    - 现象：日常态（无相机）`lsmod` 无 cam/camcc/cambist、`/dev/media*`/`/dev/video*` 皆空，但 `cam-mode.sh status` 仍打印 `camera modules = 1 … CAM-ON：不要熄屏`。
+    - 根因：`scripts/cam-mode.sh`（部署 `/usr/local/sbin/cam-mode.sh`）的 `PAT='camss|cci|camcc|bist|wl2868c|s5kjns|gc08a8|gt9764|leds_qcom|system_heap'` 含 `system_heap`，而它由 `/etc/modules` 常驻加载。
+    - 判真相机：别用该计数——看 `/dev/media*`、`/dev/video*` 数量，或 `lsmod | grep -E 'camcc|cambistmclkcc|qcom_camss'`。

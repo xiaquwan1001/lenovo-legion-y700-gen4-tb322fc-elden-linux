@@ -26,3 +26,15 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-10T15:24:22Z	layout-oct8		warm	fastboot-boot	STORM	a5ace41622f3	reports/trials/20261010T152417Z-layout-oct8
 2026-10-10T15:56:45Z	layout-vk64img-oldinit	vk64	warm	fastboot-boot(old /init)	STORM	15964160bed0	
 2026-10-10T15:56:45Z	layout-a-ram		warm	fastboot-boot RAM-only(no elden_root)	HANG	80ec53eb56ca	
+2026-10-11T11:51:15Z	q28cold-base1	vk97-base-lv64	por	fastboot boot (cold fb after user POR)	GOOD	8f3548578c20	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-194935-q28cold-base1
+2026-10-11T11:54:15Z	q28cold-round1	vk96-round-lv64	por	fastboot boot (cold fb after user POR)	NOCARD	f8d0ebd4f1cd	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-195235-q28cold-round1
+2026-10-11T11:57:30Z	q28cold-base2	vk97-base-lv64	por	fastboot boot (cold fb after user POR)	GOOD	8f3548578c20	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-195550-q28cold-base2
+2026-10-11T12:00:52Z	q28cold-round2	vk96-round-lv64	por	fastboot boot (cold fb after user POR)	NOCARD	f8d0ebd4f1cd	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-195911-q28cold-round2
+2026-10-11T12:05:06Z	q28cold-base3	vk97-base-lv64	por	fastboot boot (cold fb after user POR)	GOOD	8f3548578c20	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-200326-q28cold-base3
+2026-10-11T12:10:23Z	q28cold-sham1	vk98-sham-lv64	por	fastboot boot (cold fb after user POR)	NOCARD	eb6f16a4accf	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-200843-q28cold-sham1
+2026-10-11T12:13:01Z	q28cold-round3	vk96-round-lv64	por	fastboot boot (cold fb after user POR)	NOCARD	f8d0ebd4f1cd	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-201120-q28cold-round3
+2026-10-11T12:16:31Z	q28cold-sham2-1	vk99-sham2-lv64	por	fastboot boot (cold fb after user POR)	NOCARD	74a0fde0b34b	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-201450-q28cold-sham2-1
+2026-10-11T12:19:58Z	q28cold-sham2-2	vk99-sham2-lv64	por	fastboot boot (cold fb after user POR)	NOCARD	74a0fde0b34b	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-201817-q28cold-sham2-2
+2026-10-11T12:25:34Z	q28cold-base2-1	vk100-base2-lv64	por	fastboot boot (cold fb after user POR)	GOOD	c942918f445e	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-202353-q28cold-base2-1
+2026-10-11T12:29:35Z	q28cold-base2-2	vk100-base2-lv64	por	fastboot boot (cold fb after user POR)	GOOD	c942918f445e	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-202755-q28cold-base2-2
+2026-10-11T12:40:38Z	q28cold-empty1	vk101-empty-lv64	por	fastboot boot (cold fb after user POR)	NOCARD	d346a1611c9a	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-203858-q28cold-empty1

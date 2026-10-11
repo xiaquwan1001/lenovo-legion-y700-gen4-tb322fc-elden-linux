@@ -14,7 +14,7 @@
 set -u
 STATE=/var/lib/elden-cam/blank.env
 CAM=/usr/local/sbin/camera-modules-load.sh
-PAT='camss|cci|camcc|bist|wl2868c|s5kjns|gc08a8|gt9764|leds_qcom|system_heap'
+PAT='camss|cci|camcc|bist|wl2868c|s5kjns|gc08a8|gt9764|leds_qcom'
 # 卸载顺序 = 加载顺序的逆序（sensor/flash 先走，时钟最后）
 UNLOAD='gc08a8 s5kjns gt9764 leds-qcom-flash qcom-camss wl2868c-regulator i2c-qcom-cci cambistmclkcc-sm8750 camcc-sm8750'
 
