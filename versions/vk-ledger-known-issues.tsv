@@ -98,3 +98,7 @@ vk104-base-pin	uts_dup	同上：刻意复用 vk64 的 UTS 串
 vk105-round-pin	num_ne_tag	Q28 PINUTS round 臂（刻意钉死 UTS）；源提交不打 vk105 tag
 vk105-round-pin	uts_dup	同上：刻意复用 vk64 的 UTS 串
 vk96-round-lv64	src_unreachable	Q28 未钉 UTS 的 round 臂；其源提交在 q28/round-lv64 分支上被后续 PINUTS 重建覆盖而不可达；结论已由 vk105-round-pin 取代（reports/q28-retro-audit-20261011.md）
+vk106-newK-oldR	num_ne_tag	Q28 STORM 2×2 repack 臂（刻意复用 vk64 UTS）；无独立内核提交
+vk106-newK-oldR	uts_dup	同上：内核复用 vk104，UTS 与 vk64 同串
+vk107-oldK-newR	num_ne_tag	Q28 STORM 2×2 repack 臂（内核复用 vk94）；无独立内核提交
+vk107-oldK-newR	uts_dup	同上：UTS 与 vk64 同串

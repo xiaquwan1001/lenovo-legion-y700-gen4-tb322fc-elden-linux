@@ -52,7 +52,11 @@ fi
 S 'uname -a; echo ---; cat /proc/uptime; echo ---; cat /proc/cmdline' >"$OUT/env.txt" 2>&1
 S 'dmesg' >"$OUT/dmesg.txt" 2>&1
 S 'ls /sys/class/drm/; echo ---; for d in /sys/class/drm/card0-*; do [ -e "$d/status" ] && echo "$(basename $d) status=$(cat $d/status) dpms=$(cat $d/dpms 2>/dev/null)"; done; echo "phoc=$(pgrep -xc phoc) phosh=$(pgrep -xc phosh)"; echo "bright=$(cat /sys/class/backlight/*/brightness 2>/dev/null)"' >"$OUT/drm.txt" 2>&1
-$SSH "$TAB" 'sh -s' < scripts/q28-devprobe.sh >"$OUT/probe.txt" 2>&1 || true
+# prefer the L1/L2-separated v2 judge; fall back to v1 if absent
+PROBE=scripts/q28-devprobe2.sh
+[ -f "$PROBE" ] || PROBE=scripts/q28-devprobe.sh
+$SSH "$TAB" 'sh -s' < "$PROBE" >"$OUT/probe.txt" 2>&1 || true
+grep -oE 'l1=[0-9]+ l2=[0-9]+' "$OUT/probe.txt" >"$OUT/l1l2.txt" 2>/dev/null || true
 V=$(grep -oE 'VERDICT=[A-Z]+' "$OUT/probe.txt" | head -1 | cut -d= -f2); V=${V:-UNKNOWN}
 
 # --- 4) survival gate (>=60s interactive) ----------------------------------

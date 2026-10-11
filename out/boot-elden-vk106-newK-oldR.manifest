@@ -1,0 +1,18 @@
+# boot image manifest — Q28 STORM 2x2 factorial (repack; generated 2026-10-11)
+version=vk106-newK-oldR
+image=out/boot-elden-vk106-newK-oldR.img
+image_sha256=0e4eae912841a254f7844939bca9cc757816dc7348c0e366e3dce2eda8a0b6de
+image_size=85319680
+kernel_release=7.2.0-debug-vk64-gd02658e63cf6
+kernel_uts=Linux version 7.2.0-debug-vk64-gd02658e63cf6
+kernel_payload_sha256=553c315c608e092082f0dad84cc26f1b5a8fce141eb1a5a66178658fa01ed5b1
+kernel_image_sha256=5de979985001f0fbd40d31e7ef7e25f7e79278128dafb74b6189d2a66126fab4
+kernel_packed_from=/tmp/q28audit/vk104/kernel
+kernel_packed_sha256=5de979985001f0fbd40d31e7ef7e25f7e79278128dafb74b6189d2a66126fab4
+dtb_packed_from=/tmp/q28audit/vk104/dtb
+dtb_packed_sha256=386cc9bd5d243425dd342a9acd703f839bcb133318430b77be5ba675b90d10cb
+config_sha256=af8a2d697755d5948669e4089bdccc9de5bbcd680b45a1c6a4c84ebb21a6b159
+ramdisk=/tmp/q28audit/vk94/ramdisk
+ramdisk_sha256=35823240fcd15b4b08e1219e9a849a9abaa997bca7c11fd7f3e6e477c9c0478c
+kernel_source=vk104-base-pin (clean/base + PINUTS)
+note=2x2 factorial: kernel-build (old vk94 vs new vk104-base-pin) x ramdisk (old 35823240 vs modular 28c02622); no kernel recompiled
