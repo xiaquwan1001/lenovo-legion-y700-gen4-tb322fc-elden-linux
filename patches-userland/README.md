@@ -10,8 +10,10 @@
 |---|---|---|---|
 | `0001-phoc-honor-any-mode.patch` | phoc | 0.55.1 | 运行时可切到**非 preferred** 刷新率（原来只认 preferred，切档被忽略，屏恒 165 Hz） |
 | `0002-phosh-report-supported-scale.patch` | phosh | 0.55.0 | `GetCurrentState` 上报的 scale 吸附回 supported 列表，修复 g-c-c 非整数比例恒显 100% |
+| `0003-phosh-auto-rotation-quick-setting.patch` | phosh | 0.55.0 | 新增「自动旋转」快速设置磁贴插件（读写内置旋转磁贴同一个 `orientation-lock`，显式开关） |
+| `alpine-phosh-{use-after-free-fix,extend-timeout-with-pid}.patch` | phosh | 0.55.0-r2 | Alpine aports 的两个 phosh 补丁（保持与发行版包一致）；构建脚本会应用 |
 
-两个补丁都只是**行为修正**，不引入新协议、不改 ABI。
+0001/0002 是**行为修正**（不改协议/ABI）；0003 是**纯新增**的快速设置插件（不动核心、不新增 gsettings key）。
 
 ### 0001 根因（phoc）
 `src/output.c: phoc_output_config_head_to_output_config()` 把 `zwlr_output_configuration_head_v1`
@@ -28,6 +30,17 @@ DPI 推导的有理数（如 8/3 → 2.6666667461395264）。二者不相等，�
 用 `G_APPROX_VALUE(..., DBL_EPSILON)` **精确匹配**，匹配失败即回退显示 100%（整数档在网格上，故正常）。
 补丁在 `GetCurrentState` 里把上报 scale **吸附到最近的 supported scale**（仅当误差 ≤0.01，即量化误差内），
 不改变真实应用的 scale（phoc 侧仍是精确的 8/3，逻辑分辨率不糊）。
+
+### 0003 自动旋转磁贴（phosh）
+新增 in-tree 插件 `plugins/auto-rotation-quick-setting/`（照 `dark-mode-quick-setting` 模板），
+读写与内置旋转磁贴同一个持久 key `org.gnome.settings-daemon.peripherals.touchscreen::orientation-lock`：
+`active = !orientation_lock`，点击翻转；图标 `rotation-allowed-symbolic`/`rotation-locked-symbolic`（Adwaita 已有）。
+**不动核心、不新增 key、不用导出的 libphosh 符号**。启用 = `gsettings set sm.puri.phosh.plugins quick-settings` 里加上插件名
+（`install-on-device.sh` 自动 append）。详见 `reports/userland-auto-rotation-toggle-20261011.md`。
+
+> 通用插件机制（下次再加插件时有用）：插件必须在 `plugins/meson.build` 的 `quick_setting_plugins` 列表里；
+> 产物 = `/usr/lib/phosh/plugins/libphosh-plugin-<name>.so` + `<name>.plugin`；用 `gsettings`（`sm.puri.phosh.plugins`）启用；
+> 插件**不链 libphosh**，符号由 phosh 可执行文件经 `--dynamic-list` 导出（所以未导出的 API，如 `phosh_shell_get_rotation_manager`，插件用不了）。
 
 ## 构建（设备上，aarch64 原生）
 
@@ -55,6 +68,14 @@ rc-service greetd stop
 cp <build>/phoc  /usr/bin/phoc
 cp <build>/phosh /usr/libexec/phosh
 rc-service greetd start
+
+# 插件（自动旋转磁贴）
+install -m0644 <build>/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.plugin /usr/lib/phosh/plugins/
+install -m0755 <build>/plugins/auto-rotation-quick-setting/libphosh-plugin-auto-rotation-quick-setting.so /usr/lib/phosh/plugins/
+# 启用（写用户 dconf）
+gsettings set sm.puri.phosh.plugins quick-settings "['auto-rotation-quick-setting']"
+
+# 或一键（构建+安装+启用，幂等）：设备上跑 install-on-device.sh
 
 # 回退（设备上原始二进制已备份）
 cp /root/build/backup/phoc.0.55.1.orig  /usr/bin/phoc

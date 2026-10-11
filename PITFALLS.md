@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#182**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#183**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1378,3 +1378,12 @@
     - **修** = `patches-userland/0001-phoc-honor-any-mode.patch`（`if (head->state.mode)`，1 行）。已验证 144/120/90/60 均可切。
     - 上游核对（2026-10-11）：phoc `main`（0.58.0）仍是旧写法。★关键：上游 `47099669`（2026-03-21，"output: Actually handle preferred mode"，修 issue #429/MR !771）**只把 `!preferred` 翻成 `preferred`，修了一半**——它那台笔记本 120/60 两个档都标了 `preferred`，故凑效；**单 preferred 面板（本机）非 preferred 档仍走 else 分支**。正确谓词就是 `head->state.mode`（custom_mode 只在没给 mode 时才被填）。
     - **复现 g-c-c 行为的坑**：phosh 只在 ApplyMonitorsConfig `method==2(PERSISTENT)` 时真正应用；`method=1` 只校验后返回 OK（看似成功实则没生效）。
+
+183. **★Phosh quick-setting 插件机制（自己编译加控件时的必知）：in-tree 插件要加进 `plugins/meson.build`；插件不链 libphosh，符号靠 phosh 可执行文件 `--dynamic-list` 导出（未导出的 API 用不了）。**（2026-10-11，新增自动旋转磁贴时摸清）
+    - 产物与路径：`shared_module` → `/usr/lib/phosh/plugins/libphosh-plugin-<name>.so`；同目录还需 `<name>.plugin`（desktop 格式）；两者都要装。
+    - 注册：`plugins/meson.build` 的 `quick_setting_plugins`（或 lockscreen/status-icon）列表里加名 → `subdir(plugin)` 才会构建。
+    - 启用：gsettings `sm.puri.phosh.plugins::quick-settings`（strv）里加插件名；Phosh 监听 `changed::` 热加载。
+    - **链接模型**：插件 `shared_module` 的 `dependencies: [plugin_dep]` **不含 libphosh**；libphosh 符号在运行时由 **phosh 可执行文件**（`-Wl,--dynamic-list=phosh-exported-symbols.txt`）提供 ⇒ **只有写进 `src/phosh-exported-symbols.txt.in` 的符号插件才能用**（例：`phosh_shell_get_rotation_manager` 不在列表 ⇒ 插件调不了，只能走 gsettings）。
+    - 模板资源：`gtk_widget_class_set_template_from_resource` 路径必须 == gresource 前缀 + `qs.ui`，类名必须匹配 `G_DECLARE_FINAL_TYPE` 的类型名，否则只报 critical warning（磁贴空白而非崩溃）。
+    - 离线写用户 dconf：`su -s /bin/sh <user> -c "HOME=... dbus-run-session -- gsettings set ..."`（不需真会话在跑）。
+    - 实例：`patches-userland/0003-phosh-auto-rotation-quick-setting.patch` + `reports/userland-auto-rotation-toggle-20261011.md`。

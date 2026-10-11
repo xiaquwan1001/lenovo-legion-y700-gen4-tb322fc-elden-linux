@@ -66,17 +66,17 @@ ssh root@192.168.7.1 'cd /root/persistent-overlay && sh restore.sh'
 
 根因：本 build 的 iio-sensor-proxy 经 SSC/QRTR 后端（`/sys/bus/iio` 恒空但 `HasAccelerometer=true`）；SSC 加速度计要 ADSP 起来出 svc400（冷启数十秒）。iio 3.9「只扫一次即放弃」（G1-34），若开机时 proxy 抢在 svc400 之前起，`net.hadess.SensorProxy` 整轮无加速度计 → phosh `rotation-manager` 停 `MODE_OFF` → 自动旋转 tile 置灰、方向锁死。修复=proxy 等 svc400 再起。设备侧运行时已改（备份 `/etc/init.d/iio-sensor-proxy.bak-timing-*`）；**待下次冷启最终验证**。UI 说明：phosh 无独立“自动旋转”开关，只有“方向锁定”tile（自动旋转开着时不显示方向选择栏），属 phosh 正常模型。
 
-## 追加（2026-10-11）：用户态显示修正（phoc 刷新率 + phosh 缩放上报）
+## 追加（2026-10-11）：用户态显示修正 + 自动旋转磁贴（phoc/phosh）
 
 | 文件 | 内容 | 还原方式 |
 |---|---|---|
-| `userland-display/install-on-device.sh` | 装构建依赖 + 下载官方 release 源码 + 打补丁 + 重编 + 备份/替换 `/usr/bin/phoc`、`/usr/libexec/phosh` + 写 marker | restore.sh 已自动调用；跳过＝`SKIP_USERLAND_DISPLAY=1` |
-| `userland-display/build-phoc-phosh.sh`、`0001/0002*.patch`、`build-deps.txt` | 构建脚本 / 补丁 / 依赖清单（**真源 = 仓库 `patches-userland/`，此处为设备侧副本**） | 由 install 脚本使用 |
+| `userland-display/install-on-device.sh` | 装构建依赖 + 下载官方 release 源码 + 打补丁（含新增自动旋转插件）+ 重编 + 备份/替换 `/usr/bin/phoc`、`/usr/libexec/phosh` + 装 `/usr/lib/phosh/plugins/auto-rotation-quick-setting*` + 启用插件 + 写 marker（`display2`） | restore.sh 已自动调用；跳过＝`SKIP_USERLAND_DISPLAY=1` |
+| `userland-display/build-phoc-phosh.sh`、`000{1,2,3}-*.patch`、`alpine-phosh-*.patch`、`build-deps.txt` | 构建脚本 / 补丁 / 依赖清单（**真源 = 仓库 `patches-userland/`，此处为设备侧副本**） | 由 install 脚本使用 |
 
-- 修的两个 bug：①phoc 只认 preferred mode ⇒ 非 preferred 刷新率档被忽略（屏恒 165 Hz）；②phosh `GetCurrentState` 上报的 scale 不在 `supported_scales` 里 ⇒ g-c-c 比例行显 100%。
-  根因/证据：`reports/userland-display-scale-refresh-20261011.md`、`PITFALLS` #182/#77。
+- 三个改动：①phoc 只认 preferred mode ⇒ 非 preferred 刷新率档被忽略（屏恒 165 Hz）；②phosh `GetCurrentState` 上报的 scale 不在 `supported_scales` 里 ⇒ g-c-c 比例行显 100%；③新增「自动旋转」快速设置磁贴（插件，读写内置旋转磁贴同一个 `orientation-lock`）。
+  根因/证据：`reports/userland-display-scale-refresh-20261011.md`、`reports/userland-auto-rotation-toggle-20261011.md`、`PITFALLS` #182/#77。
 - ⚠️ **`userland-display/` 与 `patches-userland/` 是两份拷贝**（设备侧无法访问仓库）。改了 `patches-userland/` 里的任一文件，要**同步**到 `userland-display/`（反之亦然）。
-- ⚠️ 这两个二进制是**非包管理**的；后续 `apk upgrade` 会把 `phoc`/`phosh` 换回原版（upstream 未修前），需重跑 install-on-device.sh。
+- ⚠️ 这些二进制/插件是**非包管理**的；后续 `apk upgrade` 会把 `phoc`/`phosh` 换回原版（upstream 未合并前），需重跑 install-on-device.sh。
 
 ## freeze-trace（2026-10-09 新增，PITFALLS #106 死挂取证）
 

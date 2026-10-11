@@ -1,0 +1,271 @@
+diff -ruN a/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.c b/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.c
+--- a/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.c	1970-01-01 08:00:00.000000000 +0800
++++ b/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.c	2026-10-11 12:53:41.467486987 +0800
+@@ -0,0 +1,107 @@
++/*
++ * Copyright (C) 2026 The Phosh Developers
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ */
++
++#include "auto-rotation-quick-setting.h"
++
++#include <glib/gi18n.h>
++
++/**
++ * PhoshAutoRotationQuickSetting:
++ *
++ * An explicit on/off switch for automatic screen orientation.
++ *
++ * It reads and writes the same persistent GSettings key as the built-in
++ * rotation tile (org.gnome.settings-daemon.peripherals.touchscreen::
++ * orientation-lock): when the orientation is locked the screen no longer
++ * follows the accelerometer, i.e. auto-rotation is off.
++ */
++
++#define ORIENTATION_LOCK_SCHEMA_ID "org.gnome.settings-daemon.peripherals.touchscreen"
++#define ORIENTATION_LOCK_KEY       "orientation-lock"
++
++struct _PhoshAutoRotationQuickSetting {
++  PhoshQuickSetting parent;
++
++  GSettings        *settings;
++  PhoshStatusIcon  *info;
++};
++
++G_DEFINE_TYPE (PhoshAutoRotationQuickSetting, phosh_auto_rotation_quick_setting, PHOSH_TYPE_QUICK_SETTING);
++
++
++static void
++update_state (PhoshAutoRotationQuickSetting *self)
++{
++  gboolean locked = g_settings_get_boolean (self->settings, ORIENTATION_LOCK_KEY);
++  gboolean auto_rotate = !locked;
++
++  g_object_set (self->info,
++                "icon-name", auto_rotate ? "rotation-allowed-symbolic"
++                                         : "rotation-locked-symbolic",
++                "info", auto_rotate ? _("Auto-rotation on") : _("Auto-rotation off"),
++                NULL);
++  phosh_quick_setting_set_active (PHOSH_QUICK_SETTING (self), auto_rotate);
++}
++
++
++static void
++on_clicked (PhoshAutoRotationQuickSetting *self)
++{
++  gboolean locked = g_settings_get_boolean (self->settings, ORIENTATION_LOCK_KEY);
++
++  g_settings_set_boolean (self->settings, ORIENTATION_LOCK_KEY, !locked);
++}
++
++
++static void
++on_orientation_lock_changed (PhoshAutoRotationQuickSetting *self,
++                             char                          *_key,
++                             GSettings                     *_settings)
++{
++  update_state (self);
++}
++
++
++static void
++phosh_auto_rotation_quick_setting_finalize (GObject *object)
++{
++  PhoshAutoRotationQuickSetting *self = PHOSH_AUTO_ROTATION_QUICK_SETTING (object);
++
++  g_clear_object (&self->settings);
++
++  G_OBJECT_CLASS (phosh_auto_rotation_quick_setting_parent_class)->finalize (object);
++}
++
++
++static void
++phosh_auto_rotation_quick_setting_class_init (PhoshAutoRotationQuickSettingClass *klass)
++{
++  GObjectClass *object_class = G_OBJECT_CLASS (klass);
++  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
++
++  object_class->finalize = phosh_auto_rotation_quick_setting_finalize;
++
++  gtk_widget_class_set_template_from_resource (widget_class,
++    "/mobi/phosh/plugins/auto-rotation-quick-setting/qs.ui");
++
++  gtk_widget_class_bind_template_child (widget_class, PhoshAutoRotationQuickSetting, info);
++
++  gtk_widget_class_bind_template_callback (widget_class, on_clicked);
++}
++
++
++static void
++phosh_auto_rotation_quick_setting_init (PhoshAutoRotationQuickSetting *self)
++{
++  gtk_widget_init_template (GTK_WIDGET (self));
++
++  self->settings = g_settings_new (ORIENTATION_LOCK_SCHEMA_ID);
++
++  update_state (self);
++
++  g_signal_connect_swapped (self->settings, "changed::" ORIENTATION_LOCK_KEY,
++                            (GCallback) on_orientation_lock_changed, self);
++}
+diff -ruN a/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.desktop.in.in b/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.desktop.in.in
+--- a/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.desktop.in.in	1970-01-01 08:00:00.000000000 +0800
++++ b/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.desktop.in.in	2026-10-11 12:53:41.469790468 +0800
+@@ -0,0 +1,8 @@
++[Plugin]
++# Translators: This is an internal id, no need to translate it
++Id=@name@
++Name=Auto-rotation Quick Setting
++Types=quick-setting;
++Comment=Toggle automatic screen rotation
++Plugin=@plugins_dir@/libphosh-plugin-@name@.so
++Icon=rotation-allowed-symbolic
+diff -ruN a/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.h b/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.h
+--- a/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.h	1970-01-01 08:00:00.000000000 +0800
++++ b/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.h	2026-10-11 12:53:41.467486987 +0800
+@@ -0,0 +1,19 @@
++/*
++ * Copyright (C) 2026 The Phosh Developers
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ */
++
++#pragma once
++
++#include "quick-setting.h"
++
++G_BEGIN_DECLS
++
++#define PHOSH_TYPE_AUTO_ROTATION_QUICK_SETTING phosh_auto_rotation_quick_setting_get_type ()
++
++G_DECLARE_FINAL_TYPE (PhoshAutoRotationQuickSetting,
++                      phosh_auto_rotation_quick_setting,
++                      PHOSH, AUTO_ROTATION_QUICK_SETTING, PhoshQuickSetting)
++
++G_END_DECLS
+diff -ruN a/plugins/auto-rotation-quick-setting/meson.build b/plugins/auto-rotation-quick-setting/meson.build
+--- a/plugins/auto-rotation-quick-setting/meson.build	1970-01-01 08:00:00.000000000 +0800
++++ b/plugins/auto-rotation-quick-setting/meson.build	2026-10-11 12:53:41.469790468 +0800
+@@ -0,0 +1,42 @@
++name = 'auto-rotation-quick-setting'
++
++auto_rotation_quick_setting_resources = gnome.compile_resources(
++  'phosh-plugin-auto-rotation-quick-setting-resources',
++  'phosh-plugin-auto-rotation-quick-setting.gresources.xml',
++  c_name: 'phosh_plugin_auto_rotation_quick_setting',
++)
++
++auto_rotation_quick_setting_plugin_sources = files(
++  'auto-rotation-quick-setting.c',
++  'phosh-plugin-auto-rotation-quick-setting.c',
++)
++
++phosh_auto_rotation_quick_setting_plugin = shared_module(
++  'phosh-plugin-auto-rotation-quick-setting',
++  auto_rotation_quick_setting_plugin_sources,
++  auto_rotation_quick_setting_resources,
++  c_args: [
++    '-DG_LOG_DOMAIN="phosh-plugin-@0@"'.format(name),
++    '-DPLUGIN_NAME="@0@"'.format(name),
++  ],
++  dependencies: [plugin_dep],
++  install: true,
++  install_dir: plugins_dir,
++)
++
++pluginconf = configuration_data()
++pluginconf.set('name', name)
++pluginconf.set('plugins_dir', plugins_dir)
++
++i18n.merge_file(
++  input: configure_file(
++    input: name + '.desktop.in.in',
++    output: name + '.desktop.in',
++    configuration: pluginconf,
++  ),
++  output: name + '.plugin',
++  po_dir: join_paths(meson.project_source_root(), 'po'),
++  install: true,
++  install_dir: plugins_dir,
++  type: 'desktop',
++)
+diff -ruN a/plugins/auto-rotation-quick-setting/phosh-plugin-auto-rotation-quick-setting.c b/plugins/auto-rotation-quick-setting/phosh-plugin-auto-rotation-quick-setting.c
+--- a/plugins/auto-rotation-quick-setting/phosh-plugin-auto-rotation-quick-setting.c	1970-01-01 08:00:00.000000000 +0800
++++ b/plugins/auto-rotation-quick-setting/phosh-plugin-auto-rotation-quick-setting.c	2026-10-11 12:53:41.468820147 +0800
+@@ -0,0 +1,38 @@
++/*
++ * Copyright (C) 2026 The Phosh Developers
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ */
++
++#include "auto-rotation-quick-setting.h"
++#include "phosh-plugin.h"
++
++
++char **g_io_phosh_plugin_auto_rotation_quick_setting_query (void);
++
++
++void
++g_io_module_load (GIOModule *module)
++{
++  g_type_module_use (G_TYPE_MODULE (module));
++
++  g_io_extension_point_implement (PHOSH_PLUGIN_EXTENSION_POINT_QUICK_SETTING_WIDGET,
++                                  PHOSH_TYPE_AUTO_ROTATION_QUICK_SETTING,
++                                  PLUGIN_NAME,
++                                  10);
++}
++
++
++void
++g_io_module_unload (GIOModule *module)
++{
++}
++
++
++char **
++g_io_phosh_plugin_auto_rotation_quick_setting_query (void)
++{
++  char *extension_points[] = {PHOSH_PLUGIN_EXTENSION_POINT_QUICK_SETTING_WIDGET, NULL};
++
++  return g_strdupv (extension_points);
++}
+diff -ruN a/plugins/auto-rotation-quick-setting/phosh-plugin-auto-rotation-quick-setting.gresources.xml b/plugins/auto-rotation-quick-setting/phosh-plugin-auto-rotation-quick-setting.gresources.xml
+--- a/plugins/auto-rotation-quick-setting/phosh-plugin-auto-rotation-quick-setting.gresources.xml	1970-01-01 08:00:00.000000000 +0800
++++ b/plugins/auto-rotation-quick-setting/phosh-plugin-auto-rotation-quick-setting.gresources.xml	2026-10-11 12:53:41.469751698 +0800
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<gresources>
++  <gresource prefix="/mobi/phosh/plugins/auto-rotation-quick-setting/">
++    <file preprocess="xml-stripblanks">qs.ui</file>
++  </gresource>
++</gresources>
+diff -ruN a/plugins/auto-rotation-quick-setting/qs.ui b/plugins/auto-rotation-quick-setting/qs.ui
+--- a/plugins/auto-rotation-quick-setting/qs.ui	1970-01-01 08:00:00.000000000 +0800
++++ b/plugins/auto-rotation-quick-setting/qs.ui	2026-10-11 12:53:41.469790468 +0800
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<interface>
++  <requires lib="gtk+" version="3.24"/>
++  <template class="PhoshAutoRotationQuickSetting" parent="PhoshQuickSetting">
++    <property name="status-icon">info</property>
++    <signal name="clicked" handler="on_clicked" object="PhoshAutoRotationQuickSetting" swapped="yes"/>
++  </template>
++  <object class="PhoshStatusIcon" id="info">
++    <property name="visible">1</property>
++    <property name="pixel-size">16</property>
++  </object>
++</interface>
+diff -ruN a/plugins/meson.build b/plugins/meson.build
+--- a/plugins/meson.build	2026-05-17 17:39:49.000000000 +0800
++++ b/plugins/meson.build	2026-10-11 12:53:44.626502270 +0800
+@@ -68,6 +68,7 @@
+ ]
+ 
+ quick_setting_plugins = [
++  'auto-rotation-quick-setting',
+   'caffeine-quick-setting',
+   'dark-mode-quick-setting',
+   'location-quick-setting',

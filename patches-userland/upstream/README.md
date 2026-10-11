@@ -96,6 +96,14 @@ scale 8/3 is advertised as 2.6666667461395264 but reported as
 
 ---
 
+## 2b. 可选特性：自动旋转磁贴（`0003-phosh-...`）
+
+`patches-userland/0003-phosh-auto-rotation-quick-setting.patch` 是**新增**一个「自动旋转」快速设置插件（非 bug 修复，
+对上游是 UX 特性：Phosh 目前只有「旋转/锁定」磁贴，无独立自动旋转开关）。若想提，建议先开 issue 讨论 UX
+（"add an explicit auto-rotation quick setting"）再提 MR；文案可参考 `reports/userland-auto-rotation-toggle-20261011.md` §1–§2。
+
+---
+
 ## 3. 提交前需要你确认/处理
 
 1. **身份**：`user.name`/`user.email`（用于 author + `Signed-off-by:`，需与 GitLab 账号一致）。
