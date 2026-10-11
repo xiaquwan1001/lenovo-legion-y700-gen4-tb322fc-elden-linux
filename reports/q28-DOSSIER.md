@@ -362,3 +362,7 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 5. **Q28 不构成日常 / Waydroid(G2) 的现实阻塞**；此前「Q28 挡 Waydroid」实为在 RAM 起实验内核（NOCARD 倾向）上验证所致。
 
 **未决 / 若要真正修 Q28**：需要一个「改代码但不改构建身份」的对照手段（当前无），或改为**失败触发的鲁棒恢复**（如 d02658e63 的 `nt36536` 重试已使该身份冷起 GOOD）而非时序微调；或走 §"解耦"路线（如 `vkms` 虚拟显示让上层不依赖面板）。详见 `PITFALLS #192`。
+
+### o-附) 2026-10-11：法则可控性验证（vk102-c1pin）——冷起 A/B 恢复可用
+
+把版本串**钉死**回 `7.2.0-debug-vk64-gd02658e63cf6`（`.config` 里 `CONFIG_LOCALVERSION_AUTO=n`，构建时 `LOCALVERSION=-vk64-gd02658e63cf6`）后：**改内核源码（`5d01d3324`）+ 改 `.config`（`IP_ADVANCED_ROUTER/IP_MULTIPLE_TABLES`…）仍冷起 GOOD 1/1**（`ip rule` 生效）。⇒ §o 第 3 条的「冷起 A/B 作废」**只对『版本串随源码/git sha 漂移』的默认构建成立**；**钉死后冷起 A/B 恢复可用**。镜像 `out/boot-elden-vk102-c1pin.img`；构建法见 `scripts/q28-build-arm-lv64.sh`（`PINUTS=` 支持）。详见 `PITFALLS #192`。

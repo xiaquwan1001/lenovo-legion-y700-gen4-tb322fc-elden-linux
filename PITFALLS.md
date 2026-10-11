@@ -1491,6 +1491,7 @@
     - 机理猜测：版本串内容不同 → 内核 `Image.gz` 压缩后尺寸/启动镜像布局微异 → 落在 **DSI probe 竞态**的刀刃两侧（与 `#171/#172/#175` 同源；`#175` 只测到「长度」，本轮证明「内容」同样足够）。
     - **推论（方法学，重要）**：**冷起 A/B 不能用来评估 Q28 补丁**——改代码本身就改变被观测对象（observer effect）。`round`/Method-B 的 NOCARD **不能**当「修复无效」证据（同理 `vk90/vk92` 的 NOCARD 判定作废）。若确要做冷起对照，须先有「改代码但不改构建身份」的手段——当前无。
     - **可复用台架**：`d02658e63`+`-vk64`（UTS 逐字 `7.2.0-debug-vk64-gd02658e63cf6`），冷起 GOOD 5/5，产物 `out/boot-elden-vk97-base-lv64.img`（`vk97`）/ `vk100-base2-lv64.img`（`vk100`）；臂可经 `scripts/q28-build-arm-lv64.sh` 重建。
+    - **★可控性已验证（vk102-c1pin，同日）**：把版本串**钉死**回 `…-vk64-gd02658e63cf6`（`CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6`）后，**改内核源码 + 改 config（加 IP_ADVANCED_ROUTER 等）仍冷起 GOOD 1/1**（`ip rule` 亦生效）⇒ **法则只认版本串内容；钉死后冷起 A/B 恢复可用**（此前『冷起 A/B 作废』只对『版本串随源码漂移』的默认构建成立）。镜像 `out/boot-elden-vk102-c1pin.img`。
     - **设备日常 boot_b 即该身份**（会话初已稳定跑 3h；本次「纯净冷起」亦 GOOD：`card0`+`DSI-1 connected`+`phoc/phosh=1`+`storm=0`）⇒ **Q28 不构成日常 / Waydroid 的现实阻塞**；此前「Q28 挡 Waydroid」实为在 **RAM 起实验内核（NOCARD 倾向）** 上做验证所致。
 
 193. **`cam-mode.sh status` 恒误报 `CAM-ON`**（显示/Waydroid 必需模块 `system_heap` 被当成相机模块）。

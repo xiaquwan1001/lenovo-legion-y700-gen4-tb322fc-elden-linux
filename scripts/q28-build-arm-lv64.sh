@@ -13,10 +13,14 @@ set -uo pipefail
 ROOT=/home/xuqianhui1001/y700-elden
 cd "$ROOT"
 ARM=${ARM:-round}
-BASE_COMMIT=d02658e63cf607e71231b077ddd73f42408463c0
+BASE_COMMIT=${BASE_COMMIT:-d02658e63cf607e71231b077ddd73f42408463c0}
 PATCH=$ROOT/patches/q28-round-vk86.patch
 GOLDEN=$ROOT/out/rootfs-base-golden.cpio.gz
 CLEANCFG=$ROOT/patches/config-before-fragment-20261011-155716.bak   # sha a383cdb9
+CONFIGFILE=${CONFIGFILE:-$CLEANCFG}
+# PINUTS: force an exact UTS LOCALVERSION suffix (suppresses scm/auto + '+'), to test
+# whether Q28 GOOD follows the version-string *content* even with modified code/config.
+PINUTS=${PINUTS:-}
 case "$ARM" in
 	base)  VERSION=vk97-base-lv64 ;  BR=q28/base-lv64 ;  APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
 	base2) VERSION=vk100-base2-lv64 ; BR=q28/base2-lv64 ; APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
@@ -24,6 +28,7 @@ case "$ARM" in
 	sham)  VERSION=vk98-sham-lv64 ;  BR=q28/sham-lv64 ;  APPLY=1 ; PATCH=$ROOT/patches/q28-sham-noop.patch ; MSG="exp(q28): sham no-op (clk_round_rate query + pr_info, no assignment)" ;;
 	sham2) VERSION=vk99-sham2-lv64 ; BR=q28/sham2-lv64 ; APPLY=1 ; PATCH=$ROOT/patches/q28-sham2-noop.patch ; MSG="exp(q28): sham2 no-op (constant pr_info only, no clock API)" ;;
 	empty) VERSION=vk101-empty-lv64 ; BR=q28/empty-lv64 ; APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
+	c1pin) VERSION=${VERSION:-vk102-c1pin} ; BR=q28/c1pin ; APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
 	*) echo "ARM must be base|round|sham"; exit 2 ;;
 esac
 LOG=$ROOT/logs/q28-build-$VERSION-$(date +%Y%m%d-%H%M%S).log
@@ -31,11 +36,16 @@ mkdir -p "$ROOT/logs"
 exec > >(tee -a "$LOG") 2>&1
 echo "### q28 build $VERSION (ARM=$ARM) start $(date '+%F %T')  log=$LOG"
 
-export LOCALVERSION=-vk64
+export LOCALVERSION=${LOCALVERSION:--vk64}
 
 # --- pin the clean config --------------------------------------------------
 cp -f "$ROOT/linux/.config" "$ROOT/linux/.config.pre-q28arm"
-cp -f "$CLEANCFG" "$ROOT/linux/.config"
+cp -f "$CONFIGFILE" "$ROOT/linux/.config"
+if [ -n "$PINUTS" ]; then
+	sed -i 's/^CONFIG_LOCALVERSION_AUTO=.*/CONFIG_LOCALVERSION_AUTO=n/' "$ROOT/linux/.config"
+	export LOCALVERSION="$PINUTS"
+	echo "PINUTS on: LOCALVERSION=$PINUTS (CONFIG_LOCALVERSION_AUTO=n)"
+fi
 echo "pinned config sha: $(sha256sum "$ROOT/linux/.config" | cut -d' ' -f1)"
 
 # --- branch + optional patch ----------------------------------------------
