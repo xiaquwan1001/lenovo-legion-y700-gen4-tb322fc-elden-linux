@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-11。**条目编号 #1–#179**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-11。**条目编号 #1–#180**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1349,3 +1349,9 @@
 179. **`pkill -f <pattern>` 会匹配到**自己这条命令行**并自杀（本轮两次 `exit 143` / 工具调用中断）。**
     - 触发场景：`pkill -f "trace_pipe"`、`pkill -f "q24rail"` 等——`bash -c` 包装进程的 cmdline 里含同一字面量。`pkill` 只排除自身 PID，**不排除父 shell**。
     - 规避：按 **PID** 杀（记录 `$!`）、或把 pattern 拆开/加字符类（`'[t]race_pipe'`）、或直接 `kill` 文件里的 pid。详见技能 `pkill-self-match`。
+
+180. **★Q24「只改 `cambist` 单模块」的全部变体（H1/H2/D1/D2/E4a/FIX-1/FIX-2/FIX-3）都无效——因为触发需要 `camcc` + `cambist` 同时在位（2026-10-11 定案）。**
+    - 判定（全部在 `LOCALVERSION=-vk64` GOOD 台架、配对自动加载、真实熄屏）：**对照 3/3 死**；`E4a`（DT `MX→MXC`，DTB sha `563af2db`）**首次熄屏即死**；`FIX-2`（probe 常持票，匹配 vermagic 的模块 md5≠原版）**首次熄屏即死**；`FIX-3` **模块加载即挂死整机**（`#177`）。
+    - 与历史 H1（7/9）/H2（3轮2掉）/D1（6/9）/D2（7/9）合读：**「改票/轨名/运行时计数」这一整族只能降频，不可能根治**；根治必须处理 **camcc × cambist 的相互作用**（两者都是相机时钟控制器：camcc 有 GDSC + `MMCX/MXC` 双票，cambist 无 GDSC + `MX` 单票）。
+    - **新线索（未验证）**：死前 dmesg 一直有 `camcc-sm8750 ade0000.clock-controller: sync_state() pending due to ad27000.isp / ac7c000.cci / ac7b000.cci` ⇒ **camcc 永远停在 pre-`sync_state` 夹持态**（消费者 ISP/CCI 从未 probe）；叠加 cmdline `pd_ignore_unused`，两个相机 CC 的电源票可能长期是「未 sync 的钳制值」。待查：抓两 CC 的 `state_synced` 与 RPMh 实际投票（`#174` 的 trace 法）；试「让 camcc 的 sync_state 完成」；`pd_ignore_unused` 单变量对照。
+    - **教训**：当「单点修复」反复只降频不根治时，先回头验**触发体是不是单点**——本项在配对 bisect 之前，整个社区/本项目都把 cambist 当唯一元凶（连 `TASKS` G1-22 都这么写）。
