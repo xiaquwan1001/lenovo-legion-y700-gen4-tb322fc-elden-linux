@@ -55,13 +55,17 @@ case "${1:-state}" in
     echo stopped
     ;;
   session)
+    # 会话必须以会话用户身份跑：root 连用户 system bus 会 D-Bus 跨 UID NoReply（本会话实测）。
     ensure_pulse
+    UID_=${SESSION_UID:-1000}
+    UHOME=$(getent passwd "$UID_" | cut -d: -f6); UHOME=${UHOME:-/home/xuqianhui1001}
     BUS=$(phosh_env | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p')
     echo "[$(date +%T)] === session start (bus=${BUS:-none}) ===" >> "$LOG"
-    XDG_RUNTIME_DIR=/run/phosh WAYLAND_DISPLAY=wayland-0 HOME=/root \
+    setpriv --reuid="$UID_" --regid="$UID_" --init-groups \
+      env HOME="$UHOME" XDG_RUNTIME_DIR=/run/user/$UID_ WAYLAND_DISPLAY=wayland-0 \
       DBUS_SESSION_BUS_ADDRESS="$BUS" \
       setsid nohup waydroid --details-to-stdout session start >> "$LOG" 2>&1 < /dev/null &
-    echo "session started (bus=${BUS:-none}) log=$LOG"
+    echo "session started (user=$UID_ bus=${BUS:-none}) log=$LOG"
     ;;
   net)
     echo "waydroid0: $(ip -br addr show waydroid0 2>/dev/null)"
@@ -70,6 +74,34 @@ case "${1:-state}" in
     echo "--- netd 摘要 ---"
     timeout 15 waydroid shell -- sh -c "logcat -d -b all 2>/dev/null | grep -iE 'unable to initialize table|XfrmController|RouteController|dhcp' | tail -5" 2>/dev/null
     ;;
+  route)
+    # 可靠注入容器默认路由（历史 blank_screen.rc workaround 生效不可靠；本命令手工也证明有效）。
+    # 依赖：waydroid0=192.168.240.1。仅在内核无 netd 策略路由/ netd 未下发时用。
+    # 注意：必须等容器 eth0 拿到 IP（否则 "Network is unreachable"）。
+    for _i in $(seq 1 20); do
+      [ "$(lxc_state)" = RUNNING ] && break
+      sleep 3
+    done
+    [ "$(lxc_state)" = RUNNING ] || { echo "container not RUNNING; start container+session first" >&2; exit 1; }
+    _ok=0
+    for _i in $(seq 1 40); do
+      if container_eth0 | grep -q '192.168.240.1[0-9][0-9]'; then _ok=1; break; fi
+      sleep 3
+    done
+    [ "$_ok" = 1 ] || echo "warn: eth0 IP not seen after 120s, attempting anyway" >&2
+    for _i in $(seq 1 15); do
+      timeout 12 waydroid shell -- ip route replace default via 192.168.240.1 dev eth0 >/tmp/wdroute.$$ 2>&1 && break
+      grep -q RTNETLINK /tmp/wdroute.$$ && { sleep 2; continue; }
+      break
+    done
+    cat /tmp/wdroute.$$ 2>/dev/null | tail -2; rm -f /tmp/wdroute.$$
+    echo "--- container ip route ---"
+    timeout 12 waydroid shell -- ip route 2>&1 | head -4
+    ;;
+  egress)
+    echo -n "ping gw  : "; timeout 12 waydroid shell -- ping -c2 -W2 192.168.240.1 2>&1 | tail -1
+    echo -n "curl baidu: "; timeout 15 waydroid shell -- sh -c 'curl -s -m8 -o /dev/null -w "code=%{http_code}\n" http://www.baidu.com' 2>&1 | tail -1
+    ;;
   log)
     tail -n "${2:-40}" "$LOG" 2>/dev/null
     ;;
@@ -77,5 +109,5 @@ case "${1:-state}" in
     awk '/=== start ===/{s=$1} /Container is RUNNING|RUNNING/{if(s){print "start->RUNNING:", s, "->", $1}}' "$LOG" 2>/dev/null | tail -3
     ;;
   *)
-    echo "usage: $0 {state|start|stop|session|net|log [n]|elapsed}" >&2; exit 1;;
+    echo "usage: $0 {state|start|stop|session|net|route|egress|log [n]|elapsed}" >&2; exit 1;;
 esac
