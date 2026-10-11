@@ -57,7 +57,7 @@ PROBE=scripts/q28-devprobe2.sh
 [ -f "$PROBE" ] || PROBE=scripts/q28-devprobe.sh
 $SSH "$TAB" 'sh -s' < "$PROBE" >"$OUT/probe.txt" 2>&1 || true
 grep -oE 'l1=[0-9]+ l2=[0-9]+' "$OUT/probe.txt" >"$OUT/l1l2.txt" 2>/dev/null || true
-V=$(grep -oE 'VERDICT=[A-Z]+' "$OUT/probe.txt" | head -1 | cut -d= -f2); V=${V:-UNKNOWN}
+V=$(grep -oE 'VERDICT=[A-Z0-9-]+' "$OUT/probe.txt" | head -1 | cut -d= -f2); V=${V:-UNKNOWN}
 
 # --- 4) survival gate (>=60s interactive) ----------------------------------
 echo "[cold] VERDICT(display)=$V ; survival gate 65s ..."

@@ -68,6 +68,73 @@
 
 成本：每样本 1 次人工 POR 进 fastboot；判定用 v2 探针（L1/L2 + session + 65 s 存活门）。
 
+## 6. ★上机结果（2026-10-11 深夜 / 10-12 早，8 发物理 POR 冷起）
+
+| 样本 | 臂 | 内核 | ramdisk | 结果 |
+|---|---|---|---|---|
+| A1 / A2 | `vk104-base-pin` | 新 | 新 | **GOOD / GOOD** |
+| B1 / B2 | `vk106-newK-oldR` | 新 | 旧 | **GOOD / GOOD** |
+| C1 / C2 | `vk94` | 旧 | 旧 | **L1FAIL / GOOD** |
+| D1 / D2 | `vk107-oldK-newR` | 旧 | 新 | **L1FAIL / GOOD** |
+
+**观察**：
+1. **STORM 被复现**（C1/D1）：签名与历史完全一致——`command DMA timeout: status=0x2200200` → `bonded command DMA failed: master=-110 peer=-110` → `sending dcs data ff 20 failed: -110` → `Failed to initialize panel: -5`（t≈9 s），`session=0`。
+2. **不是严格镜像确定**：C1=L1FAIL 而 C2=GOOD（同镜像同路径反向）。
+3. **也不是「与镜像无关的独立随机」**：8 发里 2 次坏发**全部落在旧内核**（C/D，2/4），新内核 0/4；但**两次坏发又都在 Round 1 且连续**（C1、D1），Round 2 全 GOOD ⇒ 无法区分「旧内核高坏发率」与「首轮/时序状态效应」。
+4. **ramdisk 与结果无关**（B 用旧 ramdisk 恒 GOOD；D 用新 ramdisk 与 C 同模式）。
+
+**统计诚实**：n 太小。2/8 总坏发率、旧内核 2/4 vs 新内核 0/4、Fisher 精确 p≈0.43，**不显著**。
+
+**下一步（建议）**：同一时间窗内**交替**打 C/A（如 C3,A3,C4,A4…）以解耦「内核」与「轮次/时序」，目标每臂累计 ≥6 发。
+
+## 7. 现象整理与原因分析（2026-10-12）
+
+### 7.1 现场事实
+
+1. **STORM 被冷路径复现**：C1/D1 与历史逐字同签名，坏发发生在 `msm_dsi … timing …` 之后 **~0.22 s**：
+   `command DMA timeout: status=0x2200200` → `bonded command DMA failed: master=-110 peer=-110` → `sending dcs data ff 20 failed: -110` → `Failed to initialize panel: -5`（attempt1/2 都失败）。
+   GOOD 启动在 **同一偏移**做的是 `panel prepared: scheduling firmware upload`（面板首条 DCS 成功）。
+   DSI 时序参数与 `DSI_PLL_lockfail=4`/`device_link_fail=8` 在好坏启动**完全相同**（旧已定案为良性噪声）。
+2. **ramdisk 与结果无关**：B（新内核+旧 ramdisk）恒 GOOD；D（旧内核+新 ramdisk）与 C 同模式。
+3. **非严格镜像确定**：C1=L1FAIL vs C2=GOOD（同镜像同路径反向）。
+4. **与内核构建身份强相关**：今日 2 次 L1FAIL 全在旧内核；**历史全部 ~10 次 STORM 也都落在 Oct-8 `#60` 构建**（`vk64`/`vk94`/`oct8`）；而**新构建（`vk97`–`vk107`，共 20+ 发）0 次 STORM**。
+
+### 7.2 两内核到底差什么（已反查）
+
+| 维度 | 旧K（vk94 = vk64 `8efb2731`） | 新K（vk104 `553c315c`） |
+|---|---|---|
+| 源码 | `d02658e63` | `5d01d3324` |
+| 源码差 | — | **仅 1 个提交**：ADSP fastrpc 加 `qcom,non-secure-domain`（DT-only） |
+| config（ikconfig 实提） | 11948 行 | 11948 行，**唯一差 = `CONFIG_LOCALVERSION_AUTO=y` vs `n`** |
+| UTS localversion 后缀 | `-vk64-gd02658e63cf6` | 同上（逐字同） |
+| UTS_VERSION（`#N … 日期`） | **`#60 SMP PREEMPT Thu Oct  8 17:06:14`** | **`#118 SMP PREEMPT Sun Oct 11 22:33:36`** |
+| 内核 payload 差 | — | **5,108,388 B**（含从 36.9 M 起 ~5 MB 的 `.rodata` 串区，其首字串就是 `#118…` vs `#60…`） |
+| DTB | 149,063 B | 149,051 B（ADSP 节点差，其余 phandle 平移） |
+
+⇒ **两个内核代码几乎一样**；差别集中在：① UTS_VERSION 串长度（`#60` 2 位 vs `#118` 3 位）触发 `.rodata` 整段平移——**与 NOCARD 的 `#171/#175/#192` 同一机理**；② 一个 ADSP DT 节点。
+
+### 7.3 可能原因（假设）
+
+- **H1（首选）构建身份/布局刀刃**：STORM 是真实的首条 DCS 命令-DMA 冷起竞态；内核构建身份（UTS_VERSION 长度 → `.rodata` 布局）把竞态窗口移了位。旧的 `#60` 构建偏向坏侧（高坏发率），新构建偏好好侧。**能同时解释**：历史 STORM 全在 `#60`、新构建 20+ 发干净、以及 C2 偶发 GOOD（竞态本质随机，布局只是偏置）——与 NOCARD 的结论同构。
+- **H2 DTB 轴**：那 1 个 ADSP DT 提交改了 DTB（phandle 平移/探测顺序）→ 可能微移冷起时序。未隔离。
+- **H3 纯随机低率**：今 2/4 vs 0/4 不显著（Fisher p≈0.43）⇒ 不能单独成立；但**历史 `#60` 集群（~10 坏）对上新构建 0 坏**，若纯噪声该概率极低 ⇒ H3 只能作次要成分。
+- **H4 时序/状态/轮次**：两次坏发都是 Round 1 且连续，Round 2 全 GOOD ⇒ 可能含会话/热/POR 深度效应。用交替采样（C/A 交替）可剔除。
+
+### 7.4 为何「STORM 独立随机」是误判（与 NOCARD 同教训）
+
+- 历史 STORM 样本**几乎全在同一构建身份（`#60`）**上采集，且**从未做同身份重复冷起**；这本身就是「改代码→改身份→改被观测结果」观察者效应的适用面缺失。
+- §p 的两条“日常 boot_b”证据（§4 一次 STORM、§o 一次 GOOD）都在 `vk94`=`#60`，恰好落在 H1 的“旧构建高偏置 + 竞态随机”预期内，**不足以推出“与身份无关”**。
+
+### 7.5 决定实验（可即建）
+
+| 实验 | 做法 | 判读 |
+|---|---|---|
+| **E1 身份解除（首选）** | **现在重编旧K 源码 `d02658e63`**（自然 UTS，新 `#N`/日期）→ `vk108`；冷起系列 | 若 GOOD（新K 同率）⇒ 源码/驱动无罪，**身份布局是轴**（H1）；若仍 STORM ⇒ 源码/DT 是轴（H2） |
+| E2 DTB 轴（repack） | 新K 内核 + 旧K DTB；旧K 内核 + 新K DTB | 翻转 DTB 是否翻转结果 |
+| E3 采样 | C/A 交替冷起 | 剔除 H4/Round 效应 |
+
+> E1 是本轮结论的分水岭：它把「`#60` 旧源码有 bug」与「`#60` 这个构建身份在竞态刀刃上」分开；也是可直接“构建”的下一步。
+
 ## 4. 资产的现实约束
 
 - 物理 POR 只能由用户执行；`fastboot boot` 零写盘，boot_b 全程不动。

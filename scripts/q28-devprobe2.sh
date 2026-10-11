@@ -28,8 +28,8 @@ for d in /sys/class/drm/card0-*; do
   [ -e "$d/status" ] && CONN="$CONN $(basename $d)=$(cat $d/status)"
 done
 CONNECTED=$(echo "$CONN" | grep -c connected)
-PHOC=$(pgrep -xc phoc 2>/dev/null || echo 0)
-PHOSH=$(pgrep -xc phosh 2>/dev/null || echo 0)
+PHOC=$(pgrep -xc phoc 2>/dev/null); [ -n "$PHOC" ] || PHOC=0
+PHOSH=$(pgrep -xc phosh 2>/dev/null); [ -n "$PHOSH" ] || PHOSH=0
 WL=0; [ -e /run/user/1000/wayland-0 ] && WL=1
 BL=$(cat /sys/class/backlight/*/brightness 2>/dev/null | head -1)
 SESSION=0

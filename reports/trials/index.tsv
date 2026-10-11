@@ -42,3 +42,11 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-11T14:19:19Z	q28cold-vk103	vk103-c1r6	por	fastboot boot (cold fb after user POR)	GOOD	20348693f43b	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-221739-q28cold-vk103
 2026-10-11T14:47:53Z	q28cold-round-pin1	vk105-round-pin	por	fastboot boot (cold fb after user POR)	GOOD	b1de0f1a0ed5	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-224612-q28cold-round-pin1
 2026-10-11T14:51:29Z	q28cold-base-pin1	vk104-base-pin	por	fastboot boot (cold fb after user POR)	GOOD	24b1fd3c8cba	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-224948-q28cold-base-pin1
+2026-10-11T15:18:12Z	q28storm-A1	vk104-base-pin	por	fastboot boot (cold fb after user POR)	GOOD	24b1fd3c8cba	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-231632-q28storm-A1
+2026-10-11T15:21:18Z	q28storm-B1	vk106-newK-oldR	por	fastboot boot (cold fb after user POR)	GOOD	0e4eae912841	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-231938-q28storm-B1
+2026-10-11T15:24:06Z	q28storm-C1	vk94	por	fastboot boot (cold fb after user POR)	L1FAIL	e112ea0171b5	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-232216-q28storm-C1
+2026-10-11T15:27:14Z	q28storm-D1	vk107-oldK-newR	por	fastboot boot (cold fb after user POR)	L1FAIL	213427bcf335	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-232516-q28storm-D1
+2026-10-11T23:14:33Z	q28storm-A2	vk104-base-pin	por	fastboot boot (cold fb after user POR)	GOOD	24b1fd3c8cba	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-071252-q28storm-A2
+2026-10-11T23:19:22Z	q28storm-B2	vk106-newK-oldR	por	fastboot boot (cold fb after user POR)	GOOD	0e4eae912841	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-071742-q28storm-B2
+2026-10-11T23:23:39Z	q28storm-C2	vk94	por	fastboot boot (cold fb after user POR)	GOOD	e112ea0171b5	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-072159-q28storm-C2
+2026-10-11T23:26:30Z	q28storm-D2	vk107-oldK-newR	por	fastboot boot (cold fb after user POR)	GOOD	213427bcf335	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-072449-q28storm-D2
