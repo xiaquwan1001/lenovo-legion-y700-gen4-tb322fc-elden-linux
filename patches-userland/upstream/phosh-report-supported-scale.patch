@@ -1,0 +1,61 @@
+diff --git a/src/monitor-manager.c b/src/monitor-manager.c
+index e7b416f..34bac53 100644
+--- a/src/monitor-manager.c
++++ b/src/monitor-manager.c
+@@ -423,6 +423,47 @@ build_mode (GVariantBuilder *modes_builder, PhoshHeadMode *mode, gboolean is_cur
+                          &mode_properties_builder);
+ }
+ 
++/* The compositor reports the current output scale through the wlroots
++ * output-management protocol, which carries it as a 24.8 fixed-point value.
++ * Together with phoc's own 1/120 rounding this means the value we read back
++ * can differ slightly from the one we advertised as supported.  Since
++ * gnome-control-center matches the current scale against the advertised list
++ * with an exact (DBL_EPSILON) comparison, such a value fails to match any
++ * entry and the scale row falls back to showing 100%.
++ *
++ * Snap the reported scale back onto the nearest advertised scale so the
++ * round-trip stays stable and the correct scale is displayed.
++ */
++static double
++phosh_head_snap_to_supported_scale (PhoshHead *head, double scale)
++{
++  g_autofree float *scales = NULL;
++  double best = scale, best_dist = G_MAXDOUBLE;
++  int n;
++
++  if (head->mode == NULL)
++    return scale;
++
++  scales = phosh_util_calculate_supported_mode_scales (head->mode->width,
++                                                       head->mode->height,
++                                                       &n, TRUE);
++  for (int i = 0; i < n; i++) {
++    double dist = fabs ((double)scales[i] - scale);
++
++    if (dist < best_dist) {
++      best_dist = dist;
++      best = (double)scales[i];
++    }
++  }
++
++  /* Only snap when we're within the quantization error so that genuinely
++   * unsupported scales are still reported as-is. */
++  if (best_dist > 0.01)
++    return scale;
++
++  return best;
++}
++
+ 
+ static gboolean
+ phosh_monitor_manager_handle_get_current_state (PhoshDBusDisplayConfig *skeleton,
+@@ -519,7 +560,7 @@ phosh_monitor_manager_handle_get_current_state (PhoshDBusDisplayConfig *skeleton
+                            LOGICAL_MONITOR_FORMAT,
+                            (gint32)head->x,             /* logical_monitor->rect.x */
+                            (gint32)head->y,             /* logical_monitor->rect.y */
+-                           (double)head->scale,         /* (double) logical_monitor->scale */
++                           phosh_head_snap_to_supported_scale (head, head->scale), /* logical_monitor->scale */
+                            (guint32)head->transform,    /* logical_monitor->transform */
+                            is_primary,             /* logical_monitor->is_primary */
+                            &logical_monitor_monitors_builder,

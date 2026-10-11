@@ -1376,5 +1376,5 @@
       **非 preferred** 的 mode 落进 else 读**空的 `custom_mode`（0x0@0）** ⇒ `phoc_output_fill_state()` 见 `oc->mode.width==0` 回退 `preferred_mode`。
       历史绕法（`patches/0008` 把 165 移到 mode table 首位）只是把「钉死」从 120 换成 165，非修复。
     - **修** = `patches-userland/0001-phoc-honor-any-mode.patch`（`if (head->state.mode)`，1 行）。已验证 144/120/90/60 均可切。
-    - 上游核对（2026-10-11）：phoc `main` 仍是旧写法 ⇒ 仍是上游未修 bug。
+    - 上游核对（2026-10-11）：phoc `main`（0.58.0）仍是旧写法。★关键：上游 `47099669`（2026-03-21，"output: Actually handle preferred mode"，修 issue #429/MR !771）**只把 `!preferred` 翻成 `preferred`，修了一半**——它那台笔记本 120/60 两个档都标了 `preferred`，故凑效；**单 preferred 面板（本机）非 preferred 档仍走 else 分支**。正确谓词就是 `head->state.mode`（custom_mode 只在没给 mode 时才被填）。
     - **复现 g-c-c 行为的坑**：phosh 只在 ApplyMonitorsConfig `method==2(PERSISTENT)` 时真正应用；`method=1` 只校验后返回 OK（看似成功实则没生效）。

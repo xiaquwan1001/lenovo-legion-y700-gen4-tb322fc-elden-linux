@@ -1,0 +1,13 @@
+diff --git a/src/output.c b/src/output.c
+index d95d6db..705dcc1 100644
+--- a/src/output.c
++++ b/src/output.c
+@@ -1943,7 +1943,7 @@ phoc_output_config_head_to_output_config (PhocOutput
+   PhocOutputConfig *oc = phoc_output_config_new (phoc_output_get_identifier (self));
+ 
+   oc->enable = TRUE;
+-  if (head->state.mode && head->state.mode->preferred) {
++  if (head->state.mode) {
+     oc->mode.width = head->state.mode->width;
+     oc->mode.height = head->state.mode->height;
+     oc->mode.refresh_rate = head->state.mode->refresh / 1000.0;

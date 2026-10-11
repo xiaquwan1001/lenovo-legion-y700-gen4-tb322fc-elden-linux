@@ -110,3 +110,18 @@ pulseaudio-dev qrcodegen-dev upower-dev
 - 本修复是**用户态**改动，不进内核/DTB；重打 rootfs 会丢失（持久根目前无脚本化 rootfs 重建流程）。
   长期应把这些补丁纳入将来的 rootfs 构建，或向 phoc/phosh 上游提 MR。
 - 涉及 `git` 边界：`patches-userland/` 是新增资产，应纳入版本管理。
+
+## 7. 纳入 rootfs + 上游（同轮完成）
+
+- **rootfs 纳入**：新增 `rootfs/persistent-overlay/userland-display/`（设备侧副本：两个补丁 + `build-phoc-phosh.sh` + `build-deps.txt` + `install-on-device.sh`）；
+  `restore.sh` 已接入（`SKIP_USERLAND_DISPLAY=1` 可跳过）。**设备上实测**：跑 `install-on-device.sh` → 装依赖→下载→重编→备份→替换→写 marker
+  （`/usr/local/share/elden/userland-display.marker`），会话自动重启；重跑幂等跳过。
+- **上游**：`patches-userland/upstream/`（对 phoc/phosh `main` 的 `git diff` + commit message/MR 草案）。
+  关键发现：phoc 的 `47099669`（2026-03，修 issue #429）**只修了一半**——它那台笔记本两个档都是 `preferred`；
+  单 preferred 面板（本机）仍走 else 分支。故我们的补丁是它的泛化。
+  提交仍需用户处理账号/fork/`Signed-off-by`（见 `patches-userland/upstream/README.md` §3）。
+
+## 8. 设备侧验证（第二轮：走 rootfs 安装脚本重建后）
+
+- `wlr-randr` 切 120→165 Hz ✅；非整数 scale 上报 `2.6666667461395264` ∈ supported ✅；
+- marker 写入、二次运行输出「already installed」✅；会话重启后 phoc/phosh 正常运行 ✅。

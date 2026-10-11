@@ -5,9 +5,14 @@
 （遵守 AGENTS.md：迁移只搬 **数据/经验**，环境在目标机重建；包版本漂移可接受，目标是**包集合**与手写配置。）
 
 **一键还原**（设备上 root）：
+
+先把这个目录（含 `userland-display/` 子目录）拷到设备，再在设备上跑：
 ```sh
-ssh root@192.168.7.1 'sh -s' < rootfs/persistent-overlay/restore.sh
+scp -r rootfs/persistent-overlay root@192.168.7.1:/root/
+ssh root@192.168.7.1 'cd /root/persistent-overlay && sh restore.sh'
+# 跳过耗时的用户态重编：SKIP_USERLAND_DISPLAY=1 sh restore.sh
 ```
+（旧的一行式 `ssh 'sh -s' < restore.sh` 只在设备上已有这些 tarball 时才成立；新的 `userland-display/` 要求整目录存在。）
 
 | 文件 | 内容 | 还原方式 |
 |---|---|---|
@@ -60,6 +65,18 @@ ssh root@192.168.7.1 'sh -s' < rootfs/persistent-overlay/restore.sh
 | `iio-sensor-proxy.initd` | 覆盖 `/etc/init.d/iio-sensor-proxy`：加 `start_pre()` 等 QRTR svc 400（SSC）就绪再拉起（封顶 60s）、`after hexagonrpcd-adsp-sensorspd` | restore.sh 已在装包后 `install -m755` 覆盖 |
 
 根因：本 build 的 iio-sensor-proxy 经 SSC/QRTR 后端（`/sys/bus/iio` 恒空但 `HasAccelerometer=true`）；SSC 加速度计要 ADSP 起来出 svc400（冷启数十秒）。iio 3.9「只扫一次即放弃」（G1-34），若开机时 proxy 抢在 svc400 之前起，`net.hadess.SensorProxy` 整轮无加速度计 → phosh `rotation-manager` 停 `MODE_OFF` → 自动旋转 tile 置灰、方向锁死。修复=proxy 等 svc400 再起。设备侧运行时已改（备份 `/etc/init.d/iio-sensor-proxy.bak-timing-*`）；**待下次冷启最终验证**。UI 说明：phosh 无独立“自动旋转”开关，只有“方向锁定”tile（自动旋转开着时不显示方向选择栏），属 phosh 正常模型。
+
+## 追加（2026-10-11）：用户态显示修正（phoc 刷新率 + phosh 缩放上报）
+
+| 文件 | 内容 | 还原方式 |
+|---|---|---|
+| `userland-display/install-on-device.sh` | 装构建依赖 + 下载官方 release 源码 + 打补丁 + 重编 + 备份/替换 `/usr/bin/phoc`、`/usr/libexec/phosh` + 写 marker | restore.sh 已自动调用；跳过＝`SKIP_USERLAND_DISPLAY=1` |
+| `userland-display/build-phoc-phosh.sh`、`0001/0002*.patch`、`build-deps.txt` | 构建脚本 / 补丁 / 依赖清单（**真源 = 仓库 `patches-userland/`，此处为设备侧副本**） | 由 install 脚本使用 |
+
+- 修的两个 bug：①phoc 只认 preferred mode ⇒ 非 preferred 刷新率档被忽略（屏恒 165 Hz）；②phosh `GetCurrentState` 上报的 scale 不在 `supported_scales` 里 ⇒ g-c-c 比例行显 100%。
+  根因/证据：`reports/userland-display-scale-refresh-20261011.md`、`PITFALLS` #182/#77。
+- ⚠️ **`userland-display/` 与 `patches-userland/` 是两份拷贝**（设备侧无法访问仓库）。改了 `patches-userland/` 里的任一文件，要**同步**到 `userland-display/`（反之亦然）。
+- ⚠️ 这两个二进制是**非包管理**的；后续 `apk upgrade` 会把 `phoc`/`phosh` 换回原版（upstream 未修前），需重跑 install-on-device.sh。
 
 ## freeze-trace（2026-10-09 新增，PITFALLS #106 死挂取证）
 

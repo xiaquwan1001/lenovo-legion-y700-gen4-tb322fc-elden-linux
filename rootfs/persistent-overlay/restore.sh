@@ -34,6 +34,15 @@ if [ -x /etc/init.d/iio-sensor-proxy ] || apk info -e iio-sensor-proxy >/dev/nul
 	install -m755 iio-sensor-proxy.initd /etc/init.d/iio-sensor-proxy
 fi
 
+echo "== userland display fixes: phoc non-preferred mode + phosh scale report =="
+# Rebuilds patched phoc/phosh from source (releases are fetched, build deps are
+# installed and kept).  Takes a few minutes.  Skip with:
+#     SKIP_USERLAND_DISPLAY=1 sh restore.sh
+# Source of truth for the patches: repo patches-userland/ .
+if [ -d userland-display ]; then
+	sh userland-display/install-on-device.sh
+fi
+
 echo "== /init (single source of truth is initramfs/init in the repo) =="
 install -m755 init /init
 
