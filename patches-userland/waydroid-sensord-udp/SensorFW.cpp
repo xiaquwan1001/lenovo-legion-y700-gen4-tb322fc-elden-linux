@@ -29,6 +29,8 @@
 
 namespace waydroid {
 
+static bool dbg_enabled(void) { static int d = -1; if (d < 0) d = getenv("SENSORD_DEBUG") ? 1 : 0; return d; }
+
 static int64_t now_boottime_ns(void)
 {
     struct timespec ts;
@@ -122,6 +124,7 @@ int SensorFW::EnableSensorEvents(int id)
     if (!ID_CHECK(id))
         return -1;
     mValues[id].enabled = true;
+    if (dbg_enabled()) fprintf(stderr, "[sensord-udp] ENABLE id=%d (%s)\n", id, _SensorIdToName(id));
     return 0;
 }
 
@@ -130,6 +133,7 @@ int SensorFW::DisableSensorEvents(int id)
     if (!ID_CHECK(id))
         return -1;
     mValues[id].enabled = false;
+    if (dbg_enabled()) fprintf(stderr, "[sensord-udp] DISABLE id=%d (%s)\n", id, _SensorIdToName(id));
     return 0;
 }
 
@@ -269,6 +273,7 @@ void SensorFW::handle_line(const char *line)
     }
     mValues[id].available = true;
 
+    if (dbg_enabled()) { static unsigned n[11] = {0}; if ((n[id]++ % 100) == 0) fprintf(stderr, "[sensord-udp] rx id=%d enabled=%d line=%s\n", id, (int)mValues[id].enabled, line); }
     if (mValues[id].enabled && mCb)
         mCb(mUserdata, id);
 }
