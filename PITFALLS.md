@@ -1492,6 +1492,7 @@
     - **推论（方法学，重要）**：**冷起 A/B 不能用来评估 Q28 补丁**——改代码本身就改变被观测对象（observer effect）。`round`/Method-B 的 NOCARD **不能**当「修复无效」证据（同理 `vk90/vk92` 的 NOCARD 判定作废）。若确要做冷起对照，须先有「改代码但不改构建身份」的手段——当前无。
     - **可复用台架**：`d02658e63`+`-vk64`（UTS 逐字 `7.2.0-debug-vk64-gd02658e63cf6`），冷起 GOOD 5/5，产物 `out/boot-elden-vk97-base-lv64.img`（`vk97`）/ `vk100-base2-lv64.img`（`vk100`）；臂可经 `scripts/q28-build-arm-lv64.sh` 重建。
     - **★可控性已验证（vk102-c1pin，同日）**：把版本串**钉死**回 `…-vk64-gd02658e63cf6`（`CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6`）后，**改内核源码 + 改 config（加 IP_ADVANCED_ROUTER 等）仍冷起 GOOD 1/1**（`ip rule` 亦生效）⇒ **法则只认版本串内容；钉死后冷起 A/B 恢复可用**（此前『冷起 A/B 作废』只对『版本串随源码漂移』的默认构建成立）。镜像 `out/boot-elden-vk102-c1pin.img`。
+    - **旧结论重判（2026-10-11 `reports/q28-retro-audit-20261011.md`）**：`§k`「按内核二进制确定性」、`vk90/vk92` 的 NOCARD、round 的 NOCARD=「修复无效」、T1/T2/T3 冷 A/B 样本**均作废**；决定性证据=**同一 round 补丁未钉 UTS(`vk96`)=NOCARD 3/3 而钉死(`vk105-round-pin`)=GOOD**。冷起 A/B 的方法前提 = PINUTS。Q28 收尾口径见 `reports/q28-DOSSIER.md` §p。
     - **★法则范围限定（同日补）**：该法则只解释 **NOCARD 分支**（构建身份→有无 card0）；**STORM 是独立随机**——同日一次**日常 boot_b 纯净冷起**（UTS 同串）落在 **STORM**（`card0` 在、`storm=45`、`vblank wait timed out`、无 `phoc/phosh`/无会话）。⇒ 日常 Q28 痛点（STORM）仍在，与 boot 镜像身份无关。证据 `reports/wd-net-baseline-20261011.md` §4。
     - **设备日常 boot_b 即该身份**（会话初已稳定跑 3h；本次「纯净冷起」亦 GOOD：`card0`+`DSI-1 connected`+`phoc/phosh=1`+`storm=0`）⇒ **Q28 不构成日常 / Waydroid 的现实阻塞**；此前「Q28 挡 Waydroid」实为在 **RAM 起实验内核（NOCARD 倾向）** 上做验证所致。
 
