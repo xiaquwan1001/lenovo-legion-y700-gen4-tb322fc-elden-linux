@@ -22,12 +22,12 @@ CONFIGFILE=${CONFIGFILE:-$CLEANCFG}
 # whether Q28 GOOD follows the version-string *content* even with modified code/config.
 PINUTS=${PINUTS:-}
 case "$ARM" in
-	base)  VERSION=vk97-base-lv64 ;  BR=q28/base-lv64 ;  APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
-	base2) VERSION=vk100-base2-lv64 ; BR=q28/base2-lv64 ; APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
-	round) VERSION=vk96-round-lv64 ; BR=q28/round-lv64 ; APPLY=1 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="exp(q28): round byte clk after reparenting to PHY PLL (msg46766)" ;;
-	sham)  VERSION=vk98-sham-lv64 ;  BR=q28/sham-lv64 ;  APPLY=1 ; PATCH=$ROOT/patches/q28-sham-noop.patch ; MSG="exp(q28): sham no-op (clk_round_rate query + pr_info, no assignment)" ;;
-	sham2) VERSION=vk99-sham2-lv64 ; BR=q28/sham2-lv64 ; APPLY=1 ; PATCH=$ROOT/patches/q28-sham2-noop.patch ; MSG="exp(q28): sham2 no-op (constant pr_info only, no clock API)" ;;
-	empty) VERSION=vk101-empty-lv64 ; BR=q28/empty-lv64 ; APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
+	base)  VERSION=${VERSION:-vk97-base-lv64} ;  BR=q28/base-lv64 ;  APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
+	base2) VERSION=${VERSION:-vk100-base2-lv64} ; BR=q28/base2-lv64 ; APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
+	round) VERSION=${VERSION:-vk96-round-lv64} ; BR=q28/round-lv64 ; APPLY=1 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="exp(q28): round byte clk after reparenting to PHY PLL (msg46766)" ;;
+	sham)  VERSION=${VERSION:-vk98-sham-lv64} ;  BR=q28/sham-lv64 ;  APPLY=1 ; PATCH=$ROOT/patches/q28-sham-noop.patch ; MSG="exp(q28): sham no-op (clk_round_rate query + pr_info, no assignment)" ;;
+	sham2) VERSION=${VERSION:-vk99-sham2-lv64} ; BR=q28/sham2-lv64 ; APPLY=1 ; PATCH=$ROOT/patches/q28-sham2-noop.patch ; MSG="exp(q28): sham2 no-op (constant pr_info only, no clock API)" ;;
+	empty) VERSION=${VERSION:-vk101-empty-lv64} ; BR=q28/empty-lv64 ; APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
 	c1pin) VERSION=${VERSION:-vk102-c1pin} ; BR=q28/c1pin ; APPLY=0 ; PATCH=$ROOT/patches/q28-round-vk86.patch ; MSG="" ;;
 	*) echo "ARM must be base|round|sham"; exit 2 ;;
 esac

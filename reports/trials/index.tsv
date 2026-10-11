@@ -39,3 +39,6 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-11T12:29:35Z	q28cold-base2-2	vk100-base2-lv64	por	fastboot boot (cold fb after user POR)	GOOD	c942918f445e	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-202755-q28cold-base2-2
 2026-10-11T12:40:38Z	q28cold-empty1	vk101-empty-lv64	por	fastboot boot (cold fb after user POR)	NOCARD	d346a1611c9a	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-203858-q28cold-empty1
 2026-10-11T13:14:23Z	q28cold-c1pin1	vk102-c1pin	por	fastboot boot (cold fb after user POR)	GOOD	9a3736658f29	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-211243-q28cold-c1pin1
+2026-10-11T14:19:19Z	q28cold-vk103	vk103-c1r6	por	fastboot boot (cold fb after user POR)	GOOD	20348693f43b	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-221739-q28cold-vk103
+2026-10-11T14:47:53Z	q28cold-round-pin1	vk105-round-pin	por	fastboot boot (cold fb after user POR)	GOOD	b1de0f1a0ed5	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-224612-q28cold-round-pin1
+2026-10-11T14:51:29Z	q28cold-base-pin1	vk104-base-pin	por	fastboot boot (cold fb after user POR)	GOOD	24b1fd3c8cba	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261011-224948-q28cold-base-pin1

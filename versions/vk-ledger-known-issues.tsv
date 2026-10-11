@@ -93,3 +93,8 @@ vk102-c1pin	num_ne_tag	钉死 UTS 的 C1 路由内核（源 5d01d3324 含 ADSP D
 vk102-c1pin	uts_dup	同上：刻意复用 vk64 的 UTS 串（验证版本串身份法则可控）
 vk103-c1r6	num_ne_tag	C1 路由内核(IPv4+IPv6)，刻意钉死 UTS=vk64 串（PINUTS）；源提交不打 vk103 tag
 vk103-c1r6	uts_dup	同上：刻意复用 vk64 的 UTS 串
+vk104-base-pin	num_ne_tag	Q28 PINUTS 对照臂（刻意钉死 UTS）；源提交不打 vk104 tag
+vk104-base-pin	uts_dup	同上：刻意复用 vk64 的 UTS 串
+vk105-round-pin	num_ne_tag	Q28 PINUTS round 臂（刻意钉死 UTS）；源提交不打 vk105 tag
+vk105-round-pin	uts_dup	同上：刻意复用 vk64 的 UTS 串
+vk96-round-lv64	src_unreachable	Q28 未钉 UTS 的 round 臂；其源提交在 q28/round-lv64 分支上被后续 PINUTS 重建覆盖而不可达；结论已由 vk105-round-pin 取代（reports/q28-retro-audit-20261011.md）
