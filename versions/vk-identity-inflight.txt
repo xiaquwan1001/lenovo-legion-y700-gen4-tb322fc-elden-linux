@@ -59,3 +59,4 @@ boot-elden-vk92-fix2mx.img	# Q24 FIX-2：probe 常持票（待 -vk64 台架重�
 boot-elden-vk93-cleanctl.img	# Q28 台架对照：clean/base + LOCALVERSION=-vk93-cleanctl（NOCARD 3/3）
 boot-elden-vk93-nocam.img	# Q28 台架对照：无相机 auto-load（NOCARD 1/1）
 boot-elden-vk93-lv64.img	# ★Q28 GOOD 台架：clean/base + LOCALVERSION=-vk64（GOOD 1/1）
+boot-elden-e4a-lv64.img	# Q24 E4a 臂（DT-only）在 -vk64 台架上的镜像（UTS 与 vk64 同；实测首次熄屏即死）
