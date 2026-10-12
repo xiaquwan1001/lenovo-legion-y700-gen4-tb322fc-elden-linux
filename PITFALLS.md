@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#227**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#229**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1752,3 +1752,17 @@
     - **唯一新差异 = 复位终态**：原厂 `ctrl_reset()` 复位后 `CLK_CTRL=0x00`（时钟全关）且只恢复 `DSI_EN`（引擎关）；主线 `dsi_sw_reset_v2_9()` 恢复**保存的时钟与原 ctrl（含 `CMD_MODE_EN`）**。未单独实验。
     - **规约**：① 这条轴别再翻别家机型驱动（原厂已无更多可挖）⇒ 转上游/Qualcomm + 运营兜底；② 想继续挖需 **vendor 主内核树的 `dispcc-sm8750.c`**（Lenovo stock 未含 clk 驱动）；③ 原厂源码优先用 `stock-src/`，别再依赖 `/tmp`。
     - 证据：`reports/q28-dispcc-static-20261012.md`、`reference/vendor-display-sm8750/README.md`。
+
+228. **★Q28 运营兜底看门狗已上机：坏发 75 s 后自动正常重启（把可用性 ~50% → ~75%）；不改根因。**
+    - 设备侧 `/usr/local/sbin/q28-boot-watchdog.sh` + `/etc/local.d/elden-bringup.start` 钩子（helper 枚举 `setsid … & `）+ `/usr/local/sbin/q28-watchdog.sh on|off|status`；主机侧 `scripts/q28-watchdog.sh install|on|off|status|judge`；源 = `rootfs/persistent-overlay/q28-boot-watchdog.sh`。
+    - **判据**：`bad = (无 phoc/phosh OR 无 /sys/class/drm/card0) AND (无 card0 OR dmesg 命中 command DMA timeout/Failed to initialize panel/vblank wait timed out)`；`Q28_WD_WAIT`（默认 75 s，≥#172 的 60 s 存活门）判一次；有会话+card0 ⇒ 计数清零；重启次数**跨启动**计数、上限 `Q28_WD_MAX`（默认 2）⇒ 防重启风暴（用尽后留在台架便于诊断）。
+    - **实测**：分支自检全过（DRYRUN：nocard/nosession→坏发；good→清零；计数=2→额度用尽；marker→停用）；**真实端到端** = 合成坏发 → 持久日志 `Q28 bad boot detected (attempt 1/2 …) -> normal reboot` → 设备正常重启回 Linux（非 fastboot）、新 boot_id、随后 GOOD 启动清零。
+    - **必须遵守**：任何可能留下坏发台架的实验（Q28 A/B、Q24 台架）前先 `q28-watchdog.sh off`（否则 75 s 后台架被自动重启）；停用期内好启动仍会清零计数（判定顺序：先 good-reset，后 disable-skip）。日志写 **`/var/log/q28-watchdog.log`（持久）**——本机无 syslogd，`logger` 是空操作，别只靠它。
+    - **不覆盖**：#106「进 GUI 后卡死」形态（冻结时 phoc 进程仍在 ⇒ 本判据命中不了）。
+    - 证据：`reports/q28-watchdog-20261012.md`。
+
+229. **★地雷：设备上打包/部署的 `reboot2` 曾是「无参=进 fastboot」的旧构建（源码 2026-10-09 已修，二进制从未更新）。**
+    - 事实：`rootfs/alpine/usr/local/sbin/reboot2`（709320 B，Sep 28）用 `strings` 见 `usage: %s [bootloader|recovery|<mode>]`（默认 bootloader）；修复版 `out/reboot2-fixed`（709368 B）为 `no argument = normal reboot`。**任何以无参 `reboot2` 当「普通重启」用的脚本都会把设备打进 fastboot**（本次是 Q28 看门狗第一次真实重启踩到）。
+    - 修复：① 设备装 `out/reboot2-fixed`（sha `0c68ee5f…`）；② **仓库打包件已替换**（`rootfs/alpine/usr/local/sbin/reboot2`）；③ 看门狗加**能力自检**（`reboot2 -h | grep -q 'no argument = normal reboot'`，不过则退 `echo b > /proc/sysrq-trigger`）；④ `restore.sh` 装机时自检并告警。
+    - 规约：**凡是要「重启回 Linux」的地方，先确认 `reboot2 -h` 自报正常重启能力**；别假设设备上的二进制与仓库源码同版本。验收 = 无参 `reboot2` 后 `fastboot devices` 为空且 SSH 回来。
+    - 证据：`reports/q28-watchdog-20261012.md` §0.5 / §3。

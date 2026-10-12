@@ -43,6 +43,20 @@ if [ -d userland-display ]; then
 	sh userland-display/install-on-device.sh
 fi
 
+echo "== Q28 看门狗（运营兜底自动重启；PITFALLS #228/#229）=="
+if [ -f q28-boot-watchdog.sh ]; then
+	install -m755 q28-boot-watchdog.sh /usr/local/sbin/q28-boot-watchdog.sh
+	mkdir -p /etc/local.d
+	if [ -f /etc/local.d/elden-bringup.start ] && ! grep -q q28-boot-watchdog /etc/local.d/elden-bringup.start; then
+		sed -i 's/^for h in /for h in q28-boot-watchdog /' /etc/local.d/elden-bringup.start
+	fi
+	# 装机自检：无参 reboot2 必须做「正常重启」；旧构建会进 fastboot（#229）
+	if [ -x /usr/local/sbin/reboot2 ] && \
+	   ! /usr/local/sbin/reboot2 -h 2>&1 | grep -q 'no argument = normal reboot'; then
+		echo "WARNING: /usr/local/sbin/reboot2 是旧构建（无参=fastboot）——请装 out/reboot2-fixed" >&2
+	fi
+fi
+
 echo "== /init (single source of truth is initramfs/init in the repo) =="
 install -m755 init /init
 
