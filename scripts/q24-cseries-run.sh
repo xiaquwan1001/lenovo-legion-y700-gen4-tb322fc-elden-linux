@@ -59,7 +59,9 @@ done
 [ "$ses" = 1 ] || { log "GATE_FAIL: 会话总线/ScreenSaver 无有效响应（最后一次: $r）"; S 'sh /tmp/q24-dev-dstate.sh' > "$OUT/abort-dstate.txt"; exit 4; }
 # #198 台架健康前置检查：D 态里出现 合成器/Xwayland/GPU 捕获 ⇒ GPU/显示故障态，仪器必坏
 S 'sh /tmp/q24-dev-dstate.sh' > "$OUT/s0-dstate.txt"
-if grep -qiE 'phoc|phosh|Xwayland|gnome-session|gsd-|rpm_resume|a6xx|msm_gpu|msm_job_run|dma_fence' "$OUT/s0-dstate.txt"; then
+# 只认「用户态进程在 D 态」或「GPU 故障捕获 wchan」；内核线程的正常等 fence（dma_fence_default_wait）不算
+# （2026-10-12 误判教训：pid 56 内核线程等 fence 被当成坏台架）
+if grep -E '^D pid=[0-9]+ +/' "$OUT/s0-dstate.txt" >/dev/null || grep -qE 'a6xx_gmu_oob|a6xx_gmu_set_oob|msm_gpu_fault_crashstate_capture|msm_job_run' "$OUT/s0-dstate.txt"; then
   log "GATE_FAIL: 台架不健康（D 态含合成器/GPU：#198 故障态）见 s0-dstate.txt"; exit 4
 fi
 log "会话/台架健康门通过: $r"

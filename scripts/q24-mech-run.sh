@@ -7,12 +7,14 @@
 #
 # 判据：死亡后看 tracepipe 尾部（最后一帧事件 + 最后一条 clk/rpmh 票）⇒ 指认「死在哪一步」。
 # 用法: scripts/q24-mech-run.sh [boot.img] [label]   （前提：设备已在 fastboot，起点=物理 POR）
+#       SKIP_BOOT=1 scripts/q24-mech-run.sh - <label>   复用当前已起的台架（不重启）
 set -uo pipefail
 ROOT=/home/xuqianhui1001/y700-elden; cd "$ROOT" || exit 1
 IMG=${1:-out/boot-elden-lv64-nocam.img}
 LABEL=${2:-mech}
 HOLD=${HOLD:-60}
 SETTLE=${SETTLE:-20}
+SKIP_BOOT=${SKIP_BOOT:-0}
 TP=${TP:-'events/rpmh events/clk events/regulator events/power events/drm events/thermal'}
 OUT=$ROOT/logs/q24-$LABEL-$(date +%Y%m%d-%H%M%S); mkdir -p "$OUT"; echo "$OUT" > /tmp/q24_last_out
 TAB=root@192.168.7.1
@@ -24,21 +26,28 @@ mark(){ printf '%s %s\n' "$(wc -l < "$OUT/tracepipe.txt" 2>/dev/null || echo 0)"
 died(){ if alive; then return 1; fi; log "DEATH: SSH 不通"; return 0; }
 
 # --- 0) 前置 ---
-timeout 20 fastboot devices > "$OUT/fastboot.txt" 2>&1 || true
-grep -q fastboot "$OUT/fastboot.txt" || { log "FAIL: 设备不在 fastboot"; exit 2; }
-timeout 15 fastboot getvar product > "$OUT/fb-probe.txt" 2>&1 || true
-grep -q product "$OUT/fb-probe.txt" || { log "FAIL: bootloader 不应答 getvar（gadget 卡死）→ 物理 POR"; exit 2; }
-log "OUT=$OUT IMG=$IMG LABEL=$LABEL TP=[$TP]"
-sha256sum "$IMG" | tee "$OUT/image.sha256"
+if [ "$SKIP_BOOT" = 1 ]; then
+  alive || { log "FAIL: SKIP_BOOT=1 但设备不可达"; exit 2; }
+  log "OUT=$OUT IMG=$IMG LABEL=$LABEL TP=[$TP]（复用当前台架）"
+else
+  timeout 20 fastboot devices > "$OUT/fastboot.txt" 2>&1 || true
+  grep -q fastboot "$OUT/fastboot.txt" || { log "FAIL: 设备不在 fastboot"; exit 2; }
+  timeout 15 fastboot getvar product > "$OUT/fb-probe.txt" 2>&1 || true
+  grep -q product "$OUT/fb-probe.txt" || { log "FAIL: bootloader 不应答 getvar（gadget 卡死）→ 物理 POR"; exit 2; }
+  log "OUT=$OUT IMG=$IMG LABEL=$LABEL TP=[$TP]"
+  sha256sum "$IMG" | tee "$OUT/image.sha256"
+fi
 bash scripts/serial-logger.sh "$OUT/serial.log" >/dev/null 2>&1 &
 LOGPID=$!; log "serial-logger pid=$LOGPID"
 
 # --- 1) 冷起 ---
-log "fastboot boot $IMG"
-timeout 180 fastboot boot "$IMG" > "$OUT/fastboot-boot.log" 2>&1
-tail -3 "$OUT/fastboot-boot.log" | tee -a "$OUT/run.log"
-up=0; for i in $(seq 1 40); do alive && { up=1; log "ssh up after $((i*5))s"; break; }; sleep 5; done
-[ "$up" = 1 ] || { log "FAIL: 200s 内无 SSH"; exit 10; }
+if [ "$SKIP_BOOT" != 1 ]; then
+  log "fastboot boot $IMG"
+  timeout 180 fastboot boot "$IMG" > "$OUT/fastboot-boot.log" 2>&1
+  tail -3 "$OUT/fastboot-boot.log" | tee -a "$OUT/run.log"
+  up=0; for i in $(seq 1 40); do alive && { up=1; log "ssh up after $((i*5))s"; break; }; sleep 5; done
+  [ "$up" = 1 ] || { log "FAIL: 200s 内无 SSH"; exit 10; }
+fi
 S 'uname -a; echo ---; cut -d. -f1 /proc/uptime' > "$OUT/s0-env.txt"; log "$(head -1 "$OUT/s0-env.txt")"
 for f in q24-dev-sess.sh q24-dev-blank.sh q24-dev-keepawake.sh q24-dev-snap.sh q24-dev-dstate.sh; do
   scp -q -o StrictHostKeyChecking=no "scripts/$f" "$TAB:/tmp/$f" || log "WARN: scp $f 失败"
@@ -54,7 +63,7 @@ for i in $(seq 1 40); do
 done
 [ "$ses" = 1 ] || { log "GATE_FAIL: ScreenSaver 无有效响应（$r）"; exit 4; }
 S 'sh /tmp/q24-dev-dstate.sh' > "$OUT/s0-dstate.txt"
-if grep -qiE 'phoc|phosh|Xwayland|gnome-session|gsd-|rpm_resume|a6xx|msm_gpu|msm_job_run|dma_fence' "$OUT/s0-dstate.txt"; then
+if grep -E '^D pid=[0-9]+ +/' "$OUT/s0-dstate.txt" >/dev/null || grep -qE 'a6xx_gmu_oob|a6xx_gmu_set_oob|msm_gpu_fault_crashstate_capture|msm_job_run' "$OUT/s0-dstate.txt"; then
   log "GATE_FAIL: 台架不健康（D 态含合成器/GPU：#198）"; exit 4
 fi
 S 'sh /tmp/q24-dev-keepawake.sh' | tee -a "$OUT/s0-keepawake.txt" >/dev/null
