@@ -1,0 +1,18 @@
+{
+  "label": "q28storm-E2-110a",
+  "ts": "2026-10-12T00:02:17Z",
+  "vk": "vk110-oldK-newDTB",
+  "image": "out/boot-elden-vk110-oldK-newDTB.img",
+  "image_sha256": "15964160bed002b05621d90379c12fd68d0ae4dd4fdbcecbc94903eeefd7a20d",
+  "manifest": "/home/xuqianhui1001/y700-elden/out/boot-elden-vk110-oldK-newDTB.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk64-gd02658e63cf6",
+  "kernel_payload_sha256": "",
+  "config_sha256": "a383cdb99dfee7a9f7a21c915541af05edf6efa3d2bb7cda552b270a263cbf4d",
+  "dtb_packed_sha256": "386cc9bd5d243425dd342a9acd703f839bcb133318430b77be5ba675b90d10cb",
+  "reset_type": "por",
+  "deploy": "fastboot boot (cold fb after user POR)",
+  "probe": "q28",
+  "verdict": "L1FAIL",
+  "log_dir": "/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-080020-q28storm-E2-110a",
+  "note": "cold POR; survival gate 65s; see logs"
+}

@@ -76,6 +76,8 @@
 | B1 / B2 | `vk106-newK-oldR` | 新 | 旧 | **GOOD / GOOD** |
 | C1 / C2 | `vk94` | 旧 | 旧 | **L1FAIL / GOOD** |
 | D1 / D2 | `vk107-oldK-newR` | 旧 | 新 | **L1FAIL / GOOD** |
+| E2-109a | `vk109-newK-oldDTB` | 新 | **旧 DTB** | **GOOD** |
+| E2-110a | `vk110-oldK-newDTB` | 旧 `#60` | **新 DTB** | **L1FAIL** |
 
 **观察**：
 1. **STORM 被复现**（C1/D1）：签名与历史完全一致——`command DMA timeout: status=0x2200200` → `bonded command DMA failed: master=-110 peer=-110` → `sending dcs data ff 20 failed: -110` → `Failed to initialize panel: -5`（t≈9 s），`session=0`。
@@ -84,6 +86,17 @@
 4. **ramdisk 与结果无关**（B 用旧 ramdisk 恒 GOOD；D 用新 ramdisk 与 C 同模式）。
 
 **统计诚实**：n 太小。2/8 总坏发率、旧内核 2/4 vs 新内核 0/4、Fisher 精确 p≈0.43，**不显著**。
+
+### 6.1 ★E2 结果（2026-10-12，DTB 轴排除）
+
+| 样本 | 内核 | DTB | ramdisk | 结果 |
+|---|---|---|---|---|
+| `vk109-newK-oldDTB` | 新（`#1xx`） | **旧** | 新 | **GOOD**（`panel prepared`） |
+| `vk110-oldK-newDTB` | **旧 `#60`** | 新 | 旧 | **L1FAIL**（`command DMA timeout` @t=9.02s） |
+
+⇒ **DTB 翻转不改变结果**（好内核+旧DTB 仍 GOOD；旧内核+新DTB 仍 L1FAIL）⇒ **§7.3 H2（DTB 轴）被排除**；轴在内核二进制（构建身份）。
+
+**累计（冷路径）**：`#60` 内核臂 3 坏 / 2 好（vk94 C1/D1… + vk110）；3 位构建臂 **0 坏**（A/B/vk97–vk109 共 20+ 发）。
 
 **下一步（建议）**：同一时间窗内**交替**打 C/A（如 C3,A3,C4,A4…）以解耦「内核」与「轮次/时序」，目标每臂累计 ≥6 发。
 
