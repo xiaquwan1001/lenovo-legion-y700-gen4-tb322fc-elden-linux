@@ -139,3 +139,14 @@ bash scripts/q28-cold-run.sh out/boot-elden-vk104-base-pin.img vk104-ctlN  # 3 �
 1. **Q28 的缓解不在镜像层**：身份、round 补丁、复位时长都不改变坏发率；从 `PITFALLS #195` 派生的「3 位重编 = 治法」**作废**（「降险」仅作弱先验，不足以决策）。
 2. **根治路径 = 驱动内机制**：bonded 双 DSI 首条 DCS 的 cmd-DMA 引擎在坏发时自锁（`status=0x2200200`）；下一步应写「encoder enable 失败 → `msm_dsi_host_power_off/on`（含 PHY/PLL 复位）→ 重试 panel init」的**驱动内自恢复**补丁，判据 = 坏发 boot 能自己出画面（不靠 POR）。注意本树 = `GEEKiDOS/linux`，`bonded command DMA failed`/`peer command DMA timeout` 这条路径为本树自带 ⇒ 同时向该上游/维护者报告。
 3. **运营口径**：日常仍可能开机只见背光（当晚 4/7）；恢复 = 关机重开（暖复位在坏态可能粘住；运行期重绑无效）。相机 ⇄ 熄屏互斥（Q24）不变。
+
+**重绑实验原始行（`logs/q28-rebind-20261012/dmesg-after-rebind.txt`，host-only 未入库）：**
+
+```
+[  141.760734] [    C5] msm_dpu ae01000.display-controller: [drm:hangcheck_handler] *ERROR* 44050000: hangcheck detected gpu lockup rb 0!
+[  141.763483] [  T778] msm_dpu ae01000.display-controller: [drm:recover_worker] *ERROR* 44050000: hangcheck recover!
+[  141.765286] [  T778] msm_dpu ae01000.display-controller: [drm:recover_worker] *ERROR* 44050000: offending task: phoc (/usr/bin/phoc -v -S -C /etc/phosh/phoc.ini -E gnome-session --session=phosh)
+[  154.733700] [ T3357] Console: switching to colour dummy device 80x25
+```
+
+（`/sys/class/drm/` 重绑后只剩 `version`，`card0` 消失；panel unbind 写入时调用挂住数秒。）
