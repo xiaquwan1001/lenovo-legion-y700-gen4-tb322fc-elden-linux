@@ -1,6 +1,6 @@
 # Q28 显示问题 — 文档地图（INDEX）
 
-> 2026-10-10 整理。Q28 的过程稿散落多份，现收敛为**单一事实源（SSOT）= `q28-DOSSIER.md`**。
+> 2026-10-10 整理，2026-10-12 追加 §5。Q28 的过程稿散落多份，现收敛为**单一事实源（SSOT）= `q28-DOSSIER.md`**。
 > 本地图列出全部 `q28-*` 文档、各自定位/日期，并逐个标注**是否已并入 DOSSIER**。
 > 原则：**读现状/结论 → 只读 DOSSIER**；旧报告只作过程留痕与证据附件。
 
@@ -40,3 +40,21 @@
 3. 需断点/设备态：`q28-handoff` 顶部横幅
 
 > 修订 2026-10-10：本 INDEX + `q28-DOSSIER.md` 为新建文件；未改动/删除任何已有 `q28-*` 报告。
+
+---
+
+## 5. 2026-10-11/12 追加（构建身份定案线）
+
+> 结论已进 SSOT：`PITFALLS #192`（NOCARD 身份法则）、**`PITFALLS #195`（STORM 同族）**、`q28-DOSSIER.md §o/§p 更正/§q`、`TASKS.md §5 Q28`。
+
+| 文件 | 定位 | 日期 |
+|---|---|---|
+| **`reports/q28-handoff-20261012.md`** | **★下一会话续接**：现状一句话、已建资产、待核查项（`to_primary_dsi` DSI0/DSI1、Method B、refgen）、方法学纪律、设备态 | 2026-10-12 |
+| `reports/q28-storm-bias-audit-20261011.md` | STORM 是否误判的证据审计 + 2×2/E1/E1'/E2 判定实验与结果（§6/§7） | 2026-10-11/12 |
+| `reports/q28-retro-audit-20261011.md` | 以 `#192` 为基准重审旧现象报告（旧结论重判表） | 2026-10-11 |
+| `reports/q28-community-cases-20261012.md` | 社区/上游相似案例检索（nt36536、byte-clk 回归、DCS 阶段类、refgen） | 2026-10-12 |
+| **`reference/upstream-pengyuluo/`** | Pengyu Luo 上游代码快照（nt36536 驱动 + Y700 Gen4 DT）+ 差异/Q28 线索 | 2026-10-12 |
+
+**新增工具/臂**（详见 handoff §1）：`scripts/q28-devprobe2.sh`、`scripts/q28-build-oldrep-pin.sh`；臂 vk104–vk111。
+
+**阅读顺序（追加）**：先 `q28-handoff-20261012.md`（断点）→ `PITFALLS #195` → 需要证据进 `q28-storm-bias-audit-20261011.md`。
