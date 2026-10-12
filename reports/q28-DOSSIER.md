@@ -373,6 +373,8 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 
 ## p) 2026-10-11 收尾口径（Q28）
 
+> ⚠️ **第 3 条已被 §q（2026-10-12）更正**：STORM 并非「独立随机」，而是与 NOCARD 同类的**内核构建身份伪影**（`#60` 2 位构建号 67% 坏发 vs 3 位 0%）。
+
 **现状（SSOT，覆盖前文不一致处）**：
 
 1. **NOCARD 分支已闭环 = 构建身份伪影**。依据 `PITFALLS #192`（法则） + `§o-附`（PINUTS 解锁） + `reports/q28-retro-audit-20261011.md`（旧结论重判）。决定性证据：**同一个 round 补丁**，`vk96-round-lv64`（未钉 UTS `…-g66b5604d1898`）冷起 **NOCARD 3/3**，而 `vk105-round-pin`（钉死 UTS `…-vk64-gd02658e63cf6`）冷起 **GOOD**；对照 `vk104-base-pin`（无改+钉死）**GOOD**。
@@ -380,3 +382,23 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 3. **剩余唯一未解 = STORM（独立随机）**：日常 boot_b 纯净冷起实测 STORM（`card0` 在、`storm>0`、无桌面），与构建身份无关。**round / Method-B 对 STORM 是否有效=未测**（需系列冷起比较 STORM 率，成本=多次 POR）。
 4. **可复用台架**：`vk97-base-lv64` / `vk100-base2-lv64`（GOOD 5/5）、`vk104-base-pin` / `vk105-round-pin`（PINUTS 臂，GOOD）；判据=三态探针 + 65 s 存活门。
 5. **不再作为证据**：§k「按内核二进制确定性」、`vk90/vk92` 的 NOCARD、round 的 NOCARD=「修复无效」、T1/T2/T3 冷 A/B 样本（见 audit 报告）。
+
+## q) ★2026-10-12 定案：STORM 也是构建身份伪影（更正 §p 第 3 条）
+
+**§p 第 3 条「剩余唯一未解 = STORM（独立随机）」被本轮取证更正**：STORM 是真实的首条 DCS 命令-DMA 冷起竞态，**但坏发率由内核构建身份决定** —— 与 §o 的 NOCARD 法则（`#192`）同一机理。
+
+**决定实验（全部物理 POR 冷起，`q28-devprobe2.sh` L1/L2 判据，`q28-cold-run.sh`）**：
+
+| 实验 | 臂 | 结果 |
+|---|---|---|
+| 2×2 内核构建×ramdisk | A vk104(新K,新R) / B vk106(新K,旧R) | GOOD / GOOD |
+| 同上 | C vk94(旧K,旧R) / D vk107(旧K,新R) | L1FAIL+GOOD / L1FAIL+GOOD |
+| E2 DTB 交叉 | vk109(新K,旧DTB) / vk110(旧K,新DTB) | **GOOD / L1FAIL** |
+| E1' 复刻身份 | vk111(`d02658e63`+PINUTS+强制`#60`+同日期) | **L1FAIL** |
+
+**计数**：`#60`（2 位构建号）臂 4 坏 / 2 好（~67%）；3 位构建号（`#111`–`#120`）**0 坏 / 12+ 发**；Fisher p≈0.005。
+
+**排除**：源码（全为 `d02658e63`）、DTB（E2）、ramdisk（B/D）、具体二进制（E1' 重编复现）。
+**唯一变量**：`UTS_VERSION` 的 `#N`/日期长度 → `.rodata` 布局（`#60` 2 位 vs 3 位）。
+**治法**：日常镜像用 3 位 `#N` 的新构建身份重编（同源码 + ADSP DTB）。
+**证据**：`reports/q28-storm-bias-audit-20261011.md`、`PITFALLS #195`、`reports/trials/index.tsv`（`*q28storm*`）。

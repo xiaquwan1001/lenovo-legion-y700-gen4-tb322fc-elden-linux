@@ -1508,3 +1508,16 @@
     - **可复用**：历史 workaround（`/root/wd/blank_screen.rc` 往主表塞默认路由）**生效不可靠且不贴 AOSP fwmark 设计**，降为回退；宿主侧可靠注入=`wd-ctl.sh route`（工具已入仓）。构建法=`scripts/q28-build-arm-lv64.sh`（`ARM=c1pin PINUTS=… CONFIGFILE=…`），片段 `patches/fragment-c1-iprule6.config`、快照 `patches/config-vk103-c1routing6.bak`。
     - **附带**：修好后容器 DNS 默认 `8.8.8.8` 被墙需改；容器境外出网走**宿主 Clash 代理**（容器内 `curl -x http://<宿主USB IP>:7897` 可用，实测 google=302/github=200），**在平板本地跑同订阅代理不可行**（校园 wlan 到境外节点直连 fail）。
     - 证据：`reports/wd-netd-route-20261011.md`、`reports/wd-net-baseline-20261011.md`、`TASKS.md §2 C1`；子代理报告已由父代订正（其 `ip rule` 证据实抓于 c1pin）。
+
+195. **★Q28-STORM「冷起首条 DCS 命令-DMA 超时」同样是内核构建身份伪影（2026-10-12 定案；与 #192 同机理）**。
+    - 现象（冷起）：`msm_dsi ae94000.dsi: command DMA timeout: status=0x2200200` → `bonded command DMA failed: master=-110 peer=-110` → `sending dcs data ff 20 failed: -110` → `Failed to initialize panel: -5`，随后 `ctl reset/frame done/vblank` 风暴 ⇒ 只有背光/无桌面。坏发点 = `msm_dsi … timing …` 之后 **~0.22 s**；GOOD 启动在同一偏移做 `panel prepared`。DSI 时序参数、`DSI_PLL_lockfail=4`、`device_link_fail=8` 在好坏启动**完全一样**（良性）。
+    - 判据：L1/L2 拆分探针 `scripts/q28-devprobe2.sh`（L1=DSI/panel 真失败：`command DMA timeout`/`Failed to initialize panel`/`sending dcs data … failed`；L2=DPU 下游：`ctl reset`/`frame done`/`vblank`）⇒ `NOCARD/L1FAIL/L2STORM/GOOD(-NOSESSION)`；`scripts/q28-cold-run.sh` 已优先调用 v2。
+    - **证据（全部物理 POR → `fastboot boot`，零写盘）**：
+      - **2×2 因子（内核构建 × ramdisk）**：新内核+新/旧 ramdisk = GOOD；旧内核+旧/新 ramdisk = L1FAIL ⇒ **ramdisk 无关**（vk104/vk106 vs vk94/vk107）。
+      - **E2  DTB 交叉**：`vk109` 新内核+旧DTB = GOOD；`vk110` 旧内核+新DTB = L1FAIL ⇒ **DTB 无关**。
+      - **E1'（决定性）**：同源码 `d02658e63` + PINUTS + **强制 `KBUILD_BUILD_VERSION=60` + `KBUILD_BUILD_TIMESTAMP='Thu Oct  8 17:06:14 CST 2026'`**（banner 逐字复刻 vk94）+ 旧 ramdisk ⇒ `vk111` 冷起 **L1FAIL**；与 vk94 内核 payload 仅差 0.14% ⇒ **重现旧构建身份即重现 STORM**。
+      - 计数：**`#60`（2 位构建号）内核臂 4 坏/2 好（~67%）**；**3 位构建号（`#111`–`#120`）0 坏 / 12+ 发**（Fisher 精确 p≈0.005）。
+    - 结论：**源码、DTB、ramdisk 全部排除；唯一变量 = 内核构建身份（`UTS_VERSION` 的 `#N`/日期长度 → `.rodata` 布局）**。`#60`（2 位）落竞态坏侧、3 位构建落好侧 ⇒ **STORM 不是「独立随机」，而是逐启动随机、坏发率由构建身份决定**（§p 的「STORM 独立随机」更正）。日常 boot_b = `vk94` = `#60` 内核 ⇒ 真痛点来源。
+    - 治法：**日常镜像用新构建身份（3 位 `#N`）重编**（同源码 + ADSP DTB；cold GOOD 20+ 发）。
+    - 方法学：**冷起 A/B 必须 PINUTS，且记录 `#N` 位数**；否则构建身份混淆结果（同 #192 observer effect）。
+    - 证据：`reports/q28-storm-bias-audit-20261011.md`、`reports/trials/index.tsv`（`*q28storm*`）、`logs/q28-cold-*`。
