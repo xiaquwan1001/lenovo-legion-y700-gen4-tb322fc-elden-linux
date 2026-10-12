@@ -81,6 +81,8 @@
 versions/*.lock
 # 已退场插件 pi-messenger-swarm 的运行时状态（2026-10-04 归档 archive/2026-10-04-retired-entrypoints/）；规则保留以防重装时污染 git status
 /.pi/messenger/
+# pi-fabric（子代理/编排，2026-10-12 取代 pi-subagents）的运行时状态：mcp 缓存 + mesh state
+/.pi/fabric/
 
 # ---- 通用 ----
 __pycache__/
