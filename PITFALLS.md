@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#204**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#206**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1589,3 +1589,13 @@
     - 推论：① 熄屏票本身**不区分**死/活（C0/C1/C2 都有 `mmcx=2/cx=5`）⇒ 判死只能靠「设备是否失联 + 串口是否有 panic + trace 是否静止」；② **`mxc.lvl→0` 不是必要条件**（本台架 `mxc` 稳态即 `off-0`，全程无票，照样静默硬复位——与 `#197` 同理：别把「该轨恰好为 0」当死因）；③ 实验必须写成 `blank → hold(N s) → wake` 三段并分别记 `DEATH_AT`。
     - 附带确证：**`{camcc}` 单模块 + 真熄屏在干净配对基线上不致死**（C1，硬门 3/3 后存活 89 s）；历史「`{camcc}` 致死」的唯一反例来自「完整相机栈装载后卸载」的污染状态（`reports/q24-ctl-20261012.md` §3 已并列声明）。
     - 证据：`reports/q24-cseries-20261012.md`、`logs/q24-cseries1-20261012-113143/{run.log,serial.log,tracepipe.txt,marks.txt}`。
+
+205. **★Q24：cambist 的 DT 电源域绑定（MX-only ⇄ 上游 MMCX+MX）**不是杠杆**——两个绑定的死亡签名逐项相同（2026-10-12 上机否证）。**
+    - 实验：`out/boot-elden-vk112-h1-dtbmmcxmx.img`（DTB-only，唯一变量 = cambist 恢复上游 `power-domains=<MMCX>,<MX>` + `required-opps=low_svs,low_svs`；内核/ramdisk/cmdline 与基准逐字节同）在 **Q28 GOOD** 台架上跑 C 系列：**C0(cam=0)/C1(`{camcc}`) 存活 +89 s；C2(`{camcc,cambist}`) 真熄屏 3 s 内静默硬复位**，blank 段票 `mmcx.lvl=2/cx.lvl=5` 与 MX-only 基准**逐字相同**，串口无 panic。
+    - 推论：`be79b256d`（MX-only）既不是死因、也不是解；**DT 空间只剩 H3（camcc 去 MXC）**。⇒ 下一步应从「盲试臂」转「机制取证」：宽 tracepoint（`clk/rpmh/regulator/power/drm`）抓死前最后一帧（脚本 `scripts/q24-mech-run.sh`）。
+    - 附带线索：本轮死亡前 trace 尾部是 `disp_snapshot` 工作线程在 NoC（`0x50034`）投票后静止（基准那轮是 `phoc` + NoC）。
+    - 证据：`reports/q24-h1-result-20261012.md`、`logs/q24-h1vk112b-20261012-123310/`。
+
+206. **★Q24 相位判定顺序：必须「先判死、后判熄屏硬门」**，否则**仪表有效时的死亡现场会被误标成仪表无效**。
+    - 现象：配对+熄屏致死时，`GATE_AFTER3` 常见 `active=(false,) dpms=Off`（会话/服务正随整机崩溃而失去响应）⇒ 若先按硬门判「active 不为 true」就 `GATE_FAIL` 退出，就把一次**成功复现**记成了「台架无效」。
+    - 规约：熄屏后先 `died()`（SSH 失联即判死并记 `DEATH_AT=<phase>/blank`），只有在设备**仍存活**时才要求 3/3 硬门。`scripts/q24-cseries-run.sh` 已修（2026-10-12，第 6 轮首踩）。
