@@ -182,3 +182,132 @@ Thanks,
 3. **同窗配对无身份效应 + 成簇实证**：2026-10-13 06:39–07:21 同窗（真实 POR）`#60` 1 坏/1 好（+1 未定 NOROUTE）vs 3 位臂 2 好 ⇒ 窗内无可辨身份效应；`#60` 07:10 坏 / 07:17 好（相隔 7 min）⇒ 跨窗聚合不能当因果证据。
 
 **发送前置**：先订阅（`linux-arm-msm+subscribe@vger.kernel.org` 等），发出后 24–48 h 用 `python3 ~/.local/bin/lore-query.py` 或按 Message-ID 直取 raw 复核归档（lore inbox 路径不能按列表名猜；详见技能 `upstream-mail-ustc`）。
+
+## 11. 2026-10-13 待发正文全文留档（v2 发送版；`out/` 不入 git，故在此留存）
+
+> 待发文件 = `out/q28-bonded-dsi-2026-10-13.mail.txt`（dry-run 通过：7 收件人 / 118 行 / 纯 ASCII / Message-ID 保真）；**本次发送待用户点头**（先确认已订阅 `linux-arm-msm`）。
+
+```
+To: linux-arm-msm@vger.kernel.org
+Cc: dri-devel@lists.freedesktop.org, freedreno@lists.freedesktop.org, dmitry.baryshkov@oss.qualcomm.com, neil.armstrong@linaro.org, abelvesa@kernel.org, mitltlatltl@gmail.com
+Subject: [REPORT] SM8750 bonded dual-DSI + NT36536: first DCS command-DMA timeout on cold boot (DMA engine stays latched; DSI-side reset does not clear it)
+
+Hi,
+
+We are bringing up a Lenovo Legion Y700 (2025) tablet, TB322FC / Qualcomm
+SM8750P, with a Novatek NT36536 panel (1904x3040, DSC, video mode) driven by
+bonded dual DSI (ae94000.dsi master, ae96000.dsi peer).  Our tree is
+GEEKiDOS/linux, a 7.2-based tree that carries the bonded command path
+(dsi_mgr_bonded_cmd_xfer() plus the "bonded command DMA failed" / "peer command
+DMA timeout" messages).  We could not find that path in the vanilla 7.2 sources
+we compared against, so question 1 is partly whether it is upstream-supported
+at all.
+
+SYMPTOM
+
+On a *cold* boot (power off -> bootloader -> fastboot boot <image>) the very
+first DCS command of the panel init intermittently times out and the panel is
+never enabled.  Warm reboots do not reproduce this signature (a warm reboot
+reproducibly ends up in mode (b) below); all three modes are cold-boot only.
+Signature, identical in all failing samples:
+
+  [    9.032148] msm_dsi ae94000.dsi: command DMA timeout: status=0x2200200
+  [    9.037910] msm_dsi ae96000.dsi: peer command DMA timeout: status=0x2200200
+  [    9.037912] msm_dsi ae94000.dsi: bonded command DMA failed: master=-110 peer=-110
+  [    9.037914] panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -110
+  [    9.096078] panel-novatek-nt36536 ae94000.dsi.0: Failed to initialize panel: -5
+  [    9.102187] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf1 ctl 1 reset failure: -22
+  [   10.176852] msm_dpu ae01000.display-controller: [drm] vblank wait timed out on crtc 0
+
+On a good boot the same step prints "panel prepared: scheduling firmware
+upload".  "DSI PLL(0) lock failed" x4 and device-link warnings also appear on
+good boots (we treat them as benign noise).
+
+THREE FAILURE MODES, ALL COLD-BOOT ONLY
+
+(a) panel-init timeout with the system up: card0 exists, DSI-1 connected, SSH
+    reachable, only backlight - the signature above.  Most common.
+(b) no card0 at all (DSI host probe fails earlier).
+(c) *new* 2026-10-13: bootloader ACKs the image, but there is no SSH and no
+    fastboot at all for 30+ minutes, backlight only.  In this mode the machine
+    never reaches userspace, so even an on-device watchdog cannot recover it.
+
+REGISTER-LEVEL EVIDENCE (bad boot, instrumented)
+
+We patched the DSI path to dump state around the failure and to attempt
+recovery.  Bad boot, all timestamps in one boot:
+
+  first DCS times out (status=0x2200200)
+  before-reset : CTRL=0x175  STATUS0=0x20003  CLK_STATUS=0x3743  CMD_DMA_CTRL=0xd4000000  INTR_CTRL=0x2200200
+  after our reset (see below): CTRL=0x0 CLK_CTRL=0x0 CLK_STATUS=0x1403
+  after link re-power-on    : CTRL=0x171  STATUS0=0x20003  CLK_STATUS=0x1743  CMD_DMA_CTRL=0x14000000
+  retry of the first DCS    : failed: -110 (identical registers, three attempts in a row)
+
+What we did in that window: cleared the driver-side failure latch, powered the
+link down and up again (clock rate set, clock enable, PHY reset/re-lock, ctrl
+enable), and additionally forced the terminal state of the stock
+ctrl_reset() sequence (engines off, CLK_CTRL = 0x00) on both controllers before
+re-enabling.  The last step *did* take effect - CLK_STATUS dropped from 0x3743
+to 0x1403, i.e. the DYN_PCLK / DYN_CMD_PCLK / CMD_PCLK bits were cleared while
+CLK_CTRL was 0 - but as soon as the link is powered on again CLK_STATUS returns
+to 0x1743 and STATUS0 stays 0x20003 (ENGINE|DMA busy).
+
+So: the failure is not a state we can clear from inside the DSI controller.  It
+looks like the dynamic pixel-clock request is re-asserted during link power-on
+and the command engine stays busy; PLL_UNLOCKED is not set (the PLL is locked),
+the DSI interrupt counters do not advance while the engine is busy, and the
+registers before the first command are byte-identical to those of a good boot.
+
+WHAT WE RULED OUT (controlled, same images)
+
+* Kernel build identity: 2-digit vs 3-digit KBUILD_BUILD_VERSION, same source
+  rebuilt, empty-commit / one-line-pr_info arms, 20+ cold boots.  We first
+  measured "0 bad / 20+" for 3-digit builds; that window simply contained no
+  failure, and the same class of images later failed 4/7.  Pairing #60 against
+  a 3-digit arm inside one window showed no measurable identity effect.
+* Failures cluster in time: adjacent cold boots fail, and a clean window can
+  give 10 good boots in a row.  Rate drifts with session/environment, not with
+  the image.
+* Upstream 2028280686f4 ("round the byte clock rate after reparenting to the
+  PHY PLL"): ported to this tree with upstream semantics (rounding inside
+  dsi_link_clk_set_rate_6g(), byte-intf rate from byte_intf_clk_div_2).  First
+  cold boot still fails with the identical signature.
+* Driver-side recovery: clearing the failure latch and resetting DSI ctrl+PHY
+  (both links) + retrying, as described above.
+* Forcing the stock ctrl_reset() terminal state (CLK_CTRL = 0x00) before
+  re-enabling - the DYN bits come back on power-on (see above).
+* Using the standard broadcast command path instead of the tree's custom bonded
+  sequence: same hang, different error path.
+* Enabling-time dynamic force-on (vendor-style CLK_CTRL force-on around DSI_EN,
+  both transient and held for the whole panel-init window): still fails, and the
+  DYN bits are latched in the forcing case too.
+* ramdisk/initramfs variants, DTB variants, strict 30 s power-off POR: no effect.
+* Runtime recovery by rebinding panel / msm_dsi: this tears DRM down (card0
+  disappears, fb switches to dummy, GPU hangcheck) instead of recovering.
+
+QUESTIONS
+
+1. Is there a documented ordering requirement for the bonded command path
+   (DSI0 master / DSI1 peer) for the *first* DCS after PHY enable / PLL lock?
+   Our engine latches with STATUS0 = 0x2200200 and TRIG_DMA never self-clears.
+2. Given that a DSI-side reset cannot clear it, is the dynamic pixel-clock
+   request supposed to be dropped by the client (dispcc / INTF) side, and is
+   there a known issue with that handshake on SM8750?  Should the DSI driver
+   wait for the DYN domain to settle before the first command?
+3. Should this timeout be recoverable in the driver (reset host/PHY and
+   re-issue) instead of failing panel init permanently?  Is there an upstream
+   precedent we should follow?
+4. Any known SM8750 / DSC video-mode erratum for the first DCS after a cold
+   boot?  We looked at the PLL re-lock series (6cd33b6f4155 and 2028280686f4);
+   the symptom does not match.
+5. Would you like the full dmesg, DSI/PHY register dumps, CLK_STATUS, RPMh
+   votes, and our repro scripts, from both a good and a bad boot?  We have both
+   and can attach them.
+
+Thanks,
+Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+
+The bring-up tree is GEEKiDOS/linux plus local patches; we are happy to publish
+the repro scripts (cold-boot runner, three-state probe) and the failing-boot
+captures if that helps.  Happy to test any patch you suggest on the device.
+```
