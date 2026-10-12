@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#198**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#203**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1551,3 +1551,31 @@
     - **硬门（下次必过）**：执行熄屏后**读三个值**——`GetActive`、`/sys/class/drm/card0-DSI-1/dpms`、RPMh trace 里必须出现 `0x30080`(mmcx)/`0x30000`(cx) 的降档票；任一不动 = 本次**无效**，不得计入存活/死亡。
     - 另：D 态进程清单（`/proc/*/status` 的 `State: D` + `/proc/*/wchan`）应作为「台架是否健康」的前置检查。
     - 证据：`reports/q24-ctl-20261012.md` §7–§9、`logs/q24-s123-20261012/device-evidence.txt`。
+
+---
+
+## 二十六、Q24 台架/工具链教训（2026-10-12 第 3 轮实测）
+
+199. **★`fastboot` 客户端不得接 `head`/`grep -q`，也不得用 `timeout` 半途掐断传输——会卡死设备的 fastboot gadget，只能物理 POR。**
+    - 现象：10:40 一批 `fastboot getvar … | head -1` / `timeout N fastboot getvar` 之后，`fastboot devices` 仍列设备（USB 描述符在、device number 不变），但 `fastboot getvar product` 全部超时（rc=124）；随后两次 84 MB `fastboot boot` 都停在 `Sending 'boot.img'`，180 s 超时。
+    - 机理：`head`/`grep -q` 提前关管道 → SIGPIPE 杀死 fastboot 客户端；半途中断 libusb bulk 传输会把设备侧 fastboot 栈留在等数据的半途状态。
+    - 规约：fastboot 的 stdout **完整重定向到文件**，再对文件 grep；不要给它套会提前退出/timeout 的管道。死掉后唯一恢复 = 物理 POR。
+    - 防护：跑批前先跑一次 `fastboot getvar product`（超时 15 s，输出进文件）确认会应答，不应答立即报错退出，别把 84 MB 白白耗掉。
+
+200. **★`kill "${LOGPID:-0}"` 会自杀**（LOGPID 未设时 = `kill 0` = 杀整个进程组），表现为脚本静默死亡、收口日志（marks/DONE）缺失。
+    - 实锤：2026-10-12 Q24 runner 在 `SKIP_BOOT=1` 分支没设 LOGPID，收口处 `kill 0` 把 runner 自己连同 trace 流一起杀掉，`=== marks ===` 从未落盘。
+    - 规约：`[ -n "${VAR:-}" ] && kill "$VAR"`；或先做 `: "${VAR:=}"`。
+
+201. **★Q24 的「熄屏」与「唤醒」是两个可分离的致死点；死亡未必发生在熄屏瞬间。**
+    - 实锤（`reports/q24-s123-20261012.md`）：三值硬门 3/3 通过的真熄屏之后设备 **+11 s 仍存活**，死亡发生在随后**唤醒**（`SetActive false`）路径；末票 = `gfx.lvl(0x30050)=1` / `gmxc.lvl(0x300d0)=1`（GPU 域上电）+ NoC 批，而**不是**历史口径的 `mxc.lvl→0`。
+    - ⇒ 实验必须写成 `blank → hold N s → wake` 三段并记录 `DEATH_AT`；串口 logger 必须始终开着。
+    - ⇒ 同时注意：`PITFALLS #198` 的「坏台架」也是 **GPU resume 路径**（phoc `wchan=rpm_resume`）⇒ 判定 Q24 时必须能区分「相机对致死」与「GPU resume 自身失败」。
+
+202. **★Q28 L1FAIL（面板从未 init）的台架照样可以给 Q24 用——准入判据是「仪表硬门」而不是「Q28 GOOD」。**
+    - 实锤：本轮台架 `l1=11 l2=456`、面板 3 次 init 失败，但 `cam=0` 下 `SetActive true` 仍能 3/3 通过（`GetActive=true` + `DPMS=Off` + mmcx/cx 降档票 4 条）。
+    - ⇒ 冷起成本从「等一个 GOOD 台架」降为「取一个仪表有效台架」，POR 次数/成本显著下降。仍须并列声明「面板异常态」作为结论的限定条件。
+
+203. **★设备侧会话总线：root 直连会 `Connection is closed`，必须 `setpriv` 降 uid=1000；且 `org.gnome.ScreenSaver` 的 `GetActive` 是方法不是属性。**
+    - 可用写法：`P=$(pidof phosh); DB=$(tr '\0' '\n' </proc/$P/environ | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p'); XD=$(…XDG_RUNTIME_DIR…); setpriv --reuid=1000 --regid=1000 --init-groups env HOME=/home/xuqianhui1001 XDG_RUNTIME_DIR="$XD" DBUS_SESSION_BUS_ADDRESS="$DB" gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.GetActive`。
+    - `Properties.Get org.gnome.ScreenSaver Active` 会报 `No such property “Active”`（gdbus 要求显式签名）⇒ 直接用 `org.gnome.ScreenSaver.GetActive` 方法。
+    - 另：本机 rootfs 会话 `idle-delay` 实测为 **5 s**（会自动熄屏），跑「不熄屏」类实验前必须先 `gsettings set org.gnome.desktop.session idle-delay "uint32 0"`（工具 `scripts/q24-dev-keepawake.sh`）。
