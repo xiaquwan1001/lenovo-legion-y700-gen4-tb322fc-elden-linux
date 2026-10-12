@@ -68,3 +68,4 @@ boot-elden-vk107-oldK-newR.img	# STORM 2×2 臂 D：旧内核 + 新 ramdisk
 boot-elden-vk108-oldrep-pin.img	# STORM E1：旧源码重编 + PINUTS（等上机冷起系列）
 boot-elden-vk109-newK-oldDTB.img	# STORM E2：新K+旧DTB
 boot-elden-vk110-oldK-newDTB.img	# STORM E2：旧K+新DTB
+boot-elden-vk111-oldrep-v60.img	# STORM E1'：复刻 #60 身份重编

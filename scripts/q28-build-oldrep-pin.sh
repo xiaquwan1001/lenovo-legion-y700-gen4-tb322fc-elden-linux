@@ -29,7 +29,14 @@ cp -f "$ROOT/linux/.config" "$ROOT/linux/.config.pre-oldrep"
 cp -f "$CONFIGFILE" "$ROOT/linux/.config"
 sed -i 's/^CONFIG_LOCALVERSION_AUTO=.*/CONFIG_LOCALVERSION_AUTO=n/' "$ROOT/linux/.config"
 export LOCALVERSION="$PINUTS"
-echo "pinned config sha: $(sha256sum "$ROOT/linux/.config" | cut -d' ' -f1)  LOCALVERSION=$LOCALVERSION"
+# 可选：强制 KBUILD_BUILD_VERSION（`#N`）以复现旧构建 banner 长度（E1'）。
+if [ -n "${KBUILD_BUILD_VERSION:-}" ]; then
+	export KBUILD_BUILD_VERSION
+fi
+if [ -n "${KBUILD_BUILD_TIMESTAMP:-}" ]; then
+	export KBUILD_BUILD_TIMESTAMP
+fi
+echo "pinned config sha: $(sha256sum "$ROOT/linux/.config" | cut -d' ' -f1)  LOCALVERSION=$LOCALVERSION  KBUILD_BUILD_VERSION=${KBUILD_BUILD_VERSION:-auto}"
 
 # --- branch at the OLD source commit -------------------------------------
 cd "$ROOT/linux"

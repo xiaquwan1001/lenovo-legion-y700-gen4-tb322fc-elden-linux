@@ -108,3 +108,5 @@ vk109-newK-oldDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk104）；无�
 vk109-newK-oldDTB	uts_dup	同上：UTS 与 vk64 同串
 vk110-oldK-newDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk94）；无独立提交
 vk110-oldK-newDTB	uts_dup	同上：UTS 与 vk64 同串
+vk111-oldrep-v60	num_ne_tag	STORM E1' 臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag）
+vk111-oldrep-v60	uts_dup	同上：刻意复刻 vk64/vk94 的 UTS（含 #60/日期）
