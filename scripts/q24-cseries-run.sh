@@ -88,6 +88,8 @@ phase_blank(){
   case "$fin" in *'active=(true'*) ;; *) log "$tag 硬门 FAIL(active): $fin";; esac
   case "$fin" in *'dpms=Off'*) ;; *) log "$tag 硬门 FAIL(dpms): $fin";; esac
   log "$tag 硬门: active/dpms=[$fin] mmcx/cx 票=$votes"
+  # ★先判死：仪表有效时的死亡现场正好是 "dpms=Off + 票>0 + 随后失联"，active 读数会因会话崩溃而变 false
+  if died; then log "DEATH_AT=$tag/blank（熄屏后 ≤14s；票=$votes）"; DEATHS+=("$tag/blank"); return 1; fi
   case "$fin" in *'active=(true'*) HG_A=1;; *) HG_A=0;; esac
   case "$fin" in *'dpms=Off'*) HG_D=1;; *) HG_D=0;; esac
   if [ "$HG_A" = 0 ] || [ "$HG_D" = 0 ] || [ "$votes" -eq 0 ]; then
@@ -95,7 +97,6 @@ phase_blank(){
     return 2
   fi
   sleep 8
-  if died; then log "DEATH_AT=$tag/blank（熄屏后 ≤14 s）"; DEATHS+=("$tag/blank"); return 1; fi
   local i=0
   while [ "$i" -lt "$hold" ]; do
     if died; then log "DEATH_AT=$tag/blank-hold（熄屏后 +$(( $(date +%s) - t0 ))s，无唤醒动作）"; DEATHS+=("$tag/blank-hold"); return 1; fi
