@@ -1,10 +1,20 @@
 # Q28 Method B — round DSI byte-clk to PLL-achievable rate (SM8750 port)
 
-Status: **draft only**. Not compiled, not applied to the tree, not committed, not
-flashed. The tree copy of `drivers/gpu/drm/msm/dsi/dsi_host.c` is unchanged;
-this is a standalone `patches/q28-methodB-round-byteclk.patch` verified only with
-`git apply --check` / `patch --dry-run`. The parent must calibrate the rounding
-semantics against the exact upstream diff before building.
+Status: **SUPERSEDED 2026-10-12** — §2/§3 below describe the old single-hunk
+edition that rounded *before* reparent (inside the SM8750 branch of
+`dsi_link_clk_set_rate_6g_v2_9()`). That timing is exactly the upstream bug
+(`6cd33b6f4155`) that `2028280686f4` fixes. `q28-methodB-round-byteclk.patch`
+has been recalibrated to the upstream semantics (round in
+`dsi_link_clk_set_rate_6g()` *after* reparent; authorititative bool
+`byte_intf_clk_div_2`). See
+`reports/q28-upstream-static-20261012.md` for the authoritative analysis.
+The rest of this file is kept as history.
+
+Original status (superseded): **draft only**. Not compiled, not applied to the
+tree, not committed, not flashed. The tree copy of
+`drivers/gpu/drm/msm/dsi/dsi_host.c` is unchanged; this is a standalone
+`patches/q28-methodB-round-byteclk.patch` verified only with `git apply --check`
+/ `patch --dry-run`.
 
 ## 1. Root-cause model this patch targets (from PITFALLS #163 + upstream)
 

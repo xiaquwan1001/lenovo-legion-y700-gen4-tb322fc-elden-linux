@@ -1,48 +1,63 @@
---- a/drivers/gpu/drm/msm/dsi/dsi_host.c	2026-10-10 13:47:58.355220183 +0800
-+++ b/drivers/gpu/drm/msm/dsi/dsi_host.c	2026-10-10 13:47:58.352656003 +0800
-@@ -482,6 +482,45 @@
- 	 * also needs a valid cached VCO rate before the first prepare attempt.
- 	 */
- 	if (of_device_is_compatible(dev->of_node, "qcom,sm8750-dsi-ctrl")) {
-+		unsigned long ideal = msm_host->byte_clk_rate;
-+		unsigned long intf = msm_host->byte_intf_clk_rate;
-+		bool intf_div2 = intf && (intf != ideal);
-+		long rounded;
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -134,6 +134,7 @@
+ 
+ 	unsigned long byte_clk_rate;
+ 	unsigned long byte_intf_clk_rate;
++	bool byte_intf_clk_div_2;
+ 	unsigned long pixel_clk_rate;
+ 	unsigned long esc_clk_rate;
+ 	unsigned long link_byte_rate;
+@@ -401,8 +402,26 @@
+ int dsi_link_clk_set_rate_6g(struct msm_dsi_host *msm_host)
+ {
+ 	struct device *dev = &msm_host->pdev->dev;
++	unsigned long byte_intf_clk_rate;
++	long rounded_byte_clk_rate;
+ 	int ret;
+ 
++	/*
++	 * The byte RCG has been reparented to the DSI PHY PLL by the caller, so
++	 * clk_round_rate() now reports the PLL-achievable rate.  Round before any
++	 * consumer sees byte_clk_rate: feeding the idealised rate would make the
++	 * CCF treat every later clk_set_rate() as a real change and re-lock the
++	 * PLL, and it would programme the PHY bit clock request to a bogus value.
++	 */
++	rounded_byte_clk_rate = clk_round_rate(msm_host->byte_clk,
++					       msm_host->byte_clk_rate);
++	if (rounded_byte_clk_rate < 0) {
++		pr_err("%s: failed to round byte clock rate, %ld\n",
++		       __func__, rounded_byte_clk_rate);
++		return rounded_byte_clk_rate;
++	}
++	msm_host->byte_clk_rate = rounded_byte_clk_rate;
 +
-+		/*
-+		 * Round the byte clock to a rate the DSI PLL can actually achieve
-+		 * before programming it.  Passing the unrounded, pixel-derived
-+		 * (ideal) rate makes the common clock framework re-evaluate and
-+		 * re-lock the DSI PLL on every modeset.  On a cold boot the PLL/PHY
-+		 * lock state is not preserved across reset, so the first modeset
-+		 * takes the fragile re-lock path and the re-lock collides with the
-+		 * first command-DMA trigger (cmd engine stays busy, -110 timeout).
-+		 * Feeding clk_set_rate() the PLL-achievable rate makes the call a
-+		 * CCF no-op once the PLL is locked -- the same path warm resets
-+		 * already take successfully.
-+		 *
-+		 * Upstream: 6cd33b6f4155 ("drm/msm/dsi: round 6G byte clock rate to
-+		 * the PLL-achievable value"), reverted by bc484ede914d, then
-+		 * reworked by Dmitry Baryshkov's "round the byte clock rate after
-+		 * reparenting to the PHY PLL" series.  This is the SM8750 port in
-+		 * dsi_link_clk_set_rate_6g_v2_9().
-+		 */
-+		rounded = clk_round_rate(msm_host->dsi_pll_byte_clk, ideal);
-+		if (rounded > 0 && (unsigned long)rounded != ideal) {
-+			DBG("round dsi byte clk %lu -> %ld (PLL-achievable)\n",
-+			    ideal, rounded);
-+			msm_host->byte_clk_rate = rounded;
-+			/*
-+			 * Keep byte_intf in lock-step with byte_clk so the later
-+			 * clk_set_rate(byte_intf_clk) in dsi_link_clk_set_rate_6g()
-+			 * cannot drag the freshly locked PLL back toward the
-+			 * unachievable ideal rate.  Preserve the /2 relationship
-+			 * when the PHY requested byte_intf_clk_div_2 (not the case
-+			 * for the 3nm SM8750 PHY, but kept for correctness).
-+			 */
-+			msm_host->byte_intf_clk_rate = intf_div2 ? rounded / 2 : rounded;
-+		}
+ 	DBG("Set clk rates: pclk=%lu, byteclk=%lu",
+ 	    msm_host->pixel_clk_rate, msm_host->byte_clk_rate);
+ 
+@@ -420,7 +439,13 @@
+ 	}
+ 
+ 	if (msm_host->byte_intf_clk) {
+-		ret = clk_set_rate(msm_host->byte_intf_clk, msm_host->byte_intf_clk_rate);
++		byte_intf_clk_rate = msm_host->byte_clk_rate;
++		if (msm_host->byte_intf_clk_div_2)
++			byte_intf_clk_rate /= 2;
++		/* Keep the cached rate in sync with the power-on stale guard. */
++		msm_host->byte_intf_clk_rate = byte_intf_clk_rate;
 +
- 		ret = clk_set_rate(msm_host->dsi_pll_byte_clk,
- 				   msm_host->byte_clk_rate);
++		ret = clk_set_rate(msm_host->byte_intf_clk, byte_intf_clk_rate);
  		if (ret) {
+ 			pr_err("%s: Failed to set rate byte intf clk, %d\n",
+ 			       __func__, ret);
+@@ -3005,9 +3030,7 @@
+ 		msm_host->dma_done_seq = 0;
+ 	}
+ 
+-	msm_host->byte_intf_clk_rate = msm_host->byte_clk_rate;
+-	if (phy_shared_timings->byte_intf_clk_div_2)
+-		msm_host->byte_intf_clk_rate /= 2;
++	msm_host->byte_intf_clk_div_2 = phy_shared_timings->byte_intf_clk_div_2;
+ 
+ 	msm_dsi_sfpb_config(msm_host, true);
+ 
