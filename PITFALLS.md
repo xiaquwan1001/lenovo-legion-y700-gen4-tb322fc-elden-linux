@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#225**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#226**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1737,3 +1737,9 @@
     - 归因边界：**相关≠因果**；竞争解释见 #151（VBUS 未叫醒），且仓内无 uptime 阈值的历史标定。但 2/2 vs 3/3 足以支撑「复位前必须过就绪门」这条纪律。
     - 纪律/工具：复位前一律过 `scripts/lib-boot-ready.sh` 的 `boot_ready_or_die`（SSH 现问现答 + `uptime>=90 s` + `phoc/phosh` 已起，fail-closed，逃生阀 `ELDEN_FORCE_REBOOT=1`），已接入 `q28-boot-cycle.sh`/`q28-layout-ab.sh`/`q28-layout-one.sh`。⚠ **该门是「拒绝」不是「等待」**：循环脚本必须在门之前自己等就绪，否则一挂即需人工 POR（本会话 `q28-warm-vk117-loop.sh` 两次教训）。
     - 关键前提（#67）：SSH 在 `uptime≈6.7 s` 即可用 ⇒ **「SSH 通」不等于就绪**；历史脚本普遍只以 SSH 为门（全集见 `reports/audit-early-reboot-20261012.md`）。
+
+226. **★Q28 收束（2026-10-12 深夜，7 臂 vk116–vk122 全否证）：故障态不在 DSI 控制器内部，主靶转 dispcc/INTF 侧动态时钟。**
+    - **已证**：① 旧「楔死」判据是**软件闩锁短路**（`dsi_bonded_cmd_failed`）——vk116 清除后重试真的回到 **-110**；② vk117 寄存器转储证明 **DSI ctrl+PHY 复位确实执行**（CTRL/CLK_STATUS/CMD_DMA_CTRL 都变）却救不回；③ **判别量 = DYN pclk 域生命周期**：健康发 `CLK_STATUS 0x343→(op=0x92) 0x743→(op=0xb2) 0x343`（按命令瞬时开/放），坏发闩在 `0x1743`/`0x3743` + `STATUS0=0x20003` + DSI 中断计数 0；④ **DYN 位在控制器 sw_reset 后仍在** ⇒ 不在 DSI 内部（映射 dispcc/INTF 的动态时钟请求）；⑤ 坏发**首命令前**寄存器与好发**逐字相同** ⇒ 竞态在命令执行瞬间。
+    - **已否证**（单变量、同签名复现）：面板级 reset、软件闩锁、DSI ctrl+PHY 复位、自定义 bonded 触发序列（vk121）、使能期 dynamic force-on（vk122）、VBIF 优先级/FIFO 水位。
+    - **方法论教训**：每加一层「复位/保护」先确认它自己干净——vk116 恢复序列里重复的 `msm_dsi_phy_disable()` 触发 `unbalanced disables for vreg_l3i_0p88`（该函数**无幂等守卫**，无条件 `regulator_bulk_disable`+`pm_runtime_put`），使那一轮否证一度作废；先修序列再判结论。
+    - **原厂（同 SoC SM8750）对照可查**：LineageOS `android_kernel_oneplus_sm8750-modules` 的 `qcom/opensource/display-drivers/msm/dsi/`（`dsi_ctrl_hw_cmn.c`、`dsi_phy_hw_v7_2.c`、`dsi_clk_manager.c`…）+ 本机 `reference/stock-elden.dts`。证据链与推导见 `reports/q28-dsi-recover-20261012.md`（§10–§17）。
