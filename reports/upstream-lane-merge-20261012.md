@@ -36,3 +36,33 @@
 - **Q28 未修**：本镜像**不含**任何 Q28 修复；日常可用性靠看门狗兜底（`reports/q28-watchdog-20261012.md`）。
 - 上游文本核对（子代理提示的「未尽事项」）未做：本仓是浅快照，无法本地比对 7.2.5–7.2.10 的 commit 文本；如需向上游提交回移，再单独核 trailer/描述。
 - 原 `elden/lane-upstream` 分支保留未删（可回溯）；`verify/lane-rebase-20261012`、`verify/lane-on-vanilla-20261012` 亦保留。
+
+---
+
+## 4. vk124-merged 上机（2026-10-12 深夜，前 2 发）
+
+**方法学变更（用户 2026-10-12 采纳）**：原「候选写 boot_b 前必须 3× 冷起全 GOOD」是在「构建身份决定 Q28」的旧口径下定的；Q28 现为 ~50% 随机且与镜像无关，**3 连 GOOD 概率仅 ~12.5%** ⇒ 改为：
+
+> **判定候选可用 = 取得 1 次 GOOD 冷起**，在该 GOOD 台上做**功能验收**（声卡/WiFi/传感器/相机栈加载 + dmesg 无新报错 + ≥60 s 存活且可交互）；**不再要求 3 连 GOOD**；坏发由看门狗兜底。
+
+| 发 | 时刻 | 判据 | 结果 |
+|---|---|---|---|
+| cold1 | 22:47 | `l1=7 l2=32 card0=1 session=0` | **L1FAIL** |
+| cold2 | 22:52 | `l1=7 l2=26 card0=1 session=0` | **L1FAIL** |
+
+两发签名与历史 Q28 逐字同；台架在 SSH 后立即 `q28-watchdog off`（防 75 s 自动重启污染判据）。记录 `reports/trials/20261012T144902Z-vk124-merged-cold1.json`、`…T145427Z-vk124-merged-cold2.json`。
+
+### 4.1 L1FAIL 台上的「非显示」功能预检（cold2 台架，uptime 104–153 s）
+
+| 面 | 结果 |
+|---|---|
+| 身份 | `#121 SMP PREEMPT Mon Oct 12 18:00:00 CST 2026`（= 合并版内核，与 vk113/vk123 同身份） |
+| **audio** | ✅ `Lenovo-Y700-Gen4` 声卡在，`pcmC0D0p/1p/2c` |
+| **WiFi/MHI** | ✅ ath12k 固件加载（`fw_version … FW_INIT_DONE`）、`wlan0` 在（DOWN，未连） |
+| **GPU 固件** | ✅ `Loaded GMU firmware v5.1.25` |
+| 触屏/输入 | ✅ 7 个 input 设备 |
+| 服务 | ✅ `iio-sensor-proxy`/`hexagonrpcd-adsp-sensorspd`/`qbootctl` 均 started；`/dev/fastrpc-adsp` 在；adsp/cdsp remoteproc running |
+| ⚠ **传感器** | `/sys/bus/iio/devices` 空、`qrtr-lookup` **无 svc 400** ⇒ SSC 传感器服务未发布（**待对照**：需在 vk94 或 vk124 的 GOOD 台架上取同指标；本 lane 未触碰传感器/ADSP 路径） |
+| ⚠ GMU HFI 报错 | `HFI_H2F_MSG_GX_BW_PERF_VOTE id 455 timed out`（t≈104 s）—— **预存在**：`grep -rl GX_BW_PERF_VOTE logs/` 命中 8 份历史日志，含 **2026-10-08 的 vk63 基线** 与 Q24 serial ⇒ **不可归因于本 lane** |
+
+**结论**：前 2 发都是 Q28 坏发，**跑不到被回移的代码路径**，故对本 lane 既未证伪也未证明；但 L1FAIL 台上的**非显示预检**（audio/MHI/GPU 固件/输入/服务）全部通过、无新报错 ⇒ **暂无回归迹象**。显示面验收仍待一次 GOOD 冷起。
