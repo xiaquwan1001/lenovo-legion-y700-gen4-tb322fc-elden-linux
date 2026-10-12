@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#206**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#208**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1599,3 +1599,15 @@
 206. **★Q24 相位判定顺序：必须「先判死、后判熄屏硬门」**，否则**仪表有效时的死亡现场会被误标成仪表无效**。
     - 现象：配对+熄屏致死时，`GATE_AFTER3` 常见 `active=(false,) dpms=Off`（会话/服务正随整机崩溃而失去响应）⇒ 若先按硬门判「active 不为 true」就 `GATE_FAIL` 退出，就把一次**成功复现**记成了「台架无效」。
     - 规约：熄屏后先 `died()`（SSH 失联即判死并记 `DEATH_AT=<phase>/blank`），只有在设备**仍存活**时才要求 3/3 硬门。`scripts/q24-cseries-run.sh` 已修（2026-10-12，第 6 轮首踩）。
+
+207. **★Q24：把 GPU `power/control` 钉成 `on`（不 runtime-suspend）**不能**免除致死 ⇒ GPU runtime-resume 不是致死步骤。**
+    - 实验（2026-10-12，L1FAIL 台架）：先 `echo on > /sys/bus/platform/devices/3d00000.gpu/power/control`（读数 `auto/suspended → on/active`），再加载 `{camcc,cambist}`，然后熄屏（存活 30 s）→ **唤醒 → 仍然静默硬复位**（+87 s）。
+    - 意义：`PITFALLS #198` 的「phoc 卡在 `adreno_get_param→__pm_runtime_resume`」与 `#201` 的「唤醒末票 `gfx/gmxc=1`」都只是**同一路径的表象**，不是根因；不要再把排查重心放在 GPU runtime-PM 上。
+    - 证据：`reports/q24-mech-20261012.md` §1-C、`logs/q24-gpupm-20261012-125529/`。
+
+208. **★Q24「日常 boot_b 即可当台架」+「唤醒致死判活窗口必须 ≥60 s」+「trace 集必须先全清零」**（2026-10-12 机制轮方法论）。
+    - **日常 boot_b**（`elden_nocamera=1`、cam=0）在「面板 init 失败但会话/仪表可用」时，`{camcc,cambist}` + 熄屏 → **存活**、随后**唤醒 → 静默硬复位**，4/4 复现 ⇒ 这类复现**不需要 RAM 镜像、不需要用户 POR**，迭代成本大幅下降（与 GOOD 台架「熄屏即死」方向相反）。
+    - **判活窗口**：唤醒致死可能发生在 15 s 之后（一轮 15 s 读数 `ALIVE=yes`，数十秒后设备已重启）⇒ 判活用 ≥60 s，或直接以「trace 流是否终止 / USB 是否重枚举」判死。
+    - **trace 集**：先 `for d in /sys/kernel/debug/tracing/events/*/; do echo 0 > $d/enable; done` 再逐组打开；否则 `power/cpu_idle` 可产生 10⁶ 行噪声（一轮 3.8 M 行里 99.9% 是 cpu_idle），有效帧被埋。
+    - **陈旧 `trace_pipe` 读者**导致新读者 `Resource busy` / 空文件：跑前 `pkill -f 'trace_pi[p]e'`（主机与设备两侧），抓完先确认 `wc -l` 非 0。
+    - 证据：`reports/q24-mech-20261012.md` §4、`logs/q24-mech1b-20261012-124825/`、`logs/q24-mech2-20261012-125857/`。
