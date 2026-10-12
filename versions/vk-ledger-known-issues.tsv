@@ -135,3 +135,5 @@ vk112-h1-dtbmmcxmx	num_ne_tag	DTB-only 臂，源码复用 d02658e63（已打 vk6
 vk112-h1-dtbmmcxmx	uts_dup	刻意复用 vk64 UTS 串（同 vk94/vk109-111 模式）
 vk113-dailyid	num_ne_tag	Q28 收尾：日常镜像重建，源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交
 vk113-dailyid	uts_dup	判据需要恒定 UTS release 串（模块 vermagic）⇒ PINUTS 刻意钉回 -vk64-gd02658e63cf6
+vk114-dailyid-round	num_ne_tag	Q28 机制修复臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag），补丁未形成新提交
+vk114-dailyid-round	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + #121）

@@ -57,6 +57,16 @@ if [ "${WT_FRESH:-0}" = 1 ] || [ "$WT_HEAD" != "$BASE_COMMIT" ] || [ ! -f "$WT/a
 else
 	echo "[2] 复用既有 worktree $WT（HEAD=$WT_HEAD）"
 fi
+# --- 2b) 可选：应用内核补丁（PATCH=patches/xxx.patch）——用于「日常组合 + 机制修复」臂 ---
+git -C "$WT" checkout -- . 2>/dev/null || true     # 清掉上一次实验残留
+if [ -n "${PATCH:-}" ]; then
+	PP="$ROOT/$PATCH"
+	[ -f "$PP" ] || { echo "❌ 补丁不存在 $PP"; exit 2; }
+	git -C "$WT" apply "$PP" || { echo "❌ 补丁应用失败：$PATCH"; exit 2; }
+	echo "[2b] 已应用 $PATCH sha=$(sha256sum "$PP" | cut -c1-12)"
+	git -C "$WT" --no-pager diff --stat | tail -3
+fi
+
 cp -f "$CFG" "$WT/.config"
 sed -i 's/^CONFIG_LOCALVERSION_AUTO=.*/CONFIG_LOCALVERSION_AUTO=n/' "$WT/.config"
 cp -f linux/.version "$WT/.version" 2>/dev/null || true   # 继承计数器（下界，见 KBVER 覆盖）
