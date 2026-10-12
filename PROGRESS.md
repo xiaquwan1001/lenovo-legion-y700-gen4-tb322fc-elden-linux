@@ -19,6 +19,8 @@
 | 2026-10-10 夜 | 发现 **clean-GOOD → 整机卡死**（`#106`）的强相关 | 见 §4 |
 | 2026-10-11 | **容器传感器打通**（路线 C：宿主 gbinder 注入 + 真值 `ssccli`→UDP）；桌面深色/亮度闭环；`C1` 策略路由内核修复 | 见 `TASKS.md` C4/G1-28/C1 |
 | 2026-10-11 | **M1 干净上游资产树**建成并通过干净构建 | `build/m1-upstream/clean-tree`，见 `reports/m1-clean-tree-20261011.md` |
+| 2026-10-11 晚 | **容器音频打通**（C6：闹钟出声/录音/codec 53）、**C2 GMS 登录**（用户人工验证）、`/dev/fuse` emulated storage（Q30）、`C1` 网络治本（补 `IPV6_MULTIPLE_TABLES` 等） | 见 `TASKS.md` C6/C2/C1、`reports/container-audio-20261011.md`、`PITFALLS #194` |
+| 2026-10-12 | **Q28 STORM 定案**：与 NOCARD 同族 = **内核构建身份伪影**（`#60` 2 位号 ~67% 坏 vs 3 位号 0 坏/12+，Fisher p≈0.005）；源码/DTB/ramdisk 全排除 | `PITFALLS #195`、`reports/q28-storm-bias-audit-20261011.md`、`reports/q28-handoff-20261012.md` |
 
 ---
 
@@ -27,7 +29,7 @@
 | 目标 | 完成度 | 关键限定 |
 |---|---|---|
 | **G1** 功能健全的 Linux | **≈ 90%** | 按“驱动 bring-up 完整性”度量；**上游化 M1–M5 = 0/5 未开始** |
-| **G2** 安卓容器（Waydroid） | **≈ 50%** | 图形/内核/GAPPS/代理可用，**容器传感器 HAL 已打通**；Play 登录、Play Integrity/SafetyNet、Widevine 等级仍在收口 |
+| **G2** 安卓容器（Waydroid） | **≈ 60%** | 图形/内核/GAPPS/代理可用，**容器传感器 HAL 已打通**、**容器音频已打通**（C6）、**C2 GMS 登录**；Play Integrity/SafetyNet、Widevine 等级仍在收口 |
 | **G3** x86 模拟（Steam） | **PoC ✅** | Box64 + Wine 成功；Steam 游戏端到端未上机 |
 
 ---
@@ -52,7 +54,7 @@
 
 ### Q28 — 冷起显示间歇失败（未解决，主线阻塞）
 
-- **现象**：冷开机有概率只有背光、无画面。约 6 成冷起失败（早期 vk63 上跨复位混采口径）。
+- **现象**：冷开机有概率只有背光、无画面。约 6 成冷起失败（早期 vk63 上跨复位混采口径；**★2026-10-12 收窄：坏发率由内核构建身份决定，而非固定 ~60%**，见下方「状态」行）。
 - **根因（收窄）**：bonded 双 DSI 的**首条 DCS 命令 `ff 20` 的命令 DMA 引擎 hang**
   （hang 时 `STATUS0=0x20003`、`TRIG_DMA=0x1` 自不清）；DPU 的 `ctl reset failure -22`/frame-done/vblank
   风暴是下游后果。
@@ -60,7 +62,10 @@
 - **判据纪律**：必须**三态** + SSH 读全 dmesg + 查 `/sys/class/drm/card0`。只数风暴签名会把 NOCARD
   误判成 GOOD；串口 logger 会漏 0–20 s 现场。
 - **A/B 台架坑**：`reboot2` 暖复位会把状态“粘”成 NOCARD，不能用它做冷起结论；真冷起要物理 POR。
-- **状态**：候选修法（`cmd_trigger` settle delay / 取整 byte-clk）方向对但**未落地验证**。
+- **状态（2026-10-12 定案）**：**NOCARD 与 STORM 同族 = 内核构建身份（UTS 版本串 / 构建号位数）伪影**——
+  `#60`（2 位构建号）臂坏发 ~67%，3 位号（`#111`–`#120`）0 坏/12+（Fisher p≈0.005）；源码/DTB/ramdisk 全部排除。
+  **治法 = 日常镜像用 3 位 `#N` 新身份重编**（未执行）；冷起 A/B 必须 PINUTS（钉死 UTS）。
+  待核查项（`to_primary_dsi` DSI0/DSI1、Method B 对齐上游 `2028280686f4`、refgen）见 `reports/q28-handoff-20261012.md`。
 
 > **⚠️ 被推翻的结论（诚实记录）**：2026-10-10 夜我们曾得出「Q28 是**按内核二进制确定性**的、
 > 不是冷/暖」这一逆转性结论，并一度写进 SSOT。次日**溯源审计否定了它**：
@@ -109,7 +114,7 @@
 
 ## 6. 下一步（按优先级）
 
-1. **Q28**：用「存活门 + 三态 + 真 POR」重做对照；重点验证 `/init` 时序杠杆与 byte-clock 取整。
+1. **Q28**：执行治法——**用 3 位 `#N` 新身份重编日常镜像**（同源码 + ADSP DTB）并冷起回归；随后核查 `to_primary_dsi` DSI0/DSI1、Method B、refgen（见 `reports/q28-handoff-20261012.md`）。
 2. **#106**：把判据升级为「GOOD 需 ≥60 s 存活/可交互」；尝试让死挂**自动 panic 带栈**（ramoops 或 OOB）。
 3. **上游化 M1–M5**：M1 干净资产树已建、构建通过；下一步 M2 首发小系列（`checkpatch`/`dtbs_check` 绿）。
 4. **G2**：Waydroid Play 登录与完整性等级取证。
