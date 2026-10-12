@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#203**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#204**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1579,3 +1579,13 @@
     - 可用写法：`P=$(pidof phosh); DB=$(tr '\0' '\n' </proc/$P/environ | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p'); XD=$(…XDG_RUNTIME_DIR…); setpriv --reuid=1000 --regid=1000 --init-groups env HOME=/home/xuqianhui1001 XDG_RUNTIME_DIR="$XD" DBUS_SESSION_BUS_ADDRESS="$DB" gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.GetActive`。
     - `Properties.Get org.gnome.ScreenSaver Active` 会报 `No such property “Active”`（gdbus 要求显式签名）⇒ 直接用 `org.gnome.ScreenSaver.GetActive` 方法。
     - 另：本机 rootfs 会话 `idle-delay` 实测为 **5 s**（会自动熄屏），跑「不熄屏」类实验前必须先 `gsettings set org.gnome.desktop.session idle-delay "uint32 0"`（工具 `scripts/q24-dev-keepawake.sh`）。
+
+204. **★Q24 的「致死点」随台架显示栈状态移动：GOOD 台架死在**熄屏本身**，L1FAIL(面板未 init) 台架死在**唤醒**。触发集合恒为「`{camcc,cambist}` 配对 + 显示电源转换」。**
+    - 实锤（同一天，同一镜像 `lv64-nocam`，两次物理 POR）：
+      | 台架 | 面板 | 相位 | 结果 |
+      |---|---|---|---|
+      | `q24-s123b`（11:07） | L1FAIL（`Failed to initialize panel: -5`，storm 456） | cam=0 对照存活 → 配对 + 熄屏 | 熄屏 **+11 s 仍存活**，死亡在**唤醒**（末票 `gfx.lvl=1/gmxc.lvl=1` GPU 域上电 + NoC） |
+      | `q24-cseries1`（11:32） | **GOOD**（串口 `panel prepared … firmware 1a.01`，l1=l2=0） | C0(cam=0) / C1(`{camcc}`) / C2(配对)，各 blank→hold 60 s→wake | C0/C1 **存活 +89 s**；**C2 熄屏后 ≤5 s 静默硬复位**（串口无 panic；末票 `mmcx.lvl=2/cx.lvl=5` = 与 C0/C1 相同的熄屏票） |
+    - 推论：① 熄屏票本身**不区分**死/活（C0/C1/C2 都有 `mmcx=2/cx=5`）⇒ 判死只能靠「设备是否失联 + 串口是否有 panic + trace 是否静止」；② **`mxc.lvl→0` 不是必要条件**（本台架 `mxc` 稳态即 `off-0`，全程无票，照样静默硬复位——与 `#197` 同理：别把「该轨恰好为 0」当死因）；③ 实验必须写成 `blank → hold(N s) → wake` 三段并分别记 `DEATH_AT`。
+    - 附带确证：**`{camcc}` 单模块 + 真熄屏在干净配对基线上不致死**（C1，硬门 3/3 后存活 89 s）；历史「`{camcc}` 致死」的唯一反例来自「完整相机栈装载后卸载」的污染状态（`reports/q24-ctl-20261012.md` §3 已并列声明）。
+    - 证据：`reports/q24-cseries-20261012.md`、`logs/q24-cseries1-20261012-113143/{run.log,serial.log,tracepipe.txt,marks.txt}`。
