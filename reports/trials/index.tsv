@@ -52,3 +52,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-11T23:26:30Z	q28storm-D2	vk107-oldK-newR	por	fastboot boot (cold fb after user POR)	GOOD	213427bcf335	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-072449-q28storm-D2
 2026-10-11T23:59:09Z	q28storm-E2-109a	vk109-newK-oldDTB	por	fastboot boot (cold fb after user POR)	GOOD	9bdd1feca1c7	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-075729-q28storm-E2-109a
 2026-10-12T00:02:17Z	q28storm-E2-110a	vk110-oldK-newDTB	por	fastboot boot (cold fb after user POR)	L1FAIL	15964160bed0	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-080020-q28storm-E2-110a
+2026-10-12T00:09:49Z	q28storm-E1p-v111	vk111-oldrep-v60	por	fastboot boot (cold fb after user POR)	L1FAIL	f5d242da69b3	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-080753-q28storm-E1p-v111
