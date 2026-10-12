@@ -128,3 +128,8 @@ vk93-lv64	num_ne_tag	Q28 GOOD 台架对照臂：源提交 tag 为 vk64/vk89，�
 vk93-lv64	uts_dup	刻意复用 vk64 UTS 串
 vk93-nocam	num_ne_tag	Q28 对照臂（无相机 auto-load）：源提交 tag 为 vk64/vk89，无 vk93 tag
 lv64-nocam	uts_dup	Q24 干净无相机台架：由 vk93-lv64 仅改 cmdline（+elden_nocamera=1）repack，刻意复用 -vk64 UTS 串以保构建身份 GOOD
+# 2026-10-12 Q24 H1 DT 臂 vk112：DTB-only repack（唯一变量 = cambist 节点的 power-domains/required-opps），
+#   内核载荷/ramdisk/cmdline 与 lv64-nocam 逐字节相同以保 Q28 GOOD 身份与模块 vermagic（同 vk94 模式）。
+vk112-h1-dtbmmcxmx	tree_head_diff	DTB-only Q24 H1 臂：内核载荷复用 d02658e63（kbin ba7eca35），DTB 由 d02658e63 worktree 单变量重建（c4e063dc）；tree HEAD=5d01d3324 属既定 DTB-only 模式（同 vk94）
+vk112-h1-dtbmmcxmx	num_ne_tag	DTB-only 臂，源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交
+vk112-h1-dtbmmcxmx	uts_dup	刻意复用 vk64 UTS 串（同 vk94/vk109-111 模式）

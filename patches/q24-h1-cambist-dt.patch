@@ -1,0 +1,28 @@
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 5492087d0..cba40f634 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2096,13 +2096,16 @@ cambistmclkcc: clock-controller@1760000 {
+ 				<&bi_tcxo_div2>,
+ 				<&bi_tcxo_ao_div2>,
+ 				<&sleep_clk>;
+-			/* H1 experiment: dropped power-domains/required-opps
+-			   (matching the vendor vdd_mx-supply style).
+-			   H2: bind to MX only -- the upstream v3->v4 series
+-			   describes MX/MXC as the always-on rail, so MMCX is
+-			   the collapsible one; verify the MMCX coupling. */
+-			power-domains = <&rpmhpd RPMHPD_MX>;
+-			required-opps = <&rpmhpd_opp_low_svs>;
++			/* H1 experiment (2026-10-12): restore the upstream
++			   mainline v7.2 binding (MMCX+MX).  The MX-only form
++			   (be79b256d) was an experimental deviation whose
++			   justification (single-module test) was invalidated;
++			   the upstream binding had never been tested on the
++			   paired baseline. */
++			power-domains = <&rpmhpd RPMHPD_MMCX>,
++					<&rpmhpd RPMHPD_MX>;
++			required-opps = <&rpmhpd_opp_low_svs>,
++					<&rpmhpd_opp_low_svs>;
+ 			#clock-cells = <1>;
+ 			#reset-cells = <1>;
+ 			#power-domain-cells = <1>;
