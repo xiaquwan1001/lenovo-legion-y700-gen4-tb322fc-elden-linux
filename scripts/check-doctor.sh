@@ -35,7 +35,7 @@ topics=$(ls archive/topics/*.md 2>/dev/null | wc -l | tr -d ' ')
 indexed=$(grep -cE '^\| 20[0-9]{2}-[0-9]{2}-[0-9]{2} \| `[0-9a-f]{8}`' RESOURCES.md 2>/dev/null || echo 0)
 echo "  会话 jsonl=$sessions  RESOURCES§4 收录=$indexed  专题=$topics  根目录 md=$rootmd"
 
-if [ "$rootmd" -eq 7 ]; then ok "根目录 7 份 md（6 维护文档 + AGENTS.md）"; else warnf "根目录 md=$rootmd（预期 7）"; fi
+if [ "$rootmd" -eq 9 ]; then ok "根目录 9 份 md（6 维护文档 + AGENTS.md + 公开 README/PROGRESS）"; else warnf "根目录 md=$rootmd（预期 9）"; fi
 if [ "$sessions" -eq "$indexed" ]; then ok "会话目录与 RESOURCES §4 收录一致（$sessions）"; else warnf "会话目录 $sessions ≠ 索引 $indexed → 补 RESOURCES §4"; fi
 
 # ---------------------------------------------------------------- 2. 死链

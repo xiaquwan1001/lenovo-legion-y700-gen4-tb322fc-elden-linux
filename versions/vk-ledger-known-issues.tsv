@@ -110,3 +110,20 @@ vk110-oldK-newDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk94）；无独
 vk110-oldK-newDTB	uts_dup	同上：UTS 与 vk64 同串
 vk111-oldrep-v60	num_ne_tag	STORM E1' 臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag）
 vk111-oldrep-v60	uts_dup	同上：刻意复刻 vk64/vk94 的 UTS（含 #60/日期）
+# ---- 2026-10-12 Q28 定案收口（原 vk-identity-inflight.txt 成员）----
+# 背景：这批台架/对照臂的硬错均为**刻意设计后果**（为让零写盘 fastboot boot 能加载在机模块
+#   而刻意复用 vk64 UTS 串 ⇒ uts_dup；源提交不打 vk tag ⇒ num_ne_tag；刻意复用旧内核 ⇒ uts_lvs），
+#   非事故。Q28 已定案（PITFALLS #195、reports/q28-handoff-20261012.md）、Q24 已用户裁决
+#   （DT 变体不再排期）、C1/C2/C6 已闭环 ⇒ 从 inflight 白名单转入本永久登记；镜像留作证据/台架
+#   （臂可经 scripts/q28-build-arm-lv64.sh 重建）。kind 前缀匹配：uts_dup 涵盖 uts_dupN 计数后缀。
+e4a-lv64	uts_dup	Q24 E4a 臂在 -vk64 台架：刻意复用 vk64 UTS 串；Q24 已用户裁决（DT 变体不再排期）
+lv64-nopd	uts_dup	Q24 单变量#1（去 pd_ignore_unused）：刻意复用 vk64 UTS 串；Q24 已裁决
+vk84-q28delay-base	num_ne_tag	Q28 delay A/B 基线：构建号 vk84、源提交 tag=vk83（无 vk84 tag）；实验已被 PINUTS 方法取代（DOSSIER §p）
+vk84-q28delay-base	uts_lvs	同上：镜像 uname 为 -vk84- 而源 tag=vk83 ⇒ 号不一致（实验载具号，刻意）
+vk84-q28delay-exp	num_ne_tag	同 vk84-q28delay-base（delay=1000 臂，载荷逐字节同）
+vk84-q28delay-exp	uts_lvs	同 vk84-q28delay-base
+vk86-base	num_ne_tag	Q28 STORM 台架基线：源提交 d02658e63（tag=vk64/vk89/vk94），构建号 vk86 无对应 tag；结论已入 #195
+vk93-cleanctl	num_ne_tag	Q28 版本串对照臂（-vk93-cleanctl）：源提交 tag 为 vk64/vk89，无 vk93 tag
+vk93-lv64	num_ne_tag	Q28 GOOD 台架对照臂：源提交 tag 为 vk64/vk89，无 vk93 tag
+vk93-lv64	uts_dup	刻意复用 vk64 UTS 串
+vk93-nocam	num_ne_tag	Q28 对照臂（无相机 auto-load）：源提交 tag 为 vk64/vk89，无 vk93 tag

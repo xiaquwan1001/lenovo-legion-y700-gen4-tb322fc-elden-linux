@@ -17,55 +17,35 @@
 #   已随 tree_drift 一并登记 vk-ledger-known-issues.tsv（同 vk74-q28power 先例）；是否删镜像
 #   随 reports/tidy-20261010/cleanup-candidates.md 复核定。
 #
-# ---- 2026-10-09 Q28 显示间歇：正在反复重打的诊断内核（vk74-q28power）----
-# 性质：UTS 刻意 = 设备在机模块目录串 7.2.0-debug-vk64-gd02658e63cf6（零写盘 fastboot boot
-#       要能加载已装模块）。其 tree_drift/uts_dup/num_ne_tag 的**永久**口径已登记在
-#       versions/vk-ledger-known-issues.tsv；本段只为「正在迭代重打」的镜像免新鲜度门。
-# 状态：只 fastboot boot 取证，永不作为日常 boot_b。收口 = Q28 定案后删除本段与镜像。
-# 2026-10-10 注：Q28 根因已定案（reports/q28-DOSSIER.md），但 NOCARD 分支与 vk85 冷 A/B
-#   未收尾（NOCARD 取证仍可能复用本诊断内核），故本段保留。
-boot-elden-vk74-q28power.img	# Q28 诊断：power-on 路径 pm_runtime 返回值现形 + dsi_host power_on 传播
+# ---- 2026-10-09 Q28 显示间歇：诊断内核（vk74-q28power）----
+# UTS 刻意 = 设备在机模块目录串 7.2.0-debug-vk64-gd02658e63cf6；其 tree_drift/uts_dup/num_ne_tag
+# 永久口径已登记 vk-ledger-known-issues.tsv。成员行已于 2026-10-12 收口时删除。
 #
 # ---- 2026-10-10 Q28 delay 单变量 A/B（vk84-q28delay-base / -exp）----
-# 性质：Q28「命令 DMA 触发前插可配 settle delay」实验；同一 Image 只换 cmdline
-#       (base 无 dsi_cmd_delay_us / exp =1000)，载荷逐字节同。HEAD=vk83 tag(86193a58a)+
-#       50 行 dsi_host.c 延时补丁(未提交) → 触发 num_ne_tag(elden/vk53-hw,vk83)+uts_lvs(vk84≠vk83)。
-#       config 用恢复的好档 a80cbabb（ARCH_QCOM=y，非 vk81-83 的坏档）。
-# 状态：只 fastboot boot 做 A/B，永不作日常 boot_b。收口 = 高坏发窗判别性 A/B 定案后
-#       据结论：有效→按 elden/* 分支提交+打 vk84 tag；无效→删镜像与本段。
-# 2026-10-10 注：exp 臂首轮冷起=NOCARD（delay 盖不住，PITFALLS #165）；base 臂与「冷路径
-#   等价性」未定（DOSSIER §f-1），A/B 未收口 ⇒ 本段保留，后续以 vk85 三臂为准再裁决。
-boot-elden-vk84-q28delay-base.img	# Q28 delay A/B 基线（delay=0=现状）
-boot-elden-vk84-q28delay-exp.img	# Q28 delay A/B 实验（cmdline dsi_cmd_delay_us=1000）
+# 同一 Image 只换 cmdline；config 用恢复的好档 a80cbabb。2026-10-10 注：exp 臂首轮冷起=NOCARD
+# （delay 盖不住），base 臂冷路径等价性未定；该 A/B 后被「冷起必须 PINUTS」方法学取代
+# （DOSSIER §p、PITFALLS #192/#195）。成员行已于 2026-10-12 收口时删除。
 #
-# ---- 2026-10-10 Q28 STORM 修法单变量对（vk86-base / vk86-round / vk86-round2）----
-# 性质：刻意建在 vk64 干净基线（d02658e63，无 vk73-85 诊断链）上出 STORM 台架；
-#       UTS 号 -vk86-* ≠ 源提交 tag(vk64) 属**刻意**（=「vk64 内核 + round 实验」的
-#       构建序号），触发 num_ne_tag(vk64)。config a383cdb9、DTB 与 vk64 逐字节同。
-# 状态：只 fastboot boot 做 A/B，永不作日常 boot_b。收口 = 「同一镜像冷起 2 次」
-#       确定性门（DOSSIER §i）出结论后：有效→按 elden/* 提交+打 tag；死线→删镜像与本段。
-boot-elden-vk86-base.img	# Q28 STORM 台架基线（= vk64 内核，d02658e63）
-boot-elden-vk86-round.img	# Q28 + round(byte-clk 取整, msg46766 语义)
-boot-elden-vk86-round2.img	# 同上 + 无条件遥测 pr_info(ideal/rounded/no-op)
+# ---- 2026-10-10 Q28 STORM 台架（vk86-base / vk86-round / vk86-round2）----
+# 刻意建在 vk64 干净基线上出 STORM 台架；UTS 号 -vk86-* ≠ 源提交 tag(vk64) 属刻意。
+# 2026-10-12 注：STORM 已定案为构建身份伪影（PITFALLS #195），round 冷 A/B 作废；
+# 成员行已删除，vk86-base 硬错转入 known-issues。
 #
 # ---- 2026-10-10 Q28 STORM 台架重打（vk87-round2-v64 / vk88-base-v64）----
-# **2026-10-10 用户裁决：镜像与描述对不上（Image.gz 陈旧、未随 HEAD 重编，payload≠名字）
-#   ⇒ 已删 .img（manifest 留档）。本段无在途成员，不再有免新鲜度门效果。**
-
-# ---- 2026-10-11 Q24 三臂 + Q28 版本串对照（lane: Q24 深研）----
-boot-elden-vk90-e4amxc.img	# Q24 E4a：cambist DT MX→MXC（好档重建，待 -vk64 台架重测）
-boot-elden-vk91-fix3mx.img	# Q24 FIX-3：lazy-on+quiesce（实测挂死，保留作证据）
-boot-elden-vk92-fix2mx.img	# Q24 FIX-2：probe 常持票（待 -vk64 台架重测）
-boot-elden-vk93-cleanctl.img	# Q28 台架对照：clean/base + LOCALVERSION=-vk93-cleanctl（NOCARD 3/3）
-boot-elden-vk93-nocam.img	# Q28 台架对照：无相机 auto-load（NOCARD 1/1）
-boot-elden-vk93-lv64.img	# ★Q28 GOOD 台架：clean/base + LOCALVERSION=-vk64（GOOD 1/1）
-boot-elden-e4a-lv64.img	# Q24 E4a 臂（DT-only）在 -vk64 台架上的镜像（UTS 与 vk64 同；实测首次熄屏即死）
-boot-elden-lv64-nopd.img	# Q24 单变量#1：去 cmdline pd_ignore_unused（其余同 vk93-lv64；实测仍死）
-
-# ---- 2026-10-11 Q28 STORM 2×2 因子臂（repack，本轮构建）----
-boot-elden-vk106-newK-oldR.img	# STORM 2×2 臂 B：新内核 + 旧 ramdisk
-boot-elden-vk107-oldK-newR.img	# STORM 2×2 臂 D：旧内核 + 新 ramdisk
-boot-elden-vk108-oldrep-pin.img	# STORM E1：旧源码重编 + PINUTS（等上机冷起系列）
-boot-elden-vk109-newK-oldDTB.img	# STORM E2：新K+旧DTB
-boot-elden-vk110-oldK-newDTB.img	# STORM E2：旧K+新DTB
-boot-elden-vk111-oldrep-v60.img	# STORM E1'：复刻 #60 身份重编
+# **2026-10-10 用户裁决：镜像与描述对不上（Image.gz 陈旧）⇒ 已删 .img（manifest 留档）。
+#   本段无在途成员。**
+#
+# ---- 2026-10-11 Q24 三臂 + Q28 版本串对照 ----
+# （vk90-e4amxc / vk91-fix3mx / vk92-fix2mx / vk93-{cleanctl,nocam,lv64} / e4a-lv64 / lv64-nopd）
+# 2026-10-12 注：Q24 已用户裁决（DT 变体不再排期）、Q28 版本串法则已定案 ⇒ 全部收口；
+# 硬错转入 known-issues（vk93-cleanctl/vk93-lv64/vk93-nocam/e4a-lv64/lv64-nopd），成员行已删除。
+#
+# ---- 2026-10-11 Q28 STORM 2×2 因子臂（vk106–vk111）----
+# 2026-10-12 注：E1/E1'/E2 结论已入 SSOT（PITFALLS #195）⇒ 收口；其 num_ne_tag/uts_dup
+# 早已登记 known-issues，成员行已删除。
+#
+# ---- 2026-10-12 全量收口：当前无在途成员 ----
+# Q28 已定案、Q24 已裁决、C1/C2/C6 已闭环 ⇒ 原全部成员（vk74-q28power / vk84-q28delay-{base,exp} /
+#   vk86-{base,round,round2} / vk90~vk93 / e4a-lv64 / lv64-nopd / vk106–vk111）的永久口径已转入
+#   versions/vk-ledger-known-issues.tsv（2026-10-12 段），本文件清空。
+#   新增在途 lane 时再登记（纪律：收口后必须删除本文件里的对应行）。
