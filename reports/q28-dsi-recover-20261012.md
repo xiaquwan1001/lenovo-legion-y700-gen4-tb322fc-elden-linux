@@ -370,3 +370,12 @@ DSI_W32(DSI_CLK_CTRL, clk_ctrl);
 | s3 | 21:21 | POR 冷起 | **GOOD** | 0 | 无 clk-status-change（DYN 位未闩住）|
 
 **累计 vk122 = 3/3 GOOD、失败标记 0**（同一时间窗内前一段基线是 5 连 L1FAIL；零假设下单侧 p≈0.125，仍需再补 2 发到 5 发）。
+
+| s4 | 21:23 | POR 冷起 | **L1FAIL（坏发）** | 3× `dsi_cmds2buf_tx ... ret=-110` | **与 vk121/基线逐字同签名**：op=0xff、9.05/9.29/9.52 s、`STATUS0=0x20003`、`CLK_STATUS=0x1743`；`Failed to initialize panel: -110` |
+
+### 15.5 ★结论：vk122（dynamic force-on 使能保护）**否证**
+
+- 累计 **3/4 GOOD**（≈基线 ~50%），且第 4 发的坏发**签名逐字相同**（同一个 op=0xff、同样的 `STATUS0=0x20003`/`CLK_STATUS=0x1743`/三连 -110）。
+- ⇒ 在 `xfer_prepare()` 按原厂序列包 dynamic force-on **不能**阻止 DYN pclk 域闩住；**使能保护不是根因**。
+- 仍未解的核心事实：健康发里 DYN pclk 域「按命令瞬时开/放」（0x343→0x743→0x343），坏发里它**闩住不释放**（0x1743/0x3743）⇒ 引擎/DMA 永久 busy、零中断、DSI 侧复位清不掉。
+- 今日已否证的路线（均为单变量、可复现）：① 面板级 reset（vk64 旧补丁）② 软件闩锁（vk116，闩锁确实被清）③ DSI ctrl+PHY 复位（vk117，寄存器证明确实复位）④ 自定义 bonded 触发序列（vk121，换标准路径仍坏）⑤ 使能期 dynamic force-on（vk122）。

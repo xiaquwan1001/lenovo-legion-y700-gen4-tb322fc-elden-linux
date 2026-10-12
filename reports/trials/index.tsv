@@ -74,3 +74,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-12T13:17:13Z	vk122-s1	vk122-forceon	por	fastboot boot (cold fb after user POR)	GOOD	73e1fe6aae4b	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-211533-vk122-s1
 2026-10-12T13:20:21Z	vk122-s2	vk122-forceon	por	fastboot boot (cold fb after user POR)	GOOD	73e1fe6aae4b	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-211841-vk122-s2
 2026-10-12T13:22:53Z	vk122-s3	vk122-forceon	por	fastboot boot (cold fb after user POR)	GOOD	73e1fe6aae4b	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-212114-vk122-s3
+2026-10-12T13:29:26Z	vk122-s4	vk122-forceon	por	fastboot boot (cold fb after user POR)	L1FAIL	73e1fe6aae4b	logs/q28-cold-20261012-212352-vk122-s4
