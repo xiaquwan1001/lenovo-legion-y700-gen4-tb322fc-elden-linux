@@ -80,7 +80,7 @@
 
 **脚本（scripts/）**：
 - Q28：`q28-devprobe.sh`（三态判据）、`q28-boot-cycle.sh`（已补 card0 硬门）、`q28-ab-delay.sh`、`q28-race-hunt.sh`、`q28-verdict.sh`、`q28diag-forensic.sh`
-- Q24：`sleep-sweep.sh`、`sleep-bisect.sh`、`sleep-cumulative.sh`、`cam-mode.sh`、`camera-modules-load.sh`、`keep-awake.sh`；**2026-10-12 新增**：`q24-s123-run.sh`、`q24-cseries-run.sh`、`q24-mech-run.sh`、`q24-instrument-check.sh`、`q24-build-h1-dtarm.sh`、`q24-dev-{sess,blank,keepawake,snap,dstate}.sh`（设备侧，`setpriv` 降 uid=1000 取会话总线）
+- Q24：`sleep-sweep.sh`、`sleep-bisect.sh`、`sleep-cumulative.sh`、`cam-mode.sh`、`camera-modules-load.sh`、`keep-awake.sh`；**2026-10-12 新增**：`q24-s123-run.sh`、`q24-cseries-run.sh`、`q24-mech-run.sh`、`q24-instrument-check.sh`、`q24-build-h1-dtarm.sh`、`q24-dev-{sess,blank,keepawake,snap,dstate}.sh`（设备侧，`setpriv` 降 uid=1000 取会话总线）；**2026-10-12 下午新增**：`q24-noc-run.sh`（同 boot 双相位差分 + 恢复观察）、`q24-kill.sh`（单次致死，`ARM=cambist|camcc|pair` + `PMIC=0/1`）、`q24-pmic-dump.sh`、`q24-pmic-cycle.sh`、`q24-pmic-diff.sh`、`q24-dev-trace-on.sh`；另修 `serial-logger.sh`（孤儿 `cat` 回收，`PITFALLS #214`）
 
 **补丁（patches/）**：`q28-dsi-regdump{,-with-baseline}.patch`、`q28-poweron-propagate.patch`、`q28-cmd-dma-delay.patch`、`q28-dsi-cmd-recover.patch`、`q28-methodB-round-byteclk.patch`(+`q28-methodB-NOTES.md`)、`q28-round-vk86.patch`
 （Q24 侧：内核提交 E4a `97b8ee3c7`/`68e8ab2c0`、FIX-2 `86193a58a`、FIX-3 `e1d2c658a`、上游 `be79b256d`；**2026-10-12 新增 `q24-h1-cambist-dt.patch`（H1 DT 臂：cambist 恢复上游 MMCX+MX）**）
