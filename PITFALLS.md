@@ -1518,7 +1518,7 @@
       - **E1'（决定性）**：同源码 `d02658e63` + PINUTS + **强制 `KBUILD_BUILD_VERSION=60` + `KBUILD_BUILD_TIMESTAMP='Thu Oct  8 17:06:14 CST 2026'`**（banner 逐字复刻 vk94）+ 旧 ramdisk ⇒ `vk111` 冷起 **L1FAIL**；与 vk94 内核 payload 仅差 0.14% ⇒ **重现旧构建身份即重现 STORM**。
       - 计数：**`#60`（2 位构建号）内核臂 4 坏/2 好（~67%）**；**3 位构建号（`#111`–`#120`）0 坏 / 12+ 发**（Fisher 精确 p≈0.005）。
     - 结论：**源码、DTB、ramdisk 全部排除；唯一变量 = 内核构建身份（`UTS_VERSION` 的 `#N`/日期长度 → `.rodata` 布局）**。`#60`（2 位）落竞态坏侧、3 位构建落好侧 ⇒ **STORM 不是「独立随机」，而是逐启动随机、坏发率由构建身份决定**（§p 的「STORM 独立随机」更正）。日常 boot_b = `vk94` = `#60` 内核 ⇒ 真痛点来源。
-    - 治法：**日常镜像用新构建身份（3 位 `#N`）重编**（同源码 + ADSP DTB；cold GOOD 20+ 发）。
+    - 治法：**日常镜像用新构建身份（3 位 `#N`）重编**（同源码 + ADSP DTB；cold GOOD 20+ 发）。**⚠️ 已作废（#217/#223）：3 位身份是偏置不是解**——`vk113-dailyid`（`#121`）真机冷起仍 L1FAIL；10-12 深夜 7 发 4 坏/7、坏发按时间成簇 ⇒ 缓解不在镜像层。
     - 方法学：**冷起 A/B 必须 PINUTS，且记录 `#N` 位数**；否则构建身份混淆结果（同 #192 observer effect）。
     - 证据：`reports/q28-storm-bias-audit-20261011.md`、`reports/trials/index.tsv`（`*q28storm*`）、`logs/q28-cold-*`。
 

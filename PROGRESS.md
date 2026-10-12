@@ -20,7 +20,7 @@
 | 2026-10-11 | **容器传感器打通**（路线 C：宿主 gbinder 注入 + 真值 `ssccli`→UDP）；桌面深色/亮度闭环；`C1` 策略路由内核修复 | 见 `TASKS.md` C4/G1-28/C1 |
 | 2026-10-11 | **M1 干净上游资产树**建成并通过干净构建 | `build/m1-upstream/clean-tree`，见 `reports/m1-clean-tree-20261011.md` |
 | 2026-10-11 晚 | **容器音频打通**（C6：闹钟出声/录音/codec 53）、**C2 GMS 登录**（用户人工验证）、`/dev/fuse` emulated storage（Q30）、`C1` 网络治本（补 `IPV6_MULTIPLE_TABLES` 等） | 见 `TASKS.md` C6/C2/C1、`reports/container-audio-20261011.md`、`PITFALLS #194` |
-| 2026-10-12 | **Q28 STORM 定案**：与 NOCARD 同族 = **内核构建身份伪影**（`#60` 2 位号 ~67% 坏 vs 3 位号 0 坏/12+，Fisher p≈0.005）；源码/DTB/ramdisk 全排除 | `PITFALLS #195`、`reports/q28-storm-bias-audit-20261011.md`、`reports/q28-handoff-20261012.md` |
+| 2026-10-12 | ~~**Q28 STORM 定案**：与 NOCARD 同族 = **内核构建身份伪影**~~（**当日深夜已被推翻**，见下方 10-12 深夜各行与 `PITFALLS #217/#223`） | `PITFALLS #195`、`reports/q28-storm-bias-audit-20261011.md`、`reports/q28-identity-retest-20261012.md` |
 | 2026-10-12 | **Q28 伪线索更正**：`to_primary_dsi` DSI0/DSI1 **不是** Q28 杠杆（两树属不同 MSM 实现，本硬件上是 no-op） | `PITFALLS #196` |
 | 2026-10-12 | **Q24 重开**：更正「死前签名」（#197）；受控复现得 `{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 因暖复位坏台架未执行（#198）；新增干净无相机台架 `lv64-nocam` | `reports/q24-ctl-20261012.md`、`reports/q24-stageA-20261012.md` |
 | 2026-10-12 | **Q24 触发器干净定位（C 系列）**：三值仪表硬门下 C0(cam=0)/C1(`{camcc}`) 各自 `blank→hold 60 s→wake` 存活，C2(配对) 熄屏 3 s 内静默硬复位（GOOD 台架；`{camcc}` 单独不致死首次确证） | `reports/q24-cseries-20261012.md` |
@@ -33,6 +33,10 @@
 | 2026-10-12 晚 | **Q28 判据修正：坏发按时间成簇（会话级），非镜像属性** | `PITFALLS #223`、`reports/q28-identity-retest-20261012.md` §6 |
 | 2026-10-12 晚 | **Q28 负结果**：运行期重绑 panel/`msm_dsi` 不恢复（`card0` 消失 + GPU hangcheck） | `PITFALLS #224`、`logs/q28-rebind-20261012/` |
 | 2026-10-12 晚 | **Q28 上游报告草稿就绪（待发送）** | `archive/topics/UPSTREAM-REPORT-q28-bonded-dsi-2026-10-12.md`、`out/q28-bonded-dsi-2026-10-12.txt` |
+| 2026-10-12 深夜 | **Q28 七臂收束：vk116–vk122（+vk123）全部否证**；`-5`=软件闩锁短路、DSI ctrl+PHY 复位救不回、自定义 bonded 序列/使能期 force-on 同签名坏发；判别量=**DYN pclk 域闩住**⇒故障态不在控制器内部 | `reports/q28-dsi-recover-20261012.md`、`PITFALLS #226` |
+| 2026-10-12 深夜 | **Q28 主靶 dispcc/INTF 静态对照后削弱**：原厂源码本仓已有，`DSI_DISP_CC_*` 只用于 PHY reset clamp/MDP 调试，命令路径寄存器级等价 | `reports/q28-dispcc-static-20261012.md`、`PITFALLS #227` |
+| 2026-10-12 深夜 | **Q28 运营兜底看门狗上机**：坏发 75 s 后自动**正常重启**（可用性 ~50%→~75%）；顺带修 `reboot2` 旧构建「无参=进 fastboot」地雷 | `reports/q28-watchdog-20261012.md`、`PITFALLS #228/#229` |
+| 2026-10-12 深夜 | **上游回移 lane 收尾**：清洗后 14 文件 fast-forward 合入 `clean/base`（`5b169d541`），出日常候选 `out/boot-elden-vk124-merged.img`（同 UTS 身份 `#121`）；**验收口径改为「取得 1 次 GOOD 冷起」**；上机 3 发全 L1FAIL | `reports/upstream-lane-merge-20261012.md` |
 
 ---
 
@@ -76,9 +80,9 @@
 - **A/B 台架坑**：`reboot2` 暖复位会把状态“粘”成 NOCARD，不能用它做冷起结论；真冷起要物理 POR。
 - **状态（2026-10-12 定案，★同日晚实测降级——见本条后一 bullet）**：**NOCARD 与 STORM 同族 = 内核构建身份（UTS 版本串 / 构建号位数）伪影**——
   `#60`（2 位构建号）臂坏发 ~67%，3 位号（`#111`–`#120`）0 坏/12+（Fisher p≈0.005）；源码/DTB/ramdisk 全部排除。
-  **治法 = 日常镜像用 3 位 `#N` 新身份重编**（未执行）；冷起 A/B 必须 PINUTS（钉死 UTS）。
+  **治法 = 日常镜像用 3 位 `#N` 新身份重编**（**已执行 = `vk113-dailyid`；同日实测降级：3 位身份是偏置不是解**，见下条与 `PITFALLS #217`）；冷起 A/B 必须 PINUTS（钉死 UTS）。
   待核查项（~~`to_primary_dsi` DSI0/DSI1~~ **已证否、非 Q28 杠杆，见 `PITFALLS #196`**、Method B 对齐上游 `2028280686f4`、refgen）见 `reports/q28-handoff-20261012.md`。
-- **状态（★2026-10-12 晚 实测降级）**：上面「构建身份伪影」的定案**不成立**——同臂在不同时间窗可以是 **0 坏/20+** 也可以是 **4 坏/7（57%）**，且坏发**按时间成簇**（相邻启动成对坏 / 成串好）⇒ **缓解不在镜像层**；上游 byte-clk 取整修复（`2028280686f4`）移植到日常组合后**仍坏**；运行期重绑 DSI host **不能**恢复（反而拆掉 DRM、GPU hangcheck）。详见 `reports/q28-identity-retest-20261012.md`（含 7 发逐样本、成簇表、双否证）；上游报告草稿 = `archive/topics/UPSTREAM-REPORT-q28-bonded-dsi-2026-10-12.md`。**下一步 = 驱动内自恢复补丁**（首条 DCS 失败 → `msm_dsi_host_power_off/on` + 重试；判据 = 坏发 boot 自恢复出画面）。
+- **状态（★2026-10-12 晚 实测降级）**：上面「构建身份伪影」的定案**不成立**——同臂在不同时间窗可以是 **0 坏/20+** 也可以是 **4 坏/7（57%）**，且坏发**按时间成簇**（相邻启动成对坏 / 成串好）⇒ **缓解不在镜像层**；上游 byte-clk 取整修复（`2028280686f4`）移植到日常组合后**仍坏**；运行期重绑 DSI host **不能**恢复（反而拆掉 DRM、GPU hangcheck）。详见 `reports/q28-identity-retest-20261012.md`（含 7 发逐样本、成簇表、双否证）；上游报告草稿 = `archive/topics/UPSTREAM-REPORT-q28-bonded-dsi-2026-10-12.md`。**下一步 = 驱动内自恢复补丁**（首条 DCS 失败 → `msm_dsi_host_power_off/on` + 重试；判据 = 坏发 boot 自恢复出画面）——**该方向已于 2026-10-12 深夜执行（vk116/vk117）并否证**，见下条。
 
 > **⚠️ 被推翻的结论（诚实记录）**：2026-10-10 夜我们曾得出「Q28 是**按内核二进制确定性**的、
 > 不是冷/暖」这一逆转性结论，并一度写进 SSOT。次日**溯源审计否定了它**：
@@ -122,6 +126,8 @@
 - **下一步状态（2026-10-12 晚更新）**：① NoC/BCM 靶 **已否证**（受控差分：票不区分死/活，`#210`）；② dispcc 靶 **当前无手段**（无 DP sink、无 `modetest`，无法在不碰 DSI 面板的前提下做显示电源转换）；③ **已执行**：v2 邮件已于 2026-10-10 发出，**v3 补证准备中**（新增「致死=SoC 复位且约 30 s 自恢复 / 最小触发=配对 / PON 无 fault、无 WDT」三条硬证据）。
 - **运营口径不变**：相机 ⇄ 熄屏互斥（日常零相机模块）。
 
+- **状态（★2026-10-12 深夜 收尾轮）**：① **七臂 vk116–vk122（+vk123）全部否证**（`reports/q28-dsi-recover-20261012.md`）——`-5` = `dsi_bonded_cmd_failed` **软件闩锁短路**（vk116 清除后第 2/3 次回到 `-110`），DSI ctrl+PHY 复位**确实发生但救不回**（vk117 寄存器转储），自定义 bonded 触发序列（vk121）与使能期 dynamic force-on（vk122/vk123）同签名坏发；判别量 = **DYN pclk 域闩住不释放**（`STATUS0=0x20003`、DSI 中断计数 0、PLL 是锁的）⇒ **故障态不在 DSI 控制器内部**（`sw_reset` 后仍在）。② **主靶 dispcc/INTF 经静态对照后削弱**（`reports/q28-dispcc-static-20261012.md`）：原厂 display 源码本仓已有，全树 grep 显示 `DSI_DISP_CC_*` 只用于 PHY reset clamp 与 MDP 调试，命令路径与原厂寄存器级等价；唯一新差异 = **复位终态**（原厂复位后 `CLK_CTRL=0`），未单独实验。③ **运营兜底已上机**（`reports/q28-watchdog-20261012.md`）：坏发 75 s 后自动正常重启（可用性 ~50%→~75%，不改根因）；顺带修设备侧 `reboot2` 旧构建地雷（`PITFALLS #228/#229`）。④ **上游回移 lane 收尾**（`reports/upstream-lane-merge-20261012.md`）：14 文件合入 `clean/base`（`5b169d541`），出候选 `out/boot-elden-vk124-merged.img`（同 UTS 身份 `#121`）；**验收口径改为「取得 1 次 GOOD 冷起」**（3 连 GOOD 概率仅 ~12.5%）；上机 3 发全 L1FAIL，L1FAIL 台非显示预检（audio/WiFi/GPU 固件/输入/服务）无回归迹象。⑤ **剩余出口** = 上游/Qualcomm + 复位终态/原厂 `kickoff_command` 逐步对照；判据/纪律不变（三态 + 全 dmesg + `card0` + ≥60 s 存活门 + 真实 POR）。`boot_b` 仍 = `vk94`，**Q28 未收尾**。
+
 ### 构建/身份事故（已修复并入流程）
 
 - `vk81/82/83` 因 `make olddefconfig` 抹掉 `ARCH_QCOM` → 编出**无 QCOM 驱动的死内核**且当时未察觉，
@@ -143,11 +149,12 @@
 
 ## 6. 下一步（按优先级）
 
-1. **Q28**：执行治法——**用 3 位 `#N` 新身份重编日常镜像**（同源码 + ADSP DTB）并冷起回归；随后核查 **Method B**、refgen（见 `reports/q28-handoff-20261012.md`）。⚠ ~~`to_primary_dsi` DSI0/DSI1~~ 已证否、非 Q28 杠杆（`PITFALLS #196`）。
-2. **#106**：把判据升级为「GOOD 需 ≥60 s 存活/可交互」；尝试让死挂**自动 panic 带栈**（ramoops 或 OOB）。
-3. **上游化 M1–M5**：M1 干净资产树已建、构建通过；下一步 M2 首发小系列（`checkpatch`/`dtbs_check` 绿）。
-4. **G2**：Waydroid Play 登录与完整性等级取证。
-5. **G3**：Steam 端到端。
+1. **Q28**（未解，主线阻塞）：① **上游/Qualcomm 通道**——报告已就绪待发（`archive/topics/UPSTREAM-REPORT-q28-bonded-dsi-2026-10-12.md`）；② 软件侧仅剩 **复位终态对齐**（原厂复位后 `CLK_CTRL=0` 时钟全关+引擎关）与**原厂 `kickoff_command` 逐步对照**（`reports/q28-dsi-recover-20261012.md` §16.3），均须 PINUTS + 真实 POR 冷起；③ **验收 `vk124-merged`** 与残余坏发采样设计，见 `.pi/plans/2026-10-12-下一步测试任务-Q28-Q24.md`。⚠ ~~3 位身份重编治法~~、~~`to_primary_dsi`~~、~~上游 `2028280686f4` 移植~~、~~DSI ctrl+PHY 复位/软件闩锁/自定义 bonded 序列/使能期 force-on~~ 均已否证（`PITFALLS #196/#217/#223/#226`）。
+2. **Q24**：运营口径不变（相机 ⇄ 熄屏互斥）；续挖 = **外部电流/电压测量**（区分「相机域上电浪涌」vs「显示域转换」）+ 上游 RFC v3 补证（v2 已于 2026-10-10 发出）。
+3. **#106**：把判据升级为「GOOD 需 ≥60 s 存活/可交互」；尝试让死挂**自动 panic 带栈**（ramoops 或 OOB）。
+4. **上游化 M1–M5**：M1 干净资产树已建、构建通过；下一步 M2 首发小系列（`checkpatch`/`dtbs_check` 绿）。
+5. **G2**：Waydroid Play 登录与完整性等级取证。
+6. **G3**：Steam 端到端。
 
 ---
 

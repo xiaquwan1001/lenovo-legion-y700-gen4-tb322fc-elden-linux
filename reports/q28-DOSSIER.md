@@ -5,6 +5,11 @@
 > 定稿日期：2026-10-10。每条结论标证据来源（PITFALLS 条目 / 报告 § / 日志文件:行 / 寄存器值 / 源码行）。
 > 本文档**不改设备、不改内核、不改任何已有 git 跟踪文件**，仅整理进度。
 
+> ---
+> ### ★ 当前口径（2026-10-12 深夜，**先读这段**；下列 §a–§q 均为历史卷，结论以本段与 `TASKS.md` §5 Q28 当前口径块为准）
+> **Q28 未解，`boot_b` 仍 = `vk94`。** ① 坏发 **~50%、逐启动随机、按时间成簇（会话级），与镜像/构建身份无关**——§q「STORM 也是构建身份伪影」**已作废**（`PITFALLS #217/#223`）；3 位身份只是**降险偏置**（`#60` 5/7 坏 vs 3 位 1/23，Fisher p≈8e-4；残余坏发点估 4.3%、95% 上界 21.9%）。② **故障态不在 DSI 控制器内部**：判别量 = **DYN pclk 域闩住不释放**（`STATUS0=0x20003`、DSI 中断计数 0、PLL 是锁的），`sw_reset` 后仍在 ⇒ 指 dispcc/INTF 侧动态时钟请求；`-5` = `dsi_bonded_cmd_failed` **软件闩锁短路**（非硬件楔死）。③ **七臂 vk116–vk122（+vk123）全部否证**：面板级 reset、软件闩锁、DSI ctrl+PHY 复位、自定义 bonded 触发序列、使能期 dynamic force-on、上游 byte-clk 取整（`2028280686f4`）。④ **原厂 display 源码静态对照后主靶削弱**（唯一新差异 = 复位终态 `CLK_CTRL=0`，未实验）。⑤ **恢复只能整机复位**（运行期重绑 DSI host 会拆 DRM）。⑥ **运营兜底已上机**：坏发 75 s 自动正常重启（~50%→~75%），实验前须 `q28-watchdog off`。⑦ **上游回移候选 `vk124-merged` 冷起 3/3 L1FAIL**；验收口径已改为「取得 1 次 GOOD 冷起」。
+> 过程稿：`reports/q28-dsi-recover-20261012.md`、`reports/q28-dispcc-static-20261012.md`、`reports/q28-watchdog-20261012.md`、`reports/q28-identity-retest-20261012.md`、`reports/upstream-lane-merge-20261012.md`；下一步 `\.pi/plans/2026-10-12-下一步测试任务-Q28-Q24.md`。
+
 ---
 
 ## a) 一句话现状
@@ -400,5 +405,5 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 
 **排除**：源码（全为 `d02658e63`）、DTB（E2）、ramdisk（B/D）、具体二进制（E1' 重编复现）。
 **唯一变量**：`UTS_VERSION` 的 `#N`/日期长度 → `.rodata` 布局（`#60` 2 位 vs 3 位）。
-**治法**：日常镜像用 3 位 `#N` 的新构建身份重编（同源码 + ADSP DTB）。
+~~**治法**：日常镜像用 3 位 `#N` 的新构建身份重编（同源码 + ADSP DTB）。~~ **← 已执行（`vk113-dailyid`）并于同日实测作废（`PITFALLS #217/#223`、`reports/q28-identity-retest-20261012.md`）：3 位身份是偏置不是解。本卷 §q 的结论以文首「当前口径」为准。**
 **证据**：`reports/q28-storm-bias-audit-20261011.md`、`PITFALLS #195`、`reports/trials/index.tsv`（`*q28storm*`）。

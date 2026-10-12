@@ -80,8 +80,8 @@
 
 - **完成度**：G1 ≈90% · G2 ≈60% · G3 PoC ✅（数字权威 = `TASKS.md` §0）。
 - **Linux 侧未解（3 项，按影响排序）**：
-  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门。根因已定案=冷起首次 DSI PLL/PHY 未稳定锁定 → bonded 双 DSI 首条 DCS 的 cmd-DMA hang（冷起 ~60%，冷起失效有 NOCARD/STORM 两模式）。**⚠️ 2026-10-10 夜「按内核二进制确定性」说法已被溯源审计降级（`reports/q28-binary-determinism-provenance-20261010.md`、`PITFALLS #171`）：原台账 21 发仅 7 发有原始日志；所谓 5,040,884 B 二进制差主要是 `LOCALVERSION` 长度导致的 4 字节 `.rodata` 平移（`.text` 仅 26 个 word、全为地址立即数）；且同一 vk64.img 在冷 POR 路径 3/3=STORM。⇒ 现口径=「在 reboot2 暖路径上 vk64 亮、vk89/vk64c 不亮，真因未定」。** **【2026-10-10 夜②：同一 `boot-q28-oct8.img` 同晚同路径 5 发=GOOD/STORM/STORM/GOOD/STORM ⇒ 同镜像非确定；且 `storm=0` 的干净 GOOD 3/3 数秒内整机冻死、`storm>0` STORM 4/4 存活 ⇒ 判 GOOD 必须加**存活门**（`PITFALLS #172`、`reports/q28-layout-ab-20261010.md`）。】** 现状/判据/下一步只读 SSOT `reports/q28-DOSSIER.md` 与 `TASKS.md` §5 Q28；**【2026-10-11 新增：NOCARD 与新编镜像的 `LOCALVERSION` 强相关（同源同 config，`-vk64` GOOD 1/1 vs `-vk93-cleanctl` NOCARD 3/3）；见 `reports/q28-DOSSIER.md` §m、`PITFALLS #175`。】** **【2026-10-11 深夜定案（§o，升级 #175）：冷起 GOOD/NOCARD = 内核构建身份（UTS 版本串）法则——UTS 逐字 `…-vk64-gd02658e63cf6` GOOD 5/5，其它任何身份（含空提交/一行 pr_info/round 补丁）NOCARD 7/7；⇒ 冷起 A/B 测补丁作废；GOOD 台架=`out/boot-elden-vk97-base-lv64.img`，日常 boot_b 即该身份、纯净冷起 GOOD ⇒ Q28 不阻塞 G2；见 `PITFALLS #192`、`TASKS.md` §5 Q28。】** **【2026-10-11 收尾（§p）：NOCARD 分支闭环=构建身份伪影（同 round 补丁未钉 UTS=`vk96` NOCARD 3/3 vs 钉死=`vk105` GOOD；`reports/q28-retro-audit-20261011.md`）；冷起 A/B 必须 PINUTS；剩余唯一未解=STORM（独立随机，round 对其是否有效未测）；台架 vk97/vk100（GOOD 5/5）+vk104/vk105。】** **【2026-10-12 定案（`PITFALLS #195`、`q28-DOSSIER §q`）：STORM 也是构建身份伪影——`#60`（2 位构建号）内核臂 4 坏/2 好（~67%）vs 3 位构建号 0 坏/12+（Fisher p≈0.005）；源码/DTB/ramdisk 全部排除，唯一变量=内核构建身份（`#N`/日期长度→`.rodata` 布局）；治法=日常镜像用 3 位 `#N` 新身份重编。**【2026-10-12 深夜 收尾：当晚 7 发 4 坏/7（4 臂同率）、上游 round 修复无效、坏发按时间成簇 ⇒ 缓解不在镜像层；上游报告草稿就绪待发（`archive/topics/UPSTREAM-REPORT-q28-bonded-dsi-2026-10-12.md`）；Q28 未收尾、未写盘（boot_b=vk94）。】** ****【2026-10-12 晚 实测更正：3 位构建身份是偏置不是解——`vk113-dailyid` 冷起 GOOD/L1FAIL 各一、`vk94`(#60) 亦 L1FAIL、`vk104`(3位) GOOD；累计 `#60` 5/7 vs 3位 1/23（p≈8e-4），3 位臂残余坏发率点估 4.3%、上界 21.9% ⇒ **未刷 boot_b、Q28 未收尾**；`reports/q28-identity-retest-20261012.md` / `PITFALLS #217`。】** **【2026-10-12 构建侧：日常镜像候选 `vk113-dailyid` = vk94 逐字节复刻 + 内核 3 位构建身份重编（`#121`；ramdisk/DTB/cmdline 取自 vk94 原件，UTS release 逐字不变）；`verification=NOT_TESTED_ON_DEVICE`，下一步 = 3× 真实 POR 冷起全 GOOD 才写 boot_b；构建脚本 `scripts/q28-build-daily-id.sh`、报告 `reports/q28-vk113-20261012.md`、判据补注 `PITFALLS #216`。】** **下一会话待核查项（~~`to_primary_dsi` DSI0/DSI1~~ **已证否、非 Q28 杠杆，见 `PITFALLS #196`**；Method B、refgen）见 `reports/q28-handoff-20261012.md`。】**
-  ② **Q24 熄屏 × 相机**（🆕 2026-10-11 最小触发重定 = **`camcc-sm8750` + `cambistmclkcc-sm8750` 配对 + 真实熄屏**；单独任一不触发，历史「cambist 单模块」否证；FIX-3 实测挂死）→ 用户裁决=互斥二选一：日常零相机模块（熄屏安全），需要时 `cam-mode.sh on/off`。**🆕 2026-10-12 重开**（`PITFALLS #197/#198`）：既往「死前共同签名」= cambist probe 的常规伪影（非死因）；受控复现得 `{camcc}`+真熄屏 = **静默硬复位（末票 `mmcx↓/cx↓`，异于配对死的 `mxc→0`）**但状态有混淆；S1/S2（不熄屏）存活、S3 因暖复位坏台架未执行；**2026-10-12 当日七轮结果（已收敛）**：① **触发器干净定位**——三值仪表硬门（`GetActive`+`DPMS`+RPMh 降档票）下，GOOD 台架一次冷起内 **C0(cam=0)/C1(`{camcc}`) 各自 `blank→hold 60 s→wake` 存活 +89 s，C2(`{camcc,cambist}`) 熄屏 3 s 内静默硬复位**（`{camcc}` 单独不致死首次确证）；② **H1 DT 臂否证**——cambist 恢复上游 `MMCX+MX`（DTB-only repack，控制组逐字节复现、内核 UTS 不变）同样死在熄屏、签名与 MX-only 基准逐字相同；③ **致死点随台架显示栈状态移动**（GOOD=熄屏即死；L1FAIL=熄屏存活、**唤醒**才死）；④ **GPU runtime-PM 被否定**（`power/control=on` 仍死）；⑤ **日常 boot_b 即可复现**（配对→熄屏存活→唤醒致死 4/4，无需 RAM 镜像/POR），判活窗口须 ≥60 s；⑥ 死亡末帧 = **`dispcc` 时钟使能**（`disp_cc_mdss_*`），所有现场共同信号 = **NoC/BCM（`0x500xx`）投票爆发**。**运营口径不变 = 相机 ⇄ 熄屏互斥；根治未成。** **★2026-10-12 第 8–9 轮（下午）四条硬结论**：① **同 boot 受控差分**（A cam=0 熄屏 76 s + 唤醒存活 / B 配对唤醒 ≤10 s 死）⇒ **NoC/BCM（`0x500xx`）票死/活同址同型 → BCM 靶否证**；② **致死 = SoC 级复位 + 约 30 s 自动重启**（USB 掉线 → 重枚举 → 回到已刷 OS；当日 5/5）⇒ **不需要物理 POR**，历史「需 POR / bootloader 卡死」改判；③ **PMIC PON 块逐字节无差异 + 无硬件看门狗** ⇒ 复位不含 PMIC reason/fault、非 WDT；④ **最小触发 = 配对确认**（cambist 单独 / camcc 单独在硬门口径下各存活）。靶点收窄为**电气/时序级**（下一步 = 外部测量 + 上游 RFC v2）。 详见 `TASKS.md` G1-33 / §5 Q24、`reports/q24-{repro-20261011,ctl-20261012,stageA-20261012,s123-20261012,cseries-20261012,h1-dtarm-20261012,h1-result-20261012,mech-20261012}.md`、`PITFALLS #173–#179 / #197–#208`；
+  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门，**未解、`boot_b` 仍 = `vk94`**。当前口径（2026-10-12 深夜）：L1 根因 = bonded 双 DSI 首条 DCS `ff 20` 的命令 DMA 引擎 hang，**坏发 ~50%、逐启动随机、按时间成簇（会话级），与镜像/构建身份无关**（旧「构建身份伪影」定案**作废**，`PITFALLS #217/#223`；3 位身份仅降险偏置）；**故障态不在 DSI 控制器内部**（DYN pclk 域闩住、`sw_reset` 后仍在）；七臂 vk116–vk122 + vk123 **全部否证**；原厂 dispcc/INTF 静态对照后主靶削弱；**恢复只能整机复位**，日常可用性靠看门狗兜底（~50%→~75%）。判据 = 三态（NOCARD/STORM/GOOD）+ SSH 全 dmesg + `card0` + ≥60 s 存活门 + **真实 POR**。**状态/样本数/下一步只读 `TASKS.md` §5 Q28（含历史口径链）与 `reports/q28-dsi-recover-20261012.md`**；过程稿索引 `reports/q28-INDEX.md`。
+  ② **Q24 熄屏 × 相机** → 用户裁决 = **互斥二选一**：日常零相机模块（熄屏安全），需要时 `cam-mode.sh on/off`。最小触发 = **`camcc-sm8750` + `cambistmclkcc-sm8750` 配对 + 真实熄屏**（单独任一不触发，历史「cambist 单模块」否证）。**根治未成**；2026-10-12 九轮已收敛：`{camcc}` 单模块不致死首次确证、H1 DT 臂否证、GPU runtime-PM 否定、NoC/BCM 靶否证、致死 = **SoC 级复位 + ~30 s 自动重启**（不需物理 POR）、PMIC PON 块无差异、无硬件看门狗 ⇒ 靶点已是**电气/时序级**；下一步 = **外部电流/电压测量 + 上游 RFC v3**。详见 `TASKS.md` G1-22/G1-33、§5 Q24 与 `reports/q24-*-20261012.md`。
   ③ **进 GUI 后整机卡死**（`PITFALLS #106`，与 Q28 不同因）→ 已常驻自动取证（`/etc/sysctl.d/99-freeze-trace.conf` + `pstore-catch`），命中即 panic→暖复位→带回全 CPU 栈；暂未复现。
 - **本轮已关闭 / 搁置**（不再占未解）：✅ Q26 WiFi（2026-10-10 用户确认）、⚪ G1-6 TF 卡（用户裁决忽略）、✅ G1-34 重力/自动旋转（SSC/QRTR + iio-sensor-proxy；prox/als/compass 已核）。
 - **未开工**：上游化 **M1–M5**（`TASKS.md` §7）、G1-8 CPU/GPU 基准（GPU 已确认工作 Adreno 830 GLES3.2，待装 glmark2/vkmark 跑数）。
@@ -104,88 +104,6 @@ scripts/check-doctor.sh
 # 【版本对账】“这个 boot.img 里到底是哪个内核” / 重生成对齐表
 python3 scripts/vk-identity.py --gate                    # 只看命名/溯源规则结果
 python3 scripts/vk-identity.py > versions/vk-kernel-identity.tsv   # 重生成（随后连表一起提交）
-# 【动手前 30 秒】引导链类问题（解锁/AVB/降级/GPT/EDL）先查本地 7、8 月已有结论（#87）
-grep -rn -iE "unlock|解锁|sn\.img|1\.1\.11\.|rollback|testkey|073|\.120" \
-  .pi/skills/*/references/*.md *.md archive/topics/*.md | grep -v '^Binary'
-```
+# 【
 
-```bash
-# 目标形态：b 槽直启 Linux（~5–9 s 进 Phosh），日常不需 fastboot
-sudo bash elden-net.sh && ssh -o StrictHostKeyChecking=no root@192.168.7.1
-# 内核迭代＝统一入口 scripts/iterate.sh（四档环，细则 RUNBOOK §迭代；mod-loop/kexec/to-fastboot/flash-b/cycle 均已自锁）
-scripts/iterate.sh mod <driver-dir>              # 环0：=m 模块热载 ~30s 不重启（需先应用 fragment-modular）
-scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（迭代通道见 RUNBOOK；kexec 快环未闭环，勿默认）
-scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 先备份后执行）
-scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
-# ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM）
-./cycle.sh --soft                          # 软回 fastboot（免按电源键）
-fastboot boot bootslot-b/boot_b-clean.img  # 零写盘·持久变体（RAM 内核+磁盘根，有桌面/服务），功能测试用（见 PITFALLS #93）
-fastboot boot <img>                        # 零写盘·纯RAM变体（无桌面/服务）仅内核/引导级验证；先 blank 活跃槽 dtbo 否则卡 logo（PITFALLS #1/#10）
-# 新单元开工三件套（先写台账，再备份，再手术）
-fastboot getvar serialno; adb shell getprop ro.boot.hwboardid   # → 写进 DEVICE.md §2.2
-sh scripts/gpt-dump.sh                                          # 打印本单元 backup_lba（禁跨容量档复用）
-fastboot fetch boot_b "$BAK"/boot_b.img                         # dtbo_b / vbmeta_b 同理
-python3 scripts/slot-attr.py show                               # 槽位属性（在 GPT attribute，非 misc）
-```
-
----
-
-## 5. 目录速查
-
-| 路径 | 内容 |
-|---|---|
-`linux -> geekidos-linux` | 内核树（7.2.0 + `patches/0001–0011`）
-`patches/` | 内核改动与 config 快照（`config-vk40-bringup`）；**`elden-working-tree-ba28ec16f-2026-10-03.patch` = 权威工作树全量补丁**
-**`RESOURCES.md §3`** | **文件台账：版本控制边界 / 顶层分类 / 可清理标记 / 内核补丁回导纪律**
-**`PITFALLS.md`** | **开发经验唯一入口（新会话动手前先读）**：§0 零号纪律 + 踩坑正文（按主题编号）
-**`RESOURCES.md §4`** | **历史会话索引 + 实机验证边界**（数字 SSOT；无产出/冒烟会话以 `junk` 标注可整行忽略）
-**`.pi/AGENT-OPS.md`** | **agent 行为/授权规范（唯一入口）**：自主分级 / 物理干预边界 / 写入权限
-**`.pi/CONCURRENCY.md`** | 并发任务约束（lane/fork/registry；AGENT-OPS 下级细则）
-`scripts/` | 构建/刷机/GPT/温控/基准/串口/容器代理 全套脚本（清单见 `RESOURCES.md` §2.1）
-`out/`、`bootslot-b/` | 产物与 b 槽自签包（`boot_b_vk40{,-ram}.img`、`avb.key`）
-`backup/` | 原厂分区/固件/GPT 快照（**按容量档隔离**）；`backup/fw/README.md` 说明来源
-`stock-src/` | 联想 GPL 源码（厂商驱动/DT/固件名反查依据）
-`env-pass/` | 过环境栈 + **Linux rootfs 归档**（3.44 GB）
-`archive/2026-10-02-merged/` | **本轮合并掉的旧文档原文**（MISSION-SCOPE/DEVICES/ANDROID-COMPAT-PLAN/ROUTE-DECISION/PLAN-NODEV/DOCS-CHANGELOG）
-`reports/` | **活跃主题工作区**：进行中主题的专题/取证稿所在（如 `reports/q28-DOSSIER.md` 为 Q28 单一事实源、`reports/Q24-Q28-INDEX.md` 为 Q24+Q28 会话/进度/产物合并台账）；主题定案后证据迁 `archive/topics/` 归档层
-
----
-
-## 6. 专题档案地图（证据层，只增不改）
-
-| 主题 | 文件 |
-|---|---|
-音频（tplg→APM 图全链） | `archive/topics/AUDIO-2026-10-02.md` `archive/topics/AUDIO-2026-10-01.md` `archive/topics/AUDIO-2026-09-30.md` `archive/topics/AUDIO-scout-2026-09-30.md`
-相机 + 重力计拆解 | `archive/topics/CAMERA-2026-10-02.md` `archive/topics/STOCK-CAMERA-GRAVITY-2026-10-02.md`
-显示/刷新率 | `archive/topics/PANEL-REFRESH-2026-10-01.md`
-温控 / 充电 | `archive/topics/THERMAL-2026-10-02.md` `archive/topics/CHARGE-2026-09-30.md`
-**CDSP（G1-11 修复：split 固件 + initramfs）** | `archive/topics/CDSP-FIX-2026-10-07.md` `archive/topics/CDSP-PROBE-2026-10-06.md`
-Waydroid / Play / 容器网络 | `archive/topics/WAYDROID-2026-10-01.md` `archive/topics/WAYDROID-AOSP-AUDIT-2026-10-01.md` `archive/topics/GPLAY-2026-10-02.md` `archive/topics/PROXY-WAYDROID-2026-10-02.md`
-Win-x86 转译 PoC | `archive/topics/WIN-X86-POC-2026-10-02.md`（截图 2 张）`archive/topics/WIN-X86-2026-10-02.md`
-虚拟化（EL2/Gunyah/AVF/生态） | `archive/topics/EL2-VIRT-2026-10-02.md` `archive/topics/ARM-VIRT-RESEARCH-2026-10-02.md`
-间接引导层 / SM8750 UEFI（**G1-29 路线 A 已搁置 2026-10-05**） | `archive/topics/BOOTCHAIN-2026-10-05.md`（机制） `archive/topics/UEFI-RESOURCES-2026-10-05.md`（可用资源+中文社区检索） **`archive/topics/UEFI-UFS-BRINGUP-2026-10-05.md`（上机实验矩阵 + UFS 阻塞根因）** **`archive/topics/UEFI-UFS-UPSTREAM-ASK-2026-10-05.md`（上游 issue #12）**
-驱动主线覆盖审计 / 厂商源码 | `archive/topics/DRIVER-MAINLINE-AUDIT-2026-10-02.md` `archive/topics/STOCK-DRIVERS-2026-09-30.md` `archive/topics/STOCK-KERNEL-2026-09-30.md`
-**用户态发行版选型 + 硬盘布局** | **`archive/topics/USERLAND-STACK-2026-10-05.md`**（Phosh 新鲜度 / U1–U14 用户态 bug 单 / 不换发行版 + 会话 overhaul / boot 分区布局 / UEFI 搁置）
-**本轮三调查合并决议**（kexec / 发行版+布局 / 驱动补全；优先级裁决） | **`archive/topics/MERGE-2026-10-05.md`**
-**驱动批次上机验证**（vk53/vk54 启动失败与**归因撤回**；`fastboot boot` 矩阵） | **`archive/topics/DRIVER-VERIFY-2026-10-06.md`**
-持久化上机 + 熄屏重启故障 | `archive/topics/复盘-2026-10-03-持久化与睡眠.md` **`archive/topics/G1-22-2026-10-05.md`**（受控复现；根因未证实） **`archive/topics/REBOOT-5MIN-2026-10-05.md`**（§7.9 收尾）
-过环境 / 隐藏模块 | `archive/topics/ENV-PASS-2026-10-02.md` `archive/topics/SUSFS-KERNEL-2026-10-02.md` `archive/topics/YUEHONG-MODULE-2026-10-02.md` `archive/topics/GPT槽位元数据-2026-09-30.md`
-存储手术与回退 | `archive/topics/LINUX-REMOVE-2026-10-02.md` `restore-259/`（AVB/KSU/EDL 救砖）
-带外调试 / 出网 | `archive/topics/OOB-CONSOLE-2026-10-02.md` `archive/topics/NET-EGRESS-PLAN-2026-10-01.md`
-AOSP 迁盘校验 | `archive/topics/AOSP-MIGRATE-CHECK-2026-10-02.md`
-踩坑总表（**动手前扫**） | `PITFALLS.md`（#80/#81＝“把机器当角色”“状态才是前置条件”；**#87＝引导链问题先 grep 本地既有结论**）
-BL 解锁（**要不要 / 怎么**——已定稿，别再重推） | `RUNBOOK-BRINGUP.md` §0.5 ★权威顺序·`archive/topics/复盘-2026-10-03-BL解锁.md`（时线 + 7/8 月对照 + 根因）·`archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md`（签名链取证）
-操作史/复盘 | `archive/topics/HANDOFF.md` `archive/topics/复盘.md` `archive/topics/复盘-2026-09-29-夜.md` `archive/topics/复盘-2026-09-30-日.md` `archive/topics/复盘-2026-10-02-swarm.md` **`archive/topics/复盘-2026-10-03-BL解锁.md`** `archive/topics/PAUSE-2026-10-02-android.md`
-**近四天会话审查**（失败方向特征 F1–F9 + 排查思路 + 文档精简结论） | **`archive/topics/SESSION-AUDIT-2026-10-06.md`**
-**内核增量风险审核** | `archive/topics/AUDIT-since-vk34-2026-10-03.md`（GAPS Q22 / TASKS G1-23）与 **`RESOURCES.md §4`** 配套
-换机迁移包 | `flashing-bundle/`（tar.gz 已归档 `archive/2026-10-04-root-strays/`）
-**退场的入口**（快捷方式副本 + 已卸载插件 `pi-messenger-swarm` 登记；**插件工作流已删**） | `archive/2026-10-04-retired-entrypoints/README.md`
-**上游化审查**（内核树 vs 主线 v7.2 全量 diff，A/B/C/D 分级） | `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`（任务 `TASKS.md` §7 M1–M5）
-
----
-
-## 7. 兄弟项目与边界
-
-- ~~`~/y700类原生安卓/`~~ **已于 2026-10-02 退役并入本 repo**：该目录只有 2 份文档（24 K）+ 一个 `l2` 软链，无代码无记忆。文档原文进 `archive/topics/`（`资料汇总-2026-09-30.md`、`L2-修剪流水线-2026-09-30.md`）；LineageOS/erhai 移植线与 `aweiyry/lenovo-ota-tool` 进 gsi 技能 references；`/mnt/Samsung/l2` 改由本 repo 直接引用（`./l2` 软链）。类原生路线的**结论仍是不做**（本 repo 走 mainline + 容器）。
-- `~/netfix`（USTC 路由）、`~/eacndev`、`~/lobcorp-remake`：与本设备无关。
-- 外部资产位置与用途见 `RESOURCES.md` §2.3。
+[Exact evidence: /home/xuqianhui1001/y700-elden/.pi/sessions/pi-fold-evidence/pi-session/sha256/af/afc463b27847028c8ee5a6f17898ade8137b3fc6480a118fd65c65e236ea42e2.txt; sha256=afc463b27847028c8ee5a6f17898ade8137b3fc6480a118fd65c65e236ea42e2; bytes=25288]
