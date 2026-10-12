@@ -28,15 +28,21 @@ echo "== elden check-doctor — $ROOT =="
 # ---------------------------------------------------------------- 1. 计数
 echo
 echo "== 1. 计数一致性 =="
-sessions=$(find .pi/sessions -name '*.jsonl' 2>/dev/null | wc -l | tr -d ' ')
+sessions=$(find .pi/sessions -maxdepth 1 -name '*.jsonl' 2>/dev/null | wc -l | tr -d ' ')
 rootmd=$(ls *.md 2>/dev/null | wc -l | tr -d ' ')
 topics=$(ls archive/topics/*.md 2>/dev/null | wc -l | tr -d ' ')
 # RESOURCES §4 会话索引行：形如 | 2026-.. | `01a0xxxx` | ...
 indexed=$(grep -cE '^\| 20[0-9]{2}-[0-9]{2}-[0-9]{2} \| `[0-9a-f]{8}`' RESOURCES.md 2>/dev/null || echo 0)
-echo "  会话 jsonl=$sessions  RESOURCES§4 收录=$indexed  专题=$topics  根目录 md=$rootmd"
+echo "  会话主 jsonl=$sessions  RESOURCES§4 收录=$indexed  专题=$topics  根目录 md=$rootmd"
 
 if [ "$rootmd" -eq 9 ]; then ok "根目录 9 份 md（6 维护文档 + AGENTS.md + 公开 README/PROGRESS）"; else warnf "根目录 md=$rootmd（预期 9）"; fi
-if [ "$sessions" -eq "$indexed" ]; then ok "会话目录与 RESOURCES §4 收录一致（$sessions）"; else warnf "会话目录 $sessions ≠ 索引 $indexed → 补 RESOURCES §4"; fi
+# 会话索引：要求磁盘**主会话**（深度 1）id 全覆盖；允许索引保留已删除/迁移会话的墓碑行。
+_d=$(mktemp); _i=$(mktemp)
+find .pi/sessions -maxdepth 1 -name '*.jsonl' -printf '%f\n' 2>/dev/null | grep -oE '_[0-9a-f]{8}-' | tr -d '_-' | sort -u > "$_d"
+grep -oE '^\| 20[0-9]{2}-[0-9]{2}-[0-9]{2} \| `[0-9a-f]{8}`' RESOURCES.md 2>/dev/null | grep -oE '[0-9a-f]{8}' | sort -u > "$_i"
+_miss=$(comm -23 "$_d" "$_i" | tr '\n' ' ')
+rm -f "$_d" "$_i"
+if [ -z "$_miss" ]; then ok "会话索引覆盖全部主会话（磁盘 $sessions / 索引 $indexed 行）"; else warnf "索引缺主会话 id：$_miss"; fi
 
 # ---------------------------------------------------------------- 2. 死链
 echo

@@ -315,9 +315,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 50 / ◐ 部分 14 / ✗ 未上机 54 |
-| 状态 | active 76 / reference 27 / junk 11 / superseded 4 |
-| 时间跨度 | 2026-09-29 → 2026-10-10（磁盘 jsonl **248**；本索引 **118** 条；**10-07 前逐条收录，10-08 整日缺、10-09/10 仅个别收录**；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
+| 实机验证 | ✅ 实机 73 / ◐ 部分 14 / ✗ 未上机 62 |
+| 状态 | active 101 / reference 32 / junk 11 / superseded 5 |
+| 时间跨度 | 2026-09-29 → 2026-10-12（磁盘**主会话** jsonl **140**；本索引 **149 行**（含 9 条已删除/迁移会话的墓碑行）；子代理会话文件（深度≥2，134 个）不入本表；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
 
 ---
 
@@ -438,15 +438,45 @@ git log --oneline -10
 | 2026-10-07 | `01a115a8` | 收盘：G1-9 DP 打通 + Q21/Q24 根因 | dp/sleep | ✅ | active | DP 打通（`dr_mode=otg`+`usb-role-switch`+`mdss_dp0` 同批，提交 `6c1376907`，外接实测出画面）；Q24 根因实锤=相机模块链（dp5/dp6/dp7 控制变量 A/B） | - | DP 放缩/横竖屏残余（桌面侧，非阻塞） |
 | 2026-10-07 | `01a11650` | 会话：测试接续（中断，无产出） | stress-prep | ◐ | junk | 任务=继续未验证项（linux→安卓→x86）；止于温控/基准压测准备（读 charge-ctl.sh），**无终报无提交**；温控/基准压测**确认未执行**（全仓无运行记录） | - | 遗留未提交：`scripts/bench-run.sh`、`scripts/thermal-stress.sh`（压测脚本就绪待跑）；.pi/settings.json 为 settings 精简正常残留 |
 | 2026-10-07 | `01a11667` | 审计：近两天会话一致性审计 | session-audit | ✗ | active | 修死链误报（check-doctor 正则把 adsp.mdt 截成 adsp.md）；INDEX 88%→90%；TASKS §0 DP/Q24 状态对齐；RESOURCES §4 补 9 行（另：§2 有重复行段，待后续去重） | - | 本会话 |
+| 2026-10-07 | `01a1167d` | 稳定基线 vk62 收尾 | q28/base | ✅ | superseded | **vk62** = vk47clean 内核 + dp5 DTB H1 变体 + 完整 ramdisk + split CDSP + cmdline；已登记 registry | vk62 | vk62 后经 #131 判 tree_drift（打包内核非本树字节） |
+| 2026-10-07 | `01a11702` | 相机×熄屏矛盾 + 上游 patch 发送 | camera/upstream | ✅ | active | 已向 linux-arm-msm@vger 发送报告；patch 转纯 ASCII、重做 commit 链（171de3ae0→c5…） | - | 网页代填，无凭据落盘 |
+| 2026-10-08 | `01a11919` | 待办盘点与 vk63 烧录 | tasks/boot | ✅ | active | 4 提交收尾、check-doctor FAIL=0；**boot_b=vk63 已烧录读回校验**；Q26 口径撤销 | vk63 | - |
+| 2026-10-08 | `01a11a40` | reboot 进 bootloader 钩子固化 | boot | ✅ | active | G1-24 `reboot edl` 实测推迟；gitlab 镜像线含逐字节相同钩子 e7453f538 | - | edl 实测未做 |
+| 2026-10-08 | `01a11a70` | vk64 定版（相机/熄屏/桌面） | q24/camera | ✅ | active | 相机、熄屏电源、桌面三问题修复；HEAD=d02658e63（H2 DTS be79b256d + panel retry），tag vk64 转 annotated | vk64 | - |
+| 2026-10-08 | `01a11aa0` | 未解决问题只读盘点 | docs/tasks | ✗ | reference | 2 提交 5 文档，状态复述改指针；Q24 改回 🟡 重开；check-doctor WARN 11→10 | - | - |
+| 2026-10-08 | `01a11ab5` | 版本号混乱核查 + vk64 tag 修正 | vk-ledger | ✅ | active | vk64 tag lightweight→annotated（目标 d02658e63）；在途豁免 2→0、`--gate`=OK | vk64 | GitLab 服务端点击需人工 |
+| 2026-10-08 | `01a11b0a` | 文档入口精简 + 版本账审查 | docs/vk-ledger | ✅ | active | 移走白名单负向验证 FAIL=8→恢复绿；80 镜像/26 内核二进制逐类审查 | - | - |
+| 2026-10-08 | `01a11b24` | kexec 失败调查进度整理 | kexec | ✅ | active | 落盘 archive/topics/KEXEC-DIAG-TEST-PLAN-2026-10-08.md §8；设备停 boot_b vk64 | vk64 | crash kernel 未证实 |
+| 2026-10-08 | `01a11b69` | 内核版本号只读复核 | vk-ledger | ✗ | reference | 门禁 FAIL=2→0，提交 f8897dc；vk65–69 在途产物零改动 | - | - |
+| 2026-10-08 | `01a11bee` | 待测问题整理与内核树恢复 | tasks/hardware | ✅ | active | 内核树恢复 clean、.config 恢复、设备回 Linux（boot_b=vk64） | vk64 | - |
+| 2026-10-08 | `01a11bfc` | kexec 取证技术总结导出 | kexec/docs | ✗ | reference | 写 `~/文档/kexec-取证与技术总结.md`（311 行，纯 Markdown） | - | 输出在项目外 |
 | 2026-10-09 | `01a11fe1` | 会话：10-09 中断项目接续与多线编排 | session-meta | ◐ | active | 「继续之前中断的项目」→编排子代理推进文档口径/GPU·相机/旋转/kexec/UEFI/模块化多线；对齐 10-09 午后 Q28 密集复现（vk74/75/76）、GUI 死挂取证两件套、持久装弹常驻等提交（`d35088e`→`0915c4a`） | vk74,vk75,vk76 | 与 01a12093/01a120fe 多线并行、边界待厘清；主题待据正文核定 |
 | 2026-10-09 | `01a12093` | 会话：子代理派发（文档/GPU·相机/旋转/kexec/UEFI/模块化） | session-meta | ◐ | active | 首条指令=分派 6 类子代理（文档进度口径审核、GPU 驱动与相机、重力旋转用户级开关、kexec 可行性、UEFI 启动、驱动模块化），高难任务用高上下文模型 | vk* | 编排会话，实机结论归各子线；主题据首条指令 |
 | 2026-10-09 | `01a120fe` | 会话：接手上一轮并处理待办 | session-meta | ◐ | active | 首条=接手上次会话（设备在 linux）逐项处理待办 | - | 多线接续，主题待据正文核定 |
 | 2026-10-09 | `01a12140` | 相机：模块驱动收尾 + "camera not found" 根因 | camera | ✅ | active | 收尾相机模块驱动 + 查「模块已装仍报 camera not found」→ 根因=现役 cmdline `elden_nocamera=1` 使模块根本没加载（配置态非驱动坏，`c377ac2`/`d8ba26d`；PITFALLS #157 类误判） | vk64 | 相机⇄熄屏互斥（Q24）为已知约束；主题据首条指令+提交标题 |
 | 2026-10-09 | `01a12157` | 审计：当前版本基线与可安全烧录集合 | version-audit | ◐ | active | 首条=「现在版本基线是多少？哪些是安全的」→盘点在机/在途 vk 基线与可安全烧录集 | vk64,vk71,vk74 | 口径与 §4.3 时间线 / `versions/` 账本一致；短会话（315 行） |
 | 2026-10-09 | `01a12302` | Q28 密集取证：寄存器差分 + 好/坏基线（vk74–76） | display/q28 | ✅ | active | **Q28 密集取证 / vk74–76**：首个好/坏寄存器差分到手（否掉 dsi1vco/dsi1_isr/byte-clk 三个假差异）、模块化线在机验收通过、U2 A/B 槽位险情处置；判据更正（dsi_isr **增量**不可判屏幕死活→改累计值+dmesg，`b4616d5`/`372dda8`） | vk74,vk75,vk76 | 会话跨 10-09 深夜→10-10 12:37；Q28 根因终定在后续 01a1241b |
+| 2026-10-09 | `01a11e06` | 设备侧工具链安装 | device-setup | ✅ | active | 装 30 包含依赖 ~100MB：vim/bat/fzf 等，EDITOR→vim | - | - |
+| 2026-10-09 | `01a11f5d` | G1-34 重力与自动旋转 | sensors/rotation | ✅ | active | 重力 180° mount-matrix 修正；自动旋转根因=开机时序（iio-proxy 抢 QRTR svc400 前起→phosh MODE_OFF），现场修复实测能转 | - | 持久化待办 |
 | 2026-10-10 | `01a1241b` | Q28 定案：死内核事故修复 + vk84 单变量 A/B | q28/build | ✅ | active | **死内核事故 + vk84 + Q28 定案**：`make olddefconfig` 误删 ARCH_QCOM 致 vk81/82/83 无 QCOM 驱动死内核（作废，PITFALLS #162），build/apply 脚本加符号守卫+回钉；vk84-q28delay-{base,exp} 单变量对（唯一差 cmdline）；Q28 根因=bonded 双 DSI 首条 DCS 命令 DMA hang（冷起 ~60%，L2 DPU ctl reset 为下游，#164）；上游正解 `2028280686f4` 逐字移植对本树无效 | vk84 | 冷 A/B 未跑完（T1 vk84-exp=NOCARD，n=1）；vk84 实验镜像在途未收口 |
 | 2026-10-10 | `01a12529` | 会话：新一轮项目整理（文档/参考/规划/工作史） | session-meta | ✗ | active | **本轮整理**：发起项目整理（进度文档/参考资料/下一步规划/git 工作史），派 T1/T2/T3 子代理；本行即 T2 资产台账同步所在会话 | - | 本会话；T1/T2/T3 提案待 integrator 落领域层文档 |
 | 2026-10-10 | `01a125f2` | 分界线 clean/base + 模块化 vk89 + Q28「按内核二进制确定性」复核 | q28/modular | ✅ | active | **分界线**：立 `clean/base`（=vk64 源 `d02658e63`，tag `baseline/clean-base`）+ `baseline/feature-only`；删「镜像与描述对不上」10 个 img（保留 vk62/63 回退资产）；工作树切到 clean/base。**模块化**：fragment-modular → `vk89`（82.1 MiB，自包含模块化 ramdisk；补 `CONFIG_PCI_PWRCTRL_PWRSEQ=y` 修无 WiFi，#125）。**Q28 复核**：固定路径连测 21 发 ⇒ `vk64.img` GOOD×7 / 所有新编 NOCARD×14，路径·ramdisk·config·工具链·clean 全量逐个排除 ⇒ **按内核二进制确定性**（非冷/暖、非~60%随机，#171）。修 `assert-kernel-sane.sh` 对显式 `KERNEL_IMG=` 的误伤；清 /tmp 配额（~7 G 死内核 scratch）。 | vk89 | 追因 A（dump 两侧 kallsyms 定位位移区）/ B（单因素构建推 GOOD）待裁决 |
+| 2026-10-10 | `01a12542` | Q28 日常失败定性（STORM） | q28 | ✅ | active | 用户真实日常失败=**STORM（L1 cmd-DMA hang）**；NOCARD 全为伪影（reboot2 粘态或诊断链 ca813…） | - | - |
+| 2026-10-10 | `01a1259d` | 项目巡检与 skill 收敛 | docs/skills | ✗ | active | 给不常用 skill 加 `disable-model-invocation`：60→31 可见/29 隐藏，注入块 16.9K 起 | - | 浏览器相关 skill 未动 |
+| 2026-10-10 | `01a125c4` | 高效迭代流程与 mod-loop | dev-workflow | ✅ | active | mod-loop KV 解耦 + `--bootstrap`（零写盘 fastboot boot → 推全模块）；提交 4945805 | - | - |
+| 2026-10-10 | `01a12645` | Q28「内核二进制确定性」溯源审计 | q28/audit | ✅ | active | 提交 daa858a，本地/origin(USTC)/github 三处 HEAD 一致并推送；结论次日被降级 | - | - |
+| 2026-10-10 | `01a12836` | 卡 fastboot 根因与修复 | boot/ab | ✅ | active | 刷写正确 vk64（逐字节同）；卡 fastboot=独立 rootfs provisioning bug，已修 | vk64 | - |
+| 2026-10-11 | `01a128bf` | 刷新率与缩放用户态修复 | display/userland | ✅ | active | 修 phoc 恒 165Hz（只认 preferred mode）+ 非整数比例显 100%；测中两次遇 Q28 坏 boot，循环重启撞好 boot（上限 4 次） | - | 受 Q28 挡 |
+| 2026-10-11 | `01a12965` | Android 侧采集准备 | android/c0 | ✗ | reference | 流程确定：`adb reboot bootloader`→切 a 槽→刷 dtbo_a→重启采集 | - | - |
+| 2026-10-11 | `01a12973` | Waydroid 传感器上游路线否证 | waydroid/sensors | ✅ | active | 上游 `waydroid-sensors` 在本机不能注册 HAL，反而关 stub 致容器起不来（images.py:155）；已恢复容器 | - | - |
+| 2026-10-11 | `01a129eb` | 三支线调查与推送 | waydroid/sidequest | ✅ | active | 支线：waydroid 传感器、openrc→systemd、musl→glibc；推送 github+origin daa858a..fbd01d6 | - | - |
+| 2026-10-11 | `01a12a3a` | 容器音频与 emulated storage | waydroid/audio | ✅ | active | 容器 emulated storage 修复（缺 `/dev/fuse`）；录音/闹钟出声；提交推送 | - | - |
+| 2026-10-11 | `01a12a67` | init / glibc 选型调研 | research | ✗ | reference | 报告写 `~/文档/arm平板-systemd-vs-openrc-glibc-vs-musl-调研-2026-10-11.md`；systemd 更适合（DE 绑定 `systemd --user`） | - | 独立于项目 |
+| 2026-10-11 | `01a12ab4` | 三项架构裁决与 Q28 收尾 | decisions | ✅ | active | openrc→systemd/musl→glibc/UEFI 三项裁决；6 提交收尾，check-doctor 全绿（a0e9976…b9c25ae） | - | - |
+| 2026-10-11 | `01a12b7a` | Q24↔Q28 关系辨析 | q24/q28 | ✗ | active | 机制层：Q28 STORM=命令 DMA 超时（面板未 init、系统存活）；Q24=熄屏 RPMh `mxc.lvl`→0 硬复位（无痕）；共享成分小 | - | - |
+| 2026-10-11 | `01a12d5a` | Q28 STORM 现象整理 | q28 | ✅ | active | STORM 真复现，坏发在 `msm_dsi … timing` 后 ~0.22s；落盘 `reports/q28-storm-bias-audit-20261011.md §7`（550742f） | - | - |
+| 2026-10-11 | `01a12d5a` | Q28 构建身份伪影定案（续/分支） | q28 | ✅ | active | 收尾 FAIL=0：NOCARD=UTS 版本串内容、STORM=`#60` 2 位号 4坏/2好（~67%）vs 3 位号 0坏/12+ | - | - |
+| 2026-10-12 | `01a12d85` | 进展分析与文档收口（本会话） | docs/analysis | ✗ | active | 修 G2 50→60 漂移、vk 版本账收口（在途 8→0、补登 vk90–93、清死脚本/unversioned）、补会话索引 | - | - |
 
 ---
 
