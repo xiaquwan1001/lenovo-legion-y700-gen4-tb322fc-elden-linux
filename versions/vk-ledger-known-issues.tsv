@@ -127,3 +127,4 @@ vk93-cleanctl	num_ne_tag	Q28 版本串对照臂（-vk93-cleanctl）：源提交 
 vk93-lv64	num_ne_tag	Q28 GOOD 台架对照臂：源提交 tag 为 vk64/vk89，无 vk93 tag
 vk93-lv64	uts_dup	刻意复用 vk64 UTS 串
 vk93-nocam	num_ne_tag	Q28 对照臂（无相机 auto-load）：源提交 tag 为 vk64/vk89，无 vk93 tag
+lv64-nocam	uts_dup	Q24 干净无相机台架：由 vk93-lv64 仅改 cmdline（+elden_nocamera=1）repack，刻意复用 -vk64 UTS 串以保构建身份 GOOD

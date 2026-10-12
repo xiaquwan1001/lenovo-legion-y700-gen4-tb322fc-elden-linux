@@ -2,6 +2,7 @@ build	image	reg	img_uts	kbin_sha	src_sha	src_ref	src_tag	tree_head	tree_state	fl
 athm	boot-elden-athm.img	-	7.2.0-debug-vk47clean-gbd114ca335e1	1b48c10e3f90	bd114ca335e1	main	vk47	bd114ca335e1	clean	ok|uts_dup2
 clean	boot-elden-clean.img	-	7.2.0-debug-vk47clean-gbd114ca335e1	55883e0cdfb2	bd114ca335e1	main	vk47		-	no_manifest|kbin_shared6|uts_dup2
 e4a-lv64	boot-elden-e4a-lv64.img	-	7.2.0-debug-vk64-gd02658e63cf6	cb4d7fc57c54	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	72c2517bfba3	clean	tree_head_diff|uts_dup13
+lv64-nocam	boot-elden-lv64-nocam.img	-	7.2.0-debug-vk64-gd02658e63cf6	ba7eca35eea0	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	d02658e63cf6	clean	ok|kbin_shared2|uts_dup13
 lv64-nopd	boot-elden-lv64-nopd.img	-	7.2.0-debug-vk64-gd02658e63cf6	71b7ac9b378f	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	d02658e63cf6	clean	ok|uts_dup13
 vk100-base2-lv64	boot-elden-vk100-base2-lv64.img	vk100	7.2.0-debug-vk64-gd02658e63cf6	7d5321bb45ad	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	d02658e63cf6	clean	num_ne_tag(baseline/clean-base,q28/base-lv64,q28/base2-lv64,q28/oldrep-pin,vk64,vk89,vk94)|uts_dup13
 vk101-empty-lv64	boot-elden-vk101-empty-lv64.img	vk101	7.2.0-debug-vk64-g8d5bdc16705f	7f50889cb91a	8d5bdc16705f	branch:q28/empty-lv64		8d5bdc16705f	clean	num_ne_tag(q28/empty-lv64)
@@ -52,7 +53,7 @@ vk90-e4amxc	boot-elden-vk90-e4amxc.img	vk90	7.2.0-debug-vk90-e4amxc-g72c2517bfba
 vk91-fix3mx	boot-elden-vk91-fix3mx.img	vk91	7.2.0-debug-vk91-fix3mx-g9fba4689e5a2	38b18c103dbe	9fba4689e5a2	branch:q24/vk91-fix3		9fba4689e5a2	clean	ok
 vk92-fix2mx	boot-elden-vk92-fix2mx.img	vk92	7.2.0-debug-vk92-fix2mx-g80954c488276	d17264cf403f	80954c488276	branch:q24/vk92-fix2		80954c488276	clean	ok
 vk93-cleanctl	boot-elden-vk93-cleanctl.img	vk93	7.2.0-debug-vk93-cleanctl-gd02658e63cf6	11a0c72de905	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	d02658e63cf6	clean	num_ne_tag(baseline/clean-base,q28/base-lv64,q28/base2-lv64,q28/oldrep-pin,vk64,vk89,vk94)|kbin_shared2
-vk93-lv64	boot-elden-vk93-lv64.img	vk93	7.2.0-debug-vk64-gd02658e63cf6	ba7eca35eea0	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	d02658e63cf6	clean	num_ne_tag(baseline/clean-base,q28/base-lv64,q28/base2-lv64,q28/oldrep-pin,vk64,vk89,vk94)|uts_dup13
+vk93-lv64	boot-elden-vk93-lv64.img	vk93	7.2.0-debug-vk64-gd02658e63cf6	ba7eca35eea0	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	d02658e63cf6	clean	num_ne_tag(baseline/clean-base,q28/base-lv64,q28/base2-lv64,q28/oldrep-pin,vk64,vk89,vk94)|kbin_shared2|uts_dup13
 vk93-nocam	boot-elden-vk93-nocam.img	vk93	7.2.0-debug-vk93-cleanctl-gd02658e63cf6	11a0c72de905	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	d02658e63cf6	clean	num_ne_tag(baseline/clean-base,q28/base-lv64,q28/base2-lv64,q28/oldrep-pin,vk64,vk89,vk94)|kbin_shared2
 vk94	boot-elden-vk94.img	vk94	7.2.0-debug-vk64-gd02658e63cf6	8efb2731efb6	d02658e63cf6	main	baseline/clean-base,vk64,vk89,vk94	5d01d3324d5a	dirty	tree_drift|tree_head_diff|kbin_shared4|uts_dup13
 vk95	boot-elden-vk95.img	vk95	7.2.0-debug-vk95-g5d01d3324d5a	9e1992ac07aa	5d01d3324d5a	main	vk95	5d01d3324d5a	dirty	ok
