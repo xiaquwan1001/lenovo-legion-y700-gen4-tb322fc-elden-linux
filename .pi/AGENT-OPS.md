@@ -71,7 +71,7 @@
 ## 6. 协作与并发
 
 - 需要并发时走 `.pi/CONCURRENCY.md`（基线+fork、单写者、提交 trailer、vk registry、入口 `scripts/lane.sh`）。
-- 子代理 = `Agent` 工具（`pi-subagents`）+ `.pi/agents/<role>.md` + `.pi/missions/<topic>.md`，**无守护进程**。
+- 子代理 = `fabric_exec`（pi-fabric）里的 `agents.run`/`agents.spawn` + `.pi/agents/<role>.md`（角色卡正文）+ `.pi/missions/<topic>.md`（任务背景），**无守护进程**；2026-10-12 起不再用 pi-subagents。
 - **worker 自报成功不可信**：编排者必须独立重跑测试与全量回归。
-- 并发上限 ≤3 个后台子 agent（为限流/预算留余量，见全局 `AGENTS.md`）。
-- 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。
+- 并发上限 ≤3 个后台子 agent（已固化到全局 `fabric.json` 的 `agents.maxConcurrent: 3`；为限流/预算留余量，见全局 `AGENTS.md`）。
+- 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。迁移后无插件自动加载角色卡，派工须把其正文显式拼进 `task`。

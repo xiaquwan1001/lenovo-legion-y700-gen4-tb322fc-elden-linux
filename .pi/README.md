@@ -13,19 +13,20 @@
 | `lanes/` | lane 运行时元数据（worktree/分支/baseline/状态） | ❌ ignore | 由 `scripts/lane.sh new` 写；机器本地 |
 | `skills/` | **项目技能**（`SKILL.md` + `references/`）。与全局 `~/.pi/agent/skills/` 叠加 | ✅ track | `qualcomm-android-flashing` / `qualcomm-edl-flashing` / `gsi-device-adaptation`。references 正文不入上下文，**用时 grep** |
 | `plans/` | `plan` 技能产出的方案草稿（非权威，落地后结论进领域层） | ✅ track | 临时规划产物 |
-| `missions/` | **子代理任务卡**（喂给 `subagent` 的任务背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
-| `agents/` | **子代理角色定义**（必填 `name`/`description`；`advertise: true` 才进父提示；`role`/`objective` 仅人读） | ✅ track | 由 `pi-subagents`（nicobailon）加载为 `subagent` 工具的可选 agent；**不 pin model，继承会话默认** |
+| `missions/` | **子代理任务卡**（作为 `fabric_exec` 里 `agents.run({task})` 的派工背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
+| `agents/` | **子代理角色卡（提示词源）**（`name`/`description` + 角色提示） | ✅ track | ⚠️ pi-subagents 已于 2026-10-12 卸载，本目录**不再被任何插件自动加载**；派工时把角色卡正文 + 任务卡拼成 `task` 传给 Fabric（`agents.run`/`agents.spawn`），模型用别名或 provider/id |
 | `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | 索引见 `RESOURCES.md §4`；归档策略见 `RESOURCES.md §3` H1 |
 
 ## `missions/` vs `agents/`（易混）
 
 - `missions/<x>.md` = **做什么**：某专题的完整背景、已有进展、验收判据（长文）。
-- `agents/<x>.md` = **谁来做**：front-matter（**必须有 `name`/`description`，否则插件静默跳过**）+ 角色提示（短文）。`role`/`objective` 只是人读注释，插件不解析；要出现在父系统提示需 `advertise: true`。
+- `agents/<x>.md` = **谁来做**：front-matter（`name`/`description`）+ 角色提示（短文）。迁移后**没有任何插件解析这些字段**（`advertise`/`role`/`objective` 均仅供人读），派工时必须显式把角色卡正文带进 `task`。
   同名（如 `audio-graphopen.md`）只是同一专题的两种文件，并非重复。
 
 ## 约定
 
 - 技能保持**可移植**：不写主机名 / IP / 用户名 / 凭据（见全局 `AGENTS.md`）。
 - **行为标准只写在 `.pi/AGENT-OPS.md`**；子代理角色卡（`agents/`）只写角色专属补充，不另行定义自主/授权边界。
+- **编排接口（2026-10-12 起）**：子代理走 `fabric_exec`（pi-fabric），不再用 pi-subagents；模型别名 `worker`/`scout`/`delegate`→`ustc-pool/ustc-worker`、`complex`/`researcher`/`oracle`/`evidence-auditor`→`ustc-pool/ustc-complex`、`fast`/`flash`→`ustc-pool/deepseek-flash-2`、`default`→`ustc-pool/ustc`；并发 ≤3；独立任务用 `Promise.allSettled`。细则见全局技能 `fabric-dispatch-checklist`；改 `fabric.json` 后需 `/reload` 才生效。
 - `sessions/` 不入 git；`sn.img`、`bootslot-b/avb.key` 等敏感物禁止入库。已退场的插件入口（`pi-messenger.json`、`messenger/`、`swarm*.sh`）不再放回本目录 → `archive/2026-10-04-retired-entrypoints/`。
 - 记忆只存**跨会话有用**的偏好/教训/决策，不存可随时重推的临时细节。项目记忆已迁 hermes（`~/.pi/agent/pi-hermes-memory/` + `~/.pi/agent/projects-memory/<repo>/`，`memory_search` 可检索）——`.pi/memory/` 已于 2026-10-05 删除。

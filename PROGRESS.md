@@ -21,6 +21,8 @@
 | 2026-10-11 | **M1 干净上游资产树**建成并通过干净构建 | `build/m1-upstream/clean-tree`，见 `reports/m1-clean-tree-20261011.md` |
 | 2026-10-11 晚 | **容器音频打通**（C6：闹钟出声/录音/codec 53）、**C2 GMS 登录**（用户人工验证）、`/dev/fuse` emulated storage（Q30）、`C1` 网络治本（补 `IPV6_MULTIPLE_TABLES` 等） | 见 `TASKS.md` C6/C2/C1、`reports/container-audio-20261011.md`、`PITFALLS #194` |
 | 2026-10-12 | **Q28 STORM 定案**：与 NOCARD 同族 = **内核构建身份伪影**（`#60` 2 位号 ~67% 坏 vs 3 位号 0 坏/12+，Fisher p≈0.005）；源码/DTB/ramdisk 全排除 | `PITFALLS #195`、`reports/q28-storm-bias-audit-20261011.md`、`reports/q28-handoff-20261012.md` |
+| 2026-10-12 | **Q28 伪线索更正**：`to_primary_dsi` DSI0/DSI1 **不是** Q28 杠杆（两树属不同 MSM 实现，本硬件上是 no-op） | `PITFALLS #196` |
+| 2026-10-12 | **Q24 重开**：更正「死前签名」（#197）；受控复现得 `{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 因暖复位坏台架未执行（#198）；新增干净无相机台架 `lv64-nocam` | `reports/q24-ctl-20261012.md`、`reports/q24-stageA-20261012.md` |
 
 ---
 
@@ -88,10 +90,19 @@
   早期判据是二值的（有 `card0`=GOOD），会把「STORM 存活」和「亮一下就死」混在一起。
   但**也不能说它们全是 hang**：既有反例（`card0`+风暴的样本存活 >226 s），且当时循环能连续进行也说明多数不是 hang。
 
-### Q24 — 熄屏 × 相机（已裁决规避）
+### Q24 — 熄屏 × 相机（已裁决规避；2026-10-12 重开调查）
 
 单模块 `cambistmclkcc-sm8750` 与 DT 电源域冲突，相机常驻会在熄屏时掉电。**用户裁决**：
 日常**零相机模块**，需要相机时显式加载。根治变体未完成。
+
+**2026-10-12 重开（方法学复核 + 受控复现，详见 `reports/q24-ctl-20261012.md`）**：
+
+- **更正（`PITFALLS #197`）**：旧口径的「死前共同签名」（第二 CC 加载时 RPMh 批量投 0）**不是死因**——`modprobe camcc→cambist` **不熄屏、设备存活时同样出现**（那批轨稳态本为 0）。
+- **受控复现第 1 轮**：GOOD 台架（`-vk64` PINUTS）上 `{camcc}` 单模块 + 真实熄屏 → **静默硬复位**（串口无 panic、USB 重枚举）；末票 = phoc `mmcx↓/cx↓`（**异于配对死的 `mxc→0`**）。⚠️ 状态为「完整栈装载后卸载」，非干净 `{camcc}` ⇒ 不否定历史结论。
+- **第 2 轮 S1/S2/S3**：S1（`{camcc}` 60 s）、S2（配对 300 s）**不熄屏均存活**；**S3 未执行**——该轮经 `reboot2 bootloader`（暖复位）取台架 ⇒ 踩 `PITFALLS #166`，`phoc` 卡 D 态（GPU/DPU 故障）⇒ 熄屏完全 no-op。
+- **新纪律（`PITFALLS #198`）**：熄屏实验必备「屏真关」硬门（`GetActive`+`DPMS`+RPMh `mmcx/cx` 降档票）；**A/B 起点必须是物理 POR**。
+- **静态新发现**：本树 cambist DT = H2（MX-only，`be79b256d`），是对上游 mainline（MMCX+MX）的**实验性偏离**，且其立论已被 #197 否定 ⇒ **从未在配对基线上测过**。
+- **下一步**：物理 POR → 冷起 S1→S2→S3（S3 过硬门）→ **H1**（cambist DT 恢复上游 MMCX+MX 的首个配对基线试验）。
 
 ### 构建/身份事故（已修复并入流程）
 

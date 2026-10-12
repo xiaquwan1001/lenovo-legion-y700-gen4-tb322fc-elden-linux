@@ -53,6 +53,7 @@
 | `reports/q28-storm-bias-audit-20261011.md` | STORM 是否误判的证据审计 + 2×2/E1/E1'/E2 判定实验与结果（§6/§7） | 2026-10-11/12 |
 | `reports/q28-retro-audit-20261011.md` | 以 `#192` 为基准重审旧现象报告（旧结论重判表） | 2026-10-11 |
 | `reports/q28-community-cases-20261012.md` | 社区/上游相似案例检索（nt36536、byte-clk 回归、DCS 阶段类、refgen） | 2026-10-12 |
+| `reports/q28-upstream-static-20261012.md` | **Method B 上游静态校准**（subagent 产出，父会话已逐条复核）：`2028280686f4` 权威语义、本树落点（`dsi_calc_clk_rate_6g` 无取整 / **`dsi_link_clk_set_rate_6g` 无取整**）、修订后的 `patches/q28-methodB-round-byteclk.patch`（`git apply --check` 通过）、byte-clk≈108.1 MHz（<1 GHz，与速率阈值无关）、refgen 核验、panel 函数级差异 | 2026-10-12 |
 | **`reference/upstream-pengyuluo/`** | Pengyu Luo 上游代码快照（nt36536 驱动 + Y700 Gen4 DT）+ 差异/Q28 线索 | 2026-10-12 |
 
 **新增工具/臂**（详见 handoff §1）：`scripts/q28-devprobe2.sh`、`scripts/q28-build-oldrep-pin.sh`；臂 vk104–vk111。

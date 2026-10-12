@@ -1,14 +1,3 @@
 {
-  "sessionDir": ".pi/sessions",
-  "subagents": {
-    "defaultModel": "ustc-pool/ustc",
-    "agentOverrides": {
-      "researcher": {
-        "tools": ["read", "write", "grep", "ls", "web_search", "web_fetch", "web_providers"]
-      },
-      "evidence-auditor": {
-        "tools": ["read", "grep", "ls", "web_search", "web_fetch", "web_providers"]
-      }
-    }
-  }
+  "sessionDir": ".pi/sessions"
 }
