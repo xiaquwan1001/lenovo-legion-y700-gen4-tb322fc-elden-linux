@@ -5,6 +5,7 @@
 > 状态 2：**✅ v2 已重发（2026-10-10，用户手动验收）** — Outlook 网页重发 `[Regression v2] … MX-only binding insufficient`（收件人 linux-arm-msm@vger + Cc Taniya/Bjorn/Konrad/Abel Vesa 5 块、正文 2939 字符含 10-08 后全部新数据：MX-only 3 轮 2 掉电、bare clock controller 半成品态机理链、MX_AO/MXC_AO + PM lifecycle 两问）。**agent 代填全部就绪后点发送被风控拦下（邮件落草稿夹），用户手动重发成功**——浏览器高频自动化操作触发 Outlook 风控，发送类动作需用户手动执行（教训）。正文存 `out/q24-regression-v2-email.txt`；后续盯 lore 归档 + 回复（预期被问 MX_AO 语义与 PM lifecycle 修复可上游性，E4a 结论 MXC 单票可直接回填）。
 > 发送所用干净 patch（纯 ASCII）：内核提交 `be79b256d`（实验版 `86ea33c25`）。
 > 后续：盯 lore.kernel.org/linux-arm-msm 回复（可能要求 rebase 到 v7.1-rc1+ 或改 `vdd_mx-supply` 写法）。
+> **2026-10-12 追加：v1/v2 经复核均未进 lore 归档；本轮数据推翻 v1/v2 两条结论（单模块触发、MX-only 规避）⇒ 已起草 v3，见 `archive/topics/UPSTREAM-REPORT-cambist-q24-v3-2026-10-12.md`，正文 `out/q24-regression-v3-email.txt`（待用户发送）。**
 > 相关上游系列：`[PATCH v4] arm64: dts: qcom: sm8750: Add camera clock controller`
 > （lore: 20260511-sm8750_camcc_dt-v4-1-eab4b6c3eaea@oss.qualcomm.com，Bjorn 已指出需 rebase 到 v7.1-rc1+）
 > 驱动：`[PATCH 3/3] clk: qcom: camcc: Add camera clock controller driver for SM8750 SoC`
