@@ -365,3 +365,8 @@ DSI_W32(DSI_CLK_CTRL, clk_ctrl);
 | s1 | 21:15 | POR 冷起 | **GOOD** | `dsi_cmds2buf_tx failed`=0 / `rcg didn`=0 | `l1=0 l2=0 storm_sig=0`，phoc/phosh/wayland 全起；`before-first-cmd` 与坏发同（CLK_STATUS=0x343）；**全 boot 无 clk-status-change**（DYN 位从未闩住）|
 
 （基线坏发率 ~50% 且按时间成簇 ⇒ 单发不作数，继续采样。）
+
+| s2 | 21:18 | POR 冷起 | **GOOD** | 0 | 抓到**健康发生命周期**：op=0x92 时 `CLK_STATUS=0x743`（=0x343+DYN_PCLK_ACTIVE），下一条 op=0xb2 前已回到 `0x343` ⇒ DYN pclk 域按命令瞬时开/放 |
+| s3 | 21:21 | POR 冷起 | **GOOD** | 0 | 无 clk-status-change（DYN 位未闩住）|
+
+**累计 vk122 = 3/3 GOOD、失败标记 0**（同一时间窗内前一段基线是 5 连 L1FAIL；零假设下单侧 p≈0.125，仍需再补 2 发到 5 发）。

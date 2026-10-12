@@ -1,0 +1,18 @@
+{
+  "label": "vk122-s2",
+  "ts": "2026-10-12T13:20:21Z",
+  "vk": "vk122-forceon",
+  "image": "out/boot-elden-vk122-forceon.img",
+  "image_sha256": "73e1fe6aae4bf8deb371aac59bbbedd227af983a28ad74190e74c20ce8f2fbac",
+  "manifest": "/home/xuqianhui1001/y700-elden/out/boot-elden-vk122-forceon.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk64-gd02658e63cf6",
+  "kernel_payload_sha256": "7965d616743bfec633048e8699c6e49d989324fd059b3ce4e38399ba4838d0d4",
+  "config_sha256": "af8a2d697755d5948669e4089bdccc9de5bbcd680b45a1c6a4c84ebb21a6b159",
+  "dtb_packed_sha256": "5d658a2ce48cdda9a0451aaef28b6c668fb76607f76e2f0648ee9194c0008c0d",
+  "reset_type": "por",
+  "deploy": "fastboot boot (cold fb after user POR)",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-211841-vk122-s2",
+  "note": "cold POR; survival gate 65s; see logs"
+}
