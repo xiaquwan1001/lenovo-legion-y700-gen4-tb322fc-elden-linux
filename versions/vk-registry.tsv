@@ -220,3 +220,7 @@ vk124	q28	2026-10-12	**上游回移 lane 清洗版日常镜像**：内核源 = `
 #   同台功能验收全绿：audio/WiFi/GPU 固件/输入/服务/fastrpc-adsp/SSC 传感器（svc400 + HasAccelerometer + ssccli accel Z≈9.62）。
 #   记录 reports/trials/20261012T152609Z-vk123-s2.json；详见 reports/q28-dsi-recover-20261012.md §19。
 #   口径更正（2026-10-12 用户采纳）：镜像验收 = 取得 1 次 GOOD 冷起 + 该台功能验收（不再要求 3 连 GOOD）；见 .pi/plans/2026-10-12-下一步测试任务-Q28-Q24.md T1。
+# 2026-10-13 06:39 Q28 样本补记：vk124-merged 第 4 发（真实 POR 冷起 + fastboot boot）= GOOD（l1=0 l2=0、card0-DSI-1 connected、phoc/phosh=1、≥90 s 存活、身份 #121）
+#   ⇒ 累计 GOOD 1 / L1FAIL 3；满足新验收口径（1 次 GOOD 冷起）→ 功能验收全绿（audio/WiFi/GPU 固件/输入/服务/fastrpc-adsp/SSC svc400+HasAccelerometer+sscli accel）
+#   启动期（t<20 s）dmesg 28 条 fail|error 与 vk123-GOOD 基线逐行同；t≈39 s 有 DPU vblank timeout×2（会话出场期，已知良性类）
+#   记录 reports/trials/20261012T224107Z-vk124-cold4.json；详见 reports/upstream-lane-merge-20261012.md §5

@@ -66,3 +66,27 @@
 | ⚠ GMU HFI 报错 | `HFI_H2F_MSG_GX_BW_PERF_VOTE id 455 timed out`（t≈104 s）—— **预存在**：`grep -rl GX_BW_PERF_VOTE logs/` 命中 8 份历史日志，含 **2026-10-08 的 vk63 基线** 与 Q24 serial ⇒ **不可归因于本 lane** |
 
 **结论**：前 2 发都是 Q28 坏发，**跑不到被回移的代码路径**，故对本 lane 既未证伪也未证明；但 L1FAIL 台上的**非显示预检**（audio/MHI/GPU 固件/输入/服务）全部通过、无新报错 ⇒ **暂无回归迹象**。显示面验收仍待一次 GOOD 冷起。
+
+---
+
+## 5. vk124-merged 上机（2026-10-13 06:39 CST，第 4 发）= **GOOD** + 功能验收通过
+
+**第 4 发（真实 POR 冷起 + `fastboot boot`）判据**：`l1=0 l2=0`、`card0-DSI-1 connected`、`phoc/phosh=1`、`bright=511`、≥90 s 存活、身份 `7.2.0-debug-vk64-gd02658e63cf6 #121`（与 vk113/vk123 逐字同）。记录 `reports/trials/20261012T224107Z-vk124-cold4.json`；日志 `logs/q28-cold-20261013-063927-vk124-cold4/`（含新加的成簇代理 `cluster.txt`）。
+
+**⇒ 前 3 发 L1FAIL + 本发 GOOD ⇒ 满足新验收口径「取得 1 次 GOOD 冷起」**，随即在该 GOOD 台上做功能验收：
+
+| 面 | 结果 |
+|---|---|
+| 身份 | ✅ `7.2.0-debug-vk64-gd02658e63cf6` #121；uptime 90 s+；`boot_id=d7115197…` |
+| audio | ✅ `Lenovo-Y700-Gen4` 声卡 + `pcmC0D0p/1p/2c` |
+| WiFi/MHI | ✅ `wlan0 UP` + `fw_version 0x100effff` |
+| GPU 固件 | ✅ `GMU firmware v5.1.25` |
+| 输入 | ✅ 7 个 input 设备 |
+| 服务 | ✅ iio-sensor-proxy / hexagonrpcd-adsp-sensorspd / qbootctl started；adsp+cdsp remoteproc running |
+| fastrpc / SSC | ✅ `/dev/fastrpc-adsp`；`qrtr-lookup` svc **400**；`HasAccelerometer=true`；`ssccli` accel 实时 Z≈9.62（本 build `/sys/bus/iio` 恒空，非判据） |
+| 温度 | ✅ 114 s 时 37.0 ℃ |
+| dmesg（t<20 s） | ✅ **28 条 `fail|error`，与 vk123-GOOD 基线逐行同**（PLL lock fail×4 + orphan reparent、device link 0x180、regulatory.db -2、ath12k 首探 -110） |
+| dmesg（t≈39 s，运行时） | ⚠ `dpu_encoder_phys_vid_wait_for_commit_done: vblank timeout 400000` + `wait_for_commit_done -110` **各 2 条**——**非启动期事件**（t=39 s = phoc 首轮 modeset/会话出场），与既有 GOOD 样本同类（`vk94-ctl3` GOOD 亦 2/4 条；TASKS 已记「vblank timeout 好发/正常熄屏也会出现，不能单独当失败计数」）⇒ **不判为回移回归**，但**待 T2 同口径（同 uptime）对比坐实** |
+| 台架 | watchdog OFF；`/dev/ttyACM0` 串口已录；未写盘 |
+
+**结论**：回移 lane（14 文件）**无启动期回归迹象**，且已取得可用 GOOD 台架 ⇒ 满足写 `boot_b` 的前置条件（写前需备份 + 写后读回校验；**需用户在场上**）。

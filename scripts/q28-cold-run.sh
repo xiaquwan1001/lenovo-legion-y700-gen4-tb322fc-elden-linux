@@ -57,6 +57,9 @@ PROBE=scripts/q28-devprobe2.sh
 [ -f "$PROBE" ] || PROBE=scripts/q28-devprobe.sh
 $SSH "$TAB" 'sh -s' < "$PROBE" >"$OUT/probe.txt" 2>&1 || true
 grep -oE 'l1=[0-9]+ l2=[0-9]+' "$OUT/probe.txt" >"$OUT/l1l2.txt" 2>/dev/null || true
+# --- 3b) 成簇代理量（PITFALLS #223：坏发按时间成簇 ⇒ 每发记录可回归的环境/时序量）---
+S 'printf "boot_id=%s\\n" "$(cat /proc/sys/kernel/random/boot_id)"; printf "uptime=%s\\n" "$(cut -d" " -f1 /proc/uptime)"; printf "thermal_max=%s\\n" "$(grep -h . /sys/class/thermal/thermal_zone*/temp 2>/dev/null | sort -rn | head -1)"; printf "svc400=%s\\n" "$(qrtr-lookup 2>/dev/null | grep -cw 400)"; printf "iio_dev=%s\\n" "$(ls /sys/bus/iio/devices 2>/dev/null | wc -l)"; printf "has_accel=%s\\n" "$(busctl --system get-property net.hadess.SensorProxy /net/hadess/SensorProxy net.hadess.SensorProxy HasAccelerometer 2>/dev/null | awk "{print \\$2}")"' >"$OUT/cluster.txt" 2>&1
+cat "$OUT/cluster.txt" | tr '\n' ' ' | tee -a "$OUT/probe.txt" >/dev/null
 V=$(grep -oE 'VERDICT=[A-Z0-9-]+' "$OUT/probe.txt" | head -1 | cut -d= -f2); V=${V:-UNKNOWN}
 
 # --- 4) survival gate (>=60s interactive) ----------------------------------
