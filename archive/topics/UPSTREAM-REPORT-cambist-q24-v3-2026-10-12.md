@@ -28,10 +28,14 @@
 ## 4. 发送清单（用户执行）
 
 - [ ] 正文：`out/q24-regression-v3-email.txt`（把前 3 行的 `To:`/`Cc:`/`Subject:` 填进邮件头，正文从 `Hi,` 起）；**待发送副本已放 `~/文档/elden-upstream-v3-email.txt`，订阅信 + 步骤见 `~/文档/elden-vger-subscribe.txt`、`~/文档/elden-上游通知-发送步骤.md`（2026-10-12 定稿，采用方案 A：先订阅再发）**。
-- [ ] To：`linux-arm-msm@vger.kernel.org`；Cc（**用上次实际用过的地址**）：`taniya.das@oss.qualcomm.com`、`andersson@kernel.org`、`konradybcio@kernel.org`、`abel.vesa@linaro.org`、`linux-clk@vger.kernel.org`、`devicetree@vger.kernel.org`；自留底 `xuqianhui1001@outlook.com`。
+- [ ] To：`linux-arm-msm@vger.kernel.org`；Cc（**2026-10-12 按 MAINTAINERS/绑定 yaml 校正**）：`andersson@kernel.org`、`konradybcio@kernel.org`、`abelvesa@kernel.org`（**`abel.vesa@linaro.org` 已失效：Gmail 554 no such user**）、`quic_tdas@quicinc.com`（树内 sm8750-gcc.yaml 权威）、`quic_jkona@quicinc.com`（camcc 绑定作者）、`linux-clk@vger.kernel.org`、`devicetree@vger.kernel.org`；自留底 `xuqianhui1001@outlook.com`。
 - [ ] 通道：Outlook 网页（**发送动作必须用户点**；上次 agent 代填触发风控、邮件落草稿箱，见 `.pi` 教训）。
 - [ ] ⚠️ **先解决「发了但没进列表」的问题**：v1/v2 均未归档，可能是①发件地址未订阅 vger ⇒ 首帖进审核且未放行；②被静默丢弃。建议二选一：**先订阅** `linux-arm-msm`（vger 用 `majordomo@vger.kernel.org`，`subscribe linux-arm-msm`）再发；或**同时**直发一位维护者（如 Bjorn Andersson）并在正文首段说明「前两次投稿未出现在归档」。
 - [ ] 发送后 24–48 h 复核 `https://lore.kernel.org/linux-arm-msm/?q=cambistmclkcc` 是否出现 `[Regression v3]`；检查「已发送」与收件箱是否有 bounce/审核通知。
+
+## 4b. 投递事故（2026-10-12）
+
+- 首轮 v3 因 `abel.vesa@linaro.org` 被拒（`554 5.1.3 no such user`）产生退信；已改 `abelvesa@kernel.org`。其余收件人未见退信 ⇒ 用修正后的地址**重发一次**即可。
 
 ## 5. 预期回复与可回填数据
 
@@ -52,7 +56,7 @@
 
 \`\`\`
 To: linux-arm-msm@vger.kernel.org
-Cc: Taniya Das <taniya.das@oss.qualcomm.com>, Bjorn Andersson <andersson@kernel.org>, Konrad Dybcio <konradybcio@kernel.org>, Abel Vesa <abel.vesa@linaro.org>, linux-clk@vger.kernel.org, devicetree@vger.kernel.org, xuqianhui1001@outlook.com
+Cc: Bjorn Andersson <andersson@kernel.org>, Konrad Dybcio <konradybcio@kernel.org>, Abel Vesa <abelvesa@kernel.org>, Taniya Das <quic_tdas@quicinc.com>, Jagadeesh Kona <quic_jkona@quicinc.com>, linux-clk@vger.kernel.org, devicetree@vger.kernel.org, xuqianhui1001@outlook.com
 Subject: [Regression v3] SM8750: cambistmclkcc + camcc together hard-reset the SoC on display blank
 
 Hi,
