@@ -357,3 +357,11 @@ DSI_W32(DSI_CLK_CTRL, clk_ctrl);
 `CLK_CTRL |= ENABLE_CLKS|BIT8|BIT9|BIT11|BIT21` → `wmb` → 写 `CMD_MODE_EN|ENABLE` → `wmb` → 恢复 `CLK_CTRL` → `wmb`。
 镜像 `out/boot-elden-vk122-forceon.img`，sha `73e1fe6a…`，载荷 `7965d616…`；**verification=NOT_TESTED_ON_DEVICE**
 
+
+### 15.4 vk122 样本记录
+
+| # | 时间 | 复位 | 判定 | 失败标记 | 说明 |
+|---|---|---|---|---|---|
+| s1 | 21:15 | POR 冷起 | **GOOD** | `dsi_cmds2buf_tx failed`=0 / `rcg didn`=0 | `l1=0 l2=0 storm_sig=0`，phoc/phosh/wayland 全起；`before-first-cmd` 与坏发同（CLK_STATUS=0x343）；**全 boot 无 clk-status-change**（DYN 位从未闩住）|
+
+（基线坏发率 ~50% 且按时间成簇 ⇒ 单发不作数，继续采样。）
