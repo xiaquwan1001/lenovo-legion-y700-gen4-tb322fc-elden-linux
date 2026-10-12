@@ -1,6 +1,6 @@
 # 上游报告 Q28 草稿 — SM8750 bonded 双 DSI + NT36536：冷起首条 DCS 的 command-DMA 超时（2026-10-12）
 
-> 状态：**📝 草稿就绪，待用户发送**（2026-10-12）。发送动作需人工（GitHub issue / 邮件）。
+> 状态：**📝 已准备发送版 v2（2026-10-13）= `out/q28-bonded-dsi-2026-10-13.mail.txt`（见 §10），dry-run 通过、待用户执行发送**。发送动作需人工（GitHub issue / 邮件）。
 > 目标收件方向（建议同时发）：
 > ① **GEEKiDOS/linux**（本树 origin，`bonded_cmd_xfer`/`peer command DMA timeout` 这条路径出自本树）→ GitHub issue；
 > ② **linux-arm-msm / dri-devel / freedreno**（转发 Dmitry Baryshkov、Abel Vesa；nt36536 上游驱动作者 Pengyu Luo）→ 邮件。
@@ -168,3 +168,17 @@ QUESTIONS
 Thanks,
 <xuqianhui1001@gmail.com>
 ```
+
+---
+
+## 10. 2026-10-13 更新（发送版 v2，文件名已改日期）
+
+**可发送文件**：`out/q28-bonded-dsi-2026-10-13.mail.txt`（带 `To:/Cc:/Subject:` 头，纯 ASCII，117 行；dry-run 通过：`python3 ~/.local/bin/send-mail-ustc.py out/q28-bonded-dsi-2026-10-13.mail.txt` ⇒ 7 收件人、Message-ID `<…@mail.ustc.edu.cn>` 保真）。旧的 issue 版正文 `out/q28-bonded-dsi-2026-10-12.txt` 保留（GitHub issue 用）。
+
+**v2 比 v1 新增的三条硬证据**：
+
+1. **第三形态：bootloader ACK 但无 SSH / 无 fastboot / 仅背光，30+ min 不可达**（2026-10-13 07:21，`vk94` 第 5 发，`PITFALLS #231`）⇒ 说明失败有时**打不到用户态**：设备侧看门狗（用户态脚本）也救不了。
+2. **寄存器级否证：DSI 侧复位清不掉该状态**（`vk125-resetterm`）——`before-reset CTRL=0x175/STATUS0=0x20003/CLK_STATUS=0x3743/CMD_DMA_CTRL=0xd4000000` → 清闩锁 + 双链路 ctrl/PHY 复位 + 强制原厂 `ctrl_reset()` 终态（引擎关、`CLK_CTRL=0x00`）→ **`CLK_STATUS` 确实掉到 `0x1403`（DYN 位被清）** → 但 `link_power_on` 后立刻回到 `0x1743`、`STATUS0` 仍 `0x20003`，重试逐字 `-110`（连续 3 次寄存器序列完全相同）⇒ 动态像素时钟请求在 **power-on 阶段被重新拉起**、请求源在 DSI 控制器之外。
+3. **同窗配对无身份效应 + 成簇实证**：2026-10-13 06:39–07:21 同窗（真实 POR）`#60` 1 坏/1 好（+1 未定 NOROUTE）vs 3 位臂 2 好 ⇒ 窗内无可辨身份效应；`#60` 07:10 坏 / 07:17 好（相隔 7 min）⇒ 跨窗聚合不能当因果证据。
+
+**发送前置**：先订阅（`linux-arm-msm+subscribe@vger.kernel.org` 等），发出后 24–48 h 用 `python3 ~/.local/bin/lore-query.py` 或按 Message-ID 直取 raw 复核归档（lore inbox 路径不能按列表名猜；详见技能 `upstream-mail-ustc`）。
