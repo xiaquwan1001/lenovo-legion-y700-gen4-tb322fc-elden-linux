@@ -27,7 +27,7 @@
 
 ## 4. 发送清单（用户执行）
 
-- [ ] 正文：`out/q24-regression-v3-email.txt`（把前 3 行的 `To:`/`Cc:`/`Subject:` 填进邮件头，正文从 `Hi,` 起）。
+- [ ] 正文：`out/q24-regression-v3-email.txt`（把前 3 行的 `To:`/`Cc:`/`Subject:` 填进邮件头，正文从 `Hi,` 起）；**待发送副本已放 `~/文档/elden-upstream-v3-email.txt`，订阅信 + 步骤见 `~/文档/elden-vger-subscribe.txt`、`~/文档/elden-上游通知-发送步骤.md`（2026-10-12 定稿，采用方案 A：先订阅再发）**。
 - [ ] To：`linux-arm-msm@vger.kernel.org`；Cc（**用上次实际用过的地址**）：`taniya.das@oss.qualcomm.com`、`andersson@kernel.org`、`konradybcio@kernel.org`、`abel.vesa@linaro.org`、`linux-clk@vger.kernel.org`、`devicetree@vger.kernel.org`；自留底 `xuqianhui1001@outlook.com`。
 - [ ] 通道：Outlook 网页（**发送动作必须用户点**；上次 agent 代填触发风控、邮件落草稿箱，见 `.pi` 教训）。
 - [ ] ⚠️ **先解决「发了但没进列表」的问题**：v1/v2 均未归档，可能是①发件地址未订阅 vger ⇒ 首帖进审核且未放行；②被静默丢弃。建议二选一：**先订阅** `linux-arm-msm`（vger 用 `majordomo@vger.kernel.org`，`subscribe linux-arm-msm`）再发；或**同时**直发一位维护者（如 Bjorn Andersson）并在正文首段说明「前两次投稿未出现在归档」。
@@ -46,28 +46,32 @@
 - 机制轮：`reports/q24-mech-20261012.md`（GPU PM 否定、末帧 dispcc）
 - H1 DT 臂否证：`reports/q24-h1-result-20261012.md`（+ `patches/q24-h1-cambist-dt.patch`）
 - 纪律：`PITFALLS #209`（自恢复复位、无需 POR）、`#210`（NoC 否证）、`#211`（PMIC/WDT）、`#212`（最小触发=配对）
-## 7. 邮件正文（纯 ASCII 待发送副本，与 `out/q24-regression-v3-email.txt` 一致）
+## 7. 邮件正文（最终版，纯 ASCII，与 `~/文档/elden-upstream-v3-email.txt` 和 `out/q24-regression-v3-email.txt` 一致）
 
-（正文见下方代码块，发送时从 \`Hi,\` 起）
+（正文首段含 DELIVERY NOTE；发送时从第 4 行的 Subject 起照抄邮件头，正文从 Hi, 起）
 
 \`\`\`
 To: linux-arm-msm@vger.kernel.org
-Cc: Taniya Das <taniya.das@oss.qualcomm.com>, Bjorn Andersson <andersson@kernel.org>, Konrad Dybcio <konradybcio@kernel.org>, Abel Vesa <abel.vesa@linaro.org>, linux-clk@vger.kernel.org, devicetree@vger.kernel.org
+Cc: Taniya Das <taniya.das@oss.qualcomm.com>, Bjorn Andersson <andersson@kernel.org>, Konrad Dybcio <konradybcio@kernel.org>, Abel Vesa <abel.vesa@linaro.org>, linux-clk@vger.kernel.org, devicetree@vger.kernel.org, xuqianhui1001@outlook.com
 Subject: [Regression v3] SM8750: cambistmclkcc + camcc together hard-reset the SoC on display blank
 
 Hi,
 
 Third revision of a regression report about SM8750 (Lenovo Y700 4th gen tablet,
 TB322FC, board dts sm8750-lenovo-elden) being hard-reset by the camera clock
-controllers when the display is blanked. The two earlier posts (2026-10-08 and
-2026-10-10) still do not appear in the linux-arm-msm archive, so we resend with
-corrected data, and we formally withdraw two claims made earlier.
+controllers when the display is blanked.
 
-### Corrections to the earlier reports
+DELIVERY NOTE (please read): the two earlier revisions (2026-10-08 and
+2026-10-10) do not appear in the linux-arm-msm archive, and neither does any
+[Regression] mail from this address. If an older copy of this report reaches you
+later from a moderation queue, please ignore it and review this revision: the
+data below supersedes it, and it also withdraws two of its claims.
+
+### Corrections to the earlier revisions
 
 1. "The trigger is the cambistmclkcc block specifically" is wrong. With a strict
-   user-space gate on the same kernel (both modules probed, all clocks
-   unprepared, no consumers, no camss/cci/regulators):
+   user-space gate on the same kernel (modules probed, all clocks unprepared, no
+   consumers, no camss/cci/regulator drivers loaded):
 
      cam = 0                     blank, hold 60 s, resume  -> alive
      camcc-sm8750 only           blank, hold, resume       -> alive
@@ -78,9 +82,9 @@ corrected data, and we formally withdraw two claims made earlier.
    did not verify that the panel actually left the active state.
 
 2. The "bind cambistmclkcc to MX only" workaround (be79b256d, attached to the
-   v2 post) is withdrawn. We rebuilt the device tree only, restoring the
-   upstream binding (power-domains = <&rpmhpd RPMHPD_MMCX>, <&rpmhpd
-   RPMHPD_MX> + low_svs) and verified that the control build reproduces the
+   previous revision) is withdrawn. We rebuilt the device tree only, restoring
+   the upstream binding (power-domains = <&rpmhpd RPMHPD_MMCX>, <&rpmhpd
+   RPMHPD_MX> + low_svs) and verified that the control build reproduces our
    baseline DTB byte for byte. The SoC still resets, with an RPMh vote tail
    identical to the MX-only build. The power-domain binding is not the lever,
    and our "half-built bare clock controller collides with a collapsing rail"
@@ -94,9 +98,9 @@ corrected data, and we formally withdraw two claims made earlier.
   five death events we instrumented today the recovery was always automatic,
   28-42 s after the USB disconnect; two of them were confirmed by an SSH login
   showing a new boot_id.
-- PMIC: dumping all SPMI slaves via debugfs before and after the event shows the
-  PON register block (0x1300..0x13ff of the main PMIC) byte-identical, i.e. no
-  latched PON reason and no fault bit. The SoC hardware watchdog is disabled
+- PMIC: dumping all SPMI slaves through debugfs before and after the event shows
+  the PON register block (0x1300..0x13ff of the main PMIC) byte-identical, i.e.
+  no latched PON reason and no fault bit. The SoC hardware watchdog is disabled
   ("Hard watchdog permanently disabled"), so this is not a watchdog reset.
 - Tracing: the last frames are the compositor enabling disp_cc_mdss_* clocks
   (blank direction). On a bench where the panel did not initialize, the death
@@ -127,12 +131,12 @@ corrected data, and we formally withdraw two claims made earlier.
    they are not independent on this generation.)
 2. Is there a documented ordering constraint between the camera BIST block and
    display power/clock collapse (dispcc) on the shared MMCX/MX domains? Any
-   display power transition, blank or resume, with both controllers loaded takes
-   the SoC down instantly, and we cannot see that interaction in the clock or
-   genpd code paths.
-3. Which reset-reason source exists on SM8750 that we could read from Linux
-   after such an event? PON latches nothing and there is no pstore. Is there an
-   AOP or CPUCp crash/health register, or a smem scatter area, that records
+   display power transition, blank or resume, with both controllers loaded
+   takes the SoC down instantly, and we cannot see that interaction in the clock
+   or genpd code paths.
+3. Which reset-reason source exists on SM8750 that we could read from Linux after
+   such an event? PON latches nothing and there is no pstore. Is there an AOP or
+   CPUCp crash/health register, or a smem scatter area, that records
    "PS_HOLD dropped" versus "cold reset"?
 4. Until the root cause is known, what default would you recommend for
    distributions: an always-on vote for cambistmclkcc, a required vdd_mx supply
