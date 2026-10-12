@@ -12,7 +12,7 @@
   "reset_type": "por",
   "deploy": "fastboot boot (cold fb after user POR)",
   "probe": "q28",
-  "verdict": "UNKNOWN",
+  "verdict": "NOROUTE",
   "log_dir": "logs/q28-cold-20261013-072150-vk94",
-  "note": "aborted before forensics (only fastboot-before/boot-log; boot cmd OKAY); no env/drm/probe captured; device unreachable afterwards (no SSH, no fastboot) => verdict pending operator report"
+  "note": "operator report 2026-10-13: backlight only, NO SSH => Q28 bad boot in the \"hung / no-SSH\" flavour (unlike the common L1FAIL boots which DO expose SSH). Boot cmd was ACKed; no env/drm/probe captured (operator aborted the gate before SSH came up); no serial capture for this sample (host logger had stopped 07:11:57). Recovery = manual POR. Verdict code NOROUTE = no SSH within 150 s (script vocabulary)."
 }

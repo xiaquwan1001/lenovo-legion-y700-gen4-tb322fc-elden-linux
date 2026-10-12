@@ -9,6 +9,11 @@
 > ### ★ 当前口径（2026-10-12 深夜，**先读这段**；下列 §a–§q 均为历史卷，结论以本段与 `TASKS.md` §5 Q28 当前口径块为准）
 > **Q28 未解，`boot_b` 仍 = `vk94`。** ① 坏发 **~50%、逐启动随机、按时间成簇（会话级），与镜像/构建身份无关**——§q「STORM 也是构建身份伪影」**已作废**（`PITFALLS #217/#223`）；3 位身份只是**降险偏置**（`#60` 5/7 坏 vs 3 位 1/23，Fisher p≈8e-4；残余坏发点估 4.3%、95% 上界 21.9%）。② **故障态不在 DSI 控制器内部**：判别量 = **DYN pclk 域闩住不释放**（`STATUS0=0x20003`、DSI 中断计数 0、PLL 是锁的），`sw_reset` 后仍在 ⇒ 指 dispcc/INTF 侧动态时钟请求；`-5` = `dsi_bonded_cmd_failed` **软件闩锁短路**（非硬件楔死）。③ **七臂 vk116–vk122（+vk123）全部否证**：面板级 reset、软件闩锁、DSI ctrl+PHY 复位、自定义 bonded 触发序列、使能期 dynamic force-on、上游 byte-clk 取整（`2028280686f4`）。④ **原厂 display 源码静态对照后主靶削弱**（唯一新差异 = 复位终态 `CLK_CTRL=0`，未实验）。⑤ **恢复只能整机复位**（运行期重绑 DSI host 会拆 DRM）。⑥ **运营兜底已上机**：坏发 75 s 自动正常重启（~50%→~75%），实验前须 `q28-watchdog off`。⑦ **上游回移候选 `vk124-merged` 冷起 3/3 L1FAIL**；验收口径已改为「取得 1 次 GOOD 冷起」。
 > 过程稿：`reports/q28-dsi-recover-20261012.md`、`reports/q28-dispcc-static-20261012.md`、`reports/q28-watchdog-20261012.md`、`reports/q28-identity-retest-20261012.md`、`reports/upstream-lane-merge-20261012.md`；下一步 `\.pi/plans/2026-10-12-下一步测试任务-Q28-Q24.md`。
+>
+> ### ★ 2026-10-13 追加（三条）
+> 1. **T3 否证（寄存器级）**：`vk125-resetterm`（= vk117 恢复路径 + 复位终态对齐 `CLK_CTRL=0`）首发即坏发，但恢复路径 3 次全触发且终态**确实到达**（`Q28 resetterm: CTRL=0x0 CLK_CTRL=0x0 CLK_STATUS=0x1403`，DYN 位当场清），随后 `link_power_on` 让 `CLK_STATUS` 立刻回到 `0x1743`、重试逐字 `-110`（3 次序列相同）⇒ **请求源在 power-on 路径/外部（dispcc/INTF），不在复位终态平面**（`PITFALLS #230`、`reports/q28-dsi-recover-20261012.md` §20）。**软件侧已无剩余靶点。**
+> 2. **T2 同窗配对第 1 窗**（真实 POR，`#60` ↔ 3 位）：`#60` 1 坏 / 1 好（+1 未定）、3 位 2 好 ⇒ **窗内无可辨身份效应**；同窗 `#60` 07:10 坏 / 07:17 好（相隔 7 min）⇒ **成簇假设再获实证**，跨窗聚合不能当因果证据（`reports/q28-identity-retest-20261012.md` §0.5）。3 位身份降级为**弱先验**，不再排期采样。
+> 3. **坏发第三形态「仅背光 + 无 SSH」（hung 型）**：2026-10-13 07:21 `vk94` 第 5 发 = boot ACK 但 150 s 无 SSH、无 fastboot、仅背光，30 min 后仍不可达 ⇒ 判据只能是 `NOROUTE`，**不得**并入 NOCARD/STORM；且**设备侧看门狗（用户态脚本）救不了本形态** ⇒ 「~50%→~75%」只对 userspace 存活型坏发成立（`PITFALLS #231`）。
 
 ---
 

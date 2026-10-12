@@ -86,4 +86,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-12T23:21:04Z	vk104	vk104-base-pin	por	fastboot boot (cold fb after user POR)	GOOD	24b1fd3c8cba	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261013-071919-vk104
 2026-10-12T23:25:37Z	vk104-s1	vk104-base-pin	por	fastboot boot (cold fb after user POR)	GOOD	24b1fd3c8cba	logs/q28-cold-20261013-071509-vk104-s1
 2026-10-12T23:25:38Z	vk94-s4	vk94	por	fastboot boot (cold fb after user POR)	GOOD	e112ea0171b5	logs/q28-cold-20261013-071716-vk94
-2026-10-12T23:25:38Z	vk94-s5	vk94	por	fastboot boot (cold fb after user POR)	UNKNOWN	e112ea0171b5	logs/q28-cold-20261013-072150-vk94
+2026-10-12T23:25:38Z	vk94-s5	vk94	por	fastboot boot (cold fb after user POR)	NOROUTE	e112ea0171b5	logs/q28-cold-20261013-072150-vk94
