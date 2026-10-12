@@ -20,6 +20,9 @@ mkdir -p "$OUT"
 [ -e "$IMG" ] || { echo "missing $IMG"; exit 1; }
 S() { timeout "${2:-25}" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 "$TAB" "$1" 2>/dev/null; }
 
+# 复位/进 fastboot 前的系统就绪门（防上电未就绪即 reboot2 → 无 USB 通道挂机；见 lib-boot-ready.sh）
+. "$(dirname "$0")/lib-boot-ready.sh"
+
 echo "IMG=$IMG TAG=$TAG OUT=$OUT"
 echo "before: $(S 'echo uptime=$(cut -d" " -f1 /proc/uptime) uname=$(uname -r)')"
 
@@ -32,6 +35,9 @@ if [ "$_g" = 1 ]; then
 	exit 1
 fi
 echo "[q28-cycle] ⚠️  暖复位循环：对 Q28 冷起结论无效（PITFALLS #166），仅诊断取证。"
+
+# 就绪门：SSH 复核 + uptime>=90s + 桌面(phoc/phosh)已起，才放行；否则拒绝（fail-closed）。
+boot_ready_or_die
 
 echo "== 1) reboot2 bootloader（进 fastboot，无需按键）=="
 S '(sleep 2; reboot2 bootloader) >/dev/null 2>&1 &' || true

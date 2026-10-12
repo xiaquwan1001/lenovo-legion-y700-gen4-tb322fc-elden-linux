@@ -8,6 +8,8 @@ D=out/q28-layout
 TAB=root@192.168.7.1
 SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 $TAB"
 S(){ timeout "${2:-25}" $SSH "$1" 2>/dev/null; }
+# 复位/进 fastboot 前的系统就绪门（防未就绪即 reboot2 → 无 USB 通道挂机）
+. "$(dirname "$0")/lib-boot-ready.sh"
 case "$TAG" in
   oct8) IMG=$D/boot-q28-oct8.img; KPAY=8efb2731 ;;
   a)    IMG=$D/boot-q28-a.img;    KPAY=? ;;
@@ -20,6 +22,7 @@ esac
 if ! timeout 8 fastboot devices 2>/dev/null | grep -q .; then
   if [ "$(S 'echo up')" = up ]; then
     echo "[one] 设备在 Linux，reboot2 bootloader…"
+    boot_ready_or_die
     S '(sleep 2; reboot2 bootloader) >/dev/null 2>&1 &' || true
     ok=0; for _ in $(seq 1 18); do timeout 8 fastboot devices 2>/dev/null | grep -q . && { ok=1; break; }; sleep 5; done
     [ $ok = 1 ] || { echo "[one] NO-FASTBOOT（设备可能已挂）"; exit 3; }

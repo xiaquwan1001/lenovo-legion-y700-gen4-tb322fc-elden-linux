@@ -9,6 +9,8 @@ TAB=root@192.168.7.1
 D=out/q28-layout
 SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 $TAB"
 S(){ timeout "${2:-25}" $SSH "$1" 2>/dev/null; }
+# 复位/进 fastboot 前的系统就绪门（防未就绪即 reboot2 → 无 USB 通道挂机）
+. "$(dirname "$0")/lib-boot-ready.sh"
 declare -A IMG=( [oct8]="$D/boot-q28-oct8.img" [a]="$D/boot-q28-a.img" [aa]="$D/boot-q28-aa.img" [vk64c-repro]="$D/boot-q28-vk64c-repro.img" )
 SEQ=${SEQ:-"oct8 a aa vk64c-repro vk64c-repro aa a oct8"}
 echo "[ab] SEQ=$SEQ  $(date -Is)"
@@ -18,7 +20,8 @@ for tag in $SEQ; do
   img=${IMG[$tag]:-}
   [ -n "$img" ] && [ -e "$img" ] || { echo "[ab] unknown/missing image tag=$tag"; continue; }
   echo "==== run $i tag=$tag img=$img $(date -Is)"
-  # 1) 从当前 Linux 暖复位进 bootloader
+  # 1) 从当前 Linux 暖复位进 bootloader（先过就绪门）
+  boot_ready_or_die
   S '(sleep 2; reboot2 bootloader) >/dev/null 2>&1 &' || true
   # 2) 等 fastboot
   ok=0; for _ in $(seq 1 18); do fastboot devices 2>/dev/null | grep -q . && { ok=1; break; }; sleep 5; done
