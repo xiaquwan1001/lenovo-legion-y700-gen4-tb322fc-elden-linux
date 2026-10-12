@@ -1,0 +1,18 @@
+{
+  "label": "vk116-dsirec-s1",
+  "ts": "2026-10-12T10:54:10Z",
+  "vk": "vk116-dsirec",
+  "image": "out/boot-elden-vk116-dsirec.img",
+  "image_sha256": "810445fa5fad136ad4c79803cfab91a0cf66730558cf5672b8ee945c374cd3de",
+  "manifest": "/home/xuqianhui1001/y700-elden/out/boot-elden-vk116-dsirec.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk64-gd02658e63cf6",
+  "kernel_payload_sha256": "c44817ad521554973c4f9c37f26d2c6fab605af376206fdfe4e795cccc3335fd",
+  "config_sha256": "af8a2d697755d5948669e4089bdccc9de5bbcd680b45a1c6a4c84ebb21a6b159",
+  "dtb_packed_sha256": "5d658a2ce48cdda9a0451aaef28b6c668fb76607f76e2f0648ee9194c0008c0d",
+  "reset_type": "por",
+  "deploy": "fastboot boot (cold fb after user POR)",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-185227-vk116-dsirec-s1",
+  "note": "cold POR; survival gate 65s; see logs"
+}

@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#224**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#225**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1731,3 +1731,9 @@
     - 原因：DRM component master 不会因单个组件 unbind/bind 重新 probe；坏态下 GPU/DPU 会被拖入 hangcheck。
     - 规约：① 恢复显示只能**整机复位**（POR/关机重开；坏态下暖复位可能粘住，见 #166）；② 想在运行期救回必须走**驱动内**路径（encoder enable 失败后 `msm_dsi_host_power_off/on` 再重试 DCS），不是 sysfs 重绑；③ 在坏发台架上做 sysfs 重绑类实验前，先假设「会拆掉 DRM」。
     - 证据：本会话 17:49–17:52 的 SSH 现场 + `logs/q28-rebind-20261012/dmesg-after-rebind.txt`（含 hangcheck/offending task: phoc）。
+
+225. **★未就绪就 `reboot2 bootloader` 会把设备打进「无任何 USB 通道」态（2026-10-12 本会话 2/2 复现：uptime<25 s 全挂、uptime>100 s 全活）。**
+    - 事实（同一天、同一脚本/镜像）：`uptime=15.4 s` 发 `reboot2 bootloader` ⇒ 90 s 内无 fastboot、SSH 不通、ping 不通、`lsusb` 无 05c6/18d1 ⇒ 只能长按电源强制关机；同日另一次 `uptime=20.4 s` 同样挂。对照 `uptime=138.4 s` 与 bootstrap 门（`uptime≥120 s`）的 3 次 `reboot2` 全部正常进 fastboot。症状与 **#143** 逐字同型（同一现象）。
+    - 归因边界：**相关≠因果**；竞争解释见 #151（VBUS 未叫醒），且仓内无 uptime 阈值的历史标定。但 2/2 vs 3/3 足以支撑「复位前必须过就绪门」这条纪律。
+    - 纪律/工具：复位前一律过 `scripts/lib-boot-ready.sh` 的 `boot_ready_or_die`（SSH 现问现答 + `uptime>=90 s` + `phoc/phosh` 已起，fail-closed，逃生阀 `ELDEN_FORCE_REBOOT=1`），已接入 `q28-boot-cycle.sh`/`q28-layout-ab.sh`/`q28-layout-one.sh`。⚠ **该门是「拒绝」不是「等待」**：循环脚本必须在门之前自己等就绪，否则一挂即需人工 POR（本会话 `q28-warm-vk117-loop.sh` 两次教训）。
+    - 关键前提（#67）：SSH 在 `uptime≈6.7 s` 即可用 ⇒ **「SSH 通」不等于就绪**；历史脚本普遍只以 SSH 为门（全集见 `reports/audit-early-reboot-20261012.md`）。
