@@ -11,7 +11,7 @@
 | 项 | 现象 | 当前口径 | SSOT |
 |---|---|---|---|
 | **Q28** | 开机间歇「只有背光无桌面」 | 根因 L1=bonded 双 DSI 首条 DCS `ff 20` 的**命令 DMA 引擎 hang**（冷起 ~60%）；冷起失效两模式 **NOCARD**（无 card0，0.86s DSI PLL 未锁）/ **STORM**（有 card0 的 cmd-DMA 风暴） | `reports/q28-DOSSIER.md`、`TASKS.md` §5 Q28 |
-| **Q24** | 相机模块在位时「熄屏→整机硬复位/掉电」 | 最小触发 = **`camcc-sm8750` + `cambistmclkcc-sm8750` 配对** + 真实熄屏（历史「单模块」已被否证）；**用户裁决=互斥二选一**：日常零相机模块，需要时 `cam-mode.sh on/off`；**根治未成**；2026-10-12 重开：`PITFALLS #197`（死前签名=probe 伪影）/#198（熄屏硬门） | `TASKS.md` G1-22/G1-33、§5 Q24；`reports/q24-ctl-20261012.md` |
+| **Q24** | 相机模块在位时「熄屏→整机硬复位/掉电」 | 最小触发 = **`camcc-sm8750` + `cambistmclkcc-sm8750` 配对** + 真实熄屏（历史「单模块」已被否证）；**用户裁决=互斥二选一**：日常零相机模块，需要时 `cam-mode.sh on/off`；**根治未成**；2026-10-12 重开：`PITFALLS #197`（死前签名=probe 伪影）/#198（熄屏硬门）；**2026-10-12 七轮结论**：触发器硬门下干净复现（C2 配对+熄屏 3 s 静默硬复位、C1 `{camcc}` 不致死）；**H1（DT 上游 MMCX+MX）否证**；致死点随台架状态移动；GPU runtime-PM 否定；日常 boot_b 即可复现（4/4）；末帧 = `dispcc` 时钟使能 + NoC/BCM 票爆发 | `TASKS.md` G1-22/G1-33、§5 Q24；`reports/q24-ctl-20261012.md`、`reports/q24-cseries-20261012.md`、`reports/q24-h1-result-20261012.md`、`reports/q24-mech-20261012.md` |
 
 ---
 
@@ -44,6 +44,7 @@
 | 10-10 | `01a1241b` | — | **E4a/FIX2/FIX3 死内核作废**（`PITFALLS #162`）；vk79–83 资产入账 |
 | 10-11 | 本轮 | 受控复现 | Q24 最小对 `{camcc,cambist}` + 真实熄屏定案；封盘（互斥运营口径） |
 | 10-12 | 本轮 | 阶段A + 受控复现×2 | `PITFALLS #197`（死前签名=probe 伪影）；`{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 因暖复位坏台架未执行（#198）；新台架 `lv64-nocam` |
+| 10-12 | 本轮（续） | C 系列 + H1 DT 臂 + 机制轮 | **C 系列**：三值硬门下 C0/C1 存活、C2 配对+熄屏即死（GOOD 台架）⇒ `reports/q24-cseries-20261012.md`；**H1 臂**：DTB-only repack（控制组逐字节复现）上机=**否证** ⇒ `reports/q24-h1-{dtarm,result}-20261012.md`；**机制轮**：GPU runtime-PM 否定、日常 boot_b 4/4 复现、末帧 `dispcc` 时钟使能 + NoC/BCM 票爆发 ⇒ `reports/q24-mech-20261012.md`；工具链 `PITFALLS #199–#208` |
 
 > 完整会话行（含实机/状态/风险列）= `RESOURCES.md` §4（`01a115a8`/`01a11702`/`01a12302`/`01a1241b` 等已收录）。
 
@@ -65,26 +66,27 @@
 - 10-09 用户裁决：**相机 ⇄ 熄屏互斥**，日常零相机模块；`cam-mode.sh` 上机。
 - 10-10 E4a/FIX-2/FIX-3 三路**作废**（在无 QCOM 死内核上测，`#162`）⇒ 需恢复好档重做。
 - 10-11 封盘：最小对 `{camcc,cambist}` + 真实熄屏；运营口径=相机⇄熄屏互斥。
-- 10-12 重开：`PITFALLS #197` 更正「死前签名」；受控复现 `{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 未执行（暖复位坏台架，#198）；新台架 `out/boot-elden-lv64-nocam.img`；**下一步=物理 POR 冷起重跑 + H1（cambist DT 恢复上游 MMCX+MX）**。
+- 10-12 重开（第 1–2 轮）：`PITFALLS #197` 更正「死前签名」；受控复现 `{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 未执行（暖复位坏台架，#198）；新台架 `out/boot-elden-lv64-nocam.img`。
+- 10-12 第 3–7 轮（当日闭环）：**三值仪表硬门**落地（`GetActive`+`DPMS`+RPMh 降档票；Q28 L1FAIL 台架照样可用 ⇒ 台架准入不再依赖 Q28 GOOD）；**C 系列** 定位触发器（C0/C1 活、C2 死）；**H1 DT 臂** 上机否证（`vk112`）；**机制轮** 否定 GPU runtime-PM、确认「日常 boot_b 可复现」与「末帧 `dispcc` 时钟使能 / NoC 票爆发」。**下一步候选（未上机）**：NoC/BCM 靶、dispcc 靶、RFC v2 补证。
 
 ---
 
 ## 3. 产物清单（按类）
 
-**报告（reports/，活跃工作区，未入库）**：`q28-DOSSIER.md`(SSOT)、`q28-INDEX.md`、`q28-two-layers-20261010.md`、`q28-upstream-diff-20261010.md`、`q28-upstream-research-20261010.md`、`q28-nocard-research-20261010.md`、`q28-orchestration-20261010.md`、`q28-handoff-20261010.md`、`local-cleanup-audit-20261010.md`；**2026-10-12 新增**：`q28-storm-bias-audit-20261011.md`、`q28-community-cases-20261012.md`、`q28-handoff-20261012.md`、`q28-upstream-static-20261012.md`、`q24-repro-20261011.md`（含更正横幅）、`q24-stageA-20261012.md`、`q24-ctl-20261012.md`
+**报告（reports/，活跃工作区，未入库）**：`q28-DOSSIER.md`(SSOT)、`q28-INDEX.md`、`q28-two-layers-20261010.md`、`q28-upstream-diff-20261010.md`、`q28-upstream-research-20261010.md`、`q28-nocard-research-20261010.md`、`q28-orchestration-20261010.md`、`q28-handoff-20261010.md`、`local-cleanup-audit-20261010.md`；**2026-10-12 新增**：`q28-storm-bias-audit-20261011.md`、`q28-community-cases-20261012.md`、`q28-handoff-20261012.md`、`q28-upstream-static-20261012.md`、`q24-repro-20261011.md`（含更正横幅）、`q24-stageA-20261012.md`、`q24-ctl-20261012.md`、`q24-s123-20261012.md`、`q24-cseries-20261012.md`、`q24-h1-dtarm-20261012.md`、`q24-h1-result-20261012.md`、`q24-mech-20261012.md`
 
 **计划（.pi/plans/）**：`research-q24-cambist-2026-10-09.md`、`research-q28-panel-init-2026-10-09.md`、`research-q28-dpu-powerup-race-2026-10-09.md`、`2026-10-09-Q24-mxnom-sweep-runbook.md`、`2026-10-09-Q24-变体与G1-34资产.md`、`2026-10-09-Q28-密集复现与vk74.md`、`2026-10-09-Q28-证据与方案.md`、`2026-10-09-Q28-诊断上机包.md`、`2026-10-09-Q28b-断电态证据.md`、`2026-10-09-深夜-Q28寄存器差分-模块化在机验证-槽位险情.md`、`2026-10-10-Q24-深研.md`、`2026-10-10-Q28-深研.md`、`2026-10-10-E4a-FIX1-DT.md`、**`2026-10-12-Q24-静态复核与实验计划.md`**
 
 **脚本（scripts/）**：
 - Q28：`q28-devprobe.sh`（三态判据）、`q28-boot-cycle.sh`（已补 card0 硬门）、`q28-ab-delay.sh`、`q28-race-hunt.sh`、`q28-verdict.sh`、`q28diag-forensic.sh`
-- Q24：`sleep-sweep.sh`、`sleep-bisect.sh`、`sleep-cumulative.sh`、`cam-mode.sh`、`camera-modules-load.sh`、`keep-awake.sh`
+- Q24：`sleep-sweep.sh`、`sleep-bisect.sh`、`sleep-cumulative.sh`、`cam-mode.sh`、`camera-modules-load.sh`、`keep-awake.sh`；**2026-10-12 新增**：`q24-s123-run.sh`、`q24-cseries-run.sh`、`q24-mech-run.sh`、`q24-instrument-check.sh`、`q24-build-h1-dtarm.sh`、`q24-dev-{sess,blank,keepawake,snap,dstate}.sh`（设备侧，`setpriv` 降 uid=1000 取会话总线）
 
 **补丁（patches/）**：`q28-dsi-regdump{,-with-baseline}.patch`、`q28-poweron-propagate.patch`、`q28-cmd-dma-delay.patch`、`q28-dsi-cmd-recover.patch`、`q28-methodB-round-byteclk.patch`(+`q28-methodB-NOTES.md`)、`q28-round-vk86.patch`
-（Q24 侧为内核提交：E4a `97b8ee3c7`/`68e8ab2c0`、FIX-2 `86193a58a`、FIX-3 `e1d2c658a`、上游 `be79b256d`）
+（Q24 侧：内核提交 E4a `97b8ee3c7`/`68e8ab2c0`、FIX-2 `86193a58a`、FIX-3 `e1d2c658a`、上游 `be79b256d`；**2026-10-12 新增 `q24-h1-cambist-dt.patch`（H1 DT 臂：cambist 恢复上游 MMCX+MX）**）
 
 **镜像/构建（out/，逐镜像身份见 `versions/vk-kernel-identity.tsv`）**：
 - Q28：`vk64`（在机 boot_b）、`vk72*`/`vk73-q28diag`/`vk74-q28power`/`vk75-q28ab`（诊断，部分已删）、`vk76-freezetrace`、`vk84-q28delay-{base,exp}`、`vk86-{base,round,round2}`、`vk85`（计划未建）
-- Q24：`vk62`(H1)、`vk63`(H2)、`vk71-{mxc,mxnom}`、`vk79-E0`、`vk80-e4amxc`、`vk81`(E4a,死)/`vk82`(FIX-3,死)/`vk83`(FIX-2,死)；**2026-10-12 干净无相机台架 `out/boot-elden-lv64-nocam.img`**（由 `vk93-lv64` unpack+repack，仅 cmdline `+elden_nocamera=1`）
+- Q24：`vk62`(H1)、`vk63`(H2)、`vk71-{mxc,mxnom}`、`vk79-E0`、`vk80-e4amxc`、`vk81`(E4a,死)/`vk82`(FIX-3,死)/`vk83`(FIX-2,死)；**2026-10-12 干净无相机台架 `out/boot-elden-lv64-nocam.img`**（由 `vk93-lv64` unpack+repack，仅 cmdline `+elden_nocamera=1`）；**`vk112`（H1 DT 臂）= `out/boot-elden-vk112-h1-dtbmmcxmx.img`**（DTB-only repack：cambist 恢复上游 `MMCX+MX`，控制组逐字节复现基准 DTB、内核 UTS 不变；已上机**否证**）
 - 参考代码快照（2026-10-12）：`reference/upstream-pengyuluo/`（Pengyu 上游 nt36536 驱动 + Y700 DT + `patches/{2028280686f4,6cd33b6f4155,e4eb11b34d6c,75a5dbd1f4f7}.patch`）
 
 ---

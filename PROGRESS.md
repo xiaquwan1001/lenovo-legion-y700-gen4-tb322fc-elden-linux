@@ -23,6 +23,9 @@
 | 2026-10-12 | **Q28 STORM 定案**：与 NOCARD 同族 = **内核构建身份伪影**（`#60` 2 位号 ~67% 坏 vs 3 位号 0 坏/12+，Fisher p≈0.005）；源码/DTB/ramdisk 全排除 | `PITFALLS #195`、`reports/q28-storm-bias-audit-20261011.md`、`reports/q28-handoff-20261012.md` |
 | 2026-10-12 | **Q28 伪线索更正**：`to_primary_dsi` DSI0/DSI1 **不是** Q28 杠杆（两树属不同 MSM 实现，本硬件上是 no-op） | `PITFALLS #196` |
 | 2026-10-12 | **Q24 重开**：更正「死前签名」（#197）；受控复现得 `{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 因暖复位坏台架未执行（#198）；新增干净无相机台架 `lv64-nocam` | `reports/q24-ctl-20261012.md`、`reports/q24-stageA-20261012.md` |
+| 2026-10-12 | **Q24 触发器干净定位（C 系列）**：三值仪表硬门下 C0(cam=0)/C1(`{camcc}`) 各自 `blank→hold 60 s→wake` 存活，C2(配对) 熄屏 3 s 内静默硬复位（GOOD 台架；`{camcc}` 单独不致死首次确证） | `reports/q24-cseries-20261012.md` |
+| 2026-10-12 | **Q24 H1 DT 臂否证**：cambist 恢复上游 `MMCX+MX`（DTB-only repack，控制组逐字节复现、内核 UTS 不变）在同一 GOOD 台架同样死在熄屏，末票与基准逐字相同 | `reports/q24-h1-dtarm-20261012.md`、`reports/q24-h1-result-20261012.md`、`PITFALLS #205` |
+| 2026-10-12 | **Q24 机制轮**：GPU `power/control=on` **不能**免除致死（GPU runtime-resume 被否定）；日常 boot_b 上「配对→熄屏存活→唤醒致死」**4/4 复现**；死亡末帧 = `phoc` 使能 `disp_cc_mdss_*`，共同信号 = NoC/BCM(`0x500xx`) 票爆发 | `reports/q24-mech-20261012.md`、`PITFALLS #207/#208` |
 
 ---
 
@@ -102,7 +105,14 @@
 - **第 2 轮 S1/S2/S3**：S1（`{camcc}` 60 s）、S2（配对 300 s）**不熄屏均存活**；**S3 未执行**——该轮经 `reboot2 bootloader`（暖复位）取台架 ⇒ 踩 `PITFALLS #166`，`phoc` 卡 D 态（GPU/DPU 故障）⇒ 熄屏完全 no-op。
 - **新纪律（`PITFALLS #198`）**：熄屏实验必备「屏真关」硬门（`GetActive`+`DPMS`+RPMh `mmcx/cx` 降档票）；**A/B 起点必须是物理 POR**。
 - **静态新发现**：本树 cambist DT = H2（MX-only，`be79b256d`），是对上游 mainline（MMCX+MX）的**实验性偏离**，且其立论已被 #197 否定 ⇒ **从未在配对基线上测过**。
-- **下一步**：物理 POR → 冷起 S1→S2→S3（S3 过硬门）→ **H1**（cambist DT 恢复上游 MMCX+MX 的首个配对基线试验）。
+**2026-10-12 当日后续五轮（3–7 轮，均已完成）**：
+
+- **第 3 轮（干净无相机台架 + 三值硬门）**：`lv64-nocam` 冷起（Q28 判定 L1FAIL 但会话/仪表可用）⇒ 仪表硬门 **3/3 通过**；S1（`{camcc}` 60 s）/S2（配对 300 s）**不熄屏存活**；S3 真熄屏**成功且 +11 s 未立即致死**，死亡发生在**唤醒**（末票 `gfx=1/gmxc=1` GPU 域上电）。
+- **第 4 轮（C 系列，决定性）**：**GOOD 台架**一次冷起内 C0/C1/C2，三相位每步 `blank→hold 60 s→wake` 且每步过三值硬门 ⇒ **C0/C1 存活 +89 s，C2（配对）熄屏 3 s 内静默硬复位**（串口无 panic）；三相位熄屏末票**逐字相同**（`mmcx=2/cx=5`）⇒ **票不区分死/活**。
+- **第 5/6 轮（H1 DT 臂）**：DTB-only repack（控制组逐字节复现基准 DTB、内核 UTS 不变、`dtc` diff 恰 6 行）⇒ **否证**：上游 `MMCX+MX` 同样死在熄屏，签名与 MX-only 基准逐项相同 ⇒ **DT 电源域绑定既不是死因也不是解**。
+- **第 7 轮（机制取证）**：GPU runtime-PM 钉 `on` 仍死 ⇒ **GPU resume 非致死步骤**；L1FAIL 台架/日常 boot_b 上「配对→熄屏（存活）→唤醒（致死）」4/4 复现；死亡末帧 = `phoc` 使能 `disp_cc_mdss_mdp_lut_clk/vsync_clk_src/vsync_clk`；所有现场共同信号 = **NoC/BCM（`0x500xx`）RPMh 投票爆发**。
+- **下一步候选（未上机，无需 POR）**：① NoC/BCM 靶（`icc_set_bw` 抓「死前谁在投 NoC」）；② dispcc 靶（只动 dispcc 不碰 DSI 面板，判定靶点在 dispcc 还是面板）；③ 把「配对 + 任意显示电源转换 ⇒ 静默硬复位；两 CC `state_synced` 均不完成」补进 9 月 RFC 的 v2 邮件。
+- **运营口径不变**：相机 ⇄ 熄屏互斥（日常零相机模块）。
 
 ### 构建/身份事故（已修复并入流程）
 
