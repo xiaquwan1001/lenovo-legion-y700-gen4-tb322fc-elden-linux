@@ -47,7 +47,17 @@ git send-email --annotate --to=<list> --cc=<maintainers> out/*.patch
 发信到 `<list>+subscribe@vger.kernel.org`（**majordomo 已退役**），确认信回一发即生效。
 列表/归档的权威目录：`https://subspace.kernel.org/vger.kernel.org.html`。
 
-### 4) 复核投递（必做）
+### 4) 读回信（IMAP）
+
+```bash
+# IMAP 主机 = mail.ustc.edu.cn:993（imap.ustc.edu.cn 无 DNS，别按名字猜）
+# 凭据复用 keyring 的 smtp.ustc.edu.cn:465 条目；工具已在 ~/.local/bin/
+read-mail-ustc.py --days 3                       # 三处（INBOX / "Junk E-mail" / "Sent Items"）
+read-mail-ustc.py --days 7 --grep cambistmclkcc,nt36536   # 按主题/发件人过滤
+read-mail-ustc.py --days 14 --replies-only       # 只看对我们的 Message-ID 的回复（In-Reply-To/References）
+```
+
+### 5) 复核投递（必做）
 
 ```bash
 # 按发件人查（自动过 Anubis PoW）
@@ -64,3 +74,4 @@ python3 ~/.local/bin/lore-query.py "https://lore.kernel.org/linux-arm-msm/?q=f:<
 4. **列表信会被 USTC 标 `[SPAM]`**；`Junk E-mail` 在 IMAP 里必须加引号才能 select。回信要三处都看。
 5. **本地文件行数 ≠ 收到行数**是正常的：`git send-email` 会把 format-patch 的伪头提升为邮件头。
 6. 有的地址会"邮箱满"退信（`554 5.2.2`）——地址没错，过几天单独重投，别当配置问题。
+7. **读回信**：IMAP = `mail.ustc.edu.cn:993`。`--replies-only` 靠 `In-Reply-To`/`References` 匹配我们自己的 Message-ID，是查「有没有人回」的最快路径（比翻列表洪水可靠）。判归档一律按 Message-ID 取 raw 比正文 sha256，**别只看「已发送」**。

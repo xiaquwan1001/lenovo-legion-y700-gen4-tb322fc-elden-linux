@@ -311,3 +311,10 @@ The bring-up tree is GEEKiDOS/linux plus local patches; we are happy to publish
 the repro scripts (cold-boot runner, three-state probe) and the failing-boot
 captures if that helps.  Happy to test any patch you suggest on the device.
 ```
+
+## 12. 投递结果（2026-10-13 回填，本节为追加）
+
+- **发送**：2026-10-13T07:53:58Z（UTC，发起于本机会话），`send-mail-ustc.py out/q28-bonded-dsi-2026-10-13.mail.txt --send`；Message-ID `179184923104.248043.14168731037113716140@mail.ustc.edu.cn`（USTC 通道，Message-ID 保真）。
+- **归档（独立复核）**：`https://lore.kernel.org/all/179184923104.248043.14168731037113716140@mail.ustc.edu.cn/` ⇒ `/linux-arm-msm/` 命中；取回 raw 后 canonical body sha256 = `813edf8449a3728433ec133b853d0b74298e49544900779a23802454bd1fbfa0`，与本地 `out/q28-bonded-dsi-2026-10-13.mail.txt` **逐字节相同**（118 行）。`/dri-devel/`、`/freedreno/` 在 lore 无该 inbox（两列表归档在 lists.freedesktop.org，未独立复核）。
+- **回信**：截至 2026-10-13 08:2x（INBOX 自 10-05 全量扫描 + `In-Reply-To`/`References` 匹配）**0 封回复**；同窗口无退信（Junk 仅 1 封 `postmaster@qualcomm.com` 退信 = Q24 v3 的 `quic_tdas` 邮箱满，已在 Q24 §8 处理）。注意 USTC 对列表信加 `[SPAM]` 前缀，回信须同时看 INBOX 与 `"Junk E-mail"`（`PITFALLS #221`）。
+- **相关上游动态（同期邮件，供后续引用）**：`[GIT PULL] Qualcomm clock updates for v7.4`（2026-10-12T22:00Z）含 `sm8750-gcc: Add CX power domain`、`gcc-sm8750: Tie the CX power domain to controller`、`dispcc-sm8750: always-on 通用 probe 处理`、`cambistmclkcc-sm8750`（+7 行）⇒ 上游正在重做 SM8750 时钟/电源域接线，与 Q24 的 `cx/mmcx` 票面直接相关；`[PATCH v21 14/14] kaanapali-mtp-camera` 显示 upstream 把 `cambistmclkcc` 当作**相机 MCLK 提供者**（`CAM_BIST_MCLK_CC_MCLK2_CLK`），支持 Q24 邮件问题 1 的「裸时钟控制器」质疑方向。
