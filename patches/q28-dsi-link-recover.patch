@@ -1,0 +1,146 @@
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+index 199ec7712..086bd483f 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -87,6 +87,7 @@ void msm_dsi_host_cmd_xfer_commit(struct mipi_dsi_host *host,
+ 					u32 dma_base, u32 len);
+ int msm_dsi_host_enable(struct mipi_dsi_host *host);
+ int msm_dsi_host_disable(struct mipi_dsi_host *host);
++bool msm_dsi_host_is_enabled(struct mipi_dsi_host *host);
+ void msm_dsi_host_enable_irq(struct mipi_dsi_host *host);
+ void msm_dsi_host_disable_irq(struct mipi_dsi_host *host);
+ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 819fe87d5..be21559a5 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -2972,6 +2972,13 @@ int msm_dsi_host_disable(struct mipi_dsi_host *host)
+ 	return 0;
+ }
+ 
++bool msm_dsi_host_is_enabled(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	return READ_ONCE(msm_host->enabled);
++}
++
+ static void msm_dsi_sfpb_config(struct msm_dsi_host *msm_host, bool enable)
+ {
+ 	enum sfpb_ahb_arb_master_port_en en;
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 246ce37ee..e987724d7 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -231,9 +231,8 @@ static int dsi_mgr_bridge_get_id(struct drm_bridge *bridge)
+ 	return dsi_bridge->id;
+ }
+ 
+-static int dsi_mgr_bridge_power_on(struct drm_bridge *bridge)
++static int dsi_mgr_link_power_on(int id)
+ {
+-	int id = dsi_mgr_bridge_get_id(bridge);
+ 	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
+ 	struct msm_dsi *msm_dsi1 = dsi_mgr_get_dsi(DSI_1);
+ 	struct mipi_dsi_host *host = msm_dsi->host;
+@@ -281,17 +280,18 @@ static int dsi_mgr_bridge_power_on(struct drm_bridge *bridge)
+ 	return ret;
+ }
+ 
+-static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
++static int dsi_mgr_bridge_power_on(struct drm_bridge *bridge)
++{
++	return dsi_mgr_link_power_on(dsi_mgr_bridge_get_id(bridge));
++}
++
++static void dsi_mgr_link_power_off(int id)
+ {
+-	int id = dsi_mgr_bridge_get_id(bridge);
+ 	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
+ 	struct msm_dsi *msm_dsi1 = dsi_mgr_get_dsi(DSI_1);
+ 	struct mipi_dsi_host *host = msm_dsi->host;
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
+-
+ 	msm_dsi_host_disable_irq(host);
+ 	if (is_bonded_dsi && msm_dsi1) {
+ 		msm_dsi_host_disable_irq(msm_dsi1->host);
+@@ -301,6 +301,63 @@ static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
+ 	dsi_mgr_phy_disable(id);
+ }
+ 
++static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
++{
++	if (msm_dsi_manager_cmd_failed())
++		return;
++
++	dsi_mgr_link_power_off(dsi_mgr_bridge_get_id(bridge));
++}
++
++/*
++ * elden (TB322FC/SM8750): the bonded command engine can time out on the very
++ * first DCS write while the panel is being initialized.  The failure pointer
++ * stays set afterwards, so every later transfer fails with -EIO before the
++ * hardware is even touched - that is what used to make the failure permanent
++ * for the rest of the boot.  Reset both controllers together with their PHYs
++ * (controller reset + PLL re-lock) and drop the pointer so the caller can
++ * retry the command on a clean link.
++ *
++ * Only valid while the video engines are still off, which is exactly the panel
++ * prepare/pre-enable window: at that point the DPU interface has not been
++ * enabled yet.  A failure on a live link leaves the pointer set, so runtime
++ * transfers keep behaving as before.
++ */
++static bool dsi_mgr_recover_link(void)
++{
++	int mid = msm_dsim_glb.master_dsi_link_id;
++	struct msm_dsi *master, *slave;
++	int sid;
++
++	if (!dsi_mgr_uses_bonded_cmd() || mid < 0 || mid >= DSI_MAX)
++		return false;
++
++	sid = (mid + 1) % DSI_MAX;
++	master = dsi_mgr_get_dsi(mid);
++	slave = dsi_mgr_get_dsi(sid);
++	if (!master || !slave || !master->host || !slave->host)
++		return false;
++
++	if (msm_dsi_host_is_enabled(master->host) ||
++	    msm_dsi_host_is_enabled(slave->host))
++		return false;
++
++	dev_warn(&master->pdev->dev,
++		 "command DMA failed before video enable, resetting DSI link\n");
++
++	WRITE_ONCE(dsi_bonded_cmd_failed, false);
++	dsi_mgr_link_power_off(mid);
++	dsi_mgr_phy_disable(sid);	/* both links down: PHYs are off now */
++
++	if (dsi_mgr_link_power_on(mid)) {
++		dev_err(&master->pdev->dev, "failed to bring the DSI link back\n");
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		return false;
++	}
++
++	return true;
++}
++
+ static void dsi_mgr_bridge_pre_enable(struct drm_bridge *bridge)
+ {
+ 	int id = dsi_mgr_bridge_get_id(bridge);
+@@ -643,6 +700,12 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 		dev_err(&master_dsi->pdev->dev,
+ 			"bonded command DMA failed: master=%d peer=%d\n",
+ 			master_ret, slave_ret);
++		/*
++		 * If this happened while the panel was still being brought up,
++		 * power-cycle the link and drop the failure pointer so that the
++		 * retry of the panel init sequence runs on a clean controller.
++		 */
++		dsi_mgr_recover_link();
+ 		return ret;
+ 	}
+ 
