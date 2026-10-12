@@ -410,3 +410,14 @@ DSI_W32(DSI_CLK_CTRL, clk_ctrl);
 3. **模式/时序层面的规避**：换 panel 模式参数（如强制非动态、改 DSC/wide bus 组合）——但主线面板驱动参数与原厂 panel 的 mode 串尚未逐项对齐。
 4. **运营侧**：Q28 只在冷起 ~50% 命中，且**坏发可用 SSH 侧判据提前识别**（`l1/l2/storm_sig` 与 `card0`）⇒ 可做自动「坏发 → sysrq-b 重启」看门狗（第二次启动 50% 成功，期望把可用性从 50% 提到 ~75%）；但这不改根因。
 
+
+---
+
+## 17. 收尾交接（2026-10-12 深夜）
+
+- 本会话共出 **7 个实验臂**（vk116–vk122），全部按单变量构建并在设备上取过样本；镜像与补丁均入库（`out/boot-elden-vk11{6,7,8,9}-*.img`、`out/boot-elden-vk12{0,1,2}-*.img`、`patches/q28-*.patch`），台账 `versions/vk-registry.tsv` 有逐条注记。
+- 子代理（lane）状态：
+  - `audit/early-reboot`（脚本过早复位审计）**已完成**并已并入 main（`bd97123`，含 `scripts/lib-boot-ready.sh` 就绪门 + 审计报告），另落 **PITFALLS #225**。
+  - 上游补丁合并 lane（内核 `elden/lane-upstream`，3 commit/14 补丁 + 报告 `reports/upstream-hits-20261012.md`）的**合并/变基子代理在收尾时仍在跑**（worktree `/home/xuqianhui1001/y700-wt/wt-merged` @ `d02658e63`，未产出 deliverable）⇒ 下一轮请重跑该任务；其已给出的结论摘要（供参考）：`methodB` 语义已定、lane 的 `d152b582`（round-in-calc）在本树会把 XO 父下的 bogus 值喂给 SM8750 预设 PLL workaround，而 `c59e4a90`（round-after-reparent）正好消解该隐患。
+- 设备收尾状态：停在 vk122 的**坏发态**（`L1FAIL`，只有背光；SSH 可用、`card0=1`），无后台任务、设备锁空闲；下次使用前先物理 POR（长按电源 ~15 s → Vol- + 电源）。
+- 参考资产：`reference/stock-elden.dts`（原厂设备 DTS，来自 `backup/stock-elden/elden.dts`）；原厂 display 源码已取到 `/tmp/vdsrc/`（易失，需要时按报告 §15 的 URL 重取）。
