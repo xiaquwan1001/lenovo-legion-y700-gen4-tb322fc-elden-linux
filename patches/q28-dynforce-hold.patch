@@ -1,0 +1,321 @@
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+index 199ec7712..6273209c9 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -87,6 +87,11 @@ void msm_dsi_host_cmd_xfer_commit(struct mipi_dsi_host *host,
+ 					u32 dma_base, u32 len);
+ int msm_dsi_host_enable(struct mipi_dsi_host *host);
+ int msm_dsi_host_disable(struct mipi_dsi_host *host);
++bool msm_dsi_host_is_enabled(struct mipi_dsi_host *host);
++void msm_dsi_host_dump_link_state(struct mipi_dsi_host *host, const char *tag);
++void msm_dsi_host_dump_link_clocks(struct mipi_dsi_host *host, const char *tag);
++u32 msm_dsi_host_clk_status(struct mipi_dsi_host *host);
++void msm_dsi_host_log_cmd_state(struct mipi_dsi_host *host, const char *tag, u32 op);
+ void msm_dsi_host_enable_irq(struct mipi_dsi_host *host);
+ void msm_dsi_host_disable_irq(struct mipi_dsi_host *host);
+ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 819fe87d5..431d1bdf1 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -2669,11 +2669,29 @@ int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
+ 	if (!(msg->flags & MIPI_DSI_MSG_USE_LPM))
+ 		dsi_set_tx_power_mode(0, msm_host);
+ 
++	/*
++	 * elden (vk123): assert the internal dynamic clocks (CLK_CTRL force-on)
++	 * around the DSI_EN write and KEEP them asserted for the whole
++	 * panel-init window (unlike vk122, which restored CLK_CTRL right after).
++	 * Rationale: in Q28 bad boots DYN_PCLK_ACTIVE / DYN_CMD_PCLK_ACTIVE latch
++	 * and the command engine waits forever on the dispcc dynamic-pclk
++	 * handshake (engine/DMA busy, zero interrupts, transfer -110); with the
++	 * dynamic clocks forced on statically the engine does not enter it.
++	 */
++	u32 clk_ctrl = dsi_read(msm_host, REG_DSI_CLK_CTRL);
++	u32 force_on = DSI_CLK_CTRL_ENABLE_CLKS | BIT(8) | BIT(9) |
++		       BIT(11) | BIT(21);
++
++	dsi_write(msm_host, REG_DSI_CLK_CTRL, clk_ctrl | force_on);
++	wmb();	/* dynamic clocks up before DSI_EN */
++
+ 	msm_host->dma_cmd_ctrl_restore = dsi_read(msm_host, REG_DSI_CTRL);
+ 	dsi_write(msm_host, REG_DSI_CTRL,
+ 		msm_host->dma_cmd_ctrl_restore |
+ 		DSI_CTRL_CMD_MODE_EN |
+ 		DSI_CTRL_ENABLE);
++	wmb();	/* DSI_EN updated; forced dynamic clocks stay on */
++
+ 	dsi_intr_ctrl(msm_host, DSI_IRQ_MASK_CMD_DMA_DONE, 1);
+ 
+ 	return 0;
+@@ -2972,6 +2993,61 @@ int msm_dsi_host_disable(struct mipi_dsi_host *host)
+ 	return 0;
+ }
+ 
++bool msm_dsi_host_is_enabled(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	return READ_ONCE(msm_host->enabled);
++}
++
++void msm_dsi_host_dump_link_state(struct mipi_dsi_host *host, const char *tag)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	dev_warn(&msm_host->pdev->dev,
++		 "Q28 link[%s]: CTRL=%#x STATUS0=%#x CLK_STATUS=%#x INTR_CTRL=%#x CLK_CTRL=%#x CMD_DMA_CTRL=%#x\n",
++		 tag, dsi_read(msm_host, REG_DSI_CTRL),
++		 dsi_read(msm_host, REG_DSI_STATUS0),
++		 dsi_read(msm_host, REG_DSI_CLK_STATUS),
++		 dsi_read(msm_host, REG_DSI_INTR_CTRL),
++		 dsi_read(msm_host, REG_DSI_CLK_CTRL),
++		 dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL));
++}
++
++u32 msm_dsi_host_clk_status(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	return dsi_read(msm_host, REG_DSI_CLK_STATUS);
++}
++
++void msm_dsi_host_log_cmd_state(struct mipi_dsi_host *host, const char *tag, u32 op)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	dev_warn(&msm_host->pdev->dev,
++		 "Q28 cmd[%s] op=%#x CTRL=%#x STATUS0=%#x CLK_STATUS=%#x CLK_CTRL=%#x CMD_DMA=%#x\n",
++		 tag, op,
++		 dsi_read(msm_host, REG_DSI_CTRL),
++		 dsi_read(msm_host, REG_DSI_STATUS0),
++		 dsi_read(msm_host, REG_DSI_CLK_STATUS),
++		 dsi_read(msm_host, REG_DSI_CLK_CTRL),
++		 dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL));
++}
++
++void msm_dsi_host_dump_link_clocks(struct mipi_dsi_host *host, const char *tag)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	dev_warn(&msm_host->pdev->dev,
++		 "Q28 clk[%s]: byte=%lu byte_intf=%lu pixel=%lu esc=%lu\n",
++		 tag,
++		 msm_host->byte_clk ? clk_get_rate(msm_host->byte_clk) : 0,
++		 msm_host->byte_intf_clk ? clk_get_rate(msm_host->byte_intf_clk) : 0,
++		 msm_host->pixel_clk ? clk_get_rate(msm_host->pixel_clk) : 0,
++		 msm_host->esc_clk ? clk_get_rate(msm_host->esc_clk) : 0);
++}
++
+ static void msm_dsi_sfpb_config(struct msm_dsi_host *msm_host, bool enable)
+ {
+ 	enum sfpb_ahb_arb_master_port_en en;
+@@ -3025,6 +3101,7 @@ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
+ 		ret = dsi_link_clk_set_rate_6g_v2_9(msm_host);
+ 	else
+ 		ret = cfg_hnd->ops->link_clk_set_rate(msm_host);
++	dev_info(&msm_host->pdev->dev, "Q28 power_on: link_clk_set_rate -> %d\n", ret);
+ 	if (!ret)
+ 		ret = cfg_hnd->ops->link_clk_enable(msm_host);
+ 	if (ret) {
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 246ce37ee..c4682684e 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -37,6 +37,11 @@ static struct msm_dsi_manager msm_dsim_glb = {
+ 	.master_dsi_link_id = -1,
+ };
+ 
++/* elden: one-shot "state before the very first bonded command" dump. */
++static bool dsi_mgr_first_cmd_dumped;
++static bool dsi_mgr_first_ok_dumped;
++static u32 dsi_mgr_last_clk_status = ~0U;
++
+ static DEFINE_MUTEX(dsi_bonded_cmd_lock);
+ static bool dsi_bonded_cmd_failed;
+ 
+@@ -231,9 +236,8 @@ static int dsi_mgr_bridge_get_id(struct drm_bridge *bridge)
+ 	return dsi_bridge->id;
+ }
+ 
+-static int dsi_mgr_bridge_power_on(struct drm_bridge *bridge)
++static int dsi_mgr_link_power_on(int id)
+ {
+-	int id = dsi_mgr_bridge_get_id(bridge);
+ 	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
+ 	struct msm_dsi *msm_dsi1 = dsi_mgr_get_dsi(DSI_1);
+ 	struct mipi_dsi_host *host = msm_dsi->host;
+@@ -281,17 +285,18 @@ static int dsi_mgr_bridge_power_on(struct drm_bridge *bridge)
+ 	return ret;
+ }
+ 
+-static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
++static int dsi_mgr_bridge_power_on(struct drm_bridge *bridge)
++{
++	return dsi_mgr_link_power_on(dsi_mgr_bridge_get_id(bridge));
++}
++
++static void dsi_mgr_link_power_off(int id)
+ {
+-	int id = dsi_mgr_bridge_get_id(bridge);
+ 	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
+ 	struct msm_dsi *msm_dsi1 = dsi_mgr_get_dsi(DSI_1);
+ 	struct mipi_dsi_host *host = msm_dsi->host;
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
+-
+ 	msm_dsi_host_disable_irq(host);
+ 	if (is_bonded_dsi && msm_dsi1) {
+ 		msm_dsi_host_disable_irq(msm_dsi1->host);
+@@ -301,6 +306,72 @@ static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
+ 	dsi_mgr_phy_disable(id);
+ }
+ 
++static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
++{
++	if (msm_dsi_manager_cmd_failed())
++		return;
++
++	dsi_mgr_link_power_off(dsi_mgr_bridge_get_id(bridge));
++}
++
++/*
++ * elden (TB322FC/SM8750): the bonded command engine can time out on the very
++ * first DCS write while the panel is being initialized.  The failure pointer
++ * stays set afterwards, so every later transfer fails with -EIO before the
++ * hardware is even touched - that is what used to make the failure permanent
++ * for the rest of the boot.  Reset both controllers together with their PHYs
++ * (controller reset + PLL re-lock) and drop the pointer so the caller can
++ * retry the command on a clean link.
++ *
++ * Only valid while the video engines are still off, which is exactly the panel
++ * prepare/pre-enable window: at that point the DPU interface has not been
++ * enabled yet.  A failure on a live link leaves the pointer set, so runtime
++ * transfers keep behaving as before.
++ */
++static bool dsi_mgr_recover_link(void)
++{
++	int mid = msm_dsim_glb.master_dsi_link_id;
++	struct msm_dsi *master, *slave;
++	int sid;
++
++	if (!dsi_mgr_uses_bonded_cmd() || mid < 0 || mid >= DSI_MAX)
++		return false;
++
++	sid = (mid + 1) % DSI_MAX;
++	master = dsi_mgr_get_dsi(mid);
++	slave = dsi_mgr_get_dsi(sid);
++	if (!master || !slave || !master->host || !slave->host)
++		return false;
++
++	if (msm_dsi_host_is_enabled(master->host) ||
++	    msm_dsi_host_is_enabled(slave->host))
++		return false;
++
++	dev_warn(&master->pdev->dev,
++		 "command DMA failed before video enable, resetting DSI link\n");
++
++	WRITE_ONCE(dsi_bonded_cmd_failed, false);
++	/*
++	 * Mirror dsi_mgr_bridge_post_disable(): power_off() ends with
++	 * dsi_mgr_phy_disable(), which already turns both PHYs off when both
++	 * 'phy_enabled' flags are down.  Calling it a second time for the peer
++	 * would disable the PHY regulators twice (unbalanced disables) and drop
++	 * the PHY runtime PM refcount, so don't.
++	 */
++	msm_dsi_host_dump_link_state(master->host, "before-reset");
++	dsi_mgr_link_power_off(mid);
++
++	if (dsi_mgr_link_power_on(mid)) {
++		dev_err(&master->pdev->dev, "failed to bring the DSI link back\n");
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		return false;
++	}
++
++	msm_dsi_host_dump_link_state(master->host, "after-reset");
++
++	return true;
++}
++
+ static void dsi_mgr_bridge_pre_enable(struct drm_bridge *bridge)
+ {
+ 	int id = dsi_mgr_bridge_get_id(bridge);
+@@ -582,9 +653,22 @@ int msm_dsi_manager_connector_init(struct msm_dsi *msm_dsi,
+ 
+ static bool dsi_mgr_use_bonded_write(const struct mipi_dsi_msg *msg)
+ {
+-	return dsi_mgr_uses_bonded_cmd() && IS_SYNC_NEEDED() &&
+-	       !(msg->rx_buf && msg->rx_len) &&
+-	       !(msg->flags & MIPI_DSI_MSG_REQ_ACK);
++	/*
++	 * vk121 experiment (elden): force every sync write through the standard
++	 * broadcast path, i.e. the behaviour of the vendor/stock kernel.  The
++	 * SM8750-only bonded sequence used below hangs intermittently because
++	 * the command engine collides with the dispcc DYN pclk domain switch;
++	 * the vendor stack has no such sequence (it prepares both hosts and
++	 * lets dsi_cmds2buf_tx() trigger both engines in broadcast mode).
++	 *
++	 * Original condition, restore to re-enable the custom path:
++	 *   dsi_mgr_uses_bonded_cmd() && IS_SYNC_NEEDED() &&
++	 *   !(msg->rx_buf && msg->rx_len) &&
++	 *   !(msg->flags & MIPI_DSI_MSG_REQ_ACK)
++	 */
++	(void)msg;
++
++	return false;
+ }
+ 
+ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+@@ -643,10 +727,21 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 		dev_err(&master_dsi->pdev->dev,
+ 			"bonded command DMA failed: master=%d peer=%d\n",
+ 			master_ret, slave_ret);
++		/*
++		 * If this happened while the panel was still being brought up,
++		 * power-cycle the link and drop the failure pointer so that the
++		 * retry of the panel init sequence runs on a clean controller.
++		 */
++		dsi_mgr_recover_link();
+ 		return ret;
+ 	}
+ 
+ restore_pair:
++	/* elden: matching dump for the successful case (good boot comparison). */
++	if (!dsi_mgr_first_ok_dumped) {
++		dsi_mgr_first_ok_dumped = true;
++		msm_dsi_host_dump_link_state(master, "after-first-cmd-ok");
++	}
+ 	msm_dsi_host_bonded_xfer_restore(master);
+ 	msm_dsi_host_bonded_xfer_restore(slave);
+ 	return ret;
+@@ -681,6 +776,28 @@ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+ 		goto out_unlock;
+ 	}
+ 
++	/*
++	 * Dump the link/clock state at a fixed point (before the first command)
++	 * for every boot, good or bad: register dumps taken only after a failure
++	 * are too late, the recovery path has already reprogrammed the link.
++	 */
++	if (!dsi_mgr_first_cmd_dumped) {
++		dsi_mgr_first_cmd_dumped = true;
++		dsi_mgr_last_clk_status = msm_dsi_host_clk_status(host);
++		msm_dsi_host_dump_link_state(host, "before-first-cmd");
++		msm_dsi_host_dump_link_clocks(host, "before-first-cmd");
++	} else {
++		u32 cs = msm_dsi_host_clk_status(host);
++
++		if (cs != dsi_mgr_last_clk_status) {
++			u32 op = (msg->tx_buf && msg->tx_len) ?
++				((const u8 *)msg->tx_buf)[0] : 0;
++
++			dsi_mgr_last_clk_status = cs;
++			msm_dsi_host_log_cmd_state(host, "clk-status-change", op);
++		}
++	}
++
+ 	if (dsi_mgr_use_bonded_write(msg)) {
+ 		ret = dsi_mgr_bonded_cmd_xfer(msg);
+ 		goto out_unlock;

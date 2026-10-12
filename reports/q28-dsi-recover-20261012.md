@@ -421,3 +421,17 @@ DSI_W32(DSI_CLK_CTRL, clk_ctrl);
   - 上游补丁合并 lane（内核 `elden/lane-upstream`，3 commit/14 补丁 + 报告 `reports/upstream-hits-20261012.md`）的**合并/变基子代理在收尾时仍在跑**（worktree `/home/xuqianhui1001/y700-wt/wt-merged` @ `d02658e63`，未产出 deliverable）⇒ 下一轮请重跑该任务；其已给出的结论摘要（供参考）：`methodB` 语义已定、lane 的 `d152b582`（round-in-calc）在本树会把 XO 父下的 bogus 值喂给 SM8750 预设 PLL workaround，而 `c59e4a90`（round-after-reparent）正好消解该隐患。
 - 设备收尾状态：停在 vk122 的**坏发态**（`L1FAIL`，只有背光；SSH 可用、`card0=1`），无后台任务、设备锁空闲；下次使用前先物理 POR（长按电源 ~15 s → Vol- + 电源）。
 - 参考资产：`reference/stock-elden.dts`（原厂设备 DTS，来自 `backup/stock-elden/elden.dts`）；原厂 display 源码已取到 `/tmp/vdsrc/`（易失，需要时按报告 §15 的 URL 重取）。
+
+---
+
+## 18. vk123（DYN force-on 保持）首样本：仍坏，但失败寄存器签名改变（2026-10-12 22:21）
+
+- 臂 `vk123-dynhold` = **vk122 的 force-on 去掉还原**（panel init 全窗口保持 `CLK_CTRL` force-on），patch `patches/q28-dynforce-hold.patch`；镜像 `out/boot-elden-vk123-dynhold.img`，sha `8570c4c4…`，载荷 `908ff47e…`；DTB/ramdisk/cmdline/UTS（`#121`）与 vk113/vk116–122 一致 ⇒ 唯一变量 = 该补丁。
+- **首样本**（真实 POR → fastboot → `fastboot boot`，`scripts/q28-cold-run.sh`）：**L1FAIL**（`l1=4 l2=26 storm_sig=30`、`card0=1`、`session=0`、65 s 存活门后仍无桌面）。签名：`op=0xff` 首条命令即失败 → `Failed to initialize panel: -110`。
+- **失败时的寄存器态变了**（对照基线坏发）：
+  - 基线坏发：`CLK_STATUS=0x1743`、`CLK_CTRL=0x23f`
+  - vk123 坏发：`CLK_STATUS=0x8017c3`、`CLK_CTRL=0x200b3f`（= 强制 force-on 掩码，**按设计持续生效**）
+  - ⇒ force-on 确实保持，但 **DYN pclk 域仍然闩住**（`DYN_PCLK_ACTIVE`/`DYN_CMD_PCLK_ACTIVE` 位仍置）⇒ **「用静态 force-on 绕开 DYN 握手」假说首样本不成立**。
+- **边界**：n=1；基线坏率约 50% ⇒ 单样本不足以定论，但寄存器证据表明该补丁**没有阻止判别量出现**（与 vk122 transient force-on 同向）。
+- 设备态：样本后台架 = vk123 RAM 启动的 L1FAIL 态（SSH 可用；下次使用前先物理 POR）。
+- **下一步**：该轴剩余未测项 = 复位终态对齐、PHY reset clamp（见 `reports/q28-dispcc-static-20261012.md` §5）；静态结论仍建议**转运营兜底看门狗 + 上游/Qualcomm**。
