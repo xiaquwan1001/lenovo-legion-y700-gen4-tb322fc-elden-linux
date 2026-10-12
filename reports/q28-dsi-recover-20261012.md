@@ -290,3 +290,31 @@ Q28 clk[before-first-cmd]: byte=108107958 byte_intf=108107958 pixel=172972734 es
 2. 继续采样等 **GOOD 发**（对比生命周期；每发需一次 POR，当前处于坏发簇）。
 3. 暂时把精力移到 Q24（上游 RFC v2 + 外部电测），等坏发簇翻转再回来。
 
+
+---
+
+## 14. vk121（标准广播路径）首个样本：**干净否证——自定义 bonded 序列被洗清**
+
+`logs/q28-cold-20261012-205156-vk121-s1`（POR 冷起，L1FAIL；record `20261012T125348Z-vk121-s1`）。
+
+```
+8.8490  Q28 link[before-first-cmd]: CTRL=0x171 STATUS0=0x0 CLK_STATUS=0x343 CLK_CTRL=0x23f
+9.0521  dsi_cmds2buf_tx: cmd dma tx failed, type=0x15, data0=0xff, len=4, ret=-110   ← 标准路径的失败行
+9.0815  Q28 cmd[clk-status-change] op=0xff CTRL=0x171 STATUS0=0x20003 CLK_STATUS=0x1743 CMD_DMA=0xd4000000
+9.2840  dsi_cmds2buf_tx: ... ret=-110    (attempt 2)
+9.5160  dsi_cmds2buf_tx: ... ret=-110    (attempt 3) → Failed to initialize panel: -110
+```
+
+- **失败签名确实变了**：不再有 `bonded command DMA failed: master/peer`，改为标准 `dsi_cmds2buf_tx` 的 `-110`
+  ⇒ 路径切换**已生效**（`msm_dsi_manager_cmd_xfer_trigger()` 的广播提交在跑）。
+- **但同一个卡死态照旧**：`CLK_STATUS=0x1743`（DYN_PCLK|DYN_CMD_PCLK 置起不释放）、`STATUS0=0x20003`（ENGINE_BUSY+DMA_BUSY）、3 次尝试全 -110（间距 ~232 ms）。
+- ⇒ **自定义 `bonded_cmd_*` 序列不是原因**：两条命令路径在**同一层**（`dsi_cmds2buf_tx` → 命令引擎 DMA + dispcc DYN pclk 域切换）卡死。
+- 注：本臂里恢复钩子位于（已停用的）bonded 路径内，故无 `resetting DSI link` 日志——符合预期，不影响判定。
+
+### 14.1 剩余差异范围（下一步）
+
+命令路径已排除，剩下只可能在基础设施层：
+1. **DT 调参**：原厂 `elden.dts` 的 DSI ctrl/PHY 节点属性（`frame-threshold-time-us=0x320`、PHY 的 `qcom,dsi-phy-*`/supply/lane 配置等）与本树逐项对比。
+2. **PHY/D-PHY 时序编程**（`dsi_phy_10nm/7nm` 的 PLL + lane 设置）。
+3. **dispcc 时钟源**（pixel/byte RCG 的父与 rate；已知坏发里 pclk RCG 无法更新）。
+

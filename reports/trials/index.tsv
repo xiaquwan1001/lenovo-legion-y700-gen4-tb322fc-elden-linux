@@ -70,3 +70,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-12T12:05:42Z	vk118-s1	vk118-q28probe	por	fastboot boot (cold fb after user POR)	L1FAIL	b0472518e3bd	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-200402-vk118-s1
 2026-10-12T12:14:33Z	vk119-s1	vk119-q28probe2	por	fastboot boot (cold fb after user POR)	L1FAIL	033d4676c073	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-201253-vk119-s1
 2026-10-12T12:26:08Z	vk120-s1	vk120-q28probe3	por	fastboot boot (cold fb after user POR)	L1FAIL	f2bded7f055a	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-202428-vk120-s1
+2026-10-12T12:53:48Z	vk121-s1	vk121-stdcmd	por	fastboot boot (cold fb after user POR)	L1FAIL	87bde338a5b2	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-205156-vk121-s1
