@@ -49,7 +49,7 @@
 
 | 文件 | 定位 | 日期 |
 |---|---|---|
-| **`reports/q28-handoff-20261012.md`** | **★下一会话续接**：现状一句话、已建资产、待核查项（`to_primary_dsi` DSI0/DSI1、Method B、refgen）、方法学纪律、设备态 | 2026-10-12 |
+| **`reports/q28-handoff-20261012.md`** | **★下一会话续接**：现状一句话、已建资产、待核查项（~~`to_primary_dsi` DSI0/DSI1~~ **已证否，见 `PITFALLS #196`**、Method B、refgen）、方法学纪律、设备态 | 2026-10-12 |
 | `reports/q28-storm-bias-audit-20261011.md` | STORM 是否误判的证据审计 + 2×2/E1/E1'/E2 判定实验与结果（§6/§7） | 2026-10-11/12 |
 | `reports/q28-retro-audit-20261011.md` | 以 `#192` 为基准重审旧现象报告（旧结论重判表） | 2026-10-11 |
 | `reports/q28-community-cases-20261012.md` | 社区/上游相似案例检索（nt36536、byte-clk 回归、DCS 阶段类、refgen） | 2026-10-12 |

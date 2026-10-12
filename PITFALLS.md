@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#195**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#196**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1521,3 +1521,19 @@
     - 治法：**日常镜像用新构建身份（3 位 `#N`）重编**（同源码 + ADSP DTB；cold GOOD 20+ 发）。
     - 方法学：**冷起 A/B 必须 PINUTS，且记录 `#N` 位数**；否则构建身份混淆结果（同 #192 observer effect）。
     - 证据：`reports/q28-storm-bias-audit-20261011.md`、`reports/trials/index.tsv`（`*q28storm*`）、`logs/q28-cold-*`。
+
+---
+
+## 二十五、跨树驱动比对的方法陷阱：`to_primary_dsi` DSI0/DSI1 伪线索（2026-10-12 静态核查）
+
+196. **★「上游用 `dsi[1]`、本树改成 `dsi[0]`」= 伪线索，不是 Q28 杠杆；不要为此上机、更不要改成 `dsi[1]`。**
+    - 背景：`reports/q28-handoff-20261012.md` §2-1 曾把它列为 **Q28 最高优先待核查项**（依据 `reference/upstream-pengyuluo/README.md` 的行级差异）。
+    - 核验（全静态，未上机）：
+      1. **vanilla `linux-7.2`**（`build/m1-upstream/linux-7.2.tar.xz`，非本树 worktree）的 `drivers/gpu/drm/msm/dsi/dsi_manager.c` **完全没有 `bonded_cmd_xfer`**（grep=0），且 `#define DSI_ENCODER_MASTER DSI_1`（注释「take the encoder of DSI_1 as master encoder」）。
+      2. **本树**（GEEKiDoS `v7.2-elden` 下游 + 我们改动）有整套 `dsi_mgr_bonded_cmd_xfer()`，其注释明写 **「This supports hardware where DSI0, not DSI1, is the broadcast master and completion source」**；`dsi_mgr_uses_bonded_cmd() = is_sm8750 && IS_BONDED_DSI()` → 本机为真。
+      3. 本树 `dsi_manager.c:80` 按 DT `qcom,master-dsi` 解析 `master_dsi_link_id`；**本树与 Pengyu 上游 DT 都**把该属性挂在 `mdss_dsi0` ⇒ 硬件 master = DSI0。
+      4. `dsi_mgr_bonded_cmd_xfer(msg)` **完全忽略消息来自哪个 host**（master/slave 全由 `master_dsi_link_id` 解析，见 `dsi_manager.c:590-655`）。
+      5. 面板驱动（本树与上游）**无 RX 读命令、无 `MIPI_DSI_MSG_REQ_ACK`**（均 grep=0）⇒ `dsi_mgr_use_bonded_write()` 对每条 DCS 命令都成立 ⇒ **全部命令走 host-agnostic 的 bonded 路径**。
+    - 结论：两边各自**自洽**——上游 `dsi[1]` ↔ 上游 mainline 的 `DSI_ENCODER_MASTER=DSI_1`；本树 `dsi[0]` ↔ 本树下游的「DSI0 是 broadcast master」。在本硬件上 **`to_primary_dsi()` 返回 `dsi[0]` 或 `dsi[1]` 是 no-op**：既不是 Q28 的因（Q28 已定案=构建身份伪影，#195），也不是 bug。**改成 `dsi[1]` 反而与本树 `dsi_manager.c`（DSI0 master）自相矛盾，有引入新回归的风险。**
+    - 方法学：跨树比对驱动前，**先确认差异所在的机制层在两边是否都存在**。此处「上游写法 vs 本树写法」属**两套不同 MSM 实现**（mainline 无 bonded cmd xfer），不是同一机制的两种参数；把行级差异直接当候选根因是误判。
+    - 同步更正：`reference/upstream-pengyuluo/README.md`、`reports/q28-handoff-20261012.md` §2-1。

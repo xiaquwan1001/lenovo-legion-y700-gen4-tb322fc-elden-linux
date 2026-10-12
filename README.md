@@ -72,7 +72,7 @@ A/B 槽管理、**安卓容器传感器**（加速/陀螺/光/磁/接近，真�
 
 | ID | 问题 | 状态 |
 |---|---|---|
-| **Q28** | **冷起显示间歇失败**：首条 DCS 命令 `ff 20` 的命令 DMA 引擎 hang → 面板未使能 → 只有背光无画面。冷起失效有两种表现：**NOCARD**（`card0` 没出现）与 **STORM**（有 `card0` 但 cmd-DMA/DPU 风暴）。 | **根因已定案、治法未执行**。2026-10-12 定案：NOCARD 与 STORM **同族 = 内核构建身份（UTS 版本串 / 构建号位数）伪影**——`#60`（2 位构建号）臂坏发 ~67%，3 位号（`#111`–`#120`）0 坏/12+（Fisher p≈0.005）；源码/DTB/ramdisk 全部排除。**治法 = 日常镜像用 3 位 `#N` 新身份重编**（未执行）。判据必须三态（NOCARD/STORM/GOOD，`scripts/q28-devprobe2.sh`）+ SSH 读全 dmesg+查 `card0`；冷起 A/B 必须 PINUTS（钉死 UTS），`reboot2` 暖复位会粘 NOCARD 不可当台架。待核查项（`to_primary_dsi` DSI0/DSI1、Method B、refgen）见 `reports/q28-handoff-20261012.md`。 |
+| **Q28** | **冷起显示间歇失败**：首条 DCS 命令 `ff 20` 的命令 DMA 引擎 hang → 面板未使能 → 只有背光无画面。冷起失效有两种表现：**NOCARD**（`card0` 没出现）与 **STORM**（有 `card0` 但 cmd-DMA/DPU 风暴）。 | **根因已定案、治法未执行**。2026-10-12 定案：NOCARD 与 STORM **同族 = 内核构建身份（UTS 版本串 / 构建号位数）伪影**——`#60`（2 位构建号）臂坏发 ~67%，3 位号（`#111`–`#120`）0 坏/12+（Fisher p≈0.005）；源码/DTB/ramdisk 全部排除。**治法 = 日常镜像用 3 位 `#N` 新身份重编**（未执行）。判据必须三态（NOCARD/STORM/GOOD，`scripts/q28-devprobe2.sh`）+ SSH 读全 dmesg+查 `card0`；冷起 A/B 必须 PINUTS（钉死 UTS），`reboot2` 暖复位会粘 NOCARD 不可当台架。待核查项（~~`to_primary_dsi` DSI0/DSI1~~ **已证否、非 Q28 杠杆，`PITFALLS #196`**；Method B、refgen）见 `reports/q28-handoff-20261012.md`。 |
 | **#106** | **亮屏进桌面后整机卡死**（无 panic、SSH/USB 全失、只能物理断电）。历史上被记为“偶发”，本仓库记录了它与 **“干净的 GOOD 显示”强相关**的实测：显示真正起来后数秒内冻结。 | 未定性。已装 `softlockup_panic`+`ramoops` 自动取证，但硬看门狗被禁用+只能冷断电，**至今没抓到栈**。 |
 | **Q24** | 熄屏 × 相机（单模块 `cambistmclkcc` × DT 电源域）→ 共存会常态掉电。 | 用户裁决：**日常零相机模块**，需要时临时加载。 |
 | — | **结论纪律**：`vk81/82/83` 曾因构建事故成为“无 QCOM 驱动的死内核”，其上的结果**已作废**；`Q28` 一度被判定为“按内核二进制确定性”，经独立溯源审计后**已降级**（见 `PROGRESS.md`）。 | 已是流程的一部分：worker 结论必须由编排者独立复跑。 |

@@ -18,7 +18,7 @@
 ## 与本树的差异（潜在上游化 / 排查点）
 
 ### 驱动 `panel-novatek-nt36536.c`（本树 558 行 vs 上游 486 行）
-1. **`to_primary_dsi()`**：上游 dual-DSI 时返回 **`ctx->dsi[1]`**（"Sync on DSI1"）；**本树改成 `ctx->dsi[0]`**（注释：elden 下游命令 master 是 DSI0，MSM manager 会把每次写镜像到 DSI1 再触发 DSI0 广播 master）。—— 与 bonded 首条 DCS 直接相关，**Q28 排查要点**。
+1. **`to_primary_dsi()`**：上游 dual-DSI 时返回 **`ctx->dsi[1]`**（"Sync on DSI1"）；本树为 **`ctx->dsi[0]`**。~~Q28 排查要点~~ **← 2026-10-12 静态核查证否，非 Q28 杠杆（`PITFALLS #196`）**：本树（下游 `dsi_mgr_bonded_cmd_xfer`，注释「DSI0 才是 broadcast master」；DT `qcom,master-dsi` 在 dsi0）与上游 mainline（vanilla 7.2 **无** `bonded_cmd_xfer`，`DSI_ENCODER_MASTER=DSI_1`）是**两套不同 MSM 实现**，各自自洽；该 bonded 路径**忽略消息来自哪个 host**，面板驱动无 RX/REQ_ACK ⇒ 全命令走此路径 ⇒ `dsi[0]`/`dsi[1]` 在本硬件上 **no-op**。**不要改成 `dsi[1]`**。
 2. **init 重试**：本树在 `novatek_prepare()` 加 `for tries` 循环（失败 → `novatek_reset` → 重试 2 次），对应提交 `d02658e63`；上游无重试。另加 `novatek_enable()`（`panel->prepared ? 0 : -EIO`）。
 3. **`force_hz` 模块参数** + 额外刷新率模式（40/24 Hz）并把 165 Hz 提前为 preferred；上游无。
 4. **probe 顺序**：本树把 backlight 创建移到 `devm_mipi_dsi_attach()` **之前**（上游在 attach 之后）。
@@ -54,5 +54,5 @@
 ## 使用建议
 
 1. 需要**上游原始 panel 驱动/DT** 做对比、上游化或提 patch 时，直接读本目录。
-2. Q28 要核查/回归时，重点看 `to_primary_dsi`（DSI0 vs DSI1 命令 master）、`qcom,cphy-timing-ctrl`、以及 refgen 线索。
+2. Q28 要核查/回归时，重点看 **Method B（`2028280686f4`，byte-clk reparent 后取整）**、`qcom,cphy-timing-ctrl`、以及 refgen 线索。⚠ ~~`to_primary_dsi`（DSI0 vs DSI1）~~ **已证否、不是 Q28 杠杆**（`PITFALLS #196`）。
 3. 拉更新：见上方原始 URL（本目录为快照，不自动更新）。

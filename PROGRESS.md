@@ -65,7 +65,7 @@
 - **状态（2026-10-12 定案）**：**NOCARD 与 STORM 同族 = 内核构建身份（UTS 版本串 / 构建号位数）伪影**——
   `#60`（2 位构建号）臂坏发 ~67%，3 位号（`#111`–`#120`）0 坏/12+（Fisher p≈0.005）；源码/DTB/ramdisk 全部排除。
   **治法 = 日常镜像用 3 位 `#N` 新身份重编**（未执行）；冷起 A/B 必须 PINUTS（钉死 UTS）。
-  待核查项（`to_primary_dsi` DSI0/DSI1、Method B 对齐上游 `2028280686f4`、refgen）见 `reports/q28-handoff-20261012.md`。
+  待核查项（~~`to_primary_dsi` DSI0/DSI1~~ **已证否、非 Q28 杠杆，见 `PITFALLS #196`**、Method B 对齐上游 `2028280686f4`、refgen）见 `reports/q28-handoff-20261012.md`。
 
 > **⚠️ 被推翻的结论（诚实记录）**：2026-10-10 夜我们曾得出「Q28 是**按内核二进制确定性**的、
 > 不是冷/暖」这一逆转性结论，并一度写进 SSOT。次日**溯源审计否定了它**：
@@ -114,7 +114,7 @@
 
 ## 6. 下一步（按优先级）
 
-1. **Q28**：执行治法——**用 3 位 `#N` 新身份重编日常镜像**（同源码 + ADSP DTB）并冷起回归；随后核查 `to_primary_dsi` DSI0/DSI1、Method B、refgen（见 `reports/q28-handoff-20261012.md`）。
+1. **Q28**：执行治法——**用 3 位 `#N` 新身份重编日常镜像**（同源码 + ADSP DTB）并冷起回归；随后核查 **Method B**、refgen（见 `reports/q28-handoff-20261012.md`）。⚠ ~~`to_primary_dsi` DSI0/DSI1~~ 已证否、非 Q28 杠杆（`PITFALLS #196`）。
 2. **#106**：把判据升级为「GOOD 需 ≥60 s 存活/可交互」；尝试让死挂**自动 panic 带栈**（ramoops 或 OOB）。
 3. **上游化 M1–M5**：M1 干净资产树已建、构建通过；下一步 M2 首发小系列（`checkpatch`/`dtbs_check` 绿）。
 4. **G2**：Waydroid Play 登录与完整性等级取证。
