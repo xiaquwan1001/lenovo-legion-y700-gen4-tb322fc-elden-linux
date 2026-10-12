@@ -435,3 +435,12 @@ DSI_W32(DSI_CLK_CTRL, clk_ctrl);
 - **边界**：n=1；基线坏率约 50% ⇒ 单样本不足以定论，但寄存器证据表明该补丁**没有阻止判别量出现**（与 vk122 transient force-on 同向）。
 - 设备态：样本后台架 = vk123 RAM 启动的 L1FAIL 态（SSH 可用；下次使用前先物理 POR）。
 - **下一步**：该轴剩余未测项 = 复位终态对齐、PHY reset clamp（见 `reports/q28-dispcc-static-20261012.md` §5）；静态结论仍建议**转运营兜底看门狗 + 上游/Qualcomm**。
+
+## 19. vk123 第 2 发（2026-10-12 23:24，真实 POR 冷起，fastboot boot）= **GOOD** + 功能验收
+
+- 判据：`l1=0 l2=0 storm_sig=0`、`card0-DSI-1 connected`、`phoc/phosh=1`、uptime ≥95 s 存活、身份 `7.2.0-debug-vk64-gd02658e63cf6 #121`。记录 `reports/trials/20261012T152609Z-vk123-s2.json`；日志 `logs/q28-cold-20261012-232429-vk123-s2/`；串口 `logs/serial-vk123-s2-*.log`。
+- ⇒ **vk123（DYN force-on 保持）累计 = 1 GOOD / 1 L1FAIL（n=2）**，与基线坏发率（~50%）**不可区分** ⇒ 该轴目前**无判别力**；s1 的寄存器证据（force-on 确实保持、但 DYN pclk 域仍闩住）仍是唯一方向性证据。
+- **功能验收（GOOD 台，uptime 95–176 s）**：audio ✅（`Lenovo-Y700-Gen4` + `pcmC0D0p/1p/2c`）、WiFi ✅（`wlan0 UP` + `fw_version 0x100effff`；首探 `POWER_ON(2) -110` 后重试成功，属已知）、GPU 固件 ✅（`GMU firmware v5.1.25`）、输入 ✅（7 input）、服务 ✅（iio-sensor-proxy / hexagonrpcd-adsp-sensorspd / qbootctl started）、`/dev/fastrpc-adsp` ✅、**SSC 传感器 ✅**（`qrtr-lookup` svc 400 + `HasAccelerometer=true`/`HasProximity=true` + `ssccli` accel 实时 Z≈9.62 m/s²）、adsp/cdsp remoteproc running、最高温 44.6 ℃。
+- **★判据更正**：先前「L1FAIL 台上 `/sys/bus/iio/devices` 空 ⇒ 待对照」的口径**作废**——本 build 的 iio-sensor-proxy 走 SSC/QRTR 后端，`/sys/bus/iio` **恒空**；就绪判据 = `qrtr-lookup | grep -qw 400` + `HasAccelerometer`（技能 `y700-adsp-ssc-sensors-bringup`）。L1FAIL 台缺的其实是 **svc 400**（坏发副产物），不是 IIO 节点。
+- **良性 dmesg 噪声（GOOD 台同样出现，勿当回归）**：`DSI PLL(0) lock failed`×4 + `orphan reparent failed -110`、`Failed to create device link (0x180)`（msm_dsi / pmic_glink）、`regulatory.db -2`、ath12k 首探 `-110`。总计 28 条 `fail|error`，**无新签名**。
+- 台架/槽状态：watchdog **OFF**（marker 已在，实验前确认）；`fastboot getvar slot-retry-count:b` = **7**；台架 = vk123 RAM 启动的 GOOD 态，保持运行中（未写盘）。
