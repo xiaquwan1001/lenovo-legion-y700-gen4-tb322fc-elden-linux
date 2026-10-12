@@ -1674,3 +1674,34 @@
     - 成因：`init/utsversion-tmp.h`（`linux_banner` 侧）与 `include/generated/utsversion.h`（`init_uts_ns` 侧）两个生成头在**增量构建**里不同步（Oct-8 那次至少一个是陈旧态）。
     - 规约：① 做「构建身份」实验时用**干净 worktree + 固定 `KBUILD_BUILD_VERSION`/`KBUILD_BUILD_TIMESTAMP`**（如 `scripts/q28-build-daily-id.sh`，vk113 已验证两份串逐字一致）；② 对账老镜像时**两份都打印**，以设备 `uname -v` 为准；③ 别把 ③ 类模板串当身份。
     - 证据：`reports/q28-vk113-20261012.md` §4、`logs/q28-cold-20261012-072449-q28storm-D2/dmesg.txt:2`、`logs/q24-noc2-20261012-131918/s0-env.txt:1`、`logs/q28-build-vk111-oldrep-v60-20261012-080425.log:55-56`。
+
+## 二十七、上游邮件通道（2026-10-12 实测定案）
+
+217. **★通道选型：outlook.com 已死、QQ 会改写 Message-ID，可用通道只有 USTC。**
+    - **outlook.com**：IMAP 登录直接返回 `NO Basic authentication is disabled.`，SMTP AUTH LOGIN + 应用密码 → `535 5.7.3 Authentication unsuccessful`；`man git-send-email` 亦写明 Outlook 不再支持 app password、只能 XOAUTH2。**这不是密码错，是账号级策略**，重新生成应用密码也没用。
+    - **QQ（smtp.qq.com:465）**：发信、正文、`git am` 全正常，但腾讯出站网关把 **Message-ID 一律换成 `<tencent_…@qq.com>`，而 In-Reply-To/References 原样保留** ⇒ 子邮件引用归档里不存在的 ID，series 在 lore/mailman/patchwork/b4 上线程全断（cover 与 patch 各自成 orphan），也无法用 `--in-reply-to` 续 v2。单封独立补丁不受影响。
+    - **USTC（smtp.ustc.edu.cn:465 SSL，AUTH LOGIN/PLAIN）**：Message-ID **逐字保真**、线程自洽、归档正文 sha256 与本地逐字节相同 —— 本项目上游通道。
+    - 规约：补丁/报告一律走 USTC；QQ 仅作单封备用（`git -c sendemail.smtpServer=smtp.qq.com …`）。
+
+218. **★`git send-email` 认证失败会调用 `git credential reject`，把 keyring 里的密码删掉。**
+    - 现象：一次 535 之后，后续 `git credential fill` 变成要交互输入密码（无 tty 时 `fatal: could not read Password`），看起来像"配置坏了"，其实是凭据被自动清空。
+    - 规约：见到认证失败先重存凭据再排查其它。凭据存 GNOME keyring（helper `~/.local/bin/git-credential-keyring`），**主机键是 `smtp.<host>:<port>`（带端口）**，端口写错就取不到。
+
+219. **★vger 的 majordomo 已退役；订阅走 `<list>+subscribe@vger.kernel.org`。**
+    - 给 `majordomo@vger.kernel.org` 发 `subscribe` 只会收到 `Majordomo no longer supported` 回执（无害，但不会订阅成功）。
+    - 权威目录 = `https://subspace.kernel.org/vger.kernel.org.html`（每行的 sub/unsub/post/archive 链接）；流程 = 发 `+subscribe` → 收 Confirmation → 确认 → Welcome（本次 26 s）。
+    - **未订阅地址投稿会被审核或静默丢弃**。但注意：v1/v2 报告"没进归档"的真正原因是**网页版 Outlook 把代填的邮件拦成草稿、从未发出**，与审核无关 —— 排查投递先看 Sent/Drafts 有没有实物。
+
+220. **★lore.kernel.org 有 Anubis PoW 反爬，且 inbox 路径不能按列表名猜。**
+    - `curl` 只能拿到挑战页；`web_fetch` 的 headless Firefox 停在"计算中 0kH/s"过不去。
+    - 用 `~/.local/bin/lore-query.py`（自解 `sha256(randomData+nonce)`，v1.26.2 difficulty=5）。**提交 `pass-challenge` 必须带 `id=<challenge.id>`**，缺了返回 HTTP 500 + 新挑战（伪装成"解法错"，极易误判）。
+    - **路径映射**：`devicetree` → `/linux-devicetree/`（**不是** `/devicetree/`）、`linux-kernel` → `/lkml/`、`regressions` → `/regressions/`；一律以 subspace 页面的 archive 链接为准。查错路径得到 404，看起来像"没投递"。
+    - **判"是否投递"用 `https://lore.kernel.org/<inbox>/<Message-ID>/raw`**：不依赖搜索索引（有的 inbox 没建索引，任何 `?q=` 都 404）。
+
+221. **★USTC 邮箱把列表来信标成 `[SPAM]`（连自己的帖子回送也标），真回信有被漏看风险。**
+    - ManageSieve 4190 端口关闭 ⇒ 白名单**无法脚本化**，只能在 web 端设置里加。
+    - 排查上游往来时三处都要看：INBOX（注意 `[SPAM]` 前缀）、`"Junk E-mail"`（IMAP 选择时**必须带引号**，否则 `BAD Request not ending with`）、`"Sent Items"`。
+
+222. **★`git send-email` 把 format-patch 开头几行当邮件头吞掉，是正常行为，不是服务商改写。**
+    - `From <sha> Mon Sep 17 00:00:00 2001`、内嵌 `From:`/`Date:`/`Subject:` 会被提升为真实邮件头，正文里不再出现这 5 行；作者≠发件人时正是靠它保作者。b4/public-inbox 导出 mbox 时又会自己补 `From <sha>` 行。
+    - 反面教训：把"本地 27 行 vs 收到 21 行"当成"邮件被篡改"是误判。要比对就比**归档 raw 的正文 sha256**（本次 92 行 / `9cdecd508b85e00a` 与本地完全一致）。
