@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#226**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#227**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1743,3 +1743,12 @@
     - **已否证**（单变量、同签名复现）：面板级 reset、软件闩锁、DSI ctrl+PHY 复位、自定义 bonded 触发序列（vk121）、使能期 dynamic force-on（vk122）、VBIF 优先级/FIFO 水位。
     - **方法论教训**：每加一层「复位/保护」先确认它自己干净——vk116 恢复序列里重复的 `msm_dsi_phy_disable()` 触发 `unbalanced disables for vreg_l3i_0p88`（该函数**无幂等守卫**，无条件 `regulator_bulk_disable`+`pm_runtime_put`），使那一轮否证一度作废；先修序列再判结论。
     - **原厂（同 SoC SM8750）对照可查**：LineageOS `android_kernel_oneplus_sm8750-modules` 的 `qcom/opensource/display-drivers/msm/dsi/`（`dsi_ctrl_hw_cmn.c`、`dsi_phy_hw_v7_2.c`、`dsi_clk_manager.c`…）+ 本机 `reference/stock-elden.dts`。证据链与推导见 `reports/q28-dsi-recover-20261012.md`（§10–§17）。
+
+227. **★Q28 原厂 display 源码静态对照（2026-10-12）：「剩余靶点 #1 = 原厂把 disp_cc 映射进 DSI 做动态时钟」前提不成立；参考源本仓已有，不必依赖 `/tmp`。**
+    - **参考源**：本机权威 = `stock-src/android_kernel_lenovo_sm8750-modules/qcom/opensource/display-drivers/msm/dsi/`（40 文件，与设备同板）；同 SoC 兄弟（OnePlus SM8750）已固化到 `reference/vendor-display-sm8750/`（9 文件 + README + sha256）。逐字节比对：`dsi_ctrl_reg.h`/`dsi_clk_manager.c` 与 Lenovo 版**相同**，其余差异仅 `OPLUS_*`（OnePlus 异常上报）/`CONFIG_PXLW_IRIS`（Pixelworks）OEM 补丁，**无功能核心差异**。⇒ 前一轮「`/tmp/vdsrc` 易失」的问题已消除，`/tmp/vdsrc` 可弃。
+    - **靶点前提否证**：全树 grep 显示 `DSI_DISP_CC_*` 只用于 ① `disp_cc+0x00`（`DISP_CC_MISC_CMD`）的 **PHY reset clamp**（`dsi_ctrl_hw_22_phy_reset_config`）、② `DSI_MDP_INTF_*` 仅用于 TE / line-count 调试。**原厂在 DSI 驱动里并不操作 DYN pclk 域**（`DYN_*_ACTIVE` 是 dispcc 侧只读映射）。
+    - **命令路径等价**：原厂 `kickoff_command()` 与主线 `msm_dsi_host_bonded_cmd_stage()` 寄存器级一致（BROADCAST/MASTER/WC_SEL/PACKET_TYPE/embedded bit28；`DMA_FIFO_CTRL` bit16+bit20 禁水位；v≥2.8 VBIF priority=7；DMA base/len；SW_TRIGGER/TRIG_DMA=1）⇒ 与 vk121 结论互证。
+    - **DYN 位不可清**：原厂 `clear_error_status()` 也只清 `CLK_STATUS` BIT(16) `PLL_UNLOCK` ⇒ 与 vk117「控制器复位后 DYN 位仍在」一致。
+    - **唯一新差异 = 复位终态**：原厂 `ctrl_reset()` 复位后 `CLK_CTRL=0x00`（时钟全关）且只恢复 `DSI_EN`（引擎关）；主线 `dsi_sw_reset_v2_9()` 恢复**保存的时钟与原 ctrl（含 `CMD_MODE_EN`）**。未单独实验。
+    - **规约**：① 这条轴别再翻别家机型驱动（原厂已无更多可挖）⇒ 转上游/Qualcomm + 运营兜底；② 想继续挖需 **vendor 主内核树的 `dispcc-sm8750.c`**（Lenovo stock 未含 clk 驱动）；③ 原厂源码优先用 `stock-src/`，别再依赖 `/tmp`。
+    - 证据：`reports/q28-dispcc-static-20261012.md`、`reference/vendor-display-sm8750/README.md`。
