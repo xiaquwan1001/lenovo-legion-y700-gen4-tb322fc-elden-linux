@@ -318,3 +318,42 @@ Q28 clk[before-first-cmd]: byte=108107958 byte_intf=108107958 pixel=172972734 es
 2. **PHY/D-PHY 时序编程**（`dsi_phy_10nm/7nm` 的 PLL + lane 设置）。
 3. **dispcc 时钟源**（pixel/byte RCG 的父与 rate；已知坏发里 pclk RCG 无法更新）。
 
+
+---
+
+## 15. ★原厂（vendor）display 源码到手：dyn refresh 寄存器面 + **force-on 使能序列差异**
+
+来源：`LineageOS/android_kernel_oneplus_sm8750-modules`（**同一 SoC SM8750/sun**）的 `qcom/opensource/display-drivers/msm/dsi/`，已取回 8 个文件到 `/tmp/vdsrc/`。
+
+### 15.1 原厂有、本树完全没有的 dyn refresh 寄存器面
+
+| 项 | 原厂 | 本树 |
+|---|---|---|
+| 寄存器 | `DSI_DYNAMIC_REFRESH_CTRL = 0x0200`、`DSI_DYNAMIC_REFRESH_STATUS = 0x0210`（`dsi_ctrl_reg.h`）⇒ 正是原厂 DT 里 PHY 的 `dyn_refresh_base = <0xae94200 0xa0>` | generated 的 `dsi.xml.h` 在 0x200–0x2ff **一个寄存器都没定义**，驱动也从不碰 |
+| 握手 | `DSI_LANE_CTRL` bit28 = 请求；`DSI_INT_CTRL` bit28 = done（轮询 ≤84 ms ≈5 vsync）+ **W1C 回写 ack** | 无 |
+| PHY v7.2 | `dyn_refresh_config` / `dyn_refresh_pipe_delay` / `dyn_refresh_trigger_sel` / `dyn_refresh_helper` / `cache_phy_timings` | 无 |
+| DT 侧 | 本机原厂 DT 的面板节点带 `qcom,mdss-dsi-pan-enable-dynamic-fps`、`qcom,dsi-dyn-clk-enable` + `qcom,dsi-dyn-clk-list = <0x3083ad80 0x30c45d12 0x31050ca4>`（3 档动态时钟） | 本树面板/DPU 侧无动态刷新概念 |
+
+### 15.2 ★差异点：使能 `DSI_EN` 时的 dynamic force-on
+
+原厂 `dsi_ctrl_hw_cmn_ctrl_en()`：
+```
+clk_ctrl = DSI_R32(DSI_CLK_CTRL);
+DSI_W32(DSI_CLK_CTRL, clk_ctrl | DSI_CTRL_DYNAMIC_FORCE_ON);   /* 强制打开内部动态时钟 */
+wmb();
+reg = DSI_R32(DSI_CTRL); on ? reg |= BIT(0) : reg &= ~BIT(0); DSI_W32(DSI_CTRL, reg);
+wmb();                                                          /* DSI_EN 生效后才允许关时钟 */
+DSI_W32(DSI_CLK_CTRL, clk_ctrl);
+```
+其中 `DSI_CTRL_DYNAMIC_FORCE_ON = 0x23F|BIT(8)|BIT(9)|BIT(11)|BIT(21)` —— 与本树 `dsi_sw_reset_v2_9()` 里那段 `force_on` **逐位相同**（常量没问题，位置不对）。
+
+本树 `msm_dsi_host_xfer_prepare()`（以及 bonded 版）**直接写** `DSI_CTRL |= CMD_MODE_EN|ENABLE`，**没有任何 force-on 保护**。
+
+⇒ **根因假设**：命令引擎在「动态 pclk 域尚未起来」时被使能 —— 正好解释我们观测到的坏发态：`DYN_PCLK_ACTIVE`/`DYN_CMD_PCLK_ACTIVE` 闩住、`STATUS0=0x20003`（ENGINE+DMA busy）、**零中断**、且 DSI 侧复位清不掉（DYN 请求仍在）。
+
+### 15.3 vk122（候选修复，`q28/stock-cmd` @ `03836b22e`，patch `patches/q28-forceon.patch`）
+
+= vk121（标准广播路径，已证中性）+ 在 `msm_dsi_host_xfer_prepare()` 里按原厂序列包上 force-on：
+`CLK_CTRL |= ENABLE_CLKS|BIT8|BIT9|BIT11|BIT21` → `wmb` → 写 `CMD_MODE_EN|ENABLE` → `wmb` → 恢复 `CLK_CTRL` → `wmb`。
+镜像 `out/boot-elden-vk122-forceon.img`，sha `73e1fe6a…`，载荷 `7965d616…`；**verification=NOT_TESTED_ON_DEVICE**
+
