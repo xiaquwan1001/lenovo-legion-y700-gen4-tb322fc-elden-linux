@@ -36,6 +36,7 @@
 | 2026-10-12 深夜 | **Q28 七臂收束：vk116–vk122（+vk123）全部否证**；`-5`=软件闩锁短路、DSI ctrl+PHY 复位救不回、自定义 bonded 序列/使能期 force-on 同签名坏发；判别量=**DYN pclk 域闩住**⇒故障态不在控制器内部 | `reports/q28-dsi-recover-20261012.md`、`PITFALLS #226` |
 | 2026-10-12 深夜 | **Q28 主靶 dispcc/INTF 静态对照后削弱**：原厂源码本仓已有，`DSI_DISP_CC_*` 只用于 PHY reset clamp/MDP 调试，命令路径寄存器级等价 | `reports/q28-dispcc-static-20261012.md`、`PITFALLS #227` |
 | 2026-10-12 深夜 | **Q28 运营兜底看门狗上机**：坏发 75 s 后自动**正常重启**（可用性 ~50%→~75%）；顺带修 `reboot2` 旧构建「无参=进 fastboot」地雷 | `reports/q28-watchdog-20261012.md`、`PITFALLS #228/#229` |
+| 2026-10-13 | **Q28 复位终态对齐臂 vk125 上机否证**（= vk117 恢复路径 + `CLK_CTRL=0` 终态）：坏发 boot 上恢复路径确实触发（`resetting DSI link` + 两控制器 `Q28 resetterm: CTRL=0x0 CLK_CTRL=0x0 CLK_STATUS=0x1403`），但 `link_power_on` 后 `CLK_STATUS` 立刻回到 `0x1743`、重试命令逐字 `-110`（3 次尝试寄存器序列完全相同）⇒ **终态对齐不是解** | `reports/q28-dsi-recover-20261012.md` §20、`PITFALLS #230` |
 | 2026-10-12 深夜 | **上游回移 lane 收尾**：清洗后 14 文件 fast-forward 合入 `clean/base`（`5b169d541`），出日常候选 `out/boot-elden-vk124-merged.img`（同 UTS 身份 `#121`）；**验收口径改为「取得 1 次 GOOD 冷起」**；上机 3 发全 L1FAIL | `reports/upstream-lane-merge-20261012.md` |
 
 ---

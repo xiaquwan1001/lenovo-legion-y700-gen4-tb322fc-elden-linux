@@ -1766,3 +1766,10 @@
     - 修复：① 设备装 `out/reboot2-fixed`（sha `0c68ee5f…`）；② **仓库打包件已替换**（`rootfs/alpine/usr/local/sbin/reboot2`）；③ 看门狗加**能力自检**（`reboot2 -h | grep -q 'no argument = normal reboot'`，不过则退 `echo b > /proc/sysrq-trigger`）；④ `restore.sh` 装机时自检并告警。
     - 规约：**凡是要「重启回 Linux」的地方，先确认 `reboot2 -h` 自报正常重启能力**；别假设设备上的二进制与仓库源码同版本。验收 = 无参 `reboot2` 后 `fastboot devices` 为空且 SSH 回来。
     - 证据：`reports/q28-watchdog-20261012.md` §0.5 / §3。
+
+230. **★Q28 否证（T3，2026-10-13）：复位终态对齐（镜像原厂 `ctrl_reset()` 的 `CLK_CTRL=0`）无效——终态确实到达，但重上电后 DYN 位立刻回来。**
+    臂 `vk125-resetterm` = vk117 恢复路径 + 新导出 `msm_dsi_host_ctrl_reset_terminal()`（引擎全关 + `CLK_CTRL=0`），只在 `dsi_mgr_recover_link()` 的 `link_power_off → link_power_on` 之间调用（正常 bring-up 不变；单变量）。
+    - **首发现场（真实 POR 冷起，坏发）**：`command DMA timeout status=0x2200200` → `resetting DSI link` → `Q28 link[before-reset]: CTRL=0x175 STATUS0=0x20003 CLK_STATUS=0x3743 …` → `Q28 resetterm: CTRL=0x0 CLK_CTRL=0x0 CLK_STATUS=0x1403`（**master+slave 各一次**，DYN 位当场被清）→ `Q28 link[after-reset]: CTRL=0x171 STATUS0=0x20003 CLK_STATUS=0x1743 …` → `sending dcs data ff 20 failed: -110`。**连续 3 次面板 init 尝试，寄存器序列逐字相同**，最终 `Failed to initialize panel: -110`。
+    - **推论**：`CLK_STATUS` 的 DYN/CMD pclk 位确实由 `CLK_CTRL` 请求驱动（`0x3743 → 0x1403`），但**请求在 `link_power_on`（时钟使能/控制器 re-enable）阶段立刻被重新拉高**（`0x1403 → 0x1743`）⇒ 请求源在 **power-on 路径/外部（dispcc/INTF）**，不在「复位后的终态」这个平面 ⇒ 该轴（原厂 `ctrl_reset` 终态差异）**不是解**。
+    - 规约：写「复位终态」类补丁前先看**终态是否被后续 bring-up 覆盖**；本臂的价值在于把否证做到了寄存器级（干预生效仍无效）——比单看坏发率强得多。
+    - 证据：`reports/q28-dsi-recover-20261012.md` §20、`logs/q28-cold-20261013-070401-vk125/`（`dmesg.txt` 行 991–1560/1564–2131/2136–2704）、`logs/serial-q28-sweep-20261012230238.log` 行 12–19/582–591/1156–1165。

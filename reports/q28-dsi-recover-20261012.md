@@ -444,3 +444,21 @@ DSI_W32(DSI_CLK_CTRL, clk_ctrl);
 - **★判据更正**：先前「L1FAIL 台上 `/sys/bus/iio/devices` 空 ⇒ 待对照」的口径**作废**——本 build 的 iio-sensor-proxy 走 SSC/QRTR 后端，`/sys/bus/iio` **恒空**；就绪判据 = `qrtr-lookup | grep -qw 400` + `HasAccelerometer`（技能 `y700-adsp-ssc-sensors-bringup`）。L1FAIL 台缺的其实是 **svc 400**（坏发副产物），不是 IIO 节点。
 - **良性 dmesg 噪声（GOOD 台同样出现，勿当回归）**：`DSI PLL(0) lock failed`×4 + `orphan reparent failed -110`、`Failed to create device link (0x180)`（msm_dsi / pmic_glink）、`regulatory.db -2`、ath12k 首探 `-110`。总计 28 条 `fail|error`，**无新签名**。
 - 台架/槽状态：watchdog **OFF**（marker 已在，实验前确认）；`fastboot getvar slot-retry-count:b` = **7**；台架 = vk123 RAM 启动的 GOOD 态，保持运行中（未写盘）。
+
+## 20. ★T3 否证：复位终态对齐臂 vk125（2026-10-13 07:04，真实 POR 冷起）
+
+**臂**：`vk125-resetterm` = §10/vk117 的恢复路径 + **复位终态对齐**——新导出 `msm_dsi_host_ctrl_reset_terminal()`（引擎全关 + `CLK_CTRL=0`，镜像原厂 `dsi_ctrl_hw_cmn_ctrl_reset()` 终态），只在 `dsi_mgr_recover_link()` 的 `link_power_off → link_power_on` 之间对 master/slave 各调一次（正常 bring-up 不受影响）。补丁 `patches/q28-resetterm-vk125.patch`（3 文件 +140/−7）；镜像 `out/boot-elden-vk125-resetterm.img` sha `3e47f37c…`、载荷 `06f1b538…`，DTB/ramdisk/config/cmdline/身份 `#121` 与 vk113/vk117 逐字节同 ⇒ 唯一变量 = 本补丁。
+
+**首样本（L1FAIL）寄存器时间线**（`logs/q28-cold-20261013-070401-vk125/dmesg.txt`，串口同）：
+
+| 序 | 事件 | CTRL | STATUS0 | CLK_STATUS | CMD_DMA_CTRL |
+|---|---|---|---|---|---|
+| 1 | 首条 DCS 超时 | — | — | — | `command DMA timeout: status=0x2200200`（master + peer） |
+| 2 | `before-reset` | `0x175` | `0x20003` | `0x3743` | `0xd4000000` |
+| 3 | **`Q28 resetterm`（本臂新增）** | **`0x0`** | — | **`0x1403`**（DYN 位当场清掉） | — |
+| 4 | `after-reset`（power_on 之后） | `0x171` | `0x20003` | **`0x1743`（DYN 位回来）** | `0x14000000` |
+| 5 | 重试 | — | — | — | `sending dcs data ff 20 failed: -110` |
+
+- **连续 3 次面板 init 尝试的寄存器序列逐字相同**（第 2/3 次 `before-reset` 已是 `CLK_STATUS=0x1743`），最终 `Failed to initialize panel: -110`。
+- **结论**：`CLK_CTRL=0` **确实到达**（`CLK_STATUS` 从 `0x3743` 掉到 `0x1403`，master+slave 都到达），但 `link_power_on` 阶段请求**立刻被重新拉高**（`0x1403 → 0x1743`）⇒ 动态时钟请求的**源头在 power-on 路径/外部（dispcc/INTF）**，不在「复位终态」这一平面 ⇒ **复位终态对齐不是解，T3 收口**（`PITFALLS #230`）。
+- **方法论价值**：本臂把否证做到**寄存器级**（干预生效仍无效），比只看坏发率强；后续任何「改复位终态/顺序」的候选都应先证明该状态**不会被后续 bring-up 覆盖**。
