@@ -379,3 +379,34 @@ DSI_W32(DSI_CLK_CTRL, clk_ctrl);
 - ⇒ 在 `xfer_prepare()` 按原厂序列包 dynamic force-on **不能**阻止 DYN pclk 域闩住；**使能保护不是根因**。
 - 仍未解的核心事实：健康发里 DYN pclk 域「按命令瞬时开/放」（0x343→0x743→0x343），坏发里它**闩住不释放**（0x1743/0x3743）⇒ 引擎/DMA 永久 busy、零中断、DSI 侧复位清不掉。
 - 今日已否证的路线（均为单变量、可复现）：① 面板级 reset（vk64 旧补丁）② 软件闩锁（vk116，闩锁确实被清）③ DSI ctrl+PHY 复位（vk117，寄存器证明确实复位）④ 自定义 bonded 触发序列（vk121，换标准路径仍坏）⑤ 使能期 dynamic force-on（vk122）。
+
+---
+
+## 16. Q28 今日收束：已证 / 已否证 / 剩余靶点（2026-10-12 晚）
+
+### 16.1 已**证**实（不再是假设）
+
+1. **旧判据作废**：「首败后 DSI host 楔死、重试必然 -5」= 软件闩锁短路（vk116 实测：第 2/3 次改回 -110，重试真的打到硬件）。
+2. **DSI 控制器复位确实发生但救不回**（vk117 寄存器转储：`CTRL 0x175→0x171`、`CLK_STATUS 0x3743→0x1743`、`CMD_DMA_CTRL 0xd4000000→0x14000000`，第 2/3 次仍逐字 -110）。
+3. **判别量 = DYN pclk 域生命周期**：健康发里按命令瞬时开/放（实测 `0x343 →(op=0x92) 0x743 →(op=0xb2) 0x343`）；坏发里**闩住不释放**（`0x1743`/`0x3743`）+ `STATUS0=0x20003`（ENGINE_BUSY|DMA_BUSY）+ **DSI 中断计数 0** + `PLL_UNLOCKED` 位未置（PLL 是锁的）。
+4. **DYN 位在控制器 sw_reset 后仍在** ⇒ 它不是 DSI 内部状态，而是**dispcc/INTF 侧「动态时钟」请求的映射**（DSI 只是采样显示）。
+5. 坏发**首命令前**的寄存器与好发**逐字相同**（CTRL/STATUS0/CLK_STATUS/CLK_CTRL/INTR_CTRL 全同）⇒ 差异是**命令执行瞬间**产生的竞态，不是 bring-up 配置差异。
+
+### 16.2 已**否证**（今日，均单变量 + 可复现签名）
+
+| 路线 | 臂 | 结果 |
+|---|---|---|
+| 面板级 reset 重试 | vk64 旧补丁 | 无效（闩锁短路，从未真重试） |
+| 软件闩锁 = 根因 | vk116 | 闩锁确实被清，故障照旧 |
+| DSI ctrl+PHY 复位 | vk117 | 寄存器证明确实复位，故障照旧 |
+| 自定义 bonded 触发序列 | vk121 | 换标准广播路径，签名改变但同一卡死态 |
+| 使能期 dynamic force-on | vk122 | 3/4 GOOD，第 4 发同签名坏发 |
+| VBIF 优先级/FIFO 水位 | （既有 bonded 路径已设 7/禁用位）| 同签名坏发 ⇒ 非此因 |
+
+### 16.3 剩余靶点（按可执行性排序）
+
+1. **dispcc / INTF 侧的「动态时钟」请求**：原厂把 `disp_cc_base=0xaf0f000`、`mdp_intf_base=0xae36000` 映射进 DSI 控制器驱动，主线这两块归 DPU/dispcc 管；需要读原厂 `dsi_ctrl_hw_cmn` 的 INTF/dyn 相关写入（`DSI_DYNAMIC_REFRESH_CTRL=0x200`/`_STATUS=0x210`、`LANE_CTRL` bit28、`INT_CTRL` bit28 done+ack）并判断主线缺哪一步。
+2. **原厂 `kickoff_command` 逐步对照**（`DSI_COMMAND_MODE_DMA_CTRL` 的 embedded/LPM/bit31/30、`DSI_DMA_FIFO_CTRL`、`DSI_VBIF_CTRL`、`DSI_CMD_MODE_DMA_SW_TRIGGER`）与主线 `dsi_cmds2buf_tx` 的差异点。
+3. **模式/时序层面的规避**：换 panel 模式参数（如强制非动态、改 DSC/wide bus 组合）——但主线面板驱动参数与原厂 panel 的 mode 串尚未逐项对齐。
+4. **运营侧**：Q28 只在冷起 ~50% 命中，且**坏发可用 SSH 侧判据提前识别**（`l1/l2/storm_sig` 与 `card0`）⇒ 可做自动「坏发 → sysrq-b 重启」看门狗（第二次启动 50% 成功，期望把可用性从 50% 提到 ~75%）；但这不改根因。
+
