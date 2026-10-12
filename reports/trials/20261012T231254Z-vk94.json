@@ -1,0 +1,18 @@
+{
+  "label": "vk94",
+  "ts": "2026-10-12T23:12:54Z",
+  "vk": "vk94",
+  "image": "out/boot-elden-vk94.img",
+  "image_sha256": "e112ea0171b5c586b1c18c63435e732626aed9c3488588f9bdcf8d9be1001ef9",
+  "manifest": "/home/xuqianhui1001/y700-elden/out/boot-elden-vk94.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk64-gd02658e63cf6",
+  "kernel_payload_sha256": "8efb2731efb625409a638a86d85f6b7ee3db1db9428c5dbd731736760ec82d86",
+  "config_sha256": "a383cdb99dfee7a9f7a21c915541af05edf6efa3d2bb7cda552b270a263cbf4d",
+  "dtb_packed_sha256": "5d658a2ce48cdda9a0451aaef28b6c668fb76607f76e2f0648ee9194c0008c0d",
+  "reset_type": "por",
+  "deploy": "fastboot boot (cold fb after user POR)",
+  "probe": "q28",
+  "verdict": "L1FAIL",
+  "log_dir": "/home/xuqianhui1001/y700-elden/logs/q28-cold-20261013-071026-vk94",
+  "note": "cold POR; survival gate 65s; see logs"
+}

@@ -37,6 +37,7 @@
 | 2026-10-12 深夜 | **Q28 主靶 dispcc/INTF 静态对照后削弱**：原厂源码本仓已有，`DSI_DISP_CC_*` 只用于 PHY reset clamp/MDP 调试，命令路径寄存器级等价 | `reports/q28-dispcc-static-20261012.md`、`PITFALLS #227` |
 | 2026-10-12 深夜 | **Q28 运营兜底看门狗上机**：坏发 75 s 后自动**正常重启**（可用性 ~50%→~75%）；顺带修 `reboot2` 旧构建「无参=进 fastboot」地雷 | `reports/q28-watchdog-20261012.md`、`PITFALLS #228/#229` |
 | 2026-10-13 | **Q28 复位终态对齐臂 vk125 上机否证**（= vk117 恢复路径 + `CLK_CTRL=0` 终态）：坏发 boot 上恢复路径确实触发（`resetting DSI link` + 两控制器 `Q28 resetterm: CTRL=0x0 CLK_CTRL=0x0 CLK_STATUS=0x1403`），但 `link_power_on` 后 `CLK_STATUS` 立刻回到 `0x1743`、重试命令逐字 `-110`（3 次尝试寄存器序列完全相同）⇒ **终态对齐不是解** | `reports/q28-dsi-recover-20261012.md` §20、`PITFALLS #230` |
+| 2026-10-13 07:15–07:22 | **Q28 同窗配对采样（T2 第 1 窗，#60 ↔ 3 位身份）**：vk104-s1 **GOOD** / vk94-s4 **GOOD** / vk104 **GOOD** / vk94-s5 **UNKNOWN**（操作者提前中断，未捕判据）；同窗前段 07:04 vk125 **L1FAIL**、07:10 vk94 **L1FAIL** ⇒ **窗内两臂都出 GOOD、#60 自身也有坏发 ⇒ 无可辨身份效应**（坏发成簇主导；三条 record 由日志回填，存活门被人工中断已在 note 标注） | `reports/trials/20261012T23{2103,2537,2538}Z-*.json`、`reports/q28-identity-retest-20261012.md` §8 |
 | 2026-10-12 深夜 | **上游回移 lane 收尾**：清洗后 14 文件 fast-forward 合入 `clean/base`（`5b169d541`），出日常候选 `out/boot-elden-vk124-merged.img`（同 UTS 身份 `#121`）；**验收口径改为「取得 1 次 GOOD 冷起」**；上机 3 发全 L1FAIL | `reports/upstream-lane-merge-20261012.md` |
 
 ---
