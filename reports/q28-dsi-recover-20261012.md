@@ -226,3 +226,32 @@ Q28 clk[before-first-cmd]: byte=108107958 byte_intf=108107958 pixel=172972734 es
 = vk118 + **成功路径同点 dump**（`Q28 link[after-first-cmd-ok]`）：好发只有 before 点、坏发有 before/failure 点，缺的就是「好发在命令成功后台 DYN 位是否也置起」。
 有了它即可判定：DYN 位是**正常命令模式的常态**（那坏发就另有其因）还是**只在坏发出现的卡死标记**。
 
+
+---
+
+## 12. vk119 首坏发（20:12）——**首条命令成功**、卡在**后续命令**的 DYN pclk 域切换
+
+日志 `logs/q28-cold-20261012-201253-vk119-s1`（POR 冷起，L1FAIL；record `20261012T121433Z-vk119-s1`）。
+
+```
+8.8389  Q28 link[before-first-cmd]:  CTRL=0x171 STATUS0=0x0 CLK_STATUS=0x343  ... CMD_DMA=0x14000000
+8.8389  Q28 clk[before-first-cmd]:   byte=108107958 byte_intf=108107958 pixel=172972734 esc=19200000
+8.8389  Q28 link[after-first-cmd-ok]: CTRL=0x175 STATUS0=0x0 CLK_STATUS=0x2343  ... CMD_DMA=0xd4000000   ← 首条命令 OK
+9.0463  command DMA timeout: status=0x2200200 ... bonded command DMA failed: master=-110 peer=0   ← 第 2 条命令卡死（peer 已完成）
+9.0463  Q28 link[before-reset]: CTRL=0x175 STATUS0=0x3 CLK_STATUS=0x3743 ...        ← DYN 位置起且不释放
+9.0624  Q28 link[after-reset]:  CTRL=0x171 STATUS0=0x3 CLK_STATUS=0x1743 ...        ← 复位只清 CMD_PCLK，DYN 位保留
+```
+
+- `after-first-cmd-ok` 的 `CLK_STATUS=0x2343`（AON_PCLK+CMD_PCLK、**无 DYN 位**）与 10-09 记录的好发同点值**逐字相同**
+  ⇒ **成功命令结束后 DYN pclk 域会被释放并回到 0x2343**；而失败命令后 DYN 位**留着不释放**。
+- 本条与另外 3 条坏发的差异只在「第几条命令开始卡」（此题是第 2 条，另 3 题是第 1 条）⇒ 现象同一类：**某条命令的 DYN pclk 域切换卡住**。
+- `peer=0`（从机已完成）说明并非从机链路死亡；卡的是主机命令引擎的 pclk 域切换。
+- DYN 位在**控制器复位后仍为 1** ⇒ 该状态**不在 DSI 控制器内部**（`dsi_sw_reset` 脉冲 RESET 后 DYN_PCLK_ACTIVE / DYN_CMD_PCLK_ACTIVE 仍在），
+  结合「坏发里 pclk RCG 无法更新（18 条 WARN）」⇒ **卡点在 dispcc 侧的像素时钟域**。
+
+### 12.1 vk120 下一个探针（`q28/dsi-probe3` @ `950295e32`）
+
+按 **DCS opcode** 记录 `CLK_STATUS` 的每次变化（`Q28 cmd[clk-status-change] op=… CLK_STATUS=… CLK_CTRL=…`），
+并给所有既有 dump 加上 `CLK_CTRL`：
+目的 = 在**同一发里**看清 DYN 位「出现→释放」的完整生命周期，并定位是**哪条 DCS 命令**触发切换；好发对照自然就有了（好发每条命令都该是出现即释放）。
+
