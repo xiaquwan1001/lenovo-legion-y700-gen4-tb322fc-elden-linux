@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#215**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#216**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1666,3 +1666,11 @@
     - 现象：为取 PMIC 对照执行 `reboot -f` → 冷起落在 STORM（`drm_crtc_wait_one_vblank` 每秒 WARNING、`vblank wait timed out on crtc 0`、udevd 卡在 `fastrpc compute-cb@7`）；表现 = SSH 无 banner、控制台无 shell 提示符、串口 SysRq 不可用（gadget 控制台不支持）⇒ 只能物理按键恢复（约 11 分钟不可达）。
     - 规约：① 取复位对照**优先用 Q24 致死本身**（自恢复、且不引入 STORM）；② 必须正常重启时先确认当前是真实日常起，并接受 STORM 风险；③ 全程保证有人读串口（否则控制台背压会拖住系统）。
     - 证据：`reports/q24-noc-20261012.md` §5、本会话 13:27:51–13:57:52 记录。
+
+216. **★判据：一份内核载荷里可能有两份**内容不同**的 `UTS_VERSION` 串（增量构建的生成头不同步）；对账「构建身份」必须看设备可见的那一份。**
+    - 现象：解开现役日常内核 `out/boot-elden-vk94.img`（Oct-8 `Image-vk64.gz`）后，`Linux version` 出现三次：
+      ① 偏移 27 525 320：`… ) # SMP PREEMPT `（**构建号与时间戳为空**）；② 偏移 36 922 712：`… ) #60 SMP PREEMPT Thu Oct  8 17:06:14 CST 2026`；③ 45 862 456：`Linux version %s (%s)`（`linux_proc_banner` 模板，非本内核身份）。
+      设备 `uname -v`/dmesg 第 2 行用的是 **②**（`#60 …`）⇒ `reports/q28-storm-bias-audit-20261011.md` §7.2 的「旧K = `#60`」口径**成立**；但若用 `strings` 取**第一份**就会读到空构建号，从而误判「旧内核没有 `#N`」。
+    - 成因：`init/utsversion-tmp.h`（`linux_banner` 侧）与 `include/generated/utsversion.h`（`init_uts_ns` 侧）两个生成头在**增量构建**里不同步（Oct-8 那次至少一个是陈旧态）。
+    - 规约：① 做「构建身份」实验时用**干净 worktree + 固定 `KBUILD_BUILD_VERSION`/`KBUILD_BUILD_TIMESTAMP`**（如 `scripts/q28-build-daily-id.sh`，vk113 已验证两份串逐字一致）；② 对账老镜像时**两份都打印**，以设备 `uname -v` 为准；③ 别把 ③ 类模板串当身份。
+    - 证据：`reports/q28-vk113-20261012.md` §4、`logs/q28-cold-20261012-072449-q28storm-D2/dmesg.txt:2`、`logs/q24-noc2-20261012-131918/s0-env.txt:1`、`logs/q28-build-vk111-oldrep-v60-20261012-080425.log:55-56`。
