@@ -101,3 +101,41 @@ bash scripts/q28-cold-run.sh out/boot-elden-vk94.img        vk94-ctlN      # #60
 bash scripts/q28-cold-run.sh out/boot-elden-vk104-base-pin.img vk104-ctlN  # 3 位对照
 # 判据：probe.txt 里 VERDICT + l1/l2 + session + 65 s 存活门；每发自动落 reports/trials/
 ```
+
+---
+
+## 6. 当晚完整会话（7 发）与「时间成簇」分析（2026-10-12 16:30–17:50）
+
+| 序 | 时刻 | 镜像 | 臂性质 | 结果 |
+|---|---|---|---|---|
+| 1 | 16:30 | vk113-dailyid | 3 位身份 + 日常组合 | GOOD |
+| 2 | 16:35 | vk113-dailyid | 同上 | **L1FAIL** |
+| 3 | 16:39 | vk94 | `#60` + 日常组合（现役） | **L1FAIL** |
+| 4 | 16:44 | vk104-base-pin | 3 位 + 模块化组合 | GOOD |
+| 5 | 16:55 | vk94 | `#60` | GOOD |
+| 6 | 17:41 | vk114-dailyid-round | 日常组合 **+ 上游 round 补丁** | **L1FAIL** |
+| 7 | 17:47 | vk113-dailyid | 3 位 + 日常（严格 POR：断电 30 s） | **L1FAIL** |
+
+**观察 1（臂无关）**：4 个不同臂、**4 坏 / 7（57%）**，签名逐字相同（`command DMA timeout: status=0x2200200`，t≈9.0 s）。第 6 发（`vk114`）证明**上游 byte-clk 取整修复不修我们的 STORM**；第 7 发（严格 POR）说明**断电时长不是原因**。
+
+**观察 2（坏发按时间成簇）**：`reports/trials/index.tsv` 全部记录里，Q28 的 L1FAIL/STORM 从不单独出现，总成对/成簇：
+
+| 坏发簇（UTC） | 样本 |
+|---|---|
+| 10-11 15:24–15:27 | `C1`, `D1` |
+| 10-12 00:02–00:09 | `E2-110a`, `E1p-v111` |
+| 10-12 08:37–08:41 | `vk113-cold2`, `vk94-ctl1` |
+| 10-12 09:43–09:48 | `vk114-cold1`, `vk113-cold3` |
+
+而**无 L1FAIL 的时间窗**里可以连续跑出成串 GOOD/NOCARD：10-11 11:51–14:51 的 PINUTS 系列 = 10 GOOD / 6 NOCARD / **0 L1FAIL**；10-11 23:14–23:26 = 4/4 GOOD。
+⇒ 「3 位身份 0 坏 / 20+」这一证据**恰好落在无 L1FAIL 的时间窗内**；结合今晚同臂 57% 坏发，**更简约的解释 = 坏发率随会话/环境状态漂移（时间成簇），而非由镜像构建身份决定**。
+
+**观察 3（运行期无法救回）**：在 L1FAIL 活台架上重绑 panel / `msm_dsi` host ⇒ `card0` 消失、fb 切 dummy、GPU hangcheck lockup，显示未恢复（`PITFALLS #224`、`logs/q28-rebind-20261012/`）。
+
+---
+
+## 7. 当晚结论（覆盖 §4 的候选排序）
+
+1. **Q28 的缓解不在镜像层**：身份、round 补丁、复位时长都不改变坏发率；从 `PITFALLS #195` 派生的「3 位重编 = 治法」**作废**（「降险」仅作弱先验，不足以决策）。
+2. **根治路径 = 驱动内机制**：bonded 双 DSI 首条 DCS 的 cmd-DMA 引擎在坏发时自锁（`status=0x2200200`）；下一步应写「encoder enable 失败 → `msm_dsi_host_power_off/on`（含 PHY/PLL 复位）→ 重试 panel init」的**驱动内自恢复**补丁，判据 = 坏发 boot 能自己出画面（不靠 POR）。注意本树 = `GEEKiDOS/linux`，`bonded command DMA failed`/`peer command DMA timeout` 这条路径为本树自带 ⇒ 同时向该上游/维护者报告。
+3. **运营口径**：日常仍可能开机只见背光（当晚 4/7）；恢复 = 关机重开（暖复位在坏态可能粘住；运行期重绑无效）。相机 ⇄ 熄屏互斥（Q24）不变。
