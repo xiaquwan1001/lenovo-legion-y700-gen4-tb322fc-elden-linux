@@ -26,6 +26,9 @@
 | 2026-10-12 | **Q24 触发器干净定位（C 系列）**：三值仪表硬门下 C0(cam=0)/C1(`{camcc}`) 各自 `blank→hold 60 s→wake` 存活，C2(配对) 熄屏 3 s 内静默硬复位（GOOD 台架；`{camcc}` 单独不致死首次确证） | `reports/q24-cseries-20261012.md` |
 | 2026-10-12 | **Q24 H1 DT 臂否证**：cambist 恢复上游 `MMCX+MX`（DTB-only repack，控制组逐字节复现、内核 UTS 不变）在同一 GOOD 台架同样死在熄屏，末票与基准逐字相同 | `reports/q24-h1-dtarm-20261012.md`、`reports/q24-h1-result-20261012.md`、`PITFALLS #205` |
 | 2026-10-12 | **Q24 机制轮**：GPU `power/control=on` **不能**免除致死（GPU runtime-resume 被否定）；日常 boot_b 上「配对→熄屏存活→唤醒致死」**4/4 复现**；死亡末帧 = `phoc` 使能 `disp_cc_mdss_*`，共同信号 = NoC/BCM(`0x500xx`) 票爆发 | `reports/q24-mech-20261012.md`、`PITFALLS #207/#208` |
+| 2026-10-12 | **Q24 受控差分 + NoC/BCM 否证**：同 boot A(cam=0) 熄屏 76 s + 唤醒存活 / B(配对) 唤醒 ≤10 s 死；BCM(`0x500xx`) 票死/活同址同型 ⇒ BCM 靶否证；cmd-db 资源映射首次落表 | `reports/q24-noc-20261012.md`、`PITFALLS #210` |
+| 2026-10-12 | **Q24 致死 = SoC 级复位 + 约 30 s 自动重启（当日 6/6，无需物理 POR）**：USB 掉线 → 重枚举 → 回到已刷 OS；「需 POR」口径改判 | `reports/q24-noc-20261012.md`、`PITFALLS #209` |
+| 2026-10-12 | **Q24 死法取证（PMIC/WDT 排除）+ 最小触发矩阵**：PON 块逐字节无差异、无硬件看门狗；cambist 单独 / camcc 单独在硬门口径下各存活 ⇒ 最小触发 = 配对 | `reports/q24-r9-20261012.md`、`PITFALLS #211/#212`、`scripts/q24-pmic-*.sh` |
 
 ---
 

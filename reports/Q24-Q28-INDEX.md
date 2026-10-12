@@ -11,7 +11,7 @@
 | 项 | 现象 | 当前口径 | SSOT |
 |---|---|---|---|
 | **Q28** | 开机间歇「只有背光无桌面」 | 根因 L1=bonded 双 DSI 首条 DCS `ff 20` 的**命令 DMA 引擎 hang**（冷起 ~60%）；冷起失效两模式 **NOCARD**（无 card0，0.86s DSI PLL 未锁）/ **STORM**（有 card0 的 cmd-DMA 风暴） | `reports/q28-DOSSIER.md`、`TASKS.md` §5 Q28 |
-| **Q24** | 相机模块在位时「熄屏→整机硬复位/掉电」 | 最小触发 = **`camcc-sm8750` + `cambistmclkcc-sm8750` 配对** + 真实熄屏（历史「单模块」已被否证）；**用户裁决=互斥二选一**：日常零相机模块，需要时 `cam-mode.sh on/off`；**根治未成**；2026-10-12 重开：`PITFALLS #197`（死前签名=probe 伪影）/#198（熄屏硬门）；**2026-10-12 七轮结论**：触发器硬门下干净复现（C2 配对+熄屏 3 s 静默硬复位、C1 `{camcc}` 不致死）；**H1（DT 上游 MMCX+MX）否证**；致死点随台架状态移动；GPU runtime-PM 否定；日常 boot_b 即可复现（4/4）；末帧 = `dispcc` 时钟使能 + NoC/BCM 票爆发 | `TASKS.md` G1-22/G1-33、§5 Q24；`reports/q24-ctl-20261012.md`、`reports/q24-cseries-20261012.md`、`reports/q24-h1-result-20261012.md`、`reports/q24-mech-20261012.md` |
+| **Q24** | 相机模块在位时「熄屏→整机硬复位/掉电」 | 最小触发 = **`camcc-sm8750` + `cambistmclkcc-sm8750` 配对** + 真实熄屏（历史「单模块」已被否证）；**用户裁决=互斥二选一**：日常零相机模块，需要时 `cam-mode.sh on/off`；**根治未成**；2026-10-12 重开：`PITFALLS #197`（死前签名=probe 伪影）/#198（熄屏硬门）；**2026-10-12 七轮结论**：触发器硬门下干净复现（C2 配对+熄屏 3 s 静默硬复位、C1 `{camcc}` 不致死）；**H1（DT 上游 MMCX+MX）否证**；致死点随台架状态移动；GPU runtime-PM 否定；日常 boot_b 即可复现（4/4）；末帧 = `dispcc` 时钟使能 + NoC/BCM 票爆发；**第 8–9 轮（下午）**：受控差分**否证 BCM 靶**（死/活票同址同型）、**致死 = SoC 级复位 + 约 30 s 自动重启（6/6，不需要 POR）**、**PMIC PON 块逐字节无差异 + 无硬件看门狗**、**最小触发 = 配对确认** | `TASKS.md` G1-22/G1-33、§5 Q24；`reports/q24-ctl-20261012.md`、`reports/q24-cseries-20261012.md`、`reports/q24-h1-result-20261012.md`、`reports/q24-mech-20261012.md` |
 
 ---
 
@@ -45,6 +45,7 @@
 | 10-11 | 本轮 | 受控复现 | Q24 最小对 `{camcc,cambist}` + 真实熄屏定案；封盘（互斥运营口径） |
 | 10-12 | 本轮 | 阶段A + 受控复现×2 | `PITFALLS #197`（死前签名=probe 伪影）；`{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 因暖复位坏台架未执行（#198）；新台架 `lv64-nocam` |
 | 10-12 | 本轮（续） | C 系列 + H1 DT 臂 + 机制轮 | **C 系列**：三值硬门下 C0/C1 存活、C2 配对+熄屏即死（GOOD 台架）⇒ `reports/q24-cseries-20261012.md`；**H1 臂**：DTB-only repack（控制组逐字节复现）上机=**否证** ⇒ `reports/q24-h1-{dtarm,result}-20261012.md`；**机制轮**：GPU runtime-PM 否定、日常 boot_b 4/4 复现、末帧 `dispcc` 时钟使能 + NoC/BCM 票爆发 ⇒ `reports/q24-mech-20261012.md`；工具链 `PITFALLS #199–#208` |
+| 10-12 | 本轮（下午） | 第 8–9 轮：受控差分 + 死法 + 矩阵 | **受控差分**（同 boot A/B）⇒ **NoC/BCM 票不区分死/活（BCM 靶否证）**；**致死 = SoC 级复位 + 约 30 s 自动重启（6/6，无需 POR）**；**PMIC PON 块逐字节无差异 + 无硬件看门狗**；**cambist 单独 / camcc 单独各存活 ⇒ 最小触发 = 配对**；工具：修 `serial-logger.sh` 孤儿 `cat`、踩 `pgrep -f`+`kill` 自毙、确立「不要主动 reboot 取对照」 |
 
 > 完整会话行（含实机/状态/风险列）= `RESOURCES.md` §4（`01a115a8`/`01a11702`/`01a12302`/`01a1241b` 等已收录）。
 
@@ -67,13 +68,13 @@
 - 10-10 E4a/FIX-2/FIX-3 三路**作废**（在无 QCOM 死内核上测，`#162`）⇒ 需恢复好档重做。
 - 10-11 封盘：最小对 `{camcc,cambist}` + 真实熄屏；运营口径=相机⇄熄屏互斥。
 - 10-12 重开（第 1–2 轮）：`PITFALLS #197` 更正「死前签名」；受控复现 `{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 未执行（暖复位坏台架，#198）；新台架 `out/boot-elden-lv64-nocam.img`。
-- 10-12 第 3–7 轮（当日闭环）：**三值仪表硬门**落地（`GetActive`+`DPMS`+RPMh 降档票；Q28 L1FAIL 台架照样可用 ⇒ 台架准入不再依赖 Q28 GOOD）；**C 系列** 定位触发器（C0/C1 活、C2 死）；**H1 DT 臂** 上机否证（`vk112`）；**机制轮** 否定 GPU runtime-PM、确认「日常 boot_b 可复现」与「末帧 `dispcc` 时钟使能 / NoC 票爆发」。**下一步候选（未上机）**：NoC/BCM 靶、dispcc 靶、RFC v2 补证。
+- 10-12 第 3–7 轮（当日闭环）：**三值仪表硬门**落地（`GetActive`+`DPMS`+RPMh 降档票；Q28 L1FAIL 台架照样可用 ⇒ 台架准入不再依赖 Q28 GOOD）；**C 系列** 定位触发器（C0/C1 活、C2 死）；**H1 DT 臂** 上机否证（`vk112`）；**机制轮** 否定 GPU runtime-PM、确认「日常 boot_b 可复现」与「末帧 `dispcc` 时钟使能 / NoC 票爆发」。**下一步候选**：NoC/BCM 靶已**否证**（第 8 轮）；dispcc 靶**当前无手段**（无 DP sink、无 modetest ⇒ 无法在不碰 DSI 面板的前提下做显示电源转换）；**首选 = RFC v2 补证（上游）+ 外部电流/电压测量**。
 
 ---
 
 ## 3. 产物清单（按类）
 
-**报告（reports/，活跃工作区，未入库）**：`q28-DOSSIER.md`(SSOT)、`q28-INDEX.md`、`q28-two-layers-20261010.md`、`q28-upstream-diff-20261010.md`、`q28-upstream-research-20261010.md`、`q28-nocard-research-20261010.md`、`q28-orchestration-20261010.md`、`q28-handoff-20261010.md`、`local-cleanup-audit-20261010.md`；**2026-10-12 新增**：`q28-storm-bias-audit-20261011.md`、`q28-community-cases-20261012.md`、`q28-handoff-20261012.md`、`q28-upstream-static-20261012.md`、`q24-repro-20261011.md`（含更正横幅）、`q24-stageA-20261012.md`、`q24-ctl-20261012.md`、`q24-s123-20261012.md`、`q24-cseries-20261012.md`、`q24-h1-dtarm-20261012.md`、`q24-h1-result-20261012.md`、`q24-mech-20261012.md`
+**报告（reports/，活跃工作区，未入库）**：`q28-DOSSIER.md`(SSOT)、`q28-INDEX.md`、`q28-two-layers-20261010.md`、`q28-upstream-diff-20261010.md`、`q28-upstream-research-20261010.md`、`q28-nocard-research-20261010.md`、`q28-orchestration-20261010.md`、`q28-handoff-20261010.md`、`local-cleanup-audit-20261010.md`；**2026-10-12 新增**：`q28-storm-bias-audit-20261011.md`、`q28-community-cases-20261012.md`、`q28-handoff-20261012.md`、`q28-upstream-static-20261012.md`、`q24-repro-20261011.md`（含更正横幅）、`q24-stageA-20261012.md`、`q24-ctl-20261012.md`、`q24-s123-20261012.md`、`q24-cseries-20261012.md`、`q24-h1-dtarm-20261012.md`、`q24-h1-result-20261012.md`、`q24-mech-20261012.md`、`q24-noc-20261012.md`、`q24-r9-20261012.md`
 
 **计划（.pi/plans/）**：`research-q24-cambist-2026-10-09.md`、`research-q28-panel-init-2026-10-09.md`、`research-q28-dpu-powerup-race-2026-10-09.md`、`2026-10-09-Q24-mxnom-sweep-runbook.md`、`2026-10-09-Q24-变体与G1-34资产.md`、`2026-10-09-Q28-密集复现与vk74.md`、`2026-10-09-Q28-证据与方案.md`、`2026-10-09-Q28-诊断上机包.md`、`2026-10-09-Q28b-断电态证据.md`、`2026-10-09-深夜-Q28寄存器差分-模块化在机验证-槽位险情.md`、`2026-10-10-Q24-深研.md`、`2026-10-10-Q28-深研.md`、`2026-10-10-E4a-FIX1-DT.md`、**`2026-10-12-Q24-静态复核与实验计划.md`**
 

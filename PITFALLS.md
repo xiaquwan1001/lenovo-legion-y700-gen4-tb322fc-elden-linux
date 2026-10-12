@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-12。**条目编号 #1–#208**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-12。**条目编号 #1–#215**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1611,3 +1611,58 @@
     - **trace 集**：先 `for d in /sys/kernel/debug/tracing/events/*/; do echo 0 > $d/enable; done` 再逐组打开；否则 `power/cpu_idle` 可产生 10⁶ 行噪声（一轮 3.8 M 行里 99.9% 是 cpu_idle），有效帧被埋。
     - **陈旧 `trace_pipe` 读者**导致新读者 `Resource busy` / 空文件：跑前 `pkill -f 'trace_pi[p]e'`（主机与设备两侧），抓完先确认 `wc -l` 非 0。
     - 证据：`reports/q24-mech-20261012.md` §4、`logs/q24-mech1b-20261012-124825/`、`logs/q24-mech2-20261012-125857/`。
+
+209. **★★Q24 致死事件 = SoC 级复位 + 约 30 s 自动重启；不需要物理 POR（更正历史口径）。**
+    - 证据（主机 `journalctl -k` 的 `usb 5-1` 事件 vs 各次死亡）：
+      | 死亡（脚本判定） | USB 掉线 | 重新枚举 |
+      |---|---|---|
+      | 11:36:32 | 11:36:08 | 11:36:40 |
+      | 12:58:15 | 12:57:35 | 12:58:17 |
+      | 13:01:26 | 13:00:53 | 13:01:25 |
+      | 13:25:31 | 13:25:12 | 13:25:44 |
+    - 13:25 那次重新枚举后 **+1 s SSH 即通**（uptime≈10 s、boot_id 由 `91bb26e8…` 变 `a2c7d912…`）⇒ 设备自动回到**已刷日常 OS**；此后 r9b 与两个 arm 轮又各复现一次（`+28 s 枚举 / +40 s SSH`），**今日 6/6 自动恢复**。
+    - 脚本判定的「SSH 不通」比真实死亡晚 19–40 s（SSH 探测超时）⇒ **真实死亡时刻 = USB disconnect**（`usb 5-1: USB disconnect`）。
+    - 推论：① 自动化复现/迭代**不需要用户按 POR**；② 历史「需物理 POR / bootloader 不应答 `getvar`」应改判为「设备已自行重启进 Linux，`fastboot devices` 自然为空」；③ 判死最快的信号是 USB 总线事件（秒级），不是 SSH。
+    - 证据：`reports/q24-noc-20261012.md` §3、`logs/q24-noc3-20261012-132042/`、`logs/q24-r9b-*/run.log`。
+
+210. **★Q24：NoC/BCM（`0x500xx`）票**不区分**死/活（同 boot 受控差分否证）。**
+    - 同一次 boot：A（cam=0）熄屏 76 s + 唤醒 **存活**；B（配对）熄屏 76 s 存活 → 唤醒 ≤10 s **死亡**。
+    - 票型对照：死亡窗口 `b/wake` 与存活窗口 `a/wake` **同址同型**（`0x50000`/`0x50004`/`0x50008`/`0x50030`/`0x50068` + GPU bw 路径），只差行数（93 vs 865）。
+    - `cmd-db` 映射首次落表：`0x50000`=MC0、`0x50004`=SH0、`0x50008`=SH1、`0x5000c`=SH2、`0x50060`=SH5、`0x50068`=ACV、`0x5006c`=MC1；`0x30000`=cx.lvl、`0x30010`=mx.lvl、`0x30080`=mmcx.lvl、`0x300a0`=mxc.lvl（设备 `cat /sys/kernel/debug/cmd-db`）。
+    - 推论：「NoC/BCM 投票爆发」是**后果/伴随现象**，不是判别量；不要再把 BCM 当靶。
+    - 证据：`reports/q24-noc-20261012.md` §2、`logs/q24-noc3-20261012-132042/{run.log,tracepipe.txt}`。
+
+211. **★Q24：PMIC PON 块无差异 + 无硬件看门狗 ⇒ 复位既不含 PMIC reason/fault，也不是 WDT 触发。**
+    - 新仪器：`/sys/kernel/debug/regmap/0-00..0-09/registers` 可全量 dump（65536 行/颗；`0-00` 非 XX 行 37888），PON 块在 `0x1300-0x13ff`。脚本 `scripts/q24-pmic-dump.sh`（dump）、`q24-pmic-cycle.sh`（dump→重启→再 dump）、`q24-pmic-diff.sh`（差分 + 同 boot 噪声基线）。
+    - 结果：「配对 + 熄屏致死」前后 **PON 块逐字节相同**（`0-00`/`0-07` 的 `0x1300-0x13ff` diff = 0 行）；差异全落在 SDAM/计数器类易变区（扣掉同 boot 两次 dump 的噪声后仍有 404 个地址变化，均为状态数据）。
+    - `dmesg`：`watchdog: NMI not fully supported` + `Hard watchdog permanently disabled` ⇒ **不是看门狗复位**。
+    - 推论：复位很可能是 SoC 侧瞬时掉电/硬复位（PMIC 未记录 reason），电气/时序级（下一步只能靠外部测量或上游意见），不要再在「PMIC 掉电原因」上盲试。
+    - 证据：`logs/q24-pmic-r9b-{pre,post}-20261012-140553/`、`reports/q24-r9-20261012.md`。
+
+212. **★Q24 最小触发 = 「camcc + cambist 配对」；两个模块**单独**在硬门口径下都不致死（历史「cambist 单模块」定论性否证）。**
+    - 今日矩阵（三值硬门 `GetActive`+`DPMS`+RPMH 降档票；日常 OS `vk64 #60`）：
+      | 臂 | 台架 | 序列 | 结果 |
+      |---|---|---|---|
+      | cam=0 | L1FAIL | 熄屏 76 s → 唤醒 | 存活 |
+      | **cambist 单独** | L1FAIL | 熄屏 20 s → 唤醒 | **存活**（`DEATH=no`） |
+      | **camcc 单独** | L1FAIL | 熄屏 20 s → 唤醒 | **存活**（`DEATH=no`） |
+      | **配对** | GOOD | 熄屏 | **死亡**（`DEATH=blank`） |
+    - 推论：单模块无害、配对才致死 ⇒ 不要再用「cambist 单模块」叙事（TASKS/G1-22 历史句已过时）；也说明致死不是「某模块的 DT/驱动状态」而是**两者共存的组合效应**。
+    - 证据：`logs/q24-arm-bist-20261012-140945/`、`logs/q24-arm-cc-20261012-141138/`、`logs/q24-r9b-20261012-140552/`、`reports/q24-r9-20261012.md`。
+
+213. **★工具：`pgrep -f` 取 PID 再 `kill` 会在同一 shell 里**自杀**（即使 pattern 用了方括号）。**
+    - 现象：`for x in $(pgrep -f "q24-kil[l].sh"); do kill $x; done` 所在的 `bash -c` 包装进程**自身**被杀 ⇒ 命令中途死掉（后面的 `bash -n`、启动全没执行）。原因：同一条命令文本里还有**未加方括号**的目标名（`bash scripts/q24-kill.sh r9b`），包装进程的 `/proc/$$/cmdline` 因此命中正则。
+    - 规约：① 被杀目标名不要与本次命令文本共存（拆成两条命令）；② 优先「启动时把 PID 写文件、按 PID 杀」；③ 不得不用时排除自身：`[ "$x" = "$$" ] && continue`（必要时连 `$PPID`）。
+    - 参照技能 `pkill-self-match`（方括号只覆盖「唯一字面量也加方括号」的情形，覆盖不了同文本里的裸名）。
+    - 证据：2026-10-12 本会话一次自毙（无副作用，已改用 `ps -eo pid,cmd | grep -c` 与文件 PID）。
+
+214. **★工具：`scripts/serial-logger.sh` 会遗留孤儿 `cat` 占住 `/dev/ttyACM0`。**
+    - 现象：宿主侧 `kill <serial-logger pid>` 只杀父进程，`cat "$PORT"` 成孤儿继续占串口；多轮跑后出现多个读者（控制台数据被瓜分）或停读读者，表现为 `Device or resource busy` 与读数不完整。
+    - 修复（2026-10-12）：改为 `cat ... & CPID=$!; wait $CPID; kill $CPID`，并加 `trap "pkill -P $$ 2>/dev/null; exit 0" TERM INT`（按父属性杀，不用 `-f`）。
+    - 规约：跑前 `pgrep -f "^cat /dev/tty"` 清残、跑后确认为 0。
+    - 证据：`scripts/serial-logger.sh`、2026-10-12 两次踩到（清出 2 个孤儿 `cat`）。
+
+215. **★工具：在设备上主动 `reboot` 会把设备留在 Q28 STORM 冷起失败态（取「正常重启」对照时要当心）。**
+    - 现象：为取 PMIC 对照执行 `reboot -f` → 冷起落在 STORM（`drm_crtc_wait_one_vblank` 每秒 WARNING、`vblank wait timed out on crtc 0`、udevd 卡在 `fastrpc compute-cb@7`）；表现 = SSH 无 banner、控制台无 shell 提示符、串口 SysRq 不可用（gadget 控制台不支持）⇒ 只能物理按键恢复（约 11 分钟不可达）。
+    - 规约：① 取复位对照**优先用 Q24 致死本身**（自恢复、且不引入 STORM）；② 必须正常重启时先确认当前是真实日常起，并接受 STORM 风险；③ 全程保证有人读串口（否则控制台背压会拖住系统）。
+    - 证据：`reports/q24-noc-20261012.md` §5、本会话 13:27:51–13:57:52 记录。
