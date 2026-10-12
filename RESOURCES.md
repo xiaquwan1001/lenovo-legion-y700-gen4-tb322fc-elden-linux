@@ -477,7 +477,7 @@ git log --oneline -10
 | 2026-10-11 | `01a12d5a` | Q28 STORM 现象整理 | q28 | ✅ | active | STORM 真复现，坏发在 `msm_dsi … timing` 后 ~0.22s；落盘 `reports/q28-storm-bias-audit-20261011.md §7`（550742f） | - | - |
 | 2026-10-11 | `01a12d5a` | Q28 构建身份伪影定案（续/分支） | q28 | ✅ | active | 收尾 FAIL=0：NOCARD=UTS 版本串内容、STORM=`#60` 2 位号 4坏/2好（~67%）vs 3 位号 0坏/12+ | - | - |
 | 2026-10-12 | `01a12d85` | 进展分析与文档收口（本会话） | docs/analysis | ✗ | active | 修 G2 50→60 漂移、vk 版本账收口（在途 8→0、补登 vk90–93、清死脚本/unversioned）、补会话索引 | - | - |
-| 2026-10-12 | `01a12ef1` | 上游邮件通道定案 + v3 回归报告投递 | upstream/mail | ✅ | active | 通道三选一实测：Outlook basic auth 已禁、QQ 改写 Message-ID 断线程、**USTC 保真**；v3 于 08:22Z 投递，5 个归档（arm-msm/clk/linux-devicetree/lkml/regressions）收录、正文 sha256 一致；新增 `~/.local/bin/send-mail-ustc.py`、`lore-query.py`（过 Anubis PoW） | - | Taniya `quic_tdas` 邮箱满退信待重投；列表信被 Coremail 标 `[SPAM]` 需加白名单 |
+| 2026-10-12 | `01a12ef1` | 上游邮件通道定案 + v3 回归报告投递 | upstream/mail | ✅ | active | 通道三选一实测：Outlook basic auth 已禁、QQ 改写 Message-ID 断线程、**USTC 保真**；v3 于 08:22Z 投递，5 个归档（arm-msm/clk/linux-devicetree/lkml/regressions）收录、正文 sha256 一致；新增 `~/.local/bin/send-mail-ustc.py`、`lore-query.py`（过 Anubis PoW） | - | Taniya `quic_tdas` 邮箱满退信 → 已用上游 yaml 登记的备用地址 `taniya.das@oss.qualcomm.com` 单独重投（无退信）；列表信被 Coremail 标 `[SPAM]` 已加白名单 |
 
 ---
 
