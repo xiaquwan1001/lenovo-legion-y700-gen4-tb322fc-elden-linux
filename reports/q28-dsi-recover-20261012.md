@@ -182,3 +182,47 @@ VERSION=vk116-dsirec PATCH=patches/q28-dsi-link-recover.patch \
 - 并在 `dsi_link_clk_set_rate_6g_v2_9()` 返回处打印**返回值**（当前 power_on 把它的错误吞了：坏发 18 条 RCG WARN 但无 `failed to enable link clocks`）；
 - 目的：若"首条命令前"好/坏发就有寄存器/时钟差异 ⇒ 拿到真正的判别量；若完全相同 ⇒ 判别发生在命令发射的瞬间（PHY/lane 侧或 dispcc DYN 握手），下一靶转向 PHY 模拟/面板侧 LP11。
 
+
+---
+
+## 11. 首命令探针（vk118）与 CLK_STATUS 位解码：判别量 = **DYN pclk 域**
+
+坏发 `logs/q28-cold-20261012-200402-vk118-s1`（POR 冷起，L1FAIL；record `20261012T120542Z-vk118-s1`）。
+
+### 11.1 首条 bonded 命令**之前**的固定点（每发都打）
+
+```
+Q28 power_on: link_clk_set_rate -> 0            (初始 bring-up；无 rcg WARN)
+Q28 link[before-first-cmd]: CTRL=0x171 STATUS0=0x0 CLK_STATUS=0x343 INTR_CTRL=0xaa20aa02 CMD_DMA_CTRL=0x14000000
+Q28 clk[before-first-cmd]: byte=108107958 byte_intf=108107958 pixel=172972734 esc=19200000
+```
+
+### 11.2 位解码（`generated/dsi.xml.h`）
+
+| CLK_STATUS 位 | 值 | 含义 |
+|---|---|---|
+| 0x1/0x2 | AHBM HCLK | AON / DYN |
+| 0x40/0x80 | BYTECLK | AON / DYN |
+| 0x100/0x200/0x400 | ESCLK / PCLK / DYN_PCLK | |
+| 0x1000 / 0x2000 / 0x4000 | DYN_CMD_PCLK / **CMD_PCLK** / VID_PCLK | |
+| 0x10000 | **PLL_UNLOCKED** | |
+| STATUS0 0x1 / 0x2 | CMD_MODE_ENGINE_BUSY / CMD_MODE_DMA_BUSY | |
+
+| 时点 | CLK_STATUS | 置位域 | STATUS0 |
+|---|---|---|---|
+| 坏发·首命令前 | 0x343 | AHBM(AON+DYN) + AON_BYTECLK + AON_ESCCLK + **AON_PCLK** | 0x0 |
+| 坏发·失败后 | **0x3743** | += **DYN_PCLK(0x400) + DYN_CMD_PCLK(0x1000) + CMD_PCLK(0x2000)** | **0x20003** = ENGINE_BUSY+DMA_BUSY+bit17 |
+| 坏发·本补丁复位后 | **0x1743** | += DYN_PCLK + DYN_CMD_PCLK（**CMD_PCLK 清，DYN 位保留**） | 0x20003 |
+| 10-09 记录·好发同点 | 0x2343 | AON_PCLK + CMD_PCLK（**无 DYN 位**） | — |
+
+- **PLL_UNLOCKED 未置位** ⇒ 失败时 PLL 是锁的（排除 PLL 未锁假说）。
+- 坏发进入 **DYN pclk 域**（0x400/0x1000）并卡在那里；DSI 控制器复位只清 CMD_PCLK，**DYN 位保留** ⇒ 重试再撞同一域、逐字复现。
+  ⇒ 与 10-09 的「命令引擎撞上 DYN 像素时钟域切换」假说一致，且现在有**可读位证据**。
+- `STATUS0=0x20003`：命令引擎与命令 DMA 都报 busy（永不完成）；同期 **DSI 中断计数 0**（引擎从不产生完成/错误中断）。
+- `link_clk_set_rate -> 0`（初始与每次恢复都返回 0）：pclk RCG 的 `-EBUSY`/WARN 被 clk 框架吞掉 ⇒ **power_on 不报错不代表时钟编程成功**（18 条 `rcg didn't update` 与「返回 0」并存）。
+
+### 11.3 vk119（`q28/dsi-probe2` @ `fc7af79a1`，patch `patches/q28-dsi-probe2.patch`，镜像 sha `033d4676…`）
+
+= vk118 + **成功路径同点 dump**（`Q28 link[after-first-cmd-ok]`）：好发只有 before 点、坏发有 before/failure 点，缺的就是「好发在命令成功后台 DYN 位是否也置起」。
+有了它即可判定：DYN 位是**正常命令模式的常态**（那坏发就另有其因）还是**只在坏发出现的卡死标记**。
+
