@@ -255,3 +255,38 @@ Q28 clk[before-first-cmd]: byte=108107958 byte_intf=108107958 pixel=172972734 es
 并给所有既有 dump 加上 `CLK_CTRL`：
 目的 = 在**同一发里**看清 DYN 位「出现→释放」的完整生命周期，并定位是**哪条 DCS 命令**触发切换；好发对照自然就有了（好发每条命令都该是出现即释放）。
 
+
+---
+
+## 13. vk120 样本 + 原厂（stock）对照：CLK_CTRL 编程与 DT 双链路模型
+
+### 13.1 vk120-s1（20:24，POR 冷起，L1FAIL）——DYN 位一旦卡住就再也不变
+
+```
+8.8545  before-first-cmd: CLK_STATUS=0x343  CLK_CTRL=0x23f
+9.0618  before-reset:     CLK_STATUS=0x3743  STATUS0=0x20003   ← 第 1 条命令即卡
+9.0802  after-reset:      CLK_STATUS=0x1743  （DYN 位保留）
+9.1097  cmd[clk-status-change] op=0xff CLK_STATUS=0x1743      ← 全boot唯一一次变化（重试第 1 条 = 0xff）
+之后 3 次 before/after-reset 全 0x1743 —— 不再有任何变化
+```
+
+- `CLK_CTRL` 全程 `0x23f` = `AHBS_HCLK_ON|AHBM_SCLK_ON|PCLK_ON|DSICLK_ON|BYTECLK_ON|ESCCLK_ON|FORCE_ON_DYN_AHBM_HCLK`，与**原厂 `dsi_host.c:97` 的 `DSI_CLK_CTRL_ENABLE_CLKS` 定义逐位相同**
+  ⇒ CLK_CTRL 编程没有漏位（原本怀疑「缺 DYN pclk 的 force-on 位」不成立：该寄存器只定义了 FORCE_ON_DYN_AHBM_HCLK 这一个 force 位）。
+- `clk-status-change` 全程只出现 **1 次**：DYN pclk 域一旦卡住就**永不释放**，重试全部在 0x1743 下失败。
+
+### 13.2 stock（原厂）对照——`backup/stock-elden/elden.dts` + `stock-src/android_kernel_lenovo_sm8750`
+
+| 项 | 原厂 | 本树 | 结论 |
+|---|---|---|---|
+| 双链路模型 | `mdss_dsi0/dsi1` 各带 `qcom,split-link-supported`；单个 `qcom,dsi-display-primary` 同时引用两个 ctrl+phy | `qcom,dual-dsi-mode`+`sync-dual-dsi`+`master-dsi` | **同一件事的主线写法** ⇒ 「删掉 sync-dual-dsi 以绕开双引擎」**不是有效实验**（会让一条链路不被初始化/时钟化），已排除 |
+| CLK_CTRL | `DSI_CLK_CTRL_ENABLE_CLKS` 含 `FORCE_ON_DYN_AHBM_HCLK` | 逐位相同 | 寄存器编程无差异 |
+| 命令传输（sync 双链路） | `msm_dsi_manager_cmd_xfer()`：`xfer_prepare(另一条 host)` → `cmd_tx(本 host)` → `cmd_xfer_commit` **两条都提交**（标准 `dsi_cmd_dma` 路径 + 正常中断/completion） | 自定义 `msm_dsi_host_bonded_cmd_*` 序列（prepare→build→init_trigger→stage→trigger→arm_master→wait_master→poll_slave） | **结构性差异**：卡点在命令引擎启动瞬间的 DYN pclk 域切换，触发次序/等待方式正是两者最大不同 ⇒ 候选修复 |
+| 默认面板 | `elden_nt36523_csot_3k_dsc_vid`（video 模式 DSC） | mainline `panel-novatek-nt36536` | 同族 |
+
+### 13.3 下一步候选
+
+1. **vk121（推荐）**：把双链路命令传输换成**原厂/stock 的写法**（prepare 两条 host → 在 master 上 `cmd_tx` → 用 `msm_dsi_host_cmd_xfer_commit()` 同时提交两条），即弃用自定义 `bonded_cmd_*` 序列。
+   理由：原厂在**同一块硅**上就是这么发命令的；卡点正是「命令引擎启动」这一步。
+2. 继续采样等 **GOOD 发**（对比生命周期；每发需一次 POR，当前处于坏发簇）。
+3. 暂时把精力移到 Q24（上游 RFC v2 + 外部电测），等坏发簇翻转再回来。
+
