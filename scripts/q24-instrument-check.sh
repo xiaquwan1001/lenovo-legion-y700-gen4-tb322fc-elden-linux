@@ -17,10 +17,8 @@ S(){ timeout "${2:-20}" "${SSH[@]}" "$TAB" "$1" 2>&1; }
 log(){ printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$*" | tee -a "$OUT/run.log"; }
 
 log "OUT=$OUT（instrument check；cam 不加载）"
-sha256sum /tmp/dev-sess.sh /tmp/dev-blank.sh > "$OUT/device-scripts.sha256"
-scp -q -o StrictHostKeyChecking=no /tmp/dev-sess.sh "$TAB:/tmp/q24sess.sh"
-scp -q -o StrictHostKeyChecking=no /tmp/dev-blank.sh "$TAB:/tmp/q24blank.sh"
-S 'chmod +x /tmp/q24sess.sh /tmp/q24blank.sh; sh /tmp/q24sess.sh; echo sess_rc=$?; echo "DB=$DBUS_SESSION_BUS_ADDRESS XDG=$XDG_RUNTIME_DIR"' | tee -a "$OUT/run.log"
+for f in q24-dev-sess.sh q24-dev-blank.sh; do scp -q -o StrictHostKeyChecking=no "scripts/$f" "$TAB:/tmp/$f"; done
+S 'chmod +x /tmp/q24-dev-*.sh; sh /tmp/q24-dev-blank.sh false; echo "sess_probe_rc=$?"' | tee -a "$OUT/run.log"
 
 S 'grep -q debugfs /proc/mounts || mount -t debugfs none /sys/kernel/debug 2>/dev/null; echo 0 > /sys/kernel/debug/tracing/tracing_on; echo > /sys/kernel/debug/tracing/trace; echo 1 > /sys/kernel/debug/tracing/events/rpmh/enable; echo 1 > /sys/kernel/debug/tracing/tracing_on; echo trace_on'
 set -m
@@ -32,12 +30,12 @@ printf '%s instr-before\n' "$MARK" >> "$OUT/marks.txt"
 log "trace stream pid=$TPID mark=$MARK"
 
 log "=== 熄屏（SetActive true）==="
-S 'sh /tmp/q24blank.sh true' | tee -a "$OUT/blank.txt" | tee -a "$OUT/run.log"
+S 'sh /tmp/q24-dev-blank.sh true' | tee -a "$OUT/blank.txt" | tee -a "$OUT/run.log"
 sleep 4
 if ! S 'echo up' 8 >/dev/null; then
   log "设备在熄屏后失联（硬复位/hang）！"
 else
-  S 'sh /tmp/q24sess.sh; echo "ACTIVE=$(timeout 10 gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.freedesktop.DBus.Properties.Get org.gnome.ScreenSaver Active 2>&1)"; echo "DPMS=$(cat /sys/class/drm/card0-DSI-1/dpms)"; echo "UP=$(cut -d. -f1 /proc/uptime)"' | tee -a "$OUT/after.txt" | tee -a "$OUT/run.log"
+  S 'sh /tmp/q24-dev-blank.sh false; echo "DPMS=$(cat /sys/class/drm/card0-DSI-1/dpms)"; echo "UP=$(cut -d. -f1 /proc/uptime)"' | tee -a "$OUT/after.txt" | tee -a "$OUT/run.log"
 fi
 sleep 2
 kill "$TPID" 2>/dev/null
@@ -47,7 +45,7 @@ VALUE=$(tail -n +"$((MARK+1))" "$OUT/tracepipe.txt" | grep -E 'addr: 0x30080|add
 printf '%s\n' "$VALUE" | tee -a "$OUT/run.log"
 # 复原：唤醒
 if S 'echo up' 8 >/dev/null; then
-  S 'sh /tmp/q24blank.sh false' | tee -a "$OUT/wake.txt"
+  S 'sh /tmp/q24-dev-blank.sh false' | tee -a "$OUT/wake.txt"
   log "已唤醒（SetActive false）"
 fi
 log "DONE OUT=$OUT"

@@ -48,12 +48,21 @@ done
 S 'chmod +x /tmp/q24-dev-*.sh' >/dev/null
 
 # ---- 3) 等会话 + 关自动熄屏 ----
-ses=0; for i in $(seq 1 30); do
-  r=$(S 'sh /tmp/q24-dev-blank.sh false 2>&1 | head -1' 8)
-  case "$r" in *active=*) ses=1; break;; esac
+# 会话就绪 = 必须拿到**真实布尔回复**（active=(true/false)），不接受 error 串
+# （2026-10-12 教训：error 串里也有 'active='，会让 gate 误判通过）
+ses=0; r=""
+for i in $(seq 1 40); do
+  r=$(S 'sh /tmp/q24-dev-blank.sh false 2>&1 | head -1' 10)
+  case "$r" in *'active=(true'*|*'active=(false'*) ses=1; break;; esac
   sleep 5
 done
-[ "$ses" = 1 ] || { log "GATE_FAIL: 会话/D-Bus 不可达"; exit 4; }
+[ "$ses" = 1 ] || { log "GATE_FAIL: 会话总线/ScreenSaver 无有效响应（最后一次: $r）"; S 'sh /tmp/q24-dev-dstate.sh' > "$OUT/abort-dstate.txt"; exit 4; }
+# #198 台架健康前置检查：D 态里出现 合成器/Xwayland/GPU 捕获 ⇒ GPU/显示故障态，仪器必坏
+S 'sh /tmp/q24-dev-dstate.sh' > "$OUT/s0-dstate.txt"
+if grep -qiE 'phoc|phosh|Xwayland|gnome-session|gsd-|rpm_resume|a6xx|msm_gpu|msm_job_run|dma_fence' "$OUT/s0-dstate.txt"; then
+  log "GATE_FAIL: 台架不健康（D 态含合成器/GPU：#198 故障态）见 s0-dstate.txt"; exit 4
+fi
+log "会话/台架健康门通过: $r"
 S 'sh /tmp/q24-dev-keepawake.sh' | tee -a "$OUT/s0-keepawake.txt" | tee -a "$OUT/run.log"
 S 'sh /tmp/q24-dev-snap.sh s0' > "$OUT/s0-snap.txt"
 S 'sh /tmp/q24-dev-dstate.sh' > "$OUT/s0-dstate.txt"
@@ -79,6 +88,12 @@ phase_blank(){
   case "$fin" in *'active=(true'*) ;; *) log "$tag 硬门 FAIL(active): $fin";; esac
   case "$fin" in *'dpms=Off'*) ;; *) log "$tag 硬门 FAIL(dpms): $fin";; esac
   log "$tag 硬门: active/dpms=[$fin] mmcx/cx 票=$votes"
+  case "$fin" in *'active=(true'*) HG_A=1;; *) HG_A=0;; esac
+  case "$fin" in *'dpms=Off'*) HG_D=1;; *) HG_D=0;; esac
+  if [ "$HG_A" = 0 ] || [ "$HG_D" = 0 ] || [ "$votes" -eq 0 ]; then
+    log "GATE_FAIL: $tag 仪表无效（需 3/3：active=true + dpms=Off + 降档票>0）⇒ 本台架不能用于 Q24，请物理 POR 重取"
+    return 2
+  fi
   sleep 8
   if died; then log "DEATH_AT=$tag/blank（熄屏后 ≤14 s）"; DEATHS+=("$tag/blank"); return 1; fi
   local i=0
@@ -107,7 +122,9 @@ phase_blank(){
 # ---- 6) C0: cam=0 对照 ----
 log "=== C0: cam=0 对照（硬门 + blank/hold/wake）==="
 S 'sh /tmp/q24-dev-snap.sh c0' > "$OUT/c0-snap.txt"
-phase_blank c0 "$HOLD" || { log "跳过 C1/C2"; C0DONE=1; }
+phase_blank c0 "$HOLD"; RC=$?
+if [ "$RC" = 2 ]; then log "ABORT: C0 仪表硬门失败（cam=0 都不能熄屏）⇒ 台架无效"; kill "$TPID" 2>/dev/null; exit 5; fi
+[ "$RC" = 1 ] && { log "跳过 C1/C2"; C0DONE=1; }
 
 # ---- 7) C1: camcc ----
 if [ -z "${C0DONE:-}" ]; then
@@ -116,7 +133,9 @@ if [ -z "${C0DONE:-}" ]; then
   sleep "$SETTLE"
   S 'sh /tmp/q24-dev-snap.sh c1' > "$OUT/c1-snap.txt"
   grep -E 'lsmod-cam|state_synced|genpd' "$OUT/c1-snap.txt" | tee -a "$OUT/run.log"
-  phase_blank c1 "$HOLD" || { log "跳过 C2"; C1DONE=1; }
+  phase_blank c1 "$HOLD"; RC=$?
+  [ "$RC" = 2 ] && { log "ABORT: C1 仪表硬门失败"; kill "$TPID" 2>/dev/null; exit 5; }
+  [ "$RC" = 1 ] && { log "跳过 C2"; C1DONE=1; }
 fi
 
 # ---- 8) C2: + cambist ----
