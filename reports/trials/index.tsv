@@ -66,3 +66,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-12T10:55:54Z	q28-cycle-vk116-w1	vk116-dsirec	warm	fastboot-boot	GOOD	810445fa5fad	logs/q28-cycle-20261012-185508
 2026-10-12T11:12:36Z	vk116-s4	vk116-dsirec	por	fastboot boot (cold fb after user POR)	L1FAIL	810445fa5fad	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-191056-vk116-s4
 2026-10-12T11:29:45Z	q28-cycle-vk117-r1	vk117-q28rec2	warm	fastboot-boot	GOOD	b9fa06dbda2f	logs/q28-cycle-20261012-192855
+2026-10-12T11:42:43Z	vk117-s1	vk117-q28rec2	por	fastboot boot (cold fb after user POR)	L1FAIL	b9fa06dbda2f	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261012-194103-vk117-s1

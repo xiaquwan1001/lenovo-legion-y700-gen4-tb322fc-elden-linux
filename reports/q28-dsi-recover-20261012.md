@@ -141,3 +141,44 @@ VERSION=vk116-dsirec PATCH=patches/q28-dsi-link-recover.patch \
   ⇒ 该现象 2/2（uptime<25 s）vs 3/3 正常（uptime>100 s），已落 **PITFALLS #225**，并在循环里加「等就绪再复位」；就绪门已接入 `q28-boot-cycle.sh`。
 - 待办：设备 POR 后重跑「就绪门 + 3 轮」，**必须抓到至少一次坏发**才算验证 vk117（判据：无 `unbalanced disables`、出现 before/after 寄存器、第 2 次 DCS 是否仍 -110）。
 
+
+---
+
+## 10. vk117 首个坏发：DSI 控制器复位"确实生效"但**不能**救回（2026-10-12 19:41，POR 冷起，L1FAIL）
+
+日志 `logs/q28-cold-20261012-194103-vk117-s1/dmesg.txt`；record `reports/trials/20261012T114243Z-vk117-s1.json`。
+
+### 10.1 寄存器转储结论：控制器被复位了，故障原样复现
+
+| 时点 | CTRL | STATUS0 | CLK_STATUS | INTR_CTRL | CMD_DMA_CTRL |
+|---|---|---|---|---|---|
+| before-reset #1 | 0x175 | 0x20003 | **0x3743** | 0x2200200 | 0xd4000000 |
+| after-reset #1 | 0x171 | 0x20003 | **0x1743** | 0x2200200 | 0x14000000 |
+| before-reset #2 | 0x175 | 0x20003 | 0x1743 | 0x2200200 | 0xd4000000 |
+| after-reset #2 | 0x171 | 0x20003 | 0x1743 | 0x2200200 | 0x14000000 |
+| before/after #3 | 同上 | | | | |
+
+- `CLK_STATUS` 的 `DYN_PCLK_ACTIVE`/`DYN_CMD_PCLK_ACTIVE`（0x3743→0x1743）**被复位清掉了**，`CMD_DMA_CTRL=0xd4000000→0x14000000`、`CTRL 0x175→0x171` 同样改变
+  ⇒ **DSI 控制器寄存器态确实被整车复位**（`dsi_sw_reset_v2_9` + PHY 下电/上电 + regulator 循环）。
+- 但第 2/3 次 DCS 写入仍**逐字相同**地失败：`command DMA timeout: status=0x2200200`（200 ms 软超时）→ `master=-110 peer=-110`。
+- **⇒ 楔点不在 DSI 控制器的可编程寄存器态**。「驱动内复位 DSI ctrl+PHY」这条路线到此**走到尽头**（PITFALLS #224 规约②的假设被否证）。
+- 恢复路径本身这次是干净的：`unbalanced disables` **0 次**（vk116 为 6 次）；剩余的 `Turning OFF PHY while PLL is on` 与正常下电路径同源。
+
+### 10.2 两个新的硬判别量（好/坏发二分，均为 0 vs 非 0）
+
+1. **`disp_cc_mdss_pclk{0,1}_clk_src: rcg didn't update its configuration.`**（`clk-rcg2.c:136`，`clk_pixel_set_rate`→`clk_rcg2_configure`→`update_config`，等 `CFG_UPDATE` 500 µs 未清）
+   - 坏发 vk117-s1：**18 次**（9×pclk0 + 9×pclk1，集中在 3 次恢复各自的 `power_on` 里，每次 6 条）；坏发 vk116-s4：**18 次**。
+   - 好发 vk116-s1 / vk116-首测：**0 次**。
+   - 位置：`msm_dsi_host_power_on → dsi_link_clk_set_rate_6g_v2_9 → clk_set_rate → clk_pixel_set_rate`（**在 `dsi_sw_reset` 之前**，即 RCG 重编程发生在 DSI 还处于"DYN pclk 未完成"态时）。
+2. **DSI 中断计数**：好发 `dsi_isr` IRQ **41 次**（另一条 0）；坏发两条 `dsi_isr` 自开机起**全 0**（`/proc/interrupts`，死机态实测 351 s 未变）
+   ⇒ 坏发里 DSI 控制器**从未产生任何中断**，命令引擎装填后从不推进。
+- 另：`dsi1vco_clk`（从 PLL）好坏发都关（0 0 0）、`mdss_int2_gdsc` 好坏发都 `off-0` ⇒ 这两个**不是**判别量（早期怀疑作废）。
+
+### 10.3 下一步（vk118 设计）
+
+把"**首次命令 DMA 之前**"的 DSI + 时钟态在**每发**都打出来（好/坏发都打），直接找判别位，而不是只在失败后才看：
+
+- `dsi_mgr_bonded_cmd_xfer()` 里用一次性 static 标志，在**第一条** bonded 命令前 dump：`CTRL/STATUS0/CLK_STATUS/INTR_CTRL/CMD_DMA_CTRL` + `clk_get_rate(pixel/byte)` + pclk RCG 的父索引（`CFG_REG`）；
+- 并在 `dsi_link_clk_set_rate_6g_v2_9()` 返回处打印**返回值**（当前 power_on 把它的错误吞了：坏发 18 条 RCG WARN 但无 `failed to enable link clocks`）；
+- 目的：若"首条命令前"好/坏发就有寄存器/时钟差异 ⇒ 拿到真正的判别量；若完全相同 ⇒ 判别发生在命令发射的瞬间（PHY/lane 侧或 dispcc DYN 握手），下一靶转向 PHY 模拟/面板侧 LP11。
+
