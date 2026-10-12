@@ -151,3 +151,10 @@ We can run further experiments (registers, traces, chip revisions) on request.
 
 Thanks,
 Xuqianhui (elden bring-up, Lenovo Y700 Gen4 / SM8750)\`\`\`
+
+## 8. 投递结果（2026-10-13 回填；本文件「只增不改」，故第 1 行状态行保留当时口径）
+
+- **v3 已于 2026-10-12T08:22:05Z 发送并归档**：`https://lore.kernel.org/linux-arm-msm/179179331695.677917.11557670447411700010@mail.ustc.edu.cn`（同一 Message-ID 亦见 `/linux-clk/`、`/linux-devicetree/`、`/lkml/`、`/regressions/`）。
+- **独立复核（2026-10-13，编排者自行取回 raw，未采信发送记录）**：正文 canonical body sha256 = `4a64277a95d06dfdb0bd75c71b60d16dd3955a2ad55c7752fecb303f7ae91c7`，与本地发送版 `~/文档/elden-upstream-v3-email.send.txt` **逐字节相同**；按发件人 `f:xiaqinghuan@mail.ustc.edu.cn` 检索归档**仅此 1 封** ⇒ §1 的「v1/v2 均未见归档」与正文 DELIVERY NOTE 经复核成立。
+- **发出件 vs 仓库副本**：发出件头 = `To: linux-arm-msm@vger.kernel.org`，Cc 去掉 outlook 自抄送、增 `linux-kernel@vger.kernel.org` + `regressions@lists.linux.dev`；Taniya Das `quic_tdas@quicinc.com` 554 mailbox full ⇒ 已改 `taniya.das@oss.qualcomm.com` 单人重投（无退信）。`out/q24-regression-v3-email.txt` 已于 2026-10-13 同步为发出件头部（正文本就逐字节同）。
+- **§4 清单中已失效的通道说明（勿再照做）**：Outlook 网页发送（账号级 basic auth 已禁用）与 `majordomo@vger.kernel.org` 均**废止**；实际通道 = `smtp.ustc.edu.cn:465` 脚本发送（`~/.local/bin/send-mail-ustc.py <file> [--send]`），订阅走 `<list>+subscribe@vger.kernel.org`（`linux-arm-msm` 已于 2026-10-12 16:16 CST 订阅成功，Confirm→Welcome）。
