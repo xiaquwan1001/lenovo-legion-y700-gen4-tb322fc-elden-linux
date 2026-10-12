@@ -60,6 +60,7 @@
 - 10-10 定案：L1=cmd-DMA hang，L2=下游；**NOCARD/STORM 双模式**；`PITFALLS #164/#165`；死内核事故修复（#162）。
 - 10-10 深夜：**真实日常失败=STORM**（C1real POR + C2 冷 fastboot 2/2）；`reboot2` 暖复位粘 NOCARD（#166）；vk86 STORM 台架对入库。
 - **下一步（唯一门）**：同一镜像（vk86-round2）冷起 2 次（隔真实 POR），判定「同二进制非确定性 ⇒ 停 Q28 转 Q24」还是「`/init` 时序敏感 ⇒ 继续」。
+- **2026-10-12 晚（收尾轮）**：`vk113-dailyid`（3 位身份重编，日常组合，可复现）+ `vk114-dailyid-round`（+ 上游 `2028280686f4` 移植）；7 发冷起 **4 坏/7**，4 臂同率、签名逐字同 ⇒ 身份/补丁/复位时长都不是轴；坏发**按时间成簇** ⇒ 缓解不在镜像层。上游报告草稿就绪（`archive/topics/UPSTREAM-REPORT-q28-bonded-dsi-2026-10-12.md`）。注：本节早前的「构建身份伪影」结论作废。
 
 **Q24**
 - 10-07 根因：单模块 `cambistmclkcc-sm8750` 单独加载即触发；H1（去 power-domains）7/9、D1/D2 无效。
@@ -74,12 +75,12 @@
 
 ## 3. 产物清单（按类）
 
-**报告（reports/，活跃工作区，未入库）**：`q28-DOSSIER.md`(SSOT)、`q28-INDEX.md`、`q28-two-layers-20261010.md`、`q28-upstream-diff-20261010.md`、`q28-upstream-research-20261010.md`、`q28-nocard-research-20261010.md`、`q28-orchestration-20261010.md`、`q28-handoff-20261010.md`、`local-cleanup-audit-20261010.md`；**2026-10-12 新增**：`q28-storm-bias-audit-20261011.md`、`q28-community-cases-20261012.md`、`q28-handoff-20261012.md`、`q28-upstream-static-20261012.md`、`q24-repro-20261011.md`（含更正横幅）、`q24-stageA-20261012.md`、`q24-ctl-20261012.md`、`q24-s123-20261012.md`、`q24-cseries-20261012.md`、`q24-h1-dtarm-20261012.md`、`q24-h1-result-20261012.md`、`q24-mech-20261012.md`、`q24-noc-20261012.md`、`q24-r9-20261012.md`
+**报告（reports/，活跃工作区，未入库）**：`q28-DOSSIER.md`(SSOT)、`q28-INDEX.md`、`q28-two-layers-20261010.md`、`q28-upstream-diff-20261010.md`、`q28-upstream-research-20261010.md`、`q28-nocard-research-20261010.md`、`q28-orchestration-20261010.md`、`q28-handoff-20261010.md`、`local-cleanup-audit-20261010.md`；**2026-10-12 新增**：`q28-storm-bias-audit-20261011.md`、`q28-community-cases-20261012.md`、`q28-handoff-20261012.md`、`q28-upstream-static-20261012.md`、`q24-repro-20261011.md`（含更正横幅）、`q24-stageA-20261012.md`、`q24-ctl-20261012.md`、`q24-s123-20261012.md`、`q24-cseries-20261012.md`、`q24-h1-dtarm-20261012.md`、`q24-h1-result-20261012.md`、`q24-mech-20261012.md`、`q24-noc-20261012.md`、`q24-r9-20261012.md`；**当晚新增**：`q28-vk113-20261012.md`、`q28-identity-retest-20261012.md`
 
 **计划（.pi/plans/）**：`research-q24-cambist-2026-10-09.md`、`research-q28-panel-init-2026-10-09.md`、`research-q28-dpu-powerup-race-2026-10-09.md`、`2026-10-09-Q24-mxnom-sweep-runbook.md`、`2026-10-09-Q24-变体与G1-34资产.md`、`2026-10-09-Q28-密集复现与vk74.md`、`2026-10-09-Q28-证据与方案.md`、`2026-10-09-Q28-诊断上机包.md`、`2026-10-09-Q28b-断电态证据.md`、`2026-10-09-深夜-Q28寄存器差分-模块化在机验证-槽位险情.md`、`2026-10-10-Q24-深研.md`、`2026-10-10-Q28-深研.md`、`2026-10-10-E4a-FIX1-DT.md`、**`2026-10-12-Q24-静态复核与实验计划.md`**
 
 **脚本（scripts/）**：
-- Q28：`q28-devprobe.sh`（三态判据）、`q28-boot-cycle.sh`（已补 card0 硬门）、`q28-ab-delay.sh`、`q28-race-hunt.sh`、`q28-verdict.sh`、`q28diag-forensic.sh`
+- Q28：`q28-devprobe.sh`（三态判据）、`q28-boot-cycle.sh`（已补 card0 硬门）、`q28-ab-delay.sh`、`q28-race-hunt.sh`、`q28-verdict.sh`、`q28diag-forensic.sh`；**2026-10-12 晚新增**：`q28-build-daily-id.sh`（日常镜像重编：钉 config/UTS/构建身份 + 可选 PATCH，含多重硬门与解包复验）
 - Q24：`sleep-sweep.sh`、`sleep-bisect.sh`、`sleep-cumulative.sh`、`cam-mode.sh`、`camera-modules-load.sh`、`keep-awake.sh`；**2026-10-12 新增**：`q24-s123-run.sh`、`q24-cseries-run.sh`、`q24-mech-run.sh`、`q24-instrument-check.sh`、`q24-build-h1-dtarm.sh`、`q24-dev-{sess,blank,keepawake,snap,dstate}.sh`（设备侧，`setpriv` 降 uid=1000 取会话总线）；**2026-10-12 下午新增**：`q24-noc-run.sh`（同 boot 双相位差分 + 恢复观察）、`q24-kill.sh`（单次致死，`ARM=cambist|camcc|pair` + `PMIC=0/1`）、`q24-pmic-dump.sh`、`q24-pmic-cycle.sh`、`q24-pmic-diff.sh`、`q24-dev-trace-on.sh`；另修 `serial-logger.sh`（孤儿 `cat` 回收，`PITFALLS #214`）
 
 **补丁（patches/）**：`q28-dsi-regdump{,-with-baseline}.patch`、`q28-poweron-propagate.patch`、`q28-cmd-dma-delay.patch`、`q28-dsi-cmd-recover.patch`、`q28-methodB-round-byteclk.patch`(+`q28-methodB-NOTES.md`)、`q28-round-vk86.patch`
