@@ -389,7 +389,8 @@
 
 > 审查已完成（2026-10-04，只审不改）：payload=相对主线 v7.2 的 **125 改 + 11 新文件（≈12.4k 行）**，
 > 分级 A/B/C/D 与推进顺序见 `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`。机械检查全净
-> （checkpatch/DTC/dt-validate 仅 1 红点=usb@a600000）。
+> (checkpatch/DTC/dt-validate 仅 1 红点=usb@a600000)。
+> **上游化规则/违例清单/下游隔离清单 = `reports/upstream-policy-20261013.md`**（三问门 + 强制框架表 + Q3 违例 + 薄下游层预算）；本节只维护 M1–M5 状态。
 
 | ID | 任务 | 状态 | 依赖 | 判据 | 证据 |
 |---|---|---|---|---|---|
