@@ -52,3 +52,26 @@
 ## 发送纪律
 
 英文 commit + `Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>`；在**树根**跑 `scripts/get_maintainer.pl` 取收件人；`git send-email --dry-run --confirm=never`（git 2.53 无 `--no-confirm`）通过后发送；lore 复核归档（技能 `upstream-mail-ustc`）。
+
+## 投递记录（2026-10-13 18:29 +0800，**已发送**）
+
+系列用 `git format-patch --cover-letter -3` 重生成（补 cover letter，编号 0/3–3/3），发送前 checkpatch 4/4 = 0E/0W。
+
+| 邮件 | Message-ID | 归档（lore 独立取回） |
+|---|---|---|
+| [PATCH 0/3] 封面 | `20261013102927.1141696-1-xiaqinghuan@mail.ustc.edu.cn` | 已归档 |
+| [PATCH 1/3] document usb-psy-name | `20261013102927.1141696-2-xiaqinghuan@mail.ustc.edu.cn` | 见 §归档复核 |
+| [PATCH 2/3] describe the two-connector HS data path | `20261013102927.1141696-3-xiaqinghuan@mail.ustc.edu.cn` | 见 §归档复核 |
+| [PATCH 3/3] support two connectors sharing one HS data bus | `20261013102927.1141696-4-xiaqinghuan@mail.ustc.edu.cn` | 见 §归档复核 |
+
+- 收件人：To = Greg Kroah-Hartman / Thinh Nguyen / linux-usb@vger.kernel.org；Cc = Rob Herring / Krzysztof Kozlowski / Conor Dooley / devicetree@vger.kernel.org / linux-arm-msm@vger.kernel.org / linux-kernel@vger.kernel.org。
+- 发送命令：`git send-email --confirm=never --suppress-cc=self --to=... --cc=... patches/upstream/m3-2026-10-13/*.patch`（dry-run 先过、Result: OK）。
+- 本地正文字节 sha256（与归档 raw 逐字比对用）：
+
+```
+1878412fdba242291e740e0f26cc35d7e3010a997120bc5d5e60791e32f3ebab  0000-cover-letter.patch
+605b54f6ea5b915fff109822ee596f43d261e6beecc7570f24f88d686035edf3  0001-dt-bindings-usb-snps-dwc3-document-usb-psy-name.patch
+368ae7c84d657019d38f87e73e1a40f74fbf627c6e77b116f9d989a75fd2a061  0002-dt-bindings-usb-snps-dwc3-describe-the-two-connector.patch
+19bd4b7b4de24876d6a45bcb0a4a318b4cdaad4c4e1d4422bf51d1df3bc9771d  0003-usb-dwc3-support-two-connectors-sharing-one-HS-data-.patch
+```
+- 回信跟踪：`read-mail-ustc.py --days 7 --replies-only`。

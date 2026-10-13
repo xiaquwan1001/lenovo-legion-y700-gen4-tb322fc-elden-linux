@@ -1,0 +1,41 @@
+From 4184f2efdf434aa6f77ccca6a47b69e0fcc278d4 Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 18:23:50 +0800
+Subject: [PATCH 4/4] drm/panel: novatek-nt36536: reject enable when prepare
+ failed
+
+drm_panel_prepare() cannot report a failure to its caller, so the enable
+part of the bridge chain still runs with panel->prepared unset. Provide an
+enable() callback that returns -EIO in that case, so the panel is not
+marked as enabled and the backlight stays off.
+
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index 88a003f5a9..698e7b85a8 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -123,6 +123,12 @@ static int novatek_prepare(struct drm_panel *panel)
+ 	return ret;
+ }
+ 
++static int novatek_enable(struct drm_panel *panel)
++{
++	/* The bridge enable chain can continue after a failed prepare callback. */
++	return panel->prepared ? 0 : -EIO;
++}
++
+ static int novatek_off(struct mipi_dsi_multi_context *dsi_ctx)
+ {
+ 	mipi_dsi_dcs_set_display_off_multi(dsi_ctx);
+@@ -186,6 +192,7 @@ static int novatek_get_modes(struct drm_panel *panel,
+ 
+ static const struct drm_panel_funcs novatek_panel_funcs = {
+ 	.prepare = novatek_prepare,
++	.enable = novatek_enable,
+ 	.unprepare = novatek_unprepare,
+ 	.get_modes = novatek_get_modes,
+ };

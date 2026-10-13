@@ -1,0 +1,109 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Elden Mainline Agent <elden-mainline@localhost>
+Date: Tue, 13 Oct 2026 19:44:10 +0800
+Subject: [PATCH] dt-bindings: media: i2c: add Giantec GT9764 camera lens actuator
+
+Add DT binding for the Giantec GT9764 I2C lens actuator. It provides a
+10-bit position DAC and module-dependent advanced actuator control (AAC)
+parameters.
+
+Signed-off-by: Elden Mainline Agent <elden-mainline@localhost>
+ MAINTAINERS                                        |    6 ++
+ .../bindings/media/i2c/giantec,gt9764.yaml         |   71 ++++++++++++++++++++
+ 2 files changed, 77 insertions(+)
+---
+diff --git a/MAINTAINERS b/MAINTAINERS
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -10866,6 +10866,12 @@
+ F:	Documentation/devicetree/bindings/media/i2c/galaxycore,gc08a3.yaml
+ F:	drivers/media/i2c/gc08a3.c
+ 
++GIANTEC GT9764 LENS VOICE COIL DRIVER
++M:	Elden Mainline Agent <elden-mainline@localhost>
++L:	linux-media@vger.kernel.org
++S:	Maintained
++F:	Documentation/devicetree/bindings/media/i2c/giantec,gt9764.yaml
++
+ GALAXYCORE GC2145 SENSOR DRIVER
+ M:	Alain Volmat <alain.volmat@foss.st.com>
+ L:	linux-media@vger.kernel.org
+
+diff --git a/Documentation/devicetree/bindings/media/i2c/giantec,gt9764.yaml b/Documentation/devicetree/bindings/media/i2c/giantec,gt9764.yaml
+new file mode 100644
+index 0000000000..7c5cc66e30
+--- /dev/null
++++ b/Documentation/devicetree/bindings/media/i2c/giantec,gt9764.yaml
+@@ -0,0 +1,71 @@
++# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
++%YAML 1.2
++---
++$id: http://devicetree.org/schemas/media/i2c/giantec,gt9764.yaml#
++$schema: http://devicetree.org/meta-schemas/core.yaml#
++
++title: Giantec GT9764 camera lens actuator
++
++maintainers:
++  - Elden Mainline Agent <elden-mainline@localhost>
++
++description:
++  I2C-controlled lens actuator with a 10-bit position DAC and advanced actuator
++  control (AAC). AAC parameters depend on the lens module's mechanical response.
++
++properties:
++  compatible:
++    const: giantec,gt9764
++
++  reg:
++    maxItems: 1
++
++  vddio-supply:
++    description: Digital I/O supply.
++
++  vdd-supply:
++    description: Actuator supply, independently switched for the lens.
++
++  giantec,aac-mode:
++    $ref: /schemas/types.yaml#/definitions/uint32
++    maximum: 255
++    description: Module-specified AAC mode configuration (register 0x06).
++
++  giantec,aac-timing:
++    $ref: /schemas/types.yaml#/definitions/uint32
++    maximum: 255
++    description: Module-specified AAC timing configuration (register 0x07).
++
++  settling-time-us:
++    minimum: 1
++    description:
++      Minimum interval after programming a lens position before issuing
++      another position command, based on the lens module's damping response.
++
++required:
++  - compatible
++  - reg
++  - vddio-supply
++  - vdd-supply
++  - giantec,aac-mode
++  - giantec,aac-timing
++  - settling-time-us
++
++additionalProperties: false
++
++examples:
++  - |
++    i2c {
++        #address-cells = <1>;
++        #size-cells = <0>;
++
++        lens@c {
++            compatible = "giantec,gt9764";
++            reg = <0x0c>;
++            vddio-supply = <&camera_io>;
++            vdd-supply = <&camera_af>;
++            giantec,aac-mode = <0x40>;
++            giantec,aac-timing = <0x7c>;
++            settling-time-us = <7000>;
++        };
++    };
+

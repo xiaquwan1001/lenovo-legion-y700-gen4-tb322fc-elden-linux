@@ -1,0 +1,69 @@
+From 87ea61b4f4f3361291f4a208295939179c196ced Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 18:23:38 +0800
+Subject: [PATCH 2/4] drm/panel: novatek-nt36536: finish setup before attaching
+ DSI devices
+
+Attaching a DSI device can bind the DRM bridge and immediately prepare
+the panel. Two things must be ready by then: the backlight device, which
+prepare() enables, and the MIPI DSI format/mode flags of every DSI device
+of a dual-DSI panel.
+
+Resolve the backlight before drm_panel_add()/attach, and configure all
+DSI devices in a separate loop before attaching any of them.
+
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 26 +++++++++++--------
+ 1 file changed, 15 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index 4d66103379..fb77ae437b 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -439,6 +439,18 @@ static int novatek_probe(struct mipi_dsi_device *dsi)
+ 	ctx->dsi[0] = dsi;
+ 	mipi_dsi_set_drvdata(dsi, ctx);
+ 
++	/* Resolve suppliers before attachment can bind DRM and prepare the panel. */
++	if (desc->has_dcs_backlight) {
++		ctx->backlight = novatek_create_backlight(ctx);
++		if (IS_ERR(ctx->backlight))
++			return dev_err_probe(dev, PTR_ERR(ctx->backlight),
++					     "Failed to create backlight\n");
++	} else {
++		ret = drm_panel_of_backlight(&ctx->panel);
++		if (ret)
++			return dev_err_probe(dev, ret, "Failed to get backlight\n");
++	}
++
+ 	ctx->panel.prepare_prev_first = true;
+ 
+ 	ret = devm_drm_panel_add(dev, &ctx->panel);
+@@ -450,23 +462,15 @@ static int novatek_probe(struct mipi_dsi_device *dsi)
+ 		ctx->dsi[i]->format = desc->format;
+ 		ctx->dsi[i]->mode_flags = desc->mode_flags;
+ 		ctx->dsi[i]->dsc = &ctx->dsc;
++	}
++
++	for (i = 0; i < num_dsi; i++) {
+ 		ret = devm_mipi_dsi_attach(dev, ctx->dsi[i]);
+ 		if (ret < 0)
+ 			return dev_err_probe(dev, ret,
+ 					     "Failed to attach to DSI host\n");
+ 	}
+ 
+-	if (desc->has_dcs_backlight) {
+-		ctx->backlight = novatek_create_backlight(ctx);
+-		if (IS_ERR(ctx->backlight))
+-			return dev_err_probe(dev, PTR_ERR(ctx->backlight),
+-					     "Failed to create backlight\n");
+-	} else {
+-		ret = drm_panel_of_backlight(&ctx->panel);
+-		if (ret)
+-			return dev_err_probe(dev, ret, "Failed to get backlight\n");
+-	}
+-
+ 	return 0;
+ }
+ 

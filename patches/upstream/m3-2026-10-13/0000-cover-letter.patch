@@ -1,0 +1,39 @@
+From 6d73764570b2b2cb3d1e44747935009d20981dc7 Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 18:29:12 +0800
+Subject: [PATCH 0/3] usb: dwc3: support two connectors sharing one HS data bus
+
+Some boards wire the High Speed data lines of a single DWC3 controller to
+two receptacles and select between them with a GPIO, while the SuperSpeed
+lanes stay per connector.  This series makes such a design usable:
+
+  - patch 1 documents "usb-psy-name", a property the dwc3 glue drivers
+    already parse but which the bindings never described;
+
+  - patch 2 describes the two-connector HS data path: "port-select-gpios"
+    plus a "ports" node whose connector endpoints carry "mux-state" (the
+    logical port-select level of that connector) and "usb-role-switch";
+
+  - patch 3 adds the driver side: one role switch per connector, mutual
+    arbitration between them, and a data-path switch performed after the
+    previous host/gadget instance has been torn down.
+
+Single-connector designs are unaffected: the mux path is only taken when
+"port-select-gpios" is present.
+
+This work was developed on the Qualcomm SM8750 (Lenovo TB322FC) tablet;
+the board device tree is not upstream yet, so no in-tree user is switched
+over by this series.
+
+Xu Qianhui (3):
+  dt-bindings: usb: snps,dwc3: document usb-psy-name
+  dt-bindings: usb: snps,dwc3: describe the two-connector HS data path
+  usb: dwc3: support two connectors sharing one HS data bus
+
+ .../bindings/usb/snps,dwc3-common.yaml        |  65 ++++++-
+ drivers/usb/dwc3/core.c                       |  30 ++-
+ drivers/usb/dwc3/core.h                       |  22 +++
+ drivers/usb/dwc3/debugfs.c                    |   4 +
+ drivers/usb/dwc3/drd.c                        | 177 +++++++++++++++++-
+ 5 files changed, 294 insertions(+), 4 deletions(-)
+

@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-13。**条目编号 #1–#246**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-13。**条目编号 #1–#247**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§三十；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -249,6 +249,7 @@
       3. `vkD1a-nfcpin`（仅 pinctrl 节点，无 i2c0）起 / `vkD1b-nfcdev`（仅 `&i2c0`+`nfc@8`）挂 ⇒ 不在 pinctrl。
       4. **`vkB1-bin`（仅 `&i2c0 { status="okay"; }`，无任何子设备）挂** ⇒ 元凶 = **使能 i2c0 本身**，与 NFC 驱动/GPIO 无关。
     - 现象：`fastboot boot` 报 OKAY 后**硬关机**（非 panic、非熄屏）；USB 串口来不及注册，抓不到日志。
+    - **复发（2026-10-13，M1 7.3-rc7 重基树首次上机）**：新树板 DTS 带的是 #108 之前版本（`&i2c0 { status = "okay"; }`）⇒ 上机症状**逐条复现**：`fastboot boot` 报 `Booting OKAY` → 全程黑屏（背光不亮）→ 新内核**从未拉起 USB gadget**（主机 journal 无 cdc_ncm/cdc_acm 事件）→ 约 **39 s** 后回旧系统（≈ `panic=15` + 旧系统冷启）。**先排除过的项**（都不是原因）：模块层（纯 vk126 ramdisk 零 .ko 同样失败）、背光 `aw99706`/面板 `nt36536` 驱动（内核内已有、config 两边一致）、镜像头/cmdline/内核 gz 形式、SM8750 时钟/pinctrl/interconnect 与 USB gadget config（全部一致）。**修法**：`&i2c0 { status = "disabled"; }`（现役 `clean/base` 树早已如此），DTB 只差这一行（已复查：`diff` 仅 2 行）。镜像 `out/boot-elden-m1-73e.img`（= 新内核 + 修正 DTB + 纯 vk126 ramdisk，单变量）。**教训**：M1 资产树是 payload 血统、可能落后于 `clean/base` 上的设备侧修复；上机前应对照 `clean/base` 的 DTS 修复清单逐条核。
     - **本机（TB322FC）无 NFC 硬件**（否掉 G1-10 的前提）：vendor 无 `android.hardware.nfc.xml`（feature 未声明）、vintf manifest（sun/tuna/kera/elden）无 NFC HAL、`/lib64(/hw)` 无 NFC HAL 库、`/firmware` 无 NFC 固件；原厂 Android 运行服务无 NFC；GSMArena 规格 `NFC: No`。`ro.nfc.port=I2C` 是通用 Qualcomm 属性；`elden.dts` 的 `st21nfc` 是**总线 `disabled` 的共用模板**，`stm_nfc_i2c.ko`/`st54spi_gpio` 为多 SKU 共用。
     - **教训**：① 使能本板不存在的 QUP/总线可致**硬关机**（比 panic 更难捕捉）；② 判断设备存在与否要看原厂 DTB 的 **`status`**，不看节点是否存在；③ 归因必须做单变量（本轮 3 层二分才落到 i2c0）。
     - 前两次口径（10-06 早「DTS 破坏启动」、后按用户口述改「坏 init+用户态」）**均已收窄/作废**：坏 init（#107/#110）确实干扰了 10-06 首轮矩阵，但**不是**本故障根因。
@@ -1811,3 +1812,8 @@
     - `device/waydroid/waydroid/device.mk` 里原来的 `android.hardware.vibrator@1.0-service.waydroid` 换成自编模块；同时把 `device/waydroid/waydroid/manifest.xml` 里那段 HIDL vibrator `<hal>` 删掉（否则是「声明了但没人提供」）。
     - RRO 模块最初放 `vendor/extra/`：`mmm` 能编，但加进 `PRODUCT_PACKAGES` 会被产品 namespace 拒（`vendor/extra` 不在 `PRODUCT_SOONG_NAMESPACES`）；挪到 `hardware/waydroid/vibration-overlay` 即可（与既有 waydroid 模块同一命名空间）。
     - 固化后的验证铁证：容器内 `ls -l /proc/$(pidof <hal>)/exe` 指向 `/vendor/bin/hw/<自编名>`，且 `grep -c vibrator /proc/mounts` = **0**（说明不再依赖 bind 挂载）。
+
+247. **★跨版本改 `.config` 的两个坑：`make olddefconfig` 必须带 `ARCH=<目标架构>`；符号改名会让「配置回归」判断整体失真。**
+    - **坑 1（2026-10-13 实踩）**：`make olddefconfig` 不带 `ARCH=arm64` 时，Kbuild 按**主机 x86** 的 Kconfig 树求值，产出一份 x86 配置——再拿它跟 arm64 配置 diff，得到的差异**全是假的**。改 arm64 内核配置一律 `make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig`。
+    - **坑 2（同日本项目误判）**：7.3 把可见符号 **`PROC_SYSCTL` 改名 `SYSCTL`**（`fs/proc/Kconfig:83`，prompt 仍是 `Sysctl support (/proc/sys)`）。逐行 `grep -m1 '^CONFIG_PROC_SYSCTL='` 在新树上必然落空，于是把「7.3 内核缺 `/proc/sys`」当成上机失败根因，白走一轮。**判据必须落在产物上**：用内核树里的 `scripts/extract-ikconfig` 从**成品 Image** 里抽内嵌 config（实测 7.3 镜像 `CONFIG_SYSCTL=y` + `CONFIG_PROC_FS=y`，`/proc/sys` 一直都在）。
+    - 附：跨大版本 diff 配置时，先做一次「符号改名归并」（拿上游 Kconfig 定义对旧名字），否则 15 项差异里 14 项都是改名/删除造成的噪声（实测真正只有 `CONFIG_IPV6_MULTIPLE_TABLES` 一项）。

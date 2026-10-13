@@ -1,0 +1,52 @@
+From 39ad234ac5bb45ac612a09106f20b610a812c355 Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 19:03:03 +0800
+Subject: [PATCH 1/2] regulator: qcom,qca6390-pmu: document the WCN7861 PMU
+
+WCN7861 (Peach, PCI 0x110e) shares the PMU LDO topology of WCN7850 but
+additionally needs the 1.2V IO rail and the WLAN enable GPIO to be
+described.
+
+Add a dedicated compatible entry and the matching required-supply set.
+Upstream sm8750-mtp.dts already documents that rev 2.0 MTP boards can
+carry a WCN786x part.
+
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../bindings/regulator/qcom,qca6390-pmu.yaml     | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml b/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
+index 105174df7d..cd9b78bce0 100644
+--- a/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
++++ b/Documentation/devicetree/bindings/regulator/qcom,qca6390-pmu.yaml
+@@ -27,6 +27,7 @@ properties:
+           - qcom,wcn6750-pmu
+           - qcom,wcn6855-pmu
+           - qcom,wcn7850-pmu
++          - qcom,wcn7861-pmu
+ 
+   vdd-supply:
+     description: VDD supply regulator handle
+@@ -182,6 +183,21 @@ allOf:
+         - vdddig-supply
+         - vddrfa1p2-supply
+         - vddrfa1p8-supply
++  - if:
++      properties:
++        compatible:
++          contains:
++            const: qcom,wcn7861-pmu
++    then:
++      required:
++        - vdd-supply
++        - vddio-supply
++        - vddio1p2-supply
++        - vddaon-supply
++        - vdddig-supply
++        - vddrfa1p2-supply
++        - vddrfa1p8-supply
++        - wlan-enable-gpios
+ 
+ additionalProperties: false
+ 

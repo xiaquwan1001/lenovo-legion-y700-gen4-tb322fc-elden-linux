@@ -1,0 +1,32 @@
+From e71bede6e6c2695d2f89e43ca4a6387c69494eb3 Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 18:29:37 +0800
+Subject: [PATCH 1/2] dt-bindings: sound: awinic,aw88395: add AW88461
+ compatible
+
+The Awinic AW88461 is an I2S smart audio amplifier of the same family
+as the AW88395: it shares the ACF firmware container format and the low
+register file layout, and its Linux driver reuses the aw88395 shared
+library (SND_SOC_AW88395_LIB).  Add its compatible to the family binding
+so that a board may describe the amplifier.
+
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+ Documentation/devicetree/bindings/sound/awinic,aw88395.yaml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/sound/awinic,aw88395.yaml b/Documentation/devicetree/bindings/sound/awinic,aw88395.yaml
+index b9abb10942..e512703676 100644
+--- a/Documentation/devicetree/bindings/sound/awinic,aw88395.yaml
++++ b/Documentation/devicetree/bindings/sound/awinic,aw88395.yaml
+@@ -23,6 +23,7 @@ properties:
+       - awinic,aw88261
+       - awinic,aw88395
+       - awinic,aw88399
++      - awinic,aw88461
+ 
+   reg:
+     maxItems: 1
+-- 
+2.53.0
+

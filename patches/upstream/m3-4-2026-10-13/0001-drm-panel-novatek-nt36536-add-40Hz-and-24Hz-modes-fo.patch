@@ -1,0 +1,51 @@
+From 12fede3a025c31e1502717307f66661feba798fa Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 18:23:30 +0800
+Subject: [PATCH 1/4] drm/panel: novatek-nt36536: add 40Hz and 24Hz modes for
+ CSOT PP8807HB1-1
+
+The CSOT PP8807HB1-1 panel used on Lenovo TB322FC supports 40Hz and
+24Hz refresh rates in addition to the existing modes. Add both modes so
+they can be selected through the standard mode list.
+
+The vertical totals (10200 and 17000) are taken from the panel datasheet
+and follow the same htotal/vtotal layout as the existing entries.
+
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/panel/panel-novatek-nt36536.c | 22 +++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/panel-novatek-nt36536.c b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+index 8bd1256501..4d66103379 100644
+--- a/drivers/gpu/drm/panel/panel-novatek-nt36536.c
++++ b/drivers/gpu/drm/panel/panel-novatek-nt36536.c
+@@ -320,6 +320,28 @@ static const struct drm_display_mode csot_pp8807hb1_1_modes[] = {
+ 		.vsync_end = 3040 + 10226 + 4,
+ 		.vtotal = 3040 + 10226 + 4 + 330,
+ 	},
++	{
++		.clock = (952 + 138 + 16 + 16) * 2 * (3040 + 6826 + 4 + 330) * 40 / 1000,
++		.hdisplay = 952 * 2,
++		.hsync_start = (952 + 138) * 2,
++		.hsync_end = (952 + 138 + 16) * 2,
++		.htotal = (952 + 138 + 16 + 16) * 2,
++		.vdisplay = 3040,
++		.vsync_start = 3040 + 6826,
++		.vsync_end = 3040 + 6826 + 4,
++		.vtotal = 3040 + 6826 + 4 + 330,
++	},
++	{
++		.clock = (952 + 138 + 16 + 16) * 2 * (3040 + 13626 + 4 + 330) * 24 / 1000,
++		.hdisplay = 952 * 2,
++		.hsync_start = (952 + 138) * 2,
++		.hsync_end = (952 + 138 + 16) * 2,
++		.htotal = (952 + 138 + 16 + 16) * 2,
++		.vdisplay = 3040,
++		.vsync_start = 3040 + 13626,
++		.vsync_end = 3040 + 13626 + 4,
++		.vtotal = 3040 + 13626 + 4 + 330,
++	},
+ 	/* 1064606.4 KHz */
+ 	{
+ 		.clock = (952 + 50 + 16 + 16) * 2 * (3040 + 26 + 4 + 50) * 165 / 1000,

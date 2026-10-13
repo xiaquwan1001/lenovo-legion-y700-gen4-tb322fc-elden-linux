@@ -90,4 +90,6 @@ python3 ~/.local/bin/lore-query.py "https://lore.kernel.org/linux-arm-msm/?q=f:<
 4. **列表信会被 USTC 标 `[SPAM]`**；`Junk E-mail` 在 IMAP 里必须加引号才能 select。回信要三处都看。
 5. **本地文件行数 ≠ 收到行数**是正常的：`git send-email` 会把 format-patch 的伪头提升为邮件头。
 6. 有的地址会"邮箱满"退信（`554 5.2.2`）——地址没错，过几天单独重投，别当配置问题。
-7. **读回信**：IMAP = `mail.ustc.edu.cn:993`。`--replies-only` 靠 `In-Reply-To`/`References` 匹配我们自己的 Message-ID，是查「有没有人回」的最快路径（比翻列表洪水可靠）。判归档一律按 Message-ID 取 raw 比正文 sha256，**别只看「已发送」**。
+7. **`git format-patch` 对 >80 列 Subject 折行、并按同样规则截断文件名** —— 这是 git 的正常行为，**不是补丁损坏**：`git format-patch -1 <commit>` 重生成会一模一样（2026-10-13 实测 m2/m3/m3-4 全部如此）。判"Subject 被截断/补丁坏了"前先复现一次。
+8. **未订阅的 vger 列表也能投递并归档**（2026-10-13 实测）：M3-1 三枚补丁 To `linux-usb`、Cc `devicetree`/`linux-arm-msm`/`linux-kernel`（后三者中 devicetree/lkml 未订阅），结果 **linux-usb 与 linux-devicetree 各自 4/4 归档**。⇒ 「未订阅即被审核/丢弃」只对部分列表成立；但**投递后仍必须按 Message-ID 到每个目标 inbox 单独复核**（`lore-query.py "https://lore.kernel.org/<list>/?q=f:<地址>"`，注意 devicetree 的 inbox 是 `/linux-devicetree/`）。
+9. **读回信**：IMAP = `mail.ustc.edu.cn:993`。`--replies-only` 靠 `In-Reply-To`/`References` 匹配我们自己的 Message-ID，是查「有没有人回」的最快路径（比翻列表洪水可靠）。判归档一律按 Message-ID 取 raw 比正文 sha256，**别只看「已发送」**。
