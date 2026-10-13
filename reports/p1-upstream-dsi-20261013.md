@@ -127,7 +127,7 @@
 ⇒ **「上游规范点亮屏幕」的 vendor 缺口已收窄到：DSI PHY（最大块）+ 少量 DSI host/manager/mdss 位点**；DPU 无需 vendor 改动。
 
 ### 7.3 结论与待办
-- **Q28 疑为 vendor DSI 命令路径专有**：本臂用的是上游 DSI 命令路径（无 `bonded_cmd_*`），1 发即 GOOD 且无 `command DMA timeout`。**需多发改冷/温起采样确认 Q28 是否真的不出现**（vendor 栈坏发 ~50%，单发不作数）。
+- **Q28 疑为 vendor DSI 命令路径专有**：⚠️ **2026-10-14 悬置**：同镜像复测 4/4 未复现该 GOOD 且面板从未实测 ⇒ 见 `reports/p2b-retest-20261014.md`。原文：本臂用的是上游 DSI 命令路径（无 `bonded_cmd_*`），1 发即 GOOD 且无 `command DMA timeout`。**需多发改冷/温起采样确认 Q28 是否真的不出现**（vendor 栈坏发 ~50%，单发不作数）。
 - 这些 vendor 增量可直接作为 **b5 / M3 显示片上上游补丁的输入**（per-SoC cfg 化）。
 - 设备当前跑 P2b（RAM，零写盘）。回日常 = `eldroid-bootctl reboot system`。
 

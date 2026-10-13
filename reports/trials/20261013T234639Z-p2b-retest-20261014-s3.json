@@ -1,0 +1,18 @@
+{
+  "label": "p2b-retest-20261014-s3",
+  "ts": "2026-10-13T23:46:39Z",
+  "vk": "",
+  "image": "out/boot-elden-p2b-uplink-dsi.img",
+  "image_sha256": "71016e0812e4f458f3fc8c232f467f5b20e66e75c73be0db91a0492726ba197f",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "q28",
+  "verdict": "L2STORM",
+  "log_dir": "",
+  "note": "L2STORM"
+}

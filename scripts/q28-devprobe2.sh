@@ -21,7 +21,7 @@ echo "uname=$(uname -r) uptime=$(cut -d' ' -f1 /proc/uptime)s"
 DSIPLL=$(dmesg | grep -c 'DSI PLL(0) lock failed')
 DLFAIL=$(dmesg | grep -c 'Failed to create device link')
 L1=$(dmesg | grep -Ec 'command DMA timeout|bonded command DMA failed|Failed to initialize panel|sending dcs data .* failed')
-L2=$(dmesg | grep -Ec 'ctl [0-9]+ reset failure|frame done timeout|vblank wait timed out|drm_crtc_wait_one_vblank')
+L2=$(dmesg | grep -Ec 'ctl [0-9]+ reset failure|frame done timeout|vblank wait timed out|vblank timeout|drm_crtc_wait_one_vblank')
 HAS=0; for f in /sys/class/drm/card0; do [ -d "$f" ] && HAS=1; done
 CONN=""
 for d in /sys/class/drm/card0-*; do

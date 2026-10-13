@@ -94,3 +94,7 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-13T15:00:58Z	p1e-uplink-dsi-s1		warm	ssh->bootloader,fastboot boot	L1FAIL	9cdf675a3653	logs/p1e-boot-20261013-225658
 2026-10-13T15:06:59Z	p2b-uplink-dsi-s1		warm	ssh->bootloader,fastboot boot	GOOD	71016e0812e4	logs/p2b-boot-20261013-230402
 2026-10-13T15:24:18Z	p2c-uplink-dsi-s1		warm	ssh->bootloader,fastboot boot	GOOD	b7eb5272aebe	logs/p2c-boot-20261013-231854
+2026-10-13T23:46:38Z	p2b-retest-20261014-s1		warm	none	L2STORM	71016e0812e4	logs/p2b-retest-20261014-072844
+2026-10-13T23:46:39Z	p2b-retest-20261014-s2		warm	none	L2STORM	71016e0812e4	
+2026-10-13T23:46:39Z	p2b-retest-20261014-s3		warm	none	L2STORM	71016e0812e4	
+2026-10-13T23:46:39Z	p2b-retest-20261014-s4		warm	none	L2STORM	71016e0812e4	
