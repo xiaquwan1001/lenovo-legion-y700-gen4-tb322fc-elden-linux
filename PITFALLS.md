@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-13。**条目编号 #1–#247**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-13。**条目编号 #1–#250**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§三十；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1817,3 +1817,22 @@
     - **坑 1（2026-10-13 实踩）**：`make olddefconfig` 不带 `ARCH=arm64` 时，Kbuild 按**主机 x86** 的 Kconfig 树求值，产出一份 x86 配置——再拿它跟 arm64 配置 diff，得到的差异**全是假的**。改 arm64 内核配置一律 `make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig`。
     - **坑 2（同日本项目误判）**：7.3 把可见符号 **`PROC_SYSCTL` 改名 `SYSCTL`**（`fs/proc/Kconfig:83`，prompt 仍是 `Sysctl support (/proc/sys)`）。逐行 `grep -m1 '^CONFIG_PROC_SYSCTL='` 在新树上必然落空，于是把「7.3 内核缺 `/proc/sys`」当成上机失败根因，白走一轮。**判据必须落在产物上**：用内核树里的 `scripts/extract-ikconfig` 从**成品 Image** 里抽内嵌 config（实测 7.3 镜像 `CONFIG_SYSCTL=y` + `CONFIG_PROC_FS=y`，`/proc/sys` 一直都在）。
     - 附：跨大版本 diff 配置时，先做一次「符号改名归并」（拿上游 Kconfig 定义对旧名字），否则 15 项差异里 14 项都是改名/删除造成的噪声（实测真正只有 `CONFIG_IPV6_MULTIPLE_TABLES` 一项）。
+
+## 三十一、M1-7.3（7.3-rc7 重基树）上机：缺 `=m` 模块被误判为代码回归（2026-10-13 深夜实测）
+
+248. **★「新内核外设全废」先查 `=m` 模块有没有随镜像带——纯 ramdisk 镜像不会自动加载任何模块，缺一个 `=m` 会连锁卡死整个子系统。**
+    - 事实：`fastboot boot` 的 RAM 镜像（纯 ramdisk）里没有 `.ko`，而磁盘根的 `/lib/modules/<KV>` 只对**同 UTS** 的内核有效；新内核 KV 对不上 ⇒ **全部 `=m` 驱动都不加载**（`PITFALLS #176` vermagic 失配的另一种表现）。`=y`（内建）的不受影响。
+    - 本轮现象链（**看起来像显示回归，实为缺模块**）：`CONFIG_TYPEC_MUX_FSA4480=m` 未加载 ⇒ 无 typec **mode-switch** ⇒ `qcom_pmic_glink` altmode 拿不到 mode-switch 而 defer ⇒ `af54000.displayport-controller` **永久 deferred** ⇒ `disp_cc-sm8750: sync_state() pending due to af54000.displayport-controller`（dispcc 时钟不收敛）⇒ **`msm_drm_bind` 被卡** ⇒ `/sys/class/drm` 只有 `version`、`card0` 不存在、无桌面。早启的 `DSI PLL(0) lock failed` / `disp_cc_mdss_*_clk_src: orphan reparent failed: -110` 都是**下游表象**，不是根因。
+    - **决定性归因法 = 运行时 `insmod` 单模块**（比反复烧镜像快）：`insmod fsa4480.ko` 后立即 `card0` + `card0-DP-1` + `msm_dpu: bound af54000.displayport-controller`。同理 `CONFIG_QCOM_FASTRPC=m` 缺 ⇒ 无 `/dev/fastrpc-adsp` ⇒ `hexagonrpcd-adsp-sensorspd` 起不来 ⇒ 无传感器；`insmod fastrpc.ko` ⇒ `/dev/fastrpc-adsp` + QRTR svc400（Snapdragon Sensor Core）上线。
+    - 修法：把启动关键 `=m` 模块（本机实测只要 **`fsa4480` + `fastrpc`**）+ `/init` 加载钩子打进 ramdisk（零写盘、自包含；见 `scripts/m1-73-modules-overlay.sh`）。
+    - 教训：**「新树功能缺」先按「模块有没有带」排查，再谈代码回归**；判据用 `lsmod` + `dmesg | grep 'deferred probe pending'`，别只看现象。
+
+249. **★重打包 boot.img 后必须回读核验 `cmdline`：漏 `--cmdline` 会让 `elden_root` 消失 ⇒ 内核停下来 `switch_root`，停在 RAM root。**
+    - 现象：`fastboot boot` 后能 SSH，但 `ps -p 1` 是 `/bin/sh /init`、`rc-status: not found`（OpenRC 不在 ramdisk 里）、`/proc/cmdline` 无 `elden_root=` ⇒ 判定「没切到磁盘根」。
+    - 根因：`mkbootimg.py` 未传 `--cmdline`（本次手工重打包时漏了）⇒ boot header 的 cmdline 为空，只剩 ABL 追加的 `androidboot.*`。
+    - 判据：重打包后 `unpack_bootimg.py --boot_img <img>` 必须逐字回读 `command line args:`；`/proc/cmdline` 里应有 `elden_root=LABEL=linux17`。
+
+250. **⏳ M1-7.3 内核从内核 init 到用户态 `Run /init` 约 95 s（daily `clean/base` 约 5 s）——待查，疑 ath12k 探测阻塞（异步/同步 initcall 差异）。**
+    - 证据：黑匣子 dmesg 里 `Run /init as init process` 时间戳 ~95 s；同 boot 内 `ath12k ... failed to set mhi state: POWER_ON(2) -110` 也落在 95 s。
+    - 影响：任何依赖“早启动”的测试（显示/桌面）都会晚 ~90 s 才出；非阻塞但影响可用性与验收节拍。
+    - 状态：**未定位**；下一步对比 M1(7.3) 与 clean/base 的 ath12k 绑定（`=y` vs `=m`）与 initcall 顺序。

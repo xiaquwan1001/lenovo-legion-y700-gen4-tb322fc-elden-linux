@@ -169,3 +169,5 @@ m1-73d	tree_drift	同 m1-73（只换 DTB：去 simple-framebuffer）
 m1-73e	tree_drift	同 m1-73（只换 DTB：&i2c0 disabled）
 m1-73f	tree_drift	同 m1-73（只换 DTB：splash_region 改名 + 去 simple-framebuffer + sdhc no-1-8-v）
 m1-73h	tree_drift	同 m1-73f（只加 ramdisk 日志黑匣子层，取证用）
+m1-73i	tree_drift	同 m1-73h（只换 DTB：&mdss_dp0 disabled 单变量，证「DP 阻塞 DRM」）
+m1-73j	tree_drift	同 m1-73h 的 DTB + ramdisk 内置 fsa4480/fastrpc 与 /init 加载钩子（零写盘功能镜像）

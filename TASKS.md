@@ -404,7 +404,7 @@
 ### ★ 2026-10-13 晚：M1-7.3（7.3-rc7 重基树）首次上机 bringup
 
 > 证据层：`reports/m1-rebase-7.3rc7-{feasibility,execution}-20261013.md`、`reports/m1-73-{onboard-image,boot-failure,dts-fix-catchup,daily-config-rebuild}-20261013.md`。
-> 新树 = `build/m1-upstream/clean-tree-73` @ 分支 `m1/clean-tree-7.3rc7`；镜像族 `out/boot-elden-m1-73{,b,c,d,e,f,h}.img`（`out/` 不入 git；`versions/vk-kernel-identity.tsv` 已登记这 7 行）。
+> 新树 = `build/m1-upstream/clean-tree-73` @ 分支 `m1/clean-tree-7.3rc7`；镜像族 `out/boot-elden-m1-73{,b,c,d,e,f,h,i,j}.img`（`out/` 不入 git；`versions/vk-kernel-identity.tsv` 已登记这 9 行；每个镜像附 `.manifest`）。
 
 | 镜像 | 变量 | 上机结果 |
 |---|---|---|
@@ -412,14 +412,23 @@
 | `73b` | 同上但**纯 vk126 ramdisk（0 个 .ko）** | 同样硬关机 ⇒ **排除模块层** |
 | `73e` | + `&i2c0 → disabled` | **能起**：有背光、有马达；无声音、无 USB gadget |
 | `73f` | + `splash-region`→**`splash_region`** + 去 `simple-framebuffer` + `sdhc_2 no-1-8-v` | 有背光；无声音、无马达、无 USB |
-| `73h` | = `73f` + ramdisk「日志黑匣子」层（`/init` 自起脱离进程，把 `dmesg` 快照写磁盘根 `/root/m1-73-dmesg.txt`，每 3 s + `sync`） | 首轮 0 字节（硬断电丢页缓存）→ 已加 `sync` 重出，待复测 |
+| `73h` | = `73f` + ramdisk「日志黑匣子」层（`/init` 自起脱离进程，把 `dmesg` 快照写磁盘根 `/root/m1-73-dmesg.txt`，每 3 s + `sync`） | 首轮 0 字节（硬断电丢页缓存）→ 已加 `sync` 重出，**复测成功**（74 KB，含 0.0 s 起全量 dmesg） |
+| `73i` | = `73h` + DTB `&mdss_dp0 disabled`（单变量，验「DP 阻塞 DRM」） | 能画到 `card0`：`card0-DSI-1`+`greetd`+`phoc`；**但用户实机确认屏幕未亮** ⇒ 不作好发 |
+| `73j` | = `73h` 的 DTB（dp0 enabled）+ ramdisk 内置 `fsa4480`/`fastrpc` + `/init` 加载钩子（零写盘功能镜像） | 切根正常、模块自动加载（`[m1-73j] loaded fsa4480/fastrpc`）、`card0`+`card0-DP-1`+`card0-DSI-1`、`/dev/fastrpc-adsp`+QRTR svc400；**2/2 命中 Q28 坏发** ⇒ 未亮屏 |
 
 **已确证的设备侧修复（都在 `clean/base` 上早已存在——M1 血统落后于它们）**：
 1. `&i2c0 { status = "okay" }` = **硬关机根因**（`PITFALLS #108` 原样复发，单变量已证）⇒ 已改 `disabled`（M1-73 树提交 `1e4077f13f`）。
 2. `splash-region@fc800000` 命名不符 ⇒ ABL 按名字 `splash_region` 查找失败、**跳内核前关显示**（`PITFALLS #11`）⇒ 已改名并去 `simple-framebuffer`（提交 `b3815fb150`）。
 3. 「配置缺 `PROC_SYSCTL`」= **误判**（7.3 已把该符号改名 `SYSCTL`；用 `scripts/extract-ikconfig` 从成品内核抽内嵌 config 实测 `CONFIG_SYSCTL=y` + `PROC_FS=y`）⇒ 教训记入 `PITFALLS #247`。
 
-**当前未解（上机）**：新树起来后 **USB gadget 不枚举**（拿不到 SSH）、**无声音、无马达**；板 DTS 的 `&usb` 节点与现役逐行相同 ⇒ 不在板级 DTS。下一步 = 用 `73h` 的日志黑匣子取内核原始报错。
+**★ 2026-10-13 深夜 更正（原「USB 不枚举 / 无声音 / 无马达」判断作废）**：真因 = **纯 ramdisk 镜像（0 个 `.ko`）+ 磁盘无 7.3 `/lib/modules` ⇒ 所有 `=m` 驱动都没加载**（`PITFALLS #176` vermagic 失配的另一种表现），**不是代码回归、也不是板级 DTS**。已单变量证实（`reports/m1-73-port-bringup-20261013.md`、`PITFALLS #248`）：
+1. **显示/桌面被 DP 阻塞**：`fsa4480`（`CONFIG_TYPEC_MUX_FSA4480=m`）缺 → 无 typec mode-switch → `pmic_glink.altmode` defer → `af54000.displayport-controller` 永久 defer → `disp_cc-sm8750 sync_state() pending` → **阻塞 `msm_drm_bind` → 无 `card0`**。运行时 `insmod fsa4480.ko` 立即出 `card0`+`card0-DP-1`+`msm_dpu: bound af54000.displayport-controller`。
+2. **传感器被 `fastrpc` 阻塞**：`CONFIG_QCOM_FASTRPC=m` 缺 → 无 `/dev/fastrpc-adsp`；`insmod fastrpc.ko` → `/dev/fastrpc-adsp` + QRTR svc400（Sensor Core）上线。
+3. **`73j`（零写盘）** 把这两个模块 + `/init` 加载钩子打进 ramdisk（`scripts/m1-73-modules-overlay.sh`）：切根正常、模块自动加载、`card0-DSI-1`+`card0-DP-1`+传感器全在。
+4. **但仍无亮屏好发**：`73j` 2/2、`73i` 1/1 都画到 `card0` 但用户实机**屏幕未亮**，面板 init 报 Q28 签名（`command DMA timeout` / `sending dcs data ff 20 failed` / `Failed to initialize panel`）⇒ **「DP 阻塞 DRM」与「Q28 面板 init 失败」是两个独立问题，前者已解（补模块），后者仍卡亮屏**。
+5. **慢启动**：M1 内核到用户态 `Run /init` **~95 s**（daily ~5 s），疑 ath12k 探测阻塞内核 init（`PITFALLS #250`，未定位）。
+
+**方法沉淀**：`tools/mkbootimg` 手工**单变量对照镜像** + **磁盘黑匣子**（USB 不通也能取证）+ **运行时 `insmod` 单模块归因**（比反复烧镜像快得多）。
 **方法沉淀**：`tools/mkbootimg` 手工打**单变量对照镜像**（每次只换内核/DTB/ramdisk 之一）+ **磁盘黑匣子**（USB 不通也能取证）。
 
 ### 本轮其它交付（2026-10-13 晚，**全部备料封存不发**，投递冻结见本节顶部）
