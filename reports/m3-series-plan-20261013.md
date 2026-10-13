@@ -33,6 +33,8 @@
 | **M3-0** | 依赖台账（本文）+ 系列骨架 `patches/upstream/m3-2026-10-13/` | — | 台账数字可复现 | 本轮交付 |
 | **M3-1** | **USB 双连接器 mux 系列**：`drivers/usb/dwc3/drd.c`（`dwc3_mux_role_set` 等 +182 行）+ `core.c`（`usb-psy-name` psy 绑定）+ 其 schema（现挂在 `snps,dwc3-common.yaml`）+ 板 DTS `&usb` 段 | 无（自包含） | 上表 §0 全绿；Q2 = 扩展既有 dwc3 drd（合规） | **review 点名的红点所在**；建议同轮把 `usb-psy-name`（按名查找）改为 **phandle 引用**（上游更易接受） |
 | **M3-2** | **板基础**：UFS / PMIC regulators（pm8550 family）/ TLMM / `gpio-keys` / `ramoops` / `simple-framebuffer` / `pmic-glink` 等"上游齐 18 项"的板级 enablement | M3-1（USB 段已定） | §0 全绿 | 地基片；后续片都在其上叠加 |
+> 各片依赖的逐项上游支持面（含 payload 改动规模与两条 Q2 偏离）= `reports/m3-missing-support-matrix-20261013.md`。
+
 | **M3-3** | **音频 + 温控**：WCD939x codec + `qcom,sm8750-sndcard` dai-links + `awinic,aw88461` 功放 + 分级 thermal trips | M3-2 | §0 全绿 + sndcard 与 dai-link 一致 | cod 侧驱动已在树（`sound/soc/qcom`） |
 | **M3-4** | **显示**：mdss/dpu sm8750（含 A1 GC block）+ `panel-novatek-nt36536` 驱动 + 触屏 `novatek,nt36536-ts` | M3-2 | §0 全绿；驱动须先剥 §3 实验钩子 | 与 Q28 强耦合：**B5 per-SoC cfg 重构可与本片合并做** |
 | **M3-5** | **相机**：camss 一族（`camss.c`/新 CSID 980/VFE gen4/csiphy）+ `samsung,s5kjns`/`galaxycore,gc08a8`/`giantec,gt9764`/`willsemi,wl2868c` | M3-2（+ M4 立项） | §0 全绿 + media binding 齐 | 最大件；`gt9764` 缺 binding 需补 |
