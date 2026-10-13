@@ -55,7 +55,7 @@
 
 - **SSOT**：唯一入口 `INDEX.md`；领域层（4 份：`DEVICE`/`TASKS`/`RESOURCES`/`RUNBOOK`）与经验层（`PITFALLS`）只在各自文件维护，其余用链接引用。
 - **单写者**：任何时刻一个文件只有一个写者。**领域层 4 份 + `PITFALLS` + `.githooks` + `versions/` = 父 agent 专属**；子 agent 不碰。
-- `archive/` 只增不改；结论以领域层为准，archive 不得被引用为「当前结论」。
+- `archive/` **追加为主**：以追加为主，允许为更正错误 / 回填结果做带日期的最小修订（不改写既有结论口径）；结论以领域层为准，archive 不得被引用为「当前结论」。
 - 结论可反转：保留推翻记录（见 `ATTRIBUTION-AUDIT-2026-10-06.md` 的分层更正）。
 
 ---

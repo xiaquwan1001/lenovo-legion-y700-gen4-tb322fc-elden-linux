@@ -122,9 +122,9 @@ else
   ok "PITFALLS 头部声明 #1–#$declared ≡ 实际最大编号"
 fi
 
-# ---------------------------------------------------------------- 3.5 进度百分比口径（INDEX 快照 vs TASKS §0 权威）
+# ---------------------------------------------------------------- 3.5 完成度单源（TASKS §0 权威；INDEX §3 仅指针，不复述数字）
 echo
-echo "== 3.5 进度百分比口径 =="
+echo "== 3.5 完成度单源（TASKS §0 权威 / INDEX §3 仅指针）=="
 python3 - <<'PY'
 import re, sys
 T=open('TASKS.md').read(); I=open('INDEX.md').read()
@@ -137,11 +137,11 @@ i1=first(r'G1\s*[≈~]?\s*(\d+)%', I)
 i2=first(r'G2\s*[≈~]?\s*(\d+)%', I)
 bad=0
 for name,tv,iv in (("G1",t1,i1),("G2",t2,i2)):
-    if tv is None or iv is None:
-        print("  [warn] %s 百分比无法解析（TASKS=%s INDEX=%s）" % (name,tv,iv)); bad=-1
-    elif tv!=iv:
-        print("  [warn] %s 口径漂移：TASKS §0=%s%%（权威） vs INDEX §3 快照=%s%% → 刷 INDEX" % (name,tv,iv)); bad=1
-if bad==0: print("  [ok]   G1/G2 百分比 INDEX ≡ TASKS")
+    if tv is None:
+        print("  [warn] %s 权威百分比缺失（TASKS §0 应含 ~NN%%）" % name); bad=1
+    if iv is not None:
+        print("  [warn] %s INDEX §3 复述了完成度数字（应只给指针 → TASKS §0）" % name); bad=1
+if bad==0: print("  [ok]   完成度单源：TASKS §0 权威（G1=%s%% G2=%s%%），INDEX §3 仅指针" % (t1,t2))
 sys.exit(1 if bad else 0)
 PY
 case $?
