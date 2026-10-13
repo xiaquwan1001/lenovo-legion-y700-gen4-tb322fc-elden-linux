@@ -13,7 +13,16 @@
 
 两枚补丁**互不相关**，各自单独成帖（不做 series、不带 cover letter）。
 
-## 发送命令（dry-run 已通过）
+## 投递结果（2026-10-13 08:21 +0800，已发送）
+
+| 补丁 | Message-ID | 归档复核（独立取 raw） |
+|---|---|---|
+| 1 DPU | `20261013002124.332074-1-xiaqinghuan@mail.ustc.edu.cn` | `/linux-arm-msm/` OK；`dri-devel`/`freedreno` 在 lore 无该 inbox（归档在 lists.freedesktop.org，未复核） |
+| 2 battmgr | `20261013002124.332111-1-xiaqinghuan@mail.ustc.edu.cn` | `/linux-pm/` + `/linux-arm-msm/` + `/lkml/` 均 OK |
+
+正文 canonical body sha256：patch1 `b8fu5G/OnuGOyXYY…`、patch2 `xg0wufdtQ6dk83lO…`（16 字符前缀，取自归档 raw）。
+
+## 发送命令（dry-run 已通过；实际发送加 `--confirm=never`）
 
 ```bash
 cd build/m2-worktree

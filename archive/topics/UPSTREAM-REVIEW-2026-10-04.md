@@ -114,3 +114,9 @@ sha256(linux-7.2.tar.xz) = `f9fef3d14c0df53819026f4be74459835c2a0b0dcbf5b5bbd9ea
   - 两枚**独立成帖**（非 series）；`checkpatch --strict` = 0/0；`make … dpu_hw_catalog.o qcom_battmgr.o` 仅 CC 行、无 warning；`git send-email --dry-run` 两路均 `Result: OK`。
 - **A3 分类更正**：上游 v7.3-rc7 的 `aw86927.c`（882 行）**没有** firmware waveform 装载路径（无 `request_firmware()`/`aw86927_ram_load()`/`AW86937`），而「SRAM 窗口 0x1000→0x2000」只对那条路径有意义 ⇒ 无对应上游代码可修补，**从 A 级降为 B/C 级，不进 M2**。
 - **A2 的新增事实**：上游 binding 已有 `qcom,sm8750-pmic-glink` 且 `sm8750-mtp/qrd` 已在用，但 `qcom_battmgr_of_variants[]` **没有该条目** ⇒ SM8750 回落到 SM8350 变体并暴露错误的 `power_now`（本补丁补变体+描述符）。
+
+## 8. M2 投递结果（2026-10-13 追加）
+
+- Patch 1 `drm/msm/dpu: add the missing GC block to the SM8750 DSPP catalog`：Message-ID `20261013002124.332074-1-xiaqinghuan@mail.ustc.edu.cn`；`git send-email` 250 OK；**linux-arm-msm 已归档**（raw 复核，body sha256 `b8fu5G/OnuGOyXYY…`）。
+- Patch 2 `power: supply: qcom_battmgr: do not report power_now on SM8750`：Message-ID `20261013002124.332111-1-xiaqinghuan@mail.ustc.edu.cn`；**linux-pm / linux-arm-msm / lkml 已归档**（同一 body sha `xg0wufdtQ6dk83lO…`）。
+- `dri-devel` / `freedreno` 在 lore 无对应 inbox（归档在 lists.freedesktop.org）；如 48 h 后无回音，考虑单独 ping 或改走 `freedreno` 镜像。

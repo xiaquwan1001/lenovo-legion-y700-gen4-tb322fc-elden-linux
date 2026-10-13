@@ -395,7 +395,7 @@
 | ID | 任务 | 状态 | 依赖 | 判据 | 证据 |
 |---|---|---|---|---|---|
 | M1 | 干净上游资产树（upstream tip + payload 重放，剔除 D 类与 vk 历史） | 🟢 **树已建、干净构建通过（2026-10-11）**：`build/m1-upstream/clean-tree` @ 分支 `m1/clean-tree`（base `v7.2-elden` 44137cb4e → tip c73ff2522，11 提交 = 2 独立 patch + 10 cherry-pick + ADSP non-secure）；`Image.gz` 20.6 MB + dtbs 全绿（UTS `7.2.0-debug-m1-gc73ff25222c7`）。**未做**：`fastboot boot` 上机对照（功能等价目前是清单 §3 的逐域 argument） | — | 树能编出 vk 等价功能镜像 ✅（构建）；上机对照待做 | `reports/m1-clean-tree-20261011.md`、`.pi/plans/2026-10-10-M1-资产树清单.md`、审查档案 §4 |
-| M2 | 首发小系列 A1(GC 块)+A2(battmgr)（**A3 重分类，见右**） | 🟡 **两枚补丁已备好待发（2026-10-13）**：基线 upstream **v7.3-rc7**，`patches/upstream/m2-2026-10-13/`；checkpatch `--strict` 0/0、两目标文件编译干净、收件人 dry-run 通过 | M1 | 发至对应 ML 获 review（+lore 复核） | `patches/upstream/m2-2026-10-13/README.md`；**A3 更正 = 上游 `aw86927.c` 无 firmware 波形装载路径（882 行）⇒ 窗口放宽无对应代码可修，重分类 B/C 不进 M2** |
+| M2 | 首发小系列 A1(GC 块)+A2(battmgr)（**A3 重分类，见右**） | 🟢 **两枚补丁已于 2026-10-13 08:21 +0800 发出**（DPU → linux-arm-msm 已归档；battmgr → linux-pm/linux-arm-msm/lkml 已归档；等 review）：基线 upstream **v7.3-rc7**，`patches/upstream/m2-2026-10-13/`；checkpatch `--strict` 0/0、两目标文件编译干净、收件人 dry-run 通过 | M1 | 发至对应 ML 获 review（+lore 复核） | `patches/upstream/m2-2026-10-13/README.md`；**A3 更正 = 上游 `aw86927.c` 无 firmware 波形装载路径（882 行）⇒ 窗口放宽无对应代码可修，重分类 B/C 不进 M2** |
 | M3 | 板支持系列（DTS+qcom.yaml；先修 usb@a600000 schema 红点、去 vendor-only 属性） | ⬜ | M1 | dtbs_check CI 绿 | 同上 §3.4 |
 | M4 | 大件立项：B8 camss（media）/ B6 ath12k PEACH（wifi）/ B3 hci_qca PERI（bt） | ⬜ | M1 | 各成多轮 review 工程 | 同上 §1-B |
 | M5 | C2 dm-default-key 从上游包剥离 → 持久根 out-of-tree patchset | ⬜ | — | 上游包内无 Android vendor ABI | 同上 §1-C |
