@@ -80,3 +80,10 @@
 1. **2026-10-13 lore/dri-devel 已出现 `[PATCH] drm/msm/dpu: add the missing GC block to the SM8750 DSPP catalog`**——与 Q28 DPU 相关的独立上游活动，值得跟进（lore 实测，非本仓提交）。
 2. **ath12k 列表宿主 = lists.infradead.org（Mailman）**，不是 vger；订阅方式与 vger 的 +subscribe 不同（lore 归档头实测）。
 3. lore 直连根路径返回 403 是 **Anubis PoW 正常行为**，用 `~/.local/bin/lore-query.py` 可全通过（本次对 dri-devel/ath12k/linux-sound 三处实测成功）；「403/无条目」不可当作「列表不存在」。
+
+## 附录：编排者独立复核（2026-10-13，standing rule「子代理自报不可信」）
+
+- **④.1 更正（重要）**：报告中「lore/dri-devel 已出现独立上游补丁 `add the missing GC block to the SM8750 DSPP catalog`」**判断错误**——那条正是**我们自己**当天 08:21 投出的 P1（Message-ID `20261013002124.332074-1-…`）+ sashiko 机器人自动评审回复（`sashiko-outbox-168803@kernel.org`）。真正值得记录的既有事实是：**同一修复早已由 Rob Clark 合入 msm 树**（`3389406e6a03`，`drm/msm/dpu: Fix GAMMA LUT for sm8750 related DPUs`，applied 2026-09-30，v7.4；本地按 `gitlab.freedesktop.org/lumag/msm` 的 `msm-next` 分支核实）。我们据此**已撤稿**。
+- **④.2 部分核实**：`lore.kernel.org/ath12k/` inbox 存在且活跃（2026-10-13 有 `ath-next-20261012` pull）✓；「宿主 = lists.infradead.org」这一具体结论**未独立核实**（子代理自述来源为 lore 头部，可接受但未复验）。
+- **④.3 认可**：lore 根路径 403 / Anubis 挑战属正常反爬行为，与 `PITFALLS #220` 一致。
+- **补充更正**：表格中「dri-devel 暂缓/只追踪」需注意——我们**已在 dri-devel 投递**（P1 撤稿回复 + P3 新补丁），且 **dri-devel 在 lore 有可读镜像**（`lore.kernel.org/dri-devel/` 查询命中），因此「订阅」（lists.freedesktop.org 表单）与「追踪」（lore）可分开处理。

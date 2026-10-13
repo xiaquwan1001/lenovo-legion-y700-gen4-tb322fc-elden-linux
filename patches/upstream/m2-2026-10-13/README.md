@@ -1,5 +1,12 @@
 # M2 上游首发（2026-10-13）
 
+> **⚠️ 结局更新（2026-10-13 10:0x）**：
+> - **P1（DPU GC 块）已撤稿**：与已合入 msm 树的 `3389406e6a03`（`drm/msm/dpu: Fix GAMMA LUT for sm8750 related DPUs`，Rob Clark，2026-09-30，v7.4）**逐字重复**（我们以 v7.3-rc7 为准、漏查 drm-msm-next）。撤稿回复 Message-ID `179185706019.408862.3377489837866634553@mail.ustc.edu.cn`（In-Reply-To 原帖，已归档 linux-arm-msm）。
+> - **sashiko 机器人对我们的 P1 提了两条 High**：(a) `_dpu_crtc_get_gc_lut()` 越界读（核心只校验 max_size + 元素整除，不校验精确长度 ⇒ 真问题、**既有**、影响所有暴露 GC 的 DPU SoC）；(b) `dpu_crtc_atomic_begin()` → `_dpu_crtc_setup_cp_blocks()` 里 `kzalloc` 在 atomic 上下文（同样既有）。
+> - **新增 P3**：`drm/msm/dpu: reject undersized gamma LUT blobs`（commit `a3049c6f55`，分支 `m2/gc-lut-check`，7.3-rc7 基线；checkpatch 0/0、`dpu_crtc.o` 编译干净）——修 (a)；Message-ID `20261013020425.408928-1-xiaqinghuan@mail.ustc.edu.cn`，已归档 linux-arm-msm。(b) 未捆绑，回复中已提出可单独跟。
+
+> 复核命令：`read-mail-ustc.py --days 3 --replies-only`；lore 按 Message-ID 直取 raw。
+
 > 基线 = **upstream v7.3-rc7**（`24a19b953e`）；工作树 `build/m2-worktree`（分支 `m2/series`）。
 > 生成与验证：`git format-patch -1 --no-numbered`；`scripts/checkpatch.pl --strict --no-tree` = **0 errors / 0 warnings**；
 > 两目标文件在 v7.3-rc7 配置下 **编译干净**（`aarch64-linux-gnu-gcc`，仅 CC 行、无 warning）。
