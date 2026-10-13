@@ -39,8 +39,8 @@
 
 1. **7 颗传感器 30 s 采样 CSV**：`cmd sensorservice` 无采样子命令，需设备侧 App（如 Termux/sensor 工具）逐颗录 CSV。
 2. **5 个目标 App 关键流程录屏**：`adb shell screenrecord` + `adb pull`。
-3. **Play Integrity 判定**：需装 PI 检测 App + 登录 Google 账号（当前 `Accounts: 0`）。
-4. **root 项**：`/proc/partitions`、受保护 dumpsys（本 a 槽 `user` build 未 root 取不到）。
+3. ~~**Play Integrity 判定**~~ **不属本基线**（2026-10-13 修正）：PI 的判定对象是 **Waydroid 容器**，与真 Android 槽无关 → `TASKS.md` §2 C3 / `reports/c3-identity-drm-20261013.md`。
+4. ~~**root 项**~~ **已闭合、不补采（2026-10-13 裁决）**：无不可替代产出——块设备映射已由 `by-name.txt`（120 条）覆盖；`dumpsys drm` 无服务对象（实测）；原厂固件/库可离线取自 `backup/stock-259/`；**设备独有分区（含 `/persist`）已由 EDL 提取**（`backup/HA2EXB0E-16+512/unique/part-persist.bin` 等 21 分区，指针 `RESOURCES.md` §3）。
 
 ## 4. 本次操作史（可复现）
 
@@ -57,5 +57,5 @@ scripts/c0-android-evidence.sh HA2EXB0E   （+ 本轮补充采集）
 ## 5. 对 G2 的意义
 
 - 容器侧 Widevine **L3** 是硬上限（arm64 无 L1 库），真机对照 = **L1** ⇒ `TASKS.md §6 §1` 的 DRM 维可据实打分。
-- 真机 PI 期望 = 已解锁(`orange`)+未 root 的 stock ⇒ 容器要达到「等价」需绕过/硬化；本基线给出**未 root 的 stock 参考态**。
+- **PI 不在本基线口径**（判定对象 = 容器，见 C3）；本基线提供的是**未 root、已解锁（`orange`）的 stock 参考态**，用于容器侧的等价性对照。
 - 传感器 42 个（含 wakeup 变体），容器侧 C4 目标是「列出 elden 的 5 类物理传感器」——对照尺子已就位。

@@ -32,7 +32,7 @@
 - **不跨容量档复用 GPT 二进制**；每单元现 dump（`scripts/gpt-dump.sh`），手术读实际 GPT 参数。
 - 动分区/刷写前：`fastboot fetch` 备份将覆盖分区 + GPT 双表 dump；**写后读回校验**（不看「传输完成」）。
 - 默认只动 **b 槽 + LUN0 GPT**；`fastboot --set-active` 属写操作，按「先备份 GPT + 记当前 slot → 再执行」处理（不再绝对禁止）；恢复步骤见 `RUNBOOK-BRINGUP.md`。
-- 覆盖 a 槽前先做真机对照取证（`TASKS.md §5` Q5）；回收 Android 专属分区需 G1 全绿 + EDL 备份在手。
+- 覆盖 a 槽前确认真机对照取证已归档（2026-10-11 主体已采，指针 `TASKS.md §5` Q5）；回收 Android 专属分区需 G1 全绿 + EDL 备份在手。
 - **零写盘优先** `fastboot boot`；严格区分 **`-ram` 纯 RAM 变体（无桌面/服务）** 与**持久变体（RAM 内核 + 磁盘根）**——功能/服务级测试必须用持久变体（`PITFALLS` #92/#93）。
 - **封装脚本**：主机侧构建/打包脚本可跑；**不要用封装脚本代跑 fastboot/EDL**——该机对批量/连续命令容错差，命令一律拆单条（经验见 `PITFALLS` #3）。
 

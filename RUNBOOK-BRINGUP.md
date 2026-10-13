@@ -296,9 +296,9 @@ ssh root@192.168.7.1 "dd if=/tmp/gpt_new_main0.bin   of=$BLK bs=4096 seek=0     
 > ⚠️ **Android 侧后果**：`userdata` 变小后里面的 f2fs 仍自认大容量 → a 槽首次启动会 bootloop。
 > 两条出路（按“a 槽可弃”新前提）：
 > - **A（默认）不保留 Android**：不管 a 槽，直接当纯 Linux 机用；回退 = `backup/stock-259/` + EDL 全量刷。
-> - **B 暂时保留 a 槽**（做 Q5 真机对照取证期间需要）：`fastboot erase userdata && fastboot erase metadata` 重建 `/data`。
+> - **B 暂时保留 a 槽**（Q5 真机对照取证期间需要；主体已于 2026-10-11 采完）：`fastboot erase userdata && fastboot erase metadata` 重建 `/data`。
 >   先例：U1 手术后重建 `/data` 146.4 GiB + FBE 正常（`archive/topics/复盘-2026-09-30-日.md`）。
-> **无论 A/B，覆盖 a 槽前先把 `TASKS.md §6` §4 第 2 条的“真 Android 对照取证”做完（不可复得）。**
+> **无论 A/B：真机对照取证主体已于 2026-10-11 采自 U2 a 槽（产物/剩余项见 `TASKS.md §5` Q5）；覆盖 a 槽前只需核对该处剩余人工项。**
 
 ---
 

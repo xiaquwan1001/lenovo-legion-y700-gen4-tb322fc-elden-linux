@@ -99,7 +99,7 @@
 - **上机纪律硬约束（本轮踩出来的，`PITFALLS` #150–#152）**：坏发现场 `reboot`/`reboot -f` **全挂**，只能用 `reboot2 <mode>` 或 SysRq-b；OpenRC 下 `reboot bootloader` 不进 fastboot（会变成 halt + VBUS 自开机）；**温启循环必须自带 `slot-attr.py mark-successful b`/retry 预检**（RAM 直启不置 succ、真开机扣次数，本轮 boot_b 已被耗到 retry=6/succ=0）。
 - **已定不做 / 搁置 / 取消**（勿重推）：**G1-26/27/28 桌面用户态三问题**（深色主题 / 电源菜单图标 / 亮度滑块）—— **2026-10-11 已收口：G1-26/27 上机复核通过（`grim` 截屏三态）、G1-28 后端链路已验证（logind SetBrightness 实测生效；仅 GUI 拖拽目视待人手）**，详见 `TASKS.md` §1 与 `reports/userland-dark-brightness-verify-20261011.md`；G1-29 UEFI（卡 UFS 初始化）、G1-10 NFC（**本机无 NFC 硬件**）、G1-30 slim initramfs（无固件→外设全废）、kexec 快环（**根因已定位 2026-10-08**；2026-10-09 补充：trans_pgd bug 与当前路径无关；crashkernel=64M + kexec -p + SysRq-c 已实机尝试，缺串口观察不确定 crash kernel 是否引导，待下次用 ttyACM0 串口捕获重做；`out/boot-elden-vk77-modkdump.img` 就绪）。
 - **内核分界线（2026-10-10，新增）**：内核树功能基线 = **`clean/base`（vk64 源 `d02658e63`，tag `baseline/clean-base`）**；其上为**实验层**（Q28/Q24/kexec/显示实验），只作实验引用。纯功能对照点 = `baseline/feature-only`（`6c1376907`）。细则与理由见 `reports/BOUNDARY-2026-10-10-clean-base.md`，口径在 `TASKS.md` §4。
-- **单元**：U1 = stock Android + root（无 Linux 分区，可做 Android 侧对照取证 C0）；U2 = b 槽 mainline 持久直启（在机镜像与回退资产见 `DEVICE.md` §1.1）。
+- **单元**：U1 = stock Android + root（无 Linux 分区，C0 备用设备；基线成品/剩余项见 `TASKS.md` §5 Q5）；U2 = b 槽 mainline 持久直启（在机镜像与回退资产见 `DEVICE.md` §1.1）。
   🟢 解锁议题**已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`，**不要重新论证**。
 
 ---

@@ -70,7 +70,7 @@
 
 | ID | 任务 | 状态 | 层 | 验收 | 备注 |
 |---|---|---|---|---|---|
-| **C0** | **真 Android 对照取证**（趁单元还是 stock，**覆盖 a 槽前必做，不可复得**） | 🟢 **已采（2026-10-11，U2 `HA2EXB0E` a 槽 stock）**：`backup/HA2EXB0E-16+512/c0-baseline/`（22 文件 + SHA256SUMS）。要点：**Android 16 / build `ZUXOS_1.5.10.259_260611` / Widevine `L1` / HDCP 2.3 / BL 解锁 `orange` / 未 root / Google 账号 0 / 42 传感器 / AVF apex 在**。采集器 `scripts/c0-android-evidence.sh`（本轮修了容量档解析 bug）。U1 a 槽（stock+root）**仍可另采**（脚本历史文字针对 U1，未受影响） | 基线 | `getprop` 全量 ✅、Widevine 级别 ✅、传感器清单 ✅、分区/包清单 ✅；**30 s 传感器 CSV + 5 App 录屏 + PI 判定仍需人工**（真机账号未登录、未 root） | 报告 `reports/c0-android-baseline-20261011.md`；见 `TASKS.md §5` Q5 |
+| **C0** | **真 Android 对照取证**（趁单元还是 stock，**覆盖 a 槽前必做，不可复得**） | 🟢 **已采（2026-10-11，U2 `HA2EXB0E` a 槽 stock）**：`backup/HA2EXB0E-16+512/c0-baseline/`（22 文件 + SHA256SUMS）。要点：**Android 16 / build `ZUXOS_1.5.10.259_260611` / Widevine `L1` / HDCP 2.3 / BL 解锁 `orange` / 未 root / Google 账号 0 / 42 传感器 / AVF apex 在**。采集器 `scripts/c0-android-evidence.sh`（本轮修了容量档解析 bug）。U1 a 槽（stock+root）**可另采**（脚本历史文字针对 U1）；**root 专属项已判定无产出、不补采**（2026-10-13） | 基线 | `getprop` 全量 ✅、Widevine 级别 ✅、传感器清单 ✅、分区/包清单 ✅；**30 s 传感器 CSV + 5 App 录屏仍需人工**（真机账号未登录、未 root）；**PI 不在此列**（判定对象 = 容器 → C3 行） | 报告 `reports/c0-android-baseline-20261011.md`；见 `TASKS.md §5` Q5 |
 | **C1** | Waydroid 在 vk40 端到端复跑（去掉旧的 bind-mount 路由 workaround） | 🎯 **「去 workaround」治本完成（2026-10-11，vk103 实机）**：根因 = 内核缺 **`CONFIG_IPV6_MULTIPLE_TABLES`**（+ IPv4 多路由表）⇒ netd `RouteController` 初始化失败（`Address family not supported by protocol`）⇒ per-network 路由表全不建。补上后（`vk103-c1r6` = clean/base + IP_ADVANCED_ROUTER/IP_MULTIPLE_TABLES/IPV6_MULTIPLE_TABLES + PINUTS）实测：**容器 `ip rule` 完整 netd 规则集、table 1002 自建 `default … proto static`、未注入任何 workaround 即 `curl baidu=200`**。旧 workaround（`blank_screen.rc` 主表默认路由、生效不可靠）降为回退。历史：① 缺 `net/` 核心模块（bridge）已补（`PITFALLS #184`）；② vk95 只开 IPv4 多表仍不通（IPv6 fib rule 仍被拒）。**🆕 2026-10-13 `vk126-c1`（= vk124-merged 日常镜像 + C1 config 片段，唯一变量）GOOD 冷起实测：禁用 `blank_screen.rc` workaround 后 `sys.boot_completed=1`、netd 自建 `table eth0`/`1002` 的 `default via 192.168.240.1 proto static`、`ping 223.5.5.5` 2/2（29–49 ms）、`curl http://www.baidu.com`=200，netd `Failed to initialize RouteController` 计数 0 ⇒ 端到端判据在**日常镜像口径**上取到**（`reports/c1-noworkaround-20261013.md`）。 | 容器 | ✅ 无 workaround 出网（`curl baidu=200`，netd 自建 table 1002） | `reports/wd-netd-route-20261011.md`、`reports/c1-iprule-vk95-20261011.md`、`reports/wd-net-baseline-20261011.md`、`PITFALLS #184/#194` |
 | C2 | Play / GMS 登录收口（旧结论：卡在外部上行与代理） | ✅ **已完成（2026-10-11，用户人工验证 GMS 服务可用、Google 登录成功）**。通路：容器经**宿主 Clash 代理**出网——容器内 `curl -x http://192.168.7.9:7897 https://www.google.com`=**302**、`https://github.com`=**200**（`192.168.7.9`=x86 主机 USB 链路 IP，宿主 Clash 监听 `0.0.0.0:7897`）⇒ 已设容器 Android 全局代理 `settings put global http_proxy 192.168.7.9:7897`。⚠ 在**平板本地**跑同订阅代理走不通（校园 wlan 到境外节点 `nc` 直连 fail）；容器走宿主代理可行。 | 容器 | Play Store 登录成功 + GMS 服务可用 ✅（人工） | `reports/wd-net-baseline-20261011.md`、`reports/wd-netd-route-20261011.md`、`archive/topics/PROXY-WAYDROID-2026-10-02.md` |
 | C3 | **身份兼容性取证**（GMS/Play Integrity/Widevine 能做到哪一级）——**不预设结论** | 🆕 **本机取证已做（2026-10-13，`reports/c3-identity-drm-20261013.md`）**：**GMS 已登录**（`xuqianhui176@gmail.com`，GMS 26.37.37 / Play 53.4.34）+ **Google 连通**（`gstatic/generate_204`=204，经容器代理 `192.168.7.9:7897`）；**Widevine 不存在**（`/vendor/lib64/mediadrm/` 仅 `libdrmclearkeyplugin.so`，全 `/vendor`+`/system` 无 `*wv*`/`*widevine*`，DRM HAL 仅 `drm-service-lazy.clearkey`）⇒ **L3 路径不可用**；build = `userdebug`+**`test-keys`**（Waydroid fingerprint，非 Google 认证）⇒ PI device integrity 前置不满足；**PI/SafetyNet 回包待装检测 App**。剩余：装 PI Checker 取三档回包（需取 APK，等用户确认）+ 按社区三做法各变一变量复现 | 容器 | 出「社区先例 × 本机实测」对照表 + 回填 `TASKS.md §6` §1 的 C2 格 | 先例：redroid / waydroid_script `certified` / WayDroid-ATV（arm64 GAPPS 有、L3 仅 x86-64；arm64 仅 A11 有、A13 无） / PlayIntegrityFork；**实测需设备+上行** |
@@ -141,7 +141,7 @@
 4. **G1-6 TF 卡新卡 A/B**：`scripts/tf-stress.sh` ≥3 轮→定性（卡 vs `sdhci-msm`）→再选 `patches/candidate-tf-*.patch`。
 5. **G1-23 残留复核**：在现役基线上重测 vblank/PPM 计数（≥3 轮长时窗）。⚠️ 口径修正（原引 #154 系编号未落条，口径落 #155/#164）：`vblank timeout` 在好发和**正常熄屏**时也会出现，不能再单独当失败计数。
    ⚠️ **新发现（2026-10-09）**：Q28 面板失败时 DPU vblank 死循环占满 workqueue，导致 `reboot bootloader` 卡在 DRM cleanup（新阻塞链路：Q28→vblank storm→shutdown block→PSCI hook 永不触发）。需加 DRM shutdown timeout/ignore-error 补丁或走物理按钮进 fastboot。
-6. **C0 真 Android 对照取证**（U1 stock+root；覆盖 a 槽前必做，不可复得）。
+6. ~~**C0 真 Android 对照取证**~~ ✅ **主体已采（2026-10-11，U2 a 槽）**；状态/产物/剩余项指针 = §2 C0 行 + §5 Q5，不在此复述。不在此展开，也不设 U1 补采项（root 项已判定无产出，2026-10-13）。
 7. **C1 → C3 → C2**（G2）：Waydroid 复跑 → 身份/DRM 取证 → Play 登录（C2 需上行+代理+凭据）。**C1 已收官：内核侧 vk95 起 `ip rule` 生效；去 workaround 的容器出网验证已于 2026-10-13 在 `vk126-c1`（日常镜像 + C1 config）的 GOOD 冷起上跑完（`table eth0` 自建 default、`curl baidu=200`）——见 `reports/c1-noworkaround-20261013.md`。⇒ 下一步 C3（身份/DRM 取证）。**
 8. 顺路上机（低占时）：~~C4 传感器 HAL 部署验证~~（✅ 2026-10-11 路线 C 打通，`reports/c4-route-c-20261011.md`）、C8 Gunyah UUID 探测（✅ 已做 2026-10-10）、~~G1-8 基准~~（✅ 2026-10-11）、C7 切槽脚本（✅ 2026-10-11）。
 8.5 **模块化线收尾（Vk78 已验收，两决定已裁，2026-10-10）**：① **不刷** vk78-modular 为日常 boot_b——其 `/init` 门控已不再挂 `elden_nocamera`，刷上去 = 相机栈常驻日常态 = 违反 Q24/G1-33 用户裁决（相机不固化进日常态）；待 cambist 上游根治或「相机在位熄屏安全」被证明后另评。② **不**把 `payload-modules-load.sh` 同步到持久根 `/usr/local/sbin`——持久根已有功能等价的 `camera-modules-load.sh`，双加载器 = #157 静默失败温床；payload loader 只在镜像/ramdisk 层生效即可。理由与建议命令见 `archive/topics/CAMERA-WRAPUP-2026-10-10.md` §5。相机驱动线收尾 + "camera not found" 三层根因（=配置层：`.ko` 在盘但 `elden_nocamera=1` 不加载；installed≠loaded）见 `archive/topics/CAMERA-NOTFOUND-2026-10-10.md`。已修：`/init` 门控不再挂 `elden_nocamera`、`build-payload-hook.sh`（带产物读回断言）、`mod-loop.sh` tar 布局 bug + 计数 bug。
@@ -171,7 +171,7 @@
 | Q2 | ~~Waydroid 在 **vk40** 上是否不再需要旧 workaround~~ **✅ 已答（2026-10-11，vk64）：仍必需。** 去 workaround 后容器只有链路路由、无 default；`ip rule` → `Operation not supported`（`CONFIG_IP_ADVANCED_ROUTER` 仍 not set）。要根除需开该 config（连带 `IP_MULTIPLE_TABLES`）重编内核。**🆕 2026-10-11 vk95 已开该 config：`ip rule` 上机生效（`local/main/default` 三表），内核侧根修完成；容器端到端（去 workaround 出网）待 Q28 GOOD 启动复测**（见 `reports/c1-iprule-vk95-20261011.md`）。附带发现：vk64 部署模块目录缺 `net/` 核心模块（bridge），已补（`PITFALLS #184`）；模块化 ramdisk 管线也已补齐 net/veth/fuse | 少一处 bind-mount 脆弱点 | 已实测（§C1 行） | **C1** |
 | Q3 | **droidloom**（Linux 原生跑 Android 应用，Wayland 直出窗口）在 arm64 宿主是否可用 | 形态优于容器（无需 Android 镜像） | **已查（2026-10-02）**：`denialwm/droidloom`（251★，Rust，活跃）repo 声称支持 arm64+x86_64 平台，但**预览包只发 x86_64 Arch**（pacman+ship.yml）；INSTALL 的 "experimental ARM64" 指 x86 宿主跑 ARM64 APK（Digitalis/Berberis 翻译层）；arm64 宿主 = 官方目标但无公开包。自构建一条命令 `cargo run --locked -p droidloom-package -- build`（需 rootless podman+AOSP pin，免宿主 sudo），产物 pacman 格式需适配本 rootfs。**剩两点未知**：① arm64 自构建是否干净；② freedreno+Phosh 下 GPU/输入路径 | 观察（R1 受阻再试） |
 | Q4 | **无 KVM 前提下 VM 路线值不值得投**（**书面评估已完成 2026-10-02**，结论见 TASKS C8） | 决定要不要开第二条腿 | 结论：**维持低优先**。① 设备侧 KVM 不可达（XBL 在 secure-boot 链内加载 hyp，主线 `-el2.dtb` overlay 只适用 Qualcomm dev kit，ABL 重签救不了——hyp 加载点在 ABL 上一级）；② 独立 gunyah 驱动（v17）未进主线（本地 7.2 树 `drivers/virt/` 无 gunyah 目录）；③ 唯一新路线 = KVM-in-EL1+Gunyah backend（RFC 00/34，Linaro，2025-04，配 `qemu-for-gunyah`），WIP（pinned pages/无 guest_memfd/禁 swap）。**决定性上机实验**：vk40 起机后 `dmesg \| grep -i gunyah`（本地 qcom_scm 已带 gunyah UUID 探测）——通则路线第一步成立，败则归档 | **C8**（🟡 书面结论已出） |
-| **Q5** | **真 Android 对照基线**（一旦覆盖 a 槽就不可复得）：GMS 属性 8 段、Widevine 级别、7 颗传感器读数曲线、目标 App 行为 | 兼容层的"标准答案"，也是判定容器是否等价的尺子 | ✅ **主体已采（2026-10-11，U2 a 槽 stock，报告 `reports/c0-android-baseline-20261011.md`）**：`getprop` 全量、Widevine **L1**（`dumpsys IDrmFactory/widevine`）、42 传感器清单、分区/包、AVF apex、账号（0）。**剩**：30 s 传感器 CSV、5 App 录屏、PI 判定（需登录 Google 账号/装检测 App）。U1 a 槽（stock+root）可另采一轮 | **G2/C0**；`backup/HA2EXB0E-16+512/c0-baseline/` |
+| **Q5** | **真 Android 对照基线**（一旦覆盖 a 槽就不可复得）：GMS 属性 8 段、Widevine 级别、7 颗传感器读数曲线、目标 App 行为 | 兼容层的"标准答案"，也是判定容器是否等价的尺子 | ✅ **主体已采（2026-10-11，U2 a 槽 stock，报告 `reports/c0-android-baseline-20261011.md`）**：`getprop` 全量、Widevine **L1**（`dumpsys IDrmFactory/widevine`）、42 传感器清单、分区/包、AVF apex、账号（0）。**剩**：30 s 传感器 CSV、5 App 录屏（均为 App 行为项，与 root 无关）。**PI 判定不属本基线**（对象 = Waydroid 容器 → §2 C3）。U1 a 槽（stock+root）可另采；root 专属项已判定无产出、不补采（2026-10-13） | **G2/C0**；`backup/HA2EXB0E-16+512/c0-baseline/` |
 | Q6 | 兼容层验收的**量化判据**——**已定稿（2026-10-02，A15）**：10 条用例+阈值见 `TASKS.md §6` §5 | 避免"看起来能用"的自欺 | 上机后按用例表逐条实测打分（打分模板同处） | **C9**（模板就绪） |
 | Q7 | ~~Linux 分区到底要多大~~ **已解决（2026-10-03 G1-2）** | GPT 手术一次给足，避免二次缩容 | 实测划定：`linux17`=193 GiB（CRC 校验过），估算表在 `DEVICE.md` §3.1 | G1-2 ✅ |
 | Q8 | ~~音频是否真的可听 + 有无录音通路~~ **已解决（2026-10-04 G1-4）** | G1 硬验收 #4 | 实测：`amixer cset numid=8 on` 后扬声器出声 ✅；`arecord -D hw:0,2`（AMIC1）采集 ✅，UCM2 Mic | G1-4 ✅ |
@@ -313,18 +313,16 @@
 | 风险 | 影响 | 对冲 |
 |---|---|---|
 | 放弃 Android = 失去"100% 兼容兜底"，兼容度完全取决于 R1/R1' | 强检测 App / 银行类 / L1 DRM 场景可能整体不可用 | 保留 `backup/stock-259/` + EDL 全量包 + `restore-259/` 流程；**恢复只需一次 EDL**（不是不可逆） |
-| 一旦 a 槽被覆盖，无法再"用真 Android 校准" | 无法对照真机行为 | **在覆盖前先完成一轮真机对照取证**（身份/DRM/App 行为/传感器读数），列为 GAPS Q5 |
+| 一旦 a 槽被覆盖，无法再"用真 Android 校准" | 无法对照真机行为 | **已对冲（2026-10-11 采自 U2 a 槽）**；产物与剩余项指针 = §5 Q5 |
 | 手术回收 Android 分区（`super_a/b` 等）扩大 Linux 空间 | 更彻底不可逆 | 只在 G1 稳定后做，做前 EDL 备份 + 读回校验；分区表脚本化 |
 | 无 Android ⇒ AVF 路线（需 Android 宿主）自动失效 | VM 路线只剩高成本方案 | 所以 VM 定为"调研不承诺"（C8）；若将来需要，任一台单元刷回 stock Android 即可（等价原则保证可换机） |
 
 ---
 
-### 4. 待你拍板（2 条，都是取舍不是参数）
+### 4. 待你拍板（1 条，都是取舍不是参数）
 
 1. **是否 Phase B 回收 Android 专属分区**（`super_a/b`、`boot_a`、`recovery_a` 等，腾数十~上百 GiB 给 Linux）？
    —— 好处：一次解决容量；代价：回退只剩 EDL 全量刷。默认**暂不回收**，等 G1 全绿。
-2. **在覆盖 a 槽前，是否先做一轮"真 Android 对照取证"**（GAPS Q5：身份属性、DRM 级别、传感器读数、目标 App 行为）？
-   —— 我建议**做**，成本低且不可复得。
 
 ---
 
