@@ -30,6 +30,7 @@
 - **2026-10-10 离线快照（Q28 调试轮收尾；本轮整理时 adb/fastboot 均无设备在场）**：boot_b **持久直启仍 = `vk64`（未动）**；本轮 vk74/vk84 仅 `fastboot boot` RAM 取证，**永不作 boot_b**。Q28 根因/双模式/判据/下一步见 `reports/q28-DOSSIER.md`、`TASKS.md` §5 Q28。
 - **主机串口 logger** = `scripts/serial-logger.sh`（pid 文件 `/tmp/q28_serial_logger.pid`，常驻；主机重启需重跑）。**判 Q28 显示不能只靠串口 logger**（重连会漏 0–20 s，盖住 NOCARD 的 0.86 s 现场），须 SSH 读全 dmesg + 查 `card0`。
 - `CONFIG_LOCALVERSION` 一变，相机 20 个 `.ko` 必须整套重编（vermagic 耦合）；vk50 起模块化后驱动可单独重编。
+- **容器（Waydroid）侧在机资产（2026-10-13，TASKS C10 三期）**：`/var/lib/waydroid/images/vendor.img` 已**固化**自编 AIDL V2 vibrator HAL（`/vendor/bin/hw/android.hardware.vibrator-service.elden` + rc + vintf fragment）与静态 RRO `EldenVibrationOverlay`（`/vendor/overlay`，把 Settings 振动强度档位 1→3）；运行期只剩宿主 daemon `elden-hapticd`（OpenRC + `/etc/conf.d`）与一条 `sys/class/leds` 桥挂载。**回退镜像** `/var/lib/waydroid/images/vendor.img.bak-elden-haptics-20261013-115055`；复现 `scripts/waydroid-haptics-bake-patch.py` + `bake-vendor.sh`；细节 `reports/waydroid-haptics-20261013.md`、踩坑 `PITFALLS #232–#246`。
 
 ### 1.2 固件清单与通路（"正常驱动原厂全部固件"的分解）
 

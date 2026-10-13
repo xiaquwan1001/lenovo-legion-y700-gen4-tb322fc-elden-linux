@@ -189,3 +189,34 @@ bash scripts/waydroid-haptics-setup.sh --verify
 - 想彻底零挂载 ⇒ 走**内核侧**方案（在 aw86927 驱动里直接实现 AOSP leds-class `vibrator` ABI），见 `TASKS.md` C10 的「下一步」。
 - 回退镜像：`/var/lib/waydroid/images/vendor.img.bak-elden-haptics-20261013-115055`（打补丁前的原镜像）。
 - 复现：`scripts/waydroid-haptics-bake-patch.py`（幂等打产品配置补丁）+ `scripts/waydroid-haptics-bake-vendor.sh`（`m vendorimage` → 推设备 → 摘挂载 → 验证）。
+
+---
+
+## 9. 收尾（2026-10-13）
+
+### 9.1 本次会话净结果
+
+| # | 结果 | 证据 |
+|---|---|---|
+| 1 | 选定并点亮可用台架镜像 `out/boot-elden-vk124-merged.img`（**零写盘 RAM 直启**；第 1 次冷起 STORM → 操作者手动 POR → 第 2 次 GOOD） | §0 表；`card0-DSI-1 connected dpms=On`、`bright=511`、`phoc/phosh` |
+| 2 | 马达透传一期：容器 HAL 写的假 sysfs 节点 ↔ 宿主 daemon ↔ aw86927 FF_RUMBLE | §4；kprobe 命中 |
+| 3 | 二期：自编 **AIDL V2 HAL** → `CAP_AMPLITUDE_CONTROL` + `cancel` 立即 `off()` + `perform()` 预定义效果 | §7.2 |
+| 4 | 每侧独立强度：`--amp-a/--amp-b`，有效幅值 = 侧上限 × Android 幅度 | `A=0x8080 B=0x2020` |
+| 5 | 三期：**固化进 vendor 镜像**（HAL + rc + vintf fragment + 静态 RRO），运行期**零 bind 挂载** | §8.3；`/proc/<pid>/exe` + `/proc/mounts` |
+| 6 | 修好 **Settings「振动强度」档位**（真因是 Settings 自己的资源 =1，与 HAL 无关） | §8.2；`cmd overlay lookup` = 3 |
+
+### 9.2 待办 / 未了
+
+1. **物理确认（需人手）**：Settings → 振动与触感 里四档滑杆是否出现且能感到强度差异；`elden-hapticd --test a|b` 确认左右（A=`6-005a`、B=`6-005b`）。
+2. **内核侧固化（未做，待裁决）**：把 AOSP leds-class `vibrator` ABI（`activate`/`duration`/`state` + `amplitude`）做进 `aw86927.c`，即可去掉宿主 daemon 与最后一条 `sys/class/leds` 桥挂载；代价 = 内核补丁 + 新 boot.img + 冷起验证（Q28 ~50%/次，带看门狗）。若走此路，`boot_b` 写入仍需用户在场。
+3. **Q28 记账缺口**：本次台架第 1 次冷起 STORM 只有操作者观察、**无串口/dmesg 捕获**，故只记在本报告 §0，**未进 `reports/trials/`**；要入账需按 `q28-cold-run.sh` 口径重采（含 ≥60 s 存活门 + 串口常驻）。
+4. `boot_b` 仍 = `vk94`（本轮全程零写盘；`vk124-merged` 只作 RAM 台架）。
+5. 二期/三期脚本里的**验收命令**都要带 CLI 参数（`oneshot -a`、`prebaked <int id>`、`-B`），否则会出现「幅度/cancel 没生效」的假阴性（`PITFALLS #239`）。
+
+### 9.3 文档落点
+
+- 任务台账：`TASKS.md` §2 **C10**（一期/二期/三期 + 证据 + 回退）。
+- 踩坑：`PITFALLS.md` **#232–#246**（§二十八/§二十九）。
+- 资产：`RESOURCES.md` §3「C10 马达透传链」。
+- 设备态：`DEVICE.md` §1.1（容器侧在机资产 + 回退镜像）。
+- 技能：`projects-memory/y700-elden/skills/{waydroid-sysfs-hal-bridge,waydroid-image-bake}`。
