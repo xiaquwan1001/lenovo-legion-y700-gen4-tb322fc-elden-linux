@@ -4,7 +4,7 @@
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
 > 最后更新：2026-10-13。**条目编号 #1–#246**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
-> 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
+> 最新条目集中在文末分节 §十六–§三十；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
 
@@ -1432,7 +1432,7 @@
 
 ---
 
-## 二十三、Waydroid 容器（音频/媒体）
+## 二十四、Waydroid 容器（音频/媒体）
 
 189. **★容器内「闹钟无声 / 无媒体解码器」是 4 层叠加缺陷，不是音频链路坏（2026-10-11 实机定位并修通，C6）。**
     - **先证链路**：自建 `TestAudio`（`app_process` 跑 AudioTrack 裸 PCM，`tools/wd-audio-test/`）→ 宿主 `pactl list sink-inputs` 出现 `s16le 2ch 48000Hz`（client `threaded-ml`）。⇒ HAL→ALSA `pulse` 插件→宿主 PipeWire 本就通；别再从音频驱动找。
@@ -1475,7 +1475,7 @@
 
 ---
 
-## 二十四、Q28 冷起判定 = 内核构建身份（版本串）法则 + 冷起 A/B 测补丁作废（2026-10-11 实测）
+## 二十五、Q28 冷起判定 = 内核构建身份（版本串）法则 + 冷起 A/B 测补丁作废（2026-10-11 实测）
 
 192. **★Q28「冷起只有背光」的 GOOD/NOCARD 由内核构建身份（UTS 版本串）决定，与补丁逻辑无关；12 发冷起实证。**
     - 方法/判据（全部**物理 POR → Vol-+电源 进 fastboot → `fastboot boot`**，零写盘；判定=`scripts/q28-devprobe.sh` 三态 + `card0` 硬门 + 65 s 存活门；一键取样=`scripts/q28-cold-run.sh <img> <label>`；原始证据 `logs/q28-cold-*`、`reports/trials/*q28cold*`）：
@@ -1524,7 +1524,7 @@
 
 ---
 
-## 二十五、跨树驱动比对的方法陷阱：`to_primary_dsi` DSI0/DSI1 伪线索（2026-10-12 静态核查）
+## 二十六、跨树驱动比对的方法陷阱：`to_primary_dsi` DSI0/DSI1 伪线索（2026-10-12 静态核查）
 
 196. **★「上游用 `dsi[1]`、本树改成 `dsi[0]`」= 伪线索，不是 Q28 杠杆；不要为此上机、更不要改成 `dsi[1]`。**
     - 背景：`reports/q28-handoff-20261012.md` §2-1 曾把它列为 **Q28 最高优先待核查项**（依据 `reference/upstream-pengyuluo/README.md` 的行级差异）。
@@ -1554,7 +1554,7 @@
 
 ---
 
-## 二十六、Q24 台架/工具链教训（2026-10-12 第 3 轮实测）
+## 二十七、Q24 台架/工具链教训（2026-10-12 第 3 轮实测）
 
 199. **★`fastboot` 客户端不得接 `head`/`grep -q`，也不得用 `timeout` 半途掐断传输——会卡死设备的 fastboot gadget，只能物理 POR。**
     - 现象：10:40 一批 `fastboot getvar … | head -1` / `timeout N fastboot getvar` 之后，`fastboot devices` 仍列设备（USB 描述符在、device number 不变），但 `fastboot getvar product` 全部超时（rc=124）；随后两次 84 MB `fastboot boot` 都停在 `Sending 'boot.img'`，180 s 超时。
@@ -1688,7 +1688,7 @@
     - 规约：① 日常镜像**仍应**用 3 位身份（降险）；② **不得**把「3 位重编」当 Q28 已解决，也不得据此省略真机冷起回归（新镜像仍要 ≥3 发 POR 冷起，且 GOOD 不代表以后不坏）；③ 写结论必须带 n 与置信区间，别用「0 坏/20+ ⇒ 治好」外推；④ 遇到「镜像看似决定性但 n 小」的结论，优先做**同会话交替配对**（本次教训）。
     - 证据：`reports/q28-identity-retest-20261012.md`、`reports/trials/{20261012T083222Z-vk113-cold1,20261012T083731Z-vk113-cold2,20261012T084144Z-vk94-ctl1,20261012T084545Z-vk104-ctl2}.json`、`logs/q28-cold-20261012-16*/`。
 
-## 二十七、上游邮件通道（2026-10-12 实测定案）
+## 二十八、上游邮件通道（2026-10-12 实测定案）
 
 217. **★通道选型：outlook.com 已死、QQ 会改写 Message-ID，可用通道只有 USTC。**
     - **outlook.com**：IMAP 登录直接返回 `NO Basic authentication is disabled.`，SMTP AUTH LOGIN + 应用密码 → `535 5.7.3 Authentication unsuccessful`；`man git-send-email` 亦写明 Outlook 不再支持 app password、只能 XOAUTH2。**这不是密码错，是账号级策略**，重新生成应用密码也没用。
@@ -1782,7 +1782,7 @@
     - 证据：`reports/trials/20261012T232538Z-vk94-s5.json`（含 operator report）、`reports/q28-identity-retest-20261012.md` §0.5。
 ---
 
-## 二十八、Waydroid 马达透传（vibrator HAL → aw86927 FF）（2026-10-13 实测）
+## 二十九、Waydroid 马达透传（vibrator HAL → aw86927 FF）（2026-10-13 实测）
 
 232. **★容器 vibrator HAL 是「写文件成功 = 成功」——主线没这两个节点时它静默失败，绝不能拿「HAL 已注册 / dumpsys 无报错」当可用判据。**
     - 事实：`hardware/waydroid/vibrator/Vibrator.cpp`（= 镜像里 `/vendor/bin/hw/android.hardware.vibrator@1.0-service.waydroid`）的 `on()/off()` 就是 `std::ofstream(path) << value` 写 4 个 AOSP LED-trigger/timed_output 路径；`set()` **不检查 open/write 是否成功**，`on()` 无条件返回 `Status::OK`。
@@ -1817,7 +1817,7 @@
     - 证据：`reports/waydroid-haptics-20261013.md` §5。
 ---
 
-## 二十九、Waydroid 马达透传二期：AIDL HAL 替换（2026-10-13 下午实测）
+## 三十、Waydroid 马达透传二期：AIDL HAL 替换（2026-10-13 下午实测）
 
 239. **★`cmd vibrator_manager` 的 CLI 参数陷阱——三个假阴性把「已实现」误判成「没生效」：`-a` / 整数 effect id / `-B`。**
     - `synced oneshot [-w delay] [-a] <duration> [<amplitude>]`：**不写 `-a` 时幅度参数被整段忽略**（`hasAmplitude=false` → `VibrationEffect.DEFAULT_AMPLITUDE`=255）⇒ 第一轮 `synced oneshot 300 160` 测出 `amp=255/255`，差点误判「HAL 不支持幅度」。
