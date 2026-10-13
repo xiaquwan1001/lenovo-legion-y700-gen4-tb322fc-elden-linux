@@ -20,7 +20,7 @@
 | `q28-upstream-diff-20261010.md` | 上游精确 diff + 移植裁决（一手原文 + 逐条对树核实，**取代 handoff §3 的 cherry-pick 方案**） | 2026-10-10 | **已并入**：上游正解/PR #1867/NOT-IN-TREE→B6+C15；Method B 正确落点→e/B5；"取整未必消 Q28"→f-4。**当前上游权威口径**。 |
 | `q28-orchestration-20261010.md` | 编排轮整合（Lane A 编译 / B 取证 / C 联网 + 暖起 A/B + 死内核事故修复） | 2026-10-10 | **已并入**：取证数字/根因候选→C7–C9；vk84 单变量对→C13；死内核事故→C16（`#162`）。**注意**：其 §0/§4 冷暖方向写反（见 DOSSIER g-1），以 `#163`/B1 为准。 |
 | `q28-upstream-research-20261010.md` | 早期联网调研（PLL re-lock 假说、命中清单、方案 A/B/C） | 2026-10-10 | **已并入（并被收窄）**：机制假说→B6；方案 A→e（Method A 变体）。其"机制完全吻合 / 直接 cherry-pick"结论已被 `q28-upstream-diff` 推翻（见 DOSSIER g-4）。 |
-| `q28-delay-build-20261010.md` | Lane A 编译占位/残句（148 B，仅一句"先在不污染 `linux/.config` 的前提下试编"，**非完整报告**） | 2026-10-10 | **无实质内容可并入**；delay 镜像的权威口径取 `q28-orchestration` §3 + C13。此文件视为过程残句。 |
+| ~~`q28-delay-build-20261010.md`~~（**已清理**，文件已不存在） | Lane A 编译占位/残句（148 B，仅一句"先在不污染 `linux/.config` 的前提下试编"，**非完整报告**） | 2026-10-10 | **无实质内容可并入**；delay 镜像的权威口径取 `q28-orchestration` §3 + C13。此文件视为过程残句。 |
 | `q28-binary-determinism-20261010.md` | 阶段稿：「按内核二进制确定性」（后被证伪） | 2026-10-10 | **已并入并降级**：顶部横幅 + DOSSIER §k/§l + `#171`。 |
 | `q28-binary-determinism-provenance-20261010.md` | 溯源审计：21 发台账只有 7 发原始日志；5 MB 差是 `.rodata` 平移 | 2026-10-10 | **已并入**：DOSSIER §k 横幅/§l、`#171/#172`。 |
 | `q28-layout-ab-20261010.md` | 构建控制对 + 设备 A/B（同镜像非确定；GOOD→HANG；存活门） | 2026-10-10 | **已并入**：DOSSIER §l、`#172`。 |
@@ -36,8 +36,8 @@
 ## 4. 阅读顺序建议
 
 1. `q28-DOSSIER.md`（全部结论 + 证据指针）
-2. 需一手细节：坏发现场 → `logs/q28-BAD-vk75dump-*`；上游细节 → `q28-upstream-diff`；GOOD 基线 → `logs/q28-forensics-*` / `logs/q28-control-coldboot-*`
-3. 需断点/设备态：`q28-handoff` 顶部横幅
+2. 需一手细节：坏发现场 → `logs/q28-BAD-vk75dump-*`；上游细节 → `q28-upstream-diff-20261010.md`；GOOD 基线 → `logs/q28-forensics-*` / `logs/q28-control-coldboot-*`
+3. 需断点/设备态：`q28-handoff-20261010.md` 顶部横幅
 
 > 修订 2026-10-10：本 INDEX + `q28-DOSSIER.md` 为新建文件；未改动/删除任何已有 `q28-*` 报告。
 

@@ -1,7 +1,7 @@
 # 项目审计总览（2026-10-13）
 
 > 5 路并行审计（文档架构/PITFALLS/任务台账/报告生命周期/仓库卫生），模型 ustc-worker。
-> **状态：P0 + P1 + P3 已落地（check-doctor FAIL=0 WARN=8 EXIT=0，无回归）；P2 内容精简待排期。**
+> **状态：P0 + P1 + P2 + P3 已落地（P2 为保守版，避免丢事实；check-doctor FAIL=0 WARN=8 EXIT=0，无回归）。**
 > **进度数字现单源维护于 `TASKS.md` §0**（INDEX/README/PROGRESS 只给指针；`check-doctor` §3.5 强校验 TASKS 有数 / INDEX 不复述）。
 
 ---
@@ -27,14 +27,16 @@
 | 8 | reports/ 索引声明 | Q24-Q28-INDEX.md 写"reports/ 未入库"，实际已 git 跟踪 | 更正该声明 |
 | 9 | archive/topics 约束 | 105 个文件中 30 个被改≥2 次，违反"只增不改" | 加 AGENT-OPS 提醒 或放宽为"证据层不要求不可变，只要求不作为当前结论引用" |
 
-### P2 内容精简（分批做）
+### P2 内容精简 — ✅ 已执行（2026-10-13；保守版，避免丢事实）
+
+> 执行方式：派 3 路 ustc-worker（plans/PITFALLS/reports），**文件互不重叠、被活跃引用即跳过、worker 不提交**；编排者独立核验并收口。
 
 | # | 范围 | 发现 | 建议 |
 |---|---|---|---|
-| 10 | PITFALLS.md (1861L) | 12 条过时可降级、10 组可合并（~80 条→~30 条） | 分 2-3 批次精简，目标 1861→1200 行 |
-| 11 | reports/ (60 文件) | Q28 系列 6 篇已被取代但被权威文档按路径引用 | 移 archive 前须改 11 处链接；建议暂不动 |
-| 12 | .pi/plans/ (47 文件) | 37 个已完成/过期，仅 10 个活跃 | 归档 Oct 5-9 + research-* → archive/plans/ |
-| 13 | scripts/bisect/ | 一次性二分已完成，镜像不存在 | 归档 |
+| 10 | PITFALLS.md | 安全瘦身 **1861 → 1813 行（−48）**：stub 已关闭/已否证条目（#117/#118/#129 WiFi-Q26、#132 Q24 单模块；worker 另 stub #5/#30/#68/#72/#109/#163） | 保 #N 锚点 251 条目 / max #246 不变；深度合并未做（建议监督下逐条进行） |
+| 11 | reports/ | 保留 6 篇「已被取代」横幅 + q28-INDEX「已清理」标注；worker 的 4 篇移动**已回退** | Q28 仍活跃、被 `q28-DOSSIER`(SSOT) 引用 ⇒ 零改链 |
+| 12 | .pi/plans/ | 归档 **36 个** → `archive/plans-archive-2026-10-13/`，保留 **12 活跃** | 被 TASKS/Q24-Q28-INDEX 引用者一律留原位 |
+| 13 | scripts/bisect/ | ⏳ 未做 | 低优，留后续 |
 
 ### P3 卫生 — ✅ 已落地（2 笔 commit）
 

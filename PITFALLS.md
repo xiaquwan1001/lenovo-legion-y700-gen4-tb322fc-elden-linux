@@ -49,10 +49,8 @@
    `fastboot boot` 报 `Failed to load/authenticate boot image: Load Error` 时同理。
 
 5. **`kexec` 换内核：不可用（已定论；⛔superseded 中间态）**——`kexec -l`/`-s -l` 均装载成功，但 **`kexec -e` 失败**：早期「黑屏挂死」，补 trans_pgd（vk54/vk58）后转为**直接掉电**；**分支点已于 2026-10-08 定位（→#166）= `device_shutdown()`**（本条当年写「未定位」系受限于无存活 console + APSS 看门狗永久禁用）。⇒ **不作迭代通道**，改用 `fastboot boot`/`--flash`。
-   - 取证要点（勿再重复）：`console=ttyGS0` 是 USB gadget，kexec 时必断，**不能据「无输出」判挂死**；H2（CPU offline BUG_ON）已排除；运行期 VA=48 位却 `VA_BITS=52`。
-   - ⚠️ **kexec/重启实验前先 `slot-attr.py mark-successful b`**，否则扣 `boot_b` retry，~7 次后 b 变 unbootable。
-   - 全量证据：`archive/topics/KEXEC-ONDEVICE-2026-10-05.md`、`KEXEC-ONDEVICE-R2-2026-10-05.md`、`KEXEC-2026-10-05.md`、`RUNBOOK §8`。
-
+   - 仍有效告诫：kexec 时 `console=ttyGS0` 必断，勿据「无输出」判挂死；kexec/重启实验前先 `slot-attr.py mark-successful b`（否则扣 boot_b retry，~7 次后 unbootable）。取证遗留事实：H2（CPU offline BUG_ON）已排除；运行期 VA=48 位而 `VA_BITS=52`；APSS 看门狗永久禁用是当年「未定位」的原因。
+   - 全量证据：`archive/topics/KEXEC-ONDEVICE-2026-10-05.md`、`KEXEC-ONDEVICE-R2-2026-10-05.md`、`KEXEC-2026-10-05.md`、`RUNBOOK §8`；触发点取证见 #166。
 6. **boot.img 必须 ≤96 MiB**（`boot_a`=0x6000000）；超了 `fastboot boot` 会 `Bad Buffer Size`。
 
 7. **USB gadget 重枚举有延迟**：设备已进 Linux 但主机可能十几秒内看不到 `enx`/`ttyACM0`，等一下即恢复；别急着判定死机。
@@ -172,6 +170,7 @@
     `export http_proxy=http://192.168.7.2:7898 https_proxy=...; apk update && apk add <pkg>`。
 
 30. **`socat` 后台化时别 `pkill -f 'TCP-LISTEN:7898'`** —— 会匹配到自己的命令行把当前 shell 杀掉（现象：命令 exit 143 无输出）。
+   → [关联 #148/#179/#213：`pkill -f` 自匹配自杀同族]
 
 ---
 
@@ -260,11 +259,8 @@
       dp1 镜像因此启动失败回退 boot_b，误导为「role-switch 破坏启动」。改 `disabled` 后 dp1b 正常。
       **纪律：改结论前先 `grep` 当前树核实，不信文档的「已移除」**。证据 `archive/topics/DP-2026-10-06.md` §1。
 109. **★init 曾有「三份分叉 + awk 原地打补丁」——已固化（2026-10-06）**。
-    - 旧状态：`initramfs/init`（boot 镜像用）、`rootfs/init`（磁盘根构建用）= 设备 `/init` 三者内容不同（相机预载/音频/`ttyGS1` 各不相同）；磁盘 `/init` 还是 `scripts/patch-init-*.sh` 在设备上 awk 原地拼出来的，不可复现。
-    - 后果：改 boot 镜像的 init ≠ 改磁盘的 init；任何 init 加固只做一半就会分叉复发。
-    - 固化（本轮）：唯一真源 = `initramfs/init`（两种 root 用 `on_initramfs` 分支共存）；`rootfs/init` 删除、`build-rootfs.sh` 改从 `initramfs/init` 安装 `/init`；6 个 `patch-init-*.sh` 退休；新增 `scripts/check-init.sh`（单一真源 / `dash -n`+`busybox ash -n` / applet 覆盖 / 挂钩存在性）。
-    - 加固：`log()/warn()/fatal()` 同时写 console 与 `/dev/kmsg`（USB ACM 控制台要到 `usb-gadget` 才出现，早期 userspace 输出否则全丢）；`mnt()` 幂等+重试+失败告警；preflight 缺工具时 `rescue` 丢 shell 而非盲目继续（#107 的 userspace 版）；`switch_root` 失败显式告警并留在 RAM 根；`/var/log/elden-boot.log` 留可跨复位取证的开机快照。
-    - 证据：`archive/topics/INIT-HARDEN-2026-10-06.md`；自检 `scripts/check-init.sh`。
+    - 现已固化：唯一真源 = `initramfs/init`（两种 root 靠 `on_initramfs` 分支共存），`rootfs/init` 与 6 个 `patch-init-*.sh` 退休；自检 = `scripts/check-init.sh`（单一真源 / 语法 / applet 覆盖 / 挂钩存在性）。加固要点（log 双写 console+`/dev/kmsg`、`mnt()` 幂等重试、preflight 缺工具丢 rescue shell、`/var/log/elden-boot.log` 开机快照）已固化在脚本内。
+    - 证据：`archive/topics/INIT-HARDEN-2026-10-06.md`。
 110. **★开机刷屏 `/init: line 35: sleep: not found` + `/dev/null|/dev/kmsg: nonexistent directory` 的真因＝`switch_root` 与后台 `/persist` 任务竞态（2026-10-06 实机定位）**。
     - 现象：每次开机进桌面之前屏幕（VT）刷几十行 `/init: line 35: sleep: not found`，末尾 `line 36: can't create /dev/null`、`line 39: can't create /dev/kmsg`。看着像 init 坏了，实为无害噪音。
     - 根因：boot_b 的 RAM init（10-02 旧版）把「等 `/dev/sde79` 挂 `/persist`」的等待做成**后台子 shell**（`( … ) &`）；主流程随即 `exec switch_root`，initramfs 被释放——孤儿子 shell 还在旧根里找 `sleep`（已随 initramfs 删除）→ `not found`；重定向 `/dev/null`、`/dev/kmsg` 也已随 `mount --move /dev` 消失。
@@ -309,29 +305,14 @@
     - 修（`scripts/build-boot.sh`、`rootfs/build-rootfs.sh`）：全树 `touch -h -d @$SOURCE_DATE_EPOCH` + `find | LC_ALL=C sort -z` + `cpio --null --reproducible` + `gzip -n`。修后同输入两次 sha 一致；`scripts/check-init.sh` 加「内嵌 /init==真源 + 可复现重建」门（`CHECK_INIT_DEEP=1`）。
     - 纪律：版本台账的「唯一变量」只有在**打包可复现**时才成立；见「同输入不同 sha」先查这三处，别当成内容差异。
 
-117. **★WiFi 双管理器并存（NM + 手动 wpa_supplicant）＋ NM DHCP 反复重激活（2026-10-06 实机）**。
-    - 现象：开机后 `wlan0` **每 ~16–18 s 掉线一次**（`ath12k: failed to flush transmit queue, data pkts pending N` + `wlan0: Connection to AP 00:00:00:00:00:00 lost`），`nmcli` 恒 `getting IP configuration`，IPv4 到 ~140 s 才拿到（clean boot 28 s 已关联）。
-    - 真因：`net-up.sh`（NM 版）等地址 80 s 超时后 `exec net-up-manual.sh` → 起**第二个** `wpa_supplicant -B -i wlan0`，与 NM 的 `wpa_supplicant -u` 抢同一接口；掉线周期 = NM 的 DHCP 重激活循环（`nmcli connection up … IP configuration could not be reserved`）。
-    - 排除：`power_save`（关掉仍 5 次/80 s）、NM `dhcp=dhcpcd` 后端（仍 `could not be reserved`）。环境变量：手机热点 DHCP 后段也无 offer。
-    - 纪律：**一张网卡只允许一个 supplicant/管理器**；回退路径必须在启动另一个之前先停掉前一个（`net-up-manual.sh` 应先停 NM）。
-    - 另分叉：设备 `/usr/local/sbin/net-up.sh` = 仓库 `scripts/net-up-nm.sh`，而仓库 `scripts/net-up.sh` 是手动版（#109 同类），需对齐 SSOT。
-    - 证据：`archive/topics/WIFI-SLOW-2026-10-06.md`；相关 #109/#113。
+117. **★WiFi 双管理器并存（NM + 手动 wpa_supplicant）＋ NM DHCP 反复重激活（2026-10-06 实机；Q26 已关闭，本条归档为历史）**。
+    - 仍通用纪律：**一张网卡只允许一个 supplicant/管理器**；回退路径必须先停掉前一个再启另一个（否则两个 supplicant 抢同一接口，NM DHCP 反复重激活）。
+    - 证据：`archive/topics/WIFI-SLOW-2026-10-06.md`；相关 #109/#113/#120。
 
-118. **★WiFi「到可用约 2 分钟」的真根因 = 固件 beacon-miss + 两条独立的拆链路径（2026-10-06，vk61 基线实机）**。
-    - 现象：clean boot 28 s 关联成功，之后**每 ~16.4–17.7 s 掉线一次**（`Connection to AP 00:00:00:00:00:00 lost`，bssid 全零是 ath12k/MLO 不填 `vif.cfg.ap_addr` 的显示假象），~129 s 自行稳定；IPv4 因此要 ~2 min。
-    - 直接推手：固件 `wmi roam event reason 2`（= `WMI_ROAM_REASON_BEACON_MISS`，`ath12k debug_mask=2` 可见）；ath12k 把它变成 **3 s `connection_loss_work`**（`ATH12K_CONNECTION_LOSS_HZ`），而该 work **只能被「真 beacon 交主机」取消**（`ath12k_mac_handle_beacon_iter`）。
-    - 为什么会误报：主机在**关联后前 ~100 s 基本收不到 beacon**（`iw station dump` 的 `beacon rx: 1`，而固件的 `beacon signal avg` 却在更新），之后自行恢复（`beacon rx` → ~6–7/s，<10/s 但固件已容忍）。**换基础设施 AP（ustcnet）首 90 s 0 bmiss / 0 掉线 / beacon rx 9.3/s** ⇒ 触发条件在「手机热点 AP + WCN7850」这一组合。
-    - **两条拆链路径可独立关闭**：①驱动 `connection_loss_work`（关掉后 `lost` 归零）；②mac80211 的 AP-probe 超时（不发 deauth、不打印 `lost`，因此**只看 `lost` 计数会误判「已修复」**）。实测只关 ①，关联次数照旧（6 次/200 s）。上游同症状修法是关 ① 且只针对 MLO（2026-08 ath12k 邮件列表，仍在 review）。
-    - 已排除（单变量，各 45 s 窗口）：`power_save` 开/关（2 vs 2 次掉线）、持续流量（2–3 次）；**单次手动扫描在稳定链路上不触发 bmiss/掉线**（90 s 无新关联）。
-    - 纪律：**「WiFi 慢/掉线」先看 `iw station dump` 的 `beacon rx` 与固件 roam reason，再谈 DHCP/管理器**；`nmcli getting IP configuration` 是受害者不是根因。
-    - **★后续定位（同日追加）**：黑屏期的第一现场指标应是 **`beacon rx` 速率**（不是 `lost` 次数，后者会混入两条拆链路径）。5/6 轮复现：开机后前 ~130 s `beacon rx` ≈ **0.5/s**（固件对已关联 STA 的上送/睡眠调度受限），~130–150 s 自行校正到 5–10/s。
-    - **PS 已用正确指标彻底排除**：关联前就 `802-11-wireless.powersave 2`（PS 关）重启，黑屏与恢复点**完全不变**。
-    - **同一次开机**在黑屏窗口内扫描能得到 **33–41 个 BSS**（含该 AP 信道）⇒ **RF/beacon 接收本身正常**，坏的是「已关联 STA」这条路径。因此「开机扫一次」不能当修复（复测黑屏照旧）。
-    - **被动扫描定案（2026-10-06 深夜）**：黑屏窗口内 `iw dev wlan0 scan passive`（只听 beacon）仍能听到该 AP（BSS=36）⇒ **AP 在发 beacon、射频无辜**；症结 = 固件对已关联 vdev 的休眠/唤醒调度（~2 s 拍子），~130 s 自校正。**换 stock 非-20 固件变体会让 MHI POWER_ON 直接 -110（不兼容）**；关联后补发 `BEACON_INTERVAL`/`DTIM_PERIOD` 亦无效。
-    - **⚠️ 2026-10-08 口径更正**：「触发条件在『手机热点 AP + WCN7850』组合」**不作为终态**——用户指出同一 P40 Pro 在早期版本可正常连接 ⇒ 假设改为**版本/DTB 增量连带副作用**；本条的机制观测（beacon rx ~0.5/s、~130 s 自校正、bmiss 拆链）仍有效。见 `TASKS.md §5 Q26`。
-    - 纪律：判「AP 是否在发 beacon」**必须用被动扫描**（`iw dev wlan0 scan passive`）；主动扫描会收到 probe response，会伪造「AP 正常」的结论。
-    - 下一步方向（方法见专题 §13）：试 `CONFIG_ATH12K=m` 让 WCN **只探一次**（避开「首探失败 + 二次 bind + `qmi TME-L hardware-restricted`」的半初始化态）。
-    - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md`（§11/§12 追加、§13 下一步手册）；相关 #117/#109。
+118. **★WiFi「到可用约 2 分钟」真根因 = 固件 beacon-miss + 两条独立拆链路径（2026-10-06，vk61 基线；Q26 已关闭，本条归档为历史）**。
+    - 仍通用纪律：判「WiFi 慢/掉线」先看 `iw station dump` 的 `beacon rx` 与固件 roam reason（`nmcli getting IP configuration` 是受害者不是根因）；判「AP 是否在发 beacon」必须用**被动扫描** `iw dev wlan0 scan passive`（主动扫描的 probe response 会伪造「AP 正常」）。
+    - 机制（详见证据）：手机热点组合下，关联后前 ~130 s 固件几乎不上送 beacon（`beacon rx ≈0.5/s`，随后自校正到 5–10/s）→ `WIFI_ROAM_REASON_BEACON_MISS` → 3 s `connection_loss_work` 拆链；换基础设施 AP 首 90 s 正常。⚠️ 2026-10-08 更正：触发条件不再作终态，并入 Q26 版本/DTB 查。
+    - 证据：`archive/topics/WIFI-BMISS-2026-10-06.md`（§11/§12/§13）；相关 #117/#119/#120。
 
 119. **★同 UTS 候选内核的启动验证：`uname -r` 不可用，要用 `uname -v`；`debug_mask=2` 会冲掉 dmesg 计数（2026-10-06）**。
     - 为保持 `/lib/modules` 的 vermagic 兼容，候选内核刻意锁同一 `UTS_RELEASE`（`7.2.0-debug-vk47clean-gbd114ca335e1`）⇒ `uname -r` 在 vk61 与各候选间**逐字相同**，不能用它证明「新内核已启动」。可用判别器 = `uname -v`（`#N SMP PREEMPT <构建时间戳>`，随每次 make 递增）。
@@ -413,13 +394,8 @@
     - 判据：`ls /sys/class/drm/` 有 `card0-DSI-1`；`dmesg | grep -c "vblank wait timed out"` = **0**；`pgrep phosh` 在。
     - 处置：主树 DTS `&mdss_dp0 status="disabled"`（回退，内核提交 `08791078c`）；**DP 实验走独立零写盘載具，不进 boot_b**。`usb-role-switch` 同步回退 `/delete-property/`。
 
-129. **★WiFi 频段兼容性：华为 P40 Pro 热点 5 GHz 平板连不上，2.4 GHz 正常（2026-10-07，待根因）**。
-    - 现象：P40 Pro 热点开在 5 GHz（ch149，信号 100）时，U2 的 `wlan0` 保持 **DOWN**，`nmcli con up "P40 Pro"` 报 `Connection activation failed: The base network connection was interrupted`，无默认路由。热点切到 **2.4 GHz 后连接正常**。
-    - 对照：**vivo X200 Ultra** 热点 5 GHz / 2.4 GHz **两频段均可**连。⇒ 不是平板 ath12k 单方面禁 5 GHz，指向 AP/频段/信道/加密的特定组合。
-    - 现状：**仅记录，未定位**（未抓 supplicant/dmesg 失败帧）。怀疑点：ch149 高信道 + 华为 AP 的 802.11 行为/带宽/WPA2 参数。
-    - 排查入口：连 5 GHz 失败时看 `wpa_supplicant`/`ath12k` dmesg（关联失败 reason code）、`iw phy` 支持信道、AP 的 BW/HE/VHT 设置；参 `wifi-link-flap-triage` 技能。
-    - 规避：设备联网改用 **2.4 GHz 热点**（或 vivo 热点）。
-    - **⚠️ 2026-10-08 补充**：本条（同一 AP 的 5 GHz 连不上 / 2.4 GHz 正常）与 Q26「~2 min 到可用」可能是**同一版本/DTB 变量的两个表现**；用户指出该 P40 Pro 在早期版本可正常连接，故不再按「AP 组合已知限制」归档，并入 `TASKS.md §5 Q26` 的版本/DTB bisect 一起查。
+129. **★WiFi 频段兼容性：华为 P40 Pro 5 GHz 连不上、2.4 GHz 正常（2026-10-07，仅记录未定位；已并入 Q26，Q26 已关闭）**。
+    - 规避：设备联网改用 2.4 GHz 热点（或 vivo 热点）。排查入口见技能 `wifi-link-flap-triage`。
 
 130. **★dma-buf heap：必须只加载 `system_heap`，绝不能加载 `cma_heap`（2026-10-07 实机，G1-5 相机）**。
     - 现象：libcamera 软件 ISP 两段报错——先 `Could not open any dma-buf provider`（无任何 heap 模块时），部署 `system_heap`+`cma_heap` 后变 `dma-heap allocation failure for frame-0`（ENOMEM）。
@@ -434,12 +410,9 @@
     - 修复：从原镜像 `unpack_bootimg.py` 解出 kernel（sha=2321e3b9=vk47clean）+ 新 DTB + 原 ramdisk 重打包（`cdsp-vk47clean-camrot2`），实机 `uname -r`=vk47clean 恢复。
     - 纪律：**任何 boot 镜像重打包，kernel 来源必须 = 原镜像 unpack 出的 kernel（或同 sha 的可复现构建产物）；不得用「同一棵树」的 Image.gz 代替**。改 `build-manifest.sh`：`kernel=`/`kernel_sha256` 应记录实际打包的 kernel 文件。
 
-132. **★Q24 熄屏→硬复位/掉电的单模块根因 = `cambistmclkcc-sm8750`（相机 BIST MCLK 时钟控制器）（2026-10-07，60+ 轮二分）**。
-    - 二分结论（每项 ≥3 轮，真实熄屏 `org.gnome.ScreenSaver.SetActive(true)`）：`qcom-camss` 单独 / `camcc-sm8750`+camss / `i2c-qcom-cci`+camss / `wl2868c-regulator`+camss 各 **3/3 存活**；**`cambistmclkcc-sm8750` 单独 3/3 掉电**；**零相机模块对照 3/3 存活**；`system_heap` 无罪；pstore/kmsg 无痕（硬复位型）。
-    - 修复实验：**H1**（DT 去该节点 `power-domains=<&rpmhpd RPMHPD_MMCX>,<&rpmhpd RPMHPD_MX>` + `required-opps=low_svs`，对齐厂商用 `vdd_mx-supply` 的写法）→ cambist 单独 **7/9 存活（2/9 掉电）**；**D1** 驱动 `use_rpm=false` → 6/9；**D2** 去 `critical_cbcrs`(SLEEP_CLK 强制常开) → 7/9。⇒ **MMCX/MX 耦合是主因，但残留 ~20% 间歇未根治**；驱动侧两个开关无效。
-    - 纪律：**A/B 现象必须重复 ≥3 轮且带对照组**（本研究一开始单次样本曾把凶手误判到 `s5kjns`/`system_heap`）。
-    - 复现协议：`scripts/sleep-sweep.sh`（boot_b=可自动恢复的镜像；改 `/etc/modules-load.d/camera.conf` 限定模块集 + `reboot` + 熄屏；每轮 `qbootctl -m b`）。
-    - 规避：当前 `vk62`（H1 DTB）/ **`vk63`（H2 DTB，最优）** + 空 `camera.conf` ⇒ 零相机模块 = 熄屏安全。**H2 后续（2026-10-07 用户实机确认）：cambist 单挂 `RPMHPD_MX` ⇒ 加载 cambist + 真实熄屏存活、多次电源键循环无掉电（上游报告已发，`be79b256d`）**；H1 残留 ~20% 间歇由 H2 接管。
+132. **★Q24 熄屏→硬复位早期「单模块根因 = `cambistmclkcc-sm8750`」结论（2026-10-07）——已被 #173/#212 否证（真实最小触发 = camcc+cambist 配对 + 真实熄屏）。**
+    - 保留教训：**A/B 现象必须重复 ≥3 轮且带对照组**（本研究单次样本曾把凶手误判到 `s5kjns`/`system_heap`）。
+    - 复现协议：`scripts/sleep-sweep.sh`；证据 `archive/topics/SLEEPDEATH-*`、`TASKS.md §5 Q24`；根治尝试（H1/H2）见 #173。
 
 133. **★A/B 槽位的 `mark-successful` 必须每轮置位；否则 ABL 把槽判为 unbootable 抛到 fastboot（2026-10-07，用户纠正）**。
     - 现象：boot_b 刷入后有时“起不来/很久才起”，实为 **retry 计数递减/耗尽 → ABL 停驻 fastboot**；不是启动慢、不是镜像坏。
@@ -704,6 +677,7 @@
     小贴士：`pkill -f <模式>` 会杀掉自己这条命令行（§52）——清理串口抓包要用 `pkill -f "serial[-]log"`。
 
 68. **忙盒（BusyBox）的 `pgrep/pkill -x` 在本机不可靠**：`/usr/bin/pgrep -> /bin/busybox`（v1.37.0）。
+   → [关联 #120：busybox `pgrep/pkill -x` 假阴性的主条目（含修复与纪律）]
     实测 `cat /proc/<pid>/comm` = `phoc`，但 **`pgrep -x phoc` 匹配不到**（`pgrep phoc` 能）。
     所以"用 `pkill -x` 代替 `pkill -f` 以免杀掉自己"的招数在这里**会静默失效**。
     正确做法：查进程用 `ps -eo comm | grep -cx NAME`；杀进程用 `killall NAME` 或先 `ps` 取 PID 再 `kill`。
@@ -738,17 +712,8 @@
     动手前 `dd` 备份 LUN0 前/后各 34 扇区。
 
 72. **熄屏后无法唤醒 = 系统总线没跑 + dbus launch-helper 权限错**（2026-09-30 已修复）。
-    链路：无 `/run/dbus/system_bus_socket` → gsd-power 启动即退（code 1）→ 无熄屏/唤醒/电源键管理。
-    修了总线后又卡 D-Bus 激活：Alpine 根镜像把 `/usr/libexec/dbus-daemon-launch-helper`
-    装成 `root:root 4750`，dbus-daemon 以 messagebus 身份 exec 它 → EACCES
-    （strace 实镣），upowerd/polkitd 全都激活不了。
-    **修复**：① `mkdir -p /run/dbus && dbus-daemon --system`；
-    ② `chown root:messagebus /usr/libexec/dbus-daemon-launch-helper && chmod 4750 …`。
-    两条都已写进 `start-desktop.sh`（幂等，rootfs 重建后自动兑底）。
-    修后：gsd-power + upowerd + polkitd 全部在跑，电源键双向（熄屏/唤醒）正常。
-    诊断工具：`dd bs=24` 逐事件读 `/dev/input/event0`（hexdump 会 EINVAL）、
-    `dpms-watch.sh` 每秒采样、strace attach dbus-daemon。
-
+    - 链路：无 `/run/dbus/system_bus_socket` → gsd-power 即退；再卡 D-Bus 激活：Alpine 把 `/usr/libexec/dbus-daemon-launch-helper` 装成 `root:root 4750`，以 messagebus 身份 exec → EACCES。修复（系统总线 + `chown root:messagebus` + `chmod 4750`）已幂等固化进 `scripts/start-desktop.sh`，详见 `archive/topics/复盘-2026-09-30-日.md`。
+    - 遗留诊断工具：`dd bs=24` 逐事件读 `/dev/input/event0`（hexdump 会 EINVAL）、`dpms-watch.sh` 每秒采样、strace attach dbus-daemon。
 73. **PMIC RTC 只读 → 每次开机时间回到 1970，靠 NTP 步进**（2026-09-30 已落地）。
     `hwclock -r` 能读，但 `hwclock -w` 报 `ioctl(RTC_SET_TIME) ... No such device` —— 该 PMIC
     (`rtc-pm8xxx`) 对我们是只读的，**不要指望 `hwclock -w` 持久时钟**。
@@ -1254,11 +1219,8 @@
     - 已修：`build-kernel.sh` 加**编后符号守卫**（缺 gcc_sm8750/msm_dsi_host_bonded_cmd_trigger/rpmh → exit 1）；`apply-kernel-fragment.sh` olddefconfig 后回钉 `ARCH_QCOM/DRM_MSM/DRM_MSM_DSI/SMD_RPM/QCOM_RPMHPD`、仍缺则回滚备份并 die。恢复好档 = `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb）。详见 `reports/q28-orchestration-20261010.md` §3。
 
 163. **★Q28 的真实变量是**冷/暖复位**，不是时间/温度（推翻 10-09「强时间相关」推断，用户实机纠正）。**
-    - 旧口径（作废）：「下午好/夜里坏、强时间相关」。
-    - 正确口径（2026-10-10 日志差分定案，修正本条初稿方向写反）：**冷起基本失败（~60%，用户实机：有时能进桌）、暖起（reboot→fastboot boot / ABL 已初始化）基本成功**。今天 12:48 暖起 fastboot A/B 9/9 干净；冷 fastboot 上下文 `fastboot boot` vk75 会复现。**与时间无关。**
-    - 对实验设计的硬影响：**A/B 样本必须固定复位类型**。`reboot2 bootloader`→`fastboot boot` 是**暖复位**，与持久 boot_b 冷起不是同一变量 ⇒ 纯暖复位的循环（如本轮 `scripts/q28-ab-delay.sh` 8 轮全 GOOD）**不能**当“未复现”结论，只能说明“暖复位+RAM 直启这条路径本发没撞上”。要复现高坏发态：要么固定**持久 boot_b 暖复位**连续启多次，要么做 **冷/暖对照**（冷需用户断电）。这其实与 #1 研究“PLL/PHY 暖复位未彻底清态→首条 cmd DMA 撞 re-lock”高度吻合。
-    - 复现条件定案：**纯暖起 `reboot2 bootloader`→`fastboot boot` 不复现（今天 9/9 干净）；从 POR/冷 fastboot 上下文 `fastboot boot` 会复现**。⇒ A/B 必须走冷起（用户 POR 进 fastboot → `fastboot boot`，零写 boot_b）。
-
+    - 当时定案（现已再被收窄）：冷起基本失败 / 暖起基本成功、与时间无关；A/B 必须固定复位类型（真实 POR 判据见 #166/#192）。后续 #192/#195/#217 证明真正变量是内核构建身份（UTS 版本串），冷/暖不是独立根因。
+    - 证据：`reports/q28-binary-determinism-20261010.md` 等（见 #192 台账）。
 164. **★Q28 根因定案：bonded 双 DSI 首条 DCS 命令的命令 DMA 引擎 hang（~60% 冷起）；“背光无画面”有两层但 L2 是 L1 下游。**
     - 日志差分铁证（同 log 15 boot：GOOD 4 次 `commandDMA=0/initfail=0/ctlreset=0`、BAD 11 次**全部**先 `ae94000+ae96000 command DMA timeout status=0x2200200 master=-110 peer=-110`，面板首条 DCS `dcs data ff 20` 即超时 → init 重试 3 次仍败(-110→-5) → **4ms 后**才 `dpu_encoder_phys_vid ctl 1 reset failure -22`/frame done/vblank 风暴→自发重启）。
     - **完美共现 ⇒ L2（DPU CTL 卡死）= L1 的下游后果，非独立 bug**。根因=L1：首条命令 DMA 触发但引擎从不推进。hang 瞬间寄存器：**STATUS0=0x20003（正常=0x0）、TRIG_DMA=0x1 自不清**；CTL/CMD_DMA_CTRL/FIFO 好与坏相同。
@@ -1282,9 +1244,7 @@
     - ⇒ **Q28 判显示一律用 `scripts/q28-devprobe.sh`（三态）**；已给 q28-boot-cycle.sh 补 card0 硬门（无 card0 直接 rc=10 BAD/NOCARD）。教训：修判据要**跨脚本同步**，一份改了另一份会悄悄漂移。
 
 168. **★Q28 冷起复现的敏感点尚未定性：同一内核+DTB 逐字节相同、仅 initramfs `/init` 差一个模块加载器，冷 fastboot 路径一次 STORM(C2) 一次 NOCARD(A2)。**
-    - 静态坐实（2026-10-10）：`boot-elden-vk64.img` 与 `vk86-base.img` 内核 config（ikconfig sha a383cdb9）、DTB（386cc9bd）**逐字节相同**、git commit 同为 `gd02658e63`；面板 `CONFIG_DRM_PANEL_NOVATEK_NT36536=y`+`DRM_MSM=y` built-in ⇒ NOCARD（0.86s DSI PLL lock fail）与模块/ramdisk 内容无关。唯一差 = vk86 的 `/init` 多一段 `payload-modules-load.sh`（≤20s 超时加载 WiFi/音频/触觉/触控，挪动开机用户态时序）。
-    - ⇒ 冷起落 NOCARD 还是 STORM 二选一：**要么同二进制冷起非确定性（掷骰子选模式）⇒ 单样本 Q28 修法 A/B 本质=概率采样（应避免），要么首次 modeset 的开机时序是杠杆（可控、值得查）**。区分二者 = 把**同一镜像**冷起 2 次看模式是否一致（确定性门，非采样）。本轮未做，留下次开场先钉。
-
+    - → [已由 #192/#195 定性：冷起落 NOCARD/STORM 由内核构建身份（UTS）决定；ramdisk/DTB 已 2×2 交叉排除。证据 `reports/q28-retro-audit-20261011.md`、`reports/q28-storm-bias-audit-20261011.md`]
 169. **★迭代链的失败根因是「验证链撒谎」，不是缺想法——每环必须有一条机器可读 record / 硬门（2026-10-10 流程体检）。**
     - 证据（关键词计数）：`PITFALLS` 里 `静默` 14 处、`误判` 14 处、`作废` 8 处；四类高频事故 = ①构建产物身份静默腐化（`make olddefconfig` 删 `ARCH_QCOM`，vk81/82/83 死内核 `#162`；manifest 被手写旁路、缺 `config_sha256` ⇒ 事后无从对账）；②判据静默撒谎（守卫裸 `exit 0` `#153/#157/#161`、分类器漏 NOCARD `#165/#167`）；③部署/复位态失控（坏发 `reboot` 全挂 `#150`、暖复位粘 NOCARD `#166`、`succ=0` 倒计时 `#152`）；④实验设计（单样本 A/B、冷/暖变量混采）。
     - 处置（本轮落地）：**打包前**内核身份硬门 `scripts/assert-kernel-sane.sh`（config 锚点 + System.map 符号 + UTS 对齐 + 陈旧检测；`build-boot.sh` 调用）；manifest 完整性进 `check-doctor §5e`（≥2026-10-10 的手写旁路 FAIL，历史 grandfather）；统一记录器 `scripts/trial.sh`（device-gate succ/retry + **reset 必填** + 机器可读 JSON）。
@@ -1301,15 +1261,8 @@
     - 参考：`#151`（VBUS 自开机）、G1-25（USB 连着时 loginctl poweroff 会立即重启）——本次实测把“立即重启”细化为“OpenRC 下 loginctl poweroff 会卡停服务，要 `busybox poweroff -f` 才真断电”。
 
 171. **★Q28 在本机当前状态是「按内核二进制确定性」的，不是「冷/暖」也不是 ~60% 随机（2026-10-10 夜，同一路径连测 21 发）。**
-    - **⚠️ 2026-10-10 溯源审计降级（`reports/q28-binary-determinism-provenance-20261010.md`）**：① 原台账 21 发**仅 7 发有仓库原始日志**（GOOD×2=logs/q28-path-iso-vk64-220502；NOCARD×5=vk89-loop/vk89plain），其余 14 发（含 vk64 GOOD×5、vk64c 系 NOCARD×7）无 per-run 证据且 `.img` 已删。② 声称的「内核二进制差 5,040,884 B(8%)」**主要是假象**：35.2–41.1 MiB 段 94.72% 满足 `b[i]==a[i-4]`（整段 `.rodata` 平移 4 字节），源头=`LOCALVERSION` `-vk64`→`-vk64c` 多 1 字符；`.text` 仅 26 个 word 不同、全是 ADD/LDR 立即数地址偏移，**无指令语义改变**。③ **反证**：同一 vk64.img（sha 15964160bed0）在冷 POR/冷 fastboot 路径 3/3 = STORM（trials realpor-run1/2、coldfb-vk64），故「不是冷/暖」不成立；固定路径 reboot2 恰是 `#166` 的「NOCARD 粘态」机制。⇒ 降级为「在 reboot2 暖路径上 vk64 亮/vk89·vk64c 不亮，真因未定（4B 布局 or 复位粘态 or vk89 config 差）」。
-    - 路径固定 = `Linux → /usr/local/sbin/reboot2 bootloader → fastboot boot <img>`；判据 = SSH 读 `card0`（`/sys/class/drm` 含 card0=GOOD；只有 `version`=NOCARD）。`fastboot boot` 确为 RAM 起（cmdline token `elden_probe=FBK64` 实证），无 boot_b 回退。
-    - **台账**：`out/boot-elden-vk64.img`（Oct-8 内核 `8efb2731`）= **GOOD ×7**；所有**新编**镜像（vk89 / vk89-plain / vk64c / vk64c+旧ramdisk / vk64c `make clean` 全量）= **NOCARD ×14**。
-    - **变量逐个钉死**：同源码提交（`gd02658e63`，无 dirty）、同 config（ikconfig 从 vk64 内核抽出与 `a383cdb9` **0 差异**）、同 ramdisk（vk64c 用 vk64 原 ramdisk 仍 NOCARD）、同工具链（gcc 15.2.0-16ubuntu1 / ld 2.46）、`make clean` 全量重编仍 NOCARD。⇒ **只剩内核二进制本体**。
-    - **二进制差异**：两 `Image` 同大小(62,540,288 B)、payload sha 不同(`8efb2731` vs `ccc0a284`)，差异 **5,040,884 B（~8%）且高度集中在 32–44 MiB 区**；该区字符串集合一致，差异字节多为相邻小偏移(±4/±16) ⇒ 形态像**数据/指针重定位（布局漂移）**，非大面积代码改写。
-    - **含义**：① 用户对「冷/暖」的怀疑成立——至少它不是当前判别变量；② Q28 = **对内存/时序极敏感的首发竞态**，内核布局的微小漂移即可把同一源的两构建分别推到 GOOD / NOCARD 侧；③ Oct-8 `vk64.img` 落在 GOOD 侧，保留作 **Q28 GOOD 参照**。
-    - **口径更新**：收窄/取代 `#168` 的「同二进制冷起非确定性」与 DOSSIER 的「冷起 ~60%」——在**当前设备状态**下，同一二进制**可复现**（不是掷骰子）。追因下一步（dump 两侧 `/proc/kallsyms` 定位位移区、单因素改构建推 GOOD/NOCARD）见 `reports/q28-binary-determinism-20261010.md`。
-    - 附工具修复：`assert-kernel-sane.sh` 第 4 项 mtime 陈旧检测对**外部 `KERNEL_IMG=`** 误伤，已改为仅对本树默认 `Image.gz` 生效（外部内核靠 UTS 对齐保身份）。
-
+    - **已自审降级并作废（`reports/q28-binary-determinism-provenance-20261010.md`）**：原 21 发仅 7 发有仓库原始日志；声称的 8% 二进制差实为 `.rodata` 整段平移 4 字节假象（源头 `LOCALVERSION` 多 1 字符，无指令语义变化）；同一 vk64.img 冷 POR/冷 fastboot 3/3 = STORM，反证「不是冷/暖」。结论由 #192（构建身份/UTS 版本串）取代。
+    - 附工具修复留存：`assert-kernel-sane.sh` mtime 陈旧检测仅对本树默认 `Image.gz` 生效（外部 `KERNEL_IMG=` 靠 UTS 对齐保身份）。
 172. **★Q28 判 GOOD 必须加「存活门」：`storm=0` 的干净 GOOD 会在数秒内把整机冻死（与 #106 同签名）；`storm>0` 的 STORM 反而存活（2026-10-10 夜，`reports/q28-layout-ab-20261010.md`）。**
     - 台架：同一 `fastboot boot` 路径，判据三态 + SSH 存活采样。同一镜像 `boot-q28-oct8.img`（内核 `8efb2731`）同晚 5 发 = **GOOD(hang)/STORM/STORM/GOOD(hang)/STORM** ⇒ **同镜像同路径非确定**，直接否掉 `#171` 的「同一二进制恒定复现」。
     - **相关**：`storm=0` 的干净 GOOD **3/3 数秒内 HANG**（含 disk-root ×2 与 **RAM-only 无桌面 ×1**）；`storm>0` 的 STORM **4/4 存活**；NOCARD 存活。⇒ **「有 card0」≠「能用」**；`card0` 二元判据废除，GOOD 必须 = 有 card0 + 无风暴 + **存活 ≥60 s 且可交互**。
@@ -1322,6 +1275,7 @@
 ## 二十三、Q24 复现定案 + Q28「版本串」变量 + 测试协议陷阱（2026-10-11 实测）
 
 173. **★Q24 最小触发 = `{camcc-sm8750, cambistmclkcc-sm8750}` 两时钟控制器同时在位 + 真实熄屏；单独任一都不触发（否证历史「cambist 单模块」结论）。**
+   → [关联 #212：Q24 最小触发「camcc+cambist 配对」主条目（硬门口径定案）]
     - 同一 GOOD 启动上的最小对 bisect（`logs/q24-bisect-20261011-084135/`）：`{}` 熄屏×2 存活；`{cambist}` 熄屏 **12** 次全存活；`{camcc}` 熄屏×3 存活；**`{cambist,camcc}`（任一顺序）首次熄屏即整机硬复位**；两模块都在位但**不熄屏**等 60 s 存活。
     - ⇒ 历史 `TASKS` G1-22/G1-33 写的「单模块 `cambistmclkcc-sm8750` 触发」**被 12/12 存活否证**；真实触发需要 **camcc + cambist 配对**。用户口径：**以本轮实验现象为准**（历史取证不干净）。
     - 复现配方：GOOD 启动 + `modprobe camcc-sm8750 cambistmclkcc-sm8750` + `org.gnome.ScreenSaver.SetActive(true)`（DPMS off，不进 s2idle）。
@@ -1812,9 +1766,7 @@
     - 修法：`AUTO-OFF` 分支写 `0` 回 `activate`（Android 从不读回这三个文件，写安全）；判据 = 同一触发后 `+2 s` 与 `+6 s` 的命中数相等。
 
 238. **已达成的能力边界（HIDL 1.0 vibrator 的固有限制，别当成桥的 bug）：无幅度控制、`cmd vibrator_manager cancel` 不能提前停。**（**2026-10-13 二期已解决**：自编 AIDL V2 HAL 提供 `CAP_AMPLITUDE_CONTROL`、`off()` 在 `cancel` 时立即下发 —— 见 #239–#243 与 `TASKS.md` C10 二期）
-    - `supportsAmplitudeControl()=false` ⇒ framework `mCapabilities=[]`、`mHapticChannelMaxVibrationAmplitude=0.0`；强度只能靠桥侧 `--amp`（默认 0xffff）全局调。
-    - 实测 `synced oneshot 3000` 后 1 s 内发 `cancel`：HAL 的 `off()` **没有**被更早调用，马达跑满 3000 ms（由桥的 AUTO-OFF 收尾）。要可取消/带幅度需换 AIDL vibrator HAL（未立项）。
-    - 证据：`reports/waydroid-haptics-20261013.md` §5。
+    - → [二期已解决：自编 AIDL V2 HAL（#239–#243，TASKS C10）；HIDL 1.0 固有限制（无幅度控制、cancel 不能提前停）仅在回退 HIDL 时仍成立。证据 `reports/waydroid-haptics-20261013.md` §5]
 ---
 
 ## 三十、Waydroid 马达透传二期：AIDL HAL 替换（2026-10-13 下午实测）
