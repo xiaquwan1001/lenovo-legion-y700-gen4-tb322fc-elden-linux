@@ -316,9 +316,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 73 / ◐ 部分 14 / ✗ 未上机 62 |
-| 状态 | active 101 / reference 32 / junk 11 / superseded 5 |
-| 时间跨度 | 2026-09-29 → 2026-10-12（磁盘**主会话** jsonl **140**；本索引 **149 行**（含 9 条已删除/迁移会话的墓碑行）；子代理会话文件（深度≥2，134 个）不入本表；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
+| 实机验证 | ✅ 实机 74 / ◐ 部分 14 / ✗ 未上机 75 |
+| 状态 | active 114 / reference 33 / junk 12 / superseded 5 |
+| 时间跨度 | 2026-09-29 → 2026-10-13（磁盘**主会话** jsonl **155**；本索引 **164 行**（含 9 条已删除/迁移会话的墓碑行）；子代理会话文件（深度≥2，136 个）不入本表；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
 
 ---
 
@@ -479,6 +479,20 @@ git log --oneline -10
 | 2026-10-11 | `01a12d5a` | Q28 构建身份伪影定案（续/分支） | q28 | ✅ | active | 收尾 FAIL=0：NOCARD=UTS 版本串内容、STORM=`#60` 2 位号 4坏/2好（~67%）vs 3 位号 0坏/12+ | - | - |
 | 2026-10-12 | `01a12d85` | 进展分析与文档收口（本会话） | docs/analysis | ✗ | active | 修 G2 50→60 漂移、vk 版本账收口（在途 8→0、补登 vk90–93、清死脚本/unversioned）、补会话索引 | - | - |
 | 2026-10-12 | `01a12ef1` | 上游邮件通道定案 + v3 回归报告投递 | upstream/mail | ✅ | active | 通道三选一实测：Outlook basic auth 已禁、QQ 改写 Message-ID 断线程、**USTC 保真**；v3 于 08:22Z 投递，5 个归档（arm-msm/clk/linux-devicetree/lkml/regressions）收录、正文 sha256 一致；新增 `~/.local/bin/send-mail-ustc.py`、`lore-query.py`（过 Anubis PoW） | - | Taniya `quic_tdas` 邮箱满退信 → 已用上游 yaml 登记的备用地址 `taniya.das@oss.qualcomm.com` 单独重投（无退信）；列表信被 Coremail 标 `[SPAM]` 已加白名单 |
+| 2026-10-12 | `01a12d9c` | 空会话（冒烟） | meta | ✗ | junk | （仅“你好”，无实质操作） | - | - |
+| 2026-10-12 | `01a12de9` | pi-subagents→fabric 迁移检查 | infra/fabric | ✗ | active | 确认 pi-subagents 卸载后 agents/missions 仍可手动拼装；fabric 派发路径验证 | - | - |
+| 2026-10-12 | `01a12df8` | Q24 九轮静态复核与实验计划 | q24 | ✗ | active | 续接 C 系列后收敛：{camcc}单不致死、H1 DT 否证、GPU runtime-PM 否定、NoC/BCM 否证、PMIC PON 无差异；收敛到电气/时序级 | - | 下一步=外部电压测量(需人手) |
+| 2026-10-12 | `01a12ef9` | 项目整理与子代理分派 | docs/orchestration | ✗ | active | 文档收口+死脚本清理+vk 版本账收口 | - | - |
+| 2026-10-12 | `01a12f22` | Q24/Q28 进度确认 | docs/analysis | ✗ | active | 汇总 Q24/Q28 未解状态与下一步 | - | - |
+| 2026-10-12 | `01a12f56` | Linux 7.2.x/7.3 上游补丁调研 | research/upstream | ✗ | reference | 搜索 7.2 高版本与 7.3 中与本地开发相关的补丁更新 | - | - |
+| 2026-10-12 | `01a12f8e` | Q28 七臂否证（vk116–vk122+vk123） | q28 | ✅ | active | 驱动内自恢复七臂全部否证；DYN pclk 域闩住⇒故障态不在 DSI 控制器内部；恢复只能整机复位 | vk116–vk123 | 主靶 dispcc/INTF 静态对照后削弱 |
+| 2026-10-12 | `01a13056` | 进度整理与方向思考 | docs/analysis | ✗ | active | 阅读当日文档、整理 Q24/Q28 进度、评估同 SoC 板型驱动参考价值 | - | - |
+| 2026-10-12 | `01a130aa` | Q24/Q28 本地进度核查 | docs/analysis | ✗ | active | 查本地进度文档与报告完整性 | - | - |
+| 2026-10-12 | `01a1327e` | Q24/Q28 实验进展整理与报告审核 | q24/q28 | ✗ | active | 整理全部实验记录，审核待发上游报告 | - | - |
+| 2026-10-13 | `01a13327` | 上游邮件订阅有效性审查 | upstream/mail | ✗ | active | 审计已订阅邮件列表哪些仍有用 | - | - |
+| 2026-10-13 | `01a1334d` | locale 中文支持调研 | research/locale | ✗ | reference | 分析设备中文 locale 是否依赖 glibc（目前设备不支持中文） | - | 纯调查未落盘 |
+| 2026-10-13 | `01a13379` | 上游/下游改动分布审计 | audit/upstream | ✗ | active | 检查 phosh/内核/Waydroid/LineageOS 本地改动在上游内占比 | - | - |
+| 2026-10-13 | `01a133ec` | 文档整理（本会话） | docs/cleanup | ✗ | active | 补会话索引、清 tmp 文件、归档旧 plans | - | - |
 
 ---
 

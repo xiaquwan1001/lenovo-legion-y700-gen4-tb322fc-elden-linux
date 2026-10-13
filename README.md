@@ -53,7 +53,7 @@
 | 目标 | 完成度 | 说明 |
 |---|---|---|
 | **G1** 驱动 bring-up | **≈ 90%** | 27/30 项功能可用；**上游化 M1–M5 = 0/5（未开始）** |
-| **G2** 安卓容器 | **≈ 60%** | Waydroid 图形/内核/GAPPS/代理通路可用；**容器传感器 HAL 已打通**（宿主 gbinder 注入 + 真值 SSC→UDP）、**容器音频打通**（C6：闹钟出声 + 录音 + MediaCodec 53）、**C2 GMS 登录**（用户人工验证）；Play Integrity / SafetyNet、Widevine 等级仍在收口 |
+| **G2** 安卓容器 | **≈ 65%** | Waydroid 图形/内核/GAPPS/代理通路可用；**容器传感器 HAL 已打通**（宿主 gbinder 注入 + 真值 SSC→UDP）、**容器音频打通**（C6：闹钟出声 + 录音 + MediaCodec 53）、**C2 GMS 登录**（用户人工验证）、**C10 马达透传**（AIDL V2 幅度控制+固化进 vendor.img）；Play Integrity / SafetyNet、Widevine 等级仍在收口 |
 | **G3** x86 模拟 | **PoC ✅** | Box64 + Wine PoC 成功；Steam 端到端未上机 |
 
 已工作（有实测证据）：显示/图形（暖起）、触屏、WiFi/BT、USB（NCM 网卡 + ACM 串口）、
