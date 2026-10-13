@@ -59,3 +59,16 @@
 **新增工具/臂**（详见 handoff §1）：`scripts/q28-devprobe2.sh`、`scripts/q28-build-oldrep-pin.sh`；臂 vk104–vk111。
 
 **阅读顺序（追加）**：先 `q28-handoff-20261012.md`（断点）→ `PITFALLS #195` → 需要证据进 `q28-storm-bias-audit-20261011.md`。
+
+---
+
+## 7. 2026-10-13 深夜追加（上游显示栈对照 P1–P2c）
+
+> 结论已进 SSOT：**`TASKS.md` §5 Q28（P1–P2c 条）**、`INDEX.md` §3①、**`PITFALLS #251–#253`**；M1/上游化侧见 `TASKS.md` §7 的「上游显示栈对照」专节。
+
+| 文件 | 定位 | 日期 |
+|---|---|---|
+| **`reports/p1-upstream-dsi-20261013.md`** | **★Q28 与「上游规范点亮」分离实验**：P1（纯上游 DSI，点不亮）→ P1c（+vendor PHY C-PHY 位路径，面板 DCS 成功）→ P2b（上游 DSI host/manager+vendor PHY，**1 发 GOOD、无 Q28 签名**）→ P2c（+vendor DPU，合成器可渲染但面板仍只有背光）；含 §8 kmscube 硬挂事故与 §10 复现资产 | 2026-10-13 深夜 |
+
+- 树 `build/p1-upstream-dsi`（`p1/upstream-dsi`）· 镜像 `out/boot-elden-p{1,b,c,d,e}-*,p2b,p2c`（`out/` 不入 git）· trial `reports/trials/*p1*p2*`。
+- 判据更正：`scripts/q28-devprobe2.sh` 的 L1 正则对 **upstream 栈漏判**（须加 `dpu.*reset failure`/`vblank timeout`）。

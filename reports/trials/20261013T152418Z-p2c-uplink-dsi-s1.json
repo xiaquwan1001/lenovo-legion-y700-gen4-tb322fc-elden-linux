@@ -1,0 +1,18 @@
+{
+  "label": "p2c-uplink-dsi-s1",
+  "ts": "2026-10-13T15:24:18Z",
+  "vk": "",
+  "image": "out/boot-elden-p2c-uplink-dsi.img",
+  "image_sha256": "b7eb5272aebe5c04266b75107de51bd22639b7a706313ce9ab56cfaad42433d1",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "ssh->bootloader,fastboot boot",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "logs/p2c-boot-20261013-231854",
+  "note": "P2c vendor DPU: phoc modeset OK (crtc enable=1, grim works), BUT panel shows backlight only (user). Upstream DSI host video stream does not drive panel."
+}

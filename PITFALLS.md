@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-13。**条目编号 #1–#250**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-14。**条目编号 #1–#253**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§三十；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1836,3 +1836,21 @@
     - 证据：黑匣子 dmesg 里 `Run /init as init process` 时间戳 ~95 s；同 boot 内 `ath12k ... failed to set mhi state: POWER_ON(2) -110` 也落在 95 s。
     - 影响：任何依赖“早启动”的测试（显示/桌面）都会晚 ~90 s 才出；非阻塞但影响可用性与验收节拍。
     - 状态：**未定位**；下一步对比 M1(7.3) 与 clean/base 的 ath12k 绑定（`=y` vs `=m`）与 initcall 顺序。
+
+## 三十二、上游显示栈 bring-up（P1–P2c 臂）：DRM GOOD ≠ 面板有画面（2026-10-13 深夜）
+
+251. **★判「屏幕点亮」只认面板实测；DRM 判据（card0 / connector connected / CRTC active / phoc+phosh / grim 成功）全部满足，面板仍可能只有背光。**
+    - 事实：P2c（上游 DSI host/manager + vendor PHY + vendor DPU）上 `card0-DSI-1` enabled、`crtc-0 enable=1 active=1 mode 1904x3040@120`、`plane` fb 由 phoc 分配、`grim` 截图成功且有非黑内容、`phoc` 在跑——但**用户实测面板只有背光、无内容**。
+    - 与 Q28 坏发同型症状（仅背光），但 dmesg **无** `command DMA timeout` / `Failed to initialize panel`。⇒ 「背光无画面」不是单一根因的判据。
+    - 规约：显示 bring-up 的结论必须 = **人手确认画面** + DRM/dmesg 辅助；`grim` 只证合成器渲染，不证面板显示。
+
+252. **★上游 7.3-rc7 显示栈点不亮 elden 面板；「上游规范点亮」的 vendor 缺口 = DSI PHY（必需）+ DSI host（video/命令，最大块）+ DSI manager（enable 时序）+ msm_mdss（populate DSI PHY）+ vendor DPU 的 DRM 格式/modifier 面。**
+    - 已验证的必要件：① PHY SM8750 C-PHY 位路径（`pll_7nm_register` 选 `DSICLK_SEL(0)`/`pll_bit`）——缺它上游连 `clk_set_rate(pixel_clk)` 都 -22；② `dsi_pll_byte_clk` 取速率；③ `mdss_prepopulate_dsi_phys()`（否则 `dsi1 phy not ready`）。
+    - 纯上游 DPU 会让合成器 modeset 失败（`grim: no supported format found`、connector `disabled`）；换 vendor DPU 后合成器可扫描输出。但**即便合成器扫描输出，面板仍无画面** ⇒ 剩余缺口在 DSI host 的视频/命令编程。
+    - 详细证据链：`reports/p1-upstream-dsi-20261013.md`；树 `build/p1-upstream-dsi`（分支 `p1/upstream-dsi`，P1 5f0c2c668f → P2c 2851bcaff6）。
+
+253. **★显示处于坏态时 `reboot` / `reboot2` / `eldroid-bootctl reboot system` 都会挂在 DRM cleanup（进程不退、uptime 继续涨）；可靠软件恢复 = `echo b > /proc/sysrq-trigger`（或串口 BREAK 后发 `b`）。**
+    - 实测：P2c 上三种常规重启全部无效（`uname -r` 不变）；`ssh root@... 'echo b > /proc/sysrq-trigger'` 立即生效（回日常 `vk94`）。
+    - 附：`kmscube`（GL/EGL）在 P2c 上可触发整机硬挂（仅背光 + SSH 无响应，USB gadget 仍枚举），与 `PITFALLS #106` 同型；跑 GL 前必须常驻串口 logger。
+    - 根因同类：`PITFALLS #143`（Q28 面板失败 → vblank 风暴占满 workqueue → shutdown/reboot 卡死）。
+

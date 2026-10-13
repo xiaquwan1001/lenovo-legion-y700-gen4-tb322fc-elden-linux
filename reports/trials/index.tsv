@@ -88,3 +88,9 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-12T23:25:38Z	vk94-s4	vk94	por	fastboot boot (cold fb after user POR)	GOOD	e112ea0171b5	logs/q28-cold-20261013-071716-vk94
 2026-10-12T23:25:38Z	vk94-s5	vk94	por	fastboot boot (cold fb after user POR)	NOROUTE	e112ea0171b5	logs/q28-cold-20261013-072150-vk94
 2026-10-13T01:44:59Z	vk124-merged-cold4	vk124-merged	por	fastboot boot (cold fb after user POR)	GOOD	7f2136ae7a59	/home/xuqianhui1001/y700-elden/logs/q28-cold-20261013-094319-vk124-merged-cold4
+2026-10-13T14:35:56Z	p1-uplink-dsi-s1		warm	ssh->bootloader,fasboot boot	L1FAIL	06da231c3288	logs/p1-boot-20261013-223522
+2026-10-13T14:46:50Z	p1c-uplink-dsi-s1		warm	ssh->bootloader,fastboot boot	GOOD-NOSESSION	864c10d157c9	logs/p1c-boot-20261013-224347
+2026-10-13T14:52:13Z	p1d-uplink-display-s1		warm	ssh->bootloader,fastboot boot	L1FAIL	f8074b47bb55	logs/p1d-boot-20261013-224918
+2026-10-13T15:00:58Z	p1e-uplink-dsi-s1		warm	ssh->bootloader,fastboot boot	L1FAIL	9cdf675a3653	logs/p1e-boot-20261013-225658
+2026-10-13T15:06:59Z	p2b-uplink-dsi-s1		warm	ssh->bootloader,fastboot boot	GOOD	71016e0812e4	logs/p2b-boot-20261013-230402
+2026-10-13T15:24:18Z	p2c-uplink-dsi-s1		warm	ssh->bootloader,fastboot boot	GOOD	b7eb5272aebe	logs/p2c-boot-20261013-231854

@@ -316,9 +316,9 @@ git log --oneline -10
 
 | 维度 | 分布 |
 |---|---|
-| 实机验证 | ✅ 实机 74 / ◐ 部分 14 / ✗ 未上机 75 |
-| 状态 | active 114 / reference 33 / junk 12 / superseded 5 |
-| 时间跨度 | 2026-09-29 → 2026-10-13（磁盘**主会话** jsonl **155**；本索引 **164 行**（含 9 条已删除/迁移会话的墓碑行）；子代理会话文件（深度≥2，136 个）不入本表；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
+| 实机验证 | ✅ 实机 77 / ◐ 部分 14 / ✗ 未上机 79 |
+| 状态 | active 119 / reference 34 / junk 12 / superseded 5 |
+| 时间跨度 | 2026-09-29 → 2026-10-13（磁盘**主会话** jsonl **161**；本索引 **170 行**（含 9 条已删除/迁移会话的墓碑行）；子代理会话文件（深度≥2，136 个）不入本表；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
 
 ---
 
@@ -493,6 +493,12 @@ git log --oneline -10
 | 2026-10-13 | `01a1334d` | locale 中文支持调研 | research/locale | ✗ | reference | 分析设备中文 locale 是否依赖 glibc（目前设备不支持中文） | - | 纯调查未落盘 |
 | 2026-10-13 | `01a13379` | 上游/下游改动分布审计 | audit/upstream | ✗ | active | 检查 phosh/内核/Waydroid/LineageOS 本地改动在上游内占比 | - | - |
 | 2026-10-13 | `01a133ec` | 文档整理（本会话） | docs/cleanup | ✗ | active | 补会话索引、清 tmp 文件、归档旧 plans | - | - |
+| 2026-10-13 | `01a13403` | 项目并行审计与文档精简 | audit/docs | ✗ | active | 五路并行审计：三层入口 + 完成度单源 + 一致性修正 + 入口精简 | - | P0–P3，`reports/audit-overview-20261013.md` |
+| 2026-10-13 | `01a13453` | 待办盘点 | docs/status | ✗ | reference | 盘点当前开放待办与卡点 | - | - |
+| 2026-10-13 | `01a134c3` | 上游化统筹与分片备料 | upstream/plan | ✗ | active | M1 重基 + M3-3/M3-4/M3-6/M4-camss/M5/B5 备料封存 | - | 投递冻结；`reports/m3-*`、`m4-camss-project`、`b5-dsi-resoc` |
+| 2026-10-13 | `01a1356a` | M1-7.3 重基树上机 bringup | m1 | ✅ | active | 7.3-rc7 重基树零写盘 bringup；外设全废=缺 `=m` 模块（fsa4480→DP→DRM、fastrpc→传感器），非回归 | - | `reports/m1-73-port-bringup-20261013.md`、`PITFALLS #248–#250` |
+| 2026-10-13 | `01a13598` | 上游显示栈对照（P1–P2c） | q28/display | ✅ | active | 纯上游 DSI 点不亮(-22)→+vendor PHY 面板 DCS 成功→**P2b 1 发 GOOD 无 Q28 签名**；P2c 合成器 GOOD 但面板无内容 ⇒ 判据须面板实测 | p1–p2c | `reports/p1-upstream-dsi-20261013.md` |
+| 2026-10-13 | `01a1378a` | 整理昨日进度、更新过时文档 | docs/cleanup | ✗ | active | 收口 10-13 深夜 P1–P2c 未提交工作并同步 INDEX/TASKS/PITFALLS/q28-INDEX | - | 本会话 |
 
 ---
 

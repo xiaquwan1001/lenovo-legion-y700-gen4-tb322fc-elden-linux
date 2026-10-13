@@ -1,0 +1,18 @@
+{
+  "label": "p1c-uplink-dsi-s1",
+  "ts": "2026-10-13T14:46:50Z",
+  "vk": "",
+  "image": "out/boot-elden-p1c-uplink-dsi.img",
+  "image_sha256": "864c10d157c9fe0c61048df9920bcff5944d09dacd75ab856dccc4ae222f1f83",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "ssh->bootloader,fastboot boot",
+  "probe": "q28",
+  "verdict": "GOOD-NOSESSION",
+  "log_dir": "logs/p1c-boot-20261013-224347",
+  "note": "P1c: PHY C-PHY bit-path fix => past pixel clk -22 (no DSI power_on error). BUT DPU enc35 ctl reset -22 + frame-done/vblank timeout storm at 95.7s; no panel DCS init logged; phoc/phosh=0 (no session). upstream DHY + vendor DPU mismatch suspected."
+}

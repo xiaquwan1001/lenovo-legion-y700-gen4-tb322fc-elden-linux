@@ -1,0 +1,18 @@
+{
+  "label": "p1d-uplink-display-s1",
+  "ts": "2026-10-13T14:52:13Z",
+  "vk": "",
+  "image": "out/boot-elden-p1d-uplink-display.img",
+  "image_sha256": "f8074b47bb5537bab8ccfda02fb52b3295ef0df92476013eb3696e9519551f09",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "ssh->bootloader,fastboot boot",
+  "probe": "q28",
+  "verdict": "L1FAIL",
+  "log_dir": "logs/p1d-boot-20261013-224918",
+  "note": "P1d upstream DSI+PHY+DPU+mdss: same DPU enc35 intf1/intf2 ctl reset -22 + vblank storm, no panel DCS, no session. Attribution: kickoff failure follows the DSI stack (P1c vendor DPU also failed); upstream DSI is the blocker."
+}

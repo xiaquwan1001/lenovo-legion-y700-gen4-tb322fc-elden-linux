@@ -10,7 +10,7 @@
 
 | 项 | 现象 | 当前口径 | SSOT |
 |---|---|---|---|
-| **Q28** | 开机间歇「只有背光无桌面」 | 根因 L1=bonded 双 DSI 首条 DCS `ff 20` 的**命令 DMA 引擎 hang**；**当前口径（10-12 深夜）：坏发 ~50%、逐启动随机、按时间成簇（会话级），与镜像/构建身份无关**（旧「构建身份伪影」定案**作废**）；七臂 vk116–vk122+vk123 全部否证；故障态不在 DSI 控制器内部；恢复只能整机复位；日常靠看门狗兜底（~50%→~75%）；未解、`boot_b` 仍 `vk94` | `TASKS.md` §5 Q28（当前口径块）、`INDEX.md` §3①、`reports/q28-dsi-recover-20261012.md` |
+| **Q28** | 开机间歇「只有背光无桌面」 | 根因 L1=bonded 双 DSI 首条 DCS `ff 20` 的**命令 DMA 引擎 hang**；**当前口径（10-12 深夜）：坏发 ~50%、逐启动随机、按时间成簇（会话级），与镜像/构建身份无关**（旧「构建身份伪影」定案**作废**）；七臂 vk116–vk122+vk123 全部否证；故障态不在 DSI 控制器内部；恢复只能整机复位；日常靠看门狗兜底（~50%→~75%）；未解、`boot_b` 仍 `vk94`。**🆕 10-13 深夜（P1–P2c）**：上游 DSI host/manager+vendor PHY **1 发 GOOD、无 Q28 签名** ⇒ Q28 疑为 vendor DSI 命令路径专有（单发待多发起）；「点亮」须面板实测（`PITFALLS #251`）；`reports/p1-upstream-dsi-20261013.md` | `TASKS.md` §5 Q28（当前口径块）、`INDEX.md` §3①、`reports/q28-dsi-recover-20261012.md` |
 | **Q24** | 相机模块在位时「熄屏→整机硬复位/掉电」 | 最小触发 = **`camcc-sm8750` + `cambistmclkcc-sm8750` 配对** + 真实熄屏（历史「单模块」已被否证）；**用户裁决=互斥二选一**：日常零相机模块，需要时 `cam-mode.sh on/off`；**根治未成**；2026-10-12 重开：`PITFALLS #197`（死前签名=probe 伪影）/#198（熄屏硬门）；**2026-10-12 七轮结论**：触发器硬门下干净复现（C2 配对+熄屏 3 s 静默硬复位、C1 `{camcc}` 不致死）；**H1（DT 上游 MMCX+MX）否证**；致死点随台架状态移动；GPU runtime-PM 否定；日常 boot_b 即可复现（4/4）；末帧 = `dispcc` 时钟使能 + NoC/BCM 票爆发；**第 8–9 轮（下午）**：受控差分**否证 BCM 靶**（死/活票同址同型）、**致死 = SoC 级复位 + 约 30 s 自动重启（5/5，不需要 POR）**、**PMIC PON 块逐字节无差异 + 无硬件看门狗**、**最小触发 = 配对确认** | `TASKS.md` G1-22/G1-33、§5 Q24；`reports/q24-ctl-20261012.md`、`reports/q24-cseries-20261012.md`、`reports/q24-h1-result-20261012.md`、`reports/q24-mech-20261012.md` |
 
 ---
@@ -29,6 +29,8 @@
 | 10-10 | `01a1241b` | `17a41f85`/`6f8b8937`/`f2b172ba` 上游调研；`853c3d7c` 单变量构建；`9bb694f9`/`9f55f31e` cmd-DMA；`a1895cbe` DOSSIER 合订；`cab8f9ae` 好发取证；`bf9c7e84` 清理审计 | `reports/q28-DOSSIER.md`（SSOT）、vk84、vk86、`q28-*` 脚本与报告 |
 | 10-10 | `01a12542`/`01a1259d` | — | 进度盘点/本轮审计 |
 | 10-12 深夜 | 本轮（收尾） | 七臂 vk116–vk122 构建/上机；上游回移 lane 清洗合并；看门狗 lane | **7 臂全否证**（DYN pclk 判别量、故障态不在控制器内）⇒ `reports/q28-dsi-recover-20261012.md`；主靶 dispcc 静态削弱 ⇒ `reports/q28-dispcc-static-20261012.md`；看门狗上机 ⇒ `reports/q28-watchdog-20261012.md`；回移 14 文件合入 `clean/base` + `vk124-merged`（3/3 L1FAIL）⇒ `reports/upstream-lane-merge-20261012.md` |
+
+| 10-13 深夜 | `01a13598` | — | **上游显示栈对照 P1–P2c**：纯上游 DSI 点不亮（`-22`）→ +vendor PHY 面板 DCS 成功 → **P2b（上游 DSI host/manager+vendor PHY）1 发 GOOD、无 Q28 签名** ⇒ Q28 疑 vendor 命令路径专有；P2c 合成器 GOOD 但面板无内容（判据须面板实测）⇒ `reports/p1-upstream-dsi-20261013.md` |
 
 ### Q24 主线会话
 | 日期 | 父会话 | 关键 lane | 产出/结论 |

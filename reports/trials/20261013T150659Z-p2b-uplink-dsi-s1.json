@@ -1,0 +1,18 @@
+{
+  "label": "p2b-uplink-dsi-s1",
+  "ts": "2026-10-13T15:06:59Z",
+  "vk": "",
+  "image": "out/boot-elden-p2b-uplink-dsi.img",
+  "image_sha256": "71016e0812e4f458f3fc8c232f467f5b20e66e75c73be0db91a0492726ba197f",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "ssh->bootloader,fastboot boot",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "logs/p2b-boot-20261013-230402",
+  "note": "P2b = upstream DSI host+manager + full vendor SM8750 PHY + upstream DPU + vendor msm_mdss: VERDICT GOOD, l1=l2=0, phoc/phosh/wayland up, card0-DSI-1 connected/On, mode 1904x3040. No Q28 sig."
+}

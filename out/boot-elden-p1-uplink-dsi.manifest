@@ -1,0 +1,26 @@
+# boot-elden-p1-uplink-dsi — P1 arm: pure-upstream(7.3-rc7) DSI command path
+image:      out/boot-elden-p1-uplink-dsi.img
+sha256:     06da231c32882913943abb0dcaa435525f9d36531b78333121312aab9a0727ea
+size:       86257664 B (< 100663296 limit)
+UTS:        7.3.0-rc7-debug-g5f0c2c668fd1
+tree:       build/p1-upstream-dsi  branch p1/upstream-dsi  commit 5f0c2c668f
+base:       b3815fb150 (M1 clean-tree-73 tip, m1/clean-tree-7.3rc7)
+variable:   drivers/gpu/drm/msm/dsi/ + registers/display/dsi.xml + include/drm/drm_mipi_dsi.h
+            reverted to pristine 24a19b953e (Linux 7.3-rc7) => upstream DSI command path
+            (vendor dsi_mgr_bonded_cmd_* removed; bonded_cmd hits = 0)
+same:       DTS/DTB (elden), cmdline, ramdisk base (sha 35823240...), 7.3-rc7 base, config
+ramdisk:    base 64586468 B (rootfs-m1-73 head) + 37-module overlay (fsa4480+fastrpc+clock closure)
+modules:    37, all vermagic 7.3.0-rc7-debug-g5f0c2c668fd1
+config_sha256=78dd54532c07550d0ba4b825d794a4377cef7d7436ff598327a7011c782da72f
+kernel_payload_sha256=bb67f2f2e425408cf8430cd5d5ea7bb41c4ed8a3fd7f0e21da881338085b0db7
+# ^ config_sha256 与 out/boot-elden-m1-73.manifest 逐字相同（同 config）；payload sha 由本镜像解压实测
+verification: NOT_TESTED_ON_DEVICE
+verification: TESTED_ON_DEVICE 2026-10-13 22:35  (U2, SSH->bootloader->fastboot boot, zero-write)
+result:       L1FAIL — upstream DSI cannot power on the panel:
+              "dsi_link_clk_set_rate_6g: Failed to set rate pixel clk, -22"
+              -> msm_dsi_host_power_on: failed to enable link clocks ret=-22
+              -> sending dcs data ff 20 failed: -22 -> Failed to initialize panel: -22
+              card0 present, card0-DSI-1=connected, phoc/phosh up, backlight on (no image)
+              NB: signature is -22 (pixel clk set_rate rejected) not -110 (cmd-DMA), i.e.
+              upstream fails EARLIER than the vendor Q28 signature; both implicate the
+              pixel-clock/dispcc domain.  logs/p1-boot-20261013-223522/

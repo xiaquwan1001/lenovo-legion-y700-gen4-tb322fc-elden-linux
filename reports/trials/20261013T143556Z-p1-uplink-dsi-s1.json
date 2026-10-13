@@ -1,0 +1,18 @@
+{
+  "label": "p1-uplink-dsi-s1",
+  "ts": "2026-10-13T14:35:56Z",
+  "vk": "",
+  "image": "out/boot-elden-p1-uplink-dsi.img",
+  "image_sha256": "06da231c32882913943abb0dcaa435525f9d36531b78333121312aab9a0727ea",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "ssh->bootloader,fasboot boot",
+  "probe": "q28",
+  "verdict": "L1FAIL",
+  "log_dir": "logs/p1-boot-20261013-223522",
+  "note": "pure upstream DSI(24a19b953e): dsi_link_clk_set_rate_6g pixel clk set_rate -22 -> power_on -22 -> panel init -22; card0/DSI-1 connected; phoc/phosh up; backlight on"
+}

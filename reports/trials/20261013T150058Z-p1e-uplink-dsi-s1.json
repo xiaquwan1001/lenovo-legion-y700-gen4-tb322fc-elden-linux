@@ -1,0 +1,18 @@
+{
+  "label": "p1e-uplink-dsi-s1",
+  "ts": "2026-10-13T15:00:58Z",
+  "vk": "",
+  "image": "out/boot-elden-p1e-uplink-dsi.img",
+  "image_sha256": "9cdf675a36533848eb2ca752eb43c98940d9626666d79ad9e174cfd9f23b9218",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "ssh->bootloader,fastboot boot",
+  "probe": "q28",
+  "verdict": "L1FAIL",
+  "log_dir": "logs/p1e-boot-20261013-225658",
+  "note": "P1e enable-timing port: panel DCS init SUCCEEDS (novatek 'panel prepared'), no Q28 sig. Still DPU ctl reset -22 + vblank storm -> no video/session. Same with vendor DPU (P1c) => blocker tied to upstream DSI link/video state, not enable timing."
+}
