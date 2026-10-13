@@ -160,3 +160,5 @@ vk124-merged	num_ne_tag	上游回移 lane 清洗版日常镜像：源码 = clean
 vk124-merged	uts_dup	沿用 vk113 的 UTS release/构建身份（`#121`）以保模块 vermagic 与显示身份不变量
 vk125-resetterm	num_ne_tag	Q28 复位终态对齐臂：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
 vk125-resetterm	uts_dup	单变量对照需要与 vk113/vk117 同一 UTS release/构建身份（PINUTS + #121）
+vk126-c1	num_ne_tag	C1 端到端验收镜像：源码 = clean/base@5b169d541（与 vk124-merged 同源），文件名带 vk126 但源提交无 vk126 tag
+vk126-c1	uts_dup	单变量要求与 vk124-merged 同一 UTS release/构建身份（PINUTS #121）以隔离「唯一变量 = C1 config」

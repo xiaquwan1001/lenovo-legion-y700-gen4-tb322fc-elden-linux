@@ -77,8 +77,10 @@ CFG_SHA=$(sha256sum "$WT/.config" | cut -d' ' -f1)
 GOOD_CFG_SHA=$(sha256sum "$CFG" | cut -d' ' -f1)
 KHEAD=$(git -C "$WT" rev-parse --short HEAD)
 echo "[2] worktree=$WT  HEAD=$KHEAD  好档 config sha=$GOOD_CFG_SHA  钉死后 config sha=$CFG_SHA"
-[ "${GOOD_CFG_SHA:0:12}" = "a383cdb99dfe" ] || { echo "❌ 源 config 不是 a383cdb9 好档"; exit 2; }
-[ "$KHEAD" = "${BASE_COMMIT:0:9}" ] || { echo "❌ worktree HEAD=$KHEAD ≠ $BASE_COMMIT"; exit 2; }
+EXPECT_CFG=${EXPECT_CFG:-a383cdb99dfe}   # 允许派生 config（如 +C1 fragment）；默认仍钉好档
+[ "${GOOD_CFG_SHA:0:12}" = "$EXPECT_CFG" ] || { echo "❌ 源 config 前 12 位 $GOOD_CFG_SHA ≠ $EXPECT_CFG"; exit 2; }
+KHEAD_FULL=$(git -C "$WT" rev-parse HEAD); BASE_FULL=$(git -C linux rev-parse "$BASE_COMMIT")
+[ "$KHEAD_FULL" = "$BASE_FULL" ] || { echo "❌ worktree HEAD=$KHEAD_FULL ≠ $BASE_FULL"; exit 2; }
 
 echo "[2] 构建身份：KBUILD_BUILD_VERSION=$KBVER  KBUILD_BUILD_TIMESTAMP=$KBTIME  LOCALVERSION=$PINUTS"
 . "$ROOT/scripts/env-build.sh"
