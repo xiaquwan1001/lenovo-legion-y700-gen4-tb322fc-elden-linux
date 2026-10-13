@@ -390,13 +390,13 @@
 > 审查已完成（2026-10-04，只审不改）：payload=相对主线 v7.2 的 **125 改 + 11 新文件（≈12.4k 行）**，
 > 分级 A/B/C/D 与推进顺序见 `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`。机械检查全净
 > (checkpatch/DTC/dt-validate 仅 1 红点=usb@a600000)。
-> **上游化规则/违例清单/下游隔离清单 = `reports/upstream-policy-20261013.md`**（三问门 + 强制框架表 + Q3 违例 + 薄下游层预算）；本节只维护 M1–M5 状态。
+> **上游化规则/违例清单/下游隔离清单 = `reports/upstream-policy-20261013.md`**；M3 分片与验收口径 = `reports/m3-series-plan-20261013.md`（三问门 + 强制框架表 + Q3 违例 + 薄下游层预算）；本节只维护 M1–M5 状态。
 
 | ID | 任务 | 状态 | 依赖 | 判据 | 证据 |
 |---|---|---|---|---|---|
 | M1 | 干净上游资产树（upstream tip + payload 重放，剔除 D 类与 vk 历史） | 🟢 **树已建、干净构建通过（2026-10-11）**：`build/m1-upstream/clean-tree` @ 分支 `m1/clean-tree`（base `v7.2-elden` 44137cb4e → tip c73ff2522，11 提交 = 2 独立 patch + 10 cherry-pick + ADSP non-secure）；`Image.gz` 20.6 MB + dtbs 全绿（UTS `7.2.0-debug-m1-gc73ff25222c7`）。**未做**：`fastboot boot` 上机对照（功能等价目前是清单 §3 的逐域 argument） | — | 树能编出 vk 等价功能镜像 ✅（构建）；上机对照待做 | `reports/m1-clean-tree-20261011.md`、`.pi/plans/2026-10-10-M1-资产树清单.md`、审查档案 §4 |
 | M2 | 首发小系列 A1(GC 块)+A2(battmgr)（**A1 已撤稿=与上游重复；A3 重分类**） | 🟡 **A2 在评审**（battmgr → linux-pm/linux-arm-msm/lkml 已归档）；**A1（DPU GC 块）2026-10-13 已发撤稿回复**——与已在 msm 树的 `3389406e6a03`（Rob Clark，2026-09-30，v7.4）**重复**；**新增 P3 `drm/msm/dpu: reject undersized gamma LUT blobs`（修 sashiko 指出的 OOB 读，2026-10-13 10:04 已发）**：基线 upstream **v7.3-rc7**，`patches/upstream/m2-2026-10-13/`；checkpatch `--strict` 0/0、两目标文件编译干净、收件人 dry-run 通过 | M1 | 发至对应 ML 获 review（+lore 复核） | `patches/upstream/m2-2026-10-13/README.md`；**A3 更正 = 上游 `aw86927.c` 无 firmware 波形装载路径（882 行）⇒ 窗口放宽无对应代码可修，重分类 B/C 不进 M2** |
-| M3 | 板支持系列（DTS+qcom.yaml；先修 usb@a600000 schema 红点、去 vendor-only 属性） | ⬜ | M1 | dtbs_check CI 绿 | 同上 §3.4 |
+| M3 | 板支持系列（DTS+binding 随行；拆片见 `reports/m3-series-plan-20261013.md`） | 🟡 **已开工（2026-10-13）**：分片计划 + 验收口径已定；**M3-1/0001** `dt-bindings: usb: snps,dwc3: document usb-psy-name` 就绪未发（`checkpatch --strict` 0E/0W、`dt-doc-validate` rc=0，见 `patches/upstream/m3-2026-10-13/README.md`）。实测：板 DTB 对本树 binding **0 诊断**；对纯上游 binding 382 诊断/22 节点 ⇒ 差额 = 系列必须随行交付的 binding 集合。`arm/qcom.yaml` 的 `lenovo,elden` 登记已在 | M1 | 每片过 `dtbs_check`（自带 binding）+ `dt-doc-validate` + `checkpatch --strict` | `reports/m3-series-plan-20261013.md`、`patches/upstream/m3-2026-10-13/` |
 | M4 | 大件立项：B8 camss（media）/ B6 ath12k PEACH（wifi）/ B3 hci_qca PERI（bt） | ⬜ | M1 | 各成多轮 review 工程 | 同上 §1-B |
 | M5 | C2 dm-default-key 从上游包剥离 → 持久根 out-of-tree patchset | ⬜ | — | 上游包内无 Android vendor ABI | 同上 §1-C |
 

@@ -1,0 +1,42 @@
+From 377c45320c7aa1ce48f40c86ef7ac3d0a7e941ca Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 16:52:23 +0800
+Subject: [PATCH] dt-bindings: usb: snps,dwc3: document usb-psy-name
+
+The dwc3 driver looks up "usb-psy-name" to find the power supply which
+accepts the input current limit requested by the gadget after USB
+configuration, and while the bus is suspended or resumed
+(dwc3_vbus_draw_work()), but the property is not described by any
+binding:
+
+  $ git grep -n usb-psy-name -- Documentation/
+  (no match)
+
+As a result, any DTS using it fails dtbs_check.  The property is read
+from the DWC3 device node, which for the single-node flavours (e.g.
+qcom,snps-dwc3.yaml) is the node that $refs this file, so document it
+here.
+
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../devicetree/bindings/usb/snps,dwc3-common.yaml          | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+index 6c0b8b6538..6609a709c1 100644
+--- a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
++++ b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+@@ -51,6 +51,13 @@ properties:
+       - items:
+           pattern: "^usb(2-([0-9]|1[0-4])|3-[0-3])$"
+ 
++  usb-psy-name:
++    description:
++      Name of the USB power supply accepting the input current limit
++      requested by the gadget after USB configuration, and during bus
++      suspend and resume.
++    $ref: /schemas/types.yaml#/definitions/string
++
+   snps,usb2-lpm-disable:
+     description: Indicate if we don't want to enable USB2 HW LPM for host
+       mode.
