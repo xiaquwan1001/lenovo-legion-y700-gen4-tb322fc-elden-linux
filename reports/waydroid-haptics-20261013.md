@@ -8,12 +8,12 @@
 
 | 项 | 结果 |
 |---|---|
-| 本次上机镜像 | `out/boot-elden-vk124-merged.img`（sha256 `7f2136ae…`）**零写盘 RAM 直启**；冷起 **GOOD**（`card0-DSI-1 connected dpms=On`、`bright=511`、`phoc/phosh` 在跑）⇒ 亮屏版本选定 |
+| 本次上机镜像 | `out/boot-elden-vk124-merged.img`（sha256 `7f2136ae…`）**零写盘 RAM 直启**；**第 1 次冷起 = STORM**（操作者观察：只有背光无桌面）→ **操作者手动 POR 后第 2 次冷起 = GOOD**（`card0-DSI-1 connected dpms=On`、`bright=511`、`phoc/phosh` 在跑）⇒ 亮屏版本选定；本报告全部取证均在**第 2 次启动**的会话上 |
 | 容器 | Waydroid Session/Container **RUNNING**（`wd-ctl.sh state`）；HIDL `android.hardware.vibrator@1.0::IVibrator/default` 在册（`lshal`，PID 89） |
 | 透传链路 | Android `cmd vibrator_manager synced oneshot <ms>` → HAL 写桥文件 → 宿主 `elden-hapticd` → 内核 `aw86927_haptics_play` **kprobe 命中** |
 | 单发 500 ms | 命中 6（2 马达）；`+2 s` 与 `+6 s` 计数相同 ⇒ 无自触发环 |
 | 连击 20 ms × 8 | 命中 48（按键触觉级短振可跟随） |
-| 未验证 | **物理手感/强度**（需人手确认）；幅度、`cancel`（HIDL 1.0 限制，见 §5） |
+| 未验证 | **物理手感/强度**（需人手确认）；~~幅度、`cancel`~~ → **二期 AIDL HAL 已实现并实测（见 §7）** |
 
 ## 1. 问题定位：HAL 在写不存在的节点，且失败无声
 
@@ -93,7 +93,7 @@ kprobe: +2 s = 6, +6 s = 6（相等 ⇒ 无自触发环）; activate 文件回�
 ## 5. 限制与后续
 
 - **物理确认缺人手**：内核已收到并执行 FF 播放（kprobe + 驱动 work 命中），但「马达是否真的震」需用户确认（09-30 的 haptics 修复也是「用户确认」验收）。
-- HIDL 1.0：`supportsAmplitudeControl=false`、`cancel` 不提前停（见 `PITFALLS #238`）；要幅度/取消需 AIDL vibrator HAL（未立项）。
+- ~~HIDL 1.0：`supportsAmplitudeControl=false`、`cancel` 不提前停~~ → **二期已用自编 AIDL V2 HAL 解决（见 §7）**。
 - 双马达目前**同强度同启停**（Android 只有 1 个 vibrator id）；将来可做左右差异（`--amp` 或按通道映射）。
 - 依赖顺序：桥目录必须**先于容器启动**存在（OpenRC `before waydroid-container`；`lxc.mount.entry` 带 `optional`，缺了只是不挂、不会让容器起不来）。
 - 冷启回归未做（避免无谓重启与 Q28 风险）；重装 rootfs 后靠 `restore.sh`（已加 `elden-hapticd` 段）恢复服务登记。
@@ -111,3 +111,37 @@ ssh root@192.168.7.1 'waydroid shell cmd vibrator_manager synced oneshot 500'
 # 4) 只验证
 bash scripts/waydroid-haptics-setup.sh --verify
 ```
+
+---
+
+## 7. 二期：自编 AIDL V2 vibrator HAL（幅度 + cancel + 每侧强度，2026-10-13 下午）
+
+一期桥已能打通「Android 振动 → 马达」，但镜像自带的 HIDL 1.0 HAL 有两个天花板：`supportsAmplitudeControl=false`（无强度控制）、`cancel` 不会提前把 `off()` 下发。二期把这层换掉。
+
+### 7.1 做法
+
+| 项 | 内容 |
+|---|---|
+| 新 HAL | `patches-userland/waydroid-haptics-aidl/`（AIDL V2，ndk binder；源码树 `hardware/waydroid/vibrator-aidl/`，`mmm` 约 47 s 出产物） |
+| 部署 | **不碰 overlay**：把自编二进制 bind 到镜像里**已存在**的 HIDL 服务路径 `/vendor/bin/hw/android.hardware.vibrator@1.0-service.waydroid`，镜像的 rc 照旧拉起它；另把「镜像原 fragment + 我们的 fragment」目录 bind 到 `/vendor/etc/vintf/manifest` |
+| 为什么必须改 VINTF | servicemanager **强制**校验声明：未声明时 `AServiceManager_addService` 直接失败（logcat `Could not find android.hardware.vibrator.IVibrator/default in the VINTF manifest`，返回 -3） |
+| 桥 ABI 扩展 | 新增 `.../amplitude`（0..255）；`activate` 仍是**最后写入的触发边沿**，daemon 读到的 `duration`/`amplitude` 一定是最新值 |
+| 能力声明 | `getCapabilities()=CAP_AMPLITUDE_CONTROL`；`getSupportedEffects()=CLICK/DOUBLE_CLICK/TICK/THUD/POP/HEAVY_CLICK`；其余一律 `EX_UNSUPPORTED_OPERATION`（不谎报） |
+| 关键实现点 | 框架 `SetAmplitudeVibratorStep` 是**先 `on(duration)` 再 `setAmplitude()`** ⇒ `setAmplitude` 必须在运行中改写 `amplitude` 文件（daemon 会带新幅值重新上传 FF 效果），否则强度永远停在最初值（此坑已修） |
+
+### 7.2 实测（同一台架，容器内 `waydroid shell`）
+
+| 项 | 命令 | 结果 |
+|---|---|---|
+| 框架识别 | `dumpsys vibrator_manager` | `mCapabilities=[AMPLITUDE_CONTROL]`、`mSupportedEffects=[CLICK, DOUBLE_CLICK, TICK, THUD, POP, HEAVY_CLICK]` |
+| Android 幅度 | `synced oneshot -a 300 160` / `-a 300 40` | daemon：`amp=160/255` / `amp=40/255`（HAL 侧 logcat：`vibrator amplitude -> 160 / -> 40`） |
+| 每侧强度 × Android 幅度 | daemon `--amp-a 0xffff --amp-b 0x4000` + `oneshot -a 300 255` / `-a 300 128` | `A=0xffff B=0x4000` / `A=0x8080 B=0x2020`（叠加正确） |
+| `perform()` 预定义效果 | `synced prebaked 0` / `2` / `5` | 10 ms / 5 ms / 16 ms（CLICK/TICK/HEAVY_CLICK） |
+| **cancel** | `synced -B oneshot 8000`，1.2 s 后 `cancel` | `11:36:13` 起振 → `11:36:14` HAL `vibrator off` + daemon `vibrate OFF`（**立即停**；HIDL 1.0 时代做不到） |
+
+### 7.3 残留与纪律
+
+- **物理手感仍需人手确认**（框架/内核侧的整数与时序证据已齐）。
+- CLI 参数陷阱（`PITFALLS #239`）：`oneshot` 必须写 `-a` 才会带幅度参数；`prebaked` 收**整数 effect id**；`cancel` 只对 `-B`（后台）振动有效（token = service）。第一轮「幅度没生效」全是这三条造成的假阴性。
+- 部署顺序（`PITFALLS #235`）：**先停容器再 `scp`**，否则 bind 目标正在跑 → `ETXTBSY`。
+- 回退：删 `/var/lib/waydroid/lxc/waydroid/config` 里 `# >>> elden-haptics aidl` 段的两条 `mount.entry` → 全量重启容器 ⇒ 立刻回到镜像原 HIDL 1.0 HAL（一期桥仍可用）。

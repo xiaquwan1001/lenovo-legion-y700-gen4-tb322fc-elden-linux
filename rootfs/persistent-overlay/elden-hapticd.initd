@@ -10,6 +10,7 @@ description="Waydroid vibrator passthrough bridge (aw86927 haptics)"
 
 command="/usr/local/bin/elden-hapticd"
 command_args="--dir /run/elden-haptic/leds/vibrator --verbose ${HAPTIC_ARGS:-}"
+# 每马达强度（A=按 sysfs i2c 地址排序的第 1 个，B=第 2 个）：用 HAPTIC_ARGS="--amp-a 0xffff --amp-b 0x9999" 覆盖
 command_background="yes"
 pidfile="/run/elden-hapticd.pid"
 output_log="/var/log/elden-hapticd.log"
@@ -22,7 +23,7 @@ depend() {
 
 start_pre() {
     mkdir -p /run/elden-haptic/leds/vibrator
-    for f in activate duration state; do
+    for f in activate duration state amplitude; do
         [ -e "/run/elden-haptic/leds/vibrator/$f" ] || : > "/run/elden-haptic/leds/vibrator/$f"
         echo 0 > "/run/elden-haptic/leds/vibrator/$f" 2>/dev/null || true
     done

@@ -1,0 +1,6 @@
+service vendor.vibrator-elden /vendor/bin/hw/android.hardware.vibrator-service.elden
+    class hal
+    user system
+    group system
+    interface aidl android.hardware.vibrator.IVibrator/default
+    interface aidl android.hardware.vibrator.IVibratorManager/default

@@ -83,6 +83,8 @@ echo "== Waydroid 马达透传桥（PITFALLS #232–#238 / TASKS C10）=="
 # daemon 二进制不随快照走：主机上 scripts/build-hapticd.sh 重建后 scp 到
 # /usr/local/bin/elden-hapticd（或直接跑 scripts/waydroid-haptics-setup.sh）。
 install -m755 elden-hapticd.initd /etc/init.d/elden-hapticd
+install -d /etc/conf.d
+[ -f /etc/conf.d/elden-hapticd ] || install -m644 etc-conf.d-elden-hapticd /etc/conf.d/elden-hapticd
 rc-update add elden-hapticd default 2>/dev/null || true
 # 容器侧 bind 源（tmpfs，重启即重建；OpenRC 服务 start_pre 也会建）
 mkdir -p /run/elden-haptic/leds/vibrator

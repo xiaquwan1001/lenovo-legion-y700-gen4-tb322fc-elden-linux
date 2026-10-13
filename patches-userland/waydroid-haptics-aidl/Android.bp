@@ -1,0 +1,25 @@
+// AIDL vibrator HAL for Waydroid on mainline elden (TB322FC).
+// Replaces the Waydroid HIDL 1.0 HAL; deployment reuses the image's HIDL rc
+// path by bind-mounting this binary over it (see scripts/waydroid-haptics-aidl-deploy.sh).
+cc_binary {
+    name: "android.hardware.vibrator-service.elden",
+    relative_install_path: "hw",
+    init_rc: ["vibrator-elden.rc"],
+    vintf_fragments: ["android.hardware.vibrator.elden.xml"],
+    vendor: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+        "android.hardware.vibrator-V2-ndk",
+    ],
+    srcs: [
+        "main.cpp",
+        "Vibrator.cpp",
+        "VibratorManager.cpp",
+    ],
+}
