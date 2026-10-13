@@ -162,3 +162,10 @@ vk125-resetterm	num_ne_tag	Q28 复位终态对齐臂：源码复用 d02658e63（
 vk125-resetterm	uts_dup	单变量对照需要与 vk113/vk117 同一 UTS release/构建身份（PINUTS + #121）
 vk126-c1	num_ne_tag	C1 端到端验收镜像：源码 = clean/base@5b169d541（与 vk124-merged 同源），文件名带 vk126 但源提交无 vk126 tag
 vk126-c1	uts_dup	单变量要求与 vk124-merged 同一 UTS release/构建身份（PINUTS #121）以隔离「唯一变量 = C1 config」
+m1-73	tree_drift	故意的单变量对照：内核固定为 ed6f232d10 构建（7.3-rc7 重基树），后续提交只改 DTS/config，为隔离变量刻意不重编内核
+m1-73b	tree_drift	同 m1-73（只换 ramdisk：纯 vk126，无模块）
+m1-73c	tree_drift	同 m1-73（只换 DTB：现役 dtbold）
+m1-73d	tree_drift	同 m1-73（只换 DTB：去 simple-framebuffer）
+m1-73e	tree_drift	同 m1-73（只换 DTB：&i2c0 disabled）
+m1-73f	tree_drift	同 m1-73（只换 DTB：splash_region 改名 + 去 simple-framebuffer + sdhc no-1-8-v）
+m1-73h	tree_drift	同 m1-73f（只加 ramdisk 日志黑匣子层，取证用）
