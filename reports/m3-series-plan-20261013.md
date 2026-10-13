@@ -2,6 +2,7 @@
 
 > 证据层档案。规则见 `reports/upstream-policy-20261013.md`；M1–M5 状态权威 = `TASKS.md §7`。
 > 工作树 = `build/m1-upstream/clean-tree`（分支 `m1/clean-tree`，tip `c73ff25222`）；上游参照 = `build/m2-worktree` @ `torvalds/v7.3-rc7`（`24a19b953e`）。
+> **pristine 参照 = tag 提交** `24a19b953e`（不要再把 `build/m2-worktree` 当 pristine：它是带本片补丁的工作树，重建方式 `git -C geekidos-linux worktree add --detach <dir> 24a19b953e`）。
 > 本次实测工具链：`aarch64-linux-gnu-gcc`（`~/bin`）+ `~/venv-dtschema/bin/dt-validate`（2026.9）。
 
 ## 0. 验收口径（M3 每片的硬门）
