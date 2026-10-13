@@ -145,3 +145,47 @@ bash scripts/waydroid-haptics-setup.sh --verify
 - CLI 参数陷阱（`PITFALLS #239`）：`oneshot` 必须写 `-a` 才会带幅度参数；`prebaked` 收**整数 effect id**；`cancel` 只对 `-B`（后台）振动有效（token = service）。第一轮「幅度没生效」全是这三条造成的假阴性。
 - 部署顺序（`PITFALLS #235`）：**先停容器再 `scp`**，否则 bind 目标正在跑 → `ETXTBSY`。
 - 回退：删 `/var/lib/waydroid/lxc/waydroid/config` 里 `# >>> elden-haptics aidl` 段的两条 `mount.entry` → 全量重启容器 ⇒ 立刻回到镜像原 HIDL 1.0 HAL（一期桥仍可用）。
+
+---
+
+## 8. 三期：固化进容器 vendor 镜像 + 补上「振动强度」UI（2026-10-13 下午）
+
+### 8.1 为什么还要固化
+
+二期靠两条 `lxc.mount.entry`（HAL 二进制 + vintf fragment 目录）实现，**能跑但依赖运行时挂载**；而且 LineageOS/Waydroid 的 Settings **看不到「振动强度」调节**。三期把 HAL 与相关补丁**做进镜像**，并补上强度档位。
+
+### 8.2 强度 UI 缺失的真因（与 HAL 无关）
+
+| 层 | 事实 |
+|---|---|
+| Settings 资源 | `packages/apps/Settings/res/values/config.xml`: `config_vibration_supported_intensity_levels = 1` |
+| 控制器 | `VibrationIntensityPreferenceController.getMax() = min(VIBRATION_INTENSITY_HIGH=3, 该资源)`、`getMin() = OFF=0` ⇒ 上限 1，滑杆退化成「关/低」 |
+| 本树 | `grep -rn config_vibration_supported_intensity_levels device/ vendor/` **无覆盖**（真机通常由 device overlay/RRO 提到 3） |
+| 修法 | **静态 RRO** `EldenVibrationOverlay`（`targetPackage=com.android.settings`、`isStatic=true`、装 `/vendor/overlay`）只覆盖这一个整数 |
+
+### 8.3 固化内容与实测
+
+镜像内（零运行时挂载）：
+
+```
+/vendor/bin/hw/android.hardware.vibrator-service.elden        # 自编 AIDL V2 HAL
+/vendor/etc/init/vibrator-elden.rc                            # 自带 rc
+/vendor/etc/vintf/manifest/android.hardware.vibrator.elden.xml # vintf fragment
+/vendor/overlay/EldenVibrationOverlay.apk                     # 静态 RRO（强度档位=3）
+（原 HIDL HAL 及其 manifest 声明已从产品配置中删除）
+```
+
+| 验证项 | 结果 |
+|---|---|
+| HAL 来源 | 容器内 `ls -l /proc/<pid>/exe` → `/vendor/bin/hw/android.hardware.vibrator-service.elden`；`grep -c vibrator /proc/mounts` = **0**（无 bind） |
+| 能力 | `mCapabilities=[AMPLITUDE_CONTROL]`、`mSupportedEffects=[CLICK, DOUBLE_CLICK, TICK, THUD, POP, HEAVY_CLICK]` |
+| 静态 RRO | `cmd overlay list` → `[x] com.elden.vibration.overlay`；`cmd overlay lookup com.android.settings com.android.settings:integer/config_vibration_supported_intensity_levels` = **3** |
+| 幅度 | `synced oneshot -a 300 160` → daemon `amp=160/255`（`A=0xa0a0 B=0xa0a0`） |
+| cancel | `synced -B oneshot 8000` + 1.2 s `cancel` → 同秒 `off()` |
+
+### 8.4 还剩什么、怎么回退
+
+- **仅剩**：宿主侧 `elden-hapticd`（OpenRC 服务 + `/etc/conf.d`）+ 一条 `sys/class/leds` 桥挂载（把假 `leds` 类目录塞进容器）。它们都在持久根/overlay 快照里（`restore.sh` 覆盖）。
+- 想彻底零挂载 ⇒ 走**内核侧**方案（在 aw86927 驱动里直接实现 AOSP leds-class `vibrator` ABI），见 `TASKS.md` C10 的「下一步」。
+- 回退镜像：`/var/lib/waydroid/images/vendor.img.bak-elden-haptics-20261013-115055`（打补丁前的原镜像）。
+- 复现：`scripts/waydroid-haptics-bake-patch.py`（幂等打产品配置补丁）+ `scripts/waydroid-haptics-bake-vendor.sh`（`m vendorimage` → 推设备 → 摘挂载 → 验证）。

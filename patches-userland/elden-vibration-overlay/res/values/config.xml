@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 0..3 = OFF / LOW / MEDIUM / HIGH for each usage (touch, notification, alarm, media, ring).
+         Mapping to the aw86927 motor: framework setAmplitude -> bridge 'amplitude' -> FF magnitude. -->
+    <integer name="config_vibration_supported_intensity_levels">3</integer>
+</resources>

@@ -1,0 +1,10 @@
+// Static RRO: raise the vibration intensity levels for the Waydroid container's
+// Settings app (default is 1 => the "Vibration intensity" sliders are degenerate).
+// Baked into vendor.img at /vendor/overlay/EldenVibrationOverlay.apk.
+runtime_resource_overlay {
+    name: "EldenVibrationOverlay",
+    sdk_version: "current",
+    manifest: "AndroidManifest.xml",
+    resource_dirs: ["res"],
+    vendor: true,
+}

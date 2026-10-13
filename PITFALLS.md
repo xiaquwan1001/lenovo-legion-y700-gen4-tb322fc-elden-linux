@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-13。**条目编号 #1–#243**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-13。**条目编号 #1–#246**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§二十三；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1843,3 +1843,19 @@
 243. **`rm -rf` 跨设备（如 `/mnt/Samsung/...`）会失败（EXDEV）：本环境的删除被转到 `~/y700-elden/.pi/trash/`，跨文件系统 rename 报错。**
     - 现象：`rm -rf /mnt/Samsung/waydroid-build/hardware/waydroid/vibrator-aidl` → `EXDEV: cross-device link not permitted`。
     - 处理：用 `/bin/rm -rf`（绕过包装）；或 `cp -r` 覆盖内容而不删目录。
+
+244. **★容器 `vendor.img` 是「按内容自动裁」的紧凑 ext4，通常 100% 满：往里原位加文件会 ENOSPC，且 `install` 会先把目标截断成 0 字节——本轮把镜像里那份 HIDL vibrator HAL 弄成 0 字节过。**
+    - 事实：`device/waydroid/waydroid/BoardConfig.mk` 只设 `BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4`、**没有 `BOARD_VENDORIMAGE_PARTITION_SIZE`** ⇒ 镜像按内容裁到刚好装下（实测 85,901,312 B，`df` 显示 82M/82M、0 free）。
+    - 反面教材：`cp 原文件 原文件.hidl-orig` 直接失败；随后的 `install -m755 新二进制 目标` 先把目标截断、再写时 ENOSPC ⇒ **镜像里的 HAL 变 0 字节**（当时靠 bind 挂载掩盖了，但一旦去掉挂载就露）。
+    - 规约：**不要在 vendor.img 里原位塞文件**；要加内容就改产品配置后 `m vendorimage` 重建（PITFALLS #246），或先用 `truncate`+`resize2fs` 扩容（设备侧有 e2fsck/resize2fs）。临时验证用 bind 挂载（#241），验证完立刻改为重建。
+
+245. **★Settings 的「振动强度」档位由 **Settings 自己的资源** `config_vibration_supported_intensity_levels` 决定（AOSP 默认 1），与 HAL 是否报 `CAP_AMPLITUDE_CONTROL` 无关。**
+    - 链路：`VibrationIntensityPreferenceController.getMax() = min(VIBRATION_INTENSITY_HIGH=3, 该资源)`、`getMin() = OFF = 0` ⇒ 资源=1 时滑杆只剩两档、没有可用的「强度」调节（用户观感 = 「不显示强度栏」）。
+    - 真机由 **device overlay / RRO** 把它提到 3（或 5）；waydroid GSI 的树里**没有任何覆盖**（`grep -rn config_vibration_supported_intensity_levels device/ vendor/` 无命中）。
+    - 修法：**静态 RRO**（`android:isStatic="true"`、`targetPackage=com.android.settings`、放 `/vendor/overlay`，开机自动启用）只覆盖这一个整数 → 实测 `cmd overlay list` 出现 `[x] com.elden.vibration.overlay`、`cmd overlay lookup com.android.settings com.android.settings:integer/config_vibration_supported_intensity_levels` = **3**。
+    - 验证口径：**必须查资源值**（`cmd overlay lookup`），不要只看「HAL 报了幅度能力」。
+
+246. **给产品换 HAL：`PRODUCT_PACKAGES` 与产品 `manifest.xml` 必须同步改；新模块还得落在产品的 Soong namespace 里。**
+    - `device/waydroid/waydroid/device.mk` 里原来的 `android.hardware.vibrator@1.0-service.waydroid` 换成自编模块；同时把 `device/waydroid/waydroid/manifest.xml` 里那段 HIDL vibrator `<hal>` 删掉（否则是「声明了但没人提供」）。
+    - RRO 模块最初放 `vendor/extra/`：`mmm` 能编，但加进 `PRODUCT_PACKAGES` 会被产品 namespace 拒（`vendor/extra` 不在 `PRODUCT_SOONG_NAMESPACES`）；挪到 `hardware/waydroid/vibration-overlay` 即可（与既有 waydroid 模块同一命名空间）。
+    - 固化后的验证铁证：容器内 `ls -l /proc/$(pidof <hal>)/exe` 指向 `/vendor/bin/hw/<自编名>`，且 `grep -c vibrator /proc/mounts` = **0**（说明不再依赖 bind 挂载）。
