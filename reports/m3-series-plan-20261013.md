@@ -69,3 +69,16 @@ scripts/checkpatch.pl --strict --no-tree patches/upstream/m3-*/0*.patch
 
 **M3-1 开工**：把 dwc3 双连接器 mux 从"payload 里的一坨"整理成独立可评审系列（binding → 驱动 → DTS 三段），
 过程中把 `usb-psy-name` 的按名查找改为 phandle 引用；随后 M3-2 板基础片。
+
+## 6. 进展（2026-10-13 会话）
+
+| 项 | 状态 | 证据 |
+|---|---|---|
+| **M3-0** 依赖台账 + 系列骨架 | ✅ | 本文件 + `patches/upstream/m3-2026-10-13/` |
+| **M3-1** USB 双连接器片（3 枚补丁） | ✅ **就绪未发** | 3/3 `checkpatch --strict` 0E/0W/0C；`dt-doc-validate` rc=0；`make … drivers/usb/dwc3/` rc=0；schema 三点对照 382→(0001)380→(0001+0002)372，`usb@a600000`+endpoint 诊断 →0。详见 `patches/upstream/m3-2026-10-13/README.md` |
+| M3-1 独立复核（lane D / `ustc-audit`） | ✅ 已并入 | `reports/m3-1-0001-verify-20261013.md`（+ 附录 A：编排者复跑推翻其"compatible 未登记"根因） |
+| 缺口矩阵（原 lane C） | ✅ 由主会话重建 | lane C 被恢复看门狗杀（无产物）⇒ `reports/m3-missing-support-matrix-20261013.md` |
+| M3-2 板基础切分台账（lane B） | ⛔ **未完成**（用户指示停止） | `reports/m3-2-board-basics-split-20261013.md` 仅空骨架 + 重建配方；数据可复用缺口矩阵 |
+| **M3-3..M3-6** | ⬜ 未开始 | 依赖面见缺口矩阵 |
+
+**并行 lane 教训**（已沉淀到技能 `fabric-dispatch-checklist` + 全局记忆）：worker「攒完数据再一次性写长报告」会被 600 s 恢复看门狗判无进度而杀，且杀时**不落盘任何产物**。对策：派工要求分段落盘、拆小 lane、`agents.steer` 提醒、编排者一律核实产物（缺产物时脚本化重建往往比重新派工快）。

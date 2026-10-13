@@ -46,8 +46,8 @@
 
 | 片 | 内容 |
 |---|---|
-| M3-2 | 板基础片（UFS/PMIC regulator/TLMM/gpio-keys/ramoops/framebuffer/pmic-glink + `&usb` 段）；依赖 lane-B 的切分台账 |
-| M3-3..M3-6 | 音频/显示/相机/无线，依赖 lane-C 的缺口矩阵 |
+| M3-2 | 板基础片（UFS/PMIC regulator/TLMM/gpio-keys/ramoops/framebuffer/pmic-glink + `&usb` 段）；切分台账 = `reports/m3-2-board-basics-split-20261013.md`（⛔ 空骨架，待重建），依赖面 = `reports/m3-missing-support-matrix-20261013.md` |
+| M3-3..M3-6 | 音频/显示/相机/无线；依赖面与 Q2 偏离 = `reports/m3-missing-support-matrix-20261013.md` |
 
 ## 发送纪律
 
