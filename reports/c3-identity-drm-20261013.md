@@ -63,3 +63,15 @@ curl -m12 https://www.gstatic.com/generate_204  -> 204
 - `TASKS.md` §0（G2 ~65%）、§2 C3、§5 Q1、§6 §1 C2 维度。
 - `reports/c9-cases-20261013.md`（U5 判据）。
 - `RESOURCES.md` §1.3（社区先例）。
+
+## 5. 附：检测 App 下载候选（**留待用户处理**，2026-10-13）
+
+自动下载未采用（避免在会话内引入第三方 APK 获取/信任链）；已定位可直接取用的 release：
+
+| 用途 | 项目 | 直链 | 大小 |
+|---|---|---|---|
+| **Play Integrity 三档**（首选） | `herzhenr/spic-android`（SPIC, 456★, Apache-2.0） | `https://github.com/herzhenr/spic-android/releases/download/v1.4.0/spic-v1.4.0.apk` | 11.2 MB |
+| SafetyNet（已停服，仅历史对照） | `RikkaW/YASNAC` | `https://github.com/RikkaW/YASNAC/releases/download/v1.1.5/yasnac-v1.1.5.r65.15110ef310-release.apk` | 1.25 MB |
+
+- 备注：GitHub **直连可达**（`curl --noproxy '*' api.github.com` = 200）；走宿主代理（`127.0.0.1:7897`）会 **403**。1nikolas 的 `play-integrity-checker-app` **无 GitHub release**（无资产）。
+- 安装：设备侧 `waydroid app install <apk>`（容器需 RUNNING）；运行需 phosh 会话（当前 GOOD 发在；掉电回 vk94 日常后要重抽 GOOD 发）。
