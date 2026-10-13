@@ -1,0 +1,47 @@
+From 8d70ccd47694a4778c427670f40c873a2fcad26c Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 08:17:06 +0800
+Subject: [PATCH] drm/msm/dpu: add the missing GC block to the SM8750 DSPP
+ catalog
+
+SM8750's DSPP sub-block description only lists PCC, but the hardware (and
+the SM8650/SDM845 catalogs) also expose the gamma-correction block at
+0x17c0.
+
+dpu_crtc_create() only calls drm_crtc_enable_color_mgmt() when
+dspp->sblk->gc.base is non-zero, so on SM8750 boards no CRTC advertised
+GAMMA_LUT and userspace could not do night light/color temperature
+adjustment, even though the hardware supports it.
+
+Add the GC block to sm8750_dspp_sblk, matching the offset/version used by
+the other DSPP catalogs.
+
+Tested on Lenovo Legion Y700 Gen4 (TB322FC, SM8750P): GAMMA_LUT appears as
+a CRTC property and changing it visibly shifts the color temperature.
+
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
+index 9a993cdfab..11dc08e4a4 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
+@@ -428,6 +428,13 @@ static const struct dpu_dspp_sub_blks sdm845_dspp_sblk = {
+ static const struct dpu_dspp_sub_blks sm8750_dspp_sblk = {
+ 	.pcc = {.name = "pcc", .base = 0x1700,
+ 		.len = 0x90, .version = 0x60000},
++	/*
++	 * SM8750 has the same GC block as SM8650/SDM845.  Without it
++	 * dpu_crtc.c does not call drm_crtc_enable_color_mgmt(), so no
++	 * CRTC exposes GAMMA_LUT (night light/color temperature).
++	 */
++	.gc = {.name = "gc", .base = 0x17c0,
++		.len = 0x40, .version = 0x10008},
+ };
+ 
+ /*************************************************************
+-- 
+2.53.0
+

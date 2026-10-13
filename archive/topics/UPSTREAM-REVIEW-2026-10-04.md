@@ -105,3 +105,12 @@ DT:  cpp -nostdinc -I include -undef -x assembler-with-cpp <dts> | scripts/dtc/d
      dtschema(venv) dt-validate -s Documentation/devicetree/bindings <dtb>; dt-doc-validate <yamls>
 ```
 sha256(linux-7.2.tar.xz) = `f9fef3d14c0df53819026f4be74459835c2a0b0dcbf5b5bbd9ea19f0829402b3`；工具链：树内 `scripts/dtc/dtc`、pip venv `dtschema`。
+
+## 7. M2 执行记录（2026-10-13 追加；本节只增）
+
+- **准备完成（未发送，等用户点头）**：基线 = upstream **v7.3-rc7**（`24a19b953e`），工作树 `build/m2-worktree`（分支 `m2/series`），产物 `patches/upstream/m2-2026-10-13/`。
+  - Patch 1 `8d70ccd476` drm/msm/dpu: add the missing GC block to the SM8750 DSPP catalog（+7 行）→ To dri-devel + linux-arm-msm。
+  - Patch 2 `9995d8a131` power: supply: qcom_battmgr: do not report power_now on SM8750（+27/−2）→ To linux-pm + Sebastian Reichel。
+  - 两枚**独立成帖**（非 series）；`checkpatch --strict` = 0/0；`make … dpu_hw_catalog.o qcom_battmgr.o` 仅 CC 行、无 warning；`git send-email --dry-run` 两路均 `Result: OK`。
+- **A3 分类更正**：上游 v7.3-rc7 的 `aw86927.c`（882 行）**没有** firmware waveform 装载路径（无 `request_firmware()`/`aw86927_ram_load()`/`AW86937`），而「SRAM 窗口 0x1000→0x2000」只对那条路径有意义 ⇒ 无对应上游代码可修补，**从 A 级降为 B/C 级，不进 M2**。
+- **A2 的新增事实**：上游 binding 已有 `qcom,sm8750-pmic-glink` 且 `sm8750-mtp/qrd` 已在用，但 `qcom_battmgr_of_variants[]` **没有该条目** ⇒ SM8750 回落到 SM8350 变体并暴露错误的 `power_now`（本补丁补变体+描述符）。
