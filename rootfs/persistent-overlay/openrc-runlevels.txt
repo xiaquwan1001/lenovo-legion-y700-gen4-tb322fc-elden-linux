@@ -12,6 +12,7 @@ dhcpcd |
 dmesg |                                 sysinit
 dnsmasq |                                        
 ebtables |                                        
+elden-hapticd |      default                           
 elden-powerlog |                        shutdown        
 elogind |      default                           
 firstboot |                                        

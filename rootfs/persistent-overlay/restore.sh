@@ -79,6 +79,16 @@ grep -q 99-freeze-trace /etc/sysctl.conf 2>/dev/null || \
 install -m 0755 pstore-catch.initd /etc/init.d/pstore-catch
 rc-update add pstore-catch boot 2>/dev/null || true
 
+echo "== Waydroid 马达透传桥（PITFALLS #232–#238 / TASKS C10）=="
+# daemon 二进制不随快照走：主机上 scripts/build-hapticd.sh 重建后 scp 到
+# /usr/local/bin/elden-hapticd（或直接跑 scripts/waydroid-haptics-setup.sh）。
+install -m755 elden-hapticd.initd /etc/init.d/elden-hapticd
+rc-update add elden-hapticd default 2>/dev/null || true
+# 容器侧 bind 源（tmpfs，重启即重建；OpenRC 服务 start_pre 也会建）
+mkdir -p /run/elden-haptic/leds/vibrator
+# lxc 挂载项（两条，带 optional）由 scripts/waydroid-haptics-setup.sh 幂等追加到
+# /var/lib/waydroid/lxc/waydroid/config；本快照不覆盖该文件（含本机 mesa 等 blk 定制）。
+
 echo "== openrc runlevels + mode =="
 /usr/local/sbin/openrc-enable.sh enable
 

@@ -80,6 +80,7 @@
 | C7 | `scripts/slot-switch.sh` 一键切槽 + 槽属性自检 | ✅ **已完成（2026-10-11）**：`status`/`a`/`b [--reboot]` 全路径；b 槽回 Linux 自动 `qbootctl -m b`（防 PITFALLS #181 扣 retry）；2026-10-11 复核 `status` 在 Linux 侧正常打印槽属性 | 双槽保险 | 两条命令完成往返切换 ✅ | 即便 a 槽可弃，也要保留回退手段 |
 | C8 | **无 Android 的 VM 路线调研**（Gunyah guest on mainline / crosvm+`--parallel_vcpus`；KVM 已确认不可行） | 🟡 **书面结论已出（2026-10-02）**：维持低优先不立项——① 设备侧 KVM 不可达（XBL 锁 hyp，`-el2.dtb` overlay 只适用 dev kit）；② 独立 gunyah 驱动未进主线（本地 7.2 树无 `drivers/virt/gunyah`）；③ 唯一新路线=KVM-in-EL1+Gunyah backend（RFC 00/34，Linaro，配 `qemu-for-gunyah`，WIP） | VM | ✅ **探测已做（2026-10-10、boot_b/vk64）**：`dmesg` 仅见 reserved-memory `gunyah-hyp@80000000`（14 MiB 保留区），**无 `gh_rm`/gunyah 驱动**（本地 7.2 树无 `drivers/virt/gunyah`）⇒ 本树路线第一步不成立 ⇒ **按书面结论归档、维持低优先不立项**（若将来上带 gunyah 驱动的内核再探） | `archive/topics/EL2-VIRT-2026-10-02.md`、`RESOURCES.md` §1.5 |
 | C9 | 兼容层验收用例集 `TASKS.md §5` §Q6 打分表 | ⬜ 新增 | 全部 | 5 维打分表出数 | — |
+| **C10** | **马达透传（容器 vibrator HAL → aw86927 FF）** | ✅ **已打通（2026-10-13，`vk124-merged` 零写盘台）**：镜像自带 HIDL `android.hardware.vibrator@1.0-service.waydroid`，但它只写 AOSP `leds`/`timed_output` 节点（主线两处都没有）且 `ofstream` **不检查写失败** ⇒ Android 侧一切正常、马达不动。桥 = 宿主桥目录经 `lxc.mount.entry` 覆盖容器 `/sys/class/leds` + 宿主 daemon `elden-hapticd` 轮询起停 `aw86927-haptics` 的 `FF_RUMBLE`。实测 `cmd vibrator_manager synced oneshot 500` → daemon ON 500 ms / OFF（framework 自调）→ `aw86927_haptics_play` kprobe 命中 6；20 ms×8 连击 48 命中；`+2 s`/`+6 s` 计数相同（无自触发环）。部署 `scripts/waydroid-haptics-setup.sh`（含全量重启容器 + kprobe 取证）。限制：HIDL 1.0 无幅度控制、`cancel` 不提前停（`PITFALLS #238`）；**物理手感待人手确认** | HAL | kprobe 证据齐（2 马达）；待人手确认震动 | `reports/waydroid-haptics-20261013.md`、`PITFALLS #232–#238` |
 | ✅ C-历史 | Waydroid 容器打通、Mesa 26.1.8 解 A830 chip-id、GAPPS 镜像安装、容器代理通路、**Win-x86（Box64 0.4.5+Wine 9）PoC** | **已完成** | — | 见 `archive/topics/WIN-X86-POC-2026-10-02.md` | — |
 
 ### 2.1 主机侧并行任务（不占设备，随时可做）
@@ -303,7 +304,7 @@
 | ② | 容器无相机（厂商 camera-provider 不可用） | mainline camss 出流后 `v4l2loopback` 转发进容器 | 不写厂商 camera HAL |
 | ③ | 容器音频路径未接（AudioReach 刚通） | PipeWire 桥接；先打通播放，再测录音 | 不追求低延迟游戏音频（先量化） |
 | ④ | GMS/商店/DRM 身份 | **按社区既有做法逐条复现并记录**：GApps 包（OpenGApps/MindTheGapps/MicroG 三选 + **WayDroid-ATV arm64 GAPPS 镜像** 2026-01 SourceForge）、未认证设备注册流程、Widevine L3 注入（**x86-64 有现成库；arm64 仅 Android 11 有、A13 无**——2026-10-07 `waydroid_script` 源码核实）；每次只变一个变量 | **不预设"不可能"**；不做密钥伪造/绕过安全启动 |
-| ⑤ | 传感器之外的输入/窗口 | 触屏/键盘/鼠标由主线输入子系统透传；窗口用 phoc freeform；马达走 `aw86927` + 容器 `vibrator` shim | — |
+| ⑤ | 传感器之外的输入/窗口 | 触屏/键盘/鼠标由主线输入子系统透传；窗口用 phoc freeform；**马达已透传（✅ C10，2026-10-13：容器 `vibrator` HIDL HAL 写的 `leds` 节点由宿主桥目录 bind 覆盖 + `elden-hapticd` 转 `aw86927` FF_RUMBLE；`PITFALLS #232–#238`）** | — |
 
 ---
 
