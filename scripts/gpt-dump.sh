@@ -11,7 +11,7 @@
 #   DEV=/dev/sda PREFIX=/tmp/gpt-new sh gpt-dump.sh
 # 产出：$PREFIX-primary.bin（24576 B）、$PREFIX-backup.bin（20480 B）
 # 主机侧取回：
-#   BAK=backup/<SN>-<容量档>   (例 backup/HA2ABH62-12+256  —— 按 DEVICE.md §2.2 命名，勿用 new-tablet)
+#   BAK=backup/<SN>-<容量档>   (例 backup/HA2ABH62-12+256  —— 按 ../DEVICE/README.md §2.2 命名，勿用 new-tablet)
 #   scp root@192.168.7.1:/tmp/gpt-new-primary.bin "$BAK"/gpt_main0.bin
 #   scp root@192.168.7.1:/tmp/gpt-new-backup.bin  "$BAK"/gpt_backup0.bin
 set -eu

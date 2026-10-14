@@ -16,7 +16,7 @@
 | `missions/` | **子代理任务卡**（作为 `fabric_exec` 里 `agents.run({task})` 的派工背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
 | `agents/` | **子代理角色卡（提示词源）**（`name`/`description` + 角色提示） | ✅ track | ⚠️ pi-subagents 已于 2026-10-12 卸载，本目录**不再被任何插件自动加载**；派工时把角色卡正文 + 任务卡拼成 `task` 传给 Fabric（`agents.run`/`agents.spawn`），模型用别名或 provider/id |
 | ~~`workflows/`~~ | ✅ **已清空移除（2026-10-12）**：pi-subagents workflow 脚本（5 个）+ `plans/*-workflow.js`（5 个）已移入 `archive/2026-10-12-retired-pi-subagents-workflows/` | — | 旧方言已废弃、仅供追溯；复用须按 fabric 重写（`agents.run`/`Promise.allSettled`），**不要原地改语法** |
-| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | 索引见 `RESOURCES.md §4`；归档策略见 `RESOURCES.md §3` H1 |
+| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | 索引见 `../RESOURCES/README.md §4`；归档策略见 `../RESOURCES/README.md §3` H1 |
 
 ## `missions/` vs `agents/`（易混）
 

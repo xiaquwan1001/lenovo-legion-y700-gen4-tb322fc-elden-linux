@@ -1,6 +1,6 @@
 #!/bin/bash
 # deploy-sensord-routec.sh — build & install the route-C Waydroid sensor HAL
-# (TASKS.md C4).
+# (../TASKS/README.md C4).
 #
 # Design (verified 2026-10-11): install our UDP-backed daemon as
 # /usr/local/bin/waydroid-sensord. Waydroid's container manager then

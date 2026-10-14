@@ -1,6 +1,6 @@
 # 任务：CPU / GPU 性能基准（GL vs Vulkan，多 API）——仍开放（TASKS G1-8 ⬜）
 
-> 状态与进度的**唯一权威 = `TASKS.md` §1 行 G1-8**；本任务书只是派工背景。2026-10-04 现代化。
+> 状态与进度的**唯一权威 = `../../TASKS/README.md` §1 行 G1-8**；本任务书只是派工背景。2026-10-04 现代化。
 
 你是 y700-elden（联想 Y700 四代 TB322FC / SM8750 / Adreno A830 / 8 核 / Phosh Wayland / Alpine musl）项目的性能测试员。工作目录 `~/y700-elden`。宿主与设备均为 **Alpine(musl)**，GPU 走主线 `msm` + freedreno/Turnip（**Mesa 26.1.8 已在跑**）。
 
@@ -31,4 +31,4 @@
 - 压测占设备且发热：开始前 `scripts/device-lock.sh --status` 确认空闲，压测全程持锁（`scripts/device-lock.sh <cmd>` 包一层）；不刷 boot、不重启内核。
 - 一条命令只做一件事；轮询自带 `timeout` 自限，SSH 禁长 sleep（后台 `nohup ... &` + 短命令轮询）。
 - 温控红线：稳态温度贴近 90 °C 未降频时主动停测并记录。
-- 最终回复即交付物（结论+命令+原始日志）；**不改 `TASKS.md`**，编排者独立复跑后更新。
+- 最终回复即交付物（结论+命令+原始日志）；**不改 `../../TASKS/README.md`**，编排者独立复跑后更新。

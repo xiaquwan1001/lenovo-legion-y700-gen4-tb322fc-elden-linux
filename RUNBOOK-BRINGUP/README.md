@@ -1,7 +1,8 @@
+> 会话进度见本目录 `sessions/`；本文件为该角度策展 SSOT。
 # 上机手册（RUNBOOK-BRINGUP）— 任一单元从原厂状态到 mainline 持久直启
 
-> 领域层活文档之一；文档分三层（领域 / 元 / 证据），定义与 SSOT 见 `INDEX.md` §2。
-> **适用 = 任一 TB322FC / elden / SM8750(P) 单元**（台账 `DEVICE.md` §2.2）。它们**物理等价**，
+> 本角度文件夹的策展 SSOT（`README.md`）；`sessions/` 存以会话为单位的进度。标准见 `INDEX.md` §2。
+> **适用 = 任一 TB322FC / elden / SM8750(P) 单元**（台账 `../DEVICE/README.md` §2.2）。它们**物理等价**，
 > 唯一差异 = 容量 → GPT 数值；所有容量相关值**运行时读实际 GPT**。
 > （文件历史：原 `BRINGUP-NEW-TABLET-2026-10-02.md`；“新机接力/旧机留 Android”的角色划分已作废。）
 >
@@ -21,11 +22,11 @@
 | `BLK` | LUN0 设备 | 主线内 `ls /dev/sd*` | 通常 `/dev/sda` |
 | `SECTOR` | 扇区 | `blockdev --getss $BLK` | 4096 |
 | `BACKUP_LBA` | 备份表起始 LBA | `scripts/gpt-dump.sh` 打印 | U1=`61390847`；**其他单元必须现 dump** |
-| `LINUX_GIB` | Linux 分区大小 | **不预设固定值**：按 `DEVICE.md` §3 体量估算表定，**一次给足** | 512G 档建议 160–200；256G 档 64–96 |
+| `LINUX_GIB` | Linux 分区大小 | **不预设固定值**：按 `../DEVICE/README.md` §3 体量估算表定，**一次给足** | 512G 档建议 160–200；256G 档 64–96 |
 | `BAK` | 备份目录 | 命名规范 | `backup/${SN}-${CAP}/`（**勿再叫 `new-tablet`**） |
 
 ```bash
-export SN=<序列号> CAP=16+512 BLK=/dev/sda LINUX_GIB=<按 DEVICE.md §3.2 一次给足，勿预设>
+export SN=<序列号> CAP=16+512 BLK=/dev/sda LINUX_GIB=<按 ../DEVICE/README.md §3.2 一次给足，勿预设>
 export BAK="backup/${SN}-${CAP}"; mkdir -p "$BAK"
 ```
 > 下文 `backup/new-tablet/` 一律读作 `$BAK`（保留原文仅为历史兼容）。
@@ -189,7 +190,7 @@ fastboot getvar product
 fastboot getvar partition-size:boot_b      # 期望 0x6000000 (96 MiB)
 fastboot getvar partition-size:dtbo_b      # 期望 0x2000000 (32 MiB)
 ```
-记录 build fingerprint / hwboardid / serialno，**当场写入 `DEVICE.md` 台账**（填 §0.0 的 `SN`/`CAP`）。
+记录 build fingerprint / hwboardid / serialno，**当场写入 `../DEVICE/README.md` 台账**（填 §0.0 的 `SN`/`CAP`）。
 本 runbook **不要求**特定容量档；确认是 `TB322FC_SM8750P_*` 即可继续。
 
 ---
@@ -257,7 +258,7 @@ fastboot reboot
 **验证清单（此步就要过 = G1 验收矩阵的硬件部分）**：显示/触屏、SSH、WiFi（若要）、CPU/温度、`ls $BLK*`、**`dmesg` 里原厂固件加载（ADSP / WCN / GPU zap / 触屏 FW）无失败**。
 OOB 串口：`bash scripts/serial-run.sh 'uname -r; id'`。
 
-> ★ **持久根（Phase 4/5）熄屏稳定性**：**未解 / 间歇性**。根因已锁定为单模块 **`cambistmclkcc-sm8750`**（相机 BIST MCLK 时钟控制器）× DT 电源域耦合（H1/D1/D2/H2 四种改法均未根治）；**无相机模块态安全**。**规避必须保留**（禁空闲熄屏 + 不自动加载相机模块：cmdline `elden_nocamera=1` + `idle-delay=0`）。样本数/实验矩阵以 `TASKS.md` §5 Q24 与 §1 G1-22/G1-33 为准（本文件不维护状态）。
+> ★ **持久根（Phase 4/5）熄屏稳定性**：**未解 / 间歇性**。根因已锁定为单模块 **`cambistmclkcc-sm8750`**（相机 BIST MCLK 时钟控制器）× DT 电源域耦合（H1/D1/D2/H2 四种改法均未根治）；**无相机模块态安全**。**规避必须保留**（禁空闲熄屏 + 不自动加载相机模块：cmdline `elden_nocamera=1` + `idle-delay=0`）。样本数/实验矩阵以 `../TASKS/README.md` §5 Q24 与 §1 G1-22/G1-33 为准（本文件不维护状态）。
 > 规避（旧内核/未确认时用）：
 > ```bash
 > # 持久根上（拿到 phoc 的 session bus 后）
@@ -275,7 +276,7 @@ OOB 串口：`bash scripts/serial-run.sh 'uname -r; id'`。
 
 ```bash
 cd ~/y700-elden
-# 容量按 DEVICE.md §3.2 一次给足（256G 档 64–96；512G 档 160–200）；输入必须是本单元自己的 dump
+# 容量按 ../DEVICE/README.md §3.2 一次给足（256G 档 64–96；512G 档 160–200）；输入必须是本单元自己的 dump
 python3 scripts/gpt-surgery-tb322fc.py build \
   --main "$BAK"/gpt_main0.bin \
   --backup "$BAK"/gpt_backup0.bin \
@@ -298,7 +299,7 @@ ssh root@192.168.7.1 "dd if=/tmp/gpt_new_main0.bin   of=$BLK bs=4096 seek=0     
 > - **A（默认）不保留 Android**：不管 a 槽，直接当纯 Linux 机用；回退 = `backup/stock-259/` + EDL 全量刷。
 > - **B 暂时保留 a 槽**（Q5 真机对照取证期间需要；主体已于 2026-10-11 采完）：`fastboot erase userdata && fastboot erase metadata` 重建 `/data`。
 >   先例：U1 手术后重建 `/data` 146.4 GiB + FBE 正常（`archive/topics/复盘-2026-09-30-日.md`）。
-> **无论 A/B：真机对照取证主体已于 2026-10-11 采自 U2 a 槽（产物/剩余项见 `TASKS.md §5` Q5）；覆盖 a 槽前只需核对该处剩余人工项。**
+> **无论 A/B：真机对照取证主体已于 2026-10-11 采自 U2 a 槽（产物/剩余项见 `../TASKS/README.md §5` Q5）；覆盖 a 槽前只需核对该处剩余人工项。**
 
 ---
 
@@ -427,5 +428,5 @@ bash scripts/iterate.sh kernel --boot      # 全量重编一次；此后驱动�
 
 ## 11. 待你拍板（仅两项，均为容量/目标参数）
 
-1. **`LINUX_GIB` 具体值**：上机后用 `du` 实测各组成回填 `DEVICE.md` §3.1（GAPS Q7），再定；默认按上界一次给足。
+1. **`LINUX_GIB` 具体值**：上机后用 `du` 实测各组成回填 `../DEVICE/README.md` §3.1（GAPS Q7），再定；默认按上界一次给足。
 2. **本次目标**：只到 Phase 2（RAM 零写盘验收）还是走到 Phase 5（持久 Linux + Waydroid）？

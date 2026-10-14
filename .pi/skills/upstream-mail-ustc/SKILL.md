@@ -6,7 +6,7 @@ description: "给上游内核列表发补丁/报告（USTC 邮箱通道）并在
 # 上游邮件：USTC 通道发送 + lore 复核
 
 给 linux-arm-msm / linux-clk / LKML / devicetree / regressions 发补丁或回归报告，并**独立验证真的进了归档**。
-通道三选一的实测结论与全部坑见项目 `PITFALLS.md` §二十七。
+通道三选一的实测结论与全部坑见项目 `../../../PITFALLS/README.md` §二十七。
 
 ## 何时用
 

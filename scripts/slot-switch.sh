@@ -1,7 +1,7 @@
 #!/bin/bash
-# slot-switch.sh — A/B 槽位「一键往返切换 + 槽属性自检」（TASKS.md §2 C7）
+# slot-switch.sh — A/B 槽位「一键往返切换 + 槽属性自检」（../TASKS/README.md §2 C7）
 #
-# 背景：本机 a 槽 = stock Android，b 槽 = mainline 持久根（见 DEVICE.md §2）。
+# 背景：本机 a 槽 = stock Android，b 槽 = mainline 持久根（见 ../DEVICE/README.md §2）。
 # 进 Android = 切到 a 槽；回 Linux = 切回 b 槽。实机验证（HANDOFF §20）：
 # 「多数情况只切槽就够」——不需要刷 dtbo（2026-10-11 再次成立）。
 #

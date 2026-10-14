@@ -24,7 +24,7 @@ objective: 为 TB322FC 设计「间接引导层」（GRUB 类，尽量符合 UEF
 - **四代 TB322FC 没有 `vm-bootsys_a/b`**（已用设备实机 `lsblk`/by-partlabel 确认）。SKILL.md 明确写「SM8750-era devices (no vm-bootsys) 的三代链不能照搬」。
   四代 LUN4(`sde`) 相关分区：`uefi_a/b`(5M)、`imagefv_a/b`(2M)、`logfs`(8M vfat)、`qmcs`(30M vfat)、`spunvm`(32M vfat)、`modem_a/b`、`bluetooth_a/b`(vfat)、`boot_a/b`(96M)、`dtbo_a/b`(32M)、`misc`、`pstore`；LUN0(`sda`)：`super` 22G、`userdata` 256.7G、`linux17` ext4 193G、`metadata`、`misc`、`persist`。
 - 本机 mainline 目前由 ABL 直接引导 Android boot.img（kernel=Image.gz，ramdisk=rootfs）——即 SKILL 里说的「无 UEFI 时的 fallback」，**已被证明可用**。
-- 引导链问题**先 grep 本地技能 references 全文**（`PITFALLS #87`）；`RESOURCES.md §1.3` 有社区先例。
+- 引导链问题**先 grep 本地技能 references 全文**（`PITFALLS #87`）；`../../RESOURCES/README.md §1.3` 有社区先例。
 
 ## 要解决的问题（交付判据）
 

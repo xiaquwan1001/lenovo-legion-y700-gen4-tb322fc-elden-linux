@@ -1,6 +1,6 @@
 # 任务：相机出流（G1-5 下一轮）——仍开放（TASKS G1-5 🟡）
 
-> 状态与进度的**唯一权威 = `TASKS.md` §1 行 G1-5**；本任务书只是派工背景。2026-10-04 现代化。
+> 状态与进度的**唯一权威 = `../../TASKS/README.md` §1 行 G1-5**；本任务书只是派工背景。2026-10-04 现代化。
 
 你是 y700-elden 的相机驱动工程师。工作目录 `~/y700-elden`。
 
@@ -22,4 +22,4 @@
 - 只读探测（dmesg / media-ctl / v4l2-ctl）随时可做；写操作走自锁脚本或 `scripts/device-lock.sh`。
 - 一条命令只做一件事（副作用与轮询分开）；轮询自带 `timeout`。
 - 迭代统一 `scripts/iterate.sh`；内核树内绝不 `make olddefconfig`。
-- 最终回复即交付物（结论+命令+原始日志）；**不改 `TASKS.md`**；证据追加 `archive/topics/camera-<YYYY-MM-DD>-subagent.md`。
+- 最终回复即交付物（结论+命令+原始日志）；**不改 `../../TASKS/README.md`**；证据追加 `archive/topics/camera-<YYYY-MM-DD>-subagent.md`。

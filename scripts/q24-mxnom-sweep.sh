@@ -1,7 +1,7 @@
 #!/bin/bash
 # q24-mxnom-sweep.sh — Q24 熄屏×相机 ≥9 轮存活扫掠（vk71-mxnom，零写盘 fastboot boot）。
 #
-# 目标（.pi/plans/2026-10-09-Q24-变体与G1-34资产.md §1 / TASKS.md Q24=G1-22=G1-33）：
+# 目标（.pi/plans/2026-10-09-Q24-变体与G1-34资产.md §1 / ../TASKS/README.md Q24=G1-22=G1-33）：
 #   根因 = 单模块 cambistmclkcc-sm8750 × DT 电源域，熄屏触发间歇性硬复位（pstore/kmsg 无痕）。
 #   vk71-mxnom = 现役 H2 的单变量差：把 cambist 的 MX corner 从 low_svs 抬到 nom
 #   （power-domains=<&rpmhpd RPMHPD_MX> + required-opps nom level256）。cmdline 故意不含

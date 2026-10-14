@@ -1,6 +1,6 @@
 # 进度总结 / Progress Log
 
-> 面向公开读者的**诚实进度与问题记录**。内部权威台账是 [`TASKS.md`](TASKS.md) 与 [`INDEX.md`](INDEX.md)；
+> 面向公开读者的**诚实进度与问题记录**。内部权威台账是 [`TASKS/README.md`](TASKS/README.md) 与 [`INDEX.md`](INDEX.md)；
 > 本文件按时间线给出「做了啥、验证到哪、错在哪」。全部数字都有仓库内证据文件。
 
 ---
@@ -11,15 +11,15 @@
 |---|---|---|
 | 2026-10-03 | BL 解锁（降级路：线刷 vendor → `fastboot oem unlock`） | `Device unlocked=true`；GPT 手术给 Linux 分区 `linux17`=193 GiB |
 | 2026-10-03 | 持久磁盘根 + **Phosh 桌面自启** | `findmnt /`=`/dev/sda17`，Phosh 在跑 |
-| 2026-10-04…08 | 驱动 bring-up 批次：音频(WCD939x)/CDSP/DisplayPort/相机出流/BT/WiFi/温控/串口 | 见 `TASKS.md` §1（27 项） |
+| 2026-10-04…08 | 驱动 bring-up 批次：音频(WCD939x)/CDSP/DisplayPort/相机出流/BT/WiFi/温控/串口 | 见 `TASKS/README.md` §1（27 项） |
 | 2026-10-08 | 基线 `vk64`；发现 **Q28 显示间歇失败** | 冷起约 6 成失败，只有背光 |
 | 2026-10-09 | Q28 根因收窄；#106「进 GUI 卡死」装自动取证 | 根因=bonded 双 DSI 首条 DCS 命令 DMA hang |
 | 2026-10-10 | 立内核分界线 `clean/base`；模块化内核 `vk89` | 构建/身份管线收口 |
 | 2026-10-10 夜 | Q28「按内核二进制确定性」结论 | **次日经溯源审计后被降级**（见 §4） |
 | 2026-10-10 夜 | 发现 **clean-GOOD → 整机卡死**（`#106`）的强相关 | 见 §4 |
-| 2026-10-11 | **容器传感器打通**（路线 C：宿主 gbinder 注入 + 真值 `ssccli`→UDP）；桌面深色/亮度闭环；`C1` 策略路由内核修复 | 见 `TASKS.md` C4/G1-28/C1 |
+| 2026-10-11 | **容器传感器打通**（路线 C：宿主 gbinder 注入 + 真值 `ssccli`→UDP）；桌面深色/亮度闭环；`C1` 策略路由内核修复 | 见 `TASKS/README.md` C4/G1-28/C1 |
 | 2026-10-11 | **M1 干净上游资产树**建成并通过干净构建 | `build/m1-upstream/clean-tree`，见 `reports/m1-clean-tree-20261011.md` |
-| 2026-10-11 晚 | **容器音频打通**（C6：闹钟出声/录音/codec 53）、**C2 GMS 登录**（用户人工验证）、`/dev/fuse` emulated storage（Q30）、`C1` 网络治本（补 `IPV6_MULTIPLE_TABLES` 等） | 见 `TASKS.md` C6/C2/C1、`reports/container-audio-20261011.md`、`PITFALLS #194` |
+| 2026-10-11 晚 | **容器音频打通**（C6：闹钟出声/录音/codec 53）、**C2 GMS 登录**（用户人工验证）、`/dev/fuse` emulated storage（Q30）、`C1` 网络治本（补 `IPV6_MULTIPLE_TABLES` 等） | 见 `TASKS/README.md` C6/C2/C1、`reports/container-audio-20261011.md`、`PITFALLS #194` |
 | 2026-10-12 | ~~**Q28 STORM 定案**：与 NOCARD 同族 = **内核构建身份伪影**~~（**当日深夜已被推翻**，见下方 10-12 深夜各行与 `PITFALLS #217/#223`） | `PITFALLS #195`、`reports/q28-storm-bias-audit-20261011.md`、`reports/q28-identity-retest-20261012.md` |
 | 2026-10-12 | **Q28 伪线索更正**：`to_primary_dsi` DSI0/DSI1 **不是** Q28 杠杆（两树属不同 MSM 实现，本硬件上是 no-op） | `PITFALLS #196` |
 | 2026-10-12 | **Q24 重开**：更正「死前签名」（#197）；受控复现得 `{camcc}`+真熄屏=静默硬复位（末票 `mmcx↓/cx↓`）；S1/S2 存活、S3 因暖复位坏台架未执行（#198）；新增干净无相机台架 `lv64-nocam` | `reports/q24-ctl-20261012.md`、`reports/q24-stageA-20261012.md` |
@@ -45,7 +45,7 @@
 
 ## 2. 当前完成度（诚实版）
 
-| 目标 | 状态（权威数字见 [`TASKS.md`](TASKS.md) §0） | 关键限定 |
+| 目标 | 状态（权威数字见 [`TASKS/README.md`](TASKS/README.md) §0） | 关键限定 |
 |---|---|---|
 | **G1** 功能健全的 Linux | 多数驱动已工作（暖起） | 按“驱动 bring-up 完整性”度量；**上游化 M1–M5 未开始** |
 | **G2** 安卓容器（Waydroid） | 主链路已通 | 图形/内核/GAPPS/代理可用，**容器传感器 HAL 已打通**、**容器音频已打通**（C6）、**C2 GMS 登录**、**C10 马达透传**（AIDL V2 + 固化 vendor.img）；Play Integrity/SafetyNet、Widevine 等级仍在收口 |
@@ -60,9 +60,9 @@
 - **网络**：WiFi（WCN7861/ath12k）+ 蓝牙配对/TWS；USB-NCM 网卡（`192.168.7.1`）+ ACM 串口控制台。
 - **音频**：WCD939x 播放 + 输入（DMIC）走 QDSP6/ADSP。
 - **相机**：后摄按需加载模块可出流并抓帧（与熄屏互斥，见 `Q24`）。
-- **安卓容器传感器**：加速/陀螺/光/磁/接近进容器；真值走 `ssccli`（Qualcomm SSC）→ UDP → 宿主 gbinder HAL（`TASKS.md` C4）。
-- **安卓容器马达透传**：Waydroid HAL → 宿主桥 → `aw86927` 主线驱动；AIDL V2 幅度+cancel，固化进 `vendor.img`（`TASKS.md` C10、`reports/waydroid-haptics-20261013.md`）。
-- **桌面用户态**：深色模式、亮度滑块、自动旋转磁贴、非整数缩放/刷新率（`TASKS.md` G1-26/27/28）。
+- **安卓容器传感器**：加速/陀螺/光/磁/接近进容器；真值走 `ssccli`（Qualcomm SSC）→ UDP → 宿主 gbinder HAL（`TASKS/README.md` C4）。
+- **安卓容器马达透传**：Waydroid HAL → 宿主桥 → `aw86927` 主线驱动；AIDL V2 幅度+cancel，固化进 `vendor.img`（`TASKS/README.md` C10、`reports/waydroid-haptics-20261013.md`）。
+- **桌面用户态**：深色模式、亮度滑块、自动旋转磁贴、非整数缩放/刷新率（`TASKS/README.md` G1-26/27/28）。
 - **温控**：分级 trips。
 - **存储/启动**：持久磁盘根 + A/B 槽（`qbootctl`）+ 零写盘 `fastboot boot` 迭代。
 

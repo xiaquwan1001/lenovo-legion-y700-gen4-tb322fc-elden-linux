@@ -1,7 +1,7 @@
 # AGENT-OPS — agent 行为与开发规范（唯一入口）
 
-> **本文件是「agent 该怎么做事」的唯一入口。** 项目描述见根目录 `AGENTS.md`；技术踩坑/经验见 `PITFALLS.md`；
-> 并发细则见 `.pi/CONCURRENCY.md`；设备上机步骤见 `RUNBOOK-BRINGUP.md`；状态/进度见 `INDEX.md` → `TASKS.md`。
+> **本文件是「agent 该怎么做事」的唯一入口。** 项目描述见根目录 `AGENTS.md`；技术踩坑/经验见 `PITFALLS/README.md`；
+> 并发细则见 `.pi/CONCURRENCY.md`；设备上机步骤见 `RUNBOOK-BRINGUP/README.md`；状态/进度见 `INDEX.md` → `TASKS/README.md`。
 > 领域层事实与档案证据不被本文件复述，只被引用。
 > 状态：2026-10-06 立；同日用户定**自主优先**口径（风险先备份，异常才上报）。
 
@@ -31,8 +31,8 @@
 
 - **不跨容量档复用 GPT 二进制**；每单元现 dump（`scripts/gpt-dump.sh`），手术读实际 GPT 参数。
 - 动分区/刷写前：`fastboot fetch` 备份将覆盖分区 + GPT 双表 dump；**写后读回校验**（不看「传输完成」）。
-- 默认只动 **b 槽 + LUN0 GPT**；`fastboot --set-active` 属写操作，按「先备份 GPT + 记当前 slot → 再执行」处理（不再绝对禁止）；恢复步骤见 `RUNBOOK-BRINGUP.md`。
-- 覆盖 a 槽前确认真机对照取证已归档（2026-10-11 主体已采，指针 `TASKS.md §5` Q5）；回收 Android 专属分区需 G1 全绿 + EDL 备份在手。
+- 默认只动 **b 槽 + LUN0 GPT**；`fastboot --set-active` 属写操作，按「先备份 GPT + 记当前 slot → 再执行」处理（不再绝对禁止）；恢复步骤见 `RUNBOOK-BRINGUP/README.md`。
+- 覆盖 a 槽前确认真机对照取证已归档（2026-10-11 主体已采，指针 `TASKS/README.md §5` Q5）；回收 Android 专属分区需 G1 全绿 + EDL 备份在手。
 - **零写盘优先** `fastboot boot`；严格区分 **`-ram` 纯 RAM 变体（无桌面/服务）** 与**持久变体（RAM 内核 + 磁盘根）**——功能/服务级测试必须用持久变体（`PITFALLS` #92/#93）。
 - **封装脚本**：主机侧构建/打包脚本可跑；**不要用封装脚本代跑 fastboot/EDL**——该机对批量/连续命令容错差，命令一律拆单条（经验见 `PITFALLS` #3）。
 
@@ -52,11 +52,16 @@
 
 ---
 
-## 4. 文档与写入权限
+## 4. 文档与写入权限（文档 v2：文件夹＝角度）
 
-- **SSOT**：唯一入口 `INDEX.md`；领域层（4 份：`DEVICE`/`TASKS`/`RESOURCES`/`RUNBOOK`）与经验层（`PITFALLS`）只在各自文件维护，其余用链接引用。
-- **单写者**：任何时刻一个文件只有一个写者。**领域层 4 份 + `PITFALLS` + `.githooks` + `versions/` = 父 agent 专属**；子 agent 不碰。
-- `archive/` **追加为主**：以追加为主，允许为更正错误 / 回填结果做带日期的最小修订（不改写既有结论口径）；结论以领域层为准，archive 不得被引用为「当前结论」。
+- **结构**：唯一入口 `INDEX.md`（文件）；5 个**角度文件夹** `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/`，
+  每个内 `README.md`（策展 SSOT，唯一维护面）+ `sessions/`（**以会话为单位**的进度，命名 `YYYY-MM-DD-<主题>.md`）。
+- **记录时的区分度**（取代旧的自检计数/死链检查）：写入时就靠 文件夹(角度) + 文件名(日期+主题) + pi 会话 id 区分；
+  会话身份/检索用 **pi 原生项目会话**（`.pi/sessions/*.jsonl`，`session_search` / `/resume`），不手抄索引表。
+- **单写者**：任何时刻一个文件只有一个写者。**各角度 `README.md` + `.githooks` + `versions/` = 父 agent 专属**；
+  子 agent 只写被指派的 `sessions/` 新文件，一般不碰 README（被显式指派重建某角度文件夹时，该角度对本次派工单写者）。
+- **并入流程**：`sessions/` 里的「★SSOT 待并入」由宿主择机并进同角度 `README.md`，随后移除该标记。
+- `archive/` **追加为主**：允许为更正/回填做带日期的最小修订（不改写既有结论口径）；结论以角度 `README.md` 为准，archive 不得被引用为「当前结论」。
 - 结论可反转：保留推翻记录（见 `ATTRIBUTION-AUDIT-2026-10-06.md` 的分层更正）。
 
 ---

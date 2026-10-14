@@ -50,7 +50,7 @@
 
 ## 3. 状态（诚实版）
 
-| 目标 | 状态（权威数字见 [`TASKS.md`](TASKS.md) §0） | 说明 |
+| 目标 | 状态（权威数字见 [`TASKS/README.md`](TASKS/README.md) §0） | 说明 |
 |---|---|---|
 | **G1** 驱动 bring-up | 多数驱动已工作（暖起） | **冷起显示竞态 `Q28` 未解**；上游化 M1–M5 未开始 |
 | **G2** 安卓容器 | 主链路已通 | Waydroid 图形/内核/GAPPS/代理通路可用；**容器传感器 HAL 已打通**（宿主 gbinder 注入 + 真值 SSC→UDP）、**容器音频打通**（C6：闹钟出声 + 录音 + MediaCodec 53）、**C2 GMS 登录**（用户人工验证）、**C10 马达透传**（AIDL V2 幅度控制+固化进 vendor.img）；Play Integrity / SafetyNet、Widevine 等级仍在收口 |
@@ -60,7 +60,7 @@
 音频播放与输入、温控、CDSP、DisplayPort、相机出流（按需加模块）、持久磁盘根 + Phosh 桌面自启、
 A/B 槽管理、**安卓容器传感器**（加速/陀螺/光/磁/接近，真值来自 `ssccli` → UDP 注入容器）、
 **容器音频**（C6：闹钟出声、录音、`/dev/fuse` emulated storage）、桌面用户态深色模式/亮度滑块/自动旋转磁贴。
-明细与证据见 [`TASKS.md`](TASKS.md) §1。
+明细与证据见 [`TASKS/README.md`](TASKS/README.md) §1。
 
 **未解决 / 正在查（见 §4）**：显示冷起竞态 `Q28`、进桌面后整机卡死 `#106`、
 相机与熄屏互斥 `Q24`、以及**若干被我们自己推翻的结论**（诚实记录，见 `PROGRESS.md`）。
@@ -85,12 +85,12 @@ A/B 槽管理、**安卓容器传感器**（加速/陀螺/光/磁/接近，真�
 
 | 路径 | 内容 |
 |---|---|
-| `INDEX.md` | **入口 / 文档分层与 SSOT**（中文，最权威的现状快照） |
-| `TASKS.md` | 唯一任务台账（ID / 状态 / 下一步） |
-| `PITFALLS.md` | **踩坑经验库**（动手前该扫的坑，170+ 条） |
-| `DEVICE.md` | 设备/分区/槽位/存储口径 |
-| `RESOURCES.md` | 资源与资产清单 |
-| `RUNBOOK-BRINGUP.md` | 从解锁到起桌面的操作手册 |
+| `INDEX.md` | **入口 / 文档结构（文件夹＝角度）与 SSOT**（中文，最权威的现状快照） |
+| `TASKS/README.md` | 唯一任务台账（ID / 状态 / 下一步） |
+| `PITFALLS/README.md` | **踩坑经验库**（动手前该扫的坑，170+ 条） |
+| `DEVICE/README.md` | 设备/分区/槽位/存储口径 |
+| `RESOURCES/README.md` | 资源与资产清单 |
+| `RUNBOOK-BRINGUP/README.md` | 从解锁到起桌面的操作手册 |
 | `patches/` | 内核补丁、config、DTS 变更、上游对照 |
 | `scripts/` | 构建/打包/部署/取证工具链 |
 | `reports/` | 专题报告与**证据**（含 `q28-DOSSIER.md`、会话台账） |
@@ -113,8 +113,8 @@ A/B 槽管理、**安卓容器传感器**（加速/陀螺/光/磁/接近，真�
 ```sh
 # 目录
 INDEX.md                 # 先读这个
-TASKS.md                 # 看进度/未解
-PITFALLS.md              # 动手前扫坑
+TASKS/README.md                 # 看进度/未解
+PITFALLS/README.md              # 动手前扫坑
 
 # 内核构建（需 aarch64 交叉工具链 + ccache；见 scripts/env-build.sh）
 scripts/build-kernel.sh

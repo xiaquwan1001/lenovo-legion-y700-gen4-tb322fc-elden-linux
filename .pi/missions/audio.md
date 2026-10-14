@@ -1,6 +1,6 @@
 # 任务：音频残余包（R1 有线耳麦 / R2 双麦 / UI 收尾）
 
-> 状态与进度的**唯一权威 = `TASKS.md` §1 行 G1-4**；本任务书只是派工背景。2026-10-04 现代化。
+> 状态与进度的**唯一权威 = `../../TASKS/README.md` §1 行 G1-4**；本任务书只是派工背景。2026-10-04 现代化。
 
 你是 y700-elden（联想 Y700 四代 TB322FC / SM8750 / AudioReach）的音频内核工程师。工作目录 `~/y700-elden`。
 
@@ -14,7 +14,7 @@
 3. UI 层小项：UCM2 设备切换的边角（`wpctl` 已见 Source）。
 
 ## 先读（顺序）
-`TASKS.md` §1 G1-4 → `INDEX.md` §3 → 上列 `archive/topics/AUDIO-*` 与 `HEADSET-HW-2026-10-04.md`。
+`../../TASKS/README.md` §1 G1-4 → `INDEX.md` §3 → 上列 `archive/topics/AUDIO-*` 与 `HEADSET-HW-2026-10-04.md`。
 
 ## 资产
 - tplg：`scripts/audio-tplg/`（m4 源 + `build.sh`，m4+alsatplg）；UCM2：`scripts/audio-ucm/`。
@@ -26,6 +26,6 @@
 - 设备是串行资源：写操作一律走自锁脚本（`mod-loop`/`kexec-boot`/`to-fastboot`/`flash-b`/`cycle` 已自动 flock），或包 `scripts/device-lock.sh <cmd>`；`--status` 查占用。
 - 一条命令只做一件事：副作用（reboot/刷写/fastboot boot）与长轮询**不同条命令**（`AUDIT3` 教训）；轮询自带 `timeout` 自限。
 - 迭代统一 `scripts/iterate.sh`（mod/dtb/kernel/ram）；内核树内**绝不** `make olddefconfig`（会删 `CONFIG_ARCH_QCOM`）。
-- 最终回复即交付物：结论 + 命令 + 原始日志。**不要改 `TASKS.md`**（编排者独立复跑后更新）；专题证据追加到 `archive/topics/<主题>-<YYYY-MM-DD>-subagent.md`（只增不改），不落根目录。
+- 最终回复即交付物：结论 + 命令 + 原始日志。**不要改 `../../TASKS/README.md`**（编排者独立复跑后更新）；专题证据追加到 `archive/topics/<主题>-<YYYY-MM-DD>-subagent.md`（只增不改），不落根目录。
 - 放音测试前先把音量调低（用户要求；裸 ALSA 满增益 1023 过响，脚本默认 400）。
 - 有失联风险、超出任务书、涉及采购/凭据决策 → 停下上报。

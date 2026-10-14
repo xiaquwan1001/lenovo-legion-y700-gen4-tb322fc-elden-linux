@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ⚠ 适用前提（2026-10-03 定稿）：**只有 ROM ≤ 1.1.11.073/.076 才存在解锁命令**；
 #   1.1.11.120 = trap（显成功但回滚）；1.5.x（229/259/C16）上**任何** sn.img 均无效。
-#   未过版本门 ⇒ 先全量降级（含 GPT）再跑本脚本。权威顺序：RUNBOOK-BRINGUP.md §0.5；
+#   未过版本门 ⇒ 先全量降级（含 GPT）再跑本脚本。权威顺序：../RUNBOOK-BRINGUP/README.md §0.5；
 #   取证/复盘：archive/topics/复盘-2026-10-03-BL解锁.md・PITFALLS #82–#87。
 # 联想（ZUX OS / ZUI）平板官方解锁 BL —— U2/任一单元通用。
 # 只做「已在 fastboot 模式 + 已拿到 sn.img」之后的两条命令，其余交给用户按键。

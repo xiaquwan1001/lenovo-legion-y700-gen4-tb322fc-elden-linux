@@ -86,6 +86,6 @@ echo "== 6/6 校验和 =="
 ls -la "$OUT"
 echo
 echo "完成。仍待人工补齐（不可自动化）："
-echo "  ① 7 颗传感器 30 s 采样 CSV：在设备 Termux 里逐颗采集（见 TASKS.md §5 Q5 / C0）"
+echo "  ① 7 颗传感器 30 s 采样 CSV：在设备 Termux 里逐颗采集（见 TASKS/README.md §5 Q5 / C0）"
 echo "  ② 5 个目标 App 关键流程录屏：adb -s $SER shell screenrecord /sdcard/c0-app-N.mp4"
 echo "     录完 adb -s $SER pull /sdcard/c0-app-N.mp4 \"$OUT/\""

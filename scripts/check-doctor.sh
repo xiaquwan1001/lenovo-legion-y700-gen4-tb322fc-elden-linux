@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
-# elden 项目医生 — 结构 / 一致性自检（只读，不改任何文件）
+# elden 项目医生 — 机器账自检（只读，不改任何文件）
 #
-# 用法:  scripts/check-doctor.sh
-# 退出码: 0 = 全绿；1 = 有 FAIL
+# 用法:  scripts/check-doctor.sh     退出码: 0 = 全绿；1 = 有 FAIL
 #
-# 检查项:
-#   1. 计数            .pi/sessions 实有 vs RESOURCES §4 会话索引收录数 vs 根目录文档数
-#   2. 死链            活跃文档里引用的本地 .md 是否存在（archive/skills 为历史，不查）
-#   3. 过期字样        已删除/合并的旧文件与旧计数是否又被引用
-#   5. vk 版本账        registry 单调唯一 / registry 号必有 manifest / 树自称 ≡ 镜像内内核
-#                        （已审在案的历史项见 versions/vk-ledger-known-issues.tsv，降为 WARN）
-#   5d. 内核身份表      versions/vk-kernel-identity.tsv 新鲜度 + 命名/溯源规则门
-#                        （号↔内核二进制↔源提交 对齐；由 scripts/vk-identity.py 生成）
-#                        + registry 号覆盖现存构建号（有镜像必入 registry，否则 alloc 撞号）
+# 文档 v2 起不再做文档计数 / 死链 / 口径字样检查：记录的区分度靠写入时的
+# 文件夹(角度) + 文件名(日期+主题) + pi 会话 id 保证（见 INDEX.md §2 / .pi/AGENT-OPS.md §4）。
+# 只保留机器可核对的账：
+#   4. 已退场入口不得复辟
+#   5. vk 版本账（registry / manifest / 镜像内 UTS 一致）
+#   5d. 内核身份表新鲜度 + 命名/溯源规则门
+#   5e. manifest 完整性（config_sha256）
+#   6. 静态卫生（设备锁单一真源 / bashism / 死脚本）
 set -uo pipefail
+
 cd "$(dirname "$0")/.."
 ROOT=$PWD
 
@@ -24,129 +23,6 @@ bad()  { printf '  [FAIL] %s\n' "$1"; fail=$((fail+1)); }
 warnf(){ printf '  [warn] %s\n' "$1"; warn=$((warn+1)); }
 
 echo "== elden check-doctor — $ROOT =="
-
-# ---------------------------------------------------------------- 1. 计数
-echo
-echo "== 1. 计数一致性 =="
-sessions=$(find .pi/sessions -maxdepth 1 -name '*.jsonl' 2>/dev/null | wc -l | tr -d ' ')
-rootmd=$(ls *.md 2>/dev/null | wc -l | tr -d ' ')
-topics=$(ls archive/topics/*.md 2>/dev/null | wc -l | tr -d ' ')
-# RESOURCES §4 会话索引行：形如 | 2026-.. | `01a0xxxx` | ...
-indexed=$(grep -cE '^\| 20[0-9]{2}-[0-9]{2}-[0-9]{2} \| `[0-9a-f]{8}`' RESOURCES.md 2>/dev/null || echo 0)
-echo "  会话主 jsonl=$sessions  RESOURCES§4 收录=$indexed  专题=$topics  根目录 md=$rootmd"
-
-if [ "$rootmd" -eq 9 ]; then ok "根目录 9 份 md（6 维护文档 + AGENTS.md + 公开 README/PROGRESS）"; else warnf "根目录 md=$rootmd（预期 9）"; fi
-# 会话索引：要求磁盘**主会话**（深度 1）id 全覆盖；允许索引保留已删除/迁移会话的墓碑行。
-_d=$(mktemp); _i=$(mktemp)
-find .pi/sessions -maxdepth 1 -name '*.jsonl' -printf '%f\n' 2>/dev/null | grep -oE '_[0-9a-f]{8}-' | tr -d '_-' | sort -u > "$_d"
-grep -oE '^\| 20[0-9]{2}-[0-9]{2}-[0-9]{2} \| `[0-9a-f]{8}`' RESOURCES.md 2>/dev/null | grep -oE '[0-9a-f]{8}' | sort -u > "$_i"
-_miss=$(comm -23 "$_d" "$_i" | tr '\n' ' ')
-rm -f "$_d" "$_i"
-if [ -z "$_miss" ]; then ok "会话索引覆盖全部主会话（磁盘 $sessions / 索引 $indexed 行）"; else warnf "索引缺主会话 id：$_miss"; fi
-
-# ---------------------------------------------------------------- 2. 死链
-echo
-echo "== 2. 死链检查（活跃文档）=="
-python3 - "$ROOT" <<'PY'
-import re, os, sys, glob
-root = sys.argv[1]
-active = ["INDEX.md","AGENTS.md","DEVICE.md","TASKS.md","RESOURCES.md","PITFALLS.md",
-          "RUNBOOK-BRINGUP.md",".pi/README.md",".pi/AGENT-OPS.md",".pi/CONCURRENCY.md"]
-active += sorted(glob.glob(os.path.join(root, '.pi/missions/*.md')))
-active += sorted(glob.glob(os.path.join(root, '.pi/agents/*.md')))
-active += sorted(glob.glob(os.path.join(root, '.pi/skills/*/SKILL.md')))
-allmd = set()
-for dirpath, dirnames, filenames in os.walk(root):
-    dirnames[:] = [d for d in dirnames if d not in
-                   ('.git','geekidos-linux','Y700-elden-linux','stock-src','qdl',
-                    'env-pass','out','backup','logs')]
-    allmd |= {fn for fn in filenames if fn.endswith('.md')}
-topdirs = set(os.listdir(root))
-tok = re.compile(r'[A-Za-z0-9_./+\-\u4e00-\u9fa5]+\.md(?![A-Za-z0-9_])')
-missing = []
-for f in active:
-    p = os.path.join(root, f)
-    if not os.path.exists(p):
-        missing.append((f, "(文件本身缺失)")); continue
-    text = open(p, encoding='utf-8', errors='replace').read()
-    for m in set(tok.findall(text)):
-        if '*' in m or '{' in m or m.startswith('http'): continue
-        m = m.lstrip('./')
-        if any(os.path.exists(c) for c in
-               (os.path.join(root, m), os.path.normpath(os.path.join(root, os.path.dirname(f), m)))):
-            continue
-            continue
-        if '/' not in m: continue
-        if os.path.basename(m) in allmd: continue
-        if m.split('/')[0] not in topdirs: continue
-        missing.append((f, m))
-if missing:
-    print("  [FAIL] 死链 %d 处:" % len(missing))
-    for f, m in sorted(missing):
-        print("         %s -> %s" % (f, m))
-    sys.exit(1)
-print("  [ok]   活跃文档无死链（%d 份：6 维护 + .pi README/AGENT-OPS/CONCURRENCY/missions/agents/SKILL）" % len(active))
-PY
-[ $? -ne 0 ] && fail=$((fail+1))
-
-# ---------------------------------------------------------------- 3. 过期字样
-echo
-echo "== 3. 过期字样扫描 =="
-stale=0
-# 注：PITFALLS.md 的 §15 故意登记旧文件名，故排除在本扫描外
-for pat in 'LESSONS\.md' 'GAPS\.md' 'ANDROID-COMPAT\.md' 'FILES\.md' 'SESSION-INDEX\.md' \
-           'sessions-catalog' 'db/elden' 'db/build' 'db/README' '六视角文档集之一'; do
-  hit=$(grep -rlE "$pat" INDEX.md AGENTS.md DEVICE.md TASKS.md RESOURCES.md RUNBOOK-BRINGUP.md 2>/dev/null || true)
-  if [ -n "$hit" ]; then
-    bad "仍引用已删除/合并的 \`$pat\`: $(echo $hit | tr '\n' ' ')"
-    stale=$((stale+1))
-  fi
-done
-[ "$stale" -eq 0 ] && ok "无过期文件引用"
-
-# 术语一致性：领域层只有 4 份（DEVICE/TASKS/RESOURCES/RUNBOOK）+ 经验层 1 份（PITFALLS）
-term=$(grep -rln "领域层 *[5五] *份" INDEX.md AGENTS.md TASKS.md DEVICE.md RESOURCES.md RUNBOOK-BRINGUP.md PITFALLS.md .pi/AGENT-OPS.md .pi/CONCURRENCY.md 2>/dev/null || true)
-if [ -n "$term" ]; then bad "术语漂移「领域层 5 份」（应为领域层 4 + 经验层 1）: $(echo $term | tr '\n' ' ')"; else ok "术语「领域层 4 份 + 经验层 1 份」一致"; fi
-
-# ---------------------------------------------------------------- 3.6 PITFALLS 编号范围
-# 单一事实源 = PITFALLS.md 头部「条目编号 #1–#N」；实际编号有两种格式（N. / **#N =）
-echo
-echo "== 3.6 PITFALLS 编号范围（头部声明 vs 实际最大编号）=="
-pit_max=$(grep -oE '^[0-9]+\. |^\*\*#[0-9]+' PITFALLS.md | grep -oE '[0-9]+' | sort -n | tail -1)
-declared=$(grep -oE '条目编号 #1–#[0-9]+' PITFALLS.md | grep -oE '[0-9]+$' | head -1)
-if [ -z "$pit_max" ] || [ -z "$declared" ]; then
-  warnf "PITFALLS 编号范围无法解析（实际最大=$pit_max 声明=$declared）"
-elif [ "$pit_max" != "$declared" ]; then
-  bad "PITFALLS 头部声明 #1–#$declared ≠ 实际最大编号 #$pit_max → 刷 PITFALLS 头部"
-else
-  ok "PITFALLS 头部声明 #1–#$declared ≡ 实际最大编号"
-fi
-
-# ---------------------------------------------------------------- 3.5 完成度单源（TASKS §0 权威；INDEX §3 仅指针，不复述数字）
-echo
-echo "== 3.5 完成度单源（TASKS §0 权威 / INDEX §3 仅指针）=="
-python3 - <<'PY'
-import re, sys
-T=open('TASKS.md').read(); I=open('INDEX.md').read()
-def first(pat, s, grp=1):
-    m=re.search(pat, s)
-    return int(m.group(grp)) if m else None
-t1=first(r'\|\s*\*\*G1\*\*[^\n]*?(\d+)%', T)
-t2=first(r'\|\s*\*\*G2\*\*[^\n]*?(\d+)%', T)
-i1=first(r'G1\s*[≈~]?\s*(\d+)%', I)
-i2=first(r'G2\s*[≈~]?\s*(\d+)%', I)
-bad=0
-for name,tv,iv in (("G1",t1,i1),("G2",t2,i2)):
-    if tv is None:
-        print("  [warn] %s 权威百分比缺失（TASKS §0 应含 ~NN%%）" % name); bad=1
-    if iv is not None:
-        print("  [warn] %s INDEX §3 复述了完成度数字（应只给指针 → TASKS §0）" % name); bad=1
-if bad==0: print("  [ok]   完成度单源：TASKS §0 权威（G1=%s%% G2=%s%%），INDEX §3 仅指针" % (t1,t2))
-sys.exit(1 if bad else 0)
-PY
-case $?
-  in 0) ;; *) warn=$((warn+1)) ;;
-esac
 
 # ---------------------------------------------------------------- 4. 已退场入口不得复辟
 echo
