@@ -10,12 +10,12 @@
 
 ## 0. 零号纪律（动手前先做这四件事）
 
-1. **先查本地既有结论再取证**：`grep -rn -iE "unlock|解锁|rollback|testkey|GPT|EDL" ~/y700-elden/*.md archive/topics/*.md .pi/skills/*/references/*.md`（PITFALLS #87）。
-2. **动分区/刷写前备份**：`fastboot fetch <分区>` + GPT 双表 dump；**写后读回校验**（不看"传输完成"）。
-3. **单一远程通道的持久系统上不做自锁式实验**（电源/熄屏/网络）；用 `fastboot boot` **零写盘**验证，而非直接改 flash。
+- **先查本地既有结论再取证**：`grep -rn -iE "unlock|解锁|rollback|testkey|GPT|EDL" ~/y700-elden/*.md archive/topics/*.md .pi/skills/*/references/*.md`（PITFALLS #87）。
+- **动分区/刷写前备份**：`fastboot fetch <分区>` + GPT 双表 dump；**写后读回校验**（不看"传输完成"）。
+- **单一远程通道的持久系统上不做自锁式实验**（电源/熄屏/网络）；用 `fastboot boot` **零写盘**验证，而非直接改 flash。
    ⚠️ **两种「RAM 启动」别混**（#92/#93）：`-ram` 纯 RAM 变体**不启桌面/会话服务**，只适合内核/引导/分区级验证；
    **功能/服务级测试（桌面、PipeWire、蓝牙音频、Waydroid、相机出流）必须 `fastboot boot` 持久变体**（RAM 内核 + 磁盘根，同样零写盘）。
-4. **无设备证据不得写「已修复/已解决」**（2026-10-06 新增）：主机侧构建/编译/能进 BDS 一律只算「未上机验证」；间歇性故障**单次样本无效**（须同口径量化 + 单变量 + 长时窗）。见 `archive/topics/SESSION-AUDIT-2026-10-06.md` §3（F2/F4）。
+- **无设备证据不得写「已修复/已解决」**（2026-10-06 新增）：主机侧构建/编译/能进 BDS 一律只算「未上机验证」；间歇性故障**单次样本无效**（须同口径量化 + 单变量 + 长时窗）。见 `archive/topics/SESSION-AUDIT-2026-10-06.md` §3（F2/F4）。
    参 #87、#92、#93、复盘-持久化与睡眠。
 
 > **行为/授权（谁手敲 fastboot、何时停下请用户物理干预、何时可自主执行）见 `.pi/AGENT-OPS.md` §1；本节只讲「动手前该掌握的事实」。**
@@ -48,9 +48,9 @@
 4. **`fastboot boot` 失败后 bootloader 会进"脏"状态**（连续报 `Load Error`）；`fastboot reboot bootloader` 可清。
    `fastboot boot` 报 `Failed to load/authenticate boot image: Load Error` 时同理。
 
-5. **`kexec` 换内核：不可用（已定论；⛔superseded 中间态）**——`kexec -l`/`-s -l` 均装载成功，但 **`kexec -e` 失败**：早期「黑屏挂死」，补 trans_pgd（vk54/vk58）后转为**直接掉电**；**分支点已于 2026-10-08 定位（→#166）= `device_shutdown()`**（本条当年写「未定位」系受限于无存活 console + APSS 看门狗永久禁用）。⇒ **不作迭代通道**，改用 `fastboot boot`/`--flash`。
+5. **`kexec` 换内核：不可用（已定论；⛔superseded 中间态）**——`kexec -l`/`-s -l` 均装载成功，但 **`kexec -e` 失败**：早期「黑屏挂死」，补 trans_pgd（vk54/vk58）后转为**直接掉电**；**分支点已于 2026-10-08 定位（→#154）= `device_shutdown()`**（本条当年写「未定位」系受限于无存活 console + APSS 看门狗永久禁用）。⇒ **不作迭代通道**，改用 `fastboot boot`/`--flash`。
    - 仍有效告诫：kexec 时 `console=ttyGS0` 必断，勿据「无输出」判挂死；kexec/重启实验前先 `slot-attr.py mark-successful b`（否则扣 boot_b retry，~7 次后 unbootable）。取证遗留事实：H2（CPU offline BUG_ON）已排除；运行期 VA=48 位而 `VA_BITS=52`；APSS 看门狗永久禁用是当年「未定位」的原因。
-   - 全量证据：`archive/topics/KEXEC-ONDEVICE-2026-10-05.md`、`KEXEC-ONDEVICE-R2-2026-10-05.md`、`KEXEC-2026-10-05.md`、`RUNBOOK §8`；触发点取证见 #166。
+   - 全量证据：`archive/topics/KEXEC-ONDEVICE-2026-10-05.md`、`KEXEC-ONDEVICE-R2-2026-10-05.md`、`KEXEC-2026-10-05.md`、`RUNBOOK §8`；触发点取证见 #154。
 6. **boot.img 必须 ≤96 MiB**（`boot_a`=0x6000000）；超了 `fastboot boot` 会 `Bad Buffer Size`。
 
 7. **USB gadget 重枚举有延迟**：设备已进 Linux 但主机可能十几秒内看不到 `enx`/`ttyACM0`，等一下即恢复；别急着判定死机。
@@ -950,7 +950,7 @@
     - **选择规则**：内核/DTS/驱动早期验证、GPT/分区手术、首次 bring-up、防持久根污染 → **B**；**功能/服务级验收 → A（零写盘）**；长期固化 → `scripts/flash-b.sh out/boot-elden-vkNN.img` 写 b 槽。
     - 判断当前是哪种：`cat /proc/cmdline` 是否含 `elden_root=`；`findmnt /` 是 `/dev/sda17`（磁盘）还是 `rootfs`（RAM）。
 
-166. **★`kexec -e` 静默整机掉电的触发点 = `device_shutdown()`（Q11，2026-10-08 实机定位；2026-10-10 整理轮由重复的 #94 重编号为 #166——原文误占 #94，与「kexec 只能喂未压缩 Image」条目撞号）**。
+154. **★`kexec -e` 静默整机掉电的触发点 = `device_shutdown()`（Q11，2026-10-08 实机定位；2026-10-10 整理轮由重复的 #94 重编号为 #166——原文误占 #94，与「kexec 只能喂未压缩 Image」条目撞号）**。
     - **结论**：`kernel_kexec()` 里 `kernel_restart_prepare()` 内的 `device_shutdown()`（反向遍历到 UFS/SCSI `Synchronizing SCSI cache` 附近）会触发 PMIC 整机掉电；`syscore_shutdown()` 无罪（stage=14 干净通过）；kexec 机制本身正常（trans_pgd/CPU offline 都对）。跳过 `device_shutdown` 即一路走到 `Starting new kernel`+`psci CPU killed`（R1/R2 从未越过的墙）。
     - **取证方法学（关键，可复用）**：抓「掉电前最后几条内核日志」时，dumper 必须 **`setsid nohup` 脱离 SSH** 且逐行 `fsync` 写磁盘根。R2 用 SSH 子进程 `python` 读 `/dev/kmsg`，在 `reboot_notifier` 跑 `SYS_RESTART`（网络 teardown）时随 SSH 一起被杀，只抓到 `wlan deauth`。UFS 是早期 probe 设备、`device_shutdown` 反向遍历里最后关 → device_shutdown 早期日志能落盘。诊断内核在 `kernel_kexec()`/`kernel_restart_prepare()` 每阶段打 `[KD] stage=N` 标记，读日志最后一行即定位。
     - **注意**：`mainline kernel_kexec()` 的 `kmsg_dump` 在 else 块外（`machine_kexec` 前才调），掉电在关机阶段时 pstore/ramoops 也拿不到 —— 解释了历史 `dmesg-ramoops-0` 恒空。
@@ -974,7 +974,7 @@
 | `SESSION-INDEX.md` | 并入 `RESOURCES.md` §4 | `RESOURCES.md` §4 |
 | `LESSONS.md` | 删除（生成索引，冗余） | `PITFALLS.md` §0 + 正文 |
 | `db/`（SQLite 知识库） | 删除（无原生查询需求） | `rg` + pi 会话选择器 |
-| kexec 作迭代快环通道（决策登记） | 已放弃：不可用（#5）且掉电触发点=`device_shutdown()`（#166），勿再投入迭代通道 | PITFALLS #5/#166、`TASKS.md` §4 |
+| kexec 作迭代快环通道（决策登记） | 已放弃：不可用（#5）且掉电触发点=`device_shutdown()`（#154），勿再投入迭代通道 | PITFALLS #5/#154、`TASKS.md` §4 |
 | 「进 fastboot 先 `fastboot --set-active=a`」操作规则 | **错误规则已作废**：会动在用的 b 槽 active；现口径=不改 active slot，槽位管理用 `qbootctl` | PITFALLS #114/#60更正行、技能 qbootctl-slot-management |
 | `archive/sessions-catalog-2026-10-03.jsonl` | 删除（db 数据源） | `RESOURCES.md` §4 |
 | `archive/2026-10-02-merged/*` | 旧文档原文（证据，非废弃） | `INDEX.md` §6 |
@@ -1056,6 +1056,22 @@
 | `casualsnek/waydroid_script` | ◐ G2 候选（待验） | GApps(A13 arm64，GitHub 源)/Magisk/MicroG 注入；**不改变 A13 arm64 无 Widevine L3 的判定**（arm64 仅 A11 有 prebuilt） |
 | `FEX-Emu` | ◐ 仅对照 | G3 用 Box64 路线不变，可在基准里加对照 |
 | `iio-sensor-proxy` + `libssc` | ✅ 已采纳（路线≠QMI-SNS） | 现用 iio-sensor-proxy 经 **SSC/QRTR(svc400, ADSP/hexagonrpcd)** 后端（非旧 SLPI/QMI-SNS 路），自动旋转已可用（见 §十六）。本 build `/sys/bus/iio` 恒空但 `HasAccelerometer=true` |
+
+
+### 15.7 条目编号体检与撞号消歧（2026-10-14 整理）
+
+> 规则：编号是**跨文档的稳定引用键**，只允许「补号/消歧」，**不重排**（见文首「物理顺序不随编号单调」）。
+> 本次体检结果：**1–261 现已一号一条（无重复、无缺号）**。
+
+| 撞号/异常 | 当时状态 | 处置 |
+|---|---|---|
+| `#1`–`#4` | §0「零号纪律」4 条与 §一 `#1`–`#4` 两处都写成 `1.`–`4.` | **§0 改为无序列表**；`#1`–`#4` 归 §一（既有引用如 `PITFALLS #3`=「fastboot 不能跑批量」据此解释） |
+| `#166` | §十四「`kexec -e` 掉电触发点=`device_shutdown()`」与 §二十二「`reboot2 bootloader` 暖复位粘坏态」同号 | **kexec 那条改 `#154`**（条目 #5、本表 15.1 行的引用已同步）；`#166` 归 §二十二「暖复位粘态」 |
+| `#217` | §二十七「构建身份：3 位是偏置不是解」与 §二十八「邮件通道选型」同号 | **§二十八 首条改 `#257`**；`#217` 归 §二十七（`#217/#223` 的既有引用不变） |
+| §三十三 `1.`/`2.`/`3.` | 三连坑与 `#1`–`#3` 撞号 | 改为**无序列表**（该节是条目 #256 的后继说明，非独立条目） |
+| 缺号 `#154`/`#257` | 1–261 中未占用 | 由上面两处消歧复用 |
+
+**已作废/被取代条目全文存档**：`archive/topics/pitfalls-archive-20261014.md`（`#163`/`#167`/`#168`/`#171`/`#175`/`#192`/`#195`/`#250`）；原位保留条目号与结论首行 + 指针。
 
 ## 十六、自动旋转方向锁死 / 开关置灰 — iio-sensor-proxy 启动时序（2026-10-09 实测）
 - **现象**：phosh 快速设置无可用“自动旋转”、方向锁死；实测拿起横过来不转。
@@ -1220,8 +1236,7 @@
     - 已修：`build-kernel.sh` 加**编后符号守卫**（缺 gcc_sm8750/msm_dsi_host_bonded_cmd_trigger/rpmh → exit 1）；`apply-kernel-fragment.sh` olddefconfig 后回钉 `ARCH_QCOM/DRM_MSM/DRM_MSM_DSI/SMD_RPM/QCOM_RPMHPD`、仍缺则回滚备份并 die。恢复好档 = `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb）。详见 `reports/q28-orchestration-20261010.md` §3。
 
 163. **★Q28 的真实变量是**冷/暖复位**，不是时间/温度（推翻 10-09「强时间相关」推断，用户实机纠正）。**
-    - 当时定案（现已再被收窄）：冷起基本失败 / 暖起基本成功、与时间无关；A/B 必须固定复位类型（真实 POR 判据见 #166/#192）。后续 #192/#195/#217 证明真正变量是内核构建身份（UTS 版本串），冷/暖不是独立根因。
-    - 证据：`reports/q28-binary-determinism-20261010.md` 等（见 #192 台账）。
+   - ⚠️ **已被取代（后期口径：坏发按时间成簇，见 #217/#223）**；全文 → `archive/topics/pitfalls-archive-20261014.md` §#163
 164. **★Q28 根因定案：bonded 双 DSI 首条 DCS 命令的命令 DMA 引擎 hang（~60% 冷起）；“背光无画面”有两层但 L2 是 L1 下游。**
     - 日志差分铁证（同 log 15 boot：GOOD 4 次 `commandDMA=0/initfail=0/ctlreset=0`、BAD 11 次**全部**先 `ae94000+ae96000 command DMA timeout status=0x2200200 master=-110 peer=-110`，面板首条 DCS `dcs data ff 20` 即超时 → init 重试 3 次仍败(-110→-5) → **4ms 后**才 `dpu_encoder_phys_vid ctl 1 reset failure -22`/frame done/vblank 风暴→自发重启）。
     - **完美共现 ⇒ L2（DPU CTL 卡死）= L1 的下游后果，非独立 bug**。根因=L1：首条命令 DMA 触发但引擎从不推进。hang 瞬间寄存器：**STATUS0=0x20003（正常=0x0）、TRIG_DMA=0x1 自不清**；CTL/CMD_DMA_CTRL/FIFO 好与坏相同。
@@ -1241,11 +1256,10 @@
     - ★连带推翻：本轮中途「干净 vk64 自己也 NOCARD」「A 打错靶」等结论均源自 `reboot2` 暖机样本，已作废（详 `reports/q28-DOSSIER.md` §h）。
 
 167. **`scripts/q28-boot-cycle.sh` 判据缺陷：不查 card0，把 NOCARD 误报 GOOD（与 #165 同坑，但脚本未同步修）。**
-    - 实锤：vk86-round 暖机被 q28-boot-cycle.sh 报 `VERDICT=GOOD`，实为 NOCARD（`/sys/class/drm` 只有 `version`）。该脚本只数六种风暴签名 + dpms，**不检查 `[ -e /sys/class/drm/card0 ]`**。
-    - ⇒ **Q28 判显示一律用 `scripts/q28-devprobe.sh`（三态）**；已给 q28-boot-cycle.sh 补 card0 硬门（无 card0 直接 rc=10 BAD/NOCARD）。教训：修判据要**跨脚本同步**，一份改了另一份会悄悄漂移。
+   - ⚠️ **已修复（`q28-boot-cycle.sh` 判据已同步 card0 硬门）**；全文 → `archive/topics/pitfalls-archive-20261014.md` §#167
 
 168. **★Q28 冷起复现的敏感点尚未定性：同一内核+DTB 逐字节相同、仅 initramfs `/init` 差一个模块加载器，冷 fastboot 路径一次 STORM(C2) 一次 NOCARD(A2)。**
-    - → [已由 #192/#195 定性：冷起落 NOCARD/STORM 由内核构建身份（UTS）决定；ramdisk/DTB 已 2×2 交叉排除。证据 `reports/q28-retro-audit-20261011.md`、`reports/q28-storm-bias-audit-20261011.md`]
+   - ⚠️ **已被取代（#171/#192 那条「构建身份」线已作废）**；全文 → `archive/topics/pitfalls-archive-20261014.md` §#168
 169. **★迭代链的失败根因是「验证链撒谎」，不是缺想法——每环必须有一条机器可读 record / 硬门（2026-10-10 流程体检）。**
     - 证据（关键词计数）：`PITFALLS` 里 `静默` 14 处、`误判` 14 处、`作废` 8 处；四类高频事故 = ①构建产物身份静默腐化（`make olddefconfig` 删 `ARCH_QCOM`，vk81/82/83 死内核 `#162`；manifest 被手写旁路、缺 `config_sha256` ⇒ 事后无从对账）；②判据静默撒谎（守卫裸 `exit 0` `#153/#157/#161`、分类器漏 NOCARD `#165/#167`）；③部署/复位态失控（坏发 `reboot` 全挂 `#150`、暖复位粘 NOCARD `#166`、`succ=0` 倒计时 `#152`）；④实验设计（单样本 A/B、冷/暖变量混采）。
     - 处置（本轮落地）：**打包前**内核身份硬门 `scripts/assert-kernel-sane.sh`（config 锚点 + System.map 符号 + UTS 对齐 + 陈旧检测；`build-boot.sh` 调用）；manifest 完整性进 `check-doctor §5e`（≥2026-10-10 的手写旁路 FAIL，历史 grandfather）；统一记录器 `scripts/trial.sh`（device-gate succ/retry + **reset 必填** + 机器可读 JSON）。
@@ -1262,8 +1276,7 @@
     - 参考：`#151`（VBUS 自开机）、G1-25（USB 连着时 loginctl poweroff 会立即重启）——本次实测把“立即重启”细化为“OpenRC 下 loginctl poweroff 会卡停服务，要 `busybox poweroff -f` 才真断电”。
 
 171. **★Q28 在本机当前状态是「按内核二进制确定性」的，不是「冷/暖」也不是 ~60% 随机（2026-10-10 夜，同一路径连测 21 发）。**
-    - **已自审降级并作废（`reports/q28-binary-determinism-provenance-20261010.md`）**：原 21 发仅 7 发有仓库原始日志；声称的 8% 二进制差实为 `.rodata` 整段平移 4 字节假象（源头 `LOCALVERSION` 多 1 字符，无指令语义变化）；同一 vk64.img 冷 POR/冷 fastboot 3/3 = STORM，反证「不是冷/暖」。结论由 #192（构建身份/UTS 版本串）取代。
-    - 附工具修复留存：`assert-kernel-sane.sh` mtime 陈旧检测仅对本树默认 `Image.gz` 生效（外部 `KERNEL_IMG=` 靠 UTS 对齐保身份）。
+   - ⚠️ **已被取代（溯源审计降级 + #217/#223）**；全文 → `archive/topics/pitfalls-archive-20261014.md` §#171
 172. **★Q28 判 GOOD 必须加「存活门」：`storm=0` 的干净 GOOD 会在数秒内把整机冻死（与 #106 同签名）；`storm>0` 的 STORM 反而存活（2026-10-10 夜，`reports/q28-layout-ab-20261010.md`）。**
     - 台架：同一 `fastboot boot` 路径，判据三态 + SSH 存活采样。同一镜像 `boot-q28-oct8.img`（内核 `8efb2731`）同晚 5 发 = **GOOD(hang)/STORM/STORM/GOOD(hang)/STORM** ⇒ **同镜像同路径非确定**，直接否掉 `#171` 的「同一二进制恒定复现」。
     - **相关**：`storm=0` 的干净 GOOD **3/3 数秒内 HANG**（含 disk-root ×2 与 **RAM-only 无桌面 ×1**）；`storm>0` 的 STORM **4/4 存活**；NOCARD 存活。⇒ **「有 card0」≠「能用」**；`card0` 二元判据废除，GOOD 必须 = 有 card0 + 无风暴 + **存活 ≥60 s 且可交互**。
@@ -1288,9 +1301,7 @@
     - ⚠️ 本轮曾把 `0x30050/0x300d0` 误当「cambist 的票」——那是 **gfx/gmxc（GPU）**；查 `cmd-db` 后已纠正（`PITFALLS #174` 就是为记这条）。
 
 175. **★Q28 的 `NOCARD`（无 card0）在**新编镜像**上高度疑似由构建版本串（`LOCALVERSION`）决定 —— 同一源码、同一 `.config`，只改版本串就翻转 GOOD/NOCARD。**
-    - 本日实测（全部走 `reboot2 bootloader` → `fastboot boot` 同一路径，同一 vk89 ramdisk 基座）：`vk93-cleanctl`（`LOCALVERSION=-vk93-cleanctl`，内核=clean/base）**NOCARD 3/3**；`vk93-lv64`（**同源码同 config**，只把 `LOCALVERSION=-vk64`）→ **GOOD 1/1**（UTS 与旧 `boot-elden-vk64.img` 逐字相同）。另 `vk90/vk92/vk93-nocam` 各 NOCARD 3–4 发。
-    - 与 `#171/#172` 的「`UTS_VERSION` 长度导致整段 `.rodata` 平移」一致：**布局漂移的触发点已收窄到版本串**；`boot-elden-vk64.img` 落在 GOOD 侧。**n 小（GOOD 仅 1 发），需复核**，但与 `#166`（暖复位粘 NOCARD）不矛盾——本对照两侧**同为暖路径**，唯一变量是 `LOCALVERSION`。
-    - ⇒ **可复用的 Q28 GOOD 台架**：`LOCALVERSION=-vk64` 构建（UTS = `7.2.0-debug-vk64-gd02658e63cf6`）。**推论：`vk90/vk92` 上轮「NOCARD」判定全部作废（构建伪影），臂本身未被证伪。**
+   - ⚠️ **已作废（「版本串决定 GOOD/NOCARD」整条线被 #192 推翻、#217/#223 收口）**；全文 → `archive/topics/pitfalls-archive-20261014.md` §#175
 
 176. **★测「驱动类」改动时模块必须与运行内核 vermagic 逐字匹配，否则 `modprobe` 静默不加载 → 实验全成假阳性。**
     - 实锤：FIX-3 只改 `cambistmclkcc-sm8750.ko`（内核 Image 不变）。默认构建（`LOCALVERSION=-vk91-fix3mx`）得到的 vermagic 是 `…-vk91-fix3mx-g9fba4689e5a2`，与台架内核 `…-vk64-gd02658e63cf6` **不匹配**；若直接塞进持久根，`/init` 的 auto-load 会**静默失败**，于是「camcc 单独在位 = 本来就不掉电」⇒ 会得出「修复有效」的**假结论**。
@@ -1433,23 +1444,7 @@
 ## 二十五、Q28 冷起判定 = 内核构建身份（版本串）法则 + 冷起 A/B 测补丁作废（2026-10-11 实测）
 
 192. **★Q28「冷起只有背光」的 GOOD/NOCARD 由内核构建身份（UTS 版本串）决定，与补丁逻辑无关；12 发冷起实证。**
-    - 方法/判据（全部**物理 POR → Vol-+电源 进 fastboot → `fastboot boot`**，零写盘；判定=`scripts/q28-devprobe.sh` 三态 + `card0` 硬门 + 65 s 存活门；一键取样=`scripts/q28-cold-run.sh <img> <label>`；原始证据 `logs/q28-cold-*`、`reports/trials/*q28cold*`）：
-      | 臂(vk) | 相对 base 的改动 | UTS | 冷起 |
-      |---|---|---|---|
-      | base `vk97` | —（d02658e63 未改源码） | `7.2.0-debug-vk64-gd02658e63cf6` | **GOOD 3/3** |
-      | base2 `vk100` | 同源码重编（仅 build counter） | 同上 | **GOOD 2/2** |
-      | empty `vk101` | **空提交（零代码）** | `7.2.0-debug-vk64-g8d5bdc16705f` | NOCARD 1/1 |
-      | sham2 `vk99` | **+一行常量 `pr_info`** | `…-vk64-g94e9232e1eb4` | NOCARD 2/2 |
-      | sham1 `vk98` | +`clk_round_rate` 查询（不赋值） | `…-vk64-g31e652c57d2d` | NOCARD 1/1 |
-      | round `vk96` | +round(byte-clk 取整) 补丁 | `…-vk64-g66b5604d1898` | NOCARD 3/3 |
-    - 规律：**UTS 逐字=`…-vk64-gd02658e63cf6` → GOOD（5/5）；其它任何构建身份 → NOCARD（7/7）**。base 与 base2 **版本串逐字相同、内核二进制不同**（build counter/时间戳）却都 GOOD ⇒ 决定因素是**版本串内容**，不是「重编随机性」；**空提交（零代码改动）也翻** ⇒ **不是补丁逻辑**。
-    - 机理猜测：版本串内容不同 → 内核 `Image.gz` 压缩后尺寸/启动镜像布局微异 → 落在 **DSI probe 竞态**的刀刃两侧（与 `#171/#172/#175` 同源；`#175` 只测到「长度」，本轮证明「内容」同样足够）。
-    - **推论（方法学，重要）**：**冷起 A/B 不能用来评估 Q28 补丁**——改代码本身就改变被观测对象（observer effect）。`round`/Method-B 的 NOCARD **不能**当「修复无效」证据（同理 `vk90/vk92` 的 NOCARD 判定作废）。若确要做冷起对照，须先有「改代码但不改构建身份」的手段——当前无。
-    - **可复用台架**：`d02658e63`+`-vk64`（UTS 逐字 `7.2.0-debug-vk64-gd02658e63cf6`），冷起 GOOD 5/5，产物 `out/boot-elden-vk97-base-lv64.img`（`vk97`）/ `vk100-base2-lv64.img`（`vk100`）；臂可经 `scripts/q28-build-arm-lv64.sh` 重建。
-    - **★可控性已验证（vk102-c1pin，同日）**：把版本串**钉死**回 `…-vk64-gd02658e63cf6`（`CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6`）后，**改内核源码 + 改 config（加 IP_ADVANCED_ROUTER 等）仍冷起 GOOD 1/1**（`ip rule` 亦生效）⇒ **法则只认版本串内容；钉死后冷起 A/B 恢复可用**（此前『冷起 A/B 作废』只对『版本串随源码漂移』的默认构建成立）。镜像 `out/boot-elden-vk102-c1pin.img`。
-    - **旧结论重判（2026-10-11 `reports/q28-retro-audit-20261011.md`）**：`§k`「按内核二进制确定性」、`vk90/vk92` 的 NOCARD、round 的 NOCARD=「修复无效」、T1/T2/T3 冷 A/B 样本**均作废**；决定性证据=**同一 round 补丁未钉 UTS(`vk96`)=NOCARD 3/3 而钉死(`vk105-round-pin`)=GOOD**。冷起 A/B 的方法前提 = PINUTS。Q28 收尾口径见 `reports/q28-DOSSIER.md` §p。
-    - **★法则范围限定（同日补）**：该法则只解释 **NOCARD 分支**（构建身份→有无 card0）；**STORM 是独立随机**——同日一次**日常 boot_b 纯净冷起**（UTS 同串）落在 **STORM**（`card0` 在、`storm=45`、`vblank wait timed out`、无 `phoc/phosh`/无会话）。⇒ 日常 Q28 痛点（STORM）仍在，与 boot 镜像身份无关。证据 `reports/wd-net-baseline-20261011.md` §4。
-    - **设备日常 boot_b 即该身份**（会话初已稳定跑 3h；本次「纯净冷起」亦 GOOD：`card0`+`DSI-1 connected`+`phoc/phosh=1`+`storm=0`）⇒ **Q28 不构成日常 / Waydroid 的现实阻塞**；此前「Q28 挡 Waydroid」实为在 **RAM 起实验内核（NOCARD 倾向）** 上做验证所致。
+   - ⚠️ **已作废（「构建身份决定 GOOD/NOCARD」被 #217/#223 推翻）**；全文 → `archive/topics/pitfalls-archive-20261014.md` §#192
 
 193. **`cam-mode.sh status` 恒误报 `CAM-ON`**（显示/Waydroid 必需模块 `system_heap` 被当成相机模块）。
     - 现象：日常态（无相机）`lsmod` 无 cam/camcc/cambist、`/dev/media*`/`/dev/video*` 皆空，但 `cam-mode.sh status` 仍打印 `camera modules = 1 … CAM-ON：不要熄屏`。
@@ -1465,19 +1460,7 @@
     - 证据：`reports/wd-netd-route-20261011.md`、`reports/wd-net-baseline-20261011.md`、`TASKS.md §2 C1`；子代理报告已由父代订正（其 `ip rule` 证据实抓于 c1pin）。
 
 195. **★Q28-STORM「冷起首条 DCS 命令-DMA 超时」同样是内核构建身份伪影（2026-10-12 定案；与 #192 同机理）**。
-    - 现象（冷起）：`msm_dsi ae94000.dsi: command DMA timeout: status=0x2200200` → `bonded command DMA failed: master=-110 peer=-110` → `sending dcs data ff 20 failed: -110` → `Failed to initialize panel: -5`，随后 `ctl reset/frame done/vblank` 风暴 ⇒ 只有背光/无桌面。坏发点 = `msm_dsi … timing …` 之后 **~0.22 s**；GOOD 启动在同一偏移做 `panel prepared`。DSI 时序参数、`DSI_PLL_lockfail=4`、`device_link_fail=8` 在好坏启动**完全一样**（良性）。
-    - 判据：L1/L2 拆分探针 `scripts/q28-devprobe2.sh`（L1=DSI/panel 真失败：`command DMA timeout`/`Failed to initialize panel`/`sending dcs data … failed`；L2=DPU 下游：`ctl reset`/`frame done`/`vblank`）⇒ `NOCARD/L1FAIL/L2STORM/GOOD(-NOSESSION)`；`scripts/q28-cold-run.sh` 已优先调用 v2。
-    - **证据（全部物理 POR → `fastboot boot`，零写盘）**：
-      - **2×2 因子（内核构建 × ramdisk）**：新内核+新/旧 ramdisk = GOOD；旧内核+旧/新 ramdisk = L1FAIL ⇒ **ramdisk 无关**（vk104/vk106 vs vk94/vk107）。
-      - **E2  DTB 交叉**：`vk109` 新内核+旧DTB = GOOD；`vk110` 旧内核+新DTB = L1FAIL ⇒ **DTB 无关**。
-      - **E1'（决定性）**：同源码 `d02658e63` + PINUTS + **强制 `KBUILD_BUILD_VERSION=60` + `KBUILD_BUILD_TIMESTAMP='Thu Oct  8 17:06:14 CST 2026'`**（banner 逐字复刻 vk94）+ 旧 ramdisk ⇒ `vk111` 冷起 **L1FAIL**；与 vk94 内核 payload 仅差 0.14% ⇒ **重现旧构建身份即重现 STORM**。
-      - 计数：**`#60`（2 位构建号）内核臂 4 坏/2 好（~67%）**；**3 位构建号（`#111`–`#120`）0 坏 / 12+ 发**（Fisher 精确 p≈0.005）。
-    - 结论：**源码、DTB、ramdisk 全部排除；唯一变量 = 内核构建身份（`UTS_VERSION` 的 `#N`/日期长度 → `.rodata` 布局）**。`#60`（2 位）落竞态坏侧、3 位构建落好侧 ⇒ **STORM 不是「独立随机」，而是逐启动随机、坏发率由构建身份决定**（§p 的「STORM 独立随机」更正）。日常 boot_b = `vk94` = `#60` 内核 ⇒ 真痛点来源。
-    - 治法：**日常镜像用新构建身份（3 位 `#N`）重编**（同源码 + ADSP DTB；cold GOOD 20+ 发）。**⚠️ 已作废（#217/#223）：3 位身份是偏置不是解**——`vk113-dailyid`（`#121`）真机冷起仍 L1FAIL；10-12 深夜 7 发 4 坏/7、坏发按时间成簇 ⇒ 缓解不在镜像层。
-    - 方法学：**冷起 A/B 必须 PINUTS，且记录 `#N` 位数**；否则构建身份混淆结果（同 #192 observer effect）。
-    - 证据：`reports/q28-storm-bias-audit-20261011.md`、`reports/trials/index.tsv`（`*q28storm*`）、`logs/q28-cold-*`。
-
----
+   - ⚠️ **已作废（同上，STORM 亦非构建身份伪影）**；全文 → `archive/topics/pitfalls-archive-20261014.md` §#195
 
 ## 二十六、跨树驱动比对的方法陷阱：`to_primary_dsi` DSI0/DSI1 伪线索（2026-10-12 静态核查）
 
@@ -1645,7 +1628,7 @@
 
 ## 二十八、上游邮件通道（2026-10-12 实测定案）
 
-217. **★通道选型：outlook.com 已死、QQ 会改写 Message-ID，可用通道只有 USTC。**
+257. **★通道选型：outlook.com 已死、QQ 会改写 Message-ID，可用通道只有 USTC。**
     - **outlook.com**：IMAP 登录直接返回 `NO Basic authentication is disabled.`，SMTP AUTH LOGIN + 应用密码 → `535 5.7.3 Authentication unsuccessful`；`man git-send-email` 亦写明 Outlook 不再支持 app password、只能 XOAUTH2。**这不是密码错，是账号级策略**，重新生成应用密码也没用。
     - **QQ（smtp.qq.com:465）**：发信、正文、`git am` 全正常，但腾讯出站网关把 **Message-ID 一律换成 `<tencent_…@qq.com>`，而 In-Reply-To/References 原样保留** ⇒ 子邮件引用归档里不存在的 ID，series 在 lore/mailman/patchwork/b4 上线程全断（cover 与 patch 各自成 orphan），也无法用 `--in-reply-to` 续 v2。单封独立补丁不受影响。
     - **USTC（smtp.ustc.edu.cn:465 SSL，AUTH LOGIN/PLAIN）**：Message-ID **逐字保真**、线程自洽、归档正文 sha256 与本地逐字节相同 —— 本项目上游通道。
@@ -1833,9 +1816,7 @@
     - 判据：重打包后 `unpack_bootimg.py --boot_img <img>` 必须逐字回读 `command line args:`；`/proc/cmdline` 里应有 `elden_root=LABEL=linux17`。
 
 250. **⏳ M1-7.3 内核从内核 init 到用户态 `Run /init` 约 95 s（daily `clean/base` 约 5 s）——待查，疑 ath12k 探测阻塞（异步/同步 initcall 差异）。**
-    - 证据：黑匣子 dmesg 里 `Run /init as init process` 时间戳 ~95 s；同 boot 内 `ath12k ... failed to set mhi state: POWER_ON(2) -110` 也落在 95 s。
-    - 影响：任何依赖“早启动”的测试（显示/桌面）都会晚 ~90 s 才出；非阻塞但影响可用性与验收节拍。
-    - 状态：**未定位**；下一步对比 M1(7.3) 与 clean/base 的 ath12k 绑定（`=y` vs `=m`）与 initcall 顺序。
+   - ⚠️ **已解决（`CONFIG_ATH12K=m` + ramdisk 带 `wifi7/ath12k_wifi7.ko`，见 #259–#261）**；全文 → `archive/topics/pitfalls-archive-20261014.md` §#250
 
 ## 三十二、上游显示栈 bring-up（P1–P2c 臂）：DRM GOOD ≠ 面板有画面（2026-10-13 深夜）
 
@@ -1885,9 +1866,9 @@
 
 纯 ramdisk 臂必须让内核 UTS 与 ramdisk 内模块 vermagic 逐字相同，否则 `=m` 驱动全不加载（`#248` 的姊妹坑）：
 
-1. `CONFIG_LOCALVERSION_AUTO=n` **仍会**被 `scripts/setlocalversion --short` 追加 `+`（HEAD 不在 annotated tag 上时）⇒ UTS 变 `...-ged6f232d10e3+`，模块路径与 vermagic 全失配。
-2. 改完 `.config` 后 `make kernelrelease` 若已有缓存 `include/config/kernel.release` **会继续报旧串**（先 `rm -f` + `syncconfig`）。
-3. `LOCALVERSION=...` 环境变量是**追加**不是覆盖（会得到 `-debug-debug-...-dirty`）。
+- `CONFIG_LOCALVERSION_AUTO=n` **仍会**被 `scripts/setlocalversion --short` 追加 `+`（HEAD 不在 annotated tag 上时）⇒ UTS 变 `...-ged6f232d10e3+`，模块路径与 vermagic 全失配。
+- 改完 `.config` 后 `make kernelrelease` 若已有缓存 `include/config/kernel.release` **会继续报旧串**（先 `rm -f` + `syncconfig`）。
+- `LOCALVERSION=...` 环境变量是**追加**不是覆盖（会得到 `-debug-debug-...-dirty`）。
 
 可用解法：`CONFIG_LOCALVERSION="-debug-<sha>"` + `CONFIG_LOCALVERSION_AUTO=n`，**且**给 HEAD 打一个 **annotated** tag `v7.3-rc7`（`try_tag` 命中且 count=0 ⇒ 不输出 scm 段）⇒ UTS 精确；**构建完立即 `git tag -d`**，否则污染其它 worktree 的 `git describe` 与后续构建身份。
 
