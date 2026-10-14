@@ -1,0 +1,18 @@
+{
+  "label": "p4a-dsc12-20261014-s1",
+  "ts": "2026-10-14T00:26:21Z",
+  "vk": "",
+  "image": "out/boot-elden-p4a-dsc12.img",
+  "image_sha256": "7842aeea4ae1e8e8654626602f0061de3a250cde476f70c5221c6d3290220780",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "q28",
+  "verdict": "L2STORM",
+  "log_dir": "logs/p4a-boot-20261014-s1",
+  "note": "P4a=P2c+DSC1.2: 串口控制台见 vblank wait timed out on crtc 0 风暴 (drm_fb_helper_damage_work), UTS=g2851bcaff64f #11 确认镜像; SSH 因自身连接洪泛被 sshd 源惩罚锁死 => 需 POR 重试"
+}

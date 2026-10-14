@@ -1854,3 +1854,10 @@
     - 附：`kmscube`（GL/EGL）在 P2c 上可触发整机硬挂（仅背光 + SSH 无响应，USB gadget 仍枚举），与 `PITFALLS #106` 同型；跑 GL 前必须常驻串口 logger。
     - 根因同类：`PITFALLS #143`（Q28 面板失败 → vblank 风暴占满 workqueue → shutdown/reboot 卡死）。
 
+
+254. **★SSH 连接洪泛会把自己锁在外面（sshd 源惩罚）；而 U2 一直有 `/dev/ttyACM0` 内核控制台可用——判显示坏态不必依赖 SSH。**
+    - 现象：轮询式 `ssh` 重试（本次 ~60 次）后，设备 sshd 立刻回 `banner line 0: Not allowed at this time` 后断开（OpenSSH 9.8+ 的 **PerSourcePenalties** 源惩罚），随后连 banner 都不再给（`Connection timed out during banner exchange`）；**TCP 能连上（内核 backlog）但用户态不回**——容易误判成"系统挂死"。惩罚按源 IP 记账，安静等待也不可靠（新连接可能续期），**最稳的恢复 = 重启设备**。
+    - 纪律：设备探测**单次连接 + ≥15 s 退避**，用 `-o ConnectionAttempts=1 -o ConnectTimeout=8`，禁止 for 循环里高频 ssh；判定"是否挂死"不能只看 TCP 是否 accept。
+    - **串口控制台（本次新发现）**：U2 的 USB gadget 同时暴露 **CDC-ACM 内核控制台** `/dev/ttyACM0`（`console=ttyGS0,115200`；`/dev/serial/by-id/usb-Lenovo_TB322FC_mainline_*HA2CB1KY-if02`），`cat` 即得内核 log（含 boot 之后的 WARN 风暴）；**没有 getty/无 shell、无回显**，只能读（BREAK+\`b\` 的串口 SysRq 本次未生效，仍需物理 POR）。⇒ **SSH 死了也能判 L1/L2**（本次即靠它看出 `vblank wait timed out on crtc 0` 风暴）。
+    - ⚠️ **gadget 的 iSerialNumber 是硬编码常量 `HA2CB1KY`**（`rootfs/.../usr/local/sbin/usb-gadget` 第 37 行），**不是设备身份**——本次差点把 U2(HA2EXB0E) 误认成另一台。认设备只认 `fastboot getvar serialno`。
+

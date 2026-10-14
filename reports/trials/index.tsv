@@ -98,3 +98,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-13T23:46:39Z	p2b-retest-20261014-s2		warm	none	L2STORM	71016e0812e4	
 2026-10-13T23:46:39Z	p2b-retest-20261014-s3		warm	none	L2STORM	71016e0812e4	
 2026-10-13T23:46:39Z	p2b-retest-20261014-s4		warm	none	L2STORM	71016e0812e4	
+2026-10-14T00:26:21Z	p4a-dsc12-20261014-s1		warm	none	L2STORM	7842aeea4ae1	logs/p4a-boot-20261014-s1
