@@ -318,7 +318,7 @@ git log --oneline -10
 |---|---|
 | 实机验证 | ✅ 实机 77 / ◐ 部分 14 / ✗ 未上机 79 |
 | 状态 | active 119 / reference 34 / junk 12 / superseded 5 |
-| 时间跨度 | 2026-09-29 → 2026-10-13（磁盘**主会话** jsonl **161**；本索引 **170 行**（含 9 条已删除/迁移会话的墓碑行）；子代理会话文件（深度≥2，136 个）不入本表；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
+| 时间跨度 | 2026-09-29 → 2026-10-14（磁盘**主会话** jsonl **162**；本索引 **171 行**（含 9 条已删除/迁移会话的墓碑行）；子代理会话文件（深度≥2，136 个）不入本表；无产出/冒烟行标 `junk`，可整行忽略；**会话数字 SSOT = 本表**） |
 
 ---
 
@@ -498,6 +498,7 @@ git log --oneline -10
 | 2026-10-13 | `01a134c3` | 上游化统筹与分片备料 | upstream/plan | ✗ | active | M1 重基 + M3-3/M3-4/M3-6/M4-camss/M5/B5 备料封存 | - | 投递冻结；`reports/m3-*`、`m4-camss-project`、`b5-dsi-resoc` |
 | 2026-10-13 | `01a1356a` | M1-7.3 重基树上机 bringup | m1 | ✅ | active | 7.3-rc7 重基树零写盘 bringup；外设全废=缺 `=m` 模块（fsa4480→DP→DRM、fastrpc→传感器），非回归 | - | `reports/m1-73-port-bringup-20261013.md`、`PITFALLS #248–#250` |
 | 2026-10-13 | `01a13598` | 上游显示栈对照（P1–P2c） | q28/display | ✅ | active | 纯上游 DSI 点不亮(-22)→+vendor PHY 面板 DCS 成功→**P2b 1 发 GOOD 无 Q28 签名**；P2c 合成器 GOOD 但面板无内容 ⇒ 判据须面板实测 | p1–p2c | `reports/p1-upstream-dsi-20261013.md` |
+| 2026-10-14 | `01a13795` | M1 显示回归定位与根因分析 | m1/display | ✅ | active | 同窗口对照：日常 vk94 出桌面 / M1 7.3-rc7 树 m1-73j 只有背光 ⇒ **M1 树显示回归**（非 Q28/非粘态）；DIAG 证明 enable 路径被调用、DSC1.2 否证；强候选 H1 = 上游 revert 了 bonded PLL 初始化修复（`93c97bc8d85d`/`44784327815b`）；4 条子代理 lane（3 成 1 编排者接管） | - | Q31 未收口，E1（恢复 bonded PLL 语义 + 同内核探针）待上机；面板判据=实测；`reports/m1-display-rootcause-analysis-20261014.md` |
 | 2026-10-13 | `01a1378a` | 整理昨日进度、更新过时文档 | docs/cleanup | ✗ | active | 收口 10-13 深夜 P1–P2c 未提交工作并同步 INDEX/TASKS/PITFALLS/q28-INDEX | - | 本会话 |
 
 ---

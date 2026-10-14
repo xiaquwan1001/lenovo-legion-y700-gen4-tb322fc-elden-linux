@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-14。**条目编号 #1–#255**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-14。**条目编号 #1–#256**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§三十；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1868,3 +1868,9 @@
     - 上游臂（P2b/P2c/P4a/P4d）的额外症状：phoc `no supported format`（modeset 失败）+ 强制 modetest 后 `dsi_isr=0`；DIAG 探针证明 `dsi_mgr_bridge_enable`/`msm_dsi_host_enable` 都被调用且 `DSI_CTRL 0x171→0x173`（VID_MODE_EN 置位）⇒ 缺口不在"enable 是否被调用"。
     - **DSC 1.2 否证**：P4a（P2c + vendor DSC1.2 RC 参数 + `first_line_bpg_offset`）与 P2c 行为无差别。
     - 证据：`reports/m1-73-display-regression-20261014.md`。
+
+256. **★跨版本重基必须清点"上游 revert 过的设备必需修复"：elden 是 bonded 双 DSI，而 7.3-rc 把 `93c97bc8d85d ("drm/msm: dsi: fix PLL init in bonded mode")` revert 了（`44784327815b`，理由=它破坏了**非 bonded** 用例）⇒ M1 7.3-rc7 树点不亮面板。**
+    - 代码形态（本地实测 diff）：`dsi_pll_enable_pll_bias()` 变成"首次调用即早退"（`if (pll->pll_enable_cnt++) { …; return; }`），且 `dsi_7nm_phy_enable()` 预置 `pll->pll_enable_cnt = 1` ⇒ `PLL_SHUTDOWNB`/`PLL_SYSTEM_MUXES=0xc0` 不再写入；7.2 血统树是**无条件自增**（带修复）。
+    - 现象（易误判）：`clk_summary` 里 `dsi0vco` 有速率、CRTC active、phoc/phosh 在、grim 出图——**但面板只有背光**；判"点亮"只认面板实测（`#251/#255`）。
+    - 教训：重基不止要比 payload 差分，还要 `git log --grep=Revert` + lore 查"上游在窗口内回滚过哪些与设备相关的修复"，否则会把设备必需修复悄悄丢掉。
+    - 证据：`reports/m1-display-rootcause-analysis-20261014.md`、`reports/m1-73-display-regression-20261014.md`（含 Pengyu Luo 上游指路：缺 "dsi clk source select for the 10-bit CPHY plane"）。
