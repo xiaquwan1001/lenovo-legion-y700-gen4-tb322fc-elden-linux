@@ -1,0 +1,45 @@
+From 54dc4dd8fe728bf963982f02c427a739bba26a0d Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 14 Oct 2026 19:31:54 +0800
+Subject: [PATCH] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY
+ enable
+
+dsi_7nm_phy_enable() pre-seeds pll_enable_cnt = 1 before calling
+dsi_pll_enable_pll_bias().  That makes the bias helper take its
+early-return path, so its PLL_SYSTEM_MUXES = 0xc0 write is skipped on the
+first (bonded) bring-up and the register is left at 0x0.  Panels wired
+for bonded DSI then come up with a blank display.
+
+Write PLL_SYSTEM_MUXES in dsi_7nm_phy_enable() as well.  The write in
+dsi_pll_enable_pll_bias() is kept for the warm re-enable path where
+pll_enable_cnt is 0.
+
+Fixes: 44784327815b ("drm/msm/dsi: phy: rework PLL bias enable/disable")
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+index 1fc3b4f0c0..5dd4830a11 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+@@ -1144,6 +1144,15 @@ static int dsi_7nm_phy_enable(struct msm_dsi_phy *phy,
+ 	data = DSI_7nm_PHY_CMN_CTRL_0_DIGTOP_PWRDN_B |
+ 	       DSI_7nm_PHY_CMN_CTRL_0_PLL_SHUTDOWNB;
+ 	writel(data, base + REG_DSI_7nm_PHY_CMN_CTRL_0);
++	/*
++	 * Program the PLL output muxes here as well.  The pll_enable_cnt
++	 * pre-seed above makes dsi_pll_enable_pll_bias() take its early-return
++	 * path, so on the first (bonded) bring-up PLL_SYSTEM_MUXES would
++	 * otherwise never be written and the panel would stay dark.  The bias
++	 * function keeps its own write for the warm re-enable path
++	 * (pll_enable_cnt == 0).
++	 */
++	writel(0xc0, pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES);
+ 	spin_unlock_irqrestore(&pll->pll_enable_lock, flags);
+ 
+ 	/* Assert PLL core reset */
+-- 
+2.53.0
+
