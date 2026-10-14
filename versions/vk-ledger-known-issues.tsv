@@ -174,3 +174,25 @@ m1-73j	tree_drift	同 m1-73h 的 DTB + ramdisk 内置 fsa4480/fastrpc 与 /init 
 p2c-uplink-dsi	uts_dup3	P 系列显示对照臂：P2c/P4a/P4d 刻意钉同一构建身份（UTS 7.3.0-rc7-debug-g2851bcaff64f）以保模块 vermagic，只换内核代码
 p4a-dsc12	uts_dup3	同 p2c-uplink-dsi（P2c + vendor DSC1.2 单变量臂，已否证）
 p4d-diag	uts_dup3	同 p2c-uplink-dsi（P2c + DIAG 探针，临时诊断臂）
+# --- 2026-10-14：M1-7.3 零写盘臂族（m1-73* / e1*）----
+# 理由（对应脚本里的「刻意复用 UTS 串」情形）：这些臂用 fastboot boot 零写盘启动，
+# 系统盘 /lib/modules 是 7.2 的 ⇒ 必须把 7.3 的 =m 模块打进 ramdisk、并让内核 UTS 与
+# ramdisk 内模块 vermagic 逐字相同（否则模块不加载）。于是同一 UTS 串在载荷里出现多次
+# （内核 + 若干 .ko 的 vermagic），被 §5d 判成 uts_dupN。内核身份本身由 kernel_payload_sha256
+# 与源提交共同锚定（非 vk87/88 那类「名实不符」），经审查登记降 WARN。
+m1-73	uts_dup	M1 零写盘臂：ramdisk 内嵌 7.3 =m 模块 ⇒ UTS 串多重出现
+m1-73b	uts_dup	同上
+m1-73c	uts_dup	同上
+m1-73d	uts_dup	同上
+m1-73e	uts_dup	同上
+m1-73f	uts_dup	同上
+m1-73h	uts_dup	同上
+m1-73i	uts_dup	同上
+m1-73j	uts_dup	同上
+e1-pllfix	uts_dup	M1 E1：ramdisk 内嵌模块 ⇒ UTS 多串（显示修复臂）
+e1b-pllfix	uts_dup	M1 E1b：采用的自显示修复形态
+e1c-fsa4480y	uts_dup	M1 E1c：fsa4480=y 臂
+e1d-fastinit	uts_dup	M1 E1d：hooks 改名臂
+e1e-fastinit2	uts_dup	M1 E1e：init 计时臂
+e1g-athm	uts_dup	M1 E1g：ATH12K=m 臂（init 4.49 s）
+e1h-athm	uts_dup	M1 E1h：+ath12k_wifi7 模块臂
