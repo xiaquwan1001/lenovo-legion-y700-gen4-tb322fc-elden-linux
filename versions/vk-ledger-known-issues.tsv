@@ -171,3 +171,6 @@ m1-73f	tree_drift	同 m1-73（只换 DTB：splash_region 改名 + 去 simple-fra
 m1-73h	tree_drift	同 m1-73f（只加 ramdisk 日志黑匣子层，取证用）
 m1-73i	tree_drift	同 m1-73h（只换 DTB：&mdss_dp0 disabled 单变量，证「DP 阻塞 DRM」）
 m1-73j	tree_drift	同 m1-73h 的 DTB + ramdisk 内置 fsa4480/fastrpc 与 /init 加载钩子（零写盘功能镜像）
+p2c-uplink-dsi	uts_dup3	P 系列显示对照臂：P2c/P4a/P4d 刻意钉同一构建身份（UTS 7.3.0-rc7-debug-g2851bcaff64f）以保模块 vermagic，只换内核代码
+p4a-dsc12	uts_dup3	同 p2c-uplink-dsi（P2c + vendor DSC1.2 单变量臂，已否证）
+p4d-diag	uts_dup3	同 p2c-uplink-dsi（P2c + DIAG 探针，临时诊断臂）
