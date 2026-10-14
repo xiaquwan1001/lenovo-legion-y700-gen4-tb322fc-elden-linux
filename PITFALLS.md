@@ -1898,5 +1898,5 @@
 261. **M1-7.3 boot 时间随「发质量」分档：好发 `Run /init` 4.49 s、坏发 ~48.5 s（2026-10-14 实测）。**
     - 坏发时面板首帧 DCS 就 `-110`（Q28），随后 DRM/DPU 的 `vblank timeout`/`frame done timeout` 风暴打满 call trace，**这些同样落在 `kernel_init` 的 `wait_for_device_probe()` 等待里** ⇒ init 被拖到 ~48 s（E1h），好发则 4.49 s（E1g，同内核同 ramdisk 结构）。
     - **纪律**：M1 的「boot 时间」必须按发分档（好/坏）记录，单发不能当基线；比较 boot 时间要同时报 L1/L2/`dsi_isr`。
-    - 附带未决（**样本不足，勿当结论**）：`CONFIG_TYPEC_MUX_FSA4480=y` 把面板 bring-up 从 95.3 s 提前到 ~4.0–4.3 s，4 发里 3 发落 Q28 坏发（E1c 无 L1 但 `dsi_isr`=0；E1d/E1h L1=3；E1g 好发）——「过早 bring-up 是否抬高坏发率」需并列采样。
+    - 附带未决（**样本仍不足，勿当结论**）：`CONFIG_TYPEC_MUX_FSA4480=y` 把面板 bring-up 从 ~95 s 提前到 ~4.0–4.3 s；截至 2026-10-14 15:10 的样本 = **`=m` 2/2 GOOD（E1/E1b，均物理 POR、用户实机确认）vs `=y` 6 坏 / 1 好（E1c/E1d/E1e/E1h/E2×2 坏，仅 E1g 好）**——「过早 bring-up 是否抬高坏发率」需并列采样；**直接对照臂 = `out/boot-elden-e3-dailycfg.img`**（唯一变量 = config 回 E1b 口径 `ATH11K=m/ATH12K=y/fsa4480=m`，内核 = E2 同源 + 补丁 0001）。
     - 证据：`reports/m1-73-boot-stall-20261014.md` §6。
