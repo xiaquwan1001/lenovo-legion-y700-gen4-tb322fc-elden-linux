@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档分层），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-14。**条目编号 #1–#262**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-14。**条目编号 #1–#261**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§三十；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -1887,23 +1887,14 @@
     - 真因（该发）：WCN(WiFi) 的 MHI 等待超时——`[4.90] mhi mhi0: Wait for device to enter SBL or Mission mode` → `[96.08] ath12k: failed to set mhi state: POWER_ON(2)`（`-110`）⇒ `kernel_init` 在 `async_synchronize_full()`（`init/main.c:1567`）等 probe ⇒ init 到 96.5 s。日常 vk94 对照：ath12k 探针 **23.09 s** 起、**23.66 s** 拿到 `chip_id/fw_version`（等 0.4 s）⇒ 无停滞；M1 树 **4.42 s** 就枚举、chip 不应答、91 s 超时（之后靠用户态 `ath12k-retry` 在 ~311 s 才把 `wlan0` 拉起）。
     - **不要用的代理**：`ps -o etimes -p 1`（本次给出 423 s ≈ uptime 的误导结果）、钩子/脚本自报时间戳（它们本来就晚）。`CONFIG_TYPEC_MUX_FSA4480=y` 修的是**显示**（面板 95.3 s → 4.05 s），与 init 停滞无关，别把两件事混为一谈。
     - 证据：`reports/m1-73-boot-stall-20261014.md`（含本条更正）；`logs/arm-e1e-20261014-130838/console.log`；`logs/arm-vk94ctrl-20261014-090947/console.log`。
-    - **✅ 已解（2026-10-14 下午，E2 臂）**：真因 = **M1 树缺本地补丁 `patches/0001-ath12k-shorten-mhi-timeout`（`MHI_TIMEOUT_DEFAULT_MS` 90000→3000）**，**不是 7.3 的 PCIe/`pwrseq-qcom-wcn` 回归**（两树该处逐字节相同）。补上后：首探 4.44 s → **7.65 s 失败 -110**（等 2.75 s ≈ 3 s），`Run /init` **30.78 s**（该发为 Q28 坏发、风暴拖慢；好发预期 ~4.5 s），`ath12k-retry` try 1 bind 成功 → `phy0` up → **`wlan0` 关联**（M1-7.3 WiFi 首次打通）。证据 `reports/m1-73-e2-wcn-20261014.md`。
 
 260. **7.3 的 ath12k 拆成两个模块：PCI driver 在 `wifi7/` 子模块里——只装 core 等于没装（2026-10-14 实测）。**
     - `ath12k.ko`（core）只 `EXPORT_SYMBOL(ath12k_pci_register_driver)`；**真正注册 PCI driver `ath12k_wifi7_pci` 的是 `drivers/net/wireless/ath/ath12k/wifi7/ath12k_wifi7.ko`**（`depends: ath12k`）。只 insmod core ⇒ `/sys/bus/pci/drivers/` 里没有 ath 项，设备的 `/sys/module/ath12k` 存在但无任何 probe。
     - 连带：设备侧既有 `ath12k-retry.sh` 靠写 `/sys/bus/pci/drivers/ath12k_wifi7_pci/bind` 恢复，驱动目录不存在时只会无限刷 `bind write failed: nonexistent directory`（`existing` 检查只看设备有无 driver ⇒ 一直重试）。
     - **纪律**：把 ath12k 做成 `=m` 时，ramdisk/restore 必须同时提供 `ath12k.ko` + `wifi7/ath12k_wifi7.ko`；且**必须后台加载**（`( insmod … ) &`），否则首探 ~91 s MHI 等待会把 init 堵回去（本条与 #259 同源）。
-    - **口径补充（2026-10-14 下午，E2）**：`=m` 只是**其中一条**可行路线。基线改用 **`ATH12K=y`（= daily 口径）+ 补丁 `0001`** 即可（无需 Kconfig hack、无需把两个 .ko 塞进 ramdisk、无需后台 insmod）：首探 3 s 快速失败不留阻塞，用户态既有 `ath12k-retry.sh` 照旧 bind 成功。原因：`=y` 下 PCI driver `ath12k_wifi7_pci` 是**内建**，驱动目录始终存在。
 
 261. **M1-7.3 boot 时间随「发质量」分档：好发 `Run /init` 4.49 s、坏发 ~48.5 s（2026-10-14 实测）。**
     - 坏发时面板首帧 DCS 就 `-110`（Q28），随后 DRM/DPU 的 `vblank timeout`/`frame done timeout` 风暴打满 call trace，**这些同样落在 `kernel_init` 的 `wait_for_device_probe()` 等待里** ⇒ init 被拖到 ~48 s（E1h），好发则 4.49 s（E1g，同内核同 ramdisk 结构）。
     - **纪律**：M1 的「boot 时间」必须按发分档（好/坏）记录，单发不能当基线；比较 boot 时间要同时报 L1/L2/`dsi_isr`。
-    - 附带项（**已否证，2026-10-14 15:45**）：`CONFIG_TYPEC_MUX_FSA4480`／bring-up 时点**不是** Q28 的杠杆——E4（hold 30 s → modeset **38.06 s**）与 E5（hold 90 s → modeset **98.06 s**）**均坏**，且**同一 E1b 镜像** 12:40 GOOD、15:42 BAD ⇒ 显示结果与镜像/时点无关，是**会话级坏发簇**（见 #262）。
+    - 附带未决（**样本不足，勿当结论**）：`CONFIG_TYPEC_MUX_FSA4480=y` 把面板 bring-up 从 95.3 s 提前到 ~4.0–4.3 s，4 发里 3 发落 Q28 坏发（E1c 无 L1 但 `dsi_isr`=0；E1d/E1h L1=3；E1g 好发）——「过早 bring-up 是否抬高坏发率」需并列采样。
     - 证据：`reports/m1-73-boot-stall-20261014.md` §6。
-
-262. **★跨时段比较显示结果必须报「簇状态」：同一镜像隔 3 h 复跑可好坏相反（2026-10-14 实测；代价 = 连掉三个假说）。**
-    - 事实：`out/boot-elden-e1b-pllfix.img`（sha `d863f1ee…`）**12:40 干净 POR = 面板有内容 + 触屏（用户实机确认）**；**15:42 同一镜像干净 POR = Q28 L1 坏发**（`sending dcs data ff 20 failed: -110`，L1=4 / L2=223）。
-    - 本时段连续 **6 次干净 POR 全坏**（E2、E2′、E3、E4、E5、E1b 复跑）⇒ **坏发簇**（与 §5 Q28 既有口径「坏发 ~50%、**按时间成簇（会话级）**」一致），簇内命中率 ≈ 100%。
-    - **纪律**：① 显示 A/B 的结论只在**同一簇内**可比；跨小时/跨会话比较必须附「当时是否在坏发簇」（至少同期复跑 1 个已知臂作对照）。② **同镜像隔数小时复跑 = 识别簇的最低成本手段**。③ 不要把「某臂当时好」当代码因果证据——本次 early-bring-up / absolute-time / patch-0001 三个假说都是这样被误立的。
-    - ④ 反方向：同一时段 WiFi 6/6 正常（`Run /init` 7.67 s、`ath12k-retry` bind 成功、`wlan0` associated）⇒ 坏发簇**只打显示**，不影响启动/网络结论（补丁 0001 的结论成立）。
-    - 证据：`reports/m1-73-e2-wcn-20261014.md` §5/§6；`logs/arm-e1b-recheck-20261014-154223/`、`logs/arm-e1b-por3-20261014-122936/`。
