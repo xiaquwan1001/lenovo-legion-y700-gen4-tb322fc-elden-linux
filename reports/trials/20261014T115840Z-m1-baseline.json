@@ -1,0 +1,18 @@
+{
+  "label": "m1-baseline",
+  "ts": "2026-10-14T11:58:40Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline.img",
+  "image_sha256": "1254324a9b58e14b1040510cb52d99a2640f129575b45de6e074a7964c301964",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui1001/y700-elden/logs/arm-m1-baseline-20261014-195235",
+  "note": "M1-7.3 功能基线一发通过: Run/init 7.67s, L1=0/L2=0, DSI connected, phoc/phosh, wlan0 associated; panel user-confirmed content+touch"
+}

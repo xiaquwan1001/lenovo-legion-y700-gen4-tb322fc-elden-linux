@@ -200,3 +200,4 @@ e2-wcn	uts_dup	M1 E2：补丁 0001(ath12k MHI 3s) + ATH12K=y（daily 口径）�
 e4-paneldelay30	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证
 e5-paneldelay90	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证
 e3-dailycfg	uts_dup	M1 daily-config 功能基线臂（= E1b config + 补丁 0001）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现
+m1-baseline	uts_dup	M1-7.3 功能基线（E1b 显示修复 + 补丁 0001）机上验收镜像；ramdisk/DTB 复用 73j ⇒ 同一 UTS 串多重出现；2026-10-14 一发通过（Run/init 7.67s + 面板实测 + WiFi）
