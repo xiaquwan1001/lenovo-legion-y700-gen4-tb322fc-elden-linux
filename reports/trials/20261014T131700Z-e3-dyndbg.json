@@ -1,0 +1,18 @@
+{
+  "label": "e3-dyndbg",
+  "ts": "2026-10-14T13:17:00Z",
+  "vk": "",
+  "image": "out/boot-elden-e3-dyndbg.img",
+  "image_sha256": "43e7b88818817a489c0a77f9588cc522a3be338397b5ac8040f3e1c5b940ef4f",
+  "manifest": "",
+  "kernel_uts": "7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "dyndbg",
+  "verdict": "L2STORM",
+  "log_dir": "/home/xuqianhui1001/y700-elden/logs/arm-e3-dyndbg",
+  "note": "WCN 首探 dyndbg 取证（免重编，仅 cmdline 加 dyndbg）：pwrseq 上电 3.97s 早于 ath12k probe 4.43s；首探 MHI 4.49->7.66s -110(3s 超时)；pwrseq off 35.1s。本发 Q28 坏发，retry 被 vblank 风暴拖到 121.5s 成功。ts 取镜像构建时刻近似。"
+}

@@ -201,3 +201,8 @@ e4-paneldelay30	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa448
 e5-paneldelay90	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证
 e3-dailycfg	uts_dup	M1 daily-config 功能基线臂（= E1b config + 补丁 0001）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现
 m1-baseline	uts_dup	M1-7.3 功能基线（E1b 显示修复 + 补丁 0001）机上验收镜像；ramdisk/DTB 复用 73j ⇒ 同一 UTS 串多重出现；2026-10-14 一发通过（Run/init 7.67s + 面板实测 + WiFi）
+# ---- 2026-10-14 WCN 首探诊断族（E3/E3a/E4）：刻意复用 m1-baseline 的 UTS 串（等价 73j），
+#      为能在零写盘 fastboot boot 下加载持久盘模块；单变量分别 = cmdline dyndbg / MHI 超时 30s / 首探 msleep(8000)。
+e3-dyndbg	uts_dup	WCN 首探 dyndbg 诊断内核：UTS 刻意复用 73j（-debug-ged6f232d10e3），单变量=cmdline dyndbg 探针；证据 reports/e3-wcn-dyndbg-20261014.md
+e3a-mhi30	uts_dup	同族 E3a：单变量=ath12k MHI_TIMEOUT_DEFAULT_MS 3s→30s（H1 否证）
+e4-probedelay	uts_dup	同族 E4：单变量=ath12k_pci_probe 首探前 msleep(8000)（否证「延后/晚加载」）

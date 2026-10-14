@@ -1,0 +1,18 @@
+{
+  "label": "e4-probedelay",
+  "ts": "2026-10-14T14:37:00Z",
+  "vk": "",
+  "image": "out/boot-elden-e4-probedelay.img",
+  "image_sha256": "a3e002482a97012ae03949cfef3760236f3aa4843edbea58217da183fad7b8d9",
+  "manifest": "",
+  "kernel_uts": "7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "",
+  "deploy": "none",
+  "probe": "mhi",
+  "verdict": "",
+  "log_dir": "",
+  "note": "E4 首探延后 8.6s（ath12k_pci_probe 前 msleep(8000)）：MHI power ON 12.575s、15.591s 仍 -110(3s 超时) => 否证「延后/晚加载」。报告 reports/e3-wcn-dyndbg-20261014.md §9 未记录复位类型与 Q28 好/坏（故 reset_type/verdict 留空）；ts 取镜像构建时刻近似。"
+}

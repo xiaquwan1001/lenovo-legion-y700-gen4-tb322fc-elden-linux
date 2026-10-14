@@ -1,0 +1,18 @@
+{
+  "label": "e3a-mhi30",
+  "ts": "2026-10-14T13:43:43Z",
+  "vk": "",
+  "image": "out/boot-elden-e3a-mhi30.img",
+  "image_sha256": "eebfe78ada4142365a76f66802721984e085cf04fa63789e455ce8b37c0ca464",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui1001/y700-elden/logs/arm-e3a-mhi30",
+  "note": "WCN first-probe: MHI 30s timeout used up, still -110 => H2 (first MHI power-on unusable; fresh re-probe works). retry 50s -> chip_id -> wlan0 56.5s. Q28 sig 0."
+}
