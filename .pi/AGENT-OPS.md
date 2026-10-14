@@ -68,7 +68,8 @@
 
 ## 5. 汇报与时间盒
 
-- 汇报**先数字结论、后细节，一页内**；阶段性收官后先总结再推进。长跑设**自动截止时间盒**（`timeout -k <秒>`）并用 `ps`/`pgrep` 核实结束——均为全局硬规则，见 `~/.pi/agent/pi-hermes-memory/STANDING.md` 第 3/4 条。
+- 汇报**先数字结论、后细节，一页内**。长跑设**自动截止时间盒**（`timeout -k <秒>`）并用 `ps`/`pgrep` 核实结束——均为全局硬规则，见 `~/.pi/agent/pi-hermes-memory/STANDING.md` 第 3/4 条。
+- **不要写 summary / 总结 / 摘要**（自己收尾、子代理交付、派工单要求一律相同）：summary 文本一旦含 `/`，会被 pi 当成**文本流结束**标记，令会话或子代理任务被误判完成而**中断**（2026-10-14 实测）。凡要交付的内容一律**落盘成文件**，回复只给「产物路径 + 关键结论/数字」清单，不再另写总结段。
 - 状态词只允许「未解 / 未证实 / 未上机」；失败与半成品必落盘。
 
 ---
@@ -79,5 +80,6 @@
 - 子代理 = `fabric_exec`（pi-fabric）里的 `agents.run`/`agents.spawn` + `.pi/agents/<role>.md`（角色卡正文）+ `.pi/missions/<topic>.md`（任务背景），**无守护进程**；2026-10-12 起不再用 pi-subagents。
 - **worker 自报成功不可信**：编排者必须独立重跑测试与全量回归。
 - 并发上限 **8** 个后台子 agent（全局 `fabric.json` `agents.maxConcurrent: 8`）；按网关限流/预算自留余量，见全局 `AGENTS.md`。
+- **派工单不得要求子代理写 summary**：`agents.run({task})` 的 `task`、`.pi/agents/*.md`、`.pi/missions/*.md` 里不得出现「最后回复摘要 / 写总结 / 收尾总结」类要求；要子代理交东西就要求**产物落盘 + 最小回执字段（路径 + 关键数字）**，正文不回总结（理由见 §5；含 `/` 的 summary 会截断文本流）。
 - 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。迁移后无插件自动加载角色卡，派工须把其正文显式拼进 `task`。
 - **本项目子代理一律经 `custom-nexavlinks-com` 网关**（`https://www.nexavlinks.com`，模型 `deepseek-v4.1-flash`）：项目级 `.pi/fabric.json` 已把全部别名（worker/researcher/audit/…）指向该模型；改后需 `/reload` 生效。凭据只在全局 `auth.json`，不入库；网关地址/模型名属配置非密件。

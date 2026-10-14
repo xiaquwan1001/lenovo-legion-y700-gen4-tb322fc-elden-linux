@@ -28,6 +28,7 @@
 
 - 技能保持**可移植**：不写主机名 / IP / 用户名 / 凭据（见全局 `AGENTS.md`）。
 - **行为标准只写在 `.pi/AGENT-OPS.md`**；子代理角色卡（`agents/`）只写角色专属补充，不另行定义自主/授权边界。
+- **不写 summary/总结/摘要**：含 `/` 的 summary 会被 pi 判为**文本流结束**而中断任务（2026-10-14；见 `.pi/AGENT-OPS.md` §5/§6）。交付一律落盘文件，回复只给「产物路径 + 关键数字」。派工单 (`agents.run({task})`) 与 `.pi/agents/*.md` / `.pi/missions/*.md` 均不得要求「最后回复摘要/写总结」。
 - **编排接口（2026-10-12 起）**：子代理走 `fabric_exec`（pi-fabric），不再用 pi-subagents；模型别名 `worker`/`scout`/`delegate`/`fast`/`flash`→`ustc-pool/ustc-worker`、`complex`/`researcher`/`oracle`/`evidence-auditor`→`ustc-pool/ustc-complex`、`default`→`ustc-pool/ustc`（**经网关只能选 litellm 别名**，原始名 `deepseek-flash*`/`glm-5.3-flash` 已不可用）；并发 ≤3；独立任务用 `Promise.allSettled`。细则见全局技能 `fabric-dispatch-checklist`；改 `fabric.json` 后需 `/reload` 才生效。**本项目例外：项目级 `.pi/fabric.json` 已把全部别名指向 `custom-nexavlinks-com/deepseek-v4.1-flash`（nexavlinks 网关），本项目子代理一律用它。**
   - **角色工具集（原 `settings.json` 的 `subagents.agentOverrides`，已随本次迁移删除）**：`researcher` = `read,grep,ls,write,web_search,web_fetch,web_providers`；`evidence-auditor` = `read,grep,ls,web_search,web_fetch,web_providers`（只读）。Fabric 的 `tools:[...]` 是**完整白名单**（2026-10-12 实测：不显式列出 `web_*` 的子代理只会回 NO_WEB_TOOL；全局 `agents.defaultTools` 不含 `web_*`），所以每次派工必须显式传 `tools`。
 - `sessions/` 不入 git；`sn.img`、`bootslot-b/avb.key` 等敏感物禁止入库。已退场的插件入口（`pi-messenger.json`、`messenger/`、`swarm*.sh`）不再放回本目录 → `archive/2026-10-04-retired-entrypoints/`。
