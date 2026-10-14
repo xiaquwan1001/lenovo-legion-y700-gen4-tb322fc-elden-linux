@@ -43,128 +43,27 @@ echo "== 5. vk 版本账（registry / manifest / 镜像内 UTS）=="
 # 背景：vk52-slim 曾被静默打进 vk42 内核（manifest kernel_release 与镜像 UTS 自相矛盾），
 # 而当时无人校验。这里做三条机读检查；历史留白（vk43/49 等）只 warn 不 FAIL。
 # 证据与结论：archive/topics/VK-LEDGER-AUDIT-2026-10-06.md
-ledger=$(python3 - <<'PY' 2>/dev/null
-import os, re, zlib, glob
-
-OUT = 'out'
-reg = os.path.join('versions', 'vk-registry.tsv')
-rows = []
-if os.path.exists(reg):
-    for line in open(reg, errors='replace'):
-        m = re.match(r'^vk(\d+)\t(\S*)\t(\S*)\t(.*)$', line.rstrip('\n'))
-        if m:
-            rows.append(int(m.group(1)))
-
-nums = [r for r in rows]
-if not rows:
-    print('FAIL\tregistry 无任何 vk 行')
-else:
-    dup = sorted({n for n in nums if nums.count(n) > 1})
-    if dup:
-        print('FAIL\tregistry 有重复 vkN: %s' % ','.join('vk%d' % n for n in dup))
-    if nums != sorted(nums):
-        print('FAIL\tregistry vkN 非单调递增')
-    if not dup and nums == sorted(nums):
-        print('OK\tregistry vk50-%d 单调、无重复（%d 行）' % (max(nums), len(nums)))
-regset = set(nums)
-
-# 已知问题白名单：已审查在案的历史项降 WARN，未登记同类问题仍 FAIL
-known = {}
-kf = os.path.join('versions', 'vk-ledger-known-issues.tsv')
-if os.path.exists(kf):
-    for line in open(kf, errors='replace'):
-        if line.startswith('#') or '\t' not in line:
-            continue
-        parts = line.rstrip('\n').split('\t')
-        if len(parts) >= 2:
-            known[(parts[0], parts[1])] = parts[2] if len(parts) > 2 else ''
-
-def uts_of_image(path):
-    """镜像内核 UTS 的 release 串（与 build-manifest.sh 同法：首段 gzip → UTS）。"""
-    try:
-        d = open(path, 'rb').read()
-        i = d.find(b'\x1f\x8b\x08')
-        if i < 0:
-            return None
-        k = zlib.decompress(d[i:], 16 + zlib.MAX_WBITS)
-        m = re.search(rb'Linux version (\S+)', k)
-        return m.group(1).decode() if m else None
-    except Exception:
-        return None
-
-imgs = sorted(glob.glob(os.path.join(OUT, 'boot-elden-vk*.img')))
-no_manifest, mismatch, orphan_reg, orphan_img, tree_drift, dirty_drift = [], [], [], [], [], []
-
-def gitdesc(s):
-    """从 KV 串里取 (git sha, 是否 -dirty)，忽略 LOCALVERSION 前缀：g<sha>[-dirty]。"""
-    m = re.search(r'g([0-9a-f]{12,})(-dirty)?', s or '')
-    return (m.group(1), bool(m.group(2))) if m else None
-
-for img in imgs:
-    base = os.path.basename(img)[len('boot-elden-'):-len('.img')]
-    m = re.match(r'^vk(\d+)', base)
-    num = int(m.group(1)) if m else None
-    mf = img[:-len('.img')] + '.manifest'
-    has_mf = os.path.exists(mf)
-    if num is not None and num in regset and not has_mf:
-        no_manifest.append(base)
-    if num is None or num not in regset:
-        if not has_mf:
-            orphan_img.append(base)
-        continue
-    if has_mf:
-        kv = {}
-        for line in open(mf, errors='replace'):
-            if '=' in line:
-                k, v = line.split('=', 1)
-                kv[k] = v.strip()
-        mu, kr = kv.get('kernel_uts'), kv.get('kernel_release')
-        iu = uts_of_image(img)
-        if mu and mu != '(unknown)' and iu:
-            mr = mu.replace('Linux version ', '').split(' ')[0]
-            if mr != iu:
-                mismatch.append('%s: manifest=%s 镜像=%s' % (base, mr, iu))
-        # vk52 类事故：打包用的 Image.gz 不是构建时那棵树的内核
-        a, b = gitdesc(kr), gitdesc(mu)
-        if a and b:
-            if a[0] != b[0]:
-                tree_drift.append((base, '%s: 树/构建记录=%s 但镜像内=%s' % (base, kr, mu)))
-            elif a[1] != b[1]:
-                dirty_drift.append((base, '%s: 同 sha 但 dirty 位不同（%s vs 镜像内 %s）' % (base, kr, mu)))
-
-for b in no_manifest:
-    if (b, 'no_manifest') in known:
-        print('WARN\tregistry 号无 manifest（已知留档：%s）' % known[(b, 'no_manifest')])
-    else:
-        print('FAIL\tregistry 号无 manifest（不可复现/无指纹）：%s' % b)
-for s in mismatch:
-    print('FAIL\tmanifest 内核 ≡ 镜像内核 不符 → %s' % s)
-for base, detail in tree_drift:
-    if (base, 'tree_drift') in known:
-        print('WARN\t打包内核非本树内核（已知留档：%s）→ %s' % (known[(base, 'tree_drift')], detail))
-    else:
-        print('FAIL\t打包内核非本树内核（树自称 ≠ 镜像内）→ %s' % detail)
-for base, detail in dirty_drift:
-    if (base, 'dirty_drift') in known:
-        print('WARN\tdirty 位漂移（已知留档：%s）→ %s' % (known[(base, 'dirty_drift')], detail))
-    else:
-        print('FAIL\tdirty 位漂移（同 commit，镜像含未提交改动）→ %s' % detail)
-if not no_manifest and not mismatch and not tree_drift:
-    print('OK\tregistry 号均有 manifest，且树自称 = 镜像内 = manifest')
-if orphan_img:
-    print('WARN\tregistry 前的历史镜像无 manifest（历史留白，见审计档案）：%s' % ','.join(orphan_img))
-PY
-)
-if [ -z "$ledger" ]; then
+# 单次调用 vk-identity --all：一次全量扫描同时产出 §5 结论、§5d 门禁、§5d 新鲜度。
+# 旧版此处内联 python + §5d 再调 --gate/--check，同一批镜像被 gzip 解压三遍（墙钟 ~110s）。
+_all=$(python3 scripts/vk-identity.py --all 2>/dev/null)
+_ledger_st=(); _ledger_msg=(); _gate_st=(); _gate_msg=(); _cst=""
+while read -r _tag _st _msg; do
+  case "$_tag" in
+    L) _ledger_st+=("$_st"); _ledger_msg+=("$_msg") ;;
+    G) _gate_st+=("$_st"); _gate_msg+=("$_msg") ;;
+    C) _cst="$_st" ;;
+  esac
+done <<< "$_all"
+if [ ${#_ledger_st[@]} -eq 0 ]; then
   warnf "vk 版本账检查未产出结果（python3 缺失？）"
 else
-  while IFS=$'\t' read -r st msg; do
-    case "$st" in
-      OK)   ok   "$msg" ;;
-      WARN) warnf "$msg" ;;
-      FAIL) bad  "$msg" ;;
+  for _i in "${!_ledger_st[@]}"; do
+    case "${_ledger_st[$_i]}" in
+      OK)   ok   "${_ledger_msg[$_i]}" ;;
+      WARN) warnf "${_ledger_msg[$_i]}" ;;
+      FAIL) bad  "${_ledger_msg[$_i]}" ;;
     esac
-  done <<< "$ledger"
+  done
 fi
 
 # ---------------------------------------------------------------- 5d. 内核身份表
@@ -172,20 +71,19 @@ fi
 # 「同 UTS 串不同二进制」和「vk 号其实装的是别的号的内核」。这里补上。
 echo
 echo "== 5d. 内核身份表（号 ↔ 内核二进制 ↔ 源提交）=="
-ident=$(python3 scripts/vk-identity.py --gate 2>&1)
-if [ -z "$ident" ]; then
+if [ ${#_gate_st[@]} -eq 0 ]; then
   warnf "内核身份检查未产出结果（python3 / geekidos-linux 缺失？）"
 else
-  while IFS=$'\t' read -r st msg; do
-    case "$st" in
-      OK)    ok   "$msg" ;;
-      WARN)  warnf "$msg" ;;
-      FAIL)  bad  "$msg" ;;
-      *)     warnf "身份表检查输出无法解析：$st $msg" ;;
+  for _i in "${!_gate_st[@]}"; do
+    case "${_gate_st[$_i]}" in
+      OK)    ok   "${_gate_msg[$_i]}" ;;
+      WARN)  warnf "${_gate_msg[$_i]}" ;;
+      FAIL)  bad  "${_gate_msg[$_i]}" ;;
+      *)     warnf "身份表检查输出无法解析：${_gate_st[$_i]} ${_gate_msg[$_i]}" ;;
     esac
-  done <<< "$ident"
+  done
 fi
-if python3 scripts/vk-identity.py --check 2>/dev/null; then
+if [ "$_cst" = "0" ]; then
   ok "versions/vk-kernel-identity.tsv 与当前镜像/registry/内核 ref 一致"
 else
   bad "内核身份表已过期 → 跑 scripts/vk-identity.py > versions/vk-kernel-identity.tsv 并重提交"

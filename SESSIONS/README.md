@@ -4,7 +4,7 @@
 > **SSOT 声明**：本目录（`README.md` + `sessions/*.md`）是**会话视角的快照视图**；
 > 提交视角（谁在什么时候提交了什么）见 [`../HISTORY/`](../HISTORY/README.md)，两者互补、不互相覆盖。
 > 任务状态 / 完成度 / 未解项**不在此维护**，以 `../TASKS/README.md` §0 为准。
-> 生成：`scripts/gen-sessions.py`；校验：`scripts/check-sessions.sh`；源快照：`git show d8ae437:RESOURCES.md` §4 会话索引。
+> 生成：`scripts/gen-sessions.py`；源快照：`git show d8ae437:RESOURCES.md` §4 会话索引。
 
 ---
 
@@ -19,6 +19,10 @@
   存放在 `.pi/sessions/--home-xuqianhui1001-y700-elden--/`（各档案文件内已逐条列出真实路径）。
 - **历史子节处置**：源 §4.4「删除候选」（junk 已删/其余待批）与 §4.5「建议重命名」（已执行）**不再保留正文**，
   见本文件 §5。
+- **⚠ 快照统计未随 v2 重核（2026-10-14）**：§1「9 条墓碑行」实为 9 条**重复 id 行**（同会话多主题/子代理，非删除/迁移）；
+  「reference 34」实测 **35**；§1「主会话 jsonl 162」为快照值，磁盘顶层现 **168** 个 jsonl（快照后新增 6 个）。会话数字以 pi 原生会话（`.pi/sessions/*.jsonl`）为准。
+- **缺口**：2026-10-13 的 **Waydroid 马达透传 C10** 无 §3 行/档案（快照冻结后新增），其内容见 `../PITFALLS/README.md` §29/§30；
+  已完成子功能合并账见 `COMPLETED-FEATURES.md`。
 
 ---
 
@@ -292,6 +296,13 @@ scripts/gen-sessions.py --check    # ① 文件数 == 快照表行数 ② §1/§
 - **源 §4.5 建议重命名**：以 `session_info` append 方式执行、**可逆**，**已全部完成**；
   执行结果即 §3 表与 `sessions/` 文件名所用的「名称（建议）」列。
 - 需要两节原始全文时查历史版本：`git show d8ae437:RESOURCES.md`。
+
+---
+
+## 6. 已完成子功能合并账
+
+见 [`COMPLETED-FEATURES.md`](COMPLETED-FEATURES.md)：按子系统把「结论 ↔ 会话档案 ↔ 关键提交」并成一张账，
+收敛同一完成功能的分散描述并标出缺口（本目录 §3 为 2026-10-14 冻结快照；该账为本轮整理产物，随新完成项增补）。
 
 ---
 

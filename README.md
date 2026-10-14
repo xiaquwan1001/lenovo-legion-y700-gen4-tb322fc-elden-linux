@@ -87,7 +87,7 @@ A/B 槽管理、**安卓容器传感器**（加速/陀螺/光/磁/接近，真�
 |---|---|
 | `INDEX.md` | **入口 / 文档结构（文件夹＝角度）与 SSOT**（中文，最权威的现状快照） |
 | `TASKS/README.md` | 唯一任务台账（ID / 状态 / 下一步） |
-| `PITFALLS/README.md` | **踩坑经验库**（动手前该扫的坑，170+ 条） |
+| `PITFALLS/README.md` | **踩坑经验库**（动手前该扫的坑，条目编号范围见该文件抬头） |
 | `DEVICE/README.md` | 设备/分区/槽位/存储口径 |
 | `RESOURCES/README.md` | 资源与资产清单 |
 | `RUNBOOK-BRINGUP/README.md` | 从解锁到起桌面的操作手册 |

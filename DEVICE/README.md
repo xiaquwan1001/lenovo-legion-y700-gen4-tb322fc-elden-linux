@@ -128,11 +128,11 @@
 
 | 组成 | 实测/估算 | 依据 |
 |---|---|---|
-| Linux rootfs（Alpine + 桌面 + Mesa + 工具） | 归档实测 **3.44 GB** → 装开后 **15–20 GB** | `env-pass/backup-20261002/linux17-rootfs-…tar.gz`（30852 项） |
+| Linux rootfs（Alpine + 桌面 + Mesa + 工具） | 装开后 **15–20 GB**（归档规格见 `../RESOURCES/README.md` §2.2） | `env-pass/backup-20261002/linux17-rootfs-…tar.gz` |
 | Waydroid（system+vendor+data+ART 缓存） | **30–50 GB**（压缩镜像 1.25 GB 在手） | `~/下载/` GAPPS `system.zip` 1.17 G + `vendor.zip` 77 M |
 | x86 转译 chroot（Ubuntu base + Wine prefix） | **10–15 GB** | `pkgs-x86/`，PoC 已跑通 |
 | guest VM 镜像（Debian / Android / Windows ARM） | **每镜像 20–60 GB** | AOSP AVF `custom_vm.md` 建议 ≥10 GB；Windows 更大 |
-| 设备侧构建（内核树 + 模块 + ccache） | **25–40 GB** | 主机树 605 M + Android 树 550 G（AOSP 不在设备侧） |
+| 设备侧构建（内核树 + 模块 + ccache） | **25–40 GB** | 主机树 605 M + AOSP 树（体量见 `../RESOURCES/README.md` §2.3；AOSP 不在设备侧） |
 | 基准/压测/日志（pstore、perf、worker 日志） | **5–15 GB** | `logs/agent-logs-2026-10-02/` 已 80 M/天 |
 | **合计（全都要）** | **约 105–180 GB** | → 512 档可全放；256 档需取舍 |
 

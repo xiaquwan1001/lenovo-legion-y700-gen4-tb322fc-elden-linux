@@ -232,14 +232,14 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 |---|---|---|---|
 | 领域层 `INDEX/DEVICE/TASKS/RESOURCES/RUNBOOK.md` + `../PITFALLS/README.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2（GAPS/ANDROID-COMPAT 已并入 `../TASKS/README.md` §5/§6） |
 | `.pi/{skills,missions,agents}` `.pi/README.md` `.pi/AGENT-OPS.md` `.pi/CONCURRENCY.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：行为规范/并发细则/技能/子代理/模型配置（分工见 `.pi/README.md`）。⚠️ `.pi/memory/` 已于 2026-10-05 删除（迁 hermes）；`pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
-| `.pi/sessions/`（100 个 jsonl，含会话子目录副本） | ~108 M | ignore | 会话轨迹；**整理候选**：旧会话归档（见 §3 H1） |
+| `.pi/sessions/`（jsonl 会话轨迹，含会话子目录副本） | ~108 M | ignore | 会话轨迹；**会话数 SSOT = `SESSIONS/README.md` §1**；**整理候选**：旧会话归档（见 §3 H1） |
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
 | `patches/` | 3.7 M | ✅ track（q28 delay/methodB 草稿未入库） | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档）。**Q28 显示诊断补丁系列**（均设备无关诊断/实验件，非 G1 交付）：已 RAM 上机取证 = `q28-dsi-regdump.patch`/`q28-dsi-regdump-with-baseline.patch`（vk72/vk73/vk75 好坏寄存器差分）、`q28-poweron-propagate.patch`（vk74 4/4 复现）、`q28-cmd-dma-delay.patch`（vk84-{base,exp} 单变量对，暖 8/8 GOOD 不判别、冷 A/B 仅 T1=NOCARD 未定案）；候选未独立上机 = `q28-dsi-cmd-recover.patch`（vk64 源有界复位）；草稿未编未 apply = `q28-methodB-round-byteclk.patch`+`q28-methodB-NOTES.md`（取整 byte-clk，落点待按上游校准） |
 | `patches-userland/` | <60 K | ✅ track | **用户态（Phosh/phoc）补丁 + 构建/安装脚本**（2026-10-11 新增）：`0001-phoc-honor-any-mode.patch`（切非 preferred 刷新率）、`0002-phosh-report-supported-scale.patch`（修非整数比例显 100%）、`0003-phosh-auto-rotation-quick-setting.patch`（**新增自动旋转磁贴插件**）、`alpine-phosh-*.patch`（发行版补丁，保一致）、`build-phoc-phosh.sh`、`install-on-device.sh`（设备侧幂等安装+启用插件）、`build-deps.txt`、`upstream/`（**上游 MR 草案**）。已上机验证，证据见 `reports/userland-display-scale-refresh-20261011.md`、`reports/userland-auto-rotation-toggle-20261011.md`。设备侧还原副本 = `rootfs/persistent-overlay/userland-display/`（restore.sh 自动调用） |
 | `archive/` | ~5.5 M | ✅ track | 过程证据（87 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），追加为主 |
 | `reports/` | 216 K | ✅ track（2026-10 整理轮起入库） | **活跃主题的工作区证据**（活跃期可读可改；主题定案后整体迁 `archive/topics/`，归档层追加为主）。现含 **Q28 显示线过程稿**（`q28-DOSSIER.md`=SSOT、`q28-INDEX.md`=文档地图、`q28-{handoff,two-layers,upstream-diff,orchestration,upstream-research,nocard-research}-20261010.md`）、**Q24+Q28 会话/进度/产物合并台账 `Q24-Q28-INDEX.md`**、**用户态显示修正 `userland-display-scale-refresh-20261011.md`**、**自动旋转磁贴 `userland-auto-rotation-toggle-20261011.md`**、本地清理审计 `local-cleanup-audit-20261010.md`、本轮整理提案 `tidy-20261010/`（`resources-edits.md`/`cleanup-candidates.md` + T1/T2/T3 简报） |
 | `../PITFALLS/README.md` | 164 K | ✅ track | 踩坑正文（按主题编号）+ §0 零号纪律 + §15 废弃登记 |
-| `README.md §4` | 21 K | ✅ track | 118 条会话索引（数字 SSOT，§4）+ 内核实机验证边界 |
+| `SESSIONS/README.md` + `SESSIONS/sessions/` | 784 K | ✅ track | 会话索引/统计（**会话数 SSOT = §1**）+ 内核实机验证边界；逐会话档案一行一文件（原 `README.md §4` 会话索引已迁此） |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
 | `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
@@ -284,7 +284,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | P2-d | `backup/stock-259/` 13 分区 | 443 M | 须先核对云全量包含 abl/dtbo/recovery/vbmeta 且 =1.5.10.259 | ⬜ |
 | P3-a | AOSP `.repo` 历史 + 工作树（外置） | 523 G | 决策 G2 是否自编 Waydroid；先导出 local_manifests | ⬜ |
 | P3-b | `l2/` super/system 镜像 | 45 G | 先做 `../TASKS/README.md` §5 Q13 AVF 重提取 + 核验云包 | ⬜ |
-| H1 | `.pi/sessions/` 旧会话 | 45 M | 归档非活跃会话（保留最近若干） | ⬜ **索引已完成（`README.md §4`）；删除待任务 #2 完成 + 用户确认** |
+| H1 | `.pi/sessions/` 旧会话 | 45 M | 归档非活跃会话（保留最近若干） | ⬜ **索引已完成（`SESSIONS/README.md`）；删除待任务 #2 完成 + 用户确认** |
 
 **纪律**：按 P0→P3 逐级、不并行；每级前后记 `df -h`；删前先导出独有内容；删后回改
 `README.md §2.5` 与本节状态、并记 `archive/topics/清理清单-<date>.md`。
@@ -310,6 +310,6 @@ git log --oneline -10
 
 ---
 
-## 4. 会话检索（不再手抄索引）
+## 4. 会话检索（不再手抄索引；**会话数/统计 SSOT = `SESSIONS/README.md` §1**）
 会话身份与检索 = **pi 原生项目会话**（`.pi/sessions/*.jsonl`，项目级 `sessionDir`）：用 `session_search` / `/resume`。
-各角度的会话进度见 `<角度>/sessions/YYYY-MM-DD-<主题>.md`。
+各角度的会话进度见 `<角度>/sessions/YYYY-MM-DD-<主题>.md`；**逐会话索引/统计见 `SESSIONS/README.md`**。

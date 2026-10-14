@@ -22,8 +22,8 @@
 | `BLK` | LUN0 设备 | 主线内 `ls /dev/sd*` | 通常 `/dev/sda` |
 | `SECTOR` | 扇区 | `blockdev --getss $BLK` | 4096 |
 | `BACKUP_LBA` | 备份表起始 LBA | `scripts/gpt-dump.sh` 打印 | U1=`61390847`；**其他单元必须现 dump** |
-| `LINUX_GIB` | Linux 分区大小 | **不预设固定值**：按 `../DEVICE/README.md` §3 体量估算表定，**一次给足** | 512G 档建议 160–200；256G 档 64–96 |
-| `BAK` | 备份目录 | 命名规范 | `backup/${SN}-${CAP}/`（**勿再叫 `new-tablet`**） |
+| `LINUX_GIB` | Linux 分区大小 | **不预设固定值**：按 `../DEVICE/README.md` §3 体量估算表定，**一次给足** | 值域见 `../DEVICE/README.md` §3.2 |
+| `BAK` | 备份目录 | 命名规范见 `../DEVICE/README.md` §2.5 | `backup/${SN}-${CAP}/` |
 
 ```bash
 export SN=<序列号> CAP=16+512 BLK=/dev/sda LINUX_GIB=<按 ../DEVICE/README.md §3.2 一次给足，勿预设>
@@ -42,7 +42,7 @@ export BAK="backup/${SN}-${CAP}"; mkdir -p "$BAK"
 | **b 槽直启包** | `bootslot-b/{boot_b_vk40-ram.img, boot_b_vk40.img, dtbo_b.img, vbmeta_b_flags3.img}` | 自签 AVB，`avb.key` 仅主机 |
 | **全模块包** | `out/modules-7.2.0-debug-gba28ec16f01f-dirty.tar.gz` | strip 后 20M，1484 个 `.ko` |
 | **相机模块包** | `out/camera-modules-*.tar.gz` | 20 个（外科部署用） |
-| **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | 3.44 GB / 30852 项 |
+| **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | 规格（大小/项数）见 `../RESOURCES/README.md` §2.2 |
 | **Waydroid Mesa** | `~/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz` | 已校验 |
 | **EDL 救砖** | `qdl/build/qdl` + `~/下载/tb322fc/xbl_s_devprg_ns.melf` | 仅备用 |
 
@@ -83,7 +83,7 @@ export BAK="backup/${SN}-${CAP}"; mkdir -p "$BAK"
 ```
 
 ⇒ **已判死、不必再试**：四代 **1.5.x** 上的**任何** sn.img（官网申请 / 三代免签模板 / 第三方签名服务）——四代 ABL 换了内嵌 key 且不发公钥。
-⇒ **动手前先 grep 本地既有结论**（本机型答案早在 2026-08 的记录里；流程教训 `PITFALLS` #87、复盘 `archive/topics/复盘-2026-10-03-BL解锁.md`）。
+⇒ **动手前先查本地既有结论**（见 `PITFALLS` #87；复盘 `archive/topics/复盘-2026-10-03-BL解锁.md`）。
 
 <details><summary>以下为历史备选路（A / A3 / B / D）与官方申请细节，保留作参考；已不走</summary>
 
@@ -225,8 +225,7 @@ scp root@192.168.7.1:/tmp/gpt-new-backup.bin  "$BAK"/gpt_backup0.bin
 
 ## 3. Phase 2 — b 槽直启「RAM 版 vk40」（首次上机，零写盘）
 
-> ⚠️ **本 Phase 的「RAM 版」= 纯 RAM 变体（无桌面/会话服务，`findmnt /`=`rootfs`）**，只用于硬件/引导首验。
-> **功能/服务级验收（桌面、PipeWire、蓝牙音频、Waydroid）必须用持久根**（Phase 4/5）或 `fastboot boot` **持久变体**（零写盘，见 `PITFALLS` #93）。
+> ⚠️ **两种「RAM 启动」不得混（详见 `PITFALLS` #92/#93）**：本 Phase 的「RAM 版」= 纯 RAM 变体（无桌面/会话服务，`findmnt /`=`rootfs`），只做硬件/引导首验；**功能/服务级验收（桌面、PipeWire、蓝牙音频、Waydroid）必须用持久根**（Phase 4/5）。
 
 只覆盖 **b 槽**（原厂已备份）：
 
@@ -276,7 +275,7 @@ OOB 串口：`bash scripts/serial-run.sh 'uname -r; id'`。
 
 ```bash
 cd ~/y700-elden
-# 容量按 ../DEVICE/README.md §3.2 一次给足（256G 档 64–96；512G 档 160–200）；输入必须是本单元自己的 dump
+# 容量值域见 ../DEVICE/README.md §3.2（一次给足）；输入必须是本单元自己的 dump
 python3 scripts/gpt-surgery-tb322fc.py build \
   --main "$BAK"/gpt_main0.bin \
   --backup "$BAK"/gpt_backup0.bin \
@@ -378,8 +377,7 @@ bash scripts/iterate.sh kernel --boot      # 全量重编一次；此后驱动�
 ```
 
 **kexec 热重载**（`--kexec`，kernel 默认；**⚠️ 本机已定论不可用**）：
-- ⚠️ **2026-10-05 定论**：`kexec -s -l` 装载成功，但 `kexec -e` **硬挂整机**（无 panic / 无看门狗 / pstore 空，需物理复位）；
-  挂死分支点**尚未定位**（旧"串口戛然而止"不可用——`console=ttyGS0` 是 USB gadget，跨不过 kexec）。
+- ⚠️ **根因/结论口径见 `../TASKS/README.md` §4**（2026-10-08 定位 = `device_shutdown()` 内 `cpufreq_suspend()` × 设备 `.shutdown()` 遍历多触发叠加掉电；唯一可靠规避 = 整段跳过 device_shutdown，但目标内核仍引导失败）。
   **日常改用 `--boot`（fastboot 零写盘）/ `--flash`。**
 - ⚠️ **DTB 不能走 kexec**：`kexec_file_load(2)` 无 DTB 形参，新内核 FDT 由**运行内核的 live DT** 重建
   （`drivers/of/kexec.c: of_kexec_alloc_and_setup_fdt`）⇒ `--dtb` 是空操作，`iterate.sh dtb` 环经 kexec 不成立。

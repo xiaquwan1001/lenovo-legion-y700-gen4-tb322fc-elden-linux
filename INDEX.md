@@ -62,8 +62,8 @@
 | **资源 / 资产 / 会话** | **`RESOURCES/`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · §4 会话检索（pi 原生） |
 | **上机手册** | **`RUNBOOK-BRINGUP/`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase −1…9 |
 | **开发经验 / 踩坑** | **`PITFALLS/`** | **开发经验唯一入口**：`README.md` = §0 零号纪律 + 33 节索引；正文在 `sessions/01–33-*.md`（含 **§15 过时/废弃登记**） |
-| **会话档案（逐会话）** | **`SESSIONS/`** | 会话视角快照：`README.md` = 索引表/统计/内核时间线 + `sessions/YYYY-MM-DD-<名称>.md`（**171** 个逐会话档案）。会话身份与全文检索 = pi 原生会话（`session_search` / `/resume`） |
-| **git 提交史（逐提交）** | **`HISTORY/`** | 提交视角权威：`README.md` = 总览/类型统计/规范 + `days/YYYY-MM-DD.md`（**445** 条按日分档）。由 `scripts/gen-history.sh` 再生 |
+| **会话档案（逐会话）** | **`SESSIONS/`** | 会话视角快照：`README.md` = 索引表/统计/内核时间线 + `sessions/YYYY-MM-DD-<名称>.md`（数量见 `SESSIONS/README.md` §1）。会话身份与全文检索 = pi 原生会话（`session_search` / `/resume`） |
+| **git 提交史（逐提交）** | **`HISTORY/`** | 提交视角权威：`README.md` = 总览/类型统计/规范 + `days/YYYY-MM-DD.md`（总数见 `HISTORY/README.md` §1）。由 `scripts/gen-history.sh` 再生 |
 
 ### 证据层（`archive/`，追加为主）
 
@@ -83,24 +83,17 @@
 
 ## 3. 现状速览（指针，不复述状态）
 
-> **SSOT**：任务状态、完成度、样本数一律以 `TASKS/README.md` §0（总览）/ §1（G1）/ §5（Q 项）为准；
-> 单元与镜像形态以 `DEVICE/README.md` §1.1/§2.2 为准。**本节只回答「现在还没解决什么」，任何数字都不在此维护。**
+> **SSOT**：任务状态、完成度、样本数一律以 `TASKS/README.md` §0/§1/§5 为准；单元与镜像形态以 `DEVICE/README.md` §1.1/§2.2 为准。
+> **本节只回答「现在还没解决什么」，任何数字与当前口径都不在此维护**（见 §2 公开层豁免）。
 
-- **完成度**：见 `TASKS/README.md` §0（数字唯一权威；本文件不复述，见 §2 公开层豁免）。
-- **Linux 侧未解（3 项，按影响排序）**：
-  ① **Q28 显示间歇失败**（只有背光无桌面）→ 日常可用性第一道门，**未解、`boot_b` 仍 = `vk94`**。★当前口径（坏发 ~50%、逐启动随机、**与镜像/构建身份无关**、绑定 bonded 双 DSI 命令 DMA、上游栈暂不能作对照臂）**只读 `TASKS/README.md` §5 Q28**；过程稿 `reports/q28-INDEX.md`、`reports/q28-dsi-recover-20261012.md`。
-  ② **Q24 熄屏 × 相机** → 用户裁决 = **互斥二选一**：日常零相机模块（熄屏安全），需要时 `cam-mode.sh on/off`。**最小触发 = `camcc`+`cambistmclkcc` 配对 + 真实熄屏**；致死 = SoC 级复位 + ~30 s 自动重启；**根治未成**，靶点已转电气/时序级，**下一步 = 外部电流/电压测量（需人手）**。详见 `TASKS/README.md` §5 Q24。
-  ③ **进 GUI 后整机卡死**（`PITFALLS #106`，与 Q28 不同因）→ 已常驻自动取证（`/etc/sysctl.d/99-freeze-trace.conf` + `pstore-catch`），命中即 panic→暖复位→带回全 CPU 栈；暂未复现。
-- ✅ **Q31 M1-7.3 显示回归 已解**（2026-10-14 E1b）：上游 revert `44784327815b`（bonded PLL init）⇒ `PLL_SYSTEM_MUXES=0xc0` 永不写入；**1 行修复**放进 PHY 预置块即点亮（面板有内容 + 触屏可操作）。见 `TASKS/README.md` §5 Q31 / §7。
-- **本轮已关闭 / 搁置**（不再占未解）：✅ Q26 WiFi（2026-10-10 用户确认）、⚪ G1-6 TF 卡（用户裁决忽略）、✅ G1-34 重力/自动旋转（SSC/QRTR + iio-sensor-proxy；prox/als/compass 已核）、✅ **C10 Waydroid 马达透传**（2026-10-13：容器 HAL ↔ `aw86927` FF 全链路 → 自编 **AIDL V2** 拿到幅度控制与 `cancel` → **固化进 `vendor.img`**（运行期零 bind）→ 补上 **Settings 振动强度档位**（静态 RRO，档位 1→3）；`reports/waydroid-haptics-20261013.md`、`PITFALLS #232–#246`）。
-- **未开工 / 进行中**：上游化 **M1–M5**（`TASKS/README.md` §7；**M1-7.3 重基树已上机 bringup**：显示被 DP 阻塞已解＝纯 ramdisk 缺 `fsa4480` 模块，**显示已修（E1b，2026-10-14；见 §5 Q31）**；**2026-10-13 深夜上游显示栈对照（P1–P2c）已把上游化缺口收窄到 DSI PHY + 少量 host/manager/mdss（DPU 无需 vendor 改动）**，细节只读 §7）、G1-8 CPU/GPU 基准（GPU 已确认工作 Adreno 830 GLES3.2，待装 glmark2/vkmark 跑数）。
-- **模块化载荷线（2026-10-09 深夜已在机验收）**：`/init` 自加载 7 个载荷驱动（1.5–4.4 s）、WiFi 扫描 25 AP + 自动重连、声卡/背光/触屏/触觉全在；`scripts/mod-loop.sh` 热换驱动 **7 s** 上机。两个待决定见 `TASKS/README.md` §5 条 8.5。
-- **相机（2026-10-09 深夜零写盘复验）**：现役 boot_b(vk64/H2) 上 `CAM_FORCE=1 camera-modules-load.sh` 加载全栈 20 模块（18 s）→ 1 media/17 video/32 subdev，**前后摄各出帧且内容是真图像**；之前"相机不可用"的真因 = cmdline `elden_nocamera=1` + loader 三处静默守卫（`PITFALLS` #157–#159）。**用户裁决：相机在位时熄屏掉电 = 常态 ⇒ 相机与熄屏互斥**：日常态零相机模块，需要时 `cam-mode.sh on`（先禁熄屏再加载）、用完 `off`；**相机不固化进日常态**（`PITFALLS` #160）。
-- **上机纪律硬约束（本轮踩出来的，`PITFALLS` #150–#152）**：坏发现场 `reboot`/`reboot -f` **全挂**，只能用 `reboot2 <mode>` 或 SysRq-b；OpenRC 下 `reboot bootloader` 不进 fastboot（会变成 halt + VBUS 自开机）；**温启循环必须自带 `slot-attr.py mark-successful b`/retry 预检**（RAM 直启不置 succ、真开机扣次数，本轮 boot_b 已被耗到 retry=6/succ=0）。
-- **已定不做 / 搁置 / 取消**（勿重推）：**G1-26/27/28 桌面用户态三问题**（深色主题 / 电源菜单图标 / 亮度滑块）—— **2026-10-11 已收口：G1-26/27 上机复核通过（`grim` 截屏三态）、G1-28 后端链路已验证（logind SetBrightness 实测生效；仅 GUI 拖拽目视待人手）**，详见 `TASKS/README.md` §1 与 `reports/userland-dark-brightness-verify-20261011.md`；G1-29 UEFI（卡 UFS 初始化）、G1-10 NFC（**本机无 NFC 硬件**）、G1-30 slim initramfs（无固件→外设全废）、kexec 快环（**根因已定位 2026-10-08**；2026-10-09 补充：trans_pgd bug 与当前路径无关；crashkernel=64M + kexec -p + SysRq-c 已实机尝试，缺串口观察不确定 crash kernel 是否引导，待下次用 ttyACM0 串口捕获重做；`out/boot-elden-vk77-modkdump.img` 就绪）。
-- **内核分界线（2026-10-10，新增）**：内核树功能基线 = **`clean/base`（vk64 源 `d02658e63`，tag `baseline/clean-base`）**；其上为**实验层**（Q28/Q24/kexec/显示实验），只作实验引用。纯功能对照点 = `baseline/feature-only`（`6c1376907`）。细则与理由见 `reports/BOUNDARY-2026-10-10-clean-base.md`，口径在 `TASKS/README.md` §4。
-- **单元**：U1 = stock Android + root（无 Linux 分区，C0 备用设备；基线成品/剩余项见 `TASKS/README.md` §5 Q5）；U2 = b 槽 mainline 持久直启（在机镜像与回退资产见 `DEVICE/README.md` §1.1）。
-  🟢 解锁议题**已定稿关闭**：看 `RUNBOOK` §0.5 ★权威顺序 + `archive/topics/复盘-2026-10-03-BL解锁.md`，**不要重新论证**。
+- **未解（3 项，按影响排序）**：① Q28 显示间歇失败；② Q24 熄屏×相机（用户裁决 = 互斥二选一）；③ 进 GUI 后整机卡死（`PITFALLS #106`）。
+  **口径 / 样本 / 触发 / 下一步只读** `TASKS/README.md` §5 Q28/Q24 与 `PITFALLS #106`；在机镜像 `boot_b` 见 `DEVICE/README.md` §1.1。
+- ✅ **已解（近期）**：Q31 M1-7.3 显示回归（2026-10-14 E1b）——见 `TASKS/README.md` §5 Q31 / §7。
+- **已关闭 / 搁置**（不再占未解）：Q26 WiFi、G1-6 TF 卡、G1-34 重力/自动旋转、C10 Waydroid 马达透传（PITFALLS §29/§30）。状态与证据见 `TASKS/README.md` §0/§5。
+- **未开工 / 进行中**：上游化 M1–M5（`TASKS/README.md` §7）、G1-8 CPU/GPU 基准（`TASKS/README.md` §1）。细节只读对应节，本文件不复述。
+- **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-29 UEFI、G1-10 NFC、G1-30 slim initramfs、kexec 快环。裁决与理由见 `TASKS/README.md` §4/§5 与 `PITFALLS` §15。
+- **内核分界线**：口径在 `TASKS/README.md` §4。
+- **单元**：U1 / U2 台账见 `DEVICE/README.md` §1；解锁议题已定稿关闭（`RUNBOOK` §0.5 + `archive/topics/复盘-2026-10-03-BL解锁.md`），不要重新论证。
 
 ---
 
@@ -108,7 +101,7 @@
 
 ```bash
 cd ~/y700-elden          # ★ 启动入口即此（旧 cd 包装与根目录兼容包装 build.sh/iterate.sh/pack.sh 均已移除 → PITFALLS §15.1）
-# 【收尾自检】计数漂移 / 死链 / 口径冲突（全绿再收工）
+# 【收尾自检】退场入口 / vk 版本账与内核身份 / manifest 完整性 / 静态卫生（全绿再收工）
 scripts/check-doctor.sh
 # 【版本对账】“这个 boot.img 里到底是哪个内核” / 重生成对齐表
 python3 scripts/vk-identity.py --gate                    # 只看命名/溯源规则结果
