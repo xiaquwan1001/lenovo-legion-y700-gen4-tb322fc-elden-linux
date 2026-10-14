@@ -1,0 +1,13 @@
+diff --git a/drivers/pci/pwrctrl/Kconfig b/drivers/pci/pwrctrl/Kconfig
+index 9eec767cda..51d175eb34 100644
+--- a/drivers/pci/pwrctrl/Kconfig
++++ b/drivers/pci/pwrctrl/Kconfig
+@@ -7,7 +7,7 @@ config PCI_PWRCTRL
+ 	tristate
+ 
+ config PCI_PWRCTRL_PWRSEQ
+-	tristate
++	tristate "PCI power-sequencing controller support (elden local: prompt added so the config can force =y while ath11k/ath12k stay =m)"
+ 	select POWER_SEQUENCING
+ 	select PCI_PWRCTRL
+ 

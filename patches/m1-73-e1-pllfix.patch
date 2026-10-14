@@ -1,0 +1,47 @@
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+index 1fc3b4f0c0..a76c49e81c 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+@@ -446,17 +446,27 @@ static void dsi_pll_enable_pll_bias(struct dsi_pll_7nm *pll)
+ 	u32 data;
+ 
+ 	spin_lock_irqsave(&pll->pll_enable_lock, flags);
+-	if (pll->pll_enable_cnt++) {
+-		spin_unlock_irqrestore(&pll->pll_enable_lock, flags);
+-		WARN_ON(pll->pll_enable_cnt == INT_MAX);
+-		return;
+-	}
++	/* E1 (elden Q28/M1-73): restore pre-revert semantics — reprogram the PLL
++	 * bias registers on every call instead of early-returning. 7.3-rc7
++	 * pre-seeds pll_enable_cnt = 1 in dsi_7nm_phy_enable(), so the upstream
++	 * form never writes PLL_SYSTEM_MUXES = 0xc0 at all.
++	 */
++	pr_info("Q28-E1 bias_en enter id=%d cnt=%d ctrl0=0x%x muxes=0x%x\n",
++		pll->phy->id, pll->pll_enable_cnt,
++		readl(pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0),
++		readl(pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES));
++	pll->pll_enable_cnt++;
++	WARN_ON(pll->pll_enable_cnt == INT_MAX);
+ 
+ 	data = readl(pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0);
+ 	data |= DSI_7nm_PHY_CMN_CTRL_0_PLL_SHUTDOWNB;
+ 	writel(data, pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0);
+ 
+ 	writel(0xc0, pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES);
++	pr_info("Q28-E1 bias_en done  id=%d cnt=%d ctrl0=0x%x muxes=0x%x\n",
++		pll->phy->id, pll->pll_enable_cnt,
++		readl(pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0),
++		readl(pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES));
+ 	spin_unlock_irqrestore(&pll->pll_enable_lock, flags);
+ 	ndelay(250);
+ }
+@@ -1140,6 +1150,9 @@ static int dsi_7nm_phy_enable(struct msm_dsi_phy *phy,
+ 
+ 	spin_lock_irqsave(&pll->pll_enable_lock, flags);
+ 	pll->pll_enable_cnt = 1;
++	pr_info("Q28-E1 phy_enable id=%d preseed cnt=1 muxes=0x%x ctrl0=0x%x\n",
++		phy->id, readl(pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES),
++		readl(base + REG_DSI_7nm_PHY_CMN_CTRL_0));
+ 	/* de-assert digital and pll power down */
+ 	data = DSI_7nm_PHY_CMN_CTRL_0_DIGTOP_PWRDN_B |
+ 	       DSI_7nm_PHY_CMN_CTRL_0_PLL_SHUTDOWNB;
