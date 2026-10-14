@@ -197,3 +197,6 @@ e1e-fastinit2	uts_dup	M1 E1e：init 计时臂
 e1g-athm	uts_dup	M1 E1g：ATH12K=m 臂（init 4.49 s）
 e1h-athm	uts_dup	M1 E1h：+ath12k_wifi7 模块臂
 e2-wcn	uts_dup	M1 E2：补丁 0001(ath12k MHI 3s) + ATH12K=y（daily 口径）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现（WCN/启动停滞臂，WiFi 已打通）
+e4-paneldelay30	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证
+e5-paneldelay90	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证
+e3-dailycfg	uts_dup	M1 daily-config 功能基线臂（= E1b config + 补丁 0001）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现
