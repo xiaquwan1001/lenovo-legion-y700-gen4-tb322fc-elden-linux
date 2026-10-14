@@ -1,0 +1,18 @@
+{
+  "configVersion": 4,
+  "models": {
+    "aliases": {
+      "default": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "worker": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "scout": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "delegate": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "complex": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "researcher": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "oracle": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "evidence-auditor": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "audit": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "fast": "custom-nexavlinks-com/deepseek-v4.1-flash",
+      "flash": "custom-nexavlinks-com/deepseek-v4.1-flash"
+    }
+  }
+}

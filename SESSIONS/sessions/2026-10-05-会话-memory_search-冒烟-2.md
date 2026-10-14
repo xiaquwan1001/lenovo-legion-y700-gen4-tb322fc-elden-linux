@@ -1,0 +1,39 @@
+# 2026-10-05 · 会话：memory_search 冒烟（failure/project 计数）
+
+> 会话档案（快照）。**会话身份与检索 = pi 原生 `.pi/sessions/*.jsonl`**（`session_search` / `/resume`）；
+> 本文件是 2026-10-14 从 `RESOURCES.md` §4 会话索引快照机械登记的**静态档案**，不含会话全文。
+> 索引总表 / 统计 / 内核版本时间线见 [`../README.md`](../README.md)。
+
+## 身份
+
+| 字段 | 值 |
+|---|---|
+| **pi 会话 id** | `01a109e8` |
+| 磁盘匹配模式 | `.pi/sessions/*01a109e8*.jsonl` |
+| 日期 | 2026-10-05 |
+| 名称（建议） | 会话：memory_search 冒烟（failure/project 计数） |
+| 主题 | `session-meta` |
+| 实机 | ✗ |
+| 状态 | junk |
+| kv（提及） | — |
+
+### 磁盘上的会话文件（2）
+
+  - `.pi/sessions/2026-10-05T02-33-28-381Z_01a109e8-b63d-7762-a1aa-9743fc79f3f2.jsonl`
+  - `.pi/sessions/2026-10-05T02-33-38-725Z_01a109e8-dea4-7505-b96b-1525f462e6a1.jsonl`
+
+## 结论（原文）
+
+输出 `failure:1` / `project:1`
+
+## 风险 / 未收口
+
+冒烟测试
+
+## 相关提交
+
+- 当日提交史：[`../../HISTORY/days/2026-10-05.md`](../../HISTORY/days/2026-10-05.md)（当日提交 **14** 条）
+
+---
+
+> 生成：`scripts/gen-sessions.py`（机械生成，勿手改）。源：`git show d8ae437:RESOURCES.md` §4 会话索引。

@@ -16,7 +16,7 @@
 | `missions/` | **子代理任务卡**（作为 `fabric_exec` 里 `agents.run({task})` 的派工背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
 | `agents/` | **子代理角色卡（提示词源）**（`name`/`description` + 角色提示） | ✅ track | ⚠️ pi-subagents 已于 2026-10-12 卸载，本目录**不再被任何插件自动加载**；派工时把角色卡正文 + 任务卡拼成 `task` 传给 Fabric（`agents.run`/`agents.spawn`），模型用别名或 provider/id |
 | ~~`workflows/`~~ | ✅ **已清空移除（2026-10-12）**：pi-subagents workflow 脚本（5 个）+ `plans/*-workflow.js`（5 个）已移入 `archive/2026-10-12-retired-pi-subagents-workflows/` | — | 旧方言已废弃、仅供追溯；复用须按 fabric 重写（`agents.run`/`Promise.allSettled`），**不要原地改语法** |
-| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | 索引见 `../RESOURCES/README.md §4`；归档策略见 `../RESOURCES/README.md §3` H1 |
+| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | **逐会话快照档案见 `../SESSIONS/`**（检索仍用 `session_search`/`/resume`）；归档策略见 `../RESOURCES/README.md` §3 |
 
 ## `missions/` vs `agents/`（易混）
 
@@ -28,7 +28,7 @@
 
 - 技能保持**可移植**：不写主机名 / IP / 用户名 / 凭据（见全局 `AGENTS.md`）。
 - **行为标准只写在 `.pi/AGENT-OPS.md`**；子代理角色卡（`agents/`）只写角色专属补充，不另行定义自主/授权边界。
-- **编排接口（2026-10-12 起）**：子代理走 `fabric_exec`（pi-fabric），不再用 pi-subagents；模型别名 `worker`/`scout`/`delegate`/`fast`/`flash`→`ustc-pool/ustc-worker`、`complex`/`researcher`/`oracle`/`evidence-auditor`→`ustc-pool/ustc-complex`、`default`→`ustc-pool/ustc`（**经网关只能选 litellm 别名**，原始名 `deepseek-flash*`/`glm-5.3-flash` 已不可用）；并发 ≤3；独立任务用 `Promise.allSettled`。细则见全局技能 `fabric-dispatch-checklist`；改 `fabric.json` 后需 `/reload` 才生效。
+- **编排接口（2026-10-12 起）**：子代理走 `fabric_exec`（pi-fabric），不再用 pi-subagents；模型别名 `worker`/`scout`/`delegate`/`fast`/`flash`→`ustc-pool/ustc-worker`、`complex`/`researcher`/`oracle`/`evidence-auditor`→`ustc-pool/ustc-complex`、`default`→`ustc-pool/ustc`（**经网关只能选 litellm 别名**，原始名 `deepseek-flash*`/`glm-5.3-flash` 已不可用）；并发 ≤3；独立任务用 `Promise.allSettled`。细则见全局技能 `fabric-dispatch-checklist`；改 `fabric.json` 后需 `/reload` 才生效。**本项目例外：项目级 `.pi/fabric.json` 已把全部别名指向 `custom-nexavlinks-com/deepseek-v4.1-flash`（nexavlinks 网关），本项目子代理一律用它。**
   - **角色工具集（原 `settings.json` 的 `subagents.agentOverrides`，已随本次迁移删除）**：`researcher` = `read,grep,ls,write,web_search,web_fetch,web_providers`；`evidence-auditor` = `read,grep,ls,web_search,web_fetch,web_providers`（只读）。Fabric 的 `tools:[...]` 是**完整白名单**（2026-10-12 实测：不显式列出 `web_*` 的子代理只会回 NO_WEB_TOOL；全局 `agents.defaultTools` 不含 `web_*`），所以每次派工必须显式传 `tools`。
 - `sessions/` 不入 git；`sn.img`、`bootslot-b/avb.key` 等敏感物禁止入库。已退场的插件入口（`pi-messenger.json`、`messenger/`、`swarm*.sh`）不再放回本目录 → `archive/2026-10-04-retired-entrypoints/`。
 - 记忆只存**跨会话有用**的偏好/教训/决策，不存可随时重推的临时细节。项目记忆已迁 hermes（`~/.pi/agent/pi-hermes-memory/` + `~/.pi/agent/projects-memory/<repo>/`，`memory_search` 可检索）——`.pi/memory/` 已于 2026-10-05 删除。

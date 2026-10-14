@@ -54,7 +54,7 @@
 
 ## 4. 文档与写入权限（文档 v2：文件夹＝角度）
 
-- **结构**：唯一入口 `INDEX.md`（文件）；5 个**角度文件夹** `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/`，
+- **结构**：唯一入口 `INDEX.md`（文件）；7 个**角度文件夹** `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/`，
   每个内 `README.md`（策展 SSOT，唯一维护面）+ `sessions/`（**以会话为单位**的进度，命名 `YYYY-MM-DD-<主题>.md`）。
 - **记录时的区分度**（取代旧的自检计数/死链检查）：写入时就靠 文件夹(角度) + 文件名(日期+主题) + pi 会话 id 区分；
   会话身份/检索用 **pi 原生项目会话**（`.pi/sessions/*.jsonl`，`session_search` / `/resume`），不手抄索引表。
@@ -81,3 +81,4 @@
 - **worker 自报成功不可信**：编排者必须独立重跑测试与全量回归。
 - 并发上限 ≤3 个后台子 agent（已固化到全局 `fabric.json` 的 `agents.maxConcurrent: 3`；为限流/预算留余量，见全局 `AGENTS.md`）。
 - 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。迁移后无插件自动加载角色卡，派工须把其正文显式拼进 `task`。
+- **本项目子代理一律经 `custom-nexavlinks-com` 网关**（`https://www.nexavlinks.com`，模型 `deepseek-v4.1-flash`）：项目级 `.pi/fabric.json` 已把全部别名（worker/researcher/audit/…）指向该模型；改后需 `/reload` 生效。凭据只在全局 `auth.json`，不入库；网关地址/模型名属配置非密件。

@@ -1,7 +1,7 @@
 # 工作区索引 — TB322FC "elden"（SM8750P）固件与驱动研究
 
 > **入口。** 新会话：本文件 §1（使命）→ §2（文档结构）→ §3（现状）→ 需要细节再进对应文档/专题档案。
-> **唯一入口 = 本文件**；根目录 = 入口 `INDEX.md` + 项目身份 `AGENTS.md` + 公开 `README`/`PROGRESS`，**5 个角度文件夹**（`DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/`），各自 `README.md`（策展 SSOT）+ `sessions/`（会话进度）；标准见 §2。
+> **唯一入口 = 本文件**；根目录 = 入口 `INDEX.md` + 项目身份 `AGENTS.md` + 公开 `README`/`PROGRESS`，**7 个角度文件夹**（`DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/`），各自 `README.md`（策展 SSOT）+ `sessions/`（会话进度）；标准见 §2。
 > 2026-10-03：git 纳管 + 文档收敛（12→6）；自检 `scripts/check-doctor.sh`；不再有 SQLite/生成物。
 
 ---
@@ -53,7 +53,7 @@
 
 > 项目描述（机型/目标/设备等价）在 `AGENTS.md`；各角度 `README.md` 不再复述规范与经验。
 
-### 角度文件夹（`README.md` = 权威正文；`sessions/` = 会话进度）
+### 角度文件夹（`README.md` = 权威正文；子目录 = 以会话/单元为单位的记录）
 
 | 角度 | 文件夹 | 装什么 |
 |---|---|---|
@@ -62,6 +62,8 @@
 | **资源 / 资产 / 会话** | **`RESOURCES/`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · §4 会话检索（pi 原生） |
 | **上机手册** | **`RUNBOOK-BRINGUP/`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase −1…9 |
 | **开发经验 / 踩坑** | **`PITFALLS/`** | **开发经验唯一入口**：`README.md` = §0 零号纪律 + 33 节索引；正文在 `sessions/01–33-*.md`（含 **§15 过时/废弃登记**） |
+| **会话档案（逐会话）** | **`SESSIONS/`** | 会话视角快照：`README.md` = 索引表/统计/内核时间线 + `sessions/YYYY-MM-DD-<名称>.md`（**171** 个逐会话档案）。会话身份与全文检索 = pi 原生会话（`session_search` / `/resume`） |
+| **git 提交史（逐提交）** | **`HISTORY/`** | 提交视角权威：`README.md` = 总览/类型统计/规范 + `days/YYYY-MM-DD.md`（**445** 条按日分档）。由 `scripts/gen-history.sh` 再生 |
 
 ### 证据层（`archive/`，追加为主）
 
@@ -71,7 +73,7 @@
 ### 机器可查（无 SQLite，无生成物）
 
 - 文本搜索：`rg` / `grep`（`PITFALLS/README.md` 找踩坑、`RESOURCES/README.md` 找资源、`TASKS/README.md` 找任务）。
-- 会话回忆：pi 原生会话选择器（`/resume`）+ `rg .pi/sessions`。
+- 会话回忆：pi 原生会话选择器（`/resume`）/ `session_search` + `rg .pi/sessions`；**逐会话快照** `SESSIONS/`、**逐提交史** `HISTORY/`（`scripts/gen-sessions.py` / `gen-history.sh` 再生）。
 - 机器账自检：`scripts/check-doctor.sh`（退场入口 / vk 版本账 §5+§5d / manifest §5e / 静态卫生）。
 - 版本对账：**`versions/vk-kernel-identity.tsv`**（构建号 ↔ 内核二进制 ↔ 源提交，含每个镜像的失真标记）。
   它是本目录**唯一入 git 的派生表**（破例理由：兼作版本欠账账本）；由 `scripts/vk-identity.py` 重生成，
