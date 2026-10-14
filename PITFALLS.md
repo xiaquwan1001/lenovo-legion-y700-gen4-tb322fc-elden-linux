@@ -1861,3 +1861,10 @@
     - **串口控制台（本次新发现）**：U2 的 USB gadget 同时暴露 **CDC-ACM 内核控制台** `/dev/ttyACM0`（`console=ttyGS0,115200`；`/dev/serial/by-id/usb-Lenovo_TB322FC_mainline_*HA2CB1KY-if02`），`cat` 即得内核 log（含 boot 之后的 WARN 风暴）；**没有 getty/无 shell、无回显**，只能读（BREAK+\`b\` 的串口 SysRq 本次未生效，仍需物理 POR）。⇒ **SSH 死了也能判 L1/L2**（本次即靠它看出 `vblank wait timed out on crtc 0` 风暴）。
     - ⚠️ **gadget 的 iSerialNumber 是硬编码常量 `HA2CB1KY`**（`rootfs/.../usr/local/sbin/usb-gadget` 第 37 行），**不是设备身份**——本次差点把 U2(HA2EXB0E) 误认成另一台。认设备只认 `fastboot getvar serialno`。
 
+
+255. **★M1 7.3-rc7 重基树存在显示回归：健康的 m1-73j 启动点不亮面板，而同窗口的日常 vk94 正常出桌面 ⇒ 73i/73j 的"未亮屏"不是 Q28 坏发。**
+    - 2026-10-14 同窗口（~09:00–09:40）对照：vk94 CRTC active + 用户实测桌面正常；m1-73j **L1=L2=0、phoc/phosh 在、CRTC active、grim 出图 39965 B**，但用户实测**只有背光无内容**。
+    - ⇒ 用 `card0`/connector/CRTC/会话/grim 判"显示正常"在 M1 树上**无效**（呼应 #251）；M1 树任何"显示已通过"的结论必须面板实测。
+    - 上游臂（P2b/P2c/P4a/P4d）的额外症状：phoc `no supported format`（modeset 失败）+ 强制 modetest 后 `dsi_isr=0`；DIAG 探针证明 `dsi_mgr_bridge_enable`/`msm_dsi_host_enable` 都被调用且 `DSI_CTRL 0x171→0x173`（VID_MODE_EN 置位）⇒ 缺口不在"enable 是否被调用"。
+    - **DSC 1.2 否证**：P4a（P2c + vendor DSC1.2 RC 参数 + `first_line_bpg_offset`）与 P2c 行为无差别。
+    - 证据：`reports/m1-73-display-regression-20261014.md`。

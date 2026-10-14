@@ -144,7 +144,7 @@
 - **P2c**（上游 DSI host/manager + vendor PHY + **vendor DPU**，commit 2851bcaff6）：合成器可正常 modeset（connector enabled、crtc-0 enable=1 active=1 mode 1904x3040@120、plane fb 由 phoc 分配、grim 截图成功且有非黑内容）——但**面板实测仍只有背光、无内容**。
 - 与 P2b 对照得到两个独立问题：
   1. **上游 DPU 的 DRM 格式/modifier 面**让 phoc 无法 modeset（P2b: connector enabled=disabled、grim no supported format）；换成 vendor DPU 后合成器恢复正常（P2c 已解决）。
-  2. **即使合成器在扫描输出，面板仍不显示** ⇒ 上游 DSI host 的视频流/编程没有真正驱动面板；**只有 vendor DSI host 才点得亮**。
+  2. **即使合成器在扫描输出，面板仍不显示** ⇒ 上游 DSI host 的视频流/编程没有真正驱动面板；**只有 vendor DSI host 才点得亮**。 **⚠️ 2026-10-14 更正（`reports/m1-73-display-regression-20261014.md`）**：同窗口对照日常 vk94（桌面正常）与 m1-73j（L1=L2=0、CRTC active、grim 出图，但**面板只有背光**）⇒ **M1 7.3-rc7 树本身有显示回归**，"73i/73j 未亮屏 = Q28 坏发"的归因不成立；M1 树上任何"显示通过"的判据必须面板实测（`PITFALLS #255`）。
 - 阶段结论：**「上游规范点亮屏幕」的剩余大缺口 = DSI host**（vendor dsi_host.c 的 ~552 行里包含让面板真正显示的 video/DSC/bonded 编程；已正面验证的必需增量：DSI PHY（必需）+ DSI host（video/命令）+ DSI manager（时序）+ msm_mdss（populate DSI PHY）；DPU 侧也需 vendor 的格式面）。
 - 事故：P2c 上 kmscube 曾触发整机硬挂（与 PITFALLS #106 同型），串口 SysRq-b 可恢复；ARM 上跑 GL 前须常驻串口 logger。
 - 设备归位：boot_b = vk94（日常），本次全程零写盘。

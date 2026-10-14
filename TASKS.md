@@ -426,7 +426,7 @@
 1. **显示/桌面被 DP 阻塞**：`fsa4480`（`CONFIG_TYPEC_MUX_FSA4480=m`）缺 → 无 typec mode-switch → `pmic_glink.altmode` defer → `af54000.displayport-controller` 永久 defer → `disp_cc-sm8750 sync_state() pending` → **阻塞 `msm_drm_bind` → 无 `card0`**。运行时 `insmod fsa4480.ko` 立即出 `card0`+`card0-DP-1`+`msm_dpu: bound af54000.displayport-controller`。
 2. **传感器被 `fastrpc` 阻塞**：`CONFIG_QCOM_FASTRPC=m` 缺 → 无 `/dev/fastrpc-adsp`；`insmod fastrpc.ko` → `/dev/fastrpc-adsp` + QRTR svc400（Sensor Core）上线。
 3. **`73j`（零写盘）** 把这两个模块 + `/init` 加载钩子打进 ramdisk（`scripts/m1-73-modules-overlay.sh`）：切根正常、模块自动加载、`card0-DSI-1`+`card0-DP-1`+传感器全在。
-4. **但仍无亮屏好发**：`73j` 2/2、`73i` 1/1 都画到 `card0` 但用户实机**屏幕未亮**，面板 init 报 Q28 签名（`command DMA timeout` / `sending dcs data ff 20 failed` / `Failed to initialize panel`）⇒ **「DP 阻塞 DRM」与「Q28 面板 init 失败」是两个独立问题，前者已解（补模块），后者仍卡亮屏**。
+4. **但仍无亮屏好发**：`73j` 2/2、`73i` 1/1 都画到 `card0` 但用户实机**屏幕未亮**，面板 init 报 Q28 签名（`command DMA timeout` / `sending dcs data ff 20 failed` / `Failed to initialize panel`）⇒ **「DP 阻塞 DRM」与「Q28 面板 init 失败」是两个独立问题，前者已解（补模块），后者仍卡亮屏**。 **⚠️ 2026-10-14 更正（`reports/m1-73-display-regression-20261014.md`）**：同窗口对照日常 vk94（桌面正常）与 m1-73j（L1=L2=0、CRTC active、grim 出图，但**面板只有背光**）⇒ **M1 7.3-rc7 树本身有显示回归**，"73i/73j 未亮屏 = Q28 坏发"的归因不成立；M1 树上任何"显示通过"的判据必须面板实测（`PITFALLS #255`）。
 5. **慢启动**：M1 内核到用户态 `Run /init` **~95 s**（daily ~5 s），疑 ath12k 探测阻塞内核 init（`PITFALLS #250`，未定位）。
 
 **方法沉淀**：`tools/mkbootimg` 手工**单变量对照镜像** + **磁盘黑匣子**（USB 不通也能取证）+ **运行时 `insmod` 单模块归因**（比反复烧镜像快得多）。
