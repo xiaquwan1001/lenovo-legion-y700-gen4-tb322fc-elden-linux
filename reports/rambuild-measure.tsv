@@ -1,0 +1,8 @@
+label	date	tree	fs	targets	wall_s	memavail_min_mb	img_sha16	dtb_sha16	uts_release	rc
+p0a-ext4-cold	2026-10-15 08:23:41	/home/xuqianhui1001/y700-elden/build/b5-dsi-worktree	ext2/ext3	Image.gz dtbs JOBS=16 KBUILD_BUILD_TIMESTAMP=2026-10-13 19:49:03	560	53007	ad944597e860814c	6c07499f4025c51a	?	0
+p2a-ram-cold	2026-10-15 08:40:14	/dev/shm/elden/t-cold	tmpfs	Image.gz dtbs JOBS=16 KBUILD_BUILD_TIMESTAMP=2026-10-13 19:49:03	566	47694	066300f7980277e5	6c07499f4025c51a	?	0
+p0b-ext4-incr	2026-10-15 08:46:00	/home/xuqianhui1001/y700-elden/build/b5-dsi-worktree	ext4	Image.gz JOBS=16 KBUILD_BUILD_TIMESTAMP=2026-10-13 19:49:03	31	46394	5fa33a7b9470aa76	6c07499f4025c51a	?	0
+p2b-ram-incr	2026-10-15 08:46:00	/dev/shm/elden/t-cold	tmpfs	Image.gz JOBS=16 KBUILD_BUILD_TIMESTAMP=2026-10-13 19:49:03	32	45550	bea40098cbdd15ef	6c07499f4025c51a	?	0
+l1-ram-nodebug	2026-10-15 09:02:03	/dev/shm/elden/t-cold	tmpfs	Image.gz dtbs	598	43898	b1c85d9a57333393	6c07499f4025c51a	7.3.0-rc7-debug-ga57c1ae7913d	#3 SMP PREEMPT 2026-10-13 19:49:03 	0
+l1-incr-nodebug	2026-10-15 09:07:06	/dev/shm/elden/t-cold	tmpfs	Image.gz	22	51805	c50d1137b829f2e5	6c07499f4025c51a	7.3.0-rc7-debug-ga57c1ae7913d	#4 SMP PREEMPT 2026-10-13 19:49:03 	0
+p0b2-ext4-incr	2026-10-15 09:08:09	/home/xuqianhui1001/y700-elden/build/b5-dsi-worktree	ext4	Image.gz	31	50961	bcd3fec67366eae7	6c07499f4025c51a	7.3.0-rc7-debug-ga57c1ae7913d	#3 SMP PREEMPT 2026-10-13 19:49:03 	0
