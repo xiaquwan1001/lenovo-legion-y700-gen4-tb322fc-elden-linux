@@ -1,0 +1,18 @@
+{
+  "label": "q24-n1b-boottime-pairing",
+  "ts": "2026-10-15T14:04:05Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline-f3.img",
+  "image_sha256": "40e13f8ad43b0cb155dd9b98092a1790ca6f4b9629d4ae96123b8642438010af",
+  "manifest": "out/boot-elden-m1-baseline-f3.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "32e93db7a0c229b43cbf8c50a20650b1cabf436e7ffdd180208e2722e28547ad",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "N1b-CONFIRMS-MECHANISM",
+  "log_dir": "",
+  "note": "Boot-time CC pairing (camera.conf = camcc+cambist): both CCs bound at boot, 'dmesg|grep rpmhpd' COMPLETELY EMPTY (0 pending msgs) while 13 other providers still printed pending. vs N1 (runtime modprobe) which showed 2 pending and no change. => rpmhpd sync_state release depends on BIND TIMING; mechanism is real but one-shot at boot window. Rails identical (mx=on/mxc=off-0/mmcx=on) so pm_genpd cannot discriminate. No death reproduced (never blanked). See reports/q24-n1b-boottime-pairing-20261015.md"
+}

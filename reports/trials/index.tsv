@@ -114,3 +114,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-15T12:04:28Z	b1-recoverable-s1-dark		por	fastboot-boot	BAD-NOSCAN	e96234b20f09	logs/b1-sampling-20261015/b1-s1
 2026-10-15T13:23:10Z	m1-73-modules-camstack		cold	none	CAM-STACK-UP-NO-STREAM	40e13f8ad43b	
 2026-10-15T13:49:25Z	q24-n1-syncstate-falsified		cold	none	N1-FALSIFIED	40e13f8ad43b	
+2026-10-15T14:04:05Z	q24-n1b-boottime-pairing		por	none	N1b-CONFIRMS-MECHANISM	40e13f8ad43b	
