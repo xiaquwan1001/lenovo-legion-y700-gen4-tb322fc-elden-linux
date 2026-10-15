@@ -1,0 +1,18 @@
+{
+  "label": "m1-73-modules-camstack",
+  "ts": "2026-10-15T13:23:10Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline-f3.img",
+  "image_sha256": "40e13f8ad43b0cb155dd9b98092a1790ca6f4b9629d4ae96123b8642438010af",
+  "manifest": "out/boot-elden-m1-baseline-f3.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "32e93db7a0c229b43cbf8c50a20650b1cabf436e7ffdd180208e2722e28547ad",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "CAM-STACK-UP-NO-STREAM",
+  "log_dir": "",
+  "note": "P0: deployed 1497 modules to /lib/modules/7.3.0-rc7-debug-ged6f232d10e3 (vermagic match). Camera stack loaded: media0 + 17 video nodes, s5kjns+gc08a8 bound ENABLED. Stream fails: VFE4+RDI3 -> EINVAL 'Pixel clock too high for VFE'; VFE0+RDI0 -> EPIPE (no clock err). See reports/m1-73-modules-p0-20261015.md"
+}
