@@ -206,3 +206,9 @@ m1-baseline	uts_dup	M1-7.3 功能基线（E1b 显示修复 + 补丁 0001）机�
 e3-dyndbg	uts_dup	WCN 首探 dyndbg 诊断内核：UTS 刻意复用 73j（-debug-ged6f232d10e3），单变量=cmdline dyndbg 探针；证据 reports/e3-wcn-dyndbg-20261014.md
 e3a-mhi30	uts_dup	同族 E3a：单变量=ath12k MHI_TIMEOUT_DEFAULT_MS 3s→30s（H1 否证）
 e4-probedelay	uts_dup	同族 E4：单变量=ath12k_pci_probe 首探前 msleep(8000)（否证「延后/晚加载」）
+
+# ---- 2026-10-15 WCN 首探修法族（F1/F2/F3）：刻意复用 m1-baseline 的 UTS 串（-debug-ged6f232d10e3），
+#      为在零写盘 fastboot boot 下加载 ramdisk 内 7.3 模块；单变量分别 = MHI 层重发 / 每轮 SoC 复位重发 / probe 返 -EPROBE_DEFER。
+f1-mhiretry	uts_dup	WCN 修法 F1：ath12k_mhi_start 内 6 次重发（否证）；UTS 刻意复用 m1-baseline（ramdisk 模块 vermagic）
+f2-socreset	uts_dup	WCN 修法 F2：每轮先 ath12k_pci_sw_reset(true) 再重发（否证，6/6 -110）；UTS 同 m1-baseline
+f3-defer	uts_dup	WCN 修法 F3：ath12k_core_init 失败返 -EPROBE_DEFER 让驱动 core 重跑整轮 probe（**通过**：11.78 s chip_id、Run/init 7.670 s）；UTS 同 m1-baseline
