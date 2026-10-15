@@ -1,0 +1,18 @@
+{
+  "label": "m1-baseline-f3-s6-bad2",
+  "ts": "2026-10-15T10:53:00Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline-f3.img",
+  "image_sha256": "40e13f8ad43b0cb155dd9b98092a1790ca6f4b9629d4ae96123b8642438010af",
+  "manifest": "out/boot-elden-m1-baseline-f3.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "32e93db7a0c229b43cbf8c50a20650b1cabf436e7ffdd180208e2722e28547ad",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "q28",
+  "verdict": "L1FAIL",
+  "log_dir": "logs/armA-sampling-20261015/s6-baseline-bad2",
+  "note": "Baseline sample 6 (control arm, true POR, disk boot). SECOND bad boot of the session: l1=4, dsi_isr=0, 'ctl reset failure'=140, backlight=511. => session has had baseline 2 BAD / 1 GOOD (s2 good, s4 bad, s6 bad) - consistent with clustered bad boots. GDSC genpd on this bad boot REPLICATES s4 exactly: mdss_gdsc=on (active 74.7s), mdss_int2_gdsc=off-0. Purpose of this POR was to obtain a GOOD-boot GDSC reference for the 方案C HW_CTRL_SKIP_DIS discriminator; not obtained - still need a good boot for the contrast."
+}

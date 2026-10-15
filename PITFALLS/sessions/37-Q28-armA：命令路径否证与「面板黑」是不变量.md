@@ -27,3 +27,10 @@
 277. **★`DSI PLL(0) lock failed status=0x00000000` ×4 与 `orphan reparent failed -110` ×4 是早期 probe 伪影，不是 Q28 判别量。**
     - 实测：这两组行在**三发样本（含用户确认 GOOD 的 s2）中完全相同**（各 4 次）⇒ 无判别力。
     - 教训：早期 probe 阶段的并发失败容易与运行时故障混淆；**判别量必须取好/坏发都打或都可比的固定点**（呼应 `#192`、vk118/vk119 探针设计原则）。
+
+278. **★`pm_genpd` 状态不能用来判 Q28（GDSC `HW_CTRL_SKIP_DIS` 候选已被只读判别否证）；而「静态挖到的 delta」必须先做只读判别再建臂。**
+    - 背景：静态对照挖到 `dispcc-sm8750.c` 仅 2 行差异（`mdss_gdsc`/`mdss_int2_gdsc` 被 payload 加 `HW_CTRL_SKIP_DIS`，全 mainline 仅此一处、原厂无），机制上像「域闩住」。子代理建议「零成本只读判别」。
+    - **实测否证**：GOOD 台（s7，用户确认亮、`dsi_isr=41`）与两发坏发（s4/s6）三方**完全一致** —— `mdss_gdsc=on` / `mdss_int2_gdsc=off-0` ⇒ **零判别力、不建臂**。
+    - **口径（关键）**：`/dev/mem` 被 `CONFIG_STRICT_DEVMEM=y` 挡住 ⇒ 只能走 `pm_genpd`；而它暴露的是 genpd **状态机视图**（`mdss_gdsc` 因 `ae00000.display-subsystem` 持有而**恒 on**），**不是 `gdscr` 寄存器原值**。⇒ 否证的是「这条路」，**不是 `HW_CONTROL_MASK` 位本身**；要读寄存器位须写内核侧 debugfs 钩子 = 新变量。
+    - **教训**：静态 delta 的「机制像」不等于「可判别」；**先做零成本只读判别，能省掉一个臂**（本条正是省掉了一个单变量臂的实例）。
+    - 证据：`reports/q28-armA-20261015.md` §8.1、`logs/armA-sampling-20261015/{s4-baseline,s6-baseline-bad2,s7-baseline}/genpd-*.txt`。

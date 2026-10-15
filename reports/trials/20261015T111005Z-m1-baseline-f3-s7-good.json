@@ -1,0 +1,18 @@
+{
+  "label": "m1-baseline-f3-s7-good",
+  "ts": "2026-10-15T11:10:05Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline-f3.img",
+  "image_sha256": "40e13f8ad43b0cb155dd9b98092a1790ca6f4b9629d4ae96123b8642438010af",
+  "manifest": "out/boot-elden-m1-baseline-f3.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "32e93db7a0c229b43cbf8c50a20650b1cabf436e7ffdd180208e2722e28547ad",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "logs/armA-sampling-20261015/s7-baseline",
+  "note": "Baseline sample 7 (control arm, true POR, disk boot). USER-CONFIRMED LIT (desktop content). Software: dsi_isr=41 (= the known good-boot value, matching s2), l1=0, reset_failure=0. PURPOSE: this is the GOOD-boot reference needed to test the 方案C GDSC HW_CTRL_SKIP_DIS candidate. RESULT = CANDIDATE FALSIFIED: GDSC genpd state is IDENTICAL on good and bad boots (mdss_gdsc=on / mdss_int2_gdsc=off-0 in s7 GOOD, s4 BAD, s6 BAD). So pm_genpd observable state has NO discriminative power for Q28. CAVEAT: this falsifies the 'zero-cost read-only discriminator via pm_genpd' route, not the HW_CONTROL_MASK register bit itself - pm_genpd exposes the genpd state machine view (and mdss_gdsc is always on because display-subsystem holds it), not the gdscr raw value; reading the latter needs a kernel-side hook since /dev/mem is blocked by CONFIG_STRICT_DEVMEM=y. => No arm should be built for this candidate on this basis. Baseline session tally: s2 GOOD/s4 BAD/s6 BAD/s7 GOOD = 2 GOOD/2 BAD = 50%, consistent with the standing ~50% clustered understanding."
+}
