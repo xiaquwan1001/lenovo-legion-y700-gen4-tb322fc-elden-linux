@@ -119,3 +119,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-15T14:14:46Z	sleep-sweep-run2		warm	none	ALIVE	(absent)	/tmp/sleep-sweep.log
 2026-10-15T14:15:11Z	sleep-sweep-run3		warm	none	ALIVE	(absent)	/tmp/sleep-sweep.log
 2026-10-15T14:44:38Z	q24-n2prime-n3-12blanks-survive		por	none	Q24-RECIPE-NOT-REPRODUCIBLE	40e13f8ad43b	
+2026-10-15T15:16:03Z	n5-vk64-death-reproduced	vk64	cold	none	Q24-DEATH-REPRODUCED	15964160bed0	

@@ -1,0 +1,18 @@
+{
+  "label": "n5-vk64-death-reproduced",
+  "ts": "2026-10-15T15:16:03Z",
+  "vk": "vk64",
+  "image": "out/boot-elden-vk64.img",
+  "image_sha256": "15964160bed002b05621d90379c12fd68d0ae4dd4fdbcecbc94903eeefd7a20d",
+  "manifest": "out/boot-elden-vk64.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk64-gd02658e63cf6 (elden@y700",
+  "kernel_payload_sha256": "",
+  "config_sha256": "a383cdb99dfee7a9f7a21c915541af05edf6efa3d2bb7cda552b270a263cbf4d",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "Q24-DEATH-REPRODUCED",
+  "log_dir": "",
+  "note": "vk64 (7.2 lineage) RAM kernel via fastboot boot + FULL camera stack (19 mods) + real dpms On->Off blank: round1 ALIVE (uptime 323, boot_id c1ca45b4 unchanged); round2 DEATH (SSH lost, device returned with uptime 42 and kernel=M1 boot_b). HARD RESET signature: current boot_id 9e32c92d appears 0x in /root/powerlog.txt (elden-powerwrap records userland reboots), pstore EMPTY, RAM vk64 kernel gone. Self-recovered per #209. Contrast: same recipe on M1-7.3 = 12/12 survive. See reports/q24-n5-vk64-death-reproduced-20261015.md"
+}

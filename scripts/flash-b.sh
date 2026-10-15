@@ -48,7 +48,11 @@ echo "[flash-b] OK"
 
 if [ "$REBOOT" = 1 ]; then
 	echo "[flash-b] rebooting..."
-	ssh -o StrictHostKeyChecking=no "$TAB" 'sync; (sleep 1; reboot -f) >/dev/null 2>&1 &' || true
+	# ★ 2026-10-15 修（PITFALLS #288）：原用 `(sleep 1; reboot -f) &`，
+	# 实测在本机当前状态下【会挂起、根本不重启】——`/sbin/reboot` 是 elden-powerwrap，
+	# openrc 分支 `exec /bin/busybox reboot`；该路径与 `busybox reboot -f` 均实测挂起。
+	# `sysrq-b` 是当前唯一可靠通道（实测 uptime 归零 + boot_id 换新）。
+	ssh -o StrictHostKeyChecking=no "$TAB" 'sync; echo b > /proc/sysrq-trigger' || true
 	echo "[flash-b] waiting for Linux..."
 	for i in $(seq 1 90); do
 		sleep 2
