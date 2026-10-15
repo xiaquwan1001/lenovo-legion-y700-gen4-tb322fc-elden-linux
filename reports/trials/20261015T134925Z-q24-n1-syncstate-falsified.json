@@ -1,0 +1,18 @@
+{
+  "label": "q24-n1-syncstate-falsified",
+  "ts": "2026-10-15T13:49:25Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline-f3.img",
+  "image_sha256": "40e13f8ad43b0cb155dd9b98092a1790ca6f4b9629d4ae96123b8642438010af",
+  "manifest": "out/boot-elden-m1-baseline-f3.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "32e93db7a0c229b43cbf8c50a20650b1cabf436e7ffdd180208e2722e28547ad",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "N1-FALSIFIED",
+  "log_dir": "",
+  "note": "N1: paired CC load produced NO new rpmhpd sync_state msg and NO rail change (mx=on/mxc=off-0/mmcx=on); camcc state_synced=1. N1c: rpmh trace during paired load = 2 msgs, during unload = 54 msgs ALL on 0x300a0 (mxc.lvl) oscillating 0x2<->0x0, device alive => 'death signature mxc.lvl->0' is routine runtime-PM, not a death marker. See reports/q24-n1-syncstate-falsified-20261015.md"
+}
