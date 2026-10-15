@@ -34,3 +34,28 @@
     - **口径（关键）**：`/dev/mem` 被 `CONFIG_STRICT_DEVMEM=y` 挡住 ⇒ 只能走 `pm_genpd`；而它暴露的是 genpd **状态机视图**（`mdss_gdsc` 因 `ae00000.display-subsystem` 持有而**恒 on**），**不是 `gdscr` 寄存器原值**。⇒ 否证的是「这条路」，**不是 `HW_CONTROL_MASK` 位本身**；要读寄存器位须写内核侧 debugfs 钩子 = 新变量。
     - **教训**：静态 delta 的「机制像」不等于「可判别」；**先做零成本只读判别，能省掉一个臂**（本条正是省掉了一个单变量臂的实例）。
     - 证据：`reports/q28-armA-20261015.md` §8.1、`logs/armA-sampling-20261015/{s4-baseline,s6-baseline-bad2,s7-baseline}/genpd-*.txt`。
+
+279. **★「让失败非致命」≠「会重试」：B1 解开了软件闩锁，但守卫后面本来就没有重试循环 —— 必须区分「解除守卫」与「提供重试者」。**
+    - B1 臂（`.pi/plans/2026-10-15-方案B-可恢复化设计.md`）把 `dsi_bonded_cmd_failed` 的「一次失败永久闩死」改成有界重试（3 次），并删掉 3 处 short-circuit 清理的 early-return。
+    - **机制确实生效**（dmesg 铁证）：`bonded command failure 1/3 (command DMA timeout), will retry` → `2/3 (panel not prepared), will retry`，**全 boot 无 `giving up`** ⇒ 闩锁从未置位。
+    - **但面板依然黑**：`Failed to initialize panel` 全场**只出现 1 次**、`panel prepared`=0、**没有第二次 atomic commit**。
+      `drm_panel_prepare()` 由 **DRM panel bridge 在 atomic commit 里调用一次**；失败后**没有任何一方发起新 commit**。
+    - ⇒ **教训**：修「守卫是否允许重试」时，先确认**上游有没有重试者**。否则只得到「不再闩死」而非「会恢复」。
+    - 证据：`reports/q28-b1-firstsample-20261015.md`、trial `20261015T120428Z-b1-recoverable-s1-dark`。
+
+280. **★★Q28 坏发态下「重走 modeset」救不回（B3-b 否证）——恢复只能整机复位，且这与「软件闩锁」无关（B1 已解闩锁仍无效）。**
+    - 实验（零构建，`scripts/b3b-session-retry.sh`，在 B1 坏发台上）：停 greetd → `pkill phoc` → 重启 greetd。
+    - 结果：**phoc 1→2（会话确实重启、确实重走了 modeset）**，但 `dsi_isr` 仍 0、`panel_prepared` 仍 0、
+      `reset_failure` **268→394**（新尝试又失败）、用户目视**仍黑**。
+    - **与 P1 不矛盾**（对照实验）：GOOD 台上同样操作**安全**（`dsi_isr` 41→41、用户确认仍亮）。
+      ⇒ modeset 重走**不会弄坏好态**，但也**修不好坏态**。
+    - ⇒ **推论**：内核内 error worker 重发 commit（B3-a）**大概率同效** ⇒ 不再投入。
+    - ⇒ **对「闩锁假说」的直接否证**：B1 已解开软件闩锁仍救不回 ⇒ 坏发态是**持续性的硬件/电源域状态**。
+      这与七臂 vk116–vk125 一致，但**本条的证明更强**（那些臂未解开清理短路，B1 解开了）。
+    - 证据：`logs/b3b-session-retry-20261015/RESULT.md`。
+
+281. **★DPU 侧「hw recovery is not complete for ctl:N」是 Q28 坏发的**下游**签名（`dpu_hw_ctl.c:459`，CTL 软复位 poll 超时 → `-EINVAL` → kickoff `-22`）。**
+    - 实测：B1 坏发台上该行出现 **192 次**（与 `ctl N reset failure -22` 同数），随后 `frame done timeout` / `vblank timeout`。
+    - 读法：它**不是** DSI/PHY 的故障，而是 **DPU CTL 复位永远完不成** —— 属 L1 失败之后的 L2 表现。
+      与 `#164`「L2 是 L1 的后果」一致，**不要**把它当独立根因去修。
+    - 证据：`reports/q28-b1-firstsample-20261015.md` §2。
