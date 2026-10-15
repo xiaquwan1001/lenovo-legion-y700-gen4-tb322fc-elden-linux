@@ -43,6 +43,12 @@
 - **先查本地既有结论**：引导链（BL/AVB/降级/GPT/EDL）及反复出现的问题，先 `grep` 技能 `references/` + `archive/topics/` + `PITFALLS`；命中则本轮只做「确认或推翻」，差量重推（`PITFALLS` #87）。
 - **判据在设备侧**：主机侧构建/编译/能进 BDS 一律只算「未上机验证」；**无设备证据不得写「已修复/已解决」**（`PITFALLS` §0 纪律 4）。间歇性故障**单次样本无效**（须同口径量化 + 单变量 + 长时窗）。
 - **上机结论必须落 record**：一次设备实验 = `scripts/trial.sh` 一条机器可读记录（`reports/trials/`）；**无 record 不得写 verdict**；`--reset` 类型必填（`por`/`cold`/`warm`），复位敏感问题（如 Q28）禁暖复位样本。构建产物身份由打包前硬门 `scripts/assert-kernel-sane.sh` + `check-doctor §5e` 保证。
+- **报告必须被引用**：新落盘的 `reports/*.md` **不得成为孤儿** —— 至少从对应角度的 `README.md`
+  （如 `TASKS/README.md` §5 的 Q 行）或 `PITFALLS` 条目链过去；否则结论会随文件沉底
+  （2026-10-15 实例：`reports/q24-causal-audit-20261015.md` 既未入 git 也无人引用）。
+- **入库前门**：`.githooks/pre-commit` 会跑 `scripts/check-doctor.sh --staged-fast`（§7 入口文档
+  完整性 / §8 索引↔磁盘对账 / §9 SESSIONS 快照，~0.2 s）。**提交被拦时先修，不要习惯性 `--no-verify`**；
+  确需绕过用 `ELDEN_HOOK_SKIP=1`（如大批量归档搬迁）。收尾仍要跑**全量** `scripts/check-doctor.sh`。
 - **归因分层**：报「驱动/内核坏」前先分清 initramfs/rootfs 打包（C）与用户态配置（D）（`PITFALLS` #115）。
 - **主线优先**（服务上游化）：厂商私有 compatible 先找主线等效驱动，只补 DT/config/固件命名；主线没有则分「架构性不可做 / 私有 / 可自研」，只立第三类。
 - **上游化三问门**（写代码前）：① 有对应主线子系统 → 必须用其框架；② 有同类芯片驱动 → 复用/扩展而非新写；③ 硬件事实进 DT/数据表、软件策略才进 C。红线框架表、违例清单与下游隔离清单见 `reports/upstream-policy-20261013.md`。
