@@ -1,0 +1,18 @@
+{
+  "label": "armA-nobonded-s5-dark",
+  "ts": "2026-10-15T10:07:07Z",
+  "vk": "",
+  "image": "out/boot-elden-armA-nobonded.img",
+  "image_sha256": "5c25576f83f0be4fffc3e89888adf27a57513678655cbaf59aacd6dcdce1e10a",
+  "manifest": "out/boot-elden-armA-nobonded.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "1fe8d416a560c7be190708d08fe8470333d4591f8f529dd6e5d2d2553dbf58d3",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "BAD-NOSCAN",
+  "log_dir": "logs/armA-sampling-20261015/s5-armA",
+  "note": "arm A sample 5 (fastboot boot, POR->fastboot). USER-CONFIRMED BLACK SCREEN (only backlight, no content). Software state again looks 'healthy': l1=0, l2=0, 'ctl reset failure'=0, dsi_isr=0, panel 'prepared' 12.25s, backlight controllable (power key -> 511), DPMS On, card0-DSI-1 connected, phoc/phosh/wayland up. devprobe2 AGAIN returned the FALSE VERDICT=GOOD => the probe's rule (l1==0 + connector + session) is demonstrably insufficient and must not be trusted alone. Same subtype as s3 (backlight controllable). ARM A NOW 0 GOOD / 3 BAD. Combined with baseline 1 GOOD/1 BAD, and given Q28's known ~50% clustered rate, arm A shows NO improvement; it does remove the -110 signature in its bad boots (l1=0 vs baseline s4 l1=5) but the panel is dark either way."
+}
