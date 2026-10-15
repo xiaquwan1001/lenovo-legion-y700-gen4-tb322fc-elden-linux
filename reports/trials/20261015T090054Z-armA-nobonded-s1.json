@@ -1,0 +1,18 @@
+{
+  "label": "armA-nobonded-s1",
+  "ts": "2026-10-15T09:00:54Z",
+  "vk": "",
+  "image": "out/boot-elden-armA-nobonded.img",
+  "image_sha256": "5c25576f83f0be4fffc3e89888adf27a57513678655cbaf59aacd6dcdce1e10a",
+  "manifest": "out/boot-elden-armA-nobonded.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "1fe8d416a560c7be190708d08fe8470333d4591f8f529dd6e5d2d2553dbf58d3",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "BAD-NOSCAN",
+  "log_dir": "logs/armA-sampling-20261015/s1-armA",
+  "note": "arm A sample 1 (fastboot boot, POR from fastboot). Q28 -110 SIGNATURE GONE: command DMA timeout=0, bonded command DMA failed=0, Failed to initialize panel=0; panel 'prepared' at 12.27s. BUT panel is NOT lit: dsi_isr=0 (both lines), DPU core_irq FROZEN at 9 (3s delta=0), backlight=511. Failure MOVED to DPU side: 162x 'enc35 intf1/intf2 ctl 1 reset failure: -22' starting 14.02s (dpu_encoder_phys_vid_prepare_for_kickoff:576). This is the SAME -22 signature as the P1/P2b upstream-DSI arms. => devprobe2's VERDICT=GOOD is a FALSE GOOD (it keys on l1==0 + session/connector; dsi_isr=0 + frozen core_irq prove no scanout). Verdict recorded as BAD-NOSCAN, NOT GOOD. Interpretation pending baseline comparison."
+}

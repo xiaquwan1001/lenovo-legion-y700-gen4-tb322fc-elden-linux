@@ -1,0 +1,18 @@
+{
+  "label": "armA-nobonded-s3-good",
+  "ts": "2026-10-15T09:27:32Z",
+  "vk": "",
+  "image": "out/boot-elden-armA-nobonded.img",
+  "image_sha256": "5c25576f83f0be4fffc3e89888adf27a57513678655cbaf59aacd6dcdce1e10a",
+  "manifest": "out/boot-elden-armA-nobonded.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "1fe8d416a560c7be190708d08fe8470333d4591f8f529dd6e5d2d2553dbf58d3",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "BAD-NOSCAN",
+  "log_dir": "logs/armA-sampling-20261015/s3-armA",
+  "note": "*** VERDICT CORRECTED GOOD -> BAD-NOSCAN by USER OBSERVATION (2026-10-15) *** User was at the device and reported: screen shows NO CONTENT; power key controls backlight brightness (observed brightness changing 160->511) and volume/audio work. This is the classic Q28 bad-boot signature. My earlier GOOD call was WRONG: I over-trusted 'l1=0 + reset-failure=0 + repaint-stimulated core_irq delta=8 + grim framebuffer content (1904x3040, 151 distinct byte values)'. LESSON (major): on this board the DPU scanout/counter pipeline AND the Wayland compositor buffer can both look completely healthy while the panel displays NOTHING. grim captures the compositor's OWN buffer, not the panel output => grim content is NOT evidence the panel is lit. core_irq/msm IRQ advancing likewise only proves the DPU is running, not that the panel received valid video. CONSEQUENCE: the only trustworthy 'panel is lit' criterion remains USER EYES (PITFALLS #251/#255 was right); the software-side proxies I proposed are INVALID. Software state present here while dark: DPMS On, connector 'enabled', backlight on, disp_cc_mdss_pclk0/1_clk_src = 172991986 Hz claimed by ae94000.dsi/ae96000.dsi, dsi0_phy_pll_out_dsiclk=378419971 claimed by both, byte clks claimed, crtc intf_mode=2. NOTE: 'DSI PLL(0) lock failed status=0x0' x4 + 'orphan reparent failed -110' x4 appear in ALL THREE samples (incl. the working baseline s2) => benign early-probe artifact, NOT the discriminator. ORIGINAL (now-superseded) note follows: arm A sample 3 (fastboot boot, POR->fastboot). ARM A CAN LIGHT THE PANEL: l1=0, l2=0, 'ctl reset failure'=0 (vs sample1's 162), panel 'prepared' 12.x s, card0-DSI-1 connected, phoc/phosh/wayland up. Repaint-stimulated core_irq delta=8/repaint 3/3 rounds (counter 3350->3374) IDENTICAL to baseline s2 => frames ARE being produced. grim captured 1904x3040 PNG, 37666 B; decoded IDAT: 151 DISTINCT byte values in first 200KB (blank screen would be ~2) => real desktop content, not a blank frame. NUANCE (honest): dsi_isr=0 in this sample whereas baseline s2 had dsi_isr=41; frames here are counted on the 'msm' mdss line (IRQ 0, count 3382) instead. So dsi_isr is NOT a reliable arm-A discriminator - arm A's command path differs (that is the whole point of the arm), so DSI controller IRQ accounting differs. => VERDICT GOOD is based on core_irq/repaint + framebuffer content, which are the robust criteria. dsi_isr should be treated as arm-specific, not universal. THIS OVERTURNS the s1 conclusion that 'arm A substitutes a DPU -22 failure': arm A is NOT deterministic-fail; s1 was a failure of a different kind and s3 is a clean GOOD."
+}
