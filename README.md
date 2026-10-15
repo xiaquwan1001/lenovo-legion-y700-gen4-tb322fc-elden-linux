@@ -33,18 +33,22 @@
 | 存储/内存 | 16 GB / 512 GB（UFS），A/B 双槽 |
 | 目标 | **上游 Linux**（非 Android、非厂商内核），并**按模块向上游提交** |
 
-同型号多台单元物理等价，本项目用 **U1 / U2** 指代单元；任务按单元**当前状态**分派。
+> **SSOT**：机型规格的权威正文在 [`DEVICE/README.md`](DEVICE/README.md)；本表只是公开门面的速查副本。
+> 单元台账（U1/U2）与分区/槽位口径同样以 `DEVICE/README.md` 为准。
 
 ---
 
 ## 2. 目标（按优先级）
 
-- **G1 — 完整 Linux + 上游化**：跑功能健全的主线 Linux，正确驱动原厂固件（ADSP/CDSP/WCN7861/
-  GPU/触屏/触觉/功放/tplg/相机…）；达到上游规范后按模块提交（`checkpatch`/DTC/`dtbs_check` 绿）。
-- **G2 — 安卓容器**：不依赖 Android 宿主运行安卓应用（主路线 **Waydroid**，备胎 redroid）。
-  核心验收 = 可用性 + 风控/完整性等级（GMS 登录、Play Integrity / SafetyNet、Widevine 到哪一级，**取证判定**）。
-- **G3 — x86 模拟**：以 **Steam 游戏**为载体跑通 x86 用户态/游戏（Box64 + Wine/Proton）。
-- **拓展（非主线）**：UEFI 间接引导、Gunyah 高通虚拟化做 VM。
+> **SSOT**：目标定义与逐项状态**只**在 [`AGENTS.md`](AGENTS.md)（项目描述）与
+> [`TASKS/README.md`](TASKS/README.md) §0（进度数字）维护；此处不复述，避免三处漂移。
+
+- **G1 — 完整 Linux + 上游化**（驱动 bring-up + 按模块上游提交）
+- **G2 — 安卓容器**（Waydroid 为主路线；验收 = 可用性 + 风控/完整性等级）
+- **G3 — x86 模拟**（Steam 游戏为载体，Box64 + Wine/Proton）
+- **拓展（非主线，不阻塞 G1–G3）**：UEFI 间接引导、Gunyah 虚拟化
+
+完整措辞与验收口径见 [`AGENTS.md`](AGENTS.md) §目标；当前完成度见 [`TASKS/README.md`](TASKS/README.md) §0。
 
 ---
 
