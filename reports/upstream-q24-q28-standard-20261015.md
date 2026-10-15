@@ -37,7 +37,11 @@
 
 ### 2.3 新标准暴露的三个缺口（旧口径看不到）
 
-1. **P1 前提未实证**：`msm_dsi_cfg_get()` 改为 compatible 消歧前，必须先上机读 SM8750 的 `REG_DSI_VERSION`（当前是从上游表 + 报告推断）。**这是 L2 的第一块砖**。
+1. ~~P1 前提未实证~~ **✅ 2026-10-15 已用行为证据证实（无需读寄存器，零新增上机）**：
+   - 依据链：`dsi_host_get_id()`（`dsi_host.c:2156`）要求 `cfg->io_start[i][j] == res->start`，否则 `-EINVAL` ⇒ probe 失败（`unable to identify DSI host index`）。
+   - 两条表项的 cfg **只差 `io_start`**：`sm8650_dsi_cfg = {0xae94000, 0xae96000}`、`kaanapali_dsi_cfg = {0x9ac0000, 0x9ac3000}`（`dsi_cfg.c:197-216`；`io_offset`/`regulator_data`/`bus_clk_names` 完全相同），ops 也相同（都是 `msm_dsi_6g_v2_9_host_ops`，`dsi_cfg.c:344-347`）。
+   - 本板 DSI ctrl = `0xae94000/0xae96000`（在机 `ae94000.dsi`/`ae96000.dsi`）⇒ 只有 `sm8650_dsi_cfg` 能匹配 ⇒ **选中的必是 V2_9_0 表项**（若为 V2_10_0 则 io_start 不匹配、DSI probe 必失败、面板不可能点亮——本机已多次点亮）。
+   - 副作用结论：**"加 `sm8750_dsi_cfg`" 的收益是结构性（给未来 per-SoC 差异留位置），不是数据性的**（当前数据与 sm8650 相同）；而 P1 的机械部分（删 H07/H28 冗余 compat）**与前提无关**：两条表项 ops 相同 ⇒ 删前删后行为等价。
 2. **「行为中性」缺形式化**：B5 的 P1–P3 声明对 Q28 行为中性，但**没有任何采样协议验证**（Q28 时间成簇 ⇒ 单样本不可比）。新标准要求：P2/P3 落地时**必须**与 P4 分离 + 同会话交替采样（`PITFALLS #223`）。
 3. **根因「控制器外」与标准分层冲突**：L3 是「vendor 命令路径」，而故障态指向 **DSI 控制器之外（dispcc/INTF 侧动态时钟请求）**。⇒ 若上游答复倾向「dispcc/INTF 侧」，Q28 会**跨出 B5 的范围**（进入 clk/dispcc 子系统），需按 Q1 重新选框架、另立条目（当前无 SM8750 dispcc 驱动：Lenovo stock 未含 clk 驱动）。
 
@@ -79,6 +83,21 @@
 | 根因解决 | 指出被违反的硬件/顺序约束并反证 | ❌ 未达成（靶点已转电气/时序级） |
 | 上游化完成 | ① RFC 有上游复现/确认；② 若为驱动/DT 缺陷 ⇒ 按正确层提交；③ 若为硬件/PMIC 特性 ⇒ 上游文档化 + 我们的隔离件留在包外 | ❌ ≈30% |
 
+### 3.5 Q24 静态对照：上游 consumer（Kaanapali）vs 我们（2026-10-15，主机侧，零设备）
+
+> 动机 = RFC v3 §3 收到「上游有 consumer = Kaanapali camera DT overlay v21 14/14」后的第 ① 步（本文 §5 建议动作 3）。证据：`build/m1-upstream/clean-tree-73`（= 7.3-rc7 + 基线）。
+
+| 对象 | Kaanapali（上游 consumer） | SM8750（我们） | 差异/判定 |
+|---|---|---|---|
+| cambist 节点 | `kaanapali.dtsi:1643`，`reg=0x1760000/0x8000` | `sm8750.dtsi:2114`（pristine 7.3-rc7 同款），`reg=0x1760000/0x6000` | 仅 reg 长度（SoC 事实） |
+| **power-domains** | `<&rpmhpd RPMHPD_MMCX>, <&rpmhpd RPMHPD_MX>` | **同**（`sm8750.dtsi:2116`；我们的 H1 臂"还原上游"正是回到这一形态） | **无差异** ⇒ DT 形状**不是** Q24 的杠杆（与 H1 臂否证一致） |
+| **required-opps** | `low_svs, low_svs` | **同** | 无差异 |
+| `#power-domain-cells` | **无** | `<1>`（**pristine 7.3-rc7 就有**，非我们加的） | 无 consumer（全树 grep `power-domains = <&cambistmclkcc` = 0）、驱动无 GDSC（`cambistmclkcc-sm8750.c` 不含 `gdsc.h`）；binding `qcom,sm8450-camcc.yaml` 的示例**含** `#power-domain-cells`⇒ 合法但**空转**。⇒ 可作上游 nit/提问，**非 Q24 根因** |
+| 驱动 | `cambistmclkcc-kaanapali.c` | `cambistmclkcc-sm8750.c` | PLL 类型 `RIVIAN_EKO_T` vs **`RIVIAN_ELU`**、vco 表（2 段 vs 1 段）、多一条 `SLEEP_CLK` parent mux |
+
+**判定**：**SM8750 与 Kaanapali 的 cambist 电源模型逐项相同**（同域、同 opp），而 Kaanapali 在上游是"与 camss 一起使用"的既定 consumer ⇒ **"裸时钟控制器配对"本身不是配置错误**，Q24 的差异只可能在 ① 寄存器所在电源岛/顺序约束（v3 §2 问题 2）② SM8750 的 RIVIAN_ELU PLL/分支行为 ③ RPMh/regulator 时序。⇒ 下一步提问应指向 ①/②，**不要再回到 DT 形状**（三个 DT 变体已全部否证）。
+   - 另一条同源证据：`reg` 块 `0x1760000` 落在 MMSS/camcc 电源岛（camcc GDSC 管辖），而 cambist 自身 AHB 时钟来自 **GCC** ⇒ "camcc 侧必须在位/有 GDSC provider"与"BIST 块保留 AHB+PLL"之间的**顺序约束**是当前最值得问上游的问题（v3 §2 问题 1/2 已问，措辞可再加此静态依据）。
+
 ## 4. 对照与优先级（新标准视角）
 
 | 维度 | Q28 | Q24 |
@@ -91,9 +110,9 @@
 
 ## 5. 建议动作（按性价比，全部可执行）
 
-1. **Q28-P1 前置实证**（设备 1 次）：读 SM8750 `REG_DSI_VERSION` ⇒ 确认是否 `V2_9_0`；顺带取一次冷起三态样本。**授权已获（免在场刷机）**。
+1. ~~Q28-P1 前置实证~~ ✅ **已完成（2026-10-15，无需上机）**：见 §2.3-1 的行为证据链（`dsi_host_get_id()` 的 io_start 匹配 + 面板点亮）。**结论：P1 可推进**，且其机械部分与版本号无关。
 2. **Q28-P0/P1 落地**（主机）：P0（DSC 1.2 通用，独立补丁）+ P1（compatible 消歧，机械零行为）⇒ 各过 checkpatch `--strict` + 编译门，入 `patches/upstream/`（**投递冻结中，只备料**）。
-3. **Q24 静态对照**（主机）：拉取/阅读 Kaanapali camera DT overlay v21（上游 consumer）与我们的 `cambist`/`camcc` 节点做 14/14 逐项对照，产出差异表 ⇒ 可能直接得到"顺序约束"的线索。
+3. ~~Q24 静态对照~~ ✅ **已完成（2026-10-15，主机侧零设备）**：见 §3.5 —— **电源模型逐项相同，差异只在驱动（RIVIAN_ELU）/reg 长度/空转 `#power-domain-cells`** ⇒ DT 形状排除，问题收窄到「电源岛+顺序约束 / PLL 行为 / RPMh 时序」。
 4. **把两项写成 M 系列正式行**（本次已做，见 `TASKS/README.md` §7 M6/M7）。
 5. **不做的**：Q28 再扫 DT/驱动变体（已否证 7 臂 + H1/D1/D2）；Q24 再扫 DT 变体（H1/H2/mxnom 已否证）；把任何 workaround 包装成"修复补丁"。
 
