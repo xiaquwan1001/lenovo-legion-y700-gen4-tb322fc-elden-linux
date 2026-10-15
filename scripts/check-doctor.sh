@@ -298,6 +298,31 @@ emit('LEAK', leak)
 emit('TAIL', tail)
 emit('ORPHAN', orphan)
 emit('DUPNUM', dupnum)
+
+# ---- 8b. 写死在文档里的「N 节 / N 条」计数必须与磁盘实际条数一致 ----
+# 依据：2026-10-15 实测 INDEX.md 写「PITFALLS §0 + 33 节索引」，而实际已 36 节——
+# 这类手写计数只会在每次新增条目时静默漂移，属可机读的账（readme 的表格行数 = 真值）。
+stale = []
+# (受管文档, 正则捕获组1=声明的数, 真值来源目录)
+COUNT_RULES = [
+    ('INDEX.md', r'PITFALLS[^\n]*?(\d+)\s*节', 'PITFALLS'),
+]
+for rel, pat, ang in COUNT_RULES:
+    p = os.path.join(root, rel)
+    if not os.path.isfile(p):
+        continue
+    txt = open(p, encoding='utf-8', errors='replace').read()
+    idx = os.path.join(root, ang, 'README.md')
+    if not os.path.isfile(idx):
+        continue
+    # 真值 = 该角度 README 索引表里指向 sessions/ 的行数（与 §8 的正文对账同源）
+    # 注：链接是相对的（`sessions/NN-...`），**不带**前导斜杠 —— 用 '/sessions/' 会恒为 0。
+    real = sum(1 for ln in open(idx, encoding='utf-8', errors='replace')
+               if ln.startswith('|') and 'sessions/' in ln)
+    for m in re.finditer(pat, txt):
+        if int(m.group(1)) != real:
+            stale.append('%s 声明「%s 节」但实际 %d 节' % (rel, m.group(1), real))
+emit('STALECOUNT', stale)
 PY
 )
 echo
@@ -316,6 +341,7 @@ while IFS=$'\t' read -r _st _msg; do
   case "$_st" in
     ORPHAN) [ "$_msg" = "-" ] && ok "已声明登记的角度：sessions/ 正文均被 README 引用" || warnf "索引未登记（仅对声明逐文件登记的角度核；补 README 行或移出该口径）: $_msg" ;;
     DUPNUM) [ "$_msg" = "-" ] && ok "文件名/条目编号无撞车" || bad "编号撞车（引用歧义，必须重编）: $_msg" ;;
+    STALECOUNT) [ "$_msg" = "-" ] && ok "文档内手写条目计数与磁盘一致" || bad "文档手写计数已过期（改为不写死数字，或同步修正）: $_msg" ;;
   esac
 done <<< "$_media"
 
