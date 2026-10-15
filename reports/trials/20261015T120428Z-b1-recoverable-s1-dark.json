@@ -1,0 +1,18 @@
+{
+  "label": "b1-recoverable-s1-dark",
+  "ts": "2026-10-15T12:04:28Z",
+  "vk": "",
+  "image": "out/boot-elden-b1-recoverable.img",
+  "image_sha256": "e96234b20f09aaad7f2c65956b69cd45c7d74a4392acbd946277d4fe5a3aeae7",
+  "manifest": "out/boot-elden-b1-recoverable.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "c187280fc401a63895981b093fc1821ce7f3825c9d883ba617cd1bf9c2e9438f",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "c801884334804b56bbf4164af841a9d7896e13e3634f5f4f6000c111f983b558",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "BAD-NOSCAN",
+  "log_dir": "logs/b1-sampling-20261015/b1-s1",
+  "note": "B1 arm sample 1 (fastboot boot, true POR). USER-CONFIRMED BLACK, and power key CANNOT control backlight => B-type subtype (same as baseline s4/s6). B1's mechanism PARTIALLY WORKED, which is the key finding: dmesg shows 'dsi: bonded command failure 1/3 (command DMA timeout), will retry' then '2/3 (panel not prepared), will retry' and NEVER 'giving up' => the permanent latch did NOT engage (part (a) works as designed). BUT there was NO SECOND ATTEMPT: 'Failed to initialize panel -110' occurs exactly ONCE, a single 'sending dcs data ff 20 failed: -110', and the panel prepare is never re-run. DRM instead gave up by itself: 192x 'hw recovery is not complete for ctl:1' + 'ctl 1 reset failure -22' + frame-done/vblank timeouts. => DIAGNOSIS: making the failure non-fatal is NECESSARY BUT NOT SUFFICIENT - nothing actually requests the retry. The missing piece is a caller that re-runs the modeset/panel-prepare (方案 B3 territory). l1=6, l2=444, dsi_isr=0, backlight=160, card0-DSI-1 connected, session up (false-GOOD trap again)."
+}

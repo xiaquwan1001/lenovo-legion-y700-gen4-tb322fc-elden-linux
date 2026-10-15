@@ -111,3 +111,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-15T10:07:07Z	armA-nobonded-s5-dark		por	fastboot-boot	BAD-NOSCAN	5c25576f83f0	logs/armA-sampling-20261015/s5-armA
 2026-10-15T10:53:00Z	m1-baseline-f3-s6-bad2		por	none	L1FAIL	40e13f8ad43b	logs/armA-sampling-20261015/s6-baseline-bad2
 2026-10-15T11:10:05Z	m1-baseline-f3-s7-good		por	none	GOOD	40e13f8ad43b	logs/armA-sampling-20261015/s7-baseline
+2026-10-15T12:04:28Z	b1-recoverable-s1-dark		por	fastboot-boot	BAD-NOSCAN	e96234b20f09	logs/b1-sampling-20261015/b1-s1
