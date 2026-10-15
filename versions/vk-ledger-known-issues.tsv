@@ -212,3 +212,4 @@ e4-probedelay	uts_dup	同族 E4：单变量=ath12k_pci_probe 首探前 msleep(80
 f1-mhiretry	uts_dup	WCN 修法 F1：ath12k_mhi_start 内 6 次重发（否证）；UTS 刻意复用 m1-baseline（ramdisk 模块 vermagic）
 f2-socreset	uts_dup	WCN 修法 F2：每轮先 ath12k_pci_sw_reset(true) 再重发（否证，6/6 -110）；UTS 同 m1-baseline
 f3-defer	uts_dup	WCN 修法 F3：ath12k_core_init 失败返 -EPROBE_DEFER 让驱动 core 重跑整轮 probe（**通过**：11.78 s chip_id、Run/init 7.670 s）；UTS 同 m1-baseline
+m1-baseline-f3	uts_dup	M1-7.3 功能基线 + F3（ath12k -EPROBE_DEFER 自愈）镜像；ramdisk/DTB 复用 73j ⇒ 同一 UTS 串多重出现；2026-10-15 已刷 boot_b，冷起 GOOD（Run/init 7.667s + 面板 L1=0/L2=0 + WCN 重探 11.77s + wlan0 17.52s）
