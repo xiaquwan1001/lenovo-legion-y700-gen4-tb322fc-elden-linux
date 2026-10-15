@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # elden 项目医生 — 机器账自检（只读，不改任何文件）
 #
-# 用法:  scripts/check-doctor.sh     退出码: 0 = 全绿；1 = 有 FAIL
+# 用法:  scripts/check-doctor.sh                 退出码: 0 = 全绿；1 = 有 FAIL
+#        scripts/check-doctor.sh --staged-fast  只跑 §7/§8/§9（纯文本，~0.2 s）
+#                                               —— 供 .githooks/pre-commit 用；
+#                                               跳过 §5/§5d 的 vk 镜像解压（那是墙钟大头）
 #
 # 文档 v2 起不再做文档计数 / 死链 / 口径字样检查：记录的区分度靠写入时的
 # 文件夹(角度) + 文件名(日期+主题) + pi 会话 id 保证（见 INDEX.md §2 / .pi/AGENT-OPS.md §4）。
@@ -16,6 +19,15 @@
 #   9. SESSIONS/ 快照一致性（委托 scripts/check-sessions.sh）  ← 2026-10-15 L1
 set -uo pipefail
 
+FAST=0
+for a in "$@"; do
+  case "$a" in
+    --staged-fast|--fast) FAST=1 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+    *) echo "check-doctor: 未知参数 $a（支持 --staged-fast）" >&2; exit 2 ;;
+  esac
+done
+
 cd "$(dirname "$0")/.."
 ROOT=$PWD
 
@@ -25,7 +37,17 @@ ok()   { printf '  [ok]   %s\n' "$1"; }
 bad()  { printf '  [FAIL] %s\n' "$1"; fail=$((fail+1)); }
 warnf(){ printf '  [warn] %s\n' "$1"; warn=$((warn+1)); }
 
-echo "== elden check-doctor — $ROOT =="
+if [ "$FAST" = 1 ]; then
+  echo "== elden check-doctor (--staged-fast: 只跑 §7/§8/§9) — $ROOT =="
+else
+  echo "== elden check-doctor — $ROOT =="
+fi
+
+if [ "$FAST" = 1 ]; then
+  # ---- 快速路径：跳过 §4/§5/§5d/§5e/§6（含 vk 镜像解压，墙钟 ~14 s） ----
+  # 这些节的内容与「文档/索引改动」无关，pre-commit 无需承担其成本。
+  :
+else
 
 # ---------------------------------------------------------------- 4. 已退场入口不得复辟
 echo
@@ -175,6 +197,8 @@ while IFS=$'\t' read -r st msg; do
     DEAD)    [ "$msg" = "-" ] && ok "scripts/*.sh 无死脚本" || warnf "疑似死脚本（无任何活跃引用，核实后删/标 legacy）: $msg" ;;
   esac
 done <<< "$static"
+
+fi   # ← --staged-fast 快速路径到此结束；以下 §7/§8/§9 两条路径都跑
 
 # ---------------------------------------------------------------- 7/8/9. 入口与索引完整性（L1）
 # 立此节的直接原因（2026-10-15 独立审查）：三项硬故障全部落在此前自检的盲区里——

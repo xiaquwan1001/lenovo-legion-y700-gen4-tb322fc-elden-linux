@@ -1,0 +1,51 @@
+#!/bin/sh
+# pre-commit — 提交前守住「入口文档完整性 + 索引编号唯一」。
+#
+# 立此钩的原因（2026-10-15 独立审查）：
+#   INDEX.md（自称唯一入口）在未闭合 ``` 围栏内物理截断、并泄漏 pi-fold 机器证据指针，
+#   **自首次提交起存活 12 天无人发现** —— 因为 check-doctor 只在人工「收尾」时手动跑。
+#   同批还有 PITFALLS 两个 `33-` 且其条目号 #171–#178 与既有条目撞号（引用歧义）。
+#   这两类都是纯文本判定、合计 <0.2 s，适合放进入库前的门。
+#
+# 跑的检查 = check-doctor 的 §7 + §8 + §9 所对应的判据（不跑昂贵的 §5 vk 镜像扫描）。
+#   快速路径由 check-doctor 的 `--staged-fast` 提供：只做 §7/§8/§9，墙钟 ~0.2 s。
+#
+# 绕过：ELDEN_HOOK_SKIP=1 git commit ...   （例如大批量归档搬迁时）
+#       或 `git commit --no-verify`（全局跳过所有钩子）
+set -u
+
+[ "${ELDEN_HOOK_SKIP:-0}" = "1" ] && exit 0
+
+# 只在仓库根有 check-doctor 时生效（避免在 worktree/子模块里误报）
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$root/scripts/check-doctor.sh" ] || exit 0
+
+# 没有相关文件变动就不必跑（纯构建/blobs 提交快速通过）
+changed=$(git diff --cached --name-only --diff-filter=ACMR)
+case "$changed" in
+  *"INDEX.md"*|*"AGENTS.md"*|*"README.md"*|*"PROGRESS.md"*|*"sessions/"*|*"PITFALLS/"*|*"TASKS/"*|*"DEVICE/"*|*"RESOURCES/"*|*"HISTORY/"*|*"RUNBOOK-BRINGUP/"*|*".pi/"*)
+    ;;
+  *) exit 0 ;;
+esac
+
+out=$(cd "$root" && timeout 120 scripts/check-doctor.sh --staged-fast 2>&1)
+rc=$?
+
+if [ $rc -ne 0 ]; then
+  printf '%s\n' "$out" | grep -E '\[FAIL\]' >&2
+  cat >&2 <<'EOF'
+
+pre-commit: 入口/索引完整性检查未通过（见上）。
+
+常见修法：
+  - 围栏未闭合 / 疑似截断  → 补齐 ``` 围栏、恢复被截正文
+  - 机器证据指针泄漏      → 删掉 [Exact evidence: ...] / pi-fold-evidence 行，只留相对路径引用
+  - 编号撞车              → PITFALLS 文件名顺延全局最大号；正文章节号同理
+  - SESSIONS 快照不一致    → bash scripts/check-sessions.sh 看细节
+
+绕过（确认无碍时）：ELDEN_HOOK_SKIP=1 git commit ...   或   git commit --no-verify
+EOF
+  exit 1
+fi
+
+exit 0
