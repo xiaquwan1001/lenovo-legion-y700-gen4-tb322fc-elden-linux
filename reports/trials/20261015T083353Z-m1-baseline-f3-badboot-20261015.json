@@ -1,0 +1,18 @@
+{
+  "label": "m1-baseline-f3-badboot-20261015",
+  "ts": "2026-10-15T08:33:53Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline-f3.img",
+  "image_sha256": "40e13f8ad43b0cb155dd9b98092a1790ca6f4b9629d4ae96123b8642438010af",
+  "manifest": "out/boot-elden-m1-baseline-f3.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "32e93db7a0c229b43cbf8c50a20650b1cabf436e7ffdd180208e2722e28547ad",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "q28",
+  "verdict": "L1FAIL",
+  "log_dir": "logs/q28-badboot-20261015",
+  "note": "boot_b (flashed m1-baseline-f3, M1-7.3 upstream baseline) found sitting in a Q28 BAD BOOT when device came online 2026-10-15 16:22. Independent confirmation that Q28 survives on the M1 upstream-standard tree AFTER the E1b display-regression fix (PLL_SYSTEM_MUXES) was merged into the baseline. L1 signatures: 'command DMA timeout status=0x2200200' + 'bonded command DMA failed master=-110 peer=-110' + 'Failed to initialize panel -110' at 11.91s. dsi_isr=0 (no DSI interrupt ever fired). L2 storm: 834x 'ctl reset failure' + 1202x vblank/frame-done timeouts. FALSE-GOOD TRAP: card0-DSI-1=connected, phoc/phosh/wayland all up, backlight=160, crtc-0 intf_mode=2 and core_clk_rate non-zero - all 'normal' on a bad boot; verdict must come from l1>0 not session/connector (PITFALLS #251/#255). OBJECTIVE panel-dark evidence (no user needed): DPU core_irq frozen at 10 across a 3s window (delta=0) + dsi_isr=0 => display pipeline is not scanning out. Boot was NOT a fresh POR performed for this record - it is the 10-15 flashed-boot_b cold boot, uptime 1h58m at capture, no warm reset since (so reset_type=por). q28-watchdog was OFF (marker /etc/q28-watchdog.disable persisted from 2026-10-13) so the operational backstop did not fire - this is the 'bad boot persists indefinitely' mode, not the watchdog-recoverable one."
+}

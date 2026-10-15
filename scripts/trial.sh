@@ -85,7 +85,9 @@ device_gate() {
 write_record() {
 	# 由 env 传字段：LABEL IMAGE RESET DEPLOY PROBE VERDICT LOGDIR NOTE
 	mkdir -p "$TDIR"
-	local mf="$OUT/boot-elden-$(_vk "$IMAGE").manifest"
+	# manifest 命名 = 镜像 basename 去 .img（不依赖 vk 号：m1-baseline-f3 / armA-nobonded
+	# 等描述性镜像名同样有 manifest，旧的 "$(_vk …)" 推导会得到空名 ⇒ 身份字段全丢）
+	local mf="${IMAGE%.img}.manifest"
 	local img_sha kernel_uts kernel_payload config_sha dtb_sha
 	img_sha=$([ -e "$IMAGE" ] && sha256sum "$IMAGE" | cut -d' ' -f1 || echo "(absent)")
 	if [ -f "$mf" ]; then

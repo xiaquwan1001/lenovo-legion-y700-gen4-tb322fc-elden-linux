@@ -103,3 +103,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-14T13:17:00Z	e3-dyndbg		warm	none	L2STORM	43e7b8881881	/home/xuqianhui1001/y700-elden/logs/arm-e3-dyndbg
 2026-10-14T13:43:43Z	e3a-mhi30		warm	none	GOOD	eebfe78ada41	/home/xuqianhui1001/y700-elden/logs/arm-e3a-mhi30
 2026-10-14T14:37:00Z	e4-probedelay			none		a3e002482a97	
+2026-10-15T08:33:53Z	m1-baseline-f3-badboot-20261015		por	none	L1FAIL	40e13f8ad43b	logs/q28-badboot-20261015
