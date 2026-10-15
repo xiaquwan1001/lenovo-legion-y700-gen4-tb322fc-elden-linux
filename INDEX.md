@@ -77,7 +77,7 @@
 | **资源 / 资产 / 会话** | **`RESOURCES/`** | §1 外部参考 · §2 本地资源 · **§3 文件与资产台账（git 边界/可清理）** · §4 会话检索（pi 原生） |
 | **上机手册** | **`RUNBOOK-BRINGUP/`** | 任一单元从原厂状态做到 b 槽直启 + 持久根的 Phase −1…9 |
 | **开发经验 / 踩坑** | **`PITFALLS/`** | **开发经验唯一入口**：`README.md` = §0 零号纪律 + 索引表（条数以该表实际行数为准，勿在此写死）；正文在 `sessions/NN-*.md`（含 **§15 过时/废弃登记**） |
-| **会话档案（逐会话）** | **`SESSIONS/`** | 会话视角快照：`README.md` = 索引表/统计/内核时间线 + `sessions/YYYY-MM-DD-<名称>.md`（数量见 `SESSIONS/README.md` §1）。会话身份与全文检索 = pi 原生会话（`session_search` / `/resume`） |
+| **会话档案（逐会话）** | **`SESSIONS/`** | ⚠ **已冻结的历史快照（2026-10-15 起不再增补）**：`README.md` = 索引表/统计/内核时间线 + `sessions/YYYY-MM-DD-<名称>.md`。**新会话一律不进本目录**；会话身份与全文检索 = pi 原生会话（`session_search` / `/resume`）。此处保留仅为档案 + `check-sessions.sh` 校验基准 |
 | **git 提交史（逐提交）** | **`HISTORY/`** | 提交视角权威：`README.md` = 总览/类型统计/规范 + `days/YYYY-MM-DD.md`（总数见 `HISTORY/README.md` §1）。由 `scripts/gen-history.sh` 再生 |
 
 ### 证据层（`archive/`，追加为主）
