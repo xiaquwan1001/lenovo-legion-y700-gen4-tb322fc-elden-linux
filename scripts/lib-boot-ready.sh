@@ -37,7 +37,7 @@ boot_ready_or_die() {
 	# 1) fire 前复核 SSH 仍活
 	if [ "$($S 'echo up' 10)" != "up" ]; then
 		echo "[boot-ready] FAIL: SSH 未答（设备不在 Linux 或通道未起）-- 拒绝 reboot" >&2
-		echo "[boot-ready]   若目标是物理 POR 冷起样本，请走 scripts/q28-cold-run.sh，别在此强发复位。" >&2
+		echo "[boot-ready]   若目标是物理 POR 冷起样本，见 archive/2026-10-15-retired-scripts/q28-cold-run.sh，别在此强发复位。" >&2
 		exit 3
 	fi
 
