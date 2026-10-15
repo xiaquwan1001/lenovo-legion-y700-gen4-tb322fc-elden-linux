@@ -1,0 +1,18 @@
+{
+  "label": "sleep-sweep-run2",
+  "ts": "2026-10-15T14:14:46Z",
+  "vk": "",
+  "image": "device:7.3.0-rc7-debug-ged6f232d10e3",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "ALIVE",
+  "log_dir": "/tmp/sleep-sweep.log",
+  "note": "conf=[camcc-sm8750 cambistmclkcc-sm8750] run2 uts=7.3.0-rc7-debug-ged6f232d10e3"
+}

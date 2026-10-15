@@ -115,3 +115,7 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-15T13:23:10Z	m1-73-modules-camstack		cold	none	CAM-STACK-UP-NO-STREAM	40e13f8ad43b	
 2026-10-15T13:49:25Z	q24-n1-syncstate-falsified		cold	none	N1-FALSIFIED	40e13f8ad43b	
 2026-10-15T14:04:05Z	q24-n1b-boottime-pairing		por	none	N1b-CONFIRMS-MECHANISM	40e13f8ad43b	
+2026-10-15T14:14:21Z	sleep-sweep-run1		warm	none	ALIVE	(absent)	/tmp/sleep-sweep.log
+2026-10-15T14:14:46Z	sleep-sweep-run2		warm	none	ALIVE	(absent)	/tmp/sleep-sweep.log
+2026-10-15T14:15:11Z	sleep-sweep-run3		warm	none	ALIVE	(absent)	/tmp/sleep-sweep.log
+2026-10-15T14:44:38Z	q24-n2prime-n3-12blanks-survive		por	none	Q24-RECIPE-NOT-REPRODUCIBLE	40e13f8ad43b	

@@ -1,0 +1,18 @@
+{
+  "label": "q24-n2prime-n3-12blanks-survive",
+  "ts": "2026-10-15T14:44:38Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline-f3.img",
+  "image_sha256": "40e13f8ad43b0cb155dd9b98092a1790ca6f4b9629d4ae96123b8642438010af",
+  "manifest": "out/boot-elden-m1-baseline-f3.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "32e93db7a0c229b43cbf8c50a20650b1cabf436e7ffdd180208e2722e28547ad",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "Q24-RECIPE-NOT-REPRODUCIBLE",
+  "log_dir": "",
+  "note": "12 real DPMS On->Off blanks with camera stack loaded, ALL SURVIVED (boot_id unchanged): armA boot-time-pair 3/3, armB runtime-pair 4/4, N3 full-stack-19-modules 5/5 (valid transitions verified On before Off). PITFALLS #212 recipe 'pair + blank' NOT reproducible on m1-baseline-f3 (7.3-rc7). Historical lethal record was on vk64 (7.2 lineage) => image-lineage difference is now the strongest testable candidate. Also found+fixed: sleep-sweep.sh gave fake 3/3 ALIVE because reboot hangs (PITFALLS #288). See reports/q24-n2prime-both-arms-survive-20261015.md"
+}

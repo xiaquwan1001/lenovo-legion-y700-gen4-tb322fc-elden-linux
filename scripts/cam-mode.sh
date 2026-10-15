@@ -23,8 +23,13 @@ UNLOAD='gc08a8 s5kjns gt9764 leds-qcom-flash qcom-camss wl2868c-regulator i2c-qc
 # ⇒ 把“以会话用户跑”拼成命令前缀字符串，让 timeout 去 exec sudo。
 CAMAS='sudo -u xuqianhui1001 HOME=/home/xuqianhui1001 XDG_RUNTIME_DIR=/run/user/1000'
 find_bus(){
+	# 竞态：pgrep 列出的 pid 可能在读 /proc/<pid>/environ 前就退出，而 `< file`
+	# 的重定向失败由**调用它的 shell** 报错 —— `2>/dev/null` 挂在 tr 上拦不住
+	# ⇒ 会打印 "can't open /proc/NNNN/environ" 噪声（2026-10-15 实测每跑必现）。
+	# 治法：在**子 shell 内**先判可读再读并整体吞掉 stderr —— `[ -r ]` 与 `<` 之间
+	# 仍有 TOCTOU 窗口，光靠 -r 挡不住（实测第一次修就是这么漏的）。
 	for p in $(pgrep -u 1000 | head -40); do
-		tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -m1 '^DBUS_SESSION_BUS_ADDRESS='
+		( tr '\0' '\n' < "/proc/$p/environ" ) 2>/dev/null | grep -m1 '^DBUS_SESSION_BUS_ADDRESS='
 	done | head -1 | cut -d= -f2-
 }
 GS(){ # GS get|set <schema> <key> [value]；拿不到会话总线就明确报错（不静默）
