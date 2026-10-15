@@ -51,7 +51,10 @@ status(){
 blank_disable(){
 	mkdir -p "$(dirname "$STATE")"
 	if [ ! -f "$STATE" ]; then
-		{ echo "IDLE=$(GS get org.gnome.desktop.session idle-delay)"
+		# 2026-10-15 修（PITFALLS #285）：存档必须是**裸数值**。
+		# gsettings 回读是 "uint32 300"（带类型前缀），直接写进 env 再 `.` source
+		# 会把它当命令执行（"300: not found"）；恢复时统一补 "uint32 " 前缀。
+		{ echo "IDLE=$(GS get org.gnome.desktop.session idle-delay | sed 's/^uint32 //')"
 		  echo "AC=$(GS get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout)"
 		  echo "BATT=$(GS get org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout)"
 		  echo "LOCK=$(GS get org.gnome.desktop.screensaver lock-enabled)"; } > "$STATE"
@@ -68,7 +71,9 @@ blank_disable(){
 blank_restore(){
 	if [ -f "$STATE" ]; then
 		. "$STATE"
-		GS set org.gnome.desktop.session idle-delay "${IDLE:-uint32 300}"
+		# 兼容旧存档（可能仍带 "uint32 " 前缀）：去掉后统一补一次
+		IDLE=$(printf '%s' "${IDLE:-300}" | sed 's/^uint32 //')
+		GS set org.gnome.desktop.session idle-delay "uint32 ${IDLE}"
 		GS set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout "${AC:-900}"
 		GS set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout "${BATT:-900}"
 		GS set org.gnome.desktop.screensaver lock-enabled "${LOCK:-true}"
@@ -89,13 +94,32 @@ do_on(){
 	[ "$(cam_n)" -gt 0 ] || { echo "[cam-mode] FAIL: 模块没进来，看上面 loader 的点名信息" >&2; return 1; }
 }
 do_off(){
-	for m in $UNLOAD; do
-		if lsmod | grep -q "^$(echo "$m" | tr '-' '_') "; then
-			timeout 20 rmmod "$m" 2>&1 | head -1 | sed "s/^/[cam-mode] rmmod $m: /"
-		fi
+	# 2026-10-15 修（PITFALLS #285）：原实现有两个真缺陷 ——
+	#  ① 用 rmmod（不解析依赖）⇒ 被依赖的模块报 "in use" 就静默跳过，留下半个栈；
+	#  ② **无论卸载成败都无条件 blank_restore** ⇒ 一旦有模块没走，"恢复熄屏"会把
+	#     idle-delay 放回 300/锁屏打开，而相机栈仍在位 = **Q24 掉电条件被激活**
+	#     （2026-10-15 实测踩到：off 之后 9 个模块仍在，而 idle 已回到 300/lock=true）。
+	#  现改为：modprobe -r（依赖感知）+ 两轮 + **只在确认清零后才恢复熄屏**；
+	#  未清零则显式 FAIL 并**保持熄屏关闭**（安全侧，绝不把系统推进掉电条件）。
+	local pass
+	for pass in 1 2; do
+		for m in $UNLOAD; do
+			if lsmod | grep -q "^$(echo "$m" | tr '-' '_') "; then
+				timeout 20 modprobe -r "$m" 2>&1 | head -1 | sed "s/^/[cam-mode] modprobe -r $m: /"
+			fi
+		done
 	done
-	echo "[cam-mode] 读回：$(cam_n) 个模块 / $(ls /dev/media* 2>/dev/null | wc -l) media / $(ls /dev/video* 2>/dev/null | wc -l) video"
-	blank_restore
+	local n
+	n=$(cam_n)
+	echo "[cam-mode] 读回：$n 个模块 / $(ls /dev/media* 2>/dev/null | wc -l) media / $(ls /dev/video* 2>/dev/null | wc -l) video"
+	if [ "$n" -eq 0 ]; then
+		blank_restore
+	else
+		echo "[cam-mode] FAIL: 仍有 $n 个相机模块在位 ⇒ **不恢复熄屏**（保持熄屏关闭，避免 Q24 掉电）" >&2
+		echo "[cam-mode] 仍在位的模块：" >&2
+		lsmod | grep -E "camss|cci|camcc|cambist|s5kjns|gc08a8|gt9764|wl2868c|leds_qcom_flash" | awk '{print "  " $1}' >&2
+		return 1
+	fi
 }
 
 case "${1:-status}" in
