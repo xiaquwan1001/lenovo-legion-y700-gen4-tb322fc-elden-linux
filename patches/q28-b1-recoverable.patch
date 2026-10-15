@@ -1,0 +1,147 @@
+From cf2328ce3a92cc896f42e4231fbef7dd1becc031 Mon Sep 17 00:00:00 2001
+From: elden <elden@y700>
+Date: Thu, 15 Oct 2026 19:44:28 +0800
+Subject: [PATCH] B1(experiment): make the bonded-command failure recoverable
+ instead of permanent
+
+The bonded command path latched a single DMA failure forever
+(`dsi_bonded_cmd_failed` was only ever set to true), and the bridge
+callbacks early-returned on that latch.  One transient timeout therefore
+turned into a dead panel for the rest of the boot, and because
+power_off/post_disable also bailed out early, every later attempt ran
+against a half-torn-down link (IRQs still armed, supplies still on) that
+could not recover.
+
+Two orthogonal changes:
+ 1. bound the retries: latch only after DSI_BONDED_CMD_MAX_RETRY (3)
+    failures, and log each one, so a hiccup during panel bring-up is
+    retried rather than fatal.
+ 2. drop the cmd_failed() early-returns from power_off / pre_enable /
+    post_disable so the normal teardown and re-power-up always run and a
+    retry starts from a clean link.
+
+Not upstream material as-is: this is a behavioural experiment for Q28.
+---
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 60 +++++++++++++++++++++++----
+ 1 file changed, 52 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 559c07a8b9..08c8ad36cc 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -38,7 +38,21 @@ static struct msm_dsi_manager msm_dsim_glb = {
+ };
+ 
+ static DEFINE_MUTEX(dsi_bonded_cmd_lock);
++
++/*
++ * B1 EXPERIMENT (2026-10-15): the bonded command path used to latch a single
++ * DMA failure permanently, which turned one transient timeout into a dead
++ * panel for the rest of the boot.  Allow the panel bring-up to be retried a
++ * bounded number of times before giving up, so a recoverable hiccup does not
++ * poison the whole session.
++ *
++ * The count is deliberately not reset on success: it is a "how many times did
++ * this link misbehave" budget for the whole boot, so a pathological link
++ * still stops retrying instead of looping forever.
++ */
++#define DSI_BONDED_CMD_MAX_RETRY	3
+ static bool dsi_bonded_cmd_failed;
++static int dsi_bonded_cmd_fail_count;
+ 
+ #define IS_BONDED_DSI()		(msm_dsim_glb.is_bonded_dsi)
+ #define IS_SYNC_NEEDED()	(msm_dsim_glb.is_sync_needed)
+@@ -54,6 +68,26 @@ bool msm_dsi_manager_cmd_failed(void)
+ 	return dsi_mgr_uses_bonded_cmd() && READ_ONCE(dsi_bonded_cmd_failed);
+ }
+ 
++/*
++ * B1: record one bonded-command failure and latch only once the retry budget
++ * is exhausted.  Before the budget runs out the caller is allowed to try
++ * again; `msm_dsi_manager_cmd_failed()` keeps returning false so the normal
++ * bridge callbacks (including their cleanup paths) still run.
++ */
++static void dsi_mgr_note_cmd_failure(const char *why)
++{
++	int n = ++dsi_bonded_cmd_fail_count;
++
++	if (n >= DSI_BONDED_CMD_MAX_RETRY) {
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		pr_err("dsi: bonded command failed %d times (%s), giving up\n",
++		       n, why);
++	} else {
++		pr_warn("dsi: bonded command failure %d/%d (%s), will retry\n",
++			n, DSI_BONDED_CMD_MAX_RETRY, why);
++	}
++}
++
+ static inline struct msm_dsi *dsi_mgr_get_dsi(int id)
+ {
+ 	return msm_dsim_glb.dsi[id];
+@@ -289,8 +323,11 @@ static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
+ 	struct mipi_dsi_host *host = msm_dsi->host;
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
++	/*
++	 * B1: no `cmd_failed()` early-return here.  Skipping the teardown left
++	 * IRQs enabled and the supplies on, so a later retry ran against a
++	 * half-torn-down link that could never recover.
++	 */
+ 
+ 	msm_dsi_host_disable_irq(host);
+ 	if (is_bonded_dsi && msm_dsi1) {
+@@ -311,8 +348,11 @@ static void dsi_mgr_bridge_pre_enable(struct drm_bridge *bridge,
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 	int ret;
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
++	/*
++	 * B1: no `cmd_failed()` early-return here either.  This is the only
++	 * place that re-powers the link, so gating it on the failure latch
++	 * made a retry impossible by construction.
++	 */
+ 
+ 	DBG("id=%d", id);
+ 
+@@ -374,7 +414,7 @@ static void dsi_mgr_bridge_enable(struct drm_bridge *bridge,
+ 	if (!panel->prepared) {
+ 		dev_err(&msm_dsi->pdev->dev,
+ 			"panel is not prepared; refusing video enable\n");
+-		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		dsi_mgr_note_cmd_failure("panel not prepared");
+ 		return;
+ 	}
+ 
+@@ -426,8 +466,11 @@ static void dsi_mgr_bridge_post_disable(struct drm_bridge *bridge,
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 	int ret;
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
++	/*
++	 * B1: no `cmd_failed()` early-return.  This is the canonical teardown
++	 * (power_off + IRQ off + PLL save); skipping it on failure left the
++	 * link powered and its IRQs armed for every later attempt.
++	 */
+ 
+ 	DBG("id=%d", id);
+ 
+@@ -646,10 +689,11 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 	ret = master_ret < 0 ? master_ret : slave_ret < 0 ? slave_ret : len;
+ 	if (ret < 0) {
+ 		/* Never reuse a packet buffer while either DMA engine is unresolved. */
+-		WRITE_ONCE(dsi_bonded_cmd_failed, true);
+ 		dev_err(&master_dsi->pdev->dev,
+ 			"bonded command DMA failed: master=%d peer=%d\n",
+ 			master_ret, slave_ret);
++		/* B1: bounded retry instead of a permanent latch. */
++		dsi_mgr_note_cmd_failure("command DMA timeout");
+ 		return ret;
+ 	}
+ 
+-- 
+2.53.0
+

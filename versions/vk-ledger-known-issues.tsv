@@ -214,3 +214,4 @@ f2-socreset	uts_dup	WCN 修法 F2：每轮先 ath12k_pci_sw_reset(true) 再重�
 f3-defer	uts_dup	WCN 修法 F3：ath12k_core_init 失败返 -EPROBE_DEFER 让驱动 core 重跑整轮 probe（**通过**：11.78 s chip_id、Run/init 7.670 s）；UTS 同 m1-baseline
 m1-baseline-f3	uts_dup	M1-7.3 功能基线 + F3（ath12k -EPROBE_DEFER 自愈）镜像；ramdisk/DTB 复用 73j ⇒ 同一 UTS 串多重出现；2026-10-15 已刷 boot_b，冷起 GOOD（Run/init 7.667s + 面板 L1=0/L2=0 + WCN 重探 11.77s + wlan0 17.52s）
 armA-nobonded	uts_dup	Q28 方案A 实验臂：禁用 vendor bonded 命令协议、走标准 need_sync 路径；内核仅改 dsi_manager.c 3 处，ramdisk/DTB/cmdline 复用 m1-baseline-f3 ⇒ 同一 UTS 串多重出现
+b1-recoverable	uts_dup	Q28 方案B 实验臂：把 bonded 命令「失败即永久放弃」改成有界重试(3)+ 删掉 power_off/pre_enable/post_disable 的 cmd_failed() early-return；单文件 dsi_manager.c ×1（内核提交 cf2328ce3a），config/DTB/ramdisk/cmdline 全部逐字节复用 m1-baseline-f3 ⇒ 同一 UTS 串多重出现

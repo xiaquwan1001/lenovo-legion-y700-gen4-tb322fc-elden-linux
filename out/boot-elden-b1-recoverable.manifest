@@ -1,0 +1,45 @@
+# boot image manifest — B1 recoverable-failure arm (hand-verified 2026-10-15)
+#
+# NOTE: scripts/build-manifest.sh produced WRONG metadata for this image (it
+# inspected the main linux/ tree, not the B1 worktree): it recorded
+# kernel_release=7.2.0-debug+, kernel_release_matches_image=no, and the
+# linux/ tree's dtb/config hashes.  Those lines were discarded and the fields
+# below were gathered by hand from the actual artifacts.  (Same class of
+# hazard as PITFALLS #195 / the vk87/vk88 tree_drift incidents.)
+version=b1-recoverable
+generated=2026-10-15T11:48:58Z
+image=out/boot-elden-b1-recoverable.img
+image_sha256=e96234b20f09aaad7f2c65956b69cd45c7d74a4392acbd946277d4fe5a3aeae7
+image_size=85585920
+kernel_release=7.3.0-rc7-debug-ged6f232d10e3
+kernel_uts=Linux version 7.3.0-rc7-debug-ged6f232d10e3
+kernel_release_matches_image=yes
+kernel_payload_sha256=c187280fc401a63895981b093fc1821ce7f3825c9d883ba617cd1bf9c2e9438f
+# ^ project convention = sha256 of the DECOMPRESSED kernel segment (matches vk-identity.py)
+kernel=/home/xuqianhui1001/y700-elden/build/m1-b1-worktree/arch/arm64/boot/Image.gz
+kernel_sha256=731dfd5c771e7227483583f39bcdbed09ccf37347120da06c98290766e96a14f
+kernel_image_sha256=731dfd5c771e7227483583f39bcdbed09ccf37347120da06c98290766e96a14f
+kernel_packed_from=build/m1-b1-worktree/arch/arm64/boot/Image.gz (B1 arm)
+kernel_packed_sha256=731dfd5c771e7227483583f39bcdbed09ccf37347120da06c98290766e96a14f
+# ^ sha256 of the Image.gz FILE (gzipped); NOT the same as kernel_payload_sha256 above
+dtb_packed_from=/tmp/b1-unpack/dtb (unpacked from m1-baseline-f3)
+dtb_packed_sha256=c801884334804b56bbf4164af841a9d7896e13e3634f5f4f6000c111f983b558
+dtb_sha256=c801884334804b56bbf4164af841a9d7896e13e3634f5f4f6000c111f983b558
+config_sha256=fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4
+ramdisk_from=/tmp/b1-unpack/ramdisk (unpacked from m1-baseline-f3)
+ramdisk_sha256=4d4834e681fcf3caafffb6f1ac640c9f424ac46bc25ec456a5a552e515fc50ec
+# verified: re-unpacking out/boot-elden-m1-baseline-f3.img yields the same sha
+cmdline=console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1
+mkbootimg_args=--header_version 2 --os_version 15.0.0 --os_patch_level 2025-08 --base 0x10000000 --kernel_offset 0x8000 --ramdisk_offset 0x1000000 --second_offset 0xf00000 --tags_offset 0x100 --dtb_offset 0x1f00000 --pagesize 4096
+kernel_git_head=cf2328ce3a92cc896f42e4231fbef7dd1becc031
+kernel_git_state=clean
+kernel_branch=m1-73/b1-recoverable
+project_git_head=af38f206369afd92f8d729dd9f458d802d5fcc37
+# Single-variable proof vs the control arm (out/boot-elden-m1-baseline-f3.img):
+#   config_sha256   fe1a40b8…  == baseline (identical)
+#   dtb_sha256      c8018843…  == baseline (identical)
+#   ramdisk_sha256  4d4834e6…  == baseline unpack (identical)
+#   cmdline                    == baseline (identical)
+#   kernel_uts      same UTS   => ramdisk module vermagic matches
+#   ONLY difference = the kernel payload (B1 commit cf2328ce3a, 1 file)
+verification=NOT_TESTED_ON_DEVICE
