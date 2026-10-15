@@ -1,0 +1,18 @@
+{
+  "label": "m1-baseline-f3-s4-l1fail",
+  "ts": "2026-10-15T09:54:08Z",
+  "vk": "",
+  "image": "out/boot-elden-m1-baseline-f3.img",
+  "image_sha256": "40e13f8ad43b0cb155dd9b98092a1790ca6f4b9629d4ae96123b8642438010af",
+  "manifest": "out/boot-elden-m1-baseline-f3.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-ged6f232d10e3",
+  "kernel_payload_sha256": "32e93db7a0c229b43cbf8c50a20650b1cabf436e7ffdd180208e2722e28547ad",
+  "config_sha256": "fe1a40b89dec488e3b2dd0d26a1f597eb3f5c645620e094ab8aa7489486861c4",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "q28",
+  "verdict": "L1FAIL",
+  "log_dir": "logs/armA-sampling-20261015/s4-baseline",
+  "note": "Sample 4 = CONTROL ARM (baseline m1-baseline-f3 = boot_b), true physical POR, normal disk boot. CLASSIC Q28 BAD BOOT: l1=5 (command DMA timeout status=0x2200200 + peer timeout + 'bonded command DMA failed master=-110 peer=-110' + 'Failed to initialize panel -110' at 12.23s), l2=389, 'ctl reset failure'=172, dsi_isr=0. FALSE-GOOD TRAP REPEATED: card0-DSI-1=connected, phoc/phosh/wayland all up, backlight=511, DPMS On - all normal while panel is dark. CRITICAL: this gives the CONTROL arm a bad sample in the SAME session, which is exactly what makes the arm A comparison meaningful. dsi_isr remains consistent as auxiliary discriminator: 41 when user-confirmed lit (s2), 0 when bad (s4 here, s1, s3). RUNNING TALLY: armA 0 GOOD/2 BAD ; baseline 1 GOOD/1 BAD => SAME RATE (~50%), consistent with the standing '~50% clustered, image-independent' understanding. This MATERIALLY WEAKENS the earlier directional reading that 'arm A is worse' and, more importantly, means arm A's failures are NOT distinguishable from baseline's failures."
+}

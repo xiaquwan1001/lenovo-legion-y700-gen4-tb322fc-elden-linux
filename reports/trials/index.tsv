@@ -107,3 +107,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-15T09:00:54Z	armA-nobonded-s1		por	fastboot-boot	BAD-NOSCAN	5c25576f83f0	logs/armA-sampling-20261015/s1-armA
 2026-10-15T09:13:19Z	m1-baseline-f3-s2-good		por	none	GOOD	40e13f8ad43b	logs/armA-sampling-20261015/s2-baseline
 2026-10-15T09:27:32Z	armA-nobonded-s3-good[CORRECTED->BAD-NOSCAN]		por	fastboot-boot	BAD-NOSCAN	5c25576f83f0	logs/armA-sampling-20261015/s3-armA
+2026-10-15T09:54:08Z	m1-baseline-f3-s4-l1fail		por	none	L1FAIL	40e13f8ad43b	logs/armA-sampling-20261015/s4-baseline
