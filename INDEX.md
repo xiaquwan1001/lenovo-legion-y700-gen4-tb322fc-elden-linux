@@ -106,6 +106,29 @@ scripts/check-doctor.sh
 # 【版本对账】“这个 boot.img 里到底是哪个内核” / 重生成对齐表
 python3 scripts/vk-identity.py --gate                    # 只看命名/溯源规则结果
 python3 scripts/vk-identity.py > versions/vk-kernel-identity.tsv   # 重生成（随后连表一起提交）
-# 【
+# 【动手前 30 秒】引导链类问题（解锁/AVB/降级/GPT/EDL）先查本地既有结论（PITFALLS #87）
+grep -rn -iE "unlock|解锁|sn\.img|rollback|testkey|073" \
+  .pi/skills/*/references/*.md *.md archive/topics/*.md | grep -v '^Binary'
+```
 
-[Exact evidence: /home/xuqianhui1001/y700-elden/.pi/sessions/pi-fold-evidence/pi-session/sha256/af/afc463b27847028c8ee5a6f17898ade8137b3fc6480a118fd65c65e236ea42e2.txt; sha256=afc463b27847028c8ee5a6f17898ade8137b3fc6480a118fd65c65e236ea42e2; bytes=25288]
+```bash
+# 目标形态：b 槽直启 Linux（~5–9 s 进 Phosh），日常不需 fastboot
+sudo bash elden-net.sh && ssh -o StrictHostKeyChecking=no root@192.168.7.1
+# 内核迭代＝统一入口 scripts/iterate.sh（四档环，细则 RUNBOOK §迭代）
+scripts/iterate.sh mod <driver-dir>              # 环0：=m 模块热载 ~30s 不重启（需先应用 fragment-modular）
+scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（kexec 快环未闭环，勿默认）
+scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 先备份后执行）
+scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
+# ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM → 死内核，PITFALLS #162）
+./cycle.sh --soft                          # 软回 fastboot（免按电源键）
+fastboot boot bootslot-b/boot_b-clean.img  # 零写盘·持久变体（RAM 内核+磁盘根，有桌面/服务），功能测试用（PITFALLS #93）
+fastboot boot <img>                        # 零写盘·纯RAM变体（无桌面/服务）仅内核/引导级验证；先 blank 活跃槽 dtbo 否则卡 logo（PITFALLS #1/#10）
+# 新单元开工三件套（先写台账，再备份，再手术）
+fastboot getvar serialno; adb shell getprop ro.boot.hwboardid   # → 写进 DEVICE/README.md §2.2
+sh scripts/gpt-dump.sh                                          # 打印本单元 backup_lba（禁跨容量档复用）
+fastboot fetch boot_b "$BAK"/boot_b.img                         # dtbo_b / vbmeta_b 同理
+python3 scripts/slot-attr.py show                               # 槽位属性（在 GPT attribute，非 misc）
+# 设备侧三态判据（显示问题）：NOCARD / STORM / GOOD
+scripts/q28-devprobe2.sh          # 在设备上跑（SSH 读全 dmesg + 查 card0）
+scripts/trial.sh                  # 一次设备实验 = 一条机器可读记录（reports/trials/，--reset 必填）
+```
