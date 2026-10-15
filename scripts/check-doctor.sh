@@ -11,6 +11,9 @@
 #   5d. 内核身份表新鲜度 + 命名/溯源规则门
 #   5e. manifest 完整性（config_sha256）
 #   6. 静态卫生（设备锁单一真源 / bashism / 死脚本）
+#   7. 入口文档完整性（围栏闭合 / 截断哨兵 / 机器指针泄漏）  ← 2026-10-15 L1
+#   8. 索引↔磁盘对账（编号撞车=FAIL；索引覆盖仅对声明角度=WARN）  ← 2026-10-15 L1
+#   9. SESSIONS/ 快照一致性（委托 scripts/check-sessions.sh）  ← 2026-10-15 L1
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
@@ -172,6 +175,144 @@ while IFS=$'\t' read -r st msg; do
     DEAD)    [ "$msg" = "-" ] && ok "scripts/*.sh 无死脚本" || warnf "疑似死脚本（无任何活跃引用，核实后删/标 legacy）: $msg" ;;
   esac
 done <<< "$static"
+
+# ---------------------------------------------------------------- 7/8/9. 入口与索引完整性（L1）
+# 立此节的直接原因（2026-10-15 独立审查）：三项硬故障全部落在此前自检的盲区里——
+#   a) INDEX.md（自称唯一入口）在未闭合 ``` 围栏内物理截断，且尾部泄漏机器证据指针；
+#      自首次提交起即存在，无任何检查发现。
+#   b) PITFALLS/sessions 有两个 `33-`，索引只登记其一 ⇒ 另一份成孤儿；且其条目号
+#      #171–#178 与 22-构建守卫 已定义的 #171–#178 撞车（全库唯一一组重复号），
+#      而 reports/ 全量引用的正是后者 ⇒ 静默的引用歧义。
+#   c) scripts/check-sessions.sh 早已存在且可跑，但从未被任何门调用（静默腐烂）。
+# 本节的判据全部是「纯文本/行数」级，无镜像解压，墙钟 <1 s。
+_media=$(python3 - "$ROOT" <<'PY'
+import glob, os, re, sys
+root = sys.argv[1]
+
+# ---- 7. 入口文档：围栏闭合 + 截断哨兵 + 机器指针泄漏 ----
+# 受管入口文件（人类/agent 的第一落点）；改动此清单需同步 INDEX.md §2。
+ENTRY = ['INDEX.md', 'AGENTS.md', 'README.md', 'PROGRESS.md',
+         '.pi/AGENT-OPS.md', '.pi/README.md',
+         'TASKS/README.md', 'PITFALLS/README.md', 'DEVICE/README.md',
+         'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md',
+         'SESSIONS/README.md', 'HISTORY/README.md']
+fence, leak, tail = [], [], []
+for rel in ENTRY:
+    p = os.path.join(root, rel)
+    if not os.path.isfile(p):
+        continue
+    try:
+        raw = open(p, 'rb').read()
+        txt = raw.decode('utf-8', 'replace')
+    except OSError:
+        continue
+    n = sum(1 for ln in txt.split('\n') if ln.startswith('```'))
+    if n % 2:
+        fence.append('%s(%d)' % (rel, n))
+    if 'Exact evidence:' in txt or 'pi-fold-evidence' in txt:
+        leak.append(rel)
+    if raw and not raw.endswith(b'\n'):
+        tail.append(rel)
+    # 截断哨兵：正文以孤立的未完成标记结尾（本案形态 = 行尾 `# 【`）
+    if re.search(r'# 【\s*$', txt.rstrip('\n'), flags=re.M):
+        fence.append('%s(截断:#【)' % rel)
+
+# ---- 8. 索引 <-> 磁盘对账 ----
+# 口径依据 INDEX.md §2 / .pi/AGENT-OPS.md §4（文档 v2）：
+#   「记录时的区分度靠 文件夹(角度) + 文件名(日期+主题) + pi 会话 id；不手抄索引表」
+# ⇒ **README 逐文件登记 sessions/ 不是 v2 的硬要求**，故不能一刀切当 FAIL。
+#   本节只做两件有明确判据的事：
+#     ① 编号撞车 = 硬错（FAIL）：顺序编号角度里同名编号 ⇒ 引用歧义（2026-10-15 实测两个 33-）。
+#        PITFALLS 条目号 `NNN. ` 全局唯一，同属硬错。
+#     ② 索引覆盖 = 仅对「声明逐文件登记」的角度核（opt-in），且只 WARN：
+#        PITFALLS（README 有 §索引表，实测 36/36）、SESSIONS（171/171）已事实上全登记；
+#        TASKS 等未声明，不计（避免把合规写法判成缺陷）。
+orphan, dupnum = [], []
+ANGLES = ['PITFALLS', 'TASKS', 'DEVICE', 'RESOURCES', 'RUNBOOK-BRINGUP',
+          'SESSIONS', 'HISTORY']
+# 顺序编号角度：文件名前导 `NN-` 必须唯一。
+SEQ_NUM_ANGLES = {'PITFALLS'}
+# 声明「README 逐文件登记 sessions/」的角度（opt-in；未列入者不检查覆盖）。
+INDEXED_ANGLES = {'PITFALLS', 'SESSIONS'}
+for ang in ANGLES:
+    sdir = os.path.join(root, ang, 'sessions')
+    idx = os.path.join(root, ang, 'README.md')
+    if not os.path.isdir(sdir) or not os.path.isfile(idx):
+        continue
+    itxt = open(idx, encoding='utf-8', errors='replace').read()
+    seqdir = ang in SEQ_NUM_ANGLES
+    seen = {}
+    for f in sorted(glob.glob(os.path.join(sdir, '*.md'))):
+        base = os.path.basename(f)
+        if base == 'README.md':      # 角度自述文件，不是条目
+            continue
+        if ang in INDEXED_ANGLES and base not in itxt:
+            orphan.append('%s/sessions/%s' % (ang, base))
+        if seqdir:
+            m = re.match(r'^(\d+)-', base)
+            if m:
+                seen.setdefault(m.group(1), []).append(base)
+    for num, files in sorted(seen.items()):
+        if len(files) > 1:
+            dupnum.append('%s: %s- (%s)' % (ang, num, ' | '.join(files)))
+
+# 条目号撞车：PITFALLS 正文里 `NNN. **` 形式的编号必须全局唯一
+pdefs = {}
+for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
+    for ln in open(f, encoding='utf-8', errors='replace'):
+        m = re.match(r'^(\d{1,3})\. ', ln)
+        if m:
+            pdefs.setdefault(m.group(1), []).append(os.path.basename(f))
+for num, files in sorted(pdefs.items(), key=lambda kv: int(kv[0])):
+    if len(files) > 1:
+        dupnum.append('PITFALLS: #%s (%s)' % (num, ' | '.join(sorted(set(files)))))
+
+def emit(tag, items):
+    print('%s\t%s' % (tag, '; '.join(items) if items else '-'))
+emit('FENCE', fence)
+emit('LEAK', leak)
+emit('TAIL', tail)
+emit('ORPHAN', orphan)
+emit('DUPNUM', dupnum)
+PY
+)
+echo
+echo "== 7. 入口文档完整性（围栏 / 截断 / 机器指针）=="
+while IFS=$'\t' read -r _st _msg; do
+  case "$_st" in
+    FENCE)  [ "$_msg" = "-" ] && ok "受管入口文档围栏闭合、无截断标记" || bad "围栏未闭合或疑似截断（补齐代码围栏 / 恢复被截正文）: $_msg" ;;
+    LEAK)   [ "$_msg" = "-" ] && ok "无机器证据指针泄漏进入口文档" || bad "入口文档混入 pi-fold 证据指针（应只留相对路径引用）: $_msg" ;;
+    TAIL)   [ "$_msg" = "-" ] && ok "受管入口文档均以换行结尾" || warnf "文件缺少结尾换行: $_msg" ;;
+  esac
+done <<< "$_media"
+
+echo
+echo "== 8. 索引↔磁盘对账（编号撞车=硬错 / 索引覆盖=仅声明角度）=="
+while IFS=$'\t' read -r _st _msg; do
+  case "$_st" in
+    ORPHAN) [ "$_msg" = "-" ] && ok "已声明登记的角度：sessions/ 正文均被 README 引用" || warnf "索引未登记（仅对声明逐文件登记的角度核；补 README 行或移出该口径）: $_msg" ;;
+    DUPNUM) [ "$_msg" = "-" ] && ok "文件名/条目编号无撞车" || bad "编号撞车（引用歧义，必须重编）: $_msg" ;;
+  esac
+done <<< "$_media"
+
+# ---------------------------------------------------------------- 9. SESSIONS/ 快照一致性
+# check-sessions.sh 自 2026-10-14 落地后长期无人调用（审查发现）。此处委托执行：
+# 它校验的是「SESSIONS/ 冻结快照 vs git show d8ae437:RESOURCES.md」，属可机读账，故并入 doctor。
+# 抽检数固定 3（doctor 应快；全量抽检可手动跑 bash scripts/check-sessions.sh 20）。
+echo
+echo "== 9. SESSIONS/ 快照一致性（委托 check-sessions.sh）=="
+if [ ! -x scripts/check-sessions.sh ] && [ ! -f scripts/check-sessions.sh ]; then
+  warnf "scripts/check-sessions.sh 缺失，跳过"
+else
+  _cs=$(bash scripts/check-sessions.sh 3 2>&1)
+  _csrc=$?
+  _csl=$(printf '%s\n' "$_cs" | grep -E '^checks OK=|ALL PASS|FAIL' | tail -2 | tr '\n' ' ')
+  if [ $_csrc -eq 0 ]; then
+    ok "SESSIONS 快照与源一致（$_csl）"
+  else
+    bad "SESSIONS 快照与源不一致（$_csl）→ 跑 bash scripts/check-sessions.sh 看细节"
+  fi
+fi
 
 echo
 echo "== 汇总: FAIL=$fail  WARN=$warn =="

@@ -162,19 +162,56 @@ _PAYLOAD_CACHE = {}
 
 
 def _payload_raw(path):
-    """boot.img 的内核载荷：首段 gzip → (UTS release, 解压 Image 的 sha12)。"""
+    """boot.img 的内核载荷 → (uts|None, kbin_sha12, status)。
+
+    status ∈ {'ok', 'absent', 'corrupt'}：
+      ok      = 解出内核且含 UTS
+      absent  = 确实没有内核载荷（如 dtbo-dummy —— 非 Android boot 镜像）
+      corrupt = **是 Android boot 镜像、按头里的 kernel_size 切出内核段，但解不出来**
+                （CRC 坏 / 段截断 / 结构错）。2026-10-15 增：此前这类会被静默归入
+                absent ⇒ 「(无内核载荷)」+ `skip`，**免于身份核对**，把「读不出」伪装成
+                「没有」。实测 out/boot-elden-e3-dailycfg.img：头合法（ANDROID!,
+                kernel_size=20800279），首段 gzip magic 在 4096，但解压 CRC 失败、
+                0 字节可恢复 —— 这是「坏镜像」，不是「无内核」。
+    """
+    import struct
+    import zlib
     try:
-        import zlib
         d = open(path, 'rb').read()
-        i = d.find(b'\x1f\x8b\x08')
+    except OSError:
+        return None, '', 'absent'
+
+    # 1) 先按 Android boot header 精确定位内核段（比扫 magic 可靠）
+    if d[:8] == b'ANDROID!':
+        ks = struct.unpack('<I', d[8:12])[0]
+        if ks:
+            seg = d[4096:4096 + ks]
+            try:
+                k = zlib.decompressobj(wbits=16 + zlib.MAX_WBITS).decompress(seg, 512 << 20)
+            except Exception:
+                return None, '', 'corrupt'      # 有内核段但读不出 → 明确报坏，不静默放过
+            m = re.search(rb'Linux version (\S+)', k)
+            if m:
+                uts = m.group(1).decode('latin1').split(' ')[0]
+                return uts or None, hashlib.sha256(k).hexdigest()[:12], 'ok'
+            return None, '', 'corrupt'
+
+    # 2) 兼容非 Android 头的裸载荷（如 dtbo）：退化为扫 magic，任一命中即可
+    start = 0
+    while True:
+        i = d.find(b'\x1f\x8b\x08', start)
         if i < 0:
-            return None, ''
-        k = zlib.decompressobj(wbits=16 + zlib.MAX_WBITS).decompress(d[i:], 128 << 20)
-    except Exception:
-        return None, ''
-    m = re.search(rb'Linux version (\S+)', k)
-    uts = m.group(1).decode('latin1').split(' ')[0] if m else ''
-    return uts or None, hashlib.sha256(k).hexdigest()[:12]
+            return None, '', 'absent'
+        start = i + 1
+        try:
+            k = zlib.decompressobj(wbits=16 + zlib.MAX_WBITS).decompress(d[i:], 512 << 20)
+        except Exception:
+            continue
+        m = re.search(rb'Linux version (\S+)', k)
+        if m:
+            uts = m.group(1).decode('latin1').split(' ')[0]
+            return uts or None, hashlib.sha256(k).hexdigest()[:12], 'ok'
+    return None, '', 'absent'
 
 
 def payload(path):
@@ -235,11 +272,16 @@ def gate_lines(rows, skip_names):
     """只拦住新构建；存量欠账汇总成 WARN。返回 [(status, msg), ...]，契约同 check-doctor §5。"""
     out = []
     new_hard, legacy, held, noted, exempt = [], 0, [], [], []
+    unreadable = []
     known = known_issues()
     for r in rows:
         img = os.path.join(OUT, r[1])
         name = r[0] if r[0] != '(unversioned)' else r[1]
         flags = r[10].split('|')
+        # 内核段不可读 = 坏镜像（2026-10-15 增）：必须显式报出，不得静默归入「无载荷」。
+        # 这类镜像**免于一切身份核对**，若不出声就等于「读不出」被当成「没问题」。
+        if 'kernel-unreadable' in flags:
+            unreadable.append(r[1])
         if any(f.startswith(NOTE) for f in flags):
             noted.append(r[1])
             # NOTE 类（目前 = 无版本号默认拷贝）不参与硬拦：它无号可校，内容跟着本次构建漂，
@@ -269,6 +311,10 @@ def gate_lines(rows, skip_names):
         out.append(('WARN', '在途豁免（收口后从 vk-identity-inflight.txt 删掉）：%s' % ' '.join(held)))
     if exempt:
         out.append(('WARN', '账本已登记的例外（理由见 vk-ledger-known-issues.tsv）：%s' % ' '.join(exempt)))
+    if unreadable:
+        out.append(('WARN', '内核段不可读（boot 镜像但载荷解不出 ⇒ 该镜像免于身份核对，'
+                            '勿再据其做构建身份判断；重出该镜像或从 out/ 移除）：%s'
+                    % ' '.join(unreadable)))
     if legacy:
         out.append(('WARN', '存量欠账 %d 个镜像有硬错（逐镜像见 vk-kernel-identity.tsv / '
                     'vk-ledger-known-issues.tsv）' % legacy))
@@ -451,10 +497,13 @@ def main():
         if not base.startswith('boot-elden'):
             continue                          # 槽位转储/dtbo：见下方 (slot-dump) 段单独入账
         build = base[len('boot-elden'):-len('.img')].lstrip('-') or '(unversioned)'
-        uts, kbin = payload(img)
+        uts, kbin, pstat = payload(img)
         if not uts:
-            rows.append([build, base, '-', '(无内核载荷)', kbin, '', 'no-payload',
-                         '', '', '', 'skip'])
+            # corrupt = 是 boot 镜像却读不出内核 ⇒ 是**坏镜像**，必须显式记账、不得当「无载荷」放过；
+            # absent  = 真无载荷（非 boot 镜像，如 dtbo-dummy）⇒ 维持 skip。
+            flag = 'no-payload' if pstat == 'absent' else 'kernel-unreadable'
+            rows.append([build, base, '-', '(无内核载荷)' if pstat == 'absent' else '(内核段不可读)',
+                         kbin, '', flag, '', '', '', 'skip' if pstat == 'absent' else flag])
             continue
         dup[kbin].append(build)
         mf = manifest(img[:-len('.img')] + '.manifest')
@@ -527,7 +576,7 @@ def main():
         base = os.path.basename(img)
         if base.startswith('boot-elden'):
             continue
-        uts, kbin = payload(img)
+        uts, kbin, pstat = payload(img)
         if not uts:
             rows.append(['(no-payload)', base, '-', '(无内核载荷)', kbin, '', '', '', '', '-',
                          'skip'])
