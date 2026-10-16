@@ -64,14 +64,26 @@ T2=(
 	"$DL"                                  # EDL 全量包（救砖 programmer/loader，版本敏感）
 )
 
+# ---- T3：会话轨迹（本机独有；可单独上传）----
+# 注意：.pi/sessions/ 里含**正在写入**的当前会话 jsonl ⇒ 这一层用【真实拷贝】冻结快照
+# （不用硬链接，否则被追加时上传目录里的文件会跟着变、sha256 立刻失效）。
+T3=(
+	".pi/sessions"                         # pi 原生会话轨迹（含 subagent-artifacts）；SESSIONS/ 只有策展快照
+)
+
 rel() { case "$1" in /*) printf '%s' "$1";; *) printf '%s' "$ROOT/$1";; esac; }
 staged() { case "$1" in /*) printf '%s' "${1#/}";; *) printf '%s' "$1";; esac; }
 
-link_path() { # $1=src abs  $2=dest abs
+# $1=src abs  $2=dest abs  $3=hardlink|copy（默认 hardlink）
+link_path() {
 	[ -e "$1" ] || { echo "  跳过（不存在）: $1"; return 0; }
 	mkdir -p "$(dirname "$2")"
 	rm -rf "$2"
-	cp -al "$1" "$2" 2>/dev/null || cp -a "$1" "$2"
+	if [ "${3:-hardlink}" = copy ]; then
+		cp -a "$1" "$2"
+	else
+		cp -al "$1" "$2" 2>/dev/null || cp -a "$1" "$2"
+	fi
 }
 
 print_group() { # $1=label  $2..=paths
@@ -91,6 +103,7 @@ print_group() { # $1=label  $2..=paths
 if [ "$LIST_ONLY" = 1 ]; then
 	print_group "T1-irreplaceable" "${T1[@]}"
 	print_group "T2-optional-redownloadable" "${T2[@]}"
+	print_group "T3-sessions" "${T3[@]}"
 	exit 0
 fi
 
@@ -98,12 +111,13 @@ rm -rf "$DEST"
 mkdir -p "$DEST"
 for p in "${T1[@]}"; do link_path "$(rel "$p")" "$DEST/T1-irreplaceable/$(staged "$p")"; done
 for p in "${T2[@]}"; do link_path "$(rel "$p")" "$DEST/T2-optional-redownloadable/$(staged "$p")"; done
+for p in "${T3[@]}"; do link_path "$(rel "$p")" "$DEST/T3-sessions/$(staged "$p")" copy; done
 
 cat > "$DEST/README.md" <<'README_EOF'
 # y700-elden — 云盘备份包（本机独有 / 不可重下的二进制）
 
-上传方式：把整个目录（或它的 tar）丢到自己的云盘即可。目录内文件是【硬链接】，
-与仓库内源文件共享数据块 ⇒ 上传读内容、不额外占盘。
+上传方式：把整个目录（或它的 tar）丢到自己的云盘即可。`T1`/`T2` 两层是【硬链接】，
+与仓库内源文件共享数据块 ⇒ 上传读内容、不额外占盘；`T3-sessions/` 是**真实拷贝**（冻结快照）。
 
 ## 分层
 
@@ -111,6 +125,7 @@ cat > "$DEST/README.md" <<'README_EOF'
 |---|---|---|
 | `T1-irreplaceable/` | 设备/单元独有（分区 dump、GPT、misc、解锁前取证），以及本机唯一副本（内核 bundle、AVF 提取物、rootfs 归档、现场 boot 镜像） | **无条件上云**：本机之外没有任何副本，坏了就没了 |
 | `T2-optional-redownloadable/` | 可重下但代价高 / 源可能失效（原厂厂商资产、EDL 全量包、厂商工具） | 建议一并上云，省将来重下与找源的时间 |
+| `T3-sessions/` | pi 原生会话轨迹 `.pi/sessions/`（本机独有；含 subagent 工件） | 可选但建议：这是「怎么走到今天的」全文，`SESSIONS/` 只存策展快照。**注意**：本层是**真实拷贝**（非硬链接），因会话文件在写入中 |
 
 ## 校验
 

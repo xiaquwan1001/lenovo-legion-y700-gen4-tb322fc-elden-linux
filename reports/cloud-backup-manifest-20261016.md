@@ -14,14 +14,15 @@
 ```
 ~/cloud-backup-y700-elden-20261016/
 ├── README.md                    # 包内说明（分层/校验/敏感提示）
-├── MANIFEST.sha256              # 2999 个文件的 SHA256
+├── MANIFEST.sha256              # 3594 个文件的 SHA256
 ├── T1-irreplaceable/
-└── T2-optional-redownloadable/
+├── T2-optional-redownloadable/
+└── T3-sessions/
 ```
 
-- 逻辑体积 **6.6 G**（T1 ≈ 4.7 G + T2 ≈ 1.8 G），**实占 0**：目录内是**硬链接**（`cp -al`，link count=2），
-  与仓库源文件共享数据块 ⇒ 上传读内容、不额外占盘；源均为只读 dump/归档，不会被就地改写。
-- **完整性已验**：`sha256sum -c MANIFEST.sha256` → **ALL-OK（2999/2999）**。
+- 逻辑体积 **6.9 G**（T1 ≈ 4.7 G + T2 ≈ 1.8 G + T3 ≈ 0.39 G）。**T1/T2 是硬链接**（`cp -al`，link count=2），
+  与仓库源文件共享数据块 ⇒ **实占 0**；**T3 是真实拷贝**（会话文件在写入中，必须冻结快照）。
+- **完整性已验**：`sha256sum -c MANIFEST.sha256` → **ALL-OK（3594/3594）**。
 - 刷新/重建：`scripts/pack-cloud-backup.sh [DEST]`（幂等，先 `rm -rf` 目标目录）。
 
 ## 2. T1 — 不可再生（无条件上云）
@@ -59,7 +60,16 @@
 | `y700四代工具/` | 271 M | 厂商工具 + 解锁工具箱；**第三方源随时可能失效**；⚠ 含 sn 模板（只上私有云盘） |
 | `~/下载/tb322fc/` | 599 M | EDL 全量包（救砖 programmer/loader/XBL，**版本敏感**） |
 
-## 4. 不入包（明确可重下 / 已另有副本）
+## 4. T3-sessions — pi 原生会话轨迹（本机独有，可选但建议）
+
+| 项 | 体积 | 说明 |
+|---|---|---|
+| `.pi/sessions/` | 390 M / 595 文件 | 190 个会话的**全文轨迹** + `subagent-artifacts/`（子代理工件）。这是「**怎么走到今天的**」一手记录；`SESSIONS/` 只有策展快照、`session_search` 也只在本机查 ⇒ 丢了没有第二份。
+
+> 本层用 **真实拷贝**（非硬链接）：当前会话的 `.jsonl` 正在被追加，硬链接会让包内文件跟着变、`sha256` 立刻失效。
+> 代价 = 多占约 390 M（`df` 已验证）。
+
+## 5. 不入包（明确可重下 / 已另有副本）
 
 | 项 | 体积 | 理由 |
 |---|---|---|
@@ -68,7 +78,7 @@
 | `out/` `build/` `bootslot-b*/` `logs/` `pkgs*/` `probe/` `twrp/` | ~30 G | 可由 `patches/` + `scripts/` 重建（`out/*.manifest` 已入库作指纹） |
 | `backup/kernel-git-repair-2026-10-08/{corrupt-pack-*.pack,*.idx}` | 295 M | 修复过程的破损包留档，结论已入 PITFALLS；`elden` bundle 已在 T1 |
 
-## 5. 上传与恢复
+## 6. 上传与恢复
 
 ```bash
 # 上传：把整个目录（或打包后的单文件）丢到云盘
@@ -81,7 +91,7 @@ tar -C ~ -cf - cloud-backup-y700-elden-20261016 | zstd -T0 -19 -o /mnt/Samsung/y
 
 **恢复**：解包后按相对路径放回仓库根对应位置即可（路径与 §2/§3 表一致）。
 
-## 6. 维护
+## 7. 维护
 
 - 有新 dump/归档 → 加进 `scripts/pack-cloud-backup.sh` 的 `T1`/`T2` 数组 → 重跑 → 重传变更文件。
 - `MANIFEST.sha256` 是**快照时点**的校验和；重建后需重传对应文件或整包重传。
