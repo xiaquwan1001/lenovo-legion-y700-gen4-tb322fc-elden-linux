@@ -1,0 +1,1301 @@
+
+project device/waydroid/waydroid/
+# branch elden/lineage-20  base ghub/lineage-20 = 2234f4b  head = 79de788
+# pushes to git@git.ustc.edu.cn:xqh/y700-elden-waydroid-device.git refs/heads/elden/lineage-20
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 662400f..5096801 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -40,7 +40,7 @@ TARGET_NO_BOOTLOADER := true
+ TARGET_USES_HWC2 := true
+ ifneq ($(TARGET_USE_MESA),false)
+ BOARD_MESA3D_USES_MESON_BUILD := true
+-BOARD_MESA3D_MESON_ARGS := -Dallow-kcmp=enabled -Dmesa-clc=system -Dprecomp-compiler=system -Dandroid-strict=false
++BOARD_MESA3D_MESON_ARGS := -Dallow-kcmp=enabled -Dmesa-clc=auto -Dprecomp-compiler=auto -Dandroid-strict=false
+ BOARD_MESA3D_BUILD_LIBGBM := true
+ BOARD_MESA3D_GALLIUM_DRIVERS := r300 r600 nouveau llvmpipe svga virgl radeonsi zink
+ BOARD_MESA3D_VULKAN_DRIVERS := swrast virtio amd
+diff --git a/device.mk b/device.mk
+index 7c17ece..4fcecb7 100644
+--- a/device.mk
++++ b/device.mk
+@@ -144,9 +144,9 @@ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
+     $(LOCAL_PATH)/configs/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml \
+     $(LOCAL_PATH)/configs/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml \
+-    frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_audio.xml \
+-    frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_telephony.xml \
+-    frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml
++    frameworks/av/media/libstagefright/data/media_codecs_google_c2_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_audio.xml \
++    frameworks/av/media/libstagefright/data/media_codecs_google_c2_telephony.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_telephony.xml \
++    frameworks/av/media/libstagefright/data/media_codecs_google_c2_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml
+ 
+ ifneq ($(TARGET_USE_MESA),false)
+ PRODUCT_COPY_FILES += \
+@@ -229,7 +229,8 @@ PRODUCT_PACKAGES += \
+ 
+ # Vibrator
+ PRODUCT_PACKAGES += \
+-    android.hardware.vibrator@1.0-service.waydroid
++    android.hardware.vibrator-service.elden \
++    EldenVibrationOverlay
+ 
+ # Soong
+ PRODUCT_SOONG_NAMESPACES += \
+diff --git a/manifest.xml b/manifest.xml
+index 77d4ef4..5db04f7 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -108,19 +108,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.media.omx</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IOmx</name>
+-            <instance>default</instance>
+-        </interface>
+-        <interface>
+-            <name>IOmxStore</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.memtrack</name>
+         <transport>hwbinder</transport>
+@@ -148,15 +135,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 			<instance>default</instance>
+ 		</interface>
+ 	</hal>
+-    <hal format="hidl">
+-        <name>android.hardware.vibrator</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IVibrator</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>vendor.waydroid.display</name>
+         <transport>hwbinder</transport>
+diff --git a/system.prop b/system.prop
+index de8cf1d..742a498 100644
+--- a/system.prop
++++ b/system.prop
+@@ -24,6 +24,10 @@ debug.sf.disable_backpressure=1
+ # Disable RescueParty
+ persist.sys.disable_rescue=true
+ 
++# Sensors (elden UDP HAL, C4)
++waydroid.sensors.enabled=true
++waydroid.sensors.udp_port=52012
++
+ # LMKd
+ ro.lmk.low=1001
+ ro.lmk.medium=800
+diff --git a/waydroid_arm64_only/BoardConfig.mk b/waydroid_arm64_only/BoardConfig.mk
+index 7fae36b..0c5212f 100644
+--- a/waydroid_arm64_only/BoardConfig.mk
++++ b/waydroid_arm64_only/BoardConfig.mk
+@@ -35,6 +35,14 @@ MALLOC_SVELTE := true
+ AUDIOSERVER_MULTILIB := first
+ 
+ ifneq ($(TARGET_USE_MESA),false)
+-BOARD_MESA3D_GALLIUM_DRIVERS += freedreno v3d vc4 etnaviv tegra panfrost lima
+-BOARD_MESA3D_VULKAN_DRIVERS += broadcom freedreno panfrost
++# y700-elden: this device only needs freedreno. Override (not +=) to drop the
++# base BoardConfig's llvmpipe/swrast/r300/zink set, which forces
++# MESON_GEN_LLVM_STUB -> -Dllvm=enabled -> libLLVM22 (hours). Narrowing to a
++# single driver avoids the LLVM stub and cuts the build to minutes.
++BOARD_MESA3D_GALLIUM_DRIVERS := freedreno
++BOARD_MESA3D_VULKAN_DRIVERS := freedreno
++# mesa3d_cross.mk passes -Dgallium-va= / -Dvideo-codecs= unconditionally;
++# empty values are rejected by meson >=1.10 (feature/array options).
++BOARD_MESA3D_GALLIUM_VA := disabled
++BOARD_MESA3D_VIDEO_CODECS := all_free
+ endif
+
+project hardware/waydroid/
+# branch elden/lineage-20  base ghub/lineage-20 = 6e898e9  head = 944b06a
+# pushes to git@git.ustc.edu.cn:xqh/y700-elden-waydroid-hardware.git refs/heads/elden/lineage-20
+diff --git a/gatekeeper/SoftGateKeeper.h b/gatekeeper/SoftGateKeeper.h
+index 2f4f4d7..c32ad1d 100644
+--- a/gatekeeper/SoftGateKeeper.h
++++ b/gatekeeper/SoftGateKeeper.h
+@@ -135,10 +135,13 @@ public:
+ 
+     fast_hash_t ComputeFastHash(const SizedBuffer &password, uint64_t salt) {
+         fast_hash_t fast_hash;
+-        size_t digest_size = password.length + sizeof(salt);
++        size_t digest_size = password.size() + sizeof(salt);
+         std::unique_ptr<uint8_t[]> digest(new uint8_t[digest_size]);
+         memcpy(digest.get(), &salt, sizeof(salt));
+-        memcpy(digest.get() + sizeof(salt), password.buffer.get(), password.length);
++        const uint8_t *pwd = password.Data<uint8_t>();
++        if (pwd != nullptr && password.size() > 0) {
++            memcpy(digest.get() + sizeof(salt), pwd, password.size());
++        }
+ 
+         SHA256(digest.get(), digest_size, (uint8_t *) &fast_hash.digest);
+ 
+diff --git a/gatekeeper/SoftGateKeeperDevice.cpp b/gatekeeper/SoftGateKeeperDevice.cpp
+index 694acc4..2542717 100644
+--- a/gatekeeper/SoftGateKeeperDevice.cpp
++++ b/gatekeeper/SoftGateKeeperDevice.cpp
+@@ -69,13 +69,15 @@ int SoftGateKeeperDevice::enroll(uint32_t uid,
+         return -EINVAL;
+     }
+ 
+-    *enrolled_password_handle = response.enrolled_password_handle.buffer.release();
++    *enrolled_password_handle_length = response.enrolled_password_handle.size();
++    *enrolled_password_handle = new uint8_t[*enrolled_password_handle_length];
++    memcpy(*enrolled_password_handle, response.enrolled_password_handle.Data<uint8_t>(),
++           *enrolled_password_handle_length);
+     gatekeeper::password_handle_t *handle =
+                     reinterpret_cast<gatekeeper::password_handle_t *>(*enrolled_password_handle);
+     //FIXIT: We need to move this module to host with gatekeeper pipe
+     handle->hardware_backed = true;
+ 
+-    *enrolled_password_handle_length = response.enrolled_password_handle.length;
+     return 0;
+ }
+ 
+@@ -113,8 +115,9 @@ int SoftGateKeeperDevice::verify(uint32_t uid,
+     }
+ 
+     if (auth_token != NULL && auth_token_length != NULL) {
+-       *auth_token = response.auth_token.buffer.release();
+-       *auth_token_length = response.auth_token.length;
++       *auth_token_length = response.auth_token.size();
++       *auth_token = new uint8_t[*auth_token_length];
++       memcpy(*auth_token, response.auth_token.Data<uint8_t>(), *auth_token_length);
+     }
+ 
+     if (request_reenroll != NULL) {
+diff --git a/sensors/Sensors.cpp b/sensors/Sensors.cpp
+index 1e80cf3..b32ef42 100644
+--- a/sensors/Sensors.cpp
++++ b/sensors/Sensors.cpp
+@@ -1,86 +1,273 @@
+ /*
+- * Copyright (C) 2014, 2017-2018 The  Linux Foundation. All rights reserved.
+- * Not a contribution
+- * Copyright (C) 2008 The Android Open Source Project
+- * Copyright (C) 2018 The LineageOS Project
+- * Copyright (C) 2021 Waydroid Project
++ * Sensors.cpp — elden UDP 传感器 HAL 真实现（替换 waydroid stub）
+  *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
++ * 改造（2026-10-03，C4）：
++ *   原版（Sensors.cpp.orig）是 stub：getSensorsList 返回空、poll 无事件
++ *   → 容器内 Android framework 看不到任何传感器 → 地图旋转/陀螺/水平仪全部不可用。
++ *   原方案「uinput 注入」作废：HAL 不读 evdev（stub 根本不开设备）。
+  *
+- *      http://www.apache.org/licenses/LICENSE-2.0
++ * 新实现：
++ *   - 后台线程监听 UDP（文本行协议，见 scripts/eldroid-sensord.c 头注释）：
++ *       acc x y z / gyr x y z / mag x y z / light v / prox v
++ *   - getSensorsList 返回 5 个传感器（accel/mag/gyro/light/prox）
++ *   - poll() 阻塞等事件队列（框架专用线程反复调用，符合 HIDL poll 模型）
++ *   - 时间戳用容器自身 elapsedRealtimeNano()（宿主时钟不同源，不可信）
++ *   - 端口可配：property waydroid.sensors.udp_port（默认 52012）
+  *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
++ * 值来源（宿主侧）：scripts/eldroid-sensord --send <容器IP> [--fake|--stdin]
++ *   真值 = env-pass/scripts/sensor-send-termux.sh（另一单元 a 槽 Android 转发）。
++ *
++ * 注意：prop 用 waydroid.sensors.enabled（**不要**用 waydroid.stub_sensors_hal——
++ *   framework 0027 补丁见到它会默认 fix-to-user-rotation，锁死自动旋转）。
+  */
++#define LOG_TAG "android.hardware.sensors@1.0-service.waydroid"
+ 
+ #include "Sensors.h"
+ 
++#include <cutils/properties.h>
++#include <utils/SystemClock.h>
++
++#include <arpa/inet.h>
++#include <netinet/in.h>
++#include <sys/socket.h>
++#include <unistd.h>
++
++#include <condition_variable>
++#include <cstring>
++#include <deque>
++#include <mutex>
++#include <thread>
++#include <vector>
++
+ namespace android {
+ namespace hardware {
+ namespace sensors {
+ namespace V1_0 {
+ namespace implementation {
+ 
++using ::android::hardware::hidl_string;
++using ::android::hardware::hidl_vec;
++using ::android::hardware::sensors::V1_0::Event;
++using ::android::hardware::sensors::V1_0::EventPayload;
++using ::android::hardware::sensors::V1_0::Result;
++using ::android::hardware::sensors::V1_0::SensorInfo;
++using ::android::hardware::sensors::V1_0::SensorType;
++using ::android::hardware::sensors::V1_0::Vec3;
++
++namespace {
++
++struct SensorDesc {
++    int32_t handle;
++    SensorType type;
++    const char *name;
++    const char *stringType;
++    float maxRange;
++    float resolution;
++    float power;
++    int32_t minDelay;  // us, continuous
++    uint32_t flags;
++};
++
++/* flags: 0 = continuous, 2 = on-change, 3 = on-change + wake-up (prox) */
++static const SensorDesc kSensors[] = {
++    {1, SensorType::ACCELEROMETER,  "elden accel (UDP)", "android.sensor.accelerometer",
++     78.4f,  0.001f, 0.1f, 1000,  0},
++    {2, SensorType::MAGNETIC_FIELD, "elden mag (UDP)",   "android.sensor.magnetic_field",
++     4900.0f, 0.1f,  1.0f, 10000, 0},
++    {4, SensorType::GYROSCOPE,      "elden gyro (UDP)",  "android.sensor.gyroscope",
++     35.0f,  0.001f, 1.0f, 1000,  0},
++    {5, SensorType::LIGHT,          "elden light (UDP)", "android.sensor.light",
++     100000.0f, 1.0f, 0.0f, 0,    2},
++    {8, SensorType::PROXIMITY,      "elden prox (UDP)",  "android.sensor.proximity",
++     10.0f,  1.0f,   0.5f, 0,    3},
++};
++static const int kSensorCount = sizeof(kSensors) / sizeof(kSensors[0]);
++
++static int sensorIndexByType(const char *t) {
++    if (!strcmp(t, "acc"))   return 0;
++    if (!strcmp(t, "mag"))   return 1;
++    if (!strcmp(t, "gyr"))   return 2;
++    if (!strcmp(t, "light")) return 3;
++    if (!strcmp(t, "prox"))  return 4;
++    return -1;
++}
++
++/* ---- 共享事件队列 ---- */
++static std::mutex gMutex;
++static std::condition_variable gCv;
++static std::deque<Event> gQueue;
++static bool gEnabled[kSensorCount] = {false, false, false, false, false};
++static bool gThreadRunning = false;
++
++static void pushEventLocked(const Event &e) {
++    if (gQueue.size() > 512) gQueue.pop_front();  // 背压：丢最旧
++    gQueue.push_back(e);
++}
++
++/* ---- UDP 监听线程 ---- */
++static void *udpLoop(void *) {
++    char portProp[PROPERTY_VALUE_MAX] = {0};
++    property_get("waydroid.sensors.udp_port", portProp, "52012");
++    int port = atoi(portProp);
++    if (port <= 0 || port > 65535) port = 52012;
++
++    int fd = socket(AF_INET, SOCK_DGRAM, 0);
++    if (fd < 0) {
++        ALOGE("sensors udp: socket failed");
++        return nullptr;
++    }
++    int one = 1;
++    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
++    struct sockaddr_in addr;
++    memset(&addr, 0, sizeof(addr));
++    addr.sin_family = AF_INET;
++    addr.sin_port = htons((uint16_t)port);
++    addr.sin_addr.s_addr = htonl(INADDR_ANY);
++    if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
++        ALOGE("sensors udp: bind :%d failed", port);
++        close(fd);
++        return nullptr;
++    }
++    ALOGI("sensors udp: listening on 0.0.0.0:%d (acc/gyr/mag/light/prox)", port);
++
++    char buf[256];
++    while (gThreadRunning) {
++        struct sockaddr_in src;
++        socklen_t slen = sizeof(src);
++        ssize_t n = recvfrom(fd, buf, sizeof(buf) - 1, 0,
++                             (struct sockaddr *)&src, &slen);
++        if (n <= 0) {
++            if (gThreadRunning) usleep(10000);
++            break;
++        }
++        buf[n] = '\0';
++        char t[16];
++        float a = 0, b = 0, c = 0;
++        if (sscanf(buf, " %15s %f %f %f", t, &a, &b, &c) < 2) continue;
++        int idx = sensorIndexByType(t);
++        if (idx < 0 || !gEnabled[idx]) continue;
++
++        Event e;
++        e.sensorType = kSensors[idx].type;
++        e.sensorHandle = kSensors[idx].handle;
++        e.timestamp = ::android::elapsedRealtimeNano();
++        if (idx <= 2) {
++            Vec3 v;
++            v.x = a; v.y = b; v.z = c;
++            v.status = ::android::hardware::sensors::V1_0::SensorStatus::ACCURACY_HIGH;
++            e.u.vec3 = v;
++        } else {
++            e.u.scalar = a;
++        }
++        {
++            std::lock_guard<std::mutex> lk(gMutex);
++            pushEventLocked(e);
++        }
++        gCv.notify_one();
++    }
++    close(fd);
++    return nullptr;
++}
++
++}  // anonymous namespace
++
+ Sensors::Sensors() {
++    for (int i = 0; i < kSensorCount; i++) gEnabled[i] = false;
++    if (!gThreadRunning) {
++        gThreadRunning = true;
++        std::thread(udpLoop, nullptr).detach();
++    }
++}
++
++Sensors::~Sensors() {
++    gThreadRunning = false;
+ }
+ 
+ Return<void> Sensors::getSensorsList(getSensorsList_cb _hidl_cb) {
+     hidl_vec<SensorInfo> out;
+-
++    out.resize(kSensorCount);
++    for (int i = 0; i < kSensorCount; i++) {
++        SensorInfo &info = out[i];
++        info.sensorHandle = kSensors[i].handle;
++        info.name = kSensors[i].name;
++        info.vendor = "elden";
++        info.version = 1;
++        info.type = kSensors[i].type;
++        info.typeAsString = kSensors[i].stringType;
++        info.maxRange = kSensors[i].maxRange;
++        info.resolution = kSensors[i].resolution;
++        info.power = kSensors[i].power;
++        info.minDelay = kSensors[i].minDelay;
++        info.fifoMaxEventCount = 0;
++        info.fifoReservedEventCount = 0;
++        info.requiredPermission = "";
++        info.flags = kSensors[i].flags;
++    }
+     _hidl_cb(out);
+     return Void();
+ }
+ 
+-Return<Result> Sensors::setOperationMode(OperationMode) {
+-    return Result::INVALID_OPERATION;
++Return<Result> Sensors::setOperationMode(OperationMode mode) {
++    return mode == OperationMode::NORMAL ? Result::OK : Result::INVALID_OPERATION;
+ }
+ 
+-Return<Result> Sensors::activate(
+-        int32_t, bool) {
+-    return Result::OK;
++Return<Result> Sensors::activate(int32_t handle, bool enabled) {
++    for (int i = 0; i < kSensorCount; i++) {
++        if (kSensors[i].handle == handle) {
++            gEnabled[i] = enabled;
++            ALOGI("sensors udp: %s %s", kSensors[i].name, enabled ? "on" : "off");
++            return Result::OK;
++        }
++    }
++    return Result::BAD_VALUE;
+ }
+ 
+-Return<void> Sensors::poll(int32_t, poll_cb _hidl_cb) {
+-    hidl_vec<Event> out;
++Return<void> Sensors::poll(int32_t maxCount, poll_cb _hidl_cb) {
++    std::vector<Event> events;
++    {
++        std::unique_lock<std::mutex> lk(gMutex);
++        /* HIDL poll 模型：框架专用线程反复调用，这里阻塞到有事件为止 */
++        gCv.wait(lk, [] { return !gQueue.empty(); });
++        int cap = maxCount > 0 ? maxCount : 64;
++        while (!gQueue.empty() && (int)events.size() < cap) {
++            events.push_back(gQueue.front());
++            gQueue.pop_front();
++        }
++    }
++    hidl_vec<Event> out(events.begin(), events.end());
+     hidl_vec<SensorInfo> dynamicSensorsAdded;
+-
+     _hidl_cb(Result::OK, out, dynamicSensorsAdded);
+     return Void();
+ }
+ 
+-Return<Result> Sensors::batch(int32_t, int64_t, int64_t) {
++Return<Result> Sensors::batch(int32_t /*sensor_handle*/,
++                              int64_t /*sampling_period_ns*/,
++                              int64_t /*max_report_latency_ns*/) {
++    /* 频率由源端控制（sensord --rate / termux-sensor -d），HAL 不节流 */
+     return Result::OK;
+ }
+ 
+-Return<Result> Sensors::flush(int32_t) {
+-    return Result::OK;
++Return<Result> Sensors::flush(int32_t /*handle*/) {
++    return Result::INVALID_OPERATION;
+ }
+ 
+-Return<Result> Sensors::injectSensorData(const Event&) {
+-    // HAL does not support
++Return<Result> Sensors::injectSensorData(const Event & /*event*/) {
+     return Result::INVALID_OPERATION;
+ }
+ 
+-Return<void> Sensors::registerDirectChannel(
+-        const SharedMemInfo&, registerDirectChannel_cb _hidl_cb) {
+-    // HAL does not support
++Return<void> Sensors::registerDirectChannel(const SharedMemInfo & /*mem*/,
++                                            registerDirectChannel_cb _hidl_cb) {
+     _hidl_cb(Result::INVALID_OPERATION, -1);
+     return Void();
+ }
+ 
+-Return<Result> Sensors::unregisterDirectChannel(int32_t) {
+-    // HAL does not support
++Return<Result> Sensors::unregisterDirectChannel(int32_t /*channelHandle*/) {
+     return Result::INVALID_OPERATION;
+ }
+ 
+-Return<void> Sensors::configDirectReport(
+-        int32_t, int32_t, RateLevel, configDirectReport_cb _hidl_cb) {
+-    // HAL does not support
++Return<void> Sensors::configDirectReport(int32_t /*sensorHandle*/,
++                                         int32_t /*channelHandle*/, RateLevel /*rate*/,
++                                         configDirectReport_cb _hidl_cb) {
+     _hidl_cb(Result::INVALID_OPERATION, -1);
+     return Void();
+ }
+diff --git a/sensors/Sensors.h b/sensors/Sensors.h
+index fc7f16c..9f9c6ed 100644
+--- a/sensors/Sensors.h
++++ b/sensors/Sensors.h
+@@ -31,6 +31,7 @@ namespace implementation {
+ 
+ struct Sensors : public ::android::hardware::sensors::V1_0::ISensors {
+     Sensors();
++    ~Sensors();
+ 
+     Return<void> getSensorsList(getSensorsList_cb _hidl_cb) override;
+ 
+diff --git a/sensors/service.cpp b/sensors/service.cpp
+index 68fb6c7..7390545 100644
+--- a/sensors/service.cpp
++++ b/sensors/service.cpp
+@@ -30,12 +30,14 @@ using android::OK;
+ using android::status_t;
+ 
+ int main() {
+-    if (!property_get_bool("waydroid.stub_sensors_hal", false))
++    /* elden: 真 UDP 传感器 HAL。用 waydroid.sensors.enabled（不要用 waydroid.stub_sensors_hal——
++     * framework 0027 补丁见到它会默认 fix-to-user-rotation，锁死自动旋转）。 */
++    if (!property_get_bool("waydroid.sensors.enabled", false))
+         return 0;
+ 
+     android::sp<ISensors> service = new Sensors();
+ 
+-    configureRpcThreadpool(1, true);
++    configureRpcThreadpool(4, true);
+ 
+     status_t status = service->registerAsService();
+     if (status != OK) {
+diff --git a/vibration-overlay/Android.bp b/vibration-overlay/Android.bp
+new file mode 100644
+index 0000000..c46bade
+--- /dev/null
++++ b/vibration-overlay/Android.bp
+@@ -0,0 +1,10 @@
++// Static RRO: raise the vibration intensity levels for the Waydroid container's
++// Settings app (default is 1 => the "Vibration intensity" sliders are degenerate).
++// Baked into vendor.img at /vendor/overlay/EldenVibrationOverlay.apk.
++runtime_resource_overlay {
++    name: "EldenVibrationOverlay",
++    sdk_version: "current",
++    manifest: "AndroidManifest.xml",
++    resource_dirs: ["res"],
++    vendor: true,
++}
+diff --git a/vibration-overlay/AndroidManifest.xml b/vibration-overlay/AndroidManifest.xml
+new file mode 100644
+index 0000000..8f77921
+--- /dev/null
++++ b/vibration-overlay/AndroidManifest.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.elden.vibration.overlay"
++    android:versionCode="1"
++    android:versionName="1.0">
++    <overlay
++        android:targetPackage="com.android.settings"
++        android:isStatic="true"
++        android:priority="1" />
++    <application android:hasCode="false" android:label="Elden vibration intensity" />
++</manifest>
+diff --git a/vibration-overlay/README.md b/vibration-overlay/README.md
+new file mode 100644
+index 0000000..5b28f93
+--- /dev/null
++++ b/vibration-overlay/README.md
+@@ -0,0 +1,39 @@
++# elden-vibration-overlay — 让容器 Settings 出现「振动强度」调节
++
++## 为什么需要
++
++AOSP/LineageOS Settings 的强度滑杆按 **Settings 自己的资源** 决定档位数：
++
++```
++packages/apps/Settings/res/values/config.xml
++    <integer name="config_vibration_supported_intensity_levels">1</integer>   <-- 默认 1
++VibrationIntensityPreferenceController.getMax() = min(VIBRATION_INTENSITY_HIGH=3, 该资源)
++getMin() = VIBRATION_INTENSITY_OFF = 0
++```
++
++设备通常由 **device overlay / RRO** 把它提到 3（或 5）。本树里没有任何覆盖 ⇒ 上限=1，滑杆退化成无效两档
++（相册里看不到有意义的「强度」调节）。与 HAL 能力无关：我们的 AIDL HAL 已报 `CAP_AMPLITUDE_CONTROL`。
++
++## 做法
++
++一个 **静态 RRO**（`android:isStatic="true"`，放 `/vendor/overlay/`）：只覆盖 Settings 的这一个整数资源。
++静态 overlay 会被 PackageManager 在开机时自动启用，不需要 `cmd overlay enable`。
++
++## 编译 / 落盘
++
++```bash
++cp -r patches-userland/elden-vibration-overlay /mnt/Samsung/waydroid-build/vendor/extra/EldenVibrationOverlay
++cd /mnt/Samsung/waydroid-build && source build/envsetup.sh && lunch lineage_waydroid_arm64_only-userdebug
++mmm vendor/extra/EldenVibrationOverlay
++ls out/target/product/waydroid_arm64_only/vendor/overlay/EldenVibrationOverlay.apk
++```
++
++然后由 `scripts/waydroid-haptics-bake-vendor.sh` 与 AIDL HAL、vintf fragment 一起写进 `vendor.img`。
++
++## 验证（容器内）
++
++```
++waydroid shell cmd overlay list | grep -i elden          # [x] com.elden.vibration.overlay
++waydroid shell settings get system vibration_intensity_touch   # -1/0..3（未设为 null）
++```
++Settings → 声音/无障碍 → 振动与触感：应出现 关/低/中/高 四档滑杆（每档对应马达不同幅值）。
+diff --git a/vibration-overlay/res/values/config.xml b/vibration-overlay/res/values/config.xml
+new file mode 100644
+index 0000000..aab7061
+--- /dev/null
++++ b/vibration-overlay/res/values/config.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <!-- 0..3 = OFF / LOW / MEDIUM / HIGH for each usage (touch, notification, alarm, media, ring).
++         Mapping to the aw86927 motor: framework setAmplitude -> bridge 'amplitude' -> FF magnitude. -->
++    <integer name="config_vibration_supported_intensity_levels">3</integer>
++</resources>
+diff --git a/vibrator-aidl/Android.bp b/vibrator-aidl/Android.bp
+new file mode 100644
+index 0000000..c65a3ac
+--- /dev/null
++++ b/vibrator-aidl/Android.bp
+@@ -0,0 +1,25 @@
++// AIDL vibrator HAL for Waydroid on mainline elden (TB322FC).
++// Replaces the Waydroid HIDL 1.0 HAL; deployment reuses the image's HIDL rc
++// path by bind-mounting this binary over it (see scripts/waydroid-haptics-aidl-deploy.sh).
++cc_binary {
++    name: "android.hardware.vibrator-service.elden",
++    relative_install_path: "hw",
++    init_rc: ["vibrator-elden.rc"],
++    vintf_fragments: ["android.hardware.vibrator.elden.xml"],
++    vendor: true,
++    cflags: [
++        "-Wall",
++        "-Wextra",
++    ],
++    shared_libs: [
++        "libbase",
++        "libbinder_ndk",
++        "liblog",
++        "android.hardware.vibrator-V2-ndk",
++    ],
++    srcs: [
++        "main.cpp",
++        "Vibrator.cpp",
++        "VibratorManager.cpp",
++    ],
++}
+diff --git a/vibrator-aidl/README.md b/vibrator-aidl/README.md
+new file mode 100644
+index 0000000..8d60ba4
+--- /dev/null
++++ b/vibrator-aidl/README.md
+@@ -0,0 +1,37 @@
++# waydroid-haptics-aidl — AIDL V2 vibrator HAL（elden）
++
++替换 Waydroid 镜像自带的 HIDL 1.0 vibrator HAL（它写 AOSP `leds`/`timed_output` 节点，
++主线没有这些节点、而且它不检查写失败 ⇒ Android 侧全绿、马达不动；并且 HIDL 1.0 在 A13
++下既无幅度控制、`cancel` 也不会更早调 `off()`）。
++
++本 HAL 把请求写成宿主桥文件（见 `scripts/elden-hapticd.c`）：
++
++| 文件 | 语义 |
++|---|---|
++| `/sys/class/leds/vibrator/state` | 1/0（信息） |
++| `.../duration` | ms |
++| `.../amplitude` | 0..255（`setAmplitude` / `perform` 强度映射） |
++| `.../activate` | 1=起振、0=停振（**最后写**，daemon 以此为触发边沿） |
++
++能力：`CAP_AMPLITUDE_CONTROL`（Android 强度滑杆生效）、`off()` 真停（framework `cancel` 生效）、
++`perform()` 支持 CLICK/TICK/THUD/POP/DOUBLE_CLICK/HEAVY_CLICK；未实现的能力一律
++`EX_UNSUPPORTED_OPERATION`（不谎报）。
++
++## 编译（waydroid-build 树）
++
++```bash
++cp -r patches-userland/waydroid-haptics-aidl /mnt/Samsung/waydroid-build/hardware/waydroid/vibrator-aidl
++cd /mnt/Samsung/waydroid-build
++export CCACHE_DIR=/mnt/Samsung/ccache USE_CCACHE=1
++source build/envsetup.sh && lunch lineage_waydroid_arm64_only-userdebug
++mmm hardware/waydroid/vibrator-aidl
++```
++
++产物：`out/target/product/waydroid_arm64_only/vendor/bin/hw/android.hardware.vibrator-service.elden`
+++ `.../vendor/etc/vintf/manifest/android.hardware.vibrator.elden.xml`。
++
++## 部署
++
++见 `scripts/waydroid-haptics-aidl-deploy.sh`（零写盘：把二进制 bind 到镜像里那条 HIDL 服务路径上，
++把 vintf fragment 目录 bind 到容器 `/vendor/etc/vintf/manifest`）。
++回退 = 删掉两条 `lxc.mount.entry` + 全量重启容器。
+diff --git a/vibrator-aidl/Vibrator.cpp b/vibrator-aidl/Vibrator.cpp
+new file mode 100644
+index 0000000..a68fa4b
+--- /dev/null
++++ b/vibrator-aidl/Vibrator.cpp
+@@ -0,0 +1,331 @@
++/*
++ * Copyright (C) 2026 The elden project (TB322FC/SM8750 mainline)
++ * SPDX-License-Identifier: Apache-2.0
++ */
++#define LOG_TAG "vibrator.elden"
++
++#include "Vibrator.h"
++
++#include <android-base/logging.h>
++#include <fcntl.h>
++#include <unistd.h>
++
++#include <cerrno>
++#include <cmath>
++#include <cstring>
++
++namespace aidl::android::hardware::vibrator {
++
++using ndk::ScopedAStatus;
++
++namespace {
++
++constexpr const char* kBridgeDir = "/sys/class/leds/vibrator";
++constexpr int kDefaultDurationMs = 20;
++
++ScopedAStatus unsupported() {
++    return ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
++}
++
++/* Predefined-effect map.  Durations are chosen for a LRA-style motor; the
++ * framework only calls perform() for effects we list in getSupportedEffects(). */
++bool effectDuration(Effect effect, int* durationMs) {
++    switch (effect) {
++        case Effect::CLICK:
++            *durationMs = 10;
++            return true;
++        case Effect::DOUBLE_CLICK:
++            *durationMs = 22;
++            return true;
++        case Effect::TICK:
++            *durationMs = 5;
++            return true;
++        case Effect::THUD:
++            *durationMs = 25;
++            return true;
++        case Effect::POP:
++            *durationMs = 12;
++            return true;
++        case Effect::HEAVY_CLICK:
++            *durationMs = 16;
++            return true;
++        default:
++            return false;
++    }
++}
++
++float strengthScale(EffectStrength strength) {
++    switch (strength) {
++        case EffectStrength::LIGHT:
++            return 0.4f;
++        case EffectStrength::MEDIUM:
++            return 0.7f;
++        case EffectStrength::STRONG:
++        default:
++            return 1.0f;
++    }
++}
++
++}  // namespace
++
++HapticBridge& HapticBridge::instance() {
++    static HapticBridge bridge;
++    return bridge;
++}
++
++void HapticBridge::writeFile(const char* name, const std::string& value) {
++    const std::string path = std::string(kBridgeDir) + "/" + name;
++    const std::string payload = value + "\n";
++    int fd = open(path.c_str(), O_WRONLY | O_CLOEXEC);
++    if (fd < 0) {
++        LOG(ERROR) << "vibrator bridge: open " << path << " failed: " << std::strerror(errno);
++        return;
++    }
++    ssize_t n = write(fd, payload.data(), payload.size());
++    if (n != static_cast<ssize_t>(payload.size())) {
++        LOG(ERROR) << "vibrator bridge: write " << path << " failed: " << std::strerror(errno);
++    }
++    close(fd);
++}
++
++void HapticBridge::setAmplitude255(int v) {
++    if (v < 0) v = 0;
++    if (v > 255) v = 255;
++    bool live;
++    {
++        std::lock_guard<std::mutex> lock(mMutex);
++        mAmplitude255 = v;
++        live = mOn;
++    }
++    /* The framework's SetAmplitudeVibratorStep starts the vibration first and
++     * only then pushes the amplitude, so an amplitude change must reach the
++     * bridge *while* the motor runs (elden-hapticd re-uploads the FF effect). */
++    if (live) {
++        writeFile("amplitude", std::to_string(v));
++        LOG(INFO) << "vibrator amplitude -> " << v;
++    }
++}
++
++int HapticBridge::amplitude255() const {
++    std::lock_guard<std::mutex> lock(mMutex);
++    return mAmplitude255;
++}
++
++void HapticBridge::start(int durationMs, int ampOverride) {
++    int amp;
++    {
++        std::lock_guard<std::mutex> lock(mMutex);
++        amp = ampOverride >= 0 ? ampOverride : mAmplitude255;
++        mQueuedMs = -1;
++        mQueuedAmp = -1;
++        mOn = true;
++    }
++    if (durationMs <= 0) durationMs = kDefaultDurationMs;
++    /* order matters: elden-hapticd samples activate last, so everything it
++     * needs (duration, amplitude) is already written when it sees activate=1. */
++    writeFile("state", "1");
++    writeFile("duration", std::to_string(durationMs));
++    writeFile("amplitude", std::to_string(amp));
++    writeFile("activate", "1");
++    LOG(VERBOSE) << "vibrator on " << durationMs << "ms amp=" << amp;
++}
++
++void HapticBridge::stop() {
++    {
++        std::lock_guard<std::mutex> lock(mMutex);
++        mOn = false;
++    }
++    writeFile("activate", "0");
++    writeFile("state", "0");
++    LOG(INFO) << "vibrator off";
++}
++
++void HapticBridge::prepare() {
++    std::lock_guard<std::mutex> lock(mMutex);
++    mPrepared = true;
++    mQueuedMs = -1;
++}
++
++bool HapticBridge::isPrepared() const {
++    std::lock_guard<std::mutex> lock(mMutex);
++    return mPrepared;
++}
++
++void HapticBridge::queue(int durationMs, int ampOverride) {
++    std::lock_guard<std::mutex> lock(mMutex);
++    mQueuedMs = durationMs > 0 ? durationMs : kDefaultDurationMs;
++    mQueuedAmp = ampOverride;
++}
++
++bool HapticBridge::trigger() {
++    int queued, queuedAmp;
++    {
++        std::lock_guard<std::mutex> lock(mMutex);
++        queued = mQueuedMs;
++        queuedAmp = mQueuedAmp;
++        mPrepared = false;
++        mQueuedMs = -1;
++        mQueuedAmp = -1;
++    }
++    if (queued > 0) {
++        start(queued, queuedAmp);
++        return true;
++    }
++    return false;
++}
++
++void HapticBridge::cancelPrepared() {
++    std::lock_guard<std::mutex> lock(mMutex);
++    mPrepared = false;
++    mQueuedMs = -1;
++    mQueuedAmp = -1;
++}
++
++/* ---- IVibrator ------------------------------------------------------- */
++
++ScopedAStatus Vibrator::getCapabilities(int32_t* _aidl_return) {
++    /* We intentionally do not advertise callback capabilities: the motor is
++     * stopped by elden-hapticd (or by the framework's own off()), so no
++     * HAL-side completion notification is needed. */
++    *_aidl_return = IVibrator::CAP_AMPLITUDE_CONTROL;
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus Vibrator::off() {
++    HapticBridge::instance().stop();
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus Vibrator::on(int32_t timeoutMs,
++                           const std::shared_ptr<IVibratorCallback>& /*callback*/) {
++    auto& bridge = HapticBridge::instance();
++    if (bridge.isPrepared()) {
++        bridge.queue(timeoutMs);
++        return ScopedAStatus::ok();
++    }
++    bridge.start(timeoutMs);
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus Vibrator::perform(Effect effect, EffectStrength strength,
++                               const std::shared_ptr<IVibratorCallback>& /*callback*/,
++                               int32_t* _aidl_return) {
++    int durationMs = 0;
++    if (!effectDuration(effect, &durationMs)) {
++        return unsupported();
++    }
++    auto& bridge = HapticBridge::instance();
++    /* scale the configured amplitude by the requested strength (no state change) */
++    const int scaled =
++            static_cast<int>(std::lround(bridge.amplitude255() * strengthScale(strength)));
++    if (bridge.isPrepared()) {
++        bridge.queue(durationMs, scaled);
++    } else {
++        bridge.start(durationMs, scaled);
++    }
++    *_aidl_return = durationMs;
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus Vibrator::getSupportedEffects(std::vector<Effect>* _aidl_return) {
++    *_aidl_return = {Effect::CLICK, Effect::DOUBLE_CLICK, Effect::TICK,
++                     Effect::THUD,  Effect::POP,          Effect::HEAVY_CLICK};
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus Vibrator::setAmplitude(float amplitude) {
++    int amp = static_cast<int>(std::lround(amplitude * 255.0f));
++    HapticBridge::instance().setAmplitude255(amp);
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus Vibrator::setExternalControl(bool /*enabled*/) {
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getCompositionDelayMax(int32_t* _aidl_return) {
++    *_aidl_return = 0;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getCompositionSizeMax(int32_t* _aidl_return) {
++    *_aidl_return = 0;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getSupportedPrimitives(std::vector<CompositePrimitive>* _aidl_return) {
++    _aidl_return->clear();
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getPrimitiveDuration(CompositePrimitive /*primitive*/,
++                                             int32_t* _aidl_return) {
++    *_aidl_return = 0;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::compose(const std::vector<CompositeEffect>& /*composite*/,
++                                const std::shared_ptr<IVibratorCallback>& /*callback*/) {
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getSupportedAlwaysOnEffects(std::vector<Effect>* _aidl_return) {
++    _aidl_return->clear();
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::alwaysOnEnable(int32_t /*id*/, Effect /*effect*/,
++                                       EffectStrength /*strength*/) {
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::alwaysOnDisable(int32_t /*id*/) {
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getResonantFrequency(float* _aidl_return) {
++    *_aidl_return = NAN;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getQFactor(float* _aidl_return) {
++    *_aidl_return = NAN;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getFrequencyResolution(float* _aidl_return) {
++    *_aidl_return = NAN;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getFrequencyMinimum(float* _aidl_return) {
++    *_aidl_return = NAN;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getBandwidthAmplitudeMap(std::vector<float>* _aidl_return) {
++    _aidl_return->clear();
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getPwlePrimitiveDurationMax(int32_t* _aidl_return) {
++    *_aidl_return = 0;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getPwleCompositionSizeMax(int32_t* _aidl_return) {
++    *_aidl_return = 0;
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::getSupportedBraking(std::vector<Braking>* _aidl_return) {
++    _aidl_return->clear();
++    return unsupported();
++}
++
++ScopedAStatus Vibrator::composePwle(const std::vector<PrimitivePwle>& /*composite*/,
++                                    const std::shared_ptr<IVibratorCallback>& /*callback*/) {
++    return unsupported();
++}
++
++}  // namespace aidl::android::hardware::vibrator
+diff --git a/vibrator-aidl/Vibrator.h b/vibrator-aidl/Vibrator.h
+new file mode 100644
+index 0000000..7298bf5
+--- /dev/null
++++ b/vibrator-aidl/Vibrator.h
+@@ -0,0 +1,92 @@
++/*
++ * Copyright (C) 2026 The elden project (TB322FC/SM8750 mainline)
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * AIDL vibrator HAL for Waydroid on mainline elden.
++ * Replaces the Waydroid HIDL 1.0 HAL (which writes AOSP LED-trigger paths that
++ * do not exist on mainline and silently ignores the failures) with an AIDL V2
++ * HAL that:
++ *   - reports CAP_AMPLITUDE_CONTROL  -> intensity sliders / setAmplitude work
++ *   - off() really stops the motor   -> framework cancel() now stops it
++ *   - writes the host bridge files consumed by elden-hapticd (see
++ *     scripts/elden-hapticd.c), which drives the aw86927 FF_RUMBLE devices.
++ */
++#pragma once
++
++#include <aidl/android/hardware/vibrator/BnVibrator.h>
++
++#include <mutex>
++#include <string>
++#include <vector>
++
++namespace aidl::android::hardware::vibrator {
++
++// Writes the bridge ABI consumed by elden-hapticd on the Alpine host:
++//   /sys/class/leds/vibrator/{state,duration,amplitude,activate}
++// (bind-mounted from the host; see scripts/waydroid-haptics-setup.sh)
++class HapticBridge {
++  public:
++    static HapticBridge& instance();
++
++    void setAmplitude255(int v);
++    int amplitude255() const;
++    /* ampOverride < 0 -> use the configured amplitude */
++    void start(int durationMs, int ampOverride = -1);
++    void stop();
++
++    // "synced" (IVibratorManager) support: defer start() until trigger()
++    void prepare();
++    bool isPrepared() const;
++    void queue(int durationMs, int ampOverride = -1);
++    bool trigger();  // true if something was actually fired
++    void cancelPrepared();
++
++  private:
++    HapticBridge() = default;
++    static void writeFile(const char* name, const std::string& value);
++
++    mutable std::mutex mMutex;
++    int mAmplitude255 = 255;
++    bool mOn = false;
++    bool mPrepared = false;
++    int mQueuedMs = -1;
++    int mQueuedAmp = -1;
++};
++
++class Vibrator : public BnVibrator {
++  public:
++    Vibrator() = default;
++
++    ndk::ScopedAStatus getCapabilities(int32_t* _aidl_return) override;
++    ndk::ScopedAStatus off() override;
++    ndk::ScopedAStatus on(int32_t timeoutMs,
++                          const std::shared_ptr<IVibratorCallback>& callback) override;
++    ndk::ScopedAStatus perform(Effect effect, EffectStrength strength,
++                              const std::shared_ptr<IVibratorCallback>& callback,
++                              int32_t* _aidl_return) override;
++    ndk::ScopedAStatus getSupportedEffects(std::vector<Effect>* _aidl_return) override;
++    ndk::ScopedAStatus setAmplitude(float amplitude) override;
++    ndk::ScopedAStatus setExternalControl(bool enabled) override;
++    ndk::ScopedAStatus getCompositionDelayMax(int32_t* _aidl_return) override;
++    ndk::ScopedAStatus getCompositionSizeMax(int32_t* _aidl_return) override;
++    ndk::ScopedAStatus getSupportedPrimitives(std::vector<CompositePrimitive>* _aidl_return) override;
++    ndk::ScopedAStatus getPrimitiveDuration(CompositePrimitive primitive,
++                                            int32_t* _aidl_return) override;
++    ndk::ScopedAStatus compose(const std::vector<CompositeEffect>& composite,
++                               const std::shared_ptr<IVibratorCallback>& callback) override;
++    ndk::ScopedAStatus getSupportedAlwaysOnEffects(std::vector<Effect>* _aidl_return) override;
++    ndk::ScopedAStatus alwaysOnEnable(int32_t id, Effect effect, EffectStrength strength) override;
++    ndk::ScopedAStatus alwaysOnDisable(int32_t id) override;
++    ndk::ScopedAStatus getResonantFrequency(float* _aidl_return) override;
++    ndk::ScopedAStatus getQFactor(float* _aidl_return) override;
++    ndk::ScopedAStatus getFrequencyResolution(float* _aidl_return) override;
++    ndk::ScopedAStatus getFrequencyMinimum(float* _aidl_return) override;
++    ndk::ScopedAStatus getBandwidthAmplitudeMap(std::vector<float>* _aidl_return) override;
++    ndk::ScopedAStatus getPwlePrimitiveDurationMax(int32_t* _aidl_return) override;
++    ndk::ScopedAStatus getPwleCompositionSizeMax(int32_t* _aidl_return) override;
++    ndk::ScopedAStatus getSupportedBraking(std::vector<Braking>* _aidl_return) override;
++    ndk::ScopedAStatus composePwle(const std::vector<PrimitivePwle>& composite,
++                                   const std::shared_ptr<IVibratorCallback>& callback) override;
++};
++
++}  // namespace aidl::android::hardware::vibrator
+diff --git a/vibrator-aidl/VibratorManager.cpp b/vibrator-aidl/VibratorManager.cpp
+new file mode 100644
+index 0000000..1415148
+--- /dev/null
++++ b/vibrator-aidl/VibratorManager.cpp
+@@ -0,0 +1,57 @@
++/*
++ * Copyright (C) 2026 The elden project (TB322FC/SM8750 mainline)
++ * SPDX-License-Identifier: Apache-2.0
++ */
++#define LOG_TAG "vibrator.elden"
++
++#include "VibratorManager.h"
++
++#include <android-base/logging.h>
++
++namespace aidl::android::hardware::vibrator {
++
++using ndk::ScopedAStatus;
++
++VibratorManager::VibratorManager(std::shared_ptr<Vibrator> vibrator)
++    : mVibrator(std::move(vibrator)) {}
++
++ScopedAStatus VibratorManager::getCapabilities(int32_t* _aidl_return) {
++    /* CAP_SYNC only: we can run a "synced" vibration (trivially, one motor). */
++    *_aidl_return = CAP_SYNC | CAP_PREPARE_ON | CAP_PREPARE_PERFORM;
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus VibratorManager::getVibratorIds(std::vector<int32_t>* _aidl_return) {
++    *_aidl_return = {0};
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus VibratorManager::getVibrator(int32_t vibratorId,
++                                           std::shared_ptr<IVibrator>* _aidl_return) {
++    if (vibratorId != 0) {
++        return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
++    }
++    *_aidl_return = mVibrator;
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus VibratorManager::prepareSynced(const std::vector<int32_t>& vibratorIds) {
++    for (int32_t id : vibratorIds) {
++        if (id != 0) return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
++    }
++    HapticBridge::instance().prepare();
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus VibratorManager::triggerSynced(const std::shared_ptr<IVibratorCallback>& /*callback*/) {
++    HapticBridge::instance().trigger();
++    return ScopedAStatus::ok();
++}
++
++ScopedAStatus VibratorManager::cancelSynced() {
++    HapticBridge::instance().cancelPrepared();
++    HapticBridge::instance().stop();
++    return ScopedAStatus::ok();
++}
++
++}  // namespace aidl::android::hardware::vibrator
+diff --git a/vibrator-aidl/VibratorManager.h b/vibrator-aidl/VibratorManager.h
+new file mode 100644
+index 0000000..f51632c
+--- /dev/null
++++ b/vibrator-aidl/VibratorManager.h
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (C) 2026 The elden project (TB322FC/SM8750 mainline)
++ * SPDX-License-Identifier: Apache-2.0
++ */
++#pragma once
++
++#include <aidl/android/hardware/vibrator/BnVibratorManager.h>
++
++#include "Vibrator.h"
++
++namespace aidl::android::hardware::vibrator {
++
++/* Single-motor device: exposes exactly one vibrator (id 0).  "Synced" support
++ * is required for `adb shell cmd vibrator_manager synced ...`; the actual
++ * vibration is deferred until triggerSynced() so the semantics stay correct. */
++class VibratorManager : public BnVibratorManager {
++  public:
++    explicit VibratorManager(std::shared_ptr<Vibrator> vibrator);
++
++    ndk::ScopedAStatus getCapabilities(int32_t* _aidl_return) override;
++    ndk::ScopedAStatus getVibratorIds(std::vector<int32_t>* _aidl_return) override;
++    ndk::ScopedAStatus getVibrator(int32_t vibratorId,
++                                   std::shared_ptr<IVibrator>* _aidl_return) override;
++    ndk::ScopedAStatus prepareSynced(const std::vector<int32_t>& vibratorIds) override;
++    ndk::ScopedAStatus triggerSynced(const std::shared_ptr<IVibratorCallback>& callback) override;
++    ndk::ScopedAStatus cancelSynced() override;
++
++  private:
++    std::shared_ptr<Vibrator> mVibrator;
++};
++
++}  // namespace aidl::android::hardware::vibrator
+diff --git a/vibrator-aidl/android.hardware.vibrator.elden.xml b/vibrator-aidl/android.hardware.vibrator.elden.xml
+new file mode 100644
+index 0000000..b5bd3dd
+--- /dev/null
++++ b/vibrator-aidl/android.hardware.vibrator.elden.xml
+@@ -0,0 +1,12 @@
++<manifest version="1.0" type="device">
++    <hal format="aidl">
++        <name>android.hardware.vibrator</name>
++        <version>2</version>
++        <fqname>IVibrator/default</fqname>
++    </hal>
++    <hal format="aidl">
++        <name>android.hardware.vibrator</name>
++        <version>2</version>
++        <fqname>IVibratorManager/default</fqname>
++    </hal>
++</manifest>
+diff --git a/vibrator-aidl/main.cpp b/vibrator-aidl/main.cpp
+new file mode 100644
+index 0000000..6532e5f
+--- /dev/null
++++ b/vibrator-aidl/main.cpp
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (C) 2026 The elden project (TB322FC/SM8750 mainline)
++ * SPDX-License-Identifier: Apache-2.0
++ */
++#define LOG_TAG "vibrator.elden"
++
++#include <android-base/logging.h>
++#include <android/binder_manager.h>
++#include <android/binder_process.h>
++
++#include "Vibrator.h"
++#include "VibratorManager.h"
++
++using aidl::android::hardware::vibrator::Vibrator;
++using aidl::android::hardware::vibrator::VibratorManager;
++
++int main() {
++    ABinderProcess_setThreadPoolMaxThreadCount(4);
++
++    auto vibrator = ndk::SharedRefBase::make<Vibrator>();
++    const std::string vibName = std::string() + Vibrator::descriptor + "/default";
++    binder_status_t status = AServiceManager_addService(vibrator->asBinder().get(), vibName.c_str());
++    if (status != STATUS_OK) {
++        LOG(ERROR) << "failed to add " << vibName << ": " << status;
++        return EXIT_FAILURE;
++    }
++    LOG(INFO) << "registered " << vibName;
++
++    auto manager = ndk::SharedRefBase::make<VibratorManager>(vibrator);
++    const std::string manName = std::string() + VibratorManager::descriptor + "/default";
++    status = AServiceManager_addService(manager->asBinder().get(), manName.c_str());
++    if (status != STATUS_OK) {
++        LOG(ERROR) << "failed to add " << manName << ": " << status;
++        return EXIT_FAILURE;
++    }
++    LOG(INFO) << "registered " << manName;
++
++    ABinderProcess_joinThreadPool();
++    return EXIT_FAILURE;  // not reached
++}
+diff --git a/vibrator-aidl/vibrator-elden.rc b/vibrator-aidl/vibrator-elden.rc
+new file mode 100644
+index 0000000..96eb710
+--- /dev/null
++++ b/vibrator-aidl/vibrator-elden.rc
+@@ -0,0 +1,6 @@
++service vendor.vibrator-elden /vendor/bin/hw/android.hardware.vibrator-service.elden
++    class hal
++    user system
++    group system
++    interface aidl android.hardware.vibrator.IVibrator/default
++    interface aidl android.hardware.vibrator.IVibratorManager/default

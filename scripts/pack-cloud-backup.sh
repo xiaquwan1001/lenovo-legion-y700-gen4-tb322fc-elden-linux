@@ -20,6 +20,8 @@ if [ "${1:-}" = "--list" ]; then LIST_ONLY=1; shift; fi
 DEST=${1:-"$HOME/cloud-backup-y700-elden-$(date +%Y%m%d)"}
 DL=${EDL_PACKAGE_DIR:-"$HOME/下载/tb322fc"}
 L2=${L2_DIR:-"/mnt/Samsung/l2"}
+MESA=${MESA_OUT_DIR:-"/mnt/Samsung/mesa-out"}
+WBD=${WAYDROID_BUILD_DIR:-"/mnt/Samsung/waydroid-build"}
 
 # ---- T1：不可再生 ----
 # 每行 = 相对 $ROOT 的路径，或以 / 开头的绝对路径
@@ -62,6 +64,8 @@ T2=(
 	"backup/dtbo_a.img"
 	"y700四代工具"                          # 厂商工具 + 解锁工具箱（第三方源可能失效；含 sn 模板 ⇒ 敏感）
 	"$DL"                                  # EDL 全量包（救砖 programmer/loader，版本敏感）
+	"$MESA"                                # Waydroid bionic Mesa 交付包（7 M tar.gz + lib64；/mnt/Samsung 将清空）
+	"$WBD/out/target/product/waydroid_arm64_only/vendor.img"  # C2/C10 固化态构建产物（86 M；可重编 1–3 h）
 )
 
 # ---- T3：会话轨迹（本机独有；可单独上传）----
@@ -139,6 +143,9 @@ cat > "$DEST/README.md" <<'README_EOF'
   —— 上游/自有 fork，可重下（见 `RESOURCES/README.md` §1）。
 - `/mnt/Samsung/l2/{super,system_a,system_a.pristine}.img`（47 G）
   —— 云盘**全量线刷包**已覆盖；真要删前另议。
+- `/mnt/Samsung/waydroid-build/`（530 G AOSP 树）—— 可 `repo init+sync` 重下；
+  其**本地提交**已在两个 USTC 仓（见 RESOURCES §3），**树外本地件**在 `reference/waydroid-buildtree/`（已入库）。
+- `/mnt/Samsung/ccache`（166 M）、`fiotest`（4.1 G）—— 缓存/临时文件，可重建可删。
 - `out/` `build/` `bootslot-b*/` `logs/` `pkgs*/`
   —— 可由 `patches/` + `scripts/` 重建。
 

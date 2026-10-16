@@ -154,7 +154,7 @@
 
 | 路径 | 内容 | 规模 |
 |---|---|---|
-| `/mnt/Samsung/waydroid-build` | Waydroid AOSP 树（1254 项目 / 1219 对象库 fsck 全 OK） | 550 G |
+| `/mnt/Samsung/waydroid-build` | Waydroid AOSP 树（1254 项目 / 1219 对象库 fsck 全 OK） | 550 G（**2026-10-16 告知将随盘清空**：本地提交已推两个 USTC 仓、树外件已留档 `reference/waydroid-buildtree/`、构建产物 `vendor.img` 已进云盘包 ⇒ 可清） |
 | `/mnt/Samsung/l2`（本 repo `./l2`） | 原厂 super / system_a / system_a.pristine（sha256 逐侧一致）；**stock-259 13 分区备份里没 super，这里是唯一一份**；自研 `lp_tool.py`（LP v1.2 dump/extract/splice）唯一副本 | 45 G |
 | `~/mesa-out` | Waydroid bionic Mesa 构建产物（11 `.so` + `manifest.txt`），即上表自编产物的落地包 | ~7 M |
 | `~/下载/tb322fc` | EDL 全量包 | 599 M |
@@ -237,6 +237,13 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
       **T3-sessions** = `.pi/sessions/`（390 M，190 会话全文轨迹；**真实拷贝**冻结快照，非硬链接）。
     - **③ 会话轨迹 → 云盘**：见上 T3-sessions（2026-10-16 用户指示纳入）。
   - **仍未站外备份**：**内核现役线**——只有本地 bundle（本机无 `reccli-ts`/rclone ⇒ **云盘路未落，bundle 已在 T1 包内待上传**）。
+  - **Waydroid 树（`/mnt/Samsung/waydroid-build`）的本地提交 → 两个 USTC 仓**（2026-10-16 核，服务端 `ls-remote` 与 HEAD 一致）：
+    `device/waydroid/waydroid` → `xqh/y700-elden-waydroid-device`（`elden/lineage-20` = `79de788`）；
+    `hardware/waydroid` → `xqh/y700-elden-waydroid-hardware`（`elden/lineage-20` = `944b06a`）。
+    **全树 1254 项目已扫：无任何项目存在「不在任何远端」的本地提交**（`rev-list --branches --not --remotes` 全 0）。
+    树的**树外本地件**（`.repo/local_manifests/*.xml`、构建脚本、日志、`PROGRESS.md`）留档在 `reference/waydroid-buildtree/`；
+    文本 diff = `patches/waydroid-buildtree-local-20261016.patch`（23 文件，**取代**过期的 `-20261011` 版——后者缺 10-13 的 vibrator/haptics 提交）。
+    > 背景：`/mnt/Samsung`（`waydroid-build/` 530 G + `l2/` 47 G + `ccache` + `fiotest`）**2026-10-16 用户告知将清空** ⇒ 清空前已完成上述核对、留档与云盘打包。
 - **内核 gitlab 镜像 = 归档中（2026-10-08）**：本地侧已冻结完成；**服务端 Archive 待用户在网页点**（本机浏览器无 git.ustc.edu.cn 登录态、无 API token，agent 不代填凭据）。页面路径：项目 → **Settings → General → Advanced → Archived project → Archive project**（与它相邻的 **Delete project 不要碰**）；或 API：`curl --noproxy '*' --header "PRIVATE-TOKEN: <token>" -X PUT https://git.ustc.edu.cn/api/v4/projects/xqh%2Fy700-elden-kernel/archive`。`xqh/y700-elden-kernel`（本地 remote 已改名 `gitlab-archived`，`pushurl=no-push://…` 本地拦截 push，fetch 仍可用）。它的内容是 **2026-10-04 的回填合成线**（tip `fe54fcfff` = vk48 draft，10 提交含一个合成 base 提交），与现役线 `elden/vk53-hw`（19 提交）**无祖先关系**（已实测 merge-base 为空）；该线在本地由分支 `archive/gitlab-mirror-vk48` 固定。**为何不能更新**：`geekidos-linux/` 是 **shallow 仓**（`.git/shallow` graft 于 `ba28ec16f`），服务器拒绝任何 shallow 更新（实测 `! [remote rejected] … (shallow update not allowed)`，**force push 同样不行**）——与 10-04 当时记的「因 shallow 不能直推」同一回事。映射见 `archive/2026-10-04-git-backfill/VERSION-MAP.txt`，内核增量补丁集见 `patches/kernel-history/`（这两者才是内核历史的权威文本记录）。
 - ⚠️ **内核仓现役线目前无站外 git 备份**（镜像冻结、`origin` 是上游 GEEKiDoS 不是我们的）。现役可用备份 = `backup/kernel-git-repair-2026-10-08/elden-all-refs-1820.bundle`（**265 MB / 41 ref**，`bundle verify` 判为「完整历史」，含 vk40→vk64 + 5 个 `archive/*`；旧的 1743 那份 279 MB/38 ref 没有 vk43 留白 tag，保留作修复前留存）。要恢复站外备份只有两条路：① 把 bundle 传云盘（技能 `ustc-cloud-drive`，零 git 约束）；② `git fetch --unshallow origin` 补全上游历史后新建项目推（要下 1–2 GB，与「避免重复下载大文件」相左，需拍板）。
 - ⚠️ gitignore 注释必须独占一行（行尾 `#` 会被当作模式一部分，静默失效）。
