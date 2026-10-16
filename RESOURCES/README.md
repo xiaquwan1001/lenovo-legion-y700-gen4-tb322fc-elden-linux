@@ -226,9 +226,15 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
     （`audit/early-reboot` / `lane/doctor-refactor` / `lane/upstream`）与 **8 个标签**
     （`base/2026100{5,5,12,14}-*` / `merge/{bootchain,bootslim,userland-session}` / `pre-docs-v2`）
     ⇒ **复核后 `origin` 与本地 refs 完全一致（5 分支 / 57 标签，`main` 零欠账）**；GitHub 镜像同批同步（含 `history/pre-vk34`）。
-  - **仍未站外备份的本地独有资产**（不在 git 纳管范围，需单独通道）：① **内核现役线**——只有本地 bundle（下一条），且本机无 `reccli-ts`/rclone ⇒ 云盘路未落；
-    ② **hermes 项目记忆** `~/.pi/agent/projects-memory/y700-elden/`（`MEMORY.md` 550 K + 6 个项目技能），**在仓库之外、无 git**；
-    ③ `.pi/sessions/`（390 M，ignore）；④ 设备独有分区 dump `backup/HA2EXB0E-16+512/unique/`（133 M，**EDL 包不含 ⇒ 不可重下**）等大二进制。
+  - **本地独有工作 = 两条通道（2026-10-16 落）**：
+    - **① hermes 项目记忆 → 入库**：`scripts/sync-hermes-memory.sh` 把**仓库之外**的 `~/.pi/agent/projects-memory/<repo>/` **单向快照**进 `.pi/hermes-memory-mirror/`
+      （`MEMORY.md` + `skills/*/SKILL.md`，共 620 K / 9 文件；**不含** hermes 自滚动的 `.MEMORY.md.recovery-*`/`.retired-*` 26 M 派生历史），
+      随本仓推 USTC/GitHub；`scripts/sync-hermes-memory.sh --check` 判新鲜度。
+      **方向纪律：记忆只改 hermes 活文件（`memory_add` 等），勿手改镜像**（下次同步原样覆盖）。
+    - **② 不可重下的大二进制 → 云盘**：`scripts/pack-cloud-backup.sh [DEST]` 按 **T1/T2** 硬链接整理（link count=2，**0 额外占盘**）+ `MANIFEST.sha256`；
+      清单/理由 = `../reports/cloud-backup-manifest-20261016.md`。已生成 `~/cloud-backup-y700-elden-20261016/`（**6.6 G / 2999 文件，sha256 全验 OK**）⇒ **待用户上传云盘**。
+  - **仍未站外备份**：① **内核现役线**（只有本地 bundle；本机无 `reccli-ts`/rclone ⇒ **云盘路未落，bucket 已在 T1 包内待上传**）；
+    ② `.pi/sessions/`（390 M，ignore）——会话轨迹而非成果，`SESSIONS/` 策展快照已入库。
 - **内核 gitlab 镜像 = 归档中（2026-10-08）**：本地侧已冻结完成；**服务端 Archive 待用户在网页点**（本机浏览器无 git.ustc.edu.cn 登录态、无 API token，agent 不代填凭据）。页面路径：项目 → **Settings → General → Advanced → Archived project → Archive project**（与它相邻的 **Delete project 不要碰**）；或 API：`curl --noproxy '*' --header "PRIVATE-TOKEN: <token>" -X PUT https://git.ustc.edu.cn/api/v4/projects/xqh%2Fy700-elden-kernel/archive`。`xqh/y700-elden-kernel`（本地 remote 已改名 `gitlab-archived`，`pushurl=no-push://…` 本地拦截 push，fetch 仍可用）。它的内容是 **2026-10-04 的回填合成线**（tip `fe54fcfff` = vk48 draft，10 提交含一个合成 base 提交），与现役线 `elden/vk53-hw`（19 提交）**无祖先关系**（已实测 merge-base 为空）；该线在本地由分支 `archive/gitlab-mirror-vk48` 固定。**为何不能更新**：`geekidos-linux/` 是 **shallow 仓**（`.git/shallow` graft 于 `ba28ec16f`），服务器拒绝任何 shallow 更新（实测 `! [remote rejected] … (shallow update not allowed)`，**force push 同样不行**）——与 10-04 当时记的「因 shallow 不能直推」同一回事。映射见 `archive/2026-10-04-git-backfill/VERSION-MAP.txt`，内核增量补丁集见 `patches/kernel-history/`（这两者才是内核历史的权威文本记录）。
 - ⚠️ **内核仓现役线目前无站外 git 备份**（镜像冻结、`origin` 是上游 GEEKiDoS 不是我们的）。现役可用备份 = `backup/kernel-git-repair-2026-10-08/elden-all-refs-1820.bundle`（**265 MB / 41 ref**，`bundle verify` 判为「完整历史」，含 vk40→vk64 + 5 个 `archive/*`；旧的 1743 那份 279 MB/38 ref 没有 vk43 留白 tag，保留作修复前留存）。要恢复站外备份只有两条路：① 把 bundle 传云盘（技能 `ustc-cloud-drive`，零 git 约束）；② `git fetch --unshallow origin` 补全上游历史后新建项目推（要下 1–2 GB，与「避免重复下载大文件」相左，需拍板）。
 - ⚠️ gitignore 注释必须独占一行（行尾 `#` 会被当作模式一部分，静默失效）。
