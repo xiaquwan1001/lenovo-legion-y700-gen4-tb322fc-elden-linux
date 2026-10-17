@@ -1,0 +1,32 @@
+From 1443f263a65b728fee861f2edc640b12e87c42f0 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Thu, 8 Oct 2026 20:37:41 +0800
+Subject: [PATCH 24/33] exp(kexec): fix settle_ms spinlock double-lock deadlock
+ (Q11)
+
+list_lock is already released before the shutdown region in device_shutdown, so
+the msleep block must not spin_unlock/spin_lock around it - doing so then hit
+the loop-bottom spin_lock as a second acquisition -> queued_spin_lock_slowpath
+hang (observed CPU5 lockup in device_shutdown). msleep alone; region is already
+sleepable.
+---
+ drivers/base/core.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index 1847ee66f..679ddab41 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -4968,11 +4968,8 @@ void device_shutdown(void)
+ 			 * armed by this device's .shutdown() lands right here, making
+ 			 * the LAST SD-done in the log = the culprit. Only on kexec path
+ 			 * and only when diag_settle_ms > 0. */
+-			if (diag_settle_ms > 0) {
+-				spin_unlock(&devices_kset->list_lock);
++			if (diag_settle_ms > 0)
+ 				msleep(diag_settle_ms);
+-				spin_lock(&devices_kset->list_lock);
+-			}
+ 		}
+ 
+ 		device_unlock(dev);

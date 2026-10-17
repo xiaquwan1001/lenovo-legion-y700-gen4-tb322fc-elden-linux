@@ -1,0 +1,121 @@
+From 6cbe1ffa762266527e0a4de09d5da4ec20bbf4a4 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Thu, 8 Oct 2026 19:12:13 +0800
+Subject: [PATCH 19/33] exp(kexec): diag hook to bisect TB322FC kexec
+ hard-power-off (Q11)
+
+kexec_dbg=<mask> on cmdline skips shutdown phases to localize the silent
+power-off: bit1(=1) skip device_shutdown(), bit2(=2) skip syscore_shutdown(),
+3=both. Prints [KD] stage=N markers through the whole kexec path. Guarded by
+kexec_in_progress so normal reboot is unaffected. See archive/topics/KEXEC-*.
+---
+ include/linux/kexec.h |  8 ++++++++
+ kernel/kexec_core.c   | 36 +++++++++++++++++++++++++++++++++++-
+ kernel/reboot.c       | 11 +++++++++++
+ 3 files changed, 54 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/kexec.h b/include/linux/kexec.h
+index 8a22bc9b8..d4b8557eb 100644
+--- a/include/linux/kexec.h
++++ b/include/linux/kexec.h
+@@ -469,6 +469,11 @@ bool kexec_load_permitted(int kexec_image_type);
+ /* flag to track if kexec reboot is in progress */
+ extern bool kexec_in_progress;
+ 
++/* elden kexec-diag (Q11): shutdown-phase skip bitmask, set by kexec_dbg= */
++#define KEXEC_DBG_SKIP_DEVICE  1
++#define KEXEC_DBG_SKIP_SYSCORE 2
++extern int diag_skip_mask;
++
+ #ifndef page_to_boot_pfn
+ static inline unsigned long page_to_boot_pfn(struct page *page)
+ {
+@@ -544,6 +549,9 @@ static inline void *kimage_map_segment(struct kimage *image, int idx)
+ { return NULL; }
+ static inline void kimage_unmap_segment(void *buffer) { }
+ #define kexec_in_progress false
++#define KEXEC_DBG_SKIP_DEVICE  0
++#define KEXEC_DBG_SKIP_SYSCORE 0
++#define diag_skip_mask 0
+ #endif /* CONFIG_KEXEC_CORE */
+ 
+ #ifdef CONFIG_KEXEC_SIG
+diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
+index dc770b9a6..db936ce46 100644
+--- a/kernel/kexec_core.c
++++ b/kernel/kexec_core.c
+@@ -56,6 +56,30 @@ bool kexec_in_progress = false;
+ 
+ bool kexec_file_dbg_print;
+ 
++/*
++ * elden kexec-diag (Q11): bisect the TB322FC kexec hard-power-off by skipping
++ * individual shutdown phases.  kexec_dbg=<mask> on the cmdline; mask bits:
++ *   1 = KEXEC_DBG_SKIP_DEVICE  skip device_shutdown()  (in reboot.c)
++ *   2 = KEXEC_DBG_SKIP_SYSCORE skip syscore_shutdown()
++ * Combined 3 = skip both.  Guarded by kexec_in_progress so a normal
++ * (non-kexec) reboot is never affected.  See archive/topics/KEXEC-*.
++ * Macros KEXEC_DBG_SKIP_{DEVICE,SYSCORE} and extern diag_skip_mask live in
++ * <linux/kexec.h> so reboot.c can share them.
++ */
++int diag_skip_mask;
++
++static int __init kexec_diag_setup(char *s)
++{
++	int v;
++
++	if (!s || kstrtoint(s, 0, &v))
++		return 1;
++	diag_skip_mask = v;
++	pr_info("[KD] kexec_dbg=%d (1=skip device_shutdown, 2=skip syscore_shutdown)\n", v);
++	return 1;
++}
++__setup("kexec_dbg=", kexec_diag_setup);
++
+ /*
+  * When kexec transitions to the new kernel there is a one-to-one
+  * mapping between physical and virtual addresses.  On processors
+@@ -1189,9 +1213,19 @@ int kernel_kexec(void)
+ #endif
+ 	{
+ 		kexec_in_progress = true;
++		pr_info("[KD] stage=10 enter kernel_kexec (skip_mask=%d)\n",
++			diag_skip_mask);
+ 		kernel_restart_prepare("kexec reboot");
++		pr_info("[KD] stage=11 after kernel_restart_prepare\n");
+ 		migrate_to_reboot_cpu();
+-		syscore_shutdown();
++		pr_info("[KD] stage=12 after migrate_to_reboot_cpu\n");
++		if (!(diag_skip_mask & KEXEC_DBG_SKIP_SYSCORE)) {
++			pr_info("[KD] stage=13 before syscore_shutdown\n");
++			syscore_shutdown();
++			pr_info("[KD] stage=14 after syscore_shutdown\n");
++		} else {
++			pr_info("[KD] stage=13 SKIP syscore_shutdown\n");
++		}
+ 
+ 		/*
+ 		 * migrate_to_reboot_cpu() disables CPU hotplug assuming that
+diff --git a/kernel/reboot.c b/kernel/reboot.c
+index 695c33e75..d09e92ec5 100644
+--- a/kernel/reboot.c
++++ b/kernel/reboot.c
+@@ -102,7 +102,18 @@ void kernel_restart_prepare(char *cmd)
+ 	blocking_notifier_call_chain(&reboot_notifier_list, SYS_RESTART, cmd);
+ 	system_state = SYSTEM_RESTART;
+ 	usermodehelper_disable();
++	/*
++	 * elden kexec-diag (Q11): optionally skip device_shutdown() to bisect
++	 * the TB322FC kexec hard-power-off.  Only applies to the kexec path
++	 * (kexec_in_progress) so a normal reboot is never affected.
++	 */
++	if (kexec_in_progress && (diag_skip_mask & KEXEC_DBG_SKIP_DEVICE)) {
++		pr_info("[KD] stage=11a SKIP device_shutdown\n");
++		return;
++	}
++	pr_info("[KD] stage=11a before device_shutdown\n");
+ 	device_shutdown();
++	pr_info("[KD] stage=11b after device_shutdown\n");
+ }
+ 
+ /**

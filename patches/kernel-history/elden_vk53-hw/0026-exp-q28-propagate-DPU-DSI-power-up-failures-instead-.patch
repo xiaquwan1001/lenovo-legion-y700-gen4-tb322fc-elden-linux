@@ -1,0 +1,127 @@
+From ca81318f2efddf6812c07d5ebd75d06f4882784a Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Fri, 9 Oct 2026 17:25:49 +0800
+Subject: [PATCH 26/33] exp(q28): propagate DPU/DSI power-up failures instead
+ of swallowing them
+
+Q28 = intermittent "backlight on, no picture" on this board: the first
+atomic commit after boot fails with vblank/command-DMA timeouts (~62% of
+warm boots, ~0% of cold boots), while 80 consecutive DPMS off/on cycles on
+a running system never reproduce it (measured 2026-10-09: 80/80 effective
+cycles, 0 vblank timeouts, 8148 rpm_resume calls with 0 errors).  So the
+failure is confined to the power bring-up of the very first modeset, where
+the runtime-PM return values used to be discarded:
+
+  dpu_kms_enable_commit()  -> pm_runtime_get_sync()   return ignored
+  dpu_crtc_enable()        -> pm_runtime_get_sync()   return ignored
+  msm_dsi_host_power_on()  -> pm_runtime_get_sync()   return ignored
+
+Turn the three into pm_runtime_resume_and_get() and report (and in the DSI
+case, propagate, matching the existing regulator failure path) so a failed
+power-up is visible at the point it happens rather than as a -110 seconds
+later.  Also dump the DPU's runtime-PM state where the commit wait fails, so
+"never powered up" can be told apart from "powered up, engine did not run".
+
+Diagnostic build for vk74-q28power; not the final upstream submission.
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c | 13 +++++++++++-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c  | 25 +++++++++++++++++++++++-
+ drivers/gpu/drm/msm/dsi/dsi_host.c       | 14 ++++++++++++-
+ 3 files changed, 49 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 42d0a529b..232afc7e6 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -1273,10 +1273,21 @@ static void dpu_crtc_enable(struct drm_crtc *crtc,
+ 	struct drm_encoder *encoder;
+ 	bool request_bandwidth = false;
+ 	struct drm_crtc_state *old_crtc_state;
++	int ret;
+ 
+ 	old_crtc_state = drm_atomic_get_old_crtc_state(state, crtc);
+ 
+-	pm_runtime_get_sync(crtc->dev->dev);
++	ret = pm_runtime_resume_and_get(crtc->dev->dev);
++	if (ret < 0) {
++		/*
++		 * Same failure mode as dpu_kms_enable_commit(): if the power
++		 * domain / mdss clocks did not come up, every register write
++		 * below lands on unpowered hardware and the commit can never
++		 * complete.  Say so instead of silently timing out later.
++		 */
++		DPU_ERROR("crtc%d: power-up failed: %d\n", crtc->base.id, ret);
++		ret = 0;
++	}
+ 
+ 	DRM_DEBUG_KMS("crtc%d\n", crtc->base.id);
+ 
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+index 68b025ad9..194729862 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -444,7 +444,19 @@ static void dpu_kms_disable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
+ static void dpu_kms_enable_commit(struct msm_kms *kms)
+ {
+ 	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
+-	pm_runtime_get_sync(&dpu_kms->pdev->dev);
++	int ret;
++
++	/*
++	 * The display power domain (mdss_gdsc/gfx) and the disp_cc_mdss_*
++	 * clocks are only turned on by the runtime-PM resume callback.  A
++	 * transient failure here used to be silently ignored, which let the
++	 * atomic commit program hardware that had just lost its power-up
++	 * attempt: the visible result is a backlight-on / no-picture panel and
++	 * "vblank timeout" later on.  Propagate it instead of continuing.
++	 */
++	ret = pm_runtime_resume_and_get(&dpu_kms->pdev->dev);
++	if (ret < 0)
++		DRM_ERROR("%s: display power-up failed: %d\n", __func__, ret);
+ }
+ 
+ static void dpu_kms_disable_commit(struct msm_kms *kms)
+@@ -528,7 +540,18 @@ static void dpu_kms_wait_for_commit_done(struct msm_kms *kms,
+ 		trace_dpu_kms_wait_for_commit_done(DRMID(crtc));
+ 		ret = dpu_encoder_wait_for_commit_done(encoder);
+ 		if (ret && ret != -EWOULDBLOCK) {
++			struct device *d = &to_dpu_kms(kms)->pdev->dev;
++
+ 			DPU_ERROR("wait for commit done returned %d\n", ret);
++			/*
++			 * Dump how powered the DPU actually was at the moment the
++			 * commit failed, so "never powered up" can be told apart
++			 * from "powered up but the engine did not run".
++			 */
++			DPU_ERROR("dpu pm: status %d usage %d rpm_disabled %d\n",
++				  d->power.runtime_status,
++				  atomic_read(&d->power.usage_count),
++				  d->power.disable_depth);
+ 			break;
+ 		}
+ 	}
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 819fe87d5..817d5a608 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -3019,7 +3019,19 @@ int msm_dsi_host_power_on(struct mipi_dsi_host *host,
+ 		goto unlock_ret;
+ 	}
+ 
+-	pm_runtime_get_sync(&msm_host->pdev->dev);
++	/*
++	 * The DSI host is a runtime-PM consumer; its resume callback turns on
++	 * the bus clocks.  Ignoring the return value here meant that a failed
++	 * resume led to programming an unpowered controller, which shows up
++	 * much later as a command-DMA or vblank timeout with no error at the
++	 * point where things actually went wrong.
++	 */
++	ret = pm_runtime_resume_and_get(&msm_host->pdev->dev);
++	if (ret < 0) {
++		pr_err("%s: failed to resume dsi host, ret=%d\n", __func__, ret);
++		goto fail_disable_reg;
++	}
++
+ 	if (of_device_is_compatible(msm_host->pdev->dev.of_node,
+ 				    "qcom,sm8750-dsi-ctrl"))
+ 		ret = dsi_link_clk_set_rate_6g_v2_9(msm_host);

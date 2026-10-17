@@ -1,0 +1,107 @@
+From 2b5badef00fbae15feff29677b26dec90b21906b Mon Sep 17 00:00:00 2001
+From: elden <elden@y700>
+Date: Mon, 5 Oct 2026 19:08:21 +0800
+Subject: [PATCH 09/20] =?UTF-8?q?elden:=20vk53=20=E2=80=94=20=E7=A1=AC?=
+ =?UTF-8?q?=E4=BB=B6=E9=A9=B1=E5=8A=A8=E8=A6=86=E7=9B=96=E6=89=B9=E6=AC=A1?=
+ =?UTF-8?q?=EF=BC=88NFC=20ST21NFCA=20+=20CDSP=20=E5=90=AF=E7=94=A8?=
+ =?UTF-8?q?=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- G1-10 NFC：新增 &i2c0 (QUPV3_SE0) + st21nfca-i2c@8 节点
+  （vendor compatible 'st,st21nfc' 改为主线 'st,st21nfca-i2c'；
+  enable-gpios=<&tlmm 34>、interrupts=75 边沿触发；
+  pinctrl 4 组取自原厂 base DTB tlmm 节点）
+- G1-11 CDSP：firmware-name 由 qcom/sm8750/LENOVO/elden/cdsp.mbn
+  改为实际安装路径 qcom/sm8750/cdsp.mbn + cdsp_dtb.mbn，status=okay
+- config（vk47clean 基线 + 本分支）：NFC=y/NFC_HCI=y/NFC_SHDLC=y/
+  NFC_ST21NFCA_I2C=y/CRC_CCITT=y、TYPEC_MUX_FSA4480=y（DP 前置，见 G1-9）
+
+基线：bd114ca33 (vk47)。DP（role-switch + mdss_dp0）留 vk54 单变量。
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 56 ++++++++++++++++++-
+ 1 file changed, 53 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 12a13defb..0cd3fe997 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1995,6 +1995,27 @@ &gpi_dma2 {
+ 	status = "okay";
+ };
+ 
++/* ST21NFC on QUPV3_SE0 (i2c0, gpio32/33). Vendor compatible is "st,st21nfc";
++ * the mainline driver only matches "st,st21nfca-i2c" and needs enable-gpios.
++ */
++&i2c0 {
++	status = "okay";
++
++	nfc@8 {
++		compatible = "st,st21nfca-i2c";
++		reg = <0x08>;
++
++		interrupt-parent = <&tlmm>;
++		interrupts = <75 IRQ_TYPE_EDGE_FALLING>;
++
++		enable-gpios = <&tlmm 34 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-0 = <&nfc_int_active>, <&nfc_enable_active>;
++		pinctrl-1 = <&nfc_int_suspend>, <&nfc_enable_suspend>;
++		pinctrl-names = "default", "sleep";
++	};
++};
++
+ &i2c5 {
+ 	status = "okay";
+ 
+@@ -2616,10 +2637,10 @@ compute-cb@8 {
+ };
+ 
+ &remoteproc_cdsp {
+-	firmware-name = "qcom/sm8750/LENOVO/elden/cdsp.mbn",
+-			"qcom/sm8750/LENOVO/elden/cdsp_dtb.mbn";
++	firmware-name = "qcom/sm8750/cdsp.mbn",
++			"qcom/sm8750/cdsp_dtb.mbn";
+ 
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ &spi4 {
+@@ -2709,6 +2730,35 @@ &tlmm {
+ 	/* reserved for secure world */
+ 	gpio-reserved-ranges = <39 1>, <74 1>;
+ 
++	/* ST21NFC (G1-10): values from the stock base DTB tlmm node. */
++	nfc_int_active: nfc-int-active-state {
++		pins = "gpio75";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-down;
++	};
++
++	nfc_int_suspend: nfc-int-suspend-state {
++		pins = "gpio75";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-down;
++	};
++
++	nfc_enable_active: nfc-enable-active-state {
++		pins = "gpio34", "gpio35";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
++	nfc_enable_suspend: nfc-enable-suspend-state {
++		pins = "gpio34", "gpio35";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
+ 	wcd_default: wcd-reset-n-active-state {
+ 		pins = "gpio101";
+ 		function = "gpio";

@@ -1,0 +1,259 @@
+From 97b8ee3c79166f6de89510afca5d01af7af366fa Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sat, 10 Oct 2026 08:48:13 +0800
+Subject: [PATCH 28/33] exp(q28): E0 diagnostic enhancement - post-trigger
+ time-series + missing regs + budget fixes
+
+---
+ drivers/gpu/drm/msm/dsi/dsi_host.c | 145 +++++++++++++++++++++++------
+ 1 file changed, 117 insertions(+), 28 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 8b455e971..eda7ca625 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -2493,9 +2493,22 @@ int msm_dsi_host_bonded_cmd_build(struct mipi_dsi_host *host,
+ void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	static atomic_t q28_init_trig_count = ATOMIC_INIT(60);
++	bool q28_log;
+ 	u32 schedule_line;
++	u32 status0_entry;
+ 	u32 val;
+ 
++	/* E0: log first 60 init_trigger entries (covers one full panel init sequence) */
++	q28_log = atomic_dec_if_positive(&q28_init_trig_count) >= 0;
++
++	status0_entry = dsi_read(msm_host, REG_DSI_STATUS0);
++	if (q28_log)
++		dev_err(&msm_host->pdev->dev,
++			"Q28 init_trigger DSI%d STATUS0=%#x vid_busy=%d\n",
++			msm_host->id, status0_entry,
++			!!(status0_entry & DSI_STATUS0_VIDEO_MODE_ENGINE_BUSY));
++
+ 	/*
+ 	 * Lenovo's v2.9 path initializes command-DMA trigger state for every
+ 	 * command. Clear mainline's non-stock within-frame gate as well as stale
+@@ -2514,8 +2527,13 @@ void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
+ 	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL, 0);
+ 	if (!(msm_host->mode_flags & MIPI_DSI_MODE_VIDEO) || !msm_host->mode ||
+ 	    !(dsi_read(msm_host, REG_DSI_STATUS0) &
+-	      DSI_STATUS0_VIDEO_MODE_ENGINE_BUSY))
++	      DSI_STATUS0_VIDEO_MODE_ENGINE_BUSY)) {
++		if (q28_log)
++			dev_err(&msm_host->pdev->dev,
++				"Q28 init_trigger DSI%d SCH=0 (not scheduled)\n",
++				msm_host->id);
+ 		return;
++	}
+ 
+ 	/* Stock schedules only while its video engine state is actually ON. */
+ 	schedule_line = msm_host->mode->vtotal -
+@@ -2523,6 +2541,11 @@ void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
+ 	val = DSI_DMA_SCHEDULE_CTRL_ENABLE |
+ 	      DSI_DMA_SCHEDULE_CTRL_LINE(schedule_line);
+ 	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL, val);
++
++	if (q28_log)
++		dev_err(&msm_host->pdev->dev,
++			"Q28 init_trigger DSI%d SCH=%#x (scheduled line=%u)\n",
++			msm_host->id, val, schedule_line);
+ }
+ 
+ void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
+@@ -2587,28 +2610,76 @@ int msm_dsi_host_bonded_cmd_arm_master(struct mipi_dsi_host *host)
+ }
+ 
+ /*
+- * Q28 diagnostic register dump.
++ * Q28 E0 diagnostic: post-trigger time-series trace + enhanced register dump.
+  *
+- * Called from the bonded command-DMA wait helpers just before they return
+- * -ETIMEDOUT.  CONFIG_STRICT_DEVMEM=y makes /dev/mem unusable, so the only
+- * way to see whether the command DMA engine actually ran is to read the DSI
+- * host registers from the driver itself at the moment of the timeout.
++ * Replaces the original single-point dump with:
++ *   (a) 40×50 µs time-series after trigger (captures the moment DMA gets stuck)
++ *   (b) additional registers: DMA_SCHEDULE_CTRL/2, VBIF_CTRL, DMA_FIFO_CTRL,
++ *       LANE_CTRL, DLN0_PHY_ERR (closes the gaps identified in Q28-深研 §1.4d)
++ *   (c) separate master/slave budgets (fixes the bug where slave dump never fired)
++ *   (d) body() no longer double-decrements the budget
+  *
+- * The dump is rate-limited to two per boot (one global atomic budget shared
+- * by master and slave call sites).  On the observed failure the slave poll
+- * succeeds (peer=0), so the budget is consumed by the master timeout on
+- * panel-init attempt 1 and, once the recover patch retries, attempt 2 -
+- * exactly the diagnostic window we need.
++ * Rate-limited via per-role atomic budgets.  Pure read-only diagnostics.
+  */
+-static atomic_t q28_cmd_timeout_dumps = ATOMIC_INIT(2);
++static atomic_t q28_trace_budget_m = ATOMIC_INIT(2);
++static atomic_t q28_trace_budget_s = ATOMIC_INIT(2);
++static atomic_t q28_timeout_dump_m = ATOMIC_INIT(2);
++static atomic_t q28_timeout_dump_s = ATOMIC_INIT(2);
++static atomic_t q28_ok_dump_m = ATOMIC_INIT(2);
++static atomic_t q28_ok_dump_s = ATOMIC_INIT(2);
++static bool q28_hw_version_printed;
++
++static void q28_trace_line(struct msm_dsi_host *msm_host, const char *tag)
++{
++	if (!q28_hw_version_printed) {
++		q28_hw_version_printed = true;
++		dev_err(&msm_host->pdev->dev,
++			"Q28 DSI%d HW_VERSION=%#x\n",
++			msm_host->id,
++			dsi_read(msm_host, REG_DSI_6G_HW_VERSION));
++	}
++
++	dev_err(&msm_host->pdev->dev,
++		"Q28 %s DSI%d S0=%#x CLK=%#x INTR=%#x SCH=%#x SCH2=%#x FIFO=%#x AE=%#x TO=%#x PHYERR=%#x VBIF=%#x DFIFO=%#x LANE=%#x\n",
++		tag, msm_host->id,
++		dsi_read(msm_host, REG_DSI_STATUS0),
++		dsi_read(msm_host, REG_DSI_CLK_STATUS),
++		dsi_read(msm_host, REG_DSI_INTR_CTRL),
++		dsi_read(msm_host, REG_DSI_DMA_SCHEDULE_CTRL),
++		dsi_read(msm_host, REG_DSI_DMA_SCHEDULE_CTRL2),
++		dsi_read(msm_host, REG_DSI_FIFO_STATUS),
++		dsi_read(msm_host, REG_DSI_ACK_ERR_STATUS),
++		dsi_read(msm_host, REG_DSI_TIMEOUT_STATUS),
++		dsi_read(msm_host, REG_DSI_DLN0_PHY_ERR),
++		dsi_read(msm_host, REG_DSI_VBIF_CTRL),
++		dsi_read(msm_host, REG_DSI_DMA_FIFO_CTRL),
++		dsi_read(msm_host, REG_DSI_LANE_CTRL));
++}
++
+ /*
+- * Q28 A/B pair: dump the very same register set right after a *successful*
+- * bonded command DMA too, so a good boot leaves behind a baseline that can be
+- * diffed against the timeout dump.  This matters: on 2026-10-09 three
+- * "differences" read off failure logs alone (dsi1vco rate=0, dsi1_isr=0,
+- * byte-clock 108 vs 133 MHz) all turned out to be identical on good boots.
++ * Post-trigger time-series: sample registers every 50 µs up to 40 times.
++ * Exits early when CMD_DMA_DONE appears in INTR_CTRL (good boot: ≤3 lines).
++ * Called at the top of wait_master/poll_slave, immediately after trigger.
+  */
+-static atomic_t q28_cmd_ok_dumps = ATOMIC_INIT(2);
++static void q28_trace_post_trigger(struct msm_dsi_host *msm_host, bool is_master)
++{
++	atomic_t *budget = is_master ? &q28_trace_budget_m : &q28_trace_budget_s;
++	char tag[24];
++	int i;
++
++	if (atomic_dec_if_positive(budget) < 0)
++		return;
++
++	for (i = 0; i < 40; i++) {
++		scnprintf(tag, sizeof(tag), "t%02d-%s", i,
++			  is_master ? "m" : "s");
++		q28_trace_line(msm_host, tag);
++
++		if (dsi_read(msm_host, REG_DSI_INTR_CTRL) & DSI_IRQ_CMD_DMA_DONE)
++			break;
++		udelay(50);
++	}
++}
+ 
+ static void q28_dump_cmd_regs_body(struct msm_dsi_host *msm_host, const char *role)
+ {
+@@ -2616,9 +2687,6 @@ static void q28_dump_cmd_regs_body(struct msm_dsi_host *msm_host, const char *ro
+ 	u32 dma_len, trig, trig_dma, clk_ctrl, clk_status, intr;
+ 	u32 lane_status, timeout, ack_err, phy_reset;
+ 
+-	if (atomic_dec_if_positive(&q28_cmd_timeout_dumps) < 0)
+-		return;
+-
+ 	ctrl          = dsi_read(msm_host, REG_DSI_CTRL);
+ 	status0       = dsi_read(msm_host, REG_DSI_STATUS0);
+ 	fifo          = dsi_read(msm_host, REG_DSI_FIFO_STATUS);
+@@ -2645,6 +2713,15 @@ static void q28_dump_cmd_regs_body(struct msm_dsi_host *msm_host, const char *ro
+ 	dev_err(&msm_host->pdev->dev,
+ 		"Q28 %s CLK_CTRL=%#x CLK_STATUS=%#x LANE_STATUS=%#x TIMEOUT_STATUS=%#x ACK_ERR_STATUS=%#x\n",
+ 		role, clk_ctrl, clk_status, lane_status, timeout, ack_err);
++	dev_err(&msm_host->pdev->dev,
++		"Q28 %s SCH=%#x SCH2=%#x VBIF=%#x DFIFO=%#x LANE_CTRL=%#x DLN0_ERR=%#x\n",
++		role,
++		dsi_read(msm_host, REG_DSI_DMA_SCHEDULE_CTRL),
++		dsi_read(msm_host, REG_DSI_DMA_SCHEDULE_CTRL2),
++		dsi_read(msm_host, REG_DSI_VBIF_CTRL),
++		dsi_read(msm_host, REG_DSI_DMA_FIFO_CTRL),
++		dsi_read(msm_host, REG_DSI_LANE_CTRL),
++		dsi_read(msm_host, REG_DSI_DLN0_PHY_ERR));
+ 	dev_err(&msm_host->pdev->dev,
+ 		"Q28 %s ctx: ch=%u lanes=%u bonded=%d en=%d cmd=%d vid=%d cmd_dma_busy=%d cmd_engine_busy=%d pll_unlock=%d\n",
+ 		role, msm_host->channel, msm_host->lanes, msm_host->bonded_polling,
+@@ -2655,17 +2732,23 @@ static void q28_dump_cmd_regs_body(struct msm_dsi_host *msm_host, const char *ro
+ 		!!(clk_status & DSI_CLK_STATUS_PLL_UNLOCKED));
+ }
+ 
+-static void q28_dump_cmd_regs(struct msm_dsi_host *msm_host, const char *role)
++static void q28_dump_cmd_regs(struct msm_dsi_host *msm_host, const char *role,
++			      bool is_master)
+ {
+-	if (atomic_dec_if_positive(&q28_cmd_timeout_dumps) < 0)
++	atomic_t *budget = is_master ? &q28_timeout_dump_m : &q28_timeout_dump_s;
++
++	if (atomic_dec_if_positive(budget) < 0)
+ 		return;
+ 
+ 	q28_dump_cmd_regs_body(msm_host, role);
+ }
+ 
+-static void q28_dump_cmd_regs_ok(struct msm_dsi_host *msm_host, const char *role)
++static void q28_dump_cmd_regs_ok(struct msm_dsi_host *msm_host, const char *role,
++				 bool is_master)
+ {
+-	if (atomic_dec_if_positive(&q28_cmd_ok_dumps) < 0)
++	atomic_t *budget = is_master ? &q28_ok_dump_m : &q28_ok_dump_s;
++
++	if (atomic_dec_if_positive(budget) < 0)
+ 		return;
+ 
+ 	q28_dump_cmd_regs_body(msm_host, role);
+@@ -2677,6 +2760,9 @@ int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ 	unsigned long completed;
+ 	u32 status;
+ 
++	/* E0: post-trigger time-series (40×50µs, exits early on CMD_DMA_DONE) */
++	q28_trace_post_trigger(msm_host, true);
++
+ 	completed = wait_for_completion_timeout(&msm_host->dma_comp,
+ 						msecs_to_jiffies(200));
+ 	status = dsi_read(msm_host, REG_DSI_INTR_CTRL);
+@@ -2685,7 +2771,7 @@ int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ 	if (completed || completion_done(&msm_host->dma_comp)) {
+ 		if (READ_ONCE(msm_host->dma_done_seq) != msm_host->dma_submit_seq)
+ 			return -EIO;
+-		q28_dump_cmd_regs_ok(msm_host, "ok-master");
++		q28_dump_cmd_regs_ok(msm_host, "ok-master", true);
+ 		return len;
+ 	}
+ 
+@@ -2699,7 +2785,7 @@ int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ 		return len;
+ 	}
+ 
+-	q28_dump_cmd_regs(msm_host, "master");
++	q28_dump_cmd_regs(msm_host, "master", true);
+ 	dev_err(&msm_host->pdev->dev, "command DMA timeout: status=%#x\n", status);
+ 	return -ETIMEDOUT;
+ }
+@@ -2710,6 +2796,9 @@ int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host)
+ 	u32 status = 0;
+ 	int i;
+ 
++	/* E0: post-trigger time-series on the slave side */
++	q28_trace_post_trigger(msm_host, false);
++
+ 	for (i = 0; i < 500; i++) {
+ 		status = dsi_read(msm_host, REG_DSI_INTR_CTRL);
+ 		if (status & DSI_IRQ_CMD_DMA_DONE) {
+@@ -2719,7 +2808,7 @@ int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host)
+ 		udelay(10);
+ 	}
+ 
+-	q28_dump_cmd_regs(msm_host, "slave");
++	q28_dump_cmd_regs(msm_host, "slave", false);
+ 	dev_err(&msm_host->pdev->dev, "peer command DMA timeout: status=%#x\n", status);
+ 	return -ETIMEDOUT;
+ }

@@ -1,0 +1,48 @@
+From 7376cf22342aa87bba04bd40e7ffcfbdddb3f377 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Tue, 6 Oct 2026 20:23:25 +0800
+Subject: [PATCH 9/9] sd-noN2: revert 0009 (GET_SPF_STATE/MAP/UNMAP back to
+ alloc_apm_pkt, no APM cmd header)
+
+---
+ sound/soc/qcom/qdsp6/q6apm.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
+index 511d6b228..f5cbc552b 100644
+--- a/sound/soc/qcom/qdsp6/q6apm.c
++++ b/sound/soc/qcom/qdsp6/q6apm.c
+@@ -151,8 +151,9 @@ static void q6apm_put_audioreach_graph(struct kref *ref)
+ static int q6apm_get_apm_state(struct q6apm *apm)
+ {
+ 	int ret;
+-	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_cmd_pkt(0,
+-						APM_CMD_GET_SPF_STATE, 0);
++	/* GET_SPF_STATE has no APM command header or payload. */
++	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(0,
++				APM_CMD_GET_SPF_STATE, 0, audioreach_get_apm_src_port());
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+ 
+@@ -227,8 +228,8 @@ static int __q6apm_map_memory_fixed_region(struct device *dev, unsigned int grap
+ 	uint32_t buf_sz;
+ 	void *p;
+ 	uint32_t pos_mask = is_pos_buf ? APM_MMAP_TOKEN_MAP_TYPE_POS_BUF : 0;
+-	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_cmd_pkt(payload_size,
+-					APM_CMD_SHARED_MEM_MAP_REGIONS, graph_id | pos_mask);
++	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(payload_size,
++			APM_CMD_SHARED_MEM_MAP_REGIONS, graph_id | pos_mask, audioreach_get_apm_src_port());
+ 
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+@@ -339,8 +340,8 @@ static int __q6apm_unmap_memory_fixed_region(struct device *dev, unsigned int gr
+ 	struct audioreach_graph_info *info;
+ 	uint32_t mem_map_handle;
+ 	u32 pos_mask = is_pos_buf ? APM_MMAP_TOKEN_MAP_TYPE_POS_BUF : 0;
+-	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_cmd_pkt(sizeof(*cmd),
+-					APM_CMD_SHARED_MEM_UNMAP_REGIONS, graph_id | pos_mask);
++	struct gpr_pkt *pkt __free(kfree) = audioreach_alloc_apm_pkt(sizeof(*cmd),
++			APM_CMD_SHARED_MEM_UNMAP_REGIONS, graph_id | pos_mask, audioreach_get_apm_src_port());
+ 	if (IS_ERR(pkt))
+ 		return PTR_ERR(pkt);
+ 

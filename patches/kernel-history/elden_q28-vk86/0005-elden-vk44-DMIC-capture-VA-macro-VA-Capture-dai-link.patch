@@ -1,0 +1,58 @@
+From 26cc186e94851028f828890e8cef1c57532e857e Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sun, 4 Oct 2026 00:42:13 +0800
+Subject: [PATCH 05/20] =?UTF-8?q?elden:=20vk44=20=E2=80=94=20DMIC=20captur?=
+ =?UTF-8?q?e=EF=BC=88VA=20macro=20+=20VA=20Capture=20dai-link=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+在 vk42 基础上加音频输入端：
+- sound 节点新增 va-dai-link：cpu=<&q6apmbedai VA_CODEC_DMA_TX_0>(110)、
+  codec=<&lpass_vamacro 0>、platform=<&q6apm>（对齐上游 SM8750-MTP）。
+- &lpass_vamacro 加 pinctrl-0 = dmic01_default, dmic23_default（4x DMIC，
+  gpio6-9，与上游 MTP 同接线；主/原厂 DT 均有这两组 pin 状态）。
+
+注：DMIC mux/DEC 选择与音量由 UCM cset 完成（见 scripts/audio-ucm）。
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 23 +++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 3d7dd71b2..76ba46f29 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1142,6 +1142,21 @@ platform {
+ 				sound-dai = <&q6apm>;
+ 			};
+ 		};
++
++		/* 4x DMIC on the VA macro (capture).  pinctrl + mux are
++		 * configured on &lpass_vamacro below / by UCM. */
++		va-dai-link {
++			link-name = "VA Capture";
++			cpu {
++				sound-dai = <&q6apmbedai VA_CODEC_DMA_TX_0>;
++			};
++			codec {
++				sound-dai = <&lpass_vamacro 0>;
++			};
++			platform {
++				sound-dai = <&q6apm>;
++			};
++		};
+ 	};
+ 
+ 	aliases {
+@@ -3013,3 +3028,11 @@ &usb_hsphy {
+ &apps_smmu {
+ 	qcom,preserve-boot-mappings;
+ };
++
++/* DMIC capture: mic array on the VA macro.  dmic01/dmic23 are the LPASS
++ * LPI pin groups defined in sm8750.dtsi (gpio6-9); the same wiring as the
++ * upstream SM8750-MTP. */
++&lpass_vamacro {
++	pinctrl-names = "default";
++	pinctrl-0 = <&dmic01_default>, <&dmic23_default>;
++};

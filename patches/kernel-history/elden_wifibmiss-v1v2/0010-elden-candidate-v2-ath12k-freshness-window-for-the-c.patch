@@ -1,0 +1,101 @@
+From 5e173b6082e4734420c08159d70516abddd000e6 Mon Sep 17 00:00:00 2001
+From: elden <elden@y700>
+Date: Tue, 6 Oct 2026 19:19:05 +0800
+Subject: [PATCH 10/10] elden(candidate v2): ath12k: freshness window for the
+ connection_loss fallback timer
+
+v1 (commit a87287633) gated the 3 s connection_loss_work on "a beacon was
+seen since association".  Measured on device (P40 Pro hotspot, candidate
+wifi-bmiss-1): the firmware forwards exactly one beacon right around
+association, so the gate was already true and the forced teardown every
+~17.7 s continued unchanged (5 disconnects in the first 90 s).
+
+Gate on a *fresh* beacon instead (last 3 s).  The counter/teardown path is
+only meaningful while beacons keep arriving, which is also the only case
+in which the work can be cancelled.
+---
+ drivers/net/wireless/ath/ath12k/core.h |  3 ++-
+ drivers/net/wireless/ath/ath12k/mac.c  | 27 +++++++++++++++-----------
+ 2 files changed, 18 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath12k/core.h b/drivers/net/wireless/ath/ath12k/core.h
+index 73a94ec3b..84b52fecd 100644
+--- a/drivers/net/wireless/ath/ath12k/core.h
++++ b/drivers/net/wireless/ath/ath12k/core.h
+@@ -58,6 +58,7 @@
+ 
+ #define ATH12K_INVALID_HW_MAC_ID	0xFF
+ #define ATH12K_CONNECTION_LOSS_HZ	(3 * HZ)
++#define ATH12K_BEACON_FRESH_MSECS	3000
+ 
+ #define ATH12K_MON_TIMER_INTERVAL  10
+ #define ATH12K_RESET_TIMEOUT_HZ			(20 * HZ)
+@@ -329,7 +330,7 @@ struct ath12k_link_vif {
+ 	u8 bssid[ETH_ALEN];
+ 	struct cfg80211_bitrate_mask bitrate_mask;
+ 	struct delayed_work connection_loss_work;
+-	bool beacon_seen;
++	unsigned long last_beacon_jiffies;
+ 	int num_legacy_stations;
+ 	int rtscts_prot_mode;
+ 	int txpower;
+diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
+index 6817cd3b8..6f7af5d60 100644
+--- a/drivers/net/wireless/ath/ath12k/mac.c
++++ b/drivers/net/wireless/ath/ath12k/mac.c
+@@ -1958,7 +1958,7 @@ static void ath12k_mac_handle_beacon_iter(void *data, u8 *mac,
+ 	/* The firmware really does forward beacons for this link, which is the
+ 	 * only thing that can cancel connection_loss_work.
+ 	 */
+-	arvif->beacon_seen = true;
++	arvif->last_beacon_jiffies = jiffies;
+ 
+ 	cancel_delayed_work(&arvif->connection_loss_work);
+ }
+@@ -1988,15 +1988,20 @@ void ath12k_mac_handle_beacon_miss(struct ath12k *ar,
+ 	 * which can be cancelled when beacon is received.
+ 	 *
+ 	 * Only arm that fallback timer while the cancellation path is actually
+-	 * functional, i.e. while the firmware forwards beacons for this link to
+-	 * the host. Some firmware/AP combinations stop forwarding beacons
+-	 * entirely (observed on WCN7850 "peach" with a phone hotspot: "beacon
+-	 * rx" stays at 1 while the firmware reports beacon miss every ~17 s at
+-	 * -32 dBm RSSI). The work can then never be cancelled and every
+-	 * beacon-miss report tears the link down, so rely on the mac80211 AP
+-	 * probe triggered above instead, as mt76 and rtw89 do.
++	 * functional, i.e. while the firmware is currently forwarding beacons
++	 * for this link to the host. Some firmware/AP combinations stop
++	 * forwarding beacons entirely for a while (observed on WCN7850 "peach"
++	 * with a phone hotspot: "beacon rx" stays at 1 for the first ~2 minutes
++	 * after associating, while the firmware reports beacon miss every ~17 s
++	 * at -34 dBm RSSI). A single beacon around association is not enough to
++	 * keep this work cancellable, hence the freshness window. Without the
++	 * window every beacon-miss report tears the link down and the driver's
++	 * TX flush times out as well; rely on the mac80211 AP probe triggered
++	 * above instead, as mt76 and rtw89 do.
+ 	 */
+-	if (arvif->beacon_seen)
++	if (arvif->last_beacon_jiffies &&
++	    time_before(jiffies, arvif->last_beacon_jiffies +
++				  msecs_to_jiffies(ATH12K_BEACON_FRESH_MSECS)))
+ 		ieee80211_queue_delayed_work(hw, &arvif->connection_loss_work,
+ 					     ATH12K_CONNECTION_LOSS_HZ);
+ }
+@@ -4031,7 +4036,7 @@ static void ath12k_bss_assoc(struct ath12k *ar,
+ 	}
+ 
+ 	arvif->is_up = true;
+-	arvif->beacon_seen = false;
++	arvif->last_beacon_jiffies = 0;
+ 	arvif->rekey_data.enable_offload = false;
+ 
+ 	ath12k_dbg(ar->ab, ATH12K_DBG_MAC,
+@@ -4085,7 +4090,7 @@ static void ath12k_bss_disassoc(struct ath12k *ar,
+ 			    arvif->vdev_id, ret);
+ 
+ 	arvif->is_up = false;
+-	arvif->beacon_seen = false;
++	arvif->last_beacon_jiffies = 0;
+ 
+ 	memset(&arvif->rekey_data, 0, sizeof(arvif->rekey_data));
+ 

@@ -1,0 +1,43 @@
+From 86193a58a0951c39306e65cb5291f0582acb33f5 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sat, 10 Oct 2026 11:52:44 +0800
+Subject: [PATCH 32/33] exp(q24): FIX-2 - hold cambist runtime vote for block
+ lifetime (no zero-vote half-built state)
+
+---
+ drivers/clk/qcom/cambistmclkcc-sm8750.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/clk/qcom/cambistmclkcc-sm8750.c b/drivers/clk/qcom/cambistmclkcc-sm8750.c
+index 69abb756c..a8d4d9e8c 100644
+--- a/drivers/clk/qcom/cambistmclkcc-sm8750.c
++++ b/drivers/clk/qcom/cambistmclkcc-sm8750.c
+@@ -6,6 +6,7 @@
+ #include <linux/clk-provider.h>
+ #include <linux/module.h>
+ #include <linux/platform_device.h>
++#include <linux/pm_runtime.h>
+ #include <linux/regmap.h>
+ 
+ #include <dt-bindings/clock/qcom,sm8750-cambistmclkcc.h>
+@@ -436,7 +437,19 @@ MODULE_DEVICE_TABLE(of, cam_bist_mclk_cc_sm8750_match_table);
+ 
+ static int cam_bist_mclk_cc_sm8750_probe(struct platform_device *pdev)
+ {
+-	return qcom_cc_probe(pdev, &cam_bist_mclk_cc_sm8750_desc);
++	int ret = qcom_cc_probe(pdev, &cam_bist_mclk_cc_sm8750_desc);
++
++	/*
++	 * Q24 FIX-2: this block has no GDSC and no consumers, so
++	 * qcom_cc_really_probe()'s trailing pm_runtime_put() leaves it in a
++	 * half-programmed, zero-vote state whose rail collapse (screen blank /
++	 * RPMh deep idle) hangs the NoC and drops PS_HOLD.  Hold the runtime
++	 * vote for the block's lifetime instead (devm-managed, released on
++	 * driver detach).
++	 */
++	if (!ret)
++		ret = pm_runtime_resume_and_get(&pdev->dev); /* held via devm pm; no devm_resume_and_get in this tree */
++	return ret;
+ }
+ 
+ static struct platform_driver cam_bist_mclk_cc_sm8750_driver = {

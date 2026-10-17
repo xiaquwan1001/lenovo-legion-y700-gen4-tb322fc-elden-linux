@@ -1,0 +1,27 @@
+From 7c985a66ce3899322c7d0feeae6e5a024769ffe9 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Tue, 6 Oct 2026 20:30:47 +0800
+Subject: [PATCH 9/9] sd-noGC: revert 0002 (drop sm8750 DSDP GC/gamma block ->
+ no gamma LUT / color mgmt)
+
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
+index 8c131db0e..2e10add84 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
+@@ -416,12 +416,6 @@ static const struct dpu_dspp_sub_blks sdm845_dspp_sblk = {
+ static const struct dpu_dspp_sub_blks sm8750_dspp_sblk = {
+ 	.pcc = {.name = "pcc", .base = 0x1700,
+ 		.len = 0x90, .version = 0x60000},
+-	/* GC 块偏移与 SM8650/SDM845 同（0x17c0）；上游 sm8750 目录里漏了，
+-	 * 补上后 CRTC 才会暴露 GAMMA_LUT → Night Light / 色温可用。
+-	 * 见 dpu_crtc.c: if (dspp->sblk->gc.base) drm_crtc_enable_color_mgmt(...).
+-	 */
+-	.gc = {.name = "gc", .base = 0x17c0,
+-		.len = 0x40, .version = 0x10008},
+ };
+ 
+ /*************************************************************

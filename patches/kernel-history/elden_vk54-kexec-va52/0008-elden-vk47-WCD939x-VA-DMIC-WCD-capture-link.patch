@@ -1,0 +1,58 @@
+From bd114ca335e1b233c89800703cfa710d8a371641 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sun, 4 Oct 2026 09:49:10 +0800
+Subject: [PATCH 08/10] =?UTF-8?q?elden:=20vk47=20=E2=80=94=20WCD939x=20?=
+ =?UTF-8?q?=E9=87=87=E9=9B=86=EF=BC=88=E5=8E=BB=20VA=20DMIC=EF=BC=8C?=
+ =?UTF-8?q?=E5=8D=95=20WCD=20capture=20link=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 移除 va-dai-link 与 VA DMIC 路由（本机无 DMIC，硬件证伪）
+- 保留 wcd-capture-dai-link + WCD 路由；&swr1/&swr2 挂 wcd_rx/wcd_tx
+- 验收：声卡注册、WCD939x RX/TX 均 bound、播放正常；
+  但 WCD 采集 arecord=pcm_read I/O error（图启动无报错、无数据）
+  → 待查 ADSP 静态 tplg 的 TX3 图支持
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 21 +------------------
+ 1 file changed, 1 insertion(+), 20 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 9fab740fc..12a13defb 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1134,11 +1134,7 @@ sound {
+ 				"AMIC3", "MIC BIAS3",
+ 				"AMIC4", "MIC BIAS4",
+ 				"AMIC5", "MIC BIAS4",
+-				"TX SWR_INPUT1", "ADC2_OUTPUT",
+-				"VA DMIC0", "vdd-micb",
+-				"VA DMIC1", "vdd-micb",
+-				"VA DMIC2", "vdd-micb",
+-				"VA DMIC3", "vdd-micb";
++				"TX SWR_INPUT1", "ADC2_OUTPUT";
+ 
+ 		mi2s-dai-link {
+ 			link-name = "Secondary MI2S";
+@@ -1153,21 +1149,6 @@ platform {
+ 			};
+ 		};
+ 
+-		/* 4x DMIC on the VA macro (capture).  pinctrl + mux are
+-		 * configured on &lpass_vamacro below / by UCM. */
+-		va-dai-link {
+-			link-name = "VA Capture";
+-			cpu {
+-				sound-dai = <&q6apmbedai VA_CODEC_DMA_TX_0>;
+-			};
+-			codec {
+-				sound-dai = <&lpass_vamacro 0>;
+-			};
+-			platform {
+-				sound-dai = <&q6apm>;
+-			};
+-		};
+-
+ 		/* Analog mic capture: AMIC -> WCD939x ADC -> SWR TX (swr2) -> TX
+ 		 * macro -> ADSP.  This is the real mic path on the Y700 Gen4 (the
+ 		 * stock audio-routing only lists AMIC and MIC BIAS, no DMIC). */

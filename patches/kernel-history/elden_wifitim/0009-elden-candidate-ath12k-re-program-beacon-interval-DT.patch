@@ -1,0 +1,63 @@
+From 6ac05658dee8ccb2536d7a1a20fd1000feda2624 Mon Sep 17 00:00:00 2001
+From: elden <elden@y700>
+Date: Tue, 6 Oct 2026 20:13:03 +0800
+Subject: [PATCH 9/9] elden(candidate): ath12k: re-program beacon interval /
+ DTIM period once the STA vdev is up
+
+Observed on WCN7850 (PEACH, TB322FC) with a phone hotspot: right after the
+first association the host receives only ~0.5 beacon/s for ~100 s (the
+firmware appears to wake on a ~2 s cycle instead of the AP's DTIM period
+of 2 x 100 ms), so it reports beacon miss every ~17 s and the link is torn
+down until it re-syncs ~2 minutes later.  A 2 s wake cycle is what the
+firmware timing defaults produce, and mac80211 sends BSS_CHANGED_BEACON_INT
+(and BSS_CHANGED_BEACON_INFO) while the vdev is still being set up, so
+those WMI vdev params can land before the vdev/peer exist.
+
+Re-send WMI_VDEV_PARAM_BEACON_INTERVAL and WMI_VDEV_PARAM_DTIM_PERIOD in
+ath12k_bss_assoc() now that the vdev is up and the BSS peer is authorized.
+---
+ drivers/net/wireless/ath/ath12k/mac.c | 31 +++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/drivers/net/wireless/ath/ath12k/mac.c b/drivers/net/wireless/ath/ath12k/mac.c
+index a09288906..44c82a7c6 100644
+--- a/drivers/net/wireless/ath/ath12k/mac.c
++++ b/drivers/net/wireless/ath/ath12k/mac.c
+@@ -4047,6 +4047,37 @@ static void ath12k_bss_assoc(struct ath12k *ar,
+ 		ath12k_warn(ar->ab, "failed to set vdev %i OBSS PD parameters: %d\n",
+ 			    arvif->vdev_id, ret);
+ 
++	/* mac80211 hands us the AP's beacon interval / DTIM period while the vdev
++	 * is still being set up (BSS_CHANGED_BEACON_INT during association setup,
++	 * BSS_CHANGED_BEACON_INFO when the first beacon is processed), so those
++	 * WMI vdev params can be sent before the vdev/BSS peer exist and are then
++	 * ignored by the firmware.  Re-program them now that the vdev is up and
++	 * the BSS peer is authorized: with the firmware defaults left in place the
++	 * WCN7850 ("peach") was observed to wake for beacons only about once per
++	 * two seconds after the first association ("beacon rx" ~0.5/s), which
++	 * makes it report beacon miss and tear the link down every ~17 s until the
++	 * firmware finally re-syncs ~2 minutes later.
++	 */
++	if (arvif->beacon_interval) {
++		ret = ath12k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
++						    WMI_VDEV_PARAM_BEACON_INTERVAL,
++						    arvif->beacon_interval);
++		if (ret)
++			ath12k_warn(ar->ab,
++				    "failed to set beacon interval %d for vdev %d: %d\n",
++				    arvif->beacon_interval, arvif->vdev_id, ret);
++	}
++
++	if (arvif->dtim_period) {
++		ret = ath12k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
++						    WMI_VDEV_PARAM_DTIM_PERIOD,
++						    arvif->dtim_period);
++		if (ret)
++			ath12k_warn(ar->ab,
++				    "failed to set dtim period %d for vdev %d: %d\n",
++				    arvif->dtim_period, arvif->vdev_id, ret);
++	}
++
+ 	if (test_bit(WMI_TLV_SERVICE_11D_OFFLOAD, ar->ab->wmi_ab.svc_map) &&
+ 	    ahvif->vdev_type == WMI_VDEV_TYPE_STA &&
+ 	    ahvif->vdev_subtype == WMI_VDEV_SUBTYPE_NONE)

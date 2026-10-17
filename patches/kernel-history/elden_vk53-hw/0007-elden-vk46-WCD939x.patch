@@ -1,0 +1,135 @@
+From 4c68eb5ed4e3677090c4619b20987f608b0f8ad8 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sun, 4 Oct 2026 09:01:27 +0800
+Subject: [PATCH 07/33] =?UTF-8?q?elden:=20vk46=20=E2=80=94=20=E5=90=AF?=
+ =?UTF-8?q?=E7=94=A8=20WCD939x=20=E9=9F=B3=E9=A2=91=E7=BC=96=E8=A7=A3?=
+ =?UTF-8?q?=E7=A0=81=EF=BC=88=E6=A8=A1=E6=8B=9F=E9=BA=A6=E9=87=87=E9=9B=86?=
+ =?UTF-8?q?=E6=AD=A3=E8=B7=AF=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 新增 wcd939x codec 节点：reset=TLMM101、L1B/L15B/BOB1/L2I 稳压、micbias
+  照原厂（2.0/2.7/1.8/2.0 V）、SWR rx/tx slave 引用
+- sound：新增 wcd-capture-dai-link（cpu TX_CODEC_DMA_TX_3，
+  codec wcd939x+swr2+lpass_txmacro）；audio-routing 增加 AMIC1-5 偏置 +
+  TX SWR_INPUT1<-ADC2_OUTPUT
+- &swr1/&swr2 使能并挂 wcd_rx/wcd_tx（sdw20217010e00，端口映射照 MTP/原厂）
+- &tlmm 增加 wcd_default（gpio101 reset）
+
+原厂 DT 的 qcom,audio-routing 只有 AMIC/MIC BIAS，无 DMIC → 本机麦是模拟麦
+接 WCD939x；vk44/45 的 VA DMIC 方向已证伪。
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 81 +++++++++++++++++++
+ 1 file changed, 81 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index ad0532a2b..9fab740fc 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1129,6 +1129,12 @@ sound {
+ 		widgets = "Speaker", "Left Speaker", "Speaker", "Right Speaker";
+ 		audio-routing = "Left Speaker", "Left OUT",
+ 				"Right Speaker", "Right OUT",
++				"AMIC1", "MIC BIAS1",
++				"AMIC2", "MIC BIAS2",
++				"AMIC3", "MIC BIAS3",
++				"AMIC4", "MIC BIAS4",
++				"AMIC5", "MIC BIAS4",
++				"TX SWR_INPUT1", "ADC2_OUTPUT",
+ 				"VA DMIC0", "vdd-micb",
+ 				"VA DMIC1", "vdd-micb",
+ 				"VA DMIC2", "vdd-micb",
+@@ -1161,6 +1167,49 @@ platform {
+ 				sound-dai = <&q6apm>;
+ 			};
+ 		};
++
++		/* Analog mic capture: AMIC -> WCD939x ADC -> SWR TX (swr2) -> TX
++		 * macro -> ADSP.  This is the real mic path on the Y700 Gen4 (the
++		 * stock audio-routing only lists AMIC and MIC BIAS, no DMIC). */
++		wcd-capture-dai-link {
++			link-name = "WCD Capture";
++			cpu {
++				sound-dai = <&q6apmbedai TX_CODEC_DMA_TX_3>;
++			};
++			codec {
++				sound-dai = <&wcd939x 1>, <&swr2 0>, <&lpass_txmacro 0>;
++			};
++			platform {
++				sound-dai = <&q6apm>;
++			};
++		};
++	};
++
++	wcd939x: audio-codec {
++		compatible = "qcom,wcd9395-codec", "qcom,wcd9390-codec";
++
++		pinctrl-0 = <&wcd_default>;
++		pinctrl-names = "default";
++
++		qcom,micbias1-microvolt = <2000000>;
++		qcom,micbias2-microvolt = <2700000>;
++		qcom,micbias3-microvolt = <1800000>;
++		qcom,micbias4-microvolt = <2000000>;
++		qcom,mbhc-buttons-vthreshold-microvolt = <75000 150000 237000 500000 500000 500000 500000 500000>;
++		qcom,mbhc-headset-vthreshold-microvolt = <1700000>;
++		qcom,mbhc-headphone-vthreshold-microvolt = <50000>;
++		qcom,rx-device = <&wcd_rx>;
++		qcom,tx-device = <&wcd_tx>;
++
++		reset-gpios = <&tlmm 101 GPIO_ACTIVE_LOW>;
++
++		vdd-buck-supply = <&vreg_l15b_1p8>;
++		vdd-rxtx-supply = <&vreg_l15b_1p8>;
++		vdd-io-supply = <&vreg_l15b_1p8>;
++		vdd-mic-bias-supply = <&vreg_bob1>;
++		vdd-px-supply = <&vreg_l2i_1p2>;
++
++		#sound-dai-cells = <1>;
+ 	};
+ 
+ 	aliases {
+@@ -2679,6 +2728,14 @@ &tlmm {
+ 	/* reserved for secure world */
+ 	gpio-reserved-ranges = <39 1>, <74 1>;
+ 
++	wcd_default: wcd-reset-n-active-state {
++		pins = "gpio101";
++		function = "gpio";
++		drive-strength = <16>;
++		bias-disable;
++		output-low;
++	};
++
+ 	camera_pmic_default: camera-pmic-default-state {
+ 		pins = "gpio126";
+ 		function = "gpio";
+@@ -3042,3 +3099,27 @@ &lpass_vamacro {
+ 	vdd-micb-supply = <&vreg_l1b_1p8>;
+ 	qcom,dmic-sample-rate = <4800000>;
+ };
++
++/* WCD9395 SoundWire devices: RX on swr1 (RX macro), TX on swr2 (TX macro).
++ * Port mappings mirror the upstream SM8750-MTP / the stock elden DT. */
++&swr1 {
++	status = "okay";
++
++	/* WCD9395 RX */
++	wcd_rx: codec@0,4 {
++		compatible = "sdw20217010e00";
++		reg = <0 4>;
++		qcom,rx-port-mapping = <1 2 3 4 5 9>;
++	};
++};
++
++&swr2 {
++	status = "okay";
++
++	/* WCD9395 TX */
++	wcd_tx: codec@0,3 {
++		compatible = "sdw20217010e00";
++		reg = <0 3>;
++		qcom,tx-port-mapping = <2 2 3 4>;
++	};
++};

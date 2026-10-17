@@ -1,0 +1,71 @@
+From e70d0b660b748a868cc28289d1d9a39f692ea481 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Thu, 8 Oct 2026 19:41:48 +0800
+Subject: [PATCH 20/33] exp(kexec): robust diag parse + /sys/kernel/kexec_diag
+ sysfs knob (Q11)
+
+cmdline kexec_dbg= readback showed mask=0 despite kexec_dbg=1 (kstrtoint path
+or parse ambiguity). Add sysfs knob /sys/kernel/kexec_diag (read/write int) so
+the mask is set+confirmed at runtime from userspace; stage=10 always echoes the
+live value. simple_strtol for the cmdline parser.
+---
+ kernel/kexec_core.c | 40 ++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 36 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
+index db936ce46..c5d25b818 100644
+--- a/kernel/kexec_core.c
++++ b/kernel/kexec_core.c
+@@ -70,16 +70,48 @@ int diag_skip_mask;
+ 
+ static int __init kexec_diag_setup(char *s)
+ {
+-	int v;
++	long v;
+ 
+-	if (!s || kstrtoint(s, 0, &v))
++	if (!s || !*s)
+ 		return 1;
+-	diag_skip_mask = v;
+-	pr_info("[KD] kexec_dbg=%d (1=skip device_shutdown, 2=skip syscore_shutdown)\n", v);
++	v = simple_strtol(s, NULL, 0);
++	diag_skip_mask = (int)v;
++	pr_info("[KD] kexec_dbg parsed s='%s' -> mask=%d\n", s, diag_skip_mask);
+ 	return 1;
+ }
+ __setup("kexec_dbg=", kexec_diag_setup);
+ 
++/* debugfs readback / runtime set: /sys/kernel/debug/kexec_diag (definitive,
++ * avoids cmdline-parse ambiguity; stage=10 always echoes the live value). */
++static ssize_t kexec_diag_show(struct kobject *k, struct kobj_attribute *a,
++			       char *buf)
++{
++	return sysfs_emit(buf, "%d\n", diag_skip_mask);
++}
++static ssize_t kexec_diag_store(struct kobject *k, struct kobj_attribute *a,
++				const char *buf, size_t n)
++{
++	int v, err = kstrtoint(buf, 0, &v);
++
++	if (!err)
++		diag_skip_mask = v;
++	return err ? err : n;
++}
++static struct kobj_attribute kexec_diag_attr =
++	__ATTR(kexec_diag, 0644, kexec_diag_show, kexec_diag_store);
++
++static int __init kexec_diag_sysfs_init(void)
++{
++	struct kobject *k = kobject_create_and_add("kexec_diag", kernel_kobj);
++
++	if (!k)
++		return -ENOMEM;
++	if (sysfs_create_file(k, &kexec_diag_attr.attr))
++		kobject_put(k);
++	return 0;
++}
++late_initcall(kexec_diag_sysfs_init);
++
+ /*
+  * When kexec transitions to the new kernel there is a one-to-one
+  * mapping between physical and virtual addresses.  On processors

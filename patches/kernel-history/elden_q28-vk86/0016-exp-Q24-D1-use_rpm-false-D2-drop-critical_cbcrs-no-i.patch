@@ -1,0 +1,40 @@
+From c53e471be4dfbb159cdef446a06586dda33167af Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xuqianhui1001@outlook.com>
+Date: Thu, 8 Oct 2026 09:13:18 +0800
+Subject: [PATCH 16/20] exp(Q24): D1(use_rpm=false)/D2(drop critical_cbcrs) no
+ improvement, revert driver; keep H1 DTS
+
+H1 = cambist node without power-domains/required-opps (7/9 survival).
+Driver-side D1/D2 both failed to improve (6/9, 7/9), driver reverted.
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi    | 3 ++-
+ drivers/clk/qcom/cambistmclkcc-sm8750.c | 2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index ee2729862..6f95af427 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2096,7 +2096,8 @@ cambistmclkcc: clock-controller@1760000 {
+ 				<&bi_tcxo_div2>,
+ 				<&bi_tcxo_ao_div2>,
+ 				<&sleep_clk>;
+-			/* H1 实验：移除 power-domains/required-opps（对齐厂商 vdd_mx-supply 写法） */
++			/* H1 experiment: dropped power-domains/required-opps
++		   (matching the vendor vdd_mx-supply style) */
+ 			#clock-cells = <1>;
+ 			#reset-cells = <1>;
+ 			#power-domain-cells = <1>;
+diff --git a/drivers/clk/qcom/cambistmclkcc-sm8750.c b/drivers/clk/qcom/cambistmclkcc-sm8750.c
+index b460bafe4..69abb756c 100644
+--- a/drivers/clk/qcom/cambistmclkcc-sm8750.c
++++ b/drivers/clk/qcom/cambistmclkcc-sm8750.c
+@@ -424,7 +424,7 @@ static const struct qcom_cc_desc cam_bist_mclk_cc_sm8750_desc = {
+ 	.config = &cam_bist_mclk_cc_sm8750_regmap_config,
+ 	.clks = cam_bist_mclk_cc_sm8750_clocks,
+ 	.num_clks = ARRAY_SIZE(cam_bist_mclk_cc_sm8750_clocks),
+-	.use_rpm = false,
++	.use_rpm = true,
+ 	.driver_data = &cam_bist_mclk_cc_sm8750_driver_data,
+ };
+ 

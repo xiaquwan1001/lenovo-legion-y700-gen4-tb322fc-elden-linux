@@ -1,0 +1,38 @@
+From be79b256dca7dd1c5871a239c8c1110b64c1b338 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xuqianhui1001@outlook.com>
+Date: Thu, 8 Oct 2026 09:11:39 +0800
+Subject: [PATCH 17/33] arm64: dts: qcom: sm8750: bind cambistmclkcc to MX
+ power domain only
+
+Binding the SM8750 cambistmclkcc camera clock controller node to both
+MMCX and MX power domains makes the SoC hard-reset when the display
+blank path (DPMS off) collapses MMCX, on hardware where the module is
+probed but idle (no consumer, all clocks unprepared).
+
+Binding it to MX only -- the always-on rail -- removes the failure:
+repeated display blank/wake cycles verified healthy on hardware.
+
+See the related report to linux-arm-msm for the full repro and
+bisect data.
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 6f95af427..5492087d0 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2097,7 +2097,12 @@ cambistmclkcc: clock-controller@1760000 {
+ 				<&bi_tcxo_ao_div2>,
+ 				<&sleep_clk>;
+ 			/* H1 experiment: dropped power-domains/required-opps
+-		   (matching the vendor vdd_mx-supply style) */
++			   (matching the vendor vdd_mx-supply style).
++			   H2: bind to MX only -- the upstream v3->v4 series
++			   describes MX/MXC as the always-on rail, so MMCX is
++			   the collapsible one; verify the MMCX coupling. */
++			power-domains = <&rpmhpd RPMHPD_MX>;
++			required-opps = <&rpmhpd_opp_low_svs>;
+ 			#clock-cells = <1>;
+ 			#reset-cells = <1>;
+ 			#power-domain-cells = <1>;

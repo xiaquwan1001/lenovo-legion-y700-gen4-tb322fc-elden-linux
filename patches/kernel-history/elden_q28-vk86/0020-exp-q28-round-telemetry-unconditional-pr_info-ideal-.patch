@@ -1,0 +1,27 @@
+From a8c09a7232549bf84ed52141c357fa9b44d894ba Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sat, 10 Oct 2026 19:37:40 +0800
+Subject: [PATCH 20/20] exp(q28): round telemetry -> unconditional pr_info
+ (ideal/rounded/no-op), for vk86-round2 observability
+
+---
+ drivers/gpu/drm/msm/dsi/dsi_host.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 46217d7aa..b6cf7abd9 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -428,9 +428,9 @@ int dsi_link_clk_set_rate_6g(struct msm_dsi_host *msm_host)
+ 		return rounded_byte_clk_rate;
+ 	}
+ 
+-	if (rounded_byte_clk_rate != msm_host->byte_clk_rate)
+-		pr_info("msm_dsi: Q28 round byte clk %lu -> %ld (PLL-achievable)\n",
+-			msm_host->byte_clk_rate, rounded_byte_clk_rate);
++	pr_info("msm_dsi: Q28 byte clk ideal=%lu rounded=%ld (no-op=%s)\n",
++		msm_host->byte_clk_rate, rounded_byte_clk_rate,
++		(rounded_byte_clk_rate == msm_host->byte_clk_rate) ? "YES" : "NO");
+ 
+ 	msm_host->byte_clk_rate = rounded_byte_clk_rate;
+ 

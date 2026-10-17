@@ -1,0 +1,125 @@
+From d912d3c00e699016e9f1c81be44d9845ab3cd8b4 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Thu, 8 Oct 2026 20:16:17 +0800
+Subject: [PATCH 23/33] exp(kexec): settle_ms knob - msleep after each real
+ device shutdown (Q11)
+
+On kexec path, device_shutdown msleep(diag_settle_ms) after each real
+.shutdown() so an ASYNCHRONOUS power-off armed by a device in the real-shutdown
+window lands right after that device's SD-done. The LAST SD-done in the local
+kmsg dump names the culprit in ONE run (no 7-step binary search). stop_after
+still bounds the real-shutdown window; sysfs /sys/kernel/kexec_diag/settle_ms.
+---
+ drivers/base/core.c   | 17 ++++++++++++++---
+ include/linux/kexec.h |  2 ++
+ kernel/kexec_core.c   | 21 ++++++++++++++++++++-
+ 3 files changed, 36 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index 0396806a5..1847ee66f 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -28,6 +28,7 @@
+ #include <linux/of_device.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/sched/mm.h>
++#include <linux/delay.h>	/* elden kexec-diag: msleep settle */
+ #include <linux/sched/signal.h>
+ #include <linux/slab.h>
+ #include <linux/string_helpers.h>
+@@ -4919,7 +4920,7 @@ void device_shutdown(void)
+ 		 * kexec path. pr_warn survives any console_loglevel. */
+ 		ds_idx++;
+ 		if (kexec_in_progress)
+-			pr_warn("[KD] SD-start: %s (idx=%d)\n", dev_name(dev), ds_idx);
++			pr_warn("[KD] SD-pre: %s (idx=%d)\n", dev_name(dev), ds_idx);
+ 
+ 		/* elden kexec-diag (Q11): selective-skip / truncate-by-index knob.
+ 		 * If stop_after >= 0, skip the real .shutdown() for every device whose
+@@ -4961,8 +4962,18 @@ void device_shutdown(void)
+ 			dev->driver->shutdown(dev);
+ 		}
+ 
+-		if (kexec_in_progress)
+-			pr_warn("[KD] SD-done: %s\n", dev_name(dev));
++		if (kexec_in_progress) {
++			pr_warn("[KD] SD-done: %s (idx=%d)\n", dev_name(dev), ds_idx);
++			/* elden kexec-diag (Q11): settle so an ASYNCHRONOUS power-off
++			 * armed by this device's .shutdown() lands right here, making
++			 * the LAST SD-done in the log = the culprit. Only on kexec path
++			 * and only when diag_settle_ms > 0. */
++			if (diag_settle_ms > 0) {
++				spin_unlock(&devices_kset->list_lock);
++				msleep(diag_settle_ms);
++				spin_lock(&devices_kset->list_lock);
++			}
++		}
+ 
+ 		device_unlock(dev);
+ 		if (parent)
+diff --git a/include/linux/kexec.h b/include/linux/kexec.h
+index 21496bcd1..29cf4f96d 100644
+--- a/include/linux/kexec.h
++++ b/include/linux/kexec.h
+@@ -474,6 +474,7 @@ extern bool kexec_in_progress;
+ #define KEXEC_DBG_SKIP_SYSCORE 2
+ extern int diag_skip_mask;
+ extern int diag_stop_after;
++extern int diag_settle_ms;
+ 
+ #ifndef page_to_boot_pfn
+ static inline unsigned long page_to_boot_pfn(struct page *page)
+@@ -554,6 +555,7 @@ static inline void kimage_unmap_segment(void *buffer) { }
+ #define KEXEC_DBG_SKIP_SYSCORE 0
+ #define diag_skip_mask 0
+ #define diag_stop_after (-1)
++#define diag_settle_ms 0
+ #endif /* CONFIG_KEXEC_CORE */
+ 
+ #ifdef CONFIG_KEXEC_SIG
+diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
+index fec2f7648..b793a1b54 100644
+--- a/kernel/kexec_core.c
++++ b/kernel/kexec_core.c
+@@ -68,6 +68,7 @@ bool kexec_file_dbg_print;
+  */
+ int diag_skip_mask;
+ int diag_stop_after = -1;	/* device_shutdown: real-shutdown first N, skip rest */
++int diag_settle_ms;		/* device_shutdown: msleep after each real shutdown */
+ 
+ static int __init kexec_diag_setup(char *s)
+ {
+@@ -118,6 +119,23 @@ static ssize_t stop_after_store(struct kobject *k, struct kobj_attribute *a,
+ static struct kobj_attribute stop_after_attr =
+ 	__ATTR(stop_after, 0644, stop_after_show, stop_after_store);
+ 
++static ssize_t settle_ms_show(struct kobject *k, struct kobj_attribute *a,
++			      char *buf)
++{
++	return sysfs_emit(buf, "%d\n", diag_settle_ms);
++}
++static ssize_t settle_ms_store(struct kobject *k, struct kobj_attribute *a,
++			       const char *buf, size_t n)
++{
++	int v, err = kstrtoint(buf, 0, &v);
++
++	if (!err)
++		diag_settle_ms = v;
++	return err ? err : n;
++}
++static struct kobj_attribute settle_ms_attr =
++	__ATTR(settle_ms, 0644, settle_ms_show, settle_ms_store);
++
+ static int __init kexec_diag_sysfs_init(void)
+ {
+ 	struct kobject *k = kobject_create_and_add("kexec_diag", kernel_kobj);
+@@ -125,7 +143,8 @@ static int __init kexec_diag_sysfs_init(void)
+ 	if (!k)
+ 		return -ENOMEM;
+ 	if (sysfs_create_file(k, &kexec_diag_attr.attr) ||
+-	    sysfs_create_file(k, &stop_after_attr.attr))
++	    sysfs_create_file(k, &stop_after_attr.attr) ||
++	    sysfs_create_file(k, &settle_ms_attr.attr))
+ 		kobject_put(k);
+ 	return 0;
+ }

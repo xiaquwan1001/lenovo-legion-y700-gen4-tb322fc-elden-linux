@@ -1,0 +1,42 @@
+From 8b69eb15326439975f0698e0090dce937d0ad6e2 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Wed, 7 Oct 2026 17:08:05 +0800
+Subject: [PATCH 13/33] =?UTF-8?q?dts:=20=E7=9B=B8=E6=9C=BA=20rotation=20+1?=
+ =?UTF-8?q?80=EF=BC=88=E5=89=8D=20270=E2=86=9290=20/=20=E5=90=8E=2090?=
+ =?UTF-8?q?=E2=86=92270=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+实机取证（2026-10-07，boot_b cdsp-vk47clean + Snapshot 50.0）：
+- stock vendor DT 的 sensor-position-roll = 后 90 / 前 270，与主线 DT 原值一致；
+  但 libcamera simple-pipeline + Snapshot 预览/录像前后摄都翻转 180°。
+- 数学特征：若 app 对 Orientation 应用方向相反，R=90 与 R=270 均产生 180° 误差。
+  故 DT 取 stock roll 的补角（270/90），实机确认前后成像均正。
+- DTB 差异仅此两行（old vs new decompile diff），内核/ramdisk sha 不变。
+---
+ arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index b099f9e12..776dfd77b 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -2290,7 +2290,7 @@ rear_camera: camera@56 {
+ 		lens-focus = <&rear_lens>;
+ 		flash-leds = <&rear_flash>;
+ 		orientation = <1>;
+-		rotation = <90>;
++		rotation = <270>;
+ 
+ 		port {
+ 			rear_camera_out: endpoint {
+@@ -2326,7 +2326,7 @@ front_camera: camera@31 {
+ 		dvdd-supply = <&camera_ldo2>;
+ 		avdd-supply = <&camera_ldo3>;
+ 		orientation = <0>;
+-		rotation = <270>;
++		rotation = <90>;
+ 
+ 		port {
+ 			front_camera_out: endpoint {

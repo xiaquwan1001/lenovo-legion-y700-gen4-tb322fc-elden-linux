@@ -1,0 +1,156 @@
+From e1d2c658ad29a47343328720e13005613190267d Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sat, 10 Oct 2026 11:14:35 +0800
+Subject: [PATCH 30/33] exp(q24): FIX-3 - cambistmclkcc PM lifecycle (lazy-on +
+ suspend quiesce)
+
+This block has no GDSC and no consumers that keep its rails alive, so
+qcom_cc_really_probe() left it half-programmed (PLL0 configured +
+SLEEP_CLK CBCR enabled) after its trailing pm_runtime_put(); collapsing
+its rail then hung the NoC and dropped PS_HOLD.
+
+Move the PLL/CBCR programming out of probe into runtime_resume
+(lazy-on: CCF runtime-resumes the provider on the first consumer
+enable, so programming happens atomically under the held genpd vote),
+and fully quiesce on runtime_suspend (gate the SLEEP_CLK CBCR and
+power the PLL down via its own disable op) so the block is completely
+silent when unused and Linux holds no vote.  cambist MXC single-vote DT
+(68e8ab2c0) unchanged.
+---
+ drivers/clk/qcom/cambistmclkcc-sm8750.c | 89 ++++++++++++++++++++-----
+ 1 file changed, 72 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/clk/qcom/cambistmclkcc-sm8750.c b/drivers/clk/qcom/cambistmclkcc-sm8750.c
+index 69abb756c..450fd46ba 100644
+--- a/drivers/clk/qcom/cambistmclkcc-sm8750.c
++++ b/drivers/clk/qcom/cambistmclkcc-sm8750.c
+@@ -6,6 +6,7 @@
+ #include <linux/clk-provider.h>
+ #include <linux/module.h>
+ #include <linux/platform_device.h>
++#include <linux/pm_runtime.h>
+ #include <linux/regmap.h>
+ 
+ #include <dt-bindings/clock/qcom,sm8750-cambistmclkcc.h>
+@@ -397,13 +398,7 @@ static struct clk_regmap *cam_bist_mclk_cc_sm8750_clocks[] = {
+ 	[CAM_BIST_MCLK_CC_SLEEP_CLK_SRC] = &cam_bist_mclk_cc_sleep_clk_src.clkr,
+ };
+ 
+-static struct clk_alpha_pll *cam_bist_mclk_cc_sm8750_plls[] = {
+-	&cam_bist_mclk_cc_pll0,
+-};
+-
+-static const u32 cam_bist_mclk_cc_sm8750_critical_cbcrs[] = {
+-	0x40f8, /* CAM_BIST_MCLK_CC_SLEEP_CLK */
+-};
++#define CAM_BIST_MCLK_CC_SLEEP_CLK_CBCR		0x40f8
+ 
+ static const struct regmap_config cam_bist_mclk_cc_sm8750_regmap_config = {
+ 	.reg_bits = 32,
+@@ -413,19 +408,23 @@ static const struct regmap_config cam_bist_mclk_cc_sm8750_regmap_config = {
+ 	.fast_io = true,
+ };
+ 
+-static const struct qcom_cc_driver_data cam_bist_mclk_cc_sm8750_driver_data = {
+-	.alpha_plls = cam_bist_mclk_cc_sm8750_plls,
+-	.num_alpha_plls = ARRAY_SIZE(cam_bist_mclk_cc_sm8750_plls),
+-	.clk_cbcrs = cam_bist_mclk_cc_sm8750_critical_cbcrs,
+-	.num_clk_cbcrs = ARRAY_SIZE(cam_bist_mclk_cc_sm8750_critical_cbcrs),
+-};
+-
++/*
++ * Q24 FIX-3: this block has no GDSC and (unlike camcc) no consumers that
++ * would keep the rails alive, so the generic qcom_cc_really_probe() flow
++ * (program PLL0 + enable the SLEEP_CLK CBCR during probe, then drop the
++ * runtime PM vote) leaves it in a half-programmed, permanently-on state
++ * whose rail collapse hangs the NoC.  Keep the desc free of driver_data
++ * (no probe-time PLL/CBCR programming) and manage the PM lifecycle here:
++ * the block stays fully quiescent after probe and is only brought up on
++ * the first consumer clock enable (CCF runtime-resumes the provider, so
++ * the PLL/CBCR programming happens atomically under the held genpd
++ * vote), and is fully quiesced again on runtime suspend (screen off /
++ * RPMh collapse), so Linux holds no vote while nobody uses the block.
++ */
+ static const struct qcom_cc_desc cam_bist_mclk_cc_sm8750_desc = {
+ 	.config = &cam_bist_mclk_cc_sm8750_regmap_config,
+ 	.clks = cam_bist_mclk_cc_sm8750_clocks,
+ 	.num_clks = ARRAY_SIZE(cam_bist_mclk_cc_sm8750_clocks),
+-	.use_rpm = true,
+-	.driver_data = &cam_bist_mclk_cc_sm8750_driver_data,
+ };
+ 
+ static const struct of_device_id cam_bist_mclk_cc_sm8750_match_table[] = {
+@@ -434,9 +433,64 @@ static const struct of_device_id cam_bist_mclk_cc_sm8750_match_table[] = {
+ };
+ MODULE_DEVICE_TABLE(of, cam_bist_mclk_cc_sm8750_match_table);
+ 
++static int cam_bist_mclk_cc_sm8750_runtime_resume(struct device *dev)
++{
++	struct regmap *regmap = dev_get_drvdata(dev);
++
++	qcom_clk_alpha_pll_configure(&cam_bist_mclk_cc_pll0, regmap);
++	qcom_branch_set_clk_en(regmap, CAM_BIST_MCLK_CC_SLEEP_CLK_CBCR);
++
++	return 0;
++}
++
++static int cam_bist_mclk_cc_sm8750_runtime_suspend(struct device *dev)
++{
++	struct regmap *regmap = dev_get_drvdata(dev);
++	const struct clk_ops *pll_ops = cam_bist_mclk_cc_pll0.clkr.hw.init->ops;
++	int ret;
++
++	ret = regmap_update_bits(regmap, CAM_BIST_MCLK_CC_SLEEP_CLK_CBCR,
++				 CBCR_CLOCK_ENABLE, 0);
++	if (ret)
++		return ret;
++
++	/* Power the PLL down completely (OUTCTRL/outputs off, STANDBY). */
++	if (pll_ops->disable)
++		pll_ops->disable(&cam_bist_mclk_cc_pll0.clkr.hw);
++
++	return 0;
++}
++
++static const struct dev_pm_ops cam_bist_mclk_cc_sm8750_pm_ops = {
++	SET_RUNTIME_PM_OPS(cam_bist_mclk_cc_sm8750_runtime_suspend,
++			   cam_bist_mclk_cc_sm8750_runtime_resume, NULL)
++};
++
+ static int cam_bist_mclk_cc_sm8750_probe(struct platform_device *pdev)
+ {
+-	return qcom_cc_probe(pdev, &cam_bist_mclk_cc_sm8750_desc);
++	struct regmap *regmap;
++	int ret;
++
++	pm_runtime_enable(&pdev->dev);
++
++	regmap = qcom_cc_map(pdev, &cam_bist_mclk_cc_sm8750_desc);
++	if (IS_ERR(regmap)) {
++		ret = PTR_ERR(regmap);
++		goto err_disable_rpm;
++	}
++
++	platform_set_drvdata(pdev, regmap);
++
++	ret = qcom_cc_really_probe(&pdev->dev, &cam_bist_mclk_cc_sm8750_desc,
++				   regmap);
++	if (ret)
++		goto err_disable_rpm;
++
++	return 0;
++
++err_disable_rpm:
++	pm_runtime_disable(&pdev->dev);
++	return ret;
+ }
+ 
+ static struct platform_driver cam_bist_mclk_cc_sm8750_driver = {
+@@ -444,6 +498,7 @@ static struct platform_driver cam_bist_mclk_cc_sm8750_driver = {
+ 	.driver = {
+ 		.name = "cambistmclkcc-sm8750",
+ 		.of_match_table = cam_bist_mclk_cc_sm8750_match_table,
++		.pm = &cam_bist_mclk_cc_sm8750_pm_ops,
+ 	},
+ };
+ 

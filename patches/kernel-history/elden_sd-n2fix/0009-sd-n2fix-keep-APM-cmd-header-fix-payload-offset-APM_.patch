@@ -1,0 +1,32 @@
+From 37eb3985a92388bbbd12ee50c86c49316db8a9a2 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Tue, 6 Oct 2026 20:28:22 +0800
+Subject: [PATCH 9/9] sd-n2fix: keep APM cmd header, fix payload offset
+ (+APM_CMD_HDR_SIZE) for SHARED_MEM_MAP/UNMAP
+
+---
+ sound/soc/qcom/qdsp6/q6apm.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sound/soc/qcom/qdsp6/q6apm.c b/sound/soc/qcom/qdsp6/q6apm.c
+index 511d6b228..2736254fe 100644
+--- a/sound/soc/qcom/qdsp6/q6apm.c
++++ b/sound/soc/qcom/qdsp6/q6apm.c
+@@ -248,7 +248,7 @@ static int __q6apm_map_memory_fixed_region(struct device *dev, unsigned int grap
+ 	/* DSP expects size should be aligned to 4K */
+ 	buf_sz = ALIGN(sz, 4096);
+ 
+-	p = (void *)pkt + GPR_HDR_SIZE;
++	p = (void *)pkt + GPR_HDR_SIZE + APM_CMD_HDR_SIZE;
+ 	cmd = p;
+ 	cmd->mem_pool_id = APM_MEMORY_MAP_SHMEM8_4K_POOL;
+ 	cmd->num_regions = 1;
+@@ -359,7 +359,7 @@ static int __q6apm_unmap_memory_fixed_region(struct device *dev, unsigned int gr
+ 		mem_map_handle = info->mem_map_handle;
+ 	}
+ 
+-	cmd = (void *)pkt + GPR_HDR_SIZE;
++	cmd = (void *)pkt + GPR_HDR_SIZE + APM_CMD_HDR_SIZE;
+ 	cmd->mem_map_handle = mem_map_handle;
+ 
+ 	return q6apm_send_cmd_sync(apm, pkt, APM_CMD_SHARED_MEM_UNMAP_REGIONS);

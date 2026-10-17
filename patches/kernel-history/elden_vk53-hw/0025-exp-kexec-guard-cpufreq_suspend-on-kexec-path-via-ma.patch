@@ -1,0 +1,59 @@
+From 0d4bedf553835412c7206468f130578398964f23 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Thu, 8 Oct 2026 22:24:04 +0800
+Subject: [PATCH 25/33] exp(kexec): guard cpufreq_suspend() on kexec path via
+ mask bit 4 (Q11)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Root cause found by binary search: on TB322FC/SM8750 the kexec power-off is
+triggered by cpufreq_suspend() called at device_shutdown() ENTRY, NOT by any
+device .shutdown(). Proof: stop_after=0 runs ZERO device shutdowns yet device_
+shutdown still powers the SoC off; cpufreq_suspend is the only power-touching
+call before the device walk. mask bit 4 (KEXEC_DBG_SKIP_CPUFREQ_SUSPEND) skips
+it on the kexec path. Rebuild → vk70.
+---
+ drivers/base/core.c   | 8 +++++++-
+ include/linux/kexec.h | 2 ++
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index 679ddab41..a4fff91f5 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -4879,7 +4879,13 @@ void device_shutdown(void)
+ 	wait_for_device_probe();
+ 	device_block_probing();
+ 
+-	cpufreq_suspend();
++	/* elden kexec-diag (Q11): on this SM8750 board, cpufreq_suspend() called at
++	 * device_shutdown() ENTRY triggers a delayed PMIC power-off (proven by
++	 * stop_after=0 test: ZERO device .shutdown() ran yet system still powered
++	 * off; cpufreq_suspend is the only power-touching call before the walk).
++	 * Guard it on the kexec path via mask bit 4. */
++	if (!(kexec_in_progress && (diag_skip_mask & KEXEC_DBG_SKIP_CPUFREQ_SUSPEND)))
++		cpufreq_suspend();
+ 
+ 	spin_lock(&devices_kset->list_lock);
+ 	/*
+diff --git a/include/linux/kexec.h b/include/linux/kexec.h
+index 29cf4f96d..23a997bb1 100644
+--- a/include/linux/kexec.h
++++ b/include/linux/kexec.h
+@@ -472,6 +472,7 @@ extern bool kexec_in_progress;
+ /* elden kexec-diag (Q11): shutdown-phase skip bitmask, set by kexec_dbg= */
+ #define KEXEC_DBG_SKIP_DEVICE  1
+ #define KEXEC_DBG_SKIP_SYSCORE 2
++#define KEXEC_DBG_SKIP_CPUFREQ_SUSPEND 4
+ extern int diag_skip_mask;
+ extern int diag_stop_after;
+ extern int diag_settle_ms;
+@@ -553,6 +554,7 @@ static inline void kimage_unmap_segment(void *buffer) { }
+ #define kexec_in_progress false
+ #define KEXEC_DBG_SKIP_DEVICE  0
+ #define KEXEC_DBG_SKIP_SYSCORE 0
++#define KEXEC_DBG_SKIP_CPUFREQ_SUSPEND 0
+ #define diag_skip_mask 0
+ #define diag_stop_after (-1)
+ #define diag_settle_ms 0

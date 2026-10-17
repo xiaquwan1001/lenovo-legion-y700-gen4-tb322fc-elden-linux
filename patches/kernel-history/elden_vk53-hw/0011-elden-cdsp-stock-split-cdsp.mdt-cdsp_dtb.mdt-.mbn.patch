@@ -1,0 +1,42 @@
+From c132a1bc78b22a132ef93fa88a2fd8cf6bd47cb2 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Wed, 7 Oct 2026 12:41:08 +0800
+Subject: [PATCH 11/33] =?UTF-8?q?elden:=20cdsp=20=E2=80=94=20=E7=94=A8=20s?=
+ =?UTF-8?q?tock=20split=20=E5=9B=BA=E4=BB=B6=20(cdsp.mdt/cdsp=5Fdtb.mdt)?=
+ =?UTF-8?q?=20=E5=8F=96=E4=BB=A3=E5=8D=95=E6=96=87=E4=BB=B6=20.mbn?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+TZ PAS init 对单文件 cdsp_dtb.mbn 返回 -22；stock SunP DTS 用的是
+split 镜像 (qcom/sun-cdsp-pas firmware-name = "cdsp.mdt", "cdsp_dtb.mdt")。
+dtb_pas_id=0x25 经反汇编 stock qcom_q6v5_pas.ko 的 sun_cdsp_resource 证实
+正确（原「PAS id 不匹配」假设否证）。改回 split 后冷启 remoteproc1
+(cdsp) state=running，dmesg: 'remote processor cdsp is now up'。
+
+注意：固件由 initramfs 加载（磁盘 rootfs 版本未生效，-2 ENOENT），
+故载具 ramdisk 必须含 split 文件。
+---
+ arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 3f31a9e9b..194bc8685 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -2640,8 +2640,13 @@ compute-cb@8 {
+ };
+ 
+ &remoteproc_cdsp {
+-	firmware-name = "qcom/sm8750/cdsp.mbn",
+-			"qcom/sm8750/cdsp_dtb.mbn";
++	/* Stock SM8750P (SunP) DTS uses the split images: "cdsp.mdt", "cdsp_dtb.mdt".
++	 * The earlier single-file override (cdsp.mbn / cdsp_dtb.mbn) made TZ return
++	 * -22 from PAS init on the DTB; the single DTB build is not the signed stock
++	 * image.  Match stock (verified from backup/stock-elden/dtb/...SunP_SoC.dtb).
++	 */
++	firmware-name = "qcom/sm8750/cdsp.mdt",
++			"qcom/sm8750/cdsp_dtb.mdt";
+ 
+ 	status = "okay";
+ };

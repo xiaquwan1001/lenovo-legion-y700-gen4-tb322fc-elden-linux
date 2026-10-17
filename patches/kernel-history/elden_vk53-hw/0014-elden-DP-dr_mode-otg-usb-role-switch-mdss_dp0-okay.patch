@@ -1,0 +1,67 @@
+From 6c1376907dec16b0bf64757901ba0c996d8eb2ea Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Wed, 7 Oct 2026 19:06:06 +0800
+Subject: [PATCH 14/33] =?UTF-8?q?elden:=20DP=20=E6=89=93=E9=80=9A=20?=
+ =?UTF-8?q?=E2=80=94=20dr=5Fmode=3Dotg=20+=20usb-role-switch=20+=20mdss=5F?=
+ =?UTF-8?q?dp0=20okay?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+根因链（dp3/dp4/dp5 实机三步定位，零写盘）：
+- 'PPM init failed, stop trying' 实为 ucsi_init EPROBE_DEFER 重试 20 次放弃
+  （failed to reset PPM 从未打印 => ADSP UCSI PPM 本身通）
+- defer 源 = fwnode_usb_role_switch_get => role switch 未注册
+  => dwc3_drd_init 仅在 dr_mode=otg 时跑，本机写死 peripheral
+- otg 又被删掉的 usb-role-switch 属性强制回 peripheral（GHWPARAMS0=DRD）
+
+dp5 实机（vk47clean 内核 g26cd13b1c4a2）：card0-DP-1 connected+enabled、
+EDID F27G32Q Pro 2560x1440@180 preferred、typec/port0-partner 出现、
+vblank wait timed out=0、DSI 同亮、Phosh 正常、外接显示实测出画面。
+
+已知非阻塞残余：放缩/横竖屏显示尚有问题（桌面侧，非物理链路）。
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 22 ++++++++++---------
+ 1 file changed, 12 insertions(+), 10 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 776dfd77b..aa28614b1 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -2358,12 +2358,10 @@ &mdss_mdp {
+ };
+ 
+ &mdss_dp0 {
+-	/*
+-	 * 2026-10-07 回退到 disabled：使能 DP0 后 msm_dp（DRM 组件）在 ADSP UCSI
+-	 * 未起时永久 defer，**阻塞 msm_drm_bind → 无 card0 → 背光亮但无显示**
+-	 * （cdsp-split-1 实机观测）。DP 实验改走独立零写盘載具，不进 boot_b。
+-	 */
+-	status = "disabled";
++	/* 2026-10-07 dp5 实机：DP 打通（EDID F27G32Q Pro 2560x1440、无 vblank 风暴）。
++	 * 使能 DP0 需与下方 dr_mode=otg + usb-role-switch 同批：ADSP UCSI 活了之后
++	 * msm_dp 不再永久 defer，不阻塞 msm_drm_bind。 */
++	status = "okay";
+ };
+ 
+ &mdss_dp0_out {
+@@ -3064,11 +3062,15 @@ &ufs_mem_hc {
+ };
+ 
+ &usb {
+-	dr_mode = "peripheral";
++	/* 2026-10-07 dp5：dr_mode=otg —— peripheral 时 dwc3_drd_init 不跑，role switch
++	 * 永不注册（ucsi EPROBE_DEFER 真根因）。GHWPARAMS0=DRD，硬件支持双角色；
++	 * role-switch-default-mode 缺省即 peripheral，gadget ssh 不变（实机验证）。 */
++	dr_mode = "otg";
+ 	usb-psy-name = "qcom-battmgr-usb";
+-	/* 2026-10-07 回退：/delete-property/ usb-role-switch（DP 实验前基线）。
+-	 * 恢复 role-switch 会让 UCSI 反复 defer，且 DP0 已 disabled。 */
+-	/delete-property/ usb-role-switch;
++	/* 2026-10-07 dp5：保留 usb-role-switch。删掉它会让 dwc3_get_dr_mode 把
++	 * otg 强制回 peripheral，role switch 永不注册 ⇒ ucsi connector EPROBE_DEFER
++	 * ⇒ PPM init failed（DP 卡死的真根因，实机 dp3/dp4/dp5 三步定位）。 */
++	usb-role-switch;
+ 	port-select-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
+ 	pinctrl-0 = <&eusb_mux>;
+ 	pinctrl-names = "default";

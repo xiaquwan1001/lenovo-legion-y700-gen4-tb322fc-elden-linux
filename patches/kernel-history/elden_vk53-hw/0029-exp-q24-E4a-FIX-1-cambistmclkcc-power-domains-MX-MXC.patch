@@ -1,0 +1,41 @@
+From 68e8ab2c050b9b07553fc5cee0dd9cdd350eb90c Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sat, 10 Oct 2026 08:48:29 +0800
+Subject: [PATCH 29/33] exp(q24): E4a FIX-1 - cambistmclkcc power-domains MX ->
+ MXC (always-on camera rail)
+
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 5492087d0..94d8ec927 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2096,12 +2096,20 @@ cambistmclkcc: clock-controller@1760000 {
+ 				<&bi_tcxo_div2>,
+ 				<&bi_tcxo_ao_div2>,
+ 				<&sleep_clk>;
+-			/* H1 experiment: dropped power-domains/required-opps
+-			   (matching the vendor vdd_mx-supply style).
+-			   H2: bind to MX only -- the upstream v3->v4 series
+-			   describes MX/MXC as the always-on rail, so MMCX is
+-			   the collapsible one; verify the MMCX coupling. */
+-			power-domains = <&rpmhpd RPMHPD_MX>;
++			/* Q24 FIX-1: bind to MXC, the camera-side always-on
++			   rail used by camcc below, instead of the collapsible
++			   MX.  This block has no GDSC and no clock consumer, so
++			   qcom_cc_really_probe() leaves it programmed (PLL0 +
++			   SLEEP_CLK CBCR, AHB clock kept on by GCC) after its
++			   trailing pm_runtime_put(); collapsing its rail then
++			   hangs the NoC and drops PS_HOLD.  RPMHPD_*_AO is not
++			   the always-on choice: rpmhpd.c to_active_sleep()
++			   zeroes the sleep vote for active_only domains, so
++			   only a non-AO domain holds a floor in deep idle.
++			   Device-side experiment variant, not upstream parity
++			   (upstream cambist still uses MMCX + MX, and the vendor
++			   DT supplies this block from vdd-mx). */
++			power-domains = <&rpmhpd RPMHPD_MXC>;
+ 			required-opps = <&rpmhpd_opp_low_svs>;
+ 			#clock-cells = <1>;
+ 			#reset-cells = <1>;

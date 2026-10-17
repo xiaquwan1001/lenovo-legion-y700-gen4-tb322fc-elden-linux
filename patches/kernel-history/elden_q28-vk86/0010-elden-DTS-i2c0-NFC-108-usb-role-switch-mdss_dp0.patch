@@ -1,0 +1,65 @@
+From 8481c5a614265109b7f5779f380be5a47e03e1c2 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Wed, 7 Oct 2026 10:33:51 +0800
+Subject: [PATCH 10/20] =?UTF-8?q?elden:=20DTS=20=E2=80=94=20=E5=85=B3?=
+ =?UTF-8?q?=E9=97=AD=20&i2c0=EF=BC=88=E6=9C=AC=E6=9C=BA=E6=97=A0=20NFC?=
+ =?UTF-8?q?=EF=BC=8C=E7=A1=AC=E5=85=B3=E6=9C=BA=E6=A0=B9=E5=9B=A0=20#108?=
+ =?UTF-8?q?=EF=BC=89=E3=80=81=E6=81=A2=E5=A4=8D=20usb-role-switch=E3=80=81?=
+ =?UTF-8?q?=E4=BD=BF=E8=83=BD=20mdss=5Fdp0?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- &i2c0 status okay -> disabled：PITFALLS #108 复发，任何由本树构建的 DTB 启动必失败
+- 去掉 /delete-property/ usb-role-switch：UCSI defer 修复第一步
+- &mdss_dp0 disabled -> okay：DP-1 connector 出现、DP 控制器作为 DRM 组件绑定（ADSP UCSI 未起前不出图）
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts      | 18 +++++++++++-------
+ 1 file changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 0cd3fe997..3f31a9e9b 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1997,9 +1997,13 @@ &gpi_dma2 {
+ 
+ /* ST21NFC on QUPV3_SE0 (i2c0, gpio32/33). Vendor compatible is "st,st21nfc";
+  * the mainline driver only matches "st,st21nfca-i2c" and needs enable-gpios.
++ *
++ * 2026-10-06: 本机无 NFC 硬件（G1-10 取消）。`&i2c0 status="okay"` 会导致**硬关机**
++ * （PITFALLS #108）；此前文档记“已从驱动批次移除”，但树里仍为 okay ⇒ 任何由本树
++ * 构建的 DTB 都会启动失败（dp1 实测回退 boot_b）。此处改回 disabled。
+  */
+ &i2c0 {
+-	status = "okay";
++	status = "disabled";
+ 
+ 	nfc@8 {
+ 		compatible = "st,st21nfca-i2c";
+@@ -2355,12 +2359,11 @@ &mdss_mdp {
+ 
+ &mdss_dp0 {
+ 	/*
+-	 * Keep DisplayPort off for bring-up: msm_dp is a DRM component, and it
+-	 * defers forever without the ADSP (pmic-glink altmode / QMP DP PHY),
+-	 * which blocks msm_drm_bind entirely -> no card0 -> black panel.
+-	 * The author's working DT does not enable dp0 either.
++	 * 2026-10-06 DP2: 使能 DP0。前提已具备：fsa4480 已绑（两 mux 5-0042/5-0043）、
++	 * pmic_glink_altmode 已绑且生成 aux_hpd_bridge.dp_hpd_bridge.0/1、usb-role-switch 已恢复。
++	 * （UCSI PPM init 仍失败，但那只影响 /sys/class/typec，不影响 DP altmode 通路。）
+ 	 */
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ &mdss_dp0_out {
+@@ -3058,7 +3061,8 @@ &ufs_mem_hc {
+ &usb {
+ 	dr_mode = "peripheral";
+ 	usb-psy-name = "qcom-battmgr-usb";
+-	/delete-property/ usb-role-switch;
++	/* DP1: 恢复 usb-role-switch（原 /delete-property/ 使 UCSI 反复 defer → 无 /sys/class/typec；
++	 * 按 TASKS G1-9 修复顺序 mux→role-switch/UCSI→dp0，本步只做这一步）。 */
+ 	port-select-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
+ 	pinctrl-0 = <&eusb_mux>;
+ 	pinctrl-names = "default";

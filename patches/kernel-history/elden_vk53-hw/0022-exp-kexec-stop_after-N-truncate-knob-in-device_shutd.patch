@@ -1,0 +1,131 @@
+From c583f453725838cf6527e11791358965009d7488 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Thu, 8 Oct 2026 20:04:20 +0800
+Subject: [PATCH 22/33] exp(kexec): stop_after N truncate knob in
+ device_shutdown + name first-skipped (Q11)
+
+diag_stop_after (sysfs /sys/kernel/kexec_diag/stop_after): on kexec path, run
+real .shutdown() only for devices at walk position <= N; for the first device
+positioned > N, print its name (STOP-first-skipped) and skip its shutdown, so
+kexec succeeds and the culprit that would power off the SoC is named directly.
+Observable = kexec success (no log race). Also add idx= to SD trace.
+---
+ drivers/base/core.c   | 30 +++++++++++++++++++++++++++++-
+ include/linux/kexec.h |  2 ++
+ kernel/kexec_core.c   | 21 ++++++++++++++++++++-
+ 3 files changed, 51 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index 27c25c2a3..0396806a5 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -4872,6 +4872,8 @@ int device_change_owner(struct device *dev, kuid_t kuid, kgid_t kgid)
+ void device_shutdown(void)
+ {
+ 	struct device *dev, *parent;
++	int ds_idx = 0;		/* elden kexec-diag: reverse-walk position counter */
++	int ds_stopped = 0;
+ 
+ 	wait_for_device_probe();
+ 	device_block_probing();
+@@ -4915,8 +4917,34 @@ void device_shutdown(void)
+ 		 * captures "last device that started shutdown, never returned" = the
+ 		 * .shutdown() that triggers the TB322FC PMIC power-off. Only on the
+ 		 * kexec path. pr_warn survives any console_loglevel. */
++		ds_idx++;
+ 		if (kexec_in_progress)
+-			pr_warn("[KD] SD-start: %s\n", dev_name(dev));
++			pr_warn("[KD] SD-start: %s (idx=%d)\n", dev_name(dev), ds_idx);
++
++		/* elden kexec-diag (Q11): selective-skip / truncate-by-index knob.
++		 * If stop_after >= 0, skip the real .shutdown() for every device whose
++		 * walk position > stop_after. The first skipped device's name is
++		 * printed = the culprit that would otherwise power off the SoC.
++		 * Loop bookkeeping (list_del/locks) still runs so no hang/deadlock.
++		 * Observable = kexec success (robust, no log race). */
++		if (kexec_in_progress && diag_stop_after >= 0 &&
++		    ds_idx > diag_stop_after) {
++			if (!ds_stopped) {
++				pr_warn("[KD] STOP-first-skipped: %s (idx=%d)\n",
++					dev_name(dev), ds_idx);
++				ds_stopped = 1;
++			}
++			if (kexec_in_progress)
++				pr_warn("[KD] SD-SKIP: %s (idx=%d)\n",
++					dev_name(dev), ds_idx);
++			device_unlock(dev);
++			if (parent)
++				device_unlock(parent);
++			put_device(dev);
++			put_device(parent);
++			spin_lock(&devices_kset->list_lock);
++			continue;
++		}
+ 
+ 		if (dev->class && dev->class->shutdown_pre) {
+ 			if (initcall_debug)
+diff --git a/include/linux/kexec.h b/include/linux/kexec.h
+index d4b8557eb..21496bcd1 100644
+--- a/include/linux/kexec.h
++++ b/include/linux/kexec.h
+@@ -473,6 +473,7 @@ extern bool kexec_in_progress;
+ #define KEXEC_DBG_SKIP_DEVICE  1
+ #define KEXEC_DBG_SKIP_SYSCORE 2
+ extern int diag_skip_mask;
++extern int diag_stop_after;
+ 
+ #ifndef page_to_boot_pfn
+ static inline unsigned long page_to_boot_pfn(struct page *page)
+@@ -552,6 +553,7 @@ static inline void kimage_unmap_segment(void *buffer) { }
+ #define KEXEC_DBG_SKIP_DEVICE  0
+ #define KEXEC_DBG_SKIP_SYSCORE 0
+ #define diag_skip_mask 0
++#define diag_stop_after (-1)
+ #endif /* CONFIG_KEXEC_CORE */
+ 
+ #ifdef CONFIG_KEXEC_SIG
+diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
+index c5d25b818..fec2f7648 100644
+--- a/kernel/kexec_core.c
++++ b/kernel/kexec_core.c
+@@ -67,6 +67,7 @@ bool kexec_file_dbg_print;
+  * <linux/kexec.h> so reboot.c can share them.
+  */
+ int diag_skip_mask;
++int diag_stop_after = -1;	/* device_shutdown: real-shutdown first N, skip rest */
+ 
+ static int __init kexec_diag_setup(char *s)
+ {
+@@ -100,13 +101,31 @@ static ssize_t kexec_diag_store(struct kobject *k, struct kobj_attribute *a,
+ static struct kobj_attribute kexec_diag_attr =
+ 	__ATTR(kexec_diag, 0644, kexec_diag_show, kexec_diag_store);
+ 
++static ssize_t stop_after_show(struct kobject *k, struct kobj_attribute *a,
++			       char *buf)
++{
++	return sysfs_emit(buf, "%d\n", diag_stop_after);
++}
++static ssize_t stop_after_store(struct kobject *k, struct kobj_attribute *a,
++				const char *buf, size_t n)
++{
++	int v, err = kstrtoint(buf, 0, &v);
++
++	if (!err)
++		diag_stop_after = v;
++	return err ? err : n;
++}
++static struct kobj_attribute stop_after_attr =
++	__ATTR(stop_after, 0644, stop_after_show, stop_after_store);
++
+ static int __init kexec_diag_sysfs_init(void)
+ {
+ 	struct kobject *k = kobject_create_and_add("kexec_diag", kernel_kobj);
+ 
+ 	if (!k)
+ 		return -ENOMEM;
+-	if (sysfs_create_file(k, &kexec_diag_attr.attr))
++	if (sysfs_create_file(k, &kexec_diag_attr.attr) ||
++	    sysfs_create_file(k, &stop_after_attr.attr))
+ 		kobject_put(k);
+ 	return 0;
+ }

@@ -1,0 +1,46 @@
+From 171de3ae04981230e2979d548c0099f4fa74b71c Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Wed, 7 Oct 2026 23:11:17 +0800
+Subject: [PATCH 15/20] =?UTF-8?q?exp(Q24):=20cambist=20H1=20DTS(=E5=8E=BB?=
+ =?UTF-8?q?=20power-domains/required-opps)=20+=20=E9=A9=B1=E5=8A=A8=20use?=
+ =?UTF-8?q?=5Frpm=3Dfalse=EF=BC=88=E4=B8=B4=E6=97=B6=E5=AE=9E=E9=AA=8C?=
+ =?UTF-8?q?=E6=8F=90=E4=BA=A4=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi    | 6 +-----
+ drivers/clk/qcom/cambistmclkcc-sm8750.c | 2 +-
+ 2 files changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index c72a03057..ee2729862 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2096,11 +2096,7 @@ cambistmclkcc: clock-controller@1760000 {
+ 				<&bi_tcxo_div2>,
+ 				<&bi_tcxo_ao_div2>,
+ 				<&sleep_clk>;
+-			power-domains = <&rpmhpd RPMHPD_MMCX>,
+-					<&rpmhpd RPMHPD_MX>;
+-			required-opps = <&rpmhpd_opp_low_svs>,
+-					<&rpmhpd_opp_low_svs>;
+-
++			/* H1 实验：移除 power-domains/required-opps（对齐厂商 vdd_mx-supply 写法） */
+ 			#clock-cells = <1>;
+ 			#reset-cells = <1>;
+ 			#power-domain-cells = <1>;
+diff --git a/drivers/clk/qcom/cambistmclkcc-sm8750.c b/drivers/clk/qcom/cambistmclkcc-sm8750.c
+index 69abb756c..b460bafe4 100644
+--- a/drivers/clk/qcom/cambistmclkcc-sm8750.c
++++ b/drivers/clk/qcom/cambistmclkcc-sm8750.c
+@@ -424,7 +424,7 @@ static const struct qcom_cc_desc cam_bist_mclk_cc_sm8750_desc = {
+ 	.config = &cam_bist_mclk_cc_sm8750_regmap_config,
+ 	.clks = cam_bist_mclk_cc_sm8750_clocks,
+ 	.num_clks = ARRAY_SIZE(cam_bist_mclk_cc_sm8750_clocks),
+-	.use_rpm = true,
++	.use_rpm = false,
+ 	.driver_data = &cam_bist_mclk_cc_sm8750_driver_data,
+ };
+ 

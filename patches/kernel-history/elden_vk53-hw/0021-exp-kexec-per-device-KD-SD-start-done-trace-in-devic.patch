@@ -1,0 +1,50 @@
+From da0d8fe2089191bd9e757b293d47b52a5c175ca0 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Thu, 8 Oct 2026 19:51:25 +0800
+Subject: [PATCH 21/33] exp(kexec): per-device [KD] SD-start/done trace in
+ device_shutdown (Q11)
+
+On the kexec path, print the device name before/after each .shutdown() so the
+local kmsg dumper captures which device's shutdown callback triggers the PMIC
+power-off (last SD-start without SD-done = culprit). pr_warn survives loglevel;
+gated on kexec_in_progress.
+---
+ drivers/base/core.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index 4d0266829..27c25c2a3 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -12,6 +12,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/cleanup.h>
+ #include <linux/cpufreq.h>
++#include <linux/kexec.h>
+ #include <linux/device.h>
+ #include <linux/dma-map-ops.h> /* for dma_default_coherent */
+ #include <linux/err.h>
+@@ -4910,6 +4911,13 @@ void device_shutdown(void)
+ 		pm_runtime_get_noresume(dev);
+ 		pm_runtime_barrier(dev);
+ 
++		/* elden kexec-diag (Q11): per-device trace so the local kmsg dumper
++		 * captures "last device that started shutdown, never returned" = the
++		 * .shutdown() that triggers the TB322FC PMIC power-off. Only on the
++		 * kexec path. pr_warn survives any console_loglevel. */
++		if (kexec_in_progress)
++			pr_warn("[KD] SD-start: %s\n", dev_name(dev));
++
+ 		if (dev->class && dev->class->shutdown_pre) {
+ 			if (initcall_debug)
+ 				dev_info(dev, "shutdown_pre\n");
+@@ -4925,6 +4933,9 @@ void device_shutdown(void)
+ 			dev->driver->shutdown(dev);
+ 		}
+ 
++		if (kexec_in_progress)
++			pr_warn("[KD] SD-done: %s\n", dev_name(dev));
++
+ 		device_unlock(dev);
+ 		if (parent)
+ 			device_unlock(parent);

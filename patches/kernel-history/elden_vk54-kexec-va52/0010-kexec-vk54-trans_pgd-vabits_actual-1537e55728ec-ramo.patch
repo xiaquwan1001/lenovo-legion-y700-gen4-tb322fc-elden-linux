@@ -1,0 +1,61 @@
+From 26cd13b1c4a2c3bab1412f872b553b268835dc10 Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Mon, 5 Oct 2026 20:42:12 +0800
+Subject: [PATCH 10/10] =?UTF-8?q?kexec:=20vk54=20=E2=80=94=20trans=5Fpgd?=
+ =?UTF-8?q?=20=E7=94=A8=E8=BF=90=E8=A1=8C=E6=9C=9F=20vabits=5Factual?=
+ =?UTF-8?q?=EF=BC=88=E4=B8=8A=E6=B8=B8=201537e55728ec=EF=BC=89+=20ramoops?=
+ =?UTF-8?q?=20SHUTDOWN=20=E5=8F=96=E8=AF=81=20DT?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- machine_kexec.c: trans_pgd_create_copy(PAGE_OFFSET→_PAGE_OFFSET(vabits_actual))
+  运行期 VA=48 位（!FEAT_LPA2）而编译期 VA_BITS=52 ⇒ 命中上游缺陷
+- sm8750-lenovo-elden.dts ramoops@c2000000: record-size=2M + max-reason=5
+  以捕获 kernel_kexec() 在 machine_kexec 前的 kmsg_dump(KMSG_DUMP_SHUTDOWN)
+- 状态：kexec -e 仍未成功（掉电→fastboot），设备不稳已停手
+  见 archive/topics/KEXEC-ONDEVICE-2026-10-05.md
+---
+ arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts | 8 ++++++--
+ arch/arm64/kernel/machine_kexec.c                | 9 +++++++--
+ 2 files changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 0cd3fe997..6a8f9a5c4 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1460,8 +1460,12 @@ reserved-memory {
+ 		ramoops@c2000000 {
+ 			compatible = "ramoops";
+ 			reg = <0 0xc2000000 0 0x400000>;
+-			console-size = <0x200000>;
+-			pmsg-size = <0x200000>;
++			console-size = <0x100000>;
++			pmsg-size = <0x100000>;
++			record-size = <0x200000>;
++			/* capture kmsg_dump(KMSG_DUMP_SHUTDOWN) from kernel_kexec()
++			 * (before machine_kexec) so a kexec branch point is logged */
++			max-reason = <5>;
+ 			no-map;
+ 		};
+ 
+diff --git a/arch/arm64/kernel/machine_kexec.c b/arch/arm64/kernel/machine_kexec.c
+index c5693a32e..e98946493 100644
+--- a/arch/arm64/kernel/machine_kexec.c
++++ b/arch/arm64/kernel/machine_kexec.c
+@@ -128,8 +128,13 @@ int machine_kexec_post_load(struct kimage *kimage)
+ 			return rc;
+ 	}
+ 
+-	/* Create a copy of the linear map */
+-	rc = trans_pgd_create_copy(&info, &trans_pgd, PAGE_OFFSET, PAGE_END);
++	/* Create a copy of the linear map (use the *runtime* VA size: with
++	 * CONFIG_ARM64_VA_BITS_52 but no FEAT_LPA2 the actual VA is 48-bit;
++	 * compile-time PAGE_OFFSET would clone 16x and alias the page tables).
++	 * Upstream 1537e55728ec: "arm64: trans_pgd: clone only the linear map
++	 * that exists at runtime". */
++	rc = trans_pgd_create_copy(&info, &trans_pgd,
++				   _PAGE_OFFSET(vabits_actual), PAGE_END);
+ 	if (rc)
+ 		return rc;
+ 	kimage->arch.ttbr1 = __pa(trans_pgd);

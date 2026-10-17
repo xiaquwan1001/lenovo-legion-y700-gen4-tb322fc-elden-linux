@@ -1,0 +1,68 @@
+From 71bc6846247c4344321a8bfb651725ea357c02eb Mon Sep 17 00:00:00 2001
+From: xuqianhui1001 <xuqianhui1001@localhost>
+Date: Sat, 10 Oct 2026 18:08:14 +0800
+Subject: [PATCH 19/20] exp(q28): round byte clk after reparenting to PHY PLL
+ (upstream msg46766 semantics)
+
+---
+ drivers/gpu/drm/msm/dsi/dsi_host.c | 38 +++++++++++++++++++++++++++++-
+ 1 file changed, 37 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 819fe87d5..46217d7aa 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -401,8 +401,39 @@ int msm_dsi_runtime_resume(struct device *dev)
+ int dsi_link_clk_set_rate_6g(struct msm_dsi_host *msm_host)
+ {
+ 	struct device *dev = &msm_host->pdev->dev;
++	unsigned long byte_intf_clk_rate;
++	long rounded_byte_clk_rate;
+ 	int ret;
+ 
++	/*
++	 * Round the byte clock to a PLL-achievable rate *after* the byte RCG
++	 * has been reparented to the DSI PHY PLL (v2_9 hosts reparent in
++	 * dsi_link_clk_set_rate_6g_v2_9() just before calling us).  Rounding
++	 * earlier (e.g. in dsi_calc_clk_rate_6g()) is bogus: the byte RCG still
++	 * has its reset parent (XO) at that point.  Storing the rounded rate
++	 * here makes later link_clk_set_rate() calls no-ops in the CCF.  The
++	 * byte interface clock must be derived from the rounded rate too,
++	 * otherwise it keeps requesting the idealized rate and retriggers the
++	 * PLL on every transfer.
++	 *
++	 * Upstream: "drm/msm/dsi: round the byte clock rate after reparenting
++	 * to the PHY PLL" (Dmitry Baryshkov, 2026-09-03, freedreno msg46766),
++	 * the fixed form of 6cd33b6f4155 (reverted by bc484ede914d).
++	 */
++	rounded_byte_clk_rate = clk_round_rate(msm_host->byte_clk,
++						 msm_host->byte_clk_rate);
++	if (rounded_byte_clk_rate < 0) {
++		pr_err("%s: failed to round byte clock rate, %ld\n",
++		       __func__, rounded_byte_clk_rate);
++		return rounded_byte_clk_rate;
++	}
++
++	if (rounded_byte_clk_rate != msm_host->byte_clk_rate)
++		pr_info("msm_dsi: Q28 round byte clk %lu -> %ld (PLL-achievable)\n",
++			msm_host->byte_clk_rate, rounded_byte_clk_rate);
++
++	msm_host->byte_clk_rate = rounded_byte_clk_rate;
++
+ 	DBG("Set clk rates: pclk=%lu, byteclk=%lu",
+ 	    msm_host->pixel_clk_rate, msm_host->byte_clk_rate);
+ 
+@@ -420,7 +451,12 @@ int dsi_link_clk_set_rate_6g(struct msm_dsi_host *msm_host)
+ 	}
+ 
+ 	if (msm_host->byte_intf_clk) {
+-		ret = clk_set_rate(msm_host->byte_intf_clk, msm_host->byte_intf_clk_rate);
++		byte_intf_clk_rate = msm_host->byte_clk_rate;
++		if (msm_host->byte_intf_clk_rate &&
++		    msm_host->byte_intf_clk_rate != msm_host->byte_clk_rate)
++			byte_intf_clk_rate /= 2;	/* PHY asked for div-2 */
++
++		ret = clk_set_rate(msm_host->byte_intf_clk, byte_intf_clk_rate);
+ 		if (ret) {
+ 			pr_err("%s: Failed to set rate byte intf clk, %d\n",
+ 			       __func__, ret);
