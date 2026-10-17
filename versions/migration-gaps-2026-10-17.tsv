@@ -14,6 +14,9 @@ rootfs/alpine,rootfs/dl,rootfs/debs	LOST-REDOWNLOADABLE	rootfs 构建缓存与�
 /mnt/Samsung/mesa-out/	RESTORED	Mesa A830 26.1.8 产物（14 文件）	2026-10-17 从备份包 T2 提取	本文件
 backup/fw/vendor/firmware/wlan/*	RESTORED	WLAN 固件软链 11 条	2026-10-17 从备份包 T2 提取	本文件
 mnt/Samsung/l2/dump-super.sh	RESTORED-ADAPTED	包内旧版指向 /home/xuqianhui1001/...	保留本地新机版（与包内仅 2 行路径差）	diff 2026-10-17
-boot_b(m1-baseline-f3)	DEVICE-ONLY	2026-10-15 在机 boot_b = M1-7.3 功能基线（sha 40e13f8a/sig 78a2beb1）；主机 backup 只有 before-vk72/before-vk94 ⇒ 设备被覆盖即永久丢失	接 U2 后 fastboot fetch boot_b；配套 /lib/modules/7.3.0-rc7-debug-ged6f232d10e3（1497 .ko）tar 回主机	DEVICE/README.md §1.1；reports/migration-rebuild-audit-20261017.md P0
+boot_b(m1-baseline-f3)	RESTORED	2026-10-15 在机 boot_b = M1-7.3 功能基线	2026-10-17 ssh+dd 流式取回：backup/HA2EXB0E-16+512/boot_b-m1-baseline-f3-20261017.img，sha256 78a2beb1e0f4… 双端一致（= DEVICE §1.1 签名后 sha）	backup/HA2EXB0E-16+512/device-rescue-20261017/
+lib/modules/7.3.0-rc7-debug-ged6f232d10e3（1497 .ko）	RESTORED	设备侧模块树（相机/音频/WiFi 等全部 =m 驱动）	2026-10-17 流式 zstd tar 取回，tar 流 sha256 ee3f059b5eb2… 双端一致，解压 ko=1497	同上
+/usr/local/sbin + /root/q24bak + /etc/{init.d,modules-load.d,conf.d,modprobe.d} + /proc/config.gz	RESTORED	设备侧运维脚本与配置（cam-mode.sh、原版 cambistmclkcc/camcc .ko 等）	2026-10-17 device-config-20261017.tar.zst（502 KB / 207 项）	同上
+q28 现场（M1-7.3 坏发）	EVIDENCE	7.3-rc7 线首个完整 Q28 坏发现场	2026-10-17 dmesg 1835 行 + pm_genpd_summary + clk_summary	reports/device-rescue-and-q28-m1-badboot-20261017.md
 geekidos-linux refs vk87..vk126（可恢复部分）	RESTORED-PARTIAL	提交史仍不可再生；但补丁内容可再生	backup/kernel-git-repair-2026-10-10/elden-all-refs-pre-boundary.bundle（43 refs，含 q28/vk86）+ patches/upstream/{m1,m2,m3,m3-3,m3-4,m3-6,m4-camss} + patches/q28-*（22 枚）	reports/migration-rebuild-audit-20261017.md §2/§3
 out/*.img 重建可行性	AUDITED	config 可复原到 sha 级（153 manifest 含 config_sha256；patches/config-vk* 11 份 + fragment 8 份），但镜像哈希不可能一致 ⇒ 旧台架镜像 sha 不得再被引用	按 patches/config-daily-c1 + fragment-c1-iprule{,6} 重编并用 vk-identity.py 分配新号（不复用旧号）	reports/migration-rebuild-audit-20261017.md §3 R2
