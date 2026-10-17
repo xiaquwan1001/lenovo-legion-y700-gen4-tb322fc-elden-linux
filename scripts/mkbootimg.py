@@ -24,7 +24,7 @@ Header v2 field offsets (AOSP `boot_img_hdr_v2`):
 Self-check against a known-good image (structure must round-trip byte for byte,
 except the informational sha1 id field):
 
-    tools/mkbootimg/mkbootimg.py --selftest <image>
+    scripts/mkbootimg.py --selftest <image>
 """
 import argparse
 import hashlib
