@@ -1,0 +1,104 @@
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH v2 0/2] usb: dwc3: support two connectors sharing one HS data bus
+
+v1: <20261013102927.1141696-1-xiaqinghuan@mail.ustc.edu.cn>
+
+Changes in v2, following the review of v1:
+
+- Drop "dt-bindings: usb: snps,dwc3: document usb-psy-name" entirely.
+  Krzysztof is right: the property is not a DT convention -- a supply is
+  referenced by a phandle, not by a name.  The driver does read the string
+  (drivers/usb/dwc3/core.c: dwc3_vbus_draw_work() ->
+  device_property_read_string(dwc->dev, "usb-psy-name", ...)), but that is a
+  legacy/ACPI-shaped lookup that the board can avoid, so documenting it as a
+  generic DWC3 binding property was the wrong call.  Nothing in this series
+  needs it.  (For reference: on the affected board the same current limit is
+  reachable through the standard "power-supplies" phandle on the connector,
+  and I will follow up separately if a binding is really warranted.)
+
+- binding: no longer touches usb-psy-name at all.  In v1 the patch that
+  documented the property and the patch that described the mux raced in
+  ordering, so the second patch read as deleting what the first one added.
+  Krzysztof's "No, you just added it!" was a correct reading of that diff.
+
+- driver: a failed GPIO write no longer aborts __dwc3_set_mode() half-way.
+  Reported by sashiko-ai: the mode change tears down the previous host or
+  gadget instance before programming the new role, so bailing out between the
+  two left a torn-down role behind with a stale current_dr_role, and the next
+  request would tear it down a second time (double free / use-after-free).
+
+- driver: no more flush_work() on the freezable workqueue.  Reported by
+  sashiko-ai: flushing system_freezable_wq from the role-switch path can
+  deadlock against system suspend.  The mux now keeps exactly the same
+  asynchronous semantics as the existing single-connector role switch --
+  dwc3_set_mode() queues the work, __dwc3_set_mode() is the only place that
+  programs hardware.
+
+- driver: dropped the "mux_role" variable that was set but never used,
+  reported by kernel test robot (arm-defconfig, clang, W=1).
+
+- driver: "oldest request wins" is now actually implemented, with a timestamp
+  per connector taken at the USB_ROLE_NONE -> role transition.  v1 selected
+  port 0 first, i.e. static priority, which contradicted its own commit
+  message.  Reported by sashiko-ai.
+
+- driver: the runtime-PM reference is no longer taken on a path that can jump
+  to the error label before the reference is acquired (sashiko-ai).
+
+Konrad: to answer your question about the wiring -- this is a real board
+topology, not a hub.  Lenovo Legion Y700 (4th gen, TB322FC, SM8750P) has two
+USB-C receptacles driven by a single dwc3 instance (a600000.usb).  The Super
+Speed pairs are not shared: each receptacle has its own SS PHY pair.  Only the
+High Speed D+/D- lines are routed through one 2:1 mux, selected by TLMM GPIO
+29, and each receptacle keeps its own Type-C PD/role input (both connectors
+report data-role = "dual" through pmic-glink).  So the controller can be a
+host on one receptacle while the other is charging-only, and plugging a device
+into the other receptacle has to be able to steal the controller.  Without the
+mux support, the second receptacle's role switch is simply not registered and
+nothing happens.
+
+Relevant excerpt from the board DTS ("ports" endpoints carry the mux-state
+level of their own connector):
+
+  &usb {
+          dr_mode = "otg";
+          usb-role-switch;
+          port-select-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
+          ports {
+                  port@0 {                /* long-edge receptacle */
+                          reg = <0>;
+                          usb_dwc3_hs: endpoint {
+                                  remote-endpoint = <&pmic_glink_hs_in>;
+                                  usb-role-switch;
+                                  mux-state = <0>;
+                          };
+                  };
+                  port@2 {                /* short-edge receptacle */
+                          reg = <2>;
+                          usb_dwc3_hs2: endpoint {
+                                  remote-endpoint = <&pmic_glink_hs_c2_in>;
+                                  usb-role-switch;
+                                  mux-state = <1>;
+                          };
+                  };
+          };
+  };
+
+Testing (all on the board, 7.3-rc7 based tree):
+ - two receptacles: host mode on either receptacle works, and moving the
+   cable from one to the other hands the controller over;
+ - charging-only on one receptacle while the other has a device attached;
+ - single-connector boards: the mux path is only taken when
+   "port-select-gpios" is present, otherwise the existing role switch is used
+   unchanged.
+
+Xu Qianhui (2):
+  dt-bindings: usb: snps,dwc3: describe the two-connector HS data path
+  usb: dwc3: support two connectors sharing one HS data bus
+
+ .../bindings/usb/snps,dwc3-common.yaml        | 62 +++++++++++-
+ drivers/usb/dwc3/core.c                       | 29 ++++-
+ drivers/usb/dwc3/core.h                       | 37 ++++++
+ drivers/usb/dwc3/debugfs.c                    |  4 +
+ drivers/usb/dwc3/drd.c                        | 199 ++++++++++++++++++++++++-
+ 5 files changed, 328 insertions(+), 3 deletions(-)

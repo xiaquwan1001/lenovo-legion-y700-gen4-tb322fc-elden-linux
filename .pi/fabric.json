@@ -14,5 +14,6 @@
       "fast": "custom-nexavlinks-com/deepseek-v4.1-flash",
       "flash": "custom-nexavlinks-com/deepseek-v4.1-flash"
     }
-  }
+  },
+  "fullCodeMode": false
 }

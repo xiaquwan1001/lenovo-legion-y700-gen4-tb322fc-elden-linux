@@ -1,0 +1,124 @@
+From d08a16ff977f4af406ab6e685a549e1b08c7578d Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 17 Oct 2026 16:06:17 +0800
+Subject: [PATCH] dt-bindings: usb: snps,dwc3: describe the two-connector HS
+ data path
+
+Some designs wire the High Speed data lines of a single DWC3 controller to
+two receptacles and select between them with a GPIO, while the Super Speed
+lanes stay per connector.
+
+Describe that in snps,dwc3-common.yaml:
+
+  - port-select-gpios selects which connector drives the shared HS bus;
+  - each endpoint of "ports" carries "mux-state", the logical port-select
+    level of that connector, and marks itself as a role-switch input with
+    "usb-role-switch".
+
+The connector endpoints are restricted to port-base/endpoint-base so that
+endpoint subnodes cannot carry unrelated properties.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../bindings/usb/snps,dwc3-common.yaml        | 63 ++++++++++++++++++-
+ 1 file changed, 62 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+index 6c0b8b653..3d012f222 100644
+--- a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
++++ b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+@@ -13,6 +13,34 @@ description:
+   Defines the properties of the DWC3 core as being embedded in either an
+   vendor-specific implementation or as a standalone component.
+ 
++$defs:
++  hs-port:
++    $ref: /schemas/graph.yaml#/$defs/port-base
++    unevaluatedProperties: false
++
++    properties:
++      endpoint:
++        $ref: /schemas/graph.yaml#/$defs/endpoint-base
++        unevaluatedProperties: false
++
++        properties:
++          usb-role-switch:
++            type: boolean
++            description:
++              This connector provides its own role-switch input to the
++              controller.
++
++          mux-state:
++            $ref: /schemas/types.yaml#/definitions/uint32
++            enum: [0, 1]
++            description:
++              Logical level of the port-select GPIO which connects this
++              connector to the shared High Speed data bus.
++
++        dependentRequired:
++          usb-role-switch: [mux-state]
++          mux-state: [usb-role-switch]
++
+ allOf:
+   - $ref: usb-drd.yaml#
+   - if:
+@@ -26,8 +54,37 @@ allOf:
+       $ref: usb.yaml#
+     else:
+       $ref: usb-xhci.yaml#
++  - if:
++      required: [port-select-gpios]
++    then:
++      required: [dr_mode, usb-role-switch]
++      properties:
++        dr_mode:
++          const: otg
++        ports:
++          required: [port@0, port@2]
++          properties:
++            port@0:
++              required: [endpoint]
++              properties:
++                endpoint:
++                  required: [usb-role-switch, mux-state]
++            port@2:
++              required: [endpoint]
++              properties:
++                endpoint:
++                  required: [usb-role-switch, mux-state]
+ 
+ properties:
++  port-select-gpios:
++    maxItems: 1
++    description:
++      Selects which of two connectors drives the controller's shared High
++      Speed data bus. Each connector is described by a "ports" endpoint that
++      carries its own role-switch input and the "mux-state" level selecting
++      it. The controller switches the data path only after it has stopped the
++      role of the previous connector.
++
+   extcon:
+     maxItems: 1
+     deprecated: true
+@@ -411,13 +468,17 @@ properties:
+ 
+     properties:
+       port@0:
+-        $ref: /schemas/graph.yaml#/properties/port
++        $ref: '#/$defs/hs-port'
+         description: High Speed (HS) data bus.
+ 
+       port@1:
+         $ref: /schemas/graph.yaml#/properties/port
+         description: Super Speed (SS) data bus.
+ 
++      port@2:
++        $ref: '#/$defs/hs-port'
++        description: Second connector on the multiplexed High Speed data bus.
++
+   wakeup-source:
+     $ref: /schemas/types.yaml#/definitions/flag
+     description:
+-- 
+2.53.0
+

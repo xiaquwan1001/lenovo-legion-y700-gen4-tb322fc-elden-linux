@@ -1,5 +1,9 @@
 # M3 板支持系列（2026-10-13）
 
+> ⚠️ **本目录 = v1，已被 `../m3-v2-2026-10-17/` 取代（2026-10-17）**。v1 的 3 枚补丁中，`0001`
+> （`usb-psy-name` 文档化）按 Krzysztof 意见**整体撤回**；`0002`/`0003` 重做为 v2 的两枚（去掉属性顺序踩踏、
+> 修 lkp 告警、修 sashiko 的 4 条）。评审意见与逐条处置见 `../m3-v2-2026-10-17/README.md` §1。
+
 上游基线：
 - **pristine 参照 = tag 提交** `24a19b953e`（`Linux 7.3-rc7`）。「以 `build/m2-worktree` 当 pristine」是错的——它是工作树，当前 = pristine + 本片补丁（tip `6d73764570`）。重建 pristine 参照：`git -C geekidos-linux worktree add --detach <dir> 24a19b953e`。
 - 本片工作树 = `build/m2-worktree`，分支 `m3/usb-psy-name`（tip `6d73764570`）；独立复核树 = `build/m3-verify-0001`。
