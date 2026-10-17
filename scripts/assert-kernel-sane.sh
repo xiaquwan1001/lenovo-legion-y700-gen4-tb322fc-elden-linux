@@ -7,7 +7,8 @@
 # 本脚本把「死内核」和「陈旧内核」在**打包前**挡下，而不是等上机。
 #
 # 用法：
-#   scripts/assert-kernel-sane.sh [kernel-image]      # 默认 linux/arch/arm64/boot/Image.gz
+#   scripts/assert-kernel-sane.sh [kernel-image]      # 默认 $KDIR/arch/arm64/boot/Image.gz
+#   KDIR=build/m1-73 scripts/assert-kernel-sane.sh     # 对重放/非默认树做闸门
 #   SKIP_KERNEL_ASSERT=1 ...                          # 显式绕过（请写明理由）
 #
 # 退出：0=通过；1=不通过（已打印具体原因）。
@@ -15,9 +16,12 @@ set -uo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 . "$ROOT/scripts/env-build.sh"
 
-KIMG=${1:-$ROOT/linux/arch/arm64/boot/Image.gz}
-CONF=$ROOT/linux/.config
-SMAP=$ROOT/linux/System.map
+# KDIR lets the gate run against a replay/out-of-tree kernel tree (T3/T4 replay
+# lives in build/m1-73 rather than the default geekidos checkout).
+KDIR=${KDIR:-$ROOT/linux}
+KIMG=${1:-$KDIR/arch/arm64/boot/Image.gz}
+CONF=$KDIR/.config
+SMAP=$KDIR/System.map
 
 if [ "${SKIP_KERNEL_ASSERT:-0}" = 1 ]; then
 	echo "[assert] SKIP_KERNEL_ASSERT=1 → 已显式绕过内核闸门（请确保你知道自己在做什么）" >&2
@@ -72,7 +76,7 @@ fi
 # 该项用 mtime(KIMG) < mtime(System.map) 判「是否在改完源码后又重编」。它只在 KIMG 就是
 # 本树默认产物时成立；当调用方显式 KERNEL_IMG=<外部预编内核> 时（mtime 与树无关），
 # 该判据是假阳性 —— 此时的正确闸门是上面的 UTS 对齐 + config 锚点 + System.map 符号。
-KIMG_DEFAULT="$ROOT/linux/arch/arm64/boot/Image.gz"
+KIMG_DEFAULT="$KDIR/arch/arm64/boot/Image.gz"
 if [ "$KIMG" = "$KIMG_DEFAULT" ] && [ -f "$KIMG" ] && [ -f "$SMAP" ] && [ "$KIMG" -ot "$SMAP" ]; then
 	die "$KIMG 比 System.map 旧 → 正在打包上一次构建的内核；重跑 scripts/build-kernel.sh Image.gz"
 elif [ "$KIMG" != "$KIMG_DEFAULT" ]; then
