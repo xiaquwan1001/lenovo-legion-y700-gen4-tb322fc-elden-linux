@@ -39,7 +39,7 @@
 |---|---|---|---|
 | **L-A 内核提交史** | `vk87–vk126`、`m1/*`（7.3-rc7 线，含 `m1-73/baseline` tip `c7da05b1d8`）、`m3/*`、`q28/*` 分支对象 | **部分可再生**：`patches/upstream/*` 覆盖 M1–M4 的**补丁内容**；`patches/q28-*` 覆盖 Q28 实验补丁；但**分支结构/逐提交顺序/提交信息**不可再生 | 主要损失是「可二分性」，不是「代码」 |
 | **L-B 构建产物** | `out/*.img` 41 个（vk42–vk126 + 台架臂） | **需重编**：config 可复原到 sha 级，但**镜像哈希不可能一致**（时间戳/编译器） | 台架 A/B **必须重新采样**，不能引用旧镜像 sha |
-| **L-C 在机镜像** | `m1-baseline-f3`（boot_b）、1497 `.ko` 模块树 | **只在设备上**：只要 U2 的 b 槽不被覆盖，就可用 `fastboot fetch boot_b` 与 `ssh`+tar 取回 | 本审计的**最高优先级动作**（见 §4 P0） |
+| **L-C 在机镜像** | `m1-baseline-f3`（boot_b）、1497 `.ko` 模块树 | **只在设备上**：只要 U2 的 b 槽不被覆盖，就可用**设备侧 `dd`**（无 `fastboot fetch`，#290）与 `ssh`+tar 取回 | 本审计的**最高优先级动作**（见 §4 P0） |
 | **L-D 日志/工具** | `logs/`（bench/ui 原始日志）、`tools/wd-audio-test/` | 日志不可再生（报告里已引用的数字仍在）；工具可按报告重写 | 影响 = 少量证据指针悬空，不阻塞 |
 
 ## 3. 可重建等级（按「重建后能做什么」划分）
@@ -58,7 +58,7 @@
 
 | 优先级 | 动作 | 依赖 | 产出 |
 |---|---|---|---|
-| **P0** | **抢救设备侧活资产**：接 U2 → `fastboot fetch boot_b`（= `m1-baseline-f3`）、`adb`/ssh tar 走 `/lib/modules/7.3.0-rc7-…`、`/usr/local/sbin/*`、`/root/q24bak/` | **用户插线**；本机需先装 `platform-tools`（adb/fastboot 缺） | 把 L-C 从「只在机上」变成「有两副本」；补齐 vk126/m1 线唯一现存镜像 |
+| **P0** | **抢救设备侧活资产**：接 U2 → 起 Linux 后在设备侧 `dd if=/dev/disk/by-partlabel/boot_b of=/tmp/boot_b.img` 再取回（**本机 ABL 无 `fastboot fetch`，PITFALLS #290**）、`tar` 走 `/lib/modules/7.3.0-rc7-…`、`/usr/local/sbin/*`、`/root/q24bak/` | **用户插线** + 主机 `elden-net.sh` 要 root（本机 sudo 需密码）；`platform-tools` 已装到 `~/.local/opt/platform-tools` | 把 L-C 从「只在机上」变成「有两副本」；补齐 M1 线唯一现存镜像 |
 | **P1** | 修 `check-doctor` §5d：重生成 `versions/vk-kernel-identity.tsv`（`scripts/vk-identity.py`） | 无 | 自检回绿；表内需标注「旧镜像已失、行保留为历史账」 |
 | **P2** | 装构建依赖 `clang` + `dtc`（`apt install clang device-tree-compiler`） | 网络/镜像 | 恢复 `dtbs_check`/`dt-doc-validate`/内核编译能力 |
 | **P3** | R1：重放 M1-7.3 线（7.3-rc7 + `patches/upstream/m1-2026-10-14`） | P2 | 重新得到 7.3 基线树与 DTB；Q24 N5b/N6 的「血统二分」实验重新可跑 |

@@ -15,7 +15,7 @@
 | 情形 | 行为 |
 |---|---|
 | 主机侧一切（构建/打包/编译/静态分析/检索/脚本/基准）+ 设备侧只读探测 + **常规设备写操作**（含 fastboot/EDL、分区/槽/固件写入、经 `scripts/device-lock.sh` 的串行访问） | **直接执行**，不必逐条请示 |
-| **有写坏风险的写入**（分区/GPT/boot 槽/dtbo/vbmeta/固件，以及任一次 `fastboot` 写前） | **先备份**（`fastboot fetch` 将覆盖分区 + GPT 双表 dump + 记录回退路径），**再执行**；写后读回校验 |
+| **有写坏风险的写入**（分区/GPT/boot 槽/dtbo/vbmeta/固件，以及任一次 `fastboot` 写前） | **先备份**（将覆盖分区 + GPT 双表 dump + 记录回退路径；**备份手段 = 设备侧 `dd if=/dev/disk/by-partlabel/<part>` 后取回 / 官方线刷包解出 / EDL 读回——本机 ABL 无 `fastboot fetch`，`PITFALLS` #290**），**再执行**；写后读回校验 |
 | **物理上必须人做**（按键组合进 fastboot/EDL、插拔线缆/耳机、断电、EDL 短接） | 停下，给精确步骤与预期现象，**请用户操作**（agent 无法代做） |
 | 执行中出现**超出预期的错误**（失败模式与 `PITFALLS`/`RUNBOOK` 已知项不符、设备不回退、无可用通道、反复重启） | **停止重试**，保留现场（日志/slot/镜像 hash），给用户可执行的检查/恢复步骤 |
 | 凭据/账号/权限/隐私 | 属外部干预，直接上报用户（`STANDING.md`，全局 `~/.pi/agent/pi-hermes-memory/STANDING.md`，不在本仓库） |
@@ -30,7 +30,7 @@
 ## 2. 设备安全纪律
 
 - **不跨容量档复用 GPT 二进制**；每单元现 dump（`scripts/gpt-dump.sh`），手术读实际 GPT 参数。
-- 动分区/刷写前：`fastboot fetch` 备份将覆盖分区 + GPT 双表 dump；**写后读回校验**（不看「传输完成」）。
+- 动分区/刷写前：备份将覆盖分区（**设备侧 `dd` / 线刷包解出 / EDL 读回；本机无 `fastboot fetch`，`PITFALLS` #290**）+ GPT 双表 dump；**写后读回校验**（不看「传输完成」）。
 - 默认只动 **b 槽 + LUN0 GPT**；`fastboot --set-active` 属写操作，按「先备份 GPT + 记当前 slot → 再执行」处理（不再绝对禁止）；恢复步骤见 `RUNBOOK-BRINGUP/README.md`。
 - 覆盖 a 槽前确认真机对照取证已归档（2026-10-11 主体已采，指针 `TASKS/README.md §5` Q5）；回收 Android 专属分区需 G1 全绿 + EDL 备份在手。
 - **零写盘优先** `fastboot boot`；严格区分 **`-ram` 纯 RAM 变体（无桌面/服务）** 与**持久变体（RAM 内核 + 磁盘根）**——功能/服务级测试必须用持久变体（`PITFALLS` #92/#93）。

@@ -147,7 +147,8 @@ fastboot boot <img>                        # 零写盘·纯RAM变体（无桌面
 # 新单元开工三件套（先写台账，再备份，再手术）
 fastboot getvar serialno; adb shell getprop ro.boot.hwboardid   # → 写进 DEVICE/README.md §2.2
 sh scripts/gpt-dump.sh                                          # 打印本单元 backup_lba（禁跨容量档复用）
-fastboot fetch boot_b "$BAK"/boot_b.img                         # dtbo_b / vbmeta_b 同理
+# b 槽三件套备份：本 ABL **无 fastboot fetch**（`Unable to get max-fetch-size`，PITFALLS #290）
+ssh root@192.168.7.1 'dd if=/dev/disk/by-partlabel/boot_b of=/tmp/boot_b.img'  # 再取回；或从官方线刷包解出
 python3 scripts/slot-attr.py show                               # 槽位属性（在 GPT attribute，非 misc）
 # 设备侧三态判据（显示问题）：NOCARD / STORM / GOOD
 scripts/q28-devprobe2.sh          # 在设备上跑（SSH 读全 dmesg + 查 card0）

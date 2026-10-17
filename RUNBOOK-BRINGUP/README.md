@@ -56,7 +56,7 @@ export BAK="backup/${SN}-${CAP}"; mkdir -p "$BAK"
 ### ★ 权威顺序（2026-10-03 定稿；先读这段，下面的 A/A3/B/D 均为备选/历史）
 
 **解锁不是目标，是 fastboot 迭代便利**：写分区/写 GPT/自签 boot 走 EDL（`qdl`）**不需要解锁**；
-只有 `fastboot fetch` / `fastboot boot`（零写盘 RAM 验收）/ 切槽 / 高频迭代 boot_b 才需要解锁。
+只有 `fastboot boot`（零写盘 RAM 验收）/ 切槽 / 高频迭代 boot_b 才需要解锁（**备份不靠解锁**：本 ABL 无 `fastboot fetch`，见 §2.1）。
 → 所以：**任务只是采集/dump 的单元，保持 locked，不要为了「解锁」去折腾。**
 
 **四代（TB322FC）解锁 = 一个版本门问题，没有第二条路。** 逐条按此走，别从签名文件开始猜：
@@ -197,15 +197,24 @@ fastboot getvar partition-size:dtbo_b      # 期望 0x2000000 (32 MiB)
 
 ## 2. Phase 1 — 备份（b 槽原厂分区 + GPT）
 
-### 2.1 fastboot fetch 将被覆盖的 b 槽分区（**必做**）
+### 2.1 备份将被覆盖的 b 槽分区（**必做**）
+
+> ⚠️ **本机 ABL 不支持 `fastboot fetch`**（实测 `fastboot: error: Unable to get max-fetch-size. Device does not support fetch command.`，fastboot 37.0.1 复核 2026-10-17；另见 2026-10-06/10-08 两次证实、用户原话「带有 fetch 的一律是幻觉」）——**PITFALLS #290**。
+> 任何写「先 fetch 备份」的旧配方都是错的，会留下 0 字节文件而让人误以为已备份。
+
+三条可行路径，按代价排序：
 
 ```bash
 mkdir -p "$BAK"
-fastboot fetch boot_b   "$BAK"/boot_b.img
-fastboot fetch dtbo_b   "$BAK"/dtbo_b.img
-fastboot fetch vbmeta_b "$BAK"/vbmeta_b.img
+# A) 官方线刷包解出（最省事；TB322FU_ZUXOS_* 包内 boot.img/vbmeta.img 即 a/b 槽同源镜像）
+#    → 解包后按槽语义复制为 boot_b.img / dtbo_b.img / vbmeta_b.img
+# B) 设备已在 mainline Linux（或 rooted Android）：设备侧 dd 后取回
+ssh root@192.168.7.1 'dd if=/dev/disk/by-partlabel/boot_b   of=/tmp/boot_b.img bs=1M;                       dd if=/dev/disk/by-partlabel/dtbo_b   of=/tmp/dtbo_b.img;                       dd if=/dev/disk/by-partlabel/vbmeta_b of=/tmp/vbmeta_b.img; sync'
+scp root@192.168.7.1:/tmp/{boot_b,dtbo_b,vbmeta_b}.img "$BAK"/     # 设备无 ssh 时用 tar 经串口/usb0 取
+# C) EDL(9008) 读回（唯一能备份「未起 Linux 且已刷过」的槽的手段）
+#    qdl/edl 的 read 子命令，或 Firehose 分区表里按 LUN/扇区直读
 ```
-（a 槽不动，无需备份；`fastboot fetch` = 只读，无风险。b 槽原厂三件套是本 runbook 的**唯一回退手段**，必须先取。）
+（a 槽不动，无需备份。b 槽原厂三件套是本 runbook 的**唯一回退手段**，必须先取；**取完用 sha256 记档**。）
 
 ### 2.2 GPT dump（需先 RAM 启动 mainline，见 Phase 2）
 

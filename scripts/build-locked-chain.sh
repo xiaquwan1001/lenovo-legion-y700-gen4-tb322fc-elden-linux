@@ -21,7 +21,7 @@
 #   scripts/build-locked-chain.sh <kernel.img> <stock_boot_dump> <stock_vbmeta_dump> \
 #       [stock_vbmeta_system_dump] [stock_recovery_dump] [--out bootslot-b-locked]
 #   kernel.img      = 未签名的 mainline boot 镜像（out/boot-elden-vk40.img，无 AVB footer）
-#   stock_*_dump    = 本单元的原厂 dump（fastboot fetch 或 EDL read），参数自动读出
+#   stock_*_dump    = 本单元的原厂 dump（EDL read 或官方线刷包解出；本 ABL 无 fastboot fetch），参数自动读出
 #
 # 输出（默认 bootslot-b-locked/）：
 #   boot_b.img / vbmeta_b.img / dtbo_b.img   ← EDL/fastboot 写入 b 槽三件套
