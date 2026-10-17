@@ -8,7 +8,7 @@
 #
 # 用法：scripts/m1-73-modules-overlay.sh [out_overlay_cpio.gz]
 #   在 M1 树（build/m1-upstream/clean-tree-73）已编好的前提下，产出叠加用 cpio.gz；
-#   再 `cat <base.ramdisk> overlay.cpio.gz > 73x.ramdisk` + tools/mkbootimg/mkbootimg.py 打包
+#   再 `cat <base.ramdisk> overlay.cpio.gz > 73x.ramdisk` + scripts/mkbootimg.py 打包
 #   （打包后务必回读核验 cmdline，见 PITFALLS #249）。
 set -euo pipefail
 cd "$(dirname "$0")/.."

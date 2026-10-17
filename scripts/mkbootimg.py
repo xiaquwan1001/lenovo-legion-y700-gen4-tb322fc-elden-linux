@@ -219,10 +219,26 @@ def main(argv=None):
     ap.add_argument("--os_patch_level", default="2025-08")
     ap.add_argument("-o", "--output")
     ap.add_argument("--selftest", metavar="IMAGE")
+    ap.add_argument("--unpack", metavar="IMAGE",
+                    help="split IMAGE into <dir>/{kernel,ramdisk,second,dtb}")
+    ap.add_argument("--unpack-dir", default=".")
     a = ap.parse_args(argv)
 
     if a.selftest:
         return selftest(a.selftest)
+
+    if a.unpack:
+        _d, sections, fields = read_image(a.unpack)
+        os.makedirs(a.unpack_dir, exist_ok=True)
+        for name, data in sections.items():
+            if not data:
+                continue
+            dest = os.path.join(a.unpack_dir, name)
+            with open(dest, "wb") as f:
+                f.write(data)
+            print(f"{name}\t{dest}\t{len(data)} bytes")
+        print(f"cmdline\t{fields['cmdline']}")
+        return 0
 
     if not a.output or not a.kernel or not a.ramdisk:
         ap.error("--kernel, --ramdisk and -o/--output are required")

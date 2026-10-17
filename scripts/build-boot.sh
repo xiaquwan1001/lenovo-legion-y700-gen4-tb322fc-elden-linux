@@ -13,7 +13,7 @@ ROOT=${ROOT:-$HOME/y700-elden}
 KDIR=${KDIR:-$ROOT/linux}
 OUT=$ROOT/out
 IRAM=$ROOT/initramfs
-MKBOOTIMG=$ROOT/tools/mkbootimg/mkbootimg.py
+MKBOOTIMG=${MKBOOTIMG:-$ROOT/scripts/mkbootimg.py}   # 2026-10-17 重写并从 tools/（gitignore）迁入 scripts/
 ROOTFS=$OUT/initramfs-root
 VERSION=${VERSION:-vk28}
 mkdir -p "$OUT"

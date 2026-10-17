@@ -27,7 +27,7 @@ OUT=$ROOT/out
 INIT=$ROOT/initramfs/init
 BB=$ROOT/initramfs/busybox
 APPLETS=$ROOT/initramfs/busybox-applets.txt
-UNPACK=$ROOT/tools/mkbootimg/unpack_bootimg.py
+UNPACK=${UNPACK:-$ROOT/scripts/mkbootimg.py}   # 2026-10-17: 由重写的 mkbootimg --unpack 取代丢失的 tools/mkbootimg/unpack_bootimg.py
 mkdir -p "$OUT"
 
 die() { echo "[initramfs] FATAL: $*" >&2; exit 1; }
@@ -82,7 +82,7 @@ build_full() {
 	[ -f "$base" ] || die "BASE 不存在: $base"
 	R=/tmp/bi-full.$$; mkdir -p "$R"
 	case "$base" in
-		*.img)  python3 "$UNPACK" --boot_img "$base" --out "$R/unpack" >/dev/null 2>&1 || die "解包 $base 失败"
+		*.img)  python3 "$UNPACK" --unpack "$base" --unpack-dir "$R/unpack" >/dev/null 2>&1 || die "解包 $base 失败"
 			rd="$R/unpack/ramdisk" ;;
 		*.cpio.gz|*.cpio) rd="$base" ;;
 		*) die "无法识别的 BASE 类型: $base" ;;
