@@ -1,0 +1,33 @@
+{
+  "trial": "vk127-q28-s4",
+  "date": "2026-10-17T17:52+08:00",
+  "image": "out/boot-elden-vk127.img",
+  "image_sha256": "7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633",
+  "kernel_uts": "7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "boot_id": "075e7711-9215-427e-92fd-e2224c20ea47",
+  "boot_method": "fastboot boot after real POR (user power-cycled, vol- into fastboot)",
+  "por": true,
+  "modules_present": true,
+  "card0": true,
+  "connector_dsi1": "connected",
+  "l1_count": 0,
+  "l2_count": 2,
+  "dsi_isr": 41,
+  "session": {
+    "phoc": 1,
+    "phosh": 1
+  },
+  "backlight": 511,
+  "verdict": "Q28-GOOD (L1=0, dsi_isr=41) — confirmed",
+  "visual_confirmation": "USER_CONFIRMED_DESKTOP_VISIBLE (2026-10-17)",
+  "notes": "panel prepared ok; only 2 startup-window vblank entries (known benign class).",
+  "functional_spot_check": {
+    "wifi": "associated",
+    "audio_cards": 2,
+    "fastrpc_adsp": true,
+    "sensorproxy": "up",
+    "iio_devices": 1,
+    "camera_video_nodes": 0,
+    "note": "相机 0 个 /dev/video 符合 elden_nocamera=1 裁决（日常零相机模块）"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "trial": "vk127-q28-s6",
+  "date": "2026-10-17T18:15+08:00",
+  "image": "out/boot-elden-vk127.img",
+  "image_sha256": "7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633",
+  "kernel_uts": "7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "boot_id": "686b7f80-d336-4b21-91c7-0f6aa4df4b53",
+  "boot_method": "fastboot boot after real POR (user power-cycled, vol- into fastboot)",
+  "por": true,
+  "modules_present": true,
+  "card0": true,
+  "connector_dsi1": "connected",
+  "l1_count": 0,
+  "l2_count": 6,
+  "dsi_isr": 41,
+  "session": {"phoc": 1, "phosh": 1},
+  "backlight": 511,
+  "verdict": "Q28-GOOD (L1=0, dsi_isr=41)",
+  "visual_confirmation": "USER_CONFIRMED_DESKTOP_VISIBLE (2026-10-17)"
+}

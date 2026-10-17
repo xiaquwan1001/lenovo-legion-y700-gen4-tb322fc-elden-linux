@@ -1,0 +1,33 @@
+{
+  "trial": "vk127-q28-s3",
+  "date": "2026-10-17T17:40+08:00",
+  "image": "out/boot-elden-vk127.img",
+  "image_sha256": "7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633",
+  "kernel_uts": "7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "boot_id": "eda63178-16dd-4a5f-840c-ee7ac3b4bdf1",
+  "boot_method": "fastboot boot after reboot2 bootloader from running Linux (WARM path — protocol-noncompliant, discounted)",
+  "por": false,
+  "modules_present": true,
+  "card0": true,
+  "connector_dsi1": "connected",
+  "l1_count": 7,
+  "l2_count": 416,
+  "l1_signature": [
+    "msm_dsi ae94000.dsi: command DMA timeout: status=0x2200200",
+    "msm_dsi ae96000.dsi: peer command DMA timeout: status=0x2200200",
+    "bonded command DMA failed: master=-110 peer=-110",
+    "panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -110",
+    "Failed to initialize panel: -5"
+  ],
+  "dsi_isr": 0,
+  "session": {
+    "phoc": 1,
+    "phosh": 1,
+    "wayland": 1
+  },
+  "backlight": 511,
+  "verdict": "Q28-BAD (L1) — confirmed",
+  "visual_confirmation": "USER_CONFIRMED_BLACK_ONLY_BACKLIGHT (2026-10-17)",
+  "notes": "s1/s2 (before modules deployed) were confounded: zero modules loaded -> DP deferred -> no card0. Module tree /lib/modules/7.3.0-rc7-debug-vk127-00002-... (1497 .ko) deployed, then s3 reproduced the canonical Q28 L1 signature.",
+  "sample_validity": "discounted: warm path"
+}

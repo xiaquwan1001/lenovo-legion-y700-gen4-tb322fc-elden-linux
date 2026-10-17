@@ -62,4 +62,5 @@
 | 三十六、构建落点（内存盘）与调试信息实测（2026-10-15 实测） | [sessions/36-构建落点与调试信息实测.md](sessions/36-构建落点与调试信息实测.md) |
 | 三十七、Q28 arm A：命令路径否证、「面板黑」是不变量、软件侧点亮代理集体失效（2026-10-15 实测） | [sessions/37-Q28-armA：命令路径否证与「面板黑」是不变量.md](sessions/37-Q28-armA：命令路径否证与「面板黑」是不变量.md) |
 | 三十九、能力靠实测不靠 `--help`：`fastboot fetch` 在本机 ABL 不存在（#290）、「客户端有≠设备支持」（#291）、文档指向已归档脚本 26 处（#292）（2026-10-17 复核） | [sessions/39-能力靠实测不靠help：fastboot无fetch与同类记错.md](sessions/39-能力靠实测不靠help：fastboot无fetch与同类记错.md) |
+| 四十、RAM 启动新内核不先部署 `/lib/modules/<新UTS>` ⇒ `lsmod` 空 ⇒ DP 永久 defer ⇒ 无 `card0`（会被误判成 Q28 坏发）（#293，2026-10-17 实测） | [sessions/40-RAM起新内核不部署模块树就没有DRM.md](sessions/40-RAM起新内核不部署模块树就没有DRM.md) |
 | 三十八、M1-7.3 模块树补建（`ARCH`/vermagic 双坑）+ 相机栈首次跑通 + `cam-mode.sh off` 反向激活 Q24 + `mxc.lvl→0` 不是死亡签名 + `sync_state` 只在开机窗口生效 + `reboot` 挂起致假 ALIVE + **`#212` 配方 12 发不可复现**（2026-10-15 晚实测） | [sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md](sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md) |
