@@ -120,3 +120,21 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-15T14:15:11Z	sleep-sweep-run3		warm	none	ALIVE	(absent)	/tmp/sleep-sweep.log
 2026-10-15T14:44:38Z	q24-n2prime-n3-12blanks-survive		por	none	Q24-RECIPE-NOT-REPRODUCIBLE	40e13f8ad43b	
 2026-10-15T15:16:03Z	n5-vk64-death-reproduced	vk64	cold	none	Q24-DEATH-REPRODUCED	15964160bed0	
+2026-10-17T12:16:06Z	n7-vk127-armB-round1	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-201526.log
+2026-10-17T12:16:49Z	n7-vk127-armB-round2	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-201526.log
+2026-10-17T12:17:31Z	n7-vk127-armB-round3	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-201526.log
+2026-10-17T12:18:14Z	n7-vk127-armB-round4	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-201526.log
+2026-10-17T12:18:57Z	n7-vk127-armB-round5	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-201526.log
+2026-10-17T12:19:40Z	n7-vk127-armB-round6	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-201526.log
+2026-10-17T12:26:11Z	n7-vk127-armK-round1	vk127	warm	none	INVALID	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202527.log
+2026-10-17T12:26:18Z	n7-vk127-armK-round2	vk127	warm	none	INVALID	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202527.log
+2026-10-17T12:26:25Z	n7-vk127-armK-round3	vk127	warm	none	INVALID	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202527.log
+2026-10-17T12:26:31Z	n7-vk127-armK-round4	vk127	warm	none	INVALID	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202527.log
+2026-10-17T12:26:39Z	n7-vk127-armK-round5	vk127	warm	none	INVALID	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202527.log
+2026-10-17T12:26:45Z	n7-vk127-armK-round6	vk127	warm	none	INVALID	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202527.log
+2026-10-17T12:28:02Z	n7-vk127-armB-round1	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log
+2026-10-17T12:28:46Z	n7-vk127-armB-round2	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log
+2026-10-17T12:29:30Z	n7-vk127-armB-round3	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log
+2026-10-17T12:30:14Z	n7-vk127-armB-round4	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log
+2026-10-17T12:30:58Z	n7-vk127-armB-round5	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log
+2026-10-17T12:31:42Z	n7-vk127-armB-round6	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log

@@ -1,0 +1,18 @@
+{
+  "label": "n7-vk127-armB-round5",
+  "ts": "2026-10-17T12:30:58Z",
+  "vk": "vk127",
+  "image": "device:vk127",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "ALIVE",
+  "log_dir": "/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log",
+  "note": "N7 vk127 full-stack+blank round5 Q28sig=8 dpms=On->Off"
+}

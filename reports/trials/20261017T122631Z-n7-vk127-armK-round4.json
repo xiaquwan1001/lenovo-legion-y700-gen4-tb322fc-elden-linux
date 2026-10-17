@@ -1,0 +1,18 @@
+{
+  "label": "n7-vk127-armK-round4",
+  "ts": "2026-10-17T12:26:31Z",
+  "vk": "vk127",
+  "image": "device:vk127",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "INVALID",
+  "log_dir": "/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202527.log",
+  "note": "kernel-dpms no Off A=On B=On"
+}
