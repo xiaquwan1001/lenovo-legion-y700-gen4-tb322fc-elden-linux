@@ -26,10 +26,10 @@
 | Message-ID（cover） | `20261017153344.436818-1-xiaqinghuan@mail.ustc.edu.cn` |
 | Message-ID（patch 1） | `…-2-…`、patch 2 `…-3-…` |
 | 列表属性 | **members-only** ⇒ 非成员直接投被 hold（"Post by non-member to a members-only list"） |
-| 处置 | 已发订阅确认（token `5c7937…`）；hold 通知里另给了 3 个 cancel URL（保留在邮箱 INBOX 6488–6490） |
+| 处置（已完成） | ① 订阅确认（token `5c7937…`）→ 收到 `Welcome to the "libcamera-devel" mailing list`；② 用 hold 通知里的 cancel URL POST 取消 3 封旧投；③ **23:38 CST 重投成功**（Message-ID `20261017153829.442320-{1,2,3}-xiaqinghuan@mail.ustc.edu.cn`） |
+| 归档核实 | ✅ **3/3 已在 Pipermail**（`2026-October/date.html` 里有 `[PATCH 0/2] …`、`1/2`、`2/2`；thread 索引同样可见） |
 
-**下一步**：等 `Welcome to libcamera-devel` → 若 held 的 3 封仍未放行，重发同一系列
-（`git send-email` 同一组文件即可，Message-ID 会变，属正常重投）。
+**下一步**：等 review（若要求，改标题前缀为 `ipa: libipa: camera_sensor_helper: …` 后发 v2）。
 
 ## 3. 复核方法
 
