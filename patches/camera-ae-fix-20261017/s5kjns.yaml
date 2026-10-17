@@ -1,0 +1,12 @@
+# Per-sensor tuning for s5kjns (TB322FC / elden).
+# blackLevel is a 16-bit value: sensor pedestal is 64 at 10-bit => 64 << 6 = 4096.
+%YAML 1.1
+---
+version: 1
+algorithms:
+  - BlackLevel:
+      blackLevel: 4096
+  - Awb:
+  - Adjust:
+  - Agc:
+...

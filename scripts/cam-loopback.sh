@@ -33,7 +33,7 @@ start)
 set -u
 lsmod | grep -q v4l2loopback || modprobe v4l2loopback exclusive_caps=1 video_nr=100 2>/dev/null || insmod /lib/modules/\$(uname -r)/extra/v4l2loopback.ko exclusive_caps=1 video_nr=100
 [ -e $LOOP ] || { echo "FAIL: $LOOP 不存在（v4l2loopback 未加载）"; exit 1; }
-$( [ "$WHICH" = rear ] && echo 'v4l2-ctl -d /dev/v4l-subdev28 --set-ctrl exposure=3100,analogue_gain=1500 >/dev/null 2>&1' )
+$( [ "$WHICH" = rear ] && echo 'v4l2-ctl -d /dev/v4l-subdev28 --set-ctrl exposure=3000,analogue_gain=32 >/dev/null 2>&1' )
 pkill -f 'gst-launch-1.0 -q libcamerasrc' 2>/dev/null; sleep 1
 GST_DEBUG=0 nohup gst-launch-1.0 -q libcamerasrc camera-name="$CAM" ! videoconvert ! videoscale ! video/x-raw,format=YUY2,width=$W,height=$H,framerate=$FPS/1 ! v4l2sink device=$LOOP >/tmp/cam-loopback.log 2>&1 &
 sleep 6
