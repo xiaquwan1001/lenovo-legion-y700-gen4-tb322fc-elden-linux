@@ -49,3 +49,58 @@ git log --oneline -2          # 0001 binding / 0002 driver
 dt-doc-validate Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
 make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- W=1 drivers/usb/dwc3/
 ```
+
+## 6. 投递记录（2026-10-17 08:13Z，**已发送 + 已归档复核**）
+
+发送命令（树根 `build/m3v2-7.3rc7`）：
+
+```bash
+git send-email --confirm=never --suppress-cc=self \
+  --to="Greg Kroah-Hartman <gregkh@linuxfoundation.org>" \
+  --to="Thinh Nguyen <Thinh.Nguyen@synopsys.com>" \
+  --to="linux-usb@vger.kernel.org" \
+  --cc="Felipe Balbi <balbi@kernel.org>" \
+  --cc="Rob Herring <robh@kernel.org>" \
+  --cc="Krzysztof Kozlowski <krzk+dt@kernel.org>" \
+  --cc="Conor Dooley <conor+dt@kernel.org>" \
+  --cc="devicetree@vger.kernel.org" \
+  --cc="linux-arm-msm@vger.kernel.org" \
+  --cc="linux-kernel@vger.kernel.org" \
+  patches/upstream/m3-v2-2026-10-17/0000-cover-letter.patch \
+  patches/upstream/m3-v2-2026-10-17/0001-*.patch \
+  patches/upstream/m3-v2-2026-10-17/0002-*.patch
+```
+
+| 邮件 | Message-ID | 归档 |
+|---|---|---|
+| `[PATCH v2 0/2]` 封面 | `20261017081320.220525-1-xiaqinghuan@mail.ustc.edu.cn` | ✅ `/linux-usb/` + `/linux-devicetree/` |
+| `[PATCH v2 1/2]` binding | `20261017081320.220525-2-xiaqinghuan@mail.ustc.edu.cn` | ✅ 同上 |
+| `[PATCH v2 2/2]` driver | `20261017081320.220525-3-xiaqinghuan@mail.ustc.edu.cn` | ✅ 同上 |
+
+- 每封 `git send-email` 返回 **`Result: 250`**（三封全成功）。
+- **归档复核**：`lore-query.py "https://lore.kernel.org/<inbox>/?q=f:xiaqinghuan%40mail.ustc.edu.cn"`（自动过 Anubis PoW）⇒
+  **两个 inbox 各自 3/3**（时间戳 2026-10-17T08:13:36Z / 08:13:37Z）。
+- **逐字节复核**：取 `https://lore.kernel.org/linux-usb/<msgid>/raw`，与本地 patch 的 diff 段逐行比对 ——
+  **0002：本地 93 行 diff，归档缺失 0**；**0002（driver）：本地 380 行 diff，归档缺失 0**（封面 71/71）。
+
+### 本地正文字节 sha256（与归档 raw 对账用）
+
+```
+132831948d53093468b385fd28796bf252e590b5d06751f1c07cf111be465ba4  0000-cover-letter.patch
+95339410fb68dfbd57351ee166c39a7d46ef1c2dbb3217c3b1469705ac9fed9a  0001-dt-bindings-usb-snps-dwc3-describe-the-two-connector.patch
+0323431c0088495a73457dc33c1f3602fee09448a5a0af3883345f5571c52334  0002-usb-dwc3-support-two-connectors-sharing-one-HS-data.patch
+```
+
+### 发送期踩到的两个坑（下次直接照做）
+
+1. **系列编号**：`git format-patch --no-numbered` 生成的补丁没有 `v2 x/2` 编号，`send-email` 只会发成 `[PATCH]`。
+   必须 `git format-patch -2 -v2 --cover-letter`；cover 的 `*** SUBJECT HERE ***` / `*** BLURB HERE ***` 要手工替换。
+2. **凭据 host 必须与 keyring 条目一致**：`sendemail.smtpserver=mail.ustc.edu.cn` 时会报
+   `could not read Password for 'smtp://…@mail.ustc.edu.cn:465'`（keyring 里存的是 `smtp.ustc.edu.cn:465`）。
+   已把 `sendemail.smtpserver` 统一为 **`smtp.ustc.edu.cn`**。
+
+### 回信跟踪
+
+```bash
+python3 ~/.local/bin/read-mail-ustc.py --days 7 --replies-only
+```

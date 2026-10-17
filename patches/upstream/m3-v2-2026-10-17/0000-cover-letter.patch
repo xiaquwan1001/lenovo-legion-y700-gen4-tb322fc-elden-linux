@@ -1,4 +1,6 @@
-From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+From f3cf33485095fabd596f309f6e7d5c2379425505 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 17 Oct 2026 16:11:34 +0800
 Subject: [PATCH v2 0/2] usb: dwc3: support two connectors sharing one HS data bus
 
 v1: <20261013102927.1141696-1-xiaqinghuan@mail.ustc.edu.cn>
@@ -37,24 +39,33 @@ Changes in v2, following the review of v1:
 - driver: dropped the "mux_role" variable that was set but never used,
   reported by kernel test robot (arm-defconfig, clang, W=1).
 
-- driver: "oldest request wins" is now actually implemented, with a timestamp
+- driver: "oldest request wins" is now actually implemented, with a
+timestamp
   per connector taken at the USB_ROLE_NONE -> role transition.  v1 selected
   port 0 first, i.e. static priority, which contradicted its own commit
   message.  Reported by sashiko-ai.
 
-- driver: the runtime-PM reference is no longer taken on a path that can jump
+- driver: the runtime-PM reference is no longer taken on a path that can
+jump
   to the error label before the reference is acquired (sashiko-ai).
 
 Konrad: to answer your question about the wiring -- this is a real board
-topology, not a hub.  Lenovo Legion Y700 (4th gen, TB322FC, SM8750P) has two
-USB-C receptacles driven by a single dwc3 instance (a600000.usb).  The Super
-Speed pairs are not shared: each receptacle has its own SS PHY pair.  Only the
-High Speed D+/D- lines are routed through one 2:1 mux, selected by TLMM GPIO
+topology, not a hub.  Lenovo Legion Y700 (4th gen, TB322FC, SM8750P) has
+two
+USB-C receptacles driven by a single dwc3 instance (a600000.usb).  The
+Super
+Speed pairs are not shared: each receptacle has its own SS PHY pair.  Only
+the
+High Speed D+/D- lines are routed through one 2:1 mux, selected by TLMM
+GPIO
 29, and each receptacle keeps its own Type-C PD/role input (both connectors
 report data-role = "dual" through pmic-glink).  So the controller can be a
-host on one receptacle while the other is charging-only, and plugging a device
-into the other receptacle has to be able to steal the controller.  Without the
-mux support, the second receptacle's role switch is simply not registered and
+host on one receptacle while the other is charging-only, and plugging a
+device
+into the other receptacle has to be able to steal the controller.  Without
+the
+mux support, the second receptacle's role switch is simply not registered
+and
 nothing happens.
 
 Relevant excerpt from the board DTS ("ports" endpoints carry the mux-state
@@ -92,13 +103,16 @@ Testing (all on the board, 7.3-rc7 based tree):
    "port-select-gpios" is present, otherwise the existing role switch is used
    unchanged.
 
-Xu Qianhui (2):
+Qianhui Xu (2):
   dt-bindings: usb: snps,dwc3: describe the two-connector HS data path
   usb: dwc3: support two connectors sharing one HS data bus
 
- .../bindings/usb/snps,dwc3-common.yaml        | 62 +++++++++++-
- drivers/usb/dwc3/core.c                       | 29 ++++-
- drivers/usb/dwc3/core.h                       | 37 ++++++
- drivers/usb/dwc3/debugfs.c                    |  4 +
- drivers/usb/dwc3/drd.c                        | 199 ++++++++++++++++++++++++-
- 5 files changed, 328 insertions(+), 3 deletions(-)
+ .../bindings/usb/snps,dwc3-common.yaml        |  63 +++++-
+ drivers/usb/dwc3/core.c                       |  29 ++-
+ drivers/usb/dwc3/core.h                       |  38 ++++
+ drivers/usb/dwc3/debugfs.c                    |   4 +
+ drivers/usb/dwc3/drd.c                        | 199 +++++++++++++++++-
+ 5 files changed, 330 insertions(+), 3 deletions(-)
+
+-- 
+2.53.0

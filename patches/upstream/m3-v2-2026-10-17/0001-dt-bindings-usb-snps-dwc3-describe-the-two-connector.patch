@@ -1,8 +1,8 @@
 From d08a16ff977f4af406ab6e685a549e1b08c7578d Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Sat, 17 Oct 2026 16:06:17 +0800
-Subject: [PATCH] dt-bindings: usb: snps,dwc3: describe the two-connector HS
- data path
+Subject: [PATCH v2 1/2] dt-bindings: usb: snps,dwc3: describe the
+ two-connector HS data path
 
 Some designs wire the High Speed data lines of a single DWC3 controller to
 two receptacles and select between them with a GPIO, while the Super Speed
