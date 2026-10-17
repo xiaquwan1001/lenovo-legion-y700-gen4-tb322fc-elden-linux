@@ -16,7 +16,7 @@
 | **G2** 安卓容器（可用性 + 风控/完整性等级） | 11（Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC/C9 用例集/**C4 传感器 HAL 路线 C**/**C7 切槽脚本**/**C6 容器音频**/**C2 GMS 登录（用户人工验证）**/**C10 马达透传（2026-10-13：桥 + 自编 AIDL V2 幅度/cancel + 固化进 vendor 镜像 + 强度档位 RRO）**） | 1（C8 上机探测） | 2（相机共享 C5、C3 身份/DRM 实测） | **~65%** |
 | **G3** x86 模拟（Steam 载体） | 1（Box64 0.4.5 + Wine 9 PoC 成功） | 0 | Steam 游戏端到端（图形/音频/性能） | PoC ✅ / Steam 未上机 |
 | **拓展** UEFI 间接引导 · Gunyah VM | 0 | 0 | 2（UEFI 路线 A 已搁置；Gunyah 待上机探测） | ⬜ 非主线 |
-| 运维/资产 | 内核迭代至 **vk124-merged / vk126-c1**（Q28/Q24 实验线最新；**在机 boot_b = `m1-baseline-f3`**（2026-10-15 刷入 = M1-7.3 基线 + WCN F3 自愈；见 `DEVICE/README.md` §1.1））；里程碑 **vk84-q28delay**（base/exp 单变量 A/B 对，唯一差 cmdline `dsi_cmd_delay_us=1000`；config=好档派生——构建态 sha a383cdb9（实测 manifest），来源=恢复好档 `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb）；编后符号守卫通过、含 QCOM 驱动非死内核；镜像 `out/boot-elden-vk84-q28delay-{base,exp}.img`+manifest）。**⚠ 作废：`PITFALLS #162` 判定 vk81/82/83 因 `make olddefconfig` 删 `ARCH_QCOM` 成无 QCOM 驱动的死内核 ⇒ 在这三个镜像上得到的上机结果一律作废、需好档重测**；**模块化载荷已在机验收 + `mod-loop` 7 s 热换环跑通**；在机 boot_b 口径 `../DEVICE/README.md` §1.1）、rootfs 归档、Mesa 包、文档集重构、`qemu-utils` 已装（A13）、fstab nofail 已修（A18）、C4 传感器链（A14）、env-pass provision（A17）、持久根内核↔模块对齐、M1 资产树清单（2026-10-10）；🆕 **2026-10-11 新增**：Q24 臂镜像 `out/boot-elden-{vk90-e4amxc,vk91-fix3mx,vk92-fix2mx}.img` + `vk93-{cleanctl,nocam,lv64}.img`（均含 manifest）⚠️MIGRATION-LOST(2026-10-17：`out/*.img` 未随迁，本行镜像本地已无，需重建)；`LOCALVERSION=-vk64` GOOD 台架口径（`PITFALLS #175`）；重建脚本 `scripts/q24-rebuild-arms.sh`；⚠ **待清理**：U2 持久根 `/lib/modules/7.2.0-debug-vk64-gd02658e63cf6/drivers/clk/qcom/cambistmclkcc-sm8750.ko` 现为 **FIX-3 版**（会让任何 auto-load 相机的启动挂死），原版在设备 `/root/q24bak/` ⇒ **下一轮开始前先还原** | — | — | ✅ |
+| 运维/资产 | 内核迭代至 **vk124-merged / vk126-c1**（Q28/Q24 实验线最新；**在机 boot_b = `m1-baseline-f3`**（2026-10-15 刷入 = M1-7.3 基线 + WCN F3 自愈；见 `DEVICE/README.md` §1.1））；里程碑 **vk84-q28delay**（base/exp 单变量 A/B 对，唯一差 cmdline `dsi_cmd_delay_us=1000`；config=好档派生——构建态 sha a383cdb9（实测 manifest），来源=恢复好档 `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb）；编后符号守卫通过、含 QCOM 驱动非死内核；镜像 `out/boot-elden-vk84-q28delay-{base,exp}.img`+manifest）。**⚠ 作废：`PITFALLS #162` 判定 vk81/82/83 因 `make olddefconfig` 删 `ARCH_QCOM` 成无 QCOM 驱动的死内核 ⇒ 在这三个镜像上得到的上机结果一律作废、需好档重测**；**模块化载荷已在机验收 + `mod-loop` 7 s 热换环跑通**；在机 boot_b 口径 `../DEVICE/README.md` §1.1）、rootfs 归档、Mesa 包、文档集重构、`qemu-utils` 已装（A13）、fstab nofail 已修（A18）、C4 传感器链（A14）、env-pass provision（A17）、持久根内核↔模块对齐、M1 资产树清单（2026-10-10）；🆕 **2026-10-11 新增**：Q24 臂镜像 `out/boot-elden-{vk90-e4amxc,vk91-fix3mx,vk92-fix2mx}.img` + `vk93-{cleanctl,nocam,lv64}.img`（均含 manifest）⚠️MIGRATION-LOST(2026-10-17：`out/*.img` 未随迁，本行镜像本地已无，需重建)；`LOCALVERSION=-vk64` GOOD 台架口径（`PITFALLS #175`）；重建脚本 `scripts/q24-rebuild-arms.sh`；⚠ **待清理**：U2 持久根 `/lib/modules/7.2.0-debug-vk64-gd02658e63cf6/drivers/clk/qcom/cambistmclkcc-sm8750.ko` 现为 **FIX-3 版**（会让任何 auto-load 相机的启动挂死），原版在设备 `/root/q24bak/` ⇒ **下一轮开始前先还原**。🆕 **2026-10-17 换机后 P0 抢救完成**：在机 `boot_b`（`m1-baseline-f3`，sha `78a2beb1…`）、M1-7.3 模块树（1497 `.ko`）、`/usr/local/sbin`+`/root/q24bak`+`/proc/config.gz` 等 207 项**已入主机** `backup/HA2EXB0E-16+512/device-rescue-20261017/`（双向 sha 校验）；手法 = 设备 `usb0` IPv6 LL 直连 ssh + `dd`/tar 流（**本机 ABL 无 `fastboot fetch`**，`PITFALLS #290`）。同日 `fastboot fetch` 幻觉清掉 8 处配方、新增 `PITFALLS #290–#292`；`out/*.img` 仍为空（重建见 §4 待办 T4） | — | — | ✅ |
 
 > **注**：G1 完成度按**驱动 bringup 完整性**度量（28/31 项功能；分母=35 扣 ❌取消 G1-10 / ⛔搁置 G1-29·G1-30 / ⚪裁决搁置 G1-6），**不含上游化 M1–M5（0/5）**。INDEX §3 指针继承该限定。
 
@@ -120,6 +120,25 @@
 - **boot_b 形态**：镜像构成、sha、回退资产与「不用 slim」口径**只在 `../DEVICE/README.md` §1.1 维护**；本文件不复述。
 - **上机纪律**：驱动测试期间 `idle-delay=0` 禁熄屏；写操作前查 `scripts/device-lock.sh`；fastboot 命令拆单条（PITFALLS #3）。
 - **归因分层**（2026-10-06）：报「驱动/内核坏」前先分清 **initramfs/rootfs 打包** 与 **用户态配置**（如 vk60「驱动全废」实为 initramfs 缺固件）——见 `PITFALLS` #115、`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`。
+
+### ★ 2026-10-17 待办（换机后重置；本节为**当前唯一待办入口**，旧列表保留在下方作历史）
+
+> 来源：换机缺口审计（`reports/migration-rebuild-audit-20261017.md`）+ 邮箱分诊（`reports/mail-triage-20261017.md`）
+> + P0 抢救与 Q28 采样（`reports/device-rescue-and-q28-m1-badboot-20261017.md`）。
+> **不需要设备**的项排在前面（换机后主机侧产能仍可用）。
+
+| # | 待办 | 需要设备 | 判据 / 完成标志 |
+|---|---|---|---|
+| **T1** | **M3-1 上游回信 v2**：① 撤回 patch 1（`usb-psy-name` 被 Krzysztof 否决：全树无使用者、power supply 应走 phandle）② patch 2 binding 重写 ③ 修 lkp 告警 `core.c:171 'mux_role' set but not used`（带 `Reported-by:`/`Closes:`）④ 回 Konrad「incredibly strange setup / 有无 hub」的硬件质疑（附板级证据） | ❌ | 三条回信都有针对性答复 + 新系列 checkpatch/dt-doc-validate/编译三绿并投递 |
+| **T2** | **邮箱凭据正规化**：换「客户端授权码」→ 存回 keyring（`git credential approve`）→ 删 `~/.gitconfig` 里的明文 `smtppass` | ❌ | `send-mail-ustc.py` / `read-mail-ustc.py` 不依赖 gitconfig 明文即可收发；配置文件里无明文口令 |
+| **T3** | **构建链复位（P2+P3）**：装 `clang` + `dtc`；按 `patches/upstream/m1-2026-10-14/` + `reports/m1-rebase-7.3rc7-execution-20261013.md` 在 7.3-rc7 上重放 M1 线 | ❌ | `make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs` 与 `dtbs_check` 可跑；新 M1 树能出 DTB |
+| **T4** | **重编一个日常镜像（P4）**：config = `patches/config-daily-c1` + `fragment-c1-iprule{,6}`，用 `vk-identity.py` 分配**新号**（不复用旧 vk 号） | ⚠️（构建❌/上机✅） | 冷起 3 发记录 GOOD/坏发比例；`out/*.img` ≥1 且 manifest 与镜像 UTS 一致 |
+| **T5** | **Q24 回 Taniya Das**（10-13 请求）：完整 dmesg（配对加载 + 真实熄屏前后）+ `pm_genpd_summary` + `clk_summary` | ✅ | 回信发出且附件口径写清「Q24 语境」；**不得**拿 2026-10-17 的 Q28 坏发快照顶替 |
+| **T6** | **Q28 归档本轮证据**：把 M1-7.3 首个坏发现场（3 坏/4 发、签名逐字同型）补进 `reports/q28-DOSSIER.md`；如需报上游，另起 `[REPORT v3]` | ❌ | DOSSIER 有本节；口径仍写「未解、恢复=重启」 |
+| **T7** | **文档指针清理（PITFALLS #292）**：26 处指向已归档 `scripts/q24-*/q28-*` 的引用，只清「当前可执行配方」里的，历史会话档案保留 | ❌ | `RUNBOOK`/`INDEX`/`TASKS` 的下一步不再指向不存在脚本 |
+
+**已在本日完成、不再列入待办**：换机可重建度审计 · 邮箱通道验证 · P0 设备资产抢救（`boot_b` sha `78a2beb1…`、1497 `.ko`、207 项配置）· `fastboot fetch` 幻觉清理（PITFALLS #290–#292）· Q28 M1 线坏发现场采集与 3/4 采样 · 身份表误报降级（`check-doctor` FAIL 1→0）。
+
 
 **下一步（只列开放项，按顺序；已完成项一律只入 §1 任务行，不在此重复）**
 1. **Q28 面板 init 间歇失败**（日常可用性第一道门）——**坏发对拍已到手（2026-10-09 深夜）**：断点 = 面板首条 DCS 写（`ff 20`）走 **bonded 命令 DMA 超时**（不是 DPU modeset）；差分只有 `STATUS0 0x0→0x20003`、`CLK_STATUS 0x2343→0x3743`（多 `DYN_PCLK_ACTIVE`+`DYN_CMD_PCLK_ACTIVE`）、`cmd_dma_busy/cmd_engine_busy 0→1`，其余 16 项全等 ⇒ 假说收窄到「首次 modeset 时命令引擎撞上 DYN 像素时钟域切换」。**下一步（2026-10-10 定案后更新，权威=`reports/q28-DOSSIER.md` §f）**：① 先定 `fastboot boot` 冷路径是否等价用户真 POR 冷起（不等价则改用真 POR 做 A/B）；② Method B 按上游「加」部分重出到 vk85（落点 generic `dsi_link_clk_set_rate_6g()`、对象 `msm_host->byte_clk`，非 `_v2_9` 分支、非 cherry-pick `2028280686f4`）；③ 三臂冷起 A/B（base vs round vs delay/`REG_DSI_CLK_STATUS` 轮询），需用户断电配合，每轮 `scripts/q28-devprobe.sh` 三态判 + SSH 读全 dmesg + 查 card0；④ 若取整仍高坏发转 CMD engine 编程 / PHY pll save-restore；⑤ 采 GOOD 冷暖对照坐实基线。判据/根因详见 §5 Q28 与 `reports/q28-DOSSIER.md`。

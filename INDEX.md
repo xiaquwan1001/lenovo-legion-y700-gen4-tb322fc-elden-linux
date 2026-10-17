@@ -103,9 +103,10 @@
 > **本节只回答「现在还没解决什么」，任何数字与当前口径都不在此维护**（见 §2 公开层豁免）。
 
 - **⚠️MIGRATION-LOST（2026-10-17 换机）**：内核 git 线 `vk87–vk126`、`build/` 资产树、`out/*.img`、`logs/`、`tools/` 未随迁（判定不可再生/代价高）；登记与重建路径见 `RESOURCES/README.md` §3.5 + `versions/migration-gaps-2026-10-17.tsv`。
-  **重建账（2026-10-17 审计）**：文档/补丁/配置/证据近乎无损，真损失 = 提交史 + 镜像产物 + **在机镜像（`boot_b`=`m1-baseline-f3` 主机无副本）**；
+  **重建账（2026-10-17 审计）**：文档/补丁/配置/证据近乎无损，真损失 = 提交史 + 镜像产物；**在机镜像已于当日晚 P0 抢救到主机**（`boot_b` sha `78a2beb1…` + 1497 `.ko` + 207 项配置 → `backup/HA2EXB0E-16+512/device-rescue-20261017/`，见 `reports/device-rescue-and-q28-m1-badboot-20261017.md`）；
   分级与顺序（P0 抢救设备资产 → P1 修身份表 → P2 装 clang/dtc → P3 重放 M1-7.3 → P4 重编日常镜像）见 `reports/migration-rebuild-audit-20261017.md`；
   会话记录 `TASKS/sessions/2026-10-17-换机后重建审计-邮箱分诊.md`。**邮箱通道可用**，未处理的上游往来 5 条见 `reports/mail-triage-20261017.md`。
+  **★ 当前待办唯一入口 = `TASKS/README.md` §4 顶部「2026-10-17 待办」7 项（T1–T7）**。
 
 - **未解（3 项，按影响排序）**：① Q28 显示间歇失败；② Q24 熄屏×相机（用户裁决 = 互斥二选一）；③ 进 GUI 后整机卡死（`PITFALLS #106`）。
   **口径 / 样本 / 触发 / 下一步只读** `TASKS/README.md` §5 Q28/Q24 与 `PITFALLS #106`；在机镜像 `boot_b` 见 `DEVICE/README.md` §1.1。
