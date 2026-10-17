@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000002 Mon Sep 17 00:00:00 2001
+From: qianhui xu <sa226154@mail.ustc.edu.cn>
+Date: Sat, 17 Oct 2026 22:40:00 +0800
+Subject: [PATCH] ipa: libipa: add camera sensor helpers for GC08A8 and S5KJNS
+
+Add gain models and black levels for the two sensors used by the
+Lenovo Legion Y700 Gen4 (TB322FC, SM8750):
+
+ - gc08a8 (GalaxyCore, front): raw gain code in 1/1024 steps,
+   pedestal 64 at 10 bits.
+ - s5kjns (Samsung, rear): raw gain code in 1/32 steps,
+   pedestal 64 at 10 bits.
+
+Without these helpers the software ISP interprets the V4L2 analogue
+gain code as a multiplier (e.g. code 32 as 32x) and leaves the
+black level at zero, so AGC converges to an almost black image.
+
+This lets the sensors keep their natural V4L2 control semantics
+(raw gain code) instead of changing the kernel drivers.
+
+Signed-off-by: qianhui xu <sa226154@mail.ustc.edu.cn>
+---
++++ b/src/ipa/libipa/camera_sensor_helper.cpp
+@@ -789,6 +789,38 @@
+ };
+ REGISTER_CAMERA_SENSOR_HELPER("ov13858", CameraSensorHelperOv13858)
+ 
++class CameraSensorHelperGc08a8 : public CameraSensorHelper
++{
++public:
++	CameraSensorHelperGc08a8()
++	{
++		/*
++		 * GalaxyCore GC08A8: the V4L2 analogue gain control is the raw
++		 * sensor gain code in 1/1024 steps (0x0400 == 1.0x).
++		 * Pedestal is 64 at 10 bits (see vendor register defaults).
++		 */
++		blackLevel_ = 4096;
++		gain_ = AnalogueGainLinear{ 1, 0, 0, 1024 };
++	}
++};
++REGISTER_CAMERA_SENSOR_HELPER("gc08a8", CameraSensorHelperGc08a8)
++
++class CameraSensorHelperS5kjns : public CameraSensorHelper
++{
++public:
++	CameraSensorHelperS5kjns()
++	{
++		/*
++		 * Samsung S5KJNS: the V4L2 analogue gain control is the raw
++		 * sensor gain code in 1/32 steps (0x0020 == 1.0x).
++		 * Pedestal is 64 at 10 bits (see vendor register defaults).
++		 */
++		blackLevel_ = 4096;
++		gain_ = AnalogueGainLinear{ 1, 0, 0, 32 };
++	}
++};
++REGISTER_CAMERA_SENSOR_HELPER("s5kjns", CameraSensorHelperS5kjns)
++
+ class CameraSensorHelperVd55g1 : public CameraSensorHelper
+ {
+ public:
+-- 
+2.43.0

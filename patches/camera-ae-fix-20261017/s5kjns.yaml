@@ -1,5 +1,7 @@
 # Per-sensor tuning for s5kjns (TB322FC / elden).
 # blackLevel is a 16-bit value: sensor pedestal is 64 at 10-bit => 64 << 6 = 4096.
+# exposureTarget 0.22 of the histogram range ~= 18% linear grey after the 2.2 gamma
+# (the IPA default 0.5 targets mid-grey linearly and looks washed out on this ISP).
 %YAML 1.1
 ---
 version: 1
@@ -9,4 +11,5 @@ algorithms:
   - Awb:
   - Adjust:
   - Agc:
+      exposureTarget: 0.22
 ...
