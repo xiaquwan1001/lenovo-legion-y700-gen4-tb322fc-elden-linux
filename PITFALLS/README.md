@@ -64,4 +64,5 @@
 | 三十九、能力靠实测不靠 `--help`：`fastboot fetch` 在本机 ABL 不存在（#290）、「客户端有≠设备支持」（#291）、文档指向已归档脚本 26 处（#292）（2026-10-17 复核） | [sessions/39-能力靠实测不靠help：fastboot无fetch与同类记错.md](sessions/39-能力靠实测不靠help：fastboot无fetch与同类记错.md) |
 | 四十、RAM 启动新内核不先部署 `/lib/modules/<新UTS>` ⇒ `lsmod` 空 ⇒ DP 永久 defer ⇒ 无 `card0`（会被误判成 Q28 坏发）（#293，2026-10-17 实测） | [sessions/40-RAM起新内核不部署模块树就没有DRM.md](sessions/40-RAM起新内核不部署模块树就没有DRM.md) |
 | 四十一、设备侧熄屏自动化两坑：`dpms` sysfs 只读（root 也写不进）、Q28 坏发 boot 上 `phoc` crash-loop 约 3 min 才能取到会话总线（#294–#295，2026-10-17 实测） | [sessions/41-设备侧熄屏自动化：dpms只读与坏发会话崩溃.md](sessions/41-设备侧熄屏自动化：dpms只读与坏发会话崩溃.md) |
+| 四十二、相机 AE 三坑：libcamera 无 sensor helper ⇒ 把 V4L2 增益码当真实增益（#296）、软 ISP 黑电平只来自 helper/tuning 且默认 0（#297）、设备有 wlan0 IP 却无外网致就地构建不可行（#298）（2026-10-17 实测） | [sessions/42-相机AE三坑：helper缺失-黑电平-tuning.md](sessions/42-相机AE三坑：helper缺失-黑电平-tuning.md) |
 | 三十八、M1-7.3 模块树补建（`ARCH`/vermagic 双坑）+ 相机栈首次跑通 + `cam-mode.sh off` 反向激活 Q24 + `mxc.lvl→0` 不是死亡签名 + `sync_state` 只在开机窗口生效 + `reboot` 挂起致假 ALIVE + **`#212` 配方 12 发不可复现**（2026-10-15 晚实测） | [sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md](sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md) |
