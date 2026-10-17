@@ -341,9 +341,15 @@ int main(int argc, char **argv) {
                 logmsg("vibrate ON %ld ms amp=%u/255 (activate=%ld duration=%ld)",
                        cur_dur, cur_amp255, act, dur);
             } else if ((dur > 0 && dur != cur_dur) || (unsigned)amp255 != cur_amp255) {
+                int amp_changed = ((unsigned)amp255 != cur_amp255);
                 cur_dur = want;
                 cur_amp255 = (unsigned)amp255;
                 started_at = now;
+                /* The AIDL HAL starts the vibration first and only then pushes
+                 * setAmplitude(), so an amplitude change must re-upload the FF
+                 * effect or the motor keeps running at the stale magnitude. */
+                if (amp_changed)
+                    play_all(1);
                 logmsg("vibrate re-triggered %ld ms amp=%u/255", cur_dur, cur_amp255);
             }
         } else if (running) {

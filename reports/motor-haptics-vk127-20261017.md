@@ -52,10 +52,31 @@ kprobe A/B（写桥文件走 daemon，同一次开机、同一颗马达）：
 
 > 注：HAL 自身 `mAmplitude255 = 255`，且 `start()` 在写 `activate=1` **之前**就写 `amplitude`，所以走 HAL 的正常 Android 请求**大概率仍会震**（桥文件被 HAL 覆写成 255）；缺陷 1 命中的是「HAL 之外」或「HAL 未跑」的路径，缺陷 2 命中「运行中改强度」。两处都应修（初始化改 255 + 变更时重新上传）。
 
-## 4. 结论与下一步
+## 5. 手感复测（2026-10-17 晚，s8 GOOD 发，用户在场）★ 结案
+
+用户结论：**摸到了，两侧均正常**。此前「不工作」是误判，两个原因：
+
+1. **长震是「前强后弱」**：用户明确描述「长时间震动的右侧仅第一下强度大，后续强度小」。
+   - 厂商 `haptic.ko`（`backup/stock-elden/vendor_dlkm/haptic.ko`，带符号）反汇编 `aw8693x_cont_config`（地址 `0x13688`）逐条还原后确认：
+     `0x08=2`(CONT) → `0x08 bit2` → `0x06 bit5=0` → `0x4c bit6=1` → `0x1d=drv1_lvl` → `0x1e=cont_drv1_time` → `0x20=0xff` → `0x09=1`(GO)；
+     与 mainline 驱动 `aw8693x_cont_play()` **逐寄存器一致**，DT 参数（`cont_drv1_lvl=0x7f`、`cont_drv1_time=0x04`）也对得上（归档 `archive/topics/STOCK-KERNEL-2026-09-30.md`）。
+   - 因此「强起始段 + 低维持段」是**厂商设计的驱动包络**，不是我方漏写序列。唯一两家都不写的寄存器 `0x1f`（现场 `0x04`）已做在机 A/B（见 `logs/vk127-stress-20261017/s8-motor-0x1f-ab.txt`）。
+2. **桥的幅度默认 0**（见 §3 缺陷 1）——不经 HAL 的触发会完全静音。
+
+### 已修复并上机验证（2026-10-17 19:49，`logs/vk127-stress-20261017/s8-bridge-fix-verify.txt`）
+
+| 修复 | 内容 | 验证结果 |
+|---|---|---|
+| `rootfs/persistent-overlay/elden-hapticd.initd` | `amplitude` 启动默认值 `0 → 255`（其余三个仍 0） | 起服务后桥文件 `amplitude=255`；**只写 duration+activate 时 `aw86927_haptics_play_work` 命中 = 4**（修复前 = 0） |
+| `scripts/elden-hapticd.c` | 运行中幅度变化时重新 `play_all(1)`（原来是只打日志） | 改幅 255→80 后命中 2 → **6**，日志 `rumble ON (amplitude=80/255) A=0x5050` |
+
+设备侧已部署（`/usr/local/bin/elden-hapticd`、`/etc/init.d/elden-hapticd`，旧件备份 `*.bak-20261017`），服务 started。
+
+---
+
+## 6. 结论与下一步
 
 1. **不是内核/DT/驱动问题**（三者与已知能震的 7.2 线逐字节一致，且芯片确实进 CONT 播放态）。
-2. **不是 Waydroid 桥完全没接通**（服务、挂载、端到端写→FF 都通），但桥的 `amplitude` 默认 0 会让不经 HAL 的触发**静音**。
-3. 待用户手感确认后分叉：
-   - 有震 ⇒ 用户遇到的「不工作」在 Android/容器路径 → 修缺陷 1/2（改 initd + daemon 重新上传），再在容器内 `cmd vibrator_manager synced oneshot 500` 端到端验收。
-   - 不震 ⇒ 走向 LRA/供电侧（芯片 SYSINT 无 UVLO/OVP 报错，需外部电流/电压或与 Android 侧对照）。
+2. **两侧马达都能震**（用户手感确认）；Android/容器路径的两个桥缺陷已修复并验证。
+3. 「长震前强后弱」= 厂商驱动包络（反汇编级证明），**不建议再改**；若要更长的等强维持，属于产品调参（drv1/drv2 包络），需单独立项。
+4. 仍待补：容器内端到端（`waydroid session start` + `cmd vibrator_manager synced oneshot 500` 手感确认）。

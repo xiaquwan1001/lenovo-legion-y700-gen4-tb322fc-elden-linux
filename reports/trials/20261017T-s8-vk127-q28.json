@@ -1,0 +1,23 @@
+{
+  "trial": "vk127-q28-s8",
+  "date": "2026-10-17T19:05+08:00",
+  "image": "out/boot-elden-vk127.img",
+  "image_sha256": "7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633",
+  "kernel_uts": "7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "boot_id": "ab9b3336-0c9a-47c4-8100-429eefcfe3f0",
+  "boot_method": "fastboot boot; user reported 'rebooted to BL' as the starting state (POR vs reboot2 warm NOT yet confirmed by user)",
+  "por": true,
+  "por_note": "user confirmed: full power-off then power+vol-down into fastboot ('断电重启bl')",
+  "modules_present": true,
+  "card0": true,
+  "connector_dsi1": "connected",
+  "dsi_isr": 41,
+  "l1_count": 0,
+  "l2_count": 0,
+  "session": {"phoc": 1, "phosh": 1},
+  "backlight": 511,
+  "verdict": "Q28-GOOD",
+  "visual_confirmation": "USER_CONFIRMED_OK",
+  "notes": "Follows s7 (Q28-BAD, persistent L2 storm with SSH alive). User then returned the device to fastboot; this boot is GOOD (dsi_isr=41, L1/L2=0, backlight 511, phoc/phosh up) -> consistent with the 'bad boots cluster per session, a real POR clears the cluster' model. On this GOOD boot the haptics feel-test was run (see logs/vk127-stress-20261017/s8-motor-feel.txt): 5 phases A-short/A-long/B-short/B-long/both, aw86927_haptics_play_work kprobe 2/2/2/2/4 hits = FF delivered to the chip on every phase.",
+  "sample_validity": "VALID: real POR + dsi_isr=41 + user confirmed desktop"
+}

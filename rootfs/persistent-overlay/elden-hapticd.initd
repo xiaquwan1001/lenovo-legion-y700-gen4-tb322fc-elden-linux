@@ -23,10 +23,15 @@ depend() {
 
 start_pre() {
     mkdir -p /run/elden-haptic/leds/vibrator
-    for f in activate duration state amplitude; do
+    # amplitude 的默认值必须是 255（= 满幅），不能是 0：
+    # elden-hapticd 用 effective_mag = --amp × amplitude/255，若为 0 则 magnitude=0，
+    # 内核 aw86927_haptics_play() 会因 level 未变化直接 return（完全不震，不是“震得轻”）。
+    for f in activate duration state; do
         [ -e "/run/elden-haptic/leds/vibrator/$f" ] || : > "/run/elden-haptic/leds/vibrator/$f"
         echo 0 > "/run/elden-haptic/leds/vibrator/$f" 2>/dev/null || true
     done
+    [ -e /run/elden-haptic/leds/vibrator/amplitude ] || : > /run/elden-haptic/leds/vibrator/amplitude
+    echo 255 > /run/elden-haptic/leds/vibrator/amplitude 2>/dev/null || true
     # 容器内 HAL 以 system(uid 1000) 身份写这三个文件
     chmod 755 /run/elden-haptic /run/elden-haptic/leds
     chmod 777 /run/elden-haptic/leds/vibrator
