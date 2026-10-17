@@ -80,3 +80,21 @@ kprobe A/B（写桥文件走 daemon，同一次开机、同一颗马达）：
 2. **两侧马达都能震**（用户手感确认）；Android/容器路径的两个桥缺陷已修复并验证。
 3. 「长震前强后弱」= 厂商驱动包络（反汇编级证明），**不建议再改**；若要更长的等强维持，属于产品调参（drv1/drv2 包络），需单独立项。
 4. 仍待补：容器内端到端（`waydroid session start` + `cmd vibrator_manager synced oneshot 500` 手感确认）。
+
+## 7. 容器内端到端验收（2026-10-17 夜，`logs/vk127-stress-20261017/s8-waydroid-vib-e2e.txt`、`s8-waydroid-kprobe3.txt`）
+
+台架：`wd-ctl.sh start` + `session` → `waydroid status` = Session/Container **RUNNING**（IP 192.168.240.112）。
+
+| 项 | 结果 |
+|---|---|
+| HAL 来源 | `pid 92` → `/proc/92/exe -> /vendor/bin/hw/android.hardware.vibrator-service.elden`（三期固化版，无 bind 挂载） |
+| 能力 | `mCapabilities=[AMPLITUDE_CONTROL]`、`mSupportedEffects=[CLICK,DOUBLE_CLICK,TICK,THUD,POP,HEAVY_CLICK]` |
+| leds 桥 | 容器内 `/sys/class/leds/vibrator/{activate,duration,state,amplitude,trigger}` 在位（0666/0664） |
+| **内核级链路** | 容器 `cmd vibrator_manager synced oneshot 900` → trace 里 `elden-hapticd-5844: awplay → kworker: awwork`，**awplay=6 / awwork=4**（阳性对照宿主 ffrumble = 2/2） |
+| 幅度透传 | daemon 逐发正确：`amp=255/255`（默认）、`-a 40` → `amplitude=40` + `A=0x2020 B=0x2020`、`-a 200` → `A=0xc8c8` |
+| cancel | `-B oneshot 6000` + 1.5 s `cancel` → daemon `rumble OFF` + `vibrate OFF`（未等满 6 s） |
+| 轻触连击 | 3×`oneshot -a 120 200` → 每发独立 `vibrate ON 120 ms` + `AUTO-OFF` |
+
+⇒ **C10 全链路（Android 框架 → AIDL V2 HAL → 桥 → daemon → aw86937 CONT 播放）端到端通**；物理手感由用户在机上确认。
+
+**取证踩坑**：`/sys/kernel/tracing/tracing_on` 被置 0 后 `trace` 恒空（阳性对照也是 0 命中），会误判成「链路断了」。判 trace 是否活着必须先跑阳性对照（宿主 `ffrumble`）。
