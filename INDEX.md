@@ -102,6 +102,8 @@
 > **SSOT**：任务状态、完成度、样本数一律以 `TASKS/README.md` §0/§1/§5 为准；单元与镜像形态以 `DEVICE/README.md` §1.1/§2.2 为准。
 > **本节只回答「现在还没解决什么」，任何数字与当前口径都不在此维护**（见 §2 公开层豁免）。
 
+- **⚠️MIGRATION-LOST（2026-10-17 换机）**：内核 git 线 `vk87–vk126`、`build/` 资产树、`out/*.img`、`logs/`、`tools/` 未随迁（判定不可再生/代价高）；登记与重建路径见 `RESOURCES/README.md` §3.5 + `versions/migration-gaps-2026-10-17.tsv`。
+
 - **未解（3 项，按影响排序）**：① Q28 显示间歇失败；② Q24 熄屏×相机（用户裁决 = 互斥二选一）；③ 进 GUI 后整机卡死（`PITFALLS #106`）。
   **口径 / 样本 / 触发 / 下一步只读** `TASKS/README.md` §5 Q28/Q24 与 `PITFALLS #106`；在机镜像 `boot_b` 见 `DEVICE/README.md` §1.1。
 - ✅ **已解（近期）**：Q31 M1-7.3 显示回归（2026-10-14 E1b）——见 `TASKS/README.md` §5 Q31 / §7。

@@ -1,0 +1,16 @@
+# ⚠️MIGRATION-LOST 迁移缺口登记（2026-10-17 换机 xuqianhui1001→xuqianhui）
+# 列：path	status	impact	recovery	evidence
+# status: LOST（不可再生/代价高） / LOST-REDOWNLOADABLE（可重下） / EXPECTED-ABSENT（按决定清空） / RESTORED / RESTORED-ADAPTED
+build/	LOST	M1/M3 内核资产树+全部 worktree 丢失；M1-7.3 末态无树	按 reports/m1-rebase-7.3rc7-execution-20261013.md + patches/upstream/m1-2026-10-14/ 在 pristine 24a19b953e 上重放	目录不存在；.gitignore /build/
+geekidos-linux refs vk87..vk126,m1/*,m3/*	LOST	现役内核线（含部署 vk94、m1-73/baseline tip c7da05b1d8）无提交对象	按 versions/vk-kernel-identity.tsv 的 src_sha 重建或从镜像重放	bundle 最新=vk86（2026-10-10，43 ref）
+out/*.img (vk42..vk126)	LOST	台架臂、在机镜像不可复跑	由 patches/ + patches/config-vkNN-* 重建；在机 b 槽(m1-baseline-f3)与 backup/HA2EXB0E 各留 1 份	仅 153 个 .manifest 在库
+logs/	LOST	reports 证据指针悬空（logs/bench-20261011, logs/ui-20261011）	原始日志不可重建	reports/TASKS 引用
+tools/	LOST	含 tools/wd-audio-test/（C6 音频取证工具）	按 reports/container-audio-20261011.md 重写	—
+edk2-gunyah,edk2-gunyah-qemu,edk2-aarch64-gunyah,mu_wide_platforms,uefi-firmware-backup	LOST-REDOWNLOADABLE	G1-29/C8 取证材料	重新 git clone	RESOURCES §1.6
+qdl,twrp,pkgs,pkgs-phosh,pkgs-x86,probe,flashing-bundle	LOST-REDOWNLOADABLE	工具与包缓存	重下/重装（rootfs/debs-manifest.txt 记版本）	—
+rootfs/alpine,rootfs/dl,rootfs/debs	LOST-REDOWNLOADABLE	rootfs 构建缓存与源码包	rootfs/build-rootfs.sh 重生成	—
+/mnt/Samsung/l2/{super,system_a,system_a.pristine}.img	EXPECTED-ABSENT	按用户决定随外置盘清空	云盘全量线刷包已覆盖	cloud README §不在包内
+.pi/sessions/	RESTORED	311 文件/391M 会话轨迹（含 subagent 工件）	2026-10-17 从备份包 T3-sessions 提取	本文件；顶层 jsonl 177+1
+/mnt/Samsung/mesa-out/	RESTORED	Mesa A830 26.1.8 产物（14 文件）	2026-10-17 从备份包 T2 提取	本文件
+backup/fw/vendor/firmware/wlan/*	RESTORED	WLAN 固件软链 11 条	2026-10-17 从备份包 T2 提取	本文件
+mnt/Samsung/l2/dump-super.sh	RESTORED-ADAPTED	包内旧版指向 /home/xuqianhui1001/...	保留本地新机版（与包内仅 2 行路径差）	diff 2026-10-17

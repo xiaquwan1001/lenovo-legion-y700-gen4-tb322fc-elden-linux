@@ -330,6 +330,24 @@ git log --oneline -10
   `git -C geekidos-linux add -A && git commit -m "elden: vkN ..."`，从干净树构建。
 - **不要** `git add -f` 大文件；确需留档走磁盘备份 / 云盘，不入 git。
 
+### 5. ⚠️MIGRATION-LOST 迁移缺口登记（2026-10-17）
+
+> **标记约定**：凡引用下列路径的位置一律带 `⚠️MIGRATION-LOST`；机器可查登记 = `versions/migration-gaps-2026-10-17.tsv`。
+> 背景：2026-10-17 换机（`xuqianhui1001`→`xuqianhui`）。**已进 git 的一切 100% 恢复**（443 提交、HEAD `1a4bd89`、origin USTC HTTPS + GitHub 镜像）；
+> **未进 git 的大目录与内核 git 线未随迁**，故登记如下（结论只在 `TASKS`/`DEVICE` 维护，此处只登记「资料在不在」）。
+
+| 类别 | 内容 | 状态 | 影响 / 重建路径 |
+|---|---|---|---|
+| 内核线 | `geekidos-linux` refs `vk87–vk126`、`m1/*`、`m3/*` | ⚠️MIGRATION-LOST | 现役线（含部署 vk94、`m1-73/baseline` tip `c7da05b1d8`）无提交对象；bundle 只到 vk86（2026-10-10，43 ref） |
+| 资产树 | `build/`（M1/M3 内核树与 worktree，~4 G） | ⚠️MIGRATION-LOST | M1-7.3 末态需按 `reports/m1-rebase-7.3rc7-execution-20261013.md` + `patches/upstream/m1-2026-10-14/` 重放 |
+| 镜像 | `out/*.img`（`vk42–vk126`，~3.5 G） | ⚠️MIGRATION-LOST | 只剩 153 个 `.manifest`；台架臂不可复跑（在机 b 槽 + `backup/HA2EXB0E` 各留 1 份） |
+| 日志/工具 | `logs/`（92 M）、`tools/`（14 M，含 `tools/wd-audio-test/`） | ⚠️MIGRATION-LOST | `logs/bench-20261011`、`logs/ui-20261011` 等证据指针悬空、不可重建 |
+| 可重下 | `edk2-*`、`mu_wide_platforms`、`uefi-firmware-backup`、`qdl`、`twrp`、`pkgs*`、`probe`、`rootfs/{alpine,dl,debs}` | LOST-REDOWNLOADABLE | 重下/重建，非硬伤 |
+
+**已用备份包补回（2026-10-17）**：`.pi/sessions/`（311 文件 / 391 M，含 subagent 工件）、`~/mnt/Samsung/mesa-out/`（Mesa 26.1.8，14 文件）、`backup/fw/vendor/firmware/wlan/*`（11 条软链）。
+**核对**：`~/下载/cloud-backup-y700-elden-20261016.tar.zst` 按包内 `MANIFEST.sha256` 全量校验 = **3608/3609 OK、0 缺失**；唯一差异 = `mnt/Samsung/l2/dump-super.sh`（本地版=新机路径适配，实测仅 2 行差，保留本地版）。核对后 **tar 已删除**；清单留档 `versions/cloud-backup-20261016.MANIFEST.sha256`（内容摘要 = `reports/cloud-backup-manifest-20261016.md`）。
+另：`~/下载/migration-2026-10.tar.xz`（490 M，dotfiles/secrets 迁移包）**未动**。
+
 ---
 
 ## 4. 会话检索（不再手抄索引；**会话数/统计 SSOT = `SESSIONS/README.md` §1**）
