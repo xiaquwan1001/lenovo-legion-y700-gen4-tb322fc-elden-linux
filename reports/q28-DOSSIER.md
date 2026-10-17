@@ -412,3 +412,28 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 **唯一变量**：`UTS_VERSION` 的 `#N`/日期长度 → `.rodata` 布局（`#60` 2 位 vs 3 位）。
 ~~**治法**：日常镜像用 3 位 `#N` 的新构建身份重编（同源码 + ADSP DTB）。~~ **← 已执行（`vk113-dailyid`）并于同日实测作废（`PITFALLS #217/#223`、`reports/q28-identity-retest-20261012.md`）：3 位身份是偏置不是解。本卷 §q 的结论以文首「当前口径」为准。**
 **证据**：`reports/q28-storm-bias-audit-20261011.md`、`PITFALLS #195`、`reports/trials/index.tsv`（`*q28storm*`）。
+
+---
+
+## r) 2026-10-15 活体坏发：M1-7.3 上游化基线（E1b 已在树内）依然坏
+
+> 口径不变：**未解**，恢复仍只能整机复位。**T6 归档补充（2026-10-17）**：把 M1-7.3 首个坏发现场并入本卷，原始证据见 `reports/q28-badboot-m1-baseline-20261015.md`。
+
+| 项 | 值 |
+|---|---|
+| 镜像 | `boot_b` = `m1-baseline-f3`（sha `40e13f8ad43b…`；内核载荷 `32e93db7a0c2…`） |
+| UTS | `7.3.0-rc7-debug-ged6f232d10e3`（源码 `m1-73/baseline` tip `ad5f03c43c` = 7.3-rc7 + DSI 1 行 E1b + ath12k F3） |
+| 驻留 | **坏发态驻留 1 h 58 min**（uptime 7103 s，刷机后从未复位） |
+| 签名 | 逐字同型：`status=0x2200200`、`bonded command DMA failed: master=-110 peer=-110` |
+| 反例 | `dsi_isr=0`，DPU `core_irq` 3 s 内冻结在 10（显示流水线未扫描），L2 834+1202 |
+| 假 GOOD | `card0-DSI-1=connected`、phoc/phosh/wayland 在、背光 160 **全部照常** |
+
+**三条结论**（与本卷既有口径的关系）：
+
+1. **与镜像/身份/血统无关**：这一发跑在**全新上游化树**（7.3-rc7 + 16 文件 payload）上，血缘与 `vk94`/`vk113`（7.2 血统）完全不同，签名逐字相同 ⇒ 支持「坏发 ~50%、按时间成簇、与镜像无关」（`PITFALLS #217/#223`）。
+2. **E1b 修的是另一层**：E1b = **确定性**上游缺口（bonded `PLL_SYSTEM_MUXES=0xc0` 永不写入），Q28 = **概率性**首条 DCS `ff 20` 命令 DMA 超时（故障态在 DSI 控制器之外）。本发即「E1b 在树内仍坏」的实证 ⇒ 10-13/14 那批「上游 DSI 点不亮」的结论确被显示回归污染，不能在 E1b 后继续引用。
+3. **判据纪律**：坏发上 connector/session/背光/grim 全部正常 ⇒ 唯一可信判据 = **用户目视**；客观替代 = `l1==0` + `dsi_isr` + `core_irq` 递增（`PITFALLS #251/#255`）。`scripts/q28-devprobe2.sh` 本会话两次把黑屏误报 `VERDICT=GOOD`，规则已被证伪。
+
+**产物**：`reports/trials/20261015T083353Z-m1-baseline-f3-badboot-20261015.json`、`logs/q28-badboot-20261015/`（dmesg 4643 行、core-irq-freeze、devprobe2、state、bootlog）、采样协议 `.pi/plans/2026-10-15-armA-采样协议.md`。
+
+**交接**：重放后的同源镜像 = `out/boot-elden-vk127.img`（见 `reports/replay-2026-10-17-m1-73-vk127.md`），可作为本节的**可重建台架**；上机 3 发采样仍未做。
