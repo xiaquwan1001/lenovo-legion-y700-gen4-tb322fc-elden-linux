@@ -1,0 +1,39 @@
+{
+  "trial": "vk127-q28-s7",
+  "date": "2026-10-17T18:44+08:00",
+  "image": "out/boot-elden-vk127.img",
+  "image_sha256": "7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633",
+  "kernel_uts": "7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "boot_id": "6a5b56c4-c6ba-4b0e-bd8f-eabf8a69cce8",
+  "boot_method": "fastboot boot (device was already sitting in fastboot at session start; POR/warm entry point of that fastboot session NOT recorded by this agent)",
+  "por": "unverified",
+  "modules_present": true,
+  "card0": true,
+  "connector_dsi1": "connected",
+  "dsi_isr": 0,
+  "l1_count": 2,
+  "l1_signature": [
+    "msm_dsi ae94000.dsi: command DMA timeout: status=0x2200200 @8.607s",
+    "msm_dsi ae96000.dsi: peer command DMA timeout: status=0x2200200 @8.613s",
+    "bonded command DMA failed: master=-110 peer=-110 @8.613s",
+    "panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -110 -> retry -5 -> -5",
+    "Failed to initialize panel: -5 @8.670s"
+  ],
+  "l2_signature": [
+    "hw recovery is not complete for ctl:1",
+    "dpu_encoder_phys_vid_prepare_for_kickoff: enc35 intf1/intf2 ctl 1 reset failure: -22",
+    "dpu_encoder_frame_done_timeout: enc35 frame done timeout",
+    "dpu_encoder_phys_vid_wait_for_commit_done: vblank timeout / wait for commit done returned -110"
+  ],
+  "session": {
+    "phoc": 1,
+    "phosh": 1,
+    "ssh": "UP (unlike the 2026-10-08 vk63 form where SSH banner exchange timed out)"
+  },
+  "backlight": 160,
+  "uptime_at_sampling_s": 559,
+  "verdict": "Q28-BAD (L1, canonical signature)",
+  "visual_confirmation": "PENDING_USER",
+  "notes": "4th boot of the vk127 line after the 3/3 GOOD cold-boot batch (s4/s5/s6) of 2026-10-17. Canonical Q28 L1 reproduced, dsi_isr=0. L2 storm continues post-boot (t=125.9/127.5/129.1/130.5/133.2/140.5/177.5/193.3s in live dmesg), i.e. this form is a PERSISTENT down-state, not boot-time transient. Gotcha that cost evidence: agent ran `dmesg -C` on the device (would have destroyed L1 lines); L1 was recovered from the persisted /var/log/dmesg written at boot. Do NOT clear dmesg on device - copy /var/log/dmesg instead.",
+  "sample_validity": "valid as a Q28-BAD observation; entry path to fastboot unverified"
+}
