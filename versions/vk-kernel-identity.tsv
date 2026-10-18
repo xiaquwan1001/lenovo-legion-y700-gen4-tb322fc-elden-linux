@@ -1,2 +1,3 @@
 build	image	reg	img_uts	kbin_sha	src_sha	src_ref	src_tag	tree_head	tree_state	flag
 vk127	boot-elden-vk127.img	vk127	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	2e0fc063e176	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127	vk127	24223e44ad80	dirty	ok
+(no-payload)	dtbo-dummy.img	-	(无内核载荷)						-	skip
