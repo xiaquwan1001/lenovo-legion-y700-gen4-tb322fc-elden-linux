@@ -2,7 +2,13 @@
 
 > 任务 = `TASKS/README.md` C5 ②（容器侧 camera provider）。主机 PC 交叉编译，设备只做装载与验证。
 > 上一轮（2026-10-17 晚）结论「镜像里根本没有 camera HAL 二进制」由本报告闭环到「**有，且能注册，但首笔 binder 事务即 SIGSEGV**」。
-> 会话：pi `01a14c64`（2026-10-18T00:23Z 起）。未解决项见 §5，坑见 `PITFALLS` §44（#306–#313）。
+> 会话：pi `01a14c64`（2026-10-18T00:23Z 起）。未解决项见 §5/§9，坑见 `PITFALLS` §44（#306–#317）。
+
+> **★当前口径（2026-10-18 晚，权威 = 本文 §8/§9）**：provider 崩溃**与 camera 无关** —— 3 行最小 HIDL 客户端
+> （`IServiceManager::getService()`）在本容器同样 abort（`hidl_string::~hidl_string → free(0x30)`）。
+> 已排除 `__ndk1` 命名空间 / `hidl_string` 布局 / NDK 与平台 libc++ 头 / donor interface 库 / passthrough 路径 / VINTF 白名单。
+> 剩余方向 = 按容器 VNDK33（`TQ3A.230901.001`）的 AOSP tag 重取 libhidl/libhwbinder/system-core/frameworks-native 头重编 + `hidl-smoke` 二分。
+> **§1–§7 为历史口径链**（§7 的「平台自产件能活」结论已被 §8 推翻，保留追溯）。
 
 ---
 
