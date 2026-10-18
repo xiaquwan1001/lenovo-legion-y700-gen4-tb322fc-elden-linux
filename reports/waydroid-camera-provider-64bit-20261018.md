@@ -156,3 +156,27 @@ CameraProviderManager: tryToInitializeHidlProviderLocked: HIDL … 'external/0' 
 
 设备已回滚到上一轮基线 vendor.img（128 MiB 自编镜像，`sha256 7ec8f245…`），容器可正常启动、`Number of camera devices: 0`（provider 仍崩，符合已知状态）；
 容器/session 已停、`v4l2loopback` 未加载、无 `/dev/video*` 残留。
+
+---
+
+## 8. §7 的更正（2026-10-18 傍晚，manifest 修好后的重测）
+
+**结论翻转**：§7.1 的「A 悬（自编）崩、B 臂（平台自产）活」只成立于 manifest 已坏、没有事务投递的环境；
+把 VINTF manifest 改成合法结构后，**平台自产的 `@2.5-service_64` 也在首笔事务 SIGSEGV，寄存器指纹与自编件逐字相同**
+（`pc = x8 = 0xffff…ffe0`、`x1 = 0x0f43484e`、`x22` 相同）。⇒ **不是自编工具链独有**。
+
+| 事实 | 证据 |
+|---|---|
+| manifest 三个 ill-formed 规则（同名 `<hal>` 只能一个、同名 `<interface>` 只能一个、同一 `<hal>` 不能并列 2.4/2.5） | `hwservicemanager` 的 `VINTF parse error` 原文；错一个则**所有** vendor HAL 注册失败、容器半启动 |
+| 修好后 `Number of camera devices: 0` 且 `dumpsys media.camera` 可用（容器健康） | 本轮 logcat |
+| AOSP 自产 2.5 服务：`Registered android.hardware.camera.provider@2.5::ICameraProvider/legacy/0` → 8 ms 后 SIGSEGV，`HwBinder:2730_2` | 本轮 logcat + tombstone |
+| 两条 provider 的共同点 | 都使用 **donor 产出的** 带 vtable 的 camera HIDL 库（`provider@2.4.so`/`-legacy.so`/`camera.device@3.x-impl.so`） |
+| 容器自有 HIDL 服务（audio/sensors/light/composer）正常 | 同一 boot 内无 abort |
+
+**下一步（唯一，已写进 TASKS C5）**：**自编 interface libs（Bn/Bp）**——用 `hidl-gen -Lc++-sources` 生成
+`android.hardware.camera.provider@2.4/2.5`、`camera.device@3.2–3.6`、`camera.common@1.0`、`android.hidl.base@1.0` 的
+`sources` 并链进我们自己的 `.so`，让**所有带 vtable 的代码都来自我们这一份头文件**，再测；同时对照
+donor 库用 `DT_RELR`、我们用 `RELA` 这一差异（`readelf -d`），确认排除重定位层问题。
+
+**资产**：`scripts/waydroid-camera-bake.sh` 新增 `--legacy`（装 donor 平台自产 2.5 provider + 合法 manifest 模板），
+本轮就是用它做的实验；设备已回滚基线镜像（`sha256 7ec8f245…`）。

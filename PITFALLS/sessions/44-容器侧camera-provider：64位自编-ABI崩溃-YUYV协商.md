@@ -79,25 +79,45 @@
 - 写后校验只看 **读回 sha256**（本轮 `bootslot-b/boot_b.img` 与设备 `dd /dev/disk/by-partlabel/boot_b` 逐字节一致：
   `83d4e08add88abd2…`）；本机 ABL **无 `fastboot fetch`**（#290），读回走设备侧 `dd`。
 
-## #314 VINTF manifest 是注册硬门；改它不能用 `debugfs` 单文件替换
+## #314 VINTF manifest 的三个「ill-formed」陷阱（错一个 → 整份 vendor manifest 作废）
 
-- `hwservicemanager` 只放行 **manifest 里声明过的 `(包, 版本, 实例)`**。donor 的 `@2.5-service_64` 注册 `legacy/0`，
-  而 Waydroid 的镜像只声明了 `@2.4::ICameraProvider/external/0` ⇒ 直接
-  `Error while registering provider service: -2147483648`（`-0x80000000` = `UNKNOWN_ERROR`）后 `abort`。
-- **替换 `/vendor/etc/vintf/manifest.xml` 后立刻出现全体 vendor HAL 报 `must be in VINTF manifest`**
-  （gatekeeper/light/power/memtrack/allocator 等，条目其实都在同一文件里）⇒ 容器半启动、`dumpsys media.camera` 直接 `Can't find service`。
-  回滚原镜像立刻恢复。判据：`getprop | grep init.svc.<hal>` 大面积 `restarting` + 上述 E 行。
-- 治法：改 manifest 走**全量重建**（`mke2fs -N … -d stage`，SELinux label 由 mke2fs 落），
-  或用 `etc/vintf/manifest.d/` 片段文件 + 正确 label；**不要**用 `debugfs rm/write` 就地替换 manifest。
-  就地 `debugfs` 加**新** `.so`/可执行文件是可行的（本轮试过，能跑）。
+- 判据：`logcat | grep "VINTF parse error"`，`hwservicemanager` 会直接报出**具体**规则（别猜）：
+  1. `Duplicated manifest.hal entry android.hardware.camera.provider`
+     ⇒ **同名 HAL 只能有一个 `<hal>` 块**（我把 legacy/0 写成第二个 `<hal>` 就触发）。
+  2. `Duplicated interface entry "ICameraProvider"; if additional instances are needed, add them to the existing <interface> node`
+     ⇒ **同名 interface 只能有一个 `<interface>`，多实例写成多行 `<instance>`**。
+  3. `'android.hardware.camera.provider' is not a valid Manifest HAL: Duplicated major version: 2.5 vs. 2.4`
+     ⇒ 同一个 `<hal>` 里不能同时列 `2.4` 和 `2.5`（同 major）；写一条 `2.5` 即可（`@2.4::…/legacy/0` 的 fqname 仍可用）。
+- **代价**：manifest 一旦 ill-formed，**所有** vendor HAL 都 `must be in VINTF manifest` 而注册失败，
+  容器半启动（`dumpsys media.camera` → `Can't find service: media.camera`）。现象很像「镜像坏了」，实际是 XML 规则。
+- 正确写法（`scripts/waydroid-camera-bake.sh --legacy` 已固化为模板）：
+  ```xml
+  <hal format="hidl">
+    <name>android.hardware.camera.provider</name>
+    <transport>hwbinder</transport>
+    <version>2.5</version>
+    <interface>
+      <name>ICameraProvider</name>
+      <instance>external/0</instance>
+      <instance>legacy/0</instance>
+    </interface>
+    <fqname>@2.4::ICameraProvider/external/0</fqname>
+    <fqname>@2.5::ICameraProvider/legacy/0</fqname>
+    <fqname>@2.4::ICameraProvider/legacy/0</fqname>
+  </hal>
+  ```
+- ⚠️ 更正前稿：曾把「全体 HAL 注册失败」归因于「`debugfs` 替换 manifest 丢 SELinux label」——**错**，
+  真因就是上面的 XML 规则（`debugfs` 替换本身无害，本轮多次验证）。
 
-## #315 「谁的 ABI 不对」的判定顺序：先跑平台自产二进制，再谈重编
+## #315 A/B 结论会翻转：平台自产二进制也崩 ⇒ 先验证「环境」再怀疑自编件
 
-- 自编 64-bit provider 注册成功但**首笔事务 SIGSEGV**（`BHwBinder::transact+156`）。分类步骤（省一整天）：
-  1) 反汇编 `libhidlbase.so`：`+156` 就是 `ldr x8,[vptr,#96]; blr x8` ⇒ **+96 = `onTransact` 槽**；
-  2) tombstone 里取 `x23`（`this`）→ `[x23]` = vptr → 用 tombstone 的 **memory map** 反查 vptr 落在哪个模块的 `.data.rel.ro`
-     （本轮 = `/vendor/lib64/android.hardware.camera.provider@2.4.so`，即**平台自产的 Bn 包装对象**）；
-  3) 把自编实现的 vtable 逐槽 dump（`readelf -rW obj/X.o` 里 `.data.rel.ro._ZTV…` 的**重定位顺序** + `c++filt`），核对槽序；
-  4) **最强判据**：往同一镜像塞平台自产的同版本 64-bit provider（donor 有），补 `-legacy.so`/`camera.device@*.0-impl.so`
-     依赖 + manifest 实例后看它是 `running` 还是 `restarting`。本轮平台自产 = **running** ⇒ 环境无罪，锅在自编工具链/ABI。
-- 配套：`__ndk1` vs `__1` 一定要先 `readelf --dyn-syms | grep -c __ndk1` 验证为 0（本轮已是 0，故不是命名空间问题）。
+- 第一次 A/B 曾看到 donor 的平台自产 `provider@2.5-service_64` = `init.svc…running`，据此判定「锅在自编 ABI」。
+  **manifest 修好后（真能投递事务）它同样在首笔事务 SIGSEGV，且寄存器指纹与自编件逐字相同**
+  （`pc = x8 = 0xffffffffffffffe0`、`x1 = 0x0f43484e`、`x22` 相同）⇒ **不是自编件独有**。
+- 教训：`init.svc…=running` 只代表**进程活着**；没有事务（`dumpsys media.camera` 真连上）就不算存活证明。
+  判活必须带「有事务进来」：看 `getService: found dead hwbinder service` / `is not actually available` 有没有消失。
+- 两条 64-bit camera provider 的共同点 = **都用了 donor 产出的、带 vtable 的 camera HIDL 库**
+  （`android.hardware.camera.provider@2.4.so` / `-legacy.so` / `camera.device@3.x-impl.so`）；
+  容器自己的 HIDL 服务（audio/sensors/light）都正常 ⇒ 下一步应当**自编这些 interface 库（Bn/Bp）**、
+  彻底不用 donor 二进制再测，而不是继续调编译参数。
+- 2026-10-18 当时的设备状态已回滚到「自编 provider + 崩」的基线镜像（`sha256 7ec8f245…`），容器可正常启动。

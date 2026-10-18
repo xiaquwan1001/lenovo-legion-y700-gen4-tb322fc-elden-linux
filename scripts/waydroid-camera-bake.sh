@@ -13,7 +13,10 @@
 #
 # The image is 100% full upstream (PITFALLS #244) ⇒ grow it to 128 MiB first.
 #
-# usage: scripts/waydroid-camera-bake.sh [--build] [--no-push]
+# usage: scripts/waydroid-camera-bake.sh [--no-push] [--legacy]
+#   --legacy : ALSO install donor's AOSP-built 64-bit provider@2.5-service_64 (registers legacy/0)
+#              + its -legacy.so / camera.device@*.0-impl.so deps + VINTF legacy/0 entry.
+#              Used for the C5 A/B (platform-built provider = control arm).
 set -eu
 cd "$(dirname "$0")/.."
 W=dl-cam
@@ -21,7 +24,8 @@ TAB=${TAB:-root@192.168.7.1}
 SSH="ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=5 $TAB"
 SCP="scp -q -o BatchMode=yes -o StrictHostKeyChecking=no"
 PUSH=1
-for a in "$@"; do case "$a" in --no-push) PUSH=0;; esac; done
+LEGACY=0
+for a in "$@"; do case "$a" in --no-push) PUSH=0;; --legacy) LEGACY=1;; esac; done
 
 SRC=$W/vendor-orig.img
 OUT=$W/vendor-cam.img
@@ -37,9 +41,9 @@ rm -rf "$STAGE/lost+found"
 echo "  staged $(find "$STAGE" -type f | wc -l) files"
 
 echo "[3/6] vintf manifest patch"
-python3 - "$W/camx/vendor-manifest.xml" "$W/vendor-manifest-cam.xml" <<'PY'
+python3 - "$W/camx/vendor-manifest.xml" "$W/vendor-manifest-cam.xml" "${LEGACY:-0}" <<'PY'
 import sys
-src, dst = sys.argv[1], sys.argv[2]
+src, dst, legacy = sys.argv[1], sys.argv[2], sys.argv[3] == "1"
 s = open(src).read()
 old = """    <hal format="hidl">
         <name>android.hardware.camera.provider</name>
@@ -62,8 +66,28 @@ new = """    <hal format="hidl">
         <fqname>@2.4::ICameraProvider/external/0</fqname>
     </hal>"""
 assert old in s, "2.7 camera.provider block not found"
-open(dst, "w").write(s.replace(old, new))
-print("  manifest: 2.7 external -> 2.5 + 2.4 external")
+s = s.replace(old, new)
+if legacy:
+    # NOTE: libvintf rejects a *second* <hal> block with the same name
+    # ("Duplicated manifest.hal entry") — that makes the WHOLE vendor manifest
+    # ill-formed and every vendor HAL fails VINTF registration. So merge the
+    # legacy/0 versions+instances into the SAME camera.provider <hal> block.
+    merged = """    <hal format="hidl">
+        <name>android.hardware.camera.provider</name>
+        <transport>hwbinder</transport>
+        <version>2.5</version>
+        <interface>
+            <name>ICameraProvider</name>
+            <instance>external/0</instance>
+            <instance>legacy/0</instance>
+        </interface>
+        <fqname>@2.4::ICameraProvider/external/0</fqname>
+        <fqname>@2.5::ICameraProvider/legacy/0</fqname>
+        <fqname>@2.4::ICameraProvider/legacy/0</fqname>
+    </hal>"""
+    s = s.replace(new, merged, 1)
+open(dst, "w").write(s)
+print("  manifest: 2.7 external -> 2.5 + 2.4 external" + (" + legacy/0" if legacy else ""))
 PY
 
 echo "[4/6] add files to stage + build 128 MiB image with plenty of inodes"
@@ -103,6 +127,23 @@ put "$W/sysroot/lib/android.hardware.graphics.mapper@4.0.so" /lib64/android.hard
 put "$W/hw-interfaces/camera/provider/2.4/default/android.hardware.camera.provider@2.4-external-service.rc" /etc/init/android.hardware.camera.provider@2.4-external-service.rc 644
 put "$W/vdump/etc/permissions/android.hardware.camera.external.xml" /etc/permissions/android.hardware.camera.external.xml 644
 put "$W/vendor-manifest-cam.xml" /etc/vintf/manifest.xml 644
+
+if [ "$LEGACY" = 1 ]; then
+  # donor (LineageOS 20 / A13, AOSP-built) 64-bit provider that registers legacy/0
+  put "$W/vdump/bin/hw/android.hardware.camera.provider@2.5-service_64" /bin/hw/android.hardware.camera.provider@2.5-service_64 755
+  put "$W/vdump/etc/init/android.hardware.camera.provider@2.5-service_64.rc" /etc/init/android.hardware.camera.provider@2.5-service_64.rc 644
+  put "$W/vdump/lib64/android.hardware.camera.provider@2.4-legacy.so" /lib64/android.hardware.camera.provider@2.4-legacy.so 644
+  put "$W/vdump/lib64/android.hardware.camera.provider@2.5-legacy.so" /lib64/android.hardware.camera.provider@2.5-legacy.so 644
+  put "$W/vdump/lib64/camera.device@1.0-impl.so" /lib64/camera.device@1.0-impl.so 644
+  put "$W/vdump/lib64/camera.device@3.4-impl.so" /lib64/camera.device@3.4-impl.so 644
+  put "$W/vdump/lib64/camera.device@3.5-impl.so" /lib64/camera.device@3.5-impl.so 644
+  put "$W/vdump/lib64/libcamera.so" /lib64/libcamera.so 644
+  put "$W/vdump/lib64/libcamera-base.so" /lib64/libcamera-base.so 644
+  mkdir -p "$STAGE/lib64/libcamera"
+  cp -f "$W/vdump/lib64/libcamera/"*.so "$STAGE/lib64/libcamera/" 2>/dev/null || true
+  put "$W/vdump/lib64/hw/camera.libcamera.so" /lib64/hw/camera.libcamera.so 644
+  echo "  [legacy] + provider@2.5-service_64 (donor, AOSP-built) + legacy libs + manifest legacy/0"
+fi
 
 mke2fs -q -t ext4 -b 4096 -I 256 -N 8192 -L vendor -d "$STAGE" "$NEW" 128M
 e2fsck -f -y "$NEW" >/dev/null 2>&1 || true
