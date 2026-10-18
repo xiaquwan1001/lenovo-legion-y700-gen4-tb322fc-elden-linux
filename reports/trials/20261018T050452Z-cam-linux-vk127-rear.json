@@ -1,0 +1,18 @@
+{
+  "label": "cam-linux-vk127-rear",
+  "ts": "2026-10-18T05:04:52Z",
+  "vk": "vk127",
+  "image": "vk127",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "pass",
+  "log_dir": "",
+  "note": "cam -c1 -C2: seq 0-1, 30.06 fps, bytesused 50331648 (4072x3072 ABGR8888); dmesg 无 camss/vfe/EPIPE 错误；20 帧末帧亮度 mean 0.2（暗场景/AE，见 PITFALLS #318）"
+}

@@ -1,0 +1,35 @@
+#!/sbin/openrc-run
+# /etc/init.d/greetd — 项目补丁版（2026-10-18）
+# 原版问题：depend() 只有 need localmount；冷起时 seatd/elogind 未就绪 → greetd 崩溃，
+# 表现为「开机无桌面、loginctl 无会话、phoc 不启动」。
+# 本版：① after seatd elogind；② 交给 supervise-daemon 守护（崩溃 5 s 后重起，最多 10 次）。
+
+name="greetd"
+description="Greeter daemon"
+
+: ${cfgfile:="/etc/greetd/config.toml"}
+
+command=/usr/sbin/greetd
+command_args="--config $cfgfile ${command_args:-}"
+pidfile="/run/$RC_SVCNAME.pid"
+
+supervisor=supervise-daemon
+respawn_delay_seconds=5
+respawn_max=10
+output_log=/var/log/greetd.log
+error_log=/var/log/greetd.log
+
+required_files="$cfgfile"
+
+start_pre() {
+	# note that this user is the user from the config.toml
+	local homedir="$(getent passwd greetd | cut -d: -f6)"
+	checkpath -d -m750 -o greetd:greetd "$homedir"
+	checkpath -f -m640 -o root:root /var/log/greetd.log
+}
+
+depend() {
+	need localmount
+	after seatd elogind
+	provide display-manager
+}

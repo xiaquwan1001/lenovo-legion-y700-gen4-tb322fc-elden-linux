@@ -1,0 +1,18 @@
+{
+  "label": "cam-linux-vk127-front",
+  "ts": "2026-10-18T05:04:58Z",
+  "vk": "vk127",
+  "image": "vk127",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "pass",
+  "log_dir": "",
+  "note": "cam -c2 -C20: 30.26 fps, bytesused 31961088 (3264x2448 ABGR8888), 20 帧全收；末帧亮度 mean 0.2 std 1.7（暗场景/AE，成像内容需明亮场景复核）"
+}

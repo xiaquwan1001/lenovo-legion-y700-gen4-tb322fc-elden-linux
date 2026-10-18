@@ -138,3 +138,5 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-17T12:30:14Z	n7-vk127-armB-round4	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log
 2026-10-17T12:30:58Z	n7-vk127-armB-round5	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log
 2026-10-17T12:31:42Z	n7-vk127-armB-round6	vk127	warm	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n7-vk127-20261017-202715.log
+2026-10-18T05:04:52Z	cam-linux-vk127-rear	vk127	cold	none	pass	(absent)	
+2026-10-18T05:04:58Z	cam-linux-vk127-front	vk127	cold	none	pass	(absent)	
