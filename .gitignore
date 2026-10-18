@@ -101,3 +101,20 @@ __pycache__/
 
 # 并发会话 clone 的上游仓库（2026-10-05 用户移走）：忽略
 /edk2-aarch64-gunyah/
+
+# 2026-10-18 相机 HAL 交叉编译工作区（NDK/AOSP 克隆 + 中间产物，可重建；配方见 TASKS/sessions 与 dl-cam/build-cam-provider.sh）
+/dl-cam/ndk/
+/dl-cam/aosp/
+/dl-cam/hw-interfaces/
+/dl-cam/libhidl/
+/dl-cam/gen/
+/dl-cam/gen-aidl/
+/dl-cam/gen-aidl-src/
+/dl-cam/sysroot/
+/dl-cam/vdump/
+/dl-cam/stage/
+/dl-cam/out-cam/
+/dl-cam/*.zip
+/dl-cam/*.dat
+/dl-cam/*.img
+/dl-cam/.venv/
