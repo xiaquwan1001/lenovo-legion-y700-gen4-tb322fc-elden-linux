@@ -71,7 +71,7 @@ aarch64-linux-gnu-gcc -static -Os -o $ROOT/usr/local/sbin/reboot2 $R/reboot2.c
 # /init launches these by absolute path from /usr/local/sbin; historically they
 # were scp'd onto the device ad-hoc, so the rootfs was not reproducible.
 for s in ath12k-load.sh ath12k-retry.sh audio-alsa-init.sh bt-up.sh charge-ctl.sh charge-watch.sh \
-         dpms-watch.sh net-up-manual.sh net-up.sh \
+         dpms-watch.sh net-up-manual.sh net-up.sh net-selfheal.sh \
          start-desktop.sh time-sync.sh slot-attr.py 99-unmanaged.conf \
          openrc-enable.sh fix-logind-poweroff.sh elden-powerlog.initd blankspy.sh kmsgspy.sh \
          greetd-initial-session.sh elden-session-root camera-modules-load.sh usb-gadget; do

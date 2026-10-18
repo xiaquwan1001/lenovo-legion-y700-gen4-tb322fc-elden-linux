@@ -26,6 +26,16 @@ tar xzf etc-conf.d.tar.gz       -C /etc/conf.d --owner=0 --group=0
 tar xzf etc-greetd.tar.gz       -C /etc/greetd --owner=0 --group=0
 tar xzf etc-NM-conf.d.tar.gz    -C /etc/NetworkManager/conf.d --owner=0 --group=0
 
+# --- 网络自愈：HTTPS 信任链 + PMTU 黑洞（2026-10-18） ---------------------
+# 见 reports/net-https-mtu-rootcause-20261018.md 与 PITFALLS §49。
+# net-selfheal.sh 已在 usr-local-sbin.tar.gz 里；此处只装触发点。
+mkdir -p /etc/NetworkManager/dispatcher.d
+tar xzf etc-NM-dispatcher.tar.gz -C /etc/NetworkManager/dispatcher.d --owner=0 --group=0
+chmod 755 /etc/NetworkManager/dispatcher.d/50-net-selfheal 2>/dev/null || true
+# 立即跑一次，别等下次重启
+autostart_net_selfheal() { [ -x /usr/local/sbin/net-selfheal.sh ] && /usr/local/sbin/net-selfheal.sh; }
+autostart_net_selfheal || true
+
 echo "== iio-sensor-proxy timing override (auto-rotate stuck OFF) =="
 # Override the packaged init script so the proxy waits for QRTR svc 400 (SSC)
 # before launching; otherwise it scans once, gives up (G1-34), and phosh's

@@ -1,0 +1,63 @@
+From 1f5665e66eb3b4b4d6bad962a039cdbb6fc03958 Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xuqianhui1001@mail.ustc.edu.cn>
+Date: Sun, 18 Oct 2026 20:49:34 +0800
+Subject: [PATCH] input-method-relay: Fix NULL deref in keyboard grab destroy
+ handler
+
+wlroots 0.20.0 changed the signal emission convention and passes NULL as
+the signal data when emitting wlr_input_method_keyboard_grab_v2::events.destroy,
+see wlroots commit 06275103 ("input-method-v2: Destroy keyboard grab
+before input method").
+
+phoc still assumed the old convention where the keyboard grab was passed
+as signal data and dereferenced it unconditionally, so any input method
+tearing down its keyboard grab crashed the compositor with a SIGSEGV:
+
+  Thread 1 "phoc" received signal SIGSEGV, Segmentation fault.
+  #0  handle_im_keyboard_grab_destroy ()
+  #1  wl_signal_emit_mutable ()
+  #2  wlr_input_method_keyboard_grab_v2_destroy ()
+  #3  wl_client_destroy ()
+
+The fault address is NULL + offsetof(struct wlr_input_method_keyboard_grab_v2,
+keyboard), i.e. 0x10 on aarch64.
+
+Note that only one input method can be connected to a seat. When a second
+one connects phoc sends it "unavailable", but the grab teardown path is
+the same, so the crash was easy to hit on a device where both an
+on-screen keyboard and a regular input method engine were present: the
+compositor died and the whole session got restarted.
+
+The grab is still attached to the input method while the signal is
+emitted, so look it up there when data is NULL. This also keeps working
+with wlroots versions that still pass the grab as data.
+
+Signed-off-by: Xu Qianhui <xuqianhui1001@mail.ustc.edu.cn>
+---
+ src/input-method-relay.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/src/input-method-relay.c b/src/input-method-relay.c
+index a9829b2..a7ac07c 100644
+--- a/src/input-method-relay.c
++++ b/src/input-method-relay.c
+@@ -118,9 +118,15 @@ handle_im_keyboard_grab_destroy (struct wl_listener *listener, void *data)
+     wl_container_of (listener, relay, input_method_keyboard_grab_destroy);
+   struct wlr_input_method_keyboard_grab_v2 *keyboard_grab = data;
+ 
++  /* wlroots emits this signal with the grab as data up to 0.19 and with NULL
++   * from 0.20 on (see wlroots commit 06275103). The grab is still attached to
++   * the input method when the signal is emitted so get it from there. */
++  if (keyboard_grab == NULL && relay->input_method != NULL)
++    keyboard_grab = relay->input_method->keyboard_grab;
++
+   wl_list_remove (&relay->input_method_keyboard_grab_destroy.link);
+ 
+-  if (keyboard_grab->keyboard) {
++  if (keyboard_grab && keyboard_grab->keyboard) {
+     /* send modifier state to original client */
+     wlr_seat_keyboard_notify_modifiers (keyboard_grab->input_method->seat,
+                                         &keyboard_grab->keyboard->modifiers);
+-- 
+2.53.0
+
