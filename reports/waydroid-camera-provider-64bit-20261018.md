@@ -124,3 +124,35 @@ CameraProviderManager: tryToInitializeHidlProviderLocked: HIDL … 'external/0' 
 - 仓库：本报告 + `patches/waydroid-camera-64bit-20261018/` + `PITFALLS` §44 + C5/DEVICE 口径更新；
   `dl-cam/` 为构建工作区（8.7 G，不入 git，见 `.gitignore`）。
 - 未做的：C5 ② 的 SIGSEGV 修复（选项 B）、以及 `dumpsys media.camera` 出现 `Number of camera devices: 1` 的验收。
+
+---
+
+## 7. 追加（2026-10-18 下午）：定位到「谁的 ABI 不对」的决定性 A/B
+
+### 7.1 结论（先数字）
+
+| 臂 | 二进制来源 | 结果 |
+|---|---|---|
+| A（自编） | 我们 NDK 交叉编的 `@2.4-external-service` | 注册成功，**首笔事务即 SIGSEGV**（`BHwBinder::transact+156`，`blr x8`，`x8=0xffff…ffe0`），`init.svc…ext=restarting` |
+| B（平台自产） | donor（Los20 rpi5 OTA）自带 **64-bit** `android.hardware.camera.provider@2.5-service_64`（AOSP 构建） | 补全其 `-legacy.so`/`camera.device@*.0-impl.so` 依赖、并在 VINTF manifest 里补 `@2.5`/`@2.4` 的 `legacy/0` 实例后：**`init.svc.vendor.camera-provider-2-5` = running（存活）** |
+
+⇒ **容器环境/相机代码不是问题，问题在自编二进制的 ABI**（与 §5 的「NDK libc++ 与平台 libc++ 不一致」假定一致）。
+⇒ 另有一条**更省事的备路**：直接用 donor 那份平台自产 64-bit provider（`legacy/0`），只需 VINTF manifest 补实例 + `external_camera_config.xml` 指向 `/dev/video100`。
+
+### 7.2 诊断手法（可复用，已固化进 `PITFALLS` §44）
+
+1. tombstone 里 `x23` = `BHwBinder` 对象；`[x23]` = vptr，用 tb 的 **memory map** 反查 vptr 落在哪个模块（本轮 = `/vendor/lib64/android.hardware.camera.provider@2.4.so` 的 `.data.rel.ro`）⇒ 确认「崩的是 Bn 包装对象，不是我们的枚举代码」。
+2. `libhidlbase.so` 反汇编 `BHwBinder::transact+156` = `ldr x8,[vptr,#96]; blr x8` ⇒ **+96 = onTransact 槽**；把自编实现的 vtable 逐槽 dump（`readelf -r obj/*.o` 按 `.data.rel.ro._ZTV…` 重定位顺序 + `c++filt`）能看到槽位顺序是否与 `hwbinder/Binder.h` 的声明顺序一致。
+3. 平台自产二进制能不能在本容器跑 = **最有信息量的单次实验**（本轮 B 臂存活，直接排除环境类假设）。
+
+### 7.3 本轮踩到的两个新坑（已记 `PITFALLS` #314/#315）
+
+- **VINTF 白名单是硬门**：`hwservicemanager` 只允许 manifest 里声明过的 `(包, 版本, 实例)` 注册；donor 的 2.5 服务注册 `legacy/0`，我们的 manifest 只有 `external/0` ⇒ `Could not register service … (-2147483648)`。
+- **不要用 `debugfs` 单文件替换 `/vendor/etc/vintf/manifest.xml`**：替换后同一文件里的条目（含 gatekeeper/light/power 等无关 HAL）集体报
+  `must be in VINTF manifest`，容器半启动（`dumpsys media.camera` → `Can't find service`）。
+  回滚原 vendor.img 立刻恢复 ⇒ 改 manifest 必须走**全量重建**（`mke2fs -N … -d stage`，label 由 mke2fs 写入），或改用 `etc/vintf/manifest.d/` 片段 + 正确 label。
+
+### 7.4 收尾状态
+
+设备已回滚到上一轮基线 vendor.img（128 MiB 自编镜像，`sha256 7ec8f245…`），容器可正常启动、`Number of camera devices: 0`（provider 仍崩，符合已知状态）；
+容器/session 已停、`v4l2loopback` 未加载、无 `/dev/video*` 残留。

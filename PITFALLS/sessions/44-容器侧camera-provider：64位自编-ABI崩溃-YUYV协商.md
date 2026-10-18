@@ -78,3 +78,26 @@
 - `scripts/sign-boot-b.sh` 只签 boot；`vbmeta_b` 的 chain descriptor 必须同时用新 key 重签，否则 ABL 直接拒（无声黑屏/回 fastboot）。
 - 写后校验只看 **读回 sha256**（本轮 `bootslot-b/boot_b.img` 与设备 `dd /dev/disk/by-partlabel/boot_b` 逐字节一致：
   `83d4e08add88abd2…`）；本机 ABL **无 `fastboot fetch`**（#290），读回走设备侧 `dd`。
+
+## #314 VINTF manifest 是注册硬门；改它不能用 `debugfs` 单文件替换
+
+- `hwservicemanager` 只放行 **manifest 里声明过的 `(包, 版本, 实例)`**。donor 的 `@2.5-service_64` 注册 `legacy/0`，
+  而 Waydroid 的镜像只声明了 `@2.4::ICameraProvider/external/0` ⇒ 直接
+  `Error while registering provider service: -2147483648`（`-0x80000000` = `UNKNOWN_ERROR`）后 `abort`。
+- **替换 `/vendor/etc/vintf/manifest.xml` 后立刻出现全体 vendor HAL 报 `must be in VINTF manifest`**
+  （gatekeeper/light/power/memtrack/allocator 等，条目其实都在同一文件里）⇒ 容器半启动、`dumpsys media.camera` 直接 `Can't find service`。
+  回滚原镜像立刻恢复。判据：`getprop | grep init.svc.<hal>` 大面积 `restarting` + 上述 E 行。
+- 治法：改 manifest 走**全量重建**（`mke2fs -N … -d stage`，SELinux label 由 mke2fs 落），
+  或用 `etc/vintf/manifest.d/` 片段文件 + 正确 label；**不要**用 `debugfs rm/write` 就地替换 manifest。
+  就地 `debugfs` 加**新** `.so`/可执行文件是可行的（本轮试过，能跑）。
+
+## #315 「谁的 ABI 不对」的判定顺序：先跑平台自产二进制，再谈重编
+
+- 自编 64-bit provider 注册成功但**首笔事务 SIGSEGV**（`BHwBinder::transact+156`）。分类步骤（省一整天）：
+  1) 反汇编 `libhidlbase.so`：`+156` 就是 `ldr x8,[vptr,#96]; blr x8` ⇒ **+96 = `onTransact` 槽**；
+  2) tombstone 里取 `x23`（`this`）→ `[x23]` = vptr → 用 tombstone 的 **memory map** 反查 vptr 落在哪个模块的 `.data.rel.ro`
+     （本轮 = `/vendor/lib64/android.hardware.camera.provider@2.4.so`，即**平台自产的 Bn 包装对象**）；
+  3) 把自编实现的 vtable 逐槽 dump（`readelf -rW obj/X.o` 里 `.data.rel.ro._ZTV…` 的**重定位顺序** + `c++filt`），核对槽序；
+  4) **最强判据**：往同一镜像塞平台自产的同版本 64-bit provider（donor 有），补 `-legacy.so`/`camera.device@*.0-impl.so`
+     依赖 + manifest 实例后看它是 `running` 还是 `restarting`。本轮平台自产 = **running** ⇒ 环境无罪，锅在自编工具链/ABI。
+- 配套：`__ndk1` vs `__1` 一定要先 `readelf --dyn-syms | grep -c __ndk1` 验证为 0（本轮已是 0，故不是命名空间问题）。
