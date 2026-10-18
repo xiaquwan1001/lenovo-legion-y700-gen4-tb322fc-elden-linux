@@ -1,0 +1,9 @@
+// 手写：模拟 AOSP 平台 libc++ (android13) 的 config site。
+// 只用 ABI 相关的两项；其余宏保持 libc++ 头文件默认。
+#ifndef _LIBCPP_CONFIG_SITE
+#define _LIBCPP_CONFIG_SITE
+
+#define _LIBCPP_ABI_VERSION 1
+#define _LIBCPP_ABI_NAMESPACE __1
+
+#endif

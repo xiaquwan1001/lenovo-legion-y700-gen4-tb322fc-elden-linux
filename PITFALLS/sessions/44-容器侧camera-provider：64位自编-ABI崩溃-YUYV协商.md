@@ -121,3 +121,31 @@
   容器自己的 HIDL 服务（audio/sensors/light）都正常 ⇒ 下一步应当**自编这些 interface 库（Bn/Bp）**、
   彻底不用 donor 二进制再测，而不是继续调编译参数。
 - 2026-10-18 当时的设备状态已回滚到「自编 provider + 崩」的基线镜像（`sha256 7ec8f245…`），容器可正常启动。
+
+## #316 先写「最小客户端冒烟」再怀疑业务代码（3 行程序省掉一天）
+
+- 判据程序（`patches/waydroid-camera-64bit-20261018/hidl-smoke.cpp`）：
+  ```cpp
+  ProcessState::initWithDriver("/dev/vndbinder");           // 容器里 root shell 直跑需要；init 服务可省
+  auto sm = android::hidl::manager::V1_0::IServiceManager::getService();
+  ```
+  编译：把我们生成的 iface objects 一起链上（不需要任何 camera 库），推到 `/vendor/bin/hw/hidl-smoke` 直接跑。
+- 它**崩**就说明问题在工具链/头文件/ABI 层，**与业务代码无关**；它**不崩**才有必要读 camera 代码。
+  本轮就是靠它把「camera provider 崩」定性为「任何进程碰 `getRawServiceInternal` 都崩」。
+- 反汇编法（判定结构体布局是否一致，30 秒）：
+  ```bash
+  aarch64-linux-gnu-objdump -d --start-address=<~hidl_string> --stop-address=<+0x40> libhidlbase.so
+  # 本轮实测： [+0]=mBuffer  [+8]=uint32 mSize  [+12]=bool mOwnsBuffer  ⇒ 16 B，与头文件一致
+  ```
+- 反面教训：`Pointer tag for 0x30 was truncated` 这类 bionic abort **不是**「标签命名空间不对」的指纹，
+  它只说明**传到 free 的指针是垃圾**（局部对象/栈被踩）。别拿它直接推 `__ndk1`/`__1` 的结论。
+
+## #317 Waydroid 容器 vk127 上「64-bit HIDL 服务集体崩」的已知边界（2026-10-18 未解）
+
+- 现状：**容器自带**的 HIDL 服务（audio/sensors/light/composer）正常；**任何外来的** 64-bit HIDL 进程
+  （自编 camera provider、donor AOSP 自产 2.5 provider、3 行最小客户端）一碰 `getRawServiceInternal` 就 abort。
+- 排除项（都做过）：`__ndk1` 命名空间、`hidl_string` 布局、NDK vs 平台 libc++ 头、donor interface 库、
+  legacy passthrough 路径、manifest 白名单。
+- 待验方向：我们 `libhidl` = `tm-release (Snap for 8656240)` 与容器 VNDK33（`TQ3A.230901.001`）**AOSP tag 不同**；
+  下一步按容器镜像的 tag 重取 `system/libhidl`/`libhwbinder`/`system/core`/`frameworks/native` 头重编，
+  并用 `hidl-smoke` 二分（`defaultServiceManager()` → `sm->get()`）。

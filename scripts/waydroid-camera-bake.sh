@@ -27,6 +27,7 @@ PUSH=1
 LEGACY=0
 for a in "$@"; do case "$a" in --no-push) PUSH=0;; --legacy) LEGACY=1;; esac; done
 
+SIZE=${SIZE:-256M}     # self-built Bn/Bp 版本 .so 体积大（4-5 MB/个）⇒ 128M 不够装
 SRC=$W/vendor-orig.img
 OUT=$W/vendor-cam.img
 NEW=$W/vendor-cam.img.new
@@ -145,7 +146,7 @@ if [ "$LEGACY" = 1 ]; then
   echo "  [legacy] + provider@2.5-service_64 (donor, AOSP-built) + legacy libs + manifest legacy/0"
 fi
 
-mke2fs -q -t ext4 -b 4096 -I 256 -N 8192 -L vendor -d "$STAGE" "$NEW" 128M
+mke2fs -q -t ext4 -b 4096 -I 256 -N 8192 -L vendor -d "$STAGE" "$NEW" "$SIZE"
 e2fsck -f -y "$NEW" >/dev/null 2>&1 || true
 
 echo "[5/6] fix ownership (0:2000) + verify"

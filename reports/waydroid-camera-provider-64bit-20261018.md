@@ -180,3 +180,55 @@ donor 库用 `DT_RELR`、我们用 `RELA` 这一差异（`readelf -d`），确�
 
 **资产**：`scripts/waydroid-camera-bake.sh` 新增 `--legacy`（装 donor 平台自产 2.5 provider + 合法 manifest 模板），
 本轮就是用它做的实验；设备已回滚基线镜像（`sha256 7ec8f245…`）。
+
+---
+
+## 9. 2026-10-18 晚：自编 Bn/Bp 后仍崩，但**用最小 HIDL 客户端定位到「与 camera 无关」**
+
+### 9.1 做了什么（都是可复现的开关）
+
+| 开关 | 含义 | 结果 |
+|---|---|---|
+| `SELFIFACE=1` | `hidl-gen -Lc++-sources` 生成 **Bn/Bp**（51 个 .cpp），全部链进我们的 .so，**不再用 donor 的 camera interface 库** | 编译/链接通过；`NEEDED` 只剩基础库（无 camera iface） |
+| `DIRECT=1` | 自写 `external-service-direct.cpp`：**直接 `impl->registerAsService("external/0")`**，绕开 legacy 的 `getRawServiceInternal` + `dlopen(-impl.so)` | 仍崩 |
+| `PLATFORMLIBCXX=1` | 换 AOSP 平台 libc++ 头（`libcxx/src` + 手写 `__config_site`：`_LIBCPP_ABI_VERSION 1` / `NAMESPACE __1`） | 仍崩 |
+| **`SMOKE=1`** | 编一个 3 行的最小客户端：`IServiceManager::getService()` | **同样崩**（见 9.2） |
+
+镜像随之从 128 MiB 扩到 **256 MiB**（自编 Bn/Bp 后每个 .so 4.5 MB，128 MiB 装不下：`mke2fs: Could not allocate block`）。
+
+### 9.2 决定性证据：最小客户端也崩在同一处
+
+```
+Abort message: 'Pointer tag for 0x30 was truncated, see .../tagged-pointers'
+#01 free+96                        libc.so
+#02 hidl_string::~hidl_string+44   libhidlbase.so
+#03 getRawServiceInternal(...)+408 libhidlbase.so
+#04 main                           /vendor/bin/hw/hidl-smoke      ← 只有一行 getService()
+```
+
+⇒ **和 camera、和 donor 库都无关**：任何用我们这套工具链/头编出来的进程，一碰 `getRawServiceInternal` 就会把某个 `hidl_string` 析构出垃圾指针。
+
+已排除：
+- `__ndk1`/`__1` 命名空间（`readelf --dyn-syms | grep -c __ndk1` = 0）；
+- `hidl_string` **布局**：反汇编容器 `~hidl_string` = `[+0]=mBuffer, [+8]=uint32 mSize, [+12]=bool mOwnsBuffer`（16 B），与我们头文件逐字一致；
+- libc++ 头（NDK / 平台两版都崩）；
+- donor 产 interface 库（`SELFIFACE=1` 后仍崩）；
+- legacy passthrough 路径（`DIRECT=1` 仍崩）。
+
+**剩余最可能** = 我们 `libhidl`（tm-release, `Snap for 8656240`）与容器 `/apex/com.android.vndk.v33/lib64/libhidlbase.so`（Waydroid 镜像 = `TQ3A.230901.001`）
+**不是同一个 AOSP tag**，某些 crossing 结构体/调用约定不一致（例如 `hidl_handle`、`Return<>`、`getRawServiceInternal` 的局部对象），
+导致平台函数里的栈/局部对象被踩。
+
+### 9.3 下一步（写进 TASKS C5）
+
+1. **对齐 tag**：把容器里的 `libhidlbase.so`/`libutils.so` 的 `BuildId` 与 AOSP tag 对齐（`TQ3A.230901.001` → `android-13.0.0_r82` 一类），
+   用该 tag 的 `system/libhidl`、`system/libhwbinder`、`system/core`、`frameworks/native` 头重编；
+2. 若仍崩：用 `hidl-smoke` 做**二分**——只调 `defaultServiceManager()`（不进 `get()`），再只调 `sm->get(...)`，
+   逐步缩小到具体结构体；必要时对容器 `libhidlbase.so` 的关键函数反汇编对照我们的调用点。
+3. ⚠️ 该问题**与相机无关**，但它挡住了 C5；在它解决前，任何「相机 provider」都跑不起来。
+
+### 9.4 资产与设备状态
+
+- 新增（已入库 `patches/waydroid-camera-64bit-20261018/`）：`gen-src.sh`、`build-cam-provider.sh`（含 `SELFIFACE`/`DIRECT`/`PLATFORMLIBCXX`/`SMOKE` 四个开关）、
+  `external-service-direct.cpp`、`hidl-smoke.cpp`、`iface-compat.h`、`libcxx-__config_site`。
+- 设备：vendor.img 回滚到 128 MiB 基线（`sha256 7ec8f245…`）；container/session 停；`v4l2loopback` 卸载、无 `/dev/video*`、无 gst 残留。
