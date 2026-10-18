@@ -118,3 +118,23 @@ __pycache__/
 /dl-cam/*.dat
 /dl-cam/*.img
 /dl-cam/.venv/
+
+# 2026-10-18 补全 dl-cam 工作区（除上面已列，剩余中间物/下载件一并 ignore；
+# 规范副本已入库 patches/waydroid-camera-64bit-20261018/）
+/dl-cam/*.br
+/dl-cam/*.list
+/dl-cam/*.tgz
+/dl-cam/*.log
+/dl-cam/*.txt
+/dl-cam/*.py
+/dl-cam/*.sh
+/dl-cam/*.cpp
+/dl-cam/*.xml
+/dl-cam/META-INF/
+/dl-cam/aidl-root/
+/dl-cam/camx/
+/dl-cam/donor/
+/dl-cam/t1/
+/dl-cam/t1s/
+# 2026-10-18 C5 工具链 deb（装过即可；重下方法见 patches/waydroid-camera-64bit-20261018/README.md）
+/*.deb

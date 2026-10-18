@@ -33,7 +33,9 @@
 - ★**2026-10-17 晚：重放镜像 `vk127` 已通过冷起验收（仍未写盘）** —— `out/boot-elden-vk127.img`（sha `7515f6a4…`，85 585 920 B）=
   **7.3-rc7 + 下游 `vk64` 树 payload（cambist 回上游 parity）+ M1 DSI 1 行**，config = `config-daily-c1` + C1 片段；
   真 POR 冷起 **3/3 GOOD**（`l1=0`、`dsi_isr=41`、目视有桌面）+ 功能抽查全绿（WiFi/音频/fastrpc-adsp/SensorProxy）。
-  **`boot_b` 仍 = `m1-baseline-f3`（写盘待用户在场）**。模块树 `/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty/`（1497 `.ko`）已部署在持久根。
+  **★2026-10-18 上午：`boot_b` 已刷写 = `vk127`（读回校验）** —— 签名件 `bootslot-b/boot_b.img`（100 663 296 B，`sha256 83d4e08add88abd2…`）与设备 `dd /dev/disk/by-partlabel/boot_b` 逐字节一致；在机 `uname -r` = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty`。
+  ⚠️ **换机后 `tools/avbtool.py` 与 `bootslot-b/avb.key` 已丢失并重建**：新 AVB 公钥 `sha1 1e54e86ef19fad73…`（旧 `fc1e3b33…` 作废），`vbmeta_b` chain descriptor 已同步重签（`scripts/sign-boot-b.sh`；`PITFALLS #313`）。本轮冷起 Q28 **7 发坏 / 第 8 发 GOOD**。
+  模块树 `/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty/`（1497 `.ko`）已部署在持久根。
   ⚠️ **换新 UTS 内核必须先部署模块树再判显示**，否则 `lsmod` 空 ⇒ DP defer ⇒ 无 `card0`（`PITFALLS #293`）。配方 `reports/replay-2026-10-17-m1-73-vk127.md`。
 - **2026-10-10 离线快照（Q28 调试轮收尾；本轮整理时 adb/fastboot 均无设备在场）**：boot_b **持久直启仍 = `vk64`（未动）**；本轮 vk74/vk84 仅 `fastboot boot` RAM 取证，**永不作 boot_b**。Q28 根因/双模式/判据/下一步见 `reports/q28-DOSSIER.md`、`../TASKS/README.md` §5 Q28。
 - **主机串口 logger** = `scripts/serial-logger.sh`（pid 文件 `/tmp/q28_serial_logger.pid`，常驻；主机重启需重跑）。**判 Q28 显示不能只靠串口 logger**（重连会漏 0–20 s，盖住 NOCARD 的 0.86 s 现场），须 SSH 读全 dmesg + 查 `card0`。

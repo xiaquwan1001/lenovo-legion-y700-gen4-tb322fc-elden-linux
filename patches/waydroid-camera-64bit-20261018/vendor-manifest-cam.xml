@@ -1,0 +1,169 @@
+<!--
+    Input:
+        manifest.xml
+-->
+<manifest version="5.0" type="device" target-level="3">
+    <hal format="hidl">
+        <name>android.hardware.audio</name>
+        <transport>hwbinder</transport>
+        <version>4.0</version>
+        <interface>
+            <name>IDevicesFactory</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@4.0::IDevicesFactory/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.audio.effect</name>
+        <transport>hwbinder</transport>
+        <version>4.0</version>
+        <interface>
+            <name>IEffectsFactory</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@4.0::IEffectsFactory/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.camera.provider</name>
+        <transport>hwbinder</transport>
+        <version>2.4</version>
+        <interface>
+            <name>ICameraProvider</name>
+            <instance>external/0</instance>
+        </interface>
+        <fqname>@2.4::ICameraProvider/external/0</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.configstore</name>
+        <transport>hwbinder</transport>
+        <version>1.1</version>
+        <interface>
+            <name>ISurfaceFlingerConfigs</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.1::ISurfaceFlingerConfigs/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.gatekeeper</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IGatekeeper</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.0::IGatekeeper/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.graphics.composer</name>
+        <transport>hwbinder</transport>
+        <version>2.1</version>
+        <interface>
+            <name>IComposer</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@2.1::IComposer/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.health</name>
+        <transport>hwbinder</transport>
+        <version>2.0</version>
+        <interface>
+            <name>IHealth</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@2.0::IHealth/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.keymaster</name>
+        <transport>hwbinder</transport>
+        <version>4.0</version>
+        <interface>
+            <name>IKeymasterDevice</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@4.0::IKeymasterDevice/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.light</name>
+        <transport>hwbinder</transport>
+        <version>2.0</version>
+        <interface>
+            <name>ILight</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@2.0::ILight/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.memtrack</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IMemtrack</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.0::IMemtrack/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.power</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IPower</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.0::IPower/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.sensors</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>ISensors</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.0::ISensors/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>vendor.waydroid.clipboard</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IWaydroidClipboard</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.0::IWaydroidClipboard/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>vendor.waydroid.display</name>
+        <transport>hwbinder</transport>
+        <version>1.2</version>
+        <interface>
+            <name>IWaydroidDisplay</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.2::IWaydroidDisplay/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>vendor.waydroid.task</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IWaydroidTask</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.0::IWaydroidTask/default</fqname>
+    </hal>
+    <hal format="hidl">
+        <name>vendor.waydroid.window</name>
+        <transport>hwbinder</transport>
+        <version>1.2</version>
+        <interface>
+            <name>IWaydroidWindow</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.2::IWaydroidWindow/default</fqname>
+    </hal>
+    <sepolicy>
+        <version>33.0</version>
+    </sepolicy>
+</manifest>

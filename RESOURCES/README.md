@@ -267,6 +267,8 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
 | `bootslot-b/README.md` `backup/fw/README.md` `restore-259/*.md` | ~15 K | ✅ track | 关键说明文档（其余二进制 ignore） |
 | `net/ waydroid-ota/` | <220 K | ✅ track | 小体积资产 |
+| `dl-cam/` | 8.7 G | ignore（`.gitignore` `/dl-cam/*` + 只复活脚本） | **C5 容器侧 camera provider 的构建工作区（2026-10-18）**：`hw-interfaces/`（AOSP external HAL 源码 + 自研 YUV 补丁）、`out-cam/`（64-bit 产物）、`ndk/`+`ndk-r25c.zip`、`los20-rpi5-ota.zip`（donor 64-bit prebuilt 来源）、`vendor-cam.img`（128 MiB 烘入件）、`system/vendor-sdat.img` 等中间物。**入库的只有**：`scripts/waydroid-camera-bake.sh` + `patches/waydroid-camera-64bit-20261018/`（补丁与构建脚本副本）；其余可删可重建（`los20` OTA / NDK 可重下） |
+| 根目录 `*.deb`（8 个） | 1.9 M | ignore（`/*.deb`） | C5 工具链包（`hidl-gen`、`aidl` + android-lib*）：`dpkg -i` 装过即可；重建时按 `patches/waydroid-camera-64bit-20261018/README.md` 重下 |
 | `build/` | 4.0 G | ignore（`.gitignore` 第 24 行 `/build/` 已在） | **2026-10-10 起内核构建目录**（`scripts/build-kernel.sh` 工作区；体量集中在 `build/m1-upstream`，`build/glibc-arm64` 近空）。**可再生**：`make clean`/整目录删后下次构建重建，无独有内容需留（简报称「父将补 .gitignore」——实测已补，无需再补） |
 | `linux -> geekidos-linux` | 符号链接 | ✅ track | 目录约定 |
 | `geekidos-linux/` | 13 G | ignore | 上游 `GEEKiDoS/linux` v7.2-elden + 构建产物 |

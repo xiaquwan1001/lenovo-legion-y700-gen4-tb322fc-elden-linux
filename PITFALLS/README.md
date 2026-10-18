@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档结构），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-17。**条目编号 #1–#292**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
+> 最后更新：2026-10-18。**条目编号 #1–#313**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
 > 最新条目集中在文末分节 §十六–§三十；**编号范围只在本行维护**，其它文档不复述具体数字。
 
 ---
@@ -66,4 +66,5 @@
 | 四十一、设备侧熄屏自动化两坑：`dpms` sysfs 只读（root 也写不进）、Q28 坏发 boot 上 `phoc` crash-loop 约 3 min 才能取到会话总线（#294–#295，2026-10-17 实测） | [sessions/41-设备侧熄屏自动化：dpms只读与坏发会话崩溃.md](sessions/41-设备侧熄屏自动化：dpms只读与坏发会话崩溃.md) |
 | 四十二、相机 AE 三坑：libcamera 无 sensor helper ⇒ 把 V4L2 增益码当真实增益（#296）、软 ISP 黑电平只来自 helper/tuning 且默认 0（#297）、设备有 wlan0 IP 却无外网致就地构建不可行（#298）（2026-10-17 实测） | [sessions/42-相机AE三坑：helper缺失-黑电平-tuning.md](sessions/42-相机AE三坑：helper缺失-黑电平-tuning.md) |
 | 四十三、相机 AE 正解（libcamera helper）落地路上的三坑：设备冷起时钟 **1970** ⇒ HTTPS/`apk` 全废（#299）、交叉编 IPA 的三个硬点（musl 工具链/只换 `ipa_soft_simple.so`/签名不校验，#300）、「设备失联」先认 fastboot 形态（#301，本次成因=平板编译过热被手动重启到 BL）、平板不做重编译（#302）、软 ISP 的 AE 收敛慢是设计（统计每 4 帧一次，别用一两次抓帧判 AE，#303）、相机 A/B 必须控场景与起点（含「最短曝光测 pedestal」法，#304）、libcamera-devel 是 members-only 且提交标题带文件名（#305）（2026-10-17 实测） | [sessions/43-相机AE正解交叉编译与设备时钟.md](sessions/43-相机AE正解交叉编译与设备时钟.md) |
+| 四十四、容器侧 camera provider：vendor.img **100% 满** ⇒ `debugfs` 分配不到 inode（#306）、上游 external HAL 只有 **32 位**且 Waydroid 镜像无任何 camera HAL（#307）、Debian `aidl` 不认 `@VintfStability` 且必须 `--lang=ndk`（#308）、**NDK libc++ ≠ 平台 libc++** ⇒ 注册成功后首笔 `BHwBinder::transact` 即 SIGSEGV（`pc …fffe0`，先做「注释掉设备绑定」A/B 排枚举，#309）、`cannot find suitable cropping type` = ENUM 回退 + 四cc 白名单**两坑叠加**（#310）、Waydroid 1.6.2 openrc `-p pidfile` 不支持/root 不能用 `/run/user/1000`（#311）、设备侧长命令必须 `timeout` + Q28 坏发用有界重启（#312）、AVB key 重建后公钥 sha1 变 ⇒ `vbmeta_b` 必须同步重签（#313）（2026-10-18 实测） | [sessions/44-容器侧camera-provider：64位自编-ABI崩溃-YUYV协商.md](sessions/44-容器侧camera-provider：64位自编-ABI崩溃-YUYV协商.md) |
 | 三十八、M1-7.3 模块树补建（`ARCH`/vermagic 双坑）+ 相机栈首次跑通 + `cam-mode.sh off` 反向激活 Q24 + `mxc.lvl→0` 不是死亡签名 + `sync_state` 只在开机窗口生效 + `reboot` 挂起致假 ALIVE + **`#212` 配方 12 发不可复现**（2026-10-15 晚实测） | [sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md](sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md) |

@@ -1,0 +1,234 @@
+diff --git a/camera/device/3.4/default/ExternalCameraDevice.cpp b/camera/device/3.4/default/ExternalCameraDevice.cpp
+index 311c688..9b2eadf 100644
+--- a/camera/device/3.4/default/ExternalCameraDevice.cpp
++++ b/camera/device/3.4/default/ExternalCameraDevice.cpp
+@@ -39,8 +39,10 @@ namespace {
+ // Other formats to consider in the future:
+ // * V4L2_PIX_FMT_YVU420 (== YV12)
+ // * V4L2_PIX_FMT_YVYU (YVYU: can be converted to YV12 or other YUV420_888 formats)
+-const std::array<uint32_t, /*size*/ 2> kSupportedFourCCs{
+-    {V4L2_PIX_FMT_MJPEG, V4L2_PIX_FMT_Z16}};  // double braces required in C++11
++// ELDEN: upstream only accepts MJPEG (+Z16 for depth), which excludes raw YUV
++// devices such as anything fed by v4l2loopback (our libcamera bridge).
++const std::array<uint32_t, /*size*/ 4> kSupportedFourCCs{
++    {V4L2_PIX_FMT_MJPEG, V4L2_PIX_FMT_Z16, V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_NV12}};
+ 
+ constexpr int MAX_RETRY = 5; // Allow retry v4l2 open failures a few times.
+ constexpr int OPEN_RETRY_SLEEP_US = 100000; // 100ms * MAX_RETRY = 0.5 seconds
+@@ -275,6 +277,9 @@ status_t ExternalCameraDevice::initAvailableCapabilities(
+         switch (fmt.fourcc) {
+             case V4L2_PIX_FMT_Z16: hasDepth = true; break;
+             case V4L2_PIX_FMT_MJPEG: hasColor = true; break;
++            // ELDEN: raw YUV sources are rendered through the same I420 path.
++            case V4L2_PIX_FMT_YUYV:
++            case V4L2_PIX_FMT_NV12: hasColor = true; break;
+             default: ALOGW("%s: Unsupported format found", __FUNCTION__);
+         }
+     }
+@@ -696,11 +701,11 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
+     }
+ 
+     bool hasDepth = false;
+-    bool hasColor = false;
++    bool hasColorMjpeg = false;
+ 
+     // For V4L2_PIX_FMT_Z16
+     std::array<int, /*size*/ 1> halDepthFormats{{HAL_PIXEL_FORMAT_Y16}};
+-    // For V4L2_PIX_FMT_MJPEG
++    // For V4L2_PIX_FMT_MJPEG: JPEG stills + YUV preview
+     std::array<int, /*size*/ 3> halFormats{{HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YCbCr_420_888,
+                                             HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED}};
+ 
+@@ -710,7 +715,7 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
+                 hasDepth = true;
+                 break;
+             case V4L2_PIX_FMT_MJPEG:
+-                hasColor = true;
++                hasColorMjpeg = true;
+                 break;
+             default:
+                 ALOGW("%s: format %c%c%c%c is not supported!", __FUNCTION__,
+@@ -726,7 +731,7 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
+                 ANDROID_DEPTH_AVAILABLE_DEPTH_MIN_FRAME_DURATIONS,
+                 ANDROID_DEPTH_AVAILABLE_DEPTH_STALL_DURATIONS);
+     }
+-    if (hasColor) {
++    if (hasColorMjpeg) {
+         initOutputCharskeysByFormat(metadata, V4L2_PIX_FMT_MJPEG, halFormats,
+                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
+                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+@@ -734,6 +739,33 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
+                 ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
+     }
+ 
++    // ELDEN: raw YUV inputs (v4l2loopback / libcamera bridge) — the external HAL
++    // upstream only advertises MJPEG+BLOB. The session converts these to I420
++    // itself, so we can expose YUV_420_888 + IMPLEMENTATION_DEFINED preview streams.
++    std::array<int, /*size*/ 2> halFormatsYuv{{HAL_PIXEL_FORMAT_YCbCr_420_888,
++                                               HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED}};
++    for (uint32_t yuvFourcc : {static_cast<uint32_t>(V4L2_PIX_FMT_YUYV),
++                               static_cast<uint32_t>(V4L2_PIX_FMT_NV12)}) {
++        bool present = false;
++        for (const auto& supportedFormat : mSupportedFormats) {
++            if (supportedFormat.fourcc == yuvFourcc) {
++                present = true;
++                break;
++            }
++        }
++        if (!present) {
++            continue;
++        }
++        ALOGI("%s: advertising YUV streams for %c%c%c%c", __FUNCTION__,
++              yuvFourcc & 0xFF, (yuvFourcc >> 8) & 0xFF,
++              (yuvFourcc >> 16) & 0xFF, (yuvFourcc >> 24) & 0xFF);
++        initOutputCharskeysByFormat(metadata, yuvFourcc, halFormatsYuv,
++                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
++                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
++                ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
++                ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
++    }
++
+     calculateMinFps(metadata);
+ 
+     SupportedV4L2Format maximumFormat {.width = 0, .height = 0};
+@@ -796,6 +828,24 @@ void ExternalCameraDevice::getFrameRateList(
+         }
+     }
+ 
++    if (format->frameRates.empty()) {
++        // ELDEN_FRAMERATE_FALLBACK: v4l2loopback has no ENUM_FRAMEINTERVALS; use G_PARM.
++        v4l2_streamparm parm{};
++        parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
++        if (TEMP_FAILURE_RETRY(ioctl(fd, VIDIOC_G_PARM, &parm)) == 0 &&
++                parm.parm.capture.timeperframe.numerator != 0) {
++            SupportedV4L2Format::FrameRate fr = {
++                    parm.parm.capture.timeperframe.numerator,
++                    parm.parm.capture.timeperframe.denominator};
++            double framerate = fr.getDouble();
++            if (framerate > 0 && framerate <= fpsUpperBound) {
++                ALOGI("%s: ENUM_FRAMEINTERVALS empty, falling back to G_PARM %f fps",
++                      __FUNCTION__, framerate);
++                format->frameRates.push_back(fr);
++            }
++        }
++    }
++
+     if (format->frameRates.empty()) {
+         ALOGE("%s: failed to get supported frame rates for format:%c%c%c%c w %d h %d",
+                 __FUNCTION__,
+@@ -880,6 +930,9 @@ std::vector<SupportedV4L2Format> ExternalCameraDevice::getCandidateSupportedForm
+                     kSupportedFourCCs.begin(), kSupportedFourCCs.end(), fmtdesc.pixelformat);
+             if (it != kSupportedFourCCs.end()) {
+                 // Found supported format
++                // ELDEN_FRAMESIZE_FALLBACK: some drivers (v4l2loopback) implement
++                // VIDIOC_ENUM_FRAMESIZES as -EINVAL and only answer VIDIOC_G_FMT.
++                size_t sizesBefore = outFmts.size();
+                 v4l2_frmsizeenum frameSize {
+                         .index = 0,
+                         .pixel_format = fmtdesc.pixelformat};
+@@ -915,6 +968,40 @@ std::vector<SupportedV4L2Format> ExternalCameraDevice::getCandidateSupportedForm
+                         }
+                     }
+                 }
++                if (outFmts.size() == sizesBefore) {
++                    v4l2_format fmt{};
++                    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
++                    int gret = TEMP_FAILURE_RETRY(ioctl(fd, VIDIOC_G_FMT, &fmt));
++                    if (gret != 0) {
++                        ALOGE("%s: G_FMT failed errno=%d (%s)", __FUNCTION__, errno, strerror(errno));
++                    } else {
++                        ALOGE("%s: G_FMT ok %ux%u fourcc=%c%c%c%c (want %c%c%c%c) min=%ux%u",
++                              __FUNCTION__, fmt.fmt.pix.width, fmt.fmt.pix.height,
++                              fmt.fmt.pix.pixelformat & 0xFF, (fmt.fmt.pix.pixelformat >> 8) & 0xFF,
++                              (fmt.fmt.pix.pixelformat >> 16) & 0xFF, (fmt.fmt.pix.pixelformat >> 24) & 0xFF,
++                              fmtdesc.pixelformat & 0xFF, (fmtdesc.pixelformat >> 8) & 0xFF,
++                              (fmtdesc.pixelformat >> 16) & 0xFF, (fmtdesc.pixelformat >> 24) & 0xFF,
++                              minStreamSize.width, minStreamSize.height);
++                    }
++                    if (gret == 0 &&
++                            fmt.fmt.pix.pixelformat == fmtdesc.pixelformat &&
++                            fmt.fmt.pix.height <= fmt.fmt.pix.width &&
++                            fmt.fmt.pix.width >= minStreamSize.width &&
++                            fmt.fmt.pix.height >= minStreamSize.height) {
++                        SupportedV4L2Format format {
++                            .width = (uint32_t)fmt.fmt.pix.width,
++                            .height = (uint32_t)fmt.fmt.pix.height,
++                            .fourcc = fmt.fmt.pix.pixelformat
++                        };
++                        ALOGI("%s: ENUM_FRAMESIZES empty, falling back to G_FMT %dx%d",
++                              __FUNCTION__, format.width, format.height);
++                        if (format.fourcc == V4L2_PIX_FMT_Z16 && depthEnabled) {
++                            updateFpsBounds(fd, cropType, depthFpsLimits, format, outFmts);
++                        } else {
++                            updateFpsBounds(fd, cropType, fpsLimits, format, outFmts);
++                        }
++                    }
++                }
+             }
+         }
+         fmtdesc.index++;
+diff --git a/camera/device/3.4/default/ExternalCameraDeviceSession.cpp b/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
+index ca7186b..2b38ec6 100644
+--- a/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
++++ b/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
+@@ -1438,7 +1438,11 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
+         return false;
+     };
+ 
+-    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG && req->frameIn->mFourcc != V4L2_PIX_FMT_Z16) {
++    // ELDEN: raw YUV (v4l2loopback / libcamera bridge) is accepted too.
++    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG && req->frameIn->mFourcc != V4L2_PIX_FMT_Z16 &&
++            req->frameIn->mFourcc != V4L2_PIX_FMT_YUYV &&
++            req->frameIn->mFourcc != V4L2_PIX_FMT_NV12 &&
++            req->frameIn->mFourcc != V4L2_PIX_FMT_YUV420) {
+         return onDeviceError("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
+                 req->frameIn->mFourcc & 0xFF,
+                 (req->frameIn->mFourcc >> 8) & 0xFF,
+@@ -1519,6 +1523,47 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
+             signalRequestDone();
+             return true;
+         }
++    } else {
++        // ELDEN: raw YUV input -> intermediate YU12 (libyuv, same target as the JPEG path).
++        ATRACE_BEGIN("YUVtoI420");
++        int res = 0;
++        if (req->frameIn->mFourcc == V4L2_PIX_FMT_YUYV) {
++            res = libyuv::YUY2ToI420(
++                    inData, mYu12Frame->mWidth * 2,
++                    static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride,
++                    mYu12Frame->mWidth, mYu12Frame->mHeight);
++        } else if (req->frameIn->mFourcc == V4L2_PIX_FMT_NV12) {
++            res = libyuv::NV12ToI420(
++                    inData, mYu12Frame->mWidth,
++                    inData + mYu12Frame->mWidth * mYu12Frame->mHeight, mYu12Frame->mWidth,
++                    static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride,
++                    mYu12Frame->mWidth, mYu12Frame->mHeight);
++        } else {  // V4L2_PIX_FMT_YUV420
++            res = libyuv::I420Copy(
++                    inData, mYu12Frame->mWidth,
++                    inData + mYu12Frame->mWidth * mYu12Frame->mHeight, mYu12Frame->mWidth / 2,
++                    inData + mYu12Frame->mWidth * mYu12Frame->mHeight * 5 / 4,
++                    mYu12Frame->mWidth / 2,
++                    static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride,
++                    mYu12Frame->mWidth, mYu12Frame->mHeight);
++        }
++        ATRACE_END();
++        if (res != 0) {
++            ALOGE("%s: Convert raw YUV frame to YU12 failed! res %d", __FUNCTION__, res);
++            lk.unlock();
++            Status st = parent->processCaptureRequestError(req);
++            if (st != Status::OK) {
++                return onDeviceError("%s: failed to process capture request error!", __FUNCTION__);
++            }
++            signalRequestDone();
++            return true;
++        }
+     }
+ 
+     ATRACE_BEGIN("Wait for BufferRequest done");
