@@ -54,3 +54,30 @@
 C5 的前置 ①（主机侧 V4L2 loopback + libcamera 软 ISP 帧源）**已在 2026-10-17 完成并被本轮再次证实**（软 ISP 30 fps 满帧）。
 容器侧 ②b 的阻塞与相机无关（外来 64-bit HIDL 进程在容器里碰 `getRawServiceInternal` 即崩，见
 `reports/waydroid-camera-provider-64bit-20261018.md` §9、`PITFALLS #316/#317`）。
+
+---
+
+## 5. ★重要更正（同一晚，用户就位明亮场景后复测）：出流 ≠ 可用
+
+**结论**：驱动/V4L2 层没问题，**libcamera 的软件 ISP 只把第 0 帧写进输出缓冲**，其后全零 ⇒ **Linux 成像不可用（未解）**。
+记录：`reports/trials/20261018T051918Z-cam-linux-vk127-imaging.json`（verdict=**FAIL**）。
+
+### 5.1 判别式（逐帧看，别只看首帧）
+
+| 路径 | 结果 |
+|---|---|
+| **裸 V4L2**：`v4l2-ctl -d /dev/video0 --stream-mmap --stream-count=3 --stream-to=/tmp/b.raw`（4080×3072 pgAA，15 667 200 B/帧） | **3/3 帧都有真实数据**：帧首 8 KB mean **25.59 / 20.53 / 20.68**，nonzero ≈ 95% |
+| libcamera（默认，EGL debayer）`cam -c1 -C40` | 帧 0 mean **15.9**；**帧 1–39 全零**；`LIBCAMERA_LOG_LEVELS=*:DEBUG` 显示 debayer **每帧都在跑**（3/3 次，blackLevel 0.0627 / gamma 0.4545 参数正常） |
+| libcamera + `LIBCAMERA_SOFTISP_MODE=cpu` | **帧 0–3 全零**（`bytesused` 变 50 036 736 = 4072 宽，说明换了路径） |
+| libcamera + **stock IPA**（`/root/ipa-bak-20261017/ipa_soft_simple.so`，198 648 B） | **与自编 AE-fix IPA 完全一致**：帧 0 有数据、1+ 全零 ⇒ **不是自编 IPA 的问题** |
+
+### 5.2 归因与下一步
+
+- 已经排除：kernel/CSID/VFE（裸 V4L2 3/3 好）、sensor（同一次流）、自编 IPA（stock 同现象）、场景/曝光（裸路径有数据）。
+- 剩余最可能：**libcamera `simple` pipeline 的 `SoftwareIsp` 输出回写**——EGL 路径只有第一个 `FrameBuffer` 被写，CPU 路径一个都不写；
+  EGL 侧（`debayer_egl.cpp` 的 `setOutput()`/dmabuf → EGLImage 绑定）在多缓冲下的缓存/绑定失效，是最可疑点。
+- 下一步（按代价）：
+  1. 用 **libcamera 0.7.1 源码 + `SoftwareIsp` 单元测试**复现（host 侧即可部分复现）；
+  2. 试 **更早/更新的 libcamera**（Alpine 包版本或自编 0.6/0.8）确认是否回归；
+  3. 绕行：C5 的帧源改走**裸 V4L2 + 自己的 ISP/转换**（`v4l2src` 取 pgAA → host/GPU debayer → v4l2loopback），代价是丢掉 libcamera 的 AE。
+- 设备收尾：IPA 已恢复为自编 AE-fix 版；`CAM-OFF`（模块 0 / 节点 0 / `blank` idle 300 + lock true）；桌面（phoc）与音频（wireplumber）均在跑。

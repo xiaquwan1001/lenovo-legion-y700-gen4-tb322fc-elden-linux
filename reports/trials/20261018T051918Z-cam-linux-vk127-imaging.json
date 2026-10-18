@@ -1,0 +1,18 @@
+{
+  "label": "cam-linux-vk127-imaging",
+  "ts": "2026-10-18T05:19:18Z",
+  "vk": "vk127",
+  "image": "vk127",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "判别式：raw V4L2 /dev/video0 3/3 帧有真实数据(mean 25.6/20.5/20.7,nonzero~95%)；libcamera simple+softISP EGL 模式仅第0帧有数据(mean15.9)，1..39 帧全零；LIBCAMERA_SOFTISP_MODE=cpu 全零(bytesused 50036736)；换 stock IPA 仍只首帧 ⇒ 软ISP 输出回写 bug，非 kernel/非自编 IPA。成像不可用，未解"
+}
