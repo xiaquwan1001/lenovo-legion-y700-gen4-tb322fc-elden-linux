@@ -139,7 +139,11 @@ PROBE 与 app 侧逐帧文件的值**完全一致** ⇒
 
 ### 7.3 现场（留给下次，2026-10-18 停在这里）
 
-- 系统已**还原 Alpine 原版** libcamera + 原 IPA（`/root/lc-bak-20261018/`）⇒ 枚举正常、帧仍是黑的（已知）。
+- 系统已**还原 Alpine 原版** libcamera + 原 IPA，并逐文件核对尺寸：
+  `/usr/lib/libcamera.so.0.7.1` = **2 299 632**、`libcamera-base.so.0.7.1` = **198 568**、
+  `/usr/lib/libcamera/ipa/ipa_soft_simple.so` = **292 640**（= 上一轮的 AE-fix IPA）。
+  ⚠️ 相机模块处于 **CAM-OFF**（`/dev/media*` 与 `/dev/video*` 均为 0）⇒ 此时 `cam` 必然 `Failed to create camera session`，
+  **下次先 `sh /usr/local/sbin/cam-mode.sh on` 再做相机测试**，收尾记得 `off` + `blank restore`。
 - 可用对照件：我们的 libcrypto 版（黑帧）在 `/root/lc-ours-20261018/`；源码在 `/root/libcamera-0.7.1`（build/ 已损坏需重建）。
 - 下次第一件事：跑 `patches/libcamera-20261018/build-on-device.sh`（≈5 min）→ 逐帧 mean 验收 → 再补**目视**
   （`cam -c1 -C1 --file=/tmp/x.bin` 取一帧转 PNG 看内容；本次未做目视）。
