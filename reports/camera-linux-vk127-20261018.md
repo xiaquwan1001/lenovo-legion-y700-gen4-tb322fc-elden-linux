@@ -81,3 +81,31 @@ C5 的前置 ①（主机侧 V4L2 loopback + libcamera 软 ISP 帧源）**已在
   2. 试 **更早/更新的 libcamera**（Alpine 包版本或自编 0.6/0.8）确认是否回归；
   3. 绕行：C5 的帧源改走**裸 V4L2 + 自己的 ISP/转换**（`v4l2src` 取 pgAA → host/GPU debayer → v4l2loopback），代价是丢掉 libcamera 的 AE。
 - 设备收尾：IPA 已恢复为自编 AE-fix 版；`CAM-OFF`（模块 0 / 节点 0 / `blank` idle 300 + lock true）；桌面（phoc）与音频（wireplumber）均在跑。
+
+---
+
+## 6. 根因排查（按推荐顺序第 1 步：主机/设备侧最小复现）
+
+### 6.1 已排除的三条假设（都有正/反证据）
+
+| 假设 | 检验 | 结果 |
+|---|---|---|
+| **Mesa/EGL 对「同一个 texture 重绑新 EGLImage」不生效** | 设备侧 60 行最小程序（`/tmp/egltest.cpp`）：dma_heap 两块 dma-buf → 同一个 texture 依次绑 EGLImage → 各 clear 一种颜色 → `glFinish` → CPU mmap 读像素 | ❌ 假设错：`buf1←red (255,0,0)` / `buf2←green (0,255,0)` / `buf1←blue (0,0,255)` **全部正确**；`GL_RENDERER=Adreno (TM) 830 / freedreno / Mesa 26.1.6` |
+| **GPU→CPU 的 dma-buf 可见性（cache 一致性）** | 同上程序在**硬件 GL**（freedreno）下读回 | ❌ 假设错：硬件 GL 下 CPU mmap 也能读到 GPU 写的新值 |
+| **`egl.cpp` 里 `EGL_DMA_BUF_PLANE0_OFFSET_EXT` 硬编码 0**（libcamera 0.7.1 与 master 都是 0）导致所有帧写进 buffer 0 | 抓 `cam` 进程的 fd：`/proc/<pid>/fd` 有 **4 个独立 dma-buf**（`/dmabuf:frame-0…3`） | ❌ 假设不成立（每个 FrameBuffer 一个 fd、offset 均为 0） |
+
+### 6.2 现象再确认（更硬的形式）
+
+`cam -c1 -C5 --file='/tmp/fr_#.bin'`（**每帧一个文件**，排除 app 写单文件时的拼接问题）：
+`fr_…000000.bin mean B=15.8`，`000001..000004 = 0.0` ⇒ **app 侧读取没问题，是 buffer 里真的没有数据**。
+`LIBCAMERA_LOG_LEVELS=*:DEBUG` 显示 `DebayerEGL::debayerGPU` 的 `setShaderVariableValues` **每帧都执行**（3/3），且 `glGetError()==0`。
+
+### 6.3 下一步（第 2 步，已确认可行）
+
+设备上 **`meson`/`ninja`/`g++`/EGL+GLES 头全都在**，可以直接在设备上构建 libcamera 0.7.1（源码 1.9 MB 可取）：
+在 `DebayerEGL::process()` 里加两处日志/回读：
+1. `LOG << "out fd=" << out_fd << " offset=" << plane.offset << " len=" << plane.length`（对照 `/proc/pid/fd` 的 `frame-N`）；
+2. `glFinish()` 后 **CPU 回读该 buffer 首 4 KB 的均值**并打日志。
+
+判据：若 `process()` 里回读就是 0 ⇒ ISP 侧问题（FBO/EGLImage/管线）；若回读有数据而 app 读到 0 ⇒ 是 buffer 交付/映射环节（pipeline 把错误的 FrameBuffer 交给了 app）。
+这一步能把「libcamera 内部 vs pipeline 交付」一次分开。
