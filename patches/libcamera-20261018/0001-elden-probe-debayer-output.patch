@@ -1,0 +1,27 @@
+--- a/src/libcamera/software_isp/debayer_egl.cpp
++++ b/src/libcamera/software_isp/debayer_egl.cpp
+@@ -547,6 +547,24 @@
+ 		goto error;
+ 	}
+ 
++	/* ELDEN PROBE: 看 ISP 内部这边到底有没有数据 */
++	{
++		MappedFrameBuffer dbgOut(output, MappedFrameBuffer::MapFlag::Read);
++		if (dbgOut.isValid()) {
++			const uint8_t *p = dbgOut.planes()[0].data();
++			size_t n = std::min<size_t>(dbgOut.planes()[0].size(), 16384);
++			uint64_t sum = 0; size_t cnt = 0;
++			for (size_t i = 0; i < n; i += 4, cnt++) sum += p[i];
++			LOG(Debayer, Error) << "PROBE frame=" << frame
++					    << " outfd=" << output->planes()[0].fd.get()
++					    << " off=" << output->planes()[0].offset
++					    << " len=" << output->planes()[0].length
++					    << " meanB=" << (cnt ? double(sum) / cnt : -1);
++		} else {
++			LOG(Debayer, Error) << "PROBE frame=" << frame << " map failed";
++		}
++	}
++
+ 	bench_.finishFrame();
+ 
+ 	metadata.planes()[0].bytesused = output->planes()[0].length;

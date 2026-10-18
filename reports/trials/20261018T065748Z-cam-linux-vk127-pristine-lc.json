@@ -1,0 +1,18 @@
+{
+  "label": "cam-linux-vk127-pristine-lc",
+  "ts": "2026-10-18T06:57:48Z",
+  "vk": "vk127",
+  "image": "vk127",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "pass",
+  "log_dir": "",
+  "note": "设备自编 pristine libcamera 0.7.1（无 libcrypto，IPA 隔离）: DebayerEGL PROBE(glFinish 后 CPU 回读输出 dma-buf) 后摄 15.9/0/0/37.6/37.6...（前2帧 AE 未生效），前摄 21.4→35.1→44.5→67.3（AE 爬升）；装版 app 逐帧文件同值。对照：含 libcrypto（Alpine 包 / 自编 libcrypto 版 ninja install）→ 40 帧仅帧0有数据、其余全 0。未做目视（无明亮场景照片）"
+}

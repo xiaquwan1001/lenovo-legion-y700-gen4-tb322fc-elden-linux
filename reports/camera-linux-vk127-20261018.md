@@ -109,3 +109,39 @@ C5 的前置 ①（主机侧 V4L2 loopback + libcamera 软 ISP 帧源）**已在
 
 判据：若 `process()` 里回读就是 0 ⇒ ISP 侧问题（FBO/EGLImage/管线）；若回读有数据而 app 读到 0 ⇒ 是 buffer 交付/映射环节（pipeline 把错误的 FrameBuffer 交给了 app）。
 这一步能把「libcamera 内部 vs pipeline 交付」一次分开。
+
+---
+
+## 7. ★根因（2026-10-18 晚，设备侧自编 libcamera 后收敛）：锅在「启用 libcrypto 的 libcamera 构建」
+
+### 7.1 结论（数字先）
+
+| 构建 | 后摄 `s5kjns` 逐帧 mean（ABGR） | 前摄 `gc08a8` 逐帧 mean | 判定 |
+|---|---|---|---|
+| **pristine 0.7.1，meson 找不到 libcrypto（IPA 隔离）** | `15.9, 0, 0, 37.6, 37.6, 37.5, …`（前 2 帧 AE 未生效） | `21.4 → 35.1 → 44.5 → 67.3`（AE 爬升） | ✅ **有画面** |
+| Alpine `libcamera` 包（libcrypto + 签名 IPA，进程内 IPA） | `15.9, 0, 0, 0, …`（40 帧仍全 0） | 同上现象 | ❌ 黑帧 |
+| 自编 libcrypto 版再 `ninja install` 到系统 | `15.9, 0, 0, 0, …` | 同上 | ❌ 黑帧 |
+| `LIBCAMERA_IPA_FORCE_ISOLATION=1`（对上面两种 libcrypto 构建） | 仍全 0 | — | ❌ 隔离不是充分条件 |
+
+**判据用 PROBE**（`patches/libcamera-20261018/0001-elden-probe-debayer-output.patch`）：在 `DebayerEGL::process()`
+`glFinish()` 之后**直接 CPU 回读输出 dma-buf**（打印 `frame/outfd/offset/len/meanB`）。
+PROBE 与 app 侧逐帧文件的值**完全一致** ⇒
+**ISP 每帧都在写缓冲**，先前「只写第 0 帧」的表述**作废**；真实故障是「libcrypto 构建里 AE/参数链把后续帧压成全黑」。
+（帧 0 有数据 = 传感器默认曝光在 AE 生效前先出了一帧。）
+
+### 7.2 怎么复现/怎么修
+
+- 复现：`apk add openssl-dev` → 重编 libcamera → `ninja install` → `cam -c1 -C12 --file='/tmp/f_#.bin'` 应见「帧 0 有值、其余 0」。
+- 修：**别让 meson 找到 libcrypto**（`apk del openssl-dev`），用隔离 IPA 的构建；脚本与备份见
+  `patches/libcamera-20261018/`（`README.md` + `build-on-device.sh`）。
+- 单次构建 ≈ **4–6 min**（8 核 `-j4`），产物 lib + IPA + proxy worker；安装到 `/usr` 会覆盖 Alpine 包文件，
+  原版备份 `/root/lc-bak-20261018/`。
+
+### 7.3 现场（留给下次，2026-10-18 停在这里）
+
+- 系统已**还原 Alpine 原版** libcamera + 原 IPA（`/root/lc-bak-20261018/`）⇒ 枚举正常、帧仍是黑的（已知）。
+- 可用对照件：我们的 libcrypto 版（黑帧）在 `/root/lc-ours-20261018/`；源码在 `/root/libcamera-0.7.1`（build/ 已损坏需重建）。
+- 下次第一件事：跑 `patches/libcamera-20261018/build-on-device.sh`（≈5 min）→ 逐帧 mean 验收 → 再补**目视**
+  （`cam -c1 -C1 --file=/tmp/x.bin` 取一帧转 PNG 看内容；本次未做目视）。
+- 未做/待办：① 目视与明亮场景复核；② 把 `-Dopenssl` 这条差异做成上游 issue（同源码、唯一变量）；
+  ③ 若修好，再把 libcamera 的 sensor helper/tuning（`patches/camera-ae-fix-20261017/`）合进设备构建。
