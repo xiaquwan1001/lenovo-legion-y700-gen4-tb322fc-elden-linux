@@ -13,5 +13,5 @@ algorithms:
   - Awb:
   - Adjust:
   - Agc:
-      exposureTarget: 0.30
+      exposureTarget: 0.60
 ...

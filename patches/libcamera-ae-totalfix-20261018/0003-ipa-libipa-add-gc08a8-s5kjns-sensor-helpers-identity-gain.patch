@@ -1,0 +1,42 @@
+--- /tmp/lc-p2/libcamera-0.7.1/src/ipa/libipa/camera_sensor_helper.cpp	2026-04-29 02:13:28.000000000 +0800
++++ src/ipa/libipa/camera_sensor_helper.cpp	2026-10-18 16:48:16.119839500 +0800
+@@ -789,6 +789,39 @@
+ };
+ REGISTER_CAMERA_SENSOR_HELPER("ov13858", CameraSensorHelperOv13858)
+ 
++class CameraSensorHelperGc08a8 : public CameraSensorHelper
++{
++public:
++	CameraSensorHelperGc08a8()
++	{
++		/*
++		 * GalaxyCore GC08A8 (front). The elden kernel driver exposes the
++		 * real analogue gain on V4L2_CID_ANALOGUE_GAIN (1..16) and applies
++		 * the raw sensor code scaling (x1024) internally, so the control
++		 * value is the gain multiplier itself. Pedestal is 64 at 10 bits.
++		 */
++		blackLevel_ = 4096;
++		gain_ = AnalogueGainLinear{ 1, 0, 0, 1 };
++	}
++};
++REGISTER_CAMERA_SENSOR_HELPER("gc08a8", CameraSensorHelperGc08a8)
++
++class CameraSensorHelperS5kjns : public CameraSensorHelper
++{
++public:
++	CameraSensorHelperS5kjns()
++	{
++		/*
++		 * Samsung S5KJNS (rear). Same as above: the driver takes the real
++		 * gain (1..64) and scales to the raw code (x32) itself.
++		 * Pedestal is 64 at 10 bits.
++		 */
++		blackLevel_ = 4096;
++		gain_ = AnalogueGainLinear{ 1, 0, 0, 1 };
++	}
++};
++REGISTER_CAMERA_SENSOR_HELPER("s5kjns", CameraSensorHelperS5kjns)
++
+ class CameraSensorHelperVd55g1 : public CameraSensorHelper
+ {
+ public:

@@ -1,0 +1,24 @@
+--- /tmp/lc-p2/libcamera-0.7.1/src/ipa/simple/soft_simple.cpp	2026-04-29 02:13:28.000000000 +0800
++++ src/ipa/simple/soft_simple.cpp	2026-10-18 16:52:38.648247896 +0800
+@@ -228,10 +228,18 @@
+ 		context_.configuration.agc.againMin = camHelper_->gain(againMin);
+ 		context_.configuration.agc.againMax = camHelper_->gain(againMax);
+ 		context_.configuration.agc.again10 = std::max(context_.configuration.agc.againMin, 1.0);
++		/*
++		 * The gain step has to survive the quantization to the sensor
++		 * gain code: CameraSensorHelper::gainCode() truncates, so a step
++		 * smaller than one code increments nothing and the AGC update is
++		 * lost every frame (elden: s5kjns 1..64 steps by 0.63 and the
++		 * gain stays at code 1 forever). Use at least one code step.
++		 */
+ 		context_.configuration.agc.againMinStep =
+-			(context_.configuration.agc.againMax -
+-			 context_.configuration.agc.againMin) /
+-			100.0;
++			std::max(1.0,
++				 (context_.configuration.agc.againMax -
++				  context_.configuration.agc.againMin) /
++					 100.0);
+ 		if (camHelper_->blackLevel().has_value()) {
+ 			/*
+ 			 * The black level from camHelper_ is a 16 bit value, software ISP
