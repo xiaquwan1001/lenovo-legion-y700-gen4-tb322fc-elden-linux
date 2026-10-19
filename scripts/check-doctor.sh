@@ -485,12 +485,20 @@ else
   ok "HISTORY/README.md 无写死计数"
 fi
 _hd=$(cat HISTORY/days/*.md 2>/dev/null | grep -cE '^- [0-9a-f]{7,} ' || true)
-_hr=$(git rev-list --count HEAD 2>/dev/null || echo 0)
-_hhist=$(git rev-list --count HEAD $(git for-each-ref --format='%(refname:short)' 'refs/heads/history/*' 'refs/remotes/*/history/*' 2>/dev/null | sort -u) 2>/dev/null || echo "$_hr")
-if [ "${_hd:-0}" -ge "${_hhist:-0}" ] 2>/dev/null; then
-  ok "HISTORY/days 覆盖 ${_hd} 条 >= HEAD+history ${_hhist} 条"
+# 判据不能简单写「days 条数 == HEAD 条数」：收尾时「重生成 days → 提交」这一步本身会让 HEAD +1，
+# 于是永远差 1 条、永远 WARN（形成无法收敛的循环）。改为判「最近一次生成覆盖到哪个提交」：
+#   HEAD 在 days 里    ⇒ 完全新鲜；
+#   HEAD~1 在 days 里  ⇒ 正常收尾态（days 由上一个提交更新，本次提交只改文档）；
+#   都不是             ⇒ 真落后。
+_headh=$(git rev-parse --short=10 HEAD 2>/dev/null || true)
+_prevh=$(git rev-parse --short=10 HEAD~1 2>/dev/null || true)
+_days_all=$(cat HISTORY/days/*.md 2>/dev/null || true)
+if [ -n "$_headh" ] && printf '%s' "$_days_all" | grep -q "^- $_headh "; then
+  ok "HISTORY/days 新鲜（覆盖 HEAD ${_headh}，共 ${_hd} 条）"
+elif [ -n "$_prevh" ] && printf '%s' "$_days_all" | grep -q "^- $_prevh "; then
+  ok "HISTORY/days 新鲜（覆盖 HEAD~1 ${_prevh}；本次提交仅改文档，共 ${_hd} 条）"
 else
-  warnf "HISTORY/days 落后：${_hd} < ${_hhist} 条（收尾时跑一次 scripts/gen-history.sh）"
+  warnf "HISTORY/days 落后（未覆盖 HEAD ${_headh} 或 HEAD~1 ${_prevh}）→ 跑一次 scripts/gen-history.sh"
 fi
 
 # ---------------------------------------------------------------- 11. 提交钩子生效性
