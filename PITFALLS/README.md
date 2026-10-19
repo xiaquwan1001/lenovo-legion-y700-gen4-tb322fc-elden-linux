@@ -75,6 +75,7 @@
 | 49 | 设备 HTTPS 全废 / git 随机失败 = 0 字节证书 + PMTU 黑洞 | [49-设备网络HTTPS全废与PMTU黑洞.md](sessions/49-设备网络HTTPS全废与PMTU黑洞.md) |
 | 50 | 相机 App 一直转圈 = phoc 无键盘 ⇒ GTK `is-active` 恒假 | [50-相机App转圈真根因-phoc无键盘致is-active恒假.md](sessions/50-相机App转圈真根因-phoc无键盘致is-active恒假.md) |
 | 51 | 容器 camera provider 真根因：`IBinder` vtable 错位 + 符号抢占 | [51-容器camera-provider真根因-vtable错位与符号抢占.md](sessions/51-容器camera-provider真根因-vtable错位与符号抢占.md) |
+| 52 | WiFi 候选榜只剩已连接项 = 连通态 NM 不复扫（bgscan 写死 86400 s） | [52-WiFi候选榜塌成1项-连通态NM不复扫.md](sessions/52-WiFi候选榜塌成1项-连通态NM不复扫.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。

@@ -17,11 +17,13 @@ ssh root@192.168.7.1 'cd /root/persistent-overlay && sh restore.sh'
 | 文件 | 内容 | 还原方式 |
 |---|---|---|
 | `apk-world.txt` | `/etc/apk/world`（120 行） | `apk add $(cat …)`（restore.sh 已做） |
-| `usr-local-sbin.tar.gz` | `/usr/local/sbin/`（自研脚本，**排除 `.bak*`**） | `tar xzf - -C /usr/local/sbin --owner=0 --group=0` |
+| `usr-local-sbin.tar.gz` | `/usr/local/sbin/`（自研脚本，**排除 `.bak*`**；2026-10-19 重采，含 `wifi-scan-refresh.sh`、`cam-mode.sh`、`q28-*watchdog.sh`、`sleep-*.sh`、`kmsgspy.sh`、`elden-session-user`） | `tar xzf - -C /usr/local/sbin --owner=0 --group=0` |
 | `etc-local.d.tar.gz` | `/etc/local.d/elden-bringup.start`（OpenRC `local` 载荷） | 解到 `/etc/local.d` |
 | `etc-conf.d.tar.gz` | `/etc/conf.d/greetd`（`LIBSEAT_BACKEND=seatd`） | 解到 `/etc/conf.d` |
 | `etc-greetd.tar.gz` | `/etc/greetd/config.toml` | 解到 `/etc/greetd` |
 | `etc-NM-conf.d.tar.gz` | `99-unmanaged.conf`（usb0/lo unmanaged） | 解到 `/etc/NetworkManager/conf.d` |
+| `etc-initd-wifi-scan-refresh` | `/etc/init.d/wifi-scan-refresh`（连通态周期扫描服务，`supervise-daemon`） | `install -m755` + `rc-update add wifi-scan-refresh default` |
+| `etc-conf.d-wifi-scan-refresh` | `/etc/conf.d/wifi-scan-refresh`（`WIFI_SCAN_INTERVAL=150`，**必须 <180 s**） | `install -m644` |
 | `init` | 磁盘根 `/init` 快照（**真源 = 仓库 `initramfs/init`**） | `install -m755 init /init` |
 | `sbin-poweroff`/`-reboot`/`-halt` | `elden-powerwrap` 包装器 | `install -m755` |
 | `elden-init-mode.txt` | `openrc`（init 模式开关） | — |

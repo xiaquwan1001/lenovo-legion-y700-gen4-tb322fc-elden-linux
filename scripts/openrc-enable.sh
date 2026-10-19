@@ -31,9 +31,13 @@ GREETD_CONF=/etc/conf.d/greetd
 #   chronyd -> time-sync.sh steps the clock first (device RTC is read-only and
 #     the clock boots at 1970, so chrony must not be the first thing to start)
 #   sshd / usb-gadget / getty  -> /init keeps these for the recovery lifeline
+#   wifi-scan-refresh -> supplemental periodic scan while CONNECTED; NM forbids its
+#     own periodic scan then and its supplicant bgscan is hardcoded to 86400 s with a
+#     good signal => the AP candidate list collapses to the connected AP only
+#     (PITFALLS #354).  initd is installed by persistent-overlay/restore.sh.
 SYSINIT="devfs procfs sysfs cgroups dmesg modules sysctl hostname"
 BOOT="hwclock seedrng udev udev-trigger udev-settle localmount bootmisc"
-DEFAULT="dbus elogind seatd greetd networkmanager bluetooth polkit rtkit udisks2 local"
+DEFAULT="dbus elogind seatd greetd networkmanager wifi-scan-refresh bluetooth polkit rtkit udisks2 local"
 
 write_payload() {
 	install -d -m755 /etc/local.d /etc/conf.d

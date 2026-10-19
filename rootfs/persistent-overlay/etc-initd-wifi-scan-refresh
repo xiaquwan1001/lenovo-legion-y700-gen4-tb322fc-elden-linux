@@ -1,0 +1,38 @@
+#!/sbin/openrc-run
+# wifi-scan-refresh — 连通态周期扫描，保持 NetworkManager 的候选 AP 榜不塌陷
+#
+# 为什么需要它（根因，PITFALLS #354）：NM 在「已连接」时**不做**周期扫描
+# （periodic_allowed=FALSE），改让 wpa_supplicant 后台扫；而 NM 给 supplicant 的
+# bgscan 是写死的 `simple:30:-70:86400` ⇒ 信号好于 -70 dBm 时等于 24 h 才扫一次。
+# 不扫 ⇒ supplicant 的 BSS 缓存按 age(180 s) 过期 ⇒ NM 移除 AP 对象
+# ⇒ WiFi 候选榜只剩当前连接的网络（实测 35 → 1），手动关开 WiFi 或显式 rescan 才恢复。
+#
+# 间隔必须 < 180 s；默认 150 s，见 /etc/conf.d/wifi-scan-refresh
+#
+# ⚠️ /run/wifi-scan-refresh.pid 里是 **supervise-daemon 自己的 pid**（不是子进程 pid）。
+#    判活别对这个 pid 发信号：杀掉 supervise-daemon 会留下孤儿 `--loop` 子进程，
+#    `rc-service status` 会变成 `unsupervised`（伪装成「服务挂了」）。
+#    测重启韧性应 kill -9 **子进程**：pgrep -f 'wifi-scan-refres[h].sh --loop'（方括号防自匹配）。
+
+name="wifi-scan-refresh"
+description="Periodic NetworkManager scan while connected (keeps AP candidate list fresh)"
+
+command="/usr/local/sbin/wifi-scan-refresh.sh"
+command_args="--loop"
+command_background="yes"
+supervisor="supervise-daemon"
+pidfile="/run/wifi-scan-refresh.pid"
+output_log="/var/log/wifi-scan-refresh.log"
+error_log="/var/log/wifi-scan-refresh.log"
+respawn_delay=5
+
+depend() {
+	need dbus
+	after networkmanager
+	use logger
+}
+
+start_pre() {
+	checkpath -f -m 0644 "$output_log"
+	checkpath -d /run
+}

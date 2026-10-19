@@ -36,6 +36,15 @@ chmod 755 /etc/NetworkManager/dispatcher.d/50-net-selfheal 2>/dev/null || true
 autostart_net_selfheal() { [ -x /usr/local/sbin/net-selfheal.sh ] && /usr/local/sbin/net-selfheal.sh; }
 autostart_net_selfheal || true
 
+echo "== WiFi 候选榜不塔（连通态周期扫描；PITFALLS #354 / TASKS G1-36）=="
+# NetworkManager 在已连接状态下不做周期扫描（bgscan 写死 simple:30:-70:86400），
+# 不补扫就会让 supplicant 的 BSS 缓存过期被清 ⇒ 候选榜只剩当前连接项。
+install -m755 etc-initd-wifi-scan-refresh /etc/init.d/wifi-scan-refresh
+install -d /etc/conf.d
+[ -f /etc/conf.d/wifi-scan-refresh ] || install -m644 etc-conf.d-wifi-scan-refresh /etc/conf.d/wifi-scan-refresh
+rc-update add wifi-scan-refresh default 2>/dev/null || true
+[ -x /usr/local/sbin/wifi-scan-refresh.sh ] && rc-service wifi-scan-refresh restart >/dev/null 2>&1 || true
+
 echo "== iio-sensor-proxy timing override (auto-rotate stuck OFF) =="
 # Override the packaged init script so the proxy waits for QRTR svc 400 (SSC)
 # before launching; otherwise it scans once, gives up (G1-34), and phosh's
