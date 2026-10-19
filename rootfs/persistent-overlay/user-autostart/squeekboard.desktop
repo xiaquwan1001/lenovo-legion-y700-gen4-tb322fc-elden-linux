@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Squeekboard (OSK / seat keyboard)
+Comment=Needed so wl_seat advertises KEYBOARD; without it GTK 'is-active' stays false and apps like Snapshot never start their camera.
+Exec=/usr/bin/squeekboard
+OnlyShowIn=GNOME;
+X-GNOME-Autostart-Phase=Panel
+X-GNOME-Provides=inputmethod
+X-GNOME-Autostart-Notify=true
+X-GNOME-AutoRestart=true
+NoDisplay=true
