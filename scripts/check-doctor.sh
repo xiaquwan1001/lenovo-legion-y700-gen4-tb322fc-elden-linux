@@ -375,6 +375,27 @@ for rel, pat, ang in COUNT_RULES:
             stale.append('%s 声明「%s 节」但实际 %d 节' % (rel, m.group(1), real))
 emit('STALECOUNT', stale)
 emit('IDXROW', IDXROW)
+
+# ---- 8e. 表格结构完整性（GFM：遇首个非 `|` 行即终止表格）----
+# 立此判据的原因（2026-10-19 实测）：TASKS/README.md 有 4 处把一个表格行写成跨 4–6 个物理行的
+# 整段叙事（续行不以 `|` 开头）⇒ 源文件看着能读，渲染出来该行后半截 + 其后**全部数据行**
+# 降级为纯文本段落；同时 grep/表格解析工具会读丢内容。这是「人肉可读但机器不可读」的静默故障。
+TBL = []
+TBL_DOCS = ['TASKS/README.md', 'PITFALLS/README.md', 'DEVICE/README.md',
+            'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md', 'INDEX.md']
+for rel in TBL_DOCS:
+    p = os.path.join(root, rel)
+    if not os.path.isfile(p):
+        continue
+    lines = open(p, encoding='utf-8', errors='replace').read().split('\n')
+    for i, ln in enumerate(lines):
+        if i == 0 or not ln.strip():
+            continue
+        # 续行 = 上一行是表格行，本行既不是表格行也不是标题/引用/围栏
+        if lines[i-1].startswith('|') and not ln.startswith('|') \
+           and not ln.lstrip().startswith(('#', '>', '```', '- ')):
+            TBL.append('%s:%d 表格行被换行拆开（该行及其后全部数据行会退化成纯文本）' % (rel, i + 1))
+emit('TBL', TBL)
 PY
 )
 echo
@@ -395,6 +416,7 @@ while IFS=$'\t' read -r _st _msg; do
     DUPNUM) [ "$_msg" = "-" ] && ok "文件名/条目编号无撞车" || bad "编号撞车（引用歧义，必须重编）: $_msg" ;;
     STALECOUNT) [ "$_msg" = "-" ] && ok "文档内手写条目计数与磁盘一致" || bad "文档手写计数已过期（改为不写死数字，或同步修正）: $_msg" ;;
     IDXROW) [ "$_msg" = "-" ] && ok "索引行长度合规（结论只在正文，索引只放一句话主题）" || bad "索引行超长（内容应搬进正文，索引留一段主题 + 链接）: $_msg" ;;
+    TBL)    [ "$_msg" = "-" ] && ok "入口文档表格结构完整（无被换行拆断的表格行）" || bad "表格行被换行拆开（合并成一行，叙事搬去 reports/）: $_msg" ;;
   esac
 done <<< "$_media"
 
