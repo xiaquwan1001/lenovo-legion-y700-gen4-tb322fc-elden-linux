@@ -38,7 +38,16 @@
 | 编译（补丁树） | `make … drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.o` | **rc=0**，0 error/warning |
 | 全量构建（基线分支） | `make -j16 … Image.gz dtbs` | **rc=0 / 0 error / 0 warning**；`Image.gz` **20 798 895 B**；板 DTB 153 101 B（**与补丁前逐字节同**） |
 
-**投递冻结**：按用户 2026-10-13 决定，**不发上游邮件**，本片封存待项目收盘统一投递。
+**投递（2026-10-19，用户解除冻结）**：
+- 前置复核：上游 `master` = **Linux 7.3 正式版 `c03c1a145`**，`dsi_phy_7nm.c` 自 `v7.3-rc7` **零改动**，
+  `PLL_SYSTEM_MUXES` 缺失仍在；`linux-arm-msm` 搜索无同名补丁（无重复工作）。
+- 通道：`git send-email`（smtp.ustc.edu.cn:465），Result: **250**。
+- **Message-ID**：`<20261019130041.305805-1-xiaqinghuan@mail.ustc.edu.cn>`
+- 归档复核：`/linux-arm-msm/` **已归档**（`?q=PLL_SYSTEM_MUXES` 命中，2026-10-19T13:01:05Z）。
+- To：Rob Clark / Dmitry Baryshkov / Abhinav Kumar / Jessica Zhang / Sean Paul / Marijn Suijten；
+  Cc：linux-arm-msm / dri-devel / freedreno / linux-kernel。
+- 本地门（复跑）：checkpatch --strict **0E/1W/0C**（W = partial clone 缺 `44784327815b`，良性）、
+  pristine `24a19b953` `git am` rc=0、`dsi_phy_7nm.o` `W=1` rc=0/0 warn（2026-10-19）。
 
 ## 本地件（不在本目录，勿发上游）
 
