@@ -1,0 +1,64 @@
+From 62a291baaeba5d4b1da5b9b6065b990f32f2577e Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 19 Oct 2026 21:17:43 +0800
+Subject: [RFC PATCH v3 0/2] USB: describe two connectors sharing one DWC3 HS data bus
+
+This is v3 of the series describing two USB-C receptacles that share one
+DWC3 High Speed data bus.  It is deliberately an RFC for the shape: the
+driver part is not included yet.
+
+Changes since v2:
+- Drop port@2.  The shared HS bus is now port@0 with two numbered
+  endpoints, endpoint@0 and endpoint@1, so "ports" keeps describing the
+  controller's own buses.
+- Require "ports" when port-select-gpios is present, and reject the
+  endpoint properties when it is not.
+- Constrain the two mux-state values to be complementary.
+- Move the per-connector role-switch lookup into a generic helper,
+  usb_role_switch_at_endpoint() (new patch 2/2).  v2 relied on the
+  lookup walking from the endpoint up to the parent device, which is not
+  what usb_role_switch_get() does upstream, so a consumer would never
+  find the switch.  With the helper the switch is registered against the
+  remote endpoint and found from the connector's endpoint.
+- Do not describe driver switching policy in the binding.
+
+Two questions for you:
+
+1. Why not the standard mux bindings?
+   The GPIO only routes the HS D+/D- pair.  What the driver needs is role
+   arbitration between two connectors (the oldest active request owns the
+   data path, and a connector reports its role only while it owns the
+   path).  The mux subsystem can select a state but has no notion of
+   ownership or of USB roles, and drivers/usb/ has no mux_control
+   consumer today.  gpio-mux also drives its mux-gpio to the idle state
+   at probe time, which would override the level left by the bootloader
+   on this board.  So the arbitration stays in the controller and the
+   binding only describes the wiring.  If you would still prefer the mux
+   bindings we will rework it -- that is why this is RFC.
+
+2. Is "usb-role-switch" on a graph endpoint acceptable, given that the
+   property normally means "this device registers a role switch"?  Here
+   it declares that this connector endpoint has its own role switch, and
+   the new helper looks it up from the connector's endpoint.  A separate
+   property name is possible if you prefer.
+
+The board is the same as in v2: two USB-C receptacles, Super Speed pairs
+independent, only the HS D+/D- pair goes through a 2:1 mux controlled by
+TLMM GPIO 29; both connectors have data-role = "dual" and are handled by
+pmic-glink.
+
+Once the shape is acked I will send the DWC3 driver part as v4, including
+the fixes from the review of v2.
+
+Qianhui Xu (2):
+  dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS
+    bus
+  usb: roles: look up role switches attached to a graph endpoint
+
+ .../bindings/usb/snps,dwc3-common.yaml        | 109 +++++++++++++++++-
+ drivers/usb/roles/class.c                     |  40 +++++++
+ 2 files changed, 148 insertions(+), 1 deletion(-)
+
+-- 
+2.53.0
+
