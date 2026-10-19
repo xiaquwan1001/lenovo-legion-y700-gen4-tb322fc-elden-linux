@@ -226,6 +226,45 @@ U7 验收时注意用 camera id `"200"`。
   - `scripts/waydroid-camera-bake.sh`（`SMOKE=1` 时把 `hidl-smoke` 烘进 `/bin/hidl-smoke`）
 - `dl-cam/` 是构建工作区（不入 git）。
 
+## 10. 追加（同日）：容器相机上线后暴露的两个互斥/环境问题
+
+### 10.1 Linux 相机 `couldn't play camera stream` = loopback 生产者独占 CSI/CSID
+
+启用 C5 主机侧 loopback（`libcamerasrc → v4l2sink /dev/video100`）后，Linux 侧相机立刻失败：
+
+```
+ERROR MediaDevice: /dev/media0[qcom-camss]: Failed to setup link 'msm_csiphy4'[1] -> 'msm_csid0'[0]: Resource busy
+Camera 1 not found / Failed to create camera session
+```
+
+- **根因**：`libcamerasrc` 独占整条 media pipeline（sensor → CSIPHY → CSID → VFE）。
+  Linux 侧任何第二个相机客户端（`cam`、Snapshot、浏览器）都拿不到链路。
+- **这是硬件事实，不是缺陷**：容器相机（C5）与 Linux 相机（G1-5）共用同一路 sensor ⇒ **同一时刻互斥**。
+- 停掉生产者后 `cam -c1 -C2 --capture=2` 立刻恢复 **30.06 fps**（本轮实测）。
+- **处置**：`scripts/cam-loopback.sh start` 增加互斥检查（检测到已有相机客户端会 `REFUSE`，
+  `FORCE=1` 强制）；收尾必须显式 `stop`，与 `cam-mode.sh off` 同一纪律。
+
+### 10.2 容器 GUI 拉不起 = session 挂到了 headless 空合成器
+
+- **现象**：`waydroid app launch` / `show-full-ui` 返回 0，无窗口；用户表述「无法调起图形化界面」。
+- **根因**：重启脚本固定 `XDG_RUNTIME_DIR=/run/user/0` + `weston --backend=headless-backend.so`。
+  那是**没有真实输出的空合成器**；本机真实桌面是 **`xuqianhui1001`(uid 1000) 的 phoc**，
+  socket 在 `/run/user/1000/wayland-0`。session 挂错合成器 ⇒ 有进程、没窗口。
+- **判据**：`waydroid status | grep "Session user"` 应为 `xuqianhui1001(1000)`；
+  或直接读 session 进程 environ 里的 `XDG_RUNTIME_DIR`。
+- **修法**：改用会话用户的 phoc + 其 session bus（`scripts/waydroid-cam-restart.sh` 已改默认
+  `MODE=desktop`；Q28 坏发才用 `MODE=headless`）。
+- **连带三坑**：
+  1. `waydroid container start` **不启 lxc** —— 它只是 DBus 常驻服务，容器由 `session start` 请求拉起；
+  2. kill 后 dbus system bus 残留 `id.waydro.Container` ⇒ 静默 `Container service is already running`、lxc 仍旧 STOPPED；
+     必须 `pkill -9 -f "waydroid containe[r] start"`；
+  3. `Container: FROZEN` 是 Waydroid 的正常省电（无 UI 客户端时 `lxc-freeze`），不是故障。
+
+### 10.3 状态
+
+修复后：Linux 相机 `30.06 fps` 正常；容器 RUNNING、`Session user: xuqianhui1001(1000)`、GUI 已起（用户确认）。
+`/dev/video100` 节点仍在但生产者已停（容器相机此时无帧，属预期互斥）。
+
 ## 9. 方法论（值得留）
 
 1. **崩溃地址里的常量就是线索**：`pc = -32` 不是随机值，它是 `vtable[12]` 的磁盘填充；
@@ -236,4 +275,8 @@ U7 验收时注意用 camera id `"200"`。
 4. **「服务 running」和「有设备」是两件事**：前者只看注册与 binder 通路，后者还依赖
    `/dev/video*`、config XML、permission；别把 running 当验收通过。
 5. 前两轮把问题记成「工具链 ABI 不一致」是含糊化，代价是多花了一整轮。
+6. **占用独占硬件的实验脚本必须自带 `stop` 并写进收尾清单**：本轮忘了停 loopback 生产者，
+   用户随后用 Linux 相机就撞上 `Resource busy`，看起来像「本轮改动把相机改坏了」。
+7. **「进程起不来」先确认目标合成器对不对**：headless weston 与真实 phoc 是两套完全独立的
+   Wayland 实例，挂错了表现为「app 有进程没窗口」，很容易被误判成容器/图形栈坏了。
    正确记法应落到**具体的槽位/符号名**上（本轮三条都能被 5 分钟反汇编独立验证）。

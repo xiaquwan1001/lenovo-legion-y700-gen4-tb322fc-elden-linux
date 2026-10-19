@@ -11,6 +11,12 @@
 #   - 后摄 s5kjns 的 libcamera AE 不工作（缺 sensor helper）⇒ 必须手动设
 #     exposure/analogue_gain，否则画面全黑；本脚本在 rear 模式下会先设好。
 #
+# ★★★ 与 Linux 相机**互斥**（2026-10-19 实测）：本脚本用 libcamerasrc 独占 CSI/CSID 链路，
+#   在位时任何另一个相机客户端（`cam`、GNOME Snapshot、浏览器…）都会失败并报
+#   `couldn't play camera stream` / `Failed to setup link 'msm_csiphy4'[1] -> 'msm_csid0'[0]: Resource busy`
+#   ⇒ **用容器相机/loopback 前先确认没人在用 Linux 相机；用完立刻 `stop`**。
+#   `start` 现在会先检测是否已有相机客户端在用，有则拒绝启动（FORCE=1 可强制）。
+#
 # 用法：
 #   scripts/cam-loopback.sh start [front|rear] [WxH] [fps]   # 默认 front 1280x720 30
 #   scripts/cam-loopback.sh stop
@@ -28,6 +34,15 @@ case "${1:-status}" in
 start)
 	WHICH=${2:-front}; SIZE=${3:-1280x720}; FPS=${4:-30}
 	W=${SIZE%x*}; H=${SIZE#*x}
+	# 互斥检查：已有别的相机客户端占用链路时拒绝启动（否则对方会报 "couldn't play camera stream"）
+	if [ "${FORCE:-0}" != 1 ]; then
+		busy=$(S "pgrep -af 'cam .*-c|captureScript|gnome-snapshot|snapshot' | grep -v pgrep | wc -l") || busy=0
+		if [ "${busy:-0}" -gt 0 ]; then
+			echo "REFUSE: 已有相机客户端在跑（$busy 个）——loopback 会独占 CSI 链路并让它们报 \"couldn't play camera stream\"。"
+			echo "        确认要抢就 FORCE=1 重跑；或用完先关掉对方。"
+			exit 3
+		fi
+	fi
 	if [ "$WHICH" = rear ]; then CAM=$CAM_REAR; else CAM=$CAM_FRONT; fi
 	SRUN <<EOF
 set -u

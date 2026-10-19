@@ -131,6 +131,65 @@
   `/var/lib/waydroid/lxc/waydroid/config` 里 `/dev/video100` 的 bind 行历史上被 A/B 注释成
   `#TMPCAM# …`，会让容器看不到节点 —— 排查「容器没有 /dev/video100」先看这一行。
 
+## #352 Linux 相机「couldn't play camera stream」= 容器 loopback 生产者独占了 CSI/CSID 链路
+
+- 现象：本轮改动前 Linux 侧成像正常，启用容器相机后报 `couldn't play camera stream`
+  （Snapshot）/ `Failed to create camera session`（`cam`）。
+- 判据（一条命令定死）：
+  ```
+  $ cam -c1 -C2 --capture=1
+  ERROR MediaDevice: /dev/media0[qcom-camss]: Failed to setup link 'msm_csiphy4'[1] -> 'msm_csid0'[0]: Resource busy
+  Camera 1 not found / Failed to create camera session
+  ```
+  `Resource busy` 说明**链路已被别的进程持有**，不是驱动/固件问题。
+  再查持有者：`pgrep -af "gst-launch.*libcamerasrc"`。
+- 根因：`scripts/cam-loopback.sh` 用 `libcamerasrc` 抓 sensor 再喂 `v4l2sink /dev/video100`，
+  这是**独占式**占用（sensor → CSIPHY → CSID → VFE 整条 media pipeline）。
+  Linux 侧任何第二个相机客户端都拿不到链路。
+- ⇒ **容器相机（C5）与 Linux 相机（G1-5）在同一时刻互斥**，因为两者共用同一路 sensor 硬件。
+  这不是缺陷，是硬件事实；但必须在操作流程里显式化：
+  - 用容器相机前：确认没人在用 Linux 相机；
+  - 用完立刻 `scripts/cam-loopback.sh stop`；
+  - `cam-loopback.sh start` 已加互斥检查（检测到已有相机客户端会 `REFUSE`，`FORCE=1` 可强制）。
+- 反面教训：本轮先起了 loopback 生产者去验容器，**没有停**，用户随后在 Linux 侧用相机就撞上。
+  凡是「临时占用独占硬件」的实验，脚本必须有 `stop` 且在收尾步骤里显式调用
+  （与 `cam-mode.sh off` 同理）。
+
+## #353 容器「图形界面拉不起 / 进程起不来」= session 挂到了 headless 的空合成器上
+
+- 现象：`waydroid app launch` / `show-full-ui` 返回 0 但没有窗口，容器进程起不来；
+  用户感受是「容器无法调起图形化界面」。
+- 根因：重启脚本（`waydroid-cam-restart.sh` / `waydroid-headless-start.sh`）固定用
+  `XDG_RUNTIME_DIR=/run/user/0` + `weston --backend=headless-backend.so`。
+  那是**没有真实输出的空合成器**；本机真实桌面是 **`xuqianhui1001`(uid 1000) 的 phoc**，
+  wayland socket 在 `/run/user/1000/wayland-0`。session 挂错合成器 ⇒ app 有进程、没窗口。
+- 判据：看 session 到底挂在谁身上：
+  ```
+  $ waydroid status | grep "Session user"     # 应为 xuqianhui1001(1000)，不是 root(0)
+  $ for p in $(pgrep -f "waydroid sessio[n] start"); do tr '\0' '\n' < /proc/$p/environ | grep -E "XDG_RUNTIME_DIR|WAYLAND_DISPLAY"; done
+  ```
+  出现 `XDG_RUNTIME_DIR=/run/user/0` 就是挂错了。
+- 治法（已固化进 `scripts/waydroid-cam-restart.sh`，默认 `MODE=desktop`）：
+  ```bash
+  SB=$(for p in $(pgrep -u 1000 | head -40); do (tr '\0' '\n' < /proc/$p/environ) 2>/dev/null \
+       | grep -m1 '^DBUS_SESSION_BUS_ADDRESS='; done | head -1 | cut -d= -f2-)
+  setsid sudo -u xuqianhui1001 HOME=/home/xuqianhui1001 \
+    XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 \
+    DBUS_SESSION_BUS_ADDRESS="$SB" waydroid session start &
+  ```
+  只有 Q28 坏发（无 phoc/面板）才用 `MODE=headless` 应急，且此时容器 app **本来就不可能有可见窗口**。
+- 三个连带坑（同一轮踩全）：
+  1. **`waydroid container start` 不启 lxc** —— 它只是 DBus 常驻服务（`id.waydro.Container`）；
+     容器由 `waydroid session start` 通过 dbus 请求拉起。所以顺序必须是 container → session，
+     只跑 container 会看到 lxc 一直 STOPPED 而 `waydroid status` 不报错。
+  2. **dbus 名残留**：kill 掉容器服务后 system bus 上仍留着 `id.waydro.Container`
+     （`busctl --system list | grep waydro` 可见老 pid）⇒ 后续启动静默打
+     `Container service is already running` 并 return，lxc 永远起不来。
+     治法：`pkill -9 -f "waydroid containe[r] start"`（等 dbus 释放）再起。
+  3. **`FROZEN` 是正常省电行为**，不是故障：容器无 UI 客户端连接时 Waydroid 主动
+     `lxc-freeze`（`/var/lib/waydroid/waydroid.log` 里有 `% lxc-freeze …` ↔ `FROZEN`）。
+     看到 `Container: FROZEN` 不要去"修"，起 session/app 会自动解冻。
+
 ## #349 Q24 口径更正：「相机模块在位 ⇒ 熄屏必掉电」不是绝对的
 
 - 旧的绝对口径（2026-10-09 用户裁决）已被证据削弱，**2026-10-19 用户指示改写**：
