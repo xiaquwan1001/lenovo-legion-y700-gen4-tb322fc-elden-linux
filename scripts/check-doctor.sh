@@ -396,6 +396,37 @@ for rel in TBL_DOCS:
            and not ln.lstrip().startswith(('#', '>', '```', '- ')):
             TBL.append('%s:%d 表格行被换行拆开（该行及其后全部数据行会退化成纯文本）' % (rel, i + 1))
 emit('TBL', TBL)
+
+# ---- 8f. reports/ 不得有孤儿（AGENT-OPS §3「报告必须被引用」的机器版）----
+# 立此判据的原因：2026-10-15 实例——`reports/q24-causal-audit-20261015.md` 既未入 git
+# 也无人引用，结论随文件沉底。2026-10-19 复盘又查出 5 篇孤儿报告。
+# 判据：报告文件名必须出现在**自身以外**的 md/sh/py/tsv 里（含 glob 写法）。
+# 白名单 = reports/ 下的索引类文件（它们引用别人，不需要被别人引用）。
+ORPHANR = []
+RP = os.path.join(root, 'reports')
+if os.path.isdir(RP):
+    selfdocs = {'Q24-Q28-INDEX.md', 'q28-INDEX.md', 'q28-DOSSIER.md'}
+    corpus = []
+    for dp, dns, fns in os.walk(root):
+        dns[:] = [d for d in dns if d not in {'.git', 'node_modules', 'out', 'logs', 'backup',
+                                              'geekidos-linux', 'Y700-elden-linux', 'stock-src',
+                                              'dl-cam', 'env-pass', 'build'}]
+        for fn in fns:
+            if fn.endswith(('.md', '.sh', '.py', '.tsv')):
+                corpus.append(os.path.join(dp, fn))
+    texts = {}
+    for cf in corpus:
+        try:
+            texts[cf] = open(cf, encoding='utf-8', errors='replace').read()
+        except OSError:
+            pass
+    for rp in sorted(glob.glob(os.path.join(RP, '*.md'))):
+        base = os.path.basename(rp)
+        if base in selfdocs:
+            continue
+        if not any(base in tx for cf, tx in texts.items() if cf != rp):
+            ORPHANR.append('reports/' + base)
+emit('ORPHANR', ORPHANR)
 PY
 )
 echo
@@ -417,6 +448,7 @@ while IFS=$'\t' read -r _st _msg; do
     STALECOUNT) [ "$_msg" = "-" ] && ok "文档内手写条目计数与磁盘一致" || bad "文档手写计数已过期（改为不写死数字，或同步修正）: $_msg" ;;
     IDXROW) [ "$_msg" = "-" ] && ok "索引行长度合规（结论只在正文，索引只放一句话主题）" || bad "索引行超长（内容应搬进正文，索引留一段主题 + 链接）: $_msg" ;;
     TBL)    [ "$_msg" = "-" ] && ok "入口文档表格结构完整（无被换行拆断的表格行）" || bad "表格行被换行拆开（合并成一行，叙事搬去 reports/）: $_msg" ;;
+    ORPHANR) [ "$_msg" = "-" ] && ok "reports/ 无孤儿报告（每篇都被至少一处引用）" || warnf "报告无人引用（结论会随文件沉底，补一处指针到对应 README/TASKS 行）: $_msg" ;;
   esac
 done <<< "$_media"
 
