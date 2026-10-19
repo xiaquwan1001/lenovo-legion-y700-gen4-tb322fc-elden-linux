@@ -96,11 +96,11 @@ scale 8/3 is advertised as 2.6666667461395264 but reported as
 
 ---
 
-## 2b. 可选特性：自动旋转磁贴（`0003-phosh-...`）
+## 2b. ~~可选特性：自动旋转磁贴~~（已撤销 2026-10-19）
 
-`patches-userland/0003-phosh-auto-rotation-quick-setting.patch` 是**新增**一个「自动旋转」快速设置插件（非 bug 修复，
-对上游是 UX 特性：Phosh 目前只有「旋转/锁定」磁贴，无独立自动旋转开关）。若想提，建议先开 issue 讨论 UX
-（"add an explicit auto-rotation quick setting"）再提 MR；文案可参考 `reports/userland-auto-rotation-toggle-20261011.md` §1–§2。
+`0003-phosh-auto-rotation-quick-setting.patch` **不再提交上游**，已移至 `../withdrawn/`。
+原因：phosh 0.55 核心的旋转快捷设置（`src/quick-settings.c` → `phosh_rotation_manager_set_orientation_locked()`）
+已经是自动旋转开关，额外插件只是重复入口。历史文案见 `reports/userland-auto-rotation-toggle-20261011.md`。
 
 ---
 

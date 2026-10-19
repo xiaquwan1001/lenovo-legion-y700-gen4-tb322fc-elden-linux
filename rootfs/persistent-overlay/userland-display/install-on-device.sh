@@ -1,7 +1,10 @@
 #!/bin/sh
 # Build the patched phoc + phosh and install them into the running persistent
-# root, together with the auto-rotation quick-setting plugin.  Idempotent
-# (marker file); safe to re-run.
+# root.  Idempotent (marker file); safe to re-run.
+#
+# NOTE (2026-10-19): the auto-rotation quick-setting plugin (0003) is RETIRED.
+# Phosh's built-in rotation quick setting already toggles orientation-lock, so the
+# extra tile was a duplicate.  This script no longer builds or installs it.
 #
 # Run AS ROOT ON THE DEVICE:
 #     sh install-on-device.sh
@@ -15,9 +18,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 WORK="${WORK:-/root/build}"
 DEPS="$DIR/build-deps.txt"
 MARK=/usr/local/share/elden/userland-display.marker
-MARKVAL="phoc-0.55.1+phosh-0.55.0+display2"
-PLUGIN=auto-rotation-quick-setting
-PLUGDIR=/usr/lib/phosh/plugins
+MARKVAL="phoc-0.55.1+phosh-0.55.0+display3-norot"
 
 if [ "${SKIP_USERLAND_DISPLAY:-0}" = 1 ]; then
 	echo "[userland-display] skipped (SKIP_USERLAND_DISPLAY=1)"
@@ -35,10 +36,6 @@ echo "[userland-display] building (this takes a few minutes)"
 WORK="$WORK" sh "$DIR/build-phoc-phosh.sh" "$WORK" "$DIR"
 
 PHOSH_BUILD="$WORK/phosh-0.55.0/output"
-PLUGIN_SO="$PHOSH_BUILD/plugins/$PLUGIN/libphosh-plugin-$PLUGIN.so"
-PLUGIN_DESK="$PHOSH_BUILD/plugins/$PLUGIN/$PLUGIN.plugin"
-[ -f "$PLUGIN_SO" ]   || { echo "[userland-display] missing $PLUGIN_SO" >&2; exit 1; }
-[ -f "$PLUGIN_DESK" ] || { echo "[userland-display] missing $PLUGIN_DESK" >&2; exit 1; }
 
 echo "[userland-display] backing up originals"
 mkdir -p "$WORK/backup"
@@ -53,17 +50,17 @@ if rc-service greetd status >/dev/null 2>&1; then
 	START=1
 fi
 
-echo "[userland-display] installing binaries + plugin"
+echo "[userland-display] installing binaries"
 cp "$WORK/phoc-0.55.1/output/src/phoc"   /usr/bin/phoc
 cp "$PHOSH_BUILD/src/phosh"              /usr/libexec/phosh
 chmod 755 /usr/bin/phoc /usr/libexec/phosh
 
-install -d "$PLUGDIR"
-install -m 0644 "$PLUGIN_DESK" "$PLUGDIR/$PLUGIN.plugin"
-install -m 0755 "$PLUGIN_SO"   "$PLUGDIR/libphosh-plugin-$PLUGIN.so"
+# Remove the retired duplicate auto-rotation plugin if a previous install left it.
+rm -f /usr/lib/phosh/plugins/libphosh-plugin-auto-rotation-quick-setting.so \
+      /usr/lib/phosh/plugins/auto-rotation-quick-setting.plugin
 
-echo "[userland-display] enabling the plugin for the session user"
-# Derive the session user from greetd's config, then write the dconf key with a
+echo "[userland-display] dropping the retired auto-rotation plugin from quick-settings"
+# Derive the session user from greetd's config, then edit the dconf key with a
 # private session bus (the real one may not be running yet).
 SESS_USER=$(sed -n 's/^[[:space:]]*user[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
 		/etc/greetd/config.toml 2>/dev/null | head -1)
@@ -79,12 +76,14 @@ run_as_user() {
 
 cur=$(run_as_user gsettings get $SCHEMA $KEY 2>/dev/null || echo "@as []")
 case "$cur" in
-*"$PLUGIN"*) new="$cur" ;;
-"@as []"|"[]"|"") new="['$PLUGIN']" ;;
-*) new="${cur%]}, '$PLUGIN']" ;;
+*auto-rotation-quick-setting*)
+	# Drop only our entry; keep whatever else the user had enabled.
+	new=$(printf '%s' "$cur" | sed "s/'auto-rotation-quick-setting', \?//; s/, \?'auto-rotation-quick-setting'//")
+	new=$(printf '%s' "$new" | sed "s/\[ *\]/@as []/")
+	run_as_user gsettings set $SCHEMA $KEY "\"$new\"" 2>/dev/null \
+		|| echo "[userland-display] WARN: could not update $SCHEMA $KEY (left as-is)"
+	;;
 esac
-run_as_user gsettings set $SCHEMA $KEY "\"$new\"" 2>/dev/null \
-	|| echo "[userland-display] WARN: could not enable plugin; add it in the quick-settings editor"
 
 if [ "$START" = 1 ]; then rc-service greetd start; fi
 
@@ -93,4 +92,4 @@ echo "$MARKVAL" > "$MARK"
 echo "[userland-display] done ($MARKVAL).  rollback:"
 echo "  cp $WORK/backup/phoc.0.55.1.orig  /usr/bin/phoc"
 echo "  cp $WORK/backup/phosh.0.55.0.orig /usr/libexec/phosh"
-echo "  rm $PLUGDIR/libphosh-plugin-$PLUGIN.so $PLUGDIR/$PLUGIN.plugin"
+

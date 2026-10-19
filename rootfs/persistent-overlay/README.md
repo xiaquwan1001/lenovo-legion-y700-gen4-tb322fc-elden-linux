@@ -72,10 +72,10 @@ ssh root@192.168.7.1 'cd /root/persistent-overlay && sh restore.sh'
 
 | 文件 | 内容 | 还原方式 |
 |---|---|---|
-| `userland-display/install-on-device.sh` | 装构建依赖 + 下载官方 release 源码 + 打补丁（含新增自动旋转插件）+ 重编 + 备份/替换 `/usr/bin/phoc`、`/usr/libexec/phosh` + 装 `/usr/lib/phosh/plugins/auto-rotation-quick-setting*` + 启用插件 + 写 marker（`display2`） | restore.sh 已自动调用；跳过＝`SKIP_USERLAND_DISPLAY=1` |
-| `userland-display/build-phoc-phosh.sh`、`000{1,2,3}-*.patch`、`alpine-phosh-*.patch`、`build-deps.txt` | 构建脚本 / 补丁 / 依赖清单（**真源 = 仓库 `patches-userland/`，此处为设备侧副本**） | 由 install 脚本使用 |
+| `userland-display/install-on-device.sh` | 装构建依赖 + 下载官方 release 源码 + 打补丁（0001/0002；0003 已撤销）+ 重编 + 备份/替换 `/usr/bin/phoc`、`/usr/libexec/phosh` + 清除已撤销的 auto-rotation 插件 + 写 marker（`display3-norot`） | restore.sh 已自动调用；跳过＝`SKIP_USERLAND_DISPLAY=1` |
+| `userland-display/build-phoc-phosh.sh`、`000{1,2}-*.patch`、`alpine-phosh-*.patch`、`build-deps.txt` | 构建脚本 / 补丁 / 依赖清单（**真源 = 仓库 `patches-userland/`，此处为设备侧副本**） | 由 install 脚本使用 |
 
-- 三个改动：①phoc 只认 preferred mode ⇒ 非 preferred 刷新率档被忽略（屏恒 165 Hz）；②phosh `GetCurrentState` 上报的 scale 不在 `supported_scales` 里 ⇒ g-c-c 比例行显 100%；③新增「自动旋转」快速设置磁贴（插件，读写内置旋转磁贴同一个 `orientation-lock`）。
+- 三个改动：①phoc 只认 preferred mode ⇒ 非 preferred 刷新率档被忽略（屏恒 165 Hz）；②phosh `GetCurrentState` 上报的 scale 不在 `supported_scales` 里 ⇒ g-c-c 比例行显 100%；③~~新增「自动旋转」快速设置磁贴~~ **已撤销（2026-10-19，内置磁贴已覆盖，重复）**。
   根因/证据：`reports/userland-display-scale-refresh-20261011.md`、`reports/userland-auto-rotation-toggle-20261011.md`、`PITFALLS` #182/#77。
 - ⚠️ **`userland-display/` 与 `patches-userland/` 是两份拷贝**（设备侧无法访问仓库）。改了 `patches-userland/` 里的任一文件，要**同步**到 `userland-display/`（反之亦然）。
 - ⚠️ 这些二进制/插件是**非包管理**的；后续 `apk upgrade` 会把 `phoc`/`phosh` 换回原版（upstream 未合并前），需重跑 install-on-device.sh。

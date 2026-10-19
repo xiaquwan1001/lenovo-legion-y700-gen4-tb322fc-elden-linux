@@ -49,19 +49,12 @@ patch -Np1 -f < "$PATCHES/alpine-phosh-use-after-free-fix.patch"
 patch -Np1 -f < "$PATCHES/alpine-phosh-extend-timeout-with-pid.patch"
 # our patches
 patch -Np1 -f < "$PATCHES/0002-phosh-report-supported-scale.patch"
-patch -Np1 -f < "$PATCHES/0003-phosh-auto-rotation-quick-setting.patch"
 sed -i 's/\.rc/_rc/' meson.build
 meson setup output --prefix=/usr --buildtype=release -Dphoc_tests=disabled \
 	-Dman=false -Dtests=false -Db_lto=false -Dbindings-lib=false \
 	-Dintrospection=false -Dvapi=false
 ninja -C output
 
-PLUGIN_SO="output/plugins/auto-rotation-quick-setting/libphosh-plugin-auto-rotation-quick-setting.so"
-PLUGIN_DESK="output/plugins/auto-rotation-quick-setting/auto-rotation-quick-setting.plugin"
-[ -f "$PLUGIN_SO" ] || { echo "ERROR: auto-rotation plugin not built" >&2; exit 1; }
-[ -f "$PLUGIN_DESK" ] || { echo "ERROR: auto-rotation plugin .plugin not built" >&2; exit 1; }
-
 echo "== built:"
 echo "   $WORK/phoc-$PHOC_VER/output/src/phoc"
 echo "   $WORK/phosh-$PHOSH_VER/output/src/phosh"
-echo "   $WORK/phosh-$PHOSH_VER/$PLUGIN_SO"
