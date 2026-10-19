@@ -12,7 +12,7 @@
   - **`/var/log/dmesg` 无 `traps:`/`segfault` 行** ⇒ 用户态崩溃，不是内核 oops
   - gdb 挂 `phoc` 抓到：`Thread 1 "phoc" received signal SIGSEGV` → `#0 handle_im_keyboard_grab_destroy ()`
 
-## 2. 根因（代码级闭环）
+## 2. #337 根因（代码级闭环）
 
 `phoc 0.55.1` 的 `src/input-method-relay.c`：
 
@@ -92,7 +92,7 @@ phoc-input-method-relay-DEBUG: Attempted to connect second input method to a sea
 ## 4. 取证方法（可复用）
 
 ```sh
-# 1) 会话日志落盘（默认 phoc/phosh 的 stderr 全进 /dev/tty7，等于丢失）
+# 1) #338 会话日志落盘（默认 phoc/phosh 的 stderr 全进 /dev/tty7，等于丢失）
 #    把 greetd session 命令包一层重定向 + 留 core：
 #    /usr/local/sbin/elden-session-user 末尾
 #      ulimit -c unlimited
@@ -112,7 +112,7 @@ gdb -p $(pgrep -x phoc) -batch -ex 'set confirm off' \
   -ex 'echo \n==SEGV==\n' -ex 'bt 12' -ex 'info registers x0 x1'
 ```
 
-坑：`gdbus` 的 variant 参数必须写成 `<["a","b"]>`（字符串要带引号、整体加 `<>`），
+坑（#339）：`gdbus` 的 variant 参数必须写成 `<["a","b"]>`（字符串要带引号、整体加 `<>`），
 写成 `<[a,b]>` 会报 `unknown keyword`。
 
 ## 5. 结论与去向

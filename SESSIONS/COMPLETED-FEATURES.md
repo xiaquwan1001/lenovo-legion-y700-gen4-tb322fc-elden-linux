@@ -29,4 +29,4 @@
 
 - **会话视角缺档**：Waydroid 马达透传 C10（2026-10-13）在 `SESSIONS/README.md` §3 与 `sessions/` 无对应行/文件（§3 为 2026-10-14 冻结快照）；内容完整保留在 `../PITFALLS/README.md` §29/§30 与提交 `536f77b/a048d64/2df5ca0`。**不强行回填快照**（避免破坏 `gen-sessions.py`/`check-sessions.sh` 的逐字节校验），改由本表登记。
 - **junk / superseded 会话行**：`SESSIONS/README.md` §3 中 `junk` 12 行 / `superseded` 5 行的逐条理由见本轮审计报告 `.pi/lanes/audit-features-20261014.md` §4；`SESSIONS/README.md` §5 记为「待批」。**本轮裁决：表内保留作审计痕迹，不删**；仅其档案文件在 `sessions/README.md` 注明口径（见 §5）。
-- **重复短 id**：`01a12d5a` 在 §3 出现 2 次（同 id 两会话）——本表不复制，检索以 pi 原生 `session_search` 为准。
+- **重复短 id**：`01a12d5a` 在 §3 出现 2 次（同 id 两会话）——本表不复制，检索以 pi 原生 `scripts/sess.sh` 为准。

@@ -3,8 +3,8 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档结构），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-19。**条目编号 #1–#353**（统一 `N. **标题**` 列表；条目按主题分节，物理顺序不随编号单调）。
-> 最新条目集中在文末分节 §十六–§三十；**编号范围只在本行维护**，其它文档不复述具体数字。
+> 最后更新：2026-10-19。**条目编号范围不写死**（写死必漂）：现查 `scripts/check-doctor.sh §8` 的正文编号对账。
+> 条目唯一性 = 每个 `#NNN` 在 `sessions/*.md` 里**只被定义一次**；新增条目取当前最大号 +1。
 
 ---
 
@@ -22,58 +22,60 @@
 
 ## 节 → 文件 索引
 
-| 节 | 文件 |
-| --- | --- |
-| 一、引导 / fastboot / 重启交接 | [sessions/01-引导fastboot重启交接.md](sessions/01-引导fastboot重启交接.md) |
-| 二、内核 / DTS / 构建 | [sessions/02-内核DTS构建.md](sessions/02-内核DTS构建.md) |
-| 三、存储 / 分区 / 持久化 | [sessions/03-存储分区持久化.md](sessions/03-存储分区持久化.md) |
-| 四、固件 / 外设（反提取 vendor 资源） | [sessions/04-固件外设.md](sessions/04-固件外设.md) |
-| 五、设备上装包 / 环境 | [sessions/05-设备上装包环境.md](sessions/05-设备上装包环境.md) |
-| 六、脚本 / 工具 | [sessions/06-脚本工具.md](sessions/06-脚本工具.md) |
-| 七、Wayland / 桌面（weston） | [sessions/07-Wayland桌面.md](sessions/07-Wayland桌面.md) |
-| 八、恢复 Android / 免解 BL root 资产（2026-09-29） | [sessions/08-恢复Android免解BLroot资产.md](sessions/08-恢复Android免解BLroot资产.md) |
-| 九、WiFi / ath12k / 装包（2026-09-29） | [sessions/09-WiFiath12k装包.md](sessions/09-WiFiath12k装包.md) |
-| 十、桌面 / Phosh（2026-09-29） | [sessions/10-桌面Phosh.md](sessions/10-桌面Phosh.md) |
-| 十一、存储 / TF 卡 / 扩分区（2026-09-29） | [sessions/11-存储TF卡扩分区.md](sessions/11-存储TF卡扩分区.md) |
-| 十二、userdata 缩容（TWRP 路线实测结论，2026-09-29） | [sessions/12-userdata缩容.md](sessions/12-userdata缩容.md) |
-| 十三、AVB / 免签 / KSU（2026-09-29 实测） | [sessions/13-AVB免签KSU.md](sessions/13-AVB免签KSU.md) |
-| 十四、睡眠 / 挂起（2026-09-29） | [sessions/14-睡眠挂起.md](sessions/14-睡眠挂起.md) |
-| 十五、过时 / 废弃 / 功能缺陷登记（DEPRECATED） | [sessions/15-过时废弃功能缺陷登记.md](sessions/15-过时废弃功能缺陷登记.md) |
-| 十六、自动旋转方向锁死 / 开关置灰 — iio-sensor-proxy 启动时序（2026-10-09 实测） | [sessions/16-自动旋转方向锁死开关置灰—iio-sensor-proxy启动时序.md](sessions/16-自动旋转方向锁死开关置灰—iio-sensor-proxy启动时序.md) |
-| 十七、设备侧自动化踩坑：会话总线 / DPMS / 传感器总线（2026-10-09 实测） | [sessions/17-设备侧自动化踩坑：会话总线DPMS传感器总线.md](sessions/17-设备侧自动化踩坑：会话总线DPMS传感器总线.md) |
-| 十八、GUI/GPU 负载压测与「gfx 电源域」读法（2026-10-09 实测更正） | [sessions/18-GUIGPU负载压测与「gfx电源域」读法.md](sessions/18-GUIGPU负载压测与「gfx电源域」读法.md) |
-| 十九、重启通道 / A/B 槽位 / ramdisk 层叠 / Q28 判据（2026-10-09 深夜实测） | [sessions/19-重启通道AB槽位ramdisk层叠Q28判据.md](sessions/19-重启通道AB槽位ramdisk层叠Q28判据.md) |
-| 二十、相机模块加载：一天之内第三次栽在"静默跳过"上（2026-10-09 深夜实测） | [sessions/20-相机模块加载：一天之内第三次栽在"静默跳过"上.md](sessions/20-相机模块加载：一天之内第三次栽在"静默跳过"上.md) |
-| 二十一、相机 ⇄ 熄屏 = 互斥（不是"偶发风险"）+ 新工具自测暴露的坑（2026-10-09 深夜） | [sessions/21-相机⇄熄屏=互斥+新工具自测暴露的坑.md](sessions/21-相机⇄熄屏=互斥+新工具自测暴露的坑.md) |
-| 二十二、构建守卫 & Q28 变量纠正（2026-10-10 编排轮） | [sessions/22-构建守卫&Q28变量纠正.md](sessions/22-构建守卫&Q28变量纠正.md) |
-| 二十三、Q24 复现定案 + Q28「版本串」变量 + 测试协议陷阱（2026-10-11 实测） | [sessions/23-Q24复现定案+Q28「版本串」变量+测试协议陷阱.md](sessions/23-Q24复现定案+Q28「版本串」变量+测试协议陷阱.md) |
-| 二十四、Waydroid 容器（音频/媒体） | [sessions/24-Waydroid容器.md](sessions/24-Waydroid容器.md) |
-| 二十五、Q28 冷起判定 = 内核构建身份（版本串）法则 + 冷起 A/B 测补丁作废（2026-10-11 实测） | [sessions/25-Q28冷起判定=内核构建身份法则+冷起AB测补丁作废.md](sessions/25-Q28冷起判定=内核构建身份法则+冷起AB测补丁作废.md) |
-| 二十六、跨树驱动比对的方法陷阱：`to_primary_dsi` DSI0/DSI1 伪线索（2026-10-12 静态核查） | [sessions/26-跨树驱动比对的方法陷阱：to_primary_dsiDSI0DSI1伪线索.md](sessions/26-跨树驱动比对的方法陷阱：to_primary_dsiDSI0DSI1伪线索.md) |
-| 二十七、Q24 台架/工具链教训（2026-10-12 第 3 轮实测） | [sessions/27-Q24台架工具链教训.md](sessions/27-Q24台架工具链教训.md) |
-| 二十八、上游邮件通道（2026-10-12 实测定案） | [sessions/28-上游邮件通道.md](sessions/28-上游邮件通道.md) |
-| 二十九、Waydroid 马达透传（vibrator HAL → aw86927 FF）（2026-10-13 实测） | [sessions/29-Waydroid马达透传.md](sessions/29-Waydroid马达透传.md) |
-| 三十、Waydroid 马达透传二期：AIDL HAL 替换（2026-10-13 下午实测） | [sessions/30-Waydroid马达透传二期：AIDLHAL替换.md](sessions/30-Waydroid马达透传二期：AIDLHAL替换.md) |
-| 三十一、M1-7.3（7.3-rc7 重基树）上机：缺 `=m` 模块被误判为代码回归（2026-10-13 深夜实测） | [sessions/31-M1-7.3上机：缺=m模块被误判为代码回归.md](sessions/31-M1-7.3上机：缺=m模块被误判为代码回归.md) |
-| 三十二、上游显示栈 bring-up（P1–P2c 臂）：DRM GOOD ≠ 面板有画面（2026-10-13 深夜） | [sessions/32-上游显示栈bring-up：DRMGOOD≠面板有画面.md](sessions/32-上游显示栈bring-up：DRMGOOD≠面板有画面.md) |
-| 三十三、盯“精确 UTS / 单变量打包”的三连坑（2026-10-14 E1 实测） | [sessions/33-盯“精确UTS单变量打包”的三连坑.md](sessions/33-盯“精确UTS单变量打包”的三连坑.md) |
-| 三十四、WCN MHI 首探必然失败、重发即成功（2026-10-14 E3/E3a/E3c/E4 实测） | [sessions/34-WCN首探MHI必失败重发即成功.md](sessions/34-WCN首探MHI必失败重发即成功.md) |
-| 三十五、WCN 首探修法：只有「整轮重探」有效（2026-10-15 F1/F2/F3 实测） | [sessions/35-WCN首探修法：只有整轮重探有效.md](sessions/35-WCN首探修法：只有整轮重探有效.md) |
-| 三十六、构建落点（内存盘）与调试信息实测（2026-10-15 实测） | [sessions/36-构建落点与调试信息实测.md](sessions/36-构建落点与调试信息实测.md) |
-| 三十七、Q28 arm A：命令路径否证、「面板黑」是不变量、软件侧点亮代理集体失效（2026-10-15 实测） | [sessions/37-Q28-armA：命令路径否证与「面板黑」是不变量.md](sessions/37-Q28-armA：命令路径否证与「面板黑」是不变量.md) |
-| 三十九、能力靠实测不靠 `--help`：`fastboot fetch` 在本机 ABL 不存在（#290）、「客户端有≠设备支持」（#291）、文档指向已归档脚本 26 处（#292）（2026-10-17 复核） | [sessions/39-能力靠实测不靠help：fastboot无fetch与同类记错.md](sessions/39-能力靠实测不靠help：fastboot无fetch与同类记错.md) |
-| 四十、RAM 启动新内核不先部署 `/lib/modules/<新UTS>` ⇒ `lsmod` 空 ⇒ DP 永久 defer ⇒ 无 `card0`（会被误判成 Q28 坏发）（#293，2026-10-17 实测） | [sessions/40-RAM起新内核不部署模块树就没有DRM.md](sessions/40-RAM起新内核不部署模块树就没有DRM.md) |
-| 四十一、设备侧熄屏自动化两坑：`dpms` sysfs 只读（root 也写不进）、Q28 坏发 boot 上 `phoc` crash-loop 约 3 min 才能取到会话总线（#294–#295，2026-10-17 实测） | [sessions/41-设备侧熄屏自动化：dpms只读与坏发会话崩溃.md](sessions/41-设备侧熄屏自动化：dpms只读与坏发会话崩溃.md) |
-| 四十二、相机 AE 三坑：libcamera 无 sensor helper ⇒ 把 V4L2 增益码当真实增益（#296）、软 ISP 黑电平只来自 helper/tuning 且默认 0（#297）、设备有 wlan0 IP 却无外网致就地构建不可行（#298）（2026-10-17 实测） | [sessions/42-相机AE三坑：helper缺失-黑电平-tuning.md](sessions/42-相机AE三坑：helper缺失-黑电平-tuning.md) |
-| 四十三、相机 AE 正解（libcamera helper）落地路上的三坑：设备冷起时钟 **1970** ⇒ HTTPS/`apk` 全废（#299）、交叉编 IPA 的三个硬点（musl 工具链/只换 `ipa_soft_simple.so`/签名不校验，#300）、「设备失联」先认 fastboot 形态（#301，本次成因=平板编译过热被手动重启到 BL）、平板不做重编译（#302）、软 ISP 的 AE 收敛慢是设计（统计每 4 帧一次，别用一两次抓帧判 AE，#303）、相机 A/B 必须控场景与起点（含「最短曝光测 pedestal」法，#304）、libcamera-devel 是 members-only 且提交标题带文件名（#305）（2026-10-17 实测） | [sessions/43-相机AE正解交叉编译与设备时钟.md](sessions/43-相机AE正解交叉编译与设备时钟.md) |
-| 四十六、相机 AE 三个独立 bug 全部定位并修掉（2026-10-18 晚，两摄自动曝光上机验收通过）（#323 `exposureTarget` 不可达：MSV 只有 5 bin、`target ≤ 0.24` 时第 1 帧即"达标" ⇒ 曝光冻结 ⇒ 恒黑，钳到 0.28 / tuning 用 0.60）（#324 **推翻 §45 #322「libcrypto 构建导致黑帧」**：Alpine 原版(libcrypto)+0.60 正常出图、自编无 libcrypto+0.22 同样黑帧 ⇒ 无因果作用；方法论 = 两臂必须在同配方下才可比）（#325 **gainMinStep 必须 ≥ 1 个增益码**：`(max-min)/100 = 0.63` 被 `gainCode()` 整数除法截断 ⇒ 增益永远卡在 1，这是"后摄总黑"的第二因）（#326 **helper 增益语义必须与驱动一致**：本机驱动已是"真实增益"（s5kjns 1..64 写寄存器 ×32、gc08a8 1..16 ×1024）⇒ helper 必须 identity `{1,0,0,1}`；写成 `/32` 会让 IPA 以为范围只有 0.03–2，后摄量化归零、前摄改档振荡）（#327 **装完必验 helper 编入**：`strings ipa_soft_simple.so | grep -cE '^s5kjns$\|^gc08a8$'` = 2。本轮曾用 pristine 源码覆盖 helper，后续约 1 小时的测试全跑在无 helper 回退路径上，还误判成"前摄物理上限不够"）+ `cam -cN` 与 `--list` 编号不一致用完整 camera id（#328）+ 设备 `/tmp` 是 7.3 G tmpfs，写满后抓到的帧全 0 字节会被误判黑帧（#329）+ 主机交叉编译 aarch64-musl 三件套：GNU ld 2.37 读不了 `.relr.dyn` 用 lld、`PKG_CONFIG_LIBDIR` 指设备 `.pc`、用 `-idirafter`（#330，28 核全量 **10 s** vs 平板 4–6 min） | [sessions/46-相机黑帧真根因AGC-target与主机交叉编译.md](sessions/46-相机黑帧真根因AGC-target与主机交叉编译.md) |
-| 四十九、**设备「网络坏了」= 两个独立故障叠加**（#340：8 个 `/etc` 配置被清成 **0 字节**，其中 `/etc/ca-certificates.conf` 空 ⇒ `update-ca-certificates` 每次写出 **0 字节** bundle（rc=0 静默成功）⇒ 设备零信任锚 ⇒ **所有 HTTPS 立即失败**（`curl: (77) error adding trust anchors`）；**`apk fix <pkg>` 修不了**——它把 0 字节活文件当"用户已修改配置"，只再写一份 `.apk-new`，实测两次活文件仍 0 ⇒ 必须 `mv *.apk-new → 活文件`，无 `.apk-new` 时从 `/usr/share/ca-certificates/mozilla/*.crt` 重建 conf；#341：修好信任链后 git 对 `gitlab.freedesktop.org`/`gnome`（Fastly 段）仍 **10–55% 随机失败**，国内站 0 失败 ⇒ 手机热点广播 MTU **1500** 而上游实际 **1400** 且不下发 ICMP frag-needed = **PMTU 黑洞**，且 OpenSSL 3.5 默认后量子混合曲线 `X25519MLKEM768` 把 ClientHello 撑到 **1423 字节**必然拆段，抓包见"满 MSS 首段被丢 + 服务端 `ack 1` 回退 + SACK 只认尾段 ⇒ 无限重传死锁"；量化：同 MTU 下 MLKEM 80% vs `X25519` 98%（40 次）；排除项要记——TCP 握手 60/60 通（否证"热点封锁"）、网关 100 包 0% 丢、境外 ping 的 15% 是 ICMP 限速**不能当数据面证据**；真实 MTU 必须用 `-M do` DF 扫描量（本机 1400，v6 侧 1380）；#342：缓解由 `scripts/net-selfheal.sh` 幂等维护（MTU+power_save+证书链），**必须走冷启动验证**且在 OpenRC `local`（等 wlan0 UP）+ NM dispatcher **双触发**，只挂 boot 会漏"开机时 wlan0 未起"）（2026-10-18 实测，git 失败 35%→~10%，未根治） | [sessions/49-设备网络HTTPS全废与PMTU黑洞.md](sessions/49-设备网络HTTPS全废与PMTU黑洞.md) |
-| 四十八、**输入法「唤起即崩桌面」根因 = phoc 0.55.1 未跟进 wlroots 0.20.0 的 signal data 改 NULL 约定**（#337：`handle_im_keyboard_grab_destroy()` 把 `data`（现为 NULL）当 `keyboard_grab` 用 ⇒ `ldr x0,[x1,#16]` 在 NULL+0x10 处 SIGSEGV ⇒ greetd 重拉整条会话；实机 gdb 栈 + `/usr/bin/phoc` 反汇编双向对上。**上游 v0.55.1–v0.57/main 同款未修**。触发条件 = 有 IM 客户端建/销毁 `zwp_input_method_v2` 的 keyboard grab；本机两套 IM（fcitx5 与 squeekboard）抢同一 seat 的唯一 slot，被拒一方即走此路径 ⇒ 同时解释「输入法弹不起来」+「桌面崩」。另记 #338：`/var/log/phosh-session.log` 默认不存在——phoc/phosh 的 stderr 全进 `/dev/tty7` 等于丢失，必须包一层重定向；#339：`gdbus` 的 variant 参数须写 `<["a"]>`）（2026-10-18 实测） | [sessions/48-输入法崩溃phoc-wlroots-NULL约定.md](sessions/48-输入法崩溃phoc-wlroots-NULL约定.md) |
-| 四十七、设备重启/刷机与"相机 App 无画面"的六条纠正（2026-10-18 晚）（#331：**`fastboot boot`（RAM 内核）在本机不被 ABL 接受** —— 报 `OKAY` 但回落到磁盘 boot_b，判据 = 在机 `/proc/version` 构建时间戳仍是旧的 ⇒ 必须 `fastboot flash`；`verifiedbootstate=orange` 下需 AVB 签名 `scripts/sign-boot-b.sh`，公钥 sha1 `1e54e86e` 须与 `vbmeta_b` chain 一致；本机无 `fastboot fetch`（#290）⇒ 回退只能靠 `bootslot-b/*.img` 存档）（#332：**UTS 必须与在机模块目录逐字一致** —— `LOCALVERSION=-vk127` 才能得到 `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty`，否则 1597 个 `.ko` 全失效、相机直接不可用）（#333：**`apply-kernel-fragment.sh` 的 `olddefconfig` 会引入原 config 没有的符号**（本轮引入 `ARCH_SUPPORTS_KEXEC`/`KEXEC`）；"只加一项"要从可用 config 出发、回钉新增项，并用 `diff` 证明只剩目标项）（#334：**手工改 `.config` 后直接 `make` 会进交互提问**（`Error in reading or end of file`）；`make oldconfig` + `yes ""` 会把整片配置刷成默认值从而**毁掉原 config**，只能用 `make olddefconfig`，且改完先删 `include/config/auto.conf{,.cmd}`）（#335：**GNOME Snapshot 50 只走 `pipewiresrc`**，可用性取决于 `org.freedesktop.portal.Camera`；`IsCameraPresent=false` 时表现为 `pipewiresrc: stream error: target not found`，而 `cam`/`libcamerasrc`/`gst-device-monitor` 全正常 ⇒ "相机 App 没画面"先查 portal 后端 —— gtk/wlr 都不实现 Camera，需 `xdg-desktop-portal-gnome`）（#336：**`CONFIG_SUSPEND=y` 在本机 7.3-rc7 重放树上启动即死** —— vk128/vk129 两次实机 fastboot flash 均"只亮背光、SSH 不通、约 15 s 后关机（与 cmdline `panic=15` 吻合）"；vk129 已把 vk128 多引入的 kexec 项全部移除、diff 仅剩 15 项 suspend 连带项仍失败 ⇒ **不是配置污染，是 suspend 代码路径本身**；未定点，下一步须先取 panic 栈（`printk.always_kmsg_dump` 已进 cmdline、ramoops 在 DT、`PSTORE_RAM=y`，但失败后会自动重启需验证 pstore 是否残留；否则用 `panic=0` 或 `/dev/ttyGS0`）） | [sessions/47-刷机取证与相机App-portal根因.md](sessions/47-刷机取证与相机App-portal根因.md) |
+| # | 主题 | 正文 |
+| --- | --- | --- |
+| 01 | 引导 / fastboot / 重启交接 | [01-引导fastboot重启交接.md](sessions/01-引导fastboot重启交接.md) |
+| 02 | 内核 / DTS / 构建 | [02-内核DTS构建.md](sessions/02-内核DTS构建.md) |
+| 03 | 存储 / 分区 / 持久化 | [03-存储分区持久化.md](sessions/03-存储分区持久化.md) |
+| 04 | 固件 / 外设（反提取 vendor 资源） | [04-固件外设.md](sessions/04-固件外设.md) |
+| 05 | 设备上装包 / 环境 | [05-设备上装包环境.md](sessions/05-设备上装包环境.md) |
+| 06 | 脚本 / 工具 | [06-脚本工具.md](sessions/06-脚本工具.md) |
+| 07 | Wayland / 桌面（weston） | [07-Wayland桌面.md](sessions/07-Wayland桌面.md) |
+| 08 | 恢复 Android / 免解 BL root 资产 | [08-恢复Android免解BLroot资产.md](sessions/08-恢复Android免解BLroot资产.md) |
+| 09 | WiFi / ath12k / 装包 | [09-WiFiath12k装包.md](sessions/09-WiFiath12k装包.md) |
+| 10 | 桌面 / Phosh | [10-桌面Phosh.md](sessions/10-桌面Phosh.md) |
+| 11 | 存储 / TF 卡 / 扩分区 | [11-存储TF卡扩分区.md](sessions/11-存储TF卡扩分区.md) |
+| 12 | userdata 缩容（TWRP 路线） | [12-userdata缩容.md](sessions/12-userdata缩容.md) |
+| 13 | AVB / 免签 / KSU | [13-AVB免签KSU.md](sessions/13-AVB免签KSU.md) |
+| 14 | 睡眠 / 挂起 | [14-睡眠挂起.md](sessions/14-睡眠挂起.md) |
+| 15 | 过时 / 废弃 / 功能缺陷登记（DEPRECATED） | [15-过时废弃功能缺陷登记.md](sessions/15-过时废弃功能缺陷登记.md) |
+| 16 | 自动旋转锁死 / 开关置灰 = iio-sensor-proxy 启动时序 | [16-自动旋转方向锁死开关置灰—iio-sensor-proxy启动时序.md](sessions/16-自动旋转方向锁死开关置灰—iio-sensor-proxy启动时序.md) |
+| 17 | 设备侧自动化：会话总线 / DPMS / 传感器总线 | [17-设备侧自动化踩坑：会话总线DPMS传感器总线.md](sessions/17-设备侧自动化踩坑：会话总线DPMS传感器总线.md) |
+| 18 | GUI/GPU 负载压测与「gfx 电源域」读法 | [18-GUIGPU负载压测与「gfx电源域」读法.md](sessions/18-GUIGPU负载压测与「gfx电源域」读法.md) |
+| 19 | 重启通道 / A/B 槽位 / ramdisk 层叠 / Q28 判据 | [19-重启通道AB槽位ramdisk层叠Q28判据.md](sessions/19-重启通道AB槽位ramdisk层叠Q28判据.md) |
+| 20 | 相机模块加载：第三次栽在「静默跳过」 | [20-相机模块加载：一天之内第三次栽在"静默跳过"上.md](sessions/20-相机模块加载：一天之内第三次栽在"静默跳过"上.md) |
+| 21 | 相机 ⇄ 熄屏 = 互斥（+ 新工具自测的坑） | [21-相机⇄熄屏=互斥+新工具自测暴露的坑.md](sessions/21-相机⇄熄屏=互斥+新工具自测暴露的坑.md) |
+| 22 | 构建守卫 & Q28 变量纠正 | [22-构建守卫&Q28变量纠正.md](sessions/22-构建守卫&Q28变量纠正.md) |
+| 23 | Q24 复现定案 + Q28「版本串」变量 + 测试协议陷阱 | [23-Q24复现定案+Q28「版本串」变量+测试协议陷阱.md](sessions/23-Q24复现定案+Q28「版本串」变量+测试协议陷阱.md) |
+| 24 | Waydroid 容器（音频/媒体） | [24-Waydroid容器.md](sessions/24-Waydroid容器.md) |
+| 25 | Q28 冷起判定 = 内核构建身份法则（+ 冷起 A/B 补丁作废） | [25-Q28冷起判定=内核构建身份法则+冷起AB测补丁作废.md](sessions/25-Q28冷起判定=内核构建身份法则+冷起AB测补丁作废.md) |
+| 26 | 跨树驱动比对陷阱：`to_primary_dsi` DSI0/DSI1 伪线索 | [26-跨树驱动比对的方法陷阱：to_primary_dsiDSI0DSI1伪线索.md](sessions/26-跨树驱动比对的方法陷阱：to_primary_dsiDSI0DSI1伪线索.md) |
+| 27 | Q24 台架 / 工具链教训 | [27-Q24台架工具链教训.md](sessions/27-Q24台架工具链教训.md) |
+| 28 | 上游邮件通道 | [28-上游邮件通道.md](sessions/28-上游邮件通道.md) |
+| 29 | Waydroid 马达透传（vibrator HAL → aw86927 FF） | [29-Waydroid马达透传.md](sessions/29-Waydroid马达透传.md) |
+| 30 | Waydroid 马达透传二期：AIDL HAL 替换 | [30-Waydroid马达透传二期：AIDLHAL替换.md](sessions/30-Waydroid马达透传二期：AIDLHAL替换.md) |
+| 31 | M1-7.3 上机：缺 `=m` 模块被误判为代码回归 | [31-M1-7.3上机：缺=m模块被误判为代码回归.md](sessions/31-M1-7.3上机：缺=m模块被误判为代码回归.md) |
+| 32 | 上游显示栈 bring-up：DRM GOOD ≠ 面板有画面 | [32-上游显示栈bring-up：DRMGOOD≠面板有画面.md](sessions/32-上游显示栈bring-up：DRMGOOD≠面板有画面.md) |
+| 33 | 「精确 UTS / 单变量打包」三连坑 | [33-盯“精确UTS单变量打包”的三连坑.md](sessions/33-盯“精确UTS单变量打包”的三连坑.md) |
+| 34 | WCN MHI 首探必失败、重发即成功 | [34-WCN首探MHI必失败重发即成功.md](sessions/34-WCN首探MHI必失败重发即成功.md) |
+| 35 | WCN 首探修法：只有「整轮重探」有效 | [35-WCN首探修法：只有整轮重探有效.md](sessions/35-WCN首探修法：只有整轮重探有效.md) |
+| 36 | 构建落点（内存盘）与调试信息实测 | [36-构建落点与调试信息实测.md](sessions/36-构建落点与调试信息实测.md) |
+| 37 | Q28 arm A：命令路径否证、「面板黑」是不变量 | [37-Q28-armA：命令路径否证与「面板黑」是不变量.md](sessions/37-Q28-armA：命令路径否证与「面板黑」是不变量.md) |
+| 38 | M1-7.3 模块树补建：`ARCH` / vermagic 双坑 + 相机栈跑通 | [38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md](sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md) |
+| 39 | 能力靠实测不靠 `--help`：`fastboot fetch` 不存在等四类记错 | [39-能力靠实测不靠help：fastboot无fetch与同类记错.md](sessions/39-能力靠实测不靠help：fastboot无fetch与同类记错.md) |
+| 40 | RAM 启动不部署模块树 ⇒ 无 DRM（会误判成 Q28） | [40-RAM起新内核不部署模块树就没有DRM.md](sessions/40-RAM起新内核不部署模块树就没有DRM.md) |
+| 41 | 设备侧熄屏自动化：`dpms` 只读、坏发 boot 上会话先崩后稳 | [41-设备侧熄屏自动化：dpms只读与坏发会话崩溃.md](sessions/41-设备侧熄屏自动化：dpms只读与坏发会话崩溃.md) |
+| 42 | 相机 AE 三坑：无 sensor helper / 黑电平 / 设备无外网 | [42-相机AE三坑：helper缺失-黑电平-tuning.md](sessions/42-相机AE三坑：helper缺失-黑电平-tuning.md) |
+| 43 | 相机 AE 正解落地：交叉编译、签名、设备时钟 | [43-相机AE正解交叉编译与设备时钟.md](sessions/43-相机AE正解交叉编译与设备时钟.md) |
+| 44 | 容器 camera provider 前期：64 位自编 / vendor.img / ABI / YUYV | [44-容器侧camera-provider：64位自编-ABI崩溃-YUYV协商.md](sessions/44-容器侧camera-provider：64位自编-ABI崩溃-YUYV协商.md) |
+| 45 | 冷起无桌面 = `greetd` 崩；出流成功 ≠ 成像正确 | [45-冷起无桌面与相机成像验收.md](sessions/45-冷起无桌面与相机成像验收.md) |
+| 46 | 相机 AE 三个独立 bug：`exposureTarget` / 增益步长 / helper 语义 | [46-相机黑帧真根因AGC-target与主机交叉编译.md](sessions/46-相机黑帧真根因AGC-target与主机交叉编译.md) |
+| 47 | 刷机取证 + 相机 App 无画面 = portal 后端 | [47-刷机取证与相机App-portal根因.md](sessions/47-刷机取证与相机App-portal根因.md) |
+| 48 | 输入法「唤起即崩桌面」= phoc × wlroots 0.20 的 `data=NULL` 约定 | [48-输入法崩溃phoc-wlroots-NULL约定.md](sessions/48-输入法崩溃phoc-wlroots-NULL约定.md) |
+| 49 | 设备 HTTPS 全废 / git 随机失败 = 0 字节证书 + PMTU 黑洞 | [49-设备网络HTTPS全废与PMTU黑洞.md](sessions/49-设备网络HTTPS全废与PMTU黑洞.md) |
+| 50 | 相机 App 一直转圈 = phoc 无键盘 ⇒ GTK `is-active` 恒假 | [50-相机App转圈真根因-phoc无键盘致is-active恒假.md](sessions/50-相机App转圈真根因-phoc无键盘致is-active恒假.md) |
+| 51 | 容器 camera provider 真根因：`IBinder` vtable 错位 + 符号抢占 | [51-容器camera-provider真根因-vtable错位与符号抢占.md](sessions/51-容器camera-provider真根因-vtable错位与符号抢占.md) |
 
-
-| 五十、**相机 App（Snapshot 50）一直转圈的真根因 = 窗口拿不到焦点，不是相机栈**（#343）：phoc 的 seat 只有 libinput 的 touch/pointer、**没有键盘设备** ⇒ `wl_seat.capabilities = 4`（**只有 TOUCH**）⇒ 客户端永远收不到 `wl_keyboard.enter` ⇒ **GTK4 `GtkWindow::is-active` 恒为 false** ⇒ Snapshot 把 `Camera::start()` 挂在 `connect_is_active_notify`（`src/widgets/window.rs`）上、**永不触发** ⇒ `portal.Camera.AccessCamera` 调用 **0 次** ⇒ DeviceProvider 不启动 ⇒ viewfinder 停在 `Loading` ⇒ Spinner 永远转。**修法**：起 OSK（`squeekboard` 走 `zwp_input_method_v2`，phoc 对非 libinput 键盘直接 `seat_has_keyboard()=TRUE`）⇒ seat caps 4→7、`wl_keyboard.enter` 出现、`is-active=True`、日志 `IsCameraPresent: true` + `Camera found×2` + `Device provider started` + camerabin `Playing`、**屏幕出真动态预览**（连续截图 md5 逐张不同）。**已排除**：权限 `devices/camera=[yes]`、`IsCameraPresent`、`OpenPipeWireRemote` fd、pipewire 节点、libcamera 裸出流。**方法教训**：①「相机 App 转圈」必须按 UI 状态机分层查（窗口 active → 调 portal → 枚举设备 → START 流 → 出帧），本轮前两小时全花在 IPA/helper/帧内容上，**第一层就没过**；②**用 20 行最小 GTK 窗做对照**可一步排除「App 特有 bug」（`present()` 后 `is-active` 也是 False 就是环境问题）；③**判「事件有没到客户端」必须 `WAYLAND_DEBUG=1` 看客户端侧**，`wl_touch` 照常到达**不能**证明有焦点（触控与键盘焦点是两套），内核侧 `evtest` 只证明事件存在；④grep `wl_touch.` 而实际日志是 `wl_touch#32.` 会误判「客户端收不到」——本轮因此浪费一轮。**⚠ 未持久化**：squeekboard 仍为手动启动，重启后回到转圈（开机自启需 `/etc/xdg/autostart` 或 phosh OSK 配置）（2026-10-19 上午实测） | [sessions/50-相机App转圈真根因-phoc无键盘致is-active恒假.md](sessions/50-相机App转圈真根因-phoc无键盘致is-active恒假.md) |
-| 五十一、**容器 camera provider 真根因（已修）**：`IBinder` 比 AOSP 多 `isHostHwBinder()` ⇒ 所有 Bn vtable 错位一格、`BHwBinder::transact` 取槽 12 得到 `-32`（#344，改头文件后必须 `rm -rf obj` 才重编）；自编 `.so` 导出 libc++/libhidl 模板实例（`__tree`/`ConcurrentMap`）**抢占平台同名 WEAK 符号** ⇒ 数据结构错配 `free(0x1)`/`memcmp` 崩（#345，版本脚本 `local:*` + 白名单导出，`HIDL_FETCH_*` 必须 global）；不要自己生成 `android.hidl.manager.*` 的 Bn/Bp 否则盖掉平台实现 ⇒ `asBinder(nullptr)`（#346）；clang-14 `-O2` 编 gen-src 会 ICE，改 `-O1`（#347）；容器探针三限制：`waydroid shell --`、不能灌 stdin/无 adb/overlay 未挂载只能重烘镜像、`waydroid shell` 有 seccomp 会挡 binder（#348）；**Q24 口径更正**：`CONFIG_SUSPEND=n` 能力级排除 + vk127 完整相机栈在位 **41 发存活**，致死仅见 vk64/7.2 血统（n=2）⇒「在位即常态掉电」**作废**，待 N5b 扩样（#349）；**★ 64 位 `kDevicePrefixLen = sizeof(kDevicePath)+…` 用指针大小 ⇒ 设备号恒 0、open 错节点**（#350：`sizeof(const char*)=8` ⇒ 偏移 14 而 `"/dev/video"` 只有 10，上游只出 32 位所以从未暴露；改成 `constexpr char kDevicePath[]` + `sizeof-1`，2.4/2.7 同修）—— 这是「0 camera devices」的最后一跳；**容器相机排查手感**（#351）：logcat 先 `-G 32M` 且重启后立刻取全量、tag 是 `CamPrvdr@2.4-external`/`ExtCamDev@3.4` 不是包名、`getCameraIdList()` 按设计恒空（要看 `dumpsys` 的 `ADD device`）、`stop` 该服务会卡 `stopping` 要重启容器、loopback 生产者与 `#TMPCAM#` 注释行是常见「容器没有 /dev/video100」；**★ Linux 相机报 `couldn't play camera stream` = 容器 loopback 生产者独占 CSI/CSID 链路**（#352：`Resource busy` 于 `msm_csiphy4→msm_csid0` 即判据；容器相机与 Linux 相机**同一时刻互斥**，`cam-loopback.sh start` 已加互斥检查，`stop` 必须显式收尾）；**★ 容器 GUI 拉不起 = session 挂到了 headless 空合成器**（#353：旧重启脚本固定 `XDG_RUNTIME_DIR=/run/user/0`+headless weston，而真实桌面是 uid 1000 的 phoc ⇒ app 有进程没窗口；判据 `waydroid status | grep 'Session user'` 应为 `xuqianhui1001(1000)`；连带三坑 = `container start` 不启 lxc／dbus 名残留致 `Container service is already running`／`FROZEN` 是正常省电不是故障）（2026-10-19 实测） | [sessions/51-容器camera-provider真根因-vtable错位与符号抢占.md](sessions/51-容器camera-provider真根因-vtable错位与符号抢占.md) |
-| 四十五、冷起「没有桌面」= `greetd` 崩（#318：面板/DRM 正常、`rc-status` 显示 crashed、initd 缺 `after seatd elogind` 且无守护）+ 相机「出流成功≠成像正确」的分层判据（#319：**必须逐帧**、首帧非零会骗人，裸 V4L2 对照是金标准；收尾要 `cam-mode off` + `blank restore`，`/dev/video*` 残留是 wireplumber 持 fd）+ **libcamera simple/SoftwareIsp 只写第 0 帧（#320，未解：`LIBCAMERA_SOFTISP_MODE=cpu` 全零、stock IPA 同现象）** + 排查该问题用 60 行最小 EGL 复现器排掉 Mesa/重绑/一致性三条假设、并用「每帧一个文件」排除 app 侧（#321）+ ~~根因：启用 libcrypto 的 libcamera 构建使软 ISP 后续帧全黑~~ **⚠ 该结论已推翻（见 §46 #323）**（#322） | [sessions/45-冷起无桌面与相机成像验收.md](sessions/45-冷起无桌面与相机成像验收.md) |
-| 四十四、容器侧 camera provider：vendor.img **100% 满** ⇒ `debugfs` 分配不到 inode（#306）、上游 external HAL 只有 **32 位**且 Waydroid 镜像无任何 camera HAL（#307）、Debian `aidl` 不认 `@VintfStability` 且必须 `--lang=ndk`（#308）、**NDK libc++ ≠ 平台 libc++** ⇒ 注册成功后首笔 `BHwBinder::transact` 即 SIGSEGV（`pc …fffe0`，先做「注释掉设备绑定」A/B 排枚举，#309）、`cannot find suitable cropping type` = ENUM 回退 + 四cc 白名单**两坑叠加**（#310）、Waydroid 1.6.2 openrc `-p pidfile` 不支持/root 不能用 `/run/user/1000`（#311）、设备侧长命令必须 `timeout` + Q28 坏发用有界重启（#312）、AVB key 重建后公钥 sha1 变 ⇒ `vbmeta_b` 必须同步重签（#313）；**VINTF manifest 是注册硬门、`debugfs` 单文件替换 manifest 会让全体 vendor HAL 注册失败**（#314）、**「谁的 ABI 不对」的判定顺序：先塞平台自产二进制做 A/B 再谈重编**（#315）；**最小 HIDL 客户端冒烟法 + `~hidl_string` 反汇编判布局**（#316）、**Waydroid 容器「外来 64-bit HIDL 进程碰 getRawServiceInternal 即崩」的已知边界与排除项**（#317）（2026-10-18 实测） | [sessions/44-容器侧camera-provider：64位自编-ABI崩溃-YUYV协商.md](sessions/44-容器侧camera-provider：64位自编-ABI崩溃-YUYV协商.md) |
-| 三十八、M1-7.3 模块树补建（`ARCH`/vermagic 双坑）+ 相机栈首次跑通 + `cam-mode.sh off` 反向激活 Q24 + `mxc.lvl→0` 不是死亡签名 + `sync_state` 只在开机窗口生效 + `reboot` 挂起致假 ALIVE + **`#212` 配方 12 发不可复现**（2026-10-15 晚实测） | [sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md](sessions/38-M1-7.3模块树补建：ARCH与vermagic双坑+相机栈跑通.md) |
+> **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
+> 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
+> 编号不写死上下界；唯一性由 §8 的正文编号对账保证。

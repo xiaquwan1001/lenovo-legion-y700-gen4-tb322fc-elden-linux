@@ -1,50 +1,46 @@
 # HISTORY — git 提交史（逐提交权威）
 
 > **角度**：本仓库的 git 提交历史。**一个提交 = 一行**，按自然日切分。
-> **SSOT 声明**：本目录（`HISTORY/` 的 `README.md` + `days/*.md`）是**逐提交的权威视图**；
+> **SSOT 声明**：`days/*.md`（`scripts/gen-history.sh` 机械生成）是**逐提交的权威视图**；
 > 会话视角（谁在哪个 pi 会话里为什么这么做）见 **`../SESSIONS/`**，两者互补、不互相覆盖。
-> 数字口径：以 `git log` 为准，随仓库增长需重跑 `scripts/gen-history.sh` 再生。
+>
+> **本文件不写死任何计数**（写了必漂：2026-10-19 实测曾是 README「448」vs 实际 493，且 `days/` 缺 10-15～10-19 五天）。
+> 一切数字现查：`scripts/gen-history.sh --stats`。逐日真值 = 各日档第 1 行的 `（N 条）`。
 
 ---
 
-## 1. 总览
+## 1. 总览（现查）
 
-| 指标 | 值 |
-|---|---|
-| 总提交数 | **448** |
-| 覆盖区间 | 2026-09-28 → 2026-10-14（17 个自然日） |
-| 生成时 HEAD | `265e77c` |
-| 平均每日 | ≈ 26.3 条 |
-| 峰值日 | 2026-10-12（74 条） |
+```bash
+scripts/gen-history.sh --stats
+```
 
-> 提交数 = `git rev-list --count HEAD`；本目录 `days/` 条目合计必须与之相等（见 §5 校验）。
+一条命令输出：总提交数 / 当前 HEAD / 覆盖区间 / 平均每日 / 峰值日 / 逐日表 / type top10 / type 种数。
+
+单独两项：
+
+```bash
+git rev-list --count HEAD    # HEAD 祖先的提交数
+git rev-parse --short HEAD   # 当前 HEAD
+```
+
+> ⚠ **统计范围 = HEAD + 已回填的历史分支**：`2026-09-28`～`10-02` 那 5 个日档记录的是
+> `history/pre-vk34` 的提交，它们**不是 HEAD 的祖先**（历史回填资产，见
+> `archive/2026-10-04-git-backfill/VERSION-MAP.txt`）。脚本同时遍历 `history/*`，
+> 所以 `days/` 合计会大于 `git rev-list --count HEAD` —— 这是**正确**的，不是漂移。
 
 ---
 
 ## 2. 按日期统计
 
-见 `days/YYYY-MM-DD.md`（每天一个文件，正文含该日全部提交）。
+**唯一真值 = `days/` 目录本身**（每个自然日一个文件，文件第 1 行写当日条数）。
 
-| 日期 | 条数 |
-|---|---|
-| 2026-09-28 | 13 |
-| 2026-09-29 | 6 |
-| 2026-09-30 | 13 |
-| 2026-10-01 | 8 |
-| 2026-10-02 | 8 |
-| 2026-10-03 | 27 |
-| 2026-10-04 | 64 |
-| 2026-10-05 | 14 |
-| 2026-10-06 | 30 |
-| 2026-10-07 | 21 |
-| 2026-10-08 | 24 |
-| 2026-10-09 | 21 |
-| 2026-10-10 | 30 |
-| 2026-10-11 | 35 |
-| 2026-10-12 | 74 |
-| 2026-10-13 | 40 |
-| 2026-10-14 | 20 |
-| **合计** | **448** |
+```bash
+ls HISTORY/days                       # 有哪些天
+head -1 HISTORY/days/*.md             # 每天多少条
+```
+
+汇总表用 `scripts/gen-history.sh --stats` 现出，本文件不再抄。
 
 ---
 
@@ -53,21 +49,10 @@
 口径：取 subject 行**首个 `^[a-z_]+` 前缀**（到第一个非 `[a-z_]` 字符为止），
 即 `type` / `type: ...` / `type(scope): ...` 三种写法统一归入 `type`。
 
-| type | 条数 |
-|---|---|
-| `docs` | 153 |
-| `q` | 45 |
-| `audio` | 21 |
-| `feat` | 15 |
-| `chore` | 15 |
-| `fix` | 11 |
-| `upstream` | 8 |
-| `test` | 8 |
-| `wifi` | 6 |
-| `audit` | 6 |
+分布现查（top10 + 种数）：`scripts/gen-history.sh --stats`。
 
-> 其余 97 个 type 各 1–5 条（多为主题式前缀：`rootfs`/`power`/`haptics`/`flashctl`/`bringup`/`ledger`/`camera`/`vk`/`kexec`/`gpu`/`panel`/`thermal`/`bt`…），
-> 完整清单用下方 §4 命令自行展开；类型前缀不等于提交语义分类，只反映作者当时的书写习惯。
+> 类型前缀不等于提交语义分类，只反映作者当时的书写习惯；大量前缀是主题式
+> （`rootfs`/`power`/`haptics`/`flashctl`/`bringup`/`ledger`/`camera`/`vk`/`kexec`/`gpu`/`panel`/`thermal`/`bt`…）。
 
 ---
 
@@ -80,8 +65,8 @@
 
 ### 4.2 lane trailer（子代理提交溯源）
 
-强制由 **`.githooks/commit-msg`** 执行：仅对匹配 `lane/*` 或 `elden/lane-*` 的**分支**校验，
-其余分支（含 `main`、dense history）不检查。必需 trailer：
+强制由 **`.githooks/commit-msg`** 执行（**需 `core.hooksPath=.githooks` 才生效**，见 §5）：仅对匹配
+`lane/*` 或 `elden/lane-*` 的**分支**校验，其余分支（含 `main`、dense history）不检查。必需 trailer：
 
 | trailer | 含义 | 示例 |
 |---|---|---|
@@ -114,9 +99,24 @@ VK: vk51
 **生成（机械，勿手抄）**：
 
 ```bash
-scripts/gen-history.sh          # 重新生成 HISTORY/days/*.md
-scripts/gen-history.sh --check  # 对账 days 条目数 == git rev-list --count HEAD
+scripts/gen-history.sh          # 重新生成 HISTORY/days/*.md（幂等）
+scripts/gen-history.sh --check  # 对账 days 合计 == git rev-list HEAD + history/*
+scripts/gen-history.sh --stats  # 现查全部统计（本 README 不写死数字）
 ```
+
+**重跑是幂等的**：日档内容只由 `git log` 决定 ⇒ 未变化的日档**逐字节相同**，`git diff` 只出现在
+真正有变化的日期（通常是最后一天 + 新增日文件）。所以「全量重写 `days/*.md`」**不是反复删改**，可以放心重跑。
+
+三个会让重跑产生额外 diff 的例外（都属真变化或一次性 churn）：
+
+| 例外 | 触发 | 处置 |
+|---|---|---|
+| E1 hash 缩写变长 | git 对象增多后 `%h` 从 7 位变 8 位 ⇒ 所有日档每行同时变 | 脚本已钉 `core.abbrev=10`，**永不再变**（2026-10-19 已做一次性迁移） |
+| E2 提交被改写 | `rebase`/`amend`/`filter-repo` | 属真变化；相关日档 hash/条数全变 |
+| E3 时区不同 | 换机器/换 TZ 重跑，跨午夜提交换日 | 脚本**不改 TZ**（用 git 默认）；换环境前先看 `--stats` 的覆盖区间是否变 |
+
+> `--check` 的判据**天生「只在刚生成时为真」**：任何新提交都会让 HEAD +1 而 `days/` 不变。
+> 它是**收尾时的重生成提示**，不能当 pre-commit 门（`check-doctor` §10 只 WARN 不 FAIL）。
 
 **查询示例**：
 
@@ -132,12 +132,7 @@ git log --format=%s | grep -E '^docs'
 
 # 看某条提交的 lane trailer
 git log -1 --format=%B <hash>
-
-# 统计每日条数
-git log --format=%ad --date=short | sort | uniq -c
 ```
-
-**对账结果**（生成时）：`days/` 条目合计 = **448**，`git rev-list --count HEAD` = **448** → 一致。
 
 ---
 
@@ -145,9 +140,9 @@ git log --format=%ad --date=short | sort | uniq -c
 
 ```text
 HISTORY/
-├── README.md          # 本文件（策展 SSOT：统计表 + 规范 + 查询）
+├── README.md          # 本文件（规范 + 查询入口；统计一律现查）
 └── days/
-    ├── 2026-09-28.md  # 该日全部提交，按时间升序，每行 `- <hash> <subject>`
-    ...                # 共 17 个日文件
-    └── 2026-10-14.md
+    ├── YYYY-MM-DD.md  # 该日全部提交，按时间升序，每行 `- <10 位 hash> <subject>`
+    ...                # 每天一个文件，个数以 ls 为准
+    └── ...
 ```

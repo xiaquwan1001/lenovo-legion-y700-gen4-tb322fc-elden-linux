@@ -80,7 +80,15 @@ while read -r _tag _st _msg; do
   esac
 done <<< "$_all"
 if [ ${#_ledger_st[@]} -eq 0 ]; then
-  warnf "vk 版本账检查未产出结果（python3 缺失？）"
+  # 反静默（2026-10-19 实测教训）：scripts/vk-identity.py 曾因一行语法错误
+  # （`detail)i)` 多一个字符）而完全无法运行，但这里只报「python3 缺失？」的 warn
+  # ⇒ 整个 §5/§5d 静默失效，而 git 的 stat 缓存还让文件显示「未修改」，更难发现。
+  # 现在先做语法自检，语法坏 = FAIL（不是 warn）。
+  if ! python3 -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" scripts/vk-identity.py 2>/dev/null; then
+    bad "scripts/vk-identity.py 有语法错误，vk 版本账/内核身份检查全部失效（跑 python3 scripts/vk-identity.py 看报错）"
+  else
+    warnf "vk 版本账检查未产出结果（python3 缺失或脚本运行失败，请手工跑 scripts/vk-identity.py --all 确认）"
+  fi
 else
   for _i in "${!_ledger_st[@]}"; do
     case "${_ledger_st[$_i]}" in
@@ -297,6 +305,43 @@ for num, files in sorted(pdefs.items(), key=lambda kv: int(kv[0])):
     if len(files) > 1:
         dupnum.append('PITFALLS: #%s (%s)' % (num, ' | '.join(sorted(set(files)))))
 
+# ---- 8c. 索引行长度门：索引只放「一句话主题」，超长即说明它在替正文做二次编排 ----
+# 判据来源（2026-10-19 整理轮）：PITFALLS/README.md 曾有 9 行 ≥500 B、最长 2682 B，
+# 单元格是正文的整段搬运 ⇒ 必然与正文漂移（实测已出现一条被正文推翻的旧结论）。
+IDXROW = []
+for rel, lim in (('PITFALLS/README.md', 800),):
+    p = os.path.join(root, rel)
+    if not os.path.isfile(p):
+        continue
+    for i, ln in enumerate(open(p, encoding='utf-8', errors='replace'), 1):
+        if ln.startswith('|') and 'sessions/' in ln and len(ln.encode()) > lim:
+            IDXROW.append('%s:%d 索引行 %d B > %d' % (rel, i, len(ln.encode()), lim))
+
+# ---- 8d. PITFALLS 正文条目编号必须是 `#NNN` 且全局只定义一次 ----
+# 旧规则只认行首 `NNN. `，而 45/46/47/49/51 用的是 `## #NNN ...` 形式 ⇒ #293–#353 长期
+# 不受任何唯一性保护（实测 #337/#338/#339 一度只存在于 README 索引里，正文一次都没出现）。
+pnum = {}
+for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
+    for ln in open(f, encoding='utf-8', errors='replace'):
+        # 「定义」= 标题行里出现的 #NNN（一条目一节的写法多样：`## #323 …`、`## 2. #337 …`、
+        # `# 四十七、…（#331–#336）`），或行首 `NNN. **标题**`。
+        # 两条去噪规则（2026-10-19 实测，否则全库误报）：
+        #   ① 反引号代码段里的 `#NNN` 是**引用**不是定义（`## 289. ★★ \`PITFALLS #212\` 12 发全存活`）；
+        #   ② 同一文件内多次出现不算撞车（一节讲一组编号是正常写法），只报**跨文件**重复。
+        line = re.sub(r'`[^`]*`', '`X`', ln)
+        if re.match(r'^#{1,4}\s', line):
+            # 只取标题里的**第一个**编号：`## #324 推翻 #322 的方法论教训` 里 #322 是引用。
+            m = re.search(r'#(\d{1,3})\b', line)
+            if m:
+                pnum.setdefault(m.group(1), set()).add(os.path.basename(f))
+        else:
+            m = re.match(r'^(\d{1,3})\.\s+\*\*', line)
+            if m:
+                pnum.setdefault(m.group(1), set()).add(os.path.basename(f))
+for num, files in sorted(pnum.items(), key=lambda kv: int(kv[0])):
+    if len(files) > 1:
+        dupnum.append('PITFALLS 正文 #%s 被多处定义 (%s)' % (num, ' | '.join(sorted(set(files)))))
+
 def emit(tag, items):
     print('%s\t%s' % (tag, '; '.join(items) if items else '-'))
 emit('FENCE', fence)
@@ -329,6 +374,7 @@ for rel, pat, ang in COUNT_RULES:
         if int(m.group(1)) != real:
             stale.append('%s 声明「%s 节」但实际 %d 节' % (rel, m.group(1), real))
 emit('STALECOUNT', stale)
+emit('IDXROW', IDXROW)
 PY
 )
 echo
@@ -348,6 +394,7 @@ while IFS=$'\t' read -r _st _msg; do
     ORPHAN) [ "$_msg" = "-" ] && ok "已声明登记的角度：sessions/ 正文均被 README 引用" || warnf "索引未登记（仅对声明逐文件登记的角度核；补 README 行或移出该口径）: $_msg" ;;
     DUPNUM) [ "$_msg" = "-" ] && ok "文件名/条目编号无撞车" || bad "编号撞车（引用歧义，必须重编）: $_msg" ;;
     STALECOUNT) [ "$_msg" = "-" ] && ok "文档内手写条目计数与磁盘一致" || bad "文档手写计数已过期（改为不写死数字，或同步修正）: $_msg" ;;
+    IDXROW) [ "$_msg" = "-" ] && ok "索引行长度合规（结论只在正文，索引只放一句话主题）" || bad "索引行超长（内容应搬进正文，索引留一段主题 + 链接）: $_msg" ;;
   esac
 done <<< "$_media"
 
@@ -369,6 +416,45 @@ else
     bad "SESSIONS 快照与源不一致（$_csl）→ 跑 bash scripts/check-sessions.sh 看细节"
   fi
 fi
+
+# ---------------------------------------------------------------- 10. HISTORY 对账（<0.1 s）
+# 立此节的原因（2026-10-19 整理轮）：HISTORY/README.md 曾写死「总提交数 448 / 生成时 HEAD 265e77c」，
+# 而实际 493，且 days/ 缺 10-15～10-19 整整 5 天 —— 无任何检查发现，因为 doctor 从不看 HISTORY。
+# 判据分两档：
+#   FAIL = README 又写死了计数（数字唯一出口 = scripts/gen-history.sh --stats）；
+#   WARN = days/ 落后于 git（正常状态：刚提交完还没重生成，收尾时跑一次即可）。
+echo
+echo "== 10. HISTORY 对账（days 覆盖 / README 不写死数字）=="
+if grep -qE '^\| *总提交数 *\|' HISTORY/README.md 2>/dev/null; then
+  bad "HISTORY/README.md 又写死了提交数（应改为 scripts/gen-history.sh --stats 现查）"
+else
+  ok "HISTORY/README.md 无写死计数"
+fi
+_hd=$(cat HISTORY/days/*.md 2>/dev/null | grep -cE '^- [0-9a-f]{7,} ' || true)
+_hr=$(git rev-list --count HEAD 2>/dev/null || echo 0)
+_hhist=$(git rev-list --count HEAD $(git for-each-ref --format='%(refname:short)' 'refs/heads/history/*' 'refs/remotes/*/history/*' 2>/dev/null | sort -u) 2>/dev/null || echo "$_hr")
+if [ "${_hd:-0}" -ge "${_hhist:-0}" ] 2>/dev/null; then
+  ok "HISTORY/days 覆盖 ${_hd} 条 >= HEAD+history ${_hhist} 条"
+else
+  warnf "HISTORY/days 落后：${_hd} < ${_hhist} 条（收尾时跑一次 scripts/gen-history.sh）"
+fi
+
+# ---------------------------------------------------------------- 11. 提交钩子生效性
+# 立此节的原因（2026-10-19 整理轮实测）：.githooks/{pre-commit,commit-msg} 两个脚本早就写好、
+# 文档也一直声称「入库前门会跑 check-doctor --staged-fast」，但 `git config core.hooksPath` 是空的、
+# `.git/hooks/pre-commit` 不存在 ⇒ **两个钩子从未执行过一次**。这类「文档承诺了一个不存在的门」
+# 只能靠机器对账发现，故在此固化。
+echo
+echo "== 11. 提交钩子生效性（hooksPath 必须指向 .githooks）=="
+_hp=$(git config --get core.hooksPath || true)
+if [ "$_hp" = ".githooks" ]; then
+  ok "core.hooksPath = .githooks"
+else
+  bad "core.hooksPath='${_hp}' → 钩子未生效（跑一次 git config core.hooksPath .githooks）"
+fi
+for _h in pre-commit commit-msg; do
+  if [ -x ".githooks/$_h" ]; then ok ".githooks/$_h 可执行"; else bad ".githooks/$_h 缺失或不可执行"; fi
+done
 
 echo
 echo "== 汇总: FAIL=$fail  WARN=$warn =="

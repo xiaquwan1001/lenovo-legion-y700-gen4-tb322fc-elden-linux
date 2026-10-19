@@ -2,7 +2,7 @@
 
 本目录按会话记录 RUNBOOK-BRINGUP 角度的迭代进度。每个会话一个文件，文件名：`YYYY-MM-DD-<主题>.md`（如 `2026-10-14-persistent-boot-73.md`）。
 
-> **检索约定**：会话身份与全文检索走 pi 原生项目会话（`.pi/sessions/*.jsonl`，`session_search` / `/resume`），本目录只放提炼后的进度快照，不维护会话索引表。
+> **检索约定**：会话身份与全文检索走 pi 原生项目会话（`.pi/sessions/*.jsonl`，`scripts/sess.sh` / `/resume`），本目录只放提炼后的进度快照，不维护会话索引表。
 
 ## 头部字段约定
 

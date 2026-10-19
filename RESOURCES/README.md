@@ -234,7 +234,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
     - **② 不可重下的大二进制 → 云盘**：`scripts/pack-cloud-backup.sh [DEST]` 按 **T1/T2** 硬链接整理（link count=2，**0 额外占盘**）+ `MANIFEST.sha256`；
       清单/理由 = `../reports/cloud-backup-manifest-20261016.md`。已生成 `~/cloud-backup-y700-elden-20261016/`（**6.9 G / 3594 文件，sha256 全验 OK**）⇒ **待用户上传云盘**。
       分层：**T1** 不可再生（设备独有分区/GPT/解锁前取证/内核 bundle/AVF/rootfs 归档）· **T2** 可重下但代价高（原厂厂商资产/EDL 全量包/厂商工具）·
-      **T3-sessions** = `.pi/sessions/`（390 M，190 会话全文轨迹；**真实拷贝**冻结快照，非硬链接）。
+      **T3-sessions** = `.pi/sessions/`（体积/会话数**以备份当时的 MANIFEST 为准**；**真实拷贝**冻结快照，非硬链接）。
     - **③ 会话轨迹 → 云盘**：见上 T3-sessions（2026-10-16 用户指示纳入）。
   - **仍未站外备份**：**内核现役线**——只有本地 bundle（本机无 `reccli-ts`/rclone ⇒ **云盘路未落，bundle 已在 T1 包内待上传**）。
   - **Waydroid 树（`/mnt/Samsung/waydroid-build`）的本地提交 → 两个 USTC 仓**（2026-10-16 核，服务端 `ls-remote` 与 HEAD 一致）：
@@ -254,7 +254,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 |---|---|---|---|
 | 领域层 `INDEX/DEVICE/TASKS/RESOURCES/RUNBOOK.md` + `../PITFALLS/README.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2（GAPS/ANDROID-COMPAT 已并入 `../TASKS/README.md` §5/§6） |
 | `.pi/{skills,missions,agents}` `.pi/README.md` `.pi/AGENT-OPS.md` `.pi/CONCURRENCY.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：行为规范/并发细则/技能/子代理/模型配置（分工见 `.pi/README.md`）。⚠️ `.pi/memory/` 已于 2026-10-05 删除（迁 hermes）；`pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
-| `.pi/sessions/`（jsonl 会话轨迹，含会话子目录副本） | ~108 M | ignore | 会话轨迹；**会话数 SSOT = `SESSIONS/README.md` §1**；**整理候选**：旧会话归档（见 §3 H1） |
+| `.pi/sessions/`（jsonl 会话轨迹，含会话子目录副本） | **现查 `du -sh .pi/sessions`**（不写死；2026-10-19 = 456 M） | ignore | 会话轨迹。**会话数不在这里维护**：现查 `ls .pi/sessions/*.jsonl \| wc -l`；检索用 `scripts/sess.sh` 或 `/resume`。**整理候选**：旧会话归档（见 §3 H1） |
 | `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
 | `patches/` | 3.7 M | ✅ track（q28 delay/methodB 草稿未入库） | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档）。**Q28 显示诊断补丁系列**（均设备无关诊断/实验件，非 G1 交付）：已 RAM 上机取证 = `q28-dsi-regdump.patch`/`q28-dsi-regdump-with-baseline.patch`（vk72/vk73/vk75 好坏寄存器差分）、`q28-poweron-propagate.patch`（vk74 4/4 复现）、`q28-cmd-dma-delay.patch`（vk84-{base,exp} 单变量对，暖 8/8 GOOD 不判别、冷 A/B 仅 T1=NOCARD 未定案）；候选未独立上机 = `q28-dsi-cmd-recover.patch`（vk64 源有界复位）；草稿未编未 apply = `q28-methodB-round-byteclk.patch`+`q28-methodB-NOTES.md`（取整 byte-clk，落点待按上游校准） |
 | `patches-userland/` | <60 K | ✅ track | **用户态（Phosh/phoc）补丁 + 构建/安装脚本**（2026-10-11 新增）：`0001-phoc-honor-any-mode.patch`（切非 preferred 刷新率）、`0002-phosh-report-supported-scale.patch`（修非整数比例显 100%）、`0003-phosh-auto-rotation-quick-setting.patch`（**新增自动旋转磁贴插件**）、`alpine-phosh-*.patch`（发行版补丁，保一致）、`build-phoc-phosh.sh`、`install-on-device.sh`（设备侧幂等安装+启用插件）、`build-deps.txt`、`upstream/`（**上游 MR 草案**）。已上机验证，证据见 `reports/userland-display-scale-refresh-20261011.md`、`reports/userland-auto-rotation-toggle-20261011.md`。设备侧还原副本 = `rootfs/persistent-overlay/userland-display/`（restore.sh 自动调用） |
@@ -346,12 +346,26 @@ git log --oneline -10
 | 日志/工具 | `logs/`（92 M）、`tools/`（14 M，含 `tools/wd-audio-test/`） | ⚠️MIGRATION-LOST | `logs/bench-20261011`、`logs/ui-20261011` 等证据指针悬空、不可重建 |
 | 可重下 | `edk2-*`、`mu_wide_platforms`、`uefi-firmware-backup`、`qdl`、`twrp`、`pkgs*`、`probe`、`rootfs/{alpine,dl,debs}` | LOST-REDOWNLOADABLE | 重下/重建，非硬伤 |
 
-**已用备份包补回（2026-10-17）**：`.pi/sessions/`（311 文件 / 391 M，含 subagent 工件）、`~/mnt/Samsung/mesa-out/`（Mesa 26.1.8，14 文件）、`backup/fw/vendor/firmware/wlan/*`（11 条软链）。
+**已用备份包补回（2026-10-17）**：`.pi/sessions/`（文件数/体积见 `versions/cloud-backup-20261016.MANIFEST.sha256`，含 subagent 工件）、`~/mnt/Samsung/mesa-out/`（Mesa 26.1.8，14 文件）、`backup/fw/vendor/firmware/wlan/*`（11 条软链）。
 **核对**：`~/下载/cloud-backup-y700-elden-20261016.tar.zst` 按包内 `MANIFEST.sha256` 全量校验 = **3608/3609 OK、0 缺失**；唯一差异 = `mnt/Samsung/l2/dump-super.sh`（本地版=新机路径适配，实测仅 2 行差，保留本地版）。核对后 **tar 已删除**；清单留档 `versions/cloud-backup-20261016.MANIFEST.sha256`（内容摘要 = `reports/cloud-backup-manifest-20261016.md`）。
 另：`~/下载/migration-2026-10.tar.xz`（490 M，dotfiles/secrets 迁移包）**未动**。
 
 ---
 
-## 4. 会话检索（不再手抄索引；**会话数/统计 SSOT = `SESSIONS/README.md` §1**）
-会话身份与检索 = **pi 原生项目会话**（`.pi/sessions/*.jsonl`，项目级 `sessionDir`）：用 `session_search` / `/resume`。
-各角度的会话进度见 `<角度>/sessions/YYYY-MM-DD-<主题>.md`；**逐会话索引/统计见 `SESSIONS/README.md`**。
+## 4. 会话检索（**不手抄索引、不维护会话数**）
+
+> **会话数量/统计不在这里维护，也不写死**（历史上写过 108 M / 390 M / 162 / 168 / 198 等多个互相矛盾的值）。
+> 要数字就现查：`ls .pi/sessions/*.jsonl | wc -l`（顶层会话数）、`du -sh .pi/sessions`（体积）。
+
+**检索入口（按用途选一个）**：
+
+| 用途 | 命令 |
+|---|---|
+| 本项目会话全文检索 | `scripts/sess.sh <关键词>`（= `PI_SESSION_DIR=.pi/sessions sess …`） |
+| 交互式挑选/重命名/分支 | `/resume`（pi 会话选择器，Ctrl+R 改名） |
+| 原始 jsonl 全文 | `rg -uuu <关键词> .pi/sessions`（`-uuu` 必需：该目录在 `.gitignore` 里） |
+
+> ⚠ **全局 `sess` 直接跑会漏本项目 95% 的会话**：它默认扫 `~/.pi/agent/sessions`，而项目 `sessionDir=.pi/sessions`。
+> 一律用 `scripts/sess.sh`（已包好 `PI_SESSION_DIR`），或 `/resume`。
+
+各角度的会话进度见 `<角度>/sessions/YYYY-MM-DD-<主题>.md`；**逐会话历史快照（已冻结）**见 `SESSIONS/`（仅档案，不再增补）。

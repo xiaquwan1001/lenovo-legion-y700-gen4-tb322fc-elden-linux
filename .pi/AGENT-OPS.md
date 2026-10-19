@@ -63,7 +63,9 @@
 - **结构**：唯一入口 `INDEX.md`（文件）；7 个**角度文件夹** `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/`，
   每个内 `README.md`（策展 SSOT，唯一维护面）+ `sessions/`（**以会话为单位**的进度，命名 `YYYY-MM-DD-<主题>.md`）。
 - **记录时的区分度**（取代旧的自检计数/死链检查）：写入时就靠 文件夹(角度) + 文件名(日期+主题) + pi 会话 id 区分；
-  会话身份/检索用 **pi 原生项目会话**（`.pi/sessions/*.jsonl`，`session_search` / `/resume`），不手抄索引表。
+  会话身份/检索用 **pi 原生项目会话**（`.pi/sessions/*.jsonl`）：**`scripts/sess.sh`** 或 `/resume`，不手抄索引表。
+  （全局 `sess` 默认扫 `~/.pi/agent/sessions`，**扫不到本项目**——项目 `sessionDir=.pi/sessions`；必须用 `scripts/sess.sh`。）
+- **一次会话写什么**：唯一 8 条规则在 `INDEX.md` §2「★ 会话结束时写什么」，本节不复述。
 - **单写者**：任何时刻一个文件只有一个写者。**各角度 `README.md` + `.githooks` + `versions/` = 父 agent 专属**；
   子 agent 只写被指派的 `sessions/` 新文件，一般不碰 README（被显式指派重建某角度文件夹时，该角度对本次派工单写者）。
 - **并入流程**：`sessions/` 里的「★SSOT 待并入」由宿主择机并进同角度 `README.md`，随后移除该标记。
@@ -77,7 +79,7 @@
 - 汇报**先数字结论、后细节，一页内**。长跑设**自动截止时间盒**（`timeout -k <秒>`）并用 `ps`/`pgrep` 核实结束——均为全局硬规则，见 `~/.pi/agent/pi-hermes-memory/STANDING.md` 第 3/4 条。
 - ~~不要写 summary / 总结 / 摘要~~ —— **该禁令已作废（2026-10-19，用户裁定）**：它只会让 pi agent 的文本流解析异常，是错误归因，不是解决方案。现在**允许并要求**写收尾短报，但**内容仍以「产物路径 + 关键数字」为主**，不复述过程叙事。派工单里可以正常要求回执摘要（`agents.run({task})` 的 `task`、`.pi/agents/*.md`、`.pi/missions/*.md` 均不受限）。**落盘仍是硬要求**：报告/证据/补丁必须进 `reports/`、`sessions/`、`patches/`，回复只是索引。
 - 状态词只允许「未解 / 未证实 / 未上机」；失败与半成品必落盘。
-- **收尾的定义（不是写总结）**：① 产物/证据落文件（`reports/`、`sessions/`、`patches/`）；② 同步 SSOT（`DEVICE`/`TASKS`/`PITFALLS` 口径）；③ 设备留在安全态并写明；④ `scripts/check-doctor.sh` **FAIL=0**；⑤ `git commit` 且工作区干净。五项做完才叫收尾；只回一段总结 = **未收尾**（2026-10-18 实例：上一会话收了尾前先写了总结就停）。
+- **收尾的定义（不是写总结）**：① 产物/证据落文件（`reports/`、`sessions/`、`patches/`）；② 同步 SSOT（`DEVICE`/`TASKS`/`PITFALLS` 口径）；③ 设备留在安全态并写明；④ `scripts/check-doctor.sh` **FAIL=0**（含 §10 HISTORY 对账、§11 钩子生效性；落后先跑 `scripts/gen-history.sh`）；⑤ `git commit` 且工作区干净。五项做完才叫收尾；只回一段总结 = **未收尾**（2026-10-18 实例：上一会话收了尾前先写了总结就停）。
 
 ---
 
@@ -90,3 +92,5 @@
 - **派工单（2026-10-19 起）**：可以要求子代理回执摘要；但仍优先要求**产物落盘 + 最小回执字段（路径 + 关键数字）**，避免只回一段话而无文件（旧「禁止 summary」条款已作废，理由见 §5）。
 - 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。迁移后无插件自动加载角色卡，派工须把其正文显式拼进 `task`。
 - **本项目子代理一律经 `custom-nexavlinks-com` 网关**（`https://www.nexavlinks.com`，模型 `deepseek-v4.1-flash`）：项目级 `.pi/fabric.json` 已把全部别名（worker/researcher/audit/…）指向该模型；改后需 `/reload` 生效。凭据只在全局 `auth.json`，不入库；网关地址/模型名属配置非密件。
+  派工时**显式传 `model: "custom-nexavlinks-com/deepseek-v4.1-flash"`** 或别名，并注意 **`agents.run` 的 `tools` 是完整白名单**（不列就用不了）。
+- **子代理自报“已写报告”必须由编排者 `ls`/`read` 验证**：2026-10-19 实例——lane-b 返回 `status=completed` 且自称已写 33 KB 报告，实际文件根本不存在，重派后才有。

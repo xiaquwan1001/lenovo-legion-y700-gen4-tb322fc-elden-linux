@@ -104,7 +104,7 @@ for f in glob.glob(os.path.join(SDIR, '*.md')):
 
 SESSION_TMPL = """# {date} · {name}
 
-> 会话档案（快照）。**会话身份与检索 = pi 原生 `.pi/sessions/*.jsonl`**（`session_search` / `/resume`）；
+> 会话档案（快照）。**会话身份与检索 = pi 原生 `.pi/sessions/*.jsonl`**（`scripts/sess.sh` / `/resume`）；
 > 本文件是 2026-10-14 从 `RESOURCES.md` §4 会话索引快照机械登记的**静态档案**，不含会话全文。
 > 索引总表 / 统计 / 内核版本时间线见 [`../README.md`](../README.md)。
 
@@ -181,7 +181,7 @@ README = """# SESSIONS — 会话角度（逐会话索引与档案）
 ## 0. 会话身份与检索（**权威不在本目录**）
 
 - **会话身份 + 全文 = pi 原生项目会话**：磁盘 `.pi/sessions/*.jsonl`（项目级 `sessionDir`）。
-  检索 = **`session_search`**（hermes 记忆检索）或 pi 会话选择器 **`/resume`**；会话内容**不手抄、不复制进本目录**。
+  检索 = **`scripts/sess.sh`**（hermes 记忆检索）或 pi 会话选择器 **`/resume`**；会话内容**不手抄、不复制进本目录**。
 - **§1/§2/§3 是快照**（2026-10-14 从 `RESOURCES.md` §4 会话索引迁出时冻结），此后新增会话不在表内。
 - **逐会话档案**：`sessions/YYYY-MM-DD-<名称>.md`（共 {n} 个），与 §3 表**一行一文件**；
   文件名 = 日期 + 「名称（建议）」slug 化；同日重名加 `-2` 或 `-<短id>`。
@@ -256,7 +256,7 @@ scripts/gen-sessions.py --check    # ① 文件数 == 快照表行数 ② §1/§
 
 ---
 
-> 会话全文/检索 = pi 原生 `.pi/sessions/*.jsonl`（`session_search` / `/resume`）；本目录只存**快照索引 + 逐会话档案**。
+> 会话全文/检索 = pi 原生 `.pi/sessions/*.jsonl`（`scripts/sess.sh` / `/resume`）；本目录只存**快照索引 + 逐会话档案**。
 """
 
 
