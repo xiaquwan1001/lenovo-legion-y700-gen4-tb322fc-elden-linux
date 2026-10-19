@@ -1,0 +1,19 @@
+/* ELDEN 2026-10-19: 只导出 camera provider/device 自己的类与 vtable。
+   不导出 libc++/libhidl 模板实例（__tree/__hash_table/basic_string/ConcurrentMap…），
+   否则它们会与容器 /apex/com.android.vndk.v33/lib64/libhidlbase.so 里的同名 WEAK 符号
+   抢绑定，平台代码用我们的实例、我们用自己的实例 => 数据结构布局/生命周期错配 =>
+   static_constructor 里 ConcurrentMap<std::string,...>::set 的 __tree 比较读野指针。
+   现象：SIGSEGV memcmp(x1=0x31) / hidl_string::~hidl_string free(0x1) abort。 */
+{
+  global:
+    _ZT*;                     /* vtable/typeinfo/vthunk 都必须可见，平台要按名取 */
+    _ZN7android8hardware6camera*;
+    _ZNK7android8hardware6camera*;
+    _ZN7android8hardware6detail*;
+    _ZN7android8hardware28registerPassthroughServiceImplementation*;
+    _ZN7android8hardware40registerPassthroughServiceImplementation*;
+    _ZN7android8hardware6detail16HidlInstrumentor*;
+    HIDL_FETCH_*;             /* legacy passthrough 入口，平台按名字 dlsym */
+  local:
+    *;
+};

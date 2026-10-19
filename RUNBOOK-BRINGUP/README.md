@@ -266,7 +266,8 @@ fastboot reboot
 **验证清单（此步就要过 = G1 验收矩阵的硬件部分）**：显示/触屏、SSH、WiFi（若要）、CPU/温度、`ls $BLK*`、**`dmesg` 里原厂固件加载（ADSP / WCN / GPU zap / 触屏 FW）无失败**。
 OOB 串口：`bash scripts/serial-run.sh 'uname -r; id'`。
 
-> ★ **持久根（Phase 4/5）熄屏稳定性**：**未解 / 间歇性**。根因已锁定为单模块 **`cambistmclkcc-sm8750`**（相机 BIST MCLK 时钟控制器）× DT 电源域耦合（H1/D1/D2/H2 四种改法均未根治）；**无相机模块态安全**。**规避必须保留**（禁空闲熄屏 + 不自动加载相机模块：cmdline `elden_nocamera=1` + `idle-delay=0`）。样本数/实验矩阵以 `../TASKS/README.md` §5 Q24 与 §1 G1-22/G1-33 为准（本文件不维护状态）。
+> ★ **持久根（Phase 4/5）熄屏稳定性**：**未解 / 间歇性**。根因已锁定为单模块 **`cambistmclkcc-sm8750`**（相机 BIST MCLK 时钟控制器）× DT 电源域耦合（H1/D1/D2/H2 四种改法均未根治）；**无相机模块态安全**。
+> **★ 2026-10-19 口径更正**：「相机模块在位 ⇒ 熄屏必掉电」**不是绝对的** —— vk127（7.3 线）完整相机栈在位 + 真实熄屏 **41 发存活**，致死只在 vk64（7.2 血统）复现过（n=2:1死1活），suspend 已被能力级排除（`CONFIG_SUSPEND=n`）⇒ 待 N5b 扩样定性；下面的规避步骤仍作为**默认安全策略**保留，但做相机常驻类实验时不必因「必然掉电」而放弃（证据 `reports/q24-suspend-hypothesis-excluded-20261019.md`）。**规避必须保留**（禁空闲熄屏 + 不自动加载相机模块：cmdline `elden_nocamera=1` + `idle-delay=0`）。样本数/实验矩阵以 `../TASKS/README.md` §5 Q24 与 §1 G1-22/G1-33 为准（本文件不维护状态）。
 > 规避（旧内核/未确认时用）：
 > ```bash
 > # 持久根上（拿到 phoc 的 session bus 后）

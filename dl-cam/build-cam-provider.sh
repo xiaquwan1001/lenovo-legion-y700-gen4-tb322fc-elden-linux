@@ -59,7 +59,14 @@ INC="-I$HERE/gen
  -I$AOSP/libyuv/include
  -I$AOSP/libexif/libexif"
 
-CFLAGS="--target=aarch64-linux-android$API -std=gnu++17 -O2 -fPIC -fno-exceptions -fno-rtti -Wno-deprecated-declarations -DANDROID -D_LIBCPP_ABI_NAMESPACE=__1"
+# ELDEN 2026-10-19: ABI 对齐 Android 平台 libc++（容器 /system/lib64/libc++.so）。
+#   ABI 必须是 v1 + __1（平台 libc++ 只有 v1 的 __grow_by/__init* 符号；std::string
+#   实测 24 字节，与平台头 dl-cam/libcxx/src 一致，不需要 ALTERNATE_STRING_LAYOUT）。
+#   容器 libhidlbase 的 getRawServiceInternal 收到我们传的 std::string 会按 32 字节读，
+#   于是 hidl_string(cstr) 读出垃圾指针 => hidl_string::~hidl_string free() abort
+#   （"Pointer tag for 0x.. was truncated"）。
+#   _LIBCPP_ABI_NAMESPACE=__1 => 与平台符号命名一致（否则 __ndk1）。
+CFLAGS="--target=aarch64-linux-android$API -std=gnu++17 -O2 -fPIC -fno-exceptions -fno-rtti -Wno-deprecated-declarations -DANDROID -D_LIBCPP_ABI_VERSION=1 -D_LIBCPP_ABI_NAMESPACE=__1"
 # PLATFORMLIBCXX=1：用 AOSP 平台 libc++ 头（dl-cam/libcxx/src + 手写 __config_site）替代 NDK 头。
 # 动机见 2026-10-18：NDK 头编译的最小 HIDL 客户端在容器里 free() 时 abort（"Pointer tag ... truncated"）。
 if [ "${PLATFORMLIBCXX:-0}" = 1 ]; then
@@ -86,7 +93,10 @@ if [ "$SELFIFACE" = 1 ]; then
     rel=${src#$HERE/gen-src/}
     o=$OUT/obj/iface-$(echo "$rel" | tr '/' '_' | sed 's/\.cpp$/.o/')
     if [ ! -f "$o" ] || [ "$src" -nt "$o" ]; then
-      $CXX $CFLAGS $INC -I"$HERE/gen-src" -include "$HERE/iface-compat.h" -c "$src" -o "$o" || { echo "  FAILED $rel"; exit 1; }
+      # 某些 gen-src 文件在 clang-14 -O2 下会命中编译器内部崩溃（栈溢出/ICE），
+      # 这两处不是性能关键路径，用 -O1 规避（结果等价，只是编译慢一点）。
+      $CXX $CFLAGS $INC -I"$HERE/gen-src" -include "$HERE/iface-compat.h" -O1 -c "$src" -o "$o" \
+        || { echo "  FAILED $rel"; exit 1; }
       i=$((i+1))
     fi
     IFACE_OBJS="$IFACE_OBJS $o"
@@ -106,7 +116,7 @@ link_so() {
   [ "$SELFIFACE" = 1 ] && libs=$(echo "$libs" | sed -E "$IFACE_FILTER")
   $CXX --target=aarch64-linux-android$API -shared -o "$so" $objs $IFACE_OBJS \
     -Wl,-soname,$(basename "$so") -Wl,--no-undefined -Wl,--exclude-libs,ALL -Wl,--allow-multiple-definition \
-    -Wl,-rpath-link,"$SYS" \
+    -Wl,--version-script="$HERE/elden-cam-exports.map" -Wl,-rpath-link,"$SYS" \
     -L"$SYS" -L"$OUT" $libs
 }
 
@@ -209,7 +219,8 @@ SVC_IFACE_LIBS="-l:android.hardware.camera.common@1.0.so -l:android.hardware.cam
 [ "$SELFIFACE" = 1 ] && SVC_IFACE_LIBS=""
 $CXX --target=aarch64-linux-android$API -pie -o $OUT/android.hardware.camera.provider@2.4-external-service \
   $SVC_MAIN $IFACE_OBJS \
-  -Wl,--exclude-libs,ALL -Wl,--allow-multiple-definition -Wl,-rpath-link,"$SYS" -L"$SYS" -L"$OUT" \
+  -Wl,--exclude-libs,ALL -Wl,--allow-multiple-definition \
+  -Wl,--version-script="$HERE/elden-cam-exports.map" -Wl,-rpath-link,"$SYS" -L"$SYS" -L"$OUT" \
   -l:android.hardware.camera.provider@2.4-external.so \
   -l:android.hardware.camera.provider@2.5-external.so \
   -l:libhidlbase.so -l:libutils.so -l:liblog.so -l:libcutils.so -l:libbinder.so \

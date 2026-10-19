@@ -99,6 +99,11 @@ put() { # hostfile targetpath mode
   chmod "$mode" "$STAGE/${dst#/}"
 }
 put "$W/out-cam/android.hardware.camera.provider@2.4-external-service" /bin/hw/android.hardware.camera.provider@2.4-external-service 755
+# SMOKE=1: also drop the minimal HIDL client (getRawServiceInternal-only probe) so it can be
+# run inside the container without a working adb/overlay: /vendor/bin/hidl-smoke
+if [ "${SMOKE:-0}" = 1 ] && [ -f "$W/out-cam/hidl-smoke" ]; then
+  put "$W/out-cam/hidl-smoke" /bin/hidl-smoke 755
+fi
 put "$W/out-cam/android.hardware.camera.provider@2.4-external.so" /lib64/hw/android.hardware.camera.provider@2.4-external.so 644
 # passthrough lookup matches "<pkg>@<ver>-impl*.so" only (system/libhidl ServiceManagement.cpp:openLibs)
 put "$W/out-cam/android.hardware.camera.provider@2.4-external.so" /lib64/hw/android.hardware.camera.provider@2.4-impl.so 644

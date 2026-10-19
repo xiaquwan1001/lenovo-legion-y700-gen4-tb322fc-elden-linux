@@ -1,0 +1,45 @@
+diff --git a/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp b/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
+index 4fc7437..8497cef 100644
+--- a/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
++++ b/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
+@@ -41,10 +41,19 @@ namespace {
+ // "device@<version>/external/<id>"
+ const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/external/(.+)");
+ const int kMaxDevicePathLen = 256;
+-const char* kDevicePath = "/dev/";
++// ELDEN 2026-10-19: 上游这两行在 **64 位**上算错，必须修（这是上游只出 32 位构建的原因之一）。
++//   sizeof(kDevicePath) 里的 kDevicePath 是 `const char*` ⇒ 得到**指针大小**（arm64 = 8，
++//   32 位 = 4）。于是 kDevicePrefixLen = 8 + 5 + 1 = 14，而 "-/dev/video100" 的数字从下标 10 开始
++//   ⇒ atoi("/dev/video100" + 14) = atoi("00") = 0 ⇒ 所有设备号都被算成 0 ⇒
++//   addExternalCamera 报 "device@3.4/external/0"，随后 getCameraDeviceInterface_V3_x 用
++//   matchDeviceName 反算回 "/dev/video0"（容器里不存在）⇒ init failed ⇒ 永远 0 camera devices。
++//   32 位构建时 sizeof 指针 = 4 恰好凑出 10，所以上游 32 位一直"正常"。
++// 治法：用**字面量长度**而不是指针大小。
++constexpr char kDevicePath[] = "/dev/";
+ constexpr char kPrefix[] = "video";
+ constexpr int kPrefixLen = sizeof(kPrefix) - 1;
+-constexpr int kDevicePrefixLen = sizeof(kDevicePath) + kPrefixLen + 1;
++constexpr int kDevicePathLen = sizeof(kDevicePath) - 1;   // 5，不含 '\0'
++constexpr int kDevicePrefixLen = kDevicePathLen + kPrefixLen;  // "/dev/" + "video" = 10
+ 
+ bool matchDeviceName(int cameraIdOffset,
+                      const hidl_string& deviceName, std::string* deviceVersion,
+diff --git a/camera/provider/2.7/default/ExternalCameraProviderImpl_2_7.cpp b/camera/provider/2.7/default/ExternalCameraProviderImpl_2_7.cpp
+index b63e3bb..13df54c 100644
+--- a/camera/provider/2.7/default/ExternalCameraProviderImpl_2_7.cpp
++++ b/camera/provider/2.7/default/ExternalCameraProviderImpl_2_7.cpp
+@@ -39,10 +39,12 @@ namespace {
+ // "device@<version>/external/<id>"
+ const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/external/(.+)");
+ const int kMaxDevicePathLen = 256;
+-const char* kDevicePath = "/dev/";
++// ELDEN 2026-10-19: kDevicePath 必须是**数组**，否则 sizeof 得到指针大小（arm64=8），
++// 使 kDevicePrefixLen 偏移错位、设备号恒为 0。详见 ExternalCameraProviderImpl_2_4.cpp。
++constexpr char kDevicePath[] = "/dev/";
+ constexpr char kPrefix[] = "video";
+ constexpr int kPrefixLen = sizeof(kPrefix) - 1;
+-constexpr int kDevicePrefixLen = sizeof(kDevicePath) + kPrefixLen + 1;
++constexpr int kDevicePrefixLen = (sizeof(kDevicePath) - 1) + kPrefixLen;
+ 
+ bool matchDeviceName(int cameraIdOffset, const hidl_string& deviceName, std::string* deviceVersion,
+                      std::string* cameraDevicePath) {
