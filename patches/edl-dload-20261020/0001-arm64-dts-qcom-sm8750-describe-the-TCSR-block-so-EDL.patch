@@ -1,0 +1,44 @@
+diff --git a/Documentation/devicetree/bindings/mfd/qcom,tcsr.yaml b/Documentation/devicetree/bindings/mfd/qcom,tcsr.yaml
+index c3889f974..daf226850 100644
+--- a/Documentation/devicetree/bindings/mfd/qcom,tcsr.yaml
++++ b/Documentation/devicetree/bindings/mfd/qcom,tcsr.yaml
+@@ -43,6 +43,7 @@ properties:
+           - qcom,sm8250-tcsr
+           - qcom,sm8350-tcsr
+           - qcom,sm8450-tcsr
++          - qcom,sm8750-tcsr-mfd
+           - qcom,tcsr-apq8064
+           - qcom,tcsr-apq8084
+           - qcom,tcsr-ipq5018
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 01eee5c2a..a58f50015 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -220,6 +220,7 @@ domain_ss3: domain-sleep-0 {
+ 	firmware {
+ 		scm: scm {
+ 			compatible = "qcom,scm-sm8750", "qcom,scm";
++			qcom,dload-mode = <&tcsr 0x19000>;
+ 			interconnects = <&aggre2_noc MASTER_CRYPTO QCOM_ICC_TAG_ALWAYS
+ 					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
+ 		};
+@@ -4620,6 +4621,19 @@ tcsrcc: clock-controller@f204008 {
+ 			#reset-cells = <1>;
+ 		};
+ 
++		/*
++		 * Qualcomm Top Control and Status Register block.  Boot firmware reads
++		 * the download-mode (EDL) cookie from offset 0x19000 of this block, see
++		 * the qcom,dload-mode property on the SCM node below.  Note this is a
++		 * *different* block from tcsrcc@f204008 above (that one is 0x3004 long
++		 * and only carries clocks); base and size match the SM8750 reference
++		 * platform.
++		 */
++		tcsr: syscon@1fc0000 {
++			compatible = "qcom,sm8750-tcsr-mfd", "syscon";
++			reg = <0x0 0x01fc0000 0x0 0x30000>;
++		};
++
+ 		ctcu@10001000 {
+ 			compatible = "qcom,sm8750-ctcu", "qcom,sa8775p-ctcu";
+ 			reg = <0x0 0x10001000 0x0 0x1000>;

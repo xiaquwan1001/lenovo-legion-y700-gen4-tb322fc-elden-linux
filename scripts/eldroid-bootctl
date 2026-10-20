@@ -71,12 +71,45 @@ def cmd_reboot(args) -> int:
     _require_root("reboot")
     reason = REBOOT_REASON[target] if target else None
 
+    # EDL 的正确通道不是 reboot-mode magic，而是 **qcom_scm 的 download_mode**：
+    # 内核在 scm probe 时按 DT `qcom,dload-mode` 求出 TCSR 地址，并把
+    # QCOM_DLOAD_MASK(bits 5..4) 写进去；ABL/TZ 在该 cookie 置位时下一次 warm
+    # reset 直接进 9008。而 `qcom_scm_shutdown()` 会在干净关机时把它清成 NODUMP
+    # （drivers/firmware/qcom/qcom_scm.c），所以顺序必须是：
+    #   1) 写 /sys/module/qcom_scm/parameters/download_mode = full
+    #   2) 立刻 warm reset（RESTART，不是 RESTART2 —— 别让重启原因覆盖 cookie）
+    # 2026-10-20 之前 DT 缺 `qcom,dload-mode`（tcsr 块未描述）⇒ dload_mode_addr=0
+    # 且 SCM 无 SET_DLOAD_MODE 调用 ⇒ 写参数只会报
+    # "No available mechanism for setting download mode"，EDL 一直不可用。
+    # 修复见 patches/edl-dload-20261020/。
     if target == "edl":
-        print("⚠️  本内核 DT 无 mode-edl，EDL 未支持（见 archive/topics/FLASHCTL-2026-10-03.md）。",
-              file=sys.stderr)
-        print("   可先 reboot recovery 进 TWRP，再由 TWRP 重启到 EDL。", file=sys.stderr)
-        if not args.force:
+        dload = "/sys/module/qcom_scm/parameters/download_mode"
+        if not os.path.exists(dload):
+            print("❌ 本内核无 qcom_scm download_mode 参数（CONFIG_QCOM_SCM 缺失？）",
+                  file=sys.stderr)
             return 1
+        try:
+            cur = open(dload).read().strip()
+        except OSError as e:
+            print(f"❌ 读不到 {dload}: {e}", file=sys.stderr)
+            return 1
+        if args.dry_run:
+            print(f"[reboot] EDL: 将写 {dload}=full（当前 {cur!r}）然后 warm reset")
+            return 0
+        try:
+            with open(dload, "w") as f:
+                f.write("full")
+            after = open(dload).read().strip()
+        except OSError as e:
+            # 典型：DT 没有 qcom,dload-mode 且 SCM 也没这个 SMC ⇒ 以内核日志为准
+            print(f"❌ 写 download_mode 失败: {e}", file=sys.stderr)
+            print("   若为 EINVAL/ENODEV，检查 dmesg 是否有 \"No available mechanism "
+                  "for setting download mode\"（= DT 缺 qcom,dload-mode）", file=sys.stderr)
+            return 1
+        print(f"[reboot] EDL: download_mode {cur!r} -> {after!r}，发 warm reset")
+        err = _do_reboot(LINUX_REBOOT_CMD_RESTART, None)
+        print(f"reboot(2) 失败: errno={err} ({os.strerror(err)})", file=sys.stderr)
+        return 1
 
     if args.poweroff:
         print("[reboot] 关机（POWER_OFF）")
