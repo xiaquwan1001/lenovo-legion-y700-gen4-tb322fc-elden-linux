@@ -75,5 +75,5 @@ scripts/switch-kernel-abi.sh --to nosuspend      # 真切（模块树 + fastboot
 ## 6. 关联
 
 - `reports/vk129-abi-fix-verified-20261020.md`（根因与实证）
-- `PITFALLS #355`（config 改 ABI）、`#357`（olddefconfig 写 x86）
+- `PITFALLS #360`（config 改 ABI）、`#362`（olddefconfig 写 x86）
 - `TASKS/README.md` T8（已闭环）

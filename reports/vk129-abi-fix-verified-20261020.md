@@ -80,7 +80,7 @@
 `.config` 从 `52ae455f…`（arm64）被改成 `0fb67a2f…`（x86）：
 `CONFIG_CC_VERSION_TEXT` 变宿主机 gcc、`CONFIG_DRM_SCHED` `=y→=m`、`CONFIG_KERNEL_GZIP` 被重置。
 已从 `patches/config-suspend-s2idle-20261018-173529` 恢复，并**用镜像内嵌 ikconfig 逐字校验**通过。
-→ `PITFALLS #357`
+→ `PITFALLS #362`
 
 ### 4.2 宿主机静默文件损坏再次复现（第二次）
 
@@ -119,5 +119,5 @@
 
 - `reports/suspend-panic-rootcause-20261020.md`（根因推导，本报告是其验证）
 - `reports/suspend-enable-vk128-vk129-fail-20261018.md`（**其 §2 归因已被推翻**）
-- `PITFALLS` #355（config 改 ABI）、#356（BindsTo 串口停摆）、#357（olddefconfig 写 x86）
+- `PITFALLS` #360（config 改 ABI）、#361（BindsTo 串口停摆）、#362（olddefconfig 写 x86）
 - `TASKS/README.md` T8（本实验，✅ 已实证）

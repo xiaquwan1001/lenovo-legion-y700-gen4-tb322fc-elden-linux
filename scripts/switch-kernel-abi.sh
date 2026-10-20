@@ -1,7 +1,7 @@
 #!/bin/bash
 # switch-kernel-abi.sh — 在内核「ABI 变体」之间原子切换（内核镜像 + 模块树一起换）
 #
-# 为什么需要这个脚本（PITFALLS #355，2026-10-20 实受）：
+# 为什么需要这个脚本（PITFALLS #360，2026-10-20 实受）：
 #   vk127（CONFIG_SUSPEND=n）与 vk129（CONFIG_PM_SLEEP=y）的 **UTS 字符串完全相同**
 #   （都是 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty），所以两者共用同一个
 #   /lib/modules/<UTS> 路径 —— 但它们的 ABI 不同：

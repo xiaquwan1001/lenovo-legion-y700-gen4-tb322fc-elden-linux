@@ -1,4 +1,4 @@
-## 五十七、`make olddefconfig` 不带 `ARCH`/`CROSS_COMPILE` 会把配置写成 x86（2026-10-20 实受）
+## 五十七、`make olddefconfig` 不带 `ARCH`/`CROSS_COMPILE` 会把配置写成 x86（#362，2026-10-20 实受）
 
 **现象**：给 vk129 树重编模块，`make modules` 跑起来先进入 **Kconfig 交互提问**：
 
@@ -52,7 +52,7 @@ make -C <tree> ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 **教训（层级）**
 
 - 任何 `make <target>` 作用于交叉编译树，**`ARCH`/`CROSS_COMPILE` 必须每次都给**。
-   漏一次就可能静默重写 `.config`，而 `.config` 决定 ABI（见 #355），后果是启动即死。
+   漏一次就可能静默重写 `.config`，而 `.config` 决定 ABI（见 #360），后果是启动即死。
 - **「真实构建态」的唯一可信来源是镜像内嵌的 ikconfig**（`IKCFG_ST`…`IKCFG_ED`，gzip 段），
    不是工作树里的 `.config`。核对方法见本节末。
 - `make olddefconfig` 说 "No change" 不等于没改 —— 它的基线是它自己。

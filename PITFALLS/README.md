@@ -77,11 +77,11 @@
 | 51 | 容器 camera provider 真根因：`IBinder` vtable 错位 + 符号抢占 | [51-容器camera-provider真根因-vtable错位与符号抢占.md](sessions/51-容器camera-provider真根因-vtable错位与符号抢占.md) |
 | 52 | WiFi 候选榜只剩已连接项 = 连通态 NM 不复扫（bgscan 写死 86400 s） | [52-WiFi候选榜塌成1项-连通态NM不复扫.md](sessions/52-WiFi候选榜塌成1项-连通态NM不复扫.md) |
 | 53 | 用户态：先查内置能力，phosh 旋转磁贴重复造轮子 | [53-用户态先查内置能力-phosh旋转磁贴重复造轮子.md](sessions/53-用户态先查内置能力-phosh旋转磁贴重复造轮子.md) |
-| 54 | 构建机「静默文件损坏」与坏对象（随机 ICE / `bad reloc symbol index`） | [54-构建机静默文件损坏与坏对象.md](sessions/54-构建机静默文件损坏与坏对象.md) |
-| 55 | 改内核 config 会改 ABI：模块不重编 ⇒ 早期 panic（指令字节当指针） | [55-config改ABI-模块不重编早期panic.md](sessions/55-config改ABI-模块不重编早期panic.md) |
-| 56 | `BindsTo=` + `Restart=always` 不重连：串口日志静默停摆 | [55-config改ABI-模块不重编早期panic.md](sessions/55-config改ABI-模块不重编早期panic.md) |
-| 57 | `make olddefconfig` 不带 ARCH 会把 `.config` 写成 x86（ABI 全变） | [57-olddefconfig不带ARCH把配置写成x86.md](sessions/57-olddefconfig不带ARCH把配置写成x86.md) |
-| 58 | `nohup` 起的设备脚本不随终端中断而死：会持续折腾设备 | [58-nohup设备脚本不随终端中断而死.md](sessions/58-nohup设备脚本不随终端中断而死.md) |
+| 54 | 构建机随机 ICE / `bad reloc symbol index` = **内存页缓存位翻转**（非磁盘）；三读法判据 + 禁止「重写文件当修复」 | [54-构建机静默文件损坏与坏对象.md](sessions/54-构建机静默文件损坏与坏对象.md) |
+| 55 | **#360** 改内核 config 会改 ABI：模块不重编 ⇒ 早期 panic（指令字节当指针） | [55-config改ABI-模块不重编早期panic.md](sessions/55-config改ABI-模块不重编早期panic.md) |
+| 56 | **#361** `BindsTo=` + `Restart=always` 不重连：串口日志静默停摆 | [55-config改ABI-模块不重编早期panic.md](sessions/55-config改ABI-模块不重编早期panic.md) |
+| 57 | **#362** `make olddefconfig` 不带 ARCH 会把 `.config` 写成 x86（ABI 全变） | [57-olddefconfig不带ARCH把配置写成x86.md](sessions/57-olddefconfig不带ARCH把配置写成x86.md) |
+| 58 | **#363** `nohup` 起的设备脚本不随终端中断而死：会持续折腾设备 | [58-nohup设备脚本不随终端中断而死.md](sessions/58-nohup设备脚本不随终端中断而死.md) |
 | 59 | 触屏中文输入法三处「看着在跑其实不通」：缺 `fcitx5-gtk` / fcitx5 抢 IM 槽位 / 自编候选条多余 | [59-触屏中文输入法-GTK-IM模块与OSK槽位.md](sessions/59-触屏中文输入法-GTK-IM模块与OSK槽位.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。

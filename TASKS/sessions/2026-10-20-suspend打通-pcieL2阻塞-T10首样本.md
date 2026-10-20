@@ -84,10 +84,10 @@
 
 | # | 坑 | 一句话 |
 |---|---|---|
-| **#355** | 改 config 改 ABI | 模块不重编 ⇒ 早期 panic；已有上机实证 |
-| **#356** | `BindsTo=` + `Restart=always` 不重连 | 串口日志静默停摆（假阴性第二来源） |
-| **#357** | `make olddefconfig` 不带 `ARCH` | 把 arm64 `.config` 写成 **x86**；靠镜像内嵌 ikconfig 才发现 |
-| **#358** | `nohup` 起的设备脚本不随终端中断而死 | 会持续重启设备直到耗尽 `slot-retry-count` |
+| **#360** | 改 config 改 ABI | 模块不重编 ⇒ 早期 panic；已有上机实证 |
+| **#361** | `BindsTo=` + `Restart=always` 不重连 | 串口日志静默停摆（假阴性第二来源） |
+| **#362** | `make olddefconfig` 不带 `ARCH` | 把 arm64 `.config` 写成 **x86**；靠镜像内嵌 ikconfig 才发现 |
+| **#363** | `nohup` 起的设备脚本不随终端中断而死 | 会持续重启设备直到耗尽 `slot-retry-count` |
 
 宿主机**静默文件损坏第二次复现**（14 文件），已 `git cat-file` 修复至 `corrupt=0`；
 `memtest86+` 仍未跑，用户已确认后续单独处理。
@@ -102,4 +102,4 @@
 | EDL 真机验证 | 未做 | 需用户同意承担一次进 9008；且 EDL 出口工具链未备 |
 
 **T10 本轮的 5 个 round**：1 ALIVE（有效）· 2 INVALID-NO-BLANK · 3 SETUP-FAIL · 4 WRONG-KERNEL（跑成 vk127）· 5 SETUP-FAIL。
-后四轮全因**残留后台脚本**反复重启设备所致（PITFALLS #358），不计入 n。
+后四轮全因**残留后台脚本**反复重启设备所致（PITFALLS #363），不计入 n。

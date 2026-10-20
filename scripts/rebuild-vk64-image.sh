@@ -88,10 +88,15 @@ fi
 cp -f "$CONFIG" "$KDIR/.config"
 echo "-- 编译 Image.gz + dtbs（LOCALVERSION=-vk64）"
 
-# 工作树完整性门（2026-10-19 事故）：本机会出现「文件内容被单字符改写、mtime/size 不变」，
-# 症状 = 随机 ICE / 段错误 / ld 报 `bad reloc symbol index`。git 不查工作树内容，必须逐文件 sha1。
+# 工作树完整性门（2026-10-19 事故；2026-10-20 定性更正）：本机存在**内存侧位翻转**——
+# 磁盘字节正确，但页缓存副本被翻转；症状 = 随机 ICE / 段错误 / ld 报 `bad reloc symbol index`。
+# verify-tree-integrity.py 已能区分 CACHE（页缓存，不算失败）与 CORRUPT（磁盘真坏）。
+# 更强的门 = kbuild-sanity.sh（树完整性 + 多轮页缓存污染率 + 工具链探针）。
 if ! python3 "$ROOT/scripts/verify-tree-integrity.py" "$KDIR" --allow-dirty -q; then
-	fail "工作树有损坏文件（上面已列出）⇒ 先 `git -C $KDIR checkout -- <文件>` 修复再编。\n   症状辨定：文件内容有单字符篡改、大小/mtime 不变。"
+	fail "工作树有**磁盘真损坏**文件（上面已列出）⇒ 先 `git -C $KDIR checkout -- <文件>` 修复再编。\n   注意：若报的是 CACHE 而非 CORRUPT，那是页缓存翻位，本项不判失败。"
+fi
+if ! bash "$ROOT/scripts/kbuild-sanity.sh" "$KDIR" --before --rounds "${SANITY_ROUNDS:-2}" --allow-dirty; then
+	fail "构建前体检未过（内存位翻转 / 工具链异常）⇒ 本次构建不可信，先修环境"
 fi
 
 # 重试环：交叉 gcc 在本机会偶发 ICE/段错误（同一文件重编必过，-O2 hello 探测正常），
@@ -130,9 +135,12 @@ for s in gcc_sm8750 msm_dsi_host_bonded_cmd_trigger rpmh; do
 done
 echo "✅ 符号守卫通过"
 
-# 构建后再验一次工作树（本机存在「自发单字符损坏」，编译期间也可能发生）
+# 构建后再验一次（本机存在内存位翻转，编译期间也可能发生）
 if ! python3 "$ROOT/scripts/verify-tree-integrity.py" "$KDIR" --allow-dirty -q; then
-	fail "构建期间工作树出现新增损坏 ⇒ 本镜像不可信，丢弃并重跑"
+	fail "构建期间工作树出现**磁盘真损坏** ⇒ 本镜像不可信，丢弃并重跑"
+fi
+if ! bash "$ROOT/scripts/kbuild-sanity.sh" "$KDIR" --after --rounds "${SANITY_ROUNDS:-2}" --allow-dirty; then
+	fail "构建后体检未过（页缓存翻位 / 工具链）⇒ 本镜像不可信，丢弃并重跑"
 fi
 
 # ---------- 3. 身份核对 ----------

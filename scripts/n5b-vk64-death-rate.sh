@@ -14,7 +14,7 @@
 #
 # 用法：bash scripts/n5b-vk64-death-rate.sh [轮数] [图像]
 #
-# ★★ 安全纪律（PITFALLS #358，2026-10-20 实受）★★
+# ★★ 安全纪律（PITFALLS #363，2026-10-20 实受）★★
 #   本脚本会 reboot2 bootloader / fastboot boot，**直接折腾设备**。
 #   禁止 `nohup ... &` 无人看管地跑：终端中断不会停它，它会持续把设备重启，
 #   直到耗尽 boot_b 的 slot-retry-count（#150-#152）。
@@ -170,7 +170,7 @@ else
 	echo "  （设备当前不可达，跳过设备侧前置检查；每轮 boot 后仍会校验模块数）"
 fi
 
-SETUP_FAIL_MAX=${SETUP_FAIL_MAX:-2}   # 连续 SETUP-FAIL 达此数即退出（#358）
+SETUP_FAIL_MAX=${SETUP_FAIL_MAX:-2}   # 连续 SETUP-FAIL 达此数即退出（#363）
 consec_fail=0
 for i in $(seq 1 "$N"); do	echo
 	echo "================ ROUND $i ================"
@@ -180,7 +180,7 @@ for i in $(seq 1 "$N"); do	echo
 		consec_fail=$((consec_fail + 1))
 		if [ "$consec_fail" -ge "$SETUP_FAIL_MAX" ]; then
 			echo
-			echo "### 连续 ${consec_fail} 轮 SETUP-FAIL ⇒ 停止（不盲目重试，PITFALLS #358）"
+			echo "### 连续 ${consec_fail} 轮 SETUP-FAIL ⇒ 停止（不盲目重试，PITFALLS #363）"
 			echo "### 设备当前状态：$(SSH 'uname -r' 2>/dev/null | tr -d '\r' || echo 不可达)"
 			echo "### 需要人工确认设备后再跑。"
 			break
