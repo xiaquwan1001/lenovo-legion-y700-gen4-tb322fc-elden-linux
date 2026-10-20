@@ -142,3 +142,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-18T05:04:58Z	cam-linux-vk127-front	vk127	cold	none	pass	(absent)	
 2026-10-18T05:19:18Z	cam-linux-vk127-imaging	vk127	cold	none	FAIL	(absent)	
 2026-10-18T06:57:48Z	cam-linux-vk127-pristine-lc	vk127	cold	none	pass	(absent)	
+2026-10-20T09:35:23Z	n5b-vk64-round1	vk64	cold	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261020-173431.log

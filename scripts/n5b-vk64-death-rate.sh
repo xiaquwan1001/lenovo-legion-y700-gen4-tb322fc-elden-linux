@@ -13,6 +13,13 @@
 # 每次死亡的恢复：RAM 内核死 -> 系统回落 boot_b（M1）-> 需重新 `fastboot boot` vk64。
 #
 # 用法：bash scripts/n5b-vk64-death-rate.sh [轮数] [图像]
+#
+# ★★ 安全纪律（PITFALLS #358，2026-10-20 实受）★★
+#   本脚本会 reboot2 bootloader / fastboot boot，**直接折腾设备**。
+#   禁止 `nohup ... &` 无人看管地跑：终端中断不会停它，它会持续把设备重启，
+#   直到耗尽 boot_b 的 slot-retry-count（#150-#152）。
+#   正确用法：前台跑，或 `timeout -k 10 <总秒数> bash $0 <轮数>`。
+#   本轮另加：单轮 boot 前检查设备真实状态；连续 SETUP-FAIL 达上限即退出（不盲目重试）。
 set -u
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 N=${1:-5}
@@ -98,9 +105,26 @@ wait_vk64() {
 }
 
 boot_vk64() {
-	echo "-- fastboot boot vk64 --"
+	# ★ 2026-10-20 修正：设备可能**已经**跑在 vk64 上（RAM 内核不掉电会一直待着）。
+	#   旧实现在这种情况下依然执行 `fastboot boot`，而设备不在 fastboot ⇒ 必然 "FAILED"，
+	#   连续 3 轮 SETUP-FAIL 白跑（实测 17:28 那次）。
+	#   ⇒ 先看当前内核：已是 vk64 就直接用，省一次重启也避免打断会话。
+	local cur
+	cur=$(SSH 'uname -r' 2>/dev/null | tr -d '\r')
+	case "$cur" in
+		*vk64*)
+			echo "-- 已在 vk64（uname=$cur），跳过 fastboot boot"
+			return 0;;
+	esac
+	echo "-- fastboot boot vk64（当前 uname=${cur:-<不可达>}）"
+	# 不在 fastboot 就先踢进去（RAM 内核死掉会回落 boot_b = M1 内核）
+	if ! FB; then
+		SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
+		local t=0; while [ $t -lt 60 ]; do FB && break; sleep 3; t=$((t+3)); done
+		FB || { echo "  ❌ 进不了 fastboot（需要人按音量- + 电源）"; return 1; }
+	fi
 	timeout 120 fastboot boot "$IMG" >/dev/null 2>&1 || { echo "  fastboot boot FAILED"; return 1; }
-	wait_ssh 90 || { echo "  SSH never came up"; return 1; }
+	wait_ssh 120 || { echo "  SSH never came up"; return 1; }
 	wait_vk64 || { echo "  kernel is not vk64 (fell back?)"; return 1; }
 	return 0
 }
@@ -146,10 +170,31 @@ else
 	echo "  （设备当前不可达，跳过设备侧前置检查；每轮 boot 后仍会校验模块数）"
 fi
 
+SETUP_FAIL_MAX=${SETUP_FAIL_MAX:-2}   # 连续 SETUP-FAIL 达此数即退出（#358）
+consec_fail=0
 for i in $(seq 1 "$N"); do	echo
 	echo "================ ROUND $i ================"
 	printf "\n===== N5b ROUND %s %s =====\n" "$i" "$(date '+%F %T')" >> "$SLOG" 2>/dev/null || true
-	boot_vk64 || { echo "ROUND$i SETUP-FAIL"; continue; }
+	if ! boot_vk64; then
+		echo "ROUND$i SETUP-FAIL"
+		consec_fail=$((consec_fail + 1))
+		if [ "$consec_fail" -ge "$SETUP_FAIL_MAX" ]; then
+			echo
+			echo "### 连续 ${consec_fail} 轮 SETUP-FAIL ⇒ 停止（不盲目重试，PITFALLS #358）"
+			echo "### 设备当前状态：$(SSH 'uname -r' 2>/dev/null | tr -d '\r' || echo 不可达)"
+			echo "### 需要人工确认设备后再跑。"
+			break
+		fi
+		continue
+	fi
+	consec_fail=0
+
+	# ★ 轮内复核：确认真的在 vk64（fastboot boot 可能报 OKAY 却回落 boot_b，实测 ROUND4）
+	U_NOW=$(SSH 'uname -r' | tr -d '\r')
+	case "$U_NOW" in
+		*vk64*) : ;;
+		*) echo "ROUND$i WRONG-KERNEL(${U_NOW:-不可达}) ⇒ 不计入 n"; continue;;
+	esac
 
 	# 等会话起来（phoc 在 = 桌面活）
 	t=0; while [ $t -lt 180 ]; do SSH 'pidof phoc' | grep -q . && break; sleep 5; t=$((t+5)); done
