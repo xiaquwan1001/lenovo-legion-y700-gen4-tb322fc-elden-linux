@@ -32,8 +32,10 @@ chmod +x "$READER"
 cat > "$UNIT" <<EOF
 [Unit]
 Description=elden debug serial logger ($PORT)
-# 端口重启后 gadget 会重建节点：BindsTo 让服务跟着设备走，After 保证节点就绪
-BindsTo=$UNIT_DEV
+# ★ 不要用 BindsTo：设备一重启节点消失 ⇒ systemd **正常停止**本服务，
+#   而 Restart=always 不覆盖 BindsTo 触发的停止 ⇒ 节点回来也不自启，
+#   日志停在旧内容被误读成「没有 panic」（2026-10-20 实测，见 PITFALLS #360）。
+#   重连交给 serial-fanout.sh 自己（内部轮询等节点），systemd 只兜底。
 After=$UNIT_DEV
 
 [Service]

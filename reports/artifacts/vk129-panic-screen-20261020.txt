@@ -1,0 +1,59 @@
+# vk129 上机 panic 屏幕原文（用户在 6–7 次上电中抽到 1 次亮屏，拍照 OCR）
+# 内核: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
+# 采集: 2026-10-20 15:53 上机；屏幕文字由用户拍照 + AI OCR 提取
+[    0.551493] T1066 Unable to handle kernel paging request at virtual address 0003201faafe03f1
+[    0.551514] T1066 Mem abort info:
+[    0.551521] T1066   ESR = 0x0000000096000004
+[    0.551530] T1066   EC = 0x25: DABT (current EL), IL = 32 bits
+[    0.551539] T1066   SET = 0, FnV = 0
+[    0.551547] T1066   EA = 0, S1PTW = 0
+[    0.551607] T1066   FSC = 0x04: level 0 translation fault
+[    0.551616] T1066 Data abort info:
+[    0.551625] T1066   ISV = 0, ISS = 0x00000004, ISS2 = 0x00000000
+[    0.551634] T1066   CM = 0, WnR = 0, TnD = 0, TagAccess = 0
+[    0.551645] T1066   GCS = 0, Overlay = 0, DirtyBit = 0
+[    0.551653] T1066 [0003201faafe03f1] address between user and kernel address ranges
+[    0.551663] T1066 Internal error: Oops: 0000000096000004 [#1] SMP
+[    0.551671] T1066 Modules linked in: qcaeeee(*) coresight(+) fuse system_heap fsaa4400
+[    0.551689] T1066 CPU: 6 UID: 0 PID: 1866 Comm: udevd Not tainted 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
+[    0.551707] T1066 Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.551726] T1066 pstate: 61400005 (Nzcv daif +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.551750] T1066 pc : software_node_notify+0x54/0x110
+[    0.551763] T1066 lr : software_node_notify+0x29/0x110
+[    0.551774] T1066 sp : ffff000083d3d960
+[    0.551782] T1066 x29: ffff000083d3d960 x28: ffffb026c1be22f0 x27: 0000000000000000
+[    0.551796] T1066 x26: 0000000000000000 x25: ffff000083d3dcb0 x24: ffffb026c1c301b0
+[    0.551810] T1066 x23: ffff0000810f163d x22: 0000000000000021 x21: ffffb02717c2e000
+[    0.551824] T1066 x20: 0000000000000000 x19: ffff000081c7cb00 x18: 0000000000000000
+[    0.551838] T1066 x17: 4d554e4554533056 x16: ffffb027169a7fc0 x15: 657653d4ad455453
+[    0.551852] T1066 x14: 0000000000001ec x13: ffffb027169a4000 x12: 0000000000000000
+[    0.551866] T1066 x11: 0000000000000100 x10: 0000000000000009 x9 : ffffb02715c9c400
+[    0.551880] T1066 x8 : 0000000000000001 x7 : 0000000000000000 x6 : 0000000000000000
+[    0.551894] T1066 x5 : ffff00000580458 x4 : ffffb027169a75c0 x3 : 0000000000000040
+[    0.551908] T1066 x2 : a9be7bfd6a5233f x1 : d503201faafe03e9 x0 : ffffb02717c27b70
+[    0.551922] T1066 Call trace:
+[    0.551929] T1066  software_node_notify+0x54/0x110 (P)
+[    0.551940] T1066  device_add+0xdc/0x800
+[    0.551950] T1066  device_register+0x24/0x40
+[    0.551959] T1066  cscfg_init+0xb0/0xd10 [coresight]
+[    0.551974] T1066  coresight_init+0x6c/0xf8 [coresight]
+[    0.551986] T1066  do_one_initcall+0x5c/0x3f8
+[    0.551996] T1066  do_init_module+0x5c/0x270
+[    0.552007] T1066  load_module+0x1b50/0x23b0
+[    0.552015] T1066  init_module_from_file+0xe0/0x100
+[    0.552025] T1066  __arm64_sys_finit_module+0x1f8/0x3b8
+[    0.552035] T1066  invoke_syscall.constprop.0+0x4/0x120
+[    0.552047] T1066  el0_svc_common.constprop.0+0x4/0xe8
+[    0.552057] T1066  do_el0_svc+0x24/0x38
+[    0.552068] T1066  el0_svc+0x30/0x1a0
+[    0.552075] T1066  el0t_64_sync_handler+0xe0/0xe8
+[    0.552086] T1066  el0t_64_sync+0x198/0x1a0
+[    0.552095] T1066 Code: f9400021 b4000101 b140043f 540000c8 (f9400422)
+[    0.552108] T1066 ---[ end trace 0000000000000000 ]---
+[    0.552129] T1066 Kernel panic - not syncing: Oops: Fatal exception
+[    0.752153] T1066 SMP: stopping secondary CPUs
+[    0.752165] T1066 Kernel Offset: 0x302555a80000 from 0xffff8000000000
+[    0.752174] T1066 PHYS_OFFSET: 0xffff100000000000
+[    0.752187] T1066 CPU features: 0x0,0000000,00700028,9f180a82,aafcf6a7
+[    0.552187] T1066 Memory Limit: none
+[    0.752202] T1066 Rebooting in 20 seconds..

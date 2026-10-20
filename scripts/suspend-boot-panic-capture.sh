@@ -79,8 +79,18 @@ start_serial() {
 		echo "   确实要无串口跑：ALLOW_NOSERIAL=1 bash $0 <args>"
 		exit 3
 	fi
-	# 探针：真的有一行数据流过才算采集在工作（端口存在 ≠ 在工作）
-	serial_probe "$SLOG" || echo "  ⚠️ 探针未通：本轮串口内容可能为空，结论里必须标注"
+	# 探针：真的有一行数据流过才算采集在工作（端口存在 ≠ 在工作）。
+	# ★ 必须硬失败：探针不通时继续跑，等于拿空日志当「没有 panic」（2026-10-20 实测）。
+	if ! serial_probe "$SLOG"; then
+		echo "❌ 串口探针不通（模式=$(serial_mode)）⇒ 拒绝继续：空日志会被误读成「没有 panic」"
+		echo "   先查： systemctl status elden-serial-logger; tail /var/log/elden-serial/ttyACM0.log"
+		if [ "${ALLOW_NOSERIAL:-0}" = 1 ]; then
+			echo "   ALLOW_NOSERIAL=1 ⇒ 继续；结论里必须注明「无串口」"
+			return 0
+		fi
+		stop_serial
+		exit 3
+	fi
 }
 stop_serial() { serial_stop; }
 

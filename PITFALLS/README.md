@@ -78,6 +78,8 @@
 | 52 | WiFi 候选榜只剩已连接项 = 连通态 NM 不复扫（bgscan 写死 86400 s） | [52-WiFi候选榜塌成1项-连通态NM不复扫.md](sessions/52-WiFi候选榜塌成1项-连通态NM不复扫.md) |
 | 53 | 用户态：先查内置能力，phosh 旋转磁贴重复造轮子 | [53-用户态先查内置能力-phosh旋转磁贴重复造轮子.md](sessions/53-用户态先查内置能力-phosh旋转磁贴重复造轮子.md) |
 | 54 | 构建机「静默文件损坏」与坏对象（随机 ICE / `bad reloc symbol index`） | [54-构建机静默文件损坏与坏对象.md](sessions/54-构建机静默文件损坏与坏对象.md) |
+| 55 | 改内核 config 会改 ABI：模块不重编 ⇒ 早期 panic（指令字节当指针） | [55-config改ABI-模块不重编早期panic.md](sessions/55-config改ABI-模块不重编早期panic.md) |
+| 56 | `BindsTo=` + `Restart=always` 不重连：串口日志静默停摆 | [55-config改ABI-模块不重编早期panic.md](sessions/55-config改ABI-模块不重编早期panic.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
