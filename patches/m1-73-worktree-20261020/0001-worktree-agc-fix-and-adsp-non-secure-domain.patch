@@ -1,0 +1,82 @@
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 01eee5c2a..c0d4d04cf 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2288,6 +2288,7 @@ fastrpc {
+ 					compatible = "qcom,fastrpc";
+ 					qcom,glink-channels = "fastrpcglink-apps-dsp";
+ 					label = "adsp";
++					qcom,non-secure-domain;
+ 					memory-region = <&adsp_rpc_remote_heap_mem>;
+ 					qcom,vmids = <QCOM_SCM_VMID_LPASS
+ 						      QCOM_SCM_VMID_ADSP_HEAP>;
+diff --git a/drivers/media/i2c/gc08a8.c b/drivers/media/i2c/gc08a8.c
+index 86c81428d..c1c780436 100644
+--- a/drivers/media/i2c/gc08a8.c
++++ b/drivers/media/i2c/gc08a8.c
+@@ -536,6 +536,7 @@ static int gc08a8_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	struct gc08a8 *sensor = container_of(ctrl->handler, struct gc08a8, ctrls);
+ 	struct device *dev = sensor->sd.dev;
+ 	u16 reg;
++	u32 val;
+ 	int ret = 0, release;
+ 
+ 	switch (ctrl->id) {
+@@ -555,8 +556,11 @@ static int gc08a8_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	ret = 0;
+ 
+ 	cci_write(sensor->regmap, CCI_REG8(0x0104), 1, &ret);
+-	cci_write(sensor->regmap, CCI_REG8(reg), ctrl->val >> 8, &ret);
+-	cci_write(sensor->regmap, CCI_REG8(reg + 1), ctrl->val & 0xff, &ret);
++	/* V4L2 exposes the real analogue gain (1/1024 steps); the register takes
++	 * the raw sensor gain code (code = gain * 1024). */
++	val = ctrl->id == V4L2_CID_ANALOGUE_GAIN ? ctrl->val * 1024 : ctrl->val;
++	cci_write(sensor->regmap, CCI_REG8(reg), val >> 8, &ret);
++	cci_write(sensor->regmap, CCI_REG8(reg + 1), val & 0xff, &ret);
+ 	/* Release group hold even when a control write failed. */
+ 	release = cci_write(sensor->regmap, CCI_REG8(0x0104), 0, NULL);
+ 	pm_runtime_put(dev);
+@@ -597,7 +601,7 @@ static int gc08a8_init_controls(struct gc08a8 *sensor)
+ 	v4l2_ctrl_new_std(hdl, &gc08a8_ctrl_ops, V4L2_CID_EXPOSURE,
+ 			  4, GC08A8_EXPOSURE_MAX, 1, 0x0904);
+ 	v4l2_ctrl_new_std(hdl, &gc08a8_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
+-			  1024, 16384, 1, 1024);
++			  1, 16, 1, 1);
+ 	v4l2_ctrl_new_fwnode_properties(hdl, &gc08a8_ctrl_ops, &props);
+ 	if (hdl->error) {
+ 		ret = hdl->error;
+diff --git a/drivers/media/i2c/s5kjns.c b/drivers/media/i2c/s5kjns.c
+index 3b1c7e893..dcc8a4046 100644
+--- a/drivers/media/i2c/s5kjns.c
++++ b/drivers/media/i2c/s5kjns.c
+@@ -438,6 +438,7 @@ static int s5kjns_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	struct s5kjns *sensor = container_of(ctrl->handler, struct s5kjns, ctrls);
+ 	struct device *dev = sensor->sd.dev;
+ 	u16 reg;
++	u32 val;
+ 	int ret = 0, release;
+ 
+ 	switch (ctrl->id) {
+@@ -467,8 +468,11 @@ static int s5kjns_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	}
+ 
+ 	cci_write(sensor->regmap, CCI_REG8(0x0104), 1, &ret);
+-	cci_write(sensor->regmap, CCI_REG8(reg), ctrl->val >> 8, &ret);
+-	cci_write(sensor->regmap, CCI_REG8(reg + 1), ctrl->val & 0xff, &ret);
++	/* V4L2 exposes the real analogue gain (1/32 steps); the register takes
++	 * the raw sensor gain code (code = gain * 32). */
++	val = ctrl->id == V4L2_CID_ANALOGUE_GAIN ? ctrl->val * 32 : ctrl->val;
++	cci_write(sensor->regmap, CCI_REG8(reg), val >> 8, &ret);
++	cci_write(sensor->regmap, CCI_REG8(reg + 1), val & 0xff, &ret);
+ 	/* Release group hold even when a control write failed. */
+ 	release = cci_write(sensor->regmap, CCI_REG8(0x0104), 0, NULL);
+ 	pm_runtime_put(dev);
+@@ -509,7 +513,7 @@ static int s5kjns_init_controls(struct s5kjns *sensor)
+ 	v4l2_ctrl_new_std(hdl, &s5kjns_ctrl_ops, V4L2_CID_EXPOSURE,
+ 			  2, S5KJNS_EXPOSURE_MAX, 1, 0x0100);
+ 	v4l2_ctrl_new_std(hdl, &s5kjns_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
+-			  32, 2048, 1, 32);
++			  1, 64, 1, 1);
+ 	v4l2_ctrl_new_std_menu_items(hdl, &s5kjns_ctrl_ops, V4L2_CID_TEST_PATTERN,
+ 				     ARRAY_SIZE(s5kjns_test_pattern_menu) - 1,
+ 				     0, 0, s5kjns_test_pattern_menu);
