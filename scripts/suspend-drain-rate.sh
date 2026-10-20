@@ -28,13 +28,14 @@ MIN=${1:-30}
 shift || true
 CAM=1
 for a in "$@"; do case "$a" in --no-camera) CAM=0;; esac; done
-DEV=root@192.168.7.1
+DEV=${DEV:-root@192.168.7.1}
 TS=$(date +%Y%m%d-%H%M%S)
 LOG=$ROOT/logs/suspend-drain-$TS.log
 mkdir -p "$ROOT/logs"
 exec > >(tee -a "$LOG") 2>&1
 
 SSH() { timeout 25 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -o BatchMode=yes "$DEV" "$@" 2>/dev/null; }
+WAIT_WAKE=${WAIT_WAKE:-1800}
 BAT=/sys/class/power_supply/qcom-battmgr-bat
 USB=/sys/class/power_supply/qcom-battmgr-usb
 
@@ -98,17 +99,24 @@ echo "-- 等待 ${MIN} 分钟（$(date '+%H:%M:%S') → $(date -d "+${MIN} min" 
 sleep $((MIN * 60))
 
 # --- 4. 唤醒 ---
-echo "-- 唤醒（KEY_POWER via gpio-keys 不可用则靠用户按电源键）"
-SSH true 2>/dev/null || echo "   (仍在挂起：需要用户按一次电源键唤醒)"
-
-if ! SSH true 2>/dev/null; then
-	t=0
-	while [ $t -lt 180 ]; do
-		SSH true 2>/dev/null && break
-		sleep 5; t=$((t+5))
-	done
-fi
-SSH true || { echo "❌ 唤醒后不可达；用串口看是否死在 resume"; exit 4; }
+# ★ 2026-10-20 实测（reports/t9-rtc-wake-limit-20261020.md）：
+#   RTC wakealarm / rtcwake **唤不醒 s2idle**（挂了 6+ 分钟没醒）。
+#   ⇒ 唤醒只能人工按电源键。脚本在这里明确等待并提示，不做静默超时。
+echo
+echo "======================== 请按电源键唤醒设备 ========================"
+echo "  RTC 自动唤醒在 s2idle 下无效（已实测），必须人工按键。"
+echo "  脚本会每 5 s 探测一次，最长等 $((WAIT_WAKE)) s。"
+echo "==================================================================="
+WAKE_T0=$(date +%s)
+t=0
+while [ $t -lt "$WAIT_WAKE" ]; do
+	if SSH true 2>/dev/null; then
+		echo "   ✅ 已唤醒（等待 $t s）"
+		break
+	fi
+	sleep 5; t=$((t+5))
+done
+SSH true || { echo "❌ 唤醒后不可达（等了 ${WAIT_WAKE}s）；用串口看是否死在 resume: tail -30 /var/log/elden-serial/ttyACM0.log"; exit 4; }
 
 BID1=$(SSH 'cat /proc/sys/kernel/random/boot_id' | tr -d '\r')
 CAP1=$(SSH "cat $BAT/capacity" | tr -d '\r')
@@ -116,6 +124,8 @@ UPT1=$(SSH 'cut -d" " -f1 /proc/uptime' | tr -d '\r')
 VIDS1=$(SSH 'ls -d /dev/video* 2>/dev/null | wc -l' | tr -d '\r')
 MODS1=$(SSH 'lsmod | grep -cE "camss|cci|camcc|cambist|s5kjns|gc08a8"' | tr -d '\r')
 T1=$(date +%s)
+# 实际时长 = 进入 suspend 到 SSH 重新可达的墙钟。人工唤醒有 ±几秒抖动，
+# 对 %/h 影响可忽略；但必须记下，不能假装精确。
 ELAPSED=$(( (T1 - T0) / 60 ))
 
 echo
