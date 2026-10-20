@@ -1,0 +1,21 @@
+=== suspend 实测取证 ===
+2026-10-20T17:02:04+08:00
+kernel: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
+build : #4 SMP PREEMPT Sun Oct 18 18:19:56 CST 2026
+config: CONFIG_SUSPEND=y CONFIG_PM_SLEEP=y 
+mem_sleep: [s2idle] deep
+state: freeze mem 
+boot_id: aa883b60-628b-4c15-a5ff-b734126c4b8f
+suspend_stats/success: 1
+suspend_stats/fail: 0
+suspend_stats/last_failed_dev: 
+suspend_stats/last_failed_errno: 0
+--- dmesg ---
+[  329.559017] [ T3978]  cs_system_cfg: CoreSight Configuration manager initialised
+[  424.875757] [ T4135] PM: suspend entry (s2idle)
+[  424.893486] [ T4135] printk: Suspending console(s) (use no_console_suspend to debug)
+[  426.296374] [ T4135] PM: suspend exit
+--- 唤醒后功能 ---
+wlan0: wlan0            UP             00:03:7f:12:d0:96 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+inputs: 7
+oops: 0

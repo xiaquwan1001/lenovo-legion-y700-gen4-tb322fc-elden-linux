@@ -41,6 +41,38 @@
 | 「能起来 ⇒ ABI 假设成立」 | ✅ 起来了 | **成立** |
 | 「仍崩在 `software_node_notify` ⇒ 假设被推翻」 | 未发生 | — |
 
+---
+
+## 3.5 追加：真实 s2idle 挂起/唤醒实测（2026-10-20 17:00）
+
+上面证明了「能起机、suspend 能力在」。本节是**真的进了一次 suspend 并成功唤醒**：
+
+```
+[424.875757] PM: suspend entry (s2idle)
+[424.881754] Filesystems sync: 0.005 seconds
+[424.892431] Freezing user space processes completed (elapsed 0.001 seconds)
+[424.892440] OOM killer disabled.
+[424.893486] printk: Suspending console(s) (use no_console_suspend to debug)
+[426.296374] PM: suspend exit
+```
+
+| 判据 | 值 | 说明 |
+|---|---|---|
+| `suspend_stats/success` | **1** | 成功进入过一次 |
+| `suspend_stats/fail` | **0** | 零失败 |
+| `last_failed_errno` | **0** | — |
+| `boot_id` | `aa883b60…`（挂起前后相同） | **没有重启**，是真挂起不是崩溃重启 |
+| `PM: suspend exit` | 出现 | 正常 resume |
+| `dmesg` oops | **0** | — |
+| 唤醒后 `wlan0` | UP / LOWER_UP | 网络栈完好 |
+| 唤醒后输入设备 | 7 个 `/dev/input/event*` | 触屏/按键在 |
+| 唤醒后相机模块 | 2 个（camcc + cambist） | 未丢 |
+
+⚠️ **口径**：本次只验证「suspend 机制可用」，**功耗/掉电率未测**（那是 T9）。
+也**不得**与 Q24（相机×熄屏挂死）混谈 —— 两者是独立故障线。
+
+取证原文：`reports/artifacts/vk129-suspend-verified-20261020.txt`
+
 ## 4. 本轮踩到并修掉的三个坑（都可能重复咬人）
 
 ### 4.1 `make olddefconfig` 不带 `ARCH` 把配置写成 x86
