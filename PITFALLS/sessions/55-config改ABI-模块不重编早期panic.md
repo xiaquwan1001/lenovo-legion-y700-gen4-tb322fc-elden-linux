@@ -83,3 +83,33 @@ systemd 按 `BindsTo` **正常停止** service；而 `Restart=always` **只覆�
 「设备走了服务被正常停止，设备回来谁会重启它」。
 
 **证据**：`logs/suspend-capture-20261020-155259.serial.log`、`systemctl status elden-serial-logger`
+
+---
+
+## 补充（2026-10-20 晚）：假设已实证，并补一条部署坑
+
+**实证结果**：内核字节级不变（`Image.gz` sha `f2d073bd…`，与 vk129 镜像内 kernel 逐字相同），
+**只重编并部署模块树** ⇒ vk129 完整起机：
+
+```
+[  329.559017] cs_system_cfg: CoreSight Configuration manager initialised
+```
+
+`cs_system_cfg` 那行是 `cscfg_init()` 的最后一句 —— 原来 panic 的
+`device_register → device_add → software_node_notify` 整条链路走通了。`dmesg` oops=0，
+`/sys/power/state` = `freeze mem`，`mem_sleep` = `[s2idle] deep`。
+
+⇒ **改 config 必须整树重编模块**这条结论，从此有上机证据，不再只是推理。
+
+**追加的部署坑（同一次踩到）**：设备 `/tmp` 是 **tmpfs 7.3 GB**。
+547 MB 的模块 tar 传进 `/tmp` 再解包成 1.5 GB ⇒ 空间不足 ⇒ **静默截断成 1005/1497 个 `.ko`**，
+`coresight.ko` 缺失、`modules.dep` 0 字节，设备随后自动重启回落。
+
+部署大目录的四条纪律：
+
+- 落点用**磁盘分区**（本项目 `/` = 189 G），不要 `/tmp`；
+- 传完先比 **sha256**，解包前确认字节数；
+- 解包后**断言 `.ko` 数量**（本项目 1497）与关键模块存在，不靠「tar 返回 0」；
+- ssh 长命令加 `ServerAliveInterval=15` —— 大 tar 解包会断连（首次断在 1197/1497）。
+
+**证据**：`reports/vk129-abi-fix-verified-20261020.md`、`reports/artifacts/vk129-abi-fix-verified-20261020.txt`

@@ -80,6 +80,7 @@
 | 54 | 构建机「静默文件损坏」与坏对象（随机 ICE / `bad reloc symbol index`） | [54-构建机静默文件损坏与坏对象.md](sessions/54-构建机静默文件损坏与坏对象.md) |
 | 55 | 改内核 config 会改 ABI：模块不重编 ⇒ 早期 panic（指令字节当指针） | [55-config改ABI-模块不重编早期panic.md](sessions/55-config改ABI-模块不重编早期panic.md) |
 | 56 | `BindsTo=` + `Restart=always` 不重连：串口日志静默停摆 | [55-config改ABI-模块不重编早期panic.md](sessions/55-config改ABI-模块不重编早期panic.md) |
+| 57 | `make olddefconfig` 不带 ARCH 会把 `.config` 写成 x86（ABI 全变） | [57-olddefconfig不带ARCH把配置写成x86.md](sessions/57-olddefconfig不带ARCH把配置写成x86.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。

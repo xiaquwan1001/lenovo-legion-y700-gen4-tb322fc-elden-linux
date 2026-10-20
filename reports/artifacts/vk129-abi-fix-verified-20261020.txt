@@ -1,0 +1,18 @@
+=== uname ===
+Linux elden 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty #4 SMP PREEMPT Sun Oct 18 18:19:56 CST 2026 aarch64 GNU/Linux
+=== config 判据 ===
+CONFIG_SUSPEND=y
+CONFIG_PM_SLEEP=y
+=== 内核构建 ===
+#4 SMP PREEMPT Sun Oct 18 18:19:56 CST 2026
+=== suspend 能力 ===
+freeze mem
+[s2idle] deep
+=== coresight 决定性行 ===
+[  329.559017] [ T3978]  cs_system_cfg: CoreSight Configuration manager initialised
+=== 模块数 ===
+1497
+=== coresight.ko ===
+3456536 2026-10-20 16:42:31.000000000 +0800
+=== oops ===
+0
