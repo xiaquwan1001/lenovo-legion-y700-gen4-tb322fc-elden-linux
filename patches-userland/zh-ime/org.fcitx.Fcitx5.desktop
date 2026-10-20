@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Fcitx5 (Chinese, no waylandim)
+Comment=Must NOT take the Wayland input-method slot: squeekboard owns it, otherwise the OSK never auto-shows.
+Exec=/usr/bin/fcitx5 --disable waylandim
+Icon=fcitx
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-AutoRestart=true

@@ -1,0 +1,9 @@
+#!/bin/sh
+# 显示/隐藏触摸软键盘（wvkbd）
+if pgrep -x wvkbd-mobintl >/dev/null 2>&1; then
+    pkill -x wvkbd-mobintl
+    echo "软键盘: 已隐藏"
+else
+    setsid wvkbd-mobintl >/dev/null 2>&1 &
+    echo "软键盘: 已显示"
+fi

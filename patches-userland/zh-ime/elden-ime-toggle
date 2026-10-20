@@ -1,0 +1,51 @@
+#!/bin/sh
+# elden-ime-toggle — 唤起 / 折叠 触屏中文输入法（squeekboard）
+#
+# 触屏入口：应用网格里的「键盘」图标（/usr/share/applications/elden-ime-toggle.desktop）
+# 命令行：  elden-ime-toggle [show|hide|toggle]   （默认 toggle）
+#
+# 原理：squeekboard 实现了 Phosh 的 sm.puri.OSK0 DBus 接口
+#   method  SetVisible(in b)      ← 唯一控制面（无返回值）
+#   property Visible (read)       ← 只读
+# 实测（2026-10-20，TB322FC / phoc 0.55.1 / squeekboard 1.43.1）：
+#   SetVisible(false) → 键盘立刻收起；SetVisible(true) → 键盘重新弹出。
+# 中文由 fcitx5+Rime 负责（fcitx5 必须 --disable waylandim，把 input-method 槽位让给
+# squeekboard，否则 squeekboard 拿不到槽位 → 不会自动弹出）。
+set -u
+
+CMD=${1:-toggle}
+
+visible() {
+	gdbus call --session --dest sm.puri.OSK0 --object-path /sm/puri/OSK0 \
+		--method org.freedesktop.DBus.Properties.Get sm.puri.OSK0 Visible 2>/dev/null |
+		grep -q true
+}
+
+set_visible() { # $1 = true|false
+	gdbus call --session --dest sm.puri.OSK0 --object-path /sm/puri/OSK0 \
+		--method sm.puri.OSK0.SetVisible "$1" >/dev/null 2>&1
+}
+
+have_osk() {
+	gdbus call --session --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus \
+		--method org.freedesktop.DBus.NameHasOwner sm.puri.OSK0 2>/dev/null | grep -q true
+}
+
+if ! have_osk; then
+	# squeekboard 没在跑：拉起来再显示
+	command -v squeekboard >/dev/null 2>&1 && setsid squeekboard >/dev/null 2>&1 &
+	sleep 1.5
+fi
+
+case "$CMD" in
+show) set_visible true ;;
+hide) set_visible false ;;
+toggle)
+	if visible; then set_visible false; else set_visible true; fi
+	;;
+*)
+	echo "usage: $0 [show|hide|toggle]" >&2
+	exit 2
+	;;
+esac
+exit 0

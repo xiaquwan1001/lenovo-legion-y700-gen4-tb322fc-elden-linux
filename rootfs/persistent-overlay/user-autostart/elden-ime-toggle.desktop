@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=键盘 / Keyboard
+Name[zh_CN]=键盘（显示/隐藏）
+Comment=Toggle the on-screen keyboard (touch)
+Comment[zh_CN]=唤起或折叠触屏键盘
+Exec=/usr/local/bin/elden-ime-toggle toggle
+Icon=input-keyboard
+Terminal=false
+Categories=Utility;System;
+NoDisplay=false

@@ -1,0 +1,50 @@
+#!/bin/sh
+# zh-osk — Phosh 下的「触摸中文输入」：wvkbd(软键盘) + fcitx5/Rime(输入法) + 候选条
+#
+# 背景：
+#   * Phosh 的 squeekboard 独占 Wayland 的 input-method 槽位，fcitx5 拿不到按键；
+#   * phoc 不渲染 zwp_input_popup_surface_v2，所以 fcitx5 自带候选窗永远看不见；
+#   * wvkbd 只用 zwp_virtual_keyboard_v1 敲键，不占 input-method；
+#   * fcitx5-candbar 用 kimpanel 后端拿候选词，用 wlr-layer-shell 画候选条。
+LOG=/tmp/zh-osk.log
+exec >>"$LOG" 2>&1
+echo "=== $(date '+%F %T') zh-osk start"
+
+[ "$1" = "--wait" ] && sleep 5
+
+# 1) squeekboard 必须不在（它占 input-method 槽位）
+gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled false || true
+pkill -x squeekboard || true
+
+# 2) 先起候选条（fcitx5 通过 org.kde.impanel 找到它），再重启 fcitx5
+pkill -x fcitx5 2>/dev/null || true
+pkill -x fcitx5-candbar 2>/dev/null || true; pkill -x candidate-bar 2>/dev/null || true
+sleep 0.5
+if [ -x "$HOME/.local/bin/fcitx5-candbar" ]; then
+    setsid "$HOME/.local/bin/fcitx5-candbar" >/dev/null 2>&1 &
+else
+    echo "WARN: 未找到 fcitx5-candbar"
+fi
+setsid fcitx5 -d -u kimpanel >/dev/null 2>&1 || echo "WARN: fcitx5 启动失败"
+sleep 1
+pkill -x squeekboard 2>/dev/null || true
+
+# 3) 当前输入法切到 Rime
+busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 \
+    SetCurrentIM s rime >/dev/null 2>&1 || true
+
+# 4) 触摸软键盘（不占 input-method 槽位）
+pkill -x wvkbd-mobintl 2>/dev/null || true
+if command -v wvkbd-mobintl >/dev/null 2>&1; then
+    setsid wvkbd-mobintl >/dev/null 2>&1 &
+else
+    echo "WARN: 未安装 wvkbd-mobintl（sudo apk add wvkbd wvkbd-mobintl）"
+fi
+sleep 1
+
+# 5) 保险：压掉 gnome-session 可能重启的 squeekboard
+( for i in 1 2 3 4 5 6; do pkill -x squeekboard 2>/dev/null; sleep 0.5; done ) &
+
+echo "fcitx5=$(pgrep -x fcitx5 | tr '\n' ' ') candbar=$(pgrep -x fcitx5-candbar | tr '\n' ' ') wvkbd=$(pgrep -x wvkbd-mobintl | tr '\n' ' ') squeekboard=$(pgrep -x squeekboard | tr '\n' ' ')"
+echo "current-im=$(fcitx5-remote -n 2>&1) state=$(fcitx5-remote 2>&1)"
+echo "=== done"

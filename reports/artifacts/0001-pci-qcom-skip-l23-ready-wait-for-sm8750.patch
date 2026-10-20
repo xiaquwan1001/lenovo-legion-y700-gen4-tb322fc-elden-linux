@@ -1,0 +1,57 @@
+From 8c50b268582911b069ef17a3fc6daf5509136a32 Mon Sep 17 00:00:00 2001
+From: y700-elden <research@localhost>
+Date: Mon, 20 Oct 2026 00:00:00 +0800
+Subject: [RFC] PCI: qcom: Skip the L2/L3 Ready LTSSM wait on SM8750
+
+On SM8750 (which reuses the SM8550 controller IP) the LTSSM register at
+PARF + 0x1b0 never reports L2_IDLE (0x15) nor a detect state (<= 0x06)
+after the PME_Turn_Off broadcast.  It stays at L0S (0x12) for the whole
+10 ms poll window, so every system suspend logs:
+
+  qcom-pcie 1c00000.pcie: Timeout waiting for L2 entry! LTSSM: 0x12
+
+This is the same class of problem pci-imx6 and pcie-ultrarisc already
+work around: the controller cannot reliably read the LTSSM state after
+PME_Turn_Off, so polling it is pointless.
+
+Set pp->skip_l23_ready for this platform so dw_pcie_suspend_noirq()
+follows PCIe r6.0, sec 5.3.3.2.1: broadcast PME_Turn_Off, wait 10 ms,
+then continue with the L2/L3 sequence without reading LTSSM.
+
+This patch deliberately does NOT change any power-management behaviour:
+qcom_pcie_deinit_2_7_0() still gates the PCIe clocks and disables the
+vdda/vddpe-3v3 regulators, and the interconnect/OPP votes in
+qcom_pcie_suspend_noirq() are untouched.  The only observable change is
+that the bogus warning disappears and the noirq phase is ~10 ms shorter.
+
+Signed-off-by: y700-elden <research@localhost>
+---
+ drivers/pci/controller/dwc/pcie-qcom.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index 8c50b26..fe15949 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -1419,6 +1419,19 @@ static int qcom_pcie_host_init(struct dw_pcie_rp *pp)
+ 	struct qcom_pcie *pcie = to_qcom_pcie(pci);
+ 	int ret;
+ 
++	/*
++	 * SM8750 reuses the SM8550 controller IP.  After the PME_Turn_Off
++	 * broadcast its LTSSM (PARF + 0x1b0) stays in L0S and never reaches
++	 * L2_IDLE, so polling it only produces
++	 *
++	 *   "Timeout waiting for L2 entry! LTSSM: 0x12"
++	 *
++	 * on every suspend.  Follow PCIe r6.0, sec 5.3.3.2.1 instead: send
++	 * PME_Turn_Off, wait 10 ms and continue without reading LTSSM.
++	 */
++	if (of_device_is_compatible(pci->dev->of_node, "qcom,pcie-sm8750"))
++		pp->skip_l23_ready = true;
++
+ 	qcom_pcie_perst_assert(pcie);
+ 
+ 	ret = pcie->cfg->ops->init(pcie);
+-- 
+2.43.0

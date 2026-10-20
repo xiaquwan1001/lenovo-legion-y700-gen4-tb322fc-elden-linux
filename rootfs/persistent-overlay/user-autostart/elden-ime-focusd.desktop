@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=elden IME focus bridge
+Comment=Shows squeekboard when an input field gains focus (fcitx5 kimpanel has no wayland text-input signal)
+Exec=/usr/local/bin/elden-ime-focusd
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-AutoRestart=true
