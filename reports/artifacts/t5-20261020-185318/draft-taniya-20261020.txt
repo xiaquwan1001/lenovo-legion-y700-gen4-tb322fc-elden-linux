@@ -1,0 +1,99 @@
+To: taniya.das@oss.qualcomm.com
+Cc: linux-arm-msm@vger.kernel.org, linux-clk@vger.kernel.org
+Subject: Re: [Regression v3] SM8750: cambistmclkcc + camcc together hard-reset the SoC on display blank
+In-Reply-To: <869f6981-38d3-48cc-824e-98b5f662bd01@oss.qualcomm.com>
+References: <179179331695.677917.11557670447411700010@mail.ustc.edu.cn> <179185039667.309517.8503800087166757122@mail.ustc.edu.cn> <869f6981-38d3-48cc-824e-98b5f662bd01@oss.qualcomm.com>
+Attach: /home/xuqianhui/y700-elden/reports/artifacts/t5-20261020-185318/summary.txt
+Attach: /home/xuqianhui/y700-elden/reports/artifacts/t5-20261020-185318/20-dmesg-before-blank.txt
+Attach: /home/xuqianhui/y700-elden/reports/artifacts/t5-20261020-185318/30-pm_genpd_summary.txt
+Attach: /home/xuqianhui/y700-elden/reports/artifacts/t5-20261020-185318/40-clk_summary.txt
+Attach: /home/xuqianhui/y700-elden/reports/artifacts/t5-20261020-185318/69-dmesg-delta-after-wake.txt
+
+Hi Taniya,
+
+Sorry for the delay - here is the data you asked for on 2026-10-13, together
+with the method used to collect it, because the method matters for one of the
+three files (see "Caveat" below).
+
+Hardware: Lenovo Legion Tab Y700 Gen4 (TB322FC), SM8750P.
+Kernel: 7.3.0-rc7-debug, mainline based, no vendor patches touching clk/genpd.
+
+Sequence, in the order you requested
+------------------------------------
+1. modprobe the pair: camcc-sm8750 + cambistmclkcc-sm8750 (both loaded, 19 camera
+   modules total, 1 media node, 17 video nodes) - i.e. this is the Q24 state, not
+   a "camera absent" state.
+2. dmesg (complete, first line t=0.000000, 970 lines).
+3. pm_genpd_summary (read first, cheap) - 116 lines.
+4. clk_summary (read last) - 804 lines.
+5. one real display blank from userspace: org.gnome.ScreenSaver.SetActive(true),
+   DSI DPMS On -> Off. No s2idle, no system suspend.
+6. wake via SetActive(false), then dmesg/pm_genpd/clk_summary again.
+
+Caveat on the clk_summary/genpd snapshots
+----------------------------------------
+Joonhoe Kim pointed out on the list that reading clk_summary itself runtime-
+resumes the clock controllers, so the state you read is not necessarily the
+state at fault time. We confirm that on this board: the act of reading
+clk_summary emitted a new dmesg line at t=4152.99
+  wsa_macro 6b00000.codec: using zero-initialized flat cache, ...
+So please read the clk_summary as "state right after an explicit resume of the
+clock controllers", and the dmesg as the authoritative timeline.
+
+Result of this run (please note: no reset this time)
+----------------------------------------------------
+With this 7.3-rc7 kernel, camera controllers paired, and one real blank, the SoC
+survived - boot_id unchanged across the whole run, ssh reachable throughout,
+desktop rendered again on wake. dmesg grew by 10 lines only: the two DSI links
+re-programming their timing on blank/resume and the touch panel re-downloading
+its firmware. The instant hard reset we reported in the v3 thread was observed
+on our 7.2-lineage kernel; on 7.3-rc7 we cannot reproduce it with this exact
+sequence (n=1 so far). I would rather tell you that than dress the data up.
+
+What the snapshots show (camera stack loaded, idle, before the blank)
+---------------------------------------------------------------------
+- cam_cc_titan_top_gdsc          on        (all of its child GDSCs off-0)
+- ac7b000.cci / ac7c000.cci      active    (both CCI instances, no children)
+- mmcx                           on        (320 children)
+- cx                             on        (320 children)
+- cam_bist_mclk_cc_pll0          rate 960000000 Hz, enable_count 0
+
+And during the blank (genpd diff, 38 lines; clk diff, 96 lines):
+- cam_cc_titan_top_gdsc          on  -> off-0
+- ac7b000.cci / ac7c000.cci      active -> suspended
+- mdss_gdsc                      on  -> off-0
+- gcc_ufs_phy_gdsc children      64  -> 0
+
+The interesting detail for our question 1/2 is the first block: the camera
+Titan top GDSC is on while every child GDSC under it is off-0, and both CCI
+devices are runtime active while the camera clocks have enable_count 0. That is
+the "half powered" state we suspect, and it is exactly the state in which the
+v7.2 kernel died on blank. The BIST MCLK PLL is programmed to 960 MHz with no
+enable.
+
+Our four questions from v3 are still open (your reply did not address them, and
+we would rather have your view than guess):
+1. Is cambistmclkcc meant to be usable as a bare clock controller with no GDSC
+   and no consumer, or does the camcc side have to stay powered while the camera
+   BIST block keeps its AHB clock and PLL programmed?
+2. Is there a documented ordering constraint between the camera BIST block and
+   display power/clock collapse (dispcc) on the shared MMCX/MX domains? On the
+   v7.2 kernel any display power transition with both controllers loaded took
+   the SoC down instantly; we cannot see that interaction in the clock or genpd
+   code paths.
+3. Which reset-reason source exists on SM8750 that Linux can read after such an
+   event? PON latches nothing and there is no pstore here. Is there an AOP or
+   CPUCp crash/health register, or a smem scatter area, that distinguishes
+   "PS_HOLD dropped" from "cold reset"?
+4. Until the root cause is known, what default would you recommend for
+   distributions: an always-on vote for cambistmclkcc, a required vdd_mx supply
+   binding, or deferring the cambistmclkcc probe until the display is off?
+
+
+Attached: complete dmesg before the blank, dmesg delta after blank+wake,
+pm_genpd_summary, clk_summary, and a one-page summary of the run. If you want a
+different variant (e.g. snapshots taken while the panel is off, or after a
+reset-reproducing kernel), tell me which and I will collect it.
+
+Thanks,
+Qianhui Xu

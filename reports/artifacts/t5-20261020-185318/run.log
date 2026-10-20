@@ -1,0 +1,43 @@
+[18:53:18] == T5 采集开始  out=/home/xuqianhui/y700-elden/reports/artifacts/t5-20261020-185318
+[18:53:18] == 0) 前置：持设备锁 + 预检
+[18:53:18]   设备锁已持有（fd 9，随进程退出释放）
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
+ae37a559-270c-4f8f-97d7-b6e88d50ff82
+4150
+[18:53:18]   dpms=On  （必须 On：面板 GOOD 才不是 Q28 坏发语境）
+[18:53:18] == 1) 相机栈**配对加载**（cambistmclkcc + camcc）
+[blank] 已有存档（不覆盖）：IDLE=300 AC=900 BATT=900 LOCK=true 
+[blank] 现状：idle=uint32 0 ac=0 lock=false
+[camera] cmdline says elden_nocamera=1 but CAM_FORCE=1 -> loading anyway
+[camera] already loaded system_heap
+[camera] loaded camcc-sm8750
+[camera] loaded cambistmclkcc-sm8750
+[camera] loaded i2c-qcom-cci
+[camera] loaded wl2868c-regulator
+[camera] loaded qcom-camss
+[camera] loaded leds-qcom-flash
+[camera] loaded gt9764
+[camera] loaded s5kjns
+[camera] loaded gc08a8
+[camera] done: 1 media, 17 video nodes
+[cam-mode] loader rc=0
+[cam-mode] 读回：19 个模块 / 1 media / 17 video
+camera modules = 19   media = 1   video = 17
+dpms = On   idle-delay = uint32 0
+==> 状态 = CAM-ON：**不要熄屏**（相机在位时熄屏掉电是常态）
+[18:53:20]   配对模块数(期望 2)=2
+cambistmclkcc_sm8750    16384  2
+camcc_sm8750           61440  74
+18
+[18:53:20] == 2) ① 完整 dmesg（t=0 起？）
+[18:53:20]   dmesg 970 行，首行 t=0.000000（0.000000 = 从启动起完整）
+[18:53:20] == 3) ② pm_genpd_summary（先读，开销小）
+[18:53:20]   116 行
+[18:53:20] == 4) ③ clk_summary（**最后读**；读完立即记录 boot_id/uptime）
+[18:53:20]   804 行
+boot_id=ae37a559-270c-4f8f-97d7-b6e88d50ff82 uptime=4153s at=1970-01-03T00:42:54Z
+[18:53:20] == 5) 真实熄屏（ScreenSaver.SetActive true）→ 等 60s
+[18:53:21]   session bus = unix:path=/tmp/dbus-DvEY0hUQa4,guid=a946145273cfd40c3a62efe300029cdf
+()
+Off
+boot_id=ae37a559-270c-4f8f-97d7-b6e88d50ff82

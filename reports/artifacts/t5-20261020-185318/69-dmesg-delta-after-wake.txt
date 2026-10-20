@@ -1,0 +1,10 @@
+> [ 4152.991399] [T13346] wsa_macro 6b00000.codec: using zero-initialized flat cache, this may cause unexpected behavior
+> [ 4612.790391] [ T1720] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+> [ 4612.790667] [ T1720] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+> [ 4613.009674] [ T1720] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+> [ 4613.010239] [ T9445] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+> [ 4613.010243] [ T9445] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+> [ 4613.199636] [ T9445] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+> [ 4613.199725] [ T9445] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+> [ 4613.199900] [ T9445] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+> [ 4613.211091] [ T9445] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097

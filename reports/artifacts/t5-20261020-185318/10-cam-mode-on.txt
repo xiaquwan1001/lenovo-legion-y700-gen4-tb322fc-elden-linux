@@ -1,0 +1,19 @@
+[blank] 已有存档（不覆盖）：IDLE=300 AC=900 BATT=900 LOCK=true 
+[blank] 现状：idle=uint32 0 ac=0 lock=false
+[camera] cmdline says elden_nocamera=1 but CAM_FORCE=1 -> loading anyway
+[camera] already loaded system_heap
+[camera] loaded camcc-sm8750
+[camera] loaded cambistmclkcc-sm8750
+[camera] loaded i2c-qcom-cci
+[camera] loaded wl2868c-regulator
+[camera] loaded qcom-camss
+[camera] loaded leds-qcom-flash
+[camera] loaded gt9764
+[camera] loaded s5kjns
+[camera] loaded gc08a8
+[camera] done: 1 media, 17 video nodes
+[cam-mode] loader rc=0
+[cam-mode] 读回：19 个模块 / 1 media / 17 video
+camera modules = 19   media = 1   video = 17
+dpms = On   idle-delay = uint32 0
+==> 状态 = CAM-ON：**不要熄屏**（相机在位时熄屏掉电是常态）

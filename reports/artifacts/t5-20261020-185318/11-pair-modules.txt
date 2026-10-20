@@ -1,0 +1,2 @@
+cambistmclkcc_sm8750    16384  2
+camcc_sm8750           61440  74

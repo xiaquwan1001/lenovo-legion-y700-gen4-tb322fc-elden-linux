@@ -1,0 +1,10 @@
+[cam-mode] modprobe -r gc08a8: modprobe: FATAL: Module gc08a8 is in use.
+[cam-mode] modprobe -r s5kjns: modprobe: FATAL: Module s5kjns is in use.
+[cam-mode] modprobe -r gt9764: modprobe: FATAL: Module gt9764 is in use.
+[cam-mode] modprobe -r wl2868c-regulator: modprobe: FATAL: Module wl2868c_regulator is in use.
+[cam-mode] 读回：0 个模块 / 0 media / 0 video
+[blank] 已恢复存档值
+[blank] 现状：idle=uint32 300 ac=900 lock=true
+camera modules = 0   media = 0   video = 0
+dpms = On   idle-delay = uint32 300
+==> 状态 = CAM-OFF：熄屏安全（相机栈不在位）

@@ -1,0 +1,5 @@
+boot_id=ae37a559-270c-4f8f-97d7-b6e88d50ff82
+On
+camera modules = 0   media = 0   video = 0
+dpms = On   idle-delay = uint32 300
+==> 状态 = CAM-OFF：熄屏安全（相机栈不在位）

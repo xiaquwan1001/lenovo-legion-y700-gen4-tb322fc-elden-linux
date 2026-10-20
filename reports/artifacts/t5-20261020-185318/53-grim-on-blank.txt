@@ -1,0 +1,1 @@
+grim on blanked output: rc=124 (timeout) => DPMS Off 时无法抓帧（本身即证据）

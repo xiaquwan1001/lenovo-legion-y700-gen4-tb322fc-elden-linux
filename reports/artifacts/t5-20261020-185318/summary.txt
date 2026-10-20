@@ -1,0 +1,45 @@
+T5 — Q24 dataset (paired camera load + one real display blank)
+================================================================
+collected_at        : 2026-10-20T10:53Z (device clock unreliable; host time authoritative)
+device              : Lenovo Legion Tab Y700 Gen4 (TB322FC), SM8750P
+kernel              : 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
+boot_id             : ae37a559-270c-4f8f-97d7-b6e88d50ff82  (unchanged across the whole run)
+display             : card0-DSI-1 dpms=On before blank (GOOD panel => not a Q28 bad-boot sample)
+
+1) paired load (Q24 context)
+   lsmod : camcc_sm8750 (used by 74) + cambistmclkcc_sm8750 (used by 2) -> both present
+   total camera modules 19, 1 media node, 17 video nodes
+
+2) dmesg
+   970 lines, first line t=0.000000  (complete from boot)
+   after blank+wake: 980 lines, 10 new lines (see 69-dmesg-delta-after-wake.txt)
+
+3) pm_genpd_summary (read before clk_summary)   116 lines
+4) clk_summary        (read last)               804 lines
+
+5) side effect of the read (Joonhoe Kim's caveat, confirmed)
+   reading clk_summary emitted at t=4152.991399:
+     wsa_macro 6b00000.codec: using zero-initialized flat cache, ...
+   => the act of reading resumes clock controllers; state read != state at fault time
+
+6) real display blank via org.gnome.ScreenSaver.SetActive(true)
+   dpms On -> Off ; grim on the blanked output times out (no frames to read)
+   blanked 60 s + ~2.5 min extra: SURVIVED (boot_id unchanged, ssh reachable)
+   wake (SetActive false): dpms On, desktop rendered (screenshot 62d)
+
+7) state transitions observed during the blank
+   cam_cc_titan_top_gdsc     on      -> off-0
+   ac7b000.cci / ac7c000.cci active  -> suspended
+   mdss_gdsc                 on      -> off-0
+   gcc_ufs_phy_gdsc children 64      -> 0
+   (genpd diff 38 lines, clk diff 96 lines)
+
+8) notable steady-state values while the camera stack is loaded but idle
+   cam_cc_titan_top_gdsc = on, all child GDSCs off-0, both CCI devices active
+   mmcx = on (320 children), cx = on (320 children)
+   cam_bist_mclk_cc_pll0 rate=960000000 Hz with enable_count=0
+
+9) outcome
+   this boot did NOT hard-reset on blank (n=1). The hard reset we reported
+   was observed on the v7.2-lineage kernel; with this 7.3-rc7 kernel and this
+   exact sequence the SoC survived. Dataset delivered as requested.
