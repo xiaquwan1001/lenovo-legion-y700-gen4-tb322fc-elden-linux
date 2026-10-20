@@ -58,6 +58,58 @@ scripts/suspend-drain-rate.sh MIN
 2. 挂起前查 `/sys/kernel/debug/wakeup_sources` 确认 `rtc0` 是否在列 + `enabled` 是否 1。
 3. 保留人工唤醒作为兜底（最可靠，但测量窗口受人工时间影响 ±几秒，对 %/h 影响可忽略）。
 
+---
+
+## 6. 关键更正（2026-10-20 17:20 唤醒后取证）
+
+**上面说的「挂了 12 分钟」是错的。** 唤醒后读 `dmesg` 拿到真实时间线：
+
+```
+[822.272289] PM: suspend entry (s2idle)
+[822.292444] Freezing user space processes
+[822.294708] printk: Suspending console(s)
+[823.732427] Restarting tasks: Done
+[823.740780] PM: suspend exit          ← 只挂了 1.47 秒
+[828.877093] wlan0: authenticate ...   ← 5 s 后 WiFi 重新关联
+```
+
+**真相**：设备进入 s2idle 后 **1.47 秒就退出了**（某个唤醒源弹出），之后一直醒着，
+只是 **USB gadget 没恢复 + WiFi 重连中** ⇒ SSH 不可达，看起来像「还在挂起」。
+
+⇒ 「RTC 唤不醒」这个结论**证据不足**：设备根本没睡那么久，无法证明 RTC alarm 失效。
+本次真正证明的是**另一个更麻烦的问题**（见 §7）。
+
+## 7. 真正的问题：s2idle 待不住（1.47 秒就被弹出）
+
+`/sys/kernel/debug/wakeup_sources`（唤醒后）：
+
+| 源 | active_count | event_count | wakeup_count | max_time |
+|---|---|---|---|---|
+| `gpio-keys` | 4 | 4 | 0 | 15 |
+| `qcom-battmgr-bat` | 36 | 37 | 0 | 5 |
+| `qcom-battmgr-usb` | 3 | 3 | 0 | 9 |
+| `c400000.spmi:pmic@0:rtc@6100` | 32 | 32 | **0** | 0 |
+| `mmc0` | 3 | 3 | 0 | 3 (expire) |
+
+`rtc` **确实在** wakeup_sources 里（`event_count=32`），但 `wakeup_count=0` —— 它产生事件，
+却未被记为「由它唤醒」。
+
+最可疑的是 **`gpio-keys`（电源键）`active_count=4`**：每次写 `mem` 进 suspend 时，
+电源键状态可能被当成「事件」立刻解除挂起。这可以解释 1.47 s。
+
+**⇒ T9 的真正前置不是「RTC 能不能唤醒」，而是「为什么 s2idle 待不住」。**
+在解决之前，任何 `%/h` 测量都毫无意义（挂 1.5 秒能耗 ≈ 0）。
+
+## 8. 下一步（T9 修正后的路径）
+
+1. **查 s2idle 为何 1.5 s 退出**：`echo mem > /sys/power/state` 同时用串口抓
+   `dmesg`，开启 `no_console_suspend`（vk129 cmdline 已有 `panic=15` 等，
+   但 `no_console_suspend` 未确认），才能看到 exit 前的最后几条。
+2. 或者直接试 **`mem_sleep=deep`**：`echo deep > /sys/power/mem_sleep; echo mem > /sys/power/state`。
+   deep 是真下电，`gpio-keys` 这种「状态误判」不会立刻弹出；RTC alarm 也通常能唤醒。
+   **这是最快的判别实验**（一次上机就能分辨是 s2idle 特有问题还是通用问题）。
+3. 在 1/2 解决之前，**不要记录任何掉电率数字**。
+
 ## 5. 关联
 
 - `reports/vk129-abi-fix-verified-20261020.md` §3.5（首次挂起/唤醒实测）

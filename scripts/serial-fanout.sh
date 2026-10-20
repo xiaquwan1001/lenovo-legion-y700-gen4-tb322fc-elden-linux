@@ -19,11 +19,12 @@ LOG=${2:-/var/log/elden-serial/$(basename "$PORT").log}
 mkdir -p "$(dirname "$LOG")"
 echo "===== serial-fanout start $(date -Is) port=$PORT log=$LOG =====" >> "$LOG"
 
-# 等节点出现（设备重启期间会消失；最多等 10 min 再退出交给 systemd）
+# 等节点出现。设备重启/挂起期间会消失很久（s2idle 下 USB gadget 断电，
+# 实测挂 10+ min 节点都没回来）⇒ 上限放到 1 h；仍不出现才退出交给 systemd。
 wait_port() {
 	local t=0
 	while [ ! -e "$PORT" ]; do
-		[ "$t" -ge 600 ] && return 1
+		[ "$t" -ge 3600 ] && return 1
 		sleep 1
 		t=$((t + 1))
 	done
@@ -32,7 +33,7 @@ wait_port() {
 
 while true; do
 	wait_port || {
-		echo "===== $PORT 600s 未出现，退出交给 systemd =====" >> "$LOG"
+		echo "===== $PORT 3600s 未出现，退出交给 systemd =====" >> "$LOG"
 		exit 1
 	}
 	# 串口参数：115200 8N1、raw、无回显、不参与流控。
