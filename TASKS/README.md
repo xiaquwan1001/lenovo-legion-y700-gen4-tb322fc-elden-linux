@@ -86,7 +86,7 @@
 | A13 | `sudo apt install qemu-utils` | ✅ 已装（`qemu-img`/`qemu-nbd` 实测在位，2026-10-02 核验） |
 | A14 | 传感器注入代码 | ✅ **已完成（2026-10-03，前提修正后重定义）**：HAL 真实现（waydroid-build 树 Sensors.cpp，编译成功）+ 宿主侧 `scripts/eldroid-sensord.c`（selftest 7/7 + UDP 环回冒烟）+ `scripts/deploy-sensors-hal.sh`（overlay 部署）+ `env-pass/scripts/sensor-send-termux.sh`（真值转发） |
 | A15 | C9 用例表 + 打分模板 | ✅ 已定稿 → `README.md §6` §5（2026-10-02，10 条用例+阈值） |
-| A16 | 把 `scripts/*.sh` 里残留 `new-tablet` 默认路径参数化 | ⬜ |
+| A16 | 把 `scripts/*.sh` 里残留 `new-tablet` 默认路径参数化 | ✅ **已核（2026-10-20）**：`grep -rn new-tablet scripts/ rootfs/` 仅剩 1 处，且是 `scripts/gpt-dump.sh` 注释里的**反面示例**（“勿用 new-tablet”），无可执行配方 ⇒ 无需参数化 |
 | A17 | `env-pass/` 打包成"装到任一单元的幂等脚本"（去掉隐含绑机） | ✅ 已完成：`env-pass/scripts/envpass-provision.sh`（状态预检 TB322FC/root + 产物自动 repack + 读回校验 + 幂等）+ `envpass-ondevice.sh` 幂等化（已装模块跳过 + Shamiko -patched 优先） |
 | A18 | `sudo bash scripts/fix-fstab-samsung.sh`（/mnt/Samsung 掉盘卡开机） | ✅ 已完成（2026-10-02） |
 
