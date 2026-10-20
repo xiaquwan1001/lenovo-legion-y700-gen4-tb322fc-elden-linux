@@ -31,7 +31,6 @@ ARM=vk129
 WAIT=${WAIT:-240}
 ROLLBACK=1
 DEV=root@192.168.7.1
-SERIAL_PORT=${SERIAL_PORT:-/dev/ttyACM0}
 TS=$(date +%Y%m%d-%H%M%S)
 LOG=$ROOT/logs/suspend-capture-$TS.log
 SLOG=$ROOT/logs/suspend-capture-$TS.serial.log
@@ -39,10 +38,14 @@ RUNDIR=$ROOT/logs/suspend-capture-$TS.pstore
 mkdir -p "$ROOT/logs" "$RUNDIR"
 exec > >(tee -a "$LOG") 2>&1
 
+# 串口采集统一走 lib（relay 常驻日志 优先，直连端口其次；#359）
+. "$(dirname "$0")/lib-serial-source.sh"
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--arm) ARM=$2; shift 2;;
 		--wait) WAIT=$2; shift 2;;
+		--check) CHECK_ONLY=1; shift;;
 		--no-rollback) ROLLBACK=0; shift;;
 		*) echo "unknown arg: $1"; exit 64;;
 	esac
@@ -64,18 +67,22 @@ ssh_alive()  { SSH true; }
 
 wait_ssh() { local t=0; while [ "$t" -lt "${1:-$WAIT}" ]; do ssh_alive && return 0; sleep 5; t=$((t+5)); done; return 1; }
 
-# --- 串口记录（跨重连）---
+# --- 串口采集：实现与判据全在 lib-serial-source.sh（#359） ---
 start_serial() {
-	[ -e "$SERIAL_PORT" ] || { echo "⚠️ 无 $SERIAL_PORT：只能靠 ramoops"; return 0; }
-	( while true; do
-		stty -F "$SERIAL_PORT" 115200 raw -echo 2>/dev/null || true
-		printf "\n===== serial open %s =====\n" "$(date +%H:%M:%S)" >> "$SLOG"
-		cat "$SERIAL_PORT" >> "$SLOG" 2>/dev/null
-		sleep 0.3
-	  done ) & SER_PID=$!
-	echo "serial logger pid=$SER_PID -> $SLOG"
+	if ! serial_start "$SLOG"; then
+		echo "⚠️ 串口不可用 ⇒ 死亡瞬间 dmesg 只能靠 ramoops（16 KiB，且非 panic 型挂死时为空）"
+		if [ "${ALLOW_NOSERIAL:-0}" = 1 ]; then
+			echo "   ALLOW_NOSERIAL=1 ⇒ 继续；结论里必须注明「无串口」"
+			return 0
+		fi
+		echo "❌ 拒绝在无串口的情况下继续（空日志会被误读成「没有 panic」）。"
+		echo "   确实要无串口跑：ALLOW_NOSERIAL=1 bash $0 <args>"
+		exit 3
+	fi
+	# 探针：真的有一行数据流过才算采集在工作（端口存在 ≠ 在工作）
+	serial_probe "$SLOG" || echo "  ⚠️ 探针未通：本轮串口内容可能为空，结论里必须标注"
 }
-stop_serial() { [ -n "${SER_PID:-}" ] && kill "$SER_PID" 2>/dev/null && pkill -P "$SER_PID" 2>/dev/null; return 0; }
+stop_serial() { serial_stop; }
 
 rollback() {
 	[ "$ROLLBACK" -eq 1 ] || { echo "⚠️ --no-rollback：设备可能停在 $ARM"; return 0; }
@@ -96,6 +103,21 @@ cleanup() { stop_serial; }
 trap cleanup EXIT
 
 # --- 0. 前置 ---
+# 零副作用预检：把“能不能刷/能不能取证/有没有退路”三件事先查清，
+# 免得让用户去按音量键进 fastboot 之后才发现采集通道没通。
+if [ "${CHECK_ONLY:-0}" = 1 ]; then
+	echo "== 预检（不写盘、不碰设备状态）=="
+	printf '  armed 镜像  : '; if [ -f "$IMG" ]; then echo "$IMG ($(stat -c %s "$IMG") B, sha256 $(sha256sum "$IMG" | cut -c1-16)…)"; else echo "❌ 缺 $IMG"; fi
+	printf '  回滚镜像    : '; if [ -f "$RB" ]; then echo "$RB ($(stat -c %s "$RB") B, sha256 $(sha256sum "$RB" | cut -c1-16)…)"; else echo "❌ 缺 $RB"; fi
+	printf '  armed 签名  : '; python3 "$ROOT/tools/avbtool.py" info_image --image "$IMG" 2>/dev/null | awk -F': *' '/Public key/{k=$2} /Algorithm/{a=$2} END{print (k?"AVB ok key="k" "a:"❌ 未签名（刷进去会被 AVB 拦）")}'
+	printf '  串口采集    : '; if serial_source_probe; then :; else echo "❌ 不可用（刷了也拿不到 panic 栈）"; fi
+	printf '  设备可达    : '; if ssh_alive; then echo "SSH ok ($(SSH 'uname -r' | tr -d '\r'))"; else echo "SSH 不可达（需先进 fastboot 才刷）"; fi
+	printf '  fastboot    : '; if fb_present; then echo "ok"; else echo "不在 fastboot（需用户按音量- + 电源）"; fi
+	printf '  boot_b 槽状态: '; ssh_alive && SSH 'qbootctl 2>/dev/null | tr "\n" " "' | sed 's/  */ /g' | tail -c 200; echo
+	echo "== 预检结束。真跑：bash $0 [--arm vk128|vk129] [--wait 秒] =="
+	exit 0
+fi
+
 fb_present || { echo "❌ 设备不在 fastboot（先让用户进 BL：关机后音量- + 电源）"; exit 1; }
 echo "-- 当前 boot_b 内核（回滚前确认可回退目标）" 
 SSH 'uname -r' | sed 's/^/    /' || true

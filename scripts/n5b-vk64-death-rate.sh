@@ -17,26 +17,34 @@ set -u
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 N=${1:-5}
 IMG=${2:-$ROOT/out/boot-elden-vk64.img}
+# --check：零副作用预检（不 boot/不刷），放在参数位置解释，避免被当成轮数
+if [ "$N" = "--check" ]; then CHECK_ONLY=1; N=0; IMG=${2:-$ROOT/out/boot-elden-vk64.img}; fi
 DEV=root@192.168.7.1
 LOG=${LOG:-$ROOT/logs/n5b-vk64-$(date +%Y%m%d-%H%M%S).log}
 SLOG=$LOG.serial
-SERIAL_PORT=${SERIAL_PORT:-/dev/ttyACM0}
 mkdir -p "$(dirname "$LOG")"
 exec > >(tee -a "$LOG") 2>&1
+
+# 串口采集统一走 lib（relay 常驻日志 优先；#359）。死亡瞬间 dmesg 是 T5 唯一的完整记录。
+. "$(dirname "$0")/lib-serial-source.sh"
 
 # 串口常驻记录：Q24 是 SoC 级硬复位 + pstore 空（#197），死亡瞬间的 dmesg 事后拿不到，
 # 只能在死亡发生时由串口抓（console=ttyGS0 -> 宿主 /dev/ttyACM0）。T5 要交的「完整 dmesg」全靠这条。
 start_serial() {
-	[ -e "$SERIAL_PORT" ] || { echo "  ⚠️ 无 $SERIAL_PORT：死亡瞬间 dmesg 无法留存（T5 数据会残缺）"; return 0; }
-	( while true; do
-		stty -F "$SERIAL_PORT" 115200 raw -echo 2>/dev/null || true
-		printf "\n===== serial open %s =====\n" "$(date +%H:%M:%S)" >> "$SLOG"
-		cat "$SERIAL_PORT" >> "$SLOG" 2>/dev/null
-		sleep 0.3
-	  done ) & SER_PID=$!
-	echo "  serial logger pid=$SER_PID -> $SLOG"
+	# 串口是 T5「完整 dmesg」的唯一来源（硬复位时 pstore 常空，#197）。
+	# 旧实现把「无权限」吞成空日志 ⇒ 假阴性，现已由 lib 硬失败（#359）。
+	if ! serial_start "$SLOG"; then
+		if [ "${ALLOW_NOSERIAL:-0}" = 1 ]; then
+			echo "  ⚠️ ALLOW_NOSERIAL=1 ⇒ 继续，但本轮数据不含死亡瞬间 dmesg（T5 不可用）"
+			return 0
+		fi
+		echo "  ❌ 拒绝无串口采样（空日志会被误读成「没有 panic」）"
+		echo "  确实要无串口采样：ALLOW_NOSERIAL=1 bash $0 $*"
+		exit 3
+	fi
+	serial_probe "$SLOG" || echo "  ⚠️ 串口探针未通：死亡瞬间内容可能缺失（结论里标注）"
 }
-stop_serial() { [ -n "${SER_PID:-}" ] && { kill "$SER_PID" 2>/dev/null; pkill -P "$SER_PID" 2>/dev/null; }; return 0; }
+stop_serial() { serial_stop; }
 trap stop_serial EXIT
 
 SSH() { timeout 25 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -o BatchMode=yes "$DEV" "$@" 2>/dev/null; }
@@ -97,16 +105,48 @@ boot_vk64() {
 	return 0
 }
 
+# 从 boot 镜像里抽 UTS（不用 strings：gzip 压过的 kernel 里 strings 看不到明文）
+img_uts() {
+	timeout 60 python3 - "$1" <<'EOF'
+import gzip, re, struct, sys
+d = open(sys.argv[1], 'rb').read()
+ks, ka, rs, ra, ss, sa, ts, ta, ps = struct.unpack_from('<9I', d, 8)
+k = d[ps * 2048:ps * 2048 + ks]
+try:
+    k = gzip.decompress(k)
+except Exception:
+    pass
+m = re.search(rb'Linux version [^\x00\n]{0,100}', k)
+print(m.group(0).decode() if m else '(not found)')
+EOF
+}
+
 start_serial
 ssh_alive_probe() { SSH true; }
+
+# 零副作用预检（--check）：不 boot、不刷、不改设备状态。
+# 重点是把「每次死亡后的恢复通道」先验清楚——本脚本靠 `fastboot boot` 重进 vk64，
+# 而 2026-10-18 实测过它在本机可能报 OKAY 却不真正生效（#293），死得快时会卡住。
+if [ "${CHECK_ONLY:-0}" = 1 ]; then
+	echo "== 预检（不写盘）=="
+	printf '  串口采集    : '; if serial_source_probe; then :; else echo "❌ 不可用 ⇒ 死亡瞬间 dmesg 拿不到（T5 数据不完整）"; fi
+	printf '  设备可达    : '; if ssh_alive_probe; then echo "SSH ok ($(SSH 'uname -r' | tr -d '\r'))"; else echo "不可达（需先进 Linux）"; fi
+	printf '  fastboot    : '; if FB; then echo "ok"; else echo '不在 fastboot（fastboot boot 需要它）'; fi
+	printf '  镜像        : '; if [ -f "$IMG" ]; then echo "$IMG ($(stat -c %s "$IMG") B, sha256 $(sha256sum "$IMG" | cut -c1-16)…)"; else echo "❌ 缺 $IMG"; fi
+	printf '  镜像 UTS    : '; img_uts "$IMG"; echo
+	preflight_device || true
+	echo "== 结束。真跑：bash $0 [轮数] [图像] =="
+	serial_stop
+	exit 0
+fi
+
 if ssh_alive_probe; then
 	preflight_device || { echo "### 前置未通过：修好再跑（本次不采样，避免污染 n）"; exit 1; }
 else
 	echo "  （设备当前不可达，跳过设备侧前置检查；每轮 boot 后仍会校验模块数）"
 fi
 
-for i in $(seq 1 "$N"); do
-	echo
+for i in $(seq 1 "$N"); do	echo
 	echo "================ ROUND $i ================"
 	printf "\n===== N5b ROUND %s %s =====\n" "$i" "$(date '+%F %T')" >> "$SLOG" 2>/dev/null || true
 	boot_vk64 || { echo "ROUND$i SETUP-FAIL"; continue; }

@@ -75,7 +75,7 @@ device_gate() {
 		return 0
 	fi
 	if [ "${retry:-0}" -ge 3 ]; then
-		echo "[trial] GATE=WARN succ=0（每次真开机倒计时）→ 建议先 `trial.sh gate --fix`" >&2
+		echo '[trial] GATE=WARN succ=0（每次真开机倒计时）→ 建议先 trial.sh gate --fix' >&2
 		return 3
 	fi
 	echo "[trial] GATE=FAIL succ=0 且 retry=${retry}<3——再几次真开机将置 UNBOOTABLE；停止循环、先救援" >&2
