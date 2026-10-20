@@ -93,3 +93,8 @@ python3 ~/.local/bin/lore-query.py "https://lore.kernel.org/linux-arm-msm/?q=f:<
 7. **`git format-patch` 对 >80 列 Subject 折行、并按同样规则截断文件名** —— 这是 git 的正常行为，**不是补丁损坏**：`git format-patch -1 <commit>` 重生成会一模一样（2026-10-13 实测 m2/m3/m3-4 全部如此）。判"Subject 被截断/补丁坏了"前先复现一次。
 8. **未订阅的 vger 列表也能投递并归档**（2026-10-13 实测）：M3-1 三枚补丁 To `linux-usb`、Cc `devicetree`/`linux-arm-msm`/`linux-kernel`（后三者中 devicetree/lkml 未订阅），结果 **linux-usb 与 linux-devicetree 各自 4/4 归档**。⇒ 「未订阅即被审核/丢弃」只对部分列表成立；但**投递后仍必须按 Message-ID 到每个目标 inbox 单独复核**（`lore-query.py "https://lore.kernel.org/<list>/?q=f:<地址>"`，注意 devicetree 的 inbox 是 `/linux-devicetree/`）。
 9. **读回信**：IMAP = `mail.ustc.edu.cn:993`。`--replies-only` 靠 `In-Reply-To`/`References` 匹配我们自己的 Message-ID，是查「有没有人回」的最快路径（比翻列表洪水可靠）。判归档一律按 Message-ID 取 raw 比正文 sha256，**别只看「已发送」**。
+10. **`send-mail-ustc.py` 每次运行都重新生成 Message-ID**（`email.utils.make_msgid()` 在 `main()` 里调）⇒
+    **dry-run 打印的 id 不是真正发出件的 id**（2026-10-20 实测：dry-run `179249416509…`，实发 `179249416915…`）。
+    复核只能走 **Sent Items 回读** 或 **lore 检索/取 raw**，拿 dry-run 的 id 去查会 404 并误判「被丢弃」。
+    同理：同一份草稿重发两次会得到两个不同 Message-ID，不会自动去重。
+11. **带附件的报告信**（`Attach: <绝对路径>` 行，必须写在头部空行之前）：`lore` 会连附件一起归档（2026-10-20 实测 240 KB / 5 附件、正文 sha256 与本地逐字节相同）。附件不要超过 300 KB，vger 侧有大报文风险。
