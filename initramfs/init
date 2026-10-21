@@ -231,7 +231,13 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 	else
 		log "resolved $elden_root -> $root_dev"
 		mkdir -p /newroot
-		if mount -t ext4 -o rw,noatime "$root_dev" /newroot; then
+		# fstype: autodetect via blkid so a non-ext4 root (e.g. f2fs) works;
+		# ext4 only as the last-resort default (PITFALLS: root mount was hardcoded).
+		root_fstype=${elden_rootfstype:-}
+		[ -n "$root_fstype" ] || root_fstype=$(blkid -o value -s TYPE "$root_dev" 2>/dev/null)
+		[ -n "$root_fstype" ] || root_fstype=ext4
+		log "root fstype: $root_fstype"
+		if mount -t "$root_fstype" -o rw,noatime "$root_dev" /newroot; then
 			newinit=""
 			[ -x /newroot/init ] && newinit=/init
 			[ -z "$newinit" ] && [ -x /newroot/sbin/init ] && newinit=/sbin/init
@@ -251,7 +257,7 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 			fi
 			umount /newroot 2>/dev/null || true
 		else
-			warn "failed to mount $root_dev on /newroot (ext4); staying on RAM root"
+			warn "failed to mount $root_dev on /newroot ($root_fstype); staying on RAM root"
 		fi
 	fi
 fi

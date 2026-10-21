@@ -233,4 +233,4 @@ vk130	t9	2026-10-20	PCIe qcom skip_l23_ready（T9 方案 A）
 vk131	t9	2026-10-21	vk131 = vk130 + hci_qca FW下载窗口补丁
 vk132	t9	2026-10-21	vk132 = vk131 + qca_resume 重试（被打断的固件下载）
 vk133	t9	2026-10-21	vk133 = vk132 + resume 走 serdev re-probe
-                                                                           
+vk134	kexec	2026-10-21	vk134 = m1-73 工作树 + 0019/0020（mask=1 旋钮 + /sys/kernel/kexec_diag）；UTS 刻意同 vk127（复用在机模块树）

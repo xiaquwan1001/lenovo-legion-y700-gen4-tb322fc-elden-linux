@@ -1,0 +1,61 @@
+To: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>, linux-pm@vger.kernel.org
+Cc: Sebastian Reichel <sre@kernel.org>, linux-arm-msm@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] power: supply: qcom_battmgr: do not report power_now on SM8750
+In-Reply-To: <5bf3636d-be7a-4800-9914-808d2fc5ebd9@oss.qualcomm.com>
+References: <20261013002124.332111-1-xiaqinghuan@mail.ustc.edu.cn> <5bf3636d-be7a-4800-9914-808d2fc5ebd9@oss.qualcomm.com>
+
+Hi Konrad,
+
+You are right, and thanks for stopping on that sentence.  "Maximum-load
+updater" is a phrase I invented; it is not a QBG or battmgr term from any
+document, so I should not have used it in a commit message.  Let me
+restate what I actually observed and what I am and am not claiming.
+
+What the driver does (no bug here)
+
+qcom_battmgr_bat_get_property() does not sample anything.  For a given
+power_supply property N it reads the 32-bit slot that the QBG
+notification buffer reserves for that property (in the SM8750 variant the
+battery property array starts at context + 0x6a8 and is indexed by
+property id, so BATT_POWER_NOW, id 22, is context + 0x6a8 + 4 * 22).
+The driver faithfully returns whatever firmware left there.
+
+What I observed on the unit
+
+  - charging, actual input well under 1 W: power_now reported ~89 W
+  - discharging, actual draw ~4 W:           power_now reported >100 W
+  - current_now * voltage_now in the same samples stays in the expected
+    magnitude range, i.e. the other battery properties are consistent
+
+So on this platform the BATT_POWER_NOW slot does not hold a measurement of
+present power; it holds something closer to a configured/estimated ceiling.
+That is a statement about the value, and it is reproducible on my unit.
+
+What I do not have
+
+QBG firmware sources, or a public document describing the semantics of the
+BATT_POWER_NOW slot.  The "it is a maximum-load figure" reading is my
+inference from the two facts above plus the vendor battery property
+interface, not something I can cite.  I also cannot yet say whether this
+is a property of the SM8750 firmware build, of this OEM's configuration,
+or of the slot in general: Fenglin's earlier reply (default supported,
+OEM can customize) would predict the latter, and confirming it needs
+power_now/BATT_POWER_NOW readouts from the stock Android build on the
+same unit, which I have not done.
+
+Proposed wording
+
+I will resend the patch with the firmware-semantics sentence removed.  The
+commit message will keep only what is verifiable: on SM8750 the reported
+POWER_NOW is not a present-power reading (with the two counterexamples),
+the driver returns the slot as-is, and therefore this platform should not
+advertise POWER_NOW.  The code change is unaffected: add the SM8750
+variant and reuse the SM8550 property list without POWER_NOW.
+
+If you happen to know the intended semantics of that slot, or know of a
+QBG interface document that defines it, I would rather cite that than
+describe it in my own words.  Otherwise the factual version is what I will
+send.
+
+Thanks,
+Qianhui

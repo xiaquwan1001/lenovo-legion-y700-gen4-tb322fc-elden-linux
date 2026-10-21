@@ -235,8 +235,10 @@ vk127	uts_dup2	vk131/vk132/vk133（T9 后续臂）刻意复用其 UTS ⇒ 该镜
 # ---- 2026-10-21：T9 同 UTS 族共 5 个（vk127 + vk130~vk133）。原因统一 = 为在零写盘
 #      fastboot boot 下加载设备上已部署的 /lib/modules/<UTS>-abi-suspend（ABI 未变：
 #      config 未动，仅内核源码补丁）。收口条件 = 其中任一臂写入 boot_b 或重出带独立 UTS 的正式镜像。
-vk127	uts_dup5	T9 同 UTS 族（vk130~vk133 刻意复用其串）⇒ 族内计数触发
-vk130	uts_dup5	T9 同 UTS 族成员（零写盘 fastboot boot 需加载在机 -abi-suspend 模块树）
-vk131	uts_dup5	T9 同 UTS 族成员（hci_qca 40s 预算，实测 suspend 成功）
-vk132	uts_dup5	T9 同 UTS 族成员（+resume hci_reset_dev，实测 suspend 成功）
-vk133	uts_dup5	T9 同 UTS 族成员（+resume serdev re-probe，实测挂死，源码已回退）
+vk127	uts_dup6	T9 同 UTS 族（vk130~vk133 刻意复用其串）⇒ 族内计数触发
+vk130	uts_dup6	T9 同 UTS 族成员（零写盘 fastboot boot 需加载在机 -abi-suspend 模块树）
+vk131	uts_dup6	T9 同 UTS 族成员（hci_qca 40s 预算，实测 suspend 成功）
+vk132	uts_dup6	T9 同 UTS 族成员（+resume hci_reset_dev，实测 suspend 成功）
+vk133	uts_dup6	T9 同 UTS 族成员（+resume serdev re-probe，实测挂死，源码已回退）
+vk134	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127 复用 1497 .ko；判据用 /sys/kernel/kexec_diag）
+vk134	num_ne_tag	源提交上无同名 vkNN ref（kexec 诊断镜像，UTS 刻意同 vk127 以复用 1497 .ko；判据 = /sys/kernel/kexec_diag + [KD] 标记）
