@@ -222,3 +222,21 @@ b1-recoverable	uts_dup	Q28 方案B 实验臂：把 bonded 命令「失败即永�
 vk130	num_ne_tag	T9 上机镜像：源提交只属 vk127 tag（m1-73 replay 基 + pcie skip_l23_ready 工作树改动），刻意不带新 tag
 vk130	uts_dup2	刻意复用 boot_b UTS（-debug-vk127）以在零写盘 fastboot boot 下加载在机 -abi-suspend 模块树
 vk127	uts_dup2	vk130（T9 上机镜像）刻意复用其 UTS ⇒ 该镜像被牵连计入重复；本身口径未变
+# ---- 2026-10-21 T9 后续三发（vk131/vk132/vk133：hci_qca 固件下载窗口补丁演化）。
+#      与 vk130 同理：刻意复用 boot_b 的 UTS（-debug-vk127）以便零写盘 fastboot boot 后
+#      加载设备上已部署的 /lib/modules/<UTS>-abi-suspend（config 未改，ABI 未变）。
+vk131	num_ne_tag	T9 后续臂：源提交只属 vk127 tag（m1-73 replay 基 + 工作树改动），刻意不带新 tag
+vk131	uts_dup2	刻意复用 boot_b UTS（-debug-vk127）以零写盘加载在机 -abi-suspend 模块树
+vk132	num_ne_tag	T9 后续臂：同上（+resume hci_reset_dev）
+vk132	uts_dup2	刻意复用 boot_b UTS（同 vk130 口径）
+vk133	num_ne_tag	T9 后续臂：同上（+resume serdev re-probe，实测挂死，已回退源码）
+vk133	uts_dup2	刻意复用 boot_b UTS（同 vk130 口径）
+vk127	uts_dup2	vk131/vk132/vk133（T9 后续臂）刻意复用其 UTS ⇒ 该镜像被牵连计入重复
+# ---- 2026-10-21：T9 同 UTS 族共 5 个（vk127 + vk130~vk133）。原因统一 = 为在零写盘
+#      fastboot boot 下加载设备上已部署的 /lib/modules/<UTS>-abi-suspend（ABI 未变：
+#      config 未动，仅内核源码补丁）。收口条件 = 其中任一臂写入 boot_b 或重出带独立 UTS 的正式镜像。
+vk127	uts_dup5	T9 同 UTS 族（vk130~vk133 刻意复用其串）⇒ 族内计数触发
+vk130	uts_dup5	T9 同 UTS 族成员（零写盘 fastboot boot 需加载在机 -abi-suspend 模块树）
+vk131	uts_dup5	T9 同 UTS 族成员（hci_qca 40s 预算，实测 suspend 成功）
+vk132	uts_dup5	T9 同 UTS 族成员（+resume hci_reset_dev，实测 suspend 成功）
+vk133	uts_dup5	T9 同 UTS 族成员（+resume serdev re-probe，实测挂死，源码已回退）

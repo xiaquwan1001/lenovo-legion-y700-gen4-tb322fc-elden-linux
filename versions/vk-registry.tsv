@@ -230,3 +230,7 @@ vk127	m1-73-replay	2026-10-17	T3/T4 换机后 M1-7.3 重放（7.3-rc7 + downstre
 vk128	m1-73-replay	2026-10-18	**开启 CONFIG_SUSPEND 的第 1 次尝试（失败，已作废）**：vk127 config + `apply-kernel-fragment.sh`（olddefconfig）加 SUSPEND 组。副作用 = 顺带引入 vk127 没有的 `ARCH_SUPPORTS_KEXEC`/`# CONFIG_KEXEC is not set`（PITFALLS #333）。产物 `out/boot-elden-vk128.img`（已删）、签名版 `bootslot-b/boot_b-vk128.img`（留作证据，96 MiB，公钥 sha1 1e54e86e）。**上机（用户实机 fastboot flash boot_b + reboot）：fastboot 交接后只有背光、SSH 不通、约十几秒后关机**。内核载荷 SHA 前缀 3866edf0befb。见 reports/suspend-enable-vk128-vk129-fail-20261018.md。
 vk129	m1-73-replay	2026-10-18	**开启 CONFIG_SUSPEND 的第 2 次尝试（失败，已作废）**：从 vk127 可用 config（`patches/config-vk127-working-20261018`，sha 9d38ae13）出发，**只**加 SUSPEND 组并把 vk128 多引入的 kexec 项全部移除 ⇒ 与 vk127 的 config diff 仅剩 15 项、全为 suspend 连带项（PITFALLS #333/#336）。cmdline 另加 `printk.always_kmsg_dump` 取 panic 栈。内核载荷 SHA 前缀 e3239f37d6fc、签名版 `bootslot-b/boot_b-vk129.img`。**上机结果与 vk128 相同（只亮背光 + 约 15 s 关机）** ⇒ 排除配置污染，归因 suspend 代码路径本身。`out/boot-elden-vk129.img` 已删。
 vk130	t9	2026-10-20	PCIe qcom skip_l23_ready（T9 方案 A）
+vk131	t9	2026-10-21	vk131 = vk130 + hci_qca FW下载窗口补丁
+vk132	t9	2026-10-21	vk132 = vk131 + qca_resume 重试（被打断的固件下载）
+vk133	t9	2026-10-21	vk133 = vk132 + resume 走 serdev re-probe
+                                                                           

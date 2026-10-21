@@ -1,0 +1,95 @@
+#!/bin/sh
+# 50-elden-bt-guard — elogind system-sleep 钩子：在挂起/唤醒前后给 BT 一个安全边界。
+#
+# 为什么需要（2026-10-21，T9 实测）：
+#   WCN7850 的固件+NVM 下载（qca/brhbtfw20.tlv + qca/brhbtnv20.bin）在 serdev UART 上
+#   实测耗时 ~23 s，而 hci_qca 的 qca_suspend() 只等 FW_DOWNLOAD_TIMEOUT=3 s：
+#      Bluetooth: hci0: SSR or FW download time out
+#      hci_uart_qca serial0-0: PM: dpm_run_callback(): qca_suspend returns -110
+#      PM: Some devices failed to suspend, or early wake event detected
+#   ⇒ 任何落在下载窗口内的 suspend 都会在 3.5 s 被弹出（last_failed_dev=serial0-0）。
+#
+# 本钩子做两件事：
+#   pre  : 如果 BT 正处于「刚上电/固件下载中」窗口，等到窗口结束（最多 WAIT_S 秒）；
+#          仍在下载就 rfkill block 掉 BT 再放行（让 suspend 不被它卡住），并记下标记。
+#   post : 若 pre 曾 block，则恢复原来的 rfkill 状态。
+#
+# 判据来源：dmesg 里 "setting up wcn7850"（固件下载起点）与
+#   "QCA setup on UART is completed"（完成点）的先后顺序。实测下载耗时 ~23 s，
+#   默认等 45 s 足够。不依赖内核补丁 ⇒ 在 vk130 上也能立刻用。
+#
+# 安装：copy 到 /usr/libexec/elogind/system-sleep/ 并 chmod +x（见 scripts/deploy-bt-suspend-guard.sh）
+set -u
+
+WAIT_S=${WAIT_S:-45}
+STATE=/run/elden-bt-guard.state
+LOG=/var/log/elden-bt-guard.log
+
+log() { echo "$(date '+%F %T') [$$] $*" >> "$LOG" 2>/dev/null; }
+
+# elogind 传参：$1 = pre|post，$2 = suspend|hibernate|...
+MODE=${1:-}
+PHASE=${2:-}
+
+bt_settled() {
+	# BT 控制器已完整初始化 = 最后一次 "QCA setup on UART is completed"
+	# 晚于最后一次 "setting up wcn7850"（后者是固件下载开始）。
+	# 2026-10-21 实测踩过两个坑：
+	#   ① hci0 在**固件下载期间根本不存在**（节点在 setup 完成后才出现）；
+	#   ② `hciconfig hci0 | head -2` 会把 UP RUNNING（第 3 行）截掉。
+	# 所以判据只能看 dmesg 顺序，不能看 sysfs/hciconfig 顶部行。
+	dmesg 2>/dev/null | awk '
+		/setting up wcn7850/              { s = NR }
+		/QCA setup on UART is completed/  { d = NR }
+		END { exit !(d && (!s || d > s)) }'
+}
+
+bt_downloading() {
+	# 固件下载窗口 = 最后一次 setup 晚于最后一次 completed
+	dmesg 2>/dev/null | awk '
+		/setting up wcn7850/              { s = NR }
+		/QCA setup on UART is completed/  { d = NR }
+		END { exit !(s && (!d || s > d)) }'
+}
+
+case "$MODE" in
+pre)
+	[ "$PHASE" = "suspend" ] || exit 0
+
+	if bt_settled; then
+		log "pre: BT already settled, nothing to do"
+		exit 0
+	fi
+
+	# 等下载窗口结束，最多 WAIT_S 秒
+	i=0
+	while [ "$i" -lt "$WAIT_S" ]; do
+		bt_settled && { log "pre: BT settled after ${i}s"; exit 0; }
+		sleep 1
+		i=$((i + 1))
+	done
+
+	if bt_downloading; then
+		was=$(rfkill list bluetooth 2>/dev/null | awk '/Soft blocked/{print $3; exit}')
+		log "pre: BT still downloading after ${WAIT_S}s; rfkill block (was soft_blocked=${was:-unknown})"
+		echo "${was:-no}" > "$STATE"
+		rfkill block bluetooth
+	fi
+	;;
+post)
+	[ "$PHASE" = "suspend" ] || exit 0
+	if [ -f "$STATE" ]; then
+		was=$(cat "$STATE" 2>/dev/null)
+		rm -f "$STATE"
+		if [ "$was" = "no" ]; then
+			rfkill unblock bluetooth
+			log "post: restored BT (unblock)"
+		else
+			log "post: BT was already blocked, leaving as is"
+		fi
+	else
+		log "post: nothing to restore"
+	fi
+	;;
+esac
+exit 0

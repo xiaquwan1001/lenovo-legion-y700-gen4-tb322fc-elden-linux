@@ -84,6 +84,7 @@
 | 58 | **#363** `nohup` 起的设备脚本不随终端中断而死：会持续折腾设备 | [58-nohup设备脚本不随终端中断而死.md](sessions/58-nohup设备脚本不随终端中断而死.md) |
 | 59 | **#364** suspend 驻留判定：RTC epoch 写错 ⇒ 闹钟永不触发（假阴性） | [06-脚本工具.md](sessions/06-脚本工具.md) |
 | 59 | 触屏中文输入法三处「看着在跑其实不通」：缺 `fcitx5-gtk` / fcitx5 抢 IM 槽位 / 自编候选条多余 | [59-触屏中文输入法-GTK-IM模块与OSK槽位.md](sessions/59-触屏中文输入法-GTK-IM模块与OSK槽位.md) |
+| 60 | **#365** `loginctl suspend` 异步：DBus 3 ms 返回 ≠ 没挂起，须看 suspend_stats/entry 计数 | [06-脚本工具.md](sessions/06-脚本工具.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
