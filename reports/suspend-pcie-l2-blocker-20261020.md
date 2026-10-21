@@ -1,5 +1,11 @@
 # suspend 待不住的真根因：`qcom-pcie` L2 进入超时 ⇒ WiFi 重探 ⇒ 立即唤醒（2026-10-20）
 
+> **⚠ 2026-10-21 实测修正**：本文把「L2 超时」定为 1.4 s 唤醒的根因，**已被 vk130 上机推翻**。
+> 打上 `skip_l23_ready` 后 `Timeout waiting for L2 entry` 归零，但 suspend 仍失败：
+> 真阻塞 = BT `hci_uart_qca qca_suspend` 3 s 超时（-110，`last_failed_dev=serial0-0`）+ 长挂起后 `ath12k resume -110`；
+> `rfkill block bluetooth` 后 suspend **held 56.5 min**。另：设备 RTC epoch 与 userland 不同，
+> 本文的 `rtcwake -m mem -s 30` 结论部分属测试方法问题。见 `reports/t9-vk130-pcie-l2-live-20261021.md`。
+
 - **结论**：本机 suspend **只能维持约 1.4 秒**，原因是 `qcom-pcie` 进 L2 超时导致 PCIe link 重拉，
   把 WiFi（ath12k）重新上电/重探，随即触发唤醒源退出挂起。
 - **影响**：**T9 掉电率测量在解决此问题前无法进行** —— 挂 1.4 秒的能耗≈0，任何 `%/h` 都是噪声。
