@@ -66,3 +66,38 @@
 - **`linux,booted-from-kexec` 是本轮新加的确定性判据**（比 `uname` 有效，因为 UTS 刻意相同）：目标活着就一定有该属性。C5/C5b 均无 ⇒ **目标未存活到用户态**（或存活极短）。
 - **可见性仍是唯一硬阻塞**：115200 的 gadget console 在开机最吵的 20–40 s 里会丢 65 KB（连 panic 都丢），而 pstore 没接住。下一轮必须先解决观测：报告 §D3 的「第二个 ramoops 节点只给目标用」或把 console 降到 `quiet loglevel=3` 并用独立串口文件。
 - **另加一条设备纪律（已写入本次踩坑）**：`SysRq-b`（`echo b > /proc/sysrq-trigger`）在 DRM 楔死态下能干净冷启（实测 0 hangcheck、DSI enabled），是 `reboot2 bootloader` 卡死时的正确逃生口。
+
+## 6. 观测改造 + 本轮设备实测（23:00–23:30）
+
+**新增 opt-in 观测（`initramfs/init`，仅在 cmdline 显式打开时生效）**：
+`kexec_marker=1` → 挂 `kexec_marker_dev`（默认 /dev/sda17，含 20 s 等设备节点）→ 写 `/var/tmp/kexec-marker.txt`（uptime/kernel/UTC/cmdline）；
+`kexec_marker_reboot=1` → 写完 `reboot -f` 自回默认槽。目的：kexec 目标在纯 RAM initramfs 里**没有可用观测面**（无 NCM 地址、console gadget 太晚枚举），
+该文件是"目标确实执行过 init 代码"的持久证据，且能让设备自己回到可达状态。
+
+**本轮实测（4 轮，每轮 `fastboot boot vk134` 零写盘）**：
+| 轮 | 目标 initrd | 观察 | 判定 |
+|---|---|---|---|
+| slim（无标记） | 1 MB busybox | 串口静默、SSH 不通、fastboot 不通，但 **USB gadget 在 23:14 重新枚举**（新 `/dev/ttyACM0`+`ACM1`） | 【推测】目标活着停在 initramfs（ABL 回 boot_b 的话 SSH 必通）；无法直证 |
+| slim v2（blkid 缺 applet） | 1 MB | 无标记文件 | 标记块执行了但 `blkid` 不存在（slim 无该 applet）⇒ 改显式设备 |
+| slim v3（含等节点） | 1 MB | 无标记文件，设备掉电重启（用户目视） | 仍未取到标记；`/dev/sda17` 或许在那一刻还没枚举完 |
+| 全 rootfs（R2/C5） | 64 MB | 回 boot_b，无 `linux,booted-from-kexec` | 【已证实】未存活到用户态 |
+
+**结论口径**：`kexec` 到 `Starting new kernel` 100% 成立（4/4）；**目标内核是否进入用户态仍未证实**（正证据只到"gadget 被重新初始化"这种间接层面）。
+下一步若要收口，必须先让目标可观测，优先级：① 标记文件（已实现，等一轮干净复跑）；② 目标专用第二个 ramoops（DTS 8 行）；③ 硬件 UART（不具备）。
+
+## 7. f2fs E0 主机实验（已完成，含关键限制）
+
+镜像：`/home/xuqianhui/f2e0.img`（8 GiB, loop0），`mkfs.f2fs -O extra_attr,inode_checksum,sb_checksum,compression`，挂 `/mnt/f2`。
+
+| 项 | 结果 |
+|---|---|
+| mkfs / fsck | format successful（overprovision 1.67%、GC 预留 66 段）；`fsck.f2fs -f` **0 错误** |
+| 4K+fsync ×200 @3% 占用 | avg **6.046** ms / p50 6.009 / p95 6.123 / max 10.2 |
+| 顺序写 512 MiB + fsync | 0.36 s（≈1.5 GB/s） |
+| 填盘到 100% | 7.8 GiB / 4.3 s 后 `ENOSPC`（符合 f2fs 预留语义） |
+| 4K+fsync ×200 @93.2% 占用 | avg **6.053** ms / p95 6.144 ⇒ **无退化** |
+| `free_segments` @93% | 342（GC 仍有充足余量） |
+
+**限制（必须写进结论，别当性能结论用）**：台架是 **loop 文件叠在 NVMe/ext4 上**，6 ms 地板由 loop+host fsync 决定，不是 f2fs 本身；
+且 342 个空闲段意味着**没触发高利用率 GC 悬崖**（文献那套 97.5%→−30% 需要持续写入把 GC 逼到回收站）。⇒ E0 只证明「工具链/参数/挂载语义正常」，
+不能证明「f2fs 在这颗 UFS 上快/慢」。要测 GC 必须上跑真块设备（E2，有写盘风险）。

@@ -264,6 +264,49 @@ fi
 
 log "Alpine rootfs up, kernel $(uname -r)"
 
+# --- kexec target marker (opt-in: kexec_marker=1 on the command line) --------
+# WHY: a kexec handoff into a RAM-only initramfs has no network and its console
+# gadget re-enumerates too late to be read, so "did the target kernel survive?"
+# was unobservable (2026-10-21).  When requested, mount the disk root rw for a
+# moment and drop a timestamped file there: the next boot can read it, which
+# proves the target reached userspace-independent init code.
+if [ -n "$kexec_marker" ]; then
+	# slim initramfs has no blkid applet; allow an explicit device
+	mdev=${kexec_marker_dev:-}
+	[ -n "$mdev" ] || mdev=$(blkid -L linux17 2>/dev/null)
+	[ -n "$mdev" ] || [ -b /dev/sda17 ] && [ -z "${mdev:-}" ] && mdev=/dev/sda17
+	# slim initramfs has no udev/mdev: the UFS nodes may not exist yet
+	i=0
+	while { [ -z "${mdev:-}" ] || [ ! -b "$mdev" ]; } && [ "$i" -lt 200 ]; do
+		sleep 0.1; i=$((i + 1))
+		[ -b /dev/sda17 ] && [ -z "${mdev:-}" ] && mdev=/dev/sda17
+	done
+	if [ -n "$mdev" ]; then
+		mkdir -p /mnt/mark
+		if mount -o rw,noatime "$mdev" /mnt/mark; then
+			mkdir -p /mnt/mark/var/tmp
+			printf 'alive uptime=%s kernel=%s ts=%s cmdline=%s\n' \
+				"$(cat /proc/uptime)" "$(uname -r)" \
+				"$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(cat /proc/cmdline)" \
+				> /mnt/mark/var/tmp/kexec-marker.txt
+			sync
+			umount /mnt/mark
+			log "kexec_marker: wrote /var/tmp/kexec-marker.txt on $mdev"
+			# Opt-in auto-return: prove liveness AND get us back to a
+			# reachable kernel without anyone pressing a button.
+			if [ -n "$kexec_marker_reboot" ]; then
+				log "kexec_marker: rebooting back to the default slot"
+				sync
+				reboot -f
+			fi
+		else
+			warn "kexec_marker: cannot mount $mdev rw"
+		fi
+	else
+		warn "kexec_marker: no LABEL=linux17 found"
+	fi
+fi
+
 # --- USB: NCM network + ACM console composite (see /usr/local/sbin/usb-gadget)
 # Waits for the dwc3 UDC to appear, so run it in the background and set up
 # networking once usb0 exists.
