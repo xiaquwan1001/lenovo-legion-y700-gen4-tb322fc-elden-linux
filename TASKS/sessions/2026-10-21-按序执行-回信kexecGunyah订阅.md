@@ -53,3 +53,16 @@
 - `TASKS/README.md` §4 第 10 条（kexec）：补一行「**2026-10-21 实测：mask=1 在 7.3 成立，到 `Starting new kernel`；目标未进用户态（R1 无 initrd / R2 有 initrd 都回 boot_b）⇒ 下一步 C5 单变量**」。
 - `PITFALLS` §19（重启通道）：新增一条「显示/GPU 故障态下 `reboot2 bootloader` 卡死，需手动重启；切前先查 `hangcheck recover|gpu fault` 计数」。
 - `TASKS/README.md` §4 T13 行：把「kexec 建议动手」改为「已动手，见本节 §2」。
+
+## 5. 追加：C5 单变量（`arm-smmu.disable_bypass=1`）两轮 —— 仍不存活
+
+| 轮 | 目标 cmdline | 结果 | trial |
+|---|---|---|---|
+| C5 | `disable_bypass=0→1` + initrd + `nokaslr` | 到 `Starting new kernel`；串口 32 s 后重连，目标新时间线后又丢 **65 104 B**；live 无 `/sys/kernel/kexec_diag`、`/proc/device-tree/chosen/` **无 `linux,booted-from-kexec`** ⇒ 回来的不是目标 | `20261021T143106Z-kexec-c5-bypass1-vk134.json` |
+| C5b | 同 C5 + `quiet loglevel=4`（降串口丢包） | 同上仍回 boot_b；`/sys/fs/pstore/` **无 recovered 记录**（ramoops 已注册但没留下目标的东西） | `20261021T143106Z-kexec-c5b-bypass1-quiet-vk134.json` |
+
+**判读**：
+- **H1（SMMU 残留 stream 直通踩内存）单变量未救活** ⇒ bypass=1 不是解；H1 既未证实也未排除（改成 FAULT 也许只是把踩内存换成 fault 风暴）。
+- **`linux,booted-from-kexec` 是本轮新加的确定性判据**（比 `uname` 有效，因为 UTS 刻意相同）：目标活着就一定有该属性。C5/C5b 均无 ⇒ **目标未存活到用户态**（或存活极短）。
+- **可见性仍是唯一硬阻塞**：115200 的 gadget console 在开机最吵的 20–40 s 里会丢 65 KB（连 panic 都丢），而 pstore 没接住。下一轮必须先解决观测：报告 §D3 的「第二个 ramoops 节点只给目标用」或把 console 降到 `quiet loglevel=3` 并用独立串口文件。
+- **另加一条设备纪律（已写入本次踩坑）**：`SysRq-b`（`echo b > /proc/sysrq-trigger`）在 DRM 楔死态下能干净冷启（实测 0 hangcheck、DSI enabled），是 `reboot2 bootloader` 卡死时的正确逃生口。

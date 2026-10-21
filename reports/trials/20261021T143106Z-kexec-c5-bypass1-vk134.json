@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c5-bypass1-vk134",
+  "ts": "2026-10-21T14:31:06Z",
+  "vk": "vk134",
+  "image": "out/boot-elden-vk134.img",
+  "image_sha256": "342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65",
+  "manifest": "out/boot-elden-vk134.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "MID",
+  "log_dir": "",
+  "note": "C5 H1单变量: 目标 cmdline disable_bypass=0→1 + initrd + nokaslr。仍到 Starting new kernel；串口 32s 后重连、目标新时间线后串口丢 65KB；live 无 kexec_diag、chosen 无 linux,booted-from-kexec ⇒ 未证目标进用户态；H1 单变量未救活"
+}

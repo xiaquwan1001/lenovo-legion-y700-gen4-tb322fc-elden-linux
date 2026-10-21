@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c5b-bypass1-quiet-vk134",
+  "ts": "2026-10-21T14:31:06Z",
+  "vk": "vk134",
+  "image": "out/boot-elden-vk134.img",
+  "image_sha256": "342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65",
+  "manifest": "out/boot-elden-vk134.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "MID",
+  "log_dir": "",
+  "note": "C5b: 同 C5 但 loglevel=4 quiet（降串口丢包）。仍回 boot_b；pstore 无 recovered 记录 ⇒ 目标要么早死要么无 panic 硬复位；可见性仍是唯一阻塞"
+}
