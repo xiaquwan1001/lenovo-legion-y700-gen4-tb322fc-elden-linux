@@ -166,3 +166,16 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-22T12:09:30Z	q28disp-base	vk137-q28base	por	fastboot-boot	GOOD	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T120929Z-q28disp-base
 2026-10-22T12:11:24Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T121124Z-q28disp-exp
 2026-10-22T12:12:30Z	q28disp-base	vk137-q28base	por	fastboot-boot	STORM	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T121226Z-q28disp-base
+2026-10-22T12:16:10Z	q28disp-base	vk137-q28base	por	fastboot-boot	STORM	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T121603Z-q28disp-base
+2026-10-22T12:17:19Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T121718Z-q28disp-exp
+2026-10-22T12:18:30Z	q28disp-0155only	vk139-q28only0155	por	fastboot-boot	GOOD	dcb49fef7977	/home/xuqianhui/y700-elden/reports/trials/20261022T121830Z-q28disp-0155only
+2026-10-22T12:19:40Z	q28disp-base	vk137-q28base	por	fastboot-boot	GOOD	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T121939Z-q28disp-base
+2026-10-22T12:20:41Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T122041Z-q28disp-exp
+2026-10-22T12:22:21Z	q28disp-0155only	vk139-q28only0155	por	fastboot-boot	STORM	dcb49fef7977	/home/xuqianhui/y700-elden/reports/trials/20261022T122214Z-q28disp-0155only
+2026-10-22T12:23:41Z	q28disp-base	vk137-q28base	por	fastboot-boot	GOOD	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T122341Z-q28disp-base
+2026-10-22T12:24:47Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T122447Z-q28disp-exp
+2026-10-22T12:25:54Z	q28disp-0155only	vk139-q28only0155	por	fastboot-boot	STORM	dcb49fef7977	/home/xuqianhui/y700-elden/reports/trials/20261022T122550Z-q28disp-0155only
+2026-10-22T12:27:00Z	q28disp-base	vk137-q28base	por	fastboot-boot	STORM	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T122654Z-q28disp-base
+2026-10-22T12:27:53Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T122753Z-q28disp-exp
+2026-10-22T12:29:15Z	q28disp-0155only	vk139-q28only0155	por	fastboot-boot	STORM	dcb49fef7977	/home/xuqianhui/y700-elden/reports/trials/20261022T122909Z-q28disp-0155only
+2026-10-22T12:30:17Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T123017Z-q28disp-exp

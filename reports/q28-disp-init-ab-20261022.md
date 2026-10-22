@@ -107,10 +107,44 @@ CMDLINE_EXTRA=elden_nocamera=1 bash scripts/build-boot.sh
 3. **一处与历史口径吻合的细节**：base 的两个 GOOD 样本也有 `lockfail=4` ⇒ **单看 `DSI PLL(0) lock failed` 不是 STORM 的充分条件**（与 `PITFALLS #277` 一致）；但把该失败消掉后，本 5 发里 STORM 没再出现。
 4. 暖起（vk138，非 POR）同样 GOOD，`lockfail=0` —— 暖路径本就基本 GOOD，故只作「不破坏」证据。
 
+## 6b. 第二轮：加入 `only0155` 臂拆贡献（2026-10-22 20:16–20:30，共 23 发真实 POR）
+
+为区分两条补丁各自的作用，加构建第三臂 **`vk139-q28only0155` = base + 仅 0155**（revert 0154 的 27 行；树/config/ramdisk/DTB/cmdline/PINUTS 与另两臂逐字节一致）。
+
+### 汇总（全部真实 POR，交替采样）
+
+| 臂 | 镜像 | n | GOOD | STORM | `DSI_PLL_lockfail`（每发） |
+|---|---|---|---|---|---|
+| base | vk137 | 9 | 4 | **5（56%）** | 4,4,4,4,4,4,4,4,4 |
+| **exp（0154+0155）** | vk138 | 10 | **10** | **0** | 0 ×10 |
+| only0155 | vk139 | 4 | 1 | **3（75%）** | 0 ×4 |
+
+### 统计
+
+- exp vs base：Fisher 双侧 **p = 0.011**（0/10 vs 5/9）⇒ **达显著**。
+- only0155 vs base：p = 1.0（3/4 vs 5/9）⇒ **0155 单独对 STORM 无作用**。
+- exp vs only0155：p = 0.011 ⇒ **0154 是消 STORM 的那一条**。
+
+### ★ 机制解离（本轮最有价值的结论）
+
+| 端点 | 由谁决定 | 证据 |
+|---|---|---|
+| `DSI PLL(0) lock failed`（PLL 未锁） | **0155**（`DIGTOP_PWRDN_B`） | base 9/9 有 ×4；only0155 与 exp 均 0 |
+| **STORM（cmd-DMA `0x2200200` 超时 / 面板 init -5）** | **0154**（dispcc probe 复位活显示） | only0155 仍 3/4 STORM 且 **PLL 锁是好的**；exp 0/10 |
+
+⇒ 两条历史判断同时被修正：
+1. **PLL 锁失败不是 STORM 的成因**（only0155 4/4 PLL 锁上，仍 3/4 STORM）——与 `PITFALLS #277/#31` 方向一致，但现在有直接对照。
+2. **STORM 的对症点是「显示块在 probe 时是活状态」**（bootloader 留下的 dispcc PLL/BCR 状态），probe 断言-释放三个 BCR 后 STORM 在该臂 10/10 未复现。
+3. exp 臂同时把 PLL lockfail 打到 0 ⇒ 两条一起上仍有意义（PLL 锁失败虽不致命，但会让 pixel clock 使能计数失衡、留下早期噪声）。
+
+### 样本记录
+
+`reports/trials/20261022T1158…–1230…-q28disp-{base,exp,0155only}.json`（23 发；每发含 dmesg 全文 / probe / env / manifest 身份）。
+
 ## 7. 下一步（按性价比）
 
-1. **扩样到各 10 发**（再 10 次 POR，交替）：若 exp 10/10 且 base ≥4/10 坏 ⇒ 双侧 p<0.05，可进 DOSSIER 作为「首次坏发可治」的第一条正面证据。
-2. **拆分 0154 / 0155 贡献**（0155-only 臂）：机制端点已指向 0155，0154 是否必要需单变量；成本 = 1 次构建 + N 次 POR。
+1. ~~扩样到各 10 发~~ ✅ 已做：exp 10/10、base 5/9 STORM（p=0.011）。
+2. ~~拆 0154/0155 贡献~~ ✅ 已做：**0154 = STORM 对症，0155 = PLL 锁对症**（见 §6b）。
 3. 若扩样通过：把 `0154`(或仅 0155) + 现有软件闩锁/`link_configured` 修复**合并成候选日常镜像**，再按 Q28 验收口径（取得稳定 GOOD 冷起）走持久化。
 4. 未做：0153（video teardown 顺序，hunk 与本仓 7.2 树对不上，需逐段比）。
 

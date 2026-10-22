@@ -6,7 +6,7 @@
 # reference/upstream-armadaos-freedom/README.md §5.1、reports/q28-disp-init-ab-20261022.md
 #
 # 用法：
-#   scripts/q28-disp-ab-sample.sh base|exp ["备注"]
+#   scripts/q28-disp-ab-sample.sh base|exp|only0155 ["备注"]
 #
 # 前提（物理动作只能由用户执行，冷起必须真实 POR）：
 #   1. 长按电源键 ~10 s 关机（真断电；`reboot bootloader` 是暖复位，会粘 NOCARD，不能当冷起台架）
@@ -23,9 +23,10 @@ TAB=${TAB:-root@fe80::1e:5eff:feed:e101%enx021e5eede102}
 arm=${1:-}
 note=${2:-}
 case "$arm" in
-	base) label=q28disp-base; img=$ROOT/out/boot-elden-vk137-q28base.img ;;
-	exp)  label=q28disp-exp;  img=$ROOT/out/boot-elden-vk138-q28disp.img ;;
-	*) echo "usage: $0 base|exp [note]" >&2; exit 2 ;;
+	base)    label=q28disp-base;     img=$ROOT/out/boot-elden-vk137-q28base.img ;;
+	exp)     label=q28disp-exp;      img=$ROOT/out/boot-elden-vk138-q28disp.img ;;
+	only0155) label=q28disp-0155only; img=$ROOT/out/boot-elden-vk139-q28only0155.img ;;
+	*) echo "usage: $0 base|exp|only0155 [note]" >&2; exit 2 ;;
 esac
 [ -f "$img" ] || { echo "缺镜像 $img（见 reports/q28-disp-init-ab-20261022.md 重建配方）" >&2; exit 2; }
 
