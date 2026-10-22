@@ -1,0 +1,18 @@
+{
+  "label": "q28disp-daily73",
+  "ts": "2026-10-22T13:51:44Z",
+  "vk": "vk145-q28daily",
+  "image": "/home/xuqianhui/y700-elden/out/boot-elden-vk145-q28daily.img",
+  "image_sha256": "e7c8539c9f1a07872b14a9d2036765d99fc9f7d288b5bf9068721fbaa64e3137",
+  "manifest": "/home/xuqianhui/y700-elden/out/boot-elden-vk145-q28daily.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "e24c7d5086f182b793ee60794fc5bf420bbd2fb549ea1be7ab84431a7e080315",
+  "config_sha256": "1d3e63b20366679a88a0f9ba3a0f9244e31c945d5379328c1f8f8b3a2852eb5a",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261022T135144Z-q28disp-daily73",
+  "note": "0154+0155 冷起 A/B；vk145 验收 r4"
+}

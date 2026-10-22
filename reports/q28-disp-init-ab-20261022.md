@@ -227,3 +227,30 @@ CMDLINE_EXTRA=elden_nocamera=1 bash scripts/build-boot.sh
 
 - 设备内存里跑的是最后一发 `vk143`（STORM 态）；`boot_b` 仍是 `vk127`，**一次 POR 即回日常**，建议先充电。
 - 未刷任何分区，全程 `fastboot boot` 零写盘。
+
+## 10. ★ 日常线候选 `vk145` 冷起验收（2026-10-22 21:47–21:57，8 发真实 POR）
+
+**构建**：`m1-73@24223e44ad80`（= 在机 vk127 同源）+ **0154** + **0155** + 软件侧两修；ramdisk/DTB/cmdline 取 vk127 原件逐字节不变；UTS 同 vk127（复用机内模块树）。
+
+软件侧两修（来自 2026-10-22 现场取证 `TASKS/sessions/2026-10-22-Q28软件闩锁与link_configured误清.md`）：
+
+| | 缺陷 | 修法 |
+|---|---|---|
+| **A** | `dsi_bonded_cmd_failed` 是**单向闩锁**（全树只有置位、零清零点）⇒ 一次坏发后所有 `bridge_*`/`cmd_xfer` 永久短路 | ①`dsi_mgr_bridge_power_on()` 成功路径 `WRITE_ONCE(dsi_bonded_cmd_failed, false)`；②`dsi_mgr_bridge_power_off()` 不再因闩锁跳过 `disable_irq`/`power_off`；③`dsi_mgr_bridge_post_disable()` 闩锁置位时 `goto disable_irq`（只跳过 link 相关的 host disable，保留 IRQ/power 清理）——顺带消掉 `Unbalanced enable for IRQ 188/189` |
+| **B** | `msm_dsi_host_set_display_mode()` 无条件清 `link_configured`，而它排在 atomic 的 `pre_enable`/`power_on` 之后 ⇒ 每次唤醒必 `-ESTALE` | 只在 `!power_on` 时清；`power_on` 末尾置位的语义（"link 已按当前 rate 编程"）不被破坏 |
+
+**验收结果（真实 POR 冷起，交替与今日 daily 对照）**
+
+| 臂 | n | GOOD | 失败形态 |
+|---|---|---|---|
+| daily（在机 `vk127` 原件） | 4 | **0** | NOROUTE（150 s 无 SSH）×1、STORM ×3 |
+| **候选 `vk145`** | **8** | **8** | — |
+
+- **Fisher 双侧 p = 0.002**（8/8 vs 0/4）。
+- 8 发全部：`card0` 在、`card0-DSI-1=connected`、`storm_sig=0`、`DSI_PLL_lockfail=0`。
+- 当前这一发（第 8 发）附加核对：`phoc=1`、`phosh=1`、`/`=`/dev/sda17 ext4`、dmesg 中 `bonded command DMA failed`/`stale link` **0 次**。
+- ⚠ 仍未解释/未修：7.3 线 `fastrpc` 的 `-22` 刷屏在 vk145 上照旧（327–366 行/发），与本候选无关（见 §9.3）。
+
+**判读**：这是本仓第一条**日常线**上「冷起 STORM 0/8」的候选镜像；机制上是「0154 清掉 bootloader 留下的活显示状态」+「A/B 修掉坏发不可恢复性」的组合，两者互补（前者防首次坏发，后者让偶发坏发可自愈）。
+
+**未做**：持久化（写 `boot_b`）——需先做 96 MiB 签名镜像 + 写后读回校验，且属写盘动作，等明确指令。
