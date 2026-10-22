@@ -152,3 +152,7 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-22T05:37:56Z	kexec-c11-diskroot-fullinitrd-vk134	vk134	warm	none	FAIL	342ff21618b7	
 2026-10-22T05:55:06Z	kexec-c12-slim-diskcmdline-vk134	vk134	warm	none	FAIL	342ff21618b7	
 2026-10-22T05:55:06Z	kexec-c13-slim-plus-eldenroot-vk134	vk134	warm	none	FAIL	342ff21618b7	
+2026-10-22T06:41:51Z	kexec-c14-pstore-visibility-control-vk127	vk134	warm	none	MID	342ff21618b7	
+2026-10-22T06:54:25Z	kexec-c15-ramoops-recordsize-vk136	vk136	warm	none	MID	4883f6cea267	
+2026-10-22T06:58:22Z	kexec-c15b-panic0-device-stuck	vk136	warm	none	FAIL	4883f6cea267	
+2026-10-22T07:02:59Z	kexec-c16-panic-visible-on-vk135	vk135	warm	none	FAIL	be5fe313869b	

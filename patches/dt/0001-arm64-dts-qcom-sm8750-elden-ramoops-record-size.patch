@@ -1,0 +1,28 @@
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index aa28614..9f196da 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1457,11 +1457,21 @@ vreg_wlan_pmu_pcie_1p8: ldo9 {
+ 	};
+ 
+ 	reserved-memory {
++		/*
++		 * 8 MiB so a *separate* panic/oops record area can exist next to
++		 * the console ring.  Without `record-size` the kernel has no
++		 * persistent dmesg/oops region at all: the only sink is the
++		 * console ring, which the *next* boot's printk overwrites long
++		 * before pstore-catch can archive it.  Measured 2026-10-22:
++		 * a real `echo c > /proc/sysrq-trigger` left /sys/fs/pstore
++		 * completely empty, so kexec-target panics were unobservable.
++		 */
+ 		ramoops@c2000000 {
+ 			compatible = "ramoops";
+-			reg = <0 0xc2000000 0 0x400000>;
++			reg = <0 0xc2000000 0 0x800000>;
++			record-size = <0x200000>;
+ 			console-size = <0x200000>;
+-			pmsg-size = <0x200000>;
++			pmsg-size = <0x400000>;
+ 			no-map;
+ 		};
+ 

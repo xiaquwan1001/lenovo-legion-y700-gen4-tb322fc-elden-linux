@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c14-pstore-visibility-control-vk127",
+  "ts": "2026-10-22T06:41:51Z",
+  "vk": "vk134",
+  "image": "out/boot-elden-vk134.img",
+  "image_sha256": "342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65",
+  "manifest": "out/boot-elden-vk134.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "MID",
+  "log_dir": "",
+  "note": "可见性阳性对照(C2)：在当前内核 echo c > sysrq-trigger 强 panic。boot_id 498bc746→1697f8af 确认真重启，间隔23s≈panic=20。结果：/sys/fs/pstore 空、/var/log/pstore 无新归档 ⇒ 真 panic 不入 ramoops。根因定位：DTS ramoops@c2000000 只配 console-size/pmsg-size，缺 record-size；且 pstore-console 是环形缓冲，新启动的 printk 立刻覆盖它，因此 panic 段在归档前已被同一次启动的前期日志挤掉。次要发现：pstore-catch 服务机制本身完好(有10份历史归档)，最新归档 19700105-034000 内含装载内核 vk134 从 Booting 到 Bye! 的完整 console（含 C13 的 kexec_core stage=10..14），证明 ramoops 能跨 kexec/跨启动保留【装载方】输出"
+}

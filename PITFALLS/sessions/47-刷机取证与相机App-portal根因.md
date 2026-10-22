@@ -67,7 +67,15 @@ apk add xdg-desktop-portal-gnome                         ⇒ 修法
 - 下一步必须先取栈：
   - vk129 的 cmdline 已加 `printk.always_kmsg_dump`；ramoops 在 DT（`ramoops@c2000000`，16 KiB）、
     `CONFIG_PSTORE_RAM=y` ⇒ 失败重启后 `mount -t pstore pstore /sys/fs/pstore && ls`。
-  - 若 pstore 空：改 `panic=0`（不自动重启）或走 `/dev/ttyGS0` 串口抓完整 dmesg。
+  - 若 pstore 空：走 `/dev/ttyGS0` 串口抓完整 dmesg。**⚠️ 不要再建议 `panic=0`**（2026-10-22 实测反证）：
+    `kernel.panic=0` 会让 panic 后**停在原地不自救**——USB gadget 掉出、串口关闭、SSH/fastboot 全不可达，
+    每轮都必须人工长按电源键；而 `panic=0` 想换来的「ramoops 不被新启动覆盖」也**没兑现**（panic 时刻串口与 ramoops 都无 panic 文本）。
+    正确取舍 = `panic=5` 级：设备自暖复位回 boot_b，`pstore-catch` 下次启动自动归档，暖复位不掉电则 ramoops 应保留。
+  - 另一条更硬的坑：`/etc/sysctl.d/99-freeze-trace.conf` 硬写 `kernel.panic = 20`，**覆盖 cmdline 的 `panic=`**；
+    做 panic 可见性实验必须改运行时 `echo N > /proc/sys/kernel/panic`，改 cmdline 无效。
+  - `record-size` 缺失会让「panic 进 pstore」根本不成立：DTS 只有 `console-size`/`pmsg-size` 时内核**没有独立的 panic/oops 持久区**，
+    唯一出口是 console 环形缓冲，会被下一次启动的 printk 立刻覆盖。实测：真 `echo c > sysrq-trigger` 后 `/sys/fs/pstore` 全空。
+    加了 `record-size` 后 `dmesg` 才首次出现 `pstore: Using crash dump compression: deflate`（= record 区生效的标志）。
 - 静态怀疑点（未验）：`CONFIG_PM_GENERIC_DOMAINS_SLEEP=y` 让 genpd 参与
   `genpd_power_off_unused`，可能关掉启动关键电源域（本机 `rpmhpd` 的 `sync_state` 门控在开机窗口
   一次性求值，见 Q24/N1b）。二分：只开 `SUSPEND=y` 而 `PM_GENERIC_DOMAINS_SLEEP=n`。

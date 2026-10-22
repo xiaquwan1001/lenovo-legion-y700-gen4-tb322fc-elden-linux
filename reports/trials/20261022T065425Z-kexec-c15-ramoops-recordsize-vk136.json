@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c15-ramoops-recordsize-vk136",
+  "ts": "2026-10-22T06:54:25Z",
+  "vk": "vk136",
+  "image": "out/boot-elden-vk136.img",
+  "image_sha256": "4883f6cea267dc510d06be8f13785cd6643e9b13092c87a7e3126905de3c2b29",
+  "manifest": "out/boot-elden-vk136.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "0b614a3c58430280e8dd7bf7bd3c449515b61bdb9297dd662a154e82b7a9a308",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "MID",
+  "log_dir": "",
+  "note": "可见性改造：DTS ramoops@c2000000 从 4MiB(console2M+pmsg2M) 扩到 8MiB 并新增 record-size=0x200000(console 2M + pmsg 4M)。上机核实：dmesg 出现 'ramoops: using 0x800000@0xc2000000' + 首次出现 'pstore: Using crash dump compression: deflate' ⇒ record 区生效。阳性对照(panic)：先 echo 0 > /proc/sys/kernel/panic 绕过 /etc/sysctl.d/99-freeze-trace.conf 的 kernel.panic=20，再 echo c > sysrq-trigger。设备停在 panic 中(USB gadget 在、SSH 断、串口无新增) ⇒ panic=0 生效，ramoops 现场未被新启动覆盖，等人工按键后读归档。附带发现：/etc/sysctl.d/99-freeze-trace.conf 硬写 kernel.panic=20 会覆盖 cmdline 的 panic= 值，做 panic 可见性实验必须改运行时值"
+}

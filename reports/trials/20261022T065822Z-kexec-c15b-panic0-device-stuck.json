@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c15b-panic0-device-stuck",
+  "ts": "2026-10-22T06:58:22Z",
+  "vk": "vk136",
+  "image": "out/boot-elden-vk136.img",
+  "image_sha256": "4883f6cea267dc510d06be8f13785cd6643e9b13092c87a7e3126905de3c2b29",
+  "manifest": "out/boot-elden-vk136.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "0b614a3c58430280e8dd7bf7bd3c449515b61bdb9297dd662a154e82b7a9a308",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "方法错误(非设备问题)：为验证 ramoops 能否接住 panic，把 kernel.panic 设为 0 使 panic 后停住不重启。代价 = 设备卡在 panic 内无法自救(USB 掉出、串口关闭、SSH/ fastboot 均不可达)，每轮都要人工按键，且 panic 时刻串口也没有任何 panic 输出。正确取舍应为 panic=5 级别(设备自暖复位回 boot_b，pstore-catch 下次启动自动归档，不掉电则 ramoops 应保留)。教训：可见性实验不应以设备失控为代价"
+}

@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c16-panic-visible-on-vk135",
+  "ts": "2026-10-22T07:02:59Z",
+  "vk": "vk135",
+  "image": "out/boot-elden-vk135.img",
+  "image_sha256": "be5fe313869b2faefc72fc016fb61bdff4477e1ab6c4a9eff1299b6b5b384bd4",
+  "manifest": "out/boot-elden-vk135.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "0b614a3c58430280e8dd7bf7bd3c449515b61bdb9297dd662a154e82b7a9a308",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "带 record-size 的 vk135(8MiB + deflate 已核实) 上触发 sysrq crash：串口第一次完整抓到 panic 栈('Kernel panic - not syncing: sysrq triggered crash' + dump_stack/vpanic/panic/sysrq_handle_crash)，panic=20 暖复位 20s 自恢复(无需按键)。但恢复后 dmesg 显示 'ramoops: using 0x400000' = 4MiB ⇒ 自复位回 boot_b，而 boot_b 的 DTB 仍是旧的(无 record-size)。ram_core.c persistent_ram_post_init 用 sig(含 zone type)校验，签名不匹配即 zap ⇒ 新 record 区不被识别、panic 内容不可回收。/dev/mem 读 c2400000 被 CONFIG_STRICT_DEVMEM 拒绝。⇒ 结论：ramoops 通道要生效，恢复启动的内核必须也带 record-size 的 DTB；仅改 fastboot boot 的镜像不够，需把新 DTB 落到 boot_b(写操作)"
+}
