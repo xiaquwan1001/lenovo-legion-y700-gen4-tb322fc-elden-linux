@@ -1,4 +1,4 @@
-From: Qinghuan Xiao <xiaqinghuan@mail.ustc.edu.cn>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Subject: [RFC PATCH] clk: qcom: dispcc-sm8750: reset the MDSS blocks at probe when the bootloader left them running
 
 On Lenovo Legion Y700 Gen4 (SM8750, "lenovo,elden") the bootloader hands
@@ -50,7 +50,7 @@ behaviour above: an image with only that change still failed 3 of 4 cold
 boots with the PLL reported locked.  So the two are independent, and the
 DIGTOP change looks correct on its own.
 
-Signed-off-by: Qinghuan Xiao <xiaqinghuan@mail.ustc.edu.cn>
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
  drivers/clk/qcom/dispcc-sm8750.c | 35 ++++++++++++++++++++++++++
  1 file changed, 35 insertions(+)

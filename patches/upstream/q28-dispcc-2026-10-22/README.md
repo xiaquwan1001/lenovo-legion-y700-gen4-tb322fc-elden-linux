@@ -1,8 +1,11 @@
 # 上游 RFC：dispcc-sm8750 在 probe 复位 MDSS 块（2026-10-22）
 
-- **状态**：**未发送**。主机 perl 运行时损坏（`/usr/lib/x86_64-linux-gnu/perl-base/Tie/Hash.pm` 被写坏，
-  `perl -e 'use POSIX'` 直接编译失败）⇒ `scripts/checkpatch.pl` 与 `git send-email`（均为 Perl）都跑不起来。
-  等系统 `perl-base` 重装后：先 `checkpatch.pl --strict`，再按 `upstream-mail-ustc` 技能发送与 lore 复核。
+- **状态**：✅ **已发送并归档（2026-10-22 22:08:10 +0800）**。
+  - `checkpatch.pl --no-tree --strict`：**0 errors / 0 warnings / 0 checks**。
+  - `git send-email`（USTC，250 OK），Message-ID **`20261022140811.469417-1-xiaqinghuan@mail.ustc.edu.cn`**。
+  - 归档复核：`/linux-arm-msm/`、`/linux-clk/` 均按 Message-ID 取 raw 成功，**正文 diff 与本地逐字节相同**
+    （sha256 `289c065c17867c7a…`）；`dri-devel`（lists.freedesktop.org，非 vger）归档暂未出现，待复核。
+  - 历史：发送前主机 `perl-base` 曾被写坏（`Tie/Hash.pm` 内容错乱）⇒ `checkpatch`/`git send-email` 全部不可用，重装后恢复。
 - **内容**：`0001-*.patch` 是完整邮件（含 `From:`/`Subject:`/正文/`Signed-off-by`/diff），
   基于 `build/q28-disp-73`（m1-73 `24223e44ad80`）的 dispcc 改动，已用 `git apply --check --reverse` 验证、
   并单独编译通过（`make drivers/clk/qcom/dispcc-sm8750.o`）；已手工核对 80 列 / 行尾空白。
