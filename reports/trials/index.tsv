@@ -156,3 +156,13 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-22T06:54:25Z	kexec-c15-ramoops-recordsize-vk136	vk136	warm	none	MID	4883f6cea267	
 2026-10-22T06:58:22Z	kexec-c15b-panic0-device-stuck	vk136	warm	none	FAIL	4883f6cea267	
 2026-10-22T07:02:59Z	kexec-c16-panic-visible-on-vk135	vk135	warm	none	FAIL	be5fe313869b	
+2026-10-22T11:58:13Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T115813Z-q28disp-exp
+2026-10-22T12:00:08Z	q28disp-base	vk137-q28base	por	fastboot-boot	STORM	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T120004Z-q28disp-base
+2026-10-22T12:03:16Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T120316Z-q28disp-exp
+2026-10-22T12:04:47Z	q28disp-base	vk137-q28base	por	fastboot-boot	STORM	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T120442Z-q28disp-base
+2026-10-22T12:06:04Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T120604Z-q28disp-exp
+2026-10-22T12:07:23Z	q28disp-base	vk137-q28base	por	fastboot-boot	GOOD	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T120722Z-q28disp-base
+2026-10-22T12:08:27Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T120826Z-q28disp-exp
+2026-10-22T12:09:30Z	q28disp-base	vk137-q28base	por	fastboot-boot	GOOD	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T120929Z-q28disp-base
+2026-10-22T12:11:24Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T121124Z-q28disp-exp
+2026-10-22T12:12:30Z	q28disp-base	vk137-q28base	por	fastboot-boot	STORM	7fb5a8fee99b	/home/xuqianhui/y700-elden/reports/trials/20261022T121226Z-q28disp-base

@@ -84,7 +84,37 @@ CMDLINE_EXTRA=elden_nocamera=1 bash scripts/build-boot.sh
 - 两臂混合 ⇒ 与「成簇随机」一致，样本量不足以下结论，需按上一条扩样。
 - **每发之间必须 POR**，不得用 `reboot bootloader` 连打。
 
-## 6. 未做 / 限制
+## 6. 上机结果（2026-10-22 20:00–20:13，10 发真实 POR 冷起，交替 exp/base）
+
+| # | 臂 | 镜像 | uptime@probe | `DSI_PLL_lockfail` | `storm_sig` | 判读 |
+|---|---|---|---|---|---|---|
+| 1 | exp | vk138 | 12.7 s | 0 | 0 | **GOOD** |
+| 2 | base | vk137 | 16.8 s | 4 | 13 | **STORM** |
+| 3 | exp | vk138 | 12.6 s | 0 | 0 | **GOOD** |
+| 4 | base | vk137 | 19.3 s | 4 | 13 | **STORM** |
+| 5 | exp | vk138 | 12.6 s | 0 | 0 | **GOOD** |
+| 6 | base | vk137 | 12.6 s | 4 | 0 | **GOOD** |
+| 7 | exp | vk138 | 12.6 s | 0 | 0 | **GOOD** |
+| 8 | base | vk137 | 12.6 s | 4 | 0 | **GOOD** |
+| 9 | exp | vk138 | 12.6 s | 0 | 0 | **GOOD** |
+| 10 | base | vk137 | 17.0 s | 4 | 10 | **STORM** |
+
+记录：`reports/trials/20261022T1158…–1212…-q28disp-{exp,base}.json`（每条含 dmesg 全文、probe、env、manifest 身份）。
+
+**结论（分层，不许混读）**：
+1. **机制端点（补丁是否生效）：10/10 分离。** base 臂**每一发**都 `DSI PLL(0) lock failed` ×4；exp 臂**每一发**都是 **0** ⇒ 0155 的 `DIGTOP_PWRDN_B` 改动确实作用到硬件（不是空转），且让 7nm PLL 在早期 `of_clk_set_defaults` 那次尝试就锁上。
+2. **功能端点（是否消 STORM）：方向一致但样本不足。** exp **5/5 GOOD**、base **3/5 STORM**（Fisher 单侧 p≈0.083、双侧 p≈0.167）⇒ **未达统计显著**，不能写「已修 Q28」。
+3. **一处与历史口径吻合的细节**：base 的两个 GOOD 样本也有 `lockfail=4` ⇒ **单看 `DSI PLL(0) lock failed` 不是 STORM 的充分条件**（与 `PITFALLS #277` 一致）；但把该失败消掉后，本 5 发里 STORM 没再出现。
+4. 暖起（vk138，非 POR）同样 GOOD，`lockfail=0` —— 暖路径本就基本 GOOD，故只作「不破坏」证据。
+
+## 7. 下一步（按性价比）
+
+1. **扩样到各 10 发**（再 10 次 POR，交替）：若 exp 10/10 且 base ≥4/10 坏 ⇒ 双侧 p<0.05，可进 DOSSIER 作为「首次坏发可治」的第一条正面证据。
+2. **拆分 0154 / 0155 贡献**（0155-only 臂）：机制端点已指向 0155，0154 是否必要需单变量；成本 = 1 次构建 + N 次 POR。
+3. 若扩样通过：把 `0154`(或仅 0155) + 现有软件闩锁/`link_configured` 修复**合并成候选日常镜像**，再按 Q28 验收口径（取得稳定 GOOD 冷起）走持久化。
+4. 未做：0153（video teardown 顺序，hunk 与本仓 7.2 树对不上，需逐段比）。
+
+## 8. 未做 / 限制
 
 - 未刷任何分区（boot_b 仍是 `vk127`），`fastboot boot` 零写盘；一次 POR 即回日常。
 - 未测 0153（video teardown 顺序，其对不上本仓 7.2 树，需先逐段比）。
