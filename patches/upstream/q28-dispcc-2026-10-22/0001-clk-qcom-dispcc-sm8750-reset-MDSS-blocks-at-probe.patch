@@ -1,0 +1,113 @@
+From: Qinghuan Xiao <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [RFC PATCH] clk: qcom: dispcc-sm8750: reset the MDSS blocks at probe when the bootloader left them running
+
+On Lenovo Legion Y700 Gen4 (SM8750, "lenovo,elden") the bootloader hands
+over with the display block fully active: the dispcc PLLs are locked and
+MDSS core / core_int2 / RSCC are out of reset.  The kernel's mdss_reset()
+and clk_*_pll_configure() then run on top of that live state and the
+command-mode panel fails to initialise:
+
+  msm_dsi ae94000.dsi: command DMA timeout: status=0x2200200
+  msm_dsi ae94000.dsi: bonded command DMA failed: master=-110 peer=-110
+  panel-novatek-nt36536: Failed to initialize panel: -5
+
+The result is a cold boot with backlight only and no /dev/dri/card0.
+
+Asseting the three dispcc block resets and releasing them before the PLLs
+are programmed makes the block start from a known-zero state, after which
+the same panel initialises reliably.
+
+Measured on the same device, downstream 7.2 payload, alternating real
+power-on cold boots (fastboot boot of two images that differ only in this
+hunk and the DSI PHY change mentioned below):
+
+  without the reset:  5 of 9 cold boots failed (command DMA timeout)
+  with the reset:    15 of 15 cold boots OK (two variants, see below)
+
+As an RFC I have gated it to lenovo,elden because I cannot tell whether
+other boards that hand over with a live display would benefit or would be
+broken by resetting the block.  Two questions:
+
+1. Is a per-board workaround in dispcc probe the right place, or should
+   this be expressed as a DT property (e.g. qcom,reset-mdss-at-probe) or
+   be handled unconditionally in the dispcc driver / in mdss?
+2. LinuxLoader solves the same problem on the bootloader side under the
+   name "DisableDisplayHW".  Would you rather see the reset done by
+   mdss_reset()/DPU before the PLLs are configured, so that it also helps
+   other bootloaders that leave the block running?
+
+Separately, and relevant to Dmitry's "drm/msm/dsi/phy: power up the digital
+top before starting the 7nm PLL" series: on the same board the missing
+DIGTOP_PWRDN_B handling produces exactly the reported
+
+  DSI PLL(0) lock failed, status=0x00000000
+
+four times per boot (the PHY PLL is enabled by the clock framework from
+of_clk_set_defaults() before the PHY is touched).  With DIGTOP_PWRDN_B set
+and cleared together with PLL_SHUTDOWNB that message disappears from every
+boot I measured (10 out of 10), but it does not change the command DMA
+behaviour above: an image with only that change still failed 3 of 4 cold
+boots with the PLL reported locked.  So the two are independent, and the
+DIGTOP change looks correct on its own.
+
+Signed-off-by: Qinghuan Xiao <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/clk/qcom/dispcc-sm8750.c | 35 ++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+
+diff --git a/drivers/clk/qcom/dispcc-sm8750.c b/drivers/clk/qcom/dispcc-sm8750.c
+index e1d9534..c2a1705 100644
+--- a/drivers/clk/qcom/dispcc-sm8750.c
++++ b/drivers/clk/qcom/dispcc-sm8750.c
+@@ -5,9 +5,11 @@
+  */
+ 
+ #include <linux/clk-provider.h>
++#include <linux/delay.h>
+ #include <linux/err.h>
+ #include <linux/kernel.h>
+ #include <linux/module.h>
++#include <linux/of.h>
+ #include <linux/platform_device.h>
+ #include <linux/regmap.h>
+ #include <linux/pm_runtime.h>
+@@ -1919,6 +1921,39 @@ static int disp_cc_sm8750_probe(struct platform_device *pdev)
+ 		goto err_put_rpm;
+ 	}
+ 
++	/*
++	 * Some bootloaders hand over with the display block still fully
++	 * active: dispcc PLLs locked and MDSS core / core_int2 / RSCC out of
++	 * reset. Probing on top of that live state makes the command-mode
++	 * panel fail to initialise (command DMA timeout, panel init -EIO).
++	 *
++	 * Assert the three block resets and release them before the PLLs are
++	 * configured, so the block starts from a known-zero state.
++	 *
++	 * Limited to Lenovo Elden for now: it is the only board where this
++	 * handover behaviour was observed and the fix verified.
++	 */
++	if (of_machine_is_compatible("lenovo,elden")) {
++		static const u16 elden_bcrs[] = {
++			DISP_CC_MDSS_CORE_BCR,
++			DISP_CC_MDSS_CORE_INT2_BCR,
++			DISP_CC_MDSS_RSCC_BCR,
++		};
++		unsigned int reg;
++		int i;
++
++		for (i = 0; i < ARRAY_SIZE(elden_bcrs); i++) {
++			reg = disp_cc_sm8750_resets[elden_bcrs[i]].reg;
++			regmap_write(regmap, reg, 0x1);
++		}
++		/* Hold for one full ~30 Hz frame before releasing. */
++		msleep(50);
++		for (i = ARRAY_SIZE(elden_bcrs) - 1; i >= 0; i--) {
++			reg = disp_cc_sm8750_resets[elden_bcrs[i]].reg;
++			regmap_write(regmap, reg, 0x0);
++		}
++	}
++
+ 	clk_taycan_elu_pll_configure(&disp_cc_pll0, regmap, &disp_cc_pll0_config);
+ 	clk_taycan_elu_pll_configure(&disp_cc_pll1, regmap, &disp_cc_pll1_config);
+ 	clk_pongo_elu_pll_configure(&disp_cc_pll2, regmap, &disp_cc_pll2_config);

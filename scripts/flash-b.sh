@@ -29,16 +29,16 @@ echo "[flash-b] signing $IN"
 SHA=$(sha256sum bootslot-b/boot_b.img | cut -d' ' -f1)
 echo "[flash-b] image sha256=$SHA  (96 MiB, signed with bootslot-b/avb.key)"
 
-echo "[flash-b] uploading..."
-scp -q -o StrictHostKeyChecking=no bootslot-b/boot_b.img "$TAB:/tmp/boot_b.img"
-
-echo "[flash-b] writing boot_b..."
-ssh -o StrictHostKeyChecking=no "$TAB" '
+# Why stream over ssh instead of scp/rsync:
+#   * device sshd has no sftp-server subsystem (scp defaults to SFTP since OpenSSH 9);
+#   * scp/rsync split the remote spec on the first ':' -> IPv6 link-local hosts break
+#     unless bracketed. Piping through ssh sidesteps both, and never needs /tmp space.
+echo "[flash-b] writing boot_b (streamed over ssh)..."
+cat bootslot-b/boot_b.img | ssh -6 -o StrictHostKeyChecking=no "$TAB" '
 set -e
 D=/dev/disk/by-partlabel/boot_b
-dd if=/tmp/boot_b.img of=$D bs=1M conv=fsync 2>&1 | tail -1
+dd of=$D bs=1M conv=fsync 2>/dev/null
 sync
-rm -f /tmp/boot_b.img
 dd if=$D bs=1M count=96 2>/dev/null | sha256sum | cut -d" " -f1
 ' > /tmp/flash-b-readback.txt
 RB=$(tail -1 /tmp/flash-b-readback.txt)
