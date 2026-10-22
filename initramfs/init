@@ -270,41 +270,48 @@ log "Alpine rootfs up, kernel $(uname -r)"
 # was unobservable (2026-10-21).  When requested, mount the disk root rw for a
 # moment and drop a timestamped file there: the next boot can read it, which
 # proves the target reached userspace-independent init code.
-if [ -n "$kexec_marker" ]; then
-	# slim initramfs has no blkid applet; allow an explicit device
+# Sentinel /etc/kexec-marker-on is baked into the *marker build* only, so the
+# run does not depend on the kernel honouring a custom command line.
+if [ -n "$kexec_marker" ] || [ -e /etc/kexec-marker-on ]; then
+	log "kexec_marker: begin (sentinel=$([ -e /etc/kexec-marker-on ] && echo 1 || echo 0) dev=${kexec_marker_dev:-auto})"
+	# Resolve the disk root device.  The slim initramfs has NO blkid applet, so
+	# findfs is the primary resolver and /dev/sda17 the last-resort name (LUN0
+	# partition 17 = linux17, see DEVICE/README.md).
 	mdev=${kexec_marker_dev:-}
-	[ -n "$mdev" ] || mdev=$(blkid -L linux17 2>/dev/null)
-	[ -n "$mdev" ] || [ -b /dev/sda17 ] && [ -z "${mdev:-}" ] && mdev=/dev/sda17
-	# slim initramfs has no udev/mdev: the UFS nodes may not exist yet
+	[ -n "$mdev" ] || mdev=$(findfs LABEL=linux17 2>/dev/null)
+	[ -n "$mdev" ] || mdev=/dev/sda17
+	# No udev/mdev here: wait for devtmpfs to publish the node (UFS probe + SCSI
+	# scan can take a while on this board).  20 s total, logging every 2 s so the
+	# ring buffer shows how far it got.
 	i=0
-	while { [ -z "${mdev:-}" ] || [ ! -b "$mdev" ]; } && [ "$i" -lt 200 ]; do
+	while [ ! -b "$mdev" ] && [ "$i" -lt 200 ]; do
 		sleep 0.1; i=$((i + 1))
-		[ -b /dev/sda17 ] && [ -z "${mdev:-}" ] && mdev=/dev/sda17
+		[ $((i % 20)) -eq 0 ] && log "kexec_marker: waiting for $mdev (${i}00 ms)"
 	done
-	if [ -n "$mdev" ]; then
-		mkdir -p /mnt/mark
-		if mount -o rw,noatime "$mdev" /mnt/mark; then
-			mkdir -p /mnt/mark/var/tmp
-			printf 'alive uptime=%s kernel=%s ts=%s cmdline=%s\n' \
-				"$(cat /proc/uptime)" "$(uname -r)" \
-				"$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(cat /proc/cmdline)" \
-				> /mnt/mark/var/tmp/kexec-marker.txt
-			sync
-			umount /mnt/mark
-			log "kexec_marker: wrote /var/tmp/kexec-marker.txt on $mdev"
-			# Opt-in auto-return: prove liveness AND get us back to a
-			# reachable kernel without anyone pressing a button.
-			if [ -n "$kexec_marker_reboot" ]; then
-				log "kexec_marker: rebooting back to the default slot"
-				sync
-				reboot -f
-			fi
-		else
-			warn "kexec_marker: cannot mount $mdev rw"
-		fi
-	else
-		warn "kexec_marker: no LABEL=linux17 found"
+	if [ ! -b "$mdev" ]; then
+		log "kexec_marker: $mdev never appeared; ls /dev/sd*:"
+		ls /dev/sd* >/dev/kmsg 2>&1 || true
 	fi
+	mkdir -p /mnt/mark
+	if [ -b "$mdev" ] && mount -o rw,noatime "$mdev" /mnt/mark; then
+		mkdir -p /mnt/mark/var/tmp
+		printf 'alive uptime=%s kernel=%s ts=%s cmdline=%s\n' \
+			"$(cat /proc/uptime)" "$(uname -r)" \
+			"$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(cat /proc/cmdline)" \
+			> /mnt/mark/var/tmp/kexec-marker.txt
+		sync
+		umount /mnt/mark 2>/dev/null || true
+		log "kexec_marker: wrote /var/tmp/kexec-marker.txt on $mdev"
+	else
+		warn "kexec_marker: mount $mdev failed"
+	fi
+	# ALWAYS return to the default slot.  Earlier versions only rebooted inside
+	# the successful-mount branch, so a mount failure left the device stuck in a
+	# RAM initramfs with no network, no fastboot and no console - requiring a
+	# physical power button press (2026-10-21 incident, twice).
+	log "kexec_marker: rebooting back to the default slot"
+	sync
+	reboot -f
 fi
 
 # --- USB: NCM network + ACM console composite (see /usr/local/sbin/usb-gadget)

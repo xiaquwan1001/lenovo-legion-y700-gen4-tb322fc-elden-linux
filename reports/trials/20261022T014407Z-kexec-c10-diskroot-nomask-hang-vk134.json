@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c10-diskroot-nomask-hang-vk134",
+  "ts": "2026-10-22T01:44:07Z",
+  "vk": "vk134",
+  "image": "out/boot-elden-vk134.img",
+  "image_sha256": "342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65",
+  "manifest": "out/boot-elden-vk134.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "错误单变量：本轮忘记重新 echo 1 > /sys/kernel/kexec_diag/kexec_diag（每次开机归零）⇒ 走完整 device_shutdown()。串口实证：adreno 3d00000.gpu Timeout waiting for GPU to suspend → WARNING adreno_shutdown+0x2c → 调用栈 platform_shutdown → device_shutdown → kernel_restart_prepare → kernel_kexec；随后 sd 0:0:0:4 [sde] Synchronizing SCSI cache 后串口关闭，设备整体掉出 USB（无 fastboot/ttyACM/gadget），需人工按键。⇒ 反证 mask=1（整段跳 device_shutdown）是该机 kexec 的必要条件，且 adreno_shutdown 是硬挂点之一（与 PITFALLS §19 DRM cleanup 卡死同源）"
+}

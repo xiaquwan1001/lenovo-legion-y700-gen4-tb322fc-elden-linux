@@ -70,6 +70,9 @@ build_slim() {
 	[ -f "$R/bin/busybox" ] && [ ! -L "$R/bin/busybox" ] || die "applet 链接近乎替换了真二进制"
 	sed 's/\r$//' "$INIT" > "$R/init"; chmod 755 "$R/init"
 	[ -f "$ROOT/initramfs/usb-gadget" ] && { sed 's/\r$//' "$ROOT/initramfs/usb-gadget" > "$R/bin/usb-gadget"; chmod 755 "$R/bin/usb-gadget"; }
+	# MARKER=1 bakes the kexec-marker sentinel (see initramfs/init); used by the
+	# kexec survival test so the run does not rely on a custom cmdline.
+	[ "${MARKER:-0}" = 1 ] && : > "$R/etc/kexec-marker-on"
 	mknod -m 600 "$R/dev/console" c 5 1 2>/dev/null || true
 	pack "$R" "$OUT/initramfs-slim.cpio.gz"
 	rm -rf "$R"

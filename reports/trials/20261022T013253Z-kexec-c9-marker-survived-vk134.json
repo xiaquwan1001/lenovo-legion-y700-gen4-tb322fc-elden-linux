@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c9-marker-survived-vk134",
+  "ts": "2026-10-22T01:32:53Z",
+  "vk": "vk134",
+  "image": "out/boot-elden-vk134.img",
+  "image_sha256": "342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65",
+  "manifest": "out/boot-elden-vk134.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "PASS",
+  "log_dir": "",
+  "note": "kexec_file_load 同镜像+标记slim initramfs(302d3b3c，哨兵 /etc/kexec-marker-on，不依赖 cmdline)：到 Starting new kernel，目标内核执行 init 并在 /dev/sda17 写 /var/tmp/kexec-marker.txt（cmdline 含 nokaslr 与 kexec_dbg=1 = 目标 cmdline），随后无条件 reboot -f 自回 boot_b。live 内核 cmdline 无 nokaslr、无 kexec_diag ⇒ 回来的不是目标。Q11 结案：kexec 交接+目标用户态 init 均成立。关键数字：目标 uptime=131.59 s 才枚举出 /dev/sda17 ⇒ 历史『挂死』是观测窗口不足（busybox sleep 精度+UFS probe 慢），非目标死亡"
+}
