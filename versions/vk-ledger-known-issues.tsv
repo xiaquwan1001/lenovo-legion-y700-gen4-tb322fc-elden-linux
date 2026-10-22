@@ -242,3 +242,7 @@ vk132	uts_dup6	T9 同 UTS 族成员（+resume hci_reset_dev，实测 suspend 成
 vk133	uts_dup6	T9 同 UTS 族成员（+resume serdev re-probe，实测挂死，源码已回退）
 vk134	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127 复用 1497 .ko；判据用 /sys/kernel/kexec_diag）
 vk134	num_ne_tag	源提交上无同名 vkNN ref（kexec 诊断镜像，UTS 刻意同 vk127 以复用 1497 .ko；判据 = /sys/kernel/kexec_diag + [KD] 标记）
+vk135	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127 复用 1497 .ko；判据 = ramoops 8MiB + deflate）
+vk135	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像，UTS 刻意同 vk127）
+vk136	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127；panic=0 实验已废弃，仅留 manifest 档）
+vk136	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像，UTS 刻意同 vk127）

@@ -234,3 +234,5 @@ vk131	t9	2026-10-21	vk131 = vk130 + hci_qca FW下载窗口补丁
 vk132	t9	2026-10-21	vk132 = vk131 + qca_resume 重试（被打断的固件下载）
 vk133	t9	2026-10-21	vk133 = vk132 + resume 走 serdev re-probe
 vk134	kexec	2026-10-21	vk134 = m1-73 工作树 + 0019/0020（mask=1 旋钮 + /sys/kernel/kexec_diag）；UTS 刻意同 vk127（复用在机模块树）
+vk135	kexec	2026-10-22	vk135 = vk134 内核 + DTS ramoops 8MiB/record-size=0x200000（panic=15）；UTS 同 vk127（复用模块树）
+vk136	kexec	2026-10-22	vk136 = vk135 但 CMDLINE_OVERRIDE 换 panic=0（后被 sysctl 覆盖，已废弃，仅留档）
