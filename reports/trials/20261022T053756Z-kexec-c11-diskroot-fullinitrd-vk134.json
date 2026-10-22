@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c11-diskroot-fullinitrd-vk134",
+  "ts": "2026-10-22T05:37:56Z",
+  "vk": "vk134",
+  "image": "out/boot-elden-vk134.img",
+  "image_sha256": "342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65",
+  "manifest": "out/boot-elden-vk134.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "mask=1 已核实（MASK=1，串口 stage=11a SKIP device_shutdown → stage=14 → Starting new kernel → psci CPU1-7 killed → Bye!）。目标 cmdline=全量磁盘根 cmdline+nokaslr，initrd=完整 64MB ramdisk。执行 13:33:48，串口 13:33:49 关闭，13:34:21 重开=32s（与 panic=15 + ABL 起 boot_b 时标吻合）。回来内核 kexec_diag=0、bootargs 无 nokaslr ⇒ 不是目标 ⇒ 目标未存活到用户态。对比：上一轮 PASS 用 1MB slim 标记包（目标活到 init 并写盘 131s）；本轮 64MB 完整 ramdisk 早死 ⇒ 新单变量候选 = initrd 大小/落点（63MB Image + 64MB initrd 的 RAM 布局），非 cmdline/root 路径"
+}

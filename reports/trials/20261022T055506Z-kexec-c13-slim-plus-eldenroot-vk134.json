@@ -1,0 +1,18 @@
+{
+  "label": "kexec-c13-slim-plus-eldenroot-vk134",
+  "ts": "2026-10-22T05:55:06Z",
+  "vk": "vk134",
+  "image": "out/boot-elden-vk134.img",
+  "image_sha256": "342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65",
+  "manifest": "out/boot-elden-vk134.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8a0a0aee9f6f1db951eae009493fa3e8b7d458c310ec31632cdf5eef4859564f",
+  "config_sha256": "52ae455f6adbfd31566cd9949baec40ae4ce2c85ae47dd4e7abc3d7b5a6e4a59",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "raw",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "mask=1 核实。单变量=slim initrd + cmdline 仅在 C9 基础上加 elden_root=LABEL=linux17（不带 androidboot.*/msm_drm.dsi_display0=）。执行 13:52:45，串口 23s 后重开、目标未出 psci/Zone ranges 之后的新段、无 marker 文件、无 udevd ⇒ 目标早死，未到用户态。对比 C9(无 elden_root，活到 init) vs C12(完整 cmdline，活到 udevd 但死于 DSI) vs C13(仅加 elden_root，早死) ⇒ 结果不稳定，非单一 cmdline 变量可解释；核心限制 = 串口丢 65KB 使早期段不可见"
+}

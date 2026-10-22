@@ -149,3 +149,6 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-21T14:31:07Z	kexec-c5b-bypass1-quiet-vk134	vk134	warm	none	MID	342ff21618b7	
 2026-10-22T01:32:53Z	kexec-c9-marker-survived-vk134	vk134	warm	none	PASS	342ff21618b7	
 2026-10-22T01:44:07Z	kexec-c10-diskroot-nomask-hang-vk134	vk134	warm	none	FAIL	342ff21618b7	
+2026-10-22T05:37:56Z	kexec-c11-diskroot-fullinitrd-vk134	vk134	warm	none	FAIL	342ff21618b7	
+2026-10-22T05:55:06Z	kexec-c12-slim-diskcmdline-vk134	vk134	warm	none	FAIL	342ff21618b7	
+2026-10-22T05:55:06Z	kexec-c13-slim-plus-eldenroot-vk134	vk134	warm	none	FAIL	342ff21618b7	
