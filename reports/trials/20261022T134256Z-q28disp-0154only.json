@@ -1,0 +1,18 @@
+{
+  "label": "q28disp-0154only",
+  "ts": "2026-10-22T13:42:56Z",
+  "vk": "vk144-q28only0154",
+  "image": "/home/xuqianhui/y700-elden/out/boot-elden-vk144-q28only0154.img",
+  "image_sha256": "9309dbc5238475861d3cec567ed81c9f97918ac7c88da4f2a41eb3fa99ec8102",
+  "manifest": "/home/xuqianhui/y700-elden/out/boot-elden-vk144-q28only0154.manifest",
+  "kernel_uts": "Linux version 7.2.0-debug-vk64-gd02658e63cf6",
+  "kernel_payload_sha256": "6e1d945497bee7de6fa27ad5581ef8414e9307e4d2e4860a42278270919a223d",
+  "config_sha256": "4a2ddaf7652718f751472341faf6022c1a792153098b4d84d0fba7468762b3d4",
+  "dtb_packed_sha256": "386cc9bd5d243425dd342a9acd703f839bcb133318430b77be5ba675b90d10cb",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261022T134256Z-q28disp-0154only",
+  "note": "0154+0155 冷起 A/B；0154-only r5"
+}

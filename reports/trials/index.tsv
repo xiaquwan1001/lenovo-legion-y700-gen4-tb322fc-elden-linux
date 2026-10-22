@@ -187,3 +187,9 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-22T12:47:08Z	q28disp-exp73	vk141-q28disp73	por	fastboot-boot	GOOD	10a38c4e7bab	/home/xuqianhui/y700-elden/reports/trials/20261022T124708Z-q28disp-exp73
 2026-10-22T12:48:47Z	q28disp-daily	vk127	por	fastboot-boot	STORM	7515f6a453df	/home/xuqianhui/y700-elden/reports/trials/20261022T124830Z-q28disp-daily
 2026-10-22T12:55:57Z	q28disp-0155only73	vk143-q28-73-0155only	por	fastboot-boot	STORM	159bdcf512a4	/home/xuqianhui/y700-elden/reports/trials/20261022T125542Z-q28disp-0155only73
+2026-10-22T13:31:04Z	q28disp-exp73	vk142-q28disp73dt	por	fastboot-boot	GOOD	10a38c4e7bab	/home/xuqianhui/y700-elden/reports/trials/20261022T133103Z-q28disp-exp73
+2026-10-22T13:37:59Z	q28disp-0154only	vk144-q28only0154	por	fastboot-boot	GOOD	9309dbc52384	/home/xuqianhui/y700-elden/reports/trials/20261022T133758Z-q28disp-0154only
+2026-10-22T13:39:12Z	q28disp-0154only	vk144-q28only0154	por	fastboot-boot	GOOD	9309dbc52384	/home/xuqianhui/y700-elden/reports/trials/20261022T133912Z-q28disp-0154only
+2026-10-22T13:40:13Z	q28disp-0154only	vk144-q28only0154	por	fastboot-boot	GOOD	9309dbc52384	/home/xuqianhui/y700-elden/reports/trials/20261022T134013Z-q28disp-0154only
+2026-10-22T13:41:25Z	q28disp-0154only	vk144-q28only0154	por	fastboot-boot	GOOD	9309dbc52384	/home/xuqianhui/y700-elden/reports/trials/20261022T134124Z-q28disp-0154only
+2026-10-22T13:42:56Z	q28disp-0154only	vk144-q28only0154	por	fastboot-boot	GOOD	9309dbc52384	/home/xuqianhui/y700-elden/reports/trials/20261022T134256Z-q28disp-0154only

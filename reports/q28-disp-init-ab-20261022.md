@@ -141,10 +141,41 @@ CMDLINE_EXTRA=elden_nocamera=1 bash scripts/build-boot.sh
 
 `reports/trials/20261022T1158…–1230…-q28disp-{base,exp,0155only}.json`（23 发；每发含 dmesg 全文 / probe / env / manifest 身份）。
 
+## 6c. 第三轮：补 `only0154` 臂，2×2 解离坐实（2026-10-22 21:37–21:43，+5 发真实 POR）
+
+`vk144-q28only0154` = base + **仅 0154**（不带 0155；树/config/ramdisk/DTB/cmdline/PINUTS 与另三臂一致；因 `build/q28-disp` 出现对象文件损坏，改在全新 worktree `build/q28-disp2` 构建）。
+
+| 臂 | 补丁 | n | GOOD | STORM | `DSI_PLL_lockfail` |
+|---|---|---|---|---|---|
+| base | — | 9 | 4 | 5 | 4 ×9 |
+| **only0154** | 0154 | **5** | **5** | 0 | **4 ×5** |
+| only0155 | 0155 | 4 | 1 | 3 | 0 ×4 |
+| exp | 0154+0155 | 10 | 10 | 0 | 0 ×10 |
+
+**2×2 解离（完整）**
+
+| | PLL 锁上 | PLL 未锁 |
+|---|---|---|
+| **无 dispcc 复位** | only0155：**3/4 STORM** | base：**5/9 STORM** |
+| **有 dispcc 复位** | exp：**0/10** | only0154：**0/5** |
+
+- STORM 只随 **0154**（纵轴）变化，与 PLL 锁否（横轴）**无关** ⇒ `0154` 对症 STORM，`0155` 只改 PLL 锁/使能计数。
+- 统计：only0154 vs base 双侧 p=0.086（n 小）；**含 0154 的两臂合并 15/15 GOOD vs base 4/9 ⇒ 双侧 p=0.003**。
+- 代价评估：**只上 0154（5 行核心逻辑）即可消 STORM**；`0155` 属可选清理（PLL 锁失败会让 pixel clock 使能计数失衡，留着早期报错噪声）。
+
+### 6d. 本轮踩到的构建坑（记下来）
+
+`build/q28-disp` 在 20:14 之后出现**对象文件损坏**：先 `block/.bfq-iosched.o.cmd: 缺失分隔符`，删掉后升到 `fs/locks.o: bad reloc symbol index`。判据与处理：
+- 症状 = 链接期/生成期报 `bad reloc symbol index` 或 `.cmd` 解析错误，且**源码与 config 都没改**；
+- 处置 = 换全新 worktree 重建（ccache 命中，~2 min），**不要在损坏的树里反复 make**；
+- 推断成因 = 之前某次构建被中断（命令 abort / 超时）留下半写的 `.o`/`.cmd`。
+
 ## 7. 下一步（按性价比）
 
 1. ~~扩样到各 10 发~~ ✅ 已做：exp 10/10、base 5/9 STORM（p=0.011）。
-2. ~~拆 0154/0155 贡献~~ ✅ 已做：**0154 = STORM 对症，0155 = PLL 锁对症**（见 §6b）。
+2. ~~拆 0154/0155 贡献~~ ✅ 已做（§6b/§6c）：**0154 = STORM 对症，0155 = PLL 锁对症**；含 0154 两臂合并 15/15 vs base 4/9，p=0.003。
+3. **候选日常镜像**：把 **0154（可只带 0154）** 叠到日常 7.3 线 + 2026-10-22 的软件闩锁/`link_configured` 修复，按 Q28 验收（稳定 GOOD 冷起）后持久化。
+4. 7.3 线复刻（`vk141`）仍需 8 发/臂，并先解释 daily 的 NOROUTE（无 SSH）形态。
 3. 若扩样通过：把 `0154`(或仅 0155) + 现有软件闩锁/`link_configured` 修复**合并成候选日常镜像**，再按 Q28 验收口径（取得稳定 GOOD 冷起）走持久化。
 4. 未做：0153（video teardown 顺序，hunk 与本仓 7.2 树对不上，需逐段比）。
 
