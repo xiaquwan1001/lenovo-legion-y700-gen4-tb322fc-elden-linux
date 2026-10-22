@@ -153,3 +153,46 @@ CMDLINE_EXTRA=elden_nocamera=1 bash scripts/build-boot.sh
 - 未刷任何分区（boot_b 仍是 `vk127`），`fastboot boot` 零写盘；一次 POR 即回日常。
 - 未测 0153（video teardown 顺序，其对不上本仓 7.2 树，需先逐段比）。
 - `0154` 的 50 ms 停顿在每次 probe 只发生一次，无侧效应证据。
+
+## 9. 日常 7.3 线（m1-73）同日试跑 —— 样本不足 + 一个刷屏谜团的实测结论
+
+设备电量不足，本轮在 7.3 线只拿到很少样本；**不足以支持任何结论**，只记录事实与两个有意义的副产物。
+
+### 9.1 构建
+
+| 镜像 | 内容 | 备注 |
+|---|---|---|
+| `vk140-q28disp73` | m1-73@24223e44ad80 + 0154 + 0155 | **作废**：UTS 少了 `-vk127` ⇒ 机内模块树对不上（`fsa4480` 不加载 → DP 控制器永久 defer → dispcc `sync_state` 不收敛 → 无 `card0`）。与 `PITFALLS #31` 同一机制，非补丁问题 |
+| `vk141-q28disp73` | 同上，`CONFIG_LOCALVERSION="-debug-vk127"` ⇒ UTS 与在机 vk127 逐字相同 | ✅ 可用 |
+| `vk142-q28disp73dt` | vk141 + `sm8750.dtsi` adsp fastrpc 补 `qcom,non-secure-domain` | **与 vk141 镜像 sha 完全相同**（实测：vk127 的 DTB 本就已含该属性，`strings` 计数 1 是属性名去重造成的误判）⇒ 该 DT 改动无意义，如实记录 |
+| `vk143-q28-73-0155only` | 7.3 线 base + 仅 0155 | 用于排查刷屏来源 |
+
+### 9.2 样本（全部真实 POR）
+
+| 臂 | 样本 | 判读 |
+|---|---|---|
+| daily（在机 `vk127` 原件） | 4 | **NOROUTE（SSH 150 s 未起）×1、STORM ×3** |
+| exp73（vk141：7.3 + 0154 + 0155） | 2 | **GOOD ×2** |
+| o155_73（vk143：7.3 + 仅 0155） | 1 | STORM ×1 |
+
+⇒ 方向与 7.2 线一致，但 **n=2 vs 4 什么也不能证明**；7.3 线若要复刻 7.2 的结论，需要 8–10 发/臂，且必须先解释 daily 的 NOROUTE（无 SSH）形态。
+
+### 9.3 ★ 用户报告的「启动/关机大量刷屏」——实测归因：**7.3 线自身的 fastrpc probe 风暴，不是本补丁引入**
+
+同一镜像内按启动随机，统计 `FastRPC Domain not specified in DT` / `rpmsg_dev_probe: failed: -22` 行数：
+
+| 镜像 | 样本 A | 样本 B |
+|---|---|---|
+| daily（在机 vk127） | **1659 行** | 16 行 |
+| exp73（vk141） | **1840 行** | 293 行 |
+| o155_73（vk143） | 4 行 | — |
+
+- **日常镜像 vk127 自己也能刷 1659 行** ⇒ 与 0154/0155 无关，属 7.3 线既有问题。
+- 根因（源码级）：`drivers/misc/fastrpc.c: fastrpc_rpmsg_probe()` 从 **rpmsg 设备节点**读 `label`，7.3 上该节点的 DT 继承失效 ⇒ 每条 fastrpc 通道 probe 都走 `dev_info("FastRPC Domain not specified in DT")` + `-22`；触发次数取决于该次启动的探测/重试时序，故 4–1840 行随机。
+- 后果：`FastRPC` 在 7.3 线**基本不可用**（探测全失败）——这与本仓 G1-34 传感器链（ADSP fastrpc）在 7.3 线上的状态相关，属另一个待办，不是显示补丁的副作用。
+- 7.2 线三臂的 dmesg 中该消息 **0 行** ⇒ 这是 7.3 线独有。
+
+### 9.4 暂停点（设备电量不足）
+
+- 设备内存里跑的是最后一发 `vk143`（STORM 态）；`boot_b` 仍是 `vk127`，**一次 POR 即回日常**，建议先充电。
+- 未刷任何分区，全程 `fastboot boot` 零写盘。

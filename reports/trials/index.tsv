@@ -179,3 +179,11 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-22T12:27:53Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T122753Z-q28disp-exp
 2026-10-22T12:29:15Z	q28disp-0155only	vk139-q28only0155	por	fastboot-boot	STORM	dcb49fef7977	/home/xuqianhui/y700-elden/reports/trials/20261022T122909Z-q28disp-0155only
 2026-10-22T12:30:17Z	q28disp-exp	vk138-q28disp	por	fastboot-boot	GOOD	a0318ffa12c4	/home/xuqianhui/y700-elden/reports/trials/20261022T123017Z-q28disp-exp
+2026-10-22T12:37:56Z	q28disp-exp73	vk140-q28disp73	por	fastboot-boot	NOCARD	b70a7f29e15c	/home/xuqianhui/y700-elden/reports/trials/20261022T123755Z-q28disp-exp73
+2026-10-22T12:41:30Z	q28disp-daily	vk127	por	fastboot-boot	NOROUTE	7515f6a453df	/home/xuqianhui/y700-elden/reports/trials/20261022T124130Z-q28disp-daily
+2026-10-22T12:42:15Z	q28disp-exp73	vk140-q28disp73	por	fastboot-boot	NOCARD	b70a7f29e15c	/home/xuqianhui/y700-elden/reports/trials/20261022T124214Z-q28disp-exp73
+2026-10-22T12:44:10Z	q28disp-exp73	vk141-q28disp73	por	fastboot-boot	GOOD	10a38c4e7bab	/home/xuqianhui/y700-elden/reports/trials/20261022T124408Z-q28disp-exp73
+2026-10-22T12:45:46Z	q28disp-daily	vk127	por	fastboot-boot	STORM	7515f6a453df	/home/xuqianhui/y700-elden/reports/trials/20261022T124531Z-q28disp-daily
+2026-10-22T12:47:08Z	q28disp-exp73	vk141-q28disp73	por	fastboot-boot	GOOD	10a38c4e7bab	/home/xuqianhui/y700-elden/reports/trials/20261022T124708Z-q28disp-exp73
+2026-10-22T12:48:47Z	q28disp-daily	vk127	por	fastboot-boot	STORM	7515f6a453df	/home/xuqianhui/y700-elden/reports/trials/20261022T124830Z-q28disp-daily
+2026-10-22T12:55:57Z	q28disp-0155only73	vk143-q28-73-0155only	por	fastboot-boot	STORM	159bdcf512a4	/home/xuqianhui/y700-elden/reports/trials/20261022T125542Z-q28disp-0155only73

@@ -1,0 +1,18 @@
+{
+  "label": "q28disp-daily",
+  "ts": "2026-10-22T12:41:30Z",
+  "vk": "vk127",
+  "image": "/home/xuqianhui/y700-elden/out/boot-elden-vk127.img",
+  "image_sha256": "7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633",
+  "manifest": "/home/xuqianhui/y700-elden/out/boot-elden-vk127.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "2e0fc063e176e8234040447d51a9412c7453c6e2f78ef4c4a2e93d62a016ffe8",
+  "config_sha256": "9d38ae135cf51d1a8c0b9c1256000d6802825999d7a58ad0fe050bddd14ee833",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "NOROUTE",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261022T124130Z-q28disp-daily",
+  "note": "0154+0155 冷起 A/B；7.3 线 r2"
+}

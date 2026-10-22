@@ -1,0 +1,18 @@
+{
+  "label": "q28disp-exp73",
+  "ts": "2026-10-22T12:42:15Z",
+  "vk": "vk140-q28disp73",
+  "image": "/home/xuqianhui/y700-elden/out/boot-elden-vk140-q28disp73.img",
+  "image_sha256": "b70a7f29e15ca2be5ed45b59c61e8dc41b1eb47b70d65a15bdd0a21ebfbee645",
+  "manifest": "/home/xuqianhui/y700-elden/out/boot-elden-vk140-q28disp73.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "8ff0efc1c132ef3c0ccd985f184a226fbf26c77856d1de7989fc8c7dcc36f189",
+  "config_sha256": "9d38ae135cf51d1a8c0b9c1256000d6802825999d7a58ad0fe050bddd14ee833",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "NOCARD",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261022T124214Z-q28disp-exp73",
+  "note": "0154+0155 冷起 A/B；7.3 线 r3"
+}

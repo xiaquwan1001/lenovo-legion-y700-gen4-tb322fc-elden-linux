@@ -1,0 +1,1742 @@
+[    0.000000] [    T0] Booting Linux on physical CPU 0x0000000000 [0x514f0014]
+[    0.000000] [    T0] Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty (elden@y700) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #3 SMP PREEMPT Thu Oct 22 20:42:38 CST 2026
+[    0.000000] [    T0] KASLR enabled
+[    0.000000] [    T0] random: crng init done
+[    0.000000] [    T0] Machine model: Lenovo Legion Y700 Gen4
+[    0.000000] [    T0] printk: debug: ignoring loglevel setting.
+[    0.000000] [    T0] efi: UEFI not found.
+[    0.000000] [    T0] [Firmware Bug]: Kernel image misaligned at boot, please fix your bootloader!
+[    0.000000] [    T0] Reserved memory: created CMA memory pool at 0x00000000f2c00000, size 12 MiB
+[    0.000000] [    T0] OF: reserved mem: initialized node adsp-rpc-remote-heap, compatible id shared-dma-pool
+[    0.000000] [    T0] OF: reserved mem: 0x00000000f2c00000..0x00000000f37fffff (12288 KiB) map reusable adsp-rpc-remote-heap
+[    0.000000] [    T0] OF: reserved mem: 0x0000000080000000..0x0000000080dfffff (14336 KiB) nomap non-reusable gunyah-hyp@80000000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000080e00000..0x0000000080e3ffff (256 KiB) nomap non-reusable cpusys-vm-mem@80e00000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000081200000..0x00000000813fffff (2048 KiB) nomap non-reusable cpucp@81200000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000081a00000..0x0000000081a3ffff (256 KiB) nomap non-reusable xbl-dtlog@81a00000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000081c00000..0x0000000081c5ffff (384 KiB) nomap non-reusable aop-image@81c00000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000081c60000..0x0000000081c7ffff (128 KiB) nomap non-reusable aop-cmd-db@81c60000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000081c80000..0x0000000081cf3fff (464 KiB) nomap non-reusable aop-tme-uefi-merged@81c80000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000081d00000..0x0000000081efffff (2048 KiB) nomap non-reusable smem@81d00000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000081f00000..0x0000000081ffffff (1024 KiB) nomap non-reusable pdp-ns-shared@81f00000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000082000000..0x000000008237ffff (3584 KiB) nomap non-reusable cpucp-scandump@82000000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000082380000..0x000000008239ffff (128 KiB) nomap non-reusable adsp-mhi@82380000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000823a0000..0x00000000823dffff (256 KiB) nomap non-reusable soccp-sdi@823a0000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000823e0000..0x000000008245ffff (512 KiB) nomap non-reusable pmic-minii-dump@823e0000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000824a0000..0x000000008259ffff (1024 KiB) nomap non-reusable pvmfw@824a0000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000082600000..0x00000000826fffff (1024 KiB) nomap non-reusable global-sync@82600000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000082700000..0x00000000827fffff (1024 KiB) nomap non-reusable tz-stat@82700000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000082800000..0x00000000847fffff (32768 KiB) nomap non-reusable qdss@82800000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000084a00000..0x00000000892fffff (74752 KiB) nomap non-reusable dsm-partition-1@84a00000
+[    0.000000] [    T0] OF: reserved mem: 0x0000000089300000..0x0000000089d7ffff (10752 KiB) nomap non-reusable dsm-partition-2@89300000
+[    0.000000] [    T0] OF: reserved mem: 0x000000008ba00000..0x000000009affffff (251904 KiB) nomap non-reusable mpss@8ba00000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009b000000..0x000000009b07ffff (512 KiB) nomap non-reusable q6-mpss-dtb@9b000000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009b080000..0x000000009b08ffff (64 KiB) nomap non-reusable ipa-fw@9b080000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009b090000..0x000000009b099fff (40 KiB) nomap non-reusable ipa-gsi@9b090000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009b09a000..0x000000009b09bfff (8 KiB) nomap non-reusable gpu-micro-code@9b09a000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009b0a0000..0x000000009b27ffff (1920 KiB) nomap non-reusable spss@9b0a0000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009b280000..0x000000009b2bffff (256 KiB) nomap non-reusable spu-tz-shared@9b280000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009b2c0000..0x000000009b2fffff (256 KiB) nomap non-reusable spu-modem-shared@9b2c0000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009b300000..0x000000009bafffff (8192 KiB) nomap non-reusable camera@9b300000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009bb00000..0x000000009c2fffff (8192 KiB) nomap non-reusable camera-2@9bb00000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009c300000..0x000000009cafffff (8192 KiB) nomap non-reusable video@9c300000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009cb00000..0x000000009d1fffff (7168 KiB) nomap non-reusable cvp@9cb00000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009d200000..0x000000009eafffff (25600 KiB) nomap non-reusable cdsp@9d200000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009eb00000..0x000000009eb7ffff (512 KiB) nomap non-reusable q6-cdsp-dtb@9eb00000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009ec00000..0x000000009ed7ffff (1536 KiB) nomap non-reusable soccp@9ec00000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009ed80000..0x000000009edfffff (512 KiB) nomap non-reusable q6-adsp-dtb@9ed80000
+[    0.000000] [    T0] OF: reserved mem: 0x000000009ee00000..0x00000000a287ffff (59904 KiB) nomap non-reusable adspslpi@9ee00000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000b8000000..0x00000000b81bffff (1792 KiB) nomap non-reusable xbl-ramdump@b8000000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000d4e23000..0x00000000d50fffff (2932 KiB) nomap non-reusable hwfence-shbuf@d4e23000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000d8000000..0x00000000d85fffff (6144 KiB) nomap non-reusable tz-merged@d8000000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000f3800000..0x00000000f7bfffff (69632 KiB) nomap non-reusable trust-ui-vm@f3800000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000f7c00000..0x00000000fc7fffff (77824 KiB) nomap non-reusable oem-vm@f7c00000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000ff800000..0x00000000ffffffff (8192 KiB) nomap non-reusable llcc-lpi@ff800000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000c2000000..0x00000000c23fffff (4096 KiB) nomap non-reusable ramoops@c2000000
+[    0.000000] [    T0] OF: reserved mem: 0x00000000fc800000..0x00000000ff2fffff (44032 KiB) nomap non-reusable splash_region
+[    0.000000] [    T0] NUMA: Faking a node at [mem 0x0000000081960000-0x0000000bffffffff]
+[    0.000000] [    T0] NODE_DATA(0) allocated [mem 0xbfe0f85c0-0xbfe0facbf]
+[    0.000000] [    T0] cma: Reserved 32 MiB at 0x00000000f0c00000
+[    0.000000] [    T0] psci: probing for conduit method from DT.
+[    0.000000] [    T0] psci: PSCIv1.1 detected in firmware.
+[    0.000000] [    T0] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] [    T0] psci: MIGRATE_INFO_TYPE not supported.
+[    0.000000] [    T0] psci: SMC Calling Convention v1.3
+[    0.000000] [    T0] psci: OSI mode supported.
+[    0.000000] [    T0] Zone ranges:
+[    0.000000] [    T0]   DMA      [mem 0x0000000081960000-0x00000000ffffffff]
+[    0.000000] [    T0]   DMA32    empty
+[    0.000000] [    T0]   Normal   [mem 0x0000000100000000-0x0000000bffffffff]
+[    0.000000] [    T0] Movable zone start for each node
+[    0.000000] [    T0] Early memory node ranges
+[    0.000000] [    T0]   node   0: [mem 0x0000000081960000-0x00000000819fffff]
+[    0.000000] [    T0]   node   0: [mem 0x0000000081a40000-0x0000000081bfffff]
+[    0.000000] [    T0]   node   0: [mem 0x0000000081cf4000-0x0000000081cfffff]
+[    0.000000] [    T0]   node   0: [mem 0x0000000082460000-0x000000008249ffff]
+[    0.000000] [    T0]   node   0: [mem 0x0000000084800000-0x00000000849fffff]
+[    0.000000] [    T0]   node   0: [mem 0x0000000089d80000-0x000000008b9fffff]
+[    0.000000] [    T0]   node   0: [mem 0x000000009b09c000-0x000000009b09ffff]
+[    0.000000] [    T0]   node   0: [mem 0x000000009eb80000-0x000000009ebfffff]
+[    0.000000] [    T0]   node   0: [mem 0x00000000a2880000-0x00000000b7ffffff]
+[    0.000000] [    T0]   node   0: [mem 0x00000000b81c0000-0x00000000c1ffffff]
+[    0.000000] [    T0]   node   0: [mem 0x00000000c2400000-0x00000000d4e22fff]
+[    0.000000] [    T0]   node   0: [mem 0x00000000d5100000-0x00000000d7ffffff]
+[    0.000000] [    T0]   node   0: [mem 0x00000000e3720000-0x00000000f37fffff]
+[    0.000000] [    T0]   node   0: [mem 0x00000000ff300000-0x00000000ff7fffff]
+[    0.000000] [    T0]   node   0: [mem 0x0000000880000000-0x00000008af6fffff]
+[    0.000000] [    T0]   node   0: [mem 0x00000008b0000000-0x00000008b54fffff]
+[    0.000000] [    T0]   node   0: [mem 0x00000008c0000000-0x0000000bffffffff]
+[    0.000000] [    T0] Initmem setup node 0 [mem 0x0000000081960000-0x0000000bffffffff]
+[    0.000000] [    T0] On node 0, zone DMA: 6496 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 64 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 244 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 1888 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 9056 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 21376 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 30364 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 15072 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 15488 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 448 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 1024 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 733 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 14112 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone DMA: 47872 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone Normal: 2048 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone Normal: 2304 pages in unavailable ranges
+[    0.000000] [    T0] On node 0, zone Normal: 11008 pages in unavailable ranges
+[    0.000000] [    T0] percpu: Embedded 33 pages/cpu s94488 r8192 d32488 u135168
+[    0.000000] [    T0] pcpu-alloc: s94488 r8192 d32488 u135168 alloc=33*4096
+[    0.000000] [    T0] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+[    0.000000] [    T0] Detected PIPT I-cache on CPU0
+[    0.000000] [    T0] CPU features: detected: Address authentication (architected QARMA5 algorithm)
+[    0.000000] [    T0] CPU features: detected: GICv3 CPU interface
+[    0.000000] [    T0] CPU features: detected: Spectre-v4
+[    0.000000] [    T0] CPU features: detected: Spectre-BHB
+[    0.000000] [    T0] CPU features: detected: Broken CNTVOFF_EL2
+[    0.000000] [    T0] alternatives: applying boot alternatives
+[    0.000000] [    T0] Kernel command line: console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.boot_devices=soc/1d84000.ufshc androidboot.serialno=HA2EXB0E androidboot.mode=charger androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=charger androidboot.force_normal_boot=1
+[    0.000000] [    T0] Unknown kernel command line parameters "elden_root=LABEL=linux17 elden_nocamera=1", will be passed to user space.
+[    0.000000] [    T0] printk: log buffer data + meta data: 1048576 + 3670016 = 4718592 bytes
+[    0.000000] [    T0] Dentry cache hash table entries: 2097152 (order: 12, 16777216 bytes, linear)
+[    0.000000] [    T0] Inode-cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.000000] [    T0] software IO TLB: area num 8.
+[    0.000000] [    T0] software IO TLB: mapped [mem 0x00000000ecc00000-0x00000000f0c00000] (64MB)
+[    0.000000] [    T0] Fallback order for Node 0: 0 
+[    0.000000] [    T0] Built 1 zonelists, mobility grouping on.  Total pages: 3916403
+[    0.000000] [    T0] Policy zone: Normal
+[    0.000000] [    T0] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] [    T0] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.000000] [    T0] ftrace: allocating 80691 entries in 316 pages
+[    0.000000] [    T0] ftrace: allocated 316 pages with 5 groups
+[    0.000000] [    T0] rcu: Preemptible hierarchical RCU implementation.
+[    0.000000] [    T0] rcu: 	RCU event tracing is enabled.
+[    0.000000] [    T0] rcu: 	RCU restricting CPUs from NR_CPUS=512 to nr_cpu_ids=8.
+[    0.000000] [    T0] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000] [    T0] 	Rude variant of Tasks RCU enabled.
+[    0.000000] [    T0] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] [    T0] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] [    T0] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=8
+[    0.000000] [    T0] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] [    T0] RCU Tasks Rude: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] [    T0] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] [    T0] GICv3: 988 SPIs implemented
+[    0.000000] [    T0] GICv3: 1024 Extended SPIs implemented
+[    0.000000] [    T0] Root IRQ handler: gic_handle_irq
+[    0.000000] [    T0] GICv3: GICv3 features: 16 PPIs, DirectLPI
+[    0.000000] [    T0] GICv3: GICD_CTLR.DS=1, SCR_EL3.FIQ=0
+[    0.000000] [    T0] GICv3: Enabling SGIs without active state
+[    0.000000] [    T0] GICv3: CPU0: found redistributor 0 region 0:0x0000000016080000
+[    0.000000] [    T0] ITS [mem 0x16040000-0x1607ffff]
+[    0.000000] [    T0] ITS@0x0000000016040000: Devices Table too large, reduce ids 32->19
+[    0.000000] [    T0] ITS@0x0000000016040000: Devices too large, reduce ITS pages 1024->256
+[    0.000000] [    T0] ITS@0x0000000016040000: allocated 131072 Devices @880800000 (indirect, esz 8, psz 4K, shr 1)
+[    0.000000] [    T0] ITS@0x0000000016040000: allocated 4096 Interrupt Collections @8802f1000 (flat, esz 1, psz 4K, shr 1)
+[    0.000000] [    T0] GICv3: using LPI property table @0x0000000880310000
+[    0.000000] [    T0] GICv3: CPU0: using allocated LPI pending table @0x0000000880320000
+[    0.000000] [    T0] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] [    T0] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] [    T0] arch_timer: cp15 timer running at 19.20MHz (virt).
+[    0.000000] [    T0] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
+[    0.000000] [    T0] sched_clock: 56 bits at 19MHz, resolution 52ns, wraps every 4398046511078ns
+[    0.000079] [    T0] arm-pv: using stolen time PV
+[    0.000170] [    T0] Console: colour dummy device 80x25
+[    0.000173] [    T0] printk: legacy console [tty0] enabled
+[    0.000537] [    T0] Calibrating delay loop (skipped), value calculated using timer frequency.. 38.40 BogoMIPS (lpj=76800)
+[    0.000543] [    T0] pid_max: default: 32768 minimum: 301
+[    0.000671] [    T0] Mount-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000684] [    T0] Mountpoint-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000775] [    T0] VFS: Finished mounting rootfs on nullfs
+[    0.001256] [    T1] rcu: Hierarchical SRCU implementation.
+[    0.001259] [    T1] rcu: 	Max phase no-delay instances is 1000.
+[    0.001305] [    T1] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.003272] [    T1] EFI services will not be available.
+[    0.003346] [    T1] smp: Bringing up secondary CPUs ...
+[    0.003564] [    T0] Detected PIPT I-cache on CPU1
+[    0.003595] [    T0] GICv3: CPU1: found redistributor 100 region 0:0x00000000160c0000
+[    0.003666] [    T0] GICv3: CPU1: using allocated LPI pending table @0x0000000880330000
+[    0.003758] [    T0] CPU1: Booted secondary processor 0x0000000100 [0x514f0014]
+[    0.004375] [    T0] Detected PIPT I-cache on CPU2
+[    0.004405] [    T0] GICv3: CPU2: found redistributor 200 region 0:0x0000000016100000
+[    0.004474] [    T0] GICv3: CPU2: using allocated LPI pending table @0x0000000880340000
+[    0.004564] [    T0] CPU2: Booted secondary processor 0x0000000200 [0x514f0014]
+[    0.005156] [    T0] Detected PIPT I-cache on CPU3
+[    0.005187] [    T0] GICv3: CPU3: found redistributor 300 region 0:0x0000000016140000
+[    0.005256] [    T0] GICv3: CPU3: using allocated LPI pending table @0x0000000880350000
+[    0.005346] [    T0] CPU3: Booted secondary processor 0x0000000300 [0x514f0014]
+[    0.005955] [    T0] Detected PIPT I-cache on CPU4
+[    0.005987] [    T0] GICv3: CPU4: found redistributor 400 region 0:0x0000000016180000
+[    0.006055] [    T0] GICv3: CPU4: using allocated LPI pending table @0x0000000880360000
+[    0.006145] [    T0] CPU4: Booted secondary processor 0x0000000400 [0x514f0014]
+[    0.006738] [    T0] Detected PIPT I-cache on CPU5
+[    0.006772] [    T0] GICv3: CPU5: found redistributor 500 region 0:0x00000000161c0000
+[    0.006839] [    T0] GICv3: CPU5: using allocated LPI pending table @0x0000000880370000
+[    0.006928] [    T0] CPU5: Booted secondary processor 0x0000000500 [0x514f0014]
+[    0.008952] [    T0] Detected PIPT I-cache on CPU6
+[    0.009033] [    T0] GICv3: CPU6: found redistributor 10000 region 0:0x0000000016200000
+[    0.009145] [    T0] GICv3: CPU6: using allocated LPI pending table @0x0000000880380000
+[    0.009317] [    T0] CPU6: Booted secondary processor 0x0000010000 [0x513f0014]
+[    0.010086] [    T0] Detected PIPT I-cache on CPU7
+[    0.010146] [    T0] GICv3: CPU7: found redistributor 10100 region 0:0x0000000016240000
+[    0.010242] [    T0] GICv3: CPU7: using allocated LPI pending table @0x0000000880390000
+[    0.010399] [    T0] CPU7: Booted secondary processor 0x0000010100 [0x513f0014]
+[    0.010487] [    T1] smp: Brought up 1 node, 8 CPUs
+[    0.010546] [    T1] SMP: Total of 8 processors activated.
+[    0.010548] [    T1] CPU: All CPU(s) started at EL1
+[    0.010551] [    T1] CPU features: detected: Branch Target Identification
+[    0.010555] [    T1] CPU features: detected: ARMv8.4 Translation Table Level
+[    0.010558] [    T1] CPU features: detected: Instruction cache invalidation not required for I/D coherence
+[    0.010562] [    T1] CPU features: detected: Data cache clean to the PoU not required for I/D coherence
+[    0.010565] [    T1] CPU features: detected: Common not Private translations
+[    0.010568] [    T1] CPU features: detected: CRC32 instructions
+[    0.010570] [    T1] CPU features: detected: Data independent timing control (DIT)
+[    0.010573] [    T1] CPU features: detected: E0PD
+[    0.010576] [    T1] CPU features: detected: Enhanced Counter Virtualization
+[    0.010578] [    T1] CPU features: detected: Enhanced Counter Virtualization (CNTPOFF)
+[    0.010582] [    T1] CPU features: detected: Enhanced Privileged Access Never
+[    0.010584] [    T1] CPU features: detected: Enhanced Virtualization Traps
+[    0.010587] [    T1] CPU features: detected: Fine Grained Traps
+[    0.010590] [    T1] CPU features: detected: Generic authentication (architected QARMA5 algorithm)
+[    0.010593] [    T1] CPU features: detected: RCpc load-acquire (LDAPR)
+[    0.010596] [    T1] CPU features: detected: LSE atomic instructions
+[    0.010599] [    T1] CPU features: detected: Privileged Access Never
+[    0.010602] [    T1] CPU features: detected: PMUv3
+[    0.010604] [    T1] CPU features: detected: RAS Extension Support
+[    0.010607] [    T1] CPU features: detected: RASv1p1 Extension Support
+[    0.010609] [    T1] CPU features: detected: Random Number Generator
+[    0.010612] [    T1] CPU features: detected: Speculation barrier (SB)
+[    0.010614] [    T1] CPU features: detected: Stage-2 Force Write-Back
+[    0.010617] [    T1] CPU features: detected: TLB range maintenance instructions
+[    0.010620] [    T1] CPU features: detected: XNX
+[    0.010623] [    T1] CPU features: detected: Speculative Store Bypassing Safe (SSBS)
+[    0.010678] [    T1] alternatives: applying system-wide alternatives
+[    0.013567] [    T1] CPU features: detected: Activity Monitors Unit (AMU) on CPU0-7
+[    0.013574] [    T1] CPU features: detected: Hardware dirty bit management on CPU0-7
+[    0.013988] [    T1] Memory: 15098248K/15665612K available (27136K kernel code, 10948K rwdata, 19156K rodata, 4608K init, 2707K bss, 507840K reserved, 45056K cma-reserved)
+[    0.014105] [    T1] devtmpfs: initialized
+[    0.020283] [    T1] posixtimers hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.020310] [    T1] futex hash table entries: 2048 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+[    0.020399] [    T1] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.020403] [    T1] 0 pages in range for non-PLT usage
+[    0.020404] [    T1] 508096 pages in range for PLT usage
+[    0.021920] [    T1] DMI: not present or invalid.
+[    0.022920] [    T1] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.023315] [    T1] DMA: preallocated 2048 KiB GFP_KERNEL pool for atomic allocations
+[    0.023532] [    T1] DMA: preallocated 2048 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.023541] [    T1] audit: initializing netlink subsys (disabled)
+[    0.023572] [   T61] audit: type=2000 audit(0.020:1): state=initialized audit_enabled=0 res=1
+[    0.025029] [    T1] thermal_sys: Registered thermal governor 'step_wise'
+[    0.025030] [    T1] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.025052] [    T1] cpuidle: using governor menu
+[    0.025093] [    T1] NET: Registered PF_QIPCRTR protocol family
+[    0.025149] [    T1] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.025220] [    T1] ASID allocator initialised with 65536 entries
+[    0.026107] [    T1] Serial: AMBA PL011 UART driver
+[    0.026517] [    T1] printk: legacy console [ramoops-1] enabled
+[    0.027185] [    T1] pstore: Registered ramoops as persistent store backend
+[    0.027190] [    T1] ramoops: using 0x400000@0xc2000000, ecc: 0
+[    0.027987] [    T1] CPUidle PSCI: Initialized CPU PM domain topology using OSI mode
+[    0.033585] [    T1] /soc@0/clock-controller@af00000: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.033596] [    T1] /soc@0/display-subsystem@ae00000/phy@ae95000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.033605] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae95000
+[    0.033617] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.033630] [    T1] /soc@0/display-subsystem@ae00000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.033638] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000
+[    0.033647] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000
+[    0.033660] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0
+[    0.033673] [    T1] /soc@0/display-subsystem@ae00000/phy@ae97000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.033682] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae97000
+[    0.033694] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae95000
+[    0.033707] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.033719] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000
+[    0.033728] [    T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae96000
+[    0.033751] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae96000
+[    0.033764] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0
+[    0.033791] [    T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000
+[    0.033804] [    T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.033817] [    T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000
+[    0.033826] [    T1] /soc@0/display-subsystem@ae00000/displayport-controller@af54000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/display-controller@ae01000
+[    0.033836] [    T1] /soc@0/display-subsystem@ae00000/displayport-controller@af54000: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.033848] [    T1] /soc@0/display-subsystem@ae00000/displayport-controller@af54000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.033860] [    T1] /soc@0/display-subsystem@ae00000/displayport-controller@af54000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000
+[    0.033869] [    T1] /soc@0/phy@88e8000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/displayport-controller@af54000
+[    0.033879] [    T1] /soc@0/usb@a600000: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.033892] [    T1] /soc@0/phy@88e8000: Fixed dependency cycle(s) with /soc@0/usb@a600000
+[    0.034001] [    T1] /soc@0/isp@ad27000: Fixed dependency cycle(s) with /soc@0/cci@ac7b000/i2c-bus@0/camera@56
+[    0.034013] [    T1] /soc@0/cci@ac7b000/i2c-bus@0/camera@56: Fixed dependency cycle(s) with /soc@0/isp@ad27000
+[    0.034034] [    T1] /soc@0/isp@ad27000: Fixed dependency cycle(s) with /soc@0/cci@ac7c000/i2c-bus@0/camera@31
+[    0.034052] [    T1] /soc@0/cci@ac7c000/i2c-bus@0/camera@31: Fixed dependency cycle(s) with /soc@0/isp@ad27000
+[    0.034150] [    T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/displayport-controller@af54000
+[    0.034161] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/display-controller@ae01000
+[    0.034213] [    T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/display-controller@ae01000
+[    0.035084] [    T1] /soc@0/clock-controller@af00000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae95000
+[    0.035423] [    T1] /soc@0/clock-controller@af00000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae97000
+[    0.035770] [    T1] /soc@0/tmc@1004f000: Fixed dependency cycle(s) with /soc@0/ctcu@10001000
+[    0.035778] [    T1] /soc@0/tmc@10048000: Fixed dependency cycle(s) with /soc@0/ctcu@10001000
+[    0.035786] [    T1] /soc@0/replicator@1004e000: Fixed dependency cycle(s) with /soc@0/tmc@10048000
+[    0.035816] [    T1] /soc@0/tmc@1004f000: Fixed dependency cycle(s) with /soc@0/replicator@1004e000
+[    0.035824] [    T1] /soc@0/ctcu@10001000: Fixed dependency cycle(s) with /soc@0/tmc@1004f000
+[    0.035832] [    T1] /soc@0/replicator@1004e000: Fixed dependency cycle(s) with /soc@0/tmc@1004f000
+[    0.035863] [    T1] /soc@0/tmc@10048000: Fixed dependency cycle(s) with /soc@0/replicator@1004e000
+[    0.035870] [    T1] /soc@0/ctcu@10001000: Fixed dependency cycle(s) with /soc@0/tmc@10048000
+[    0.035890] [    T1] /soc@0/funnel@10041000: Fixed dependency cycle(s) with /soc@0/stm@10002000
+[    0.035913] [    T1] /soc@0/stm@10002000: Fixed dependency cycle(s) with /soc@0/funnel@10041000
+[    0.035933] [    T1] /soc@0/funnel@10041000: Fixed dependency cycle(s) with /soc@0/tpda@10004000
+[    0.035955] [    T1] /soc@0/tpda@10004000: Fixed dependency cycle(s) with /soc@0/funnel@10041000
+[    0.035963] [    T1] /soc@0/tpdm@1000f000: Fixed dependency cycle(s) with /soc@0/tpda@10004000
+[    0.035970] [    T1] /soc@0/tpda@10004000: Fixed dependency cycle(s) with /soc@0/tpdm@1000f000
+[    0.036014] [    T1] /soc@0/funnel@10b04000: Fixed dependency cycle(s) with /soc@0/funnel@10041000
+[    0.036025] [    T1] /soc@0/funnel@10041000: Fixed dependency cycle(s) with /soc@0/funnel@10b04000
+[    0.036035] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/funnel@10041000
+[    0.036056] [    T1] /soc@0/funnel@10041000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036070] [    T1] /soc@0/replicator@1004e000: Fixed dependency cycle(s) with /soc@0/replicator@10046000
+[    0.036078] [    T1] /soc@0/replicator@10046000: Fixed dependency cycle(s) with /soc@0/replicator@1004e000
+[    0.036086] [    T1] /soc@0/replicator@10b06000: Fixed dependency cycle(s) with /soc@0/replicator@10046000
+[    0.036115] [    T1] /soc@0/replicator@10046000: Fixed dependency cycle(s) with /soc@0/replicator@10b06000
+[    0.036280] [    T1] /soc@0/tpda@10803000: Fixed dependency cycle(s) with /soc@0/tpdm@10800000
+[    0.036288] [    T1] /soc@0/tpdm@10800000: Fixed dependency cycle(s) with /soc@0/tpda@10803000
+[    0.036321] [    T1] /soc@0/funnel@10804000: Fixed dependency cycle(s) with /soc@0/tpda@10803000
+[    0.036329] [    T1] /soc@0/tpda@10803000: Fixed dependency cycle(s) with /soc@0/funnel@10804000
+[    0.036362] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/funnel@10804000
+[    0.036372] [    T1] /soc@0/funnel@10804000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036403] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@1082c000
+[    0.036417] [    T1] /soc@0/tpdm@1082c000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036444] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@10841000
+[    0.036459] [    T1] /soc@0/tpdm@10841000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036493] [    T1] /soc@0/tpda@10851000: Fixed dependency cycle(s) with /soc@0/tpdm@1084e000
+[    0.036501] [    T1] /soc@0/tpdm@1084e000: Fixed dependency cycle(s) with /soc@0/tpda@10851000
+[    0.036534] [    T1] /soc@0/tpda@10851000: Fixed dependency cycle(s) with /soc@0/tpdm@1084f000
+[    0.036543] [    T1] /soc@0/tpdm@1084f000: Fixed dependency cycle(s) with /soc@0/tpda@10851000
+[    0.036576] [    T1] /soc@0/tpda@10851000: Fixed dependency cycle(s) with /soc@0/tpdm@10850000
+[    0.036585] [    T1] /soc@0/tpdm@10850000: Fixed dependency cycle(s) with /soc@0/tpda@10851000
+[    0.036617] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpda@10851000
+[    0.036625] [    T1] /soc@0/tpda@10851000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036663] [    T1] /soc@0/tpda@10986000: Fixed dependency cycle(s) with /soc@0/tpdm@10980000
+[    0.036671] [    T1] /soc@0/tpdm@10980000: Fixed dependency cycle(s) with /soc@0/tpda@10986000
+[    0.036705] [    T1] /soc@0/funnel@10987000: Fixed dependency cycle(s) with /soc@0/tpda@10986000
+[    0.036713] [    T1] /soc@0/tpda@10986000: Fixed dependency cycle(s) with /soc@0/funnel@10987000
+[    0.036744] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/funnel@10987000
+[    0.036756] [    T1] /soc@0/funnel@10987000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036783] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a3000
+[    0.036802] [    T1] /soc@0/tpdm@109a3000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036826] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a4000
+[    0.036844] [    T1] /soc@0/tpdm@109a4000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036870] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a5000
+[    0.036886] [    T1] /soc@0/tpdm@109a5000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036911] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a6000
+[    0.036928] [    T1] /soc@0/tpdm@109a6000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036952] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a7000
+[    0.036970] [    T1] /soc@0/tpdm@109a7000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036993] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a8000
+[    0.037011] [    T1] /soc@0/tpdm@109a8000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037034] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a9000
+[    0.037053] [    T1] /soc@0/tpdm@109a9000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037075] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109aa000
+[    0.037095] [    T1] /soc@0/tpdm@109aa000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037124] [    T1] /soc@0/tpdm@109d0000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037132] [    T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109d0000
+[    0.037189] [    T1] /soc@0/tmc@10b05000: Fixed dependency cycle(s) with /soc@0/funnel@10b04000
+[    0.037197] [    T1] /soc@0/funnel@10b04000: Fixed dependency cycle(s) with /soc@0/tmc@10b05000
+[    0.037221] [    T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/funnel@10b04000
+[    0.037231] [    T1] /soc@0/funnel@10b04000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037246] [    T1] /soc@0/replicator@10b06000: Fixed dependency cycle(s) with /soc@0/tmc@10b05000
+[    0.037255] [    T1] /soc@0/tmc@10b05000: Fixed dependency cycle(s) with /soc@0/replicator@10b06000
+[    0.037336] [    T1] /soc@0/tpdm@10b0d000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037344] [    T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b0d000
+[    0.037352] [    T1] /soc@0/tpdm@10b0c000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037359] [    T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b0c000
+[    0.037367] [    T1] /soc@0/tpdm@10b0b000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037375] [    T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b0b000
+[    0.037382] [    T1] /soc@0/tpdm@10b0a000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037390] [    T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b0a000
+[    0.037397] [    T1] /soc@0/tpdm@10b09000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037405] [    T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b09000
+[    0.037556] [    T1] /soc@0/interrupt-controller@16000000: Fixed dependency cycle(s) with /soc@0/interrupt-controller@16000000
+[    0.037585] [    T1] /soc@0/ufs@1d84000: Fixed dependency cycle(s) with /soc@0/phy@1d80000
+[    0.037595] [    T1] /soc@0/phy@1d80000: Fixed dependency cycle(s) with /soc@0/ufs@1d84000
+[    0.055064] [    T1] /soc@0/rsc@16500000/regulators-0: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-0/bob2
+[    0.055078] [    T1] /soc@0/rsc@16500000/regulators-0: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-0/bob1
+[    0.055179] [    T1] /soc@0/rsc@16500000/regulators-1: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-1/smps1
+[    0.055373] [    T1] /soc@0/rsc@16500000/regulators-3: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-3/smps3
+[    0.055472] [    T1] /soc@0/rsc@16500000/regulators-1: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-4/smps7
+[    0.055483] [    T1] /soc@0/rsc@16500000/regulators-4: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-1/smps1
+[    0.055493] [    T1] /soc@0/rsc@16500000/regulators-4: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-4/smps7
+[    0.056863] [    T1] /tpdm-cdsp-llm: Fixed dependency cycle(s) with /soc@0/tpda@10986000
+[    0.056870] [    T1] /soc@0/tpda@10986000: Fixed dependency cycle(s) with /tpdm-cdsp-llm
+[    0.057008] [    T1] /tpdm-cdsp-llm2: Fixed dependency cycle(s) with /soc@0/tpda@10986000
+[    0.057015] [    T1] /soc@0/tpda@10986000: Fixed dependency cycle(s) with /tpdm-cdsp-llm2
+[    0.057150] [    T1] /tpdm-modem1: Fixed dependency cycle(s) with /soc@0/tpda@10803000
+[    0.057157] [    T1] /soc@0/tpda@10803000: Fixed dependency cycle(s) with /tpdm-modem1
+[    0.057800] [    T1] /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@43: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.057819] [    T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@43
+[    0.057915] [    T1] /soc@0/phy@88e8000: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.057931] [    T1] /soc@0/usb@a600000: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.057953] [    T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.058078] [    T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/usb@a600000
+[    0.058095] [    T1] /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@42: Fixed dependency cycle(s) with /pmic-glink/connector@1
+[    0.058108] [    T1] /pmic-glink/connector@1: Fixed dependency cycle(s) with /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@42
+[    0.058118] [    T1] /soc@0/usb@a600000: Fixed dependency cycle(s) with /pmic-glink/connector@1
+[    0.058329] [    T1] /pmic-glink/connector@1: Fixed dependency cycle(s) with /soc@0/usb@a600000
+[    0.059352] [    T1] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.059358] [    T1] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.059366] [    T1] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.059371] [    T1] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.059376] [    T1] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.059381] [    T1] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.059387] [    T1] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.059392] [    T1] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.059854] [    T1] raid6: using neon recovery algorithm
+[    0.063337] [    T1] iommu: Default domain type: Translated
+[    0.063343] [    T1] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.063545] [    T1] SCSI subsystem initialized
+[    0.063581] [    T1] libata version 3.00 loaded.
+[    0.063664] [    T1] usbcore: registered new interface driver usbfs
+[    0.063678] [    T1] usbcore: registered new interface driver hub
+[    0.063692] [    T1] usbcore: registered new device driver usb
+[    0.064176] [    T1] pps_core: LinuxPPS API ver. 1 registered
+[    0.064181] [    T1] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.064188] [    T1] PTP clock support registered
+[    0.064246] [    T1] EDAC MC: Ver: 3.0.0
+[    0.064432] [    T1] scmi_core: SCMI protocol bus registered
+[    0.064859] [    T1] FPGA manager framework
+[    0.064881] [    T1] Advanced Linux Sound Architecture Driver Initialized.
+[    0.065055] [    T1] Bluetooth: Core ver 2.22
+[    0.065065] [    T1] NET: Registered PF_BLUETOOTH protocol family
+[    0.065070] [    T1] Bluetooth: HCI device and connection manager initialized
+[    0.065076] [    T1] Bluetooth: HCI socket layer initialized
+[    0.065082] [    T1] Bluetooth: L2CAP socket layer initialized
+[    0.065090] [    T1] Bluetooth: SCO socket layer initialized
+[    0.065187] [    T1] vgaarb: loaded
+[    0.065359] [    T1] clocksource: Switched to clocksource arch_sys_counter
+[    0.065476] [    T1] VFS: Disk quotas dquot_6.6.0
+[    0.065484] [    T1] VFS: Dquot-cache hash table entries: 512 (4096 bytes)
+[    0.066956] [    T1] NET: Registered PF_INET protocol family
+[    0.067044] [    T1] IP idents hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.070118] [    T1] tcp_listen_portaddr_hash hash table entries: 8192 (order: 5, 131072 bytes, linear)
+[    0.070206] [    T1] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.070215] [    T1] TCP established hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.070875] [    T1] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    0.072147] [    T1] TCP: Hash tables configured (established 131072 bind 65536)
+[    0.072172] [    T1] UDP hash table entries: 8192 (order: 7, 524288 bytes, linear)
+[    0.072564] [    T1] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.072673] [    T1] RPC: Registered named UNIX socket transport module.
+[    0.072679] [    T1] RPC: Registered udp transport module.
+[    0.072684] [    T1] RPC: Registered tcp transport module.
+[    0.072688] [    T1] RPC: Registered tcp-with-tls transport module.
+[    0.072693] [    T1] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.073018] [    T1] PCI: CLS 0 bytes, default 64
+[    0.073070] [   T73] Unpacking initramfs...
+[    0.081678] [    T1] Initialise system trusted keyrings
+[    0.081731] [    T1] workingset: timestamp_bits=42 (anon: 37) max_order=22 bucket_order=0 (anon: 0)
+[    0.081837] [    T1] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.081917] [    T1] NFS: Registering the id_resolver key type
+[    0.081925] [    T1] Key type id_resolver registered
+[    0.081929] [    T1] Key type id_legacy registered
+[    0.081942] [    T1] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[    0.081948] [    T1] nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+[    0.082209] [    T1] Key type asymmetric registered
+[    0.082215] [    T1] Asymmetric key parser 'x509' registered
+[    0.082229] [    T1] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 240)
+[    0.082236] [    T1] io scheduler mq-deadline registered
+[    0.082241] [    T1] io scheduler kyber registered
+[    0.082254] [    T1] io scheduler bfq registered
+[    0.082325] [    T1] xor: measuring software checksum speed
+[    0.082685] [    T1]    eor3            : 36840 MB/sec
+[    0.083285] [    T1]    32regs          : 22028 MB/sec
+[    0.083885] [    T1]    8regs           : 22028 MB/sec
+[    0.083890] [    T1] xor: using function: eor3 (36840 MB/sec)
+[    0.090653] [    T1] raid6: int64x1  gen()  3882 MB/s
+[    0.095884] [    T1] raid6: int64x2  gen()  5016 MB/s
+[    0.100386] [    T1] raid6: int64x4  gen()  5828 MB/s
+[    0.106400] [    T1] raid6: int64x8  gen()  4363 MB/s
+[    0.109150] [    T1] raid6: neonx1   gen()  9547 MB/s
+[    0.111555] [    T1] raid6: neonx2   gen() 10919 MB/s
+[    0.113842] [    T1] raid6: neonx4   gen() 11489 MB/s
+[    0.116149] [    T1] raid6: neonx8   gen() 11390 MB/s
+[    0.116154] [    T1] raid6: using algorithm neonx4 gen() 11489 MB/s
+[    0.117559] [    T1] raid6: .... xor() 9359 MB/s, rmw enabled
+[    0.130160] [    T1] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.204355] [   T97] vreg_s1d_0p97: Setting 880000-1100000uV
+[    0.204376] [   T95] vreg_s7i_1p2: Setting 1224000-1340000uV
+[    0.204590] [   T95] vreg_s8i_0p9: Setting 900000-972000uV
+[    0.204597] [   T97] vreg_s3d_1p2: Setting 1200000-1300000uV
+[    0.204766] [   T95] vreg_l1i_1p2: Setting 1200000-1200000uV
+[    0.204789] [   T97] vreg_s4d_0p85: Setting 500000-1036000uV
+[    0.204927] [   T95] vreg_l2i_1p2: Setting 1200000-1200000uV
+[    0.205182] [   T97] vreg_l3d_0p88: Setting 880000-920000uV
+[    0.206386] [    T1] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.207689] [    T1] msm_serial: driver initialized
+[    0.207957] [    T1] SuperH (H)SCI(F) driver initialized
+[    0.208102] [    T1] STM32 USART driver initialized
+[    0.212851] [    T1] loop: module loaded
+[    0.213267] [    T1] megasas: 07.734.00.00-rc1
+[    0.215420] [    T1] spmi_pmic_arb c400000.spmi: PMIC arbiter version v7 (0x70020000)
+[    0.233802] [    T1] tun: Universal TUN/TAP device driver, 1.6
+[    0.233989] [    T1] VFIO - User Level meta-driver version: 0.3
+[    0.236090] [    T1] usbcore: registered new interface driver usb-storage
+[    0.246525] [    T1] mousedev: PS/2 mouse device common for all mice
+[    0.247624] [    T1] rtc-pm8xxx c400000.spmi:pmic@0:rtc@6100: registered as rtc0
+[    0.247659] [    T1] rtc-pm8xxx c400000.spmi:pmic@0:rtc@6100: setting system clock to 1970-01-05T02:36:30 UTC (354990)
+[    0.248031] [    T1] i2c_dev: i2c /dev entries driver
+[    0.250126] [    T1] input: pmic_pwrkey as /devices/platform/soc@0/c400000.spmi/spmi-0/0-00/c400000.spmi:pmic@0:pon@1300/c400000.spmi:pmic@0:pon@1300:pwrkey/input/input0
+[    0.250617] [    T1] input: pmic_resin as /devices/platform/soc@0/c400000.spmi/spmi-0/0-00/c400000.spmi:pmic@0:pon@1300/c400000.spmi:pmic@0:pon@1300:resin/input/input1
+[    0.262537] [    T1] Bluetooth: HCI UART driver ver 2.3
+[    0.262544] [    T1] Bluetooth: HCI UART protocol H4 registered
+[    0.262553] [    T1] Bluetooth: HCI UART protocol LL registered
+[    0.262598] [    T1] Bluetooth: HCI UART protocol Broadcom registered
+[    0.262606] [    T1] Bluetooth: HCI UART protocol QCA registered
+[    0.262615] [    T1] Bluetooth: HCI UART protocol Marvell registered
+[    0.266966] [    T1] arm-scmi arm-scmi.1.auto: Using scmi_mailbox_transport
+[    0.266973] [    T1] arm-scmi arm-scmi.1.auto: SCMI max-rx-timeout: 30ms / max-msg-size: 104bytes / max-msg: 20
+[    0.267102] [    T1] arm-scmi arm-scmi.1.auto: SCMI Notifications - Core Enabled.
+[    0.267396] [    T1] arm-scmi arm-scmi.1.auto: SCMI Protocol v2.0 'Qualcomm:' Firmware version 0x20000
+[    0.267434] [    T1] arm-scmi arm-scmi.1.auto: Enabling SCMI Quirk [quirk_perf_level_get_fc_force]
+[    0.267491] [    T1] arm-scmi arm-scmi.1.auto: Enabling SCMI Quirk [quirk_clock_rates_triplet_out_of_spec]
+[    0.273656] [    T1] cpu cpu0: EM: OPP:384000 is inefficient
+[    0.273741] [    T1] cpu cpu0: EM: created perf domain
+[    0.281457] [    T1] cpu cpu6: EM: created perf domain
+[    0.286660] [    T1] scmi-perf-domain scmi_dev.4: Initialized 2 performance domains
+[    0.286897] [    T1] SMCCC: SOC_ID: ARCH_SOC_ID not implemented, skipping ....
+[    0.287229] [    T1] clocksource: arch_mmio_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
+[    0.287236] [    T1] arch-timer-mmio 16800000.timer: mmio timer running at 19.20MHz (virt)
+[    0.287304] [    T1] hid: raw HID events driver (C) Jiri Kosina
+[    0.287363] [    T1] usbcore: registered new interface driver usbhid
+[    0.287368] [    T1] usbhid: USB HID core driver
+[    0.290287] [    T1] hw perfevents: enabled with armv8_pmuv3 PMU driver, 13 (0,80000fff) counters available
+[    0.290502] [   T23] watchdog: NMI not fully supported
+[    0.290505] [   T23] watchdog: Hard watchdog permanently disabled
+[    0.293385] [    T1] Initializing XFRM netlink socket
+[    0.293403] [    T1] NET: Registered PF_INET6 protocol family
+[    0.293652] [    T1] Segment Routing with IPv6
+[    0.293659] [    T1] In-situ OAM (IOAM) with IPv6
+[    0.293679] [    T1] NET: Registered PF_PACKET protocol family
+[    0.293683] [    T1] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    0.293688] [    T1] Bluetooth: HIDP socket layer initialized
+[    0.293707] [    T1] Key type dns_resolver registered
+[    0.297932] [    T1] registered taskstats version 1
+[    0.297983] [    T1] Loading compiled-in X.509 certificates
+[    0.299282] [    T1] Demotion targets for Node 0: null
+[    0.299474] [    T1] Btrfs loaded, zoned=no, fsverity=no
+[    0.306319] [   T75] qcom_scm: convention: smc arm 64
+[    0.308601] [   T75] qcom_scm firmware:scm: qseecom: found qseecom with version 0x1402000
+[    0.308608] [   T75] qcom_scm firmware:scm: qseecom: untested machine, skipping
+[    0.311266] [   T75] qcom-ice 1d88000.crypto: Found QC Inline Crypto Engine (ICE) v4.0.3
+[    0.311271] [   T75] qcom-ice 1d88000.crypto: QC Hardware Key Manager (HWKM) version v2
+[    0.311322] [   T75] qcom-ice 1d88000.crypto: Not using HWKM. Supporting raw keys only.
+[    0.312397] [   T62] vreg_s1g_0p5: Setting 300000-700000uV
+[    0.312577] [   T62] vreg_s3g_1p8: Setting 1856000-2000000uV
+[    0.312736] [   T62] vreg_s4g_0p75: Setting 300000-900000uV
+[    0.312823] [   T74] vreg_s2j_1p1: Setting 1000000-1100000uV
+[    0.312855] [   T62] vreg_l1g_0p91: Setting 912000-936000uV
+[    0.312977] [   T62] vreg_l2g_1p8: Setting 1200000-1856000uV
+[    0.313075] [   T74] vreg_s3j_1p1: Setting 1000000-1100000uV
+[    0.313132] [   T62] vreg_l3g_1p2: Setting 1200000-1256000uV
+[    0.313367] [   T75] arm-smmu 3da0000.iommu: probing hardware configuration...
+[    0.313370] [   T75] arm-smmu 3da0000.iommu: SMMUv2 with:
+[    0.313401] [   T75] arm-smmu 3da0000.iommu: 	stage 1 translation
+[    0.313404] [   T75] arm-smmu 3da0000.iommu: 	coherent table walk
+[    0.313407] [   T75] arm-smmu 3da0000.iommu: 	stream matching with 24 register groups
+[    0.313436] [   T75] arm-smmu 3da0000.iommu: 	21 context banks (0 stage-2 only)
+[    0.313462] [   T75] arm-smmu 3da0000.iommu: 	Supported page sizes: 0x61311000
+[    0.313465] [   T75] arm-smmu 3da0000.iommu: 	Stage-1: 48-bit VA -> 36-bit IPA
+[    0.313523] [   T75] arm-smmu 3da0000.iommu: 	preserved 0 boot mappings
+[    0.315495] [   T75] platform 3d00000.gpu: Adding to iommu group 0
+[    0.315577] [   T75] platform 3d37000.gmu: Adding to iommu group 1
+[    0.316993] [   T75] arm-smmu 15000000.iommu: probing hardware configuration...
+[    0.316997] [   T75] arm-smmu 15000000.iommu: SMMUv2 with:
+[    0.317008] [   T75] arm-smmu 15000000.iommu: 	stage 1 translation
+[    0.317011] [   T75] arm-smmu 15000000.iommu: 	coherent table walk
+[    0.317014] [   T75] arm-smmu 15000000.iommu: 	stream matching with 132 register groups
+[    0.317025] [   T75] arm-smmu 15000000.iommu: 	83 context banks (0 stage-2 only)
+[    0.318938] [   T75] arm-smmu 15000000.iommu: 	Supported page sizes: 0x61311000
+[    0.318941] [   T75] arm-smmu 15000000.iommu: 	Stage-1: 36-bit VA -> 36-bit IPA
+[    0.318993] [   T75] platform 800000.dma-controller: Adding to iommu group 2
+[    0.319032] [   T75] platform 8c0000.geniqup: Adding to iommu group 3
+[    0.319071] [   T75] platform a00000.dma-controller: Adding to iommu group 4
+[    0.319110] [   T75] platform ac0000.geniqup: Adding to iommu group 5
+[    0.319165] [   T75] platform 1dc4000.dma-controller: Adding to iommu group 6
+[    0.319214] [   T75] platform 1dfa000.crypto: Adding to iommu group 6
+[    0.319253] [   T75] platform 8804000.mmc: Adding to iommu group 7
+[    0.319286] [   T75] platform a600000.usb: Adding to iommu group 8
+[    0.319325] [   T75] platform ad27000.isp: Adding to iommu group 9
+[    0.319363] [   T75] platform 1d84000.ufs: Adding to iommu group 10
+[    0.320536] [   T75] amba 10048000.tmc: Adding to iommu group 11
+[    0.320576] [   T75] amba 1004f000.tmc: Adding to iommu group 12
+[    0.351191] [   T75] platform ae01000.display-controller: Adding to iommu group 13
+[    0.351336] [   T75] platform ae01000.display-controller: boot framebuffer mapped before SID switch: iova=0x00000000fc800000 size=2b00000 translated=0x00000000fc800000
+[    0.352402] [   T75] msm_dsi ae94000.dsi: Failed to create device link (0x180) with supplier ae96000.dsi for /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0
+[    0.355318] [   T75] remoteproc remoteproc0: adsp is available
+[    0.356373] [   T75] remoteproc remoteproc1: cdsp is available
+[    0.359520] [   T75] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 88e8000.phy for /pmic-glink/connector@0
+[    0.360998] [   T75] geni_i2c 884000.i2c: Bus frequency not specified, default to 100kHz.
+[    0.656700] [   T73] Freeing initrd memory: 63104K
+[    0.656786] [   T33] remoteproc remoteproc1: powering up cdsp
+[    0.656787] [   T98] remoteproc remoteproc0: powering up adsp
+[    0.656793] [   T98] remoteproc remoteproc0: Booting fw image qcom/sm8750/adsp.mdt, size 8364
+[    0.656796] [   T33] remoteproc remoteproc1: Booting fw image qcom/sm8750/cdsp.mdt, size 5084
+[    0.732380] [   T75] geni_i2c 888000.i2c: Bus frequency not specified, default to 100kHz.
+[    0.738743] [   T75] 898000.serial: ttyHS1 MMIO:0x0000000000898000 (irq = 213, base_baud = 0) is a MSM
+[    0.738779] [   T75] serial serial0: tty port ttyHS1 registered
+[    0.739947] [   T75] novatek-nvt36xxx-spi spi0.0: stock SPI CS setup/hold delays: 300 ns
+[    0.740462] [   T75] geni_i2c a94000.i2c: Bus frequency not specified, default to 100kHz.
+[    0.740875] [   T75] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+[    0.740904] [   T75] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+[    0.741197] [   T75] geni_i2c a98000.i2c: Bus frequency not specified, default to 100kHz.
+[    0.812029] [   T33] remoteproc remoteproc1: remote processor cdsp is now up
+[    1.264307] [   T98] remoteproc remoteproc0: remote processor adsp is now up
+[    1.321883] [  T150] PDR: Indication received from msm/adsp/charger_pd, state: 0x1fffffff, trans-id: 1
+[    1.330674] [  T151] PDR: Indication received from msm/adsp/audio_pd, state: 0x1fffffff, trans-id: 1
+[    1.330722] [  T154] qcom,apr 6800000.remoteproc:glink-edge.adsp_apps.-1.-1: Adding APR/GPR dev: gprsvc:service:2:3
+[    1.331243] [  T154] platform 6800000.remoteproc:glink-edge:gpr:service@3:dais: Adding to iommu group 14
+[    1.331798] [  T154] qcom,apr 6800000.remoteproc:glink-edge.adsp_apps.-1.-1: Adding APR/GPR dev: gprsvc:service:2:7
+[    2.283295] [   T75] input: aw86927-haptics as /devices/platform/soc@0/ac0000.geniqup/a98000.i2c/i2c-6/6-005a/input/input3
+[    3.911208] [   T75] input: aw86927-haptics as /devices/platform/soc@0/ac0000.geniqup/a98000.i2c/i2c-6/6-005b/input/input4
+[    3.913862] [   T72] vreg_bob1: Setting 3032000-3992000uV
+[    3.914379] [   T73] vreg_s5f_0p5: Setting 500000-1000000uV
+[    3.914656] [   T73] vreg_l1f_0p88: Setting 880000-920000uV
+[    3.914783] [   T73] vreg_l2f_1p2: Setting 1200000-1200000uV
+[    3.915058] [   T72] vreg_bob2: Setting 3000000-3000000uV
+[    3.915757] [   T72] vreg_l1b_1p8: Setting 1800000-1800000uV
+[    3.915870] [   T72] vreg_l2b_3p0: Setting 3008000-3048000uV
+[    3.916126] [   T72] vreg_l6b_1p8: Setting 1800000-3008000uV
+[    3.916230] [   T72] vreg_l7b_1p8: Setting 1800000-3008000uV
+[    3.917220] [   T75] ufshcd-qcom 1d84000.ufs: freq-table-hz property not specified
+[    3.917225] [   T75] ufshcd-qcom 1d84000.ufs: ufshcd_populate_vreg: Unable to find vdd-hba-supply regulator, assuming enabled
+[    3.917244] [   T75] ufshcd-qcom 1d84000.ufs: ufshcd_populate_vreg: Unable to find vccq2-supply regulator, assuming enabled
+[    3.925789] [   T75] ufshcd-qcom 1d84000.ufs: MCQ resource not found in device tree
+[    3.925796] [   T75] ufshcd-qcom 1d84000.ufs: MCQ mode is disabled, err=-19
+[    3.925800] [   T75] scsi host0: ufshcd
+[    3.957055] [   T96] scsi 0:0:0:49488: Well-known LUN    SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.957151] [   T72] sdhci_msm 8804000.mmc: Got CD GPIO
+[    3.957689] [   T96] scsi 0:0:0:49476: Well-known LUN    SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.958311] [   T96] scsi 0:0:0:49456: Well-known LUN    SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.958990] [   T96] scsi 0:0:0:0: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.959658] [   T96] scsi 0:0:0:1: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.959670] [   T73] sd 0:0:0:0: [sda] 123871232 4096-byte logical blocks: (507 GB/473 GiB)
+[    3.960689] [   T73] sd 0:0:0:0: [sda] Write Protect is off
+[    3.960693] [   T73] sd 0:0:0:0: [sda] Mode Sense: 00 32 00 10
+[    3.960694] [   T75] novatek-nvt36xxx-spi spi0.0: stock SPI CS setup/hold delays: 300 ns
+[    3.960790] [   T75] input: NVTCapacitiveTouchScreen as /devices/platform/soc@0/ac0000.geniqup/a90000.spi/spi_master/spi0/spi0.0/input/input5
+[    3.960826] [   T75] novatek-nvt36xxx-spi spi0.0: registered NVT36xxx touchscreen as panel follower
+[    3.960884] [   T62] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    3.960892] [   T62] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    3.960899] [   T62] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    3.960903] [   T62] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    3.960914] [   T62] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    3.961086] [   T89] Bluetooth: hci0: setting up wcn7850
+[    3.962723] [   T73] sd 0:0:0:0: [sda] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    3.962756] [   T73] sd 0:0:0:0: [sda] Preferred minimum I/O size 524288 bytes
+[    3.962760] [   T73] sd 0:0:0:0: [sda] Optimal transfer size 524288 bytes
+[    3.964225] [   T96] scsi 0:0:0:2: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.966267] [  T181] sd 0:0:0:1: [sdb] 5120 4096-byte logical blocks: (21.0 MB/20.0 MiB)
+[    3.967299] [  T181] sd 0:0:0:1: [sdb] Write Protect is off
+[    3.967302] [  T181] sd 0:0:0:1: [sdb] Mode Sense: 00 32 00 10
+[    3.969338] [  T181] sd 0:0:0:1: [sdb] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    3.969364] [  T181] sd 0:0:0:1: [sdb] Preferred minimum I/O size 524288 bytes
+[    3.969367] [  T181] sd 0:0:0:1: [sdb] Optimal transfer size 524288 bytes
+[    3.971818] [   T96] scsi 0:0:0:3: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.972840] [  T180] sd 0:0:0:2: [sdc] 5120 4096-byte logical blocks: (21.0 MB/20.0 MiB)
+[    3.973883] [  T180] sd 0:0:0:2: [sdc] Write Protect is off
+[    3.973888] [  T180] sd 0:0:0:2: [sdc] Mode Sense: 00 32 00 10
+[    3.975972] [  T180] sd 0:0:0:2: [sdc] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    3.976014] [  T180] sd 0:0:0:2: [sdc] Preferred minimum I/O size 524288 bytes
+[    3.976018] [  T180] sd 0:0:0:2: [sdc] Optimal transfer size 524288 bytes
+[    3.976427] [  T179] sd 0:0:0:3: [sdd] 8192 4096-byte logical blocks: (33.6 MB/32.0 MiB)
+[    3.976440] [   T96] scsi 0:0:0:4: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.977448] [  T179] sd 0:0:0:3: [sdd] Write Protect is off
+[    3.977452] [  T179] sd 0:0:0:3: [sdd] Mode Sense: 00 32 00 10
+[    3.979491] [  T179] sd 0:0:0:3: [sdd] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    3.980519] [  T179] sd 0:0:0:3: [sdd] Preferred minimum I/O size 524288 bytes
+[    3.980522] [  T179] sd 0:0:0:3: [sdd] Optimal transfer size 524288 bytes
+[    3.986231] [   T96] scsi 0:0:0:5: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    3.986288] [  T182] sd 0:0:0:4: [sde] 1048576 4096-byte logical blocks: (4.29 GB/4.00 GiB)
+[    3.987337] [  T182] sd 0:0:0:4: [sde] Write Protect is off
+[    3.987341] [  T182] sd 0:0:0:4: [sde] Mode Sense: 00 32 00 10
+[    3.989401] [  T182] sd 0:0:0:4: [sde] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    3.989457] [  T182] sd 0:0:0:4: [sde] Preferred minimum I/O size 524288 bytes
+[    3.989460] [  T182] sd 0:0:0:4: [sde] Optimal transfer size 524288 bytes
+[    3.989629] [   T72] mmc0: SDHCI controller on 8804000.mmc [8804000.mmc] using ADMA 64-bit
+[    3.989867] [   T96] sd 0:0:0:5: [sdf] 8192 4096-byte logical blocks: (33.6 MB/32.0 MiB)
+[    3.990883] [   T96] sd 0:0:0:5: [sdf] Write Protect is off
+[    3.990886] [   T96] sd 0:0:0:5: [sdf] Mode Sense: 00 32 00 10
+[    3.992912] [   T96] sd 0:0:0:5: [sdf] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    3.993939] [   T96] sd 0:0:0:5: [sdf] Preferred minimum I/O size 524288 bytes
+[    3.993942] [   T96] sd 0:0:0:5: [sdf] Optimal transfer size 524288 bytes
+[    3.997416] [  T181]  sdb: sdb1 sdb2 sdb3 sdb4 sdb5
+[    3.997511] [   T75] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier a600000.usb for /pmic-glink/connector@1
+[    3.997520] [   T75] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier a600000.usb for /pmic-glink/connector@0
+[    3.997620] [  T181] sd 0:0:0:1: [sdb] Attached SCSI disk
+[    3.997736] [   T73]  sda: sda1 sda2 sda3 sda4 sda5 sda6 sda7 sda8 sda9 sda10 sda11 sda12 sda13 sda14 sda15 sda16 sda17
+[    3.997991] [   T73] sd 0:0:0:0: [sda] Attached SCSI disk
+[    4.001765] [  T180]  sdc: sdc1 sdc2 sdc3 sdc4 sdc5
+[    4.001841] [  T180] sd 0:0:0:2: [sdc] Attached SCSI disk
+[    4.005310] [    T1] input: gpio-keys as /devices/platform/gpio-keys/input/input6
+[    4.005491] [    T1] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    4.006186] [    T1] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    4.006289] [    T1] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    4.006310] [   T98] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[    4.006314] [   T98] cfg80211: failed to load regulatory.db
+[    4.006574] [    T1] clk: Not disabling unused clocks
+[    4.006577] [    T1] PM: genpd: Not disabling unused power domains
+[    4.006592] [    T1] ALSA device list:
+[    4.006596] [    T1]   No soundcards found.
+[    4.014180] [  T179]  sdd: sdd1 sdd2 sdd3
+[    4.014303] [  T179] sd 0:0:0:3: [sdd] Attached SCSI disk
+[    4.022881] [   T96]  sdf: sdf1 sdf2 sdf3 sdf4 sdf5
+[    4.022991] [   T96] sd 0:0:0:5: [sdf] Attached SCSI disk
+[    4.026032] [  T182]  sde: sde1 sde2 sde3 sde4 sde5 sde6 sde7 sde8 sde9 sde10 sde11 sde12 sde13 sde14 sde15 sde16 sde17 sde18 sde19 sde20 sde21 sde22 sde23 sde24 sde25 sde26 sde27 sde28 sde29 sde30 sde31 sde32 sde33 sde34 sde35 sde36 sde37 sde38 sde39 sde40 sde41 sde42 sde43 sde44 sde45 sde46 sde47 sde48 sde49 sde50 sde51 sde52 sde53 sde54 sde55 sde56 sde57 sde58 sde59 sde60 sde61 sde62 sde63 sde64 sde65 sde66 sde67 sde68 sde69 sde70 sde71 sde72 sde73 sde74 sde75 sde76 sde77 sde78
+[    4.027668] [  T182] sd 0:0:0:4: [sde] Attached SCSI disk
+[    4.179341] [   T62] qcom-pcie 1c00000.pcie: iATU: unroll T, 8 ob, 8 ib, align 4K, limit 1024G
+[    4.377513] [   T62] qcom-pcie 1c00000.pcie: PCIe Gen.3 x2 link up
+[    4.377879] [   T62] qcom-pcie 1c00000.pcie: PCI host bridge to bus 0000:00
+[    4.377901] [   T62] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    4.377919] [   T62] pci_bus 0000:00: root bus resource [io  0x0000-0xfffff]
+[    4.377936] [   T62] pci_bus 0000:00: root bus resource [mem 0x40300000-0x63ffffff]
+[    4.377954] [   T62] pci_bus 0000:00: root bus resource [mem 0x400000000-0x6ffffffff]
+[    4.378042] [   T62] pci 0000:00:00.0: [17cb:011c] type 01 class 0x060400 PCIe Root Port
+[    4.378080] [   T62] pci 0000:00:00.0: BAR 0 [mem 0x00000000-0x00000fff]
+[    4.378098] [   T62] pci 0000:00:00.0: PCI bridge to [bus 01-ff]
+[    4.378118] [   T62] pci 0000:00:00.0:   bridge window [io  0x0000-0x0fff]
+[    4.378136] [   T62] pci 0000:00:00.0:   bridge window [mem 0x00000000-0x000fffff]
+[    4.378160] [   T62] pci 0000:00:00.0:   bridge window [mem 0x00000000-0x000fffff 64bit pref]
+[    4.378235] [   T62] pci 0000:00:00.0: PME# supported from D0 D3hot D3cold
+[    4.379276] [   T62] pci 0000:00:00.0: Adding to iommu group 15
+[    4.386370] [   T62] pci 0000:01:00.0: [17cb:110e] type 00 class 0x028000 PCIe Endpoint
+[    4.386738] [   T62] pci 0000:01:00.0: BAR 0 [mem 0x00000000-0x001fffff 64bit]
+[    4.386777] [   T62] pci 0000:01:00.0: BAR 2 [mem 0x00000000-0x00007fff 64bit]
+[    4.387541] [   T62] pci 0000:01:00.0: PME# supported from D0 D3hot D3cold
+[    4.388397] [   T62] pci 0000:01:00.0: Adding to iommu group 15
+[    4.393578] [   T62] pci 0000:01:00.0: ASPM: default states L0s L1
+[    4.393779] [   T62] pci 0000:00:00.0: bridge window [io  0x1000-0x0fff] to [bus 01-ff] add_size 1000
+[    4.393806] [   T62] pci 0000:00:00.0: bridge window [mem 0x00100000-0x000fffff 64bit pref] to [bus 01-ff] add_size 200000 add_align 100000
+[    4.393839] [   T62] pci 0000:00:00.0: bridge window [mem 0x40300000-0x405fffff]: assigned
+[    4.393860] [   T62] pci 0000:00:00.0: bridge window [mem 0x400000000-0x4001fffff 64bit pref]: assigned
+[    4.393880] [   T62] pci 0000:00:00.0: BAR 0 [mem 0x40600000-0x40600fff]: assigned
+[    4.393901] [   T62] pci 0000:00:00.0: bridge window [io  0x1000-0x1fff]: assigned
+[    4.393924] [   T62] pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+[    4.394041] [   T62] pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]: assigned
+[    4.394156] [   T62] pci 0000:00:00.0: PCI bridge to [bus 01-ff]
+[    4.394173] [   T62] pci 0000:00:00.0:   bridge window [io  0x1000-0x1fff]
+[    4.394192] [   T62] pci 0000:00:00.0:   bridge window [mem 0x40300000-0x405fffff]
+[    4.394210] [   T62] pci 0000:00:00.0:   bridge window [mem 0x400000000-0x4001fffff 64bit pref]
+[    4.394232] [   T62] pci_bus 0000:00: resource 4 [io  0x0000-0xfffff]
+[    4.394249] [   T62] pci_bus 0000:00: resource 5 [mem 0x40300000-0x63ffffff]
+[    4.394266] [   T62] pci_bus 0000:00: resource 6 [mem 0x400000000-0x6ffffffff]
+[    4.394282] [   T62] pci_bus 0000:01: resource 0 [io  0x1000-0x1fff]
+[    4.394298] [   T62] pci_bus 0000:01: resource 1 [mem 0x40300000-0x405fffff]
+[    4.394314] [   T62] pci_bus 0000:01: resource 2 [mem 0x400000000-0x4001fffff 64bit pref]
+[    4.417180] [   T62] pcieport 0000:00:00.0: PME: Signaling with IRQ 234
+[    4.417694] [   T62] pcieport 0000:00:00.0: AER: enabled with IRQ 234
+[    4.419197] [   T62] ath12k_wifi7_pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+[    4.419308] [   T62] ath12k_wifi7_pci 0000:01:00.0: enabling device (0000 -> 0002)
+[    4.419381] [   T62] ath12k_wifi7_pci 0000:01:00.0: Wi-Fi 7 Hardware name: peach hw2.0
+[    4.422387] [   T62] ath12k_wifi7_pci 0000:01:00.0: MSI vectors: 32
+[    4.478874] [   T62] mhi mhi0: Requested to power ON
+[    4.478888] [   T62] mhi mhi0: Power on setup success
+[    4.563104] [  T178] mhi mhi0: Wait for device to enter SBL or Mission mode
+[    6.347245] [   T89] Bluetooth: hci0: QCA Product ID   :0x00000021
+[    6.347279] [   T89] Bluetooth: hci0: QCA SOC Version  :0x40210200
+[    6.347295] [   T89] Bluetooth: hci0: QCA ROM Version  :0x00000200
+[    6.347309] [   T89] Bluetooth: hci0: QCA Patch Version:0x00006d58
+[    6.347325] [   T89] Bluetooth: hci0: QCA controller version 0x02000200
+[    6.347342] [   T89] Bluetooth: hci0: QCA Downloading qca/brhbtfw20.tlv
+[    6.369483] [  T154] qcom-apm gprsvc:service:2:3: CMD timeout for [1001021] opcode
+[    6.421081] [  T182] rx_macro 6ac0000.codec: Driver needs fixing: Unsorted reg_defaults, sorting the copy
+[    6.433670] [  T182] qcom-soundwire 7630000.soundwire: dout-ports (0) mismatch with controller (1)
+[    6.434833] [  T182] wcd939x_codec audio-codec: bound sdw:2:0:0217:010e:00:4 (ops wcd_sdw_component_ops)
+[    6.434870] [  T182] wcd939x_codec audio-codec: bound sdw:3:0:0217:010e:00:3 (ops wcd_sdw_component_ops)
+[    6.436988] [  T182] wsa_macro 6aa0000.codec: Driver needs fixing: Unsorted reg_defaults, sorting the copy
+[    6.438086] [  T182] wsa_macro 6b00000.codec: Driver needs fixing: Unsorted reg_defaults, sorting the copy
+[    6.439355] [  T182] snd-sc8280xp sound: ASoC: Parent card not yet available, widget card binding deferred
+[    6.478065] [  T182] ALSA: Control name 'stream0.vol_ctrl0 MultiMedia1 Playback Volume' truncated to 'stream0.vol_ctrl0 MultiMedia1 Playback Volu'
+[    6.478150] [  T182] ALSA: Control name 'stream1.vol_ctrl1 MultiMedia2 Playback Volume' truncated to 'stream1.vol_ctrl1 MultiMedia2 Playback Volu'
+[    6.481123] [  T182] input: Lenovo-Y700-Gen4 Headset Jack as /devices/platform/sound/sound/card0/input7
+[    7.649760] [   T62] ath12k_wifi7_pci 0000:01:00.0: failed to set mhi state: POWER_ON(2)
+[    7.649784] [   T62] ath12k_wifi7_pci 0000:01:00.0: failed to start mhi: -110
+[    7.649795] [   T62] ath12k_wifi7_pci 0000:01:00.0: failed to power up :-110
+[    7.650236] [   T62] ath12k_wifi7_pci 0000:01:00.0: failed to create soc 0 core: -110
+[    7.650258] [   T62] ath12k_wifi7_pci 0000:01:00.0: unable to create hw group
+[    7.650271] [   T62] ath12k_wifi7_pci 0000:01:00.0: failed to init core: -110
+[    7.663958] [   T62] ath12k_wifi7_pci 0000:01:00.0: probe with driver ath12k_wifi7_pci failed with error -110
+[    7.667397] [    T1] Freeing unused kernel memory: 4608K
+[    7.667516] [    T1] Run /init as init process
+[    7.667524] [    T1]   with arguments:
+[    7.667531] [    T1]     /init
+[    7.667537] [    T1]   with environment:
+[    7.667543] [    T1]     HOME=/
+[    7.667549] [    T1]     TERM=linux
+[    7.667555] [    T1]     elden_root=LABEL=linux17
+[    7.667562] [    T1]     elden_nocamera=1
+[    7.679951] [  T243] [m1-73j] no fsa4480.ko
+[    7.680441] [  T243] [m1-73j] no fastrpc.ko
+[    7.707766] [    T1] [init] root fs type=tmpfs on_initramfs=1
+[    7.708640] [    T1] [init] disk root requested: LABEL=linux17
+[    7.904800] [  T264] EXT4-fs (sda17): recovery complete
+[    7.904929] [  T264] EXT4-fs (sda17): mounted filesystem 5ff56407-047b-402f-88c8-0386ca6e5604 r/w with ordered data mode. Quota mode: none.
+[    7.912225] [    T1] [init] resolved LABEL=linux17 -> /dev/sda17
+[    7.913194] [    T1] [init] switching root to /dev/sda17 (/init)
+[    7.943637] [    T1] [init] root fs type=ext2/ext3 on_initramfs=0
+[    7.948754] [  T304] [camera] SKIPPED: cmdline has elden_nocamera=1 (override with CAM_FORCE=1)
+[    7.950921] [    T1] [init] Alpine rootfs up, kernel 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
+[    7.977034] [  T323] printk: legacy console [ttyGS0] enabled
+[    7.986638] [  T310] configfs-gadget.g1 gadget.0: HOST MAC 02:1e:5e:ed:e1:02
+[    7.986645] [  T310] configfs-gadget.g1 gadget.0: MAC 02:1e:5e:ed:e1:01
+[    7.992702] [    T1] [init] openrc mode: handing PID1 to /sbin/init
+[    8.016686] [  T310] [usb-gadget] bound to a600000.usb
+[    8.018168] [  T308] [init] usb0 up: 192.168.7.1, ssh root@192.168.7.1 (no password)
+[    8.209264] [  T801] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+[    8.216387] [  T801] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+[    8.218080] [   T62] msm_dpu ae01000.display-controller: bound ae94000.dsi (ops dsi_ops)
+[    8.218090] [   T62] msm_dpu ae01000.display-controller: bound ae96000.dsi (ops dsi_ops)
+[    8.219263] [   T62] msm_dpu ae01000.display-controller: bound af54000.displayport-controller (ops msm_dp_display_comp_ops)
+[    8.219517] [   T62] adreno 3d00000.gpu: supply vdd not found, using dummy regulator
+[    8.219542] [   T62] adreno 3d00000.gpu: supply vddcx not found, using dummy regulator
+[    8.223826] [  T807] fuse: init (API version 7.46)
+[    8.244792] [   T62] msm_dpu ae01000.display-controller: bound 3d00000.gpu (ops a3xx_ops)
+[    8.245105] [   T62] [drm:dpu_kms_hw_init:1173] dpu hardware revision:0xc0000000
+[    8.245231] [   T62] msm_dpu ae01000.display-controller: boot framebuffer mapped before SID switch: iova=0x00000000fc800000 size=2b00000 translated=0x00000000fc800000
+[    8.245260] [   T62] msm_dpu ae01000.display-controller: [drm] reserved boot framebuffer IOVA 0xfc800000+0x2b00000
+[    8.265369] [   T62] [drm] Initialized msm 1.13.0 for ae01000.display-controller on minor 0
+[    8.266038] [   T62] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_sqe.fw from new location
+[    8.266415] [   T62] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_gmu.bin from new location
+[    8.266602] [   T62] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_aqe.fw from new location
+[    8.267099] [   T62] [drm] Loaded GMU firmware v5.1.25
+[    8.271665] [  T943] udevd[943]: starting version 3.2.14
+[    8.278952] [  T943] udevd[943]: starting eudev-3.2.14
+[    8.312058] [   T62] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[    8.312350] [   T62] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[    8.372351] [ T1030]  cs_system_cfg: CoreSight Configuration manager initialised
+[    8.373665] [ T1028] coresight-dynamic-replicator 10046000.replicator: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008130c6d80 flags 0x0]
+[    8.373759] [ T1028] coresight-dynamic-replicator 10046000.replicator: probe with driver coresight-dynamic-replicator failed with error -22
+[    8.373872] [ T1028] coresight-dynamic-replicator 1004e000.replicator: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008130c6d80 flags 0x0]
+[    8.373962] [ T1028] coresight-dynamic-replicator 1004e000.replicator: probe with driver coresight-dynamic-replicator failed with error -22
+[    8.374923] [ T1017] coresight-dynamic-funnel 10041000.funnel: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008132d9000 flags 0x0]
+[    8.374925] [ T1017] coresight-dynamic-funnel 10041000.funnel: probe with driver coresight-dynamic-funnel failed with error -22
+[    8.374925] [ T1028] coresight-dynamic-replicator 10b06000.replicator: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008130c6d80 flags 0x0]
+[    8.375015] [ T1028] coresight-dynamic-replicator 10b06000.replicator: probe with driver coresight-dynamic-replicator failed with error -22
+[    8.375367] [ T1017] coresight-dynamic-funnel 10804000.funnel: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008132d9000 flags 0x0]
+[    8.375452] [ T1017] coresight-dynamic-funnel 10804000.funnel: probe with driver coresight-dynamic-funnel failed with error -22
+[    8.375558] [ T1017] coresight-dynamic-funnel 10987000.funnel: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008132d9000 flags 0x0]
+[    8.375704] [ T1017] coresight-dynamic-funnel 10987000.funnel: probe with driver coresight-dynamic-funnel failed with error -22
+[    8.376625] [ T1017] coresight-dynamic-funnel 10b04000.funnel: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008132d9000 flags 0x0]
+[    8.376632] [ T1013] coresight-cti 1080b000.cti: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008132d9060 flags 0x0]
+[    8.376634] [ T1013] coresight-cti 1080b000.cti: probe with driver coresight-cti failed with error -22
+[    8.376647] [ T1013] coresight-cti 1098b000.cti: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008132d9060 flags 0x0]
+[    8.376648] [ T1013] coresight-cti 1098b000.cti: probe with driver coresight-cti failed with error -22
+[    8.376965] [ T1017] coresight-dynamic-funnel 10b04000.funnel: probe with driver coresight-dynamic-funnel failed with error -22
+[    8.382234] [ T1031] coresight-tmc 10048000.tmc: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008089e61e0 flags 0x0]
+[    8.382324] [ T1031] coresight-tmc 10048000.tmc: probe with driver coresight-tmc failed with error -22
+[    8.382594] [ T1031] coresight-tmc 1004f000.tmc: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008089e61e0 flags 0x0]
+[    8.382683] [ T1031] coresight-tmc 1004f000.tmc: probe with driver coresight-tmc failed with error -22
+[    8.383075] [ T1031] coresight-tmc 10b05000.tmc: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008089e61e0 flags 0x0]
+[    8.383160] [ T1031] coresight-tmc 10b05000.tmc: probe with driver coresight-tmc failed with error -22
+[    8.384966] [ T1020] coresight-stm 10002000.stm: error -EINVAL: invalid resource [??? 0x00000000-0xffff0008132d86c0 flags 0x0]
+[    8.385055] [ T1020] coresight-stm 10002000.stm: probe with driver coresight-stm failed with error -22
+[    8.405443] [ T1024] qcomtee: QTEE version 5.2.0
+[    8.442139] [ T1018] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.442142] [ T1018] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.442145] [ T1018] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.442196] [ T1018] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.442197] [ T1018] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.442200] [ T1018] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.442472] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.442473] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.442476] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.442951] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.442952] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.442955] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.443129] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.443130] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.443133] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.443603] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.443604] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.443607] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.443786] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.443787] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.443790] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.443964] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.443965] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.443968] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.445195] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.445196] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.445199] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.445667] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.445668] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.445670] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.455354] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.455355] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.455358] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.455624] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.455625] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.455628] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.455909] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.455910] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.455913] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.456081] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.456082] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.456085] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.456255] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.456256] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.456259] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.456427] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.456428] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.456432] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.456510] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.456510] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.456513] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.456598] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.456599] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.456602] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.456777] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.456778] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.456782] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.456950] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.456951] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.456954] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.457127] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.457128] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.457131] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.457292] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.457293] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.457296] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.457483] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.457484] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.457488] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.457574] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.457575] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.457577] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.457649] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.457650] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.457652] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.467554] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.467555] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.467558] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.473514] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.473516] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.473519] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.485367] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.485368] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.485372] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.489677] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.489677] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.489680] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.490676] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.490677] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.490680] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.490701] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.490702] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.490704] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.492177] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.492178] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.492182] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.495376] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.495378] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.495381] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.496297] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.496297] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.496300] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.498071] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.498072] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.498075] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.498242] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.498243] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.498246] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.502069] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.502069] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.502072] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.502293] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.502294] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.502296] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.502357] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.502358] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.502360] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.509802] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.509803] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.509806] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.509981] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.509982] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.509985] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.510060] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.510061] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.510064] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.510150] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.510151] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.510154] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.510340] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.510342] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.510344] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.510515] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.510516] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.510519] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.510691] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.510692] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.510695] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.513771] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.513772] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.513775] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.513944] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.513945] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.513948] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.514002] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.514003] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.514006] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.514118] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.514119] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.514122] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.514293] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.514294] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.514297] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.514469] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.514470] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.514473] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.514644] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.514645] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.514648] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.514819] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.514820] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.514823] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.515002] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.515003] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.515006] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.515085] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.515086] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.515089] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.515171] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.515172] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.515175] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.515365] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.515365] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.515368] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.515629] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.515630] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.515633] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.516154] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.516155] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.516158] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.516620] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.516621] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.516624] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.520412] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.520414] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.520417] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.520973] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.520974] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.520977] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.521956] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.521956] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.521959] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.522187] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.522188] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.522190] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.522522] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.522523] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.522525] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.523037] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.523038] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.523041] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.523213] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.523213] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.523216] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.523387] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.523388] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.523390] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.523414] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.523415] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.523417] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.523571] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.523571] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.523574] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.523793] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.523793] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.523796] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.523971] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.523971] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.523974] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.524161] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.524161] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.524164] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.524334] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.524335] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.524337] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.524530] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.524530] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.524533] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.524712] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.524712] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.524715] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.524880] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.524881] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.524883] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.524902] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.524902] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.524904] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.525054] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.525055] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.525057] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.525309] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.525310] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.525312] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.525483] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.525483] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.525486] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.525732] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.525732] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.525735] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.525907] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.525907] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.525910] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.526030] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.526031] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.526033] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.526105] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.526105] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.526108] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.526352] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.526353] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.526356] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.526533] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.526534] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.526537] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.526717] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.526718] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.526720] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.526913] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.526913] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.526916] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.527073] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.527073] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.527076] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.527094] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.527094] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.527097] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.527451] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.527463] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.527505] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.527954] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.527955] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.527958] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.528125] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.528126] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.528129] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.528243] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.528243] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.528246] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.528553] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.528554] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.528557] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.528773] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.528774] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.528777] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.528956] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.528957] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.528960] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.529136] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.529137] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.529140] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.529323] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.529324] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.529327] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.529440] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.529441] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.529445] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.529664] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.529665] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.529668] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.529856] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.529857] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.529860] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.530070] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.530071] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.530074] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.530285] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.530286] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.530289] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.530370] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.530371] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.530374] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.530491] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.530492] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.530495] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.530734] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.530735] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.530738] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.530915] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.530916] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.530919] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.531112] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.531113] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.531116] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.531301] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.531302] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.531305] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.531685] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.531685] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.531689] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.531899] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.531900] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.531902] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.531922] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.531922] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.531925] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.532185] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.532186] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.532188] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.532618] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.532618] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.532621] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.533385] [   T62] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[    8.533890] [   T98] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[    8.533891] [   T98] novatek-nvt36xxx-spi spi0.0: NT36536 identification: engineering reset
+[    8.534964] [   T62] Console: switching to colour frame buffer device 119x95
+[    8.536714] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.536715] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.536718] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.537348] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.537349] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.537351] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.537518] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.537518] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.537521] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.537714] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.537715] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.537722] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.537795] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.537796] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.537799] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.538042] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.538042] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.538045] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.538308] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.538309] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.538311] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.538502] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.538503] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.538506] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.538707] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.538708] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.538710] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.538862] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.538862] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.538865] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.538882] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.538882] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.538885] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.539289] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.539290] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.539292] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.539480] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.539482] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.539484] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.539689] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.539690] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.539693] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.539972] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.539973] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.539976] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.539980] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.539981] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.539984] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.540154] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.540155] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.540157] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.540473] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.540474] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.540477] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.540738] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.540739] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.540742] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.541052] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.541053] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.541057] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.541230] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.541231] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.541234] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.541417] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.541418] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.541421] [  T142] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.541457] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.541457] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.541461] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    8.544605] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.548671] [   T62] msm_dpu ae01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+[    8.592437] [   T98] novatek-nvt36xxx-spi spi0.0: trim ID 15 0e 00 23 65 03
+[    8.597905] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[    8.623267] [   T98] novatek-nvt36xxx-spi spi0.0: NT36536 hardware cascade=1 strap=02
+[    8.628636] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    8.633549] [   T98] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[    9.087825] [   T98] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[    9.088063] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[    9.103746] [   T98] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[    9.109071] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[    9.140892] [   T98] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[    9.172776] [   T98] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[    9.178114] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.775522] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.779092] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.782741] [  T142] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.787136] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.790745] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.794331] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.798347] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.802525] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.806100] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.806101] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.806104] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.806161] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.821229] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.821241] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.821281] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.821293] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.821307] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.821396] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.823673] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.846570] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.850082] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.853565] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.857072] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.860559] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.864702] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.868306] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.871790] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.875302] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.878765] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.882277] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.886581] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.890046] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.893569] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.897028] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.900524] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.904016] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.907870] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.911399] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.915057] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.918591] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.922088] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.925641] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.929983] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.935318] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.940503] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.945738] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.951013] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.956368] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.962012] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.965650] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.969230] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.972854] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.976458] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.980111] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   10.984114] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.987736] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   10.991368] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.995139] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   10.998764] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.002419] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.007007] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.010809] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.014564] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.018184] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.021840] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.025469] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.029527] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.034976] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.040322] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.045635] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.050952] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.056296] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.061962] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.065636] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.069285] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.072900] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.076559] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.080212] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.084318] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.087999] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.091720] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.095448] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.099198] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.102868] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.106908] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.112414] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.117727] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.123049] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.128354] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.133717] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.139371] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.143031] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.146647] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.150301] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.153973] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.157600] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.161628] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.165282] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.168906] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.172634] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.176328] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.180108] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.184140] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.189727] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.195001] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.200314] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.205644] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.210973] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.216677] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.220340] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.223962] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.227697] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.231342] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.235004] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.239048] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.242675] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.246331] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.250153] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.253788] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.257450] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.261440] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.266950] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.272270] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.277646] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.283002] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.288329] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.294019] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.297636] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.301284] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.304958] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.308574] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.312236] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.316203] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.319865] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.323593] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.327387] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.331064] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.334680] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.339115] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.344542] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.349874] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.355205] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.360520] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.365846] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.371490] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.375116] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.378788] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.382406] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.386058] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.389722] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.393714] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.397375] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.401165] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.404836] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.408490] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.412113] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.416142] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.421576] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.426889] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.432221] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.437497] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.442822] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.448523] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.452180] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.455818] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.459468] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.463124] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.466749] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.470777] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.474519] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.478407] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.482060] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.485682] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.489325] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.493354] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.498785] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.504093] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.509416] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.514727] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.520052] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.525766] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.529441] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.533047] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.536702] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.540317] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.543979] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.548084] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.551812] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.555481] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.559099] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.562757] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.566433] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.570397] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.575830] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.581167] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.586482] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.591799] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.597125] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.603289] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.606910] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.610567] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.614222] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.617838] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.621601] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.625583] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.631024] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.636339] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.641646] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.646960] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.652284] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.658441] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.662077] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.665737] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.669389] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.673004] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.676738] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.680868] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.684592] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.688247] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.691863] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.695513] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.699179] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.703330] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.708759] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.714071] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.719383] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.724707] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.730094] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.735749] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.739372] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.743020] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.746640] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.750296] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.754066] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.758048] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.763478] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.768794] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.774107] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.779445] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.784761] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.790462] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.794087] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.797762] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.801374] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.805042] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.808705] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.812776] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.816537] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.820192] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.823810] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.827461] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.831109] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.835126] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.840557] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.845877] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.851197] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.856540] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.861812] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.867508] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.871167] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.874828] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.878461] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.882115] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.885815] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.889956] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.895384] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.900697] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.906108] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.911462] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.916790] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.922462] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.926119] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.929792] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.933409] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.937056] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.940756] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.944865] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.948603] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.952325] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.955994] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.959648] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.963278] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.967328] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.972755] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   11.978104] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.983417] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   11.988693] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.994013] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   11.999738] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.003416] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.007038] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.010692] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.014342] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.018069] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.022090] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.027736] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.033069] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.038383] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.043661] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.048982] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.055139] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.058798] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.062458] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.066069] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.069719] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.073447] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.077463] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.082914] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.088224] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.093539] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.098860] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.104137] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.110294] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.113951] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.117611] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.121223] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.124946] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.128692] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.132728] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.138260] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.143576] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.148887] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.154221] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.159544] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.165254] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.168877] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.172530] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.176149] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.179819] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.183583] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.187567] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.192994] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.198304] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.203637] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.208949] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.214275] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.219930] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.223579] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.227247] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.230916] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.234574] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.238348] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.242466] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.247903] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.253257] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.258691] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.264079] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.269422] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.275240] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.278944] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.282601] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.286249] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.289905] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.293686] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.297506] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.303286] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.308597] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.314250] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.317908] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.321527] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.325174] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.329271] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.333077] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.337106] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.342534] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.347852] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.353254] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.358558] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.363908] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.370029] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.373708] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.377394] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.381089] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.384854] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.388492] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.392637] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.398079] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.403425] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.408818] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.414167] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.419474] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.425195] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.428890] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.432551] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.436191] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.439932] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.443658] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.447729] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.453466] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.458778] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.464124] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.469434] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.474761] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.480907] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.484528] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.488181] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.491793] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.495522] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.499263] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.503706] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.509225] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.514543] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.519879] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.525193] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.530562] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.536277] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.539920] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.543678] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.547355] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.551083] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.554951] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.558969] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.564410] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.569728] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.575078] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.580426] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.585790] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.591479] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.595123] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.598794] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.602449] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.606292] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.609953] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.614054] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.619444] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.624786] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.630123] [  T146] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.635442] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.640764] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.646475] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.650160] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.650161] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.650163] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.650168] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.650170] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.669016] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.669017] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.669020] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.669069] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.669070] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.669074] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.669584] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.669585] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.669589] [  T143] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.670188] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.670189] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.670192] [  T143] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.670594] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT
+[   12.717683] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: rpmsg_dev_probe: failed: -22
+[   12.721299] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: probe with driver qcom,fastrpc failed with error -22
+[   12.725952] [  T146] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: FastRPC Domain not specified in DT

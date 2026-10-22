@@ -1,0 +1,18 @@
+{
+  "label": "q28disp-0155only73",
+  "ts": "2026-10-22T12:55:57Z",
+  "vk": "vk143-q28-73-0155only",
+  "image": "/home/xuqianhui/y700-elden/out/boot-elden-vk143-q28-73-0155only.img",
+  "image_sha256": "159bdcf512a445bb778938ef82739be3c5e08f654b01b159ca9e2ddfc5f209ac",
+  "manifest": "/home/xuqianhui/y700-elden/out/boot-elden-vk143-q28-73-0155only.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "0407621c5b4f160e6f606ce617fc4be2b2ac9e8d8d475366a63f28b9c3a4327a",
+  "config_sha256": "1d3e63b20366679a88a0f9ba3a0f9244e31c945d5379328c1f8f8b3a2852eb5a",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "STORM",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261022T125542Z-q28disp-0155only73",
+  "note": "0154+0155 冷起 A/B；7.3 only0155 spam probe"
+}
