@@ -1,0 +1,108 @@
+Date: Sat, 17 Oct 2026 00:00:00 +0800
+Subject: [PATCH] drm/msm: order Elden video-mode teardown flush before timing stop
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+On lenovo,elden the master and slave video encoders drive one split
+pipeline. Stopping the compositor gracefully disables the interface and
+lets the DPU/DSI blocks be torn down and re-enabled, after which the
+panel stays black even though every register reads back as programmed:
+the SSPP fetch never restarts and the layer mixer keeps emitting its
+border colour.
+
+dpu_encoder_helper_phys_cleanup() ends in a CTL flush, and in video mode
+a flush is only consumed at a frame boundary. Running the cleanup after
+enable_timing(0) therefore leaves the teardown in the shadow registers,
+and the next enable inherits the stale active configuration. The flush
+must be issued while the timing engine is still running, so the Elden
+master now calls the cleanup before stopping the timing engine and no
+longer repeats it at the end of the function.
+
+The Elden slave shares the master's CTL and timing generator, so it skips
+the teardown entirely and only transitions to DISABLED. Its matching
+enable half in dpu_encoder_phys_vid_handle_post_kickoff() marks the slave
+ENABLED without starting the timing engine a second time.
+
+The paired enable/disable contract is taken from h0cheung's tb322fc tree,
+commit 6f97250ead155fc3b980856323e99a4623dae73d, narrowed to this board;
+every other machine keeps the existing ordering, the existing cleanup
+placement and the existing kickoff path verbatim. This is patch 0153; it
+is meant to be applied on top of 0152.
+
+---
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c | 35 +++++++++++++++++++++++++++++++++--
+ 1 file changed, 34 insertions(+), 1 deletion(-)
+---
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+@@ -601,6 +601,7 @@
+ 	unsigned long lock_flags;
+ 	int ret;
+ 	struct dpu_hw_intf_status intf_status = {0};
++	bool is_elden = of_machine_is_compatible("lenovo,elden");
+ 
+ 	if (!phys_enc->parent || !phys_enc->parent->dev) {
+ 		DPU_ERROR("invalid encoder/device\n");
+@@ -621,6 +622,25 @@
+ 		return;
+ 	}
+ 
++	/*
++	 * On Elden the master and slave interfaces are two halves of one video
++	 * pipeline; only the master owns the shared CTL flush and the timing
++	 * generator, so the slave has nothing to stop or clean up.
++	 */
++	if (is_elden && !dpu_encoder_phys_vid_is_master(phys_enc))
++		goto done;
++
++	/*
++	 * On Elden the teardown must be flushed while the timing engine is
++	 * still running. The cleanup ends in a CTL flush, and video mode only
++	 * consumes a flush at a frame boundary, so a flush issued after the
++	 * timing engine has stopped stays in the shadow registers and the next
++	 * enable inherits a stale active configuration: the SSPP fetch never
++	 * restarts and the layer mixer keeps emitting its border colour.
++	 */
++	if (is_elden)
++		dpu_encoder_helper_phys_cleanup(phys_enc);
++
+ 	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
+ 	phys_enc->hw_intf->ops.enable_timing(phys_enc->hw_intf, 0);
+ 	if (dpu_encoder_phys_vid_is_master(phys_enc))
+@@ -665,7 +685,9 @@
+ 		}
+ 	}
+ 
+-	dpu_encoder_helper_phys_cleanup(phys_enc);
++	if (!is_elden)
++		dpu_encoder_helper_phys_cleanup(phys_enc);
++done:
+ 	phys_enc->enable_state = DPU_ENC_DISABLED;
+ }
+ 
+@@ -673,12 +695,22 @@
+ 		struct dpu_encoder_phys *phys_enc)
+ {
+ 	unsigned long lock_flags;
++	bool is_elden = of_machine_is_compatible("lenovo,elden");
+ 
+ 	/*
+ 	 * Video mode must flush CTL before enabling timing engine
+ 	 * Video encoders need to turn on their interfaces now
+ 	 */
+ 	if (phys_enc->enable_state == DPU_ENC_ENABLING) {
++		/*
++		 * The Elden slave is driven by the master's timing engine;
++		 * starting it here would restart the generator a second time.
++		 */
++		if (is_elden && !dpu_encoder_phys_vid_is_master(phys_enc)) {
++			phys_enc->enable_state = DPU_ENC_ENABLED;
++			return;
++		}
++
+ 		trace_dpu_enc_phys_vid_post_kickoff(DRMID(phys_enc->parent),
+ 				    phys_enc->hw_intf->idx - INTF_0);
+ 		spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);

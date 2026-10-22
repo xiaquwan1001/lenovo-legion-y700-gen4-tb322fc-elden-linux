@@ -1,0 +1,1175 @@
+From h0cheung/tb322fc-linux-kernel 6f97250ead155fc3b980856323e99a4623dae73d
+Subject: [PATCH] drm/msm/dsi: Elden bonded command DMA closure
+
+Selective adaptation of the SM8750 dual-DSI bonded command path from
+the pin tree.  Only the Elden (lenovo,elden) bonded-sync master-DSI0
+path is enabled; there are no SM8750-wide or non-Elden behavioural
+changes.  ArmadaOS fixes preserved in place: 0016 (host prepare video
+control) and 0505 (GEM locking).  No splash, reserved-memory, SMMU or
+RCU changes.
+
+Files:
+  drivers/gpu/drm/msm/dsi/dsi.h
+  drivers/gpu/drm/msm/dsi/dsi_host.c
+  drivers/gpu/drm/msm/dsi/dsi_manager.c
+  drivers/gpu/drm/msm/registers/display/dsi.xml
+  drivers/gpu/drm/msm/msm_gem.c
+  drivers/gpu/drm/msm/msm_gem.h
+
+sourceprovenance: pin@6f97250ead155fc3b980856323e99a4623dae73d
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -52,6 +52,7 @@
+ 				   struct drm_encoder *encoder);
+ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg);
+ bool msm_dsi_manager_cmd_xfer_trigger(int id, u32 dma_base, u32 len);
++bool msm_dsi_manager_cmd_failed(void);
+ int msm_dsi_manager_register(struct msm_dsi *msm_dsi);
+ void msm_dsi_manager_unregister(struct msm_dsi *msm_dsi);
+ void msm_dsi_manager_tpg_enable(void);
+@@ -68,6 +69,25 @@
+ 					const struct mipi_dsi_msg *msg);
+ void msm_dsi_host_cmd_xfer_commit(struct mipi_dsi_host *host,
+ 					u32 dma_base, u32 len);
++
++/* Elden (SM8750 CPHY) bonded command DMA helpers */
++void msm_dsi_host_bonded_wait_video(struct mipi_dsi_host *host);
++int msm_dsi_host_bonded_xfer_prepare(struct mipi_dsi_host *host);
++void msm_dsi_host_bonded_xfer_restore(struct mipi_dsi_host *host);
++int msm_dsi_host_bonded_cmd_build(struct mipi_dsi_host *host,
++				  const struct mipi_dsi_msg *msg,
++				  u32 *dma_base, u32 *len);
++void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host);
++void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
++				   const struct mipi_dsi_msg *msg,
++				   u32 dma_base, u32 len, bool master);
++void msm_dsi_host_bonded_cmd_trigger(struct mipi_dsi_host *host);
++int msm_dsi_host_bonded_cmd_arm_master(struct mipi_dsi_host *host);
++int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len);
++int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host);
++void msm_dsi_host_bonded_cmd_abort(struct mipi_dsi_host *host);
++void msm_dsi_host_cmd_xfer_config(struct mipi_dsi_host *host,
++				  bool broadcast, bool master);
+ int msm_dsi_host_enable(struct mipi_dsi_host *host);
+ int msm_dsi_host_disable(struct mipi_dsi_host *host);
+ void msm_dsi_host_enable_irq(struct mipi_dsi_host *host);
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -190,6 +190,13 @@
+ 	bool cphy_mode;
+ 
+ 	u32 dma_cmd_ctrl_restore;
++	u32 cmd_dma_ctrl_restore;
++	u32 cmd_dma_ctrl1_restore;
++	u32 intr_mask_restore;
++	bool bonded_polling;
++	u32 dma_submit_seq;
++	u32 dma_done_seq;
++	u64 tx_buf_iova;
+ 
+ 	bool registered;
+ 	bool power_on;
+@@ -802,6 +809,8 @@
+ 
+ 	DBG("intr=%x enable=%d", intr, enable);
+ 
++	if (READ_ONCE(msm_host->bonded_polling))
++		intr &= ~DSI_IRQ_CMD_DMA_DONE;
+ 	dsi_write(msm_host, REG_DSI_INTR_CTRL, intr);
+ 	spin_unlock_irqrestore(&msm_host->intr_lock, flags);
+ }
+@@ -1347,6 +1356,7 @@
+ 
+ 	msm_gem_object_set_name(msm_host->tx_gem_obj, "tx_gem");
+ 
++	msm_host->tx_buf_iova = iova;
+ 	msm_host->tx_size = msm_host->tx_gem_obj->size;
+ 
+ 	return 0;
+@@ -1385,6 +1395,7 @@
+ 		drm_gpuvm_put(msm_host->vm);
+ 		msm_host->tx_gem_obj = NULL;
+ 		msm_host->vm = NULL;
++		msm_host->tx_buf_iova = 0;
+ 	}
+ 
+ 	if (msm_host->tx_buf)
+@@ -1534,10 +1545,15 @@
+ 	uint64_t dma_base;
+ 	bool triggered;
+ 
+-	ret = cfg_hnd->ops->dma_base_get(msm_host, &dma_base);
+-	if (ret) {
+-		pr_err("%s: failed to get iova: %d\n", __func__, ret);
+-		return ret;
++	if (of_machine_is_compatible("lenovo,elden") &&
++	    msm_host->tx_gem_obj) {
++		dma_base = msm_host->tx_buf_iova;
++	} else {
++		ret = cfg_hnd->ops->dma_base_get(msm_host, &dma_base);
++		if (ret) {
++			pr_err("%s: failed to get iova: %d\n", __func__, ret);
++			return ret;
++		}
+ 	}
+ 
+ 	reinit_completion(&msm_host->dma_comp);
+@@ -1614,10 +1630,20 @@
+ 				const struct mipi_dsi_msg *msg)
+ {
+ 	int len, ret;
++	bool elden_sync = of_machine_is_compatible("lenovo,elden") &&
++			  msm_host->tx_gem_obj;
+ 	int bllp_len = msm_host->mode->hdisplay *
+ 			mipi_dsi_pixel_format_to_bpp(msm_host->format) / 8;
+ 
++	/*
++	 * Elden read requests build the packet in a WC GEM buffer and
++	 * pass ownership back to the device, even if the add fails.
++	 */
++	if (elden_sync)
++		msm_gem_sync_for_cpu(msm_host->tx_gem_obj);
+ 	len = dsi_cmd_dma_add(msm_host, msg);
++	if (elden_sync)
++		msm_gem_sync_for_device(msm_host->tx_gem_obj);
+ 	if (len < 0) {
+ 		pr_err("%s: failed to add cmd type = 0x%x\n",
+ 			__func__,  msg->type);
+@@ -1660,6 +1686,17 @@
+ 		container_of(work, struct msm_dsi_host, err_work);
+ 	u32 status = msm_host->err_work_state;
+ 
++	/*
++	 * An Elden bonded failure already reset both engines while holding
++	 * the pair mutex; do not race that explicit teardown.  This must
++	 * not take the pair mutex (the caller holds it).
++	 */
++	if (of_machine_is_compatible("lenovo,elden") &&
++	    msm_dsi_manager_cmd_failed()) {
++		msm_host->err_work_state = 0;
++		return;
++	}
++
+ 	pr_err_ratelimited("%s: status=%x\n", __func__, status);
+ 	if (status & DSI_ERR_STATE_MDP_FIFO_UNDERFLOW)
+ 		dsi_sw_reset(msm_host);
+@@ -1772,15 +1809,28 @@
+ static irqreturn_t dsi_host_irq(int irq, void *ptr)
+ {
+ 	struct msm_dsi_host *msm_host = ptr;
+-	u32 isr;
++	u32 ack, isr, raw;
+ 	unsigned long flags;
+ 
+ 	if (!msm_host->ctrl_base)
+ 		return IRQ_HANDLED;
+ 
+ 	spin_lock_irqsave(&msm_host->intr_lock, flags);
+-	isr = dsi_read(msm_host, REG_DSI_INTR_CTRL);
+-	dsi_write(msm_host, REG_DSI_INTR_CTRL, isr);
++	raw = dsi_read(msm_host, REG_DSI_INTR_CTRL);
++	isr = raw;
++	ack = raw;
++	/*
++	 * The polled bonded slave owns its completion status: while
++	 * polling is active and the DMA_DONE mask is not enabled, keep
++	 * the W1C status bit set (do not ack it) and ignore it here so
++	 * the peer can consume it.
++	 */
++	if (READ_ONCE(msm_host->bonded_polling) &&
++	    !(isr & DSI_IRQ_MASK_CMD_DMA_DONE)) {
++		isr &= ~DSI_IRQ_CMD_DMA_DONE;
++		ack &= ~DSI_IRQ_CMD_DMA_DONE;
++	}
++	dsi_write(msm_host, REG_DSI_INTR_CTRL, ack);
+ 	spin_unlock_irqrestore(&msm_host->intr_lock, flags);
+ 
+ 	DBG("isr=0x%x, id=%d", isr, msm_host->id);
+@@ -1791,8 +1841,12 @@
+ 	if (isr & DSI_IRQ_VIDEO_DONE)
+ 		complete(&msm_host->video_comp);
+ 
+-	if (isr & DSI_IRQ_CMD_DMA_DONE)
++	if (isr & DSI_IRQ_CMD_DMA_DONE) {
++		if (of_machine_is_compatible("lenovo,elden"))
++			WRITE_ONCE(msm_host->dma_done_seq,
++				   msm_host->dma_submit_seq);
+ 		complete(&msm_host->dma_comp);
++	}
+ 
+ 	return IRQ_HANDLED;
+ }
+@@ -2305,11 +2359,44 @@
+ 	}
+ }
+ 
++static int dsi_cmd_link_clk_set_rate(struct msm_dsi_host *msm_host);
++
+ int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
+ 				const struct mipi_dsi_msg *msg)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
++	int ret;
++
++	if (of_machine_is_compatible("lenovo,elden")) {
++		ret = pm_runtime_resume_and_get(&msm_host->pdev->dev);
++		if (ret < 0)
++			return ret;
++
++		ret = dsi_cmd_link_clk_set_rate(msm_host);
++		if (ret)
++			goto elden_err_runtime_put;
++
++		ret = cfg_hnd->ops->link_clk_enable(msm_host);
++		if (ret)
++			goto elden_err_runtime_put;
++
++		if (!(msg->flags & MIPI_DSI_MSG_USE_LPM))
++			dsi_set_tx_power_mode(0, msm_host);
++
++		msm_host->dma_cmd_ctrl_restore = dsi_read(msm_host, REG_DSI_CTRL);
++		dsi_write(msm_host, REG_DSI_CTRL,
++			msm_host->dma_cmd_ctrl_restore |
++			DSI_CTRL_CMD_MODE_EN |
++			DSI_CTRL_ENABLE);
++		dsi_intr_ctrl(msm_host, DSI_IRQ_MASK_CMD_DMA_DONE, 1);
++
++		return 0;
++
++elden_err_runtime_put:
++		pm_runtime_put(&msm_host->pdev->dev);
++		return ret;
++	}
+ 
+ 	/* TODO: make sure dsi_cmd_mdp is idle.
+ 	 * Since DSI6G v1.2.0, we can set DSI_TRIG_CTRL.BLOCK_DMA_WITHIN_FRAME
+@@ -2593,6 +2680,15 @@
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 
+ 	disable_irq(msm_host->irq);
++
++	/*
++	 * On Elden, stop the error worker before the host is powered down
++	 * so no worker accesses registers after poweroff.
++	 */
++	if (of_machine_is_compatible("lenovo,elden")) {
++		cancel_work_sync(&msm_host->err_work);
++		msm_host->err_work_state = 0;
++	}
+ }
+ 
+ int msm_dsi_host_enable(struct mipi_dsi_host *host)
+@@ -2716,6 +2812,8 @@
+ 		msm_host->link_byte_rate = msm_host->byte_clk_rate;
+ 		msm_host->link_pixel_rate = msm_host->pixel_clk_rate;
+ 		msm_host->link_intf_div_2 = msm_host->byte_intf_clk_div_2;
++		msm_host->dma_submit_seq = 0;
++		msm_host->dma_done_seq = 0;
+ 		WRITE_ONCE(msm_host->link_configured, true);
+ 	}
+ 
+@@ -2735,6 +2833,390 @@
+ 	return ret;
+ }
+ 
++#define DSI_IRQ_ALL_MASKS \
++	(DSI_IRQ_MASK_CMD_DMA_DONE | DSI_IRQ_MASK_CMD_MDP_DONE | \
++	 DSI_IRQ_MASK_VIDEO_DONE | DSI_IRQ_MASK_BTA_DONE | DSI_IRQ_MASK_ERROR)
++
++
++static void dsi_cmd_dma_intr_update(struct msm_dsi_host *msm_host,
++				    bool enable, bool clear)
++{
++	u32 intr;
++	unsigned long flags;
++
++	spin_lock_irqsave(&msm_host->intr_lock, flags);
++	intr = dsi_read(msm_host, REG_DSI_INTR_CTRL) & DSI_IRQ_ALL_MASKS;
++	if (enable)
++		intr |= DSI_IRQ_MASK_CMD_DMA_DONE;
++	else
++		intr &= ~DSI_IRQ_MASK_CMD_DMA_DONE;
++	if (clear)
++		intr |= DSI_IRQ_CMD_DMA_DONE | DSI_IRQ_BTA_DONE;
++	dsi_write(msm_host, REG_DSI_INTR_CTRL, intr);
++	spin_unlock_irqrestore(&msm_host->intr_lock, flags);
++}
++
++static void dsi_intr_masks_restore(struct msm_dsi_host *msm_host, u32 masks)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&msm_host->intr_lock, flags);
++	dsi_write(msm_host, REG_DSI_INTR_CTRL, masks & DSI_IRQ_ALL_MASKS);
++	spin_unlock_irqrestore(&msm_host->intr_lock, flags);
++}
++
++static void dsi_cmd_error_prepare(struct msm_dsi_host *msm_host)
++{
++	u32 val;
++
++	val = dsi_read(msm_host, REG_DSI_ERR_INT_MASK0);
++	val |= 0x001f0200;
++	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, val);
++	wmb(); /* Stock completes the error-mask write before stale clear. */
++
++	/* Stock clear_error_status(0x20): LP RX timeout status bit 4. */
++	dsi_write(msm_host, REG_DSI_TIMEOUT_STATUS, BIT(4));
++}
++
++static void dsi_cmd_error_cleanup(struct msm_dsi_host *msm_host)
++{
++	u32 val;
++
++	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
++	val = dsi_read(msm_host, REG_DSI_FIFO_STATUS);
++	dsi_write(msm_host, REG_DSI_FIFO_STATUS, val | 0x44440400);
++	val = dsi_read(msm_host, REG_DSI_ERR_INT_MASK0);
++	val &= ~0x001f0200;
++	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, val);
++	wmb(); /* Complete overflow unmask before stale-error clear. */
++
++	/* Stock repeats clear_error_status(0x20) after command-engine off. */
++	dsi_write(msm_host, REG_DSI_TIMEOUT_STATUS, BIT(4));
++}
++
++static int dsi_cmd_link_clk_set_rate(struct msm_dsi_host *msm_host)
++{
++	struct device *dev = &msm_host->pdev->dev;
++
++	if (!of_machine_is_compatible("lenovo,elden"))
++		return msm_host->cfg_hnd->ops->link_clk_set_rate(msm_host);
++
++	/*
++	 * Power-on owns the link clocks and their OPP vote.  Commands only
++	 * acquire another enable reference; reapplying an ideal rate can
++	 * rewrite a running PLL after fractional truncation.  Reject a
++	 * stale configuration instead of repairing it live.
++	 */
++	if (!READ_ONCE(msm_host->power_on) ||
++	    !READ_ONCE(msm_host->link_configured) ||
++	    msm_host->byte_clk_rate != msm_host->link_byte_rate ||
++	    msm_host->pixel_clk_rate != msm_host->link_pixel_rate ||
++	    msm_host->byte_intf_clk_div_2 != msm_host->link_intf_div_2 ||
++	    !clk_is_match(clk_get_parent(msm_host->byte_src_clk),
++			  msm_host->dsi_pll_byte_clk) ||
++	    !clk_is_match(clk_get_parent(msm_host->pixel_src_clk),
++			  msm_host->dsi_pll_pixel_clk)) {
++		dev_err(dev, "stale link configuration\n");
++		return -ESTALE;
++	}
++
++	return 0;
++}
++
++
++void msm_dsi_host_bonded_wait_video(struct mipi_dsi_host *host)
++{
++	dsi_wait4video_eng_busy(to_msm_dsi_host(host));
++}
++
++int msm_dsi_host_bonded_xfer_prepare(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
++	int ret;
++
++	ret = pm_runtime_resume_and_get(&msm_host->pdev->dev);
++	if (ret < 0)
++		return ret;
++
++	ret = dsi_cmd_link_clk_set_rate(msm_host);
++	if (ret)
++		goto err_runtime_put;
++
++	ret = cfg_hnd->ops->link_clk_enable(msm_host);
++	if (ret)
++		goto err_runtime_put;
++
++	msm_host->dma_cmd_ctrl_restore = dsi_read(msm_host, REG_DSI_CTRL);
++	msm_host->cmd_dma_ctrl_restore =
++		dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL);
++	msm_host->cmd_dma_ctrl1_restore =
++		dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL1);
++	msm_host->intr_mask_restore =
++		dsi_read(msm_host, REG_DSI_INTR_CTRL) & DSI_IRQ_ALL_MASKS;
++	dsi_cmd_error_prepare(msm_host);
++	dsi_write(msm_host, REG_DSI_CTRL,
++		  msm_host->dma_cmd_ctrl_restore |
++		  DSI_CTRL_CMD_MODE_EN | DSI_CTRL_ENABLE);
++
++	/* The slave is polled, never completed through its Linux IRQ. */
++	dsi_cmd_dma_intr_update(msm_host, false, true);
++	return 0;
++
++err_runtime_put:
++	pm_runtime_put_sync(&msm_host->pdev->dev);
++	return ret;
++}
++
++void msm_dsi_host_bonded_xfer_restore(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
++
++	WRITE_ONCE(msm_host->bonded_polling, false);
++	dsi_cmd_dma_intr_update(msm_host, false, false);
++	dsi_write(msm_host, REG_DSI_CMD_DMA_CTRL1,
++		  msm_host->cmd_dma_ctrl1_restore);
++	dsi_write(msm_host, REG_DSI_CMD_DMA_CTRL,
++		  msm_host->cmd_dma_ctrl_restore);
++	dsi_write(msm_host, REG_DSI_CTRL, msm_host->dma_cmd_ctrl_restore);
++	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL2, 0);
++	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL, 0);
++	dsi_cmd_error_cleanup(msm_host);
++	dsi_intr_masks_restore(msm_host, msm_host->intr_mask_restore);
++	cfg_hnd->ops->link_clk_disable(msm_host);
++	pm_runtime_put_sync(&msm_host->pdev->dev);
++}
++
++int msm_dsi_host_bonded_cmd_build(struct mipi_dsi_host *host,
++				  const struct mipi_dsi_msg *msg,
++				  u32 *dma_base, u32 *len)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
++	u64 base;
++	int packet_len;
++	int bllp_len;
++	int ret;
++
++	if (msm_host->tx_gem_obj)
++		msm_gem_sync_for_cpu(msm_host->tx_gem_obj);
++	packet_len = dsi_cmd_dma_add(msm_host, msg);
++	if (msm_host->tx_gem_obj)
++		msm_gem_sync_for_device(msm_host->tx_gem_obj);
++	if (packet_len < 0)
++		return packet_len;
++
++	if (!msm_host->mode)
++		return -EINVAL;
++
++	bllp_len = msm_host->mode->hdisplay *
++		mipi_dsi_pixel_format_to_bpp(msm_host->format) / 8;
++	if ((msm_host->mode_flags & MIPI_DSI_MODE_VIDEO) &&
++	    packet_len > bllp_len)
++		return -EINVAL;
++
++	if (msm_host->tx_gem_obj) {
++		base = msm_host->tx_buf_iova;
++	} else {
++		ret = cfg_hnd->ops->dma_base_get(msm_host, &base);
++		if (ret)
++			return ret;
++	}
++	if (upper_32_bits(base))
++		return -ERANGE;
++
++	*dma_base = lower_32_bits(base);
++	*len = packet_len;
++	return 0;
++}
++
++void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	u32 schedule_line;
++	u32 val;
++
++	/*
++	 * Lenovo's v2.9 path initializes command-DMA trigger state for every
++	 * command. Clear mainline's non-stock within-frame gate as well as stale
++	 * scheduling mux/select state before either bonded descriptor is staged.
++	 */
++	val = dsi_read(msm_host, REG_DSI_TRIG_CTRL);
++	val &= ~GENMASK(3, 0);
++	val &= ~DSI_TRIG_CTRL_BLOCK_DMA_WITHIN_FRAME;
++	val &= ~DSI_TRIG_CTRL_DMA_TRG_MUX;
++	val &= ~DSI_TRIG_CTRL_DMA_TRIGGER_EXT__MASK;
++	val |= DSI_TRIG_CTRL_DMA_TRIGGER(TRIGGER_SW);
++	dsi_write(msm_host, REG_DSI_TRIG_CTRL, val);
++
++	/* Reset bootloader/prior-command scheduling state before this command. */
++	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL2, 0);
++	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL, 0);
++	if (!(msm_host->mode_flags & MIPI_DSI_MODE_VIDEO) || !msm_host->mode ||
++	    !(dsi_read(msm_host, REG_DSI_STATUS0) &
++	      DSI_STATUS0_VIDEO_MODE_ENGINE_BUSY))
++		return;
++
++	/* Stock schedules only while its video engine state is actually ON. */
++	schedule_line = msm_host->mode->vtotal -
++		(msm_host->mode->vsync_start - msm_host->mode->vdisplay) + 1;
++	val = DSI_DMA_SCHEDULE_CTRL_ENABLE |
++	      DSI_DMA_SCHEDULE_CTRL_LINE(schedule_line);
++	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL, val);
++}
++
++void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
++				   const struct mipi_dsi_msg *msg,
++				   u32 dma_base, u32 len, bool master)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	u32 val;
++
++	WRITE_ONCE(msm_host->bonded_polling, !master);
++	val = dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL);
++	val &= ~(DSI_CMD_DMA_CTRL_BROADCAST_MASTER |
++		 DSI_CMD_DMA_CTRL_WC_SEL | DSI_CMD_DMA_CTRL_PACKET_TYPE |
++		 DSI_CMD_DMA_CTRL_LOW_POWER);
++	val |= DSI_CMD_DMA_CTRL_BROADCAST_EN |
++	       DSI_CMD_DMA_CTRL_FROM_FRAME_BUFFER;
++	if (master)
++		val |= DSI_CMD_DMA_CTRL_BROADCAST_MASTER;
++	if (msg->flags & MIPI_DSI_MSG_USE_LPM)
++		val |= DSI_CMD_DMA_CTRL_LOW_POWER;
++	dsi_write(msm_host, REG_DSI_CMD_DMA_CTRL, val);
++
++	val = dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL1);
++	val &= ~DSI_CMD_DMA_CTRL1_MULTI_DMA_BURST_EN;
++	dsi_write(msm_host, REG_DSI_CMD_DMA_CTRL1, val);
++
++	val = dsi_read(msm_host, REG_DSI_DMA_FIFO_CTRL);
++	val |= DSI_DMA_FIFO_CTRL_DISABLE_READ_WATERMARK |
++	       DSI_DMA_FIFO_CTRL_DISABLE_WRITE_WATERMARK;
++	dsi_write(msm_host, REG_DSI_DMA_FIFO_CTRL, val);
++
++	if (msm_host->cfg_hnd->major == MSM_DSI_VER_MAJOR_6G &&
++	    msm_host->cfg_hnd->minor >= MSM_DSI_6G_VER_MINOR_V2_8_0) {
++		val = dsi_read(msm_host, REG_DSI_VBIF_CTRL);
++		val &= ~DSI_VBIF_CTRL_PRIORITY__MASK;
++		val |= DSI_VBIF_CTRL_PRIORITY(7);
++		dsi_write(msm_host, REG_DSI_VBIF_CTRL, val);
++	}
++
++	dsi_write(msm_host, REG_DSI_DMA_BASE, dma_base);
++	dsi_write(msm_host, REG_DSI_DMA_LEN, len & GENMASK(23, 0));
++}
++
++void msm_dsi_host_bonded_cmd_trigger(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	dsi_write(msm_host, REG_DSI_TRIG_DMA, 1);
++}
++
++int msm_dsi_host_bonded_cmd_arm_master(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	dsi_cmd_dma_intr_update(msm_host, false, true);
++	synchronize_irq(msm_host->irq);
++	msm_host->dma_submit_seq++;
++	reinit_completion(&msm_host->dma_comp);
++	dsi_cmd_dma_intr_update(msm_host, true, false);
++	return dsi_read(msm_host, REG_DSI_INTR_CTRL) & DSI_IRQ_MASK_CMD_DMA_DONE ?
++		0 : -EIO;
++}
++
++int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	unsigned long completed;
++	u32 status;
++
++	completed = wait_for_completion_timeout(&msm_host->dma_comp,
++						msecs_to_jiffies(200));
++	status = dsi_read(msm_host, REG_DSI_INTR_CTRL);
++	dsi_cmd_dma_intr_update(msm_host, false, false);
++	synchronize_irq(msm_host->irq);
++	if (completed || completion_done(&msm_host->dma_comp)) {
++		if (READ_ONCE(msm_host->dma_done_seq) != msm_host->dma_submit_seq)
++			return -EIO;
++		return len;
++	}
++
++	if (!(status & DSI_IRQ_CMD_DMA_DONE))
++		status = dsi_read(msm_host, REG_DSI_INTR_CTRL);
++	if (status & DSI_IRQ_CMD_DMA_DONE) {
++		dsi_cmd_dma_intr_update(msm_host, false, true);
++		WRITE_ONCE(msm_host->dma_done_seq, msm_host->dma_submit_seq);
++		dev_warn(&msm_host->pdev->dev,
++			 "command DMA completed without IRQ\n");
++		return len;
++	}
++
++	dev_err(&msm_host->pdev->dev, "command DMA timeout: status=%#x\n", status);
++	return -ETIMEDOUT;
++}
++
++int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	u32 status = 0;
++	int i;
++
++	for (i = 0; i < 500; i++) {
++		status = dsi_read(msm_host, REG_DSI_INTR_CTRL);
++		if (status & DSI_IRQ_CMD_DMA_DONE) {
++			dsi_cmd_dma_intr_update(msm_host, false, true);
++			return 0;
++		}
++		udelay(10);
++	}
++
++	dev_err(&msm_host->pdev->dev, "peer command DMA timeout: status=%#x\n", status);
++	return -ETIMEDOUT;
++}
++
++void msm_dsi_host_cmd_xfer_config(struct mipi_dsi_host *host,
++				  bool broadcast, bool master)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	u32 val = dsi_read(msm_host, REG_DSI_CMD_DMA_CTRL);
++
++	val &= ~(BIT(31) | BIT(30));
++	if (broadcast)
++		val |= BIT(31);
++	if (master)
++		val |= BIT(30);
++
++	dsi_write(msm_host, REG_DSI_CMD_DMA_CTRL, val);
++}
++
++void msm_dsi_host_bonded_cmd_abort(struct mipi_dsi_host *host)
++{
++	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	/*
++	 * Mask both error and completion, drain the IRQ, and stop the error
++	 * worker (its caller holds the manager pair mutex, so the worker must
++	 * never take it).  Then reset the command engine, which on Elden v2.9
++	 * actually stops DMA, and clear stale completion status.
++	 */
++	dsi_intr_ctrl(msm_host, DSI_IRQ_MASK_ERROR | DSI_IRQ_MASK_CMD_DMA_DONE, 0);
++	synchronize_irq(msm_host->irq);
++	cancel_work_sync(&msm_host->err_work);
++	/* A worker already running may have re-enabled ERROR after the first
++	 * mask; mask again and synchronize to close that race.
++	 */
++	dsi_intr_ctrl(msm_host, DSI_IRQ_MASK_ERROR | DSI_IRQ_MASK_CMD_DMA_DONE, 0);
++	synchronize_irq(msm_host->irq);
++	msm_host->err_work_state = 0;
++	dsi_sw_reset(msm_host);
++	dsi_cmd_dma_intr_update(msm_host, false, true);
++}
++
++
++
+ int msm_dsi_host_power_off(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -4,6 +4,7 @@
+  */
+ 
+ #include "drm/drm_bridge_connector.h"
++#include <drm/drm_panel.h>
+ 
+ #include "msm_kms.h"
+ #include "dsi.h"
+@@ -30,9 +31,38 @@
+ 
+ static struct msm_dsi_manager msm_dsim_glb;
+ 
++/*
++ * Elden dual-DSI bonded command transfers are serialized as a pair and
++ * remember a terminal DMA failure for the rest of the current power
++ * cycle.  The latch is only consulted on the Elden bonded path.
++ */
++static DEFINE_MUTEX(dsi_bonded_cmd_lock);
++static bool dsi_bonded_cmd_failed;
++
+ #define IS_BONDED_DSI()		(msm_dsim_glb.is_bonded_dsi)
+ #define IS_SYNC_NEEDED()	(msm_dsim_glb.is_sync_needed)
+ #define IS_MASTER_DSI_LINK(id)	(msm_dsim_glb.master_dsi_link_id == id)
++
++/*
++ * The Elden bonded command path applies only to lenovo,elden with bonded
++ * sync dual-DSI; it is not an all-SM8750 path.  The master-link
++ * requirement is deliberately not folded in here: it is enforced at
++ * each entry point so an invalid master is rejected instead of silently
++ * falling through to the original DSI0 no-op.
++ */
++static bool msm_dsi_manager_uses_bonded_cmd(void)
++{
++	return of_machine_is_compatible("lenovo,elden") &&
++	       IS_BONDED_DSI() && IS_SYNC_NEEDED();
++}
++
++bool msm_dsi_manager_cmd_failed(void)
++{
++	if (!msm_dsi_manager_uses_bonded_cmd())
++		return false;
++
++	return READ_ONCE(dsi_bonded_cmd_failed);
++}
+ 
+ static inline struct msm_dsi *dsi_mgr_get_dsi(int id)
+ {
+@@ -198,6 +228,7 @@
+ struct dsi_bridge {
+ 	struct drm_bridge base;
+ 	int id;
++	bool powered;
+ };
+ 
+ #define to_dsi_bridge(x) container_of(x, struct dsi_bridge, base)
+@@ -290,9 +321,37 @@
+ 	if (is_bonded_dsi && !IS_MASTER_DSI_LINK(id))
+ 		return;
+ 
++	/*
++	 * Reject an invalid Elden master before touching power: the bonded
++	 * command path is only defined for master DSI_0.  A duplicate
++	 * pre_enable on an already-powered bridge is a no-op that must not
++	 * clear the failure latch.
++	 */
++	if (msm_dsi_manager_uses_bonded_cmd() &&
++	    msm_dsim_glb.master_dsi_link_id != DSI_0)
++		return;
++
++	if (msm_dsi_manager_uses_bonded_cmd() &&
++	    to_dsi_bridge(bridge)->powered)
++		return;
++
+ 	ret = dsi_mgr_bridge_power_on(bridge);
+ 	if (ret) {
+ 		dev_err(&msm_dsi->pdev->dev, "Power on failed: %d\n", ret);
++		return;
++	}
++
++	if (msm_dsi_manager_uses_bonded_cmd()) {
++		/*
++		 * Defer video enable to bridge .enable, which runs after panel
++		 * preparation.  Clear the previous failed latch and mark the pair
++		 * powered together, under the pair mutex, only after a successful
++		 * fresh power-on.
++		 */
++		mutex_lock(&dsi_bonded_cmd_lock);
++		WRITE_ONCE(dsi_bonded_cmd_failed, false);
++		to_dsi_bridge(bridge)->powered = true;
++		mutex_unlock(&dsi_bonded_cmd_lock);
+ 		return;
+ 	}
+ 
+@@ -329,6 +388,91 @@
+ 		if (IS_BONDED_DSI() && s_dsi)
+ 			msm_dsi_host_test_pattern_en(s_dsi->host);
+ 	}
++}
++
++static void dsi_mgr_bridge_enable(struct drm_bridge *bridge)
++{
++	int id = dsi_mgr_bridge_get_id(bridge);
++	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
++	struct msm_dsi *other_dsi = dsi_mgr_get_dsi(DSI_1);
++	struct drm_panel *panel;
++	int ret;
++
++	/* Non-Elden bridges are an immediate no-op. */
++	if (!msm_dsi_manager_uses_bonded_cmd() ||
++	    id != DSI_0 || !IS_MASTER_DSI_LINK(id) ||
++	    !to_dsi_bridge(bridge)->powered)
++		return;
++
++	/* Serialize the full enable/register sequence with the command path. */
++	mutex_lock(&dsi_bonded_cmd_lock);
++
++	if (msm_dsi_manager_cmd_failed())
++		goto out;
++
++	/*
++	 * Run after all bridge pre-enable callbacks (including panel PPS), so
++	 * video is only enabled once the panel is prepared.  Both hosts must
++	 * exist before either is enabled.
++	 */
++	if (!msm_dsi->next_bridge) {
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		goto out;
++	}
++	panel = of_drm_find_panel(msm_dsi->next_bridge->of_node);
++	if (IS_ERR_OR_NULL(panel) || !panel->prepared) {
++		dev_err(&msm_dsi->pdev->dev,
++			"panel is not prepared; refusing video enable\n");
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		goto out;
++	}
++	if (!msm_dsi->host || !other_dsi || !other_dsi->host) {
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		goto out;
++	}
++
++	ret = msm_dsi_host_enable(msm_dsi->host);
++	if (ret) {
++		pr_err("%s: enable host %d failed, %d\n", __func__, id, ret);
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		goto out;
++	}
++
++	ret = msm_dsi_host_enable(other_dsi->host);
++	if (ret) {
++		pr_err("%s: enable host1 failed, %d\n", __func__, ret);
++		msm_dsi_host_disable(msm_dsi->host);
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++	}
++
++out:
++	mutex_unlock(&dsi_bonded_cmd_lock);
++}
++
++static void dsi_mgr_bridge_disable(struct drm_bridge *bridge)
++{
++	int id = dsi_mgr_bridge_get_id(bridge);
++	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
++	struct msm_dsi *other_dsi = dsi_mgr_get_dsi(DSI_1);
++
++	/* Non-Elden bridges are an immediate no-op. */
++	if (!msm_dsi_manager_uses_bonded_cmd() ||
++	    id != DSI_0 || !IS_MASTER_DSI_LINK(id) ||
++	    !to_dsi_bridge(bridge)->powered)
++		return;
++
++	/* Serialize the full teardown with the command path. */
++	mutex_lock(&dsi_bonded_cmd_lock);
++
++	/*
++	 * Close video on both links even after a failure; cleanup must never
++	 * be blocked by the failed latch.
++	 */
++	msm_dsi_host_disable(msm_dsi->host);
++	if (other_dsi && other_dsi->host)
++		msm_dsi_host_disable(other_dsi->host);
++
++	mutex_unlock(&dsi_bonded_cmd_lock);
+ }
+ 
+ static void dsi_mgr_bridge_post_disable(struct drm_bridge *bridge)
+@@ -349,6 +493,46 @@
+ 	 */
+ 	if (is_bonded_dsi && !IS_MASTER_DSI_LINK(id))
+ 		goto disable_phy;
++
++	if (msm_dsi_manager_uses_bonded_cmd()) {
++		/*
++		 * Only a previously powered master owns the IRQ-off / PLL-save /
++		 * power-off sequence; an unpowered path jumps straight to PHY
++		 * disable with no IRQ-depth imbalance or unpowered PLL access.
++		 * The pair mutex is held across the flag clear and the whole
++		 * teardown, and released before the common PHY disable.
++		 */
++		mutex_lock(&dsi_bonded_cmd_lock);
++
++		if (!to_dsi_bridge(bridge)->powered) {
++			mutex_unlock(&dsi_bonded_cmd_lock);
++			goto disable_phy;
++		}
++
++		to_dsi_bridge(bridge)->powered = false;
++
++		/* Video was already disabled by dsi_mgr_bridge_disable(). */
++		msm_dsi_host_disable_irq(host);
++		if (is_bonded_dsi && msm_dsi1)
++			msm_dsi_host_disable_irq(msm_dsi1->host);
++
++		/* Save PHY status if it is a clock source */
++		msm_dsi_phy_pll_save_state(msm_dsi->phy);
++
++		ret = msm_dsi_host_power_off(host);
++		if (ret)
++			pr_err("%s: host %d power off failed,%d\n", __func__, id, ret);
++
++		if (is_bonded_dsi && msm_dsi1) {
++			ret = msm_dsi_host_power_off(msm_dsi1->host);
++			if (ret)
++				pr_err("%s: host1 power off failed, %d\n",
++				       __func__, ret);
++		}
++
++		mutex_unlock(&dsi_bonded_cmd_lock);
++		goto disable_phy;
++	}
+ 
+ 	ret = msm_dsi_host_disable(host);
+ 	if (ret)
+@@ -447,6 +631,8 @@
+ static const struct drm_bridge_funcs dsi_mgr_bridge_funcs = {
+ 	.attach = dsi_mgr_bridge_attach,
+ 	.pre_enable = dsi_mgr_bridge_pre_enable,
++	.enable = dsi_mgr_bridge_enable,
++	.disable = dsi_mgr_bridge_disable,
+ 	.post_disable = dsi_mgr_bridge_post_disable,
+ 	.mode_set = dsi_mgr_bridge_mode_set,
+ 	.mode_valid = dsi_mgr_bridge_mode_valid,
+@@ -488,6 +674,102 @@
+ 	return 0;
+ }
+ 
++/*
++ * Read path: prepare, configure and restore only the requested host while
++ * the caller holds the pair mutex.  A negative read means the command
++ * engine state is unresolved, so mark the cycle failed and abort the host
++ * (mask + drain + error-worker stop + reset + stale clear) before the
++ * regular restore returns ownership of the buffer.
++ */
++static int dsi_mgr_bonded_cmd_read(struct mipi_dsi_host *host,
++				   const struct mipi_dsi_msg *msg)
++{
++	int ret;
++
++	ret = msm_dsi_host_xfer_prepare(host, msg);
++	if (ret)
++		return ret;
++
++	msm_dsi_host_cmd_xfer_config(host, false, false);
++	ret = msm_dsi_host_cmd_rx(host, msg);
++	if (ret < 0) {
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		msm_dsi_host_bonded_cmd_abort(host);
++	}
++
++	msm_dsi_host_xfer_restore(host, msg);
++	return ret;
++}
++
++static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
++{
++	struct msm_dsi *master_dsi = dsi_mgr_get_dsi(DSI_0);
++	struct msm_dsi *slave_dsi = dsi_mgr_get_dsi(DSI_1);
++	struct mipi_dsi_host *master, *slave;
++	u32 dma_base, len;
++	int master_ret, slave_ret, ret;
++
++	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host)
++		return -ENODEV;
++	master = master_dsi->host;
++	slave = slave_dsi->host;
++
++	if (msm_dsi_manager_cmd_failed())
++		return -EIO;
++
++	ret = msm_dsi_host_bonded_xfer_prepare(master);
++	if (ret)
++		return ret;
++	ret = msm_dsi_host_bonded_xfer_prepare(slave);
++	if (ret)
++		goto restore_master;
++
++	msm_dsi_host_bonded_wait_video(master);
++	msm_dsi_host_bonded_wait_video(slave);
++	ret = msm_dsi_host_bonded_cmd_build(master, msg, &dma_base, &len);
++	if (ret) {
++		/* Pre-trigger failure: restore without latching failure. */
++		msm_dsi_host_bonded_xfer_restore(master);
++		msm_dsi_host_bonded_xfer_restore(slave);
++		return ret;
++	}
++	msm_dsi_host_bonded_cmd_init_trigger(master);
++	msm_dsi_host_bonded_cmd_init_trigger(slave);
++	msm_dsi_host_bonded_cmd_stage(master, msg, dma_base, len, true);
++	msm_dsi_host_bonded_cmd_stage(slave, msg, dma_base, len, false);
++
++	/* Flush the packet and both descriptors before starting either engine. */
++	wmb();
++	msm_dsi_host_bonded_cmd_trigger(slave);
++	master_ret = msm_dsi_host_bonded_cmd_arm_master(master);
++	if (!master_ret) {
++		wmb(); /* Enable the completion interrupt before master kickoff. */
++		msm_dsi_host_bonded_cmd_trigger(master);
++		master_ret = msm_dsi_host_bonded_cmd_wait_master(master, len);
++	}
++	/* Resolve the peer even if the master's completion failed. */
++	slave_ret = msm_dsi_host_bonded_cmd_poll_slave(slave);
++	ret = master_ret < 0 ? master_ret : slave_ret < 0 ? slave_ret : len;
++	if (ret < 0) {
++		/* Never reuse the packet buffer while either engine is unresolved. */
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		msm_dsi_host_bonded_cmd_abort(master);
++		msm_dsi_host_bonded_cmd_abort(slave);
++		dev_err(&master_dsi->pdev->dev,
++			"bonded command DMA failed: master=%d peer=%d\n",
++			master_ret, slave_ret);
++	}
++
++	/* Always restore both acquired hosts, even after a failure. */
++	msm_dsi_host_bonded_xfer_restore(master);
++	msm_dsi_host_bonded_xfer_restore(slave);
++	return ret;
++
++restore_master:
++	msm_dsi_host_bonded_xfer_restore(master);
++	return ret;
++}
++
+ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+ {
+ 	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
+@@ -499,6 +781,39 @@
+ 
+ 	if (!msg->tx_buf || !msg->tx_len)
+ 		return 0;
++
++	if (msm_dsi_manager_uses_bonded_cmd()) {
++		struct msm_dsi *master_dsi = dsi_mgr_get_dsi(DSI_0);
++		struct msm_dsi *slave_dsi = dsi_mgr_get_dsi(DSI_1);
++
++		if (!master_dsi || !slave_dsi || !master_dsi->host ||
++		    !slave_dsi->host)
++			return -ENODEV;
++
++		if (msm_dsim_glb.master_dsi_link_id != DSI_0)
++			return -EINVAL;
++
++		if (is_read) {
++			mutex_lock(&dsi_bonded_cmd_lock);
++			if (READ_ONCE(dsi_bonded_cmd_failed))
++				ret = -EIO;
++			else
++				ret = dsi_mgr_bonded_cmd_read(msm_dsi->host, msg);
++			mutex_unlock(&dsi_bonded_cmd_lock);
++			return ret;
++		}
++
++		if (msg->flags & MIPI_DSI_MSG_REQ_ACK)
++			return -EOPNOTSUPP;
++
++		mutex_lock(&dsi_bonded_cmd_lock);
++		if (READ_ONCE(dsi_bonded_cmd_failed))
++			ret = -EIO;
++		else
++			ret = dsi_mgr_bonded_cmd_xfer(msg);
++		mutex_unlock(&dsi_bonded_cmd_lock);
++		return ret;
++	}
+ 
+ 	/* In bonded master case, panel requires the same commands sent to
+ 	 * both DSI links. Host issues the command trigger to both links
+@@ -540,6 +855,16 @@
+ 	struct msm_dsi *msm_dsi0 = dsi_mgr_get_dsi(DSI_0);
+ 	struct mipi_dsi_host *host = msm_dsi->host;
+ 
++	/*
++	 * Elden single-host reads commit only the requested host and clear
++	 * broadcast; the legacy bonded trigger below is left untouched.
++	 */
++	if (msm_dsi_manager_uses_bonded_cmd()) {
++		msm_dsi_host_cmd_xfer_config(host, false, false);
++		msm_dsi_host_cmd_xfer_commit(host, dma_base, len);
++		return true;
++	}
++
+ 	if (IS_SYNC_NEEDED() && (id == DSI_0))
+ 		return false;
+ 
+diff --git a/drivers/gpu/drm/msm/registers/display/dsi.xml b/drivers/gpu/drm/msm/registers/display/dsi.xml
+--- a/drivers/gpu/drm/msm/registers/display/dsi.xml
++++ b/drivers/gpu/drm/msm/registers/display/dsi.xml
+@@ -188,8 +188,11 @@
+ 
+ 	<reg32 offset="0x00038" name="CMD_DMA_CTRL">
+ 		<bitfield name="BROADCAST_EN" pos="31" type="boolean"/>
++		<bitfield name="BROADCAST_MASTER" pos="30" type="boolean"/>
++		<bitfield name="WC_SEL" pos="29" type="boolean"/>
+ 		<bitfield name="FROM_FRAME_BUFFER" pos="28" type="boolean"/>
+ 		<bitfield name="LOW_POWER" pos="26" type="boolean"/>
++		<bitfield name="PACKET_TYPE" pos="24" type="boolean"/>
+ 	</reg32>
+ 	<reg32 offset="0x0003c" name="CMD_CFG0">
+ 		<bitfield name="DST_FORMAT" low="0" high="3" type="dsi_cmd_dst_format"/>
+@@ -206,6 +209,10 @@
+ 	</reg32>
+ 	<reg32 offset="0x00044" name="DMA_BASE"/>
+ 	<reg32 offset="0x00048" name="DMA_LEN"/>
++	<reg32 offset="0x0004c" name="DMA_FIFO_CTRL">
++		<bitfield name="DISABLE_READ_WATERMARK" pos="16" type="boolean"/>
++		<bitfield name="DISABLE_WRITE_WATERMARK" pos="20" type="boolean"/>
++	</reg32>
+ 	<reg32 offset="0x00054" name="CMD_MDP_STREAM0_CTRL">
+ 		<bitfield name="DATA_TYPE" low="0" high="5" type="uint"/>
+ 		<bitfield name="VIRTUAL_CHANNEL" low="8" high="9" type="uint"/>
+@@ -233,9 +240,17 @@
+ 		<bitfield name="MDP_TRIGGER" low="4" high="6" type="dsi_cmd_trigger"/>
+ 		<bitfield name="STREAM" low="8" high="9" type="uint"/>
+ 		<bitfield name="BLOCK_DMA_WITHIN_FRAME" pos="12" type="boolean"/>
++		<bitfield name="DMA_TRG_MUX" pos="16" type="boolean"/>
++		<bitfield name="DMA_TRIGGER_EXT" low="17" high="19" type="uint"/>
+ 		<bitfield name="TE" pos="31" type="boolean"/>
+ 	</reg32>
+ 	<reg32 offset="0x0008c" name="TRIG_DMA"/>
++	<!-- 6G v2.2+ raw offsets are 0x100/0x104 after DSI_6G_REG_SHIFT. -->
++	<reg32 offset="0x000fc" name="DMA_SCHEDULE_CTRL">
++		<bitfield name="LINE" low="0" high="15" type="uint"/>
++		<bitfield name="ENABLE" pos="28" type="boolean"/>
++	</reg32>
++	<reg32 offset="0x00100" name="DMA_SCHEDULE_CTRL2"/>
+ 	<reg32 offset="0x000b0" name="DLN0_PHY_ERR">
+ 		<bitfield name="DLN0_ERR_ESC" pos="0" type="boolean"/>
+ 		<bitfield name="DLN0_ERR_SYNC_ESC" pos="4" type="boolean"/>
+@@ -314,6 +329,12 @@
+ 	<reg32 offset="0x00128" name="PHY_RESET">
+ 		<bitfield name="RESET" pos="0" type="boolean"/>
+ 	</reg32>
++	<reg32 offset="0x001c8" name="VBIF_CTRL">
++		<bitfield name="PRIORITY" low="0" high="2" type="uint"/>
++	</reg32>
++	<reg32 offset="0x0038c" name="CMD_DMA_CTRL1">
++		<bitfield name="MULTI_DMA_BURST_EN" pos="1" type="boolean"/>
++	</reg32>
+ 	<reg32 offset="0x00160" name="TEST_PATTERN_GEN_VIDEO_INIT_VAL"/>
+ 	<reg32 offset="0x00198" name="TPG_MAIN_CONTROL">
+ 		<bitfield name="CHECKERED_RECTANGLE_PATTERN" pos="8" type="boolean"/>
+diff --git a/drivers/gpu/drm/msm/msm_gem.c b/drivers/gpu/drm/msm/msm_gem.c
+--- a/drivers/gpu/drm/msm/msm_gem.c
++++ b/drivers/gpu/drm/msm/msm_gem.c
+@@ -230,6 +230,33 @@
+ 	struct device *dev = msm_obj->base.dev->dev;
+ 
+ 	dma_unmap_sgtable(dev, msm_obj->sgt, DMA_BIDIRECTIONAL, 0);
++}
++
++void msm_gem_sync_for_cpu(struct drm_gem_object *obj)
++{
++	struct msm_gem_object *msm_obj = to_msm_bo(obj);
++
++	if (!(msm_obj->flags & MSM_BO_WC) || !msm_obj->sgt)
++		return;
++
++	dma_sync_sgtable_for_cpu(obj->dev->dev, msm_obj->sgt,
++				 DMA_BIDIRECTIONAL);
++}
++
++void msm_gem_sync_for_device(struct drm_gem_object *obj)
++{
++	struct msm_gem_object *msm_obj = to_msm_bo(obj);
++
++	if (!(msm_obj->flags & MSM_BO_WC) || !msm_obj->sgt)
++		return;
++
++	/*
++	 * WC objects remain DMA-mapped between get_pages() and put_pages().
++	 * Return the existing mapping to the device after CPU packet writes;
++	 * do not create a second DMA mapping for the DSI command buffer.
++	 */
++	dma_sync_sgtable_for_device(obj->dev->dev, msm_obj->sgt,
++				    DMA_BIDIRECTIONAL);
+ }
+ 
+ static void update_lru_active(struct drm_gem_object *obj)
+diff --git a/drivers/gpu/drm/msm/msm_gem.h b/drivers/gpu/drm/msm/msm_gem.h
+--- a/drivers/gpu/drm/msm/msm_gem.h
++++ b/drivers/gpu/drm/msm/msm_gem.h
+@@ -289,6 +289,8 @@
+ void *msm_gem_get_vaddr_active(struct drm_gem_object *obj);
+ void msm_gem_put_vaddr_locked(struct drm_gem_object *obj);
+ void msm_gem_put_vaddr(struct drm_gem_object *obj);
++void msm_gem_sync_for_cpu(struct drm_gem_object *obj);
++void msm_gem_sync_for_device(struct drm_gem_object *obj);
+ int msm_gem_madvise(struct drm_gem_object *obj, unsigned madv);
+ bool msm_gem_active(struct drm_gem_object *obj);
+ int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op, ktime_t *timeout);

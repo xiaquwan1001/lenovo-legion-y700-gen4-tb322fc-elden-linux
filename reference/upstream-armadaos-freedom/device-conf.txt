@@ -1,0 +1,10 @@
+ARMADA_DEVICE_ID=lenovo-tb322fc
+ARMADA_DEVICE_NAME='Lenovo Legion Y700 Gen4'
+ARMADA_SOC_CLASS=SM8750
+# Gen4 hardware-rotated scanout is still under investigation; the gamescope
+# rotation shader path currently restores the display after a session restart.
+ARMADA_GAMESCOPE_USE_ROTATION_SHADER=1
+ARMADA_PRIMARY_TOUCHSCREEN='NVTCapacitiveTouchScreen'
+# TB322FC has no built-in gamepad; InputPlumber exposes sources but no
+# CompositeDevice, so `controller-type apply` must not wait for one.
+ARMADA_BUILTIN_GAMEPAD=0

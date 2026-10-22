@@ -1,0 +1,423 @@
+From: GEEKiDoS <geek_ds@foxmail.com>
+Subject: [PATCH] iommu/arm-smmu: hand the Elden boot framebuffer to the display VM
+
+Preserve the bootloader's live SM8750 SMMU stream mappings on the Lenovo
+Elden (TB322FC) instead of resetting them, map the runtime /chosen
+simple-framebuffer into the display VM before the SID switch, and reserve
+that same rounded range from the DMA allocator so the display never
+allocates over the splash still being scanned out.
+
+The handoff originates from GEEKiDoS <geek_ds@foxmail.com> commit
+dc7d14dc64c8d4f86220b30cd126b17d805c8474.  The reference tree is
+https://github.com/h0cheung/tb322fc-linux-kernel pinned at
+6f97250ead155fc3b980856323e99a4623dae73d.  Armada adapted it for the
+combined kernel.
+
+diff --git a/drivers/iommu/arm/arm-smmu/arm-smmu.c b/drivers/iommu/arm/arm-smmu/arm-smmu.c
+--- a/drivers/iommu/arm/arm-smmu/arm-smmu.c
++++ b/drivers/iommu/arm/arm-smmu/arm-smmu.c
+@@ -1165,6 +1165,109 @@
+ 	}
+ }
+ 
++static int arm_smmu_boot_fb_range(struct device *dev, phys_addr_t *out_base,
++				  size_t *out_size)
++{
++	struct arm_smmu_master_cfg *cfg;
++	struct device_node *chosen, *child, *node;
++	struct resource res;
++	u64 start, end;
++	int ret;
++
++	*out_base = 0;
++	*out_size = 0;
++
++	if (!of_device_is_compatible(dev->of_node, "qcom,sm8750-dpu"))
++		return 0;
++
++	cfg = dev_iommu_priv_get(dev);
++	if (!cfg || !cfg->smmu || !cfg->smmu->preserve_boot_mappings)
++		return 0;
++
++	chosen = of_find_node_by_path("/chosen");
++	if (!chosen)
++		return -ENODEV;
++
++	child = NULL;
++	for_each_available_child_of_node(chosen, node) {
++		if (!of_device_is_compatible(node, "simple-framebuffer"))
++			continue;
++		if (child) {
++			of_node_put(node);
++			of_node_put(child);
++			of_node_put(chosen);
++			return -EINVAL;
++		}
++		child = of_node_get(node);
++	}
++
++	of_node_put(chosen);
++
++	if (!child)
++		return -ENOENT;
++
++	ret = of_address_to_resource(child, 0, &res);
++	of_node_put(child);
++	if (ret)
++		return ret;
++
++	if (!res.end || res.start == 0 || res.end < res.start)
++		return -EINVAL;
++	if (res.end > DMA_BIT_MASK(32))
++		return -ERANGE;
++
++	start = ALIGN_DOWN((u64)res.start, SZ_4K);
++	end = ALIGN((u64)res.end + 1, SZ_4K);
++	if (end - start < SZ_4K || end - start > (1ULL << 32))
++		return -ERANGE;
++
++	*out_base = (phys_addr_t)start;
++	*out_size = (size_t)(end - start);
++	return 0;
++}
++
++static int arm_smmu_map_boot_framebuffer(struct iommu_domain *domain,
++					 struct device *dev)
++{
++	phys_addr_t base, addr, translated;
++	size_t size, unmapped;
++	int ret;
++
++	ret = arm_smmu_boot_fb_range(dev, &base, &size);
++	if (ret)
++		return ret;
++	if (!size)
++		return 0;
++
++	translated = iommu_iova_to_phys(domain, base);
++	if (translated == base) {
++		for (addr = base; addr - base < size; addr += SZ_4K)
++			if (iommu_iova_to_phys(domain, addr) != addr)
++				return -EEXIST;
++		return 0;
++	}
++	if (translated)
++		return dev_err_probe(dev, -EEXIST,
++				     "boot framebuffer IOVA is already occupied\n");
++
++	ret = iommu_map(domain, base, base, size, IOMMU_READ, GFP_KERNEL);
++	if (ret)
++		return dev_err_probe(dev, ret,
++				     "failed to map boot framebuffer before SID switch\n");
++
++	translated = iommu_iova_to_phys(domain, base);
++	dev_info(dev,
++		 "boot framebuffer mapped before SID switch: iova=%pa size=%zx translated=%pa\n",
++		 &base, size, &translated);
++	if (translated != base) {
++		unmapped = iommu_unmap(domain, base, size);
++		WARN_ON(unmapped != size);
++		return -EFAULT;
++	}
++
++	return 0;
++}
++
+ static int arm_smmu_attach_dev(struct iommu_domain *domain, struct device *dev,
+ 			       struct iommu_domain *old)
+ {
+@@ -1206,6 +1309,10 @@
+ 	}
+ 
+ 	/* Looks ok, so add the device to the domain */
++	ret = arm_smmu_map_boot_framebuffer(domain, dev);
++	if (ret)
++		goto rpm_put;
++
+ 	arm_smmu_master_install_s2crs(cfg, S2CR_TYPE_TRANS,
+ 				      smmu_domain->cfg.cbndx, fwspec);
+ rpm_put:
+@@ -1607,7 +1714,10 @@
+ 				      struct list_head *head)
+ {
+ 	struct iommu_resv_region *region;
++	phys_addr_t fb_base;
++	size_t fb_size;
+ 	int prot = IOMMU_WRITE | IOMMU_NOEXEC | IOMMU_MMIO;
++	int ret;
+ 
+ 	region = iommu_alloc_resv_region(MSI_IOVA_BASE, MSI_IOVA_LENGTH,
+ 					 prot, IOMMU_RESV_SW_MSI, GFP_KERNEL);
+@@ -1615,6 +1725,14 @@
+ 		return;
+ 
+ 	list_add_tail(&region->list, head);
++
++	ret = arm_smmu_boot_fb_range(dev, &fb_base, &fb_size);
++	if (!ret && fb_size) {
++		region = iommu_alloc_resv_region(fb_base, fb_size, IOMMU_READ,
++						IOMMU_RESV_RESERVED, GFP_KERNEL);
++		if (region)
++			list_add_tail(&region->list, head);
++	}
+ 
+ 	iommu_dma_get_resv_regions(dev, head);
+ }
+@@ -2067,6 +2185,12 @@
+ 	if (of_dma_is_coherent(dev->of_node))
+ 		smmu->features |= ARM_SMMU_FEAT_COHERENT_WALK;
+ 
++	if (of_machine_is_compatible("lenovo,elden") &&
++	    of_device_is_compatible(dev->of_node, "qcom,sm8750-smmu-500") &&
++	    !of_device_is_compatible(dev->of_node, "qcom,adreno-smmu") &&
++	    of_property_present(dev->of_node, "qcom,preserve-boot-mappings"))
++		smmu->preserve_boot_mappings = true;
++
+ 	return 0;
+ }
+ 
+@@ -2079,6 +2203,13 @@
+ 
+ 	INIT_LIST_HEAD(&rmr_list);
+ 	iort_get_rmr_sids(dev_fwnode(smmu->dev), &rmr_list);
++
++	if (smmu->preserve_boot_mappings && list_empty(&rmr_list)) {
++		iort_put_rmr_sids(dev_fwnode(smmu->dev), &rmr_list);
++		dev_notice(smmu->dev,
++			   "\tpreserved live boot mappings, skipping SMMU reset\n");
++		return;
++	}
+ 
+ 	/*
+ 	 * Rather than trying to look at existing mappings that
+@@ -2229,8 +2360,10 @@
+ 	/* Check for RMRs and install bypass SMRs if any */
+ 	arm_smmu_rmr_install_bypass_smr(smmu);
+ 
+-	arm_smmu_device_reset(smmu);
+-	arm_smmu_test_smr_masks(smmu);
++	if (!smmu->preserve_boot_mappings) {
++		arm_smmu_device_reset(smmu);
++		arm_smmu_test_smr_masks(smmu);
++	}
+ 
+ 	err = iommu_device_sysfs_add(&smmu->iommu, smmu->dev, NULL,
+ 				     "smmu.%pa", &smmu->ioaddr);
+@@ -2250,7 +2383,7 @@
+ 	 * can serve as an ideal proxy for that decision. So, conditionally
+ 	 * enable pm_runtime.
+ 	 */
+-	if (dev->pm_domain) {
++	if (dev->pm_domain && !smmu->preserve_boot_mappings) {
+ 		pm_runtime_set_active(dev);
+ 		pm_runtime_enable(dev);
+ 		arm_smmu_rpm_use_autosuspend(smmu);
+diff --git a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
+--- a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
++++ b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
+@@ -470,6 +470,70 @@
+ 	}
+ 
+ 	/*
++	 * When the firmware's boot mappings must be preserved (e.g. the
++	 * bootloader splash is still being scanned out), do not touch the
++	 * live stream mapping registers.  Import the current hardware state
++	 * instead, so the driver knows which stream mapping groups, SMRs and
++	 * context banks are in use, and leaves the running configuration
++	 * intact.
++	 */
++	if (smmu->preserve_boot_mappings) {
++		/*
++		 * Only the first 128 architected stream matching groups are
++		 * guaranteed to be reliable, so make sure later allocations
++		 * cannot stray beyond them.
++		 */
++		if (smmu->num_mapping_groups > 128) {
++			dev_notice(smmu->dev, "\tLimiting the stream matching groups to 128\n");
++			smmu->num_mapping_groups = 128;
++		}
++
++		/*
++		 * We skip the usual reset, so the firmware may have left
++		 * sCR0.EXIDENABLE in a different state to the one implied by
++		 * IDR0.EXIDS.  Track the live state rather than silently
++		 * switching the hardware mode.
++		 */
++		reg = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_sCR0);
++		if (reg & ARM_SMMU_sCR0_EXIDENABLE)
++			smmu->features |= ARM_SMMU_FEAT_EXIDS;
++		else
++			smmu->features &= ~ARM_SMMU_FEAT_EXIDS;
++
++		for (i = 0; i < smmu->num_mapping_groups; i++) {
++			bool exid = smmu->features & ARM_SMMU_FEAT_EXIDS;
++			u32 s2cr = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_S2CR(i));
++			u32 decoded_smr;
++
++			smr = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_SMR(i));
++
++			if (exid ? !(s2cr & ARM_SMMU_S2CR_EXIDVALID) :
++				   !FIELD_GET(ARM_SMMU_SMR_VALID, smr))
++				continue;
++
++			decoded_smr = smr;
++			if (!exid)
++				decoded_smr &= ~ARM_SMMU_SMR_VALID;
++
++			smmu->smrs[i].id = FIELD_GET(ARM_SMMU_SMR_ID, decoded_smr);
++			smmu->smrs[i].mask = FIELD_GET(ARM_SMMU_SMR_MASK, decoded_smr);
++			smmu->smrs[i].valid = true;
++			smmu->smr_mask_mask |= smmu->smrs[i].mask;
++
++			smmu->s2crs[i].type = FIELD_GET(ARM_SMMU_S2CR_TYPE, s2cr);
++			smmu->s2crs[i].privcfg = FIELD_GET(ARM_SMMU_S2CR_PRIVCFG, s2cr);
++			smmu->s2crs[i].cbndx = FIELD_GET(ARM_SMMU_S2CR_CBNDX, s2cr);
++			smmu->s2crs[i].count = 1;
++
++			if (smmu->s2crs[i].type == S2CR_TYPE_TRANS &&
++			    smmu->s2crs[i].cbndx < smmu->num_context_banks)
++				set_bit(smmu->s2crs[i].cbndx, smmu->context_map);
++		}
++
++		return 0;
++	}
++
++	/*
+ 	 * Some platforms support more than the Arm SMMU architected maximum of
+ 	 * 128 stream matching groups. The additional registers appear to have
+ 	 * the same behavior as the architected registers in the hardware.
+@@ -577,6 +641,16 @@
+ 	reg = FIELD_PREP(ARM_SMMU_S2CR_TYPE, type) |
+ 	      FIELD_PREP(ARM_SMMU_S2CR_CBNDX, cbndx) |
+ 	      FIELD_PREP(ARM_SMMU_S2CR_PRIVCFG, s2cr->privcfg);
++
++	/*
++	 * When preserving live boot mappings we may rewrite imported S2CRs;
++	 * make sure the EXIDVALID bit of an imported entry is not lost.
++	 */
++	if (smmu->preserve_boot_mappings &&
++	    (smmu->features & ARM_SMMU_FEAT_EXIDS) &&
++	    smmu->smrs && smmu->smrs[idx].valid)
++		reg |= ARM_SMMU_S2CR_EXIDVALID;
++
+ 	arm_smmu_gr0_write(smmu, ARM_SMMU_GR0_S2CR(idx), reg);
+ }
+ 
+diff --git a/drivers/iommu/arm/arm-smmu/arm-smmu.h b/drivers/iommu/arm/arm-smmu/arm-smmu.h
+--- a/drivers/iommu/arm/arm-smmu/arm-smmu.h
++++ b/drivers/iommu/arm/arm-smmu/arm-smmu.h
+@@ -308,6 +308,9 @@
+ #define ARM_SMMU_FEAT_FMT_AARCH32_S	(1 << 11)
+ #define ARM_SMMU_FEAT_EXIDS		(1 << 12)
+ 	u32				features;
++
++	/* Preserve firmware/bootloader stream mappings (e.g. boot splash) */
++	bool				preserve_boot_mappings;
+ 
+ 	enum arm_smmu_arch_version	version;
+ 	enum arm_smmu_implementation	model;
+diff --git a/drivers/gpu/drm/msm/msm_kms.c b/drivers/gpu/drm/msm/msm_kms.c
+--- a/drivers/gpu/drm/msm/msm_kms.c
++++ b/drivers/gpu/drm/msm/msm_kms.c
+@@ -6,7 +6,9 @@
+  */
+ 
+ #include <linux/aperture.h>
++#include <linux/iommu.h>
+ #include <linux/kthread.h>
++#include <linux/of.h>
+ #include <linux/sched/mm.h>
+ #include <uapi/linux/sched/types.h>
+ 
+@@ -177,6 +179,38 @@
+ 	return -ENOSYS;
+ }
+ 
++/*
++ * The lenovo,elden display path keeps the bootloader's splash framebuffer
++ * identity mapped by the SMMU (qcom,preserve-boot-mappings on the SM8750
++ * application SMMU).  In that case the display VM must not hand out IOVAs
++ * over the live framebuffer.  Detect exactly that setup: the SM8750 DPU whose
++ * real SMMU provider is the non-Adreno SM8750 SMMU with the preserve flag.
++ */
++static bool msm_kms_keep_bootfb_reserved(struct device *iommu_dev)
++{
++	struct device_node *np = iommu_dev->of_node;
++	struct of_phandle_args args;
++	bool ret;
++
++	if (!np || !of_machine_is_compatible("lenovo,elden"))
++		return false;
++
++	if (!of_device_is_compatible(np, "qcom,sm8750-dpu"))
++		return false;
++
++	if (of_parse_phandle_with_args(np, "iommus", "#iommu-cells", 0,
++				       &args))
++		return false;
++
++	ret = of_device_is_compatible(args.np, "qcom,sm8750-smmu-500") &&
++	      !of_device_is_compatible(args.np, "qcom,adreno-smmu") &&
++	      of_property_present(args.np, "qcom,preserve-boot-mappings");
++
++	of_node_put(args.np);
++
++	return ret;
++}
++
+ struct drm_gpuvm *msm_kms_init_vm(struct drm_device *dev, struct device *mdss_dev)
+ {
+ 	struct drm_gpuvm *vm;
+@@ -185,6 +219,7 @@
+ 	struct msm_drm_private *priv = dev->dev_private;
+ 	struct msm_kms *kms = priv->kms;
+ 	struct device *iommu_dev;
++	u64 va_start = 0x1000, va_end = 0x100000000;
+ 
+ 	/*
+ 	 * IOMMUs can be a part of MDSS device tree binding, or the
+@@ -203,8 +238,42 @@
+ 	if (IS_ERR(mmu))
+ 		return ERR_CAST(mmu);
+ 
+-	vm = msm_gem_vm_create(dev, mmu, "mdp_kms",
+-			       0x1000, 0x100000000 - 0x1000, true);
++	if (msm_kms_keep_bootfb_reserved(iommu_dev)) {
++		struct iommu_resv_region *region;
++		LIST_HEAD(resv_regions);
++		bool found = false;
++
++		/*
++		 * The live boot framebuffer is exposed by the SMMU as an
++		 * IOMMU_RESV_RESERVED region.  Cap the VM at its start so we
++		 * never allocate over it; the tail above it is intentionally
++		 * left unused while the boot mapping lives (it is not backed
++		 * by any gem object).  MSI/SW_MSI reservations are ignored.
++		 */
++		iommu_get_resv_regions(iommu_dev, &resv_regions);
++		list_for_each_entry(region, &resv_regions, list) {
++			if (region->type != IOMMU_RESV_RESERVED)
++				continue;
++			if (!region->length)
++				continue;
++			if (region->start < va_start || region->start >= va_end)
++				continue;
++			va_end = min_t(u64, va_end, region->start);
++			found = true;
++			break;
++		}
++		iommu_put_resv_regions(iommu_dev, &resv_regions);
++
++		if (!found || va_end <= va_start) {
++			dev_err(mdp_dev,
++				"no boot framebuffer reservation for preserved display VM\n");
++			mmu->funcs->destroy(mmu);
++			return ERR_PTR(-ENODEV);
++		}
++	}
++
++	vm = msm_gem_vm_create(dev, mmu, "mdp_kms", va_start,
++			       va_end - va_start, true);
+ 	if (IS_ERR(vm)) {
+ 		dev_err(mdp_dev, "vm create, error %pe\n", vm);
+ 		mmu->funcs->destroy(mmu);

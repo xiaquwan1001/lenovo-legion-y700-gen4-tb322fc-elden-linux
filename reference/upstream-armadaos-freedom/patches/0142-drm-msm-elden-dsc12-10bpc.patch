@@ -1,0 +1,363 @@
+From: Armada <noreply@armada.local>
+Date: Wed, 14 Oct 2026 00:00:00 +0800
+Subject: [PATCH] drm/msm: opt-in DSC 1.2 and 10-bpc handling for Elden
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Enable DSC 1.2 RC tables, a pin-derived initial-line calculation and
+the SM8750 full-ICH-precision encoder bit for the LENOVO Legion Y700
+Gen4 (lenovo,elden) panel, which drives 10-bpc streams over a single
+multi-slice DSI packet.
+
+Every behaviour change is gated on of_machine_is_compatible(
+"lenovo,elden") (plus DSC 1.2 / bpc > 8 where relevant); the previous
+programming path is preserved verbatim for all other panels. The
+initial-line algorithm and the ENC_DF_CTRL bit 12 handling are derived
+from the tb322fc-linux-kernel driver. Provenance:
+  https://github.com/h0cheung/tb322fc-linux-kernel/commit/6f97250ead155fc3b980856323e99a4623dae73d
+
+This is patch 0142; it is meant to be applied on top of 0141.
+
+---
+ drivers/gpu/drm/msm/dsi/dsi_host.c | 56 +-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c | 64 +-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c | 34 +-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h | 2 +
+ drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_12_0_sm8750.h | 24 +-
+ drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c | 12 +
+ 6 files changed, 174 insertions(+), 18 deletions(-)
+---
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 1b8b7ab18f50..b9b571ba316d 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -1887,8 +1887,37 @@
+ 	return -EINVAL;
+ }
+ 
++static u8 dsi_dsc_1_2_first_line_bpg_offset(const struct drm_dsc_config *dsc)
++{
++	u8 bpg_offset;
++	u8 uncompressed_bpg_rate;
++	u8 bpp = drm_dsc_get_bpp_int(dsc);
++
++	if (dsc->slice_height < 8)
++		bpg_offset = 2 * (dsc->slice_height - 1);
++	else if (dsc->slice_height < 20)
++		bpg_offset = 12;
++	else if (dsc->slice_height <= 30)
++		bpg_offset = 13;
++	else if (dsc->slice_height < 42)
++		bpg_offset = 14;
++	else
++		bpg_offset = 15;
++
++	if (dsc->native_422)
++		uncompressed_bpg_rate = 3 * bpp * 4;
++	else if (dsc->native_420)
++		uncompressed_bpg_rate = 3 * bpp;
++	else
++		uncompressed_bpg_rate = (3 * bpp + 2) * 3;
++
++	return min_t(u8, bpg_offset, uncompressed_bpg_rate - 3 * bpp);
++}
++
+ static int dsi_populate_dsc_params(struct msm_dsi_host *msm_host, struct drm_dsc_config *dsc)
+ {
++	enum drm_dsc_params_type params_type = DRM_DSC_1_1_PRE_SCR;
++	bool elden_dsc_1_2;
+ 	int ret;
+ 
+ 	if (dsc->bits_per_pixel & 0xf) {
+@@ -1920,12 +1949,35 @@
+ 	drm_dsc_set_const_params(dsc);
+ 	drm_dsc_set_rc_buf_thresh(dsc);
+ 
+-	/* DPU supports only pre-SCR panels */
+-	ret = drm_dsc_setup_rc_params(dsc, DRM_DSC_1_1_PRE_SCR);
++	/*
++	 * DSC 1.2 panels need version-specific RC tables and an explicit
++	 * first-line bpg offset. Gate the new programming on the Elden panel
++	 * (single-packet multi-slice DSC); every other panel keeps the
++	 * historical pre-SCR behaviour.
++	 */
++	elden_dsc_1_2 = of_machine_is_compatible("lenovo,elden") &&
++			(msm_host->mode_flags &
++			 MIPI_DSI_MODE_DSC_ALL_SLICES_IN_PKT) &&
++			dsc->dsc_version_minor == 2;
++
++	if (elden_dsc_1_2) {
++		if (dsc->native_422)
++			params_type = DRM_DSC_1_2_422;
++		else if (dsc->native_420)
++			params_type = DRM_DSC_1_2_420;
++		else
++			params_type = DRM_DSC_1_2_444;
++	}
++
++	ret = drm_dsc_setup_rc_params(dsc, params_type);
+ 	if (ret) {
+ 		DRM_DEV_ERROR(&msm_host->pdev->dev, "could not find DSC RC parameters\n");
+ 		return ret;
+ 	}
++
++	if (elden_dsc_1_2)
++		dsc->first_line_bpg_offset =
++			dsi_dsc_1_2_first_line_bpg_offset(dsc);
+ 
+ 	dsc->initial_scale_value = drm_dsc_initial_scale_value(dsc);
+ 	dsc->line_buf_depth = dsc->bits_per_component + 1;
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+index de6b49944486..0ff0e093693b 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.c
+@@ -19,6 +19,7 @@
+ #include <drm/drm_file.h>
+ #include <drm/drm_probe_helper.h>
+ #include <drm/drm_framebuffer.h>
++#include <drm/display/drm_dsc_helper.h>
+ 
+ #include "msm_drv.h"
+ #include "dpu_kms.h"
+@@ -2042,6 +2043,62 @@
+ 	return DIV_ROUND_UP(total_pixels, dsc->slice_width);
+ }
+ 
++static u32
++dpu_encoder_dsc_initial_line_calc_elden(struct drm_dsc_config *dsc,
++					u32 enc_ip_width,
++					u32 common_mode)
++{
++	const int rtl_max_bpc = 10;
++	const int rtl_output_data_width = 64;
++	const int pipeline_latency = 28;
++	int soft_slice_per_enc, container_slice_width;
++	int max_muxword_size, max_se_size, max_ssm_delay;
++	int mux_word_size, compress_bpp_group;
++	int input_ssm_out_latency, obuf_latency, base_hs_latency;
++	int rtl_num_components, ob_data_width_4comps, ob_data_width_3comps;
++	int ob_data_width, chunk_bits, output_rate_ratio_complement;
++	int output_rate_extra_budget_bits, multi_hs_extra_budget_bits;
++	int multi_hs_extra_latency;
++	bool multiplex = common_mode & DSC_MODE_MULTIPLEX;
++	bool split_panel = common_mode & DSC_MODE_SPLIT_PANEL;
++	int bpp = drm_dsc_get_bpp_int(dsc);
++
++	soft_slice_per_enc = enc_ip_width / dsc->slice_width;
++	container_slice_width = dsc->native_422 ? dsc->slice_width / 2 :
++		dsc->slice_width;
++	max_muxword_size = rtl_max_bpc >= 12 ? 64 : 48;
++	max_se_size = 4 * (rtl_max_bpc + 1);
++	max_ssm_delay = max_se_size + max_muxword_size - 1;
++	mux_word_size = dsc->bits_per_component >= 12 ? 64 : 48;
++	compress_bpp_group = dsc->native_422 ? 2 * bpp : bpp;
++	input_ssm_out_latency = pipeline_latency +
++		3 * (max_ssm_delay + 2) * soft_slice_per_enc;
++	rtl_num_components = (dsc->native_420 || dsc->native_422) ? 4 : 3;
++	ob_data_width_4comps = rtl_output_data_width >= 2 * max_muxword_size ?
++		rtl_output_data_width : 2 * rtl_output_data_width;
++	ob_data_width_3comps = rtl_output_data_width >= max_muxword_size ?
++		rtl_output_data_width : 2 * rtl_output_data_width;
++	ob_data_width = rtl_num_components == 4 ? ob_data_width_4comps :
++		ob_data_width_3comps;
++	obuf_latency = DIV_ROUND_UP(9 * ob_data_width + mux_word_size,
++		compress_bpp_group) + 1;
++	base_hs_latency = dsc->initial_xmit_delay + input_ssm_out_latency +
++		obuf_latency;
++	chunk_bits = 8 * dsc->slice_chunk_size;
++	output_rate_ratio_complement = ob_data_width - compress_bpp_group;
++	output_rate_extra_budget_bits =
++		(output_rate_ratio_complement * chunk_bits) >>
++		(ob_data_width == 128 ? 7 : 6);
++	multi_hs_extra_budget_bits = split_panel && multiplex ? chunk_bits :
++		(soft_slice_per_enc > 1 && ob_data_width > compress_bpp_group ?
++		 chunk_bits : output_rate_extra_budget_bits);
++	multi_hs_extra_latency = DIV_ROUND_UP(multi_hs_extra_budget_bits,
++		compress_bpp_group);
++
++	return DIV_ROUND_UP(base_hs_latency + multi_hs_extra_latency,
++		container_slice_width);
++}
++
+ static void dpu_encoder_dsc_pipe_cfg(struct dpu_hw_ctl *ctl,
+ 				     struct dpu_hw_dsc *hw_dsc,
+ 				     struct dpu_hw_pingpong *hw_pp,
+@@ -2107,7 +2164,12 @@
+ 	intf_ip_w = this_frame_slices * dsc->slice_width;
+ 
+ 	enc_ip_w = intf_ip_w / num_dsc;
+-	initial_lines = dpu_encoder_dsc_initial_line_calc(dsc, enc_ip_w);
++	if (of_machine_is_compatible("lenovo,elden") &&
++	    dsc->dsc_version_minor == 2 && dsc->bits_per_component > 8)
++		initial_lines = dpu_encoder_dsc_initial_line_calc_elden(dsc,
++						enc_ip_w, dsc_common_mode);
++	else
++		initial_lines = dpu_encoder_dsc_initial_line_calc(dsc, enc_ip_w);
+ 
+ 	for (i = 0; i < num_dsc; i++)
+ 		dpu_encoder_dsc_pipe_cfg(ctl, hw_dsc[i], hw_pp[i],
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+index ba810f26ea30..91fff3c9f3eb 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+@@ -11,6 +11,8 @@
+ #include "dpu_trace.h"
+ #include "disp/msm_disp_snapshot.h"
+ #include "msm_dsc_helper.h"
++
++#include <linux/of.h>
+ 
+ #include <drm/display/drm_dsc_helper.h>
+ #include <drm/drm_managed.h>
+@@ -130,14 +132,32 @@
+ 	if (phys_enc->hw_intf->cap->type != INTF_DP && timing->compression_en) {
+ 		struct drm_dsc_config *dsc =
+ 		       dpu_encoder_get_dsc_config(phys_enc->parent);
+-		/*
+-		 * TODO: replace drm_dsc_get_bpp_int with logic to handle
+-		 * fractional part if there is fraction
+-		 */
+-		timing->width = timing->width * drm_dsc_get_bpp_int(dsc) /
+-				(dsc->bits_per_component * 3);
++
++		timing->dce_bytes_per_line = msm_dsc_get_bytes_per_line(dsc);
++
++		if (of_machine_is_compatible("lenovo,elden") &&
++		    dsc->dsc_version_minor == 2 &&
++		    dsc->bits_per_component > 8) {
++			/*
++			 * Keep the DPU timing generator in lockstep with the DSI host.
++			 * The compressed line is transported in whole bytes, so
++			 * deriving the pixel-clock width from dce_bytes_per_line also
++			 * accounts for fractional bpp and slice chunk padding.
++			 * Rounding down here while the DSI host rounds up makes the
++			 * two blocks disagree by one cycle per line.
++			 */
++			timing->width =
++				DIV_ROUND_UP(timing->dce_bytes_per_line * 8,
++					     dsc->bits_per_component * 3);
++		} else {
++			/*
++			 * TODO: replace drm_dsc_get_bpp_int with logic to handle
++			 * fractional part if there is fraction
++			 */
++			timing->width = timing->width * drm_dsc_get_bpp_int(dsc) /
++					(dsc->bits_per_component * 3);
++		}
+ 		timing->xres = timing->width;
+-		timing->dce_bytes_per_line = msm_dsc_get_bytes_per_line(dsc);
+ 	}
+ }
+ 
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h
+index 8d1a18b0bfd2..b411541fb2f8 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.h
+@@ -146,10 +146,12 @@
+ /**
+  * DSC sub-blocks/features
+  * @DPU_DSC_NATIVE_42x_EN     Supports NATIVE_422_EN and NATIVE_420_EN encoding
++ * @DPU_DSC_FULL_ICH_PREC     Full ICH error precision for 10/12-bpc streams
+  * @DPU_DSC_MAX
+  */
+ enum {
+ 	DPU_DSC_NATIVE_42x_EN = 0x1,
++	DPU_DSC_FULL_ICH_PREC,
+ 	DPU_DSC_MAX
+ };
+ 
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_12_0_sm8750.h b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_12_0_sm8750.h
+index eaf4423f2968..6acb76f7c472 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_12_0_sm8750.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_12_0_sm8750.h
+@@ -316,42 +316,50 @@
+ 	{
+ 		.name = "dce_0_0", .id = DSC_0,
+ 		.base = 0x80000, .len = 0x8,
+-		.features = BIT(DPU_DSC_NATIVE_42x_EN),
++		.features = BIT(DPU_DSC_NATIVE_42x_EN) |
++			    BIT(DPU_DSC_FULL_ICH_PREC),
+ 		.sblk = &sm8750_dsc_sblk_0,
+ 	}, {
+ 		.name = "dce_0_1", .id = DSC_1,
+ 		.base = 0x80000, .len = 0x8,
+-		.features = BIT(DPU_DSC_NATIVE_42x_EN),
++		.features = BIT(DPU_DSC_NATIVE_42x_EN) |
++			    BIT(DPU_DSC_FULL_ICH_PREC),
+ 		.sblk = &sm8750_dsc_sblk_1,
+ 	}, {
+ 		.name = "dce_1_0", .id = DSC_2,
+ 		.base = 0x81000, .len = 0x8,
+-		.features = BIT(DPU_DSC_NATIVE_42x_EN),
++		.features = BIT(DPU_DSC_NATIVE_42x_EN) |
++			    BIT(DPU_DSC_FULL_ICH_PREC),
+ 		.sblk = &sm8750_dsc_sblk_0,
+ 	}, {
+ 		.name = "dce_1_1", .id = DSC_3,
+ 		.base = 0x81000, .len = 0x8,
+-		.features = BIT(DPU_DSC_NATIVE_42x_EN),
++		.features = BIT(DPU_DSC_NATIVE_42x_EN) |
++			    BIT(DPU_DSC_FULL_ICH_PREC),
+ 		.sblk = &sm8750_dsc_sblk_1,
+ 	}, {
+ 		.name = "dce_2_0", .id = DSC_4,
+ 		.base = 0x82000, .len = 0x8,
+-		.features = BIT(DPU_DSC_NATIVE_42x_EN),
++		.features = BIT(DPU_DSC_NATIVE_42x_EN) |
++			    BIT(DPU_DSC_FULL_ICH_PREC),
+ 		.sblk = &sm8750_dsc_sblk_0,
+ 	}, {
+ 		.name = "dce_2_1", .id = DSC_5,
+ 		.base = 0x82000, .len = 0x8,
+-		.features = BIT(DPU_DSC_NATIVE_42x_EN),
++		.features = BIT(DPU_DSC_NATIVE_42x_EN) |
++			    BIT(DPU_DSC_FULL_ICH_PREC),
+ 		.sblk = &sm8750_dsc_sblk_1,
+ 	}, {
+ 		.name = "dce_3_0", .id = DSC_6,
+ 		.base = 0x83000, .len = 0x8,
+-		.features = BIT(DPU_DSC_NATIVE_42x_EN),
++		.features = BIT(DPU_DSC_NATIVE_42x_EN) |
++			    BIT(DPU_DSC_FULL_ICH_PREC),
+ 		.sblk = &sm8750_dsc_sblk_0,
+ 	}, {
+ 		.name = "dce_3_1", .id = DSC_7,
+ 		.base = 0x83000, .len = 0x8,
+-		.features = BIT(DPU_DSC_NATIVE_42x_EN),
++		.features = BIT(DPU_DSC_NATIVE_42x_EN) |
++			    BIT(DPU_DSC_FULL_ICH_PREC),
+ 		.sblk = &sm8750_dsc_sblk_1,
+ 	},
+ };
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
+index b8a330d813e6..b3ce432931f4 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.c
+@@ -4,6 +4,7 @@
+  * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved
+  */
+ 
++#include <linux/of.h>
+ #include <drm/drm_managed.h>
+ 
+ #include <drm/display/drm_dsc_helper.h>
+@@ -123,6 +124,17 @@
+ 	if (mode & DSC_MODE_VIDEO)
+ 		data |= BIT(9);
+ 
++	/*
++	 * SM8750 DPU 12.x hardened DSC needs full ICH error precision for
++	 * 10/12-bpc streams. Enable it only for the Elden panel so other
++	 * DPU_DSC_FULL_ICH_PREC capable configurations are unaffected.
++	 */
++	if (of_machine_is_compatible("lenovo,elden") &&
++	    test_bit(DPU_DSC_FULL_ICH_PREC, &hw_dsc->caps->features) &&
++	    dsc->dsc_version_minor == 0x2 &&
++	    dsc->bits_per_component > 8)
++		data |= BIT(12);
++
+ 	data |= (_dsc_calc_output_buf_max_addr(hw_dsc, num_active_slice_per_enc) << 18);
+ 
+ 	DPU_REG_WRITE(hw, sblk->enc.base + ENC_DF_CTRL, data);

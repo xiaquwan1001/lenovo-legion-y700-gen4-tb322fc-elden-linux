@@ -1,0 +1,206 @@
+Subject: [PATCH] clk: restore Elden display clock and power dependencies
+
+Reference: https://github.com/h0cheung/tb322fc-linux-kernel/commit/6f97250ead155fc3b980856323e99a4623dae73d
+
+--- a/drivers/clk/clk.c
++++ b/drivers/clk/clk.c
+@@ -64,6 +64,7 @@
+ };
+ 
+ struct clk_core {
++	bool orphan_reparent_failed;
+ 	const char		*name;
+ 	const struct clk_ops	*ops;
+ 	struct clk_hw		*hw;
+@@ -3826,6 +3827,55 @@
+ }
+ #endif
+ 
++static int clk_core_reparent_orphan_nolock(struct clk_core *orphan,
++					   struct clk_core *parent)
++{
++	bool parent_ops_enabled = false;
++	bool parent_migration_enabled = false;
++	bool core_migration_enabled = false;
++	unsigned long flags;
++	int ret;
++
++	if (orphan->flags & CLK_OPS_PARENT_ENABLE) {
++		ret = clk_core_prepare_enable(parent);
++		if (ret)
++			return ret;
++		parent_ops_enabled = true;
++	}
++
++	if (orphan->prepare_count) {
++		ret = clk_core_prepare_enable(parent);
++		if (ret)
++			goto err_disable_ops_parent;
++		parent_migration_enabled = true;
++
++		ret = clk_core_enable_lock(orphan);
++		if (ret)
++			goto err_disable_migration_parent;
++		core_migration_enabled = true;
++	}
++
++	flags = clk_enable_lock();
++	clk_reparent(orphan, parent);
++	clk_enable_unlock(flags);
++
++	if (core_migration_enabled)
++		clk_core_disable_lock(orphan);
++	if (parent_ops_enabled)
++		clk_core_disable_unprepare(parent);
++
++	/* Keep the migration reference on the new parent. */
++	return 0;
++
++err_disable_migration_parent:
++	if (parent_migration_enabled)
++		clk_core_disable_unprepare(parent);
++err_disable_ops_parent:
++	if (parent_ops_enabled)
++		clk_core_disable_unprepare(parent);
++	return ret;
++}
++
+ static void clk_core_reparent_orphans_nolock(void)
+ {
+ 	struct clk_core *orphan;
+@@ -3839,15 +3889,24 @@
+ 		struct clk_core *parent = __clk_init_parent(orphan);
+ 
+ 		/*
+-		 * We need to use __clk_set_parent_before() and _after() to
+-		 * properly migrate any prepare/enable count of the orphan
++		 * We need to migrate any prepare/enable count of the orphan
+ 		 * clock. This is important for CLK_IS_CRITICAL clocks, which
+ 		 * are enabled during init but might not have a parent yet.
+ 		 */
+ 		if (parent) {
+-			/* update the clk tree topology */
+-			__clk_set_parent_before(orphan, parent);
+-			__clk_set_parent_after(orphan, parent, NULL);
++			int ret;
++
++			if (orphan->orphan_reparent_failed)
++				continue;
++
++			ret = clk_core_reparent_orphan_nolock(orphan, parent);
++			if (ret) {
++				orphan->orphan_reparent_failed = true;
++				pr_err_ratelimited("%s: orphan reparent failed: %d\n",
++						   orphan->name, ret);
++				continue;
++			}
++
+ 			__clk_recalc_accuracies(orphan);
+ 			__clk_recalc_rates(orphan, true, 0);
+ 
+--- a/drivers/clk/qcom/gdsc.c
++++ b/drivers/clk/qcom/gdsc.c
+@@ -147,6 +147,7 @@
+ static int gdsc_toggle_logic(struct gdsc *sc, enum gdsc_status status,
+ 		bool wait)
+ {
++	u32 val;
+ 	int ret;
+ 
+ 	if (status == GDSC_ON && sc->rsupply) {
+@@ -161,6 +162,14 @@
+ 			goto err_disable_supply;
+ 	}
+ 
++	if (status == GDSC_ON && sc->flags & HW_CTRL_SKIP_DIS) {
++		ret = regmap_read(sc->regmap, sc->gdscr, &val);
++		if (ret)
++			goto err_disable_icc;
++		if (val & HW_CONTROL_MASK)
++			return 0;
++	}
++
+ 	ret = gdsc_update_collapse_bit(sc, status == GDSC_OFF);
+ 
+ 	/* If disabling votable gdscs, don't poll on status */
+@@ -205,6 +214,9 @@
+ 
+ 	return ret;
+ 
++err_disable_icc:
++	if (status == GDSC_ON)
++		icc_set_bw(sc->icc_path, 0, 0);
+ err_disable_supply:
+ 	if (status == GDSC_ON && sc->rsupply)
+ 		regulator_disable(sc->rsupply);
+@@ -350,6 +362,13 @@
+ 
+ 	/* Turn off HW trigger mode if supported */
+ 	if (sc->flags & HW_CTRL) {
++		if (sc->flags & HW_CTRL_SKIP_DIS) {
++			ret = icc_set_bw(sc->icc_path, 0, 0);
++			if (ret)
++				return ret;
++			return sc->rsupply ? regulator_disable(sc->rsupply) : 0;
++		}
++
+ 		ret = gdsc_hwctrl(sc, false);
+ 		if (ret < 0)
+ 			return ret;
+--- a/drivers/clk/qcom/gdsc.h
++++ b/drivers/clk/qcom/gdsc.h
+@@ -69,6 +69,8 @@
+ #define RETAIN_FF_ENABLE	BIT(7)
+ #define NO_RET_PERIPH	BIT(8)
+ #define HW_CTRL_TRIGGER	BIT(9)
++/* Leave power gating to hardware when the software vote is released. */
++#define HW_CTRL_SKIP_DIS	BIT(10)
+ 	struct reset_controller_dev	*rcdev;
+ 	unsigned int			*resets;
+ 	unsigned int			reset_count;
+--- a/drivers/clk/qcom/dispcc-sm8750.c
++++ b/drivers/clk/qcom/dispcc-sm8750.c
+@@ -1759,7 +1759,7 @@
+ 		.name = "mdss_gdsc",
+ 	},
+ 	.pwrsts = PWRSTS_OFF_ON,
+-	.flags = POLL_CFG_GDSCR | HW_CTRL | RETAIN_FF_ENABLE,
++	.flags = POLL_CFG_GDSCR | HW_CTRL | RETAIN_FF_ENABLE | HW_CTRL_SKIP_DIS,
+ };
+ 
+ static struct gdsc mdss_int2_gdsc = {
+@@ -1771,7 +1771,7 @@
+ 		.name = "mdss_int2_gdsc",
+ 	},
+ 	.pwrsts = PWRSTS_OFF_ON,
+-	.flags = POLL_CFG_GDSCR | HW_CTRL | RETAIN_FF_ENABLE,
++	.flags = POLL_CFG_GDSCR | HW_CTRL | RETAIN_FF_ENABLE | HW_CTRL_SKIP_DIS,
+ };
+ 
+ static struct clk_regmap *disp_cc_sm8750_clocks[] = {
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_kms.c
+@@ -12,6 +12,7 @@
+ #include <linux/debugfs.h>
+ #include <linux/dma-buf.h>
+ #include <linux/of_irq.h>
++#include <linux/of.h>
+ #include <linux/pm_opp.h>
+ 
+ #include <drm/drm_crtc.h>
+@@ -1599,6 +1600,15 @@
+ 
+ 	ddev = dpu_kms->dev;
+ 
++	/* Lenovo Elden: restore core clock OPP vote before clock/register access */
++	if (of_machine_is_compatible("lenovo,elden")) {
++		rc = dev_pm_opp_set_rate(dev, dpu_kms_get_clk_rate(dpu_kms, "core"));
++		if (rc) {
++			DPU_ERROR("failed to restore core clock OPP rc:%d\n", rc);
++			return rc;
++		}
++	}
++
+ 	rc = clk_bulk_prepare_enable(dpu_kms->num_clocks, dpu_kms->clocks);
+ 	if (rc) {
+ 		DPU_ERROR("clock enable failed rc:%d\n", rc);

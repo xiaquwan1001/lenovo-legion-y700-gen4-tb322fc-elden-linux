@@ -1,0 +1,437 @@
+From: Elden SM8750 CPHY bring-up <elden-sm8750-cphy@localhost>
+Subject: [PATCH] drm/msm/dsi: SM8750 CPHY DSI link clocks for Elden
+
+Selective Elden adaptation of the fixed pin
+6f97250ead155fc3b980856323e99a4623dae73d https://github.com/h0cheung/tb322fc-linux-kernel/commit/6f97250ead155fc3b980856323e99a4623dae73d
+reworked for the SM8750 CPHY DSI link-clock programming path.
+
+---
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -135,6 +135,12 @@
+ 	unsigned long pixel_clk_rate;
+ 	unsigned long esc_clk_rate;
+ 
++	/* Elden (SM8750 CPHY) DSI link programming state */
++	unsigned long link_byte_rate;
++	unsigned long link_pixel_rate;
++	bool link_intf_div_2;
++	bool link_configured;
++
+ 	/* DSI v2 specific clocks */
+ 	struct clk *src_clk;
+ 
+@@ -348,8 +354,13 @@
+ 				     "%s: can't find dsi_esc clock\n",
+ 				     __func__);
+ 
+-	if (cfg_hnd->ops->clk_init_ver)
++	if (of_machine_is_compatible("lenovo,elden") &&
++		of_device_is_compatible(msm_host->pdev->dev.of_node,
++					"qcom,sm8750-dsi-ctrl")) {
++		ret = dsi_clk_init_6g_v2_9(msm_host);
++	} else if (cfg_hnd->ops->clk_init_ver) {
+ 		ret = cfg_hnd->ops->clk_init_ver(msm_host);
++	}
+ 
+ 	return ret;
+ }
+@@ -365,6 +376,9 @@
+ 		return 0;
+ 
+ 	clk_bulk_disable_unprepare(msm_host->num_bus_clks, msm_host->bus_clks);
++
++	if (of_machine_is_compatible("lenovo,elden"))
++		WRITE_ONCE(msm_host->link_configured, false);
+ 
+ 	return 0;
+ }
+@@ -433,24 +447,50 @@
+ int dsi_link_clk_set_rate_6g_v2_9(struct msm_dsi_host *msm_host)
+ {
+ 	struct device *dev = &msm_host->pdev->dev;
++	bool elden = of_machine_is_compatible("lenovo,elden");
+ 	int ret;
+ 
+ 	if (!msm_host->byte_src_parent)
+ 		msm_host->byte_src_parent = clk_get_parent(msm_host->byte_src_clk);
+ 	if (!msm_host->pixel_src_parent)
+ 		msm_host->pixel_src_parent = clk_get_parent(msm_host->pixel_src_clk);
++
++	if (elden) {
++		long rounded = clk_round_rate(msm_host->dsi_pll_byte_clk,
++						  msm_host->byte_clk_rate);
++
++		if (rounded < 0) {
++			dev_err(dev, "Failed to round PHY byte clk rate: %ld\n", rounded);
++			return rounded;
++		}
++
++		if (rounded > 0)
++			msm_host->byte_clk_rate = rounded;
++
++		ret = clk_set_rate(msm_host->dsi_pll_byte_clk, msm_host->byte_clk_rate);
++		if (ret) {
++			dev_err(dev, "Failed to set PHY byte clk rate: %d\n", ret);
++			return ret;
++		}
++	}
+ 
+ 	/*
+ 	 * DSI PHY PLLs have to be enabled to allow reparenting to them, so
+ 	 * cannot use assigned-clock-parents.
+ 	 */
+ 	ret = clk_set_parent(msm_host->byte_src_clk, msm_host->dsi_pll_byte_clk);
+-	if (ret)
++	if (ret) {
+ 		dev_err(dev, "Failed to parent byte_src -> dsi_pll_byte: %d\n", ret);
++		if (elden)
++			return ret;
++	}
+ 
+ 	ret = clk_set_parent(msm_host->pixel_src_clk, msm_host->dsi_pll_pixel_clk);
+-	if (ret)
++	if (ret) {
+ 		dev_err(dev, "Failed to parent pixel_src -> dsi_pll_pixel: %d\n", ret);
++		if (elden)
++			return ret;
++	}
+ 
+ 	return dsi_link_clk_set_rate_6g(msm_host);
+ }
+@@ -897,8 +937,11 @@
+ 		data |= DSI_TRIG_CTRL_BLOCK_DMA_WITHIN_FRAME;
+ 	dsi_write(msm_host, REG_DSI_TRIG_CTRL, data);
+ 
+-	data = DSI_CLKOUT_TIMING_CTRL_T_CLK_POST(phy_shared_timings->clk_post) |
+-		DSI_CLKOUT_TIMING_CTRL_T_CLK_PRE(phy_shared_timings->clk_pre);
++	if (of_machine_is_compatible("lenovo,elden") && msm_host->cphy_mode)
++		data = 0;
++	else
++		data = DSI_CLKOUT_TIMING_CTRL_T_CLK_POST(phy_shared_timings->clk_post) |
++			DSI_CLKOUT_TIMING_CTRL_T_CLK_PRE(phy_shared_timings->clk_pre);
+ 	dsi_write(msm_host, REG_DSI_CLKOUT_TIMING_CTRL, data);
+ 
+ 	if ((cfg_hnd->major == MSM_DSI_VER_MAJOR_6G) &&
+@@ -1137,9 +1180,18 @@
+ 	}
+ }
+ 
++static void dsi_sw_reset_v2_9(struct msm_dsi_host *msm_host);
++
+ static void dsi_sw_reset(struct msm_dsi_host *msm_host)
+ {
+ 	u32 ctrl;
++
++	if (of_machine_is_compatible("lenovo,elden") &&
++		of_device_is_compatible(msm_host->pdev->dev.of_node,
++					"qcom,sm8750-dsi-ctrl")) {
++		dsi_sw_reset_v2_9(msm_host);
++		return;
++	}
+ 
+ 	ctrl = dsi_read(msm_host, REG_DSI_CTRL);
+ 
+@@ -1165,6 +1217,33 @@
+ 		dsi_write(msm_host, REG_DSI_CTRL, ctrl);
+ 		wmb();	/* make sure dsi controller enabled again */
+ 	}
++}
++
++static void dsi_sw_reset_v2_9(struct msm_dsi_host *msm_host)
++{
++	u32 ctrl = dsi_read(msm_host, REG_DSI_CTRL);
++	u32 clocks;
++	u32 force_on = DSI_CLK_CTRL_ENABLE_CLKS | BIT(8) | BIT(9) |
++		       BIT(11) | BIT(21);
++
++	/* Match the SM8750 stock controller reset, including dynamic clocks. */
++	dsi_write(msm_host, REG_DSI_CTRL,
++		  ctrl & ~(DSI_CTRL_ENABLE | DSI_CTRL_VID_MODE_EN |
++			   DSI_CTRL_CMD_MODE_EN));
++	wmb(); /* disable all engines before forcing clocks */
++
++	clocks = dsi_read(msm_host, REG_DSI_CLK_CTRL);
++	dsi_write(msm_host, REG_DSI_CLK_CTRL, clocks | force_on);
++	wmb(); /* clocks must run while reset is asserted */
++	dsi_write(msm_host, REG_DSI_RESET, 1);
++	wmb(); /* assert reset before starting the pulse delay */
++	udelay(1);
++	dsi_write(msm_host, REG_DSI_RESET, 0);
++	wmb(); /* release reset before restoring clock gating */
++	dsi_write(msm_host, REG_DSI_CLK_CTRL, clocks);
++	wmb(); /* restore clocks before enabling the controller */
++	dsi_write(msm_host, REG_DSI_CTRL, ctrl);
++	wmb(); /* finish restoring the controller */
+ }
+ 
+ static void dsi_op_mode_config(struct msm_dsi_host *msm_host,
+@@ -2593,10 +2672,29 @@
+ 		goto unlock_ret;
+ 	}
+ 
+-	pm_runtime_get_sync(&msm_host->pdev->dev);
+-	ret = cfg_hnd->ops->link_clk_set_rate(msm_host);
+-	if (!ret)
+-		ret = cfg_hnd->ops->link_clk_enable(msm_host);
++	if (of_machine_is_compatible("lenovo,elden")) {
++		ret = pm_runtime_resume_and_get(&msm_host->pdev->dev);
++		if (ret) {
++			pr_err("%s: failed to resume device. ret=%d\n",
++				   __func__, ret);
++			goto fail_disable_reg;
++		}
++
++		ret = dsi_link_clk_set_rate_6g_v2_9(msm_host);
++		if (!ret)
++			ret = cfg_hnd->ops->link_clk_enable(msm_host);
++		if (ret) {
++			pr_err("%s: failed to enable link clocks. ret=%d\n",
++				   __func__, ret);
++			pm_runtime_put(&msm_host->pdev->dev);
++			goto fail_disable_reg;
++		}
++	} else {
++		pm_runtime_get_sync(&msm_host->pdev->dev);
++		ret = cfg_hnd->ops->link_clk_set_rate(msm_host);
++		if (!ret)
++			ret = cfg_hnd->ops->link_clk_enable(msm_host);
++	}
+ 	if (ret) {
+ 		pr_err("%s: failed to enable link clocks. ret=%d\n",
+ 		       __func__, ret);
+@@ -2613,6 +2711,13 @@
+ 	dsi_timing_setup(msm_host, is_bonded_dsi);
+ 	dsi_sw_reset(msm_host);
+ 	dsi_ctrl_enable(msm_host, phy_shared_timings, phy);
++
++	if (of_machine_is_compatible("lenovo,elden")) {
++		msm_host->link_byte_rate = msm_host->byte_clk_rate;
++		msm_host->link_pixel_rate = msm_host->pixel_clk_rate;
++		msm_host->link_intf_div_2 = msm_host->byte_intf_clk_div_2;
++		WRITE_ONCE(msm_host->link_configured, true);
++	}
+ 
+ 	msm_host->power_on = true;
+ 	mutex_unlock(&msm_host->dev_mutex);
+@@ -2662,6 +2767,9 @@
+ 
+ 	msm_host->power_on = false;
+ 
++	if (of_machine_is_compatible("lenovo,elden"))
++		WRITE_ONCE(msm_host->link_configured, false);
++
+ unlock_ret:
+ 	mutex_unlock(&msm_host->dev_mutex);
+ 	return 0;
+@@ -2671,6 +2779,9 @@
+ 				  const struct drm_display_mode *mode)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++
++	if (of_machine_is_compatible("lenovo,elden"))
++		WRITE_ONCE(msm_host->link_configured, false);
+ 
+ 	if (msm_host->mode) {
+ 		drm_mode_destroy(msm_host->dev, msm_host->mode);
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.c
+@@ -645,6 +645,24 @@
+ 	if (!of_property_read_u32(dev->of_node, "phy-type", &phy_type))
+ 		phy->cphy_mode = (phy_type == PHY_TYPE_CPHY);
+ 
++	if (of_machine_is_compatible("lenovo,elden") && phy->cphy_mode &&
++	    of_property_present(dev->of_node, "qcom,cphy-timing-ctrl")) {
++		if (of_property_count_u8_elems(dev->of_node,
++					       "qcom,cphy-timing-ctrl") != 14)
++			return dev_err_probe(dev, -EINVAL,
++					     "qcom,cphy-timing-ctrl must have 14 elements\n");
++
++		ret = of_property_read_u8_array(dev->of_node,
++						"qcom,cphy-timing-ctrl",
++						phy->cphy_timing_ctrl,
++						ARRAY_SIZE(phy->cphy_timing_ctrl));
++		if (ret)
++			return dev_err_probe(dev, ret,
++					     "Invalid qcom,cphy-timing-ctrl\n");
++
++		phy->has_cphy_timing_ctrl = true;
++	}
++
+ 	phy->base = msm_ioremap_size(pdev, "dsi_phy", &phy->base_size);
+ 	if (IS_ERR(phy->base))
+ 		return dev_err_probe(dev, PTR_ERR(phy->base),
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy.h
+@@ -116,6 +116,8 @@
+ 	enum msm_dsi_phy_usecase usecase;
+ 	bool regulator_ldo_mode;
+ 	bool cphy_mode;
++	bool has_cphy_timing_ctrl;
++	u8 cphy_timing_ctrl[14];
+ 
+ 	struct clk_hw *vco_hw;
+ 	bool pll_on;
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+@@ -8,6 +8,7 @@
+ #include <linux/clk.h>
+ #include <linux/clk-provider.h>
+ #include <linux/iopoll.h>
++#include <linux/of.h>
+ 
+ #include "dsi_phy.h"
+ #include "dsi.xml.h"
+@@ -349,6 +350,8 @@
+ {
+ 	struct dsi_pll_7nm *pll_7nm = to_pll_7nm(hw);
+ 	struct dsi_pll_config config;
++	void __iomem *base = pll_7nm->phy->pll_base;
++	u32 decimal, fraction;
+ 
+ 	dsi_pll_enable_pll_bias(pll_7nm);
+ 	DBG("DSI PLL%d rate=%lu, parent's=%lu", pll_7nm->phy->id, rate,
+@@ -362,12 +365,30 @@
+ 
+ 	dsi_pll_calc_ssc(pll_7nm, &config);
+ 
++	/* Repeated ideal-rate requests can encode the running rate. */
++	if (of_machine_is_compatible("lenovo,elden") &&
++	    of_device_is_compatible(pll_7nm->phy->pdev->dev.of_node,
++				    "qcom,sm8750-dsi-phy-3nm") &&
++	    READ_ONCE(pll_7nm->phy->pll_on)) {
++		decimal = readl(base + REG_DSI_7nm_PHY_PLL_DECIMAL_DIV_START_1) & 0xff;
++		fraction = readl(base + REG_DSI_7nm_PHY_PLL_FRAC_DIV_START_LOW_1) & 0xff;
++		fraction |= (readl(base + REG_DSI_7nm_PHY_PLL_FRAC_DIV_START_MID_1) &
++			     0xff) << 8;
++		fraction |= (readl(base + REG_DSI_7nm_PHY_PLL_FRAC_DIV_START_HIGH_1) &
++			     0x3) << 16;
++		if (decimal == config.decimal_div_start &&
++		    fraction == config.frac_div_start) {
++			goto out_bias;
++		}
++	}
++
+ 	dsi_pll_commit(pll_7nm, &config);
+ 
+ 	dsi_pll_config_hzindep_reg(pll_7nm);
+ 
+ 	dsi_pll_ssc_commit(pll_7nm, &config);
+ 
++out_bias:
+ 	dsi_pll_disable_pll_bias(pll_7nm);
+ 	/* flush, ensure all register writes are done*/
+ 	wmb();
+@@ -535,7 +556,16 @@
+ 	if (pll_7nm->slave)
+ 		writel(0x1, pll_7nm->slave->phy->base + REG_DSI_7nm_PHY_CMN_RBUF_CTRL);
+ 
++	return 0;
++
+ error:
++	if (of_machine_is_compatible("lenovo,elden")) {
++		writel(0, pll_7nm->phy->base + REG_DSI_7nm_PHY_CMN_PLL_CNTRL);
++		dsi_pll_disable_pll_bias(pll_7nm);
++		if (pll_7nm->slave)
++			dsi_pll_disable_pll_bias(pll_7nm->slave);
++		wmb(); /* Complete failed startup cleanup before returning. */
++	}
+ 	return rc;
+ }
+ 
+@@ -814,10 +844,25 @@
+ 	 * don't register a pclk_mux clock and just use post_out_div instead
+ 	 */
+ 	if (pll_7nm->phy->cphy_mode) {
+-		dsi_pll_cmn_clk_cfg1_update(pll_7nm,
+-					    DSI_7nm_PHY_CMN_CLK_CFG1_DSICLK_SEL__MASK,
+-					    DSI_7nm_PHY_CMN_CLK_CFG1_DSICLK_SEL(3));
+-		phy_pll_out_dsi_parent = pll_post_out_div;
++		/*
++		 * The elden 30-bpp / three-trio C-PHY uses the full-rate bit
++		 * path (DSICLK_SEL=0), followed by PIX_CLK_DIV=2 and the DISPCC
++		 * 16/35 M/N ratio. The generic 2/7 path cannot synthesize its
++		 * 172.992 MHz compressed per-host pixel clock.
++		 */
++		if (of_machine_is_compatible("lenovo,elden") &&
++		    of_device_is_compatible(pll_7nm->phy->pdev->dev.of_node,
++					    "qcom,sm8750-dsi-phy-3nm")) {
++			dsi_pll_cmn_clk_cfg1_update(pll_7nm,
++						    DSI_7nm_PHY_CMN_CLK_CFG1_DSICLK_SEL__MASK,
++				DSI_7nm_PHY_CMN_CLK_CFG1_DSICLK_SEL(0));
++			phy_pll_out_dsi_parent = pll_bit;
++		} else {
++			dsi_pll_cmn_clk_cfg1_update(pll_7nm,
++						    DSI_7nm_PHY_CMN_CLK_CFG1_DSICLK_SEL__MASK,
++				DSI_7nm_PHY_CMN_CLK_CFG1_DSICLK_SEL(3));
++			phy_pll_out_dsi_parent = pll_post_out_div;
++		}
+ 	} else {
+ 		snprintf(clk_name, sizeof(clk_name), "dsi%d_pclk_mux", pll_7nm->phy->id);
+ 
+@@ -1029,9 +1074,16 @@
+ 
+ 	if ((phy->cfg->quirks & DSI_PHY_7NM_QUIRK_V7_2)) {
+ 		if (phy->cphy_mode) {
+-			/* TODO: different for second phy */
+-			vreg_ctrl_0 = 0x57;
+-			vreg_ctrl_1 = 0x41;
++			/* SM8750 v7.2 uses lower slave-PHY LDO values when PLL0
++			 * supplies the bonded link clocks.
++			 */
++			if (of_machine_is_compatible("lenovo,elden") && phy->id) {
++				vreg_ctrl_0 = 0x44;
++				vreg_ctrl_1 = 0x42;
++			} else {
++				vreg_ctrl_0 = 0x57;
++				vreg_ctrl_1 = 0x41;
++			}
+ 			glbl_rescode_top_ctrl = 0x3d;
+ 			glbl_rescode_bot_ctrl = 0x38;
+ 		} else {
+@@ -1156,17 +1208,30 @@
+ 
+ 	/* DSI PHY timings */
+ 	if (phy->cphy_mode) {
+-		writel(0x00, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_0);
+-		writel(timing->hs_exit, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_4);
+-		writel(timing->shared_timings.clk_pre,
+-		       base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_5);
+-		writel(timing->clk_prepare, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_6);
+-		writel(timing->shared_timings.clk_post,
+-		       base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_7);
+-		writel(timing->hs_rqst, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_8);
+-		writel(0x02, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_9);
+-		writel(0x04, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_10);
+-		writel(0x00, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_11);
++		if (phy->has_cphy_timing_ctrl) {
++			unsigned int i;
++
++			for (i = 0; i < ARRAY_SIZE(phy->cphy_timing_ctrl); i++)
++				writel(phy->cphy_timing_ctrl[i],
++				       base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_0 + i * 4);
++		} else {
++			/*
++			 * Generic C-PHY timing path (unchanged from bwork). The pin
++			 * build additionally clears the D-PHY-only registers; that
++			 * broader change is intentionally not part of this scope.
++			 */
++			writel(0x00, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_0);
++			writel(timing->hs_exit, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_4);
++			writel(timing->shared_timings.clk_pre,
++			       base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_5);
++			writel(timing->clk_prepare, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_6);
++			writel(timing->shared_timings.clk_post,
++			       base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_7);
++			writel(timing->hs_rqst, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_8);
++			writel(0x02, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_9);
++			writel(0x04, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_10);
++			writel(0x00, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_11);
++		}
+ 	} else {
+ 		writel(0x00, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_0);
+ 		writel(timing->clk_zero, base + REG_DSI_7nm_PHY_CMN_TIMING_CTRL_1);

@@ -1,0 +1,172 @@
+Subject: [PATCH] power: supply: qcom_battmgr: accept SM8750 USB current requests
+
+DWC3 submits INPUT_CURRENT_LIMIT requests after USB enumeration but the
+battery manager has no setter for them. Add the protocol setter and response
+handling only for the SM8750 USB supply, keeping other variants read-only.
+Serialize enable notifications with property transactions. Pass the requested
+current unchanged; no autonomous current increase or replay policy is added.
+
+Adapted from h0cheung/tb322fc-linux-kernel at
+6f97250ead155fc3b980856323e99a4623dae73d, qcom_battmgr.c blob
+d7fff0936693830c938d5c5bc1b46adfe442cf9e.
+
+diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
+index e92218b..c032102 100644
+--- a/drivers/power/supply/qcom_battmgr.c
++++ b/drivers/power/supply/qcom_battmgr.c
+@@ -301,6 +301,7 @@ struct qcom_battmgr_usb {
+ 	unsigned int current_max;
+ 	unsigned int current_limit;
+ 	unsigned int usb_type;
++	unsigned int adapter_type;
+ };
+ 
+ struct qcom_battmgr_wireless {
+@@ -1097,6 +1098,58 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
+ 	return 0;
+ }
+ 
++/* Called with battmgr->lock held, like every other property transaction. */
++static int qcom_battmgr_set_usb_current_limit(struct qcom_battmgr *battmgr, int ua)
++{
++	int ret;
++
++	ret = qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_GET,
++					    USB_ADAP_TYPE, 0);
++	if (ret)
++		return ret;
++
++	/* Other charger types negotiate their input limit in firmware. */
++	switch (battmgr->usb.adapter_type) {
++	case POWER_SUPPLY_USB_TYPE_SDP:
++	case POWER_SUPPLY_USB_TYPE_CDP:
++	case POWER_SUPPLY_USB_TYPE_PD:
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	return qcom_battmgr_request_property(battmgr, BATTMGR_USB_PROPERTY_SET,
++					    USB_INPUT_CURR_LIMIT, ua);
++}
++
++static int qcom_battmgr_usb_set_property(struct power_supply *psy,
++					 enum power_supply_property psp,
++					 const union power_supply_propval *val)
++{
++	struct qcom_battmgr *battmgr = power_supply_get_drvdata(psy);
++	int ret;
++
++	if (psp != POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT || val->intval < 0)
++		return -EINVAL;
++
++	mutex_lock(&battmgr->lock);
++	if (!battmgr->service_up) {
++		ret = -EAGAIN;
++		goto out;
++	}
++
++	ret = qcom_battmgr_set_usb_current_limit(battmgr, val->intval);
++out:
++	mutex_unlock(&battmgr->lock);
++	return ret;
++}
++
++static int qcom_battmgr_usb_is_writeable(struct power_supply *psy,
++					 enum power_supply_property psp)
++{
++	return psp == POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT;
++}
++
+ static const enum power_supply_property sc8280xp_usb_props[] = {
+ 	POWER_SUPPLY_PROP_ONLINE,
+ };
+@@ -1147,6 +1200,31 @@ static const struct power_supply_desc sm8350_usb_psy_desc = {
+ 		     BIT(POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID),
+ };
+ 
++/*
++ * Same descriptor as sm8350_usb_psy_desc, but with the INPUT_CURRENT_LIMIT
++ * setter exposed. Only SM8750 selects this one, so the write path stays
++ * unavailable on every other variant.
++ */
++static const struct power_supply_desc sm8750_usb_psy_desc = {
++	.name = "qcom-battmgr-usb",
++	.type = POWER_SUPPLY_TYPE_USB,
++	.properties = sm8350_usb_props,
++	.num_properties = ARRAY_SIZE(sm8350_usb_props),
++	.get_property = qcom_battmgr_usb_get_property,
++	.set_property = qcom_battmgr_usb_set_property,
++	.property_is_writeable = qcom_battmgr_usb_is_writeable,
++	.usb_types = BIT(POWER_SUPPLY_USB_TYPE_UNKNOWN) |
++		     BIT(POWER_SUPPLY_USB_TYPE_SDP)     |
++		     BIT(POWER_SUPPLY_USB_TYPE_DCP)     |
++		     BIT(POWER_SUPPLY_USB_TYPE_CDP)     |
++		     BIT(POWER_SUPPLY_USB_TYPE_ACA)     |
++		     BIT(POWER_SUPPLY_USB_TYPE_C)       |
++		     BIT(POWER_SUPPLY_USB_TYPE_PD)      |
++		     BIT(POWER_SUPPLY_USB_TYPE_PD_DRP)  |
++		     BIT(POWER_SUPPLY_USB_TYPE_PD_PPS)  |
++		     BIT(POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID),
++};
++
+ static const u8 sm8350_wls_prop_map[] = {
+ 	[POWER_SUPPLY_PROP_ONLINE] = WLS_ONLINE,
+ 	[POWER_SUPPLY_PROP_VOLTAGE_NOW] = WLS_VOLT_NOW,
+@@ -1543,6 +1621,14 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
+ 			break;
+ 		}
+ 		break;
++	case BATTMGR_USB_PROPERTY_SET:
++		if (payload_len != sizeof(resp->intval) ||
++		    le32_to_cpu(resp->intval.property) != USB_INPUT_CURR_LIMIT) {
++			battmgr->error = -EPROTO;
++			break;
++		}
++		battmgr->error = le32_to_cpu(resp->intval.result) ? -EREMOTEIO : 0;
++		break;
+ 	case BATTMGR_USB_PROPERTY_GET:
+ 		property = le32_to_cpu(resp->intval.property);
+ 		if (payload_len != sizeof(resp->intval)) {
+@@ -1573,6 +1659,9 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
+ 		case USB_CURR_MAX:
+ 			battmgr->usb.current_max = le32_to_cpu(resp->intval.value);
+ 			break;
++		case USB_ADAP_TYPE:
++			battmgr->usb.adapter_type = le32_to_cpu(resp->intval.value);
++			break;
+ 		case USB_INPUT_CURR_LIMIT:
+ 			battmgr->usb.current_limit = le32_to_cpu(resp->intval.value);
+ 			break;
+@@ -1669,7 +1758,9 @@ static void qcom_battmgr_enable_worker(struct work_struct *work)
+ 	};
+ 	int ret;
+ 
++	mutex_lock(&battmgr->lock);
+ 	ret = qcom_battmgr_request(battmgr, &req, sizeof(req));
++	mutex_unlock(&battmgr->lock);
+ 	if (ret)
+ 		dev_err(battmgr->dev, "failed to request power notifications\n");
+ }
+@@ -1704,6 +1795,7 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 			      const struct auxiliary_device_id *id)
+ {
+ 	const struct power_supply_desc *psy_desc;
++	const struct power_supply_desc *usb_psy_desc;
+ 	struct power_supply_config psy_cfg_supply = {};
+ 	struct power_supply_config psy_cfg = {};
+ 	const struct of_device_id *match;
+@@ -1788,7 +1880,12 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
+ 			return dev_err_probe(dev, PTR_ERR(battmgr->bat_psy),
+ 					     "failed to register battery power supply\n");
+ 
+-		battmgr->usb_psy = devm_power_supply_register(dev, &sm8350_usb_psy_desc, &psy_cfg_supply);
++		if (battmgr->variant == QCOM_BATTMGR_SM8750)
++			usb_psy_desc = &sm8750_usb_psy_desc;
++		else
++			usb_psy_desc = &sm8350_usb_psy_desc;
++
++		battmgr->usb_psy = devm_power_supply_register(dev, usb_psy_desc, &psy_cfg_supply);
+ 		if (IS_ERR(battmgr->usb_psy))
+ 			return dev_err_probe(dev, PTR_ERR(battmgr->usb_psy),
+ 					     "failed to register USB power supply\n");

@@ -73,10 +73,10 @@
 |---|---|---|
 | **`sunflower2333/mu_wide_platforms`**（fork of `Project-Aloha/mu_aloha_platforms`；307 M；2026-07-19 建 / 2026-10-01 更新） | 含 **`Platforms/PakalaPkg/Device/lenovo-y700g4/`（TB322FC 设备包，518 文件）**：真实内存映射 `PlatformMemoryMapLib`、`PlatformConfigurationMapLib`、`ACPI/DSDT.aml`、`DeviceTreeBlob/Linux/linux-y700g4.dtb`、`Binaries/`（原厂 DXE 全集）、`PatchedBinaries/`（Clock/UFS/PMIC/SPMI/WDog/UsbConfig/FeatureEnabler）、1904×3040 framebuffer + SMBIOS `Lenovo/Y700/4`；另含 `Silicon/QC/Sm8750/`、同族 `Device/{oneplus-dodge,oneplus-erhai,xiaomi-piano,nubia-nx789j}` | **G1-29 路线 A 的现成设备包**（此前判定为「缺环」）；`./build_uefi.py -d lenovo-y700g4` → **`Build/PakalaPkg/lenovo-y700g4.img`**（Android boot 镜像 ＝ BootShim + UEFI FD，BootShim 参数 `build_cfg/sm8750.json`：`UEFI_BASE=0xFF300000, UEFI_SIZE=0x400000`） |
 | **`Project-Aloha/UEFIFirmwareBackup`** → `lenovo-y700g4/BOOT.MXF.2.5.1-00240.1-PAKALA-1/`（480 文件，`3a48f03cf` 2026-04-21） | 从原厂固件提取的 **Y700g4 UEFI DXE 二进制备份**；README §SM8750 Pakala 表：`Lenovo y700 gen4 = lenovo-y700g4`、`Oneplus 13 = oneplus-pjz110`、`Xiaomi Piano = xiaomi-piano` | 上述 `Binaries/` 的来源；也可离线核对设备自带 DXE |
-| `Project-Silicium/Mu-Silicium`（`Silicon/Qualcomm/PakalaPkg` + `Platforms/OnePlus/dodgePkg`） | SM8750 备选基线；`Status.md`：OnePlus 13 `Linux Boot ✅ / Internal Storage ✅ / Display ✅ / Touchscreen ✅` | 备选基线 + BootShim（`REQUIRES_KERNEL_HEADER` 补 `ARM\x64` 头的 arm64 壳）参考 |
+| **`Project-Silicium/Mu-Silicium`** + `Device-Binaries`（2026-10-22 复核：Mu `42fe5637` / Bin `a1501e0c`） | SM8750 已有**在用**设备：OnePlus 13 `dodge` —— `Status.md` 记 `Display ✅ / Internal Storage ✅ / Mass Storage ✅ / Linux Boot ✅`。关键：其 `UFSDxe` 用**打过补丁的二进制** `UFSDxe.patched.efi`，补丁内容 = 「sleep→wakeup」+「gear check 前强制 link 唤醒」（作者 `sunflower2333`/N1kroks），**正是上游对我们 UFS 失败的答复所指的 UFSDxe 专用补丁** | **G1-29 重试的最小增量**：只换这一个二进制（sha256 与本仓 `reference/upstream-mu-silicium/README.md` 对照），配方见该 README §3 |
 
 > **要点**：资源已「现成」⇒ G1-29 Route A 由「自造 UEFI」变为「取用 + 主机构建 + 设备侧零写盘 `fastboot boot` 验证」。
-> **已落盘（2026-10-05）**：`mu_wide_platforms/`（fork `xiaquwan1001/mu_wide_platforms`，1.0 G，含设备包 391 文件）+ `uefi-firmware-backup/`（`Project-Aloha/UEFIFirmwareBackup`，1.3 G）；二者同名驱动 sha256 逐字节一致。**未 clone**：Mu-Silicium（备选基线，本设备包不依赖）。
+> **⚠ MIGRATION-LOST（2026-10-22 核实）**：2026-10-05 曾落盘 `mu_wide_platforms/`（fork `xiaquwan1001/mu_wide_platforms`，1.0 G，含设备包 391 文件）+ `uefi-firmware-backup/`（`Project-Aloha/UEFIFirmwareBackup`，1.3 G，二者同名驱动 sha256 逐字节一致），**2026-10-17 换机未随迁，本机已不存在** ⇒ 路线 A 重试须先重取。Mu-Silicium 与 `Device-Binaries` 本轮改为**按需取件**（小件快照 + 结论见 `reference/upstream-mu-silicium/`），不再全量 clone。
 > **仍未解**：① `lenovo-y700g4` 无 CI/产物/公开验证记录；② `DeviceTreeBlob/Linux/*.dtb` 均为 **6 字节 `dummy` 占位符**（但 `PakalaPkg/PostBuild.py` 构建只用 `BootShim+SM8750_EFI.fd`，**不引用 DTB**，故不阻塞 boot.img 产出）；③ 平台默认 `PcdSystemMemorySize=12 GiB` ≠ 本单元 16 GB（按容量档需核内存映射）；④ 四代 ABL 是否接受 BootShim 壳（BOOTCHAIN **E4** 未做）；⑤ 备份 `uefi.elf`（2.79 MB）≠ 本机 `~/下载/tb322fc/uefi.elf`（5.24 MB，不同固件线）。
 
 ### 1.7 生态工具评估（2026-10-07，联网对比）
@@ -89,6 +89,21 @@
 | `casualsnek/waydroid_script` | Waydroid 后装注入：GApps / Magisk / MicroG | ◐ G2 候选（A13 arm64 GApps 走 GitHub 源） |
 | `mkinitfs` · `pmbootstrap` · `alpine-make-rootfs` · `msm-firmware-loader` · `pil-squasher` | initramfs / 构建 / 固件 | ❌ 不采用（理由见 `PITFALLS` §15.6） |
 | `FEX-Emu` | x86 转译（G3） | ◐ 仅作 Box64 对照 |
+
+### 1.8 同机型另一条 Linux 分支（armadaos-freedom，2026-10-22 取证）
+
+> 仓库 `mydanyi/armadaos-freedom`，main `244b7451`（2026-10-22）。快照与逐条裁决见 **`../reference/upstream-armadaos-freedom/README.md`**。
+> 定位：ArmadaOS（SteamOS 风格、Fedora bootc）的平板分支，覆盖 **Y700 四代 `lenovo,elden` / SM8750** 与五代 `baldur`，统一 Linux **7.2.6**。
+
+| 能用的 | 状态 |
+|---|---|
+| **`0154` dispcc probe 复位活显示 + `0155` DSI PHY `DIGTOP_PWRDN_B` 随 PLL bias 置/清**（均只对 `lenovo,elden` 生效，+32 行） | ❌ **本仓缺**（可干净 apply）⇒ **Q28「冷起 NOCARD」候选 A/B**：`0155` 的机理解释的正是本仓记录过的 `DSI PLL(0) lock failed status=0x00000000` |
+| `0146` SMMU boot handoff 的**另一半**（`arm_smmu_boot_fb_range()` 把 `/chosen/simple-framebuffer` 范围从 DMA allocator 预留） | 🟡 本仓只有 `arm_smmu_map_boot_framebuffer()`；出现「splash 区被覆盖/花屏」时对照 |
+| `0148` clk orphan reparent 保留迁移引用（`orphan_reparent_failed` 字段） | 🟡 同问题另一种写法，按需比 |
+| **Steam ARM64 客户端 + Steam Runtime 的 pin**（`steam_client_steamdeck_stable_linuxarm64`、runtime `3c.0.20260729.253765`）+ `packages/{fex,gamescope,steam-bootstrap}` | ⚪ **G3 新选项**：官方 arm64 Steam + FEX，对比本仓 Box64+Wine 路线（需 Alpine 侧自建 FEX/gamescope） |
+| 设备配置事实：触屏名 `NVTCapacitiveTouchScreen`、`ARMADA_GAMESCOPE_USE_ROTATION_SHADER=1`、无内置手柄 | ✅ 可直接引用的事实 |
+| kShimC 启动菜单（5.4 MB 源码，**GPL-3.0**）+ `kshim-tools`（MultiBootKernelPatcher/UnpackTool） | ⛔ 不 vendor（许可与启动架构都要立项另议）；仅作外部依赖 |
+| 显示/电池/SM8750 基础设施（`0142/0143/0144/0145/0149/0150/0033/0038/0066/0521`…） | ✅ 本仓已有或更全（逐条对照见该 README §4） |
 
 ### 1.4 方法论 / 运维参考
 
