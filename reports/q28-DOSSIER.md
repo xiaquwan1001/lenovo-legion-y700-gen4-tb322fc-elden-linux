@@ -10,6 +10,14 @@
 > **Q28 未解，`boot_b` 仍 = `vk94`。** ① 坏发 **~50%、逐启动随机、按时间成簇（会话级），与镜像/构建身份无关**——§q「STORM 也是构建身份伪影」**已作废**（`PITFALLS #217/#223`）；3 位身份只是**降险偏置**（`#60` 5/7 坏 vs 3 位 1/23，Fisher p≈8e-4；残余坏发点估 4.3%、95% 上界 21.9%）。② **故障态不在 DSI 控制器内部**：判别量 = **DYN pclk 域闩住不释放**（`STATUS0=0x20003`、DSI 中断计数 0、PLL 是锁的），`sw_reset` 后仍在 ⇒ 指 dispcc/INTF 侧动态时钟请求；`-5` = `dsi_bonded_cmd_failed` **软件闩锁短路**（非硬件楔死）。③ **七臂 vk116–vk122（+vk123）全部否证**：面板级 reset、软件闩锁、DSI ctrl+PHY 复位、自定义 bonded 触发序列、使能期 dynamic force-on、上游 byte-clk 取整（`2028280686f4`）。④ **原厂 display 源码静态对照后主靶削弱**（唯一新差异 = 复位终态 `CLK_CTRL=0`，未实验）。⑤ **恢复只能整机复位**（运行期重绑 DSI host 会拆 DRM）。⑥ **运营兜底已上机**：坏发 75 s 自动正常重启（~50%→~75%），实验前须 `q28-watchdog off`。⑦ **上游回移候选 `vk124-merged` 冷起 3/3 L1FAIL**；验收口径已改为「取得 1 次 GOOD 冷起」。
 > 过程稿：`reports/q28-dsi-recover-20261012.md`、`reports/q28-dispcc-static-20261012.md`、`reports/q28-watchdog-20261012.md`、`reports/q28-identity-retest-20261012.md`、`reports/upstream-lane-merge-20261012.md`；下一步 `\.pi/plans/2026-10-12-下一步测试任务-Q28-Q24.md`。
 >
+> ### ★ 2026-10-22 追加（**机理改写，先读**）
+> 活体坏发运行期取证（`§s`、`PITFALLS #366`）确认**两处代码级缺陷**使「一次坏发」升级为「此后每次重试必败」：
+> ①`dsi_bonded_cmd_failed` **单向闩锁**（只有置位、零清零点；8 处提前 return；`post_disable` 跳过 `power_off/disable_irq` ⇒ `Unbalanced enable for IRQ`）；
+> ②`msm_dsi_host_set_display_mode()` 无条件清 `link_configured` 且排在 `power_on` 之后 ⇒ 唤醒必 `-ESTALE`（实测 `power_on=1 link_configured=0`，三组 rate 全等）。
+> 清闩锁后重试**首次到达硬件**：新签名 `stale link configuration`/`-116`；`STATUS0=0x175`（engine/MDP/DSI busy 自锁、`CTRL.ENABLE=0`）、
+> `CLK_STATUS=0x23f`（**无 DYN 位、PLL 未失锁**）⇒ 「故障态不在控制器内」「DYN pclk 域闩住」两条旧口径**削弱/本发不成立**。
+> 「恢复只能整机复位」**机理改写**为软件闩锁所致，硬件是否可救**尚未被测过**（下一轮三最小实验）。
+>
 > ### ★ 2026-10-13 追加（三条）
 > 1. **T3 否证（寄存器级）**：`vk125-resetterm`（= vk117 恢复路径 + 复位终态对齐 `CLK_CTRL=0`）首发即坏发，但恢复路径 3 次全触发且终态**确实到达**（`Q28 resetterm: CTRL=0x0 CLK_CTRL=0x0 CLK_STATUS=0x1403`，DYN 位当场清），随后 `link_power_on` 让 `CLK_STATUS` 立刻回到 `0x1743`、重试逐字 `-110`（3 次序列相同）⇒ **请求源在 power-on 路径/外部（dispcc/INTF），不在复位终态平面**（`PITFALLS #230`、`reports/q28-dsi-recover-20261012.md` §20）。**软件侧已无剩余靶点。**
 > 2. **T2 同窗配对第 1 窗**（真实 POR，`#60` ↔ 3 位）：`#60` 1 坏 / 1 好（+1 未定）、3 位 2 好 ⇒ **窗内无可辨身份效应**；同窗 `#60` 07:10 坏 / 07:17 好（相隔 7 min）⇒ **成簇假设再获实证**，跨窗聚合不能当因果证据（`reports/q28-identity-retest-20261012.md` §0.5）。3 位身份降级为**弱先验**，不再排期采样。
@@ -437,3 +445,71 @@ config（vk64 内核 `extract-ikconfig` 与 `a383cdb9` **0 差异**）、工具�
 **产物**：`reports/trials/20261015T083353Z-m1-baseline-f3-badboot-20261015.json`、`logs/q28-badboot-20261015/`（dmesg 4643 行、core-irq-freeze、devprobe2、state、bootlog）、采样协议 `.pi/plans/2026-10-15-armA-采样协议.md`。
 
 **交接**：重放后的同源镜像 = `out/boot-elden-vk127.img`（见 `reports/replay-2026-10-17-m1-73-vk127.md`），可作为本节的**可重建台架**；上机 3 发采样仍未做。
+
+---
+
+## s) ★2026-10-22 活体坏发运行期取证：软件闩锁 + `link_configured` 误清（**机理改写**）
+
+> 本轮在**同一发坏发**（`vk127`、`uptime` 8 min、`bonded command DMA failed -110/-110`、`dsi_isr=0`）上做
+> **零重启运行期探测**（探针内核模块 + `/dev/mem` 寄存器直读），**首次让重试真正到达硬件**。
+> 会话全文：`TASKS/sessions/2026-10-22-Q28软件闩锁与link_configured误清.md`；产物 `probes/q28{latch,peek}/`、`logs/q28-latch-20261022/`。
+
+### s-1 两处**代码级**缺陷（下游 payload 自带，7.2 / 7.3 两血统都在）
+
+**A. `dsi_bonded_cmd_failed` 是单向闩锁（零清零点）**
+
+`dsi_manager.c:41` 定义；**只有** `:377`（`panel is not prepared`）与 `:649`（bonded xfer 失败）两处 `WRITE_ONCE(…, true)`；
+`build/base-7.2`、`geekidos-linux`、`build/m1-73` **三个血统 grep 结果一致：无任何清零**。
+置位后 `msm_dsi_manager_cmd_failed()` 在 8 处无条件短路（`dsi_manager.c:292/314/367/396/429/615/681`、`dsi_host.c:1699`）：
+`bridge_pre_enable/enable/post_disable/disable` 直接 `return`（**不 power_off、不 disable_irq**），
+`cmd_xfer` 对任何写命令返回 `-EIO`。⇒ 坏发后**每次**面板重 init 都在第一条 DCS `ff 20` 报 `-5`，**从不触碰硬件**。
+**连带**：唤醒时 `dsi_mgr_bridge_power_on()` 无条件 `enable_irq`，而下一次 `post_disable` 被闩锁跳过 ⇒ 实测
+`Unbalanced enable for IRQ 188/189`（`__enable_irq` WARNING，栈经 `msm_dsi_host_enable_irq ← dsi_mgr_bridge_pre_enable`）。
+
+**B. `link_configured` 被 `set_display_mode()` 误清（atomic 顺序缺陷）**
+
+`dsi_host.c:2377 dsi_cmd_link_clk_set_rate()` 的 SM8750 分支要求 `power_on && link_configured && 三组 rate 相等 && 两个 parent 匹配`，
+否则 `-ESTALE`。而 `link_configured` 写入点 = `power_on()` 末尾置 true（`:3069`）、`power_off()`（`:3092`）/
+`set_display_mode()`（`:3129`）/`runtime_suspend()`（`:383`）置 false。
+`dsi_manager.c:494 dsi_mgr_bridge_mode_set()` 调它，而 DRM atomic 流程里 `mode_set` **排在 `pre_enable`（含 power_on）之后**
+⇒ 唤醒链路必然得到 `power_on=1, link_configured=0`。
+
+### s-2 运行时实测（`q28peek.ko`，清闩锁后唤醒一次）
+
+```
+dsi[0] power_on=1 link_configured=0        ← 唯一不满足项（-ESTALE 来源）
+       byte 108107959/108107959 OK ; pixel 172972735/172972735 OK ; intf 108107959/108107959 OK
+dsi[1] 同型
+```
+
+⇒ 三个 rate 全等、parent 匹配 ⇒ `-ESTALE` 只可能来自 `link_configured=0`。清闩锁后唤醒**首次**报出新签名
+`msm_dsi ae94000.dsi: stale link configuration` ×3 + `sending dcs data ff 20 failed: -116`（ETIMEDOUT）。
+
+### s-3 硬件侧首次实测：`STATUS0` 引擎忙位自锁，但时钟域无异常
+
+`/dev/mem` 直读（基址来自 `/proc/device-tree/.../dsi@ae94000/reg`）：
+
+| 寄存器 | 值 | 解读 |
+|---|---|---|
+| `STATUS0 (0x04)` | `0x175` | `CMD_MODE_ENGINE_BUSY|CMD_MODE_MDP_BUSY|DSI_BUSY` 全 1；`CMD_MODE_DMA_BUSY=0` |
+| `CTRL (0x00)` | `0x20090000` | bit0 `ENABLE=0` ⇒ 控制器已关 |
+| `TRIG_DMA (0x8c)` | `0` | 已清 |
+| `TIMEOUT_STATUS (0xbc)` | `0xffff` | 粘滞全置 |
+| `CLK_STATUS (0x11c)` | `0x23f` | **无 `PLL_UNLOCKED(0x10000)`、无 `DYN_*` 位** |
+
+两侧控制器逐位相同；`dsi_isr` 全程 1769 s 恒为 0。
+
+**⇒ 修正既有口径**：①「故障态不在 DSI 控制器内部」**削弱** —— busy 位就在控制器内且自锁；
+②「判别量 = DYN pclk 域闩住不释放」**在本发不成立**（`CLK_STATUS` 无 DYN 位、PLL 未失锁）；
+③「恢复只能整机复位」**不变但机理改写** —— 不是硬件不可救，而是 **A+B 让所有重试在到达硬件前就失败**。
+
+### s-4 下一轮（零写盘，直接在坏发上做）
+
+1. 探针置 `link_configured=1`（闩锁已清）→ 再唤醒：判据 = 是否越过 `-ESTALE`、`ff 20` 变成真超时/真成功。
+2. 若仍失败：读 `STATUS0` 是否仍 `0x175`；再打一次 `dsi_sw_reset_v2_9` 等价序列后重读，判据 = `STATUS0 & 0x19` 是否清零。
+3. 正式补丁（待 1/2）：A = 在 `bridge_power_on()` 成功路径清闩锁（或改成 per-link 而非全局一次性）且让 `post_disable` 不受闩锁影响（修 `Unbalanced enable`）；B = `set_display_mode()` 不清 `link_configured`，或在 `power_on()` 之后单独置位。
+
+### s-5 纪律
+
+探针模块 `taint` 内核（`O`）且**改变可达路径** ⇒ 只作取证，不得进上游包/日常镜像。
+本轮**未写盘、未重启**；`boot_b` 仍 = `vk127`；闩锁已被清（RAM 静态变量），设备**仍在坏发态**，恢复靠用户物理 POR。

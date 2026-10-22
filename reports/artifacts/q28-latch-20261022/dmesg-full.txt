@@ -1,0 +1,40 @@
+[ 1760.196325] [ T2393] panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -5
+[ 1760.196528] [ T2393] panel-novatek-nt36536 ae94000.dsi.0: panel init attempt 1 failed: -5, resetting and retrying
+[ 1760.226212] [ T2393] panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -5
+[ 1760.226444] [ T2393] panel-novatek-nt36536 ae94000.dsi.0: panel init attempt 2 failed: -5, resetting and retrying
+[ 1760.256204] [ T2393] panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -5
+[ 1760.256235] [ T2393] panel-novatek-nt36536 ae94000.dsi.0: Failed to initialize panel: -5
+[ 1760.259060] [ T2393] hw recovery is not complete for ctl:1
+[ 1760.259076] [ T2393] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf1 ctl 1 reset failure: -22
+[ 1760.261169] [ T2393] hw recovery is not complete for ctl:1
+[ 1760.261178] [ T2393] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf2 ctl 1 reset failure: -22
+[ 1760.294062] [    C7] [drm:dpu_encoder_frame_done_timeout:2762] [dpu error]enc35 frame done timeout
+[ 1760.314481] [ T2393] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: a0c208c0
+[ 1760.314825] [ T2393] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
+[ 1760.722142] [ T5780] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: a0c208c0
+[ 1760.722377] [ T5780] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
+[ 1760.727501] [ T5780] hw recovery is not complete for ctl:1
+[ 1760.727535] [ T5780] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf1 ctl 1 reset failure: -22
+[ 1760.729621] [ T5780] hw recovery is not complete for ctl:1
+[ 1760.729640] [ T5780] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf2 ctl 1 reset failure: -22
+[ 1760.762250] [    C7] [drm:dpu_encoder_frame_done_timeout:2762] [dpu error]enc35 frame done timeout
+[ 1760.786190] [ T5780] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: a0c208c0
+[ 1760.786323] [ T5780] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
+[ 1761.947942] [ T5043] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: a0c208c0
+[ 1761.948356] [ T5043] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
+[ 1761.951138] [ T5043] hw recovery is not complete for ctl:1
+[ 1761.951256] [ T5043] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf1 ctl 1 reset failure: -22
+[ 1761.953494] [ T5043] hw recovery is not complete for ctl:1
+[ 1761.953509] [ T5043] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf2 ctl 1 reset failure: -22
+[ 1761.986268] [    C0] [drm:dpu_encoder_frame_done_timeout:2762] [dpu error]enc35 frame done timeout
+[ 1762.009809] [ T5043] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: a0c208c0
+[ 1762.011186] [ T5043] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
+[ 1768.747797] [ T5780] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: a0c208c0
+[ 1768.748392] [ T5780] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
+[ 1768.751318] [ T5780] hw recovery is not complete for ctl:1
+[ 1768.751348] [ T5780] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf1 ctl 1 reset failure: -22
+[ 1768.753437] [ T5780] hw recovery is not complete for ctl:1
+[ 1768.753450] [ T5780] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:576] [dpu error]enc35 intf2 ctl 1 reset failure: -22
+[ 1768.786158] [    C0] [drm:dpu_encoder_frame_done_timeout:2762] [dpu error]enc35 frame done timeout
+[ 1768.806440] [ T5780] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: a0c208c0
+[ 1768.806465] [ T5780] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
