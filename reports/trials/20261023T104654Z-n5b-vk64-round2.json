@@ -1,0 +1,18 @@
+{
+  "label": "n5b-vk64-round2",
+  "ts": "2026-10-23T10:46:54Z",
+  "vk": "vk64",
+  "image": "device:vk64",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "DEAD",
+  "log_dir": "/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-184045.log",
+  "note": "N5b vk64 7.2-lineage full-stack+blank round2 phase=blank Q28sig=0 mods=19"
+}
