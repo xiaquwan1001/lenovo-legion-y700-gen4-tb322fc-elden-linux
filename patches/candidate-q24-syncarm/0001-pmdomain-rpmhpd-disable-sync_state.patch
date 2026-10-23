@@ -1,0 +1,18 @@
+diff --git a/drivers/pmdomain/qcom/rpmhpd.c b/drivers/pmdomain/qcom/rpmhpd.c
+index 5c13407026..536e70a057 100644
+--- a/drivers/pmdomain/qcom/rpmhpd.c
++++ b/drivers/pmdomain/qcom/rpmhpd.c
+@@ -1233,7 +1233,12 @@ static struct platform_driver rpmhpd_driver = {
+ 		.name = "qcom-rpmhpd",
+ 		.of_match_table = rpmhpd_match_table,
+ 		.suppress_bind_attrs = true,
+-		.sync_state = rpmhpd_sync_state,
++		/*
++		 * Q24 单变量实验：不注册 sync_state，使所有 rail 一直停留在
++		 * rpmhpd_aggregate_corner() 的「未 sync」分支（最高 corner）。
++		 * 依据：Konrad Dybcio 2026-10-20 单变量实验建议。
++		 */
++		/* .sync_state = rpmhpd_sync_state, */
+ 	},
+ 	.probe = rpmhpd_probe,
+ };

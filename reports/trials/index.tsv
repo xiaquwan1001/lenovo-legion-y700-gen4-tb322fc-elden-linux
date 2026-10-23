@@ -207,3 +207,8 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-23T06:43:15Z	n5b-vk64-round1	vk64	cold	none	DEAD	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-144109.log
 2026-10-23T06:45:58Z	n5b-vk64-round2	vk64	cold	none	DEAD	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-144109.log
 2026-10-23T07:38:36Z	n5b-vk64-round4	vk64	cold	none	DEAD	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-153035.log
+2026-10-23T08:03:44Z	n5b-vk64-round4	vk64	cold	none	DEAD	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-155518.log
+2026-10-23T08:15:52Z	n5b-vk64-round6	vk64	cold	none	DEAD	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-155518.log
+2026-10-23T08:26:14Z	n5b-vk64-round2	vk64	cold	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-162415.log
+2026-10-23T08:27:05Z	n5b-vk64-round3	vk64	cold	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-162415.log
+2026-10-23T08:27:55Z	n5b-vk64-round4	vk64	cold	none	ALIVE	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-162415.log

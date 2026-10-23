@@ -155,14 +155,32 @@ EOF
 }
 
 # 强制重开一次 vk64 RAM 内核（用于「已在 vk64 但显示栈已坏」的 boot，见下方显示健康门）
+# ★ 2026-10-23（PITFALLS #369）：这类 boot 上 `reboot2 bootloader` 会**静默无效**（shutdown 挂住），
+#   实测 4 次里 3 次没重启。⇒ 加两级逃生：30 s 内没进 fastboot 就 SysRq-b 回 boot_b，
+#   再从 boot_b（健康态）走 reboot2 → fastboot。
+wait_fb() { local t=0; while [ $t -lt "${1:-90}" ]; do FB && return 0; sleep 3; t=$((t+3)); done; return 1; }
 force_reboot_vk64() {
 	local up w=0 t=0
 	up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r')
 	while { [ -z "$up" ] || [ "$up" -lt 60 ]; } && [ $w -lt 90 ]; do sleep 5; w=$((w+5)); up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r'); done
-	[ -n "$up" ] || return 1		# SSH 不可达 ⇒ 交给人工
-	SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
-	while [ $t -lt 90 ]; do FB && break; sleep 3; t=$((t+3)); done
-	FB || return 1
+	if [ -n "$up" ]; then
+		SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
+		if ! wait_fb 30; then
+			echo "  (reboot2 30 s 未进 fastboot ⇒ SysRq-b 逃生，PITFALLS #369)"
+			SSH 'sync; echo b > /proc/sysrq-trigger' >/dev/null 2>&1 || true
+			sleep 20
+			if ! wait_fb 20; then
+				# 已回 boot_b：等它稳定后走一次正常 reboot2
+				wait_ssh 180 || return 1
+				up=; w=0
+				while { [ -z "$up" ] || [ "$up" -lt 60 ]; } && [ $w -lt 120 ]; do sleep 5; w=$((w+5)); up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r'); done
+				SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
+				wait_fb 90 || return 1
+			fi
+		fi
+	else
+		wait_fb 30 || return 1
+	fi
 	timeout 120 fastboot boot "$IMG" >/dev/null 2>&1 || return 1
 	wait_ssh 120 || return 1
 	wait_vk64 || return 1
@@ -198,7 +216,14 @@ consec_fail=0
 for i in $(seq 1 "$N"); do	echo
 	echo "================ ROUND $i ================"
 	printf "\n===== N5b ROUND %s %s =====\n" "$i" "$(date '+%F %T')" >> "$SLOG" 2>/dev/null || true
-	if ! boot_vk64; then
+	# ★ FRESH=1：每发都强制重开一次 RAM 内核（同一 boot 连采会被质疑独立性）
+	if [ "${FRESH:-0}" = 1 ]; then
+		if [ "$(SSH 'uname -r' | tr -d '\r')" != "" ]; then
+			force_reboot_vk64 || { echo "ROUND$i SETUP-FAIL-BOOT"; continue; }
+		else
+			boot_vk64 || { echo "ROUND$i SETUP-FAIL-BOOT"; continue; }
+		fi
+	elif ! boot_vk64; then
 		echo "ROUND$i SETUP-FAIL"
 		consec_fail=$((consec_fail + 1))
 		if [ "$consec_fail" -ge "$SETUP_FAIL_MAX" ]; then
