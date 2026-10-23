@@ -1,0 +1,18 @@
+{
+  "label": "q28por-r1",
+  "ts": "2026-10-23T14:58:19Z",
+  "vk": "vk152",
+  "image": "/home/xuqianhui/y700-elden/out/boot-elden-vk152.img",
+  "image_sha256": "1b4ec8f8cf08fe38f31760f2eebc81b038493c5181df746cfb81b04c4b8b3862",
+  "manifest": "/home/xuqianhui/y700-elden/out/boot-elden-vk152.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "c0b39ccb24b357f17117733d8229e9dbd6df17f352035ee1d1cc97f19cd8ca71",
+  "config_sha256": "ba0c2a49503b1465c2eab633789f2b17257ca12824c3320835be5dc573b2da28",
+  "dtb_packed_sha256": "7190ecf050c59108195495a9ff7d555657b3f4c090fa885b8f9e29330113d492",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261023T145818Z-q28por-r1",
+  "note": "Q28 真 POR 同口径样本（boot_id=0f0f772e，clkdiag=reports/artifacts/q28-clkdiag-r1-0f0f772e.txt）"
+}

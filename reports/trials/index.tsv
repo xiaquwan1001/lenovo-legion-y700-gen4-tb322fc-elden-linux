@@ -221,3 +221,5 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-23T12:00:44Z	q28disp-v2	vk150-q28v2	por	fastboot-boot	GOOD	831ca7c4653e	/home/xuqianhui/y700-elden/reports/trials/20261023T120044Z-q28disp-v2
 2026-10-23T12:03:03Z	q28disp-v2	vk150-q28v2	por	fastboot-boot	GOOD	831ca7c4653e	/home/xuqianhui/y700-elden/reports/trials/20261023T120303Z-q28disp-v2
 2026-10-23T12:11:28Z	q28disp-v2	vk150-q28v2	por	fastboot-boot	GOOD	831ca7c4653e	/home/xuqianhui/y700-elden/reports/trials/20261023T121128Z-q28disp-v2
+2026-10-23T14:58:19Z	q28por-r1	vk152	por	none	GOOD	1b4ec8f8cf08	/home/xuqianhui/y700-elden/reports/trials/20261023T145818Z-q28por-r1
+2026-10-23T15:18:10Z	q28por-r2	vk152	por	none	GOOD	1b4ec8f8cf08	/home/xuqianhui/y700-elden/reports/trials/20261023T151810Z-q28por-r2
