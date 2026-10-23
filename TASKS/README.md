@@ -12,8 +12,8 @@
 | 目标 | 已完成 | 进行中 | 未开始 | 完成度 |
 |---|---|---|---|---|
 | **G1** 完整 Linux + 上游化（驱动原厂固件 + 上游提交） | 29 项（显示/图形/触屏/网络/**G1-36 WiFi 候选榜**/电源/相机出流+App 实测/音频播放+输入/温控/串口/CDSP/DP/BT 配对+TWS/**G1-8 基准**…）——**明细与证据只在 §1** | 0 项（WiFi Q26 已关闭，2026-10-10 用户确认）+ ⚪ TF 卡 G1-6 用户裁决搁置——**假设/样本只在 §5** | 上游化 **M1–M5**（§7）、G1-34（仅 SLPI 原生 IIO 路线） | **~90%** |
-| **G1 阻塞项速览**（**本行只列 ID**；状态/样本数/口径唯一权威 = §5 的 Q 行） | — | 🟡 **Q28** 显示间歇（**已有日常候选 vk145：冷起 8/8 GOOD，已写 boot_b**；机理与遗留**只读 §5 Q28**）· 🟢 **Q24** 熄屏×相机（**2026-10-23 根因已指名、停止采样**：7.2 血统缺上游 `skip retention by default`，7.3 线自带该修复 ⇒ 41 发 0 死亡 vs 7.2 的 6/8 死是**版本差不是随机**；日常线无需本地补丁，**只读 §5 Q24**） | — | — |
-| **G2** 安卓容器（可用性 + 风控/完整性等级） | 12（Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC/C9 用例集/**C4 传感器 HAL 路线 C**/**C7 切槽脚本**/**C6 容器音频**/**C2 GMS 登录（用户人工验证）**/**C10 马达透传（2026-10-13：桥 + 自编 AIDL V2 幅度/cancel + 固化进 vendor 镜像 + 强度档位 RRO）**/**C11 触屏中文输入法（2026-10-20：squeekboard + fcitx5/Rime + focusd 唤起/折叠）**） | 1（C8 上机探测） | 1（C5 ②b 已完成 2026-10-19：`Number of camera devices: 1`；剩 U7 App 预览/前后摄切换 + C3 身份/DRM 实测） | **~65%** |
+| **G1 阻塞项速览**（**本行只列 ID**；状态/样本数/口径唯一权威 = §5 的 Q 行） | — | 🟡 **Q28** 显示间歇（**日常线已升到 vk152**；**vk151/vk152 线真 POR 累计 3 发全 GOOD**（下午上机核验 1 + 本轮 r1/r2 2，判据段逐字一致），距 ≥8 发判据还差 **5 发（交用户在机旁完成）**；**新增 Q32 暖起 vs 冷起差异**（静态预研已落盘，机理与遗留**只读 §5 Q28/Q32**）· 🟢 **Q24** 熄屏×相机（**2026-10-23 根因已指名、停止采样**：7.2 血统缺上游 `skip retention by default`，7.3 线自带该修复 ⇒ 41 发 0 死亡 vs 7.2 的 6/8 死是**版本差不是随机**；日常线无需本地补丁，**只读 §5 Q24**） | — | — |
+| **G2** 安卓容器（可用性 + 风控/完整性等级） | 12（Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC/C9 用例集/**C4 传感器 HAL 路线 C**/**C7 切槽脚本**/**C6 容器音频**/**C2 GMS 登录（用户人工验证）**/**C10 马达透传（2026-10-13：桥 + 自编 AIDL V2 幅度/cancel + 固化进 vendor 镜像 + 强度档位 RRO）**/**C11 触屏中文输入法（2026-10-20：squeekboard + fcitx5/Rime + focusd 唤起/折叠）**） | 1（C8 上机探测） | 1（C5 ②b 已完成 2026-10-19：`Number of camera devices: 1`；**2026-10-23 复核：曾回落 0 = `/dev/video100` 的 bind 从未持久化，已修 + 前后摄语义已定（换 loopback 生产者）**；剩 **U7 App 实开预览（需装 APK）** + C3 身份/DRM 实测） | **~65%** |
 | **G3** x86 模拟（Steam 载体） | 1（Box64 0.4.5 + Wine 9 PoC 成功） | 0 | Steam 游戏端到端（图形/音频/性能） | PoC ✅ / Steam 未上机 |
 | **拓展** UEFI 间接引导 · Gunyah VM | 0 | 0 | 2（UEFI 路线 A 已搁置；Gunyah 待上机探测） | ⬜ 非主线 |
 | 运维/资产 | 内核迭代至 **vk124-merged / vk126-c1**（Q28/Q24 实验线最新；**在机 boot_b = `vk127`**（2026-10-18 刷入 = 7.3-rc7 + vk64 payload + M1 DSI 1 行；读回 sha `83d4e08a…` 一致；见 `DEVICE/README.md` §1.1））；里程碑 **vk84-q28delay**（base/exp 单变量 A/B 对，唯一差 cmdline `dsi_cmd_delay_us=1000`；config=好档派生——构建态 sha a383cdb9（实测 manifest），来源=恢复好档 `patches/config-before-fragment-20261009-210432.bak`（sha a80cbabb）；编后符号守卫通过、含 QCOM 驱动非死内核；镜像 `out/boot-elden-vk84-q28delay-{base,exp}.img`+manifest）。**⚠ 作废：`PITFALLS #162` 判定 vk81/82/83 因 `make olddefconfig` 删 `ARCH_QCOM` 成无 QCOM 驱动的死内核 ⇒ 在这三个镜像上得到的上机结果一律作废、需好档重测**；**模块化载荷已在机验收 + `mod-loop` 7 s 热换环跑通**；在机 boot_b 口径 `../DEVICE/README.md` §1.1）、rootfs 归档、Mesa 包、文档集重构、`qemu-utils` 已装（A13）、fstab nofail 已修（A18）、C4 传感器链（A14）、env-pass provision（A17）、持久根内核↔模块对齐、M1 资产树清单（2026-10-10）；🆕 **2026-10-11 新增**：Q24 臂镜像 `out/boot-elden-{vk90-e4amxc,vk91-fix3mx,vk92-fix2mx}.img` + `vk93-{cleanctl,nocam,lv64}.img`（均含 manifest）⚠️MIGRATION-LOST(2026-10-17：`out/*.img` 未随迁，本行镜像本地已无，需重建)；`LOCALVERSION=-vk64` GOOD 台架口径（`PITFALLS #175`）；重建脚本 `scripts/q24-rebuild-arms.sh`（⚠ **换机后丢失**，见 `reports/migration-rebuild-audit-20261017.md`；Q24 臂如需重跑按 §5 Q24 配方 + `patches/q28-*` 重放）；⚠ **待清理**：U2 持久根 `/lib/modules/7.2.0-debug-vk64-gd02658e63cf6/drivers/clk/qcom/cambistmclkcc-sm8750.ko` 现为 **FIX-3 版**（会让任何 auto-load 相机的启动挂死），原版在设备 `/root/q24bak/` ⇒ **下一轮开始前先还原**。🆕 **2026-10-17 换机后 P0 抢救完成**：在机 `boot_b`（`m1-baseline-f3`，sha `78a2beb1…`）、M1-7.3 模块树（1497 `.ko`）、`/usr/local/sbin`+`/root/q24bak`+`/proc/config.gz` 等 207 项**已入主机** `backup/HA2EXB0E-16+512/device-rescue-20261017/`（双向 sha 校验）；手法 = 设备 `usb0` IPv6 LL 直连 ssh + `dd`/tar 流（**本机 ABL 无 `fastboot fetch`**，`PITFALLS #290`）。同日 `fastboot fetch` 幻觉清掉 8 处配方、新增 `PITFALLS #290–#292`；`out/*.img` 仍为空（重建见 §4 待办 T4） | — | — | ✅ |
@@ -144,9 +144,17 @@
 
 **需要物理 POR 的样本一律排在最后**（用户在机旁断电/开机时一次做完）；其间只做不重启的项。
 TF 卡（G1-6 / Q10）**暂时不做**，不进任何待办排序。
+
+**Q28 采样配额（2026-10-23 用户定）**：**agent 只取 2 发，剩余次数交用户在机旁完成**。
+前 2 发已取（r1 `0f0f772e` / r2 `b6211ab4`，均 GOOD），见 `reports/q28-por-samples-r1r2-20261023.md`。
+用户续取：`scripts/q28-por-rounds.sh 1 2400 <轮号>`（`boot_b` 已是 vk152，**不需要 fastboot**；断电开机后自动取证）。
+判据（每发都要满足）：`VERDICT=GOOD`、`DSI_PLL_lockfail=0`、`failed to acquire mdss resets=0`、两路 `pclk/byte` parent 相同。
+
 当前「需要 POR」的三项与判据只读 `reports/closeout-q29-backlight-camera-20261023.md` §5：
-① `vk151/vk152` ≥8 发真 POR 冷起（`boot_b` 已是 vk152 ⇒ 用 `scripts/q28-coldboot-collect.sh <round>` 即可，无需 fastboot）；
-② Q28 `q28-clkdiag` 好/坏各一份同口径冷起；③ N5b/T10 臂扩样（暂停中，恢复条件 = Q28 v2 压掉坏 boot 类）。
+① Q28 ≥8 发真 POR 冷起（**已 3 发，剩 5 发交用户**）；② Q28 `q28-clkdiag` 坏发样本（至今 0 坏发）；
+③ N5b/T10 臂扩样（暂停中，恢复条件 = Q28 v2 压掉坏 boot 类）。
+**Q32（暖起 vs 冷起）** 的三臂实验（W1 暖 vendor / C1 真 POR / W2 `reboot -f`）同样需要用户在场，
+设计见 `reports/q32-warm-vs-cold-preresearch-20261023.md` §5。
 
 **下一步（只列开放项，按顺序；已完成项一律只入 §1 任务行，不在此重复）**
 1. **Q28 面板 init 间歇失败**（日常可用性第一道门）——**坏发对拍已到手（2026-10-09 深夜）**：断点 = 面板首条 DCS 写（`ff 20`）走 **bonded 命令 DMA 超时**（不是 DPU modeset）；差分只有 `STATUS0 0x0→0x20003`、`CLK_STATUS 0x2343→0x3743`（多 `DYN_PCLK_ACTIVE`+`DYN_CMD_PCLK_ACTIVE`）、`cmd_dma_busy/cmd_engine_busy 0→1`，其余 16 项全等 ⇒ 假说收窄到「首次 modeset 时命令引擎撞上 DYN 像素时钟域切换」。**下一步（2026-10-10 定案后更新，权威=`reports/q28-DOSSIER.md` §f）**：① 先定 `fastboot boot` 冷路径是否等价用户真 POR 冷起（不等价则改用真 POR 做 A/B）；② Method B 按上游「加」部分重出到 vk85（落点 generic `dsi_link_clk_set_rate_6g()`、对象 `msm_host->byte_clk`，非 `_v2_9` 分支、非 cherry-pick `2028280686f4`）；③ 三臂冷起 A/B（base vs round vs delay/`REG_DSI_CLK_STATUS` 轮询），需用户断电配合，每轮 `scripts/q28-devprobe.sh` 三态判 + SSH 读全 dmesg + 查 card0；④ 若取整仍高坏发转 CMD engine 编程 / PHY pll save-restore；⑤ 采 GOOD 冷暖对照坐实基线。判据/根因详见 §5 Q28 与 `reports/q28-DOSSIER.md`。

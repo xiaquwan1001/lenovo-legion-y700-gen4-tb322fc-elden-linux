@@ -124,10 +124,11 @@
   **重建账（2026-10-17 审计）**：文档/补丁/配置/证据近乎无损，真损失 = 提交史 + 镜像产物；**在机镜像已于当日晚 P0 抢救到主机**（`boot_b` sha `78a2beb1…` + 1497 `.ko` + 207 项配置 → `backup/HA2EXB0E-16+512/device-rescue-20261017/`，见 `reports/device-rescue-and-q28-m1-badboot-20261017.md`）；
   分级与顺序（P0 抢救设备资产 → P1 修身份表 → P2 装 clang/dtc → P3 重放 M1-7.3 → P4 重编日常镜像）见 `reports/migration-rebuild-audit-20261017.md`；
   会话记录 `TASKS/sessions/2026-10-17-换机后重建审计-邮箱分诊.md`。**邮箱通道可用**，未处理的上游往来 5 条见 `reports/mail-triage-20261017.md`。
-  **★ 当前待办唯一入口 = `TASKS/README.md` §4 顶部「2026-10-17 待办」7 项（T1–T7）**。
+  **★ 当前待办入口 = `TASKS/README.md` §4**：T1–T8/T10/T12/T13 已结项（2026-10-23）；**仍开放 = T9（suspend 掉电率，等 `HS-PHY not in L2` 与 hwmon 两条非阻塞告警收尾）、T11（宿主内存，等你在 BIOS/硬件侧动作）**。现行口径在该节顶部「收尾轮次纪律（2026-10-23 用户定）」——**需要物理 POR 的样本一律排最后**、**TF 卡暂时不做**、**Q28 只由 agent 取 2 发、其余交用户在机旁完成**。
 
-- **未解（3 项，按影响排序）**：① Q28 显示间歇失败；② Q24 熄屏×相机（用户裁决 = 互斥二选一）；③ 进 GUI 后整机卡死（`PITFALLS #106`）。
-  **口径 / 样本 / 触发 / 下一步只读** `TASKS/README.md` §5 Q28/Q24 与 `PITFALLS #106`；在机镜像 `boot_b` 见 `DEVICE/README.md` §1.1。
+- **未解（3 项，按影响排序）**：① Q28 显示间歇失败（日常线 vk152，真 POR 已 3 发 GOOD、还差 5 发）；② Q24 熄屏×相机（根因已指名 = 7.2 缺上游 `skip retention`，已停止采样）；③ 进 GUI 后整机卡死（`PITFALLS #106`）。
+  **新增待办 Q32 = 暖起 vs 冷起差异**（静态预研已落盘，指向「ABL 交接 framebuffer + 复位动作」而非「暖/冷」本身）。
+  **口径 / 样本 / 触发 / 下一步只读** `TASKS/README.md` §5 Q28/Q24/Q32 与 `PITFALLS #106`；在机镜像 `boot_b` 见 `DEVICE/README.md` §1.1。
 - ✅ **已解（近期）**：Q31 M1-7.3 显示回归（2026-10-14 E1b）——见 `TASKS/README.md` §5 Q31 / §7。
 - **已关闭 / 搁置**（不再占未解）：Q26 WiFi、G1-6 TF 卡、G1-34 重力/自动旋转、C10 Waydroid 马达透传（PITFALLS §29/§30）。状态与证据见 `TASKS/README.md` §0/§5。
 - **未开工 / 进行中**：上游化 M1–M5（`TASKS/README.md` §7）、G1-8 CPU/GPU 基准（`TASKS/README.md` §1）。细节只读对应节，本文件不复述。

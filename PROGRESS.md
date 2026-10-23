@@ -40,6 +40,12 @@
 | 2026-10-13 07:15–07:22 | **Q28 同窗配对采样（T2 第 1 窗，#60 ↔ 3 位身份）**：vk104-s1 **GOOD** / vk94-s4 **GOOD** / vk104 **GOOD** / vk94-s5 **UNKNOWN**（操作者提前中断，未捕判据）；同窗前段 07:04 vk125 **L1FAIL**、07:10 vk94 **L1FAIL** ⇒ **窗内两臂都出 GOOD、#60 自身也有坏发 ⇒ 无可辨身份效应**（坏发成簇主导；三条 record 由日志回填，存活门被人工中断已在 note 标注）。**同窗口尾 07:21 `vk94` 第 5 发 = 坏发第三形态「仅背光 + 无 SSH」**（`NOROUTE`；150 s 无 SSH、无 fastboot、30 min 仍不可达）⇒ 判据不得并入 NOCARD/STORM，且**设备侧看门狗救不了本形态**（`PITFALLS #231`） | `reports/trials/20261012T23{2103,2537,2538}Z-*.json`、`reports/q28-identity-retest-20261012.md` §8 |
 | 2026-10-12 深夜 | **上游回移 lane 收尾**：清洗后 14 文件 fast-forward 合入 `clean/base`（`5b169d541`），出日常候选 `out/boot-elden-vk124-merged.img`（同 UTS 身份 `#121`）；**验收口径改为「取得 1 次 GOOD 冷起」**；上机 3 发全 L1FAIL | `reports/upstream-lane-merge-20261012.md` |
 | 2026-10-13 | **C10 Waydroid 马达透传完成**：容器 HAL ↔ `aw86927` FF 全链路 → 自编 **AIDL V2** 拿到幅度控制与 `cancel` → **固化进 `vendor.img`**（运行期零 bind）→ **Settings 振动强度档位**（静态 RRO，档位 1→3） | `reports/waydroid-haptics-20261013.md`、`PITFALLS #232–#246` |
+| 2026-10-14 | **Q31 显示回归定位并修复（E1b，1 行语义）**：上游 revert 了 bonded PLL init ⇒ `PLL_SYSTEM_MUXES=0xc0` 永不写入；修复后干净 POR 面板有内容 + 触屏可操作 | `reports/m1-73-e1b-pllfix-20261014.md` |
+| 2026-10-18…22 | **Q28 机理改写**：定位 `dsi_bonded_cmd_failed` 单向闩锁 + `link_configured` 误清两处代码缺陷；A/B 修复后 **0154+0155 两臂合并 15/15 GOOD vs base 4/9（p=0.003）** | `reports/q28-disp-init-ab-20261022.md`、`PITFALLS #366` |
+| 2026-10-23 | **Q28 v2：复位搬到 display 侧（`msm_mdss_reset()`）真 POR 5/5 GOOD**，证明起作用的是「复位动作 + 早于 PLL」而非 dispcc probe 位置；日常候选 `vk151/vk152` 已写 `boot_b`（含 kexec 诊断旋钮） | `reports/q28-v2-mdss-reset-20261023.md`、`reports/vk151-daily-candidate-20261023.md` |
+| 2026-10-23 | **Q24 根因指名并停止采样**：7.2 血统缺上游 `pmdomain: qcom: rpmhpd: Skip retention by default`（7.3 线自带）⇒ 41 发 0 死亡 vs 7.2 的 6/8 死是**版本差不是随机**；日常线无需本地补丁 | `reports/q24-retention-rootcause-20261023.md` |
+| 2026-10-23 | **收尾轮（免 POR）**：Q29 关闭（容器 Mesa bind 冗余，已删，图形正常）、**背光下限服务**（修「面板 GOOD 但看起来黑屏」）、容器相机恢复 1 设备（根因 = `/dev/video100` bind 从未持久化） | `reports/closeout-q29-backlight-camera-20261023.md`、`PITFALLS #372/#373` |
+| 2026-10-23 夜 | **Q28 前 2 发真 POR（vk152）= 2/2 GOOD**，判据段逐字一致；累计 3 发，距 ≥8 发判据剩 5 发（**采样配额：agent 只取 2 发，其余交用户**）。**新增待办 Q32 = 暖起 vs 冷起差异**（静态预研指向「ABL 交接 framebuffer + 复位动作」，而非「暖/冷」本身） | `reports/q28-por-samples-r1r2-20261023.md`、`reports/q32-warm-vs-cold-preresearch-20261023.md` |
 
 ---
 
@@ -151,12 +157,24 @@
 
 ## 6. 下一步（按优先级）
 
-1. **Q28**（未解，主线阻塞）：① **上游/Qualcomm 通道**——报告已就绪待发（`archive/topics/UPSTREAM-REPORT-q28-bonded-dsi-2026-10-12.md`）；② 软件侧仅剩 **复位终态对齐**（原厂复位后 `CLK_CTRL=0` 时钟全关+引擎关）与**原厂 `kickoff_command` 逐步对照**（`reports/q28-dsi-recover-20261012.md` §16.3），均须 PINUTS + 真实 POR 冷起；③ **验收 `vk124-merged`** 与残余坏发采样设计，见 `.pi/plans/2026-10-12-下一步测试任务-Q28-Q24.md`。⚠ ~~3 位身份重编治法~~、~~`to_primary_dsi`~~、~~上游 `2028280686f4` 移植~~、~~DSI ctrl+PHY 复位/软件闩锁/自定义 bonded 序列/使能期 force-on~~ 均已否证（`PITFALLS #196/#217/#223/#226`）。
-2. **Q24**：运营口径不变（相机 ⇄ 熄屏互斥）；续挖 = **外部电流/电压测量**（区分「相机域上电浪涌」vs「显示域转换」）+ 上游 RFC v3 补证（v2 已于 2026-10-10 发出）。
-3. **#106**：把判据升级为「GOOD 需 ≥60 s 存活/可交互」；尝试让死挂**自动 panic 带栈**（ramoops 或 OOB）。
-4. **上游化 M1–M5**：M1 干净资产树已建、构建通过；下一步 M2 首发小系列（`checkpatch`/`dtbs_check` 绿）。
-5. **G2**：Waydroid Play 登录与完整性等级取证。
-6. **G3**：Steam 端到端。
+> **2026-10-23 起的工作纪律（用户定）**：**需要物理 POR 的样本一律排最后**；**TF 卡（G1-6）暂时不做**；
+> **Q28 采样配额：agent 只取 2 发，其余交用户在机旁完成**。权威口径 = [`TASKS/README.md`](TASKS/README.md) §4「收尾轮次纪律」。
+
+1. **Q28**（未解，主线阻塞）：日常线 `vk152`，**真 POR 已 3 发 GOOD（判据段逐字一致）**，还差 5 发（交用户，
+   `scripts/q28-por-rounds.sh 1 2400 <轮号>`，`boot_b` 已是 vk152 故不需要 fastboot）。
+   机理线：M8 的 dispcc RFC 已投并在评审（我方 10-23 已按 Taniya 架构意见改成 display 侧复位）。
+   ⚠ 已否证：~~3 位身份重编~~、~~`to_primary_dsi`~~、~~上游 `2028280686f4` 移植~~、
+   ~~DSI ctrl+PHY 复位/软件闩锁/自定义 bonded 序列/使能期 force-on~~（`PITFALLS #196/#217/#223/#226`）。
+2. **Q32（新）暖起 vs 冷起差异**：静态预研已完成（`reports/q32-warm-vs-cold-preresearch-20261023.md`），
+   三臂实验（W1 暖 vendor / C1 真 POR / W2 `reboot -f`）在用户在场时做；
+   核心假说已从「暖/冷」改写为「**本次启动 ABL 有没有留活显示**」。
+3. **Q24**：**根因已指名、停止采样**（7.2 缺上游 `skip retention by default`，7.3 自带）。日常仍执行
+   `cam-mode.sh on/off` 互斥（安全策略，非既成事实）。
+4. **#106**：判据「GOOD 需 ≥60 s 存活/可交互」；ramoops 装弹已在位等它自己撞（见 `TASKS` §5 §2 表）。
+5. **上游化 M1–M5**：M1 树与 `m1-73/baseline` 已收敛；M3-1 v3 形状 RFC 已投等 ack；
+   M3-2 台账 / M3-3 音频 / M3-4 显示 / M4 camss 均备料封存（投递冻结，收盘统一投）。
+6. **G2**：容器相机只剩 **App 实开预览（需装 APK）**；C3 身份/DRM 取证（PI 检测 App 亦需 APK）。
+7. **G3**：Steam 端到端。
 
 ---
 
