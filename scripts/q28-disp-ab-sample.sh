@@ -6,7 +6,7 @@
 # reference/upstream-armadaos-freedom/README.md §5.1、reports/q28-disp-init-ab-20261022.md
 #
 # 用法：
-#   scripts/q28-disp-ab-sample.sh base|exp|only0154|only0155|daily|exp73|o155_73|daily73|v2 ["备注"]
+#   scripts/q28-disp-ab-sample.sh base|exp|only0154|only0155|daily|exp73|o155_73|daily73|v2|vk151 ["备注"]
 #
 # 前提（物理动作只能由用户执行，冷起必须真实 POR）：
 #   1. 长按电源键 ~10 s 关机（真断电；`reboot bootloader` 是暖复位，会粘 NOCARD，不能当冷起台架）
@@ -32,7 +32,8 @@ case "$arm" in
 	o155_73) label=q28disp-0155only73; img=$ROOT/out/boot-elden-vk143-q28-73-0155only.img ;;
 	daily73) label=q28disp-daily73; img=$ROOT/out/boot-elden-vk145-q28daily.img ;;
 	v2)      label=q28disp-v2;      img=$ROOT/out/boot-elden-vk150-q28v2.img ;;
-	*) echo "usage: $0 base|exp|only0154|only0155|daily|exp73|o155_73|daily73|v2 [note]" >&2; exit 2 ;;
+	vk151)   label=q28disp-vk151;   img=$ROOT/out/boot-elden-vk151.img ;;
+	*) echo "usage: $0 base|exp|only0154|only0155|daily|exp73|o155_73|daily73|v2|vk151 [note]" >&2; exit 2 ;;
 esac
 [ -f "$img" ] || { echo "缺镜像 $img（见 reports/q28-disp-init-ab-20261022.md 重建配方）" >&2; exit 2; }
 
@@ -44,4 +45,4 @@ fi
 echo "[sample] arm=$arm image=$(basename "$img")  —— fastboot boot（零写盘）"
 exec env TAB="$TAB" bash "$ROOT/scripts/trial.sh" run \
 	--label "$label" --image "$img" --reset por --deploy fastboot-boot \
-	--probe q28 --force --note "0154+0155 冷起 A/B；$note"
+	--probe q28 --force --note "Q28 arm=$arm；$note"
