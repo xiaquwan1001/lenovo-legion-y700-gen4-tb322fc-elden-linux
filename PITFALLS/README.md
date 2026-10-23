@@ -90,6 +90,7 @@
 | 63 | **#368** `reboot2 bootloader` 在设备刚硬复位后 ~11 s 下发 ⇒ 不进 fastboot 且 USB 全不枚举（无串口无 fastboot），只能人工断电 | [63-reboot2早期下发致设备USB不枚举.md](sessions/63-reboot2早期下发致设备USB不枚举.md) |
 | 64 | **#369** 显示栈已坏的 boot：`phoc` 在但 DBus 全超时、`dpms` 写 `EACCES`、`reboot2` 静默无效（shutdown 挂住）⇒ 逃生用 `SysRq-b`；熄屏实验前必须过显示健康门 | [64-显示栈坏时phoc-DBus超时与reboot2无效.md](sessions/64-显示栈坏时phoc-DBus超时与reboot2无效.md) |
 | 65 | **#370** 「概率性」故障先两树 `git diff` 枚举语义差 + 用现成 debugfs 验证，别急着加样本 | [65-概率性故障先diff两树语义差.md](sessions/65-概率性故障先diff两树语义差.md) |
+| 66 | **#371** 裸 `adb get-state`/`fastboot devices`（不带 `-s`）会把命令发给同总线的**另一台手机**；设备锁 fd 还会被 adb fork-server 继承导致后续脚本永久阻塞（`fuser` 判据） | [66-裸adb探测把命令发给同总线另一台手机.md](sessions/66-裸adb探测把命令发给同总线另一台手机.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。

@@ -1,0 +1,66 @@
+To: konrad.dybcio@oss.qualcomm.com
+Cc: linux-pm@vger.kernel.org, sre@kernel.org, linux-arm-msm@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] power: supply: qcom_battmgr: do not report power_now on SM8750
+In-Reply-To: <63cf18bc-5c89-4a55-aa15-2550dc47c155@oss.qualcomm.com>
+References: <20261013002124.332111-1-xiaqinghuan@mail.ustc.edu.cn> <5bf3636d-be7a-4800-9914-808d2fc5ebd9@oss.qualcomm.com> <179259054168.209323.8102186130128474174@mail.ustc.edu.cn> <52fc4222-508d-4acf-b38a-7b4e5aeff3cb@oss.qualcomm.com> <179274197125.1374502.18211548118625978753@mail.ustc.edu.cn> <63cf18bc-5c89-4a55-aa15-2550dc47c155@oss.qualcomm.com>
+
+Hi Konrad,
+
+> Did you try reaching out to the vendor?
+
+No, and I want to be precise about why rather than hand-wave it:
+
+  - This tablet (Lenovo Legion Y700 Gen4, TB322FC) has no vendor channel for
+    kernel sources. The public support surface is consumer warranty, not
+    engineering. We are an independent bring-up, not a customer of theirs.
+  - I also asked the person who is upstreaming the mainline DT for this same
+    board (separate thread, private) whether a downstream tree exists publicly.
+    There are partial downstream trees for sibling Lenovo tablets, but none that
+    covers this unit's QBG/battery path.
+
+So "ask the vendor" is not available to us. What I could do instead, I did:
+boot the unit's own stock Android and compare it against mainline on the same
+battery.
+
+STOCK ANDROID SIDE (slot a, same unit)
+
+  build:  Lenovo/TB322FC_PRC/TB322FC:16/BQ2A.250610.001-BP2A.250605.031.A3/\
+          ZUXOS_1.5.10.259_260611_PRC:user/release-keys
+  dumpsys battery:  level 94%, voltage 4309 mV, charge_counter 6439000 uAh,
+                    temperature 32.3 C, status 2 (charging), health 2
+
+Limits I hit, stated plainly: this is a user/release-keys build, so no adb
+root, and SELinux denies the shell domain access to
+/sys/class/power_supply/battery. I could not read the downstream kernel's own
+power_now attribute. Two things I could check from userspace:
+
+  - the Android battery stack never surfaces power_now at all: it is not in
+    dumpsys battery, and a full logcat scan for power_now / BATT_POWER returns
+    zero hits.
+  - therefore "is power_now disabled downstream too" has no answer from a user
+    build - the platform has no validated consumer of that property.
+
+MAINLINE SIDE (same unit, same battery, same QBG firmware, minutes later)
+
+  charge_counter 6489760 uAh, voltage_now 4285000 uV, current_now -1003000 uA,
+  temp 32.1 C, capacity 94%
+
+The shared QBG values agree with the stock numbers (charge counter within 0.8%,
+voltage 24 mV, temperature 0.2 C). So the property plumbing is not the problem:
+the only quantity that disagrees is POWER_NOW, and the stock stack does not use
+it.
+
+WHAT WE DO IN OUR TREE
+
+Our SM8750 battmgr description simply does not advertise the property (the
+sm8550 property list minus the trailing POWER_NOW), so on our dailies
+/sys/class/power_supply/qcom-battmgr-bat has no power_now file at all - that is
+what the patch you already have does.
+
+If a readback of the raw downstream slot would settle it for you, I can unlock
+and root this unit and read the value directly - it costs us a slot switch and
+an unlock, so tell me if it is actually load-bearing for the patch, otherwise I
+would rather keep the unit usable.
+
+Thanks,
+Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>

@@ -1,0 +1,21 @@
+To: konrad.dybcio@oss.qualcomm.com
+Cc: linux-pm@vger.kernel.org, sre@kernel.org
+Subject: Re: [PATCH] power: supply: qcom_battmgr: do not report power_now on SM8750
+In-Reply-To: <179276335779.97093.2561281074827129812@mail.ustc.edu.cn>
+References: <20261013002124.332111-1-xiaqinghuan@mail.ustc.edu.cn> <5bf3636d-be7a-4800-9914-808d2fc5ebd9@oss.qualcomm.com> <52fc4222-508d-4acf-b38a-7b4e5aeff3cb@oss.qualcomm.com> <63cf18bc-5c89-4a55-aa15-2550dc47c155@oss.qualcomm.com> <179276335779.97093.2561281074827129812@mail.ustc.edu.cn>
+
+One correction to my previous mail before it misleads you: I wrote that we have
+no vendor sources, which is too strong.
+
+What we actually have is the OEM's public GPL drop for this unit
+(android_kernel_lenovo_sm8750 + -modules). It does contain vendor sources for
+display (qcom/opensource/display-drivers), touch, camera, wlan, audio, video.
+It does NOT contain the battery/QBG path - there is no drivers/power/supply
+vendor code and no qti_battery_charger in the drop at all - which is exactly the
+part your question is about. So the answer for this thread is unchanged, but the
+reason is "the drop does not cover this subsystem", not "no sources exist".
+
+We have not contacted the vendor; the drop is public download, no support
+channel involved.
+
+Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
