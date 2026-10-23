@@ -10,7 +10,7 @@
 
 | 项 | 值 |
 |---|---|
-| 镜像 | `out/boot-elden-vk64-syncarm.img` |
+| 镜像 | `out/boot-elden-vk148.img` |
 | sha256 | `93bbc4e265ae06a0e302f86d741137cace8d9f233ab60d719069804042435815` |
 | kernel payload sha256 | `2696543452a78008bb0ad93a822fec2b36055ce16e57b51c8b62dd45e54fd9a4` |
 | UTS | `7.2.0-debug-vk64-gd02658e63cf6`（**显式钉住** ⇒ 复用设备上 1497 个 `.ko`，`PITFALLS #367`） |
@@ -27,7 +27,7 @@
 
 ## 2. 首测结果：**3/3 ALIVE**（同一 boot 连采）
 
-台架：`fastboot boot out/boot-elden-vk64-syncarm.img` → 会话起来 → 加载 19 个相机模块 → `ScreenSaver.SetActive(true)`（真实熄屏，`dpms On→Off` 已核）→ 熄屏 30 s → **显式唤醒** → 再判 8 s。
+台架：`fastboot boot out/boot-elden-vk148.img` → 会话起来 → 加载 19 个相机模块 → `ScreenSaver.SetActive(true)`（真实熄屏，`dpms On→Off` 已核）→ 熄屏 30 s → **显式唤醒** → 再判 8 s。
 
 | 轮 | dpms | 熄屏 30 s | 唤醒 8 s | 判定 |
 |---|---|---|---|---|

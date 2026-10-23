@@ -284,3 +284,5 @@ vk146-BADSUSPEND	num_ne_tag	PINUTS 到 vk127 UTS（config 漂移作废，留证�
 vk146-BADSUSPEND	uts_dup	PINUTS 到 vk127 UTS
 vk147	num_ne_tag	PINUTS 到 vk127 UTS（在机 boot_b：kexec 旋钮 + 0154，SSOT config）
 vk147	uts_dup	PINUTS 到 vk127 UTS
+vk148	num_ne_tag	单变量臂：内核源仍为 vk64 提交（d02658e63），只改 rpmhpd sync_state，故源提交上只有 vk64 ref
+vk148	uts_dup	PINUTS 到 vk64 UTS，刻意复用机上 1497 个 vk64 模块（PITFALLS #367）

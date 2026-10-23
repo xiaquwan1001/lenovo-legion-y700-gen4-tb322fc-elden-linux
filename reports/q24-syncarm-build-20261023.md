@@ -206,22 +206,22 @@ python3 scripts/mkbootimg.py --header_version 2 --os_version 15.0.0 --os_patch_l
   --cmdline "console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1" \
   --base 0x00000000 --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 \
   --second_offset 0x00f00000 --tags_offset 0x00000100 --dtb_offset 0x01f00000 \
-  --pagesize 4096 -o out/boot-elden-vk64-syncarm.img
+  --pagesize 4096 -o out/boot-elden-vk148.img
 ```
 
 | 项 | 值 |
 |---|---|
-| 输出 | `/home/xuqianhui/y700-elden/out/boot-elden-vk64-syncarm.img` |
+| 输出 | `/home/xuqianhui/y700-elden/out/boot-elden-vk148.img` |
 | 大小 | 85,352,448（与 vk64 相同：各段按 4096 页对齐后总长不变） |
 | image sha256 | `93bbc4e265ae06a0e302f86d741137cace8d9f233ab60d719069804042435815` |
-| manifest | `out/boot-elden-vk64-syncarm.manifest`（`scripts/build-manifest.sh vk64-syncarm` 生成，sha `2fe6590a103d6b3e…`，未手写） |
+| manifest | `out/boot-elden-vk148.manifest`（`scripts/build-manifest.sh vk64-syncarm` 生成，sha `2fe6590a103d6b3e…`，未手写） |
 | kernel_payload_sha256（解压后内核身份） | `2696543452a78008bb0ad93a822fec2b36055ce16e57b51c8b62dd45e54fd9a4` |
 
 ### 5.1 镜像结构逐字段对比
 
 ```
 python3 scripts/mkbootimg.py --unpack out/boot-elden-vk64.img        --unpack-dir /tmp/un-a
-python3 scripts/mkbootimg.py --unpack out/boot-elden-vk64-syncarm.img --unpack-dir /tmp/un-b2
+python3 scripts/mkbootimg.py --unpack out/boot-elden-vk148.img --unpack-dir /tmp/un-b2
 ```
 
 | 头字段 | vk64 | syncarm | 判定 |
@@ -299,7 +299,7 @@ $ git -C linux rev-list --count d02658e63..'vk64^{commit}'
    `4d70d304…` → `1671a8f6…` → `cf2eaeb9…`（`init/version-timestamp.o` 每次重建、`.rodata` 里的
    编译时间戳随之变化）。但 `rpmhpd.o` 每次编译**字节完全相同**（`79303174…`，三次一致）
    ⇒ 代码差异本身是确定的，不确定性只在时间戳。
-   **最终交付态 = 本文 §5 与 `out/boot-elden-vk64-syncarm.manifest` 的 sha**：
+   **最终交付态 = 本文 §5 与 `out/boot-elden-vk148.manifest` 的 sha**：
    image `93bbc4e2…`，kernel payload `2696543452…`，Image.gz `cf2eaeb9…`。
    判据请用 `kernel_payload_sha256`（解压后内核身份），不要用中间产物。
 4. **语义风险（本 lane 不判定）**：所有 rail 钉在最高档可能导致功耗/发热显著上升，或与
