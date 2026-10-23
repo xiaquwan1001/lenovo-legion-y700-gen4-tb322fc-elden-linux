@@ -292,3 +292,5 @@ vk150-q28v2	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只改显示
 vk150-q28v2	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）
 vk151	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只改显示复位归属与软件修，故源提交上只有 replay/m1-73-vk127 ref
 vk151	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）
+vk152	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只加 Q11 kexec 诊断旋钮（0019/0020），故源提交上只有 replay/m1-73-vk127 ref
+vk152	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）；新增旋钮不改变 config/ABI（check-abi-config 27 项一致、of_node@624）
