@@ -167,6 +167,8 @@
 
 ### 2.3 主机大容量资产（占盘大户，勿误删）
 
+> **2026-10-23 状态**：外置盘 `/mnt/Samsung` **未挂**（`./l2` 断链、`~/mnt/Samsung/l2` 空目录）⇒ 下表前两行目标**本机不存在**；现现盘最大项改为 `build/` 40 G 与 `.pi/trash/` 21 G（见 §3.2）。
+
 | 路径 | 内容 | 规模 |
 |---|---|---|
 | `/mnt/Samsung/waydroid-build` | Waydroid AOSP 树（1254 项目 / 1219 对象库 fsck 全 OK） | 550 G（**2026-10-16 告知将随盘清空**：本地提交已推两个 USTC 仓、树外件已留档 `reference/waydroid-buildtree/`、构建产物 `vendor.img` 已进云盘包 ⇒ 可清） |
@@ -190,6 +192,8 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 要继续则从该文档 §下一步 接上（关键坑：debugfs `rm` 不同步位图，必须 `e2fsck -fp` 收尾；OTA 彻底失效是固定代价）。
 
 ### 2.5 资产瘦身优先级（2026-10-02 审计｜纯文字方案，**未执行**）
+
+> **2026-10-23：本节数字大量过期（换机后 / 重下后），现行口径以 `../reports/assets-inventory-20261023.md` §5（A0–A7）与 §3.3 状态表为准**；本节只保留 P 级方案的历史推理。
 
 > 2026-10-03：条目状态、可清理标记与 git 归属已集中到 **`README.md §3` §3**；本节的 P 级方案不变。
 > **P0-b 前置闸已解除**：内核工作树 13 个 modified 文件已导出为
@@ -265,65 +269,83 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 
 ### 2. 顶层台账
 
-| 路径 | 体积 | 版本控制 | 说明 / 处置 |
+> **2026-10-23 全量对账**（`reports/assets-inventory-20261023.md`）：体积全部现查 `du`；仓库总占用 **83.5 GB**、入 git **2399 文件 / 49 MB**（`.git` 另 31 MB）。
+> 失配 17 行数字 + 10 条路径已不存在 + 5 项未登记，已按本表刷新。**删除仍按 §3 纪律等令。**
+
+| 路径 | 体积（2026-10-23 现查） | 版本控制 | 说明 / 处置 |
 |---|---|---|---|
-| 领域层 `INDEX/DEVICE/TASKS/RESOURCES/RUNBOOK.md` + `../PITFALLS/README.md` + `AGENTS.md` | <200 K | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2（GAPS/ANDROID-COMPAT 已并入 `../TASKS/README.md` §5/§6） |
-| `.pi/{skills,missions,agents}` `.pi/README.md` `.pi/AGENT-OPS.md` `.pi/CONCURRENCY.md` `.pi/settings.json` | ~1 M | ✅ track | AI 大脑：行为规范/并发细则/技能/子代理/模型配置（分工见 `.pi/README.md`）。⚠️ `.pi/memory/` 已于 2026-10-05 删除（迁 hermes）；`pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1） |
-| `.pi/sessions/`（jsonl 会话轨迹，含会话子目录副本） | **现查 `du -sh .pi/sessions`**（不写死；2026-10-19 = 456 M） | ignore | 会话轨迹。**会话数不在这里维护**：现查 `ls .pi/sessions/*.jsonl \| wc -l`；检索用 `scripts/sess.sh` 或 `/resume`。**整理候选**：旧会话归档（见 §3 H1） |
-| `scripts/` | ~530 K | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
-| `patches/` | 3.7 M | ✅ track（q28 delay/methodB 草稿未入库） | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档）。**Q28 显示诊断补丁系列**（均设备无关诊断/实验件，非 G1 交付）：已 RAM 上机取证 = `q28-dsi-regdump.patch`/`q28-dsi-regdump-with-baseline.patch`（vk72/vk73/vk75 好坏寄存器差分）、`q28-poweron-propagate.patch`（vk74 4/4 复现）、`q28-cmd-dma-delay.patch`（vk84-{base,exp} 单变量对，暖 8/8 GOOD 不判别、冷 A/B 仅 T1=NOCARD 未定案）；候选未独立上机 = `q28-dsi-cmd-recover.patch`（vk64 源有界复位）；草稿未编未 apply = `q28-methodB-round-byteclk.patch`+`q28-methodB-NOTES.md`（取整 byte-clk，落点待按上游校准） |
-| `patches-userland/` | <60 K | ✅ track | **用户态（Phosh/phoc）补丁 + 构建/安装脚本**（2026-10-11 新增）：`0001-phoc-honor-any-mode.patch`（切非 preferred 刷新率）、`0002-phosh-report-supported-scale.patch`（修非整数比例显 100%）、`0003-...`（自动旋转磁贴，**已撤销 2026-10-19：内置磁贴重复**，原文在 `withdrawn/`）、`alpine-phosh-*.patch`（发行版补丁，保一致）、`build-phoc-phosh.sh`、`install-on-device.sh`（设备侧幂等安装；已不再装插件）、`build-deps.txt`、`upstream/`（**上游 MR 草案**）。已上机验证，证据见 `reports/userland-display-scale-refresh-20261011.md`、`reports/userland-auto-rotation-toggle-20261011.md`。设备侧还原副本 = `rootfs/persistent-overlay/userland-display/`（restore.sh 自动调用） |
-| `archive/` | ~5.5 M | ✅ track | 过程证据（87 篇专题 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），追加为主 |
-| `reports/` | 216 K | ✅ track（2026-10 整理轮起入库） | **活跃主题的工作区证据**（活跃期可读可改；主题定案后整体迁 `archive/topics/`，归档层追加为主）。现含 **Q28 显示线过程稿**（`q28-DOSSIER.md`=SSOT、`q28-INDEX.md`=文档地图、`q28-{handoff,two-layers,upstream-diff,orchestration,upstream-research,nocard-research}-20261010.md`）、**Q24+Q28 会话/进度/产物合并台账 `Q24-Q28-INDEX.md`**、**用户态显示修正 `userland-display-scale-refresh-20261011.md`**、**自动旋转磁贴 `userland-auto-rotation-toggle-20261011.md`**、本地清理审计 `local-cleanup-audit-20261010.md`、本轮整理提案 `tidy-20261010/`（`resources-edits.md`/`cleanup-candidates.md` + T1/T2/T3 简报） |
-| `../PITFALLS/README.md` | 164 K | ✅ track | 踩坑正文（按主题编号）+ §0 零号纪律 + §15 废弃登记 |
-| `SESSIONS/README.md` + `SESSIONS/sessions/` | 784 K | ✅ track | 会话索引/统计（**会话数 SSOT = §1**）+ 内核实机验证边界；逐会话档案一行一文件（原 `README.md §4` 会话索引已迁此） |
+| 领域层 `INDEX/DEVICE/TASKS/RESOURCES/RUNBOOK.md` + `AGENTS.md`（各角度 `README.md` 单列） | 领域层合计 ≈ 0.8 M（`TASKS/` 456 K、`HISTORY/` 144 K、`RESOURCES/` 84 K、`DEVICE/` 48 K、`RUNBOOK-BRINGUP/` 44 K、`INDEX.md` 20 K、`PROGRESS.md` 20 K、`README.md` 12 K、`AGENTS.md` 4 K） | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2（GAPS/ANDROID-COMPAT 已并入 `../TASKS/README.md` §5/§6） |
+| `.pi/{skills,missions,agents}` `.pi/README.md` `.pi/AGENT-OPS.md` `.pi/CONCURRENCY.md` `.pi/settings.json` `.pi/plans` `.pi/hermes-memory-mirror` `.pi/fabric.json` | 1.5 M | ✅ track | AI 大脑：行为规范/并发细则/技能/子代理/模型/计划（分工见 `.pi/README.md`）+ hermes 项目记忆单向镜像 620 K。⚠️ `.pi/memory/` 已于 2026-10-05 删除（迁 hermes）；`pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1）。`.pi/lanes/`、`.pi/fabric/` 为运行时，已 ignore |
+| **`.pi/trash/`**（trash-cli 回收站：`files/` + `info/*.trashinfo`） | **21 G** | ignore（**依据在 `.git/info/exclude:7`，本机私有、不入库**） | **2026-10-23 新登记**（此前台账完全没记，是仓库最大单体之一）。来源 = `scripts/rambuild.sh` 等用 `trash` 删构建落点。单件最大 `out-m1-73.1792228804` **11 G**；另有 5.07 G `cloud-backup-y700-elden-20261016.tar.zst`（已按 MANIFEST 校验过、结论在 `reports/cloud-backup-manifest-20261016.md`）+ 大量 `obj/gen/stage/out-cam` 中间物。**可整删（A0）**；`info/` 里有原路径记录，如需救回先看 `info/` |
+| `.pi/sessions/`（jsonl 会话轨迹，含会话子目录副本） | **现查**（2026-10-23 = 496 M / 209 个 jsonl） | ignore | 会话轨迹。**会话数不在这里维护**：现查 `ls .pi/sessions/*.jsonl \| wc -l`；检索用 `scripts/sess.sh` 或 `/resume`。**整理候选**：旧会话归档（见 §3 H1） |
+| `scripts/` | 1.3 M（180 文件） | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |
+| `patches/` | 11 M（310 文件） | ✅ track | 内核补丁 + config 快照 + 工作树全量 patch + `kernel-history/`（各 elden 分支增量补丁，异地留档）。**Q28 显示诊断补丁系列**（均设备无关诊断/实验件，非 G1 交付）：已 RAM 上机取证 = `q28-dsi-regdump.patch`/`q28-dsi-regdump-with-baseline.patch`（vk72/vk73/vk75 好坏寄存器差分）、`q28-poweron-propagate.patch`（vk74 4/4 复现）、`q28-cmd-dma-delay.patch`（vk84-{base,exp} 单变量对，暖 8/8 GOOD 不判别、冷 A/B 仅 T1=NOCARD 未定案）；候选未独立上机 = `q28-dsi-cmd-recover.patch`（vk64 源有界复位）；草稿未编未 apply = `q28-methodB-round-byteclk.patch`+`q28-methodB-NOTES.md`（取整 byte-clk，落点待按上游校准） |
+| `patches-userland/` | 536 K（62 文件） | ✅ track | **用户态（Phosh/phoc）补丁 + 构建/安装脚本**（2026-10-11 新增）：`0001-phoc-honor-any-mode.patch`（切非 preferred 刷新率）、`0002-phosh-report-supported-scale.patch`（修非整数比例显 100%）、`0003-...`（自动旋转磁贴，**已撤销 2026-10-19：内置磁贴重复**，原文在 `withdrawn/`）、`alpine-phosh-*.patch`（发行版补丁，保一致）、`build-phoc-phosh.sh`、`install-on-device.sh`（设备侧幂等安装；已不再装插件）、`build-deps.txt`、`upstream/`（**上游 MR 草案**）。已上机验证，证据见 `reports/userland-display-scale-refresh-20261011.md`、`reports/userland-auto-rotation-toggle-20261011.md`。设备侧还原副本 = `rootfs/persistent-overlay/userland-display/`（restore.sh 自动调用） |
+| `archive/` | 2.6 M（219 文件，含 124 篇 md） | ✅ track | 过程证据（124 篇 md + 2 截图 + 2 截图 + `2026-10-04-retired-entrypoints/` 退场入口归档），追加为主 |
+| `reports/` | 15 M（154 篇 md + `artifacts/` 1.1 M） | ✅ track（2026-10 整理轮起入库） | **2026-10-23 资产盘点** = `assets-inventory-20261023.md`（顶层磁盘真值 / 台账失配 / 不可再生 / 清理候选 A0–A7 / MIGRATION-LOST 对账）。 **活跃主题的工作区证据**（活跃期可读可改；主题定案后整体迁 `archive/topics/`，归档层追加为主）。现含 **Q28 显示线过程稿**（`q28-DOSSIER.md`=SSOT、`q28-INDEX.md`=文档地图、`q28-{handoff,two-layers,upstream-diff,orchestration,upstream-research,nocard-research}-20261010.md`）、**Q24+Q28 会话/进度/产物合并台账 `Q24-Q28-INDEX.md`**、**用户态显示修正 `userland-display-scale-refresh-20261011.md`**、**自动旋转磁贴 `userland-auto-rotation-toggle-20261011.md`**、本地清理审计 `local-cleanup-audit-20261010.md`、本轮整理提案 `tidy-20261010/`（`resources-edits.md`/`cleanup-candidates.md` + T1/T2/T3 简报） |
+| `../PITFALLS/`（`README.md` 正文 + `sessions/`） | 564 K | ✅ track | 踩坑正文（按主题编号）+ §0 零号纪律 + §15 废弃登记 |
+| `SESSIONS/README.md` + `SESSIONS/sessions/` | 792 K | ✅ track | 会话索引/统计（**会话数 SSOT = §1**）+ 内核实机验证边界；逐会话档案一行一文件（原 `README.md §4` 会话索引已迁此） |
 | `initramfs/` | 2.0 M | ✅ track | init/脚本 + busybox（重建输入） |
-| `rootfs/`（脚本/conf/init） | 小 | ✅ track | `alpine/ dl/ debs/`（176 M+）已 ignore |
-| `env-pass/{scripts,tools}/` | 12 K | ✅ track | 过环境脚本 + 模块重打包工具 |
+| `probes/` | 2.1 M（8 文件纳管；2 个 `.ko` + `.module-common.o` 被 ignore） | ✅ track | **2026-10-23 新登记**：Q28 设备侧探针模块源码 + 预编 `.ko`（`q28latch/`、`q28peek/`，另见 `probes/README.md`）；`.ko` 属可重编，结论在 `reports/q28-*` |
+| `reference/` | 4.0 M（58 文件） | ✅ track | **2026-10-23 新登记**：外部同机型/厂商资料的**快照与裁决**（`upstream-armadaos-freedom/`、`upstream-mu-silicium/`、`upstream-pengyuluo/`、`vendor-display-sm8750/`、`waydroid-buildtree/`、`stock-elden.dts`） |
+| `versions/` | 652 K（8 文件） | ✅ track | **2026-10-23 新登记**：供机器门与台账比较的派生表（`vk-kernel-identity.tsv`、`vk-registry.tsv`、`migration-gaps-2026-10-17.tsv`、`cloud-backup-20261016.MANIFEST.sha256`…）；`*.lock` 为运行时，已 ignore |
+| `rootfs/`（脚本/conf/init） | 672 K（63 文件） | ✅ track | 现体量在 `persistent-overlay/` 568 K（`userland-display/`、`user-autostart/`、`usr-libexec-elogind-system-sleep/`）；旧注的 `alpine/ dl/ debs/` **已不存在** |
+| `env-pass/{scripts,tools}/` | 44 K | ✅ track | 过环境脚本 + 模块重打包工具 |
 | `bootslot-b/README.md` `backup/fw/README.md` `restore-259/*.md` | ~15 K | ✅ track | 关键说明文档（其余二进制 ignore） |
 | `net/ waydroid-ota/` | <220 K | ✅ track | 小体积资产 |
-| `dl-cam/` | 8.7 G | ignore（`.gitignore` `/dl-cam/*` + 只复活脚本） | **C5 容器侧 camera provider 的构建工作区（2026-10-18）**：`hw-interfaces/`（AOSP external HAL 源码 + 自研 YUV 补丁）、`out-cam/`（64-bit 产物）、`ndk/`+`ndk-r25c.zip`、`los20-rpi5-ota.zip`（donor 64-bit prebuilt 来源）、`vendor-cam.img`（128 MiB 烘入件）、`system/vendor-sdat.img` 等中间物。**入库的只有**：`scripts/waydroid-camera-bake.sh` + `patches/waydroid-camera-64bit-20261018/`（补丁、构建脚本、`gen-src.sh`、`hidl-smoke.cpp`、`iface-compat.h`、平台 libc++ config site 等副本）；其余可删可重建（`los20` OTA / NDK 可重下）。**2026-10-18 晚**：新增 `gen-src/`（hidl-gen 生成的 Bn/Bp 51 源）、`libcxx/src`（AOSP 平台 libc++ 头）、`hdrs`/`iface-compat.h`；bake 镜像尺寸参数化（`SIZE`，默认 **256M**，自编 Bn/Bp 后每个 .so ≈4.5 MB） |
+| `dl-cam/` | 8.8 G | ignore（已纳管 231 文件：`libcxx/` 185 + `gen-src/` 40 + 脚本） | **C5 容器侧 camera provider 的构建工作区（2026-10-18）**：`hw-interfaces/`（AOSP external HAL 源码 + 自研 YUV 补丁）、`out-cam/`（64-bit 产物）、`ndk/`+`ndk-r25c.zip`、`los20-rpi5-ota.zip`（donor 64-bit prebuilt 来源）、`vendor-cam.img`（128 MiB 烘入件）、`system/vendor-sdat.img` 等中间物。**入库的只有**：`scripts/waydroid-camera-bake.sh` + `patches/waydroid-camera-64bit-20261018/`（补丁、构建脚本、`gen-src.sh`、`hidl-smoke.cpp`、`iface-compat.h`、平台 libc++ config site 等副本）；其余可删可重建（`los20` OTA / NDK 可重下）。**2026-10-18 晚**：新增 `gen-src/`（hidl-gen 生成的 Bn/Bp 51 源）、`libcxx/src`（AOSP 平台 libc++ 头）、`hdrs`/`iface-compat.h`；bake 镜像尺寸参数化（`SIZE`，默认 **256M**，自编 Bn/Bp 后每个 .so ≈4.5 MB） |
 | 根目录 `*.deb`（8 个） | 1.9 M | ignore（`/*.deb`） | C5 工具链包（`hidl-gen`、`aidl` + android-lib*）：`dpkg -i` 装过即可；重建时按 `patches/waydroid-camera-64bit-20261018/README.md` 重下 |
-| `build/` | 4.0 G | ignore（`.gitignore` 第 24 行 `/build/` 已在） | **2026-10-10 起内核构建目录**（`scripts/build-kernel.sh` 工作区；体量集中在 `build/m1-upstream`，`build/glibc-arm64` 近空）。**可再生**：`make clean`/整目录删后下次构建重建，无独有内容需留（简报称「父将补 .gitignore」——实测已补，无需再补） |
+| **`build/`** | **40 G**（7 棵树 + `linux-7.2.tar.xz` 153 M） | ignore（`/build/`） | **2026-10-10 起内核构建目录**。⚠ **旧口径「整目录可再生」不成立**（2026-10-23 实测）：`build/base-7.2` 与 `build/m3v2-7.3rc7` 是**独立仓**，含**本地独有提交**（`master`/`elden-payload-v2` `378459aff`、`m3v2` `f3cf334`、`replay-m1-73-vk127` `24223e4`，对象不在 `geekidos-linux`、也不在 10-10 bundle）；其余 5 棵是 worktree，**未提交改动**：`m1-73` 13 / `q28-disp` 1 / `q28-disp2` 1 / `q28-disp-73` 4。**回收前必须先 `git bundle create … --all` 固定两仓 + 导出这 4 棵 worktree 的 diff**（逐项见 `reports/assets-inventory-20261023.md` §4.1） |
 | `linux -> geekidos-linux` | 符号链接 | ✅ track | 目录约定 |
-| `geekidos-linux/` | 13 G | ignore | 上游 `GEEKiDoS/linux` v7.2-elden + 构建产物 |
-| `Y700-elden-linux/` | 15 M | ignore | 旧迭代上游 clone |
-| `stock-src/` | 350 M | ignore | 联想 GPL 源码 clone（可重下） |
-| `qdl/` | 3.2 M | ignore | 上游 qdl（`qdl/build/qdl` 为构建物） |
-| `tools/` | 14 M | ignore | `venv-avb` + 上游 `mkbootimg`（可重建） |
-| `edk2-gunyah/` `edk2-gunyah-qemu/` `edk2-aarch64-gunyah/` | 2.0 G | ignore | 2026-10-05 研究 clone（`Droid-VM/edk2-gunyah`、`qemu-gunyah/edk2-gunyah-qemu`、`AnyLaySys/edk2-aarch64-gunyah`；Gunyah VM/Windows guest 固件参考，**可重下、可清理**）。前两者由 bootchain lane clone；`edk2-aarch64-gunyah` 由并发会话 clone。详见 §1.5 |
-| `mu_wide_platforms/` | 1.0 G | ignore | **G1-29 主资源（2026-10-05 落盘）**：fork `xiaquwan1001/mu_wide_platforms` ← `sunflower2333/mu_wide_platforms`；含 **TB322FC 设备包** `Platforms/PakalaPkg/Device/lenovo-y700g4/`（391 文件）。可重下；详见 §1.6 |
-| `uefi-firmware-backup/` | 1.3 G | ignore | `Project-Aloha/UEFIFirmwareBackup`（2026-10-05 落盘，shallow）；`lenovo-y700g4/` 原厂 UEFI DXE 备份（含 `uefi.elf`、`BOOT.MXF.2.5.1-00240.1-PAKALA-1/`），即设备包 `Binaries/` 的来源。可重下；详见 §1.6 |
-| `out/` | ~3.5 G（41 个 img） | ignore（`*.manifest` 入库） | boot 产物 / cpio / modules。**2026-10-10 清理审计已回收 ~6.28 G（9.4→3.6）**；留盘口径同 `versions/vk-identity-inflight.txt`：vk64=持久 boot_b 内核（+`Image-vk64.gz`）、**在途留**=vk84-q28delay-{base,exp}+vk74-q28power（Q28 冷 A/B 未定案）、vk77/vk78 modular 线；**用户已判死可删**=vk71-mxc/mxnom（Q24 变体）。逐项见 `reports/local-cleanup-audit-20261010.md` 与 `reports/tidy-20261010/cleanup-candidates.md` |
-| `bootslot-b/` `bootslot-b-u2/` | 905 M | ignore | 自签 b 槽包（含 `avb.key` 私钥，禁止入库） |
-| `backup/` | 1.5 G | 混合 | 原厂分区/固件/GPT dump（不可替代，留盘）。**证据文本已纳入 git**（`elden-dump.txt`、`HA2EXB0E-16+512/*.txt`、`pre-unlock/`、`vk40-ram-acceptance-dmesg.txt`）；二进制与 `sn-neko-zuxos.img` 仍 ignore |
-| `env-pass/`（余） | 3.8 G | ignore | 过环境栈 + rootfs 归档 |
-| `logs/` | 92 M | ignore | 串口/构建/agent 日志 |
-| `pkgs/ pkgs-phosh/ pkgs-x86/` | 639 M | ignore | apk/deb 缓存（可重下） |
-| `probe/` `twrp/` `y700四代工具/` | 552 M | ignore | 探针数据 / TWRP 镜像 / 厂商工具 |
-| `flashing-bundle/` | 15 M | ignore | 换机迁移包快照（tar.gz 已归档 `2026-10-04-root-strays/`） |
-| `restore-259/`（二进制） | 254 M | ignore | AVB/KSU/EDL 救砖资产 |
+| `geekidos-linux/` | 2.9 G | ignore | 上游 `GEEKiDoS/linux` v7.2-elden + 构建产物（换机后重量；refs 到 `elden-archive/q28/vk86`，另有本地线 `replay/m1-73-vk127`）。无站外 git 备份 ⇒ 见 §1 的 bundle 行 |
+| `Y700-elden-linux/` | 28 M | ignore | 旧迭代上游 clone |
+| `stock-src/` | 2.0 G | ignore | 联想 GPL 源码 clone（可重下） |
+| `qdl/` `twrp/` `probe/` `pkgs-phosh/` `pkgs-x86/` `flashing-bundle/` `bootslot-b-u2/` | **磁盘已不存在** | — | 换机未随迁或已清理；保留本条只为消除旧台账死路径（需时重下/重建） |
+| `tools/` | 232 K | ignore | 只剩 `avbtool.py` + 上游 `mkbootimg`（可重建）；`venv-avb` 已不在 |
+| `edk2-gunyah/` `edk2-gunyah-qemu/` `edk2-aarch64-gunyah/` | **磁盘已不存在（原 2.0 G）** | ignore | 2026-10-05 研究 clone（`Droid-VM/edk2-gunyah`、`qemu-gunyah/edk2-gunyah-qemu`、`AnyLaySys/edk2-aarch64-gunyah`；Gunyah VM/Windows guest 固件参考，**可重下、可清理**）。前两者由 bootchain lane clone；`edk2-aarch64-gunyah` 由并发会话 clone。详见 §1.5 |
+| `mu_wide_platforms/` | **磁盘已不存在（原 1.0 G）** | ignore | **G1-29 主资源（2026-10-05 落盘）**：fork `xiaquwan1001/mu_wide_platforms` ← `sunflower2333/mu_wide_platforms`；含 **TB322FC 设备包** `Platforms/PakalaPkg/Device/lenovo-y700g4/`（391 文件）。可重下；详见 §1.6 |
+| `uefi-firmware-backup/` | **磁盘已不存在（原 1.3 G）** | ignore | `Project-Aloha/UEFIFirmwareBackup`（2026-10-05 落盘，shallow）；`lenovo-y700g4/` 原厂 UEFI DXE 备份（含 `uefi.elf`、`BOOT.MXF.2.5.1-00240.1-PAKALA-1/`），即设备包 `Binaries/` 的来源。可重下；详见 §1.6 |
+| `out/` | 2.4 G（22 个 img / 172 个 manifest） | ignore（`*.manifest` 入库） | 现存 vk64、vk127、vk130–vk147；⚠ **vk130/vk131 现「内核段不可读」**（`vk-identity.py` 硬化后判定，属内核线在途）。 boot 产物 / cpio / modules。**2026-10-10 清理审计已回收 ~6.28 G（9.4→3.6）**；留盘口径同 `versions/vk-identity-inflight.txt`：vk64=持久 boot_b 内核（+`Image-vk64.gz`）、**在途留**=vk84-q28delay-{base,exp}+vk74-q28power（Q28 冷 A/B 未定案）、vk77/vk78 modular 线；**用户已判死可删**=vk71-mxc/mxnom（Q24 变体）。逐项见 `reports/local-cleanup-audit-20261010.md` 与 `reports/tidy-20261010/cleanup-candidates.md` |
+| `bootslot-b/`（`bootslot-b-u2/` 已不存在） | 409 M | ignore | 自签 b 槽包（含 `avb.key` 私钥，禁止入库） |
+| `backup/` | 3.2 G | 混合 | 2026-10-23 构成：`HA2EXB0E-16+512/` 669 M（含 `unique/` 133 M、`device-rescue-20261017/` 19 M）、`stock-259/` 443 M、`stock-elden/` 271 M、`git-pack-repair-20261020/` 574 M、`kernel-git-repair-2026-10-08/` 265 M（被 10-10 版覆盖，可删）、`kernel-git-repair-2026-10-10/` 265 M、`avf/` 249 M、`fw/` 191 M、`misc/` 1.6 M、`gpt/` 92 K、`slot-probe/` 6.7 M、`rawdump.img` 256 MiB、`dtbo_a.img` 32 M、`doctor-scripts-wt-20261015/` 16 K。 原厂分区/固件/GPT dump（不可替代，留盘）。**证据文本已纳入 git**（`elden-dump.txt`、`HA2EXB0E-16+512/*.txt`、`pre-unlock/`、`vk40-ram-acceptance-dmesg.txt`）；二进制与 `sn-neko-zuxos.img` 仍 ignore |
+| `env-pass/`（余） | 3.3 G | ignore | 只剩 `backup-20261002/linux17-rootfs-20261002.tar.gz` 3.3 G（里程碑件，不瘦身）；`build/`、`kernel-susfs/` 已不在 |
+| `logs/` | 204 M | ignore | 串口/构建/agent 日志；大头 `cam-vk127-20261017-203657/` 110 M、`cam-snapshot-20261019/` 61 M |
+| `pkgs/` | 4 K（**空目录**） | ignore | 原 apk/deb 缓存 639 M 已清；`pkgs-phosh/`、`pkgs-x86/` 已不存在。空壳可删（A7） |
+| `y700四代工具/` | 271 M | ignore | 厂商工具（`probe/`、`twrp/` 已不存在） |
+| `flashing-bundle/` | **磁盘已不存在（原 15 M）** | ignore | 换机迁移包快照（tar.gz 已归档 `2026-10-04-root-strays/`） |
+| `restore-259/` | 20 K（只剩 2 个 md） | ✅ track | 二进制 254 M 已不在（按 `.gitignore` 只留 md 的设计） |
 | `archive/2026-10-04-root-strays/y700-elden-docs-*.tar.gz`（5 个） | 240 K | 已入库 | 旧文档快照；2026-10-04 自根目录归档 |
 | `backup/HA2EXB0E-16+512/sn.img` | 356 B | ignore | **含本机序列号，禁止入库**；2026-10-04 自根目录迁入 |
-| `l2 -> /mnt/Samsung/l2` | 45 G（外置） | ignore | 外置盘 super/system 镜像 |
+| `.gitignore` `LICENSE` `cycle.sh` `elden-net.sh` `.githooks/` `.pi/rambuild/` | 32 K | ✅ track | **2026-10-23 补登记**（根配置/快环脚本/提交钩子/内存盘构建 manifest） |
+| `l2 -> ~/mnt/Samsung/l2` | 0 B（目标 16 K：`dump-super.sh` + `lp_tool.py`） | ignore | 原 45 G 外置 super/system **已随盘丢失**；⚠ **`lp_tool.py`（自研 LP v1.2 dump/extract/splice）是唯一副本、`dump-super.sh` 是新机路径版** ⇒ 应尽快收进 `tools/`；P3-b 无可回收 |
+| `.git/` | 31 M | — | 2026-10-23 新登记（受管 2399 文件 / 49 MB） |
 
 ### 3. 可清理标记（不动手，等确认）
 
-编号对应 `README.md` §2.5 的 P 级；状态：⬜ 未执行 / ✅ 已执行。
+编号对应 `README.md` §2.5 的 P 级；状态：⬜ 未执行 / ◐ 部分 / ✅ 已执行 / ⛔ 无需执行。
+**2026-10-23 复核**：A0–A7 见 `../reports/assets-inventory-20261023.md` §5（含体积、前置闸、重建路径）；旧 P 行状态已按下表更正。
 
 | 标记 | 目标 | 体积 | 前置闸 | 状态 |
 |---|---|---|---|---|
-| P0-a | `/mnt/Samsung/fiotest/` | 4.1 G | 无 | ⬜ |
-| P0-b | `geekidos-linux/` 构建产物（`make clean`） | 13 G→1.6 G | **已解除**：工作树 13 文件已导出 `patches/elden-working-tree-ba28ec16f-2026-10-03.patch`（反向 apply 校验通过）+ config 已存 `patches/config-vk40-bringup` + HEAD=`ba28ec16f` | ⬜ |
-| P1-a | `out/` `bootslot-b/` 旧 boot 镜像（留 vk40±ram、vk39） | 5.3 G→0.6 G | vk40 上机验收通过后才删 vk39 | ⬜ |
-| P1-b | `pkgs/ pkgs-phosh/ pkgs-x86/` | 638 M | 无（`rootfs/debs-manifest.txt` 已记版本） | ⬜ |
-| P2-a | `env-pass/{build,kernel-susfs}` 中间物 | 494 M | 保留 `env-pass/backup-20261002/linux17-rootfs.tar.gz` | ⬜ |
-| P2-b | `backup/rawdump.img` 压缩 | 257 M→~30 M | 无 | ⬜ |
-| P2-c | 重复快照（`flashing-bundle/`、`y700-elden-docs-*.tar.gz`） | ~30 M | 保留最新一套 | ◐ **tar.gz 已于 10-04 归档** `archive/2026-10-04-root-strays/`；`flashing-bundle/` 目录仍在根目录 |
-| P2-d | `backup/stock-259/` 13 分区 | 443 M | 须先核对云全量包含 abl/dtbo/recovery/vbmeta 且 =1.5.10.259 | ⬜ |
-| P3-a | AOSP `.repo` 历史 + 工作树（外置） | 523 G | 决策 G2 是否自编 Waydroid；先导出 local_manifests | ⬜ |
-| P3-b | `l2/` super/system 镜像 | 45 G | 先做 `../TASKS/README.md` §5 Q13 AVF 重提取 + 核验云包 | ⬜ |
-| H1 | `.pi/sessions/` 旧会话 | 45 M | 归档非活跃会话（保留最近若干） | ⬜ **索引已完成（`SESSIONS/README.md`）；删除待任务 #2 完成 + 用户确认** |
+| **A0** | **`.pi/trash/`**（回收站；含 5.07 G 云盘包 tar） | **21 G** | 无（云盘包已校验过；`info/` 留原路径） | ⬜ **2026-10-23 新增，最大单项** |
+| **A1** | `build/` 可弃 worktree + 中间物 | ≈ 25–32 G | 先 `git bundle create --all` 固定 `build/base-7.2`、`build/m3v2-7.3rc7` + 导出 worktree diff | ⬜ 2026-10-23 新增 |
+| **A2** | `backup/kernel-git-repair-2026-10-08/`（41 ref） | 265 M | 已被 10-10 版逐 ref 覆盖（差集仅 5 个 `worktrees/*/HEAD`） | ⬜ 2026-10-23 新增 |
+| **A3** | `backup/git-pack-repair-20261020/` | 574 M | 先 `git fsck` 确认主仓自洽 | ⬜ 2026-10-23 新增 |
+| **A4** | `out/` 旧实验镜像 + `*-unpack/` | ≈ 1.0–1.6 G | registry 已登记；`*-unpack` 纯中间物 | ⬜ |
+| **A5** | `logs/cam-*` 等旧日志 | ≈ 200 M | 结论已在 `reports/` | ⬜ |
+| **A6** | `dl-cam/` NDK/OTA/中间物 | ≈ 7.4 G | 配方在 `patches/waydroid-camera-64bit-20261018/` | ⬜ |
+| **A7** | `pkgs/` 空目录 | 4 K | 无 | ⬜ |
+| P0-a | `/mnt/Samsung/fiotest/` | — | — | ⛔ **目标不存在**（外置盘未挂） |
+| P0-b | `geekidos-linux/` 构建产物 | — | — | ✅ 换机后已无旧构建产物（现 2.9 G）；后续口径见 A1 |
+| P1-a | `out/` `bootslot-b/` 旧镜像 | — | — | ◐ 现 2.4 G / 22 img，逐号裁决见 A4 |
+| P1-b | `pkgs/ pkgs-phosh/ pkgs-x86/` | 639 M→4 K | 无 | ✅ **已清**（只剩空目录） |
+| P2-a | `env-pass/{build,kernel-susfs}` | 494 M | — | ✅ **已清**（目录不在） |
+| P2-b | `backup/rawdump.img` 压缩 | 256 MiB | 无 | ⬜ 仍在 |
+| P2-c | 重复快照（`flashing-bundle/`、`y700-elden-docs-*.tar.gz`） | ~30 M | 保留最新一套 | ◐ tar.gz 已归档；`flashing-bundle/` 目录已不存在 |
+| P2-d | `backup/stock-259/` 13 分区 | 443 M | 须先核对云全量包含 abl/dtbo/recovery/vbmeta 且 =1.5.10.259 | ⬜ 仍在 |
+| P3-a | AOSP `.repo` 历史 + 工作树（外置） | — | — | ⛔ 目标不存在（`/mnt/Samsung/waydroid-build` 未挂，随盘清空） |
+| P3-b | `l2/` super/system 镜像 | — | — | ⛔ 目标断链（`~/mnt/Samsung/l2` 空） |
+| H1 | `.pi/sessions/` 旧会话 | 496 M | 归档非活跃会话（保留最近若干） | ⬜ **索引已完成**；删除待用户确认 |
 
 **纪律**：按 P0→P3 逐级、不并行；每级前后记 `df -h`；删前先导出独有内容；删后回改
 `README.md §2.5` 与本节状态、并记 `archive/topics/清理清单-<date>.md`。
@@ -347,7 +369,7 @@ git log --oneline -10
   `git -C geekidos-linux add -A && git commit -m "elden: vkN ..."`，从干净树构建。
 - **不要** `git add -f` 大文件；确需留档走磁盘备份 / 云盘，不入 git。
 
-### 5. ⚠️MIGRATION-LOST 迁移缺口登记（2026-10-17）
+### 5. ⚠️MIGRATION-LOST 迁移缺口登记（2026-10-17，2026-10-23 对账）
 
 > **标记约定**：凡引用下列路径的位置一律带 `⚠️MIGRATION-LOST`；机器可查登记 = `versions/migration-gaps-2026-10-17.tsv`。
 > 背景：2026-10-17 换机（`xuqianhui1001`→`xuqianhui`）。**已进 git 的一切 100% 恢复**（443 提交、HEAD `1a4bd89`、origin USTC HTTPS + GitHub 镜像）；
@@ -355,15 +377,18 @@ git log --oneline -10
 
 | 类别 | 内容 | 状态 | 影响 / 重建路径 |
 |---|---|---|---|
-| 内核线 | `geekidos-linux` refs `vk87–vk126`、`m1/*`、`m3/*` | ⚠️MIGRATION-LOST | 现役线（含部署 vk94、`m1-73/baseline` tip `c7da05b1d8`）无提交对象；bundle 只到 vk86（2026-10-10，43 ref） |
-| 资产树 | `build/`（M1/M3 内核树与 worktree，~4 G） | ⚠️MIGRATION-LOST | M1-7.3 末态需按 `reports/m1-rebase-7.3rc7-execution-20261013.md` + `patches/upstream/m1-2026-10-14/` 重放 |
-| 镜像 | `out/*.img`（`vk42–vk126`，~3.5 G） | ⚠️MIGRATION-LOST | 只剩 153 个 `.manifest`；台架臂不可复跑（在机 b 槽 + `backup/HA2EXB0E` 各留 1 份） |
-| 日志/工具 | `logs/`（92 M）、`tools/`（14 M，含 `tools/wd-audio-test/`） | ⚠️MIGRATION-LOST | `logs/bench-20261011`、`logs/ui-20261011` 等证据指针悬空、不可重建 |
-| 可重下 | `edk2-*`、`mu_wide_platforms`、`uefi-firmware-backup`、`qdl`、`twrp`、`pkgs*`、`probe`、`rootfs/{alpine,dl,debs}` | LOST-REDOWNLOADABLE | 重下/重建，非硬伤 |
+| 内核线 | `geekidos-linux` refs `vk87–vk126`、`m1/*`、`m3/*` | ⚠️MIGRATION-LOST（**2026-10-23 复核：仍缺**） | 现役线（含部署 vk94、`m1-73/baseline` tip `c7da05b1d8`）无提交对象；bundle 边界仍 = `q28/vk86`（10-10，43 ref）。**新增本地线** `replay/m1-73-vk127`（3 commit，10-17 建）**不在任何 bundle** ⇒ 需补一版 bundle |
+| 资产树 | `build/`（原 ~4 G） | ✅ **已重建（2026-10-23：40 G / 7 棵）**，但**不是纯可再生** | 两独立仓含本地独有 commit（`base-7.2` 的 `master`/`elden-payload-v2`、`m3v2-7.3rc7` 的 `m3v2`/`replay-m1-73-vk127`）；回收前先 bundle（`reports/assets-inventory-20261023.md` §4.1） |
+| 镜像 | `out/*.img`（`vk42–vk126`） | ◐ **部分重建**：现 22 个 img（vk64、vk127、vk130–vk147） | 旧号仍缺；`.manifest` 172 个；台架臂不可复跑（在机 b 槽 + `backup/HA2EXB0E` 各留 1 份） |
+| 日志/工具 | `logs/`（原 92 M）、`tools/`（原 14 M，含 `tools/wd-audio-test/`） | ◐ `logs/` 已到 204 M；`tools/` 只剩 232 K | 旧证据指针 `logs/bench-20261011`、`logs/ui-20261011` 仍悬空；`venv-avb`、`wd-audio-test` 仍缺 |
+| 可重下 | `edk2-*`、`mu_wide_platforms`、`uefi-firmware-backup`、`qdl`、`twrp`、`pkgs*`、`probe`、`rootfs/{alpine,dl,debs}` | LOST-REDOWNLOADABLE（2026-10-23：仍均为空） | 重下/重建，非硬伤 |
 
 **已用备份包补回（2026-10-17）**：`.pi/sessions/`（文件数/体积见 `versions/cloud-backup-20261016.MANIFEST.sha256`，含 subagent 工件）、`~/mnt/Samsung/mesa-out/`（Mesa 26.1.8，14 文件）、`backup/fw/vendor/firmware/wlan/*`（11 条软链）。
 **核对**：`~/下载/cloud-backup-y700-elden-20261016.tar.zst` 按包内 `MANIFEST.sha256` 全量校验 = **3608/3609 OK、0 缺失**；唯一差异 = `mnt/Samsung/l2/dump-super.sh`（本地版=新机路径适配，实测仅 2 行差，保留本地版）。核对后 **tar 已删除**；清单留档 `versions/cloud-backup-20261016.MANIFEST.sha256`（内容摘要 = `reports/cloud-backup-manifest-20261016.md`）。
 另：`~/下载/migration-2026-10.tar.xz`（490 M，dotfiles/secrets 迁移包）**未动**。
+
+> **2026-10-23 对账**：上表状态已按现查刷新；完整逐项（含体积与 A0–A7 清理候选）= `../reports/assets-inventory-20261023.md`。
+> 另查得 5.07 G 的 `cloud-backup-y700-elden-20261016.tar.zst` **尚在 `.pi/trash/`**（核对后删除的 tar 落进了回收站，非真删）——随 A0 一并回收。
 
 ---
 
