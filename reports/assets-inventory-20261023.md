@@ -1,7 +1,9 @@
 # 资产盘点与台账对账（2026-10-23）
 
 > 目的：把 `RESOURCES/README.md` §3「文件与资产台账」与**磁盘真值**对齐，并给出可执行清理候选。
-> 方法：纯主机侧只读（`du` / `git ls-files` / `git bundle list-heads` / `git -C <tree> rev-list`），无上机、无删除。
+> 方法：纯主机侧只读（`du` / `git ls-files` / `git bundle list-heads` / `git -C <tree> rev-list`），无上机。
+> **2026-10-23 已执行**：用户批准后 A0–A7 全部跑完，**净回收 37.3 GiB**（根盘 `df` 184.0→146.7 GiB，仓库 83.5 GB→≈47 GB）。
+> 执行记录（每级 df、前置闸、保留理由、抢救件）= **`archive/topics/清理清单-20261023.md`**；**本文 §2 的体积是清理前快照**，现行值只看 `RESOURCES/README.md` §3.2。
 > 结论口径：**数字全部现查于 2026-10-23 本次会话**；删除类动作一律「待令」，本报告只登记不吃掉。
 
 ## 1. 结论（数字先行）
@@ -14,7 +16,7 @@
 | **最大未登记资产** | **`.pi/trash/` 21 GB**（trash-cli 回收站，单件最大 `out-m1-73.1792228804` **11 G**，另有 5.07 GB 云盘包 tar；台账完全没记；忽略依据在 `.git/info/exclude`，本机私有） |
 | 台账失配行 | **17 行数字过期 / 10 条路径已不存在 / 5 项未登记**（逐条见 §3） |
 | 不可再生资产（须留） | 3 类：build 树本地 commit、`backup/HA2EXB0E-16+512/unique`+`device-rescue`、`.pi/sessions` 209 会话 |
-| 可回收上限（若全批） | ≈ **69 GB**（`.pi/trash` 21 + `build/` 38 + `out/` 1.6 + `backup/` 0.8 + `logs/` 0.2 + `dl-cam/` 7.4） |
+| 可回收上限（若全批） | ≈ **69 GB** → **已收 37.3 GiB**（A0–A7） |
 
 ## 2. 顶层清单（磁盘真值）
 
@@ -108,7 +110,10 @@
 | `backup/kernel-git-repair-2026-10-10/elden-all-refs-pre-boundary.bundle` | 265 M | 43 ref，**bundle 边界 = `q28/vk86`（10-10）** |
 | `geekidos-linux` 新 ref | — | `replay/m1-73-vk127`（3 commit，10-17）**不在**上述 bundle 内 ⇒ 需补 bundle |
 
-## 5. 可清理候选（**未执行，等令**）
+## 5. 可清理候选（**A0–A7 已于 2026-10-23 执行**）
+
+> ✅ **全部执行完毕**（A1 只做 idle 部分）；执行证据与每级 `df` 见 `../archive/topics/清理清单-20261023.md`。下表保留当时的决策依据。
+> ⚠ 执行中发现：本机 pi bash 把 `rm -rf` 转成 trash ⇒ 批量删必须用 `python3 shutil.rmtree`（否则「删除」只是搬进 `.pi/trash`，21 G 就是这么攒的）。
 
 | 级别 | 目标 | 可回收 | 前置闸 / 重建路径 |
 |---|---|---|---|
@@ -134,8 +139,7 @@
 
 ## 7. 本轮未做（边界）
 
-- **未删任何东西**（删除按 `RESOURCES` §2.5 纪律：P 级逐级、需用户令）。
-- **未重生成** `versions/vk-kernel-identity.tsv`：现表相对新脚本已过期（`check-doctor §5d` FAIL=1，属**内核线在途**）。重生成会把 vk130/vk131 写成「内核段不可读」、并把 `uts_dup11` 改判 `uts_dup9`，属于内核线口径变更，不宜在资产整理轮顺手改。
+- **未重生成** `versions/vk-kernel-identity.tsv`：现表相对新脚本已过期（`check-doctor §5d` FAIL=1，属**内核线在途**）。重生成会把 vk130/vk131 写成「内核段不可读」、并把 `uts_dup11` 改判 `uts_dup9`，属于内核线口径变更，不宜在资产整理轮顺手改。（vk130/131 镜像已在 A4 删除）
 - 未上机、未动 `boot_b`。
 
 ## 8. 引用
