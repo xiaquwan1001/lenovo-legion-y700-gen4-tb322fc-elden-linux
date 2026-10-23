@@ -21,7 +21,13 @@
      修法 = `devm_reset_control_bulk_get_shared()` + **deassert prime**（shared 是 deassert 引用计数，
      首用须先 deassert 一次，否则 assert 撞 `WARN_ON(deassert_count==0)`）。
      修正后 `connected`/`enabled`/`dpu_err=0`/`EBUSY=0`、`debugfs dri/0/state` 有 `fb=110` 真扫描、亮度 511。
-  6. **未做**：读回校验（`qcom_reset_ops` 无 `.status`，需直读 dispcc regmap `0x8000/0xa000/0xc000` bit0）、
+  6. **真 POR 冷起 5/5 GOOD（判据达成）**：`--reset por` 五发全 GOOD，同一镜像 `831ca7c4…`，
+     逐发指标**逐字相同**（`storm_sig=0`/`card0=1`/`DSI-1=connected`/`DSI_PLL_lockfail=4`）。
+     与 `only0154`（同为 5/5、同样 `DSI_PLL_lockfail=4`）**逐项相同**，vs base 4/9 双侧 p≈0.086。
+     ⇒ **复位搬到 display 侧不损失效果**，位置迁移安全。
+  7. **边界（重要）**：v2 基于 `24223e44`，**不含** A/B 两处软件闩锁修 + 0155 ⇒ **不是可直接替换 `boot_b` 的日常镜像**；
+     要成日常需把三处改动 rebase 到 `vk145` 的树上（未做）。
+  8. **未做**：读回校验（`qcom_reset_ops` 无 `.status`，需直读 dispcc regmap `0x8000/0xa000/0xc000` bit0）、
      simpledrm 在场/不在场对照、**真 POR ≥5 发**（当前 2 发是 `reboot2 bootloader` 暖复位，不构成严格 A/B；
      第 3 发撞 `PITFALLS #368` USB 全不枚举，需人工断电）。
 - **证据指针**：

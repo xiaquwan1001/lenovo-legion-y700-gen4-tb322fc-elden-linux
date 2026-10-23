@@ -216,3 +216,8 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-23T10:36:38Z	n5b-vk64-round2	vk64	cold	none	DEAD	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-183223.log
 2026-10-23T10:46:54Z	n5b-vk64-round2	vk64	cold	none	DEAD	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-184045.log
 2026-10-23T10:49:37Z	n5b-vk64-round3	vk64	cold	none	DEAD	(absent)	/home/xuqianhui/y700-elden/logs/n5b-vk64-20261023-184045.log
+2026-10-23T11:54:48Z	q28disp-v2	vk150-q28v2	por	fastboot-boot	GOOD	831ca7c4653e	/home/xuqianhui/y700-elden/reports/trials/20261023T115447Z-q28disp-v2
+2026-10-23T11:57:48Z	q28disp-v2	vk150-q28v2	por	fastboot-boot	GOOD	831ca7c4653e	/home/xuqianhui/y700-elden/reports/trials/20261023T115747Z-q28disp-v2
+2026-10-23T12:00:44Z	q28disp-v2	vk150-q28v2	por	fastboot-boot	GOOD	831ca7c4653e	/home/xuqianhui/y700-elden/reports/trials/20261023T120044Z-q28disp-v2
+2026-10-23T12:03:03Z	q28disp-v2	vk150-q28v2	por	fastboot-boot	GOOD	831ca7c4653e	/home/xuqianhui/y700-elden/reports/trials/20261023T120303Z-q28disp-v2
+2026-10-23T12:11:28Z	q28disp-v2	vk150-q28v2	por	fastboot-boot	GOOD	831ca7c4653e	/home/xuqianhui/y700-elden/reports/trials/20261023T121128Z-q28disp-v2

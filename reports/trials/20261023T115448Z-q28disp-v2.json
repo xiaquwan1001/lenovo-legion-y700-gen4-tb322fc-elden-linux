@@ -1,0 +1,18 @@
+{
+  "label": "q28disp-v2",
+  "ts": "2026-10-23T11:54:48Z",
+  "vk": "vk150-q28v2",
+  "image": "/home/xuqianhui/y700-elden/out/boot-elden-vk150-q28v2.img",
+  "image_sha256": "831ca7c4653eae67ef96a4580017412d84351e8f885b35b91ba0401caf7793f7",
+  "manifest": "/home/xuqianhui/y700-elden/out/boot-elden-vk150-q28v2.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty",
+  "kernel_payload_sha256": "57a73b864986b75ed8dd99d14c9f405c2b3e7b7f95cfdfb503a314e5c6643437",
+  "config_sha256": "ba0c2a49503b1465c2eab633789f2b17257ca12824c3320835be5dc573b2da28",
+  "dtb_packed_sha256": "(absent)",
+  "reset_type": "por",
+  "deploy": "fastboot-boot",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261023T115447Z-q28disp-v2",
+  "note": "0154+0155 冷起 A/B；POR cold boot #1"
+}
