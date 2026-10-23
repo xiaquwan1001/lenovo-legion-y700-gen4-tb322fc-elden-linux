@@ -119,8 +119,17 @@ boot_vk64() {
 	echo "-- fastboot boot vk64（当前 uname=${cur:-<不可达>}）"
 	# 不在 fastboot 就先踢进去（RAM 内核死掉会回落 boot_b = M1 内核）
 	if ! FB; then
+		# ★ 2026-10-23（PITFALLS #368）：设备刚硬复位 ~11 s 时下发 reboot2 会进不了 fastboot
+		#   且 USB 全不枚举（只能人工断电）。硬性要求 uptime ≥ 60 s 且会话已起。
+		local up w=0
+		up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r')
+		while { [ -z "$up" ] || [ "$up" -lt 60 ]; } && [ $w -lt 90 ]; do
+			echo "  (uptime=${up:-?}s < 60s：等设备稳定再 reboot2，避免 #368)"
+			sleep 5; w=$((w+5)); up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r')
+		done
+		if [ -z "$up" ]; then echo "  ❌ SSH 不可达且不在 fastboot：需要人工介入"; return 1; fi
 		SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
-		local t=0; while [ $t -lt 60 ]; do FB && break; sleep 3; t=$((t+3)); done
+		local t=0; while [ $t -lt 90 ]; do FB && break; sleep 3; t=$((t+3)); done
 		FB || { echo "  ❌ 进不了 fastboot（需要人按音量- + 电源）"; return 1; }
 	fi
 	timeout 120 fastboot boot "$IMG" >/dev/null 2>&1 || { echo "  fastboot boot FAILED"; return 1; }
@@ -143,6 +152,20 @@ except Exception:
 m = re.search(rb'Linux version [^\x00\n]{0,100}', k)
 print(m.group(0).decode() if m else '(not found)')
 EOF
+}
+
+# 强制重开一次 vk64 RAM 内核（用于「已在 vk64 但显示栈已坏」的 boot，见下方显示健康门）
+force_reboot_vk64() {
+	local up w=0 t=0
+	up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r')
+	while { [ -z "$up" ] || [ "$up" -lt 60 ]; } && [ $w -lt 90 ]; do sleep 5; w=$((w+5)); up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r'); done
+	[ -n "$up" ] || return 1		# SSH 不可达 ⇒ 交给人工
+	SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
+	while [ $t -lt 90 ]; do FB && break; sleep 3; t=$((t+3)); done
+	FB || return 1
+	timeout 120 fastboot boot "$IMG" >/dev/null 2>&1 || return 1
+	wait_ssh 120 || return 1
+	wait_vk64 || return 1
 }
 
 start_serial
@@ -200,6 +223,25 @@ for i in $(seq 1 "$N"); do	echo
 	t=0; while [ $t -lt 180 ]; do SSH 'pidof phoc' | grep -q . && break; sleep 5; t=$((t+5)); done
 	SSH 'pidof phoc' | grep -q . || { echo "ROUND$i NO-SESSION"; continue; }
 
+	# ★ 2026-10-23：显示健康门。实测有一类 boot「phoc 在但 DBus 全超时、dmesg 507 条
+	#   dpu vblank timeout / reset failure、sysfs dpms 写 EACCES(非 master)」⇒ 熄屏根本发不出去，
+	#   旧实现会把它记成 INVALID-NO-BLANK（浪费 3 发）。这类 boot 属 Q28 坏发，重开即可。
+	DPUERR=$(SSH 'dmesg | grep -cE "vblank timeout|reset failure"' | tr -d '\r')
+	AC=$(SSH "su - xuqianhui1001 -c 'DBUS_SESSION_BUS_ADDRESS=\$(for p in \$(pidof phoc); do tr \"\\0\" \"\\n\" < /proc/\$p/environ 2>/dev/null | sed -n \"s/^DBUS_SESSION_BUS_ADDRESS=//p\"; done | head -1) XDG_RUNTIME_DIR=/run/user/1000 gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.GetActive'" | tr -d '\r')
+	case "$AC" in
+		*true*|*false*) : ;;
+		*)
+			echo "ROUND$i SETUP-FAIL-BUS（会话 DBus 无响应；dpu_err=${DPUERR:-?}，按 Q28 坏发处理）"
+			force_reboot_vk64 && echo "  (已强制重开 vk64；本发作废，下一发重采)" 
+			continue;;
+	esac
+	if [ "${DPUERR:-0}" -gt 50 ]; then
+		echo "ROUND$i SETUP-FAIL-DISPLAY（dpu_err=$DPUERR ⇒ 显示栈已坏，熄屏发不出去）"
+		force_reboot_vk64 && echo "  (已强制重开 vk64；本发作废，下一发重采)"
+		continue
+	fi
+	echo "  display health: dpu_err=$DPUERR"
+
 	BID=$(SSH 'cat /proc/sys/kernel/random/boot_id' | tr -d '\r')
 	Q28=$(SSH 'dmesg | grep -cE "command DMA timeout|Failed to initialize panel"' | tr -d '\r')
 	echo "  boot_id=$BID  Q28sig=$Q28"
@@ -216,24 +258,67 @@ for i in $(seq 1 "$N"); do	echo
 	SSH "su - xuqianhui1001 -c 'DBUS_SESSION_BUS_ADDRESS=$SBU XDG_RUNTIME_DIR=/run/user/1000 gsettings set org.gnome.desktop.session idle-delay \"uint32 0\"'" >/dev/null
 
 	# WAKE -> 确认 On；BLANK -> 确认 Off
-	SSH "su - xuqianhui1001 -c 'DBUS_SESSION_BUS_ADDRESS=$SBU XDG_RUNTIME_DIR=/run/user/1000 gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.SetActive false'" >/dev/null
-	sleep 4
-	A=$(SSH 'cat /sys/class/drm/card0/card0-DSI-1/dpms' | tr -d '\r')
-	SSH "su - xuqianhui1001 -c 'DBUS_SESSION_BUS_ADDRESS=$SBU XDG_RUNTIME_DIR=/run/user/1000 gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.SetActive true'" >/dev/null
-	sleep 4
-	B=$(SSH 'cat /sys/class/drm/card0/card0-DSI-1/dpms' | tr -d '\r')
-	echo "  dpms $A -> $B"
-	if [ "$B" != "Off" ]; then echo "ROUND$i INVALID-NO-BLANK($A->$B)"; continue; fi
+	# ★ 2026-10-23 修正（三处假阴性）：① 冷启动早期 `SetActive(true)` 可能 no-op；
+	#   ② **空/异常读数往往是设备已经硬复位**，旧实现当「没熄屏」丢弃 —— 实测 14:09 那轮
+	#      4 个 round 全是「熄屏后 ~4 s 就复位」，却被记成 INVALID-NO-BLANK；
+	#   ③ 重试循环里必须在**每次读之后**核 boot_id，而不是只在读空时核。
+	SETACT() { SSH "su - xuqianhui1001 -c 'DBUS_SESSION_BUS_ADDRESS=$SBU XDG_RUNTIME_DIR=/run/user/1000 gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.SetActive $1'"; }
+	DPMS_RD() { SSH 'cat /sys/class/drm/card0/card0-DSI-1/dpms' | tr -d '\r'; }
+	BIDCHK() { # 0=同一 boot；1=已复位/已换 boot（C0 = 新 boot_id，可能为空=不可达）
+		C0=$(SSH 'cat /proc/sys/kernel/random/boot_id' | tr -d '\r')
+		if [ -n "$C0" ] && [ "$C0" != "$BID" ]; then return 1; fi
+		return 0
+	}
+	EARLY_DEAD=0; A=; B=; C0=
+	for attempt in 1 2 3; do
+		SETACT false >/dev/null; sleep 4
+		A=$(DPMS_RD)
+		if ! BIDCHK; then EARLY_DEAD=1; echo "  ⇒ 唤醒阶段已复位（boot_id $BID -> ${C0:-不可达}）"; break; fi
+		if [ -z "$A" ]; then echo "  (attempt $attempt: 唤醒后 dpms 读数空，重试)"; sleep 5; continue; fi
+		SETACT true >/dev/null; sleep 6
+		B=$(DPMS_RD)
+		if ! BIDCHK; then EARLY_DEAD=1; B="reset"; echo "  ⇒ 熄屏后 ~6 s 内已复位（dpms='${B}'，boot_id $BID -> ${C0:-不可达}）"; break; fi
+		[ -z "$B" ] && B=unknown
+		[ "$B" = "Off" ] && break
+		echo "  (attempt $attempt: dpms $A -> $B，写 sysfs DPMS 兜底)"
+		SSH 'echo off > /sys/class/drm/card0/card0-DSI-1/dpms' >/dev/null 2>&1
+		sleep 5
+		B=$(DPMS_RD)
+		if ! BIDCHK; then EARLY_DEAD=1; B="reset"; echo "  ⇒ sysfs 兜底后已复位（boot_id $BID -> ${C0:-不可达}）"; break; fi
+		[ "$B" = "Off" ] && break
+		sleep 5
+	done
+	echo "  dpms $A -> $B  (early_dead=$EARLY_DEAD)"
+	if [ "$EARLY_DEAD" = 1 ]; then
+		echo "ROUND$i DEAD (熄屏/唤醒路径，boot_id $BID -> ${C0:-不可达})"
+	elif [ "$B" != "Off" ]; then echo "ROUND$i INVALID-NO-BLANK($A->$B)"; continue; fi
 
-	# 保持 30 s，然后判活
-	sleep 30
+	# 保持 30 s（熄屏相位），再显式唤醒（唤醒相位）——Q24 历史上两个相位都存在，
+	#   旧实现只判熄屏 30 s，会把「唤醒致死」留到下一轮开头才暴露（相位归因错位）。
+	PHASE=blank
+	[ "$EARLY_DEAD" = 1 ] || sleep 30
 	C=$(SSH 'cat /proc/sys/kernel/random/boot_id' | tr -d '\r')
-	if [ -n "$C" ] && [ "$C" = "$BID" ]; then
-		echo "ROUND$i ALIVE (boot_id unchanged, Q28sig=$Q28)"
-		V=ALIVE
+	if [ "$EARLY_DEAD" = 1 ]; then
+		echo "  phase=blank(早死,<6 s)"
+	elif [ -z "$C" ] || [ "$C" != "$BID" ]; then
+		echo "  phase=blank（熄屏 30 s 内复位）"
 	else
+		echo "  熄屏 30 s 存活 ⇒ 唤醒（Q24 历史致死点）"
+		SETACT false >/dev/null
+		sleep 8
+		C=$(SSH 'cat /proc/sys/kernel/random/boot_id' | tr -d '\r')
+		if [ -n "$C" ] && [ "$C" = "$BID" ]; then
+			echo "ROUND$i ALIVE (blank 30 s + wake 8 s 均存活, Q28sig=$Q28)"
+			V=ALIVE; PHASE=-
+		else
+			echo "  phase=wake（唤醒 8 s 内复位）"
+			V=DEAD
+		fi
+	fi
+	if [ "${V:-}" != "ALIVE" ]; then
 		# 死了：等回落 + 取硬复位签名
-		echo "ROUND$i DEAD (boot_id $BID -> ${C:-<unreachable>})"
+		V=DEAD
+		echo "ROUND$i DEAD-$PHASE (boot_id $BID -> ${C:-<unreachable>})"
 		wait_ssh 120 || true
 		PLOG=$(SSH 'grep -c "$(cat /proc/sys/kernel/random/boot_id)" /root/powerlog.txt' | tr -d '\r')
 		PSTORE=$(SSH 'ls /sys/fs/pstore/ 2>/dev/null | wc -l' | tr -d '\r')
@@ -252,11 +337,10 @@ for i in $(seq 1 "$N"); do	echo
 		else
 			echo "  pstore 空（Q24 常规：无痕硬复位 #197）"
 		fi
-		V=DEAD
 	fi
 	bash "$ROOT/scripts/trial.sh" record --label "n5b-vk64-round$i" --image "device:vk64" \
 		--reset cold --verdict "$V" --logdir "$LOG" \
-		--note "N5b vk64 7.2-lineage full-stack+blank round$i Q28sig=$Q28 mods=$MODS" >/dev/null 2>&1 || true
+		--note "N5b vk64 7.2-lineage full-stack+blank round$i phase=$PHASE Q28sig=$Q28 mods=$MODS" >/dev/null 2>&1 || true
 done
 echo
 echo "### N5b done $(date '+%F %T')  log=$LOG"

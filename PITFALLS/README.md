@@ -87,6 +87,8 @@
 | 60 | **#365** `loginctl suspend` 异步：DBus 3 ms 返回 ≠ 没挂起，须看 suspend_stats/entry 计数 | [06-脚本工具.md](sessions/06-脚本工具.md) |
 | 61 | **#366** 单向闩锁把硬件故障伪装成「不可恢复」：失败标志只置位不清零 ⇒ 所有重试都没到硬件 | [61-Q28单向闩锁把硬件故障伪装成不可恢复.md](sessions/61-Q28单向闩锁把硬件故障伪装成不可恢复.md) |
 | 62 | **#367** `vermagic` 只比 UTS 字符串：同 UTS 不同 config 的模块树静默用错 struct 偏移（of_node 624 vs 680）⇒ 驱动永不 probe 成功，无警告 | [62-vermagic只比UTS-同UTS不同config模块树静默错位.md](sessions/62-vermagic只比UTS-同UTS不同config模块树静默错位.md) |
+| 63 | **#368** `reboot2 bootloader` 在设备刚硬复位后 ~11 s 下发 ⇒ 不进 fastboot 且 USB 全不枚举（无串口无 fastboot），只能人工断电 | [63-reboot2早期下发致设备USB不枚举.md](sessions/63-reboot2早期下发致设备USB不枚举.md) |
+| 64 | **#369** 显示栈已坏的 boot：`phoc` 在但 DBus 全超时、`dpms` 写 `EACCES`、`reboot2` 静默无效（shutdown 挂住）⇒ 逃生用 `SysRq-b`；熄屏实验前必须过显示健康门 | [64-显示栈坏时phoc-DBus超时与reboot2无效.md](sessions/64-显示栈坏时phoc-DBus超时与reboot2无效.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
