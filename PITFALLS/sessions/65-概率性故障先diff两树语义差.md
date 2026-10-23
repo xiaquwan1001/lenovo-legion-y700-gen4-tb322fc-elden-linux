@@ -53,3 +53,10 @@ Cc `Ulf Hansson <ulf.hansson@linaro.org>` 收到自动回执 **"Your email to Ul
 ⇒ 该地址已停用（已离开 Linaro/generic PM 维护）。**以后 linux-pm 相关 Cc 不要带他**；
 现任 generic PM domain 维护者走 linux-pm 列表本身即可。同类风险：Cc 名单要从
 `MAINTAINERS` 现查，不要沿用旧邮件里的 Cc 行。
+
+## 另一个坑：`make kernelrelease` 有缓存，改 config 后仍返回旧 UTS
+
+改完 `CONFIG_LOCALVERSION` 后 `make kernelrelease` 仍打印旧值（`include/config/kernel.release`
+是生成物缓存），看起来像"配置没生效"，实际是没重建。**必须删掉
+`include/config/kernel.release` 再构建**，然后用「Image 里解出的 UTS」做最终判据，
+不要信树侧命令 —— 这正是 `PITFALLS #367`（同 UTS 不同 config、模块树静默错位）的入口。
