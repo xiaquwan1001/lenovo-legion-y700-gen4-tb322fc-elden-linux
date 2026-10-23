@@ -46,3 +46,10 @@ Q24（熄屏 × 相机 → 硬复位）在 vk64（7.2 血统）上 n=8 死 6，�
 
 > **「随机」先当版本差查一遍。** 一次 `git diff` + 一次 debugfs dump 的确定性，
 > 抵几十发要人守着的样本。
+
+## 附带踩坑（同日邮件）
+
+Cc `Ulf Hansson <ulf.hansson@linaro.org>` 收到自动回执 **"Your email to Ulf Hansson … (Exiting)"**
+⇒ 该地址已停用（已离开 Linaro/generic PM 维护）。**以后 linux-pm 相关 Cc 不要带他**；
+现任 generic PM domain 维护者走 linux-pm 列表本身即可。同类风险：Cc 名单要从
+`MAINTAINERS` 现查，不要沿用旧邮件里的 Cc 行。
