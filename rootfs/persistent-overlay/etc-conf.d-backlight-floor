@@ -1,0 +1,4 @@
+# /etc/conf.d/backlight-floor
+# 背光下限（单位 = /sys/class/backlight/aw99706-backlight/max_brightness 的刻度，本机 0..4095）
+# 1024 ≈ 25%：可见、不刺眼；低于约 512（12%）在日光下已容易被误判成「黑屏」。
+BACKLIGHT_FLOOR=1024

@@ -36,7 +36,10 @@ start)
 	W=${SIZE%x*}; H=${SIZE#*x}
 	# 互斥检查：已有别的相机客户端占用链路时拒绝启动（否则对方会报 "couldn't play camera stream"）
 	if [ "${FORCE:-0}" != 1 ]; then
-		busy=$(S "pgrep -af 'cam .*-c|captureScript|gnome-snapshot|snapshot' | grep -v pgrep | wc -l") || busy=0
+		# ⚠ 2026-10-23：旧判据 `snapshot` 会命中内核线程 `[disp_snapshot]`（display 快照，
+		# 与相机无关）⇒ 永远误报「已有相机客户端在跑」。改为只匹配**用户态**客户端：
+		# argv[0] 必须以 / 开头（内核线程显示为 [name]），且排除 pgrep/本脚本自身。
+		busy=$(S "ps -eo pid,args | grep -E '(^|[ /])(cam|captureScript|gnome-snapshot|snapshot)( |\$)' | grep -vE 'pgrep|grep|cam-loopback|\\[.*\\]' | wc -l") || busy=0
 		if [ "${busy:-0}" -gt 0 ]; then
 			echo "REFUSE: 已有相机客户端在跑（$busy 个）——loopback 会独占 CSI 链路并让它们报 \"couldn't play camera stream\"。"
 			echo "        确认要抢就 FORCE=1 重跑；或用完先关掉对方。"

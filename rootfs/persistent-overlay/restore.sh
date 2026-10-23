@@ -45,6 +45,15 @@ install -d /etc/conf.d
 rc-update add wifi-scan-refresh default 2>/dev/null || true
 [ -x /usr/local/sbin/wifi-scan-refresh.sh ] && rc-service wifi-scan-refresh restart >/dev/null 2>&1 || true
 
+echo "== 背光下限（PITFALLS #372：面板 GOOD 但看起来像黑屏）=="
+# aw99706 默认 brightness=160/4095 ≈ 4%，加上自动亮度会继续压低 ⇒ 人看到"设备没响应"。
+# 两层：用户态关 ambient（本脚本不动 dconf，见 README「用户态 gsettings」）+ 服务钳下限。
+install -m755 etc-initd-backlight-floor /etc/init.d/backlight-floor
+install -d /etc/conf.d
+[ -f /etc/conf.d/backlight-floor ] || install -m644 etc-conf.d-backlight-floor /etc/conf.d/backlight-floor
+rc-update add backlight-floor default 2>/dev/null || true
+[ -x /usr/local/sbin/elden-backlight-floor.sh ] && rc-service backlight-floor restart >/dev/null 2>&1 || true
+
 echo "== iio-sensor-proxy timing override (auto-rotate stuck OFF) =="
 # Override the packaged init script so the proxy waits for QRTR svc 400 (SSC)
 # before launching; otherwise it scans once, gives up (G1-34), and phosh's

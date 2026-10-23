@@ -22,6 +22,7 @@ ssh root@192.168.7.1 'cd /root/persistent-overlay && sh restore.sh'
 | `etc-conf.d.tar.gz` | `/etc/conf.d/greetd`（`LIBSEAT_BACKEND=seatd`） | 解到 `/etc/conf.d` |
 | `etc-greetd.tar.gz` | `/etc/greetd/config.toml` | 解到 `/etc/greetd` |
 | `etc-NM-conf.d.tar.gz` | `99-unmanaged.conf`（usb0/lo unmanaged） | 解到 `/etc/NetworkManager/conf.d` |
+| `etc-initd-backlight-floor` / `etc-conf.d-backlight-floor` | 背光下限服务（`supervise-daemon`，20 s 轮询，`BACKLIGHT_FLOOR=1024`≈25%）；防「面板 GOOD 但看起来像黑屏」（`PITFALLS #372`） | `install -m755/-m644` + `rc-update add backlight-floor default`（restore.sh 已做） |
 | `etc-initd-wifi-scan-refresh` | `/etc/init.d/wifi-scan-refresh`（连通态周期扫描服务，`supervise-daemon`） | `install -m755` + `rc-update add wifi-scan-refresh default` |
 | `etc-conf.d-wifi-scan-refresh` | `/etc/conf.d/wifi-scan-refresh`（`WIFI_SCAN_INTERVAL=150`，**必须 <180 s**） | `install -m644` |
 | `init` | 磁盘根 `/init` 快照（**真源 = 仓库 `initramfs/init`**） | `install -m755 init /init` |
@@ -46,6 +47,13 @@ ssh root@192.168.7.1 'cd /root/persistent-overlay && sh restore.sh'
 5. **`99-unmanaged.conf`**：`usb0`/`lo` 必须 unmanaged，否则 NM 会掐断 SSH 生命线。
 6. **`chown greetd:greetd /var/lib/greetd`**（原 Alpine 打包 `root:root 750` → greetd 报 `Permission denied`）。
 7. **`/init` 真源 = `initramfs/init`**（磁盘根 `/init` 由 `build-rootfs.sh` 安装；**禁止在设备上改 `/init`**）。
+9. **背光下限**（`PITFALLS #372`）：`backlight-floor` 服务 + **用户态** `ambient-enabled=false`。
+   gsettings 必须在**真会话**里写（`PITFALLS #103`：裸写不生效），restore.sh **不**替你改 dconf：
+   ```sh
+   sudo -u <sess_user> HOME=/home/<sess_user> XDG_RUNTIME_DIR=/run/user/<uid> \
+        DBUS_SESSION_BUS_ADDRESS="$(从该用户任一进程的 environ 取)" \
+        gsettings set org.gnome.settings-daemon.plugins.power ambient-enabled false
+   ```
 8. **dbus launch helper**：`chown root:messagebus /usr/libexec/dbus-daemon-launch-helper; chmod 4750`（Alpine 打包为 root:root）。
 
 ## 已知缺口（重建时注意）
