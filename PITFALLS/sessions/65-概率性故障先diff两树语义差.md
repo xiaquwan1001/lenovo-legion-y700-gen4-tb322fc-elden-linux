@@ -60,3 +60,21 @@ Cc `Ulf Hansson <ulf.hansson@linaro.org>` 收到自动回执 **"Your email to Ul
 是生成物缓存），看起来像"配置没生效"，实际是没重建。**必须删掉
 `include/config/kernel.release` 再构建**，然后用「Image 里解出的 UTS」做最终判据，
 不要信树侧命令 —— 这正是 `PITFALLS #367`（同 UTS 不同 config、模块树静默错位）的入口。
+
+## 再一个坑：`reset_control_get_exclusive()` 会与 reset provider 自己撞 `-EBUSY`
+
+把一个 device 树节点的 `resets` 指向某 clk 驱动（如 `dispcc`）的 BCR 时，
+**dispcc 作为 reset provider 已经 exclusive 持有那些 BCR**。消费者再用
+`_get_exclusive()` 必然 `-EBUSY`（`__reset_control_get_internal()` 里
+`WARN_ON(!rstc->shared || !shared) → ERR_PTR(-EBUSY)`），probe 直接失败 `-16`。
+
+两个必须一起做的修法：
+
+- 用 **`devm_reset_control_bulk_get_shared()`**（reset 线本来允许多消费者）；
+- **shared 是 deassert 引用计数**：首用必须先 `deassert()` 一次建 `deassert_count`，
+   否则随后 `assert()` 撞 `WARN_ON(atomic_read(&rstc->deassert_count) == 0)` 返回 `-EINVAL`。
+   ⇒ 正确顺序 = **deassert(prime) → assert → msleep → deassert**。
+
+判据：上机后 `dmesg | grep -c "failed to acquire mdss resets"` 必须 0；
+出现 `-EBUSY` 时症状是**比不带补丁还差**（显示完全不起来、phosh 不在），
+容易被误读成"复位把硬件弄坏了"，实际是根本没拿到 reset。

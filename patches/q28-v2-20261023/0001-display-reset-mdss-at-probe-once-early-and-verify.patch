@@ -36,10 +36,10 @@ index 01eee5c..b75d908 100644
  			interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
  					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
 diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
-index 9144b2c..ed17a70 100644
+index 9144b2c..eccc1d9 100644
 --- a/drivers/gpu/drm/msm/msm_mdss.c
 +++ b/drivers/gpu/drm/msm/msm_mdss.c
-@@ -306,28 +306,81 @@ static void msm_mdss_destroy(struct msm_mdss *msm_mdss)
+@@ -306,28 +306,94 @@ static void msm_mdss_destroy(struct msm_mdss *msm_mdss)
  	irq_set_chained_handler_and_data(irq, NULL, NULL);
  }
  
@@ -83,15 +83,10 @@ index 9144b2c..ed17a70 100644
 +		reset_control_deassert(reset);
 +
 +		reset_control_put(reset);
-+
-+		return 0;
-+	}
  
 -	reset = reset_control_get_optional_exclusive(dev, NULL);
 -	if (!reset) {
 -		/* Optional reset not specified */
-+	if (!num_resets) {
-+		/* reset-names present but empty: nothing to do */
  		return 0;
 -	} else if (IS_ERR(reset)) {
 -		return dev_err_probe(dev, PTR_ERR(reset),
@@ -99,12 +94,23 @@ index 9144b2c..ed17a70 100644
  	}
  
 -	reset_control_assert(reset);
++	if (!num_resets) {
++		/* reset-names present but empty: nothing to do */
++		return 0;
++	}
++
 +	resets = devm_kcalloc(dev, num_resets, sizeof(*resets), GFP_KERNEL);
 +	if (!resets)
 +		return -ENOMEM;
 +
-+	ret = devm_reset_control_bulk_get_optional_exclusive(dev, num_resets,
-+							    resets);
+ 	/*
+-	 * Tests indicate that reset has to be held for some period of time,
+-	 * make it one frame in a typical system
++	 * Shared, not exclusive: the reset lines belong to the display clock
++	 * controller, which already holds them for its own reset provider.
++	 * Exclusive acquisition would fail with -EBUSY.
++	 */
++	ret = devm_reset_control_bulk_get_shared(dev, num_resets, resets);
 +	if (ret)
 +		return dev_err_probe(dev, ret, "failed to acquire mdss resets\n");
 +
@@ -112,13 +118,20 @@ index 9144b2c..ed17a70 100644
 +	if (!resets[0].rstc)
 +		return 0;
 +
++	/*
++	 * Shared reset lines are reference counted from the deassert side, so
++	 * prime the count before the first assert. Without this the assert
++	 * below would be dropped with -EINVAL.
++	 */
++	ret = reset_control_bulk_deassert(num_resets, resets);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to prime mdss resets\n");
++
 +	ret = reset_control_bulk_assert(num_resets, resets);
 +	if (ret)
 +		return dev_err_probe(dev, ret, "failed to assert mdss resets\n");
 +
- 	/*
--	 * Tests indicate that reset has to be held for some period of time,
--	 * make it one frame in a typical system
++	/*
 +	 * Hold long enough for the whole block to settle. This runs before the
 +	 * MDSS clocks and PLLs are configured, so nothing is scanning out yet
 +	 * and the reset cannot disturb a live pipeline.
