@@ -1,0 +1,241 @@
+diff --git a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
+index faeb2ad..518f852 100644
+--- a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
++++ b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
+@@ -98,6 +98,16 @@ properties:
+   resets:
+     items:
+       - description: MDSS_CORE reset
++      - description: MDSS_CORE_INT2 reset
++      - description: MDSS_RSCC reset
++    minItems: 1
++
++  reset-names:
++    items:
++      - const: core
++      - const: core_int2
++      - const: rscc
++    minItems: 1
+ 
+   memory-region:
+     maxItems: 1
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 01eee5c..b75d908 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -3322,7 +3322,10 @@ mdss: display-subsystem@ae00000 {
+ 				 <&gcc GCC_DISP_HF_AXI_CLK>,
+ 				 <&dispcc DISP_CC_MDSS_MDP_CLK>;
+ 
+-			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>;
++			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>,
++				 <&dispcc DISP_CC_MDSS_CORE_INT2_BCR>,
++				 <&dispcc DISP_CC_MDSS_RSCC_BCR>;
++			reset-names = "core", "core_int2", "rscc";
+ 
+ 			interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
+ 					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 5405173..5f69c43 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -3126,7 +3126,15 @@ int msm_dsi_host_set_display_mode(struct mipi_dsi_host *host,
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 
+-	WRITE_ONCE(msm_host->link_configured, false);
++	/*
++	 * Q28: link_configured means "the link is programmed for the current
++	 * rates" and is set at the end of power_on(). DRM calls mode_set after
++	 * pre_enable/power_on() in the atomic sequence, so clearing it here made
++	 * every resume path fail dsi_cmd_link_clk_set_rate() with -ESTALE even
++	 * though all three rates matched. Only invalidate when the link is down.
++	 */
++	if (!READ_ONCE(msm_host->power_on))
++		WRITE_ONCE(msm_host->link_configured, false);
+ 	if (msm_host->mode) {
+ 		drm_mode_destroy(msm_host->dev, msm_host->mode);
+ 		msm_host->mode = NULL;
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 559c07a..b019d27 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -271,6 +271,15 @@ static int dsi_mgr_bridge_power_on(struct drm_bridge *bridge)
+ 	if (is_bonded_dsi && msm_dsi1)
+ 		msm_dsi_host_enable_irq(msm_dsi1->host);
+ 
++	/*
++	 * Q28: dsi_bonded_cmd_failed used to be a one-way latch. A single bad
++	 * boot-time command left every later bridge/power path short-circuited
++	 * (no panel re-init, no IRQ/power cleanup) for the rest of the uptime.
++	 * A successful power-on proves the link was brought up again, so clear
++	 * it here and let the next enable attempt reach the hardware.
++	 */
++	WRITE_ONCE(dsi_bonded_cmd_failed, false);
++
+ 	return 0;
+ 
+ host1_on_fail:
+@@ -289,9 +298,11 @@ static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
+ 	struct mipi_dsi_host *host = msm_dsi->host;
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
+-
++	/*
++	 * Q28: do not short-circuit the cleanup. Skipping disable_irq/power_off
++	 * here is what produced the "Unbalanced enable for IRQ" warnings and
++	 * left the controller half-alive after a failed enable.
++	 */
+ 	msm_dsi_host_disable_irq(host);
+ 	if (is_bonded_dsi && msm_dsi1) {
+ 		msm_dsi_host_disable_irq(msm_dsi1->host);
+@@ -426,8 +437,13 @@ static void dsi_mgr_bridge_post_disable(struct drm_bridge *bridge,
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 	int ret;
+ 
++	/*
++	 * Q28: when the bonded command path already failed, skip only the
++	 * (link-dependent) host disable and still run the IRQ/power cleanup
++	 * below. Returning early here unbalanced the IRQ enable count.
++	 */
+ 	if (msm_dsi_manager_cmd_failed())
+-		return;
++		goto disable_irq;
+ 
+ 	DBG("id=%d", id);
+ 
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+index 5dd4830..eb0193c 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+@@ -434,6 +434,8 @@ static void dsi_pll_disable_pll_bias(struct dsi_pll_7nm *pll)
+ 
+ 	data = readl(pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0);
+ 	data &= ~DSI_7nm_PHY_CMN_CTRL_0_PLL_SHUTDOWNB;
++	if (of_machine_is_compatible("lenovo,elden"))
++		data &= ~DSI_7nm_PHY_CMN_CTRL_0_DIGTOP_PWRDN_B;
+ 	writel(0, pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES);
+ 	writel(data, pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0);
+ 	spin_unlock_irqrestore(&pll->pll_enable_lock, flags);
+@@ -454,6 +456,8 @@ static void dsi_pll_enable_pll_bias(struct dsi_pll_7nm *pll)
+ 
+ 	data = readl(pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0);
+ 	data |= DSI_7nm_PHY_CMN_CTRL_0_PLL_SHUTDOWNB;
++	if (of_machine_is_compatible("lenovo,elden"))
++		data |= DSI_7nm_PHY_CMN_CTRL_0_DIGTOP_PWRDN_B;
+ 	writel(data, pll->phy->base + REG_DSI_7nm_PHY_CMN_CTRL_0);
+ 
+ 	writel(0xc0, pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES);
+diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
+index 9144b2c..eccc1d9 100644
+--- a/drivers/gpu/drm/msm/msm_mdss.c
++++ b/drivers/gpu/drm/msm/msm_mdss.c
+@@ -306,28 +306,94 @@ static void msm_mdss_destroy(struct msm_mdss *msm_mdss)
+ 	irq_set_chained_handler_and_data(irq, NULL, NULL);
+ }
+ 
++/*
++ * The display block is one of the few peripherals that the bootloader may
++ * leave fully running: PLLs locked, MDP configured and any framebuffer it
++ * was handed actively scanning out. Bringing the driver up on top of that
++ * live state is what makes command-mode panel initialisation fail on some
++ * boards (the first DCS command runs into a bus that is still busy).
++ *
++ * Some SoCs gate the block through more than one reset line - MDSS_CORE
++ * alone does not cover the interrupt/register block (CORE_INT2) or the RSCC
++ * wrapper. Reset all declared lines so the block starts from a known-zero
++ * state, and hold long enough for the logic to settle.
++ */
+ static int msm_mdss_reset(struct device *dev)
+ {
+-	struct reset_control *reset;
++	struct reset_control_bulk_data *resets;
++	unsigned int num_resets;
++	int ret;
++
++	num_resets = of_property_count_strings(dev->of_node, "reset-names");
++	if (num_resets < 0) {
++		/* Legacy single unnamed reset */
++		struct reset_control *reset;
++
++		reset = reset_control_get_optional_exclusive(dev, NULL);
++		if (!reset)
++			return 0;
++		if (IS_ERR(reset))
++			return dev_err_probe(dev, PTR_ERR(reset),
++					     "failed to acquire mdss reset\n");
++
++		reset_control_assert(reset);
++		/*
++		 * Tests indicate that reset has to be held for some period of
++		 * time, make it one frame in a typical system
++		 */
++		msleep(20);
++		reset_control_deassert(reset);
++
++		reset_control_put(reset);
+ 
+-	reset = reset_control_get_optional_exclusive(dev, NULL);
+-	if (!reset) {
+-		/* Optional reset not specified */
+ 		return 0;
+-	} else if (IS_ERR(reset)) {
+-		return dev_err_probe(dev, PTR_ERR(reset),
+-				     "failed to acquire mdss reset\n");
+ 	}
+ 
+-	reset_control_assert(reset);
++	if (!num_resets) {
++		/* reset-names present but empty: nothing to do */
++		return 0;
++	}
++
++	resets = devm_kcalloc(dev, num_resets, sizeof(*resets), GFP_KERNEL);
++	if (!resets)
++		return -ENOMEM;
++
+ 	/*
+-	 * Tests indicate that reset has to be held for some period of time,
+-	 * make it one frame in a typical system
++	 * Shared, not exclusive: the reset lines belong to the display clock
++	 * controller, which already holds them for its own reset provider.
++	 * Exclusive acquisition would fail with -EBUSY.
++	 */
++	ret = devm_reset_control_bulk_get_shared(dev, num_resets, resets);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to acquire mdss resets\n");
++
++	/* If not a single line was described, treat it as "no reset". */
++	if (!resets[0].rstc)
++		return 0;
++
++	/*
++	 * Shared reset lines are reference counted from the deassert side, so
++	 * prime the count before the first assert. Without this the assert
++	 * below would be dropped with -EINVAL.
++	 */
++	ret = reset_control_bulk_deassert(num_resets, resets);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to prime mdss resets\n");
++
++	ret = reset_control_bulk_assert(num_resets, resets);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to assert mdss resets\n");
++
++	/*
++	 * Hold long enough for the whole block to settle. This runs before the
++	 * MDSS clocks and PLLs are configured, so nothing is scanning out yet
++	 * and the reset cannot disturb a live pipeline.
+ 	 */
+ 	msleep(20);
+-	reset_control_deassert(reset);
+ 
+-	reset_control_put(reset);
++	ret = reset_control_bulk_deassert(num_resets, resets);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to deassert mdss resets\n");
+ 
+ 	return 0;
+ }
