@@ -37,6 +37,22 @@ for c in CONFIG_ARCH_QCOM CONFIG_DRM_MSM CONFIG_DRM_MSM_DSI; do
 	grep -qE "^$c=y" "$CONF" || die "$CONF 缺 $c=y → olddefconfig 腐化？从 patches/config-before-fragment-*.bak 恢复后重编"
 done
 
+# --- 1b. ABI 敏感项：编出来的内核必须和机内模块树兼容 ----------------------
+# CONFIG_SUSPEND 之类的差异会把 struct device.of_node 从 624 推到 680，
+# 而 vermagic 只比 UTS 字符串拦不住 ⇒ 模块静默用错偏移（fastrpc 刷屏/传感器全废、
+# 或上机「背光亮一下即掉电」）。详见 scripts/check-abi-config.sh 头注释。
+if [ -f "$CONF" ]; then
+	if ! bash "$ROOT/scripts/check-abi-config.sh" "$CONF" >/tmp/abi-gate.$$ 2>&1; then
+		sed -n '1,200p' /tmp/abi-gate.$$ >&2
+		rm -f /tmp/abi-gate.$$
+		die "ABI 敏感项与参考 config 不一致（见上）→ 模块树会静默失效"
+	else
+		[ -n "${VERBOSE:-}" ] && sed -n '1,200p' /tmp/abi-gate.$$
+		grep -q 'ABI 敏感项与参考一致' /tmp/abi-gate.$$ && echo "[assert] ✅ ABI 敏感项一致（$(grep -c '\[ok\]' /tmp/abi-gate.$$) 项）"
+	fi
+	rm -f /tmp/abi-gate.$$
+fi
+
 # --- 2. System.map 符号锚点（平台驱动真的链进去了）------------------------
 if [ -f "$SMAP" ]; then
 	for s in gcc_sm8750 msm_dsi_host_bonded_cmd_trigger qcom_rpmh; do

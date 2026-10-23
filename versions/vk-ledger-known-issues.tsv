@@ -246,3 +246,41 @@ vk135	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127 复用 1497 
 vk135	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像，UTS 刻意同 vk127）
 vk136	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127；panic=0 实验已废弃，仅留 manifest 档）
 vk136	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像，UTS 刻意同 vk127）
+#
+# ---------------------------------------------------------------------------
+# §5d PINUTS 例外（2026-10-23 登记）
+# PINUTS = `CONFIG_LOCALVERSION_AUTO=n` + 手工 `LOCALVERSION` 钉死 UTS 串，
+# 本项目的既定策略（PITFALLS #192/#195：UTS 逐字相同才让 RAM 镜像用上机内模块树，
+# 否则 vermagic 失配 → 无 DRM → 判显示必假阴性）。代价是「同 UTS 不同二进制」必然
+# 触发 uts_dup，且源提交上无同名 vkNN ref 触发 num_ne_tag —— 两者都是**设计意图**，
+# 不是事故。此处逐条登记以让 §5d 回归可读；新增 PINUTS 镜像照此加一行。
+# ---------------------------------------------------------------------------
+vk127	uts_dup	PINUTS 钉 vk64/vk127 同族 UTS，复用机内模块树（日常线起点）
+vk130	uts_dup	PINUTS（T9 PCIe skip_l23_ready）
+vk131	uts_dup	PINUTS（vk130 + hci_qca FW 窗口）
+vk132	uts_dup	PINUTS（vk131 + qca_resume 重试）
+vk133	uts_dup	PINUTS（vk132 + resume serdev re-probe）
+vk134	uts_dup	PINUTS（kexec mask=1 载具）
+vk135	uts_dup	PINUTS（vk134 + DTS ramoops record-size）
+vk136	uts_dup	PINUTS（vk135 + panic=0，已废弃留档）
+vk137-q28base	num_ne_tag	PINUTS 到 7.2 线 vk64 UTS（Q28 A/B base 臂，源在 bundle/vk64）
+vk137-q28base	uts_dup	PINUTS 到 vk64 UTS
+vk138-q28disp	num_ne_tag	PINUTS 到 vk64 UTS（Q28 A/B exp 臂）
+vk138-q28disp	uts_dup	PINUTS 到 vk64 UTS
+vk139-q28only0155	num_ne_tag	PINUTS 到 vk64 UTS（only0155 拆贡献臂）
+vk139-q28only0155	uts_dup	PINUTS 到 vk64 UTS
+vk140-q28disp73	num_ne_tag	PINUTS 到 vk127 UTS（后作废：UTS 少了 -vk127 前缀）
+vk141-q28disp73	num_ne_tag	PINUTS 到 vk127 UTS（vk140 修正版）
+vk141-q28disp73	uts_dup	PINUTS 到 vk127 UTS
+vk142-q28disp73dt	num_ne_tag	PINUTS 到 vk127 UTS（7.3 线 + ADSP fastrpc DT）
+vk142-q28disp73dt	uts_dup	PINUTS 到 vk127 UTS
+vk143-q28-73-0155only	num_ne_tag	PINUTS 到 vk127 UTS
+vk143-q28-73-0155only	uts_dup	PINUTS 到 vk127 UTS
+vk144-q28only0154	num_ne_tag	PINUTS 到 vk64 UTS（only0154 臂）
+vk144-q28only0154	uts_dup	PINUTS 到 vk64 UTS
+vk145-q28daily	num_ne_tag	PINUTS 到 vk127 UTS（日常候选，已写 boot_b）
+vk145-q28daily	uts_dup	PINUTS 到 vk127 UTS
+vk146-BADSUSPEND	num_ne_tag	PINUTS 到 vk127 UTS（config 漂移作废，留证）
+vk146-BADSUSPEND	uts_dup	PINUTS 到 vk127 UTS
+vk147	num_ne_tag	PINUTS 到 vk127 UTS（在机 boot_b：kexec 旋钮 + 0154，SSOT config）
+vk147	uts_dup	PINUTS 到 vk127 UTS

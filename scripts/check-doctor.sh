@@ -13,6 +13,7 @@
 #   5. vk 版本账（registry / manifest / 镜像内 UTS 一致）
 #   5d. 内核身份表新鲜度 + 命名/溯源规则门
 #   5e. manifest 完整性（config_sha256）
+#   5f. ABI 敏感项一致性（.config ↔ 模块树，防 struct 偏移静默漂移）  ← 2026-10-23
 #   6. 静态卫生（设备锁单一真源 / bashism / 死脚本）
 #   7. 入口文档完整性（围栏闭合 / 截断哨兵 / 机器指针泄漏）  ← 2026-10-15 L1
 #   8. 索引↔磁盘对账（编号撞车=FAIL；索引覆盖仅对声明角度=WARN）  ← 2026-10-15 L1
@@ -160,6 +161,46 @@ if [ ${#_miss[@]} -eq 0 ]; then
   ok "所有 ≥$_CUTOFF 的 manifest 含 config_sha256（白名单 $_waived / 历史 grandfather $_hist）"
 else
   bad "manifest 缺 config_sha256（应走 scripts/build-manifest.sh，勿手写）: ${_miss[*]}"
+fi
+
+# ---------------------------------------------------------------- 5f. ABI 敏感项一致性
+# 2026-10-23 实受：build/m1-73/.config 遗留 CONFIG_SUSPEND=y（vk128/vk129 失败实验未还原），
+# 它把 struct device.of_node 从 624 推到 680。而 /lib/modules/<UTS> 符号链接当时指向
+# -abi-suspend 模块树（UTS 与内核逐字相同）⇒ vermagic 拦不住 ⇒ 后果：
+#   · fastrpc 读 of_node=NULL → rpmsg add/remove 死循环 → dmesg 刷屏 300+/发、
+#     /dev/fastrpc-* 全缺、SSC 传感器全废（vk127 起一直如此）
+#   · 用该 config 编出的内核上机「背光亮一下即掉电」
+# 本节查两件事：(a) 构建树 .config 与 SSOT 的 ABI 敏感项；(b) 构建树产出的
+# of_node 偏移是否与「模块树链接指向的那套 .ko」一致（缺省双盲检查）。
+echo
+echo "== 5f. ABI 敏感项一致性（内核 ↔ 模块树）=="
+_abi_trees=""
+for _t in build/m1-73 build/base-7.2 build/q28-disp-73 linux; do
+  [ -f "$_t/.config" ] && _abi_trees="$_abi_trees $_t"
+done
+if [ -z "$_abi_trees" ]; then
+  warnf "未找到任何内核树的 .config（build/m1-73 等）→ 跳过"
+else
+  for _t in $_abi_trees; do
+    if bash scripts/check-abi-config.sh "$_t/.config" >/tmp/abi5f.$$ 2>&1; then
+      ok "$_t/.config ABI 敏感项与 SSOT 一致"
+    else
+      _d=$(grep -E '\[FAIL\]' /tmp/abi5f.$$ | sed -E 's/^ +\[FAIL\] +//' | tr '\n' ';' | cut -c1-200)
+      bad "$_t/.config ABI 敏感项漂移（与机内模块树不兼容）: $_d"
+    fi
+    rm -f /tmp/abi5f.$$
+  done
+fi
+
+if [ -d build/m1-73 ] && command -v pahole >/dev/null 2>&1 && [ -f build/m1-73/vmlinux ]; then
+  _off=$(pahole -C device build/m1-73/vmlinux 2>/dev/null | awk '/struct device_node \* +of_node/{gsub(/\*/,"",$(NF-2)); print $(NF-2)}' | tr -d ';')
+  if [ -n "$_off" ]; then
+    ok "build/m1-73 vmlinux: struct device.of_node @ $_off（部署的模块必须读同一偏移）"
+  else
+    warnf "build/m1-73/vmlinux 取不到 of_node 偏移（pahole 无该成员？）"
+  fi
+else
+  [ -d build/m1-73 ] && warnf "缺 pahole 或 build/m1-73/vmlinux → 跳过 of_node 偏移核对"
 fi
 
 # ---------------------------------------------------------------- 6. 静态卫生（防造轮回退）
