@@ -226,3 +226,5 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-24T02:13:48Z	q32w1-r1	vk152	warm	none	GOOD	d8e8074be0dd	/home/xuqianhui/y700-elden/reports/trials/20261024T021347Z-q32w1-r1
 2026-10-24T02:19:46Z	q32c1-r1	vk152	por	none	GOOD	d8e8074be0dd	/home/xuqianhui/y700-elden/reports/trials/20261024T021942Z-q32c1-r1
 2026-10-24T02:21:35Z	q32w1-r1	vk152	warm	none	GOOD	d8e8074be0dd	/home/xuqianhui/y700-elden/reports/trials/20261024T022134Z-q32w1-r1
+2026-10-24T02:49:43Z	q32c1-r2	vk152	por	none	GOOD	d8e8074be0dd	/home/xuqianhui/y700-elden/reports/trials/20261024T024942Z-q32c1-r2
+2026-10-24T02:51:54Z	q32w2-r1	vk152	warm	none	GOOD	d8e8074be0dd	/home/xuqianhui/y700-elden/reports/trials/20261024T025153Z-q32w2-r1
