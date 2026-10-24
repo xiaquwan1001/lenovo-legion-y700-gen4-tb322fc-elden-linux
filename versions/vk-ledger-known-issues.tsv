@@ -294,3 +294,5 @@ vk151	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只改显示复位
 vk151	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）
 vk152	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只加 Q11 kexec 诊断旋钮（0019/0020），故源提交上只有 replay/m1-73-vk127 ref
 vk152	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）；新增旋钮不改变 config/ABI（check-abi-config 27 项一致、of_node@624）
+vk153	num_ne_tag	内核源仍为 m1-73 提交（24223e44）：在 build/vk151 上加 Q11/K6 ITS quiesce 钩子（导出 gic_its_quiesce_for_kexec + 诊断打印），源提交上只有 replay/m1-73-vk127 ref；config/ABI 未变
+vk153	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI

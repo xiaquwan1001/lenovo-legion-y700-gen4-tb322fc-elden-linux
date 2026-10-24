@@ -117,3 +117,62 @@ kexec-target-dmesg.txt: 1402 行，覆盖目标 0 → 126.58 s
    **但原因和 10-23 记的「DSI 自锁」不同**，应以本轮为准。
 3. **冷暖复位**：本轮数据没有给 W1/W2/C1/POR 增加区分力（三者都不碰 ITS/MSI 残留）。
    若还要做，必须先有「复位深度 × ITS 残留」的判据（目标侧 `ITS queue timeout` 计数就是现成的一条）。
+
+---
+
+## 6. vk153：ITS quiesce 钩子（退出侧）——**部分有效，33 次残留**
+
+### 6.1 补丁（`build/vk151`，3 文件）
+
+| 文件 | 改动 |
+|---|---|
+| `drivers/irqchip/irq-gic-v3-its.c` | 新增并导出 `gic_its_quiesce_for_kexec()`：逐 `its_node` 打印 `CTLR/CREADR/CWRITER` → `its_force_quiescent()` → 再打印结果；另加 `[KD] its-probe:`（probe 后 `CTLR/CREADR/CWRITER/cbaser`）与超时行补打 `CREADR/CTLR/CWRITER` |
+| `kernel/kexec_core.c` | `mask=1` 路径在 `syscore_shutdown()` 之后调用上述钩子，打 `[KD] stage=14b after its-quiesce`；同文件提供 `__weak` 空实现 |
+| `include/linux/kexec.h` | 钩子原型（顺手消掉 2 个 `-Wmissing-prototypes`） |
+
+镜像 `out/boot-elden-vk153.img` sha `5efca31f…`（22 032 384 B），registry 已登记（lane `kexec-its`）。
+**编译按用户要求留 2 个 P 核**：`taskset -c 0-11 make -j12`（i7-14700KF：CPU0–15 = 8 个 P 核 ×2 HT，CPU12–15 空出）。
+
+### 6.2 上机（全程零写盘）
+
+载具 = `reboot2 bootloader` → `fastboot boot out/boot-elden-vk153.img`（RAM 运行，UTS `…-dirty+`），
+再 `mask=1` kexec 到同 Image（`probe=K8 kexec_marker=1`）。载具侧用 `cat /dev/kmsg > /var/tmp/k8-carrier-kmsg.log` 落盘（跳转即断，正好留下关机段）。
+
+**载具侧（关键，第一次看到这条路径）**：
+
+```
+[KD] stage=10 enter kernel_kexec (skip_mask=1)
+[KD] stage=11a SKIP device_shutdown
+[KD] stage=13 before syscore_shutdown → stage=14 after syscore_shutdown
+[KD] its-quiesce: @0x16040000 CTLR=00000001 CREADR=13760 CWRITER=13760   ← 队列已排空（两者相等）
+[KD] its-quiesce: @0x16040000 ret=0        CTLR=80000000 CREADR=13760   ← QUIESCENT=1、ENABLE=0
+[KD] stage=14b after its-quiesce
+kexec_core: Starting new kernel
+```
+
+**目标侧（`reports/artifacts/kexec-pstore-probe-20261024/k8-*`）**：
+
+| 判据 | vk152 载具（无钩子） | vk153 载具（有钩子） |
+|---|---|---|
+| `ITS queue timeout` | **99** 条 | **33** 条 |
+| 首条 / 末条 | t=2.55 s / 126.35 s | t=3.39 s / **43.42 s** |
+| 到 `/init` | 126.35 s | **43.42 s** |
+| `CREADR` 行为 | 冻结在 1057 B，**永不恢复** | 冻结在 1057 B 约 41 s 后**恢复** |
+| `its-probe` | `CTLR=00000001 CREADR=0 CWRITER=0` | 同（ENABLE 生效、队列重编程正常） |
+
+⇒ **退出侧 drain+quiesce 确实把「ITS 永久停摆」变成了「有界停顿」**（1.25 s × 33 ≈ 41 s），但没有归零。
+
+### 6.3 残留 33 次的原因（下一步唯一变量）
+
+目标 dmesg 里仍然有 **8 个 CPU 各一条** `GICv3: CPU<n>: Booted with LPIs enabled, memory probably corrupted`，
+且 `Expected reserved range [0x880310000:0x880310ffff], not found`：
+
+- `gic_reserve_range()` 在本树**只在 EFI 下生效**（`efi_mem_reserve_persistent`），**DT 启动恒返回 0** ⇒
+  LPI 属性表/待发表跨 kexec **没有任何保留**；`enabled_lpis_allowed()`（= 属性表是否在保留区内）因此为假。
+- 目标内核于是走「重新分配自己的表」的干净路径，但 **RD 侧 `GICR_CTLR.EnableLPI` 仍是载具留下的 1**，
+  `redist_disable_lpis()` 要等到 `its_cpu_init()` 逐 CPU 才清，而 `its_init()` 的 MAPC/MAPD 先发出去了 ⇒ 前 33 条命令卡在那里，
+  等 8 个 CPU 陆续把 RD 的 LPI 清掉后才继续。
+
+**下一增量（未做，~15 min，仍零写盘）**：在退出侧钩子里**一并把每个 redistributor 的 `GICR_CTLR.EnableLPI` 清零**
+（`redist_disable_lpis()` 的 all-CPU 版本），使目标内核从一开始就看不到「LPIs enabled」。
+预期判据：`Booted with LPIs enabled` 0 条、`ITS queue timeout` **33 → 0**、到 `/init` **43 s → ~10 s**。
