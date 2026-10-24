@@ -258,3 +258,5 @@ vk155	kexec-its	2026-10-24	把 quiesce 调用点从 stage 14b 前移到 `kernel_
 vk156	kexec-its	2026-10-24	内核写盘报告补 `off`/缓冲区修正；`out/boot-elden-vk156.img`
 vk157	kexec-its	2026-10-24	加 `/sys/kernel/its_quiesce/its_quiesce` 触发口（用户态直接跑钩子，不必 kexec）——**用它定案**：ITS quiesce `ret=0 CTLR=1→0x80000000`，而 RD `GICR_CTLR 00000005→00000005`（EnableLPIs 为 RES1，清不掉）；`out/boot-elden-vk157.img`
 vk158	kexec-its	2026-10-24	`gic_reserve_range()` 增加 DT 分支：`fdt_add_mem_rsv(initial_boot_params, …)`，让 LPI prop/pending 表跨 kexec 被保留、目标走 preallocated 路径；`out/boot-elden-vk158.img`。**上机未生效**（目标仍 8×`Failed to disable LPIs`、99 次超时、无 `Using preallocated redistributor tables`）⇒ 下一步要打点该函数的返回值与 FDT 余量
+vk159	kexec-its	2026-10-24	`gic_reserve_range()` 打点版：打印 `addr/size/ret` 与 FDT `rsv` 数量/`totalsize`；实测 `ret=-3 (-FDT_ERR_NOSPACE)`、`rsv 0->0` ⇒ DT 上靠 FDT memreserve 保留 LPI 表不可行
+vk160	kexec-its	2026-10-24	**修好 kexec 的版本**：incoming 侧 claim 继承的 LPI 表（`enabled_lpis_allowed()` + preallocated 分支里 `memblock_reserve`），目标 `ITS queue timeout 99→0`、`Failed to disable LPIs 8→0`、到 `/init` **1.31 s**；对 POR 惰性
