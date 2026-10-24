@@ -29,3 +29,18 @@
 - `ssh 'sync; kexec -e'` 会挂到 TCP 超时才返回（本轮 ~350 s），**不能用它的返回时间当复位时间**；
   要立刻开始轮询就 `setsid … &` 把 ssh 放掉。
 - 目标复位回 `boot_b` 的时间稳定在 **+310~330 s**（3 次一致），判据取「回来时的 `/proc/uptime` + `/proc/cmdline`」。
+
+## #379 SM8750 的 `GICR_CTLR.EnableLPIs` 是 **RES1**：写过 1 之后再也清不掉
+
+- 实测（vk157，`/sys/kernel/its_quiesce/its_quiesce` 触发，内核自己写盘）：
+  `RD cpu0..cpu7 CTLR 00000005 -> 00000005` —— 8/8 全部写 0 无效。
+- 后果：**任何**「进来时 LPIs 已使能」的内核都**不能**禁用 LPI、也**不能**重编程
+  `GICR_PROPBASER/PENDBASER`（架构要求先 disable+quiescent）⇒ 只能**沿用**原表。
+- 因此跨 kexec 时 LPI 表必须被保留（上游靠 EFI `efi_mem_reserve_persistent()`）；
+  **DT 启动没有这条路**，`fdt_add_mem_rsv()` 实测 `-3 (-FDT_ERR_NOSPACE)`（ABL 的 live DTB `rsv 0->0`），
+  且 kexec 在 `kexec -l` 时就克隆完 FDT，跳转时再改已晚。
+- 可行解 = **incoming 侧 `memblock_reserve()` 认领**继承的表（在 `memblock_free_all()` 之前），
+  让 `RDIST_FLAGS_RD_TABLES_PREALLOCATED` 成立、走 preallocated 路径。详见
+  `TASKS/sessions/2026-10-24-kexec-its-lpi-claim.md`。
+- 误判风险：`reboot`/`kexec` 后看到 `Failed to disable LPIs` 不要以为「驱动写错了」，**是硬件 RES1**；
+  也不要再尝试「退出侧把 LPI 清掉」这条路（已否决）。

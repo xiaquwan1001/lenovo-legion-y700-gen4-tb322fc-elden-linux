@@ -1,0 +1,5 @@
+[15:04:00] === K17 start ===
+[15:04:00] carrier: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty 511.89 
+[15:04:02] LOAD OK
+[15:04:02] mask=1
+[15:04:02] kexec fired

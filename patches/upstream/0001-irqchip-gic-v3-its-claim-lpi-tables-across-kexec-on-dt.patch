@@ -1,0 +1,113 @@
+irqchip/gic-v3-its: Claim LPI tables inherited across kexec on DT
+
+When a kernel is kexec'd into while LPIs are enabled, the incoming kernel
+finds GICR_CTLR.EnableLPIs set and tries to re-initialise the LPI tables
+from scratch.  That requires disabling LPIs first, which is not always
+possible: on some implementations (e.g. Qualcomm SM8750) GICR_CTLR.EnableLPIs
+is RES1 once set, the write is ignored and redist_disable_lpis() returns
+-EBUSY.  its_cpu_init() then bails out early, LPIs are never reprogrammed,
+and every MSI command queued against the ITS waits for its completion
+timeout: measured 99 timeouts of ~1.25 s each, pushing /init out from
+1.3 s to 126 s.
+
+The tables themselves are still intact and usable, and the driver already
+has a path for that (RDIST_FLAGS_RD_TABLES_PREALLOCATED), but it is gated on
+the tables being reserved memory.  On an EFI boot the outgoing kernel records
+a persistent reservation; on a DT boot nothing does.  fdt_add_mem_rsv() is not
+an option either: the flattened DTB handed over by the bootloader has no space
+left for a new entry (-FDT_ERR_NOSPACE), and kexec clones that blob when the
+image is loaded, long before the jump.
+
+So claim the inherited tables in the incoming kernel instead: reserve the
+property table while LPIs are being probed (memblock still owns the pages, well
+before memblock_free_all()), and the per-CPU pending tables when the
+preallocated path is taken.  The preallocated path is then selected normally
+and the ITS keeps working across the handoff.
+
+Measured on SM8750 (kexec into the same image, disk root):
+
+  before: 99 x "ITS queue timeout", 8 x "Failed to disable LPIs", /init 126.35 s
+  after:  0 x "ITS queue timeout",  0 x "Failed to disable LPIs", /init   1.31 s
+
+Behaviour on a normal cold boot is unchanged: enabled_lpis_allowed() is only
+consulted when LPIs are already enabled on entry, and the preallocated path is
+only taken when that flag is set.
+
+Signed-off-by: xuqianhui <xiaqinghuan@mail.ustc.edu.cn>
+
+diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
+index 6f5811aae5..2c23da11b2 100644
+--- a/drivers/irqchip/irq-gic-v3-its.c
++++ b/drivers/irqchip/irq-gic-v3-its.c
+@@ -2280,7 +2280,7 @@ static void its_free_prop_table(struct page *prop_page)
+ 	its_free_pages(page_address(prop_page), get_order(LPI_PROPBASE_SZ));
+ }
+ 
+-static bool gic_check_reserved_range(phys_addr_t addr, unsigned long size)
++static bool gic_range_is_reserved(phys_addr_t addr, unsigned long size)
+ {
+ 	phys_addr_t start, end, addr_end;
+ 	u64 i;
+@@ -2300,9 +2300,17 @@ static bool gic_check_reserved_range(phys_addr_t addr, unsigned long size)
+ 			return true;
+ 	}
+ 
++	return false;
++}
++
++static bool gic_check_reserved_range(phys_addr_t addr, unsigned long size)
++{
++	if (gic_range_is_reserved(addr, size))
++		return true;
++
+ 	/* Not found, not a good sign... */
+ 	pr_warn("GICv3: Expected reserved range [%pa:%pa], not found\n",
+-		&addr, &addr_end);
++		&addr, &addr + size - 1);
+ 	add_taint(TAINT_CRAP, LOCKDEP_STILL_OK);
+ 	return false;
+ }
+@@ -3067,7 +3075,26 @@ static bool enabled_lpis_allowed(void)
+ 	val = gicr_read_propbaser(gic_data_rdist_rd_base() + GICR_PROPBASER);
+ 	addr = val & GENMASK_ULL(51, 12);
+ 
+-	return gic_check_reserved_range(addr, LPI_PROPBASE_SZ);
++	if (gic_range_is_reserved(addr, LPI_PROPBASE_SZ))
++		return true;
++
++	/*
++	 * LPIs are already enabled, but the tables we inherited are not marked
++	 * reserved.  On a DT boot there is no EFI persistent reservation and the
++	 * flattened DTB has no room left for a memreserve entry, so the kernel we
++	 * came from (kexec) had no way to hand them over as reserved.
++	 *
++	 * We cannot start from scratch either: PROPBASER/PENDBASER may only be
++	 * reprogrammed with LPIs disabled, and on some implementations
++	 * GICR_CTLR.EnableLPIs reads as RES1 once set.  So keep the inherited
++	 * tables and claim them here, before memblock hands the pages over to the
++	 * buddy allocator.
++	 */
++	if (memblock_reserve(addr, LPI_PROPBASE_SZ))
++		return false;
++
++	pr_info("GICv3: claiming inherited LPI property table @%pa\n", &addr);
++	return true;
+ }
+ 
+ static int __init allocate_lpi_tables(void)
+@@ -3175,7 +3202,14 @@ static void its_cpu_init_lpis(void)
+ 		paddr = gicr_read_pendbaser(rbase + GICR_PENDBASER);
+ 		paddr &= GENMASK_ULL(51, 16);
+ 
+-		WARN_ON(!gic_check_reserved_range(paddr, LPI_PENDBASE_SZ));
++		/*
++		 * Same as the property table: keep the inherited pending table
++		 * rather than handing the ITS a range the allocator may reuse.
++		 */
++		if (!gic_range_is_reserved(paddr, LPI_PENDBASE_SZ)) {
++			memblock_reserve(paddr, LPI_PENDBASE_SZ);
++			pr_info_once("GICv3: claiming inherited LPI pending tables\n");
++		}
+ 		gic_data_rdist()->flags |= RD_LOCAL_PENDTABLE_PREALLOCATED;
+ 
+ 		goto out;
