@@ -310,3 +310,5 @@ vk159	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在
 vk159	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI
 vk160	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树
 vk160	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI
+vk161	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；与上游补丁文本对齐
+vk161	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI

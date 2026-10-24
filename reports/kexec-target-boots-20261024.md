@@ -280,3 +280,41 @@ SM8750 上 `GICR_CTLR.EnableLPIs` 是 **RES1**（vk157 实测 8/8 `00000005 -> 0
    （或直接趁窗口 SSH 进去，ITS 修好后 USB 是否恢复也值得复测）。
 2. 修法值得**上游化**（比现状「taint 后带着未保留内存继续用」更正确），先内部稳定几轮再发。
 3. 若要把 kexec 快环变成日常能力，需要把这 2 处改动并入日常线（当前 `boot_b` 仍是 vk152）。
+
+---
+
+## 9. 上游投递 + 目标 userland 现场（2026-10-24 收尾）
+
+### 9.1 上游化
+
+补丁 `patches/upstream/m-gic-its-claim-20261024/0001-*` **已投递**（用户批准解除投递冻结）：
+
+- Message-ID **`<20261024075856.835932-1-xiaqinghuan@mail.ustc.edu.cn>`**（USTC 通道，SMTP `Result: 250`）
+- To Thomas Gleixner；Cc Marc Zyngier / linux-arm-kernel / linux-kernel
+- **归档复核**：`/lkml/` 与 `/linux-arm-kernel/` 两个 inbox 按 Message-ID 取 raw **均命中全文**，正文与本地补丁逐 hunk 一致
+- 投递前用**最终补丁文本**重跑上机（vk161，不是 vk160）：`ITS queue timeout` **0**、`Failed to disable LPIs` **0**、
+  claim 属性表 1 次 + 待发表 1 次（`pr_info_once`）、`Using preallocated redistributor tables` 有、`/init` **1.275 s**
+
+### 9.2 kexec 目标「userland 之后」的现场（第一次拿到）
+
+设备端新增 `/etc/local.d/elden-bootlog.start`：每次启动把 `cmdline/boot_id/uptime/drm 列表/dmesg` 写到
+`/var/log/dmesg-<boot_id>.txt`（带 boot_id 后缀 ⇒ kexec 目标的快照不会被回落启动覆盖）。
+vk161 目标那次（`probe=K18`，uptime 65.6 s 时落盘，产物 `reports/artifacts/kexec-pstore-probe-20261024/k18-target-userland.log`）：
+
+| 观测 | 值 | 含义 |
+|---|---|---|
+| `/sys/class/drm` | 只有 `version` | **目标里没有 card0**：`msm_dpu` 没 bind |
+| `[usb-gadget] no UDC after 20s` | 22.1 s | **dwc3 没回来**（`mask=1` 跳过 `device_shutdown` ⇒ 继承活态） |
+| 之后的复位 | ~157 s（回落 uptime 14.5 s） | 高度吻合自家 **Q28 看门狗**（`local.d` 起 + `WAIT=75`；`card=no` ⇒ 重启一次） |
+
+⇒ **kexec 修好的是「内核与 MSI」，不是「显示与 USB」**：`mask=1` 的代价就是把 dwc3/显示留在 live 态，
+目标侧 `no UDC` + `无 card0` 是同一根因的两面。这与 Q11 的 K3 裁决一致（kexec 用于**不需显示/USB 的调试**），
+但把「为什么」从「静默挂死」改写成了「内核 1.3 s 到 /init，但显示与 USB 继承态未复位」。
+
+### 9.3 下一步（写给下一轮）
+
+1. 若要 kexec 臂也能连网/出图：需要**有选择地**在跳转前把 dwc3 与 DSI/dispcc 关到「可重新 probe」的程度
+   （`mask=1` 跳过了 `device_shutdown`，可考虑只对这两个 device 调 `.shutdown()` 或 `unbind`——
+   但 `msm-mdss/unbind` 已实测会整机重启，见 `reports/kexec-vk147-display-inherit-20261023.md` §3）。
+2. 上游侧等 review；若要求更严格，v2 = 在 `its_init()` 遍历 redistributor 帧一次性认领待发表（消除「认领太晚」的局限）。
+3. 顺手修的文档坑：`lore-query.py` 过不去当前 Anubis（`pass-challenge` 404）⇒ 用 `web_fetch(provider=firecrawl)` 取 raw。

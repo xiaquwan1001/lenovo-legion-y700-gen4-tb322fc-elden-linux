@@ -44,3 +44,14 @@
   `TASKS/sessions/2026-10-24-kexec-its-lpi-claim.md`。
 - 误判风险：`reboot`/`kexec` 后看到 `Failed to disable LPIs` 不要以为「驱动写错了」，**是硬件 RES1**；
   也不要再尝试「退出侧把 LPI 清掉」这条路（已否决）。
+
+## #380 kexec 实验臂里**别把兜底看门狗关掉**（`elden_q28_nowd`）——否则设备会停在无网络态
+
+- 2026-10-24 实测：为了观察目标 userland 之后的现场，在目标 cmdline 加 `elden_q28_nowd`（停用 Q28 看门狗）。
+  结果目标起来后 **无 card0、无 dwc3/USB**（继承活态）⇒ 既不能 SSH 也没有看门狗把它重启 ⇒ 设备在无网络态
+  **挂了 17 分钟以上**，只能人工长按电源。
+- 规约：kexec/复位类实验臂**保留兜底看门狗**（它正好把「card=no」的坏台架重启回可用线）；
+  要看得更晚，就把现场**落盘**（`/etc/local.d/elden-bootlog.start` 写 `/var/log/dmesg-<boot_id>.txt`），
+  不要去延长一个无网络的台架寿命。
+- 配套：`mask=1` 跳过 `device_shutdown` ⇒ 目标侧 **dwc3 与显示都留在 live 态**（`no UDC after 20s`、drm 只有 `version`），
+  这是 kexec 臂「能跑内核但没显示没网」的默认结果，不是新 bug。
