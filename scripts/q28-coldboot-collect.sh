@@ -38,6 +38,10 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
 		OUT="reports/artifacts/q28-clkdiag-r$R-$(printf '%s' "$BID" | cut -c1-8).txt"
 		$SSH "$T" 'bash -s' < "$ROOT/scripts/q28-clkdiag.sh" >/dev/null 2>&1
 		$SSH "$T" "cat /var/tmp/q28-clkdiag-$(printf '%s' "$BID" | cut -c1-8).txt" > "$ROOT/$OUT" 2>/dev/null
+		# Q32 同发取证：把「复位深度 + 固件有没有留活显示」与 Q28 样本绑在一起
+		$SSH "$T" 'RESET_DECLARED=por sh -s' < "$ROOT/scripts/q32-boot-evidence.sh" >/dev/null 2>&1
+		$SSH "$T" "cat /var/tmp/q32-boot-$(printf '%s' "$BID" | cut -c1-8).txt" \
+			> "$ROOT/reports/artifacts/q32-boot-$(printf '%s' "$BID" | cut -c1-8).txt" 2>/dev/null
 		printf '%s' "$BID" > /tmp/prev_boot_id.txt
 		echo "[collect] 新启动 boot_id=$BID uptime=${UP}s → $OUT"
 		grep -E "^(command DMA timeout|peer command DMA timeout|DSI_PLL_lockfail|reset failure|STORM|recovery is not complete) " "$ROOT/$OUT" | sed 's/^/    /'

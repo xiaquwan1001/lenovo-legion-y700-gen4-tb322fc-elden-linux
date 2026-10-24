@@ -84,6 +84,12 @@ for k in $(seq 0 $((N - 1))); do
 	$SSH "$T" "cat /var/tmp/q28-clkdiag-$B8.txt" > "$ROOT/$OUT_REL" 2>/dev/null
 	[ -s "$ROOT/$OUT_REL" ] || echo "  ⚠ clkdiag 产物为空：$OUT_REL" >&2
 
+	# ---- 1b) Q32 证据（复位深度 + 固件活显示），与同一发样本绑定 ----
+	Q32_REL="reports/artifacts/q32-boot-$B8.txt"
+	$SSH "$T" 'RESET_DECLARED=por sh -s' < "$ROOT/scripts/q32-boot-evidence.sh" >/dev/null 2>&1
+	$SSH "$T" "cat /var/tmp/q32-boot-$B8.txt" > "$ROOT/$Q32_REL" 2>/dev/null
+	[ -s "$ROOT/$Q32_REL" ] || echo "  ⚠ q32 证据为空：$Q32_REL" >&2
+
 	# ---- 2) devprobe 三态判定 + dmesg/env ----
 	STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 	LOGDIR="$TDIR/${STAMP}-q28por-r$R"
@@ -95,6 +101,7 @@ for k in $(seq 0 $((N - 1))); do
 	[ -n "$VERDICT" ] || VERDICT=UNKNOWN
 	printf 'boot_id=%s\nimage=%s\n' "$BID" "$(basename "$IMAGE")" > "$LOGDIR/README.txt"
 	cp -f "$ROOT/$OUT_REL" "$LOGDIR/" 2>/dev/null
+	cp -f "$ROOT/$Q32_REL" "$LOGDIR/" 2>/dev/null
 
 	# ---- 3) trial 记录（与其它冷起样本同表，便于事后统计）----
 	TAB="$T" bash "$ROOT/scripts/trial.sh" record --label "q28por-r$R" --image "$IMAGE" \

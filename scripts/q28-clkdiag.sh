@@ -36,6 +36,20 @@ for p in "command DMA timeout" "peer command DMA timeout" "DSI_PLL_lockfail" \
 done
 dmesg 2>/dev/null | grep -E "command DMA timeout|peer command DMA timeout|reset failure|DSI_PLL_lockfail" | tail -8 >> "$OUT"
 
+sec q32-reset-and-handoff
+# Q32 三判据（reports/q32-warm-vs-cold-preresearch-20261023.md §2/§3）：
+# ① 本次复位深度：vendor reset 打印是否出现（架构 SYSTEM_RESET 与 POR 内核侧不可区分）
+printf 'vendor_reset_print=%s\n' "$(dmesg 2>/dev/null | grep -c 'SYSTEM_RESET2 vendor reset_type')" >> "$OUT"
+dmesg 2>/dev/null | grep -E 'SYSTEM_RESET2|reset reason|reboot: ' | tail -4 >> "$OUT"
+# ② 固件是否留活显示：DT splash 区 + msm 记录的 boot framebuffer + silent_boot 模式
+_sp=no; for _d in /proc/device-tree/reserved-memory/*splash*; do [ -d "$_d" ] && _sp=yes; done
+printf 'splash_node=%s\n' "$_sp" >> "$OUT"
+printf 'bootfb_recorded=%s\n' "$(dmesg 2>/dev/null | grep -c 'reserved boot framebuffer IOVA')" >> "$OUT"
+printf 'silent_boot=%s\n' "$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^silent_boot.mode=//p')" >> "$OUT"
+# ③ simpledrm/efifb 是否参与（7.3 树期望 0；非 0 = 交接路径变了）
+printf 'simpledrm_or_efifb=%s\n' "$(dmesg 2>/dev/null | grep -icE 'simpledrm|simple-framebuffer|efifb')" >> "$OUT"
+printf 'chosen_fb=%s\n' "$([ -d /proc/device-tree/chosen/framebuffer ] && echo yes || echo no)" >> "$OUT"
+
 sec ctl-clock-rates
 # DPU/INTF 侧的关键量：pclk0/1 的 parent 与 rate
 for c in disp_cc_mdss_pclk0_clk_src disp_cc_mdss_pclk1_clk_src \

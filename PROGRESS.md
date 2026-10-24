@@ -46,6 +46,7 @@
 | 2026-10-23 | **Q24 根因指名并停止采样**：7.2 血统缺上游 `pmdomain: qcom: rpmhpd: Skip retention by default`（7.3 线自带）⇒ 41 发 0 死亡 vs 7.2 的 6/8 死是**版本差不是随机**；日常线无需本地补丁 | `reports/q24-retention-rootcause-20261023.md` |
 | 2026-10-23 | **收尾轮（免 POR）**：Q29 关闭（容器 Mesa bind 冗余，已删，图形正常）、**背光下限服务**（修「面板 GOOD 但看起来黑屏」）、容器相机恢复 1 设备（根因 = `/dev/video100` bind 从未持久化） | `reports/closeout-q29-backlight-camera-20261023.md`、`PITFALLS #372/#373` |
 | 2026-10-23 夜 | **Q28 前 2 发真 POR（vk152）= 2/2 GOOD**，判据段逐字一致；累计 3 发，距 ≥8 发判据剩 5 发（**采样配额：agent 只取 2 发，其余交用户**）。**新增待办 Q32 = 暖起 vs 冷起差异**（静态预研指向「ABL 交接 framebuffer + 复位动作」，而非「暖/冷」本身） | `reports/q28-por-samples-r1r2-20261023.md`、`reports/q32-warm-vs-cold-preresearch-20261023.md` |
+| 2026-10-23 深夜 | **Q32 开工（无复位、无 verdict）**：取证工具落地（`scripts/q32-boot-evidence.sh` / `scripts/q32-arm.sh`，clkdiag 加 6 个 Q32 判据、两个 POR 收集器自动附采）；**判据更正 = 复位深度只能从 pstore/ramoops 取**（本次 dmesg 永无该打印，`PITFALLS #374`）；**试点（vk152 `b6211ab4`）**：DT `splash_region` 43 MiB + msm `reserved boot framebuffer IOVA` + `silent_boot.mode=nonsilent` ⇒ **ABL 留了活显示**，而 `simpledrm=0`（`PITFALLS #375`）；UEFI 交叉评估：**维持搁置**，UEFI 会把「固件活显示」推向恒 yes 并抹掉 W1 臂 | `reports/q32-kickoff-20261023.md` |
 
 ---
 
