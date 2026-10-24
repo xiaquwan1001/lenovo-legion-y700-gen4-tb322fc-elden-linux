@@ -1,6 +1,6 @@
 # m-gic-its-claim-20261024 — irqchip/gic-v3-its：kexec 继承 LPI 表要「认领」而不是「重来」
 
-> 状态：**就绪未发**（`patches/upstream/README.md` §3 投递冻结，需用户明确批准）
+> 状态：**已投递（2026-10-24，用户批准）** `<20261024075856.835932-1-xiaqinghuan@mail.ustc.edu.cn>`；`/lkml/` 与 `/linux-arm-kernel/` 均已归档
 > 关联：`reports/kexec-target-boots-20261024.md` §7/§8、`TASKS/sessions/2026-10-24-kexec-its-lpi-claim.md`、`PITFALLS #378/#379`
 
 ## 0. 一句话
@@ -66,6 +66,14 @@ kexec 到「LPIs 已使能」的内核时，incoming 内核按现状会试图**�
 
 ## 6. 投递记录
 
-- 2026-10-24：备料完成，**未投递**（投递冻结）。
-- 待批后计划：`git send-email`（To Thomas / Cc Marc + 两列表），随后用
-  `~/.local/bin/lore-query.py` 按 Message-ID 复核 `https://lore.kernel.org/<inbox>/<Message-ID>/raw`。
+- 2026-10-24 15:58 (+0800)：`git send-email`（USTC 通道）**已发**，SMTP `Result: 250`；
+  Message-ID **`<20261024075856.835932-1-xiaqinghuan@mail.ustc.edu.cn>`**。
+  To Thomas Gleixner；Cc Marc Zyngier + linux-arm-kernel + linux-kernel。
+- **归档复核（2026-10-24）**：`https://lore.kernel.org/lkml/<MID>/raw` 与
+  `https://lore.kernel.org/linux-arm-kernel/<MID>/raw` **均取到全文**（LKML 带
+  `X-Mailing-List: linux-kernel@vger.kernel.org`，arm-kernel 带 `List-Id: <linux-arm-kernel.lists.infradead.org>`）；
+  正文与本地补丁逐 hunk 一致（`index 6f5811aae5..6dcd903e9f`、结尾 `-- \n2.53.0` 相同）。
+  ⚠ 工具说明：`~/.local/bin/lore-query.py` 对当前 Anubis（v1.26.2，`algorithm: fast`）**过不去**（`pass-challenge` 404）；
+  本轮改用 `web_fetch(provider=firecrawl)` 取 raw 成功 —— 下次优先用这条。
+- 上机确认（投递前用**最终补丁文本**重做）：vk161，目标 `ITS queue timeout` **0**、
+  `Failed to disable LPIs` **0**、claim 属性表 1 + 待发表 1、`/init` **1.275 s**。
