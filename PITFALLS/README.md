@@ -107,6 +107,8 @@
 
 | 77 | **#388** 厂商运行时注入的 DT 节点属性可能是**每次开机新发**：同机两次 reboot 后 `reg`（Gunyah RM capid）全变、只有 `interrupts` 恒定 ⇒ 取一个样本就写死进 DTB 会静默失效；判据 = 连续两次开机逐字节对比 + 属性值在本地固件 blob 里是否 0 命中（0 命中=运行时生成，只能复刻发现通道） | [77-运行时注入的DT节点值可能每boot都变.md](sessions/77-运行时注入的DT节点值可能每boot都变.md) |
 
+| 78 | **#389** 合法厂商 overlay 在主线一律 `-EINVAL`：根因常是**板 DTB 没有 `__symbols__`**（dtc 未加 `-@`）⇒ `__fixups__` 解析失败；判据 `dtc -O dts <板dtb> \| grep -c __symbols__`（0=本坑）。连带：RM 已绑定时 `rmmod` 承载 overlay 的模块 = 拆节点 ⇒ 20 s 内整机复位，须先卸消费者 | [78-主线DTB缺symbols导致厂商overlay-EINVAL与rmmod复位.md](sessions/78-主线DTB缺symbols导致厂商overlay-EINVAL与rmmod复位.md) |
+
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
 > 编号不写死上下界；唯一性由 §8 的正文编号对账保证。
