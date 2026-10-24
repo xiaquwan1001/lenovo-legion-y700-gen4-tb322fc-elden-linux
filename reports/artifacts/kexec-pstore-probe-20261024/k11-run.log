@@ -1,0 +1,25 @@
+[13:55:20] === K11 start ===
+[13:55:20] 1) reboot to bootloader (single command)
+[13:55:40]    fastboot present
+[13:55:40] 2) fastboot boot vk154 (single command)
+Sending 'boot.img' (21516 KB)                      FAILED (reap_urb(0) failed: urb returned error: Protocol error)
+fastboot: error: Command failed
+[13:55:45] 3) wait for carrier SSH
+[13:55:56]    carrier uname: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+   uptime: 10.87
+[13:55:56]    identity: fastboot-booted vk153/vk154 (UTS has '+')
+[13:55:56] 4) backup dumper (best effort) + payload push
+dumper alive
+[13:56:01]    LOAD OK
+[13:56:01]    mask=1
+[13:56:01] 5) fire kexec
+[14:01:25]    back +324s uptime=16.76
+[14:01:25]    IDENTITY=FALLBACK
+[14:01:25] 6) grab pstore FIRST (read-once)
+-r--r----- 1 root root 128906 Jan  7 03:51 /var/tmp/k11-pstore.txt
+[14:01:26] 7) carrier-side evidence (pstore, else dumper)
+[14:01:26] 8) target-side evidence
+   ITS timeouts: 99
+   Booted-with-LPIs lines: 8
+[  126.399120][    T1] Freeing unused kernel memory: 4608K
+[  126.399170][    T1] Run /init as init process
+[14:01:26] === done ===

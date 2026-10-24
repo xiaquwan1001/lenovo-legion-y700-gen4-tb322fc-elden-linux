@@ -1,0 +1,25 @@
+[14:03:25] === K12 start ===
+[14:03:25] 1) reboot to bootloader (single command)
+[14:03:45]    fastboot present
+[14:03:45] 2) fastboot boot vk154 (single command)
+Booting                                            OKAY [ 10.111s]
+Finished. Total time: 10.610s
+[14:03:56] 3) wait for carrier SSH
+[14:04:07]    carrier uname: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+   uptime: 3.97
+[14:04:07]    identity: fastboot-booted vk153/vk154 (UTS has '+')
+[14:04:07] 4) backup dumper (best effort) + payload push
+dumper alive
+[14:04:15]    LOAD OK
+[14:04:15]    mask=1
+[14:04:15] 5) fire kexec
+[14:09:51]    back +336s uptime=16.99
+[14:09:51]    IDENTITY=FALLBACK
+[14:09:51] 6) grab pstore FIRST (read-once)
+-r--r----- 1 root root 128719 Jan  7 03:59 /var/tmp/k12-pstore.txt
+[14:09:52] 7) carrier-side evidence (pstore, else dumper)
+[14:09:52] 8) target-side evidence
+   ITS timeouts: 99
+   Booted-with-LPIs lines: 8
+[  133.921220][    T1] Freeing unused kernel memory: 4608K
+[  133.921271][    T1] Run /init as init process
+[14:09:52] === done ===

@@ -1,0 +1,27 @@
+[14:13:07] === K13 start ===
+[14:13:07] 1) reboot to bootloader (single command)
+[14:13:27]    fastboot present
+[14:13:27] 2) fastboot boot vk154 (single command)
+Booting                                            OKAY [ 10.111s]
+Finished. Total time: 10.611s
+[14:13:38] 3) wait for carrier SSH
+[14:13:49]    carrier uname: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+   uptime: 3.98
+[14:13:49]    identity: fastboot-booted vk153/vk154 (UTS has '+')
+[14:13:49] 4) payload push
+[14:13:52]    LOAD OK
+[14:13:52]    mask=1
+[14:13:52] 4b) start dumper LATE (right before firing)
+size1=81253
+size2=87026
+[14:13:57] 5) fire kexec
+[14:19:33]    back +336s uptime=18.29
+[14:19:33]    IDENTITY=FALLBACK
+[14:19:33] 6) grab pstore FIRST (read-once)
+-r--r----- 1 root root 128828 Jan  7 04:09 /var/tmp/k13-pstore.txt
+[14:19:33] 7) carrier-side evidence (pstore, else dumper)
+[14:19:33] 8) target-side evidence
+   ITS timeouts: 99
+   Booted-with-LPIs lines: 8
+[  133.915372][    T1] Freeing unused kernel memory: 4608K
+[  133.915422][    T1] Run /init as init process
+[14:19:33] === done ===
