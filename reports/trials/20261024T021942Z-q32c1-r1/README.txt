@@ -1,0 +1,10 @@
+boot_id=c93c5543-dbdd-4ccf-9854-ecad41cbf63e
+image=boot_b-vk152.img
+arm=c1
+reset=por
+verdict=GOOD
+fw_live_fb=yes
+reset_depth=por_declared
+vendor_path_proof=n/a
+serial_vendor_reset=0
+serial_delta_bytes=2948625738

@@ -101,3 +101,38 @@ fi
 `SER_TOK=$(grep -ac PATTERN file || echo 0)` 在**无命中**时输出**两行**（`grep -c` 已打印 `0`，再追加 `echo 0`），
 在 `set -u` 脚本里会让 `[ "$SER_TOK" -lt 1 ]` 报 `需要整数` 并中断取证 ⇒ 样本白跑一发。
 写法：`X=$(grep -ac PAT file 2>/dev/null | head -1); X=${X:-0}`。
+
+---
+
+## #377 ramoops 在 POR 后不清零 ⇒ 新旧文本按行交错把关键行「写坏」；判据要抗噪 + 防残留
+
+### 现象
+
+同一条复位打印，两次暖复位后读出来不一样（2026-10-24 实测）：
+
+```
+# 第一次（region 干净）
+psci: SYSTEM_RESET2 vendor reset_type=0x80010001 cookie=0x2 (cmd=bootloader)
+# 第二次（上一次的记录还在）
+psci: psci: SYSTEM_RESET2 vendor reret_type=0h8000001 cookie=0x2 (cmd=bnotlader)
+```
+
+`grep 'SYSTEM_RESET2 vendor reset_type'` 对第二种**必然失配** ⇒ 会被误判成「钩子没生效/降级成普通重启」。
+
+### 根因
+
+`ramoops` 是固定地址的环形缓冲（本机 `0x400000@0xc2000000`）。断电/真 POR 后 DRAM 内容保留、**不清零**，
+新启动从索引 0 重写 ⇒ 新旧日志按行交错，长行被后半段旧字节覆盖一部分，读出来就是「丢字符/插字符」。
+
+### 三条判据规则（已落地到 `scripts/q32-boot-evidence.sh` / `q32-arm.sh`）
+
+- **只认不会被打乱的锚点**：`SYSTEM_RESET2`（必要时再要 `cookie=0x`），用 `grep -a`（防 NUL 当二进制跳过）。
+   把命中的原始行整行落盘，让人能读乱码而不是只看计数。
+- **残留闸**：与**上一发已归档的 pstore** 逐字比对 —— 残留文本会与上一发**完全相同**；
+   本发与上一发不同 ⇒ 是本发新写。没有这一步，POR 之后可能把上上发的暖复位记录当成这一发的。
+- **别用「读不到」反推冷起**：pstore 空可能是 POR、也可能是已被读过一次（读后即删）。
+
+### 附带
+
+`dmesg` 输出也可能含 NUL 字节（本机实测有），把采集产物写成 binary 后 `grep -o` 会报
+`匹配到二进制文件` 并静默返回空 ⇒ 采集端统一 `| tr -d '\0'`，并用 `grep -a`。

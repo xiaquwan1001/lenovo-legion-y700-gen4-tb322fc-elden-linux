@@ -1,0 +1,5 @@
+evidence re-derived 2026-10-24 after matcher fix
+PST_RESET_loose(grep -ac SYSTEM_RESET2)=1
+matched: psci: SYSTEM_RESET2 vendor reret_type=0h8000001 cookie=0x2 (cmd=bootloader)   # 文本被打乱，锚点未乱
+prev-archive-compare: 与 299bfac8 那份文本不同 ⇒ 非残留（残留会逐字相同）
+outcome proof: fastboot reached ⇒ vendor reset_type=0x80010001 生效

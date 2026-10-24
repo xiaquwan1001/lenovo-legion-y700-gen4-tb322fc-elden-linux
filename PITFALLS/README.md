@@ -92,7 +92,7 @@
 | 65 | **#370** 「概率性」故障先两树 `git diff` 枚举语义差 + 用现成 debugfs 验证，别急着加样本 | [65-概率性故障先diff两树语义差.md](sessions/65-概率性故障先diff两树语义差.md) |
 | 66 | **#371** 裸 `adb get-state`/`fastboot devices`（不带 `-s`）会把命令发给同总线的**另一台手机**；设备锁 fd 还会被 adb fork-server 继承导致后续脚本永久阻塞（`fuser` 判据） | [66-裸adb探测把命令发给同总线另一台手机.md](sessions/66-裸adb探测把命令发给同总线另一台手机.md) |
 | 67 | **#372** 背光被自动亮度压到 4% ⇒「面板 GOOD 但看起来黑屏」，误判设备状态；**#373** 容器相机 0 devices = `/dev/video100` 的 bind 从未进 `config_nodes`（会话内手工绑的），且 `pgrep` 判据命中内核线程 `[disp_snapshot]` 致 `cam-loopback.sh start` 永久拒启动 | [67-背光4伪装黑屏与容器相机bind从未持久化.md](sessions/67-背光4伪装黑屏与容器相机bind从未持久化.md) |
-| 68 | **#374** 复位深度证据在**上一个内核**里（pstore/ramoops，读后即删），本次 `dmesg` 永远没有那条 `SYSTEM_RESET2 vendor` 打印；架构 `SYSTEM_RESET` 与真 POR 内核侧不可区分 ⇒ 复位类型必须显式声明。**#375** 在机 DTB 节点名 `splash_region` ≠ 源码树 `splash-region@fc800000`（写死路径必静默失配）；且「`simpledrm=0`」≠「ABL 没留交接 framebuffer」（msm 用 `memory-region` 保留 IOVA）。**#376** 多发实验的就绪门必须**每发重过**（第 2 发早发 `reboot2` ⇒ USB 全不枚举） | [68-pstore才是复位深度证据与splash节点名不统一.md](sessions/68-pstore才是复位深度证据与splash节点名不统一.md) |
+| 68 | **#374** 复位深度的证据在**上一个内核**里（pstore，读后即删），本次 `dmesg` 没有 `SYSTEM_RESET2 vendor`；架构 `SYSTEM_RESET` 与 POR 不可区分 ⇒ 复位类型须显式声明。**#375** 在机 DTB 节点名 `splash_region` ≠ 源码树 `splash-region@fc800000`（写死路径必静默失配）；且「`simpledrm=0`」≠「ABL 没留交接 framebuffer」（msm 用 `memory-region` 保留 IOVA）。**#376** 多发实验就绪门必须每发重过（第 2 发早发 `reboot2` ⇒ USB 全不枚举）。**#377** ramoops 在 POR 后不清零 ⇒ 复位行被交错写坏，须抗噪锚点 + 与上一发归档比对 | [68-pstore才是复位深度证据与splash节点名不统一.md](sessions/68-pstore才是复位深度证据与splash节点名不统一.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。

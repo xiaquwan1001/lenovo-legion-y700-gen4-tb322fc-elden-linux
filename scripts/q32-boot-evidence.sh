@@ -112,7 +112,14 @@ for p in "command DMA timeout" "peer command DMA timeout" "reset failure" "DSI_P
 done
 
 # ---------- summary（机器可读） ----------
-PST_RESET=$( [ -s "$PST" ] && grep -ac 'SYSTEM_RESET2 vendor reset_type' "$PST" || echo 0)
+# ★抗噪匹配：ramoops 在 POR 后是**残留+新写交错**（同一地址被旧内容填过），实测会把
+# `vendor reset_type=0x80010001` 写成 `vendor reret_type=0h8000001` 之类 ⇒ 不能用整串精确匹配。
+# 只认不会被打乱的锚点 `SYSTEM_RESET2`（若它都花掉则记 unknown，不强推）。
+PST_RESET=$(grep -ac 'SYSTEM_RESET2' "$PST" 2>/dev/null | head -1); PST_RESET=${PST_RESET:-0}
+if [ -s "$PST" ]; then
+	printf '%s\n' '--- pstore 抗噪匹配到的复位行（可能是残留/交错文本，需与上一发归档比对）' >> "$OUT"
+	grep -aE 'SYSTEM_RESET2|Restarting system with command' "$PST" 2>/dev/null | tail -4 >> "$OUT"
+fi
 PST_PRESENT=no; [ -s "$PST" ] && PST_PRESENT=yes
 VENDOR_RESET=$(dmesg 2>/dev/null | grep -c 'SYSTEM_RESET2 vendor reset_type')
 SPLASH_NODE=no
@@ -165,6 +172,8 @@ fi
 	printf 'DSI_STATUS=%s/%s\n' "${DSI:-none}" "${DSIEN:-none}"
 	printf 'STORM_SIG=%s\n' "$STORM"
 } >> "$OUT"
+
+tr -d '\0' < "$OUT" > "$OUT.clean" 2>/dev/null && mv -f "$OUT.clean" "$OUT" 2>/dev/null || true
 
 sed -n '/^===== summary =====/,$p' "$OUT"
 echo "OUT=$OUT"
