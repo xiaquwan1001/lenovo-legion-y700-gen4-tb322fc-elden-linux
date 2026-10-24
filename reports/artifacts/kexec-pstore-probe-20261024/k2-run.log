@@ -1,0 +1,19 @@
+[11:23:16] === K1 probe start ===
+[11:23:16] image  c0b39ccb24b357f1 61M
+[11:23:16] dtb    7190ecf050c59108
+[11:23:16] initrd 55e2a0d24b3dbf61
+[11:23:16] device: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty 611.78 b8ac16e2-2ed0-41da-90e5-d7b48e47dfdc 
+[11:23:16] push payload
+944ae78ace27adc9f817256f75a5a4f0  /var/tmp/kt-k2/Image
+d37c1e21506295e4c936be55ef0d1723  /var/tmp/kt-k2/dtb
+3aceb3d26da62ea99af2730415df8140  /var/tmp/kt-k2/initrd
+944ae78ace27adc9f817256f75a5a4f0 Image
+d37c1e21506295e4c936be55ef0d1723 sm8750-lenovo-elden.dtb
+3aceb3d26da62ea99af2730415df8140 initramfs-slim.cpio.gz
+[11:23:18] set mask=1 (skip device_shutdown) + readback
+1
+[11:23:18] cmdline: console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel panic=15 kexec_dbg=1 elden_kexec_target=1 probe=K2 kexec_marker=1 kexec_marker_dev=/dev/sda17
+[11:23:18] load
+[11:23:19] LOAD OK
+1
+[11:23:19] === kexec -e (device will go away) ===

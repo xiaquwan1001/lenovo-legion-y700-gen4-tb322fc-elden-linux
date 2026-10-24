@@ -1,0 +1,221 @@
+            CPU0       CPU1       CPU2       CPU3       CPU4       CPU5       CPU6       CPU7       
+  11:        546        951        384        323      21166       6193        136        116  GICv3                      27 Level     arch_timer
+  13:        255          0          0          0          0          0          0          0  GICv3                     261 Level     ipcc_0
+  14:         58          0          0          0          0          0          0          0  GICv3                      58 Level     apss_cpucp_mbox
+  15:        573          0          0          0          0          0          0          0  GICv3                      37 Level     apps_rsc
+  16:        249          0          0          0          0          0          0          0  ipcc                        0 Edge      aoss-qmp
+  17:          1          0          0          0          0          0          0          0  ipcc                     196610 Edge      smp2p-adsp
+  18:          0          0          0          0          0          0          0          0  ipcc                     393218 Edge      smp2p-cdsp
+  19:          0          0          0          0          0          0          0          0  ipcc                     131074 Edge      smp2p-modem
+  22:          0          0          0          0          0          0          0          0  pmic_arb                 6431304 Edge      pm8xxx_rtc_alarm
+  23:          0          0          0          0          0          0          0          0  pmic_arb                 1303109 Edge      pmic_pwrkey
+  24:          0          0          0          0          0          0          0          0  pmic_arb                 1294917 Edge      pmic_resin
+  25:          0          0          0          0          0          0          0          0  GICv3                     803 Level     c228000.thermal-sensor
+  26:          0          0          0          0          0          0          0          0  GICv3                     516 Level     c228000.thermal-sensor
+  27:          0          0          0          0          0          0          0          0  GICv3                     804 Level     c229000.thermal-sensor
+  28:          0          0          0          0          0          0          0          0  GICv3                     517 Level     c229000.thermal-sensor
+  29:          0          0          0          0          0          0          0          0  GICv3                     805 Level     c22a000.thermal-sensor
+  30:          0          0          0          0          0          0          0          0  GICv3                     518 Level     c22a000.thermal-sensor
+  31:          0          0          0          0          0          0          0          0  GICv3                     806 Level     c22b000.thermal-sensor
+  32:          0          0          0          0          0          0          0          0  GICv3                     519 Level     c22b000.thermal-sensor
+  33:          0          0          0          0          0          0          0          0  pmic_arb                 17433181 Edge      temp-alarm
+  34:          0          0          0          0          0          0          0          0  pmic_arb                 134873740 Edge      temp-alarm
+  35:          0          0          0          0          0          0          0          0  pmic_arb                 118096511 Edge      temp-alarm
+  36:          0          0          0          0          0          0          0          0  pmic_arb                 50987627 Edge      temp-alarm
+  37:          0          0          0          0          0          0          0          0  pmic_arb                 84542067 Edge      temp-alarm
+  38:          0          0          0          0          0          0          0          0  pmic_arb                 101319289 Edge      temp-alarm
+  39:          0          0          0          0          0          0          0          0  pmic_arb                 151650964 Edge      temp-alarm
+  41:          0          0          0          0          0          0          0          0  GICv3                      38 Level     arch_mem_timer
+  42:          0          0          0          0          0          0          0          0  pmic_arb                 9445969 Edge      sdam0
+  44:          0          0          0          0          0          0          0          0  GICv3                      23 Level     arm-pmu
+  46:          0          0          0          0          0          0          0          0  GICv3                     994 Edge      qcom-scm
+  47:          0          0          0          0          0          0          0          0  GICv3                     706 Level     arm-smmu global fault
+  73:          0          0          0          0          0          0          0          0  GICv3                      97 Level     arm-smmu global fault
+  74:          0          0          0          0          0          0          0          0  GICv3                     129 Level     arm-smmu-context-fault
+  75:          0          0          0          0          0          0          0          0  GICv3                     130 Level     arm-smmu-context-fault
+  76:          0          0          0          0          0          0          0          0  GICv3                     131 Level     arm-smmu-context-fault
+  77:          0          0          0          0          0          0          0          0  GICv3                     132 Level     arm-smmu-context-fault
+  78:          0          0          0          0          0          0          0          0  GICv3                     133 Level     arm-smmu-context-fault
+  90:          0          0          0          0          0          0          0          0  GICv3                     145 Level     arm-smmu-context-fault
+ 100:          0          0          0          0          0          0          0          0  GICv3                     217 Level     arm-smmu-context-fault
+ 101:          0          0          0          0          0          0          0          0  GICv3                     218 Level     arm-smmu-context-fault
+ 102:          0          0          0          0          0          0          0          0  GICv3                     219 Level     arm-smmu-context-fault
+ 103:          0          0          0          0          0          0          0          0  GICv3                     220 Level     arm-smmu-context-fault
+ 104:          0          0          0          0          0          0          0          0  GICv3                     221 Level     arm-smmu-context-fault
+ 105:          0          0          0          0          0          0          0          0  GICv3                     222 Level     arm-smmu-context-fault
+ 106:          0          0          0          0          0          0          0          0  GICv3                     223 Level     arm-smmu-context-fault
+ 188:          0          0          0          0          0          0          0          0  msm_mdss                    4 Edge      dsi_isr
+ 189:          0          0          0          0          0          0          0          0  msm_mdss                    5 Edge      dsi_isr
+ 190:          0          0          0          0          0          0          0          0  PDC                         6 Edge      q6v5 wdog
+ 191:          0          0          0          0          0          0          0          0  smp2p-adsp    0 Edge      q6v5 fatal
+ 192:          0          0          0          0          0          1          0          0  smp2p-adsp    1 Edge      q6v5 ready
+ 193:          0          0          0          0          0          0          0          0  smp2p-adsp    2 Edge      q6v5 handover
+ 194:          0          0          0          0          0          0          0          0  smp2p-adsp    3 Edge      q6v5 stop
+ 195:          0          0          0          0          0          0          0          0  smp2p-adsp    7 Edge      q6v5 shutdown-ack
+ 204:          0          0          0          0          0          0          0          0  GICv3                     304 Level     bam_dma
+ 205:          6          0          0          0          0          0          0          0  GICv3                     615 Level     884000.i2c
+ 206:         21          0          0          0          0          0          0          0  GICv3                     616 Level     888000.i2c
+ 207:         14          0          0          0          0          0          0          0  GICv3                     493 Level     qcom_geni_serial_uart1
+ 208:          0          0          0          0          0          0          0          0  GICv3                     389 Level     a90000.spi
+ 209:          0          0          0          0          0          0          0          0  msmgpio                   162 Edge      spi0.0
+ 211:        156          0          0          0          0          0          0          0  GICv3                     395 Level     a98000.i2c
+ 215:       2245          0          0          0          0          0          0          0  GICv3                     297 Level     ufshcd
+ 216:          6          0          0          0          0          0          0          0  GICv3                     239 Level     mmc0
+ 217:          2          0          0          0          0          0          0          0  GICv3                     255 Level     8804000.mmc
+ 218:          0          0          0          0          0          0          0          0  msmgpio                    55 Edge      8804000.mmc cd
+ 219:          0          0          0          0          0          0          0          0  spmi-gpio                   5 Edge      Volume Up
+ 220:          0          0          0          0          0          0          0          0  msmgpio                   104 Level     0000:00:00.0:wakeup
+ 222:          0          0          0          0          0          0          0          0  ITS-PCI-MSI-0000:00:00.0    0 Edge      PCIe PME, aerdrv
+ 223:          1          0          0          0          0          0          0          0  GICv3                     172 Level     qcom_pcie_global_irq0
+IPI0:         59         32         28         51         34         89         10          9  Rescheduling interrupts
+IPI1:       1842       1007       1232       1927        603        660        484        261  Function call interrupts
+IPI2:          0          0          0          0          0          0          0          0  CPU stop interrupts
+IPI3:          0          0          0          0          0          0          0          0  CPU stop NMIs
+IPI4:          0          0          0          0          0          0          0          0  Timer broadcast interrupts
+IPI5:         33          4         11          1          5          4         14          2  IRQ work interrupts
+IPI6:          0          0          0          0          0          0          0          0  CPU backtrace interrupts
+IPI7:          0          0          0          0          0          0          0          0  KGDB roundup interrupts
+ Err:          0
+--- iomem ---
+00100000-002f41ff : 100000.clock-controller clock-controller@100000
+00406000-00406fff : 406000.mailbox mailbox@406000
+00800000-0085ffff : 800000.dma-controller dma-controller@800000
+00884000-00887fff : 884000.i2c i2c@884000
+00888000-0088bfff : 888000.i2c i2c@888000
+00898000-0089bfff : 898000.serial serial@898000
+008c0000-008c1fff : 8c0000.geniqup geniqup@8c0000
+00a00000-00a5ffff : a00000.dma-controller dma-controller@a00000
+00a90000-00a93fff : a90000.spi spi@a90000
+00a98000-00a9bfff : a98000.i2c i2c@a98000
+00ac0000-00ac1fff : ac0000.geniqup geniqup@ac0000
+01c00000-01c02fff : 1c00000.pcie parf
+01c03000-01c03fff : 1c00000.pcie mhi
+01c06000-01c07fff : 1c06000.phy phy@1c06000
+01d80000-01d81fff : 1d80000.phy phy@1d80000
+01d84000-01d86fff : 1d84000.ufs ufs@1d84000
+01d88000-01d9ffff : 1d88000.crypto crypto@1d88000
+01dc4000-01debfff : 1dc4000.dma-controller dma-controller@1dc4000
+01f40000-01f5ffff : 1f40000.hwlock hwlock@1f40000
+03d64000-03d69fff : 3d64000.clock-controller clock-controller@3d64000
+03d90000-03d997ff : 3d90000.clock-controller clock-controller@3d90000
+03da0000-03ddffff : 3da0000.iommu iommu@3da0000
+08804000-08804fff : 8804000.mmc mmc@8804000
+088e8000-088ebfff : 88e8000.phy phy@88e8000
+0aaf0000-0aafffff : aaf0000.clock-controller clock-controller@aaf0000
+0ae00000-0ae00fff : ae00000.display-subsystem mdss
+0af00000-0af1ffff : af00000.clock-controller clock-controller@af00000
+0c222000-0c222fff : c228000.thermal-sensor thermal-sensor@c228000
+0c223000-0c223fff : c229000.thermal-sensor thermal-sensor@c229000
+0c224000-0c224fff : c22a000.thermal-sensor thermal-sensor@c22a000
+0c225000-0c225fff : c22b000.thermal-sensor thermal-sensor@c22b000
+0c228000-0c228fff : c228000.thermal-sensor thermal-sensor@c228000
+0c229000-0c229fff : c229000.thermal-sensor thermal-sensor@c229000
+0c22a000-0c22afff : c22a000.thermal-sensor thermal-sensor@c22a000
+0c22b000-0c22bfff : c22b000.thermal-sensor thermal-sensor@c22b000
+0c300000-0c3003ff : c300000.power-management power-management@c300000
+0c3f0000-0c3f03ff : c3f0000.sram sram@c3f0000
+0c42d000-0c430fff : c400000.spmi cnfg
+0c440000-0c4bffff : c400000.spmi obsrvr
+0c4c0000-0c4cffff : c400000.spmi intr
+0c500000-0c8fffff : c400000.spmi chnls
+0f100000-0f201fff : f100000.pinctrl pinctrl@f100000
+0f204008-0f20700b : f204008.clock-controller clock-controller@f204008
+10002000-10002fff : stm-base
+10004000-10004fff : tpda@10004000
+1000f000-1000ffff : tpdm@1000f000
+10041000-10041fff : funnel@10041000
+10046000-10046fff : replicator@10046000
+10048000-10048fff : tmc@10048000
+1004e000-1004efff : replicator@1004e000
+1004f000-1004ffff : tmc@1004f000
+10800000-10800fff : tpdm@10800000
+10803000-10803fff : tpda@10803000
+10804000-10804fff : funnel@10804000
+1080b000-1080bfff : cti@1080b000
+1082c000-1082cfff : tpdm@1082c000
+10841000-10841fff : tpdm@10841000
+1084e000-1084efff : tpdm@1084e000
+1084f000-1084ffff : tpdm@1084f000
+10850000-10850fff : tpdm@10850000
+10851000-10851fff : tpda@10851000
+10980000-10980fff : tpdm@10980000
+10986000-10986fff : tpda@10986000
+10987000-10987fff : funnel@10987000
+1098b000-1098bfff : cti@1098b000
+109a3000-109a3fff : tpdm@109a3000
+109a4000-109a4fff : tpdm@109a4000
+109a5000-109a5fff : tpdm@109a5000
+109a6000-109a6fff : tpdm@109a6000
+109a7000-109a7fff : tpdm@109a7000
+109a8000-109a8fff : tpdm@109a8000
+109a9000-109a9fff : tpdm@109a9000
+109aa000-109aafff : tpdm@109aa000
+109ab000-109af1ff : tn@109ab000
+109d0000-109d0fff : tpdm@109d0000
+10b04000-10b04fff : funnel@10b04000
+10b05000-10b05fff : tmc@10b05000
+10b06000-10b06fff : replicator@10b06000
+10b08000-10b08fff : tpda@10b08000
+10b09000-10b09fff : tpdm@10b09000
+10b0a000-10b0afff : tpdm@10b0a000
+10b0b000-10b0bfff : tpdm@10b0b000
+10b0c000-10b0cfff : tpdm@10b0c000
+10b0d000-10b0dfff : tpdm@10b0d000
+15000000-150fffff : 15000000.iommu iommu@15000000
+16000000-1600ffff : GICD
+16080000-1627ffff : GICR
+16430000-16437fff : 16430000.mailbox mailbox@16430000
+16520000-1652ffff : 16500000.rsc drv-2
+16801000-16801fff : arch_mem_timer
+17830000-17837fff : 16430000.mailbox mailbox@16430000
+17b4e000-17b4e3ff : 17b4e000.sram sram@17b4e000
+221c8000-221c8fff : 221c8000.efuse efuse@221c8000
+24800000-249fffff : 24800000.system-cache-controller llcc0_base
+24c00000-24dfffff : 24800000.system-cache-controller llcc2_base
+25800000-259fffff : 24800000.system-cache-controller llcc1_base
+25c00000-25dfffff : 24800000.system-cache-controller llcc3_base
+26800000-269fffff : 24800000.system-cache-controller llcc_broadcast_base
+26c00000-26dfffff : 24800000.system-cache-controller llcc_broadcast_and_base
+40000000-40000f1c : 1c00000.pcie dbi
+40000f20-40000fc7 : 1c00000.pcie elbi
+40001000-40001fff : 1c00000.pcie atu
+40100000-401fffff : 1c00000.pcie config
+40300000-63ffffff : pcie@1c00000
+  40300000-405fffff : PCI Bus 0000:01
+    40300000-40307fff : 0000:01:00.0
+    40400000-405fffff : 0000:01:00.0
+  40600000-40600fff : 0000:00:00.0
+81960000-819fffff : System RAM
+81a40000-81bfffff : System RAM
+81cf4000-81cfffff : System RAM
+82460000-8249ffff : System RAM
+84800000-849fffff : System RAM
+89d80000-8b9fffff : System RAM
+9b09c000-9b09ffff : System RAM
+9eb80000-9ebfffff : System RAM
+a2880000-b7ffffff : System RAM
+  a2a00000-a575ffff : Kernel code
+  a5760000-a5bdffff : reserved
+  a5be0000-a694ffff : Kernel data
+b81c0000-c1ffffff : System RAM
+c2400000-d4e22fff : System RAM
+d5100000-d7ffffff : System RAM
+e3720000-f37fffff : System RAM
+  eb000000-f0ffffff : reserved
+  f1000000-f1103fff : reserved
+  f1200000-f1225fff : reserved
+  f2c00000-f37fffff : reserved
+ff300000-ff7fffff : System RAM
+400000000-6ffffffff : pcie@1c00000
+  400000000-4001fffff : PCI Bus 0000:01
+880000000-8af6fffff : System RAM
+8b0000000-8b54fffff : System RAM
+8c0000000-bffffffff : System RAM
+  beccf8000-bfdffffff : reserved
+  bfe01e000-bfe0ddfff : reserved
+  bfe0de000-bfe0defff : reserved
+  bfe0e0000-bfe0e3fff : reserved
+  bfe0e4000-bfe0e6fff : reserved
+  bfe0e7000-bfe0fafff : reserved
+  bfe0fb000-bfe203fff : reserved
+  bfe204000-bffffffff : reserved

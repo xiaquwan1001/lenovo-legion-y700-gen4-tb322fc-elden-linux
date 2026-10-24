@@ -161,6 +161,11 @@ for arg in $(cat /proc/cmdline); do
 		elden_root=*) elden_root=${arg#elden_root=} ;;
 		ubuntu_root=*) elden_root=${arg#ubuntu_root=} ;;
 		elden_nocamera=*) elden_nocamera=${arg#elden_nocamera=} ;;
+		# kexec target evidence dump (see kexec_marker_dump()).  MUST be parsed
+		# here: this loop is a whitelist, so an unlisted token is silently
+		# dropped and the dump never arms (PITFALLS #378, 2026-10-24).
+		kexec_marker=*) kexec_marker=${arg#kexec_marker=} ;;
+		kexec_marker_dev=*) kexec_marker_dev=${arg#kexec_marker_dev=} ;;
 	esac
 done
 
@@ -210,6 +215,29 @@ if [ -x /usr/local/sbin/payload-modules-load.sh ]; then
 	timeout 20 /usr/local/sbin/payload-modules-load.sh >"$KLOG" 2>&1 || warn "payload-modules-load failed/timed out"
 fi
 
+# --- kexec target evidence dump (opt-in: kexec_marker=1) ----------------------
+# WHY: a kexec handoff inherits the live kernel's dwc3/USB state (mask=1 skips
+# device_shutdown), so the target has **no network and no readable console**;
+# and pstore's console record is rewritten in place across boots, so its byte
+# order is NOT time order (PITFALLS #377).  The only trustworthy channel is a
+# file the target's own init code writes to disk, read by the next boot.
+# Dumps: marker line (uptime/ts/cmdline) + verbatim ring buffer + interrupts.
+kexec_marker_dump() {
+	_mnt=$1
+	mkdir -p "$_mnt/var/tmp" 2>/dev/null || true
+	printf 'alive uptime=%s kernel=%s ts=%s cmdline=%s\n' \
+		"$(cat /proc/uptime)" "$(uname -r)" \
+		"$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(cat /proc/cmdline)" \
+		> "$_mnt/var/tmp/kexec-marker.txt"
+	dmesg > "$_mnt/var/tmp/kexec-target-dmesg.txt" 2>/dev/null \
+		|| cat /dev/kmsg > "$_mnt/var/tmp/kexec-target-dmesg.txt" 2>/dev/null || true
+	{ cat /proc/interrupts; echo '--- iomem ---'; cat /proc/iomem; } \
+		> "$_mnt/var/tmp/kexec-target-irqs.txt" 2>/dev/null || true
+	sync
+	log "kexec_marker: dumped target evidence into $_mnt/var/tmp (uptime=$(cat /proc/uptime))"
+	return 0
+}
+
 if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 	log "disk root requested: $elden_root"
 	root_dev=""
@@ -244,6 +272,11 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 			[ -z "$newinit" ] && [ -x /newroot/bin/sh ] && newinit=/bin/sh
 			if [ -n "$newinit" ]; then
 				log "switching root to $root_dev ($newinit)"
+				# Disk-root kexec target: dump evidence onto the mounted root and
+				# then keep booting normally (no reboot needed here).
+				if [ -n "${kexec_marker:-}" ] || [ -e /etc/kexec-marker-on ]; then
+					kexec_marker_dump /newroot || warn "kexec_marker: dump onto /newroot failed"
+				fi
 				mkdir -p /newroot/dev /newroot/proc /newroot/sys /newroot/run
 				umount /tmp 2>/dev/null || true
 				mount --move /dev   /newroot/dev   || warn "move /dev failed"
@@ -265,13 +298,10 @@ fi
 log "Alpine rootfs up, kernel $(uname -r)"
 
 # --- kexec target marker (opt-in: kexec_marker=1 on the command line) --------
-# WHY: a kexec handoff into a RAM-only initramfs has no network and its console
-# gadget re-enumerates too late to be read, so "did the target kernel survive?"
-# was unobservable (2026-10-21).  When requested, mount the disk root rw for a
-# moment and drop a timestamped file there: the next boot can read it, which
-# proves the target reached userspace-independent init code.
-# Sentinel /etc/kexec-marker-on is baked into the *marker build* only, so the
-# run does not depend on the kernel honouring a custom command line.
+# R A M - R O O T  path only (a disk-root target already dumped evidence onto
+# /newroot before switch_root, see kexec_marker_dump() above).  Here we are
+# stuck in the initramfs by design, so mount the disk for a moment to write the
+# same evidence, then always return to the default slot.
 if [ -n "$kexec_marker" ] || [ -e /etc/kexec-marker-on ]; then
 	log "kexec_marker: begin (sentinel=$([ -e /etc/kexec-marker-on ] && echo 1 || echo 0) dev=${kexec_marker_dev:-auto})"
 	# Resolve the disk root device.  The slim initramfs has NO blkid applet, so
@@ -294,14 +324,8 @@ if [ -n "$kexec_marker" ] || [ -e /etc/kexec-marker-on ]; then
 	fi
 	mkdir -p /mnt/mark
 	if [ -b "$mdev" ] && mount -o rw,noatime "$mdev" /mnt/mark; then
-		mkdir -p /mnt/mark/var/tmp
-		printf 'alive uptime=%s kernel=%s ts=%s cmdline=%s\n' \
-			"$(cat /proc/uptime)" "$(uname -r)" \
-			"$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(cat /proc/cmdline)" \
-			> /mnt/mark/var/tmp/kexec-marker.txt
-		sync
+		kexec_marker_dump /mnt/mark || warn "kexec_marker: dump onto /mnt/mark failed"
 		umount /mnt/mark 2>/dev/null || true
-		log "kexec_marker: wrote /var/tmp/kexec-marker.txt on $mdev"
 	else
 		warn "kexec_marker: mount $mdev failed"
 	fi

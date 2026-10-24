@@ -1,0 +1,41 @@
+[11:07:51] === K1 probe start ===
+[11:07:51] image  c0b39ccb24b357f1 61M
+[11:07:51] dtb    7190ecf050c59108
+[11:07:51] initrd 46f2f4a9f8b6196b
+[11:07:51] device: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty 972.24 82dc158d-ddd0-4537-9835-45376a4fa3c5 
+[11:07:51] push payload
+944ae78ace27adc9f817256f75a5a4f0  /var/tmp/kt-k1/Image
+d37c1e21506295e4c936be55ef0d1723  /var/tmp/kt-k1/dtb
+46eb3d60a7e146bb96f6372dd51d70da  /var/tmp/kt-k1/initrd
+944ae78ace27adc9f817256f75a5a4f0 Image
+d37c1e21506295e4c936be55ef0d1723 sm8750-lenovo-elden.dtb
+46eb3d60a7e146bb96f6372dd51d70da initramfs-slim.cpio.gz
+[11:07:54] set mask=1 (skip device_shutdown) + readback
+1
+[11:07:54] cmdline: console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel panic=15 elden_root=LABEL=linux17 kexec_dbg=1 elden_kexec_target=1 probe=K1
+[11:07:54] load
+[11:07:54] LOAD OK
+1
+[11:07:54] === kexec -e (device will go away) ===
+[11:13:40] back at +5s uptime=36.37 boot_id=b8ac16e2
+[11:13:40] IDENTITY=FALLBACK (boot_b long cmdline)
+[11:13:40] grab pstore immediately (read-once)
+ls: cannot access '/var/tmp/psm-post.txt': No such file or directory
+-r--r----- 1 root root 122891 Jan  7 01:03 /var/tmp/ps-post.txt
+36.51 226.02
+total 480
+drwxrwxr-x 3 xuqianhui xuqianhui   4096 Oct 24 11:13 .
+drwxrwxr-x 6 xuqianhui xuqianhui   4096 Oct 24 11:07 ..
+-rw-rw-r-- 1 xuqianhui xuqianhui   1195 Oct 24 11:13 k1-run.log
+drwxrwxr-x 2 xuqianhui xuqianhui   4096 Oct 24 11:13 logs
+-rw-r----- 1 xuqianhui xuqianhui 122891 Oct 24 11:13 pstore-post-boot.txt
+-rw-r----- 1 xuqianhui xuqianhui 346196 Oct 24 11:07 pstore-pre-boot.txt
+[11:13:41] === pstore analysis ===
+[11:13:41] target token hits (elden_kexec_target=1): 3
+[11:13:41] target 'Kernel command line' hits:         3
+[11:13:41] [KD] stage hits:                          2
+[11:13:41] 'Booting Linux on physical CPU' hits:     1
+[    0.000000][    T0] Kernel command line: console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel panic=15 elden_root=LABEL=linux17 kexec_dbg=1 elden_kexec_target=1 probe=K1
+[    0.000000][    T0] Unknown kernel command li.e parametdrs "elden_root=LABEL=linux17 elden_kexec_target=1 probe=K1", will be passed to user space.
+[ 0126.326157][    T1]     probe=K1
+[11:13:41] === done ===

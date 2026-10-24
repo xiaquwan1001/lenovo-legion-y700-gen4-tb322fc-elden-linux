@@ -1,0 +1,18 @@
+[11:47:33] === K3 start ===
+[11:47:33] carrier: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty 172.72 
+[11:47:35] pushed; initrd sha 55e2a0d24b3dbf61
+[11:47:35] mask readback: 1
+[11:47:36] LOAD OK, kexec_loaded=1
+[11:47:36] === kexec -e (fire-and-forget; ssh must NOT block) ===
+[11:47:36] kexec fired
+[11:48:51] down (+75s)
+[11:50:06] down (+150s)
+[11:51:21] down (+225s)
+[11:52:37] down (+301s)
+[11:53:29] back on FALLBACK at +353s (uptime=14.29, 22a7d74d)
+[11:53:29] === collect disk-side artifacts ===
+ls: cannot access '/var/tmp/k3-target-*.txt': No such file or directory
+--- ITS count ---
+--- init/boot timing ---
+[11:53:29] TARGET_SEEN=0 files: 2
+[11:53:29] === done ===
