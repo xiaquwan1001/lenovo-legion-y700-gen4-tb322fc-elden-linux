@@ -1,0 +1,18 @@
+{
+  "label": "q32c1-r2",
+  "ts": "2026-10-24T02:49:43Z",
+  "vk": "vk152",
+  "image": "/home/xuqianhui/y700-elden/bootslot-b/boot_b-vk152.img",
+  "image_sha256": "d8e8074be0dd4f2c67739bc7f986200d49a97b5139a41ff9cfc8945ed7093565",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261024T024942Z-q32c1-r2",
+  "note": "Q32 arm=c1 复位深度=por_declared FW_LIVE_FB=yes serial_vendor_reset=0（boot_id=dddaca7d）"
+}

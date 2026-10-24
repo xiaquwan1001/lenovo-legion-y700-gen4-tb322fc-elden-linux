@@ -1,0 +1,6 @@
+[  126.420266][ T5269] reboot: [KD] stage=11a SKIP device_shutdown
+[  144.668758][ T9633] reboot: [KD] stage=11a before device_shutdown
+[  137.020972][ T9256] reboot: [KD] stage=11a before device_shutdown
+[  110.749065][ T9202] reboot: [KD] stage=11a before device_shutdown
+~ # [6n[   17.688031][ T6239] reboot: [KD] stage=11a before device_shutdown
+[   94.788938][ T9167] reboot: [KD] stage=11a before device_shutdown

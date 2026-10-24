@@ -1,0 +1,10 @@
+boot_id=82dc158d-ddd0-4537-9835-45376a4fa3c5
+image=boot_b-vk152.img
+arm=w2
+reset=warm
+verdict=GOOD
+fw_live_fb=yes
+reset_depth=warm_declared
+vendor_path_proof=n/a
+serial_vendor_reset=0
+serial_delta_bytes=254825

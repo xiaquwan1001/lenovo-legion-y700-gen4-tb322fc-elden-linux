@@ -35,6 +35,16 @@
    因此判据只能是单向的：**pstore 有该打印 ⇒ 确定是暖复位（vendor 路径）；没有 ⇒ 不能推断是 POR**，
    必须由人声明（`RESET_DECLARED=por|cold|warm`）或 trial 记录里的 `--reset` 承担。
 
+### 三种指纹（2026-10-24 五发实测，互斥）
+
+| pstore 里看到 | 判定 |
+|---|---|
+| `psci: SYSTEM_RESET2 … vendor reset_type=0x80010001` | W1 / vendor 路径（经 bootloader） |
+| `reboot: Restarting system` 且**无** command、**无** `SYSTEM_RESET2` | 架构 `SYSTEM_RESET`（`reboot -f`） |
+| 整个 pstore **空** | POR / 断电（旁证），或「已被读过一次」 |
+
+判据表见 `reports/q32-matrix-20261024.md`。
+
 ### 附带结论
 
 架构 `SYSTEM_RESET` 与物理 POR 在**内核侧完全不可区分**（同一 PSCI 调用，无打印）⇒ 任何「暖/冷」对比实验，
