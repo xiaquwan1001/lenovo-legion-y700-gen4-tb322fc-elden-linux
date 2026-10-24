@@ -126,3 +126,11 @@ ssh root@192.168.7.1 'insmod /tmp/gunyah_wdt.ko && lsmod | grep gunyah && readli
 - `TASKS/README.md` §5 Q4（无 KVM 前提下 VM 路线值不值得投）→ 增加本条实测证据；**结论仍待「要它做什么」**。
 - 与 `reports/gunyah-roadmap-20261021.md` 的差异：该报告「本机主线侧资产一件不在盘」仍成立，但
   「hyp 是否在、通道是否可用」这一层已由本轮实测闭环（原为【推测/未证实】）。
+
+## 9. 追加（同日）：方向 B 首轮 = RM 通道在 hyp 层**已确认可用**
+
+用户明确目标 = **在这块板子上跑 Windows on ARM**（Gunyah VM 路线），选定先做方向 B。
+只读探针 `probes/gunyah-identify/` 调 HYP_IDENTIFY：**API v1、`flags[0]=0x10010fff` ⇒ DOORBELL/MSGQUEUE/VCPU/MEMEXTENT 全部支持**，
+且 `hvc #0x6000` 与 SMCCC 形式（`hvc #0` + `x0=0xc6008000`）返回同一组值。
+厂商 hypercall 表已从 `backup/stock-elden/vendor_ramdisk/*.ko` 反汇编落地。
+详见 **`reports/gunyah-rm-probe-20261024.md`**。
