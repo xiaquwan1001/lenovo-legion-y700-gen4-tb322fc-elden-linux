@@ -50,7 +50,8 @@ def walk_sections(buf, start, end, depth, tag, outdir):
             guid = uuid.UUID(bytes_le=body[:16])
             data_off = u16(body, 16)
             attrs = u16(body, 18)
-            comp = body[data_off:]
+            # DataOffset 相对 **section 头起始**（off），不是 GUID 位置（早期版本这里差 4 字节 ⇒ 解压全失败）
+            comp = buf[off + data_off:off + size]
             print(f'{"  "*depth}[sect] {tag} GUID_DEFINED {guid} attr=0x{attrs:04x} payload={len(comp)}')
             inner = None
             if guid == LZMA_GUID:

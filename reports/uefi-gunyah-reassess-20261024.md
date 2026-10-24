@@ -140,3 +140,30 @@ PY
 3. 若将来重启 UEFI，§1.4 的顺序应改为：① 先拿 issue 答复 → ② 再决定「重下 Mu（1 G+1.3 G）」还是「逆 XBL 打包」——**后者不优先**。
 
 **工具**：`scripts/ffs-extract.py <blob> [--out DIR] [--grep STR]`（纯 stdlib，纯只读；已能解析 FV header/ext header 链、FFS 文件、UI/PE32/GUID-defined-LZMA 段）。
+
+## 6. ★更正（2026-10-24 晚）：§5 的结论是错的 —— 厂商 DXE **就在** `uefi.elf` 里
+
+> 触发：后台 lane u1 用另一套解析器从 `uefi.elf` 解出 4 247 552 B 的内嵌 FV 并枚举到 `DxeCore`；复核后发现**我的 `scripts/ffs-extract.py` 有 4 字节偏移 bug**。
+
+**bug**：GUID-defined section 的 `DataOffset` 是**相对 section 头起始**（`off`），我写成了相对 GUID 位置（`off+4`），
+于是 LZMA 流整体错位 4 字节 ⇒ 全部解压失败 ⇒ 我据此下了「SMM_CORE 之外没有可解模块、厂商 DXE 在 XBL」的错误结论。
+
+**更正后的事实**（`scripts/ffs-extract.py` 已修，`--out` 可枚举）：
+
+| 项 | 实测 |
+|---|---|
+| `uefi.elf` 内嵌 FV #1 | LZMA 解出 **4 247 560 B**，内含 **59 个 DXE 模块**（含 `DxeCore`、`RscRtDxe` …） |
+| 内嵌 FV #2 | 3 194 888 B（另一组驱动） |
+| **厂商 `UFSDxe`** | **就在 FV #1 里**：GUID `0d35cd8e-97ea-4f9a-96af-0f0d89f76567`、PE32、**151 552 B**、sha256 `fa561bf1eb18f142b128f0335973f6c4a8d0241747ea581d5b3a56d601878d2` |
+| 与 10-21 报告的对应 | 该二进制的字符串偏移与 10-21 分析**逐字相同**（`UFS.c` @RVA `0x1b438`、`ufs_error_log` @`0x1e045`）⇒ 当时分析的正是**同一条构建线** |
+
+产物：`reports/artifacts/uefi-dxe-20261024/{vendor-dxe-fv.bin, vendor-UFSDxe.efi, modules.tsv}`（59 模块清单）。
+
+**这改变了 N1 的可行性判断**（但**不改变「现在不投」的裁决**）：
+
+- 原「取厂商 UFSDxe 需解 XBL 专有打包、成本高于重下 Mu」**作废** —— 厂商 UFSDxe 与**整套 59 个 DXE 驱动**现在都在盘上；
+- 新的、可执行的假设：stock UEFI 用它自己的 UFSDxe 时 **Android 能启动** ⇒ 它需要的「运行期表」(UFSDxe 里 `.data:0x228d8`，
+  由 `0x89a4` 注册：`str x1,[0x228d0]; ldr x8,[x1,#0x60]; str x8,[0x228d8]`，查表在 `0x6cc8`：`method(4, key, &out)`)
+  **在 stock 固件里有提供者**；Mu 的构建里可能**缺那个提供者驱动** ⇒ 「special patch on UFSDxe」的真实含义很可能是「补上/对齐这个服务提供者」。
+- 下一步（可后台做）：① 找出 59 个模块中谁 `bl 0x1230`→`0x89a4` 注册该服务（或谁提供该 GUID）；② 对比 Mu（KaanapaliPkg oneplus-plk110）构建的驱动清单是否缺它；
+  ③ 若缺 ⇒ 用厂商模块补进去即可验证（**不需要再逆向 XBL**）。

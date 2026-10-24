@@ -97,6 +97,7 @@
 | 69 | **#380** kexec 实验臂别关兜底看门狗（`elden_q28_nowd`）：目标继承 dwc3/显示活态 ⇒ 无网无图，既不能 SSH 也没人重启 ⇒ 设备停摆需人工断电；要看得更晚就**落盘**（`/etc/local.d/elden-bootlog.start` → `/var/log/dmesg-<boot_id>.txt`），别延长无网络台架 | [69-kexec目标可见性三连坑.md](sessions/69-kexec目标可见性三连坑.md)
 | 69 | **#379** SM8750 的 `GICR_CTLR.EnableLPIs` 是 **RES1**（实测 8/8 `00000005→00000005`）：「退出侧把 LPI 清掉」这条路不存在；跨 kexec 只能**沿用**原表，DT 上无法用 FDT memreserve 保留（`-FDT_ERR_NOSPACE`），可行解 = incoming 侧 `memblock_reserve()` 认领 ⇒ 走 preallocated 路径 | [69-kexec目标可见性三连坑.md](sessions/69-kexec目标可见性三连坑.md)
 | 70 | **#381** 单模块构建四连坑：错 ARCH 的 `make prepare` 清掉 `asm-offsets.h` 的 `TSK_STACK_CANARY`（→ `-mstack-protector-guard-offset=` 空）并带偏 `FTRACE_MCOUNT_USE_*`（→ `-mrecord-mcount` 不认识）；缺 `scripts/module.lds`/`Module.symvers` 报「没有规则可制作目标 xxx.ko」；`M=` 绝对路径被去前导斜杠 | [70-模块构建三缺件与错ARCH的prepare清空生成头.md](sessions/70-模块构建三缺件与错ARCH的prepare清空生成头.md) |
+| 71 | **#382** EFI `GUID_DEFINED` 段 `DataOffset` 是**相对 section 头**（不是 GUID 位置），差 4 字节 ⇒ LZMA 全失败 ⇒ 误判「固件里没有 DXE/UFSDxe」；解压全失败先怀疑偏移，别归因「厂商私有格式」 | [71-EFI-GUID段DataOffset差4字节导致反向错误结论.md](sessions/71-EFI-GUID段DataOffset差4字节导致反向错误结论.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
