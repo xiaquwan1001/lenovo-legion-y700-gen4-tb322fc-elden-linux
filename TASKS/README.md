@@ -158,6 +158,10 @@ TF 卡（G1-6 / Q10）**暂时不做**，不进任何待办排序。
 
 > **★2026-10-24 用户定的下一步：考查 UEFI 与 Gunyah**（只读考查优先、不写盘；旧结论只作输入，结论落 `reports/`）。
 
+> **★2026-10-24 收尾交接（下次从这里开始）**：设备当前**停在 fastboot**（`fastboot devices` = `HA2EXB0E`），`boot_b` 已置 succ。
+> 第一件事 = **A 上机**：`fastboot boot reports/artifacts/uefi-built-20261024/lenovo-y700g4-A.img`（零写盘；判据 = BDS 是否出现 UFS 设备、`UFS.c+2326` ASSERT 是否消失）；通过再做 **C**（再加厂商 `RmVmDxe`，判据 = 进 Linux 后 `/proc/device-tree/hypervisor/` 是否出现 `qcom,resource-manager-rpc@…`）。
+> 完整交接见 `TASKS/sessions/2026-10-24-收尾-Gunyah与UEFI交接-5.md`。
+
 - **N1 UEFI 间接引导考查** —— 🟡 **首轮完成（2026-10-24）：维持搁置**（`reports/uefi-gunyah-reassess-20261024.md` §1）。
   ① 上游 `mu_wide_platforms#12` 仍 Open：原厂 10-09 只答「firmware version related，需 UFSDxe 专用补丁」，
   我方 10-21 静态分析追问（`0x402` 不是 config tag + `UFS.c+2326` 是独立第二故障）**3 天 0 回复** ⇒ 唯一信息入口未通；
