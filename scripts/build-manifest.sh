@@ -47,8 +47,13 @@ PK_DTB=$(pick_arg "${MKBOOTIMG_ARGS:-}" dtb)
 resolve() { [ -n "$1" ] || return 0; [ -e "$1" ] && printf '%s' "$1" || printf '%s' "$ROOT/$1"; }
 PK_KERNEL=$(resolve "$PK_KERNEL"); PK_DTB=$(resolve "$PK_DTB")
 # 构建时那棵树的内核 ≟ 镜像里那个内核（vk52 类事故的现场自证）
-if [ "$KV" = '(unknown)' ] || [ "$UTS" = '(unknown)' ]; then K_MATCH=unknown
-else K_MATCH=$([ "${KV}" = "${UTS#Linux version }" ] && echo yes || echo no); fi
+# 口径注（2026-10-24，PITFALLS #384）：`make -s kernelrelease` 的查询环境与真正构建环境可能差一个尾部 "+"
+# （dirty 树 + 未显式传 LOCALVERSION 时 setlocalversion 会补 "+"），那是脚本口径差、不是镜像错。
+# 比对时忽略尾部 "+"；另记 kernel_release_query 保留原始查询值，避免下次再误判。
+KV_CMP=${KV%+}
+UTS_CMP=${UTS#Linux version }; UTS_CMP=${UTS_CMP%+}
+if [ "$KV_CMP" = '(unknown)' ] || [ "$UTS" = '(unknown)' ]; then K_MATCH=unknown
+else K_MATCH=$([ "$KV_CMP" = "$UTS_CMP" ] && echo yes || echo no); fi
 
 KHEAD=$(git -C "$KDIR" rev-parse HEAD 2>/dev/null || echo "(none)")
 KDIRTY=$(git -C "$KDIR" status --porcelain 2>/dev/null | head -1 || true)
@@ -63,6 +68,7 @@ PHEAD=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo "(none)")
 	echo "image_sha256=$(sha "$IMG")"
 	echo "image_size=$( [ -e "$IMG" ] && stat -c%s "$IMG" || echo 0 )"
 	echo "kernel_release=$KV"
+	echo "kernel_release_normalized=$KV_CMP"
 	echo "kernel_uts=$UTS"
 	echo "kernel_payload_sha256=$KPAYLOAD"
 	echo "kernel_release_matches_image=$K_MATCH"
