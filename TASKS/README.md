@@ -158,16 +158,19 @@ TF 卡（G1-6 / Q10）**暂时不做**，不进任何待办排序。
 
 > **★2026-10-24 用户定的下一步：考查 UEFI 与 Gunyah**（只读考查优先、不写盘；旧结论只作输入，结论落 `reports/`）。
 
-- **N1 UEFI 间接引导考查**：基线 = `reports/uefi-restart-20261021.md`（不建议重启：前置资产 2.3 G 全丢、阻塞两层
-  `0x402` 运行期注册表 + `UFS.c+2326`、收益已被 kexec 覆盖）。本轮只做不重下 1 G 的三件事：① 用在盘
-  `~/下载/tb322fc/{uefi,abl,imagefv}.elf` 逆向该运行期注册表结构，判 `0x402` / `UFSSmmuConfig` 两层是否可解；
-  ② 按该报告 §0.5 把「`0x402` 不是 config tag」回帖上游 issue #12；③ 与 kexec / U-Boot 排定替代优先序。
-  **判据** = 出「UEFI 可不可重启 + 最小实验矩阵」定性结论；不可解则正式关闭、不再重启。
-- **N2 Gunyah 虚拟化考查**：基线 = `reports/gunyah-roadmap-20261021.md`（主线只有 `gunyah_wdt`、无 RM/VM 驱动；
-  Android 侧运行件 + UAPI 头在盘，主线侧驱动/guest 固件/VMM 全不在盘）。本轮只做阶段 0 + 事实复核：
-  ① 设备上零成本探测（`qcom_scm` 是否注册 `gunyah-wdt`、`/sys/bus/platform/devices` 有无 gunyah）；
-  ② 复核上游是否仍停在 v17/2024-02 未进主线；③ 出立项/不立项判据与阶段 1 最小成本账。
-  **判据** = 报告 + 明确「立项 / 不立项」，不预设立项。
+- **N1 UEFI 间接引导考查** —— 🟡 **首轮完成（2026-10-24）：维持搁置**（`reports/uefi-gunyah-reassess-20261024.md` §1）。
+  ① 上游 `mu_wide_platforms#12` 仍 Open：原厂 10-09 只答「firmware version related，需 UFSDxe 专用补丁」，
+  我方 10-21 静态分析追问（`0x402` 不是 config tag + `UFS.c+2326` 是独立第二故障）**3 天 0 回复** ⇒ 唯一信息入口未通；
+  ② 回帖动作**已于 2026-10-21 完成**（不是待办）；③ 本轮新解出 `imagefv.elf` 的 LZMA 内层 FV（32 MB），
+  但 `UFS.c` 仍 0 命中 ⇒ 取厂商 UFSDxe 需写 FFS 递归解压器（估 1–2 h），**未投**。
+  **解冻条件**（任一）：issue #12 给出层级答案 / 出现 SM8750 上 UEFI 真正枚举 UFS 的第三方案例 / kexec 不可用而又需要启动菜单。
+- **N2 Gunyah 虚拟化考查** —— 🟡 **首轮完成（2026-10-24）：维持不立项，阶段 0 探测待设备**（同上报告 §2）。
+  ① 今日复核 mainline `master` 的 `drivers/virt/` **仍无 `gunyah/`**（上游最新仍 v17/2024-02）；本机三树同样为 0；
+  ② **新证据**：`hypvm.mbn`（8 MiB，sha256 `c3dbff5e…`）含 `gunyah-resource-manager`、`qcom,resource-manager-rpc@`、
+  `rm_rpc_receive_from_rm`、`rm_vm_create` ⇒ EL2 侧 Gunyah + RM-RPC **齐全**；
+  ③ 内核侧探测点已就绪（`qcom_scm_gunyah_wdt_init()`，`CONFIG_HAVE_ARM_SMCCC_DISCOVERY=y`）⇒ **二值问题**：
+  `ls /sys/bus/platform/devices | grep -i gunyah` 有无 `gunyah-wdt`（设备未接入，本轮未跑）。
+  **判据** = 阶段 0 阴性 ⇒ 永久关闭；阳性 ⇒ 才谈「port v17 + 一个 VMM」的周级投入。
 1. ~~**Q28 面板 init 间歇失败**~~ ✅ **已结项（2026-10-24）=「已规避」，不再推进根因**（权威 = §5 Q28）——以下为历史排查记录，保留备查：**坏发对拍已到手（2026-10-09 深夜）**：断点 = 面板首条 DCS 写（`ff 20`）走 **bonded 命令 DMA 超时**（不是 DPU modeset）；差分只有 `STATUS0 0x0→0x20003`、`CLK_STATUS 0x2343→0x3743`（多 `DYN_PCLK_ACTIVE`+`DYN_CMD_PCLK_ACTIVE`）、`cmd_dma_busy/cmd_engine_busy 0→1`，其余 16 项全等 ⇒ 假说收窄到「首次 modeset 时命令引擎撞上 DYN 像素时钟域切换」。**下一步（2026-10-10 定案后更新，权威=`reports/q28-DOSSIER.md` §f）**：① 先定 `fastboot boot` 冷路径是否等价用户真 POR 冷起（不等价则改用真 POR 做 A/B）；② Method B 按上游「加」部分重出到 vk85（落点 generic `dsi_link_clk_set_rate_6g()`、对象 `msm_host->byte_clk`，非 `_v2_9` 分支、非 cherry-pick `2028280686f4`）；③ 三臂冷起 A/B（base vs round vs delay/`REG_DSI_CLK_STATUS` 轮询），需用户断电配合，每轮 `scripts/q28-devprobe.sh` 三态判 + SSH 读全 dmesg + 查 card0；④ 若取整仍高坏发转 CMD engine 编程 / PHY pll save-restore；⑤ 采 GOOD 冷暖对照坐实基线。判据/根因详见 §5 Q28 与 `reports/q28-DOSSIER.md`。
    **【2026-10-10 深夜推进小结，详 DOSSIER §h】**：①已定——`fastboot boot` 冷路径≡真 POR（C1real 盘启 STORM + C2 冷 fastboot STORM，都坏）；②已做——round 按上游真 diff（freedreno msg46766：`clk_round_rate(byte_clk)` 在 generic `dsi_link_clk_set_rate_6g()` 顶部、reparent 之后）落地，干净单变量对 **vk86-base / vk86-round2**（内核+DTB 与 vk64 逐字节同、config a383cdb9、同完整 ramdisk，`q28/vk86` 分支）；**★真实日常失败=STORM ⇒ delay/round 靶对**。**新阻塞（未定性）**：同一内核+DTB、仅 `/init` 差一个 `payload-modules-load.sh`（挪开机时序）⇒ 一次 STORM(C2) 一次 NOCARD(A2)。**下一步唯一门=同一镜像（vk86-round2）冷起 2 次（每次间隔 POR，`reboot2` 暖复位粘 NOCARD 不可用，`PITFALLS #166`）**：两次异模式 ⇒ 同二进制冷起非确定性⇒单样本 A/B 不可行⇒**停 Q28、转 Q24**；两次同模式 ⇒ `/init` 时序是杠杆⇒继续查时序。
    ⚠️ **上机纪律更新**（`PITFALLS` #150–#152）：坏发现场 `reboot`/`reboot -f` 全挂，**必须用 `reboot2 <mode>`（RESTART2 syscall）或 SysRq-b**；OpenRC 下 `reboot bootloader` 不会进 fastboot（会变成 halt+VBUS 自开机）；**每轮循环开头必须 `slot-attr.py mark-successful b` 或预检 `slot-retry-count`**（本轮实测 boot_b 已被 RAM 实验耗到 retry=6/succ=0，再 6 次就真 unbootable）。
