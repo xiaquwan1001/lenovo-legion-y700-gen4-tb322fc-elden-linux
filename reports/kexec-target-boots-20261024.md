@@ -227,3 +227,56 @@ ITS 命令永远等不到完成 ⇒ 命令队列排队到 33/99 条、每条付 
    若是没余量，正解 = 在 DT 里预留 `memreserve` 或改用 `/proc/device-tree` 侧的固定 carveout。
 4. 载具可见性经验（已进 `PITFALLS #378`）：`cat /dev/kmsg` 每开一次都从缓冲区头重放，用 `>>` 循环会重复写；
    用户态落盘进程在开机早期会被系统清掉 ⇒ **用内核写盘**（本轮的 `its_kexec_report()`）或目标侧 dump 才是可靠通道。
+
+---
+
+## 8. ★ 修好了：incoming 侧「claim 继承的 LPI 表」⇒ ITS 超时 99 → **0**，到 `/init` 126.35 s → **1.31 s**
+
+### 8.1 为什么不是补 FDT（vk159 实测否决）
+
+给 `gic_reserve_range()` 打点后（vk159，载具上直接读 dmesg）：
+
+```
+[KD] gic-reserve: addr=0x880310000 size=65536 ret=-3 rsv 0->0 totalsize=154698
+```
+
+`ret=-3 = -FDT_ERR_NOSPACE`：ABL 给的 live DTB **一个 memreserve 都没有、也没有余量**，
+而 `fdt_add_mem_rsv()` 是就地改活 FDT（kexec 只在 `kexec -l` 时克隆它，**跳转时再改已经太晚**）。
+⇒ 「靠 FDT 保留」这条路在 DT 上要额外搬 FDT，代价大且与 `of_kexec` 的克隆时机耦合，放弃。
+
+### 8.2 落地的修法（只改 **incoming** 侧，2 处，`build/vk151/drivers/irqchip/irq-gic-v3-its.c`）
+
+SM8750 上 `GICR_CTLR.EnableLPIs` 是 **RES1**（vk157 实测 8/8 `00000005 -> 00000005`），
+所以 incoming 内核**既不能清 LPI 也不能重编程 BASER**；唯一可行解 = **继承的表现在就认领**：
+
+| 位置 | 改动 |
+|---|---|
+| `enabled_lpis_allowed()` | 属性表不在保留区时：`pr_info` + `memblock_reserve(addr, LPI_PROPBASE_SZ)`，再复查（在 `memblock_free_all()` 之前，页还没进入 buddy） |
+| `its_cpu_init_lpis()` preallocated 分支 | 每个 CPU 的待发表同理：`memblock_reserve(paddr, LPI_PENDBASE_SZ)` 后就地沿用（原来是 `WARN_ON` + 带着未保留内存继续用） |
+
+效果：`RDIST_FLAGS_RD_TABLES_PREALLOCATED` 成立 ⇒ `redist_disable_lpis()` 提前返回（不再 -EBUSY）
+⇒ `its_cpu_init()` 不再短路 ⇒ LPI 表沿用载具的原表（内容本来就在）⇒ ITS 命令立即完成。
+
+**对日常启动是惰性的**：`enabled_lpis_allowed()` 只在「进来时 `EnableLPIs=1`」才被调用（POR 时为 0），
+`preallocated` 分支只在有该 flag 时进入 ⇒ 普通 POR 路径零行为变化。
+
+### 8.3 上机判据（K16：载具 = vk152 日常线，零写盘 kexec 到 vk160）
+
+| 判据 | vk152 基线 | vk153 半程 | **vk160（本轮）** |
+|---|---|---|---|
+| `ITS queue timeout` | 99 | 33 | **0** |
+| `Failed to disable LPIs` | 8 | 8 | **0** |
+| `Using preallocated redistributor tables` | 无 | 无 | **有（1 次）** |
+| `claiming inherited LPI …table` | — | — | **9 次**（属性表 1 + 待发表 8） |
+| 到 `/init` | 126.35 s | 43.42 s | **1.31 s** |
+| initramfs marker uptime | 126.5 s | 43.5 s | **1.51 s** |
+
+产物：`reports/artifacts/kexec-pstore-probe-20261024/k16-*`。
+
+### 8.4 剩余未解（下一步）
+
+1. 目标 userland 起来后（switch_root 之后）**约 155 s 会复位回落**——本轮 dump 在 `switch_root` 之前（1.5 s），
+   看不到那段的死因。下一步：把 `kexec_marker_dump()` 之外再加一个**磁盘根 userland 的 boot-id 落盘**
+   （或直接趁窗口 SSH 进去，ITS 修好后 USB 是否恢复也值得复测）。
+2. 修法值得**上游化**（比现状「taint 后带着未保留内存继续用」更正确），先内部稳定几轮再发。
+3. 若要把 kexec 快环变成日常能力，需要把这 2 处改动并入日常线（当前 `boot_b` 仍是 vk152）。
