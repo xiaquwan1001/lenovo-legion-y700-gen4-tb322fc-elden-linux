@@ -1,42 +1,51 @@
-irqchip/gic-v3-its: Claim LPI tables inherited across kexec on DT
+From 7f773c31b0afa490d49bc69437126605cefc6749 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 24 Oct 2026 15:28:22 +0800
+Subject: [PATCH] irqchip/gic-v3-its: Claim LPI tables inherited across kexec
+ on DT
 
 When a kernel is kexec'd into while LPIs are enabled, the incoming kernel
 finds GICR_CTLR.EnableLPIs set and tries to re-initialise the LPI tables
 from scratch.  That requires disabling LPIs first, which is not always
-possible: on some implementations (e.g. Qualcomm SM8750) GICR_CTLR.EnableLPIs
-is RES1 once set, the write is ignored and redist_disable_lpis() returns
--EBUSY.  its_cpu_init() then bails out early, LPIs are never reprogrammed,
-and every MSI command queued against the ITS waits for its completion
-timeout: measured 99 timeouts of ~1.25 s each, pushing /init out from
-1.3 s to 126 s.
+possible: on some implementations (e.g. Qualcomm SM8750) the EnableLPIs
+bit is RES1 once set, the write to clear it is ignored, and
+redist_disable_lpis() returns -EBUSY.  its_cpu_init() then bails out
+early, LPIs are never reprogrammed, and every MSI command queued against
+the ITS waits for its completion timeout: measured 99 timeouts of about
+1.25 s each, pushing /init out from 1.3 s to 126 s.
 
 The tables themselves are still intact and usable, and the driver already
-has a path for that (RDIST_FLAGS_RD_TABLES_PREALLOCATED), but it is gated on
-the tables being reserved memory.  On an EFI boot the outgoing kernel records
-a persistent reservation; on a DT boot nothing does.  fdt_add_mem_rsv() is not
-an option either: the flattened DTB handed over by the bootloader has no space
-left for a new entry (-FDT_ERR_NOSPACE), and kexec clones that blob when the
-image is loaded, long before the jump.
+has a path for that (RDIST_FLAGS_RD_TABLES_PREALLOCATED), but it is gated
+on the tables being reserved memory.  On an EFI boot the outgoing kernel
+records a persistent reservation; on a DT boot nothing does.  Adding a
+memreserve entry is not an option either: the flattened DTB handed over by
+the bootloader has no space left for a new one (-FDT_ERR_NOSPACE), and
+kexec clones that blob when the image is loaded, long before the jump.
 
 So claim the inherited tables in the incoming kernel instead: reserve the
-property table while LPIs are being probed (memblock still owns the pages, well
-before memblock_free_all()), and the per-CPU pending tables when the
-preallocated path is taken.  The preallocated path is then selected normally
-and the ITS keeps working across the handoff.
+property table while LPIs are being probed (memblock still owns the pages,
+well before memblock_free_all()), and the per-CPU pending tables when the
+preallocated path is taken.  The preallocated path is then selected
+normally and the ITS keeps working across the handoff.
 
-Measured on SM8750 (kexec into the same image, disk root):
+Measured on SM8750, kexec into the same image with a disk root:
 
-  before: 99 x "ITS queue timeout", 8 x "Failed to disable LPIs", /init 126.35 s
-  after:  0 x "ITS queue timeout",  0 x "Failed to disable LPIs", /init   1.31 s
+  before: 99 x "ITS queue timeout", 8 x "Failed to disable LPIs",
+          /init at 126.35 s
+  after:   0 x "ITS queue timeout", 0 x "Failed to disable LPIs",
+          /init at   1.31 s
 
-Behaviour on a normal cold boot is unchanged: enabled_lpis_allowed() is only
-consulted when LPIs are already enabled on entry, and the preallocated path is
-only taken when that flag is set.
+Behaviour on a normal cold boot is unchanged: enabled_lpis_allowed() is
+only consulted when LPIs are already enabled on entry, and the
+preallocated path is only taken when that flag ends up set.
 
-Signed-off-by: xuqianhui <xiaqinghuan@mail.ustc.edu.cn>
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/irqchip/irq-gic-v3-its.c | 42 +++++++++++++++++++++++++++++---
+ 1 file changed, 38 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
-index 6f5811aae5..2c23da11b2 100644
+index 6f5811aae5..7e802163a8 100644
 --- a/drivers/irqchip/irq-gic-v3-its.c
 +++ b/drivers/irqchip/irq-gic-v3-its.c
 @@ -2280,7 +2280,7 @@ static void its_free_prop_table(struct page *prop_page)
@@ -82,10 +91,10 @@ index 6f5811aae5..2c23da11b2 100644
 +	 * came from (kexec) had no way to hand them over as reserved.
 +	 *
 +	 * We cannot start from scratch either: PROPBASER/PENDBASER may only be
-+	 * reprogrammed with LPIs disabled, and on some implementations
-+	 * GICR_CTLR.EnableLPIs reads as RES1 once set.  So keep the inherited
-+	 * tables and claim them here, before memblock hands the pages over to the
-+	 * buddy allocator.
++	 * reprogrammed with LPIs disabled, and on some implementations the
++	 * EnableLPIs bit reads as RES1 once set.  So keep the inherited tables
++	 * and claim them here, before memblock hands the pages over to the buddy
++	 * allocator.
 +	 */
 +	if (memblock_reserve(addr, LPI_PROPBASE_SZ))
 +		return false;
@@ -111,3 +120,6 @@ index 6f5811aae5..2c23da11b2 100644
  		gic_data_rdist()->flags |= RD_LOCAL_PENDTABLE_PREALLOCATED;
  
  		goto out;
+-- 
+2.53.0
+
