@@ -1,0 +1,111 @@
+
+===== pstore-previous-boot =====
+total 0
+-r--r----- 1 xuqianhui1001 1007 346800 Jan  7 00:03 console-ramoops-0
+-r--r----- 1 xuqianhui1001 1007  38613 Jan  7 00:03 pmsg-ramoops-0
+pstore_archived=/var/tmp/q32-pstore-299bfac8.log bytes=346800
+--- 上一个启动里的复位/关机痕迹（tail 10）
+[  110.749065][ T9202] reboot: [KD] stage=11a bafore device_shutdOwn
+[  110.945723][ T9202] reboot: [KD] stage=11b after device_shutdovn
+[  11 .94761][ T9202] reboot: Restarding system with c�mmand 'bootloader'
+[  110.947437][ T9202] psci: psci: SYSTEM_RESET2 vendor reset_type=0x80010001 cookie=0x2 (cmd=bnotl�ader)
+--- 上一个启动的显示尾部（tail 6）
+[  110.942270][ T9202]  drm_atomic_bridge_chain_disable+0x7c/0xb8
+[  110.942278][ T9202]  drm_atomic_helper_commit_modeset_disables+0x24/0x78
+[  110.9T2295][ T9202]  drm_atkmic[commit+0x94/0xe0
+[  110.942298][ T9202]  drm_atomic_helper_disable_all+0x210/0x228
+[  110.942302][ T9202]  drm_atomic_helper_shutdown*0x90/0x150
+[  110.942364][ T9202] panel-novatek-nt36536 ae94000.dsi.0: [drm:drm_panel_disable] failed to disable backlight: -108
+
+===== identity =====
+Linux elden 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty #4 SMP PREEMPT Fri Oct 23 20:57:21 CST 2026 aarch64 GNU/Linux
+boot_id=299bfac8 uptime=16.01s
+reset_declared=warm
+build_manifest=
+cmdline=console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.boot_devices=soc/1d84000.ufshc androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal androidboot.force_normal_boot=1 silent_boot.mode=nonsilent
+bootargs=console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.boot_devices=soc/1d84000.ufshc androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal androidboot.force_normal_boot=1 silent_boot.mode=nonsilent
+
+===== reset-depth =====
+--- dmesg /SYSTEM_RESET2 vendor reset_type/
+0
+--- dmesg /SYSTEM_RESET2|psci_elden|vendor reset/ (head 6)
+--- dmesg /reboot: |Restarting system|reboot_mode/ (head 6)
+--- dmesg /reboot reason|reset reason|bootreason/ (head 6)
+--- qbootctl
+SLOT _b: already marked successful
+SLOT _b: Marked boot successful
+
+===== firmware-display =====
+--- reserved-memory / splash
+splash_region
+splash_node_path=/proc/device-tree/reserved-memory/splash_region
+ 00 00 00 00 fc 80 00 00 00 00 00 00 02 b0 00 00
+no_map=yes
+--- dmesg /reserved mem:.*splash/ (head 6)
+[    0.000000] [    T0] OF: reserved mem: 0x00000000fc800000..0x00000000ff2fffff (44032 KiB) nomap non-reusable splash_region
+--- dmesg /boot framebuffer|bootloader frame|continuous-splash/ (head 6)
+[    0.303444] [   T74] platform ae01000.display-controller: boot framebuffer mapped before SID switch: iova=0x00000000fc800000 size=2b00000 translated=0x00000000fc800000
+[    8.996359] [   T62] msm_dpu ae01000.display-controller: boot framebuffer mapped before SID switch: iova=0x00000000fc800000 size=2b00000 translated=0x00000000fc800000
+[    8.996387] [   T62] msm_dpu ae01000.display-controller: [drm] reserved boot framebuffer IOVA 0xfc800000+0x2b00000
+--- dmesg /simpledrm|simple-framebuffer|efifb/
+0
+--- chosen/
+#address-cells
+#size-cells
+bootargs
+kaslr-seed
+linux,initrd-end
+linux,initrd-start
+name
+ranges
+--- fb0
+fb0/name=msmdrmfb
+fb0/virtual_size=1904,3040
+fb0/stride=7680
+fb0/bits_per_pixel=32
+--- silent_boot / panel
+msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid:
+silent_boot.mode=nonsilent
+/sys/class/drm/card0-DSI-1/status=connected
+/sys/class/drm/card0-DSI-1/enabled=enabled
+/sys/class/drm/card0-DSI-1/dpms=On
+/sys/class/backlight/aw99706-backlight/brightness=511
+
+===== probe-timeline =====
+--- 关键时间戳（boot FB 记录 vs msm bind vs fbcon 切换）
+[ 0.303444] [    0.303444] [   T74] platform ae01000.display-controller: boot framebuffer mapped before SID switch: iova=0x00000000fc800000 size=2b00000 translated=0x00000000fc800000
+[ 8.970400] [    8.970400] [   T62] msm_dpu ae01000.display-controller: bound ae94000.dsi (ops dsi_ops)
+[ 8.970412] [    8.970412] [   T62] msm_dpu ae01000.display-controller: bound ae96000.dsi (ops dsi_ops)
+[ 8.971589] [    8.971589] [   T62] msm_dpu ae01000.display-controller: bound af54000.displayport-controller (ops msm_dp_display_comp_ops)
+[ 8.995889] [    8.995889] [   T62] msm_dpu ae01000.display-controller: bound 3d00000.gpu (ops a3xx_ops)
+[ 8.996359] [    8.996359] [   T62] msm_dpu ae01000.display-controller: boot framebuffer mapped before SID switch: iova=0x00000000fc800000 size=2b00000 translated=0x00000000fc800000
+[ 8.996387] [    8.996387] [   T62] msm_dpu ae01000.display-controller: [drm] reserved boot framebuffer IOVA 0xfc800000+0x2b00000
+[ 9.013513] [    9.013513] [   T62] [drm] Initialized msm 1.13.0 for ae01000.display-controller on minor 0
+[ 9.283938] [    9.283938] [   T62] Console: switching to colour frame buffer device 119x95
+[ 9.302220] [    9.302220] [   T62] msm_dpu ae01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+
+===== display-errors =====
+command DMA timeout              0
+peer command DMA timeout         0
+reset failure                    0
+DSI_PLL_lockfail                 0
+failed to acquire mdss resets    0
+stale link configuration         0
+
+===== summary =====
+boot_id=299bfac8 uptime=16.25s
+RESET_DECLARED=warm
+PSTORE_PRESENT=yes
+PSTORE_RESET_PRINT=1
+RESET_DEPTH=vendor_bootloader
+SPLASH_NODE=yes
+SPLASH_RESERVED_MEM=1
+BOOTFB_RECORDED=1
+BOOTFB_MAPPED_PRE_SID=2
+FW_LIVE_FB=yes
+SILENT_BOOT=nonsilent
+SIMPLEDRM=0
+CHOSEN_FB=no
+FB0_NAME=msmdrmfb
+DSI_STATUS=connected/enabled
+STORM_SIG=0

@@ -1,0 +1,1 @@
+[  144.668758][ T9633] reboot: [KD] stage=11a before device_shutdown

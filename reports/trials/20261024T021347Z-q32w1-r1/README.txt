@@ -1,0 +1,11 @@
+boot_id=299bfac8-4f72-4f72-8dff-0d0551bed7d9
+image=boot_b-vk152.img
+arm=w1
+reset=warm
+verdict=GOOD
+fw_live_fb=yes
+reset_depth=vendor_bootloader
+vendor_path_proof=yes(fastboot_reached)
+serial_vendor_reset=0
+0
+serial_delta_bytes=249246
