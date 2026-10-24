@@ -97,3 +97,35 @@ git clone --depth 1 https://gh-proxy.com/https://github.com/xiaquwan1001/mu_wide
 | 6 | Features/CONFIG | 10 s | 2.0 M | `d08c5af327768d2820bbd030ca5af443be33bce8` |
 
 全部 `git submodule status -- <path>` 前缀由 `-` 变空格，无 `+`/`U`。每步包 `timeout -k 10 1500`（≤25 min），gh-proxy 无 404，未退回直连。
+
+### 根因与修正：子模块被全局 git 改写劫持成 SSH
+
+```
+$ git config --global --get-regexp 'url\..*\.insteadof'
+url.https://mirrors.ustc.edu.cn/aosp/.insteadof https://android.googlesource.com/
+url.git@github.com:.insteadof https://github.com/
+```
+
+`~/.gitconfig` 里 `url.git@github.com:.insteadOf https://github.com/` 把**所有 https://github.com/ 改写为 git@github.com: SSH**。
+命令行只加了 `url."https://gh-proxy.com/https://github.com/".insteadOf` 一条，同前缀冲突时 SSH 规则仍生效 ⇒ 子模块 clone 走 SSH，**到 github 无响应**（不是资源大）。
+证据：第一次 openssl clone 走 `timeout -k 10 1500` 全程耗尽 1500 s、目录 0 字节、状态仍 `-`；同一仓库加 `GIT_CONFIG_GLOBAL=/dev/null` 后 **92 s/141 M 完成**。
+
+修正后命令（此后一律用这条）：
+
+```
+GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null timeout -k 10 900 \
+  git -c url."https://gh-proxy.com/https://github.com/".insteadOf="https://github.com/" \
+  submodule update --init --depth 1 --jobs 1 -- <path>
+```
+
+| # | submodule | 耗时 | 大小 | 检出 SHA |
+|---|---|---|---|---|
+| 7 | Platforms/OpensslPkg/Library/OpensslLib/openssl | 92 s | 141 M | `aea7aaf2abb04789f5868cbabec406ea43aa84bf` |
+| 8 | Binaries（SurfaceDuoBinaries-fork） | 56 s | 206 M | `ce59dcf54753e112d7b847dd997d3ae934094e0d` |
+| 9 | Features/DFCI | 0 s(已存在) | 7.5 M | `401e480fe46d348115a6fe94a878d50069b8098c` |
+| 10 | Platforms/CranePkg（CrDK） | 0 s(已存在) | 516 K | `1731534fb1efe9d03972bb6ac3771f779f1a9d87` |
+| 11 | Platforms/SurfaceDuoACPI | 0 s(已存在) | 43 M | `d742758fe575c08b5278d84fec1b3b313551a587` |
+
+- 第 8 条首次失败（`Binaries` 残留 211 M 半成品目录 → `已经存在，并且不是一个空目录`），`rm -rf Binaries` 后 56 s 完成。
+- 全 11 条 `git submodule status` 前缀均为空格（无 `-`/`+`/`U`），工作树 `du -sh` = **3.3 G**。
+- gh-proxy 对以上仓库均无 404，未退回直连。

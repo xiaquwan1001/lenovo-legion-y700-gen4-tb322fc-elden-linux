@@ -43,3 +43,28 @@ GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null \
 - **别靠加 timeout 解决**：25 分钟 × N 个子模块 = 白等；先用 `GIT_ALLOW_PROTOCOL=https` 一条命令定位协议层问题。
 - 全局 `insteadOf` 是「便利」也是「暗坑」：凡是要按 URL 精确控制通道（镜像、sparse、submodule）的场合，一律用
    `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null` + 命令行 `-c` 显式指定，别继承全局。
+
+## 补充（同日）：**嵌套**子模块会丢掉命令行的 `-c` 改写 ⇒ 必须用 PATH 级 wrapper
+
+拉 `Binaries`（Project-Aloha/SurfaceDuoBinaries-fork）时出现新形态：外层靠着 `-c url.…insteadOf` 走进了镜像，
+但 `submodule update --recursive` 里**嵌套**的 `git fetch`（实测 `https://github.com/ARMmbed/mbedtls`）拿不到那条 `-c`，
+于是直连 GitHub，**rx 1 KB/s**、目录体积 206 M 十几分钟不动。
+
+修法 = 放一个 PATH 级 `git` wrapper，让**每一个** git 进程（含嵌套）都带上改写：
+
+```sh
+# ~/.local/bin/git
+#!/bin/sh
+exec /usr/bin/git \
+  -c url."https://gh-proxy.com/https://github.com/".insteadOf="https://github.com/" \
+  -c url."https://gh-proxy.com/https://github.com/".insteadOf="git@github.com:" \
+  -c http.version=HTTP/1.1 "$@"
+```
+用法：`PATH=$HOME/.local/bin:$PATH GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git submodule update --init --recursive …`
+验证：`PATH=… git ls-remote https://github.com/ARMmbed/mbedtls HEAD` 秒回（改前挂死）。
+
+另两条实测约束：
+- `Binaries` 在 `.gitmodules` 里键名是 `Platforms/SurfaceDuoBinaries` 但 path 是 `Binaries`；若目录里已有内容且无 `.git`，
+  git 会拒绝 clone（「已存在且不是空目录」）⇒ 先 `mv` 到 `/tmp` 再拉。
+- 只 `--depth 1` 有时拿不到 `.gitmodules` 指定的**特定提交**（本例 `ce59dcf` 不是分支头），
+  报「获取了子模组路径但没有包含该提交」；此时对该子模块去掉 `--depth 1`（或 `git -C <mod> fetch origin <sha>`）。

@@ -1,0 +1,19 @@
+fatal: 目标路径 '/home/xuqianhui/y700-elden/build/uefi-woa-prep/repos/7-mu-lenovo/Binaries' 已经存在，并且不是一个空目录。
+fatal: 无法克隆 'https://github.com/Project-Aloha/SurfaceDuoBinaries-fork' 到子模组路径 '/home/xuqianhui/y700-elden/build/uefi-woa-prep/repos/7-mu-lenovo/Binaries'
+克隆 'Binaries' 失败。按计划重试
+fatal: 目标路径 '/home/xuqianhui/y700-elden/build/uefi-woa-prep/repos/7-mu-lenovo/Binaries' 已经存在，并且不是一个空目录。
+fatal: 无法克隆 'https://github.com/Project-Aloha/SurfaceDuoBinaries-fork' 到子模组路径 '/home/xuqianhui/y700-elden/build/uefi-woa-prep/repos/7-mu-lenovo/Binaries'
+第二次尝试克隆 'Binaries' 失败，退出
+== Binaries                     rc=1 elapsed=0s size=211M
+来自 https://gh-proxy.com/https://github.com/microsoft/mu_feature_dfci
+ * branch            401e480fe46d348115a6fe94a878d50069b8098c -> FETCH_HEAD
+子模组路径 'Features/DFCI'：检出 '401e480fe46d348115a6fe94a878d50069b8098c'
+== Features/DFCI                rc=0 elapsed=12s size=7.5M
+来自 https://gh-proxy.com/https://github.com/Project-Aloha/CrDK
+ * branch            1731534fb1efe9d03972bb6ac3771f779f1a9d87 -> FETCH_HEAD
+子模组路径 'Platforms/CranePkg'：检出 '1731534fb1efe9d03972bb6ac3771f779f1a9d87'
+== Platforms/CranePkg           rc=0 elapsed=5s size=516K
+来自 https://gh-proxy.com/https://github.com/Project-Aloha/acpi_oem_third_party_common
+ * branch            d742758fe575c08b5278d84fec1b3b313551a587 -> FETCH_HEAD
+子模组路径 'Platforms/SurfaceDuoACPI'：检出 'd742758fe575c08b5278d84fec1b3b313551a587'
+== Platforms/SurfaceDuoACPI     rc=0 elapsed=3s size=43M
