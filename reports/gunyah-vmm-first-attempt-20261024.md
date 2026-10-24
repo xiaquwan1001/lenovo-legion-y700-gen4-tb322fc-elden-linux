@@ -61,3 +61,34 @@ misc gunyah: Failed to initialize VM: -22
 | **C. 改内核侧**：把 guest kernel image 与 DTB 分开（`RANGE_ID_IMAGE` 放内核、DTB 用独立机制），对齐新版上游 API | 高（改驱动 + 重编内核） | 同上 |
 
 > 注：`VM_ALLOC_VMID`、DTB parcel 共享、`VM_CONFIG_IMAGE`、`VM_SET_ADDRESS_LAYOUT` 均已成功 ⇒ RM 侧的「VM 生命周期前段」是通的，卡点集中在 `VM_INIT` 的 IRQ 分配。
+
+## 6. 方案 A 已执行：**在 stock Android（厂商内核/驱动）上得到同一个失败**
+
+方法：`fastboot set_active a` + Magisk 补丁 `init_boot_a`（原厂镜像已备份、随后还原）→ 把**同一个 `vmmtest` 二进制**推到 `/data/local/tmp` 以 root 运行。
+
+结果（`adb` 侧 `dmesg`）：
+
+```
+40.936473 gunyah_rsc_mgr hypervisor:qcom,resource-manager-rpc@c1c233af3a0c9b9c:
+           RM rejected message 5600000b. Error: 10
+40.936482 misc gunyah: Failed to initialize VM: -22
+```
+
+⇒ **逐字相同的 `VM_INIT → IRQ_INUSE(0x10)`**。
+
+**结论**：
+1. 不是我们移植的问题 —— 同一份 harness 在**厂商内核 + 厂商驱动 + 同一 hypervisor** 上一样被拒；
+2. 「普通（非 pVM）子 VM」这条路在该 firmware 的 RM 策略下**不成立**（至少以我们这种参数：user region + DTB parcel + 无 fw）。
+
+## 7. 顺带取得的 Android 侧线索（对方案 B 有用）
+
+| 事实 | 值/含义 |
+|---|---|
+| Android `/dev/gunyah` | `10,260` —— 由厂商 `gh_rm_drv` 注册，**和我们主线用同一个驱动名/同一个 5600000b 报错** |
+| Android **`/dev/qgunyah`** | `10,263` —— **AVF（pVM）走的是这个设备**，我们主线没有对应节点（`GH_ANDROID_IOCTL_TYPE = 'A'` 那组 ioctl 在主线被挂在 `/dev/gunyah` 上） |
+| AVF 存在性 | apex `com.android.virt`(+`@3`)；包 `com.android.virtualmachine.res`、`com.android.virtualization.terminal`（后者**无 launchable activity** ⇒ 无法用 UI 触发，本机未验证过 AVF 实际建 VM） |
+| 厂商模块 | `/vendor/lib/modules/{gh_ctrl,gh_irq_lend,gh_mem_notifier,gh_panic_notifier,gh_rm_booster,gh_tlmm_vm_mem_access,hvc_gunyah}.ko`（`gh_rm_drv` 在内核内建，模块目录里没有独立 .ko ⇒ 抓不到二进制做反汇编） |
+| `pvmfw` 分区 | 存在（`pvmfw_a/b`，ABL 日志 `Loaded Partition: pvmfw`），说明 bootloader 侧为 pVM 做了准备 |
+
+⇒ 方案 B 的正确入口应是 **`/dev/qgunyah` + `GH_ANDROID_*`（'A'）那套 ioctl**（pVM 授权 + fw 独立 parcel + `LEND_USER_MEM`），而不是我们现在的 `/dev/gunyah` 普通路径；
+我们主线要复刻，需要先补出 `/dev/qgunyah` 这个 misc 节点与对应 ioctl 分派（厂商 `gh_rm_drv` 里有，AOSP mainline 无）。
