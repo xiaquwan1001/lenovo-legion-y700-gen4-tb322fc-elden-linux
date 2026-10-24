@@ -138,3 +138,9 @@ __pycache__/
 /dl-cam/t1s/
 # 2026-10-18 C5 工具链 deb（装过即可；重下方法见 patches/waydroid-camera-64bit-20261018/README.md）
 /*.deb
+
+# --- 大体积试验产物不入 git（2026-10-24：一条 2.8 GB 串口 delta 曾把 GitHub 推送打回）
+# trials 里只保留小而可读的判据；原始串口 delta/抓包按需留在磁盘，不入库。
+reports/trials/*/serial-delta.log
+reports/trials/*/*.pcap
+reports/trials/*/*.bin
