@@ -1,0 +1,73 @@
+
+===== identity =====
+--- uname -a
+Linux elden 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty #4 SMP PREEMPT Fri Oct 23 20:57:21 CST 2026 aarch64 GNU/Linux
+boot_id=c93c5543 uptime=31.08s
+--- cat /proc/cmdline
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.boot_devices=soc/1d84000.ufshc androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal androidboot.force_normal_boot=1 silent_boot.mode=nonsilent
+
+===== display-status =====
+card0-DSI-1/status=connected
+card0-DSI-1/enabled=enabled
+card0-DSI-1/dpms=On
+aw99706-backlight/brightness=511
+card0
+card0-DP-1
+card0-DSI-1
+card0-Writeback-1
+renderD128
+version
+
+===== dmesg-signatures =====
+command DMA timeout                0
+peer command DMA timeout           0
+DSI_PLL_lockfail                   0
+recovery is not complete           0
+reset failure                      0
+STORM                              0
+failed to acquire mdss resets      0
+failed to prime mdss resets        0
+stale link configuration           0
+Unbalanced enable                  0
+
+===== q32-reset-and-handoff =====
+vendor_reset_print=0
+splash_node=yes
+bootfb_recorded=1
+silent_boot=nonsilent
+simpledrm_or_efifb=0
+chosen_fb=no
+
+===== ctl-clock-rates =====
+disp_cc_mdss_pclk0_clk_src       rate=172972734    parent=dsi0_phy_pll_out_dsiclk
+disp_cc_mdss_pclk1_clk_src       rate=172972734    parent=dsi0_phy_pll_out_dsiclk
+disp_cc_mdss_mdp_clk_src         rate=575000000    parent=disp_cc_pll0
+disp_cc_mdss_byte0_clk_src       rate=108107958    parent=dsi0_phy_pll_out_byteclk
+disp_cc_mdss_byte1_clk_src       rate=108107958    parent=dsi0_phy_pll_out_byteclk
+
+===== dsi-phy-clocks =====
+dsi1_pll_out_div_clk    0       0        0        2500000048  0          0     50000      Y               deviceless                      no_connection_id         
+dsi1_pll_post_out_div_clk 0       0        0        714285728   0          0     50000      Y                  deviceless                      no_connection_id         
+dsi1_pll_bit_clk     0       0        0        2500000048  0          0     50000      Y                  deviceless                      no_connection_id         
+dsi1_pll_by_2_bit_clk 0       0        0        1250000024  0          0     50000      Y                     deviceless                      no_connection_id         
+dsi0_pll_out_div_clk    1       1        0        756755712   0          0     50000      Y               deviceless                      no_connection_id         
+dsi0_pll_post_out_div_clk 0       0        0        216215917   0          0     50000      Y                  deviceless                      no_connection_id         
+dsi0_pll_bit_clk     2       2        0        756755712   0          0     50000      Y                  deviceless                      no_connection_id         
+disp_cc_mdss_pclk0_clk_src 1       1        0        172972734   0          0     50000      Y                        ae94000.dsi                     pixel_src                
+disp_cc_mdss_pclk0_clk 1       1        0        172972734   0          0     50000      Y                           ae94000.dsi                     pixel                    
+disp_cc_mdss_pclk1_clk_src 1       1        0        172972734   0          0     50000      Y                        ae96000.dsi                     pixel_src                
+disp_cc_mdss_pclk1_clk 1       1        0        172972734   0          0     50000      Y                           ae96000.dsi                     pixel                    
+dsi0_pll_by_2_bit_clk 0       0        0        378377856   0          0     50000      Y                     deviceless                      no_connection_id         
+disp_cc_mdss_byte0_clk_src 2       2        0        108107958   0          0     50000      Y                        ae94000.dsi                     byte_src                 
+disp_cc_mdss_byte1_clk_src 2       2        0        108107958   0          0     50000      Y                        ae96000.dsi                     byte_src                 
+disp_cc_mdss_pclk2_clk_src 0       0        0        19200000    0          0     50000      N            deviceless                      no_connection_id         
+disp_cc_mdss_pclk2_clk  0       0        0        19200000    0          0     50000      N               deviceless                      no_connection_id         
+
+===== drm-summary =====
+crtc-0: 
+crtc-1: 
+crtc-2: 
+
+===== i2c-panel =====
+10-002f
+10-0076

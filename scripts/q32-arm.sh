@@ -21,8 +21,10 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 ARM=${1:?usage: $0 w1|w2|c1 [n] [wait_s]}
 N=${2:-2}
+RSTART=${RSTART:-1}
 WAIT=${3:-900}
 case "$ARM" in w2) [ -n "${3:-}" ] || WAIT=1500 ;; esac
+for a in "$@"; do [ "$a" = "--current" ] && Q32_CURRENT=1; done
 IMAGE=${IMAGE:-$ROOT/bootslot-b/boot_b-vk152.img}
 # 复位深度证据：pstore 在本机实测**恒为空**（PITFALLS #197/#374）⇒ 串口 relay 才是唯一可靠通道。
 # 该文件由 root 常驻服务（scripts/install-serial-logger.sh + serial-fanout.sh）以 0644 写入。
@@ -58,15 +60,19 @@ collect() {  # collect <arm> <round> <boot_id> <reset_kind>
 	# ★Q32 证据必须**先**取：pstore（上个启动的 console 尾部）读后即删
 	$SSH "RESET_DECLARED=$reset sh -s" < "$ROOT/scripts/q32-boot-evidence.sh" >/dev/null 2>&1
 	q32_rel="reports/artifacts/q32-boot-$B8.txt"
-	$SSH "cat /var/tmp/q32-boot-$B8.txt" > "$ROOT/$q32_rel" 2>/dev/null
+	$SSH "cat /var/tmp/q32-boot-$B8.txt" | tr -d '\0' > "$ROOT/$q32_rel" 2>/dev/null
 	$SSH "cat /var/tmp/q32-pstore-$B8.log" > "$logdir/pstore-prev-boot.log" 2>/dev/null
 
 	# ★串口：从复位前的偏移开始截取 → 上一个内核在复位路径上的打印（含 vendor reset_type）
 	local SER_TOK=0 SER_BYTES=0
 	if [ -r "$SERIAL_LOG" ]; then
-		tail -c +$((SERIAL_OFF + 1)) "$SERIAL_LOG" > "$logdir/serial-delta.log" 2>/dev/null || true
+		if [ "$SERIAL_OFF" -gt 0 ]; then
+			tail -c +$((SERIAL_OFF + 1)) "$SERIAL_LOG" > "$logdir/serial-delta.log" 2>/dev/null || true
+		else
+			tail -c 4000000 "$SERIAL_LOG" > "$logdir/serial-delta.log" 2>/dev/null || true   # 事后采集：只留尾部 4 MB
+		fi
 		SER_BYTES=$(wc -c < "$logdir/serial-delta.log" 2>/dev/null | head -1); SER_BYTES=${SER_BYTES:-0}
-		SER_TOK=$(grep -ac 'SYSTEM_RESET2 vendor reset_type' "$logdir/serial-delta.log" 2>/dev/null | head -1); SER_TOK=${SER_TOK:-0}
+		SER_TOK=$(grep -ac 'SYSTEM_RESET2' "$logdir/serial-delta.log" 2>/dev/null | head -1); SER_TOK=${SER_TOK:-0}
 		grep -aE 'SYSTEM_RESET2 vendor reset_type|reboot: |Restarting system|Power down' "$logdir/serial-delta.log" 2>/dev/null | tail -6 > "$logdir/serial-reset.txt"
 	fi
 
@@ -105,6 +111,19 @@ collect() {  # collect <arm> <round> <boot_id> <reset_kind>
 	echo "  → $q32_rel | $cl_rel | $logdir"
 }
 
+# ---------------- 事后采集模式：设备已经起来了（用户刚做完 POR），只采当前这一发 ----------------
+# 用法： scripts/q32-arm.sh c1 1 900 --current     （或 Q32_CURRENT=1）
+if [ "${Q32_CURRENT:-0}" = 1 ]; then
+	T=$(pick_target) || { echo "❌ 设备不可达" >&2; exit 1; }
+	BID=$(boot_id); [ -n "$BID" ] || { echo "❌ 读不到 boot_id" >&2; exit 1; }
+	up=$(uptime_s); while [ "${up%.*}" -lt 12 ] 2>/dev/null; do sleep 2; up=$(uptime_s); done
+	PREV=$BID
+	case "$ARM" in c1) RESET_KIND=por ;; w1|w2) RESET_KIND=warm ;; *) RESET_KIND=por ;; esac
+	echo "[Q32/$ARM] 事后采集当前启动 boot_id=${BID:0:8} uptime=${up}s（声明 reset=$RESET_KIND）"
+	collect "$ARM" "${ROUND:-$RSTART}" "$BID" "$RESET_KIND"
+	exit 0
+fi
+
 # ---------------- 前置门 ----------------
 . "$ROOT/scripts/lib-boot-ready.sh"
 case "$ARM" in w1|w2) boot_ready_or_die ;; esac
@@ -121,7 +140,7 @@ await_new_boot() {  # await_new_boot <round>
 			up=$(uptime_s)
 			while [ "${up%.*}" -lt 12 ] 2>/dev/null; do sleep 2; up=$(uptime_s); done
 			PREV=$bid
-			collect "$ARM" "$r" "$bid" "$RESET_KIND"
+			collect "$ARM" "$((RSTART + r - 1))" "$bid" "$RESET_KIND"
 			return 0
 		fi
 		sleep 4
