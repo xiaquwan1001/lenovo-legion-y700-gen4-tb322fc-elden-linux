@@ -67,3 +67,37 @@ msm_dpu ae01000.display-controller: [drm] reserved boot framebuffer IOVA 0xfc800
 
 ⇒ 「ABL 有没有点屏」的判据 = `reserved mem:` 行 + `BOOTFB_RECORDED` + cmdline `silent_boot.mode`（`nonsilent` = 点了屏），
 **不需要 probe 前快照**。`simpledrm=0` 只说明「内核没把固件 FB 当显示器用」，说明不了固件有没有点屏。
+
+---
+
+## #376 采集脚本的「就绪门」必须**每发重过**，不能只在开头过一次
+
+### 现象
+
+`scripts/q32-arm.sh w1 2`：Round 1 正常（进 fastboot → 回启 → 采集成功），
+Round 2 在**上一发刚起来 ~35 s** 时又发 `eldroid-bootctl reboot bootloader`
+⇒ 设备**USB 全不枚举**：`fastboot devices` 空、`/dev/ttyACM*` 消失、SSH 超时 —— 只能人物理断电。
+
+### 根因
+
+就绪门（`lib-boot-ready.sh`：uptime ≥ 90 s + 桌面在）只在脚本**入口**调用了一次。
+连续多发的实验里，第 2 发起步时系统才 30 多秒 —— 与 `PITFALLS #368`（`reboot2` 早期下发导致 USB 不枚举）同一机制。
+
+### 修法（已落地）
+
+多发循环里**每一发之前**重新过门：
+```bash
+if [ "$k" -gt 1 ]; then
+  while :; do
+    up=$(uptime_s)
+    [ "${up%.*}" -ge "$BOOT_READY_MIN_UPTIME" ] && [ "$(S 'ps -eo comm | grep -cx phoc')" != 0 ] && break
+    sleep 5
+  done
+fi
+```
+
+### 顺带一条 shell 纪律
+
+`SER_TOK=$(grep -ac PATTERN file || echo 0)` 在**无命中**时输出**两行**（`grep -c` 已打印 `0`，再追加 `echo 0`），
+在 `set -u` 脚本里会让 `[ "$SER_TOK" -lt 1 ]` 报 `需要整数` 并中断取证 ⇒ 样本白跑一发。
+写法：`X=$(grep -ac PAT file 2>/dev/null | head -1); X=${X:-0}`。

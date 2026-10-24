@@ -24,6 +24,10 @@ N=${2:-2}
 WAIT=${3:-900}
 case "$ARM" in w2) [ -n "${3:-}" ] || WAIT=1500 ;; esac
 IMAGE=${IMAGE:-$ROOT/bootslot-b/boot_b-vk152.img}
+# 复位深度证据：pstore 在本机实测**恒为空**（PITFALLS #197/#374）⇒ 串口 relay 才是唯一可靠通道。
+# 该文件由 root 常驻服务（scripts/install-serial-logger.sh + serial-fanout.sh）以 0644 写入。
+SERIAL_LOG=${SERIAL_LOG:-/var/log/elden-serial/ttyACM0.log}
+SERIAL_OFF=0
 SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 root@192.168.7.1"
 TDIR="$ROOT/reports/trials"
 ARTS="$ROOT/reports/artifacts"
@@ -43,10 +47,10 @@ fastboot_wait() {  # 等 fastboot 出现（单条命令，不接管道，PITFALL
 	return 1
 }
 
-collect() {  # collect <arm> <round> <boot_id> <reset_kind> <verdict_hint>
+collect() {  # collect <arm> <round> <boot_id> <reset_kind>
 	local arm=$1 r=$2 BID=$3 reset=$4
 	local B8; B8=$(printf '%s' "$BID" | cut -c1-8)
-	local stamp logdir q32_rel clk_rel
+	local stamp logdir q32_rel cl_rel
 	stamp=$(date -u +%Y%m%dT%H%M%SZ)
 	logdir="$TDIR/${stamp}-q32${arm}-r$r"
 	mkdir -p "$logdir"
@@ -57,8 +61,17 @@ collect() {  # collect <arm> <round> <boot_id> <reset_kind> <verdict_hint>
 	$SSH "cat /var/tmp/q32-boot-$B8.txt" > "$ROOT/$q32_rel" 2>/dev/null
 	$SSH "cat /var/tmp/q32-pstore-$B8.log" > "$logdir/pstore-prev-boot.log" 2>/dev/null
 
+	# ★串口：从复位前的偏移开始截取 → 上一个内核在复位路径上的打印（含 vendor reset_type）
+	local SER_TOK=0 SER_BYTES=0
+	if [ -r "$SERIAL_LOG" ]; then
+		tail -c +$((SERIAL_OFF + 1)) "$SERIAL_LOG" > "$logdir/serial-delta.log" 2>/dev/null || true
+		SER_BYTES=$(wc -c < "$logdir/serial-delta.log" 2>/dev/null | head -1); SER_BYTES=${SER_BYTES:-0}
+		SER_TOK=$(grep -ac 'SYSTEM_RESET2 vendor reset_type' "$logdir/serial-delta.log" 2>/dev/null | head -1); SER_TOK=${SER_TOK:-0}
+		grep -aE 'SYSTEM_RESET2 vendor reset_type|reboot: |Restarting system|Power down' "$logdir/serial-delta.log" 2>/dev/null | tail -6 > "$logdir/serial-reset.txt"
+	fi
+
 	# Q28 同口径（复位敏感：坏发即 NOCARD/STORM）
-	clk_rel="reports/artifacts/q28-clkdiag-q32-$arm-$B8.txt"
+	cl_rel="reports/artifacts/q28-clkdiag-q32-$arm-$B8.txt"
 	$SSH 'bash -s' < "$ROOT/scripts/q28-clkdiag.sh" >/dev/null 2>&1
 	$SSH "cat /var/tmp/q28-clkdiag-$B8.txt" > "$ROOT/$cl_rel" 2>/dev/null
 
@@ -67,19 +80,28 @@ collect() {  # collect <arm> <round> <boot_id> <reset_kind> <verdict_hint>
 	$SSH 'sh -s' < "$ROOT/scripts/q28-devprobe.sh" > "$logdir/probe.txt" 2>&1
 	cp -f "$ROOT/$q32_rel" "$logdir/" 2>/dev/null
 	cp -f "$ROOT/$cl_rel" "$logdir/" 2>/dev/null
-	local VERDICT FW RESET_D
+	local VERDICT FW RESET_D VPROOF
 	VERDICT=$(grep -oE 'VERDICT=[A-Z]+' "$logdir/probe.txt" | head -1 | cut -d= -f2); VERDICT=${VERDICT:-UNKNOWN}
 	FW=$(grep -oE 'FW_LIVE_FB=[a-z]+' "$ROOT/$q32_rel" | head -1 | cut -d= -f2); FW=${FW:-unknown}
 	RESET_D=$(grep -oE 'RESET_DEPTH=[a-z_]+' "$ROOT/$q32_rel" | head -1 | cut -d= -f2); RESET_D=${RESET_D:-unknown}
-	printf 'boot_id=%s\nimage=%s\narm=%s\nreset=%s\nverdict=%s\nfw_live_fb=%s\nreset_depth=%s\n' \
-		"$BID" "$(basename "$IMAGE")" "$arm" "$reset" "$VERDICT" "$FW" "$RESET_D" > "$logdir/README.txt"
+	# vendor 复位路径的**结果级**证明：进得了 fastboot 只可能来自 reset_type=0x80010001（架构 SYSTEM_RESET 只会正常启动）
+	if [ "$arm" = w1 ]; then VPROOF="yes(fastboot_reached)"; else VPROOF="n/a"; fi
+	printf 'boot_id=%s\nimage=%s\narm=%s\nreset=%s\nverdict=%s\nfw_live_fb=%s\nreset_depth=%s\nvendor_path_proof=%s\nserial_vendor_reset=%s\nserial_delta_bytes=%s\n' \
+		"$BID" "$(basename "$IMAGE")" "$arm" "$reset" "$VERDICT" "$FW" "$RESET_D" "$VPROOF" "$SER_TOK" "$SER_BYTES" > "$logdir/README.txt"
 
-	TAB=$SSH bash "$ROOT/scripts/trial.sh" record --label "q32${arm}-r$r" --image "$IMAGE" \
+	TAB=root@192.168.7.1 bash "$ROOT/scripts/trial.sh" record --label "q32${arm}-r$r" --image "$IMAGE" \
 		--reset "$reset" --deploy none --probe q28 --verdict "$VERDICT" --logdir "$logdir" \
-		--note "Q32 arm=$arm 复位深度=$RESET_D FW_LIVE_FB=$FW（boot_id=$B8）" >/dev/null 2>&1 \
+		--note "Q32 arm=$arm 复位深度=$RESET_D FW_LIVE_FB=$FW serial_vendor_reset=$SER_TOK（boot_id=$B8）" >/dev/null 2>&1 \
 		|| echo "  ⚠ trial 记录失败（继续）" >&2
 
-	echo "  ARM=$arm r$r  VERDICT=$VERDICT  FW_LIVE_FB=$FW  RESET_DEPTH=$RESET_D"
+	echo "  ARM=$arm r$r  VERDICT=$VERDICT  FW_LIVE_FB=$FW  RESET_DEPTH=$RESET_D  vendor_path_proof=$VPROOF  serial_vendor_reset=$SER_TOK (delta ${SER_BYTES}B)"
+	if [ "$SER_TOK" -lt 1 ]; then
+		# 已知：本机 console 是 USB gadget，复位前那个 pr_info 常在主机取走前就断链 ⇒ 串口缺行是常态
+		echo "  ℹ 串口无 vendor reset 打印（gadget console 复位瞬间断链=已知现象）⇒ 复位深度以结果为准：$VPROOF"
+	fi
+	if [ "$SER_BYTES" -lt 200 ]; then
+		echo "  ⚠ 串口增量仅 ${SER_BYTES}B ⇒ 采集可能没在工作（PITFALLS #359/#374 假阴性），复位深度不可判定" >&2
+	fi
 	echo "  → $q32_rel | $cl_rel | $logdir"
 }
 
@@ -111,6 +133,9 @@ await_new_boot() {  # await_new_boot <round>
 for k in $(seq 1 "$N"); do
 	echo
 	echo "=============== Q32/$ARM  Round $k / $N ==============="
+	# 复位前锚定串口偏移（复位路径上的打印从这里往后找）
+	if [ -r "$SERIAL_LOG" ]; then SERIAL_OFF=$(stat -c%s "$SERIAL_LOG" 2>/dev/null || echo 0); fi
+	echo "  serial_off=$SERIAL_OFF ($(basename "$SERIAL_LOG"))"
 	case "$ARM" in
 	w1)
 		echo "→ 暖复位 W1：eldroid-bootctl reboot bootloader → fastboot reboot"
