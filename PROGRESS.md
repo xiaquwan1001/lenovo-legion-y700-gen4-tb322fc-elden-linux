@@ -168,7 +168,9 @@
 
 1. **★UEFI 与 Gunyah 考查**（2026-10-24 用户定的下一步；只读优先、不写盘）：基线 = `reports/uefi-restart-20261021.md`、
    `reports/gunyah-roadmap-20261021.md`。UEFI：用 `~/下载/tb322fc/*.elf` 逆向运行期注册表（不重下 1 G Mu）+ 回帖 issue #12；
-   Gunyah：阶段 0 零成本探测 + 上游现状复核。产出 = 各项「可不可重启 / 立不立项」定性 + 最小成本账（详见 `TASKS` §4 N1/N2）。
+   Gunyah：阶段 0 零成本探测 + 上游现状复核。产出 = 各项「可不可重启 / 立不立项」定性 + 最小成本账（详见 `TASKS` §4 N1/N2）。**首轮已出（`reports/uefi-gunyah-reassess-20261024.md`）**：
+   UEFI 维持搁置（issue #12 追问 0 回复；厂商 DXE 在 XBL 打包体里，取证成本反升）；**Gunyah 阶段 0/0b 阳性**
+   （`gunyah-wdt` 在 + 自编 `gunyah_wdt.ko` probe 通 ⇒ 本机确实在 Gunyah 下且 SMCCC 通道可用，`reports/gunyah-stage0-positive-20261024.md`）。
 2. **Q28/Q32**：✅ **已结项（2026-10-24）=「已规避」** —— 运营线 vk152 线上 **8/8 无坏发**（真 POR 5/5 + 暖复位 3/3），
    看门狗与三态探针在役；**不补样本、不挖根因**，复启条件只读 `TASKS/README.md` §5 Q28。
 3. **Q24**：⛔ **关闭（2026-10-24 用户裁决：不值得取证）** —— 根因已指名（7.2 缺上游 `skip retention by default`，7.3 自带），

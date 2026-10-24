@@ -119,3 +119,24 @@ import lzma; d=open('/home/xuqianhui/下载/tb322fc/imagefv.elf','rb').read()
 out=lzma.decompress(d[0x1078:], format=lzma.FORMAT_ALONE); print(len(out))
 PY
 ```
+
+## 5. 追加（同日，`scripts/ffs-extract.py` 落地后）：厂商 DXE 不在 UEFI FV 里，而在 **XBL** 里
+
+> 报告初稿曾假设「厂商 UFSDxe 可从 `uefi.elf` / `imagefv.elf` 里取出来和 Mu 版比对」。**这个假设是错的**，本条更正。
+
+新工具 `scripts/ffs-extract.py`（FV/FFS/section 递归 + GUID-defined LZMA 段）实测：
+
+| blob | 顶层结构 | 内含模块 |
+|---|---|---|
+| `uefi.elf`（5 242 880 B） | 一个 FV（base `0x1000`，len `0x2a8000`） | **SEC**(TE 307 400 B) + `uefiplat.cfg`(561 B) + **2 个 SMM_CORE**（LZMA 段）——**没有任何 DXE_DRIVER** |
+| `imagefv.elf`（2 097 152 B） | 单个 LZMA 段（GUID 在 `0x1064`、流起 `0x1078`） | 解出内层 FV **32 198 664 B**，内容是**开机 logo BMP 集**（`battery_symbol_*` / `tsys_thermal_*` / `main_logo1.bmp`…），无 PE32 |
+| `tools.fv` / `abl.elf` | 各 1 个 FV，内容为 SMM_CORE | 无 DXE |
+| **`xbl_s.melf`（3 670 016 B）** | ELF32 shim（2 个 PT_LOAD，共 `0x884` B）+ 3.5 MB 打包体 | 打包体内 `ufs_error_log` 在 `0xd1541`、`ufs_` 串在 `0xc497c` ⇒ **厂商 UFS/UFSDxe 逻辑在 XBL 里** |
+
+**影响**：
+
+1. 「取厂商 UFSDxe 与 Mu 版逐字节比对」这条路**成本高于重下 Mu**（XBL 是 3.5 MB 打包体，需高通自有打包/压缩格式解包，且无公开格式文档）。
+2. 这正好强化 §1 的「不投」结论：连**取证**都要先解开专有打包，而唯一的信息入口（issue #12 的层级答复）依然 0 回复。
+3. 若将来重启 UEFI，§1.4 的顺序应改为：① 先拿 issue 答复 → ② 再决定「重下 Mu（1 G+1.3 G）」还是「逆 XBL 打包」——**后者不优先**。
+
+**工具**：`scripts/ffs-extract.py <blob> [--out DIR] [--grep STR]`（纯 stdlib，纯只读；已能解析 FV header/ext header 链、FFS 文件、UI/PE32/GUID-defined-LZMA 段）。

@@ -1,0 +1,31 @@
+== date/uname
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+Tue Jan  6 22:34:39 UTC 1970
+Linux elden 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty #4 SMP PREEMPT Fri Oct 23 20:57:21 CST 2026 aarch64 GNU/Linux
+== /sys/bus/platform/devices gunyah
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+/sys/bus/platform/devices/gunyah-wdt
+MODALIAS=platform:gunyah-wdt
+== /sys/hypervisor
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+ls: cannot access '/sys/hypervisor': No such file or directory
+cat: /sys/hypervisor/type: No such file or directory
+== dmesg gunyah
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+[    0.000000] [    T0] OF: reserved mem: 0x0000000080000000..0x0000000080dfffff (14336 KiB) nomap non-reusable gunyah-hyp@80000000
+== reserved-memory
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah-hyp@80000000
+00000000: 0000 0000 8000 0000 0000 0000 00e0 0000  ................
+== config
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+CONFIG_ARM_SCMI_TRANSPORT_MAILBOX=y
+CONFIG_QCOM_SCM=y
+CONFIG_HAVE_ARM_SMCCC_DISCOVERY=y
+# CONFIG_GUNYAH_WATCHDOG is not set
+CONFIG_MAILBOX=y
+# CONFIG_MAILBOX_TEST is not set
+# CONFIG_POLARFIRE_SOC_MAILBOX is not set
+CONFIG_BCM74110_MAILBOX=y
+# CONFIG_AXIADO_MAILBOX is not set
+CONFIG_APPLE_MAILBOX=m

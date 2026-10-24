@@ -96,6 +96,7 @@
 | 69 | **#378** kexec 目标可见性三连坑：① `/init` cmdline 解析是**白名单**，自定义 token（`kexec_marker=1`）被静默丢弃 ⇒ 别用「文件没出现」反推「没跑到」；② `mask=1` 跳过 `device_shutdown` ⇒ 目标继承 dwc3 活态、**无网络无串口**，只有「目标自己写磁盘」可靠；③ pstore console record **按行覆盖**，同一记录里能同时出现游标关机尾与目标 `/init`，**字节序≠时间序**，只能做存在性锚点 | [69-kexec目标可见性三连坑.md](sessions/69-kexec目标可见性三连坑.md)
 | 69 | **#380** kexec 实验臂别关兜底看门狗（`elden_q28_nowd`）：目标继承 dwc3/显示活态 ⇒ 无网无图，既不能 SSH 也没人重启 ⇒ 设备停摆需人工断电；要看得更晚就**落盘**（`/etc/local.d/elden-bootlog.start` → `/var/log/dmesg-<boot_id>.txt`），别延长无网络台架 | [69-kexec目标可见性三连坑.md](sessions/69-kexec目标可见性三连坑.md)
 | 69 | **#379** SM8750 的 `GICR_CTLR.EnableLPIs` 是 **RES1**（实测 8/8 `00000005→00000005`）：「退出侧把 LPI 清掉」这条路不存在；跨 kexec 只能**沿用**原表，DT 上无法用 FDT memreserve 保留（`-FDT_ERR_NOSPACE`），可行解 = incoming 侧 `memblock_reserve()` 认领 ⇒ 走 preallocated 路径 | [69-kexec目标可见性三连坑.md](sessions/69-kexec目标可见性三连坑.md)
+| 70 | **#381** 单模块构建四连坑：错 ARCH 的 `make prepare` 清掉 `asm-offsets.h` 的 `TSK_STACK_CANARY`（→ `-mstack-protector-guard-offset=` 空）并带偏 `FTRACE_MCOUNT_USE_*`（→ `-mrecord-mcount` 不认识）；缺 `scripts/module.lds`/`Module.symvers` 报「没有规则可制作目标 xxx.ko」；`M=` 绝对路径被去前导斜杠 | [70-模块构建三缺件与错ARCH的prepare清空生成头.md](sessions/70-模块构建三缺件与错ARCH的prepare清空生成头.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。

@@ -1,0 +1,19 @@
+# gunyah_wdt 探针（2026-10-24，设备 root@192.168.7.1，内核 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty）
+# 目的：验证 Gunyah 的 SMCCC vendor-hyp 通道真的可用（不只 UUID 应答）
+$ modinfo -F vermagic gunyah_wdt.ko
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+$ scp gunyah_wdt.ko root@192.168.7.1:/tmp/ && ssh ... 'insmod /tmp/gunyah_wdt.ko'
+OK
+$ lsmod | grep gunyah
+gunyah_wdt             12288  0
+$ readlink -f /sys/class/watchdog/watchdog0/device
+/sys/devices/platform/gunyah-wdt
+$ ls /sys/devices/platform/gunyah-wdt/
+driver  driver_override  misc  modalias  power  subsystem  uevent  watchdog
+$ readlink /sys/devices/platform/gunyah-wdt/driver
+../../../bus/platform/drivers/gunyah-wdt
+# 说明：/sys/class/watchdog/watchdog0 的属性文件不存在 ⇒ 本内核未开 CONFIG_WATCHDOG_SYSFS（不是驱动问题）
+$ rmmod gunyah_wdt
+rmmod_OK
+# 结论：probe 通过 = GUNYAH_WDT_STATUS(SMCCC vendor-hyp func 0x0006) 返回 0 且 stop(DISABLE) 成功
+#       ⇒ Gunyah hypervisor 在 EL2 真实存在且 SMCCC vendor-hyp 调用链可用
