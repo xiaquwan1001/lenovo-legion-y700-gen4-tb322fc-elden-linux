@@ -103,6 +103,8 @@
 | 74 | **#385** 「零写盘」只保证不写分区：模块装进持久根 `/lib/modules/<UTS>` 后，udev 会按 modalias 自动 `modprobe`（实测日用内核重启后 `gunyah_wdt` 被自动加载，尽管 config 未开）；要绝对无副作用就 `insmod` 绝对路径或实验后清理 | [74-模块装进持久根会被udev按modalias自动加载.md](sessions/74-模块装进持久根会被udev按modalias自动加载.md) |
 | 75 | **#386** 全局 `url.git@github.com:.insteadOf=https://github.com/` 把子模块 https 改写成 SSH ⇒ clone 挂死且 **0 字节流量**（不是资源大）；判据 `GIT_ALLOW_PROTOCOL=https` 报「传输 ssh 不允许」；修法 `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null` + **PATH 级 git wrapper**（嵌套子模块会丢命令行 `-c`，实测直连 1 KB/s）；另有 `depth 1` 拿不到指定提交、非空目录拒 clone 两条 | [75-全局git把https改写成ssh导致子模块clone挂死.md](sessions/75-全局git把https改写成ssh导致子模块clone挂死.md) |
 
+| 76 | **#387** UEFI/异类载荷 `fastboot boot` 三坑：v3 header 被本机 ABL **静默忽略**（`Booting OKAY` 但设备留在 bootloader、fastboot 仍应答 ⇒ 判据看 USB 是否掉线），同 payload 改 v0 才真交棒；失败会把当前槽标 `slot-unbootable=yes` 并回落另一槽（恢复 = `fastboot set_active b`）；ABL 日志在 `logfs` 分区可读，但**崩溃那一发不落盘** | [76-UEFI载荷fastboot三坑-v3不跳与槽被标记unbootable.md](sessions/76-UEFI载荷fastboot三坑-v3不跳与槽被标记unbootable.md) |
+
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
 > 编号不写死上下界；唯一性由 §8 的正文编号对账保证。

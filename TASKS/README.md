@@ -161,6 +161,13 @@ TF 卡（G1-6 / Q10）**暂时不做**，不进任何待办排序。
 > **★2026-10-24 收尾交接（下次从这里开始）**：设备当前**停在 fastboot**（`fastboot devices` = `HA2EXB0E`），`boot_b` 已置 succ。
 > 第一件事 = **A 上机**：`fastboot boot reports/artifacts/uefi-built-20261024/lenovo-y700g4-A.img`（零写盘；判据 = BDS 是否出现 UFS 设备、`UFS.c+2326` ASSERT 是否消失）；通过再做 **C**（再加厂商 `RmVmDxe`，判据 = 进 Linux 后 `/proc/device-tree/hypervisor/` 是否出现 `qcom,resource-manager-rpc@…`）。
 > 完整交接见 `TASKS/sessions/2026-10-24-收尾-Gunyah与UEFI交接-5.md`。
+>
+> **★★2026-10-24 22:20 A 上机结果（`reports/uefi-boot-A-attempt-20261024.md`，PITFALLS #387）**：
+> ① **原样 A（header v3）被本机 ABL 静默忽略** —— `Booting OKAY` 但设备留在 bootloader、`fastboot getvar` 仍应答（判据 = USB 是否掉线）；
+> ② **同一载荷 repack 成 v0 才真交棒**（`--base 0x0 --kernel_offset 0x8000 --pagesize 4096`）⇒ `usb_read failed: No such device`，随后设备复位并以 **stock Android 槽 a** 出现 ⇒ **载荷死在 UEFI 早期，无任何内部可见性**（UART 未开、显示未初始化、崩溃发不落 `logfs`）；
+> ③ 副作用：失败的 `fastboot boot` 会把 `boot_b` 标 `slot-unbootable=yes`，**恢复 = `fastboot set_active b`**（已执行，vk127 Linux 已回）。
+> **⇒ 建议把 capid 取证切到 A 路**（Magisk 补丁 stock boot，`fastboot boot` 零写盘 root，读一次 `/proc/device-tree/hypervisor/*/{reg,interrupts}`）；
+> UEFI 路线恢复的前提是**先补可见性**（BootShim 加 `dc civac`/`ic iallu`、或换已知可跑的 tb322fc FD 做对照），否则是盲调。待用户裁决。
 
 - **N1 UEFI 间接引导考查** —— 🟡 **首轮完成（2026-10-24）：维持搁置**（`reports/uefi-gunyah-reassess-20261024.md` §1）。
   ① 上游 `mu_wide_platforms#12` 仍 Open：原厂 10-09 只答「firmware version related，需 UFSDxe 专用补丁」，
