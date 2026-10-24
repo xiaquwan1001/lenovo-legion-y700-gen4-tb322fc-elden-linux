@@ -1,0 +1,31 @@
+	hypervisor {
+		phandle = <0x55f>;
+		#address-cells = <0x02>;
+		#size-cells = <0x00>;
+		compatible = "qcom,gunyah-hypervisor-1.0", "qcom,gunyah-hypervisor", "simple-bus";
+
+		qcom,gh-watchdog {
+			phandle = <0x560>;
+			compatible = "qcom,gh-watchdog";
+			interrupts = <0x00 0x00 0x04>;
+		};
+
+		qcom,gunyah-vm {
+			compatible = "qcom,gunyah-vm-id-1.0", "qcom,gunyah-vm-id";
+			qcom,vmid = <0x03>;
+			qcom,vendor = "Qualcomm";
+		};
+
+		qcom,resource-manager-rpc@90d561f5f0ee2c27 {
+			compatible = "gunyah-resource-manager", "qcom,resource-manager-1-0", "qcom,resource-manager";
+			reg = <0x90d561f5 0xf0ee2c27 0x90d561f5 0xf0ee1c7c>;
+			interrupts = <0x00 0x3c0 0x01 0x00 0x3c1 0x01>;
+			qcom,free-irq-start = <0x3c0>;
+			qcom,is-full-duplex;
+			qcom,tx-message-size = <0xf0>;
+			qcom,rx-message-size = <0xf0>;
+			qcom,tx-queue-depth = <0x08>;
+			qcom,rx-queue-depth = <0x08>;
+		};
+	};
+
