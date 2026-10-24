@@ -176,3 +176,54 @@ kexec_core: Starting new kernel
 **下一增量（未做，~15 min，仍零写盘）**：在退出侧钩子里**一并把每个 redistributor 的 `GICR_CTLR.EnableLPI` 清零**
 （`redist_disable_lpis()` 的 all-CPU 版本），使目标内核从一开始就看不到「LPIs enabled」。
 预期判据：`Booted with LPIs enabled` 0 条、`ITS queue timeout` **33 → 0**、到 `/init` **43 s → ~10 s**。
+
+---
+
+## 7. 定案：不是「ITS 没 quiesce」，是 **`GICR_CTLR.EnableLPIs` 在这颗 SoC 上是 RES1**
+
+### 7.1 决定性证据：内核自己写盘（`/sys/kernel/its_quiesce/its_quiesce` 触发口，vk157）
+
+用户态一行触发即可跑同一钩子，绕开「载具日志抓不到」的死结（`its_kexec_report()` 由**内核**直接
+`filp_open`+`kernel_write` 写 `/var/tmp/its-kexec-report.txt`，不依赖任何用户态进程）：
+
+```
+its-quiesce report (kernel-side, kexec)
+ITS @0x16040000 CTLR=00000001 CREADR=9376 CWRITER=9376
+ITS @0x16040000 quiesce ret=0 CTLR=80000000          ← ITS 侧 quiesce 完全有效
+RD cpu0 CTLR 00000005 -> 00000005
+RD cpu1 CTLR 00000005 -> 00000005
+…  cpu7 同上                                          ← EnableLPIs 写不进去
+```
+
+目标侧同一条因果链（`k13/k15` 目标 dmesg）：
+
+```
+GICv3: CPU0: Booted with LPIs enabled, memory probably corrupted
+CPU0: Failed to disable LPIs          ← redist_disable_lpis() = -EBUSY
+… 8 个 CPU 全一样
+```
+⇒ `its_cpu_init()` 在 `redist_disable_lpis()` 失败处直接返回 ⇒ **LPI 从未重新配置** ⇒ 依赖 LPI 的
+ITS 命令永远等不到完成 ⇒ 命令队列排队到 33/99 条、每条付 1.25 s 超时。
+这解释了 `CREADR` 冻结在 1057 B、以及 vk153 之后从「永久停摆」变成「有界停顿」。
+
+### 7.2 各版实测汇总（全部零写盘；载具 = `reboot2 bootloader` + `fastboot boot`）
+
+| 版本 | 改动 | 目标 `ITS queue timeout` | 到 `/init` | 目标 `Failed to disable LPIs` |
+|---|---|---|---|---|
+| vk152（载具） | 无钩子 | **99** | 126.35 s | 8 |
+| **vk153** | ITS quiesce（stage 14b） | **33** | **43.42 s** | 8 |
+| vk154/155/156 | 加 RD 清理 + 内核写盘报告 | 99（载具侧证据缺失，结论作废） | 126 s | 8 |
+| vk157 | 同上 + `/sys/kernel/its_quiesce` 触发口 | **99**（钩子在 stage 11b 已实测执行：report 文件在） | 126 s | 8 |
+| vk158 | `gic_reserve_range()` 加 DT `fdt_add_mem_rsv` 分支（让表跨 kexec 保留、走 preallocated） | **99（未生效）** | 128.7 s | 8（且无 `Using preallocated redistributor tables`） |
+
+### 7.3 结论与下一步（写死，避免下次重推）
+
+1. **「继续清 EnableLPIs」这条路已证伪**：SM8750 上该位是 RES1，`writel` 无效（vk157 实测 8/8 `00000005->00000005`）。
+2. **唯一正确方向 = 让 incoming 内核走 preallocated 路径**（它不需要清 EnableLPIs）：要求 prop/pending 表在
+   incoming 的 memblock 里**是 reserved**。上游 EFI 路径用 `efi_mem_reserve_persistent()`；本机是 DT，本站补的
+   `fdt_add_mem_rsv()` 分支**没有生效**（vk158：目标仍报 `Expected reserved range […] not found` 1 次）。
+3. **下一轮只做一件事**：给 `gic_reserve_range()` 打点（`addr/size/返回值`）+ 打印 FDT 里 memreserve 条数，
+   判断是 `fdt_add_mem_rsv` 返回 `-FDT_ERR_NOSPACE`（ABL 给的 DTB 没余量）还是 kexec 侧没沿用。
+   若是没余量，正解 = 在 DT 里预留 `memreserve` 或改用 `/proc/device-tree` 侧的固定 carveout。
+4. 载具可见性经验（已进 `PITFALLS #378`）：`cat /dev/kmsg` 每开一次都从缓冲区头重放，用 `>>` 循环会重复写；
+   用户态落盘进程在开机早期会被系统清掉 ⇒ **用内核写盘**（本轮的 `its_kexec_report()`）或目标侧 dump 才是可靠通道。

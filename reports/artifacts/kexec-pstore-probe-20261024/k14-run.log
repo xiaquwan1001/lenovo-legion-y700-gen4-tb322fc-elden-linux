@@ -1,0 +1,25 @@
+[14:22:17] === K14 start ===
+[14:22:17] 1) reboot to bootloader (single command)
+[14:22:37]    fastboot present
+[14:22:37] 2) fastboot boot vk154 (single command)
+Booting                                            OKAY [ 10.109s]
+Finished. Total time: 10.607s
+[14:22:48] 3) wait for carrier SSH
+[14:22:59]    carrier uname: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+   uptime: 4.00
+[14:22:59]    identity: fastboot-booted vk153/vk154 (UTS has '+')
+[14:22:59] 4) payload push
+[14:23:01]    LOAD OK
+[14:23:02]    mask=1
+[14:23:02] 4b) (kernel writes /var/tmp/its-kexec-report.txt itself; no dumper needed)
+[14:23:02] 5) fire kexec
+[14:25:58]    back +176s uptime=14.14
+[14:25:58]    IDENTITY=FALLBACK
+[14:25:58] 6) grab pstore FIRST (read-once)
+pstore empty
+[14:25:58] 7) carrier-side evidence (kernel-written report)
+[14:25:58] 8) target-side evidence
+   ITS timeouts: 99
+   Booted-with-LPIs lines: 8
+[  126.370939][    T1] Freeing unused kernel memory: 4608K
+[  126.370990][    T1] Run /init as init process
+[14:25:58] === done ===

@@ -296,3 +296,13 @@ vk152	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只加 Q11 kexec �
 vk152	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）；新增旋钮不改变 config/ABI（check-abi-config 27 项一致、of_node@624）
 vk153	num_ne_tag	内核源仍为 m1-73 提交（24223e44）：在 build/vk151 上加 Q11/K6 ITS quiesce 钩子（导出 gic_its_quiesce_for_kexec + 诊断打印），源提交上只有 replay/m1-73-vk127 ref；config/ABI 未变
 vk153	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
+vk154	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
+vk154	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
+vk155	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
+vk155	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
+vk156	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
+vk156	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
+vk157	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
+vk157	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
+vk158	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
+vk158	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
