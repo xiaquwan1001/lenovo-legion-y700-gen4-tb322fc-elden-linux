@@ -132,7 +132,9 @@
 - ✅ **已解（近期）**：Q31 M1-7.3 显示回归（2026-10-14 E1b）——见 `TASKS/README.md` §5 Q31 / §7。
 - **已关闭 / 搁置**（不再占未解）：Q26 WiFi、G1-6 TF 卡、G1-34 重力/自动旋转、C10 Waydroid 马达透传（PITFALLS §29/§30）。状态与证据见 `TASKS/README.md` §0/§5。
 - **未开工 / 进行中**：上游化 M1–M5（`TASKS/README.md` §7）、G1-8 CPU/GPU 基准（`TASKS/README.md` §1）。细节只读对应节，本文件不复述。
-- **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-29 UEFI、G1-10 NFC、G1-30 slim initramfs、kexec 快环；
+- **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-29 UEFI、G1-10 NFC、G1-30 slim initramfs；
+  **kexec 已不再是「不做」**（2026-10-24：交接/掉电/ITS 三个阻塞全关，修法已上游投递 M9）——但**显示与 USB 继承态未复位**
+  （目标里无 `card0`、`no UDC`，~157 s 被 Q28 看门狗重启），所以定位仍是**「不需显示/网络的调试快环」**，见 `TASKS/README.md` §4 第 10 条；
   **宿主 rootfs 不切 glibc、不切 systemd**（2026-10-11 裁定，零收益 / 高重建成本，证据：`reports/libc-musl-vs-glibc-20261011.md`、`reports/init-systemd-vs-openrc-20261011.md`）。
   裁决与理由见 `TASKS/README.md` §4/§5 与 `PITFALLS` §15。
 - **内核分界线**：口径在 `TASKS/README.md` §4。
@@ -159,7 +161,7 @@ grep -rn -iE "unlock|解锁|sn\.img|rollback|testkey|073" \
 sudo bash elden-net.sh && ssh -o StrictHostKeyChecking=no root@192.168.7.1
 # 内核迭代＝统一入口 scripts/iterate.sh（四档环，细则 RUNBOOK §迭代）
 scripts/iterate.sh mod <driver-dir>              # 环0：=m 模块热载 ~30s 不重启（需先应用 fragment-modular）
-scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（kexec 快环未闭环，勿默认）
+scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（零写盘快环：kexec 可用，但目标无显示/USB，见 §4 第 10 条）
 scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 先备份后执行）
 scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
 # ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM → 死内核，PITFALLS #162）
