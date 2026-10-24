@@ -312,3 +312,5 @@ vk160	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在
 vk160	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI
 vk161	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；与上游补丁文本对齐
 vk161	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI
+gunyah1	uts_dup	PINUTS 到 vk127 UTS（LOCALVERSION= 置空），刻意让 gunyah 模块能直接 insmod 到在机模块树；config 仅多 CONFIG_VIRT_DRIVERS=y/CONFIG_GUNYAH=m 等 gunyah 行（PITFALLS #383）
+gunyah1	num_ne_tag	内核源码未提交（gunyah-port worktree 未 commit/tag），基线 = 24223e44ad80 + 未提交改动；用途是零写盘试验，非日常线
