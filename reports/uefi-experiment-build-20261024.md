@@ -8,7 +8,7 @@
 - 已克隆 xiaquwan1001/mu_wide_platforms（gh-proxy 成功），commit `6b6ac42a7edcdef984497efe2280db5309eb0001`（2026-10-05 11:51 +0800，ci: allow DEBUG build type…），仓库 1.0G。
 - UFSDxe 替换已完成：`PatchedBinaries/UFSDxe.efi` 由 Mu 版 `00ae059f…`（151552 B）换成厂商版 `fa561bf1…`（151552 B），替换点即上游 PatchedBinaries 机制（UFSDxe.inf `PE32|UFSDxe.efi|*` 指向它），无需改 .inf。
 - **关键取证**：lenovo-y700g4 的 Mu UFSDxe 本身就是 151552 B，与厂商版同尺寸不同 sha —— 与「Mu 用的 UFSDxe 是 159744 B」的旧结论冲突；159744 B 的 UFSDxe 只出现在 KaanapaliPkg/oneplus-plk110 与 KailuaPkg/oneplus-salami。即 y700g4 设备包的 UFSDxe 来自 nubia-nx789j 同代 Pakala 提取，并非 159744 B 那枚。
-- 构建：进行中（子模块克隆走 gh-proxy，见 §9）。
+- 构建环境就绪，见 §2/§9；UFSDxe 与 RmVmDxe 均已替换（§3/§RmVmDxe）。
 
 ## 1. 仓库获取（7-mu-lenovo）
 
@@ -73,3 +73,27 @@ git clone --depth 1 https://gh-proxy.com/https://github.com/xiaquwan1001/mu_wide
 - **未证实**：部分子模块 `git submodule status` 显示 `+`（检出 SHA ≠ 超项目记录），若构建报缺文件需回补精确 SHA。
 
 （待填）
+
+---
+
+# 续做（同一会话第二轮，2026-10-24 晚）
+
+起点状态：仓库 `7-mu-lenovo` @ `6b6ac42a`，工作树 1.7 G，`git submodule status` 11 条全部为 `-`（未初始化）。
+本轮纪律：逐个 submodule 拉取（不用 stuart_setup 的默认全量）、单个 >4 GB 或 >25 min 跳过、不碰设备。
+
+## R1. submodule 逐个拉取（时间/大小记账）
+
+（逐条追加）
+
+### 已拉取（gh-proxy 镜像，`--depth 1 --jobs 4`，单条命令）
+
+| # | submodule | 耗时 | 目录大小 | 检出 SHA |
+|---|---|---|---|---|
+| 1 | MU_BASECORE | 84 s | 1.7 G | `3609e51f683e4d9eed13df8dccbb05b0a64ebab2` |
+| 2 | Common/MU | 15 s | 20 M | `039747f3b2c13df10b4fe4844e864c3095f98212` |
+| 3 | Common/MU_TIANO | 73 s | 8.4 M | `2dd1beb9cd7631030dfc8e74cb4840a89b5d008d` |
+| 4 | Common/MU_OEM_SAMPLE | 12 s | 1.5 M | `e798945fbe64baad73e9c4ec7cfb26efaa95d4e3` |
+| 5 | Silicon/Arm/MU_TIANO | 56 s | 6.0 M | `d65d47a5f20ddc5b9c2190413773aa76e6966818` |
+| 6 | Features/CONFIG | 10 s | 2.0 M | `d08c5af327768d2820bbd030ca5af443be33bce8` |
+
+全部 `git submodule status -- <path>` 前缀由 `-` 变空格，无 `+`/`U`。每步包 `timeout -k 10 1500`（≤25 min），gh-proxy 无 404，未退回直连。
