@@ -42,3 +42,22 @@ misc gunyah: Failed to initialize VM: -22
 1. 冷起（全新 RM 状态）先跑 `vmmtest`，判定 §2-① 是否成立。
 2. 不成立则换 guest DTB（对照 `Droid-VM/crosvm` 的 gunyah guest DT 与 `edk2-gunyah` 的 VM DT）。
 3. `VM_INIT` 过后剩下：`ADD_FUNCTION(VCPU 0)` → `SET_BOOT_CONTEXT(PC/X0/SP)` → `VCPU_RUN`，stub 会写 magic 并撞未映射物理地址（`0x0F000000`）⇒ 期望 `GUNYAH_VCPU_EXIT_MMIO` 或 `PAGE_FAULT`，且宿主内存里能读到 magic（这两条是「guest 真的执行了」的硬判据）。
+
+## 5. 追加实测（同一夜间，冷起复测）
+
+1. **候选解释 ①（IRQ 泄漏）已否证**：全新 boot（RM 状态全新，本 boot 内未做任何 `CREATE_VM`）后**第一次**跑 harness，仍然 `RM rejected 0x5600000b, Error 0x10 (IRQ_INUSE)`。
+2. **架构层面的事实（重要）**：本移植把 `GUNYAH_VM_SET_DTB_CONFIG` 的区域按 `GUNYAH_RM_RANGE_ID_IMAGE`（=0）注册给 RM（`vm_mgr.c:746`），
+   即「**DTB 被当成 VM 的 image 段**」；本端口没有 `RANGE_ID_DTB`（`rsc_mgr.h` 只有 `IMAGE=0 / FIRMWARE=1`）。
+   ⇒ 我们这种「只有 DTB 没有 guest kernel 镜像」的最小 VM，在 RM 看来是「image 段里放了一份 DTB」，VM_INIT 失败的具体触发点很可能与此相关（未证实）。
+3. **pVM 分支（`GH_VM_ANDROID_SET_FW_CONFIG`）**：在 `-EINVAL` 之前就先失败于 `Failed to allocate parcel for FW: -22`
+   ⇒ 该分支要求 fw 走**独立 parcel/独立的 lend 语义**，不是把 fw 放进同一个 user region 就行。
+
+### 结论/下一步（三选一，按成本排序）
+
+| 方案 | 成本 | 判据 |
+|---|---|---|
+| **A. 先反问硬件能力**：用 Magisk root 后在 stock Android 上确认 AVF/pVM 能否建 VM（`/avf/pvmfw.img` 是否存在、`logcat`/`dmesg` 里有没有成功的 VM_INIT） | 中（一次 flash + 冷起） | 能 → 说明 hyp 支持子 VM，问题在我们这套参数/资源声明；不能 → 这条路在本 firmware 上不成立，G2 回到 Waydroid 主线 |
+| **B. 复刻厂商 pVM 流程**：pvmfw 独立 region + `GH_VM_ANDROID_LEND_USER_MEM` + `SET_FW_CONFIG` + `SET_DTB_CONFIG` | 中高 | `VM_INIT` 通过，`VM_START` 返回 0 |
+| **C. 改内核侧**：把 guest kernel image 与 DTB 分开（`RANGE_ID_IMAGE` 放内核、DTB 用独立机制），对齐新版上游 API | 高（改驱动 + 重编内核） | 同上 |
+
+> 注：`VM_ALLOC_VMID`、DTB parcel 共享、`VM_CONFIG_IMAGE`、`VM_SET_ADDRESS_LAYOUT` 均已成功 ⇒ RM 侧的「VM 生命周期前段」是通的，卡点集中在 `VM_INIT` 的 IRQ 分配。
