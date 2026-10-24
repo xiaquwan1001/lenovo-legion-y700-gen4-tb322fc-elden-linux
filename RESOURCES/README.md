@@ -241,6 +241,12 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 - **排除（ignore）**：上游 clone、构建产物、可再生成物、大二进制 dump、运行时状态、设备敏感数据。
 - git 仓库根 = 本目录；分支 `main`。上游内核树 `geekidos-linux/` **不是** submodule，其进度以 `patches/` 为准。
 - **异地备份（2026-10-04 起）**：顶层仓 `origin` = `git@git.ustc.edu.cn:xqh/y700-elden`（@xqh，SSH key `~/.ssh/id_ed25519_gitlab_ustc`，全分支+标签）——**这条仍然现役**。
+  - ⚠️ **2026-10-24 起 `origin/main` 有意落后**（用户裁定「暂时落后」）：本地历史因剔除一个 2.75 GB 的
+    `reports/trials/*/serial-delta.log`（曾触发 GitHub 100 MB 拒收）被重写，`origin/main` 是**保护分支**拒绝 force push，
+    故 origin 停在旧 `ad7c6fb`；**权威远端 = GitHub**（已推 `59b93a6`）。
+    ⇒ 本地已设 `remote.pushDefault=github` + `branch.main.remote=github`，`git push` 默认只推 GitHub。
+    若要恢复 origin：先在其 Settings→Repository→Protected branches 临时放开 `main`，再
+    `git push --force-with-lease origin main`（该 2.75 GB 文件仍在磁盘、已 gitignore，不入库）。
   - **最近一次复核同步（2026-10-16）**：把积压的 **181 提交 + 工作树**补推为 `main=3d98885`，并补齐本地独有的 **3 个分支**
     （`audit/early-reboot` / `lane/doctor-refactor` / `lane/upstream`）与 **8 个标签**
     （`base/2026100{5,5,12,14}-*` / `merge/{bootchain,bootslim,userland-session}` / `pre-docs-v2`）
