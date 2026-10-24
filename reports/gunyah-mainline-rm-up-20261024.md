@@ -40,7 +40,7 @@ TZ SIP 0x02000609 (HYP_INFO_GET_HYP_DTB_ADDRESS, param_id=0)   ← arm_smccc_smc
   → of_overlay_fdt_apply(dtbo)  ⇒ 上游 gunyah/rsc_mgr 直接 bind
 ```
 
-**实现 = 两个小模块 + 一个静态测试程序**（都在 `build/gunyah-port/`）：
+**实现 = 两个小模块 + 一个静态测试程序**（源码已入本仓库 `tools/gunyah-modules/`，构建落在 `build/gunyah-port/`）：
 - `elden-hypprobe/hypprobe.ko` —— 只读探针：打 SIP、hexdump HBI 与 DTBO（调试用，`in-tree` 外置模块）。
 - `elden-gunyah-dtbo/dtbo.ko` —— 正式件：打 SIP → 校验 magic → `kmemdup` 每个 DTBO（overlay 只引用不拷贝）→ `of_overlay_fdt_apply()`；debugfs `elden-gunyah/dtbo{0,1}` 导出原始 blob。
 - `elden-rmtest/rmtest.c` —— 静态 aarch64 程序：`open("/dev/gunyah")` + `ioctl(GUNYAH_CREATE_VM)`。
