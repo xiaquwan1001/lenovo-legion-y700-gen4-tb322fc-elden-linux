@@ -1,0 +1,51 @@
+== uname
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
+== kallsyms set_direct_map
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+ffffdd15960e4068 T set_direct_map_invalid_noflush
+ffffdd15960e40e8 T set_direct_map_default_noflush
+== config
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+CONFIG_HAVE_ARM_SMCCC_DISCOVERY=y
+CONFIG_GUNYAH_WATCHDOG=m
+CONFIG_VIRT_DRIVERS=y
+CONFIG_GUNYAH=m
+== modinfo
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah_hypercall: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah_platform_hooks: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah_qcom: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah_rsc_mgr: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah_vcpu: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah_irqfd: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah_ioeventfd: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+gunyah_wdt: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty SMP preempt mod_unload aarch64
+== insmod 结果
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+insmod: ERROR: could not insert module /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty/kernel/arch/arm64/gunyah/gunyah_hypercall.ko: File exists
+gunyah_hypercall: rc=1
+insmod: ERROR: could not insert module /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty/kernel/drivers/virt/gunyah/gunyah.ko: File exists
+gunyah: rc=1
+insmod: ERROR: could not insert module /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty/kernel/drivers/virt/gunyah/gunyah_platform_hooks.ko: File exists
+gunyah_platform_hooks: rc=1
+insmod: ERROR: could not insert module /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty/kernel/drivers/virt/gunyah/gunyah_qcom.ko: File exists
+gunyah_qcom: rc=1
+insmod: ERROR: could not insert module /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty/kernel/drivers/virt/gunyah/gunyah_rsc_mgr.ko: File exists
+gunyah_rsc_mgr: rc=1
+5
+== 设备/绑定
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+ls: cannot access '/dev/gunyah': No such file or directory
+gunyah
+gunyah_rsc_mgr
+gunyah-wdt

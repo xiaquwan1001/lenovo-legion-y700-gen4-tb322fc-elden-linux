@@ -100,6 +100,7 @@
 | 71 | **#382** EFI `GUID_DEFINED` 段 `DataOffset` 是**相对 section 头**（不是 GUID 位置），差 4 字节 ⇒ LZMA 全失败 ⇒ 误判「固件里没有 DXE/UFSDxe」；解压全失败先怀疑偏移，别归因「厂商私有格式」 | [71-EFI-GUID段DataOffset差4字节导致反向错误结论.md](sessions/71-EFI-GUID段DataOffset差4字节导致反向错误结论.md) |
 | 72 | **#383** Gunyah 移植两坑：`drivers/virt/Kconfig` 的 `source gunyah` 在 `if VIRT_DRIVERS` 内 ⇒ 只开 `CONFIG_GUNYAH=m` 被 syncconfig 静默丢弃；7.3 **未导出** `set_direct_map_{invalid,default}_noflush` ⇒ `gunyah_rsc_mgr.ko` 编得过但 insmod 报 Unknown symbol（必须重编内核） | [72-gunyah移植两坑-VIRT_DRIVERS门与未导出的set_direct_map.md](sessions/72-gunyah移植两坑-VIRT_DRIVERS门与未导出的set_direct_map.md) |
 | 73 | **#384** manifest 的 `kernel_release_matches_image=no` 可能是**假阴性**：查询 `make -s kernelrelease` 的环境少传 `LOCALVERSION=` ⇒ dirty 树被 `setlocalversion` 补尾 `+`，与镜像 banner/模块 vermagic 只差一个 `+`；比对前剥 `+`，并先自己从 `Image.gz` 取 banner 复核 | [73-manifest的kernelrelease查询口径差一个加号.md](sessions/73-manifest的kernelrelease查询口径差一个加号.md) |
+| 74 | **#385** 「零写盘」只保证不写分区：模块装进持久根 `/lib/modules/<UTS>` 后，udev 会按 modalias 自动 `modprobe`（实测日用内核重启后 `gunyah_wdt` 被自动加载，尽管 config 未开）；要绝对无副作用就 `insmod` 绝对路径或实验后清理 | [74-模块装进持久根会被udev按modalias自动加载.md](sessions/74-模块装进持久根会被udev按modalias自动加载.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
