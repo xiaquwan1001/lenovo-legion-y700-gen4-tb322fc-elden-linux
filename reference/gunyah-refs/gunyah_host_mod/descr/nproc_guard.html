@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<title>nproc_guard</title>
+</head>
+<body>
+
+<div class="i18n" data-lang="en">
+    <section>
+        <h2>Why it's needed</h2>
+        <p>To reach the camera, microphone and app-scoped files, DroidVM briefly switches a helper thread's <em>real</em> user ID between root and the app, over and over. The kernel keeps a per-user count of running processes (<code>RLIMIT_NPROC</code>), and its bookkeeping can drift a little on each of those switches — sometimes one too many, sometimes one too few.</p>
+        <p>Once that count drifts below zero (or, far more rarely, past the ceiling), the kernel refuses to start <em>any</em> new process for the app's user. The symptom is unmistakable: <strong>DroidVM stops opening</strong>, often right after reinstalling or after many VM start/stops — and only a reboot clears it, because the bad count lives in the kernel.</p>
+    </section>
+    <section>
+        <h2>What it does</h2>
+        <p>It recomputes that count from the truth — the number of the app's processes actually running right now — and writes it back, so the kernel starts the app again <strong>without a reboot</strong>. A count below zero is always wrong, and while the app is closed the correct value is simply zero.</p>
+        <p>The app's user ID is different on every phone, so it is not built in: the DroidVM daemon passes it when it loads the module. Loaded on its own, the module does nothing.</p>
+    </section>
+    <section>
+        <h2>If the app still won't open</h2>
+        <p>Run this once from a root shell (e.g. Termux), then reopen DroidVM:</p>
+        <p><code>su -c 'echo 1 &gt; /sys/kernel/nproc_guard/reset'</code></p>
+        <p>Check what happened with <code>su -c 'cat /sys/kernel/nproc_guard/status'</code>. The lasting fix is on the DroidVM side (switching only the effective/filesystem user ID, which never touches this count); this module is the no-reboot rescue in the meantime.</p>
+    </section>
+</div>
+
+<div class="i18n" data-lang="zh-CN">
+    <section>
+        <h2>原因</h2>
+        <p>为了访问摄像头、麦克风和应用私有文件，DroidVM 会把辅助线程的<em>真实</em>用户 ID 在 root 和应用之间来回切换，而且非常频繁。内核为每个用户维护一个正在运行的进程计数（<code>RLIMIT_NPROC</code>），每次这样切换，它的记账都可能偏一点点——有时多算一个，有时少算一个。</p>
+        <p>一旦这个计数掉到负数（或极少数情况下超过上限），内核就会拒绝为该应用的用户启动<em>任何</em>新进程。症状很明确：<strong>DroidVM 打不开了</strong>，常发生在重装之后、或反复开关 VM 之后——而且只有重启才能清除，因为坏掉的计数在内核里。</p>
+    </section>
+    <section>
+        <h2>功能</h2>
+        <p>它按真实情况重新计算这个计数——也就是该应用当前真正在跑的进程数——再写回去，让内核<strong>不用重启</strong>就能重新启动应用。负数一定是错的；应用关闭时，正确值就是 0。</p>
+        <p>应用的用户 ID 每台手机都不同，所以不写死：由 DroidVM 守护进程在加载模块时传入。单独加载时，模块什么都不做。</p>
+    </section>
+    <section>
+        <h2>如果应用还是打不开</h2>
+        <p>在 root shell（例如 Termux）里执行一次，然后重新打开 DroidVM：</p>
+        <p><code>su -c 'echo 1 &gt; /sys/kernel/nproc_guard/reset'</code></p>
+        <p>用 <code>su -c 'cat /sys/kernel/nproc_guard/status'</code> 查看结果。根治要在 DroidVM 端（只切换有效/文件系统用户 ID，就不会碰到这个计数）；这个模块是过渡期的免重启急救。</p>
+    </section>
+</div>
+
+<div class="i18n" data-lang="zh-TW">
+    <section>
+        <h2>原因</h2>
+        <p>為了存取相機、麥克風和應用程式私有檔案,DroidVM 會把輔助執行緒的<em>真實</em>使用者 ID 在 root 和應用程式之間來回切換,而且非常頻繁。核心為每個使用者維護一個正在執行的行程計數(<code>RLIMIT_NPROC</code>),每次這樣切換,它的記帳都可能偏一點點——有時多算一個,有時少算一個。</p>
+        <p>一旦這個計數掉到負數(或極少數情況下超過上限),核心就會拒絕為該應用程式的使用者啟動<em>任何</em>新行程。症狀很明確:<strong>DroidVM 打不開了</strong>,常發生在重裝之後、或反覆開關 VM 之後——而且只有重開機才能清除,因為壞掉的計數在核心裡。</p>
+    </section>
+    <section>
+        <h2>功能</h2>
+        <p>它按真實情況重新計算這個計數——也就是該應用程式當前真正在跑的行程數——再寫回去,讓核心<strong>不用重開機</strong>就能重新啟動應用程式。負數一定是錯的;應用程式關閉時,正確值就是 0。</p>
+        <p>應用程式的使用者 ID 每支手機都不同,所以不寫死:由 DroidVM 守護行程在載入模組時帶入。單獨載入時,模組什麼都不做。</p>
+    </section>
+    <section>
+        <h2>如果應用程式還是打不開</h2>
+        <p>在 root shell(例如 Termux)裡執行一次,然後重新打開 DroidVM:</p>
+        <p><code>su -c 'echo 1 &gt; /sys/kernel/nproc_guard/reset'</code></p>
+        <p>用 <code>su -c 'cat /sys/kernel/nproc_guard/status'</code> 查看結果。根治要在 DroidVM 端(只切換有效/檔案系統使用者 ID,就不會碰到這個計數);這個模組是過渡期的免重開機急救。</p>
+    </section>
+</div>
+
+</body>
+</html>

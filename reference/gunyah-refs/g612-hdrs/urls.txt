@@ -1,0 +1,10 @@
+https://android.googlesource.com/kernel/common/+/refs/heads/android16-6.12/include/linux/gunyah.h?format=TEXT
+  out=include_linux_gunyah.h_gunyah.h
+https://android.googlesource.com/kernel/common/+/refs/heads/android16-6.12/include/linux/gunyah_qtvm.h?format=TEXT
+  out=include_linux_gunyah_qtvm.h_gunyah_qtvm.h
+https://android.googlesource.com/kernel/common/+/refs/heads/android16-6.12/include/uapi/linux/gunyah.h?format=TEXT
+  out=include_uapi_linux_gunyah.h_gunyah.h
+https://android.googlesource.com/kernel/common/+/refs/heads/android16-6.12/include/trace/hooks/gunyah.h?format=TEXT
+  out=include_trace_hooks_gunyah.h_gunyah.h
+https://android.googlesource.com/kernel/common/+/refs/heads/android16-6.12/arch/arm64/include/asm/gunyah.h?format=TEXT
+  out=arch_arm64_include_asm_gunyah.h_gunyah.h

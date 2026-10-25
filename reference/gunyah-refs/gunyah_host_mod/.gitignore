@@ -1,0 +1,5 @@
+# build outputs from build.sh (staged into DroidVM-Prebuilt-Root/manual-build instead)
+/dist/
+
+# Built modules. Nothing in the tree reads a checked-in .ko.
+*.ko

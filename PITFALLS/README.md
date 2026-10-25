@@ -117,6 +117,8 @@
 
 | 82 | **#393** `RM rejected … Error: 10` 是**十进制** ⇒ 真实 0xA `MEM_INVALID`（`0x10 IRQ_INUSE` 会打印成 `Error: 16`）。误读一个数导致 2026-10-24 整轮「卡在 IRQ_INUSE」结论与其假设（IRQ 泄漏/DTB 缺 doorbell）全部作废；只有 `message %08x` 那一段是十六进制 | [82-dmesg里RM错误码是十进制不是十六进制.md](sessions/82-dmesg里RM错误码是十进制不是十六进制.md) |
 
+| 83 | **#394** `vermagic` 只比 UTS **release 串**：`…-g<sha>-dirty` 里 `<sha>` 不同就是不同的树，同串不保证任何结构体布局一致；加载即随机踩内存，表现是 `list_del/list_add corruption`（报错点常在 `device_shutdown`/`typec_register_partner`，与 Gunyah 无关），且 `reboot` 卡死只能硬断电。门禁 = 比对设备 `/proc/version` 与 `modinfo vermagic` **逐字**（含 `-dirty`） | [83-vermagic同串不代表同一构建导致内存踩踏.md](sessions/83-vermagic同串不代表同一构建导致内存踩踏.md) |
+
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
 > 编号不写死上下界；唯一性由 §8 的正文编号对账保证。

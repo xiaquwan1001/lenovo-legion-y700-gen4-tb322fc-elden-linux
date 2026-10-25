@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<title>gh_unmovable</title>
+</head>
+<body>
+
+<div class="i18n" data-lang="en">
+    <section>
+        <h2>Why it's needed</h2>
+        <p>Memory shared with a VM gets pinned: from that moment the system may not move it. But the memory a program normally receives often lands in a region the system marks movable (or reserves for CMA), and that leads to a chain of two steps that can break:</p>
+        <ol>
+            <li>before pinning, the kernel must relocate the contents somewhere else;</li>
+            <li>that relocation can fail — and when it does, the whole share fails, so GPU-accelerated programs hit <code>VK_ERROR_OUT_OF_DEVICE_MEMORY</code> at random.</li>
+        </ol>
+        <p>The kernel offers no way to ask for unmovable memory up front, so this cannot be avoided from the application side.</p>
+    </section>
+    <section>
+        <h2>What it does</h2>
+        <p>It provides <code>/dev/gh_unmovable</code>, which marks a small graphics buffer as "allocate from the unmovable region". Its pages are born there, so pinning needs no relocation and always succeeds.</p>
+        <p>Large graphics buffers come from the 2MB huge-page reserve pool and were never affected.</p>
+    </section>
+</div>
+
+<div class="i18n" data-lang="zh-CN">
+    <section>
+        <h2>原因</h2>
+        <p>共享给 VM 的内存会被「钉住」——系统从此不能搬动它。但程序一般申请到的内存，常落在系统标记为可移动（或预留给 CMA）的区域，于是接下来这两步就有机会出事：</p>
+        <ol>
+            <li>钉住之前，内核得先把内容搬去别的位置；</li>
+            <li>这个搬迁有机会失败，一失败整次共享就失败，表现出来就是 GPU 加速的程序随机出现 <code>VK_ERROR_OUT_OF_DEVICE_MEMORY</code>。</li>
+        </ol>
+        <p>内核并没有提供「一开始就申请到不可搬动内存」的方法，所以这个问题无法从使用端避开。</p>
+    </section>
+    <section>
+        <h2>功能</h2>
+        <p>提供 <code>/dev/gh_unmovable</code> 接口，把小块绘图内存标记为「从不可搬动区分配」。页面从产生的那一刻起就在不可搬动区，钉住不再需要搬迁，必定成功。</p>
+        <p>大块绘图内存由 2MB 大页保留池供应，本来就不受此问题影响。</p>
+    </section>
+</div>
+
+<div class="i18n" data-lang="zh-TW">
+    <section>
+        <h2>原因</h2>
+        <p>共享給 VM 的記憶體會被「釘住」——系統從此不能搬動它。但程式一般申請到的記憶體，常落在系統標記為可移動（或保留給 CMA）的區域，於是接下來這兩步就有機會出事：</p>
+        <ol>
+            <li>釘住之前，內核得先把內容搬去別的位置；</li>
+            <li>這個搬遷有機會失敗，一失敗整次共享就失敗，表現出來就是 GPU 加速的程式隨機出現 <code>VK_ERROR_OUT_OF_DEVICE_MEMORY</code>。</li>
+        </ol>
+        <p>內核並沒有提供「一開始就申請到不可搬動記憶體」的方法，所以這個問題無法從使用端避開。</p>
+    </section>
+    <section>
+        <h2>功能</h2>
+        <p>提供 <code>/dev/gh_unmovable</code> 介面，把小塊繪圖記憶體標記為「從不可搬動區配置」。頁面從產生的那一刻起就在不可搬動區，釘住不再需要搬遷，必定成功。</p>
+        <p>大塊繪圖記憶體由 2MB 大頁保留池供應，本來就不受此問題影響。</p>
+    </section>
+</div>
+
+</body>
+</html>

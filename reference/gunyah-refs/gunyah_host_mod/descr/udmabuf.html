@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<title>udmabuf</title>
+</head>
+<body>
+
+<div class="i18n" data-lang="en">
+    <section>
+        <h2>Why it's needed</h2>
+        <p>For GPU acceleration, the VM's graphics memory must pass through the kernel's <code>/dev/udmabuf</code> feature to become something the GPU can use directly, and a single buffer is often 128 or 256 MB. Phone kernels break this in three different ways:</p>
+        <ol>
+            <li>some were built without udmabuf at all, so <code>/dev/udmabuf</code> does not exist;</li>
+            <li>most have a flawed one: creating a large buffer needs a contiguous chunk of memory for an internal list, which fails once memory is fragmented (fixed upstream, but GKI 6.6 has not caught up);</li>
+            <li>all of them cap a single buffer at 64 MB by default — far under what a GPU buffer needs.</li>
+        </ol>
+    </section>
+    <section>
+        <h2>What it does</h2>
+        <p>At load time the module detects which of the three cases this kernel is in, and treats exactly that one:</p>
+        <table>
+            <tr><th>1. no udmabuf</th><td>it provides <code>/dev/udmabuf</code> itself</td></tr>
+            <tr><th>2. flawed</th><td>it repairs it, using an allocation that tolerates fragmentation</td></tr>
+            <tr><th>3. already fine</th><td>it leaves the kernel's code alone</td></tr>
+        </table>
+        <p>In every case it raises the 64 MB per-buffer cap and the buffer-count limit to what GPU acceleration needs, and restores everything when unloaded.</p>
+    </section>
+</div>
+
+<div class="i18n" data-lang="zh-CN">
+    <section>
+        <h2>原因</h2>
+        <p>GPU 加速时，VM 的绘图内存需要通过内核的 <code>/dev/udmabuf</code> 功能，转换成 GPU 能直接使用的形式，而且单块常常要 128MB、256MB。手机内核在这里有三种常见问题：</p>
+        <ol>
+            <li>有些内核根本没有编译 udmabuf，<code>/dev/udmabuf</code> 不存在；</li>
+            <li>大多数内核的 udmabuf 有缺陷：建立大块时，内部需要一段连续内存来放清单，内存零碎时会失败（上游已修复，但 GKI 6.6 尚未跟上）；</li>
+            <li>所有内核都把单块上限默认在 64MB，远小于 GPU 缓冲区需要的大小。</li>
+        </ol>
+    </section>
+    <section>
+        <h2>功能</h2>
+        <p>模块加载时自动判断内核属于上述哪一种情况，对症处理：</p>
+        <table>
+            <tr><th>1. 没有 udmabuf</th><td>自己提供一个 <code>/dev/udmabuf</code></td></tr>
+            <tr><th>2. 有但有缺陷</th><td>修复它，改用不怕内存零碎的分配方式</td></tr>
+            <tr><th>3. 一切正常</th><td>不动内核的代码</td></tr>
+        </table>
+        <p>无论哪种情况，都会把 64MB 的单块上限和块数限制调大到 GPU 加速够用，卸载时全部复原。</p>
+    </section>
+</div>
+
+<div class="i18n" data-lang="zh-TW">
+    <section>
+        <h2>原因</h2>
+        <p>GPU 加速時，VM 的繪圖記憶體需要透過內核的 <code>/dev/udmabuf</code> 功能，轉換成 GPU 能直接使用的形式，而且單塊常常要 128MB、256MB。手機內核在這裡有三種常見問題：</p>
+        <ol>
+            <li>有些內核根本沒有編譯 udmabuf，<code>/dev/udmabuf</code> 不存在；</li>
+            <li>大多數內核的 udmabuf 有缺陷：建立大塊時，內部需要一段連續記憶體來放清單，記憶體零碎時會失敗（上游已修復，但 GKI 6.6 尚未跟上）；</li>
+            <li>所有內核都把單塊上限預設在 64MB，遠小於 GPU 緩衝區需要的大小。</li>
+        </ol>
+    </section>
+    <section>
+        <h2>功能</h2>
+        <p>模組載入時自動判斷內核屬於上述哪一種情況，對症處理：</p>
+        <table>
+            <tr><th>1. 沒有 udmabuf</th><td>自己提供一個 <code>/dev/udmabuf</code></td></tr>
+            <tr><th>2. 有但有缺陷</th><td>修復它，改用不怕記憶體零碎的配置方式</td></tr>
+            <tr><th>3. 一切正常</th><td>不動內核的程式</td></tr>
+        </table>
+        <p>無論哪種情況，都會把 64MB 的單塊上限和塊數限制調大到 GPU 加速夠用，卸載時全部復原。</p>
+    </section>
+</div>
+
+</body>
+</html>

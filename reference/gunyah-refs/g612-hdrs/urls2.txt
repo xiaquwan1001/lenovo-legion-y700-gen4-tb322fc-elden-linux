@@ -1,0 +1,10 @@
+https://raw.githubusercontent.com/aosp-mirror/kernel_common/android16-6.12/include/linux/gunyah.h
+  out=gunyah.h
+https://raw.githubusercontent.com/aosp-mirror/kernel_common/android16-6.12/include/linux/gunyah_qtvm.h
+  out=gunyah_qtvm.h
+https://raw.githubusercontent.com/aosp-mirror/kernel_common/android16-6.12/include/uapi/linux/gunyah.h
+  out=gunyah.h
+https://raw.githubusercontent.com/aosp-mirror/kernel_common/android16-6.12/include/trace/hooks/gunyah.h
+  out=gunyah.h
+https://raw.githubusercontent.com/aosp-mirror/kernel_common/android16-6.12/arch/arm64/include/asm/gunyah.h
+  out=gunyah.h

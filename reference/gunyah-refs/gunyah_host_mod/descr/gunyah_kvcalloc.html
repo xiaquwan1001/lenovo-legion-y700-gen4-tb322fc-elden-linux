@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<title>gunyah_kvcalloc</title>
+</head>
+<body>
+
+<!-- The figure closes each language's "why" section, so it is written once per
+     language block. Keep the three SVG copies identical; only the caption differs. -->
+
+<div class="i18n" data-lang="en">
+    <section>
+        <h2>Why it's needed</h2>
+        <p>When the 6.1 kernel's Gunyah driver prepares memory for a VM, it first builds a page list — one entry per 4KB of VM memory. The bigger the VM, the bigger the list: a 2GB VM needs several MB for the list alone.</p>
+        <p>It allocates that list with <code>kcalloc</code>, which demands one physically contiguous block. As a phone runs, its free memory scatters into small pieces, and a contiguous block that large becomes impossible to find — so creating a large VM fails with Out of memory even though plenty of memory is free.</p>
+        <figure>
+            <svg viewBox="0 0 300 84" role="img">
+                <text class="lbl-strong" x="0" y="19">kcalloc</text>
+                <rect class="free" x="44" y="6" width="216" height="16" rx="3"/>
+                <g class="used">
+                    <rect x="44" y="6" width="20" height="16"/>
+                    <rect x="76" y="6" width="14" height="16"/>
+                    <rect x="104" y="6" width="22" height="16"/>
+                    <rect x="140" y="6" width="18" height="16"/>
+                    <rect x="176" y="6" width="16" height="16"/>
+                    <rect x="206" y="6" width="20" height="16"/>
+                </g>
+                <rect class="miss" x="44" y="4" width="60" height="20" rx="3"/>
+                <path class="x-mark" d="M270 8 l12 12 M282 8 l-12 12"/>
+
+                <text class="lbl-strong" x="0" y="63">kvcalloc</text>
+                <rect class="free" x="44" y="50" width="216" height="16" rx="3"/>
+                <g class="used">
+                    <rect x="44" y="50" width="20" height="16"/>
+                    <rect x="76" y="50" width="14" height="16"/>
+                    <rect x="104" y="50" width="22" height="16"/>
+                    <rect x="140" y="50" width="18" height="16"/>
+                    <rect x="176" y="50" width="16" height="16"/>
+                    <rect x="206" y="50" width="20" height="16"/>
+                </g>
+                <g class="keep">
+                    <rect x="64" y="50" width="12" height="16"/>
+                    <rect x="192" y="50" width="14" height="16"/>
+                    <rect x="226" y="50" width="34" height="16"/>
+                </g>
+                <path class="ok-mark" d="M270 58 l5 6 l11 -13"/>
+            </svg>
+            <figcaption>
+                The same memory, seen twice.
+                <ol>
+                    <li><code>kcalloc</code> insists on one unbroken run (dashed) and there is none left, so VM creation fails.</li>
+                    <li><code>kvcalloc</code> takes the same total from whatever free pieces exist (highlighted).</li>
+                </ol>
+                <span class="legend"><span><i class="sw-used"></i>in use</span><span><i class="sw-free"></i>free</span><span><i class="sw-keep"></i>what it takes</span></span>
+            </figcaption>
+        </figure>
+    </section>
+    <section>
+        <h2>What it does</h2>
+        <p>It switches the allocation to <code>kvcalloc</code>, which falls back to stitching scattered pieces together (vmalloc) when no contiguous block exists, and switches the matching free path to <code>kvfree</code>.</p>
+        <p>This is exactly the fix the kernel adopted upstream (commit <code>b6ff6203e4bc</code>); the module applies it without modifying the kernel, so VMs above 2GB can boot. On a kernel that already carries the fix, loading this module changes nothing.</p>
+    </section>
+</div>
+
+<div class="i18n" data-lang="zh-CN">
+    <section>
+        <h2>原因</h2>
+        <p>6.1 内核的 Gunyah 驱动在准备 VM 内存时，会先建立一张页面清单——VM 每 4KB 内存一条。VM 内存越大、清单越大，2GB 的 VM 光清单就要好几 MB。</p>
+        <p>它用 <code>kcalloc</code> 来分配这张清单，而这种方式要求一整块连续的物理内存。手机用久了，空闲内存会碎成小块，这么大的一整块常常找不到，于是建立大内存 VM 就失败、显示 Out of memory——即使手机明明还有很多可用内存。</p>
+        <figure>
+            <svg viewBox="0 0 300 84" role="img">
+                <text class="lbl-strong" x="0" y="19">kcalloc</text>
+                <rect class="free" x="44" y="6" width="216" height="16" rx="3"/>
+                <g class="used">
+                    <rect x="44" y="6" width="20" height="16"/>
+                    <rect x="76" y="6" width="14" height="16"/>
+                    <rect x="104" y="6" width="22" height="16"/>
+                    <rect x="140" y="6" width="18" height="16"/>
+                    <rect x="176" y="6" width="16" height="16"/>
+                    <rect x="206" y="6" width="20" height="16"/>
+                </g>
+                <rect class="miss" x="44" y="4" width="60" height="20" rx="3"/>
+                <path class="x-mark" d="M270 8 l12 12 M282 8 l-12 12"/>
+
+                <text class="lbl-strong" x="0" y="63">kvcalloc</text>
+                <rect class="free" x="44" y="50" width="216" height="16" rx="3"/>
+                <g class="used">
+                    <rect x="44" y="50" width="20" height="16"/>
+                    <rect x="76" y="50" width="14" height="16"/>
+                    <rect x="104" y="50" width="22" height="16"/>
+                    <rect x="140" y="50" width="18" height="16"/>
+                    <rect x="176" y="50" width="16" height="16"/>
+                    <rect x="206" y="50" width="20" height="16"/>
+                </g>
+                <g class="keep">
+                    <rect x="64" y="50" width="12" height="16"/>
+                    <rect x="192" y="50" width="14" height="16"/>
+                    <rect x="226" y="50" width="34" height="16"/>
+                </g>
+                <path class="ok-mark" d="M270 58 l5 6 l11 -13"/>
+            </svg>
+            <figcaption>
+                同一段内存，看两次。
+                <ol>
+                    <li><code>kcalloc</code> 坚持要一整块连续的（虚线框），此时已经找不到，于是建立 VM 失败。</li>
+                    <li><code>kvcalloc</code> 则从零散的空闲处凑齐同样的总量（高亮处）。</li>
+                </ol>
+                <span class="legend"><span><i class="sw-used"></i>已使用</span><span><i class="sw-free"></i>空闲</span><span><i class="sw-keep"></i>实际取用</span></span>
+            </figcaption>
+        </figure>
+    </section>
+    <section>
+        <h2>功能</h2>
+        <p>把分配方式换成 <code>kvcalloc</code>：找不到整块时，自动改用可拼凑零散内存的方式（vmalloc），释放端也配套换成 <code>kvfree</code>。</p>
+        <p>这正是内核上游采用的修复（提交 <code>b6ff6203e4bc</code>）；本模块不改内核就套用同样的修复，让 2GB 以上的 VM 能正常开机。若内核本身已含此修复，加载本模块不会有任何改变。</p>
+    </section>
+</div>
+
+<div class="i18n" data-lang="zh-TW">
+    <section>
+        <h2>原因</h2>
+        <p>6.1 內核的 Gunyah 驅動在準備 VM 記憶體時，會先建立一張頁面清單——VM 每 4KB 記憶體一筆。VM 記憶體越大、清單越大，2GB 的 VM 光清單就要好幾 MB。</p>
+        <p>它用 <code>kcalloc</code> 來配置這張清單，而這種方式要求一整塊連續的實體記憶體。手機用久了，空閒記憶體會碎成小塊，這麼大的一整塊常常找不到，於是建立大記憶體 VM 就失敗、顯示 Out of memory——即使手機明明還有很多可用記憶體。</p>
+        <figure>
+            <svg viewBox="0 0 300 84" role="img">
+                <text class="lbl-strong" x="0" y="19">kcalloc</text>
+                <rect class="free" x="44" y="6" width="216" height="16" rx="3"/>
+                <g class="used">
+                    <rect x="44" y="6" width="20" height="16"/>
+                    <rect x="76" y="6" width="14" height="16"/>
+                    <rect x="104" y="6" width="22" height="16"/>
+                    <rect x="140" y="6" width="18" height="16"/>
+                    <rect x="176" y="6" width="16" height="16"/>
+                    <rect x="206" y="6" width="20" height="16"/>
+                </g>
+                <rect class="miss" x="44" y="4" width="60" height="20" rx="3"/>
+                <path class="x-mark" d="M270 8 l12 12 M282 8 l-12 12"/>
+
+                <text class="lbl-strong" x="0" y="63">kvcalloc</text>
+                <rect class="free" x="44" y="50" width="216" height="16" rx="3"/>
+                <g class="used">
+                    <rect x="44" y="50" width="20" height="16"/>
+                    <rect x="76" y="50" width="14" height="16"/>
+                    <rect x="104" y="50" width="22" height="16"/>
+                    <rect x="140" y="50" width="18" height="16"/>
+                    <rect x="176" y="50" width="16" height="16"/>
+                    <rect x="206" y="50" width="20" height="16"/>
+                </g>
+                <g class="keep">
+                    <rect x="64" y="50" width="12" height="16"/>
+                    <rect x="192" y="50" width="14" height="16"/>
+                    <rect x="226" y="50" width="34" height="16"/>
+                </g>
+                <path class="ok-mark" d="M270 58 l5 6 l11 -13"/>
+            </svg>
+            <figcaption>
+                同一段記憶體，看兩次。
+                <ol>
+                    <li><code>kcalloc</code> 堅持要一整塊連續的（虛線框），此時已經找不到，於是建立 VM 失敗。</li>
+                    <li><code>kvcalloc</code> 則從零散的空閒處湊齊同樣的總量（高亮處）。</li>
+                </ol>
+                <span class="legend"><span><i class="sw-used"></i>已使用</span><span><i class="sw-free"></i>空閒</span><span><i class="sw-keep"></i>實際取用</span></span>
+            </figcaption>
+        </figure>
+    </section>
+    <section>
+        <h2>功能</h2>
+        <p>把配置方式換成 <code>kvcalloc</code>：找不到整塊時，自動改用可拼湊零散記憶體的方式（vmalloc），釋放端也配套換成 <code>kvfree</code>。</p>
+        <p>這正是內核上游採用的修復（提交 <code>b6ff6203e4bc</code>）；本模組不改內核就套用同樣的修復，讓 2GB 以上的 VM 能正常開機。若內核本身已含此修復，載入本模組不會有任何改變。</p>
+    </section>
+</div>
+
+</body>
+</html>

@@ -144,3 +144,8 @@ __pycache__/
 reports/trials/*/serial-delta.log
 reports/trials/*/*.pcap
 reports/trials/*/*.bin
+
+# ---- Gunyah 驱动代次参照集（2026-10-25）----
+# 只保留源码切片（1.3 M），排除 clone 残留与解码中间产物
+/reference/gunyah-refs/*/.git/
+/reference/gunyah-refs/**/*.b64
