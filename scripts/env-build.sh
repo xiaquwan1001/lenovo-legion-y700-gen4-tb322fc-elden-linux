@@ -33,6 +33,11 @@ else
 fi
 export ARCH KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
+# Kernel tree to build: default = $ROOT/linux (the symlink), override with KDIR
+# so mod-loop/build scripts can target a worktree (e.g. KDIR=build/vk151).
+: "${KDIR:=$ROOT/linux}"
+export KDIR
+
 # Per-build uname label (e.g. LOCALVERSION=-vk50).  Export it and every ring —
 # kernel/dtb builds, kexec fingerprint, and mod-loop's vermagic check — stays
 # consistent, because they all go through kbuild().  Without this, a
@@ -41,5 +46,5 @@ export ARCH KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
 kbuild() {
 	# Run make in the kernel tree with the shared env.
-	make -C "$ROOT/linux" -j"${JOBS:-$(nproc)}" ${LOCALVERSION:+LOCALVERSION=$LOCALVERSION} "$@"
+	make -C "$KDIR" -j"${JOBS:-$(nproc)}" ${LOCALVERSION:+LOCALVERSION=$LOCALVERSION} "$@"
 }

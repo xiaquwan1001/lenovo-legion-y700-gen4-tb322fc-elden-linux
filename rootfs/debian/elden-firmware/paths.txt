@@ -1,0 +1,19 @@
+# paths.txt — elden-firmware 的内容清单（相对 /lib/firmware）
+#
+# 只收**本机专属**固件。Debian 的 firmware-qcom-soc 没有 sm8750 目录
+# （packages.debian.org trixie filelist 实测只有 sdm845/sm8250/sm8550/sm8650/x1e80100/sc8280xp），
+# 所以这块板子的固件必须自建包，不能依赖发行版。
+# 通用 linux-firmware 内容（iwlwifi/rtl/…）不进本包，需要时另装 firmware-linux。
+#
+# 行格式：以 / 结尾 = 递归目录；否则 = 单个文件（支持通配）。
+# 排除：*.bak / *.tmp（设备上手工备份过 brhbtnv20.bin.bak）
+
+qcom/sm8750/
+ath12k/PEACH/
+awinic/
+novatek_ts_csot_3k_fw.bin
+qca/brhbtfw20.tlv
+qca/brhbtnv20.bin
+qca/brhperifw20.tlv
+qca/brhperinv20.bin
+qcom/gen80000_*.zst

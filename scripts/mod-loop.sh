@@ -38,6 +38,7 @@ while [ $# -gt 0 ]; do
 	shift
 done
 [ -n "$DIR" ] || { echo "usage: mod-loop.sh <module-dir-relative-to-kernel-root> [--bootstrap|--allow-mismatch]" >&2; exit 2; }
+DIR=${DIR#"$KDIR/"}
 DIR=${DIR#"$ROOT/linux/"}
 
 # --bootstrap：设备未跑本树内核时，构建内核+全模块 → 零写盘 fastboot boot → 推全模块。

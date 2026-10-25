@@ -1,0 +1,168 @@
+# pkgmap.tsv — Alpine(apk) 包集合 → Debian(sid/forky) 包集合 的唯一映射表
+#
+# 来源：rootfs/persistent-overlay/apk-world.txt（120 行，设备实际 apk world）
+#      + 设备上不在 world 里的必需包（hexagonrpcd / iio-sensor-proxy / squeekboard /
+#        fcitx5 栈 / qbootctl / nav 工具）= 本文件 action=add 的行。
+#
+# 列（TAB 分隔）：
+#   apk       Alpine 包名（已剥离 world 行里残留的 apk 签名后缀 "><Q1…="）
+#   action    map     等价包（可能 1:1 或改名）
+#             drop    Debian 无对应/不需要（Alpine 专属或已由 systemd/base 提供）
+#             add    apk-world 里没有但设备需要（Debian 侧新安装）
+#   debian    Debian 包名（多个用空格分隔；action=drop 时留空）
+#   note      理由/坑（含版本门：必须 sid 或 backports 的项）
+#
+# 校验：`bash rootfs/debian/tools/check-pkgmap.sh`（离线查 sid 索引，缺包 FAIL）
+# 生成：`apt-list.txt` = 本表 map/add 行的 debian 去重并集（rootfs 构建的唯一安装清单）。
+#
+# 硬纪律：
+#   * **绝不**映射到 linux-image-* / firmware-qcom-soc（前者没有本机板 DTS，
+#     后者无 sm8750 目录，见 reports/mobian-migration-plan-20261021.md §2 #1/#5）。
+#   * Alpine 的 *-openrc / apk-tools / alpine-* / musl* 一律 drop，不找替代。
+
+## ---- Alpine 基础/包管理（全部 drop） ----
+alpine-baselayout	drop		Debian 由 base-files 提供
+alpine-keys	drop		发行版签名密钥，无意义
+alpine-release	drop		Debian 由 base-files 提供
+apk-tools	drop		Debian 用 apt/dpkg
+musl	drop		glibc 发行版
+musl-utils	drop		glibc 发行版
+busybox-extras	drop		Debian busybox 已含 applet；需要时用 coreutils
+e2fsprogs-extra	drop		工具已并入 Debian e2fsprogs
+iptables-legacy	drop		Debian 只保留 nft 后端（iptables 包内）
+elogind	drop		systemd-logind 取代（见 note：grep 依赖）
+elogind-common	drop		systemd-logind 取代
+elogind-openrc	drop		systemd-logind 取代
+pam-rundir	drop		libpam-systemd 附带
+
+## ---- 基础系统 / shell / 工具 ----
+bash	map	bash
+busybox	map	busybox
+coreutils	map	coreutils
+grep	map	grep
+sed	map	sed
+gawk	map	gawk
+findutils	map	findutils
+file	map	file
+less	map	less
+nano	map	nano
+tree	map	tree
+htop	map	htop
+tmux	map	tmux
+jq	map	jq
+xz	map	xz-utils
+zstd	map	zstd
+rsync	map	rsync
+curl	map	curl
+wget	map	wget
+socat	map	socat
+strace	map	strace
+stress-ng	map	stress-ng
+tcpdump	map	tcpdump
+shadow	map	passwd		Alpine shadow = Debian passwd（useradd/usermod 等）
+util-linux	map	util-linux
+procps-ng	map	procps
+e2fsprogs	map	e2fsprogs
+f2fs-tools	map	f2fs-tools
+dosfstools	map	dosfstools
+gptfdisk	map	gdisk
+kexec-tools	map	kexec-tools
+dtc	map	device-tree-compiler
+pciutils	map	pciutils
+usbutils	map	usbutils
+i2c-tools	map	i2c-tools
+evtest	map	evtest
+v4l-utils	map	v4l-utils
+ethtool	map	ethtool
+iproute2	map	iproute2
+iptables	map	iptables
+iputils	map	iputils-ping
+iw	map	iw
+android-tools	map	adb fastboot	Debian 拆成 adb/fastboot 两个包（android-tools-* 只是过渡名）
+chrony	map	chrony
+openssh	map	openssh-client
+openssh-server	map	openssh-server
+dhcpcd	map	dhcpcd-base	NetworkManager 自带内置 DHCP，仅保留命令行工具；不需要可 drop
+lxc	map	lxc
+
+## ---- dbus / 会话 / 系统服务 ----
+dbus-libs	map	libdbus-1-3
+busctl	drop		systemd 自带 busctl
+seatd	map	seatd
+rtkit	map	rtkit
+udisks2	map	udisks2
+gvfs	map	gvfs
+
+## ---- 图形 / 桌面（Phosh 栈） ----
+phosh	map	phosh		sid = 0.58.0（phoc 0.58 需 rebase 0001+0002 补丁，trixie 0.46 是降级）
+greetd	map	greetd
+greetd-phrog	map	phrog		Phosh 官方 greeter（Alpine 包名 greetd-phrog）
+foot	map	foot
+font-dejavu	map	fonts-dejavu-core
+kmscube	map	kmscube
+weston	map	weston
+weston-backend-drm	drop		Debian 的 weston 单包内含 DRM 后端
+weston-clients	drop		Debian 的 weston 单包内含客户端
+weston-shell-desktop	drop		Debian 的 weston 单包内含 desktop-shell
+weston-terminal	drop		Debian 的 weston 单包内含 terminal
+grim	map	grim
+wlr-randr	map	wlr-randr
+xdg-desktop-portal	map	xdg-desktop-portal
+xdg-desktop-portal-gtk	map	xdg-desktop-portal-gtk
+xdg-desktop-portal-wlr	map	xdg-desktop-portal-wlr
+xdg-user-dirs	map	xdg-user-dirs
+
+## ---- 图形库（Mesa/DRM/Vulkan；A830 = freedreno） ----
+mesa-demos	map	mesa-utils
+mesa-utils	map	mesa-utils
+mesa-dri-gallium	map	libgl1-mesa-dri
+mesa-egl	map	libegl1
+mesa-gbm	map	libgbm1
+mesa-gles	map	libgles2
+mesa-vulkan-freedreno	map	mesa-vulkan-drivers
+libdrm-tests	map	libdrm-tests
+vulkan-loader	map	libvulkan1
+vulkan-tools	map	vulkan-tools
+
+## ---- 音频（PipeWire 栈；tplg/UCM 属自研资产，见 elden-firmware / audio-ucm） ----
+alsa-lib	map	libasound2t64
+alsa-utils	map	alsa-utils
+pipewire	map	pipewire
+pipewire-alsa	map	pipewire-alsa
+pipewire-pulse	map	pipewire-pulse
+pipewire-spa-bluez	map	libspa-0.2-bluetooth
+wireplumber	map	wireplumber
+
+## ---- 网络 / 无线 / 蓝牙 ----
+networkmanager	map	network-manager
+networkmanager-cli	drop		Debian 的 network-manager 含 nmcli
+networkmanager-tui	drop		Debian 无 nmtui 独立包（network-manager 内含）
+networkmanager-wifi	drop		Debian 的 network-manager 含 wifi 插件
+bluez	map	bluez		Debian bluez 含 btmon/btmgmt
+bluez-btmon	drop		Debian bluez 已含 /usr/bin/btmon（packages.debian.org filelist 实测）
+bluez-deprecated	drop		Debian bluez 已含 hciconfig/hcitool 等
+bluez-tools	map	bluez-tools
+gnome-bluetooth	map	gnome-bluetooth-sendto	sid 拆包：gnome-bluetooth-sendto = 发文件 UI
+wpa_supplicant	map	wpasupplicant
+wireless-regdb	map	wireless-regdb
+
+## ---- 链接/加密库（Alpine 按 soname 拆包，Debian 同名不同名） ----
+libcrypto3	map	libssl3t64
+libssl3	map	libssl3t64
+libip4tc	map	libip4tc2
+libip6tc	map	libip6tc2
+libnl3	map	libnl-3-200
+llvm22-libs	map	libllvm22
+pcsc-lite-libs	map	libpcsclite1
+
+## ---- 容器（G2） ----
+waydroid	map	waydroid	sid 1.6.3+ds-3（Debian 14 起进官方归档）
+
+## ---- 设备需要但不在 apk-world（action=add） ----
+iio-sensor-proxy	add	iio-sensor-proxy	**必须 sid**：3.9 才有 drv-ssc-* SSC 后端（trixie 3.7 无），本机 /sys/bus/iio 恒空
+libssc	add	libssc2 libssc-dev	sid 运行时包名 = libssc2（源码包 libssc）；dev 只在主机侧编 iio-sensor-proxy 时需要
+hexagonrpcd	add	hexagonrpcd	SSC 用户态守护（QRTR svc 400），服务名 hexagonrpcd-adsp-sensorspd
+squeekboard	add	squeekboard	OSK（C11 输入法栈）
+fcitx5	add	fcitx5 fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-rime	Debian 前端包名 = fcitx5-frontend-gtk3/4（Alpine 叫 fcitx5-gtk3/4）
+qbootctl	add	qbootctl	Debian 包自带 qbootctl.service（ExecStart=qbootctl -m），装完必须 enable
+phoc	add	phoc	phosh 依赖会带，但两枚补丁要显式重建，单列以免漏

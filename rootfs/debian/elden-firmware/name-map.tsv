@@ -1,0 +1,16 @@
+# name-map.tsv — DT `firmware-name` → 内核**实际请求**的路径
+#
+# 为什么需要这张表：DT 里写的名字不一定就是 `request_firmware()` 的字符串。
+# 这类差异只在「换发行版/换固件包」时咬人：文件明明装了，驱动仍报 -ENOENT。
+#
+# 列：DT 名（TAB）实际路径（TAB）依据
+#
+# 已实测（2026-10-26，设备 dmesg + 代码核对）：
+#   * BT（hci_qca/btqca）：DT 的 `firmware-name = "brhbtnv20.bin", "brhbtfw20.tlv"`
+#     不被用来拼请求路径；btqca 代码里写死 `qca/brhbtfw20.tlv` / `qca/brhbtnv20.bin`
+#     （dmesg 逐字：`QCA Downloading qca/brhbtfw20.tlv`）。
+#     ⇒ 固件包必须提供 **qca/** 下的名字；DT 名只作注释。
+#   * 其余 DT 名（adsp.mdt/cdsp.mdt/gen80000_zap.mbn/novatek_*/awinic/*）与请求路径逐字相同。
+
+brhbtnv20.bin	qca/brhbtnv20.bin	btqca 代码硬编码 qca/ 前缀
+brhbtfw20.tlv	qca/brhbtfw20.tlv	同上

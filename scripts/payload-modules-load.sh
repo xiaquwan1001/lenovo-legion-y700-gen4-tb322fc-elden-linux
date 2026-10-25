@@ -26,13 +26,22 @@ MODDIR=/lib/modules/$KV
 depmod -a "$KV" 2>/dev/null || depmod -a 2>/dev/null || true
 
 load() {
-	if lsmod 2>/dev/null | grep -q "^$1 "; then
+	# lsmod 打印下划线名（snd-q6apm → snd_q6apm），两种写法都要能命中
+	local m=${1//-/_}
+	if lsmod 2>/dev/null | grep -q "^$m "; then
 		return 0
 	fi
-	if modprobe "$1" 2>/dev/null; then
+	if ! modprobe "$1" 2>/dev/null; then
+		echo "[payload] WARN: modprobe $1 failed" >&2
+		return 1
+	fi
+	# 内核把该驱动编成 =y 时 modprobe 也会 rc=0（modules.builtin 命中），
+	# 但 lsmod 里永远不会出现 —— 不能把「builtin」记成「loaded」（2026-10-26 实测：
+	# vk152 非模块化内核上本脚本把 ath12k/q6apm 全报成 loaded，是假证据）。
+	if lsmod 2>/dev/null | grep -q "^$m "; then
 		echo "[payload] loaded $1"
 	else
-		echo "[payload] WARN: modprobe $1 failed" >&2
+		echo "[payload] $1 is builtin in this kernel (no-op)"
 	fi
 }
 

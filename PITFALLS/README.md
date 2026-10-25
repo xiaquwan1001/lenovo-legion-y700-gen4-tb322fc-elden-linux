@@ -124,6 +124,10 @@
 | 86 | **#397** 用户态服务跨 init 迁移三连击：① OpenRC 名 ≠ systemd 单元名（`Requires=localmount` 被**静默忽略**⇒服务乱序、greetd 无桌面）；② `bash` 函数体只有注释 = 语法错误（空 `depend()` 直接崩）；③ `while read` 里裸调 `ssh` 吞掉 stdin（漂移比对只跑第一行仍显示全绿） | [86-用户态服务跨init迁移三个坑.md](sessions/86-用户态服务跨init迁移三个坑.md) |
 | 89 | **#400** f2fs 手术的 ramdisk 工具级坑：busybox `tar` 不支持 `--xattrs/--acls`（须从 ext4 取 GNU tar+libacl 走 musl loader）· `oflag=direct`/`/dev/stdin` 在 busybox `dd` 上必失败 · 设备无 `python3` ⇒ 偏移算空产出 0 字节 GPT dump · `/mnt/dbg` 的 dmesg 钩子 fd9 被 init 后代继承 ⇒ 超级块不释放（ro 挂载/`e2fsck`/整盘 `dd` 全 EBUSY）· tar 流 sha **不是**内容指纹（用 `tar -d`） | [89-f2fs手术五个工具级坑.md](sessions/89-f2fs手术五个工具级坑.md) |
 | 85 | **#396** 6.12 的 `gunyah.ko` 用 `core_initcall` 且**无 `module_exit`** ⇒ `/proc/modules` 标 `[permanent]`，`rmmod` 报 `Resource busy`（refcnt 可为 0）。换栈只能覆盖 `/lib/modules/<UTS>/kernel/…`（**不要放 `extra/`**）→ `depmod -a` → 重启 | [85-6.12-gunyah.ko无module_exit所以permanent不可rmmod.md](sessions/85-6.12-gunyah.ko无module_exit所以permanent不可rmmod.md) |
+| 90 | **#406** `fastboot boot` 的镜像会**活过普通暖复位**：`reboot` 后 `uname -r` 仍是测试内核，而 `boot_b` 内容逐字未变。判「已回 boot_b」只能靠启动后读内核身份；退回要经 `reboot2 bootloader` + `fastboot reboot`（或物理 POR） | [90-fastboot-boot镜像存活于暖复位.md](sessions/90-fastboot-boot镜像存活于暖复位.md) |
+| 91 | **#407** 用**陈旧 ramdisk**（`rootfs-vk127.cpio.gz`，其 `/init` 写死 `mount -t ext4`）打 f2fs 生产根的镜像 ⇒ 静默回落 RAM shell：gadget 枚举正常、但无 IP、ssh 不通（串口 `~ #`）。生产根镜像必须用仓库 `/init` 的 `initramfs-full`；救援可走 gadget 的 IPv6 链路本地 | [91-陈旧ramdisk静默进RAM-shell.md](sessions/91-陈旧ramdisk静默进RAM-shell.md) |
+| 92 | **#408** GNU `ld.bfd` 2.46 在 ~1.6 GB debug 的最终链接上 SIGSEGV（中间 `--strip-debug` 链接都成功）⇒ 用 `LD=ld.lld`，且必须写成 **make 参数**（`LD=… make` 是环境变量，会被 Makefile 的 `LD = $(CROSS_COMPILE)ld` 覆盖） | [92-ldbfd超大debug链接段错误.md](sessions/92-ldbfd超大debug链接段错误.md) |
+| 93 | **#409** 无 prompt 的 Kconfig 符号钉不住 `=y`（kbuild 的 syncconfig 会按 `select` 重算回 `m`，无提示）；且 `modprobe` 对 **builtin** 也 rc=0 ⇒ 加载器会把内置驱动报成 `loaded`（须用 `lsmod` 复核 + `-`→`_` 归一） | [93-不可见kconfig符号钉不住.md](sessions/93-不可见kconfig符号钉不住.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
