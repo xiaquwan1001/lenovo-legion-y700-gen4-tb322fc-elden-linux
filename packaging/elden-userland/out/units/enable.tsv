@@ -1,0 +1,21 @@
+# GENERATED — 迁移后要启用的服务（enabled=1）；0 的保留定义不启用
+# name<TAB>openrc-runlevel<TAB>systemd-target
+backlight-floor	default	multi-user.target
+bt-alias	default	multi-user.target
+charge-watch	default	multi-user.target
+elden-bootlog	default	multi-user.target
+elden-hapticd	default	multi-user.target
+elden-powerlog	shutdown	poweroff.target reboot.target halt.target
+greetd	default	multi-user.target
+iio-sensor-proxy	default	multi-user.target
+net-selfheal	default	multi-user.target
+pstore-catch	boot	multi-user.target
+q28-boot-watchdog	default	multi-user.target
+qbootctl	default	multi-user.target
+ssc-udp-relay	default	multi-user.target
+time-sync	default	multi-user.target
+waydroid-ipv6	default	multi-user.target
+wifi-scan-refresh	default	multi-user.target
+ath12k-retry	default	multi-user.target
+hexagonrpcd-adsp-sensorspd	default	multi-user.target
+waydroid-container	default	multi-user.target

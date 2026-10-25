@@ -1,0 +1,9 @@
+#!/sbin/openrc-run
+description="Relay real Qualcomm SSC sensor values to the Waydroid sensor HAL (UDP)"
+command="/usr/bin/python3"
+command_args="/usr/local/bin/ssc-udp-relay.py"
+command_background="yes"
+pidfile="/run/ssc-udp-relay.pid"
+output_log="/var/log/ssc-udp-relay.log"
+error_log="/var/log/ssc-udp-relay.log"
+depend() { need localmount; after waydroid-container; use net; }

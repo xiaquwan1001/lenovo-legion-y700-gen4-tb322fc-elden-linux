@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""eldroid-bootctl — Linux 侧刷机控制（reboot reason + A/B 槽位元数据）。
+
+运行在设备的 mainline Linux 里（root）。两块能力：
+
+  eldroid-bootctl reboot <bootloader|recovery|system|edl>
+        用 Linux reboot(2) 的 RESTART2 带 reason 重启；mainline 的
+        nvmem-reboot-mode 驱动监听 reboot-notifier，按 DT `reboot-mode/mode-*`
+        把 magic 写进 PMIC SDAM（reboot-reason@48），ABL 据此决定引导目标。
+        DT 现值：mode-recovery=0x01, mode-bootloader=0x02（EDL 无）。
+
+  eldroid-bootctl slot {info|active|set-active <a|b>|mark-successful [a|b]|
+                        set-retry <0..7> [a|b]}
+        读写 GPT 分区项 attribute 第 6 字节（A/B 槽元数据，见 slot-attr.py）。
+        boot_a/boot_b 在 LUN4 `/dev/sde`。写操作先自动 dd 备份 GPT 前 34 扇区。
+
+依赖：同目录的 `slot-attr.py`（slot 子命令转发）。
+"""
+from __future__ import annotations
+
+import argparse
+import ctypes
+import os
+import subprocess
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SLOT_ATTR = os.path.join(HERE, "slot-attr.py")
+DEFAULT_DEV = "/dev/sde"
+
+LINUX_REBOOT_MAGIC1 = 0xFEE1DEAD
+LINUX_REBOOT_MAGIC2 = 672274793
+LINUX_REBOOT_CMD_RESTART = 0x01234567
+LINUX_REBOOT_CMD_RESTART2 = 0xA1B2C3D4
+LINUX_REBOOT_CMD_POWER_OFF = 0x4321FEDC
+
+# 注意：musl 的 `reboot()` 是 **单参数** 封装（int reboot(int cmd)），用 4 参数调它会把
+# magic1 当成 cmd → 内核返回 EINVAL(22)。必须直接走 syscall(SYS_reboot, ...)。
+SYS_REBOOT = {"aarch64": 142, "armv7l": 88, "x86_64": 169}.get(os.uname().machine, 142)
+
+# reason 字符串 -> DT mode-* 的 magic（pmk8550.dtsi；仅供显示核对）
+MODE_MAGIC = {"recovery": 0x01, "bootloader": 0x02}
+REBOOT_REASON = {
+    "bootloader": "bootloader",
+    "recovery": "recovery",
+    "system": None,       # 普通重启（无 reason）
+    "normal": None,
+    "edl": "edl",         # 本内核无 mode-edl，只作占位（不会写 magic）
+}
+
+
+def _require_root(what: str) -> None:
+    if os.geteuid() != 0:
+        sys.exit(f"eldroid-bootctl: {what} 需要 root（当前 uid={os.geteuid()}）")
+
+
+def _do_reboot(cmd: int, reason: str | None) -> int:
+    """直调 syscall(SYS_reboot, ...)；成功不返回，失败返回 errno。"""
+    libc = ctypes.CDLL("libc.so.6", use_errno=True)
+    libc.syscall.restype = ctypes.c_long
+    os.sync()
+    arg = ctypes.c_char_p(reason.encode()) if reason else None
+    libc.syscall(SYS_REBOOT, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, arg)
+    return ctypes.get_errno()  # 成功则不会到这里
+
+
+def cmd_reboot(args) -> int:
+    target = args.target
+    if target is not None and target not in REBOOT_REASON:
+        sys.exit(f"未知目标 {target!r}；可选 {', '.join(REBOOT_REASON)}")
+    _require_root("reboot")
+    reason = REBOOT_REASON[target] if target else None
+
+    if target == "edl":
+        print("⚠️  本内核 DT 无 mode-edl，EDL 未支持（见 archive/topics/FLASHCTL-2026-10-03.md）。",
+              file=sys.stderr)
+        print("   可先 reboot recovery 进 TWRP，再由 TWRP 重启到 EDL。", file=sys.stderr)
+        if not args.force:
+            return 1
+
+    if args.poweroff:
+        print("[reboot] 关机（POWER_OFF）")
+    elif reason:
+        magic = MODE_MAGIC.get(reason)
+        print(f"[reboot] 目标={target} reason={reason!r} "
+              f"magic={('0x%02x' % magic) if magic is not None else '?'}（写 PMIC SDAM reboot-reason）")
+    else:
+        print("[reboot] 普通重启（无 reason）")
+
+    if args.dry_run:
+        print("  (dry-run: 不执行 reboot(2))")
+        return 0
+
+    cmd = LINUX_REBOOT_CMD_POWER_OFF if args.poweroff else \
+        (LINUX_REBOOT_CMD_RESTART2 if reason else LINUX_REBOOT_CMD_RESTART)
+    err = _do_reboot(cmd, reason)
+    print(f"reboot(2) 失败: errno={err} ({os.strerror(err)})", file=sys.stderr)
+    return 1
+
+
+def _slot_attr(argv: list[str], backup: bool = False) -> int:
+    if not os.path.exists(SLOT_ATTR):
+        sys.exit(f"找不到 {SLOT_ATTR}")
+    if backup:
+        _backup_gpt()
+    return subprocess.call([sys.executable, SLOT_ATTR, *argv])
+
+
+def _backup_gpt() -> None:
+    dev = os.environ.get("ELDROID_GPT_DEV", DEFAULT_DEV)
+    ts = subprocess.check_output(["date", "+%Y%m%d-%H%M%S"]).decode().strip()
+    out = f"/root/gpt-{os.path.basename(dev)}-{ts}.bin"
+    print(f"[slot] 备份 GPT 前 34 扇区 -> {out}")
+    subprocess.check_call(["dd", "if=" + dev, "of=" + out, "bs=4096", "count=34"],
+                          stderr=subprocess.DEVNULL)
+
+
+def cmd_slot(args) -> int:
+    if args.action == "info":
+        return _slot_attr(["--device", args.device, "show"])
+    if args.action == "active":
+        out = subprocess.check_output(
+            [sys.executable, SLOT_ATTR, "--device", args.device, "show"]).decode()
+        act = [l.split()[0] for l in out.splitlines()
+               if l.strip().startswith("boot_") and "active=1" in l]
+        print(act[0].split("_")[-1] if act else "(no active boot_* slot)")
+        return 0
+    if args.action == "set-active":
+        _require_root("slot set-active")
+        return _slot_attr(["--device", args.device, "set", args.slot,
+                           "--active", "--retry", "7"], backup=True)
+    if args.action == "mark-successful":
+        _require_root("slot mark-successful")
+        return _slot_attr(["--device", args.device, "mark-successful", args.slot],
+                          backup=True)
+    if args.action == "set-retry":
+        _require_root("slot set-retry")
+        return _slot_attr(["--device", args.device, "set", args.slot,
+                           "--retry", str(args.retry)], backup=True)
+    sys.exit("unknown slot action")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("reboot", help="带 reason 重启到 bootloader/recovery/system")
+    p.add_argument("target", nargs="?", choices=list(REBOOT_REASON))
+    p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--force", action="store_true", help="edl 未支持时也继续")
+    p.add_argument("--poweroff", action="store_true", help="关机而非重启（忽略 target）")
+    p.set_defaults(func=cmd_reboot)
+
+    p = sub.add_parser("slot", help="A/B 槽位元数据（GPT attribute byte6）")
+    p.add_argument("--device", default=DEFAULT_DEV)
+    s = p.add_subparsers(dest="action", required=True)
+    s.add_parser("info")
+    s.add_parser("active")
+    sp = s.add_parser("set-active")
+    sp.add_argument("slot", choices=["a", "b"])
+    sp = s.add_parser("mark-successful")
+    sp.add_argument("slot", nargs="?", choices=["a", "b"], default=None)
+    sp = s.add_parser("set-retry")
+    sp.add_argument("retry", type=int, choices=range(0, 8))
+    sp.add_argument("slot", nargs="?", choices=["a", "b"], default=None)
+    p.set_defaults(func=cmd_slot)
+
+    args = ap.parse_args()
+    # mark-successful/set-retry 省略槽位 -> 当前活动槽
+    if args.cmd == "slot" and args.action in ("mark-successful", "set-retry") and args.slot is None:
+        out = subprocess.check_output(
+            [sys.executable, SLOT_ATTR, "--device", args.device, "show"]).decode()
+        act = [l.split()[0].split("_")[-1] for l in out.splitlines()
+               if l.strip().startswith("boot_") and "active=1" in l]
+        args.slot = act[0] if act else "b"
+        print(f"[slot] 未指定槽位，使用当前活动槽 {args.slot!r}")
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

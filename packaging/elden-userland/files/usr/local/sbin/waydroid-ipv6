@@ -1,0 +1,60 @@
+#!/bin/sh
+# Keep Waydroid dual-stack: host ULA + NAT66 + container IPv6 default routes.
+# The container's Android netd uses policy routing, so the default route must
+# be present in the "eth0" and "eth0_local" tables, not only the main table.
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+
+BRIDGE=waydroid0
+PREFIX=fd00:240
+GATEWAY=${PREFIX}::1
+LXC_DIR=/var/lib/waydroid/lxc
+LXC_NAME=waydroid
+
+IP6T=ip6tables-legacy
+command -v "$IP6T" >/dev/null 2>&1 || IP6T=ip6tables
+
+log() {
+    logger -t waydroid-ipv6 "$*" 2>/dev/null || true
+}
+
+host_setup() {
+    [ -d "/sys/class/net/$BRIDGE" ] || return 0
+
+    ip -6 addr add "${GATEWAY}/64" dev "$BRIDGE" 2>/dev/null || true
+    sysctl -qw net.ipv6.conf.all.forwarding=1 || true
+    sysctl -qw "net.ipv6.conf.${BRIDGE}.forwarding=1" || true
+
+    "$IP6T" -t nat -C POSTROUTING -s "${PREFIX}::/64" ! -d "${PREFIX}::/64" -j MASQUERADE 2>/dev/null || \
+        "$IP6T" -t nat -A POSTROUTING -s "${PREFIX}::/64" ! -d "${PREFIX}::/64" -j MASQUERADE
+    "$IP6T" -C FORWARD -i "$BRIDGE" -j ACCEPT 2>/dev/null || \
+        "$IP6T" -I FORWARD -i "$BRIDGE" -j ACCEPT
+    "$IP6T" -C FORWARD -o "$BRIDGE" -j ACCEPT 2>/dev/null || \
+        "$IP6T" -I FORWARD -o "$BRIDGE" -j ACCEPT
+}
+
+container_setup() {
+    state=$(lxc-info -P "$LXC_DIR" -n "$LXC_NAME" -sH 2>/dev/null || true)
+    [ "$state" = "RUNNING" ] || return 0
+
+    ip4=$(lxc-info -P "$LXC_DIR" -n "$LXC_NAME" -iH 2>/dev/null | head -n 1)
+    case "$ip4" in
+        192.168.240.*) ;;
+        *) return 0 ;;
+    esac
+    last=${ip4##*.}
+    addr="${PREFIX}::${last}"
+
+    timeout 5 lxc-attach -P "$LXC_DIR" -n "$LXC_NAME" -- sh -c "
+        ip -6 addr add '$addr/64' dev eth0 nodad 2>/dev/null || true
+        ip -6 route add default via '$GATEWAY' dev eth0 2>/dev/null || true
+        ip -6 route add default via '$GATEWAY' dev eth0 table eth0 2>/dev/null || true
+        ip -6 route add default via '$GATEWAY' dev eth0 table eth0_local 2>/dev/null || true
+    " >/dev/null 2>&1 || true
+}
+
+log "starting"
+while :; do
+    host_setup
+    container_setup
+    sleep 5
+done

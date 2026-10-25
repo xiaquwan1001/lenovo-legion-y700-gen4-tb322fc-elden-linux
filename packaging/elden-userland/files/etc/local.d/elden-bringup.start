@@ -1,0 +1,27 @@
+#!/bin/sh
+# OpenRC `local` payload — helpers with no OpenRC service equivalent.
+# networkmanager/bluetooth services own their daemons; ath12k-retry just
+# re-probes the WCN so wlan0 appears (NM connects when it does).  time-sync
+# steps the 1970 clock from NTP and then keeps chronyd running.
+for h in q28-boot-watchdog ath12k-retry charge-watch time-sync; do
+	[ -x "/usr/local/sbin/$h.sh" ] && setsid "/usr/local/sbin/$h.sh" >"/run/$h.log" 2>&1 &
+done
+# 网络自愈（HTTPS 信任链 + PMTU）：wlan0 起来之前跑会漏掉 MTU，故等 ath12k
+# 就绪后重试一轮。见 reports/net-https-mtu-rootcause-20261018.md
+(
+	for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
+		sleep 10
+		ip -br link 2>/dev/null | grep -q "^wlan.*UP" && break
+	done
+	[ -x /usr/local/sbin/net-selfheal.sh ] && \
+		/usr/local/sbin/net-selfheal.sh > /run/net-selfheal.log 2>&1
+) &
+# bluetoothd is started by the `bluetooth` service; hci0 shows up ~30 s later
+# once btqca loads the firmware, so set the alias/power state a bit after boot.
+(
+	sleep 30
+	command -v bluetoothctl >/dev/null 2>&1 || exit 0
+	bluetoothctl system-alias elden >/dev/null 2>&1
+	bluetoothctl power on >/dev/null 2>&1
+) &
+exit 0

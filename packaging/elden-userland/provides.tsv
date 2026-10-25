@@ -1,0 +1,5 @@
+# provides.tsv — 服务别名（OpenRC 的 `provide` / systemd 的 Aliases=）
+# 用途：别的服务或用户态按别名找它（如 `display-manager`）。迁移时别名必须保留，
+# 否则按名依赖它的第三方 unit 会静默失配。
+# 列：name<TAB>alias
+greetd	display-manager

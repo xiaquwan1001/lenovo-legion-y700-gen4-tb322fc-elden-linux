@@ -1,0 +1,16 @@
+# sources.tsv — 每个 ELF 的重建来源（人工维护；verify.sh 校验）
+#
+# 列：dst <TAB> build <TAB> source <TAB> status <TAB> note
+#   build  : 可在仓库根直接执行的重建命令（空 = 无）
+#   source : 源文件（相对仓库根；多个用逗号）
+#   status : ok | missing（missing = 当前**不可重建**，属已知缺口，verify 报 WARN）
+#
+# 设计口径：二进制不进 git；只要 build+source 成立，任何一台主机都能重出**功能等价**的 ELF。
+# 注意 striping/编译选项变化会改 sha ⇒ sha 漂移不等于功能漂移，verify 只做「源在」的硬判据。
+/usr/local/bin/elden-hapticd	bash scripts/build-hapticd.sh	scripts/elden-hapticd.c	ok	静态 aarch64，musl/glibc 通吃；产物 out/hapticd/elden-hapticd
+/usr/local/bin/eldroid-sensord	bash scripts/build-sensord.sh	scripts/eldroid-sensord.c	ok	静态 aarch64；产物 out/sensord/eldroid-sensord
+/usr/local/bin/ffrumble	-	-	missing	**无仓库源**：只在 reports/waydroid-haptics-20261013.md 与 motor-haptics-vk127-20261017.md 里作为取证工具出现；宿主封装 /usr/local/bin/vibrate 调用它。补齐方式见 packaging/elden-userland/extra/README.md
+/usr/local/bin/waydroid-sensord	-	patches-userland/waydroid-sensord-udp/	missing	构建需 gbinder/glibutil 开发包（设备上 make）；仓库只有 -udp 变体的完整 Makefile，非 udp 版缺 recipe
+/usr/local/bin/waydroid-sensord-udp	-	patches-userland/waydroid-sensord-udp/Makefile	missing	同上；-udp 可直接 `make -C patches-userland/waydroid-sensord-udp`（在设备/debootstrap 环境内）
+/usr/local/bin/elden-ime-focusd	bash patches-userland/zh-ime/build-elden-ime.sh	patches-userland/zh-ime/elden-ime-focusd.c	ok	动态链 glib/gio + musl，**换 glibc 发行版必须重编**（见 README §「musl 依赖」）
+/usr/local/sbin/reboot2	aarch64-linux-gnu-gcc -static -Os -o /tmp/reboot2 rootfs/reboot2.c	rootfs/reboot2.c	ok	静态；PSCI vendor reset（SYSTEM_RESET2），Linux→fastboot 的可靠入口

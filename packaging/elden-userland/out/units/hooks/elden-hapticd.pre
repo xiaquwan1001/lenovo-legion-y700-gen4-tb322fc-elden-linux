@@ -1,0 +1,17 @@
+# hooks/elden-hapticd.pre — 启动前置（原 /etc/init.d/elden-hapticd 的 start_pre，逐字搬迁）
+# 由 OpenRC 的 start_pre() 或 systemd 的 ExecStartPre= 执行；必须是 POSIX sh、幂等、以 root 运行。
+
+mkdir -p /run/elden-haptic/leds/vibrator
+# amplitude 的默认值必须是 255（= 满幅），不能是 0：
+# elden-hapticd 用 effective_mag = --amp × amplitude/255，若为 0 则 magnitude=0，
+# 内核 aw86927_haptics_play() 会因 level 未变化直接 return（完全不震，不是"震得轻"）。
+for f in activate duration state; do
+	[ -e "/run/elden-haptic/leds/vibrator/$f" ] || : > "/run/elden-haptic/leds/vibrator/$f"
+	echo 0 > "/run/elden-haptic/leds/vibrator/$f" 2>/dev/null || true
+done
+[ -e /run/elden-haptic/leds/vibrator/amplitude ] || : > /run/elden-haptic/leds/vibrator/amplitude
+echo 255 > /run/elden-haptic/leds/vibrator/amplitude 2>/dev/null || true
+# 容器内 HAL 以 system(uid 1000) 身份写这三个文件
+chmod 755 /run/elden-haptic /run/elden-haptic/leds
+chmod 777 /run/elden-haptic/leds/vibrator
+chmod 666 /run/elden-haptic/leds/vibrator/*

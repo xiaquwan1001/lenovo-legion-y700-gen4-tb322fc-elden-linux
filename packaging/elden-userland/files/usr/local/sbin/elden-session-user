@@ -1,0 +1,24 @@
+#!/bin/sh
+# greetd session target: xuqianhui1001 with proper XDG/Wayland env.
+# greetd + PAM (pam_elogind) provides:
+#   XDG_RUNTIME_DIR, XDG_SESSION_ID, XDG_SEAT, XDG_VTNR
+#   DBUS_SESSION_BUS_ADDRESS (via dbus-launch in phosh-session)
+#   WAYLAND_DISPLAY (set by phoc compositor)
+
+export LIBSEAT_BACKEND=seatd
+export XDG_CURRENT_DESKTOP=Phosh:GNOME
+export XDG_SESSION_DESKTOP=phosh
+export XDG_SESSION_TYPE=wayland
+export GDK_BACKEND=wayland
+export MOZ_ENABLE_WAYLAND=1
+export QT_QPA_PLATFORM=wayland
+export SDL_VIDEODRIVER=wayland
+export CLUTTER_BACKEND=wayland
+export EGL_PLATFORM=surfaceless
+
+# elogind should provide XDG_RUNTIME_DIR; fallback if not
+[ -n "$XDG_RUNTIME_DIR" ] || export XDG_RUNTIME_DIR=/run/user/$(id -u)
+mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null || true
+chmod 700 "$XDG_RUNTIME_DIR" 2>/dev/null || true
+
+exec /usr/bin/phosh-session

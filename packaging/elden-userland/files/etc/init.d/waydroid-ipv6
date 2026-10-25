@@ -1,0 +1,13 @@
+#!/sbin/openrc-run
+
+name="Waydroid IPv6"
+description="Keep Waydroid bridge and container dual-stack (ULA + NAT66)"
+
+command="/usr/local/sbin/waydroid-ipv6"
+command_background=true
+pidfile="/run/waydroid-ipv6.pid"
+
+depend() {
+    need waydroid-container
+    after waydroid-container networkmanager
+}

@@ -1,0 +1,4 @@
+# 包自带 unit（我们**不**渲染，迁移后只需确认已安装 + enable）
+# name<TAB>exec<TAB>desc
+hexagonrpcd-adsp-sensorspd	/usr/bin/hexagonrpcd-adsp-sensorspd	ADSP sensorspd service (QRTR svc 400) — package-provided
+waydroid-container	/usr/bin/waydroid	Waydroid container manager — package-provided

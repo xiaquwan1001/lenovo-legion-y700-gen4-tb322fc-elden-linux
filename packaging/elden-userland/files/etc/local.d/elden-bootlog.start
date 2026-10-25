@@ -1,0 +1,14 @@
+#!/bin/sh
+# per-boot evidence snapshot: boot_id suffix so a kexec target's log survives the fallback boot
+id=$(cat /proc/sys/kernel/random/boot_id 2>/dev/null)
+[ -n "$id" ] || exit 0
+{
+  date
+  echo "boot_id=$id"
+  echo "cmdline=$(cat /proc/cmdline)"
+  echo "uptime=$(cut -d' ' -f1 /proc/uptime)"
+  echo "--- /sys/class/drm ---"; ls /sys/class/drm 2>/dev/null
+  echo "--- card0-DSI-1 ---"; cat /sys/class/drm/card0-DSI-1/status 2>/dev/null
+  echo "--- dmesg ---"; dmesg 2>/dev/null
+} > "/var/log/dmesg-$id.txt" 2>&1
+sync

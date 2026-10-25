@@ -1,0 +1,18 @@
+# hooks/iio-sensor-proxy.pre — 启动前置（原 /etc/init.d/iio-sensor-proxy 的 start_pre）
+#
+# Timing fix (auto-rotate stuck OFF / direction locked) — G1-34 / PITFALLS：
+# SSC accelerometer 由 ADSP 上的 QRTR svc 400 提供。iio-sensor-proxy 3.9 只在启动时扫一次，
+# 扫不到就放弃 ⇒ 冷起时若本服务赢了对 ADSP/SSC 启动的竞态，SensorProxy 将**永久**没有加速度计，
+# phosh rotation-manager 停在 MODE_OFF（旋转磁贴变灰、方向锁死）。
+# 故有界地等 QRTR svc 400 出现；等不到也照常启动（不劣于修复前）。
+
+i=0
+while [ "$i" -lt 60 ]; do
+	if qrtr-lookup 2>/dev/null | grep -qw 400; then
+		exit 0
+	fi
+	i=$((i + 1))
+	sleep 1
+done
+echo "elden: iio-sensor-proxy: QRTR svc 400 (SSC) not seen after ${i}s; starting anyway" >&2
+exit 0

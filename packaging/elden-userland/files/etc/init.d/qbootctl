@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+# Mark the current A/B slot successful on every boot.
+# 2026-10-11 fix (see scripts/fix-ab-mark-successful.sh): this service existed
+# but was NOT in any runlevel -> BOOT_SUCCESSFUL never set -> ABL decremented
+# tries_remaining once per boot -> after 7 reboots the device stopped at
+# fastboot.  Enabled in runlevel `default`; explicit start() so OpenRC status
+# reports `started` instead of `crashed` for this run-once command.
+description="Mark current boot as successful in Android A/B interface"
+
+start() {
+	ebegin "Marking current A/B slot successful"
+	/usr/bin/qbootctl -m
+	eend $?
+}

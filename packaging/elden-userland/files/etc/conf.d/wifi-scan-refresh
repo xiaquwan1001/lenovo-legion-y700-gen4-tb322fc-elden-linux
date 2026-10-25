@@ -1,0 +1,11 @@
+# /etc/conf.d/wifi-scan-refresh — 连通态周期扫描参数（PITFALLS #354）
+#
+# 为什么存在：NetworkManager 在「已连接」状态下不做周期扫描（periodic_allowed=FALSE），
+# 交给 wpa_supplicant 的 bgscan，而 NM 把 bgscan 写死成 simple:30:-70:86400
+# ⇒ 信号好于 -70 dBm 时等于不再扫描 ⇒ 候选 AP 榜过期后被清空，只剩当前连接项。
+#
+# WIFI_SCAN_INTERVAL = 请求扫描的间隔（秒）。
+#   **必须小于 180 s**（wpa_supplicant 的 bss_expiration_age，超过就仍会被清缓存）。
+#   代价：本机全信道扫描（110 信道）约 5.6–8.4 s，150 s 档 ≈ 4–6% 占空比。
+#   想省电可调到 170（贴着上限），想更实时可设 120（= NM 未连接时的自扫上限）。
+WIFI_SCAN_INTERVAL=150

@@ -1,0 +1,8 @@
+#!/bin/sh
+# trigger a feedbackd event on the phosh session bus. usage: feedback [event]
+ev=${1:-button-pressed}
+PID=$(ps -o pid=,comm= | awk '$2=="phosh"{print $1; exit}')
+BUS=$(tr '\0' '\n' < /proc/$PID/environ | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p')
+DBUS_SESSION_BUS_ADDRESS=$BUS gdbus call --session --dest org.sigxcpu.Feedback \
+  --object-path /org/sigxcpu/Feedback \
+  --method org.sigxcpu.Feedback.TriggerFeedback "cli" "$ev" "{}" 0

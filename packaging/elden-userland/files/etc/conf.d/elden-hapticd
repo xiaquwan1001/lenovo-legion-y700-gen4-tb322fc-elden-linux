@@ -1,0 +1,7 @@
+# /etc/conf.d/elden-hapticd — Waydroid 马达透传桥参数（TASKS C10）
+#
+# --amp-a / --amp-b：两个马达各自的最大强度（0..0xffff）。
+# A/B = 按 sysfs i2c 地址排序的第 1/第 2 个马达（本机 6-005a / 6-005b）。
+# 先用 `elden-hapticd --test a` / `--test b` 靠手感触明哪一侧是哪一路，
+# 再把下面这行改成需要的左右差异（例如 --amp-a 0xffff --amp-b 0xbbbb）。
+HAPTIC_ARGS="--amp-a 0xffff --amp-b 0xffff"

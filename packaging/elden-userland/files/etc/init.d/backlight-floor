@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+# backlight-floor — 把背光钳在 FLOOR 之上，避免「面板 GOOD 但看起来像黑屏」
+#
+# 背景与实测事故见 /usr/local/sbin/elden-backlight-floor.sh 头部注释、
+# reports/backlight-floor-20261023.md、PITFALLS #372。
+# 参数：/etc/conf.d/backlight-floor 的 BACKLIGHT_FLOOR（默认 1024/4095 ≈ 25%）
+name="backlight-floor"
+description="Clamp AW99706 backlight above a floor so a GOOD panel never looks black"
+
+command="/usr/local/sbin/elden-backlight-floor.sh"
+command_args="--loop 20"
+command_background="yes"
+supervisor="supervise-daemon"
+pidfile="/run/backlight-floor.pid"
+output_log="/var/log/backlight-floor.log"
+error_log="/var/log/backlight-floor.log"
+respawn_delay=10
+
+depend() {
+	after localmount
+}

@@ -1,0 +1,14 @@
+#!/bin/sh
+# greetd initial_session target (path A, auto-login root).  greetd runs this
+# through PAM (pam_elogind) so a real logind session exists for root.
+export LIBSEAT_BACKEND=seatd
+export XDG_CURRENT_DESKTOP=Phosh:GNOME
+export XDG_SESSION_DESKTOP=phosh
+export XDG_SESSION_TYPE=wayland
+export GDK_BACKEND=wayland
+export MOZ_ENABLE_WAYLAND=1
+export HOME=/root
+[ -n "$XDG_RUNTIME_DIR" ] || export XDG_RUNTIME_DIR=/run/user/0
+mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null || true
+chmod 700 "$XDG_RUNTIME_DIR" 2>/dev/null || true
+exec /usr/bin/phosh-session

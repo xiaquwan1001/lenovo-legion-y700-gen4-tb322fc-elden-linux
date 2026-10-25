@@ -1,0 +1,5 @@
+#!/bin/sh
+# elden-glycin-shim: make glycin's bwrap self-test look blocked so glycin runs
+# image loaders without sandboxing (fixes phosh/gdk-pixbuf abort).
+echo "bwrap: Creating new namespace failed: Operation not permitted" >&2
+exit 1

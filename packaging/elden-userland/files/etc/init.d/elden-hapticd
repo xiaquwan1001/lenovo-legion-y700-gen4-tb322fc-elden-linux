@@ -1,0 +1,39 @@
+#!/sbin/openrc-run
+# elden-hapticd — Waydroid 马达透传（宿主侧 bridge daemon）
+# 职责：① 建 bridge 目录/文件（容器 /sys/class/leds 的 bind 源）
+#       ② 轮询 activate/duration 并把请求转成 aw86927 FF_RUMBLE
+# 前置：lxc.mount.entry 把 /run/elden-haptic/leds 挂到容器的 /sys/class/leds
+#       （见 scripts/waydroid-haptics-setup.sh）
+
+name="elden-hapticd"
+description="Waydroid vibrator passthrough bridge (aw86927 haptics)"
+
+command="/usr/local/bin/elden-hapticd"
+command_args="--dir /run/elden-haptic/leds/vibrator --verbose ${HAPTIC_ARGS:-}"
+# 每马达强度（A=按 sysfs i2c 地址排序的第 1 个，B=第 2 个）：用 HAPTIC_ARGS="--amp-a 0xffff --amp-b 0x9999" 覆盖
+command_background="yes"
+pidfile="/run/elden-hapticd.pid"
+output_log="/var/log/elden-hapticd.log"
+error_log="/var/log/elden-hapticd.log"
+
+depend() {
+    before waydroid-container
+    after localmount
+}
+
+start_pre() {
+    mkdir -p /run/elden-haptic/leds/vibrator
+    # amplitude 的默认值必须是 255（= 满幅），不能是 0：
+    # elden-hapticd 用 effective_mag = --amp × amplitude/255，若为 0 则 magnitude=0，
+    # 内核 aw86927_haptics_play() 会因 level 未变化直接 return（完全不震，不是“震得轻”）。
+    for f in activate duration state; do
+        [ -e "/run/elden-haptic/leds/vibrator/$f" ] || : > "/run/elden-haptic/leds/vibrator/$f"
+        echo 0 > "/run/elden-haptic/leds/vibrator/$f" 2>/dev/null || true
+    done
+    [ -e /run/elden-haptic/leds/vibrator/amplitude ] || : > /run/elden-haptic/leds/vibrator/amplitude
+    echo 255 > /run/elden-haptic/leds/vibrator/amplitude 2>/dev/null || true
+    # 容器内 HAL 以 system(uid 1000) 身份写这三个文件
+    chmod 755 /run/elden-haptic /run/elden-haptic/leds
+    chmod 777 /run/elden-haptic/leds/vibrator
+    chmod 666 /run/elden-haptic/leds/vibrator/*
+}

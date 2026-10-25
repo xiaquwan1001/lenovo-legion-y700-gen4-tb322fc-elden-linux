@@ -1,0 +1,17 @@
+#!/bin/sh
+# usage: vibrate [ms_per_burst] [repeats]   (default 800ms x 5)
+ms=${1:-800}; n=${2:-5}
+evs=""
+for d in /sys/class/input/event*; do
+  [ "$(cat "$d/device/name" 2>/dev/null)" = "aw86927-haptics" ] && evs="$evs /dev/input/$(basename "$d")"
+done
+echo "haptic devices:$evs  burst=${ms}ms x${n}"
+i=0
+while [ $i -lt $n ]; do
+  i=$((i+1))
+  for e in $evs; do
+    /usr/local/bin/ffrumble "$e" "$ms" 0xffff || echo "  $e failed"
+    sleep 0.4
+  done
+done
+echo done

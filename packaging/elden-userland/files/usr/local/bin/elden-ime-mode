@@ -1,0 +1,45 @@
+#!/bin/sh
+# elden-ime-mode -- 在两种输入法模式间切换（TB322FC / phoc / squeekboard / fcitx5+Rime）
+#
+#   term (默认) : fcitx5 占住 Wayland input-method 槽位
+#                 → 终端 foot / 任何 text-input-v3 客户端都能用 Rime 打中文
+#                 → OSK 由 elden-ime-focusd 监听 kimpanel 后调 sm.puri.OSK0.SetVisible 弹出
+#   osk         : fcitx5 --disable waylandim，把槽位让给 squeekboard
+#                 → OSK 自动弹出最可靠；中文只在 GTK / Xwayland 应用里可用（终端无效）
+#
+# 用法: elden-ime-mode [term|osk]     （默认 term）
+set -u
+
+restart_all() {
+	pkill -x squeekboard 2>/dev/null
+	pkill -x fcitx5 2>/dev/null
+	sleep 0.6
+}
+
+case "${1:-term}" in
+term)
+	# 顺序很重要：先腾空槽位 → fcitx5 抢到 input-method-v2 → 再拉 squeekboard
+	restart_all
+	setsid /usr/bin/fcitx5 >/dev/null 2>&1 &
+	sleep 1.2
+	setsid /usr/bin/squeekboard >/dev/null 2>&1 &
+	sleep 0.5
+	echo "mode=term (fcitx5 owns waylandim; foot 可中文；OSK 由 focusd 弹出)"
+	;;
+osk)
+	restart_all
+	setsid /usr/bin/fcitx5 --disable waylandim >/dev/null 2>&1 &
+	sleep 0.8
+	setsid /usr/bin/squeekboard >/dev/null 2>&1 &
+	sleep 0.5
+	echo "mode=osk (squeekboard owns slot; 终端里没有中文)"
+	;;
+*)
+	echo "usage: $0 [term|osk]" >&2
+	exit 2
+	;;
+esac
+
+# 确保 focusd 在跑
+pgrep -f /usr/local/bin/elden-ime-focusd >/dev/null 2>&1 || setsid /usr/local/bin/elden-ime-focusd >/dev/null 2>&1 &
+exit 0

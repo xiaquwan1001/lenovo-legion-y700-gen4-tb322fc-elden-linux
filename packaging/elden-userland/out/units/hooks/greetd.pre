@@ -1,0 +1,13 @@
+# hooks/greetd.pre — 启动前置（等价原 /etc/init.d/greetd 的 start_pre）
+#
+# 原 start_pre 用 OpenRC 的 `checkpath` 建 greetd 用户 home 与日志文件。
+# 这里改成发行版无关的等价实现：**不能省** —— home 不存在时 greetd 直接退出，
+# 表现就是 PITFALLS #318 的「开机无桌面 / loginctl 无会话」。
+
+homedir=$(getent passwd greetd 2>/dev/null | cut -d: -f6)
+[ -n "$homedir" ] || { echo "elden/greetd.pre: 用户 greetd 不存在（包未装？）" >&2; exit 1; }
+install -d -m 750 -o greetd -g greetd "$homedir"
+install -d -m 755 /var/log
+[ -e /var/log/greetd.log ] || : > /var/log/greetd.log
+chown root:root /var/log/greetd.log
+chmod 640 /var/log/greetd.log

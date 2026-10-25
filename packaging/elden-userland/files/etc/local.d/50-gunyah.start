@@ -1,0 +1,10 @@
+#!/bin/sh
+# Bring up Gunyah RM on mainline elden. dtbo.ko fetches the per-boot hyp DTBOs
+# (TZ SIP 0x02000609 -> hyp boot info -> overlay).
+# 2026-10-25: stack is now the AOSP android16-6.12 driver set (config_image +
+# auth_vm_mgr + gunyah_qtvm). Module build identity MUST equal /proc/version.
+modprobe dtbo 2>/dev/null
+for m in gunyah_hypercall gunyah gunyah_platform_hooks gunyah_qcom gunyah_rsc_mgr \
+         gunyah_vcpu gunyah_irqfd gunyah_ioeventfd gunyah_qtvm; do
+	modprobe "$m" 2>/dev/null
+done

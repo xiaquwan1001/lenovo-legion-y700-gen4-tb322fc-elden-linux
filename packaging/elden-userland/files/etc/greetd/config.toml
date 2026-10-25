@@ -1,0 +1,14 @@
+# /etc/greetd/config.toml — auto-login xuqianhui1001, appliance mode.
+# PAM (pam_elogind) grants seat/device access via elogind.
+# Rollback: cp /etc/greetd/config.toml.bak-root /etc/greetd/config.toml
+
+[terminal]
+vt = 7
+
+[initial_session]
+command = "/usr/local/sbin/elden-session-user"
+user = "xuqianhui1001"
+
+[default_session]
+command = "/usr/local/sbin/elden-session-user"
+user = "xuqianhui1001"

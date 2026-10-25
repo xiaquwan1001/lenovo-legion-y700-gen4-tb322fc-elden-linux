@@ -1,0 +1,9 @@
+# hooks/wifi-scan-refresh.pre — 启动前置（等价原 initd 的 start_pre 的 checkpath）
+#
+# ⚠️ /run/wifi-scan-refresh.pid 里是 **supervise-daemon 自己的 pid**（不是子进程 pid）。
+# 判活别对这个 pid 发信号：杀掉 supervise-daemon 会留下孤儿 `--loop` 子进程，
+# `rc-service status` 会变成 `unsupervised`（伪装成「服务挂了」）。
+# 测重启韧性要 kill -9 子进程：pgrep -f 'wifi-scan-refres[h].sh --loop'（方括号防自匹配）。
+install -d -m 755 /run /var/log
+[ -e /var/log/wifi-scan-refresh.log ] || : > /var/log/wifi-scan-refresh.log
+chmod 0644 /var/log/wifi-scan-refresh.log

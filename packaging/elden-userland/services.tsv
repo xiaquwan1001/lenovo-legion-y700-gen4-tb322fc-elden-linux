@@ -1,0 +1,42 @@
+# services.tsv — 服务语义唯一真源（人工维护；render.py 渲染两种 init，verify.sh 校验）
+#
+# 列（TAB 分隔，字段内不得含 TAB）：
+#   name          服务名（两种 init 同名，日志/conf.d 也用它）
+#   init          ours | override | package
+#   class         longrun | oneshot | shutdown
+#   desc
+#   exec          绝对路径（package 类可以是包内路径）
+#   args          exec 参数（原样进 shell / systemd，`${VAR}` 由各自展开）
+#   env           默认环境变量 "K=V;K2=V2"（conf.d 可覆盖；见各 conf.d）
+#   log           日志文件（空 = 交 journald / OpenRC 默认）
+#   respawn       崩溃重启延迟秒数（0 = 不守护）
+#   need          OpenRC need（→ systemd Requires=；package 依赖用本表其它行名）
+#   after         顺序依赖（systemd After=，OpenRC after）
+#   before        OpenRC before（→ systemd Before=）
+#   wantedby      systemd 安装目标（多个用空格）
+#   enabled       1 = 默认启用；0 = 保留定义但不启用
+#
+# ⚠️ 语义红线（改动前先看 README §服务迁移口径）：qbootctl 必须默认启用；greetd 必须有 respawn；
+#    iio-sensor-proxy 必须等 QRTR svc 400；wifi-scan-refresh 间隔必须 <180 s；
+#    elden-hapticd 的 amplitude 默认必须 255。
+name	init	class	desc	exec	args	env	log	respawn	need	after	before	wantedby	enabled
+backlight-floor	ours	longrun	Clamp AW99706 backlight above a floor so a GOOD panel never looks black	/usr/local/sbin/elden-backlight-floor.sh	--loop 20	BACKLIGHT_FLOOR=1024	/var/log/backlight-floor.log	10	localmount	localmount		multi-user.target	1
+bt-alias	ours	oneshot	Set the Bluetooth adapter alias/power once btqca firmware has loaded	/usr/local/sbin/elden-bt-alias.sh		BT_ALIAS=elden	/var/log/bt-alias.log	0	bluetooth	bluetooth		multi-user.target	1
+charge-watch	ours	longrun	Keep charging policy at runtime (charge-ctl loop)	/usr/local/sbin/charge-watch.sh			/var/log/charge-watch.log	10	udev	udev		multi-user.target	1
+elden-bootlog	ours	oneshot	Per-boot evidence snapshot keyed by boot_id	/usr/local/sbin/elden-bootlog.sh			-	0	localmount	localmount		multi-user.target	1
+elden-hapticd	ours	longrun	Waydroid vibrator bridge (aw86927 FF_RUMBLE)	/usr/local/bin/elden-hapticd	--dir /run/elden-haptic/leds/vibrator --verbose ${HAPTIC_ARGS}	HAPTIC_ARGS=--amp-a 0xffff --amp-b 0xffff	/var/log/elden-hapticd.log	5	localmount	localmount	waydroid-container	multi-user.target	1
+elden-powerlog	ours	shutdown	Record a clean-shutdown marker for post-mortem	/usr/local/sbin/elden-powerlog-mark.sh			/root/powerlog.txt	0				poweroff.target reboot.target halt.target	1
+gunyah-modprobe	ours	oneshot	Load the Gunyah RM driver stack (BLOCKED: vendor MEM_DONATE required; see reports/gunyah-decision-20261025.md)	/usr/local/sbin/gunyah-modprobe.sh				0				multi-user.target	0
+greetd	override	longrun	Greeter daemon (patched: respawn + after seatd/elogind)	/usr/sbin/greetd	--config /etc/greetd/config.toml	LIBSEAT_BACKEND=seatd	/var/log/greetd.log	5	localmount	seatd elogind		multi-user.target	1
+iio-sensor-proxy	override	longrun	iio-sensor-proxy (patched: waits for QRTR svc 400 = SSC)	/usr/libexec/iio-sensor-proxy			-	5	dbus	hexagonrpcd-adsp-sensorspd		multi-user.target	1
+net-selfheal	ours	oneshot	HTTPS trust chain + PMTU self-heal after wlan0 is up	/usr/local/sbin/net-selfheal.sh			/var/log/net-selfheal.log	0	localmount	networkmanager		multi-user.target	1
+pstore-catch	ours	oneshot	Archive pstore/ramoops records to /var/log/pstore at boot	/usr/local/sbin/pstore-catch.sh			/var/log/pstore-catch.log	0	localmount	localmount		multi-user.target	1
+q28-boot-watchdog	ours	longrun	One-shot DSI/panel watchdog for Q28 (never fired on the operational line)	/usr/local/sbin/q28-boot-watchdog.sh			/var/log/q28-watchdog.log	0	localmount	localmount		multi-user.target	1
+qbootctl	override	oneshot	Mark the current A/B slot successful (PITFALLS #181: without it, ~7 reboots end in fastboot)	/usr/bin/qbootctl	-m			0				multi-user.target	1
+ssc-udp-relay	ours	longrun	Relay real Qualcomm SSC sensor values to the Waydroid sensor HAL (UDP)	/usr/bin/python3	/usr/local/bin/ssc-udp-relay.py		/var/log/ssc-udp-relay.log	5	dbus	dbus		multi-user.target	1
+time-sync	ours	oneshot	Set the wall clock once the network is up	/usr/local/sbin/time-sync.sh			/var/log/time-sync.log	0	localmount	networkmanager		multi-user.target	1
+waydroid-ipv6	ours	longrun	Keep the Waydroid bridge and container dual-stack (ULA + NAT66)	/usr/local/sbin/waydroid-ipv6			-	5	waydroid-container	waydroid-container networkmanager		multi-user.target	1
+wifi-scan-refresh	ours	longrun	Periodic NetworkManager scan while connected, keeps the AP candidate list fresh	/usr/local/sbin/wifi-scan-refresh.sh	--loop	WIFI_SCAN_INTERVAL=150	/var/log/wifi-scan-refresh.log	5	dbus	networkmanager		multi-user.target	1
+ath12k-retry	ours	longrun	Re-bind ath12k PCI devices that failed first probe	/usr/local/sbin/ath12k-retry.sh			/var/log/ath12k-retry.log	0	localmount	localmount		multi-user.target	1
+hexagonrpcd-adsp-sensorspd	package	longrun	ADSP sensorspd service (QRTR svc 400) — package-provided	/usr/bin/hexagonrpcd-adsp-sensorspd			-	5				multi-user.target	1
+waydroid-container	package	longrun	Waydroid container manager — package-provided	/usr/bin/waydroid	container start		-	5	lxc	lxc		multi-user.target	1
