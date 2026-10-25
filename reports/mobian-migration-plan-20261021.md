@@ -129,14 +129,19 @@
 > | S0 版本选型门 | ✅ 已定 = **forky/sid** | sid 索引实测（`apt-cache` 直读 `/opt/elden/arm64-sid`） |
 > | S1 主机 rootfs（debootstrap） | ✅ 完成（2026-10-25） | `/opt/elden/arm64-sid`（`debian_version` = `forky/sid`），同时用作 arm64 交叉构建 chroot |
 > | S2 包集翻译 | ✅ 完成（2026-10-26） | `rootfs/debian/pkgmap.tsv`（map 97 / drop 23 / add 7）+ `tools/check-pkgmap.sh` **FAIL=0 WARN=0** → `apt-list.txt`（107 包）；`reports/mobian-rootfs-artifacts-20261026.md` §1 |
-> | S3 自建 firmware 包 | ✅ 完成（2026-10-26） | `rootfs/debian/elden-firmware/` → `out/debian/elden-firmware_1.0~20261025_all.deb`（21 MB / 116 项，DTS `firmware-name` 门禁全绿）；同报告 §2 |
-> | S4 模块树 | 🟡 物料已就绪，未落地 | `out/modstage-vk163/lib/modules/<UTS>`（1539 `.ko`，模块化产物） |
+> | S3 自建 firmware 包 | 🟡 已产出，**缺一块** | `rootfs/debian/elden-firmware/` → `out/debian/elden-firmware_1.0~20261025_all.deb`（21 MB / 116 项，DTS `firmware-name` 门禁全绿）；同报告 §2。**补齐项**：传感器 DSP 目录 `/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors`（不在 `/lib/firmware` 里，见 `reports/modular-mobian-transition-20261026.md` §4） |
+> | S4 模块树 | 🟡 物料已就绪 + **装根方法已验** | `out/modstage-vk163/lib/modules/<UTS>`（1539 `.ko`）；`depmod -b <根> <UTS>` 实测 rc=0（免 root，见 §3.1） |
 > | S5 initramfs | ⬜ 未做 | 需 Debian `initramfs-tools` hook（tplg/固件必须进 initramfs） |
 > | S6 systemd unit | 🟡 已渲染、未部署 | `packaging/elden-userland/out/units/systemd`（18 个，语义真源 `services.tsv`） |
 > | S7 设备侧落地 | ⬜ 未做 | 前置：回退通道实测 + `slot-attr` 基线 |
 >
 > **方向已由用户指令确认（2026-10-26）**：宿主 rootfs 切 glibc/systemd = 目标（不再受 2026-10-11「不切」裁定约束，
 > 该裁定只针对「为换而换」）。仍未变的两条硬约束：① 内核必须自编；② 必须 sid 级 `iio-sensor-proxy` + `libssc2`。
+>
+> **★ 落点改判（2026-10-26 续，见 `reports/modular-mobian-transition-20261026.md` §0 J1/J2）**：
+> f2fs 并存后已有两块 96 GiB ⇒ **Debian 装 `linux17` ext4，Alpine 留 `linux18` f2fs 不动**，
+> §3.3 的「路线①原地覆盖 + 无 live 回退」**作废**（回退 = 重启回 `boot_b`，秒级）。
+> 换根靠 cmdline `elden_root=LABEL=linux17` ⇒ **必须换 boot 镜像**，但可用 `fastboot boot` 零写盘（S7 = 一条命令）。
 
 ### S0 版本选型门（0.5 h）— ✅ 已定 forky/sid
 

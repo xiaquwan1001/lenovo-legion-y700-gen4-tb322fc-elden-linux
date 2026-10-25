@@ -26,6 +26,11 @@
 ### 1.1 内核与软件基线
 - ★**2026-10-26（模块化内核 vk163 零写盘上机；`boot_b` 未变）** —— 在机模块树**新增** `/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163/`（1539 `.ko`，89 MB，仅当跑 vk163 镜像时被使用；日常内核忽略）与 `/usr/local/sbin/payload-modules-load.sh`（载荷模块加载器；在 vk152 非模块化内核上是 no-op，实测自报 `is builtin`）。
   `boot_b` 仍是 `f2fs-root`（内核 sha `b6a074ff…` 读回一致、`retry=6 succ=1`），本轮**未写任何分区**；测试方式 = `fastboot boot out/boot-elden-vk163.img`，退回必须经 `reboot2 bootloader` + `fastboot reboot`（**普通暖复位会继续起测试镜像**，见 `PITFALLS #401`）。报告 `reports/vk163-modular-20261026.md`。
+- ★**2026-10-26（续）· `linux17` 已定性为 Debian 候选落点** —— 迁移改用「双分区并存」而非原地覆盖：Debian 目标根 = **`linux17` ext4**，
+  Alpine 现役根 `linux18` f2fs 不动 ⇒ 回退 = 重启回 `boot_b`（秒级，不需要 live 介质）。换根靠 cmdline `elden_root=LABEL=`（烧在 boot.img 里）
+  ⇒ 候选镜像用 `fastboot boot` 零写盘验收。见 `reports/modular-mobian-transition-20261026.md` §0 J1/J2。
+  另：传感器 DSP 目录 = **`/usr/share/qcom/sm8750/LENOVO/TB322FC`**（550 KB，`sns_reg.conf`+`config/`+`registry/`，属主 `fastrpc`），
+  不是 `/lib/firmware` 的一部分 —— 迁移物料清单需单列。
 - ★**2026-10-25（f2fs 路线 A 真机落地：根 = `f2fs @linux18`）** —— `boot_b` 已换成 `f2fs-root` 镜像（内核 = vk152 那份 `b6a074ff…`、ramdisk = 仓库 `/init`、cmdline `elden_root=LABEL=linux18`，签名件 sha `257266ec…`，写后读回一致）。
   **盘布局（4 KiB 扇区）**：`linux17` ext4 **96.0 GiB**（73 277 435..98 443 258，**留作回退根**，实测 `fastboot boot` 可起）+ `linux18` f2fs **96.0 GiB**（98 443 259..123 609 082）+ 尾部余 1024 MiB；GPT 双表写后 `cmp` 读回一致。
   **起根实测**：`/init` 打印 `root fstype: f2fs` → `switching root to /dev/sda18`；模块 37、`version magic` 错误 0、`phoc=1`、`card0-DSI-1=connected`、背光 511、`crashed` 0、`df / = 96G 31%`、`qbootctl -m b` → `succ=1`；首启后离线 `fsck.f2fs -f` 全 `[Ok..]`。
