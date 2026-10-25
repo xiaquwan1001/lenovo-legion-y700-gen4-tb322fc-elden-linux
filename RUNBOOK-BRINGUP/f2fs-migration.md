@@ -1,6 +1,9 @@
 # RUNBOOK：ext4 → f2fs 根（路线 A：缩 ext4 + 尾部新建 f2fs + 本地复制）
 
-> 状态：**已备好、未执行**（2026-10-25）。所有写盘步骤都要显式 `--yes`。
+> 状态：**已执行完成（2026-10-25 真机）** —— 根现为 `f2fs @linux18`，`boot_b` 已写槽，真 POR 冷起 + 读回 + 首启后 `fsck.f2fs` 全通过；
+> ext4 `linux17`（96 GiB）保留为回退根且 `fastboot boot` 实测可起。执行记录见 `TASKS/sessions/2026-10-25-f2fs路线A落地.md`。
+> ⚠ 执行中暴露的 5 个 ramdisk 工具级坑（busybox `tar/dd`、无 `python3`、dmesg 钩子 fd9 占超级块、tar 流 sha 非内容指纹）见 `PITFALLS #400–#405`，复跑前先读。
+> 所有写盘步骤仍要显式 `--yes`。
 > 依据：`reports/f2fs-host-bench-20261025.md`（参数定案 + discard 已证实）、
 > `reports/g0-fstype-zero-write-20261025.md`（`/init` fstype 探测已上机验证）、
 > `reports/userland-service-consolidation-20261025.md`（入口已收敛，换 fs 不再牵动服务）。

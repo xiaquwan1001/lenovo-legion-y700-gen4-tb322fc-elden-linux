@@ -24,8 +24,14 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
+- ★**2026-10-25（f2fs 路线 A 真机落地：根 = `f2fs @linux18`）** —— `boot_b` 已换成 `f2fs-root` 镜像（内核 = vk152 那份 `b6a074ff…`、ramdisk = 仓库 `/init`、cmdline `elden_root=LABEL=linux18`，签名件 sha `257266ec…`，写后读回一致）。
+  **盘布局（4 KiB 扇区）**：`linux17` ext4 **96.0 GiB**（73 277 435..98 443 258，**留作回退根**，实测 `fastboot boot` 可起）+ `linux18` f2fs **96.0 GiB**（98 443 259..123 609 082）+ 尾部余 1024 MiB；GPT 双表写后 `cmp` 读回一致。
+  **起根实测**：`/init` 打印 `root fstype: f2fs` → `switching root to /dev/sda18`；模块 37、`version magic` 错误 0、`phoc=1`、`card0-DSI-1=connected`、背光 511、`crashed` 0、`df / = 96G 31%`、`qbootctl -m b` → `succ=1`；首启后离线 `fsck.f2fs -f` 全 `[Ok..]`。
+  **数据一致性**：同盘复制 216 882 → 216 876 文件（差 6 = socket），`tar -d`（含 xattr/ACL）**零差异**，硬链接 133 组保留。
+  **已知噪声（两侧一致，非迁移引入）**：`rmtfs` failed（缺 `/dev/qcom_rmtfs_mem1`）、`rtkit` 偶报 `crashed` 但进程存活。
+  细节 `TASKS/sessions/2026-10-25-f2fs路线A落地.md`、坑 `PITFALLS #400–#405`。
 - ★**2026-10-25（用户态固化 + 入口收敛 + f2fs 预备；全零写盘/仅 rootfs 文件级改动）** ——
-  `boot_b` **仍 = `vk152`**（未写槽）；根 = `/dev/sda17` ext4 / 189 G、用 28 G。**三处变化**：
+  `boot_b` **当时 = `vk152`**（该时段未写槽；当晚已切 `f2fs-root`，见上条）；根当时 = `/dev/sda17` ext4 / 189 G、用 28 G。**三处变化**：
   ① **disk `/init` 350 行旧版 → 仓库版 444 行**（`sha256 24074be1…`；旧件 `/root/bak/20261025-entry-consolidation/init.disk-old`）
      ⇒ `camera-modules-load.sh` 生效（**模块 0 → 37~47**），openrc 模式判定与「/init 只做挂根+模块+lifeline+交棒」口径一致；
   ② **服务单一归属**：`/etc/local.d/{elden-bringup,elden-bootlog}.start` 改 no-op，运行期脚本改由 OpenRC 服务负责

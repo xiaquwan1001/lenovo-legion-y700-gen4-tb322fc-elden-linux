@@ -119,7 +119,22 @@ shrink() {
 	say "0. 抓当前 GPT 双表（写前最后一份）"
 	mkdir -p "$WORK"
 	$SSH "dd if=$DEV bs=4096 count=6 2>/dev/null" > "$WORK/gpt_before_main0.bin"
-	$SSH "dd if=$DEV bs=4096 skip=\$((\$(python3 -c 'print(123871231)')-4)) count=5 2>/dev/null" > "$WORK/gpt_before_backup0.bin"
+	# ⚠ 备份表偏移必须从主表头解析（设备侧没有 python3；写死数字曾导致 dd 静默失败产出 0 字节文件）
+	[ "$(stat -c %s "$WORK/gpt_before_main0.bin")" = 24576 ] || die "主表 dump 尺寸不对（应 24576 B）"
+	ALT=$(python3 -c '
+import struct,sys
+b=open(sys.argv[1],"rb").read()
+h=b[4096:4096+92]
+assert h[:8]==b"EFI PART", "primary header missing"
+print(struct.unpack_from("<Q",h,32)[0])' "$WORK/gpt_before_main0.bin") || die "解析 backup_lba 失败"
+	echo "  backup_lba=$ALT（备份表从 $((ALT-4)) 起）"
+	$SSH "dd if=$DEV bs=4096 skip=$((ALT-4)) count=5 2>/dev/null" > "$WORK/gpt_before_backup0.bin"
+	[ "$(stat -c %s "$WORK/gpt_before_backup0.bin")" = 20480 ] || die "备份表 dump 尺寸不对（应 20480 B）"
+	python3 -c '
+import sys
+b=open(sys.argv[1],"rb").read()
+assert b[4*4096:4*4096+8]==b"EFI PART", "备份表 dump 里第 5 个扇区不是 GPT 头"
+assert any(b[0:4096]), "备份表 entries 扇区全 0"' "$WORK/gpt_before_backup0.bin" || die "备份表 dump 内容不对"
 	python3 "$ROOT/scripts/gpt-surgery-tb322fc.py" list --main "$WORK/gpt_before_main0.bin" | head -3
 
 	say "1. 生成新 GPT（先只生成，不写）"
@@ -129,19 +144,75 @@ shrink() {
 		--shrink-name "$LABEL_OLD" --new-name "$LABEL_NEW" \
 		--keep-gib "$KEEP_GIB" --new-gib "$NEW_GIB" || die "GPT 生成失败"
 
-	say "2. 取 resize2fs（只读挂 ext4 → 拷出来 → 立刻 umount）"
+	say "1b. 卸载 ramdisk 对 $PART_OLD 的自动挂载（ext4 必须完全离线）"
+	# vk162 的 rescue ramdisk 会把 linux17 自动挂到 /mnt/dbg(rw) 供调试；
+	# 只要还挂着，e2fsck/resize2fs 就会拒绝或写坏。这里逐个卸掉并复核 /proc/mounts。
+	# ▲ ramdisk 的 dmesg 捕获钩子（/init 里 `exec 9>/mnt/dbg/...`）会一直持有 ext4 上的
+	#   日志文件 ⇒ umount 之后超级块仍不释放：umount 成功、/proc/mounts 为空，但
+	#   e2fsck 报 "/dev/sda17 is in use"、dd 整盘报 EBUSY。必须先把这些持有者杀掉。
+	$SSH "
+	set -e
+	for p in /proc/[0-9]*; do
+		for f in \$p/fd/*; do
+			t=\$(readlink \$f 2>/dev/null) || continue
+			case \"\$t\" in
+				/mnt/dbg/*|/mnt/ro/*|/mnt/old/*|*m1-73-dmesg*)
+					# fd 9 会被 init 的后代继承（detach 后路径显示成 /root/m1-73-dmesg.txt），
+					# 所以只杀「父进程 = init」的直接子进程，避免把自己的 ssh shell 也杀掉。
+					PP=\$(awk '{print \$4}' /proc/\$(basename \$p)/stat 2>/dev/null)
+					if [ \"\$PP\" = 1 ]; then echo \"kill \$(basename \$p) fd:\$t\"; kill -9 \$(basename \$p) 2>/dev/null || true; fi ;;
+			esac
+		done
+	done
+	for i in 1 2 3 4 5; do
+		m=\$(awk -v d=$PART_OLD '\$1==d{printf \"%s \",\$2}' /proc/mounts)
+		[ -z \"\$m\" ] && break
+		for p in \$m; do echo \"umount \$p\"; umount \"\$p\" 2>/dev/null || umount -l \"\$p\"; done
+		sleep 1
+	done
+	if awk -v d=$PART_OLD '\$1==d{f=1} END{exit f?0:1}' /proc/mounts; then
+		echo \"FATAL: $PART_OLD 仍被挂载\" >&2; exit 1
+	fi
+	DEVNAME=\$(basename $PART_OLD)
+	for i in \$(seq 1 10); do
+		[ -d /sys/fs/ext4/\$DEVNAME ] || break
+		sleep 1
+	done
+	if [ -d /sys/fs/ext4/\$DEVNAME ]; then
+		echo \"FATAL: /sys/fs/ext4/\$DEVNAME 仍存在（超级块未释放）\" >&2
+		for p in /proc/[0-9]*; do ls -l \$p/fd 2>/dev/null | grep -q '$PART_OLD\\|/mnt/' && echo \"holder: \$p \$(tr '\\0' ' ' < \$p/cmdline)\" ; done
+		exit 1
+	fi
+	echo '$PART_OLD 已完全卸载（超级块已释放）✅'
+	" || die "无法卸载 $PART_OLD（resize2fs 要求离线）"
+
+	say "2. 取 resize2fs + GNU tar（只读挂 ext4 → 拷出来 → 立刻 umount）"
+	# ⚠ RAM root 的 /bin/tar 是 busybox：不认 --xattrs/--acls（会静默丢 capability/ACL）。
+	#   所以从 ext4 侧取 Alpine 的 GNU tar(musl) + libacl，用 ramdisk 自带的 musl loader 跑。
 	$SSH '
 	set -e
-	mkdir -p /mnt/ro /tmp/e2tools
-	mount -o ro '"$PART_OLD"' /mnt/ro
+	mkdir -p /mnt/ro /tmp/e2tools /tmp/e2tools/lib
+	# 本内核会拒绝「上层还留着 orphan_present/未净卸痕迹」时的 ro 挂载
+	# （报 would-change-RO-state）。只读不是目的，只是取工具的手段：
+	# 拿不到就退到 rw 挂 → 拷完 sync + 净卸 → 复核 /proc/mounts 为空。
+	if ! mount -o ro '"$PART_OLD"' /mnt/ro 2>/dev/null; then
+		echo "ro 挂载被拒 → 改 rw 挂取工具（拷完立刻净卸）"
+		mount -t ext4 '"$PART_OLD"' /mnt/ro || { echo "FATAL: 两种挂法都失败" >&2; exit 1; }
+	fi
 	for t in resize2fs e2label tune2fs dumpe2fs; do
 		[ -x /mnt/ro/usr/sbin/$t ] && cp /mnt/ro/usr/sbin/$t /tmp/e2tools/ 2>/dev/null || true
 		[ -x /mnt/ro/sbin/$t ] && cp /mnt/ro/sbin/$t /tmp/e2tools/ 2>/dev/null || true
 	done
-	umount /mnt/ro
+	cp /mnt/ro/bin/tar /tmp/e2tools/tar
+	cp -L /mnt/ro/usr/lib/libacl.so.1 /tmp/e2tools/lib/ 2>/dev/null || true
+	sync
+	umount /mnt/ro || { echo "FATAL: /mnt/ro 卸不掉" >&2; exit 1; }
 	chmod +x /tmp/e2tools/* 2>/dev/null || true
-	ls -l /tmp/e2tools
+	printf "#!/bin/sh\nexec /lib/ld-musl-aarch64.so.1 --library-path /tmp/e2tools/lib /tmp/e2tools/tar \"\$@\"\n" > /tmp/e2tools/gtar
+	chmod +x /tmp/e2tools/gtar
+	ls -l /tmp/e2tools /tmp/e2tools/lib
 	/tmp/e2tools/resize2fs -V 2>&1 | head -2
+	/tmp/e2tools/gtar --version | head -1
 	'
 
 	say "3. e2fsck -f 后离线缩容到 ${KEEP_GIB} GiB"
@@ -157,7 +228,9 @@ shrink() {
 	say "4. 写 GPT（主表 LBA0..5 + 备份表），写后读回校验"
 	$SSH "
 	set -e
-	dd if=/dev/stdin of=$DEV bs=4096 seek=0 conv=notrunc oflag=direct 2>/dev/null
+	# ⚠ 设备侧 dd 是 busybox：不认 oflag=direct（Invalid argument），只用 conv=notrunc,fsync
+	# ⚠ ramdisk 里没有 /dev/stdin，dd 默认读 stdin
+	dd of=$DEV bs=4096 seek=0 conv=notrunc,fsync
 	" < "$WORK/gpt_after_main0.bin" || die "主表写入失败"
 	$SSH "dd if=$DEV bs=4096 count=6 2>/dev/null" > "$WORK/gpt_rb_main0.bin"
 	cmp -s "$WORK/gpt_after_main0.bin" "$WORK/gpt_rb_main0.bin" || die "主表读回不一致"
@@ -166,14 +239,15 @@ shrink() {
 	$SSH "
 	set -e
 	BASE=\$(( 123871231 - 4 ))
-	dd if=/dev/stdin of=$DEV bs=4096 seek=\$BASE conv=notrunc oflag=direct 2>/dev/null
+	dd of=$DEV bs=4096 seek=\$BASE conv=notrunc,fsync
 	" < "$WORK/gpt_after_backup0.bin" || die "备份表写入失败"
 	$SSH "dd if=$DEV bs=4096 skip=123871227 count=5 2>/dev/null" > "$WORK/gpt_rb_backup0.bin"
 	cmp -s "$WORK/gpt_after_backup0.bin" "$WORK/gpt_rb_backup0.bin" || die "备份表读回不一致"
 	echo "备份表读回一致 ✅"
 
 	say "5. partprobe + 确认新分区存在"
-	$SSH "partprobe $DEV 2>/dev/null; udevadm settle 2>/dev/null; lsblk -b -o NAME,SIZE,TYPE $DEV | tail -4; blockdev --getsize64 $PART_NEW" \
+	$SSH "partprobe $DEV 2>/dev/null; udevadm settle 2>/dev/null; command -v mdev >/dev/null && mdev -s; \
+		sleep 2; lsblk -b -o NAME,SIZE,TYPE $DEV 2>/dev/null | tail -4; blockdev --getsize64 $PART_NEW" \
 		|| die "新分区 $PART_NEW 未出现"
 
 	say "6. mkfs.f2fs -l $LABEL_NEW"
@@ -185,14 +259,23 @@ shrink() {
 	mkdir -p /mnt/old /mnt/new
 	mount -o ro $PART_OLD /mnt/old
 	mount $PART_NEW /mnt/new
-	tar -C /mnt/old -c --xattrs --acls --numeric-owner . | tar -C /mnt/new -x --xattrs --acls --numeric-owner
+	TAR_OPTS='--xattrs --acls --numeric-owner --sort=name --exclude=./lost+found'
+	/tmp/e2tools/gtar \$TAR_OPTS -C /mnt/old -cf - . | /tmp/e2tools/gtar \$TAR_OPTS -C /mnt/new -xf -
 	sync
 	du -x -s -B1 /mnt/old /mnt/new
 	"
-	say "8. 复制后校验：文件数 / 关键文件 sha / fsck.f2fs"
+	say "8. 复制后校验：文件数 / 流 sha（含 xattr+ACL） / 关键文件 sha / fsck.f2fs"
 	$SSH "
 	set -e
 	printf 'old files: %s\nnew files: %s\n' \"\$(find /mnt/old -xdev | wc -l)\" \"\$(find /mnt/new -xdev | wc -l)\"
+	# 权威判据 = GNU tar 的 `-d`（compare）：逐成员核对 name/size/mtime/mode/uid/gid + 内容 + xattr/ACL。
+	# 不要用「两股 tar 流 sha 相等」当判据：归档头里含 `.` 目录项与设备/块号等噪声，
+	# 实测同一份数据两边 sha 不同但 `-d` 零差异（2026-10-25 实测，勿再踩）。
+	TAR_OPTS='--xattrs --acls --numeric-owner --sort=name --exclude=./lost+found'
+	DIFF=\$(/tmp/e2tools/gtar \$TAR_OPTS -C /mnt/old -cf - . 2>/dev/null | /tmp/e2tools/gtar --xattrs --acls --numeric-owner -C /mnt/new -df - 2>&1 | wc -l)
+	echo \"tar --compare 差异行数: \$DIFF\"
+	[ \"\$DIFF\" = 0 ] || { echo 'FATAL: 复制后与源不一致（见上，tar --compare 输出）' >&2; exit 1; }
+	echo '元数据 + 内容 tar --compare 零差异 ✅' 
 	for f in init usr/local/sbin/reboot2 lib/modules; do
 		printf '%-28s %s\n' \"\$f\" \"\$(sha256sum /mnt/old/\$f 2>/dev/null | cut -d' ' -f1 | head -1)=/\$(sha256sum /mnt/new/\$f 2>/dev/null | cut -d' ' -f1 | head -1)\"
 	done
