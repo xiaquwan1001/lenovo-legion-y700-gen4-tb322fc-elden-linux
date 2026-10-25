@@ -316,3 +316,7 @@ gunyah1	uts_dup	PINUTS 到 vk127 UTS（LOCALVERSION= 置空），刻意让 gunya
 gunyah1	num_ne_tag	内核源码未提交（gunyah-port worktree 未 commit/tag），基线 = 24223e44ad80 + 未提交改动；用途是零写盘试验，非日常线
 dtbo1	uts_dup	同 gunyah1 内核（PINUTS 到 vk127 UTS），唯一差别 = 板 DTB 用 -@ 重编（带 __symbols__，201 582 B）；用途 = 厂商 Gunyah hyp DTBO 的 of_overlay_fdt_apply 零写盘验证
 dtbo1	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动
+dtbo2	uts_dup	同 dtbo1 内核（PINUTS 到 vk127 UTS）；相对 dtbo1 只换了 ramdisk → 日用全量 rootfs。起因=dtbo1 用 initramfs-slim 导致 ADSP/CDSP 拿不到固件（PITFALLS #390）
+dtbo2	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动
+dtbo3	uts_dup	同 dtbo2，另加 PMIC RTC offset DT 修复（nvmem cell in pmk8550_sdam_2，PITFALLS #392、patches/dt/0002）
+dtbo3	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动；2026-10-25 起为 boot_b 在役日用镜像

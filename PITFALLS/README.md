@@ -109,6 +109,14 @@
 
 | 78 | **#389** 合法厂商 overlay 在主线一律 `-EINVAL`：根因常是**板 DTB 没有 `__symbols__`**（dtc 未加 `-@`）⇒ `__fixups__` 解析失败；判据 `dtc -O dts <板dtb> \| grep -c __symbols__`（0=本坑）。连带：RM 已绑定时 `rmmod` 承载 overlay 的模块 = 拆节点 ⇒ 20 s 内整机复位，须先卸消费者 | [78-主线DTB缺symbols导致厂商overlay-EINVAL与rmmod复位.md](sessions/78-主线DTB缺symbols导致厂商overlay-EINVAL与rmmod复位.md) |
 
+| 79 | **#390** RAM 启动镜像用 `initramfs-slim`（无 `/lib/firmware`）⇒ `q6v5_pas` 在 switch_root 前拿不到 ADSP/CDSP 固件 ⇒ DSP 永久 offline ⇒ `qcom-battmgr` 全属性 `-EAGAIN`、充电/电量全废。**指纹 = WiFi 正常但电源坏**（ath12k 固件在磁盘）。判据：`remoteproc*/state=offline` + `ramdisk cpio \| grep -c lib/firmware`=0 | [79-RAM启动用slim-initramfs导致DSP离线与电源管理全废.md](sessions/79-RAM启动用slim-initramfs导致DSP离线与电源管理全废.md) |
+
+| 80 | **#391** `fastboot boot` 交棒后 USB 变成 **`1d6b:0104`**（composite gadget），且要 **60–90 s** 才枚举；按 `18d1/05c6` VID 白名单判活会把「正在启动」误判为「SoC 硬挂」。判活三件套 = `lsusb` 全量 + `ssh 192.168.7.1 uptime` + `fastboot devices`。连带：`flash-b.sh` 曾写死 `ssh -6` 而默认 `TABLET` 是 IPv4 字面量 ⇒ 直接报 `Address family not supported` | [80-fastboot-boot后USB变1d6b0104且慢枚举.md](sessions/80-fastboot-boot后USB变1d6b0104且慢枚举.md) |
+
+| 81 | **#392** RTC 不可写（`hwclock -w` → `-ENODEV`）导致每次开机被 1970 覆盖：节点/驱动/绑定全正常，根因是 DT 缺 nvmem offset cell（`rtc-pm8xxx` 的 `set_time` 无 cell 即返回 `-ENODEV`）。修法 = SDAM2 里加 `rtc_offset@b0` + rtc 节点 `nvmem-cells`。注：直接 `make qcom/<board>.dtb` 时 `DTC_FLAGS_<dtb>` 不生效，须 `DTC_FLAGS=-@` | [81-PMIC-RTC不可写因DT缺offset-cell.md](sessions/81-PMIC-RTC不可写因DT缺offset-cell.md) |
+
+| 82 | **#393** `RM rejected … Error: 10` 是**十进制** ⇒ 真实 0xA `MEM_INVALID`（`0x10 IRQ_INUSE` 会打印成 `Error: 16`）。误读一个数导致 2026-10-24 整轮「卡在 IRQ_INUSE」结论与其假设（IRQ 泄漏/DTB 缺 doorbell）全部作废；只有 `message %08x` 那一段是十六进制 | [82-dmesg里RM错误码是十进制不是十六进制.md](sessions/82-dmesg里RM错误码是十进制不是十六进制.md) |
+
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
 > 编号不写死上下界；唯一性由 §8 的正文编号对账保证。

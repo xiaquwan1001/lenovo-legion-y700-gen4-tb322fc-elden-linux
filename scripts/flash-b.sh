@@ -33,8 +33,13 @@ echo "[flash-b] image sha256=$SHA  (96 MiB, signed with bootslot-b/avb.key)"
 #   * device sshd has no sftp-server subsystem (scp defaults to SFTP since OpenSSH 9);
 #   * scp/rsync split the remote spec on the first ':' -> IPv6 link-local hosts break
 #     unless bracketed. Piping through ssh sidesteps both, and never needs /tmp space.
+# 2026-10-25 fix (PITFALLS #391): do NOT force `ssh -6`. The default TABLET is the
+# IPv4 literal 192.168.7.1, where `-6` fails with "Address family for hostname not
+# supported"; an IPv6 link-local target (root@fe80::1e:5eff:feed:e101%<iface>) still
+# works without the flag, since ssh picks the family from the address itself.
+SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=8 -o ServerAliveInterval=15"
 echo "[flash-b] writing boot_b (streamed over ssh)..."
-cat bootslot-b/boot_b.img | ssh -6 -o StrictHostKeyChecking=no "$TAB" '
+cat bootslot-b/boot_b.img | timeout 900 ssh $SSH_OPTS "$TAB" '
 set -e
 D=/dev/disk/by-partlabel/boot_b
 dd of=$D bs=1M conv=fsync 2>/dev/null
@@ -52,12 +57,12 @@ if [ "$REBOOT" = 1 ]; then
 	# 实测在本机当前状态下【会挂起、根本不重启】——`/sbin/reboot` 是 elden-powerwrap，
 	# openrc 分支 `exec /bin/busybox reboot`；该路径与 `busybox reboot -f` 均实测挂起。
 	# `sysrq-b` 是当前唯一可靠通道（实测 uptime 归零 + boot_id 换新）。
-	ssh -o StrictHostKeyChecking=no "$TAB" 'sync; echo b > /proc/sysrq-trigger' || true
+	timeout 30 ssh $SSH_OPTS "$TAB" 'sync; echo b > /proc/sysrq-trigger' || true
 	echo "[flash-b] waiting for Linux..."
 	for i in $(seq 1 90); do
 		sleep 2
-		ping -c1 -W1 192.168.7.1 >/dev/null 2>&1 && timeout 8 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+		ping -c1 -W1 192.168.7.1 >/dev/null 2>&1 && timeout 8 ssh $SSH_OPTS \
 			"$TAB" 'uptime' 2>/dev/null && { echo "[flash-b] up (~$((i*2))s)"; break; }
 	done
-	timeout 15 ssh -o StrictHostKeyChecking=no "$TAB" 'cat /proc/version' || true
+	timeout 15 ssh $SSH_OPTS "$TAB" 'cat /proc/version' || true
 fi

@@ -1,5 +1,12 @@
 # Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 
+> ⚠️ **2026-10-25 更正（PITFALLS #393）**：本报告把 RM 的 `Error: 10` 读成 `0x10 IRQ_INUSE`，
+> **这是误读** —— 驱动用 `%d`（十进制）打印，`Error: 10` 实际是 **0xA `MEM_INVALID`**。
+> 因此 §2 的「IRQ 泄漏」与「DTB 缺 doorbell」两条候选解释、以及由此派生的冷起复测结论全部作废；
+> 结论 6 中「同一 harness 在 stock Android 上逐字相同」仍然成立（错误码同为一个十进制 10）。
+> 现状与下一步只看 `reports/gunyah-pvm-attempt-20261025.md` 与 `TASKS/README.md` §4 N2。
+
+
 > 前置已就绪：RM 在主线可用（`reports/gunyah-mainline-rm-up-20261024.md`）。
 > 本轮目标：不经 QEMU/crosvm，用最小 harness 把 guest VM 跑起来。
 > 状态：**未完成** —— `VM_ALLOC_VMID` / DTB parcel 共享 / `VM_CONFIG_IMAGE` 全过，卡在 `VM_INIT`。
