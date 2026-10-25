@@ -320,3 +320,7 @@ dtbo2	uts_dup	同 dtbo1 内核（PINUTS 到 vk127 UTS）；相对 dtbo1 只换�
 dtbo2	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动
 dtbo3	uts_dup	同 dtbo2，另加 PMIC RTC offset DT 修复（nvmem cell in pmk8550_sdam_2，PITFALLS #392、patches/dt/0002）
 dtbo3	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动；2026-10-25 起为 boot_b 在役日用镜像
+gh612a	uts_dup	同 dtbo3 的 PINUTS 思路（LOCALVERSION= 置空 ⇒ 复用 vk127 UTS），目的 = 让 6.12 Gunyah 驱动集按在机 /lib/modules/<uname -r> 加载；反例镜像：DTB 因 7.3 DTC_FLAGS 命名变更未带 __symbols__（PITFALLS #395）
+gh612a	num_ne_tag	内核源码未提交（gunyah-port worktree，24223e44ad80 + 未提交改动）
+gh612b	uts_dup	同 gh612a，唯一差别 = 修好 DTC_FLAGS_sm8750-lenovo-elden（无 .dtb 后缀）后重编板 DTB（带 __symbols__）；2026-10-25 6.12 栈有效件
+gh612b	num_ne_tag	同上（gunyah-port worktree 未提交）

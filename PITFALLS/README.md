@@ -3,7 +3,7 @@
 > 📇 **先看 `INDEX.md`**（文档地图 + 状态裁决）。
 > **给下一个会话：先读 `INDEX.md`（文档结构），再扫本文件。** 这里全是花过代价换来的教训，按主题归类。
 > **本文件 = 开发经验（踩坑）唯一入口**；**「谁执行、允不允许自动跑」的行为/授权标准在 `.pi/AGENT-OPS.md`**，本文件不定义授权边界。
-> 最后更新：2026-10-19。**条目编号范围不写死**（写死必漂）：现查 `scripts/check-doctor.sh §8` 的正文编号对账。
+> 最后更新：2026-10-25。**条目编号范围不写死**（写死必漂）：现查 `scripts/check-doctor.sh §8` 的正文编号对账。
 > 条目唯一性 = 每个 `#NNN` 在 `sessions/*.md` 里**只被定义一次**；新增条目取当前最大号 +1。
 
 ---
@@ -118,6 +118,8 @@
 | 82 | **#393** `RM rejected … Error: 10` 是**十进制** ⇒ 真实 0xA `MEM_INVALID`（`0x10 IRQ_INUSE` 会打印成 `Error: 16`）。误读一个数导致 2026-10-24 整轮「卡在 IRQ_INUSE」结论与其假设（IRQ 泄漏/DTB 缺 doorbell）全部作废；只有 `message %08x` 那一段是十六进制 | [82-dmesg里RM错误码是十进制不是十六进制.md](sessions/82-dmesg里RM错误码是十进制不是十六进制.md) |
 
 | 83 | **#394** `vermagic` 只比 UTS **release 串**：`…-g<sha>-dirty` 里 `<sha>` 不同就是不同的树，同串不保证任何结构体布局一致；加载即随机踩内存，表现是 `list_del/list_add corruption`（报错点常在 `device_shutdown`/`typec_register_partner`，与 Gunyah 无关），且 `reboot` 卡死只能硬断电。门禁 = 比对设备 `/proc/version` 与 `modinfo vermagic` **逐字**（含 `-dirty`） | [83-vermagic同串不代表同一构建导致内存踩踏.md](sessions/83-vermagic同串不代表同一构建导致内存踩踏.md) |
+| 84 | **#395** 7.3 起 `DTC_FLAGS_<board>` 用 **`target-stem`（无 `.dtb`）**，老写法 `DTC_FLAGS_<board>.dtb := -@` 被静默忽略 ⇒ 板 DTB 无 `__symbols__` ⇒ 厂商 hyp overlay 一律 `-EINVAL`、RM 永不绑定。判据 = 产物 `dtc -O dts \| grep -c __symbols__`（0=本坑）+ `dtbs V=1` 里 dtc 有没有 `-@` | [84-7.3-DTC_FLAGS按target-stem命名导致板DTB无symbols.md](sessions/84-7.3-DTC_FLAGS按target-stem命名导致板DTB无symbols.md) |
+| 85 | **#396** 6.12 的 `gunyah.ko` 用 `core_initcall` 且**无 `module_exit`** ⇒ `/proc/modules` 标 `[permanent]`，`rmmod` 报 `Resource busy`（refcnt 可为 0）。换栈只能覆盖 `/lib/modules/<UTS>/kernel/…`（**不要放 `extra/`**）→ `depmod -a` → 重启 | [85-6.12-gunyah.ko无module_exit所以permanent不可rmmod.md](sessions/85-6.12-gunyah.ko无module_exit所以permanent不可rmmod.md) |
 
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
