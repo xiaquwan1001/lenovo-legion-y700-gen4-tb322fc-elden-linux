@@ -15,3 +15,10 @@ depend() {
 	need localmount
 }
 
+# oneshot/shutdown：显式 start()，让状态如实报 started/failed 而不是 crashed
+start() {
+	ebegin "Per-boot evidence snapshot keyed by boot_id"
+	"$command" $command_args
+	eend $?
+}
+

@@ -15,3 +15,10 @@ depend() {
 	need localmount
 }
 
+# oneshot/shutdown：显式 start()，让状态如实报 started/failed 而不是 crashed
+start() {
+	ebegin "Archive pstore/ramoops records to /var/log/pstore at boot"
+	"$command" $command_args
+	eend $?
+}
+

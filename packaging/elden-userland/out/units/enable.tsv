@@ -15,6 +15,7 @@ qbootctl	default	multi-user.target
 ssc-udp-relay	default	multi-user.target
 time-sync	default	multi-user.target
 waydroid-ipv6	default	multi-user.target
+net-up	default	multi-user.target
 wifi-scan-refresh	default	multi-user.target
 ath12k-retry	default	multi-user.target
 hexagonrpcd-adsp-sensorspd	default	multi-user.target

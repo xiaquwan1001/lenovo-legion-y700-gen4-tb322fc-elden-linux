@@ -182,9 +182,20 @@ def render_openrc_initd(svc, hook_body):
     provides = PROVIDES.get(svc["name"], [])
     if provides:
         dep.append("provide " + " ".join(provides))
+    oneshot_start = ""
+    if cls != "longrun":
+        oneshot_start = (
+            "\n# oneshot/shutdown：显式 start()，让状态如实报 started/failed 而不是 crashed\n"
+            "start() {\n"
+            '\tebegin "' + svc["desc"].replace('"', "'") + '"\n'
+            '\t"$command" $command_args\n'
+            "\teend $?\n"
+            "}\n")
+
     mapping = {
         "NAME": svc["name"], "INIT": svc["init"], "CLASS": cls, "DESC": svc["desc"],
         "EXEC": svc["exec"], "ARGS": svc.get("args", ""),
+        "ONESHOT_START": oneshot_start,
         "CONFD": confd, "ENV_DEFAULTS": defaults,
         "OPENRC_EXTRA": "\n".join(extra) or "# oneshot：前台执行",
         "DEPEND": "\n".join("\t" + d for d in dep),

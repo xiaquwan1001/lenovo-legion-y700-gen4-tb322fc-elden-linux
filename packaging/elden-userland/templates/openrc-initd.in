@@ -14,4 +14,4 @@ command_args="@ARGS@"
 depend() {
 @DEPEND@
 }
-@PRE_HOOK@
+@PRE_HOOK@@ONESHOT_START@

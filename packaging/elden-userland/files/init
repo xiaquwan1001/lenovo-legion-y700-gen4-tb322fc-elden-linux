@@ -155,10 +155,17 @@ fi
 #   elden_root=LABEL=linux | UUID=... | PARTLABEL=... | /dev/sde79 ...
 # Parsed before /persist so we know whether a switch_root is coming.
 elden_root=""
+elden_nocamera=""
 for arg in $(cat /proc/cmdline); do
 	case "$arg" in
 		elden_root=*) elden_root=${arg#elden_root=} ;;
 		ubuntu_root=*) elden_root=${arg#ubuntu_root=} ;;
+		elden_nocamera=*) elden_nocamera=${arg#elden_nocamera=} ;;
+		# kexec target evidence dump (see kexec_marker_dump()).  MUST be parsed
+		# here: this loop is a whitelist, so an unlisted token is silently
+		# dropped and the dump never arms (PITFALLS #378, 2026-10-24).
+		kexec_marker=*) kexec_marker=${arg#kexec_marker=} ;;
+		kexec_marker_dev=*) kexec_marker_dev=${arg#kexec_marker_dev=} ;;
 	esac
 done
 
@@ -190,11 +197,46 @@ fi
 # there too: the OpenRC `modules` service is not in any runlevel on this tree,
 # so /init is the only thing that auto-loads the camera stack (G1-5).
 # Non-fatal by design; absent in the minimal busybox initramfs.
-if [ -x /usr/local/sbin/camera-modules-load.sh ]; then
+# elden_nocamera=1 (kernel cmdline) suppresses the auto-load; used for
+# module-set bisection (camera stack ⇄ screen-blank power-off, Q24).
+if [ "${elden_nocamera:-0}" != 1 ] && [ -x /usr/local/sbin/camera-modules-load.sh ]; then
 	# Log to /dev/kmsg, not /run: on a disk-root boot the persistent /init
 	# remounts a fresh tmpfs over /run, which hides a ramdisk /run file.
 	timeout 20 /usr/local/sbin/camera-modules-load.sh >"$KLOG" 2>&1 || warn "camera-modules-load failed/timed out"
 fi
+
+# --- modularized payload drivers (TB322FC) -----------------------------------
+# ATH12K / QDSP6 audio / haptics / touch / backlight are =m (fragment-modular.config).
+# Same mechanism as the camera stack: /init is the only auto-loader on this
+# tree (no OpenRC `modules` service in runlevels). Non-fatal by design.
+# NOT gated on elden_nocamera: WiFi/audio/touch/backlight have nothing to do
+# with the camera stack, and `elden_nocamera=1` must keep WiFi working.
+if [ -x /usr/local/sbin/payload-modules-load.sh ]; then
+	timeout 20 /usr/local/sbin/payload-modules-load.sh >"$KLOG" 2>&1 || warn "payload-modules-load failed/timed out"
+fi
+
+# --- kexec target evidence dump (opt-in: kexec_marker=1) ----------------------
+# WHY: a kexec handoff inherits the live kernel's dwc3/USB state (mask=1 skips
+# device_shutdown), so the target has **no network and no readable console**;
+# and pstore's console record is rewritten in place across boots, so its byte
+# order is NOT time order (PITFALLS #377).  The only trustworthy channel is a
+# file the target's own init code writes to disk, read by the next boot.
+# Dumps: marker line (uptime/ts/cmdline) + verbatim ring buffer + interrupts.
+kexec_marker_dump() {
+	_mnt=$1
+	mkdir -p "$_mnt/var/tmp" 2>/dev/null || true
+	printf 'alive uptime=%s kernel=%s ts=%s cmdline=%s\n' \
+		"$(cat /proc/uptime)" "$(uname -r)" \
+		"$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(cat /proc/cmdline)" \
+		> "$_mnt/var/tmp/kexec-marker.txt"
+	dmesg > "$_mnt/var/tmp/kexec-target-dmesg.txt" 2>/dev/null \
+		|| cat /dev/kmsg > "$_mnt/var/tmp/kexec-target-dmesg.txt" 2>/dev/null || true
+	{ cat /proc/interrupts; echo '--- iomem ---'; cat /proc/iomem; } \
+		> "$_mnt/var/tmp/kexec-target-irqs.txt" 2>/dev/null || true
+	sync
+	log "kexec_marker: dumped target evidence into $_mnt/var/tmp (uptime=$(cat /proc/uptime))"
+	return 0
+}
 
 if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 	log "disk root requested: $elden_root"
@@ -217,13 +259,24 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 	else
 		log "resolved $elden_root -> $root_dev"
 		mkdir -p /newroot
-		if mount -t ext4 -o rw,noatime "$root_dev" /newroot; then
+		# fstype: autodetect via blkid so a non-ext4 root (e.g. f2fs) works;
+		# ext4 only as the last-resort default (PITFALLS: root mount was hardcoded).
+		root_fstype=${elden_rootfstype:-}
+		[ -n "$root_fstype" ] || root_fstype=$(blkid -o value -s TYPE "$root_dev" 2>/dev/null)
+		[ -n "$root_fstype" ] || root_fstype=ext4
+		log "root fstype: $root_fstype"
+		if mount -t "$root_fstype" -o rw,noatime "$root_dev" /newroot; then
 			newinit=""
 			[ -x /newroot/init ] && newinit=/init
 			[ -z "$newinit" ] && [ -x /newroot/sbin/init ] && newinit=/sbin/init
 			[ -z "$newinit" ] && [ -x /newroot/bin/sh ] && newinit=/bin/sh
 			if [ -n "$newinit" ]; then
 				log "switching root to $root_dev ($newinit)"
+				# Disk-root kexec target: dump evidence onto the mounted root and
+				# then keep booting normally (no reboot needed here).
+				if [ -n "${kexec_marker:-}" ] || [ -e /etc/kexec-marker-on ]; then
+					kexec_marker_dump /newroot || warn "kexec_marker: dump onto /newroot failed"
+				fi
 				mkdir -p /newroot/dev /newroot/proc /newroot/sys /newroot/run
 				umount /tmp 2>/dev/null || true
 				mount --move /dev   /newroot/dev   || warn "move /dev failed"
@@ -237,12 +290,53 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 			fi
 			umount /newroot 2>/dev/null || true
 		else
-			warn "failed to mount $root_dev on /newroot (ext4); staying on RAM root"
+			warn "failed to mount $root_dev on /newroot ($root_fstype); staying on RAM root"
 		fi
 	fi
 fi
 
 log "Alpine rootfs up, kernel $(uname -r)"
+
+# --- kexec target marker (opt-in: kexec_marker=1 on the command line) --------
+# R A M - R O O T  path only (a disk-root target already dumped evidence onto
+# /newroot before switch_root, see kexec_marker_dump() above).  Here we are
+# stuck in the initramfs by design, so mount the disk for a moment to write the
+# same evidence, then always return to the default slot.
+if [ -n "$kexec_marker" ] || [ -e /etc/kexec-marker-on ]; then
+	log "kexec_marker: begin (sentinel=$([ -e /etc/kexec-marker-on ] && echo 1 || echo 0) dev=${kexec_marker_dev:-auto})"
+	# Resolve the disk root device.  The slim initramfs has NO blkid applet, so
+	# findfs is the primary resolver and /dev/sda17 the last-resort name (LUN0
+	# partition 17 = linux17, see DEVICE/README.md).
+	mdev=${kexec_marker_dev:-}
+	[ -n "$mdev" ] || mdev=$(findfs LABEL=linux17 2>/dev/null)
+	[ -n "$mdev" ] || mdev=/dev/sda17
+	# No udev/mdev here: wait for devtmpfs to publish the node (UFS probe + SCSI
+	# scan can take a while on this board).  20 s total, logging every 2 s so the
+	# ring buffer shows how far it got.
+	i=0
+	while [ ! -b "$mdev" ] && [ "$i" -lt 200 ]; do
+		sleep 0.1; i=$((i + 1))
+		[ $((i % 20)) -eq 0 ] && log "kexec_marker: waiting for $mdev (${i}00 ms)"
+	done
+	if [ ! -b "$mdev" ]; then
+		log "kexec_marker: $mdev never appeared; ls /dev/sd*:"
+		ls /dev/sd* >/dev/kmsg 2>&1 || true
+	fi
+	mkdir -p /mnt/mark
+	if [ -b "$mdev" ] && mount -o rw,noatime "$mdev" /mnt/mark; then
+		kexec_marker_dump /mnt/mark || warn "kexec_marker: dump onto /mnt/mark failed"
+		umount /mnt/mark 2>/dev/null || true
+	else
+		warn "kexec_marker: mount $mdev failed"
+	fi
+	# ALWAYS return to the default slot.  Earlier versions only rebooted inside
+	# the successful-mount branch, so a mount failure left the device stuck in a
+	# RAM initramfs with no network, no fastboot and no console - requiring a
+	# physical power button press (2026-10-21 incident, twice).
+	log "kexec_marker: rebooting back to the default slot"
+	sync
+	reboot -f
+fi
 
 # --- USB: NCM network + ACM console composite (see /usr/local/sbin/usb-gadget)
 # Waits for the dwc3 UDC to appear, so run it in the background and set up

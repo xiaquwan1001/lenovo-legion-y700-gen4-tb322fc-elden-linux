@@ -16,3 +16,24 @@ depend() {
 	after networkmanager
 }
 
+start_pre() {
+	# hooks/net-selfheal.pre — 等 wlan 就绪再自愈（原 /etc/local.d/elden-bringup.start 的等待逻辑）
+	#
+	# 为什么必须等（reports/net-https-mtu-rootcause-20261018.md）：wlan0 起来之前跑会漏掉 MTU，
+	# 而 PMTU 黑洞正是要修的东西。原实现有界等 120 s 后照常跑；这里保持一致（不劣于原行为）。
+	i=0
+	while [ "$i" -lt 12 ]; do
+		ip -br link 2>/dev/null | grep -q '^wlan.*UP' && exit 0
+		i=$((i + 1))
+		sleep 10
+	done
+	echo "elden: net-selfheal: wlan 未在 120 s 内 UP，照常执行" >&2
+	exit 0
+}
+# oneshot/shutdown：显式 start()，让状态如实报 started/failed 而不是 crashed
+start() {
+	ebegin "HTTPS trust chain + PMTU self-heal after wlan0 is up"
+	"$command" $command_args
+	eend $?
+}
+

@@ -31,12 +31,13 @@ greetd	override	longrun	Greeter daemon (patched: respawn + after seatd/elogind)	
 iio-sensor-proxy	override	longrun	iio-sensor-proxy (patched: waits for QRTR svc 400 = SSC)	/usr/libexec/iio-sensor-proxy			-	5	dbus	hexagonrpcd-adsp-sensorspd		multi-user.target	1
 net-selfheal	ours	oneshot	HTTPS trust chain + PMTU self-heal after wlan0 is up	/usr/local/sbin/net-selfheal.sh			/var/log/net-selfheal.log	0	localmount	networkmanager		multi-user.target	1
 pstore-catch	ours	oneshot	Archive pstore/ramoops records to /var/log/pstore at boot	/usr/local/sbin/pstore-catch.sh			/var/log/pstore-catch.log	0	localmount	localmount		multi-user.target	1
-q28-boot-watchdog	ours	longrun	One-shot DSI/panel watchdog for Q28 (never fired on the operational line)	/usr/local/sbin/q28-boot-watchdog.sh			/var/log/q28-watchdog.log	0	localmount	localmount		multi-user.target	1
+q28-boot-watchdog	ours	oneshot	One-shot DSI/panel watchdog for Q28 (never fired on the operational line)	/usr/local/sbin/q28-boot-watchdog.sh			/var/log/q28-watchdog.log	0	localmount	greetd		multi-user.target	1
 qbootctl	override	oneshot	Mark the current A/B slot successful (PITFALLS #181: without it, ~7 reboots end in fastboot)	/usr/bin/qbootctl	-m			0				multi-user.target	1
 ssc-udp-relay	ours	longrun	Relay real Qualcomm SSC sensor values to the Waydroid sensor HAL (UDP)	/usr/bin/python3	/usr/local/bin/ssc-udp-relay.py		/var/log/ssc-udp-relay.log	5	dbus	dbus		multi-user.target	1
-time-sync	ours	oneshot	Set the wall clock once the network is up	/usr/local/sbin/time-sync.sh			/var/log/time-sync.log	0	localmount	networkmanager		multi-user.target	1
+time-sync	ours	longrun	Set the wall clock once the network is up	/usr/local/sbin/time-sync.sh			/var/log/time-sync.log	0	localmount	networkmanager		multi-user.target	1
 waydroid-ipv6	ours	longrun	Keep the Waydroid bridge and container dual-stack (ULA + NAT66)	/usr/local/sbin/waydroid-ipv6			-	5	waydroid-container	waydroid-container networkmanager		multi-user.target	1
+net-up	ours	oneshot	Bring up WiFi via NetworkManager (repo /init skips this in openrc mode)	/usr/local/sbin/net-up.sh			/run/net-up.log	0		networkmanager		multi-user.target	1
 wifi-scan-refresh	ours	longrun	Periodic NetworkManager scan while connected, keeps the AP candidate list fresh	/usr/local/sbin/wifi-scan-refresh.sh	--loop	WIFI_SCAN_INTERVAL=150	/var/log/wifi-scan-refresh.log	5	dbus	networkmanager		multi-user.target	1
-ath12k-retry	ours	longrun	Re-bind ath12k PCI devices that failed first probe	/usr/local/sbin/ath12k-retry.sh			/var/log/ath12k-retry.log	0	localmount	localmount		multi-user.target	1
+ath12k-retry	ours	oneshot	Re-bind ath12k PCI devices that failed first probe	/usr/local/sbin/ath12k-retry.sh			/var/log/ath12k-retry.log	0	localmount	localmount		multi-user.target	1
 hexagonrpcd-adsp-sensorspd	package	longrun	ADSP sensorspd service (QRTR svc 400) — package-provided	/usr/bin/hexagonrpcd-adsp-sensorspd			-	5				multi-user.target	1
 waydroid-container	package	longrun	Waydroid container manager — package-provided	/usr/bin/waydroid	container start		-	5	lxc	lxc		multi-user.target	1

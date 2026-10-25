@@ -15,3 +15,10 @@ depend() {
 	: # 无依赖
 }
 
+# oneshot/shutdown：显式 start()，让状态如实报 started/failed 而不是 crashed
+start() {
+	ebegin "Mark the current A/B slot successful (PITFALLS #181: without it, ~7 reboots end in fastboot)"
+	"$command" $command_args
+	eend $?
+}
+

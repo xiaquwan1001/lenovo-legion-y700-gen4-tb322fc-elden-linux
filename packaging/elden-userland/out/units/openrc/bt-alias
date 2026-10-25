@@ -16,3 +16,10 @@ depend() {
 	need bluetooth
 }
 
+# oneshot/shutdown：显式 start()，让状态如实报 started/failed 而不是 crashed
+start() {
+	ebegin "Set the Bluetooth adapter alias/power once btqca firmware has loaded"
+	"$command" $command_args
+	eend $?
+}
+
