@@ -326,3 +326,5 @@ gh612b	uts_dup	同 gh612a，唯一差别 = 修好 DTC_FLAGS_sm8750-lenovo-elden�
 gh612b	num_ne_tag	同上（gunyah-port worktree 未提交）
 vk162-fstype	num_ne_tag	内核未改动 = vk152 那份（本镜像只换 ramdisk，不编译内核）
 vk162-fstype	uts_dup	刻意 PIN 到 vk152 的 UTS/LOCALVERSION，以便复用机上 1497 个 .ko（单变量实验的硬要求）
+vk162-rescue	num_ne_tag	内核未改动 = vk152 那份（救援镜像只改 cmdline/ramdisk 选择）
+vk162-rescue	uts_dup	刻意复用 vk152 的 UTS 以共用模块树
