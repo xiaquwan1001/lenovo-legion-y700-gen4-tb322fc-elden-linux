@@ -324,3 +324,5 @@ gh612a	uts_dup	同 dtbo3 的 PINUTS 思路（LOCALVERSION= 置空 ⇒ 复用 vk1
 gh612a	num_ne_tag	内核源码未提交（gunyah-port worktree，24223e44ad80 + 未提交改动）
 gh612b	uts_dup	同 gh612a，唯一差别 = 修好 DTC_FLAGS_sm8750-lenovo-elden（无 .dtb 后缀）后重编板 DTB（带 __symbols__）；2026-10-25 6.12 栈有效件
 gh612b	num_ne_tag	同上（gunyah-port worktree 未提交）
+vk162-fstype	num_ne_tag	内核未改动 = vk152 那份（本镜像只换 ramdisk，不编译内核）
+vk162-fstype	uts_dup	刻意 PIN 到 vk152 的 UTS/LOCALVERSION，以便复用机上 1497 个 .ko（单变量实验的硬要求）

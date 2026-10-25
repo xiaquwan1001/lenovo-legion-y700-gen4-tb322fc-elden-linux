@@ -63,7 +63,9 @@ def load_registry():
     nums = set()
     if os.path.exists(REG):
         for line in open(REG, errors='replace'):
-            m = re.match(r'^vk(\d+)\t', line)
+            # 号后可能是 TAB（vk161）也可能是 '-'+标签（vk137-q28base / vk162-fstype）：
+            # 旧正则只认 TAB ⇒ 带标签的构建号永远「未登记」，check-doctor 每轮误报 FAIL。
+            m = re.match(r'^vk(\d+)(?!\d)', line)
             if m:
                 nums.add(int(m.group(1)))
     return nums
