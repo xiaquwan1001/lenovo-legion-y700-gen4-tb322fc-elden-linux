@@ -174,6 +174,10 @@
    **2026-10-24 用户裁决：WoaA 走纯 Linux（Gunyah 自建栈），Android/AVF 只作材料参考，最终不保留 Android 分区**（详见 `TASKS` §4 N1/N2）。**首轮已出（`reports/uefi-gunyah-reassess-20261024.md`）**：
    UEFI 维持搁置（issue #12 追问 0 回复；厂商 DXE 在 XBL 打包体里，取证成本反升）；**Gunyah 阶段 0/0b 阳性**
    （`gunyah-wdt` 在 + 自编 `gunyah_wdt.ko` probe 通 ⇒ 本机确实在 Gunyah 下且 SMCCC 通道可用，`reports/gunyah-stage0-positive-20261024.md`）。
+   **★2026-10-25 终局：Gunyah 子 VM 结项 = 不可行（用户定 C）** —— RM 建 VM 恒 `VM_INIT 0xA MEM_INVALID`，
+   对 DTB/内存模型（含整块急切 LEND）/驱动代次（6.6、6.12、厂商内核同 harness）全不敏感；厂商可用路径依赖主线没有的
+   `MEM_DONATE(0x51000010)` + `gunyah_loader` hypercall 族。⇒ **G2 回 Waydroid**；`drivers/virt/gunyah` 6.12 分层只作 G1 补丁素材封存。
+   权威 = `reports/gunyah-decision-20261025.md`；过程 = `reports/gunyah-612-samebuild-20261025.md`；新坑 `PITFALLS #395/#396`。
 2. **Q28/Q32**：✅ **已结项（2026-10-24）=「已规避」** —— 运营线 vk152 线上 **8/8 无坏发**（真 POR 5/5 + 暖复位 3/3），
    看门狗与三态探针在役；**不补样本、不挖根因**，复启条件只读 `TASKS/README.md` §5 Q28。
 3. **Q24**：⛔ **关闭（2026-10-24 用户裁决：不值得取证）** —— 根因已指名（7.2 缺上游 `skip retention by default`，7.3 自带），
