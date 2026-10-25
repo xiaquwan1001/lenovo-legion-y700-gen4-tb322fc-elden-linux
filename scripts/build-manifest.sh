@@ -72,9 +72,21 @@ PHEAD=$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo "(none)")
 	echo "kernel_uts=$UTS"
 	echo "kernel_payload_sha256=$KPAYLOAD"
 	echo "kernel_release_matches_image=$K_MATCH"
-	echo "kernel=$KDIR/arch/arm64/boot/Image.gz"
-	echo "kernel_sha256=$(sha "$KDIR/arch/arm64/boot/Image.gz")"
-	echo "kernel_image_sha256=$(sha "$KDIR/arch/arm64/boot/Image")"
+	# kernel 身份字段必须描述「真的打进镜像的那份」，不能是树里的默认产物：
+	# 用 KERNEL_IMG=/path 打包（例如从既有 boot.img 解出内核、只换 ramdisk 的 A/B）时，
+	# 旧写法会把 KDIT/Image.gz 的 hash 记成内核身份（2026-10-25 vk162-fstype 实测：
+	# kernel_sha256 写成树里的 ddaa5c38，而镜像里的内核其实是 b6a074ff = vk152 那份）。
+	KSEL=${PK_KERNEL:-}
+	[ -n "$KSEL" ] && [ -e "$KSEL" ] || KSEL="$KDIR/arch/arm64/boot/Image.gz"
+	echo "kernel=$KSEL"
+	echo "kernel_sha256=$(sha "$KSEL")"
+	# kernel_image_sha256 = 解压后的内核字节（KPAYLOAD 已从镜像里算出，同源）
+	if [ "$KPAYLOAD" != "(unknown)" ]; then
+		echo "kernel_image_sha256=$KPAYLOAD"
+	else
+		echo "kernel_image_sha256=$(sha "$KDIR/arch/arm64/boot/Image")"
+	fi
+	echo "kernel_identity_source=$([ -n "${PK_KERNEL:-}" ] && [ -e "${PK_KERNEL:-}" ] && echo packed || echo tree)"
 	echo "kernel_packed_from=${PK_KERNEL:-(unknown)}"
 	echo "kernel_packed_sha256=$(sha "${PK_KERNEL:-/nonexistent}")"
 	echo "dtb_packed_from=${PK_DTB:-(unknown)}"
