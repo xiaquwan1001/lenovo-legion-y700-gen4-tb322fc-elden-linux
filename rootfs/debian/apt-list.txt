@@ -1,5 +1,5 @@
 # apt-list.txt — 由 rootfs/debian/tools/check-pkgmap.sh 从 pkgmap.tsv 生成，勿手改
-# 生成时间: 2026-10-25T14:25:55Z  索引: /opt/elden/arm64-sid
+# 生成时间: 2026-10-25T15:06:02Z  索引: /opt/elden/arm64-sid
 adb
 alsa-utils
 bash
