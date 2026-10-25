@@ -123,12 +123,27 @@
 
 > S0–S6 全部可在主机侧完成，**设备保持 fastboot 不动**；只有 S7 触碰设备。
 
-### S0 版本选型门（0.5 h）
+> **★2026-10-26 状态更新（权威状态只在此块，下文各节保留原始计划文本）**
+> | 步骤 | 状态 | 产物/证据 |
+> |---|---|---|
+> | S0 版本选型门 | ✅ 已定 = **forky/sid** | sid 索引实测（`apt-cache` 直读 `/opt/elden/arm64-sid`） |
+> | S1 主机 rootfs（debootstrap） | ✅ 完成（2026-10-25） | `/opt/elden/arm64-sid`（`debian_version` = `forky/sid`），同时用作 arm64 交叉构建 chroot |
+> | S2 包集翻译 | ✅ 完成（2026-10-26） | `rootfs/debian/pkgmap.tsv`（map 97 / drop 23 / add 7）+ `tools/check-pkgmap.sh` **FAIL=0 WARN=0** → `apt-list.txt`（107 包）；`reports/mobian-rootfs-artifacts-20261026.md` §1 |
+> | S3 自建 firmware 包 | ✅ 完成（2026-10-26） | `rootfs/debian/elden-firmware/` → `out/debian/elden-firmware_1.0~20261025_all.deb`（21 MB / 116 项，DTS `firmware-name` 门禁全绿）；同报告 §2 |
+> | S4 模块树 | 🟡 物料已就绪，未落地 | `out/modstage-vk163/lib/modules/<UTS>`（1539 `.ko`，模块化产物） |
+> | S5 initramfs | ⬜ 未做 | 需 Debian `initramfs-tools` hook（tplg/固件必须进 initramfs） |
+> | S6 systemd unit | 🟡 已渲染、未部署 | `packaging/elden-userland/out/units/systemd`（18 个，语义真源 `services.tsv`） |
+> | S7 设备侧落地 | ⬜ 未做 | 前置：回退通道实测 + `slot-attr` 基线 |
+>
+> **方向已由用户指令确认（2026-10-26）**：宿主 rootfs 切 glibc/systemd = 目标（不再受 2026-10-11「不切」裁定约束，
+> 该裁定只针对「为换而换」）。仍未变的两条硬约束：① 内核必须自编；② 必须 sid 级 `iio-sensor-proxy` + `libssc2`。
+
+### S0 版本选型门（0.5 h）— ✅ 已定 forky/sid
 
 - 判据：**必须选 forky/sid**（或 trixie + 自编 `iio-sensor-proxy 3.9` + `libssc`）。依据 §2 #6：trixie 的 `iio-sensor-proxy 3.7-3` 源码无 `drv-ssc-*.c`，而本机 `/sys/bus/iio` 恒空（`TASKS/README.md` G1-34 行）⇒ 传感器必死。
 - 附带判据：选 sid 即接受 phoc/phosh **0.58.0**，并承担 §6 U1（补丁 rebase）风险。
 
-### S1 主机侧 rootfs 构建（2–3 h）
+### S1 主机侧 rootfs 构建（2–3 h）— ✅ 已完成 2026-10-25
 
 - 动作：`sudo apt install debootstrap`；`debootstrap --arch=arm64 --variant=minbase <suite> <dir> <mirror>`（靠已启用的 qemu-aarch64 binfmt 跑 arm64 maintainer scripts）。
 - 判据：`chroot <dir> dpkg --print-architecture` = `arm64`；`chroot <dir> /bin/sh -c 'echo ok'` rc=0；目录 < 2 GB（minbase）。
@@ -137,13 +152,13 @@
   ② 构建侧更硬：`mobian-recipes` 的 `devices/qcom/configs/` 只有 `sc7280.toml sdm670.toml sdm845.toml sm6350.toml sm7150.toml wip.toml`（salsa API 实测），**没有 sm8750**；且 `wip.toml` 是空模板（`chipset = ""`）。
   加上 Mobian 明确「使用 mainline 内核、**不打包重设备特定内核**」（`wiki.debian.org/Mobian/Porting`）⇒ 本机只能是「自建 Debian rootfs + 保留自编内核」，Mobian 仅作**包集合参考**（`devices/qcom/packages-phosh.yaml` 一类清单）。
 
-### S2 包集翻译（`apk-world.txt` 120 行 → apt 清单，2 h）
+### S2 包集翻译（`apk-world.txt` 120 行 → apt 清单，2 h）— ✅ 已完成 2026-10-26
 
 - 动作：逐条映射 `rootfs/persistent-overlay/apk-world.txt`（`wc -l` = **120**）。已确定的必改项：
   `musl`→无（glibc）；`elogind`/`elogind-common`/`elogind-openrc`→`systemd`（删 -openrc）；`greetd-phrog`→`phrog`；`networkmanager-cli`→`network-manager`；`fcitx5-gtk3/4`→**`fcitx5-frontend-gtk3/4`**（`packages.debian.org` 实测：`fcitx5-gtk` 在 trixie 无结果）；`mesa-dri-gallium`→`libgl1-mesa-dri`+`mesa-utils`；`llvm22-libs`→按 sid 实际 `libllvm*`；`alpine-*`/`apk-tools`/`busybox*`/`openrc` 全删；`squeekboard`/`iio-sensor-proxy`/`hexagonrpcd`/`libssc` 保留（版本按 sid）。
 - 判据：清单中**每个 apk 包都有 `map/drop/replace` 三选一的显式记录**（落 `rootfs/debian/pkgmap.tsv`），无「未知」项；且**显式排除 `linux-image-*`**（见 §6 U7）。
 
-### S3 自建 firmware 包（3–4 h）
+### S3 自建 firmware 包（3–4 h）— ✅ 已完成 2026-10-26
 
 - 动作：从 `backup/fw/` 打本地 deb `elden-firmware`，安装到 `/lib/firmware/`：ADSP `adsp.mdt`+seg、CDSP **split** `cdsp.mdt`/`cdsp_dtb.mdt`、WiFi `peach/amss20.bin`+bdwlan+BDF、BT `brhbtfw20.tlv`/`brhbtnv20.bin`、GPU `gen80000_{zap,sqe,gmu,aqe}`、触屏 `novatek_ts_csot_3k_fw.bin`、功放/触觉 `awinic/y700-gen4-*.bin`、**tplg `qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin`**。
 - 判据（硬）：DTS 的每条 `firmware-name` 与包内路径逐条比对，已知 5 处：`qcom/sm8750/adsp.mdt`（`linux/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts:1868`）、`qcom/sm8750/LENOVO/elden/cdsp.mbn`（`:1923`）、`novatek_ts_csot_3k_fw.bin`（`:1948`）、`brhbtnv20.bin`+`brhbtfw20.tlv`（`:2261`）、`awinic/y700-gen4-{haptic,speakers}.bin`（`:1369/1383/1403/1413`）。

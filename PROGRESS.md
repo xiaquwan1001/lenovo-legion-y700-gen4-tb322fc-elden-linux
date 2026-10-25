@@ -55,6 +55,8 @@
 | 2026-10-25 | **Gunyah pVM 实测 + 一次结论更正**：RM 错误码是 `%d` 十进制打印，2026-10-24 的「`Error: 0x10` IRQ_INUSE」实为 **0xA `MEM_INVALID`** ⇒ 上轮 IRQ 泄漏/DTB 缺 doorbell 假设全废。pVM 路径（真 `pvmfw` + LEND + `SET_FW_CONFIG`）走到 `VM_INIT` 仍 `0xA`，7 个 DTB 变体错误码不变；`gunyah_rm_vm_init()` 请求体只有 vmid（DTB 侧改不动）⇒ DTB-only 路线穷尽；`SHARE+PVM` 更早被 `Error: 3 DENIED` | `reports/gunyah-pvm-attempt-20261025.md`、`PITFALLS #391/#393` |
 | 2026-10-25 | **根文件系统切 f2fs（路线 A：并存，数据不出设备）**：先用实测否掉「原地换」——主机↔设备 USB NCM 只有 **14.3 MB/s**（300 MB/21.0 s），两趟 30 GB ≈ 1–1.5 h 且 ext4 一格式化就没本地回退。改为「缩 ext4 + 尾部新建 f2fs + 同盘本地复制」：`linux17` ext4 **193→96 GiB**、`linux18` f2fs **96 GiB**（GPT 双表写后 `cmp` 读回一致）；`tar -d`（含 xattr/ACL）**零差异**、216 882→216 876 文件（差 6 = socket）、硬链接 133 组保留。零写盘 `fastboot boot` 验 `f2fs` 起根后写槽 `boot_b`：真 POR `/`=`/dev/sda18 f2fs`、模块 **37**、`version magic` 错 **0**、`phoc=1`、DSI connected、`qbootctl succ=1`、读回 sha 一致、首启后 `fsck.f2fs` 全 `[Ok..]`；ext4 侧保留且 `fastboot boot` 实测可起（回退零成本）。过程修掉 5 个只在 RAM root 暴露的工具坑（busybox `tar/dd`、无 `python3`、dmesg 钩子 fd9 占超级块、tar 流 sha 非内容指纹） | `TASKS/sessions/2026-10-25-f2fs路线A落地.md`、`RUNBOOK-BRINGUP/f2fs-migration.md`、`PITFALLS #400–#405` |
 | 2026-10-24 | **kexec 剩余边界写清**：修好的是「内核 + MSI」，**显示与 USB 仍是继承活态**（`mask=1` 跳过 `device_shutdown`）⇒ 目标里无 `card0`、`[usb-gadget] no UDC after 20s`，~157 s 被自家 Q28 看门狗重启回落；定位维持「不需显示/网络的调试快环」 | `reports/kexec-target-boots-20261024.md` §9、`PITFALLS #380` |
+| 2026-10-26 | **驱动模块化迁到 7.3 日常线（`vk163`，零写盘上机）**：载荷驱动（ath12k / QDSP6 全套 / WCD939X / SC8280XP / 触屏 / 触觉 / 背光）在 `build/vk151`(@`24223e4`) 全部翻成 `=m`，并在**生产 f2fs 根**上启动验证：66 模块、WiFi/BT/音频/触屏/触觉/背光/相机/Phosh 全绿、模块错误 0；`mod-loop` 热换触屏驱动实测通过 ⇒ 改叶驱动从「重编内核 + 重做镜像 + 重启」降到秒级。**`boot_b` 未写**（是否转日常线待定）。顺带更正两条旧结论（BT 模块化不需要改 Kconfig；`PCI_PWRCTRL_PWRSEQ` 与 WiFi 无关）| `reports/vk163-modular-20261026.md`、`PITFALLS #406–#409` |
+| 2026-10-26 | **Mobian 迁移物料（摆脱 Alpine 依赖的第一步）**：`rootfs/debian/pkgmap.tsv` 把设备 120 个 apk 全部定性（map 97 / drop 23 / add 7，门禁 **FAIL=0 WARN=0**）→ 107 个 Debian 包清单；`elden-firmware` 自建固件 deb（21 MB / 116 项，板 DTS 的 `firmware-name` 逐条门禁全绿，含自编 tplg）。新事实：BT 固件实际请求 `qca/` 前缀；Debian 的 `firmware-qcom-soc` 无 `sm8750` ⇒ 自建包必需 | `reports/mobian-rootfs-artifacts-20261026.md` |
 
 ---
 
@@ -185,6 +187,7 @@
    `vk149` 臂复现**取消**；日常仍执行 `cam-mode.sh on/off` 互斥（安全策略，非既成事实）。
 4. **#106**：判据「GOOD 需 ≥60 s 存活/可交互」；ramoops 装弹已在位等它自己撞（见 `TASKS` §5 §2 表）。
 5. **上游化 M1–M5**：M1 树与 `m1-73/baseline` 已收敛；M3-1 v3 形状 RFC 已投等 ack；
+   **2026-10-26 新增热验证通道**：日常线载荷驱动已模块化（`vk163`），叶驱动（触屏/背光/触觉/音频/无线）改一次 = `mod-loop` 秒级上机验证，不用整机重启；
    M3-2 台账 / M3-3 音频 / M3-4 显示 / M4 camss 均备料封存（投递冻结，收盘统一投）。
 6. **G2**：容器相机只剩 **App 实开预览（需装 APK）**；C3 身份/DRM 取证（PI 检测 App 亦需 APK）。
 7. **G3**：Steam 端到端。

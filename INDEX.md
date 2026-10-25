@@ -124,7 +124,7 @@
   **重建账（2026-10-17 审计）**：文档/补丁/配置/证据近乎无损，真损失 = 提交史 + 镜像产物；**在机镜像已于当日晚 P0 抢救到主机**（`boot_b` sha `78a2beb1…` + 1497 `.ko` + 207 项配置 → `backup/HA2EXB0E-16+512/device-rescue-20261017/`，见 `reports/device-rescue-and-q28-m1-badboot-20261017.md`）；
   分级与顺序（P0 抢救设备资产 → P1 修身份表 → P2 装 clang/dtc → P3 重放 M1-7.3 → P4 重编日常镜像）见 `reports/migration-rebuild-audit-20261017.md`；
   会话记录 `TASKS/sessions/2026-10-17-换机后重建审计-邮箱分诊.md`。**邮箱通道可用**，未处理的上游往来 5 条见 `reports/mail-triage-20261017.md`。
-  **★ 当前待办入口 = `TASKS/README.md` §4**：T1–T8/T10/T12/T13 已结项（2026-10-23）；**仍开放 = T9（suspend 掉电率，等 `HS-PHY not in L2` 与 hwmon 两条非阻塞告警收尾）、T11（宿主内存，等你在 BIOS/硬件侧动作）、T14（用户态固化→Mobian 迁移，第一步已落）**；**T15（f2fs 根迁移，路线 A）已于 2026-10-25 真机完成**。现行口径在该节顶部「收尾轮次纪律（2026-10-23 用户定）」——**需要物理 POR 的样本一律排最后**、**TF 卡暂时不做**、**Q28 只由 agent 取 2 发、其余交用户在机旁完成**。
+  **★ 当前待办入口 = `TASKS/README.md` §4**：T1–T8/T10/T12/T13 已结项（2026-10-23）；**仍开放 = T9（suspend 掉电率，等 `HS-PHY not in L2` 与 hwmon 两条非阻塞告警收尾）、T11（宿主内存，等你在 BIOS/硬件侧动作）、T14（用户态固化→Mobian 迁移，第一步已落）**；**T15（f2fs 根迁移，路线 A）已于 2026-10-25 真机完成**；**T16（驱动模块化迁到 7.3 日常线 + Mobian 首批物料）2026-10-26 第一步完成（零写盘上机）**。现行口径在该节顶部「收尾轮次纪律（2026-10-23 用户定）」——**需要物理 POR 的样本一律排最后**、**TF 卡暂时不做**、**Q28 只由 agent 取 2 发、其余交用户在机旁完成**。
 
 - **未解（3 项，按影响排序）**：① Q28 显示间歇失败（日常线 vk152，真 POR 已 3 发 GOOD、还差 5 发）；② Q24 熄屏×相机（根因已指名 = 7.2 缺上游 `skip retention`，已停止采样）；③ 进 GUI 后整机卡死（`PITFALLS #106`）。
   **新增待办 Q32 = 暖起 vs 冷起差异**（静态预研已落盘，指向「ABL 交接 framebuffer + 复位动作」而非「暖/冷」本身）。 **2026-10-23 深夜：Q32 取证工具已落地 + 试点取证 + 判据更正**（复位深度只能从 pstore/ramoops 取；在机「ABL 留了活显示」已实测确认）→ `reports/q32-kickoff-20261023.md`；三臂仍未执行。**2026-10-24：三臂已跑完 5 发（W1×2 / C1×2 / W2×1）全 GOOD ⇒ 暖/冷不是主变量，Q32 并入 Q28** → `reports/q32-matrix-20261024.md`。
@@ -135,8 +135,13 @@
 - **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-29 UEFI、G1-10 NFC、G1-30 slim initramfs；
   **kexec 已不再是「不做」**（2026-10-24：交接/掉电/ITS 三个阻塞全关，修法已上游投递 M9）——但**显示与 USB 继承态未复位**
   （目标里无 `card0`、`no UDC`，~157 s 被 Q28 看门狗重启），所以定位仍是**「不需显示/网络的调试快环」**，见 `TASKS/README.md` §4 第 10 条；
-  **宿主 rootfs 不切 glibc、不切 systemd**（2026-10-11 裁定，零收益 / 高重建成本，证据：`reports/libc-musl-vs-glibc-20261011.md`、`reports/init-systemd-vs-openrc-20261011.md`）。
-  裁决与理由见 `TASKS/README.md` §4/§5 与 `PITFALLS` §15。
+  **宿主 rootfs 切 glibc / systemd = 用户 2026-10-26 定的方向（过渡到 Mobian），不再是「勿重推」项**：
+  2026-10-11 的「不切」裁定针对的是「为换而换」（当时卡点全在内核/显示链，换 init 无收益，证据
+  `reports/libc-musl-vs-glibc-20261011.md`、`reports/init-systemd-vs-openrc-20261011.md`）；2026-10-26 用户明确要求
+  「摆脱 Alpine 依赖、逐渐过渡到 Mobian」⇒ 该裁定被用户指令覆盖，路径与成本以
+  `reports/mobian-migration-plan-20261021.md`（S0–S7）为准，已完成项见其 §4 的状态标记。
+  **仍未变的两条硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级
+  `iio-sensor-proxy`（trixie 3.7 无 SSC 后端）+ `libssc2`，否则传感器栈直接死。
 - **内核分界线**：口径在 `TASKS/README.md` §4。
 - **单元**：U1 / U2 台账见 `DEVICE/README.md` §1；解锁议题已定稿关闭（`RUNBOOK` §0.5 + `archive/topics/复盘-2026-10-03-BL解锁.md`），不要重新论证。
 
