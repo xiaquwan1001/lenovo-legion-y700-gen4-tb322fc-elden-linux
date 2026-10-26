@@ -93,26 +93,87 @@ rescue() {
 	while :; do sleep 3600 || :; done
 }
 
+# --- root phase detection ----------------------------------------------------
+# 「现在踩在 initramfs 上还是已经在磁盘根上」。preflight 就要用（**磁盘阶段不需要
+# switch_root**），所以定义在 preflight 之前；主流程在下面复用它。
+# RETURN: 0 = 已在磁盘根（on_initramfs=0），1 = initramfs 阶段（on_initramfs=1）。
+ROOT_FSTYPE=
+root_phase_disk() {
+	ROOT_FSTYPE=$(stat -f -c %T / 2>/dev/null)
+	if [ -z "$ROOT_FSTYPE" ]; then
+		# stat without -c support: read the fstype of / from the mount table.
+		ROOT_FSTYPE=$(while read -r _d _m _f _o; do [ "$_m" = "/" ] && { echo "$_f"; break; }; done < /proc/mounts)
+	fi
+	case "$ROOT_FSTYPE" in
+		rootfs|tmpfs|ramfs) return 1 ;;
+		*) return 0 ;;
+	esac
+}
+
+# --- busybox applet fallback -------------------------------------------------
+# 「能力在、名字不在」：最小根里 busybox 常带 applet 但**没有对应符号链接**
+# （Debian 的 `busybox` 包只装 /bin/busybox，不装 applet 链接）。这类根是可用的，
+# 不该被判成「根不完整」⇒ 命令不存在但 applet 有时，定义同名 shell 函数转调。
+BB=
+# 搜索面可被环境变量覆盖：唯一用途是让离线回归测试（scripts/test-init-preflight.sh）
+# 在**没有对应绝对路径**的宿主机上复现"有/无 busybox"两种根。
+for _bb in ${BB_SEARCH:-/bin/busybox /usr/bin/busybox /sbin/busybox /usr/sbin/busybox}; do
+	[ -x "$_bb" ] && { BB=$_bb; break; }
+done
+have_applet() { # have_applet <name> —— 命中则定义同名函数并返回 0
+	command -v "$1" >/dev/null 2>&1 && return 1
+	[ -n "$BB" ] || return 1
+	"$BB" --list 2>/dev/null | grep -qx "$1" || return 1
+	eval "$1() { $BB $1 \"\$@\"; }"
+	return 0
+}
+
 # --- preflight: essential tools --------------------------------------------
 # The classic failure mode (PITFALLS #107) was a minimal busybox initramfs
 # without /bin/sh symlinks: /init's shebang could not be exec'd and the kernel
 # reported "No working init found" + panic.  Catch the userspace half of that
 # here, with a message that says what is actually missing.
+#
+# **2026-10-26 M6 事故（`reports/m6-switch-root-breakpoint-resolved-20261026.md`）**：
+# 旧版本**一律**要求 `switch_root`，于是 Debian 根（无 busybox applet 链接）的 /init
+# 在 preflight 第一屏就判「根不完整」→ rescue shell；PID 1 无 tty ⇒ 全静默，
+# 看起来像「卡在 switch_root 内部」。真因只是一个**磁盘阶段根本用不到的命令**。
+# ⇒ 工具清单按阶段取：只有 initramfs 阶段需要 switch_root。
+if root_phase_disk; then _ph_disk=1; else _ph_disk=0; fi
+tools_need="sh mount umount mkdir cat sleep grep"
 missing=
-for c in sh mount umount switch_root mkdir cat sleep grep; do
-	command -v "$c" >/dev/null 2>&1 || missing="$missing $c"
+for c in $tools_need; do
+	command -v "$c" >/dev/null 2>&1 && continue
+	have_applet "$c" && continue
+	missing="$missing $c"
 done
-# A root-device resolver.  The minimal busybox initramfs has neither blkid nor
+# switch_root 单独处理：调用点是 `exec switch_root …`，而 **exec 只认路径、不认 shell 函数**
+# ⇒ applet 回退只能用可拆词的 "$BB switch_root"，不能靠 have_applet 的同名函数。
+SWITCH_ROOT_CMD=switch_root
+if [ "$_ph_disk" = 0 ]; then
+	if command -v switch_root >/dev/null 2>&1; then
+		:
+	elif [ -n "$BB" ] && "$BB" --list 2>/dev/null | grep -qx switch_root; then
+		SWITCH_ROOT_CMD="$BB switch_root"
+	else
+		missing="$missing switch_root"
+	fi
+fi
+# A root-device resolver (initramfs 阶段才用)。  The minimal busybox initramfs has neither blkid nor
 # mountpoint (see initramfs/busybox-applets.txt) but DOES have findfs, so findfs
 # is the primary resolver and blkid only a bonus in the full rootfs.
-if ! command -v findfs >/dev/null 2>&1 && ! command -v blkid >/dev/null 2>&1; then
-	missing="$missing root-resolver(findfs|blkid)"
+if [ "$_ph_disk" = 0 ]; then
+	if ! command -v findfs >/dev/null 2>&1 && ! command -v blkid >/dev/null 2>&1 \
+	   && ! have_applet findfs && ! have_applet blkid; then
+		missing="$missing root-resolver(findfs|blkid)"
+	fi
 fi
 if [ -n "$missing" ]; then
-	fatal "missing essential tool(s):$missing"
+	fatal "missing essential tool(s):$missing (phase=$([ "$_ph_disk" = 1 ] && echo disk || echo initramfs))"
 	fatal "this initramfs/rootfs is incomplete - check the applet symlinks"
 	rescue "missing tools:$missing"
 fi
+# --- end preflight -----------------------------------------------------------
 
 # --- mount helper -----------------------------------------------------------
 # Idempotent, retrying, loud on failure.  Must NOT depend on the `mountpoint`
@@ -164,15 +225,13 @@ hostname elden
 
 # --- which root are we on? --------------------------------------------------
 # Guards below must not run twice (else /persist would mount over the root).
-roottype=$(stat -f -c %T / 2>/dev/null)
+# 阶段检测本体在 root_phase_disk()（定义在 preflight 之前，那里就要用）。
+if root_phase_disk; then on_initramfs=0; else on_initramfs=1; fi
+roottype=$ROOT_FSTYPE
 if [ -z "$roottype" ]; then
 	# stat without -c support: read the fstype of / from the mount table.
 	roottype=$(while read -r _d _m _f _o; do [ "$_m" = "/" ] && { echo "$_f"; break; }; done < /proc/mounts)
 fi
-case "$roottype" in
-	rootfs|tmpfs|ramfs) on_initramfs=1 ;;
-	*) on_initramfs=0 ;;
-esac
 if [ "$on_initramfs" = 0 ]; then
 	exec 9>>/var/tmp/elden-init-trace.log 2>/dev/null && TRACE_FD=1
 fi
@@ -404,11 +463,11 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 				# busybox switch_root 失败时会打印具体原因（"not a mount point"/"can't delete"/…），
 				# 而那时 /dev、/proc、/sys、/run 都已被 `mount --move` 搬走 ⇒ log() 与 warn() 的
 				# 输出去向全失效，只有这条 fd 还能用（2026-10-26 实测：exec 之后彻底静默）。
-				trace "exec switch_root /newroot $newinit"
+				trace "exec $SWITCH_ROOT_CMD /newroot $newinit"
 				if [ "${TRACE_FD:-0}" = 1 ]; then
-					exec switch_root /newroot "$newinit" 2>&9
+					exec $SWITCH_ROOT_CMD /newroot "$newinit" 2>&9
 				else
-					exec switch_root /newroot "$newinit"
+					exec $SWITCH_ROOT_CMD /newroot "$newinit"
 				fi
 				# 能执行到这里 = switch_root **返回了**（没成功 exec）。
 				# 此时 /dev /proc /sys /run 都不在 RAM 根上了，先把它们搬回来，否则后面的

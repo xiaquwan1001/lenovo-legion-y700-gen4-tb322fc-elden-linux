@@ -24,6 +24,7 @@
 #   D 单元：systemd-analyze verify 全绿；单元里不得出现 `rc-service`/`apk`（跨 init 污染）
 #   E 语义红线：qbootctl 默认 enable、greetd 有 Restart、wifi-scan <180s、hapticd amp=255
 #   F 初始化：/init 可 `sh -n`；`/etc/elden-init-mode` = systemd；init 里三个模式分支齐全
+#   G 单元启用状态 / H 单元依赖名可解析 / I 磁盘根 /init 工具链（防「root 被判不完整」）
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
@@ -286,6 +287,44 @@ for u in "$STAGE"/usr/lib/systemd/system/*.service; do
 	done
 done
 ok "依赖名解析完毕（$nunits 个单元）"
+
+sec "I. 磁盘根 /init 工具链（overlay ∪ Debian chroot）"
+# 2026-10-26 M6 事故（`reports/m6-switch-root-breakpoint-resolved-20261026.md`）：
+# Debian 根的 /init 在 preflight **第一屏**把自己判成「根不完整」→ rescue shell；
+# PID 1 无 tty ⇒ 全静默，看起来像「卡在 switch_root 内部」。真因只是一个
+# **磁盘阶段根本用不到的命令** `switch_root`（Debian 的 busybox 包只装 /bin/busybox，
+# 不装 applet 链接）。所以这一段守两件事：
+#   ① /init 按阶段取工具清单（磁盘阶段不得要求 switch_root）；
+#   ② 磁盘阶段真正要用的工具，在 overlay 或 Debian chroot 里真实存在。
+if grep -q 'tools_need="sh mount umount mkdir cat sleep grep"' "$STAGE/init" \
+   && grep -q 'SWITCH_ROOT_CMD=switch_root' "$STAGE/init"; then
+	ok "/init 按阶段取工具清单（磁盘阶段不要求 switch_root）"
+else
+	bad "/init 仍是旧口径（一律要求 switch_root ⇒ Debian 根必落 rescue shell）"
+fi
+have_path() { # have_path <root> <name> —— 八个标准 bin 目录里找可执行名
+	for _d in usr/local/sbin usr/local/bin usr/sbin usr/bin sbin bin; do
+		[ -e "$1/$_d/$2" ] && return 0
+	done
+	return 1
+}
+miss=
+for t in sh mount umount mkdir cat sleep grep; do
+	have_path "$STAGE" "$t" || have_path "$CHROOT" "$t" || miss="$miss $t"
+done
+if ! have_path "$STAGE" findfs && ! have_path "$CHROOT" findfs \
+   && ! have_path "$STAGE" blkid && ! have_path "$CHROOT" blkid; then
+	miss="$miss root-resolver(findfs|blkid)"
+fi
+[ -z "$miss" ] && ok "磁盘阶段工具全在（overlay ∪ chroot: $CHROOT）" \
+	|| bad "磁盘阶段缺工具:$miss（磁盘 /init 会落 rescue shell）"
+# 行为回归：直接跑 /init preflight 的 4 个用例（离线、<1 s）
+if sh "$ROOT/scripts/test-init-preflight.sh" >/tmp/stage-init-preflight.$$ 2>&1; then
+	ok "init preflight 回归 4/4（scripts/test-init-preflight.sh）"
+else
+	bad "init preflight 回归失败：$(tail -3 /tmp/stage-init-preflight.$$ | tr '\n' ' ')"
+fi
+rm -f /tmp/stage-init-preflight.$$
 
 printf '\n==== stage: FAIL=%d WARN=%d  （产物 %s）\n' "$fail" "$warn" "${STAGE#$ROOT/}"
 [ "$fail" -eq 0 ] || exit 1
