@@ -276,3 +276,4 @@ vk170-trace3	migration	2026-10-26	**M6 迁移诊断件**：复用 vk163 内核�
 vk171-swrerr	migration	2026-10-26	**M6 迁移诊断件**：复用 vk163 内核载荷（同一 `build/vk151` Image.gz/DTB/ramdisk 谱系），只改 cmdline/ramdisk，镜像身份由 manifest `kernel_payload_sha256` 区分。把 switch_root 的 stderr 重定向进 trace fd + 失败时搬回伪文件系统；**结果未读到**（设备卡住待 POR）
 vk172	modular2	2026-10-26	模块化 v2（fragment-modular-v2）上机件：=y 3364/=m 1464，MMC 整链=m，DRM 不动
 vk173	vk173	2026-10-26	vk172 载荷 + RTC offset DTB（patches/dt/0002）：模块化 v2 上日常线并修 hwclock=1970
+vk174	m6-initfix	2026-10-26	M6: 阶段化 preflight + applet 回退（Debian 根 switch_root 缺链接事故）
