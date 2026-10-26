@@ -34,8 +34,10 @@ i=0
 while [ "$i" -lt "$MAX" ]; do
 	if have_slots; then
 		if "$QBOOTCTL" -m 2>&1 | sed 's/^/qbootctl-mark: /' >&2; then
-			# 复核：确认当前槽真的被标成 successful（别只信返回码）
-			cur=$("$QBOOTCTL" -c 2>/dev/null)
+			# 复核：确认当前槽真的被标成 successful（别只信返回码）。
+			# ⚠️ 口径（2026-10-26 实测）：`-c` 打印整行 `Current slot: _b`，而 `-n` 只要**裸字母**
+			#    `b`（传 `_b` 会报 `Expected slot not '_b'` 并 rc=1）⇒ 必须剥前缀和下划线。
+			cur=$("$QBOOTCTL" -c 2>/dev/null | sed 's/.*slot:[[:space:]]*//' | tr -d '_ \r')
 			if [ -n "$cur" ] && "$QBOOTCTL" -n "$cur" >/dev/null 2>&1; then
 				log "slot ${cur} marked successful (after ${i} x ${SLEEP}s wait)"
 				exit 0

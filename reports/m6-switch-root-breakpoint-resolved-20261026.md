@@ -106,3 +106,39 @@ elden-init/disk t=1.13 handoff to /sbin/init (systemd)
 - cmdline 追加 **`elden_early_gadget=1`**（RAM 阶段就起 gadget ⇒ 系统起不来时仍有 ttyACM0 + SSH）与 **`elden_q28_nowd`**（排除 watchdog 变量）；
 - 先把 `out/modstage-vk172/lib/modules/<vk172 UTS>` 铺到 `linux17`（修 7.3-①）；
 - 其余（内核/DTB/`/init`）保持不变，仍 `fastboot boot` 零写盘。
+
+---
+
+## 8. Debian 根到桌面（2026-10-26 22:2x，同一 vk175 镜像，零写盘）
+
+修完下面 6 条后，`fastboot boot out/boot-elden-vk175.img` **全自动**起桌面（无任何人工步骤）：
+
+| 判据 | 结果 |
+|---|---|
+| 根 | `ext4 /dev/sda17`（linux17） |
+| PID 1 | `systemd`（`is-system-running=degraded`，另有 3 个已知失败单元） |
+| greetd | `active`；`ExecStart=/usr/sbin/greetd --config /etc/greetd/config.toml` |
+| 桌面 | `phoc -v -S -C /usr/share/phosh/phoc.ini -E gnome-session --session=phosh` + `/usr/libexec/phosh`（Phosh 0.58.0） |
+| 会话 | `c1 1001 xuqianhui1001 seat0 1296 user tty7 yes`（**不是 greeter**） |
+| 显示 | `card0-DSI-1 = connected/enabled`，背光 1024 |
+| 槽位 | `qbootctl Result=success`（PITFALLS #181 风险消除） |
+| WiFi | `wlp1s0 114.214.193.59/22`（`net-up` → `success`） |
+
+### 8.1 六条根因（每条都是**静默失败**，全部已修，详见 PITFALLS #423–#428）
+
+| # | 症状 | 根因 | 修法（已落地） |
+|---|---|---|---|
+| 1 | `chroot: /bin/sh: No such file or directory` | overlay 用普通 `tar` 解包，把 usr-merge 的 `/lib -> usr/lib` **换成真目录** | `install-overlay.sh`：`tar --keep-directory-symlink` + 解完断言 `/bin /sbin /lib` 仍是链接 |
+| 2 | greetd 等 5 个服务 `203/EXEC` | 单元 `ExecStartPre=/usr/local/libexec/elden/*.pre` 而该文件**从不安装**；且 hook 本体是**无 shebang 的片段** | `stage.sh` 安装 hooks 并**补 `#!/bin/sh`**；新门禁 **D2**（`Exec*` 路径必须在 overlay∪PKGROOT 存在、hook 必须带 shebang） |
+| 3 | 同上，`_greetd` vs `greetd` | Debian 用户名叫 `_greetd` | `hooks/greetd.pre` 两个名字都试，owner 用解析结果 |
+| 4 | 只停在 phrog 登录界面（`phoc --session=phrog`） | Debian 包 `greetd-phrog` 的 `/usr/lib/.../greetd.service.d/phrog.conf` 覆盖 ExecStart | overlay 写 `zz-elden.conf`（**排序必须晚于 `phrog.conf`**，`10-` 会被盖掉）+ 空 `ExecStart=` 清列表 |
+| 5 | greetd 每 5 s 自杀：`configured default session user 'xuqianhui1001' not found` | debootstrap 根里**根本没有桌面用户** | `ensure-desktop-user.sh`（uid 1001、组按发行版过滤）+ 接进 `build-rootfs.sh` |
+| 6 | `net-up.service failed`、`wlan0 never appeared` | 接口名 Debian 是 `wlp1s0`，且**开头只探测一次**（ath12k 异步 ~9–21 s 才出 phy） | `net-up.sh`：循环内反复探测 + `WIFI_IF` 覆盖；`/etc/conf.d/greetd` 去 `export`（systemd EnvironmentFile 不认，整条变量丢失）→ 记 `overrides.tsv` |
+
+### 8.2 仍然失败/未做的（Debian 根，非阻塞桌面）
+
+- `hexagonrpcd.service`：`Could not open FastRPC node (/dev/fastrpc-adsp)` ⇒ 传感器链在 Debian 根上没通（Alpine 侧由 `/init` 建节点/加载 adsp 相关模块）。
+- `accounts-daemon.service` failed（gdm/accountsservice 依赖项，待查）。
+- `lxc-net.service` failed + Waydroid 未部署在 Debian 根（G2 在 Debian 上的后续工作）。
+- `elden-hapticd` 缺：设备侧静态二进制未入库（MANIFEST `repo_src=-`，T14 债务）；门禁 D2 以 WARN 点名。
+- `usb0` 网络：Debian 根**不跑 udhcpd**，主机侧要手工 `ip addr add 192.168.7.9/24 dev <usbnet>` 才能 SSH（Alpine 侧有 udhcpd）。建议把 udhcpd 加到 Debian 单元或改静态对端地址。

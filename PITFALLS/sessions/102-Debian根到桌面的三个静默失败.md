@@ -1,4 +1,4 @@
-# #423 overlay 解包顶掉 usr-merge 符号链接；#424 systemd 单元引用从不安装的 `.pre` 文件；#425 跨发行版的名字差异（greetd/_greetd、wlan0/wlp1s0）
+# #423 overlay 解包顶掉 usr-merge；#424 `.pre` hook 从不安装且无 shebang；#425 跨发行版名字差异；#426 drop-in 文件名排序；#427 debootstrap 根没有桌面用户；#428 一次探测接口名必失败
 
 - **日期**：2026-10-26
 - **场景**：M6/T19，把 `out/stage-debian/`（overlay，139 MB）推到 Debian 目标根 `linux17` 并启动（vk175）
@@ -73,3 +73,42 @@ qbootctl[433]: No slots found, is this an A/B device?
 - `linux17:/var/log/journal/*/system.journal`（可 `chroot <root> journalctl -D /var/log/journal` 读）
 - `rootfs/debian/stage.sh`（门禁 D2/I）、`rootfs/debian/install-overlay.sh`（#423 固化）
 - `packaging/elden-userland/hooks/greetd.pre`、`files/usr/local/sbin/{net-up.sh,qbootctl-mark.sh}`
+
+
+## #426 systemd drop-in 按**文件名排序**合并，`10-` 会被上游包的 `phrog.conf` 盖掉
+
+Debian 的 `greetd-phrog` 包提供 `/usr/lib/systemd/system/greetd.service.d/phrog.conf`（把 ExecStart
+改成图形 greeter）。我们在 `/etc/systemd/system/greetd.service.d/10-elden.conf` 里 `ExecStart=` 清空后重设，
+**结果没生效**——因为 `/etc` 与 `/usr/lib` 的 drop-in 是**按文件名统一排序**合并的，`10-` < `phrog.conf`（`1` < `p`），
+后排序者覆盖 ⇒ 仍然跑 phrog。
+
+- 判据：`systemctl show <unit> -p ExecStart --value` 看**最终** argv，不要只看 `systemctl cat`（两者都显示，会以为生效了）。
+- 修法：名字取 `zz-elden.conf`（排序最后）。**不要**用 `10-`/`90-` 这种直觉编号。
+
+## #427 debootstrap 出来的根**没有任何发行版之外的用户** ⇒ greetd appliance 模式直接死循环
+
+`/etc/greetd/config.toml` 是 appliance 模式（`initial_session.user = xuqianhui1001`）。Debian 根里没这个用户：
+
+```
+greetd: error: configured default session user 'xuqianhui1001' not found
+greetd: error: check_children: greeter exited without creating a session
+```
+
+systemd 每 5 s 重拉一次 ⇒ `greetd.service: activating`、**连 greeter 都不出**（屏幕停在 VT7 空白），
+而 `card0-DSI-1` 是 `connected/enabled`、背光正常 ⇒ 很容易误判成"显示栈问题"。
+
+- 修法：`rootfs/debian/ensure-desktop-user.sh`（uid **1001** 必须与 Alpine 侧一致，否则 `/home` 与 Waydroid/会话属主全错；
+  组列表按「目标根里真实存在」过滤：Debian 有 render/netdev，Alpine 用 video/audio/input/plugdev），并接进 `build-rootfs.sh`。
+
+## #428 在循环外只探测一次接口名 ⇒ ath12k 异步绑定必然探测失败
+
+`net-up.sh` 曾写成"开头解析一次 IF 再等它出现"。ath12k 是异步 probe（本机 ~9–21 s 才出 phy），
+开机 3 s 时 `/sys/class/net/*/wireless` 还不存在 ⇒ 探测失败 ⇒ 回落 `wlan0` ⇒ 永久等一个不存在的名字：
+
+```
+net-up: wlan0 never appeared     ← Debian 上真实接口是 wlp1s0
+net-up.service: failed
+```
+
+更阴的是**WiFi 最后还是通的**（NetworkManager 自己的 autoconnect 连上了）⇒ 掩盖了这个 bug，
+只在 `systemctl --failed` 里露一条。修法 = 探测放进等待循环（名字消失则作废重探）。

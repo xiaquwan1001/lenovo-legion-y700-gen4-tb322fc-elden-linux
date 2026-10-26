@@ -54,7 +54,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/kmsgspy.sh	script	b1d26a3a454fc2daa6897d2869a7a20cbb888f52ffa9a64b45c66fe6585cc6a9	235	755	files/usr/local/sbin/kmsgspy.sh
 /usr/local/sbin/net-selfheal.sh	script	e7d065da3f76ecd534f2d682307752481732bd0a47211c0c8a01bdb4c4a58f07	4816	755	files/usr/local/sbin/net-selfheal.sh
 /usr/local/sbin/net-up-manual.sh	script	b5564801e6bdd3e5dc5ce4f2d452c0a8fc512af2788fcdb2bf897478c8ad9a0c	2492	755	files/usr/local/sbin/net-up-manual.sh
-/usr/local/sbin/net-up.sh	script	4cd18ac7bd8c728774f3fd41e4bc136113b60a1e996d79441f02036a4ba5da13	3418	755	files/usr/local/sbin/net-up.sh
+/usr/local/sbin/net-up.sh	script	c5d4dc3500564d1540e658442b1af43fad7b9075a2676cd20ffbf00908c7dc7d	4109	755	files/usr/local/sbin/net-up.sh
 /usr/local/sbin/openrc-enable.sh	script	c89433b3aa7e1461234e4ad734ce4879486c12c68a68b8b194e604be5143aacd	4903	755	files/usr/local/sbin/openrc-enable.sh
 /usr/local/sbin/q28-boot-watchdog.sh	script	709e9eb86c65f45ed21fe97046382559b83b7b8696bc598eef02a1030011accc	4116	755	files/usr/local/sbin/q28-boot-watchdog.sh
 /usr/local/sbin/q28-watchdog.sh	script	f9cba76ed87be4450759384e36d076f73c14036bc7ae33ff8dfec2c835cecb5a	600	755	files/usr/local/sbin/q28-watchdog.sh
@@ -77,4 +77,4 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/elden-powerlog-mark.sh	script	b935b179eea5315c86899823f750d29853a774b1f3a5875510782b44a02fd505	1107	755	files/usr/local/sbin/elden-powerlog-mark.sh
 /usr/local/sbin/elden-bootlog.sh	script	43051f7e650dcd29c0332ad0aa66a78c6896157e3767611dac6118a36b78dea4	727	755	files/usr/local/sbin/elden-bootlog.sh
 /usr/local/sbin/gunyah-modprobe.sh	script	6917db43c83d4fd5605f5deaa74ec3c42b5955437df881c6a868ce62dd20c40e	822	755	files/usr/local/sbin/gunyah-modprobe.sh
-/usr/local/sbin/qbootctl-mark.sh	script	3f2ba96f81b1be2fd354d2c791b726eb7debe5633e2c365952483be80266f665	2442	755	files/usr/local/sbin/qbootctl-mark.sh
+/usr/local/sbin/qbootctl-mark.sh	script	f414483acbb7f4e2d57a64b5645cfee63ae9771bfef0123c99380c5519a3663f	2705	755	files/usr/local/sbin/qbootctl-mark.sh

@@ -1,0 +1,16 @@
+# overrides.tsv — stage.sh **有意改写**的 MANIFEST 路径（唯一真源）
+#
+# 为什么需要（2026-10-26，Debian 根到桌面）：
+#   `MANIFEST.tsv` 记录的是**设备逐字副本**（Alpine 侧的真源，sha 锁定）。有一小撮文件
+#   在 Debian 侧必须写**不同的内容**才能工作，最典型的是 `/etc/conf.d/*`：
+#     Alpine/OpenRC：`. /etc/conf.d/x` 读入 ⇒ 要给子进程传变量必须写 `export X=...`
+#     Debian/systemd：`EnvironmentFile=` 读入 ⇒ **不吃 `export` 前缀**，会打
+#       `Ignoring invalid environment assignment 'export X=...'` 然后**整条变量丢失**
+#   （实测：greetd 的 LIBSEAT_BACKEND 就这么丢的。）
+#   ⇒ 这些路径由 `rootfs/debian/stage.sh` 在 MANIFEST 铺设**之后**重写，
+#     门禁 C（MANIFEST sha 自洽）必须知道这是有意的，而不是漂移。
+#
+# 列（TAB 分隔）：
+#   path    安装绝对路径（与 MANIFEST 的 dst 同形）
+#   reason  为什么 Debian 侧内容不同（必填；门禁只打印，不做语义判断）
+/etc/conf.d/greetd	Alpine 侧要 `export LIBSEAT_BACKEND=seatd`（OpenRC 用 `.` 读，不 export 传不进子进程）；systemd 的 EnvironmentFile 不认 `export` 前缀，整条变量会被丢弃 ⇒ Debian 侧必须写无 export 版本

@@ -183,6 +183,19 @@ if [ -f "$HOME/.ssh/id_rsa.pub" ]; then
 fi
 step ok "fstab / hostname / hosts / sshd 主机密钥 / authorized_keys"
 
+# 桌面用户（greetd appliance 模式的 initial_session 目标）。
+# 缺它 = greetd 打 `configured default session user ... not found` 后每 5 s 自杀一次，
+# 现象是「systemd 起来了、DSI 也 connected，但没有 phoc/phosh」（2026-10-26 实测）。
+# 用同一把脚本，保证「重建根」和「修现场」走同一份逻辑（uid 1001，与 Alpine 侧一致）。
+HERE_D=$(cd "$(dirname "$0")" && pwd)
+if [ -x "$HERE_D/ensure-desktop-user.sh" ]; then
+	bash "$HERE_D/ensure-desktop-user.sh" --root "$ROOTDIR" 2>/dev/null \
+		|| chroot "$ROOTDIR" /usr/sbin/useradd -u 1001 -m -s /bin/bash -U \
+			-G video,render,audio,input,plugdev,netdev,bluetooth xuqianhui1001 \
+		|| say "warn: 桌面用户创建失败（需在目标根上跑 ensure-desktop-user.sh）"
+	step ok "桌面用户 xuqianhui1001（uid 1001）"
+fi
+
 # ---------------------------------------------------------------- 6 depmod
 say "6 depmod -b（模块树索引）"
 depmod -b "$ROOTDIR" "$UTS" || die "depmod 失败"

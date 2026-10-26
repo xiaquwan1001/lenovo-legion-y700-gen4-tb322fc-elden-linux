@@ -24,8 +24,8 @@ wifi_iface() {
 	done
 	return 1
 }
-IF=${WIFI_IF:-}
-[ -n "$IF" ] || IF=$(wifi_iface) || IF=wlan0
+IF=${WIFI_IF:-}          # 显式覆盖优先；否则留空，交给下面的探测循环
+
 CONF=/etc/wpa_supplicant/wpa_supplicant.conf
 MANUAL=/usr/local/sbin/net-up-manual.sh
 LOG=/run/net-up.log
@@ -50,9 +50,22 @@ mkdir -p /etc/NetworkManager/conf.d
 cp -f /usr/local/sbin/99-unmanaged.conf /etc/NetworkManager/conf.d/99-unmanaged.conf 2>/dev/null
 
 # wait for the wireless iface (up to 3 min; created by ath12k-retry.sh)
+# ⚠️ 接口名**必须在循环里反复探测**，不能在开头只解析一次：ath12k 绑定是异步的
+# （本机 ~9–21 s 才出 phy），开头那一刻 /sys/class/net/*/wireless 还不存在 ⇒ 一次失败就
+# 永久回落 wlan0 ⇒ Debian 根上打 "wlan0 never appeared"、`net-up.service` failed
+# （2026-10-26 实测；WiFi 最终靠 NM 自己的 autoconnect 起来，掩盖了这个 bug）。
 i=0
-while [ ! -e "/sys/class/net/$IF" ] && [ "$i" -lt 90 ]; do sleep 2; i=$((i+1)); done
-[ -e "/sys/class/net/$IF" ] || { log "$IF never appeared"; exit 1; }
+while [ "$i" -lt 90 ]; do
+	# 已解析到的名字若消失（重绑定/重命名），作废重探
+	if [ -n "$IF" ] && [ ! -e "/sys/class/net/$IF" ]; then IF=; fi
+	if [ -z "$IF" ]; then
+		IF=$(wifi_iface 2>/dev/null) || IF=
+		[ -n "$IF" ] && log "wireless iface detected: $IF"
+	fi
+	[ -n "$IF" ] && break
+	sleep 2; i=$((i+1))
+done
+[ -n "$IF" ] || { log "no wireless iface after 180 s"; exit 1; }
 
 # start NetworkManager if not already running
 if ! ps -eo comm 2>/dev/null | grep -qx NetworkManager; then
