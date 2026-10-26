@@ -7,7 +7,7 @@ dst	kind	sha256	size	mode	repo_src
 /etc/init.d/backlight-floor	openrc-initd	717ac921d42d96c4d67e119758cac1c86870e52b2613b1f9d050cbd5e25623ae	758	755	files/etc/init.d/backlight-floor
 /etc/init.d/elden-hapticd	openrc-initd	c5ef6edc33bc42319b8734b2c7d0be143b672e1699a9dec77b4df4928047e932	1890	755	files/etc/init.d/elden-hapticd
 /etc/init.d/elden-powerlog	openrc-initd	9660e7aee715954ad8949fa8c0a0335c5ca6ff65e7578ef016fd7827468b57dc	772	755	files/etc/init.d/elden-powerlog
-/etc/init.d/greetd	openrc-initd	97127fc6ff77b6f0d0efec9c309bfddd7871d4e8daf12bd41e479149a09b1c67	1517	755	files/etc/init.d/greetd
+/etc/init.d/greetd	openrc-initd	61a566f44a23353ee1ea5492b4354216c53d40a65f21610658cbcdd8af8b4fc7	1659	755	files/etc/init.d/greetd
 /etc/init.d/iio-sensor-proxy	openrc-initd	1479cea26453c297119f32a713cc74ae8a40934b8a67e2c971eedfb0577d2e0f	989	755	files/etc/init.d/iio-sensor-proxy
 /etc/init.d/pstore-catch	openrc-initd	d1d1a742cf6534d6a8e3b65c48bc2795d52f4ad0c7e5cbad00e3a7a5aac77edd	780	755	files/etc/init.d/pstore-catch
 /etc/init.d/qbootctl	openrc-initd	38a016980644d627262a262f6d825822516f2cf35d95a48b7f83518c7a67731f	610	755	files/etc/init.d/qbootctl
@@ -17,7 +17,7 @@ dst	kind	sha256	size	mode	repo_src
 /etc/local.d/50-gunyah.start	locald	3d7b139e6cd9747857c0a2be230ed1447b30de2c636a41007162d1ec14841461	505	755	files/etc/local.d/50-gunyah.start
 /etc/local.d/elden-bootlog.start	locald	4b3f9ccbe383a1224e7cc7d85640903eefbe05bf1c6fffd0aa839cc3d648cdc9	76	755	files/etc/local.d/elden-bootlog.start
 /etc/local.d/elden-bringup.start	locald	111b2e4cfb666a2202928bfd7aa93396b7bc2f6e08a269b2218e617cdc09dcfb	117	755	files/etc/local.d/elden-bringup.start
-/init	init	678cccb79faf1b62f46afe22e23994c8323c2c03239553a101a1bf1116d2e42c	30067	755	files/init
+/init	init	7d51f6b4b290d4d631782c07df74cd861a8519860a4a07eedd18a42e41a1ff28	30366	755	files/init
 /usr/local/bin/bwrap	script	79b77b2f375039b2d361a603cbd7d587f110c2be8b09655938e25ed563a5064f	236	755	files/usr/local/bin/bwrap
 /usr/local/bin/elden-hapticd	elf	aca55cb143fd0506991e8031fe059b8213f8fc7f5a3e08fa0eef34d645a47bf3	729312	755	-
 /usr/local/bin/elden-ime-focusd	elf	d23048278d492ca51fc68267eb9c7e78015343206aa527ad9d9b3d60d8202b04	74392	755	-

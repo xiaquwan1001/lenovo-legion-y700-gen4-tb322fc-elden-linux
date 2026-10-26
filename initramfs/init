@@ -155,7 +155,11 @@ mnt cgroup2 none /sys/fs/cgroup || warn "cgroup2 unavailable (Waydroid/LXC will 
 # created via binder-control by waydroid's setupBinderNodes at init/session).
 mnt binder binder /dev/binderfs || warn "binderfs unavailable (Waydroid will fail)"
 
-echo 8 > /proc/sys/kernel/printk 2>/dev/null
+# 2026-10-26：console loglevel 默认 1（只 emerg/alert）。WCD939X 冷起会打 5k+ 行
+# `ASoC error (-16)`；tty0 同步打印让启动多花 ~20 s（dmesg 内容不受影响）。
+# 可用 cmdline `elden_console_loglevel=8` 覆盖。
+: "${elden_console_loglevel:=1}"
+echo "$elden_console_loglevel" > /proc/sys/kernel/printk 2>/dev/null
 hostname elden
 
 # --- which root are we on? --------------------------------------------------

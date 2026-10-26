@@ -49,4 +49,7 @@ start_pre() {
 		sleep 0.5
 	done
 	[ "$_i" -lt 60 ] || echo "elden/greetd.pre: warn: seat0 not ready after 30s" >&2
+
+	# 启动日志降噪结束：恢复 console loglevel（dmesg 始终保留全量）。
+	echo 7 > /proc/sys/kernel/printk 2>/dev/null || true
 }
