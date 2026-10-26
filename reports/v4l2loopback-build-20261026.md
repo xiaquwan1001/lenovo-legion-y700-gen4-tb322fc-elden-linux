@@ -13,10 +13,10 @@
   可复现做法：**临时**把 `include/config/kernel.release` 与 `include/generated/utsrelease.h` 写成目标 UTS →
   `make M=<src> clean modules` → 立即恢复两个生成文件（本次已恢复，`cmp` 无差异）。
 - 产物：`out/extmod-vk163/v4l2loopback.ko`
-  sha256 `778697b729931f1d3aed134713e51cd3bc262c367ec25583dac547e1b42c9253`
-  （vermagic 已核；0 warning）。
+  sha256 `adb1abe4ec1971dea11b3949ef76a663e16ce8024b695f90618981641bb50a16`
+  （vermagic 已核；0 warning）。**注意**：早期副本 `778697…` 是「未改写 kernel.release 前」的构建，vermagic 带 `+`，设备拒载；以 `adb1abe4…` 为准。
 
-## 设备部署（待设备恢复后执行）
+## 设备部署（2026-10-26 17:5x 已实测通过）
 
 ```bash
 ssh root@192.168.7.1 'mkdir -p /lib/modules/$(uname -r)/extra'
@@ -30,3 +30,11 @@ ssh root@192.168.7.1 'depmod -a && modprobe v4l2loopback exclusive_caps=1 video_
 ## 回退
 
 删除 `/lib/modules/<UTS>/extra/v4l2loopback.ko` + `depmod -a`；`cam-loopback.sh` 自身已对缺失节点报 FAIL（不会静默）。
+
+## 实测结果（2026-10-26，vk163 已在 boot_b）
+
+- 部署路径：`/lib/modules/<UTS>/extra/v4l2loopback.ko`，sha256 `adb1abe4…` 与主机一致。
+- `depmod -a` + `modprobe v4l2loopback exclusive_caps=1 video_nr=100` 成功：
+  `lsmod` 见 `v4l2loopback 53248 0`，`/dev/video100` 出现，
+  `v4l2-ctl --info` = `Driver name: v4l2 loopback / Card type: Dummy video device (0x0064) / Bus info: platform:v4l2loopback-100`。
+- 结论：C5/U7 的「节点不存在」卡点已解除；下一步是起 `scripts/cam-loopback.sh` 生产者 + 装相机 APK 实开预览。
