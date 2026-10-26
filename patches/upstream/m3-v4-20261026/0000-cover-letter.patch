@@ -4,8 +4,9 @@ Date: Mon, 26 Oct 2026 19:33:55 +0800
 Subject: [PATCH v4 0/3] usb: dwc3: support two connectors sharing one HS data bus
 
 This is a formal submission, not an RFC: it supersedes the two-patch v2
-series and the shape-only v3 RFC, and it contains the driver that uses the
-binding it describes.  Sorry for the confusion caused by sending v3 as an
+series (<20261017081320.220525-1-xiaqinghuan@mail.ustc.edu.cn>) and the
+shape-only v3 RFC (<20261019131848.344689-1-xiaqinghuan@mail.ustc.edu.cn>),
+and it contains the driver that uses the binding it describes.  Sorry for the confusion caused by sending v3 as an
 RFC threaded under v2; the intent was to settle the binding shape first,
 but that is not how it should have been posted.  The series is complete
 below, with the disposition of every review comment listed.
@@ -135,14 +136,31 @@ sashiko, driver (v2 2/2):
 Testing
 =======
 
+Mechanical, re-run on v4:
+
  - checkpatch --strict: 0 errors, 0 warnings, 0 checks on all three patches.
  - dt-doc-validate on snps,dwc3-common.yaml: clean.
- - Compiles clean with W=1 for drivers/usb/dwc3/ and drivers/usb/roles/.
- - Full arm64 Image.gz + dtbs build of the tree with the series applied.
- - Behaviour on hardware: with both connectors probed, plugging a device
-   into either receptacle moves the mux and reinitialises the controller;
-   the other connector then reports USB_ROLE_NONE instead of fighting for
-   the bus.
+ - W=1 compiles clean for drivers/usb/dwc3/ and drivers/usb/roles/.
+ - Full arm64 Image.gz + dtbs build of a v7.3-rc7 tree with the series
+   applied.
+
+Board behaviour: this board's daily kernel carries this series, and it
+registers both per-connector switches, visible as
+a600000.usb-port0-role-switch and a600000.usb-port1-role-switch.  In the
+earlier revisions the mux logic was exercised plug-by-plug: host mode on
+either receptacle, moving the cable from one receptacle to the other hands
+the controller over, and a charging-only connector next to an active one
+does not disturb it.
+
+The v4 changes are the review fixes listed above: registering the switches
+before the initial mode request, taking the request order and the mode
+request in one critical section, ticket handling on NONE -> role only, the
+monotonic counter instead of jiffies, and dropping the unused field.  Those
+were reviewed and built but not re-exercised plug-by-plug, because the
+author's test setup talks to this board through the very USB link being
+switched; I would rather say that than claim a test I did not run.  I can
+re-test on request if a maintainer wants the swap sequence confirmed before
+this goes in.
 
 Qianhui Xu (3):
   dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus
