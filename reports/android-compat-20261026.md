@@ -413,3 +413,11 @@ ICameraProvider / IComposer / IDevicesFactory / IGatekeeper / IKeymasterDevice /
 - **Widevine 「arm64/A13 是否可补齐」** —— 未取证（只知当前库不存在 + 社区先例为 A11 有、A13 无）。
 - **U4/U5/U6/U9/U10 用例**（视频通话 / 流媒体 DRM / 游戏帧率 / 多窗口 / 休眠唤醒）—— 未测。
 - **容器内 IME**（C11 记账项）—— 未测。
+
+---
+
+## 追加（2026-10-26 17:20，编排者）
+
+- §0 附条「C5/U7 卡点 = 当前 UTS 无 `v4l2loopback.ko`」的解锁件已构建：
+  `out/extmod-vk163/v4l2loopback.ko`（0.15.4，vermagic 与在机 vk163 **逐字一致**），
+  构建/部署/回退见 `reports/v4l2loopback-build-20261026.md`。**待设备恢复后部署**。
