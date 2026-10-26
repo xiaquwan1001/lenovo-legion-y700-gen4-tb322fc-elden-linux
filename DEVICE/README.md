@@ -24,6 +24,7 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
+- ★**2026-10-26 晚（vk163 已刷 `boot_b`，模块化进日常线）** —— `out/boot-elden-vk163.img` 签后 sha `65ae2ff0…`，`scripts/flash-b.sh` 写入后**读回一致**；启动后 `uname -r` = `…-dirty-debug-vk163`、`lsmod` **66**、`/lib/modules/<UTS>` 1539 `.ko`、dmesg 模块错误 **0**、`wlan0`/`card0-DSI-1=connected`/phoc+phosh 均在。另部署 **`v4l2loopback 0.15.4`** 到 `/lib/modules/<UTS>/extra/`（sha `adb1abe4…`，vermagic 逐字匹配），`/dev/video100` 已出现（C5/U7 节点卡点解除）。**未做真 POR 冷起**（本次为 `reboot` 后启动）；回退件 `bootslot-b/boot_b-f2fs-root.img`（vk152 载荷）在。
 - ★**2026-10-26（模块化内核 vk163 零写盘上机；`boot_b` 未变）** —— 在机模块树**新增** `/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163/`（1539 `.ko`，89 MB，仅当跑 vk163 镜像时被使用；日常内核忽略）与 `/usr/local/sbin/payload-modules-load.sh`（载荷模块加载器；在 vk152 非模块化内核上是 no-op，实测自报 `is builtin`）。
   `boot_b` 仍是 `f2fs-root`（内核 sha `b6a074ff…` 读回一致、`retry=6 succ=1`），本轮**未写任何分区**；测试方式 = `fastboot boot out/boot-elden-vk163.img`，退回必须经 `reboot2 bootloader` + `fastboot reboot`（**普通暖复位会继续起测试镜像**，见 `PITFALLS #401`）。报告 `reports/vk163-modular-20261026.md`。
 - ★**2026-10-26（续 2）· `linux17` 现在是 Debian 根，但启动停在 `switch_root`** —— 根内容 = Debian forky/sid（36268 文件 / 1.9 G），
