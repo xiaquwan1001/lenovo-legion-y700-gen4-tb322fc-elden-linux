@@ -1,0 +1,36 @@
+# coupling-waivers.tsv — 目标系统专属构造的**显式豁免表**（每条都要能被核查）
+#
+# 为什么需要（2026-10-26，T14 用户态去 Alpine 化）：
+#   `packaging/elden-userland/files/` 是**设备逐字副本**（禁止手改，MANIFEST 有 sha 锁定），
+#   所以里面 Alpine 专属的写法不能在原地改掉。能做的只有三种诚实的处理：
+#     skip    —— 该文件根本不进 Debian 根（必须在 `rootfs/debian/debian-exclude.tsv` 里有对应行）
+#     message —— 该 token 只出现在**引号内**（用户可见提示语），不会被当成命令执行
+#     guarded —— 该行旁边有 `command -v <tool>` 守卫 + 回退分支（可移植写法，不静默失败）
+#   `check-coupling.sh` 的 X 段会**逐条把这些声明验证一遍**：
+#     skip 类对不上排除表 ⇒ FAIL；message 类把引号剥掉后仍命中 ⇒ FAIL（那是真调用）。
+#   ⇒ 「写豁免」不是「放过」，是「换一种可核查的判据」。
+#
+# 列（TAB 分隔）：
+#   path_regex  "仓库相对路径:行号" 的 grep -E 正则（行号写死，位置漂了会重新 FAIL ⇒ 好）
+#   kind        all | rc-service | rc-update | locald | apk | musl | emerge | openrc-shebang
+#   stage       skip | message | guarded
+#   reason      必填。写「为什么在 Debian 上不会坏事」，不要写「暂时放过」
+#
+# 维护口径：**为本表新增一行前先问——能不能改代码？** 能改就改代码（改完这条就删掉）。
+# 本表只该装「设备逐字副本」和「本身就属于 Alpine 侧」的两类。
+path_regex	kind	stage	reason
+# ---- openrc-enable.sh：整个脚本就是 Alpine OpenRC 的开关，进 Debian 根毫无意义（已 skip） ----
+packaging/elden-userland/files/usr/local/sbin/openrc-enable\.sh:25	all	skip	BRINGUP=/etc/local.d/... 是该脚本写 boot 钩子的目标路径；脚本已被 debian-exclude.tsv 排除，不进 Debian 根
+packaging/elden-userland/files/usr/local/sbin/openrc-enable\.sh:39	locald	skip	同上：mkdir /etc/local.d 只为写 Alpine 的 local 钩子；脚本不进 Debian 根
+packaging/elden-userland/files/usr/local/sbin/openrc-enable\.sh:71	rc-update	skip	rc-update add sysinit：Alpine runlevel 概念，Debian 侧等价物是 systemctl --root enable（stage.sh 7/7 已做）
+packaging/elden-userland/files/usr/local/sbin/openrc-enable\.sh:72	rc-update	skip	同上（boot runlevel）
+packaging/elden-userland/files/usr/local/sbin/openrc-enable\.sh:73	rc-update	skip	同上（default runlevel）
+packaging/elden-userland/files/usr/local/sbin/openrc-enable\.sh:93	rc-update	skip	rc-update add elden-powerlog shutdown：systemd 侧由 services.tsv 的 elden-powerlog 行（WantedBy=poweroff/reboot/halt.target）承担
+# ---- elden-powerlog.initd：openrc-run 工件，systemd 侧用 extra/elden-powerlog-mark.sh ----
+packaging/elden-userland/files/usr/local/sbin/elden-powerlog\.initd:23	rc-service	skip	rc-status 只在 OpenRC shutdown runlevel 有意义；本文件已被 debian-exclude.tsv 排除，Debian 侧等价物是 extra/usr/local/sbin/elden-powerlog-mark.sh（已带 command -v 双分支）
+# ---- 用户可见提示语（token 在引号内，不执行） ----
+packaging/elden-userland/files/usr/local/bin/ssc-udp-relay\.py:61	apk	message	字符串 "FATAL: ssccli not found (apk add libssc)" 是异常分支的**日志文案**，不会被执行；X 段证明：剥掉引号后正则不再命中
+packaging/elden-userland/files/usr/local/sbin/bt-up\.sh:19	apk	message	同上：`log "bluetoothd not installed (apk add bluez)"` 是日志文案（该分支直接 exit 1，不装包）
+packaging/elden-userland/files/usr/local/sbin/greetd-initial-session\.sh:80	apk	message	同上：`echo "$GREETD missing (apk add greetd)"` 是错误提示，随后 exit 1
+packaging/elden-userland/files/usr/local/sbin/setup-session-greetd\.sh:40	apk	message	`echo "[session] apk add greetd greetd-phrog"` 是下一步的提示文案；真正执行在 :41（该文件已被 debian-exclude.tsv 排除）
+packaging/elden-userland/files/usr/local/sbin/setup-session-greetd\.sh:41	apk	skip	真调用 `apk add -q greetd greetd-phrog`，但本文件已被 debian-exclude.tsv 排除（Debian 侧 greetd 由 apt-list 提供），不会进 Debian 根

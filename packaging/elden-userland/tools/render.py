@@ -30,6 +30,11 @@ REQUIRED = {"name", "init", "class", "desc", "exec"}
 CLASSES = {"longrun", "oneshot", "shutdown"}
 # OpenRC 服务名 → systemd 单元名（**两个世界不同名**，混用即静默失效）
 # 依据：systemd-analyze verify 实测 "Failed to add dependency on localmount"。
+#
+# ⚠️ 2026-10-26（T14 去 Alpine 化）：本表**不再是唯一真源**，权威已迁到 `deps.tsv`
+#   （抽象名 → openrc / systemd 双列）。这里保留为**派生缓存**，并且必须与 deps.tsv
+#   第 2 列逐条一致（`--check` 里的自检会断言，漂了直接 FAIL）。
+#   历史教训不变：两个世界不同名，混用即静默失效（PITFALLS #397a）。
 UNIT_MAP = {
     # OpenRC 伪服务 / runlevel 关键字
     "localmount": "local-fs.target",
@@ -60,15 +65,97 @@ UNIT_MAP = {
 }
 
 
+# ---------------------------------------------------------------- 抽象依赖层
+# deps.tsv 的形状：abstract <TAB> openrc <TAB> systemd <TAB> note
+# 两类索引，**方向相反**，这是向后兼容的关键：
+#   ABSTRACT[抽象名]  → (openrc 名, systemd 名)   新写法（推荐）
+#   BY_OPENRC[openrc] → (抽象名, systemd 名)      旧写法（2026-10-25 的 services.tsv 原样可跑）
+# ⇒ 「改名换 init」只需改 deps.tsv；「继续用 OpenRC 名」也仍然合法且解析到同一行。
+ABSTRACT = {}
+BY_OPENRC = {}
+DEPS_CONFLICTS = []          # 歧义：同一个 openrc 名出现在两个抽象名里
+
+
+def load_deps(path: Path):
+    ABSTRACT.clear()
+    BY_OPENRC.clear()
+    del DEPS_CONFLICTS[:]
+    if not path.exists():
+        raise RenderError(
+            f"缺 {path.name}：抽象依赖词表是必需品（services.tsv 的 need/after/before 靠它渲染）")
+    header = None
+    for lineno, line in enumerate(path.read_text().splitlines(), 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        vals = line.split("\t")
+        if header is None:
+            header = vals
+            if header[:3] != ["abstract", "openrc", "systemd"]:
+                raise RenderError(
+                    f"{path.name}:{lineno}: 表头前三列必须是 abstract/openrc/systemd，实际 {header[:3]}")
+            continue
+        if len(vals) < 3:
+            raise RenderError(f"{path.name}:{lineno}: 列数 {len(vals)} < 3")
+        abstract, openrc, systemd = (v.strip() for v in vals[:3])
+        if not abstract or not openrc or not systemd:
+            raise RenderError(f"{path.name}:{lineno}: 抽象名/两种名字都不能为空：{line[:80]}")
+        if abstract in ABSTRACT:
+            raise RenderError(f"{path.name}:{lineno}: 抽象名重复：{abstract}")
+        if not systemd.endswith((".service", ".target")):
+            raise RenderError(
+                f"{path.name}:{lineno}: systemd 列必须是 *.service 或 *.target（否则 systemd 静默忽略）：{systemd}")
+        if openrc in BY_OPENRC and BY_OPENRC[openrc][0] != abstract:
+            DEPS_CONFLICTS.append((openrc, BY_OPENRC[openrc][0], abstract))
+        ABSTRACT[abstract] = (openrc, systemd)
+        BY_OPENRC[openrc] = (abstract, systemd)
+
+
+def _lookup(name: str):
+    """依赖名 → (抽象名, openrc 名, systemd 名)；抽象名优先，其次旧 OpenRC 名。"""
+    if name in ABSTRACT:
+        openrc, systemd = ABSTRACT[name]
+        return name, openrc, systemd
+    if name in BY_OPENRC:
+        abstract, systemd = BY_OPENRC[name]
+        return abstract, name, systemd
+    return None
+
+
 def unit_name(name: str, known: set) -> str:
-    """把 services.tsv 里的依赖名翻成 systemd 单元名。映射表优先，其次本包服务名。"""
+    """把 services.tsv / deps.tsv 里的依赖名翻成 **systemd** 单元名。
+
+    解析顺序（每条都必须有出处，杜绝「看起来能跑」）：
+      1. deps.tsv 的抽象名         —— 新写法，推荐
+      2. deps.tsv 的 openrc 名     —— 旧写法，向后兼容（同一个 systemd 名）
+      3. UNIT_MAP（历史缓存）      —— 只为兼容 deps.tsv 尚未覆盖的历史行
+      4. 本包 services.tsv 的服务名 —— 同包互依
+      其它 ⇒ 抛错（systemd 会静默忽略，绝不能放过）
+    """
+    hit = _lookup(name)
+    if hit is not None:
+        abstract, _, systemd = hit
+        legacy = UNIT_MAP.get(name)
+        if legacy is not None and legacy != systemd:
+            raise RenderError(
+                f"依赖名 {name!r} 在 deps.tsv 与 UNIT_MAP 里解析不一致"
+                f"（deps.tsv={systemd} / UNIT_MAP={legacy}）⇒ 先统一再渲染")
+        return systemd
     if name in UNIT_MAP:
         return UNIT_MAP[name]
     if name in known:
         return f"{name}.service"
     raise RenderError(
-        f"依赖名 {name!r} 既不在 UNIT_MAP 也不是本包服务 ⇒ systemd 侧会静默忽略"
-        f"（加映射或改依赖）")
+        f"依赖名 {name!r} 既不在 deps.tsv、也不在 UNIT_MAP、也不是本包服务 ⇒ systemd 侧会静默忽略"
+        f"（在 deps.tsv 加抽象名，或改用已有抽象名）")
+
+
+def openrc_name(name: str) -> str:
+    """把依赖名翻成 **OpenRC** 侧的名字（`depend() { need … }`）。"""
+    hit = _lookup(name)
+    if hit is not None:
+        return hit[1]
+    # 本包服务名与历史 UNIT_MAP 项在 OpenRC 侧原样保留（它们本来就是 OpenRC 名）
+    return name
 
 INITS = {"ours", "override", "package"}
 
@@ -155,15 +242,23 @@ def render_openrc_initd(svc, hook_body):
             extra.append(f"respawn_delay_seconds={respawn}")
             extra.append("respawn_max=10")
 
-    need = split_names(svc.get("need"))
-    after = [x for x in split_names(svc.get("after")) if x not in need]
+    # 抽象名 → OpenRC 名字（deps.tsv 第 2 列）；未登记的（本包服务/历史项）原样透传
+    # 去重按**抽象名**判定（need 写 fs-local、after 写 localmount 是同一个依赖，不能重复渲染）
+    def _canon(x):
+        hit = _lookup(x)
+        return hit[0] if hit is not None else x
+
+    need_raw = split_names(svc.get("need"))
+    need_keys = {_canon(x) for x in need_raw}
+    need = [openrc_name(x) for x in need_raw]
+    after = [openrc_name(x) for x in split_names(svc.get("after")) if _canon(x) not in need_keys]
     dep = []
     if need:
         dep.append("need " + " ".join(need))
     if after:
         dep.append("after " + " ".join(after))
     if split_names(svc.get("before")):
-        dep.append("before " + " ".join(split_names(svc["before"])))
+        dep.append("before " + " ".join(openrc_name(x) for x in split_names(svc["before"])))
     if not dep:
         # ⚠️ bash 会把「函数体里只有一行注释」判为语法错误（`f() { # c\n }` → unexpected token）
         dep.append(": # 无依赖")
@@ -211,15 +306,36 @@ def render_systemd_unit(svc, hook_body):
         deps.append("DefaultDependencies=no")
         deps.append("After=local-fs.target")
         deps.append("Before=shutdown.target")
+    # systemd 侧同理：Requires= 用抽象名归并，After= 去重按抽象名（否则 need fs-local + after localmount 会双写）
+    def _canon(x):
+        hit = _lookup(x)
+        return hit[0] if hit is not None else x
+
     need = split_names(svc.get("need"))
+    need_keys = {_canon(x) for x in need}
     if need:
         deps.append("Requires=" + " ".join(unit_name(x, KNOWN) for x in need))
-    after = [x for x in split_names(svc.get("after")) if x not in need]
+    after = [x for x in split_names(svc.get("after")) if _canon(x) not in need_keys]
     if after:
         deps.append("After=" + " ".join(unit_name(x, KNOWN) for x in after))
     before = split_names(svc.get("before"))
     if before:
         deps.append("Before=" + " ".join(unit_name(x, KNOWN) for x in before))
+    # 去重：同一个 systemd 单元名在 Requires=/After= 里重复出现会被 systemd 接受，
+    # 但同名归一后就重复了（example: need fs-local + after localmount ⇒ 两行 local-fs.target）
+    seen_units, dedup = set(), []
+    for line in deps:
+        key = line.split("=", 1)[0]
+        units = line.split("=", 1)[1].split() if "=" in line else []
+        if key in ("Requires", "After", "Before"):
+            units = [u for u in units if (key, u) not in seen_units]
+            for u in units:
+                seen_units.add((key, u))
+            if not units:
+                continue
+            line = key + "=" + " ".join(units)
+        dedup.append(line)
+    deps = dedup
 
     body = []
     if cls == "shutdown":
@@ -270,6 +386,12 @@ def main() -> int:
     global KNOWN, PROVIDES
     KNOWN = {s["name"] for s in services}
     PROVIDES = load_provides(ROOT / "provides.tsv")
+    try:
+        load_deps(ROOT / "deps.tsv")
+    except RenderError as exc:
+        print("render: FAIL", file=sys.stderr)
+        print("  - " + str(exc), file=sys.stderr)
+        return 1
 
     seen = set()
     errors = []
@@ -312,6 +434,31 @@ def main() -> int:
             errors.append(f"provides.tsv: {name} 不是 services.tsv 里的服务")
         if not aliases:
             errors.append(f"provides.tsv: {name} 别名列表为空")
+
+    # ---- 抽象依赖层自检（2026-10-26 T14：deps.tsv 是唯一真源） ----------------
+    # 1. deps.tsv 第 2 列必须与历史 UNIT_MAP 逐条一致（只查两边都有的键）——
+    #    不一致就是「同一句话两种说法」，一定要現场修为一个。
+    for openrc_name_, (abstract, systemd) in sorted(BY_OPENRC.items()):
+        legacy = UNIT_MAP.get(openrc_name_)
+        if legacy is not None and legacy != systemd:
+            errors.append(
+                f"deps.tsv 与 UNIT_MAP 冲突：openrc={openrc_name_} "
+                f"deps.tsv→{systemd} / UNIT_MAP→{legacy}")
+    # 2. 同一个 openrc 名不得映射到两个抽象名（歧义 = 两种 init 可能走叉）
+    for openrc_name_, a1, a2 in DEPS_CONFLICTS:
+        errors.append(f"deps.tsv: openrc 名 {openrc_name_!r} 同时属于 {a1!r} 与 {a2!r}")
+    # 3. services.tsv 里出现的每个依赖词必须能解析（否则 systemd 静默忽略）
+    for svc in services:
+        for col in ("need", "after", "before"):
+            for token in split_names(svc.get(col)):
+                try:
+                    unit_name(token, KNOWN)
+                except RenderError as exc:
+                    errors.append(f"{svc['name']}.{col}: {exc}")
+    # 4. ★向后兼容硬门：旧 OpenRC 写法与抽象写法必須渲染出**逐字相同**的产物。
+    #    做法 = 把每行 need/after/before 的每个词换成「它自己的抽象名」，再渲染一遍比字符串。
+    #    这条保证「改名字不改语义」，也是将来换第三种 init 时的回退保险。
+    errors.extend(_compat_selfcheck(services))
 
     if errors:
         print("render: FAIL", file=sys.stderr)
@@ -361,6 +508,37 @@ def main() -> int:
 
     print(f"render: → {OUT.relative_to(ROOT)}/{{openrc,systemd,hooks}}, enable.tsv")
     return 0
+
+
+def _compat_selfcheck(services):
+    """旧 OpenRC 词表 ⇄ 抽象词表：渲染结果必须逐字等价（向后兼容硬门）。
+
+    返回错误列表（空 = 通过）。只对**实际能被 deps.tsv 解析**的词做归一，其它词原样保留。
+    否则任何一次 deps.tsv 改动都可能让旧 services.tsv 静默变异。
+    """
+    errs = []
+    for svc in services:
+        if svc["init"] == "package":
+            continue
+        hook = HOOKS / f"{svc['name']}.pre"
+        hook_body = hook.read_text() if hook.exists() else ""
+        norm = dict(svc)
+        for col in ("need", "after", "before"):
+            toks = split_names(svc.get(col))
+            out = []
+            for t in toks:
+                hit = _lookup(t)
+                out.append(hit[0] if hit else t)
+            norm[col] = " ".join(out)
+        try:
+            a = render_openrc_initd(svc, hook_body) + render_systemd_unit(svc, hook_body)
+            b = render_openrc_initd(norm, hook_body) + render_systemd_unit(norm, hook_body)
+        except RenderError:
+            continue                      # 其它检查会报具体原因，这里不重复计
+        if a != b:
+            errs.append(
+                f"{svc['name']}: 抽象名与旧 OpenRC 名渲染不等价（去 Alpine 化破坏兼容）")
+    return errs
 
 
 if __name__ == "__main__":

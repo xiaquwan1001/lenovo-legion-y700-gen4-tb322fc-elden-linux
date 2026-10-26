@@ -1,0 +1,26 @@
+# debian-exclude.tsv — 明确**不**进 Debian/Mobian 目标根的安装路径（唯一真源）
+#
+# 为什么需要单独一张表（2026-10-26，T14 去 Alpine 化）：
+#   `packaging/elden-userland/files/` 是**设备逐字副本**（禁止手改，MANIFEST 有 sha 锁定），
+#   其中一部分文件天然是 Alpine 侧专属（`/etc/init.d/*` 的 OpenRC initd、`/etc/local.d/*`
+#   的 boot 钩子、`openrc-enable.sh` 这个"把 PID1 交给 OpenRC"的开关、`apk` 装机助手……）。
+#   它们进 Debian 根只有坏处：要么永不执行（local.d/rc-update），要么直接把 apk 装上。
+#   原先是 `rootfs/debian/stage.sh` 里按 MANIFEST 的 `kind` 硬编码跳过（openrc-initd|locald），
+#   但 kind 只覆盖到 initd/local.d — 三个 `kind=script` 的文件从缝里漏进了 Debian 根。
+#   ⇒ 改成显式路径表：**加/减都要写理由**，两个门禁都读它。
+#
+# 谁读这张表：
+#   1. `rootfs/debian/stage.sh` 组装时跳过（并在门禁里断言真的没铺进去）
+#   2. `packaging/elden-userland/tools/check-coupling.sh` 的 X 段：任何一条
+#      `stage=skip` 的耦合豁免，都必须在这里有对应行 ⇒ 「豁免」与「不进 Debian 根」
+#      是两个必须同时成立的声明，不能只写一个。
+#   3. `packaging/elden-userland/tools/verify.sh --offline`：断言本表每行都真的存在于
+#      MANIFEST（防表腐化：删了文件忘删行）
+#
+# 列（TAB 分隔）：
+#   path    安装绝对路径（与 MANIFEST 的 dst 同形）
+#   kind    openrc-initd | locald | alpine-tool   （人在读，门禁只用来打印分类）
+#   reason  为什么不能进 Debian 根（必填）
+/usr/local/sbin/openrc-enable.sh	alpine-tool	本脚本的**全部功能**就是 `rc-update add` 把 runlevel 写进 /etc/runlevels 并切换 /etc/elden-init-mode=openrc。Debian 侧 PID1 是 systemd、init_mode=systemd，跑它只会写出一份永不生效的 runlevel 树，并把模式标记改错 ⇒ 必须排除
+/usr/local/sbin/elden-powerlog.initd	alpine-tool	这是 `/etc/init.d/elden-powerlog` 的**权威副本**（openrc-run shebang + `eend`），只在 OpenRC shutdown runlevel 下有意义；systemd 侧用的是 `extra/usr/local/sbin/elden-powerlog-mark.sh`（已经由 services.tsv 的 elden-powerlog 行渲染）。留在根里会让人误以为它是可执行脚本
+/usr/local/sbin/setup-session-greetd.sh	alpine-tool	装机助手，install 分支里直接 `apk add -q greetd greetd-phrog`。Debian 侧 greetd 由 apt-list 提供（pkgmap.tsv），这个脚本在 Debian 上只会报 apk not found

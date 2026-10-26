@@ -228,3 +228,4 @@ ts	label	vk	reset	deploy	verdict	image_sha	log_dir
 2026-10-24T02:21:35Z	q32w1-r1	vk152	warm	none	GOOD	d8e8074be0dd	/home/xuqianhui/y700-elden/reports/trials/20261024T022134Z-q32w1-r1
 2026-10-24T02:49:43Z	q32c1-r2	vk152	por	none	GOOD	d8e8074be0dd	/home/xuqianhui/y700-elden/reports/trials/20261024T024942Z-q32c1-r2
 2026-10-24T02:51:54Z	q32w2-r1	vk152	warm	none	GOOD	d8e8074be0dd	/home/xuqianhui/y700-elden/reports/trials/20261024T025153Z-q32w2-r1
+2026-10-26T07:01:15Z	tf-g16-card2-3r	vk163	warm	fastboot-boot	PASS	70fefa733340	

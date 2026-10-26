@@ -1,0 +1,56 @@
+# deps.tsv — 抽象依赖词表（发行版 / init 中立的「服务语义」层）
+#
+# 为什么需要（2026-10-26，T14 用户态去 Alpine 化）：
+#   `services.tsv` 的 need/after/before 原来直接写 **OpenRC 服务名**（localmount / udev /
+#   dbus / seatd / elogind / networkmanager…），再由 render.py 用 UNIT_MAP 反向翻成
+#   systemd 单元名 ⇒ **OpenRC 是第一语言，systemd 是译文**。换 init 就得再写一张反表，
+#   而漏一条的代价是「依赖被 systemd 静默忽略」（PITFALLS #397a / #318）。
+#   现在改成：`services.tsv` 只写**抽象名**（本文件第 1 列），两种 init 的具体名字都从
+#   这里查 ⇒ 加第三种 init 只需加一列，services.tsv 一行不动。
+#
+# 列（TAB 分隔）：
+#   abstract   抽象依赖名（services.tsv 的 need/after/before 用它）
+#   openrc     OpenRC 侧的具体名字（`depend() { need … }` 里写的那个）
+#   systemd    systemd 侧的具体单元名（`Requires=` / `After=` 里写的那个）
+#   note       语义 + 为什么这两个名字不等价（写清差异，别只写"映射"）
+#
+# ★ 向后兼容：services.tsv 里**继续写旧 OpenRC 名也是合法的**（render.py 用第 2 列反查
+#   同一行），所以 2026-10-25 之前写的行不改也能渲染；`render.py --check` 内置自检会断言
+#   「抽象名」与「旧 OpenRC 名」渲染出**逐字相同**的两套产物（这条是硬门，不是注释）。
+#
+# ★ 名字对齐的坑（每条 note 都记了，别改成"看起来更对称"的样子）：
+#   - `session-bus` 指的是 **D-Bus 系统总线**，名字沿用 T14 任务词表；不是 session bus。
+#   - `sensors-dsp` 两侧名字**故意不同**：Alpine 是独立服务 hexagonrpcd-adsp-sensorspd，
+#     Debian 0.4.0 没有该二进制，靠 hexagonrpcd.service 的 `-s` drop-in 复刻（J3）；
+#     systemd 列**沿用** hexagonrpcd-adsp-sensorspd.service，因为 `rootfs/debian/stage.sh` §5
+#     已建同名别名指向 hexagonrpcd.service。别改成 hexagonrpcd.service —— 改了就得同步删别名，
+#     否则「别名无人用」会让人误以为它可删（stage.sh 门禁 H 依赖别名存在）。
+#   - `login-manager` 在 Debian 由 systemd 自带（systemd-logind）；overlay 里给了
+#     `elogind.service → systemd-logind.service` 别名（rootfs/debian/stage.sh §5/门禁 H）。
+#
+# 用法：只改这张表不要动 render.py 的映射代码；新增抽象名后跑
+#   python3 packaging/elden-userland/tools/render.py --check
+#
+abstract	openrc	systemd	note
+fs-local	localmount	local-fs.target	本地文件系统已挂载（/etc、/var 可写、/var/log 可写）。OpenRC 的 localmount 是伪服务，systemd 侧对应 local-fs.target；写 Requires=localmount 会被静默忽略（#397a）
+fs-root	root	local-fs.target	根文件系统。OpenRC 的 root 伪服务与 localmount 在 systemd 侧收敛到同一个 target ⇒ 本行与 fs-local 同值，保留只为语义可读
+dev-manager	udev	systemd-udevd.service	设备管理器（/dev 与冷插拔事件）。OpenRC 里 udev 是本地服务名，systemd 侧是 systemd-udevd.service（不是 udev.service，写错即静默忽略）
+dev-manager-settle	udev-settle	systemd-udev-settle.service	等设备枚举收敛。Debian 侧默认不启用 udev-settle（Debian 认为它是 time sink）⇒ 依赖它的服务必须自己能重试，不能只靠这一条
+dev-manager-trigger	udev-trigger	systemd-udev-trigger.service	补发冷插拔 uevent
+clock-hw	hwclock	systemd-hwclock.service	把 RTC 同步到系统时钟（无电池 RTC 的本机在上游化时会被拔掉，见 TASKS §7）
+hostname	hostname	systemd-hostnamed.service	主机名设定
+sysctl	sysctl	systemd-sysctl.service	内核参数（/etc/sysctl.d）；注意 Debian 的 sysctl 由 systemd-sysctl 在 sysinit 阶段跑，OpenRC 侧是 sysctl 服务
+kernel-modules	modules	systemd-modules-load.service	按 /etc/modules 加载模块。本机**不用**它加载相机/payload（有序加载在 /init，见 initramfs/init:264-280）；保留给发行版自带的 /etc/modules
+boot-local	local	elden-local.service	「sysinit 之后跑一次本地钩子」的抽象。OpenRC 侧 = /etc/local.d（Alpine 专属目录，本仓库门禁禁止新增用法）；systemd 侧 = elden-local.service（一个 oneshot，由 render 层维护，不要再往 /etc/local.d 写东西）
+session-bus	dbus	dbus.service	D-Bus **系统总线**（名字沿用 T14 词表）。这是全项目最容易错的一条：OpenRC 叫 dbus，systemd 叫 dbus.service
+seat	seatd	seatd.service	seat 管理（greetd 的 LIBSEAT_BACKEND=seatd；seatd 没起 greetd 就无桌面，PITFALLS #318）
+login-manager	elogind	elogind.service	会话/登录管理。Alpine 用 elogind（独立守护），Debian 用 systemd 自带 logind ⇒ overlay 提供 elogind.service → systemd-logind.service 别名，否则 greetd 的 After= 静默失效
+polkit	polkit	polkit.service	权限代理
+rtkit	rtkit	rtkit-daemon.service	实时调度代理（PipeWire 依赖）
+udisks	udisks2	udisks2.service	UDisks2（Phosh 的存储/电源面板）
+bluetooth-stack	bluetooth	bluetooth.service	BlueZ 守护。OpenRC 服务名 bluetooth，systemd 单元 bluetooth.service
+net-manager	networkmanager	NetworkManager.service	网络管理。**大小写是硬坑**：systemd 单元名是 NetworkManager.service（大写 N/M），写成 networkmanager.service 会静默忽略（#397a 同型）
+time-daemon	chronyd	chronyd.service	时间同步守护（本机另有 time-sync.service 做一次性校正，见 services.tsv）
+container-host	lxc	lxc.service	LXC（Waydroid 宿主侧依赖）
+ssh	sshd	sshd.service	SSH 守护。**这是 /init 的恢复通道**，在 PID1 交接前就由 /init 自己拉起（initramfs/init:520-535）
+sensors-dsp	hexagonrpcd-adsp-sensorspd	hexagonrpcd-adsp-sensorspd.service	ADSP sensorspd（QRTR svc 400 = SSC）。Alpine 是独立 initd；Debian 0.4.0 **没有该二进制**，由 hexagonrpcd.service 的 `-s` drop-in 复刻（J3），并由 stage.sh §5 建同名别名指向它 ⇒ 本行的 systemd 列在两侧都能解析。iio-sensor-proxy 必须等它，否则自动旋转永久 MODE_OFF（G1-34）
