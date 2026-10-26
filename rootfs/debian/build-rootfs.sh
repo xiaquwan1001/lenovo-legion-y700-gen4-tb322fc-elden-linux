@@ -135,7 +135,27 @@ fi
 
 # ---------------------------------------------------------------- 4 overlay
 say "4 覆盖 stage-debian（固件/模块/用户态/单元/init）"
-rsync -aHAX --numeric-ids "$STAGE/" "$ROOTDIR/" || die "rsync overlay 失败"
+# ⚠️ 两个必须加的 rsync 选项（2026-10-26 实测踩到，属于「越修越坏」的一类）：
+#   --keep-dirlinks：Debian sid 是 **usr-merge** 布局，/lib 与 /bin 都是指向 usr/ 的符号链接。
+#     overlay 里的 `lib/`（firmware+modules）是个真目录，不加这个选项 rsync 会把
+#     `/lib -> usr/lib` 这个符号链接**替换成真目录** ⇒ `/lib/ld-linux-aarch64.so.1` 消失 ⇒
+#     此后 chroot 里所有 arm64 程序都跑不了（报 `qemu-aarch64: Could not open '/lib/ld-linux…'`）。
+#   --chown=root:root：overlay 是普通用户建的，`rsync -a` 会把属主原样带进目标根。
+rsync -aHAX --numeric-ids --keep-dirlinks --chown=root:root "$STAGE/" "$ROOTDIR/" \
+	|| die "rsync overlay 失败"
+# 幂等修复：如果上一次已经踩过（/lib 变成了真目录），把它还原成 usr-merge 的符号链接。
+if [ ! -L "$ROOTDIR/lib" ] && [ -d "$ROOTDIR/usr/lib" ]; then
+	step warn "/lib 不是符号链接（usr-merge 被破坏）→ 还原"
+	for d in firmware modules; do
+		if [ -d "$ROOTDIR/lib/$d" ]; then
+			mkdir -p "$ROOTDIR/usr/lib/$d"
+			rsync -aHAX --chown=root:root "$ROOTDIR/lib/$d/" "$ROOTDIR/usr/lib/$d/"
+			rm -rf "$ROOTDIR/lib/$d"
+		fi
+	done
+	find "$ROOTDIR/lib" -mindepth 1 -maxdepth 1 -exec mv -f {} "$ROOTDIR/usr/lib/" \; 2>/dev/null || true
+	rmdir "$ROOTDIR/lib" 2>/dev/null && ln -s usr/lib "$ROOTDIR/lib"
+fi
 step ok "overlay 已铺（$(du -sh "$STAGE" | cut -f1)）"
 
 # ---------------------------------------------------------------- 5 基线配置
@@ -179,6 +199,10 @@ f=0
 b() { printf '  FAIL  %s\n' "$*"; f=$((f+1)); }
 o() { printf '  ok    %s\n' "$*"; }
 [ "$(chroot "$ROOTDIR" dpkg --print-architecture 2>/dev/null)" = arm64 ] && o "dpkg arch = arm64" || b "dpkg arch 不是 arm64"
+# usr-merge 完整性：/lib 必须是 → usr/lib 的符号链接，否则 arm64 程序全跑不了
+[ -L "$ROOTDIR/lib" ] && [ -e "$ROOTDIR/lib/ld-linux-aarch64.so.1" ] \
+	&& o "/lib 是 usr-merge 符号链接，loader 可解析" \
+	|| b "/lib 不是符号链接或缺 loader（overlay 覆盖破坏了 usr-merge）"
 [ -x "$ROOTDIR/sbin/init" ] || [ -L "$ROOTDIR/sbin/init" ] && o "/sbin/init 存在（$(readlink -f "$ROOTDIR/sbin/init" 2>/dev/null | sed "s|$ROOTDIR||")）" || b "缺 /sbin/init"
 chroot "$ROOTDIR" systemctl --version >/dev/null 2>&1 && o "systemd 可执行" || b "systemctl 跑不起来"
 [ "$(cat "$ROOTDIR/etc/elden-init-mode" 2>/dev/null)" = systemd ] && o "/etc/elden-init-mode = systemd" || b "init-mode 不是 systemd"
@@ -194,7 +218,7 @@ grep -vE '^[[:space:]]*#' "$ROOTDIR/etc/fstab" | grep -q 'LABEL=linux17' \
 [ -L "$ROOTDIR/etc/systemd/system/multi-user.target.wants/qbootctl.service" ] && o "qbootctl 已 enable" || b "qbootctl 未 enable"
 [ -L "$ROOTDIR/etc/systemd/system/display-manager.service" ] && o "display-manager → greetd" || b "display-manager 缺失"
 dpkg-query --admindir="$ROOTDIR/var/lib/dpkg" -W linux-image-'*' 2>/dev/null | grep -q . && b "装进了 Debian 内核包" || o "未装任何 Debian 内核包"
-o "已装包数 $(dpkg-query --admindir="$ROOTDIR/var/lib/dpkg" -f '${Package}\n' 2>/dev/null | wc -l)"
+o "已装包数 $(chroot "$ROOTDIR" dpkg-query -f '${Package}\n' -W 2>/dev/null | wc -l)"
 o "根体积 $(du -sh --exclude=proc --exclude=sys --exclude=dev "$ROOTDIR" 2>/dev/null | cut -f1)"
 [ "$f" = 0 ] || die "门禁 FAIL=$f"
 
