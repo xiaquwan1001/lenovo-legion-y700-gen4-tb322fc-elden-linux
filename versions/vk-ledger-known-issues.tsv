@@ -339,3 +339,4 @@ vk169-trace2	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 
 vk170-trace3	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
 vk171-swrerr	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
 vk174	num_ne_tag	M6 迁移候选（2026-10-26）：内核/DTB 逐字节复用 vk173(=vk172 载荷)，只换 ramdisk 的 /init（阶段化 preflight）+ cmdline elden_root=LABEL=linux17；无内核改动故无新 tag
+vk175	num_ne_tag	M6 可见性件（2026-10-26）：内核/DTB/ramdisk 与 vk174 逐字节相同，只加 cmdline elden_early_gadget=1 + elden_q28_nowd

@@ -10,7 +10,22 @@
 # and Settings→Network work.  First-time profile creation is done once with
 # `nmcli device wifi connect "<ssid>" password "<psk>"` (persisted by NM).
 set -u
-IF=wlan0
+# 无线接口名**按发行版不同**（2026-10-26 Debian 根实测）：
+#   Alpine 无 systemd-udevd 的可预测命名 ⇒ wlan0
+#   Debian/systemd 有 net.ifnames ⇒ wlp1s0（本机 ath12k 走 PCIe：wlp1s0）
+# 写死 wlan0 的后果：等 90×2 s 后失败、`net-up.service` 报 failed、WiFi 永不自动连。
+# 取法按优先级：env 覆盖 → sysfs 里带 wireless 目录的第一块 → iw → rtnl 名里 wlan*/wlp*。
+wifi_iface() {
+	for d in /sys/class/net/*; do
+		[ -d "$d/wireless" ] || continue
+		n=${d##*/}
+		[ "$n" = "p2p-dev-$(echo "$n" | sed 's/^p2p-dev-//')" ] && continue
+		echo "$n"; return 0
+	done
+	return 1
+}
+IF=${WIFI_IF:-}
+[ -n "$IF" ] || IF=$(wifi_iface) || IF=wlan0
 CONF=/etc/wpa_supplicant/wpa_supplicant.conf
 MANUAL=/usr/local/sbin/net-up-manual.sh
 LOG=/run/net-up.log
@@ -34,7 +49,7 @@ fi
 mkdir -p /etc/NetworkManager/conf.d
 cp -f /usr/local/sbin/99-unmanaged.conf /etc/NetworkManager/conf.d/99-unmanaged.conf 2>/dev/null
 
-# wait for wlan0 (up to 3 min; created by ath12k-retry.sh)
+# wait for the wireless iface (up to 3 min; created by ath12k-retry.sh)
 i=0
 while [ ! -e "/sys/class/net/$IF" ] && [ "$i" -lt 90 ]; do sleep 2; i=$((i+1)); done
 [ -e "/sys/class/net/$IF" ] || { log "$IF never appeared"; exit 1; }

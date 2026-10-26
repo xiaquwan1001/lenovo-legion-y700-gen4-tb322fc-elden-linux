@@ -6,7 +6,7 @@ Description=Mark the current A/B slot successful (PITFALLS #181: without it, ~7 
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/qbootctl -m
+ExecStart=/usr/local/sbin/qbootctl-mark.sh
 EnvironmentFile=-/etc/conf.d/qbootctl
 
 [Install]

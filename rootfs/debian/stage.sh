@@ -28,10 +28,15 @@
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
-CHROOT=${CHROOT:-/opt/elden/arm64-sid}
+CHROOT=${CHROOT:-/opt/elden/arm64-sid}            # 依赖闭包模拟根（minbase，含 build-essential）
+# PKGROOT = 「包自带的二进制」去哪查：chroot 是依赖模拟根，**不含** greetd/qbootctl 这些
+# 只在目标根里才有的包；真正的 833 包完整根在 /opt/elden/mobian-rootfs（T18 产物）。
+PKGROOT=${PKGROOT:-/opt/elden/mobian-rootfs}
+[ -d "$PKGROOT" ] || PKGROOT=$CHROOT
 STAGE=${STAGE:-$ROOT/out/stage-debian}
 MODSTAGE=${MODSTAGE:-$ROOT/out/modstage-vk163}
 UNITS=$ROOT/packaging/elden-userland/out/units/systemd
+HOOKS=$ROOT/packaging/elden-userland/hooks
 MANIFEST=$ROOT/packaging/elden-userland/MANIFEST.tsv
 USERLAND=$ROOT/packaging/elden-userland
 QCOM_ROOT=/usr/share/qcom/sm8750/LENOVO/TB322FC
@@ -92,6 +97,21 @@ if [ "$MODE" != check ]; then
 	for u in "$UNITS"/*.service; do
 		install -D -m 644 "$u" "$STAGE/usr/lib/systemd/system/$(basename "$u")"
 	done
+
+	# 4b/6 启动前置 hook（ExecStartPre 的目标文件）
+	# 为什么必须有这一步（2026-10-26 Debian 根实测）：render.py 把 hooks/<svc>.pre 的**内容**
+	# 内联进 OpenRC initd（Alpine 侧不用额外文件），但系统给 systemd 渲染的是
+	# `ExecStartPre=/usr/local/libexec/elden/<svc>.pre` —— 那个文件此前**没有人安装**
+	# ⇒ greetd / elden-hapticd / net-selfheal / wifi-scan-refresh 全是 status=203/EXEC，
+	# 现象 = 系统起来了但**没有桌面**（greetd 起不来）。
+	mkdir -p "$STAGE/usr/local/libexec/elden"
+	nhook=0
+	for h in "$HOOKS"/*.pre; do
+		[ -f "$h" ] || continue
+		install -D -m 755 "$h" "$STAGE/usr/local/libexec/elden/$(basename "$h")"
+		nhook=$((nhook+1))
+	done
+	ok "启动前置 hook: $nhook 个 → /usr/local/libexec/elden/"
 
 	printf '  5/6 hexagonrpcd drop-in（SSC 传感器入口）\n'
 	# 为什么是 drop-in 而不是自建 unit / 自建包：
@@ -155,6 +175,12 @@ if [ "$MODE" != check ]; then
 fi
 
 # ---------------------------------------------------------------- 门禁
+have_path() { # have_path <root> <name> —— 八个标准 bin 目录里找可执行名
+	for _d in usr/local/sbin usr/local/bin usr/sbin usr/bin sbin bin; do
+		[ -e "$1/$_d/$2" ] && return 0
+	done
+	return 1
+}
 sec "A. 固件（DT 名 + 传感器 DSP 树）"
 # 复用 elden-firmware 的 DTS 门禁：它自带「每条 firmware-name 都要在」的逻辑，这里只做包内复核。
 # 注意：**不要**写 `dpkg-deb -c | grep -q` —— grep -q 提前关闭管道会让 tar 吃 SIGPIPE，
@@ -220,6 +246,28 @@ for u in "$STAGE"/usr/lib/systemd/system/*.service; do
 done
 nunits=$(ls "$STAGE"/usr/lib/systemd/system/*.service 2>/dev/null | wc -l)
 ok "$nunits 个单元已核（systemd-analyze=$have_verify）"
+# D2：单元引用的**绝对路径可执行文件**必须真的在（overlay ∪ Debian chroot）。
+# 为什么单列（2026-10-26）：`systemd-analyze verify` 对「目标根才有那个二进制」是**预期噪声**，
+# 我们把它过滤掉了 ⇒ 真正的幽灵路径（ExecStartPre 指向从不存在的 libexec 文件）也一起被滤掉，
+# 表现为开机后 status=203/EXEC、服务自杀、无桌面，而门禁全绿。
+for u in "$STAGE"/usr/lib/systemd/system/*.service; do
+	b=$(basename "$u")
+	for path in $(grep -hoE '^(ExecStartPre|ExecStart|ExecStartPost|ExecStop|ExecReload)=[^ ]+' "$u" \
+			| sed 's/^[A-Za-z]*=//' | sort -u); do
+		case "$path" in -*) continue ;; esac      # 形如 `-/bin/kill` 的可忽略前缀
+		[ "${path#/}" = "$path" ] && continue      # 相对路径/裸命令名不管（由 systemd 查 PATH）
+		[ -e "$STAGE$path" ] && continue           # path 是绝对路径：直接拼根，不能走 have_path
+		[ -e "$PKGROOT$path" ] && continue
+		# 已知债务：MANIFEST 里 repo_src="-" 的行 = 设备侧二进制、仓库无副本（T14 剩余三步之一）。
+		# 这不是"幽灵路径"而是"仓库里根本没有这个文件"，故只 WARN 并点名，不阻断 stage。
+		if awk -F'\t' -v p="$path" '$1==p && $6=="-" {found=1} END{exit !found}' "$MANIFEST"; then
+			warnf "D2 $b 的可执行文件 $path 是设备侧二进制（MANIFEST repo_src=-，T14 债务）⇒ Debian 根没有它"
+			continue
+		fi
+		bad "D2 $b 引用不存在的可执行文件: $path"
+	done
+done
+ok "D2 单元引用的可执行文件均已解析（overlay ∪ chroot）"
 grep -q "hexagonrpcd_extra=-s" "$STAGE/etc/systemd/system/hexagonrpcd.service.d/elden.conf" \
 	&& ok "hexagonrpcd drop-in: -s + fw_dir 指向 $QCOM_ROOT" \
 	|| bad "hexagonrpcd drop-in 缺 -s/fw_dir"
@@ -302,12 +350,6 @@ if grep -q 'tools_need="sh mount umount mkdir cat sleep grep"' "$STAGE/init" \
 else
 	bad "/init 仍是旧口径（一律要求 switch_root ⇒ Debian 根必落 rescue shell）"
 fi
-have_path() { # have_path <root> <name> —— 八个标准 bin 目录里找可执行名
-	for _d in usr/local/sbin usr/local/bin usr/sbin usr/bin sbin bin; do
-		[ -e "$1/$_d/$2" ] && return 0
-	done
-	return 1
-}
 miss=
 for t in sh mount umount mkdir cat sleep grep; do
 	have_path "$STAGE" "$t" || have_path "$CHROOT" "$t" || miss="$miss $t"

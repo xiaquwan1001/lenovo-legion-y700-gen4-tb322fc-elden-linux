@@ -277,3 +277,4 @@ vk171-swrerr	migration	2026-10-26	**M6 迁移诊断件**：复用 vk163 内核�
 vk172	modular2	2026-10-26	模块化 v2（fragment-modular-v2）上机件：=y 3364/=m 1464，MMC 整链=m，DRM 不动
 vk173	vk173	2026-10-26	vk172 载荷 + RTC offset DTB（patches/dt/0002）：模块化 v2 上日常线并修 hwclock=1970
 vk174	m6-initfix	2026-10-26	M6: 阶段化 preflight + applet 回退（Debian 根 switch_root 缺链接事故）
+vk175	m6-visibility	2026-10-26	M6: RAM 阶段 gadget + 排除 q28 watchdog（linux17 已铺 vk172 模块树）

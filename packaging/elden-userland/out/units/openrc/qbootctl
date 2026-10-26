@@ -8,8 +8,8 @@ description="Mark the current A/B slot successful (PITFALLS #181: without it, ~7
 [ -f "/etc/conf.d/qbootctl" ] && . "/etc/conf.d/qbootctl"
 # 无默认参数
 
-command="/usr/bin/qbootctl"
-command_args="-m"
+command="/usr/local/sbin/qbootctl-mark.sh"
+command_args=""
 # oneshot：前台执行
 depend() {
 	: # 无依赖

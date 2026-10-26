@@ -31,9 +31,20 @@ start_pre() {
 	# 这里改成发行版无关的等价实现：**不能省** —— home 不存在时 greetd 直接退出，
 	# 表现就是 PITFALLS #318 的「开机无桌面 / loginctl 无会话」。
 
-	homedir=$(getent passwd greetd 2>/dev/null | cut -d: -f6)
-	[ -n "$homedir" ] || { echo "elden/greetd.pre: 用户 greetd 不存在（包未装？）" >&2; exit 1; }
-	install -d -m 750 -o greetd -g greetd "$homedir"
+	# 用户名按发行版不同：Alpine 用 `greetd`，Debian 用 `_greetd`（2026-10-26 实测，
+	# Debian 根上按 `greetd` 查会直接 exit 1 ⇒ greetd 服务 203/EXEC ⇒ 无桌面）。
+	# 两边都试，取第一个存在的；owner 也用解析出的名字，避免 install -o greetd 在 Debian 上失败。
+	guser=
+	for _u in greetd _greetd; do
+		getent passwd "$_u" >/dev/null 2>&1 && { guser=$_u; break; }
+	done
+	if [ -z "$guser" ]; then
+		echo "elden/greetd.pre: 用户 greetd/_greetd 都不存在（包未装？）" >&2
+		exit 1
+	fi
+	homedir=$(getent passwd "$guser" | cut -d: -f6)
+	[ -n "$homedir" ] || { echo "elden/greetd.pre: $guser 无 home" >&2; exit 1; }
+	install -d -m 750 -o "$guser" -g "$guser" "$homedir"
 	install -d -m 755 /var/log
 	[ -e /var/log/greetd.log ] || : > /var/log/greetd.log
 	chown root:root /var/log/greetd.log
