@@ -1,0 +1,39 @@
+# svc-deps.tsv — 服务运行时依赖：命令/路径 → 提供它的 Debian 包 → 证据
+#
+# 为什么需要这张表（2026-10-26 抓到的门禁缺口）：
+#   `pkgmap.tsv` 只保证「120 行 apk world 都有映射」；但设备上真正跑起来的 21 个服务
+#   （`packaging/elden-userland/services.tsv`）和 /init 会用一批**命令**，其中有些在 Alpine 上
+#   是由依赖自动带入的（不在 apk world 里），Debian 侧同样不会自动带入，也不在任何已装包的
+#   Depends 里。离线依赖闭包模拟（`apt-get -s install $(apt-list)` → 674 Inst）里缺席的
+#   7 个包就是这么漏掉的（python3 / libglib2.0-bin / sysvinit-utils / psmisc /
+#   alsa-ucm-conf / ca-certificates / login）。
+#
+# 列（TAB 分隔）：
+#   what       命令名（如 python3）或绝对路径（如 /usr/share/alsa/ucm2）
+#   providers  提供它的包（空格分隔 = 任一即可）
+#              `own:<name>` 前缀 = **本项目自建 deb**（产物 out/debian/<name>_*.deb），不从 apt 拿
+#   evidence   为什么需要（写清证据：哪个文件/哪条 exec/哪次实测）
+#
+# 门禁（`rootfs/debian/tools/check-pkgmap.sh` E 段）：
+#   E1 每个 provider 必须「真的会装上」：apt 包必须在 apt-list.txt 里；
+#      `own:` 包必须存在 out/debian/<name>_*.deb（缺失 → WARN + 点名「待建」）
+#   E2 命令型 what 必须在 packaging/elden-userland/{files,extra} 里真实出现（表腐化成死行 → WARN）
+#   E3 路径型 what（以 / 开头）不做 E2，只做 E1
+#
+# 维护口径：只登记「不由任何已装包的 Depends 自动带入」的项；纯 lib 依赖不登记（交给 apt 解算）。
+#
+python3	python3	services.tsv: ssc-udp-relay 的 exec = /usr/bin/python3 /usr/local/bin/ssc-udp-relay.py
+gdbus	libglib2.0-bin	userland 脚本 8 处（phosh/NM/portal 查询）；Alpine 侧由 glib 依赖带入
+gsettings	libglib2.0-bin	userland 脚本 7 处（自动旋转/亮度等 gsettings 操作）
+pidof	sysvinit-utils	userland 脚本 6 处（q28-race-hunt/wd-restart/wd-ctl/sleep-cumulative）；**procps 不提供 pidof**（Debian filelist 实测）
+pkill	procps	userland 脚本 8 处（dpms-watch/net-up-manual）；Debian procps 提供，已在 apt-list
+update-ca-certificates	ca-certificates	net-selfheal.sh 的信任链修复对象；缺则 HTTPS 全废（PITFALLS #49）
+login	login	/init:`getty -n -l /bin/sh` 与 systemd getty@ 都要求 /bin/login 存在
+modprobe	kmod	/init + camera-modules-load.sh + payload-modules-load.sh（19 处）
+depmod	kmod	payload-modules-load.sh 的模块树索引重建
+blkid	util-linux	/init 判根分区 fstype（f2fs/ext4 自动识别，f2fs 迁移后必需）
+findfs	util-linux	/init 解析 elden_root=LABEL=…（唯一的根定位方式）
+sshd	openssh-server	恢复通道：/init 在 systemd 之前拉起，R1/R2 的兜底
+/usr/share/alsa/ucm2	alsa-ucm-conf	自研 UCM 落在 ucm2/Qualcomm/sm8750/，顶层 include 来自此包
+/lib/firmware/qcom/sm8750	own:elden-firmware	自建固件 deb（DTS firmware-name 逐条门禁），**不能**用 firmware-qcom-soc
+/usr/share/qcom/sm8750	own:elden-firmware	传感器 DSP 文件树（`-R` 根 = `.../LENOVO/TB322FC`，载荷在 `sensors/`：sns_reg.conf + config/×139 + registry/），hexagonrpcd -R 的根；**不在** /lib/firmware

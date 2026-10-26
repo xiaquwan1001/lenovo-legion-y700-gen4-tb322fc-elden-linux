@@ -136,8 +136,19 @@ log "root fs type=$roottype on_initramfs=$on_initramfs"
 # --- init mode: legacy ad-hoc services vs native OpenRC -----------------------
 # /etc/elden-init-mode = "openrc" makes the disk-root branch hand PID1 over to
 # /sbin/init (busybox) once the recovery lifeline is up, so /etc/inittab runs
-# openrc sysinit/boot/default.  Anything else (or a missing file) keeps the
+# openrc sysinit/boot/default.  A missing file ("legacy") keeps the
 # pre-2026-10-06 behaviour.  Wired up by /usr/local/sbin/openrc-enable.sh.
+#
+# **2026-10-26（迁移用）新增第三个值 `systemd`**：与 openrc 同样把自己交给
+# `/sbin/init`（systemd 的 `/sbin/init -> /usr/lib/systemd/systemd`），但**不**跑
+# start-desktop.sh、也不自己拉 dbus/NM/ath12k 等 —— 全交给 systemd。
+# 为什么要留着 /init 而不把 lifeline 翻成 systemd unit：usb0（192.168.7.1）+ sshd +
+# ttyGS1 在 **PID1 交接之前** 就可用，这是 R1/R2（槽/根起不来时）唯一不依赖任何
+# 发行版服务的恢复通道；且 camera/payload 模块的**有序**加载只有这里保证。
+# 三个值的行为矩阵（on_initramfs=0 时）：
+#   legacy   ：自己拉 dbus/helpers + start-desktop.sh，不交接
+#   openrc   ：不拉，交接给 /sbin/init
+#   systemd  ：不拉，交接给 /sbin/init（与 openrc 同一分支，仅注释/日志不同）
 init_mode=$(cat /etc/elden-init-mode 2>/dev/null || echo legacy)
 
 # --- elden sleep policy (PITFALLS §64) -------------------------------------
@@ -383,9 +394,10 @@ if [ "$on_initramfs" = 1 ] && [ -x /root/probe.sh ]; then
 	( /root/probe.sh > /root/probe.log 2>&1; log "probe finished" ) &
 fi
 
-# OpenRC mode: /sbin/init owns dbus/elogind/seatd/greetd/NetworkManager and
-# /etc/local.d/elden-bringup, so skip this hand-rolled orchestration entirely.
-if [ "$on_initramfs" = 0 ] && [ "$init_mode" != openrc ]; then
+# Native-init mode (openrc | systemd): /sbin/init owns dbus/elogind|logind/seatd/
+# greetd/NetworkManager and the bring-up scripts, so skip this hand-rolled
+# orchestration entirely.  Only `legacy` keeps the ad-hoc path.
+if [ "$on_initramfs" = 0 ] && [ "$init_mode" = legacy ]; then
 	# --- system D-Bus: single early owner (NM/UPower/polkit depend on it) ---
 	mkdir -p /run/dbus
 	chown root:messagebus /usr/libexec/dbus-daemon-launch-helper 2>/dev/null
@@ -416,8 +428,8 @@ respawn ttyGS0 &
 respawn ttyGS1 &
 
 if [ "$on_initramfs" = 0 ]; then
-	if [ "$init_mode" = openrc ]; then
-		: # /sbin/init (exec'd below, after the boot log) owns the session
+	if [ "$init_mode" != legacy ]; then
+		: # native init (openrc | systemd), exec'd below, owns the session
 	elif [ -x /usr/local/sbin/start-desktop.sh ]; then
 		/usr/local/sbin/start-desktop.sh &
 	fi
@@ -431,12 +443,15 @@ if [ "$on_initramfs" = 0 ] && [ -d /var/log ]; then
 	{ date; echo "--- dmesg (init snapshot) ---"; dmesg; } >/var/log/elden-boot.log 2>/dev/null || true
 fi
 
-# Hand PID1 to busybox init so /etc/inittab runs openrc sysinit/boot/default.
+# Hand PID1 to the native init so it can run its own early services.
 # Deliberately last: usb0 + sshd + ttyGS0/GS1 are up (recovery over SSH if the
-# OpenRC boot fails) and the boot log above has been written.  Wired by
-# /usr/local/sbin/openrc-enable.sh; revert with `openrc-enable.sh revert`.
-if [ "$on_initramfs" = 0 ] && [ "$init_mode" = openrc ]; then
-	log "openrc mode: handing PID1 to /sbin/init"
+# native boot fails) and the boot log above has been written.
+# openrc : /sbin/init (busybox) → /etc/inittab → openrc sysinit/boot/default
+#          Wired by /usr/local/sbin/openrc-enable.sh; revert with `… revert`.
+# systemd: /sbin/init (symlink to /usr/lib/systemd/systemd) — same handoff shape,
+#          so the lifeline above stays valid even if systemd never comes up.
+if [ "$on_initramfs" = 0 ] && [ "$init_mode" != legacy ]; then
+	log "$init_mode mode: handing PID1 to /sbin/init"
 	exec /sbin/init
 fi
 

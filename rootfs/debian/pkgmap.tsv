@@ -166,3 +166,14 @@ squeekboard	add	squeekboard	OSK（C11 输入法栈）
 fcitx5	add	fcitx5 fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-rime	Debian 前端包名 = fcitx5-frontend-gtk3/4（Alpine 叫 fcitx5-gtk3/4）
 qbootctl	add	qbootctl	Debian 包自带 qbootctl.service（ExecStart=qbootctl -m），装完必须 enable
 phoc	add	phoc	phosh 依赖会带，但两枚补丁要显式重建，单列以免漏
+
+## ---- 服务运行时依赖（action=add；apk-world 里没有 = Alpine 侧由依赖自动带入） ----
+## 来源：`rootfs/debian/svc-deps.tsv`（命令 → 提供包 → 证据）+ 离线依赖闭包模拟实测
+## （apt-get -s install apt-list → 674 Inst；下列 7 个**不在**闭包内，必须显式装）。
+python3	add	python3	`services.tsv` ssc-udp-relay 的 exec 就是 /usr/bin/python3；waydroid 的 Depends 也含 python3
+libglib2.0-bin	add	libglib2.0-bin	userland 脚本 8 处 gdbus、7 处 gsettings（Alpine 侧由 glib 依赖带入）
+sysvinit-utils	add	sysvinit-utils	pidof 6 处（**procps 不提供**，Debian 的 pidof 在 sysvinit-utils）
+kmod	add	kmod	/init（systemd 之前就要 modprobe）+ camera/payload-modules-load；虽然在依赖闭包里，但 /init 跑得比 systemd 早，显式装更安全
+alsa-ucm-conf	add	alsa-ucm-conf	UCM2 基线：自研 UCM 落在 ucm2/Qualcomm/sm8750/，顶层 include 来自此包
+ca-certificates	add	ca-certificates	net-selfheal.sh 的信任链修复对象 + 全部 HTTPS（curl/apt）
+login	add	login	/init 的 getty 默认 -l /bin/login；systemd getty@ 也依赖 /bin/login

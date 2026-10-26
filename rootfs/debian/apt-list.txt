@@ -1,11 +1,13 @@
 # apt-list.txt — 由 rootfs/debian/tools/check-pkgmap.sh 从 pkgmap.tsv 生成，勿手改
-# 生成时间: 2026-10-25T15:06:02Z  索引: /opt/elden/arm64-sid
+# 生成时间: 2026-10-26T01:59:32Z  索引: /opt/elden/arm64-sid
 adb
+alsa-ucm-conf
 alsa-utils
 bash
 bluez
 bluez-tools
 busybox
+ca-certificates
 chrony
 coreutils
 curl
@@ -42,6 +44,7 @@ iputils-ping
 iw
 jq
 kexec-tools
+kmod
 kmscube
 less
 libasound2t64
@@ -51,6 +54,7 @@ libegl1
 libgbm1
 libgl1-mesa-dri
 libgles2
+libglib2.0-bin
 libip4tc2
 libip6tc2
 libllvm22
@@ -61,6 +65,7 @@ libssc2
 libssc-dev
 libssl3t64
 libvulkan1
+login
 lxc
 mesa-utils
 mesa-vulkan-drivers
@@ -77,6 +82,7 @@ pipewire
 pipewire-alsa
 pipewire-pulse
 procps
+python3
 qbootctl
 rsync
 rtkit
@@ -86,6 +92,7 @@ socat
 squeekboard
 strace
 stress-ng
+sysvinit-utils
 tcpdump
 tmux
 tree

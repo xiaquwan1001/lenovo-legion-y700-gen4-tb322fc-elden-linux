@@ -6,6 +6,8 @@
 #   B 可解析：每个 map/add 的 Debian 包名都能在 **sid 索引** 里查到（apt-cache，只读）
 #   C 禁用项：不得映射到 linux-image-* / firmware-qcom-soc（会把 Debian 内核或错误固件带进来）
 #   D 生成物：apt-list.txt = map/add 的 debian 去重并集（喂给 debootstrap/apt-get install）
+#   E 服务运行时依赖（svc-deps.tsv）：provider 必须真的会装上；命令型条目必须真被引用
+#     （E 段是 2026-10-26 补的：A–D 只管「apk world 那 120 行」，盖不住「服务用什么命令」）
 #
 # 用法：
 #   bash rootfs/debian/tools/check-pkgmap.sh                    # 默认用 /opt/elden/arm64-sid 的索引
@@ -21,6 +23,9 @@ CHROOT=${CHROOT:-/opt/elden/arm64-sid}
 MAP="$ROOT/rootfs/debian/pkgmap.tsv"
 WORLD="$ROOT/rootfs/persistent-overlay/apk-world.txt"
 OUT="$ROOT/rootfs/debian/apt-list.txt"
+DEPS="$ROOT/rootfs/debian/svc-deps.tsv"
+USERLAND="$ROOT/packaging/elden-userland"
+OWNDEB="$ROOT/out/debian"
 
 LIST_ONLY=0
 [ "${1:-}" = "--list" ] && LIST_ONLY=1
@@ -96,6 +101,72 @@ if [ "$LIST_ONLY" = 1 ]; then cat "$tmp_apt"; exit 0; fi
 say ""
 say "统计: map=$nmap drop=$ndrop add=$nadd  解析失败=$nmiss  apt 包数=$(wc -l < "$tmp_apt")"
 say "生成: ${OUT#$ROOT/}（$(grep -c -v '^#' "$OUT") 个包）"
+
+# --- E: 服务运行时依赖（命令/路径 → 提供包 → 证据） ---
+# 判据用的是「**空 dpkg status 的依赖闭包**」而不是「apt-list 里的字面包名」：
+#   minbase 根上真正会被装的 = apt-get install $(apt-list) 解出来的闭包（含 Depends）。
+#   拿 chroot 现成的 dpkg status 做模拟是错的 —— 那个 chroot 里已经有 build-essential，
+#   会把「其实闭包会带」跟「真的缺」混为一谈（2026-10-26 就这么误判过 3 个包，已纠正）。
+#   所以这里先把 status 指到一个空文件，再收集所有 `Inst <pkg>`。
+if [ -f "$DEPS" ]; then
+	say ""
+	say "[E. 服务运行时依赖 svc-deps.tsv]"
+	closure=$(mktemp); : > /tmp/elden-empty-status
+	if command -v apt-get >/dev/null; then
+		apt-get -s --no-install-recommends \
+			-o Dir::Etc::sourcelist="$CHROOT/etc/apt/sources.list" \
+			-o Dir::Etc::sourceparts=/dev/null \
+			-o Dir::State::Lists="$CHROOT/var/lib/apt/lists" \
+			-o Dir::State::status=/tmp/elden-empty-status \
+			-o Dir::Cache=/tmp \
+			-o APT::Architecture=arm64 -o APT::Architectures=arm64 \
+			install $(cat "$tmp_apt") 2>/dev/null \
+			| awk '/^Inst /{print $2}' | sort -u > "$closure"
+	fi
+	nC=$(wc -l < "$closure")
+	if [ "$nC" -gt 0 ]; then
+		say "  minbase 闭包 $nC 个包（空 status 模拟）"
+		cat "$closure" >> "$tmp_apt"; sort -u -o "$tmp_apt" "$tmp_apt"
+	else
+		warnf "E 闭包模拟不可用（apt-get 缺失或索引不全），退回「字面包名」判据"
+	fi
+	nE=0
+	while IFS=$'\x1f' read -r what providers evidence; do
+		case "$what" in ''|\#*) continue ;; esac
+		nE=$((nE + 1))
+		[ -n "${providers:-}" ] || { bad "E 行缺 providers: $what"; continue; }
+		for p in $providers; do
+			case "$p" in
+			own:*)
+				name=${p#own:}
+				if ! compgen -G "$OWNDEB/${name}_*.deb" >/dev/null; then
+					warnf "E 自建包待建: $name（$what 需要；产物应为 out/debian/${name}_*.deb）"
+				fi
+				;;
+			*)
+				if ! grep -qx "$p" "$tmp_apt"; then
+					bad "E 提供包不在 minbase 闭包里: $p（$what 需要）"
+				fi
+				;;
+			esac
+		done
+		# E2：命令型条目必须真被 userland 引用（防表腐化）
+		case "$what" in
+		/*) : ;;
+		*)
+			if [ -d "$USERLAND" ] && ! grep -rqE "(^|[^[:alnum:]_./-])${what}([[:space:]]|$)" \
+				"$USERLAND/files" "$USERLAND/extra" 2>/dev/null; then
+				warnf "E 声明了但 userland 里没人用: $what（表腐了吗？）"
+			fi
+			;;
+		esac
+	done < <(awk -F'\t' 'BEGIN{OFS="\x1f"} !/^#/ && NF {print $1,$2,$3}' "$DEPS")
+	[ "$nE" -gt 0 ] && say "  条目 $nE 条已核（provider ∈ minbase 闭包 ∪ 自建 deb；命令型条目在 userland 有引用）"
+	rm -f "$closure" /tmp/elden-empty-status
+else
+	warnf "缺 $DEPS（服务运行时依赖门未启用）"
+fi
+
 if [ "$fail" -gt 0 ]; then
 	say "结果: FAIL=$fail WARN=$warn"
 	exit 1

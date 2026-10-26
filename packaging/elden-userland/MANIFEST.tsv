@@ -17,7 +17,7 @@ dst	kind	sha256	size	mode	repo_src
 /etc/local.d/50-gunyah.start	locald	3d7b139e6cd9747857c0a2be230ed1447b30de2c636a41007162d1ec14841461	505	755	files/etc/local.d/50-gunyah.start
 /etc/local.d/elden-bootlog.start	locald	4b3f9ccbe383a1224e7cc7d85640903eefbe05bf1c6fffd0aa839cc3d648cdc9	76	755	files/etc/local.d/elden-bootlog.start
 /etc/local.d/elden-bringup.start	locald	111b2e4cfb666a2202928bfd7aa93396b7bc2f6e08a269b2218e617cdc09dcfb	117	755	files/etc/local.d/elden-bringup.start
-/init	init	24074be193bed47d1ba4ddfc25f4ab41cf5cae95713a15a84cd5cb407b1cf44f	20926	755	files/init
+/init	init	e4c67e0c8663f6be529ae4180be41d0f7d84b9bc716800563e3a20f29a5598d3	22062	755	files/init
 /usr/local/bin/bwrap	script	79b77b2f375039b2d361a603cbd7d587f110c2be8b09655938e25ed563a5064f	236	755	files/usr/local/bin/bwrap
 /usr/local/bin/elden-hapticd	elf	aca55cb143fd0506991e8031fe059b8213f8fc7f5a3e08fa0eef34d645a47bf3	729312	755	-
 /usr/local/bin/elden-ime-focusd	elf	d23048278d492ca51fc68267eb9c7e78015343206aa527ad9d9b3d60d8202b04	74392	755	-

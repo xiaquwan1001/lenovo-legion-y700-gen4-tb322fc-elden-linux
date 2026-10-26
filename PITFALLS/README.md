@@ -132,3 +132,4 @@
 > **索引只放「一句话主题」**：结论、命令、数字一律在正文 `sessions/NN-*.md`（唯一事实源）。
 > 单行超过 800 字节即视为「索引在做正文的活」，`scripts/check-doctor.sh` §8 会报错。
 > 编号不写死上下界；唯一性由 §8 的正文编号对账保证。
+| 94 | **#410** 依赖闭包模拟必须用**空 dpkg status**（用 chroot 现成的 status 会把「已装」当「不需要装」⇒ 误判缺 3 个包）；**#411** `dpkg-deb -c \| grep -q` 在 `pipefail` 下因 SIGPIPE 把「文件在」判成缺失；**#412** `rsync --files-from` 不传空目录 + hexagonrpcd `-R` 根比载荷少一层 | [94-迁移门禁三坑-闭包status与SIGPIPE与空目录.md](sessions/94-迁移门禁三坑-闭包status与SIGPIPE与空目录.md) |

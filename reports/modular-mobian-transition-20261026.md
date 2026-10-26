@@ -89,33 +89,39 @@ qemu-aarch64 -L /opt/elden/arm64-sid ./usr/bin/busybox --list \
 兜底（若临时想直接跑 musl 产物）：Debian `musl 1.2.6-1` 提供 `/lib/ld-musl-aarch64.so.1`。
 ⇒ `packaging/elden-userland/MANIFEST.tsv` 的 ELF 是**设备副本**（`repo_src=-`），迁移时按 sources.tsv 的 host 产物铺。
 
-### 3.4 apt 清单：**抓到一个真实缺口**（S2 门禁覆盖不到的那一类）
+### 3.4 apt 清单：**抓到门禁缺口**（S2 只保证「apk world 120 行有映射」，盖不住「服务用什么命令」）
 
-`check-pkgmap.sh` 只保证「120 个 apk world 行都有映射」，不保证「服务实际用到的命令有包提供」。
-离线依赖闭包模拟（主机可跑，3.3 s）：
+**★ 测量更正（2026-10-26 同日，PITFALLS #410）**：第一次测用的是 chroot 现成的 dpkg status，
+而那个 chroot 里有 `build-essential`（连带 python3/libglib2.0-bin/sysvinit-utils 已装）⇒ apt 对它们
+输出「已经是最新版」而不是 `Inst`，导致我把 **7** 个都当成「缺」。用**空 status（minbase 模拟）**重测：
+
+| 旧 apt-list 的真实缺口 | 实际由闭包带入（不需改表） |
+|---|---|
+| **`alsa-ucm-conf`**（UCM2 基目录）· **`ca-certificates`**（`update-ca-certificates` + TLS 信任链）· **`login`**（`/bin/login`） | `systemd` · `udev` · `dbus` · `kmod` · `python3` · `libglib2.0-bin` · `sysvinit-utils`（pidof） |
+
+⇒ 真正缺的只有 **3 个**；另 4 个（`kmod`/`python3`/`libglib2.0-bin`/`sysvinit-utils`）虽然闭包会带，
+仍在本轮一起显式钉进 `pkgmap.tsv`（理由：`/init` 跑在 systemd 之前就需要 `modprobe`；
+`ssc-udp-relay` 要 `python3` 而它只由 `waydroid` 的 Depends 拉——一旦不装 waydroid 就静默丢）。
+`psmisc` 已**撤掉**：userland 里没人用 `killall`（只有 `scripts/oob-gs1-activate.sh` 一个主机侧工具用），
+本条是初版的错报。
+
+本轮已落地的门禁（`rootfs/debian/tools/check-pkgmap.sh` **E 段** + 新文件 `rootfs/debian/svc-deps.tsv`）：
+
 ```
-apt-get -s --no-install-recommends \
-  -o Dir::State::Lists=/opt/elden/arm64-sid/var/lib/apt/lists \
-  -o Dir::State::status=/opt/elden/arm64-sid/var/lib/dpkg/status \
-  -o Dir::Cache=/tmp/apsim -o APT::Architecture=arm64 \
-  install $(grep -v '^#' rootfs/debian/apt-list.txt | tr '\n' ' ')
-→ 674 个 Inst（闭包）
+$ bash rootfs/debian/tools/check-pkgmap.sh
+统计: map=97 drop=23 add=14  解析失败=0  apt 包数=114
+[E. 服务运行时依赖 svc-deps.tsv]
+  minbase 闭包 819 个包（空 status 模拟）
+  条目 15 条已核（provider ∈ minbase 闭包 ∪ 自建 deb；命令型条目在 userland 有引用）
+结果: FAIL=0 WARN=0
 ```
-闭包内（**自动带入，不需改 apt-list**）：`systemd` / `udev` / `dbus` / `kmod` ✅
-闭包外（**缺，必须补**）：
+- **E1**：`svc-deps.tsv` 每条 provider 必须落在 **minbase 闭包**（空 status 跑 `apt-get -s install $(apt-list)`
+  的 `Inst` 集）或 `own:<自建包>`（要求 `out/debian/<name>_*.deb` 存在）；
+- **E2**：命令型条目必须在 `packaging/elden-userland/{files,extra}` 里**真被引用**（防表腐化）；
+- **门禁自检（负向测试）**：把 `alsa-ucm-conf` 映射改成不存在的包名 → `FAIL E 提供包不在 minbase 闭包里: alsa-ucm-conf`；
+  改回去 → `FAIL=0`。
 
-| 缺的包 | 谁需要（证据） | 提供的东西 |
-|---|---|---|
-| `python3` | `services.tsv:ssc-udp-relay` → `/usr/bin/python3 /usr/local/bin/ssc-udp-relay.py`；`waydroid` 的 `Depends:` 也含 python3 | `/usr/bin/python3`（`python3-minimal` 只提供 `python3 -> python3.14` 链接，解释器本体在 `python3.14-minimal`） |
-| `libglib2.0-bin` | 脚本 8 处 `gdbus`、7 处 `gsettings` | `/usr/bin/gdbus` |
-| `sysvinit-utils` | `pidof` 6 处 | `/usr/bin/pidof`（`procps` **不**提供） |
-| `psmisc` | `killall`（`waydroid-*` 脚本族） | `/usr/bin/killall` |
-| `alsa-ucm-conf` | UCM2 基线目录（自研 UCM 落在 `ucm2/Qualcomm/sm8750/`，顶层 include 来自此包） | `/usr/share/alsa/ucm2/**` |
-| `ca-certificates` | `net-selfheal.sh` 信任链修复 + 所有 HTTPS | `/usr/sbin/update-ca-certificates`、`/etc/ssl/certs/ca-certificates.crt` |
-| `login` | `/init` 的 `getty` 默认 `-l /bin/login`（现在显式 `-l /bin/sh`，但 systemd getty 会用到） | `/bin/login` |
-
-⇒ **待做**：这 7 个走 `pkgmap.tsv` 的 `add` 行（`note` 写明「apk-world 里没有 = Alpine 侧由依赖自动带入 / 服务运行时依赖」），
-   再由 `check-pkgmap.sh` 重新生成 `apt-list.txt`；并给门禁**加 E 段**（依赖闭包：必需命令 ↔ 提供包 ↔ 闭包内）。
+闭包证据（可复现）：旧表 816 Inst / 新表 819 Inst，差 3 = 上表那三个。
 
 ## 4. J3 的证据与改写
 
@@ -191,6 +197,25 @@ apt-get -s --no-install-recommends \
   -o Dir::Cache=/tmp/apsim -o APT::Architecture=arm64 \
   install $(grep -v '^#' rootfs/debian/apt-list.txt | tr '\n' ' ') | grep -c '^Inst'
 ```
+
+## 7.5 本轮后续进展（同日，M1 + M3/M4 物料已落地）
+
+| 步 | 状态 | 产物/门禁 |
+|---|---|---|
+| **M1** 包集补口 + 闭包门 | ✅ | `pkgmap.tsv` add 97→**111 行**（map 97/drop 23/add 14）⇒ `apt-list.txt` **114 包**；新 `svc-deps.tsv`（15 条）+ `check-pkgmap.sh` **E 段**；**FAIL=0 WARN=0**，负向测试通过 |
+| **M3 固件 + 传感器树** | ✅ | `elden-firmware` 现含 **两个内容树**：`/lib/firmware`（114 文件）+ **`/usr/share/qcom/sm8750/LENOVO/TB322FC`**（140 文件）；`out/debian/elden-firmware_1.0~20261026_all.deb` = 21 MB / **256 条目**，解包后 DT 与传感器树双检查绿 |
+| **M4 模块树 + 单元 + init** | ✅ | `rootfs/debian/stage.sh` 组装 `out/stage-debian/`（134 MB）：模块 1529 `.ko` + `depmod -b`、19 个 systemd 单元、`hexagonrpcd` drop-in、`/init` + `/etc/elden-init-mode=systemd`。门禁 **FAIL=0 WARN=0** |
+| **M2 归档 linux17** | ⬜ | 需设备读 28 G（下一步） |
+| **M5 完整 rootfs** | ⬜ | 需 root（`sudo`），暂未动 |
+| **M6/M7 上机** | ⬜ | 需主机在场 + `fastboot boot` |
+
+**`/init` 的第三模式 `systemd`（本轮唯一代码改动）**：
+`init_mode` 现在三值（`legacy` / `openrc` / `systemd`）。判定改成「是不是 legacy」而不是「是不是 openrc」：
+- `legacy` ⇒ 自己拉 dbus/helpers + `start-desktop.sh`（原行为，逐字不变）；
+- `openrc` / `systemd` ⇒ 只做 lifeline（usb0+udhcpd+sshd+ttyGS0/1 + 有序模块加载）后 `exec /sbin/init`。
+`openrc` 路径的行为**与改动前等价**（原来 `!= openrc` 跳过 ⇒ 现在 `= legacy` 才跑，两者对 openrc 都是「不跑」）。
+设备上 `/etc/elden-init-mode` 仍是 `openrc` ⇒ 现役根行为不变；新 sha `e4c67e0c…`（旧 `24074be1…`）。
+`stage.sh` 门禁 F 断言：语法 + 三值齐全 + **lifeline 行号 < 交接行号**（364 < 454）。
 
 ## 8. 未解 / 待核
 

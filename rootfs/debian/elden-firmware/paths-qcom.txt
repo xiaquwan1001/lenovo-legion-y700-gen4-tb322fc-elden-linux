@@ -1,0 +1,14 @@
+# paths-qcom.txt — elden-firmware 的**第二个内容树**：/usr/share/qcom（相对该根）
+#
+# 为什么这一段和 paths.txt 分开（而不是塞在一起）：
+#   传感器 DSP 的文件树 **不在 /lib/firmware**，而在 `/usr/share/qcom/sm8750/LENOVO/TB322FC`
+#   （设备实测 550 KB：`sns_reg.conf` + `config/` + `registry/`）。它由 `hexagonrpcd -R <dir>`
+#   当「served files 根」读给 ADSP 的 sensorspd 用；路径是 hexagonrpcd 的 `-R` 契约，
+#   不是 DT `firmware-name` 契约 ⇒ 两套「路径即契约」的检查逻辑不同，清单也分开维护。
+#
+# 缺失的后果：iio-sensor-proxy 在 Debian 上拿不到任何传感器（本机 /sys/bus/iio 恒空，
+# 传感器全挂在 SSC 上）⇒ 自动旋转/自动亮度/接近感应全死，且表现为「服务在跑但没数据」。
+#
+# 行格式：以 / 结尾 = 递归目录；否则 = 单个文件（支持通配）。排除 *.bak / *.tmp。
+
+sm8750/LENOVO/TB322FC/
