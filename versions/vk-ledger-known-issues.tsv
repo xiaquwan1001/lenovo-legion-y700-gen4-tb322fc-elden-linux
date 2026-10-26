@@ -330,3 +330,4 @@ vk162-rescue	num_ne_tag	内核未改动 = vk152 那份（救援镜像只改 cmdl
 vk162-rescue	uts_dup	刻意复用 vk152 的 UTS 以共用模块树
 f2fs-root	num_ne_tag	内核未改动 = vk152 那份（本镜像只改 cmdline/ramdisk）
 f2fs-root	uts_dup	刻意复用 vk152 的 UTS 以共用模块树
+vk164-debianroot	num_ne_tag	M6 迁移候选：**故意复用 vk163 的内核载荷**（同一 build/vk151 Image.gz，只改 cmdline elden_root=LABEL=linux17），源提交上没有 vk164 ref 是设计使然；镜像身份由 manifest kernel_payload_sha256 区分
