@@ -1,0 +1,12 @@
+round=1 boot_id=60b5869b start=695570 uptime=67s
+vblank timeout                 0
+drm_crtc_wait_one_vblank       0
+PPM init failed                0
+reset failure                  0
+command DMA timeout            0
+dsi_bonded_cmd_failed          0
+Failed to initialize panel     0
+qcom-pcie\|L2 entry            0
+hwmon                          0
+battery=75%
+suspend_success= fail=

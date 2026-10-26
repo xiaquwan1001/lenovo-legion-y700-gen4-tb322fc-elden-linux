@@ -1,0 +1,29 @@
+== dt ==
+compatible interrupts name nvmem-cell-names nvmem-cells reg reg-names status 
+== time ==
+Mon Oct 26 20:22:38 CST 2026
+2026-10-26 20:22:38.614053+08:00
+== set + verify ==
+hwclock -w rc=0
+2026-10-26 20:22:40.126971+08:00
+== rtc epoch ==
+1793017362
+1793017362
+== health ==
+/dev/sda18 f2fs
+loaded=106
+mmc=CBADS
+dsi=connected
+moderr=0
+uname=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+date=2026-10-26T20:26:46+08:00
+hwclock=2026-10-26 20:26:46.658203+08:00
+rtc_since=1793017608
+root=/dev/sda18 f2fs
+loaded=106
+mmc=CBADS
+dsi=connected
+phoc1/phosh1
+moderr=0
+q28sig=0
+boot_b_sha=1a05a89de98aa6a9

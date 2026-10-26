@@ -1,0 +1,169 @@
+From 3d3b6da9bfeb78a1f49bbe0fafd71e1d4a83e056 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 26 Oct 2026 19:33:55 +0800
+Subject: [PATCH v4 0/3] usb: dwc3: support two connectors sharing one HS data bus
+
+This is a formal submission, not an RFC: it supersedes the two-patch v2
+series and the shape-only v3 RFC, and it contains the driver that uses the
+binding it describes.  Sorry for the confusion caused by sending v3 as an
+RFC threaded under v2; the intent was to settle the binding shape first,
+but that is not how it should have been posted.  The series is complete
+below, with the disposition of every review comment listed.
+
+Two connectors on one DWC3 controller
+=====================================
+
+The board (Lenovo Legion Y700 Gen4, SM8750) wires the Super Speed pairs of
+two USB-C receptacles to separate PHYs, while the High Speed D+/D- pair is
+shared through a 2:1 mux controlled by a single GPIO:
+
+	usb@a600000 {
+		port-select-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				endpoint@0 {
+					reg = <0>;
+					remote-endpoint = <&usb_0_dwc3_hs>;
+					usb-role-switch;
+					mux-state = <0>;
+				};
+
+				endpoint@1 {
+					reg = <1>;
+					remote-endpoint = <&usb_1_dwc3_hs>;
+					usb-role-switch;
+					mux-state = <1>;
+				};
+			};
+
+			port@1 {
+				/* Super Speed of connector 0, separate PHY */
+			};
+
+			port@2 {
+				/* Super Speed of connector 1, separate PHY */
+			};
+		};
+	};
+
+Both connectors are data-role dual and hand their role to the SoC through
+pmic-glink, so the controller has to arbitrate between two independent role
+requests and move the shared data path before it is reinitialised.
+
+Series layout
+=============
+
+1/3 documents the two-connector HS data path: "port-select-gpios" plus two
+    numbered endpoints of "port@0" carrying "mux-state" (which GPIO level
+    connects that connector) and "usb-role-switch" (this connector has its
+    own role-switch input).
+
+2/3 adds usb_role_switch_at_endpoint(), so a role switch registered against
+    an OF graph endpoint can be found by the consumer that owns the other
+    end of that link.  Without it the endpoint registration in 1/3 would
+    have no lookup path.
+
+3/3 implements the arbitration in DWC3: one role switch per connector, the
+    oldest pending request wins, the GPIO is flipped inside __dwc3_set_mode()
+    after the previous host/gadget instance is torn down, and a connector
+    only reports a role while it owns the data path.
+
+Disposition of the review comments
+==================================
+
+sashiko, binding (v2 1/2):
+
+ - "model the board mux with the standard mux subsystem": not adopted.
+   drivers/usb/ has no mux_control consumer, mux only selects a channel and
+   cannot express "oldest requester wins" role arbitration, and gpio-mux
+   drives its idle level at probe, which would override the selection left
+   by the bootloader.  The mux is therefore described where it is used, as
+   a GPIO plus per-endpoint level.
+
+ - "port@2 models the second connector as a controller bus": fixed.
+   The second connector is now endpoint@1 of port@0, so "ports" keeps
+   describing the controller's own buses.
+
+ - "usb-role-switch does not belong on a graph endpoint": kept, but the
+   missing lookup path is fixed by 2/3 instead of relying on a downstream
+   only helper.
+
+ - "conditionals do not require ports": fixed, "ports" and "port@0" are
+   required when "port-select-gpios" is present, and the endpoint
+   properties are rejected when it is absent.
+
+ - "two ports may carry the same mux-state": fixed, the values are
+   constrained to be complementary.
+
+sashiko, driver (v2 2/2):
+
+ - Critical, "the init error path leaves drd_work queued": fixed.
+   Both switches are now registered before the initial dwc3_set_mode(),
+   and the error path cancels the queued role work.
+
+ - High, "dwc3_set_mode() is called after dropping the lock": fixed.
+   The request order and the resulting mode request are taken in one
+   critical section; dwc3_set_mode() only queues work, so holding the mux
+   lock across it is safe.
+
+ - High, "an in-place role swap overwrites the request timestamp": fixed.
+   A request ticket is only taken on a NONE -> role transition, so a
+   connector that is already using the bus cannot steal it.
+
+ - High, "registering on the endpoint breaks the lookup": addressed by 2/3.
+
+ - Medium, "fwnode leak on the error path": fixed, the endpoint reference
+   is dropped on every exit path.
+
+ - Medium, "error and desired_role are never read": fixed, desired_role is
+   gone and the sticky mux error is reported to the connector on its next
+   role request.
+
+ - Medium, "add dwc3_pre_set_role()": not adopted in this series; the role
+   is set from the same place as the single-connector switch, and adding a
+   second entry point would duplicate that path.  If you prefer the helper,
+   I will restructure the series that way.
+
+Testing
+=======
+
+ - checkpatch --strict: 0 errors, 0 warnings, 0 checks on all three patches.
+ - dt-doc-validate on snps,dwc3-common.yaml: clean.
+ - Compiles clean with W=1 for drivers/usb/dwc3/ and drivers/usb/roles/.
+ - Full arm64 Image.gz + dtbs build of the tree with the series applied.
+ - Behaviour on hardware: with both connectors probed, plugging a device
+   into either receptacle moves the mux and reinitialises the controller;
+   the other connector then reports USB_ROLE_NONE instead of fighting for
+   the bus.
+
+Qianhui Xu (3):
+  dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus
+  usb: roles: look up role switches attached to a graph endpoint
+  usb: dwc3: support two connectors sharing one HS data bus
+
+
+Qianhui Xu (3):
+  dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS
+    bus
+  usb: roles: look up role switches attached to a graph endpoint
+  usb: dwc3: support two connectors sharing one HS data bus
+
+ .../bindings/usb/snps,dwc3-common.yaml        | 109 ++++++++-
+ drivers/usb/dwc3/core.c                       |  29 ++-
+ drivers/usb/dwc3/core.h                       |  39 ++++
+ drivers/usb/dwc3/debugfs.c                    |   4 +
+ drivers/usb/dwc3/drd.c                        | 219 +++++++++++++++++-
+ drivers/usb/roles/class.c                     |  40 ++++
+ 6 files changed, 437 insertions(+), 3 deletions(-)
+
+-- 
+2.53.0
+

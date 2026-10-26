@@ -1,0 +1,44 @@
+== identity ==
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+/dev/sda18 f2fs
+uptime=22s
+== modules ==
+loaded=106
+ath12k                     Live
+ath12k_wifi7               Live
+hci_uart                   Live
+btqca                      Live
+snd_q6apm                  Live
+snd_soc_sc8280xp           Live
+snd_soc_wcd939x            Live
+aw86927                    Live
+novatek_nvt36xxx_spi       Live
+aw99706                    Live
+mmc_core                   Live
+mmc_block                  Live
+sdhci                      Live
+sdhci_msm                  Live
+== errors ==
+module_err=0
+q28_sig=0
+== mmc/tf ==
+mmc0 
+CBADS
+/dev/mmcblk0
+/dev/mmcblk0p1
+== display ==
+connected
+phoc=1 phosh=1
+backlight=511
+== net/bt ==
+lo usb0 wlan0 
+	Soft blocked: no
+	Hard blocked: no
+	Soft blocked: no
+	Hard blocked: no
+hci0:	Type: Primary  Bus: UART
+	BD Address: 00:00:00:00:00:00  ACL MTU: 0:0  SCO MTU: 0:0
+== audio ==
+ 0 [LenovoY700Gen4 ]: sm8750 - Lenovo-Y700-Gen4
+== camera ==
+17

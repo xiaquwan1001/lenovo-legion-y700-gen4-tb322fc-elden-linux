@@ -1,0 +1,19 @@
+BID=7de8fbf0
+===== summary =====
+boot_id=7de8fbf0 uptime=41.38s
+RESET_DECLARED=por
+PSTORE_PRESENT=no
+PSTORE_RESET_PRINT=0
+RESET_DEPTH=por_declared
+SPLASH_NODE=yes
+SPLASH_RESERVED_MEM=1
+BOOTFB_RECORDED=1
+BOOTFB_MAPPED_PRE_SID=2
+FW_LIVE_FB=yes
+SILENT_BOOT=nonsilent
+SIMPLEDRM=0
+CHOSEN_FB=no
+FB0_NAME=msmdrmfb
+DSI_STATUS=connected/enabled
+STORM_SIG=0
+OUT=/var/tmp/q32-boot-7de8fbf0.txt
