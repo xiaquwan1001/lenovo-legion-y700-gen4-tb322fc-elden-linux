@@ -62,3 +62,47 @@ elden-init/ram t= exec switch_root /newroot /init
 - 读回证据：本报告 §1（原文来自 `linux17:/var/tmp/elden-init-trace.log`，设备侧 `mount -o ro /dev/disk/by-label/linux17`）
 - 诊断镜像：`out/boot-elden-vk171-swrerr.img`（sha `551ac3a848aedd35…`）
 - 代码位置：`initramfs/init:57–118`（trace/preflight）、`initramfs/init:392–410`（switch_root 段）、`rootfs/debian/stage.sh`
+
+---
+
+## 7. ★ 上机验证（2026-10-26 21:25，vk174，零写盘）
+
+**结论：§4 的修法在真机上**成立**——`switch_root` 与磁盘 `/init` preflight 全部通过；阻塞点已前移到 systemd 阶段。**
+
+### 7.1 现场（主机侧 USB 时间线）
+
+| 时刻 | 事件 |
+|---|---|
+| 21:24:53 | `fastboot boot out/boot-elden-vk174.img`（先 `slot-attr.py mark-successful b` 把 retry 顶回 7） |
+| 21:25:05 | `Booting OKAY`（ABL 交棒） |
+| 21:25:12 | 主机 `USB disconnect`（载荷接管） |
+| 21:26:53 | `1d6b:0104` 复合 gadget 出现 —— 但这是**回落后的 Alpine（linux18）**，不是 Debian 根 |
+
+即：Debian 根这次**没有**在本机复现「usb 全无 → 物理 POR」的老现象；设备约 95 s 后自行复位回 `boot_b`。
+
+### 7.2 决定性证据（`linux17:/var/tmp/elden-init-trace.log`，715 B）
+
+```
+elden-init/ram  t=1.02 newinit /init size=33504        ← 新 /init 已生效
+elden-init/ram  t= all mounts moved
+elden-init/disk t=1.08 start on_initramfs=0 mode= roottype=ext2/ext3
+elden-init/disk t=1.09 camera-modules-load start
+elden-init/disk t=1.10 payload-modules-load start
+elden-init/disk t=1.13 handoff to /sbin/init (systemd)
+```
+
+- **磁盘阶段 trace 开始写了**（旧事故里一行都没有）⇒ preflight 通过；
+- **没有** `missing essential tool(s)` ⇒ 根因确实只是 `switch_root` 缺链接；
+- `dmesg` 快照（`linux17:/var/log/elden-boot.log`）同步印证：`switching root to /dev/sda17 (/init)`、`newinit … sha=330ab62bec60`、`[init] Alpine rootfs up, kernel …vk172`。
+
+### 7.3 新阻塞点（systemd 阶段），两条都可低风险验证
+
+1. **模块树 UTS 不匹配**：`linux17:/lib/modules/` 只有 `…-debug-vk163`，而跑的是 `…-debug-vk172` ⇒ **DRM/显示模块完全加载不了**（无 `card0`），相机也是同样原因报了 `no modules`；
+2. **恢复通道仍在交接之后**：`/init` 的 usb0 gadget 在后台子 shell 里拉起，而 PID1 在 **t=1.13 s** 就交给 systemd ⇒ systemd 一旦早期失败，主机侧依旧全静默（本次即如此：无 `1d6b:0104`、journal 未落盘、`/var/log/journal` 仍是 10-17 的旧文件）；
+3. 复位时机 ~95 s ≈ `q28-boot-watchdog` 的 `Q28_WD_WAIT=75` + systemd 启动时间——**但该 watchdog 本次没有留下日志**（`/var/log/q28-watchdog.log` 仍是 10-17 那行），所以「watchdog 触发复位」只是候选，未坐实。
+
+### 7.4 下一发（vk175）配方
+
+- cmdline 追加 **`elden_early_gadget=1`**（RAM 阶段就起 gadget ⇒ 系统起不来时仍有 ttyACM0 + SSH）与 **`elden_q28_nowd`**（排除 watchdog 变量）；
+- 先把 `out/modstage-vk172/lib/modules/<vk172 UTS>` 铺到 `linux17`（修 7.3-①）；
+- 其余（内核/DTB/`/init`）保持不变，仍 `fastboot boot` 零写盘。
