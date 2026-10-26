@@ -296,7 +296,7 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 ### 1. 待调查（Open questions，按优先级）
 
-> 编号 Q1–Q26、Q28、Q31、Q32；**Q27 从无此号**（历史「G1-34 / §5 Q27」为幻影引用，已随 2026-10-10 清理移除）。
+> 编号 Q1–Q26、Q28、Q31–Q34；**Q27 从无此号**（历史「G1-34 / §5 Q27」为幻影引用，已随 2026-10-10 清理移除）。
 
 | ID | 未知 | 为什么要知道 | 怎么测（最小实验） | 关联任务 |
 |---|---|---|---|---|
@@ -331,6 +331,9 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 | **Q29** | ~~容器 vendor 镜像 Mesa 与宿主 bind Mesa 重叠~~ **✅ 已核对并简化（2026-10-23）**：`debugfs` 从 `vendor.img` 抽出 `config_nodes` 涉及的 **11 个**文件与 `/root/wd/mesa/...` 逐一比对 ⇒ **9 个逐字节 SAME**；剩 2 个（`lib64/libgallium_dri.so`、`lib64/hw/vulkan.freedreno.so`）**同尺寸、不同 build-id**，但**段级 `.text`/`.rodata` 相同**，只有 `.eh_frame*`/`.plt`/`.got.plt` 与 build-id 不同（同源两次构建）。⇒ **删除 `config_nodes` 里 `waydroid-mesa-swap` 段全部 11 条 bind**（备份 `config_nodes.bak-q29-20261023-221233`），起真实桌面会话实测 **`GLES: freedreno, Adreno (TM) 830, OpenGL ES 3.2 Mesa 26.1.8`**，容器 `/vendor/lib64/libgallium_dri.so` = 镜像内那份（mtime 2026-10-13 12:03）⇒ 图形栈正常。**（附）容器内录音「app 级」已可用**：修 emulated storage（见 Q30）后，自带 `org.lineageos.recorder` 无头驱动出 m4a。| 容器图形一致性（已闭） | ✅ 已核对 + 已简化 | `reports/closeout-q29-backlight-camera-20261023.md` §1、`PITFALLS #190` |
 | **Q30** | ~~容器内 emulated storage 不可挂~~ **已修（2026-10-11）**：`sm list-volumes`=`emulated;0 unmountable`，全部写外存的 app（含自带 Recorder）`getExternalFilesDir()` 返 null。根因=容器缺 `/dev/fuse`（宿主有，但 `config_nodes` 生成时它还不存在 ⇒ `lxc.py make_entry("/dev/fuse")` 跳过）。修=`config_nodes` 加 `/dev/fuse` bind + `/etc/modules` 加 `fuse`；修后 `emulated;0 mounted`、Recorder 可存 m4a。 | 容器存储完整性（G2/C4） | ✅ 已修 | `reports/container-audio-20261011.md` §5.6 |
 | **Q20** | **流程病：引导链问题先外部取证/自研、后本地检索** ⇒ 把 7、8 月已定的结论（版本门、.120 trap、失败特征串、**U1 已于 2026-08-16 用降级路解成功一次**）在 10-03 重新发现一遍，多花一轮必败实验。根因：`references/*.md` 正文不入上下文，**不 grep 等于不存在**（`PITFALLS` #87） | 上不设防就会再犯（下次是新 ROM 版本 / 新单元 / AVB 参数） | 已落：① `AGENTS.md` 新增「本地优先」规则；② `RUNBOOK` §0.5 ★权威顺序置顶（含版本门与停手串）；③ 本文末一条 grep 命令作开场强制动作；④ 引用旧成功记录先查单元+固件态 | 流程（无单元依赖） |
+
+| **Q33** | **WCD939X 冷起 5425 行 `ASoC error (-16)` 读重试（耗 20 s）** | 音频最终可用，但启动多等 20 s、并刷屏 | 抓调用栈/调用者（T139 音频卡初始化上下文），确认 `soc_component_read_no_lock()` 的 EBUSY 来源（regmap 在 runtime-suspend 时读）；复现命令见 `reports/vk163-por-boot-latency-20261026.md` §3 | T21 / G1-4 / `PITFALLS #421` |
+| **Q34** | **`bluetoothd` 冷起偶发 crash**（`rc-service bluetooth stop/start` 后正常） | 冷起后蓝牙不可用，需手动重启服务 | 复现 ≥3 次冷起，收 `bluetoothd` 退出码/日志；若为 D-Bus 名抢占则在 `bluetooth` 服务加 restart/调序 | T21 / G1-7 / `PITFALLS #420` 邻近 |
 
 ---
 
