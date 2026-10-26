@@ -46,6 +46,21 @@ export BAK="backup/${SN}-${CAP}"; mkdir -p "$BAK"
 | **Waydroid Mesa** | `~/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz` | 已校验 |
 | **EDL 救砖** | `qdl/build/qdl` + `~/下载/tb322fc/xbl_s_devprg_ns.melf` | 仅备用 |
 
+### 0.1 主机侧一次性配置 — USB lifeline 自动拿地址（**每台主机做一次**）
+
+设备的 usb0 固定 `192.168.7.1/24`，并在上面跑 `udhcpd`（`192.168.7.2–20`，**故意不发默认网关**，
+否则宿主上网流量会走进平板）。主机侧建一条 DHCP 配置即可持久自动，否则要先手工 `ip addr add`：
+
+```bash
+# 接口名由 usb-gadget 固定的 host_addr 02:1e:5e:ed:e1:02 决定（跨重启稳定）
+nmcli connection add type ethernet ifname enx021e5eede102 con-name elden-usb-gadget \
+      ipv4.method auto ipv6.method link-local autoconnect yes
+```
+
+验证：设备起来后 10 s 内 `ip -4 addr show enx021e5eede102` 拿到 `192.168.7.9/24`，
+`ssh root@192.168.7.1` 直接可进。若拿不到地址，先在设备侧确认 `pgrep -af udhcpd`
+（Debian 根的 busybox 有 applet 无符号链接，靠 `/init` 的 `usb0_dhcp()` 回退调用，见 `PITFALLS #430`）。
+
 > ⛔ **不得沿用任何其他单元的 GPT 二进制**（`backup/gpt/gpt_*_device.bin` 是 234 GiB 档的）——
 > 容量不同而写旧表 = bootloop/不可启动（已有先例记录）。**每单元现 dump、现生成。**
 

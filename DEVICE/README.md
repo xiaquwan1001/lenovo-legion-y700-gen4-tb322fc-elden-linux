@@ -37,6 +37,10 @@
 - ★**2026-10-26（续）· `linux17` 已定性为 Debian 候选落点** —— 迁移改用「双分区并存」而非原地覆盖：Debian 目标根 = **`linux17` ext4**，
   Alpine 现役根 `linux18` f2fs 不动 ⇒ 回退 = 重启回 `boot_b`（秒级，不需要 live 介质）。换根靠 cmdline `elden_root=LABEL=`（烧在 boot.img 里）
   ⇒ 候选镜像用 `fastboot boot` 零写盘验收。见 `reports/modular-mobian-transition-20261026.md` §0 J1/J2。
+  **2026-10-26 深夜定态**：`linux17` 上的 Debian 根**已能全自动到 phosh 桌面**（自动登录 → `phoc --session=phosh`；
+  电量/UPower、WiFi(`wlp1s0`)、`qbootctl` 自标成功、usb0 自动 DHCP 均在工作；仍失败 = `accounts-daemon`、`lxc-net`+Waydroid 未部署、
+  `elden-hapticd` 二进制未入库）。`linux18` f2fs / `boot_b` **未动**。桌面自动化判据与六条根因见
+  `reports/m6-switch-root-breakpoint-resolved-20261026.md` §8–§9、`PITFALLS #423–#430`。
   另：传感器 DSP 目录 = **`/usr/share/qcom/sm8750/LENOVO/TB322FC`**（550 KB，`sns_reg.conf`+`config/`+`registry/`，属主 `fastrpc`），
   不是 `/lib/firmware` 的一部分 —— 迁移物料清单需单列。
 - ★**2026-10-25（f2fs 路线 A 真机落地：根 = `f2fs @linux18`）** —— `boot_b` 已换成 `f2fs-root` 镜像（内核 = vk152 那份 `b6a074ff…`、ramdisk = 仓库 `/init`、cmdline `elden_root=LABEL=linux18`，签名件 sha `257266ec…`，写后读回一致）。

@@ -173,6 +173,8 @@ failed(仅 3): accounts-daemon / hexagonrpcd / lxc-net
 
 ### 9.1 两条根因（详见 PITFALLS #429/#430）
 
+0. **用户目视确认（2026-10-26 23:0x）**：phosh 顶栏**已显示电池图标与百分比** ⇒ UPower→phosh 的
+   整条链闭合，不只是"数据可读"。
 1. **电量**：`qcom_battmgr` 正常、sysfs 正常，缺的是 **`upower` 包**（phosh 走 UPower over D-Bus）；
    且 Debian 的 `upower.service` 是 D-Bus 激活型、postinst 不 enable ⇒ 必须在 overlay 里挂进
    `graphical.target.wants`。已加进 `pkgmap.tsv`（apt-list 第 100 行）+ 门禁 G 断言。
