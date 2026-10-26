@@ -279,3 +279,4 @@ vk173	vk173	2026-10-26	vk172 载荷 + RTC offset DTB（patches/dt/0002）：模�
 vk174	m6-initfix	2026-10-26	M6: 阶段化 preflight + applet 回退（Debian 根 switch_root 缺链接事故）
 vk175	m6-visibility	2026-10-26	M6: RAM 阶段 gadget + 排除 q28 watchdog（linux17 已铺 vk172 模块树）
 vk176	m6-power-usb	2026-10-26	M6: upower 电量显示 + usb0 DHCP applet 回退
+vk177	m6-sensors	2026-10-26	M6: ADSP fastrpc non-secure domain（/dev/fastrpc-adsp）+ accounts-daemon 竞态
