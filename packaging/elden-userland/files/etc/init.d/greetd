@@ -26,6 +26,17 @@ start_pre() {
 	local homedir="$(getent passwd greetd | cut -d: -f6)"
 	checkpath -d -m750 -o greetd:greetd "$homedir"
 	checkpath -f -m640 -o root:root /var/log/greetd.log
+
+	# 冷起竞态（2026-10-26 POR 实测）：`after elogind` 只保证启动顺序，不保证
+	# elogind 的 D-Bus/seat 已就绪；pam_elogind 此时建会话失败 ⇒ greeter 立即退出，
+	# respawn_max 耗尽后服务 stopped，表现=开机无桌面。等 seat0 可见（≤30 s）。
+	local i=0
+	while [ "$i" -lt 60 ]; do
+		loginctl show-seat seat0 >/dev/null 2>&1 && break
+		i=$((i + 1))
+		sleep 0.5
+	done
+	[ "$i" -lt 60 ] || echo "greetd: warn: seat0 not ready after 30s" >&2
 }
 
 depend() {

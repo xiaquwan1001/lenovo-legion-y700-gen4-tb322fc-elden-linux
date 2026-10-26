@@ -38,4 +38,15 @@ start_pre() {
 	[ -e /var/log/greetd.log ] || : > /var/log/greetd.log
 	chown root:root /var/log/greetd.log
 	chmod 640 /var/log/greetd.log
+
+	# 冷起竞态（2026-10-26 POR 实测）：`after elogind` 只保证启动顺序，不保证
+	# elogind 的 D-Bus/seat 已就绪；pam_elogind 建会话失败 ⇒ greeter 退出、服务 stopped。
+	# 等 seat0 可见（≤30 s）；超时只告警不阻塞。
+	_i=0
+	while [ "$_i" -lt 60 ]; do
+		loginctl show-seat seat0 >/dev/null 2>&1 && break
+		_i=$((_i + 1))
+		sleep 0.5
+	done
+	[ "$_i" -lt 60 ] || echo "elden/greetd.pre: warn: seat0 not ready after 30s" >&2
 }
