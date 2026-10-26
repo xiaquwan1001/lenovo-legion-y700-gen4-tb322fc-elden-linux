@@ -16,6 +16,14 @@ WAIT=${WAIT_TIMEOUT:-180}     # 等节点出现的最长秒数
 RECV=${RECV_TIMEOUT:-600}     # 节点出现后抓多久
 OUT=${OUT:-/tmp/serial-$(date +%H%M%S).log}
 
+# DETACH=1：自分离重跑（给「先起捕获，再去 reboot / fastboot boot」的顺序用，
+# 否则捕获会挂在调用它的 shell 上，设备一 reboot 就被一起收掉）。
+if [ "${DETACH:-0}" = 1 ]; then
+	DETACH=0 setsid nohup env DETACH=0 OUT="$OUT" bash "$0" >>/tmp/serial-capture-$RANDOM.log 2>&1 </dev/null &
+	echo "started pid=$! log=$OUT"
+	exit 0
+fi
+
 printf '[serial] 等 %s 出现（最多 %ss）…\n' "$PORT" "$WAIT"
 i=0
 while [ ! -c "$PORT" ]; do
