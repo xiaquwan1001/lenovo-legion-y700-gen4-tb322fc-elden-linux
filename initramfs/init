@@ -167,11 +167,15 @@ fi
 # Parsed before /persist so we know whether a switch_root is coming.
 elden_root=""
 elden_nocamera=""
+elden_early_gadget=""
 for arg in $(cat /proc/cmdline); do
 	case "$arg" in
 		elden_root=*) elden_root=${arg#elden_root=} ;;
 		ubuntu_root=*) elden_root=${arg#ubuntu_root=} ;;
 		elden_nocamera=*) elden_nocamera=${arg#elden_nocamera=} ;;
+		# 诊断开关：把 USB 复合 gadget（usb0 + ttyGS0/GS1）提到 **RAM 阶段**建好，
+		# 这样磁盘根自己坏掉时主机侧仍有通道（PITFALLS「boot 后全静默」条）。
+		elden_early_gadget=*) elden_early_gadget=${arg#elden_early_gadget=} ;;
 		# kexec target evidence dump (see kexec_marker_dump()).  MUST be parsed
 		# here: this loop is a whitelist, so an unlisted token is silently
 		# dropped and the dump never arms (PITFALLS #378, 2026-10-24).
@@ -249,6 +253,36 @@ kexec_marker_dump() {
 	return 0
 }
 
+# --- early USB gadget (opt-in: elden_early_gadget=1) ------------------------
+# 为什么需要：默认整条恢复通道（usb0 192.168.7.1 + ttyGS0 控制台 + ttyGS1 root shell）
+# 都在 switch_root **之后**由磁盘 /init 拉起。一旦磁盘根有问题（/init 跑不起来 / 落进 rescue() /
+# usb-gadget 起不来 / SoC 硬挂），主机侧就完全失明，而且这四种情况**无法区分**
+# （2026-10-26 把根换成 Debian 的候选镜像首次上机就是全静默，见 reports/ 与 PITFALLS）。
+# 这个开关把 gadget 提到 RAM 阶段：
+#   * configfs 已在上面 `mnt configfs configfs /sys/kernel/config` 挂好；
+#   * switch_root 用 `mount --move /sys`，会把 configfs 挂载点连同内核里的 gadget 对象一起
+#     带进新根 ⇒ 通道不会断（这也是它能起作用的前提）；
+#   * 磁盘 /init 再调 `usb-gadget start` 时因 `[ -d $G ]` 直接 return，不会重建；
+#   * 用 /run/elden-early-gadget 标记「IP/udhcpd 已配」，避免后半段重复 add。
+# 默认关：多一个早期持有者就多一份出错面，只在诊断/迁移试机上开。
+if [ "$on_initramfs" = 1 ] && [ -n "$elden_early_gadget" ]; then
+	log "early gadget requested (elden_early_gadget=$elden_early_gadget)"
+	(
+		/usr/local/sbin/usb-gadget start
+		i=0
+		while [ ! -d /sys/class/net/usb0 ] && [ "$i" -lt 200 ]; do sleep 0.1; i=$((i + 1)); done
+		if [ -d /sys/class/net/usb0 ]; then
+			ip link set usb0 up
+			ip addr add 192.168.7.1/24 dev usb0 2>/dev/null || true
+			udhcpd -S /etc/udhcpd.conf
+			: > /run/elden-early-gadget
+			log "early usb0 up: 192.168.7.1 (lifeline already live BEFORE switch_root)"
+		else
+			warn "early gadget: usb0 never appeared"
+		fi
+	) &
+fi
+
 if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 	log "disk root requested: $elden_root"
 	root_dev=""
@@ -276,13 +310,18 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 		[ -n "$root_fstype" ] || root_fstype=$(blkid -o value -s TYPE "$root_dev" 2>/dev/null)
 		[ -n "$root_fstype" ] || root_fstype=ext4
 		log "root fstype: $root_fstype"
+		# 埋点（2026-10-26 M6 全静默事故）：把「要挂哪个 dev、挂成功没」都打到 kmsg。
+		log "DBG mount start: dev=$root_dev fstype=$root_fstype target=/newroot cmdline_elden_root=$elden_root"
 		if mount -t "$root_fstype" -o rw,noatime "$root_dev" /newroot; then
+			log "DBG mount ok: $(grep -c . /proc/mounts) mounts; newroot has $(ls /newroot 2>/dev/null | wc -l) entries"
 			newinit=""
 			[ -x /newroot/init ] && newinit=/init
 			[ -z "$newinit" ] && [ -x /newroot/sbin/init ] && newinit=/sbin/init
 			[ -z "$newinit" ] && [ -x /newroot/bin/sh ] && newinit=/bin/sh
 			if [ -n "$newinit" ]; then
 				log "switching root to $root_dev ($newinit)"
+				# 埋点：switch_root 之前把目标根的 /init 身份也记下来（区分「同一个 init」还是「发行版换了」）
+				log "DBG newinit: $newinit size=$(stat -c %s "/newroot$newinit" 2>/dev/null) sha=$(sha256sum "/newroot$newinit" 2>/dev/null | cut -c1-12) shebang=$(head -c 40 "/newroot$newinit" 2>/dev/null | head -1)"
 				# Disk-root kexec target: dump evidence onto the mounted root and
 				# then keep booting normally (no reboot needed here).
 				if [ -n "${kexec_marker:-}" ] || [ -e /etc/kexec-marker-on ]; then
@@ -294,8 +333,9 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 				mount --move /proc  /newroot/proc  || warn "move /proc failed"
 				mount --move /sys   /newroot/sys   || warn "move /sys failed"
 				mount --move /run   /newroot/run   || warn "move /run failed"
+				log "DBG exec switch_root now"
 				exec switch_root /newroot "$newinit"
-				warn "switch_root returned; staying on RAM root"
+				warn "switch_root returned (rc=$?); staying on RAM root"
 			else
 				warn "$root_dev mounted but has no /init, /sbin/init or /bin/sh; staying on RAM root"
 			fi
@@ -353,6 +393,9 @@ fi
 # Waits for the dwc3 UDC to appear, so run it in the background and set up
 # networking once usb0 exists.
 ip link set lo up
+if [ -e /run/elden-early-gadget ]; then
+	log "usb0 already up from the RAM phase (elden_early_gadget); not re-configuring"
+else
 (
 	/usr/local/sbin/usb-gadget start
 	i=0
@@ -366,6 +409,7 @@ ip link set lo up
 		warn "usb0 never appeared"
 	fi
 ) &
+fi
 
 # sshd (host keys generated at image build time)
 # sshd refuses to start unless /var/empty is root-owned and not group/world
