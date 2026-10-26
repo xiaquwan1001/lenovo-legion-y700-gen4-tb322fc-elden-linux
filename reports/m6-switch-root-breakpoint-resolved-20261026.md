@@ -142,3 +142,17 @@ elden-init/disk t=1.13 handoff to /sbin/init (systemd)
 - `lxc-net.service` failed + Waydroid 未部署在 Debian 根（G2 在 Debian 上的后续工作）。
 - `elden-hapticd` 缺：设备侧静态二进制未入库（MANIFEST `repo_src=-`，T14 债务）；门禁 D2 以 WARN 点名。
 - `usb0` 网络：Debian 根**不跑 udhcpd**，主机侧要手工 `ip addr add 192.168.7.9/24 dev <usbnet>` 才能 SSH（Alpine 侧有 udhcpd）。建议把 udhcpd 加到 Debian 单元或改静态对端地址。
+
+### 8.3 冷起验收（2026-10-26 22:31 `fastboot boot vk175`，第 2 次独立复现，全自动）
+
+```
+root: ext4 /dev/sda17   uptime=407s
+phoc(phosh)=2  /usr/libexec/phosh=2
+c1 1001 xuqianhui1001 seat0 1392 user tty7 yes
+wifi: 114.214.227.153/21     (net-up=success)
+qbootctl=success  greetd=active
+failed(仅 3): accounts-daemon / hexagonrpcd / lxc-net
+```
+
+⇒ **Debian(Mobian 方向) 根已在主线上「自动登录 → phosh 桌面 + WiFi + 槽位自标成功」跑通**，
+两次独立启动结果一致。仍缺的三项见 §8.2。
