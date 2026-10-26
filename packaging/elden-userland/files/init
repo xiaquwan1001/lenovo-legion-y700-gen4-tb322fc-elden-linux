@@ -56,11 +56,31 @@ trace() {
 	# 注意：这里**不能**在定义时固化 TRACE_ON —— cmdline 解析在后面，
 	# 固化会导致 elden_trace=0 永远不生效（每次调用现读）。
 	[ "${elden_trace:-1}" = 0 ] && return 0
-	[ -e /dev/pmsg0 ] || return 0
+	# TRACE_FD=1 表示 fd 9 已是目标根 ext4（否则不往 fd 9 写，避免 "Bad file descriptor" 噪声）
 	_ts=$(cut -d' ' -f1 /proc/uptime 2>/dev/null)
 	_ph=ram
 	[ "${on_initramfs:-1}" = 0 ] && _ph=disk
-	printf 'elden-init/%s t=%s %s\n' "$_ph" "$_ts" "$*" > /dev/pmsg0 2>/dev/null || true
+	# 通道 0：**常开 fd 9 直写目标根 ext4**（挂载后 exec 9>>… 打开）——每行立即落盘，
+	# 不受「后续行还在 tmpfs 里」的歧义影响；这是能区分「switch_root 内部挂」与
+	# 「磁盘 /init 首行挂」的唯一可靠手段（2026-10-26 实测：只写 /run 时最后一条之后全丢）。
+	if [ "${TRACE_FD:-0}" = 1 ]; then
+		printf 'elden-init/%s t=%s %s\n' "$_ph" "$_ts" "$*" >&9 2>/dev/null || true
+	fi
+	# 通道 1：/run（tmpfs，switch_root 时随 `mount --move /run` 带进新根 ⇒ 两个阶段都能看）
+	printf 'elden-init/%s t=%s %s\n' "$_ph" "$_ts" "$*" >> /run/init-trace.log 2>/dev/null || true
+	# 通道 2：pmsg（ramoops）。**实测本例内核上写 /dev/pmsg0 rc=0 但 /sys/fs/pstore 恒空**，
+	# 所以它只是「说不定」的备份，不能当唯一通道（2026-10-26）。
+	[ -e /dev/pmsg0 ] && printf 'elden-init/%s t=%s %s\n' "$_ph" "$_ts" "$*" > /dev/pmsg0 2>/dev/null
+	return 0
+}
+
+# trace_save(): 把目前为止的 trace 落到**目标根的磁盘**上（跨复位可读）。
+# 为什么需要：设备卡死时唯一可靠的取证面就是磁盘；/run 里的副本随掉电消失。
+trace_save() {
+	[ -r /run/init-trace.log ] || return 0
+	[ -d /var/tmp ] || mkdir -p /var/tmp 2>/dev/null || return 0
+	cp -f /run/init-trace.log "/var/tmp/elden-init-trace.log" 2>/dev/null || true
+	sync 2>/dev/null || true
 	return 0
 }
 
@@ -149,8 +169,12 @@ case "$roottype" in
 	rootfs|tmpfs|ramfs) on_initramfs=1 ;;
 	*) on_initramfs=0 ;;
 esac
+if [ "$on_initramfs" = 0 ]; then
+	exec 9>>/var/tmp/elden-init-trace.log 2>/dev/null && TRACE_FD=1
+fi
 log "root fs type=$roottype on_initramfs=$on_initramfs"
 trace "start on_initramfs=$on_initramfs mode=$init_mode roottype=$roottype"
+[ "$on_initramfs" = 0 ] && trace_save
 
 # --- init mode: legacy ad-hoc services vs native OpenRC -----------------------
 # /etc/elden-init-mode = "openrc" makes the disk-root branch hand PID1 over to
@@ -234,6 +258,7 @@ fi
 # Non-fatal by design; absent in the minimal busybox initramfs.
 # elden_nocamera=1 (kernel cmdline) suppresses the auto-load; used for
 # module-set bisection (camera stack ⇄ screen-blank power-off, Q24).
+[ "$on_initramfs" = 0 ] && { trace "camera-modules-load start"; trace_save; }
 if [ "${elden_nocamera:-0}" != 1 ] && [ -x /usr/local/sbin/camera-modules-load.sh ]; then
 	# Log to /dev/kmsg, not /run: on a disk-root boot the persistent /init
 	# remounts a fresh tmpfs over /run, which hides a ramdisk /run file.
@@ -246,6 +271,7 @@ fi
 # tree (no OpenRC `modules` service in runlevels). Non-fatal by design.
 # NOT gated on elden_nocamera: WiFi/audio/touch/backlight have nothing to do
 # with the camera stack, and `elden_nocamera=1` must keep WiFi working.
+[ "$on_initramfs" = 0 ] && { trace "payload-modules-load start"; trace_save; }
 if [ -x /usr/local/sbin/payload-modules-load.sh ]; then
 	timeout 20 /usr/local/sbin/payload-modules-load.sh >"$KLOG" 2>&1 || warn "payload-modules-load failed/timed out"
 fi
@@ -339,6 +365,12 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 		if mount -t "$root_fstype" -o rw,noatime "$root_dev" /newroot; then
 			log "DBG mount ok: $(grep -c . /proc/mounts) mounts; newroot has $(ls /newroot 2>/dev/null | wc -l) entries"
 			trace "mount ok entries=$(ls /newroot 2>/dev/null | wc -l)"
+			# 挂载成功 ⇒ 立刻把 RAM 阶段攒下的 trace 写到 ext4 上（后面再怎么挂都能读）
+			mkdir -p /newroot/var/tmp 2>/dev/null
+			cp -f /run/init-trace.log /newroot/var/tmp/elden-init-trace.log 2>/dev/null
+			# 常开 fd 9：从此每条 trace 直接写进目标根 ext4（append，逐行可见）
+			exec 9>>/newroot/var/tmp/elden-init-trace.log && TRACE_FD=1
+			log "trace fd opened on newroot/var/tmp/elden-init-trace.log"
 			newinit=""
 			[ -x /newroot/init ] && newinit=/init
 			[ -z "$newinit" ] && [ -x /newroot/sbin/init ] && newinit=/sbin/init
@@ -353,16 +385,36 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_root" ]; then
 				if [ -n "${kexec_marker:-}" ] || [ -e /etc/kexec-marker-on ]; then
 					kexec_marker_dump /newroot || warn "kexec_marker: dump onto /newroot failed"
 				fi
+				# 每步各 trace 一次（fd 9 直写 ext4）：switch_root 前的窗口只有这几行，
+				# 少任何一行都能立刻定位（2026-10-26：上一次只知「mount ok 之后就没了」）。
+				trace "mkdir newroot dirs"
 				mkdir -p /newroot/dev /newroot/proc /newroot/sys /newroot/run
 				umount /tmp 2>/dev/null || true
-				mount --move /dev   /newroot/dev   || warn "move /dev failed"
-				mount --move /proc  /newroot/proc  || warn "move /proc failed"
-				mount --move /sys   /newroot/sys   || warn "move /sys failed"
-				mount --move /run   /newroot/run   || warn "move /run failed"
+				trace "move /dev";   mount --move /dev   /newroot/dev   || warn "move /dev failed"
+				trace "move /proc";  mount --move /proc  /newroot/proc  || warn "move /proc failed"
+				trace "move /sys";   mount --move /sys   /newroot/sys   || warn "move /sys failed"
+				trace "move /run";   mount --move /run   /newroot/run   || warn "move /run failed"
+				trace "all mounts moved"
 				log "DBG exec switch_root now"
+				# 诊断期：把 switch_root 的 **stderr 直接写进 trace 文件**（fd 9 = 目标根 ext4）。
+				# busybox switch_root 失败时会打印具体原因（"not a mount point"/"can't delete"/…），
+				# 而那时 /dev、/proc、/sys、/run 都已被 `mount --move` 搬走 ⇒ log() 与 warn() 的
+				# 输出去向全失效，只有这条 fd 还能用（2026-10-26 实测：exec 之后彻底静默）。
 				trace "exec switch_root /newroot $newinit"
-				exec switch_root /newroot "$newinit"
-				warn "switch_root returned (rc=$?); staying on RAM root"
+				if [ "${TRACE_FD:-0}" = 1 ]; then
+					exec switch_root /newroot "$newinit" 2>&9
+				else
+					exec switch_root /newroot "$newinit"
+				fi
+				# 能执行到这里 = switch_root **返回了**（没成功 exec）。
+				# 此时 /dev /proc /sys /run 都不在 RAM 根上了，先把它们搬回来，否则后面的
+				# lifeline（usb-gadget/sshd/udhcpd）会静默全废、表现为「设备活着但没有通道」。
+				trace "switch_root RETURNED (exec failed)"
+				for _m in dev proc sys run; do
+					mount --move "/newroot/$_m" "/$_m" 2>/dev/null || true
+				done
+				trace "moved pseudo-fs back onto RAM root"
+				warn "switch_root returned; staying on RAM root (pseudo-fs restored)"
 			else
 				warn "$root_dev mounted but has no /init, /sbin/init or /bin/sh; staying on RAM root"
 			fi
@@ -433,6 +485,7 @@ else
 		udhcpd -S /etc/udhcpd.conf
 		log "usb0 up: 192.168.7.1, ssh root@192.168.7.1 (no password)"
 		trace "usb0 up (disk phase)"
+		trace_save
 	else
 		warn "usb0 never appeared"
 	fi
@@ -525,6 +578,7 @@ fi
 if [ "$on_initramfs" = 0 ] && [ "$init_mode" != legacy ]; then
 	log "$init_mode mode: handing PID1 to /sbin/init"
 	trace "handoff to /sbin/init ($init_mode)"
+	trace_save
 	exec /sbin/init
 fi
 

@@ -26,6 +26,12 @@
 ### 1.1 内核与软件基线
 - ★**2026-10-26（模块化内核 vk163 零写盘上机；`boot_b` 未变）** —— 在机模块树**新增** `/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163/`（1539 `.ko`，89 MB，仅当跑 vk163 镜像时被使用；日常内核忽略）与 `/usr/local/sbin/payload-modules-load.sh`（载荷模块加载器；在 vk152 非模块化内核上是 no-op，实测自报 `is builtin`）。
   `boot_b` 仍是 `f2fs-root`（内核 sha `b6a074ff…` 读回一致、`retry=6 succ=1`），本轮**未写任何分区**；测试方式 = `fastboot boot out/boot-elden-vk163.img`，退回必须经 `reboot2 bootloader` + `fastboot reboot`（**普通暖复位会继续起测试镜像**，见 `PITFALLS #401`）。报告 `reports/vk163-modular-20261026.md`。
+- ★**2026-10-26（续 2）· `linux17` 现在是 Debian 根，但启动停在 `switch_root`** —— 根内容 = Debian forky/sid（36268 文件 / 1.9 G），
+  `/init` = 仓库最新版（sha `678cccb7…`，含 `elden_early_gadget` + trace 双通道 + switch_root stderr 重定向 + 伪 fs 回搬）。
+  **启动实测**：ext4 挂载正常（t=0.97→0.98）、4 个 `mount --move` 全过、`exec switch_root /newroot /init` 已发出，
+  而磁盘 `/init` 一行 trace 都没写 ⇒ **卡在 busybox `switch_root` 内部或 exec 失败**；
+  设备表现为「有 USB gadget、无 SSH/无 fastboot/串口静默」，取证只能靠 `linux17:/var/tmp/elden-init-trace.log`（常开 fd 直写）。
+  见 `../reports/m6-debian-candidate-boot-nousb-20261026.md` §6、`../TASKS/README.md` T19。
 - ★**2026-10-26（续）· `linux17` 已定性为 Debian 候选落点** —— 迁移改用「双分区并存」而非原地覆盖：Debian 目标根 = **`linux17` ext4**，
   Alpine 现役根 `linux18` f2fs 不动 ⇒ 回退 = 重启回 `boot_b`（秒级，不需要 live 介质）。换根靠 cmdline `elden_root=LABEL=`（烧在 boot.img 里）
   ⇒ 候选镜像用 `fastboot boot` 零写盘验收。见 `reports/modular-mobian-transition-20261026.md` §0 J1/J2。

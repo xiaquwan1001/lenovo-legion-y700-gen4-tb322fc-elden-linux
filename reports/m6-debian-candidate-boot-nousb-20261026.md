@@ -77,3 +77,55 @@ fastboot boot out/boot-elden-vk164-debianroot.img
 # 退回 boot_b（PITFALLS #90/#406：fastboot boot 的镜像会活过暖复位）
 ssh root@192.168.7.1 reboot2 bootloader && fastboot reboot
 ```
+
+---
+
+## 6. 调试全记录（同日续，8 发候选镜像）— **断点已定位到 `switch_root`**
+
+### 6.1 取证基础设施（这轮最大的工程产出）
+
+| 尝试 | 结果 |
+|---|---|
+| 串口 `cat /dev/ttyACM0` | **无用**：console 在 t≈11 s 才连上（gadget 后起），`/init` 的埋点都在 t≈2–6 s；连上时内核只把 ring buffer 重放一遍（到 t≈10.98），此后设备一个字节都没打 |
+| 多读者并存 | **有害**：常驻 fanout + 临时 `cat` 会**分食同一条流**，日志出现空洞（第一次失败证据就这么丢的）。已改 `scripts/serial-probe.sh`（独占 + BREAK/换行）与 `scripts/serial-capture.sh`（`DETACH=1`） |
+| **pstore / pmsg** | **不可用**：`echo x > /dev/pmsg0` 返回 0，但 `/sys/fs/pstore` **恒空**（`mount -t pstore` 也空）；ramoops 已注册（`pstore: Registered ramoops as persistent store backend`，`ramoops: using 0x400000@0xc2000000`）。⇒ 只能降级为「备份通道」，见 PITFALLS 新条目 |
+| **`/init` trace → 常开 fd 9 直写目标根 ext4** | ✅ **有效**：`/var/tmp/elden-init-trace.log` 跨复位可读；每行立即落盘，不受「后续行还在 tmpfs」歧义影响 |
+| 免物理断电复位（SysRq over USB ACM） | 已实现 `scripts/serial-sysrq.py`（BREAK + 字符；内核 `CONFIG_MAGIC_SYSRQ=y` + `MAGIC_SYSRQ_SERIAL=y`），**本轮未验证成功**（发 `b` 后设备重新枚举但未回 Alpine） |
+
+### 6.2 决定性 trace（vk170-trace3 那发，逐字）
+
+```
+elden-init/ram t=0.80 start on_initramfs=1 mode= roottype=tmpfs
+elden-init/ram t=0.81 disk root requested: LABEL=linux17
+elden-init/ram t=0.84 early usb0 up
+elden-init/ram t=0.97 resolved LABEL=linux17 -> /dev/sda17
+elden-init/ram t=0.97 mount start dev=/dev/sda17 fstype=ext4
+elden-init/ram t=0.98 mount ok entries=20
+elden-init/ram t=0.98 newinit /init size=29055
+elden-init/ram t=0.98 mkdir newroot dirs
+elden-init/ram t=0.98 move /dev
+elden-init/ram t=0.98 move /proc
+elden-init/ram t=    move /sys        ← 时间戳变空：/proc 已被搬走（预期副作用）
+elden-init/ram t=    move /run
+elden-init/ram t=    all mounts moved
+elden-init/ram t=    exec switch_root /newroot /init
+```
+**之后没有任何 `disk …` 行。**
+
+### 6.3 由此确定的结论
+
+1. `linux17` 的 ext4 **挂载完全正常**（t=0.97→0.98，20 个顶层项），4 个 `mount --move` 全部完成；
+2. `exec switch_root /newroot /init` **已发出**，但磁盘根的 `/init` **一个 trace 都没写**（它在开头就会 `exec 9>>/var/tmp/…` 并写 `start`）⇒ **从未进入磁盘 `/init`**；
+3. ⇒ 卡点在 **busybox `switch_root` 内部**（它要递归删除旧 initramfs 的整棵树后再 `mount --move` + `chroot` + `exec`），或 `exec` 后内核 exec 失败。
+   **已排除**：Debian 根的用户态不可执行（设备上 `chroot /mnt/deb /bin/sh` → `chroot-exec-ok` + `forky/sid`；`dash -n /init` 通过；`sbin/init -> ../lib/systemd/systemd`）。
+4. 「设备活着但无 SSH」还有一个**结构原因**：`mount --move` 之后 `/dev /proc /sys /run` 都离开了 RAM 根，一旦 `switch_root` **返回失败**而不是 exec，后面的 lifeline（usb-gadget/sshd/udhcpd）会**静默全废**。已在 `/init` 里补「switch_root 返回则把四个伪文件系统搬回来」。
+
+### 6.4 下一步（已实现、待读结果）
+
+`vk171-swrerr`（`out/boot-elden-vk171-swrerr.img`，sha `551ac3a848aedd35…`）把 **`switch_root` 的 stderr 直接重定向进 trace 文件**（`exec switch_root … 2>&9`），并加了「返回则恢复伪文件系统」。它的错误文案就是答案（`not a mount point` / `can't delete …` / `exec failed: …`）。**该发未读到结果**（设备卡住待物理 POR）。
+
+另一条待验方向：`switch_root` 的删除阶段要递归 unlink **整个 initramfs**（本机 full ramdisk 解包约 200 MB、`/lib/firmware` 数千文件）。若嫌疑集中在此，可改用 `switch_root` 的替代实现（自己 `mount --move` + `chroot` + `exec`，跳过删除），或换成 slim ramdisk（无 `/lib/firmware`）先验一次。
+
+### 6.5 本轮设备态
+
+**需要物理 POR**：设备当前 USB 有 `1d6b:0104` gadget、无 SSH、无 fastboot。`boot_b` 槽位未变（`retry=6 succ=1 unbootable=0`），`linux18`（Alpine 现役根）未动，`linux17` 上是 Debian 根 + 最新 `/init`（sha `678cccb7…`）。**全程零写盘**（只 `fastboot boot`；唯一写入是 rootfs 归档到 `linux17` 与把 `/init` 铺进该根，均在非现役分区）。

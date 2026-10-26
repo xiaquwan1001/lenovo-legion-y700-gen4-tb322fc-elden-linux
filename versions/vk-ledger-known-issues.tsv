@@ -331,3 +331,10 @@ vk162-rescue	uts_dup	刻意复用 vk152 的 UTS 以共用模块树
 f2fs-root	num_ne_tag	内核未改动 = vk152 那份（本镜像只改 cmdline/ramdisk）
 f2fs-root	uts_dup	刻意复用 vk152 的 UTS 以共用模块树
 vk164-debianroot	num_ne_tag	M6 迁移候选：**故意复用 vk163 的内核载荷**（同一 build/vk151 Image.gz，只改 cmdline elden_root=LABEL=linux17），源提交上没有 vk164 ref 是设计使然；镜像身份由 manifest kernel_payload_sha256 区分
+vk165-earlygadget	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
+vk166-dbg	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
+vk167-trace	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
+vk168-ramprobe	num_ne_tag	RAM-only 探针：无 elden_root，用来在设备卡死时读 linux17 上的 trace（复用 vk163 载荷）
+vk169-trace2	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
+vk170-trace3	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
+vk171-swrerr	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
