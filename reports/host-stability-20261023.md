@@ -290,3 +290,21 @@ tail -5 ~/mprime/logs/<时间戳>/telemetry.csv
 | `/var/log/kern.log`、`/var/log/syslog` | `adm` 组可读；panic 时日志在写一半处被截断（可作硬冻结标志） |
 | `/tmp/r73-diag/` | Godot/Mesa 复现材料（`t1..t4.log`、`probe_*`） |
 | `~/y700-elden/reports/artifacts/host-panic-20261023/dmesg.202610232032` | 第 12 次 panic dmesg 的长期副本（从 `/tmp/hwdiag` 拷出，防 `/tmp` 被清） |
+
+---
+
+## 附：第 13 次内核 panic（2026-10-26 11:45:33，配置未变）
+
+- **现场**：`dump-incomplete` 流程留下的首核 dmesg 已解出（`/var/crash/202610261145/dmesg.202610261145`，129 880 B，末尾被 `Modules linked in` 截断）。
+  ```
+  [ 7987.600913] Oops: general protection fault, probably for non-canonical address 0x7ffff7a58820b0b4: 0000 [#1] SMP NOPTI
+  [ 7987.600928] CPU: 9  PID: 214643  Comm: gnome-control-c  Tainted: G  O
+  [ 7987.600933] RIP: 0010:filemap_get_entry+0x8c/0x1d0     RBX: 7ffff7a58820b080  RAX: 0
+   Call Trace: __filemap_get_folio_mpol → filemap_fault → __do_fault → handle_pte_fault → handle_mm_fault → do_user_addr_fault
+  ```
+  即 **page cache 的 xarray 条目被写成了用户空间形态的废指针**（`0x7ffff7a5…`），与 #2（rbtree）、#4/#12（`refill_obj_stock` per-CPU slab 库存）同属「mm 元数据被写坏」一族，落点已扩散到第四个不同子系统。
+- **前兆**：整份 dmesg 零 MCE（`mce_record` 仍 208 条，最后一条 10-22 16:45）、零 WARNING/lockup；崩前最后日志是 11:45:14 的 snapcast fifo 轮询（panic 打印没进 journald）。
+- **不是 GPU/电源**：崩溃内核里那 1466 条 `NVRM … Possible bad register read 0xbadf5720` 属于 **kdump 崩溃内核**（11:45:44 起）在已崩状态 GPU 上重新加载 nvidia 所致，两内核共用 initramfs，属噪声。
+- **dump 失败原因**：`makedumpfile --dump-dmesg` 成功（dmesg 已存），随后 `makedumpfile -F -c -d 31 /proc/vmcore | compress` 写到 125 829 120 B（恰 120 MiB，11:45:45→11:45:51）后崩溃内核 40 s 无任何日志 → 完整 dump 不可用。crashkernel 仅 1024 M（61 GB 机器落 `32G-64G:1024M` 档），且崩溃内核会加载 nvidia/NM，建议提到 2048 M 并改用 `lzo`。
+- **配置核对（与 10-23 记录一致，未被改动）**：BIOS 1836 (2026-04-16)、微码 0x133、2×32 GB `CM4X32GC3200C16K2E` 仍跑 `2133 MT/s / 1.2 V`（XMP 关）、无 ECC。
+- **同期用户态**：10-26 11:49:52 `firefox WebExtensions` segfault in `libxul.so`（CPU 4/core 8）；10-25 23:29 `steamwebhelper` segfault in `libGLX_nvidia.so`。panic 间隔：10-23 20:31 → 10-26 11:45（约 2.6 天）。
