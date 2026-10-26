@@ -126,7 +126,7 @@
   会话记录 `TASKS/sessions/2026-10-17-换机后重建审计-邮箱分诊.md`。**邮箱通道可用**，未处理的上游往来 5 条见 `reports/mail-triage-20261017.md`。
   **★ 当前待办入口 = `TASKS/README.md` §4**：T1–T8/T10/T12/T13 已结项（2026-10-23）；**仍开放 = T9（suspend 掉电率，等 `HS-PHY not in L2` 与 hwmon 两条非阻塞告警收尾）、T11（宿主内存，等你在 BIOS/硬件侧动作）、T14（用户态固化→Mobian 迁移，第一步已落）**；**T15（f2fs 根迁移，路线 A）已于 2026-10-25 真机完成**；**T16（驱动模块化迁到 7.3 日常线 + Mobian 首批物料）2026-10-26 第一步完成（零写盘上机）**。现行口径在该节顶部「收尾轮次纪律（2026-10-23 用户定）」——**需要物理 POR 的样本一律排最后**、**TF 卡暂时不做**、**Q28 只由 agent 取 2 发、其余交用户在机旁完成**。
 
-- **未解（3 项，按影响排序）**：① Q28 显示间歇失败（日常线 vk152，真 POR 已 3 发 GOOD、还差 5 发）；② Q24 熄屏×相机（根因已指名 = 7.2 缺上游 `skip retention`，已停止采样）；③ 进 GUI 后整机卡死（`PITFALLS #106`）。
+- **未解（1 项）**：③ 进 GUI 后整机卡死（`PITFALLS #106`）。Q28/Q32 已按「已规避」结项、Q24 已关闭 ⇒ **样本数与复启条件只读 `TASKS/README.md` §5 Q28/Q24/Q32**，本文件不复述。
   **新增待办 Q32 = 暖起 vs 冷起差异**（静态预研已落盘，指向「ABL 交接 framebuffer + 复位动作」而非「暖/冷」本身）。 **2026-10-23 深夜：Q32 取证工具已落地 + 试点取证 + 判据更正**（复位深度只能从 pstore/ramoops 取；在机「ABL 留了活显示」已实测确认）→ `reports/q32-kickoff-20261023.md`；三臂仍未执行。**2026-10-24：三臂已跑完 5 发（W1×2 / C1×2 / W2×1）全 GOOD ⇒ 暖/冷不是主变量，Q32 并入 Q28** → `reports/q32-matrix-20261024.md`。
   **★2026-10-24：Q28 按「已规避（运营线 vk152）」结项** —— 代码级修复（0154/0155/两修）+ 看门狗（ON、从未触发）+ 三态探针；POR 5/5、暖复位 3/3 全 GOOD（8/8 无坏发），但用户决定**不再补样本、不再挖根因**；复启条件三条写死在报告里 → `reports/q28-workaround-closeout-20261024.md`。**口径 / 样本 / 触发 / 下一步只读** `TASKS/README.md` §5 Q28/Q24/Q32 与 `PITFALLS #106`；在机镜像 `boot_b` 见 `DEVICE/README.md` §1.1。
 - ✅ **已解（近期）**：Q31 M1-7.3 显示回归（2026-10-14 E1b）——见 `TASKS/README.md` §5 Q31 / §7。
@@ -171,7 +171,7 @@ scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：�
 scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
 # ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM → 死内核，PITFALLS #162）
 ./cycle.sh --soft                          # 软回 fastboot（免按电源键）
-fastboot boot bootslot-b/boot_b-clean.img  # 零写盘·持久变体（RAM 内核+磁盘根，有桌面/服务），功能测试用（PITFALLS #93）
+fastboot boot bootslot-b/boot_b-f2fs-root.img  # 零写盘·持久变体（RAM 内核+磁盘根，有桌面/服务），功能测试用（PITFALLS #93；原 boot_b-clean.img ⚠️MIGRATION-LOST(2026-10-17)，见 RESOURCES §3.5）
 fastboot boot <img>                        # 零写盘·纯RAM变体（无桌面/服务）仅内核/引导级验证；先 blank 活跃槽 dtbo 否则卡 logo（PITFALLS #1/#10）
 # 新单元开工三件套（先写台账，再备份，再手术）
 fastboot getvar serialno; adb shell getprop ro.boot.hwboardid   # → 写进 DEVICE/README.md §2.2

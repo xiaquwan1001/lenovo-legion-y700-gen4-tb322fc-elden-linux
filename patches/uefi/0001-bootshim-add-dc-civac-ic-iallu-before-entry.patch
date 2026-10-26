@@ -1,0 +1,34 @@
+diff --git a/BootShim/BootShim.S b/BootShim/BootShim.S
+index 76dcb4f9..4a43c292 100644
+--- a/BootShim/BootShim.S
++++ b/BootShim/BootShim.S
+@@ -45,9 +45,29 @@ _CopyLoop:
+ 	stp		x2, x3, [x5], #16
+ 	subs	x6, x6, #16
+ 	b.ne	_CopyLoop
++
++/*
++ * Cache maintenance before executing the copied image:
++ * the stp loop above may leave dirty D-cache lines at the destination
++ * (UEFI_BASE..UEFI_BASE+UEFI_SIZE) if XBL entered with the D-cache
++ * enabled. Clean+invalidate them to PoC so DRAM holds the payload,
++ * then invalidate the whole I-cache so no stale instructions are
++ * fetched at the new entry point.
++ */
+ 	ldr		x5, _StackBase
++	ldr		x6, _StackSize
++_CivacLoop:
++	dc		civac, x5
++	add		x5, x5, #64
++	subs	x6, x6, #64
++	b.ne	_CivacLoop
++	dsb		sy
++	ic		iallu
++	dsb		sy
++	isb
+ 
+ _Entry:
++	ldr		x5, _StackBase
+ 	br		x5
+ 
+ _Dead:

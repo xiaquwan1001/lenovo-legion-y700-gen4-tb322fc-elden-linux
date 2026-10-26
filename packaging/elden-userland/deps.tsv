@@ -13,6 +13,11 @@
 #   openrc     OpenRC 侧的具体名字（`depend() { need … }` 里写的那个）
 #   systemd    systemd 侧的具体单元名（`Requires=` / `After=` 里写的那个）
 #   note       语义 + 为什么这两个名字不等价（写清差异，别只写"映射"）
+#   provider   （可选，第 5 列）当前生效的实现 = services.tsv 的服务名；空格分隔可列候选，
+#              现役的写第一个。只允许 3 个抽象点带本列（container-backend / sensor-source /
+#              haptics-bridge，见 reports/waydroid-droidloom-userland-interface-20261026.md §3）；
+#              render.py 会校验每个候选都是本包服务名或 UNIT_MAP 键，防写幽灵 provider。
+#              换后端 = 改这一列 + services.tsv 对应行的 exec/args，依赖图（need/after）不动。
 #
 # ★ 向后兼容：services.tsv 里**继续写旧 OpenRC 名也是合法的**（render.py 用第 2 列反查
 #   同一行），所以 2026-10-25 之前写的行不改也能渲染；`render.py --check` 内置自检会断言
@@ -53,4 +58,7 @@ net-manager	networkmanager	NetworkManager.service	网络管理。**大小写是�
 time-daemon	chronyd	chronyd.service	时间同步守护（本机另有 time-sync.service 做一次性校正，见 services.tsv）
 container-host	lxc	lxc.service	LXC（Waydroid 宿主侧依赖）
 ssh	sshd	sshd.service	SSH 守护。**这是 /init 的恢复通道**，在 PID1 交接前就由 /init 自己拉起（initramfs/init:520-535）
+container-backend	waydroid-container	waydroid-container.service	【抽象点① 容器后端】「起/停/查一个 Android 容器」的语义。现役 provider=waydroid（waydroid container start，LXC 承载）；候选 redroid / droidloom cell。切换 = 换 services.tsv 里 provider 行的 exec/args + 本行 openrc/systemd 两列，waydroid-ipv6 / elden-hapticd 等依赖方只写本抽象名，不改（reports/waydroid-droidloom-userland-interface-20261026.md §3 A1/A6）	waydroid-container
+sensor-source	ssc-udp-relay	ssc-udp-relay.service	【抽象点② 传感器数据源】「把宿主侧传感器值推给消费者」的进程。现役 provider=ssc-udp-relay（ssccli→UDP:4446）；候选 --fake 源 / Termux 转发。只抽源、不抽传输（UDP 下游 HAL 已定型）；切源 = 换 provider 行 exec/args（同上报告 §3 A2）	ssc-udp-relay
+haptics-bridge	elden-hapticd	elden-hapticd.service	【抽象点③ 触觉桥】「容器振动请求 → aw86927 FF_RUMBLE」的桥。现役 provider=elden-hapticd（sysfs 文件轮询 activate/duration/amplitude，amplitude 默认 255 语义红线不变）；droidloom 下无 /sys bind 面时换 socket 承载，桥语义 ABI 不变（同上报告 §3 A3）	elden-hapticd
 sensors-dsp	hexagonrpcd-adsp-sensorspd	hexagonrpcd-adsp-sensorspd.service	ADSP sensorspd（QRTR svc 400 = SSC）。Alpine 是独立 initd；Debian 0.4.0 **没有该二进制**，由 hexagonrpcd.service 的 `-s` drop-in 复刻（J3），并由 stage.sh §5 建同名别名指向它 ⇒ 本行的 systemd 列在两侧都能解析。iio-sensor-proxy 必须等它，否则自动旋转永久 MODE_OFF（G1-34）

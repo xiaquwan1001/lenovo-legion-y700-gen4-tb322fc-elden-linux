@@ -71,14 +71,17 @@ UNIT_MAP = {
 #   ABSTRACT[抽象名]  → (openrc 名, systemd 名)   新写法（推荐）
 #   BY_OPENRC[openrc] → (抽象名, systemd 名)      旧写法（2026-10-25 的 services.tsv 原样可跑）
 # ⇒ 「改名换 init」只需改 deps.tsv；「继续用 OpenRC 名」也仍然合法且解析到同一行。
+PROVIDER_POINTS = {"container-backend", "sensor-source", "haptics-bridge"}
 ABSTRACT = {}
 BY_OPENRC = {}
+PROVIDERS = {}                # abstract → [provider 候选，现役在前]
 DEPS_CONFLICTS = []          # 歧义：同一个 openrc 名出现在两个抽象名里
 
 
 def load_deps(path: Path):
     ABSTRACT.clear()
     BY_OPENRC.clear()
+    PROVIDERS.clear()
     del DEPS_CONFLICTS[:]
     if not path.exists():
         raise RenderError(
@@ -99,6 +102,13 @@ def load_deps(path: Path):
         abstract, openrc, systemd = (v.strip() for v in vals[:3])
         if not abstract or not openrc or not systemd:
             raise RenderError(f"{path.name}:{lineno}: 抽象名/两种名字都不能为空：{line[:80]}")
+        # 可选第 5 列 provider：只有 3 个抽象点允许带（防到处长出可插拔点）
+        if len(vals) >= 5 and vals[4].strip():
+            if abstract not in PROVIDER_POINTS:
+                raise RenderError(
+                    f"{path.name}:{lineno}: 抽象名 {abstract!r} 不是三大抽象点，"
+                    f"不得带 provider 列（防过度设计）")
+            PROVIDERS[abstract] = vals[4].split()
         if abstract in ABSTRACT:
             raise RenderError(f"{path.name}:{lineno}: 抽象名重复：{abstract}")
         if not systemd.endswith((".service", ".target")):
@@ -455,11 +465,26 @@ def main() -> int:
                     unit_name(token, KNOWN)
                 except RenderError as exc:
                     errors.append(f"{svc['name']}.{col}: {exc}")
+    # 3b. 三大抽象点的 provider 必须可解析（本包服务名 / UNIT_MAP 键 / '-'）
+    for abstract, provs in sorted(PROVIDERS.items()):
+        if not provs:
+            errors.append(f"deps.tsv: {abstract} 的 provider 列为空")
+            continue
+        for p in provs:
+            if p in ("-", KNOWN) or p in KNOWN or p in UNIT_MAP:
+                continue
+            errors.append(f"deps.tsv: {abstract} 的 provider {p!r} 不是本包服务也不是 UNIT_MAP 键")
     # 4. ★向后兼容硬门：旧 OpenRC 写法与抽象写法必須渲染出**逐字相同**的产物。
     #    做法 = 把每行 need/after/before 的每个词换成「它自己的抽象名」，再渲染一遍比字符串。
     #    这条保证「改名字不改语义」，也是将来换第三种 init 时的回退保险。
     errors.extend(_compat_selfcheck(services))
 
+    # 3c. 三大抽象点必须登记 provider（现役实现可追溯）
+    for abstract in sorted(PROVIDER_POINTS):
+        if abstract not in ABSTRACT:
+            errors.append(f"deps.tsv: 缺抽象点 {abstract}（三抽象点是硬性清单，不许漂）")
+        elif abstract not in PROVIDERS:
+            errors.append(f"deps.tsv: 抽象点 {abstract} 缺 provider 列（现役实现必须可追溯）")
     if errors:
         print("render: FAIL", file=sys.stderr)
         for e in errors:
