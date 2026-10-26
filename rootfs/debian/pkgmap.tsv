@@ -166,6 +166,9 @@ squeekboard	add	squeekboard	OSK（C11 输入法栈）
 fcitx5	add	fcitx5 fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-rime	Debian 前端包名 = fcitx5-frontend-gtk3/4（Alpine 叫 fcitx5-gtk3/4）
 qbootctl	add	qbootctl	Debian 包自带 qbootctl.service（ExecStart=qbootctl -m），装完必须 enable
 phoc	add	phoc	phosh 依赖会带，但两枚补丁要显式重建，单列以免漏
+upower	add	upower	**电池/电量显示的唯一依赖链**：驱动侧 `qcom-battmgr-bat` 一直在（sysfs 有 capacity/status），
+	但 phosh 的电量指示走 **UPower over D-Bus**，Debian 包集合里没有 upower 就**完全没有电量 UI**
+	（2026-10-26 实测：`upower` 缺失 → `upower: command not found`、phosh 顶栏无电池；装上后 87% 立刻可见）
 
 ## ---- 服务运行时依赖（action=add；apk-world 里没有 = Alpine 侧由依赖自动带入） ----
 ## 来源：`rootfs/debian/svc-deps.tsv`（命令 → 提供包 → 证据）+ 离线依赖闭包模拟实测

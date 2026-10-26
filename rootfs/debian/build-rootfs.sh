@@ -169,6 +169,17 @@ sysfs          /sys       sysfs  defaults              0 0
 devpts         /dev/pts   devpts gid=5,mode=620        0 0
 tmpfs          /dev/shm   tmpfs  defaults,nosuid,nodev 0 0
 EOF
+# usb0 lifeline 的 DHCP 配置（与 Alpine 侧同义）：只发地址、**不发默认网关**，
+# 否则宿主机会把上网流量丢给平板。Debian 根的 busybox 自带 udhcpd applet（无符号链接），
+# /init 的 usb0_dhcp() 会自己回退到 `busybox udhcpd`；缺这个文件时 /init 还会写 /run 内联版。
+cat > "$ROOTDIR/etc/udhcpd.conf" <<'EOF'
+start 192.168.7.2
+end 192.168.7.20
+interface usb0
+lease_file /run/udhcpd.leases
+option subnet 255.255.255.0
+option lease 86400
+EOF
 printf 'elden\n' > "$ROOTDIR/etc/hostname"
 cat > "$ROOTDIR/etc/hosts" <<'EOF'
 127.0.0.1 localhost elden

@@ -156,3 +156,32 @@ failed(仅 3): accounts-daemon / hexagonrpcd / lxc-net
 
 ⇒ **Debian(Mobian 方向) 根已在主线上「自动登录 → phosh 桌面 + WiFi + 槽位自标成功」跑通**，
 两次独立启动结果一致。仍缺的三项见 §8.2。
+
+---
+
+## 9. 电源/电量 + usb0 lifeline 收口（2026-10-26 22:54，vk176，冷起全自动）
+
+| 判据 | 结果 |
+|---|---|
+| 根 / 桌面 | `ext4 /dev/sda17`；`phoc --session=phosh` ×2、`/usr/libexec/phosh` ×2、会话 `c1 1001 … seat0 tty7 user` |
+| **电量** | `/sys/class/power_supply/qcom-battmgr-bat` = `86 / Charging`（驱动一直正常）；`upower` 现已 active：`present yes / state charging / energy 25.2 Wh / 86%` |
+| **usb0 lifeline** | 主机 **10 s 自动 DHCP 拿到 192.168.7.9/24**（`udhcpd` 由 `/init` 的 `usb0_dhcp()` 用 busybox applet 起，2 个实例；`/etc/udhcpd.conf` 无默认网关） |
+| WiFi | `wlp1s0 114.214.193.209/22` |
+| greetd / 槽位 | `active` / `qbootctl Result=success` |
+| 失败单元 | **仅 2 个**：`accounts-daemon`、`lxc-net`（`hexagonrpcd` 本轮已 OK） |
+| 启动速度 | 桌面在 **uptime ≈ 13 s** 内就起来了（greetd 不再陷入 5 s × N 重启退避） |
+
+### 9.1 两条根因（详见 PITFALLS #429/#430）
+
+1. **电量**：`qcom_battmgr` 正常、sysfs 正常，缺的是 **`upower` 包**（phosh 走 UPower over D-Bus）；
+   且 Debian 的 `upower.service` 是 D-Bus 激活型、postinst 不 enable ⇒ 必须在 overlay 里挂进
+   `graphical.target.wants`。已加进 `pkgmap.tsv`（apt-list 第 100 行）+ 门禁 G 断言。
+2. **usb0 地址**：Debian 的 busybox 有 `udhcpd` applet 但无符号链接 ⇒ `/init` 直接调 `udhcpd` 静默失败，
+   主机侧表现为「USB 网卡永远没有 IPv4」。已加 `usb0_dhcp()`（路径 → applet → /run 内联配置），
+   并在 Debian 根落 `/etc/udhcpd.conf`；主机侧一条 NM 配置（`elden-usb-gadget`，DHCP）即可持久自动。
+
+### 9.2 仍缺
+
+- `accounts-daemon`（Debian 侧 accountsservice，供 GNOME/Phosh 用户信息；不影响桌面与电量）
+- `lxc-net` + Waydroid 未部署在 Debian 根
+- `elden-hapticd` 设备侧静态二进制未入库（T14 债务）

@@ -175,6 +175,35 @@ if [ -n "$missing" ]; then
 fi
 # --- end preflight -----------------------------------------------------------
 
+
+# --- usb0 DHCP：给主机发地址（lifeline 的一部分）--------------------------------
+# 为什么要有包装（2026-10-26 Debian 根实测）：`udhcpd` 在 Debian 的 busybox 里**有 applet
+# 但没有符号链接** ⇒ 直接调 `udhcpd` 失败且只写 stderr（宿主机侧症状 = USB 网卡永远拿不到
+# IPv4，必须手工 `ip addr add`）。这里统一：路径 → applet → 内联最小配置。
+# 端口上只发地址、**不发默认网关**：否则宿主机会把上网流量丢给平板（见 rootfs/build-rootfs.sh）。
+usb0_dhcp() {
+	_conf=/etc/udhcpd.conf
+	if [ ! -f "$_conf" ]; then
+		_conf=/run/udhcpd.conf
+		cat > "$_conf" <<-EOF
+		start 192.168.7.2
+		end 192.168.7.20
+		interface usb0
+		lease_file /run/udhcpd.leases
+		option subnet 255.255.255.0
+		option lease 86400
+		EOF
+	fi
+	if command -v udhcpd >/dev/null 2>&1; then
+		udhcpd -S "$_conf"
+	elif [ -n "${BB:-}" ] && "$BB" --list 2>/dev/null | grep -qx udhcpd; then
+		"$BB" udhcpd -S "$_conf"
+	else
+		warn "udhcpd 不可用（无命令也无 busybox applet）⇒ 主机侧需手工配 192.168.7.x/24"
+		return 1
+	fi
+}
+
 # --- mount helper -----------------------------------------------------------
 # Idempotent, retrying, loud on failure.  Must NOT depend on the `mountpoint`
 # applet: the minimal busybox build does not have it (only findfs/mount), so we
@@ -383,7 +412,7 @@ if [ "$on_initramfs" = 1 ] && [ -n "$elden_early_gadget" ]; then
 		if [ -d /sys/class/net/usb0 ]; then
 			ip link set usb0 up
 			ip addr add 192.168.7.1/24 dev usb0 2>/dev/null || true
-			udhcpd -S /etc/udhcpd.conf
+			usb0_dhcp
 			: > /run/elden-early-gadget
 			log "early usb0 up: 192.168.7.1 (lifeline already live BEFORE switch_root)"
 			trace "early usb0 up"
@@ -545,7 +574,7 @@ else
 	if [ -d /sys/class/net/usb0 ]; then
 		ip link set usb0 up
 		ip addr add 192.168.7.1/24 dev usb0
-		udhcpd -S /etc/udhcpd.conf
+		usb0_dhcp
 		log "usb0 up: 192.168.7.1, ssh root@192.168.7.1 (no password)"
 		trace "usb0 up (disk phase)"
 		trace_save
