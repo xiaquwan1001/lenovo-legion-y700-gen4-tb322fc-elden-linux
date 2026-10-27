@@ -132,6 +132,7 @@
 - ✅ **已解（近期）**：Q31 M1-7.3 显示回归（2026-10-14 E1b）——见 `TASKS/README.md` §5 Q31 / §7。
 - **已关闭 / 搁置**（不再占未解）：Q26 WiFi、**G1-6 TF 卡（2026-10-26 新卡收口，旧卡废置）**、C10 Waydroid 马达透传（PITFALLS §29/§30）。**G1-34 不是已关闭**：Alpine 根可用、**Debian 根仍回归**（`HasAccelerometer=false`，缺口 = libssc 0.4.4），只读 `TASKS/README.md` §1 G1-34。
 - **未开工 / 进行中**：上游化 M1–M5（`TASKS/README.md` §7）、G1-8 CPU/GPU 基准（`TASKS/README.md` §1）。细节只读对应节，本文件不复述。
+- **可评审分片（只备不发）**：B5 bonded-DSI 第 1–3 步、aw86927 五提交系列、camss 驱动系列 —— 状态与两处待拍板只读 `TASKS/README.md` §7 的 M 行；判据复核汇总 `reports/lanes-20261027-verified.md`。
 - **上游投递（2026-10-27 起解冻）**：已在评审/已归档的系列与「只备不发」的草案**只读** `TASKS/README.md` §7（M 行逐条带 Message-ID）。
   **口径**：投递解冻由用户按批放行；agent **不等回复**，只做不阻塞项（备料/门禁/取证）。
 - **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-29 UEFI、G1-10 NFC、G1-30 slim initramfs；
@@ -168,6 +169,9 @@ grep -rn -iE "unlock|解锁|sn\.img|rollback|testkey|073" \
 sudo bash elden-net.sh && ssh -o StrictHostKeyChecking=no root@192.168.7.1
 # 内核迭代＝统一入口 scripts/iterate.sh（四档环，细则 RUNBOOK §迭代）
 scripts/iterate.sh mod <driver-dir>              # 环0：=m 模块热载 ~30s 不重启（需先应用 fragment-modular）
+#   成功判据 = build-id 匹配（脚本会自己打印 ✅/❌ 并在未确认时 rc=1；见 PITFALLS #447）
+LOCALVERSION=-debug-vkNN scripts/mod-loop.sh <driver-dir> --reload <mod-name>
+#   设备 UTS 与本树 KV 不一致时脚本会 REFUSING；跨 KV 只能用 --bootstrap 或 --allow-mismatch
 scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（零写盘快环：kexec 可用，但目标无显示/USB，见 §4 第 10 条）
 scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 先备份后执行）
 scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查

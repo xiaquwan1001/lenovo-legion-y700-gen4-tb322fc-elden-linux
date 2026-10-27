@@ -62,6 +62,8 @@
 | 2026-10-27 | **Debian 根上的 Waydroid 起完**：`sys.boot_completed=1`、6 个 h/w 传感器 running、加速计数值与 `ssccli` 逐位一致、马达桥 `amp=255/255` 实测、冷起 XDG autostart 10 s 内 Session RUNNING。根因三条全在用户态：`waydroid-sensord` 是 **musl 动态件**（glibc 根 exec ENOENT 但 `which` 命中 ⇒ 关了 stub 又没 HAL）、`elden-hapticd` 的 systemd `${VAR}` 不分词、`ssc-udp-relay` 缺 `ssccli`（在 `libssc-bin`） | `TASKS/sessions/2026-10-27-Debian根Waydroid打通-sensorsHAL与马达桥.md`、`PITFALLS #431–#437` |
 | 2026-10-27 | **容器相机推进到 App 预览 `STREAMING`**：宿主 `gst(NV12) → v4l2-ctl --stream-out-mmap=8 → /dev/video100`（`REQBUFS` 只能在写端解决，模块保持 stock）；容器 `configureStreams` 通过、`Preview stream state STREAMING`。剩余 = 外部 HAL 无 JPEG(BLOB)（`v4l2loopback` 只能 NV12）故拍照型 App 打不开，绕法 = preview+analyze 类 App | `PITFALLS #438–#441`、`TASKS/README.md` C5/U7 |
 | 2026-10-27 | **G1-34 按根分列**：SSC 服务 **400 已注册**（旧「未注册」结论作废）、`ssccli` 出真值；`HasAccelerometer=false` 的真因在 **libssc 0.4.4**（Alpine 工作态 0.4.3），顺带修掉 `qrtr-tools` 缺失导致的 60 s 白等 | `PITFALLS #442/#443`、`PITFALLS/sessions/107-*` |
+| 2026-10-27 | **三条并行 lane 收口（编排者独立复跑判据）**：`b5-resoc` 把 bonded-DSI 的全局态/魔数/十直调收进 per-SoC `msm_dsi_bonded_cfg` + 两个 host ops（3 提交，逐提交 `make drivers/gpu/drm/msm/` rc=0 / 0 warning；`static bool dsi_bonded_cmd_failed`=0、`0x001f0200`=0、`0x44440400`=0、`dsi.h` 原型 10→2）；`aw86927-series` 从 pristine 起把固件波形能力做成 5 提交上游系列草案（`checkpatch --strict` 5/5 `0E/0W/0C` + `dt-doc-validate` rc=0 + 逐枚 `git apply` 全通）；`devcam-ab` 上机做 SKEW_CAL A/B（`0x54` vs 厂商 `0x00`，各 3 次 90 帧） | 三臂均 90/90、0 错误、30.26 fps（顶 sensor 上限）、帧 STDDEV 53.81 vs 53.78 ⇒ **无可测差异**；处置 = 不回退，上游化时以厂商值提交并注明「本机无差异」 | `reports/lanes-20261027-verified.md`、`TASKS/sessions/2026-10-27-三lane收口与mod-loop假成功修复.md` |
+| 2026-10-27 | **`mod-loop.sh` 的「reloaded」曾是假的**：`qcom-camss`(连字符) vs `lsmod` 的 `qcom_camss`(下划线) 致 `rmmod` 从不执行、`modprobe` 必失败且错误被 `2>/dev/null` 吞；`modules_install` 目的地取自不刷新的 `include/config/kernel.release` ⇒ 装进错误 `<KV>`；`modules.order` 丢失时被误报成「driver is built-in」。修法 = 直收 `.ko` → `updates/` + 名字归一化 + 失败非零 + **build-id 硬校验** | 正路 build-id 匹配、负向测试 rc=1；同轮我自己用 `make -B` 验证生成文件把 `build/vk151/.config` 从 12047 行/`=m`1464 改成 9042/686，已按 manifest `config_sha256` 反查快照逐字还原 | `PITFALLS #447`、`PITFALLS/sessions/108-*` |
 
 ---
 
@@ -192,7 +194,10 @@
    `vk149` 臂复现**取消**；日常仍执行 `cam-mode.sh on/off` 互斥（安全策略，非既成事实）。
 4. **#106**：判据「GOOD 需 ≥60 s 存活/可交互」；ramoops 装弹已在位等它自己撞（见 `TASKS` §5 §2 表）。
 5. **上游化 M1–M5**：M1 树与 `m1-73/baseline` 已收敛；M3-1 v3 形状 RFC 已投等 ack；
+   **2026-10-27 新增可评审分片**：B5 第 1–3 步（bonded-DSI 收进 per-SoC cfg + 2 个 host ops，`patches/local/b5-resoc-20261027/`）与 aw86927 五提交系列（`patches/upstream/aw86927-20261027/`）均已过门禁、**只备不发**；
+   投递前两处待拍板：① B5 的 bonded 表暂时挂在 `sm8650_dsi_cfg`（需第 4 步拆独立 SM8750 表项）；② aw86927 第 4 提交顺手修了 pristine 的 `BST_7000MV 0x11→0x09`，应按惯例拆成独立 `Fixes:` 补丁；
    **2026-10-26 新增热验证通道**：日常线载荷驱动已模块化（`vk163`），叶驱动（触屏/背光/触觉/音频/无线）改一次 = `mod-loop` 秒级上机验证，不用整机重启；
+   **2026-10-27 该通道已可信**：`mod-loop.sh` 原先会在模块没换时假报成功（`PITFALLS #447`），现以 **build-id 校验**作唯一成功判据，失败非零退出；
    M3-2 台账 / M3-3 音频 / M3-4 显示 / M4 camss 均备料封存（投递冻结，收盘统一投）。
 6. **G2**：容器相机只剩 **App 实开预览（需装 APK）**；C3 身份/DRM 取证（PI 检测 App 亦需 APK）。
 7. **G3**：Steam 端到端。
