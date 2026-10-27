@@ -163,6 +163,13 @@ iio-sensor-proxy	add	iio-sensor-proxy	**必须 sid**：3.9 才有 drv-ssc-* SSC 
 libssc	add	libssc2 libssc-bin	sid 运行时包名 = libssc2（源码包 libssc）；**ssccli 在 libssc-bin**里（libssc2 只有库，没有 CLI）——
 	`ssc-udp-relay` 的 exec 就是 `ssccli`，少了它 relay 会 `FATAL: ssccli not found` 每 5 s 退一次（2026-10-27 实测）。
 	dev 包只在主机侧编 iio-sensor-proxy 时需要，不进目标根
+## 容器相机（C5/U7）在 Debian 根上要的三件套（2026-10-27 实测）：
+##   gstreamer1.0-tools/plugins-base/good（gst-launch + videoconvert/videoscale）
+##   gstreamer1.0-libcamera（libcamerasrc，软 ISP 抓 mainline 相机）
+##   v4l-utils（v4l2-ctl 配置/取证）+ libcamera-tools（`cam -l` 枚举）
+## 另需内核侧 v4l2loopback 模块（非 Debian 包，见 scripts/cam-loopback.sh 头注释）。
+camera-loopback	add	gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libcamera v4l-utils libcamera-tools	容器相机的宿主侧通路（C5/U7）；缺 libcamerasrc 时 gst 直接报 no element
+
 ## route C 的 `waydroid-sensord` 必须 **glibc 重编**（Alpine 件是 musl 动态 ⇒ glibc 根上 exec ENOENT，
 ## PITFALLS #431）；构建依赖 = libgbinder-dev libglibutil-dev libglib2.0-dev g++ make pkg-config，
 ## 是**构建期**工具、不进 apt-list，由 `scripts/deploy-sensord-routec-debian.sh` 按需装。

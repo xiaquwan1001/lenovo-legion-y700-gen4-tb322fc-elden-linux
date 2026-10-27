@@ -1,0 +1,19 @@
+--- a/v4l2loopback.c
++++ b/v4l2loopback.c
+@@ -1734,8 +1734,14 @@
+ 		goto exit_reqbufs_unlock;
+ 
+ 	if (has_other_owners(opener, dev) && dev->used_buffer_count > 0) {
+-		/* allow 'allocation' of existing number of buffers */
+-		req_count = dev->used_buffer_count;
++		/* 已有其它 owner（典型：写端 gst v4l2sink 默认只申请 3 个）
++		 * 时，原实现**强制**把本 owner 的请求压到 used_buffer_count。
++		 * Android 的 external camera HAL 要求 ≥4 个 buffer，于是
++		 * "VIDIOC_REQBUFS expected 4 buffers, got 3 instead" ⇒ 直接失败。
++		 * 这里改成只**保底**（请求少于已用时抬到已用数），允许请求更多、
++		 * 上限仍是 dev->buffer_count（= max_buffers）。 */
++		if (req_count < dev->used_buffer_count)
++			req_count = dev->used_buffer_count;
+ 	} else if (any_mapped_buffer(dev)) {
+ 		/* do not allow re-allocation if buffers are mapped */
+ 		result = -EBUSY;
