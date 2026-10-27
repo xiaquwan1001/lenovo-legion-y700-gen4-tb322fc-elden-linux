@@ -1,0 +1,54 @@
+From d20da3f675a7438d7114aee47f9ad8ae0bf718f2 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 14:00:36 +0800
+Subject: [PATCH 7/7] media: camss: (NOT FOR UPSTREAM) pair CSID and VFE
+ instances on SM8750
+
+Two behaviours this device needs that have no generic answer yet, kept
+apart from the preceding patches so they can be dropped when a proper
+solution exists:
+
+ - The 980 CSID drives the VFE with the same instance index (the index is
+   encoded in the CSID register writes and in the interrupt routing),
+   while camss_link_entities() links every CSID to every VFE of the same
+   line.  Restrict the links to i == k on SM8750.
+
+ - camss_subdev_notifier_complete() creates a sensor -> CSIPHY link
+   unconditionally; with a sensor node that exposes the same CSI port on
+   two PHYs this tries to create the link twice and fails the whole
+   notifier.  Skip the link when it already exists.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/media/platform/qcom/camss/camss.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index b70fbff0f..93d62ce6d 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -5329,6 +5329,10 @@ static int camss_link_entities(struct camss *camss)
+ 					struct v4l2_subdev *ispif = &camss->ispif->line[i].subdev;
+ 					struct v4l2_subdev *vfe = &camss->vfe[k].line[j].subdev;
+ 
++					/* CSID980 updates and completions target the paired VFE. */
++					if (camss->res->version == CAMSS_8750 && i != k)
++						continue;
++
+ 					ret = media_create_pad_link(&ispif->entity,
+ 								    MSM_ISPIF_PAD_SRC,
+ 								    &vfe->entity,
+@@ -5563,6 +5567,10 @@ static int camss_subdev_notifier_complete(struct v4l2_async_notifier *async)
+ 			return -EINVAL;
+ 		}
+ 
++		if (media_entity_find_link(&sensor->pads[i],
++					   &input->pads[MSM_CSIPHY_PAD_SINK]))
++			continue;
++
+ 		ret = media_create_pad_link(sensor, i, input,
+ 					    MSM_CSIPHY_PAD_SINK,
+ 					    MEDIA_LNK_FL_IMMUTABLE | MEDIA_LNK_FL_ENABLED);
+-- 
+2.53.0
+
