@@ -61,6 +61,9 @@ E Camera3-Device: configureStreamsLocked: Unable to configure streams with HAL: 
    —— 写端 `gst v4l2sink` 默认只申请 **3** 个 buffer，后开的后端（HAL 要 4 个）被**强制压到 3**。
    修法 = `patches/extmod/0001-v4l2loopback-allow-grow-reqbufs.patch`（只保底、允许放大到
    `max_buffers`），重编 `out/extmod-vk172/v4l2loopback.ko`（vermagic 必须逐字等于目标 UTS）。
+   **一条命令可复现**：`bash scripts/deploy-v4l2loopback.sh`（自动读设备 UTS → 打补丁 →
+   临时改 `kernel.release`/`utsrelease.h` 编 → 核对 vermagic → 部署 → `modprobe … max_buffers=8`；
+   实测输出 `vermagic OK` + `/dev/video100` + `max_buffers=8`）。
 
 过了这道门才有：
 
