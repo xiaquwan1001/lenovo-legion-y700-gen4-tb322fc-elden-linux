@@ -1,0 +1,18 @@
+{
+  "label": "m4-skewcal-armB-0x00",
+  "ts": "2026-10-27T12:01:21Z",
+  "vk": "vk172",
+  "image": "/home/xuqianhui/y700-elden/out/boot-elden-vk172.img",
+  "image_sha256": "70d550a74d45dcb05f1f8d0be0e3af2d1105544f8af75c92c3cba760842186f9",
+  "manifest": "/home/xuqianhui/y700-elden/out/boot-elden-vk172.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172",
+  "kernel_payload_sha256": "a7fa00c481bf9dc44f8178306b56095acc846c7c1057a31730a4e5eda298d44c",
+  "config_sha256": "91dbc727089f222bc338ac472b98ce4ecb233a0647cd3969c4724e945a608ac8",
+  "dtb_packed_sha256": "7190ecf050c59108195495a9ff7d555657b3f4c090fa885b8f9e29330113d492",
+  "reset_type": "warm",
+  "deploy": "mod-loop hot-swap qcom-camss (no reboot)",
+  "probe": "v4l2-ctl 90 frames",
+  "verdict": "B=90/90 frames 3.147-3.150s 0 err",
+  "log_dir": "",
+  "note": "SKEW_CAL=0x00 (vendor value, ko build-id 83c37dd1); fps 30.26"
+}
