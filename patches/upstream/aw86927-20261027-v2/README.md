@@ -55,3 +55,15 @@ git apply 0001..0005                  # → 5/5 OK，终态 +126 −23
 2. **0001 的 `Fixes:` 是否合适**：它修的是自 `df53055c540f` 起就错的既有值（7 V 名字对、值错），
    若维护者认为「vendor 值未必适用于所有板」，可退化成注释修正。
 3. 固件波形能力后续是否单独立 RFC（本机确实在用厂商波形）。
+
+## 投递记录（2026-10-27 21:29 +0800，用户批准）
+
+- 通道：USTC SMTP（`git send-email`，`--thread`，cover letter + 5 枚）
+- **To**：`linux-input@vger.kernel.org`、`Dmitry Torokhov <dmitry.torokhov@gmail.com>`
+  **Cc**：`devicetree@vger.kernel.org`、Rob Herring、Krzysztof Kozlowski、Conor Dooley、`linux-kernel@vger.kernel.org`
+- Message-ID（线程根 `-1`，各枚 `-2..-6`）：
+  `20261027132929.242158-1..6-xiaqinghuan@mail.ustc.edu.cn`，6 封 `Result: 250`
+- **归档复核（lore 独立检索，按发件人）**：
+  `/linux-input/` **6/6**、`/linux-devicetree/` **6/6**（含 cover）、`/all/` 见 8 条本批记录
+- 本地回读：Sent Items `[161]`–`[166]` 六封
+- 待办：盯 review（Dmitry Torokhov）；有意见即出 v2，不自行加料
