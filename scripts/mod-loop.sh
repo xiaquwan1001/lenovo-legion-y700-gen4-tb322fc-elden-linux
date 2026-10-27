@@ -102,28 +102,41 @@ if ! kbuild M="$DIR" modules 2>&1 | tail -5; then
 	echo "[mod] build failed" >&2; exit 1
 fi
 
-STAGE=$(mktemp -d); trap 'rm -rf "$STAGE"' EXIT
-kbuild M="$DIR" INSTALL_MOD_PATH="$STAGE" modules_install >/dev/null
-
-KO_LIST=$(find "$STAGE/lib/modules/$KV" -name '*.ko' 2>/dev/null | sort)
+# Collect the .ko files straight from the build tree instead of going through
+# `modules_install`.  Two independent silent-failure paths lived in that hop:
+#   * its destination comes from include/config/kernel.release, which an `M=` build
+#     never refreshes ⇒ modules staged under the wrong <KV> and the device kept the
+#     OLD module while every line below reported success;
+#   * it needs the *global* modules.order, which goes missing as soon as .config
+#     churns ⇒ "no .ko staged" (which used to be misreported as "driver is built-in").
+# Reading the .ko from $KDIR/$DIR needs neither.  Layout on the device is the flat
+# `updates/` convention, and `depmod -a` rebuilds the index anyway.
+KO_LIST=$(find "$KDIR/$DIR" -maxdepth 1 -name '*.ko' 2>/dev/null | sort)
+if [ -z "$KO_LIST" ] && [ -d "$KDIR/$DIR" ]; then
+	KO_LIST=$(find "$KDIR/$DIR" -name '*.ko' 2>/dev/null | sort)
+fi
 if [ -z "$KO_LIST" ]; then
-	echo "[mod] no .ko staged for $DIR." >&2
-	echo "      Likely the driver is built-in (=y). Flip it to =m:" >&2
+	echo "[mod] ❌ no .ko for $DIR under $KDIR/$DIR" >&2
+	echo "      若本应= y 到内核里（非模块），就没东西可热载：把 tristate 翻成 =m：" >&2
 	echo "        FRAG=\"patches/fragment-modular.config patches/fragment-modular-v2.config\" SNAP=patches/config-<snap> scripts/apply-kernel-fragment.sh" >&2
+	echo "      若是刚改完 .config 导致 modules.order 丢失：先跑一遍全量 'make modules'。" >&2
 	exit 1
 fi
 NAMES=$(echo "$KO_LIST" | xargs -n1 basename | sed 's/\.ko$//')
-echo "[mod] staged: $(echo "$NAMES" | tr '\n' ' ')"
+echo "[mod] built: $(echo "$NAMES" | tr '\n' ' ')"
 
-# tar only the staged module subtree, preserving whatever layout modules_install
-# produced.  NOTE (2026-10-09 fix): `M=<dir> modules_install` does NOT always create
-# a `kernel/` prefix -- for single-dir M= builds it stages the .ko flat (or under
-# extra/), so taping the literal `kernel` dir failed with "kernel: cannot stat".
-# Tar the .ko files by relative path instead; the device extracts to the same layout
-# and `depmod -a` rebuilds the index anyway.
+# Everything is uploaded as updates/<name>.ko.  updates/ outranks the in-tree
+# kernel/ copy in depmod's search order, so the freshly built one wins; the
+# build-id check below then proves which one actually got loaded.
+STAGE=$(mktemp -d); trap 'rm -rf "$STAGE"' EXIT
+mkdir -p "$STAGE/updates"
+for ko in $KO_LIST; do cp -f "$ko" "$STAGE/updates/"; done
+
+# Upload the staged `updates/` tree as-is and extract it into <KV>/ on the device.
+tar_names=$(ls -l "$STAGE/updates")
 TAR=$(mktemp --suffix=.tar.gz); trap 'rm -rf "$STAGE" "$TAR"' EXIT
-( cd "$STAGE/lib/modules/$KV" && find . -name '*.ko' -print0 | tar czf "$TAR" --null -T - )
-[ -s "$TAR" ] || { echo "[mod] staging tarball empty (no .ko under $STAGE/lib/modules/$KV)" >&2; exit 1; }
+( cd "$STAGE" && tar czf "$TAR" updates )
+[ -s "$TAR" ] || { echo "[mod] staging tarball empty ($tar_names)" >&2; exit 1; }
 
 echo "[mod] uploading to /lib/modules/$KV ..."
 $SSH "mkdir -p /lib/modules/$KV"
@@ -134,10 +147,48 @@ $SSH "tar xzf /var/tmp/modloop.tar.gz -C /lib/modules/$KV && depmod -a '$KV' && 
 
 [ -n "$RELOAD" ] && NAMES="$RELOAD"
 echo "[mod] reloading: $(echo "$NAMES" | tr '\n' ' ')"
+RELOAD_FAILED=0
 for m in $NAMES; do
-	# -w lets modprobe handle dependencies; fall back to rmmod+modprobe.
-	$SSH "lsmod | grep -q '^$m ' && { modprobe -r '$m' 2>/dev/null || rmmod -f '$m' 2>/dev/null; }; modprobe '$m' 2>/dev/null && echo '[mod] reloaded $m' || echo '[mod] WARN: modprobe $m failed'" || true
+	# `.ko` basenames use '-' (qcom-camss); lsmod/modprobe use '_' (qcom_camss).
+	# Comparing the raw name made the `rmmod` step never fire and `modprobe qcom-camss`
+	# always fail — with the error swallowed, so the script still printed
+	# "reloaded qcom-camss" (2026-10-27).  Normalise, and never report success on failure.
+	mu=$(echo "$m" | tr '-' '_')
+	rc=0
+	$SSH "set -e
+		if lsmod | grep -q '^$mu '; then modprobe -r '$mu' || rmmod -f '$mu' || exit 10; fi
+		if ! modprobe '$mu'; then exit 11; fi
+		if lsmod | grep -q '^$mu '; then echo '[mod] reloaded $m (as $mu)'; else exit 12; fi" || rc=$?
+	case $rc in
+	0) ;;
+	10) echo "[mod] ❌ $m: rmmod failed (still in use?) — device keeps the OLD module" >&2; RELOAD_FAILED=1 ;;
+	11) echo "[mod] ❌ $m: modprobe $mu failed (vermagic/name?) — device keeps the OLD module" >&2; RELOAD_FAILED=1 ;;
+	12) echo "[mod] ❌ $m: modprobe returned 0 but $mu is not loaded" >&2; RELOAD_FAILED=1 ;;
+	*) echo "[mod] ❌ $m: ssh/setup error rc=$rc" >&2; RELOAD_FAILED=1 ;;
+	esac
 done
+
+# Proof that the module on the device is the one just built, not a leftover.
+# A green "[mod] reloaded" line is NOT proof (it was confidently wrong once).
+if command -v readelf >/dev/null 2>&1 && [ -n "${KO_LIST:-}" ]; then
+	for ko in $KO_LIST; do
+		want=$(readelf -n "$ko" 2>/dev/null | sed -n 's/.*Build ID: //p' | head -1)
+		[ -n "$want" ] || continue
+		mu=$(basename "$ko" .ko | tr '-' '_')
+		got=$($SSH "cat /sys/module/$mu/notes/.note.gnu.build-id 2>/dev/null" 2>/dev/null \
+			| python3 -c 'import sys; d=sys.stdin.buffer.read(); i=d.find(b"GNU"); print(d[i+4:i+24].hex() if i>=0 else "")' 2>/dev/null || true)
+		if [ -n "$got" ] && [ "$got" = "$want" ]; then
+			echo "[mod] ✅ build-id match $mu: $want"
+		elif [ -n "$got" ]; then
+			echo "[mod] ❌ build-id MISMATCH $mu: running=$got built=$want (device is NOT running the new module)" >&2
+			RELOAD_FAILED=1
+		else
+			echo "[mod] (build-id unavailable for $mu — verify manually)" >&2
+		fi
+	done
+fi
 
 echo "[mod] evidence:"
 $SSH "dmesg | tail -20; echo '---'; lsmod | grep -E '$(echo "$NAMES" | tr '\n' '|' | sed 's/|$//')' || true"
+
+[ "$RELOAD_FAILED" = 0 ] || { echo "[mod] ❌ 热载未确认成功 —— 不要把本次构建当作已在设备上生效" >&2; exit 1; }

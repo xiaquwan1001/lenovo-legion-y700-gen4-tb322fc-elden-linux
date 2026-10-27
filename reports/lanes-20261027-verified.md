@@ -87,7 +87,7 @@ fb8f38d95 rc=0 warnings=0 errors=0     # 提交 2
 **M4 R1 处置建议**：不回退成本地改动，改为**上游化时以厂商值 `0x00` 提交并注明"本机无差异"**。
 依据 = 0x54 在厂商 82 张表里无来源（`reports/m4-csiphy-vendor-provenance-20261027.md` §2），属无出处魔数。
 
-## §4 工具侧缺陷（本轮新发现，建议修）
+## §4 工具侧缺陷（本轮新发现，**已在同一轮修掉**，详见 `PITFALLS #447`）
 
 1. **`scripts/mod-loop.sh --reload` 对含下划线的模块名静默失败**：它用 `lsmod | grep -q '^$m '`
    对比传入的 `qcom-camss`（连字符）与 lsmod 里的 `qcom_camss`（下划线）⇒ 匹配不到、
