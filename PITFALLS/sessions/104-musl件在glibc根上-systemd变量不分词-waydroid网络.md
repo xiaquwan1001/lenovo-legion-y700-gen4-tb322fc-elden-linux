@@ -70,23 +70,40 @@ $ apt-cache search libssc         →  libssc-bin - Qualcomm sensor core library
 **没有 CLI** ⇒ relay 立刻退出、HAL 只能拿到"无数据"⇒ 传感器列表有了但读数不动。
 已改 `libssc2 libssc-bin`。
 
-## #434 `lxc-info -n waydroid` 恒 "doesn't exist"；`restart waydroid-container` 可能留下无网桥
+## #434 Waydroid 起不来的三个"不是配置"的真相：`-P`、会话握手、网桥
 
-两个独立陷阱，都会把人带偏：
+① **`lxc-info -n waydroid` 恒 "doesn't exist"**：Waydroid 的 lxc state 在
+`-P /var/lib/waydroid/lxc`。裸 `lxc-info` 查的是 `/var/lib/lxc` ⇒ 容器明明 RUNNING
+（`ps` 里 surfaceflinger/zygote 都在）也报不存在。取 PID 一律
+`lxc-info -P /var/lib/waydroid/lxc -n waydroid -p`。
 
-① **路径**：Waydroid 的 lxc state 在 `-P /var/lib/waydroid/lxc`。裸 `lxc-info -n waydroid` 查的是
-   `/var/lib/lxc` ⇒ **恒** `waydroid doesn't exist`，而容器其实 RUNNING（`ps` 里 surfaceflinger/zygote 都在）。
-   正确取 PID：`lxc-info -P /var/lib/waydroid/lxc -n waydroid -p`。
-② **restart 竞争**：`systemctl restart waydroid-container` 时旧实例的 `waydroid-net.sh stop` 可能在新实例
-   `waydroid-net.sh start` **之后**才跑完 ⇒ `waydroid0` 被删掉 ⇒ `lxc-start` 报
-   `Failed to attach "vethXXXX" to bridge "waydroid0", bridge interface doesn't exist`
-   ⇒ 容器 STOPPED 但 systemd unit 仍报 `active`（服务只是 dbus 名持有者）。
-   恢复：`/usr/lib/waydroid/data/scripts/waydroid-net.sh start`，或再 `restart` 一次并**等 ≥20 s**；
-   判据用 `ip -br link show waydroid0` + `lxc-info -P … -p` + `getprop sys.boot_completed`，别看 unit 状态。
-③ **`State: FROZEN` 也算"活着"**：2026-10-27 实测出现过一次容器 `FROZEN`（`sys.boot_completed` 仍是 1、
-   进程都在、只是 cgroup.freeze=1）；`waydroid container unfreeze` 后立刻回 RUNNING。
-   诱因未定（怀疑与上述 restart 竞态 / 重复 `waydroid container start` 有关），**先别把它当"容器坏了"**；
-   排查顺序 = `waydroid status` → `lxc-info -P … -s` → `cat /sys/fs/cgroup/lxc.payload.waydroid/cgroup.freeze`。
+② **`systemctl restart waydroid-container` 之后容器不会自己起**（2026-10-27 定论）。
+Debian 的 `waydroid-container.service` 是 `Type=dbus`，`ExecStart=waydroid container start`
+做完三件事就进 `GLib.MainLoop`：拿 `id.waydro.Container` 名、注册 `DbusInitializer`、
+等**会话握手**才由 initializer 的 worker 线程去 `do_start`（起网桥 → lxc-start →
+拉 sensord）。所以 restart 之后老 session 不会重新握手 ⇒ 状态永久卡在
+`Session: RUNNING / Container: STOPPED`，而 unit 报 `active`。
+
+**修法**（落在我们自己的 `waydroid-session.sh`，不 patch 上游 Python）：脚本检测
+"Session 在跑但 Container 既不是 RUNNING 也不是 FROZEN" ⇒ `waydroid session stop` + 重起一次。
+实测 `systemctl restart waydroid-container` + 跑该脚本 = **3/3 在 5 s 内回到 Container RUNNING**。
+
+③ **网桥必须先在**：容器起时 `lxc-start` 要把 veth attach 到 `waydroid0`；网桥不在就
+`Failed to attach "vethXXXX" to bridge "waydroid0", bridge interface doesn't exist`
+⇒ 容器 STOPPED（"Waydroid 坏了"的表象）。所以 session 脚本在 `exec waydroid session start`
+之前先判 `ip link show waydroid0`，缺则 `/usr/lib/waydroid/data/scripts/waydroid-net.sh start`。
+
+④ **`Container: FROZEN` 是正常省电态**，不是坏：Android 侧请求 suspend 时
+`services/hardware_manager.py: suspend()` → `container_manager.freeze()`（`suspend_action`
+= freeze）；反向由 `app_manager` 的 `cm.Unfreeze()`（`waydroid app launch …` /
+`waydroid show-full-ui`）触发。实测：`waydroid container freeze` → `waydroid app launch
+com.android.settings` → 立刻回 RUNNING，`sys.boot_completed` 始终 1。
+排查顺序：`waydroid status` → `lxc-info -P … -s` → `cat /sys/fs/cgroup/lxc.payload.waydroid/cgroup.freeze`。
+
+⑤ **试过但没采用的假设**：`KillMode=process`（以为 stop 时 `control-group` 会连带杀掉
+net-down 子进程造成网桥残留）。实测改后连续 3 次 `restart` **仍然 3/3 容器不起**
+（因为②），且 stop 后 `waydroid0` 仍残留 ⇒ 收益未证实、还有遗留子进程风险 ⇒ **已回退，不入仓库**。
+教训：现象对得上不等于机理对，先做单变量复现再改 unit。
 
 ## #435 `XDG_RUNTIME_DIR` 跨发行版不同：Alpine `/run/phosh` vs Debian `/run/user/<uid>`
 

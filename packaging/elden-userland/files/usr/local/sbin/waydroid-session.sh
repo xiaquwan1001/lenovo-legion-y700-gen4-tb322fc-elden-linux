@@ -1,10 +1,16 @@
 #!/bin/sh
 # Start a Waydroid session inside the running Phosh/Wayland session.
 #
-# XDG_RUNTIME_DIR 不能写死：Alpine 的 phosh 用 /run/phosh，Debian 走 logind 的
-# /run/user/<uid>（2026-10-27 实测：写死 /run/phosh ⇒ Debian 上
-# "Wayland socket '/run/phosh/wayland-0' doesn't exist" ⇒ session 起不来 ⇒
-# 容器也随之被 laminar stop）。判据一律用**真实存在的 wayland-0 socket**。
+# 三件事（都在本脚本里兜底，因为它们都只表现为"Waydroid 起不来"）：
+#   ① XDG_RUNTIME_DIR 不能写死：Alpine 的 phosh 用 /run/phosh，Debian 走 logind 的
+#      /run/user/<uid> ⇒ 探测**真实存在的 wayland-0 socket**，并**等**它出现（≤30 s）。
+#      （PITFALLS #435/#437：XDG autostart 可能在 phoc 建 socket 之前就执行）
+#   ② 网桥兜底：`waydroid0` 不在就先 `waydroid-net.sh start`
+#      （PITFALLS #434：容器起时会 attach veth 到 waydroid0，网桥缺失 ⇒ lxc-start 直接失败）
+#   ③ "session 在跑但容器没起"自愈：`systemctl restart waydroid-container` 之后，
+#      waydroid-container 只是 D-Bus mainloop，**不会**自己起容器；老 session 又不会重新握手
+#      ⇒ 状态一直是 Session RUNNING / Container STOPPED。这里主动 stop+start 一次。
+#      注意 `Container: FROZEN` 是正常省电态（Android 自己 suspend），**不要**把它当坏。
 pick_runtime_dir() {
 	for d in "${XDG_RUNTIME_DIR:-}" "/run/user/$(id -u)" /run/phosh \
 		/run/user/1001 /run/user/1000 /run/user/0; do
@@ -14,9 +20,6 @@ pick_runtime_dir() {
 	return 1
 }
 
-# XDG autostart 里 `X-GNOME-Autostart-Delay` 在当前 gnome-session 版本**已不生效**
-# （日志： "no longer manages session services"）⇒ 本条目可能在 phoc 建 socket 之前就执行。
-# 所以这里**等** socket 出现（≤30 s），不要一看到没有就退出（否则 autostart 永远失败）。
 i=0
 while :; do
 	RT=$(pick_runtime_dir) && break
@@ -31,4 +34,20 @@ export XDG_RUNTIME_DIR="$RT"
 export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
 export HOME="${HOME:-/root}"
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# ② 网桥兜底
+NETSH=/usr/lib/waydroid/data/scripts/waydroid-net.sh
+if [ -x "$NETSH" ] && ! ip link show waydroid0 >/dev/null 2>&1; then
+	"$NETSH" start >/dev/null 2>&1 || true
+fi
+
+# ③ 半死状态自愈（Session 在跑 / Container 不在跑，且不是 FROZEN）
+ST=$(waydroid status 2>/dev/null || true)
+if printf '%s\n' "$ST" | grep -q 'Session:.*RUNNING' &&
+   ! printf '%s\n' "$ST" | grep -qE 'Container:.*(RUNNING|FROZEN)'; then
+	echo "waydroid-session: stale session (container down) → restarting session" >&2
+	waydroid session stop >/dev/null 2>&1 || true
+	sleep 2
+fi
+
 exec waydroid session start

@@ -41,7 +41,14 @@
   7. **可重现性收紧**：部署脚本优先取 **主机 arm64 chroot** 产物（`out/sensord-host/waydroid-sensord-udp`，
      sha `22028ffd…`，由 `scripts/host-arm64-chroot.sh --build-sensord` 产出），目标根不再需要 g++/dev 包；
      设备上现装即该产物（旧 musl 件留档 `/usr/local/bin/waydroid-sensord.musl.bak`）；MANIFEST 两条 elf 改记此 sha。
+- **同日追加（第三段：半死态与误判纠正）**：
+  8. `restart waydroid-container` 后容器**不自起**是**设计**（`Type=dbus` + initializer 等会话握手），
+     表现为 `Session RUNNING / Container STOPPED` 且 unit `active`；`waydroid-session.sh` 现在做半死态自愈
+     （stop+start）+ 起会话前兜底建 `waydroid0`。判据：restart 容器服务 + 跑脚本 → **3/3 / 5 s 内 Container RUNNING**。
+  9. `Container: FROZEN` = **正常省电**（Android suspend → `container_manager.freeze()`；app launch → `Unfreeze`）。
+  10. **否证**：`KillMode=process` 的网桥竞态假设 —— 实测不解决且残留 `waydroid0`，已回退（不要重复试）。
 - **★SSOT 待并入**：
+
   - ✅ 已并入：`TASKS/README.md` 新增 **T22**；`PITFALLS/README.md` 索引行 105。
   - ⬜ 待并入：`reports/debian-waydroid-20261026.md` §3 应标注「已解决」（下轮改）；G1-34 本体（SSC svc 400 注册表）不动。
 - **未做 / 阻塞**：
