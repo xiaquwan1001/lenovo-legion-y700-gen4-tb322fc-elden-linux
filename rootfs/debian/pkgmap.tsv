@@ -163,6 +163,11 @@ iio-sensor-proxy	add	iio-sensor-proxy	**必须 sid**：3.9 才有 drv-ssc-* SSC 
 libssc	add	libssc2 libssc-bin	sid 运行时包名 = libssc2（源码包 libssc）；**ssccli 在 libssc-bin**里（libssc2 只有库，没有 CLI）——
 	`ssc-udp-relay` 的 exec 就是 `ssccli`，少了它 relay 会 `FATAL: ssccli not found` 每 5 s 退一次（2026-10-27 实测）。
 	dev 包只在主机侧编 iio-sensor-proxy 时需要，不进目标根
+## 传感器（G1-34）：iio-sensor-proxy 的启动前置要 `qrtr-lookup` 才判得了"QRTR svc 400
+## （Snapdragon Sensor Core）是否已注册"。Debian 的包名是 **qrtr-tools**（`qrtr-lookup` 在
+## 其中，单装 libqrtr 没有 CLI）——缺它时 pre hook 会白等满 60 s，日志还会误报"SSC 没起来"。
+qrtr-tools	add	qrtr-tools	qrtr-lookup（排查 QRTR 服务表 / iio-sensor-proxy.pre 的判据）
+
 ## 容器相机（C5/U7）在 Debian 根上要的三件套（2026-10-27 实测）：
 ##   gstreamer1.0-tools/plugins-base/good（gst-launch + videoconvert/videoscale）
 ##   gstreamer1.0-libcamera（libcamerasrc，软 ISP 抓 mainline 相机）

@@ -23,6 +23,7 @@ depend() {
 }
 
 start_pre() {
+	#!/bin/sh
 	# hooks/iio-sensor-proxy.pre — 启动前置（原 /etc/init.d/iio-sensor-proxy 的 start_pre）
 	#
 	# Timing fix (auto-rotate stuck OFF / direction locked) — G1-34 / PITFALLS：
@@ -30,6 +31,14 @@ start_pre() {
 	# 扫不到就放弃 ⇒ 冷起时若本服务赢了对 ADSP/SSC 启动的竞态，SensorProxy 将**永久**没有加速度计，
 	# phosh rotation-manager 停在 MODE_OFF（旋转磁贴变灰、方向锁死）。
 	# 故有界地等 QRTR svc 400 出现；等不到也照常启动（不劣于修复前）。
+
+	# ⚠ 没有 qrtr-lookup 时**不要**白等 60 s（2026-10-27 实测：Debian 根缺 `qrtr-tools`，
+	# 这个 pre hook 每次都等满 60 s 才放行 ⇒ 冷起白白多 1 分钟，且日志里那句
+	# "QRTR svc 400 (SSC) not seen after 60s" 会被误读成"SSC 没起来"）。
+	if ! command -v qrtr-lookup >/dev/null 2>&1; then
+		echo "elden: iio-sensor-proxy: qrtr-lookup 缺失（apt install qrtr-tools），跳过 SSC 等待" >&2
+		exit 0
+	fi
 
 	i=0
 	while [ "$i" -lt 60 ]; do
