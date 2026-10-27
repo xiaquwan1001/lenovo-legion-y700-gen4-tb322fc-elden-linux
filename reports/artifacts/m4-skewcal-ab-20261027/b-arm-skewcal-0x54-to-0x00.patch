@@ -1,0 +1,40 @@
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
+index 11d9b9489..89fce176c 100644
+--- a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
++++ b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
+@@ -826,7 +826,7 @@ csiphy_lane_regs lane_regs_2_4_0[] = {
+ 	{0x0008, 0x19, 0x00, CSIPHY_SETTLE_CNT_LOWER_BYTE},
+ 	{0x0010, 0x52, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 	{0x0094, 0xD7, 0x00, CSIPHY_SKEW_CAL},
+-	{0x005C, 0x54, 0x00, CSIPHY_SKEW_CAL},
++	{0x005C, 0x00, 0x00, CSIPHY_SKEW_CAL},
+ 	{0x0060, 0xFD, 0x00, CSIPHY_SKEW_CAL},
+ 	{0x0064, 0x7F, 0x00, CSIPHY_SKEW_CAL},
+ 
+@@ -849,7 +849,7 @@ csiphy_lane_regs lane_regs_2_4_0[] = {
+ 	{0x0408, 0x19, 0x00, CSIPHY_SETTLE_CNT_LOWER_BYTE},
+ 	{0x0410, 0x52, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 	{0x0494, 0xD7, 0x00, CSIPHY_SKEW_CAL},
+-	{0x045C, 0x54, 0x00, CSIPHY_SKEW_CAL},
++	{0x045C, 0x00, 0x00, CSIPHY_SKEW_CAL},
+ 	{0x0460, 0xFD, 0x00, CSIPHY_SKEW_CAL},
+ 	{0x0464, 0x7F, 0x00, CSIPHY_SKEW_CAL},
+ 
+@@ -872,7 +872,7 @@ csiphy_lane_regs lane_regs_2_4_0[] = {
+ 	{0x0808, 0x19, 0x00, CSIPHY_SETTLE_CNT_LOWER_BYTE},
+ 	{0x0810, 0x52, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 	{0x0894, 0xD7, 0x00, CSIPHY_SKEW_CAL},
+-	{0x085C, 0x54, 0x00, CSIPHY_SKEW_CAL},
++	{0x085C, 0x00, 0x00, CSIPHY_SKEW_CAL},
+ 	{0x0860, 0xFD, 0x00, CSIPHY_SKEW_CAL},
+ 	{0x0864, 0x7F, 0x00, CSIPHY_SKEW_CAL},
+ 
+@@ -895,7 +895,7 @@ csiphy_lane_regs lane_regs_2_4_0[] = {
+ 	{0x0C08, 0x19, 0x00, CSIPHY_SETTLE_CNT_LOWER_BYTE},
+ 	{0x0C10, 0x52, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 	{0x0C94, 0xD7, 0x00, CSIPHY_SKEW_CAL},
+-	{0x0C5C, 0x54, 0x00, CSIPHY_SKEW_CAL},
++	{0x0C5C, 0x00, 0x00, CSIPHY_SKEW_CAL},
+ 	{0x0C60, 0xFD, 0x00, CSIPHY_SKEW_CAL},
+ 	{0x0C64, 0x7F, 0x00, CSIPHY_SKEW_CAL},
+ 
