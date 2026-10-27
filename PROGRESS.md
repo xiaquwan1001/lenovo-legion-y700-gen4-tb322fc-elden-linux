@@ -57,6 +57,11 @@
 | 2026-10-24 | **kexec 剩余边界写清**：修好的是「内核 + MSI」，**显示与 USB 仍是继承活态**（`mask=1` 跳过 `device_shutdown`）⇒ 目标里无 `card0`、`[usb-gadget] no UDC after 20s`，~157 s 被自家 Q28 看门狗重启回落；定位维持「不需显示/网络的调试快环」 | `reports/kexec-target-boots-20261024.md` §9、`PITFALLS #380` |
 | 2026-10-26 | **驱动模块化迁到 7.3 日常线（`vk163`，零写盘上机）**：载荷驱动（ath12k / QDSP6 全套 / WCD939X / SC8280XP / 触屏 / 触觉 / 背光）在 `build/vk151`(@`24223e4`) 全部翻成 `=m`，并在**生产 f2fs 根**上启动验证：66 模块、WiFi/BT/音频/触屏/触觉/背光/相机/Phosh 全绿、模块错误 0；`mod-loop` 热换触屏驱动实测通过 ⇒ 改叶驱动从「重编内核 + 重做镜像 + 重启」降到秒级。**`boot_b` 未写**（是否转日常线待定）。顺带更正两条旧结论（BT 模块化不需要改 Kconfig；`PCI_PWRCTRL_PWRSEQ` 与 WiFi 无关）| `reports/vk163-modular-20261026.md`、`PITFALLS #406–#409` |
 | 2026-10-26 | **Mobian 迁移物料（摆脱 Alpine 依赖的第一步）**：`rootfs/debian/pkgmap.tsv` 把设备 120 个 apk 全部定性（map 97 / drop 23 / add 7，门禁 **FAIL=0 WARN=0**）→ 107 个 Debian 包清单；`elden-firmware` 自建固件 deb（21 MB / 116 项，板 DTS 的 `firmware-name` 逐条门禁全绿，含自编 tplg）。新事实：BT 固件实际请求 `qca/` 前缀；Debian 的 `firmware-qcom-soc` 无 `sm8750` ⇒ 自建包必需 | `reports/mobian-rootfs-artifacts-20261026.md` |
+| 2026-10-26 | **Mobian 路径打通到桌面**：`linux17` ext4 上的 Debian forky/sid 根全自动进 phosh（修掉六条静默失败：overlay tar 顶掉 usr-merge、`.pre` 无 shebang、`_greetd` 名差、greetd-phrog drop-in 排序、缺桌面用户、`wlan0`/`wlp1s0`），电量（缺 `upower` 包）与 usb0（busybox `udhcpd` 无链接）同日收口；`boot_b`/`linux18` 未动，回退 = 重启 | `reports/m6-switch-root-breakpoint-resolved-20261026.md`、`reports/debian-root-accounts-sensors-20261026.md` |
+| 2026-10-26 | **模块化 v2（`vk172`/`boot_b`=`vk173`）**：42 符号重分类后 `=y 3364 / =m 1464`，1638 `.ko` vermagic 逐字一致；上机全绿（含 MMC 整链 `=m`），`mod-loop` 热换秒级；同批把 RTC offset 打进板 DTB（`hwclock` 可写且跨重启保持） | `reports/vk172-modular-v2-build-20261026.md`、`TASKS/README.md` T16/T21 |
+| 2026-10-27 | **Debian 根上的 Waydroid 起完**：`sys.boot_completed=1`、6 个 h/w 传感器 running、加速计数值与 `ssccli` 逐位一致、马达桥 `amp=255/255` 实测、冷起 XDG autostart 10 s 内 Session RUNNING。根因三条全在用户态：`waydroid-sensord` 是 **musl 动态件**（glibc 根 exec ENOENT 但 `which` 命中 ⇒ 关了 stub 又没 HAL）、`elden-hapticd` 的 systemd `${VAR}` 不分词、`ssc-udp-relay` 缺 `ssccli`（在 `libssc-bin`） | `TASKS/sessions/2026-10-27-Debian根Waydroid打通-sensorsHAL与马达桥.md`、`PITFALLS #431–#437` |
+| 2026-10-27 | **容器相机推进到 App 预览 `STREAMING`**：宿主 `gst(NV12) → v4l2-ctl --stream-out-mmap=8 → /dev/video100`（`REQBUFS` 只能在写端解决，模块保持 stock）；容器 `configureStreams` 通过、`Preview stream state STREAMING`。剩余 = 外部 HAL 无 JPEG(BLOB)（`v4l2loopback` 只能 NV12）故拍照型 App 打不开，绕法 = preview+analyze 类 App | `PITFALLS #438–#441`、`TASKS/README.md` C5/U7 |
+| 2026-10-27 | **G1-34 按根分列**：SSC 服务 **400 已注册**（旧「未注册」结论作废）、`ssccli` 出真值；`HasAccelerometer=false` 的真因在 **libssc 0.4.4**（Alpine 工作态 0.4.3），顺带修掉 `qrtr-tools` 缺失导致的 60 s 白等 | `PITFALLS #442/#443`、`PITFALLS/sessions/107-*` |
 
 ---
 
@@ -75,8 +80,8 @@
 - **显示/图形**：暖起稳定出桌面（Phosh）；冷起有 `Q28` 竞态（见 §4）。
 - **触屏**：Novatek NT36536（SPI）可用。
 - **网络**：WiFi（WCN7861/ath12k）+ 蓝牙配对/TWS；USB-NCM 网卡（`192.168.7.1`）+ ACM 串口控制台。
-- **音频**：WCD939x 播放 + 输入（DMIC）走 QDSP6/ADSP。
-- **相机**：后摄按需加载模块可出流并抓帧（与熄屏互斥，见 `Q24`）。
+- **音频**：WCD939x 播放 + 输入（**模拟麦接 WCD939x，非 DMIC**）走 QDSP6/ADSP。
+- **相机**：后摄按需加载模块可出流并抓帧；容器侧已到 App 预览 `STREAMING`（`TASKS/README.md` C5/U7）。
 - **安卓容器传感器**：加速/陀螺/光/磁/接近进容器；真值走 `ssccli`（Qualcomm SSC）→ UDP → 宿主 gbinder HAL（`TASKS/README.md` C4）。
 - **安卓容器马达透传**：Waydroid HAL → 宿主桥 → `aw86927` 主线驱动；AIDL V2 幅度+cancel，固化进 `vendor.img`（`TASKS/README.md` C10、`reports/waydroid-haptics-20261013.md`）。
 - **桌面用户态**：深色模式、亮度滑块、自动旋转磁贴、非整数缩放/刷新率（`TASKS/README.md` G1-26/27/28）。
@@ -91,7 +96,7 @@
 
 > **本节的「当前口径」已上收：[`TASKS/README.md`](TASKS/README.md) §5（Q28/Q24）为准；此处只保留时间线与被推翻结论的诚实记录。**
 
-### Q28 — 冷起显示间歇失败（未解决，主线阻塞）
+### Q28 — 冷起显示间歇失败（**已规避·结项（2026-10-24）**：运营判断，非「已解决」）
 
 - **现象**：冷开机有概率只有背光、无画面（早期口径「约 6 成」「坏发率由构建身份决定」均已废）。**当前口径只读 [`TASKS/README.md`](TASKS/README.md) §5 Q28**，本处不复述数字。
 - **根因（收窄）**：bonded 双 DSI 的**首条 DCS 命令 `ff 20` 的命令 DMA 引擎 hang**
