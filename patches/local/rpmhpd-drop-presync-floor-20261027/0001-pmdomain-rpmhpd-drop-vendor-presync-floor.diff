@@ -1,0 +1,47 @@
+diff --git a/drivers/pmdomain/qcom/rpmhpd.c b/drivers/pmdomain/qcom/rpmhpd.c
+index df064b496..907432759 100644
+--- a/drivers/pmdomain/qcom/rpmhpd.c
++++ b/drivers/pmdomain/qcom/rpmhpd.c
+@@ -41,7 +41,6 @@
+  * @addr:		Resource address as looped up using resource name from
+  *			cmd-db
+  * @state_synced:	Indicator that sync_state has been invoked for the rpmhpd resource
+- * @presync_floor:	Clamp to the lowest functional corner before sync_state
+  */
+ struct rpmhpd {
+ 	struct device	*dev;
+@@ -58,7 +57,6 @@ struct rpmhpd {
+ 	const char	*res_name;
+ 	u32		addr;
+ 	bool		state_synced;
+-	bool		presync_floor;
+ };
+ 
+ struct rpmhpd_desc {
+@@ -120,7 +118,6 @@ static struct rpmhpd gbx = {
+ static struct rpmhpd gfx = {
+ 	.pd = { .name = "gfx", },
+ 	.res_name = "gfx.lvl",
+-	.presync_floor = true,
+ };
+ 
+ static struct rpmhpd gfx1 = {
+@@ -234,7 +231,6 @@ static struct rpmhpd qphy = {
+ static struct rpmhpd gmxc = {
+ 	.pd = { .name = "gmxc", },
+ 	.res_name = "gmxc.lvl",
+-	.presync_floor = true,
+ };
+ 
+ /* Eliza RPMH powerdomains */
+@@ -971,10 +967,6 @@ static int rpmhpd_aggregate_corner(struct rpmhpd *pd, unsigned int corner)
+ 
+ 	if (pd->state_synced) {
+ 		to_active_sleep(pd, corner, &this_active_corner, &this_sleep_corner);
+-	} else if (pd->presync_floor) {
+-		/* Keep GMU-managed rails alive but low until sync_state. */
+-		to_active_sleep(pd, max(corner, pd->enable_corner),
+-				&this_active_corner, &this_sleep_corner);
+ 	} else {
+ 		/* Clamp to highest corner if sync_state hasn't happened */
+ 		this_active_corner = pd->level_count - 1;
