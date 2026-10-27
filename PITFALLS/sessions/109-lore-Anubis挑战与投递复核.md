@@ -30,3 +30,16 @@
 
 - 归档页里 `In-Reply-To`/`References` 与 `git send-email` 的 `--no-chain-reply-to` 组合正确（cover → 1/2 → 2/2）。
 - 归档正文与本站 `format-patch` 输出逐字一致（人工比对 `diff --git` 段）。
+
+## 附：#445 手写 TCP 中继会把 TLS 首包丢掉（暴露代理给设备要用的正确做法）
+
+同轮为修「设备到宿主代理不通」自写了 python 中继（thread-per-connection、双 `pipe()`）：
+
+- 症状：`curl -x http://192.168.7.9:7897 https://…` **6 连里挂 2–3 发**（`SSL connect error` / exit 35），
+  而直连 `127.0.0.1:7890` **5/5 全 204**；失败的那一发 `CONNECT` 已经 200，说明隧道建好但**首包被吞**。
+- 试过换实现细节（`--accept` 线程化、`TCP_NODELAY`、把程序文本从 stdin 挪到文件）**都不解决**。
+- 正解：**用 systemd 自带的两件套**——
+  `systemd-socket-activate -l <ip>:<port> /lib/systemd/systemd-socket-proxyd 127.0.0.1:7890`
+  （实体脚本 `scripts/host-net-proxy.sh`，实测 host 6/6、device 6/6 全 204）。**不要再手写字节中继**。
+- 另一条纪律：清理这类助手**别用 `pkill -f <模式>`**——模式文本就在自己的 `bash -c` 命令行里，
+  会把自己那条 shell 杀掉（本轮实测 exit 143）。用 `ss -ltnp` 取出 `pid=` 再 `kill`。
