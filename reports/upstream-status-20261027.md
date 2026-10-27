@@ -22,6 +22,7 @@
 | **M3-3 / M3-4 / M3-6**（音频 aw88461 / 显示 4 枚 / WCN pwrseq） | ⬜ 封存备料 | 2026-10-13 | 用户尚未批准投递 | 按 M3-1 收口后再逐片投 |
 | **M5**（`dm-default-key` → 出树 patchset） | ⬜ 立项完，patchset 未交付 | 2026-10-13 报告 + 隔离已在上游树完成 | — | 交付「能力用上游 `dm-inlinecrypt` + patchset 封存」两件 |
 | **M7**（Q24 rpmhpd retention） | ✅ **关闭** | 上游修复已在 7.3 线 ⇒ 无需我方补丁 | — | 可选：把 debugfs/cmd-db 观测数据回给 Konrad/Taniya（纯观测） |
+| **U4**（`aw86927` SRAM 窗口） | 🟡 本地收口，上游化并入待建系列 | 2026-10-27 数据表重构（+39 −25，`W=1` 0 warning，行为等价） | 需先建 5 提交系列（binding → chip 数据 → 固件装载 → AW86937 差异 → 双控） | 见 `reports/u4-aw86927-sramwindow-20261027.md` §1；风险 = 维护者可能主张「用驱动内波形、不要固件」 |
 | **M1-U6**（`qcom_q6v5_pas` DTB 固件泄漏） | ⬜ 补丁已备，**未投** | 2026-10-27 `patches/upstream/m1-pas-dtbfw-20261027/`（+5 −4，0E/0W/0C） | 用户批准 | 投 `linux-remoteproc`（Bjorn Andersson）；建议同时合进 M1 树 |
 | **M9**（ITS/LPI kexec 认领） | ✅ **已撤回** | Marc Zyngier 否方案；回信 2026-10-26 已发并回读 | — | 不做；正解在 loader/EFI 侧（与本项目当前主线无关） |
 

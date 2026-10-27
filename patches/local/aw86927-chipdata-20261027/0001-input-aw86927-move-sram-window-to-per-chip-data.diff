@@ -1,0 +1,112 @@
+diff --git a/drivers/input/misc/aw86927.c b/drivers/input/misc/aw86927.c
+index 1ac99ecde..e7cbe5730 100644
+--- a/drivers/input/misc/aw86927.c
++++ b/drivers/input/misc/aw86927.c
+@@ -200,7 +200,33 @@ enum aw86927_model {
+ 	AW86938,
+ };
+ 
++/**
++ * struct aw86927_chip - per-part data
++ * @chip_id: value reported by the CHIPID registers
++ * @model: register-level behaviour group
++ * @ram_start: first addressable SRAM word for waveform data
++ * @ram_end: end of the SRAM window (exclusive)
++ *
++ * The SRAM window is a property of the part, not of the board, so it lives
++ * here instead of being derived from the model with open-coded constants.
++ */
++struct aw86927_chip {
++	u16 chip_id;
++	enum aw86927_model model;
++	unsigned int ram_start;
++	unsigned int ram_end;
++};
++
++static const struct aw86927_chip aw86927_chips[] = {
++	/* 4 KiB window, shared with the in-driver waveform table below. */
++	{ .chip_id = AW86927_CHIPID, .model = AW86927, .ram_start = 0x800, .ram_end = 0x1000 },
++	/* AW8693x parts keep the same base but expose twice the SRAM. */
++	{ .chip_id = AW86937_CHIPID, .model = AW86937, .ram_start = 0x800, .ram_end = 0x2000 },
++	{ .chip_id = AW86938_CHIPID, .model = AW86938, .ram_start = 0x800, .ram_end = 0x2000 },
++};
++
+ struct aw86927_data {
++	const struct aw86927_chip *chip;
+ 	enum aw86927_model model;
+ 	struct work_struct play_work;
+ 	struct device *dev;
+@@ -764,14 +790,7 @@ static int aw86927_ram_load(struct aw86927_data *haptics, const char *name)
+ 	u8 readback[16];
+ 	u16 checksum = 0;
+ 	unsigned int base, first, start, end, i;
+-	/*
+-	 * AW86927 exposes a 4 KiB SRAM window (base 0x800..0x1000).
+-	 * AW86937/AW86938 use the same base with a larger window; the
+-	 * Lenovo Y700-Gen4 (AW86937) vendor waveform reaches 0x1ef5, so
+-	 * accept up to 0x2000 for those parts instead of rejecting the
+-	 * firmware outright (which broke probe with -EINVAL).
+-	 */
+-	unsigned int sram_end = haptics->model == AW86927 ? 0x1000 : 0x2000;
++	const struct aw86927_chip *chip = haptics->chip;
+ 	int err, disable_err;
+ 
+ 	err = request_firmware(&fw, name, haptics->dev);
+@@ -779,14 +798,14 @@ static int aw86927_ram_load(struct aw86927_data *haptics, const char *name)
+ 		return err;
+ 
+ 	err = -EINVAL;
+-	if (fw->size < 9 || fw->size > sram_end - AW86927_RAM_BASE_ADDR)
++	if (fw->size < 9 || fw->size > chip->ram_end - chip->ram_start)
+ 		goto release;
+ 	for (i = 2; i < fw->size; i++)
+ 		checksum += fw->data[i];
+ 	base = get_unaligned_be16(fw->data + 2);
+ 	first = get_unaligned_be16(fw->data + 5);
+ 	if (checksum != get_unaligned_be16(fw->data) ||
+-	    base < 0x800 || base + fw->size - 4 > sram_end ||
++	    base < chip->ram_start || base + fw->size - 4 > chip->ram_end ||
+ 	    first <= base || (first - base - 1) % 4 ||
+ 	    first >= base + fw->size - 4 ||
+ 	    haptics->waveform_index > (first - base - 1) / 4)
+@@ -978,7 +997,7 @@ static int aw86927_detect(struct aw86927_data *haptics)
+ {
+ 	__be16 read_buf;
+ 	u16 chip_id;
+-	int err;
++	int err, i;
+ 
+ 	err = regmap_bulk_read(haptics->regmap, AW86927_CHIPIDH_REG, &read_buf, 2);
+ 	if (err)
+@@ -986,22 +1005,17 @@ static int aw86927_detect(struct aw86927_data *haptics)
+ 
+ 	chip_id = be16_to_cpu(read_buf);
+ 
+-	switch (chip_id) {
+-	case AW86927_CHIPID:
+-		haptics->model = AW86927;
+-		break;
+-	case AW86937_CHIPID:
+-		haptics->model = AW86937;
+-		break;
+-	case AW86938_CHIPID:
+-		haptics->model = AW86938;
+-		break;
+-	default:
+-		dev_err(haptics->dev, "Unexpected CHIPID value 0x%x\n", chip_id);
+-		return -ENODEV;
++	for (i = 0; i < ARRAY_SIZE(aw86927_chips); i++) {
++		if (aw86927_chips[i].chip_id != chip_id)
++			continue;
++
++		haptics->chip = &aw86927_chips[i];
++		haptics->model = haptics->chip->model;
++		return 0;
+ 	}
+ 
+-	return 0;
++	dev_err(haptics->dev, "Unexpected CHIPID value 0x%x\n", chip_id);
++	return -ENODEV;
+ }
+ 
+ static void aw86927_reset(void *data)
