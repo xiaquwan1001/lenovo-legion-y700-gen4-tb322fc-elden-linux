@@ -83,6 +83,10 @@ $ apt-cache search libssc         →  libssc-bin - Qualcomm sensor core library
    ⇒ 容器 STOPPED 但 systemd unit 仍报 `active`（服务只是 dbus 名持有者）。
    恢复：`/usr/lib/waydroid/data/scripts/waydroid-net.sh start`，或再 `restart` 一次并**等 ≥20 s**；
    判据用 `ip -br link show waydroid0` + `lxc-info -P … -p` + `getprop sys.boot_completed`，别看 unit 状态。
+③ **`State: FROZEN` 也算"活着"**：2026-10-27 实测出现过一次容器 `FROZEN`（`sys.boot_completed` 仍是 1、
+   进程都在、只是 cgroup.freeze=1）；`waydroid container unfreeze` 后立刻回 RUNNING。
+   诱因未定（怀疑与上述 restart 竞态 / 重复 `waydroid container start` 有关），**先别把它当"容器坏了"**；
+   排查顺序 = `waydroid status` → `lxc-info -P … -s` → `cat /sys/fs/cgroup/lxc.payload.waydroid/cgroup.freeze`。
 
 ## #435 `XDG_RUNTIME_DIR` 跨发行版不同：Alpine `/run/phosh` vs Debian `/run/user/<uid>`
 
