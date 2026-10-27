@@ -18,14 +18,14 @@
 | **M6 L1**（DSI `PLL_SYSTEM_MUXES` 1 行） | 🟡 等 review | 2026-10-19 投，已归档 | arm-msm 维护者 | 随 M6 系列走 |
 | **M6 B5-P1/重构**（bonded DSI per-SoC cfg） | ⬜ **设计稿已出**（2026-10-27） | `reports/b5-per-soc-cfg-design-20261027.md`：现状 = bonded 增量 **+902 −76**（四文件）而 per-SoC 侧 **0 行改动**；方案 = 数据进 `msm_dsi_config` + 行为进 `host_cfg_ops`；拆 5 步（前 3 步行为中性） | 第 4 步（master 不由 bind 顺序决定）需上机；第 5 步（`0x001f0200/0x44440400` 魔数）无文档 ⇒ 永久隔离 | 先做 1–3（主机侧、`grep` 可判），再谈 4 的上机 |
 | **M6 B5-P4**（Q28 bonded DSI） | ⬜ RFC 备料，未发 | 2026-10-27 `patches/upstream/m6-b5-p4-rfc-20261027/RFC-SCOPE.md`（建议拆 3 提交 + 4 条接受风险） | 需上机对照（P4 会移动 Q28 坏发率） | 先做 H39/H40 使能时机对照，再定 RFC 文本 |
-| **M2 A2**（battmgr `power_now`） | 🟡 球在我方 | 2026-10-26 vendor repo 已核对（`reports/m2-a2-vendor-repo-check-20261026.md`） | Konrad 要求基线换 `linux-next/master` | ① A2 与 linux-next 逐 hunk 比对（是否已被覆盖）② 开发基线切 linux-next |
+| **M2 A2**（battmgr `power_now`） | 🟢 **v2 已 rebase 到 linux-next（2026-10-27 晚），待形状裁决后投** | 2026-10-27：linux-next master **未被覆盖**（驱动 `sm8750` 命中 0）、补丁 5 hunk 全过 ⇒ `patches/upstream/m2-a2-linuxnext-20261027/`（0E/0W/0C + 编译 0 warning）；同时修正 v1 提交信息的事实错误（回落对象是 **SM8550** 不是 SM8350） | — | ① ~~与 linux-next 逐 hunk 比对~~ ✅ ② ~~基线切 linux-next~~ ✅ ③ 形状裁决（保持最小 / 换独立数组）+ kaanapali 一句是否入正文 | `reports/m2-a2-linuxnext-compare-20261027.md` |
 | **M2 A1 / P3** | ✅ A1 撤稿（与上游 `3389406e6a03` 重复）；P3 gamma LUT OOB 修复已投 | — | — | 无 |
 | **M3-3 / M3-4 / M3-6**（音频 aw88461 / 显示 4 枚 / WCN pwrseq） | ⬜ 封存备料 | 2026-10-13 | 用户尚未批准投递 | 按 M3-1 收口后再逐片投 |
 | **M5**（`dm-default-key` → 出树 patchset） | ⬜ 立项完，patchset 未交付 | 2026-10-13 报告 + 隔离已在上游树完成 | — | 交付「能力用上游 `dm-inlinecrypt` + patchset 封存」两件 |
 | **M7**（Q24 rpmhpd retention） | ✅ **关闭** | 上游修复已在 7.3 线 ⇒ 无需我方补丁 | — | 可选：把 debugfs/cmd-db 观测数据回给 Konrad/Taniya（纯观测） |
 | **U3**（`rpmhpd` `presync_floor`） | ✅ **关闭（删除）** | 2026-10-27：本机 `gfx`/`gmxc` consumer = 0 ⇒ 分支不可达；删后与 pristine 逐字节相同（D13） | — | 不立项；若将来 DTS 给这两域挂消费者再按报告 §3 议 |
 | **U4**（`aw86927` SRAM 窗口） | 🟡 本地收口，上游化并入待建系列 | 2026-10-27 数据表重构（+39 −25，`W=1` 0 warning，行为等价） | 需先建 5 提交系列（binding → chip 数据 → 固件装载 → AW86937 差异 → 双控） | 见 `reports/u4-aw86927-sramwindow-20261027.md` §1；风险 = 维护者可能主张「用驱动内波形、不要固件」 |
-| **M1-U6**（`qcom_q6v5_pas` DTB 固件泄漏） | ⬜ 补丁已备，**未投** | 2026-10-27 `patches/upstream/m1-pas-dtbfw-20261027/`（+5 −4，0E/0W/0C） | 用户批准 | 投 `linux-remoteproc`（Bjorn Andersson）；建议同时合进 M1 树 |
+| **M1-U6**（`qcom_q6v5_pas` DTB 固件泄漏） | 🟢 补丁有效且**已验可直接套 linux-next**（`git apply --check` rc=0） | 2026-10-27 `patches/upstream/m1-pas-dtbfw-20261027/`（+5 −4，0E/0W/0C）；linux-next 只新增了失败分支的 `qcom_pas_metadata_release()`，**成功路径仍 0 处 release** ⇒ 泄漏仍在 | 用户批准 | 按 linux-next 基线重写正文那句「仅 1 处 release_firmware」（linux-next 为 2 处）后投 `linux-remoteproc` | `reports/m1-u6-pas-dtbfw-leak-20261027.md` |
 | **M9**（ITS/LPI kexec 认领） | ✅ **已撤回** | Marc Zyngier 否方案；回信 2026-10-26 已发并回读 | — | 不做；正解在 loader/EFI 侧（与本项目当前主线无关） |
 
 ## §1 本轮（10-27）新增的三件事
@@ -65,3 +65,28 @@ for c in $(git rev-list --reverse 24a19b953..HEAD); do
 | **M1 新树未上机对照** | `build/m1-upstream/clean-tree-73` 只有「构建通过 + 逐域 argument」，没有等机功能对照记录 |
 | **基线代次** | 全部系列基线仍是 7.3-rc7（`24a19b953`）；Konrad 已要求 A2 换 `linux-next/master`，其余系列未跟进 |
 | **封存件无人推进** | M3-3 / M3-4 / M3-6 / M5 四件都停在「备料完成」，需要一次投递裁决 |
+
+## §4 2026-10-27 晚：全系列 linux-next 去重核对（新增）
+
+> 完整表格与证据 = `reports/upstream-dedup-audit-20261027.md`。本节只留判定。
+
+**除 aw86927 外，全部在途系列在 linux-next master 上都没有被重复实现**（判据：binding 404 / 目标符号 `grep` 无命中 / 补丁 `git apply --check` rc=0）：
+
+| 系列 | 上游已有？ | 补丁能套？ |
+|---|---|---|
+| M2 A2 battmgr | 无 | ✅ 5 hunk 全过 → 已出 v2 |
+| M2 P3 gamma LUT | 无（`_dpu_crtc_get_gc_lut()` 仍无长度校验） | — |
+| M3-1 dwc3 双连接器 | 无（`role.h` 无 `usb_role_switch_at_endpoint()`） | — |
+| M3-3 `aw88461` binding | 无 | — |
+| M3-4 panel nt36536 4 枚 | 无 | ✅ 4/4 顺序 apply 成功 |
+| M4-1 三枚 binding | 无 | — |
+| M6 L1 DSI muxes | 无（`0xc0` 仍只在 `dsi_pll_enable_pll_bias()`） | — |
+| M8 dispcc 复位 | 无（probe 无 reset 调用） | — |
+| M1-U6 pas 泄漏 | **上游同病**（成功路径 0 处 release） | ✅ 直接套 |
+| **aw86927 5 提交** | ⚠ **波形装载已被上游内置实现占据** | ❌ 0003/0005 冲突 |
+
+**aw86927 的关键变化**：linux-next 的 `aw86927.c` 已有 `aw86927_waveform[]` 正弦表 + `sram_waveform_header` + `aw86927_ram_init()` 写入路径（**驱动内波形，不是固件**），仍无 `request_firmware`、无 `AW86937`。
+⇒ U4 报告预判的「维护者可能要求用驱动内波形」**已经变成既成事实**；系列三选一（弃固件 / 固件作可选覆盖 / 先问列表）待拍板。
+
+**同轮配套**：三条 lane 分支已合入 `main`（`ea6c518`/`41f9996`/`72acfd3`，此前 `TASKS §7` 引用的 8 条路径在主仓不存在），
+并新增 `scripts/check-doc-assets.sh` + `check-doctor §13` 把「文档引用的资产路径必须存在」变成常驻门禁（`checked=384 missing=0`）。

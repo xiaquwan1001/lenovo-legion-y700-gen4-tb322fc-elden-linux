@@ -19,6 +19,7 @@
 #   8. 索引↔磁盘对账（编号撞车=FAIL；索引覆盖仅对声明角度=WARN）  ← 2026-10-15 L1
 #   9. SESSIONS/ 快照一致性（委托 scripts/check-sessions.sh）  ← 2026-10-15 L1
 #   12. 驱动模块化门禁（锚点 / olddefconfig 幂等 / tristate 自洽）  ← 2026-10-27
+#   13. 文档引用的资产路径必须存在（委托 scripts/check-doc-assets.sh）  ← 2026-10-27
 set -uo pipefail
 
 FAST=0
@@ -575,6 +576,23 @@ else
     ok "模块化 config 门禁通过（$(printf '%s' "$_mo" | grep -c '^PASS:') 项 PASS）"
   else
     bad "模块化 config 门禁失败：$(printf '%s' "$_mo" | grep -E '^FAIL' | head -3 | tr '\n' ' ')"
+  fi
+fi
+
+# ---------------------------------------------------------------- 13. 文档资产路径存在性
+# 立此节的原因（2026-10-27）：三条 lane 的产物（patches/ reports/ scripts/）提交在各自
+# worktree 分支上，主仓 main 只落了收口总结 ⇒ TASKS/README.md §7 与 upstream 状态页引用的
+# 一批路径在主仓不存在，下个会话按路径找不到就会重做一遍。§8 只查「报告是否被引用」，
+# 不查「被引用的路径是否存在」，这一节补的正是后半句。
+echo
+echo "== 13. 文档引用的资产路径（委托 check-doc-assets.sh）=="
+if [ ! -f scripts/check-doc-assets.sh ]; then
+  bad "scripts/check-doc-assets.sh 缺失"
+else
+  if _da=$(bash scripts/check-doc-assets.sh 2>&1); then
+    ok "文档资产路径齐全（$(printf '%s' "$_da" | grep -o 'checked=[0-9]*' | head -1)）"
+  else
+    bad "文档引用了不存在的路径：$(printf '%s' "$_da" | grep '^MISSING' | head -3 | awk '{print $2}' | tr '\n' ' ')"
   fi
 fi
 

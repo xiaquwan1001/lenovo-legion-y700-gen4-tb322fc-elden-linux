@@ -1,0 +1,18 @@
+# scripts/check-doc-assets.sh 的豁免表
+#
+# 每行 = <被引用的路径><TAB><理由>
+# 只允许「已经在文档里写明是历史/丢失/不在仓库」的条目；新增条目必须在理由里写清出处。
+#
+# 2026-10-27 建表时的 7 条全部来自 2026-10-17 换机与 out/ 不入库这两件事，
+# 与 reports/migration-rebuild-audit-20261017.md 的 MIGRATION-LOST 口径一致。
+
+bootslot-b/boot_b_vk40.img	G1-1 历史回退件，2026-10-17 换机未随迁（out/ 与旧 bootslot 资产已丢）
+bootslot-b/boot_b-clean.img	同上（Q28 时期的 clean 基线件）
+bootslot-b/boot_b_vk40-ram.img	同上（纯 RAM 变体）
+bootslot-b-u2/	2026-10-06 前的「两轨分机」目录命名，已随设备等价原则作废
+patches/config-before-fragment-20261009-210432.bak	Q28 恢复好档快照，换机后未随迁（现存最早为 20261001 系列）
+patches/kernel-history/elden_vk53-hw/0019+0020	vk53 硬件化历史基线，换机未随迁
+reports/vk152	文档原文写作 `reports/vk152`/`q28-v2`（两段拼接），非单一路径
+scripts/q24-rebuild-arms.sh	换机丢失，TASKS §0 已注明「按 §5 Q24 配方重放」
+scripts/module.lds	实指内核树内 arch/arm64/kernel/module.lds，非本仓库脚本
+rootfs-vk127.cpio.gz	PITFALLS 里指 out/rootfs-vk127.cpio.gz（out/ 不入库，实际件在 out/ 下）
