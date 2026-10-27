@@ -1,0 +1,177 @@
+From 196516d955c84c61cd820c5e2c4ebbf230e72856 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 19:57:51 +0800
+Subject: [PATCH 2/5] input: aw86927: describe the parts in a chip data table
+
+AW86927, AW86937 and AW86938 differ in two properties that the driver
+currently derives from the model with open-coded constants: the CHIPID
+value and the SRAM window available for waveform data.
+
+Turn both into a single read-only table, so that detect() becomes a
+lookup and the geometry is stated once instead of being recomputed.
+The base address of the SRAM window moves to the table as well, which
+removes AW86927_BASEADDRH_VAL/AW86927_BASEADDRL_VAL in favour of the
+per-part value; the resulting register writes are unchanged for the two
+already supported parts.
+
+AW86937 is register compatible with AW86938 as far as boost voltage is
+concerned, so it joins that branch of the haptic init instead of being
+rejected by detect().
+
+Lane: aw86927-series
+Agent: aw86927-series
+Baseline: base/20261027-5d6400f
+Task: U4
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/input/misc/aw86927.c | 65 ++++++++++++++++++++++++++----------
+ 1 file changed, 47 insertions(+), 18 deletions(-)
+
+diff --git a/drivers/input/misc/aw86927.c b/drivers/input/misc/aw86927.c
+index f53b8f004..86659f198 100644
+--- a/drivers/input/misc/aw86927.c
++++ b/drivers/input/misc/aw86927.c
+@@ -146,6 +146,7 @@
+ #define AW86927_CHIPIDH_REG			0x57
+ #define AW86927_CHIPIDL_REG			0x58
+ #define AW86927_CHIPID				0x9270
++#define AW86937_CHIPID				0x9370
+ #define AW86938_CHIPID				0x9380
+ 
+ #define AW86927_TMCFG_REG			0x5b
+@@ -172,8 +173,6 @@
+ 
+ /* default value of base addr */
+ #define AW86927_RAM_BASE_ADDR			0x800
+-#define AW86927_BASEADDRH_VAL			0x08
+-#define AW86927_BASEADDRL_VAL			0x00
+ 
+ enum aw86927_work_mode {
+ 	AW86927_STANDBY_MODE,
+@@ -182,10 +181,40 @@ enum aw86927_work_mode {
+ 
+ enum aw86927_model {
+ 	AW86927,
++	AW86937,
+ 	AW86938,
+ };
+ 
++/**
++ * struct aw86927_chip - per-part data
++ * @chip_id: value reported by the CHIPID registers
++ * @model: register-level behaviour group
++ * @ram_start: first addressable SRAM word for waveform data
++ * @ram_end: end of the SRAM window (exclusive)
++ *
++ * The SRAM window is a property of the part, not of the board, so it lives
++ * here instead of being derived from the model with open-coded constants.
++ */
++struct aw86927_chip {
++	u16 chip_id;
++	enum aw86927_model model;
++	unsigned int ram_start;
++	unsigned int ram_end;
++};
++
++static const struct aw86927_chip aw86927_chips[] = {
++	/* 4 KiB window, shared with the in-driver waveform table below. */
++	{ .chip_id = AW86927_CHIPID, .model = AW86927, .ram_start = 0x800,
++	  .ram_end = 0x1000 },
++	/* AW8693x parts keep the same base but expose twice the SRAM. */
++	{ .chip_id = AW86937_CHIPID, .model = AW86937, .ram_start = 0x800,
++	  .ram_end = 0x2000 },
++	{ .chip_id = AW86938_CHIPID, .model = AW86938, .ram_start = 0x800,
++	  .ram_end = 0x2000 },
++};
++
+ struct aw86927_data {
++	const struct aw86927_chip *chip;
+ 	enum aw86927_model model;
+ 	struct work_struct play_work;
+ 	struct device *dev;
+@@ -588,6 +617,7 @@ static int aw86927_haptic_init(struct aw86927_data *haptics)
+ 		if (err)
+ 			return err;
+ 		break;
++	case AW86937:
+ 	case AW86938:
+ 		err = regmap_update_bits(haptics->regmap,
+ 					 AW86938_PLAYCFG1_REG,
+@@ -630,23 +660,23 @@ static int aw86927_ram_init(struct aw86927_data *haptics)
+ 
+ 	/* Set base address for the start of the SRAM waveforms */
+ 	err = regmap_write(haptics->regmap,
+-			   AW86927_BASEADDRH_REG, AW86927_BASEADDRH_VAL);
++			   AW86927_BASEADDRH_REG, haptics->chip->ram_start >> 8);
+ 	if (err)
+ 		return err;
+ 
+ 	err = regmap_write(haptics->regmap,
+-			   AW86927_BASEADDRL_REG, AW86927_BASEADDRL_VAL);
++			   AW86927_BASEADDRL_REG, haptics->chip->ram_start & 0xff);
+ 	if (err)
+ 		return err;
+ 
+ 	/* Set start of SRAM, before the data is written it will be the same as the base */
+ 	err = regmap_write(haptics->regmap,
+-			   AW86927_RAMADDRH_REG, AW86927_BASEADDRH_VAL);
++			   AW86927_RAMADDRH_REG, haptics->chip->ram_start >> 8);
+ 	if (err)
+ 		return err;
+ 
+ 	err = regmap_write(haptics->regmap,
+-			   AW86927_RAMADDRL_REG, AW86927_BASEADDRL_VAL);
++			   AW86927_RAMADDRL_REG, haptics->chip->ram_start & 0xff);
+ 	if (err)
+ 		return err;
+ 
+@@ -738,7 +768,7 @@ static int aw86927_detect(struct aw86927_data *haptics)
+ {
+ 	__be16 read_buf;
+ 	u16 chip_id;
+-	int err;
++	int err, i;
+ 
+ 	err = regmap_bulk_read(haptics->regmap, AW86927_CHIPIDH_REG, &read_buf, 2);
+ 	if (err)
+@@ -746,19 +776,17 @@ static int aw86927_detect(struct aw86927_data *haptics)
+ 
+ 	chip_id = be16_to_cpu(read_buf);
+ 
+-	switch (chip_id) {
+-	case AW86927_CHIPID:
+-		haptics->model = AW86927;
+-		break;
+-	case AW86938_CHIPID:
+-		haptics->model = AW86938;
+-		break;
+-	default:
+-		dev_err(haptics->dev, "Unexpected CHIPID value 0x%x\n", chip_id);
+-		return -ENODEV;
++	for (i = 0; i < ARRAY_SIZE(aw86927_chips); i++) {
++		if (aw86927_chips[i].chip_id != chip_id)
++			continue;
++
++		haptics->chip = &aw86927_chips[i];
++		haptics->model = haptics->chip->model;
++		return 0;
+ 	}
+ 
+-	return 0;
++	dev_err(haptics->dev, "Unexpected CHIPID value 0x%x\n", chip_id);
++	return -ENODEV;
+ }
+ 
+ static int aw86927_probe(struct i2c_client *client)
+@@ -862,6 +890,7 @@ static int aw86927_probe(struct i2c_client *client)
+ 
+ static const struct of_device_id aw86927_of_id[] = {
+ 	{ .compatible = "awinic,aw86927" },
++	{ .compatible = "awinic,aw86937" },
+ 	{ /* sentinel */ }
+ };
+ 
+-- 
+2.53.0
+

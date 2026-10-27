@@ -1,0 +1,195 @@
+From 409beee0a26c81f2d4f8bc8038ecaed7ba666b7a Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 20:13:35 +0800
+Subject: [PATCH 5/5] input: aw86927: stop playback over suspend and on
+ shutdown
+
+The driver has no power management at all, so a rumble that is playing
+when the system suspends is left running into the powered-down SoC, and
+a shutdown leaves the actuator driven until the rails collapse.
+
+Add suspend/resume and a shutdown callback:
+
+  - suspend takes the input mutex so a new effect cannot arm the work
+    while it is being drained, marks the device suspended under
+    event_lock so the memless timer cannot queue more work, and then
+    cancels the work and stops playback. On failure the flag is cleared
+    so the device keeps working;
+  - resume only clears the flag: the chip keeps its register state across
+    the system sleep, and the next effect re-issues the playback
+    sequence anyway;
+  - shutdown disables the work and asserts reset.
+
+The level is read and written with READ_ONCE()/WRITE_ONCE() because it is
+now touched from both the effect callback and the suspend path, and it is
+cleared whenever playback stops so the next identical effect is not
+filtered out as a no-op.
+
+The driver keeps no global state, so two instances (left and right
+actuator) are independent and both get their own suspend/resume.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+
+Lane: aw86927-series
+Agent: aw86927-series
+Baseline: base/20261027-5d6400f
+Task: U4
+---
+ drivers/input/misc/aw86927.c | 75 +++++++++++++++++++++++++++++++++---
+ 1 file changed, 69 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/input/misc/aw86927.c b/drivers/input/misc/aw86927.c
+index 24847dbfe..60b2fd89a 100644
+--- a/drivers/input/misc/aw86927.c
++++ b/drivers/input/misc/aw86927.c
+@@ -15,6 +15,7 @@
+ #include <linux/i2c.h>
+ #include <linux/input.h>
+ #include <linux/module.h>
++#include <linux/pm.h>
+ #include <linux/property.h>
+ #include <linux/regmap.h>
+ #include <linux/regulator/consumer.h>
+@@ -233,6 +234,7 @@ struct aw86927_data {
+ 	struct i2c_client *client;
+ 	struct regmap *regmap;
+ 	struct gpio_desc *reset_gpio;
++	bool suspended;
+ 	u16 level;
+ 	u32 waveform_index;
+ };
+@@ -396,22 +398,26 @@ static int aw86927_haptics_play(struct input_dev *dev, void *data, struct ff_eff
+ 	struct aw86927_data *haptics = input_get_drvdata(dev);
+ 	int level;
+ 
++	/* The chip is powered down; a queued event would only fail. */
++	if (haptics->suspended)
++		return 0;
++
+ 	level = effect->u.rumble.strong_magnitude;
+ 	if (!level)
+ 		level = effect->u.rumble.weak_magnitude;
+ 
+ 	/* If level does not change, don't restart playback */
+-	if (haptics->level == level)
++	if (READ_ONCE(haptics->level) == level)
+ 		return 0;
+ 
+-	haptics->level = level;
++	WRITE_ONCE(haptics->level, level);
+ 
+ 	schedule_work(&haptics->play_work);
+ 
+ 	return 0;
+ }
+ 
+-static int aw86927_play_sine(struct aw86927_data *haptics)
++static int aw86927_play_sine(struct aw86927_data *haptics, u16 level)
+ {
+ 	int err;
+ 
+@@ -457,7 +463,8 @@ static int aw86927_play_sine(struct aw86927_data *haptics)
+ 	if (err)
+ 		return err;
+ 
+-	err = regmap_write(haptics->regmap, AW86927_PLAYCFG2_REG, haptics->level * 0x80 / 0xffff);
++	err = regmap_write(haptics->regmap, AW86927_PLAYCFG2_REG,
++			   level * 0x80 / 0xffff);
+ 	if (err)
+ 		return err;
+ 
+@@ -476,6 +483,7 @@ static void aw86927_close(struct input_dev *input)
+ 	int err;
+ 
+ 	cancel_work_sync(&haptics->play_work);
++	WRITE_ONCE(haptics->level, 0);
+ 
+ 	err = aw86927_stop(haptics);
+ 	if (err)
+@@ -487,10 +495,11 @@ static void aw86927_haptics_play_work(struct work_struct *work)
+ 	struct aw86927_data *haptics =
+ 		container_of(work, struct aw86927_data, play_work);
+ 	struct device *dev = &haptics->client->dev;
++	u16 level = READ_ONCE(haptics->level);
+ 	int err;
+ 
+-	if (haptics->level)
+-		err = aw86927_play_sine(haptics);
++	if (level)
++		err = aw86927_play_sine(haptics, level);
+ 	else
+ 		err = aw86927_stop(haptics);
+ 
+@@ -1047,6 +1056,58 @@ static int aw86927_probe(struct i2c_client *client)
+ 	return 0;
+ }
+ 
++static void aw86927_reset(void *data)
++{
++	struct aw86927_data *haptics = data;
++
++	gpiod_set_value_cansleep(haptics->reset_gpio, 1);
++}
++
++static void aw86927_shutdown(struct i2c_client *client)
++{
++	struct aw86927_data *haptics = i2c_get_clientdata(client);
++
++	disable_work_sync(&haptics->play_work);
++	aw86927_reset(haptics);
++}
++
++static int aw86927_suspend(struct device *dev)
++{
++	struct aw86927_data *haptics = dev_get_drvdata(dev);
++	int err;
++
++	guard(mutex)(&haptics->input_dev->mutex);
++
++	/* Block events from the memless effect timer before draining the work. */
++	scoped_guard(spinlock_irq, &haptics->input_dev->event_lock)
++		haptics->suspended = true;
++
++	cancel_work_sync(&haptics->play_work);
++	err = aw86927_stop(haptics);
++
++	scoped_guard(spinlock_irq, &haptics->input_dev->event_lock) {
++		if (err)
++			haptics->suspended = false;
++		else
++			WRITE_ONCE(haptics->level, 0);
++	}
++
++	return err;
++}
++
++static int aw86927_resume(struct device *dev)
++{
++	struct aw86927_data *haptics = dev_get_drvdata(dev);
++
++	guard(mutex)(&haptics->input_dev->mutex);
++	guard(spinlock_irq)(&haptics->input_dev->event_lock);
++	haptics->suspended = false;
++
++	return 0;
++}
++
++static DEFINE_SIMPLE_DEV_PM_OPS(aw86927_pm_ops, aw86927_suspend, aw86927_resume);
++
+ static const struct of_device_id aw86927_of_id[] = {
+ 	{ .compatible = "awinic,aw86927" },
+ 	{ .compatible = "awinic,aw86937" },
+@@ -1059,8 +1120,10 @@ static struct i2c_driver aw86927_driver = {
+ 	.driver = {
+ 		.name = "aw86927-haptics",
+ 		.of_match_table = aw86927_of_id,
++		.pm = pm_sleep_ptr(&aw86927_pm_ops),
+ 	},
+ 	.probe = aw86927_probe,
++	.shutdown = aw86927_shutdown,
+ };
+ 
+ module_i2c_driver(aw86927_driver);
+-- 
+2.53.0
+
