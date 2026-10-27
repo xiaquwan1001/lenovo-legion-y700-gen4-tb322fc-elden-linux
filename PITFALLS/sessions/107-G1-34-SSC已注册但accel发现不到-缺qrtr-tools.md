@@ -47,10 +47,20 @@ Discovered 'rotv' sensor (…)   → name: Rotation Vector / vendor: QTI / sampl
 但 `busctl get-property net.hadess.SensorProxy … HasAccelerometer HasAmbientLight` = **`false / true`
 （加速度计没有）**，发现的只有 `rotv`（和一个 `mn`），**没有 `accel`**。
 
-⇒ 结论分层要写清楚：**不是** 内核/DSP/固件/QRTR 注册问题，而是 **iio-sensor-proxy 3.9 的
-SSC 后端（`drv-ssc.c`）没把 accelerometer 列进来**（发现到的 data-type 与 ssccli 查询路径不一致）。
-下一轮的入手点：对比 `drv-ssc.c` 的 `data-types`（accel/light/prox/compass/rotv）与 libssc 实际
-上报的 sensor 属性（`iio-sensor-proxy -v` 的完整 log 已能拿到每条 `name/vendor/data-type/stream-type`）。
+进一步取证（本轮做得比上一版更细，**推翻"iio-sensor-proxy 发现逻辑坏了"的笼统说法**）：
+
+| 根 | iio-sensor-proxy | libssc | 结果 |
+|---|---|---|---|
+| Alpine（2026-10-09 工作态，`linux18`） | **3.9-r2** | **0.4.3-r0** | `HasAccelerometer/HasAmbientLight/HasProximity = true`（历史记录） |
+| Debian（现在，`linux17`） | **3.9**（二进制里 accel/light/compass 相关字符串与 Alpine 版**逐条相同**） | **0.4.4** | `rotv` + `mn` 被发现，**没有 accel** ⇒ `HasAccelerometer=false` |
+
+⇒ 同一台设备、同一个 iio-sensor-proxy 主版本，唯一显著差异是 **libssc 0.4.3 → 0.4.4**；
+而 `ssccli`（**也是** libssc 0.4.4）读 accelerometer 正常，说明 DSP/注册表本身没问题，
+可疑点是 **libssc 0.4.4 的 discover 路径/数据类型命名**（iio 走 discover，ssccli 走直接属性查询）。
+⇒ 结论：**不是**内核/DSP/固件/QRTR 注册，也**不是** iio-sensor-proxy 的 accel 代码缺失，
+而是 Debian 侧 libssc 版本差。下一轮实验（按成本排）：① 给 iio-sensor-proxy 加日志打印它请求的
+data-type 串；② 用 libssc 0.4.3 交叉验证（Alpine 包可解包/libssc 源码编 0.4.3）；③ 必要时在
+iio 侧把 `accelerometer` 显式加入请求列表。
 
 ## 判据速查（本轮固化）
 

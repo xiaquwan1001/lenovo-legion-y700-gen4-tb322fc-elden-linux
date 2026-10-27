@@ -25,6 +25,19 @@
 
 ### 1.1 内核与软件基线
 - ★**2026-10-26 21:26 起（在机 `boot_b` = vk173，模块化 v2 + RTC 修复）** —— `out/boot-elden-vk173.img`（84 525 056 B，`kernel_payload` = vk172，**DTB 带 `patches/dt/0002`**）经 `scripts/flash-b.sh` 签名（签后 sha **`1a05a89d…`**）写入后**读回一致**；正常 `reboot` 后：`uname -r` = `…-dirty-debug-vk172`、`/`=`f2fs /dev/sda18`、`lsmod` **106**（vk163 对照 66）、`/lib/modules/<UTS>` **1638 `.ko`**、`mmc0=CBADS`（TF 以 `=m` 驱动）、`card0-DSI-1=connected`、phoc/phosh=1、模块错误 **0**、Q28 签名 **0**。**新：`date`/`hwclock -r` = 真实时间且跨重启保持**（修前每次都回 1970-01-09）。回退件 = `bootslot-b/boot_b-vk163-signed-20261026.img`（sha `65ae2ff0…`）。证据 `reports/vk172-modular-v2-build-20261026.md` §5、`reports/artifacts/baseline-20261027/vk173-flash-verify.txt`。
+- ★**2026-10-27（当前在机状态：Debian 根可用，Android 容器起完，相机/传感器进度）** ——
+  **运行根** = `linux17` ext4（Debian forky/sid，`fastboot boot out/boot-elden-vk17x.img` 零写盘进；**`boot_b` 未改**，
+  仍是 `vk173` = 模块化 v2 载荷 + RTC DTB，回退 = 重启即回 Alpine `linux18` f2fs）。当前 `uname -r` = `…-debug-vk172`。
+  **可用性**：phosh 桌面 + 电量 + WiFi + usb0 DHCP 全自动；Waydroid **Session/Container RUNNING**、`boot_completed=1`、
+  容器 6 个 h/w 传感器 running（route-C `waydroid-sensord` 已按 glibc 重编）、马达桥 `elden-hapticd` active、
+  XDG autostart 冷起自动进 Android；失败单元 **0**。
+  **相机**（C5/U7）：宿主 = mainline 相机 → libcamera → `gst | v4l2-ctl --stream-out-mmap=8` → `/dev/video100`
+  （v4l2loopback 需按当前 UTS 重编、`max_buffers=8`、**stock 无补丁**）；容器 `configureStreams` / `start V4L2 streaming` /
+  `Preview stream state STREAMING` 均已实测，剩 App 侧停帧。
+  **传感器**（G1-34）：`qrtr-lookup` 见 **400 = Snapdragon Sensor Core service**（旧"未注册"结论作废）、
+  `ssccli` 出真值；但 Debian 侧 `libssc 0.4.4`（Alpine 工作态是 0.4.3）下 iio-sensor-proxy 只发现 `rotv`/`mn`
+  ⇒ `HasAccelerometer=false`（详见 `../TASKS/README.md` §1 G1-34、`../PITFALLS/sessions/107-*`）。
+  详情与命令：`../TASKS/README.md` T22、`../PITFALLS` #431–#443。
 - ★**2026-10-26 晚（vk163 已刷 `boot_b`，模块化进日常线）** —— `out/boot-elden-vk163.img` 签后 sha `65ae2ff0…`，`scripts/flash-b.sh` 写入后**读回一致**；启动后 `uname -r` = `…-dirty-debug-vk163`、`lsmod` **66**、`/lib/modules/<UTS>` 1539 `.ko`、dmesg 模块错误 **0**、`wlan0`/`card0-DSI-1=connected`/phoc+phosh 均在。另部署 **`v4l2loopback 0.15.4`** 到 `/lib/modules/<UTS>/extra/`（sha `adb1abe4…`，vermagic 逐字匹配），`/dev/video100` 已出现（C5/U7 节点卡点解除）。真 POR 冷起**已验**（2026-10-26 断电重启；phoc/phosh 29–30 s 到位，时延拆解见 `reports/vk163-por-boot-latency-20261026.md`）；回退件 `bootslot-b/boot_b-f2fs-root.img`（vk152 载荷）在。
 - ★**2026-10-26（模块化内核 vk163 零写盘上机；`boot_b` 未变）** —— 在机模块树**新增** `/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163/`（1539 `.ko`，89 MB，仅当跑 vk163 镜像时被使用；日常内核忽略）与 `/usr/local/sbin/payload-modules-load.sh`（载荷模块加载器；在 vk152 非模块化内核上是 no-op，实测自报 `is builtin`）。
   `boot_b` 仍是 `f2fs-root`（内核 sha `b6a074ff…` 读回一致、`retry=6 succ=1`），本轮**未写任何分区**；测试方式 = `fastboot boot out/boot-elden-vk163.img`，退回必须经 `reboot2 bootloader` + `fastboot reboot`（**普通暖复位会继续起测试镜像**，见 `PITFALLS #401`）。报告 `reports/vk163-modular-20261026.md`。
