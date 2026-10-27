@@ -38,6 +38,13 @@
   `ssccli` 出真值；但 Debian 侧 `libssc 0.4.4`（Alpine 工作态是 0.4.3）下 iio-sensor-proxy 只发现 `rotv`/`mn`
   ⇒ `HasAccelerometer=false`（详见 `../TASKS/README.md` §1 G1-34、`../PITFALLS/sessions/107-*`）。
   详情与命令：`../TASKS/README.md` T22、`../PITFALLS` #431–#443。
+  **⚠ 同日新观测（两小时内 ×2）**：**桌面/容器显示栈会在空闲期自发掉线** —— 形态固定：`card0-DSI-1` 仍 `connected`
+  但 `dpms=Off`、`enabled=disabled`、logind 里 seat0 会话消失、`phoc` 进程仍在、`grim` 挂住、
+  容器 `SurfaceControl` 报 `DEAD_OBJECT`；**无 dmesg 复位签名、非 Q28 触发路径**。恢复 = 整机重启
+  （`sysrq-b` → Alpine `linux18` → `reboot2 bootloader` → `fastboot boot out/boot-elden-vk177.img`，无人值守 ~3 min）。
+  取证脚本已入库 `../scripts/display-drop-forensics.sh`（9 类证据一包），**健康基线**在
+  `../reports/artifacts/display-drop-20261027/`（DSI `connected/enabled/On`、seat0 会话在、唯一失败单元 = `lxc-net.service`）。
+  **当前失败单元 1**（`lxc-net.service`，与容器网络无关：Waydroid 自建 `waydroid0`）。
 - ★**2026-10-26 晚（vk163 已刷 `boot_b`，模块化进日常线）** —— `out/boot-elden-vk163.img` 签后 sha `65ae2ff0…`，`scripts/flash-b.sh` 写入后**读回一致**；启动后 `uname -r` = `…-dirty-debug-vk163`、`lsmod` **66**、`/lib/modules/<UTS>` 1539 `.ko`、dmesg 模块错误 **0**、`wlan0`/`card0-DSI-1=connected`/phoc+phosh 均在。另部署 **`v4l2loopback 0.15.4`** 到 `/lib/modules/<UTS>/extra/`（sha `adb1abe4…`，vermagic 逐字匹配），`/dev/video100` 已出现（C5/U7 节点卡点解除）。真 POR 冷起**已验**（2026-10-26 断电重启；phoc/phosh 29–30 s 到位，时延拆解见 `reports/vk163-por-boot-latency-20261026.md`）；回退件 `bootslot-b/boot_b-f2fs-root.img`（vk152 载荷）在。
 - ★**2026-10-26（模块化内核 vk163 零写盘上机；`boot_b` 未变）** —— 在机模块树**新增** `/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163/`（1539 `.ko`，89 MB，仅当跑 vk163 镜像时被使用；日常内核忽略）与 `/usr/local/sbin/payload-modules-load.sh`（载荷模块加载器；在 vk152 非模块化内核上是 no-op，实测自报 `is builtin`）。
   `boot_b` 仍是 `f2fs-root`（内核 sha `b6a074ff…` 读回一致、`retry=6 succ=1`），本轮**未写任何分区**；测试方式 = `fastboot boot out/boot-elden-vk163.img`，退回必须经 `reboot2 bootloader` + `fastboot reboot`（**普通暖复位会继续起测试镜像**，见 `PITFALLS #401`）。报告 `reports/vk163-modular-20261026.md`。
