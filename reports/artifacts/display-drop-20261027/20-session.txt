@@ -1,0 +1,49 @@
+== loginctl sessions
+ 1 1001 xuqianhui1001 -     1455 manager       -    no  -
+ 5    0 root          -     7970 user          -    no  -
+ 6    0 root          -     7980 manager-early -    no  -
+c1 1001 xuqianhui1001 seat0 1360 user          tty7 yes -
+== seats
+seat0
+== session details (each)
+Id=1
+Seat=
+Display=
+Type=unspecified
+Class=manager
+Active=yes
+State=active
+Id=5
+Seat=
+Display=
+Type=tty
+Class=user
+Active=yes
+State=active
+Id=6
+Seat=
+Display=
+Type=unspecified
+Class=manager-early
+Active=yes
+State=active
+Id=c1
+Seat=seat0
+Display=
+Type=tty
+Class=user
+Active=yes
+State=active
+== compositor processes
+   1331       1     169 SLs  /usr/sbin/greetd --config /etc/greetd/config.toml
+   1360    1331     169 SLs+ /usr/sbin/greetd --session-worker 11
+   1629    1360     168 Sl+  /usr/bin/phoc -v -S -C /usr/share/phosh/phoc.ini -E gnome-session --session=phosh
+   1812    1629     166 Sl+  /usr/libexec/gnome-session-init-worker phosh
+   1824    1455     166 Ssl  /usr/libexec/gnome-session-ctl --monitor
+   1836    1455     166 Ssl  /usr/libexec/gnome-session-service --session=phosh
+   1842    1455     166 Ssl  /usr/libexec/phosh
+   2146    1455     166 Sl   /usr/libexec/at-spi2-registryd --use-gnome-session
+   2330    1455     166 Ssl  /usr/bin/phosh-osk-stevia --allow-replacement
+== wayland sockets
+srwxrwxr-x 1 xuqianhui1001 xuqianhui1001 0 Oct 27 13:28 /run/user/1001/wayland-0
+-rw-rw---- 1 xuqianhui1001 xuqianhui1001 0 Oct 27 13:28 /run/user/1001/wayland-0.lock

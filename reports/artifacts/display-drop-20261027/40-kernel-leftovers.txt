@@ -1,0 +1,8 @@
+== pstore
+total 0
+== reset reason (if any)
+== interrupts (dsi/mdss/dpu)
+ 177:       2976          0          0          0          0          0          0          0  msm_mdss                    0 Edge      msm
+ 178:         41          0          0          0          0          0          0          0  msm_mdss                    4 Edge      dsi_isr
+ 179:          0          0          0          0          0          0          0          0  msm_mdss                    5 Edge      dsi_isr
+ 218:          0          0          0          0          0          0          0          0  msm_mdss                   12 Edge      dp_display_isr

@@ -1,0 +1,15 @@
+== card0-DP-1
+  status=disconnected,
+  enabled=disabled,
+  dpms=On,
+  modes=
+== card0-DSI-1
+  status=connected,
+  enabled=enabled,
+  dpms=On,
+  modes=1904x3040,1904x3040,1904x3040,1904x3040,1904x3040,1904x3040,1904x3040,1904x3040,
+== card0-Writeback-1
+  status=unknown,
+  enabled=disabled,
+  dpms=On,
+  modes=

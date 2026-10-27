@@ -1,0 +1,4 @@
+SLOT _b: already marked successful
+SLOT _b: Marked boot successful
+== failed units
+● lxc-net.service loaded failed failed LXC network bridge setup

@@ -1,0 +1,1 @@
+[    0.208393] [      T1] arm-scmi arm-scmi.0.auto: SCMI max-rx-timeout: 30ms / max-msg-size: 104bytes / max-msg: 20

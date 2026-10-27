@@ -1,0 +1,6 @@
+stamp=20261027T133135
+uptime=172.80 1307.50
+boot_id=0c2da894-314d-4823-8caa-0c9dff070ee7
+kernel=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+PRETTY_NAME="Debian GNU/Linux forky/sid"
+root=ext4 /dev/sda17
