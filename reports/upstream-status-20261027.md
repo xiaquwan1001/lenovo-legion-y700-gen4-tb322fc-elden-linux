@@ -16,6 +16,7 @@
 | **M4-5**（ath12k PEACH、hci_qca PERI） | ⬜ **未备料** | — | 只有 M3-6 的拆解清单 | 排在 camss 之后 |
 | **M8**（dispcc MDSS 复位 RFC） | 🟡 等 maintainer | 2026-10-22 投 RFC；Taniya 反对复位归属，我方 10-23 已回（接受搬 `msm_mdss_reset()`） | clk 维护者 | 等回包；必要时转正式系列（含 DT 属性） |
 | **M6 L1**（DSI `PLL_SYSTEM_MUXES` 1 行） | 🟡 等 review | 2026-10-19 投，已归档 | arm-msm 维护者 | 随 M6 系列走 |
+| **M6 B5-P1/重构**（bonded DSI per-SoC cfg） | ⬜ **设计稿已出**（2026-10-27） | `reports/b5-per-soc-cfg-design-20261027.md`：现状 = bonded 增量 **+902 −76**（四文件）而 per-SoC 侧 **0 行改动**；方案 = 数据进 `msm_dsi_config` + 行为进 `host_cfg_ops`；拆 5 步（前 3 步行为中性） | 第 4 步（master 不由 bind 顺序决定）需上机；第 5 步（`0x001f0200/0x44440400` 魔数）无文档 ⇒ 永久隔离 | 先做 1–3（主机侧、`grep` 可判），再谈 4 的上机 |
 | **M6 B5-P4**（Q28 bonded DSI） | ⬜ RFC 备料，未发 | 2026-10-27 `patches/upstream/m6-b5-p4-rfc-20261027/RFC-SCOPE.md`（建议拆 3 提交 + 4 条接受风险） | 需上机对照（P4 会移动 Q28 坏发率） | 先做 H39/H40 使能时机对照，再定 RFC 文本 |
 | **M2 A2**（battmgr `power_now`） | 🟡 球在我方 | 2026-10-26 vendor repo 已核对（`reports/m2-a2-vendor-repo-check-20261026.md`） | Konrad 要求基线换 `linux-next/master` | ① A2 与 linux-next 逐 hunk 比对（是否已被覆盖）② 开发基线切 linux-next |
 | **M2 A1 / P3** | ✅ A1 撤稿（与上游 `3389406e6a03` 重复）；P3 gamma LUT OOB 修复已投 | — | — | 无 |
