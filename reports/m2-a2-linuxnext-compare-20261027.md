@@ -92,7 +92,9 @@ CC [M]  drivers/power/supply/qcom_battmgr.o        # rc=0，无 warning
    还是把属性表升进**变体数据结构**（`{ const enum power_supply_property *bat_props; unsigned int num_bat_props; }`）。
    → **建议保持现形状**：A2 是单属性小修，同一系列里重构 5 个 SoC 的变体数据结构会被要求拆成前置准备提交；
    若维护者嫌「顺序魔法」，最小改法是换独立数组（选项 2），**不建议**捆绑大重构。
-2. **kaanapali 那句要不要写进正文**：写 = 主动揭示、可能被要求「一起改」；不写 = 被问到再答（风险是被当成没做功课）。
+2. ~~kaanapali 那句要不要写进正文~~ **已定（2026-10-27 夜，按推荐）= 不写进 patch 正文**，改为备一份答复话术
+   （`patches/upstream/m2-a2-linuxnext-20261027/REPLY-kaanapali.md`）。理由：正文只陈述本机可举证的事实，
+   把「下一代怎么算」留给维护者判断；被问到再答比主动替别人下结论更稳。
 3. **是否投 v2**：按「逐系列由用户批准」口径，本轮**只备料不投**。
 
 ## §6 下一步
