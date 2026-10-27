@@ -17,6 +17,7 @@ dst	kind	sha256	size	mode	repo_src
 /etc/local.d/50-gunyah.start	locald	3d7b139e6cd9747857c0a2be230ed1447b30de2c636a41007162d1ec14841461	505	755	files/etc/local.d/50-gunyah.start
 /etc/local.d/elden-bootlog.start	locald	4b3f9ccbe383a1224e7cc7d85640903eefbe05bf1c6fffd0aa839cc3d648cdc9	76	755	files/etc/local.d/elden-bootlog.start
 /etc/local.d/elden-bringup.start	locald	111b2e4cfb666a2202928bfd7aa93396b7bc2f6e08a269b2218e617cdc09dcfb	117	755	files/etc/local.d/elden-bringup.start
+/etc/xdg/autostart/elden-waydroid.desktop	config	84969f19d03b4541e1f1b5a3af5e909b1d4ff0747c3e187b353eca65aa67bc77	808	644	files/etc/xdg/autostart/elden-waydroid.desktop
 /init	init	47af5f7d5400f52b944ffd8d5517e38dfa99531667a5cc2f18919209f6e7a539	34584	755	files/init
 /usr/local/bin/bwrap	script	79b77b2f375039b2d361a603cbd7d587f110c2be8b09655938e25ed563a5064f	236	755	files/usr/local/bin/bwrap
 /usr/local/bin/elden-hapticd	elf	aca55cb143fd0506991e8031fe059b8213f8fc7f5a3e08fa0eef34d645a47bf3	729312	755	-
@@ -32,8 +33,8 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/bin/slot-attr.py	python	1d433236d2ee4812931b33612cf8569954f863e9f0d73b8b564c17fc52426a9d	11011	755	files/usr/local/bin/slot-attr.py
 /usr/local/bin/ssc-udp-relay.py	python	01d20f2454909adb1da97d5ccde30cc2cec0b70722f7e16e12dfbb311d75d074	3935	755	files/usr/local/bin/ssc-udp-relay.py
 /usr/local/bin/vibrate	script	bfd16e58926223a4d6b51400e6c908a97aa7569194380a98ee9a833441b9dd9b	466	755	files/usr/local/bin/vibrate
-/usr/local/bin/waydroid-sensord	elf	c8a5b1d0dce550ff5e2089a216a135d0de6d45651e7101124239c72b24eac10f	246456	755	-
-/usr/local/bin/waydroid-sensord-udp	elf	8a037ed0dd25618ef3b0ae83b637316b80207c35f186548300d24701164b0070	244768	755	-
+/usr/local/bin/waydroid-sensord	elf	22028ffd9a53d2fc48b8227e05a95eb2b0d7245d8db10fb80e052d38257849a5	266200	755	-
+/usr/local/bin/waydroid-sensord-udp	elf	22028ffd9a53d2fc48b8227e05a95eb2b0d7245d8db10fb80e052d38257849a5	266200	755	-
 /usr/local/sbin/99-unmanaged.conf	script	4ec1672cc519b7d6ffde0a887f27c91bb275ece1304bff410bc22c1e93582db1	297	644	files/usr/local/sbin/99-unmanaged.conf
 /usr/local/sbin/ath12k-load.sh	script	37ca2ec077cdbf98b27a0f8921d6a6f597e10715dde9c164b328bf4acb7bc79d	1467	755	files/usr/local/sbin/ath12k-load.sh
 /usr/local/sbin/ath12k-retry.sh	script	d9ad1061f85d5cc01ed0e94672a47babb41e24e94cb86a088ccc52e69e30524d	1514	755	files/usr/local/sbin/ath12k-retry.sh
@@ -67,8 +68,8 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/time-sync.sh	script	c5736ac00a30fe7357229166bcf416dd36d96aaefb8c36d3af27fce2ca1fcaa1	1252	755	files/usr/local/sbin/time-sync.sh
 /usr/local/sbin/usb-gadget	script	7c70e2b9913526451907e5306af294a8e58acb50a1d0411ba0da9a50f61c626c	2529	755	files/usr/local/sbin/usb-gadget
 /usr/local/sbin/waydroid-ipv6	script	38dedcbbdd59b37830916feb13312d6072f9b28ee944fb6034e3dabd1abeee8c	2046	755	files/usr/local/sbin/waydroid-ipv6
-/usr/local/sbin/waydroid-session.sh	script	d5c197f1be93d1937d87f4a88c55954e8d132f41a1d8be726a8dc8ffeecb83f6	1007	755	files/usr/local/sbin/waydroid-session.sh
-/usr/local/sbin/waydroid-ui.sh	script	84fe6f43208fb4f02922a2808209b9a8f624d6c025e89d31ed7e9ef4081bb8fe	757	755	files/usr/local/sbin/waydroid-ui.sh
+/usr/local/sbin/waydroid-session.sh	script	9acfe2b99436219badb38dedb512a267c09768578cc3e8a31f915510f17aafc7	1423	755	files/usr/local/sbin/waydroid-session.sh
+/usr/local/sbin/waydroid-ui.sh	script	7c0cb0809a8199fd10f244e60c53c8482a68c4741bb598e47578c15722eeed04	1173	755	files/usr/local/sbin/waydroid-ui.sh
 /usr/local/sbin/wd-ctl.sh	script	1f6e7af9918fa8c6d34e5e2d7f3d0f103efe28adda8471b32a91cac38302a91d	5203	755	files/usr/local/sbin/wd-ctl.sh
 /usr/local/sbin/wd-restart.sh	script	166cca88642b85c74e1b4e7fc812a2d761bf962a5e3dbae46da33dd473fc0c6b	816	755	files/usr/local/sbin/wd-restart.sh
 /usr/local/sbin/wifi-scan-refresh.sh	script	e5ea01adc37c268b83a62a9d3a4e9a729c94db183608efeea90c3af91b071eba	4359	755	files/usr/local/sbin/wifi-scan-refresh.sh

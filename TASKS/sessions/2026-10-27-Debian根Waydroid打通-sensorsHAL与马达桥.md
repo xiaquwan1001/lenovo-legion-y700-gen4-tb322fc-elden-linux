@@ -33,6 +33,14 @@
   `nsenter -t <pid> -m -p /system/bin/getprop sys.boot_completed` →
   `nsenter -t <pid> -m -p /system/bin/dumpsys sensorservice | head -2`
 - **证据指针**：本文件 §结论 + `PITFALLS/sessions/104-*.md`、`reports/debian-waydroid-20261026.md`（上一轮 §3 三条卡点已销）
+- **同日追加（第二段）**：
+  6. **冷起自启成立**：`/etc/xdg/autostart/elden-waydroid.desktop` → `waydroid-session.sh`；
+     `systemctl restart greetd` 后 **10 s 内** `waydroid status` = Session RUNNING、`boot_completed=1`、6 sensors。
+     两个坑：Debian sid gnome-session 见到 `X-GNOME-Autostart-Phase` 就**不执行**该条目（日志 "no longer manages
+     session services"）；`X-GNOME-Autostart-Delay` 同属失效机制 ⇒ 脚本必须自己等 wayland socket（≤30 s）⇒ PITFALLS #436/#437。
+  7. **可重现性收紧**：部署脚本优先取 **主机 arm64 chroot** 产物（`out/sensord-host/waydroid-sensord-udp`，
+     sha `22028ffd…`，由 `scripts/host-arm64-chroot.sh --build-sensord` 产出），目标根不再需要 g++/dev 包；
+     设备上现装即该产物（旧 musl 件留档 `/usr/local/bin/waydroid-sensord.musl.bak`）；MANIFEST 两条 elf 改记此 sha。
 - **★SSOT 待并入**：
   - ✅ 已并入：`TASKS/README.md` 新增 **T22**；`PITFALLS/README.md` 索引行 105。
   - ⬜ 待并入：`reports/debian-waydroid-20261026.md` §3 应标注「已解决」（下轮改）；G1-34 本体（SSC svc 400 注册表）不动。

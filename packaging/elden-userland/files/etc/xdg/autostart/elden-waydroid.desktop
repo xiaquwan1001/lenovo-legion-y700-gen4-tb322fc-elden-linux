@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Waydroid session
+Comment=Start the Waydroid Android session inside the Phosh/Wayland session
+# XDG_RUNTIME_DIR 由 waydroid-session.sh 探测并**等待** socket（Alpine=/run/phosh，Debian=/run/user/<uid>）
+Exec=/usr/local/sbin/waydroid-session.sh
+Terminal=false
+NoDisplay=true
+# phosh 的 XDG_CURRENT_DESKTOP = "Phosh:GNOME"，"Phosh" 不是 desktop-file 注册值（validate 报错），
+# 只写 GNOME 就命中。
+OnlyShowIn=GNOME;
+# ⚠️ 不要加 X-GNOME-Autostart-Phase / X-GNOME-Autostart-Delay：当前 gnome-session（Debian sid）
+# 会打 "sets X-GNOME-Autostart-Phase, but gnome-session no longer manages session services"
+# 然后**不执行**该条目（2026-10-27 实测：加了就永远不起 Waydroid session）。
+X-GNOME-Autostart-enabled=true
