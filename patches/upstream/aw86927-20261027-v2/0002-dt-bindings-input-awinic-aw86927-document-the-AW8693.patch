@@ -1,0 +1,31 @@
+From 3b5bdf8bfac9c6aee967052c52c836cfde073d7e Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 21:19:39 +0800
+Subject: [PATCH 2/5] dt-bindings: input: awinic,aw86927: document the AW86937
+ variant
+
+The AW86937 is a sibling of the AW86938 with the same register layout and
+a distinct CHIPID.  It is described the same way as the AW86938, with the
+AW86927 compatible as fallback; software tells the parts apart by reading
+the CHIPID registers.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ Documentation/devicetree/bindings/input/awinic,aw86927.yaml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/input/awinic,aw86927.yaml b/Documentation/devicetree/bindings/input/awinic,aw86927.yaml
+index bd74b8148..42b8f5f9e 100644
+--- a/Documentation/devicetree/bindings/input/awinic,aw86927.yaml
++++ b/Documentation/devicetree/bindings/input/awinic,aw86927.yaml
+@@ -15,6 +15,7 @@ properties:
+       - const: awinic,aw86927
+       - items:
+           - enum:
++              - awinic,aw86937
+               - awinic,aw86938
+           - const: awinic,aw86927
+ 
+-- 
+2.53.0
+

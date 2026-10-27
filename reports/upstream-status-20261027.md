@@ -83,10 +83,13 @@ for c in $(git rev-list --reverse 24a19b953..HEAD); do
 | M6 L1 DSI muxes | 无（`0xc0` 仍只在 `dsi_pll_enable_pll_bias()`） | — |
 | M8 dispcc 复位 | 无（probe 无 reset 调用） | — |
 | M1-U6 pas 泄漏 | **上游同病**（成功路径 0 处 release） | ✅ 直接套 |
-| **aw86927 5 提交** | ⚠ **波形装载已被上游内置实现占据** | ❌ 0003/0005 冲突 |
+| **aw86927 5 提交** | **无**（驱动内波形表上游早有，`df53055c540f`；无 `AW86937`、无 `request_firmware`） | ✅ 1 行 include 漂移即可套；已重切 **v2**（`reports/aw86927-series-v2-20261027.md`） |
 
-**aw86927 的关键变化**：linux-next 的 `aw86927.c` 已有 `aw86927_waveform[]` 正弦表 + `sram_waveform_header` + `aw86927_ram_init()` 写入路径（**驱动内波形，不是固件**），仍无 `request_firmware`、无 `AW86937`。
-⇒ U4 报告预判的「维护者可能要求用驱动内波形」**已经变成既成事实**；系列三选一（弃固件 / 固件作可选覆盖 / 先问列表）待拍板。
+**aw86927 已重切为 v2（2026-10-27 晚）**：驱动内正弦表（`aw86927_waveform[]` + `sram_waveform_header` + `aw86927_ram_init()`）
+上游**早就有**（`df53055c540f`，7.3-rc7 即含），仍无 `request_firmware`、无 `AW86937`；
+⇒ 按「先交最容易被收的部分」**删掉固件波形**，并把 `BST 0x11→0x09` 拆成独立 `Fixes:`：
+v2 = **5 枚**（`patches/upstream/aw86927-20261027-v2/`），逐提交编译 5/5、linux-next 上 5/5 顺序 apply OK。
+（本页上一版写「被上游半路占据」= 误判，已纠正；细节 `reports/upstream-dedup-audit-20261027.md` §2。）
 
 **同轮配套**：三条 lane 分支已合入 `main`（`ea6c518`/`41f9996`/`72acfd3`，此前 `TASKS §7` 引用的 8 条路径在主仓不存在），
 并新增 `scripts/check-doc-assets.sh` + `check-doctor §13` 把「文档引用的资产路径必须存在」变成常驻门禁（`checked=384 missing=0`）。

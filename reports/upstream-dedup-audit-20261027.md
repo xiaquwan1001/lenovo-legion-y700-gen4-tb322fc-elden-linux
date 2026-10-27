@@ -19,9 +19,9 @@
 | **M6 B5-P4** RFC | 未发 | — | 备料不变 |
 | **M8** dispcc MDSS 复位 | **没有**（`dispcc-sm8750.c` 只有 resets 表 `.resets=`，probe 无 reset 调用） | — | 保持 |
 | **M1-U6** `qcom_q6v5_pas` DTB 固件泄漏 | **上游仍有此泄漏**（成功路径 0 处 `release_firmware`；linux-next 只在 `qcom_mdt_pas_load()` 失败分支 `qcom_pas_metadata_release()` + `release_firmware()`） | **能**（`git apply --check` rc=0，直接套 linux-next） | ✅ 可直接投（等用户批准） |
-| **aw86927 5 提交系列** | ⚠ **部分被上游占据** | **不能**：`0001/0002/0004` 可套，**`0003/0005` 冲突** | ⛔ 必须重构（见 §2） |
+| **aw86927 5 提交系列** | **没有**（驱动内波形表上游早有，来自 `df53055c540f`；无 `AW86937`、无 `request_firmware`） | **能**，`0003` 只需 1 行 include 漂移即可套；`0005` 属系列内依赖 | ✅ 已重切为 **v2（5 枚，去固件 + 拆 `Fixes:`）**，见 §2 |
 
-**一句话**：除 aw86927 外，全部系列在 linux-next 上都**没有**被重复实现；A2 与 U6 可直接在 linux-next 基线上出件。
+**一句话**：**全部系列**在 linux-next 上都没有被重复实现（aw86927 的「被占据」是上一版误判，已纠正，见 §2）；A2 与 U6 可直接在 linux-next 基线上出件。
 
 ## §1 方法（可复现）
 
@@ -39,35 +39,27 @@ curl -sSL "$B/drivers/remoteproc/qcom_q6v5_pas.c?h=master"  | grep -c release_fi
 # ③ 补丁能不能套（最小仓只放目标文件，git apply --check）
 ```
 
-## §2 ★ aw86927 系列：上游已内置「驱动内波形」，我们的「固件装载」被半路占据
+## §2 ★ aw86927：先纠正本报告上一版的错判（已重切为 v2）
 
-linux-next 的 `drivers/input/misc/aw86927.c`（24637 B）**已含 SRAM 波形装载**，但走的是
-**驱动内置正弦表**，不是固件：
+**上一版这一节写错了**，写成「上游半路占据了波形装载，10-13 的结论两周就过时」。实际是：
 
-| 事实 | 位置 |
+| 事实 | 出处 |
 |---|---|
-| `static const u8 aw86927_waveform[]`（二补码正弦，注释写明 `round(84 * sin(x / 16.25))`） | 文件 ~209 行 |
-| `struct aw86927_sram_waveform_header` + `sram_waveform_header`（version 0x01 + start/end 地址） | ~224 行 |
-| `aw86927_ram_init()` 里先写 header、再 `regmap_noinc_write()` 写波形、再走 VBAT 检测 | ~654–696 行 |
-| **没有** `request_firmware()`（`grep firmware` = 0 命中） | 全文 |
-| **没有** `AW86937`（`enum aw86927_model` 只有 `AW86927`/`AW86938`） | ~186 行 |
-| `AW86938_PLAYCFG1_BST_7000MV 0x11` 仍在（我们的 `Fixes: 0x11→0x09` 依然成立） | ~51 行 |
-| binding `awinic,aw86927.yaml` **已在上游**（200），我们的 0001 是**改**它（+AW86937 + firmware 属性），不是新建 | — |
+| 上游**驱动内正弦表早就在**（`aw86927_waveform[]` + `sram_waveform_header` + `aw86927_ram_init()` 写入路径） | `df53055c540f`「Input: aw86927 - add support for Awinic AW86938」，**7.3-rc7 就含**（`grep -c aw86927_waveform` = 3） |
+| U4 报告说的是「上游无**固件**装载路径」——这句**一直是对的** | `reports/u4-aw86927-sramwindow-20261027.md`、v1 README「hardcodes one sine waveform ... no request_firmware() path」 |
+| linux-next 相对 7.3-rc7 在这个文件上**只漂移 1 行**（新增 `#include <linux/interrupt.h>`） | `diff` 该文件 = 3 行增删（含 diff 头） |
+| 因此 `0003` 套不上的真因 = 那行 include 落在它第一个 hunk 的上下文里 | `git apply` 报错行号 10（include 块） |
+| `0005` 套不上 = 上下文含 `0003` 新增的行，**系列内依赖**（本来就该最后套） | 0005 hunk 上下文 `u32 waveform_index;` |
 
-补丁套用结果（逐枚 `git apply`，基座 = linux-next 的 `aw86927.c` + `binding` + `drivers/input/misc/Kconfig`）：
+⇒ 「必须重构」的理由不成立（改 1 行 include 就能套）。**但重构仍然做了，理由换成更站得住的一条**：
+把「用厂商固件替换上游内置正弦表」当第一炮打是最容易被否的一块（要论证板级波形、DT 属性、校验格式），
+应先交无争议部分。**v2 = 5 枚**：`Fixes: 0x11→0x09` 单枚 + binding(AW86937) + AW86937 驱动 + AW8693X 寄存器布局 + suspend/shutdown；
+删掉固件装载与随它而来的 SRAM 几何数据表。门禁：逐提交编译 5/5 rc=0、`checkpatch --strict` 4 枚 0E/0W/0C
+（0001 有 1 W = 本地仓 shallow 认不到 `Fixes:` 的 commit id）、`dt-doc-validate` rc=0、**linux-next 上 5/5 顺序 apply OK**。
+产物 `patches/upstream/aw86927-20261027-v2/`，报告 `reports/aw86927-series-v2-20261027.md`，v1 目录已加 ⛔ 取代标记。
 
-```
-0001 rc=0   0002 rc=0   0003 rc=1（aw86927.c 冲突）   0004 rc=0   0005 rc=1（依赖 0003）
-```
-
-⇒ **两处硬冲突**：`0003`（固件波形装载）撞上上游刚加的内置波形 `aw86927_ram_init()`；`0005`（suspend/shutdown）依赖 0003 的上下文。
-
-**这条印证了 U4 报告里预判的评审风险**（「维护者可能主张用驱动内波形、不要固件」）——**它已经发生了**。
-三条出路（需你拍板，本轮不动）：
-
-1. **放弃固件路径**：只交 `AW86937` 支持 + `BST 0x11→0x09` Fixes + suspend/shutdown，波形沿用上游内置表 —— 最小、最可能被收；
-2. **固件作可选覆盖**：`firmware-name` 属性存在才用固件，否则用内置表 —— 保留能力、需论证为什么板级要换波形（本机现有 `/lib/firmware/awinic/y700-gen4-haptic.bin` 5881 B 是厂商波形）；
-3. 整系列暂缓，先在列表上问「是否接受 firmware 覆盖」再动手。
+**教训**：①「没有固件装载」≠「没有波形装载」，读结论要连谓语一起读；②`git apply` 失败先看失败 hunk 的行号与上下文再归因；
+③ 去重核对照做（binding 404 / apply 检查），但归因要分层。
 
 ## §3 M1-U6 的新事实（顺带核实）
 
@@ -92,5 +84,5 @@ linux-next 的 `qcom_q6v5_pas.c` 已经引入 `qcom_pas_metadata_release()`，�
 
 1. **A2 v2**：等 §2 形状裁决后投 `linux-pm`（v2 已在 `patches/upstream/m2-a2-linuxnext-20261027/`，0E/0W/0C + 编译 0 warning）。
 2. **M1-U6**：改基线说明 → 投 `linux-remoteproc`（Bjorn Andersson）。
-3. **aw86927**：走 §2 的三选一；选 1 的话系列从 5 提交缩到 3 提交，重做很快。
+3. **aw86927**：v2 已成型待批准投递（`linux-input`，To Dmitry Torokhov）；固件波形留作后续 RFC。
 4. 其余系列（M3-1 / M4-1 / M8）继续等 review，**不再加料**。

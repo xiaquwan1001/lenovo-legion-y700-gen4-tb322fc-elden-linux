@@ -1,5 +1,10 @@
 # aw86927 firmware waveform series (draft, 2026-10-27)
 
+> **⛔ 已被取代（2026-10-27 晚）：见 `../aw86927-20261027-v2/`。**
+> 对 linux-next 核对后决定**先不交固件波形**（上游自带驱动内正弦表，来自 `df53055c540f`），
+> 该系列重切为 5 枚无固件提交（并从中拆出 `Fixes:` 单枚）。本目录保留作过程记录，
+> **不要再按这里投递**。原因与判据见 `reports/aw86927-series-v2-20261027.md` §2。
+
 Pristine base: `24a19b953` (Linux 7.3-rc7).  Branch in `build/aw-series`:
 `aw86927-upstream-series`, 5 commits, tip `409beee0a`.
 
