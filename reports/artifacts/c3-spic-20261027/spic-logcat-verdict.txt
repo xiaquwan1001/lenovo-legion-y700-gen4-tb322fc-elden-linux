@@ -1,0 +1,35 @@
+10-27 13:06:17.959  1700  1747 W android.vending: Accessing hidden method Lcom/android/org/conscrypt/OpenSSLSocketImpl;->setAlpnProtocols([B)V (max-target-q,core-platform-api, reflection, denied)
+10-27 13:06:17.959  1700  1747 W android.vending: Accessing hidden method Lcom/android/org/conscrypt/AbstractConscryptSocket;->setAlpnProtocols([B)V (max-target-q, reflection, denied)
+10-27 13:06:18.650  1700  1747 W android.vending: Accessing hidden method Lcom/android/org/conscrypt/OpenSSLSocketImpl;->getAlpnSelectedProtocol()[B (max-target-q,core-platform-api, reflection, denied)
+10-27 13:06:18.650  1700  1747 W android.vending: Accessing hidden method Lcom/android/org/conscrypt/AbstractConscryptSocket;->getAlpnSelectedProtocol()[B (max-target-q, reflection, denied)
+10-27 13:06:19.004  1700  1753 I Finsky  : [72] kcv.b(30): requestIntegrityToken() finished for com.henrikherzig.playintegritychecker.
+10-27 13:06:19.005  3914  3963 I PlayCore: UID: [10151]  PID: [3914] OnRequestIntegrityTokenCallback : onRequestIntegrityToken
+10-27 13:06:19.005  3914  4213 I PlayCore: UID: [10151]  PID: [3914] IntegrityService : Unbind from service.
+10-27 13:06:19.007  3914  3914 W System.err: SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+10-27 13:06:19.007  3914  3914 W System.err: SLF4J: Defaulting to no-operation (NOP) logger implementation
+10-27 13:06:19.007  3914  3914 W System.err: SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+10-27 13:06:19.031  3914  3914 I System.out: {
+10-27 13:06:19.031  3914  3914 I System.out:   "requestDetails": {
+10-27 13:06:19.031  3914  3914 I System.out:     "requestPackageName": "com.henrikherzig.playintegritychecker",
+10-27 13:06:19.031  3914  3914 I System.out:     "timestampMillis": "1793077578875",
+10-27 13:06:19.031  3914  3914 I System.out:     "nonce": "WFhLU1dTZHkxYTJSdDZLSUJlSW1NMDE2Y1BnRml6bFZYWEdWOEp3c3ZNelNlTzVRbnc\u003d"
+10-27 13:06:19.031  3914  3914 I System.out:   },
+10-27 13:06:19.031  3914  3914 I System.out:   "appIntegrity": {
+10-27 13:06:19.031  3914  3914 I System.out:     "appRecognitionVerdict": "UNEVALUATED"
+10-27 13:06:19.031  3914  3914 I System.out:   },
+10-27 13:06:19.031  3914  3914 I System.out:   "deviceIntegrity": {
+10-27 13:06:19.031  3914  3914 I System.out:     "recentDeviceActivity": {
+10-27 13:06:19.031  3914  3914 I System.out:       "deviceActivityLevel": "UNEVALUATED"
+10-27 13:06:19.031  3914  3914 I System.out:     }
+10-27 13:06:19.031  3914  3914 I System.out:   },
+10-27 13:06:19.031  3914  3914 I System.out:   "accountDetails": {
+10-27 13:06:19.031  3914  3914 I System.out:     "appLicensingVerdict": "UNEVALUATED"
+10-27 13:06:19.031  3914  3914 I System.out:   },
+10-27 13:06:19.031  3914  3914 I System.out:   "environmentDetails": {
+10-27 13:06:19.031  3914  3914 I System.out:     "playProtectVerdict": "UNEVALUATED"
+10-27 13:06:19.031  3914  3914 I System.out:   }
+10-27 13:06:19.031  3914  3914 I System.out: }
+10-27 13:06:22.866   264   278 D ConnectivityService: requestNetwork for uid/pid:10092/1364 activeRequest: null callbackRequest: 108 [NetworkRequest [ REQUEST id=109, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10092 RequestorUid: 10092 RequestorPkg: com.google.android.dialer UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647
+10-27 13:06:22.867   264   383 D ConnectivityService: NetReassign [109 : null → 100]
+10-27 13:06:22.867   264   382 D EthernetNetworkFactory: eth0: onNetworkNeeded for request: NetworkRequest [ REQUEST id=109, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10092 RequestorUid: 10092 RequestorPkg: com.google.android.dialer UnderlyingNetworks: Null] ]
+10-27 13:06:22.867   264   382 D EthernetNetworkFactory: IpClient already started
