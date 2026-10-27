@@ -22,9 +22,10 @@
 | **M3-3 / M3-4 / M3-6**（音频 aw88461 / 显示 4 枚 / WCN pwrseq） | ⬜ 封存备料 | 2026-10-13 | 用户尚未批准投递 | 按 M3-1 收口后再逐片投 |
 | **M5**（`dm-default-key` → 出树 patchset） | ⬜ 立项完，patchset 未交付 | 2026-10-13 报告 + 隔离已在上游树完成 | — | 交付「能力用上游 `dm-inlinecrypt` + patchset 封存」两件 |
 | **M7**（Q24 rpmhpd retention） | ✅ **关闭** | 上游修复已在 7.3 线 ⇒ 无需我方补丁 | — | 可选：把 debugfs/cmd-db 观测数据回给 Konrad/Taniya（纯观测） |
+| **M1-U6**（`qcom_q6v5_pas` DTB 固件泄漏） | ⬜ 补丁已备，**未投** | 2026-10-27 `patches/upstream/m1-pas-dtbfw-20261027/`（+5 −4，0E/0W/0C） | 用户批准 | 投 `linux-remoteproc`（Bjorn Andersson）；建议同时合进 M1 树 |
 | **M9**（ITS/LPI kexec 认领） | ✅ **已撤回** | Marc Zyngier 否方案；回信 2026-10-26 已发并回读 | — | 不做；正解在 loader/EFI 侧（与本项目当前主线无关） |
 
-## §1 本轮（10-27）新增的两件事
+## §1 本轮（10-27）新增的三件事
 
 1. **M4-1 投出**（用户批准）：两条线程、三枚 binding，实发件留档
    `patches/upstream/m4-camss-2026-10-13/sent-20261027/`（投递前修掉占位身份 `Elden Mainline Agent <…@localhost>`
@@ -32,6 +33,9 @@
 2. **M4-2…M4-4 驱动系列备料完成**：把本地功能树里「一次性提交」的整块 camss 重切成 7 个**逐条可编译**的提交；
    相对下游树的两处有意改动 = 匿名 `union{reg_update; rup_update; aup_update}` → 显式字段、
    两处 `CAMSS_8750` 特判隔离成 `NOT FOR UPSTREAM` 提交。风险清单见该目录 `README.md` §4（R1–R7）。
+3. **M1-U6 终审（新增）**：`qcom_q6v5_pas` 的 DTB 固件在成功路径泄漏，D6「上游 release 路径取代」的依据被推翻；
+   补丁 `patches/upstream/m1-pas-dtbfw-20261027/`（+5 −4，0E/0W/0C，**未投**），证据
+   `reports/m1-u6-pas-dtbfw-leak-20261027.md`。**D 类未决 9 → 8 条**（U6 结项；另 U8 `CONFIG_FS_ENCRYPTION` 核查为「当前不编译」，同批结项）。
 
 ## §2 机械门（可复用，本轮原始结果）
 
@@ -54,7 +58,7 @@ for c in $(git rev-list --reverse 24a19b953..HEAD); do
 
 | 残留 | 说明 |
 |---|---|
-| **D 类剔除未终审（9 条未决）** | M1 重基树里 DSI 一族（B5/Q28 相关）仍留树内待重构，见 `TASKS` §7 M1 行与 `reports/m1-rebase-7.3rc7-execution-20261013.md` §4。这是**真·上游化残留**，不属文档漂移 |
+| **D 类剔除未终审（8 条未决，U6 已结项）** | M1 重基树里 DSI 一族（B5/Q28 相关）仍留树内待重构，见 `TASKS` §7 M1 行与 `reports/m1-rebase-7.3rc7-execution-20261013.md` §4。**2026-10-27 更新**：U6（`qcom_q6v5_pas` DTB 固件泄漏）已终审为**真 bug**、补丁备好（`reports/m1-u6-pas-dtbfw-leak-20261027.md`），D 类由 9 条降为 8 条；剩余核心仍是 DSI 一族 |
 | **M1 新树未上机对照** | `build/m1-upstream/clean-tree-73` 只有「构建通过 + 逐域 argument」，没有等机功能对照记录 |
 | **基线代次** | 全部系列基线仍是 7.3-rc7（`24a19b953`）；Konrad 已要求 A2 换 `linux-next/master`，其余系列未跟进 |
 | **封存件无人推进** | M3-3 / M3-4 / M3-6 / M5 四件都停在「备料完成」，需要一次投递裁决 |
