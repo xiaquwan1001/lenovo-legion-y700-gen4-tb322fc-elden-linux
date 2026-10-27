@@ -1,0 +1,17 @@
+# elden (TB322FC / SM8750P): libssc/SSC 传感器类型 + 加速度计安装矩阵
+#
+# 为什么必须自己加这条：Debian/Alpine 的 iio-sensor-proxy 3.9 上游
+# /usr/lib/udev/rules.d/80-iio-sensor-proxy.rules 只给 fastrpc-adsp* 打
+#   ENV{IIO_SENSOR_PROXY_TYPE}+="ssc-light ssc-compass"
+# 而 drv-ssc-accel.c 的 discover 是
+#   drv_check_udev_sensor_type (device, "ssc-accel", NULL)
+# ⇒ 没有 ssc-accel 这个属性，加速度计**永远不会**被探测到，表现为
+#   net.hadess.SensorProxy HasAccelerometer=false、Phosh 自动旋转磁贴灰掉，
+#   而 ssccli --sensor accelerometer 仍能出数（容易误判成「SSC/DSP 坏了」）。
+# 2026-10-27 在 Debian 根上实测：补上本规则 + udevadm trigger + 重启
+# iio-sensor-proxy ⇒ HasAccelerometer/HasAmbientLight/HasProximity 全 true。
+#
+# ACCEL_MOUNT_MATRIX：Y700 四代是横向自然姿平板，传感器 x/y 相对面板互换且同取反；
+# 该值与 Alpine 根上 2026-10-09 标定结果逐字一致（勿凭空改，改前按
+# monitor-sensor 的四姿态复标）。
+SUBSYSTEM=="misc", KERNEL=="fastrpc-adsp*", ENV{IIO_SENSOR_PROXY_TYPE}+="ssc-accel ssc-proximity ssc-light ssc-compass", ENV{ACCEL_MOUNT_MATRIX}="-1, 0, 0; 0, -1, 0; 0, 0, 1"

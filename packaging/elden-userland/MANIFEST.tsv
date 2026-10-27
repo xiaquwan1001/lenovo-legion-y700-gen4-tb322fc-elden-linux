@@ -17,6 +17,7 @@ dst	kind	sha256	size	mode	repo_src
 /etc/local.d/50-gunyah.start	locald	3d7b139e6cd9747857c0a2be230ed1447b30de2c636a41007162d1ec14841461	505	755	files/etc/local.d/50-gunyah.start
 /etc/local.d/elden-bootlog.start	locald	4b3f9ccbe383a1224e7cc7d85640903eefbe05bf1c6fffd0aa839cc3d648cdc9	76	755	files/etc/local.d/elden-bootlog.start
 /etc/local.d/elden-bringup.start	locald	111b2e4cfb666a2202928bfd7aa93396b7bc2f6e08a269b2218e617cdc09dcfb	117	755	files/etc/local.d/elden-bringup.start
+/etc/udev/rules.d/81-libssc-elden.rules	udev-rule	8d3429f8ff46ecfc6bdb4e3d6c52e328fecfe543d8bf77dfffe2e2eeaac1b127	1247	644	files/etc/udev/rules.d/81-libssc-elden.rules
 /etc/xdg/autostart/elden-waydroid.desktop	config	84969f19d03b4541e1f1b5a3af5e909b1d4ff0747c3e187b353eca65aa67bc77	808	644	files/etc/xdg/autostart/elden-waydroid.desktop
 /init	init	47af5f7d5400f52b944ffd8d5517e38dfa99531667a5cc2f18919209f6e7a539	34584	755	files/init
 /usr/local/bin/bwrap	script	79b77b2f375039b2d361a603cbd7d587f110c2be8b09655938e25ed563a5064f	236	755	files/usr/local/bin/bwrap

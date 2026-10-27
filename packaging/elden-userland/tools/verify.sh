@@ -148,6 +148,18 @@ if [ -n "$iv" ] && [ "$iv" -lt 180 ] 2>/dev/null; then ok "wifi-scan-refresh 间
 else fail "wifi-scan-refresh 间隔缺失或 ≥180s（当前 '$iv'）"; fi
 grep -q 'echo 255 > /run/elden-haptic/leds/vibrator/amplitude' "$HERE/hooks/elden-hapticd.pre" \
   && ok "elden-hapticd amplitude 默认 255（TASKS C10）" || fail "amplitude 默认必须是 255"
+# 2026-10-27 新增：SSC 加速度计的**唯一入口**是 udev 属性 ssc-accel。
+# iio-sensor-proxy 3.9 上游 80-iio-sensor-proxy.rules 只给 fastrpc-adsp* 打 ssc-light/ssc-compass，
+# 而 drv-ssc-accel.c 的 discover 是 drv_check_udev_sensor_type(device,"ssc-accel") ⇒ 缺属性 = 永远无 accel，
+# 症状（Debian 根实测）是 HasAccelerometer=false 但 ssccli 能出数，极易误判成 libssc/DSP 坏了。
+ru=$HERE/files/etc/udev/rules.d/81-libssc-elden.rules
+if [ -f "$ru" ] && grep -q 'KERNEL=="fastrpc-adsp\*"' "$ru" \
+   && grep -q 'IIO_SENSOR_PROXY_TYPE}+="ssc-accel' "$ru" \
+   && grep -q 'ACCEL_MOUNT_MATRIX' "$ru"; then
+  ok "SSC 加速度计 udev 规则在位（ssc-accel + mount matrix，G1-34）"
+else
+  fail "缺 81-libssc-elden.rules 或其 ssc-accel/ACCEL_MOUNT_MATRIX（HasAccelerometer 会恒 false）"
+fi
 [ -x "$HERE/extra/usr/local/sbin/elden-powerlog-mark.sh" ] \
   && ok "shutdown 标记已剥离成独立脚本" || warn "elden-powerlog-mark.sh 未置可执行位"
 
