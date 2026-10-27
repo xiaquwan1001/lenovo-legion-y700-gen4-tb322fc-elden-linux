@@ -1,0 +1,187 @@
+From fb8f38d95e7c2f3e2a4ea895fbb3449830c452f7 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 20:03:22 +0800
+Subject: [PATCH 2/3] drm/msm/dsi: add per-SoC bonded command-path config
+
+The bonded command path carried its constants inline: the error-mask bits
+in dsi_cmd_error_prepare()/dsi_cmd_error_cleanup(), the CMD_DMA_CTRL bits
+staged before a broadcast and the peer poll budget. Those are controller
+facts, so they belong in the existing per-SoC table next to the regulator
+and bus-clock data rather than in the driver body.
+
+Add struct msm_dsi_bonded_cfg and hang it off struct msm_dsi_config.
+SM8750 reports DSI 6G v2.9, which selects the sm8650 cfg entry, so the
+bonded data is attached there with values copied verbatim from the
+current code. Use remains gated on the sm8750 compatible, so behaviour is
+unchanged.
+
+Lane: b5-resoc
+Agent: b5-resoc
+Baseline: base/20261027-5d6400f
+Task: U1-U2-U5
+---
+ drivers/gpu/drm/msm/dsi/dsi_cfg.c  | 26 ++++++++++++++++++++++++++
+ drivers/gpu/drm/msm/dsi/dsi_cfg.h  | 22 ++++++++++++++++++++++
+ drivers/gpu/drm/msm/dsi/dsi_host.c | 22 +++++++++++++++-------
+ 3 files changed, 63 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.c b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+index da3fe6824..640ebe824 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+@@ -4,6 +4,7 @@
+  */
+ 
+ #include "dsi_cfg.h"
++#include "dsi.xml.h"
+ 
+ static const char * const dsi_v2_bus_clk_names[] = {
+ 	"core_mmss", "iface", "bus",
+@@ -194,6 +195,24 @@ static const struct regulator_bulk_data sm8650_dsi_regulators[] = {
+ 	{ .supply = "vdda", .init_load_uA = 16600 },	/* 1.2 V */
+ };
+ 
++/*
++ * Bonded command-path data. Values are copied verbatim from the vendor-derived
++ * in-tree code; the SM8750 compatible check in dsi_host.c/dsi_manager.c still
++ * gates every use until the master link moves into this table as well.
++ * TODO(doc): err_clear_bits/err_cleanup_bits touch bits that dsi.xml does not
++ * describe (see reports/b5-per-soc-cfg-design-20261027.md, RFC-SCOPE R1).
++ */
++static const struct msm_dsi_bonded_cfg sm8750_dsi_bonded_cfg = {
++	.master_link_id = DSI_0,
++	.cmd_dma_ctrl = DSI_CMD_DMA_CTRL_BROADCAST_EN |
++			DSI_CMD_DMA_CTRL_FROM_FRAME_BUFFER,
++	.err_clear_bits = 0x001f0200,
++	.err_cleanup_bits = 0x44440400,
++	.poll_timeout_us = 5000,	/* 500 polls, 10 us apart */
++	.needs_link_clk_bump = true,
++	.needs_sw_reset = true,
++};
++
+ static const struct msm_dsi_config sm8650_dsi_cfg = {
+ 	.io_offset = DSI_6G_REG_SHIFT,
+ 	.regulator_data = sm8650_dsi_regulators,
+@@ -203,6 +222,13 @@ static const struct msm_dsi_config sm8650_dsi_cfg = {
+ 	.io_start = {
+ 		{ 0xae94000, 0xae96000 },
+ 	},
++	/*
++	 * SM8750 reports DSI 6G v2.9, i.e. it selects this very table entry, so
++	 * the bonded data has to hang off it. Its use is still gated on the
++	 * "qcom,sm8750-dsi-ctrl" compatible, so an actual SM8650 keeps taking
++	 * the regular command path.
++	 */
++	.bonded = &sm8750_dsi_bonded_cfg,
+ };
+ 
+ static const struct msm_dsi_config kaanapali_dsi_cfg = {
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.h b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
+index ccf066796..c8813a738 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.h
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
+@@ -41,6 +41,26 @@
+ /* Maximum number of configurations matched against the same hw revision */
+ #define VARIANTS_MAX			2
+ 
++/**
++ * struct msm_dsi_bonded_cfg - per-SoC data for the bonded command path
++ * @master_link_id: link that drives the broadcast; not the probe order
++ * @cmd_dma_ctrl: CMD_DMA_CTRL bits both engines need while staged
++ * @err_clear_bits: error-mask bits set before a command
++ * @err_cleanup_bits: side-effectful FIFO status bits written after a command
++ * @poll_timeout_us: the peer is polled, never completed through its IRQ
++ * @needs_link_clk_bump: command-time link clock vote for this generation
++ * @needs_sw_reset: this generation needs the stock controller reset sequence
++ */
++struct msm_dsi_bonded_cfg {
++	u8 master_link_id;
++	u32 cmd_dma_ctrl;
++	u32 err_clear_bits;
++	u32 err_cleanup_bits;
++	u32 poll_timeout_us;
++	bool needs_link_clk_bump;
++	bool needs_sw_reset;
++};
++
+ struct msm_dsi_config {
+ 	u32 io_offset;
+ 	const struct regulator_bulk_data *regulator_data;
+@@ -48,6 +68,8 @@ struct msm_dsi_config {
+ 	const char * const *bus_clk_names;
+ 	const int num_bus_clks;
+ 	const resource_size_t io_start[VARIANTS_MAX][DSI_MAX];
++	/* NULL when the SoC has no bonded command path */
++	const struct msm_dsi_bonded_cfg *bonded;
+ };
+ 
+ struct msm_dsi_host_cfg_ops {
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 5405173a4..a3e9882c2 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -2345,12 +2345,19 @@ void msm_dsi_host_bonded_wait_video(struct mipi_dsi_host *host)
+ 	dsi_wait4video_eng_busy(to_msm_dsi_host(host));
+ }
+ 
++static const struct msm_dsi_bonded_cfg *
++dsi_bonded_cfg(struct msm_dsi_host *msm_host)
++{
++	return msm_host->cfg_hnd->cfg->bonded;
++}
++
+ static void dsi_cmd_error_prepare(struct msm_dsi_host *msm_host)
+ {
++	const struct msm_dsi_bonded_cfg *bonded = dsi_bonded_cfg(msm_host);
+ 	u32 val;
+ 
+ 	val = dsi_read(msm_host, REG_DSI_ERR_INT_MASK0);
+-	val |= 0x001f0200;
++	val |= bonded->err_clear_bits;
+ 	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, val);
+ 	wmb(); /* Stock completes the error-mask write before stale clear. */
+ 
+@@ -2360,13 +2367,14 @@ static void dsi_cmd_error_prepare(struct msm_dsi_host *msm_host)
+ 
+ static void dsi_cmd_error_cleanup(struct msm_dsi_host *msm_host)
+ {
++	const struct msm_dsi_bonded_cfg *bonded = dsi_bonded_cfg(msm_host);
+ 	u32 val;
+ 
+ 	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+ 	val = dsi_read(msm_host, REG_DSI_FIFO_STATUS);
+-	dsi_write(msm_host, REG_DSI_FIFO_STATUS, val | 0x44440400);
++	dsi_write(msm_host, REG_DSI_FIFO_STATUS, val | bonded->err_cleanup_bits);
+ 	val = dsi_read(msm_host, REG_DSI_ERR_INT_MASK0);
+-	val &= ~0x001f0200;
++	val &= ~bonded->err_clear_bits;
+ 	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, val);
+ 	wmb(); /* Complete overflow unmask before stale-error clear. */
+ 
+@@ -2553,8 +2561,7 @@ void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
+ 	val &= ~(DSI_CMD_DMA_CTRL_BROADCAST_MASTER |
+ 		 DSI_CMD_DMA_CTRL_WC_SEL | DSI_CMD_DMA_CTRL_PACKET_TYPE |
+ 		 DSI_CMD_DMA_CTRL_LOW_POWER);
+-	val |= DSI_CMD_DMA_CTRL_BROADCAST_EN |
+-	       DSI_CMD_DMA_CTRL_FROM_FRAME_BUFFER;
++	val |= dsi_bonded_cfg(msm_host)->cmd_dma_ctrl;
+ 	if (master)
+ 		val |= DSI_CMD_DMA_CTRL_BROADCAST_MASTER;
+ 	if (msg->flags & MIPI_DSI_MSG_USE_LPM)
+@@ -2636,10 +2643,11 @@ int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
++	u32 timeout_us = dsi_bonded_cfg(msm_host)->poll_timeout_us;
+ 	u32 status = 0;
+-	int i;
++	u32 elapsed;
+ 
+-	for (i = 0; i < 500; i++) {
++	for (elapsed = 0; elapsed < timeout_us; elapsed += 10) {
+ 		status = dsi_read(msm_host, REG_DSI_INTR_CTRL);
+ 		if (status & DSI_IRQ_CMD_DMA_DONE) {
+ 			dsi_cmd_dma_intr_update(msm_host, false, true);
+-- 
+2.53.0
+

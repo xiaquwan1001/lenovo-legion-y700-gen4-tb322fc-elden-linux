@@ -1,0 +1,378 @@
+From 768b7c11dca4a1617cc348d3637c5fc88cd9472a Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 20:17:17 +0800
+Subject: [PATCH 3/3] drm/msm/dsi: route the bonded command path through host
+ ops
+
+The manager called ten separate msm_dsi_host_bonded_* helpers to drive a
+bonded command transaction, so the broadcast engine's shape leaked into
+the manager and every helper needed a cross-file prototype.
+
+Expose the transaction as two host ops instead: .bonded_cmd_xfer runs one
+broadcast command against a peer host and .bonded_wait_video waits for
+the video engine to go idle. The implementation moves into dsi_host.c
+where the rest of the register-level code lives, and the ten helpers
+become file-static there; only the two entry points stay in dsi.h. The
+ops are only populated for the 6G v2.9 generation, which is the one
+SM8750 reports.
+
+The manager still picks the master by link id and the sequencing inside
+the transaction is unchanged, so behaviour is identical.
+
+Lane: b5-resoc
+Agent: b5-resoc
+Baseline: base/20261027-5d6400f
+Task: U1-U2-U5
+---
+ drivers/gpu/drm/msm/dsi/dsi.h         | 20 +++----
+ drivers/gpu/drm/msm/dsi/dsi_cfg.c     |  3 +
+ drivers/gpu/drm/msm/dsi/dsi_cfg.h     |  8 +++
+ drivers/gpu/drm/msm/dsi/dsi_host.c    | 86 ++++++++++++++++++++++++---
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 64 ++++----------------
+ 5 files changed, 107 insertions(+), 74 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+index 199ec7712..667d233f7 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -53,12 +53,15 @@ int msm_dsi_manager_connector_init(struct msm_dsi *msm_dsi,
+ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg);
+ int msm_dsi_manager_cmd_xfer_trigger(int id, u32 dma_base, u32 len);
+ bool msm_dsi_manager_cmd_failed(void);
++void msm_dsi_manager_mark_cmd_failed(void);
+ int msm_dsi_manager_register(struct msm_dsi *msm_dsi);
+ void msm_dsi_manager_unregister(struct msm_dsi *msm_dsi);
+ void msm_dsi_manager_tpg_enable(void);
+ 
+ /* dsi host */
+ struct msm_dsi_host;
++struct msm_dsi_host_cfg_ops;
++const struct msm_dsi_host_cfg_ops *msm_dsi_host_get_cfg_ops(struct mipi_dsi_host *host);
+ int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
+ 					const struct mipi_dsi_msg *msg);
+ void msm_dsi_host_xfer_restore(struct mipi_dsi_host *host,
+@@ -67,20 +70,11 @@ int msm_dsi_host_cmd_tx(struct mipi_dsi_host *host,
+ 					const struct mipi_dsi_msg *msg);
+ int msm_dsi_host_cmd_rx(struct mipi_dsi_host *host,
+ 					const struct mipi_dsi_msg *msg);
++/* bonded command path; registered in struct msm_dsi_host_cfg_ops */
++int msm_dsi_host_bonded_cmd_xfer(struct mipi_dsi_host *host,
++				 struct mipi_dsi_host *peer,
++				 const struct mipi_dsi_msg *msg);
+ void msm_dsi_host_bonded_wait_video(struct mipi_dsi_host *host);
+-int msm_dsi_host_bonded_xfer_prepare(struct mipi_dsi_host *host);
+-void msm_dsi_host_bonded_xfer_restore(struct mipi_dsi_host *host);
+-int msm_dsi_host_bonded_cmd_build(struct mipi_dsi_host *host,
+-				  const struct mipi_dsi_msg *msg,
+-				  u32 *dma_base, u32 *len);
+-void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host);
+-void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
+-				   const struct mipi_dsi_msg *msg,
+-				   u32 dma_base, u32 len, bool master);
+-void msm_dsi_host_bonded_cmd_trigger(struct mipi_dsi_host *host);
+-int msm_dsi_host_bonded_cmd_arm_master(struct mipi_dsi_host *host);
+-int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len);
+-int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host);
+ void msm_dsi_host_cmd_xfer_config(struct mipi_dsi_host *host,
+ 				  bool broadcast, bool master);
+ void msm_dsi_host_cmd_xfer_commit(struct mipi_dsi_host *host,
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.c b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+index 640ebe824..aa44d9fcb 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+@@ -320,6 +320,9 @@ static const struct msm_dsi_host_cfg_ops msm_dsi_6g_v2_9_host_ops = {
+ 	.tx_buf_put = dsi_tx_buf_put_6g,
+ 	.dma_base_get = dsi_dma_base_get_6g,
+ 	.calc_clk_rate = dsi_calc_clk_rate_6g,
++	/* SM8750 is the bonded part on this generation; see sm8650_dsi_cfg. */
++	.bonded_cmd_xfer = msm_dsi_host_bonded_cmd_xfer,
++	.bonded_wait_video = msm_dsi_host_bonded_wait_video,
+ };
+ 
+ static const struct msm_dsi_cfg_handler dsi_cfg_handlers[] = {
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.h b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
+index c8813a738..4ab015fb8 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.h
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
+@@ -82,6 +82,14 @@ struct msm_dsi_host_cfg_ops {
+ 	void (*tx_buf_put)(struct msm_dsi_host *msm_host);
+ 	int (*dma_base_get)(struct msm_dsi_host *msm_host, uint64_t *iova);
+ 	int (*calc_clk_rate)(struct msm_dsi_host *msm_host, bool is_bonded_dsi);
++	/*
++	 * Bonded command path. Only filled for controllers that implement the
++	 * broadcast protocol; dsi_manager.c reaches them through these two ops.
++	 */
++	int (*bonded_cmd_xfer)(struct mipi_dsi_host *host,
++			       struct mipi_dsi_host *peer,
++			       const struct mipi_dsi_msg *msg);
++	void (*bonded_wait_video)(struct mipi_dsi_host *host);
+ };
+ 
+ struct msm_dsi_cfg_handler {
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index a3e9882c2..0e3437a27 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -2345,6 +2345,12 @@ void msm_dsi_host_bonded_wait_video(struct mipi_dsi_host *host)
+ 	dsi_wait4video_eng_busy(to_msm_dsi_host(host));
+ }
+ 
++const struct msm_dsi_host_cfg_ops *
++msm_dsi_host_get_cfg_ops(struct mipi_dsi_host *host)
++{
++	return to_msm_dsi_host(host)->cfg_hnd->ops;
++}
++
+ static const struct msm_dsi_bonded_cfg *
+ dsi_bonded_cfg(struct msm_dsi_host *msm_host)
+ {
+@@ -2415,7 +2421,7 @@ static int dsi_cmd_link_clk_set_rate(struct msm_dsi_host *msm_host)
+ 	return msm_host->cfg_hnd->ops->link_clk_set_rate(msm_host);
+ }
+ 
+-int msm_dsi_host_bonded_xfer_prepare(struct mipi_dsi_host *host)
++static int dsi_bonded_xfer_prepare(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
+@@ -2454,7 +2460,7 @@ int msm_dsi_host_bonded_xfer_prepare(struct mipi_dsi_host *host)
+ 	return ret;
+ }
+ 
+-void msm_dsi_host_bonded_xfer_restore(struct mipi_dsi_host *host)
++static void dsi_bonded_xfer_restore(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
+@@ -2474,7 +2480,7 @@ void msm_dsi_host_bonded_xfer_restore(struct mipi_dsi_host *host)
+ 	pm_runtime_put_sync(&msm_host->pdev->dev);
+ }
+ 
+-int msm_dsi_host_bonded_cmd_build(struct mipi_dsi_host *host,
++static int dsi_bonded_cmd_build(struct mipi_dsi_host *host,
+ 				  const struct mipi_dsi_msg *msg,
+ 				  u32 *dma_base, u32 *len)
+ {
+@@ -2514,7 +2520,7 @@ int msm_dsi_host_bonded_cmd_build(struct mipi_dsi_host *host,
+ 	return 0;
+ }
+ 
+-void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
++static void dsi_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 	u32 schedule_line;
+@@ -2549,7 +2555,7 @@ void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
+ 	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL, val);
+ }
+ 
+-void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
++static void dsi_bonded_cmd_stage(struct mipi_dsi_host *host,
+ 				   const struct mipi_dsi_msg *msg,
+ 				   u32 dma_base, u32 len, bool master)
+ {
+@@ -2589,14 +2595,14 @@ void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
+ 	dsi_write(msm_host, REG_DSI_DMA_LEN, len & GENMASK(23, 0));
+ }
+ 
+-void msm_dsi_host_bonded_cmd_trigger(struct mipi_dsi_host *host)
++static void dsi_bonded_cmd_trigger(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 
+ 	dsi_write(msm_host, REG_DSI_TRIG_DMA, 1);
+ }
+ 
+-int msm_dsi_host_bonded_cmd_arm_master(struct mipi_dsi_host *host)
++static int dsi_bonded_cmd_arm_master(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 
+@@ -2609,7 +2615,7 @@ int msm_dsi_host_bonded_cmd_arm_master(struct mipi_dsi_host *host)
+ 		0 : -EIO;
+ }
+ 
+-int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
++static int dsi_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 	unsigned long completed;
+@@ -2640,7 +2646,7 @@ int msm_dsi_host_bonded_cmd_wait_master(struct mipi_dsi_host *host, u32 len)
+ 	return -ETIMEDOUT;
+ }
+ 
+-int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host)
++static int dsi_bonded_cmd_poll_slave(struct mipi_dsi_host *host)
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 	u32 timeout_us = dsi_bonded_cfg(msm_host)->poll_timeout_us;
+@@ -2660,6 +2666,68 @@ int msm_dsi_host_bonded_cmd_poll_slave(struct mipi_dsi_host *host)
+ 	return -ETIMEDOUT;
+ }
+ 
++int msm_dsi_host_bonded_cmd_xfer(struct mipi_dsi_host *host,
++				 struct mipi_dsi_host *peer,
++				 const struct mipi_dsi_msg *msg)
++{
++	struct msm_dsi_host *master_dsi = to_msm_dsi_host(host);
++	u32 dma_base, len;
++	int master_ret, peer_ret, ret;
++
++	if (!peer)
++		return -ENODEV;
++
++	if (msm_dsi_manager_cmd_failed())
++		return -EIO;
++
++	ret = dsi_bonded_xfer_prepare(host);
++	if (ret)
++		return ret;
++	ret = dsi_bonded_xfer_prepare(peer);
++	if (ret)
++		goto restore_master;
++
++	/* Per-generation: the video engine must be idle before staging. */
++	master_dsi->cfg_hnd->ops->bonded_wait_video(host);
++	to_msm_dsi_host(peer)->cfg_hnd->ops->bonded_wait_video(peer);
++	ret = dsi_bonded_cmd_build(host, msg, &dma_base, &len);
++	if (ret)
++		goto restore_pair;
++	dsi_bonded_cmd_init_trigger(host);
++	dsi_bonded_cmd_init_trigger(peer);
++	dsi_bonded_cmd_stage(host, msg, dma_base, len, true);
++	dsi_bonded_cmd_stage(peer, msg, dma_base, len, false);
++
++	/* Flush the packet and both descriptors before starting either engine. */
++	wmb();
++	dsi_bonded_cmd_trigger(peer);
++	master_ret = dsi_bonded_cmd_arm_master(host);
++	if (!master_ret) {
++		wmb(); /* Enable the completion interrupt before master kickoff. */
++		dsi_bonded_cmd_trigger(host);
++		master_ret = dsi_bonded_cmd_wait_master(host, len);
++	}
++	/* Resolve the peer even if the master's completion failed. */
++	peer_ret = dsi_bonded_cmd_poll_slave(peer);
++	ret = master_ret < 0 ? master_ret : peer_ret < 0 ? peer_ret : len;
++	if (ret < 0) {
++		/* Never reuse a packet buffer while either DMA engine is unresolved. */
++		msm_dsi_manager_mark_cmd_failed();
++		dev_err(&master_dsi->pdev->dev,
++			"bonded command DMA failed: master=%d peer=%d\n",
++			master_ret, peer_ret);
++		return ret;
++	}
++
++restore_pair:
++	dsi_bonded_xfer_restore(host);
++	dsi_bonded_xfer_restore(peer);
++	return ret;
++restore_master:
++	dsi_bonded_xfer_restore(host);
++	return ret;
++}
++
+ int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
+ 				const struct mipi_dsi_msg *msg)
+ {
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 93d636220..917e51a73 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -11,6 +11,7 @@
+ 
+ #include "msm_kms.h"
+ #include "dsi.h"
++#include "dsi_cfg.h"
+ 
+ #define DSI_CLOCK_MASTER	DSI_0
+ #define DSI_CLOCK_SLAVE		DSI_1
+@@ -52,6 +53,11 @@ static bool dsi_mgr_uses_bonded_cmd(void)
+ 	return msm_dsim_glb.is_sm8750 && IS_BONDED_DSI();
+ }
+ 
++void msm_dsi_manager_mark_cmd_failed(void)
++{
++	WRITE_ONCE(msm_dsim_glb.bonded_cmd_failed, true);
++}
++
+ bool msm_dsi_manager_cmd_failed(void)
+ {
+ 	return dsi_mgr_uses_bonded_cmd() &&
+@@ -601,9 +607,7 @@ static bool dsi_mgr_use_bonded_write(const struct mipi_dsi_msg *msg)
+ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ {
+ 	struct msm_dsi *master_dsi, *slave_dsi;
+-	struct mipi_dsi_host *master, *slave;
+-	u32 dma_base, len;
+-	int master_ret, slave_ret, ret;
++	const struct msm_dsi_host_cfg_ops *ops;
+ 
+ 	if (msm_dsim_glb.master_dsi_link_id < 0 ||
+ 	    msm_dsim_glb.master_dsi_link_id >= DSI_MAX)
+@@ -613,57 +617,13 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 	slave_dsi = dsi_mgr_get_other_dsi(msm_dsim_glb.master_dsi_link_id);
+ 	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host)
+ 		return -ENODEV;
+-	master = master_dsi->host;
+-	slave = slave_dsi->host;
+-
+-	if (msm_dsi_manager_cmd_failed())
+-		return -EIO;
+-
+-	ret = msm_dsi_host_bonded_xfer_prepare(master);
+-	if (ret)
+-		return ret;
+-	ret = msm_dsi_host_bonded_xfer_prepare(slave);
+-	if (ret)
+-		goto restore_master;
+ 
+-	msm_dsi_host_bonded_wait_video(master);
+-	msm_dsi_host_bonded_wait_video(slave);
+-	ret = msm_dsi_host_bonded_cmd_build(master, msg, &dma_base, &len);
+-	if (ret)
+-		goto restore_pair;
+-	msm_dsi_host_bonded_cmd_init_trigger(master);
+-	msm_dsi_host_bonded_cmd_init_trigger(slave);
+-	msm_dsi_host_bonded_cmd_stage(master, msg, dma_base, len, true);
+-	msm_dsi_host_bonded_cmd_stage(slave, msg, dma_base, len, false);
+-
+-	/* Flush the packet and both descriptors before starting either engine. */
+-	wmb();
+-	msm_dsi_host_bonded_cmd_trigger(slave);
+-	master_ret = msm_dsi_host_bonded_cmd_arm_master(master);
+-	if (!master_ret) {
+-		wmb(); /* Enable the completion interrupt before master kickoff. */
+-		msm_dsi_host_bonded_cmd_trigger(master);
+-		master_ret = msm_dsi_host_bonded_cmd_wait_master(master, len);
+-	}
+-	/* Resolve the peer even if the master's completion failed. */
+-	slave_ret = msm_dsi_host_bonded_cmd_poll_slave(slave);
+-	ret = master_ret < 0 ? master_ret : slave_ret < 0 ? slave_ret : len;
+-	if (ret < 0) {
+-		/* Never reuse a packet buffer while either DMA engine is unresolved. */
+-		WRITE_ONCE(msm_dsim_glb.bonded_cmd_failed, true);
+-		dev_err(&master_dsi->pdev->dev,
+-			"bonded command DMA failed: master=%d peer=%d\n",
+-			master_ret, slave_ret);
+-		return ret;
+-	}
++	/* Which hosts run the broadcast engine is per-generation knowledge. */
++	ops = msm_dsi_host_get_cfg_ops(master_dsi->host);
++	if (!ops || !ops->bonded_cmd_xfer)
++		return -EOPNOTSUPP;
+ 
+-restore_pair:
+-	msm_dsi_host_bonded_xfer_restore(master);
+-	msm_dsi_host_bonded_xfer_restore(slave);
+-	return ret;
+-restore_master:
+-	msm_dsi_host_bonded_xfer_restore(master);
+-	return ret;
++	return ops->bonded_cmd_xfer(master_dsi->host, slave_dsi->host, msg);
+ }
+ 
+ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+-- 
+2.53.0
+
