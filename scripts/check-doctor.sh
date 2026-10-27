@@ -18,6 +18,7 @@
 #   7. 入口文档完整性（围栏闭合 / 截断哨兵 / 机器指针泄漏）  ← 2026-10-15 L1
 #   8. 索引↔磁盘对账（编号撞车=FAIL；索引覆盖仅对声明角度=WARN）  ← 2026-10-15 L1
 #   9. SESSIONS/ 快照一致性（委托 scripts/check-sessions.sh）  ← 2026-10-15 L1
+#   12. 驱动模块化门禁（锚点 / olddefconfig 幂等 / tristate 自洽）  ← 2026-10-27
 set -uo pipefail
 
 FAST=0
@@ -558,6 +559,24 @@ fi
 for _h in pre-commit commit-msg; do
   if [ -x ".githooks/$_h" ]; then ok ".githooks/$_h 可执行"; else bad ".githooks/$_h 缺失或不可执行"; fi
 done
+
+# ---------------------------------------------------------------- 12. 驱动模块化门禁
+# 立此节的原因（2026-10-27 收尾轮）：scripts/check-modular-config.sh 2026-10-26 就写好了
+# （28 锚点不回退 + olddefconfig 幂等 + tristate 依赖自洽 + 可选模块树 vermagic），
+# 但没有任何调用方 —— 与 §11 同类问题：门写在仓库里，实际从不执行。
+echo
+echo "== 12. 驱动模块化门禁（锚点不回退 / olddefconfig 幂等 / tristate 自洽）=="
+if [ ! -d build/vk151 ]; then
+  warnf "无 build/vk151 构建树 → 跳过模块化门禁（换机/清理后属预期，不影响入库）"
+elif [ ! -f scripts/check-modular-config.sh ]; then
+  bad "scripts/check-modular-config.sh 缺失"
+else
+  if _mo=$(bash scripts/check-modular-config.sh 2>&1); then
+    ok "模块化 config 门禁通过（$(printf '%s' "$_mo" | grep -c '^PASS:') 项 PASS）"
+  else
+    bad "模块化 config 门禁失败：$(printf '%s' "$_mo" | grep -E '^FAIL' | head -3 | tr '\n' ' ')"
+  fi
+fi
 
 echo
 echo "== 汇总: FAIL=$fail  WARN=$warn =="
