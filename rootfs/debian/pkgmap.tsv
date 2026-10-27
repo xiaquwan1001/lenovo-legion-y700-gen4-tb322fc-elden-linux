@@ -160,7 +160,12 @@ waydroid	map	waydroid	sid 1.6.3+ds-3（Debian 14 起进官方归档）
 
 ## ---- 设备需要但不在 apk-world（action=add） ----
 iio-sensor-proxy	add	iio-sensor-proxy	**必须 sid**：3.9 才有 drv-ssc-* SSC 后端（trixie 3.7 无），本机 /sys/bus/iio 恒空
-libssc	add	libssc2 libssc-dev	sid 运行时包名 = libssc2（源码包 libssc）；dev 只在主机侧编 iio-sensor-proxy 时需要
+libssc	add	libssc2 libssc-bin	sid 运行时包名 = libssc2（源码包 libssc）；**ssccli 在 libssc-bin**里（libssc2 只有库，没有 CLI）——
+	`ssc-udp-relay` 的 exec 就是 `ssccli`，少了它 relay 会 `FATAL: ssccli not found` 每 5 s 退一次（2026-10-27 实测）。
+	dev 包只在主机侧编 iio-sensor-proxy 时需要，不进目标根
+## route C 的 `waydroid-sensord` 必须 **glibc 重编**（Alpine 件是 musl 动态 ⇒ glibc 根上 exec ENOENT，
+## PITFALLS #431）；构建依赖 = libgbinder-dev libglibutil-dev libglib2.0-dev g++ make pkg-config，
+## 是**构建期**工具、不进 apt-list，由 `scripts/deploy-sensord-routec-debian.sh` 按需装。
 hexagonrpcd	add	hexagonrpcd	SSC 用户态守护（QRTR svc 400），服务名 hexagonrpcd-adsp-sensorspd
 squeekboard	add	squeekboard	OSK（C11 输入法栈）
 fcitx5	add	fcitx5 fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-rime	Debian 前端包名 = fcitx5-frontend-gtk3/4（Alpine 叫 fcitx5-gtk3/4）

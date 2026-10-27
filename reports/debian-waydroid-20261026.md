@@ -38,6 +38,12 @@
 
 ## 3. 仍缺（按依赖顺序）
 
+> **★2026-10-27 已全部销号**（见 `TASKS/sessions/2026-10-27-Debian根Waydroid打通-sensorsHAL与马达桥.md`、`PITFALLS` #431–#435）：
+> ① 根因不是 route-C 供给不稳，而是 `waydroid-sensord` 是 **musl 动态**件（glibc 根上 exec ENOENT，但 `which` 命中）；
+> 用 `scripts/deploy-sensord-routec-debian.sh` 重编后 `sys.boot_completed=1`、6 个 h/w 传感器 running、读数与 `ssccli` 一致；
+> ② `elden-hapticd` 是 systemd `${VAR}` 不分词导致 `status=2`（`render.py` 已修）；`ssc-udp-relay` 缺的是 `libssc-bin` 里的 `ssccli`；
+> ③ `lxc-net` 已在 `stage.sh` 里 mask。下面保留当时的现场记录。
+
 1. **容器内 sensors HAL 不注册**：`vendor/bin/hw/android.hardware.sensors@1.0-service.waydroid`
    与 `vendor/etc/init/…service.waydroid.rc` 都在 vendor.img 里，服务定义是 `oneshot`，
    手工跑立刻退出（rc=0）⇒ 说明它要的东西不在（host 侧 route-C 供给：UDP 52012 的

@@ -281,6 +281,15 @@ if [ "$MODE" != check ]; then
 			&& enabled=$((enabled+1)) || bad "systemctl --root enable 失败: $name"
 	done < <(awk -F'\t' 'BEGIN{OFS="\x1f"} !/^#/ && NF {$1=$1; print}' "$USERLAND/services.tsv")
 	ok "已烘入 enable: $enabled 个单元"
+
+	# Waydroid 有自己的 `waydroid-net.sh`（建 waydroid0 网桥 + dnsmasq）；Debian 的 lxc-net 在本机
+	# **必然失败**（`ip6tables ... Could not fetch rule set generation id`，2026-10-26/27 两次实测），
+	# 失败单元会污染启动判定。用 **mask**（symlink → /dev/null）连 D-Bus 激活也挡掉；
+	# 单元文件由 `lxc-net` 包提供（不在 stage 里），所以**无条件**建 mask —— 指向 /dev/null 的
+	# 悬空 symlink 对 systemd 也是合法 mask。
+	mkdir -p "$STAGE/etc/systemd/system"
+	ln -sfn /dev/null "$STAGE/etc/systemd/system/lxc-net.service"
+	ok "已 mask: lxc-net.service（Waydroid 自带 waydroid0，无需 lxc-net）"
 fi
 
 # ---------------------------------------------------------------- 门禁
@@ -424,6 +433,9 @@ W="$STAGE/etc/systemd/system/multi-user.target.wants"
 for u in qbootctl greetd iio-sensor-proxy wifi-scan-refresh elden-hapticd ath12k-retry net-selfheal; do
 	[ -L "$W/$u.service" ] && ok "已 enable: $u" || bad "未 enable: $u（首启会自己恢复/跳步）"
 done
+[ -L "$STAGE/etc/systemd/system/lxc-net.service" ] \
+	&& ok "lxc-net 已 mask（否则每启一条失败单元）" \
+	|| bad "lxc-net 未 mask ⇒ Debian 上必失败（ip6tables legacy）"
 [ -L "$STAGE/etc/systemd/system/display-manager.service" ] \
 	&& ok "display-manager.service → greetd（桌面由 greetd 起）" \
 	|| bad "display-manager 别名缺失（greetd 不会被当作显示管理器）"

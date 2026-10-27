@@ -67,12 +67,20 @@ echo "[C] 设备侧静态二进制"
 for b in waydroid-sensord waydroid-sensord-udp eldroid-sensord elden-hapticd ffrumble; do
 	if [ -e "$M/usr/local/bin/$b" ]; then
 		if readelf -l "$M/usr/local/bin/$b" 2>/dev/null | grep -qi interpreter; then
-			echo "  ! $b 是动态链接，glibc 根上不可用（跳过；需重编）"
+			if readelf -l "$M/usr/local/bin/$b" 2>/dev/null | grep -qi 'ld-musl'; then
+				echo "  ! $b 是 **musl 动态**件：glibc 根上 exec 会 ENOENT（不是可以忽略的 warning）"
+				case "$b" in
+					waydroid-sensord) echo "      ⇒ 必须重编：主机跑 scripts/deploy-sensord-routec-debian.sh（否则 Android 永远卡 bootanimation）" ;;
+				esac
+			else
+				echo "  ! $b 是动态链接，glibc 根上不可用（跳过；需重编）"
+			fi
 		else
 			cp -a "$M/usr/local/bin/$b" "/usr/local/bin/$b"; echo "  + $b"
 		fi
 	fi
 done
+command -v ssccli >/dev/null || echo "  ! 缺 ssccli（apt-get install libssc-bin）⇒ ssc-udp-relay 会 FATAL 退出"
 
 echo "[D] /root/wd + config_nodes 修正"
 [ -d "$M/root/wd" ] && { mkdir -p /root/wd; cp -a "$M/root/wd/." /root/wd/; echo "  + /root/wd"; }

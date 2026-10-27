@@ -67,8 +67,8 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/time-sync.sh	script	c5736ac00a30fe7357229166bcf416dd36d96aaefb8c36d3af27fce2ca1fcaa1	1252	755	files/usr/local/sbin/time-sync.sh
 /usr/local/sbin/usb-gadget	script	7c70e2b9913526451907e5306af294a8e58acb50a1d0411ba0da9a50f61c626c	2529	755	files/usr/local/sbin/usb-gadget
 /usr/local/sbin/waydroid-ipv6	script	38dedcbbdd59b37830916feb13312d6072f9b28ee944fb6034e3dabd1abeee8c	2046	755	files/usr/local/sbin/waydroid-ipv6
-/usr/local/sbin/waydroid-session.sh	script	fa4e2ae0acb83e28a12dbcfd205f2fc606f5b3def6e9f099603a197a72cf6f9a	265	755	files/usr/local/sbin/waydroid-session.sh
-/usr/local/sbin/waydroid-ui.sh	script	9b176c74380bad0f574bdd891beea074b5cbf8ea387e5f106f6ffb945487ff0c	195	755	files/usr/local/sbin/waydroid-ui.sh
+/usr/local/sbin/waydroid-session.sh	script	d5c197f1be93d1937d87f4a88c55954e8d132f41a1d8be726a8dc8ffeecb83f6	1007	755	files/usr/local/sbin/waydroid-session.sh
+/usr/local/sbin/waydroid-ui.sh	script	84fe6f43208fb4f02922a2808209b9a8f624d6c025e89d31ed7e9ef4081bb8fe	757	755	files/usr/local/sbin/waydroid-ui.sh
 /usr/local/sbin/wd-ctl.sh	script	1f6e7af9918fa8c6d34e5e2d7f3d0f103efe28adda8471b32a91cac38302a91d	5203	755	files/usr/local/sbin/wd-ctl.sh
 /usr/local/sbin/wd-restart.sh	script	166cca88642b85c74e1b4e7fc812a2d761bf962a5e3dbae46da33dd473fc0c6b	816	755	files/usr/local/sbin/wd-restart.sh
 /usr/local/sbin/wifi-scan-refresh.sh	script	e5ea01adc37c268b83a62a9d3a4e9a729c94db183608efeea90c3af91b071eba	4359	755	files/usr/local/sbin/wifi-scan-refresh.sh

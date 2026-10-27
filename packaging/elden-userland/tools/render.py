@@ -14,6 +14,7 @@
     verify.sh 会扫渲染产物。
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -309,6 +310,19 @@ def render_openrc_initd(svc, hook_body):
     return subst((TEMPLATES / "openrc-initd.in").read_text(), mapping)
 
 
+SHELL_VAR = re.compile(r"\$\{(\w+)(?::-[^}]*)?\}")
+
+
+def _systemd_args(args: str) -> str:
+    """services.tsv 的 `${VAR}`/`${VAR:-default}` 是 shell 口径，systemd 语义不同：
+    `$VAR`（不带花括号、自成一词）才按空白切成多个参数；`${VAR}` 会**整串当成一个参数**
+    （实测：hapticd 把 `--amp-a 0xffff --amp-b 0xffff` 收成单个 argv ⇒ status=2 无限重启，
+    PITFALLS #418）。systemd 也不支持 `${VAR:-default}`，默认值由 Environment= 提供，
+    故这里统一降级成 `$VAR`。
+    """
+    return SHELL_VAR.sub(r"$\1", args)
+
+
 def render_systemd_unit(svc, hook_body):
     cls = svc["class"]
     deps = []
@@ -355,7 +369,7 @@ def render_systemd_unit(svc, hook_body):
         hook_path = f"/usr/local/libexec/elden/{svc['name']}.pre"
         body.append(f"ExecStartPre={hook_path}")
 
-    exec_line = svc["exec"] + (" " + svc["args"] if svc.get("args") else "")
+    exec_line = svc["exec"] + (" " + _systemd_args(svc["args"]) if svc.get("args") else "")
     body.append(f"ExecStart={exec_line}")
 
     pairs = env_pairs(svc.get("env"))

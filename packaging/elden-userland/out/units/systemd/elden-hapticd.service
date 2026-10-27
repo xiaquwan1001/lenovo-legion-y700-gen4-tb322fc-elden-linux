@@ -8,7 +8,7 @@ Before=waydroid-container.service
 [Service]
 Type=simple
 ExecStartPre=/usr/local/libexec/elden/elden-hapticd.pre
-ExecStart=/usr/local/bin/elden-hapticd --dir /run/elden-haptic/leds/vibrator --verbose ${HAPTIC_ARGS}
+ExecStart=/usr/local/bin/elden-hapticd --dir /run/elden-haptic/leds/vibrator --verbose $HAPTIC_ARGS
 Environment="HAPTIC_ARGS=--amp-a 0xffff --amp-b 0xffff"
 EnvironmentFile=-/etc/conf.d/elden-hapticd
 Restart=always
