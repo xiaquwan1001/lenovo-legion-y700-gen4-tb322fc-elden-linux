@@ -9,10 +9,12 @@
 #   YUYV 走的是"YUV 兜底"分支，cameraserver 的 legacy 参数层会
 #   `Camera2-Parameters: generated preview size list is empty` ⇒ 相机打不开。
 #
-# ★`max_buffers=8` 也是必须的（同 PITFALLS #440）：HAL 要 4 个 buffer，而写端
-#   gst v4l2sink 只申请 3 个，v4l2loopback 会把后来的请求压到 3 ⇒
+# ★buffer 数量必须 >=4，而且**要在写端解决**（同 PITFALLS #440）：HAL 要 4 个，而
+#   `gst v4l2sink` 只申请 3 个 ⇒ v4l2loopback 是设备级共享队列，后来的 HAL 会被压到 3 ⇒
 #   `VIDIOC_REQBUFS expected 4 buffers, got 3 instead` ⇒ configureStreams 失败。
-#   还需要内核侧补丁 `patches/extmod/0001-v4l2loopback-allow-grow-reqbufs.patch`。
+#   修法 = 写端换成 `v4l2-ctl --stream-out-mmap=8`（可显式指定数量），gst 只管抓帧 + fdsink。
+#   不要试图在驱动里改数量：两端数量不一致会让写端拿到"没排队的 buffer"⇒ dqbuf 报错 + SIGSEGV。
+#   模块仍需 `max_buffers=8`（>= 写端/读端要的数量）。
 # 前置：设备侧 /lib/modules/$(uname -r)/extra/v4l2loopback.ko（本脚本会尝试 insmod）。
 #
 # 已知限制（2026-10-17 实测）：
@@ -57,13 +59,20 @@ start)
 		fi
 	fi
 	if [ "$WHICH" = rear ]; then CAM=$CAM_REAR; else CAM=$CAM_FRONT; fi
+	FMT=${LOOPFMT:-NV12}
 	SRUN <<EOF
 set -u
 lsmod | grep -q v4l2loopback || modprobe v4l2loopback exclusive_caps=1 video_nr=100 max_buffers=8 2>/dev/null || insmod /lib/modules/\$(uname -r)/extra/v4l2loopback.ko exclusive_caps=1 video_nr=100 max_buffers=8
 [ -e $LOOP ] || { echo "FAIL: $LOOP 不存在（v4l2loopback 未加载）"; exit 1; }
 $( [ "$WHICH" = rear ] && echo 'v4l2-ctl -d /dev/v4l-subdev28 --set-ctrl exposure=3000,analogue_gain=32 >/dev/null 2>&1' )
-pkill -f 'gst-launch-1.0 -q libcamerasrc' 2>/dev/null; sleep 1
-GST_DEBUG=0 nohup gst-launch-1.0 -q libcamerasrc camera-name="$CAM" ! videoconvert ! videoscale ! video/x-raw,format=${LOOPFMT:-NV12},width=$W,height=$H,framerate=$FPS/1 ! v4l2sink device=$LOOP >/tmp/cam-loopback.log 2>&1 &
+pkill -f 'gst-launch-1.0 -q libcamera[s]rc' 2>/dev/null
+pkill -f 'v4l2-ctl -d $LOOP --stream-out' 2>/dev/null
+sleep 1
+# 写端 = v4l2-ctl（buffer 数可控，默认 8）；抓帧端 = gst(libcamerasrc) → fdsink
+setsid bash -c "gst-launch-1.0 -q libcamerasrc camera-name='$CAM' ! videoconvert ! videoscale \
+  ! video/x-raw,format=$FMT,width=$W,height=$H,framerate=$FPS/1 ! fdsink fd=1 \
+  | v4l2-ctl -d $LOOP --set-fmt-video-out=width=$W,height=$H,pixelformat=$FMT \
+      --stream-out-mmap=8 --stream-from=- " >/tmp/cam-loopback.log 2>&1 &
 sleep 6
 echo "-- producer log:"; tail -3 /tmp/cam-loopback.log
 echo "-- loop fmt:"; v4l2-ctl -d $LOOP --get-fmt-video 2>/dev/null | grep -E 'Width|Pixel'

@@ -4,7 +4,7 @@
 # 为什么需要脚本（PITFALLS #440）：容器相机要 `/dev/video100`，而
 #   ① 模块必须**按目标 UTS 逐字匹配 vermagic**（否则设备拒载，且报错只说 invalid module format）；
 #   ② 默认 `max_buffers=2`、且写端 gst 只申请 3 个 ⇒ Android external HAL 要 4 个会失败，
-#      所以 `patches/extmod/0001-v4l2loopback-allow-grow-reqbufs.patch` 必须打上。
+#      所以 `patches/extmod/0001-v4l2loopback-min-4-buffers.patch` 必须打上。
 #
 # 用法：
 #   bash scripts/deploy-v4l2loopback.sh                 # 默认 TARGET=root@192.168.7.1
@@ -18,7 +18,7 @@ TARGET=${TARGET:-root@192.168.7.1}
 SSH_OPTS=${SSH_OPTS:--o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null}
 KSRC=${KSRC:-$ROOT/build/vk151}
 SRC=$ROOT/build/extmod/v4l2loopback
-PATCH=$ROOT/patches/extmod/0001-v4l2loopback-allow-grow-reqbufs.patch
+PATCH=$ROOT/patches/extmod/0001-v4l2loopback-min-4-buffers.patch
 SKIP_BUILD=${SKIP_BUILD:-0}
 CROSS=${CROSS:-aarch64-linux-gnu-}
 
@@ -35,7 +35,7 @@ mkdir -p "$OUT"
 
 if [ "$SKIP_BUILD" = 0 ]; then
 	[ -d "$SRC" ] || { say "缺源码树 $SRC（先 git clone v4l2loopback 到 build/extmod/）"; exit 1; }
-	if [ -f "$PATCH" ] && ! grep -q "req_count < dev->used_buffer_count" "$SRC/v4l2loopback.c"; then
+	if [ -f "$PATCH" ] && ! grep -q "req_count < 4" "$SRC/v4l2loopback.c"; then
 		say "打补丁：$(basename "$PATCH")"
 		patch -d "$SRC" -p1 < "$PATCH" || { say "打补丁失败"; exit 1; }
 	fi
@@ -61,7 +61,16 @@ say "部署 → /lib/modules/$UTS/extra/ 并加载（max_buffers=8）"
 rsh "mkdir -p /lib/modules/$UTS/extra"
 # shellcheck disable=SC2086
 scp -q $SSH_OPTS "$OUT/v4l2loopback.ko" "$TARGET:/lib/modules/$UTS/extra/"
-rsh 'depmod -a; modprobe -r v4l2loopback 2>/dev/null; \
+rsh 'depmod -a
+	# ⚠ 若模块仍被占用（生产者 gst / 容器 camera HAL 开着设备），`modprobe -r` 会失败，
+	# 而 `modprobe` 随后是 no-op ⇒ 你以为换了新模块，实际还在跑旧代码（2026-10-27 实测踩过）。
+	if lsmod | grep -q "^v4l2loopback"; then
+		modprobe -r v4l2loopback 2>/dev/null || {
+			echo "FAIL: v4l2loopback 仍在使用（先 pkill gst-launch / 停容器相机），未换模块" >&2
+			lsmod | grep -E "^v4l2loopback|camera" >&2
+			exit 3
+		}
+	fi
 	modprobe v4l2loopback exclusive_caps=1 video_nr=100 max_buffers=8 && \
 	ls -l /dev/video100 && cat /sys/module/v4l2loopback/parameters/max_buffers'
 say "done（相机生产者：bash scripts/cam-loopback.sh start front 1280x720 30）"

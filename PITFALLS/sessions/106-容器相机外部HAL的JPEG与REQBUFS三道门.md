@@ -43,7 +43,7 @@ AOSP 的 external camera HAL 只在 V4L2 源支持 **MJPEG** 时才把 MJPEG 直
   HAL 打开设备时报 `initCameraCharacteristics: v4l2 device open /dev/video100 failed`、
   `Camera3-Device: Could not open camera session: Broken pipe (-32)`。
 
-## #440 `VIDIOC_REQBUFS expected 4 buffers, got 3 instead`
+## #440 `VIDIOC_REQBUFS expected 4 buffers, got 3 instead` —— 只能在**写端**解决
 
 格式/打开都对之后的最后一道门：
 
@@ -54,44 +54,58 @@ E ExtCamDevSsn: V4L configuration failed!, format:NV12, w 1280, h 720
 E Camera3-Device: configureStreamsLocked: Unable to configure streams with HAL: Function not implemented (-38)
 ```
 
-两个原因叠加：
-① `v4l2loopback` 默认 `max_buffers=2` ⇒ 必须 `modprobe … max_buffers=8`；
-② 即使 `max_buffers=8` 仍只给 3：`vidioc_reqbufs()` 里
-   `if (has_other_owners() && used_buffer_count > 0) req_count = used_buffer_count;`
-   —— 写端 `gst v4l2sink` 默认只申请 **3** 个 buffer，后开的后端（HAL 要 4 个）被**强制压到 3**。
-   修法 = `patches/extmod/0001-v4l2loopback-allow-grow-reqbufs.patch`（只保底、允许放大到
-   `max_buffers`），重编 `out/extmod-vk172/v4l2loopback.ko`（vermagic 必须逐字等于目标 UTS）。
-   **一条命令可复现**：`bash scripts/deploy-v4l2loopback.sh`（自动读设备 UTS → 打补丁 →
-   临时改 `kernel.release`/`utsrelease.h` 编 → 核对 vermagic → 部署 → `modprobe … max_buffers=8`；
-   实测输出 `vermagic OK` + `/dev/video100` + `max_buffers=8`）。
+机理：`v4l2loopback` 的 buffer 队列是**设备级共享**的，先开的写端决定数量；
+`gst v4l2sink` 只申请 **3** 个，后到的 HAL 要 4 个 ⇒ `vidioc_reqbufs()` 里
+`if (has_other_owners() && used_buffer_count > 0) req_count = used_buffer_count;` 把它压到 3。
 
-过了这道门才有：
+**试过两种驱动补丁，都失败（勿重复）**：
+- 允许"请求更大"（`if (req_count < used) req_count = used;`）⇒ 两端数量不一致 ⇒ 写端拿到
+  "没排队的 buffer" ⇒ 刷 `gstv4l2allocator.c: buffer N was not queued, this indicate a driver bug`
+  并最终 **SIGSEGV**；
+- 所有 owner 一律协商成 `dev->buffer_count` ⇒ 去掉共享分支后第二个 opener 直接 `EBUSY`；
+  保留共享但抬下限到 4 ⇒ 写端仍按自己申请的 3 排 buffer，`got 3` 依旧。
 
-```
-I ExtCamDevSsn: configureV4l2StreamLocked: start V4L2 streaming 1280x720@30.000000fps
-V ExtCamDevSsn: threadLoop: converting to format NV12
-D StreamStateObserver: Update Preview stream state to STREAMING
-→ dumpsys media.camera: Active Camera Clients: [Camera ID: 200 … Package Name: de.markusfisch.android.binaryeye]
-```
+**成功做法（stock 模块，零补丁）**：写端换成 `v4l2-ctl`，它可以显式给数量：
 
-## #441 生产者 `gst-launch` 会 SIGSEGV，帧一停 App 就卡 spinner
-
-```
-/tmp/cam-nv12.log: Caught SIGSEGV
-                   exec gdb failed: No such file or directory
-                   Spinning.  Please run 'gdb gst-launch-1.0 <pid>' …
+```sh
+gst-launch-1.0 -q libcamerasrc camera-name=<CAM> ! videoconvert ! videoscale \
+    ! video/x-raw,format=NV12,width=1280,height=720,framerate=30/1 ! fdsink fd=1 \
+  | v4l2-ctl -d /dev/video100 --set-fmt-video-out=width=1280,height=720,pixelformat=NV12 \
+      --stream-out-mmap=8 --stream-from=-
 ```
 
-判据：`logcat | grep -c threadLoop` **不再增长**（HAL 没有新帧），而
-`dumpsys media.camera` 仍显示 client active ⇒ 界面停在加载圈。
-**未定位**（不是配置问题；`pkill` 后重起生产者可复现/恢复）。排查建议：
-`GST_DEBUG=3` 抓崩溃前最后的 element、或改用 `v4l2src`/`ffmpeg` 侧写端对照。
+实测：**30.26–30.93 fps**、`not queued` 报错 **0**、`/dev/video100` = NV12 1280x720、
+容器侧 `REQBUFS expected` 计数 **0**、`configureStreams` 通过、`start V4L2 streaming 1280x720@30fps`、
+`StreamStateObserver: Preview stream state to STREAMING`、`Active Camera Clients` 见 App PID。
+模块只需 `max_buffers=8`（≥ 两端要的数量）。
 
-## 本轮顺带确认的依赖（Debian 根）
+**部署脚本的坑**：`modprobe -r` 在模块仍被占用（生产者/容器开着设备）时会失败，而随后的
+`modprobe` 是 no-op ⇒ 你以为换了新模块，实际还在跑旧的。`scripts/deploy-v4l2loopback.sh`
+现在会在卸载失败时直接 FAIL 并打印占用者（实测已拦下一次静默失败）。
 
-`gstreamer1.0-tools/plugins-base/plugins-good` + `gstreamer1.0-libcamera`（`libcamerasrc`）
-+ `v4l-utils`（`v4l2-ctl`）+ `libcamera-tools`（`cam -l`）；缺任一件时表现为
-"no element libcamerasrc" 或 `cam` 命令不存在。已进 `pkgmap.tsv`（`camera-loopback` 行）。
+## #441 App 级停帧：框架侧一切正常，App 自己的分析器停了
+
+成功配置之后（CameraX 日志齐全）：
+
+```
+D CameraStateMachine: New public camera state CameraState{type=OPEN, error=null}
+D UseCaseAttachState: All use case: [id0-…, ey0-…]   # preview + analyze
+D CaptureSession: CameraCaptureSession.onConfigured() mState=OPENED
+D CaptureSession: CameraCaptureSession.onReady() OPENED
+dumpsys media.camera: Device status: ACTIVE / Frames produced: 12 / Active Camera Clients: [PID … binaryeye]
+```
+
+但 `logcat | grep -c threadLoop` 在 **97 帧（≈3 s）后不再增长**，界面停在 App 自己的加载遮罩。
+⇒ 不是 HAL/驱动的问题（HAL 在等 App 发新 request）；是 App 侧（Binary Eye 的 CameraX
+analyze 用例）不再 request/consume。
+
+**历史纠正**：之前把"生产者 SIGSEGV"当成独立缺陷，实际那是 #440 里"两端 buffer 数量不一致"补丁的副作用；
+换成写端 `v4l2-ctl --stream-out-mmap=8` 后生产者连续跑 >120 s 无崩溃（`gst` 只抓帧 + fdsink）。
+⇒ **`v4l2loopback` 保持 stock，不要打 buffer 数量补丁**。
+
+**剩余待查**：97 帧后停 request 的原因（App 分析器阻塞 / YUV→NV12 CPU 拷贝太慢不够喂 30 fps /
+Waydroid 的 `IMPLEMENTATION_DEFINED` 路径问题）。可用对照：换成只做 preview 的最小 App、
+或抓 `dumpsys media.camera -v 1` 的 per-stream frame 计数看是"没 request"还是"request 了没出帧"。
 
 ## 附带发现：`verify.sh` 的 F 段前提变了（设备已换根）
 
