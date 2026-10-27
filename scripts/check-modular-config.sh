@@ -21,6 +21,10 @@
 set -euo pipefail
 
 ROOT="${ROOT:-/home/xuqianhui/y700-elden}"
+if [ -z "${KDIR:-}" ]; then
+	_t=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$ROOT/patches/current-tree" 2>/dev/null | grep -v '^$' | head -1)
+	KDIR="${_t:+$ROOT/$_t}"
+fi
 KDIR="${KDIR:-$ROOT/build/vk151}"
 CFG="${CONFIG:-$KDIR/.config}"
 CROSS="${CROSS:-aarch64-linux-gnu-}"

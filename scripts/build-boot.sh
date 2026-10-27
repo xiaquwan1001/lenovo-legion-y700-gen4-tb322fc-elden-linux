@@ -10,6 +10,7 @@
 #       已用 vk27 原内核 + 原 ramdisk 复现验证：输出与 out/boot-elden-vk27.img **逐字节相同**。
 set -e
 ROOT=${ROOT:-$HOME/y700-elden}
+. "$ROOT/scripts/env-build.sh"   # 树默认取 patches/current-tree（日常线），KDIR= 可覆盖
 KDIR=${KDIR:-$ROOT/linux}
 OUT=$ROOT/out
 IRAM=$ROOT/initramfs

@@ -9,6 +9,7 @@
 # and both git HEADs.  Commit the manifests (they are tiny, text-only).
 set -euo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
+. "$ROOT/scripts/env-build.sh"   # 树默认取 patches/current-tree（日常线），KDIR= 可覆盖
 KDIR=${KDIR:-$ROOT/linux}
 OUT=$ROOT/out
 VERSION=${1:?usage: build-manifest.sh <version> [image]}

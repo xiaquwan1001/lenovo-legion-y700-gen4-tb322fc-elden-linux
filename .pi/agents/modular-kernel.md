@@ -14,7 +14,9 @@ tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 - `reports/vk163-modular-20261026.md`（第一层成果：载荷驱动全 `=m`、零写盘上机全绿、`mod-loop` 通）
 - `TASKS/README.md` §4 T16/T17、§7 M3（上游化要按模块出补丁）
 - `PITFALLS/README.md` 零号纪律 + `#162`（olddefconfig 删 ARCH_QCOM）、`#176`（vermagic）、`#406`–`#409`
-- `patches/fragment-modular.config`、`patches/fragment-modular-video.config`、`patches/config-vk163-modular-20261025`
+- `patches/fragment-modular.config`（v1 载荷驱动）、`patches/fragment-modular-v2.config`（v2 基础设施外设，**已上机**）、
+  `patches/fragment-modular-video.config`（可选，保留不用）、快照 `patches/config-vk163-modular-v2-20261026`（= v1+v2 完整状态）
+- `patches/current-tree`（**树默认指针**，= `build/vk151`；脚本经 `scripts/env-build.sh` 取它，`KDIR=` 可覆盖）
 - `build/vk151/.config`（7.3 日常线真源）、`scripts/{env-build,build-kernel,mod-loop,payload-modules-load}.sh`
 
 ## 目标（按顺序）
@@ -41,7 +43,8 @@ tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 
 ## 硬约束
 - **只写**：`reports/modular-driver-audit-20261026.md`、`TASKS/sessions/2026-10-26-模块化第二层.md`、
-  `patches/fragment-modular-v2.config`、`scripts/check-modular-config.sh`（+ 必要的 `patches/` 快照）。
+  `patches/fragment-modular-v2.config`、`scripts/check-modular-config.sh`（+ 必要的 `patches/` 快照；新片段要能被
+  `FRAG="a b"` 多层合并并可重放）。
   **绝不编辑** `INDEX.md`/`TASKS/README.md`/`DEVICE/`/`RESOURCES/`/`PITFALLS/README.md`/`RUNBOOK-*`。
 - 不 `make olddefconfig` 后直接采用（必须走 `merge_config` + 锚点回钉，见 `PITFALLS #162`）。
 - 不跑全仓 `grep -r`（`PITFALLS #417`），限定目录/文件。

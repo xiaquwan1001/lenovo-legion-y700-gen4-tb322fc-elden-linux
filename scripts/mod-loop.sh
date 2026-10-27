@@ -3,7 +3,8 @@
 # on the device.  No kernel rebuild, no boot image, no fastboot, no reboot (~30 s).
 #
 # Requires the target driver to be built as a module (=m).  If it is =y, this
-# script refuses and tells you to flip the tristate (see patches/fragment-modular.config).
+# script refuses and tells you to flip the tristate (see patches/fragment-modular*.config;
+# 日常线已应用 v1+v2 两层，快照 patches/config-vk163-modular-v2-20261026).
 #
 # usage:
 #   scripts/mod-loop.sh sound/soc/qcom            # build dir, push, reload all its .ko
@@ -108,7 +109,7 @@ KO_LIST=$(find "$STAGE/lib/modules/$KV" -name '*.ko' 2>/dev/null | sort)
 if [ -z "$KO_LIST" ]; then
 	echo "[mod] no .ko staged for $DIR." >&2
 	echo "      Likely the driver is built-in (=y). Flip it to =m:" >&2
-	echo "        scripts/apply-kernel-fragment.sh  (FRAG=patches/fragment-modular.config)" >&2
+	echo "        FRAG=\"patches/fragment-modular.config patches/fragment-modular-v2.config\" SNAP=patches/config-<snap> scripts/apply-kernel-fragment.sh" >&2
 	exit 1
 fi
 NAMES=$(echo "$KO_LIST" | xargs -n1 basename | sed 's/\.ko$//')

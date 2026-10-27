@@ -16,7 +16,8 @@
 # failed `kexec -l` leaves the current kernel running.  First test `--load-only`.
 set -euo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
-KDIR=$ROOT/linux
+. "$ROOT/scripts/env-build.sh"   # 树默认取 patches/current-tree（日常线），KDIR= 可覆盖
+KDIR=${KDIR:-$ROOT/linux}
 TAB=${TAB:-root@192.168.7.1}
 SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 $TAB"
 

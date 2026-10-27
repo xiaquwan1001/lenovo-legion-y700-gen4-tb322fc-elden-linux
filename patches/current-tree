@@ -1,0 +1,7 @@
+# 日常线内核树指针（唯一一行有效内容，相对仓库根）。
+# 读取方：scripts/env-build.sh 的 KDIR 默认值（iterate/mod-loop/build-kernel/
+#          apply-kernel-fragment 全部经它取树）。
+# 历史：`linux` 符号链接 = GEEKiDoS v7.2-elden 血统（@ba28ec16f0），自 2026-10-27
+#       起不再是默认——日常线载荷是 7.3-rc7，裸跑脚本曾静默编错树。
+# 换树时只改这一行（并同步 DEVICE/README 内核树一节）；临时覆盖用 KDIR=。
+build/vk151

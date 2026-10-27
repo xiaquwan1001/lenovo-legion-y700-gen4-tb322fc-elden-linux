@@ -394,12 +394,17 @@ fastboot reboot
 | **2 内核** | `scripts/iterate.sh kernel` | 改 `=y` 代码 / 新补丁 | 全量编译（ccache 暖后复用）+ kexec ~2–5 min |
 | **3 RAM 兜底** | `scripts/iterate.sh ram` | 零写盘取证 / 回退验证 | fastboot boot（**需主机 USB**） |
 
-**前置（一次性）**：应用模块化片段，否则环 0 不可用——
+**前置（一次性）**：应用模块化片段，否则环 0 不可用。模块化是**两层**，两层都要应用
+（只应用 v1 = 半模块化：TF/MMC/QRTR 等仍是 `=y`）——
 ```bash
-FRAG=patches/fragment-modular.config SNAP=patches/config-vk50-modular \
+FRAG="patches/fragment-modular.config patches/fragment-modular-v2.config" \
+  SNAP=patches/config-vk163-modular-v2-20261026 \
   bash scripts/apply-kernel-fragment.sh
-bash scripts/iterate.sh kernel --boot      # 全量重编一次；此后驱动改动走环 0
+bash scripts/check-modular-config.sh        # 门禁：锚点不回退 / olddefconfig 幂等
+bash scripts/iterate.sh kernel --boot       # 全量重编一次；此后驱动改动走环 0
 ```
+- 树默认 = `patches/current-tree`（日常线 `build/vk151`），`KDIR=` 可覆盖；脚本会打印实际用的树。
+- 片段逐条符号取值会被核对（`DRIFT` 行 = 被 bool 子项/依赖拉回，属既定行为，见 `PITFALLS #162`）。
 
 **kexec 热重载**（`--kexec`，kernel 默认；**⚠️ 本机已定论不可用**）：
 - ⚠️ **根因/结论口径见 `../TASKS/README.md` §4**（2026-10-08 定位 = `device_shutdown()` 内 `cpufreq_suspend()` × 设备 `.shutdown()` 遍历多触发叠加掉电；唯一可靠规避 = 整段跳过 device_shutdown，但目标内核仍引导失败）。

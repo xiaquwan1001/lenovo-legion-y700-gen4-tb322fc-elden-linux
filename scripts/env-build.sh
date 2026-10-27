@@ -33,10 +33,25 @@ else
 fi
 export ARCH KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
-# Kernel tree to build: default = $ROOT/linux (the symlink), override with KDIR
-# so mod-loop/build scripts can target a worktree (e.g. KDIR=build/vk151).
-: "${KDIR:=$ROOT/linux}"
+# Kernel tree to build.  Resolution order:
+#   1. KDIR=... (explicit override, e.g. KDIR=build/vk151 or an experiment worktree)
+#   2. $ROOT/patches/current-tree  (一行指针 = 日常线树；2026-10-27 起）
+#   3. $ROOT/linux                 （历史：GEEKiDoS v7.2-elden 血统符号链接）
+# 为什么要有第 2 条：日常线载荷是 7.3-rc7（build/vk151），而 `linux` 符号链接停在
+# 7.2 血统且无 .config —— 裸跑 iterate/mod-loop/build-kernel 会静默编错树。
+if [ -z "${KDIR:-}" ]; then
+	if [ -r "$ROOT/patches/current-tree" ]; then
+		_t=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$ROOT/patches/current-tree" | grep -v '^$' | head -1)
+		[ -n "$_t" ] && KDIR="$ROOT/$_t"
+	fi
+	: "${KDIR:=$ROOT/linux}"
+fi
+# 相对路径按仓库根解析（文档里的写法是 KDIR=build/vk151），随后统一成绝对路径，
+# 否则调用方一旦 cd 到别处 $KDIR 就失效。
+case "$KDIR" in /*) ;; *) KDIR="$ROOT/$KDIR" ;; esac
 export KDIR
+[ -d "$KDIR" ] || echo "[env] WARNING: KDIR 不存在: $KDIR（用 KDIR=<tree> 覆盖）" >&2
+[ -f "$KDIR/.config" ] || echo "[env] WARNING: $KDIR/.config 不存在（先 make defconfig，或用 KDIR=<tree>）" >&2
 
 # Per-build uname label (e.g. LOCALVERSION=-vk50).  Export it and every ring —
 # kernel/dtb builds, kexec fingerprint, and mod-loop's vermagic check — stays

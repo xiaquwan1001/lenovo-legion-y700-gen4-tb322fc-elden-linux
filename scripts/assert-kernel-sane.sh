@@ -16,9 +16,8 @@ set -uo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 . "$ROOT/scripts/env-build.sh"
 
-# KDIR lets the gate run against a replay/out-of-tree kernel tree (T3/T4 replay
-# lives in build/m1-73 rather than the default geekidos checkout).
-KDIR=${KDIR:-$ROOT/linux}
+# 树已由 env-build.sh 解析（默认 = patches/current-tree 指向的日常线树）；
+# KDIR= 可指向重放/实验树（如 build/m1-73、build/m4-base）。
 KIMG=${1:-$KDIR/arch/arm64/boot/Image.gz}
 CONF=$KDIR/.config
 SMAP=$KDIR/System.map

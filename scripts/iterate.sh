@@ -3,7 +3,10 @@
 #
 # 四档速度，从快到慢：
 #   mod <dir>   模块快环：编该目录模块 → 推设备 → rmmod/modprobe。**不重启**（~30s）
-#               需先一次性应用 patches/fragment-modular.config（见该文件）。
+#               前提：目标驱动是 =m。一次性配好 = 两层片段都应用
+#               （FRAG="patches/fragment-modular.config patches/fragment-modular-v2.config"，
+#               见 scripts/apply-kernel-fragment.sh 与 RUNBOOK-BRINGUP §8）。
+#               内核树默认取 patches/current-tree（日常线），可用 KDIR= 覆盖。
 #   dtb         只重编 DTB → 用 kexec 热加载（无 fastboot、无 ABL、无重启按钮）
 #   kernel      重编 Image+DTB → 用 kexec 热加载
 #   ram         重编并用 fastboot boot 起一个纯 RAM 变体（零写盘，兜底/取证用）
@@ -21,7 +24,6 @@
 set -euo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 . "$ROOT/scripts/env-build.sh"
-KDIR=$ROOT/linux
 OUT=$ROOT/out
 
 # 自动版本号：SSOT = versions/vk-registry.tsv（lane.sh alloc 原子分配，flock）。
