@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | **M3-1**（USB 双连接器 / dwc3） | 🟡 等 review | 2026-10-26 12:32Z 投**正式 `[PATCH v4 0/3]`**（binding + `usb_role_switch_at_endpoint()` + 驱动），4 封 250、lore 双列表归档 | Krzysztof / Konrad / USB 维护者 | 等回包；有 review 即出 v5（不再自行加料） |
 | **M4-1**（camss 三枚 binding：gt9764 / s5kjns / wl2868c） | 🟡 等 review | 2026-10-27 投两条线程（media `[PATCH 0/2]` + regulator 单枚），lore 已归档 | Mauro / Mark Brown | 常见回包 = 「要驱动同发」⇒ 见 M4-2…M4-4 |
-| **M4-2…M4-4**（camss 驱动主体） | ⬜ 备料完成，**未投** | 2026-10-27 `patches/upstream/m4-camss-series-20261027/`（7 提交 / +1760 −61；checkpatch 7/7 0E；逐提交可编译） | **3 条硬项**：R1 数值出处（非 QCOM 投递）/ R2 `common_status_offset=0x138` 未上机验证 / R3 SOF 迁移应单立 RFC | 先解 R1（与 QCOM 侧对齐）、R2（上机取证）；R3 拆 RFC |
+| **M4-2…M4-4**（camss 驱动主体） | ⬜ 备料完成，**未投** | 2026-10-27 `patches/upstream/m4-camss-series-20261027/`（7 提交 / +1760 −61；checkpatch 7/7 0E；逐提交可编译） | **硬项**：R1 数值出处 → 🟡 **已降级**（厂商 `camera.ko` 数据段对账：lane 表 99/103 一致）/ R2 `0x138` → ✅ **已解决**（厂商 `csiphy_v2_4_0[+4]=0x1138`）/ R3 SOF 迁移应单立 RFC（不变） | R1 剩余 = 4 条 SKEW_CAL 偏离（`0x54` vs 厂商 `0x00`）需上机 A/B；R3 拆 RFC；见 `reports/m4-csiphy-vendor-provenance-20261027.md` |
 | **M4-5**（ath12k PEACH、hci_qca PERI） | ⬜ **未备料** | — | 只有 M3-6 的拆解清单 | 排在 camss 之后 |
 | **M8**（dispcc MDSS 复位 RFC） | 🟡 等 maintainer | 2026-10-22 投 RFC；Taniya 反对复位归属，我方 10-23 已回（接受搬 `msm_mdss_reset()`） | clk 维护者 | 等回包；必要时转正式系列（含 DT 属性） |
 | **M6 L1**（DSI `PLL_SYSTEM_MUXES` 1 行） | 🟡 等 review | 2026-10-19 投，已归档 | arm-msm 维护者 | 随 M6 系列走 |

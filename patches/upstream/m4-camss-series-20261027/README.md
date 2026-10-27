@@ -50,14 +50,20 @@ for c in $(git rev-list --reverse 24a19b953..HEAD); do
 
 ## 4. 评审风险 / 投递前必须处理
 
-- **R1（必须）硬件数值出处**：`lane_regs_sm8750`（提交 1）与 `csiphy_res_8750`/`csid_res_8750`/`vfe_res_8750`
-  （提交 6）的寄存器序列、供电名、时钟率、icc 带宽全部来自**厂商实现**（本地功能树血统），我们不是 QCOM，
-  上游通常要求「硬件编程手册出处」或 QCOM 同签。binding 的 `maintainers:` 是
-  `Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>`（= 该 binding 原文来自 QCOM 侧），可作为 co-author/ack 线索，
-  但**投递前需就此与 QCOM 侧的 camss 系列对齐**，否则大概率收到「请提供文档依据」。
-- **R2（必须）`common_status_offset = 0x138` 未上机专项验证**：CSIPHY 2.4.0 我们设了 `0x138`（2.3.0 为默认 `0xb0`），
-  该偏移**只被 `csiphy_isr()` 的错误上报路径读取**，正常出流不经过；设备上相机 30 fps 正常只说明 lane 数据正确，
-  不说明这个偏移正确。要么上机取证（出流时 `devmem` 对比两组偏移的 lane status），要么在提交里改成显式说明。
+> 2026-10-27 更新：R1/R2 已用原厂 `camera.ko` 数据段对账降级（见下）；投递前请把下列两句写进 `0001` 的 commit message：
+> 「lane 数据取自厂商 CSIPHY 2.4.0 (2ph) register map，除 4 条 SKEW_CAL 外逐条一致」、「common status 块 = `0x1000 + 0x138`，与厂商每代参数表一致」。
+
+- **R1（已降级，剩 4 条待决策）硬件数值出处** —— 2026-10-27 用原厂 `backup/stock-elden/vendor_dlkm/camera.ko`
+  （**not stripped**）做了数据段级对账（`reports/m4-csiphy-vendor-provenance-20261027.md`）：
+  我们的 `lane_regs_sm8750`（103 条）与厂商符号 **`csiphy_2ph_v2_4_0_reg`**（1648 B = 103×16）**地址/掩码/类型 103/103 相同、`data` 99/103 相同**；
+  **剩余 4 条全部是 SKEW_CAL 的 `0x5c` 偏移**（我们 `0x54`、厂商 `0x00`），且**82 张厂商表里没有任何一张含 `0x54`**
+  ⇒ 这 4 个值是**我方偏离**，投递前必须二选一：(a) 回退成厂商 `0x00` 做一次上机 A/B；(b) 保留并在正文显式声明「SKEW_CAL 由我们打开」。
+  另：厂商另有 `csiphy_3ph_v2_4_0_reg`（72 条，地址体系完全不同）⇒ **本机是 2ph 变体**，正文要点明，
+  否则 review 第一问必是「为什么不复用 3ph 表」。
+- **R2（已解决）`common_status_offset = 0x138`** —— 同一次取证：厂商每代参数结构 `csiphy_v2_4_0`（80 B）=
+  `{0x1028, **0x1138**, 0x1058, 0, 0, 0, 0x400, 0xb, 0x14, …}`，且 `cam_csiphy_common_status_reg_dump` 反汇编证实
+  `x27 = base + [ver+4]` 读 12 个 status 寄存器、第二块 `base + [ver+8]` ⇒ **`0x1138 = 0x1000 + 0x138` 与我们的取值逐位一致**。
+  仍是「数据段一致」而非「运行期验证」（该偏移只走 `csiphy_isr()` 错误路径），但已不再是"猜的"。
 - **R3（必须）提交 3 是架构性改动**：把「帧起始」从 VFE 移到 CSID（gen4 VFE 的 `isr` 是 nop），
   并且 `vfe_buf_done()` 的 sequence 语义随之改变（帧号只由 SOF 递增、SOF 前完成的 buffer 标 `VB2_BUF_STATE_ERROR`）。
   按项目方案（`reports/m4-camss-project-20261013.md` §2.1 M4-3/M4-4）这应当**单独立 RFC**并附上
