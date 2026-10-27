@@ -1,0 +1,239 @@
+From de91bbba9859b2cea80dd24670f779f96b11908c Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 20:02:27 +0800
+Subject: [PATCH 3/5] input: aw86927: load the RAM waveform from firmware
+
+The in-driver waveform is a plain sine, which is only good enough to
+prove the part responds. Real boards ship a tuned waveform set that also
+compensates for the mechanical resonance of their actuator, and on
+AW86937 there is no built-in waveform to fall back to at all.
+
+Allow the image to come from the firmware loader instead: "firmware-name"
+names the image, "awinic,ram-waveform-index" picks the one-based index of
+the periodic rumble waveform inside it. Both properties are optional and
+the built-in sine is still used when no image is given, so existing
+device trees keep working.
+
+The image starts with a big-endian checksum over the rest of the file,
+the base address of the image in SRAM, and a table of (start, end) pairs
+for the individual waveforms. Everything is validated against the SRAM
+window of the part before a single register write happens, because the
+image is normally extracted from a vendor blob and a bad one must not
+leave the chip in a half-programmed state: after the upload the SRAM is
+read back and compared, and probe fails if it does not match.
+
+Lane: aw86927-series
+Agent: aw86927-series
+Baseline: base/20261027-5d6400f
+Task: U4
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/input/misc/Kconfig   |   1 +
+ drivers/input/misc/aw86927.c | 130 ++++++++++++++++++++++++++++++++++-
+ 2 files changed, 129 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/input/misc/Kconfig b/drivers/input/misc/Kconfig
+index 169768e3d..a15ce92bd 100644
+--- a/drivers/input/misc/Kconfig
++++ b/drivers/input/misc/Kconfig
+@@ -129,6 +129,7 @@ config INPUT_ATMEL_CAPTOUCH
+ config INPUT_AW86927
+ 	tristate "Awinic AW86927 Haptic Driver Support"
+ 	depends on I2C && INPUT
++	select FW_LOADER
+ 	select INPUT_FF_MEMLESS
+ 	select REGMAP_I2C
+ 	help
+diff --git a/drivers/input/misc/aw86927.c b/drivers/input/misc/aw86927.c
+index 86659f198..c67e6f6f3 100644
+--- a/drivers/input/misc/aw86927.c
++++ b/drivers/input/misc/aw86927.c
+@@ -10,13 +10,16 @@
+ #include <linux/bitfield.h>
+ #include <linux/bits.h>
+ #include <linux/delay.h>
++#include <linux/firmware.h>
+ #include <linux/gpio/consumer.h>
+ #include <linux/i2c.h>
+ #include <linux/input.h>
+ #include <linux/module.h>
++#include <linux/property.h>
+ #include <linux/regmap.h>
+ #include <linux/regulator/consumer.h>
+ #include <linux/types.h>
++#include <linux/unaligned.h>
+ 
+ #define AW86927_RSTCFG_REG			0x00
+ #define AW86927_RSTCFG_SOFTRST			0xaa
+@@ -223,6 +226,7 @@ struct aw86927_data {
+ 	struct regmap *regmap;
+ 	struct gpio_desc *reset_gpio;
+ 	u16 level;
++	u32 waveform_index;
+ };
+ 
+ static const struct regmap_config aw86927_regmap_config = {
+@@ -397,10 +401,11 @@ static int aw86927_play_sine(struct aw86927_data *haptics)
+ 	if (err)
+ 		return err;
+ 
+-	/* Set waveseq 1 to the first wave */
++	/* Loop the selected motor waveform. */
+ 	err = regmap_update_bits(haptics->regmap, AW86927_WAVCFG1_REG,
+ 				 AW86927_WAVCFG1_WAVSEQ1_MASK,
+-				 FIELD_PREP(AW86927_WAVCFG1_WAVSEQ1_MASK, 1));
++				 FIELD_PREP(AW86927_WAVCFG1_WAVSEQ1_MASK,
++					    haptics->waveform_index));
+ 	if (err)
+ 		return err;
+ 
+@@ -640,10 +645,117 @@ static int aw86927_haptic_init(struct aw86927_data *haptics)
+ 	return 0;
+ }
+ 
++static int aw86927_ram_load(struct aw86927_data *haptics, const char *name)
++{
++	const struct aw86927_chip *chip = haptics->chip;
++	const struct firmware *fw;
++	u8 readback[16];
++	u16 checksum = 0;
++	unsigned int base, first, start, end, i;
++	int err, disable_err;
++
++	err = request_firmware(&fw, name, haptics->dev);
++	if (err)
++		return err;
++
++	/*
++	 * Layout: big-endian checksum, big-endian base address, then one
++	 * (start, end) address pair per waveform, all little-endian relative
++	 * offsets already folded into the addresses.
++	 */
++	err = -EINVAL;
++	if (fw->size < 9 || fw->size > chip->ram_end - chip->ram_start)
++		goto release;
++
++	for (i = 2; i < fw->size; i++)
++		checksum += fw->data[i];
++
++	base = get_unaligned_be16(fw->data + 2);
++	first = get_unaligned_be16(fw->data + 5);
++	if (checksum != get_unaligned_be16(fw->data) ||
++	    base < chip->ram_start || base + fw->size - 4 > chip->ram_end ||
++	    first <= base || (first - base - 1) % 4 ||
++	    first >= base + fw->size - 4 ||
++	    haptics->waveform_index > (first - base - 1) / 4)
++		goto release;
++
++	i = 5 + (haptics->waveform_index - 1) * 4;
++	start = get_unaligned_be16(fw->data + i);
++	end = get_unaligned_be16(fw->data + i + 2);
++	if (start < first || end < start || end >= base + fw->size - 4)
++		goto release;
++
++	err = aw86927_stop(haptics);
++	if (err)
++		goto release;
++
++	err = regmap_update_bits(haptics->regmap, AW86927_SYSCTRL3_REG,
++				 AW86927_SYSCTRL3_EN_RAMINIT_MASK,
++				 AW86927_SYSCTRL3_EN_RAMINIT_MASK);
++	if (err)
++		goto release;
++
++	usleep_range(1000, 1500);
++
++	err = regmap_write(haptics->regmap, AW86927_BASEADDRH_REG, base >> 8);
++	if (!err)
++		err = regmap_write(haptics->regmap, AW86927_BASEADDRL_REG, base & 0xff);
++	if (!err)
++		err = regmap_write(haptics->regmap, AW86927_RAMADDRH_REG, base >> 8);
++	if (!err)
++		err = regmap_write(haptics->regmap, AW86927_RAMADDRL_REG, base & 0xff);
++
++	/* Write the image, skipping the two header words already consumed. */
++	for (i = 4; !err && i < fw->size; i += 16)
++		err = regmap_noinc_write(haptics->regmap, AW86927_RAMDATA_REG,
++					 fw->data + i,
++					 min_t(size_t, 16, fw->size - i));
++
++	/* Read the SRAM back so a corrupt upload cannot reach playback. */
++	if (!err)
++		err = regmap_write(haptics->regmap, AW86927_RAMADDRH_REG, base >> 8);
++	if (!err)
++		err = regmap_write(haptics->regmap, AW86927_RAMADDRL_REG, base & 0xff);
++	for (i = 4; !err && i < fw->size; i += sizeof(readback)) {
++		size_t len = min_t(size_t, sizeof(readback), fw->size - i);
++
++		err = regmap_noinc_read(haptics->regmap, AW86927_RAMDATA_REG,
++					readback, len);
++		if (!err && memcmp(readback, fw->data + i, len))
++			err = -EILSEQ;
++	}
++
++	disable_err = regmap_update_bits(haptics->regmap, AW86927_SYSCTRL3_REG,
++					 AW86927_SYSCTRL3_EN_RAMINIT_MASK, 0);
++	if (!err)
++		err = disable_err;
++release:
++	release_firmware(fw);
++
++	return err;
++}
++
+ static int aw86927_ram_init(struct aw86927_data *haptics)
+ {
++	const char *firmware;
+ 	int err;
+ 
++	if (device_property_present(haptics->dev, "firmware-name")) {
++		err = device_property_read_string(haptics->dev, "firmware-name",
++						  &firmware);
++		if (err)
++			return err;
++
++		return aw86927_ram_load(haptics, firmware);
++	}
++
++	/*
++	 * Without a firmware image only the built-in waveform exists, and the
++	 * AW86937 has none at all.
++	 */
++	if (haptics->model == AW86937 || haptics->waveform_index != 1)
++		return -EINVAL;
++
+ 	err = aw86927_wait_enter_standby(haptics);
+ 	if (err)
+ 		return err;
+@@ -654,6 +766,8 @@ static int aw86927_ram_init(struct aw86927_data *haptics)
+ 				 AW86927_SYSCTRL3_EN_RAMINIT_MASK,
+ 				 FIELD_PREP(AW86927_SYSCTRL3_EN_RAMINIT_MASK,
+ 					    AW86927_SYSCTRL3_EN_RAMINIT_ON));
++	if (err)
++		return err;
+ 
+ 	/* AW86938 wants a 1ms delay here */
+ 	usleep_range(1000, 1500);
+@@ -800,6 +914,18 @@ static int aw86927_probe(struct i2c_client *client)
+ 
+ 	haptics->dev = &client->dev;
+ 	haptics->client = client;
++	haptics->waveform_index = 1;
++
++	if (device_property_present(haptics->dev, "awinic,ram-waveform-index")) {
++		err = device_property_read_u32(haptics->dev,
++					       "awinic,ram-waveform-index",
++					       &haptics->waveform_index);
++		if (err)
++			return err;
++	}
++
++	if (!haptics->waveform_index || haptics->waveform_index > 127)
++		return -EINVAL;
+ 
+ 	i2c_set_clientdata(client, haptics);
+ 
+-- 
+2.53.0
+
