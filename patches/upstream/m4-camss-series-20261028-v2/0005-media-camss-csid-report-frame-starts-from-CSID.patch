@@ -1,0 +1,254 @@
+From 5cd1786d318ed930f198dde4fc4f2e10e24fd84c Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 28 Oct 2026 11:26:57 +0800
+Subject: [PATCH 5/9] media: camss: csid: report frame starts from CSID
+
+The CSID of generation 980 moves the capture interrupts away from the VFE:
+that VFE has no useful interrupt sources, and the CSID reports RDI buffer
+done, register update completion and CAMIF start-of-frame per CSI2 stream
+instead.
+
+A buffer is only complete once its frame started, and the sequence number
+of a frame is defined by its start: turn the CSID start-of-frame interrupt
+into the frame start source.  camss_frame_start() forwards it to the
+paired VFE, which raises V4L2_EVENT_FRAME_SYNC on the video node,
+increments the sequence only there, and marks buffers done before their
+frame started as erroneous.  A start-of-frame may also follow an as-yet
+unhandled completion, so the end-of-frame and start-of-frame timestamps are
+compared and the completion reported first in that case.
+
+Hardware generations that still report frame starts through the VFE keep
+the previous behaviour, as the new vfe_hw_ops callback is only provided by
+VFE implementations that need it.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../platform/qcom/camss/camss-csid-980.c      | 27 +++++++++
+ drivers/media/platform/qcom/camss/camss-vfe.c | 59 ++++++++++++++++++-
+ drivers/media/platform/qcom/camss/camss-vfe.h |  3 +
+ drivers/media/platform/qcom/camss/camss.c     | 12 ++++
+ drivers/media/platform/qcom/camss/camss.h     |  1 +
+ 5 files changed, 101 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-csid-980.c b/drivers/media/platform/qcom/camss/camss-csid-980.c
+index 09139815c..e0ba84f4d 100644
+--- a/drivers/media/platform/qcom/camss/camss-csid-980.c
++++ b/drivers/media/platform/qcom/camss/camss-csid-980.c
+@@ -108,6 +108,7 @@
+ #define CSID_CSI2_RDIN_IRQ_CLEAR(rdi) \
+ 	((csid_is_lite(csid) ? 0xF4 : 0x11C) + 0x10 * (rdi))
+ #define		INFO_RUP_DONE				BIT(23)
++#define		INFO_CAMIF_SOF				BIT(4)
+ #define CSID_RDI_TOP_IRQ(rdi)		BIT((csid_is_lite(csid) ? 8 : 16) + (rdi))
+ #define CSID_RDI_IRQ_PATTERN(rdi) \
+ 	((csid_is_lite(csid) ? 0x548 : 0xE50) + (csid_is_lite(csid) ? 0x100 : 0x200) * (rdi))
+@@ -295,6 +296,10 @@ static void csid_configure_stream(struct csid_device *csid, u8 enable)
+ 		if (csid->phy.en_vc & BIT(i)) {
+ 			u32 mask = readl(csid->base + CSID_CSI2_RDIN_IRQ_MASK(i));
+ 
++			writel(INFO_CAMIF_SOF | INFO_RUP_DONE,
++			       csid->base + CSID_CSI2_RDIN_IRQ_CLEAR(i));
++			mask = enable ? mask | INFO_CAMIF_SOF | INFO_RUP_DONE
++				      : mask & ~(INFO_CAMIF_SOF | INFO_RUP_DONE);
+ 			writel(mask, csid->base + CSID_CSI2_RDIN_IRQ_MASK(i));
+ 			mask = readl(csid->base + CSID_TOP_IRQ_MASK);
+ 			mask = enable ? mask | CSID_RDI_TOP_IRQ(i) : mask & ~CSID_RDI_TOP_IRQ(i);
+@@ -327,6 +332,18 @@ static void csid_subdev_reg_update(struct csid_device *csid, int port_id,
+ 		__csid_aup_update(csid, port_id);
+ }
+ 
++static u64 csid_read_timestamp(struct csid_device *csid, u32 offset)
++{
++	u32 hi, lo;
++
++	do {
++		hi = readl(csid->base + offset + 4);
++		lo = readl(csid->base + offset);
++	} while (hi != readl(csid->base + offset + 4));
++
++	return (u64)hi << 32 | lo;
++}
++
+ /**
+  * csid_isr - CSID module interrupt service routine
+  * @irq: Interrupt line
+@@ -359,6 +376,16 @@ static irqreturn_t csid_isr(int irq, void *dev)
+ 			if (val & INFO_RUP_DONE)
+ 				csid_subdev_reg_update(csid, i, true);
+ 
++			if (val & INFO_CAMIF_SOF) {
++				/* A new SOF may follow an as-yet unhandled completion. */
++				if (done && csid_read_timestamp(csid, CSID_RDI_EOF_TS(i)) <
++				    csid_read_timestamp(csid, CSID_RDI_SOF_TS(i))) {
++					camss_buf_done(csid->camss, csid->id, i);
++					done = false;
++				}
++				camss_frame_start(csid->camss, csid->id, i);
++			}
++
+ 			if (done)
+ 				camss_buf_done(csid->camss, csid->id, i);
+ 		}
+diff --git a/drivers/media/platform/qcom/camss/camss-vfe.c b/drivers/media/platform/qcom/camss/camss-vfe.c
+index d1b66033a..070b7feda 100644
+--- a/drivers/media/platform/qcom/camss/camss-vfe.c
++++ b/drivers/media/platform/qcom/camss/camss-vfe.c
+@@ -444,6 +444,34 @@ u32 vfe_hw_version(struct vfe_device *vfe)
+ 	return hw_version;
+ }
+ 
++void vfe_frame_start(struct vfe_device *vfe, int wm)
++{
++	struct v4l2_event event = { .type = V4L2_EVENT_FRAME_SYNC };
++	struct vfe_output *output;
++	struct vfe_line *line;
++	unsigned long flags;
++
++	spin_lock_irqsave(&vfe->output_lock, flags);
++	if (vfe->wm_output_map[wm] == VFE_LINE_NONE)
++		goto out_unlock;
++
++	line = &vfe->line[vfe->wm_output_map[wm]];
++	output = &line->output;
++	if (output->state != VFE_OUTPUT_ON)
++		goto out_unlock;
++
++	/* Count frames even when there is no buffer available for capture. */
++	event.u.frame_sync.frame_sequence = output->sequence++;
++	output->frame_started = true;
++	spin_unlock_irqrestore(&vfe->output_lock, flags);
++
++	v4l2_event_queue(line->subdev.devnode, &event);
++	return;
++
++out_unlock:
++	spin_unlock_irqrestore(&vfe->output_lock, flags);
++}
++
+ /*
+  * vfe_buf_done - Process write master done interrupt
+  * @vfe: VFE Device
+@@ -478,7 +506,17 @@ void vfe_buf_done(struct vfe_device *vfe, int wm)
+ 	}
+ 
+ 	ready_buf->vb.vb2_buf.timestamp = ts;
+-	ready_buf->vb.sequence = output->sequence++;
++	if (ops->frame_start) {
++		if (output->frame_started) {
++			ready_buf->vb.sequence = output->sequence - 1;
++		} else {
++			ready_buf->vb.sequence = output->sequence;
++			state = VB2_BUF_STATE_ERROR;
++		}
++		output->frame_started = false;
++	} else {
++		ready_buf->vb.sequence = output->sequence++;
++	}
+ 
+ 	index = 0;
+ 	output->buf[0] = output->buf[1];
+@@ -544,6 +582,7 @@ int vfe_enable_output_v2(struct vfe_line *line)
+ 	output->state = VFE_OUTPUT_ON;
+ 
+ 	output->sequence = 0;
++	output->frame_started = false;
+ 	output->wait_reg_update = 0;
+ 	reinit_completion(&output->reg_update);
+ 
+@@ -1972,8 +2011,24 @@ static int vfe_link_setup(struct media_entity *entity,
+ 	return 0;
+ }
+ 
++static int vfe_subscribe_event(struct v4l2_subdev *sd, struct v4l2_fh *fh,
++			       struct v4l2_event_subscription *sub)
++{
++	struct vfe_line *line = v4l2_get_subdevdata(sd);
++	struct vfe_device *vfe = to_vfe(line);
++
++	if (!vfe->res->hw_ops->frame_start)
++		return -ENOIOCTLCMD;
++
++	if (sub->type != V4L2_EVENT_FRAME_SYNC || sub->id)
++		return -EINVAL;
++
++	return v4l2_event_subscribe(fh, sub, 16, NULL);
++}
++
+ static const struct v4l2_subdev_core_ops vfe_core_ops = {
+ 	.s_power = vfe_set_power,
++	.subscribe_event = vfe_subscribe_event,
+ };
+ 
+ static const struct v4l2_subdev_video_ops vfe_video_ops = {
+@@ -2080,6 +2135,8 @@ int msm_vfe_register_entities(struct vfe_device *vfe,
+ 		v4l2_subdev_init(sd, &vfe_v4l2_ops);
+ 		sd->internal_ops = &vfe_v4l2_internal_ops;
+ 		sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
++		if (vfe->res->hw_ops->frame_start)
++			sd->flags |= V4L2_SUBDEV_FL_HAS_EVENTS;
+ 		if (i == VFE_LINE_PIX && vfe->res->is_lite == false)
+ 			snprintf(sd->name, ARRAY_SIZE(sd->name), "%s%d_%s",
+ 				 MSM_VFE_NAME, vfe->id, "pix");
+diff --git a/drivers/media/platform/qcom/camss/camss-vfe.h b/drivers/media/platform/qcom/camss/camss-vfe.h
+index c402ef170..621eee07d 100644
+--- a/drivers/media/platform/qcom/camss/camss-vfe.h
++++ b/drivers/media/platform/qcom/camss/camss-vfe.h
+@@ -77,6 +77,7 @@ struct vfe_output {
+ 	};
+ 	enum vfe_output_state state;
+ 	unsigned int sequence;
++	bool frame_started;
+ 
+ 	int wait_reg_update;
+ 	struct completion sof;
+@@ -118,6 +119,7 @@ struct vfe_hw_ops {
+ 			     struct vfe_line *line);
+ 	void (*vfe_wm_stop)(struct vfe_device *vfe, u8 wm);
+ 	void (*vfe_buf_done)(struct vfe_device *vfe, int port_id);
++	void (*frame_start)(struct vfe_device *vfe, int port_id);
+ 	void (*vfe_wm_update)(struct vfe_device *vfe, u8 wm, u32 addr,
+ 			      struct vfe_line *line);
+ };
+@@ -286,6 +288,7 @@ int vfe_enable_v2(struct vfe_line *line);
+  * @wm: Write master id
+  */
+ void vfe_buf_done(struct vfe_device *vfe, int wm);
++void vfe_frame_start(struct vfe_device *vfe, int wm);
+ 
+ /*
+  * vfe_get_output_v2 - Get vfe output line
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index 2123f6388..92d536986 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -5044,6 +5044,18 @@ void camss_buf_done(struct camss *camss, int hw_id, int port_id)
+ 	}
+ }
+ 
++void camss_frame_start(struct camss *camss, int hw_id, int port_id)
++{
++	struct vfe_device *vfe;
++
++	if (hw_id < 0 || hw_id >= camss->res->vfe_num || port_id < 0)
++		return;
++
++	vfe = &camss->vfe[hw_id];
++	if (port_id < vfe->res->line_num && vfe->res->hw_ops->frame_start)
++		vfe->res->hw_ops->frame_start(vfe, port_id);
++}
++
+ /*
+  * camss_register_entities - Register subdev nodes and create links
+  * @camss: CAMSS device
+diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
+index ef45eea00..6a17ec027 100644
+--- a/drivers/media/platform/qcom/camss/camss.h
++++ b/drivers/media/platform/qcom/camss/camss.h
+@@ -178,6 +178,7 @@ int camss_vfe_get(struct camss *camss, int id);
+ void camss_vfe_put(struct camss *camss, int id);
+ void camss_delete(struct camss *camss);
+ void camss_buf_done(struct camss *camss, int hw_id, int port_id);
++void camss_frame_start(struct camss *camss, int hw_id, int port_id);
+ void camss_reg_update(struct camss *camss, int hw_id,
+ 		      int port_id, bool is_clear);
+ 
