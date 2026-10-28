@@ -328,7 +328,7 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 | **Q20** | **流程病：引导链问题先外部取证/自研、后本地检索** ⇒ 把 7、8 月已定的结论（版本门、.120 trap、失败特征串、**U1 已于 2026-08-16 用降级路解成功一次**）在 10-03 重新发现一遍，多花一轮必败实验。根因：`references/*.md` 正文不入上下文，**不 grep 等于不存在**（`PITFALLS` #87） | 上不设防就会再犯（下次是新 ROM 版本 / 新单元 / AVB 参数） | 已落：① `AGENTS.md` 新增「本地优先」规则；② `RUNBOOK` §0.5 ★权威顺序置顶（含版本门与停手串）；③ 本文末一条 grep 命令作开场强制动作；④ 引用旧成功记录先查单元+固件态 | 流程（无单元依赖） |
 
 | **Q33** | **WCD939X 冷起 5425 行 `ASoC error (-16)` 读重试（耗 20 s）** | 音频最终可用，但启动多等 20 s、并刷屏 | 抓调用栈/调用者（T139 音频卡初始化上下文），确认 `soc_component_read_no_lock()` 的 EBUSY 来源（regmap 在 runtime-suspend 时读）；复现命令见 `reports/vk163-por-boot-latency-20261026.md` §3 | T21 / G1-4 / `PITFALLS #421` |
-| **Q34** | **`bluetoothd` 冷起偶发 crash**（`rc-service bluetooth stop/start` 后正常） | 冷起后蓝牙不可用，需手动重启服务 | 复现 ≥3 次冷起，收 `bluetoothd` 退出码/日志；若为 D-Bus 名抢占则在 `bluetooth` 服务加 restart/调序 | T21 / G1-7 / `PITFALLS #420` 邻近 |
+| **Q34** | **`bluetoothd` 冷起偶发 crash**（`rc-service bluetooth stop/start` 后正常） | 冷起后蓝牙不可用，需手动重启服务 | ✅ **已定案（2026-10-28 现场复现）= 不是 crash，是 WCN7861 外设固件缺文件**（`PITFALLS #454`）：`bluetoothd` 一直 active，`hci0` DOWN / BD 全 0、`Direct firmware load for qca/tmel_peach_20.elf failed with error -2` ⇒ `Peripheral setup failed: -2`；设备 `/lib/firmware/qca/` 只有 4 个文件（少 tmel）。补文件 + `modprobe -r hci_uart; modprobe hci_uart` ⇒ `hci0 UP RUNNING` / BD `22:22:62:9C:97:58` / `QCA setup on UART is completed`；**重载服务或重载模块都不解决，必须补文件**（旧「restart 就好」与本次不同源）。根治 = `elden-firmware` 加 `local-extras.tsv` + 新门禁 A2「驱动 `MODULE_FIRMWARE` 声明的厂商固件必须进包」（负向测试已验证）。原判据存档：若为 D-Bus 名抢占则在 `bluetooth` 服务加 restart/调序 | T21 / G1-7 / `PITFALLS #420` 邻近 |
 
 ---
 

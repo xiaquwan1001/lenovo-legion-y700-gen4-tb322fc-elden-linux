@@ -1,0 +1,12 @@
+# local-extras.tsv — **源树里没有、但驱动会 request** 的固件（仓库内副本）
+#
+# 为什么需要这张表：设备的 /lib/firmware 只是「当年拷上去的那几个」，
+# 而驱动声明的固件名可能比它多。2026-10-27 实测：Debian 根上 `hci_qca` 在
+# WCN7861 外设阶段加载 `qca/tmel_peach_20.elf`（内核 MODULE_FIRMWARE 显式列出），
+# 但 `/lib/firmware/qca/` 只有 brhbtfw20/brhbtnv20/brhperifw20/brhperinv20 四个
+# ⇒ `Direct firmware load for qca/tmel_peach_20.elf failed with error -2`
+# ⇒ `Peripheral setup failed: -2` ⇒ **蓝牙控制器根本起不来**（hci0 DOWN、BD 地址全 0、
+#   bluetoothd active 但 `No default controller available`）。
+#
+# 列：<相对 /lib/firmware 的路径>（TAB）<仓库内文件>（TAB）<来源说明>
+qca/tmel_peach_20.elf	backup/fw/modem/image/tmel_peach_20.elf	stock LUN4 modem 分区 image/（56752 B, sha256 a175c8d9…）

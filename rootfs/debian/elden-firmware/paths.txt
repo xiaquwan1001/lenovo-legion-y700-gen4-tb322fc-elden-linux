@@ -16,4 +16,5 @@ qca/brhbtfw20.tlv
 qca/brhbtnv20.bin
 qca/brhperifw20.tlv
 qca/brhperinv20.bin
+qca/tmel_peach_20.elf
 qcom/gen80000_*.zst
