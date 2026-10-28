@@ -1,0 +1,23 @@
+UNAME=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+=== BASE ===
+command DMA timeout=0
+vblank timeout=0
+reset failure=0
+panel is not prepared=0
+FILTER=21
+WARM dpms=On enabled=enabled status=connected
+CYCLE_0 BLANK
+  dpms=Off enabled=disabled status=connected
+CYCLE_0 WAKE
+  dpms=On enabled=enabled status=connected
+CYCLE_1 BLANK
+  dpms=Off enabled=disabled status=connected
+CYCLE_1 WAKE
+  dpms=On enabled=enabled status=connected
+=== AFTER ===
+command DMA timeout=0
+vblank timeout=0
+reset failure=0
+panel is not prepared=0
+TRACE_LINES=76
+FINAL dpms=On enabled=enabled status=connected

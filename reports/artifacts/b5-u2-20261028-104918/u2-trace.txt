@@ -1,0 +1,76 @@
+# tracer: function
+#
+# entries-in-buffer/entries-written: 64/64   #P:8
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+            phoc-1585    [001] .....  4875.299155: drm_atomic_helper_commit_modeset_disables <-msm_atomic_commit_tail
+            phoc-1585    [001] .....  4875.299156: drm_atomic_bridge_chain_disable <-drm_atomic_helper_commit_encoder_bridge_disable
+            phoc-1585    [001] .....  4875.299156: drm_panel_disable <-panel_bridge_atomic_disable
+            phoc-1585    [001] .....  4875.301375: dsi_mgr_bridge_disable <-drm_atomic_bridge_chain_disable
+            phoc-1585    [001] .....  4875.301376: msm_dsi_host_disable <-dsi_mgr_bridge_disable
+            phoc-1585    [001] .....  4875.301393: msm_dsi_host_disable <-dsi_mgr_bridge_disable
+            phoc-1585    [001] .....  4875.306763: drm_atomic_bridge_chain_post_disable <-drm_atomic_helper_commit_encoder_bridge_post_disable
+            phoc-1585    [001] .....  4875.306764: drm_panel_unprepare <-panel_bridge_atomic_post_disable
+            phoc-1585    [001] .....  4875.307199: dsi_mgr_bridge_post_disable <-drm_atomic_bridge_chain_post_disable
+            phoc-1585    [001] .....  4875.307207: msm_dsi_host_power_off <-dsi_mgr_bridge_post_disable
+            phoc-1585    [001] .....  4875.307256: msm_dsi_host_power_off <-dsi_mgr_bridge_post_disable
+            phoc-1585    [001] .....  4875.307327: dsi_mgr_phy_disable <-dsi_mgr_bridge_post_disable
+            phoc-1585    [001] .....  4875.307795: drm_atomic_helper_commit_modeset_enables <-msm_atomic_commit_tail
+            phoc-1585    [004] .....  4877.334453: drm_atomic_helper_commit_modeset_disables <-msm_atomic_commit_tail
+            phoc-1585    [004] .....  4877.334457: dsi_mgr_bridge_mode_set <-drm_bridge_chain_mode_set
+            phoc-1585    [004] .....  4877.334457: msm_dsi_host_set_display_mode <-dsi_mgr_bridge_mode_set
+            phoc-1585    [004] .....  4877.334458: msm_dsi_host_set_display_mode <-dsi_mgr_bridge_mode_set
+            phoc-1585    [004] .....  4877.336562: drm_atomic_helper_commit_modeset_enables <-msm_atomic_commit_tail
+            phoc-1585    [004] .....  4877.336567: drm_atomic_bridge_chain_pre_enable <-drm_atomic_helper_commit_encoder_bridge_pre_enable
+            phoc-1585    [004] .....  4877.336567: dsi_mgr_bridge_pre_enable <-drm_atomic_bridge_chain_pre_enable
+            phoc-1585    [004] .....  4877.340076: msm_dsi_host_power_on <-dsi_mgr_bridge_pre_enable
+            phoc-1585    [004] .....  4877.341079: msm_dsi_host_power_on <-dsi_mgr_bridge_pre_enable
+            phoc-1585    [004] .....  4877.341321: drm_panel_prepare <-panel_bridge_atomic_pre_enable
+            phoc-1585    [004] .....  4877.568235: drm_atomic_bridge_chain_enable <-drm_atomic_helper_commit_encoder_bridge_enable
+            phoc-1585    [004] .....  4877.568236: dsi_mgr_bridge_enable <-drm_atomic_bridge_chain_enable
+            phoc-1585    [004] .....  4877.568239: msm_dsi_host_enable <-dsi_mgr_bridge_enable
+            phoc-1585    [004] .....  4877.568242: msm_dsi_host_enable <-dsi_mgr_bridge_enable
+            phoc-1585    [004] .....  4877.568246: drm_panel_enable <-panel_bridge_atomic_enable
+   kworker/u33:2-43930   [003] .....  4877.591852: drm_atomic_helper_commit_modeset_disables <-msm_atomic_commit_tail
+   kworker/u33:2-43930   [003] .....  4877.593895: drm_atomic_helper_commit_modeset_enables <-msm_atomic_commit_tail
+   kworker/u33:2-43930   [003] .....  4877.791827: drm_atomic_helper_commit_modeset_disables <-msm_atomic_commit_tail
+   kworker/u33:2-43930   [003] .....  4877.791978: drm_atomic_helper_commit_modeset_enables <-msm_atomic_commit_tail
+            phoc-1585    [000] .....  4880.321504: drm_atomic_helper_commit_modeset_disables <-msm_atomic_commit_tail
+            phoc-1585    [000] .....  4880.321505: drm_atomic_bridge_chain_disable <-drm_atomic_helper_commit_encoder_bridge_disable
+            phoc-1585    [000] .....  4880.321505: drm_panel_disable <-panel_bridge_atomic_disable
+            phoc-1585    [000] .....  4880.323217: dsi_mgr_bridge_disable <-drm_atomic_bridge_chain_disable
+            phoc-1585    [000] .....  4880.323217: msm_dsi_host_disable <-dsi_mgr_bridge_disable
+            phoc-1585    [000] .....  4880.323234: msm_dsi_host_disable <-dsi_mgr_bridge_disable
+            phoc-1585    [000] .....  4880.323442: drm_atomic_bridge_chain_post_disable <-drm_atomic_helper_commit_encoder_bridge_post_disable
+            phoc-1585    [000] .....  4880.323443: drm_panel_unprepare <-panel_bridge_atomic_post_disable
+            phoc-1585    [000] .....  4880.323708: dsi_mgr_bridge_post_disable <-drm_atomic_bridge_chain_post_disable
+            phoc-1585    [000] .....  4880.323713: msm_dsi_host_power_off <-dsi_mgr_bridge_post_disable
+            phoc-1585    [000] .....  4880.323743: msm_dsi_host_power_off <-dsi_mgr_bridge_post_disable
+            phoc-1585    [000] .....  4880.323794: dsi_mgr_phy_disable <-dsi_mgr_bridge_post_disable
+            phoc-1585    [000] .....  4880.325173: drm_atomic_helper_commit_modeset_enables <-msm_atomic_commit_tail
+            phoc-1585    [004] .....  4882.370062: drm_atomic_helper_commit_modeset_disables <-msm_atomic_commit_tail
+            phoc-1585    [004] .....  4882.370065: dsi_mgr_bridge_mode_set <-drm_bridge_chain_mode_set
+            phoc-1585    [004] .....  4882.370065: msm_dsi_host_set_display_mode <-dsi_mgr_bridge_mode_set
+            phoc-1585    [004] .....  4882.370066: msm_dsi_host_set_display_mode <-dsi_mgr_bridge_mode_set
+            phoc-1585    [004] .....  4882.372108: drm_atomic_helper_commit_modeset_enables <-msm_atomic_commit_tail
+            phoc-1585    [004] .....  4882.372113: drm_atomic_bridge_chain_pre_enable <-drm_atomic_helper_commit_encoder_bridge_pre_enable
+            phoc-1585    [004] .....  4882.372113: dsi_mgr_bridge_pre_enable <-drm_atomic_bridge_chain_pre_enable
+            phoc-1585    [004] .....  4882.375606: msm_dsi_host_power_on <-dsi_mgr_bridge_pre_enable
+            phoc-1585    [004] .....  4882.376506: msm_dsi_host_power_on <-dsi_mgr_bridge_pre_enable
+            phoc-1585    [004] .....  4882.376751: drm_panel_prepare <-panel_bridge_atomic_pre_enable
+            phoc-1585    [004] .....  4882.596123: drm_atomic_bridge_chain_enable <-drm_atomic_helper_commit_encoder_bridge_enable
+            phoc-1585    [004] .....  4882.596124: dsi_mgr_bridge_enable <-drm_atomic_bridge_chain_enable
+            phoc-1585    [004] .....  4882.596127: msm_dsi_host_enable <-dsi_mgr_bridge_enable
+            phoc-1585    [004] .....  4882.596130: msm_dsi_host_enable <-dsi_mgr_bridge_enable
+            phoc-1585    [004] .....  4882.596134: drm_panel_enable <-panel_bridge_atomic_enable
+   kworker/u33:2-43930   [004] .....  4882.631128: drm_atomic_helper_commit_modeset_disables <-msm_atomic_commit_tail
+   kworker/u33:2-43930   [004] .....  4882.633330: drm_atomic_helper_commit_modeset_enables <-msm_atomic_commit_tail
+   kworker/u33:2-43930   [004] .....  4882.829648: drm_atomic_helper_commit_modeset_disables <-msm_atomic_commit_tail
+   kworker/u33:2-43930   [004] .....  4882.829797: drm_atomic_helper_commit_modeset_enables <-msm_atomic_commit_tail

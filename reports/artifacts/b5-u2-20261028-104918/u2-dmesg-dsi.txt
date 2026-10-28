@@ -1,0 +1,80 @@
+[    0.035321] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0
+[    0.285901] [     T62] msm_dsi ae94000.dsi: Failed to create device link (0x180) with supplier ae96000.dsi for /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0
+[    2.555302] [   T1038] novatek-nvt36xxx-spi spi0.0: stock SPI CS setup/hold delays: 300 ns
+[    2.565212] [     T97] novatek-nvt36xxx-spi spi0.0: stock SPI CS setup/hold delays: 300 ns
+[    2.565325] [     T97] novatek-nvt36xxx-spi spi0.0: registered NVT36xxx touchscreen as panel follower
+[    3.362675] [     T74] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[    3.362985] [     T74] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[    3.582563] [     T74] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[    3.584645] [     T53] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[    3.584648] [     T53] novatek-nvt36xxx-spi spi0.0: NT36536 identification: engineering reset
+[    3.603187] [     T53] novatek-nvt36xxx-spi spi0.0: trim ID 15 0e 00 23 65 03
+[    3.603306] [     T53] novatek-nvt36xxx-spi spi0.0: NT36536 hardware cascade=1 strap=02
+[    3.603308] [     T53] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[    3.791510] [     T53] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[    3.791672] [     T53] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[    3.791918] [     T53] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[    3.802745] [     T53] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[ 4345.649698] [   T1585] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4345.650046] [   T1585] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4345.874017] [   T1585] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[ 4345.874913] [  T39277] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[ 4345.874930] [  T39277] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[ 4346.062837] [  T39277] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[ 4346.062993] [  T39277] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[ 4346.063154] [  T39277] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[ 4346.074068] [  T39277] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[ 4350.742249] [   T1585] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4350.742583] [   T1585] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4350.969915] [   T1585] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[ 4350.970802] [  T38130] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[ 4350.970819] [  T38130] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[ 4351.161353] [  T38130] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[ 4351.161480] [  T38130] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[ 4351.161648] [  T38130] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[ 4351.172901] [  T38130] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[ 4355.765405] [   T1585] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4355.765739] [   T1585] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4355.989977] [   T1585] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[ 4355.990967] [  T29556] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[ 4355.990985] [  T29556] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[ 4356.176670] [  T29556] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[ 4356.176750] [  T29556] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[ 4356.176910] [  T29556] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[ 4356.188174] [  T29556] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[ 4785.636099] [   T1585] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4785.636361] [   T1585] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4785.860378] [   T1585] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[ 4785.861356] [  T40492] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[ 4785.861374] [  T40492] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[ 4786.051572] [  T40492] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[ 4786.051680] [  T40492] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[ 4786.051838] [  T40492] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[ 4786.063168] [  T40492] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[ 4790.661433] [   T1585] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4790.661902] [   T1585] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4790.884360] [   T1585] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[ 4790.885450] [  T38521] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[ 4790.885468] [  T38521] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[ 4791.072094] [  T38521] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[ 4791.072328] [  T38521] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[ 4791.072668] [  T38521] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[ 4791.083915] [  T38521] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[ 4877.341025] [   T1585] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4877.341281] [   T1585] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4877.568040] [   T1585] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[ 4877.569030] [  T39274] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[ 4877.569048] [  T39274] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[ 4877.758346] [  T39274] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[ 4877.758483] [  T39274] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[ 4877.758643] [  T39274] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[ 4877.769998] [  T39274] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[ 4882.376466] [   T1585] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4882.376709] [   T1585] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[ 4882.595928] [   T1585] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[ 4882.596925] [  T39274] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[ 4882.596943] [  T39274] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[ 4882.787463] [  T39274] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[ 4882.787541] [  T39274] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[ 4882.787703] [  T39274] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[ 4882.798967] [  T39274] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
