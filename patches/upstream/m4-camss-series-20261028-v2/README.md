@@ -1,4 +1,4 @@
-# M4-2…M4-4 camss 驱动系列 **v2**（2026-10-28，回应 Sashiko 自动评审）
+# M4-2…M4-4 camss 驱动系列 **v2**（2026-10-28 已投递并复核）
 
 面向上游 `linux-media` 的 **camss SM8750 驱动主体**，9 提交。**v1 已投**（2026-10-28，
 `[PATCH 0/9]` Message-ID `<20261028034105.326535-1..10@mail.ustc.edu.cn>`）。本目录 = **v2 候选，未发**，
@@ -36,3 +36,19 @@
 ## 发送
 
 **未发。** 发送需用户按系列批准。上机复验已通过（§5）。若批准：先跑 `send-email --dry-run` 复核，再以 `[PATCH v2]` 新串（含 `Changes in v2`）。
+
+## 6. 投递记录（2026-10-28 17:29:54 +0800 **已发**）
+
+| 项 | 值 |
+|---|---|
+| 发送 | `git send-email --confirm=never`，**10 封全部 `Result: 250`**（转录 `out/mail-20261028/m4-camss-v2-send.txt`） |
+| Message-ID | `<20261028093003.722745-1..10-xiaqinghuan@mail.ustc.edu.cn>`（`References` 自洽，同一线程） |
+| 收件人 | To = Bryan O'Donoghue + Mauro Carvalho Chehab；Cc = Rob/Krzysztof/Conor/Bjorn/Konrad/Hangxiang + linux-media/linux-arm-msm/devicetree/linux-kernel（与 v1 一致） |
+| Subject | `[PATCH v2 0/9]` … `[PATCH v2 9/9]` |
+| **lore `/all/`** | ✅ **10/10 归档**（`scripts/lore-fetch-raw.py all <10 个 msgid>`，全部 Subject 正确） |
+| 列表 inbox 抽验 | ✅ `/linux-media/`(#6)、`/linux-arm-msm/`(#9)、`/linux-devicetree/`(#2)、`/lkml/`(#1) 均命中 |
+| **逐字节复核** | ✅ lore 取回 9 枚补丁（跳过 cover）拼 mbox → pristine `24a19b953` `git am` **9/9 干净**，与源分支 `m4/v2-20261028` `git diff` **空** |
+| Sent Items 回读 | ✅ **10/10**（`[PATCH v2 …]`） |
+| 上机复验 | ✅ 见 §5（front/rear 各 90/90、0 错误） |
+
+**下一步**：盯 review（`read-mail-ustc.py --days 3 --replies-only`）。

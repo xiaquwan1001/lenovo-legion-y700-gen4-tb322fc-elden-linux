@@ -230,3 +230,54 @@ gst ... ! jpegenc ! fdsink fd=1 | mjpgfeed /dev/video100 1280 720
   `Failed to run lxc.hook.post-stop`，但**不影响启动**（是 stop 路径的噪声，别当成启动失败）。
 - 容器内 `/dev/video100` 的 inode 是**容器启动时 bind 的快照**；主机重新 `modprobe` 后
   **必须让容器真正重启**（不是 freeze/unfreeze），否则仍是旧的 `c---------` 0 权限节点。
+
+---
+
+# 追加三：Binary Eye 实测 —— 相机链路对 App **可用**，卡点 = HAL 的 YU12 转换缓冲（2026-10-28 晚）
+
+> 目的：绕开 OpenCamera 崩在 `libhwui.so` 的那条路，用 preview+analyze 类 App 证明相机链路可用。
+
+## §16 结果（数字）
+
+| 项 | 结果 |
+|---|---|
+| Binary Eye 是否已装 | ✅ 已在（`de.markusfisch.android.binaryeye`，`~/.local/share/waydroid/data/app/…`）；启动 Activity 是 **`.activity.SplashActivity`**（不是 `MainActivity`） |
+| 相机链路 | ✅ `Camera 200: Opened` → `configureStreams` → **`configureV4l2StreamLocked: start V4L2 streaming 1280x720@30.000000fps`** |
+| **真跑了帧** | ✅ `ProcessCaptureRequest latency histogram **(7) samples**`、`Stream 0 dequeueBuffer latency histogram (8) samples` ⇒ **确实产出了 7 个请求的帧** |
+| 崩溃 | provider 进程 `android.hardware.camera.provider@2.4-external-service` **SIGSEGV**（`cameraserver: Camera provider 'external/0-0' has died; removing it`） |
+| 崩溃线程/栈 | `ExtCamOut` → `libyuv.so CopyRow_NEON+8` ← `CopyPlane` ← **`I420Copy`** ← **`camera.device@3.4-external-impl.so formatConvert()`+244** ← `OutputThread::threadLoop()`+2212 |
+
+## §17 根因（源码级）
+
+`formatConvert()`（`dl-cam/hw-interfaces/camera/device/3.4/default/ExternalCameraUtils.cpp:303`）走
+`V4L2_PIX_FMT_YUV420 → libyuv::I420Copy(in.y/in.cb/in.cr → out.y/out.cb/out.cr, sz)`
+（`ExternalCameraDeviceSession.cpp:1652`）。`out` 来自 `sHandleImporter.lockYCbCr()`（gralloc 输出缓冲），
+`in` 来自 `cropAndScaleLocked(mYu12Frame, …)`。
+
+`CopyRow_NEON` 的 `SEGV_ACCERR`（fault addr `--------`）说明 **`out.cb`/`out.cr` 一侧地址不可写**：
+即 gralloc 输出的 `YCbCrLayout`（`cStride`/`chromaStep`）与 HAL 假设的 I420 平面布局不一致 ——
+**容器内 gralloc mapper 的 `lockYCbCr` 与 HAL 3.4 期望不匹配**（本镜像 2026-10-19 版）。
+
+⇒ **与相机链路（camss→libcamera→gst→loopback→HAL 输入侧）无关**，是 **HAL 输出侧 + 容器 gralloc** 的问题。
+
+## §18 结论
+
+- **相机链路对 App 可用**：Binary Eye 拿到了 `STREAMING`、真产出 7 帧（latency histogram 有样本）。
+  这与 OpenCamera 的表现一致（它也是 configureStreams 全过后才崩）。
+- 现在阻塞 App 预览的两个崩溃**都不在相机线**：
+  1. **OpenCamera** → `libhwui.so` `GrBackendTexture` 析构（容器 GPU / HWUI+Adreno）
+  2. **Binary Eye / 任何走 YUV 输出的 App** → HAL `formatConvert` `I420Copy` 写输出 gralloc 缓冲时 `SEGV_ACCERR`
+     （容器 gralloc `lockYCbCr` 布局不符）
+- 两者的共同点：**相机已经出帧了，死在「把帧交给 Android 图形层」这一步**。
+
+## §19 下一步（若要继续，属容器图形/gralloc 线）
+
+1. 抓 `dumpsys media.camera` 里的 `Active Camera Clients` 与 `android.hardware.camera.provider` 的 gralloc 请求，
+   核对 `cStride` / `chromaStep`（HAL 打印 `outLayout y/cb/cr/ystride/cstride/cstep` 的那行 ALOGV 可开 `debug` 级别取）。
+2. 试 **`YV12` 输出**（`PixelFormat::YV12` 走同一 `I420Copy`，但 gralloc 布局常不同）或让 App 只请求
+   `PixelFormat::BLOB`（拍照路径，已验证 `configureStreams` 的 JPEG 流可用）。
+3. 或在容器侧换 `gralloc` 实现（Waydroid 的 `libgralloc` 与 Android 版本要匹配）。
+
+## §20 设备终态
+
+CAM-OFF（模块 0 / media 0 / video 0）、`v4l2loopback` 卸、`/dev/video100` 无、容器停、`dpms=On`、blank idle=300。
