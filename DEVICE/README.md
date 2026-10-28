@@ -119,7 +119,7 @@
 | AudioReach **tplg** | vendor 自研 | 自编 `Lenovo-Y700-Gen4-tplg.bin` | ASoC `q6apm` + `patches/0011` | ✅ 出声+录音（G1-4） |
 | CDSP `cdsp.mdt`+seg / `cdsp_dtb.mdt`+seg | `modem_a` | `backup/fw/modem/image/`（**split**；`cdsp_dtb.mbn` 单文件被 TZ 拒） | `qcom_q6v5_pas` + DTS `firmware-name`（split）；固件须在 **initramfs** | ✅ 起（`remoteproc1 running`，2026-10-07，G1-11） |
 | WiFi Peach（`amss.bin`/`bdwlan`/BDF） | `modem_a/peach` | `backup/fw/modem/image/peach/`（两套：在用 `amss20.bin` sha `848a2f04…`；**非-20 `amss.bin` 不兼容**：MHI POWER_ON `-110`） | `ath12k` + MHI 重试补丁 | ✅（**Q26 已关闭**：2026-10-10 用户实机确认关联即可用，见 `TASKS` §5 Q26） |
-| BT（`brhbtfw20.tlv`/`brhbtnv20.bin`） | `bluetooth_a` | `backup/fw/bluetooth/` | `hci_qca` + IBS 补丁 | ✅ 配对 + TWS 实听通过（用户 2026-10-06 实测） |
+| BT（**5 个文件**：`brhbtfw20.tlv`/`brhbtnv20.bin`/`brhperifw20.tlv`/`brhperinv20.bin`/`tmel_peach_20.elf`） | `bluetooth_a` + LUN4 `modem_a/image`（tmel） | `backup/fw/bluetooth/`、`backup/fw/modem/image/tmel_peach_20.elf` | `hci_qca` + IBS 补丁；**WCN7861 外设阶段在代码里要 5 个文件名**（`MODULE_FIRMWARE` 只列后 3 个） | ✅ 配对 + TWS 实听通过（用户 2026-10-06）；**2026-10-28 补：第 5 个 `tmel_peach_20.elf` 缺则控制器不注册**（`Peripheral setup failed: -2`，`PITFALLS #454`），已进 `elden-firmware/local-extras.tsv` + 门禁 A2 |
 | GPU gen80000 `zap/sqe/gmu/aqe` | vendor | `backup/fw/gen80000_*` | `msm` + freedreno | ✅ |
 | 触屏 `novatek_ts_csot_3k_fw.bin` | vendor | `backup/fw/vendor/` | `nt36536` | ✅ |
 | 触觉 FW / 功放 ACF | vendor | 改名喂入 `awinic/y700-gen4-*.bin` | `aw86927` / `aw88461` | ✅ |

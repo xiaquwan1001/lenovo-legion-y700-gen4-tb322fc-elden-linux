@@ -65,6 +65,10 @@
 | 2026-10-27 | **三条并行 lane 收口（编排者独立复跑判据）**：`b5-resoc` 把 bonded-DSI 的全局态/魔数/十直调收进 per-SoC `msm_dsi_bonded_cfg` + 两个 host ops（3 提交，逐提交 `make drivers/gpu/drm/msm/` rc=0 / 0 warning；`static bool dsi_bonded_cmd_failed`=0、`0x001f0200`=0、`0x44440400`=0、`dsi.h` 原型 10→2）；`aw86927-series` 从 pristine 起把固件波形能力做成 5 提交上游系列草案（`checkpatch --strict` 5/5 `0E/0W/0C` + `dt-doc-validate` rc=0 + 逐枚 `git apply` 全通）；`devcam-ab` 上机做 SKEW_CAL A/B（`0x54` vs 厂商 `0x00`，各 3 次 90 帧） | 三臂均 90/90、0 错误、30.26 fps（顶 sensor 上限）、帧 STDDEV 53.81 vs 53.78 ⇒ **无可测差异**；处置 = 不回退，上游化时以厂商值提交并注明「本机无差异」 | `reports/lanes-20261027-verified.md`、`TASKS/sessions/2026-10-27-三lane收口与mod-loop假成功修复.md` |
 | 2026-10-27 | **`mod-loop.sh` 的「reloaded」曾是假的**：`qcom-camss`(连字符) vs `lsmod` 的 `qcom_camss`(下划线) 致 `rmmod` 从不执行、`modprobe` 必失败且错误被 `2>/dev/null` 吞；`modules_install` 目的地取自不刷新的 `include/config/kernel.release` ⇒ 装进错误 `<KV>`；`modules.order` 丢失时被误报成「driver is built-in」。修法 = 直收 `.ko` → `updates/` + 名字归一化 + 失败非零 + **build-id 硬校验** | 正路 build-id 匹配、负向测试 rc=1；同轮我自己用 `make -B` 验证生成文件把 `build/vk151/.config` 从 12047 行/`=m`1464 改成 9042/686，已按 manifest `config_sha256` 反查快照逐字还原 | `PITFALLS #447`、`PITFALLS/sessions/108-*` |
 
+| 2026-10-27 夜 | **G1-34 真因换掉两个**：`HasAccelerometer=false` = 缺 udev 属性 `ssc-accel`（**不是 libssc 0.4.4**；`drv-ssc-accel.c` 首行就查该属性）；修完冷起又灭 = **ordering cycle**（服务挂 `multi-user.target` 而 `After=hexagonrpcd`，包单元自带 `After=multi-user.target`）⇒ 改挂 `graphical.target`。冷起 `running`/`failed=0`/传感器三真、无需手工 restart | `PITFALLS #451/#453`、`TASKS/sessions/2026-10-27-G1-34定案-udev属性缺ssc-accel.md` |
+| 2026-10-27 夜 | **B5（M6）第 1–4 步**：1–3 步零写盘上机**行为中性**（60 次 DCS 亮度写 + 20 轮熄屏/唤醒，7 项错误计数全 0、`boot_id` 不变）；第 4 步（master 由 per-SoC 表决定）同值臂一致、**判别臂强改 DSI1 ⇒ 面板首条 DCS `ff 20` 三连 `-22`** ⇒ 主从角色**不可自由换**。陷阱：判别臂下截图/桌面都正常，只有 dmesg 露馅 | `reports/b5-step4-master-from-cfg-20261027.md` |
+| 2026-10-28 | **Q34 定案 = 缺固件不是服务崩**：`hci0` DOWN/BD 全 0、`Direct firmware load for qca/tmel_peach_20.elf failed with error -2` ⇒ `Peripheral setup failed: -2`；补文件 + 重载模块 ⇒ `UP RUNNING`/`QCA setup on UART is completed`。根治 = `local-extras.tsv` + 新门禁 **A2「驱动 MODULE_FIRMWARE 必须进包」** | `PITFALLS #454`、`TASKS/sessions/2026-10-28-Q34蓝牙缺tmel固件定案.md` |
+
 ---
 
 ## 2. 当前完成度（诚实版）
@@ -194,13 +198,15 @@
    `vk149` 臂复现**取消**；日常仍执行 `cam-mode.sh on/off` 互斥（安全策略，非既成事实）。
 4. **#106**：判据「GOOD 需 ≥60 s 存活/可交互」；ramoops 装弹已在位等它自己撞（见 `TASKS` §5 §2 表）。
 5. **上游化 M1–M5**：M1 树与 `m1-73/baseline` 已收敛；M3-1 v3 形状 RFC 已投等 ack；
-   **2026-10-27 新增可评审分片**：B5 第 1–3 步（bonded-DSI 收进 per-SoC cfg + 2 个 host ops，`patches/local/b5-resoc-20261027/`）与 aw86927 五提交系列（`patches/upstream/aw86927-20261027/`）均已过门禁、**只备不发**；
-   投递前两处待拍板：① B5 的 bonded 表暂时挂在 `sm8650_dsi_cfg`（需第 4 步拆独立 SM8750 表项）；② aw86927 第 4 提交顺手修了 pristine 的 `BST_7000MV 0x11→0x09`，应按惯例拆成独立 `Fixes:` 补丁；
+   **2026-10-27 新增可评审分片**：B5 第 1–3 步（bonded-DSI 收进 per-SoC cfg + 2 个 host ops，`patches/local/b5-resoc-20261027/`）与 aw86927 五提交系列（`patches/upstream/aw86927-20261027-v2/`）均已过门禁；aw86927 v2 **已投**（`[PATCH 0/5]`，`/linux-input/` 6/6 归档）、M1-U6 与 M2 A2 同批已投；
+   **2026-10-27 夜**：B5 **第 1–3 步已零写盘上机 = 行为中性**（7 项计数全 0）、**第 4 步已实现并上机**（同值臂中性；判别臂 `master=DSI1` ⇒ 面板 DCS `ff 20` 三连 `-22` ⇒ **主从角色不可自由换**，字段降级为事实登记）⇒ 见 `reports/b5-step4-master-from-cfg-20261027.md`；
+   投递前待办：① B5 的表挂在 `sm8650_dsi_cfg` 上（需拆独立 SM8750 表项）；② 第 4 步投递前把「调用者必须是 master」做成显式检查（当前只返回 `-22`）；
    **2026-10-26 新增热验证通道**：日常线载荷驱动已模块化（`vk163`），叶驱动（触屏/背光/触觉/音频/无线）改一次 = `mod-loop` 秒级上机验证，不用整机重启；
    **2026-10-27 该通道已可信**：`mod-loop.sh` 原先会在模块没换时假报成功（`PITFALLS #447`），现以 **build-id 校验**作唯一成功判据，失败非零退出；
    M3-2 台账 / M3-3 音频 / M3-4 显示 / M4 camss 均备料封存（投递冻结，收盘统一投）。
 6. **G2**：容器相机只剩 **App 实开预览（需装 APK）**；C3 身份/DRM 取证（PI 检测 App 亦需 APK）。
 7. **G3**：Steam 端到端。
+8. **★2026-10-28 收盘：三项已收掉**（不再列待办）：**G1-34 传感器两棵根全绿**（udev `ssc-accel` + ordering cycle，`PITFALLS #451/#453`）、**Q34 蓝牙 = 缺 `qca/tmel_peach_20.elf`**（`PITFALLS #454`，已加门禁 A2「驱动 `MODULE_FIRMWARE` 必须进包」）、**B5 第 1–4 步上机**（见上）。⇒ 当前真开放项只剩：M4-2…4 定稿投递、B5 第 5 步隔离层（R1 魔数，文档阻断）、U2 原子回调时序（需 `drm.debug=0x4` 时间线）、UEFI issue #12 回帖（等你点头）、C5/U7 容器相机 App 预览（需装 APK）、G3 Steam；**掉电率按用户指示最低优先、不排期**。
 
 ---
 

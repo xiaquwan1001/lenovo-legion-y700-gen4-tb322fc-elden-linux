@@ -124,15 +124,15 @@
   **重建账（2026-10-17 审计）**：文档/补丁/配置/证据近乎无损，真损失 = 提交史 + 镜像产物；**在机镜像已于当日晚 P0 抢救到主机**（`boot_b` sha `78a2beb1…` + 1497 `.ko` + 207 项配置 → `backup/HA2EXB0E-16+512/device-rescue-20261017/`，见 `reports/device-rescue-and-q28-m1-badboot-20261017.md`）；
   分级与顺序（P0 抢救设备资产 → P1 修身份表 → P2 装 clang/dtc → P3 重放 M1-7.3 → P4 重编日常镜像）见 `reports/migration-rebuild-audit-20261017.md`；
   会话记录 `TASKS/sessions/2026-10-17-换机后重建审计-邮箱分诊.md`。**邮箱通道可用**，未处理的上游往来 5 条见 `reports/mail-triage-20261017.md`。
-  **★ 当前待办入口 = `TASKS/README.md` §4**：T1–T8/T10/T12/T13 已结项（2026-10-23）；**仍开放 = T9（suspend 掉电率，等 `HS-PHY not in L2` 与 hwmon 两条非阻塞告警收尾）、T11（宿主内存，等你在 BIOS/硬件侧动作）、T14（用户态固化→Mobian 迁移，第一步已落）**；**T15（f2fs 根迁移，路线 A）已于 2026-10-25 真机完成**；**T16（驱动模块化迁到 7.3 日常线 + Mobian 首批物料）2026-10-26 第一步完成（零写盘上机）**。现行纪律只读 `TASKS/README.md` §4 顶部：**需要物理 POR 的样本一律排最后**；**Q28/Q32/Q24 全部结项、补采样已停**；**TF 卡（G1-6）已收口出列**。近两天主线 = **Debian 根迁移**（T19 已收口 / T22 Waydroid 起完），见 `DEVICE/README.md` §1.1。
+  **★ 当前待办入口 = `TASKS/README.md` §4**：T1–T8/T10/T12/T13 已结项（2026-10-23）；**仍开放 = T9（suspend 掉电率 —— 🔽 2026-10-28 用户定：优先级最低、暂不排期）、T11（宿主内存，等你在 BIOS/硬件侧动作）、T14（用户态固化→Mobian 迁移，三步剩余）**；**T15（f2fs 根迁移，路线 A）已于 2026-10-25 真机完成**；**T16（驱动模块化迁到 7.3 日常线 + Mobian 首批物料）2026-10-26 第一步完成（零写盘上机）**。现行纪律只读 `TASKS/README.md` §4 顶部：**需要物理 POR 的样本一律排最后**；**Q28/Q32/Q24 全部结项、补采样已停**；**TF 卡（G1-6）已收口出列**。近两天主线 = **Debian 根迁移**（T19 已收口 / T22 Waydroid 起完），见 `DEVICE/README.md` §1.1。
 
 - **未解（1 项）**：③ 进 GUI 后整机卡死（`PITFALLS #106`）。Q28/Q32 已按「已规避」结项、Q24 已关闭 ⇒ **样本数与复启条件只读 `TASKS/README.md` §5 Q28/Q24/Q32**，本文件不复述。
   **新增待办 Q32 = 暖起 vs 冷起差异**（静态预研已落盘，指向「ABL 交接 framebuffer + 复位动作」而非「暖/冷」本身）。 **2026-10-23 深夜：Q32 取证工具已落地 + 试点取证 + 判据更正**（复位深度只能从 pstore/ramoops 取；在机「ABL 留了活显示」已实测确认）→ `reports/q32-kickoff-20261023.md`；三臂仍未执行。**2026-10-24：三臂已跑完 5 发（W1×2 / C1×2 / W2×1）全 GOOD ⇒ 暖/冷不是主变量，Q32 并入 Q28** → `reports/q32-matrix-20261024.md`。
   **★2026-10-24：Q28 按「已规避（运营线 vk152）」结项** —— 代码级修复（0154/0155/两修）+ 看门狗（ON、从未触发）+ 三态探针；POR 5/5、暖复位 3/3 全 GOOD（8/8 无坏发），但用户决定**不再补样本、不再挖根因**；复启条件三条写死在报告里 → `reports/q28-workaround-closeout-20261024.md`。**口径 / 样本 / 触发 / 下一步只读** `TASKS/README.md` §5 Q28/Q24/Q32 与 `PITFALLS #106`；在机镜像 `boot_b` 见 `DEVICE/README.md` §1.1。
 - ✅ **已解（近期）**：Q31 M1-7.3 显示回归（2026-10-14 E1b）——见 `TASKS/README.md` §5 Q31 / §7。
-- **已关闭 / 搁置**（不再占未解）：Q26 WiFi、**G1-6 TF 卡（2026-10-26 新卡收口，旧卡废置）**、C10 Waydroid 马达透传（PITFALLS §29/§30）。**G1-34 已收口（2026-10-27，两棵根都可用）**：Debian 根的问题**不是 libssc 0.4.4**，是缺 udev 属性 `ssc-accel`（`PITFALLS #451`），已修复并固化进 `MANIFEST` + `verify.sh` 门禁；口径只读 `TASKS/README.md` §1 G1-34。
+- **已关闭 / 搁置**（不再占未解）：Q26 WiFi、**G1-6 TF 卡（2026-10-26 新卡收口，旧卡废置）**、C10 Waydroid 马达透传（PITFALLS §29/§30）、**G1-34 传感器（2026-10-27/28）**、**Q34 蓝牙控制器（2026-10-28）**。两条的当前口径只读 `TASKS/README.md` §1 G1-34 与 §5 Q34：G1-34 的真因**不是 libssc 0.4.4**，而是缺 udev 属性 `ssc-accel`（`PITFALLS #451`）+ 服务挂错 target 造成 ordering cycle（`#453`），均已固化进 `MANIFEST`/`verify.sh`/`stage.sh` 门禁；Q34 的真因是缺 `qca/tmel_peach_20.elf`（`#454`），已加门禁「驱动 `MODULE_FIRMWARE` 声明的厂商固件必须进包」。
 - **未开工 / 进行中**：上游化 M1–M5（`TASKS/README.md` §7）、G1-8 CPU/GPU 基准（`TASKS/README.md` §1）。细节只读对应节，本文件不复述。
-- **可评审分片（只备不发）**：B5 bonded-DSI 第 1–3 步、aw86927 五提交系列、camss 驱动系列 —— 状态与两处待拍板只读 `TASKS/README.md` §7 的 M 行；判据复核汇总 `reports/lanes-20261027-verified.md`。
+- **可评审分片**：B5 bonded-DSI **第 1–4 步（2026-10-27 夜全部上机：1–3 行为中性、第 4 步判别臂证明主从角色不可换）**、camss 驱动系列（备料完成未投）—— aw86927 v2 / M1-U6 / M2 A2 已于 2026-10-27 **投出并归档**；状态与待拍板只读 `TASKS/README.md` §7 的 M 行；判据复核汇总 `reports/lanes-20261027-verified.md`、`reports/b5-step4-master-from-cfg-20261027.md`。
 - **上游投递（2026-10-27 起解冻）**：已在评审/已归档的系列与「只备不发」的草案**只读** `TASKS/README.md` §7（M 行逐条带 Message-ID）。
   **口径**：投递解冻由用户按批放行；agent **不等回复**，只做不阻塞项（备料/门禁/取证）。
 - **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-29 UEFI、G1-10 NFC、G1-30 slim initramfs；
