@@ -71,6 +71,7 @@
 | 2026-10-28 | **U2（B5/M6 原子回调时序）上机取证并关闭**：`ftrace` 抓 bonded-DSI 熄屏/唤醒两轮，enable 序 = `pre_enable(只 power_on) → panel_prepare → 219–224 ms → bridge_enable(host_enable ×2) → panel_enable`，disable 序 = `panel_disable → host_disable ×2 → panel_unprepare → post_disable(power_off ×2 + phy_disable)`；8 项判据全 PASS 且两轮同序、错误计数 0→0 ⇒ 现有原子回调切分即推荐形状，**不需要补丁** | `reports/b5-u2-atomic-timeline-20261028.md`、`scripts/b5-u2-atomic-timeline.sh`、`PITFALLS #456` |
 | 2026-10-28 | **M4-2…M4-4 定稿为可发状态**（未发）：9 提交 / 14 文件 / +1931 −61 —— R1 改成厂商 SKEW_CAL 值并写明 2ph 表 103/103 出处 + 本机 A/B 无差异；R3 把「帧起始改由 CSID 上报」拆成独立提交；R4 拆 DMA 连续性与失败回退；新增 SoC dtsi 节点 ⇒ `dtbs_check` 首次能跑且两板 0 warning（含负向测试）；剔除 NOT-FOR-UPSTREAM 提交。门禁：checkpatch 9/9 `0E/0C`、逐提交编译含 `LD [M]` 全绿、pristine 重放逐字节一致、`send-email --dry-run` 10 × OK | `reports/m4-camss-series-ready-20261028.md`、`patches/upstream/m4-camss-series-20261028/` |
 | 2026-10-28 | **M4-2…M4-4 已投递（用户批准）并逐字节复核**：`[PATCH 0/9] media: camss: add SM8750 support`，10 封 `Result: 250`，Message-ID `20261028034105.326535-1..10`；lore `/all/` **10/10** 归档，抽验 linux-media / linux-arm-msm / linux-devicetree 均 200；**raw → mbox → pristine `git am` 9/9，与源分支 `git diff` 空**；Sent Items 10/10、INBOX 回环 10/10 | `patches/upstream/m4-camss-series-20261028/README.md` §6、`PITFALLS #457` |
+| 2026-10-28 | **B5 第 5 步解阻**：原判「`0x001f0200/0x44440400` 魔数 bit30/29 上游无描述 ⇒ 永久隔离」被证否 —— `0x44440400` 的五个位在 `generated/dsi.xml.h` 里全有名字（OR 逐位相等），bit30/29 = `BROADCAST_MASTER`/`WC_SEL`；只有 `ERR_INT_MASK0` 字段布局无公开手册 ⇒ 写成 `GENMASK(20,16)|BIT(9)` 并注释。落地 0005 补丁，**`dsi_host.o` 的 `.text` 逐字节相同**（零机器码差异），编译 0 warning | `reports/b5-step5-doc-unblock-20261028.md`、`PITFALLS #458` |
 
 ---
 
@@ -209,7 +210,7 @@
    M3-2 台账 / M3-3 音频 / M3-4 显示 / M4 camss 均备料封存（投递冻结，收盘统一投）。
 6. **G2**：容器相机只剩 **App 实开预览（需装 APK）**；C3 身份/DRM 取证（PI 检测 App 亦需 APK）。
 7. **G3**：Steam 端到端。
-8. **★2026-10-28 收盘：三项已收掉**（不再列待办）：**G1-34 传感器两棵根全绿**（udev `ssc-accel` + ordering cycle，`PITFALLS #451/#453`）、**Q34 蓝牙 = 缺 `qca/tmel_peach_20.elf`**（`PITFALLS #454`，已加门禁 A2「驱动 `MODULE_FIRMWARE` 必须进包」）、**B5 第 1–4 步上机**（见上）。⇒ 当前真开放项只剩：M4-2…4 **已投递并复核**（`[PATCH 0/9]` 10 封 250，lore `/all/` 10/10，raw 重放 9/9 逐字节一致）、B5 第 5 步隔离层（R1 魔数，文档阻断）、~~U2 原子回调时序~~（**2026-10-28 已证并关闭**：8 项原文判据全 PASS，现形状即上游形状）、UEFI issue #12 回帖（等你点头）、C5/U7 容器相机 App 预览（需装 APK）、G3 Steam；**掉电率按用户指示最低优先、不排期**。
+8. **★2026-10-28 收盘：三项已收掉**（不再列待办）：**G1-34 传感器两棵根全绿**（udev `ssc-accel` + ordering cycle，`PITFALLS #451/#453`）、**Q34 蓝牙 = 缺 `qca/tmel_peach_20.elf`**（`PITFALLS #454`，已加门禁 A2「驱动 `MODULE_FIRMWARE` 必须进包」）、**B5 第 1–4 步上机**（见上）。⇒ 当前真开放项只剩：M4-2…4 **已投递并复核**（`[PATCH 0/9]` 10 封 250，lore `/all/` 10/10，raw 重放 9/9 逐字节一致）、~~B5 第 5 步隔离层~~（**2026-10-28 解阻**：`0x44440400` 全位有上游符号、`ERR_INT_MASK0` 按厂商行为写明，patch 已落地且 `.text` 逐字节等价）、~~U2 原子回调时序~~（**2026-10-28 已证并关闭**：8 项原文判据全 PASS，现形状即上游形状）、UEFI issue #12 回帖（等你点头）、C5/U7 容器相机 App 预览（需装 APK）、G3 Steam；**掉电率按用户指示最低优先、不排期**。
 
 ---
 
