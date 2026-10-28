@@ -46,9 +46,28 @@ packaging/elden-userland/
 bash packaging/elden-userland/tools/sync-from-device.sh
 # 渲染两种 init
 python3 packaging/elden-userland/tools/render.py
-# 门禁（离线跑结构检查；设备在线时附加 sha 漂移检查）
+# 门禁（A–G；设备在线时 F 段额外比对「根画像」下的期望表）
 bash packaging/elden-userland/tools/verify.sh
+
+# 不连设备、改读本地树（负向测试 / 预演暂存 overlay）——门禁写完必须做这一步
+LOCAL_ROOT=$PWD/out/stage-debian bash packaging/elden-userland/tools/verify.sh   # 正向：应全绿
+LOCAL_ROOT=/tmp/fakeroot      bash packaging/elden-userland/tools/verify.sh   # 负向：篡改一个 unit 应 FAIL
+
+# 强制根画像（默认自动：/etc/elden-init-mode → /run/systemd/system）
+ROOT_PROFILE=openrc bash packaging/elden-userland/tools/verify.sh
 ```
+
+## 门禁 F 段的「真值」优先级（2026-10-28 定）
+
+换根（Alpine→Debian）后旧判据在 Debian 根上 **FAIL=3 全是假阳性**（`PITFALLS #455`）。现在的判据：
+
+1. **期望 sha 优先取暂存 overlay**（`out/stage-debian/`，`rootfs/debian/stage.sh` 的产物）——
+   那才是真正要 rsync 上去的内容；`rootfs/debian/overrides.tsv` 里「按发行版有意改写」的路径
+   （如 `/etc/conf.d/greetd` 在 systemd `EnvironmentFile` 下不能带 `export`）自然不再报漂移。
+2. **openrc 专属路径**（`/etc/init.d/`、`/etc/local.d/`）在 systemd 根上**不存在是预期**，聚合一行 ok，不逐条 WARN。
+3. **渲染单元 ↔ 设备**（新 F2）：systemd 根对 `/usr/lib/systemd/system/*.service`，openrc 根对 `/etc/init.d/*`，
+   与 `out/units/` 逐字比对——这条原先**完全没有门禁**（`render.py` 只保证渲染自洽，不保证部署一致）。
+4. 全部 sha 一次 ssh 往返取（`xargs sha256sum`），73+ 条路径从分钟级降到 ~2.5 s。
 
 ## 服务迁移口径（换 init 时唯一要看的一列）
 

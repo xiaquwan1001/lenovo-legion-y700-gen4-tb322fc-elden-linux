@@ -7,15 +7,21 @@
 #   C. services.tsv 每个 ours/override 行的 exec 必须落在 MANIFEST 或 extra/ 里（不留幽灵服务）
 #   D. 渲染门：render.py --check 通过；两套 unit 都在；unit 结构合法；无跨 init 污染
 #   E. 语义红线（README 里那 5 条）逐条断言
-#   F. 在线时：设备逐字比对 files/（漂移只报 DIFF，不改）
+#   F. 在线时：设备逐字比对「根画像」下的期望表（MANIFEST/渲染单元 + 暂存 overlay 优先）
+#   F2. 渲染单元 ↔ 设备（systemd → /usr/lib/systemd/system，openrc → /etc/init.d）
 #
 # 用法：bash tools/verify.sh [--offline] [user@host]
+#       ROOT_PROFILE=systemd|openrc   强制根画像（默认自动探测 /etc/elden-init-mode → /run/systemd/system）
+#       LOCAL_ROOT=<dir>              不连设备，改读本地树（负向测试 / 预演 overlay 用）
 set -uo pipefail
 
 HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 REPO=$(cd -- "$HERE/../.." && pwd)
 OFFLINE=0
 SSH_TARGET=${SSH_TARGET:-root@192.168.7.1}
+LOCAL_ROOT=${LOCAL_ROOT:-}
+STAGE=${STAGE:-$REPO/out/stage-debian}
+[ -d "$STAGE" ] || STAGE=
 for a in "$@"; do
   case "$a" in
     --offline) OFFLINE=1 ;;
@@ -165,31 +171,114 @@ fi
 
 # ---------------------------------------------------------------- F. 设备漂移
 sec "F. 设备逐字比对"
-if [ "$OFFLINE" = "1" ]; then
-  ok "--offline：跳过"
-elif ssh -o BatchMode=yes -o ConnectTimeout=6 "$SSH_TARGET" true 2>/dev/null; then
-  drift=0; checked=0
+# ★ 2026-10-28 改（旧判据在 Debian 根上 FAIL=3 全是假阳性）：
+#   - Debian 根由 `rootfs/debian/stage.sh` 组装 ⇒ 真正要 rsync 上去的内容在**暂存 overlay**
+#     （`out/stage-debian/`），且 `rootfs/debian/overrides.tsv` 里的路径**本就该与 Alpine 副本不同**
+#     （例：`/etc/conf.d/greetd` 在 systemd 的 EnvironmentFile 里不能带 `export`）。
+#   - openrc 专属路径（`/etc/init.d`、`/etc/local.d`）在 systemd 根上不存在是**预期**，不是漂移。
+#   ⇒ 期望表 = MANIFEST 文本行 + 渲染单元；每条的期望 sha 优先取 overlay 同名文件。
+is_openrc_only() { case "$1" in /etc/init.d/*|/etc/local.d/*) return 0 ;; *) return 1 ;; esac; }
+
+probe_profile() {   # → systemd | openrc
+  case "${ROOT_PROFILE:-}" in systemd|openrc) echo "$ROOT_PROFILE"; return 0 ;; esac
+  local m
+  if [ -n "$LOCAL_ROOT" ]; then
+    if   [ -f "$LOCAL_ROOT/etc/elden-init-mode" ]; then m=$(cat "$LOCAL_ROOT/etc/elden-init-mode")
+    elif [ -d "$LOCAL_ROOT/run/systemd/system" ]; then m=systemd
+    else m=openrc; fi
+  else
+    m=$(ssh -o BatchMode=yes -o ConnectTimeout=8 "$SSH_TARGET" \
+          'cat /etc/elden-init-mode 2>/dev/null || { [ -d /run/systemd/system ] && echo systemd || echo openrc; }' 2>/dev/null)
+  fi
+  echo "${m%%[!a-z]*}"
+}
+
+# 期望表：path<TAB>expected_sha<TAB>origin
+build_expect() {
+  local dst kind sha size mode repo_src p h origin f
   while IFS=$'\t' read -r dst kind sha size mode repo_src; do
     [ "$dst" = "dst" ] && continue
     [ "$kind" = "elf" ] && continue
+    if [ "$ROOT_PROFILE" = "systemd" ] && is_openrc_only "$dst"; then continue; fi
+    h=$sha; origin=MANIFEST
+    if [ -n "$STAGE" ] && [ -f "$STAGE$dst" ]; then
+      h=$(sha256sum "$STAGE$dst" | cut -d' ' -f1); origin=overlay
+    fi
+    printf '%s\t%s\t%s\n' "$dst" "$h" "$origin"
+  done <"$HERE/MANIFEST.tsv"
+  if [ "$ROOT_PROFILE" = "systemd" ]; then
+    for f in "$HERE"/out/units/systemd/*.service; do
+      [ -f "$f" ] || continue
+      p=/usr/lib/systemd/system/$(basename "$f"); h=$(sha256sum "$f" | cut -d' ' -f1); origin=unit
+      if [ -n "$STAGE" ] && [ -f "$STAGE$p" ]; then h=$(sha256sum "$STAGE$p" | cut -d' ' -f1); origin=overlay; fi
+      printf '%s\t%s\t%s\n' "$p" "$h" "$origin"
+    done
+  else
+    for f in "$HERE"/out/units/openrc/*; do
+      [ -f "$f" ] || continue
+      p=/etc/init.d/$(basename "$f"); h=$(sha256sum "$f" | cut -d' ' -f1); origin=unit
+      printf '%s\t%s\t%s\n' "$p" "$h" "$origin"
+    done
+  fi
+}
+
+# 一次往返取全部 sha（旧版每条一次 ssh，73 条路径 ≈ 分钟级）
+fetch_shas() {   # stdin: 绝对路径 → stdout "sha<TAB>逻辑路径"（LOCAL_ROOT 时也要回逻辑路径）
+  local p h
+  if [ -n "$LOCAL_ROOT" ]; then
+    while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      [ -f "$LOCAL_ROOT$p" ] || continue
+      h=$(sha256sum "$LOCAL_ROOT$p" 2>/dev/null | cut -d' ' -f1)
+      [ -n "$h" ] && printf '%s\t%s\n' "$h" "$p"
+    done
+  else
+    ssh -o BatchMode=yes -o ConnectTimeout=8 "$SSH_TARGET" "xargs -d '\n' sha256sum 2>/dev/null" \
+      | awk '{h=$1; $1=""; sub(/^ +/,""); if (h ~ /^[0-9a-f]{64}$/) print h"\t"$0}'
+  fi
+}
+
+if [ "$OFFLINE" = "1" ]; then
+  ok "--offline：跳过"
+elif [ -n "$LOCAL_ROOT" ] || ssh -o BatchMode=yes -o ConnectTimeout=6 "$SSH_TARGET" true 2>/dev/null; then
+  ROOT_PROFILE=$(probe_profile)
+  [ -n "$ROOT_PROFILE" ] || ROOT_PROFILE=openrc
+  printf '  根画像 %s（init-mode=%s / overlay=%s）\n' "$ROOT_PROFILE" "$ROOT_PROFILE" "${STAGE:-无}"
+
+  exp=/tmp/.verify_exp.$$
+  build_expect >"$exp"
+  declare -A GOT=()
+  while IFS=$'\t' read -r h p; do GOT[$p]=$h; done < <(cut -f1 "$exp" | fetch_shas)
+
+  drift=0; gone=0; checked=0; skipped=0
+  while IFS=$'\t' read -r p h origin; do
+    [ -n "$p" ] || continue
     checked=$((checked + 1))
-    got=$(ssh -n -o BatchMode=yes -o ConnectTimeout=6 "$SSH_TARGET" "sha256sum /${dst#/} 2>/dev/null | cut -d' ' -f1")
-    if [ -z "$got" ]; then warn "$dst: 设备上已不存在（仓库副本保留）"
-    elif [ "$got" != "$sha" ]; then
-      fail "$dst: 设备与仓库副本不一致（设备 $got / 副本 $sha）⇒ 需要 sync 并评审"
+    got=${GOT[$p]:-}
+    if [ -z "$got" ]; then
+      if [ "$ROOT_PROFILE" = "systemd" ] && is_openrc_only "$p"; then skipped=$((skipped + 1)); continue; fi
+      warn "$p: 设备上不存在（期望来源 $origin）"; gone=$((gone + 1))
+    elif [ "$got" != "$h" ]; then
+      case "$origin" in
+        overlay) fail "$p: 设备 ≠ 暂存 overlay（设备 ${got:0:16} / overlay ${h:0:16}）⇒ 部署落后或设备手改" ;;
+        unit)    fail "$p: 设备上的单元与渲染产物不一致（设备 ${got:0:16} / 渲染 ${h:0:16}）⇒ 重跑 render+部署" ;;
+        *)       fail "$p: 设备与仓库副本不一致（设备 ${got:0:16} / 副本 ${h:0:16}）⇒ 需要 sync 并评审" ;;
+      esac
       drift=$((drift + 1))
     fi
-  done <"$HERE/MANIFEST.tsv"
-  [ "$drift" = 0 ] && ok "$checked 条与设备逐字一致"
+  done <"$exp"
+  rm -f "$exp"
+  [ "$drift" = 0 ] && [ "$gone" = 0 ] && ok "$checked 条与设备逐字一致（含渲染单元；根画像 $ROOT_PROFILE）"
+  [ "$skipped" -gt 0 ] && ok "$skipped 条 openrc 专属路径（/etc/init.d、/etc/local.d）在 systemd 根上不适用（预期）"
 
   # ELF 漂移只提示（重编会改 sha，不代表功能漂移）
   awk -F'\t' 'NR>1 && $2=="elf"{print $1"\t"$3}' "$HERE/MANIFEST.tsv" | while IFS=$'\t' read -r d h; do
-    got=$(ssh -n -o BatchMode=yes -o ConnectTimeout=6 "$SSH_TARGET" "sha256sum $d 2>/dev/null | cut -d' ' -f1")
+    got=$(printf '%s\n' "$d" | fetch_shas | cut -f1)
     [ -z "$got" ] && continue
-    [ "$got" = "$h" ] || echo "  DIFF  $d: 设备 $got ≠ 清单 $h（重编？）"
+    [ "$got" = "$h" ] || echo "  DIFF  $d: 设备 ${got:0:16} ≠ 清单 ${h:0:16}（重编？）"
   done
 else
-  warn "设备不可达（$SSH_TARGET），跳过 F"
+  warn "设备不可达（$SSH_TARGET 或 LOCAL_ROOT），跳过 F"
 fi
 
 # ---------------------------------------------------------------- G. 第 4 处真源
