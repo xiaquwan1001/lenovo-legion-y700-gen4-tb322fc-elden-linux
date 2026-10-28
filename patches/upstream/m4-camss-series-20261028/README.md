@@ -91,3 +91,18 @@ git send-email --no-chain-reply-to \
 
 投递后必做（技能 `upstream-mail-ustc` §5）：lore 按 Message-ID 取 raw 复核 + INBOX 回环 + 正文 sha 比对。
 dry-run 转录件：`out/mail-20261028/m4-camss-20261028-dryrun.txt`（`out/` 不入库）。
+
+## 6. 投递记录（2026-10-28 11:40:56 +0800 已发）
+
+| 项 | 值 |
+|---|---|
+| 发送 | `git send-email --confirm=never`，10 封 `Result: 250`（git 2.53 不认 `--no-confirm`，须 `--confirm=never`） |
+| Message-ID | `<20261028034105.326535-1..10-xiaqinghuan@mail.ustc.edu.cn>`（同一线程，`References` 自洽） |
+| Sent Items 回读 | 10/10 在（`[170,172..178]` + 2 封主题不含 "camss" 的按主题单查） |
+| INBOX 回环 | 10/10（每封各 1 次列表回环） |
+| **lore 归档** | `/all/` **10/10**；另抽验 `/linux-media/`（#5）、`/linux-arm-msm/`（#7）、`/linux-devicetree/`（#1）均 200 + Subject 正确 |
+| **逐字节复核** | 把 `/all/` 的 9 封补丁（去掉 cover）拼 mbox → 在 pristine `git am` ⇒ **9/9 干净**，与源分支 `git diff` **空** |
+| 复核工具 | `scripts/lore-fetch-raw.py <list|all> <msgid>... -o DIR`（带 Anubis PoW；**Message-ID 不能带尖括号**，否则 pass-challenge 404） |
+| 转录件 | `out/mail-20261028/m4-camss-20261028-send.txt`（`out/` 不入库） |
+
+下一步 = 盯 review（`python3 ~/.local/bin/read-mail-ustc.py --days 3 --replies-only`）。
