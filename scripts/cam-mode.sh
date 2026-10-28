@@ -21,18 +21,35 @@ UNLOAD='gc08a8 s5kjns gt9764 leds-qcom-flash qcom-camss wl2868c-regulator i2c-qc
 # 注意：`timeout` 只能 exec **真二进制**，不能跑 shell 函数（写成 `timeout 10 su_run …`
 # 会报 “failed to run command ‘su_run’: No such file or directory”，整段 gsettings 当场空转）。
 # ⇒ 把“以会话用户跑”拼成命令前缀字符串，让 timeout 去 exec sudo。
-CAMAS='sudo -u xuqianhui1001 HOME=/home/xuqianhui1001 XDG_RUNTIME_DIR=/run/user/1000'
+# ★会话用户/uid 必须**现查**，不能写死（2026-10-28 实测：Alpine 根是 uid 1000「xuqianhui」，
+# Debian 根是 uid 1001「xuqianhui1001」⇒ 写死会让 `find_bus` 永远找不到会话总线，
+# 于是 `GS get ...` 空、blank 守卫静默失效，而 status 仍打印 CAM-ON/CAM-OFF）。
+SESSION_USER=${SESSION_USER:-$(loginctl list-sessions --no-legend 2>/dev/null | awk '$4=="seat0"{print $3; exit}')}
+SESSION_USER=${SESSION_USER:-xuqianhui1001}
+SUID=$(id -u "$SESSION_USER" 2>/dev/null || echo 1000)
+SHOME=$(getent passwd "$SESSION_USER" 2>/dev/null | cut -d: -f6)
+# ★提权工具也要现查：Alpine 根有 `sudo`，**Debian 根没有**（2026-10-28 实测 `sudo: command not found`），
+# 而 GS() 把 stderr 吞掉后只看 stdout 最后一个字段 ⇒ 守卫会**静默变成空操作**（status 里 idle-delay 空、
+# blank disable/restore 什么也没做）。所以这里按可用性选工具，两者都没有就直接报错。
+if command -v sudo >/dev/null 2>&1; then
+	CAMAS="sudo -u $SESSION_USER HOME=$SHOME XDG_RUNTIME_DIR=/run/user/$SUID"
+elif command -v runuser >/dev/null 2>&1; then
+	CAMAS="runuser -u $SESSION_USER -- env HOME=$SHOME XDG_RUNTIME_DIR=/run/user/$SUID"
+else
+	CAMAS=""
+fi
 find_bus(){
 	# 竞态：pgrep 列出的 pid 可能在读 /proc/<pid>/environ 前就退出，而 `< file`
 	# 的重定向失败由**调用它的 shell** 报错 —— `2>/dev/null` 挂在 tr 上拦不住
 	# ⇒ 会打印 "can't open /proc/NNNN/environ" 噪声（2026-10-15 实测每跑必现）。
 	# 治法：在**子 shell 内**先判可读再读并整体吞掉 stderr —— `[ -r ]` 与 `<` 之间
 	# 仍有 TOCTOU 窗口，光靠 -r 挡不住（实测第一次修就是这么漏的）。
-	for p in $(pgrep -u 1000 | head -40); do
+	for p in $(pgrep -u $SUID | head -40); do
 		( tr '\0' '\n' < "/proc/$p/environ" ) 2>/dev/null | grep -m1 '^DBUS_SESSION_BUS_ADDRESS='
 	done | head -1 | cut -d= -f2-
 }
 GS(){ # GS get|set <schema> <key> [value]；拿不到会话总线就明确报错（不静默）
+	if [ -z "$CAMAS" ]; then echo "[cam-mode] FAIL: 既没有 sudo 也没有 runuser，无法以会话用户执行 gsettings" >&2; return 1; fi
 	SBU=$(find_bus)
 	if [ -z "$SBU" ]; then echo "[cam-mode] FAIL: 找不到会话总线（会话用户未登录？gsettings 读不到真值）" >&2; return 1; fi
 	if [ "$1" = get ]; then
