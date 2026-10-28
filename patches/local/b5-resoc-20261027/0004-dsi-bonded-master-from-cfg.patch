@@ -1,0 +1,91 @@
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+index 667d233f7..811895123 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -62,6 +62,7 @@ void msm_dsi_manager_tpg_enable(void);
+ struct msm_dsi_host;
+ struct msm_dsi_host_cfg_ops;
+ const struct msm_dsi_host_cfg_ops *msm_dsi_host_get_cfg_ops(struct mipi_dsi_host *host);
++const struct msm_dsi_bonded_cfg *msm_dsi_host_get_bonded_cfg(struct mipi_dsi_host *host);
+ int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
+ 					const struct mipi_dsi_msg *msg);
+ void msm_dsi_host_xfer_restore(struct mipi_dsi_host *host,
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 0e3437a27..85f162a27 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -2357,6 +2357,17 @@ dsi_bonded_cfg(struct msm_dsi_host *msm_host)
+ 	return msm_host->cfg_hnd->cfg->bonded;
+ }
+ 
++/*
++ * The bonded master/slave roles are a property of the SoC's DSI generation,
++ * not of the order in which the two DSI hosts happen to probe.  Expose the
++ * per-SoC table so the manager can take the master from there.
++ */
++const struct msm_dsi_bonded_cfg *
++msm_dsi_host_get_bonded_cfg(struct mipi_dsi_host *host)
++{
++	return dsi_bonded_cfg(to_msm_dsi_host(host));
++}
++
+ static void dsi_cmd_error_prepare(struct msm_dsi_host *msm_host)
+ {
+ 	const struct msm_dsi_bonded_cfg *bonded = dsi_bonded_cfg(msm_host);
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 917e51a73..6a5a4ce83 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -46,7 +46,7 @@ static DEFINE_MUTEX(dsi_bonded_cmd_lock);
+ 
+ #define IS_BONDED_DSI()		(msm_dsim_glb.is_bonded_dsi)
+ #define IS_SYNC_NEEDED()	(msm_dsim_glb.is_sync_needed)
+-#define IS_MASTER_DSI_LINK(id)	(msm_dsim_glb.master_dsi_link_id == id)
++#define IS_MASTER_DSI_LINK(id)	(dsi_mgr_bonded_master_link_id(id) == (id))
+ 
+ static bool dsi_mgr_uses_bonded_cmd(void)
+ {
+@@ -74,6 +74,25 @@ static inline struct msm_dsi *dsi_mgr_get_other_dsi(int id)
+ 	return msm_dsim_glb.dsi[(id + 1) % DSI_MAX];
+ }
+ 
++/*
++ * The master link comes from the per-SoC bonded config when the SoC provides
++ * one; falling back to the DT-declared value (which the probe order fills in)
++ * keeps SoCs without a bonded table working exactly as before.
++ */
++static int dsi_mgr_bonded_master_link_id(int id)
++{
++	struct msm_dsi *dsi = dsi_mgr_get_dsi(id);
++	const struct msm_dsi_bonded_cfg *bonded;
++
++	if (dsi && dsi->host) {
++		bonded = msm_dsi_host_get_bonded_cfg(dsi->host);
++		if (bonded)
++			return bonded->master_link_id;
++	}
++
++	return msm_dsim_glb.master_dsi_link_id;
++}
++
+ static int dsi_mgr_parse_of(struct device_node *np, int id)
+ {
+ 	struct msm_dsi_manager *msm_dsim = &msm_dsim_glb;
+@@ -608,13 +627,13 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ {
+ 	struct msm_dsi *master_dsi, *slave_dsi;
+ 	const struct msm_dsi_host_cfg_ops *ops;
++	int master_id = dsi_mgr_bonded_master_link_id(DSI_0);
+ 
+-	if (msm_dsim_glb.master_dsi_link_id < 0 ||
+-	    msm_dsim_glb.master_dsi_link_id >= DSI_MAX)
++	if (master_id < 0 || master_id >= DSI_MAX)
+ 		return -EINVAL;
+ 
+-	master_dsi = dsi_mgr_get_dsi(msm_dsim_glb.master_dsi_link_id);
+-	slave_dsi = dsi_mgr_get_other_dsi(msm_dsim_glb.master_dsi_link_id);
++	master_dsi = dsi_mgr_get_dsi(master_id);
++	slave_dsi = dsi_mgr_get_other_dsi(master_id);
+ 	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host)
+ 		return -ENODEV;
+ 

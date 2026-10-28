@@ -342,3 +342,17 @@ vk174	num_ne_tag	M6 迁移候选（2026-10-26）：内核/DTB 逐字节复用 vk
 vk175	num_ne_tag	M6 可见性件（2026-10-26）：内核/DTB/ramdisk 与 vk174 逐字节相同，只加 cmdline elden_early_gadget=1 + elden_q28_nowd
 vk176	num_ne_tag	M6 电源/USB 件（2026-10-26）：内核/DTB 复用 vk172 载荷，ramdisk 换新 /init（usb0_dhcp applet 回退）
 vk177	num_ne_tag	M6 传感器件（2026-10-26）：内核/ramdisk 同 vk176，板 DTB 加 ADSP fastrpc qcom,non-secure-domain
+vk178-b5verify	num_ne_tag	B5 第1-3步验证件（2026-10-27）：LOCALVERSION 钉 -debug-vk172 以复用设备模块树，源提交上无 vk178 ref 为设计使然
+vk178-b5verify	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树（B5 改动全在 vmlinux）
+vk179-b5step4a	num_ne_tag	B5 第4步同值臂（2026-10-27）：同上，UTS 钉住
+vk179-b5step4a	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树
+vk180-b5step4b	num_ne_tag	B5 第4步判别臂（2026-10-27）：同上，UTS 钉住
+vk180-b5step4b	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树
+vk181-daily	num_ne_tag	日常线复原件（2026-10-27）：B5 实验后从还原的树重打，UTS 钉住
+vk181-daily	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树
+vk172	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
+vk173	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
+vk174	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
+vk175	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
+vk176	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
+vk177	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变

@@ -429,10 +429,41 @@ if [ -f "$STAGE/init" ]; then
 else bad "overlay 缺 /init"; fi
 
 sec "G. 单元启用状态（烘进 overlay，不靠首启人工 enable）"
-W="$STAGE/etc/systemd/system/multi-user.target.wants"
-for u in qbootctl greetd iio-sensor-proxy wifi-scan-refresh elden-hapticd ath12k-retry net-selfheal; do
-	[ -L "$W/$u.service" ] && ok "已 enable: $u" || bad "未 enable: $u（首启会自己恢复/跳步）"
-done
+# 目标 === enable.tsv 的 systemd-target 列（render.py 生成，services.tsv 为真源）。
+# 这里**不再写死 multi-user.target**：2026-10-27 实测 iio-sensor-proxy 必须挂在
+# graphical.target（hexagonrpcd 自带 `After=multi-user.target`，两个都挂 multi-user
+# 就成 ordering cycle ⇒ iio-sensor-proxy 在冷起时**根本不启动**，传感器全灭，
+# 且日志只有一行 cycle 警告）。写死目标名的门禁认不出这种回归。
+# 直接读 services.tsv（真源）而不是写死清单：旧版把 7 个服务名硬编码在
+# `multi-user.target` 下，于是 2026-10-27 实测的这条回归（iio-sensor-proxy 必须挂在
+# graphical.target：hexagonrpcd 自带 `After=multi-user.target`，两者都挂 multi-user
+# 就成 ordering cycle ⇒ iio-sensor-proxy 冷起**根本不启动**、传感器全灭，日志只有一行
+# cycle 警告）不会被任何门禁抓到。
+#   - init=package 的行由发行版自己启用/建别名，不要求我们放链接（只登记一行 ok）；
+#   - wantedby 可以是多个 target（如 elden-powerlog 的三个关机 target），逐个查。
+# ⚠ 不要用 `while IFS=$'\t' read -r f1 … f14` 解析 services.tsv：它有一个**真空字段**
+# （`before` 列），而 tab 属 POSIX IFS 空白 ⇒ bash 会**折叠连续 tab**，后面所有列左移一列
+# （实测 `elden-powerlog` 的 wantedby 被读成 enabled 的 "1"）。用 awk 按 -F'\t' 取列，
+# 输出 `name|init|wantedby` 三列再读。
+SVC_TSV="$USERLAND/services.tsv"
+[ -f "$SVC_TSV" ] || bad "缺 $SVC_TSV"
+while IFS='|' read -r _name _init _wantedby; do
+	[ -n "$_name" ] || continue
+	if [ "$_init" = package ]; then
+		ok "package: $_name（由发行版启用，不在 overlay 里建链接）"
+		continue
+	fi
+	if [ -z "$_wantedby" ]; then
+		warnf "W $_name enabled=1 但 wantedby 为空（无处挂 ⇒ 不会启动）"
+		continue
+	fi
+	_miss=""
+	for _t in $_wantedby; do
+		[ -L "$STAGE/etc/systemd/system/$_t.wants/$_name.service" ] || _miss="$_miss $_t"
+	done
+	[ -z "$_miss" ] && ok "已 enable: $_name（$_wantedby）" \
+		|| bad "未 enable: $_name（缺${_miss} 的 .wants 链接 ⇒ 首启会自己恢复/跳步）"
+done < <(awk -F'\t' 'NR>1 && $1 !~ /^#/ && $14==1 {print $1"|"$2"|"$13}' "$SVC_TSV")
 [ -L "$STAGE/etc/systemd/system/lxc-net.service" ] \
 	&& ok "lxc-net 已 mask（否则每启一条失败单元）" \
 	|| bad "lxc-net 未 mask ⇒ Debian 上必失败（ip6tables legacy）"

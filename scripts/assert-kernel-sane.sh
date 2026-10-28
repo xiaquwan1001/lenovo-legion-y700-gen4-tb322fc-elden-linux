@@ -54,8 +54,14 @@ fi
 
 # --- 2. System.map 符号锚点（平台驱动真的链进去了）------------------------
 if [ -f "$SMAP" ]; then
-	for s in gcc_sm8750 msm_dsi_host_bonded_cmd_trigger qcom_rpmh; do
-		grep -q "$s" "$SMAP" || die "System.map 缺符号 '$s' → 无 QCOM 驱动的死内核（#162）"
+	# DSI 锚点用「或」：B5 重构把 msm_dsi_host_bonded_cmd_trigger 降成 file-static 的
+	# dsi_bonded_cmd_trigger，对外面收成 msm_dsi_host_bonded_cmd_xfer（见
+	# patches/local/b5-resoc-20261027）。只认旧名会把重构后的好内核判成死内核。
+	# 语义与旧版一致：普通符号仍是**子串**匹配（gcc_sm8750 实际符号是 gcc_sm8750_probe）；
+	# 只有 DSI 那一条是「或」，用 ERE 且两侧锁到空白，避免误命中更长的名字。
+	for s in gcc_sm8750 "msm_dsi_host_bonded_cmd_trigger|msm_dsi_host_bonded_cmd_xfer|dsi_bonded_cmd_trigger" qcom_rpmh; do
+		grep -qF "$s" "$SMAP" || grep -qE "[[:space:]]($s)\$" "$SMAP" \
+			|| die "System.map 缺符号 '$s' → 无 QCOM 驱动的死内核（#162）"
 	done
 else
 	die "System.map 不存在 → 先跑 scripts/build-kernel.sh"

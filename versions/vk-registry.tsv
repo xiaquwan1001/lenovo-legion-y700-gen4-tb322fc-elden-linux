@@ -280,3 +280,7 @@ vk174	m6-initfix	2026-10-26	M6: 阶段化 preflight + applet 回退（Debian 根
 vk175	m6-visibility	2026-10-26	M6: RAM 阶段 gadget + 排除 q28 watchdog（linux17 已铺 vk172 模块树）
 vk176	m6-power-usb	2026-10-26	M6: upower 电量显示 + usb0 DHCP applet 回退
 vk177	m6-sensors	2026-10-26	M6: ADSP fastrpc non-secure domain（/dev/fastrpc-adsp）+ accounts-daemon 竞态
+vk178	b5-verify	2026-10-27	iterate.sh
+vk179-b5step4a	b5-resoc	2026-10-27	B5 第4步同值臂：master 由 bonded_cfg 决定（值仍 DSI0），零写盘上机全绿
+vk180-b5step4b	b5-resoc	2026-10-27	B5 第4步判别臂：master 强改 DSI1 ⇒ 面板首条 DCS ff20 三连 -22（角色不可换）
+vk181-daily	b5-verify	2026-10-27	B5 实验后还原日常线树重打的无标记镜像（设备复原用）

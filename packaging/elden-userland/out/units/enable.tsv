@@ -7,7 +7,7 @@ elden-bootlog	default	multi-user.target
 elden-hapticd	default	multi-user.target
 elden-powerlog	shutdown	poweroff.target reboot.target halt.target
 greetd	default	multi-user.target
-iio-sensor-proxy	default	multi-user.target
+iio-sensor-proxy	default	graphical.target
 net-selfheal	default	multi-user.target
 pstore-catch	boot	multi-user.target
 q28-boot-watchdog	default	multi-user.target

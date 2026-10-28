@@ -28,7 +28,7 @@ elden-hapticd	ours	longrun	Waydroid vibrator bridge (aw86927 FF_RUMBLE)	/usr/loc
 elden-powerlog	ours	shutdown	Record a clean-shutdown marker for post-mortem	/usr/local/sbin/elden-powerlog-mark.sh			/root/powerlog.txt	0				poweroff.target reboot.target halt.target	1
 gunyah-modprobe	ours	oneshot	Load the Gunyah RM driver stack (BLOCKED: vendor MEM_DONATE required; see reports/gunyah-decision-20261025.md)	/usr/local/sbin/gunyah-modprobe.sh				0				multi-user.target	0
 greetd	override	longrun	Greeter daemon (patched: respawn + after seatd/elogind)	/usr/sbin/greetd	--config /etc/greetd/config.toml	LIBSEAT_BACKEND=seatd	/var/log/greetd.log	5	fs-local	seat login-manager		multi-user.target	1
-iio-sensor-proxy	override	longrun	iio-sensor-proxy (patched: waits for QRTR svc 400 = SSC)	/usr/libexec/iio-sensor-proxy			-	5	session-bus	sensors-dsp		multi-user.target	1
+iio-sensor-proxy	override	longrun	iio-sensor-proxy (patched: waits for QRTR svc 400 = SSC)	/usr/libexec/iio-sensor-proxy			-	5	session-bus	sensors-dsp		graphical.target	1
 net-selfheal	ours	oneshot	HTTPS trust chain + PMTU self-heal after wlan0 is up	/usr/local/sbin/net-selfheal.sh			/var/log/net-selfheal.log	0	fs-local	net-manager		multi-user.target	1
 pstore-catch	ours	oneshot	Archive pstore/ramoops records to /var/log/pstore at boot	/usr/local/sbin/pstore-catch.sh			/var/log/pstore-catch.log	0	fs-local	fs-local		multi-user.target	1
 q28-boot-watchdog	ours	oneshot	One-shot DSI/panel watchdog for Q28 (never fired on the operational line)	/usr/local/sbin/q28-boot-watchdog.sh			/var/log/q28-watchdog.log	0	fs-local	greetd		multi-user.target	1
