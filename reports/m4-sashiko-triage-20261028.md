@@ -96,3 +96,30 @@
 - **F3（中断掩码）需上机复验**一次出流（90 帧、错误计数 0）后再考虑发 v2。
 - 是否发 v2、是否回 Sashiko（机器人通常无需逐条回，发 `[PATCH v2]` 即含 `Changes in v2`）：**等用户批准**。
 - 回复 F6/F7 的措辞草稿另附（若用户要回）。
+
+## 5. 上机复验（2026-10-28 15:0x，零写盘热换模块）
+
+**目的**：F3 改了 CSID 中断掩码，须确认 4 处修复在真机上不回归出流。
+
+**手法**（照 `reports/m4-skewcal-ab-20261027.md` 的快环）：
+- 在功能树 `build/vk151`（HEAD `24223e4` = 在机内核）上把 v2 的 **同一组 4 处改动**打进 `camss-csid-980.c` / `camss-vfe.c`；
+- `LOCALVERSION=-debug-vk172 make prepare`（刷新 `include/generated/utsrelease.h`）+ `make M=drivers/media/platform/qcom/camss clean`；
+- `scripts/mod-loop.sh drivers/media/platform/qcom/camss --reload qcom-camss` 热换（**未整机重启、未写 boot 槽**）；
+- **硬证据**：运行中模块 build-id `9b38f05772fd951204ffa845bbf0352e9256241f` = 新编 `qcom-camss.ko` 的 build-id（旧基线 `2dd23e54…`），且设备盘 `updates/qcom-camss.ko` sha256 `a52ab5e5…` = 主机编出件。
+- 出流：`camera-stream-up.sh front stream 90` / `rear stream 90`；错误计数 = `dmesg` 对 `command DMA timeout|EPIPE|EINVAL|csiphy.*error|camss.*error|camss.*fail` 计数前后差分。
+
+**结果**：
+
+| 通道 | 帧数 | v4l2 fps | 耗时 | 错误计数 前→后 |
+|---|---|---|---|---|
+| front（gc08a8→csiphy4→csid0→vfe0_rdi0→/dev/video0） | **90/90** | 30.26 | 3.35 s | 0 → 0 |
+| rear（s5kjns→csiphy3→csid1→vfe1_rdi0→/dev/video3） | **90/90** | 30.03 | — | 0 → 0 |
+
+帧内容抽查（front 3 帧 raw）：`BYTES 29 963 520 / NONZERO 99.67% / DISTINCT 256 / STDDEV 46.97` ⇒ 真帧非垃圾。
+
+**结论**：4 处修复在真机上 **不回归**（双摄 90/90、0 错误、满速 30 fps、像素正常）。`INFO_RUP_DONE` 解掩码无中断风暴/副作用。
+
+**限定**：① 前/后摄都走 **RDI0（port0）**，`dt_id = port & 0x03` 与「RDI>0」的收益**本机测不出**（无 RDI>0 物理通路），只能证明用 port 后 RDI0 仍正常；
+② 热换未 POR（冷启 PHY/中断时序不同，结论不外推到冷启）；③ 只测单摄单模。
+
+**设备终态**：热换的 `updates/qcom-camss.ko` 已移走、`depmod` 回落基线 ko（运行 build-id 回到 `2dd23e54…`）、`cam-mode.sh off`（CAM-OFF、blank 恢复 idle=300、剩 `system_heap` 常驻属正常）。

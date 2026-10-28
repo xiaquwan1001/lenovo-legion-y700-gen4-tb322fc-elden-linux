@@ -30,9 +30,9 @@
 | 终态 build | `LD [M] drivers/media/platform/qcom/camss/qcom-camss.o`，0 warning |
 | `checkpatch.pl --strict` ×9 | **0 errors / 0 checks**；3 条 WARNING 全为同一假阳性（`added file(s), does MAINTAINERS need updating?`，patch 1/4/8） |
 | pristine `git am` 9 枚 | **9/9 干净**（`/tmp/v2p`） |
-| 未跑 | `dtbs_check`（schema/DTS 未改，沿用 v1 的 0 warning 结果）；**未上机**（v2 只是 v1 的功能等价重切 + 4 处纠正，上机基线仍是 `devcam-ab`/G1-5 记录） |
+| `dtbs_check` | 未重跑（schema/DTS 未改，沿用 v1 的 0 warning 结果） |
+| **上机复验** | ✅ **2026-10-28 已做**：零写盘热换该 4 处修复的模块，front/rear 各 **90/90 帧、30.0–30.26 fps、错误计数 0→0**、像素正常（NONZERO 99.67%）⇒ 不回归。详见 `reports/m4-sashiko-triage-20261028.md` §5 |
 
 ## 发送
 
-**未发。** 发送需用户按系列批准。若批准：先跑 `send-email --dry-run` 复核，再以 `--in-reply-to` /
-`--no-thread` 决定挂 v1 线程还是新开（Sashiko 是机器人，回 v1 线程即可、普通做法是 `[PATCH v2]` 新串）。
+**未发。** 发送需用户按系列批准。上机复验已通过（§5）。若批准：先跑 `send-email --dry-run` 复核，再以 `[PATCH v2]` 新串（含 `Changes in v2`）。
