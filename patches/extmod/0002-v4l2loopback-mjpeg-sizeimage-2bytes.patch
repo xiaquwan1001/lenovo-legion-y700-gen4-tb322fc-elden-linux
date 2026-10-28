@@ -1,0 +1,29 @@
+diff --git a/v4l2loopback_formats.h b/v4l2loopback_formats.h
+index 6790e76..f040c3d 100644
+--- a/v4l2loopback_formats.h
++++ b/v4l2loopback_formats.h
+@@ -321,7 +321,14 @@ static const struct v4l2l_format formats[] = {
+ 	{
+ 		.name = "Motion-JPEG",
+ 		.fourcc = V4L2_PIX_FMT_MJPEG,
+-		.depth = 32,
++		/* 2026-10-28：depth 32 -> 16。depth 只用来算 sizeimage（压缩格式
++		 * 没有 bytesperline），32 会给出 w*h*4，而 Android external camera
++		 * HAL 用 kMaxBytesPerPixel = 2 做上限校检
++		 * （ExternalCameraDeviceSession.cpp: bufferSize > 2*w*h => -EINVAL）
++		 * ⇒ configureStreams 直接失败、相机打不开。
++		 * 16 给出 w*h*2，等于 HAL 的上限，且远大于真实 720p JPEG 帧。
++		 */
++		.depth = 16,
+ 		.flags = FORMAT_FLAGS_COMPRESSED,
+ 	},
+ #endif /* V4L2_PIX_FMT_MJPEG */
+@@ -329,7 +336,7 @@ static const struct v4l2l_format formats[] = {
+ 	{
+ 		.name = "JFIF JPEG",
+ 		.fourcc = V4L2_PIX_FMT_JPEG,
+-		.depth = 32,
++		.depth = 16,
+ 		.flags = FORMAT_FLAGS_COMPRESSED,
+ 	},
+ #endif /* V4L2_PIX_FMT_JPEG */

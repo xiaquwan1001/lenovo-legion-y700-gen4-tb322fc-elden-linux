@@ -19,6 +19,7 @@ SSH_OPTS=${SSH_OPTS:--o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHo
 KSRC=${KSRC:-$ROOT/build/vk151}
 SRC=$ROOT/build/extmod/v4l2loopback
 PATCH=$ROOT/patches/extmod/0001-v4l2loopback-min-4-buffers.patch
+PATCH2=$ROOT/patches/extmod/0002-v4l2loopback-mjpeg-sizeimage-2bytes.patch
 SKIP_BUILD=${SKIP_BUILD:-0}
 CROSS=${CROSS:-aarch64-linux-gnu-}
 
@@ -38,6 +39,13 @@ if [ "$SKIP_BUILD" = 0 ]; then
 	if [ -f "$PATCH" ] && ! grep -q "req_count < 4" "$SRC/v4l2loopback.c"; then
 		say "打补丁：$(basename "$PATCH")"
 		patch -d "$SRC" -p1 < "$PATCH" || { say "打补丁失败"; exit 1; }
+	fi
+	# 0002：MJPEG/JPEG 的 depth 32 -> 16。压缩格式的 sizeimage = w*h*depth/8，
+	# 32 给出 w*h*4，Android external camera HAL 用 kMaxBytesPerPixel=2 做上限
+	# （ExternalCameraDeviceSession.cpp），超了直接 -EINVAL ⇒ configureStreams 失败。
+	if [ -f "$PATCH2" ] && ! grep -q "depth = 16," "$SRC/v4l2loopback_formats.h"; then
+		say "打补丁：$(basename "$PATCH2")"
+		patch -d "$SRC" -p1 < "$PATCH2" || { say "打补丁失败"; exit 1; }
 	fi
 	# vermagic 逐字匹配：临时把生成文件改成目标 UTS，编完立刻恢复（见 reports/v4l2loopback-build-20261026.md）
 	RELF=$KSRC/include/config/kernel.release

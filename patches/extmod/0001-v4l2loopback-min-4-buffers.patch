@@ -1,0 +1,19 @@
+diff --git a/v4l2loopback.c b/v4l2loopback.c
+index af9ec3e..697b883 100644
+--- a/v4l2loopback.c
++++ b/v4l2loopback.c
+@@ -1667,6 +1667,14 @@ static int vidioc_reqbufs(struct file *file, void *fh,
+ 
+ 	if (req_count > dev->buffer_count)
+ 		req_count = dev->buffer_count;
++	/* 下限 4：Android 的 external camera HAL 在 configureStreams 时硬要求
++	 * >=4 个 buffer（否则 "VIDIOC_REQBUFS expected 4 buffers, got N instead"
++	 * ⇒ configureStreams 失败、相机打不开）。而 v4l2loopback 的 buffer 队列是
++	 * **设备级共享**的，先开的写端（gst v4l2sink 默认只申请 3）决定了全设备
++	 * 的数量，stock 逻辑会把后开的后端压到同一数量（=3）。
++	 * 这里只抬下限、不动 stock 的共享/压制逻辑，两端数量仍一致。 */
++	if (req_count > 0 && req_count < 4)
++		req_count = 4;
+ 
+ 	switch (reqbuf->memory) {
+ 	case V4L2_MEMORY_MMAP:

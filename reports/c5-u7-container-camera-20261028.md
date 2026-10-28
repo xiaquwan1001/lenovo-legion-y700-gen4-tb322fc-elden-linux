@@ -6,6 +6,8 @@
 
 ## §0 结论（数字）
 
+> ⚠️ **本节「metadata 为空」的结论已于同日第二轮被推翻**，权威结论见文末 **§7–§11**。
+
 | 项 | 结果 |
 |---|---|
 | 是否需要装 APK | ❌ **不需要**：镜像里已有 `net.sourceforge.opencamera`（OpenCamera）与 `com.google.android.apps.googlecamera.fishfood` |
@@ -13,7 +15,7 @@
 | 修好后 | `Number of camera devices: 1`；external provider `@2.4` 枚举出 `1280x720@30` |
 | 三种像素格式 | NV12 → `initOutputCharsKeys: format NV12 is not supported!`；YUYV → `not supported!` + `advertising YUV streams for YUYV`（兜底分支）；**MJPG → 正常枚举、零告警** |
 | App 行为（三格式都一样） | OpenCamera `Camera 200: Opened` 后**立刻 disconnect**，伴随 `E/camera_metadata: validate_camera_metadata_structure: metadata is null!` + `E/Camera2-Metadata: acquire: Failed to validate metadata structure 0x0` ⇒ **cameraserver 拿到的 static metadata 是空的** |
-| ⇒ 真卡点 | **不是像素格式、不是 App**，是容器侧 external HAL 的 **`getCameraCharacteristics` 返回空 metadata** |
+| ⇒ 真卡点（**★已被 §7 推翻，见下**） | ~~`getCameraCharacteristics` 返回空 metadata~~ → 实为 **BLOB 缺失 + v4l2loopback `sizeimage` 超 HAL 上限** |
 
 ## §1 复现链（可复跑）
 
@@ -72,3 +74,100 @@ lxc-attach ... -c 'logcat -d -v brief' | grep -E 'Camera2-Metadata|Opened|discon
 
 - 本报告；`scripts/cam-mode.sh`（会话用户/提权工具现查）；设备侧脚本已同步。
 - 证据链日志：本轮 `logcat` 关键行已逐字引在 §2/§0（未落盘成文件；复跑命令见 §1）。
+
+---
+
+# 追加：C5/U7 第二轮（2026-10-28 下午）—— **真卡点再次换人，且已修到「只差写端帧切分」**
+
+> 上一版（同日早间）结论「external HAL static metadata 为空」**被本轮推翻**。
+> 实测 static metadata 是**满的（55 项）**，`metadata is null` 只是 disconnect 时的**症状噪声**，
+> 真卡点是 **JPEG(BLOB) 输出流缺失**，根因落在 **v4l2loopback 的 `sizeimage` 计算**。
+
+## §7 三轮定位（每轮都被真机日志推翻一次假设）
+
+### 轮 1：metadata「为空」是误判
+
+`dumpsys media.camera` 的 `Camera HAL device device@3.4/external/200` 段显示
+**`Dumping camera metadata array: 55 / 55 entries, 768 / 768 bytes of extra data`**，键值齐全
+（`info.supportedHardwareLevel=EXTERNAL`、`scaler.availableStreamConfigurations`、`jpeg.maxSize` 全在）。
+⇒ 「static metadata 为空」不成立；`E/camera_metadata: metadata is null` 出现在
+`Camera2ClientBase: start to disconnect` **之后**，是关闭路径的次生错误。
+
+### 轮 2：真正的第一道门 = **没有 JPEG/BLOB 输出流**
+
+NV12 源时的 `availableStreamConfigurations`：**8 项 / 只有 2 条流**
+（`[35 w h OUTPUT]` = YUV_420_888、`[34 ...]` = IMPLEMENTATION_DEFINED），**格式 33（JPEG）缺席**。
+OpenCamera 走 `CameraController2`，`E/CameraController2: no picture sizes returned by getOutputSizes`
+⇒ 拿不到拍照尺寸 ⇒ 初始化即退出。
+
+**换成 MJPG 源后**（`gst ... ! jpegenc ! v4l2-ctl --set-fmt-video-out=pixelformat=MJPG`）：
+`availableStreamConfigurations` 变成 **12 项 / 3 条流**，多出 **`[33 1280 720 OUTPUT]`（JPEG）**。
+⇒ 第一道门 = **源必须是 MJPEG**（HAL 只在压缩源下广告 BLOB），与 PITFALLS #438 一致。
+
+### 轮 3：真卡点 = v4l2loopback 的 MJPEG `sizeimage` 违反 HAL 上限
+
+源换成 MJPEG 后 App 能走到 `configureStreams`，但：
+
+```
+I/ExtCamDevSsn@3.4: configureV4l2StreamLocked: V4L2 buffer size is 3686400
+E/ExtCamDevSsn@3.4: ... V4L2 buffer size: 3686400 looks invalid. Expected maximum size: 1843200
+E/ExtCamDevSsn@3.4: V4L configuration failed!, format:MJPG, w 1280, h 720
+E/Camera3-Device: Camera 200: configureStreamsLocked: Unable to configure streams with HAL: Function not implemented (-38)
+```
+
+**3686400 = 1280×720×4**，而 HAL 上限 `1843200 = 1280×720×2`。
+
+源码级取证（本仓 `dl-cam/hw-interfaces/camera/device/3.4/default/`）：
+- `ExternalCameraDeviceSession.h:112` → `static const uint32_t kMaxBytesPerPixel = 2;`
+- `ExternalCameraDeviceSession.cpp:2094` → `expectedMaxBufferSize = kMaxBytesPerPixel * w * h`
+- `:2095` → `if (bufferSize == 0 || bufferSize > expectedMaxBufferSize) return -EINVAL;`
+
+而 `v4l2loopback` 侧（`v4l2loopback_formats.h`）MJPEG/JPEG 条目写的是 **`.depth = 32`**，
+压缩格式（`FORMAT_FLAGS_COMPRESSED`）的 `sizeimage = (w * h * depth) >> 3 = w*h*4`
+（`v4l2loopback.c:pix_format_set_size()`）⇒ 必然超上限 2 倍。
+
+**修法** = `depth` 32 → **16** ⇒ `sizeimage = w*h*2 = 1843200`（正好等于 HAL 上限，远大于真实 720p JPEG 帧）。
+
+## §8 修复落地
+
+| 项 | 内容 |
+|---|---|
+| 补丁 | `patches/extmod/0002-v4l2loopback-mjpeg-sizeimage-2bytes.patch`（MJPEG + JFIF JPEG 两条 `depth = 32 → 16`，带成因注释） |
+| 部署脚本 | `scripts/deploy-v4l2loopback.sh` 增 `$PATCH2`，幂等打补丁（`grep -q "depth = 16,"` 判已打） |
+| 同时补回 | `patches/extmod/0001-v4l2loopback-min-4-buffers.patch`（此前只在 build/ 里未入库，脚本引用的路径本来不存在） |
+| 设备实测 | 重编 `v4l2loopback.ko`（vermagic 逐字 `…-debug-vk172`）→ 加载 → `v4l2-ctl --get-fmt-video` **`Size Image = 1843200`** ✅ |
+
+## §9 修完之后的下一道门（尚未解决，已定位）
+
+修好后 `configureStreams` **通过**，`start V4L2 streaming` 也成功，App 不再因 BLOB 缺失退出；
+但出流阶段报：
+
+```
+E/ExtCamDevSsn@3.4: threadLoop: Convert V4L2 frame to YU12 failed! res 1   （连续刷屏）
+```
+
+成因（已确认，非推测）：`v4l2-ctl --stream-from=-` **按固定 `sizeimage`**（现 1843200）切分输入流，
+而 MJPEG 是**变长**帧（真实 720p JPEG 每帧远小于 1843200）⇒ 帧边界被打乱，
+libyuv 解码必然失败。
+
+⇒ 正确做法是用**能按真实 `bytesused` 逐帧写**的写端。两条候选：
+1. `gst ... ! v4l2sink device=/dev/video100` —— 本轮试了，但它没有把 format 发布到设备
+   （`v4l2-ctl --get-fmt-video` 返回空、HAL 枚举到 `trimSupportedFormats: input format list is empty!`），
+   需先 `v4l2-ctl --set-fmt-video-out` 预置格式再让 v4l2sink 沿用，未验证。
+2. 自写写端（按 `VIDIOC_QBUF` 逐帧 `bytesused` 提交），可控但成本高。
+
+**结论口径**：C5/U7 = **未收口**。已推进两级真卡点（BLOB 缺失 → 已解；`sizeimage` 超限 → 已修并上机确认），
+剩余 = **写端必须做变长 MJPEG 帧切分**。
+
+## §10 设备终态
+
+- `v4l2loopback` 已卸载、`/dev/video100` 不存在；`cam-mode.sh off`（相机模块 0、media 0、blank idle=300、`dpms=On`）。
+- 容器已停（`lxc-stop`），无残留 `provider@2.4-external` 进程占用设备。
+- 遗留：`system_heap` 常驻（正常）。
+
+## §11 产物
+
+- `patches/extmod/0001-v4l2loopback-min-4-buffers.patch`（补入库）
+- `patches/extmod/0002-v4l2loopback-mjpeg-sizeimage-2bytes.patch`（**本轮新**）
+- `scripts/deploy-v4l2loopback.sh`（两枚补丁幂等打）
+- 本报告 §7–§10
