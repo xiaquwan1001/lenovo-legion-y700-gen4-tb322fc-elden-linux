@@ -1,0 +1,6 @@
+WARNING: setlocale('en_US.UTF-8') failed, using locale: 'C'. International characters may not work.
+WARNING: setlocale('en_US.UTF-8') failed, using locale: 'C'. International characters may not work.
+
+Steam logging initialized: directory: /root/steam-home/.local/share/Steam/logs
+
+setting LIBGL_KOPPER_DISABLE=true for steamwebhelper to get store working properly

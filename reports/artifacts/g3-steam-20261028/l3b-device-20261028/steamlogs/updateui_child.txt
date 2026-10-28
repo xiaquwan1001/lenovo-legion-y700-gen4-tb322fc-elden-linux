@@ -1,0 +1,84 @@
+
+
+[2026-10-28 19:21:01] Client version: 0
+[2026-10-28 19:21:01] Process started with command-line: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-child-update-ui' '-child-update-ui-socket' '8' '-noreactlog' '-console'
+[2026-10-28 19:21:01] Using update UI: xwin
+[2026-10-28 19:21:01] Create window
+[2026-10-28 19:21:01] Set percent complete: 0
+[2026-10-28 19:21:01] Set percent complete: -1
+[2026-10-28 19:21:01] Set status message: Verifying installation...
+[2026-10-28 19:21:01] Set percent complete: 0
+[2026-10-28 19:21:01] Set status message: Downloading Update...
+[2026-10-28 19:21:01] Set status message: Checking for available update...
+[2026-10-28 19:21:01] Set percent complete: -1
+[2026-10-28 19:21:01] Show window
+[2026-10-28 19:21:09] Fatal error: Steam needs to be online to update.	 Please confirm your network connection and try again.
+
+
+[2026-10-28 19:23:28] Client version: 0
+[2026-10-28 19:23:28] Process started with command-line: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-child-update-ui' '-child-update-ui-socket' '8' '-overridepackageurl' 'http://127.0.0.1:8080' '-noreactlog' '-console'
+[2026-10-28 19:23:28] Using update UI: xwin
+[2026-10-28 19:23:28] Create window
+[2026-10-28 19:23:28] Set percent complete: 0
+[2026-10-28 19:23:28] Set percent complete: -1
+[2026-10-28 19:23:28] Set status message: Verifying installation...
+[2026-10-28 19:23:29] Set percent complete: 0
+[2026-10-28 19:23:29] Set status message: Downloading Update...
+[2026-10-28 19:23:29] Set status message: Checking for available update...
+[2026-10-28 19:23:29] Set percent complete: -1
+[2026-10-28 19:23:29] Show window
+[2026-10-28 19:23:31] Set status message: Downloading update (667975 of 667975 KB)...
+[2026-10-28 19:23:31] Set percent complete: 100
+[2026-10-28 19:23:31] Set status message: Download Complete.
+[2026-10-28 19:23:31] Set percent complete: -1
+[2026-10-28 19:23:31] Set status message: Extracting package...
+[2026-10-28 19:23:46] Set status message: Installing update...
+[2026-10-28 19:23:51] ProcessNextMessage: socket disconnected
+[2026-10-28 19:23:51] No more messages are expected - exiting
+
+
+[2026-10-28 19:34:47] Client version: 0
+[2026-10-28 19:34:47] Process started with command-line: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-child-update-ui' '-child-update-ui-socket' '8' '-overridepackageurl' 'http://127.0.0.1:8080' '-noreactlog' '-console'
+[2026-10-28 19:34:47] Using update UI: xwin
+[2026-10-28 19:34:47] Create window
+[2026-10-28 19:34:47] Set percent complete: 0
+[2026-10-28 19:34:47] Set percent complete: -1
+[2026-10-28 19:34:47] Set status message: Verifying installation...
+[2026-10-28 19:34:47] Destroy window
+
+
+[2026-10-28 19:37:30] Client version: 0
+[2026-10-28 19:37:30] Process started with command-line: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-child-update-ui' '-child-update-ui-socket' '8' '-overridepackageurl' 'http://127.0.0.1:8080' '-noreactlog' '-console'
+[2026-10-28 19:37:30] Using update UI: xwin
+[2026-10-28 19:37:30] Create window
+[2026-10-28 19:37:30] Set percent complete: 0
+[2026-10-28 19:37:30] Set status message: Checking for available updates...
+[2026-10-28 19:37:30] Set percent complete: -1
+[2026-10-28 19:37:30] Set percent complete: -1
+[2026-10-28 19:37:30] Set status message: Verifying installation...
+[2026-10-28 19:37:30] Show window
+[2026-10-28 19:37:32] Destroy window
+
+
+[2026-10-28 21:29:17] Client version: 0
+[2026-10-28 21:29:17] Process started with command-line: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-child-update-ui' '-child-update-ui-socket' '8' '-overridepackageurl' 'http://127.0.0.1:8080' '-noreactlog' '-console'
+[2026-10-28 21:29:17] Using update UI: xwin
+[2026-10-28 21:29:17] Create window
+[2026-10-28 21:29:17] ProcessNextMessage: socket disconnected
+[2026-10-28 21:29:17] No more messages are expected - exiting
+
+
+[2026-10-28 21:37:12] Client version: 0
+[2026-10-28 21:37:12] Process started with command-line: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-child-update-ui' '-child-update-ui-socket' '8' '-overridepackageurl' 'http://127.0.0.1:8080' '-noreactlog' '-console'
+[2026-10-28 21:37:12] Using update UI: xwin
+[2026-10-28 21:37:12] Create window
+[2026-10-28 21:37:12] ProcessNextMessage: socket disconnected
+[2026-10-28 21:37:12] No more messages are expected - exiting
+
+
+[2026-10-28 21:47:52] Client version: 0
+[2026-10-28 21:47:52] Process started with command-line: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-child-update-ui' '-child-update-ui-socket' '8' '-overridepackageurl' 'http://127.0.0.1:8080' '-noreactlog' '-console'
+[2026-10-28 21:47:52] Using update UI: xwin
+[2026-10-28 21:47:52] Create window
+[2026-10-28 21:47:52] ProcessNextMessage: socket disconnected
+[2026-10-28 21:47:52] No more messages are expected - exiting

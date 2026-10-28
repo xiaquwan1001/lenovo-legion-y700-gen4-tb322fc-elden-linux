@@ -1,0 +1,57 @@
+
+
+[2026-10-28 19:37:32] Client version: 1792618285
+[2026-10-28 19:37:32] Started webhelper process 198832
+[2026-10-28 19:37:32] Restart webhelper process, counter 2
+[2026-10-28 19:37:32] Shutting down webhelper process 198832
+[2026-10-28 19:37:32] Started webhelper process 198924
+[2026-10-28 19:37:32] STARTUP SteamUI browser requested at +11792ms
+[2026-10-28 19:37:32] CreateBrowser id:2579166843 type:12 flags:1000000 (-2147483648, -2147483648) 0x0
+[2026-10-28 19:37:45] RetryCreateBrowser id:2579166843 type:12 flags:16777216: (-2147483648, -2147483648) 0x0
+[2026-10-28 19:37:45] CreateResponse: id:2579166843 handle:65536
+[2026-10-28 19:37:45] BrowserReady: handle:65536
+[2026-10-28 19:37:46] GetDesiredSteamUIWindows: starting processing of 1 windows
+[2026-10-28 19:37:46] GetDesiredSteamUIWindows: finish
+[2026-10-28 19:37:46] PopupHTMLWindow: idx:131073 handle:65536
+[2026-10-28 19:37:46] BrowserReady: handle:131073
+[2026-10-28 19:42:30] Shutting down webhelper process 198924
+
+
+[2026-10-28 21:29:17] Client version: 1792618285
+[2026-10-28 21:29:17] Started webhelper process 217576
+[2026-10-28 21:29:17] STARTUP SteamUI browser requested at +1719ms
+[2026-10-28 21:29:17] CreateBrowser id:2556844519 type:12 flags:1000000 (-2147483648, -2147483648) 0x0
+[2026-10-28 21:29:20] RetryCreateBrowser id:2556844519 type:12 flags:16777216: (-2147483648, -2147483648) 0x0
+[2026-10-28 21:29:20] CreateResponse: id:2556844519 handle:65536
+[2026-10-28 21:29:20] BrowserReady: handle:65536
+[2026-10-28 21:29:21] GetDesiredSteamUIWindows: starting processing of 1 windows
+[2026-10-28 21:29:21] GetDesiredSteamUIWindows: finish
+[2026-10-28 21:29:21] PopupHTMLWindow: idx:131073 handle:65536
+[2026-10-28 21:29:21] BrowserReady: handle:131073
+[2026-10-28 21:34:17] Shutting down webhelper process 217576
+
+
+[2026-10-28 21:37:12] Client version: 1792618285
+[2026-10-28 21:37:12] Started webhelper process 221351
+[2026-10-28 21:37:12] STARTUP SteamUI browser requested at +612ms
+[2026-10-28 21:37:12] CreateBrowser id:3965066269 type:12 flags:1000000 (-2147483648, -2147483648) 0x0
+[2026-10-28 21:37:13] CreateResponse: id:3965066269 handle:65536
+[2026-10-28 21:37:13] BrowserReady: handle:65536
+[2026-10-28 21:37:14] GetDesiredSteamUIWindows: starting processing of 1 windows
+[2026-10-28 21:37:14] GetDesiredSteamUIWindows: finish
+[2026-10-28 21:37:14] PopupHTMLWindow: idx:131073 handle:65536
+[2026-10-28 21:37:14] BrowserReady: handle:131073
+[2026-10-28 21:39:32] Shutting down webhelper process 221351
+
+
+[2026-10-28 21:47:52] Client version: 1792618285
+[2026-10-28 21:47:52] Started webhelper process 227165
+[2026-10-28 21:47:52] STARTUP SteamUI browser requested at +703ms
+[2026-10-28 21:47:52] CreateBrowser id:2240196707 type:12 flags:1000000 (-2147483648, -2147483648) 0x0
+[2026-10-28 21:47:53] CreateResponse: id:2240196707 handle:65536
+[2026-10-28 21:47:53] BrowserReady: handle:65536
+[2026-10-28 21:47:55] GetDesiredSteamUIWindows: starting processing of 1 windows
+[2026-10-28 21:47:55] GetDesiredSteamUIWindows: finish
+[2026-10-28 21:47:55] PopupHTMLWindow: idx:131073 handle:65536
+[2026-10-28 21:47:55] BrowserReady: handle:131073
+[2026-10-28 21:50:02] Shutting down webhelper process 227165

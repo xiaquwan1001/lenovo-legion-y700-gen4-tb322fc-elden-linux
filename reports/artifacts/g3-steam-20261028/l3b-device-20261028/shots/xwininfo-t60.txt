@@ -1,0 +1,2 @@
+xwininfo: can not set locale properly
+xwininfo: error: unable to open display ":0"

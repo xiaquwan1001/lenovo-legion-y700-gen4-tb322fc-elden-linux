@@ -1,0 +1,738 @@
+
+
+[2026-10-28 19:37:33] Client version: 1792618285
+[2026-10-28 19:37:33] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:37:33] [Logged Off, 0, 0] [U:1:0] CCMInterface::SetSteamID( [U:1:0] )
+[2026-10-28 19:37:34] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:37:34] Connectivity test: result=CaptivePortal (since 0.0s ago), prev=Unknown, in progress=0
+[2026-10-28 19:37:36] IPv6 HTTP connectivity test (ipv6check-http.steamserver.net / [2404:3fc0:a:100::10]:80 ([2404:3fc0:a:100::10]:80)) - TIMEOUT
+[2026-10-28 19:37:36] IPv6 UDP connectivity test (ipv6check-udp.steamserver.net / [2404:3fc0:2:101::671c:369a]:27019) - SUCCESS
+[2026-10-28 19:37:37] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:37:37] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:37:37] Connectivity test: result=CaptivePortal (since 3.3s ago), prev=Unknown, in progress=0
+[2026-10-28 19:37:40] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:37:40] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:37:40] Connectivity test: result=CaptivePortal (since 6.5s ago), prev=Unknown, in progress=0
+[2026-10-28 19:37:43] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:37:43] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:37:43] Connectivity test: result=CaptivePortal (since 9.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:37:46] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:37:47] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:37:47] Connectivity test: result=CaptivePortal (since 13.0s ago), prev=Unknown, in progress=0
+[2026-10-28 19:37:50] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:37:52] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:37:52] Connectivity test: result=CaptivePortal (since 18.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:37:55] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:37:55] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:37:55] Connectivity test: result=CaptivePortal (since 21.5s ago), prev=Unknown, in progress=0
+[2026-10-28 19:37:58] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:37:58] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:37:58] Connectivity test: result=CaptivePortal (since 24.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:01] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:01] Connectivity test (104.116.243.9:80 (104.116.243.9:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:01] Connectivity test: result=CaptivePortal (since 27.7s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:04] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:04] Connectivity test (104.116.243.9:80 (104.116.243.9:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:04] Connectivity test: result=CaptivePortal (since 30.8s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:08] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:08] Connectivity test (104.116.243.10:80 (104.116.243.10:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:08] Connectivity test: result=CaptivePortal (since 34.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:11] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:11] Connectivity test (104.116.243.10:80 (104.116.243.10:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:11] Connectivity test: result=CaptivePortal (since 37.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:14] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:21] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:21] Connectivity test: result=CaptivePortal (since 47.3s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:24] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:27] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:27] Connectivity test: result=CaptivePortal (since 53.5s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:30] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:30] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:30] Connectivity test: result=CaptivePortal (since 56.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:33] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:38] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:38] Connectivity test: result=CaptivePortal (since 63.8s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:41] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:41] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:41] Connectivity test: result=CaptivePortal (since 66.9s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:44] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:44] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:44] Connectivity test: result=CaptivePortal (since 70.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:47] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:47] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:47] Connectivity test: result=CaptivePortal (since 73.4s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:50] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:50] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:50] Connectivity test: result=CaptivePortal (since 76.4s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:53] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:54] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:54] Connectivity test: result=CaptivePortal (since 80.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:38:57] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:38:58] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:38:58] Connectivity test: result=CaptivePortal (since 84.7s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:01] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:01] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:01] Connectivity test: result=CaptivePortal (since 87.7s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:04] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:05] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:05] Connectivity test: result=CaptivePortal (since 90.8s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:08] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:09] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:09] Connectivity test: result=CaptivePortal (since 95.0s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:12] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:12] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:12] Connectivity test: result=CaptivePortal (since 98.0s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:15] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:15] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:15] Connectivity test: result=CaptivePortal (since 101.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:18] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:18] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:18] Connectivity test: result=CaptivePortal (since 104.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:21] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:24] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:24] Connectivity test: result=CaptivePortal (since 110.4s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:27] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:27] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:27] Connectivity test: result=CaptivePortal (since 113.7s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:30] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:31] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:31] Connectivity test: result=CaptivePortal (since 116.8s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:34] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:34] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:34] Connectivity test: result=CaptivePortal (since 119.9s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:37] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:38] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:38] Connectivity test: result=CaptivePortal (since 124.0s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:41] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:42] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:42] Connectivity test: result=CaptivePortal (since 128.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:45] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:46] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:46] Connectivity test: result=CaptivePortal (since 132.3s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:49] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:49] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:49] Connectivity test: result=CaptivePortal (since 135.3s ago), prev=Unknown, in progress=0
+[2026-10-28 19:39:52] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:39:57] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:39:57] Connectivity test: result=CaptivePortal (since 143.8s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:01] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:01] Connectivity test (104.116.243.10:80 (104.116.243.10:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:01] Connectivity test: result=CaptivePortal (since 146.8s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:04] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:04] Connectivity test (104.116.243.10:80 (104.116.243.10:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:04] Connectivity test: result=CaptivePortal (since 149.9s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:07] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:10] Connectivity test (104.116.243.10:80 (104.116.243.10:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:10] Connectivity test: result=CaptivePortal (since 156.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:13] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:13] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:13] Connectivity test: result=CaptivePortal (since 159.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:16] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:16] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:16] Connectivity test: result=CaptivePortal (since 162.3s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:19] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:19] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:19] Connectivity test: result=CaptivePortal (since 165.3s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:22] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:22] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:22] Connectivity test: result=CaptivePortal (since 168.4s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:25] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:25] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:25] Connectivity test: result=CaptivePortal (since 171.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:28] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:30] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:30] Connectivity test: result=CaptivePortal (since 175.9s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:33] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:33] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:33] Connectivity test: result=CaptivePortal (since 179.0s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:36] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:36] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:36] Connectivity test: result=CaptivePortal (since 182.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:39] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:39] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:39] Connectivity test: result=CaptivePortal (since 185.4s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:42] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:44] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:44] Connectivity test: result=CaptivePortal (since 190.5s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:47] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:47] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:47] Connectivity test: result=CaptivePortal (since 193.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:50] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:53] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:53] Connectivity test: result=CaptivePortal (since 199.0s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:56] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:40:56] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:40:56] Connectivity test: result=CaptivePortal (since 202.0s ago), prev=Unknown, in progress=0
+[2026-10-28 19:40:59] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:01] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:01] Connectivity test: result=CaptivePortal (since 207.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:04] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:06] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:06] Connectivity test: result=CaptivePortal (since 212.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:09] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:09] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:09] Connectivity test: result=CaptivePortal (since 215.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:12] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:13] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:13] Connectivity test: result=CaptivePortal (since 219.4s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:16] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:16] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:16] Connectivity test: result=CaptivePortal (since 222.7s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:19] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:20] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:20] Connectivity test: result=CaptivePortal (since 225.9s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:23] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:25] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:25] Connectivity test: result=CaptivePortal (since 231.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:28] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:28] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:28] Connectivity test: result=CaptivePortal (since 234.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:31] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:31] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:31] Connectivity test: result=CaptivePortal (since 237.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:34] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:35] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:35] Connectivity test: result=CaptivePortal (since 240.8s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:38] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:42] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:42] Connectivity test: result=CaptivePortal (since 248.1s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:45] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:45] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:45] Connectivity test: result=CaptivePortal (since 251.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:48] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:49] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:49] Connectivity test: result=CaptivePortal (since 255.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:52] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:52] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:52] Connectivity test: result=CaptivePortal (since 258.5s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:55] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:55] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:55] Connectivity test: result=CaptivePortal (since 261.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:41:58] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:41:58] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:41:58] Connectivity test: result=CaptivePortal (since 264.7s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:01] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:01] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:01] Connectivity test: result=CaptivePortal (since 267.8s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:05] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:07] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:07] Connectivity test: result=CaptivePortal (since 273.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:10] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:10] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:10] Connectivity test: result=CaptivePortal (since 276.3s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:13] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:13] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:13] Connectivity test: result=CaptivePortal (since 279.6s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:16] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:17] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:17] Connectivity test: result=CaptivePortal (since 282.9s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:20] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:20] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:20] Connectivity test: result=CaptivePortal (since 286.2s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:23] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:23] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:23] Connectivity test: result=CaptivePortal (since 289.3s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:26] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:26] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:26] Connectivity test: result=CaptivePortal (since 292.4s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:29] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 19:42:29] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 19:42:29] Connectivity test: result=CaptivePortal (since 295.7s ago), prev=Unknown, in progress=0
+[2026-10-28 19:42:32] [Logged Off, 0, 0] [U:1:0] ResetVoiceRecording() (was recording: 0) (last get voice time: 1793187752 seconds ago)
+[2026-10-28 19:42:32] [Logged Off, 0, 0] [U:1:0] Log session ended
+
+
+[2026-10-28 21:29:19] Client version: 1792618285
+[2026-10-28 21:29:19] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:19] [Logged Off, 0, 0] [U:1:0] CCMInterface::SetSteamID( [U:1:0] )
+[2026-10-28 21:29:19] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:19] Connectivity test: result=CaptivePortal (since 0.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:19] IPv6 HTTP connectivity test (ipv6check-http.steamserver.net / [2404:3fc0:a:100::7]:80 ([2404:3fc0:a:100::7]:80)) - SUCCESS
+[2026-10-28 21:29:19] IPv6 HTTP connectivity test (ipv6check-http.steamserver.net / [2404:3fc0:a:100::7]:80 ([2404:3fc0:a:100::7]:80)) - server indicated we are using ipv6, external address = '2001:da8:d800:4801:9c46:87d9:1508:9fd0'
+[2026-10-28 21:29:20] IPv6 UDP connectivity test (ipv6check-udp.steamserver.net / [2404:3fc0:a:100::5]:27019) - SUCCESS
+[2026-10-28 21:29:22] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:24] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:24] Connectivity test: result=CaptivePortal (since 5.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:27] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:29] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:29] Connectivity test: result=CaptivePortal (since 10.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:32] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:32] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:32] Connectivity test: result=CaptivePortal (since 13.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:35] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:35] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:35] Connectivity test: result=CaptivePortal (since 16.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:38] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:39] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:39] Connectivity test: result=CaptivePortal (since 19.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:42] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:42] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:42] Connectivity test: result=CaptivePortal (since 23.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:45] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:45] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:45] Connectivity test: result=CaptivePortal (since 26.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:48] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:48] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:48] Connectivity test: result=CaptivePortal (since 29.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:51] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:52] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:52] Connectivity test: result=CaptivePortal (since 33.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:55] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:55] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:55] Connectivity test: result=CaptivePortal (since 36.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:29:59] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:29:59] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:29:59] Connectivity test: result=CaptivePortal (since 39.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:02] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:04] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:04] Connectivity test: result=CaptivePortal (since 44.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:07] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:08] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:08] Connectivity test: result=CaptivePortal (since 49.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:11] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:11] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:11] Connectivity test: result=CaptivePortal (since 52.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:14] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:15] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:15] Connectivity test: result=CaptivePortal (since 56.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:18] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:21] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:21] Connectivity test: result=CaptivePortal (since 62.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:24] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:24] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:24] Connectivity test: result=CaptivePortal (since 65.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:27] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:29] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:29] Connectivity test: result=CaptivePortal (since 70.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:32] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:33] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:33] Connectivity test: result=CaptivePortal (since 73.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:36] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:36] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:36] Connectivity test: result=CaptivePortal (since 76.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:39] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:39] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:39] Connectivity test: result=CaptivePortal (since 79.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:42] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:42] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:42] Connectivity test: result=CaptivePortal (since 83.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:45] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:45] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:45] Connectivity test: result=CaptivePortal (since 86.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:48] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:48] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:48] Connectivity test: result=CaptivePortal (since 89.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:51] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:52] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:52] Connectivity test: result=CaptivePortal (since 92.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:55] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:30:55] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:30:55] Connectivity test: result=CaptivePortal (since 96.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:30:58] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:00] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:00] Connectivity test: result=CaptivePortal (since 101.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:03] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:05] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:05] Connectivity test: result=CaptivePortal (since 105.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:08] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:08] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:08] Connectivity test: result=CaptivePortal (since 109.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:11] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:11] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:11] Connectivity test: result=CaptivePortal (since 112.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:14] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:15] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:15] Connectivity test: result=CaptivePortal (since 116.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:18] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:19] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:19] Connectivity test: result=CaptivePortal (since 120.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:22] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:22] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:22] Connectivity test: result=CaptivePortal (since 123.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:25] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:25] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:25] Connectivity test: result=CaptivePortal (since 126.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:28] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:28] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:28] Connectivity test: result=CaptivePortal (since 129.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:31] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:32] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:32] Connectivity test: result=CaptivePortal (since 132.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:35] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:36] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:36] Connectivity test: result=CaptivePortal (since 136.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:39] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:40] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:40] Connectivity test: result=CaptivePortal (since 140.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:43] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:43] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:43] Connectivity test: result=CaptivePortal (since 144.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:46] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:46] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:46] Connectivity test: result=CaptivePortal (since 147.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:49] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:49] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:49] Connectivity test: result=CaptivePortal (since 150.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:52] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:53] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:53] Connectivity test: result=CaptivePortal (since 154.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:56] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:31:56] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:31:56] Connectivity test: result=CaptivePortal (since 157.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:31:59] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:00] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:00] Connectivity test: result=CaptivePortal (since 160.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:03] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:03] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:03] Connectivity test: result=CaptivePortal (since 163.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:06] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:06] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:06] Connectivity test: result=CaptivePortal (since 167.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:09] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:12] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:12] Connectivity test: result=CaptivePortal (since 173.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:15] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:16] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:16] Connectivity test: result=CaptivePortal (since 176.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:19] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:20] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:20] Connectivity test: result=CaptivePortal (since 180.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:23] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:24] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:24] Connectivity test: result=CaptivePortal (since 184.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:27] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:27] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:27] Connectivity test: result=CaptivePortal (since 188.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:30] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:30] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:30] Connectivity test: result=CaptivePortal (since 191.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:33] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:33] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:33] Connectivity test: result=CaptivePortal (since 194.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:36] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:36] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:36] Connectivity test: result=CaptivePortal (since 197.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:39] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:40] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:40] Connectivity test: result=CaptivePortal (since 200.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:43] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:44] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:44] Connectivity test: result=CaptivePortal (since 204.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:47] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:47] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:47] Connectivity test: result=CaptivePortal (since 208.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:50] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:50] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:50] Connectivity test: result=CaptivePortal (since 211.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:53] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:53] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:53] Connectivity test: result=CaptivePortal (since 214.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:32:56] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:32:57] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:32:57] Connectivity test: result=CaptivePortal (since 217.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:00] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:00] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:00] Connectivity test: result=CaptivePortal (since 221.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:03] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:03] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:03] Connectivity test: result=CaptivePortal (since 224.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:06] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:06] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:06] Connectivity test: result=CaptivePortal (since 227.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:09] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:10] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:10] Connectivity test: result=CaptivePortal (since 231.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:13] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:14] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:14] Connectivity test: result=CaptivePortal (since 234.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:17] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:20] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:20] Connectivity test: result=CaptivePortal (since 241.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:23] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:28] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:28] Connectivity test: result=CaptivePortal (since 248.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:31] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:35] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:35] Connectivity test: result=CaptivePortal (since 256.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:38] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:38] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:38] Connectivity test: result=CaptivePortal (since 259.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:41] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:42] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:42] Connectivity test: result=CaptivePortal (since 263.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:45] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:45] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:45] Connectivity test: result=CaptivePortal (since 266.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:48] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:48] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:48] Connectivity test: result=CaptivePortal (since 269.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:51] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:52] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:52] Connectivity test: result=CaptivePortal (since 273.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:55] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:33:55] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:33:55] Connectivity test: result=CaptivePortal (since 276.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:33:58] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:34:01] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:34:01] Connectivity test: result=CaptivePortal (since 282.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:34:05] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:34:05] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:34:05] Connectivity test: result=CaptivePortal (since 285.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:34:08] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:34:08] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:34:08] Connectivity test: result=CaptivePortal (since 289.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:34:11] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:34:13] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:34:13] Connectivity test: result=CaptivePortal (since 294.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:34:16] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:34:17] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:34:17] Connectivity test: result=CaptivePortal (since 298.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:34:19] [Logged Off, 0, 0] [U:1:0] ResetVoiceRecording() (was recording: 0) (last get voice time: 1793194459 seconds ago)
+[2026-10-28 21:34:19] [Logged Off, 0, 0] [U:1:0] Log session ended
+
+
+[2026-10-28 21:37:12] Client version: 1792618285
+[2026-10-28 21:37:12] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:12] [Logged Off, 0, 0] [U:1:0] CCMInterface::SetSteamID( [U:1:0] )
+[2026-10-28 21:37:13] IPv6 HTTP connectivity test (ipv6check-http.steamserver.net / [2404:3fc0:a:100::5]:80 ([2404:3fc0:a:100::5]:80)) - SUCCESS
+[2026-10-28 21:37:13] IPv6 HTTP connectivity test (ipv6check-http.steamserver.net / [2404:3fc0:a:100::5]:80 ([2404:3fc0:a:100::5]:80)) - server indicated we are using ipv6, external address = '2001:da8:d800:4801:9c46:87d9:1508:9fd0'
+[2026-10-28 21:37:13] IPv6 UDP connectivity test (ipv6check-udp.steamserver.net / [2404:3fc0:a:100::5]:27019) - SUCCESS
+[2026-10-28 21:37:14] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:14] Connectivity test: result=CaptivePortal (since 0.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:17] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:17] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:17] Connectivity test: result=CaptivePortal (since 3.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:20] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:20] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:20] Connectivity test: result=CaptivePortal (since 6.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:23] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:23] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:23] Connectivity test: result=CaptivePortal (since 9.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:26] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:26] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:26] Connectivity test: result=CaptivePortal (since 12.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:29] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:30] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:30] Connectivity test: result=CaptivePortal (since 15.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:33] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:33] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:33] Connectivity test: result=CaptivePortal (since 19.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:36] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:36] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:36] Connectivity test: result=CaptivePortal (since 22.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:39] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:39] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:39] Connectivity test: result=CaptivePortal (since 25.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:42] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:42] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:42] Connectivity test: result=CaptivePortal (since 28.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:45] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:45] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:45] Connectivity test: result=CaptivePortal (since 31.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:48] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:48] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:48] Connectivity test: result=CaptivePortal (since 34.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:51] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:51] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:51] Connectivity test: result=CaptivePortal (since 37.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:54] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:54] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:54] Connectivity test: result=CaptivePortal (since 40.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:37:57] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:37:58] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:37:58] Connectivity test: result=CaptivePortal (since 44.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:01] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:01] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:01] Connectivity test: result=CaptivePortal (since 47.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:04] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:04] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:04] Connectivity test: result=CaptivePortal (since 50.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:07] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:09] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:09] Connectivity test: result=CaptivePortal (since 55.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:12] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:12] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:12] Connectivity test: result=CaptivePortal (since 58.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:15] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:15] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:15] Connectivity test: result=CaptivePortal (since 61.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:18] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:18] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:18] Connectivity test: result=CaptivePortal (since 64.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:21] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:21] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:21] Connectivity test: result=CaptivePortal (since 67.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:24] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:24] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:24] Connectivity test: result=CaptivePortal (since 70.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:27] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:27] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:27] Connectivity test: result=CaptivePortal (since 73.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:30] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:32] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:32] Connectivity test: result=CaptivePortal (since 78.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:35] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:35] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:35] Connectivity test: result=CaptivePortal (since 81.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:38] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:38] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:38] Connectivity test: result=CaptivePortal (since 84.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:41] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:41] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:41] Connectivity test: result=CaptivePortal (since 87.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:44] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:44] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:44] Connectivity test: result=CaptivePortal (since 90.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:47] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:48] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:48] Connectivity test: result=CaptivePortal (since 94.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:51] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:51] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:51] Connectivity test: result=CaptivePortal (since 97.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:54] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:54] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:54] Connectivity test: result=CaptivePortal (since 100.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:38:57] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:38:58] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:38:58] Connectivity test: result=CaptivePortal (since 104.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:39:01] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:39:11] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:39:11] Connectivity test: result=CaptivePortal (since 117.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:39:14] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:39:14] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:39:14] Connectivity test: result=CaptivePortal (since 120.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:39:17] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:39:17] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:39:17] Connectivity test: result=CaptivePortal (since 123.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:39:21] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:39:21] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:39:21] Connectivity test: result=CaptivePortal (since 127.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:39:24] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:39:26] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:39:26] Connectivity test: result=CaptivePortal (since 132.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:39:29] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:39:29] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:39:29] Connectivity test: result=CaptivePortal (since 135.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:39:32] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:39:32] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:39:32] Connectivity test: result=CaptivePortal (since 138.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:39:34] [Logged Off, 0, 0] [U:1:0] ResetVoiceRecording() (was recording: 0) (last get voice time: 1793194774 seconds ago)
+[2026-10-28 21:39:34] [Logged Off, 0, 0] [U:1:0] Log session ended
+
+
+[2026-10-28 21:47:52] Client version: 1792618285
+[2026-10-28 21:47:52] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:47:52] [Logged Off, 0, 0] [U:1:0] CCMInterface::SetSteamID( [U:1:0] )
+[2026-10-28 21:47:53] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:47:53] Connectivity test: result=CaptivePortal (since 0.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:47:54] IPv6 HTTP connectivity test (ipv6check-http.steamserver.net / [2404:3fc0:a:100::4]:80 ([2404:3fc0:a:100::4]:80)) - SUCCESS
+[2026-10-28 21:47:54] IPv6 HTTP connectivity test (ipv6check-http.steamserver.net / [2404:3fc0:a:100::4]:80 ([2404:3fc0:a:100::4]:80)) - server indicated we are using ipv6, external address = '2001:da8:d800:4801:9c46:87d9:1508:9fd0'
+[2026-10-28 21:47:54] IPv6 UDP connectivity test (ipv6check-udp.steamserver.net / [2404:3fc0:2:101::671c:3696]:27019) - SUCCESS
+[2026-10-28 21:47:56] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:47:56] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:47:56] Connectivity test: result=CaptivePortal (since 3.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:47:59] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:47:59] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:47:59] Connectivity test: result=CaptivePortal (since 6.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:02] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:03] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:03] Connectivity test: result=CaptivePortal (since 9.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:06] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:07] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:07] Connectivity test: result=CaptivePortal (since 13.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:10] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:10] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:10] Connectivity test: result=CaptivePortal (since 17.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:13] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:13] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:13] Connectivity test: result=CaptivePortal (since 20.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:16] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:16] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:16] Connectivity test: result=CaptivePortal (since 23.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:19] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:19] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:19] Connectivity test: result=CaptivePortal (since 26.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:22] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:22] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:22] Connectivity test: result=CaptivePortal (since 29.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:25] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:25] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:25] Connectivity test: result=CaptivePortal (since 32.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:29] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:29] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:29] Connectivity test: result=CaptivePortal (since 35.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:32] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:33] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:33] Connectivity test: result=CaptivePortal (since 39.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:36] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:36] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:36] Connectivity test: result=CaptivePortal (since 42.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:39] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:41] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:41] Connectivity test: result=CaptivePortal (since 48.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:44] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:44] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:44] Connectivity test: result=CaptivePortal (since 51.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:47] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:49] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:49] Connectivity test: result=CaptivePortal (since 56.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:52] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:53] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:53] Connectivity test: result=CaptivePortal (since 59.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:56] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:56] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:56] Connectivity test: result=CaptivePortal (since 62.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:48:59] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:48:59] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:48:59] Connectivity test: result=CaptivePortal (since 66.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:02] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:03] Connectivity test (203.69.141.49:80 (203.69.141.49:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:03] Connectivity test: result=CaptivePortal (since 69.8s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:06] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:07] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:07] Connectivity test: result=CaptivePortal (since 73.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:10] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:10] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:10] Connectivity test: result=CaptivePortal (since 77.2s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:13] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:14] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:14] Connectivity test: result=CaptivePortal (since 81.3s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:17] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:17] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:17] Connectivity test: result=CaptivePortal (since 84.4s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:20] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:21] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:21] Connectivity test: result=CaptivePortal (since 88.5s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:24] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:24] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:24] Connectivity test: result=CaptivePortal (since 91.6s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:27] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:30] Connectivity test (203.69.141.24:80 (203.69.141.24:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:30] Connectivity test: result=CaptivePortal (since 96.7s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:33] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:36] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:36] Connectivity test: result=CaptivePortal (since 102.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:39] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:39] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:39] Connectivity test: result=CaptivePortal (since 105.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:42] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:42] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:42] Connectivity test: result=CaptivePortal (since 109.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:45] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:45] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:45] Connectivity test: result=CaptivePortal (since 112.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:48] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:48] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:48] Connectivity test: result=CaptivePortal (since 115.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:51] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:52] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:52] Connectivity test: result=CaptivePortal (since 118.9s ago), prev=Unknown, in progress=0
+[2026-10-28 21:49:55] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:49:57] Connectivity test (203.69.141.42:80 (203.69.141.42:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:49:57] Connectivity test: result=CaptivePortal (since 124.0s ago), prev=Unknown, in progress=0
+[2026-10-28 21:50:00] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:50:00] Connectivity test (203.69.141.18:80 (203.69.141.18:80)): Got HTTP 200, assuming captive portal hijack
+[2026-10-28 21:50:00] Connectivity test: result=CaptivePortal (since 127.1s ago), prev=Unknown, in progress=0
+[2026-10-28 21:50:03] Connectivity test: Starting test, fetching 'http://steamconnecttest.com/204'
+[2026-10-28 21:50:04] [Logged Off, 0, 0] [U:1:0] ResetVoiceRecording() (was recording: 0) (last get voice time: 1793195404 seconds ago)
+[2026-10-28 21:50:04] [Logged Off, 0, 0] [U:1:0] Log session ended

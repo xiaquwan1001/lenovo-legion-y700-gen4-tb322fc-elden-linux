@@ -1,0 +1,6 @@
+0001-drm-msm-dsi-move-the-bonded-command                               rc=1 failedHunks=0
+0002-drm-msm-dsi-add-per-SoC-bonded-comm                               rc=0 failedHunks=0
+0003-drm-msm-dsi-route-the-bonded-comman                               rc=1 failedHunks=0
+0004-drm-msm-dsi-take-the-bonded-master-                               rc=1 failedHunks=0
+0005-drm-msm-dsi-reject-bonded-commands-                               rc=1 failedHunks=0
+0006-drm-msm-dsi-name-the-FIFO-error-bit                               rc=1 failedHunks=0

@@ -1,0 +1,73 @@
+From 48122526922bbcee67cc336850631c396529cd64 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 28 Oct 2026 19:59:13 +0800
+Subject: [PATCH 6/6] drm/msm/dsi: name the FIFO error bits of the bonded
+ command path
+
+The bonded command path masks the controller FIFO error group around every
+broadcast command and clears the corresponding sticky status bits
+afterwards. Both were written as bare numbers in the per-SoC table
+(0x001f0200 for ERR_INT_MASK0, 0x44440400 for FIFO_STATUS).
+
+They are not undocumented. The generated dsi.xml.h names the FIFO status
+bits: the command DMA FIFO underflow and the high speed FIFO overflows of
+the four data lanes, whose OR is exactly 0x44440400. ERR_INT_MASK0 itself
+has no field definitions in dsi.xml, so its side is stated explicitly: the
+overflow group is bits 20:16 (bits 16:19 are the same four lane overflows,
+bit 20 is masked together with the group) and the command DMA FIFO
+underflow is bit 9.
+
+No functional change: the .rodata of dsi_cfg.o is byte-identical before
+and after.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/dsi/dsi_cfg.c | 25 +++++++++++++++++++++++--
+ 1 file changed, 23 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.c b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+index d8eb03b35..9017bfebb 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+@@ -195,6 +195,27 @@ static const struct regulator_bulk_data sm8650_dsi_regulators[] = {
+ 	{ .supply = "vdda", .init_load_uA = 16600 },	/* 1.2 V */
+ };
+ 
++/*
++ * The FIFO errors of this controller are handled as one group: the high speed
++ * FIFO overflows of the four data lanes and the command DMA FIFO underflow.
++ * dsi.xml describes the FIFO_STATUS bits but not the ERR_INT_MASK0 layout, so
++ * the mask side is spelled out: the overflow group occupies bits 20:16 (bits
++ * 16:19 are the DLN0..DLN3 overflows, bit 20 is masked with the group) and the
++ * command DMA FIFO underflow is bit 9.
++ */
++#define DSI_ERR_INT_MASK0_FIFO_OVERFLOW			GENMASK(20, 16)
++#define DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW	BIT(9)
++#define DSI_ERR_INT_MASK0_FIFO_ERRORS			\
++	(DSI_ERR_INT_MASK0_FIFO_OVERFLOW | DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW)
++
++/* FIFO_STATUS is write-1-to-clear; these are its FIFO error status bits. */
++#define DSI_FIFO_STATUS_FIFO_ERRORS			\
++	(DSI_FIFO_STATUS_CMD_DMA_FIFO_UNDERFLOW |	\
++	 DSI_FIFO_STATUS_DLN0_HS_FIFO_OVERFLOW |	\
++	 DSI_FIFO_STATUS_DLN1_HS_FIFO_OVERFLOW |	\
++	 DSI_FIFO_STATUS_DLN2_HS_FIFO_OVERFLOW |	\
++	 DSI_FIFO_STATUS_DLN3_HS_FIFO_OVERFLOW)
++
+ /*
+  * Bonded command-path data. The values are the ones this SoC's controller
+  * needs; the master link is a hardware fact of the panel wiring and is not a
+@@ -204,8 +225,8 @@ static const struct msm_dsi_bonded_cfg sm8750_dsi_bonded_cfg = {
+ 	.master_link_id = DSI_0,
+ 	.cmd_dma_ctrl = DSI_CMD_DMA_CTRL_BROADCAST_EN |
+ 			DSI_CMD_DMA_CTRL_FROM_FRAME_BUFFER,
+-	.err_clear_bits = 0x001f0200,
+-	.err_cleanup_bits = 0x44440400,
++	.err_clear_bits = DSI_ERR_INT_MASK0_FIFO_ERRORS,
++	.err_cleanup_bits = DSI_FIFO_STATUS_FIFO_ERRORS,
+ 	.poll_timeout_us = 5000,	/* 500 polls, 10 us apart */
+ 	.needs_link_clk_bump = true,
+ 	.needs_sw_reset = true,
+-- 
+2.53.0
+

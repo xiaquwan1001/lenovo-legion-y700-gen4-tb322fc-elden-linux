@@ -1,0 +1,61 @@
+From 96f84f0e969b4c376babc145bdd07b55b9acde1d Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 28 Oct 2026 20:27:07 +0800
+Subject: [PATCH v2 0/2] regulator: wl2868c: add the WL2868C camera PMIC
+
+This series adds support for the Will Semiconductor WL2868C, a
+seven-channel I2C camera PMIC found on the Lenovo Legion Tab (TB322FC,
+SM8750).
+
+Patch 1 is the DT binding. It is a verbatim resend of the v2 posted on
+its own earlier today as
+
+  <20261028120442.99375-1-xiaqinghuan@mail.ustc.edu.cn>
+
+which already carries the fixes from the v1 review (regulator-first
+subject prefix, MAINTAINERS entry sorted into the W section, no
+linux-media list, consumer description). It is repeated here only so
+the series is complete and bisectable: submitting-patches.rst asks for
+the Documentation/ part to come before the code implementing the
+binding, and the devicetree submitting-patches.rst asks for the binding
+to be kept with the driver that uses it. Reviewers who already looked
+at patch 1 need not look at it again.
+
+Patch 2 is the driver itself, which is also the answer to the review
+question about whether this was premature: the binding was posted ahead
+of the driver, the driver exists, and it has a real consumer on the
+board named in the binding.
+
+Consumer, from the TB322FC device tree:
+
+  - rear camera, samsung,s5kjns: dvdd -> LDO1, avdd -> LDO4,
+    dovdd -> LDO7
+  - front camera, galaxycore,gc08a8: dvdd -> LDO2, avdd -> LDO3,
+    dovdd -> LDO7
+  - rear VCM, giantec,gt9764: vdd -> LDO5, vddio -> LDO7
+
+So LDO1 to LDO5 and LDO7 are all in use; LDO6 is the only unused
+output.
+
+The driver is a plain regulator driver: regmap over I2C, one
+regulator_desc per LDO registered with devm_regulator_register(), linear
+voltage mapping, and no private sysfs or debugfs interface. SYS_EN, the
+chip-wide enable bit, is set and checked together with the per-LDO bit
+because no output comes up without it.
+
+Qianhui Xu (2):
+  regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+  regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+
+ .../bindings/regulator/willsemi,wl2868c.yaml  |  79 +++++++++
+ MAINTAINERS                                   |   7 +
+ drivers/regulator/Kconfig                     |  11 ++
+ drivers/regulator/Makefile                    |   1 +
+ drivers/regulator/wl2868c-regulator.c         | 155 ++++++++++++++++++
+ 5 files changed, 253 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+ create mode 100644 drivers/regulator/wl2868c-regulator.c
+
+-- 
+2.53.0
+

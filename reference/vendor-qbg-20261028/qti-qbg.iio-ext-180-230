@@ -1,0 +1,51 @@
+	if (rc < 0) {
+		pr_err("Failed to write to address %04x rc=%d\n",
+				chip->base + addr, rc);
+		return rc;
+	}
+
+	if (*chip->debug_mask & QBG_DEBUG_BUS_WRITE)
+		pr_info("length %d addr=%#x data:%*ph\n", len, chip->base + addr, len, val);
+
+	return 0;
+}
+
+static bool is_chan_valid(struct qti_qbg *chip, enum qbg_ext_iio_channels chan)
+{
+	int rc;
+
+	if (IS_ERR(chip->ext_iio_chans[chan]))
+		return false;
+
+	if (!chip->ext_iio_chans[chan]) {
+		chip->ext_iio_chans[chan] = iio_channel_get(chip->dev,
+					qbg_ext_iio_chan_name[chan]);
+		if (IS_ERR(chip->ext_iio_chans[chan])) {
+			rc = PTR_ERR(chip->ext_iio_chans[chan]);
+			if (rc == -EPROBE_DEFER)
+				chip->ext_iio_chans[chan] = NULL;
+
+			pr_err("Failed to get IIO channel %s, rc=%d\n",
+				qbg_ext_iio_chan_name[chan], rc);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static int qbg_read_iio_chan(struct qti_qbg *chip, enum qbg_ext_iio_channels chan,
+				int *val)
+{
+	int rc;
+
+	if (is_chan_valid(chip, chan)) {
+		rc = iio_read_channel_processed(chip->ext_iio_chans[chan], val);
+		return (rc < 0) ? rc : 0;
+	}
+
+	return -EINVAL;
+}
+
+static int qbg_write_iio_chan(struct qti_qbg *chip, enum qbg_ext_iio_channels chan,
+				int val)

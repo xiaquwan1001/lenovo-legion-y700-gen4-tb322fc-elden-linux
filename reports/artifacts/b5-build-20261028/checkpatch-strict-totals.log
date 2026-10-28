@@ -1,0 +1,6 @@
+0001-drm-msm-dsi-move-the-bonded-command-failure-flag-int.patch                rc=0 | total: 0 errors, 0 warnings, 0 checks, 43 lines checked 
+0002-drm-msm-dsi-add-per-SoC-bonded-command-path-config.patch                  rc=0 | total: 0 errors, 0 warnings, 0 checks, 151 lines checked 
+0003-drm-msm-dsi-route-the-bonded-command-path-through-ho.patch                rc=0 | total: 0 errors, 0 warnings, 0 checks, 380 lines checked 
+0004-drm-msm-dsi-take-the-bonded-master-link-from-the-SoC.patch                rc=0 | total: 0 errors, 0 warnings, 0 checks, 150 lines checked 
+0005-drm-msm-dsi-reject-bonded-commands-issued-on-the-pee.patch                rc=0 | total: 0 errors, 0 warnings, 0 checks, 39 lines checked 
+0006-drm-msm-dsi-name-the-FIFO-error-bits-of-the-bonded-c.patch                rc=0 | total: 0 errors, 0 warnings, 0 checks, 37 lines checked 

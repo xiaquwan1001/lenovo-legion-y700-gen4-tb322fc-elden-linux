@@ -1,0 +1,22 @@
+section sizes (aarch64-linux-gnu-size -A, bytes):
+stage         | manager .text/.data/.bss | host .text | cfg .text | #funcs
+r0-base       |   5408/ 24/ 32     |  23048     |    96     | 93
+r0001         |   5344/ 24/ 24     |  23048     |    96     | 93
+r0002         |   5344/ 24/ 24     |  23048     |   196     | 93
+r0003         |   5088/ 24/ 24     |  22944     |   196     | 92
+
+[r0-base -> r0001]
+    removed_funcs (0): []
+    added_funcs   (0): []
+    changed_insn  (6): [('dsi_mgr_bridge_disable', 48, 44), ('dsi_mgr_bridge_post_disable', 136, 132), ('dsi_mgr_bridge_pre_enable', 274, 272), ('msm_dsi_manager_cmd_failed', 16, 12), ('msm_dsi_manager_cmd_xfer', 284, 280), ('msm_dsi_manager_connector_init', 58, 60)]
+    total insns: 7132 -> 7116  (delta -16)
+[r0001 -> r0002]
+    removed_funcs (0): []
+    added_funcs   (0): []
+    changed_insn  (1): [('msm_dsi_cfg_get', 22, 47)]
+    total insns: 7116 -> 7141  (delta +25)
+[r0002 -> r0003]
+    removed_funcs (9): ['msm_dsi_host_bonded_cmd_arm_master', 'msm_dsi_host_bonded_cmd_build', 'msm_dsi_host_bonded_cmd_init_trigger', 'msm_dsi_host_bonded_cmd_poll_slave', 'msm_dsi_host_bonded_cmd_stage', 'msm_dsi_host_bonded_cmd_trigger', 'msm_dsi_host_bonded_cmd_wait_master', 'msm_dsi_host_bonded_xfer_prepare', 'msm_dsi_host_bonded_xfer_restore']
+    added_funcs   (8): ['dsi_bonded_cmd_init_trigger', 'dsi_bonded_cmd_stage', 'dsi_bonded_xfer_prepare', 'dsi_bonded_xfer_restore', 'dsi_cmd_dma_intr_update', 'msm_dsi_host_bonded_cmd_xfer', 'msm_dsi_host_get_cfg_ops', 'msm_dsi_manager_mark_cmd_failed']
+    changed_insn  (13): [('dsi_calc_clk_rate_v2', 68, 64), ('dsi_calc_pclk', 44, 42), ('dsi_cmds2buf_tx', 146, 148), ('dsi_intr_ctrl', 54, 52), ('dsi_link_clk_disable_6g', 34, 36), ('dsi_link_clk_enable_v2', 126, 124), ('dsi_link_clk_set_rate_v2', 78, 80), ('dsi_update_dsc_timing', 146, 148), ('dsi_wait4video_eng_busy', 58, 60), ('msm_dsi_host_get_dsc_config', 110, 100), ('msm_dsi_manager_cmd_failed', 12, 14), ('msm_dsi_manager_cmd_xfer', 280, 206), ('msm_dsi_manager_connector_init', 60, 58)]
+    total insns: 7141 -> 7051  (delta -90)

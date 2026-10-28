@@ -1,0 +1,16 @@
+===== git am 0001-drm-msm-dsi-move-the-bonded-command-failure-flag-int.patch
+应用：drm/msm/dsi: move the bonded command failure flag into the manager state
+使用索引来重建一个（三路合并的）基础目录树...
+M	drivers/gpu/drm/msm/dsi/dsi_manager.c
+回落到在基础版本上打补丁并进行三路合并...
+自动合并 drivers/gpu/drm/msm/dsi/dsi_manager.c
+冲突（内容）：合并冲突于 drivers/gpu/drm/msm/dsi/dsi_manager.c
+error: 无法合并变更。
+hint: 用 'git am --show-current-patch=diff' 命令查看失败的补丁
+hint: When you have resolved this problem, run "git am --continue".
+hint: If you prefer to skip this patch, run "git am --skip" instead.
+hint: 若要复原至原始分支并停止补丁操作，执行 "git am --abort"。
+hint: Disable this message with "git config set advice.mergeConflict false"
+打补丁失败于 0001 drm/msm/dsi: move the bonded command failure flag into the manager state
+rc=128
+--- FAILED at 0001-drm-msm-dsi-move-the-bonded-command-failure-flag-int.patch ; am state: # branch.oid 24a19b953e2a3d0ea5a8c4951a0ab8f32720c907 # branch.head (detached) u UU N... 100644 100644 100644 100644 559c07a8b937216b68fde2b0bd898c1aca4ce318 959daa88b1d022da5f552bb21ca7c04006524fa4 93d636220b6f77575842fbc6a059b75d50f72637 drivers/gpu/drm/msm/dsi/dsi_manager.c 

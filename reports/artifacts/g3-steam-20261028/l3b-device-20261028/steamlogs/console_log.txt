@@ -1,0 +1,187 @@
+
+
+[2026-10-28 19:37:32] Client version: 1792618285
+[2026-10-28 19:37:32] wayland: skipping init because GAMESCOPE_WAYLAND_DISPLAY is not set
+[2026-10-28 19:37:32] Warning: wayland init failed, some functionality may be unavailable
+[2026-10-28 19:37:32] Loaded SDL version 3.4.0-1576-gab5541ec5
+[2026-10-28 19:37:32] XOpenIM() failed, LANG = zh_CN.UTF-8
+[2026-10-28 19:37:32] GetWin32Stats: display was not open yet, good
+[2026-10-28 19:37:32] GetWin32Stats: display was not open yet, good
+[2026-10-28 19:37:32] Using udev for HIDAPI joystick device discovery
+[2026-10-28 19:37:32] wayland: skipping init because GAMESCOPE_WAYLAND_DISPLAY is not set
+[2026-10-28 19:37:32] PulseAudio connect failed (used only for Mic Volume Control) with error: Access denied
+[2026-10-28 19:37:32] PulseAudio context init failed
+[2026-10-28 19:37:32] Steam Runtime Launch Service: starting steam-runtime-launcher-service
+[2026-10-28 19:37:32] Steam Runtime Launch Service: steam-runtime-launcher-service is running pid 198870
+[2026-10-28 19:37:32] WARNING: unable to link protobuf_parse_stats and protobuf_parse_stats because one or more is a ConCommand.
+[2026-10-28 19:37:32] Using udev for joystick device discovery
+[2026-10-28 19:37:32] Steam Runtime Launch Service: steam-runtime-launcher-service pid 198870 exited
+[2026-10-28 19:37:32] Steam Runtime Launch Service: steam-runtime-launcher-service possible problem, disabling
+[2026-10-28 19:37:32] Created mapping SteamChrome_MasterStream_uid0_spid198789_mem when set to fail if created
+[2026-10-28 19:37:32] Failed to init SteamVR because it isn't installed
+[2026-10-28 19:37:44] Skipping Virtual to VGUI translation for keyMap Key 138
+[2026-10-28 19:37:44] Skipping Virtual to VGUI translation for keyMap Key 139
+[2026-10-28 19:37:44] Skipping Virtual to VGUI translation for keyMap Key 140
+[2026-10-28 19:37:44] Skipping Virtual to VGUI translation for keyMap Key 141
+[2026-10-28 19:37:44] Skipping Virtual to VGUI translation for keyMap Key 142
+[2026-10-28 19:37:44] Skipping Virtual to VGUI translation for keyMap Key 143
+[2026-10-28 19:37:44] Skipping Virtual to VGUI translation for keyMap Key 144
+[2026-10-28 19:37:44] Console Log Start
+[2026-10-28 19:37:46] GetIPCConnectionDetails: /usr/bin/lsof -P -F upnR -i TCP@127.0.0.1:39134
+[2026-10-28 19:37:46] GetIPCConnectionDetails: /usr/bin/lsof -P -F upnR -i TCP@127.0.0.1:45142
+[2026-10-28 19:37:46] GetIPCConnectionDetails: p198789
+[2026-10-28 19:37:46] GetIPCConnectionDetails: p198789
+[2026-10-28 19:37:46] GetIPCConnectionDetails: R198787
+[2026-10-28 19:37:46] GetIPCConnectionDetails: R198787
+[2026-10-28 19:37:46] GetIPCConnectionDetails: u0
+[2026-10-28 19:37:46] GetIPCConnectionDetails: u0
+[2026-10-28 19:37:46] GetIPCConnectionDetails: nlocalhost:37705->localhost:39134
+[2026-10-28 19:37:46] GetIPCConnectionDetails: nlocalhost:37733->localhost:45142
+[2026-10-28 19:37:46] GetIPCConnectionDetails: p198982
+[2026-10-28 19:37:46] GetIPCConnectionDetails: p198982
+[2026-10-28 19:37:46] GetIPCConnectionDetails: R198924
+[2026-10-28 19:37:46] GetIPCConnectionDetails: R198924
+[2026-10-28 19:37:46] GetIPCConnectionDetails: u0
+[2026-10-28 19:37:46] GetIPCConnectionDetails: u0
+[2026-10-28 19:37:46] GetIPCConnectionDetails: nlocalhost:39134->localhost:37705
+[2026-10-28 19:37:46] GetIPCConnectionDetails: nlocalhost:45142->localhost:37733
+[2026-10-28 19:37:46] STARTUP SlowJSMethodCall User.RegisterForCurrentUserChanges took 2.0ms
+
+
+[2026-10-28 21:29:17] Client version: 1792618285
+[2026-10-28 21:29:17] wayland: skipping init because GAMESCOPE_WAYLAND_DISPLAY is not set
+[2026-10-28 21:29:17] Warning: wayland init failed, some functionality may be unavailable
+[2026-10-28 21:29:17] Loaded SDL version 3.4.0-1576-gab5541ec5
+[2026-10-28 21:29:17] XOpenIM() failed, LANG = zh_CN.UTF-8
+[2026-10-28 21:29:17] GetWin32Stats: display was not open yet, good
+[2026-10-28 21:29:17] GetWin32Stats: display was not open yet, good
+[2026-10-28 21:29:17] Using udev for HIDAPI joystick device discovery
+[2026-10-28 21:29:17] wayland: skipping init because GAMESCOPE_WAYLAND_DISPLAY is not set
+[2026-10-28 21:29:17] PulseAudio connect failed (used only for Mic Volume Control) with error: Access denied
+[2026-10-28 21:29:17] PulseAudio context init failed
+[2026-10-28 21:29:17] Steam Runtime Launch Service: starting steam-runtime-launcher-service
+[2026-10-28 21:29:17] Steam Runtime Launch Service: steam-runtime-launcher-service is running pid 217644
+[2026-10-28 21:29:17] WARNING: unable to link protobuf_parse_stats and protobuf_parse_stats because one or more is a ConCommand.
+[2026-10-28 21:29:19] Skipping Virtual to VGUI translation for keyMap Key 138
+[2026-10-28 21:29:19] Skipping Virtual to VGUI translation for keyMap Key 139
+[2026-10-28 21:29:19] Skipping Virtual to VGUI translation for keyMap Key 140
+[2026-10-28 21:29:19] Skipping Virtual to VGUI translation for keyMap Key 141
+[2026-10-28 21:29:19] Skipping Virtual to VGUI translation for keyMap Key 142
+[2026-10-28 21:29:19] Skipping Virtual to VGUI translation for keyMap Key 143
+[2026-10-28 21:29:19] Skipping Virtual to VGUI translation for keyMap Key 144
+[2026-10-28 21:29:19] Console Log Start
+[2026-10-28 21:29:19] Using udev for joystick device discovery
+[2026-10-28 21:29:20] Failed to init SteamVR because it isn't installed
+[2026-10-28 21:29:20] Steam Runtime Launch Service: steam-runtime-launcher-service pid 217644 exited
+[2026-10-28 21:29:20] Steam Runtime Launch Service: steam-runtime-launcher-service possible problem, disabling
+[2026-10-28 21:29:21] GetIPCConnectionDetails: /usr/bin/lsof -P -F upnR -i TCP@127.0.0.1:36922
+[2026-10-28 21:29:21] GetIPCConnectionDetails: p217514
+[2026-10-28 21:29:21] GetIPCConnectionDetails: R217512
+[2026-10-28 21:29:21] GetIPCConnectionDetails: u0
+[2026-10-28 21:29:21] GetIPCConnectionDetails: nlocalhost:44725->localhost:36922
+[2026-10-28 21:29:21] GetIPCConnectionDetails: p217680
+[2026-10-28 21:29:21] GetIPCConnectionDetails: R217576
+[2026-10-28 21:29:21] GetIPCConnectionDetails: u0
+[2026-10-28 21:29:21] GetIPCConnectionDetails: nlocalhost:36922->localhost:44725
+[2026-10-28 21:29:21] GetIPCConnectionDetails: /usr/bin/lsof -P -F upnR -i TCP@127.0.0.1:40106
+[2026-10-28 21:29:21] GetIPCConnectionDetails: p217514
+[2026-10-28 21:29:21] GetIPCConnectionDetails: R217512
+[2026-10-28 21:29:21] GetIPCConnectionDetails: u0
+[2026-10-28 21:29:21] GetIPCConnectionDetails: nlocalhost:42435->localhost:40106
+[2026-10-28 21:29:21] GetIPCConnectionDetails: p217680
+[2026-10-28 21:29:21] GetIPCConnectionDetails: R217576
+[2026-10-28 21:29:21] GetIPCConnectionDetails: u0
+[2026-10-28 21:29:21] GetIPCConnectionDetails: nlocalhost:40106->localhost:42435
+[2026-10-28 21:29:22] STARTUP SlowJSMethodCall SharedConnection.RegisterOnLogonInfoChanged took 1.2ms
+
+
+[2026-10-28 21:37:12] Client version: 1792618285
+[2026-10-28 21:37:12] wayland: skipping init because GAMESCOPE_WAYLAND_DISPLAY is not set
+[2026-10-28 21:37:12] Warning: wayland init failed, some functionality may be unavailable
+[2026-10-28 21:37:12] Loaded SDL version 3.4.0-1576-gab5541ec5
+[2026-10-28 21:37:12] XOpenIM() failed, LANG = zh_CN.UTF-8
+[2026-10-28 21:37:12] GetWin32Stats: display was not open yet, good
+[2026-10-28 21:37:12] GetWin32Stats: display was not open yet, good
+[2026-10-28 21:37:12] Using udev for HIDAPI joystick device discovery
+[2026-10-28 21:37:12] wayland: skipping init because GAMESCOPE_WAYLAND_DISPLAY is not set
+[2026-10-28 21:37:12] PulseAudio connect failed (used only for Mic Volume Control) with error: Access denied
+[2026-10-28 21:37:12] PulseAudio context init failed
+[2026-10-28 21:37:12] WARNING: unable to link protobuf_parse_stats and protobuf_parse_stats because one or more is a ConCommand.
+[2026-10-28 21:37:13] Skipping Virtual to VGUI translation for keyMap Key 138
+[2026-10-28 21:37:13] Skipping Virtual to VGUI translation for keyMap Key 139
+[2026-10-28 21:37:13] Skipping Virtual to VGUI translation for keyMap Key 140
+[2026-10-28 21:37:13] Skipping Virtual to VGUI translation for keyMap Key 141
+[2026-10-28 21:37:13] Skipping Virtual to VGUI translation for keyMap Key 142
+[2026-10-28 21:37:13] Skipping Virtual to VGUI translation for keyMap Key 143
+[2026-10-28 21:37:13] Skipping Virtual to VGUI translation for keyMap Key 144
+[2026-10-28 21:37:13] Console Log Start
+[2026-10-28 21:37:13] Using udev for joystick device discovery
+[2026-10-28 21:37:13] Failed to init SteamVR because it isn't installed
+[2026-10-28 21:37:13] Steam Runtime Launch Service: starting steam-runtime-launcher-service
+[2026-10-28 21:37:13] Steam Runtime Launch Service: steam-runtime-launcher-service is running pid 221470
+[2026-10-28 21:37:14] GetIPCConnectionDetails: /usr/bin/lsof -P -F upnR -i TCP@127.0.0.1:37542
+[2026-10-28 21:37:14] GetIPCConnectionDetails: /usr/bin/lsof -P -F upnR -i TCP@127.0.0.1:36908
+[2026-10-28 21:37:14] GetIPCConnectionDetails: p221292
+[2026-10-28 21:37:14] GetIPCConnectionDetails: p221292
+[2026-10-28 21:37:14] GetIPCConnectionDetails: R221290
+[2026-10-28 21:37:14] GetIPCConnectionDetails: R221290
+[2026-10-28 21:37:14] GetIPCConnectionDetails: u0
+[2026-10-28 21:37:14] GetIPCConnectionDetails: u0
+[2026-10-28 21:37:14] GetIPCConnectionDetails: nlocalhost:38099->localhost:37542
+[2026-10-28 21:37:14] GetIPCConnectionDetails: nlocalhost:43617->localhost:36908
+[2026-10-28 21:37:14] GetIPCConnectionDetails: p221449
+[2026-10-28 21:37:14] GetIPCConnectionDetails: p221449
+[2026-10-28 21:37:14] GetIPCConnectionDetails: R221351
+[2026-10-28 21:37:14] GetIPCConnectionDetails: R221351
+[2026-10-28 21:37:14] GetIPCConnectionDetails: u0
+[2026-10-28 21:37:14] GetIPCConnectionDetails: u0
+[2026-10-28 21:37:14] GetIPCConnectionDetails: nlocalhost:37542->localhost:38099
+[2026-10-28 21:37:14] GetIPCConnectionDetails: nlocalhost:36908->localhost:43617
+[2026-10-28 21:37:14] Steam Runtime Launch Service: steam-runtime-launcher-service pid 221470 exited
+[2026-10-28 21:37:14] Steam Runtime Launch Service: steam-runtime-launcher-service possible problem, disabling
+
+
+[2026-10-28 21:47:52] Client version: 1792618285
+[2026-10-28 21:47:52] wayland: skipping init because GAMESCOPE_WAYLAND_DISPLAY is not set
+[2026-10-28 21:47:52] Warning: wayland init failed, some functionality may be unavailable
+[2026-10-28 21:47:52] Loaded SDL version 3.4.0-1576-gab5541ec5
+[2026-10-28 21:47:52] XOpenIM() failed, LANG = zh_CN.UTF-8
+[2026-10-28 21:47:52] GetWin32Stats: display was not open yet, good
+[2026-10-28 21:47:52] GetWin32Stats: display was not open yet, good
+[2026-10-28 21:47:52] Using udev for HIDAPI joystick device discovery
+[2026-10-28 21:47:52] wayland: skipping init because GAMESCOPE_WAYLAND_DISPLAY is not set
+[2026-10-28 21:47:52] PulseAudio connect failed (used only for Mic Volume Control) with error: Access denied
+[2026-10-28 21:47:52] PulseAudio context init failed
+[2026-10-28 21:47:52] WARNING: unable to link protobuf_parse_stats and protobuf_parse_stats because one or more is a ConCommand.
+[2026-10-28 21:47:53] Skipping Virtual to VGUI translation for keyMap Key 138
+[2026-10-28 21:47:53] Skipping Virtual to VGUI translation for keyMap Key 139
+[2026-10-28 21:47:53] Skipping Virtual to VGUI translation for keyMap Key 140
+[2026-10-28 21:47:53] Skipping Virtual to VGUI translation for keyMap Key 141
+[2026-10-28 21:47:53] Skipping Virtual to VGUI translation for keyMap Key 142
+[2026-10-28 21:47:53] Skipping Virtual to VGUI translation for keyMap Key 143
+[2026-10-28 21:47:53] Skipping Virtual to VGUI translation for keyMap Key 144
+[2026-10-28 21:47:53] Console Log Start
+[2026-10-28 21:47:53] Using udev for joystick device discovery
+[2026-10-28 21:47:53] Failed to init SteamVR because it isn't installed
+[2026-10-28 21:47:53] Steam Runtime Launch Service: starting steam-runtime-launcher-service
+[2026-10-28 21:47:53] Steam Runtime Launch Service: steam-runtime-launcher-service is running pid 227333
+[2026-10-28 21:47:54] Steam Runtime Launch Service: steam-runtime-launcher-service pid 227333 exited
+[2026-10-28 21:47:54] Steam Runtime Launch Service: steam-runtime-launcher-service possible problem, disabling
+[2026-10-28 21:47:54] GetIPCConnectionDetails: /usr/bin/lsof -P -F upnR -i TCP@127.0.0.1:50200
+[2026-10-28 21:47:54] GetIPCConnectionDetails: /usr/bin/lsof -P -F upnR -i TCP@127.0.0.1:37780
+[2026-10-28 21:47:54] GetIPCConnectionDetails: p227097
+[2026-10-28 21:47:54] GetIPCConnectionDetails: p227097
+[2026-10-28 21:47:54] GetIPCConnectionDetails: R227095
+[2026-10-28 21:47:54] GetIPCConnectionDetails: R227095
+[2026-10-28 21:47:54] GetIPCConnectionDetails: u0
+[2026-10-28 21:47:54] GetIPCConnectionDetails: u0
+[2026-10-28 21:47:54] GetIPCConnectionDetails: nlocalhost:33389->localhost:50200
+[2026-10-28 21:47:54] GetIPCConnectionDetails: nlocalhost:41937->localhost:37780
+[2026-10-28 21:47:54] GetIPCConnectionDetails: p227301
+[2026-10-28 21:47:54] GetIPCConnectionDetails: p227301
+[2026-10-28 21:47:54] GetIPCConnectionDetails: R227165
+[2026-10-28 21:47:54] GetIPCConnectionDetails: R227165
+[2026-10-28 21:47:54] GetIPCConnectionDetails: u0
+[2026-10-28 21:47:54] GetIPCConnectionDetails: u0
+[2026-10-28 21:47:54] GetIPCConnectionDetails: nlocalhost:50200->localhost:33389
+[2026-10-28 21:47:54] GetIPCConnectionDetails: nlocalhost:37780->localhost:41937

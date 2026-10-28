@@ -1,0 +1,3 @@
+Window 35651639
+  Position: 64,64 (screen: 0)
+  Geometry: 700x440

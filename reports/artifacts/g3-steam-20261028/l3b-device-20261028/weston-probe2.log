@@ -1,0 +1,80 @@
+Date: 2026-10-28 CST
+[19:19:50.614] weston 16.0.0
+               https://wayland.freedesktop.org
+               Bug reports to: https://gitlab.freedesktop.org/wayland/weston/issues/
+               Build: 16.0.0
+[19:19:50.614] Command line: weston --backend=wayland --socket=wl-g3 --xwayland --width=1280 --height=800 --idle-time=0
+[19:19:50.614] OS: Linux, 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172, #28 SMP PREEMPT Tue Oct 27 23:26:17 CST 2026, aarch64
+[19:19:50.614] Flight recorder: enabled, scopes subscribed: log
+[19:19:50.614] Starting with no config file.
+[19:19:50.614] Output repaint window is 7 ms maximum.
+[19:19:50.614] Loading module '/usr/lib/aarch64-linux-gnu/libweston-16/wayland-backend.so'
+[19:19:50.626] Loading module '/usr/lib/aarch64-linux-gnu/libweston-16/gl-renderer.so'
+[19:19:50.653] Using rendering device: /dev/dri/renderD128
+[19:19:50.659] EGL version: 1.5
+[19:19:50.659] EGL vendor: Mesa Project
+[19:19:50.659] EGL client APIs: OpenGL OpenGL_ES 
+[19:19:50.659] EGL features:
+               EGL Wayland extension: no
+               context priority: yes
+               buffer age: yes
+               partial update: no
+               swap buffers with damage: yes
+               configless context: yes
+               surfaceless context: yes
+               dmabuf support: modifiers
+               fence sync: yes (native, wait)
+[19:19:50.662] GL version: OpenGL ES 3.2 Mesa 26.2.5-1
+[19:19:50.662] GLSL version: OpenGL ES GLSL ES 3.20
+[19:19:50.662] GL vendor: freedreno
+[19:19:50.662] GL renderer: Adreno (TM) 830
+[19:19:50.664] GL ES 3.2 - renderer features:
+               read-back format: ARGB8888
+               glReadPixels supports y-flip: yes
+               glReadPixels supports PBO: yes
+               wl_shm 10 bpc formats: yes
+               wl_shm 16 bpc formats: yes
+               wl_shm half-float formats: yes
+               internal R and RG formats: yes
+               OES_EGL_image_external: yes
+               GPU timeline: yes
+               Texture immutability: yes
+               Required precision: yes
+               In-shader blending: yes
+[19:19:50.664] Using GL renderer
+[19:19:50.664] Registered plugin API 'weston_windowed_output_api_wayland_v2' of size 16
+[19:19:50.664] Color manager: no-op
+                 protocol support: no
+[19:19:50.664] Output 'wayland0' attempts EOTF mode SDR and colorimetry mode default.
+[19:19:50.664] Output 'wayland0' using color profile: stock sRGB color profile
+[19:19:50.664] Creating 1280x800 wayland output at (0, 0)
+[19:19:50.666] Mode switch failed
+[19:19:50.666] wayland-backend: Using xdg_wm_base
+[19:19:50.666] Chosen EGL config details: id:  31 rgba: 8 8 8 8 buf: 32 dep:  0 stcl: 0 int: 0-1 type: win|pbf val: fix vis_id: 0x34325241
+[19:19:50.670] Output 'wayland0' enabled with head(s) wayland0
+[19:19:50.670] Compositor capabilities:
+               arbitrary surface rotation: yes
+               screen capture uses y-flip: yes
+               cursor planes: no
+               arbitrary resolutions: no
+               view mask clipping: yes
+               explicit sync: yes
+               color operations: yes
+               color representation: yes
+               in-shader blending: yes
+               presentation clock: CLOCK_MONOTONIC_RAW, id 4
+               presentation clock resolution: 0.000000001 s
+[19:19:50.670] Loading module '/usr/lib/aarch64-linux-gnu/weston/desktop-shell.so'
+[19:19:50.670] Loading module '/usr/lib/aarch64-linux-gnu/libweston-16/xwayland.so'
+[19:19:50.670] Registered plugin API 'weston_xwayland_v3' of size 32
+[19:19:50.670] Registered plugin API 'weston_xwayland_surface_v2' of size 24
+[19:19:50.670] xserver listening on display :0
+[19:19:50.670] launching '/usr/libexec/weston-keyboard'
+[19:19:50.671] launching '/usr/libexec/weston-desktop-shell'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+[19:19:50.775] Chosen EGL config details: id:  31 rgba: 8 8 8 8 buf: 32 dep:  0 stcl: 0 int: 0-1 type: win|pbf val: fix vis_id: 0x34325241
+[19:19:54.191] unexpectedly large timestamp jump (from 35501418 to 35504851)
+[19:20:05.612] caught signal 15

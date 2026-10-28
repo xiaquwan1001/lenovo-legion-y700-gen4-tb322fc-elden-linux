@@ -1,0 +1,104 @@
+Date: 2026-10-28 CST
+[19:20:16.543] weston 16.0.0
+               https://wayland.freedesktop.org
+               Bug reports to: https://gitlab.freedesktop.org/wayland/weston/issues/
+               Build: 16.0.0
+[19:20:16.543] Command line: weston --backend=wayland --socket=wl-g3 --xwayland --width=1280 --height=800 --idle-time=0
+[19:20:16.543] OS: Linux, 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172, #28 SMP PREEMPT Tue Oct 27 23:26:17 CST 2026, aarch64
+[19:20:16.543] Flight recorder: enabled, scopes subscribed: log
+[19:20:16.543] Starting with no config file.
+[19:20:16.543] Output repaint window is 7 ms maximum.
+[19:20:16.543] Loading module '/usr/lib/aarch64-linux-gnu/libweston-16/wayland-backend.so'
+[19:20:16.556] Loading module '/usr/lib/aarch64-linux-gnu/libweston-16/gl-renderer.so'
+[19:20:16.582] Using rendering device: /dev/dri/renderD128
+[19:20:16.587] EGL version: 1.5
+[19:20:16.587] EGL vendor: Mesa Project
+[19:20:16.587] EGL client APIs: OpenGL OpenGL_ES 
+[19:20:16.587] EGL features:
+               EGL Wayland extension: no
+               context priority: yes
+               buffer age: yes
+               partial update: no
+               swap buffers with damage: yes
+               configless context: yes
+               surfaceless context: yes
+               dmabuf support: modifiers
+               fence sync: yes (native, wait)
+[19:20:16.590] GL version: OpenGL ES 3.2 Mesa 26.2.5-1
+[19:20:16.590] GLSL version: OpenGL ES GLSL ES 3.20
+[19:20:16.590] GL vendor: freedreno
+[19:20:16.590] GL renderer: Adreno (TM) 830
+[19:20:16.592] GL ES 3.2 - renderer features:
+               read-back format: ARGB8888
+               glReadPixels supports y-flip: yes
+               glReadPixels supports PBO: yes
+               wl_shm 10 bpc formats: yes
+               wl_shm 16 bpc formats: yes
+               wl_shm half-float formats: yes
+               internal R and RG formats: yes
+               OES_EGL_image_external: yes
+               GPU timeline: yes
+               Texture immutability: yes
+               Required precision: yes
+               In-shader blending: yes
+[19:20:16.592] Using GL renderer
+[19:20:16.592] Registered plugin API 'weston_windowed_output_api_wayland_v2' of size 16
+[19:20:16.592] Color manager: no-op
+                 protocol support: no
+[19:20:16.592] Output 'wayland0' attempts EOTF mode SDR and colorimetry mode default.
+[19:20:16.592] Output 'wayland0' using color profile: stock sRGB color profile
+[19:20:16.592] Creating 1280x800 wayland output at (0, 0)
+[19:20:16.593] Mode switch failed
+[19:20:16.593] wayland-backend: Using xdg_wm_base
+[19:20:16.593] Chosen EGL config details: id:  31 rgba: 8 8 8 8 buf: 32 dep:  0 stcl: 0 int: 0-1 type: win|pbf val: fix vis_id: 0x34325241
+[19:20:16.597] Output 'wayland0' enabled with head(s) wayland0
+[19:20:16.597] Compositor capabilities:
+               arbitrary surface rotation: yes
+               screen capture uses y-flip: yes
+               cursor planes: no
+               arbitrary resolutions: no
+               view mask clipping: yes
+               explicit sync: yes
+               color operations: yes
+               color representation: yes
+               in-shader blending: yes
+               presentation clock: CLOCK_MONOTONIC_RAW, id 4
+               presentation clock resolution: 0.000000001 s
+[19:20:16.597] Loading module '/usr/lib/aarch64-linux-gnu/weston/desktop-shell.so'
+[19:20:16.597] Loading module '/usr/lib/aarch64-linux-gnu/libweston-16/xwayland.so'
+[19:20:16.597] Registered plugin API 'weston_xwayland_v3' of size 32
+[19:20:16.597] Registered plugin API 'weston_xwayland_surface_v2' of size 24
+[19:20:16.597] xserver listening on display :0
+[19:20:16.597] launching '/usr/libexec/weston-keyboard'
+[19:20:16.598] launching '/usr/libexec/weston-desktop-shell'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+[19:20:16.651] Chosen EGL config details: id:  31 rgba: 8 8 8 8 buf: 32 dep:  0 stcl: 0 int: 0-1 type: win|pbf val: fix vis_id: 0x34325241
+[19:20:20.190] unexpectedly large timestamp jump (from 35527303 to 35530850)
+[19:20:22.555] launching '/usr/bin/Xwayland'
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Multiple symbols for level 1/group 1 on key <FK23>
+>                   Using F23, ignoring XF86TouchpadOff
+> Warning:          Symbol map for key <FK23> redefined
+>                   Using last definition for conflicting fields
+> Warning:          Symbol map for key <FK24> redefined
+>                   Using last definition for conflicting fields
+> Warning:          Could not resolve keysym XF86ElectronicPrivacyScreenOn
+> Warning:          Could not resolve keysym XF86ElectronicPrivacyScreenOff
+> Warning:          Could not resolve keysym XF86ActionOnSelection
+> Warning:          Could not resolve keysym XF86ContextualInsert
+> Warning:          Could not resolve keysym XF86ContextualQuery
+Errors from xkbcomp are not fatal to the X server
+[19:20:22.630] xfixes version: 6.0
+[19:20:22.635] created wm, root 786
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Unsupported maximum keycode 709, clipping.
+>                   X11 cannot support keycodes above 255.
+> Warning:          Virtual modifier Hyper multiply defined
+>                   Using 0, ignoring 0
+> Warning:          Virtual modifier ScrollLock multiply defined
+>                   Using 0, ignoring 0
+Errors from xkbcomp are not fatal to the X server
+(EE) failed to read Wayland events: Broken pipe

@@ -1,0 +1,73 @@
+CProcessEnvironmentManager is ready, 5 preallocated environment variables.
+[2026-10-28 21:37:12] Startup - updater built Oct 21 2026 21:09:58
+[2026-10-28 21:37:12] Startup - Steam Client launched with: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-overridepackageurl' 'http://127.0.0.1:8080' '-noreactlog' '-console'
+[2026-10-28 21:37:12] Opted in to client beta 'steamdeck_stable' via beta file
+You are in the 'steamdeck_stable' client beta.
+10/28 21:37:12 minidumps folder is set to /tmp/dumps
+10/28 21:37:12 Init: Installing breakpad exception handler for appid(steam)/version(1792618285)/tid(221292)
+CProcessEnvironmentManager is ready, 5 preallocated environment variables.
+[2026-10-28 21:37:12] Process started with command-line: '/root/steam-home/.local/share/Steam/steamrtarm64/steam' '-child-update-ui' '-child-update-ui-socket' '8' '-overridepackageurl' 'http://127.0.0.1:8080' '-noreactlog' '-console'
+10/28 21:37:12 minidumps folder is set to /tmp/dumps
+[2026-10-28 21:37:12] Using update UI: xwin
+10/28 21:37:12 Init: Installing breakpad exception handler for appid(steam)/version(0)/tid(221298)
+[2026-10-28 21:37:12] Create window
+[2026-10-28 21:37:12] Loading cached metrics from disk (/root/steam-home/.local/share/Steam/package/steam_client_metrics.bin)
+[2026-10-28 21:37:12] Failed to load cached hosts file (File 'update_hosts_cached.vdf' not found), using defaults
+[2026-10-28 21:37:12] Using the following download hosts for Public, Realm steamglobal
+[2026-10-28 21:37:12] 1. http://127.0.0.1:8080, /, Realm 'steamglobal', weight was 999, source = '-overridepackageurl'
+[2026-10-28 21:37:12] 2. https://client-update.steamstatic.com, /, Realm 'steamglobal', weight was 1, source = 'baked in'
+[2026-10-28 21:37:12] Verifying installation...
+[2026-10-28 21:37:12] Verifying file sizes only
+[2026-10-28 21:37:12] Verification complete
+UpdateUI: skip show logo
+[2026-10-28 21:37:12] ProcessNextMessage: socket disconnected
+[2026-10-28 21:37:12] No more messages are expected - exiting
+XOpenIM() failed, LANG = zh_CN.UTF-8
+XOpenIM() failed, LANG = zh_CN.UTF-8XRRGetOutputInfo Workaround: initialized with override: 0 real: (nil)
+Error: XRRGetOutputInfo() is not available
+10/28 21:37:12 minidumps folder is set to /tmp/dumps
+10/28 21:37:12 Init: Installing breakpad exception handler for appid(steamsysinfo)/version(1792618285)/tid(221339)
+Running query: 1 - GpuTopology
+Response: gpu_topology {
+  gpus {
+    id: 1
+    name: "Adreno (TM) 830"
+    vram_size_bytes: 11694768128
+    driver_id: k_EGpuDriverId_MesaTurnip
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  gpus {
+    id: 2
+    name: "llvmpipe (LLVM 22.1.8, 128 bits)"
+    vram_size_bytes: 15594041344
+    driver_id: k_EGpuDriverId_MesaLLVMPipe
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  default_gpu_id: 1
+}
+
+Exit code: 0
+Saving response to: /tmp/steambcdiFM - 95 bytes
+Error: XRRGetOutputInfo() is not available
+/bin/sh: 1: /root/steam-home/.local/share/Steam/steamrtarm64/../steamrtarm32/gldriverquery: not found
+/bin/sh: 1: /root/steam-home/.local/share/Steam/steamrtarm64/../steamrtarm32/vulkandriverquery: not found
+Steam Runtime Launch Service: starting steam-runtime-launcher-service
+Steam Runtime Launch Service: steam-runtime-launcher-service is running pid 221470
+sh: 1: exec: steam-runtime-launcher-service: not found
+Steam Runtime Launch Service: steam-runtime-launcher-service pid 221470 exited
+Steam Runtime Launch Service: steam-runtime-launcher-service possible problem, disabling
+[2026-10-28 21:39:13] Background update loop checking for update. . .
+[2026-10-28 21:39:13] Checking for available updates...
+[2026-10-28 21:39:13] Downloading manifest: http://127.0.0.1:8080/steam_client_steamdeck_stable_linuxarm64
+[2026-10-28 21:39:13] Manifest download: send request
+[2026-10-28 21:39:13] Manifest download: waiting for download to finish
+[2026-10-28 21:39:13] Manifest download: finished
+[2026-10-28 21:39:13] Download skipped: /steam_client_steamdeck_stable_linuxarm64 version 1792618285, installed version 1792618285, existing pending version 0
+[2026-10-28 21:39:13] Nothing to do
+[2026-10-28 21:39:34] Shutdown

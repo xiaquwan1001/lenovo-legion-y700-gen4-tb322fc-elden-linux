@@ -1,0 +1,28 @@
+	if (pm_suspend_via_firmware())
+		return qbg_restore(dev);
+#endif
+	return 0;
+}
+
+static const struct dev_pm_ops qbg_pm_ops = {
+	.freeze = qbg_freeze,
+	.restore = qbg_restore,
+	.suspend = qbg_suspend,
+	.resume = qbg_resume,
+};
+
+static const struct of_device_id qbg_match_table[] = {
+	{ .compatible = "qcom,qbg", },
+	{ },
+};
+
+static struct platform_driver qti_qbg_driver = {
+	.driver = {
+		.name = "qti_qbg",
+		.of_match_table = qbg_match_table,
+		.pm = &qbg_pm_ops,
+	},
+	.probe = qti_qbg_probe,
+	.remove = qti_qbg_remove,
+};
+module_platform_driver(qti_qbg_driver);

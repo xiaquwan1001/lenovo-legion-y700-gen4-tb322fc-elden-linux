@@ -1,0 +1,206 @@
+From 4683b6c72e2d80b3e15940ff858d6b277ed3f70c Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 28 Oct 2026 20:06:20 +0800
+Subject: [PATCH 4/6] drm/msm/dsi: take the bonded master link from the SoC
+ config
+
+Which of the two bonded links drives the broadcast was decided by the order
+in which the two DSI hosts happened to probe, so the master role was a
+property of probe timing rather than of the hardware.
+
+Read it from the per-SoC bonded config instead, and fall back to the
+DT-declared value for SoCs that have no bonded config. The value is a
+record of the hardware, not a knob: on this generation the panel is wired
+to one link only, and driving the broadcast from the other one makes the
+panel's first DCS command fail.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/dsi/dsi.h         |  1 +
+ drivers/gpu/drm/msm/dsi/dsi_cfg.h     |  4 ++-
+ drivers/gpu/drm/msm/dsi/dsi_host.c    | 11 ++++++
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 52 ++++++++++++++++++++-------
+ 4 files changed, 54 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
+index 667d233f7..811895123 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi.h
++++ b/drivers/gpu/drm/msm/dsi/dsi.h
+@@ -62,6 +62,7 @@ void msm_dsi_manager_tpg_enable(void);
+ struct msm_dsi_host;
+ struct msm_dsi_host_cfg_ops;
+ const struct msm_dsi_host_cfg_ops *msm_dsi_host_get_cfg_ops(struct mipi_dsi_host *host);
++const struct msm_dsi_bonded_cfg *msm_dsi_host_get_bonded_cfg(struct mipi_dsi_host *host);
+ int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
+ 					const struct mipi_dsi_msg *msg);
+ void msm_dsi_host_xfer_restore(struct mipi_dsi_host *host,
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.h b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
+index f666286f1..e295b2241 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.h
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
+@@ -43,7 +43,9 @@
+ 
+ /**
+  * struct msm_dsi_bonded_cfg - per-SoC data for the bonded command path
+- * @master_link_id: link that drives the broadcast; not the probe order
++ * @master_link_id: link that drives the broadcast; a hardware fact of the
++ *                  panel wiring, not the probe order and not a tunable: it
++ *                  must be the link the panel is attached to
+  * @cmd_dma_ctrl: CMD_DMA_CTRL bits both engines need while staged
+  * @err_clear_bits: error-mask bits set before a command
+  * @err_cleanup_bits: side-effectful FIFO status bits written after a command
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 6c7d7b15d..c50e89237 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -2357,6 +2357,17 @@ dsi_bonded_cfg(struct msm_dsi_host *msm_host)
+ 	return msm_host->cfg_hnd->cfg->bonded;
+ }
+ 
++/*
++ * The bonded master/slave roles are a property of the SoC's DSI generation,
++ * not of the order in which the two DSI hosts happen to probe.  Expose the
++ * per-SoC table so the manager can take the master from there.
++ */
++const struct msm_dsi_bonded_cfg *
++msm_dsi_host_get_bonded_cfg(struct mipi_dsi_host *host)
++{
++	return dsi_bonded_cfg(to_msm_dsi_host(host));
++}
++
+ static void dsi_cmd_error_prepare(struct msm_dsi_host *msm_host)
+ {
+ 	const struct msm_dsi_bonded_cfg *bonded = dsi_bonded_cfg(msm_host);
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 917e51a73..23f2d68d5 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -46,7 +46,6 @@ static DEFINE_MUTEX(dsi_bonded_cmd_lock);
+ 
+ #define IS_BONDED_DSI()		(msm_dsim_glb.is_bonded_dsi)
+ #define IS_SYNC_NEEDED()	(msm_dsim_glb.is_sync_needed)
+-#define IS_MASTER_DSI_LINK(id)	(msm_dsim_glb.master_dsi_link_id == id)
+ 
+ static bool dsi_mgr_uses_bonded_cmd(void)
+ {
+@@ -74,6 +73,33 @@ static inline struct msm_dsi *dsi_mgr_get_other_dsi(int id)
+ 	return msm_dsim_glb.dsi[(id + 1) % DSI_MAX];
+ }
+ 
++/*
++ * The master link is a hardware fact of the panel wiring, taken from the
++ * per-SoC bonded config when the SoC provides one. Falling back to the
++ * DT-declared value (which the probe order fills in) keeps SoCs without a
++ * bonded table working exactly as before. The value is read, never
++ * negotiated: swapping the two links does not work on hardware, so this is
++ * deliberately not a knob.
++ */
++static int dsi_mgr_bonded_master_link_id(int id)
++{
++	struct msm_dsi *dsi = dsi_mgr_get_dsi(id);
++	const struct msm_dsi_bonded_cfg *bonded;
++
++	if (dsi && dsi->host) {
++		bonded = msm_dsi_host_get_bonded_cfg(dsi->host);
++		if (bonded)
++			return bonded->master_link_id;
++	}
++
++	return msm_dsim_glb.master_dsi_link_id;
++}
++
++static bool dsi_mgr_is_master_link(int id)
++{
++	return dsi_mgr_bonded_master_link_id(id) == id;
++}
++
+ static int dsi_mgr_parse_of(struct device_node *np, int id)
+ {
+ 	struct msm_dsi_manager *msm_dsim = &msm_dsim_glb;
+@@ -117,9 +143,9 @@ static int dsi_mgr_setup_components(int id)
+ 		if (ret)
+ 			return ret;
+ 	} else if (other_dsi) {
+-		struct msm_dsi *master_link_dsi = IS_MASTER_DSI_LINK(id) ?
++		struct msm_dsi *master_link_dsi = dsi_mgr_is_master_link(id) ?
+ 							msm_dsi : other_dsi;
+-		struct msm_dsi *slave_link_dsi = IS_MASTER_DSI_LINK(id) ?
++		struct msm_dsi *slave_link_dsi = dsi_mgr_is_master_link(id) ?
+ 							other_dsi : msm_dsi;
+ 
+ 		/*
+@@ -327,7 +353,7 @@ static void dsi_mgr_bridge_pre_enable(struct drm_bridge *bridge,
+ 	DBG("id=%d", id);
+ 
+ 	/* Do nothing with the host if it is slave-DSI in case of bonded DSI */
+-	if (is_bonded_dsi && !IS_MASTER_DSI_LINK(id))
++	if (is_bonded_dsi && !dsi_mgr_is_master_link(id))
+ 		return;
+ 
+ 	ret = dsi_mgr_bridge_power_on(bridge);
+@@ -375,7 +401,7 @@ static void dsi_mgr_bridge_enable(struct drm_bridge *bridge,
+ 	if (!msm_dsim_glb.is_sm8750 ||
+ 	    !to_dsi_bridge(bridge)->powered ||
+ 	    msm_dsi_manager_cmd_failed() ||
+-	    (IS_BONDED_DSI() && !IS_MASTER_DSI_LINK(id)))
++	    (IS_BONDED_DSI() && !dsi_mgr_is_master_link(id)))
+ 		return;
+ 
+ 	panel = of_drm_find_panel(msm_dsi->next_bridge->of_node);
+@@ -404,7 +430,7 @@ static void dsi_mgr_bridge_disable(struct drm_bridge *bridge,
+ 	if (!msm_dsim_glb.is_sm8750 ||
+ 	    !to_dsi_bridge(bridge)->powered ||
+ 	    msm_dsi_manager_cmd_failed() ||
+-	    (IS_BONDED_DSI() && !IS_MASTER_DSI_LINK(id)))
++	    (IS_BONDED_DSI() && !dsi_mgr_is_master_link(id)))
+ 		return;
+ 
+ 	/* Make off commands possible before panel unprepare in post-disable. */
+@@ -446,7 +472,7 @@ static void dsi_mgr_bridge_post_disable(struct drm_bridge *bridge,
+ 	 * It is safe to call dsi_mgr_phy_disable() here because a single PHY
+ 	 * won't be diabled until both PHYs request disable.
+ 	 */
+-	if (is_bonded_dsi && !IS_MASTER_DSI_LINK(id))
++	if (is_bonded_dsi && !dsi_mgr_is_master_link(id))
+ 		goto disable_phy;
+ 
+ 	if (msm_dsim_glb.is_sm8750)
+@@ -498,7 +524,7 @@ static void dsi_mgr_bridge_mode_set(struct drm_bridge *bridge,
+ 
+ 	DBG("set mode: " DRM_MODE_FMT, DRM_MODE_ARG(mode));
+ 
+-	if (is_bonded_dsi && !IS_MASTER_DSI_LINK(id))
++	if (is_bonded_dsi && !dsi_mgr_is_master_link(id))
+ 		return;
+ 
+ 	msm_dsi_host_set_display_mode(host, adjusted_mode);
+@@ -608,13 +634,13 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ {
+ 	struct msm_dsi *master_dsi, *slave_dsi;
+ 	const struct msm_dsi_host_cfg_ops *ops;
++	int master_id = dsi_mgr_bonded_master_link_id(DSI_0);
+ 
+-	if (msm_dsim_glb.master_dsi_link_id < 0 ||
+-	    msm_dsim_glb.master_dsi_link_id >= DSI_MAX)
++	if (master_id < 0 || master_id >= DSI_MAX)
+ 		return -EINVAL;
+ 
+-	master_dsi = dsi_mgr_get_dsi(msm_dsim_glb.master_dsi_link_id);
+-	slave_dsi = dsi_mgr_get_other_dsi(msm_dsim_glb.master_dsi_link_id);
++	master_dsi = dsi_mgr_get_dsi(master_id);
++	slave_dsi = dsi_mgr_get_other_dsi(master_id);
+ 	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host)
+ 		return -ENODEV;
+ 
+@@ -771,7 +797,7 @@ bool msm_dsi_is_bonded_dsi(struct msm_dsi *msm_dsi)
+ 
+ bool msm_dsi_is_master_dsi(struct msm_dsi *msm_dsi)
+ {
+-	return IS_MASTER_DSI_LINK(msm_dsi->id);
++	return dsi_mgr_is_master_link(msm_dsi->id);
+ }
+ 
+ const char *msm_dsi_get_te_source(struct msm_dsi *msm_dsi)
+-- 
+2.53.0
+

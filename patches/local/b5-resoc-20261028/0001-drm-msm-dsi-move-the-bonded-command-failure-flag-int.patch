@@ -1,0 +1,73 @@
+From 0f24eb6998be89b2a42302368d12d8e71a0cd23b Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 19:44:43 +0800
+Subject: [PATCH 1/6] drm/msm/dsi: move the bonded command failure flag into
+ the manager state
+
+The bonded-DSI command path kept a file-scoped static bool
+dsi_bonded_cmd_failed next to the global manager instance, so the bonded
+state was split across two storage classes. Move the flag into struct
+msm_dsi_manager (msm_dsim_glb) so that the manager owns all of it and
+nothing mutable stays file-scoped. The READ_ONCE()/WRITE_ONCE() use is
+unchanged, so behaviour is identical.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 559c07a8b..93d636220 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -30,6 +30,7 @@ struct msm_dsi_manager {
+ 	bool is_bonded_dsi;
+ 	bool is_sync_needed;
+ 	bool is_sm8750;
++	bool bonded_cmd_failed;
+ 	int master_dsi_link_id;
+ };
+ 
+@@ -37,8 +38,10 @@ static struct msm_dsi_manager msm_dsim_glb = {
+ 	.master_dsi_link_id = -1,
+ };
+ 
++/* Serialises bonded command transactions; the failure flag it guards lives in
++ * msm_dsim_glb so no bonded state is file-scoped.
++ */
+ static DEFINE_MUTEX(dsi_bonded_cmd_lock);
+-static bool dsi_bonded_cmd_failed;
+ 
+ #define IS_BONDED_DSI()		(msm_dsim_glb.is_bonded_dsi)
+ #define IS_SYNC_NEEDED()	(msm_dsim_glb.is_sync_needed)
+@@ -51,7 +54,8 @@ static bool dsi_mgr_uses_bonded_cmd(void)
+ 
+ bool msm_dsi_manager_cmd_failed(void)
+ {
+-	return dsi_mgr_uses_bonded_cmd() && READ_ONCE(dsi_bonded_cmd_failed);
++	return dsi_mgr_uses_bonded_cmd() &&
++	       READ_ONCE(msm_dsim_glb.bonded_cmd_failed);
+ }
+ 
+ static inline struct msm_dsi *dsi_mgr_get_dsi(int id)
+@@ -374,7 +378,7 @@ static void dsi_mgr_bridge_enable(struct drm_bridge *bridge,
+ 	if (!panel->prepared) {
+ 		dev_err(&msm_dsi->pdev->dev,
+ 			"panel is not prepared; refusing video enable\n");
+-		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		WRITE_ONCE(msm_dsim_glb.bonded_cmd_failed, true);
+ 		return;
+ 	}
+ 
+@@ -646,7 +650,7 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 	ret = master_ret < 0 ? master_ret : slave_ret < 0 ? slave_ret : len;
+ 	if (ret < 0) {
+ 		/* Never reuse a packet buffer while either DMA engine is unresolved. */
+-		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		WRITE_ONCE(msm_dsim_glb.bonded_cmd_failed, true);
+ 		dev_err(&master_dsi->pdev->dev,
+ 			"bonded command DMA failed: master=%d peer=%d\n",
+ 			master_ret, slave_ret);
+-- 
+2.53.0
+

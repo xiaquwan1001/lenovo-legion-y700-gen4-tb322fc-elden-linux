@@ -1,0 +1,120 @@
+
+
+[2026-10-28 19:37:32] Client version: no bootstrapper found
+[2026-10-28 19:37:32] Running query: 1 - GpuTopology
+[2026-10-28 19:37:32] Response: gpu_topology {
+  gpus {
+    id: 1
+    name: "Adreno (TM) 830"
+    vram_size_bytes: 11694768128
+    driver_id: k_EGpuDriverId_MesaTurnip
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  gpus {
+    id: 2
+    name: "llvmpipe (LLVM 22.1.8, 128 bits)"
+    vram_size_bytes: 15594041344
+    driver_id: k_EGpuDriverId_MesaLLVMPipe
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  default_gpu_id: 1
+}
+
+[2026-10-28 19:37:32] Exit code: 0
+[2026-10-28 19:37:32] Saving response to: /tmp/steamlePokB - 95 bytes
+
+
+[2026-10-28 21:29:17] Client version: no bootstrapper found
+[2026-10-28 21:29:17] Running query: 1 - GpuTopology
+[2026-10-28 21:29:18] Response: gpu_topology {
+  gpus {
+    id: 1
+    name: "Adreno (TM) 830"
+    vram_size_bytes: 11694768128
+    driver_id: k_EGpuDriverId_MesaTurnip
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  gpus {
+    id: 2
+    name: "llvmpipe (LLVM 22.1.8, 128 bits)"
+    vram_size_bytes: 15594041344
+    driver_id: k_EGpuDriverId_MesaLLVMPipe
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  default_gpu_id: 1
+}
+
+[2026-10-28 21:29:18] Exit code: 0
+[2026-10-28 21:29:18] Saving response to: /tmp/steamEGhaie - 95 bytes
+
+
+[2026-10-28 21:37:12] Client version: no bootstrapper found
+[2026-10-28 21:37:12] Running query: 1 - GpuTopology
+[2026-10-28 21:37:12] Response: gpu_topology {
+  gpus {
+    id: 1
+    name: "Adreno (TM) 830"
+    vram_size_bytes: 11694768128
+    driver_id: k_EGpuDriverId_MesaTurnip
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  gpus {
+    id: 2
+    name: "llvmpipe (LLVM 22.1.8, 128 bits)"
+    vram_size_bytes: 15594041344
+    driver_id: k_EGpuDriverId_MesaLLVMPipe
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  default_gpu_id: 1
+}
+
+[2026-10-28 21:37:12] Exit code: 0
+[2026-10-28 21:37:12] Saving response to: /tmp/steambcdiFM - 95 bytes
+
+
+[2026-10-28 21:47:52] Client version: no bootstrapper found
+[2026-10-28 21:47:52] Running query: 1 - GpuTopology
+[2026-10-28 21:47:52] Response: gpu_topology {
+  gpus {
+    id: 1
+    name: "Adreno (TM) 830"
+    vram_size_bytes: 11694768128
+    driver_id: k_EGpuDriverId_MesaTurnip
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  gpus {
+    id: 2
+    name: "llvmpipe (LLVM 22.1.8, 128 bits)"
+    vram_size_bytes: 15594041344
+    driver_id: k_EGpuDriverId_MesaLLVMPipe
+    driver_version_major: 26
+    driver_version_minor: 2
+    driver_version_patch: 5
+    luid: 0
+  }
+  default_gpu_id: 1
+}
+
+[2026-10-28 21:47:52] Exit code: 0
+[2026-10-28 21:47:52] Saving response to: /tmp/steamBmpJDp - 95 bytes

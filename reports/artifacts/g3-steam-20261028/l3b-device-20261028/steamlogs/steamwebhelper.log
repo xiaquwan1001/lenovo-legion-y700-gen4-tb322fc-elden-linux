@@ -1,0 +1,34 @@
+10/28 21:47:52 minidumps folder is set to /tmp/dumps
+[1028/214752.897329:WARNING:crash_reporting.cc(271)] Failed to set crash key: UserID with value: 0
+[1028/214752.897355:WARNING:crash_reporting.cc(271)] Failed to set crash key: BuildID with value: 1792618285
+[1028/214752.897357:WARNING:crash_reporting.cc(271)] Failed to set crash key: SteamUniverse with value: Public
+[1028/214752.897359:WARNING:crash_reporting.cc(271)] Failed to set crash key: Vendor with value: Valve
+[1028/214752.897361:WARNING:crash_reporting.cc(271)] Failed to set crash key: Platform with value: Linux
+[1028/214752.925312:WARNING:crash_reporting.cc(271)] Failed to set crash key: UserID with value: 0
+[1028/214752.925361:WARNING:crash_reporting.cc(271)] Failed to set crash key: BuildID with value: 1792618285
+[1028/214752.925365:WARNING:crash_reporting.cc(271)] Failed to set crash key: SteamUniverse with value: Public
+[1028/214752.925368:WARNING:crash_reporting.cc(271)] Failed to set crash key: Vendor with value: Valve
+[1028/214752.925371:WARNING:crash_reporting.cc(271)] Failed to set crash key: Platform with value: Linux
+[1028/214752.926889:WARNING:crash_reporting.cc(271)] Failed to set crash key: UserID with value: 0
+[1028/214752.926924:WARNING:crash_reporting.cc(271)] Failed to set crash key: BuildID with value: 1792618285
+[1028/214752.926928:WARNING:crash_reporting.cc(271)] Failed to set crash key: SteamUniverse with value: Public
+[1028/214752.926931:WARNING:crash_reporting.cc(271)] Failed to set crash key: Vendor with value: Valve
+[1028/214752.926933:WARNING:crash_reporting.cc(271)] Failed to set crash key: Platform with value: Linux
+src/webhelper/html_chrome.cpp (622) : CefCrashReportingEnabled()
+10/28 21:47:53 Init: Installing breakpad exception handler for appid(cefwebhelper)/version(1792618285)/tid(227165)
+[1028/214753.262134:WARNING:crash_reporting.cc(271)] Failed to set crash key: UserID with value: 0
+[1028/214753.262177:WARNING:crash_reporting.cc(271)] Failed to set crash key: BuildID with value: 1792618285
+[1028/214753.262181:WARNING:crash_reporting.cc(271)] Failed to set crash key: SteamUniverse with value: Public
+[1028/214753.262184:WARNING:crash_reporting.cc(271)] Failed to set crash key: Vendor with value: Valve
+[1028/214753.262187:WARNING:crash_reporting.cc(271)] Failed to set crash key: Platform with value: Linux
+assert_20261028214753_5.dmp[227320]: Uploading dump (out-of-process)
+/tmp/dumps/assert_20261028214753_5.dmp
+[227165:227182:1028/214754.116634:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.DBus.StartServiceByName: object_path= /org/freedesktop/DBus: org.freedesktop.DBus.Error.NoReply: Did not receive a reply. Possible causes include: the remote application did not send a reply, the message bus security policy blocked the reply, the reply timeout expired, or the network connection was broken.
+10/28 21:47:54 minidumps folder is set to /tmp/dumps
+[227165:227165:1028/214755.259890:ERROR:atom_cache.cc(229)] Add STEAM_GAME to kAtomsToCache
+[227220:227220:1028/214757.893901:ERROR:gl_surface_presentation_helper.cc(260)] GetVSyncParametersIfAvailable() failed for 1 times!
+[227220:227220:1028/214757.908277:ERROR:gl_surface_presentation_helper.cc(260)] GetVSyncParametersIfAvailable() failed for 2 times!
+[227220:227220:1028/214759.693429:ERROR:gl_surface_presentation_helper.cc(260)] GetVSyncParametersIfAvailable() failed for 3 times!
+assert_20261028214753_5.dmp[227320]: Finished uploading minidump (out-of-process): success = no
+assert_20261028214753_5.dmp[227320]: error: Timeout was reached
+assert_20261028214753_5.dmp[227320]: file ''/tmp/dumps/assert_20261028214753_5.dmp'', upload no: ''Timeout was reached''

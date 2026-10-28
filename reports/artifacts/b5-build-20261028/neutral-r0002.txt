@@ -1,0 +1,192 @@
+# tag=r0002  tree=/tmp/l2b-neutral  rev=24223e44a
+== dsi_manager.o sections:
+   .text                            5344      0
+   .data                              24      0
+   .bss                               24      0
+   Total                          206225
+== dsi_manager.o per-function instruction counts:
+   <dsi_mgr_bridge_attach>: 20
+   <dsi_mgr_bridge_disable>: 44
+   <dsi_mgr_bridge_enable>: 64
+   <dsi_mgr_bridge_mode_set>: 84
+   <dsi_mgr_bridge_mode_valid>: 60
+   <dsi_mgr_bridge_post_disable>: 132
+   <dsi_mgr_bridge_pre_enable>: 272
+   <dsi_mgr_phy_disable>: 36
+   <msm_dsi_get_te_source>: 4
+   <msm_dsi_is_bonded_dsi>: 8
+   <msm_dsi_is_master_dsi>: 10
+   <msm_dsi_manager_cmd_failed>: 12
+   <msm_dsi_manager_cmd_xfer>: 280
+   <msm_dsi_manager_cmd_xfer_trigger>: 50
+   <msm_dsi_manager_connector_init>: 60
+   <msm_dsi_manager_register>: 136
+   <msm_dsi_manager_tpg_enable>: 32
+   <msm_dsi_manager_unregister>: 30
+== dsi_manager.o defined data/rodata symbols:
+    b 0000000000000018 dsi_bonded_cmd_lock
+    d 0000000000000018 msm_dsim_glb
+    r 0000000000000018 __func__.2
+    r 0000000000000019 __func__.0
+    r 0000000000000019 __func__.1
+    r 000000000000001a __func__.3
+    r 000000000000001c __func__.4
+    r 0000000000000170 dsi_mgr_bridge_funcs
+== dsi_host.o sections:
+   .text                           23048      0
+   .data                              32      0
+   .bss                                0      0
+   Total                          405280
+== dsi_host.o per-function instruction counts:
+   <dsi_adjust_pclk_for_compression>: 48
+   <dsi_byte_clk_get_rate>: 72
+   <dsi_calc_clk_rate_6g>: 28
+   <dsi_calc_clk_rate_v2>: 68
+   <dsi_calc_pclk>: 44
+   <dsi_clk_init_6g_v2>: 32
+   <dsi_clk_init_6g_v2_9>: 88
+   <dsi_clk_init_v2>: 36
+   <dsi_cmd_dma_add>: 120
+   <dsi_cmd_link_clk_set_rate>: 76
+   <dsi_cmds2buf_tx>: 146
+   <dsi_dma_base_get_6g>: 20
+   <dsi_dma_base_get_v2>: 12
+   <dsi_err_worker>: 48
+   <dsi_host_attach>: 98
+   <dsi_host_detach>: 24
+   <dsi_host_irq>: 188
+   <dsi_host_transfer>: 32
+   <dsi_intr_ctrl>: 54
+   <dsi_link_clk_disable_6g>: 34
+   <dsi_link_clk_disable_v2>: 34
+   <dsi_link_clk_enable_6g>: 124
+   <dsi_link_clk_enable_v2>: 126
+   <dsi_link_clk_set_rate_6g>: 84
+   <dsi_link_clk_set_rate_6g_v2_9>: 76
+   <dsi_link_clk_set_rate_v2>: 78
+   <dsi_sw_reset>: 114
+   <dsi_tx_buf_alloc_6g>: 82
+   <dsi_tx_buf_alloc_v2>: 30
+   <dsi_tx_buf_get_6g>: 12
+   <dsi_tx_buf_get_v2>: 6
+   <dsi_tx_buf_put_6g>: 14
+   <dsi_update_dsc_timing>: 146
+   <dsi_wait4video_eng_busy>: 58
+   <msm_dsi_host_bonded_cmd_arm_master>: 76
+   <msm_dsi_host_bonded_cmd_build>: 90
+   <msm_dsi_host_bonded_cmd_init_trigger>: 54
+   <msm_dsi_host_bonded_cmd_poll_slave>: 64
+   <msm_dsi_host_bonded_cmd_stage>: 90
+   <msm_dsi_host_bonded_cmd_trigger>: 10
+   <msm_dsi_host_bonded_cmd_wait_master>: 112
+   <msm_dsi_host_bonded_wait_video>: 14
+   <msm_dsi_host_bonded_xfer_prepare>: 160
+   <msm_dsi_host_bonded_xfer_restore>: 120
+   <msm_dsi_host_check_dsc>: 36
+   <msm_dsi_host_cmd_rx>: 296
+   <msm_dsi_host_cmd_tx>: 12
+   <msm_dsi_host_cmd_xfer_commit>: 22
+   <msm_dsi_host_cmd_xfer_config>: 22
+   <msm_dsi_host_destroy>: 30
+   <msm_dsi_host_disable>: 32
+   <msm_dsi_host_disable_irq>: 12
+   <msm_dsi_host_enable>: 46
+   <msm_dsi_host_enable_irq>: 14
+   <msm_dsi_host_get_dsc_config>: 110
+   <msm_dsi_host_get_mode_flags>: 6
+   <msm_dsi_host_get_phy_clk_req>: 38
+   <msm_dsi_host_init>: 666
+   <msm_dsi_host_is_wide_bus_enabled>: 24
+   <msm_dsi_host_modeset_init>: 28
+   <msm_dsi_host_power_off>: 82
+   <msm_dsi_host_power_on>: 734
+   <msm_dsi_host_register>: 28
+   <msm_dsi_host_reset_phy>: 36
+   <msm_dsi_host_set_display_mode>: 38
+   <msm_dsi_host_set_phy_mode>: 8
+   <msm_dsi_host_snapshot>: 30
+   <msm_dsi_host_test_pattern_en>: 98
+   <msm_dsi_host_unregister>: 18
+   <msm_dsi_host_xfer_prepare>: 104
+   <msm_dsi_host_xfer_restore>: 48
+   <msm_dsi_runtime_resume>: 42
+   <msm_dsi_runtime_suspend>: 26
+   <msm_dsi_tx_buf_free>: 32
+== dsi_host.o defined data/rodata symbols:
+    d 0000000000000001 __print_once.27
+    d 0000000000000020 _rs.15
+    r 000000000000000d __func__.11
+    r 000000000000000f __func__.12
+    r 000000000000000f __func__.14
+    r 000000000000000f __func__.6
+    r 0000000000000010 CSWTCH.118
+    r 0000000000000010 CSWTCH.120
+    r 0000000000000010 __func__.26
+    r 0000000000000010 __func__.7
+    r 0000000000000010 __func__.8
+    r 0000000000000012 __func__.13
+    r 0000000000000012 __func__.18
+    r 0000000000000013 __func__.25
+    r 0000000000000014 CSWTCH.65
+    r 0000000000000014 __func__.5
+    r 0000000000000015 __func__.19
+    r 0000000000000015 __func__.3
+    r 0000000000000015 __func__.4
+    r 0000000000000016 __func__.1
+    r 0000000000000016 __func__.20
+    r 0000000000000017 __func__.21
+    r 0000000000000017 __func__.23
+    r 0000000000000018 dsi_host_ops
+    r 0000000000000019 __func__.22
+    r 0000000000000019 __func__.24
+    r 000000000000001a __func__.9
+    r 000000000000001d __func__.2
+    r 000000000000001e __func__.0
+    r 0000000000000080 supported_data_lane_swaps
+== dsi_cfg.o sections:
+   .text                             196      0
+   .data                               0      0
+   .bss                                0      0
+   Total                          135727
+== dsi_cfg.o per-function instruction counts:
+   <msm_dsi_cfg_get>: 47
+== dsi_cfg.o defined data/rodata symbols:
+    r 0000000000000010 dsi_v2_4_clk_names
+    r 0000000000000018 dsi_msm8998_bus_clk_names
+    r 0000000000000018 dsi_v1_3_1_clk_names
+    r 0000000000000018 dsi_v2_bus_clk_names
+    r 0000000000000018 sdm660_dsi_regulators
+    r 0000000000000018 sm8550_dsi_regulators
+    r 0000000000000018 sm8650_dsi_regulators
+    r 0000000000000018 sm8750_dsi_bonded_cfg
+    r 0000000000000020 dsi_6g_bus_clk_names
+    r 0000000000000020 dsi_sdm660_bus_clk_names
+    r 0000000000000030 dsi_v1_3_1_regulators
+    r 0000000000000030 dsi_v2_4_regulators
+    r 0000000000000030 msm8998_dsi_regulators
+    r 0000000000000030 sa8775p_dsi_regulators
+    r 0000000000000030 sc7280_dsi_regulators
+    r 0000000000000048 apq8064_dsi_regulators
+    r 0000000000000048 msm8974_apq8084_regulators
+    r 0000000000000048 msm8996_dsi_regulators
+    r 0000000000000048 msm_dsi_6g_host_ops
+    r 0000000000000048 msm_dsi_6g_v2_9_host_ops
+    r 0000000000000048 msm_dsi_6g_v2_host_ops
+    r 0000000000000048 msm_dsi_v2_host_ops
+    r 0000000000000058 apq8064_dsi_cfg
+    r 0000000000000058 kaanapali_dsi_cfg
+    r 0000000000000058 msm8916_dsi_cfg
+    r 0000000000000058 msm8974_apq8084_dsi_cfg
+    r 0000000000000058 msm8976_dsi_cfg
+    r 0000000000000058 msm8994_dsi_cfg
+    r 0000000000000058 msm8996_dsi_cfg
+    r 0000000000000058 msm8998_dsi_cfg
+    r 0000000000000058 sa8775p_dsi_cfg
+    r 0000000000000058 sc7280_dsi_cfg
+    r 0000000000000058 sdm660_dsi_cfg
+    r 0000000000000058 sdm845_dsi_cfg
+    r 0000000000000058 sm8550_dsi_cfg
+    r 0000000000000058 sm8650_dsi_cfg
+    r 0000000000000058 sm8750_dsi_cfg
+    r 0000000000000090 msm8994_dsi_regulators
+    r 0000000000000258 dsi_cfg_handlers
