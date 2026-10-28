@@ -37,3 +37,17 @@
   这**不代表模块没加载**，别误判。
 - `deploy-v4l2loopback.sh` 原先引用的 `patches/extmod/0001-…` 在仓里根本不存在（改动只在 gitignore 的 `build/extmod/` 里）
   ⇒ 已补回 0001 并把两枚补丁都做成幂等打补丁。
+
+## 续（同日傍晚）：写端必须按真实 `bytesused` 切帧
+
+- `v4l2-ctl --stream-from-hdr` **不是通用头**：源码 `v4l-utils/utils/v4l2-ctl/v4l2-ctl-streaming.cpp:read_fwht_frame()`
+  读的是 `struct fwht_cframe_hdr`（magic1/magic2/version/width/height/flags/colorspace/.../size，44 B），
+  **FWHT 专用**，MJPEG 传进去必然错位。别被 `--help-all` 的 "Use for compressed data" 误导。
+- 正解 = 自写写端（`patches-userland/mjpgfeed-loopback/`）：按 **SOI `FFD8` / EOI `FFD9`** 切帧，`VIDIOC_QBUF` 时
+  `bytesused = 真实帧长`。实测 720p MJPEG 真实帧 ≈ **85 KB**，而 `sizeimage` = 1 843 200 ⇒
+  固定切分等于每帧塞 21 帧数据，libyuv 必失败。
+- 容器自动 **FROZEN**（无窗口客户端）会让 `lxc-attach`/`logcat` **静默挂死**（不是慢）⇒ 先 `lxc-unfreeze`。
+- `lxc-stop -k` 常不生效；可靠 = `kill -9 $(pgrep -f "lxc-start.*waydroid")` + `kill -9 $(pgrep -f "waydroid containe[r]")`
+  （后者是 python 服务，会残留并占住 dbus 名）。
+- `lxc.hook.post-stop = /dev/null` 在 stop 时报 `Permission denied` / `Failed to run lxc.hook.post-stop`，
+  **只是 stop 路径噪声，不影响启动**，别误判成启动失败。

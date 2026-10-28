@@ -171,3 +171,62 @@ libyuv 解码必然失败。
 - `patches/extmod/0002-v4l2loopback-mjpeg-sizeimage-2bytes.patch`（**本轮新**）
 - `scripts/deploy-v4l2loopback.sh`（两枚补丁幂等打）
 - 本报告 §7–§10
+
+
+---
+
+# 追加二：写端变长 MJPEG 逐帧提交 —— **相机链路已打通**（2026-10-28 傍晚）
+
+> 承接 §9「剩余 = 写端必须做变长 MJPEG 帧切分」。
+
+## §12 结论（数字）
+
+| 项 | 结果 |
+|---|---|
+| `v4l2-ctl --stream-from-hdr` 能否用 | ❌ **不能**：源码核对（`v4l-utils` `v4l2-ctl-streaming.cpp:read_fwht_frame()`）该头是 **`struct fwht_cframe_hdr`**（FWHT 专用，magic/version/colorspace 等 44 B），与 MJPEG 无关 |
+| 正解 | 自写写端 `mjpgfeed`：从 stdin 按 **SOI(`FFD8`)/EOI(`FFD9`)** 切帧，`VIDIOC_QBUF` 时 `bytesused = 真实帧长` |
+| 实测 | `frames=390+ dropped=0 last≈84.9 KB`（连续稳定，30 fps 生产者）；`v4l2-ctl --get-fmt-video` = `MJPG 1280x720 Size Image 1843200` |
+| 容器侧 | `configureV4l2StreamLocked: start V4L2 streaming 1280x720@30.000000fps` ✅；**`Convert V4L2 frame to YU12 failed` 完全消失**（§9 的最后一门已过） |
+| App 侧 | OpenCamera 打开相机、`Camera 200: Opened`、configureStreams 全通过；随后**崩在 `libhwui.so` RenderThread**（见 §13），**与相机无关** |
+
+## §13 App 崩溃 = 容器 GPU/ANGLE 问题（新卡点，与本任务无关）
+
+```
+F/DEBUG: name: RenderThread >>> net.sourceforge.opencamera
+F/DEBUG: signal 0 (SIGSEGV), code 1 (SEGV_MAPERR)
+  #00 pc .../libhwui.so (__aarch64_ldadd4_acq_rel+16)
+  #01 pc .../libhwui.so (GrBackendTexture::~GrBackendTexture()+56)
+  #02 pc .../libhwui.so (AutoBackendTextureRelease::unref(bool)+220)
+  #03 pc .../libhwui.so (SkImage::MakeFromTexture(...)+812)
+```
+
+即 **GrBackendTexture 析构时野指针**（`fault addr --------`、`ldadd4` 命中已释放对象），
+属容器内 **HWUI + Adreno/ANGLE** 的组合问题（`E/OpenGLRenderer: Device claims wide gamut support,
+cannot find matching config` 是同一族的先兆）。**相机栈侧没有任何错误**。
+
+⇒ **C5/U7 的相机部分到此为止**：从「0 台相机」一路推到「预览流真的跑起来」，
+剩余阻塞换成了**容器 GPU 渲染稳定性**（独立课题，属 G2 容器图形线，不在相机线）。
+
+## §14 写端工具（产物）
+
+`mjpgfeed`（本轮新写，C 静态 aarch64）：
+
+```
+gst ... ! jpegenc ! fdsink fd=1 | mjpgfeed /dev/video100 1280 720
+```
+
+- 源码要点：先 `VIDIOC_S_FMT` 定 MJPG + `VIDIOC_REQBUFS` 8 缓冲，全部 `QBUF` 后 `STREAMON`；
+  主循环 `select(DQBUF)` → `memcpy` 真实帧 → `QBUF(bytesused=真实长度)`；
+  帧超 `sizeimage` 时截断并计 `dropped`；每 30 帧打印进度。
+- **未入库**（`/tmp/mjpgfeed`，源码 `/tmp/mjpgfeed.c`）—— 若要长期用，建议落到 `scripts/` 或 `tools/`。
+
+## §15 操作坑补充（承接 §7 的坑列表）
+
+- 容器**反复自动 FROZEN**（无窗口客户端时 Waydroid 省电）⇒ `lxc-attach` 会**静默挂死**；
+  本次每次取证前都要先 `lxc-unfreeze -P /var/lib/waydroid/lxc -n waydroid`。
+- **`lxc-stop -k` 常常不生效**（`lxc-ls` 仍 RUNNING）；可靠路径 = `kill -9 $(pgrep -f "lxc-start.*waydroid")`，
+  再 `kill -9 $(pgrep -f "waydroid containe[r]")`（**这个 python 服务进程会残留并占住 dbus 名**）。
+- `lxc.hook.post-stop = /dev/null` 在 stop 时会报 `exec: /dev/null: Permission denied` +
+  `Failed to run lxc.hook.post-stop`，但**不影响启动**（是 stop 路径的噪声，别当成启动失败）。
+- 容器内 `/dev/video100` 的 inode 是**容器启动时 bind 的快照**；主机重新 `modprobe` 后
+  **必须让容器真正重启**（不是 freeze/unfreeze），否则仍是旧的 `c---------` 0 权限节点。
