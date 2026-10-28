@@ -1,5 +1,7 @@
 # M4-2…M4-4 camss 驱动系列（draft，2026-10-27）
 
+> ⛔ **已被 `../m4-camss-series-20261028/` 取代（2026-10-28 定稿）：本目录是 7 提交草稿，含 `NOT FOR UPSTREAM` 提交、R3/R4 未拆、R1 仍是 `0x54`、R6 未闭。不要再发这一版。**
+
 面向上游 `linux-media` 的 **camss sm8750 驱动主体**分片草案。承接 M4-1（binding 三枚已投，
 `patches/upstream/m4-camss-2026-10-13/sent-20261027/`）。规则 = `reports/upstream-policy-20261013.md`；
 拆解方案 = `reports/m4-camss-project-20261013.md` §2.1。

@@ -1,0 +1,86 @@
+From 02df6d46c71b5ab5b88b532c2d04824ea5fe3e27 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 28 Oct 2026 11:29:24 +0800
+Subject: [PATCH 0/9] media: camss: add SM8750 support
+
+This series adds camera capture support for the Qualcomm SM8750 SoC
+(camera subsystem block with four CSID, six CSIPHY, three VFE and two VFE
+lite instances).  It was developed on a Lenovo TB322FC (Y700 Gen4 tablet)
+and both of its sensors (rear s5kjns, front gc08a8) capture at full
+resolution and 30 fps with it, through libcamera.
+
+The block is close to the SM8650 one, but the capture interrupts move from
+the VFE to the CSID: the VFE of this generation has no useful interrupt
+sources, and the CSID reports RDI buffer done, register update completion
+and CAMIF start-of-frame per CSI2 stream.  That drives the two structural
+changes in the series:
+
+ - camss-csid-980.c adds the CSID registers of this generation, with the
+   full and the lite variant; the full one splits the register update into
+   separate RUP and AUP commands that need an extra trigger write.
+
+ - patches 4 and 5 keep the "add the generation" and "report frame starts
+   from the CSID" parts apart.  The latter is the architectural change:
+   frame start moves to the CSID, V4L2_EVENT_FRAME_SYNC is raised from
+   there, the sequence number is only incremented on a frame start, and a
+   buffer whose frame never started is reported with
+   VB2_BUF_STATE_ERROR instead of silently being numbered.  An SOF can
+   also arrive after an as-yet unhandled completion, so the EOF and SOF
+   timestamps are compared and the completion is reported first in that
+   case.  Generations that still report frame starts through the VFE are
+   unaffected: the new vfe_hw_ops callback is only provided by the VFE
+   implementations that need it.
+
+Patches 6 and 7 are generic video-node fixes the newer write master needs:
+a buffer payload has to be physically contiguous because the frame
+increment registers describe one linear range, and a start that fails
+halfway must stop the subdevices already started.
+
+The CSIPHY 2.4.0 lane values in patch 2 are the ones the vendor CSIPHY
+2.4.0 driver uses for the two-phase variant of this PHY: address, mask and
+parameter type match for all 103 entries and the data byte for 99, the
+four remaining ones being the SKEW_CAL data bytes, which are left at the
+vendor value.  The three-phase variant of the same PHY uses a different
+address layout, so its table cannot be reused here.
+
+Not included on purpose, to keep this series reviewable: the CCI/I2C
+control path of this platform, the CSID to VFE instance pairing and the
+repeated RUP on the initial buffers.  Those are being prepared separately.
+
+Patch 9 describes the block in the SoC dtsi, so that dtbs_check exercises
+the binding together with the node; the node is left disabled and boards
+enable it on top.
+
+Qianhui Xu (9):
+  dt-bindings: media: add the Qualcomm SM8750 camera subsystem
+  media: camss: csiphy: add CSIPHY 2.4.0 lane settings for SM8750
+  media: camss: csid: unwind the power-on path through a single error
+    label
+  media: camss: csid: add the 980 generation
+  media: camss: csid: report frame starts from CSID
+  media: camss: video: check that a buffer is DMA contiguous and add a
+    prepare hook
+  media: camss: video: stop the subdevices already started when a start
+    fails
+  media: camss: vfe: add the gen4 block and SM8750 camera subsystem
+  arm64: dts: qcom: sm8750: add the camera subsystem
+
+ .../bindings/media/qcom,sm8750-camss.yaml     | 435 ++++++++++++++++
+ arch/arm64/boot/dts/qcom/sm8750.dtsi          | 179 +++++++
+ drivers/media/platform/qcom/camss/Makefile    |   2 +
+ .../platform/qcom/camss/camss-csid-980.c      | 468 ++++++++++++++++++
+ .../media/platform/qcom/camss/camss-csid.c    |  45 +-
+ .../media/platform/qcom/camss/camss-csid.h    |   3 +
+ .../qcom/camss/camss-csiphy-3ph-1-0.c         | 124 +++++
+ .../platform/qcom/camss/camss-vfe-gen4.c      | 212 ++++++++
+ drivers/media/platform/qcom/camss/camss-vfe.c |  69 ++-
+ drivers/media/platform/qcom/camss/camss-vfe.h |   5 +
+ .../media/platform/qcom/camss/camss-video.c   |  78 +--
+ .../media/platform/qcom/camss/camss-video.h   |   1 +
+ drivers/media/platform/qcom/camss/camss.c     | 369 ++++++++++++++
+ drivers/media/platform/qcom/camss/camss.h     |   2 +
+ 14 files changed, 1931 insertions(+), 61 deletions(-)
+ create mode 100644 Documentation/devicetree/bindings/media/qcom,sm8750-camss.yaml
+ create mode 100644 drivers/media/platform/qcom/camss/camss-csid-980.c
+ create mode 100644 drivers/media/platform/qcom/camss/camss-vfe-gen4.c
+
