@@ -70,3 +70,63 @@ PC 接**短边**、PD 接**长边**：预期 SSH 断（数据通路固定长边�
 - 落在 **C** ⇒ 可直接开工：给 `qcom_battmgr` 增加第二口的 psy（或把 `ucsi.02` 的功率接进
   `power_supply` 聚合），并在 `port-select` 仲裁里把「数据口」与「充电口」解耦。
 - 落在 **D** ⇒ 只需改仲裁策略 + 文档澄清，无固件依赖。
+
+---
+
+## 7. 附录：静态证据（编排者采集，2026-10-29，可复核）
+
+lane F 在 21 轮后卡在长思考、未落盘（已记入会话总结），下列事实由编排者直接取自主机与设备，
+均为「命令 + 原始输出」级证据。
+
+### 7.1 内核是**逐口建模**的（已证）
+
+设备侧（`ssh root@192.168.7.1`）：
+
+```
+# /sys/class/power_supply/ → qcom-battmgr-bat / -usb / -wls
+#                            ucsi-source-psy-pmic_glink.ucsi.01 / .02
+# ucsi.01: ONLINE=1  5000000 uV  current_max=100000   usb_type 当前=C
+# ucsi.02: ONLINE=0        0 uV  current_max=0
+# /sys/class/typec/ → port0, port0-partner, port1
+# port0: data_role=device  power_role=sink  orientation=normal
+```
+
+DT 侧（`build/m1-73/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts:1287-1341`）：
+
+```
+pmic_glink: pmic-glink { compatible = "qcom,sm8750-pmic-glink", "qcom,sm8550-pmic-glink", "qcom,pmic-glink";
+    connector@0 { compatible = "usb-c-connector"; reg = <0>; data-role = "dual"; ... }
+    connector@1 { compatible = "usb-c-connector"; reg = <1>; data-role = "dual"; ... }
+```
+
+dmesg：`pmic-glink` 为 `connector@1` 记录 supplier `5-0042`、为 `connector@0` 记录 `5-0043`
+（两颗 SMB1501），两者都挂 `a600000.usb`；另有 4 条
+`Failed to create device link (0x180) with supplier … for /pmic-glink/connector@{0,1}`
+（`0x180` 是 `dl_flags` 位组合，不是错误码；**是否影响两口并存未判**）。
+
+⇒ 结论 1：**「内核只认一个口」不成立**——端口、连接器、充电 IC 都是逐口的。
+
+### 7.2 充电功率在 ABI 层被压成单口（已证，属系统侧）
+
+上游 `build/m1-73/drivers/power/supply/qcom_battmgr.c`：
+
+```
+322:	struct power_supply *bat_psy;
+323:	struct power_supply *usb_psy;
+324:	struct power_supply *wls_psy;
+1788:	battmgr->usb_psy = devm_power_supply_register(dev, &sc8280xp_usb_psy_desc, ...);
+1812:	battmgr->usb_psy = devm_power_supply_register(dev, &sm8350_usb_psy_desc, ...);
+```
+
+⇒ 每个 battmgr 实例**只注册一个 `usb_psy`**。设备上实测同理：只有 `qcom-battmgr-usb` 一个充电 psy，
+两个口的状态落在两个 `ucsi-source-psy-*` 上，而 UCSI psy 的 `current_max` 只有 100 mA（并非实际充电通道）。
+
+⇒ 结论 2：**即使 ADSP 支持双口，上游 ABI 也没有表达「第二口在充电」的位置**——这一半是系统限制。
+但这不代表实测会落 C（见 §3 判据表：还要看 ADSP 是否把第二口上报）。
+
+### 7.3 未证实的部分（不写结论）
+
+- ADSP `battery_charger` 固件是否支持双口同时在线（厂商 `qti_battery_charger` 的 ABI 里是否有 port 概念）——
+  需反汇编厂商 `vendor_dlkm/qti_battery_charger.ko` 或读 `reports/m2-a2-vendor-qbg-20261028.md` 的结论边界。
+- 那 4 条 `Failed to create device link (0x180)` 的后果。
+- 「短边插 PD 时 ADSP 是否升压」——只有 §2 的物理测试能定。
