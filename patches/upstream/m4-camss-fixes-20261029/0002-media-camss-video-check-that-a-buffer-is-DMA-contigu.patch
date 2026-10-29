@@ -76,6 +76,3 @@ index d3e56e240a..af046ecb7f 100644
  	int (*queue_buffer)(struct camss_video *vid, struct camss_buffer *buf);
  	int (*flush_buffers)(struct camss_video *vid,
  			     enum vb2_buffer_state state);
--- 
-2.53.0
-

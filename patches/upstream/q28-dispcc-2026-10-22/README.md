@@ -1,6 +1,11 @@
 # 上游 RFC：dispcc-sm8750 在 probe 复位 MDSS 块（2026-10-22）
 
-- **状态**：✅ **已发送并归档（2026-10-22 22:08:10 +0800）**。
+- **状态**：⛔ **形状已被上游否决，RFC 作废（2026-10-28）**。Taniya Das 2026-10-22 22:52 +0800 明确
+  「these resets if required should be taken care or triggered from the Display SW driver. It is not on to
+  the clock driver to drive these resets」⇒ **复位不得由 clk driver 发起**，本目录补丁不再提交；
+  落点改为显示侧（`msm_mdss_reset()` 路径），返工件见 `patches/upstream/q28-dispcc-v2-20261029/`
+  （若该目录存在）与 `reports/m8-dispcc-v2-20261029.md`。以下为原始投递记录（仅存历史）。
+- **原状态**：✅ **已发送并归档（2026-10-22 22:08:10 +0800）**。
   - `checkpatch.pl --no-tree --strict`：**0 errors / 0 warnings / 0 checks**。
   - `git send-email`（USTC，250 OK），Message-ID **`20261022140811.469417-1-xiaqinghuan@mail.ustc.edu.cn`**。
   - 归档复核：`/linux-arm-msm/`、`/linux-clk/` 均按 Message-ID 取 raw 成功，**正文 diff 与本地逐字节相同**

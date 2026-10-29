@@ -1,0 +1,47 @@
+From a676a49e8266c6f7e3382c05aca6c9988aa4f52c Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Thu, 29 Oct 2026 18:28:04 +0800
+Subject: [PATCH 3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets
+
+The SM8750 display clock controller provides, beside the MDSS core
+reset, block resets for the MDSS core INT2 interrupt controller and for
+the MDSS RSC.  On devices whose bootloader hands over with the display
+block still active (PLLs locked, MDSS core / INT2 / RSC out of reset),
+the kernel so far reset only the MDSS core and left the INT2 and RSC
+blocks in the state left behind by the bootloader; command-mode panel
+initialisation then fails with command DMA timeouts and the display
+comes up as backlight only, without a DRM device.
+
+Describe all three block resets so that the MDSS reset returns the
+whole display subsystem to a known state before any display hardware is
+programmed.
+
+The reset runs after the display clock controller has programmed its
+PLLs (the clock controller supplies the MDSS clocks and power domain,
+so it always probes first).  The block resets do not touch the PLL
+registers and no display pipeline is active at this point, so the PLL
+configuration survives the reset and nothing visible can glitch.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index dd738d13df..950c528bc4 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -3071,7 +3071,9 @@ mdss: display-subsystem@ae00000 {
+ 				 <&gcc GCC_DISP_HF_AXI_CLK>,
+ 				 <&dispcc DISP_CC_MDSS_MDP_CLK>;
+ 
+-			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>;
++			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>,
++				 <&dispcc DISP_CC_MDSS_CORE_INT2_BCR>,
++				 <&dispcc DISP_CC_MDSS_RSCC_BCR>;
+ 
+ 			interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
+ 					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
+-- 
+2.53.0
+

@@ -61,3 +61,14 @@ grep -Pn '[^\x00-\x7F]' → 无命中
 - **未上机**：三枚中 1/3 与 3/3 是错误路径修复，2/3 改变缓冲校验行为（拒绝非连续 buffer），
   建议上机时用现有 `cam-loopback.sh` / 相机出流判据各跑一次前后摄 90 帧（判据 = 不出现新的
   `-EINVAL` 拒绝、帧率不变）。
+
+## 6. 维护提醒：cover 正文与 `git format-patch`
+
+`0000-cover-letter.patch` 的正文来自本目录 `COVER-BLURB.txt`。**任何一次重新
+`git format-patch --cover-letter` 都会把它重置成 `*** SUBJECT HERE ***` / `*** BLURB HERE ***`**
+（2026-10-29 实测发生一次）。重生成后必须重新贴回，校验：
+
+```sh
+grep -c 'SUBJECT HERE\|BLURB HERE' 0000-cover-letter.patch   # 必须为 0
+grep -Pn '[^\x00-\x7F]' 0000-cover-letter.patch              # 必须无命中
+```

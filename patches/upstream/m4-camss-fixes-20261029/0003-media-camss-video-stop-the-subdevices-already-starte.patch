@@ -116,6 +116,3 @@ index 027cf024f9..ee9ffd0432 100644
  	video->ops->flush_buffers(video, VB2_BUF_STATE_ERROR);
  }
  
--- 
-2.53.0
-
