@@ -18,13 +18,23 @@
 | **M1-U6** `qcom_q6v5_pas` DTB 固件泄漏 | 🟡 等 review（10-27 投） | 无上游动作 | 无（此时催信只扣分） |
 | **M2-A2** `qcom_battmgr` SM8750 | 🟡 等 review（10-27 投，v2 基线 linux-next） | 无上游动作；10-28 厂商 QBG 重新评估（旧「无厂商通道」结论被推翻，致命互斥 = `MSG_OWNER_BC` 与上游 `PMIC_GLINK_OWNER_BATTMGR` 同值） | 无；将来若做，落点推荐 **B（扩展上游 qcom_battmgr）** |
 | **M4-1** bindings（gt9764 / s5kjns / wl2868c） | 🟡 等 review；**两枚被要求「给用户」** | Mark Brown + Krzysztof 回：wl2868c「只有 binding 别说 driver」、主题前缀不符；sashiko：gt9764 建议复用 `dongwoon,dw9768.yaml` | 回帖选路（gt9764 → `dw9768.yaml`）+ wl2868c 改 **binding + driver + DTS 同系列** |
-| **M4-2…M4-4** camss 驱动 | 🔴 **v1 已投但被要求 hold；v2 未投** | 10-28 投 9 枚 + 10 封；10-28 晚 Hangxiang Ma：等 SoB/Author 补齐、**CSIPHY 必须改走 `phy-qcom-mipi-csi2-core`**；10-29 对照上游 **v6/v23** 后**公开放弃 6 枚**，只留 3 枚通用修复 | 3 枚已备（`patches/upstream/m4-camss-fixes-20261029/`，门禁 3/3 0E0W0C + 编译 0 warning，见该目录 `GATES.md`），**未投**；SoB 归属取证见 `reports/m4-camss-v3-plan-20261029.md` |
+| **M4-2…M4-4** camss 驱动 | 🟢 **3 枚通用修复已投（2026-10-29 20:31）**；九枚 SM8750 系列作废 | 10-28 投 9 枚 + 10 封；10-28 晚 Hangxiang Ma：等 SoB/Author 补齐、**CSIPHY 必须改走 `phy-qcom-mipi-csi2-core`**；10-29 对照上游 **v6/v23** 后**公开放弃 6 枚**，只留 3 枚通用修复 | 3 枚已备（`patches/upstream/m4-camss-fixes-20261029/`，门禁 3/3 0E0W0C + 编译 0 warning，见该目录 `GATES.md`），**未投**；SoB 归属取证见 `reports/m4-camss-v3-plan-20261029.md` |
 | **M6/B5** bonded DSI 核心 | ⛔ 用户 10-29 裁决**暂不启动**上游化 | preflight：6 枚对 pristine 7.3-rc7 `git am` **0/6**，缺整组不存在的 bonded 核心（4 文件 +822 −46） | 维持备料封存；第 5 步已解阻（魔数有上游符号） |
 | **M7/Q24** rpmhpd retention | ✅ 无需我方补丁 | 上游 `skip retention by default` 已在 7.3 线 | 可选：把 retention 档位 dump 回给 Konrad/Taniya |
-| **M8** dispcc 复位落点 | ⛔ **RFC 形状被否决** | Taniya Das：复位不得由 clk driver 驱动；10-28 回信接受 | 返工到 `msm_mdss_reset()`（`patches/upstream/q28-dispcc-v2-20261029/`，**未上机**） |
+| **M8** dispcc 复位落点 | 🟢 **v2 已投（2026-10-29 20:32）**；v1 RFC 形状被否决 | Taniya Das：复位不得由 clk driver 驱动；10-28 回信接受 | 返工到 `msm_mdss_reset()`（`patches/upstream/q28-dispcc-v2-20261029/`，**未上机**） |
 | **M9** GIC ITS 认领 LPI 表 | ⛔ 已撤回 | Marc Zyngier 否方案（正解 = 引导器预置 LPI 表 + DT memreserve）；10-26 回信已发 | 无（只保留「kexec 仅用于不需 LPI 的调试」） |
 | **aw86927** 5 枚 | 🟡 等 review（10-27 投） | Krzysztof **Acked-by 2/5**；sashiko 4/5、5/5 各 1 条 Medium | v3 时保持 Ack 原样 + 接两条 Medium（草案 `out/mail-20261029b/07`） |
 | **wl2868c driver** | ⬜ 备料，**未投** | — | 与 binding + DTS 同系列，用 `git format-patch -v2` 统一重生成 |
+
+## 1b. 本轮已完成的投递（2026-10-29）
+
+| 系列 | Message-ID | 结果 |
+|---|---|---|
+| `[PATCH 0/3] media: camss: three fixes for the CSID power and VFE streaming paths` | `20261029123107.28705-1..4` | 4 封 250，lore `/all/` 4/4 = 200 |
+| `[PATCH v2 0/3] drm/msm/mdss: reset all MDSS block resets described in DT` | `20261029123238.29877-1..4` | 4 封 250，lore `/all/` 4/4 = 200 |
+| M8 撤回收尾信**重投** Michael Turquette（原 Cc 退信未达） | `179327704077.28331.12487991903259233990` | `已发送 OK` |
+
+两个系列 cover 都写明「未上机」与形状边界；门禁与投递记录见各自目录的 `GATES.md` / `SENT.md`。
 
 ## 2. 两个必须先处理的非技术事件
 
