@@ -1,0 +1,171 @@
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E5DE30BF6D
+	for <linux-media@vger.kernel.org>; Tue, 21 Jul 2026 12:46:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1784637985; cv=none; b=QWqwDup3Gb7GcxJl3IDXHtoFwsdVAgoE1l3kzQ99eVjjHnU28x5PdM5OsFV0FH4xM5KzB/ksOOQwWzx7GtDnI5ecXkWx9K175jnFzLxDz/PmXS9+eEmaQ2ZbL815eaDQWyNWvIarlbZ7gOKXE/j+oDiBfjw0Ecu5UDxHJ53UTTs=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1784637985; c=relaxed/simple;
+	bh=o7FBTKIJJyfscOK4BGpJqsmGkVsLI6G5gCzTwUk/ink=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=XvwRqk6xiFX/GVTLGhJahKbhkgj9VORvdp9op/9i/CUc9Gl7/UiW8hpsjM9WUzV0HaQIMiMtJNofikiM3366T2kZwk1z1Kq+h6kk0XVQQSw+j+hn2q4llfZ35BVI86PqwkIdiUWhlJC7v6yLDV2LSFXhDtr7OtYkxlorSv1bnu0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com; spf=pass smtp.mailfrom=oss.qualcomm.com; dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b=b8gOuF0f; dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b=jjv4VgQM; arc=none smtp.client-ip=205.220.180.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oss.qualcomm.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b="b8gOuF0f";
+	dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b="jjv4VgQM"
+Received: from pps.filterd (m0279869.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 66LARSIV1516600
+	for <linux-media@vger.kernel.org>; Tue, 21 Jul 2026 12:46:23 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qualcomm.com; h=
+	cc:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
+	ue2ael/NgWihxiKza333EZtUQUQbwo1TWMqZTaN4+3c=; b=b8gOuF0fFojc7HUA
+	forz+g6v7shG3dklfgSwOV3U8Tb/YpnHokjqXhON2HzbLetwungByF1CRYwnLMN/
+	IZX/tcxHunAFUuObxSO8xzq9erFpMUGxufWIgcH1Nj0wVqxkAeJ61yVFzT2uo4Hf
+	9pqbvqf6OPo5ixZ2g5kmtRfH0uSy3bzPVxP2XZpsK5TlE7BXyrsLgRezNPNL2YzI
+	eR0rdOFXRX3+VLhfZ1ucrE0mFcQZ1ZpDopgn1NXba3leD8hpEQ5Oz+/wkDgC9Laf
+	u1BzRqBupCAk3vDvVZE+Y+C57/OOXK1yWeca0qh+Y+A4noRN1nLclJKnkq+hiImt
+	ni1gDg==
+Received: from mail-pg1-f198.google.com (mail-pg1-f198.google.com [209.85.215.198])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 4fj6860tn9-1
+	(version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NOT)
+	for <linux-media@vger.kernel.org>; Tue, 21 Jul 2026 12:46:23 +0000 (GMT)
+Received: by mail-pg1-f198.google.com with SMTP id 41be03b00d2f7-c96b4f58ddcso7260078a12.3
+        for <linux-media@vger.kernel.org>; Tue, 21 Jul 2026 05:46:23 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=oss.qualcomm.com; s=google; t=1784637982; x=1785242782; darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=ue2ael/NgWihxiKza333EZtUQUQbwo1TWMqZTaN4+3c=;
+        b=jjv4VgQMZaUBHeW7+MqfR8a8OA8AmLU/+UT8JSjdGoNao+US6/CppXz3jqv9w6rPQv
+         Q61wQ20OL5Vznb2ucYan3XxOx4G0Z05xuTsQpMuSsHOU8mLLQNDvJLLzaN6jExUp2pYS
+         U9QiX5+ZZVkmJu/50adIkz8aoNAvK3QobvmnJTWKm7Q+tgnyfygpkYATfwBPvemq8iUM
+         clvrERuKzL71HsKcbDh0goePTZE57DeWFLOQsu736zZvwZynGbfHQkoQ8xYqg2UhLQkl
+         y5+ho/zfGomL7n03cIvtP6e7ZSrAfKbLXl8DOE7dbsJweuqiUCPvGMx7xdjZHttMx3Vu
+         rFFw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1784637982; x=1785242782;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=ue2ael/NgWihxiKza333EZtUQUQbwo1TWMqZTaN4+3c=;
+        b=L9+oevzCcJK2gieal7TW3crWiq3gr3/ToD73GKRmMMmniBgXeR+OxGPRt+L1xGsdN3
+         9a8h/mPQs7Ar8QuGR80AFAR4xZLfqC9Chn0cxvxc7CIE7G3KefBg8Y2ThWTA8qrbd50U
+         CWNA0UOVUPBmm6epivSJsK7m+IxNUmNI2eYvAOpIKHsyRLwrVxgzsaHeoG5X8APJRm9h
+         serMhPJvNhVKXHBv+cYRlv1DfGYbWPGOB/C4tFbtSqqZaO8agiQt41/yDpt75xEbhwnt
+         yNDunkNatnPegftU/fF+xCFR1XVwHKks3L4n8gJ5DVcWzKIJ0FnRPqMSVf+FPvUDczm/
+         SQvA==
+X-Gm-Message-State: AOJu0YxSCGIxZeV4t+1E1teqva+UzNvDh1+3dThrlbfMrwoEchwS/h13
+	/6fbDhCIsrRcJ+B/Bg4HjjZaOTYJbCAWspB0eqesyIZ72TiAzHyrL902pybHYYPRPcJZDR4jPRh
+	peRwtf6kblD0BR813+TNGCdP33hwxSdRGQq0fp9DjtM8aDmLu2OSc8dDvJzF0jxqY+Q==
+X-Gm-Gg: AfdE7cm0iiXKNBgNBR3eL9RvYmTYDiuORhOcYkEIruWvc3jneWWcMcrvID9DljvTKx/
+	TGRXWiDvIbJ4vKJTGGsBEzmb8OBXR4munDDx0Utmg6DF3CbI5BgPAhKD0iSCyayP3bif9jDZZqA
+	t3gXX1DMKQ6o+lHGADX6J9YTcw3WMghH3wPcNASY2PY/aaH4zUXWsLyNEMgzmi0PAKEZJY13e0n
+	YpxOxRkLXQjM4rlcqPkO0pULseIj4OQz7RgGSXuGYLNUFpSRi+X7dkDwmIne/7fGc3NOYKQ4Xxz
+	vCJutcI9TJYG2tPDFAQm/m/CtOHp+6i/Hm6OxCeJw3A/Y2BkkJJ3xvKj0W+SrY3NILherE5L41d
+	Zaty4nKSbmMg8ZVXaDDiO1QKdSoIGLXNnLlAH10zKufzFGEN5pVKv+MQ=
+X-Received: by 2002:a05:6a21:1404:b0:3c3:824d:5200 with SMTP id adf61e73a8af0-3c3ad963e99mr17621876637.41.1784637982458;
+        Tue, 21 Jul 2026 05:46:22 -0700 (PDT)
+X-Received: by 2002:a05:6a21:1404:b0:3c3:824d:5200 with SMTP id adf61e73a8af0-3c3ad963e99mr17621824637.41.1784637981892;
+        Tue, 21 Jul 2026 05:46:21 -0700 (PDT)
+Received: from hu-hangxian-lv.qualcomm.com (Global_NAT1.qualcomm.com. [129.46.96.20])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-31429f9bb62sm45258359eec.2.2026.07.21.05.46.18
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 21 Jul 2026 05:46:18 -0700 (PDT)
+From: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
+Date: Tue, 21 Jul 2026 05:46:03 -0700
+Subject: [PATCH v6 4/7] media: qcom: camss: csiphy: Add support for v2.3.0
+ two-phase CSIPHY
+Precedence: bulk
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20260721-add-support-for-camss-on-sm8750-v6-4-a5f841061d18@oss.qualcomm.com>
+References: <20260721-add-support-for-camss-on-sm8750-v6-0-a5f841061d18@oss.qualcomm.com>
+In-Reply-To: <20260721-add-support-for-camss-on-sm8750-v6-0-a5f841061d18@oss.qualcomm.com>
+To: Robert Foss <rfoss@kernel.org>, Todor Tomov <todor.too@gmail.com>,
+        Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+        Vladimir Zapolskiy <vladimir.zapolskiy@linaro.org>,
+        Mauro Carvalho Chehab <mchehab@kernel.org>,
+        Rob Herring <robh@kernel.org>,
+        Krzysztof Kozlowski <krzk+dt@kernel.org>,
+        Conor Dooley <conor+dt@kernel.org>, Bryan O'Donoghue <bod@kernel.org>,
+        Loic Poulain <loic.poulain@oss.qualcomm.com>,
+        Vinod Koul <vkoul@kernel.org>,
+        Neil Armstrong <neil.armstrong@linaro.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+        devicetree@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-phy@lists.infradead.org,
+        jeyaprakash.soundrapandian@oss.qualcomm.com,
+        Vijay Kumar Tumati <quic_vtumati@quicinc.com>,
+        Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
+X-Mailer: b4 0.14.3
+X-Proofpoint-Spam-Info: AW1haW4tMjYwNzIxMDEzNSBTYWx0ZWRfX4ixYh2UPDsbb
+ Pws/u8VMJBnHawuuQglj3bHAKy4uHBxBzEBgRrfy5x9Ad7jgivyniQyjBAlBFrVrQeZLq3PyAig
+ cqabLA12Pnh68LGXRAail2mZX4Mcfhg=
+X-Proofpoint-ORIG-GUID: 0eeVou-_SxjVP2ZHm0yATmrpOm4Akz6K
+X-Proofpoint-GUID: 0eeVou-_SxjVP2ZHm0yATmrpOm4Akz6K
+X-Authority-Analysis: v=2.4 cv=X75i7mTe c=1 sm=1 tr=0 ts=6a5f6a1f cx=c_pps
+ a=Qgeoaf8Lrialg5Z894R3/Q==:117 a=ouPCqIW2jiPt+lZRy3xVPw==:17
+ a=IkcTkHD0fZMA:10 a=RAioF0-LDSMA:10 a=s4-Qcg_JpJYA:10
+ a=VkNPw1HP01LnGYTKEx00:22 a=u7WPNUs3qKkmUXheDGA7:22 a=_glEPmIy2e8OvE2BGh3C:22
+ a=VwQbUJbxAAAA:8 a=EUspDBNiAAAA:8 a=OFxwwg5cOWCKIq9qzTkA:9 a=QEXdDO2ut3YA:10
+ a=x9snwWr2DeNwDh03kgHS:22
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNzIxMDEzNSBTYWx0ZWRfXy1Jy/OxdOD2e
+ YZORf2rsJ1xRWRPdzsoTbTUsweFDPYD/IraDK+ZMD563oVaXd8ePDxiUhpXr5eGLc3mLhG0+T3y
+ jT4ymVz9MLLS0UuUCzwsVZ3Rl4Uw9aq7Se0Jjby5BO06zeoWSgiO2bl804QlLxjO9QbDLYKMoX/
+ aTQDvRsV+rxo50tNeleab/yBBRwqyu34WtO+RGDM6/vngdGJUpnzWcq1XYgsFVLWdcOZCNKlDX1
+ 6fxRgbAmvp4iqa3W2Jv6+fZoicSbWDh+xepLh7u2gSG66NQiiFLrv/Yr8VsOaqd7W1EcEtEEvIK
+ c8pKW7S1MxoQJvLWLoxU2/8Lv3WYZcGcHxjqzxUl+I0isaWkscVvRmsOk93IkuvWrnKimS6xhAe
+ 71SIdbRyD2V21snUyblheToygUxhNJl9mKXRhxfvidXrQ1ECr1Go8Mmg9oPqJiwqW2WHuli3UK0
+ 2XVoKAqA5snwKBUoEuA==
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.134,FMLib:17.12.100.49
+ definitions=2026-07-21_01,2026-07-20_03,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ impostorscore=0 bulkscore=0 lowpriorityscore=0 clxscore=1015 spamscore=0
+ malwarescore=0 phishscore=0 adultscore=0 suspectscore=0 priorityscore=1501
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2606150000 definitions=main-2607210135
+
+Add more detailed resource information for CSIPHY devices in the camss
+driver along with the support for v2.3.0 in the 2 phase CSIPHY driver
+that is responsible for the PHY lane register configuration, module
+reset and interrupt handling.
+
+Reviewed-by: Bryan O'Donoghue <bod@kernel.org>
+Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
+---
+ drivers/media/platform/qcom/camss/camss.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index 9982174ed1ad..1ab1a0cd82d2 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -6085,7 +6085,9 @@ static const struct camss_resources sm8650_resources = {
+ static const struct camss_resources sm8750_resources = {
+ 	.version = CAMSS_8750,
+ 	.pd_name = "top",
++	.csiphy_res = csiphy_res_kaanapali,
+ 	.icc_res = icc_res_sm8750,
++	.csiphy_num = ARRAY_SIZE(csiphy_res_kaanapali),
+ 	.icc_path_num = ARRAY_SIZE(icc_res_sm8750),
+ };
+ 
+
+-- 
+2.34.1
+
+
