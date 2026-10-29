@@ -360,8 +360,9 @@ lxc.mount.entry = /run/fake-cmdline proc/cmdline none bind,create=file,optional 
 
 ### §8.7 欠账（明确不做/未做）
 
-1. `/run/fake-cmdline` 的重建**未脚本化**（重启后容器会再起不来）——下一步应放进
-   `scripts/cam-mode.sh` 或 `waydroid-cam-restart.sh`（`lxc-unfreeze` 前行内生成）。
+1. ~~`/run/fake-cmdline` 的重建未脚本化~~ ⇒ **2026-10-29 已做**：新增 `scripts/waydroid-cmdline-fix.sh`
+   （幂等 / `--status` 只读），并接线进 `scripts/waydroid-cam-restart.sh`（起 container 前调用）。
+   实测：删文件 + 停容器 → 跑 restart → `ro.bootmode=unknown`、112 进程。
 2. `waydroid-camera-bake.sh` 不可直接复跑（缺 `dl-cam/vendor-manifest.xml`、`dl-cam/vdump/`），
    本轮用 `debugfs` 原地换 5 个 .so 绕开；如需可复现的整镜像构建，需恢复那两处输入。
 3. Binary Eye **镜像里并没有**（10-28 记录「早已装」已失效，`pm list packages` 无此包）。

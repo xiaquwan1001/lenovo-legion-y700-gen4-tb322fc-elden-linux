@@ -59,6 +59,13 @@ timeout 120 $SSH 'lxc-stop -P /var/lib/waydroid/lxc -n waydroid -k >/dev/null 2>
   sleep 2; lxc-ls -P /var/lib/waydroid/lxc 2>/dev/null' || true
 
 echo "== [2/3] 起 container 服务（MODE=$MODE）"
+# PITFALLS #465：宿主带着 `androidboot.mode=charger` 重启时（插 USB），容器 init 会变成
+# `ro.bootmode=charger` ⇒ 只跑 `on charger`，没有 vold/zygote ⇒ 只有 15 个进程、没有
+# `media.camera` 服务。这里先重建 `/run/fake-cmdline`（tmpfs，重启即丢）+ 确保 lxc bind
+# 在位；幂等，无需 charger 时自动跳过。
+if [ -f "$(dirname "$0")/waydroid-cmdline-fix.sh" ]; then
+  bash "$(dirname "$0")/waydroid-cmdline-fix.sh" 2>&1 | tail -4
+fi
 timeout 90 $SSH "MODE='$MODE' SESS_USER='$SESS_USER' SESS_UID='$SESS_UID' bash -s" <<'EOS'
 set -u
 if [ "$MODE" = headless ]; then
