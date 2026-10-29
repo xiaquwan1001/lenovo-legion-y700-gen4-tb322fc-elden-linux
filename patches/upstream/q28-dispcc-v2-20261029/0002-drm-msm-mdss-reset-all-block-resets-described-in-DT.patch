@@ -1,4 +1,4 @@
-From 79ff49672db18b4e66e5b7324b85957d63fa9042 Mon Sep 17 00:00:00 2001
+From 6d2c015afdd3ff36d846eff4d3d24fda0a9193fb Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Thu, 29 Oct 2026 18:16:29 +0800
 Subject: [PATCH 2/3] drm/msm/mdss: reset all block resets described in DT

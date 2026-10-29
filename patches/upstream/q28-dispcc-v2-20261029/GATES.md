@@ -66,3 +66,59 @@ PATH，只是 `dt-check-style` 依赖的 `ruamel` 只装在 venv 里）。另核
 3. `dt-check-style`（venv python，两文件）→ **rc=0**
 
 ⇒ **schema 合法性本轮已独立验证通过，投递前无需再补**；报告 §4 表已同步修正。
+
+---
+
+## 6. 编排者第三次复核（2026-10-29 20:0x）：lane 的「binding 全绿」有误，已修
+
+**发现**：lane C2 用 `dt-doc-validate` 报 rc=0，但编排者按同一命令复跑得到 **rc=1**：
+
+```
+mdss-common.yaml: properties:resets: {'maxItems': 3, 'items': [...]}
+  should not be valid under {'required': ['maxItems']}
+  hint: "maxItems" is not needed with an "items" list
+  from schema $id: http://devicetree.org/meta-schemas/items.yaml
+```
+
+根因（读 `dtschema/meta-schemas/items.yaml`）：当 `items` 是**列表**且 `additionalItems: false` 时，
+`maxItems` 被显式禁止。原补丁同时写了 `maxItems: 3` 与三项 `items` ⇒ meta-schema 直接拒绝，
+**上游 CI（dtschema）会红**。
+
+**但简单删掉 `maxItems` 也不行**（实测）：
+
+```
+$V/dt-validate ... qcom,sm8750-mdss.example.dtb   （example 改为 1 个 reset）
+qcom,sm8750-mdss.example.dtb: resets: [[4294967295]] is too short
+```
+
+即 array-form `items` 长度 3 自带 `minItems: 3` 语义 ⇒ 单复位的老平台 DT 会全部变红。
+
+**正确修法**（已落进 `0001`，并 `rebase --autosquash` 折回首个提交）：
+
+```yaml
+  resets:
+    minItems: 1
+    items:
+      - description: MDSS core reset
+      - description: MDSS core INT2 interrupt controller reset
+      - description: MDSS RSC (resource state controller) reset
+```
+
+**修后编排者独立复跑（全部 rc=0）**：
+
+| 检查 | 结果 |
+|---|---|
+| `dt-doc-validate`（两个 yaml） | rc=0 |
+| `dt-validate` on example（**3** resets） | rc=0 |
+| `dt-validate` on example（临时改成 **1** reset，验向后兼容） | rc=0 |
+| `scripts/dtc/dt-check-style`（两文件，venv python） | rc=0 |
+| pristine `24a19b953` 上 `git am` 3/3 | 干净 |
+| `checkpatch --strict` 3 枚 | 0/0/0 |
+| `make W=1 drivers/gpu/drm/msm/` | rc=0 / 0 warning |
+
+⇒ **向后兼容性（单复位平台）现在有实测证据**，不再只是论证。
+
+**方法学教训（已进 PITFALLS）**：`make dt_binding_check` 在 7.3-rc7 的三个校验步
+（`CHKDT`/`STYLE`/yamllint，见 `Documentation/devicetree/bindings/Makefile:38-59`）全部以
+`|| true` 结尾 ⇒ **该 target 的 rc 永远为 0，不构成 schema 合法的证据**；必须直接跑
+`dt-doc-validate` / `dt-validate` / `dt-check-style` 三件套并检查各自 rc。

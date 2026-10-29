@@ -6,9 +6,10 @@
 - **基点**：pristine `Linux 7.3-rc7`（`24a19b953e`），工作树 `build/m8-dispcc-v2`。
 - **形状**：三枚补丁，把 `DISP_CC_MDSS_CORE_BCR` / `CORE_INT2_BCR` / `RSCC_BCR`
   三个 MDSS 块复位从 clk driver 迁到显示侧既有 `msm_mdss_reset()` 路径：
-  1. `0001` dt-bindings: `mdss-common.yaml` 的 `resets` 放宽到 `maxItems: 3`
-     （第一项仍为 MDSS core，既有单复位 DT 全部合法）；`qcom,sm8750-mdss.yaml`
-     example 同步列三复位；
+  1. `0001` dt-bindings: `mdss-common.yaml` 的 `resets` 改为 **`minItems: 1` + 三项 `items`**
+     （**不能写 `maxItems`**：array-form `items` 下 meta-schema 明确禁止，且列表长度 3 自带
+     `minItems: 3` 语义 ⇒ 必须显式 `minItems: 1` 才能让单复位的老平台 DT 继续合法；
+     修前/修后输出见 `GATES.md` §6）；`qcom,sm8750-mdss.yaml` example 同步列三复位；
   2. `0002` drm/msm: `msm_mdss_reset()` 改用 `devm_reset_control_array_get(…,
      RESET_CONTROL_OPTIONAL_EXCLUSIVE)`，按 DT 全组 assert → 20 ms → deassert；
      clk driver（`dispcc-sm8750.c`）**零改动**；无复位平台与单复位平台行为不变；
@@ -26,7 +27,9 @@
     （`LOCALVERSION=` 空，msm 目录产物删净强制重编）：rc=0，0 warning / 0 error；
   - `checkpatch.pl --strict`：三枚均 0 errors / 0 warnings / 0 checks；
   - pristine 7.3-rc7 逐枚 `git am`：全干净无 fuzz；
-  - （加分）`dt_binding_check`（sm8750-mdss + mdss-common）：rc=0。
+  - binding 校验（致命版，dtschema venv）：`doc_validate`（两 yaml）/
+    `dt-validate`（example vs processed-schema）/ `dt-check-style` 均 rc=0；
+    注意 7.3-rc7 的 `make dt_binding_check` 校验步全带 `\|\| true`，其 rc=0 不构成证据；
 - **留给上游的开放问题（≤3，详见报告 §6）**：
   1. 疗效等价性未上机：v2 复位时刻（PLL 后）与 A/B 验证过的时刻（PLL 前）不同，
      INT2/RSCC 在 PLL 后复位能否治 cold-boot command DMA 超时，需真机 A/B；

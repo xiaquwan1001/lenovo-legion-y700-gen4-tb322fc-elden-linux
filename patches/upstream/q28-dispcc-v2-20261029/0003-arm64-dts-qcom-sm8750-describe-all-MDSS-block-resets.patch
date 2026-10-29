@@ -1,4 +1,4 @@
-From a676a49e8266c6f7e3382c05aca6c9988aa4f52c Mon Sep 17 00:00:00 2001
+From f6c8dfab2aed1b4e7e0b2ac26b9570441ebaaa64 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Thu, 29 Oct 2026 18:28:04 +0800
 Subject: [PATCH 3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets
