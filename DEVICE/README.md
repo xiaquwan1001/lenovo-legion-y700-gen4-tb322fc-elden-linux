@@ -143,6 +143,32 @@
 | **不成立** | ~~NFC~~ | **本机无 NFC 硬件**（vendor 无 nfc feature/HAL/固件，`PITFALLS` #108） |
 | **✗ 不投入** | TEE/SPU/hw-fence/mem-buf、FM RTC6226、ST54 SE、Gunyah/PMIH010x | 私有或无源码 |
 
+### 1.4 USB 双口与充电（2026-10-29 实测定案，本节为该事实唯一正文位置）
+
+长边口 = USB3（`usb@a600000` + QMP SS PHY、DP altmode）；短边口 = USB2（`usb_dwc3_hs2`）。
+两个 `usb-c-connector`（`connector@0`/`@1`）各绑一颗 SMB1501（`smb1501@0x43`/`@0x42`），
+充电由 **ADSP `battery_charger`** 经 PMIC-GLINK 决定用哪一口/哪颗。
+
+| 观测 | 实测值（2 s 粒度采样，用户物理插拔） |
+|---|---|
+| **长边 = PC(SDP)** + 短边 = PD | 电池 **0.29–0.33 A**；`ucsi.01/02` 均 online（短边 PD 契约 3 A、`port1-partner/pd0` 存在）；`qcom-battmgr-usb` 报 5.05 V / 891 mA |
+| 拔掉短边 PD（仅长边 SDP） | 电池 0.19→0.39 A（充电算法爬升）；`ucsi.02` offline；`qcom-battmgr-usb` 报 4.71 V / 891 mA |
+| **拔掉长边 PC，仅短边 PD** | 电池 **0.199 A → 12.21 A（40 s 内爬升）**，`capacity` 19%→27%（≈+600 mAh）；**短边 PD 单独 = ≈46 W 真快充** |
+| 长边 PC 插回（两口都在） | 立刻回落到 **0.18–0.19 A**，只吃长边 SDP |
+
+**结论（已证）**
+
+1. **不是硬件单口**：短边 PD 单独可跑 12.2 A。
+2. **不是「内核只认一口」**：内核逐口建模（两个 `typec/port*`、两个 `ucsi-source-psy-*`、两颗 SMB1501 都在 DT 与 `/sys` 里）。
+3. **是 ADSP 的选口策略**：两口同时在时只选长边；`qcom-battmgr-usb` 只是**只读跟随被选中的那一口**
+   （插 PD 时报 PD 的 5.05 V，拔掉后报 PC SDP 的 4.71 V）。AP 侧**没有**改这个选择的控制面。
+4. **只留短边 PD 时 `qcom-battmgr-usb` 的 `voltage_now` 读到 1.0–1.2 V**（与电池吃 12 A 矛盾）——
+   这是 `qcom_battmgr` 单 `usb_psy` 结构的直接后果（多口时读数归属不清），**不要当电压故障**。
+
+**接法建议**：要「数据 + 快充」同时成立，**PD 插长边、数据线插短边**；前提是主线把数据通路从
+`gpio29` 固定长边改成仲裁（`port-select-gpios`，即 `TASKS` §7 M3-1 系列补丁）。
+详细采样日志与判据表 = `../reports/usb-dual-port-test-protocol-20261029.md` §8。
+
 ---
 
 ## 2. 设备状态
