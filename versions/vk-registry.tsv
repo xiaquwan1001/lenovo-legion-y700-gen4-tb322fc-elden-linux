@@ -284,3 +284,4 @@ vk178	b5-verify	2026-10-27	iterate.sh
 vk179-b5step4a	b5-resoc	2026-10-27	B5 第4步同值臂：master 由 bonded_cfg 决定（值仍 DSI0），零写盘上机全绿
 vk180-b5step4b	b5-resoc	2026-10-27	B5 第4步判别臂：master 强改 DSI1 ⇒ 面板首条 DCS ff20 三连 -22（角色不可换）
 vk181-daily	b5-verify	2026-10-27	B5 实验后还原日常线树重打的无标记镜像（设备复原用）
+vk182-camssv3	m4-v3	2026-10-29	M4 camss v3（csid-980 锁 + write-then-clear）上机复验镜像：kernel=vk151 树副本 + v3 两文件，ramdisk/cmdline 逐字取自已知可用 vk181-daily（含 elden_early_gadget=1），UTS 刻意与 vk172 相同以匹配 /lib/modules
