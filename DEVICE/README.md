@@ -24,8 +24,13 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-10-26 21:26 起（在机 `boot_b` = vk173，模块化 v2 + RTC 修复）** —— `out/boot-elden-vk173.img`（84 525 056 B，`kernel_payload` = vk172，**DTB 带 `patches/dt/0002`**）经 `scripts/flash-b.sh` 签名（签后 sha **`1a05a89d…`**）写入后**读回一致**；正常 `reboot` 后：`uname -r` = `…-dirty-debug-vk172`、`/`=`f2fs /dev/sda18`、`lsmod` **106**（vk163 对照 66）、`/lib/modules/<UTS>` **1638 `.ko`**、`mmc0=CBADS`（TF 以 `=m` 驱动）、`card0-DSI-1=connected`、phoc/phosh=1、模块错误 **0**、Q28 签名 **0**。**新：`date`/`hwclock -r` = 真实时间且跨重启保持**（修前每次都回 1970-01-09）。回退件 = `bootslot-b/boot_b-vk163-signed-20261026.img`（sha `65ae2ff0…`）。证据 `reports/vk172-modular-v2-build-20261026.md` §5、`reports/artifacts/baseline-20261027/vk173-flash-verify.txt`。
-- ★**2026-10-27（当前在机状态：Debian 根可用，Android 容器起完，相机/传感器进度）** ——
+- ★**2026-10-29（当前在机状态，唯一权威）** —— `boot_b` 分区 sha256 = **`b72866ef6e6c82…`**，与签名件 `bootslot-b/boot_b.img`（100 663 296 B）**逐字节一致**；其 AVB 原镜像 = `out/boot-elden-vk181-daily.img`（84 520 960 B，sha `c8953ba0…`）。
+  实测：`uname -r` = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`、`uname -v` = `#28 SMP PREEMPT Tue Oct 27 23:26:17 CST 2026`；
+  **运行根 = `/dev/sda17` ext4 `LABEL=linux17`（Debian forky/sid）**，cmdline 含 `elden_root=LABEL=linux17`、`elden_early_gadget=1`、`elden_q28_nowd`、`elden_nocamera` 未出现；
+  `/lib/modules/<UTS>` = **1639 `.ko`**（`find -name '*.ko'`；另有 1 个 `.ko.xz`）；Waydroid Session/Container RUNNING（SSH `root@192.168.7.1` 经 USB-NCM）。
+  ⇒ **回退口径已反转**：`f2fs @linux18`（Alpine，vk152 载荷）现为回退，不再是运行根。
+- ★**2026-10-26 21:26（历史，已被上一条取代）** —— 当时 `boot_b` = `vk173`（模块化 v2 + RTC 修复） —— `out/boot-elden-vk173.img`（84 525 056 B，`kernel_payload` = vk172，**DTB 带 `patches/dt/0002`**）经 `scripts/flash-b.sh` 签名（签后 sha **`1a05a89d…`**）写入后**读回一致**；正常 `reboot` 后：`uname -r` = `…-dirty-debug-vk172`、`/`=`f2fs /dev/sda18`、`lsmod` **106**（vk163 对照 66）、`/lib/modules/<UTS>` **1638 `.ko`**、`mmc0=CBADS`（TF 以 `=m` 驱动）、`card0-DSI-1=connected`、phoc/phosh=1、模块错误 **0**、Q28 签名 **0**。**新：`date`/`hwclock -r` = 真实时间且跨重启保持**（修前每次都回 1970-01-09）。回退件 = `bootslot-b/boot_b-vk163-signed-20261026.img`（sha `65ae2ff0…`）。证据 `reports/vk172-modular-v2-build-20261026.md` §5、`reports/artifacts/baseline-20261027/vk173-flash-verify.txt`。
+- ★**2026-10-27（历史；其「`boot_b` 未改仍是 vk173、回退 = 重启回 Alpine `linux18` f2fs」已被 2026-10-29 状态取代 —— 现运行根就是 `linux17` ext4 Debian，`linux18` f2fs 才是回退）** ——
   **运行根** = `linux17` ext4（Debian forky/sid，`fastboot boot out/boot-elden-vk17x.img` 零写盘进；**`boot_b` 未改**，
   仍是 `vk173` = 模块化 v2 载荷 + RTC DTB，回退 = 重启即回 Alpine `linux18` f2fs）。当前 `uname -r` = `…-debug-vk172`。
   **可用性**：phosh 桌面 + 电量 + WiFi + usb0 DHCP 全自动；Waydroid **Session/Container RUNNING**、`boot_completed=1`、
