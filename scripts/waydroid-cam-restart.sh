@@ -20,10 +20,38 @@
 set -u
 T=${TAB:-root@192.168.7.1}
 MODE=${MODE:-desktop}
-# 桌面会话用户（本机 phoc/phosh 跑在 uid 1000）
-SESS_USER=${SESS_USER:-xuqianhui1001}
-SESS_UID=${SESS_UID:-1000}
+# SSH 必须**先于** detect_sess() 定义：2026-10-29 lane L1d 修（旧版把它放在 detect_sess 之后，
+# detect_sess 里 `$SSH` 未绑定 ⇒ `set -u` 直接报 "SSH: 未绑定的变量"）。
 SSH="ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=5 $T"
+# 桌面会话用户：**从设备自动检测**（2026-10-28 lane L1d 修）
+#   旧版写死 xuqianhui1001/1000，且 desktop 分支用 `setsid sudo -u`，而 Debian 根**没有 sudo**
+#   ⇒ `setsid: failed to execute sudo: No such file or directory`（PITFALLS #459 同类坑）。
+#   现在：环境变量 SESS_USER/SESS_UID 若已给则复用；否则按「谁拥有 /run/user/*/wayland-0」检测；
+#   再否则退回「/home 下唯一用户」。privilege 切换用 runuser（Debian root 自带），无 sudo 也行。
+detect_sess() {
+  local rt u id
+  for rt in $(timeout 20 $SSH 'ls -d /run/user/*/wayland-0 2>/dev/null' 2>/dev/null); do
+    id=${rt#/run/user/}; id=${id%%/*}
+    u=$(timeout 20 $SSH "getent passwd $id 2>/dev/null | cut -d: -f1" 2>/dev/null)
+    [ -n "$u" ] && { echo "$u $id"; return 0; }
+  done
+  u=$(timeout 20 $SSH 'for d in /home/*; do [ -d "$d" ] && basename "$d"; done | head -1' 2>/dev/null)
+  [ -n "$u" ] || return 1
+  id=$(timeout 20 $SSH "id -u $u 2>/dev/null" 2>/dev/null)
+  [ -n "$id" ] && echo "$u $id"
+}
+if [ -z "${SESS_USER:-}" ] || [ -z "${SESS_UID:-}" ]; then
+  if got=$(detect_sess) && [ -n "$got" ]; then
+    set -- $got
+    SESS_USER=${SESS_USER:-$1}
+    SESS_UID=${SESS_UID:-$2}
+  fi
+fi
+SESS_USER=${SESS_USER:-xuqianhui1001}
+SESS_UID=${SESS_UID:-$(id -u "$SESS_USER" 2>/dev/null || echo 1000)}
+# 会话内提权：优先 sudo（若有），否则 runuser（Debian root 自带）
+if timeout 20 $SSH 'command -v sudo >/dev/null 2>&1' 2>/dev/null; then RUNAS="sudo -u"; else RUNAS="runuser -u"; fi
+echo "  会话用户 = $SESS_USER (uid $SESS_UID), 提权方式 = $RUNAS"
 
 echo "== [1/3] 停旧栈（container 服务的 dbus 名必须一起清掉）"
 timeout 120 $SSH 'lxc-stop -P /var/lib/waydroid/lxc -n waydroid -k >/dev/null 2>&1
@@ -51,15 +79,17 @@ if [ "$MODE" = headless ]; then
     echo "$out"' || true
 else
   # 真实桌面：借用 phoc 的 wayland-0 与它的 session bus（否则 gsettings/dbus 全是空的）
-  timeout 300 $SSH "SESS_USER='$SESS_USER' SESS_UID='$SESS_UID' bash -s" <<'EOS'
+  timeout 300 $SSH "SESS_USER='$SESS_USER' SESS_UID='$SESS_UID' RUNAS='$RUNAS' bash -s" <<'EOS'
 set -u
+# 远端兜底：宿主判定的 RUNAS 透传为空时，在设备上自己判一次（Debian 根无 sudo）
+[ -n "${RUNAS:-}" ] || { command -v sudo >/dev/null 2>&1 && RUNAS="sudo -u" || RUNAS="runuser -u"; }
 RT=/run/user/$SESS_UID
 [ -S "$RT/wayland-0" ] || { echo "FAIL: $RT/wayland-0 不存在（phoc 没起？用 MODE=headless）"; exit 1; }
 # 从会话用户任一进程的 environ 里取 DBUS_SESSION_BUS_ADDRESS（竞态：先判可读再读，见 cam-mode.sh 注释）
 SB=$(for p in $(pgrep -u "$SESS_UID" | head -40); do ( tr '\0' '\n' < "/proc/$p/environ" ) 2>/dev/null \
      | grep -m1 '^DBUS_SESSION_BUS_ADDRESS='; done | head -1 | cut -d= -f2-)
 echo "  DBUS_SESSION_BUS_ADDRESS=${SB:-<empty>}"
-setsid sudo -u "$SESS_USER" HOME="/home/$SESS_USER" XDG_RUNTIME_DIR="$RT" WAYLAND_DISPLAY=wayland-0 \
+setsid $RUNAS "$SESS_USER" env HOME="/home/$SESS_USER" XDG_RUNTIME_DIR="$RT" WAYLAND_DISPLAY=wayland-0 \
   DBUS_SESSION_BUS_ADDRESS="$SB" waydroid session start >/tmp/wd-session.log 2>&1 < /dev/null &
 for i in $(seq 1 40); do sleep 5; out=$(waydroid status 2>&1 | head -6)
   echo "$out" | grep -q "Container:.*RUNNING" && break; done

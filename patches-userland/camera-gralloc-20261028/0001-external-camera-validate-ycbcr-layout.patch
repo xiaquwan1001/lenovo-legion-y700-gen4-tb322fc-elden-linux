@@ -1,0 +1,157 @@
+Fix external-camera HAL：YV12 输出布局自洽校验 + YV12/YU12 推导回退
+
+设备实测 (y700-elden / TB322FC, Waydroid 容器, openGapps arm64, 2026-10-28):
+Binary Eye 请求 Stream[0] = HAL_PIXEL_FORMAT_YV12 (0x32315659) 时,
+minigbm/IMapper@4.0 返回的 PlaneLayouts 自相矛盾 (y_str 2048 / c_str 0 / c_step 1,
+cb==y, cr==y)，HAL 无校验直接 I420Copy -> CopyRow_NEON SIGSEGV/SEGV_ACCERR。
+
+---
+ dl-cam/hw-interfaces/camera/common/1.0/default/HandleImporter.cpp | 104 ++++++++++++
+ dl-cam/hw-interfaces/camera/device/3.4/default/ExternalCameraUtils.cpp |  27 +++++
+---
+
+--- a/dl-cam/hw-interfaces/camera/common/1.0/default/HandleImporter.cpp
++++ b/dl-cam/hw-interfaces/camera/common/1.0/default/HandleImporter.cpp
+@@ -157,11 +157,99 @@
+     return planeLayouts;
+ }
+ 
++namespace {
++
++// 2026-10-28 (y700-elden lane L1c): Waydroid/minigbm 的 IMapper@4.0 对
++// HAL_PIXEL_FORMAT_YV12 缓冲返回的 PlaneLayouts 可能自相矛盾——实测
++// (1280x720 YV12, usage 0x20930) 得到 y_str 2048 / c_str 0 / c_step 1，
++// 且 CB/CR 与 Y 基址重合。这种布局直接交给 libyuv::I420Copy() 会在
++// CopyRow_NEON 内写越界并触发 SEGV_ACCERR（tombstone_24 实证）。
++// 先做自洽校验；失败时对三平面 YUV420 用 plane1.offsetInBytes/height
++// 反推真实 yStride 并回退到标准 YV12/YU12 布局；仍不可用则返回全零布局，
++// 由调用方报错，绝不盲写。
++bool isLayoutSane(const YCbCrLayout& l, uint32_t width) {
++    if (l.y == nullptr || l.cb == nullptr || l.cr == nullptr) return false;
++    if (l.yStride <= 0 || l.yStride < static_cast<int32_t>(width)) return false;
++    if (l.cStride <= 0) return false;
++    if (l.cb == l.y || l.cr == l.y || l.cb == l.cr) return false;
++    const int32_t minCStride = ((static_cast<int32_t>(width) + 1) / 2)
++            * (l.chromaStep > 0 ? l.chromaStep : 1);
++    if (l.cStride < minCStride) return false;
++    return true;
++}
++
++YCbCrLayout repairPlanarYuv420Layout(
++        const YCbCrLayout& layout, const std::vector<PlaneLayout>& planeLayouts,
++        uint32_t width, uint32_t height) {
++    YCbCrLayout out = layout;
++    if (isLayoutSane(out, width)) return out;  // NV12 / 正常 YV12：原样返回
++
++    ALOGE("%s: inconsistent YCbCr layout (y %p cb %p cr %p y_str %d c_str %d c_step %d),"
++          " trying YV12/YU12 fallback", __FUNCTION__, out.y, out.cb, out.cr,
++          out.yStride, out.cStride, out.chromaStep);
++
++    uint8_t* base = reinterpret_cast<uint8_t*>(out.y);
++    if (base == nullptr || height == 0) return YCbCrLayout{};
++
++    // plane1.offsetInBytes == yStride * height，由此反推真实 yStride
++    // （实测 921600 / 720 = 1280，而 metadata 报 2048）。
++    int32_t yStride = 0;
++    uint64_t plane1Offset = 0;
++    bool vPlaneFirst = false;
++    size_t idx = 0;
++    for (const auto& planeLayout : planeLayouts) {
++        if (idx == 1) {
++            plane1Offset = planeLayout.offsetInBytes;
++            for (const auto& c : planeLayout.components) {
++                if (gralloc4::isStandardPlaneLayoutComponentType(c.type) &&
++                    static_cast<PlaneLayoutComponentType>(c.type.value) ==
++                            PlaneLayoutComponentType::CR) {
++                    vPlaneFirst = true;
++                }
++            }
++        }
++        ++idx;
++    }
++    if (plane1Offset != 0 && plane1Offset % height == 0) {
++        const uint64_t derived = plane1Offset / height;
++        if (derived >= width && derived <= (1ULL << 20)) {
++            yStride = static_cast<int32_t>(derived);
++        }
++    }
++    if (yStride == 0) yStride = out.yStride;
++    if (yStride <= 0 || yStride < static_cast<int32_t>(width)) return YCbCrLayout{};
++
++    const int32_t cStride = (yStride + 1) / 2;
++    uint8_t* crPlane = base + static_cast<uint64_t>(yStride) * height;
++    uint8_t* cbPlane = crPlane + static_cast<uint64_t>(yStride) * height / 4;
++    if (!vPlaneFirst) {
++        // YU12 (I420): 第二平面是 U
++        uint8_t* tmp = cbPlane;
++        cbPlane = crPlane;
++        crPlane = tmp;
++    }
++
++    out.yStride = yStride;
++    out.cb = cbPlane;
++    out.cr = crPlane;
++    out.cStride = cStride;
++    out.chromaStep = 1;
++
++    if (!isLayoutSane(out, width)) {
++        ALOGE("%s: fallback layout still unusable, refusing to convert", __FUNCTION__);
++        return YCbCrLayout{};
++    }
++    ALOGV("%s: repaired layout cb %p cr %p y_str %d c_str %d c_step %d",
++          __FUNCTION__, out.cb, out.cr, out.yStride, out.cStride, out.chromaStep);
++    return out;
++}
++
++}  // namespace
++
+ template <>
+ YCbCrLayout HandleImporter::lockYCbCrInternal<IMapperV4, MapperErrorV4>(
+         const sp<IMapperV4> mapper, buffer_handle_t& buf, uint64_t cpuUsage,
+-        const IMapper::Rect& accessRegion) {
+-    hidl_handle acquireFenceHandle;
++        const IMapper::Rect& accessRegion) {    hidl_handle acquireFenceHandle;
+     auto buffer = const_cast<native_handle_t*>(buf);
+     YCbCrLayout layout = {};
+     void* mapped = nullptr;
+@@ -215,7 +303,8 @@
+         }
+     }
+ 
+-    return layout;
++    return repairPlanarYuv420Layout(layout, planeLayouts, accessRegion.width,
++                                    accessRegion.height);
+ }
+ 
+ template<class M, class E>
+--- a/dl-cam/hw-interfaces/camera/device/3.4/default/ExternalCameraUtils.cpp
++++ b/dl-cam/hw-interfaces/camera/device/3.4/default/ExternalCameraUtils.cpp
+@@ -300,8 +300,28 @@
+     return 0;
+ }
+ 
++// 2026-10-28 (y700-elden lane L1c): 写前前置校验。实测 Waydroid gralloc 对
++// YV12 输出缓冲给出 cStride==0 / cb==cr==y 的自相矛盾布局，libyuv::I420Copy
++// 会盲写到越界地址并 SIGSEGV（cameraserver 判 provider 死亡整链路断）。
++// 这里非法布局直接返回错误，把「进程崩溃」降级为「单次请求失败」，并打印
++// 完整布局以便取证。
++static bool isConvertLayoutUsable(const YCbCrLayout& l, Size sz) {
++    if (l.y == nullptr || l.cb == nullptr || l.cr == nullptr) return false;
++    if (l.yStride <= 0 || l.yStride < static_cast<int32_t>(sz.width)) return false;
++    if (l.cStride <= 0) return false;
++    if (l.cb == l.y || l.cr == l.y || l.cb == l.cr) return false;
++    return true;
++}
++
+ int formatConvert(
+         const YCbCrLayout& in, const YCbCrLayout& out, Size sz, uint32_t format) {
++    if (!isConvertLayoutUsable(out, sz)) {
++        ALOGE("%s: refuse to convert (format 0x%x %dx%d): output layout unusable"
++              " y %p cb %p cr %p y_str %d c_str %d c_step %d",
++              __FUNCTION__, format, sz.width, sz.height, out.y, out.cb, out.cr,
++              out.yStride, out.cStride, out.chromaStep);
++        return -EINVAL;
++    }
+     int ret = 0;
+     switch (format) {
+         case V4L2_PIX_FMT_NV21:

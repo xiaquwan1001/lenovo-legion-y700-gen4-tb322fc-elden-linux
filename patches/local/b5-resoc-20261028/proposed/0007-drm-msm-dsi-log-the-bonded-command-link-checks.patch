@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 29 Oct 2026 10:00:00 +0800
+Subject: [PATCH 7/7] drm/msm/dsi: log the bonded command link checks
+
+The bonded transaction validates two things before it touches hardware:
+that a master link is known, and that the link the command came from is
+that master.  Only the second one says why it failed; the first one, and
+the case where the peer host is not up yet, still return a bare -EINVAL
+or -ENODEV, which is the same complaint this series set out to remove,
+just one branch further up.
+
+Report both through the device that issued the command, naming the link
+ids, and keep the error codes as they are.  Nothing else changes: the
+checks stay ahead of the prepare step, so a rejected call still leaves
+both links untouched.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 3fa1a7b23..a5875e725 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -636,8 +636,12 @@ static int dsi_mgr_bonded_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+ 	const struct msm_dsi_host_cfg_ops *ops;
+ 	int master_id = dsi_mgr_bonded_master_link_id(id);
+ 
+-	if (master_id < 0 || master_id >= DSI_MAX)
++	if (master_id < 0 || master_id >= DSI_MAX) {
++		dev_err(&dsi_mgr_get_dsi(id)->pdev->dev,
++			"bonded command on link %d, but no valid master link is known (%d)\n",
++			id, master_id);
+ 		return -EINVAL;
++	}
+ 
+ 	/*
+ 	 * Only the master link owns the broadcast engine and its completion
+@@ -655,8 +659,12 @@ static int dsi_mgr_bonded_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+ 
+ 	master_dsi = dsi_mgr_get_dsi(master_id);
+ 	slave_dsi = dsi_mgr_get_other_dsi(master_id);
+-	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host)
++	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host) {
++		dev_err(&dsi_mgr_get_dsi(id)->pdev->dev,
++			"bonded command on link %d, but master link %d is not ready\n",
++			id, master_id);
+ 		return -ENODEV;
++	}
+ 
+ 	/* Which hosts run the broadcast engine is per-generation knowledge. */
+ 	ops = msm_dsi_host_get_cfg_ops(master_dsi->host);
+
+-- 
+2.53.0
+
