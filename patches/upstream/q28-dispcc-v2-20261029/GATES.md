@@ -49,3 +49,20 @@ ModuleNotFoundError: No module named 'ruamel'
   疗效等价性未证）。上机判据：真 POR ≥5 发，`STORM=0`、`command DMA timeout` 0 次、
   面板 `card0-DSI-1=connected`。
 - **未发送**。
+
+---
+
+## 补充（lane C2，2026-10-29 晚）：§4 已补做，结论修正
+
+本机 `~/.local/opt/dtschema-venv` 有 dtschema 2026.9（`dt-doc-validate`/`dt-validate` 已在
+PATH，只是 `dt-check-style` 依赖的 `ruamel` 只装在 venv 里）。另核实 7.3-rc7 的
+`make dt_binding_check` 内部所有校验步（`CHKDT`/`STYLE`/example 的 `dt-validate`）
+均带 `|| true` 非致命 ⇒ **该 target rc=0 不构成 schema 合法的证据**，§4 的保留正确。
+已补跑致命版三件套（工作树 `build/m8-dispcc-v2`）：
+
+1. `dtschema.doc_validate -u bindings mdss-common.yaml qcom,sm8750-mdss.yaml` → **rc=0**
+2. `dt-validate -l qcom,sm8750-mdss.yaml -u bindings -p processed-schema.json
+   qcom,sm8750-mdss.example.dtb` → **rc=0**
+3. `dt-check-style`（venv python，两文件）→ **rc=0**
+
+⇒ **schema 合法性本轮已独立验证通过，投递前无需再补**；报告 §4 表已同步修正。
