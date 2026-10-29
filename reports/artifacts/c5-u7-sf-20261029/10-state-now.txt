@@ -1,0 +1,22 @@
+== uname
+Linux elden 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 #28 SMP PREEMPT Tue Oct 27 23:26:17 CST 2026 aarch64 GNU/Linux
+== uptime
+ 16:43:03 up  2:03,  3 users,  load average: 0.09, 0.05, 0.01
+== waydroid status
+Session:	RUNNING
+Container:	RUNNING
+Vendor type:	MAINLINE
+IP address:	192.168.240.112
+Session user:	xuqianhui1001(1001)
+Wayland display:	wayland-0
+== lxc
+NAME     STATE   AUTOSTART GROUPS IPV4            IPV6          UNPRIVILEGED 
+waydroid RUNNING 0         -      192.168.240.112 fd00:240::112 false        
+== SF proc
+root               1       0 14:39:37 00:00:00 init
+root               3       1 14:39:37 00:00:00 init
+root              75       1 14:39:38 00:00:01 zygote64
+system           104       1 14:39:38 00:00:02 surfaceflinger
+webview_zygote   493      75 14:39:41 00:00:00 webview_zygote
+== init uptime
+7412.74 58991.42

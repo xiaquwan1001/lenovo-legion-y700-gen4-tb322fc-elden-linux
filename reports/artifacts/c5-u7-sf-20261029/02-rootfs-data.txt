@@ -1,0 +1,6 @@
+== rootfs/data
+total 8
+drwxrwx--x.  2 1000 1000 4096 Sep 27 13:33 .
+drwxr-xr-x. 30 root root 4096 Sep 27 14:01 ..
+== tombstones
+== anr

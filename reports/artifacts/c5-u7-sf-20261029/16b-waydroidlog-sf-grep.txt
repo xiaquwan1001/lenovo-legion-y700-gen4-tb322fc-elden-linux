@@ -1,0 +1,5 @@
+# 宿主 /var/lib/waydroid/waydroid.log 中 surfaceflinger|died|crash|SIGABRT|SkImage 命中（18:24 采集）
+# 命令: timeout 20 ssh ... 'grep -inE "surfaceflinger|died|crash|SIGABRT|SkImage" /var/lib/waydroid/waydroid.log | head -20'
+# 结论: 0 条 surfaceflinger/SIGABRT/SkImage 命中；仅 18 条 gbinder "Service manager has died" 常规行
+# (10-27 09:52 ~ 10-28 17:49，hwbinder 服务管理器重启噪声)。宿主侧 waydroid.log 不记录容器内
+# native 进程崩溃 —— 事项 1 的宿主侧文件证据链到此关闭，崩溃证据只在容器 /data/tombstones（§3 已取）。

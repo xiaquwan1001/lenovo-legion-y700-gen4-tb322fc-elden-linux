@@ -1,0 +1,62 @@
+== /data/tombstones
+-rw-rw----  1 tombstoned system  88021 2026-10-28 09:28 tombstone_15
+-rw-rw----  1 tombstoned system  48130 2026-10-28 09:28 tombstone_15.pb
+-rw-rw----  1 tombstoned system 158282 2026-10-28 16:27 tombstone_16
+-rw-rw----  1 tombstoned system  91364 2026-10-28 16:27 tombstone_16.pb
+-rw-rw----  1 tombstoned system  89529 2026-10-28 16:57 tombstone_17
+-rw-rw----  1 tombstoned system  49254 2026-10-28 16:57 tombstone_17.pb
+-rw-rw----  1 tombstoned system 287149 2026-10-28 17:03 tombstone_18
+-rw-rw----  1 tombstoned system 166342 2026-10-28 17:03 tombstone_18.pb
+-rw-rw----  1 tombstoned system 137689 2026-10-28 17:43 tombstone_19
+-rw-rw----  1 tombstoned system  76679 2026-10-28 17:43 tombstone_19.pb
+-rw-rw----  1 tombstoned system  82555 2026-10-28 17:43 tombstone_20
+-rw-rw----  1 tombstoned system  44941 2026-10-28 17:43 tombstone_20.pb
+-rw-rw----  1 tombstoned system  81823 2026-10-28 17:43 tombstone_21
+-rw-rw----  1 tombstoned system  44476 2026-10-28 17:43 tombstone_21.pb
+-rw-rw----  1 tombstoned system 137881 2026-10-28 22:00 tombstone_22
+-rw-rw----  1 tombstoned system  76736 2026-10-28 22:00 tombstone_22.pb
+-rw-rw----  1 tombstoned system  82383 2026-10-28 22:00 tombstone_23
+-rw-rw----  1 tombstoned system  44849 2026-10-28 22:00 tombstone_23.pb
+-rw-rw----  1 tombstoned system  81183 2026-10-28 22:00 tombstone_24
+-rw-rw----  1 tombstoned system  44276 2026-10-28 22:00 tombstone_24.pb
+== /data/anr
+total 636
+drwxrwxr-x  2 system system   4096 2026-10-29 00:01 .
+drwxrwx--x 54 system system   4096 2026-10-29 14:39 ..
+-rw-------  1 system system 642207 2026-10-29 00:01 anr_2026-10-29-00-01-00-240
+== /data/system/dropbox tail
+-rw-------  1 system system  1322 2026-10-29 00:01 system_server_wtf@1793203262008.txt
+-rw-------  1 system system  1748 2026-10-29 00:01 system_server_wtf@1793203262099.txt
+-rw-------  1 system system  1748 2026-10-29 00:01 system_server_wtf@1793203262100.txt
+-rw-------  1 system system  2395 2026-10-29 00:01 system_server_wtf@1793203262197.txt
+-rw-------  1 system system  2395 2026-10-29 00:01 system_server_wtf@1793203262199.txt
+-rw-------  1 system system  1319 2026-10-29 14:06 system_server_wtf@1793253987250.txt
+-rw-------  1 system system  1322 2026-10-29 14:06 system_server_wtf@1793253987251.txt
+-rw-------  1 system system  1747 2026-10-29 14:06 system_server_wtf@1793253987350.txt
+-rw-------  1 system system  2395 2026-10-29 14:06 system_server_wtf@1793253987663.txt
+-rw-------  1 system system  2395 2026-10-29 14:06 system_server_wtf@1793253987664.txt
+-rw-------  1 system system  3184 2026-10-29 14:06 system_server_wtf@1793253987683.txt
+-rw-------  1 system system  1319 2026-10-29 14:35 system_server_wtf@1793255744721.txt
+-rw-------  1 system system  1322 2026-10-29 14:35 system_server_wtf@1793255744722.txt
+-rw-------  1 system system  1747 2026-10-29 14:35 system_server_wtf@1793255744834.txt
+-rw-------  1 system system  2395 2026-10-29 14:35 system_server_wtf@1793255745153.txt
+-rw-------  1 system system  2395 2026-10-29 14:35 system_server_wtf@1793255745155.txt
+-rw-------  1 system system  3184 2026-10-29 14:35 system_server_wtf@1793255745171.txt
+-rw-------  1 system system  1319 2026-10-29 14:39 system_server_wtf@1793255981424.txt
+-rw-------  1 system system  1322 2026-10-29 14:39 system_server_wtf@1793255981425.txt
+-rw-------  1 system system  1747 2026-10-29 14:39 system_server_wtf@1793255981539.txt
+-rw-------  1 system system  2395 2026-10-29 14:39 system_server_wtf@1793255981854.txt
+-rw-------  1 system system  2395 2026-10-29 14:39 system_server_wtf@1793255981856.txt
+-rw-------  1 system system  3184 2026-10-29 14:39 system_server_wtf@1793255981868.txt
+-rw-------  1 system system  1558 2026-10-29 16:24 system_server_wtf@1793262297855.txt
+-rw-------  1 system system  1558 2026-10-29 16:24 system_server_wtf@1793262297856.txt
+-rw-------  1 system system  2666 2026-10-29 16:24 system_server_wtf@1793262297875.txt
+-rw-------  1 system system  1427 2026-10-29 16:24 system_server_wtf@1793262297878.txt
+-rw-------  1 system system  1427 2026-10-29 16:24 system_server_wtf@1793262297879.txt
+-rw-------  1 system system  3066 2026-10-29 16:24 system_server_wtf@1793262297916.txt
+-rw-------  1 system system  2666 2026-10-29 16:45 system_server_wtf@1793263546768.txt
+== /data/misc/logd
+total 8
+drwxr-x---  2 logd   log  4096 2026-10-26 23:13 .
+drwxrwx--t 62 system misc 4096 2026-10-26 23:14 ..
+-rw-------  1 logd   log     0 2026-10-29 14:39 event-log-tags

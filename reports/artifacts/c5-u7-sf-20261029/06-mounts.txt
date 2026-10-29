@@ -1,0 +1,49 @@
+== mounts
+/var/lib/waydroid/images/system.img on /var/lib/waydroid/rootfs type ext4 (ro,relatime)
+/var/lib/waydroid/images/vendor.img on /var/lib/waydroid/rootfs/vendor type ext4 (ro,relatime)
+/dev/sda17 on /var/lib/waydroid/rootfs/vendor/waydroid.prop type ext4 (rw,noatime,stripe=128)
+
+== df rootfs/data
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/loop0      2.5G  2.5G     0 100% /var/lib/waydroid/rootfs
+== rootfs top
+total 136
+drwxr-xr-x. 30 root root  4096 Sep 27 14:01 .
+drwxr-xr-x   9 root root  4096 Oct 29 14:39 ..
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 acct
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 apex
+lrw-r--r--.  1 root root    11 Sep 27 13:33 bin -> /system/bin
+lrw-r--r--.  1 root root    50 Sep 27 13:33 bugreports -> /data/user_de/0/com.android.shell/files/bugreports
+lrw-r--r--.  1 root root    11 Sep 27 13:33 cache -> /data/cache
+dr-xr-xr-x.  2 root root  4096 Sep 27 13:33 config
+lrw-r--r--.  1 root root    17 Sep 27 13:33 d -> /sys/kernel/debug
+drwxrwx--x.  2 1000 1000  4096 Sep 27 13:33 data
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 data_mirror
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 debug_ramdisk
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 dev
+lrw-r--r--.  1 root root    11 Sep 27 13:33 etc -> /system/etc
+lrwxr-x---.  1 root 2000    16 Sep 27 13:33 init -> /system/bin/init
+-rwxr-x---.  1 root 2000   463 Sep 27 13:33 init.environ.rc
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 linkerconfig
+drwx------.  2 root root 16384 Sep 27 14:02 lost+found
+drwxr-xr-x.  2 root 1000  4096 Sep 27 13:33 mnt
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 mnt_extra
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 odm
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 odm_dlkm
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 odm_extra
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 oem
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 postinstall
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 proc
+lrw-r--r--.  1 root root    15 Sep 27 13:33 product -> /system/product
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 run
+lrw-r--r--.  1 root root    21 Sep 27 13:33 sdcard -> /storage/self/primary
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 second_stage_resources
+drwxr-x--x.  2 root 1028  4096 Sep 27 13:33 storage
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 sys
+drwxr-xr-x. 15 root root  4096 Sep 27 13:42 system
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 system_dlkm
+lrw-r--r--.  1 root root    18 Sep 27 13:33 system_ext -> /system/system_ext
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 tmp
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 var
+drwxr-xr-x  12 root root  4096 Oct 19 15:40 vendor
+drwxr-xr-x.  2 root root  4096 Sep 27 13:33 vendor_dlkm

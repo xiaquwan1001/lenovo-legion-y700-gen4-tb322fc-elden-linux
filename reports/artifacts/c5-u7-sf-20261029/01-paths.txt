@@ -1,0 +1,22 @@
+== waydroid root tree
+host-permissions
+images
+lxc
+overlay
+overlay_rw
+overlay_work
+rootfs
+waydroid.cfg
+waydroid.log
+waydroid.prop
+waydroid_base.prop
+== find tombstones
+/var/lib/waydroid/rootfs/system/bin/tombstoned
+/var/lib/waydroid/rootfs/system/etc/init/tombstoned.rc
+== data dir
+== kernel dmesg SkImage
+[   26.645797] [     T88] Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_DEF
+[   26.646496] [     T88] Bluetooth: hci0: QCA setup on UART is completed
+[   26.646569] [     T88] Bluetooth: hci0: HFP non-HCI data transport is supported
+[   26.680034] [   T1074] Bluetooth: MGMT ver 1.23
+[   26.682547] [   T6672] NET: Registered PF_ALG protocol family

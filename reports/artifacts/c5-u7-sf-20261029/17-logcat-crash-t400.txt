@@ -1,0 +1,7 @@
+# 容器 logcat -d -b crash -t 400（18:25 采集，lxc-attach + 双层 timeout，一次一条）
+# 结果: rc=124 —— 零字节输出
+# 根因(已实锤,见 32-frozen-attach-blocked.txt): Container=FROZEN，冻结容器中 lxc-attach
+#       进入的进程全部被挂起，连 attach -- true 探针都 rc=124。非 logcat/命令缺陷。
+# 崩溃证据本就不在当前 logd: 崩溃发生在 14:39 之前的容器 run，logd 内存环已随重启清空
+# (上一 lane 11-logcat-crash-full.txt 16:43 容器 RUNNING 时实测 0 字节)。双路皆空。
+[rc=124]

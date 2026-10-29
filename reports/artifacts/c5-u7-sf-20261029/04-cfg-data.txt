@@ -1,0 +1,20 @@
+== cfg
+7:mount_overlays = False
+10:binder = binder
+11:vndbinder = vndbinder
+12:hwbinder = hwbinder
+15:binder_protocol = aidl3
+== images
+total 2807068
+drwxr-xr-x 2 root root       4096 Oct 26 23:10 .
+drwxr-xr-x 9 root root       4096 Oct 29 14:39 ..
+-rw-r--r-- 1 root root 2605989888 Oct 26 23:10 system.img
+-rw-r--r-- 1 root root  268435456 Oct 26 23:10 vendor.img
+== overlay_rw
+system
+vendor
+/var/lib/waydroid/overlay_rw
+/var/lib/waydroid/overlay_rw/system
+/var/lib/waydroid/overlay_rw/system/bin
+/var/lib/waydroid/overlay_rw/system/bin/hidl-smoke
+/var/lib/waydroid/overlay_rw/vendor

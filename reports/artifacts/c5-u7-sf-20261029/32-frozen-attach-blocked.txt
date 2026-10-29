@@ -1,0 +1,24 @@
+# 容器 FROZEN 导致 lxc-attach 全挂（18:26 采集）—— 上一版 lane「设备侧命令无输出」根因
+#
+# 命令 1: timeout 20 ssh ... 'waydroid status; echo ---; ps -eo pid,lstart,comm | grep -i surfaceflinger | grep -v grep'
+Session:	RUNNING
+Container:	FROZEN
+Vendor type:	MAINLINE
+IP address:	UNKNOWN
+Session user:	xuqianhui1001(1001)
+Wayland display:	wayland-0
+---
+   3570 Thu Oct 29 14:39:38 2026 surfaceflinger
+[rc=0]
+#
+# 命令 2: timeout 20 ssh ... 'timeout 10 lxc-attach -P /var/lib/waydroid/lxc -n waydroid -- true; echo "attach-probe rc=$?"'
+attach-probe rc=124
+[ssh rc=0]
+#
+# 结论：
+# 1) Container=FROZEN（无 UI 客户端的正常省电态，见 00-initial-state.txt 注释），冻结容器中
+#    lxc-attach 进入的进程全部被 cgroup freezer 挂起 —— 连零开销的 true 都超时（rc=124）。
+#    ⇒ 本版 17/18/19 三条 logcat 快照 rc=124 非命令缺陷，是容器态问题；此前 lane 卡死同因。
+# 2) SF（宿主视角 pid 3570，容器内 pid 104，同进程两 namespace）自 14:39:38 存活至今（18:26，
+#    约 3h47m），FROZEN 期间无合成活动 —— 该存活时长不能算主动渲染稳定性证据（§4 D 保留）。
+# 3) tombstone/anr 路径不受影响：/var/lib/waydroid/data/* 为宿主直读挂载，无需 attach。

@@ -1,0 +1,12 @@
+10-29 14:39:49.047 E/OpenGLRenderer(  686): Device claims wide gamut support, cannot find matching config, error = EGL_SUCCESS
+10-29 14:39:49.047 W/OpenGLRenderer(  686): Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-29 14:39:49.283 E/OpenGLRenderer(  686): Device claims wide gamut support, cannot find matching config, error = EGL_SUCCESS
+10-29 14:39:49.283 W/OpenGLRenderer(  686): Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-29 14:39:49.568 E/OpenGLRenderer( 1127): Device claims wide gamut support, cannot find matching config, error = EGL_SUCCESS
+10-29 14:39:49.568 W/OpenGLRenderer( 1127): Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-29 16:24:57.969 E/OpenGLRenderer(  264): Device claims wide gamut support, cannot find matching config, error = EGL_SUCCESS
+10-29 16:24:57.969 W/OpenGLRenderer(  264): Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-29 16:24:58.068 E/OpenGLRenderer( 2772): Device claims wide gamut support, cannot find matching config, error = EGL_SUCCESS
+10-29 16:24:58.068 W/OpenGLRenderer( 2772): Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-29 16:24:58.124 E/OpenGLRenderer(  443): Device claims wide gamut support, cannot find matching config, error = EGL_SUCCESS
+10-29 16:24:58.124 W/OpenGLRenderer(  443): Failed to initialize 101010-2 format, error = EGL_SUCCESS

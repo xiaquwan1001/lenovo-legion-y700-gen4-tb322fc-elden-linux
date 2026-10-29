@@ -1,0 +1,114 @@
+== ANR head
+Subject: Broadcast of Intent { act=android.intent.action.DATE_CHANGED flg=0x20200010 }
+
+--- CriticalEventLog ---
+capacity: 20
+timestamp_ms: 1793203260022
+window_ms: 300000
+
+
+----- pid 500 at 2026-10-29 00:01:00.241568713+0800 -----
+Cmd line: com.android.systemui
+Build fingerprint: 'waydroid/lineage_waydroid_arm64_only/waydroid_arm64_only:13/TQ3A.230901.001/eng.aleast.20260927.073220:userdebug/test-keys'
+ABI: 'arm64'
+Build type: optimized
+Zygote loaded classes=21641 post zygote classes=7180
+Dumping registered class loaders
+#0 dalvik.system.PathClassLoader: [], parent #1
+#1 java.lang.BootClassLoader: [], no parent
+#2 dalvik.system.PathClassLoader: [/system/system_ext/priv-app/SystemUI/SystemUI.apk!classes2.dex:/system/system_ext/priv-app/SystemUI/SystemUI.apk], parent #1
+#3 dalvik.system.PathClassLoader: [], parent #1
+Done dumping class loaders
+Classes initialized: 0 in 0
+Intern table: 32917 strong; 1220 weak
+JNI: CheckJNI is off; globals=774 (plus 59 weak)
+Libraries: libandroid.so libaudioeffect_jni.so libcompiler_rt.so libframework-connectivity-jni.so libframework-connectivity-tiramisu-jni.so libicu_jni.so libjavacore.so libjavacrypto.so libjnigraphics.so libmedia_jni.so libopenjdk.so librs_jni.so librtp_jni.so libsoundpool.so libstats_jni.so libwebviewchromium_loader.so (16)
+Heap: 51% free, 17MB/35MB; 430417 objects
+Dumping cumulative Gc timings
+Start Dumping Averages for 1 iterations for concurrent copying
+Process mark stacks and References:	Sum: 16.005ms Avg: 16.005ms
+MarkingPhase:	Sum: 7.078ms Avg: 7.078ms
+EnqueueFinalizerReferences:	Sum: 2.197ms Avg: 2.197ms
+VisitConcurrentRoots:	Sum: 1.844ms Avg: 1.844ms
+ScanImmuneSpaces:	Sum: 1.110ms Avg: 1.110ms
+ClearFromSpace:	Sum: 650us Avg: 650us
+ProcessReferences:	Sum: 241us Avg: 241us
+CaptureThreadRootsForMarking:	Sum: 166us Avg: 166us
+SweepSystemWeaks:	Sum: 155us Avg: 155us
+FlipOtherThreads:	Sum: 128us Avg: 128us
+ForwardSoftReferences:	Sum: 127us Avg: 127us
+GrayAllDirtyImmuneObjects:	Sum: 122us Avg: 122us
+ScanCardsForSpace:	Sum: 80us Avg: 80us
+
+== wtf 16:24
+Process: system_server
+Subject: NetworkStats
+Build: waydroid/lineage_waydroid_arm64_only/waydroid_arm64_only:13/TQ3A.230901.001/eng.aleast.20260927.073220:userdebug/test-keys
+Dropped-Count: 0
+
+android.util.Log$TerribleFailure: problem reading network stats
+	at android.util.Log.wtf(Log.java:315)
+	at android.util.Log.wtf(Log.java:309)
+	at com.android.server.net.NetworkStatsService.performPollLocked(NetworkStatsService.java:2295)
+	at com.android.server.net.NetworkStatsService.performPoll(NetworkStatsService.java:2266)
+	at com.android.server.net.NetworkStatsService.-$$Nest$mperformPoll(Unknown Source:0)
+	at com.android.server.net.NetworkStatsService$3.onReceive(NetworkStatsService.java:1940)
+	at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0$android-app-LoadedApk$ReceiverDispatcher$Args(LoadedApk.java:1790)
+	at android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0.run(Unknown Source:2)
+	at android.os.Handler.handleCallback(Handler.java:942)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loopOnce(Looper.java:201)
+	at android.os.Looper.loop(Looper.java:288)
+	at android.os.HandlerThread.run(HandlerThread.java:67)
+Caused by: java.lang.IllegalStateException: java.io.IOException: android.os.ServiceSpecificException: Unable to swap active stats map: Address family not supported by protocol (code 97)
+	at com.android.server.net.NetworkStatsService.readNetworkStatsUidDetail(NetworkStatsService.java:2763)
+	at com.android.server.net.NetworkStatsService.getNetworkStatsUidDetail(NetworkStatsService.java:2777)
+	at com.android.server.net.NetworkStatsService.recordSnapshotLocked(NetworkStatsService.java:2204)
+	at com.android.server.net.NetworkStatsService.performPollLocked(NetworkStatsService.java:2293)
+	... 10 more
+Caused by: java.io.IOException: android.os.ServiceSpecificException: Unable to swap active stats map: Address family not supported by protocol (code 97)
+	at com.android.server.net.NetworkStatsFactory.requestSwapActiveStatsMapLocked(NetworkStatsFactory.java:310)
+	at com.android.server.net.NetworkStatsFactory.readNetworkStatsDetail(NetworkStatsFactory.java:337)
+	at com.android.server.net.NetworkStatsService.readNetworkStatsUidDetail(NetworkStatsService.java:2761)
+	... 13 more
+Caused by: android.os.ServiceSpecificException: Unable to swap active stats map: Address family not supported by protocol (code 97)
+	at com.android.server.BpfNetMaps.maybeThrow(BpfNetMaps.java:71)
+	at com.android.server.BpfNetMaps.swapActiveStatsMap(BpfNetMaps.java:226)
+	at com.android.server.net.NetworkStatsFactory.requestSwapActiveStatsMapLocked(NetworkStatsFactory.java:308)
+	... 15 more
+== wtf 16:45
+Process: system_server
+Subject: NetworkStats
+Build: waydroid/lineage_waydroid_arm64_only/waydroid_arm64_only:13/TQ3A.230901.001/eng.aleast.20260927.073220:userdebug/test-keys
+Dropped-Count: 6
+
+android.util.Log$TerribleFailure: problem reading network stats
+	at android.util.Log.wtf(Log.java:315)
+	at android.util.Log.wtf(Log.java:309)
+	at com.android.server.net.NetworkStatsService.performPollLocked(NetworkStatsService.java:2295)
+	at com.android.server.net.NetworkStatsService.performPoll(NetworkStatsService.java:2266)
+	at com.android.server.net.NetworkStatsService.-$$Nest$mperformPoll(Unknown Source:0)
+	at com.android.server.net.NetworkStatsService$3.onReceive(NetworkStatsService.java:1940)
+	at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0$android-app-LoadedApk$ReceiverDispatcher$Args(LoadedApk.java:1790)
+	at android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0.run(Unknown Source:2)
+	at android.os.Handler.handleCallback(Handler.java:942)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loopOnce(Looper.java:201)
+	at android.os.Looper.loop(Looper.java:288)
+	at android.os.HandlerThread.run(HandlerThread.java:67)
+Caused by: java.lang.IllegalStateException: java.io.IOException: android.os.ServiceSpecificException: Unable to swap active stats map: Address family not supported by protocol (code 97)
+	at com.android.server.net.NetworkStatsService.readNetworkStatsUidDetail(NetworkStatsService.java:2763)
+	at com.android.server.net.NetworkStatsService.getNetworkStatsUidDetail(NetworkStatsService.java:2777)
+	at com.android.server.net.NetworkStatsService.recordSnapshotLocked(NetworkStatsService.java:2204)
+	at com.android.server.net.NetworkStatsService.performPollLocked(NetworkStatsService.java:2293)
+	... 10 more
+Caused by: java.io.IOException: android.os.ServiceSpecificException: Unable to swap active stats map: Address family not supported by protocol (code 97)
+	at com.android.server.net.NetworkStatsFactory.requestSwapActiveStatsMapLocked(NetworkStatsFactory.java:310)
+	at com.android.server.net.NetworkStatsFactory.readNetworkStatsDetail(NetworkStatsFactory.java:337)
+	at com.android.server.net.NetworkStatsService.readNetworkStatsUidDetail(NetworkStatsService.java:2761)
+	... 13 more
+Caused by: android.os.ServiceSpecificException: Unable to swap active stats map: Address family not supported by protocol (code 97)
+	at com.android.server.BpfNetMaps.maybeThrow(BpfNetMaps.java:71)
+	at com.android.server.BpfNetMaps.swapActiveStatsMap(BpfNetMaps.java:226)
+	at com.android.server.net.NetworkStatsFactory.requestSwapActiveStatsMapLocked(NetworkStatsFactory.java:308)
+	... 15 more

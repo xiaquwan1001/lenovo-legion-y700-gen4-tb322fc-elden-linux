@@ -1,0 +1,107 @@
+== waydroid.log tail
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 666 -R /dev/hwbinder
+(1142) [Thu, 29 Oct 2026 14:39:38] Starting up container for a new session
+(1142) [Thu, 29 Oct 2026 14:39:38] % /usr/lib/waydroid/data/scripts/waydroid-net.sh start
+(1142) [Thu, 29 Oct 2026 14:39:38] vnic is waydroid0
+(1142) [Thu, 29 Oct 2026 14:39:38] % waydroid-sensord /dev/hwbinder
+(1142) [Thu, 29 Oct 2026 14:39:38] New background process: pid=3350, output=background
+(1142) [Thu, 29 Oct 2026 14:39:38] % systemctl is-active -q nfcd
+(1142) [Thu, 29 Oct 2026 14:39:38] [sensord-udp] listening on udp/0.0.0.0:52012
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/dri/renderD128
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/fb0
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video16
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video15
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video14
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video13
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video12
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video11
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video10
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video9
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video8
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video7
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video6
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video5
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video4
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video3
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video2
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video1
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/video0
+(1142) [Thu, 29 Oct 2026 14:39:38] % chmod 777 -R /dev/dma_heap/system
+(1142) [Thu, 29 Oct 2026 14:39:38] % mv /var/lib/waydroid/config_session /var/lib/waydroid/lxc/waydroid
+(1142) [Thu, 29 Oct 2026 14:39:38] % mount -o ro /var/lib/waydroid/images/system.img /var/lib/waydroid/rootfs
+(1142) [Thu, 29 Oct 2026 14:39:38] % mount -o ro /var/lib/waydroid/images/vendor.img /var/lib/waydroid/rootfs/vendor
+(1142) [Thu, 29 Oct 2026 14:39:38] % mount -o bind /var/lib/waydroid/waydroid.prop /var/lib/waydroid/rootfs/vendor/waydroid.prop
+(1142) [Thu, 29 Oct 2026 14:39:38] Save config: /var/lib/waydroid/waydroid.cfg
+(1142) [Thu, 29 Oct 2026 14:39:38] % lxc-start -P /var/lib/waydroid/lxc -F -n waydroid -- /init
+(1142) [Thu, 29 Oct 2026 14:39:38] New background process: pid=3385, output=background
+(1142) [Thu, 29 Oct 2026 14:39:38] % lxc-info -P /var/lib/waydroid/lxc -n waydroid -sH
+(1142) [Thu, 29 Oct 2026 14:39:38] lxc-start: waydroid: ../src/lxc/utils.c: safe_mount: 1332 No such file or directory - Failed to mount "/dev/video100" onto "/usr/lib/aarch64-linux-gnu/lxc/rootfs/dev/video100"
+(1142) [Thu, 29 Oct 2026 14:39:38] lxc-start: waydroid: ../src/lxc/utils.c: safe_mount: 1332 No such file or directory - Failed to mount "/dev/video100" onto "/usr/lib/aarch64-linux-gnu/lxc/rootfs/dev/video100"
+(1142) [Thu, 29 Oct 2026 14:39:38] RUNNING
+(1142) [Thu, 29 Oct 2026 14:39:38] [gbinder] Service manager /dev/hwbinder has appeared
+(1142) [Thu, 29 Oct 2026 14:39:38] [waydroid-sensors-daemon] Waydroid Sensors HAL service ready.
+(1142) [Thu, 29 Oct 2026 14:39:41] [waydroid-sensors-daemon] ERROR: Sensor humidity Not found!
+(1142) [Thu, 29 Oct 2026 14:39:41] [waydroid-sensors-daemon] ERROR: Sensor device-orientation Not found!
+(1142) [Thu, 29 Oct 2026 14:39:41] [waydroid-sensors-daemon] ERROR: Sensor pressure Not found!
+(1142) [Thu, 29 Oct 2026 14:39:41] [waydroid-sensors-daemon] ERROR: Sensor stepcounter Not found!
+(1142) [Thu, 29 Oct 2026 14:39:41] [waydroid-sensors-daemon] ERROR: Sensor temperature Not found!
+(1142) [Thu, 29 Oct 2026 14:40:28] % lxc-info -P /var/lib/waydroid/lxc -n waydroid -sH
+(1142) [Thu, 29 Oct 2026 14:40:28] RUNNING
+(1142) [Thu, 29 Oct 2026 14:40:49] waydroidhardware: Received transaction: 3
+(1142) [Thu, 29 Oct 2026 14:40:49] % lxc-info -P /var/lib/waydroid/lxc -n waydroid -sH
+(1142) [Thu, 29 Oct 2026 14:40:49] RUNNING
+(1142) [Thu, 29 Oct 2026 14:40:49] % lxc-freeze -P /var/lib/waydroid/lxc -n waydroid
+(1142) [Thu, 29 Oct 2026 14:40:49] % lxc-info -P /var/lib/waydroid/lxc -n waydroid -sH
+(1142) [Thu, 29 Oct 2026 14:40:49] FROZEN
+(1142) [Thu, 29 Oct 2026 14:47:20] % lxc-info -P /var/lib/waydroid/lxc -n waydroid -sH
+(1142) [Thu, 29 Oct 2026 14:47:20] FROZEN
+(1142) [Thu, 29 Oct 2026 16:17:04] % lxc-info -P /var/lib/waydroid/lxc -n waydroid -sH
+(1142) [Thu, 29 Oct 2026 16:17:04] FROZEN
+(1142) [Thu, 29 Oct 2026 16:17:44] % lxc-info -P /var/lib/waydroid/lxc -n waydroid -sH
+(1142) [Thu, 29 Oct 2026 16:17:44] FROZEN
+
+== ls /var/log | grep -i way
+-rw-r--r--   1 root    root                 40 Oct 28 12:23 waydroid-session.log
+== journal waydroid
+Oct 29 14:06:30 elden dnsmasq-dhcp[3316]: DHCPOFFER(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03
+Oct 29 14:06:30 elden dnsmasq-dhcp[3316]: DHCPREQUEST(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03
+Oct 29 14:06:30 elden dnsmasq-dhcp[3316]: DHCPACK(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03 Lenovo-Legion-Y700-Gen4
+-- Boot 8bde60514b064140ae010b7e3c17abd3 --
+Oct 17 05:54:19 elden systemd[1]: Starting waydroid-container.service - Waydroid Container...
+Oct 29 14:35:36 elden systemd[1]: Started waydroid-container.service - Waydroid Container.
+Oct 29 14:35:41 elden waydroid[1133]: [14:35:41] Starting up container for a new session
+Oct 29 14:35:41 elden dnsmasq[3264]: started, version 2.93 cachesize 150
+Oct 29 14:35:41 elden dnsmasq[3264]: compile time options: IPv6 GNU-getopt DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth DNSSEC loop-detect inotify dumpfile
+Oct 29 14:35:41 elden dnsmasq-dhcp[3264]: DHCP, IP range 192.168.240.2 -- 192.168.240.254, lease time 1h
+Oct 29 14:35:41 elden dnsmasq-dhcp[3264]: DHCP, sockets bound exclusively to interface waydroid0
+Oct 29 14:35:41 elden dnsmasq[3264]: reading /etc/resolv.conf
+Oct 29 14:35:41 elden dnsmasq[3264]: using nameserver 202.38.64.18#53
+Oct 29 14:35:41 elden dnsmasq[3264]: using nameserver 202.38.64.56#53
+Oct 29 14:35:41 elden dnsmasq[3264]: read /etc/hosts - 4 names
+Oct 29 14:35:41 elden waydroid[1133]: [14:35:41] waiting 10 seconds for container to start...
+Oct 29 14:35:43 elden dnsmasq[3264]: reading /etc/resolv.conf
+Oct 29 14:35:43 elden dnsmasq[3264]: using nameserver 202.38.64.18#53
+Oct 29 14:35:43 elden dnsmasq[3264]: using nameserver 202.38.64.56#53
+Oct 29 14:35:45 elden dnsmasq-dhcp[3264]: DHCPDISCOVER(waydroid0) 00:16:3e:f9:d3:03
+Oct 29 14:35:45 elden dnsmasq-dhcp[3264]: DHCPOFFER(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03
+Oct 29 14:35:45 elden dnsmasq-dhcp[3264]: DHCPREQUEST(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03
+Oct 29 14:35:45 elden dnsmasq-dhcp[3264]: DHCPACK(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03 Lenovo-Legion-Y700-Gen4
+-- Boot 22180d3345a94934ac4abcf34003b388 --
+Oct 17 05:54:19 elden systemd[1]: Starting waydroid-container.service - Waydroid Container...
+Oct 29 14:39:33 elden systemd[1]: Started waydroid-container.service - Waydroid Container.
+Oct 29 14:39:38 elden waydroid[1142]: [14:39:38] Starting up container for a new session
+Oct 29 14:39:38 elden dnsmasq[3348]: started, version 2.93 cachesize 150
+Oct 29 14:39:38 elden dnsmasq[3348]: compile time options: IPv6 GNU-getopt DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth DNSSEC loop-detect inotify dumpfile
+Oct 29 14:39:38 elden dnsmasq-dhcp[3348]: DHCP, IP range 192.168.240.2 -- 192.168.240.254, lease time 1h
+Oct 29 14:39:38 elden dnsmasq-dhcp[3348]: DHCP, sockets bound exclusively to interface waydroid0
+Oct 29 14:39:38 elden dnsmasq[3348]: reading /etc/resolv.conf
+Oct 29 14:39:38 elden dnsmasq[3348]: using nameserver 202.38.64.18#53
+Oct 29 14:39:38 elden dnsmasq[3348]: using nameserver 202.38.64.56#53
+Oct 29 14:39:38 elden dnsmasq[3348]: read /etc/hosts - 4 names
+Oct 29 14:39:40 elden dnsmasq[3348]: reading /etc/resolv.conf
+Oct 29 14:39:40 elden dnsmasq[3348]: using nameserver 202.38.64.18#53
+Oct 29 14:39:40 elden dnsmasq[3348]: using nameserver 202.38.64.56#53
+Oct 29 14:39:42 elden dnsmasq-dhcp[3348]: DHCPDISCOVER(waydroid0) 00:16:3e:f9:d3:03
+Oct 29 14:39:42 elden dnsmasq-dhcp[3348]: DHCPOFFER(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03
+Oct 29 14:39:42 elden dnsmasq-dhcp[3348]: DHCPREQUEST(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03
+Oct 29 14:39:42 elden dnsmasq-dhcp[3348]: DHCPACK(waydroid0) 192.168.240.112 00:16:3e:f9:d3:03 Lenovo-Legion-Y700-Gen4

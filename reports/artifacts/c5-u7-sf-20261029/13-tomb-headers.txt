@@ -1,0 +1,143 @@
+== tombstone headers
+--- tombstone_00
+Timestamp: 2026-10-27 01:30:13.361025313+0000
+Process uptime: 35s
+pid: 64030, tid: 64130, name: SensorService  >>> system_server <<<
+--- tombstone_01
+Timestamp: 2026-10-27 01:59:23.677331287+0000
+Process uptime: 1s
+pid: 77, tid: 163, name: composer@2.1-se  >>> /vendor/bin/hw/android.hardware.graphics.composer@2.1-service <<<
+--- tombstone_02
+Timestamp: 2026-10-27 02:02:42.998916455+0000
+Process uptime: 1s
+pid: 80, tid: 132, name: composer@2.1-se  >>> /vendor/bin/hw/android.hardware.graphics.composer@2.1-service <<<
+--- tombstone_03
+Timestamp: 2026-10-27 02:27:33.744108489+0000
+Process uptime: 1s
+pid: 81, tid: 131, name: composer@2.1-se  >>> /vendor/bin/hw/android.hardware.graphics.composer@2.1-service <<<
+--- tombstone_04
+Timestamp: 2026-10-27 03:14:51.296558918+0000
+Process uptime: 35s
+pid: 113, tid: 136, name: RenderEngine  >>> /system/bin/surfaceflinger <<<
+--- tombstone_05
+Timestamp: 2026-10-27 03:14:51.317057260+0000
+Process uptime: 35s
+pid: 82, tid: 2938, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_06
+Timestamp: 2026-10-27 03:16:44.733148390+0000
+Process uptime: 149s
+pid: 140, tid: 3282, name: CameraServiceWa  >>> /system/bin/cameraserver <<<
+--- tombstone_07
+Timestamp: 2026-10-27 03:48:05.030364507+0000
+Process uptime: 36s
+pid: 112, tid: 150, name: RenderEngine  >>> /system/bin/surfaceflinger <<<
+--- tombstone_08
+Timestamp: 2026-10-27 03:48:05.177612364+0000
+Process uptime: 36s
+pid: 83, tid: 2895, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_09
+Timestamp: 2026-10-27 03:50:56.902948327+0000
+Process uptime: 36s
+pid: 113, tid: 133, name: RenderEngine  >>> /system/bin/surfaceflinger <<<
+--- tombstone_10
+Timestamp: 2026-10-27 03:50:57.066092575+0000
+Process uptime: 36s
+pid: 82, tid: 2866, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_11
+Timestamp: 2026-10-27 03:50:57.891914603+0000
+Process uptime: 2s
+pid: 2936, tid: 2943, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_12
+Timestamp: 2026-10-27 03:55:19.345922030+0000
+Process uptime: 35s
+pid: 110, tid: 131, name: RenderEngine  >>> /system/bin/surfaceflinger <<<
+--- tombstone_13
+Timestamp: 2026-10-27 03:55:19.510742642+0000
+Process uptime: 36s
+pid: 82, tid: 2923, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_14
+Timestamp: 2026-10-27 03:55:20.368066357+0000
+Process uptime: 1s
+pid: 2997, tid: 3004, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_15
+Timestamp: 2026-10-28 09:28:17.520483848+0800
+Process uptime: 2s
+pid: 78, tid: 170, name: composer@2.1-se  >>> /vendor/bin/hw/android.hardware.graphics.composer@2.1-service <<<
+--- tombstone_16
+Timestamp: 2026-10-28 16:27:20.003407007+0800
+Process uptime: 300s
+pid: 139, tid: 2728, name: CameraServiceWa  >>> /system/bin/cameraserver <<<
+--- tombstone_17
+Timestamp: 2026-10-28 16:57:15.359428301+0800
+Process uptime: 1s
+pid: 80, tid: 135, name: composer@2.1-se  >>> /vendor/bin/hw/android.hardware.graphics.composer@2.1-service <<<
+--- tombstone_18
+Timestamp: 2026-10-28 17:03:00.582407486+0800
+Process uptime: 2s
+pid: 2649, tid: 2665, name: RenderThread  >>> net.sourceforge.opencamera <<<
+--- tombstone_19
+Timestamp: 2026-10-28 17:43:05.071055878+0800
+Process uptime: 225s
+pid: 110, tid: 130, name: RenderEngine  >>> /system/bin/surfaceflinger <<<
+--- tombstone_20
+Timestamp: 2026-10-28 17:43:05.242215111+0800
+Process uptime: 225s
+pid: 83, tid: 2656, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_21
+Timestamp: 2026-10-28 17:43:06.081858764+0800
+Process uptime: 2s
+pid: 2727, tid: 2734, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_22
+Timestamp: 2026-10-28 22:00:03.590224212+0800
+Process uptime: 850s
+pid: 112, tid: 134, name: RenderEngine  >>> /system/bin/surfaceflinger <<<
+--- tombstone_23
+Timestamp: 2026-10-28 22:00:03.766097305+0800
+Process uptime: 850s
+pid: 82, tid: 3585, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+--- tombstone_24
+Timestamp: 2026-10-28 22:00:04.921498487+0800
+Process uptime: 2s
+pid: 3659, tid: 3667, name: ExtCamOut  >>> /vendor/bin/hw/android.hardware.camera.provider@2.4-external-service <<<
+
+== dropbox crash entries
+system_server_watchdog@1793060576123.txt.gz
+system_server_watchdog@1793060678685.txt.gz
+system_server_watchdog@1793060781432.txt.gz
+system_server_watchdog@1793060884101.txt.gz
+system_server_watchdog@1793060986720.txt.gz
+system_server_watchdog@1793061089188.txt.gz
+system_server_watchdog@1793061191953.txt.gz
+system_server_watchdog@1793061294458.txt.gz
+system_server_watchdog@1793061397133.txt.gz
+system_server_watchdog@1793061499722.txt.gz
+system_server_watchdog@1793061602316.txt.gz
+system_server_watchdog@1793061705083.txt.gz
+system_server_watchdog@1793061807722.txt.gz
+system_server_watchdog@1793061910217.txt.gz
+system_server_watchdog@1793062012960.txt.gz
+system_server_watchdog@1793062115666.txt.gz
+system_server_watchdog@1793062218328.txt.gz
+system_server_watchdog@1793062321051.txt.gz
+system_server_watchdog@1793062423722.txt.gz
+system_server_watchdog@1793062526436.txt.gz
+system_server_watchdog@1793062629179.txt.gz
+system_server_watchdog@1793062731721.txt.gz
+system_server_watchdog@1793062834402.txt.gz
+system_server_watchdog@1793062937109.txt.gz
+system_server_watchdog@1793063039583.txt.gz
+system_server_watchdog@1793063142255.txt.gz
+system_server_watchdog@1793063244855.txt.gz
+system_server_watchdog@1793063347434.txt.gz
+system_server_watchdog@1793063450049.txt.gz
+system_server_watchdog@1793063552442.txt.gz
+system_server_watchdog@1793063655120.txt.gz
+system_server_watchdog@1793063757503.txt.gz
+system_server_watchdog@1793063860237.txt.gz
+system_server_watchdog@1793063962906.txt.gz
+system_server_watchdog@1793064065387.txt.gz
+system_server_watchdog@1793064168039.txt.gz
+system_server_watchdog@1793064270759.txt.gz
+system_server_watchdog@1793064373480.txt.gz
+system_server_watchdog@1793064476147.txt.gz
+system_server_watchdog@1793064578715.txt.gz

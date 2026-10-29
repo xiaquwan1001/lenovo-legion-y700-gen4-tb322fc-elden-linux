@@ -1,0 +1,99 @@
+== lxc config mounts
+/var/lib/waydroid/lxc/waydroid/config:3:lxc.rootfs.path = /var/lib/waydroid/rootfs
+/var/lib/waydroid/lxc/waydroid/config:10:lxc.mount.auto = cgroup:ro sys:ro proc
+/var/lib/waydroid/lxc/waydroid/config:41:lxc.mount.entry = /run/elden-haptic run/elden-haptic none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config:43:lxc.mount.entry = /run/elden-haptic/leds sys/class/leds none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config:48:lxc.mount.entry = /dev/video100 dev/video100 none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config.bak-camera:3:lxc.rootfs.path = /var/lib/waydroid/rootfs
+/var/lib/waydroid/lxc/waydroid/config.bak-camera:10:lxc.mount.auto = cgroup:ro sys:ro proc
+/var/lib/waydroid/lxc/waydroid/config.bak-camera:41:lxc.mount.entry = /run/elden-haptic run/elden-haptic none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config.bak-camera:43:lxc.mount.entry = /run/elden-haptic/leds sys/class/leds none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config.bak-elden-haptics:3:lxc.rootfs.path = /var/lib/waydroid/rootfs
+/var/lib/waydroid/lxc/waydroid/config.bak-elden-haptics:10:lxc.mount.auto = cgroup:ro sys:ro proc
+/var/lib/waydroid/lxc/waydroid/config.bak-elden-haptics-aidl:3:lxc.rootfs.path = /var/lib/waydroid/rootfs
+/var/lib/waydroid/lxc/waydroid/config.bak-elden-haptics-aidl:10:lxc.mount.auto = cgroup:ro sys:ro proc
+/var/lib/waydroid/lxc/waydroid/config.bak-elden-haptics-aidl:41:lxc.mount.entry = /run/elden-haptic run/elden-haptic none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config.bak-elden-haptics-aidl:43:lxc.mount.entry = /run/elden-haptic/leds sys/class/leds none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config.bak-vid100-1792394919:3:lxc.rootfs.path = /var/lib/waydroid/rootfs
+/var/lib/waydroid/lxc/waydroid/config.bak-vid100-1792394919:10:lxc.mount.auto = cgroup:ro sys:ro proc
+/var/lib/waydroid/lxc/waydroid/config.bak-vid100-1792394919:41:lxc.mount.entry = /run/elden-haptic run/elden-haptic none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config.bak-vid100-1792394919:43:lxc.mount.entry = /run/elden-haptic/leds sys/class/leds none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:1:lxc.mount.entry = tmpfs dev tmpfs nosuid 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:2:lxc.mount.entry = /dev/zero dev/zero none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:3:lxc.mount.entry = /dev/null dev/null none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:4:lxc.mount.entry = /dev/full dev/full none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:5:lxc.mount.entry = /dev/tty dev/tty none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:6:lxc.mount.entry = /dev/char dev/char none bind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:7:lxc.mount.entry = /dev/pmsg0 dev/pmsg0 none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:8:lxc.mount.entry = /dev/dri/renderD128 dev/dri/renderD128 none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:9:lxc.mount.entry = /dev/fb0 dev/fb0 none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:10:lxc.mount.entry = /dev/binder dev/binder none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:11:lxc.mount.entry = /dev/vndbinder dev/vndbinder none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:12:lxc.mount.entry = /dev/hwbinder dev/hwbinder none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:13:lxc.mount.entry = none dev/pts devpts defaults,mode=644,ptmxmode=666,create=dir 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:14:lxc.mount.entry = /dev/uhid dev/uhid none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:15:lxc.mount.entry = /dev/net/tun dev/tun none bind,create=file,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:16:lxc.mount.entry = /var/lib/waydroid/host-permissions vendor/etc/host-permissions none bind,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:17:lxc.mount.entry = /sys/kernel/debug sys/kernel/debug none rbind,create=dir,optional 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:18:lxc.mount.entry = tmpfs mnt_extra tmpfs nodev 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:19:lxc.mount.entry = tmpfs tmp tmpfs nodev 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:20:lxc.mount.entry = tmpfs var tmpfs nodev 0 0
+/var/lib/waydroid/lxc/waydroid/config_nodes:21:lxc.mount.entry = tmpfs run tmpfs nodev 0 0
+
+== config_session?
+config
+config.bak-camera
+config.bak-elden-haptics
+config.bak-elden-haptics-aidl
+config.bak-vid100-1792394919
+config_nodes
+config_nodes.bak-273030
+config_nodes.bak-277935
+config_nodes.bak-alpine
+config_nodes.bak-audio-1791711356
+config_nodes.bak-c1now-19700102-040653
+config_nodes.bak-c1t-20261013-140430
+config_nodes.bak-c1test-1791699499
+config_nodes.bak-c2build-1791717253
+config_nodes.bak-c2xml-1791711884
+config_nodes.bak-cam
+config_nodes.bak-dmaheap-1791712460
+config_nodes.bak-fuse-1791717558
+config_nodes.bak-preproxy-1790909654
+config_nodes.bak-q29-20261023-221233
+config_nodes.bak-reinit-1791712563
+config_nodes.c1bak
+config_nodes.orig
+config_session
+waydroid.log
+waydroid.seccomp
+== cat config_nodes
+lxc.mount.entry = tmpfs dev tmpfs nosuid 0 0
+lxc.mount.entry = /dev/zero dev/zero none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/null dev/null none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/full dev/full none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/tty dev/tty none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/char dev/char none bind,create=dir,optional 0 0
+lxc.mount.entry = /dev/pmsg0 dev/pmsg0 none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/dri/renderD128 dev/dri/renderD128 none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/fb0 dev/fb0 none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/binder dev/binder none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/vndbinder dev/vndbinder none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/hwbinder dev/hwbinder none bind,create=file,optional 0 0
+lxc.mount.entry = none dev/pts devpts defaults,mode=644,ptmxmode=666,create=dir 0 0
+lxc.mount.entry = /dev/uhid dev/uhid none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/net/tun dev/tun none bind,create=file,optional 0 0
+lxc.mount.entry = /var/lib/waydroid/host-permissions vendor/etc/host-permissions none bind,optional 0 0
+lxc.mount.entry = /sys/kernel/debug sys/kernel/debug none rbind,create=dir,optional 0 0
+lxc.mount.entry = tmpfs mnt_extra tmpfs nodev 0 0
+lxc.mount.entry = tmpfs tmp tmpfs nodev 0 0
+lxc.mount.entry = tmpfs var tmpfs nodev 0 0
+lxc.mount.entry = tmpfs run tmpfs nodev 0 0
+# >>> waydroid-mesa-swap BEGIN
+lxc.mount.entry = /dev/video100 dev/video100 none bind,create=file,optional 1 0
+# <<< waydroid-mesa-swap END
+lxc.mount.entry = /dev/dri/card0 dev/dri/card0 none bind,create=file,optional 0 0
+lxc.mount.entry = /root/wd/allocator.rc vendor/etc/init/android.hardware.graphics.allocator@4.0-service.minigbm_gbm_mesa.rc none bind,create=file 0 0
+lxc.mount.entry = /root/wd/blank_screen.rc system/etc/init/blank_screen.rc none bind,create=file,optional 0 0
+lxc.mount.entry = /dev/dma_heap dev/dma_heap none bind,create=dir,optional 0 0
+lxc.mount.entry = /dev/fuse dev/fuse none bind,create=file,optional 0 0

@@ -1,0 +1,8 @@
+== waydroid status
+Session:	RUNNING
+Container:	FROZEN
+Vendor type:	MAINLINE
+IP address:	192.168.240.112
+Session user:	xuqianhui1001(1001)
+Wayland display:	wayland-0
+== SF proc
