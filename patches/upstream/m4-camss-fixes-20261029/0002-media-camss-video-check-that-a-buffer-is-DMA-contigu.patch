@@ -1,0 +1,81 @@
+From 7f3ead1ca2a72ef120c9c845ccc03eeb91809076 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 28 Oct 2026 11:26:58 +0800
+Subject: [PATCH 2/3] media: camss: video: check that a buffer is DMA
+ contiguous and add a prepare hook
+
+The write master of the newer VFE generations can only be programmed with
+a buffer whose payload is physically contiguous, because the frame
+increment registers describe one linear address range.  Check that the DMA
+mapping of every plane is contiguous for at least sizeimage bytes and
+reject the buffer otherwise, instead of silently writing past the end of
+the first scatterlist entry.
+
+Also let the SoC code add its own alignment requirements to a queued
+buffer through a new prepare_buffer() video operation, which runs after
+the generic checks.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../media/platform/qcom/camss/camss-video.c    | 18 +++++++++++++++++-
+ .../media/platform/qcom/camss/camss-video.h    |  1 +
+ 2 files changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-video.c b/drivers/media/platform/qcom/camss/camss-video.c
+index 0852eb6f13..027cf024f9 100644
+--- a/drivers/media/platform/qcom/camss/camss-video.c
++++ b/drivers/media/platform/qcom/camss/camss-video.c
+@@ -155,7 +155,10 @@ static int video_buf_init(struct vb2_buffer *vb)
+ 	const struct v4l2_pix_format_mplane *format =
+ 						&video->active_fmt.fmt.pix_mp;
+ 	struct sg_table *sgt;
+-	unsigned int i;
++	struct scatterlist *sg;
++	dma_addr_t end;
++	unsigned int i, j;
++	size_t contiguous;
+ 
+ 	for (i = 0; i < format->num_planes; i++) {
+ 		sgt = vb2_dma_sg_plane_desc(vb, i);
+@@ -163,6 +166,16 @@ static int video_buf_init(struct vb2_buffer *vb)
+ 			return -EFAULT;
+ 
+ 		buffer->addr[i] = sg_dma_address(sgt->sgl);
++		end = buffer->addr[i];
++		contiguous = 0;
++		for_each_sgtable_dma_sg(sgt, sg, j) {
++			if (sg_dma_address(sg) != end)
++				break;
++			contiguous += sg_dma_len(sg);
++			end += sg_dma_len(sg);
++		}
++		if (contiguous < format->plane_fmt[i].sizeimage)
++			return -EINVAL;
+ 	}
+ 
+ 	if (format->pixelformat == V4L2_PIX_FMT_NV12 ||
+@@ -193,6 +206,9 @@ static int video_buf_prepare(struct vb2_buffer *vb)
+ 
+ 	vbuf->field = V4L2_FIELD_NONE;
+ 
++	if (video->ops->prepare_buffer)
++		return video->ops->prepare_buffer(video, vb);
++
+ 	return 0;
+ }
+ 
+diff --git a/drivers/media/platform/qcom/camss/camss-video.h b/drivers/media/platform/qcom/camss/camss-video.h
+index d3e56e240a..af046ecb7f 100644
+--- a/drivers/media/platform/qcom/camss/camss-video.h
++++ b/drivers/media/platform/qcom/camss/camss-video.h
+@@ -28,6 +28,7 @@ struct camss_buffer {
+ struct camss_video;
+ 
+ struct camss_video_ops {
++	int (*prepare_buffer)(struct camss_video *vid, struct vb2_buffer *vb);
+ 	int (*queue_buffer)(struct camss_video *vid, struct camss_buffer *buf);
+ 	int (*flush_buffers)(struct camss_video *vid,
+ 			     enum vb2_buffer_state state);
+-- 
+2.53.0
+

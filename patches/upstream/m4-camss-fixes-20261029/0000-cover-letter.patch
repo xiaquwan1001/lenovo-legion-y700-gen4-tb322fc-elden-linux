@@ -1,0 +1,53 @@
+From 965ee54771067face3ed3168a32b391bda69aa7d Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Thu, 29 Oct 2026 18:30:54 +0800
+Subject: [PATCH 0/3] media: camss: three fixes for the CSID power and VFE streaming paths
+
+These three patches are fixes found while bringing camss up on a new SoC,
+but none of them depends on that new SoC support: each one is against code
+that already exists in mainline and can be reviewed on its own.
+
+1/3 csid: the power-on path repeats its cleanup sequence in every error
+    branch and gets the first one wrong: when pm_runtime_resume_and_get()
+    fails, the parent device reference taken by parent_dev_ops->get() is
+    never dropped, so the VFE stays powered.  Fold the four open-coded
+    blocks into a single label chain and route the pm_runtime failure
+    through the parent put as well.
+
+2/3 video: the write master of the newer VFE generations can only be
+    programmed with a physically contiguous payload, because the frame
+    increment registers describe one linear address range.  A buffer whose
+    plane was not contiguous was silently written past the end of the
+    first scatterlist entry.  Reject such buffers instead, and add a
+    prepare_buffer() video operation so SoC code can add its own
+    alignment requirements after the generic checks.
+
+3/3 video: when one subdevice fails to start, the ones already started
+    further up the pipeline were left streaming and the next start tried
+    to start them again.  Factor the teardown loop out of
+    video_stop_streaming() and run it from the error path; also keep
+    stopping the remaining subdevices when one of them fails to stop
+    instead of returning early.
+
+All three are build tested with W=1 on drivers/media/platform/qcom/camss/
+and apply cleanly on v7.3-rc7.
+
+This series intentionally contains no SoC enablement, no DT binding and no
+CSIPHY change; those are being discussed in separate threads.
+
+Qianhui Xu (3):
+  media: camss: csid: unwind the power-on path through a single error
+    label
+  media: camss: video: check that a buffer is DMA contiguous and add a
+    prepare hook
+  media: camss: video: stop the subdevices already started when a start
+    fails
+
+ .../media/platform/qcom/camss/camss-csid.c    | 45 +++++------
+ .../media/platform/qcom/camss/camss-video.c   | 78 +++++++++++--------
+ .../media/platform/qcom/camss/camss-video.h   |  1 +
+ 3 files changed, 68 insertions(+), 56 deletions(-)
+
+-- 
+2.53.0
+
