@@ -86,11 +86,16 @@
 ## 6. 协作与并发
 
 - 需要并发时走 `.pi/CONCURRENCY.md`（基线+fork、单写者、提交 trailer、vk registry、入口 `scripts/lane.sh`）。
-- 子代理 = `fabric_exec`（pi-fabric）里的 `agents.run`/`agents.spawn` + `.pi/agents/<role>.md`（角色卡正文）+ `.pi/missions/<topic>.md`（任务背景），**无守护进程**；2026-10-12 起不再用 pi-subagents。
-- **worker 自报成功不可信**：编排者必须独立重跑测试与全量回归。
-- 并发上限 **8** 个后台子 agent（全局 `fabric.json` `agents.maxConcurrent: 8`）；按网关限流/预算自留余量，见全局 `AGENTS.md`。
-- **派工单（2026-10-19 起）**：可以要求子代理回执摘要；但仍优先要求**产物落盘 + 最小回执字段（路径 + 关键数字）**，避免只回一段话而无文件（旧「禁止 summary」条款已作废，理由见 §5）。
-- 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。迁移后无插件自动加载角色卡，派工须把其正文显式拼进 `task`。
-- **本项目子代理一律经 `custom-nexavlinks-com` 网关**（`https://www.nexavlinks.com`，模型 `deepseek-v4.1-flash`）：项目级 `.pi/fabric.json` 已把全部别名（worker/researcher/audit/…）指向该模型；改后需 `/reload` 生效。凭据只在全局 `auth.json`，不入库；网关地址/模型名属配置非密件。
-  派工时**显式传 `model: "custom-nexavlinks-com/deepseek-v4.1-flash"`** 或别名，并注意 **`agents.run` 的 `tools` 是完整白名单**（不列就用不了）。
+- **三层编排（2026-10-31 起）只读 `.pi/ORCHESTRATION.md`**：总管（对话/约束/复核）→ 一级角色卡
+  （`physical-exec` / `doc-audit-lead` / `mail-io` / `code-boundary`）→ 可选二级叶级（`impl-worker` / `verify-worker`
+  或既有专题卡）。角色卡在 `.pi/agents/`，Fabric 按 `name` 直接读取，正文作子代理 systemPrompt。
+- 子代理 = `fabric_exec`（pi-fabric）里的 `agents.run`/`agents.spawn`，**无守护进程**；2026-10-12 起不再用 pi-subagents。
+- **worker 自报成功不可信**：编排者必须独立重跑测试与全量回归；二级产物由一级 `ls`/`read` 验证，一级回执由总管复核。
+- 并发上限 **16** 个后台子 agent（`agents.maxConcurrent: 16`）；**递归深度 2**（`agents.maxDepth: 2`，L2 为叶）。
+  树内配额：总管同时 ≤4 个一级、每个一级 ≤3 个二级（合计 ≤16）。按网关限流/预算自留余量，见全局 `AGENTS.md`。
+- **派工单（2026-10-19 起）**：可以要求子代理回执摘要；但仍优先要求**产物落盘 + 最小回执字段（路径 + 关键数字 + 复现命令）**，避免只回一段话而无文件（旧「禁止 summary」条款已作废，理由见 §5）。
+- 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。
+- **本项目子代理一律用 ustc 池**（`custom.ustc-pool/*`，本机 litellm 网关轮转 key）：默认 `ustc`、执行 `ustc-worker`、
+  研究 `ustc-research`、审计/边界 `ustc-audit`；项目级 `.pi/fabric.json` 已把全部别名指向该池，改后需 `/reload` 生效。
+  派工时**显式传 `provider/model`**（别名在会话内可能不解析），并注意 **`agents.run` 的 `tools` 是完整白名单**（不列就用不了）。
 - **子代理自报“已写报告”必须由编排者 `ls`/`read` 验证**：2026-10-19 实例——lane-b 返回 `status=completed` 且自称已写 33 KB 报告，实际文件根本不存在，重派后才有。

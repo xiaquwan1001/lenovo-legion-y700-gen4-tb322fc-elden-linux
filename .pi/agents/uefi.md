@@ -1,7 +1,7 @@
 ---
 name: uefi-vis
 description: UEFI 早期可见性与 UFSDxe 代次差实验（主机侧重建 + 静态取证），上机由父 agent 排他
-model: ustc-pool/ustc-worker
+model: custom.ustc-pool/ustc-worker
 thinking: high
 tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---

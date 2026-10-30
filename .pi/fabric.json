@@ -1,18 +1,23 @@
 {
   "configVersion": 4,
+  "agents": {
+    "maxConcurrent": 16,
+    "maxPerExecution": 16,
+    "maxDepth": 2
+  },
   "models": {
     "aliases": {
-      "default": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "worker": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "scout": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "delegate": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "complex": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "researcher": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "oracle": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "evidence-auditor": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "audit": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "fast": "custom-nexavlinks-com/deepseek-v4.1-flash",
-      "flash": "custom-nexavlinks-com/deepseek-v4.1-flash"
+      "default": "custom.ustc-pool/ustc",
+      "worker": "custom.ustc-pool/ustc-worker",
+      "scout": "custom.ustc-pool/ustc",
+      "delegate": "custom.ustc-pool/ustc",
+      "complex": "custom.ustc-pool/ustc",
+      "researcher": "custom.ustc-pool/ustc-research",
+      "oracle": "custom.ustc-pool/ustc",
+      "evidence-auditor": "custom.ustc-pool/ustc-audit",
+      "audit": "custom.ustc-pool/ustc-audit",
+      "fast": "custom.ustc-pool/ustc",
+      "flash": "custom.ustc-pool/ustc"
     }
   },
   "fullCodeMode": false

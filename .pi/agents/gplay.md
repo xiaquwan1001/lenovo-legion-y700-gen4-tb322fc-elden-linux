@@ -1,9 +1,6 @@
 ---
 name: gplay
 description: Waydroid Play 登录与认证取证
-advertise: true
-role: GplayIntegration
-objective: 执行 .pi/missions/gplay.md（Waydroid Play 登录 + 认证取证，TASKS C2/C3）。
 ---
 
 # 角色：容器集成工程师（gplay 轮）

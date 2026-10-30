@@ -27,7 +27,9 @@ main ──base/<date>-<sha>──┬── lane/c3-id    (worktree) ── comm
 3. **不 rebase / 不 merge main 进 lane**：lane 只从 baseline 前进；需要上游新基线时由父决定是否重开 lane。
 4. **内核改动必走 worktree**：`geekidos-linux`（13 G）绝不在主 checkout 上多 agent 同时改。
 5. **设备是单一串行资源**：所有上机/刷写/复现任务用 `scripts/device-lock.sh` 串行，任何时刻只有一个 lane 持设备。
-6. **并发上限 ≤3 个后台子 agent**，为限流/预算留余量（`~/.pi/agent/AGENTS.md`）。
+6. **并发上限 16 个后台子 agent**（`agents.maxConcurrent: 16`，递归深度 `agents.maxDepth: 2`，见 `.pi/ORCHESTRATION.md`）。
+   树内配额：总管同时 ≤4 个一级角色，每个一级 ≤3 个二级（合计 ≤16）；`agents.maxPerExecution: 16`。
+   按 ustc 池限流/预算自留余量（key 轮转由 litellm 负责），见全局 `AGENTS.md`。
 
 ## 3. 提交信息（子代理可区分）
 

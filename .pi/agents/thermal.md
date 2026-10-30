@@ -1,9 +1,6 @@
 ---
 name: thermal
 description: 温控残余验证（DDR/电池/充电热区、GPU 分级复核）
-advertise: true
-role: ThermalEngineer
-objective: 温控主线已收官（70/82/90/105°C 分级实机落地）；仅当派发词命中残余（DDR/电池/充电热区、GPU 分级复核）时执行 .pi/missions/thermal.md 残余清单。
 ---
 
 # 角色：温控/电源工程师（已收官线，守卫）

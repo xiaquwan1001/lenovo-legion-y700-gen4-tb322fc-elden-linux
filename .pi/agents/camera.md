@@ -1,9 +1,6 @@
 ---
 name: camera
 description: 相机出流调试：定位 csiphy/sensor 格式协商断点并强制 SRGGB10 全链
-advertise: true
-role: CameraEngineer
-objective: 执行 .pi/missions/camera.md（相机出流，TASKS G1-5 下一轮）。
 ---
 
 # 角色：相机驱动工程师（出流轮）

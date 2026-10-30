@@ -1,7 +1,7 @@
 ---
 name: upstream-m
 description: 上游化 M 系列 review 跟踪与补丁备料（M2/M3/M5/M6/M8/M9），冻结期只备料不发信
-model: ustc-pool/ustc-worker
+model: custom.ustc-pool/ustc-worker
 thinking: high
 tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---

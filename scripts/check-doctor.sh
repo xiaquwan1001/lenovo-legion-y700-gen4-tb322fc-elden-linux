@@ -273,7 +273,7 @@ root = sys.argv[1]
 # ---- 7. 入口文档：围栏闭合 + 截断哨兵 + 机器指针泄漏 ----
 # 受管入口文件（人类/agent 的第一落点）；改动此清单需同步 INDEX.md §2。
 ENTRY = ['INDEX.md', 'AGENTS.md', 'README.md', 'PROGRESS.md',
-         '.pi/AGENT-OPS.md', '.pi/README.md',
+         '.pi/AGENT-OPS.md', '.pi/README.md', '.pi/ORCHESTRATION.md',
          'TASKS/README.md', 'PITFALLS/README.md', 'DEVICE/README.md',
          'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md',
          'SESSIONS/README.md', 'HISTORY/README.md']

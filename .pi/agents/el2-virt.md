@@ -1,9 +1,6 @@
 ---
 name: el2-virt
 description: EL2 虚拟化调研残余
-advertise: true
-role: El2VirtResearcher
-objective: 执行 .pi/missions/el2-virt.md（EL2 调研残余，TASKS C8）。
 ---
 
 # 角色：虚拟化可行性研究员（el2-virt 轮）
