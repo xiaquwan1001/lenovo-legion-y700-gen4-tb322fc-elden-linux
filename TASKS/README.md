@@ -305,8 +305,11 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 - **droidloom 可行性规划（未证实，主机侧可并行）**：以 `RESOURCES/sessions/2026-10-26-denial-droidloom深度评估.md` 和 `reports/waydroid-droidloom-userland-interface-20261026.md` 为基线，核实上游当前版本、arm64 构建/发布、Phosh 的 linux-dmabuf v4 feedback 与 linux-drm-syncobj 要求、内核和图形接口、GMS/PI、相机/音频/传感器适配；给出不改现有桌面的隔离试验、资源成本与退出条件。用户要求规划，不预设替换 Waydroid。
 - **设备优先收口**：M8 A/B 基线本轮用户现场判别 3/3 正常，首发有标准采样；原方案的坏发未复现，v2 疗效仍未证实。当前在基线臂，恢复日常镜像前读回备份超时且缺 32 KiB，已停止写入；先诊断链路并取得完整校验备份及 GPT 双表，再决定恢复，禁止把截断备份用于恢复。
 - **双口反向接法**：见 `DEVICE/README.md` §1.4 与 `reports/artifacts/usb-reverse-20261030/snapshot.txt`；待低电量条件下复核充电功率和长时数据稳定性。
-- **并行排产**：设备操作串行加锁；主机侧 M3 v5、wl2868c v2、UEFI 中断续作已异步运行，结束后由父代理独立检查。后续将 Waydroid 静态配置分析与 droidloom 可行性分别派到独立路径，避免与设备测试和已有 lane 写入重叠；任何上游发送另按批批准。
-- **2026-10-29 中断产物的报告入口**（均为未完成/未验证件，不得当结论）：`reports/m8ab-build-20261029.md`（两臂构建，上机结果见下条）、`reports/m3-1-v5-20261029.md`（骨架）、`reports/wl2868c-v2-20261029.md`（骨架）、`reports/uefi-closeout-20261029.md`（部分完成；主机侧续作见 `reports/uefi-recovery-20261030.md`，M1/M3/M4 已完、M2 待上机）。
+- **并行排产**：设备操作串行加锁；三条 2026-10-29 中断续作（M3 / wl2868c / UEFI）**已于 2026-10-30 全部收口**，报告经父代理核对（数字与文件存在性）。后续按“设备一条 + 主机侧两条”排，新增 lane 均限定单文件报告与设备只读。任何上游发送另按批批准。
+- **2026-10-29 中断产物的报告入口**（均为未完成/未验证件，不得当结论）：`reports/m8ab-build-20261029.md`（两臂构建，上机结果见下条）、`reports/uefi-closeout-20261029.md`（部分完成；主机侧续作 `reports/uefi-recovery-20261030.md`：M1/M3/M4 已完、M2 待上机、**E1 二进制身份与仓库 `PatchedBinaries` 不一致**未决）；`reports/m3-1-v5-20261029.md` 与 `reports/wl2868c-v2-20261029.md` 两份骨架已由对应 recovery 报告取代，见下两条。
+- **M3-1 v5 未开工，最小修复落点已定（2026-10-30，`reports/m3-v5-recovery-20261030.md`）**：`patches/upstream/` 下没有 v5 目录、`build/m3v5` 与 v4 零差异 ⇒ 昨晚 v5 实际零产出。sashiko 12 条原文已找回，8/12 静态证实（含自死锁 `drd.c:557 → :574 → core.c:322`）；报告 §4 给 A–J 十项落点（约 49 行），**未落地/未编译**。下一步 = 按 §4 实施 + 门禁 + 上机。
+- **wl2868c v2 系列有硬阻断（2026-10-30，`reports/wl2868c-recovery-20261030.md`）**：四枚补丁真实、可 apply、checkpatch 干净，但 **3/3 板级 DTS 缺 `xo_board`/`sleep_clk`/`bi_tcxo_div2`/`bi_tcxo_ao_div2` 四个 fixed-clock ⇒ `sm8750-lenovo-elden.dtb` 编译 rc=2（15 条 phandle 错误）**，另有 `arm/qcom.yaml` 板 compatible 与 3 个 sensor/lens binding 未登记 ⇒ **发前必修，当前不可用**。
+- **设备状态（2026-10-30 11:2x）**：M8 A/B 基线臂已回退，`boot_b` 恢复为 vk181-daily 签名件（读回 sha `b72866ef…`），在机 `uname -v = #28`、106 模块、面板 connected/enabled、错误计数 0。
 - **M8 续测结果（2026-10-30）**：基线臂 3/3 现场正常（1 发有标准采样）⇒ 坏发未复现、按预注册规则停手未刷 v2 ⇒ **v2 疗效仍未证实**；详见 `reports/m8ab-restart-20261030.md`。
 
 ### 1. 待调查（Open questions，按优先级）
