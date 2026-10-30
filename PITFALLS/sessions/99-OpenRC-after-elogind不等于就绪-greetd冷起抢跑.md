@@ -1,4 +1,4 @@
-# 99 · OpenRC `after elogind` 不等于「elogind 已就绪」：冷起 greetd 抢跑 → 无桌面
+# #419 · OpenRC `after elogind` 不等于「elogind 已就绪」：冷起 greetd 抢跑 → 无桌面
 
 - 日期：2026-10-26（vk163 刷 `boot_b` 后真 POR 实测）
 - 现象：真 POR 冷起后 `card0-DSI-1=connected`、模块 65、`wlan0` 在，但**无桌面**；

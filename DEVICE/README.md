@@ -37,12 +37,12 @@
   **本轮额外写盘**：`/lib/modules/<UTS>/` 下 4 个 `.ko`（`typec_ucsi`/`ucsi_glink`/`dwc3`/`dwc3-qcom`）被 M3-1 v5+F2 版本替换（原件备份 `/root/m3modbak-20261030/`）⇒ **回退到 vk181 日常件时必须把这 4 个模块也拷回**（`depmod -a`）。
   **回退件（两个候选，均为 100 663 296 B）**：
   ① `bootslot-b/boot_b-vk181-daily-signed-20261029.img`（sha **`b72866ef…`**）= **日常内核**，要回日常用它；
-  ② `bootslot-b/boot_b.img` = **当前工作副本**，其内容随 `scripts/flash-b.sh` 每次刷写而变（**现为 m3v5-f2，sha `e6b1124c…`**）⇒ **禁止把它当「日常回退件」**（`PITFALLS` 本轮教训，见 `reports/doc-audit-20261030.md` P0-2）。
+  ② `bootslot-b/boot_b.img` = **当前工作副本**，其内容随 `scripts/flash-b.sh` 每次刷写而变（**历史值：2026-10-30 13:19 时点曾为 m3v5-f2 / sha `e6b1124c…`；该路径随 `scripts/flash-b.sh` 每次刷写变动，当前值只认本节首条 §1.1，实测现 = `aedae5f1`（vk183）**）⇒ **禁止把它当「日常回退件」**（`PITFALLS` 本轮教训，见 `reports/doc-audit-20261030.md` P0-2）。
   运行根 = `/dev/sda17` ext4 `LABEL=linux17`（Debian forky/sid）；`/lib/modules/<UTS>` 被 vk163/vk172/m3v5 等多代镜像共用（`uts_dup`，见 `versions/vk-ledger-known-issues.tsv`）。
 - ★**2026-10-30 12:43（历史，已被上一条取代）** —— 当时在机 = **M3-1 v5 测试镜像**（`out/boot-elden-m3v5-daily.img`，签后 `bootslot-b/boot_b-m3v5-daily-signed-20261030.img`）：
   `boot_b` 分区 sha256 = **`55d06551a5d8…`**，`boot_id` = `3a803dbb-647e-4d39-914b-c0f5152319aa`，
   `uname -v` = `#1 SMP PREEMPT Fri Oct 30 11:22:59 CST 2026`，面板 `connected/enabled`、108 模块、失败单元 1（`lxc-net`，已知无害）。
-- ★**2026-10-29（历史，已被上一条取代）** —— 当时 `boot_b` 分区 sha256 = **`b72866ef6e6c82…`**，与签名件 `bootslot-b/boot_b.img` **逐字节一致**；其 AVB 原镜像 = `out/boot-elden-vk181-daily.img`（84 520 960 B，sha `c8953ba0…`）。
+- ★**2026-10-29（历史，已被上一条取代）** —— 当时 `boot_b` 分区 sha256 = **`b72866ef6e6c82…`**，与签名件 `bootslot-b/boot_b-vk181-daily-signed-20261029.img` **逐字节一致**（可变副本 `bootslot-b/boot_b.img` 现已刷 vk183，不再等于 `b72866ef`）；其 AVB 原镜像 = `out/boot-elden-vk181-daily.img`（84 520 960 B，sha `c8953ba0…`）。
   实测：`uname -r` = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`、`uname -v` = `#28 SMP PREEMPT Tue Oct 27 23:26:17 CST 2026`；
   **运行根 = `/dev/sda17` ext4 `LABEL=linux17`（Debian forky/sid）**，cmdline 含 `elden_root=LABEL=linux17`、`elden_early_gadget=1`、`elden_q28_nowd`、`elden_nocamera` 未出现；
   `/lib/modules/<UTS>` = **1639 `.ko`**（`find -name '*.ko'`；另有 1 个 `.ko.xz`）；Waydroid Session/Container RUNNING（SSH `root@192.168.7.1` 经 USB-NCM）。
@@ -188,7 +188,7 @@
 （本轮实测踩到：插短边时 `fastboot devices` 空、`lsusb` 无 18d1，设备却已在 fastboot）。自建 BL（让短边也能用于 fastboot）
 **归入远期项**，当前不作为任何任务的前置。
 
-**接法候选**：要「数据 + 快充」同时成立，可尝试 **PD 插长边、数据线插短边**；数据热切换及 `port-select-gpios` 仲裁仍需独立验证（`TASKS` §7 M3-1）。
+**接法候选**：要「数据 + 快充」同时成立，历史候选接法 **PD 插长边、数据线插短边**；「数据+充电并存」已于 2026-10-30 反向接法实测（见下条），**仅热切换/启动期仲裁**未验证（`TASKS` §7 M3-1）。
 详细采样日志与判据表 = `../reports/usb-dual-port-test-protocol-20261029.md` §8。
 
 **2026-10-30 反向接法实测**：用户接短边数据线、长边充电线；SSH 数据链路可用，两 UCSI online，`.01` 报 PD，`.02` 报 Type-C；六次采样中电池显示 100%、Charging、约 1.86–1.95 A，`qcom-battmgr-usb` 约 8.81–8.87 V / 1.46–1.62 A（标识 SDP 与 PD 报告不一致，归属未证实）。因此本次只证明**同时有数据和充电**，不证明快充功率、充电器端实际输入或长期稳定性。原「需 M3-1 仲裁才有数据」作为本接法的必需条件被当前观察推翻，启动时与热切换行为仍待区分；证据 `../reports/artifacts/usb-reverse-20261030/snapshot.txt`。

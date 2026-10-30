@@ -385,6 +385,28 @@ for num, files in sorted(pnum.items(), key=lambda kv: int(kv[0])):
     if len(files) > 1:
         dupnum.append('PITFALLS 正文 #%s 被多处定义 (%s)' % (num, ' | '.join(sorted(set(files)))))
 
+# ---- 8e. PITFALLS 索引里的 #NNN 必须有正文「定义」（悬空=硬错）----
+# 8d 只查「跨文件重复」；索引有、正文没有（或正文用 `# 98 ·` 这类文件序号式标题）
+# 长期无人发现（2026-10-30 实测 #418/#419/#471）。本门用**宽松定义集**（标题 + 行首 NNN.
+# + 正文粗体 `**#NNN**` 也算定义），且**只喂悬空门**、绝不回喂 8d 的 pnum（否则行内引用
+# `**#143**` 会被当成定义，制造假的跨文件重复）。
+pdef_all = {k: set(v) for k, v in pnum.items()}
+for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
+    base = os.path.basename(f)
+    for ln in open(f, encoding='utf-8', errors='replace'):
+        line = re.sub(r'`[^`]*`', '`X`', ln)
+        if re.match(r'^#{1,4}\s', line):
+            continue  # 标题首编号已在 pnum
+        m = re.search(r'\*\*\s*#(\d{1,3})\s*\*\*', line)
+        if m:
+            pdef_all.setdefault(m.group(1), set()).add(base)
+idxnums = set()
+for ln in open(os.path.join(root, 'PITFALLS', 'README.md'), encoding='utf-8', errors='replace'):
+    if ln.startswith('|') and 'sessions/' in ln:
+        idxnums |= set(re.findall(r'#(\d{1,3})\b', re.sub(r'`[^`]*`', 'X', ln)))
+DANGLING = ['PITFALLS 索引 #%s 无正文定义' % n
+            for n in sorted(idxnums, key=int) if n not in pdef_all]
+
 def emit(tag, items):
     print('%s\t%s' % (tag, '; '.join(items) if items else '-'))
 emit('FENCE', fence)
@@ -392,6 +414,7 @@ emit('LEAK', leak)
 emit('TAIL', tail)
 emit('ORPHAN', orphan)
 emit('DUPNUM', dupnum)
+emit('DANGLING', DANGLING)
 
 # ---- 8b. 写死在文档里的「N 节 / N 条」计数必须与磁盘实际条数一致 ----
 # 依据：2026-10-15 实测 INDEX.md 写「PITFALLS §0 + 33 节索引」，而实际已 36 节——
@@ -488,6 +511,7 @@ while IFS=$'\t' read -r _st _msg; do
   case "$_st" in
     ORPHAN) [ "$_msg" = "-" ] && ok "已声明登记的角度：sessions/ 正文均被 README 引用" || warnf "索引未登记（仅对声明逐文件登记的角度核；补 README 行或移出该口径）: $_msg" ;;
     DUPNUM) [ "$_msg" = "-" ] && ok "文件名/条目编号无撞车" || bad "编号撞车（引用歧义，必须重编）: $_msg" ;;
+    DANGLING) [ "$_msg" = "-" ] && ok "PITFALLS 索引 #NNN 均有正文定义" || bad "PITFALLS 索引悬空（正文缺 #NNN 锚点，或正文标题用文件序号式）: $_msg" ;;
     STALECOUNT) [ "$_msg" = "-" ] && ok "文档内手写条目计数与磁盘一致" || bad "文档手写计数已过期（改为不写死数字，或同步修正）: $_msg" ;;
     IDXROW) [ "$_msg" = "-" ] && ok "索引行长度合规（结论只在正文，索引只放一句话主题）" || bad "索引行超长（内容应搬进正文，索引留一段主题 + 链接）: $_msg" ;;
     TBL)    [ "$_msg" = "-" ] && ok "入口文档表格结构完整（无被换行拆断的表格行）" || bad "表格行被换行拆开（合并成一行，叙事搬去 reports/）: $_msg" ;;

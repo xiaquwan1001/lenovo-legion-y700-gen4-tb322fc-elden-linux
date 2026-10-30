@@ -1,4 +1,4 @@
-# 98 · UEFI 异类载荷 repack v0：`--base` 必须是 0x10000000（0x0 被 ABL 静默不交棒）
+# #418 · UEFI 异类载荷 repack v0：`--base` 必须是 0x10000000（0x0 被 ABL 静默不交棒）
 
 - 日期：2026-10-26（上机实测）
 - 设备：HA2EXB0E（fastboot），镜像：`reports/artifacts/uefi-visibility-20261026/lenovo-y700g4-{A2,N2}.img`（header v3）
