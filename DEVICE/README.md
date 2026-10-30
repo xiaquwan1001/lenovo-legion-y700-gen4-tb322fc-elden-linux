@@ -25,7 +25,7 @@
 
 ### 1.1 内核与软件基线
 - ★**2026-10-30 13:19（当前在机状态，唯一权威；含设备侧读回）** —— 在机 = **M3-1 v5 + F2 镜像**（`out/boot-elden-m3v5-f2.img`，签后 sha `e6b1124c…`，证据 `reports/m3v5-f2-onboard-20261030.md`）：
-  `boot_b` 分区 sha256 = **`e6b1124ca6ec38aad162b405e883038a007dac59053be32e57fe22239e689b69`**（设备侧 `dd \| sha256sum` 实测），`boot_id` = `3a3d187f-1307-4542-97a7-b2eb81b3e61d`，
+  `boot_b` 分区 sha256 = **`e6b1124ca6ec38aad162b405e883038a007dac59053be32e57fe22239e689b69`**（设备侧 `dd \| sha256sum` 实测），`boot_id` = `b4d2846d-bc1a-439c-bd6a-840e388ff2f1`（冷起 POR 后；首次暖起为 `3a3d187f…`，两次均通过 M3 绑定取证），
   `uname -r` = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`、`uname -v` = `#2 SMP PREEMPT Fri Oct 30 13:06:36 CST 2026`，
   面板 `connected/enabled`、108 模块、失败单元 1（`hexagonrpcd`：`/dev/fastrpc-adsp` 不存在，**11:26 起即失败，早于本轮刷写**，非回归）。
   **本轮额外写盘**：`/lib/modules/<UTS>/` 下 4 个 `.ko`（`typec_ucsi`/`ucsi_glink`/`dwc3`/`dwc3-qcom`）被 M3-1 v5+F2 版本替换（原件备份 `/root/m3modbak-20261030/`）⇒ **回退到 vk181 日常件时必须把这 4 个模块也拷回**（`depmod -a`）。
