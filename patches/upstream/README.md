@@ -16,8 +16,23 @@
 
 ```sh
 SER=patches/upstream/<series>
+TREE=$(sed -n 's/^\(build\/[^ #]*\).*/\1/p' patches/current-tree | head -1)
+CP="$PWD/$TREE/scripts/checkpatch.pl"        # 仓库根**没有** scripts/checkpatch.pl（旧写法本身就是坏的）
+[ -f "$CP" ] || { echo "找不到 $CP"; return 1 2>/dev/null || exit 1; }
 # 1) 风格：每补丁英文正文 + Signed-off-by，0E/0W
-scripts/checkpatch.pl --strict --no-tree $SER/*.patch
+#    ⚠ 必须先把 patch 复制到**空目录**再跑（见下方坑），否则 checkpatch 会把 patch 当源码扫、
+#      patch 级检查（Subject/签名区/正文折行/Fixes 格式）**全部被跳过**，得到假绿的 0E/0W。
+TMPSER=$(mktemp -d); cp $SER/*.patch "$TMPSER"/
+( cd "$TMPSER" && perl "$CP" --strict --no-tree *.patch ); echo "checkpatch rc=$?"
+```
+
+> **坑（2026-10-30 实测）**：在仓库根跑 `scripts/checkpatch.pl --strict --no-tree $SER/*.patch`，
+> `checkpatch` 的 `git_is_single_file()`（`scripts/checkpatch.pl:1338`）会 `git ls-files` 命中**被跟踪的**
+> `*.patch`，于是把它当**源码文件**扫：同一枚 patch 得 `3 errors / 35 lines checked`（真话是
+> `0 errors / 1 warning / 8 lines`——那 1 W 还是 `Fixes:` 的 commit-id 告警）。
+> ⇒ **历史上任何「仓库根 0E/0W/0C」都不足为凭**，一律用上面的临时目录写法复跑。
+
+```sh
 # 2) binding 自检（改动/新增的 yaml）
 dt-doc-validate <每个改动的 yaml>
 # 3) DTS 编译 + schema（自带 binding 口径）

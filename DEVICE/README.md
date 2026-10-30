@@ -51,9 +51,13 @@
   **相机**（C5/U7）：宿主 = mainline 相机 → libcamera → `gst | v4l2-ctl --stream-out-mmap=8` → `/dev/video100`
   （v4l2loopback 需按当前 UTS 重编、`max_buffers=8`、**stock 无补丁**）；容器 `configureStreams` / `start V4L2 streaming` /
   `Preview stream state STREAMING` 均已实测，剩 App 侧停帧。
-  **传感器**（G1-34）：`qrtr-lookup` 见 **400 = Snapdragon Sensor Core service**（旧"未注册"结论作废）、
-  `ssccli` 出真值；但 Debian 侧 `libssc 0.4.4`（Alpine 工作态是 0.4.3）下 iio-sensor-proxy 只发现 `rotv`/`mn`
-  ⇒ `HasAccelerometer=false`（详见 `../TASKS/README.md` §1 G1-34、`../PITFALLS/sessions/107-*`）。
+  **传感器**（G1-34，**2026-10-30 复核推翻 ✅**）：`hexagonrpcd` = **failed**
+  （`Could not open FastRPC node (/dev/fastrpc-adsp)`），`/dev/` 只有 `fastrpc-adsp-secure`/`fastrpc-cdsp`/`fastrpc-cdsp-secure`，
+  `HasAccelerometer`/`HasAmbientLight`/`HasProximity` = **false/false/false**。
+  根因 = `fastrpc.c:2599` 依赖的 `qcom,non-secure-domain` 只存在于 `build/vk151` 的未提交工作区改动，
+  **在机 vk172 的 DTB 里没有** ⇒ 只建安全域节点。**旧口径（svc 400 可见 ⇒ 正常）作废**：
+  svc 400 是否注册与 `fastrpc-adsp` 是否创建是两件事，传感器栈吃的是后者。
+  详见 `../TASKS/README.md` §1 G1-34、`reports/code-style-and-duty-overlap-audit-20261030.md` C-01/C-02。
   详情与命令：`../TASKS/README.md` T22、`../PITFALLS` #431–#443。
   **⚠ 同日新观测（两小时内 ×2）**：**桌面/容器显示栈会在空闲期自发掉线** —— 形态固定：`card0-DSI-1` 仍 `connected`
   但 `dpms=Off`、`enabled=disabled`、logind 里 seat0 会话消失、`phoc` 进程仍在、`grim` 挂住、

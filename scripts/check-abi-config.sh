@@ -13,9 +13,9 @@
 # 参考 config 用 `--ref` 指定；默认取 patches/config-vk127-working-*（现役日常线 SSOT）。
 #
 # 用法：
-#   scripts/check-abi-config.sh                      # 比 build/m1-73/.config
+#   scripts/check-abi-config.sh                      # 比 patches/current-tree 指向的现役树 .config
 #   scripts/check-abi-config.sh path/to/.config
-#   scripts/check-abi-config.sh --ref patches/config-daily-c1 build/m1-73/.config
+#   scripts/check-abi-config.sh --ref patches/config-daily-c1 build/vk151/.config
 #   SKIP_ABI_ASSERT=1 ...                            # 显式绕过（必须写明理由）
 #
 # 退出：0=一致；1=有差异（打印具体项）。
@@ -55,7 +55,18 @@ ABI_KEYS=(
 
 REF=""
 if [ "${1:-}" = "--ref" ]; then REF=${2:-}; shift 2; fi
-CONF=${1:-$ROOT/build/m1-73/.config}
+CONF=${1:-}
+
+# 默认目标 = `patches/current-tree` 指向的**现役日常线树**（不再写死已退役的 build/m1-73：
+# 2026-10-30 实测裸跑恒绿，检的是 7.2 血统旧树，门禁形同虚设）。
+if [ -z "$CONF" ]; then
+	CUR_TREE=$(sed -n 's/^\(build\/[^ #]*\).*/\1/p' "$ROOT/patches/current-tree" 2>/dev/null | head -1)
+	if [ -z "$CUR_TREE" ]; then
+		echo "[abi] ❌ 无法从 patches/current-tree 解析现役树；请显式给 .config 路径或 KDIR=" >&2
+		exit 1
+	fi
+	CONF="$ROOT/$CUR_TREE/.config"
+fi
 
 if [ "${SKIP_ABI_ASSERT:-0}" = 1 ]; then
 	echo "[abi] SKIP_ABI_ASSERT=1 → 已显式绕过大 ABI 门禁" >&2

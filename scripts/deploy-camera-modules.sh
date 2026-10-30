@@ -41,6 +41,21 @@ if [ -n "$RUNKV" ] && [ "$RUNKV" != "$KV" ]; then
 	exit 1
 fi
 
+# Guard (ABI): vermagic 只比 UTS 字符串，拦不住 struct 布局漂移（PITFALLS #367：
+# CONFIG_SUSPEND 差异 → struct device.of_node 偏移 624 vs 680 → fastrpc 读成 NULL →
+# rpmsg 死循环 + `/dev/fastrpc-*` 全缺 + SSC 传感器全废）。这里比对模块构建树的
+# .config 与现役 SSOT 参考 config 的 27 项 ABI 敏感项，不一致就拒绝部署。
+CAMD_TREE=${CAMD_TREE:-$ROOT/$(sed -n 's/^\(build\/[^ #]*\).*/\1/p' "$ROOT/patches/current-tree" 2>/dev/null | head -1)}
+if [ -f "$CAMD_TREE/.config" ]; then
+	echo "== 0) ABI gate (tree=$CAMD_TREE) =="
+	bash "$ROOT/scripts/check-abi-config.sh" "$CAMD_TREE/.config" || {
+		echo "REFUSING: 模块构建树与 SSOT 参考 config 的 ABI 敏感项不一致（见上）；修好或显式 SKIP_ABI_ASSERT=1 绕过" >&2
+		exit 1
+	}
+else
+	echo "WARN: 找不到 $CAMD_TREE/.config，跳过 ABI 门禁（用 CAMD_TREE=<树目录> 指定）" >&2
+fi
+
 echo "== 1) transfer =="
 $SSH "cat > /tmp/camera-modules.tar.gz" < "$BUNDLE"
 $SSH "mkdir -p /lib/modules/$KV && tar xzf /tmp/camera-modules.tar.gz -C /lib/modules/$KV && depmod -a $KV && echo extracted"

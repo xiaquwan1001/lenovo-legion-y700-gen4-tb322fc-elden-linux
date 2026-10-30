@@ -80,3 +80,21 @@
 - 用户已核实的「三条无问题」：b5 bonded 表已独立成 `sm8750_dsi_cfg`；Q34 固件门禁真存在且会 FAIL；G1-34 的 udev 门禁三件齐全。
 - 待用户裁决（SSOT 改动，本轮未动）：① G1-34 是否改回未完成 + `DEVICE/README.md` §1.1 svc 400 口径；
   ② 三处门禁（checkpatch 命令 / `check-abi-config.sh` 默认目标 / `deploy-camera-modules.sh` 加 ABI 门）是否立即修。
+
+## 用户批准后的落地（2026-10-30 18:4x，「都改」）
+
+1. **SSOT 更正（G1-34 由 ✅ → 🔴）**：`TASKS/README.md` G1-34 行首改为「🔴 在机不通（2026-10-30 复核推翻）」，
+   写明 `hexagonrpcd` failed / 无 `/dev/fastrpc-adsp` / 三属性 false / 根因 `fastrpc.c:2599` +
+   `qcom,non-secure-domain` 只在未提交工作区；10-27 的判定降级为「仅在镜像带该 DT 属性时成立」。
+   `DEVICE/README.md` §1.1 传感器段同步改写，并显式作废旧口径「svc 400 可见 ⇒ 正常」。
+2. **三处门禁修复**：
+   - `patches/upstream/README.md` §1：checkpatch 命令改为「用 `patches/current-tree` 解析现役树的
+     `scripts/checkpatch.pl`（仓库根根本没有这个文件，旧写法本身是坏的）+ 先 cp 到空临时目录再跑」，
+     并写明坑的实测数字（仓库根 3E/35 行 vs `/tmp` 0E/1W/8 行）。
+   - `scripts/check-abi-config.sh`：默认目标从写死的 `build/m1-73`（已退役树）改为
+     `patches/current-tree` 指向的现役树；解析失败则报错退出（不再静默取旧树）。
+   - `scripts/deploy-camera-modules.sh`：在 vermagic guard 之后新增 **ABI gate**（调 `check-abi-config.sh`
+     比对模块构建树 vs SSOT 参考 config），不一致即 `REFUSING`。
+3. **用修好的门复跑全量 upstream patch（76 枚）**：**1 ERROR / 22 WARNING / 10 CHECK**。
+   唯一 ERROR = `Fixes:` 指向的 commit subject 不符（审计 A1-01）——**未改**：涉及已投递系列的正文，
+   需单独裁决（改 patch 正文会与已发送内容不一致）。
