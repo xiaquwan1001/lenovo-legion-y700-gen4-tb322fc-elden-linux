@@ -1,0 +1,196 @@
+From 5fbf41c0675301c38a26672baa7f6166d2afe4a4 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 30 Oct 2026 12:00:47 +0800
+Subject: [PATCH 1/2] dt-bindings: usb: snps,dwc3: tighten the two-connector
+ shared HS bus
+
+Two connectors behind one controller only take the mux path when the
+controller node itself carries "usb-role-switch": dwc3_get_dr_mode()
+otherwise forces dr_mode back to peripheral, dwc3_get_extcon() skips the
+role-switch branch and dwc3_drd_init() never calls dwc3_role_mux_init().
+The binding accepted such a DT, so a DT that passed the schema check did
+not describe a DT the driver could act on.  Require the property whenever
+port-select-gpios is present.
+
+Two more holes in the endpoint schema are fixed at the same time:
+
+  - the hs-port patternProperties only covered endpoint@0 and endpoint@1,
+    so an unnumbered endpoint or endpoint@2+ escaped the
+    unevaluatedProperties: false rule of the graph endpoint.  Use the same
+    endpoint name pattern as graph.yaml so every endpoint is validated.
+
+  - the mux-state complementarity was expressed with two independent "if
+    const: 0" blocks, which only rejected two zeroes; two endpoints both
+    claiming mux-state = <1> passed validation.  Express the pair as oneOf
+    so exactly one of the two assignments is accepted.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../bindings/usb/snps,dwc3-common.yaml        | 116 ++++++++++++------
+ 1 file changed, 76 insertions(+), 40 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+index 5e7ec094c7..341b5fcdad 100644
+--- a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
++++ b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+@@ -14,26 +14,36 @@ description:
+   vendor-specific implementation or as a standalone component.
+ 
+ $defs:
++  hs-endpoint:
++    $ref: /schemas/graph.yaml#/$defs/endpoint-base
++    unevaluatedProperties: false
++
++    properties:
++      usb-role-switch:
++        type: boolean
++        description:
++          This connector endpoint has its own USB role switch. The switch is
++          registered against this endpoint and looked up with
++          usb_role_switch_at_endpoint().
++
++      mux-state:
++        $ref: /schemas/types.yaml#/definitions/uint32
++        enum: [0, 1]
++        description:
++          Logical level of the port-select GPIO which connects this
++          connector to the shared High Speed data bus.
++
++    dependentRequired:
++      usb-role-switch: [mux-state]
++      mux-state: [usb-role-switch]
++
+   hs-port:
+     $ref: /schemas/graph.yaml#/$defs/port-base
+     unevaluatedProperties: false
+-    properties:
+-      endpoint:
+-        $ref: /schemas/graph.yaml#/$defs/endpoint-base
+-        unevaluatedProperties: false
+-        properties:
+-          usb-role-switch:
+-            type: boolean
+-            description: Separate role-switch input for this connector.
+-          mux-state:
+-            $ref: /schemas/types.yaml#/definitions/uint32
+-            enum: [0, 1]
+-            description:
+-              Logical port-select GPIO level for this data path. State 0
+-              takes precedence when both connectors request USB data.
+-        dependentRequired:
+-          usb-role-switch: [mux-state]
+-          mux-state: [usb-role-switch]
++
++    patternProperties:
++      '^endpoint(@[0-9a-f]+)?$':
++        $ref: '#/$defs/hs-endpoint'
+ 
+ allOf:
+   - $ref: usb-drd.yaml#
+@@ -51,39 +61,68 @@ allOf:
+   - if:
+       required: [port-select-gpios]
+     then:
+-      required: [usb-role-switch, ports, dr_mode]
++      # The mux path is only taken when the controller itself carries
++      # "usb-role-switch": dwc3_get_dr_mode() forces dr_mode back to
++      # peripheral, dwc3_get_extcon() skips the role-switch branch and
++      # dwc3_drd_init() never calls dwc3_role_mux_init() without it.
++      required: [dr_mode, ports, usb-role-switch]
+       properties:
+         dr_mode:
+           const: otg
+         ports:
+-          required: [port@0, port@2]
++          required: [port@0]
+           properties:
+             port@0:
+-              required: [endpoint]
++              required: ['#address-cells', '#size-cells', endpoint@0, endpoint@1]
+               properties:
+-                endpoint:
++                endpoint@0:
+                   required: [usb-role-switch, mux-state]
+-            port@2:
+-              required: [endpoint]
+-              properties:
+-                endpoint:
++                endpoint@1:
+                   required: [usb-role-switch, mux-state]
+ 
+-properties:
+-  usb-psy-name:
+-    $ref: /schemas/types.yaml#/definitions/string
+-    description:
+-      Name of the USB power supply accepting the input current limit requested
+-      by the gadget after USB configuration and during bus suspend or resume.
++              # "mux-state" is the port-select level of a connector, so the two
++              # values have to be complementary.  oneOf also rejects the case of
++              # both endpoints claiming the same level.
++              oneOf:
++                - required: [endpoint@0, endpoint@1]
++                  properties:
++                    endpoint@0:
++                      properties:
++                        mux-state:
++                          const: 0
++                    endpoint@1:
++                      properties:
++                        mux-state:
++                          const: 1
++                - required: [endpoint@0, endpoint@1]
++                  properties:
++                    endpoint@0:
++                      properties:
++                        mux-state:
++                          const: 1
++                    endpoint@1:
++                      properties:
++                        mux-state:
++                          const: 0
++    else:
++      properties:
++        ports:
++          properties:
++            port@0:
++              patternProperties:
++                '^endpoint(@[0-9a-f]+)?$':
++                  properties:
++                    usb-role-switch: false
++                    mux-state: false
+ 
++properties:
+   port-select-gpios:
+     maxItems: 1
+     description:
+-      Selects between two external connectors sharing the controller's HS
+-      data bus. The port@0 and port@2 endpoints specify distinct mux-state
+-      values and provide independent role-switch inputs. The controller
+-      stops the previous role before changing the data path. With neither
+-      connector requesting data, the last selection is retained.
++      Selects which of the two connectors drives the controller's shared High
++      Speed data bus. Each connector is described by a numbered endpoint of
++      "port@0" that carries its own role-switch input and the "mux-state"
++      level selecting it.
+ 
+   extcon:
+     maxItems: 1
+@@ -475,10 +514,6 @@ properties:
+         $ref: /schemas/graph.yaml#/properties/port
+         description: Super Speed (SS) data bus.
+ 
+-      port@2:
+-        $ref: '#/$defs/hs-port'
+-        description: Alternate connector on the multiplexed HS data bus.
+-
+   wakeup-source:
+     $ref: /schemas/types.yaml#/definitions/flag
+     description:
+@@ -490,3 +525,4 @@ required:
+ 
+ additionalProperties: true
+ ...
++
+-- 
+2.53.0
+
