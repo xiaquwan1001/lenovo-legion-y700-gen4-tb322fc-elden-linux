@@ -58,3 +58,25 @@
   3. UEFI 复活条件：先修「交棒随机」再谈 Mu；否则改判据走串口/`ttyACM` 或放弃屏上出字。
   4. droidloom M1-b（设备装 6 个 `-dev` 包 + rustup）与 phoc syncobj 两件，均未开工。
   5. 审计 lane 收口后按其 P0 清单另派实施 lane。
+
+## 审计 lane（L5）收口 + 编排者独立复核（2026-10-30 18:2x）
+
+- 产物：`reports/code-style-and-duty-overlap-audit-20261030.md`（80 KB）——
+  **54 条发现：P0 10 / P1 21 / P2 23**（A 上游规范 4/9/9、B 职责重复 2/5/8、C 需求对不上 3/3/3、D 缺失 1/4/3）。
+  A1 机械门：108 个 patch → 81 个 0/0/0，合计 1 E / 35 W / 10 C（其中 24 W = 已知假阳性）。
+- **编排者独立复核（不采信自报，三条 P0 全部复现）**：
+  1. **A1-11 门禁命令本身有缺陷（已复现）**：同一枚 `aw86927-20260527-v2/0001-*` 在**仓库根**跑
+     `checkpatch --strict` → `3 errors / 35 lines checked`（把 patch 当源码扫、patch 级检查全跳过）；
+     复制到 `/tmp` 跑 → `0 errors / 1 warning / 8 lines`（真实值）。⇒ **历史上任何「仓库根 0E/0W/0C」都不足为凭**，
+     `patches/upstream/README.md` §1 的命令必须改成「先 cp 到空目录再跑」。
+  2. **C-01/C-02/D-01 传感器口径崩塌（设备实测复现）**：`hexagonrpcd` = **failed**（`Could not open FastRPC node
+     (/dev/fastrpc-adsp)`），`/dev/` 只有 `fastrpc-adsp-secure`/`fastrpc-cdsp`/`fastrpc-cdsp-secure`，
+     `busctl … HasAccelerometer/HasAmbientLight/HasProximity` = **false/false/false**。
+     根因：`fastrpc.c:2599` 以 `qcom,non-secure-domain` 决定是否建非安全域实例，而该属性只存在于
+     `build/vk151` 的**未提交工作区改动**（`sm8750.dtsi` diff 可见）⇒ **在机 vk172 的 DTB 早于这行**。
+     ⇒ `TASKS/README.md` G1-34 的 ✅「三真」**与在机状态不符**，需改回未完成。
+  3. **B7-01 ABI 门禁默认检退役树（已复现）**：`scripts/check-abi-config.sh:56` `CONF=${1:-$ROOT/build/m1-73/.config}`
+     ⇒ 裸跑恒绿，检的不是 `patches/current-tree` 指向的 `build/vk151`。
+- 用户已核实的「三条无问题」：b5 bonded 表已独立成 `sm8750_dsi_cfg`；Q34 固件门禁真存在且会 FAIL；G1-34 的 udev 门禁三件齐全。
+- 待用户裁决（SSOT 改动，本轮未动）：① G1-34 是否改回未完成 + `DEVICE/README.md` §1.1 svc 400 口径；
+  ② 三处门禁（checkpatch 命令 / `check-abi-config.sh` 默认目标 / `deploy-camera-modules.sh` 加 ABI 门）是否立即修。
