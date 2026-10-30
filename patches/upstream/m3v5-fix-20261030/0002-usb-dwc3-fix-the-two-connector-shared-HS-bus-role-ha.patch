@@ -1,4 +1,4 @@
-From f2c58916ee73e216c5325877d5d0a882ebb62cf1 Mon Sep 17 00:00:00 2001
+From 7abd1781e917b06f789fa47bec0cb84cb9dd0f51 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Fri, 30 Oct 2026 12:00:47 +0800
 Subject: [PATCH 2/2] usb: dwc3: fix the two-connector shared HS bus role

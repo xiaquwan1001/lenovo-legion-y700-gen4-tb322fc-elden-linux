@@ -1,0 +1,42 @@
+/dts-v1/;
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	gpio: gpio-controller {
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+
+	usb@a600000 {
+		compatible = "snps,dwc3";
+		reg = <0x0a600000 0x10000>;
+		interrupts = <0 1 4>;
+		dr_mode = "otg";
+		usb-role-switch;
+		port-select-gpios = <&gpio 29 0>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				endpoint@0 {
+					reg = <0>;
+					usb-role-switch;
+					mux-state = <0>;
+				};
+
+				endpoint@1 {
+					reg = <1>;
+					usb-role-switch;
+					mux-state = <0>;
+				};
+			};
+		};
+	};
+};
