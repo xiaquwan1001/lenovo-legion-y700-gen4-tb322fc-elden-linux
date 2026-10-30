@@ -56,6 +56,9 @@
    默认 `ustc`、执行/实现 `ustc-worker`、研究 `ustc-research`、审计/边界检查 `ustc-audit`。
    派工时写显式 `provider/model`（别名在会话内可能不解析）；池内 key 轮转/限流由 litellm 负责，不手动绑 key。
 5. 递归子代理还会继承 `agent` 风险授权；**不继承**网络/写盘授权——需要时在派工单里写清。
+6. **L1 派 L2 必须同步 await**：在一次普通 `fabric_exec`（可传 `timeoutMs`）里用 `Promise.allSettled` 起 L2，**不要用 `background: true`**。
+   实测（2026-10-30 重派轮）：子代理里把 L2 扇出挂成后台程序 ⇒ 15 分钟零产物、`agents.list()` 返回 0、无子进程，而同步 waited 版本两轮均正常。
+   出现该症状时先改回同步派发，不要归因于模型/限流。
 
 派 L1 的最小调用形：
 
@@ -113,6 +116,8 @@ const r = await agents.run({
 ```
 
 - L2 → L1：L1 必须 `ls`/`read` 验证产物存在，并**重跑廉价门禁**（`check-doctor --staged-fast`、构建一次、单条 `fastboot getvar` 等）。
+- **证据先落盘（长任务必做）**：每条命令 `2>&1 | tee reports/artifacts/<topic>-<date>/<gate>.log`，每过一门立即把 rc/warn/err 追加进报告；
+  不要把大段日志读进上下文（只 `grep -c`/`tail -3`）。理由：2026-10-30 一次 L1 进程 SIGSEGV 死掉，未 tee 的门禁全部丢失、必须重跑。
 - L1 → 总管：总管按验收判据**独立复跑**（硬规则：worker 自报成功不可信）；不复跑不得写“已修复/已解决”。
 - 失败/半成品同样落盘，状态词只用「未解 / 未证实 / 未上机」。
 

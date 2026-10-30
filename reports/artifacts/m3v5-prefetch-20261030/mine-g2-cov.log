@@ -1,0 +1,174 @@
+make[1]: 进入目录“/tmp/m3v5-g2-cov”
+  UPD     /tmp/m3v5-g2-cov/Makefile
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/kconfig/conf.o
+  HOSTCC  scripts/kconfig/confdata.o
+  HOSTCC  scripts/kconfig/expr.o
+  LEX     scripts/kconfig/lexer.lex.c
+  YACC    scripts/kconfig/parser.tab.[ch]
+  HOSTCC  scripts/kconfig/lexer.lex.o
+  HOSTCC  scripts/kconfig/menu.o
+  HOSTCC  scripts/kconfig/parser.tab.o
+  HOSTCC  scripts/kconfig/preprocess.o
+  HOSTCC  scripts/kconfig/symbol.o
+  HOSTCC  scripts/kconfig/util.o
+  HOSTLD  scripts/kconfig/conf
+.config:13521:warning: override: reassigning to symbol ACPI
+#
+# configuration written to .config
+#
+make[1]: 离开目录“/tmp/m3v5-g2-cov”
+olddefconfig_rc=0
+=== glue all-modules build start 2026-10-30T22:03:59+08:00
+make[1]: 进入目录“/tmp/m3v5-g2-cov”
+  UPD     arch/arm64/include/generated/uapi/asm/kvm_para.h
+  UPD     arch/arm64/include/generated/uapi/asm/errno.h
+  UPD     arch/arm64/include/generated/uapi/asm/ioctl.h
+  UPD     arch/arm64/include/generated/uapi/asm/msgbuf.h
+  UPD     arch/arm64/include/generated/uapi/asm/ioctls.h
+  UPD     arch/arm64/include/generated/uapi/asm/poll.h
+  UPD     arch/arm64/include/generated/uapi/asm/ipcbuf.h
+  UPD     arch/arm64/include/generated/uapi/asm/resource.h
+  UPD     include/generated/uapi/linux/version.h
+  UPD     arch/arm64/include/generated/uapi/asm/siginfo.h
+  UPD     arch/arm64/include/generated/uapi/asm/sembuf.h
+  UPD     arch/arm64/include/generated/uapi/asm/shmbuf.h
+  UPD     arch/arm64/include/generated/uapi/asm/stat.h
+  UPD     arch/arm64/include/generated/uapi/asm/sockios.h
+  UPD     arch/arm64/include/generated/uapi/asm/swab.h
+  SYSHDR  arch/arm64/include/generated/uapi/asm/unistd_64.h
+  UPD     arch/arm64/include/generated/uapi/asm/socket.h
+  UPD     arch/arm64/include/generated/uapi/asm/termios.h
+  UPD     arch/arm64/include/generated/uapi/asm/termbits.h
+  UPD     arch/arm64/include/generated/uapi/asm/types.h
+  UPD     include/config/kernel.release
+  HOSTCC  scripts/dtc/dtc.o
+  UPD     include/generated/compile.h
+  HOSTCC  scripts/dtc/flattree.o
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+  HOSTCC  scripts/dtc/treesource.o
+  HOSTCC  scripts/dtc/srcpos.o
+  HOSTCC  scripts/dtc/checks.o
+  HOSTCC  scripts/dtc/util.o
+  LEX     scripts/dtc/dtc-lexer.lex.c
+  UPD     include/generated/utsrelease.h
+  YACC    scripts/dtc/dtc-parser.tab.[ch]
+  HOSTCC  scripts/dtc/libfdt/fdt.o
+  HOSTCC  scripts/dtc/libfdt/fdt_ro.o
+  HOSTCC  scripts/dtc/libfdt/fdt_wip.o
+  HOSTCC  scripts/dtc/libfdt/fdt_sw.o
+  HOSTCC  scripts/dtc/libfdt/fdt_rw.o
+  HOSTCC  scripts/dtc/libfdt/fdt_strerror.o
+  HOSTCC  scripts/dtc/libfdt/fdt_empty_tree.o
+  HOSTCC  scripts/dtc/libfdt/fdt_addresses.o
+  HOSTCC  scripts/dtc/libfdt/fdt_overlay.o
+  HOSTCC  scripts/dtc/fdtoverlay.o
+  UPD     arch/arm64/include/generated/asm/early_ioremap.h
+  UPD     arch/arm64/include/generated/asm/mcs_spinlock.h
+  UPD     arch/arm64/include/generated/asm/fprobe.h
+  UPD     arch/arm64/include/generated/asm/mmzone.h
+  UPD     arch/arm64/include/generated/asm/qrwlock.h
+  UPD     arch/arm64/include/generated/asm/qspinlock.h
+  UPD     arch/arm64/include/generated/asm/user.h
+  UPD     arch/arm64/include/generated/asm/parport.h
+  UPD     arch/arm64/include/generated/asm/delay.h
+  UPD     arch/arm64/include/generated/asm/device.h
+  UPD     arch/arm64/include/generated/asm/div64.h
+  UPD     arch/arm64/include/generated/asm/dma-mapping.h
+  UPD     arch/arm64/include/generated/asm/emergency-restart.h
+  UPD     arch/arm64/include/generated/asm/dma.h
+  UPD     arch/arm64/include/generated/asm/irq_regs.h
+  UPD     arch/arm64/include/generated/asm/hw_irq.h
+  UPD     arch/arm64/include/generated/asm/kdebug.h
+  UPD     arch/arm64/include/generated/asm/kmap_size.h
+  UPD     arch/arm64/include/generated/asm/local.h
+  UPD     arch/arm64/include/generated/asm/local64.h
+  UPD     arch/arm64/include/generated/asm/mmiowb.h
+  UPD     arch/arm64/include/generated/asm/msi.h
+  UPD     arch/arm64/include/generated/asm/percpu_types.h
+  UPD     arch/arm64/include/generated/asm/serial.h
+  UPD     arch/arm64/include/generated/asm/softirq_stack.h
+  UPD     arch/arm64/include/generated/asm/switch_to.h
+  UPD     arch/arm64/include/generated/asm/trace_clock.h
+  UPD     arch/arm64/include/generated/asm/unwind_user.h
+  SYSTBL  arch/arm64/include/generated/asm/syscall_table_32.h
+  SYSTBL  arch/arm64/include/generated/asm/syscall_table_64.h
+  SYSHDR  arch/arm64/include/generated/asm/unistd_32.h
+  UPD     arch/arm64/include/generated/asm/vga.h
+  UPD     arch/arm64/include/generated/asm/video.h
+  SYSHDR  arch/arm64/include/generated/asm/unistd_compat_32.h
+  HOSTCC  scripts/dtc/dtc-lexer.lex.o
+  HOSTCC  scripts/dtc/dtc-parser.tab.o
+  HOSTLD  scripts/dtc/fdtoverlay
+  HOSTLD  scripts/dtc/dtc
+  HOSTCC  scripts/kallsyms
+  HOSTCC  scripts/sorttable.o
+  HOSTCC  scripts/elf-parse.o
+  HOSTCC  scripts/asn1_compiler
+  HOSTCC  scripts/tracepoint-update.o
+  HOSTLD  scripts/tracepoint-update
+  HOSTLD  scripts/sorttable
+  GEN     arch/arm64/include/generated/asm/cpucap-defs.h
+  GEN     arch/arm64/include/generated/asm/kernel-hwcap.h
+  GEN     arch/arm64/include/generated/asm/sysreg-defs.h
+  CC      scripts/mod/empty.o
+  HOSTCC  scripts/mod/mk_elfconfig
+  CC      scripts/mod/devicetable-offsets.s
+  UPD     scripts/mod/devicetable-offsets.h
+  MKELF   scripts/mod/elfconfig.h
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/mod/symsearch.o
+  HOSTLD  scripts/mod/modpost
+  CC      kernel/bounds.s
+  CHKSHA1 /home/xuqianhui/y700-elden/build/m3v5-pristine/include/linux/atomic/atomic-arch-fallback.h
+  CHKSHA1 /home/xuqianhui/y700-elden/build/m3v5-pristine/include/linux/atomic/atomic-instrumented.h
+  CHKSHA1 /home/xuqianhui/y700-elden/build/m3v5-pristine/include/linux/atomic/atomic-long.h
+  UPD     include/generated/timeconst.h
+  UPD     include/generated/bounds.h
+  CC      arch/arm64/kernel/asm-offsets.s
+  UPD     include/generated/asm-offsets.h
+  CC      kernel/sched/rq-offsets.s
+  UPD     include/generated/rq-offsets.h
+  CALL    /home/xuqianhui/y700-elden/build/m3v5-pristine/scripts/checksyscalls.sh 
+  LDS     arch/arm64/kernel/vdso/vdso.lds
+  CC      arch/arm64/kernel/vdso/vgettimeofday.o
+  AS      arch/arm64/kernel/vdso/note.o
+  AS      arch/arm64/kernel/vdso/sigreturn.o
+  CC      arch/arm64/kernel/vdso/vgetrandom.o
+  AS      arch/arm64/kernel/vdso/vgetrandom-chacha.o
+  LD      arch/arm64/kernel/vdso/vdso.so.dbg
+  VDSOSYM include/generated/vdso-offsets.h
+  OBJCOPY arch/arm64/kernel/vdso/vdso.so
+  CC [M]  drivers/usb/dwc3/core.o
+  CC [M]  drivers/usb/dwc3/trace.o
+  CC [M]  drivers/usb/dwc3/host.o
+  CC [M]  drivers/usb/dwc3/gadget.o
+  CC [M]  drivers/usb/dwc3/ep0.o
+  CC [M]  drivers/usb/dwc3/drd.o
+  CC [M]  drivers/usb/dwc3/debugfs.o
+  CC [M]  drivers/usb/dwc3/dwc3-am62.o
+  CC [M]  drivers/usb/dwc3/dwc3-apple.o
+  CC [M]  drivers/usb/dwc3/dwc3-omap.o
+  CC [M]  drivers/usb/dwc3/dwc3-exynos.o
+  CC [M]  drivers/usb/dwc3/dwc3-pci.o
+  CC [M]  drivers/usb/dwc3/dwc3-haps.o
+  CC [M]  drivers/usb/dwc3/dwc3-keystone.o
+  CC [M]  drivers/usb/dwc3/dwc3-meson-g12a.o
+  CC [M]  drivers/usb/dwc3/dwc3-of-simple.o
+  CC [M]  drivers/usb/dwc3/dwc3-st.o
+  CC [M]  drivers/usb/dwc3/dwc3-qcom.o
+  CC [M]  drivers/usb/dwc3/dwc3-qcom-legacy.o
+  CC [M]  drivers/usb/dwc3/dwc3-imx8mp.o
+  CC [M]  drivers/usb/dwc3/dwc3-imx.o
+  CC [M]  drivers/usb/dwc3/dwc3-xilinx.o
+  CC [M]  drivers/usb/dwc3/dwc3-octeon.o
+  CC [M]  drivers/usb/dwc3/dwc3-rtk.o
+  CC [M]  drivers/usb/dwc3/dwc3-generic-plat.o
+  CC [M]  drivers/usb/dwc3/dwc3-google.o
+  LD [M]  drivers/usb/dwc3/dwc3.o
+make[1]: 离开目录“/tmp/m3v5-g2-cov”
+rc=0

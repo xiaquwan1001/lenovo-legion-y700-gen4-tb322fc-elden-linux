@@ -1,0 +1,201 @@
+G2 rerun(2, cross) start 2026-10-30T21:59:31+08:00
+make[1]: 进入目录“/tmp/m3v5-g2-obj”
+/home/xuqianhui/y700-elden/build/m3v5-pristine/arch/arm64/Makefile:33: Detected assembler with broken .inst; disassembly will be unreliable
+  SYNC    include/config/auto.conf
+*
+* Restart config...
+*
+*
+* ARM errata workarounds via the alternatives framework
+*
+AmpereOne: AC03_CPU_38: Certain bits in the Virtualization Translation Control Register and Translation Control Registers do not follow RES0 semantics (AMPERE_ERRATUM_AC03_CPU_38) [Y/n/?] y
+AmpereOne: AC04_CPU_23:  Failure to synchronize writes to HCR_EL2 may corrupt address translations. (AMPERE_ERRATUM_AC04_CPU_23) [Y/n/?] y
+Cortex-A53: 826319: System might deadlock if a write cannot complete until read data is accepted (ARM64_ERRATUM_826319) [Y/n/?] y
+Cortex-A53: 827319: Data cache clean instructions might cause overlapping transactions to the interconnect (ARM64_ERRATUM_827319) [Y/n/?] y
+Cortex-A53: 824069: Cache line might not be marked as clean after a CleanShared snoop (ARM64_ERRATUM_824069) [Y/n/?] y
+Cortex-A53: 819472: Store exclusive instructions might cause data corruption (ARM64_ERRATUM_819472) [Y/n/?] y
+Cortex-A57: 832075: possible deadlock on mixing exclusive memory accesses with device loads (ARM64_ERRATUM_832075) [Y/n/?] y
+Cortex-A57/A72: 1742098: ELR recorded incorrectly on interrupt taken between cryptographic instructions in a sequence (ARM64_ERRATUM_1742098) [Y/n/?] y
+Cortex-A53: 845719: a load might read incorrect data (ARM64_ERRATUM_845719) [Y/?] y
+Cortex-A53: 843419: A load or store might access an incorrect address (ARM64_ERRATUM_843419) [Y/?] y
+Cortex-A55: 1024718: Update of DBM/AP bits without break before make might result in incorrect update (ARM64_ERRATUM_1024718) [Y/n/?] y
+Cortex-A76/Neoverse-N1: MRC read following MRRC read of specific Generic Timer in AArch32 might give incorrect result (ARM64_ERRATUM_1418040) [Y/n/?] y
+Cortex-A76: 1165522: Speculative AT instruction using out-of-context translation regime could cause subsequent request to generate an incorrect translation (ARM64_ERRATUM_1165522) [Y/n/?] y
+Cortex-A57/A72: 1319537: Speculative AT instruction using out-of-context translation regime could cause subsequent request to generate an incorrect translation (ARM64_ERRATUM_1319367) [Y/n/?] y
+Cortex-A55: 1530923: Speculative AT instruction using out-of-context translation regime could cause subsequent request to generate an incorrect translation (ARM64_ERRATUM_1530923) [Y/n/?] y
+Cortex-A55: Completion of affected memory accesses might not be guaranteed by completion of a TLBI (rare) (ARM64_ERRATUM_2441007) [N/y/?] n
+Cortex-A76: Modification of the translation table for a virtual address might lead to read-after-read ordering violation (rare) (ARM64_ERRATUM_1286807) [N/y/?] n
+Cortex-A76: Software Step might prevent interrupt recognition (ARM64_ERRATUM_1463225) [Y/n/?] y
+Neoverse-N1: workaround mis-ordering of instruction fetches (rare) (ARM64_ERRATUM_1542419) [N/y/?] n
+Cortex-A77: 1508412: workaround deadlock on sequence of NC/Device load and store exclusive or PAR read (ARM64_ERRATUM_1508412) [Y/n/?] y
+Cortex-A510: 2051678: disable Hardware Update of the page table dirty bit (ARM64_ERRATUM_2051678) [Y/n/?] y
+Cortex-A510: 2077057: workaround software-step corrupting SPSR_EL2 (ARM64_ERRATUM_2077057) [Y/n/?] y
+Cortex-A510: 2658417: remove BF16 support due to incorrect result (ARM64_ERRATUM_2658417) [Y/n/?] y
+Cortex-A710: 2054223: workaround TSB instruction failing to flush trace (ARM64_ERRATUM_2054223) [Y/n/?] y
+Neoverse-N2: 2067961: workaround TSB instruction failing to flush trace (ARM64_ERRATUM_2067961) [Y/n/?] y
+Cortex-A510: Completion of affected memory accesses might not be guaranteed by completion of a TLBI (rare) (ARM64_ERRATUM_2441009) [N/y/?] n
+Cortex-A510: 2457168: workaround for AMEVCNTR01 incrementing incorrectly (ARM64_ERRATUM_2457168) [Y/n/?] y
+Cortex-A715: 2645198: Workaround possible [ESR|FAR]_ELx corruption (ARM64_ERRATUM_2645198) [Y/n/?] y
+Cortex-A725: 3821522: workaround for possible CNT_CYCLES increment error due to WFE/WFI (ARM64_ERRATUM_3821522) [Y/n/?] y
+Cortex-A520: 2966298: workaround for speculatively executed unprivileged load (ARM64_ERRATUM_2966298) [Y/n/?] y
+Cortex-A510: 3117295: workaround for speculatively executed unprivileged load (ARM64_ERRATUM_3117295) [Y/n/?] y
+Cortex-*/Neoverse-*: workaround for MSR SSBS not self-synchronizing (ARM64_ERRATUM_3194386) [Y/n/?] y
+SI L1: 4311569: workaround for premature CMO completion erratum (ARM64_ERRATUM_4311569) [Y/n/?] y
+C1-Pro: 4193714: SME DVMSync early acknowledgement (ARM64_ERRATUM_4193714) [Y/n/?] (NEW) 
+Error in reading or end of file.
+
+Various: Completion of affected memory accesses might not be guaranteed by completion of a TLBI (ARM64_ERRATUM_4118414) [Y/n/?] y
+Cavium erratum 22375, 24313 (CAVIUM_ERRATUM_22375) [Y/n/?] y
+Cavium erratum 23144: ITS SYNC hang on dual socket system (CAVIUM_ERRATUM_23144) [Y/n/?] y
+Cavium errata 23154 and 38545: GICv3 lacks HW synchronisation (CAVIUM_ERRATUM_23154) [Y/n/?] y
+Cavium erratum 27456: Broadcast TLBI instructions may cause icache corruption (CAVIUM_ERRATUM_27456) [Y/n/?] y
+Cavium erratum 30115: Guest may disable interrupts in host (CAVIUM_ERRATUM_30115) [Y/n/?] y
+Cavium ThunderX2 erratum 219: PRFM between TTBR change and ISB fails (CAVIUM_TX2_ERRATUM_219) [Y/n/?] y
+Fujitsu-A64FX erratum E#010001: Undefined fault may occur wrongly (FUJITSU_ERRATUM_010001) [Y/n/?] y
+Hip07 161600802: Erroneous redistributor VLPI base (HISILICON_ERRATUM_161600802) [Y/n/?] y
+Hip09 162100801 erratum support (HISILICON_ERRATUM_162100801) [Y/n/?] y
+Hisilicon erratum 162100125 (HISILICON_ERRATUM_162100125) [Y/n/?] y
+Falkor E1003: Incorrect translation due to ASID change (QCOM_FALKOR_ERRATUM_1003) [Y/n/?] y
+Falkor E1009: Prematurely complete a DSB after a TLBI (QCOM_FALKOR_ERRATUM_1009) [Y/n/?] y
+QDF2400 E0065: Incorrect GITS_TYPER.ITT_Entry_size (QCOM_QDF2400_ERRATUM_0065) [Y/n/?] y
+Falkor E1041: Speculative instruction fetches might cause errant memory access (QCOM_FALKOR_ERRATUM_E1041) [Y/n/?] y
+NVIDIA Carmel CNP: CNP on Carmel semantically different than ARM cores (NVIDIA_CARMEL_CNP_ERRATUM) [Y/n/?] y
+NVIDIA Olympus: device store/load ordering erratum (NVIDIA_OLYMPUS_1027_ERRATUM) [Y/n/?] y
+Renesas R-Car Gen4: GIC600 can not access physical addresses above 4 GiB (RENESAS_ERRATUM_GEN4GICITS1) [Y/n/?] y
+Rockchip 3568002: GIC600 can not access physical addresses higher than 4GB (ROCKCHIP_ERRATUM_3568002) [Y/n/?] y
+Rockchip 3588001: GIC600 can not support shareability attributes (ROCKCHIP_ERRATUM_3588001) [Y/n/?] y
+Socionext Synquacer: Workaround for GICv3 pre-ITS (SOCIONEXT_SYNQUACER_PREITS) [Y/n/?] y
+*
+* ARMv8.5 architectural features
+*
+Branch Target Identification support (ARM64_BTI) [Y/n/?] y
+Enable support for E0PD (ARM64_E0PD) [Y/n/?] y
+Memory Tagging Extension support (ARM64_MTE) [Y/n/?] (NEW) 
+Error in reading or end of file.
+
+*
+* ARMv9.6 architectural features
+*
+Support Unprivileged Load Store Instructions (LSUI) (ARM64_LSUI) [Y/n/?] (NEW) 
+Error in reading or end of file.
+
+*
+* Kernel Features
+*
+Page size
+> 1. 4KB (ARM64_4K_PAGES)
+  2. 16KB (ARM64_16K_PAGES)
+  3. 64KB (ARM64_64K_PAGES)
+choice[1-3?]: 1
+Virtual address space size
+  1. 39-bit (ARM64_VA_BITS_39)
+  2. 48-bit (ARM64_VA_BITS_48)
+> 3. 52-bit (ARM64_VA_BITS_52)
+choice[1-3?]: 3
+Physical address space size
+> 1. 52-bit (ARM64_PA_BITS_52)
+choice[1]: 1
+Endianness
+> 1. Build little-endian kernel (CPU_LITTLE_ENDIAN)
+choice[1]: 1
+Maximum number of CPUs (2-4096) (NR_CPUS) [512] 512
+Support for hot-pluggable CPUs (HOTPLUG_CPU) [Y/n/?] y
+NUMA Memory Allocation and Scheduler Support (NUMA) [Y/n/?] y
+  Maximum NUMA Nodes (as a power of 2) (NODES_SHIFT) [4] 4
+Timer frequency
+  1. 100 HZ (HZ_100)
+> 2. 250 HZ (HZ_250)
+  3. 300 HZ (HZ_300)
+  4. 1000 HZ (HZ_1000)
+choice[1-4?]: 2
+Enable paravirtualization code (PARAVIRT) [Y/n/?] y
+Paravirtual steal time accounting (PARAVIRT_TIME_ACCOUNTING) [N/y/?] n
+Xen guest support on ARM64 (XEN) [N/y/?] n
+Emulate Privileged Access Never using TTBR0_EL1 switching (ARM64_SW_TTBR0_PAN) [N/y/?] n
+Enable the tagged user addresses syscall ABI (ARM64_TAGGED_ADDR_ABI) [Y/n/?] y
+ARM Scalable Vector Extension support (ARM64_SVE) [Y/n/?] y
+ARM Scalable Matrix Extension support (ARM64_SME) [Y/n/?] (NEW) 
+Error in reading or end of file.
+
+Support for NMI-like interrupts (ARM64_PSEUDO_NMI) [N/y/?] n
+Randomize the address of the kernel image (RANDOMIZE_BASE) [Y/n/?] y
+  Randomize the module region over a 2 GB range (RANDOMIZE_MODULE_REGION_FULL) [Y/n/?] y
+*
+* General architecture-dependent options
+*
+SMT (Hyperthreading) scheduler support (SCHED_SMT) [Y/n/?] y
+Cluster scheduler support (SCHED_CLUSTER) [Y/n/?] y
+Multi-Core Cache (MC) scheduler support (SCHED_MC) [Y/n/?] y
+Kprobes (KPROBES) [Y/?] y
+Optimize very unlikely/likely branches (JUMP_LABEL) [Y/?] y
+  Static key selftest (STATIC_KEYS_SELFTEST) [N/y/?] n
+Enable seccomp to safely execute untrusted bytecode (SECCOMP) [Y/n/?] y
+  Show seccomp filter cache status in /proc/pid/seccomp_cache (SECCOMP_CACHE_DEBUG) [N/y/?] n
+Stack Protector buffer overflow detection (STACKPROTECTOR) [Y/n/?] y
+  Strong Stack Protector (STACKPROTECTOR_STRONG) [Y/n/?] y
+Shadow Call Stack (SHADOW_CALL_STACK) [N/y/?] (NEW) 
+Error in reading or end of file.
+
+Link Time Optimization (LTO)
+> 1. None (LTO_NONE)
+choice[1]: 1
+MMU page size
+> 1. 4KiB pages (PAGE_SIZE_4KB)
+choice[1]: 1
+Provide system calls for 32-bit time_t (COMPAT_32BIT_TIME) [Y/n/?] y
+Use a virtually-mapped stack (VMAP_STACK) [Y/?] y
+Support for randomizing kernel stack offset on syscall entry (RANDOMIZE_KSTACK_OFFSET) [Y/?] y
+  Default state of kernel stack offset randomization (RANDOMIZE_KSTACK_OFFSET_DEFAULT) [N/y/?] n
+Locking event counts collection (LOCK_EVENT_COUNTS) [N/y/?] n
+Use RELR relocation packing (RELR) [Y/n/?] y
+  UPD     include/generated/compile.h
+  CC      scripts/mod/empty.o
+  CC      scripts/mod/devicetable-offsets.s
+  MKELF   scripts/mod/elfconfig.h
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/mod/symsearch.o
+  HOSTLD  scripts/mod/modpost
+  CC      kernel/bounds.s
+  CC      arch/arm64/kernel/asm-offsets.s
+  CC      kernel/sched/rq-offsets.s
+  CALL    /home/xuqianhui/y700-elden/build/m3v5-pristine/scripts/checksyscalls.sh 
+  LDS     arch/arm64/kernel/vdso/vdso.lds
+  CC      arch/arm64/kernel/vdso/vgettimeofday.o
+  AS      arch/arm64/kernel/vdso/note.o
+  AS      arch/arm64/kernel/vdso/sigreturn.o
+  CC      arch/arm64/kernel/vdso/vgetrandom.o
+  AS      arch/arm64/kernel/vdso/vgetrandom-chacha.o
+  LD      arch/arm64/kernel/vdso/vdso.so.dbg
+  VDSOSYM include/generated/vdso-offsets.h
+  OBJCOPY arch/arm64/kernel/vdso/vdso.so
+  CC [M]  drivers/usb/dwc3/core.o
+  CC [M]  drivers/usb/dwc3/trace.o
+  CC [M]  drivers/usb/dwc3/host.o
+  CC [M]  drivers/usb/dwc3/gadget.o
+  CC [M]  drivers/usb/dwc3/ep0.o
+  CC [M]  drivers/usb/dwc3/drd.o
+  CC [M]  drivers/usb/dwc3/debugfs.o
+  CC [M]  drivers/usb/dwc3/dwc3-am62.o
+  CC [M]  drivers/usb/dwc3/dwc3-apple.o
+  CC [M]  drivers/usb/dwc3/dwc3-omap.o
+  CC [M]  drivers/usb/dwc3/dwc3-exynos.o
+  CC [M]  drivers/usb/dwc3/dwc3-haps.o
+  CC [M]  drivers/usb/dwc3/dwc3-keystone.o
+  CC [M]  drivers/usb/dwc3/dwc3-meson-g12a.o
+  CC [M]  drivers/usb/dwc3/dwc3-of-simple.o
+  CC [M]  drivers/usb/dwc3/dwc3-st.o
+  CC [M]  drivers/usb/dwc3/dwc3-qcom.o
+  CC [M]  drivers/usb/dwc3/dwc3-qcom-legacy.o
+  CC [M]  drivers/usb/dwc3/dwc3-imx8mp.o
+  CC [M]  drivers/usb/dwc3/dwc3-imx.o
+  CC [M]  drivers/usb/dwc3/dwc3-xilinx.o
+  CC [M]  drivers/usb/dwc3/dwc3-octeon.o
+  CC [M]  drivers/usb/dwc3/dwc3-rtk.o
+  CC [M]  drivers/usb/dwc3/dwc3-generic-plat.o
+  CC [M]  drivers/usb/dwc3/dwc3-google.o
+  LD [M]  drivers/usb/dwc3/dwc3.o
+make[1]: 离开目录“/tmp/m3v5-g2-obj”
+rc=0
+ALLDONE

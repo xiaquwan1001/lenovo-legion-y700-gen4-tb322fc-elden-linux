@@ -1,0 +1,11 @@
+=== checkpatch --strict 2026-10-30T21:58:34+08:00
+## v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch
+total: 0 errors, 0 warnings, 0 checks, 142 lines checked
+
+/home/xuqianhui/y700-elden/patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch has no obvious style problems and is ready for submission.
+rc=0
+## v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch
+total: 0 errors, 0 warnings, 0 checks, 222 lines checked
+
+/home/xuqianhui/y700-elden/patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch has no obvious style problems and is ready for submission.
+rc=0

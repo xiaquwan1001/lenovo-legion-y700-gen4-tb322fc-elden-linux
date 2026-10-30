@@ -1,0 +1,35 @@
+--- G3 addendum 2026-10-30T21:58:29+08:00
+[a] usb_role_switch_at_endpoint linkage:
+ */
+static struct usb_role_switch *
+usb_role_switch_at_endpoint(struct fwnode_handle *fwnode)
+{
+[b] EXPORT symbols in roles/class.c:
+97:EXPORT_SYMBOL_GPL(usb_role_switch_set_role);
+124:EXPORT_SYMBOL_GPL(usb_role_switch_get_role);
+224:EXPORT_SYMBOL_GPL(usb_role_switch_get);
+248:EXPORT_SYMBOL_GPL(fwnode_usb_role_switch_get);
+263:EXPORT_SYMBOL_GPL(usb_role_switch_put);
+289:EXPORT_SYMBOL_GPL(usb_role_switch_find_by_fwnode);
+316:EXPORT_SYMBOL_GPL(usb_role_string);
+459:EXPORT_SYMBOL_GPL(usb_role_switch_register);
+476:EXPORT_SYMBOL_GPL(usb_role_switch_unregister);
+487:EXPORT_SYMBOL_GPL(usb_role_switch_set_drvdata);
+[c] missed-adaptation probe (old-style callers outside roles/core/drd):
+build/m3v5-pristine/drivers/usb/chipidea/core.c:603:static enum usb_role ci_usb_role_switch_get(struct usb_role_switch *sw)
+build/m3v5-pristine/drivers/usb/chipidea/core.c:1176:		ci_role_switch.get = ci_usb_role_switch_get;
+build/m3v5-pristine/drivers/usb/common/usb-conn-gpio.c:234:	info->role_sw = usb_role_switch_get(dev);
+build/m3v5-pristine/drivers/usb/misc/qcom_eud.c:203:	chip->role_sw = usb_role_switch_get(&pdev->dev);
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-rtk.c:127:static enum usb_role dwc3_usb_role_switch_get(struct usb_role_switch *sw)
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-rtk.c:143:	dwc3_role_switch.get = dwc3_usb_role_switch_get;
+build/m3v5-pristine/drivers/usb/dwc3/drd.c:477:static enum usb_role dwc3_usb_role_switch_get(struct usb_role_switch *sw)
+build/m3v5-pristine/drivers/usb/dwc3/drd.c:770:	dwc3_role_switch.get = dwc3_usb_role_switch_get;
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-apple.c:399:static enum usb_role dwc3_usb_role_switch_get(struct usb_role_switch *sw)
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-apple.c:426:	dwc3_role_switch.get = dwc3_usb_role_switch_get;
+[d] v5-0002 touched files:
+diff --git a/drivers/usb/dwc3/core.c b/drivers/usb/dwc3/core.c
+diff --git a/drivers/usb/dwc3/core.h b/drivers/usb/dwc3/core.h
+diff --git a/drivers/usb/dwc3/drd.c b/drivers/usb/dwc3/drd.c
+diff --git a/drivers/usb/roles/class.c b/drivers/usb/roles/class.c
+[e] v5-0001 touched files:
+diff --git a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml

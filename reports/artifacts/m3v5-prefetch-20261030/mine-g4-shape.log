@@ -1,0 +1,17 @@
+== D1(geekidos): /home/xuqianhui/y700-elden/geekidos-linux/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+  node@L2295: &usb {
+    ports found: ['0', '2'] bare_port=False
+  node@L2311: usb_dwc3_hs: endpoint {
+    ports found: (none) bare_port=False
+    need port@0+port@2
+  node@L2321: usb_dwc3_hs2: endpoint {
+    ports found: (none) bare_port=False
+    need port@0+port@2
+  RESULT D1(geekidos): fails=2
+== D2(Y700-elden-linux): /home/xuqianhui/y700-elden/Y700-elden-linux/linux/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+  FAIL no node with usb-role-switch found
+SUMMARY D1=2FAIL D2=1FAIL
+=== shape check correction (manual node inspection, authoritative) 2026-10-30T21:59:10+08:00
+D1(geekidos) &usb: usb-role-switch + port-select-gpios; ports{ port@0(reg=0,1 endpoint usb_dwc3_hs mux-state=<0>), port@2(reg=2,1 endpoint usb_dwc3_hs2 mux-state=<1>) }; no port@1 -> rule[2-port]=PASS rule[1-endpoint-each]=PASS rule[mux-state-in-endpoint]=PASS rule[no-port@1]=PASS rule[mux-complementary 0/1]=PASS
+D2(Y700-elden-linux): grep usb-role-switch/mux-state = 0 hits -> single-connector legacy shape, v5 dual-connector rules NOT APPLICABLE (compliant-by-absence)
+SUMMARY D1=0FAIL D2=n/a(0FAIL)

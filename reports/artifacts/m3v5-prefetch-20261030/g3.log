@@ -1,0 +1,36 @@
+=== G3 usage-point audit (tree T=build/m3v5-pristine = v4+v5 applied) 2026-10-30T21:58:15+08:00
+
+--- symbol: pre_set_role
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-imx8mp.c:177:	.pre_set_role   = dwc3_imx_pre_set_role,
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-qcom.c:606:	.pre_set_role	= dwc3_qcom_set_role_notifier,
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1003: * @pre_set_role: Notify glue of role switch notifications
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1007:	void	(*pre_set_role)(struct dwc3 *dwc, enum usb_role role);
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1706:	if (dwc->glue_ops && dwc->glue_ops->pre_set_role)
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1707:		dwc->glue_ops->pre_set_role(dwc, role);
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-imx.c:181:	.pre_set_role = dwc3_imx_pre_set_role,
+
+--- symbol: dwc3_pre_set_role
+build/m3v5-pristine/drivers/usb/dwc3/drd.c:385:		dwc3_pre_set_role(dwc, USB_ROLE_HOST);
+build/m3v5-pristine/drivers/usb/dwc3/drd.c:411:		dwc3_pre_set_role(dwc, USB_ROLE_DEVICE);
+build/m3v5-pristine/drivers/usb/dwc3/drd.c:443:	dwc3_pre_set_role(dwc, role);
+build/m3v5-pristine/drivers/usb/dwc3/drd.c:472:	dwc3_pre_set_role(dwc, role);
+build/m3v5-pristine/drivers/usb/dwc3/drd.c:584:	dwc3_pre_set_role(dwc, selected_role);
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1704:static inline void dwc3_pre_set_role(struct dwc3 *dwc, enum usb_role role)
+
+--- symbol: usb_role_switch_at_endpoint
+build/m3v5-pristine/drivers/usb/roles/class.c:167:usb_role_switch_at_endpoint(struct fwnode_handle *fwnode)
+build/m3v5-pristine/drivers/usb/roles/class.c:214:		sw = usb_role_switch_at_endpoint(dev_fwnode(dev));
+build/m3v5-pristine/drivers/usb/roles/class.c:239:		sw = usb_role_switch_at_endpoint(fwnode);
+build/m3v5-pristine/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml:27:          usb_role_switch_at_endpoint().
+
+--- symbol: glue_ops
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-imx8mp.c:269:	dwc3->glue_ops = &dwc3_imx_glue_ops;
+build/m3v5-pristine/drivers/usb/dwc3/core.c:2513:	dwc->glue_ops = NULL;
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-qcom.c:701:	qcom->dwc.glue_ops = &dwc3_qcom_glue_ops;
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1070: * @glue_ops: Vendor callbacks for flattened device implementations.
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1272:	const struct dwc3_glue_ops	*glue_ops;
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1706:	if (dwc->glue_ops && dwc->glue_ops->pre_set_role)
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1707:		dwc->glue_ops->pre_set_role(dwc, role);
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1712:	if (dwc->glue_ops && dwc->glue_ops->pre_run_stop)
+build/m3v5-pristine/drivers/usb/dwc3/core.h:1713:		dwc->glue_ops->pre_run_stop(dwc, is_on);
+build/m3v5-pristine/drivers/usb/dwc3/dwc3-imx.c:263:	dwc->glue_ops = &dwc3_imx_glue_ops;

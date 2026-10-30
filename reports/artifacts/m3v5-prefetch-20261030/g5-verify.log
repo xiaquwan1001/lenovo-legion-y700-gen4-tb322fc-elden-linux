@@ -1,0 +1,12 @@
+SAME Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+SAME drivers/usb/dwc3/core.c
+SAME drivers/usb/dwc3/core.h
+SAME drivers/usb/dwc3/debugfs.c
+SAME drivers/usb/dwc3/drd.c
+SAME drivers/usb/roles/class.c
+SUMMARY same=6 diff=0
+12
+pristine_head_still=34865c8915bfbeb1b4fc15dac5696c0033322b87
+0
+--- alternate-pack anomaly probe:
+blob
