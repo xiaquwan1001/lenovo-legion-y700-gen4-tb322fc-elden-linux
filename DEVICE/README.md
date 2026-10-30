@@ -24,7 +24,15 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-10-29（当前在机状态，唯一权威）** —— `boot_b` 分区 sha256 = **`b72866ef6e6c82…`**，与签名件 `bootslot-b/boot_b.img`（100 663 296 B）**逐字节一致**；其 AVB 原镜像 = `out/boot-elden-vk181-daily.img`（84 520 960 B，sha `c8953ba0…`）。
+- ★**2026-10-30 12:43（当前在机状态，唯一权威；含设备侧读回）** —— 在机 = **M3-1 v5 测试镜像**（`out/boot-elden-m3v5-daily.img`，签后 `bootslot-b/boot_b-m3v5-daily-signed-20261030.img`）：
+  `boot_b` 分区 sha256 = **`55d06551a5d8…`**（设备侧 `dd \| sha256sum` 实测），`boot_id` = `3a803dbb-647e-4d39-914b-c0f5152319aa`，
+  `uname -r` = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`、`uname -v` = `#1 SMP PREEMPT Fri Oct 30 11:22:59 CST 2026`，
+  面板 `connected/enabled`、108 模块、失败单元 1（`lxc-net`，已知无害）。
+  **回退件（两个候选，均为 100 663 296 B）**：
+  ① `bootslot-b/boot_b-vk181-daily-signed-20261029.img`（sha **`b72866ef…`**）= **日常内核**，要回日常用它；
+  ② `bootslot-b/boot_b.img` = **当前工作副本**，其内容随 `scripts/flash-b.sh` 每次刷写而变（**现为 m3v5-daily，sha `55d06551…`**）⇒ **禁止把它当「日常回退件」**（`PITFALLS` 本轮教训，见 `reports/doc-audit-20261030.md` P0-2）。
+  运行根 = `/dev/sda17` ext4 `LABEL=linux17`（Debian forky/sid）；`/lib/modules/<UTS>` 被 vk163/vk172/m3v5 等多代镜像共用（`uts_dup`，见 `versions/vk-ledger-known-issues.tsv`）。
+- ★**2026-10-29（历史，已被上一条取代）** —— 当时 `boot_b` 分区 sha256 = **`b72866ef6e6c82…`**，与签名件 `bootslot-b/boot_b.img` **逐字节一致**；其 AVB 原镜像 = `out/boot-elden-vk181-daily.img`（84 520 960 B，sha `c8953ba0…`）。
   实测：`uname -r` = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`、`uname -v` = `#28 SMP PREEMPT Tue Oct 27 23:26:17 CST 2026`；
   **运行根 = `/dev/sda17` ext4 `LABEL=linux17`（Debian forky/sid）**，cmdline 含 `elden_root=LABEL=linux17`、`elden_early_gadget=1`、`elden_q28_nowd`、`elden_nocamera` 未出现；
   `/lib/modules/<UTS>` = **1639 `.ko`**（`find -name '*.ko'`；另有 1 个 `.ko.xz`）；Waydroid Session/Container RUNNING（SSH `root@192.168.7.1` 经 USB-NCM）。
