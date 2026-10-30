@@ -358,3 +358,5 @@ vk176	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk17
 vk177	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
 vk182-camssv3	uts_dup	M4 camss v3 上机复验镜像：UTS **刻意**与 vk172 相同（dwc3=m，必须匹配 /lib/modules/<UTS> 才能拉起 USB gadget，见 PITFALLS #468）；二进制不同属预期
 vk182-camssv3	num_ne_tag	上机复验镜像按惯例用 vk 号（不走 tag）；分支标签集合沿用日常线 replay/m1-73-vk127 系属预期
+m8ab-base	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 1bcbe17a16a0）
+m8ab-v2	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 2691215d2e0e）

@@ -1,0 +1,114 @@
+Thanks for the pointer. Before following the tiny-DXE route I have to correct
+our own framing first: we now have a static proof of what `0x402` is, and it is
+not a platform configuration entry. That changes the questions we should be
+asking you.
+
+## 1. Reproduction data (all from our unit)
+
+Device: Lenovo Y700 Gen4 (TB322FC, SM8750P, "lenovo-y700g4" in your tree).
+
+- stock `uefi.elf`: 5,242,880 B, sha256 `fc68d2f9...`
+- embedded FV (LZMA, FFS `9e21fd93-9c72-4c15-8c4b-e77f1db2d792`, data offset 24):
+  4,247,560 B, sha256 `657940ca74a667aaa518038f2d4bfe7de04205ca883574e0c46172df002962d9`
+- vendor `UFSDxe.efi` out of that FV: PE32, 151,552 B, file GUID
+  `0d35cd8e-97ea-4f9a-96af-0f0d89f76567`,
+  sha256 `fa561bf11eb18f142b128f0335973f6c4a8d0241747ea581d5b3a56d601878d2`
+- your `Binaries/.../UFSDxe/UFSDxe.efi` differs from the stock binary in **6 bytes
+  only**, all inside the embedded build-path string (`mp250526` vs `mp251201`, file
+  offsets `0x23d21`, `0x23d30..0x23d33`, `0x23d3b`) -- so your unpatched copy is the
+  same build as ours.
+- your `PatchedBinaries/UFSDxe.efi` differs from stock in **32 bytes = 3 sites**:
+  `0xa998` (8 B), `0x114c4` (16 B), `0x1b080` (8 B).
+- failure signature (10-05 run, patched binary, v0 header):
+  `Synchronous Exception`, `PC = UFSDxe+0x13224`, data abort / translation fault
+  level 2, handler reads `FAR = X0 + 8` with `X0 = 0xD6ABB030`.
+
+## 2. What 0x402 is
+
+All offsets below are RVAs into `UFSDxe.efi` `.text`; the bytes at these RVAs are
+identical in your `PatchedBinaries` copy (none of the 3 patch sites touches this
+function).
+
+- `0x12e30` is a callback `(ctx, len)`. It requires `len >= 0x1c`
+  (`0x12e38 cmp w2,#0x1c ; b.hs`), then reads `w8 = [ctx] - 0x401` and, when
+  `w8 <= 3`, jumps through the 4-entry byte table at `0x1e2b8`
+  (`0x12e4c..0x12e70`). The table bytes are `00 07 0a 0d`, i.e. targets
+  `0x401 -> 0x12e74`, `0x402 -> 0x12e90`, `0x403 -> 0x12e9c`, `0x404 -> 0x12ea8`.
+  So **the first 32-bit word of `ctx` is an opcode in the range 0x401..0x404**,
+  and `0x402` only means "case 2 of this dispatch table".
+- `0x12e90` loads `x0 = ctx` and calls `0x13120`, the handler:
+  - size = `u32[ctx+0x10] + u32[ctx+0x14]` (`0x13138..0x13170`)
+  - `AllocatePool(EfiBootServicesData, size)` via `[gBS+0x40]` (helper `0x6cc8`)
+  - `CopyMemWrapper(dst, ctx, size)` (`0x779c`; its assert strings are
+    `CopyMemWrapper.c` at RVA `0x1cbb1`)
+  - validates `u32[copy+0] == 0x402` (`0x131f4`) -- i.e. it re-checks the opcode
+    it just copied
+  - zero-extends `u32[copy+4..7]` (`0x13200..0x13218`), bails out if zero
+    (`0x1321c`), and then executes `ldr x9,[x0,#8]` at `0x13224`.
+
+Two consequences:
+
+1. **`0x402` is not a configuration tag.** Between the entry of `0x13120` and the
+   faulting load there are exactly two calls: `AllocatePool` and `CopyMemWrapper`.
+   There is no config-map lookup, no `LocateProtocol`, no
+   `ConfigurationMapHelperLib` call anywhere on this path. (For completeness, the
+   configuration map in your tree, `dodgePkg/Library/ConfigurationMapLib/
+   ConfigurationMapLib.c`, has 41 entries and all of them are named keys such as
+   `EnableShell`, `NumCpus`, `EnableUfsIOC`; there is no numeric `0x402` key.)
+2. The fault is the **second word of our own request context** (`ctx+4`), holding
+   `0xD6ABB030`, being dereferenced as a pointer. So the interesting question is
+   not "which config is missing" but "who is supposed to fill `ctx+4`".
+
+We would like to retract the earlier "which platform config is it missing"
+framing from our previous comment -- it was our own misreading.
+
+## 3. The second, independent failure we see: UFS.c+2326
+
+Separately from the above we also get `ASSERT UFS.c +2326` with
+`Status = EFI_DEVICE_ERROR`. Statically:
+
+- `mov w1,#0x916` (= 2326) occurs exactly once in `.text`, at `0x42f4`, next to
+  `"UFS.c"` (RVA `0x1b438`);
+- the assert payload is at RVA `0x1c14e`:
+  `!EFI_ERROR (((RETURN_STATUS)(0x8000000000000000ULL | (7))))`;
+- the guard path right before prints `UFSSmmuConfig failed` (RVA `0x1c073`), and a
+  second assert at `UFS.c+2331` follows.
+
+So that layer is SMMU/context configuration, not link state. We see it as a second
+failure signature, independent of the `0x402` dereference.
+
+## 4. Two questions
+
+**Q1 (0x402 path).** In your tree, which component is expected to populate the
+`+4` word of the request context for opcode `0x402` before UFSDxe runs? Two
+concrete possibilities from our side: (a) it is supposed to come from a
+firmware-version-dependent data blob -- which would match your earlier "needs a
+special UFSDxe patch" comment; or (b) it comes from a DXE producer that is present
+in the stock FV but missing from the FV we build. Which one is it, and if (b),
+which module?
+
+**Q2 (SMMU layer).** Does the SM8750 UFS SMMU work you mentioned also cover
+`UFSSmmuConfig` (the `UFS.c+2326` assert)? Concretely: on Mu/Pakala should that
+`EFI_DEVICE_ERROR` disappear once the correct SMMU/IOMMU description is used, or
+does UFSDxe need a platform-specific SMMU bypass on this device?
+
+## 5. What we can provide
+
+- the exact `cmp -l` offset lists (stock vs your `Binaries` vs your
+  `PatchedBinaries`), so you can confirm we test *your* binary and not a rebuild;
+- sha256 of every artifact in the chain (`uefi.elf` -> FV -> `UFSDxe.efi`) plus
+  the extraction commands;
+- a full disassembly listing of `0x12e30`, `0x13120` and the three patch sites
+  (as a text attachment, offsets only -- no decompiled source);
+- our BootShim, including the cache-maintenance patch we had to add
+  (`dc civac` over `UEFI_BASE..+0x500000`, `dsb sy`, `ic iallu`, `dsb sy`, `isb`),
+  and the ABL `Final RAM Partitions` line showing `UEFI_BASE = 0xFF300000`,
+  size `0x500000`;
+- `UFSDxe.depex` (value `06 08`, i.e. TRUE) and its `APRIORI.inc` position (line
+  76), in case the ordering of the `0x402` producer matters;
+- on request, the v0-header image that reproduces `PC = UFSDxe+0x13224` on our unit.
+
+On the tiny-DXE suggestion: we agree it is the right shape *if* the link really is
+in Sleep, but we would rather settle Q1/Q2 first, because hand-programming the UFS
+UIC registers can leave the link unrecoverable on this unit, and we currently have
+no early console output to debug it with.

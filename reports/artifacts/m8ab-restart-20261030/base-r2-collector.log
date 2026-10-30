@@ -1,0 +1,7 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+[POR] 起点 boot_id=b5447e3f  uptime=26.13s  待测镜像=boot-elden-m8ab-base.img
+[POR] 计划取 1 发真 POR（轮号 12 .. 12）
+
+=============== Round 12 / 12 ===============
+→ 请现在做【物理断电】：长按电源键 ~10 s 关机，然后短按电源开机（不要用 reboot！）
+  本脚本会等 900s 内的新启动（boot_id 变化即认定为新样本）…

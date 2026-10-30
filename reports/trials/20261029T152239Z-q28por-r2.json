@@ -1,0 +1,18 @@
+{
+  "label": "q28por-r2",
+  "ts": "2026-10-29T15:22:39Z",
+  "vk": "",
+  "image": "out/boot-elden-m8ab-base.img",
+  "image_sha256": "87f6b767671749ab605e83300ddf1201942c62b9bced7185d9cba3afde5f619d",
+  "manifest": "out/boot-elden-m8ab-base.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172",
+  "kernel_payload_sha256": "1bcbe17a16a0c3ce40bcf16aad1bd6ecbbe73ef4bcea4438be799832fda0f998",
+  "config_sha256": "1e5fe5652a87c447efc7d7a556dc0543677c2f18570f076dd851f900afde5c72",
+  "dtb_packed_sha256": "0b614a3c58430280e8dd7bf7bd3c449515b61bdb9297dd662a154e82b7a9a308",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "GOOD",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/trials/20261029T152238Z-q28por-r2",
+  "note": "Q28 真 POR 同口径样本（boot_id=8a835f43，clkdiag=reports/artifacts/q28-clkdiag-r2-8a835f43.txt）"
+}

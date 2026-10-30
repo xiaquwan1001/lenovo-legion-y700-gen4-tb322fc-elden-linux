@@ -84,3 +84,5 @@ inittest-veh	img+manifest(out/boot-elden-inittest-veh.img)	✅冒烟(WiFi慢但�
 #
 # 【可选确认】若用户坚持亲眼确认，按上序零写盘各跑一次即可（不写盘、不动 slot）。
 # ============================================================================
+m8ab-base	img+manifest(out/boot-elden-m8ab-base.img)	未上机（构建+打包闸门全绿）	—	有	在途	M8 v2 A/B base 臂：上游单 CORE 复位（STORM 高危形态复测基线）
+m8ab-v2	img+manifest(out/boot-elden-m8ab-v2.img)	未上机（构建+打包闸门全绿）	—	有	在途	M8 v2 A/B v2 臂：mdss probe 三复位全组（PLL 后）

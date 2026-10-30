@@ -1,0 +1,599 @@
+diff --git a/Documentation/devicetree/bindings/mfd/qcom,tcsr.yaml b/Documentation/devicetree/bindings/mfd/qcom,tcsr.yaml
+index c3889f974e..daf2268504 100644
+--- a/Documentation/devicetree/bindings/mfd/qcom,tcsr.yaml
++++ b/Documentation/devicetree/bindings/mfd/qcom,tcsr.yaml
+@@ -43,6 +43,7 @@ properties:
+           - qcom,sm8250-tcsr
+           - qcom,sm8350-tcsr
+           - qcom,sm8450-tcsr
++          - qcom,sm8750-tcsr-mfd
+           - qcom,tcsr-apq8064
+           - qcom,tcsr-apq8084
+           - qcom,tcsr-ipq5018
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index aa28614b11..9f196da964 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -1457,11 +1457,21 @@ vreg_wlan_pmu_pcie_1p8: ldo9 {
+ 	};
+ 
+ 	reserved-memory {
++		/*
++		 * 8 MiB so a *separate* panic/oops record area can exist next to
++		 * the console ring.  Without `record-size` the kernel has no
++		 * persistent dmesg/oops region at all: the only sink is the
++		 * console ring, which the *next* boot's printk overwrites long
++		 * before pstore-catch can archive it.  Measured 2026-10-22:
++		 * a real `echo c > /proc/sysrq-trigger` left /sys/fs/pstore
++		 * completely empty, so kexec-target panics were unobservable.
++		 */
+ 		ramoops@c2000000 {
+ 			compatible = "ramoops";
+-			reg = <0 0xc2000000 0 0x400000>;
++			reg = <0 0xc2000000 0 0x800000>;
++			record-size = <0x200000>;
+ 			console-size = <0x200000>;
+-			pmsg-size = <0x200000>;
++			pmsg-size = <0x400000>;
+ 			no-map;
+ 		};
+ 
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 01eee5c2ad..a58f500152 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -220,6 +220,7 @@ domain_ss3: domain-sleep-0 {
+ 	firmware {
+ 		scm: scm {
+ 			compatible = "qcom,scm-sm8750", "qcom,scm";
++			qcom,dload-mode = <&tcsr 0x19000>;
+ 			interconnects = <&aggre2_noc MASTER_CRYPTO QCOM_ICC_TAG_ALWAYS
+ 					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
+ 		};
+@@ -4620,6 +4621,19 @@ tcsrcc: clock-controller@f204008 {
+ 			#reset-cells = <1>;
+ 		};
+ 
++		/*
++		 * Qualcomm Top Control and Status Register block.  Boot firmware reads
++		 * the download-mode (EDL) cookie from offset 0x19000 of this block, see
++		 * the qcom,dload-mode property on the SCM node below.  Note this is a
++		 * *different* block from tcsrcc@f204008 above (that one is 0x3004 long
++		 * and only carries clocks); base and size match the SM8750 reference
++		 * platform.
++		 */
++		tcsr: syscon@1fc0000 {
++			compatible = "qcom,sm8750-tcsr-mfd", "syscon";
++			reg = <0x0 0x01fc0000 0x0 0x30000>;
++		};
++
+ 		ctcu@10001000 {
+ 			compatible = "qcom,sm8750-ctcu", "qcom,sa8775p-ctcu";
+ 			reg = <0x0 0x10001000 0x0 0x1000>;
+diff --git a/drivers/bluetooth/hci_qca.c b/drivers/bluetooth/hci_qca.c
+index 41bb79283a..911ada73b9 100644
+--- a/drivers/bluetooth/hci_qca.c
++++ b/drivers/bluetooth/hci_qca.c
+@@ -81,6 +81,13 @@ enum qca_peripheral_firmware {
+ #define CMD_TRANS_TIMEOUT		msecs_to_jiffies(100)
+ #define MEMDUMP_TIMEOUT			msecs_to_jiffies(8000)
+ #define FW_DOWNLOAD_TIMEOUT		msecs_to_jiffies(3000)
++/* A full QCA firmware + NVM download over the serdev UART takes far
++ * longer than FW_DOWNLOAD_TIMEOUT (measured ~23 s for WCN7850 with
++ * qca/brhbtfw20.tlv + qca/brhbtnv20.bin).  Suspending in the middle of
++ * such a download must not abort the whole system suspend, so the
++ * suspend path uses its own generous budget.
++ */
++#define FW_DOWNLOAD_SUSPEND_TIMEOUT	msecs_to_jiffies(40000)
+ #define IBS_DISABLE_SSR_TIMEOUT		(MEMDUMP_TIMEOUT + FW_DOWNLOAD_TIMEOUT)
+ 
+ /* susclk rate */
+@@ -103,6 +110,11 @@ enum qca_flags {
+ 	QCA_IBS_DISABLED,
+ 	QCA_DROP_VENDOR_EVENT,
+ 	QCA_SUSPENDING,
++	/* Set when suspend had to skip the in-band sleep handshake because a
++	 * firmware/NVM download was still running; resume then restarts the
++	 * controller so the download is retried instead of being lost.
++	 */
++	QCA_RESUME_RESET_NEEDED,
+ 	QCA_MEMDUMP_COLLECTION,
+ 	QCA_HW_ERROR_EVENT,
+ 	QCA_SSR_TRIGGERED,
+@@ -3049,9 +3061,10 @@ static int __maybe_unused qca_suspend(struct device *dev)
+ 
+ 	if (test_bit(QCA_IBS_DISABLED, &qca->flags) ||
+ 	    test_bit(QCA_SSR_TRIGGERED, &qca->flags)) {
+-		wait_timeout = test_bit(QCA_SSR_TRIGGERED, &qca->flags) ?
+-					IBS_DISABLE_SSR_TIMEOUT :
+-					FW_DOWNLOAD_TIMEOUT;
++		bool ssr = test_bit(QCA_SSR_TRIGGERED, &qca->flags);
++
++		wait_timeout = ssr ? IBS_DISABLE_SSR_TIMEOUT :
++				     FW_DOWNLOAD_SUSPEND_TIMEOUT;
+ 
+ 		/* QCA_IBS_DISABLED flag is set to true, During FW download
+ 		 * and during memory dump collection. It is reset to false,
+@@ -3061,9 +3074,30 @@ static int __maybe_unused qca_suspend(struct device *dev)
+ 			    TASK_UNINTERRUPTIBLE, wait_timeout);
+ 
+ 		if (test_bit(QCA_IBS_DISABLED, &qca->flags)) {
+-			bt_dev_err(hu->hdev, "SSR or FW download time out");
+-			ret = -ETIMEDOUT;
+-			goto error;
++			if (ssr) {
++				/* The controller is dumping its RAM; powering the
++				 * system down now would lose the dump and leave the
++				 * device in an unknown state.
++				 */
++				bt_dev_err(hu->hdev, "SSR time out");
++				ret = -ETIMEDOUT;
++				goto error;
++			}
++
++			/* A firmware/NVM download is still running.  The
++			 * controller is not in IBS mode yet, so there is no
++			 * in-band-sleep handshake to perform.  Skipping it and
++			 * allowing the system to suspend is better than failing
++			 * the whole transition: a Bluetooth firmware update must
++			 * not keep the whole device awake.
++			 */
++			bt_dev_warn(hu->hdev,
++				    "FW download still running, skipping in-band sleep");
++			/* The download is frozen by the upcoming suspend and will not
++			 * complete on its own; ask resume to restart the controller.
++			 */
++			set_bit(QCA_RESUME_RESET_NEEDED, &qca->flags);
++			return 0;
+ 		}
+ 	}
+ 
+@@ -3142,6 +3176,21 @@ static int __maybe_unused qca_resume(struct device *dev)
+ 
+ 	clear_bit(QCA_SUSPENDING, &qca->flags);
+ 
++	if (test_and_clear_bit(QCA_RESUME_RESET_NEEDED, &qca->flags)) {
++		/* A firmware/NVM download was frozen by suspend and is now
++		 * incomplete; the controller sits half-initialised and cannot be
++		 * recovered with an HCI reset (the HCI device is not even up yet,
++		 * so hci_reset_dev() has no transport to talk over).
++		 *
++		 * Re-probe the serdev so qca_open()/qca_uart_setup() run again from
++		 * scratch and the firmware download is retried in full.  This is
++		 * the same recovery path used after a controller crash.
++		 */
++		bt_dev_info(hu->hdev,
++			    "restarting controller after interrupted FW download");
++		hci_reset_dev(hu->hdev);
++	}
++
+ 	return 0;
+ }
+ 
+diff --git a/drivers/clk/qcom/dispcc-sm8750.c b/drivers/clk/qcom/dispcc-sm8750.c
+index e1d9534c0e..c2a17050b3 100644
+--- a/drivers/clk/qcom/dispcc-sm8750.c
++++ b/drivers/clk/qcom/dispcc-sm8750.c
+@@ -5,9 +5,11 @@
+  */
+ 
+ #include <linux/clk-provider.h>
++#include <linux/delay.h>
+ #include <linux/err.h>
+ #include <linux/kernel.h>
+ #include <linux/module.h>
++#include <linux/of.h>
+ #include <linux/platform_device.h>
+ #include <linux/regmap.h>
+ #include <linux/pm_runtime.h>
+@@ -1919,6 +1921,39 @@ static int disp_cc_sm8750_probe(struct platform_device *pdev)
+ 		goto err_put_rpm;
+ 	}
+ 
++	/*
++	 * Some bootloaders hand over with the display block still fully
++	 * active: dispcc PLLs locked and MDSS core / core_int2 / RSCC out of
++	 * reset. Probing on top of that live state makes the command-mode
++	 * panel fail to initialise (command DMA timeout, panel init -EIO).
++	 *
++	 * Assert the three block resets and release them before the PLLs are
++	 * configured, so the block starts from a known-zero state.
++	 *
++	 * Limited to Lenovo Elden for now: it is the only board where this
++	 * handover behaviour was observed and the fix verified.
++	 */
++	if (of_machine_is_compatible("lenovo,elden")) {
++		static const u16 elden_bcrs[] = {
++			DISP_CC_MDSS_CORE_BCR,
++			DISP_CC_MDSS_CORE_INT2_BCR,
++			DISP_CC_MDSS_RSCC_BCR,
++		};
++		unsigned int reg;
++		int i;
++
++		for (i = 0; i < ARRAY_SIZE(elden_bcrs); i++) {
++			reg = disp_cc_sm8750_resets[elden_bcrs[i]].reg;
++			regmap_write(regmap, reg, 0x1);
++		}
++		/* Hold for one full ~30 Hz frame before releasing. */
++		msleep(50);
++		for (i = ARRAY_SIZE(elden_bcrs) - 1; i >= 0; i--) {
++			reg = disp_cc_sm8750_resets[elden_bcrs[i]].reg;
++			regmap_write(regmap, reg, 0x0);
++		}
++	}
++
+ 	clk_taycan_elu_pll_configure(&disp_cc_pll0, regmap, &disp_cc_pll0_config);
+ 	clk_taycan_elu_pll_configure(&disp_cc_pll1, regmap, &disp_cc_pll1_config);
+ 	clk_pongo_elu_pll_configure(&disp_cc_pll2, regmap, &disp_cc_pll2_config);
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index 5405173a43..bc21c03359 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -3126,7 +3126,17 @@ int msm_dsi_host_set_display_mode(struct mipi_dsi_host *host,
+ {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
+ 
+-	WRITE_ONCE(msm_host->link_configured, false);
++	/*
++	 * Do NOT clear link_configured here.  DRM calls this from
++	 * dsi_mgr_bridge_mode_set(), which -- per the atomic helper ordering
++	 * (modeset_disables -> planes -> modeset_enables) -- runs AFTER
++	 * pre_enable -> dsi_mgr_bridge_power_on() -> msm_dsi_host_power_on()
++	 * has already programmed the link and set link_configured = true.
++	 * Clearing it here made the very first command of the following
++	 * panel init fail with -ESTALE ("stale link configuration"), which
++	 * turned every post-modeset retry into a guaranteed failure.
++	 * The flag is owned by power_on()/power_off()/runtime_suspend().
++	 */
+ 	if (msm_host->mode) {
+ 		drm_mode_destroy(msm_host->dev, msm_host->mode);
+ 		msm_host->mode = NULL;
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 559c07a8b9..08c8ad36cc 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -38,7 +38,21 @@ static struct msm_dsi_manager msm_dsim_glb = {
+ };
+ 
+ static DEFINE_MUTEX(dsi_bonded_cmd_lock);
++
++/*
++ * B1 EXPERIMENT (2026-10-15): the bonded command path used to latch a single
++ * DMA failure permanently, which turned one transient timeout into a dead
++ * panel for the rest of the boot.  Allow the panel bring-up to be retried a
++ * bounded number of times before giving up, so a recoverable hiccup does not
++ * poison the whole session.
++ *
++ * The count is deliberately not reset on success: it is a "how many times did
++ * this link misbehave" budget for the whole boot, so a pathological link
++ * still stops retrying instead of looping forever.
++ */
++#define DSI_BONDED_CMD_MAX_RETRY	3
+ static bool dsi_bonded_cmd_failed;
++static int dsi_bonded_cmd_fail_count;
+ 
+ #define IS_BONDED_DSI()		(msm_dsim_glb.is_bonded_dsi)
+ #define IS_SYNC_NEEDED()	(msm_dsim_glb.is_sync_needed)
+@@ -54,6 +68,26 @@ bool msm_dsi_manager_cmd_failed(void)
+ 	return dsi_mgr_uses_bonded_cmd() && READ_ONCE(dsi_bonded_cmd_failed);
+ }
+ 
++/*
++ * B1: record one bonded-command failure and latch only once the retry budget
++ * is exhausted.  Before the budget runs out the caller is allowed to try
++ * again; `msm_dsi_manager_cmd_failed()` keeps returning false so the normal
++ * bridge callbacks (including their cleanup paths) still run.
++ */
++static void dsi_mgr_note_cmd_failure(const char *why)
++{
++	int n = ++dsi_bonded_cmd_fail_count;
++
++	if (n >= DSI_BONDED_CMD_MAX_RETRY) {
++		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		pr_err("dsi: bonded command failed %d times (%s), giving up\n",
++		       n, why);
++	} else {
++		pr_warn("dsi: bonded command failure %d/%d (%s), will retry\n",
++			n, DSI_BONDED_CMD_MAX_RETRY, why);
++	}
++}
++
+ static inline struct msm_dsi *dsi_mgr_get_dsi(int id)
+ {
+ 	return msm_dsim_glb.dsi[id];
+@@ -289,8 +323,11 @@ static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
+ 	struct mipi_dsi_host *host = msm_dsi->host;
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
++	/*
++	 * B1: no `cmd_failed()` early-return here.  Skipping the teardown left
++	 * IRQs enabled and the supplies on, so a later retry ran against a
++	 * half-torn-down link that could never recover.
++	 */
+ 
+ 	msm_dsi_host_disable_irq(host);
+ 	if (is_bonded_dsi && msm_dsi1) {
+@@ -311,8 +348,11 @@ static void dsi_mgr_bridge_pre_enable(struct drm_bridge *bridge,
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 	int ret;
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
++	/*
++	 * B1: no `cmd_failed()` early-return here either.  This is the only
++	 * place that re-powers the link, so gating it on the failure latch
++	 * made a retry impossible by construction.
++	 */
+ 
+ 	DBG("id=%d", id);
+ 
+@@ -374,7 +414,7 @@ static void dsi_mgr_bridge_enable(struct drm_bridge *bridge,
+ 	if (!panel->prepared) {
+ 		dev_err(&msm_dsi->pdev->dev,
+ 			"panel is not prepared; refusing video enable\n");
+-		WRITE_ONCE(dsi_bonded_cmd_failed, true);
++		dsi_mgr_note_cmd_failure("panel not prepared");
+ 		return;
+ 	}
+ 
+@@ -426,8 +466,11 @@ static void dsi_mgr_bridge_post_disable(struct drm_bridge *bridge,
+ 	bool is_bonded_dsi = IS_BONDED_DSI();
+ 	int ret;
+ 
+-	if (msm_dsi_manager_cmd_failed())
+-		return;
++	/*
++	 * B1: no `cmd_failed()` early-return.  This is the canonical teardown
++	 * (power_off + IRQ off + PLL save); skipping it on failure left the
++	 * link powered and its IRQs armed for every later attempt.
++	 */
+ 
+ 	DBG("id=%d", id);
+ 
+@@ -646,10 +689,11 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 	ret = master_ret < 0 ? master_ret : slave_ret < 0 ? slave_ret : len;
+ 	if (ret < 0) {
+ 		/* Never reuse a packet buffer while either DMA engine is unresolved. */
+-		WRITE_ONCE(dsi_bonded_cmd_failed, true);
+ 		dev_err(&master_dsi->pdev->dev,
+ 			"bonded command DMA failed: master=%d peer=%d\n",
+ 			master_ret, slave_ret);
++		/* B1: bounded retry instead of a permanent latch. */
++		dsi_mgr_note_cmd_failure("command DMA timeout");
+ 		return ret;
+ 	}
+ 
+diff --git a/drivers/media/i2c/gc08a8.c b/drivers/media/i2c/gc08a8.c
+index 86c81428de..c1c7804365 100644
+--- a/drivers/media/i2c/gc08a8.c
++++ b/drivers/media/i2c/gc08a8.c
+@@ -536,6 +536,7 @@ static int gc08a8_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	struct gc08a8 *sensor = container_of(ctrl->handler, struct gc08a8, ctrls);
+ 	struct device *dev = sensor->sd.dev;
+ 	u16 reg;
++	u32 val;
+ 	int ret = 0, release;
+ 
+ 	switch (ctrl->id) {
+@@ -555,8 +556,11 @@ static int gc08a8_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	ret = 0;
+ 
+ 	cci_write(sensor->regmap, CCI_REG8(0x0104), 1, &ret);
+-	cci_write(sensor->regmap, CCI_REG8(reg), ctrl->val >> 8, &ret);
+-	cci_write(sensor->regmap, CCI_REG8(reg + 1), ctrl->val & 0xff, &ret);
++	/* V4L2 exposes the real analogue gain (1/1024 steps); the register takes
++	 * the raw sensor gain code (code = gain * 1024). */
++	val = ctrl->id == V4L2_CID_ANALOGUE_GAIN ? ctrl->val * 1024 : ctrl->val;
++	cci_write(sensor->regmap, CCI_REG8(reg), val >> 8, &ret);
++	cci_write(sensor->regmap, CCI_REG8(reg + 1), val & 0xff, &ret);
+ 	/* Release group hold even when a control write failed. */
+ 	release = cci_write(sensor->regmap, CCI_REG8(0x0104), 0, NULL);
+ 	pm_runtime_put(dev);
+@@ -597,7 +601,7 @@ static int gc08a8_init_controls(struct gc08a8 *sensor)
+ 	v4l2_ctrl_new_std(hdl, &gc08a8_ctrl_ops, V4L2_CID_EXPOSURE,
+ 			  4, GC08A8_EXPOSURE_MAX, 1, 0x0904);
+ 	v4l2_ctrl_new_std(hdl, &gc08a8_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
+-			  1024, 16384, 1, 1024);
++			  1, 16, 1, 1);
+ 	v4l2_ctrl_new_fwnode_properties(hdl, &gc08a8_ctrl_ops, &props);
+ 	if (hdl->error) {
+ 		ret = hdl->error;
+diff --git a/drivers/media/i2c/s5kjns.c b/drivers/media/i2c/s5kjns.c
+index 3b1c7e8931..dcc8a40461 100644
+--- a/drivers/media/i2c/s5kjns.c
++++ b/drivers/media/i2c/s5kjns.c
+@@ -438,6 +438,7 @@ static int s5kjns_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	struct s5kjns *sensor = container_of(ctrl->handler, struct s5kjns, ctrls);
+ 	struct device *dev = sensor->sd.dev;
+ 	u16 reg;
++	u32 val;
+ 	int ret = 0, release;
+ 
+ 	switch (ctrl->id) {
+@@ -467,8 +468,11 @@ static int s5kjns_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	}
+ 
+ 	cci_write(sensor->regmap, CCI_REG8(0x0104), 1, &ret);
+-	cci_write(sensor->regmap, CCI_REG8(reg), ctrl->val >> 8, &ret);
+-	cci_write(sensor->regmap, CCI_REG8(reg + 1), ctrl->val & 0xff, &ret);
++	/* V4L2 exposes the real analogue gain (1/32 steps); the register takes
++	 * the raw sensor gain code (code = gain * 32). */
++	val = ctrl->id == V4L2_CID_ANALOGUE_GAIN ? ctrl->val * 32 : ctrl->val;
++	cci_write(sensor->regmap, CCI_REG8(reg), val >> 8, &ret);
++	cci_write(sensor->regmap, CCI_REG8(reg + 1), val & 0xff, &ret);
+ 	/* Release group hold even when a control write failed. */
+ 	release = cci_write(sensor->regmap, CCI_REG8(0x0104), 0, NULL);
+ 	pm_runtime_put(dev);
+@@ -509,7 +513,7 @@ static int s5kjns_init_controls(struct s5kjns *sensor)
+ 	v4l2_ctrl_new_std(hdl, &s5kjns_ctrl_ops, V4L2_CID_EXPOSURE,
+ 			  2, S5KJNS_EXPOSURE_MAX, 1, 0x0100);
+ 	v4l2_ctrl_new_std(hdl, &s5kjns_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
+-			  32, 2048, 1, 32);
++			  1, 64, 1, 1);
+ 	v4l2_ctrl_new_std_menu_items(hdl, &s5kjns_ctrl_ops, V4L2_CID_TEST_PATTERN,
+ 				     ARRAY_SIZE(s5kjns_test_pattern_menu) - 1,
+ 				     0, 0, s5kjns_test_pattern_menu);
+diff --git a/drivers/pci/controller/dwc/pcie-qcom.c b/drivers/pci/controller/dwc/pcie-qcom.c
+index 8c50b26858..fe159496c5 100644
+--- a/drivers/pci/controller/dwc/pcie-qcom.c
++++ b/drivers/pci/controller/dwc/pcie-qcom.c
+@@ -1419,6 +1419,19 @@ static int qcom_pcie_host_init(struct dw_pcie_rp *pp)
+ 	struct qcom_pcie *pcie = to_qcom_pcie(pci);
+ 	int ret;
+ 
++	/*
++	 * SM8750 reuses the SM8550 controller IP.  After the PME_Turn_Off
++	 * broadcast its LTSSM (PARF + 0x1b0) stays in L0S and never reaches
++	 * L2_IDLE, so polling it only produces
++	 *
++	 *   "Timeout waiting for L2 entry! LTSSM: 0x12"
++	 *
++	 * on every suspend.  Follow PCIe r6.0, sec 5.3.3.2.1 instead: send
++	 * PME_Turn_Off, wait 10 ms and continue without reading LTSSM.
++	 */
++	if (of_device_is_compatible(pci->dev->of_node, "qcom,pcie-sm8750"))
++		pp->skip_l23_ready = true;
++
+ 	qcom_pcie_perst_assert(pcie);
+ 
+ 	ret = pcie->cfg->ops->init(pcie);
+diff --git a/include/linux/kexec.h b/include/linux/kexec.h
+index 0af8ae4fdd..7172276658 100644
+--- a/include/linux/kexec.h
++++ b/include/linux/kexec.h
+@@ -469,6 +469,11 @@ bool kexec_load_permitted(int kexec_image_type);
+ /* flag to track if kexec reboot is in progress */
+ extern bool kexec_in_progress;
+ 
++/* elden kexec-diag (Q11): shutdown-phase skip bitmask, set by kexec_dbg= */
++#define KEXEC_DBG_SKIP_DEVICE  1
++#define KEXEC_DBG_SKIP_SYSCORE 2
++extern int diag_skip_mask;
++
+ #ifndef page_to_boot_pfn
+ static inline unsigned long page_to_boot_pfn(struct page *page)
+ {
+@@ -544,6 +549,9 @@ static inline void *kimage_map_segment(struct kimage *image, int idx)
+ { return NULL; }
+ static inline void kimage_unmap_segment(void *buffer) { }
+ #define kexec_in_progress false
++#define KEXEC_DBG_SKIP_DEVICE  0
++#define KEXEC_DBG_SKIP_SYSCORE 0
++#define diag_skip_mask 0
+ #endif /* CONFIG_KEXEC_CORE */
+ 
+ #ifdef CONFIG_KEXEC_SIG
+diff --git a/kernel/kexec_core.c b/kernel/kexec_core.c
+index dc770b9a6d..c5d25b818a 100644
+--- a/kernel/kexec_core.c
++++ b/kernel/kexec_core.c
+@@ -56,6 +56,62 @@ bool kexec_in_progress = false;
+ 
+ bool kexec_file_dbg_print;
+ 
++/*
++ * elden kexec-diag (Q11): bisect the TB322FC kexec hard-power-off by skipping
++ * individual shutdown phases.  kexec_dbg=<mask> on the cmdline; mask bits:
++ *   1 = KEXEC_DBG_SKIP_DEVICE  skip device_shutdown()  (in reboot.c)
++ *   2 = KEXEC_DBG_SKIP_SYSCORE skip syscore_shutdown()
++ * Combined 3 = skip both.  Guarded by kexec_in_progress so a normal
++ * (non-kexec) reboot is never affected.  See archive/topics/KEXEC-*.
++ * Macros KEXEC_DBG_SKIP_{DEVICE,SYSCORE} and extern diag_skip_mask live in
++ * <linux/kexec.h> so reboot.c can share them.
++ */
++int diag_skip_mask;
++
++static int __init kexec_diag_setup(char *s)
++{
++	long v;
++
++	if (!s || !*s)
++		return 1;
++	v = simple_strtol(s, NULL, 0);
++	diag_skip_mask = (int)v;
++	pr_info("[KD] kexec_dbg parsed s='%s' -> mask=%d\n", s, diag_skip_mask);
++	return 1;
++}
++__setup("kexec_dbg=", kexec_diag_setup);
++
++/* debugfs readback / runtime set: /sys/kernel/debug/kexec_diag (definitive,
++ * avoids cmdline-parse ambiguity; stage=10 always echoes the live value). */
++static ssize_t kexec_diag_show(struct kobject *k, struct kobj_attribute *a,
++			       char *buf)
++{
++	return sysfs_emit(buf, "%d\n", diag_skip_mask);
++}
++static ssize_t kexec_diag_store(struct kobject *k, struct kobj_attribute *a,
++				const char *buf, size_t n)
++{
++	int v, err = kstrtoint(buf, 0, &v);
++
++	if (!err)
++		diag_skip_mask = v;
++	return err ? err : n;
++}
++static struct kobj_attribute kexec_diag_attr =
++	__ATTR(kexec_diag, 0644, kexec_diag_show, kexec_diag_store);
++
++static int __init kexec_diag_sysfs_init(void)
++{
++	struct kobject *k = kobject_create_and_add("kexec_diag", kernel_kobj);
++
++	if (!k)
++		return -ENOMEM;
++	if (sysfs_create_file(k, &kexec_diag_attr.attr))
++		kobject_put(k);
++	return 0;
++}
++late_initcall(kexec_diag_sysfs_init);
++
+ /*
+  * When kexec transitions to the new kernel there is a one-to-one
+  * mapping between physical and virtual addresses.  On processors
+@@ -1189,9 +1245,19 @@ int kernel_kexec(void)
+ #endif
+ 	{
+ 		kexec_in_progress = true;
++		pr_info("[KD] stage=10 enter kernel_kexec (skip_mask=%d)\n",
++			diag_skip_mask);
+ 		kernel_restart_prepare("kexec reboot");
++		pr_info("[KD] stage=11 after kernel_restart_prepare\n");
+ 		migrate_to_reboot_cpu();
+-		syscore_shutdown();
++		pr_info("[KD] stage=12 after migrate_to_reboot_cpu\n");
++		if (!(diag_skip_mask & KEXEC_DBG_SKIP_SYSCORE)) {
++			pr_info("[KD] stage=13 before syscore_shutdown\n");
++			syscore_shutdown();
++			pr_info("[KD] stage=14 after syscore_shutdown\n");
++		} else {
++			pr_info("[KD] stage=13 SKIP syscore_shutdown\n");
++		}
+ 
+ 		/*
+ 		 * migrate_to_reboot_cpu() disables CPU hotplug assuming that
+diff --git a/kernel/reboot.c b/kernel/reboot.c
+index d177d89fcc..214cf1a54f 100644
+--- a/kernel/reboot.c
++++ b/kernel/reboot.c
+@@ -103,7 +103,18 @@ void kernel_restart_prepare(char *cmd)
+ 	blocking_notifier_call_chain(&reboot_notifier_list, SYS_RESTART, cmd);
+ 	system_state = SYSTEM_RESTART;
+ 	usermodehelper_disable();
++	/*
++	 * elden kexec-diag (Q11): optionally skip device_shutdown() to bisect
++	 * the TB322FC kexec hard-power-off.  Only applies to the kexec path
++	 * (kexec_in_progress) so a normal reboot is never affected.
++	 */
++	if (kexec_in_progress && (diag_skip_mask & KEXEC_DBG_SKIP_DEVICE)) {
++		pr_info("[KD] stage=11a SKIP device_shutdown\n");
++		return;
++	}
++	pr_info("[KD] stage=11a before device_shutdown\n");
+ 	device_shutdown();
++	pr_info("[KD] stage=11b after device_shutdown\n");
+ }
+ 
+ /**

@@ -299,6 +299,16 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-10-30 新增待办与并行安排
+
+- **Waydroid 浏览器 `ERR_PROXY_CONNECTION_FAILED`（未解，G2 优先）**：设备独占时只读核查容器全局代理/PAC、浏览器代理、目标地址及监听端口、容器到宿主连通性；区分容器网络、代理配置和上游连通，保留配置后单变量修复；验收同浏览器访问代理目标及直连对照。先排除凭据/隐私问题，不记录敏感信息。
+- **droidloom 可行性规划（未证实，主机侧可并行）**：以 `RESOURCES/sessions/2026-10-26-denial-droidloom深度评估.md` 和 `reports/waydroid-droidloom-userland-interface-20261026.md` 为基线，核实上游当前版本、arm64 构建/发布、Phosh 的 linux-dmabuf v4 feedback 与 linux-drm-syncobj 要求、内核和图形接口、GMS/PI、相机/音频/传感器适配；给出不改现有桌面的隔离试验、资源成本与退出条件。用户要求规划，不预设替换 Waydroid。
+- **设备优先收口**：M8 A/B 基线本轮用户现场判别 3/3 正常，首发有标准采样；原方案的坏发未复现，v2 疗效仍未证实。当前在基线臂，恢复日常镜像前读回备份超时且缺 32 KiB，已停止写入；先诊断链路并取得完整校验备份及 GPT 双表，再决定恢复，禁止把截断备份用于恢复。
+- **双口反向接法**：见 `DEVICE/README.md` §1.4 与 `reports/artifacts/usb-reverse-20261030/snapshot.txt`；待低电量条件下复核充电功率和长时数据稳定性。
+- **并行排产**：设备操作串行加锁；主机侧 M3 v5、wl2868c v2、UEFI 中断续作已异步运行，结束后由父代理独立检查。后续将 Waydroid 静态配置分析与 droidloom 可行性分别派到独立路径，避免与设备测试和已有 lane 写入重叠；任何上游发送另按批批准。
+- **2026-10-29 中断产物的报告入口**（均为未完成/未验证件，不得当结论）：`reports/m8ab-build-20261029.md`（两臂构建，上机结果见下条）、`reports/m3-1-v5-20261029.md`（骨架）、`reports/wl2868c-v2-20261029.md`（骨架）、`reports/uefi-closeout-20261029.md`（部分完成；主机侧续作见 `reports/uefi-recovery-20261030.md`，M1/M3/M4 已完、M2 待上机）。
+- **M8 续测结果（2026-10-30）**：基线臂 3/3 现场正常（1 发有标准采样）⇒ 坏发未复现、按预注册规则停手未刷 v2 ⇒ **v2 疗效仍未证实**；详见 `reports/m8ab-restart-20261030.md`。
+
 ### 1. 待调查（Open questions，按优先级）
 
 > 编号 Q1–Q26、Q28、Q31–Q34；**Q27 从无此号**（历史「G1-34 / §5 Q27」为幻影引用，已随 2026-10-10 清理移除）。
@@ -339,7 +349,7 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 | **Q33** | **WCD939X 冷起 5425 行 `ASoC error (-16)` 读重试（耗 20 s）** | 音频最终可用，但启动多等 20 s、并刷屏 | 抓调用栈/调用者（T139 音频卡初始化上下文），确认 `soc_component_read_no_lock()` 的 EBUSY 来源（regmap 在 runtime-suspend 时读）；复现命令见 `reports/vk163-por-boot-latency-20261026.md` §3 | T21 / G1-4 / `PITFALLS #421` |
 | **Q34** | **`bluetoothd` 冷起偶发 crash**（`rc-service bluetooth stop/start` 后正常） | 冷起后蓝牙不可用，需手动重启服务 | ✅ **已定案（2026-10-28 现场复现）= 不是 crash，是 WCN7861 外设固件缺文件**（`PITFALLS #454`）：`bluetoothd` 一直 active，`hci0` DOWN / BD 全 0、`Direct firmware load for qca/tmel_peach_20.elf failed with error -2` ⇒ `Peripheral setup failed: -2`；设备 `/lib/firmware/qca/` 只有 4 个文件（少 tmel）。补文件 + `modprobe -r hci_uart; modprobe hci_uart` ⇒ `hci0 UP RUNNING` / BD `22:22:62:9C:97:58` / `QCA setup on UART is completed`；**重载服务或重载模块都不解决，必须补文件**（旧「restart 就好」与本次不同源）。根治 = `elden-firmware` 加 `local-extras.tsv` + 新门禁 A2「驱动 `MODULE_FIRMWARE` 声明的厂商固件必须进包」（负向测试已验证）。原判据存档：若为 D-Bus 名抢占则在 `bluetooth` 服务加 restart/调序 | T21 / G1-7 / `PITFALLS #420` 邻近 |
-| **Q35** | **双口能否「长边跑数据 + 短边快充」** | ✅ **已判定（2026-10-29 实测）= 物理可行、被 ADSP 选口策略挡住**：只留短边 PD 时电池 **12.2 A**（capacity 19%→27%，≈46 W）；两口同插则只吃长边 SDP 0.891 A。内核逐口建模（两 `typec/port*` + 两 `ucsi-source-psy-*` + 两颗 SMB1501）⇒ 不是「内核只认一口」；`qcom-battmgr-usb` 只读跟随被选中的那口，AP 无控制面 ⇒ **归因固件（ADSP 策略）** | 不阻塞 G1/G2；要「数据+快充」同时成立 = **PD 插长边、数据插短边**（需 M3-1 `port-select` 仲裁落地） | **不再投入**（除非将来 ADSP 侧提供选口接口）；事实正文只在 `DEVICE/README.md` §1.4，采样与判据 = `reports/usb-dual-port-test-protocol-20261029.md` §8 | 不需要单独任务行 |
+| **Q35** | **双口能否「长边跑数据 + 短边快充」** | ✅ **已判定（2026-10-29 实测）= 物理可行、被 ADSP 选口策略挡住**：只留短边 PD 时电池 **12.2 A**（capacity 19%→27%，≈46 W）；两口同插则只吃长边 SDP 0.891 A。内核逐口建模（两 `typec/port*` + 两 `ucsi-source-psy-*` + 两颗 SMB1501）⇒ 不是「内核只认一口」；`qcom-battmgr-usb` 只读跟随被选中的那口，AP 无控制面 ⇒ **归因固件（ADSP 策略）** | 不阻塞 G1/G2；反向接法「PD 长边、数据短边」已观察到数据与充电并存；快充和热切换待验证（见 `DEVICE/README.md` §1.4；M3-1 仲裁的必要性未证实） | **不再投入**（除非将来 ADSP 侧提供选口接口）；事实正文只在 `DEVICE/README.md` §1.4，采样与判据 = `reports/usb-dual-port-test-protocol-20261029.md` §8 | 不需要单独任务行 |
 
 ---
 

@@ -1,0 +1,71 @@
+From 440b07562d5d57a9237d5e84e412bf1b7419e530 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Thu, 29 Oct 2026 23:19:37 +0800
+Subject: [PATCH v2 0/3] regulator: add the WL2868C camera PMIC and wire up its
+ users on the Lenovo Legion Tab
+
+This series adds support for the Will Semiconductor WL2868C, an I2C
+camera power management IC with seven LDOs, together with its in-tree
+users: the regulator driver (patch 2) and the board description of the
+Lenovo Legion Tab (TB322FC, SM8750) that wires the camera devices to
+the LDO outputs (patch 3).
+
+The DT binding (patch 1) is unchanged from the v2 that was posted
+standalone on 28 October, which already carries the fixes from that
+round (subject prefix, MAINTAINERS placement). The driver and the
+board description are new to this series; the series carries v2 so
+that its version history stays consistent with the binding.
+
+Two notes on where this version came from:
+
+  - the binding commit message of the first posting contained a
+    duplicated paragraph; all three commit messages here are written
+    fresh for this series.
+
+  - the reviews asked who actually uses the binding. The answer is now
+    part of the series: patch 3 describes the board wiring, and the
+    consumers are these three devices on the WL2868C outputs
+
+      - rear camera, samsung,s5kjns: dvdd -> LDO1, avdd -> LDO4,
+        dovdd -> LDO7
+      - front camera, galaxycore,gc08a8: dvdd -> LDO2, avdd -> LDO3,
+        dovdd -> LDO7
+      - rear VCM, giantec,gt9764: vdd -> LDO5, vddio -> LDO7
+
+    LDO1 to LDO5 and LDO7 are all in use; LDO6 is not wired out on
+    this board.
+
+The driver is a plain regulator driver: regmap over I2C, one
+regulator_desc per LDO registered with devm_regulator_register(),
+linear voltage mapping, no private sysfs or debugfs interface. SYS_EN,
+the chip-wide enable, has no consumer of its own; the driver sets it
+together with the per-LDO bit on enable and only clears the per-LDO
+bit on disable, so that turning one rail off cannot gate the chip
+itself.
+
+Patch 3 also adds the two CCI I2C controllers to the SM8750 dtsi,
+because the camera devices hang off them. The sensors are described
+with their supplies only for now; their CSI endpoints will come with
+the camera subsystem work.
+
+Qianhui Xu (3):
+  regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+  regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+  arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators
+
+ .../bindings/regulator/willsemi,wl2868c.yaml  |  79 ++++++++
+ MAINTAINERS                                   |   7 +
+ arch/arm64/boot/dts/qcom/Makefile             |   1 +
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 170 ++++++++++++++++++
+ arch/arm64/boot/dts/qcom/sm8750.dtsi          | 112 ++++++++++++
+ drivers/regulator/Kconfig                     |  11 ++
+ drivers/regulator/Makefile                    |   1 +
+ drivers/regulator/wl2868c-regulator.c         | 155 ++++++++++++++++
+ 8 files changed, 536 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+ create mode 100644 arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+ create mode 100644 drivers/regulator/wl2868c-regulator.c
+
+-- 
+2.53.0
+
