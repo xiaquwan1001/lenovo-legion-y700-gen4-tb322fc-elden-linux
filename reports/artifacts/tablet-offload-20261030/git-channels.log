@@ -1,0 +1,29 @@
+# gate=git-channels date=2026-10-30T22:46:45+08:00 — read-only ls-remote; no push; no credential output
+## A. SSH:22 to git.ustc from HOST (TCP now OPEN) — key auth, BatchMode, 1 attempt
+<LONGSTR>	refs/heads/audit/early-reboot
+<LONGSTR>	refs/heads/history/pre-vk34
+<LONGSTR>	refs/heads/lane/doctor-refactor
+<LONGSTR>	refs/heads/lane/upstream
+<LONGSTR>	refs/heads/main
+<LONGSTR>	refs/heads/main-clean-20261026
+rc=0
+## B. HTTPS anon from HOST
+https info/refs http=401
+## C. glab api with stored keyring creds (project list, names only, no token)
+PROJECTS: ['xuqianhui1001/phoc']
+## D. github remote reachable (ssh 443)?
+3c38428047df9cf12314a107b9833b37918c9096	refs/heads/audit/early-reboot
+76b2c0fa4a18b1eeaa777caf31bbc6c1e950c971	refs/heads/history/pre-vk34
+c806a811c1b9d1661b0140621c3838b66359b26f	refs/heads/lane/doctor-refactor
+53fbe5a405805ed3294e86b6056e518bcdcae1e2	refs/heads/lane/upstream
+rc=0
+## E. unpushed commits vs each remote
+-- github
+141
+-- origin
+141
+## F. last fetch age per remote
+-- github FETCH_HEAD age
+2026-10-26 19:00:10.792036300 +0800
+-- origin FETCH_HEAD age
+2026-10-26 19:00:10.792036300 +0800

@@ -1,0 +1,29 @@
+# gate=tablet-apt-sim date=2026-10-30T22:47:34+08:00 — SIMULATION ONLY (NoLocking, -s), no install, no lock contention with M3-1 lane
+== mirrors reach
+deb-orig http=200
+npm-registry(ustc) http=404
+registry.npmjs.org http=200
+git.ustc 443 http=302
+pypi(ustc) http=301
+== apt simulate (no lock)
+== simulate cross toolchain arm64 (already native)
+== pi/npm offline deps present on tablet?
+ls: cannot access '/root/.pi': No such file or directory
+== input devices
+by-path
+event0
+event1
+event2
+event3
+event4
+event5
+event6
+mice
+mouse0
+== free space
+/dev/sda17       94G   16G   73G  18% /
+== systemd user manager?
+running
+== login user for user-unit
+   0 root          no active
+1001 xuqianhui1001 no active

@@ -1,0 +1,2 @@
+channel=direct-ustc   provider=custom.ustc       model=deepseek-flash  (probe 200)
+default set

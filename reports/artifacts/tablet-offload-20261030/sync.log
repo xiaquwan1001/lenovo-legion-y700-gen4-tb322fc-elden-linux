@@ -1,0 +1,75 @@
+# gate=sync date=2026-10-30T22:42:47+08:00  (credentials REDACTED, never dumped)
+## remotes (redacted)
+github	git@github.com:xiaquwan1001/lenovo-legion-y700-gen4-tb322fc-elden-linux.git (fetch)
+github	git@github.com:xiaquwan1001/lenovo-legion-y700-gen4-tb322fc-elden-linux.git (push)
+origin	https://git.ustc.edu.cn/xqh/y700-elden.git (fetch)
+origin	https://git.ustc.edu.cn/xqh/y700-elden.git (push)
+## branch -vv
++ lane/aw86927-series 41f9996 (/home/xuqianhui/wt-aw86927-series) upstream: aw86927 固件波形能力 5 提交系列草案（U4）
++ lane/b5-resoc       ea6c518 (/home/xuqianhui/wt-b5-resoc) b5-resoc: bonded-DSI per-SoC cfg + host ops (steps 1-3)
++ lane/devcam-ab      72acfd3 (/home/xuqianhui/wt-devcam-ab) M4-R1: SKEW_CAL A/B on-device (hot-swap qcom-camss, no reboot)
+* main                5bad548 [github/main: 领先 141] chore(history): 重生成 HISTORY/days
+## HEAD
+5bad548d4dc42a8c7955febd3c2aff4ae78ffbc6 2026-10-30 22:11:54 +0800 chore(history): 重生成 HISTORY/days
+## status -sb (first 15)
+## main...github/main [领先 141]
+?? reports/artifacts/m3v5-onboard-20261030/a0-bootb.log
+?? reports/artifacts/m3v5-onboard-20261030/a0-gpt.log
+?? reports/artifacts/m3v5-onboard-20261030/a0-host-assets.log
+?? reports/artifacts/m3v5-onboard-20261030/a0-id.log
+?? reports/artifacts/m3v5-onboard-20261030/a0-modbak.log
+?? reports/artifacts/m3v5-onboard-20261030/a0-summary.md
+?? reports/artifacts/m3v5-onboard-20261030/a0-usb-state.log
+?? reports/artifacts/m3v5-onboard-20261030/a1-summary.md
+?? reports/artifacts/m3v5-onboard-20261030/g1.log
+?? reports/artifacts/m3v5-onboard-20261030/g2-olddef.log
+?? reports/artifacts/m3v5-onboard-20261030/g2-removed-m.txt
+?? reports/artifacts/m3v5-onboard-20261030/g3-abi.log
+?? reports/artifacts/tablet-offload-20261030/
+?? reports/m3v5-onboard-plan-20261030.md
+## upstream tracking of current branch
+github/main
+## glab version + auth status (NO --show-token)
+Current glab version: 1.53.0
+gitlab.com
+  x gitlab.com: API call failed: GET https://gitlab.com/api/v4/user: 401 {message: 401 Unauthorized}
+  ✓ Git operations for gitlab.com configured to use https protocol.
+  ✓ API calls for gitlab.com are made over https protocol.
+  ✓ REST API Endpoint: https://gitlab.com/api/v4/
+  ✓ GraphQL Endpoint: https://gitlab.com/api/graphql/
+  ! No token provided in configuration file. [redacted]
+git.ustc.edu.cn
+  ✓ Logged in to git.ustc.edu.cn as xqh (keyring)
+  ✓ Git operations for git.ustc.edu.cn configured to use https protocol.
+  ✓ API calls for git.ustc.edu.cn are made over https protocol.
+  ✓ REST API Endpoint: https://git.ustc.edu.cn/api/v4/
+  ✓ GraphQL Endpoint: https://git.ustc.edu.cn/api/graphql/
+  ✓ Token: ************************** [redacted]
+  ! Invalid token provided in configuration file. [redacted]
+gitlab.gnome.org
+  ✓ Logged in to gitlab.gnome.org as xuqianhui1001 (keyring)
+  ✓ Git operations for gitlab.gnome.org configured to use https protocol.
+  ✓ API calls for gitlab.gnome.org are made over https protocol.
+  ✓ REST API Endpoint: https://gitlab.gnome.org/api/v4/
+rc_glab=0
+## glab config file exists? (contents NOT shown)
+-rw------- 1 xuqianhui xuqianhui 1862 Oct 18 21:06 /home/xuqianhui/.config/glab-cli/config.yml
+## git credential helper config
+credential.https://github.com.helper 
+credential.https://github.com.helper !/usr/bin/gh auth git-credential
+credential.https://gist.github.com.helper 
+credential.https://gist.github.com.helper !/usr/bin/gh auth git-credential
+credential.helper !/home/xuqianhui/.local/bin/git-credential-keyring
+credential.https://git.ustc.edu.cn.helper 
+credential.https://git.ustc.edu.cn.helper !glab auth git-credential
+## credential stores present? (names only)
+ABSENT /home/xuqianhui/.git-credentials
+ABSENT /home/xuqianhui/.netrc
+EXISTS /home/xuqianhui/.config/gh/hosts.yml perms=600
+EXISTS /home/xuqianhui/.config/glab-cli/config.yml perms=600
+## PAT env vars set? (presence only)
+GITLAB_TOKEN=UNSET
+GITLAB_ACCESS_TOKEN=UNSET
+GLAB_TOKEN=UNSET
+CI_JOB_TOKEN=UNSET
+VLAB_TOKEN=UNSET

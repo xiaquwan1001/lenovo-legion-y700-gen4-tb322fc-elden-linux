@@ -276,3 +276,9 @@
 2. **可再生的大对象不外置到设备**：内核/模块/镜像/归档留主机，用 `sshfs`/NFS/`scp` 按需取；TF 卡未修好前不指望它。
 3. **回收 Android 分区是主要扩容手段**（§2.4 Phase B），不是二次缩 `userdata`。
 4. 任何改动前先备份分区（**设备侧 `dd` / 官方线刷包解出 / EDL 读回——本机 ABL 无 `fastboot fetch`，`PITFALLS` #290**）+ GPT 双表 dump；改后**读回校验**（回读 md5/sha256，不看"传输完成"）。
+
+### 3.3 当前容量决定（2026-10-30 用户裁定）
+
+- **只保留一个 Linux 分区**：保留 `linux17`（ext4，Debian 根），删除 `linux18`（f2fs，Alpine 回退根）并把空间并入 `linux17` ⇒ 目标 ≈**192 GiB**（可用由 73 G 增至 ≈169 G）。
+- **Alpine 秒级回退随之退役**；等价回退 = `boot_b` 签名镜像（`boot_b-vk181-daily-signed`/`vk162-rescue` 等）+ 主机侧备份 + 救援镜像。**不再以“重启回 Alpine”作为回退路径**（T19 旧口径作废）。
+- **执行顺序（硬约束）**：M3-1 v5 上机实验收尾 → GPT 双表备份（`scripts/gpt-dump.sh`）→ 删 `sda18` → 扩 `sda17` → `resize2fs` 在线增长 → 读回校验（`lsblk`/`df`/`e2fsck -fn`）。设备是单一串行资源，未完成前不得与其它上机 lane 并行。

@@ -1,0 +1,10 @@
+# gate=kernel-repo date=2026-10-30T23:10:44+08:00
+## anon reachability of the kernel repo (docs repo was 401)
+https anon kernel info/refs http=401
+## ssh ls-remote kernel repo from host (refs count only)
+2
+## shallow clone .git size vs full
+1.2G	geekidos-linux/.git
+85M	.git
+## estimated tablet clone (shallow depth=1 of kernel tree)
+1.8G	geekidos-linux

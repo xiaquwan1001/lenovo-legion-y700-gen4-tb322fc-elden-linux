@@ -1,0 +1,86 @@
+scripts/hk-save-decrypt.py:49:        from Crypto.Cipher import AES  # pycryptodome
+scripts/hk-save-decrypt.py:55:        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+scripts/hk-save-decrypt.py:60:        raise SystemExit("need pycryptodome or cryptography (pip install pycryptodome)")
+scripts/eldroid-bootctl:184:    p.add_argument("--force", action="store_true", help="edl 未支持时也继续")
+scripts/win-x86-rootfs.sh:5:# 或用 --debootstrap 走 debootstrap+qemu-user-static 交叉构建 Debian/Ubuntu rootfs。
+scripts/win-x86-rootfs.sh:11:#   scripts/win-x86-rootfs.sh debootstrap        # debootstrap 交叉构建（需 root + qemu）
+scripts/win-x86-rootfs.sh:50:debootstrap_build() {
+scripts/win-x86-rootfs.sh:51:  # 交叉构建：主机需 apt install debootstrap qemu-user-static
+scripts/win-x86-rootfs.sh:52:  command -v debootstrap >/dev/null || { echo "need: apt install debootstrap qemu-user-static" >&2; exit 2; }
+scripts/win-x86-rootfs.sh:56:  debootstrap --arch=arm64 --foreign --variant=minbase "$1" "$ROOTFS" "$mirror"
+scripts/win-x86-rootfs.sh:58:  chroot "$ROOTFS" /debootstrap/debootstrap --second-stage
+scripts/win-x86-rootfs.sh:59:  chroot "$ROOTFS" bash -c "apt-get update && apt-get install -y ca-certificates wget"
+scripts/win-x86-rootfs.sh:83:  debootstrap) shift; debootstrap_build "${1:-noble}";;
+scripts/win-x86-rootfs.sh:85:  *) echo "usage: $0 {build|debootstrap|deploy} ..." >&2; exit 2;;
+scripts/host-arm64-chroot.sh:9:#      `debootstrap` 起来之后 S2–S5 都能在里面离线做。
+scripts/host-arm64-chroot.sh:29:say "0/5 依赖：debootstrap / qemu-user-static（binfmt 已注册：$(ls /proc/sys/fs/binfmt_misc 2>/dev/null | grep -c qemu-aarch64)）"
+scripts/host-arm64-chroot.sh:30:if ! command -v debootstrap >/dev/null; then
+scripts/host-arm64-chroot.sh:32:	DEBIAN_FRONTEND=noninteractive apt-get install -y -qq debootstrap
+scripts/host-arm64-chroot.sh:34:command -v debootstrap >/dev/null || { echo "debootstrap 安装失败" >&2; exit 1; }
+scripts/host-arm64-chroot.sh:35:# arm64 二进制要靠 binfmt 才能在 x86 主机上执行（本机已注册；缺则装 qemu-user-static）
+scripts/host-arm64-chroot.sh:37:	DEBIAN_FRONTEND=noninteractive apt-get install -y -qq qemu-user-static
+scripts/host-arm64-chroot.sh:40:say "1/5 debootstrap $SUITE arm64 → $CHROOT_DIR（minbase，可重入）"
+scripts/host-arm64-chroot.sh:42:	debootstrap --arch=arm64 --variant=minbase --include=ca-certificates \
+scripts/host-arm64-chroot.sh:45:	echo "已存在，跳过 debootstrap"
+scripts/host-arm64-chroot.sh:54:	apt-get install -y -qq --no-install-recommends \
+scripts/gunyah-rm-bringup.sh:28:	aarch64-linux-gnu-gcc -static -O2 -o "$KSRC/elden-rmtest/rmtest" "$KSRC/elden-rmtest/rmtest.c"
+scripts/kbuild-sanity.sh:94:	&& aarch64-linux-gnu-gcc -O2 "$TMPD/h.c" -o "$TMPD/h" 2>"$TMPD/err" \
+scripts/build-ffrumble.sh:7:[ -n "$CC" ] || CC=$(command -v aarch64-linux-gnu-gcc || echo "$HOME/bin/aarch64-linux-gnu-gcc")
+scripts/sd-variant-build.sh:20:export CC="ccache aarch64-linux-gnu-gcc"
+scripts/rebuild-vk64-image.sh:72:      ① sudo apt-get install --reinstall -y gcc-15-aarch64-linux-gnu cpp-15-aarch64-linux-gnu
+scripts/rebuild-vk64-image.sh:73:      ② sudo apt-get install -y gcc-14-aarch64-linux-gnu  （然后 CROSS_COMPILE=aarch64-linux-gnu-14- 重跑）
+scripts/rebuild-vk64-image.sh:110:			CC="${CC:-ccache aarch64-linux-gnu-gcc}" HOSTCC="${HOSTCC:-ccache gcc}" \
+scripts/deploy-sensord-routec-debian.sh:41:rsh 'DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
+scripts/build-sensord.sh:7:[ -n "$CC" ] || CC=$(command -v aarch64-linux-gnu-gcc || echo "$HOME/bin/aarch64-linux-gnu-gcc")
+scripts/apply-kernel-fragment.sh:46:export PATH="$HOME/bin:$PATH"   # 本机 gcc 只有版本化名，~/bin 里放了 aarch64-linux-gnu-gcc 软链
+scripts/apply-kernel-fragment.sh:81:  warn "装好后跑： sudo apt install -y gcc-15-aarch64-linux-gnu"
+scripts/build-hapticd.sh:7:[ -n "$CC" ] || CC=$(command -v aarch64-linux-gnu-gcc || echo "$HOME/bin/aarch64-linux-gnu-gcc")
+scripts/build-athm-probe.sh:20:export CC="ccache aarch64-linux-gnu-gcc"
+scripts/env-build.sh:28:	export CC="ccache aarch64-linux-gnu-gcc"
+tools/avbtool.py:379:    # instead just parse openssl(1) output to get this
+tools/avbtool.py:381:    args = ['openssl', 'rsa', '-in', key_path, '-modulus', '-noout']
+tools/avbtool.py:439:    """Sign given data using |signing_helper| or openssl.
+tools/avbtool.py:441:    openssl is used if neither the parameters signing_helper nor
+tools/avbtool.py:496:            ['openssl', 'rsautl', '-sign', '-inkey', self.key_path, '-raw'],
+tools/avbtool.py:561:    AvbError: If there errors calling out to openssl command during
+tools/avbtool.py:614:  # to rely on Crypto.PublicKey.RSA. Instead just use openssl(1) to verify.
+tools/avbtool.py:636:          ['openssl', 'asn1parse', '-genconf', asn1_tmpfile.name, '-out',
+tools/avbtool.py:643:          ['openssl', 'rsautl', '-verify', '-pubin', '-inkey', der_tmpfile.name,
+probes/README.md:28:aarch64-linux-gnu-gcc -static -O1 -o probes/q28latch/dsidump probes/q28latch/dsidump.c
+packaging/elden-userland/extra/README.md:22:  但构建依赖 gbinder/glibutil 开发包，`sources.tsv` 里给的是「在设备/debootstrap 环境内 make」，
+packaging/elden-userland/files/usr/local/bin/eldroid-bootctl:151:    p.add_argument("--force", action="store_true", help="edl 未支持时也继续")
+packaging/elden-userland/out/units/openrc/iio-sensor-proxy:39:		echo "elden: iio-sensor-proxy: qrtr-lookup 缺失（apt install qrtr-tools），跳过 SSC 等待" >&2
+packaging/elden-userland/out/units/hooks/iio-sensor-proxy.pre:14:	echo "elden: iio-sensor-proxy: qrtr-lookup 缺失（apt install qrtr-tools），跳过 SSC 等待" >&2
+packaging/elden-userland/sources.tsv:16:/usr/local/sbin/reboot2	aarch64-linux-gnu-gcc -static -Os -o /tmp/reboot2 rootfs/reboot2.c	rootfs/reboot2.c	ok	静态；PSCI vendor reset（SYSTEM_RESET2），Linux→fastboot 的可靠入口
+packaging/elden-userland/hooks/iio-sensor-proxy.pre:14:	echo "elden: iio-sensor-proxy: qrtr-lookup 缺失（apt install qrtr-tools），跳过 SSC 等待" >&2
+.pi/skills/qualcomm-edl-flashing/references/tb321fu-y700.md:18:  length % 16 == 0; decrypt tool: XDA Breed43214, `pip install cryptography` + decrypt_batch.bat).
+.pi/skills/qualcomm-edl-flashing/references/tb322fc-y700-gen4.md:94:- Full resource map + host toolchain (clang-21 / aarch64-gcc 15.2 / dtc / 644 GiB):
+.pi/skills/qualcomm-edl-flashing/references/tb322fc-y700-gen4.md:222:  - Host toolchain ready: clang-21 ✅, aarch64-gcc 15.2 installable, dtc ✅, 644 GiB disk.
+.pi/skills/qualcomm-edl-flashing/SKILL.md:30:2. Install bkerler/edl: `git clone https://github.com/bkerler/edl` (China: prefix `https://gh-proxy.com/`), `pip install -r requirements.txt` in a venv (PEP 668 boxes). Udev rule for 05c6:9008 (MODE="0666") + `udevadm control -R`; **replug the device after** — rule changes don't apply to an already-enumerated device.
+.pi/skills/qualcomm-edl-flashing/SKILL.md:70:- Lenovo `.x` files (encrypted rawprogram XML): structure is consistent with AES-CBC + 16-byte IV prefix (length % 16 == 0). CN 7z packages sometimes ship PLAIN XML (e.g. TB321FU_ZUI_16.1.10.027) while ROW zips use .x. XDA tool by Breed43214 (`pip install cryptography` + decrypt_batch.bat) decrypts them. **Ready-made alternative (2026-08-08)**: LTBox (now a full GUI app, v3.2.2) has a built-in "Convert X to XML" step plus EDL partition/LUN read-write — see `references/community-tool-status-2026-08.md`.
+.pi/skills/qualcomm-android-flashing/references/session-20260808-oem-super-night.md:34:## EDL firehose sector-size gate (pad exactly, or edl refuses)
+.pi/skills/qualcomm-android-flashing/references/community-tool-status-2026-08.md:70:  Userspace mode uses libusb directly — the SAME transport the project's bkerler/edl chain has
+.pi/skills/qualcomm-android-flashing/references/community-tool-status-2026-08.md:119:- bkerler/edl still actively maintained (652 commits, ©2026) — local copy from 2026-05-14 can
+.pi/skills/qualcomm-android-flashing/references/tb321fu-mod-package-boot.md:42:- EDL 读回验证写入：`edl r <part> <out>` + sha256 对比（EDL 会话"Connection detected, quiting"
+.pi/skills/qualcomm-android-flashing/references/gdrive-zip64-range-extract.md:5:## 1. 下载前先拿 confirm token（模拟 gdown）
+.pi/skills/qualcomm-android-flashing/references/lenovo-abl-incompatibility.md:93:- DTB analysis: `apt-get download device-tree-compiler` → `dpkg -x` → `dtc -I dtb -O dts`
+.pi/skills/qualcomm-android-flashing/references/tb321fu-region-lock.md:10:3. logfs (`edl r logfs /tmp/logfs.bin`) ring buffer showed **5 boot records, ALL ending at
+.pi/skills/qualcomm-android-flashing/references/tb321fu-region-lock.md:17:4. `edl r misc` → `ffbm-00` (factory-mode marker).
+.pi/skills/qualcomm-android-flashing/references/tb321fu-region-lock.md:18:5. `edl r devinfo` → `ANDROID-BOOT!` + `01` = BL unlocked, no region data there.
+.pi/skills/qualcomm-android-flashing/references/tb321fu-region-lock.md:71:  (`edl r logfs`) immediately after the FIRST failed boot is the next diagnostic (retries
+.pi/skills/qualcomm-android-flashing/references/tb321fu-region-lock.md:92:(Breed43214, `pip install cryptography` + decrypt_batch.bat), `TB320FC_ROW_fastboot_prc_v2.x.zip`
+.pi/skills/qualcomm-android-flashing/references/tb321fu-region-lock.md:97:## Google Drive large-file download without gdown (China network)
+.pi/skills/qualcomm-android-flashing/references/tb321fu-region-lock.md:98:`pip install gdown` failed (PEP 668 + mirror 403 on soupsieve). Working substitute
+.pi/skills/qualcomm-android-flashing/references/grub-direct-boot-android.md:87:  dtbs with a magic scan (`d0 0d fe ed` totalsize walk), then `dtc -I dtb -O dts` each
+.pi/skills/qualcomm-android-flashing/SKILL.md:23:- **misc partition in this state reads `ffbm-00`** (factory-mode marker; XDA threads tie it to the same "not compatible" bootloop family). If EBS persists after region conversion, try clearing misc (EDL `edl w misc` with a zeroed 1 MiB image) to remove FFBM influence.
+.pi/skills/qualcomm-android-flashing/SKILL.md:65:- bkerler/edl: **NOT installable via `pip install edl`** — that PyPI name is an unrelated video/monitoring tool (its setup imports `timecode`). Install from GitHub source: tarball (CN network: gh-proxy.com proxy — see china-mirror skill) -> extract -> `python3 -m venv venv-edl && venv-edl/bin/pip install -r requirements.txt` (PEP 668 hosts need the venv; pyusb imports as `usb`, verify `import usb, serial`). Commands: `edl.py -l <melf> printgpt` (real GPT incl. LUN layout), `secureboot`, `r`/`w` partitions, `rl <dir>` backup-all, `gpt <dir>` write GPT, `ws <start_sector> <file>` raw-sector write, `qfil <rawprogram> <patch> <imagedir>` QFIL-XML flash, `setactiveslot <a|b>`. qdl-rs: `qdl-rs --loader-path <melf> --storage-type ufs --backend serial --dev-path <COM> --phys-part-idx 4 write <part> <file>`.
+.pi/skills/qualcomm-android-flashing/SKILL.md:72:- Lenovo `.x` files (rawprogram/patch/contents) are encrypted XML; decrypt with the XDA tool (`pip install cryptography` + decrypt_batch.bat).
+.pi/skills/qualcomm-android-flashing/SKILL.md:155:Restoring super: OEM packages ship the dynamic partitions as **individual fs images** (ext4/erofs) + rawprogram XML giving LP-metadata offsets — NOT one sparse super.img. ROW zip packages encrypt those XMLs (`.x` extension); CN 7z packages historically ship plain XMLs — an old CN package's offsets can flash newer images (super content is not rollback-indexed). Alternatives to the `.x` decrypt: XDA Breed43214 tool (`pip install cryptography` + decrypt_batch.bat), or rebuild super with lpmake from the fs images (Python-lpmake recipe in `qualcomm-edl-flashing`).
+.pi/skills/qualcomm-android-flashing/SKILL.md:166:- **bkerler/edl firehose sessions die after 1–2 partition writes with `USB Overflow`** ("Connection detected, quiting."). Re-trying the same command never recovers; the fix is a physical USB re-enumeration — unplug/replug the cable (device stays in EDL) — then continue the remaining writes one pair at a time. For BL-unlocked devices, prefer `fastboot flash <part>` over EDL for boot/vendor_boot/dtbo/init_boot/vbmeta writes (fastboot channel is stable where EDL firehose wedges). Note `edl w <partition> <img>` writes by GPT partition name (boot_a, not boot).
+.pi/skills/qualcomm-android-flashing/SKILL.md:167:- **logfs "Start EBS" ≠ kernel handoff**: a logfs record ending at `Start EBS` with no `Load Image boot_a` line means the ABL gate rejected the boot (region lock, etc.). Capture logfs IMMEDIATELY after the first failed boot (`edl r logfs`) before retries overwrite the ring buffer; read misc (`edl r misc`) for the `ffbm-00` factory-mode marker.
+.pi/skills/qualcomm-android-flashing/SKILL.md:172:- When the user names an obscure boot/tool (e.g. 'tirith' as a GRUB-like loader): verify it exists on PyPI/GitHub FIRST. `pip install tirith` pulls an unrelated remote-monitoring package; no bootloader project by that name exists — confirm before installing, then clarify with the user.
+.pi/skills/qualcomm-android-flashing/SKILL.md:175:- **LTBox "Qualcomm kernel USB driver is missing" on Linux = qud-package check in kernel driver mode, NOT a real problem**: LTBox defaults `qcom_driver_mode: "kernel"` (`~/.config/ltbox/settings.json`) and warns when the `qud` package (source-compiled kernel-module .deb) is absent — even when `qcserial` is already loaded. Do NOT install qud (needs root + compile against the running kernel, risky on new HWE kernels). Fix: set `"qcom_driver_mode": "userspace"` in the settings file — userspace = plain libusb, the same transport the bkerler/edl chain uses. No root, no reboot; relaunch to verify the banner is gone. Detail: `references/community-tool-status-2026-08.md`.
+.pi/skills/qualcomm-android-flashing/SKILL.md:185:- `references/tb321fu-region-lock.md` — 2026-08-08: "不兼容" = ABL EBS = REGION LOCK (vendor_boot DTB region FDT **values** `IROW`/`IPRC` — node name `product_region` may be absent; grep values not names); logfs "Start EBS" ≠ kernel handoff; LTBox conversion + avbtool testkey rebuild recipe with exact rollback/partition_size numbers; **region gate PASSED empirically** → follow-on **fastboot-loop blocker** (eliminated: AVB enable/disable, stock boot, misc/ffbm; root cause unresolved, next step logfs); NindoS stock-AVB GSI counterpoint (open question); ahnoriku ready-made MOD ROW→PRC packages; Google Drive download-without-gdown recipe.
+.pi/skills/qualcomm-android-flashing/SKILL.md:188:- `references/gdrive-zip64-range-extract.md` — fetch SPECIFIC entries from a large Google Drive ZIP64 archive via Range requests (ZIP64 CD parse, extra-field lho, inflate+CRC) without downloading the whole 6+ GiB file; damaged-download diagnosis (size-correct-but-zero-filled tail); gdown uuid/confirm flow.
+.pi/skills/qualcomm-android-flashing/SKILL.md:189:- `references/community-tool-status-2026-08.md` — toolchain re-survey (work paused by user 2026-08-08): LTBox matured into a full GUI app (v3.2.2 — Convert Region / rollback bypass / .x→XML decrypt / EDL flash wizard; TB321FU ZUI ≤ 17.5.10.170 in-window; /tmp/LTBox already latest, uncompiled); DynoBox firmware re-sign CLI (LenovoRSA-gate escape); TWRP b0006 for TB321FU (polygraphene); CN region now ships ZUXOS (Android 16) not ZUI; XDA 4706488/4742843/4775810 updates; bkerler/edl still active (652 commits).
+RUNBOOK-BRINGUP/README.md:230:#    qdl/edl 的 read 子命令，或 Firehose 分区表里按 LUN/扇区直读

@@ -1,0 +1,6 @@
+bashrc-backed-up
+
+# ble.sh (installed 2026-10-30, tablet-offload lane)
+[[ $- == *i* ]] && source /usr/local/share/blesh/ble.sh --noattach
+bash: /usr/local/share/blesh/ble.sh: No such file or directory
+BLE_OK=127

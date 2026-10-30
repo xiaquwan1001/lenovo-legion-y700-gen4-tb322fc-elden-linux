@@ -1,0 +1,41 @@
+# gate=vlab-vm3 date=2026-10-30T22:47:34+08:00 — read-only (one mkdir/rmdir probe in /opt/vlab only)
+Welcome to Vlab
+== mount options (writability judgement)
+/      rw,relatime,space_cache=v2,subvolid=256,subvol=/@
+/opt/vlab ro,noatime,compress=zstd:3,discard=async,space_cache=v2,subvolid=256,subvol=/@
+== can write /opt/vlab? (dir test under a private name, removed immediately)
+mkdir: 无法创建目录 "/opt/vlab/.probe-14178": 只读文件系统
+OPTVLAB_WRITABLE=no
+== container type
+lxc
+0::/init.scope
+== git.ustc reachability from VM
+443 http=302
+VM->git.ustc:22 OPEN
+== cgroup cpu/mem limits (v2)
+max 100000
+max
+== disk quota on / (btrfs qgroup?)
+/dev/mapper/user--data2-vm--14178--disk--0   16G  3.8G   12G   25% /
+== apt lists freshness
+总计 327960
+drwxr-xr-x 1 _apt root        0  9月  5 21:21 auxfiles
+-rw-r----- 1 root root        0  9月  5 21:21 lock
+-rw-r--r-- 1 root root   270087  4月 22  2022 mirrors.ustc.edu.cn_ubuntu_dists_jammy_InRelease
+-rw-r--r-- 1 root root  6779186  4月 19  2022 mirrors.ustc.edu.cn_ubuntu_dists_jammy_main_binary-amd64_Packages
+13
+== installed cross-build toolchain?
+0
+== kernel build prereqs present
+rsync         INSTALLED
+flex          INSTALLED
+bison         INSTALLED
+bc            INSTALLED
+ccache        NO
+pahole        NO
+dtc           NO
+python3       INSTALLED
+pip3          NO
+swig          NO
+libssl-dev    NO
+SSH_RC=0

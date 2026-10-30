@@ -1,0 +1,21 @@
+# gate=vlab-entry date=2026-10-30T22:44:13+08:00
+## shell history hits for vlab (host/user only; grep for ssh/scp lines)
+-- /home/xuqianhui/.bash_history
+ssh vlab
+ssh vlab
+## pi session history mentions of vlab (paths + first hit line only)
+/home/xuqianhui/.pi/agent/sessions/2026-10-09T14-08-41-372Z_01a120fe-a39b-7438-a0e0-8b7b96d21e99.jsonl
+/home/xuqianhui/.pi/agent/sessions/2026-09-29T05-38-12-293Z_01a0ebab-aec5-7461-835b-3968af3175cd.jsonl
+/home/xuqianhui/.pi/agent/sessions/2026-10-09T00-18-34-776Z_01a11e06-a697-77d5-b040-80dd4648cc45.jsonl
+/home/xuqianhui/.pi/agent/sessions/2026-09-28T14-40-54-677Z_01a0e876-2f95-72a8-ab1c-20cf5672220b.jsonl
+/home/xuqianhui/.pi/agent/sessions/2026-10-13T04-15-52-099Z_01a13379-5523-73dc-b6e4-fb0fa28326d1.jsonl
+## pi project sessions mention vlab? (repo .pi/sessions)
+/home/xuqianhui/y700-elden/.pi/sessions/2026-10-09T14-08-41-372Z_01a120fe-a39b-7438-a0e0-8b7b96d21e99.jsonl
+/home/xuqianhui/y700-elden/.pi/sessions/2026-10-09T00-18-34-776Z_01a11e06-a697-77d5-b040-80dd4648cc45.jsonl
+/home/xuqianhui/y700-elden/.pi/sessions/2026-10-17T13-39-06-431Z_01a14a16-6e3f-710b-ae5f-d82213651676.jsonl
+/home/xuqianhui/y700-elden/.pi/sessions/2026-10-13T04-15-52-099Z_01a13379-5523-73dc-b6e4-fb0fa28326d1.jsonl
+/home/xuqianhui/y700-elden/.pi/sessions/2026-10-30T11-31-32-900Z_01a18c94-51a4-7017-ac6a-a3e7e71f5ad3.jsonl
+## bash_history: any ssh to 114.214.* or vm-ish hosts
+     11 ssh root@192.168.7.1
+      2 ssh vlab
+      1 ssh 192.168.7.1

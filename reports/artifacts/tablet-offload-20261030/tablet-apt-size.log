@@ -1,0 +1,9 @@
+# gate=tablet-apt-size date=2026-10-30T22:48:35+08:00
+core-dev   (git tmux rsync patchutils shellcheck): pkgs=6 bytes=14988920 (14.3 MiB)
+ble.sh     (ble.sh): pkgs=1 bytes=558136 (0.5 MiB)
+node+npm   (nodejs npm): pkgs=468 bytes=70352052 (67.1 MiB)
+py-static  (python3-yaml python3-jsonschema device-tree-compiler python3-pip): pkgs=38 bytes=12707556 (12.1 MiB)
+kbuild     (build-essential libssl-dev libelf-dev dwarves ccache bc bison flex libncurses-dev): pkgs=29 bytes=9548296 (9.1 MiB)
+ALL-TOGETHER: pkgs=513 bytes=88752124 (84.6 MiB)
+== disk footprint (After this operation)
+0 upgraded, 513 newly installed, 0 to remove and 7 not upgraded.

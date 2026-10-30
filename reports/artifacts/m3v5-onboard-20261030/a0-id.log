@@ -1,0 +1,7 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+Linux elden 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 #1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026 aarch64 GNU/Linux
+Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 (xuqianhui@xuqianhui) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026
+b186674c-1754-4241-898a-ab44d05bd324
+ 22:34:03 up  3:29,  2 users,  load average: 1.07, 1.04, 1.00
+108
+1640

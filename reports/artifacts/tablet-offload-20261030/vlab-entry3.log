@@ -1,0 +1,47 @@
+# gate=vlab-entry3 date=2026-10-30T22:44:41+08:00 (no secret contents; only names/IPs/ports)
+## *.pem / key files under ~/.ssh (names only)
+authorized_keys
+## vlab-related tokens in sessions (safe patterns only)
+    484 testkey_rsa4096.pem
+    106 testkey.x509.pem
+    104 vlab
+     76 testkey_rsa2048.pem
+     58 vlab-vm14178.pem
+     57 cert.pem
+     46 vlab.ustc.edu.cn
+     42 tk.pem
+     28 cert_pub.pem
+     24 aosp.pem
+     18 testkey.pem
+     12 rsa_pkcs8_pbes2_pbkdf2_4096_des.pem
+     12 rsa_pkcs8_pbes2_pbkdf2_4096_3des_sha256.pem
+     12 rsa_pkcs1_784_clear.pem
+     12 rsa4096_prv.pem
+     12 aosp_pub.pem
+     10 aosp_testkey.pem
+      8 x509.pem
+      8 pc_require.pem
+      8 pc_inhibit_require.pem
+      8 lenovo_pub.pem
+      6 smroot.pem
+      6 signing_key.pem
+      6 san_email_dns_ip_dirname_uri.pem
+      6 rsa_pkcs8_pbes2_pbkdf2_2048_aes128cbc_sha224.pem
+## IPs appearing on same lines as vlab (context extraction)
+      2 114.214.192.228
+      2 114.214.192.1
+      1 114.214.240.112
+## which session files mention vlab + their dates (host-side sessions)
+2026-10-04T06-13-13-729Z_01a1058b-8b81-729b-92e9-d32fad326fa2.jsonl
+2026-10-04T11-43-14-425Z_01a106b9-adf9-729b-92e9-d33c02b886e9.jsonl
+2026-10-05T06-05-48-388Z_01a10aab-1be4-7419-9132-0ddcb43629f8.jsonl
+2026-10-09T00-18-34-776Z_01a11e06-a697-77d5-b040-80dd4648cc45.jsonl
+2026-10-09T14-08-41-372Z_01a120fe-a39b-7438-a0e0-8b7b96d21e99.jsonl
+2026-10-13T02-46-47-522Z_01a13327-c7e1-73dc-b6e4-fb0d3804c599.jsonl
+2026-10-13T04-15-52-099Z_01a13379-5523-73dc-b6e4-fb0fa28326d1.jsonl
+## DNS + TCP probe vlab
+2001:da8:d800:75::226 vlab.ustc.edu.cn
+vlab:22 OPEN
+## candidate VM host key lookup
+UNKNOWN vlab-vm14178
+KNOWN vlab.ustc.edu.cn

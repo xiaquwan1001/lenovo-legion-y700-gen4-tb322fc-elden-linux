@@ -1,0 +1,42 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+total 4
+drwxr-xr-x 3 root root 4096 Oct 30 13:18 drivers
+---BAK---
+---CUR---
+sha256sum: /root/m3modbak-20261030/drivers: Is a directory
+528d4dd89ff8b91ddae3593f36ac60c50684256ff52785ff524d8d3e9f90abfb  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+sha256sum: /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3_qcom.ko: No such file or directory
+b1bcaa382e44b59deca33f610a054a8ef12eee52d1be70874b11fa40c1c6f317  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/typec_ucsi.ko
+1d242230700970e1d90bb71ef323073bce7fd53d00deca6472991b61d86c3f76  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/ucsi_glink.ko
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+/root/m3modbak-20261030/drivers/usb/dwc3/dwc3-qcom.ko
+/root/m3modbak-20261030/drivers/usb/dwc3/dwc3.ko
+/root/m3modbak-20261030/drivers/usb/typec/ucsi/typec_ucsi.ko
+/root/m3modbak-20261030/drivers/usb/typec/ucsi/ucsi_glink.ko
+---
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/typec_ucsi.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/ucsi_ccg.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/cros_ec_ucsi.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/ucsi_glink.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-meson-g12a.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-rtk.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom-legacy.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-am62.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-apple.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-haps.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-keystone.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-imx8mp.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-xilinx.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-generic-plat.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-of-simple.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-exynos.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-imx.ko
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+dwc3.ko | c694eeac3fdb9d8dc42f496e9a4ca5858872dd52dbfe86659c11e24b34f06292 | 528d4dd89ff8b91ddae3593f36ac60c50684256ff52785ff524d8d3e9f90abfb | no | 304400
+dwc3-qcom.ko | 3c114021f22e640745a533bd78cb97c0654fdf5ac65f30b0bdae5f8b0618532f | 7bff9135121c712c07de618f0b0d67fd5aa9a9633841a86613c91fed74eb58b3 | no | 22896
+typec_ucsi.ko | 9992946493eb7532d17ed2a697e215f9c69dcf55b2b6ccdd24207705507d07a4 | b1bcaa382e44b59deca33f610a054a8ef12eee52d1be70874b11fa40c1c6f317 | no | 88824
+ucsi_glink.ko | 4bfa8835e57aab70bbafd6fa22f7456994644f6f05ba2a81af83363e320ff2c7 | 1d242230700970e1d90bb71ef323073bce7fd53d00deca6472991b61d86c3f76 | no | 18944

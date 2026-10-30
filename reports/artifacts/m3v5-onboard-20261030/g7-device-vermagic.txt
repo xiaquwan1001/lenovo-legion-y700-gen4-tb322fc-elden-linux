@@ -1,0 +1,8 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 (xuqianhui@xuqianhui) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172

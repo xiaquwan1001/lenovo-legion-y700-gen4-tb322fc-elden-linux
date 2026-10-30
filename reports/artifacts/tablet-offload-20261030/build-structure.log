@@ -1,0 +1,61 @@
+# gate=build-structure date=2026-10-30T23:10:31+08:00
+## tree count in build/
+36
+## all depth1 sizes
+177.5 G	build
+12.2 G	build/vk151
+12.2 G	build/vk-camssv3
+12.2 G	build/m3v5-fix
+12.2 G	build/gunyah-port
+12.2 G	build/m3v5-pristine
+8.2 G	build/uefi-woa-prep
+7.3 G	build/q28-v2
+7.3 G	build/m1-73
+7.3 G	build/q28-disp-73
+7.2 G	build/vk64-sync-arm
+7.2 G	build/vk64-ret-arm
+7.0 G	build/b5-resoc
+7.0 G	build/m8ab-base
+7.0 G	build/m3v5-daily
+7.0 G	build/m8ab-v2
+7.0 G	build/m4-v3
+6.9 G	build/q28-disp2
+6.7 G	build/vk183-fastrpc
+5.6 G	build/q28-disp
+4.6 G	build/m3v2-7.3rc7
+2.3 G	build/base-7.2
+## structure of one current tree (m3v5-pristine, depth1)
+106M	build/m3v5-pristine/tools
+175M	build/m3v5-pristine/kernel
+406M	build/m3v5-pristine/fs
+529M	build/m3v5-pristine/sound
+561M	build/m3v5-pristine/arch
+592M	build/m3v5-pristine/net
+6.5G	build/m3v5-pristine/drivers
+13G	build/m3v5-pristine
+## is it an out-of-tree build or full source copy?
+COPYING
+CREDITS
+Documentation
+Kbuild
+Kconfig
+LICENSES
+MAINTAINERS
+Makefile
+HAS Makefile (source copy or obj dir)
+HAS .config
+320K	build/m3v5-pristine/.config
+## vmlinux/modules size
+vmlinux 0.6 GiB
+## git source candidates for tablet (partial clone?)
+1.2G	geekidos-linux/.git
+-- geekidos-linux
+true
+HEAD
+gitlab	https://git.ustc.edu.cn/xqh/y700-elden-kernel.git (fetch)
+gitlab	https://git.ustc.edu.cn/xqh/y700-elden-kernel.git (push)
+-- stock-src
+false
+main
+github	git@github.com:xiaquwan1001/lenovo-legion-y700-gen4-tb322fc-elden-linux.git (fetch)
+github	git@github.com:xiaquwan1001/lenovo-legion-y700-gen4-tb322fc-elden-linux.git (push)

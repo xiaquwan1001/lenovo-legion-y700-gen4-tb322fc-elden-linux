@@ -1,0 +1,6 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+aedae5f121ecbe5cc6f5de59a14ae5ba3680229d619c49cedee0d6cf8b9b4765  -
+c694eeac3fdb9d8dc42f496e9a4ca5858872dd52dbfe86659c11e24b34f06292  /root/m3modbak-20261030/drivers/usb/dwc3/dwc3.ko
+528d4dd89ff8b91ddae3593f36ac60c50684256ff52785ff524d8d3e9f90abfb  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+Current slot: _b
+b186674c-1754-4241-898a-ab44d05bd324

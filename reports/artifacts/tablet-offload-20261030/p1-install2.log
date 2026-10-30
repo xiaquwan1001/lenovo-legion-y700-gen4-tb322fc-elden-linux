@@ -1,0 +1,13 @@
+Setting up node-tape (5.6.1+~cs8.20.19-6) ...
+Setting up node-deep-equal (2.2.3+ds1+~cs43.15.94-1) ...
+Setting up npm (12.2.0+ds1-1) ...
+Processing triggers for libc-bin (2.43-7) ...
+git 1:2.55.0-1
+nodejs 24.22.2+dfsg+~cs24.19.2-1
+npm 12.2.0+ds1-1
+ripgrep 15.2.0-1
+python3-pip 26.2.2+dfsg-1
+build-essential 12.12
+git version 2.55.0
+v24.22.2
+12.2.0

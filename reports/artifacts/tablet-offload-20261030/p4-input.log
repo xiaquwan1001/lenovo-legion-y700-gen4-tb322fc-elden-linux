@@ -1,0 +1,43 @@
+== session ==
+  1 1001 xuqianhui1001 -     1428  manager       -    no  -
+131    0 root          -     56140 user          -    no  -
+132    0 root          -     56150 manager-early -    no  -
+ c1 1001 xuqianhui1001 seat0 1283  user          tty7 yes -
+
+  elden-hapticd.service      loaded active running Waydroid vibrator bridge (aw86927 FF_RUMBLE)
+  ssc-udp-relay.service      loaded active running Relay real Qualcomm SSC sensor values to the Waydroid sensor HAL (UDP)
+  waydroid-container.service loaded active running Waydroid Container
+  waydroid-ipv6.service      loaded active running Keep the Waydroid bridge and container dual-stack (ULA + NAT66)
+xuqianh+    1564  0.0  1.9 1465076 290784 tty7   Sl+  19:04   0:03 /usr/bin/phoc -v -S -C /usr/share/phosh/phoc.ini -E gnome-session --session=phosh
+xuqianh+    1641  0.0  0.0 177980 10168 tty7     Sl+  19:04   0:00 /usr/libexec/gnome-session-init-worker phosh
+xuqianh+    1672  0.0  0.1 615012 27144 ?        Ssl  19:04   0:00 /usr/libexec/gnome-session-service --session=phosh
+== input devices ==
+total 0
+drwxr-xr-x  3 root root     240 Jan 13  1970 .
+drwxr-xr-x 20 root root    7800 Jan 13  1970 ..
+drwxr-xr-x  2 root root     160 Jan 13  1970 by-path
+crw-rw----  1 root input 13, 64 Oct 17 05:54 event0
+crw-rw----  1 root input 13, 65 Oct 17 05:54 event1
+crw-rw----  1 root input 13, 66 Oct 17 05:54 event2
+crw-rw----  1 root input 13, 67 Jan 13  1970 event3
+crw-rw----  1 root input 13, 68 Jan 13  1970 event4
+crw-rw----  1 root input 13, 69 Jan 13  1970 event5
+crw-rw----  1 root input 13, 70 Jan 13  1970 event6
+crw-rw----  1 root input 13, 63 Oct 17 05:54 mice
+== osk ==
+/usr/bin/squeekboard
+squeekboard
+inactive
+platform-a90000.spi-cs-0-event
+platform-a98000.i2c-event
+platform-c400000.spmi-platform-c400000.spmi:pmic@0:pon@1300:pwrkey-event
+platform-c400000.spmi-platform-c400000.spmi:pmic@0:pon@1300:resin-event
+platform-gpio-keys-event
+platform-sound-event
+N: Name="pmic_pwrkey"
+N: Name="pmic_resin"
+N: Name="gpio-keys"
+N: Name="NVTCapacitiveTouchScreen"
+N: Name="aw86927-haptics"
+N: Name="aw86927-haptics"
+N: Name="Lenovo-Y700-Gen4 Headset Jack"

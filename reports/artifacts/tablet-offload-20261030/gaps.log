@@ -1,0 +1,34 @@
+# gate=vlab-probe+gaps date=2026-10-30T22:45:28+08:00
+## single BatchMode auth-offer probe (no credential sent, one attempt only)
+Welcome to Vlab
+rc=0
+## litellm gateway health (host-side, 127.0.0.1:4000)
+GET /health/liveliness -> http=200
+GET /v1/models -> http=500
+LISTEN 0      2048                                127.0.0.1:4000       0.0.0.0:*    users:(("litellm",pid=2117,fd=13))       
+## tracked vs untracked in big payload dirs
+dl-cam total=2.7G tracked_files=231
+out total=6.4G tracked_files=218
+backup total=3.0G tracked_files=18
+env-pass total=3.3G tracked_files=8
+bootslot-b total=1.1G tracked_files=1
+stock-src total=2.0G tracked_files=0
+geekidos-linux total=2.9G tracked_files=0
+y700四代工具 total=271M tracked_files=0
+reference total=6.1M tracked_files=222
+logs total=35M tracked_files=0
+Y700-elden-linux total=28M tracked_files=0
+rootfs total=836K tracked_files=81
+## what is tracked inside out/ dl-cam/ backup/
+backup/HA2EXB0E-16+512/SHA256SUMS.unlock
+backup/HA2EXB0E-16+512/getvar-locked.txt
+backup/HA2EXB0E-16+512/getvar-pre-android-20261011.txt
+backup/HA2EXB0E-16+512/getvar-unlocked-1.1.txt
+backup/HA2EXB0E-16+512/gpt-list-pre-surgery.txt
+backup/HA2EXB0E-16+512/pre-unlock/SHA256SUMS
+backup/HA2EXB0E-16+512/pre-unlock/by-name.txt
+backup/HA2EXB0E-16+512/pre-unlock/dumpsys-services.txt
+## largest untracked payload files (top10, excl build/geekidos)
+0.2 GB	./dl-cam/vendor-orig.img
+0.2 GB	./dl-cam/vendor-cam-l1d.img
+0.2 GB	./backup/rawdump.img

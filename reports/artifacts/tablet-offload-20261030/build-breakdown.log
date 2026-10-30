@@ -1,0 +1,26 @@
+# gate=build-breakdown date=2026-10-30T23:10:00+08:00
+## build/ depth-1 (top12)
+7.0G	build/m8ab-v2
+7.0G	build/q28-disp2
+7.3G	build/m1-73
+7.3G	build/q28-disp-73
+7.3G	build/vk64-ret-arm
+7.3G	build/vk64-sync-arm
+7.4G	build/q28-v2
+8.2G	build/uefi-woa-prep
+13G	build/gunyah-port
+13G	build/m3v5-fix
+13G	build/m3v5-pristine
+13G	build/vk-camssv3
+13G	build/vk151
+178G	build
+## how many kernel source trees under build/
+## ccache size
+3.6G	/home/xuqianhui/.cache/ccache
+## out/ depth1
+89M	out/modstage-vk163
+94M	out/modstage-vk172
+107M	out/m3v5-onboard
+134M	out/stage-debian
+683M	out/debian
+6.6G	out

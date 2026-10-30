@@ -1,0 +1,13 @@
+# gate=vlab-context date=2026-10-30T22:45:00+08:00 — 长 token/base64 已正则脱敏
+=== 2026-10-09T00-18-34-776Z_01a11e06-a697-77d5-b040-80dd4648cc45.jsonl
+vlab HostName vlab.ustc.edu.cn User ubuntu IdentityFile ~/.ssh/vlab-vm14178.pem Ho...\
+vlab\n    HostName vlab.ustc.edu.cn\n    User ubuntu\n    IdentityFile ~/.ssh/vlab-vm14178.pem\n\nHost git.ustc.edu.cn\n    User git\n    IdentityFile ~/.<LONGSTR>\n    IdentitiesOnly yes\n\n# --- GitHub over SSH (added 2026-10-05; 22 与 443 都可通，44
+=== 2026-10-13T04-15-52-099Z_01a13379-5523-73dc-b6e4-fb0fa28326d1.jsonl
+vlab-vm14178.pem ==== Host vlab HostName vlab.ustc.edu.cn User ubuntu IdentityFile ~/.ssh/vlab-vm14178.pem\
+vlab-vm14178.pem\n====\nHost vlab\n    HostName vlab.ustc.edu.cn\n    User ubuntu\n    IdentityFile ~/.ssh/vlab-vm14178.pem\n\nHost git.ustc.edu.cn\n    User git\n    IdentityFile ~/.<LONGSTR>\n    IdentitiesOnly yes\n\n# --- GitHub over SSH (adde
+=== 2026-10-04T06-13-13-729Z_01a1058b-8b81-729b-92e9-d32fad326fa2.jsonl
+vlab host. Existing ed25519 key.\n- git identity is `xuqianhui1001 <xuqianhui1001@localhost>` — should set a proper email, probably school email. I don't know it. Maybe use the GitLab account email. I'll leave identity but could set to something. Better ask/leave.
+vlab HostName vlab.ustc.edu.cn User ubuntu IdentityFile ~/.s...\
+vlab\n    HostName vlab.ustc.edu.cn\n    User ubuntu\n    IdentityFile ~/.ssh/vlab-vm14178.pem\n\nHost git.ustc.edu.cn\n    User git\n    IdentityFile ~/.<LONGSTR>\n    IdentitiesOnly yes\n=== PUBLIC KEY (give to user) ===\nssh-ed25519 AAAAC3NzaC1
+vlab\n    HostName vlab.ustc.edu.cn\n    User ubuntu\n    IdentityFile ~/.ssh/vlab-vm14178.pem\n\nHost git.ustc.edu.cn\n    User git\n    IdentityFile ~/.<LONGSTR>\n    IdentitiesOnly yes\n\n=== pubkey ===\nssh-ed25519 <LONGSTR>
+vlab-vm14178.pem\n=== ssh config ===\nHost vlab\n    HostName vlab.ustc.edu.cn\n    User ubuntu\n    IdentityFile ~/.ssh/vlab-vm14178.pem\n=== gitlab resolution ===\ngitlab.ustc.edu.cn => (no)\ngit.ustc.edu.cn => 114.214.240.112 git.ustc.edu.cn\ngitlab.ustc.edu.cn

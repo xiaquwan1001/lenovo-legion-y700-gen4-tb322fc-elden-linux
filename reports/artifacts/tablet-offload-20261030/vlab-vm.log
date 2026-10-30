@@ -1,0 +1,85 @@
+# gate=vlab-vm date=2026-10-30T22:45:53+08:00 — read-only probes; no writes; no secrets
+Welcome to Vlab
+== id
+VM14178-my
+ubuntu
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+== cpu
+2
+model name	: Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz
+== mem
+               total        used        free      shared  buff/cache   available
+内存：          6           0           5           0           0           5
+== df
+文件系统                                    大小  已用  可用 已用% 挂载点
+/dev/mapper/user--data2-vm--14178--disk--0   16G  3.8G   12G   25% /
+/dev/mapper/user--data2-vm--14178--disk--0   16G  3.8G   12G   25% /
+== lsblk
+NAME             SIZE TYPE MOUNTPOINT
+sda      958999298048 disk 
+├─sda1        1031168 part 
+├─sda2     1073741824 part 
+└─sda3   957924490752 part 
+sdb    71970272575488 disk 
+== tools
+git                     /usr/bin/git
+gcc                     /usr/bin/gcc
+g++                     /usr/bin/g++
+make                    /usr/bin/make
+cmake                   /usr/bin/cmake
+ninja                   /usr/bin/ninja
+clang                   /usr/bin/clang
+dtc                     MISSING
+python3                 /usr/bin/python3
+pip3                    MISSING
+node                    MISSING
+npm                     MISSING
+docker                  MISSING
+curl                    /usr/bin/curl
+rsync                   /usr/bin/rsync
+tmux                    MISSING
+aarch64-linux-gnu-gcc   MISSING
+pahole                  MISSING
+swig                    MISSING
+bc                      /usr/bin/bc
+bison                   /usr/bin/bison
+flex                    /usr/bin/flex
+ccache                  MISSING
+glab                    MISSING
+== versions
+git version 2.34.1
+gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+== apt cross candidates
+gcc-aarch64-linux-gnu:
+== net egress
+2001:da8:d800:95::110 mirrors.ustc.edu.cn
+mirrors.ustc http=200
+api.llm http=200
+== home listing
+总计 108
+drwxr-x--- 1 ubuntu ubuntu   650  9月 28 16:14 .
+drwxr-xr-x 1 root   root      12  7月  4  2024 ..
+drwxrwxr-x 1 ubuntu ubuntu   114  9月 28 16:13 2026ustc-jianmu-compiler
+-rw------- 1 ubuntu ubuntu 12545 10月 30 22:42 .bash_history
+-rw-r--r-- 1 ubuntu ubuntu   220  7月  4  2024 .bash_logout
+-rw-r--r-- 1 ubuntu ubuntu  4989  9月 12 14:17 .bashrc
+drwx------ 1 ubuntu ubuntu   280  9月  5 21:21 .cache
+drwxr-xr-x 1 ubuntu ubuntu   396  9月  5 21:47 .config
+drwxrwxr-x 1 ubuntu ubuntu   274  9月  6 16:50 cross_env
+drwx------ 1 ubuntu ubuntu    22  9月  5 21:20 .dbus
+drwxr-xr-x 1 ubuntu ubuntu    50  7月  4  2024 Desktop
+-rw-r--r-- 1 ubuntu ubuntu    23  9月  5 21:20 .dmrc
+drwxr-xr-x 1 ubuntu ubuntu     0  7月  4  2024 Documents
+drwxr-xr-x 1 ubuntu ubuntu     0  9月  6 16:11 Downloads
+-rw-rw-r-- 1 ubuntu ubuntu   196  9月  5 21:44 gcd.c
+-rw-rw-r-- 1 ubuntu ubuntu  2694  9月  5 21:44 gcd.ll
+-rw-rw-r-- 1 ubuntu ubuntu   133  9月 28 15:58 .gitconfig
+-rw------- 1 ubuntu ubuntu    57  9月 28 16:14 .git-credentials
+-rw------- 1 ubuntu ubuntu   330  9月  5 21:20 .ICEauthority
+== home usage
+3.6G	/home/ubuntu
+== load
+ 22:46:25 up 12 days, 48 min,  0 users,  load average: 5.59, 4.41, 3.94
+SSH_RC=0

@@ -1,0 +1,9 @@
+E: Failed to fetch https://mirrors.ustc.edu.cn/debian/pool/main/n/nodejs/libnode137_24.22.0%2bdfsg%2b%7ecs24.19.2-2_arm64.deb  404  Not Found [IP: 2001:da8:d800:95::110 443]
+E: Failed to fetch https://mirrors.ustc.edu.cn/debian/pool/main/n/nodejs/nodejs_24.22.0%2bdfsg%2b%7ecs24.19.2-2_arm64.deb  404  Not Found [IP: 2001:da8:d800:95::110 443]
+E: Failed to fetch https://mirrors.ustc.edu.cn/debian/pool/main/n/nodejs/libnode-dev_24.22.0%2bdfsg%2b%7ecs24.19.2-2_arm64.deb  404  Not Found [IP: 2001:da8:d800:95::110 443]
+E: Failed to fetch https://mirrors.ustc.edu.cn/debian/pool/main/n/node-ip-address/node-ip-address_10.7.4-1_all.deb  404  Not Found [IP: 2001:da8:d800:95::110 443]
+E: Unable to fetch some archives, maybe run apt update or try with --fix-missing?
+RC=0
+bash: line 1: git: command not found
+bash: line 1: node: command not found
+bash: line 1: npm: command not found

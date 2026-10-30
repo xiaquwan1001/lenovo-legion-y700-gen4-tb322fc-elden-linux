@@ -1,0 +1,56 @@
+# gate=tablet-state-after-parallel-lane date=2026-10-30T23:07:56+08:00 — READ-ONLY (no installs, no credential reads)
+== df /
+/dev/sda17       94G   17G   73G  19% /
+== installed now (versions)
+git      git version 2.55.0
+node     v24.22.2
+npm      12.2.0
+pi       1.4.0
+ble.sh   MISSING
+tmux     tmux: unknown option -- -
+rsync    rsync  version 3.5.1  protocol version 33
+== dpkg installed delta markers
+git 1:2.55.0-1
+nodejs 24.22.2+dfsg+~cs24.19.2-1
+npm 12.2.0+ds1-1
+== pi install footprint
+32K	/root/.pi
+83M	/root/.npm
+== auth-ish files on tablet (paths+perms ONLY, contents never read)
+600 root:root /root/.pi/agent/models-store.json
+600 root:root /root/.pi/agent/custom-providers-auth.json
+600 root:root /root/.pi/agent/models.json
+600 root:root /root/.pi/agent/custom-providers.json
+600 root:root /root/.pi/agent/auth.json
+== ble.sh location
+/usr/local/share/blesh/ble-0.4.0-devel3
+== toolchain disk cost
+dpkg Installed-Size(git+nodejs+npm+ble.sh)=58 MiB
+== biggest dirs under / (top10, excl /proc /sys)
+12K	/mnt
+24K	/init.bak-1800
+36K	/init
+2.2M	/run
+3.6M	/etc
+18M	/tmp
+1.7G	/home
+3.9G	/usr
+3.9G	/var
+7.1G	/root
+== repo clone on tablet?
+152K	/root/$D
+316K	/root/sensord-routeC
+456K	/root/m3modbak-20261030
+14M	/root/src
+93M	/root/m1-73-dmesg.txt
+1.6G	/root/g3-steam
+2.0G	/root/wd
+3.3G	/root/steam-home
+== node_modules global size + count
+0
+== swap/zram (memory headroom for builds)
+               total        used        free      shared  buff/cache   available
+Mem:           14871        4467        4725        1032        6964       10404
+Swap:              0           0           0
+== apt cache leftovers
+301M	/var/cache/apt/archives

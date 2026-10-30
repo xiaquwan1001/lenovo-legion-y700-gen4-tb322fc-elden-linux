@@ -1,0 +1,66 @@
+== memory ==
+               total        used        free      shared  buff/cache   available
+Mem:            14Gi       4.2Gi       6.6Gi       1.0Gi       4.9Gi        10Gi
+Swap:             0B          0B          0B
+== disk ==
+Filesystem     Type   Size  Used Avail Use% Mounted on
+/dev/sda17     ext4    94G   16G   73G  18% /
+tmpfs          tmpfs  7.3G  4.0K  7.3G   1% /tmp
+/dev/sda17     6291456 88455 6203001    2% /
+== lsblk ==
+NAME          SIZE FSTYPE MOUNTPOINT
+loop0         2.4G ext4   /var/lib/waydroid/rootfs
+loop1         256M ext4   /var/lib/waydroid/rootfs/vendor
+sda         472.5G        
+|-sda1          3M        
+|-sda2        512K        
+|-sda3        300M ext4   
+|-sda4         16M        
+|-sda5          8K        
+|-sda6         32M ext4   
+|-sda7          1M        
+|-sda8        512K        
+|-sda9        512K        
+|-sda10        22G        
+|-sda11        64K        
+|-sda12        64K        
+|-sda13        64M f2fs   
+|-sda14       256M        
+|-sda15       128M        
+|-sda16     256.7G        
+== pkgs ==
+972 packages installed
+== key pkgs ==
+tmux 3.8-1
+jq 1.8.2-1
+rsync 3.5.1+ds1-2
+bash 5.3-4
+== apt candidate ==
+git:
+  Candidate: 1:2.55.0-1
+        500 https://mirrors.ustc.edu.cn/debian sid/main arm64 Packages
+nodejs:
+  Candidate: 24.22.0+dfsg+~cs24.19.2-2
+        500 https://mirrors.ustc.edu.cn/debian sid/main arm64 Packages
+== net: ustc apt ==
+200 0.557738s
+== net: api.ustc ==
+200 0.025001s
+== net: github ==
+== net: npmjs ==
+== parts 17/18 ==
+|-sda13    64M f2fs           
+|-sda14   256M                
+|-sda15   128M                
+|-sda16 256.7G                
+|-sda17    96G ext4   linux17 /
+`-sda18    96G f2fs   linux18 
+== npm mirror ==
+200 0.208033s
+== gh mirror candidates ==
+== deb dl speed (13MB git) ==
+9331752 git_1%3a2.55.0-1_arm64.deb
+== vlab dns/ssh ==
+2001:da8:d800:75::226 vlab.ustc.edu.cn
+2001:da8:d800:75::226 vlab.ustc.edu.cn
+no-record-if-empty

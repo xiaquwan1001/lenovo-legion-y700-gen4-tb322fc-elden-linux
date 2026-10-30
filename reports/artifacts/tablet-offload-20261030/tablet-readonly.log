@@ -1,0 +1,129 @@
+== id
+0
+== uname
+Linux elden 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 #1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026 aarch64 GNU/Linux
+== lsblk
+NAME                SIZE FSTYPE LABEL   PARTLABEL        MOUNTPOINT
+loop0         2605989888 ext4   /                        /var/lib/waydroid/rootfs
+loop1          268435456 ext4   vendor                   /var/lib/waydroid/rootfs/vendor
+sda         507376566272                                 
+|-sda1           3145728                proinfo          
+|-sda2            524288                lenovolock       
+|-sda3         314572800 ext4           lenovocust       
+|-sda4          16777216                lenovoraw        
+|-sda5              8192                ssd              
+|-sda6          33554432 ext4           persist          
+|-sda7           1048576                misc             
+|-sda8            524288                keystore         
+|-sda9            524288                frp              
+|-sda10      23622320128                super            
+|-sda11            65536                vbmeta_system_a  
+|-sda12            65536                vbmeta_system_b  
+|-sda13         67108864 f2fs           metadata         
+|-sda14        268435456                rawdump          
+|-sda15        134217728                pstoredump       
+|-sda16     275681456128                userdata         
+|-sda17     103079215104 ext4   linux17 linux17          /
+`-sda18     103079215104 f2fs   linux18 linux18          
+sdb             20971520                                 
+|-sdb1           3670016                xbl_a            
+|-sdb2            352256                xbl_config_a     
+|-sdb3             32768                multiimgqti_a    
+|-sdb4             32768                multiimgoem_a    
+`-sdb5            262144                apdp             
+sdc             20971520                                 
+|-sdc1           3670016                xbl_b            
+|-sdc2            352256                xbl_config_b     
+|-sdc3             32768                multiimgqti_b    
+|-sdc4             32768                multiimgoem_b    
+`-sdc5            262144                apdpb            
+sdd             33554432                                 
+|-sdd1            106496                ALIGN_TO_128K_1  
+|-sdd2            131072                cdt              
+`-sdd3           1048576                ddr              
+sde           4294967296                                 
+|-sde1           5242880                uefi_a           
+== df
+Filesystem      Size  Used Avail Use% Mounted on
+devtmpfs        7.3G     0  7.3G   0% /dev
+tmpfs           7.3G  168K  7.3G   1% /dev/shm
+tmpfs           7.3G  2.2M  7.3G   1% /run
+/dev/sda17       94G   16G   73G  18% /
+tmpfs           7.3G  4.0K  7.3G   1% /tmp
+none            1.0M     0  1.0M   0% /run/credentials/systemd-journald.service
+tmpfs           1.5G   20K  1.5G   1% /run/user/1001
+/dev/loop0      2.5G  2.5G     0 100% /var/lib/waydroid/rootfs
+/dev/loop1      238M  107M  114M  49% /var/lib/waydroid/rootfs/vendor
+none            1.0M     0  1.0M   0% /run/credentials/getty@tty1.service
+tmpfs           1.5G  8.0K  1.5G   1% /run/user/0
+== partlabel dir
+total 0
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 ALIGN_TO_128K_1 -> ../../sdd1
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 ALIGN_TO_128K_2 -> ../../sdf1
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 abl_a -> ../../sde8
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 abl_b -> ../../sde41
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 aop_a -> ../../sde2
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 aop_b -> ../../sde35
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 aop_config_a -> ../../sde3
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 aop_config_b -> ../../sde36
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 apdp -> ../../sdb5
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 apdpb -> ../../sdc5
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 bluetooth_a -> ../../sde7
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 bluetooth_b -> ../../sde40
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 boot_a -> ../../sde12
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 boot_b -> ../../sde45
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 cdt -> ../../sdd2
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 connsec -> ../../sde73
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 cpucp_a -> ../../sde20
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 cpucp_b -> ../../sde53
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 cpucp_dtb_a -> ../../sde28
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 cpucp_dtb_b -> ../../sde60
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 ddr -> ../../sdd3
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 devcfg_a -> ../../sde13
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 devcfg_b -> ../../sde46
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 devinfo -> ../../sde66
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 dpm -> ../../sde78
+lrwxrwxrwx 1 root root 10 Oct 17 05:54 dsp_a -> ../../sde9
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 dsp_b -> ../../sde42
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 dtbo_a -> ../../sde16
+lrwxrwxrwx 1 root root 11 Oct 17 05:54 dtbo_b -> ../../sde49
+== tool check
+git          MISSING
+node         MISSING
+npm          MISSING
+tmux         /usr/bin/tmux
+screen       MISSING
+ssh          /usr/bin/ssh
+rsync        /usr/bin/rsync
+curl         /usr/bin/curl
+python3      /usr/bin/python3
+make         /usr/bin/make
+gcc          /usr/bin/gcc
+ble.sh       MISSING
+systemd-run  /usr/bin/systemd-run
+apt-get      /usr/bin/apt-get
+== apt candidates (read-only)
+git:
+  Candidate: 1:2.55.0-1
+nodejs:
+  Candidate: 24.22.0+dfsg+~cs24.19.2-2
+npm:
+  Candidate: 12.2.0+ds1-1
+ble.sh:
+  Candidate: 0.4.0~git20250806.8060b7a-2
+tmux:
+  Candidate: 3.8-1
+== apt-cache search ble
+acr - autoconf like tool
+amsynth - two oscillators software synthesizer
+atuin - magical shell history
+blackbox-terminal - BlackBox Terminal Emulator
+ble.sh - Bash Line Editor
+== nproc/mem
+8
+               total        used        free      shared  buff/cache   available
+Mem:              14           4           6           0           4          10
+== api.llm reach from tablet
+114.214.240.204 api.llm.ustc.edu.cn
+== proxy env
+0

@@ -1,0 +1,36 @@
+# gate=ssh-probe date=2026-10-30T22:44:01+08:00
+## ssh-keygen -F candidate hosts (hashed known_hosts lookup; presence only)
+KNOWN  vlab.ustc.edu.cn
+UNKNOWN vlab.ustc.edu.cn:22
+UNKNOWN gitlab.ustc.edu.cn
+KNOWN  git.ustc.edu.cn
+UNKNOWN gitlab.com
+KNOWN  192.168.7.1
+UNKNOWN api.llm.ustc.edu.cn
+UNKNOWN mirrors.ustc.edu.cn
+## ssh config full Host blocks (redact nothing secret: no keys inline?)
+---
+Host github.com
+    HostName ssh.github.com
+    Port 443
+    User git
+    IdentityFile ~/.ssh/<keyfile>
+    IdentitiesOnly yes
+---
+Host git.ustc.edu.cn
+    User git
+    IdentityFile ~/.ssh/<keyfile>
+    IdentitiesOnly yes
+---
+Host gitlab.gnome.org ssh.gitlab.gnome.org
+    HostName ssh.gitlab.gnome.org
+    Port 22
+    User git
+    IdentityFile ~/.ssh/<keyfile>
+    IdentitiesOnly yes
+## TCP reachability of git.ustc 22 vs 443 (5s each)
+TCP22=OPEN
+TCP443=OPEN
+## HTTPS anon API probe (no token sent)
+GET /api/v4/projects%3Fx -> http=200
+GET /xqh/y700-elden.git/info/refs?service=git-upload-pack -> http=401

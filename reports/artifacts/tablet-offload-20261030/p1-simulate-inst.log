@@ -1,0 +1,50 @@
+Inst bzip2 (1.0.8-6+b2 Debian:unstable [arm64])
+Inst libdpkg-perl (1.23.11 Debian:unstable [all])
+Inst patch (2.8.1-1 Debian:unstable [arm64])
+Inst dpkg-dev (1.23.11 Debian:unstable [all])
+Inst build-essential (12.12 Debian:unstable [arm64])
+Inst node-fast-deep-equal (3.1.3-3 Debian:unstable [all])
+Inst node-json-schema-traverse (1.0.0-3 Debian:unstable [all])
+Inst node-jsonify (0.0.1-1 Debian:unstable [all])
+Inst node-json-stable-stringify (1.0.2+repack1+~cs1.0.34-2 Debian:unstable [all])
+Inst libsimdutf35 (9.3.0+really9.1.2-1 Debian:unstable [arm64])
+Inst libada-url0-3 (3.4.4-1+b1 Debian:unstable [arm64])
+Inst libcares2 (1.34.8-1 Debian:unstable [arm64])
+Inst libhdr-histogram6 (0.11.8-4+b2 Debian:unstable [arm64])
+Inst libllhttp9.4 (9.4.3+~cs12.11.9-2 Debian:unstable [arm64])
+Inst libsimdjson33 (4.6.11-1 Debian:unstable [arm64])
+Inst node-xtend (4.0.2-3 Debian:unstable [all])
+Inst node-acorn (8.17.0+ds+~cs28.27.25-1 Debian:unstable [all]) []
+Inst node-balanced-match (2.0.0-1 Debian:unstable [all]) []
+Inst node-brace-expansion (2.1.7+~1.1.2-1 Debian:unstable [all]) []
+Inst node-minimatch (9.0.7-2 Debian:unstable [all]) []
+Inst node-ms (2.1.3+~cs0.7.31-3 Debian:unstable [all]) []
+Inst node-debug (4.4.3+~4.1.13-1 Debian:unstable [all]) []
+Inst node-lru-cache (11.2.7-7 Debian:unstable [all]) []
+Inst node-semver (7.7.4+~cs9.7.4-2 Debian:unstable [all]) []
+Inst node-llhttp (9.4.3+~cs12.11.9-2 Debian:unstable [all]) []
+Inst node-undici (8.12.2+dfsg+~cs3.2.3-2 Debian:unstable [all]) []
+Inst libnode137 (24.22.0+dfsg+~cs24.19.2-2 Debian:unstable [arm64]) []
+Inst node-corepack (0.35.0-2 Debian:unstable [all]) []
+Inst nodejs (24.22.0+dfsg+~cs24.19.2-2 Debian:unstable [arm64])
+Inst node-ajv (8.20.0~ds+~cs7.2.4-1 Debian:unstable [all])
+Inst libjs-inherits (2.0.4-9 Debian:unstable [all])
+Inst node-inherits (2.0.4-9 Debian:unstable [all])
+Inst node-typedarray (0.0.7-4 Debian:unstable [all])
+Inst node-concat-stream (2.0.0+~2.0.3-2 Debian:unstable [all])
+Inst node-esutils (2.0.3+~2.0.2-3 Debian:unstable [all])
+Inst node-isarray (2.0.5-7 Debian:unstable [all])
+Inst node-doctrine (3.0.0-4 Debian:unstable [all])
+Inst node-eslint-visitor-keys (3.3.0+ds1-3 Debian:unstable [all])
+Inst node-estraverse (5.3.0+ds+~5.1.7-1 Debian:unstable [all])
+Inst node-object-assign (4.1.1-7 Debian:unstable [all])
+Inst node-esrecurse (4.3.0-2 Debian:unstable [all])
+Inst node-eslint-scope (7.1.1+~3.7.4-1 Debian:unstable [all])
+Inst node-espree (9.4.1~dfsg-2 Debian:unstable [all])
+Inst node-esquery (1.6.0~ds-1 Debian:unstable [all])
+Inst node-eslint-utils (3.0.0-4 Debian:unstable [all])
+Inst node-flatted (3.4.4~ds-1 Debian:unstable [all])
+Inst node-safe-buffer (5.2.1+~cs2.1.2-6 Debian:unstable [all])
+Inst node-iconv-lite (0.6.3-3 Debian:unstable [all])
+Inst node-encoding (0.1.13-2 Debian:unstable [all])
+Inst node-jsonparse (1.3.1-10 Debian:unstable [all])

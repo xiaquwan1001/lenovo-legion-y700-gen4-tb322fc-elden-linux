@@ -1,0 +1,15 @@
+scripts/build-boot.sh:17:MKBOOTIMG=${MKBOOTIMG:-$ROOT/scripts/mkbootimg.py}   # 2026-10-17 重写并从 tools/（gitignore）迁入 scripts/
+scripts/build-initramfs.sh:30:UNPACK=${UNPACK:-$ROOT/scripts/mkbootimg.py}   # 2026-10-17: 由重写的 mkbootimg --unpack 取代丢失的 tools/mkbootimg/unpack_bootimg.py
+scripts/m1-73-modules-overlay.sh:11:#   再 `cat <base.ramdisk> overlay.cpio.gz > 73x.ramdisk` + scripts/mkbootimg.py 打包
+scripts/f2fs-migrate.sh:56:		command -v resize2fs e2label tune2fs mkfs.f2fs fsck.f2fs tar zstd gzip
+scripts/f2fs-migrate.sh:103:	$SSH 'sync; tar -C / -c --one-file-system --acls --xattrs . 2>/tmp/tar.err' | zstd -3 -T0 -q -o "$out" \
+scripts/f2fs-migrate.sh:296:	[ -e "$kimg" ] || python3 "$ROOT/scripts/mkbootimg.py" --unpack "$ROOT/out/boot-elden-vk152.img" \
+scripts/q32-boot-evidence.sh:35:		# 可能是压缩的（CONFIG_PSTORE_COMPRESS）⇒ 先试 zstd，再退回原样
+scripts/q32-boot-evidence.sh:36:		if command -v zstd >/dev/null 2>&1 && zstd -dc "$f" > "$PST.tmp" 2>/dev/null; then
+scripts/build-manifest.sh:8:# kernel/DTB/.config/ramdisk/image hashes, the exact cmdline and mkbootimg argv,
+scripts/build-manifest.sh:44:# 真正打进 boot.img 的 kernel/dtb 文件（从 mkbootimg argv 里读，而不是猜树里的路径）。
+scripts/build-manifest.sh:101:	echo "mkbootimg_args=${MKBOOTIMG_ARGS:-(unknown)}"
+scripts/mkbootimg.py:2:"""mkbootimg.py — minimal AOSP boot image v2 builder (elden project vendored copy).
+scripts/mkbootimg.py:27:    scripts/mkbootimg.py --selftest <image>
+scripts/mkbootimg.py:166:    # been repacked after mkbootimg, so its value follows no AOSP ordering in
+RUNBOOK-BRINGUP/README.md:426:`mkbootimg` argv + 两个 git HEAD），解决「vk49 打包命令丢失」。构建即生成，应随提交进 git。

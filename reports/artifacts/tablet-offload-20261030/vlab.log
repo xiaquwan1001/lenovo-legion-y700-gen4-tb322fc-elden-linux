@@ -1,0 +1,87 @@
+# gate=vlab date=2026-10-30T22:43:30+08:00
+## ~/.ssh listing (names only)
+total  
+-rw------- xuqianhui authorized_keys
+-rw------- xuqianhui config
+-rw------- xuqianhui id_rsa
+-rw-r--r-- xuqianhui id_rsa.pub
+-rw------- xuqianhui known_hosts
+-rw------- xuqianhui known_hosts.old
+## ssh config Host/Hostname/Port lines (no identity secrets beyond paths)
+7:Host github.com
+15:Host git.ustc.edu.cn
+21:Host gitlab.gnome.org ssh.gitlab.gnome.org
+## grep -i vlab in ~/.ssh (filenames+line only, redact long)
+## known_hosts host keys (host part only)
+|1|0McOXkZ38WrYpRgVVwkdqFpwqUI=|sgoEpg/f1kmkNLU6yMGvGk+r+FY=
+|1|1eHWcBNJb1eOEcVGPk/Cd7obRTg=|KHi0ujofJddmMhjxPiCXCQWd3EA=
+|1|2YK9Vk5TbJhXXPn0sEgT0BX5DyU=|GThqPCugAC5EOZ5/LnIGuR9qfVM=
+|1|5Sm+FysH1gynrc/I7Q9EkzvTNHg=|uAoZ76KBsxWssE06TmWuKgGxWQc=
+|1|6SHhCw5gxwCBsPh7O6ndpqBO02c=|CkYCM1CWat85CF5ga3+RIRcQZX4=
+|1|8vQL7UEebqUalbpI7FXCM0qEz2o=|otuaa5P5pxCkC8aT2y37WukCDgQ=
+|1|9Sqr45Ryidb67WP8qRsRQOJ1/FE=|PUbs08J2r9HJ/llOxX28D7DO7pE=
+|1|a+yHZQZwoFcn9LPJ4xBD9ZnEyMI=|ajmAWrtwQN8SCDrU8MZapwcwGUo=
+|1|ajAVv+ItUz5g6vMlfflfWd5nlfA=|63PSlF19OWMsTxvMDWD9NmECymI=
+|1|bILcKtK1UhYIlvtKQwthvuiN44g=|ksv7W4s/cA6B2+vTQr0ReCs/PnY=
+|1|BJVLT1m5fd6NKt1El7ORxZqJ3FE=|WF2EW4L+500F3avPmJx9xk14R/c=
+|1|CulF1cu1WDg9deRQniJj10vOJBw=|V3//KqXsNjNCN/RANTbCDfv2C7I=
+|1|d8mouoG3P5jpa5WGnWrf65vnH3Q=|NEcfk3xMrFQn1owep8lO+pdd7+k=
+|1|dXd2EniVMm1OEPiPsT6QPgo8OQk=|BXcRwLSQHSs9Tli0QGKiAfQupG0=
+|1|eC4tvZJ3ZwosmEAL7Pt+9b3wE2w=|Hk/HfUgkhZQkKAW53ZN7t2ZatH8=
+|1|fSz1PpIk8FDYvyvZFaa8nG5OAa8=|L+GvMrDnLWaMLEKqPmHBO2v42WE=
+|1|G8vhYpWWuf2qzy1TxcZjP8WHMCg=|8hIoPCEGNbNn5IYRVv/zuNYd+/U=
+|1|GQnMZLv7tAy4geDltqEuxphDebU=|SjSbD+beWWmTIUWySLNC6dFVEho=
+|1|hcLn9V7cX7OxXfAFw0HX+rRtkNU=|ytx0WUvmGiuSNWTMOeAcsXBaKtY=
+|1|j/ecntu9xfO9ePe/l1R4AMi3J+o=|OfKI4MP7IIVHxZXR+PFR1nqmKlo=
+|1|jgLejGHxtXp8+tnr+0Lop9FMlmc=|PN9s5daGpeZonmz/E6JA0Y1U9Po=
+|1|jp4cfYn7AwKnzm+a4BzRprpy/LY=|fd8SclN4DGvAsdSuE94ogocT2Jw=
+|1|KmarbxUaEPDwFBRyWh35ACYyKHw=|mRJGcMlVCPFTGmGIR2lqPMvO+tI=
+|1|nBEYfB+r6891e2YN8ScZ8wVW2wQ=|hk2yer6aDLwVK7xhAj61II+amoE=
+|1|NcULQ80MgAeSHctUhiIadWI838I=|AfcyqckxNiCmhsDk0L0P0ek9M8Y=
+|1|OJxv8/Xw77jDcWBLjX+2uj16DNs=|xmpHjFindKdmAXZs5IgDkYjGztw=
+|1|opfIMYBV91WO66jGp1B1C+5jjIY=|J+4I1kJb8urCvnd/TPHtVakYm7E=
+|1|P7sCMFBzHhov7aRMp8Vc3Of2UBA=|9x9YsE7VsE5nyu/8OmQ4nmLGKhk=
+|1|rPmSBk3pIwhhEHpq7XOBtj5R9yY=|+f+9Qn9arij3FsYhEKCGKTEdqx8=
+|1|SfEeyeSaFyGhtSzNMY6vjfxX18k=|YC7Op4ZmsfvOseQucq0Yeh73tbs=
+|1|tKFfJjkBQlDQCfxtd1liwo6QFr4=|BK6Neay+xZce8wJIT6u8JHvYHHI=
+|1|uyZpLLWp/d1Epx4RxqJ56DwYPX8=|i3rZHpXgMU4gxNjX0zfkr/Mh9M4=
+|1|VFFtQW+QXkphqPG/r7/FMNIHo8I=|YIkoD0OnHEl9w4A4lsiKXDqqiLc=
+|1|Wm/TEZghPi+BAJNRIpECtN7eKNw=|KvoV4xlfeGJSziBvyVD3WAiAnW8=
+|1|x6AZfmLJpvZqk/xLsSkgoDGDP4c=|wsjNU7g+pE/GU+S+A4YEnmfVR3E=
+|1|xHsWfFl/LdNu8QPJe83/5AZ9u+U=|p1O0i2dEfLd08PS3g9LP8clJgQA=
+|1|Y5EBtQEvJuWSDCznegodzrB2qE8=|MTZxwbBRTx1suOCM74XMdzTjQtI=
+|1|YznZAj0JBbclKFKuSJXYPS1OE30=|ZXTIwjIHwaHhQkyy30nhOSedSLE=
+## known_hosts count
+38 /home/xuqianhui/.ssh/known_hosts
+## grep -ril vlab in repo (docs/scripts)
+## grep -ril vlab in memories
+/home/xuqianhui/.pi/agent/pi-hermes-memory/failures.md
+/home/xuqianhui/.pi/agent/pi-hermes-memory/sessions.db
+/home/xuqianhui/.pi/agent/pi-hermes-memory/MEMORY.md
+## grep -ril 'ustc.*vm\|虚拟机\|gitlab-runner\|runner' in RESOURCES/TASKS (names only)
+TASKS/README.md
+.pi/trash/files/0001-Linux-7.3-rc7.patch.1793190193
+.pi/sessions/2026-10-23T14-02-36-937Z_01a16912-1c08-755f-97b1-7bd4bb79a78b.jsonl
+.pi/sessions/2026-10-03T06-08-20-133Z_01a10060-b4a5-7089-b2d6-6a3386010674.jsonl
+.pi/sessions/2026-10-04T13-50-18-147Z_01a1072e-0223-7377-87db-1a872969dae9.jsonl
+.pi/sessions/2026-10-06T15-20-59-754Z_01a111cd-c26a-7027-9a35-163e43125288.jsonl
+.pi/sessions/2026-10-26T02-56-59-395Z_01a17623-ca03-70c3-b81f-097c03742b05.jsonl
+.pi/sessions/2026-10-05T09-23-56-218Z_01a10b60-80b9-71a6-95af-c835e195a254.jsonl
+.pi/sessions/2026-10-03T14-22-14-511Z_01a10224-e3ef-77ba-b6d2-9c4945b756f5.jsonl
+.pi/sessions/2026-10-04T15-57-56-762Z_01a107a2-de9a-717e-859f-3161d2ea82a1.jsonl
+.pi/sessions/2026-10-26T05-24-39-337Z_01a176aa-fb29-7555-b413-bddf93b52d61.jsonl
+.pi/sessions/pi-fold-evidence/pi-session/sha256/f6/f611faed7c9f46b07d172bbb73ab33778ac196447a363451e68672e1c3e8cf51.txt
+.pi/sessions/pi-fold-evidence/pi-session/sha256/6c/6cec4a7e839e61d113bed848adffa7c3de8c13bf8685fb3dd4842e680f2fa43d.txt
+.pi/sessions/pi-fold-evidence/pi-session/sha256/ba/ba08216ac224da1e5976f85b3292d516dfd0891493b13558fb9597b7319fd405.txt
+.pi/sessions/pi-fold-evidence/pi-session/sha256/fd/fd7e14f140b0882ed8192254c3b615fe1f78b2d76b6197e3d2bf0f1fdc626939.txt
+.pi/sessions/2026-10-09T12-11-53-043Z_01a12093-b352-747e-9e0f-36ab1a405672/19458df7-6d4e-4246-8887-869579e9ce7f/run-0/pi-fold-evidence/pi-session/sha256/31/31ade1f3f6a0c9e7a5bb802eaad6037a67fbafc46ea1bf3a0ece6ade330a7f72.txt
+.pi/sessions/2026-10-02T04-26-15-516Z_01a0fadc-e45b-7320-83c7-c4c4b6a27fe1.jsonl
+.pi/sessions/2026-10-02T14-04-55-226Z_01a0fcee-ac39-722a-9026-77520e2d5b92.jsonl
+.pi/sessions/2026-10-04T00-11-56-443Z_01a10440-c69a-768f-b62a-59665948dfbe.jsonl
+.pi/sessions/2026-10-04T14-37-52-920Z_01a10759-9198-7377-87db-1a913cfe4269.jsonl
+## any ssh targets referenced in repo scripts (host= patterns)
+scp $OUT/*.jar root@192.168.7.1
+scp root@192.168.7.1
+ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 root@192.168.7.1
+ssh root@192.168.7.1
+ssh target (default root@192.168.7.1

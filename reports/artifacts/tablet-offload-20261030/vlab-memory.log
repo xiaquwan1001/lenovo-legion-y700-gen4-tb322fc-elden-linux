@@ -1,0 +1,7 @@
+# gate=vlab-memory
+## MEMORY.md vlab hits
+365:USTC GitLab (git.ustc.edu.cn = 114.214.240.112) 从本机(xuqianhui, Ubuntu, eno1 校内 114.214.x) **SSH 22 端口被 RST 拒绝**，即使挂着校园有线+热点双默认路由（114.214.0.0/16 走 eno1）。对照：mirrors.ustc.edu.cn:22、vlab.ustc.edu.cn:22 正常，git.ustc.edu.cn:443 正常(302)。故非本机端口全封，而是该主机/该网段对 22 的 ACL。HTTPS 私有库需 PAT（历史 glpat token 已失效）。GL 登录页自述『SSH 校外推荐』『校外反复认证失败会暂时封 IP』。要拉 USTC 私有库需：校园网认证/VPN、或提供有效 PAT。 <!-- created=2026-10-17, last=202
+369:本机（xuqianhui, 2026-10-17 换机后）USTC GitLab git.ustc.edu.cn (114.214.240.112) 的 **22 端口被 RST 拒绝**（nc/ssh 均 Connection refused），即使有校园有线路由（via 114.214.192.1 dev eno1）；同 /24 的 api.llm.ustc.edu.cn:22、vlab.ustc.edu.cn:22、mirrors.ustc.edu.cn:22、202.38.95.110:22 可达 ⇒ 是该主机的 ACL 而非本机/全局封锁。443 正常（302/401）。SSH over 443 也被 close。旧会话里的 glpat token 已失效（401）。用户可给 glab 配 USTC token 走 HTTPS 通道（glab 已装，config 默认 h
+§
+## failures.md vlab hits
+4072:[tool-quirk] 本机（xuqianhui/xuqianhui1001，换机后）USTC GitLab git.ustc.edu.cn (114.214.240.112) **22 端口被 ACL 拒绝**（nc/ssh 均 Connection refused），而同网段 vlab/api.llm/mirrors.ustc.edu.cn:22、202.38.95.110:22 可达 ⇒ 是该主机 ACL 非本机问题。443 正常。可行替代 = **glab token 走 HTTPS**：`git config --global credential.https://git.ustc.edu.cn.helper '!glab auth git-credential'`，credential fill 得 username=oauth2 + token；把 remote 

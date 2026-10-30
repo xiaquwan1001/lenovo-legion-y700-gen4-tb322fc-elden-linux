@@ -1,0 +1,125 @@
+# gate=capacity host=xuqianhui date=2026-10-30T22:42:47+08:00
+## df -h / (host)
+文件系统        大小  已用  可用 已用% 挂载点
+/dev/nvme0n1p2  937G  509G  381G   58% /
+## git count-objects -vPH
+error: 未知开关 `P'
+用法：git count-objects [-v] [-H | --human-readable]
+
+    -v, --[no-]verbose    输出更详细
+    -H, --[no-]human-readable
+                          以人类可读的格式显示大小
+
+## tracked-file count + tracked bytes
+3720
+97949584	total
+## top-level du (all, incl dotdirs)
+0	l2
+0	linux
+4.0K	AGENTS.md
+4.0K	LICENSE
+4.0K	cycle.sh
+4.0K	elden-net.sh
+8.0K	.gitignore
+12K	.githooks
+12K	README.md
+20K	restore-259
+24K	INDEX.md
+36K	android-libcutils_1%3a34.0.5-12build1_amd64.deb
+36K	android-liblog_1%3a34.0.5-12build1_amd64.deb
+48K	PROGRESS.md
+48K	waydroid-ota
+52K	RUNBOOK-BRINGUP
+52K	android-libutils_1%3a34.0.5-12build1_amd64.deb
+72K	DEVICE
+100K	android-libbase_1%3a34.0.5-12build1_amd64.deb
+120K	RESOURCES
+148K	android-libbacktrace_1%3a34.0.5-12build1_amd64.deb
+160K	net
+188K	HISTORY
+336K	aidl_1%3a10.0.0+r36-4_amd64.deb
+452K	hidl-gen_10.0.0+r36-3.1build1_amd64.deb
+572K	patches-userland
+684K	versions
+708K	android-libboringssl_14.0.0+r45-3_amd64.deb
+792K	SESSIONS
+836K	rootfs
+872K	packaging
+952K	PITFALLS
+1.1M	TASKS
+1.1M	tools
+1.5M	scripts
+2.0M	initramfs
+2.1M	probes
+2.6M	archive
+6.1M	reference
+13M	patches
+28M	Y700-elden-linux
+35M	logs
+85M	.git
+99M	reports
+271M	y700四代工具
+1.1G	bootslot-b
+2.0G	stock-src
+2.7G	dl-cam
+2.9G	geekidos-linux
+3.0G	backup
+3.3G	env-pass
+3.5G	.pi
+6.4G	out
+171G	build
+## per-area du (docs/scripts/patches/sessions)
+1.1M	TASKS
+792K	SESSIONS
+99M	reports
+952K	PITFALLS
+72K	DEVICE
+120K	RESOURCES
+52K	RUNBOOK-BRINGUP
+188K	HISTORY
+2.6M	archive
+24K	INDEX.md
+## pi sessions + lane/missions
+616M	.pi/sessions
+40K	.pi/lanes
+32K	.pi/missions
+260K	.pi/plans
+96K	.pi/agents
+424K	.pi/skills
+## large non-git payloads
+171G	build
+6.4G	out
+2.7G	dl-cam
+3.3G	env-pass
+3.0G	backup
+2.0G	stock-src
+2.9G	geekidos-linux
+1.1G	bootslot-b
+836K	rootfs
+2.0M	initramfs
+35M	logs
+28M	Y700-elden-linux
+85M	.git
+6.1M	reference
+1.1M	tools
+1.5M	scripts
+13M	patches
+572K	patches-userland
+684K	versions
+872K	packaging
+452K	hidl-gen_10.0.0+r36-3.1build1_amd64.deb
+708K	android-libboringssl_14.0.0+r45-3_amd64.deb
+## ignored+untracked total (git status)
+14
+## working tree total excl ignored (checkout footprint)
+16G	.
+## git worktrees
+4
+/home/xuqianhui/y700-elden        5bad548 [main]
+/home/xuqianhui/wt-aw86927-series 41f9996 [lane/aw86927-series]
+/home/xuqianhui/wt-b5-resoc       ea6c518 [lane/b5-resoc]
+/home/xuqianhui/wt-devcam-ab      72acfd3 [lane/devcam-ab]
+## loose objects / pack count
+pack-b5cd308892ef23431a3ba8619d76b9b05c6ed436.idx
+pack-b5cd308892ef23431a3ba8619d76b9b05c6ed436.pack
+pack-b5cd308892ef23431a3ba8619d76b9b05c6ed436.rev

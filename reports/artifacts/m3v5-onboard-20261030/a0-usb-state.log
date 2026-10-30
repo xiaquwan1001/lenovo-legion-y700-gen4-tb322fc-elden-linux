@@ -1,0 +1,19 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+port0
+port0-partner
+port1
+a600000.usb-port0-role-switch
+a600000.usb-port1-role-switch
+0
+0
+/sys/class/typec/port0: host [device] source [sink]
+/sys/class/typec/port1: host [device] source [sink]
+a600000.usb
+configured
+PPM_INIT=0
+ROLE_FAIL=0
+ucsi_glink             12288  0
+typec_ucsi             65536  1 ucsi_glink
+dwc3_qcom              20480  2
+dwc3                  188416  1 dwc3_qcom
+pmic_glink             16384  3 pmic_glink_altmode,qcom_battmgr,ucsi_glink

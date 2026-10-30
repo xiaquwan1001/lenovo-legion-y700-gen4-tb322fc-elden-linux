@@ -1,0 +1,46 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+Disk /dev/sda: 123871232 sectors, 472.5 GiB
+Model: KLUFG8RHKF-F0H1 
+Sector size (logical/physical): 4096/4096 bytes
+Disk identifier (GUID): C96EFCEB-90BB-E152-F60B-2321C7F4D385
+Partition table holds up to 32 entries
+Main partition table begins at sector 2 and ends at sector 2
+First usable sector is 6, last usable sector is 123871226
+Partitions will be aligned on 1-sector boundaries
+Total free space is 262144 sectors (1024.0 MiB)
+
+Number  Start (sector)    End (sector)  Size       Code  Name
+   1               6             773   3.0 MiB     FFFF  proinfo
+   2             774             901   512.0 KiB   FFFF  lenovolock
+   3             902           77701   300.0 MiB   FFFF  lenovocust
+   4           77702           81797   16.0 MiB    A039  lenovoraw
+   5           81798           81799   8.0 KiB     A02C  ssd
+   6           81800           89991   32.0 MiB    A026  persist
+   7           89992           90247   1024.0 KiB  A01F  misc
+   8           90248           90375   512.0 KiB   A02D  keystore
+   9           90376           90503   512.0 KiB   FFFF  frp
+  10           90504         5857671   22.0 GiB    FFFF  super
+  11         5857672         5857687   64.0 KiB    FFFF  vbmeta_system_a
+  12         5857688         5857703   64.0 KiB    FFFF  vbmeta_system_b
+  13         5857704         5874087   64.0 MiB    FFFF  metadata
+  14         5874088         5939623   256.0 MiB   A01C  rawdump
+  15         5939624         5972391   128.0 MiB   FFFF  pstoredump
+  16         5972392        73277434   256.7 GiB   A03A  userdata
+  17        73277435        98443258   96.0 GiB    8300  linux17
+  18        98443259       123609082   96.0 GiB    8300  linux18
+---HEAD---
+6afbaa756a1d30a5f8985fa4a213e4ebfb6baa0237dd8e66591309a978432047  -
+---TAIL---
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  -
+---SLOT---
+Current slot: _b
+SLOT _a:
+	Active      : 0
+	Successful  : 1
+	Bootable    : 1
+SLOT _b:
+	Active      : 1
+	Successful  : 1
+	Bootable    : 1
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+c08bbcc4d5c6ef5a0159b55441d2ea35dbd967717bcbfaccc751f0c1808676f3  -

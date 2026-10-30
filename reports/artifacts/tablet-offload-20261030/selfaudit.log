@@ -1,0 +1,28 @@
+# gate=selfaudit date=2026-10-30T23:15:28+08:00
+## 1) credential-pattern leak scan over my new files (should print NOTHING)
+LEAK_HITS=0
+## 2) write boundary: files I/L2 added (must be only reports|artifacts|.pi/plans|TASKS/sessions)
+.pi/plans/pi-tablet-night.service
+.pi/plans/tablet-night-runner.sh
+.pi/plans/tablet-offline-pkgs.sh
+.pi/plans/tablet-queue.example.jsonl
+.pi/plans/tablet-sync.sh
+"TASKS/sessions/2026-10-30-\345\271\263\346\235\277\346\226\255\347\224\265\347\273\255\344\275\234\344\270\216\345\220\214\346\255\245\350\247\204\345\210\222.md"
+reports/artifacts/tablet-offload-20261030/
+reports/tablet-offload-plan-20261030.md
+## 3) products exist + sizes
+1615 .pi/plans/pi-tablet-night.service
+8407 .pi/plans/tablet-night-runner.sh
+6877 .pi/plans/tablet-offline-pkgs.sh
+4331 .pi/plans/tablet-queue.example.jsonl
+4010 .pi/plans/tablet-sync.sh
+5684 TASKS/sessions/2026-10-30-平板断电续作与同步规划.md
+29123 reports/tablet-offload-plan-20261030.md
+## 4) gates re-run by L1 itself
+runner syntax OK
+queue ok 6
+main
+141
+## 5) no stray pi/night processes from dry-run
+## 6) artifact log count
+48

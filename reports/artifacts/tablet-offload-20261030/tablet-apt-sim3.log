@@ -1,0 +1,8 @@
+# gate=tablet-apt-sim3 date=2026-10-30T22:48:08+08:00
+The following NEW packages will be installed:
+0 upgraded, 494 newly installed, 0 to remove and 7 not upgraded.
+---- count NEW ----
+121
+---- kernel-build set (arm64 native) ----
+---- dtschema via pip? (presence of pip only) ----
+Traceback (most recent call last):

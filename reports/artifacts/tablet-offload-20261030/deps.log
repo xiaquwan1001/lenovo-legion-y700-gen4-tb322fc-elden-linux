@@ -1,0 +1,114 @@
+# gate=deps date=2026-10-30T22:44:41+08:00
+## apt package refs in scripts/tools/probes/docs (sorted freq)
+      3 等待
+      3 qrtr-tools），跳过
+      3 qemu-user-static
+      3 debootstrap
+      3 SSC
+      3 -qq
+      2 gcc-15-aarch64-linux-gnu
+      2 \
+      1 （然后
+      1 重跑）
+      1 wget
+      1 gcc-14-aarch64-linux-gnu
+      1 cpp-15-aarch64-linux-gnu
+      1 ca-certificates
+      1 CROSS_COMPILE=aarch64-linux-gnu-14-
+      1 -q
+      1 --reinstall
+      1 
+## pip/pip3 install refs
+      5 pip install cryptography
+      2 pip install -r requirements.txt
+      1 pip install tirith
+      1 pip install pycryptodome)
+      1 pip install gdown
+      1 pip install edl
+## npm install refs
+    125 npm install --save @earendil-works/pi-coding-agent@1.1.0
+     28 npm i --save-dev @types/jquery
+      3 npm install --package-lock-only --offline --no-audit --no-fund 2>
+      3 npm i --save-dev @types/mocha
+      3 npm i --save-dev @types/jest
+      2 npm install -g pi-messenger-swarm
+      1 npm install would fix. Let me check if package-lock.json exists and just leave it
+      1 npm install list.\n\nLet me now write a build script to construct the bundle, then a README, then tar.\n\nLet me first double-check 
+      1 npm install -g pi-profile-switch\n
+      1 npm install --package-lock-only --offline. Let me test with settle.\n\nD. Legacy workflow JS (project): move to archive. 
+      1 npm install --package-lock-only --offline --no-audit --no-fund
+      1 npm install --package-lock-only
+      1 npm i --save-dev @types/node
+## dtschema / dt-validate / checkpatch / dt-doc-validate usage
+## python3 modules imported by scripts (top)
+     12 sys
+      8 os
+      7 argparse
+      6 struct
+      5 subprocess
+      4 hashlib
+      4 binascii
+      2 time
+      2 tempfile
+      2 re
+      1 zlib
+      1 uuid
+      1 termios
+      1 smtplib
+      1 shutil
+      1 pathlib
+      1 multiprocessing
+      1 math
+      1 json
+      1 importlib
+      1 glob
+      1 fcntl
+      1 email
+      1 cryptography
+      1 concurrent
+## firmware blobs referenced in repo (non-build)
+./bootslot-b/boot_b-vk151.img
+./bootslot-b/boot_b-m3v5-daily-signed-20261030.img
+./bootslot-b/boot_b-vk181-daily-signed-20261029.img
+./bootslot-b/boot_b-vk145.img
+./bootslot-b/boot_b-pre-vk151-20261023.img
+./bootslot-b/boot_b-vk152.img
+./bootslot-b/boot_b-vk127.img
+./bootslot-b/boot_b-vk163-signed-20261026.img
+./bootslot-b/boot_b-vk129.img
+./bootslot-b/boot_b-f2fs-root.img
+./bootslot-b/boot_b.img
+./bootslot-b/boot_b-pre-vk183-20261030.img
+./bootslot-b/boot_b-vk128.img
+./dl-cam/donor/libtinyxml2.so
+./dl-cam/donor/camera.libcamera.so
+./dl-cam/vendor-cam-l1d.img
+./dl-cam/aosp/frameworks-native/data/etc/android.software.backup.xml
+./dl-cam/aosp/frameworks-native/data/etc/android.software.sip.xml
+./dl-cam/aosp/frameworks-native/data/etc/android.software.voice_recognizers.xml
+./dl-cam/aosp/frameworks-native/data/etc/android.software.app_widgets.xml
+./dl-cam/aosp/frameworks-native/data/etc/android.software.device_id_attestation.xml
+./dl-cam/aosp/frameworks-native/data/etc/android.software.preview_sdk.xml
+./dl-cam/aosp/frameworks-native/data/etc/android.software.window_magnification.xml
+./dl-cam/aosp/frameworks-native/data/etc/android.software.vulkan.deqp.level-2019-03-01.xml
+./dl-cam/aosp/frameworks-native/data/etc/android.software.midi.xml
+## host-installed pip pkgs of interest
+fastjsonschema            2.22.2
+jsonschema                4.19.2
+jsonschema-specifications 2023.12.1
+meson                     1.10.1
+## kernel build toolchain present on host
+gcc                     gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+aarch64-linux-gnu-gcc   aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+clang                   Ubuntu clang version 21.1.8 (6ubuntu1)
+ld                      GNU ld (GNU Binutils for Ubuntu) 2.46
+lld                     dtc                     Version: DTC 1.7.2
+pahole                  v1.31
+rustc                   meson                   1.10.1
+ninja                   1.13.2
+python3                 Python 3.14.4
+swig                    MISSING
+bc                      bc 1.07.1
+bison                   bison (GNU Bison) 3.8.2
+flex                    flex 2.6.4
+ccache                  ccache version 4.12.3

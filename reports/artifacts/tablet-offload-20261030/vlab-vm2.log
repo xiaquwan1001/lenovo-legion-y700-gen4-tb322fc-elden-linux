@@ -1,0 +1,146 @@
+# gate=vlab-vm2 date=2026-10-30T22:46:45+08:00 — read-only
+Welcome to Vlab
+== full lsblk
+NAME     SIZE FSTYPE TYPE MOUNTPOINT MODEL
+sda    893.1G        disk            RAID 730-8i 1GB 
+├─sda1  1007K        part            
+├─sda2     1G        part            
+└─sda3 892.1G        part            
+sdb     65.5T        disk            DS800 K30       
+== proc partitions
+major minor  #blocks  name
+
+   8        0  936522752 sda
+   8        1       1007 sda1
+   8        2    1048576 sda2
+   8        3  935473135 sda3
+ 252        0    8388608 dm-0
+ 252        1   16777216 dm-1
+ 252        2    8937472 dm-2
+ 252        3  875659264 dm-3
+ 252        4  875659264 dm-4
+ 252        5  875659264 dm-5
+ 252        6  201326592 dm-6
+ 252        7   33554432 dm-7
+   8       16 70283469312 sdb
+ 252        8   16777216 dm-8
+ 252        9   50331648 dm-9
+ 252       12   16777216 dm-12
+ 252       14   25165824 dm-14
+ 252       15   16777216 dm-15
+ 252       16   16777216 dm-16
+ 252       17       4096 dm-17
+ 252       18   16777216 dm-18
+ 252       13   16777216 dm-13
+ 252       19       4096 dm-19
+ 252       20   16777216 dm-20
+ 252       23   16777216 dm-23
+ 252       24   16777216 dm-24
+ 252       25   16777216 dm-25
+ 252       21   16777216 dm-21
+ 252       27   16777216 dm-27
+ 252       29   16777216 dm-29
+ 252       30   16777216 dm-30
+ 252       31   16777216 dm-31
+ 252       32   16777216 dm-32
+ 252       33   16777216 dm-33
+ 252       34   16777216 dm-34
+ 252       35   16777216 dm-35
+ 252       36   16777216 dm-36
+ 252       28   16777216 dm-28
+ 252       37   16777216 dm-37
+ 252       38   16777216 dm-38
+ 252       40   16777216 dm-40
+ 252       41   16777216 dm-41
+ 252       42   16777216 dm-42
+ 252       43   16777216 dm-43
+ 252       44   16777216 dm-44
+ 252       45   16777216 dm-45
+ 252       46   16777216 dm-46
+ 252       47   16777216 dm-47
+ 252       48   16777216 dm-48
+ 252       39   16777216 dm-39
+ 252       50       4096 dm-50
+ 252       51   16777216 dm-51
+ 252       10       4096 dm-10
+ 252       11   16777216 dm-11
+ 252       52   16777216 dm-52
+ 252       49   16777216 dm-49
+ 252       53       4096 dm-53
+ 252       54   16777216 dm-54
+ 252       56   16777216 dm-56
+ 252       59   16777216 dm-59
+ 252       60   16777216 dm-60
+ 252       55   16777216 dm-55
+ 252       58   16777216 dm-58
+ 252       62   16777216 dm-62
+ 252       63   16777216 dm-63
+ 252       61   16777216 dm-61
+ 252       65   16777216 dm-65
+ 252       22   16777216 dm-22
+ 252       66   16777216 dm-66
+ 252       64   16777216 dm-64
+ 252       67   16777216 dm-67
+ 252       68   16777216 dm-68
+ 252       70   16777216 dm-70
+ 252       71   16777216 dm-71
+ 252       72       4096 dm-72
+ 252       69   16777216 dm-69
+ 252       74   16777216 dm-74
+ 252       73   16777216 dm-73
+ 252       75   16777216 dm-75
+ 252       77   16777216 dm-77
+ 252       78   16777216 dm-78
+ 252       79   16777216 dm-79
+ 252       57   16777216 dm-57
+ 252       76   16777216 dm-76
+ 252       26   16777216 dm-26
+== lvm
+sudo: pvs：找不到命令
+bash: 行 3: lvs: 未找到命令
+== sudo -n available?
+sudo_rc=0
+== mounts
+/                                             /dev/mapper/user--data2-vm--14178--disk--0[/@] btrfs          16G  11.8G
+├─/opt/vlab                                   /dev/mapper/pve-vlab--software[/@]             btrfs         192G  97.1G
+├─/dev                                        none                                           tmpfs         492K   488K
+│ ├─/dev/shm                                  tmpfs                                          tmpfs           4G     4G
+│ ├─/dev/mqueue                               mqueue                                         mqueue           0      0
+│ ├─/dev/fuse                                 udev[/fuse]                                    devtmpfs    117.3G 117.3G
+│ ├─/dev/.lxc/proc                            proc                                           proc             0      0
+│ ├─/dev/.lxc/sys                             sys                                            sysfs            0      0
+│ ├─/dev/full                                 udev[/full]                                    devtmpfs    117.3G 117.3G
+│ ├─/dev/null                                 udev[/null]                                    devtmpfs    117.3G 117.3G
+│ ├─/dev/random                               udev[/random]                                  devtmpfs    117.3G 117.3G
+│ ├─/dev/tty                                  udev[/tty]                                     devtmpfs    117.3G 117.3G
+== unmounted big part fs type
+== git identity/credential helper (names only)
+user.name PB24111701XiaQinghuan
+user.email xiaqinghuan@mail.ustc.edu.cn
+credential.helper store
+== does VM have git remote access to git.ustc? (1 ls-remote, refs only)
+fatal: could not read Username for 'https://git.ustc.edu.cn': 没有那个设备或地址
+rc=0
+== apt cache cross toolchain
+gcc-aarch64-linux-gnu:
+gcc-12-aarch64-linux-gnu:
+device-tree-compiler:
+dwarves:
+ccache:
+== big dirs in home
+4.0K	/home/ubuntu/gcd.c
+4.0K	/home/ubuntu/gcd.ll
+8.0K	/home/ubuntu/lab0
+12K	/home/ubuntu/lab1-plan.md
+320K	/home/ubuntu/lab1
+856K	/home/ubuntu/lab1-evidence
+15M	/home/ubuntu/2026ustc-jianmu-compiler
+3.2G	/home/ubuntu/cross_env
+== is anyone compiling now
+COMMAND         %CPU COMMAND
+systemd          0.0 /sbin/init
+systemd-journal  0.0 /lib/systemd/systemd-journald
+systemd-network  0.0 /lib/systemd/systemd-networkd
+systemd-resolve  0.0 /lib/systemd/systemd-resolved
+accounts-daemon  0.0 /usr/libexec/accounts-daemon
+SSH_RC=0

@@ -1,0 +1,8 @@
+b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66  out/m3v5-onboard/boot-elden-m3v5-onboard.img
+f7a3d1aa8d7a247e289db35376b8e42e0936e433ec32e870187cd60c71866a00  out/m3v5-onboard/boot-elden-m3v5-onboard.manifest
+4a5b4365b534c98bee9a10e3f611a564068732c2efa750052238cabbdda467ea  out/m3v5-onboard/dwc3.ko
+50875e2877c0ce36a2620a3d628aa882333fe604ca32efb62bdadf182156820c  out/m3v5-onboard/dwc3-qcom.ko
+513db6c9a6e20591a639024f60864e0db00d09a25f07d0d5f47d5f1f7930f359  out/m3v5-onboard/Image.gz
+0b614a3c58430280e8dd7bf7bd3c449515b61bdb9297dd662a154e82b7a9a308  out/m3v5-onboard/sm8750-lenovo-elden.dtb
+8c0694e9efd1dffb5914ea0acd07d00ae173427387eec7d879550a63565d01db  out/m3v5-onboard/typec_ucsi.ko
+6b6049ad7a4c3a29feabf03e210ded1a13db102f673a01bf7b45473868dbf2a5  out/m3v5-onboard/ucsi_glink.ko

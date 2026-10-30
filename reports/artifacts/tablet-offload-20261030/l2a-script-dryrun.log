@@ -1,0 +1,12 @@
+=== [apt] 平板侧 apt-get download 命令清单 ===
+DRY-RUN: mkdir -p /home/xuqianhui/y700-elden/reports/artifacts/tablet-offload-20261030
+DRY-RUN: would write /home/xuqianhui/y700-elden/reports/artifacts/tablet-offload-20261030/tablet-apt-offline-commands.sh (already shown above); content NOT executed on tablet.
+apt 档总体积（L1 实测）：513 pkgs / 84.6 MiB → 平板 /var/cache/apt/archives.offline
+=== [npm/Pi] 离线包 ===
+DRY-RUN: du -sh /home/xuqianhui/.pi/agent/npm
+DRY-RUN: rsync -a /home/xuqianhui/.pi/agent/npm/ /home/xuqianhui/y700-elden/out-offline-pkgs/pool/pi-agent-npm/
+DRY-RUN: node 在平板上以 apt nodejs 24.22.0 直接运行该目录（npm registry 已 200 可作回退）
+DRY-RUN 回退: cd /home/xuqianhui/.pi/agent/npm && npm pack --pack-destination /home/xuqianhui/y700-elden/out-offline-pkgs/pool/npm-tarballs/（不推荐，体积更大）
+DRY-RUN: pip download dtschema cryptography -d /home/xuqianhui/y700-elden/out-offline-pkgs/pool/wheelhouse/  (~8 MB, USTC pypi 200)
+DRY-RUN: pip download -r <edl-requirements.txt> -d /home/xuqianhui/y700-elden/out-offline-pkgs/pool/wheelhouse-edl/
+done (DRY_RUN=1). 排除清单未变：build/ geekidos-linux/ out/ stock-src/ env-pass/ backup/ dl-cam/ .pi/sessions/

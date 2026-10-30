@@ -1,0 +1,31 @@
+[abi] 目标: build/m3v5-pristine/.config
+[abi] 参考: /home/xuqianhui/y700-elden/patches/config-vk127-working-20261018
+[abi] ── ABI 敏感项比对 ──
+  [ok]   CONFIG_SUSPEND               __NOT_SET__
+  [ok]   CONFIG_PM_SLEEP              __ABSENT__
+  [ok]   CONFIG_PM_SLEEP_SMP          __ABSENT__
+  [ok]   CONFIG_PM                    y
+  [ok]   CONFIG_PM_GENERIC_DOMAINS    y
+  [ok]   CONFIG_DEBUG_LOCK_ALLOC      __NOT_SET__
+  [ok]   CONFIG_LOCKDEP               __ABSENT__
+  [ok]   CONFIG_PROVE_LOCKING         __NOT_SET__
+  [ok]   CONFIG_NUMA                  y
+  [ok]   CONFIG_HOTPLUG_CPU           y
+  [ok]   CONFIG_CPUMASK_OFFSTACK      y
+  [ok]   CONFIG_NR_CPUS               512
+  [ok]   CONFIG_PREEMPT               y
+  [ok]   CONFIG_PREEMPT_COUNT         y
+  [ok]   CONFIG_PREEMPTION            y
+  [ok]   CONFIG_PREEMPT_RT            __ABSENT__
+  [ok]   CONFIG_ARM64_VA_BITS         52
+  [ok]   CONFIG_ARM64_VA_BITS_39      __NOT_SET__
+  [ok]   CONFIG_ARM64_VA_BITS_48      __NOT_SET__
+  [ok]   CONFIG_ARM64_VA_BITS_52      y
+  [ok]   CONFIG_ARM64_4K_PAGES        y
+  [ok]   CONFIG_ARM64_16K_PAGES       __NOT_SET__
+  [ok]   CONFIG_ARM64_64K_PAGES       __NOT_SET__
+  [ok]   CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE y
+  [ok]   CONFIG_CC_OPTIMIZE_FOR_SIZE  __NOT_SET__
+  [ok]   CONFIG_SMP                   y
+  [ok]   CONFIG_MODVERSIONS           __NOT_SET__
+[abi] ✅ ABI 敏感项与参考一致（27 项）

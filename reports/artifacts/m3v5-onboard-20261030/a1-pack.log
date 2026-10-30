@@ -1,0 +1,17 @@
+[assert] SKIP_KERNEL_ASSERT=1 → 已显式绕过内核闸门（请确保你知道自己在做什么）
+[initramfs] slim → /home/xuqianhui/y700-elden/out/initramfs-slim.cpio.gz  1066883 B  sha=ee28bb0eb2a48121
+ramdisk: /home/xuqianhui/y700-elden/out/initramfs-full-elden.cpio.gz (62M)
+cmdline: console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_early_gadget=1 elden_q28_nowd
+wrote /home/xuqianhui/y700-elden/out/boot-elden-m3v5-onboard.img (84496384 bytes)
+
+-rw-rw-r-- 1 xuqianhui xuqianhui 84496384 Oct 30 23:06 /home/xuqianhui/y700-elden/out/boot-elden-m3v5-onboard.img
+sha256: b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66
+[manifest] /home/xuqianhui/y700-elden/out/boot-elden-m3v5-onboard.manifest
+version=m3v5-onboard
+image_sha256=b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66
+kernel_release=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+kernel_uts=Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+ramdisk=/home/xuqianhui/y700-elden/out/initramfs-full-elden.cpio.gz
+cmdline=console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_early_gadget=1 elden_q28_nowd
+
+Next: fastboot boot /home/xuqianhui/y700-elden/out/boot-elden-m3v5-onboard.img   （或 scripts/kexec-boot.sh 热重载）

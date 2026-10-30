@@ -1,0 +1,101 @@
+# gate=gitpack+sessions date=2026-10-30T22:45:11+08:00
+## git count-objects -v -H
+count: 2118
+size: 49.86 MiB
+in-pack: 9593
+packs: 1
+size-pack: 31.19 MiB
+prune-packable: 0
+garbage: 0
+size-garbage: 0 字节
+## .git breakdown
+32M	.git/objects/pack
+51M	.git/objects
+448K	.git/index
+84K	.git/refs
+136K	.git/logs
+## pack sizes
+32431147 .git/objects/pack/pack-b5cd308892ef23431a3ba8619d76b9b05c6ed436.pack
+TOTAL_BYTES 32431147
+## all refs count + full history size check
+75
+## clone-size estimate (git bundle of all refs to /dev/null dry-run)
+## .pi/sessions detail
+616M	.pi/sessions
+265
+616M
+top5 sessions
+11M	.pi/sessions/2026-10-18T07-03-22-698Z_01a14dd2-7d49-766a-bd12-264ceb37acdf.jsonl
+9.2M	.pi/sessions/2026-10-12T02-37-23-800Z_01a12df8-d1d7-77c8-bb38-b742588513ec.jsonl
+7.9M	.pi/sessions/2026-10-17T13-39-06-431Z_01a14a16-6e3f-710b-ae5f-d82213651676.jsonl
+7.0M	.pi/sessions/2026-10-17T11-58-38-931Z_01a149ba-7552-7711-ba23-ee5b5d9f6185.jsonl
+7.0M	.pi/sessions/2026-10-26T12-37-36-248Z_01a17837-5b78-76ac-8149-3baf8f45f00c.jsonl
+## reports breakdown
+99M	reports
+## TASKS/sessions + SESSIONS + HISTORY + PITFALLS sizes (docs set)
+176K	HISTORY/days/
+704K	SESSIONS/sessions/
+804K	TASKS/sessions
+896K	PITFALLS/sessions/
+## tracked docs+scripts bytes by top dir (git ls-files)
+   1213 reports
+    447 patches
+    231 dl-cam
+    221 reference
+    218 out
+    211 scripts
+    189 archive
+    171 "SESSIONS
+    145 packaging
+    132 "PITFALLS
+    128 "TASKS
+     89 .pi
+     81 rootfs
+     66 patches-userland
+     34 HISTORY
+     31 "archive
+     18 backup
+     15 ".pi
+      9 probes
+      8 versions
+## gitignore head (口径)
+/geekidos-linux/
+/Y700-elden-linux/
+/stock-src/
+/qdl/
+/tools/
+/edk2-gunyah/
+/edk2-gunyah-qemu/
+/mu_wide_platforms/
+/uefi-firmware-backup/
+/build/
+/out/*
+!/out/*.manifest
+/bootslot-b-u2/
+/logs/
+/pkgs/
+/pkgs-phosh/
+/pkgs-x86/
+/probe/
+/twrp/
+/y700四代工具/
+/flashing-bundle/
+/rootfs/alpine/
+/rootfs/dl/
+/rootfs/debs/
+/env-pass/*
+!/env-pass/scripts/
+!/env-pass/tools/
+/bootslot-b/*
+!/bootslot-b/README.md
+/backup/*
+!/backup/fw/
+/backup/fw/*
+!/backup/fw/README.md
+!/backup/elden-dump.txt
+!/backup/HA2EXB0E-16+512/
+/backup/HA2EXB0E-16+512/*
+!/backup/HA2EXB0E-16+512/*.txt
+!/backup/HA2EXB0E-16+512/SHA256SUMS.unlock
+!/backup/HA2EXB0E-16+512/pre-unlock/
+!/backup/HA2EXB0E-16+512/pre-unlock/*.txt

@@ -1,0 +1,11 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+DEPMOD_OK
+c694eeac3fdb9d8dc42f496e9a4ca5858872dd52dbfe86659c11e24b34f06292  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+3c114021f22e640745a533bd78cb97c0654fdf5ac65f30b0bdae5f8b0618532f  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom.ko
+9992946493eb7532d17ed2a697e215f9c69dcf55b2b6ccdd24207705507d07a4  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/typec_ucsi.ko
+4bfa8835e57aab70bbafd6fa22f7456994644f6f05ba2a81af83363e320ff2c7  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/ucsi_glink.ko
+--- lsmod
+ucsi_glink             12288  0
+typec_ucsi             65536  1 ucsi_glink
+dwc3_qcom              20480  2
+dwc3                  188416  1 dwc3_qcom

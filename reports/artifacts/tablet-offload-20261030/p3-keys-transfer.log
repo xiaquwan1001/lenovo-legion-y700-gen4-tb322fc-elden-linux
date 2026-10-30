@@ -1,0 +1,7 @@
+drwxr-xr-x 2 root root 4096 Oct 30 23:02 .
+drwxr-xr-x 3 root root 4096 Oct 30 23:02 ..
+-rw------- 1 root root  474 Oct 30 23:02 auth.json
+-rw------- 1 root root  365 Oct 30 23:02 custom-providers-auth.json
+-rw------- 1 root root 4910 Oct 30 23:02 custom-providers.json
+-rw------- 1 root root   22 Oct 30 23:02 models.json
+auth providers: ['deepseek', 'ustc-ai-1', 'ustc-ai-2', 'ustc-ai-3', 'ustc-ai-4']

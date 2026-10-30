@@ -1,0 +1,4 @@
+drivers/usb/typec/ucsi/typec_ucsi.ko :: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64
+drivers/usb/typec/ucsi/ucsi_glink.ko :: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64
+drivers/usb/dwc3/dwc3.ko :: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64
+drivers/usb/dwc3/dwc3-qcom.ko :: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64

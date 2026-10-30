@@ -1,0 +1,43 @@
+# pi-tablet-night.service — 平板夜间无人值守 systemd user unit（L2-B）
+#
+# 安装（平板上，uid 1001 xuqianhui1001）：
+#   mkdir -p ~/.config/systemd/user
+#   cp .pi/plans/pi-tablet-night.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#
+# 无交互登录前提（需平板 root 执行一次，属用户干预项）：
+#   loginctl enable-linger xuqianhui1001
+#
+# 启动：
+#   systemctl --user start pi-tablet-night.service          # 手动 oneshot
+#   或配 timer（示例：每日 23:00）：
+#     # ~/.config/systemd/user/pi-tablet-night.timer
+#     [Unit] Description=...
+#     [Timer] OnCalendar=*-*-* 23:00:00 Persistent=true
+#     [Install] WantedBy=timers.target
+#
+# 备选（无 linger / tmux 3.8 已装）：
+#   tmux new -ds nightrun .pi/plans/tablet-night-runner.sh
+#   tmux attach -t nightrun
+#
+# [Unit] 区：DefaultDependencies=no 避免依赖 user 会话生命周期；且不与 shutdown 竞争
+[Unit]
+Description=y700-elden tablet night runner (queued jobs, bounded by timeout -k)
+DefaultDependencies=no
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/y700-elden
+# API 键走占位符环境文件（chmod 600，内容用户手填，绝不入 git/rsync）
+EnvironmentFile=-%h/.config/pi-tablet-night.env
+ExecStart=%h/y700-elden/.pi/plans/tablet-night-runner.sh
+# 双保险硬截止：整夜最多 8h（runner 内每任务另有 timeout -k 截止盒）
+TimeoutStartSec=8h
+Nice=19
+IOSchedulingClass=idle
+# 断电/失败不自动重启：重启由 .done/.fail 状态文件续作（幂等）
+Restart=no
+
+[Install]
+WantedBy=default.target

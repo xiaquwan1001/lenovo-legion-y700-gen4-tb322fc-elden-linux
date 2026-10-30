@@ -1,0 +1,5 @@
+[assert] ✅ ABI 敏感项一致（27 项）
+[assert] ❌ System.map 缺符号 'msm_dsi_host_bonded_cmd_trigger|msm_dsi_host_bonded_cmd_xfer|dsi_bonded_cmd_trigger' → 无 QCOM 驱动的死内核（#162）
+[assert] ℹ️ KIMG=build/m3v5-pristine/arch/arm64/boot/Image.gz 非本树默认产物 → 跳过 mtime 陈旧检测（依赖 UTS 对齐保证身份）
+[assert] 打包已阻止。确要绕过：SKIP_KERNEL_ASSERT=1
+assert_rc=1
