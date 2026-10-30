@@ -360,3 +360,4 @@ vk182-camssv3	uts_dup	M4 camss v3 上机复验镜像：UTS **刻意**与 vk172 �
 vk182-camssv3	num_ne_tag	上机复验镜像按惯例用 vk 号（不走 tag）；分支标签集合沿用日常线 replay/m1-73-vk127 系属预期
 m8ab-base	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 1bcbe17a16a0）
 m8ab-v2	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 2691215d2e0e）
+m3v5-daily	uts_dup	M3-1 双口 role mux 上机镜像：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；二进制不同属预期，身份由 kernel_payload_sha256 锚定
