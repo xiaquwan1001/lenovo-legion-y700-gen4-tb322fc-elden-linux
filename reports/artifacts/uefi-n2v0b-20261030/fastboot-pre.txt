@@ -1,0 +1,11 @@
+== 14:15:52 pre-fastboot state ==
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.005s
+slot-unbootable:a: no
+Finished. Total time: 0.004s
+product: elden_prc_wifi
+Finished. Total time: 0.004s
+secure: yes
+Finished. Total time: 0.004s

@@ -1,0 +1,4 @@
+img_sha=90659a4dc35657589269e090f782087643ec0370b4f636749185fbf9e3e9f1f1  reports/artifacts/uefi-onboard-20261030/N2-v0b.img
+Sending 'boot.img' (2384 KB)                       OKAY [  0.055s]
+Booting                                            OKAY [ 10.107s]
+Finished. Total time: 10.163s

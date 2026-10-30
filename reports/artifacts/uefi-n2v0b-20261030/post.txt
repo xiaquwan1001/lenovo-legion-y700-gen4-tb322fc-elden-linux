@@ -1,0 +1,8 @@
+current-slot: b
+Finished. Total time: 0.009s
+slot-unbootable:b: no
+Finished. Total time: 0.006s
+#2 SMP PREEMPT Fri Oct 30 13:06:36 CST 2026
+926850aa-7b24-4f53-a7cf-9ca5a59efb1f
+/dev/sda17 ext4
+connected
