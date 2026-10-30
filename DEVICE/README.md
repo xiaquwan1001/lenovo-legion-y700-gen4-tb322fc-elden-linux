@@ -177,6 +177,11 @@
 4. **只留短边 PD 时 `qcom-battmgr-usb` 的 `voltage_now` 读到 1.0–1.2 V**（与电池吃 12 A 矛盾）——
    这是 `qcom_battmgr` 单 `usb_psy` 结构的直接后果（多口时读数归属不清），**不要当电压故障**。
 
+**★ 2026-10-30 操作事实（用户确认）**：**ABL / bootloader / fastboot 阶段只有「长边」口有数据**；
+短边口在 fastboot 下不枚举 ⇒ 从 Linux `reboot bootloader` 前必须把数据线插到**长边**，否则设备进 fastboot 后主机看不到
+（本轮实测踩到：插短边时 `fastboot devices` 空、`lsusb` 无 18d1，设备却已在 fastboot）。自建 BL（让短边也能用于 fastboot）
+**归入远期项**，当前不作为任何任务的前置。
+
 **接法候选**：要「数据 + 快充」同时成立，可尝试 **PD 插长边、数据线插短边**；数据热切换及 `port-select-gpios` 仲裁仍需独立验证（`TASKS` §7 M3-1）。
 详细采样日志与判据表 = `../reports/usb-dual-port-test-protocol-20261029.md` §8。
 
