@@ -1,0 +1,51 @@
+# host-net-proxy.service — 把宿主 Bettbox/mihomo 的 127.0.0.1:7890 中继到 192.168.7.9:7897
+#
+# 用途：Waydroid 容器全局代理写死 192.168.7.9:7897（USB-NCM 侧宿主 IP），
+#       而 Bettbox 只监听 127.0.0.1:7890 且 allow-lan: false，
+#       故必须由宿主侧做端口中继（systemd-socket-activate + systemd-socket-proxyd）。
+#       本 unit 取代手工 scripts/host-net-proxy.sh，登录即可用、Bettbox 后起能自愈。
+# 取证：reports/waydroid-proxy-systemd-20261030.md
+#
+# 安装（用户级，无需 root）：
+#   mkdir -p ~/.config/systemd/user
+#   cp scripts/systemd/host-net-proxy.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now host-net-proxy.service
+#   systemctl --user status host-net-proxy.service
+#
+# 不登录也想跑（可选，需 root 一次）：sudo loginctl enable-linger "$USER"
+#
+# 回退：
+#   systemctl --user disable --now host-net-proxy.service
+#   rm -f ~/.config/systemd/user/host-net-proxy.service
+#   systemctl --user daemon-reload
+#
+# 说明：
+#  - 无 [Install] 的 WantedBy 依赖也可以 enable —— 使用 default.target.wants。
+#  - 不 After= 具体 GUI 应用：Bettbox 是 flatpak/图形会话进程，不是 systemd unit；
+#    改为 ExecStartPre 有界等待 7890 + Restart=always，Bettbox 后起时下一轮重启即恢复。
+#  - socket-proxyd 只在收到连接时连上游，故上游暂缺时端口仍监听（连接会被拒/挂断），
+#    这是「中继先起、后端后起」能自愈的前提，也是残留风险之一（见报告）。
+
+[Unit]
+Description=Expose Bettbox 127.0.0.1:7890 to 192.168.7.9:7897 for Waydroid container
+Documentation=file:%h/y700-elden/reports/waydroid-proxy-systemd-20261030.md
+After=default.target
+
+[Service]
+Type=simple
+# 有界等待上游代理（Bettbox）就绪；超时不失败，仍继续暴露端口
+ExecStartPre=-/bin/bash %h/y700-elden/scripts/host-net-proxy.sh --wait-upstream 60
+# --foreground = exec systemd-socket-activate（不 fork、不写 /tmp pidfile）
+ExecStart=/bin/bash %h/y700-elden/scripts/host-net-proxy.sh --foreground
+# 进程退出（Bettbox 掉线、proxyd 崩）后自动重起；重启前再等一次上游
+Restart=always
+RestartSec=5
+TimeoutStartSec=90
+# 只杀主进程即可：socket-activate exec 成主进程，socket-proxyd 是其子进程
+KillMode=mixed
+# 用户级 unit 不涉及提权
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target
