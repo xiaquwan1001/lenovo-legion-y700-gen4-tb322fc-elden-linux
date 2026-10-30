@@ -301,14 +301,17 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 ### 2026-10-30 新增待办与并行安排
 
-- **Waydroid 浏览器 `ERR_PROXY_CONNECTION_FAILED`（未解，G2 优先）**：设备独占时只读核查容器全局代理/PAC、浏览器代理、目标地址及监听端口、容器到宿主连通性；区分容器网络、代理配置和上游连通，保留配置后单变量修复；验收同浏览器访问代理目标及直连对照。先排除凭据/隐私问题，不记录敏感信息。
+- **Waydroid 浏览器 `ERR_PROXY_CONNECTION_FAILED`（2026-10-30 已修，待固化）**：根因 = 容器全局代理指 `192.168.7.9:7897`，而宿主中继进程未运行（Bettbox `allow-lan:false` 只听 `127.0.0.1:7890`）。已运行 `scripts/host-net-proxy.sh` 恢复；实测容器 `nc 192.168.7.9 7897` = TCP OK、打开 https 页面成功。**仍属临时进程（重启即失效，正是本次成因），systemd user unit 固化待立项**。取证与三类判定见 `reports/waydroid-proxy-err-20261030.md`。
 - **droidloom 可行性规划（未证实，主机侧可并行）**：以 `RESOURCES/sessions/2026-10-26-denial-droidloom深度评估.md` 和 `reports/waydroid-droidloom-userland-interface-20261026.md` 为基线，核实上游当前版本、arm64 构建/发布、Phosh 的 linux-dmabuf v4 feedback 与 linux-drm-syncobj 要求、内核和图形接口、GMS/PI、相机/音频/传感器适配；给出不改现有桌面的隔离试验、资源成本与退出条件。用户要求规划，不预设替换 Waydroid。
 - **设备优先收口**：M8 A/B 基线本轮用户现场判别 3/3 正常，首发有标准采样；原方案的坏发未复现，v2 疗效仍未证实。当前在基线臂，恢复日常镜像前读回备份超时且缺 32 KiB，已停止写入；先诊断链路并取得完整校验备份及 GPT 双表，再决定恢复，禁止把截断备份用于恢复。
 - **双口反向接法**：见 `DEVICE/README.md` §1.4 与 `reports/artifacts/usb-reverse-20261030/snapshot.txt`；待低电量条件下复核充电功率和长时数据稳定性。
 - **并行排产**：设备操作串行加锁；三条 2026-10-29 中断续作（M3 / wl2868c / UEFI）**已于 2026-10-30 全部收口**，报告经父代理核对（数字与文件存在性）。后续按“设备一条 + 主机侧两条”排，新增 lane 均限定单文件报告与设备只读。任何上游发送另按批批准。
 - **2026-10-29 中断产物的报告入口**（均为未完成/未验证件，不得当结论）：`reports/m8ab-build-20261029.md`（两臂构建，上机结果见下条）、`reports/uefi-closeout-20261029.md`（部分完成；主机侧续作 `reports/uefi-recovery-20261030.md`：M1/M3/M4 已完、M2 待上机、**E1 二进制身份与仓库 `PatchedBinaries` 不一致**未决）；`reports/m3-1-v5-20261029.md` 与 `reports/wl2868c-v2-20261029.md` 两份骨架已由对应 recovery 报告取代，见下两条。
 - **M3-1 v5 未开工，最小修复落点已定（2026-10-30，`reports/m3-v5-recovery-20261030.md`）**：`patches/upstream/` 下没有 v5 目录、`build/m3v5` 与 v4 零差异 ⇒ 昨晚 v5 实际零产出。sashiko 12 条原文已找回，8/12 静态证实（含自死锁 `drd.c:557 → :574 → core.c:322`）；报告 §4 给 A–J 十项落点（约 49 行），**未落地/未编译**。下一步 = 按 §4 实施 + 门禁 + 上机。
-- **wl2868c v2 系列有硬阻断（2026-10-30，`reports/wl2868c-recovery-20261030.md`）**：四枚补丁真实、可 apply、checkpatch 干净，但 **3/3 板级 DTS 缺 `xo_board`/`sleep_clk`/`bi_tcxo_div2`/`bi_tcxo_ao_div2` 四个 fixed-clock ⇒ `sm8750-lenovo-elden.dtb` 编译 rc=2（15 条 phandle 错误）**，另有 `arm/qcom.yaml` 板 compatible 与 3 个 sensor/lens binding 未登记 ⇒ **发前必修，当前不可用**。
+- **邮件分诊结论（2026-10-30，`reports/mail-triage-20261030.md`）**：近三日外部来信 **10 封**（Krzysztof 2 / Shuai Liu 4 / Bryan 2 / Loic 2）。要点：① **camss 2/3 被 Bryan NAK**（他实测 plane0 有 5 处物理断裂、0 处 IOVA 断裂 ⇒ 查 IOVA 却声称物理连续的判据被证伪）；② camss 3/3 获 Loic 形状建议（helper 化 + `v4l2_subdev_enable_streams`）；③ Bryan 明确 SM8750 camss enable 整块归 Hangxiang，我方只以 fix 形态存在；④ **M8 v2 与 sashiko 均 0 新回信**；⑤ **Krzysztof 对 wl2868c 三条硬要求**：逐条回应 v1 意见 / **“not with LLM”（回信必须人工撰稿）** / “still see no users”。
+- **wl2868c “no users” 已具备答复依据（2026-10-30）**：器件数 = 板 DTS 的 **8 条 `*-supply = <&camera_ldoN>`**（LDO7 扇出 3、LDO6 空置），且 v3 已把该 DTS 修到 **DTB 编译 rc=0**（原 rc=2）——即“消费者证据”现在成立。**但回信必须人工撰稿**，不由 agent 代写。
+- **待拍板的投递动作**（邮件分诊 §3 D1–D6）：D1 camss v2（撕2/3、改 3/3 形状）、D2 回 Krzysztof 重锚定 camss、D3 回 wl2868c（人工）、D4 wl2868c driver 系列（前置已解锁）、D5 patchwork 标 superseded（需人工）、D6 吸收 Shuai Liu 的 icc 表 finding 作为给 Hangxiang 的 fix 素材。
+- **wl2868c v3 四枚（门禁已过，待批准投递）**：原 15 条 phandle 错误已归零——从 `sm8750-mtp.dts` 复用 4 个 fixed-clock、补 `arm/qcom.yaml` 登记、**compatible 已改为 `lenovo,elden`**（与日常线树一致，用户 2026-10-30 批准）。**父代理独立复跑**：`sm8750-lenovo-elden.dtb` rc=0/ERROR 0（原 rc=2）、mtp 对照 rc=0、pristine 重放 3/3 且被改文件 md5 与分支 tip 逐个相同；checkpatch 1/3 与 2/3 **0E0W0C**、3/3 0E/2W（两类固有假阳性）、cover 0E/1W。**未上机、未投递**。细节 `reports/wl2868c-v2b-20261030.md`。
 - **设备状态（2026-10-30 11:2x）**：M8 A/B 基线臂已回退，`boot_b` 恢复为 vk181-daily 签名件（读回 sha `b72866ef…`），在机 `uname -v = #28`、106 模块、面板 connected/enabled、错误计数 0。
 - **M8 续测结果（2026-10-30）**：基线臂 3/3 现场正常（1 发有标准采样）⇒ 坏发未复现、按预注册规则停手未刷 v2 ⇒ **v2 疗效仍未证实**；详见 `reports/m8ab-restart-20261030.md`。
 

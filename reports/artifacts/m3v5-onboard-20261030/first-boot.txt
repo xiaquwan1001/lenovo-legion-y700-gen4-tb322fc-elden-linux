@@ -1,0 +1,71 @@
+Linux elden 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 #1 SMP PREEMPT Fri Oct 30 11:22:59 CST 2026 aarch64 GNU/Linux
+#1 SMP PREEMPT Fri Oct 30 11:22:59 CST 2026
+912f6d7b-597d-44c4-8c4f-6d9f5c65827b
+---
+/sys/class/usb_role/a600000.usb-port0-role-switch
+device power subsystem uevent waiting_for_supplier 
+/sys/class/usb_role/a600000.usb-port1-role-switch
+device power subsystem uevent waiting_for_supplier 
+---
+configured
+---
+[   15.500056] [   T3292] init: Sending signal 9 to service 'exec 19 (/bin/rm -rf /data/per_boot)' (pid 917) process group...
+[   15.500071] [   T3292] libprocessgroup: Successfully killed process cgroup uid 1000 pid 917 in 0ms
+[   15.500405] [   T3292] init: processing action (sys.boot_completed=1) from (/system/etc/init/blank_screen.rc:9)
+[   15.500426] [   T3292] init: starting service 'exec 20 (/system/bin/sh -c sleep 3; for i in 1 2 3 4 5 6 7 8 9 10; do /system/bin/ip route replace default via 192.168.240.1 dev eth0 && exit 0; sleep 2; done)'...
+[   15.500822] [   T3292] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+[   15.500835] [   T3292] init: createProcessGroup(0, 930) failed for service 'exec 20 (/system/bin/sh -c sleep 3; for i in 1 2 3 4 5 6 7 8 9 10; do /system/bin/ip route replace default via 192.168.240.1 dev eth0 && exit 0; sleep 2; done)': Read-only file system
+[   15.500845] [   T3292] init: SVC_EXEC service 'exec 20 (/system/bin/sh -c sleep 3; for i in 1 2 3 4 5 6 7 8 9 10; do /system/bin/ip route replace default via 192.168.240.1 dev eth0 && exit 0; sleep 2; done)' pid 930 (uid 0 gid 0+0 context default) started; waiting...
+[   16.586037] [   T3305] binder: 3305 RLIMIT_NICE not set
+[   16.586056] [   T3305] binder: 3305 RLIMIT_NICE not set
+[   17.147684] [   T3305] binder: 3305 RLIMIT_NICE not set
+[   17.147738] [   T3305] binder: 3305 RLIMIT_NICE not set
+[   17.557478] [     T91] binder_debug: 8 callbacks suppressed
+[   17.557481] [     T91] binder: undelivered TRANSACTION_COMPLETE
+[   17.557493] [     T91] binder: undelivered transaction 45540, process died.
+[   18.517569] [   T3292] init: Service 'exec 20 (/system/bin/sh -c sleep 3; for i in 1 2 3 4 5 6 7 8 9 10; do /system/bin/ip route replace default via 192.168.240.1 dev eth0 && exit 0; sleep 2; done)' (pid 930) exited with status 0 waiting took 3.020000 seconds
+[   18.517600] [   T3292] init: Sending signal 9 to service 'exec 20 (/system/bin/sh -c sleep 3; for i in 1 2 3 4 5 6 7 8 9 10; do /system/bin/ip route replace default via 192.168.240.1 dev eth0 && exit 0; sleep 2; done)' (pid 930) process group...
+[   18.517632] [   T3292] libprocessgroup: Successfully killed process cgroup uid 0 pid 930 in 0ms
+[   18.517713] [   T3292] init: processing action (sys.boot_completed=1 && sys.bootstat.first_boot_completed=0) from (/system/etc/init/bootstat.rc:77)
+[   18.517761] [   T3292] init: starting service 'exec 21 (/system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l)'...
+[   18.518447] [   T3292] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+[   18.518462] [   T3292] init: createProcessGroup(1000, 1901) failed for service 'exec 21 (/system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l)': Read-only file system
+[   18.518583] [   T3292] init: processing action (sys.boot_completed=1) from (/system/etc/init/flags_health_check.rc:7)
+[   18.525364] [   T3292] init: processing action (sys.boot_completed=1) from (/system/etc/init/init.waydroid.rc:6)
+[   18.525412] [   T3292] init: service 'adbd' requested start, but it is already running (flags: 132)
+[   18.525425] [   T3292] init: processing action (lmkd.reinit=0 && sys.boot_completed=1) from (/system/etc/init/lmkd.rc:14)
+[   18.525492] [   T3292] init: processing action (sys.boot_completed=1) from (/system/etc/init/logd.rc:34)
+[   18.525531] [   T3292] init: starting service 'logd-auditctl'...
+[   18.526213] [   T3292] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1036: Read-only file system
+[   18.526257] [   T3292] init: createProcessGroup(1036, 1908) failed for service 'logd-auditctl': Read-only file system
+[   18.527383] [   T3292] init: Service 'exec 21 (/system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l)' (pid 1901) exited with status 0 oneshot service took 0.008000 seconds in background
+[   18.527423] [   T3292] init: Sending signal 9 to service 'exec 21 (/system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l)' (pid 1901) process group...
+[   18.527444] [   T3292] libprocessgroup: Successfully killed process cgroup uid 1000 pid 1901 in 0ms
+[   18.527503] [   T3292] init: processing action (sys.boot_completed=1 && sys.wifitracing.started=0) from (/system/etc/init/wifi.rc:28)
+[   18.544180] [   T3292] init: Service 'logd-auditctl' (pid 1908) exited with status 0 oneshot service took 0.018000 seconds in background
+[   18.544217] [   T3292] init: Sending signal 9 to service 'logd-auditctl' (pid 1908) process group...
+[   18.544243] [   T3292] libprocessgroup: Successfully killed process cgroup uid 1036 pid 1908 in 0ms
+[   18.570275] [   T3292] init: processing action (sys.user.0.ce_available=true) from (/system/etc/init/wifi.rc:21)
+[   18.571277] [   T3292] init: processing action (lmkd.reinit=1) from (/system/etc/init/lmkd.rc:10)
+[   18.571301] [   T3292] init: starting service 'exec 22 (/system/bin/lmkd --reinit)'...
+[   18.572316] [   T3292] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+[   18.572345] [   T3292] init: createProcessGroup(0, 1936) failed for service 'exec 22 (/system/bin/lmkd --reinit)': Read-only file system
+[   18.656756] [   T3292] init: Service 'exec 22 (/system/bin/lmkd --reinit)' (pid 1936) exited with status 0 oneshot service took 0.084000 seconds in background
+[   18.656840] [   T3292] init: Sending signal 9 to service 'exec 22 (/system/bin/lmkd --reinit)' (pid 1936) process group...
+[   18.657146] [   T3292] libprocessgroup: Successfully killed process cgroup uid 0 pid 1936 in 0ms
+[   19.043510] [   T3292] init: Sending signal 9 to service 'idmap2d' (pid 121) process group...
+[   19.043694] [   T3292] libprocessgroup: Successfully killed process cgroup uid 1000 pid 121 in 0ms
+[   19.044003] [   T3292] init: Control message: Processed ctl.stop for 'idmap2d' from pid: 267 (system_server)
+[   19.424418] [    T154] amba 109ab000.tn: deferred probe pending: (reason unknown)
+[   19.424432] [    T154] qnoc-sm8750 interconnect-1: sync_state() pending due to 1dfa000.crypto
+[   19.424436] [    T154] qnoc-sm8750 1700000.interconnect: sync_state() pending due to 1dfa000.crypto
+[   19.424442] [    T154] gcc-sm8750 100000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   19.424447] [    T154] gxclkctl-kaanapali 3d64000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   19.424451] [    T154] sm8750-gpucc 3d90000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   28.376538] [     T88] Bluetooth: hci0: QCA Downloading qca/brhbtnv20.bin
+[   28.683625] [     T88] Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_DEF
+[   28.684531] [     T88] Bluetooth: hci0: QCA setup on UART is completed
+[   28.684640] [     T88] Bluetooth: hci0: HFP non-HCI data transport is supported
+[   28.734256] [   T1084] Bluetooth: MGMT ver 1.23
+[   28.736893] [   T7249] NET: Registered PF_ALG protocol family
+[   62.568879] [   T3406] logd: logdr: UID=0 GID=0 PID=2811 n tail=600 logMask=99 pid=0 start=0ns deadline=0ns
