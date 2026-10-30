@@ -24,7 +24,13 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-10-30 13:19（当前在机状态，唯一权威；含设备侧读回）** —— 在机 = **M3-1 v5 + F2 镜像**（`out/boot-elden-m3v5-f2.img`，签后 sha `e6b1124c…`，证据 `reports/m3v5-f2-onboard-20261030.md`）：
+- ★**2026-10-30 19:05（当前在机状态，唯一权威）** —— 在机 = **`vk183-fastrpc`**（后台修复传感器那发；`out/boot-elden-vk183-fastrpc.img`，签后 `bootslot-b/boot_b.img`）：
+  `boot_b` 分区 sha256 = **`aedae5f121ecbe5cc6f5de59a14ae5ba3680229d619c49cedee0d6cf8b9b4765`**（设备侧实测），`boot_id` = `b186674c-1754-4241-898a-ab44d05bd324`，
+  `uname -r` 仍 = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`（**故意钉住 UTS** 以复用 `/lib/modules`）、`uname -v` = `#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026`。
+  与上一发（`e6b1124c…` m3v5-f2）的**唯一内核差异** = 一枚 DT commit（`qcom,non-secure-domain`，`patches/dt/0003-*`）；ramdisk/cmdline 逐字取自原 `boot_b`。
+  **传感器已恢复**：`/dev/fastrpc-adsp` 在、`hexagonrpcd` `Result=success`、`HasAccelerometer/AmbientLight/Proximity` = true/true/true、`ssccli` 出真值（`TASKS` §1 G1-34）。
+  **回退件**：`bootslot-b/boot_b-pre-vk183-20261030.img`（= 上一发 m3v5-f2，sha `e6b1124c…`）。
+- ★**2026-10-30 13:19（历史，已被上一条取代）** —— 当时在机 = **M3-1 v5 + F2 镜像**（`out/boot-elden-m3v5-f2.img`，签后 sha `e6b1124c…`，证据 `reports/m3v5-f2-onboard-20261030.md`）：
   `boot_b` 分区 sha256 = **`e6b1124ca6ec38aad162b405e883038a007dac59053be32e57fe22239e689b69`**（设备侧 `dd \| sha256sum` 实测），`boot_id` = `b4d2846d-bc1a-439c-bd6a-840e388ff2f1`（冷起 POR 后；首次暖起为 `3a3d187f…`，两次均通过 M3 绑定取证），
   `uname -r` = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`、`uname -v` = `#2 SMP PREEMPT Fri Oct 30 13:06:36 CST 2026`，
   面板 `connected/enabled`、108 模块、失败单元 1（`hexagonrpcd`：`/dev/fastrpc-adsp` 不存在，**11:26 起即失败，早于本轮刷写**，非回归）。
@@ -51,13 +57,9 @@
   **相机**（C5/U7）：宿主 = mainline 相机 → libcamera → `gst | v4l2-ctl --stream-out-mmap=8` → `/dev/video100`
   （v4l2loopback 需按当前 UTS 重编、`max_buffers=8`、**stock 无补丁**）；容器 `configureStreams` / `start V4L2 streaming` /
   `Preview stream state STREAMING` 均已实测，剩 App 侧停帧。
-  **传感器**（G1-34，**2026-10-30 复核推翻 ✅**）：`hexagonrpcd` = **failed**
-  （`Could not open FastRPC node (/dev/fastrpc-adsp)`），`/dev/` 只有 `fastrpc-adsp-secure`/`fastrpc-cdsp`/`fastrpc-cdsp-secure`，
-  `HasAccelerometer`/`HasAmbientLight`/`HasProximity` = **false/false/false**。
-  根因 = `fastrpc.c:2599` 依赖的 `qcom,non-secure-domain` 只存在于 `build/vk151` 的未提交工作区改动，
-  **在机 vk172 的 DTB 里没有** ⇒ 只建安全域节点。**旧口径（svc 400 可见 ⇒ 正常）作废**：
-  svc 400 是否注册与 `fastrpc-adsp` 是否创建是两件事，传感器栈吃的是后者。
-  详见 `../TASKS/README.md` §1 G1-34、`reports/code-style-and-duty-overlap-audit-20261030.md` C-01/C-02。
+  **传感器**（G1-34，**2026-10-30 19:05 已修好并上机验证**）：根因是修复（`qcom,non-secure-domain`）只存在于未提交工作区 ⇒ 在机 DTB 没有它 ⇒ `fastrpc` 只建 `-secure` 节点。单独抽一枚 DT commit 重编刷入（`vk183-fastrpc`）后：
+  `/dev/fastrpc-adsp` 在、`hexagonrpcd` success、`HasAccelerometer`/`HasAmbientLight`/`HasProximity` = **true/true/true**、`ssccli` 出真值。
+  详见 `../TASKS/README.md` §1 G1-34、`patches/dt/0003-*`。
   详情与命令：`../TASKS/README.md` T22、`../PITFALLS` #431–#443。
   **⚠ 同日新观测（两小时内 ×2）**：**桌面/容器显示栈会在空闲期自发掉线** —— 形态固定：`card0-DSI-1` 仍 `connected`
   但 `dpms=Off`、`enabled=disabled`、logind 里 seat0 会话消失、`phoc` 进程仍在、`grim` 挂住、

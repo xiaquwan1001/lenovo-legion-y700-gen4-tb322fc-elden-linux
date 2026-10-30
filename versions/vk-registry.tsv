@@ -287,3 +287,4 @@ vk181-daily	b5-verify	2026-10-27	B5 实验后还原日常线树重打的无标�
 vk182-camssv3	m4-v3	2026-10-29	M4 camss v3（csid-980 锁 + write-then-clear）上机复验镜像：kernel=vk151 树副本 + v3 两文件，ramdisk/cmdline 逐字取自已知可用 vk181-daily（含 elden_early_gadget=1），UTS 刻意与 vk172 相同以匹配 /lib/modules
 m8ab-base	m8ab	2026-10-29	M8 v2 真机 A/B base 臂（上游单 CORE 复位）：build/m1-73@24223e44ad80+脏差异 − 0154 elden 块；config=vk151 口径；UTS 刻意钉 -debug-vk172 以复用 /lib/modules；ramdisk/cmdline 逐字取 vk181-daily；未上机
 m8ab-v2	m8ab	2026-10-29	M8 v2 真机 A/B v2 臂（mdss 三复位 v2）：base 臂 + q28-dispcc-v2 0001-0003（reset-array 全组）；UTS/ramdisk/cmdline 同 base 臂；未上机
+vk183-fastrpc	fastrpc-dt	2026-10-30	传感器修复上机件：build/vk151@509f271d52（=24223e44ad80 + 仅一枚 DT commit `qcom,non-secure-domain`；其余 539 行 WIP 未纳入），干净 worktree build/vk183-fastrpc；Image.gz + elden dtb 新编，ramdisk/cmdline 逐字取自原 boot_b；UTS 刻意钉 -debug-vk172 以复用 /lib/modules

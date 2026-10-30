@@ -362,3 +362,5 @@ m8ab-base	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；�
 m8ab-v2	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 2691215d2e0e）
 m3v5-daily	uts_dup	M3-1 双口 role mux 上机镜像：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；二进制不同属预期，身份由 kernel_payload_sha256 锚定
 m3v5-f2	uts_dup	M3-1 v5 + F2 上机镜像（defer 上抛）：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；本轮同时替换了 dwc3/ucsi/typec 的 4 个 .ko，二进制不同属预期，身份由 kernel_payload_sha256 锚定 685ad1d9409b
+vk183-fastrpc	num_ne_tag	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref
+vk183-fastrpc	uts_dup11	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）

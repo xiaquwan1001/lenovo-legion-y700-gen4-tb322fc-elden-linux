@@ -1,0 +1,38 @@
+From 509f271d523a76f1b2f35347dbbb405820d620f9 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 30 Oct 2026 18:55:57 +0800
+Subject: [PATCH] arm64: dts: qcom: sm8750: mark the ADSP fastrpc domain
+ non-secure
+
+Same as sm8550/sm8650.  Without this the fastrpc driver treats the ADSP
+domain as secure and only creates /dev/fastrpc-adsp-secure, so
+hexagonrpcd cannot attach and the SSC sensor chain never comes up.
+
+Verified on TB322FC: with the property the kernel creates
+/dev/fastrpc-adsp and iio-sensor-proxy reports accelerometer, ambient
+light and proximity.
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 01eee5c2ad..d706d35a5e 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2288,6 +2288,13 @@ fastrpc {
+ 					compatible = "qcom,fastrpc";
+ 					qcom,glink-channels = "fastrpcglink-apps-dsp";
+ 					label = "adsp";
++					/* Same as sm8550/sm8650: the ADSP fastrpc domain is a
++					 * non-secure domain.  Without this the driver only
++					 * creates /dev/fastrpc-adsp-secure, never
++					 * /dev/fastrpc-adsp, so hexagonrpcd cannot attach
++					 * and the SSC sensor chain never comes up.
++					 */
++					qcom,non-secure-domain;
+ 					memory-region = <&adsp_rpc_remote_heap_mem>;
+ 					qcom,vmids = <QCOM_SCM_VMID_LPASS
+ 						      QCOM_SCM_VMID_ADSP_HEAP>;
+-- 
+2.53.0
+
