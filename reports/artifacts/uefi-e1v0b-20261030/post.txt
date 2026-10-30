@@ -1,0 +1,11 @@
+== 15:0x post ==
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.004s
+fastboot reboot:
+Rebooting                                          OKAY [  0.001s]
+Finished. Total time: 0.051s
+#2 SMP PREEMPT Fri Oct 30 13:06:36 CST 2026
+c272f77c-55d7-4091-a1b0-fcb0b7efdac3
+/dev/sda17 ext4

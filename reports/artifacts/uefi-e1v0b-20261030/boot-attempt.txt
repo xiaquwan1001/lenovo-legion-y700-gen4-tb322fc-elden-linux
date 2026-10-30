@@ -1,0 +1,4 @@
+img=2ff27bf0d992f988f408dd099d10f35776381f2209827c8998f4f0fa3b0e367d  reports/artifacts/uefi-onboard-20261030/E1-v0b.img
+Sending 'boot.img' (2388 KB)                       OKAY [  0.055s]
+Booting                                            OKAY [ 10.110s]
+Finished. Total time: 10.166s

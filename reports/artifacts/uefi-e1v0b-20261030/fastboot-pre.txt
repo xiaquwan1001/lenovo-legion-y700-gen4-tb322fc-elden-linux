@@ -1,0 +1,5 @@
+== 15:04:10 fastboot pre ==
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.004s
