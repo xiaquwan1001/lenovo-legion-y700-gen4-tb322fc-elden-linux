@@ -290,3 +290,13 @@ ROOT=/tmp/tabrunner DRY_RUN=1 .pi/plans/tablet-night-runner.sh "$PWD/.pi/plans/t
 1. **报告不得成孤儿**（`AGENT-OPS §3`）：请从 `TASKS/README.md` 相应 Q/§行或 `PITFALLS` 链到本文件。
 2. **`.gitignore` 口径**按 §3.3 建议落笔（含 `.pi/sessions/`、`.pi/night-state/`）。
 3. **记忆更正**：`~/.pi/agent/pi-hermes-memory/MEMORY.md:365,369` 与 `failures.md:4072` 的「git.ustc.edu.cn:22 被 ACL 拒绝」已过期，且应补一条「vlab VM = 1 CPU LXC，不可当编译机；入口 = 主机 key 免密登 ubuntu@vlab.ustc.edu.cn」（凭据本身不写）。
+
+
+---
+
+## ★ 2026-10-31 用户裁定：放弃 vlab 编译节点，范围收敛为「平板可承担的任务」
+
+- 实测 vlab VM：**2 核 / 6 GiB RAM / 16 GiB 盘（12 G 空闲）**、Ubuntu 22.04、gcc 11.4 —— 装不下内核全量构建（需 30–40 G）。
+  连通性已具备（主机与平板均实测 `ssh -i vlab-vm14178.pem ubuntu@vlab.ustc.edu.cn` OK），但**不再承担编译任务**。
+- 夜间队列只保留平板能承担的低 CPU/低 IO 类别：文档审计、邮件分诊与草稿、补丁备料与 checkpatch、日志/证据分析、SSOT 合并、静态核查、同步与归档；**不含**内核编译、打包成像、大体积构建。
+- 容量前提更新：平板单分区 ≈192 GiB（2026-10-31 已执行，`/` 可用 ≈163 G），Repo 85 MiB + 工作树 23 G + 会话/离线包 ≈27 G 均可放下；`build/` 仍不搬。
