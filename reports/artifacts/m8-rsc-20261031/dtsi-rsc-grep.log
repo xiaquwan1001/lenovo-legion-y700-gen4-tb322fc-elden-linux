@@ -1,0 +1,7 @@
+27:#include <dt-bindings/soc/qcom,rpmh-rsc.h>
+3321:		mdss: display-subsystem@ae00000 {
+3334:				 <&dispcc DISP_CC_MDSS_RSCC_BCR>;
+3335:			reset-names = "core", "core_int2", "rscc";
+6251:		apps_rsc: rsc@16500000 {
+6252:			compatible = "qcom,rpmh-rsc";
+6268:			label = "apps_rsc";

@@ -1,0 +1,8 @@
+1868:static const struct qcom_reset_map disp_cc_sm8750_resets[] = {
+1869:	[DISP_CC_MDSS_CORE_BCR] = { 0x8000 },
+1870:	[DISP_CC_MDSS_CORE_INT2_BCR] = { 0xa000 },
+1871:	[DISP_CC_MDSS_RSCC_BCR] = { 0xc000 },
+1891:	.resets = disp_cc_sm8750_resets,
+1892:	.num_resets = ARRAY_SIZE(disp_cc_sm8750_resets),
+1932:	qcom_branch_set_clk_en(regmap, 0xc00c); /* DISP_CC_MDSS_RSCC_AHB_CLK */
+1933:	qcom_branch_set_clk_en(regmap, 0xc008); /* DISP_CC_MDSS_RSCC_VSYNC_CLK */

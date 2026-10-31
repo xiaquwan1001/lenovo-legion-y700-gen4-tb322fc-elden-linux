@@ -12,7 +12,9 @@ HS_FIFO_OVERFLOW of the four data lanes), and their OR is exactly 0x44440400.
 ERR_INT_MASK0 itself has no field definitions in dsi.xml, so its side is stated
 explicitly: the overflow group is bits 20:16 (bits 16:19 are the same four
 lane overflows, bit 20 is masked with the group) and the command DMA FIFO
-underflow is bit 9 - GENMASK(20, 16) | BIT(9) = 0x001f0200.
+underflow is bit 9 - GENMASK(20, 16) | BIT(9) = 0x001f0200. The grouping is
+not guessed: the vendor driver's mask_error_intr() masks exactly these bits as
+one FIFO error group and then W1C-clears the five matching sticky status bits.
 
 No functional change: the disassembly of dsi_host.o is byte-identical before
 and after (.text compared with objcopy).
@@ -21,7 +23,7 @@ Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
 --- a/drivers/gpu/drm/msm/dsi/dsi_host.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
-@@ -2345,16 +2345,43 @@
+@@ -2345,16 +2345,44 @@
  	dsi_wait4video_eng_busy(to_msm_dsi_host(host));
  }
  
@@ -31,7 +33,8 @@ Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 + * dsi.xml does not describe the ERR_INT_MASK0 layout, so the mask bits are
 + * spelled out: the FIFO overflow group occupies bits 20:16 (bits 16:19 are the
 + * DLN0..DLN3 overflows, bit 20 is masked with the group) and the command DMA
-+ * FIFO underflow is bit 9.
++ * FIFO underflow is bit 9 - the grouping follows the vendor driver's
++ * mask_error_intr(), which masks these bits as one FIFO error group.
 + */
 +#define DSI_ERR_INT_MASK0_FIFO_OVERFLOW			GENMASK(20, 16)
 +#define DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW	BIT(9)
@@ -68,7 +71,7 @@ Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
  	dsi_write(msm_host, REG_DSI_TIMEOUT_STATUS, BIT(4));
  }
  
-@@ -2362,15 +2389,19 @@
+@@ -2362,15 +2391,19 @@
  {
  	u32 val;
  

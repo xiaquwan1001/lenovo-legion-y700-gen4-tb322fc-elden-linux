@@ -1,0 +1,26 @@
+== dsi.xml ERR_INT_MASK0 section ==
+300:	<reg32 offset="0x00108" name="ERR_INT_MASK0"/>
+301-	<reg32 offset="0x0010c" name="INTR_CTRL" type="DSI_IRQ"/>
+302-	<reg32 offset="0x00114" name="RESET"/>
+303-	<reg32 offset="0x00118" name="CLK_CTRL">
+304-		<bitfield name="AHBS_HCLK_ON" pos="0" type="boolean"/>
+305-		<bitfield name="AHBM_SCLK_ON" pos="1" type="boolean"/>
+== rc=0 ==
+== tree-wide ERR_INT_MASK0 usage (drivers) ==
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:990:	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, 0x13ff3fe0);
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2351: * dsi.xml does not describe the ERR_INT_MASK0 layout, so the mask bits are
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2356:#define DSI_ERR_INT_MASK0_FIFO_OVERFLOW			GENMASK(20, 16)
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2357:#define DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW	BIT(9)
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2358:#define DSI_ERR_INT_MASK0_FIFO_ERRORS			\
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2359:	(DSI_ERR_INT_MASK0_FIFO_OVERFLOW | DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW)
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2379:	val = dsi_read(msm_host, REG_DSI_ERR_INT_MASK0);
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2380:	val |= DSI_ERR_INT_MASK0_FIFO_ERRORS;
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2381:	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, val);
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2399:	val = dsi_read(msm_host, REG_DSI_ERR_INT_MASK0);
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2400:	val &= ~DSI_ERR_INT_MASK0_FIFO_ERRORS;
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c:2401:	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, val);
+== DLN0_HS_FIFO_OVERFLOW usage ==
+build/vk151/drivers/gpu/drm/msm/generated/dsi.xml.h
+build/vk151/drivers/gpu/drm/msm/registers/display/dsi.xml
+build/vk151/drivers/gpu/drm/msm/dsi/dsi_host.c
+build/vk151/drivers/gpu/drm/amd/include/asic_reg/dce/dce_12_0_sh_mask.h

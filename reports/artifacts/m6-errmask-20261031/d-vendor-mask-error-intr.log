@@ -1,0 +1,47 @@
+== vendor dsi_ctrl_hw_cmn.c mask_error_intr ==
+1809-	wmb(); /* ensure register committed */
+1810-
+1811-	return rc;
+1812-}
+1813-
+1814:void dsi_ctrl_hw_cmn_mask_error_intr(struct dsi_ctrl_hw *ctrl, u32 idx, bool en)
+1815-{
+1816-	u32 reg = 0;
+1817-	u32 fifo_status = 0, timeout_status = 0;
+1818-	u32 overflow_clear = BIT(10) | BIT(18) | BIT(22) | BIT(26) | BIT(30);
+1819-	u32 underflow_clear = BIT(19) | BIT(23) | BIT(27) | BIT(31);
+1820-	u32 lp_rx_clear = BIT(4);
+1821-
+1822-	reg = DSI_R32(ctrl, DSI_ERR_INT_MASK0);
+1823-
+1824-	/*
+1825-	 * Before unmasking we should clear the corresponding error status bits
+1826-	 * that might have been set while we masked these errors. Since these
+1827-	 * are sticky bits, these errors will trigger the moment we unmask
+1828-	 * the error bits.
+1829-	 */
+1830-	if (idx & BIT(DSI_FIFO_OVERFLOW)) {
+1831-		if (en) {
+1832-			reg |= (0x1f << 16);
+1833-			reg |= BIT(9);
+1834-		} else {
+1835-			reg &= ~(0x1f << 16);
+1836-			reg &= ~BIT(9);
+1837-			fifo_status = DSI_R32(ctrl, DSI_FIFO_STATUS);
+1838-			DSI_W32(ctrl, DSI_FIFO_STATUS, fifo_status | overflow_clear);
+1839-		}
+1840-	}
+1841-
+1842-	if (idx & BIT(DSI_FIFO_UNDERFLOW)) {
+1843-		if (en)
+1844-			reg |= (0x1b << 26);
+1845-		else {
+1846-			reg &= ~(0x1b << 26);
+1847-			fifo_status = DSI_R32(ctrl, DSI_FIFO_STATUS);
+1848-			DSI_W32(ctrl, DSI_FIFO_STATUS, fifo_status | underflow_clear);
+1849-		}
+1850-	}
+1851-
+1852-	if (idx & BIT(DSI_LP_Rx_TIMEOUT)) {
+1853-		if (en)
+1854-			reg |= (0x7 << 23);

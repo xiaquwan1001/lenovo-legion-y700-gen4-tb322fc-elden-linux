@@ -1,0 +1,19 @@
+== dsi.xml ERR_INT family ==
+300:	<reg32 offset="0x00108" name="ERR_INT_MASK0"/>
+== mask_error_intr across build trees ==
+build/base-7.2/drivers/gpu/drm/msm/dsi/dsi_host.c:2348:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/m8ab-base/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/m1-73/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/q28-disp/drivers/gpu/drm/msm/dsi/dsi_host.c:2348:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/gunyah-port/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/m3v5-fix/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/m8ab-v2/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/aw-chip/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/q28-v2/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/vk64-ret-arm/drivers/gpu/drm/msm/dsi/dsi_host.c:2348:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/vk183-fastrpc/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/vk64-sync-arm/drivers/gpu/drm/msm/dsi/dsi_host.c:2348:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/q28-disp-73/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/m3v5-daily/drivers/gpu/drm/msm/dsi/dsi_host.c:2365:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/b5-resoc/drivers/gpu/drm/msm/dsi/dsi_host.c:2390:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
+build/q28-disp2/drivers/gpu/drm/msm/dsi/dsi_host.c:2348:	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */

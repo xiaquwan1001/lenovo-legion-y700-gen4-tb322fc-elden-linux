@@ -1,0 +1,9 @@
+== self-test 正例（2 枚完整依赖链）==
+  ok    0001-add-f1.patch
+  ok    0002-add-f2-extend-f1.patch
+PASS  selftest-positive: 全部 3 个文件按序重放成功于 dd36455d5ee26ae52059cbb6803300f619fd99ee
+== self-test 负例（删 0001，仅剩依赖它的 0002）==
+  FAIL  0002-add-f2-extend-f1.patch: git apply --check 失败（对当前序列状态不自足）
+  WARN  缺 cover letter（*0000*/*cover*）
+FAIL  selftest-negative: 序列在 0002-add-f2-extend-f1.patch 处中断（对 dd36455d5ee26ae52059cbb6803300f619fd99ee 不自足或缺序列内前置）
+SELF-TEST: PASS

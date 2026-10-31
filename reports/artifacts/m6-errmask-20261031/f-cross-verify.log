@@ -1,0 +1,15 @@
+== geekidos independent downstream usage of 0x001f0200 / 0x44440400 ==
+geekidos-linux/drivers/char/hw_random/omap-rng.c:56:#define RNG_ALARMCNT_SHUTDOWN_TH_MASK		(0x1f << 16)
+geekidos-linux/drivers/video/fbdev/mmp/hw/mmp_ctrl.h:1320:#define LVDS_SELLV_TXCLK_MASK			(0x1f << 16)
+geekidos-linux/drivers/usb/host/isp116x.h:106:#define		HCRHPORT_CLRMASK	(0x1f << 16)
+geekidos-linux/drivers/staging/sm750fb/sm750_accel.h:28:#define DE_SOURCE_X_K1_MONO_MASK			(0x1f << 16)
+geekidos-linux/drivers/staging/sm750fb/sm750_accel.h:55:#define DE_CONTROL_COMMAND_MASK                         (0x1f << 16)
+geekidos-linux/drivers/staging/sm750fb/ddk750_reg.h:767:#define VIDEO_ALPHA_COLOR_LOOKUP_01_1_BLUE_MASK       (0x1f << 16)
+geekidos-linux/drivers/staging/sm750fb/ddk750_reg.h:777:#define VIDEO_ALPHA_COLOR_LOOKUP_23_3_BLUE_MASK       (0x1f << 16)
+geekidos-linux/drivers/staging/sm750fb/ddk750_reg.h:787:#define VIDEO_ALPHA_COLOR_LOOKUP_45_5_BLUE_MASK       (0x1f << 16)
+geekidos-linux/drivers/staging/sm750fb/ddk750_reg.h:797:#define VIDEO_ALPHA_COLOR_LOOKUP_67_7_BLUE_MASK       (0x1f << 16)
+geekidos-linux/drivers/staging/sm750fb/ddk750_reg.h:807:#define VIDEO_ALPHA_COLOR_LOOKUP_89_9_BLUE_MASK       (0x1f << 16)
+
+== python verify arithmetic ==
+FIFO errors OR = 0x44440400
+GENMASK(20,16)|BIT(9) = 0x1f0200

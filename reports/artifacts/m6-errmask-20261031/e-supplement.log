@@ -1,0 +1,90 @@
+	if (idx & BIT(DSI_LP_Rx_TIMEOUT)) {
+		if (en)
+			reg |= (0x7 << 23);
+		else {
+			reg &= ~(0x7 << 23);
+			timeout_status = DSI_R32(ctrl, DSI_TIMEOUT_STATUS);
+			DSI_W32(ctrl, DSI_TIMEOUT_STATUS, timeout_status | lp_rx_clear);
+		}
+	}
+
+	if (idx & BIT(DSI_PLL_UNLOCK_ERR)) {
+		if (en)
+			reg |= BIT(28);
+		else
+			reg &= ~BIT(28);
+	}
+
+	DSI_W32(ctrl, DSI_ERR_INT_MASK0, reg);
+	wmb(); /* ensure error is masked */
+}
+
+void dsi_ctrl_hw_cmn_error_intr_ctrl(struct dsi_ctrl_hw *ctrl, bool en)
+{
+	u32 reg = 0;
+	u32 dsi_total_mask = 0x2222AA02;
+
+	reg = DSI_R32(ctrl, DSI_INT_CTRL);
+	reg &= dsi_total_mask;
+
+	if (en)
+		reg |= (BIT(24) | BIT(25));
+	else
+		reg &= ~BIT(25);
+
+== also geekidos tree same shape? ==
+1198:	u32 force_on = DSI_CLK_CTRL_ENABLE_CLKS | BIT(8) | BIT(9) |
+== mainline 0x13ff3fe0 context ==
+	    phy_shared_timings->clk_pre_inc_by_2)
+		dsi_write(msm_host, REG_DSI_T_CLK_PRE_EXTEND,
+			  DSI_T_CLK_PRE_EXTEND_INC_BY_2_BYTECLK);
+
+	data = 0;
+	if (!(flags & MIPI_DSI_MODE_NO_EOT_PACKET))
+		data |= DSI_EOT_PACKET_CTRL_TX_EOT_APPEND;
+	dsi_write(msm_host, REG_DSI_EOT_PACKET_CTRL, data);
+
+	/* allow only ack-err-status to generate interrupt */
+	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, 0x13ff3fe0);
+
+	dsi_intr_ctrl(msm_host, DSI_IRQ_MASK_ERROR, 1);
+
+	dsi_write(msm_host, REG_DSI_CLK_CTRL, DSI_CLK_CTRL_ENABLE_CLKS);
+
+	data = DSI_CTRL_CLK_EN;
+
+	DBG("lane number=%d", msm_host->lanes);
+	data |= ((DSI_CTRL_LANE0 << msm_host->lanes) - DSI_CTRL_LANE0);
+
+== dsi.xml FIFO_STATUS full block ==
+#define REG_DSI_FIFO_STATUS					0x00000008
+#define DSI_FIFO_STATUS_VIDEO_MDP_FIFO_OVERFLOW			0x00000001
+#define DSI_FIFO_STATUS_VIDEO_MDP_FIFO_UNDERFLOW		0x00000008
+#define DSI_FIFO_STATUS_CMD_MDP_FIFO_UNDERFLOW			0x00000080
+#define DSI_FIFO_STATUS_CMD_DMA_FIFO_RD_WATERMARK_REACH		0x00000100
+#define DSI_FIFO_STATUS_CMD_DMA_FIFO_WR_WATERMARK_REACH		0x00000200
+#define DSI_FIFO_STATUS_CMD_DMA_FIFO_UNDERFLOW			0x00000400
+#define DSI_FIFO_STATUS_DLN0_LP_FIFO_EMPTY			0x00001000
+#define DSI_FIFO_STATUS_DLN0_LP_FIFO_FULL			0x00002000
+#define DSI_FIFO_STATUS_DLN0_LP_FIFO_OVERFLOW			0x00004000
+#define DSI_FIFO_STATUS_DLN0_HS_FIFO_EMPTY			0x00010000
+#define DSI_FIFO_STATUS_DLN0_HS_FIFO_FULL			0x00020000
+#define DSI_FIFO_STATUS_DLN0_HS_FIFO_OVERFLOW			0x00040000
+#define DSI_FIFO_STATUS_DLN0_HS_FIFO_UNDERFLOW			0x00080000
+#define DSI_FIFO_STATUS_DLN1_HS_FIFO_EMPTY			0x00100000
+#define DSI_FIFO_STATUS_DLN1_HS_FIFO_FULL			0x00200000
+#define DSI_FIFO_STATUS_DLN1_HS_FIFO_OVERFLOW			0x00400000
+#define DSI_FIFO_STATUS_DLN1_HS_FIFO_UNDERFLOW			0x00800000
+#define DSI_FIFO_STATUS_DLN2_HS_FIFO_EMPTY			0x01000000
+#define DSI_FIFO_STATUS_DLN2_HS_FIFO_FULL			0x02000000
+#define DSI_FIFO_STATUS_DLN2_HS_FIFO_OVERFLOW			0x04000000
+#define DSI_FIFO_STATUS_DLN2_HS_FIFO_UNDERFLOW			0x08000000
+#define DSI_FIFO_STATUS_DLN3_HS_FIFO_EMPTY			0x10000000
+#define DSI_FIFO_STATUS_DLN3_HS_FIFO_FULL			0x20000000
+#define DSI_FIFO_STATUS_DLN3_HS_FIFO_OVERFLOW			0x40000000
+#define DSI_FIFO_STATUS_DLN3_HS_FIFO_UNDERFLOW			0x80000000
+
+
+#define REG_DSI_VID_CFG0					0x0000000c
+#define DSI_VID_CFG0_VIRT_CHANNEL__MASK				0x00000003
+#define DSI_VID_CFG0_VIRT_CHANNEL__SHIFT			0

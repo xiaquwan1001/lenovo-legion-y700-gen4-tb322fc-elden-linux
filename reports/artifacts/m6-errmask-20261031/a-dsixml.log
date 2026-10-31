@@ -1,0 +1,23 @@
+== dsi.xml.h path ==
+-rw-rw-r-- 1 xuqianhui xuqianhui 33933 Oct 26 19:43 build/vk151/drivers/gpu/drm/msm/generated/dsi.xml.h
+
+== FIFO_STATUS bits ==
+166:#define DSI_FIFO_STATUS_CMD_DMA_FIFO_UNDERFLOW			0x00000400
+170:#define DSI_FIFO_STATUS_DLN0_HS_FIFO_EMPTY			0x00010000
+171:#define DSI_FIFO_STATUS_DLN0_HS_FIFO_FULL			0x00020000
+172:#define DSI_FIFO_STATUS_DLN0_HS_FIFO_OVERFLOW			0x00040000
+173:#define DSI_FIFO_STATUS_DLN0_HS_FIFO_UNDERFLOW			0x00080000
+176:#define DSI_FIFO_STATUS_DLN1_HS_FIFO_OVERFLOW			0x00400000
+180:#define DSI_FIFO_STATUS_DLN2_HS_FIFO_OVERFLOW			0x04000000
+184:#define DSI_FIFO_STATUS_DLN3_HS_FIFO_OVERFLOW			0x40000000
+
+== ERR_INT_MASK0 all refs in dsi.xml.h ==
+597:#define REG_DSI_ERR_INT_MASK0					0x00000108
+
+== dsi.xml in tree? ==
+build/vk151/drivers/gpu/drm/msm/generated/dsi.xml.h
+build/vk151/drivers/gpu/drm/msm/registers/display/dsi.xml
+
+== BIT(20)/BIT(16..19) defs near? ==
+320:#define DSI_CMD_DMA_CTRL_BROADCAST_MASTER			0x40000000
+321:#define DSI_CMD_DMA_CTRL_WC_SEL					0x20000000

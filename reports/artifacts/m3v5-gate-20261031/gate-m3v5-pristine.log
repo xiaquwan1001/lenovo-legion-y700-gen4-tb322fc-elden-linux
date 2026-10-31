@@ -1,0 +1,6 @@
+== 门禁: patches/upstream/m3v5-20261030  base=24a19b953e  repo=/home/xuqianhui/y700-elden/build/m3v2-7.3rc7 ==
+  FAIL  v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch: git apply --check 失败（对当前序列状态不自足）
+  WARN  缺 cover letter（*0000*/*cover*）
+FAIL  m3v5-20261030: 序列在 v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch 处中断（对 24a19b953e 不自足或缺序列内前置）
+== 汇总: PASS=0 FAIL=1 WARN=1 退出码=1 ==
+rc=1

@@ -1,0 +1,8 @@
+== 门禁: patches/upstream/q28-dispcc-v2-20261029  base=24a19b953e  repo=build/q28-disp-73 ==
+  ok    0001-dt-bindings-display-msm-mdss-common-describe-additio.patch
+  ok    0002-drm-msm-mdss-reset-all-block-resets-described-in-DT.patch
+  ok    0003-arm64-dts-qcom-sm8750-describe-all-MDSS-block-resets.patch
+  WARN  缺 cover letter（*0000*/*cover*）
+PASS  q28-dispcc-v2-20261029: 全部 3 个文件按序重放成功于 24a19b953e
+== 汇总: PASS=3 FAIL=0 WARN=1 退出码=0 ==
+rc=0

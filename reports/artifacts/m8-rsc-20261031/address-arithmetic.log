@@ -1,0 +1,9 @@
+# 地址区间算术（SM8750，build/vk151 dtsi + linux 7.2 dispcc map）
+mdss 节点 reg        = 0x0ae00000 + 0x1000 => [0x0ae00000, 0x0ae01000)
+dispcc 节点 reg      = 0x0af00000 + 0x20000 => [0x0af00000, 0x0af20000)
+DISP_CC_MDSS_CORE_BCR      = dispcc+0x8000 = 0x0af08000  (dispcc 窗口内, mdss 窗口外)
+DISP_CC_MDSS_CORE_INT2_BCR = dispcc+0xa000 = 0x0af0a000  (dispcc 窗口内, mdss 窗口外)
+DISP_CC_MDSS_RSCC_BCR      = dispcc+0xc000 = 0x0af0c000  (dispcc 窗口内, mdss 窗口外)
+vendor sde_cesta "rscc" reg= 0x0af20000 + 0x850          (dispcc 窗口外, mdss 窗口外, 上游 dtsi 未描述)
+vendor mdss_mdp reg 窗口   = 0x0ae00000 + 0x93800        (不含 0x0af20000)
+vendor RPMh apps_rsc       = 0x16500000 (qcom,rpmh-rsc, 与 DISP_CC_MDSS_RSCC 无关)
