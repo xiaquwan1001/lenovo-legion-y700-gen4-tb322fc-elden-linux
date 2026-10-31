@@ -1,0 +1,4 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+< waiting for any device >
+current-slot: b
+Finished. Total time: 0.007s

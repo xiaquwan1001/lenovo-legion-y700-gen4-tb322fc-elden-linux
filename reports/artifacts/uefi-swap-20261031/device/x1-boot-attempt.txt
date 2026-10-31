@@ -1,0 +1,4 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+Sending 'boot.img' (2388 KB)                       OKAY [  0.055s]
+Booting                                            OKAY [ 10.110s]
+Finished. Total time: 10.166s

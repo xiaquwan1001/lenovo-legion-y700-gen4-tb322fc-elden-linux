@@ -1,0 +1,18 @@
+{
+  "label": "X1-v0b-nohandoff",
+  "ts": "2026-10-31T08:37:04Z",
+  "vk": "",
+  "image": "reports/artifacts/uefi-swap-20261031/X1-v0b.img",
+  "image_sha256": "ed46b7091b1f3b4199ccd20b5f511cf8ec9127ce41a2c731890c1476963d908b",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "未交棒（60/60 fastboot 应答）；dodge UFSDxe 在 A2 基座上仍不交棒",
+  "log_dir": "",
+  "note": ""
+}

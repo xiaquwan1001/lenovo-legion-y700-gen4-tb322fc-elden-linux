@@ -1,0 +1,18 @@
+{
+  "label": "X2-v0b-nohandoff",
+  "ts": "2026-10-31T08:37:05Z",
+  "vk": "",
+  "image": "reports/artifacts/uefi-swap-20261031/X2-v0b.img",
+  "image_sha256": "9dd1c16afcce6dce73b1a08b5aa8efa5a69d3d621b3960fc0356ff4f45f40804",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "未交棒（60/60 fastboot 应答）；厂商 UFSDxe 在 E1 基座上仍不交棒",
+  "log_dir": "",
+  "note": ""
+}

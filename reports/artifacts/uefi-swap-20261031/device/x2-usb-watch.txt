@@ -1,0 +1,720 @@
+16:32:43
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:44
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:45
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:46
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:48
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:49
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:50
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:51
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:52
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:53
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:54
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:55
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:56
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:57
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:58
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:32:59
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:00
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:01
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:02
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:03
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:04
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:05
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:06
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:07
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:08
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:09
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:10
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:11
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:12
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:13
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:14
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:15
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:16
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:17
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:18
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:19
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:20
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:21
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:22
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:23
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:24
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:25
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:26
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:27
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:28
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:29
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:30
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:31
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:32
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:33
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:34
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:35
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:36
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:37
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:38
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:39
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:40
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:41
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:42
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+16:33:43
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 003: ID 0b05:19af ASUSTek Computer, Inc. AURA LED Controller
+Bus 001 Device 004: ID 093a:522c Pixart Imaging, Inc. Wireless Gaming Mouse
+Bus 001 Device 005: ID 346d:5678 USB Disk 20
+Bus 001 Device 006: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 007: ID 05e3:0608 Genesys Logic, Inc. Hub
+Bus 001 Device 008: ID 19f5:3247 Nordic Semiconductor NuPhy Air96 V2 Dongle
+Bus 001 Device 024: ID 12d1:108a Huawei Technologies Co., Ltd. ELS-AN00
+Bus 001 Device 025: ID 2d95:6001 vivo vivo X200 Ultra
+Bus 001 Device 028: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot)
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub

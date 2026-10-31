@@ -1,0 +1,4 @@
+== pre X2 16:31:55
+79bb14cb-ada0-4bc5-b22e-ccb783dad567
+connected
+/dev/sda17 ext4

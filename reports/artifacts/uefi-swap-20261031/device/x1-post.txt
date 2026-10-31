@@ -1,0 +1,7 @@
+recover_time=25s
+79bb14cb-ada0-4bc5-b22e-ccb783dad567
+#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026
+/dev/sda17 ext4
+ls: cannot access '/sys/class/drm/card0-DSI-1/status': No such file or directory
+cat: /sys/class/drm/card0-DSI-1/status: No such file or directory
+aedae5f121ecbe5cc6f5de59a14ae5ba3680229d619c49cedee0d6cf8b9b4765  bootslot-b/boot_b.img

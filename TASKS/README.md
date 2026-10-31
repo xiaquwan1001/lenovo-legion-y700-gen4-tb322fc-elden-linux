@@ -299,6 +299,20 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-10-31 晚（并行 lane）：UEFI 2×2 补全 —— 交棒需「厂商 UFSDxe × cachefix shim 基座」
+
+- **lanes**（`physical-exec`，零写盘）：造出两发交叉载荷并各打一发 ——
+  **X1 = A2 基座 + dodge UFSDxe**（sha `ed46b709…`）、**X2 = E1 基座 + 厂商 UFSDxe**（sha `9dd1c16a…`）。
+  四发 header 逐字段相同（`hv=0`/`pagesize=4096`/`kernel_addr=0x10008000`）；`FVMAIN.Fv@0x1e561c` 实测段长
+  X1=`e76b555f…`(155 648 B)、X2=`00ae059f…`(151 552 B) ⇒ 单变量拆分成立。
+- **结果：两发都不交棒**（父代理独立复核 `x1/x2-usb-watch.txt`：各 **60/60** 采样为 `18d1:d00d`、bus/device 号不变、无重枚举）。
+  2×2 补全：**A2 ✅ / X1 ❌ / X2 ❌ / E1 ❌**。
+- **归因（本轮唯一新增结论）**：交棒不是「有没有 UFSDxe」，也不是「哪个 UFSDxe」单独决定，而是
+  **「厂商 UFSDxe × cachefix shim 基座」二元组合同时成立**；dodge 件放到 A2 基座上仍不交棒，厂商件放到 E1 基座上也不交棒。
+- **状态**：`boot_b` 前后均 `aedae5f1…`（零写盘、未改槽）、两发各回 Linux 24–25 s、终态 DSI connected / 根 `sda17` ext4 / 失败单元 0；
+  trial record `reports/trials/20261031T0837{04,05}Z-X1,X2-v0b-nohandoff.json`；报告 `reports/uefi-swap-x1x2-20261031.md`、证据 `reports/artifacts/uefi-swap-20261031/`。
+- **仍未解**：交棒后**全静默**（A2 是唯一交棒发，J1 屏上出字 = 0）⇒ 观测面仍是最大瓶颈（硬件串口 / `UsbSerial` 单独立项）。
+
 ### 2026-10-31 晚：启动提速（net-selfheal 白等 120 s 修掉）
 
 - **根因 + 修法**（`PITFALLS` #475）：`hooks/net-selfheal.pre` 判据写死 Alpine 的 `wlan0`，Debian 侧是 **`wlp1s0`**

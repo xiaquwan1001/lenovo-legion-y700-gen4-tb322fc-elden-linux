@@ -1,0 +1,6 @@
+recover_time=24s
+da32df04-4acf-4f8b-88bb-f5731cab8b5f
+#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026
+/dev/sda17 ext4
+connected
+aedae5f121ecbe5cc6f5de59a14ae5ba3680229d619c49cedee0d6cf8b9b4765  bootslot-b/boot_b.img
