@@ -1,0 +1,5 @@
+acffb17c-90e3-4876-aafe-738de8e49184
+/dev/sda17 ext4
+connected
+aedae5f121ecbe5c
+0

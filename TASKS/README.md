@@ -299,6 +299,20 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-10-31 晚：UEFI R1 上机 —— 里程碑 shim **不交棒**，色条方案作废
+
+- 载荷 `VIS-R1.img`（sha `d2ebbd47…`）= **A2 同一份 FD** + **带里程碑色条的 cachefix shim**（384 B）；header 与前四发逐字段同；
+  gunzip 反解 shim/FD 均逐字节相等。**零写盘**。
+- **结果**：60 s × 每秒采样 **60/60** 为 `18d1:d00d`、bus/device 恒 `001/033` ⇒ **未交棒**；用户目视「屏幕依然卡联想 logo」⇒ **无任何色条**。
+  回退 `fastboot reboot` → 12 s 回 Linux，`boot_id` `acffb17c`、根 `sda17` ext4、面板 connected、`boot_b` 仍 `aedae5f1…`、失败单元 0。
+- **关键判读**：与 10-30 的 A2（同 FD + 160 B cachefix shim）**交棒**对照 ⇒ **唯一变量是 shim 内容**。反汇编显示 384 B 版在拷贝/cache 维护**之前**
+  先写 `0xFC800000`（`movk x20,#0xfc80,lsl16` + `str w23,[x20],#4`）；该时刻写 display reserved 极可能触发异常且无处理者 ⇒
+  **shim 自毁 ⇒ ABL 停在 fastboot**。⇒ 结论写成「shim 不能早写 FB」，**不是**「A2 形态不交棒」。
+- **作废**：色条/里程碑方案（除非把标记点移到重定位之后，那已进入 UEFI 内部、不是新信息）。**保留资产**：A2 的 FD 与 160 B cachefix shim 均未改。
+- **下一步（需人参与/待定）**：① control 一发（原始 `A2-v0b.img`）坐实「变量是 shim 内容」，代价 = 若交棒则 ~30 s 回落 stock Android，需按键进 fastboot 再 `set_active b`；
+  ② 若 control 交棒，观测点改到 UEFI 内部（`PrePi`/`ArmPlatformSec` 入口），但须先静态确认该时刻 `0xFC800000` 可写。
+- 报告 `reports/uefi-vis-r1-20261031.md`，证据 `reports/artifacts/uefi-vis-r1-20261031/`。
+
 ### 2026-10-31 晚（并行 lane）：UEFI 早期可见性四通道调查 —— 结论「改 0 行代码就有观测面」
 
 - **lane**：`uefi-vis`（L1，纯静态取证 + 上游只读，未上机）。报告 `reports/uefi-visibility-channels-20261031.md`。
