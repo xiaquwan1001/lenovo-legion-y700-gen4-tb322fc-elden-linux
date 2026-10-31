@@ -1,0 +1,49 @@
+From 24e695d228d0bcafed8f10034a0b7391b85b61f9 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 31 Oct 2026 12:08:54 +0800
+Subject: [PATCH v2 0/2] media: camss: CSID power-on unwind and VFE stream handling
+
+This is version 2 of the three camss fixes I sent on 29 October.  Two
+things changed.
+
+The DMA-contiguity check and its prepare_buffer hook are gone.  Bryan
+measured that plane0 of a normal buffer has five physical breaks and no
+IOVA breaks, and the pipeline still works; that matches how dma-iommu
+merges the segments when the table is mapped.  The check tested
+sg_dma_address() (IOVA) while the commit message claimed physical
+contiguity, so the commit was wrong even before the measurement, and the
+prepare_buffer hook had no implementer or caller anywhere in the tree.
+I dropped the whole patch rather than rewording it.
+
+The streaming fix is reshaped after Loic's review: the start and stop
+walks now share camss_video_subdevs_set_stream(), the source pad is taken
+from media_entity_remote_source_pad_unique() instead of pads[0], and the
+subdevices are toggled with v4l2_subdev_enable_streams() and
+v4l2_subdev_disable_streams().  The camss subdevices only implement
+.s_stream(), so the helpers fall back to it; that is the only reason this
+still works without changing the subdevice drivers.
+
+The scope of this series is fixes only.  The SM8750 camss enablement is
+not part of it; that work is with Hangxiang.  Both patches apply on
+v7.3-rc7 and the camss module builds clean.
+
+Changes since the 29 October posting:
+ - drop the DMA-contiguity patch and its prepare hook (rejected on plane0
+   evidence; it also never had a user)
+ - factor the stream walk into one helper, use the remote source pad and
+   the v4l2_subdev_*_streams() helpers
+ - keep the csid power-on unwind unchanged
+
+
+Qianhui Xu (2):
+  media: camss: csid: unwind the power-on path through a single error
+    label
+  media: camss: video: factor pipeline stream on/off into a helper
+
+ .../media/platform/qcom/camss/camss-csid.c    |  45 ++++----
+ .../media/platform/qcom/camss/camss-video.c   | 109 +++++++++++-------
+ 2 files changed, 85 insertions(+), 69 deletions(-)
+
+-- 
+2.53.0
+
