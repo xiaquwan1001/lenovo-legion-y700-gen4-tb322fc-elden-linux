@@ -100,7 +100,7 @@ const r = await agents.run({
 - 并发写 → 按 `.pi/CONCURRENCY.md` 走 lane/worktree；提交带 `Lane/Agent/Baseline/Task/VK` trailer。
 - **设备是单一串行资源**：任何上机/刷写/复现前 `scripts/device-lock.sh`，同一时刻仅一个持有者。
 - **物理动作**（按键进 fastboot/EDL、插拔、断电）= 用户执行；agent 给精确步骤与预期现象。
-- **发信**：`mail-io` 默认只读/只起草；投递须用户按批放行（`TASKS/README.md` §7 口径）。凭据不入派工单、不落盘、不进回复。
+- **发信**：`mail-io` 默认只读/只起草；投递须用户按批放行（`TASKS/README.md` §7 口径）。**2026-10-31 用户授权：回信/cover 正文可由 agent 撰写**（含「not with LLM」类线程），前提 = 开头如实披露 AI 辅助 + 每条论断可复现证据 + 逐条回应，见 `AGENTS.md`「上游发信」；**投递动作仍逐批放行**。凭据不入派工单、不落盘、不进回复。
 
 ---
 

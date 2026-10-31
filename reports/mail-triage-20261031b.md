@@ -115,5 +115,7 @@ M8 v2 在 devicetree 侧 1/3 仍为 `needs-ack`（与「首个维护者意见＝
 ## §7 一句话收口
 
 增量窗内**只有 2 封新意见**：**Konrad 一句话否掉 M8 v2 的 RSC 复位**（接受，v3 删一项，但需真机重测 CORE+INT2）、**sashiko 4 条打在 wl2868c v3 的板 DTS 上且 High 是真 bug**（i2c10 的父 `qupv3_2`/`gpi_dma2` 没 enable ⇒ regulator 根本注册不出来）。
-两封技术回信已起草（**未发**）；Krzysztof 那条按他的明示**只列要点、不代写正文**。
+两封技术回信已起草（**未发**）；Krzysztof 那条**按 2026-10-31 用户授权可代写正文**（前提 = 披露 AI 辅助 + 证据 + 逐条回应；见 `AGENTS.md`「上游发信」），投递仍待批。
+
+> **★2026-10-31 12:5x 总管更正（不改上文证据）**：`wl2868c v3 0/3` **已于当日 11:42:57–11:43:00 CST 实际投出**（Sent Items [208–211]、本机 INBOX [15908–15911]），patchwork 已收录 v3 三枚 + elden DTS（driver 一条 `handled-elsewhere`，其余 `new`/`needs-ack`），本报告 §6 的「三枚仍 `new`」只在 sashiko 不改 state 这一层成立。凡以「v3 待投」为前提的段落一律作废。
 lore 归档 **11/11 命中、0 取不到**；另补齐一条 M9 的未记录回信（Marc 10-26 13:53Z，纯确认、无新要求）。

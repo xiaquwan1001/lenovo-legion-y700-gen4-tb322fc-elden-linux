@@ -18,6 +18,9 @@ tools: ["read", "grep", "find", "ls", "bash", "edit", "write", "web_search", "we
 1. **收信**：`scripts/read-mail-ustc.py` 拉取/分诊（发件人、系列、结论、待办），按线程归并。
 2. **核对**：对每封回信/每个系列在 lore 归档核对 **Message-ID、是否进 archive、是否有评审意见**。
 3. **起草**：vN 回信/补丁系列草稿（`patches/upstream/<topic>-<date>/`），跑 checkpatch 静态门。
+   **2026-10-31 用户授权：正文可由 agent 撰写**（含维护者明示「not with LLM」的线程），三件必备：
+   ① 开头如实披露 AI 辅助（作者本人校对，内容/测量/决定归作者）；② 每条论断附可复现证据（`claims.tsv` 形态）；
+   ③ 逐条回应 reviewer，不遗漏。范例 = `out/mail-20261031/`（Sent[207] 已于 2026-10-31 发出并回读）。
 4. **落盘**：`reports/mail-triage-<date>.md` + 对应 `TASKS/sessions/` 新文件；更新每条待办的状态指针。
 
 ## 深派（可选二级）
@@ -26,7 +29,8 @@ tools: ["read", "grep", "find", "ls", "bash", "edit", "write", "web_search", "we
 - **禁止任何 L2 发信**；发信只在你收口、总管确认、用户按批放行后由指定单一执行者做。
 
 ## 硬约束
-- **默认不投递**：不发 `git send-email`、不改订阅、不回复；「解冻」以用户当批指令为准。
+- **默认不投递**：不发 `git send-email`、不改订阅、不回复；「解冻」以用户当批指令为准
+  （**代写正文 ≠ 可自行投递**；两者权限分离）。
 - 凭据/口令只从现有通道读取，**不写进文件、派工单、报告或回复**；需要账号/权限时上报用户。
 - 一律用 ustc 池模型（`custom.ustc-pool/*`）；不引入外部网关。
 - 回执四段：新信数/行动数/阻塞数、各系列一句话状态、产物路径；≤1 页。

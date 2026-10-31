@@ -9,7 +9,7 @@
 ## 目标（按优先级）
 
 - **G1 完整 Linux + 上游化**：主线 Linux **功能特性完整**，**正确驱动全部原厂固件**（ADSP/CDSP/WCN7861/GPU/触屏/触觉/功放/tplg/相机…）。
-  代码达到上游规范后**按模块向上游提交**（checkpatch/DTC/`dtbs_check` 绿；分级与顺序见 `TASKS/README.md` §7 M1–M5）。
+  代码达到上游规范后**按模块向上游提交**（checkpatch/DTC/`dtbs_check` 绿；分级与顺序见 `TASKS/README.md` §7 的 M 系列，以 §7 为准）。
 - **G2 安卓容器**：**不依赖 Android 宿主**运行安卓应用（主路线 Waydroid，备胎 redroid）。
   核心验收 = **可用性 + 风控/完整性等级**：GMS 登录、**Play Integrity / SafetyNet**、Widevine 能做到哪一级
   （**取证判定，不预设"不可能"也不承诺**；见 `RESOURCES/README.md` §1.3、`TASKS/README.md` §5 Q1/§6）。
@@ -23,6 +23,9 @@
 - **存储**：Linux 容量按项目体量一次给足（`DEVICE/README.md` §3），扩容首选回收 Android 专属分区；不写死配置。
 - **文档 SSOT**：唯一入口 `INDEX.md`；分层与清单见 `INDEX.md` §2。
 - **构建限并发**：主机 28 线程，但**编译一律保留 2 个 P 核给交互** ⇒ `make -j26` 起步（内核/模块/大型构建都一样，别用裸 `-j`）。
+- **上游发信（2026-10-31 用户授权，已实测一次）**：**允许 agent 代写回信/cover**（含回应维护者「not with LLM」那类线程），**前提三件**：
+  ① 开头如实披露 AI 辅助（作者本人校对；内容/测量/决定归作者）；② 每条论断附可复现证据（引用 + 命令/数据）；③ 逐条回应 reviewer 意见，不遗漏、不说套话。
+  投递仍按 `TASKS/README.md` §7「按系列逐次批准」；范例 = `out/mail-20261031/{re-krzysztof-wl2868c.txt,claims.tsv,self-review.md}`（Sent[207]）。
 
 ---
 

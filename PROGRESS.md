@@ -91,7 +91,7 @@
 
 | 目标 | 状态（权威数字见 [`TASKS/README.md`](TASKS/README.md) §0） | 关键限定 |
 |---|---|---|
-| **G1** 功能健全的 Linux | 多数驱动已工作（暖起） | 按“驱动 bring-up 完整性”度量；**上游化 M1–M5 未开始** |
+| **G1** 功能健全的 Linux | 多数驱动已工作（暖起） | 按“驱动 bring-up 完整性”度量；**上游化 M 系列（以 `TASKS` §7 为准）进行中** |
 | **G2** 安卓容器（Waydroid） | 主链路已通 | 图形/内核/GAPPS/代理可用，**容器传感器 HAL 已打通**、**容器音频已打通**（C6）、**C2 GMS 登录**、**C10 马达透传**（AIDL V2 + 固化 vendor.img）；Play Integrity/SafetyNet、Widevine 等级仍在收口 |
 | **G3** x86 模拟（Steam） | **PoC ✅** | Box64 + Wine 成功；Steam 游戏端到端未上机 |
 
@@ -213,7 +213,7 @@
 3. **Q24**：⛔ **关闭（2026-10-24 用户裁决：不值得取证）** —— 根因已指名（7.2 缺上游 `skip retention by default`，7.3 自带），
    `vk149` 臂复现**取消**；日常仍执行 `cam-mode.sh on/off` 互斥（安全策略，非既成事实）。
 4. **#106**：判据「GOOD 需 ≥60 s 存活/可交互」；ramoops 装弹已在位等它自己撞（见 `TASKS` §5 §2 表）。
-5. **上游化 M1–M5**：M1 树与 `m1-73/baseline` 已收敛；M3-1 v3 形状 RFC 已投等 ack；
+5. **上游化 M 系列（以 `TASKS` §7 为准）**：M1 树与 `m1-73/baseline` 已收敛；M3-1 v4 / v5 系列、M4 camss（v2 0/2）、M4-1 bindings、M6 L1、M8 RFC、wl2868c v3 均已投并归档；
    **2026-10-27 新增可评审分片**：B5 第 1–3 步（bonded-DSI 收进 per-SoC cfg + 2 个 host ops，`patches/local/b5-resoc-20261027/`）与 aw86927 五提交系列（`patches/upstream/aw86927-20261027-v2/`）均已过门禁；aw86927 v2 **已投**（`[PATCH 0/5]`，`/linux-input/` 6/6 归档）、M1-U6 与 M2 A2 同批已投；
    **2026-10-27 夜**：B5 **第 1–3 步已零写盘上机 = 行为中性**（7 项计数全 0）、**第 4 步已实现并上机**（同值臂中性；判别臂 `master=DSI1` ⇒ 面板 DCS `ff 20` 三连 `-22` ⇒ **主从角色不可自由换**，字段降级为事实登记）⇒ 见 `reports/b5-step4-master-from-cfg-20261027.md`；
    投递前待办：① B5 的表挂在 `sm8650_dsi_cfg` 上（需拆独立 SM8750 表项）；② 第 4 步投递前把「调用者必须是 master」做成显式检查（当前只返回 `-22`）；
