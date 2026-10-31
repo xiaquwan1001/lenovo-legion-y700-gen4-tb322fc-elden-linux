@@ -1,0 +1,42 @@
+-rw-rw-r-- 1 xuqianhui xuqianhui 88260608 Oct 31 10:23 out/boot-elden-m3v5-onboard-b.img
+-rw-rw-r-- 1 xuqianhui xuqianhui     2617 Oct 31 10:23 out/boot-elden-m3v5-onboard-b.manifest
+a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3  out/boot-elden-m3v5-onboard-b.img
+ramdisk=out/initramfs-m3v5x1.cpio.gz
+ramdisk_sha256=de859e0c40c08feca50018be04b6044729210e7dedbbc8a4aa346bf32255c709
+mkbootimg_args=--header_version 2 --os_version 15.0.0 --os_patch_level 2025-08 --kernel build/m3v5-pristine/arch/arm64/boot/Image.gz --ramdisk out/initramfs-m3v5x1.cpio.gz --dtb out/m3v5-onboard/sm8750-lenovo-elden.dtb --cmdline console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_early_gadget=1 elden_q28_nowd --base 0x00000000 --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --second_offset 0x00f00000 --tags_offset 0x00000100 --dtb_offset 0x01f00000 --pagesize 4096 -o /home/xuqianhui/y700-elden/out/boot-elden-m3v5-onboard-b.img
+usage: mkbootimg.py [-h] [--kernel KERNEL] [--ramdisk RAMDISK]
+                    [--second SECOND] [--dtb DTB]
+                    [--recovery_dtbo RECOVERY_DTBO] [--cmdline CMDLINE]
+                    [--extra_cmdline EXTRA_CMDLINE] [--name NAME]
+                    [--base BASE] [--kernel_offset KERNEL_OFFSET]
+                    [--ramdisk_offset RAMDISK_OFFSET]
+                    [--second_offset SECOND_OFFSET]
+                    [--tags_offset TAGS_OFFSET] [--dtb_offset DTB_OFFSET]
+                    [--pagesize PAGESIZE] [--header_version HEADER_VERSION]
+                    [--os_version OS_VERSION]
+                    [--os_patch_level OS_PATCH_LEVEL] [-o OUTPUT]
+                    [--selftest IMAGE] [--unpack IMAGE]
+                    [--unpack-dir UNPACK_DIR]
+mkbootimg.py: error: argument --unpack: expected one argument
+usage: mkbootimg.py [-h] [--kernel KERNEL] [--ramdisk RAMDISK]
+                    [--second SECOND] [--dtb DTB]
+                    [--recovery_dtbo RECOVERY_DTBO] [--cmdline CMDLINE]
+                    [--extra_cmdline EXTRA_CMDLINE] [--name NAME]
+                    [--base BASE] [--kernel_offset KERNEL_OFFSET]
+                    [--ramdisk_offset RAMDISK_OFFSET]
+                    [--second_offset SECOND_OFFSET]
+                    [--tags_offset TAGS_OFFSET] [--dtb_offset DTB_OFFSET]
+                    [--pagesize PAGESIZE] [--header_version HEADER_VERSION]
+                    [--os_version OS_VERSION]
+                    [--os_patch_level OS_PATCH_LEVEL] [-o OUTPUT]
+                    [--selftest IMAGE] [--unpack IMAGE]
+                    [--unpack-dir UNPACK_DIR]
+mkbootimg.py: error: argument --unpack: expected one argument
+total 0
+drwx------  2 xuqianhui xuqianhui  40 Oct 31 10:23 .
+drwxrwxrwt 22 root      root      580 Oct 31 10:23 ..
+sha256sum: /tmp/m3v5pk.ttb2Jg/ramdisk: No such file or directory
+de859e0c40c08feca50018be04b6044729210e7dedbbc8a4aa346bf32255c709  out/initramfs-m3v5x1.cpio.gz
+
+== unpack 回读（--unpack <img> --unpack-dir）==
+ramdisk sha256 = de859e0c40c08feca50018be04b6044729210e7dedbbc8a4aa346bf32255c709（与 out/initramfs-m3v5x1.cpio.gz 一致）

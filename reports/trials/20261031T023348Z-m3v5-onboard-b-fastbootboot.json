@@ -1,0 +1,18 @@
+{
+  "label": "m3v5-onboard-b-fastbootboot",
+  "ts": "2026-10-31T02:33:48Z",
+  "vk": "",
+  "image": "out/boot-elden-m3v5-onboard-b.img",
+  "image_sha256": "a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3",
+  "manifest": "out/boot-elden-m3v5-onboard-b.manifest",
+  "kernel_uts": "Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172",
+  "kernel_payload_sha256": "c4e884ada92970bd7fc7683d34d6efe1d185bc1ab8c8a8de179faff221e295fa",
+  "config_sha256": "d3371cdb569aa8ef3ddcd5ed0117afd99c7167c9fd61e290b875c6199a093dd4",
+  "dtb_packed_sha256": "0b614a3c58430280e8dd7bf7bd3c449515b61bdb9297dd662a154e82b7a9a308",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "fail",
+  "log_dir": "",
+  "note": ""
+}

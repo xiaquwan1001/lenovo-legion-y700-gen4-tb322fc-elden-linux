@@ -1,0 +1,3 @@
+[trial] boot_b: succ=1 retry=6 unbootable=0
+[trial] GATE=OK
+SERIAL_OFFSET=22366768

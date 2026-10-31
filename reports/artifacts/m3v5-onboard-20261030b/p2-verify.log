@@ -1,0 +1,7 @@
+ko count: 14
+modules.dep dwc3 grep: 2
+init-diff: EMPTY
+de859e0c40c08feca50018be04b6044729210e7dedbbc8a4aa346bf32255c709  out/initramfs-m3v5x1.cpio.gz
+	for m in phy_qcom_qmp_combo aux_bridge phy_qcom_qmp_usb dwc3 dwc3_qcom typec_ucsi ucsi_glink; do
+		modprobe "$m" 2>/dev/null || echo "[usb-gadget] modprobe $m failed" > /dev/kmsg
+	done

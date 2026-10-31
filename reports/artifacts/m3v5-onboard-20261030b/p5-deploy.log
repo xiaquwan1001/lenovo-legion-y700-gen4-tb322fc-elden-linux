@@ -1,0 +1,97 @@
+=== P5 precheck 2026-10-31T10:19:55+08:00 ===
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+rc=0
+=== P5 step1 backup 2026-10-31T10:20:00+08:00 ===
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+ae1dd534604b8d526f5d9096e382ac9ee4ea5b883443d3f1894bcf44d7d4101a  /root/m3mods-daily-20261031.tar
+-rw-r--r-- 1 root root 109199360 Oct 31 10:20 /root/m3mods-daily-20261031.tar
+
+real	0m0.309s
+user	0m0.008s
+sys	0m0.009s
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+ae1dd534604b8d526f5d9096e382ac9ee4ea5b883443d3f1894bcf44d7d4101a  reports/artifacts/m3v5-onboard-20261030b/m3mods-daily-20261031.tar
+=== P5 step2 precheck 2026-10-31T10:21:10+08:00 ===
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/typec_ucsi.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/ucsi_glink.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-meson-g12a.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-rtk.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom-legacy.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-am62.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-apple.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-haps.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-keystone.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-imx8mp.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-xilinx.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-generic-plat.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-of-simple.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-exynos.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-imx.ko
+---
+c694eeac3fdb9d8dc42f496e9a4ca5858872dd52dbfe86659c11e24b34f06292  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+3c114021f22e640745a533bd78cb97c0654fdf5ac65f30b0bdae5f8b0618532f  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom.ko
+9992946493eb7532d17ed2a697e215f9c69dcf55b2b6ccdd24207705507d07a4  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/typec_ucsi.ko
+4bfa8835e57aab70bbafd6fa22f7456994644f6f05ba2a81af83363e320ff2c7  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/ucsi_glink.ko
+---
+drivers
+sha256sum: /root/m3modbak-20261030/drivers: Is a directory
+4a5b4365b534c98bee9a10e3f611a564068732c2efa750052238cabbdda467ea  out/m3v5-onboard/dwc3.ko
+50875e2877c0ce36a2620a3d628aa882333fe604ca32efb62bdadf182156820c  out/m3v5-onboard/dwc3-qcom.ko
+8c0694e9efd1dffb5914ea0acd07d00ae173427387eec7d879550a63565d01db  out/m3v5-onboard/typec_ucsi.ko
+6b6049ad7a4c3a29feabf03e210ded1a13db102f673a01bf7b45473868dbf2a5  out/m3v5-onboard/ucsi_glink.ko
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+9992946493eb7532d17ed2a697e215f9c69dcf55b2b6ccdd24207705507d07a4  /root/m3modbak-20261030/drivers/usb/typec/ucsi/typec_ucsi.ko
+4bfa8835e57aab70bbafd6fa22f7456994644f6f05ba2a81af83363e320ff2c7  /root/m3modbak-20261030/drivers/usb/typec/ucsi/ucsi_glink.ko
+c694eeac3fdb9d8dc42f496e9a4ca5858872dd52dbfe86659c11e24b34f06292  /root/m3modbak-20261030/drivers/usb/dwc3/dwc3.ko
+3c114021f22e640745a533bd78cb97c0654fdf5ac65f30b0bdae5f8b0618532f  /root/m3modbak-20261030/drivers/usb/dwc3/dwc3-qcom.ko
+=== P5 step2 deploy 2026-10-31T10:21:25+08:00 ===
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+scp_rc=0
+=== P5 step3 verify sha 2026-10-31T10:21:31+08:00 ===
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+4a5b4365b534c98bee9a10e3f611a564068732c2efa750052238cabbdda467ea  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+50875e2877c0ce36a2620a3d628aa882333fe604ca32efb62bdadf182156820c  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom.ko
+8c0694e9efd1dffb5914ea0acd07d00ae173427387eec7d879550a63565d01db  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/typec_ucsi.ko
+6b6049ad7a4c3a29feabf03e210ded1a13db102f673a01bf7b45473868dbf2a5  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/ucsi_glink.ko
+=== P5 step4 depmod 2026-10-31T10:21:42+08:00 ===
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+depmod_rc=0
+=== P5 step5 final 2026-10-31T10:22:04+08:00 ===
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-am62.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-apple.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-exynos.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-generic-plat.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-haps.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-imx.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-imx8mp.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-keystone.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-meson-g12a.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-of-simple.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom-legacy.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-rtk.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-xilinx.ko
+/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+---
+4a5b4365b534c98bee9a10e3f611a564068732c2efa750052238cabbdda467ea  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3.ko
+50875e2877c0ce36a2620a3d628aa882333fe604ca32efb62bdadf182156820c  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/dwc3/dwc3-qcom.ko
+8c0694e9efd1dffb5914ea0acd07d00ae173427387eec7d879550a63565d01db  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/typec_ucsi.ko
+6b6049ad7a4c3a29feabf03e210ded1a13db102f673a01bf7b45473868dbf2a5  /lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/drivers/usb/typec/ucsi/ucsi_glink.ko
+---
+  UNIT LOAD ACTIVE SUB DESCRIPTION
+
+0 loaded units listed.
+ 10:22:05 up 10:38,  2 users,  load average: 0.00, 0.00, 0.00
+               total        used        free      shared  buff/cache   available
+Mem:           14871        1730       12146         434        1652       13140

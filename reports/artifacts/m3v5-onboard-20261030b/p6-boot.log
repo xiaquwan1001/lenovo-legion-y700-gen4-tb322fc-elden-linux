@@ -1,0 +1,5 @@
+[lock] acquired (/tmp/elden-device-root_192_168_7_1_.lock)
+HA2EXB0E	 fastboot
+Sending 'boot.img' (86192 KB)                      OKAY [  1.952s]
+Booting                                            OKAY [ 10.109s]
+Finished. Total time: 12.100s

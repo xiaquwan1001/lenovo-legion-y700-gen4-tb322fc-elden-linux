@@ -1,0 +1,13 @@
+dwc3: config=[] ko=[build/m3v5-pristine/drivers/usb/dwc3/dwc3.ko] depends=[]
+dwc3-qcom: config=[] ko=[build/m3v5-pristine/drivers/usb/dwc3/dwc3-qcom.ko] depends=[dwc3]
+phy-qcom-qmp-combo: config=[CONFIG_PHY_QCOM_QMP_COMBO=m] ko=[build/m3v5-pristine/drivers/phy/qualcomm/phy-qcom-qmp-combo.ko] depends=[aux-bridge]
+phy-qcom-qmp-usb: config=[CONFIG_PHY_QCOM_QMP_USB=m] ko=[build/m3v5-pristine/drivers/phy/qualcomm/phy-qcom-qmp-usb.ko] depends=[]
+aux-bridge: config=[] ko=[build/m3v5-pristine/drivers/gpu/drm/bridge/aux-bridge.ko] depends=[]
+typec_ucsi: config=[CONFIG_TYPEC_UCSI=m] ko=[build/m3v5-pristine/drivers/usb/typec/ucsi/typec_ucsi.ko] depends=[]
+ucsi_glink: config=[] ko=[build/m3v5-pristine/drivers/usb/typec/ucsi/ucsi_glink.ko] depends=[typec_ucsi,pmic_glink]
+
+== gadget 最小集（闭包）==
+核心 7 个：dwc3 dwc3-qcom phy-qcom-qmp-combo phy-qcom-qmp-usb aux-bridge typec_ucsi ucsi_glink
+ucsi_glink 依赖闭包追加 5 个：pmic_glink rpmsg_core pdr_interface qcom_pdr_msg qmi_helpers
+  （pmic_glink deps=rpmsg_core,pdr_interface; pdr_interface deps=qcom_pdr_msg,qmi_helpers; qcom_pdr_msg deps=qmi_helpers）
+glink_smem deps 如上（若 pmic_glink 经 glink 走，还需 qcom_glink_smem/qcom_glink）

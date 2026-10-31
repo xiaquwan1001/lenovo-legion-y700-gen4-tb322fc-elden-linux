@@ -211,3 +211,44 @@ rc=0（SKIP 下）：config 锚点 ok / System.map ok / UTS 对齐 ok（需 `LOC
 2. **内核 + 模块 + initramfs 三者配套**：改用 `build/m3v5-pristine` 自己的模块树（已产出 1632 `.ko` / 579M tar），并**用不同 UTS**（如 `-m3v5x1`）落到独立 `/lib/modules/<新UTS>`，避免覆盖日常模块树；initramfs 要么内嵌该 UTS 的启动必需模块，要么去掉 `elden_early_gadget=1` 让 udev 在 switch_root 后加载。
 3. **判据去显示依赖**：全部走串口 + USB 网络；显示失败不计入 A1 判据（候选缺 DSI 是已知偏差）。
 4. 仍坚持零写盘 `fastboot boot`；A2 插拔/A3 POR 由用户执行。
+
+---
+
+## §7 第二发（2026-10-31 上午，m3v5-onboard-b）：P1–P5 全过，P6 再败 —— USB 仍零枚举，根因仍不在 early gadget 缺模块
+
+> 执行：physical-exec L1 + 2 L2 同步派发（本节由 L1 落盘）。原始证据：`reports/artifacts/m3v5-onboard-20261030b/`。
+
+### 7.1 P1–P5 结果（全部 PASS，L1 独立复核）
+
+| Gate | 结果 | 关键数字 |
+|---|---|---|
+| P1 模块清单 | ✅ | gadget 最小集闭包 **14 个 .ko**（核心 7：dwc3/dwc3-qcom/qmp-combo/qmp-usb/aux-bridge/typec_ucsi/ucsi_glink；ucsi_glink 依赖闭包追加 pmic_glink、rpmsg_core、pdr_interface、qcom_pdr_msg、qmi_helpers、glink_smem 等）；`p1-modlist.log` |
+| P2 initramfs | ✅ | `out/initramfs-m3v5x1.cpio.gz` sha `de859e0c…`；解包 .ko=14；`modules.dep` 含 dwc3；**init sha 未变**（diff 空）；并修 initramfs 内 `usr/local/sbin/usb-gadget`（非 SSOT）在 wait_udc 前 modprobe 上述模块 —— 这是新发现：**/init 无任何模块加载机制，只塞 .ko 不会自动加载** |
+| P3 打包 | ✅ | `out/boot-elden-m3v5-onboard-b.img` 88 260 608 B，sha `a144e5ce…`；manifest ramdisk 回读 sha 与源一致；cmdline 含 `elden_early_gadget=1 elden_q28_nowd`；SKIP_KERNEL_ASSERT=1（DSI 锚点已知偏差） |
+| P4 模块树 | ✅（UTS 抉择=复用） | `/tmp` 已被清 ⇒ 重建 staging（`make modules_install` 仅 2 s，1632 .ko），tar 1.9 G 存 `…b/m3v5pristine-mods.tar`；独立 UTS 方案作废（>40 min 全量重建且作废 A1 pinned-UTS Image/ABI 27 锚点） |
+| P5 设备部署 | ✅ | 整树备份 `/root/m3mods-daily-20261031.tar`（109 MB，双侧 sha `ae1dd534…` 一致 + 主机留档）；4 个候选 .ko 部署后 sha 4/4 == `out/m3v5-onboard/*.ko`；`depmod -a` ok；未重启、未刷写 |
+| trial gate | ✅ | GATE=OK；boot_b succ=1 |
+
+### 7.2 P6 实测（10:26–10:32）：FAIL，与第一发同一失败模式
+
+1. `reboot bootloader` → `fastboot devices` 出 `HA2EXB0E`；`fastboot boot out/boot-elden-m3v5-onboard-b.img` → `Sending OKAY / Booting OKAY`。
+2. SSH 轮询 300 s+ **不通**；`lsusb` **无平板设备（连 1d6b:0104 gadget 都没有）**。
+3. 串口（ttyACM0 = ttyGS0 gadget 控制台）新增仅 32 行 = **旧内核（vk183）shutdown 过程** + `serial closed`，**候选内核零输出**（gadget 没起来 ⇒ ttyGS0 控制台不存在，符合闭环）。`p6-serial-delta.log`。
+
+### 7.3 判读（重要：本发已排除一个假设）
+
+- 本发 initramfs **已含** gadget 全套模块且 usb-gadget 会主动 modprobe，early gadget 仍零枚举 ⇒ **「initramfs 缺 dwc3 模块」不是（唯一）根因**。失败在更早环节：候选内核在 gadget probe 前已死/挂，或 pristine 内核对 SM8750 平台基本启动（时钟/pinctrl/内存）就有问题。
+- 串口通道受制于同一 gadget（ttyGS0），设备失联时**没有任何独立观测面**（无外部 UART、pstore 无 ramoops）——这是结构性的取证盲区。
+- 下一发前置：**先验平台最小可启动性**（pristine + 最小 config + `earlycon`/纯 RAM busybox 变体 + 不依赖 gadget 的观测），或先在 QEMU/无设备侧排除 v5 补丁 panic。在拿到独立于 USB 的观测面前，继续 `fastboot boot` 无信息量。
+
+### 7.4 现场与恢复
+
+- 零写盘：boot_b 未动（仍 vk183 `aedae5f1…`）；设备停在候选内核（黑屏/无 USB）。**恢复 = 用户长按电源 ~10 s 强制关机 → 再开机**，即回 vk183 基线（`/lib/modules` 4 个 .ko 当前为候选版，回基线后如需干净可从 `/root/m3mods-daily-20261031.tar` 或 `/root/m3modbak-20261030/` 复原 + `depmod -a`）。
+- record：`reports/trials/20261031T023348Z-m3v5-onboard-b-fastbootboot.json`（verdict=fail, reset=warm）。
+
+### 7.5 恢复实测（总管，2026-10-31 10:40–10:45）
+
+- 用户长按电源 → 正常开机后：`uname -v = #1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026`（vk183）、新 `boot_id = 34244956…`、SSH 正常。
+- **模块树已整树回滚并核验**：用设备的 `/root/m3mods-daily-20261031.tar`（sha `ae1dd534…`，与主机留档一致）解回 `/lib/modules/<UTS>` + `depmod -a` rc=0；`.ko` 计数 **1639**；4 个关键模块 sha 全部回到日常原件（`c694eeac…`/`3c114021…`/`99929464…`/`4bfa8835…`）。证据 `reports/artifacts/m3v5-onboard-20261030b/rollback-modules.log`。
+- 主机侧留档：`backup/m3v5-onboard-20261031/m3mods-daily-20261031.tar`（109 MB，不入 git）；1.9 G 的 staging tar 已删（`make modules_install` 2 s 可重建）。
+- **结论：设备已回到完全干净基线**（boot_b vk183 + 日常模块树 + ssh/typec 正常）。

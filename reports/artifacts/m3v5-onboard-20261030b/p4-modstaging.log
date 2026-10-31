@@ -1,0 +1,23 @@
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/can/can-raw.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/can/can-bcm.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/can/can-gw.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/9p/9pnet.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/9p/9pnet_fd.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/9p/9pnet_virtio.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/nfc/nfc.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/nfc/nci/nci.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/hsr/hsr.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/qrtr/qrtr.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/qrtr/qrtr-smd.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/qrtr/qrtr-tun.ko
+  INSTALL /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172/kernel/net/qrtr/qrtr-mhi.ko
+  DEPMOD  /tmp/m3v5pristine-mods/lib/modules/7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+make: 离开目录“/home/xuqianhui/y700-elden/build/m3v5-pristine”
+
+real	0m2.010s
+user	0m2.852s
+sys	0m3.883s
+rc=0
+1632
+-rw-rw-r-- 1 xuqianhui xuqianhui 1933619200 Oct 31 10:19 reports/artifacts/m3v5-onboard-20261030b/m3v5pristine-mods.tar
+83ff38969dce94ee1e12676fb53710a3abea9540118f3e9f4a4db8f0767b9671  reports/artifacts/m3v5-onboard-20261030b/m3v5pristine-mods.tar

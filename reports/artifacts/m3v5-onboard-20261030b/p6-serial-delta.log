@@ -1,0 +1,32 @@
+# [38547.050028][ T3329] binder: 3329 RLIMIT_NICE not set
+[38547.050069][ T3329] binder: 3329 RLIMIT_NICE not set
+[38547.054530][ T3170] binder: 3170:3170 BC_DEAD_BINDER_DONE 0000000000000000 not found
+[38547.061047][ T2223] rfkill: input handler enabled
+[38547.073477][ T3312] waydroid0: port 1(vethtzVL32) entered disabled state
+[38547.074507][ T3312] vethtzVL32 (unregistering): left allmulticast mode
+[38547.074539][ T3312] vethtzVL32 (unregistering): left promiscuous mode
+[38547.074562][ T3312] waydroid0: port 1(vethtzVL32) entered disabled state
+[38547.201015][T130900] EXT4-fs (loop1): unmounting filesystem eb958989-b41e-4969-befa-f0caa4ee5c94.
+[38547.204103][T130901] EXT4-fs (loop0): unmounting filesystem 48bf884f-9572-4e7a-92fd-69c332a161f5.
+[38548.830588][ T1242] wlp1s0: deauthenticating from 30:5f:77:13:2d:e0 by local choice (Reason: 3=DEAUTH_LEAVING)
+[38553.506006][    T1] systemd-shutdown[1]: Syncing filesystems and block devices.
+[38553.519423][    T1] systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+[38553.527266][  T987] systemd-journald[987]: Received SIGTERM from PID 1 (systemd-shutdow).
+[38553.580661][    T1] systemd-shutdown[1]: Sending SIGKILL to remaining processes...
+[38553.589664][    T1] systemd-shutdown[1]: Unmounting file systems.
+[38553.597180][T131076] (sd-umount)[131076]: Unmounting '/run/credentials/systemd-journald.service'.
+[38553.599642][T131077] (sd-remount)[131077]: Remounting '/' read-only with options 'stripe=128'.
+[38553.627616][T131077] EXT4-fs (sda17): re-mounted 5ff56407-047b-402f-88c8-0386ca6e5604 ro.
+[38553.634602][    T1] systemd-shutdown[1]: All filesystems unmounted.
+[38553.641580][    T1] systemd-shutdown[1]: Deactivating swaps.
+[38553.644902][    T1] systemd-shutdown[1]: All swaps deactivated.
+[38553.648148][    T1] systemd-shutdown[1]: Detaching loop devices.
+[38553.652758][    T1] systemd-shutdown[1]: All loop devices detached.
+[38553.655508][    T1] systemd-shutdown[1]: Stopping MD devices.
+[38553.658047][    T1] systemd-shutdown[1]: All MD devices stopped.
+[38553.659115][    T1] systemd-shutdown[1]: Detaching DM devices.
+[38553.661263][    T1] systemd-shutdown[1]: All DM devices detached.
+[38553.663337][    T1] systemd-shutdown[1]: All filesystems, swaps, loop devices, MD devices and DM devices detached.
+[38553.665782][    T1] systemd-shutdown[1]: Syncing filesystems and block devices.
+[38553.667561][    T1] systemd-shutdown[1]: Rebooting with argument 'bootloader'.
+===== serial closed /dev/ttyACM0 (rc=0) 2026-10-31T10:26:06+08:00 =====
