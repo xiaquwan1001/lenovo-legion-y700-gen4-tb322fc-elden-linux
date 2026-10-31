@@ -61,6 +61,10 @@ case "$cmd" in
     log "preflight PASS"
     ;;
   --fetch-tablet)
+    # 0) 先拉 GitLab 上的 tablet/* 分支（平板夜间 --allow-push 的产物；不依赖平板 LAN 可达）
+    git fetch origin '+refs/heads/tablet/*:refs/remotes/origin/tablet/*' 2>/dev/null \
+      && log "已 fetch origin 的 tablet/* 分支" \
+      || log "WARN: fetch origin tablet/* 失败（凭据/网络），继续 rsync 路径"
     # 会话/用户数据 rsync 单向：主机 <- 平板，--checksum，禁 --delete
     HOST="${TABLET_HOST:-root@192.168.7.1}"
     RPATH="${TABLET_RPATH:-/home/xuqianhui1001/y700-elden}"
@@ -78,7 +82,12 @@ case "$cmd" in
   --merge-tablet)
     BR="${2:?usage: --merge-tablet tablet/<task>}"
     case "$BR" in tablet/*) ;; *) die "只许合并 tablet/* 分支: $BR" 9 ;; esac
-    git merge --no-ff "$BR" || { git merge --abort 2>/dev/null; die "冲突，已 abort，报总管收口" 10; }
+    TARGET="$BR"
+    if ! git show-ref --verify --quiet "refs/heads/$BR"; then
+      if git show-ref --verify --quiet "refs/remotes/origin/$BR"; then TARGET="origin/$BR";
+      else die "既无本地分支 $BR 也无 origin/$BR（先跑 --fetch-tablet）" 10; fi
+    fi
+    git merge --no-ff "$TARGET" || { git merge --abort 2>/dev/null; die "冲突，已 abort，报总管收口" 10; }
     log "已合并 $BR（push 由人工执行）"
     ;;
   *)
