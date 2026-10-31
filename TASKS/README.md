@@ -299,6 +299,17 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-10-31 晚：启动提速（net-selfheal 白等 120 s 修掉）
+
+- **根因 + 修法**（`PITFALLS` #475）：`hooks/net-selfheal.pre` 判据写死 Alpine 的 `wlan0`，Debian 侧是 **`wlp1s0`**
+  ⇒ 永不提前返回，**每轮启动白等满 120 s**（静默降级、无失败单元）。改判据为「任意 `wl*` + `UP` + 有 IPv4」、上限 **20 s**。
+- **真机结果（warm reboot 实测，同一台机）**：`net-selfheal` 3.1 s→**10.2 s（7.1 s 完成）**（原 128 s）；
+  `multi-user.target` **128 s → 33.2 s**、`graphical.target` **33.2 s** ⇒ **净省约 95 s**。
+  同轮：`iio-sensor-proxy` active、`waydroid-container` active、失败单元 **0**、`dsi_bonded_cmd_failed` **0**、面板 `On`。
+- **部署事故与教训**（`PITFALLS` #476）：手工 `cat >` 直推仓库 `hooks/*.pre` 丢了 `stage.sh` 补的 shebang ⇒
+  `Exec format error / 203/EXEC`；又因「脚本与数据共用一个 stdin 管道」把目标截成 0 字节。已改为**只从 `out/stage-debian/` 部署**。
+- **未验证**：修后的 hook 只在**暖复位**上验过启动耗时；下一次真 POR 应复核同一数字（预计不变，`wlan` 关联 ~9 s 与复位深度无关）。
+
 ### 2026-10-31 下午（续）：「全部继续」四项落地
 
 - **① wl2868c v4 已投（15:0x CST，git send-email，5 封全 `Result: 250`）**：cover MID `<cover.1793427040.git.xiaqinghuan@mail.ustc.edu.cn>`，4 枚分别为 `7f2062a3…`/`bebaff7e…`/`74cccd47…`/`9ef48d26…`（同 `.1793427040/41.git.` 前缀）；To Mark Brown + Liam Girdwood，Cc Krzysztof/Rob/Conor/linux-arm-msm/devicetree/lkml；cover `In-Reply-To` v3 cover ⇒ 与 v3 线程相连。**未上机**。

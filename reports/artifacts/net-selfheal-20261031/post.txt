@@ -1,0 +1,25 @@
+== net-selfheal ==
+Jan 14 05:32:21 elden systemd[1]: Starting net-selfheal.service - HTTPS trust chain + PMTU self-heal after wlan0 is up...
+Jan 14 05:32:21 elden (t-selfheal.pre)[1311]: net-selfheal.service: Failed to execute /usr/local/libexec/elden/net-selfheal.pre: Exec format error
+Jan 14 05:32:21 elden (t-selfheal.pre)[1311]: net-selfheal.service: Failed at step EXEC spawning /usr/local/libexec/elden/net-selfheal.pre: Exec format error
+Jan 14 05:32:21 elden systemd[1]: net-selfheal.service: Control process exited, code=exited, status=203/EXEC
+Jan 14 05:32:21 elden systemd[1]: net-selfheal.service: Failed with result 'exit-code'.
+Jan 14 05:32:21 elden systemd[1]: Failed to start net-selfheal.service - HTTPS trust chain + PMTU self-heal after wlan0 is up.
+== 从 Starting 到 Deactivated 的实际耗时 ==
+[    3.058667] elden systemd[1]: Starting net-selfheal.service - HTTPS trust chain + PMTU self-heal after wlan0 is up...
+[    3.064089] elden (t-selfheal.pre)[1311]: net-selfheal.service: Failed to execute /usr/local/libexec/elden/net-selfheal.pre: Exec format error
+[    3.064277] elden (t-selfheal.pre)[1311]: net-selfheal.service: Failed at step EXEC spawning /usr/local/libexec/elden/net-selfheal.pre: Exec format error
+[    3.071761] elden systemd[1]: net-selfheal.service: Control process exited, code=exited, status=203/EXEC
+[    3.071855] elden systemd[1]: net-selfheal.service: Failed with result 'exit-code'.
+[    3.072024] elden systemd[1]: Failed to start net-selfheal.service - HTTPS trust chain + PMTU self-heal after wlan0 is up.
+== 就绪时刻 ==
+Jan 14 05:32:22 elden systemd[1362]: Startup finished in 641ms.
+Jan 14 05:32:22 elden systemd[1362]: Reached target graphical-session-pre.target - Session services which should run early before the graphical session is brought up.
+Jan 14 05:32:23 elden systemd[1362]: Reached target graphical-session.target - Current graphical user session.
+Oct 31 15:42:58 elden systemd[5436]: Startup finished in 459ms.
+Oct 31 15:43:14 elden systemd[1]: Reached target multi-user.target - Multi-User System.
+== boot_id / Q28 ==
+0e9cd292-97f5-46d4-a6fb-c9b8cd601810
+0
+On
+1
