@@ -1,0 +1,77 @@
+From 9ef48d26aa4480b2dc1e20ad7af55f51aa22fec7 Mon Sep 17 00:00:00 2001
+Message-ID: <cover.1793427040.git.xiaqinghuan@mail.ustc.edu.cn>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 31 Oct 2026 14:10:40 +0800
+Subject: [PATCH v4 0/4] regulator: add the Will Semiconductor WL2868C camera PMIC
+
+The WL2868C is the camera PMIC on the Lenovo Legion Tab (TB322FC,
+SM8750); its seven LDOs feed the rear camera, the front camera and the
+VCM on i2c10.
+
+v3 was reviewed by sashiko and Krzysztof; what changed, point by point:
+
+ - i2c10 was enabled while its parents were not, so the bus could never
+   populate and none of the regulators it hosts could have registered.
+   The board DTS now enables qupv3_2 and gpi_dma2 alongside i2c10
+   (sashiko, High).
+
+ - The binding schema, the SoC dtsi and the board DTS were mixed in the
+   board patch. The series is now one binding patch (including the
+   arm/qcom.yaml registration), one driver patch, one sm8750.dtsi patch
+   and one board DTS patch (sashiko, Low; checkpatch flagged the same
+   thing).
+
+ - The sm8750.dtsi patch now leaves both I2C buses of each CCI
+   controller available instead of disabling bus 1, as sm8550.dtsi and
+   sm8650.dtsi do, and carries the bus 1 pinctrl states on gpio115/116
+   and gpio119/120 (sashiko, Low).
+
+ - The CCI nodes moved after videocc@aaf0000 into unit-address order,
+   and the new pinctrl states sit alphabetically inside &tlmm (sashiko,
+   Low).
+
+ - The commit message now says that the SoC has three CCI controllers
+   of which two are described, instead of "the two CCI I2C
+   controllers" (sashiko, Low).
+
+ - The front galaxycore,gc08a8 node is dropped: it has no binding at
+   all, unlike samsung,s5kjns and giantec,gt9764, whose bindings were
+   posted separately and are still in review. LDO2 and LDO3 stay wired
+   in the board file for when that series lands. The sensor nodes also
+   lost their power-domains property: the TITAN_TOP GDSC belongs to the
+   camera controller that owns the CCI bus, not to an I2C sensor, which
+   is powered through its supplies and its reset GPIO (sashiko,
+   Medium). The rear sensor gained its CSI-2 endpoint; the
+   remote-endpoint side arrives with the camera subsystem series.
+
+Everything above is host-side only. The i2c10 probe and the runtime
+existence of the regulators are still unverified on hardware; the
+on-board evidence reported earlier (i2c-10 present, camera_ldo1..5,7
+registered, LDO6 without consumer) comes from our own downstream board
+DTS, not from the files in this series.
+
+
+Qianhui Xu (4):
+  regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+  regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+  arm64: dts: qcom: sm8750: describe two of the three CCI I2C
+    controllers
+  arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators
+
+ .../devicetree/bindings/arm/qcom.yaml         |   1 +
+ .../bindings/regulator/willsemi,wl2868c.yaml  |  79 ++++++++
+ MAINTAINERS                                   |   7 +
+ arch/arm64/boot/dts/qcom/Makefile             |   1 +
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 175 ++++++++++++++++++
+ arch/arm64/boot/dts/qcom/sm8750.dtsi          | 158 ++++++++++++++++
+ drivers/regulator/Kconfig                     |  11 ++
+ drivers/regulator/Makefile                    |   1 +
+ drivers/regulator/wl2868c-regulator.c         | 155 ++++++++++++++++
+ 9 files changed, 588 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+ create mode 100644 arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+ create mode 100644 drivers/regulator/wl2868c-regulator.c
+
+-- 
+2.53.0
+

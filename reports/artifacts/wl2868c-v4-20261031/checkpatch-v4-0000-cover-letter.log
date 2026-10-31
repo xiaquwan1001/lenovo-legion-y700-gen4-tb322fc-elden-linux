@@ -1,0 +1,15 @@
+WARNING: Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+#71: 
+ create mode 100644 Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+
+ERROR: Does not appear to be a unified-diff format patch
+
+total: 1 errors, 1 warnings, 0 checks, 0 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+"[PATCH v4 0/4] regulator: add the Will Semiconductor WL2868C camera PMIC" has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.

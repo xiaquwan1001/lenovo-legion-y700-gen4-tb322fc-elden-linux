@@ -1,0 +1,6 @@
+/tmp/wlv4/out/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: lens@c (giantec,gt9764): giantec,aac-mode: b'\x00\x00\x00@' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+/tmp/wlv4/out/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: lens@c (giantec,gt9764): giantec,aac-timing: b'\x00\x00\x00|' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+/tmp/wlv4/out/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: /soc@0/cci@ac7b000/i2c-bus@0/lens@c: failed to match any schema with compatible: ['giantec,gt9764']
+/tmp/wlv4/out/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: /soc@0/cci@ac7b000/i2c-bus@0/camera@56: failed to match any schema with compatible: ['samsung,s5kjns']

@@ -1,0 +1,149 @@
+make[1]: 进入目录“/tmp/wlv4/out”
+  UPD     arch/arm64/include/generated/uapi/asm/kvm_para.h
+  UPD     arch/arm64/include/generated/uapi/asm/errno.h
+  UPD     arch/arm64/include/generated/uapi/asm/ioctls.h
+  UPD     arch/arm64/include/generated/uapi/asm/ipcbuf.h
+  UPD     arch/arm64/include/generated/uapi/asm/ioctl.h
+  UPD     arch/arm64/include/generated/uapi/asm/resource.h
+  UPD     arch/arm64/include/generated/uapi/asm/poll.h
+  UPD     arch/arm64/include/generated/uapi/asm/msgbuf.h
+  UPD     include/generated/uapi/linux/version.h
+  UPD     arch/arm64/include/generated/uapi/asm/sembuf.h
+  UPD     arch/arm64/include/generated/uapi/asm/siginfo.h
+  UPD     arch/arm64/include/generated/uapi/asm/socket.h
+  UPD     arch/arm64/include/generated/uapi/asm/shmbuf.h
+  SYSHDR  arch/arm64/include/generated/uapi/asm/unistd_64.h
+  UPD     arch/arm64/include/generated/uapi/asm/stat.h
+  UPD     arch/arm64/include/generated/uapi/asm/swab.h
+  UPD     arch/arm64/include/generated/uapi/asm/sockios.h
+  UPD     arch/arm64/include/generated/uapi/asm/types.h
+  UPD     arch/arm64/include/generated/uapi/asm/termbits.h
+  UPD     arch/arm64/include/generated/uapi/asm/termios.h
+  UPD     include/generated/compile.h
+  HOSTCC  scripts/kallsyms
+  HOSTCC  scripts/sorttable.o
+  HOSTCC  scripts/elf-parse.o
+  HOSTCC  scripts/asn1_compiler
+  UPD     arch/arm64/include/generated/asm/early_ioremap.h
+  UPD     arch/arm64/include/generated/asm/mmzone.h
+  UPD     arch/arm64/include/generated/asm/mcs_spinlock.h
+  UPD     arch/arm64/include/generated/asm/qrwlock.h
+  UPD     arch/arm64/include/generated/asm/qspinlock.h
+  UPD     arch/arm64/include/generated/asm/parport.h
+  UPD     arch/arm64/include/generated/asm/delay.h
+  UPD     arch/arm64/include/generated/asm/user.h
+  UPD     arch/arm64/include/generated/asm/fprobe.h
+  UPD     arch/arm64/include/generated/asm/device.h
+  UPD     arch/arm64/include/generated/asm/div64.h
+  UPD     arch/arm64/include/generated/asm/dma-mapping.h
+  UPD     arch/arm64/include/generated/asm/dma.h
+  UPD     arch/arm64/include/generated/asm/emergency-restart.h
+  UPD     arch/arm64/include/generated/asm/irq_regs.h
+  UPD     arch/arm64/include/generated/asm/kdebug.h
+  UPD     arch/arm64/include/generated/asm/hw_irq.h
+  UPD     arch/arm64/include/generated/asm/kmap_size.h
+  UPD     arch/arm64/include/generated/asm/local.h
+  UPD     arch/arm64/include/generated/asm/msi.h
+  UPD     arch/arm64/include/generated/asm/local64.h
+  UPD     arch/arm64/include/generated/asm/percpu_types.h
+  UPD     arch/arm64/include/generated/asm/softirq_stack.h
+  UPD     arch/arm64/include/generated/asm/switch_to.h
+  UPD     arch/arm64/include/generated/asm/serial.h
+  UPD     arch/arm64/include/generated/asm/mmiowb.h
+  SYSTBL  arch/arm64/include/generated/asm/syscall_table_32.h
+  UPD     arch/arm64/include/generated/asm/unwind_user.h
+  UPD     arch/arm64/include/generated/asm/vga.h
+  SYSTBL  arch/arm64/include/generated/asm/syscall_table_64.h
+  SYSHDR  arch/arm64/include/generated/asm/unistd_32.h
+  SYSHDR  arch/arm64/include/generated/asm/unistd_compat_32.h
+  UPD     arch/arm64/include/generated/asm/video.h
+  UPD     arch/arm64/include/generated/asm/trace_clock.h
+  UPD     include/generated/utsrelease.h
+  HOSTLD  scripts/sorttable
+  GEN     arch/arm64/include/generated/asm/cpucap-defs.h
+  GEN     arch/arm64/include/generated/asm/kernel-hwcap.h
+  GEN     arch/arm64/include/generated/asm/sysreg-defs.h
+  CC      scripts/mod/empty.o
+  HOSTCC  scripts/mod/mk_elfconfig
+  CC      scripts/mod/devicetable-offsets.s
+  UPD     scripts/mod/devicetable-offsets.h
+  MKELF   scripts/mod/elfconfig.h
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/mod/symsearch.o
+  HOSTLD  scripts/mod/modpost
+  CC      kernel/bounds.s
+  CHKSHA1 /tmp/wlv4/pt2/include/linux/atomic/atomic-arch-fallback.h
+  CHKSHA1 /tmp/wlv4/pt2/include/linux/atomic/atomic-instrumented.h
+  CHKSHA1 /tmp/wlv4/pt2/include/linux/atomic/atomic-long.h
+  UPD     include/generated/timeconst.h
+  UPD     include/generated/bounds.h
+  CC      arch/arm64/kernel/asm-offsets.s
+  UPD     include/generated/asm-offsets.h
+  CC      kernel/sched/rq-offsets.s
+  UPD     include/generated/rq-offsets.h
+  CALL    /tmp/wlv4/pt2/scripts/checksyscalls.sh 
+  LDS     arch/arm64/kernel/vdso/vdso.lds
+  CC      arch/arm64/kernel/vdso/vgettimeofday.o
+  AS      arch/arm64/kernel/vdso/note.o
+  AS      arch/arm64/kernel/vdso/sigreturn.o
+  CC      arch/arm64/kernel/vdso/vgetrandom.o
+  AS      arch/arm64/kernel/vdso/vgetrandom-chacha.o
+  LD      arch/arm64/kernel/vdso/vdso.so.dbg
+  VDSOSYM include/generated/vdso-offsets.h
+  OBJCOPY arch/arm64/kernel/vdso/vdso.so
+  CC      drivers/regulator/core.o
+  CC      drivers/regulator/dummy.o
+  CC      drivers/regulator/fixed-helper.o
+  CC      drivers/regulator/helpers.o
+  CC      drivers/regulator/devres.o
+  CC      drivers/regulator/irq_helpers.o
+  CC      drivers/regulator/of_regulator.o
+  CC      drivers/regulator/fixed.o
+  CC      drivers/regulator/cros-ec-regulator.o
+  CC      drivers/regulator/scmi-regulator.o
+  CC      drivers/regulator/axp20x-regulator.o
+  CC      drivers/regulator/bd718x7-regulator.o
+  CC      drivers/regulator/bd9571mwv-regulator.o
+  CC      drivers/regulator/fan53555.o
+  CC      drivers/regulator/gpio-regulator.o
+  CC      drivers/regulator/hi6421v530-regulator.o
+  CC      drivers/regulator/hi655x-regulator.o
+  CC      drivers/regulator/max77620-regulator.o
+  CC      drivers/regulator/max8973-regulator.o
+  CC      drivers/regulator/mp8859.o
+  CC      drivers/regulator/mt6357-regulator.o
+  CC      drivers/regulator/mt6358-regulator.o
+  CC      drivers/regulator/mt6359-regulator.o
+  CC      drivers/regulator/mt6360-regulator.o
+  CC      drivers/regulator/mt6397-regulator.o
+  CC      drivers/regulator/qcom-rpmh-regulator.o
+  CC      drivers/regulator/qcom_smd-regulator.o
+  CC      drivers/regulator/qcom_spmi-regulator.o
+  CC      drivers/regulator/pca9450-regulator.o
+  CC      drivers/regulator/pf8x00-regulator.o
+  CC      drivers/regulator/pfuze100-regulator.o
+  CC      drivers/regulator/pwm-regulator.o
+  CC      drivers/regulator/raa215300.o
+  CC      drivers/regulator/rk808-regulator.o
+  CC      drivers/regulator/rohm-regulator.o
+  CC      drivers/regulator/s2mps11.o
+  CC      drivers/regulator/sun20i-regulator.o
+  CC      drivers/regulator/tps65219-regulator.o
+  CC      drivers/regulator/uniphier-regulator.o
+  CC      drivers/regulator/renesas-usb-vbus-regulator.o
+  CC [M]  drivers/regulator/da9211-regulator.o
+  CC [M]  drivers/regulator/lp873x-regulator.o
+  CC [M]  drivers/regulator/max20411-regulator.o
+  CC [M]  drivers/regulator/mt6315-regulator.o
+  CC [M]  drivers/regulator/mt6316-regulator.o
+  CC [M]  drivers/regulator/qcom-pm8008-regulator.o
+  CC [M]  drivers/regulator/qcom-refgen-regulator.o
+  CC [M]  drivers/regulator/qcom_usb_vbus-regulator.o
+  CC [M]  drivers/regulator/tps6594-regulator.o
+  CC [M]  drivers/regulator/tps65132-regulator.o
+  CC [M]  drivers/regulator/vctrl-regulator.o
+  CC [M]  drivers/regulator/wl2868c-regulator.o
+  AR      drivers/regulator/built-in.a
+make[1]: 离开目录“/tmp/wlv4/out”

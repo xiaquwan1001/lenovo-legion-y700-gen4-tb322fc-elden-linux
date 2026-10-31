@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "/home/xuqianhui/y700-elden/build/wl-v2/scripts/spdxcheck.py", line 6, in <module>
+    from ply import lex, yacc
+ModuleNotFoundError: No module named 'ply'
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+#51: 
+new file mode 100644
+
+WARNING: DT compatible string "giantec,gt9764" appears un-documented -- check build/wl-v2/Documentation/devicetree/bindings/
+#112: FILE: arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts:57:
++		compatible = "giantec,gt9764";
+
+WARNING: DT compatible string "samsung,s5kjns" appears un-documented -- check build/wl-v2/Documentation/devicetree/bindings/
+#122: FILE: arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts:67:
++		compatible = "samsung,s5kjns";
+
+total: 0 errors, 3 warnings, 0 checks, 182 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+"[PATCH v4 4/4] arm64: dts: qcom: sm8750-lenovo-elden: describe the" has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.

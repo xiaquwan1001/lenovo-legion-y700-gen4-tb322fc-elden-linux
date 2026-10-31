@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/xuqianhui/y700-elden/build/wl-v2/scripts/spdxcheck.py", line 6, in <module>
+    from ply import lex, yacc
+ModuleNotFoundError: No module named 'ply'
+total: 0 errors, 0 warnings, 0 checks, 192 lines checked
+
+"[PATCH v4 2/4] regulator: willsemi,wl2868c: add the WL2868C camera" has no obvious style problems and is ready for submission.
