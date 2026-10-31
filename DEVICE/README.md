@@ -24,7 +24,8 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-10-30 19:05（当前在机状态，唯一权威）** —— 在机 = **`vk183-fastrpc`**（后台修复传感器那发；`out/boot-elden-vk183-fastrpc.img`，签后 `bootslot-b/boot_b.img`）：
+- ★**2026-10-31 15:30（当前在机状态，唯一权威）** —— **`vk183-fastrpc` 已转正为日常件**：用户当日 15:29 物理断电做**真 POR**，判据全绿 —— 7 项 Q28 计数全 0（`dsi_bonded_cmd_failed`/`vblank timeout`/`drm_crtc_wait_one_vblank`/`PPM init failed`/`reset failure`/`command DMA timeout`/`Failed to initialize panel`）、`DSI PLL lock failed=4`（与 vk181 基线同，未引入新副作用）、面板 `connected/enabled/On`、`/lib/modules` **1639 `.ko`**、失败单元 **0**、传感器可用（`monitor-sensor` 出 `tilt=face-up`）、根 `/dev/sda17` ext4。`boot_id` = `0f6195d0-b4d3-42c4-80ef-047f66ec0e18`；`boot_b` 分区 sha **`aedae5f1…`**（未变）；trial record `reports/trials/20261031T073414Z-vk183-daily-por-r1.json`（`--reset por` / `--verdict GOOD`），证据 `reports/artifacts/por-vk183-20261031/`。**已知启动代价（非回归）**：`net-selfheal.pre` 等 `wlan0` 最多 **120 s**（本轮等到超时才继续）⇒ 传感器/Waydroid 相关单元在这些单元之后启动，整机到 multi-user 完成约 2 min。
+- ★**2026-10-30 19:05（历史，已被上一条取代）** —— 在机 = **`vk183-fastrpc`**（后台修复传感器那发；`out/boot-elden-vk183-fastrpc.img`，签后 `bootslot-b/boot_b.img`）：
   `boot_b` 分区 sha256 = **`aedae5f121ecbe5cc6f5de59a14ae5ba3680229d619c49cedee0d6cf8b9b4765`**（设备侧实测），`boot_id` = `b186674c-1754-4241-898a-ab44d05bd324`，
   `uname -r` 仍 = `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`（**故意钉住 UTS** 以复用 `/lib/modules`）、`uname -v` = `#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026`。
   与上一发（`e6b1124c…` m3v5-f2）的**唯一内核差异** = 一枚 DT commit（`qcom,non-secure-domain`，`patches/dt/0003-*`）；ramdisk/cmdline 逐字取自原 `boot_b`。

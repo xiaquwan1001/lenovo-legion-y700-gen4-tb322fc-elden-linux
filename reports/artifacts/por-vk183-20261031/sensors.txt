@@ -1,0 +1,102 @@
+-- No entries --
+--- iio-sensor-proxy ---
+inactive
+-- No entries --
+○ hexagonrpcd.service - Hexagon DSP sensors daemon
+     Loaded: loaded (/usr/lib/systemd/system/hexagonrpcd.service; enabled; preset: enabled)
+    Drop-In: /etc/systemd/system/hexagonrpcd.service.d
+             └─elden.conf
+     Active: inactive (dead)
+        Job: 132
+       Docs: man:hexagonrpcd(1)
+             file:///usr/share/doc/hexagonrpcd/README.Debian
+=== deps ===
+JOB UNIT                     TYPE  STATE
+132 hexagonrpcd.service      start waiting
+1   graphical.target         start waiting
+2   multi-user.target        start waiting
+133 iio-sensor-proxy.service start waiting
+116 net-selfheal.service     start running
+
+5 jobs listed.
+=== adsp firmware/remoteproc ===
+running running 
+[    3.720174] [    T149] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@7: Adding to iommu group 19
+[    3.721078] [    T149] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@8: Adding to iommu group 20
+[    3.736428] [    T117] PDR: Indication received from msm/adsp/charger_pd, state: 0x1fffffff, trans-id: 1
+[    3.745513] [     T12] PDR: Indication received from msm/adsp/audio_pd, state: 0x1fffffff, trans-id: 1
+[    3.745524] [   T1098] qcom,apr 6800000.remoteproc:glink-edge.adsp_apps.-1.-1: Adding APR/GPR dev: gprsvc:service:2:3
+[    3.745543] [   T1098] qcom,apr 6800000.remoteproc:glink-edge.adsp_apps.-1.-1: Adding APR/GPR dev: gprsvc:service:2:7
+○ net-selfheal.service - HTTPS trust chain + PMTU self-heal after wlan0 is up
+     Loaded: loaded (/usr/lib/systemd/system/net-selfheal.service; enabled; preset: enabled)
+     Active: inactive (dead) since Sat 2026-10-31 15:32:04 CST; 8s ago
+ Invocation: 31c881a030a94eef8592469c57033395
+    Process: 1300 ExecStartPre=/usr/local/libexec/elden/net-selfheal.pre (code=exited, status=0/SUCCESS)
+    Process: 8206 ExecStart=/usr/local/sbin/net-selfheal.sh (code=exited, status=0/SUCCESS)
+   Main PID: 8206 (code=exited, status=0/SUCCESS)
+   Mem peak: 2.8M
+        CPU: 51ms
+
+Jan 14 05:19:41 elden systemd[1]: Starting net-selfheal.service - HTTPS trust chain + PMTU self-heal after wlan0 is up...
+Oct 31 15:32:04 elden net-selfheal.pre[1300]: elden: net-selfheal: wlan 未在 120 s 内 UP，照常执行
+Oct 31 15:32:04 elden net-selfheal.sh[8206]: [net-selfheal] ca bundle OK: 120 certs, 180744 bytes
+Oct 31 15:32:04 elden net-selfheal.sh[8206]: [net-selfheal] done, problems=0
+=== after/before ===
+=== last logs ===
+Oct 31 15:32:13 elden systemd[8262]: Starting dbus.service - D-Bus User Message Bus...
+Oct 31 15:32:13 elden systemd[8262]: pipewire.service - PipeWire Multimedia Service skipped, unmet condition check ConditionUser=!root
+Oct 31 15:32:13 elden systemd[1]: Started session-13.scope - Session 13 of User root.
+Oct 31 15:32:13 elden sshd-session[8252]: pam_env(sshd:session): Unable to open env file: /etc/default/locale
+Oct 31 15:32:13 elden systemd[8262]: Started dbus.service - D-Bus User Message Bus.
+Oct 31 15:32:13 elden systemd[8262]: mpris-proxy.service - Bluetooth mpris proxy skipped, unmet condition check ConditionUser=!@system
+Oct 31 15:32:13 elden systemd[8262]: wireplumber.service: Bound to unit pipewire.service, but unit isn't active.
+Oct 31 15:32:13 elden systemd[8262]: Dependency failed for wireplumber.service - Multimedia Service Session Manager.
+Oct 31 15:32:13 elden systemd[8262]: wireplumber.service: Job wireplumber.service/start failed with result 'dependency'.
+Oct 31 15:32:13 elden systemd[8262]: filter-chain.service: Bound to unit pipewire.service, but unit isn't active.
+Oct 31 15:32:13 elden systemd[8262]: Dependency failed for filter-chain.service - PipeWire filter chain daemon.
+Oct 31 15:32:13 elden systemd[8262]: filter-chain.service: Job filter-chain.service/start failed with result 'dependency'.
+Oct 31 15:32:13 elden systemd[8262]: pipewire-pulse.service - PipeWire PulseAudio skipped, unmet condition check ConditionUser=!root
+Oct 31 15:32:13 elden systemd[8262]: Reached target default.target - Main User Target.
+Oct 31 15:32:13 elden systemd[8262]: Startup finished in 467ms.
+inactive
+active
+0
+1
+=== wifi ===
+0
+wlp1s0:connected
+waydroid0:connected (externally)
+p2p-dev-wlp1s0:disconnected
+usb0:unmanaged
+vethLveI61:unmanaged
+=== uptime ===
+ 15:32:57 up 2 min,  2 users,  load average: 0.20, 0.26, 0.11
+○ hexagonrpcd.service - Hexagon DSP sensors daemon
+     Loaded: loaded (/usr/lib/systemd/system/hexagonrpcd.service; enabled; preset: enabled)
+    Drop-In: /etc/systemd/system/hexagonrpcd.service.d
+             └─elden.conf
+     Active: inactive (dead) since Sat 2026-10-31 15:32:05 CST; 1min 4s ago
+   Duration: 796ms
+ Invocation: 4087c5bf1ab44524922ff6547da4d7d2
+       Docs: man:hexagonrpcd(1)
+             file:///usr/share/doc/hexagonrpcd/README.Debian
+    Process: 8216 ExecStart=/usr/bin/hexagonrpcd (code=exited, status=0/SUCCESS)
+--- 手动起（只读诊断？不，先看为何 inactive）---
+ActiveState=inactive
+SubState=dead
+ConditionResult=yes
+Result=success
+ExecMainStatus=0
+--- 谁挡住 ---
+No jobs running.
+iio:device0 
+    Waiting for iio-sensor-proxy to appear
++++ iio-sensor-proxy appeared
+=== Has accelerometer (orientation: undefined, tilt: undefined)
+    Tilt changed: face-up
+=== ssccli ===
+/usr/bin/ssccli
+Specify a supported sensor: 'proximity', 'light', 'accelerometer', 'magnetometer', 'compass', 'gyroscope'
+Specify a supported sensor: 'proximity', 'light', 'accelerometer', 'magnetometer', 'compass', 'gyroscope'
+Specify a supported sensor: 'proximity', 'light', 'accelerometer', 'magnetometer', 'compass', 'gyroscope'
+Specify a supported sensor: 'proximity', 'light', 'accelerometer', 'magnetometer', 'compass', 'gyroscope'

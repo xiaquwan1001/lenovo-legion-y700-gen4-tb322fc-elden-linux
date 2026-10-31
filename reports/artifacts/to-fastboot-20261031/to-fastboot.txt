@@ -1,0 +1,5 @@
+== reboot bootloader ==
+fastboot up after 12s
+HA2EXB0E	 fastboot
+current-slot: b
+Finished. Total time: 0.004s

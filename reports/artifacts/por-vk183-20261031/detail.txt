@@ -1,0 +1,20 @@
+== DSI PLL 明细 ==
+[    0.318793] [     T56] DSI PLL(0) lock failed, status=0x00000000
+[    0.323943] [     T56] DSI PLL(0) lock failed, status=0x00000000
+[    0.329092] [     T56] DSI PLL(0) lock failed, status=0x00000000
+[    0.334245] [     T56] DSI PLL(0) lock failed, status=0x00000000
+== hexagonrpcd ==
+○ hexagonrpcd.service - Hexagon DSP sensors daemon
+     Loaded: loaded (/usr/lib/systemd/system/hexagonrpcd.service; enabled; preset: enabled)
+    Drop-In: /etc/systemd/system/hexagonrpcd.service.d
+             └─elden.conf
+     Active: inactive (dead)
+        Job: 132
+       Docs: man:hexagonrpcd(1)
+             file:///usr/share/doc/hexagonrpcd/README.Debian
+== fastrpc 节点 ==
+/dev/fastrpc-adsp /dev/fastrpc-cdsp /dev/fastrpc-cdsp-secure 
+== boot 时间线 ==
+[    0.794851] [      T1] Run /init as init process
+[    0.994615] [      T1] [init] switching root to /dev/sda17 (/init)
+[    1.803448] [      T1] systemd[1]: Detected architecture arm64.

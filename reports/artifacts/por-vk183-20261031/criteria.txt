@@ -1,0 +1,30 @@
+== dmesg 判据 ==
+dsi_bonded_cmd_failed            0
+vblank timeout                   0
+drm_crtc_wait_one_vblank         0
+PPM init failed                  0
+reset failure                    0
+command DMA timeout              0
+Failed to initialize panel       0
+DSI PLL                          4
+== 面板 ==
+connected
+enabled
+On
+== 模块/服务 ==
+1639
+108
+0
+1
+== 传感器 ==
+/dev/fastrpc-adsp
+inactive
+== 网络 ==
+192.168.7.1/24
+inactive
+0
+    Waiting for iio-sensor-proxy to appear
+== sensor props ==
+0
+uptime:
+ 15:31:33 up 1 min,  2 users,  load average: 0.55, 0.31, 0.12

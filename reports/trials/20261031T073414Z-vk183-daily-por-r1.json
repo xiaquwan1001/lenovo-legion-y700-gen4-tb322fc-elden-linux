@@ -1,0 +1,18 @@
+{
+  "label": "vk183-daily-por-r1",
+  "ts": "2026-10-31T07:34:14Z",
+  "vk": "vk183-fastrpc",
+  "image": "out/boot-elden-vk183-fastrpc.img",
+  "image_sha256": "30e6a4c4bcfcd707993178e5554d5086964a104adde1a3227968342cda8c752b",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "por",
+  "deploy": "none",
+  "probe": "q28",
+  "verdict": "GOOD",
+  "log_dir": "reports/artifacts/por-vk183-20261031",
+  "note": "用户物理断电真 POR；boot_id 0f6195d0；7 项 Q28 判据全 0（DSI PLL lock failed=4 与 vk181 基线同）；面板 connected/enabled/On；1639 .ko；失败单元 0；传感器 monitor-sensor 出 tilt=face-up"
+}
