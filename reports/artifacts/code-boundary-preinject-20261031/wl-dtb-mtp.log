@@ -1,0 +1,4 @@
+make[1]: 进入目录“/tmp/cb-wl-out”
+  DTC     arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+/tmp/cb-wl/arch/arm64/boot/dts/qcom/sm8750.dtsi:3296.27-3359.6: Warning (avoid_unnecessary_addr_size): /soc@0/display-subsystem@ae00000/dsi@ae96000: unnecessary #address-cells/#size-cells without "ranges", "dma-ranges" or child "reg" or "ranges" property
+make[1]: 离开目录“/tmp/cb-wl-out”

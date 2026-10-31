@@ -1,0 +1,9 @@
+error: 打补丁失败：Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml:31
+error: Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml：补丁未应用
+hint: 用 'git am --show-current-patch=diff' 命令查看失败的补丁
+hint: When you have resolved this problem, run "git am --continue".
+hint: If you prefer to skip this patch, run "git am --skip" instead.
+hint: 若要复原至原始分支并停止补丁操作，执行 "git am --abort"。
+hint: Disable this message with "git config set advice.mergeConflict false"
+应用：dt-bindings: usb: snps,dwc3: tighten the two-connector shared HS bus
+打补丁失败于 0001 dt-bindings: usb: snps,dwc3: tighten the two-connector shared HS bus

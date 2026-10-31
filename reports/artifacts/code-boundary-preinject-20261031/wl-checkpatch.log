@@ -1,0 +1,97 @@
+############ WL2868C checkpatch --strict --no-signoff --patch ############
+==== v3-0000-cover-letter.patch ====
+ERROR: trailing whitespace
+#50: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0000-cover-letter.patch:50:
++-- $
+
+total: 1 errors, 0 warnings, 0 checks, 52 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+NOTE: Whitespace errors detected.
+      You may wish to use scripts/cleanpatch or scripts/cleanfile
+
+patches/upstream/wl2868c-v2b-20261030/v3-0000-cover-letter.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+rc=1
+==== v3-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL.patch ====
+ERROR: trailing whitespace
+#122: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL.patch:122:
++ $
+
+ERROR: trailing whitespace
+#132: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL.patch:132:
++-- $
+
+total: 2 errors, 0 warnings, 0 checks, 134 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+NOTE: Whitespace errors detected.
+      You may wish to use scripts/cleanpatch or scripts/cleanfile
+
+patches/upstream/wl2868c-v2b-20261030/v3-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+rc=1
+==== v3-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera.patch ====
+ERROR: trailing whitespace
+#46: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera.patch:46:
++ $
+
+ERROR: trailing whitespace
+#56: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera.patch:56:
++ $
+
+ERROR: trailing whitespace
+#244: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera.patch:244:
++-- $
+
+total: 3 errors, 0 warnings, 0 checks, 246 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+NOTE: Whitespace errors detected.
+      You may wish to use scripts/cleanpatch or scripts/cleanfile
+
+patches/upstream/wl2868c-v2b-20261030/v3-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+rc=1
+==== v3-0003-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-W.patch ====
+ERROR: trailing whitespace
+#37: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0003-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-W.patch:37:
++ $
+
+ERROR: trailing whitespace
+#271: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0003-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-W.patch:271:
++ $
+
+ERROR: trailing whitespace
+#344: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0003-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-W.patch:344:
++ $
+
+ERROR: trailing whitespace
+#394: FILE: patches/upstream/wl2868c-v2b-20261030/v3-0003-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-W.patch:394:
++-- $
+
+total: 4 errors, 0 warnings, 0 checks, 396 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+NOTE: Whitespace errors detected.
+      You may wish to use scripts/cleanpatch or scripts/cleanfile
+
+patches/upstream/wl2868c-v2b-20261030/v3-0003-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-W.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+rc=1

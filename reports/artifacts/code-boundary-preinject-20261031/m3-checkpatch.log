@@ -1,0 +1,125 @@
+############ M3V5 checkpatch --strict --no-signoff --patch ############
+==== v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch ====
+ERROR: trailing whitespace
+#44: FILE: patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch:44:
++ $
+
+ERROR: trailing whitespace
+#49: FILE: patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch:49:
++ $
+
+ERROR: trailing whitespace
+#54: FILE: patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch:54:
++ $
+
+ERROR: trailing whitespace
+#175: FILE: patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch:175:
++ $
+
+ERROR: trailing whitespace
+#179: FILE: patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch:179:
++ $
+
+ERROR: trailing whitespace
+#183: FILE: patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch:183:
++-- $
+
+total: 6 errors, 0 warnings, 0 checks, 185 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+NOTE: Whitespace errors detected.
+      You may wish to use scripts/cleanpatch or scripts/cleanfile
+
+patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+rc=1
+==== v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch ====
+ERROR: trailing whitespace
+#72: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:72:
++ $
+
+ERROR: trailing whitespace
+#84: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:84:
++ $
+
+ERROR: trailing whitespace
+#111: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:111:
++ $
+
+ERROR: trailing whitespace
+#113: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:113:
++ $
+
+ERROR: trailing whitespace
+#125: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:125:
++ $
+
+ERROR: trailing whitespace
+#138: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:138:
++ $
+
+ERROR: trailing whitespace
+#154: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:154:
++ $
+
+ERROR: trailing whitespace
+#166: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:166:
++ $
+
+ERROR: trailing whitespace
+#196: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:196:
++ $
+
+ERROR: trailing whitespace
+#206: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:206:
++ $
+
+ERROR: trailing whitespace
+#215: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:215:
++ $
+
+ERROR: trailing whitespace
+#231: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:231:
++ $
+
+ERROR: trailing whitespace
+#236: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:236:
++ $
+
+ERROR: trailing whitespace
+#251: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:251:
++ $
+
+ERROR: trailing whitespace
+#261: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:261:
++ $
+
+ERROR: trailing whitespace
+#275: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:275:
++ $
+
+ERROR: trailing whitespace
+#279: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:279:
++ $
+
+ERROR: trailing whitespace
+#308: FILE: patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch:308:
++-- $
+
+total: 18 errors, 0 warnings, 0 checks, 310 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+NOTE: Whitespace errors detected.
+      You may wish to use scripts/cleanpatch or scripts/cleanfile
+
+patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+rc=1

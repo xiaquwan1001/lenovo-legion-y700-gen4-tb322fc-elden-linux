@@ -1,0 +1,7 @@
+==== checkpatch --strict (stdin) — AUTHORITATIVE ====
+v3-0000-cover-letter.patch                                               total: 1 errors, 1 warnings, 0 checks, 0 lines checked
+v3-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL.patch          total: 0 errors, 0 warnings, 0 checks, 91 lines checked
+v3-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera.patch          total: 0 errors, 0 warnings, 0 checks, 186 lines checked
+v3-0003-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-W.patch          total: 0 errors, 5 warnings, 0 checks, 340 lines checked
+v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch          total: 0 errors, 0 warnings, 0 checks, 142 lines checked
+v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch          total: 0 errors, 0 warnings, 0 checks, 222 lines checked

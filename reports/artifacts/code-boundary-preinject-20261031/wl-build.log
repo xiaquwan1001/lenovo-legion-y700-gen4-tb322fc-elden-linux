@@ -1,0 +1,25 @@
+make[1]: 进入目录“/tmp/cb-wl-out”
+  UPD     /tmp/cb-wl-out/Makefile
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/kconfig/conf.o
+  HOSTCC  scripts/kconfig/confdata.o
+  HOSTCC  scripts/kconfig/expr.o
+  LEX     scripts/kconfig/lexer.lex.c
+  YACC    scripts/kconfig/parser.tab.[ch]
+  HOSTCC  scripts/kconfig/lexer.lex.o
+  HOSTCC  scripts/kconfig/menu.o
+  HOSTCC  scripts/kconfig/parser.tab.o
+  HOSTCC  scripts/kconfig/preprocess.o
+  HOSTCC  scripts/kconfig/symbol.o
+  HOSTCC  scripts/kconfig/util.o
+  HOSTLD  scripts/kconfig/conf
+*** Default configuration is based on 'defconfig'
+#
+# configuration written to .config
+#
+make[1]: 离开目录“/tmp/cb-wl-out”
+make[1]: 进入目录“/tmp/cb-wl-out”
+#
+# No change to .config
+#
+make[1]: 离开目录“/tmp/cb-wl-out”
