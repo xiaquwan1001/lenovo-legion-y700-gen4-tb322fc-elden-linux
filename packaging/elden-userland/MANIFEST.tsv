@@ -43,7 +43,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/blankspy.sh	script	3ed4fdaa24abc198bd60e4741f6df784754c28f0f0fb776dff4877bc5c6a1e05	1681	755	files/usr/local/sbin/blankspy.sh
 /usr/local/sbin/bt-up.sh	script	e33a45b97132af1175729285b226696461211f7afb4516119aa00c4a39cb7b9d	1806	755	files/usr/local/sbin/bt-up.sh
 /usr/local/sbin/camera-modules-load.sh	script	d1b0a9ebf803440a48502704e383b573b2d616a39a3e7f3b6871568d259a1d04	4076	755	files/usr/local/sbin/camera-modules-load.sh
-/usr/local/sbin/cam-mode.sh	script	55c8f7ad3815d293c286ad58ec7829dafda23a7806dc6d59f0a3f94bb711b116	8111	755	files/usr/local/sbin/cam-mode.sh
+/usr/local/sbin/cam-mode.sh	script	1262641cd37e967b3012684f2447c730bb0e69e383393924288f7770b7f70f57	9405	755	files/usr/local/sbin/cam-mode.sh
 /usr/local/sbin/charge-ctl.sh	script	4757f6a9e8909b188329e98679a1d1d3cd4a04cea5ccd6cf3a7cb7326756e0b1	2857	755	files/usr/local/sbin/charge-ctl.sh
 /usr/local/sbin/charge-watch.sh	script	5c6ceb322aadaa1d62b4edeffee4b091396ae4334da024a492b984b156f4e8dc	1518	755	files/usr/local/sbin/charge-watch.sh
 /usr/local/sbin/dpms-watch.sh	script	25de8dafcd963be1feb7adbc8fea1c0fa59c59bf92d44ab9e4b566f4a2a650c7	773	755	files/usr/local/sbin/dpms-watch.sh

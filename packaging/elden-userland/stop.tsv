@@ -1,0 +1,14 @@
+# stop.tsv — 停止/关机语义（systemd 侧 TimeoutStopSec / ExecStop；OpenRC 侧忽略）
+#
+# 为什么独立成表、而不是给 services.tsv 加第 15 列：
+#   tools/render.py:load_services() 对「列数 != 表头」是硬错（防 TAB 错位静默失效），
+#   加列要动全部行；语义上停等策略也只对少数服务有值，独立表符合 deps.tsv / provides.tsv 的既有形态。
+#
+# 列：name<TAB>timeout_stop<TAB>exec_stop<TAB>note
+#   timeout_stop   秒；空 = 用 systemd 缺省（DefaultTimeoutStopSec=90s）
+#   exec_stop      仓库 hooks/ 下的脚本名（渲染到 /usr/local/libexec/elden/）；
+#                  空 = 不生成 ExecStop
+#
+# 权威分析 = reports/shutdown-greetd-hang-plan-20261030.md（§1 现场证据 / §2 根因 / §3 方案）。
+name	timeout_stop	exec_stop	note
+greetd	5	greetd.stop	R1 死锁：greetd check_children() 持 inner 写锁 await start_greeter()，而 SIGTERM 的 terminate() 抢同一把写锁 ⇒ 主进程不退 ⇒ 关机卡满 90 s（实测 6/6，90.027–90.233 s）。ExecStop 先杀 session-worker 解除死锁，TimeoutStopSec 兜底把最坏值压到 5 s。

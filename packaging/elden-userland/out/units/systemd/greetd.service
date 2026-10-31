@@ -13,6 +13,8 @@ Environment="LIBSEAT_BACKEND=seatd"
 EnvironmentFile=-/etc/conf.d/greetd
 Restart=always
 RestartSec=5
+TimeoutStopSec=5
+ExecStop=-/usr/local/libexec/elden/greetd.stop
 StandardOutput=append:/var/log/greetd.log
 StandardError=append:/var/log/greetd.log
 

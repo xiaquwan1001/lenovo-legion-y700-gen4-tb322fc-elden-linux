@@ -75,6 +75,7 @@ UNIT_MAP = {
 PROVIDER_POINTS = {"container-backend", "sensor-source", "haptics-bridge"}
 ABSTRACT = {}
 BY_OPENRC = {}
+STOP = {}          # stop.tsv → {name: row}；由 main() 填充（与 KNOWN/PROVIDES 同风格）
 PROVIDERS = {}                # abstract → [provider 候选，现役在前]
 DEPS_CONFLICTS = []          # 歧义：同一个 openrc 名出现在两个抽象名里
 
@@ -184,6 +185,32 @@ def load_provides(path: Path):
             continue
         name, alias = (line.split("\t") + [""])[:2]
         out.setdefault(name.strip(), []).append(alias.strip())
+    return out
+
+
+def load_stop(path: Path):
+    """stop.tsv → {name: {"name","timeout_stop","exec_stop","note"}}。
+
+    与 load_services() 同样严格：列数不符即硬错（防 TAB 错位静默失效）。
+    文件不存在 ⇒ 空表（不引入任何 stop 语义，既有 unit 逐字不变）。"""
+    out = {}
+    if not path.exists():
+        return out
+    header = None
+    for lineno, line in enumerate(path.read_text().splitlines(), 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if line.startswith("name\t"):
+            header = [h.strip() for h in line.split("\t")]
+            continue
+        if header is None:
+            raise RenderError(f"{path}:{lineno}: 数据行出现在表头之前")
+        vals = [v.strip() for v in line.split("\t")]
+        if len(vals) != len(header):
+            raise RenderError(
+                f"{path}:{lineno}: 列数 {len(vals)} != 表头 {len(header)}: {line[:80]}")
+        row = dict(zip(header, vals))
+        out[row["name"]] = row
     return out
 
 
@@ -384,6 +411,13 @@ def render_systemd_unit(svc, hook_body):
             body.append(f"RestartSec={respawn}")
         else:
             body.append("Restart=no")
+    # 停止语义（stop.tsv）：只在有值时才写，无条目的服务 unit 逐字不变
+    stop = STOP.get(svc["name"])
+    if stop:
+        if stop.get("timeout_stop"):
+            body.append(f"TimeoutStopSec={stop['timeout_stop']}")
+        if stop.get("exec_stop"):
+            body.append(f"ExecStop=-/usr/local/libexec/elden/{stop['exec_stop']}")
     if cls == "longrun" and svc.get("log") and svc["log"].startswith("/"):
         body.append(f"StandardOutput=append:{svc['log']}")
         body.append(f"StandardError=append:{svc['log']}")
@@ -407,9 +441,15 @@ def render_systemd_unit(svc, hook_body):
 def main() -> int:
     check_only = "--check" in sys.argv
     services = load_services(ROOT / "services.tsv")
-    global KNOWN, PROVIDES
+    global KNOWN, PROVIDES, STOP
     KNOWN = {s["name"] for s in services}
     PROVIDES = load_provides(ROOT / "provides.tsv")
+    try:
+        STOP = load_stop(ROOT / "stop.tsv")
+    except RenderError as exc:
+        print("render: FAIL", file=sys.stderr)
+        print("  - " + str(exc), file=sys.stderr)
+        return 1
     try:
         load_deps(ROOT / "deps.tsv")
     except RenderError as exc:
@@ -419,6 +459,12 @@ def main() -> int:
 
     seen = set()
     errors = []
+    for _n, _row in STOP.items():
+        if _n not in KNOWN:
+            errors.append(f"stop.tsv: {_n} 不是 services.tsv 里的服务")
+        elif _row.get("exec_stop") and not (HOOKS / _row["exec_stop"]).exists():
+            errors.append(
+                f"stop.tsv: {_n} 的 exec_stop={_row['exec_stop']!r} 在 hooks/ 下不存在")
     rendered = []
     for svc in services:
         name = svc["name"]
@@ -526,10 +572,11 @@ def main() -> int:
         (OUT / "openrc" / name).write_text(o)
         (OUT / "openrc" / name).chmod(0o755)
         (OUT / "systemd" / f"{name}.service").write_text(s)
-        hook = HOOKS / f"{name}.pre"
-        if hook.exists():
-            (OUT / "hooks" / f"{name}.pre").write_text(hook.read_text())
-            (OUT / "hooks" / f"{name}.pre").chmod(0o755)
+        for _ext in (".pre", ".stop"):
+            hook = HOOKS / f"{name}{_ext}"
+            if hook.exists():
+                (OUT / "hooks" / f"{name}{_ext}").write_text(hook.read_text())
+                (OUT / "hooks" / f"{name}{_ext}").chmod(0o755)
 
     # 安装清单：迁移时照着这张表 enable（enabled=0 的跳过）
     lines = ["# GENERATED — 迁移后要启用的服务（enabled=1）；0 的保留定义不启用",

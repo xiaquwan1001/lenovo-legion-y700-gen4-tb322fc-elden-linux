@@ -1,0 +1,25 @@
+#!/bin/sh
+# hooks/greetd.stop — 解除 greetd 关机 SIGTERM 死锁（R1）
+# 渲染到 /usr/local/libexec/elden/greetd.stop，由 greetd.service 的 ExecStop 调用。
+#
+# 机制（greetd 0.10.3 greetd/src/context.rs:338-383 / 405-406）：
+#   check_children() 在**持有 inner 写锁**的情况下 await start_greeter()，
+#   而 start_greeter() 会一直等 session-worker 通过 unix datagram 回 Success；
+#   SIGTERM 处理 terminate() 要拿同一把写锁 ⇒ 永久阻塞 ⇒ 主进程不退 ⇒ 90 s 超时。
+# 对策：本单元被 stop 时先杀掉所有 session-worker ⇒ worker 端 socket 关闭
+#   ⇒ 持锁方 get_state() 立刻 ECONNREFUSED ⇒ check_children 返回 Err ⇒ 主进程立即退出。
+#
+# 注意（PITFALLS: pkill 自杀）：模式用 ^ 锚定绝对路径，不会匹配本脚本自身 cmdline；
+# 另加 [ "$c" = "$$" ] 兜底。不要改成 pkill -f 'session-worker'（会匹配外层 shell）。
+set -u
+_kill() {
+	pgrep -f -- '^/usr/sbin/greetd --session-worker' 2>/dev/null | while read -r c; do
+		[ "$c" = "$$" ] && continue
+		kill -TERM "$c" 2>/dev/null || true
+	done
+}
+_kill
+# 给一次机会：worker 死后主进程应在毫秒级退出；1 s 后仍在则再补一次（幂等）
+sleep 1
+_kill
+exit 0
