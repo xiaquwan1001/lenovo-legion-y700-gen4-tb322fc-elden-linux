@@ -1,0 +1,61 @@
+--- /tmp/cf.S	2026-10-31 17:25:10.813718816 +0800
++++ BootShim/BootShim.S	2026-10-31 17:23:14.559315005 +0800
+@@ -34,8 +34,40 @@
+ 	.long 0
+ 
+ _Start:
++#ifdef FB_BASE
++/* framebuffer milestone markers: 32bpp xrgb, stride = FB_WIDTH*4
++   x20=write ptr, w21=col ctr, w22=row ctr, w23=color
++   PUTMARK: 16x16 solid bar, advance to next slot */
++#define MARK_SETUP(color, xoff)                       \
++	movz	x20, #((FB_BASE) & 0xffff);           \
++	movk	x20, #(((FB_BASE) >> 16) & 0xffff), lsl #16; \
++	movz	w23, #((color) & 0xffff);             \
++	movk	w23, #(((color) >> 16) & 0xffff), lsl #16; \
++	add	x20, x20, #(xoff)*4
++#define PUTMARK                                       \
++	movz	w22, #16;                             \
++9972:	movz	w21, #16;                             \
++9971:	str	w23, [x20], #4;                       \
++	subs	w21, w21, #1;                         \
++	b.ne	9971b;                                \
++	ldr	x24, =((FB_WIDTH)*4 - 16*4); \ 
++	add	x20, x20, x24;     \
++	subs	w22, w22, #1;                         \
++	b.ne	9972b
++#else
++#define MARK_SETUP(color, xoff)
++#define PUTMARK
++#endif
++	/* M1 red */
++	MARK_SETUP(0x00FF4040, 32)
++	PUTMARK
++
+ 	mov		x4, x1
+ 	ldr		x5, _StackBase
++	/* M2 green: copy done */
++	MARK_SETUP(0x0040FF40, 64)
++	PUTMARK
++
+ 	cmp		x4, x5
+ 	beq		_Entry
+ 	ldr		x6,  _StackSize
+@@ -68,9 +100,17 @@
+ 
+ _Entry:
+ 	ldr		x5, _StackBase
++	/* M3 blue: cache maintained, entering UEFI */
++	MARK_SETUP(0x004040FF, 96)
++	PUTMARK
++
+ 	br		x5
+ 
+ _Dead:
++	/* MD yellow */
++	MARK_SETUP(0x0000FFFF, 128)
++	PUTMARK
++
+ 	/* We should never get here */
+ 	b		_Dead
+ 

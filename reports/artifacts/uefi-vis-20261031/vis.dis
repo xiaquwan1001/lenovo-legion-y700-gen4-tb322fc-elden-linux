@@ -1,0 +1,108 @@
+
+BootShim-vis-cachefix.elf:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000000000 <_Head>:
+       0: 10000c01     	adr	x1, 0x180 <_Payload>
+       4: 1400000f     	b	0x40 <_Start>
+
+0000000000000008 <_StackBase>:
+       8: 00 00 30 ff  	.word	0xff300000
+       c: 00 00 00 00  	.word	0x00000000
+
+0000000000000010 <_StackSize>:
+      10: 00 00 40 00  	.word	0x00400000
+		...
+      38: 41 52 4d 64  	.word	0x644d5241
+      3c: 00 00 00 00  	.word	0x00000000
+
+0000000000000040 <_Start>:
+      40: d2800014     	mov	x20, #0x0               // =0
+      44: f2bf9014     	movk	x20, #0xfc80, lsl #16
+      48: 52880817     	mov	w23, #0x4040            // =16448
+      4c: 72a01ff7     	movk	w23, #0xff, lsl #16
+      50: 91020294     	add	x20, x20, #0x80
+      54: 52800216     	mov	w22, #0x10              // =16
+      58: 52800215     	mov	w21, #0x10              // =16
+      5c: b8004697     	str	w23, [x20], #0x4
+      60: 710006b5     	subs	w21, w21, #0x1
+      64: 54ffffc1     	b.ne	0x5c <_Start+0x1c>
+      68: d283b018     	mov	x24, #0x1d80            // =7552
+      6c: 8b180294     	add	x20, x20, x24
+      70: 710006d6     	subs	w22, w22, #0x1
+      74: 54ffff21     	b.ne	0x58 <_Start+0x18>
+      78: aa0103e4     	mov	x4, x1
+      7c: 58fffc65     	ldr	x5, 0x8 <_StackBase>
+      80: d2800014     	mov	x20, #0x0               // =0
+      84: f2bf9014     	movk	x20, #0xfc80, lsl #16
+      88: 529fe817     	mov	w23, #0xff40            // =65344
+      8c: 72a00817     	movk	w23, #0x40, lsl #16
+      90: 91040294     	add	x20, x20, #0x100
+      94: 52800216     	mov	w22, #0x10              // =16
+      98: 52800215     	mov	w21, #0x10              // =16
+      9c: b8004697     	str	w23, [x20], #0x4
+      a0: 710006b5     	subs	w21, w21, #0x1
+      a4: 54ffffc1     	b.ne	0x9c <_Start+0x5c>
+      a8: d283b018     	mov	x24, #0x1d80            // =7552
+      ac: 8b180294     	add	x20, x20, x24
+      b0: 710006d6     	subs	w22, w22, #0x1
+      b4: 54ffff21     	b.ne	0x98 <_Start+0x58>
+      b8: eb05009f     	cmp	x4, x5
+      bc: 54000200     	b.eq	0xfc <_Entry>
+      c0: 58fffa86     	ldr	x6, 0x10 <_StackSize>
+
+00000000000000c4 <_CopyLoop>:
+      c4: a8c10c82     	ldp	x2, x3, [x4], #0x10
+      c8: a8810ca2     	stp	x2, x3, [x5], #0x10
+      cc: f10040c6     	subs	x6, x6, #0x10
+      d0: 54ffffa1     	b.ne	0xc4 <_CopyLoop>
+      d4: 58fff9a5     	ldr	x5, 0x8 <_StackBase>
+      d8: 58fff9c6     	ldr	x6, 0x10 <_StackSize>
+
+00000000000000dc <_CivacLoop>:
+      dc: d50b7e25     	dc	civac, x5
+      e0: 910100a5     	add	x5, x5, #0x40
+      e4: f10100c6     	subs	x6, x6, #0x40
+      e8: 54ffffa1     	b.ne	0xdc <_CivacLoop>
+      ec: d5033f9f     	dsb	sy
+      f0: d508751f     	ic	iallu
+      f4: d5033f9f     	dsb	sy
+      f8: d5033fdf     	isb
+
+00000000000000fc <_Entry>:
+      fc: 58fff865     	ldr	x5, 0x8 <_StackBase>
+     100: d2800014     	mov	x20, #0x0               // =0
+     104: f2bf9014     	movk	x20, #0xfc80, lsl #16
+     108: 52881ff7     	mov	w23, #0x40ff            // =16639
+     10c: 72a00817     	movk	w23, #0x40, lsl #16
+     110: 91060294     	add	x20, x20, #0x180
+     114: 52800216     	mov	w22, #0x10              // =16
+     118: 52800215     	mov	w21, #0x10              // =16
+     11c: b8004697     	str	w23, [x20], #0x4
+     120: 710006b5     	subs	w21, w21, #0x1
+     124: 54ffffc1     	b.ne	0x11c <_Entry+0x20>
+     128: d283b018     	mov	x24, #0x1d80            // =7552
+     12c: 8b180294     	add	x20, x20, x24
+     130: 710006d6     	subs	w22, w22, #0x1
+     134: 54ffff21     	b.ne	0x118 <_Entry+0x1c>
+     138: d61f00a0     	br	x5
+
+000000000000013c <_Dead>:
+     13c: d2800014     	mov	x20, #0x0               // =0
+     140: f2bf9014     	movk	x20, #0xfc80, lsl #16
+     144: 529ffff7     	mov	w23, #0xffff            // =65535
+     148: 72a00017     	movk	w23, #0x0, lsl #16
+     14c: 91080294     	add	x20, x20, #0x200
+     150: 52800216     	mov	w22, #0x10              // =16
+     154: 52800215     	mov	w21, #0x10              // =16
+     158: b8004697     	str	w23, [x20], #0x4
+     15c: 710006b5     	subs	w21, w21, #0x1
+     160: 54ffffc1     	b.ne	0x158 <_Dead+0x1c>
+     164: d283b018     	mov	x24, #0x1d80            // =7552
+     168: 8b180294     	add	x20, x20, x24
+     16c: 710006d6     	subs	w22, w22, #0x1
+     170: 54ffff21     	b.ne	0x154 <_Dead+0x18>
+     174: 17fffff2     	b	0x13c <_Dead>
+     178: d503201f     	nop
+     17c: d503201f     	nop

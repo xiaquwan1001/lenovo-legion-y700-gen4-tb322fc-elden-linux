@@ -299,6 +299,24 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-10-31 晚（并行 lane）：UEFI 早期可见性四通道调查 —— 结论「改 0 行代码就有观测面」
+
+- **lane**：`uefi-vis`（L1，纯静态取证 + 上游只读，未上机）。报告 `reports/uefi-visibility-channels-20261031.md`。
+- **★核心发现（已证）**：**A2 载荷里可见性代码本来就是编进去的** —— `Platforms/PakalaPkg/PakalaNoSb.dsc:31`
+  `USE_SCREEN_FOR_SERIAL_OUTPUT = 1` ⇒ `SerialPortLib = FrameBufferSerialPortLib`，直接写 ABL 已点亮的 framebuffer
+  （`Display Reserved` `0xFC800000`，1904×3040），**不调 GOP、不碰 DSI/panel PHY**；异常路径 `ArchSec.c:45` 是
+  **无宏门控的裸 `SerialPortWrite`**（RELEASE 下仍活）。⇒ **A2 交棒后全静默 ⇒ 最合理解释是「死在它之前」（PrePi 之前/之中）**，
+  而观测面本身**不需要新代码**。
+- **四通道决策表**：① 屏上出字 = **已证可行、0 行新代码**（推荐主通道）；② 内存落盘（InMemorySerialPortLib→PStore 区）=
+  本机 MemoryMap **无 `PStore` 区**，需自划 ⇒ 备选可叠加；③ USB ACM = **未证实**（树内无 `UsbSerialDxe`，上游 code search `UsbFnSerial`=0）；
+  ④ 硬件 UART = **未证实**（无公开测试点证据；树内有 `QcomGeniSerialPortLib` 现成实现，本机 PCD 未覆盖）。
+- **备料（已编译验证 rc=0）**：`patches/uefi/20261031-vis/0002-bootshim-framebuffer-milestone-markers.patch`
+  （BootShim 里程碑色条，基于 0001 的 `dc civac`/`ic iallu` 叠加）+ `reports/artifacts/uefi-vis-20261031/BootShim-vis-cachefix.bin`（384 B）。
+  **判读表**（报告 §1 F-V2）：无 M1 = 根本没交棒；仅有 M1(红) = 死在 shim 拷贝/cache 维护；M1+M2+M3 = 死在 UEFI 入口~SEC 异常处理器生效前；
+  色条全有且有文字 = 活过 SEC。**观测窗口前移到 shim 第一条指令**。
+- **未做**：未造 A2+markers 整镜像、未上机（判读需**目视/手机录像**，属物理动作）；issue #12 自 10-29 后无新评论（gh api 实测），无需回帖。
+- **顺带结论**：tiny UFSDxe 现在不值得做（功能已被 `00ae059f` 三补丁覆盖；可测性为 0 = 同病；裸 MMIO 写错可致 UFS 链路不可恢复）。
+
 ### 2026-10-31 晚（并行 lane）：UEFI 2×2 补全 —— 交棒需「厂商 UFSDxe × cachefix shim 基座」
 
 - **lanes**（`physical-exec`，零写盘）：造出两发交叉载荷并各打一发 ——
