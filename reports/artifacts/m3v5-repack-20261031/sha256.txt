@@ -1,0 +1,3 @@
+d4e31e0bfb2f5ce71884e489e6a0f6453ef998da5605fb141036ab3dea9a1491  patches/upstream/m3v5-20261030/v5-0000-cover-letter.patch
+3f1fcdf63c2c57a13101e00e0e8ddfc90ee33f5255b70805d85b89422a2079b6  patches/upstream/m3v5-20261030/v5-0001-dt-bindings-usb-snps-dwc3-tighten-the-two-connect.patch
+5c9f3b2c9d922d77b45bc1c79bae26fd1c0b8b5a07674ab70d36834be822a412  patches/upstream/m3v5-20261030/v5-0002-usb-dwc3-fix-the-two-connector-shared-HS-bus-role.patch

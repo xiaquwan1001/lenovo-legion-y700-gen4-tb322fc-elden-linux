@@ -1,0 +1,8 @@
+== 门禁: patches/local/b5-resoc-20261027  base=0f1fb1c9c1  repo=build/vk151 ==
+  ok    0001-drm-msm-dsi-move-bonded-command-failure-flag-into-ds.patch
+  ok    0002-drm-msm-dsi-add-per-SoC-bonded-command-path-config.patch
+  ok    0003-drm-msm-dsi-route-the-bonded-command-path-through-ho.patch
+  ok    0004-drm-msm-dsi-take-bonded-DSI-master-cfg-from-per-SoC-.patch
+  ok    0005-drm-msm-dsi-name-the-FIFO-error-bits-of-the-bonded-c.patch
+PASS  b5-resoc-20261027: 全部 6 个文件按序重放成功于 0f1fb1c9c1
+== 汇总: PASS=5 FAIL=0 WARN=0 退出码=0 ==

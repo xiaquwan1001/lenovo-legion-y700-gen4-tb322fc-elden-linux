@@ -1,0 +1,7 @@
+WARNING: Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+#135: 
+[1] v4: https://lore.kernel.org/linux-usb/20261026123211.243224-1-xiaqinghuan@mail.ustc.edu.cn/
+
+ERROR: Does not appear to be a unified-diff format patch
+
+total: 1 errors, 1 warnings, 0 checks, 0 lines checked

@@ -1,98 +1,76 @@
-Subject: [PATCH 0005/0005] drm/msm/dsi: name the FIFO error bits of the command path
+From b32823e957deb117a1741aa66e8974e3be40ddb0 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 31 Oct 2026 21:51:19 +0800
+Subject: [PATCH 5/5] drm/msm/dsi: name the FIFO error bits of the bonded
+ command path
 
-The bonded command path masks the controller FIFO error group around every
-broadcast command and clears the corresponding sticky status bits afterwards.
-Both were spelled as magic numbers (0x001f0200 in ERR_INT_MASK0, 0x44440400 in
-FIFO_STATUS), which is why the change was previously treated as unsubmittable:
-the register bits were believed to be undocumented.
+The per-SoC bonded config carries the controller FIFO error group as two
+magic numbers: 0x001f0200 in ERR_INT_MASK0 and 0x44440400 in FIFO_STATUS.
+They are documented - FIFO_STATUS bitfields carry public names in dsi.xml
+(the command DMA FIFO underflow at bit 10 and the DLN0..DLN3 HS FIFO
+overflows at bits 18/22/26/30, whose OR is exactly 0x44440400), while
+ERR_INT_MASK0 has no field definitions in dsi.xml, so its side is spelled
+out from the bit layout: GENMASK(20, 16) | BIT(9) = 0x001f0200. The
+grouping is not guessed: the vendor driver's mask_error_intr() masks
+exactly these bits as one FIFO error group.
 
-They are documented: drivers/gpu/drm/msm/generated/dsi.xml.h names the FIFO
-status bits (bit 10 CMD_DMA_FIFO_UNDERFLOW, bits 18/22/26/30 the DLN0..DLN3
-HS_FIFO_OVERFLOW of the four data lanes), and their OR is exactly 0x44440400.
-ERR_INT_MASK0 itself has no field definitions in dsi.xml, so its side is stated
-explicitly: the overflow group is bits 20:16 (bits 16:19 are the same four
-lane overflows, bit 20 is masked with the group) and the command DMA FIFO
-underflow is bit 9 - GENMASK(20, 16) | BIT(9) = 0x001f0200. The grouping is
-not guessed: the vendor driver's mask_error_intr() masks exactly these bits as
-one FIFO error group and then W1C-clears the five matching sticky status bits.
+Name both groups (DSI_ERR_INT_MASK0_FIFO_ERRORS,
+DSI_FIFO_STATUS_FIFO_ERRORS), switch the sm8750 table to them and drop
+the TODO(doc) note now that the provenance lives in the macro comments.
 
-No functional change: the disassembly of dsi_host.o is byte-identical before
-and after (.text compared with objcopy).
+No functional change: both macro groups expand to the previous literals.
 
 Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
---- a/drivers/gpu/drm/msm/dsi/dsi_host.c
-+++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
-@@ -2345,16 +2345,44 @@
- 	dsi_wait4video_eng_busy(to_msm_dsi_host(host));
- }
- 
+ drivers/gpu/drm/msm/dsi/dsi_cfg.c | 30 ++++++++++++++++++++++++++----
+ 1 file changed, 26 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.c b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+index aa44d9fcba..05d9e1a191 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+@@ -199,15 +199,37 @@ static const struct regulator_bulk_data sm8650_dsi_regulators[] = {
+  * Bonded command-path data. Values are copied verbatim from the vendor-derived
+  * in-tree code; the SM8750 compatible check in dsi_host.c/dsi_manager.c still
+  * gates every use until the master link moves into this table as well.
+- * TODO(doc): err_clear_bits/err_cleanup_bits touch bits that dsi.xml does not
+- * describe (see reports/b5-per-soc-cfg-design-20261027.md, RFC-SCOPE R1).
+  */
++
 +/*
-+ * FIFO errors of the controller, handled as one group: the high speed FIFO
-+ * overflows of the four data lanes and the command DMA FIFO underflow.
-+ * dsi.xml does not describe the ERR_INT_MASK0 layout, so the mask bits are
-+ * spelled out: the FIFO overflow group occupies bits 20:16 (bits 16:19 are the
-+ * DLN0..DLN3 overflows, bit 20 is masked with the group) and the command DMA
-+ * FIFO underflow is bit 9 - the grouping follows the vendor driver's
-+ * mask_error_intr(), which masks these bits as one FIFO error group.
++ * FIFO error bits of ERR_INT_MASK0. dsi.xml does not describe the layout of
++ * this register, so the mask bits are spelled out: bits 20:16 mask the high
++ * speed FIFO overflow group (bits 16:19 are the DLN0..DLN3 overflows, bit 20
++ * is part of the group but carries no public name) and bit 9 is the command
++ * DMA FIFO underflow. The grouping is not guessed: the vendor driver's
++ * mask_error_intr() masks exactly these bits as one FIFO error group.
 + */
-+#define DSI_ERR_INT_MASK0_FIFO_OVERFLOW			GENMASK(20, 16)
++#define DSI_ERR_INT_MASK0_FIFO_OVERFLOW		GENMASK(20, 16)
 +#define DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW	BIT(9)
-+#define DSI_ERR_INT_MASK0_FIFO_ERRORS			\
++#define DSI_ERR_INT_MASK0_FIFO_ERRORS \
 +	(DSI_ERR_INT_MASK0_FIFO_OVERFLOW | DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW)
 +
-+/* FIFO_STATUS is write-1-to-clear; these are its FIFO error status bits. */
-+#define DSI_FIFO_STATUS_FIFO_ERRORS			\
-+	(DSI_FIFO_STATUS_CMD_DMA_FIFO_UNDERFLOW |	\
-+	 DSI_FIFO_STATUS_DLN0_HS_FIFO_OVERFLOW |	\
-+	 DSI_FIFO_STATUS_DLN1_HS_FIFO_OVERFLOW |	\
-+	 DSI_FIFO_STATUS_DLN2_HS_FIFO_OVERFLOW |	\
-+	 DSI_FIFO_STATUS_DLN3_HS_FIFO_OVERFLOW)
++/*
++ * Matching sticky FIFO_STATUS bits, write-1-to-clear. These carry public names
++ * in dsi.xml: CMD_DMA_FIFO_UNDERFLOW at bit 10 and the DLN0..DLN3 HS FIFO
++ * overflows at bits 18/22/26/30.
++ */
++#define DSI_FIFO_STATUS_FIFO_ERRORS \
++	(DSI_FIFO_STATUS_CMD_DMA_FIFO_UNDERFLOW | \
++	 DSI_FIFO_STATUS_DLN0_HS_FIFO_OVERFLOW | DSI_FIFO_STATUS_DLN1_HS_FIFO_OVERFLOW | \
++	 DSI_FIFO_STATUS_DLN2_HS_FIFO_OVERFLOW | DSI_FIFO_STATUS_DLN3_HS_FIFO_OVERFLOW)
 +
- static void dsi_cmd_error_prepare(struct msm_dsi_host *msm_host)
- {
- 	u32 val;
- 
-+	/*
-+	 * Mask the FIFO error group across a broadcast command: a slave that is
-+	 * not ready yet may overflow its FIFO, which must not abort the whole
-+	 * link.  The mask write has to complete before the stale status below is
-+	 * cleared, as those status bits are sticky.
-+	 */
- 	val = dsi_read(msm_host, REG_DSI_ERR_INT_MASK0);
--	val |= 0x001f0200;
-+	val |= DSI_ERR_INT_MASK0_FIFO_ERRORS;
- 	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, val);
--	wmb(); /* Stock completes the error-mask write before stale clear. */
-+	wmb();
- 
--	/* Stock clear_error_status(0x20): LP RX timeout status bit 4. */
-+	/* LP RX timeout (TIMEOUT_STATUS bit 4) is sticky as well. */
- 	dsi_write(msm_host, REG_DSI_TIMEOUT_STATUS, BIT(4));
- }
- 
-@@ -2362,15 +2391,19 @@
- {
- 	u32 val;
- 
--	/* Stock mask_error_intr(0x2, false) W1C-clears FIFO errors. */
-+	/*
-+	 * Clear the FIFO status bits that latched while they were masked, then
-+	 * unmask the group: these are sticky, so clearing before unmasking is
-+	 * what keeps a stale overflow from firing the moment the mask lifts.
-+	 */
- 	val = dsi_read(msm_host, REG_DSI_FIFO_STATUS);
--	dsi_write(msm_host, REG_DSI_FIFO_STATUS, val | 0x44440400);
-+	dsi_write(msm_host, REG_DSI_FIFO_STATUS, val | DSI_FIFO_STATUS_FIFO_ERRORS);
- 	val = dsi_read(msm_host, REG_DSI_ERR_INT_MASK0);
--	val &= ~0x001f0200;
-+	val &= ~DSI_ERR_INT_MASK0_FIFO_ERRORS;
- 	dsi_write(msm_host, REG_DSI_ERR_INT_MASK0, val);
--	wmb(); /* Complete overflow unmask before stale-error clear. */
-+	wmb();
- 
--	/* Stock repeats clear_error_status(0x20) after command-engine off. */
-+	/* Drop the LP RX timeout latched during the command as well. */
- 	dsi_write(msm_host, REG_DSI_TIMEOUT_STATUS, BIT(4));
- }
- 
+ static const struct msm_dsi_bonded_cfg sm8750_dsi_bonded_cfg = {
+ 	.master_link_id = DSI_0,
+ 	.cmd_dma_ctrl = DSI_CMD_DMA_CTRL_BROADCAST_EN |
+ 			DSI_CMD_DMA_CTRL_FROM_FRAME_BUFFER,
+-	.err_clear_bits = 0x001f0200,
+-	.err_cleanup_bits = 0x44440400,
++	.err_clear_bits = DSI_ERR_INT_MASK0_FIFO_ERRORS,
++	.err_cleanup_bits = DSI_FIFO_STATUS_FIFO_ERRORS,
+ 	.poll_timeout_us = 5000,	/* 500 polls, 10 us apart */
+ 	.needs_link_clk_bump = true,
+ 	.needs_sw_reset = true,
+-- 
+2.53.0
+

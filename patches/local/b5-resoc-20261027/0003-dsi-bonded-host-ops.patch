@@ -1,7 +1,7 @@
-From 768b7c11dca4a1617cc348d3637c5fc88cd9472a Mon Sep 17 00:00:00 2001
+From ac9b1230c610913c59e3ba44eea944f11650b945 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Tue, 27 Oct 2026 20:17:17 +0800
-Subject: [PATCH 3/3] drm/msm/dsi: route the bonded command path through host
+Subject: [PATCH 3/5] drm/msm/dsi: route the bonded command path through host
  ops
 
 The manager called ten separate msm_dsi_host_bonded_* helpers to drive a
@@ -19,20 +19,17 @@ SM8750 reports.
 The manager still picks the master by link id and the sequencing inside
 the transaction is unchanged, so behaviour is identical.
 
-Lane: b5-resoc
-Agent: b5-resoc
-Baseline: base/20261027-5d6400f
-Task: U1-U2-U5
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
- drivers/gpu/drm/msm/dsi/dsi.h         | 20 +++----
+ drivers/gpu/drm/msm/dsi/dsi.h         | 20 +++---
  drivers/gpu/drm/msm/dsi/dsi_cfg.c     |  3 +
  drivers/gpu/drm/msm/dsi/dsi_cfg.h     |  8 +++
- drivers/gpu/drm/msm/dsi/dsi_host.c    | 86 ++++++++++++++++++++++++---
- drivers/gpu/drm/msm/dsi/dsi_manager.c | 64 ++++----------------
- 5 files changed, 107 insertions(+), 74 deletions(-)
+ drivers/gpu/drm/msm/dsi/dsi_host.c    | 90 +++++++++++++++++++++++----
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 64 ++++---------------
+ 5 files changed, 109 insertions(+), 76 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
-index 199ec7712..667d233f7 100644
+index 199ec77129..667d233f7b 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.h
 +++ b/drivers/gpu/drm/msm/dsi/dsi.h
 @@ -53,12 +53,15 @@ int msm_dsi_manager_connector_init(struct msm_dsi *msm_dsi,
@@ -77,7 +74,7 @@ index 199ec7712..667d233f7 100644
  				  bool broadcast, bool master);
  void msm_dsi_host_cmd_xfer_commit(struct mipi_dsi_host *host,
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.c b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
-index 640ebe824..aa44d9fcb 100644
+index 640ebe8244..aa44d9fcba 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_cfg.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
 @@ -320,6 +320,9 @@ static const struct msm_dsi_host_cfg_ops msm_dsi_6g_v2_9_host_ops = {
@@ -91,7 +88,7 @@ index 640ebe824..aa44d9fcb 100644
  
  static const struct msm_dsi_cfg_handler dsi_cfg_handlers[] = {
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.h b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
-index c8813a738..4ab015fb8 100644
+index c8813a738b..4ab015fb82 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_cfg.h
 +++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
 @@ -82,6 +82,14 @@ struct msm_dsi_host_cfg_ops {
@@ -110,7 +107,7 @@ index c8813a738..4ab015fb8 100644
  
  struct msm_dsi_cfg_handler {
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
-index a3e9882c2..0e3437a27 100644
+index a3e9882c22..5df0e775b1 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_host.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
 @@ -2345,6 +2345,12 @@ void msm_dsi_host_bonded_wait_video(struct mipi_dsi_host *host)
@@ -144,15 +141,17 @@ index a3e9882c2..0e3437a27 100644
  {
  	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
  	const struct msm_dsi_cfg_handler *cfg_hnd = msm_host->cfg_hnd;
-@@ -2474,7 +2480,7 @@ void msm_dsi_host_bonded_xfer_restore(struct mipi_dsi_host *host)
+@@ -2474,8 +2480,8 @@ void msm_dsi_host_bonded_xfer_restore(struct mipi_dsi_host *host)
  	pm_runtime_put_sync(&msm_host->pdev->dev);
  }
  
 -int msm_dsi_host_bonded_cmd_build(struct mipi_dsi_host *host,
+-				  const struct mipi_dsi_msg *msg,
 +static int dsi_bonded_cmd_build(struct mipi_dsi_host *host,
- 				  const struct mipi_dsi_msg *msg,
++				const struct mipi_dsi_msg *msg,
  				  u32 *dma_base, u32 *len)
  {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
 @@ -2514,7 +2520,7 @@ int msm_dsi_host_bonded_cmd_build(struct mipi_dsi_host *host,
  	return 0;
  }
@@ -162,15 +161,17 @@ index a3e9882c2..0e3437a27 100644
  {
  	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
  	u32 schedule_line;
-@@ -2549,7 +2555,7 @@ void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
+@@ -2549,8 +2555,8 @@ void msm_dsi_host_bonded_cmd_init_trigger(struct mipi_dsi_host *host)
  	dsi_write(msm_host, REG_DSI_DMA_SCHEDULE_CTRL, val);
  }
  
 -void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
+-				   const struct mipi_dsi_msg *msg,
 +static void dsi_bonded_cmd_stage(struct mipi_dsi_host *host,
- 				   const struct mipi_dsi_msg *msg,
++				 const struct mipi_dsi_msg *msg,
  				   u32 dma_base, u32 len, bool master)
  {
+ 	struct msm_dsi_host *msm_host = to_msm_dsi_host(host);
 @@ -2589,14 +2595,14 @@ void msm_dsi_host_bonded_cmd_stage(struct mipi_dsi_host *host,
  	dsi_write(msm_host, REG_DSI_DMA_LEN, len & GENMASK(23, 0));
  }
@@ -276,7 +277,7 @@ index a3e9882c2..0e3437a27 100644
  				const struct mipi_dsi_msg *msg)
  {
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
-index 93d636220..917e51a73 100644
+index 93d636220b..917e51a73f 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
 @@ -11,6 +11,7 @@

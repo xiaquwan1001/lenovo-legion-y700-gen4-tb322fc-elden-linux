@@ -1,0 +1,160 @@
+../../patches/local/b5-resoc-20261027/0000-cover-letter.patch
+../../patches/local/b5-resoc-20261027/0001-drm-msm-dsi-move-bonded-command-failure-flag-into-ds.patch
+../../patches/local/b5-resoc-20261027/0002-drm-msm-dsi-add-per-SoC-bonded-command-path-config.patch
+../../patches/local/b5-resoc-20261027/0003-drm-msm-dsi-route-the-bonded-command-path-through-ho.patch
+../../patches/local/b5-resoc-20261027/0004-drm-msm-dsi-take-bonded-DSI-master-cfg-from-per-SoC-.patch
+../../patches/local/b5-resoc-20261027/0005-drm-msm-dsi-name-the-FIFO-error-bits-of-the-bonded-c.patch
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<robdclark@gmail.com>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Rob Clark <robdclark@gmail.com>
+Cc: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org,
+	devicetree@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 0/5] drm/msm/dsi: collect bonded command-path data into per-SoC config
+Date: Sat, 31 Oct 2026 22:46:17 +0800
+Message-ID: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<robdclark@gmail.com>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Rob Clark <robdclark@gmail.com>
+Cc: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org,
+	devicetree@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 1/5] drm/msm/dsi: move bonded command failure flag into dsi manager state
+Date: Sat, 31 Oct 2026 22:46:18 +0800
+Message-ID: <20261031144623.1065930-2-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<robdclark@gmail.com>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Rob Clark <robdclark@gmail.com>
+Cc: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org,
+	devicetree@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 2/5] drm/msm/dsi: add per-SoC bonded command-path config
+Date: Sat, 31 Oct 2026 22:46:19 +0800
+Message-ID: <20261031144623.1065930-3-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<robdclark@gmail.com>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Rob Clark <robdclark@gmail.com>
+Cc: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org,
+	devicetree@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 3/5] drm/msm/dsi: route the bonded command path through host ops
+Date: Sat, 31 Oct 2026 22:46:20 +0800
+Message-ID: <20261031144623.1065930-4-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<robdclark@gmail.com>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Rob Clark <robdclark@gmail.com>
+Cc: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org,
+	devicetree@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 4/5] drm/msm/dsi: take bonded DSI master cfg from per-SoC config
+Date: Sat, 31 Oct 2026 22:46:21 +0800
+Message-ID: <20261031144623.1065930-5-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<robdclark@gmail.com>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Rob Clark <robdclark@gmail.com>
+Cc: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org,
+	devicetree@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 5/5] drm/msm/dsi: name the FIFO error bits of the bonded command path
+Date: Sat, 31 Oct 2026 22:46:22 +0800
+Message-ID: <20261031144623.1065930-6-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261031144623.1065930-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK

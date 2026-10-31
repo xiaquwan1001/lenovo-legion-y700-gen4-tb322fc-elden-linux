@@ -90,7 +90,7 @@ bash scripts/check-series-selfcontained.sh patches/upstream/q28-dispcc-v2-202610
 ## 4. 失败项最小修法（投递前 checklist）
 
 1. **补目录内 cover**：以 `git format-patch --cover-letter --base=fd69bd54e3` 在 `m3v4`+v5 分支上重出 v5 系列为 `v5-0000..0002`，`0000-cover-letter.patch` 内容取自 §3 草稿（Subject 行去掉 From/署名块后并入）；
-2. 重出后**复跑本门禁**：`bash scripts/check-series-selfcontained.sh patches/upstream/m3v5-20261030 fd69bd54e3 --repo build/m3v2-7.3rc7`，预期 `PASS=3 FAIL=0 WARN=0 退出码=0`；
+2. 重出后**复跑本门禁**：`bash scripts/check-series-selfcontained.sh patches/upstream/m3v5-20261030 fd69bd54e3 --repo build/m3v2-7.3rc7`，预期 `PASS=2 FAIL=0 WARN=0 退出码=0`（**PASS 上限 = 非 cover 枚数**：脚本按设计跳过 `*0000*`/`*cover*` 不重放，cover 的存在由「缺 cover」WARN 是否消失来判；汇总行会写「全部 3 个文件」）；
 3. 投递动作仍按 `TASKS/README.md` §7 由用户按批放行；cover 含 AI 披露，属 2026-10-31 用户授权范围。
 
 ## 5. 边界遵守声明

@@ -1,0 +1,5 @@
+95eec158c8 drm/msm/dsi: name the FIFO error bits of the bonded command path
+996eae17e3 drm/msm/dsi: take bonded DSI master cfg from per-SoC config
+ea85fbd29a drm/msm/dsi: route the bonded command path through host ops
+88e0b6cec7 drm/msm/dsi: add per-SoC bonded command-path config
+5969660291 drm/msm/dsi: move bonded command failure flag into dsi manager state

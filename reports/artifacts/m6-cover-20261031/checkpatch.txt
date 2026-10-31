@@ -1,0 +1,34 @@
+== 0000-cover-letter.patch
+ERROR: Does not appear to be a unified-diff format patch
+
+total: 1 errors, 0 warnings, 0 checks, 0 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+"[PATCH 0/5] drm/msm/dsi: collect bonded command-path data into per-SoC config" has style problems, please review.
+
+NOTE: Ignored message types: MISSING_CONTEXT
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+== 0001-drm-msm-dsi-move-bonded-command-failure-flag-into-ds.patch
+total: 0 errors, 0 warnings, 0 checks, 43 lines checked
+
+"[PATCH 1/5] drm/msm/dsi: move bonded command failure flag into dsi" has no obvious style problems and is ready for submission.
+== 0002-drm-msm-dsi-add-per-SoC-bonded-command-path-config.patch
+total: 0 errors, 0 warnings, 0 checks, 136 lines checked
+
+"[PATCH 2/5] drm/msm/dsi: add per-SoC bonded command-path config" has no obvious style problems and is ready for submission.
+== 0003-drm-msm-dsi-route-the-bonded-command-path-through-ho.patch
+total: 0 errors, 0 warnings, 0 checks, 308 lines checked
+
+"[PATCH 3/5] drm/msm/dsi: route the bonded command path through host" has no obvious style problems and is ready for submission.
+== 0004-drm-msm-dsi-take-bonded-DSI-master-cfg-from-per-SoC-.patch
+total: 0 errors, 0 warnings, 0 checks, 137 lines checked
+
+"[PATCH 4/5] drm/msm/dsi: take bonded DSI master cfg from per-SoC" has no obvious style problems and is ready for submission.
+== 0005-drm-msm-dsi-name-the-FIFO-error-bits-of-the-bonded-c.patch
+total: 0 errors, 0 warnings, 0 checks, 41 lines checked
+
+"[PATCH 5/5] drm/msm/dsi: name the FIFO error bits of the bonded" has no obvious style problems and is ready for submission.

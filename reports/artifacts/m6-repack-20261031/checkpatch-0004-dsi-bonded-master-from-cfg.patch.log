@@ -1,0 +1,3 @@
+total: 0 errors, 0 warnings, 0 checks, 137 lines checked
+
+"[PATCH 4/5] drm/msm/dsi: take bonded DSI master cfg from per-SoC" has no obvious style problems and is ready for submission.

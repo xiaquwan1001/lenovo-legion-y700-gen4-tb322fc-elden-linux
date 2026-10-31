@@ -1,0 +1,56 @@
+From b32823e957deb117a1741aa66e8974e3be40ddb0 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 31 Oct 2026 22:42:53 +0800
+Subject: [PATCH 0/5] drm/msm/dsi: collect bonded command-path data into per-SoC config
+
+*** AI-assistance disclosure ***: this series was drafted by a coding
+agent (Pi) working from the author's design and measurements; the author
+reviewed, tested and approved the final text. The design, measurements
+and decisions are the author's own.
+
+The sm8750 (Lenovo Y700 4th gen, TB322FC) uses bonded DSI: two DSI hosts
+share one bonded link, and the master is decided by the SoC generation.
+This series is preparatory refactoring of that bonded command path,
+carried over from the vendor tree:
+
+  - 0001/0003 move the bonded command failure flag into the DSI manager
+    state and route the command path through host ops, so no mutable
+    bonded state stays file-scoped;
+  - 0002 collects the per-SoC bonded command-path data (FIFO error mask,
+    CMD_DMA_CTRL bits, peer poll budget) into a new struct
+    msm_dsi_bonded_cfg hung off the existing per-SoC table;
+  - 0004 takes the bonded master link id from that per-SoC config
+    instead of deriving it from probe order;
+  - 0005 names the FIFO error bits instead of using raw magic numbers.
+
+*** NOTE ***: this series contains NO functional fix for the Q28 panel
+issue. It only re-homes data and names constants; behaviour is unchanged
+(patch 5 is explicitly "No functional change").
+
+The bonded command path that this series re-homes is the one the vendor
+firmware lineage on this device (SM8750) drives; the series introduces no
+new runtime behaviour (patch 5 is explicitly "No functional change").
+Gates re-run on the final series:
+  - checkpatch --strict: 5/5 patches clean;
+  - make -j26 W=1 drivers/gpu/drm/msm/: 0 errors, 0 warnings;
+  - the series replays cleanly, in order, on top of 0f1fb1c9c1.
+
+Qianhui Xu (5):
+  drm/msm/dsi: move bonded command failure flag into dsi manager state
+  drm/msm/dsi: add per-SoC bonded command-path config
+  drm/msm/dsi: route the bonded command path through host ops
+  drm/msm/dsi: take bonded DSI master cfg from per-SoC config
+  drm/msm/dsi: name the FIFO error bits of the bonded command path
+
+ drivers/gpu/drm/msm/dsi/dsi.h         |  21 ++---
+ drivers/gpu/drm/msm/dsi/dsi_cfg.c     |  51 +++++++++++
+ drivers/gpu/drm/msm/dsi/dsi_cfg.h     |  30 +++++++
+ drivers/gpu/drm/msm/dsi/dsi_host.c    | 123 ++++++++++++++++++++++----
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 123 ++++++++++++--------------
+ 5 files changed, 249 insertions(+), 99 deletions(-)
+
+
+base-commit: 0f1fb1c9c1c8f09c711e8e9a82acbde2baeed691
+-- 
+2.53.0
+

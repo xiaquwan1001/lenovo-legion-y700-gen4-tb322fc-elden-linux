@@ -1,0 +1,9 @@
+== 门禁: /home/xuqianhui/y700-elden/patches/local/b5-resoc-20261027  base=0f1fb1c9c1  repo=build/vk151 ==
+  ok    0001-dsi-manager-bonded-failure-flag.patch
+  ok    0002-dsi-per-soc-bonded-cfg.patch
+  ok    0003-dsi-bonded-host-ops.patch
+  ok    0004-dsi-bonded-master-from-cfg.patch
+  ok    0005-dsi-name-fifo-error-bits.patch
+  WARN  缺 cover letter（*0000*/*cover*）
+PASS  b5-resoc-20261027: 全部 5 个文件按序重放成功于 0f1fb1c9c1
+== 汇总: PASS=5 FAIL=0 WARN=1 退出码=0 ==
