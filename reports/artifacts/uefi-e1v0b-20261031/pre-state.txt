@@ -1,0 +1,4 @@
+== pre ==
+84e8602c-acac-46c4-a93c-89a751aaaaef
+#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026
+aedae5f121ecbe5cc6f5de59a14ae5ba3680229d619c49cedee0d6cf8b9b4765  /dev/disk/by-partlabel/boot_b

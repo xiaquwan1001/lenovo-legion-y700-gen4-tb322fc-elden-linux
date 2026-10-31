@@ -1,0 +1,3 @@
+== to fastboot ==
+fastboot up after 8s
+HA2EXB0E	 fastboot
