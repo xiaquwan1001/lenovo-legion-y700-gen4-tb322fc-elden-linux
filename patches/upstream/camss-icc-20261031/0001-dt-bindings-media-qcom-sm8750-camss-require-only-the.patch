@@ -1,0 +1,43 @@
+From a1757a3b076848fb909f3fd0f80b153956905d84 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 31 Oct 2026 12:23:55 +0800
+Subject: [PATCH 1/2] dt-bindings: media: qcom,sm8750-camss: require only the
+ voted interconnect paths
+
+The binding requires four interconnect names, but the driver's
+icc_res_sm8750[] only looks up "ahb" and "hf_mnoc"; "sf_mnoc" and
+"sf_icp_mnoc" are never voted.  interconnect-names is positional and the
+items list has no minItems, so a device tree with the two paths the driver
+actually uses fails validation.
+
+Reduce the required names to those two.
+
+Suggested-by: Shuai Liu <shuai.liu@samsung.com>
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../devicetree/bindings/media/qcom,sm8750-camss.yaml          | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/media/qcom,sm8750-camss.yaml b/Documentation/devicetree/bindings/media/qcom,sm8750-camss.yaml
+index e0e0722a83..7ddd1cbae4 100644
+--- a/Documentation/devicetree/bindings/media/qcom,sm8750-camss.yaml
++++ b/Documentation/devicetree/bindings/media/qcom,sm8750-camss.yaml
+@@ -107,14 +107,12 @@ properties:
+       - const: vfe_lite1
+ 
+   interconnects:
+-    maxItems: 4
++    maxItems: 2
+ 
+   interconnect-names:
+     items:
+       - const: ahb
+       - const: hf_mnoc
+-      - const: sf_mnoc
+-      - const: sf_icp_mnoc
+ 
+   iommus:
+     maxItems: 1
+-- 
+2.53.0
+
