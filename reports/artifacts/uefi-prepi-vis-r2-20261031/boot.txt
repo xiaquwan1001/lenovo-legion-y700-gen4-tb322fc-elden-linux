@@ -1,0 +1,4 @@
+< waiting for any device >
+Sending 'boot.img' (2384 KB)                       OKAY [  0.055s]
+Booting                                            OKAY [ 10.107s]
+Finished. Total time: 10.164s

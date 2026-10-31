@@ -1,0 +1,31 @@
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index bbade5ed..00accba3 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -38,6 +38,16 @@
+ UINT64  mSystemMemoryEnd = FixedPcdGet64 (PcdSystemMemoryBase) +
+                            FixedPcdGet64 (PcdSystemMemorySize) - 1;
+ 
++////////////////////////////////////////////
++// Patch: PrePi visibility markers (physical DDR write, MMU off at this point)
++STATIC VOID PrePiFbMarker (UINT32 Color)
++{
++  volatile UINT32  *fb = (volatile UINT32 *)0xFC800000UL;
++  for (UINTN i = 0; i < 1904UL * 16; i++) {
++    fb[i] = Color;
++  }
++}
++
+ ////////////////////////////////////////////
+ // Patch: call lk scheduler related function.
+ extern VOID _ModuleEntryPoint(VOID);
+@@ -250,6 +260,9 @@ CEntryPoint ()
+ {
+   UINT64  StartTimeStamp;
+   EFI_STATUS Status;
++
++  PrePiFbMarker (0x0000FF00);  // solid GREEN (xRGB 0x00RRGGBB): UEFI C entry reached
++
+   ARM_MEMORY_REGION_DESCRIPTOR_EX UefiFd;
+ 
+   // Initialize the platform specific controllers

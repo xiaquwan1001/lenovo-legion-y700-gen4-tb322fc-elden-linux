@@ -299,6 +299,21 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-10-31 晚：UEFI 控制组 + R2 —— **A2 原件今天仍交棒**，而三发重建全不交棒
+
+- **控制组（关键）**：10-30 原件 `A2-v0b.img`（sha `a38bd563…`，未改一字节）今日上机 **仍交棒** ——
+  `Booting FAILED (usb_read failed: No such device)`、USB 掉线、45 s 内 fastboot 采样 0/45，随后 ABL 回落 stock Android。
+  ⇒ 「10-30 交棒是运气」被排除，交棒条件**可复现**。
+- **R2**（A2 的 160 B shim + PrePi 入口插桩 FD `c6e0e887…`）**不交棒**（60/60 `18d1:d00d`，屏上无字，12 s 回 Linux）。
+- **两个独立故障，不得混谈**：① **早期写 FB = 致命**（R1 在 shim 写、R2 在 PrePi `CEntryPoint` 写，两发都死）⇒
+  `reports/uefi-prepi-visibility-static-20261031.md` 的「安全」判定**被实测否证**，改判「不安全，原因未证实」；
+  ② **重建 FD 本身就不交棒**（X1/X2 只换 FV 里的 UFSDxe 槽、无任何 FB 写，也不交棒）⇒ 需主机侧字节级对比，**未做**。
+- **恢复路径（新增，写进实验单）**：A2 交棒回落 Android 后本机 **adb 可直接用**（无需按键）：
+  `adb -s HA2EXB0E reboot bootloader` → `fastboot --set-active=b`（自动清 `slot-unbootable:b`）→ `fastboot reboot` → 12 s 回 Linux。
+  终态 `boot_id` `baf06456`、根 `sda17` ext4、面板 connected、`boot_b` 仍 `aedae5f1…`、失败单元 0。
+- **纪律**：在拿到「重建即失效」的字节级结论前，**不再打任何「重建 + 插桩」组合**（每发要用户盯屏且可能落 Android，成本过高）。
+- 报告 `reports/uefi-vis-control-20261031.md`，证据 `reports/artifacts/uefi-vis-{r2,control}-20261031/`。
+
 ### 2026-10-31 晚：UEFI R1 上机 —— 里程碑 shim **不交棒**，色条方案作废
 
 - 载荷 `VIS-R1.img`（sha `d2ebbd47…`）= **A2 同一份 FD** + **带里程碑色条的 cachefix shim**（384 B）；header 与前四发逐字段同；
