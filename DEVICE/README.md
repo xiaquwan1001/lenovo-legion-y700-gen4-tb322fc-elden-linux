@@ -277,8 +277,13 @@
 3. **回收 Android 分区是主要扩容手段**（§2.4 Phase B），不是二次缩 `userdata`。
 4. 任何改动前先备份分区（**设备侧 `dd` / 官方线刷包解出 / EDL 读回——本机 ABL 无 `fastboot fetch`，`PITFALLS` #290**）+ GPT 双表 dump；改后**读回校验**（回读 md5/sha256，不看"传输完成"）。
 
-### 3.3 当前容量决定（2026-10-30 用户裁定）
+### 3.3 当前容量决定（2026-10-30 用户裁定；**2026-10-31 已执行完毕**）
 
-- **只保留一个 Linux 分区**：保留 `linux17`（ext4，Debian 根），删除 `linux18`（f2fs，Alpine 回退根）并把空间并入 `linux17` ⇒ 目标 ≈**192 GiB**（可用由 73 G 增至 ≈169 G）。
+- **只保留一个 Linux 分区**：保留 `linux17`（ext4，Debian 根），删除 `linux18`（f2fs，Alpine 回退根）并把空间并入 `linux17`。
+  **执行结果（2026-10-31 10:5x–11:0x，总管执行）**：`sda17` = **192.0 GiB**（sectors 73277435–123609082，起点逐字未变）、
+  ext4 `50331648 × 4 KiB` blocks、`/` = **188 G，可用 163 G**；`linux18` 已删除，`by-partlabel` 只剩 `linux17`。
+  `partx -u` 在线更新分区尺寸 + `resize2fs` 在线扩容，**重启后复验通过**（新 `boot_id`、`/dev/sda17 ext4 /`）。
+  GPT 双表 + `sgdisk --backup` 已留档：设备 `/root/gpt-20261031.*`、主机 `backup/gpt-20261031/`（sha 见该目录日志）。
+  ⚠ 执行中一次 `sgdisk --new` 默认对齐把起点挪到 73277436（+1 sector）——已用 `--set-alignment=1` 立即改回 73277435 并逐字核验后才 `resize2fs`。
 - **Alpine 秒级回退随之退役**；等价回退 = `boot_b` 签名镜像（`boot_b-vk181-daily-signed`/`vk162-rescue` 等）+ 主机侧备份 + 救援镜像。**不再以“重启回 Alpine”作为回退路径**（T19 旧口径作废）。
 - **执行顺序（硬约束）**：M3-1 v5 上机实验收尾 → GPT 双表备份（`scripts/gpt-dump.sh`）→ 删 `sda18` → 扩 `sda17` → `resize2fs` 在线增长 → 读回校验（`lsblk`/`df`/`e2fsck -fn`）。设备是单一串行资源，未完成前不得与其它上机 lane 并行。
