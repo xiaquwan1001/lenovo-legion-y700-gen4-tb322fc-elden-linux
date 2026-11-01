@@ -145,3 +145,38 @@ ABL 对 `fastboot boot` 的接受/拒绝存在**非确定性**（或依赖 sessi
 2. 保持 `slot a` unbootable 以便崩后停在 fastboot、不让 Android 覆盖窗口；读窗口用 `set-active=b` + reboot 回 Linux。
 3. 首轮只回答一个问题：**stage1 出不出现**（= shim 第一条指令是否执行）。若仍为 0，则换写入目标
    （`splash` 头部 `0xFC800000+0x1000`、`dsm-1` 头部）并同时保留「写入自身是否致命」的对照（同镜像但不写）。
+
+---
+
+## §7 决定性对照（15:20–15:45）：**`fastboot boot` 的「交棒」不等于载荷被执行**
+
+### 7.1 USB 黑屏间隙计时（新工具 `scripts/uefi-usb-gap.py`）
+
+`fastboot boot` 一发出，ABL 立即销毁 fastboot gadget（主机侧 `usb_read failed`），设备从 USB 完全消失，
+直到下一个可枚举对象出现。用 50 ms 轮询记录间隙：
+
+| 载荷 | 体积 | 发次 | USB 黑屏间隙 | 重新出现 |
+|---|---|---|---|---|
+| **对照**：cachefix shim + Mu FD（不写任何 DDR） | 2.4 MB | 2 | **20.53 s / 20.05 s** | `17ef:7f3d`（Android gadget） |
+| **自旋**：`b .` 死循环（只有看门狗能打断） | 8 KB | 2 | **20.20 s / 19.99 s** | `17ef:7f3d`（Android gadget） |
+
+⇒ **两者在噪声内完全相同**。若载荷真的执行了 `b .`，看门狗复位必然额外加上它那一截（11-01 目视是「1–2 s」），
+间隙应系统性变长；实测没有。**最合理解释：ABL 拆完 USB 后直接去启动槽位，我们的载荷从未被执行。**
+
+### 7.2 与其它证据的一致性
+
+- 三块「Android 不踩」的 carveout（`dsm-1` 87.5% / `dsm-2` 87.6% / `video` 77.5%，见 §6 存活扫描）
+  在真 HANDOFF 发次之后**仍然全 0** ⇒ 不是被清掉，是根本没写。
+- 多次会话里 FB 上也从未出现过任何色条/文字。
+- `fastboot boot` 有时直接被拒（`Invalid Parameter`），且**接受与否取决于另一个槽是否 bootable**（§6.1）
+  ⇒ ABL 在这条路径上确实做了校验工作，而不是盲跳到载荷。
+
+**⇒ 需要作废的旧口径**：「`usb_read failed` + USB 消失」= 载荷被执行（11-01 的 7/7「被接受」清单要重写为
+「被 ABL 接手并校验」，不等于「跳到载荷」）。历史唯一真正的执行证据仍然是 **2026-10-05 屏上出字（v3 header、另一套配置）**。
+
+### 7.3 进一步验证（进行中）
+
+用「带唯一 cmdline 标记的 Linux 镜像」`fastboot boot`（`elden_fbtest=1`，82 MB）：若 ABL 真执行 fastboot 镜像，
+Linux 起来后 `/proc/cmdline` 会带该标记；若起来的是槽位镜像，标记不会出现 —— 这条能一锤定音区分
+「ABL 完全不执行 fastboot 镜像」与「只对 UEFI 类载荷不执行」。
+实测该发返回 `Booting OKAY [10.109s]`（拒绝口径），随后设备又一次进入 USB 全静默（#368 状态），需物理断电后复核 cmdline。
