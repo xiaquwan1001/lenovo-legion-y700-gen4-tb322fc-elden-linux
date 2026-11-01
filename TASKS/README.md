@@ -334,18 +334,43 @@ v0 boot.img，96 MiB AVB testkey）写进 **`boot_b`**（读回 sha 逐字节一
 - 对照排除：`misc` BCB（`bootonce-bootloader`）清零 → 无效；`fastboot erase misc` → 无效；
   刷回**原厂 `backup/stock-259/boot_a.img`** + `--set-active=a` → **仍进 fastboot**；用户**物理断电重启一次** → 仍进 fastboot。
 - ⇒ **不是镜像问题（同一件之前能启动）、不是 BCB 问题、不是 Android 槽损坏**。`--set-active` 会把 retry 重置为 7，
-  之后 reboot 再读为 6 ⇒ **ABL 确实尝试启动并失败**，随后落入 fastboot（`start EBS` 快路径，~6–8 s 复现）。
-- 现状（只读实测）：`current-slot:b`、`a/b` 均 `successful:no`、`retry` a=5 / b=7、`unbootable:no`、`verdict:fastboot`。
-  **无 ssh、无 adb、无 Android**（`lsusb` 仅 `18d1:d00d`）。
+  之后 reboot 再读为 6 ⇒ **ABL 确实尝试启动并失败**，随后落入 fastboot（~6–8 s 复现）。
 
-**未做 / 待办（恢复优先）**
-1. **EDL（9008）只读 dump**：拿本次启动的 `logfs`（ABL 10 段环形日志）+ `boot_a/boot_b` 逐字节对照 ⇒ 才有一手归因证据。
-   （`fastboot oem edl` 在本机 ABL 上 unknown command ⇒ 需物理进 9008。）
-2. `scripts/logfs-decode.py`（本轮新写，已自测：8 MiB 正确识别 10 个有效启动段 + reset 类型/slot/Start EBS）
-   与 `scripts/slotboot-run.sh`（写盘+150 s 采样）已入库；恢复后第一件事 = 解码 logfs 定位失败原因。
-3. 恢复之后才谈「载荷是否被执行」——本次这一问**仍无答案**（DDR 标记需要 Linux 才能读）。
+**★2026-11-01 19:00–19:40 EDL 取证（已归入 `reports/uefi-slotboot-stuck-fastboot-20261101.md`，结论仍未闭环）**
+- **工具链**：`~/edl-tool/bkerler-edl-1cda1a6`（已装依赖）+ loader `~/下载/tb322fc/xbl_s_devprg_ns.melf`；
+  `sahara v3 → firehose` 均通过（vendor 未卡权限）。
+- **镜像内容彻底排除**：EDL 读回 `boot_a` sha `d4772c11…` = `backup/stock-259/boot_a.img` 逐字节相同；
+  `boot_b` sha `fb55997c…` = 16:2x 仍在跑 vk183 时的分区值 ⇒ **两侧都是已知能启动的件**。
+- **槽位元数据已排除**：LUN4 GPT 实测 `boot_a byte6=0x37`(retry6/succ0)、`boot_b=0x32`(retry6/succ0)；
+  用 `scripts/slot-attr.py --image` 离线改成 a=`0x78`、b=`0x7f`（active+successful+retry7），**双表 + 双 CRC 重算**，
+  `edl.py ws` 写回后 **主/备 GPT 读回均逐字节一致**；`getvar` 实测 `a/b` 均 `successful:yes`、`retry:7`，
+  且**连续 reboot 后 retry 不再递减** ⇒ **ABL 确实读到了新属性** —— 但**仍进 fastboot**。
+- **`logfs` 判读（修复前那份 `efc88d9f…`）**：最新段只有 `PM: PON by SYSOK` → `Start EBS [ 7940]`，
+  **没有 `Booting from slot`、没有 `Loading Image`** ⇒ 那一次 ABL **根本没走槽位启动路径**；
+  而早先正常段是 `Loading Image recovery_a/init_boot_a/pvmfw_a/boot_a` + `Booting from slot (_a)` + `Start EBS [13302]`。
+  ⇒ `[7940]` 是介于「正常 13302」与「fastboot 4085」之间的**第三种进入路径**，成因未知。
+- **⚠ 判据更正**：本机 `Image size : 4096 Bytes` 出现在**能正常启动的段里**，**不能**当 ABL 解析失败的判据（`PITFALLS` 里那条属别的机型）。
+- **回滚保险**：LUN4 GPT 原始双表 34 块已存 `reports/artifacts/uefi-slotboot-20261101/lun4-gpt-{primary,backup}-raw.bin`
+  （`ed56f1da…` / `0bbfa568…`），改后件 `lun4-gpt-{primary,backup}-new.bin`（`fb18e8ea…` / `bab69f0f…`）。
 
-报告 `reports/lanes-consolidated-20261101.md` §5、现场件 `reports/artifacts/uefi-slotboot-20261101/`。
+**现状（2026-11-01 19:40，只读实测）**：`current-slot:b`、`a/b` 均 `successful:yes`、`retry:7`、`unbootable:no`、
+`verdict:fastboot`；**无 ssh、无 adb、无 Android**（`lsusb` 仅 `18d1:d00d`）。
+
+**未解问题（按权重，均未证）**
+1. `fastboot continue` 的 **`Failed to load image from partition: Device Error`** = ABL 自己的**加载层**错误（比 `Booting OKAY`/`usb_read failed` 更有指向性）
+   ⇒ 优先核对 AVB 链（`vbmeta_a/b`、`vbmeta_system_a/b`、`pvmfw_a`）与 UFS 读。
+2. **只改了 `boot_b` 却让原厂槽 `boot_a` 也不启动** ⇒ 指向某个**跨槽持久状态**：`misc`（上轮读取被打断）/ `devinfo` / `lenovoraw` /
+   rpmb rollback index / ABL 的 prevent-flash-verify 类修改检测。
+3. **GPT 一致性**：我只改 `boot_a/boot_b` 的 byte6，而 `recovery_b/init_boot_b/pvmfw_b` 等仍是 `0xfb`（succ=1/unbootable=1），
+   与 `boot_b=0x7f` **形态不一致** ⇒ 「槽可用但子分区声明不可用」可能被 ABL 拒（未证）。
+
+**待办（已暂停，等用户决定；全部只读优先）**
+1. EDL 重抓 **GPT 修复之后**的 `logfs`（现在缺这一段）；2. 只读核对 `vbmeta_*`/`pvmfw_a` 是否仍为原厂件；
+3. 重读 `misc`/`devinfo`/`lenovoraw` 看是否被写过；4. 仍无解则按官方包 GPT 全量比对，或 LTBox 全量刷回（最后手段）。
+5. 「载荷是否被执行」仍无答案（DDR 标记需 Linux 才能读）——本次不能反证 `PITFALLS #481`。
+
+报告 `reports/uefi-slotboot-stuck-fastboot-20261101.md`（事故全记录）、`reports/lanes-consolidated-20261101.md` §5、
+现场件 `reports/artifacts/uefi-slotboot-20261101/`。
 
 ### 2026-10-31 晚：UEFI 线**暂停深入**（用户裁决；2026-11-01 已按上方纠正块恢复推进）—— 两项主机侧待办挂起
 
