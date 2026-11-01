@@ -1,0 +1,9 @@
+# fastboot pre 2026-11-01T13:05:46+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.006s
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.005s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.004s

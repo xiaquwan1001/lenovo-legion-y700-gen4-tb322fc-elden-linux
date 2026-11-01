@@ -1,0 +1,18 @@
+{
+  "label": "uefi-ddr-marks-r1",
+  "ts": "2026-11-01T05:08:56Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-ddr-20261101/marks/uefi-v0.img",
+  "image_sha256": "99a4bcde0e205992ea336282b923f77822538275aed717c118a5937d8d384995",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "HANDOFF",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261101-130523",
+  "note": "handoff-witness: boot.txt/FAILED-usb; post mode=linux boot_id=# ssh post 2026-11-01T13:08:52+08:00"
+}

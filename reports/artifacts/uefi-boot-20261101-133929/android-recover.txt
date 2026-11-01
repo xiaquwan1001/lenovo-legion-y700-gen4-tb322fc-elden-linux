@@ -1,0 +1,5 @@
+< waiting for HA2EXB0E>
+Setting current slot to 'b'                        OKAY [  0.024s]
+Finished. Total time: 0.029s
+Rebooting                                          OKAY [  0.001s]
+Finished. Total time: 0.051s
