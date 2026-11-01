@@ -1,0 +1,18 @@
+{
+  "label": "uefi-c1-brk",
+  "ts": "2026-11-01T03:29:27Z",
+  "vk": "",
+  "image": "reports/artifacts/uefi-rb-20261031/abortshims/shim-brk-v0.img",
+  "image_sha256": "b318cd4657c267790f64841fe977a1287d298d1a79903dba5cd79f1700f31a0e",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "HANDOFF",
+  "log_dir": "reports/artifacts/uefi-boot-20261101-103452",
+  "note": "补记（原运行被中断未落 record）：80B shim=brk #1 -> b .；USB 3s 内消失、用户目视掉电重启；同臂对照 spin 同样掉电"
+}

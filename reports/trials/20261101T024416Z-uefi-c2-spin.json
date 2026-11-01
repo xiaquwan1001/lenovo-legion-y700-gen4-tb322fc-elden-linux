@@ -1,0 +1,18 @@
+{
+  "label": "uefi-c2-spin",
+  "ts": "2026-11-01T02:44:16Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-rb-20261031/abortshims/shim-spin-v0.img",
+  "image_sha256": "c3926ceb855b3cca36b98b820218410d1937091c64f3b65fe8fb7bc248b3b4cd",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "HANDOFF",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261101-104120",
+  "note": "handoff-witness: boot.txt/FAILED-usb; post mode=linux boot_id=# ssh post 2026-11-01T10:44:12+08:00"
+}

@@ -1,0 +1,28 @@
+[10:34:52] ===== trial START label=uefi-c1-brk image=shim-brk-v0.img sha=b318cd4657c267790f64841fe977a1287d298d1a79903dba5cd79f1700f31a0e =====
+[10:34:52] image_size=8192
+[trial] boot_b: succ=1 retry=6 unbootable=0
+[trial] GATE=OK
+[10:34:53] pre boot_id=# ssh pre 2026-11-01T10:34:53+08:00
+[10:34:54] ssh -> reboot bootloader (eldroid-bootctl)
+[10:35:16] fastboot up after ~2s
+[10:35:16] SER=HA2EXB0E
+# fastboot pre 2026-11-01T10:35:16+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.004s
+current-slot: b
+Finished. Total time: 0.006s
+slot-unbootable:b: no
+Finished. Total time: 0.005s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.004s
+[10:35:16] fastboot boot shim-brk-v0.img
+Sending 'boot.img' (8 KB)                          OKAY [  0.002s]
+Booting                                            FAILED (usb_read failed: No such device)
+fastboot: error: Command failed
+[10:35:17] fastboot boot returned after 0s
+[10:36:49] watch: usb_present_last=0 samples_with_usb=2/40
+[10:36:49] VERDICT(candidate)=HANDOFF
+[10:36:49] recovering...
+[10:36:49] ABL gone (handoff) -> wait for fallback (Android) or ABL watchdog
+[10:36:55] post-OS mode=android after ~2s
+[10:36:55] in stock Android -> adb reboot bootloader + set_active b

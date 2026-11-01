@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p6-idtest-oldid",
+  "ts": "2026-11-01T03:15:19Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-rb-20261031/repack/N2-repack-with-oldid-v0.img",
+  "image_sha256": "b73b396df51ca45967030496ca8391072747f52806a20e204cf8a84527fd60fa",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "HANDOFF",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261101-111313",
+  "note": "handoff-witness: boot.txt/FAILED-usb; post mode=linux boot_id=# ssh post 2026-11-01T11:15:16+08:00"
+}

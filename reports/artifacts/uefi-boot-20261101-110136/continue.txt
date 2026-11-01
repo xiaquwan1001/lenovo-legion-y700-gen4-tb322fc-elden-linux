@@ -1,0 +1,2 @@
+Resuming boot                                      FAILED (usb_read failed: No such device)
+fastboot: error: Command failed

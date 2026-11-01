@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p7-n2-old-retest2",
+  "ts": "2026-11-01T03:19:37Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-onboard-20261030/N2-v0b.img",
+  "image_sha256": "90659a4dc35657589269e090f782087643ec0370b4f636749185fbf9e3e9f1f1",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "NOJUMP",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261101-111719",
+  "note": "handoff-witness: boot.txt/still-fastboot; post mode=linux boot_id=# ssh post 2026-11-01T11:19:30+08:00"
+}

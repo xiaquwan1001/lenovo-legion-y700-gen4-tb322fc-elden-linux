@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p8-r2-prepi-marker-cleanheader",
+  "ts": "2026-11-01T03:24:38Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-rb-20261031/repack/R2-repack-v0.img",
+  "image_sha256": "1fecbe80dd632059c7933fb1dd5a3a7bf4f20a5f525353bad05ef8e3f284c1ca",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "HANDOFF",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261101-112159",
+  "note": "handoff-witness: boot.txt/FAILED-usb; post mode=linux boot_id=# ssh post 2026-11-01T11:24:38+08:00"
+}
