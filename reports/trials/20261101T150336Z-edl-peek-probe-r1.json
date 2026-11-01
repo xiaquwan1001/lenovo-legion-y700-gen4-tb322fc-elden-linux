@@ -1,0 +1,18 @@
+{
+  "label": "edl-peek-probe-r1",
+  "ts": "2026-11-01T15:03:36Z",
+  "vk": "",
+  "image": "none",
+  "image_sha256": "(absent)",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "loader Supported Functions 无 peek（列表已抓）；rawxml 两种属性格式均 failed/空回包 ⇒ EDL 读 DDR 不可行。fastboot oem edl 已验证可用；edl-ng printgpt LUN4 正常；edl reset 回 Linux 9s。报告 reports/uefi-ddr-fallback-plan-20261101.md §1.1 更正"
+}

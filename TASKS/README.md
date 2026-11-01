@@ -374,6 +374,29 @@ EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案
 - 附带：EDL `05c6:9008` 需 udev 规则 + `udevadm trigger --action=change`；`out/` 三个「内核段不可读」镜像
   （`dtbo3`/`gh612b`/`vk146-BADSUSPEND`）实测**均可正常解压**（UTS `…vk172`），身份表已重生成（`check-doctor` FAIL=0）。
 
+### 2026-11-01 23:0x：UEFI 线按推荐顺序开工（4 lane）——**① 通道定案：EDL `peek` 本机不可用**，改「切断回落 + 回读」
+
+**一句话**：四条 lane 并行（① DDR 通道前置 / ② 合体 BOOT / ③ EUD / ④ 10-05 出字配方），
+其中 **① 的「EDL 直读 DDR」被一发上机否证（`PITFALLS #486`）**，① 方案已改写；④ 镜像已备好待上机。全程**零写盘**。
+
+- **实测（今晚，一发定案）**：`fastboot oem edl` **可用**（`OKAY [0.001s]`，4 s 后 `lsusb` = `05c6:9008`，首次拿到实测证据）；
+  但 loader `xbl_s_devprg_ns.melf` 的 **Supported Functions 无 `peek`**
+  （`program,read,nop,patch,configure,setbootablestoragedrive,erase,power,firmwarewrite,getstorageinfo,benchmark,emmc,ufs,fixgpt,getsha256digest`）
+  ⇒ `check_cmd("peek")` 拒；**绕过 host 检查用 `rawxml` 手发 `<peek>` 两发也是 `failed.` + 空回包** ⇒ **EDL 读 DDR 不可行**。
+  顺带坐实：udev `99-edl.rules` 生效（节点 `crw-rw-rw- root plugdev`，无需 sudo；非 root `udevadm reload` 报 varlink Permission denied ≠ 规则未写）、
+  **edl-ng 1.6.0 可用**（`printgpt -u 4` 正常列 LUN4 全表）、`edl-ng reset` 约 9 s 回 Linux（`boot_id fb08d9d7…`，槽位未变）。
+  record `reports/trials/20261101T150336Z-edl-peek-probe-r1.json`。
+- **① 方案改写**：只剩「**切断回落**」一条 —— a 槽 unbootable ⇒ 载荷崩溃后 ABL 停 fastboot（无 Android 启动）
+  ⇒ `fastboot boot <Linux boot.img>`（零写盘）⇒ 设备侧用 `probes/blackbox` 读窗口。报告 `reports/uefi-ddr-fallback-plan-20261101.md`
+  （§1.4 编排者实测更正、§3 窗口×清除者表、§4 三案实验单），工具 `scripts/edl-peek.sh`（仅存档，勿再用）。
+- **④ 已备件未上机**：`out/uefi-20261101-1005recipe-v0.img`（2 441 216 B，sha `97c95cc1…`）= 10-05 出字配方
+  （`PakalaNoSb.dsc` RELEASE + `SCALE_FACTOR 3` + 未补丁厂商 UFSDxe `dac620ac…` + stock shim `054e114d…`）
+  × **干净 v0 header**（v0/`0x10008000`/4096/其余全零）；构建 0 error、620 条 warning 与 10-31 基线逐条同型（零增量）。
+  判据 = 屏上出现可辨认文字/色块（J1）。报告 `reports/uefi-1005recipe-cleanheader-20261101.md`。
+- **并行 lane 状态**：② 合体 BOOT 与 ③ EUD 仍在跑（报告骨架已落盘）；
+  ②的目标 = SunUEFI 合体 BOOT 机制 + 本机 ABL 加载语义 + `xiaomi-piano` vs `lenovo-y700g4` delta；
+  ③的目标 = 本机 `eud` 是否 probe、固件是否启用、最小验证清单。
+
 **以下为 2026-11-01 19:40 的当时记录（结论已被上条取代，仅留沿革）**
 
 **现状（2026-11-01 19:40，只读实测）**：`current-slot:b`、`a/b` 均 `successful:yes`、`retry:7`、`unbootable:no`、
