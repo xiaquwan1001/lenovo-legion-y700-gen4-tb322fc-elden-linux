@@ -1,0 +1,2 @@
+ee3d2b13a74c1893a8ca57cd43fa0f16ab2dc879e6d60a39ec5ca0ff681fb3f5  dsm/uefi-v0.img
+重建: bash scripts/sign-boot-b.sh reports/artifacts/uefi-ddr-20261101/dsm/uefi-v0.img <out>

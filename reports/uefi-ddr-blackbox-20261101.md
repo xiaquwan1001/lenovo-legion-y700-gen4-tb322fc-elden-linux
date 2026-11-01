@@ -205,3 +205,20 @@ ABL 回 `Booting OKAY [10.109s]`，随后 **USB 全静默**（`lsusb` 无设备�
 `boot-elden-gh612b.img`（2026-10-25）、`boot-elden-vk146-BADSUSPEND.img`（2026-10-22）。
 说明当时写盘/构建就已损坏（mtime 都是创建时），`versions/vk-kernel-identity.tsv` 的 `kernel-unreadable`
 标记能抓到它们 —— 建议重出或从 `out/` 移除，避免以后被当成「载荷/配置变量」误用。
+
+---
+
+## §10 下一步：改走「槽位正常启动」路径（P2 合体 BOOT 的最小形态）
+
+既然 `fastboot boot` 的三类终态里没有一类是「载荷被执行」（§7），而 2026-10-05 唯一真执行证据来自**能跑到 BDS 的那批**，
+下一发改为**让 ABL 用正常 `boot` 路径加载我们的载荷**（= SunUEFI「合体 BOOT」的最小形态）：
+
+- 步骤（已备料，零新增构建）：把 `reports/artifacts/uefi-ddr-20261101/dsm/uefi-v0.img`（ddrmarks shim + Mu FD，2.4 MB）
+  用 `scripts/sign-boot-b.sh` 签成 `reports/artifacts/uefi-ddr-20261101/slotb-uefi-marks.img`（96 MiB，AVB testkey），
+  dd 进 **boot_b**（我们自己的槽，可整份回退），`reboot`（不走 fastboot）。
+- 预期与判据：
+  1. 若 ABL 正常启动路径真的跳到载荷 ⇒ `dsm-1/dsm-2/video` 三块 carveout 上应出现 stage 标记（这三块已实测 Android 不清）；
+  2. 若载荷跑起来后崩 ⇒ ABL 会把 b 标 unbootable 并回落 **a（Android）**，我们从 Android → fastboot → 重刷 Linux 回 b 再读标记；
+  3. 若 b 槽这条路也不执行 ⇒ 「ABL 只执行真内核」基本成立，UEFI 只能借「内核 + 选择器」形态（SunUEFI 的合体 BOOT 正解）。
+- 前置备份：`boot_b` 现有件（bb3）与更早原件 `bootslot-b/boot_b-device-backup-20261101.img`（sha `aedae5f1…`）都在主机侧；
+  回退一条命令：`scripts/flash-b.sh <备份件>`。
