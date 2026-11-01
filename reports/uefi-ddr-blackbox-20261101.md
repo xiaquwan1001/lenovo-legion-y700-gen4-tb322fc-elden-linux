@@ -100,3 +100,48 @@ scripts/blackbox.py selftest           # 解码器自测（含 10% 单比特衰�
 - **不要**用 `oem-vm` / 受保护 carveout 做 marker 目标：写它疑似直接触发复位。
 - **不要**用 ramoops 区（`0xC2000000`）做 marker：内核日志会把 `popcount` 统计顶到阈值以上，出现假阳性。
 - **不要**只读 `logfs` 第一段：它是 10 段 64 KiB 环形（见 `reports/uefi-observability-pivot-20261101.md` §1.1）。
+
+---
+
+## §6 追加（13:50–14:10）：`fastboot boot` 判定**非确定性** + 绕开 Android 回落
+
+### 6.1 同一份镜像、同一 header，结果三次不同（重要更正）
+
+`reports/artifacts/uefi-ddr-20261101/clean2/uefi-v0.img`（sha `423188a0…`，**未改动过**）连续上机：
+
+| 次 | 时间 | 结果 | ABL 回话 |
+|---|---|---|---|
+| r1 | 13:42 | **HANDOFF**（载荷执行） | `Booting FAILED (usb_read failed)` |
+| r2 | 13:54 | **NOJUMP**（拒绝） | `Booting OKAY [10.145s]` |
+| （插入）| 13:57 | **拒绝** | `Failed to load/authenticate boot image: Invalid Parameter` |
+| （插入）| 14:06 | **拒绝**（同一句） | 同上 |
+| r5 | 14:07 | 未能测到（进 fastboot 时撞 `PITFALLS #368`，USB 全不枚举） | — |
+
+⇒ **11-01 的「干净 header 下 7/7 载荷被执行」不是载荷属性，也不是 header 的唯一函数**：
+ABL 对 `fastboot boot` 的接受/拒绝存在**非确定性**（或依赖 session/历史计数的隐藏状态）。
+这直接解释了历史上「A2 原件 ✅ / N2 原件 ❌，header 只差 `kernel_size`+`id`」的矛盾 —— **不能再用 header 差分去追**。
+判据必须写成「同一镜像重复 N 发，统计接受率」，并且**每次实验都要先确认本次真的 HANDOFF**（以 `usb_read failed` + USB 消失为准）。
+
+### 6.2 绕开 stock Android 回落（方案已跑通一半）
+
+- 手段：`qbootctl -u a` / `qbootctl -m a` / `qbootctl -s b`（设备自带；slot 元数据在 `misc`，已备份
+  `reports/artifacts/uefi-ddr-20261101/slot-backup/misc.bin`）。
+- 把 **slot a 标成 unbootable** 之后，payload 崩掉时 ABL **不再启动 stock Android**（Android 是这轮窗口被清零/覆盖的元凶），
+  设备停在 fastboot；随后 `fastboot --set-active=b` + `fastboot reboot` 就能直接回我们的 Linux（**已验证 ~15 s 回 ssh**）。
+- 但 `fastboot boot` 在这条路径上被连拒两次（§6.1 的 `Invalid Parameter`），所以「用 fastboot 临时起一个 Linux 去读窗口」不可行
+  （大镜像 82 MB 也一样：`Booting OKAY [10.111s]`，实际是回落 b 槽起的 Linux，不是 fastboot 镜像）。
+
+### 6.3 设备现状（需要物理干预一次）
+
+- 14:07 的 r5 在 `eldroid-bootctl reboot bootloader` 时撞 **`PITFALLS #368`**（复位后 ~11 s 内再次 reboot2 ⇒ USB 全不枚举）。
+- 当前：**无 fastboot / 无 ssh / `lsusb` 也没有设备** ⇒ 需**物理长按电源 ~10 s 断电**，再开机。
+- 预期恢复后状态：`slot a` unbootable、`slot b` active+bootable+successful、`boot_b` = bb3（vk183 + `memmap` 保留窗），
+  开机直接进 Linux；若落 fastboot，则 `fastboot --set-active=b && fastboot reboot`。
+- 恢复后要做的第一件事：`qbootctl -m a`（把 Android 槽恢复 bootable），再决定下一轮实验形态。
+
+### 6.4 下一轮实验形态（据 §6.1 调整）
+
+1. 每次上机**先打 2–3 发同镜像**，只统计「真正 HANDOFF」的那些发次；否则标记判据无效。
+2. 保持 `slot a` unbootable 以便崩后停在 fastboot、不让 Android 覆盖窗口；读窗口用 `set-active=b` + reboot 回 Linux。
+3. 首轮只回答一个问题：**stage1 出不出现**（= shim 第一条指令是否执行）。若仍为 0，则换写入目标
+   （`splash` 头部 `0xFC800000+0x1000`、`dsm-1` 头部）并同时保留「写入自身是否致命」的对照（同镜像但不写）。

@@ -1,0 +1,18 @@
+{
+  "label": "uefi-ddr-clean2-r2",
+  "ts": "2026-11-01T05:55:07Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-ddr-20261101/clean2/uefi-v0.img",
+  "image_sha256": "423188a02f2cc9bfe2c842b894bd10b03ebb936be2369596ef8c1857dabe3073",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "NOJUMP",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261101-135304",
+  "note": "handoff-witness: boot.txt/still-fastboot; post mode=linux boot_id=# ssh post 2026-11-01T13:55:07+08:00"
+}

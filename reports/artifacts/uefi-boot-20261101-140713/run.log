@@ -1,0 +1,7 @@
+[14:07:13] ===== trial START label=uefi-ddr-clean2-r5 image=uefi-v0.img sha=423188a02f2cc9bfe2c842b894bd10b03ebb936be2369596ef8c1857dabe3073 =====
+[14:07:13] image_size=2441216
+[trial] boot_b: succ=1 retry=6 unbootable=0
+[trial] GATE=OK
+[14:07:13] pre boot_id=# ssh pre 2026-11-01T14:07:13+08:00
+[14:07:13] ssh -> reboot bootloader (eldroid-bootctl)
+[14:09:09] FATAL: fastboot did not come up (PITFALLS #368: 复位后 ~11 s 内再 reboot2 需物理断电)

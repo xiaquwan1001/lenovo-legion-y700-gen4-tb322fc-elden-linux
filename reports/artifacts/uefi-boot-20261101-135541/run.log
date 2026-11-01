@@ -1,0 +1,65 @@
+[13:55:41] ===== trial START label=uefi-ddr-clean2-r3 image=uefi-v0.img sha=423188a02f2cc9bfe2c842b894bd10b03ebb936be2369596ef8c1857dabe3073 =====
+[13:55:41] image_size=2441216
+[trial] boot_b: succ=1 retry=7 unbootable=0
+[trial] GATE=OK
+[13:55:42] pre boot_id=# ssh pre 2026-11-01T13:55:42+08:00
+[13:55:42] ssh -> reboot bootloader (eldroid-bootctl)
+[13:56:04] fastboot up after ~2s
+[13:56:04] SER=HA2EXB0E
+# fastboot pre 2026-11-01T13:56:04+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.004s
+current-slot: b
+Finished. Total time: 0.007s
+slot-unbootable:b: no
+Finished. Total time: 0.004s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.004s
+[13:56:04] fastboot boot uefi-v0.img
+Sending 'boot.img' (2384 KB)                       OKAY [  0.055s]
+Booting                                            FAILED (remote: 'Failed to load/authenticate boot image: Invalid Parameter')
+fastboot: error: Command failed
+[13:56:06] fastboot boot returned after 1s
+[13:57:06] watch: usb_present_last=1 samples_with_usb=60/60
+[13:57:06] VERDICT(candidate)=NOJUMP
+[13:57:06] recovering...
+[13:57:06] ABL alive -> try 'fastboot continue'（同会话续启动，保留 logfs）
+[13:57:06] continue failed/unsupported -> fastboot reboot
+[13:57:12] back in fastboot at ~2s -> reboot
+[13:57:21] back in fastboot at ~4s -> reboot
+[13:57:30] back in fastboot at ~6s -> reboot
+[13:57:38] back in fastboot at ~8s -> reboot
+[13:57:46] back in fastboot at ~10s -> reboot
+[13:57:54] back in fastboot at ~12s -> reboot
+[13:58:02] back in fastboot at ~14s -> reboot
+[13:58:11] back in fastboot at ~16s -> reboot
+[13:58:19] back in fastboot at ~18s -> reboot
+[13:58:27] back in fastboot at ~20s -> reboot
+[13:58:35] back in fastboot at ~22s -> reboot
+[13:58:43] back in fastboot at ~24s -> reboot
+[13:58:51] back in fastboot at ~26s -> reboot
+[13:59:00] back in fastboot at ~28s -> reboot
+[13:59:08] back in fastboot at ~30s -> reboot
+[13:59:16] back in fastboot at ~32s -> reboot
+[13:59:24] back in fastboot at ~34s -> reboot
+[13:59:32] back in fastboot at ~36s -> reboot
+[13:59:41] back in fastboot at ~38s -> reboot
+[13:59:49] back in fastboot at ~40s -> reboot
+[13:59:57] back in fastboot at ~42s -> reboot
+[14:00:05] back in fastboot at ~44s -> reboot
+[14:00:13] back in fastboot at ~46s -> reboot
+[14:00:22] back in fastboot at ~48s -> reboot
+[14:00:30] back in fastboot at ~50s -> reboot
+[14:00:38] back in fastboot at ~52s -> reboot
+[14:00:46] back in fastboot at ~54s -> reboot
+[14:00:54] back in fastboot at ~56s -> reboot
+[14:01:02] back in fastboot at ~58s -> reboot
+[14:01:11] back in fastboot at ~60s -> reboot
+[14:01:19] back in fastboot at ~62s -> reboot
+[14:01:27] back in fastboot at ~64s -> reboot
+[14:01:35] back in fastboot at ~66s -> reboot
+[14:01:43] back in fastboot at ~68s -> reboot
+[14:01:52] back in fastboot at ~70s -> reboot
+[14:02:00] back in fastboot at ~72s -> reboot
+[14:02:08] back in fastboot at ~74s -> reboot
+[14:02:16] back in fastboot at ~76s -> reboot
