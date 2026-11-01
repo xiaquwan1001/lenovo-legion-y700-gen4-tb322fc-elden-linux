@@ -126,10 +126,12 @@
   会话记录 `TASKS/sessions/2026-10-17-换机后重建审计-邮箱分诊.md`。**邮箱通道可用**，未处理的上游往来 5 条见 `reports/mail-triage-20261017.md`。
   **★ 当前待办入口 = `TASKS/README.md` §4**（本行只给指针，**任务状态与开放集一律以 §4 表与 §5 为准**；下表为快照，不外推）：近期已结项 T1–T8/T10/T12/T13/T15/T16/T18–T22（含 T15 f2fs 根迁移 2026-10-25、T16 模块化迁入日常线 2026-10-26、T19 Debian 根、T22 Waydroid 起完；**T17 仍 🟡 部分**＝驱动模块化×Mobian 迁移交界面已核对）；**仍开放 = T9（suspend 掉电率，2026-10-28 用户定优先级最低、暂不排期）、T11（宿主内存，等用户在 BIOS/硬件侧动作）、T14（用户态固化→Mobian 迁移，三步已落地、真机 FAIL=0）**。现行纪律只读 `TASKS/README.md` §4 顶部：**需要物理 POR 的样本一律排最后**；**Q28/Q32/Q24 全部结项、补采样已停**；**TF 卡（G1-6）已收口出列**。**最新一轮（2026-10-31）= 四 lane 轮**（M8 收尾 / 平板夜间通道 dry-run / greetd 停时 / 邮件分诊 / 投递前门禁 / 文档审计），逐条见 `TASKS/README.md` §5「2026-10-31 四 lane 轮」。在机/根形态见 `DEVICE/README.md` §1.1。
 
-- **★ 2026-11-01 设备阻塞（最高优先，优先于一切研究侧工作）**：U2 **只能进 fastboot，无法启动任何槽**（无 Android / 无 ssh / 无 adb）。
-  UEFI「槽位正常启动」实验（载荷写进 `boot_b` 后 `reboot`）后发生；已排除镜像（两槽读回逐字节等于已知能启动件）与槽位属性（GPT 已修且 ABL 接受）；
-  未解 = `fastboot continue` 报 `Device Error`（ABL 加载层）+「只改 `boot_b` 却连原厂槽也不启动」。
-  **全记录与待办**：`reports/uefi-slotboot-stuck-fastboot-20261101.md`；坑 `PITFALLS #482/#483`；在机口径 `DEVICE/README.md` §1.1 首条。
+- **✅ 2026-11-01 设备阻塞已闭环（当日解除）**：U2 曾**只能进 fastboot**（无 Android/ssh/adb），
+  真根因 = **引导固件代次与 A/B 槽脱钩**（`PITFALLS #484`）：本机双代引导固件并存（`*_a`+LUN1 = 259 原厂 UEFI `6.0.260611`；
+  `*_b`+LUN2 = 上一版 `6.0.260514`），ABL 按活动槽选 boot LUN ⇒ 槽位与 LUN 必须配对。**修复 = `fastboot --set-active` 另一槽，双向复现**
+  （a → Android / b → Linux，均已实测）。⇒ **AVB / 镜像 / 槽位属性 / `misc` / `devinfo` 已全部排除**（§5 旧候选作废）。
+  **全记录（含 §8 闭环）**：`reports/uefi-slotboot-stuck-fastboot-20261101.md`；取证件 `reports/artifacts/uefi-edl-read-20261101/`；
+  坑 `PITFALLS #484/#485`（后者：`logfs` 十段中只有 seg0 是本机的）；在机口径 `DEVICE/README.md` §1.1 首条。
 - **未解项（只读 `TASKS/README.md` §5 / `PITFALLS #106`，本文件不计数）**：③ 进 GUI 后整机卡死（`PITFALLS #106`）。Q28/Q32 已按「已规避」结项、Q24 已关闭 ⇒ **样本数与复启条件只读 `TASKS/README.md` §5 Q28/Q24/Q32**，本文件不复述。
   **新增待办 Q32 = 暖起 vs 冷起差异**（静态预研已落盘，指向「ABL 交接 framebuffer + 复位动作」而非「暖/冷」本身）。 **2026-10-23 深夜：Q32 取证工具已落地 + 试点取证 + 判据更正**（复位深度只能从 pstore/ramoops 取；在机「ABL 留了活显示」已实测确认）→ `reports/q32-kickoff-20261023.md`；三臂仍未执行。**2026-10-24：三臂已跑完 5 发（W1×2 / C1×2 / W2×1）全 GOOD ⇒ 暖/冷不是主变量，Q32 并入 Q28** → `reports/q32-matrix-20261024.md`。
   **★2026-10-24：Q28 按「已规避（运营线 vk152）」结项** —— 代码级修复（0154/0155/两修）+ 看门狗（ON、从未触发）+ 三态探针；POR 5/5、暖复位 3/3 全 GOOD（8/8 无坏发），但用户决定**不再补样本、不再挖根因**；复启条件三条写死在报告里 → `reports/q28-workaround-closeout-20261024.md`。**口径 / 样本 / 触发 / 下一步只读** `TASKS/README.md` §5 Q28/Q24/Q32 与 `PITFALLS #106`；在机镜像 `boot_b` 见 `DEVICE/README.md` §1.1。

@@ -1,0 +1,6 @@
+bootloader
+_a
+orange
+eio
+yes
+Linux localhost 6.6.118-android15-8-g350f378eb496-ab14943902-4k #1 SMP PREEMPT Thu Feb 26 02:40:50 UTC 2026 aarch64 Toybox

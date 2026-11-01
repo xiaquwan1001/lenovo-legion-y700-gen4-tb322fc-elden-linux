@@ -1,0 +1,7 @@
+getprop ro.build.display.id            TB322FC_CN_OPEN_USER_Q00041.1_W_ZUXOS_1.5.10.259_ST_260611
+getprop ro.boot.slot_suffix            _a
+getprop ro.boot.verifiedbootstate      orange
+getprop ro.boot.veritymode             eio
+getprop ro.boot.bootreason             bootloader
+getprop ro.boot.bootloader             
+getprop init.svc.bootanim              stopped

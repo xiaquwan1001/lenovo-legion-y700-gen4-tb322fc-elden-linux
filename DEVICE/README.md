@@ -24,7 +24,18 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-11-01 19:40（当前状态，唯一权威）—— ⚠ 设备停在 fastboot，未恢复（未闭环）**：
+- ★**2026-11-01 21:xx（当前状态，唯一权威）—— ✅ 已恢复，在机 Linux（`slot_suffix=_b`）**：
+  **根因 = 引导固件代次与 A/B 槽脱钩**（`PITFALLS #484`）：本机**双代引导固件并存** —— `*_a`+**LUN1** = 259 原厂
+  （`uefi_a`/`abl_a`/`xbl_a`/`xbl_config_a` 与官方包 `/home/xuqianhui/文档/TB322FC_15.10.259/` 逐字节相同；UEFI `6.0.260611` Jun 11），
+  `*_b`+**LUN2** = 上一版（`uefi_b` 差 550 846 B；UEFI `6.0.260514` May 14）。ABL 按活动槽选 boot LUN ⇒ 槽位与 LUN 必须配对；
+  卡死时是 `slot=b` 却跑 `UFS Boot LUN: 1`。**修复 = `fastboot --set-active` 另一槽，双向复现**
+  （`a` → 进 Android；`b` → 回 Linux）。**AVB 无关**：`vbmeta_a` = 官方包逐字节同，b 槽公钥拒绝在能正常启动的日志里也存在。
+  恢复后实测：`boot_id fbfec355`、UTS `…vk172`、`/` = `/dev/sda17` ext4、`card0-DSI-1=connected`、`systemctl --failed` 空、
+  `boot_b` 未改（`fb55997c…`）。**取证件全量** = `reports/artifacts/uefi-edl-read-20261101/`；事故记录（含本节旧文沿革）
+  `reports/uefi-slotboot-stuck-fastboot-20261101.md`。**★仍须注意**：改槽位就是改 LUN，跨代次切槽可能再触发同类现象；
+  动槽位前先抓 `logfs` 基线（`scripts/logfs-decode.py`，只看 **seg0**，见 `PITFALLS #485`）。
+  EDL 工具链 = `~/edl-tool/bkerler-edl-1cda1a6` + loader `~/下载/tb322fc/xbl_s_devprg_ns.melf`（9008 需 udev 规则）。
+- ★**2026-11-01 19:40（历史，已被上一条取代）—— ⚠ 曾停在 fastboot（已闭环）**：
   UEFI「槽位正常启动」实验（`boot_b` ← `slotb-uefi-marks.img`，sha `769c3800…`，读回一致）后 `reboot` **14 s 直接进 fastboot**，
   且此后**任何槽位都无法启动**。已排除：镜像（EDL 读回 `boot_a`=`d4772c11…` 与原厂备份逐字节同、`boot_b`=`fb55997c…` 为能跑的 vk183 件）、
   BCB（`misc` 清零 / `erase misc`）、槽位属性（LUN4 GPT 已修成 a=`0x78`/b=`0x7f` 且 ABL 接受，`getvar` 为 `successful:yes`+`retry:7`）。

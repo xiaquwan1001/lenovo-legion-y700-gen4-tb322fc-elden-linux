@@ -353,6 +353,29 @@ v0 boot.img，96 MiB AVB testkey）写进 **`boot_b`**（读回 sha 逐字节一
 - **回滚保险**：LUN4 GPT 原始双表 34 块已存 `reports/artifacts/uefi-slotboot-20261101/lun4-gpt-{primary,backup}-raw.bin`
   （`ed56f1da…` / `0bbfa568…`），改后件 `lun4-gpt-{primary,backup}-new.bin`（`fb18e8ea…` / `bab69f0f…`）。
 
+**★★2026-11-01 21:xx 闭环：真根因 = 引导固件代次与 A/B 槽脱钩（`PITFALLS #484`），已恢复**
+
+EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案，**推翻本节下方「未解问题」1–3 与「待办」**：
+
+- **根因**：本机是**双代引导固件并存** —— `*_a` + **LUN1** = 259 原厂（`uefi_a` = 官方包 `uefi.elf` 逐字节相同，
+  UEFI `6.0.260611` Jun 11 2026；`abl_a`/`xbl_a`/`xbl_config_a` 亦同）；`*_b` + **LUN2** = 上一版
+  （`uefi_b` 差 550 846 B，UEFI `6.0.260514` May 14 2026；`abl_b`/`xbl_b` 亦不同）。**ABL 按活动槽选 boot LUN**
+  ⇒ 槽位与 LUN 必须配对。卡死那次是 `slot=b` 却跑在 `UFS Boot LUN: 1`。
+- **判据**（`logfs` seg0 三连）：① `UFS Boot LUN` 与 `current-slot` 不配对；② **无 `Booting from slot (_x)`**；
+  ③ `POST Time` 后只剩 1 行 `VB: RWDeviceState` 就 `Start EBS [7845]`，总时长 7.8 s（正常 13.3 s）。
+- **修复**：`fastboot --set-active=a`（→ 进 Android，实测成功）与 `fastboot --set-active=b`（→ 回 Linux，实测成功），
+  **双向复现**。Linux 终态：`slot_suffix=_b`、`boot_id fbfec355`、UTS `…vk172`、`/` = `/dev/sda17`、
+  `card0-DSI-1=connected`、`systemctl --failed` 空、`boot_b` 未改（`fb55997c…`）。
+- **顺带排除**：`vbmeta_a` = 官方包逐字节相同；b 槽 `vbmeta_b` 的 `avb_slot_verify.c:913` 公钥拒绝在**能正常启动**的
+  日志里也存在 ⇒ 是 unlocked/orange 常态，**AVB 全程无关**。`misc` 全 0、`devinfo` = `ANDROID-BOOT!` + `u.1.1.1`
+  （= is_unlocked/is_unlock_critical/is_charger_screen_enabled，正常值）。主/备 GPT header+entry CRC 均 OK。
+- **`logfs` 判读纠错**（`PITFALLS #485`）：seg1–9 属**另一台 12+256 机器**（ECID `0x045AC096892B`）且与官方包
+  `logfs_ufs_8mb.bin` 9/10 段逐字节相同 = 工厂模板 ⇒ 本机历史只能看 **seg0**（旧 §4「第三种路径」作废）。
+- 附带：EDL `05c6:9008` 需 udev 规则 + `udevadm trigger --action=change`；`out/` 三个「内核段不可读」镜像
+  （`dtbo3`/`gh612b`/`vk146-BADSUSPEND`）实测**均可正常解压**（UTS `…vk172`），身份表已重生成（`check-doctor` FAIL=0）。
+
+**以下为 2026-11-01 19:40 的当时记录（结论已被上条取代，仅留沿革）**
+
 **现状（2026-11-01 19:40，只读实测）**：`current-slot:b`、`a/b` 均 `successful:yes`、`retry:7`、`unbootable:no`、
 `verdict:fastboot`；**无 ssh、无 adb、无 Android**（`lsusb` 仅 `18d1:d00d`）。
 

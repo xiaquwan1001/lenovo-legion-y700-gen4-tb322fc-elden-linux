@@ -1,0 +1,7 @@
+label=ddrmarks-b image=reports/artifacts/uefi-ddr-20261101/clean2/uefi-v0.img sha=423188a02f2cc9bf out=reports/artifacts/uefi-ddr-20261101-142830
+--- shot 1/2 ---
+  verdict=HANDOFF  abl='Sending 'boot.img' (2384 KB)                       OKAY [  0.055s] Booting                                            FA'
+  [warn] 崩后没等到 fastboot
+--- shot 2/2 ---
+  [skip] ssh 不在（设备不在 Linux）
+== 真正交棒 1/2 发 ==

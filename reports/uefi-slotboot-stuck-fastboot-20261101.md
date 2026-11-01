@@ -166,3 +166,86 @@ BACKUP  READBACK IDENTICAL
 - **实验前必须抓到「当前状态基线」的 `logfs` 与 GPT 双表**（本轮 GPT 抓了，`logfs` 只抓在写盘前，正好差了关键一段）。
 - **`fastboot continue` 的 `Device Error` 是 ABL 加载层的独立信号**，比 `Booting OKAY` / `usb_read failed` 更有指向性，
   应作为判据之一写进 #481 的补充。
+
+---
+
+# ★§8 闭环（2026-11-01 21:xx）：真根因 = 引导固件代次与 A/B 槽脱钩（`PITFALLS #484`）
+
+> **本节推翻 §0 结论 1/3/4、§5 全部候选、§6 全部待办、§7 第一条教训的口径。** 设备已恢复，在机 Linux。
+
+## §8.1 定案
+
+本机是**双代引导固件并存**，且 ABL **按活动槽选择 boot LUN**：
+
+| 活动槽 | boot LUN | XBL | ABL | UEFI | 结果 |
+|---|---|---|---|---|---|
+| `a` | **1** | `xbl_a` `8b09b3ae…` | `abl_a` `e7062378…`（payload `e48d3b8f…`） | `uefi_a` `fc68d2f9…` = **`6.0.260611`（Jun 11 2026）** | 进 Android（实测成功） |
+| `b` | **2** | `xbl_b` `fc4fd270…` | `abl_b` `811489f0…`（payload `529b9e95…`） | `uefi_b` `ae3c1c92…` = **`6.0.260514`（May 14 2026）** | 进 Linux（实测成功） |
+
+`*_a` 全线（`uefi_a`/`abl_a`/`xbl_a`/`xbl_config_a`）与官方包
+`/home/xuqianhui/文档/TB322FC_15.10.259/` **逐字节相同**；`*_b` 是上一版（`uefi_b` 差 550 846 B，
+其中第二个 LZMA 段整体不同 = 545 780 B）。
+
+**卡死那次**是 `slot=b` 却跑在 `UFS Boot LUN: 1` ⇒ Jun 11 那代 UEFI 去读 b 槽，`logfs` seg0 表现为
+`POST Time [2828] OS Loader` → 1 行 `VB: RWDeviceState: Succeed using rpmb!` → `Start EBS [7845]`，
+**没有 `Booting from slot`、没有 `KeyPress:/BootReason:/Fastboot=/SilentBoot` 段**，总时长 7.8 s（正常 13.3 s）。
+
+## §8.2 修复与验证
+
+```bash
+fastboot --set-active=a && fastboot reboot   # → 进 Android（ro.boot.slot_suffix=_a, verifiedbootstate=orange, veritymode=eio）
+fastboot --set-active=b && fastboot reboot   # → 回 Linux（slot_suffix=_b）
+```
+
+双向各做一次，均一次成功。恢复后 Linux 实测：`boot_id fbfec355-d05b-485b-86c5-f01cf60c07c6`、
+UTS `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`、`findmnt /` = `/dev/sda17` ext4（`elden_root=LABEL=linux17`）、
+`card0-DSI-1=connected`、`systemctl --failed` 空、`qbootctl` 显示 `Current slot: _b`，`boot_b` 分区未改动（`fb55997c…`）。
+
+## §8.3 §5 四条候选的逐条否定
+
+1. **AVB 链** → ❌ 无关。`vbmeta_a` = 官方包逐字节相同；b 槽 `vbmeta_b` 被拒的
+   `avb_slot_verify.c:913: ERROR: vbmeta_b: Public key used to sign data rejected.` 在**能正常启动**的那次
+   （`logfs-before.bin` seg0）里也同样出现 ⇒ 这是 unlocked/orange 常态。
+2. **跨槽持久状态（`misc`/`devinfo`/rpmb）** → ❌ 无关。`misc` **1 MiB 全 0**；
+   `devinfo` = `ANDROID-BOOT!` + `0d/0e/0f = 1/1/1`（= `is_unlocked`/`is_unlock_critical`/`is_charger_screen_enabled`，
+   与 `getvar` 的 `unlocked:yes`/`charger-screen-enabled:1` 一致，**正常值**，差点被当成故障点清掉）。
+3. **GPT 一致性** → ❌ 无关。主/备双表 header CRC + entry CRC 全 OK；`boot_a=0x78`/`boot_b=0x7f`（retry7/succ1）
+   已被 ABL 接受；另有 22 个条目的 byte6 是 `0x4f`/`0x0b`（retry=1 老值）属**历史遗留**，不影响启动。
+4. **载荷是否被执行** → 归结为零：卡死那发是引导固件层没走到槽位路径，与 `fastboot boot` 载荷无关（#481 不受影响）。
+
+## §8.4 取证方法（可复现，全只读）
+
+```bash
+cd ~/edl-tool/bkerler-edl-1cda1a6
+L=~/下载/tb322fc/xbl_s_devprg_ns.melf
+python3 edl.py --loader=$L r logfs   <out>          # 8 MiB 环形 × 10 段
+python3 edl.py --loader=$L r uefi_a|uefi_b <out>    # 各 5 MiB
+python3 edl.py --loader=$L r abl_a|abl_b   <out>
+python3 edl.py --loader=$L r xbl_a|xbL_b   <out>
+python3 edl.py --loader=$L r devinfo|misc  <out>
+python3 edl.py --loader=$L r vbmeta_a|vbmeta_b <out>
+python3 edl.py --loader=$L rs 0 34 --lun=4 <out>    # 各 LUN 的 GPT 主表
+cd ~/y700-elden && python3 scripts/logfs-decode.py <logfs> --segment 0
+```
+
+`05c6:9008` 默认 root-only，需 `/etc/udev/rules.d/99-edl.rules`
+（`SUBSYSTEM=="usb",ATTRS{idVendor}=="05c6",ATTRS{idProduct}=="9008",MODE="0666",GROUP="plugdev"`）
+**加** `udevadm control --reload-rules && udevadm trigger --subsystem-match=usb --action=change`
+（只 reload 不 trigger 不生效，本轮实测踩到）。
+
+## §8.5 `logfs` 判读纠错（`PITFALLS #485`）
+
+本机（U2 `HA2EXB0E`，ECID `0x045A7FD29739`，16+512）的 10 段 `logfs` **只有 seg0 是它自己写的**；
+seg1–9 的 ECID 是 `0x045AC096892B`（**另一台 12+256**，`UFS INQUIRY ID: SAMSUNG KLUEG4RHKF-F0H1`），
+且与官方包 `logfs_ufs_8mb.bin` **9/10 段逐字节相同**（= 工厂模板）。
+
+⇒ **§4 的「seg0 = 第三种进入路径」与用 seg1–9 当「早先正常尝试」的整段推论全部作废**。
+判本机历史只能看 seg0，并核对 `Chip ECID` / `UFS INQUIRY ID` / `RAM Installed`。
+（`Image size : 4096 Bytes` 在能正常启动的段里也全是 4096，**不是**解析失败判据。）
+
+## §8.6 教训（已并入 `PITFALLS #484/#485`）
+
+- **「不可恢复」的结论要留余地**：§0/§5 断言「断电/刷回/切槽全无效」，8 小时后被一条 `--set-active` 推翻。
+  写死结论前先问「有没有漏掉一个状态维度（LUN / 固件代次 / 槽位属性）」。
+- **备份不足 ≠ 原因在备份之外**：当时把「刷回原件无效」解释成「存在不可见的持久状态」，实际只是两个**可读**量。
+- **别按第一直觉动手**：曾在计划里准备「清 `devinfo` 的 `u.1.1.1` 三字节」，核对布局后发现那正是三个正常标志位。

@@ -152,3 +152,6 @@ reports/trials/*/*.bin
 
 # 96 MiB 签名槽位镜像不入库（可重建）
 reports/artifacts/uefi-ddr-20261101/*.img
+
+# EDL 只读取证件：二进制本体不入库（README + SHA256SUMS 是唯一账，33 MB 可由 SHA 对账重抓）
+/reports/artifacts/uefi-edl-read-20261101/*.bin
