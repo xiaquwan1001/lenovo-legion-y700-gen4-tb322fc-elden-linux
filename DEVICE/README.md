@@ -24,7 +24,14 @@
 | 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-10-31 19:59（当前在机状态，唯一权威）** —— 仍是 **`vk183-fastrpc`**（`boot_b` sha `aedae5f1…`，**全程零写盘**）：
+- ★**2026-11-01 17:30（当前状态，唯一权威）—— ⚠ 设备停在 fastboot，未恢复**：
+  UEFI「槽位正常启动」实验（`boot_b` ← `slotb-uefi-marks.img`，sha `769c3800…`，读回一致）后 `reboot` **14 s 直接进 fastboot**，
+  且此后**任何槽位都无法启动**（刷回在机原件 `boot_b.img` sha `fb55997c…`、`--set-active=b/a`、`fastboot continue`、
+  `misc` BCB 清零 / `erase misc`、刷回原厂 `boot_a.img`、用户物理断电重启 —— 全部仍回 fastboot）。
+  实测：`current-slot:b`、a/b 均 `successful:no`、`retry` a=5 / b=7、`unbootable:no`、无 ssh / 无 adb / 无 Android gadget。
+  **下一步 = EDL 只读 dump 拿 `logfs` + `boot_a/boot_b` 对照**（详见 `TASKS/README.md` §5 「2026-11-01 16:39」块）。
+  现场件 `reports/artifacts/uefi-slotboot-20261101/`。
+- ★**2026-10-31 19:59（历史，已被上一条取代）** —— 仍是 **`vk183-fastrpc`**（`boot_b` sha `aedae5f1…`）：
   本日晚间为 UEFI 线做了 4 发 `fastboot boot`（R1 色条 / R2 PrePi 插桩 / 控制组 A2 原件；下午另有 X1·X2 两发），
   其中控制组（A2 原件）**交棒并回落 stock Android**，已用 **adb 路径**恢复（`adb -s HA2EXB0E reboot bootloader` →
   `fastboot --set-active=b` → `fastboot reboot`，12 s 回 Linux），`slot-unbootable:b` 由 `yes` 自动清回 `no`。
