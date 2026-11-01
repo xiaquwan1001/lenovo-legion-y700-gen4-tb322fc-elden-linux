@@ -1,0 +1,52 @@
+# EUD 本机只读探针 —— 2026-11-01 22:37–22:40 CST（ssh root@192.168.7.1，纯读）
+# 复查（22:55 之后）链路已重新枚举为 192.168.42.x、ssh 22 拒绝，故本节为唯一一次成功采集。
+
+uname: 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+
+--- dmesg | grep -i eud ---
+(空) rc=1
+
+--- lsmod | grep -i eud ---
+(空) rc=1
+
+--- zcat /proc/config.gz | grep -E "EUD|QCOM_SCM|ROLE_SWITCH|TYPEC" ---
+CONFIG_USB_QCOM_EUD=m
+CONFIG_QCOM_SCM=y
+CONFIG_USB_ROLE_SWITCH=y
+CONFIG_TYPEC=y
+
+--- ls -d /sys/bus/platform/devices/*eud* ---
+ls: cannot access '/sys/bus/platform/devices/*eud*': No such file or directory
+
+--- ls /sys/bus/platform/drivers/ | grep -i eud ---
+(空) rc=1
+
+--- find /proc/device-tree -iname "*eud*" ---
+(空) count=0
+
+--- modinfo /lib/modules/$(uname -r)/kernel/drivers/usb/misc/qcom_eud.ko ---
+filename:       .../kernel/drivers/usb/misc/qcom_eud.ko
+license:        GPL v2
+description:    QTI EUD driver
+alias:          of:N*T*Cqcom,eudC*
+alias:          of:N*T*Cqcom,eud
+intree:         Y
+name:           qcom_eud
+vermagic:       7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 SMP preempt mod_unload aarch64
+
+--- ls /sys/class/usb_role/ ---
+a600000.usb-port0-role-switch
+a600000.usb-port1-role-switch
+
+--- ls /sys/class/udc/ ---
+a600000.usb
+
+--- ls /sys/bus/platform/devices/ | grep -E "88e|a600000" ---
+88e3000.phy
+88e8000.phy
+a600000.usb
+
+--- ls /sys/class/typec/ ---
+port0
+port0-partner
+port1
