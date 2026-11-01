@@ -1,0 +1,150 @@
+  0	usb=[]	fb=[]	ssh=up
+  1	usb=[]	fb=[]	ssh=down
+  3	usb=[]	fb=[]	ssh=down
+  4	usb=[]	fb=[]	ssh=down
+  5	usb=[]	fb=[]	ssh=down
+  6	usb=[]	fb=[]	ssh=down
+  7	usb=[]	fb=[]	ssh=down
+  8	usb=[]	fb=[]	ssh=down
+ 14	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 21	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 27	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 33	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 39	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 45	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 51	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 57	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 64	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 70	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 76	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 82	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 88	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+ 94	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+100	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+107	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+113	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+119	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+125	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+131	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+137	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+143	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+150	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+156	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+162	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+168	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+174	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+180	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+186	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+193	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+199	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+205	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+211	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+217	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+223	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+229	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+236	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+242	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+248	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+254	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+260	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+266	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+273	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+279	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+285	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+291	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+297	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+303	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+309	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+316	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+322	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+328	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+334	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+340	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+346	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+352	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+359	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+365	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+371	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+377	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+383	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+389	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+395	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+402	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+408	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+414	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+420	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+426	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+432	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+438	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+445	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+451	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+457	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+463	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+469	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+475	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+481	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+488	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+494	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+500	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+506	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+512	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+518	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+524	usb=[Bus 001 Device 011: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+531	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+537	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+543	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+549	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+555	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+561	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+568	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+574	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+580	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+586	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+592	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+598	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+604	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+611	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+617	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+623	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+629	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+635	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+641	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+647	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+654	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+660	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+666	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+672	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+678	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+684	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+690	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+697	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+703	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+709	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+715	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+721	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+727	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+733	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+740	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+746	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+752	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+758	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+764	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+770	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+777	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+783	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+789	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+795	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+801	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+807	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+813	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+820	usb=[Bus 001 Device 012: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+826	usb=[]	fb=[]	ssh=down
+832	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+838	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+844	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+850	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+856	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+863	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+869	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+875	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down
+881	usb=[Bus 001 Device 013: ID 18d1:d00d Google Inc. Xiaomi Mi/Redmi 2 (fastboot);]	fb=[HA2EXB0E	 fastboot;]	ssh=down

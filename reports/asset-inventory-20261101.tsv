@@ -1,0 +1,215 @@
+path	bytes	files	mtime	sha12	referenced_by	verdict
+reports/artifacts/b5-build-20261028	414752	12	2026-10-28		reports/b5-step5-upstream-20261028.md	keep
+reports/artifacts/b5-u2-20261028-104918	17078	3	2026-10-28		reports/b5-u2-atomic-timeline-20261028.md	keep
+reports/artifacts/baseline-20261027	7989	8	2026-10-26		reports/vk172-modular-v2-build-20261026.md,reports/g1-23-windows-20261026.md	keep
+reports/artifacts/c3-spic-20261027	248888	3	2026-10-27		unreferenced	stale
+reports/artifacts/c5-u7-sf-20261029	488220	22	2026-10-29		reports/c5-u7-sf-skimage-20261029.md,reports/audit-20261029-pending-consistency.md	keep
+reports/artifacts/code-boundary-preinject-20261031	37172	17	2026-10-31		reports/code-boundary-preinject-20261031.md,reports/m3-v5-selfcontained-20261031.md	keep
+reports/artifacts/device-window-20261031	0	0	2026-10-31		reports/device-window-checklist-20261031.md	keep
+reports/artifacts/display-drop-20261027	2918	6	2026-10-27		unreferenced	stale
+reports/artifacts/g3-steam-20261028	204938	39	2026-10-28		reports/g3-steam-20261028.md,reports/audit-20261029-pending-consistency.md,reports/g3-steam-screenshot-paths-20261029.md	keep
+reports/artifacts/gunyah-boot-test-20261024	3285	1	2026-10-24		reports/gunyah-boot-test-20261024.md	keep
+reports/artifacts/gunyah-capid-20261024	886781	2	2026-10-24		unreferenced	stale
+reports/artifacts/gunyah-dt-20261024	2279	26	2026-10-24		reports/gunyah-dt-capid-20261024.md	keep
+reports/artifacts/gunyah-probe-20261024	528235	5	2026-10-24		reports/gunyah-stage0-positive-20261024.md,reports/woa-gunyah-survey-20261024.md,reports/gunyah-rm-probe-20261024.md	keep
+reports/artifacts/host-panic-20261023	251530	1	2026-10-23		reports/host-stability-20261023.md	keep
+reports/artifacts/host-panic-20261026	129880	1	2026-10-26		reports/doc-audit-20261026.md	keep
+reports/artifacts/kexec-pstore-probe-20261024	2555187	45	2026-10-24		reports/kexec-target-boots-20261024.md	keep
+reports/artifacts/m3v5fix-20261030-probe	5761	9	2026-10-30		reports/m3v5-binding-reshape-20261030.md	keep
+reports/artifacts/m3v5-gate-20261031	2377	5	2026-10-31		reports/m3-v5-selfcontained-20261031.md	keep
+reports/artifacts/m3v5-onboard-20261030	439392	29	2026-10-30		reports/doc-audit-20261030.md,reports/m3v5-onboard-plan-20261030.md,reports/uefi-testplan-20261030.md,reports/m3v5-onboard-20261030.md,reports/m3v5-connector-bind-rootcause-20261030.md	keep
+reports/artifacts/m3v5-onboard-20261030b	19430	10	2026-10-31		reports/m3v5-onboard-plan-20261030.md	keep
+reports/artifacts/m3v5-prefetch-20261030	42612	11	2026-10-30		reports/m3v5-prefetch-regression-20261030.md	keep
+reports/artifacts/m3v5-repack-20261031	4515	6	2026-10-31		reports/m3v5-repack-20261031.md	keep
+reports/artifacts/m4-skewcal-ab-20261027	1757	1	2026-10-27		reports/mail-triage-20261028.md,reports/camss-upstream-response-20261028.md,reports/lanes-20261027-verified.md,reports/m4-skewcal-ab-20261027.md,reports/m4-sashiko-triage-20261028.md	keep
+reports/artifacts/m6-cover-20261031	8838	3	2026-10-31		unreferenced	stale
+reports/artifacts/m6-errmask-20261031	10958	6	2026-10-31		reports/m6-dsi-errmask0-20261031.md	keep
+reports/artifacts/m6-repack-20261031	14862	8	2026-10-31		reports/m6-b5-series-repack-20261031.md	keep
+reports/artifacts/m8ab-restart-20261030	2366	3	2026-10-30		reports/uefi-testplan-20261030.md,reports/m8ab-readback-bootb-20261031.md,reports/m8ab-restart-20261030.md,reports/doc-audit-20261030.md,reports/uefi-consolidated-20261030.md,reports/bootloader-alternatives-survey-20261030.md,reports/uefi-onboard-20261030.md	keep
+reports/artifacts/m8-rsc-20261031	2998	5	2026-10-31		reports/m8-rsc-ownership-20261031.md	keep
+reports/artifacts/net-selfheal-20261031	3210	3	2026-10-31		unreferenced	stale
+reports/artifacts/por-vk183-20261031	7499	4	2026-10-31		unreferenced	stale
+reports/artifacts/q28-latch-20261022	9145	2	2026-10-22		reports/q28-DOSSIER.md	keep
+reports/artifacts/t5-20261020-185318	948293	28	2026-10-20		reports/t5-q24-dataset-20261020.md	keep
+reports/artifacts/tablet-offload-20261030	173302	50	2026-10-30		reports/tablet-offload-plan-20261030.md,reports/tablet-dev-env-20261030.md	keep
+reports/artifacts/to-fastboot-20261031	247	2	2026-10-31		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-102356	71334	10	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-102923	46	1	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-103452	4811	9	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-104120	70953	10	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-105146	70603	10	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-105802	70591	10	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-110136	70871	12	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-110845	70466	10	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-111313	70662	10	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-111719	70741	12	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-112159	70901	10	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-130523	8460047	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-130938	8460046	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-131541	8460043	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-132027	8460044	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-132423	8460044	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-132850	8460044	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-133454	8460043	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-133929	8460048	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-135304	8460155	12	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-135541	6535	8	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-140713	1424	3	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-boot-20261101-150302	8460042	11	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-built-20261024	19910656	6	2026-10-24		reports/uefi-experiment-build-20261024.md,reports/uefi-testplan-20261030.md,reports/uefi-boot-A-attempt-20261024.md,reports/uefi-consolidated-20261030.md,reports/uefi-migration-interface-20261026.md	keep
+reports/artifacts/uefi-ddr-20261101	202109996	68	2026-11-01		reports/uefi-ddr-blackbox-20261101.md	keep
+reports/artifacts/uefi-ddr-20261101-142404	659	1	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-ddr-20261101-142830	431	1	2026-11-01		unreferenced	stale
+reports/artifacts/uefi-dxe-20261024	4458677	4	2026-10-24		reports/uefi-issue12-reply-final-draft-20261029.md,reports/uefi-consolidated-20261030.md,reports/uefi-issue12-reply-draft-20261028.md,reports/uefi-runtime-table-provider-20261024.md,reports/uefi-e1-identity-20261030.md,reports/uefi-recovery-20261030.md,reports/uefi-migration-interface-20261026.md,reports/uefi-testplan-20261030.md,reports/uefi-gunyah-reassess-20261024.md,reports/gunyah-capid-forensics-20261024.md	keep
+reports/artifacts/uefi-e0e1-20261028	14267146	9	2026-10-28		reports/uefi-issue12-reply-final-draft-20261029.md,reports/uefi-testplan-20261030.md,reports/uefi-recovery-20261030.md,reports/uefi-consolidated-20261030.md,reports/uefi-text-console-archaeology-plan-20261030.md,reports/uefi-e1-identity-20261030.md,reports/uefi-visibility-rebuild-20261028.md	keep
+reports/artifacts/uefi-e1v0b-20261030	1392	5	2026-10-30		reports/uefi-text-console-archaeology-plan-20261030.md,reports/uefi-e1-identity-20261030.md	keep
+reports/artifacts/uefi-e1v0b-20261031	5462	7	2026-10-31		reports/uefi-e1-v0b-onboard-20261031.md	keep
+reports/artifacts/uefi-forensics-20261101	209376	1	2026-11-01		reports/uefi-observability-pivot-20261101.md	keep
+reports/artifacts/uefi-issue12-20261029	36414	4	2026-10-29		reports/uefi-closeout-20261029.md	keep
+reports/artifacts/uefi-n2v0b-20261030	2777	6	2026-10-30		reports/uefi-n2-v0b-onboard-20261030.md	keep
+reports/artifacts/uefi-onboard-20261030	9773524	5	2026-10-30		reports/uefi-e1-v0b-onboard-20261031.md,reports/uefi-n2-v0b-onboard-20261030.md,reports/uefi-vis-r1-20261031.md,reports/uefi-onboard-20261030.md,reports/uefi-text-console-archaeology-plan-20261030.md,reports/uefi-e1-identity-20261030.md	keep
+reports/artifacts/uefi-prepi-vis-20261031	9284967	4	2026-10-31		reports/uefi-prepi-visibility-static-20261031.md	keep
+reports/artifacts/uefi-prepi-vis-r2-20261031	9077370	7	2026-10-31		unreferenced	stale
+reports/artifacts/uefi-rb-20261031	23921850	20	2026-11-01		reports/uefi-cleanheader-reframe-20261101.md	keep
+reports/artifacts/uefi-swap-20261031	18238183	21	2026-10-31		reports/uefi-swap-x1x2-20261031.md	keep
+reports/artifacts/uefi-v0-20261027	4886528	3	2026-10-26		reports/uefi-consolidated-20261030.md,reports/uefi-testplan-20261030.md,reports/uefi-n2-v0-attempt-20261026.md,reports/uefi-samechip-tablet-display-20261028.md	keep
+reports/artifacts/uefi-vis-20261031	5171	3	2026-10-31		reports/uefi-visibility-channels-20261031.md	keep
+reports/artifacts/uefi-vis-control-20261031	2746	5	2026-10-31		reports/uefi-vis-control-20261031.md	keep
+reports/artifacts/uefi-visibility-20261026	13275724	6	2026-10-26		reports/uefi-issue12-reply-final-draft-20261029.md,reports/uefi-testplan-20261030.md,reports/uefi-consolidated-20261030.md,reports/uefi-visibility-20261026.md,reports/uefi-visibility-rebuild-20261028.md	keep
+reports/artifacts/uefi-vis-r1-20261031	9082409	11	2026-10-31		reports/uefi-vis-r1-20261031.md,reports/uefi-vis-control-20261031.md	keep
+reports/artifacts/usb-reverse-20261030	3813	1	2026-10-30		unreferenced	stale
+reports/artifacts/wl2868c-v4-20261031	13937	13	2026-10-31		reports/device-window-checklist-20261031.md,reports/wl2868c-v4-20261031.md	keep
+reports/artifacts/0001-pci-qcom-skip-l23-ready-wait-for-sm8750.patch	2350	1	2026-10-20		TASKS/README.md,TASKS/sessions/2026-10-20-触屏中文输入法与T9静态方案.md,reports/pcie-l2-static-20261020.md,reports/t9-vk130-pcie-l2-live-20261021.md	keep
+reports/artifacts/c5-u7-l1d-shot-20261029.png	32325	1	2026-10-29		TASKS/README.md,TASKS/sessions/2026-10-29-容器相机gralloc修法上机.md,TASKS/sessions/2026-10-29-收官-容器相机与camss定调.md,reports/audit-20261029-pending-consistency.md,reports/c5-u7-gralloc-device-20261028.md	keep
+reports/artifacts/q28-clkdiag-good-20261023.txt	4670	1	2026-10-23		TASKS/sessions/2026-10-23-上游回信与stockAndroid取证与Q28收口.md,reports/q28-dpu-intf-next-20261023.md	keep
+reports/artifacts/q28-clkdiag-q32-c1-c93c5543.txt	4850	1	2026-10-24		unreferenced	stale
+reports/artifacts/q28-clkdiag-q32-c1-dddaca7d.txt	4850	1	2026-10-24		unreferenced	stale
+reports/artifacts/q28-clkdiag-q32-w1-299bfac8.txt	4850	1	2026-10-24		unreferenced	stale
+reports/artifacts/q28-clkdiag-q32-w1-51fb6bed.txt	4850	1	2026-10-24		unreferenced	stale
+reports/artifacts/q28-clkdiag-q32-w2-82dc158d.txt	4850	1	2026-10-24		unreferenced	stale
+reports/artifacts/q28-clkdiag-q32pilot-b6211ab4.txt	4853	1	2026-10-23		reports/q32-kickoff-20261023.md	keep
+reports/artifacts/q28-clkdiag-r1-0f0f772e.txt	4705	1	2026-10-23		reports/q28-por-samples-r1r2-20261023.md,reports/trials/20261023T145819Z-q28por-r1.json	keep
+reports/artifacts/q28-clkdiag-r1-981b2bef.txt	0	1	2026-10-29		unreferenced	stale
+reports/artifacts/q28-clkdiag-r1-e30552a6.txt	4924	1	2026-10-29		reports/trials/20261029T152135Z-q28por-r1.json	keep
+reports/artifacts/q28-clkdiag-r11-7377535e.txt	4899	1	2026-10-30		reports/m8ab-restart-20261030.md,reports/trials/20261030T025103Z-q28por-r11.json	keep
+reports/artifacts/q28-clkdiag-r2-8a835f43.txt	4925	1	2026-10-29		reports/trials/20261029T152239Z-q28por-r2.json	keep
+reports/artifacts/q28-clkdiag-r2-b6211ab4.txt	4705	1	2026-10-23		reports/q28-por-samples-r1r2-20261023.md,reports/trials/20261023T151810Z-q28por-r2.json	keep
+reports/artifacts/q28-clkdiag-r3-2cba3524.txt	4925	1	2026-10-29		reports/trials/20261029T152347Z-q28por-r3.json	keep
+reports/artifacts/q32-boot-08fce7ea.txt	6286	1	2026-10-24		unreferenced	stale
+reports/artifacts/q32-boot-299bfac8.txt	6293	1	2026-10-24		unreferenced	stale
+reports/artifacts/q32-boot-2cba3524.txt	5487	1	2026-10-29		unreferenced	stale
+reports/artifacts/q32-boot-3c3c06e3.txt	5350	1	2026-10-24		reports/q32-kickoff-20261023.md	keep
+reports/artifacts/q32-boot-51fb6bed.txt	6286	1	2026-10-24		unreferenced	stale
+reports/artifacts/q32-boot-6419fa71.txt	6288	1	2026-10-24		unreferenced	stale
+reports/artifacts/q32-boot-7377535e.txt	5435	1	2026-10-30		unreferenced	stale
+reports/artifacts/q32-boot-82dc158d.txt	6255	1	2026-10-24		unreferenced	stale
+reports/artifacts/q32-boot-8a835f43.txt	5487	1	2026-10-29		unreferenced	stale
+reports/artifacts/q32-boot-981b2bef.txt	0	1	2026-10-29		unreferenced	stale
+reports/artifacts/q32-boot-b6211ab4.txt	5302	1	2026-10-23		reports/q32-kickoff-20261023.md	keep
+reports/artifacts/q32-boot-c93c5543.txt	5335	1	2026-10-24		unreferenced	stale
+reports/artifacts/q32-boot-dddaca7d.txt	5335	1	2026-10-24		unreferenced	stale
+reports/artifacts/q32-boot-e30552a6.txt	5486	1	2026-10-29		unreferenced	stale
+reports/artifacts/reply-konrad-battmgr-20261021.txt	3032	1	2026-10-21		TASKS/sessions/2026-10-21-按序执行-回信kexecGunyah订阅.md	keep
+reports/artifacts/reply-konrad-vendor-20261023.txt	3387	1	2026-10-23		TASKS/sessions/2026-10-23-上游回信与stockAndroid取证与Q28收口.md	keep
+reports/artifacts/reply-konrad-vendor-addendum-20261023.txt	1321	1	2026-10-23		unreferenced	stale
+reports/artifacts/reply-pengyu-dt-coord-20261023.txt	4277	1	2026-10-23		TASKS/sessions/2026-10-23-上游回信与stockAndroid取证与Q28收口.md	keep
+reports/artifacts/uefi-mu-submodules-20261024.log	1680	1	2026-10-24		unreferenced	stale
+reports/artifacts/vk129-abi-fix-verified-20261020.txt	524	1	2026-10-20		TASKS/README.md,reports/vk129-abi-fix-verified-20261020.md	keep
+reports/artifacts/vk129-panic-screen-20261020.txt	3790	1	2026-10-20		reports/suspend-panic-rootcause-20261020.md,reports/vk129-abi-fix-verified-20261020.md	keep
+reports/artifacts/vk129-suspend-verified-20261020.txt	823	1	2026-10-20		reports/pcie-l2-static-20261020.md,reports/vk129-abi-fix-verified-20261020.md	keep
+bootslot-b/boot_b-bb1.img	100663296	1	2026-11-01	60448cd70f96	unreferenced	stale
+bootslot-b/boot_b-device-backup-20261101.img	100663296	1	2026-11-01	aedae5f121ec	current-on-device (vk183-fastrpc, sha aedae5f1… per DEVICE/README §1.1) TASKS/sessions/2026-11-01-UEFI可观测性换向调研.md,reports/uefi-ddr-blackbox-20261101.md	keep
+bootslot-b/boot_b-f2fs-root.img	100663296	1	2026-10-25	257266ec058f	DEVICE/README.md,INDEX.md,TASKS/README.md,TASKS/sessions/2026-10-26-vk163真POR与启动时延.md,reports/doc-audit-20261026.md,reports/uefi-consolidated-20261030.md,reports/uefi-testplan-20261030.md	history
+bootslot-b/boot_b-m3v5-daily-signed-20261030.img	100663296	1	2026-10-30	55d06551a5d8	DEVICE/README.md,reports/m8ab-readback-bootb-20261031.md	history
+bootslot-b/boot_b-pre-vk151-20261023.img	100663296	1	2026-10-23	53a546312d61	TASKS/sessions/2026-10-23-vk152日用载具与kexec复跑.md,reports/doc-audit-20261026.md	history
+bootslot-b/boot_b-pre-vk183-20261030.img	100663296	1	2026-10-30	e6b1124ca6ec	rollback piece (DEVICE/README §1.1) DEVICE/README.md,reports/doc-audit-20261030-v2-applylist.md,reports/doc-audit-20261030-v2.md,reports/m3v5-onboard-plan-20261030.md,reports/m8ab-readback-bootb-20261031.md	backup
+bootslot-b/boot_b-vk127.img	100663296	1	2026-10-18	dc2132636fba	DEVICE/README.md,reports/suspend-enable-vk128-vk129-fail-20261018.md,reports/vk129-abi-fix-verified-20261020.md	history
+bootslot-b/boot_b-vk128.img	100663296	1	2026-10-18	bea71dba5916	versions/vk-registry.tsv	history
+bootslot-b/boot_b-vk129.img	100663296	1	2026-10-18	736bfe87cba1	DEVICE/README.md,versions/vk-registry.tsv	history
+bootslot-b/boot_b-vk145.img	100663296	1	2026-10-22	fcda354b76ee	unreferenced	history
+bootslot-b/boot_b-vk151.img	100663296	1	2026-10-23	32b5ec15b520	unreferenced	history
+bootslot-b/boot_b-vk152.img	100663296	1	2026-10-23	d8e8074be0dd	DEVICE/README.md,TASKS/sessions/2026-10-23-vk152日用载具与kexec复跑.md,reports/doc-audit-20261026.md,reports/trials/20261024T021347Z-q32w1-r1/README.txt,reports/trials/20261024T021348Z-q32w1-r1.json,reports/trials/20261024T021942Z-q32c1-r1/README.txt,reports/trials/20261024T021945Z-q32c1-r1.json,reports/tr	history
+bootslot-b/boot_b-vk163-signed-20261026.img	100663296	1	2026-10-26	65ae2ff0acc1	DEVICE/README.md,TASKS/README.md,reports/vk172-modular-v2-build-20261026.md	history
+bootslot-b/boot_b-vk181-daily-signed-20261029.img	100663296	1	2026-10-29	b72866ef6e6c	daily kernel rollback (DEVICE/README §1.1) DEVICE/README.md,TASKS/README.md,reports/code-style-and-duty-overlap-audit-20261030.md,reports/doc-audit-20261030-v2-applylist.md,reports/doc-audit-20261030-v2.md,reports/doc-audit-20261030.md,reports/doc-audit-20261031-apply.md,reports/m3v5-f2-onboard-20261030.md,reports/m3v5-onboard-plan-20261030.	backup
+bootslot-b/boot_b.img	100663296	1	2026-11-01	fb55997c524e	mutable working copy rewritten by scripts/flash-b.sh — never treat as content-stable DEVICE/README.md,INDEX.md,TASKS/README.md,TASKS/sessions/2026-10-15-晚-p0模块树-相机栈-Q24四轮实测.md,TASKS/sessions/2026-10-29-并行批次-审计整改-上游返工-双口.md,reports/audit-20261029-pending-consistency.md,reports/device-rescue-and-q28-m1-badboot-20261017.md,reports/doc-audit-20261030-v2-applylist.md,reports/doc-audit-20	keep
+out/boot-elden-dtbo1.img	22081536	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; TASKS/README.md,TASKS/sessions/2026-10-24-Gunyah-RM跑通与VMM卡点-6.md,reports/gunyah-mainline-rm-up-20261024.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-dtbo2.img	85639168	1	2026-10-25		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; versions/vk-kernel-identity.tsv	history
+out/boot-elden-dtbo3.img	85639168	1	2026-10-25		kernel-unreadable (versions/vk-kernel-identity.tsv); TASKS/sessions/2026-11-01-UEFI可观测性换向调研.md,TASKS/sessions/2026-11-01-UEFI重打包口径纠正.md,reports/uefi-ddr-blackbox-20261101.md,versions/vk-kernel-identity.tsv	stale
+out/boot-elden-f2fs-root.img	85557248	1	2026-10-25		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; DEVICE/README.md,TASKS/sessions/2026-10-25-f2fs路线A落地.md,TASKS/sessions/2026-10-25-用户态固化与迁移前置.md,versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-gh612a.img	85590016	1	2026-10-25		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; TASKS/sessions/2026-10-25-Gunyah同构建复跑与loader路线.md,reports/gunyah-612-samebuild-20261025.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-gh612b.img	85639168	1	2026-10-25		kernel-unreadable (versions/vk-kernel-identity.tsv); TASKS/README.md,TASKS/sessions/2026-10-25-Gunyah同构建复跑与loader路线.md,reports/gunyah-612-samebuild-20261025.md,reports/gunyah-decision-20261025.md,reports/uefi-ddr-blackbox-20261101.md,versions/vk-kernel-identity.tsv	stale
+out/boot-elden-gunyah1.img	85590016	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; TASKS/README.md,TASKS/sessions/2026-10-24-收尾-Gunyah与UEFI交接-5.md,reports/gunyah-boot-test-20261024.md,reports/gunyah-kernel-build-20261024.md,versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-m3v5-daily.img	84529152	1	2026-10-30		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; DEVICE/README.md,reports/doc-audit-20261030.md,reports/m3v5-onboard-20261030.md,reports/uefi-testplan-20261030.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-m3v5-f2.img	84529152	1	2026-10-30		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; DEVICE/README.md,reports/m3v5-f2-onboard-20261030.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-m3v5-onboard-b.img	88260608	1	2026-10-31		identical to boot-elden.img; reports/m3v5-onboard-plan-20261030.md,reports/trials/20261031T023348Z-m3v5-onboard-b-fastbootboot.json,versions/vk-kernel-identity.tsv	dupe
+out/boot-elden-m3v5-onboard.img	84496384	1	2026-10-30		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; reports/m3v5-onboard-plan-20261030.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-m8ab-base.img	84529152	1	2026-10-29		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; reports/m8ab-build-20261029.md,reports/m8ab-restart-20261030.md,reports/trials/20261029T152135Z-q28por-r1.json,reports/trials/20261029T152135Z-q28por-r1/README.txt,reports/trials/20261029T152238Z-q28por-r2/README.txt,reports/trials/20261029T152239Z-q28por-r2.json,reports/trials/20261029T152346Z-q28p	history
+out/boot-elden-m8ab-v2.img	84529152	1	2026-10-29		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; reports/m8ab-build-20261029.md,versions/vk-kernel-identity.tsv,versions/vk-triage.tsv	history
+out/boot-elden-vk127.img	85585920	1	2026-10-17		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; DEVICE/README.md,TASKS/README.md,TASKS/sessions/2026-10-17-T3T4重建链与T6T7收口.md,TASKS/sessions/2026-10-18-相机容器HAL-64bit编译与vk127写盘.md,reports/camera-vk127-20261017.md,reports/q24-n7-vk127-20261017.md,reports/q28-DOSSIER.md,reports/replay-2026-10-17-m1-73-vk127.md,reports/trials/20261017T-s3-vk127-q28.js	history
+out/boot-elden-vk132.img	85712896	1	2026-10-21		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk133.img	85712896	1	2026-10-21		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; reports/f2fs-plan-20261021.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk134.img	85712896	1	2026-10-21		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; TASKS/sessions/2026-10-21-按序执行-回信kexecGunyah订阅.md,TASKS/sessions/2026-10-22-kexec目标存活实证.md,reports/kexec-plan-20261021.md,reports/trials/20261021T140642Z-kexec-c1-nokaslr-vk134.json,reports/trials/20261021T141046Z-kexec-c1-initrd-vk134.json,reports/trials/20261021T143106Z-kexec-c5-bypass1-vk134.json	history
+out/boot-elden-vk135.img	85712896	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; reports/trials/20261022T070259Z-kexec-c16-panic-visible-on-vk135.json,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk136.img	85712896	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; reports/trials/20261022T065425Z-kexec-c15-ramoops-recordsize-vk136.json,reports/trials/20261022T065822Z-kexec-c15b-panic0-device-stuck.json,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk137-q28base.img	85352448	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.2.0-debug-vk64-gd02658e63cf6; reports/q28-disp-init-ab-20261022.md,reports/trials/20261022T120008Z-q28disp-base.json,reports/trials/20261022T120447Z-q28disp-base.json,reports/trials/20261022T120723Z-q28disp-base.json,reports/trials/20261022T120930Z-q28disp-base.json,reports/trials/20261022T121230Z-q28disp-base.json,reports/trial	history
+out/boot-elden-vk138-q28disp.img	85352448	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.2.0-debug-vk64-gd02658e63cf6; reports/q28-disp-init-ab-20261022.md,reports/trials/20261022T115813Z-q28disp-exp.json,reports/trials/20261022T120316Z-q28disp-exp.json,reports/trials/20261022T120604Z-q28disp-exp.json,reports/trials/20261022T120827Z-q28disp-exp.json,reports/trials/20261022T121124Z-q28disp-exp.json,reports/trials/202	history
+out/boot-elden-vk139-q28only0155.img	85352448	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.2.0-debug-vk64-gd02658e63cf6; reports/trials/20261022T121830Z-q28disp-0155only.json,reports/trials/20261022T122221Z-q28disp-0155only.json,reports/trials/20261022T122554Z-q28disp-0155only.json,reports/trials/20261022T122915Z-q28disp-0155only.json,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk140-q28disp73.img	85590016	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-00002-g24223e44ad80-dirty; reports/trials/20261022T123756Z-q28disp-exp73.json,reports/trials/20261022T124215Z-q28disp-exp73.json,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk141-q28disp73.img	85590016	1	2026-10-22		identical to boot-elden-vk142-q28disp73dt.img (sha 10a38c4e7bab); reports/trials/20261022T124410Z-q28disp-exp73.json,reports/trials/20261022T124708Z-q28disp-exp73.json,versions/vk-kernel-identity.tsv	dupe
+out/boot-elden-vk142-q28disp73dt.img	85590016	1	2026-10-22		identical to boot-elden-vk141-q28disp73.img; reports/trials/20261022T133104Z-q28disp-exp73.json,versions/vk-kernel-identity.tsv	dupe
+out/boot-elden-vk143-q28-73-0155only.img	85590016	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; reports/trials/20261022T125557Z-q28disp-0155only73.json,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk144-q28only0154.img	85352448	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.2.0-debug-vk64-gd02658e63cf6; reports/trials/20261022T133759Z-q28disp-0154only.json,reports/trials/20261022T133912Z-q28disp-0154only.json,reports/trials/20261022T134013Z-q28disp-0154only.json,reports/trials/20261022T134125Z-q28disp-0154only.json,reports/trials/20261022T134256Z-q28disp-0154only.json,versions/vk-kernel-identity.ts	history
+out/boot-elden-vk145-q28daily.img	85590016	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; reports/trials/20261022T134710Z-q28disp-daily73.json,reports/trials/20261022T134823Z-q28disp-daily73.json,reports/trials/20261022T135038Z-q28disp-daily73.json,reports/trials/20261022T135144Z-q28disp-daily73.json,reports/trials/20261022T135303Z-q28disp-daily73.json,reports/trials/20261022T135413Z-q28	history
+out/boot-elden-vk146-BADSUSPEND.img	85712896	1	2026-10-22		kernel-unreadable (versions/vk-kernel-identity.tsv); DEVICE/README.md,TASKS/sessions/2026-10-23-刷屏根因模块树ABI与kexec复跑.md,reports/kexec-vk147-display-inherit-20261023.md,reports/uefi-ddr-blackbox-20261101.md,versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	stale
+out/boot-elden-vk147.img	85590016	1	2026-10-22		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; DEVICE/README.md,TASKS/sessions/2026-10-23-vk152日用载具与kexec复跑.md,TASKS/sessions/2026-10-23-刷屏根因模块树ABI与kexec复跑.md,reports/kexec-vk147-display-inherit-20261023.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk148.img	85352448	1	2026-10-23		in versions/vk-kernel-identity.tsv uts=7.2.0-debug-vk64-gd02658e63cf6; TASKS/README.md,reports/q24-syncarm-build-20261023.md,reports/q24-syncarm-test-20261023.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk149.img	85352448	1	2026-10-23		in versions/vk-kernel-identity.tsv uts=7.2.0-debug-vk64-gd02658e63cf6; TASKS/README.md,reports/q24-retention-rootcause-20261023.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk150-q28v2.img	85590016	1	2026-10-23		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; TASKS/sessions/2026-10-23-Q28v2-MDSS复位搬到display侧.md,reports/q28-v2-mdss-reset-20261023.md,reports/trials/20261023T115448Z-q28disp-v2.json,reports/trials/20261023T115748Z-q28disp-v2.json,reports/trials/20261023T120044Z-q28disp-v2.json,reports/trials/20261023T120303Z-q28disp-v2.json,reports/trials/202	history
+out/boot-elden-vk151.img	85585920	1	2026-10-23		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; TASKS/sessions/2026-10-23-vk152日用载具与kexec复跑.md,reports/vk151-daily-candidate-20261023.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk152.img	85590016	1	2026-10-23		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; TASKS/sessions/2026-10-25-f2fs路线A落地.md,TASKS/sessions/2026-10-25-用户态固化与迁移前置.md,reports/g0-fstype-zero-write-20261025.md,reports/trials/20261023T145818Z-q28por-r1/README.txt,reports/trials/20261023T145819Z-q28por-r1.json,reports/trials/20261023T151810Z-q28por-r2.json,reports/trials/20261023T151810Z-q	history
+out/boot-elden-vk153.img	22032384	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+; reports/kexec-target-boots-20261024.md,versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-vk154.img	22032384	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+; versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-vk155.img	22032384	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+; versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-vk156.img	22032384	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+; versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-vk157.img	22036480	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+; versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-vk158.img	22036480	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+; versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-vk159.img	22032384	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk161.img	22032384	1	2026-10-24		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+; reports/audit-20261029-pending-consistency.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk162-fstype.img	85557248	1	2026-10-25		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; DEVICE/README.md,TASKS/sessions/2026-10-25-用户态固化与迁移前置.md,reports/g0-fstype-zero-write-20261025.md,reports/userland-service-consolidation-20261025.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk162-rescue.img	85590016	1	2026-10-25		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty; DEVICE/README.md,TASKS/sessions/2026-10-25-用户态固化与迁移前置.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk163.img	85811200	1	2026-10-25		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; DEVICE/README.md,TASKS/README.md,TASKS/sessions/2026-10-26-vk163真POR与启动时延.md,TASKS/sessions/2026-10-26-驱动模块化落地与Mobian物料.md,reports/tf-g16-retest-20261026.md,reports/trials/20261026T070115Z-tf-g16-card2-3r.json,reports/vk163-modular-20261026.md,versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-vk164-debianroot.img	85811200	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; TASKS/sessions/2026-10-26-M6上机未收口-switch_root断点.md,reports/m6-debian-candidate-boot-nousb-20261026.md,reports/uefi-migration-interface-20261026.md,versions/vk-kernel-identity.tsv,versions/vk-registry.tsv	history
+out/boot-elden-vk165-earlygadget.img	85815296	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk166-dbg.img	85819392	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk167-trace.img	85819392	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk168-ramprobe.img	85819392	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk169-trace2.img	85819392	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk170-trace3.img	85815296	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk171-swrerr.img	85819392	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163; reports/m6-debian-candidate-boot-nousb-20261026.md,reports/m6-switch-root-breakpoint-resolved-20261026.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk172.img	84525056	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; TASKS/README.md,reports/trials/20261027T120121Z-m4-skewcal-armA-0x54.json,reports/trials/20261027T120121Z-m4-skewcal-armB-0x00.json,reports/vk172-modular-v2-build-20261026.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk173.img	84525056	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; DEVICE/README.md,reports/vk172-modular-v2-build-20261026.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk174.img	84520960	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; reports/m6-switch-root-breakpoint-resolved-20261026.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk175.img	84520960	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; reports/m6-switch-root-breakpoint-resolved-20261026.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk176.img	84525056	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk177.img	84525056	1	2026-10-26		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; DEVICE/README.md,TASKS/sessions/2026-10-27-C3-PI取证与设备回Debian根.md,reports/debian-root-accounts-sensors-20261026.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk178-b5verify.img	84525056	1	2026-10-27		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; reports/b5-step4-master-from-cfg-20261027.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk179-b5step4a.img	84525056	1	2026-10-27		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; reports/audit-20261029-pending-consistency.md,reports/b5-step4-master-from-cfg-20261027.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk180-b5step4b.img	84525056	1	2026-10-27		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; reports/audit-20261029-pending-consistency.md,reports/b5-step4-master-from-cfg-20261027.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk181-daily.img	84520960	1	2026-10-28		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; DEVICE/README.md,TASKS/README.md,TASKS/sessions/2026-10-29-camss-v3上机复验（完成）.md,reports/audit-20261029-crossdoc.md,reports/audit-20261029-pending-consistency.md,reports/b5-step4-master-from-cfg-20261027.md,reports/doc-audit-20261030-v2.md,reports/doc-audit-20261030.md,reports/m4-camss-v3-20261029.md,	history
+out/boot-elden-vk182-camssv3.img	84520960	1	2026-10-29		in versions/vk-kernel-identity.tsv uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172; DEVICE/README.md,TASKS/sessions/2026-10-29-camss-v3上机复验（完成）.md,reports/audit-20261029-pending-consistency.md,reports/m4-camss-v3-20261029.md,versions/vk-kernel-identity.tsv	history
+out/boot-elden-vk183-fastrpc.img	84525056	1	2026-10-30		current on-device kernel source image; DEVICE/README.md,reports/m3v5-onboard-plan-20261030.md,reports/trials/20261031T073414Z-vk183-daily-por-r1.json,versions/vk-kernel-identity.tsv	keep
+out/boot-elden-vk64.img	85352448	1	2026-10-20		in versions/vk-kernel-identity.tsv uts=7.2.0-debug-vk64-gd02658e63cf6; TASKS/sessions/2026-10-20-资源准备-Q24台架与suspend诊断.md,reports/host-file-corruption-20261020.md,reports/local-cleanup-audit-20261010.md,reports/q24-n5-vk64-death-reproduced-20261015.md,reports/q24-n5b-20261023.md,reports/q24-n7-vk127-20261017.md,reports/q24-q28-narrative-archive-20261019.md,reports/q24-s	history
+out/boot-elden.img	88260608	1	2026-10-31		identical to boot-elden-m3v5-onboard-b.img (sha a144e5ce1b37); TASKS/sessions/2026-10-23-vk152日用载具与kexec复跑.md,TASKS/sessions/2026-10-26-文档资料审计.md,TASKS/sessions/2026-10-27-三lane收口与mod-loop假成功修复.md,reports/audit-20261029-pending-consistency.md,reports/doc-audit-20261026.md,reports/local-cleanup-audit-20261010.md,reports/m1-73-onboard-image-20261013.md,reports/m8	dupe
+out/dtbo-dummy.img	4096	1	2026-10-31		in versions/vk-kernel-identity.tsv uts=(无内核载荷); reports/audit-20261029-pending-consistency.md,reports/m1-73-onboard-image-20261013.md,reports/tidy-20261010/cleanup-candidates.md,versions/vk-kernel-identity.tsv	history
+archive/	2183206	13			retired scripts/plans/topics archive	keep
+probes/	2417349	5			one-off probe scripts	keep
+patches/	11841109	107			kernel patches + history series (7 variant dirs with duplicated series)	keep
+dl-cam/	2745503645	23			camera bring-up source (AOSP/donor)	keep
+stock-src/	2105289516	3			stock kernel sources	keep
+reference/	5623678	11			external reference repos (gunyah etc.)	keep
+waydroid-ota/	1350	2			waydroid OTA stubs	keep
+rootfs/	609267	25			rootfs build scripts + debian overlay	keep
+backup/	3371490396	25			device/stock backups (GPT, fw, slots)	keep
+env-pass/	3443814333	3			env snapshot? large, NOT inspected in detail	keep
+geekidos-linux/	2825076578	43			geekidos distro tree	keep
+y700四代工具/	283028906	4			lenovo tools	keep

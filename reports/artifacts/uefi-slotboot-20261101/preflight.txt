@@ -1,0 +1,45 @@
+== uname
+7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+== boot_b sha (96M readback)
+fb55997c524ea26201841b5fdcc657c011423c7049766f7e36d5d994b3c35169  -
+== slots
+Active slot: _b
+SLOT _a: is marked bootable
+SLOT _b: is marked bootable
+SLOT _a: is marked successful
+SLOT _b: is marked successful
+== boot_id
+d197d5fb-f807-4e68-8fc0-4513892d1fbc
+== logfs first bytes
+e249506c8464e346645e4d609304dce753e639d91032165fea565a252c597d6f  -
+gpt_disk_commit: Invalid args
+update_slot_attribute: Failed to commit disk
+SLOT _a: Failed to set as unbootable
+SLOT _a: is marked bootable
+Active slot: _b
+rc=1
+qbootctl: qcom bootctrl HAL port for Linux
+-------------------------------------------
+qbootctl [-c|-m|-s|-u|-b|-n|-x] [SLOT]
+
+    <no args>        dump slot info (default)
+    -h               this help text
+    -c               get the current slot
+    -a               get the active slot
+    -b SLOT          check if SLOT is marked as bootable
+    -n SLOT          check if SLOT is marked as successful
+    -x [SLOT]        get the slot suffix for SLOT (default: current)
+    -s SLOT          set to active slot to SLOT
+    -m [SLOT]        mark a boot as successful (default: current)
+    -u [SLOT]        mark SLOT as unbootable (default: current)
+    -i               still write the GPT headers even if the UFS bLun can't be changed (default: false)
+SLOT _a: is marked bootable
+Current slot: _b
+SLOT _a:
+	Active      : 0
+	Successful  : 1
+	Bootable    : 1
+SLOT _b:
+	Active      : 1
+	Successful  : 1
+	Bootable    : 1
