@@ -133,6 +133,24 @@ def cmd_read(args):
         print("  位平面字段全 0 ⇒ 没有 fault 记录（更支持看门狗/超时复位）")
 
 
+def cmd_poke(args):
+    """把选定的 stage 页从 Linux 侧填成 0xFF（对照实验用：证明「marker 会不会被回落启动清掉」）。"""
+    stages = [int(x) for x in args.stages.split(",")]
+    skip = 0
+    script = []
+    for k in stages:
+        script.append("dd if=/dev/zero bs=4096 count=1 seek=%d conv=notrunc 2>/dev/null" % (k + skip))
+    # 直接在设备上生成 0xFF 页并写到对应偏移
+    cmd = ("rmmod blackbox 2>/dev/null; insmod /lib/modules/$(uname -r)/extra/blackbox.ko pa=%s size=%d 2>/dev/null; "
+           "tr '\\0' '\\377' < /dev/zero | dd of=/tmp/ffpage bs=4096 count=1 2>/dev/null; "
+           % (args.pa, args.window))
+    for k in stages:
+        cmd += ("dd if=/tmp/ffpage of=/sys/kernel/debug/blackbox bs=4096 seek=%d conv=notrunc 2>/dev/null; " % k)
+    cmd += "rm -f /tmp/ffpage; echo poked"
+    print(ssh(args.target, cmd).decode().strip())
+    print("已把 stage %s 页填 0xFF（对照用）" % stages)
+
+
 def cmd_raw(args):
     win = read_window(args.target, args.pa, args.window)
     open(args.path, "wb").write(win)
@@ -168,6 +186,10 @@ def main():
         sp = sub.add_parser(name)
         sp.add_argument("--pa", default=argparse.SUPPRESS)      # 允许写在子命令后
         sp.set_defaults(fn=fn)
+    sp = sub.add_parser("poke")
+    sp.add_argument("--stages", default="1,2,4")
+    sp.add_argument("--pa", default=argparse.SUPPRESS)
+    sp.set_defaults(fn=cmd_poke)
     p = sub.add_parser("raw")
     p.add_argument("path")
     p.add_argument("--pa", default=argparse.SUPPRESS)

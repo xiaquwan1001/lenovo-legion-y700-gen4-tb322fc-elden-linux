@@ -180,3 +180,28 @@ ABL 对 `fastboot boot` 的接受/拒绝存在**非确定性**（或依赖 sessi
 Linux 起来后 `/proc/cmdline` 会带该标记；若起来的是槽位镜像，标记不会出现 —— 这条能一锤定音区分
 「ABL 完全不执行 fastboot 镜像」与「只对 UEFI 类载荷不执行」。
 实测该发返回 `Booting OKAY [10.109s]`（拒绝口径），随后设备又一次进入 USB 全静默（#368 状态），需物理断电后复核 cmdline。
+
+---
+
+## §8 15:45 现场：第三类终态「ABL 自己挂死在 logo」
+
+`fastboot boot /tmp/fbtest.img`（82 MB，带唯一 cmdline `elden_fbtest=1`）：
+ABL 回 `Booting OKAY [10.109s]`，随后 **USB 全静默**（`lsusb` 无设备、fastboot/adb 均不枚举），
+用户目视**屏上停在联想 logo 不动**（不是「掉电重启」，是「挂住」）。
+
+⇒ 这坐实了 `fastboot boot` 的第三类终态（见 `PITFALLS` #481）：ABL 在加载/解压/校验这一步自己挂死，
+既不回落也不重启。历史上把它并进了「交棒（HANDOFF）」，于是把「ABL 挂死」误读成「载荷开始执行」。
+
+**本发现对文档的影响**：
+1. 「交棒/不交棒」二值判据不再够用，必须升级为三态：**拒（fastboot 仍应答）/ 复位回落（~20 s 后 Android 重现）/ 挂 logo（再也不回来）**。
+2. 任何「载荷跑没跑」的结论**必须来自独立通道**（DDR 标记 / UART / EUD-SWD / 屏上输出），
+   `usb_read failed` 只是「ABL 接手了」。
+3. 82 MB 级别的镜像走 `fastboot boot` 会让 ABL 挂死 ⇒ 该路径不适合承载「Linux 内核 + 大 ramdisk」，
+   更不适合做临时读取通道。
+
+## §9 附带发现（主机侧，与本线无关但应处理）
+
+`out/` 里有 **3 个 boot 镜像的内核段解压 CRC 坏**（GZIP `-3`）：`boot-elden-dtbo3.img`（2026-10-25）、
+`boot-elden-gh612b.img`（2026-10-25）、`boot-elden-vk146-BADSUSPEND.img`（2026-10-22）。
+说明当时写盘/构建就已损坏（mtime 都是创建时），`versions/vk-kernel-identity.tsv` 的 `kernel-unreadable`
+标记能抓到它们 —— 建议重出或从 `out/` 移除，避免以后被当成「载荷/配置变量」误用。

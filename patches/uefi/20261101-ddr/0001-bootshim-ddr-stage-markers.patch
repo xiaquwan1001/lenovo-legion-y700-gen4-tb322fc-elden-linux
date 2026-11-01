@@ -1,18 +1,15 @@
 diff --git a/BootShim/BootShim.S b/BootShim/BootShim.S
-index 76dcb4f9..31f9bb8b 100644
+index 76dcb4f9..a321b54c 100644
 --- a/BootShim/BootShim.S
 +++ b/BootShim/BootShim.S
-@@ -34,6 +34,29 @@ _StackSize:
+@@ -34,6 +34,27 @@ _StackSize:
  	.long 0
  
  _Start:
-+/* ---- DDR 黑匣子 stage 标记（2026-11-01，--shim ddrmarks）----
-+   单调编码：整页填 0xFF = 「到过该 stage」，读侧按 popcount>=6 字节占比判
-+   （本机 DDR 复位后约 26-32% 字节只发生 1->0 翻转，见 reports/uefi-ddr-blackbox-20261101.md）。
-+   落回 Android 时只有这两块 carveout 实测「不被 Android 踩」（13:37 对照）：
-+     0xFEF00000  splash_region 尾部  0x89300000  dsm-partition-2
-+   stage 页号：1=shim 入口 2=FD 拷完 4=即将跳入 FD。
-+   注意：先写 splash 尾部，因为写 oem-vm(0xF7D00000) 会立刻复位（疑似受 Gunyah 保护）。 */
++/* DDR 黑匣子 stage 标记（2026-11-01 第三版）：Android 回落实测**不清**的三块 carveout
++   （dsm-partition-1 / video / dsm-partition-2，存活率 77-88%），按「最不易受保护」顺序写：
++     0x84A00000 dsm1 -> 0x9C300000 video -> 0x89300000 dsm2
++   单调编码：整页 0xFF = 到过该 stage。stage：1=shim 入口 2=FD 拷完 4=即将跳入 FD。 */
 +#define BB_MARK_REG(base, stage)                          \
 +	movz	x7, #((base) & 0xffff);                   \
 +	movk	x7, #(((base) >> 16) & 0xffff), lsl #16;  \
@@ -25,14 +22,15 @@ index 76dcb4f9..31f9bb8b 100644
 +	subs	w10, w10, #1;                             \
 +	b.ne	1b
 +#define BB_MARK(stage)                                    \
-+	BB_MARK_REG(0xFEF00000, stage);                   \
++	BB_MARK_REG(0x84A00000, stage);                   \
++	BB_MARK_REG(0x9C300000, stage);                   \
 +	BB_MARK_REG(0x89300000, stage)
 +
 +	BB_MARK(1)
  	mov		x4, x1
  	ldr		x5, _StackBase
  	cmp		x4, x5
-@@ -45,9 +68,31 @@ _CopyLoop:
+@@ -45,9 +66,31 @@ _CopyLoop:
  	stp		x2, x3, [x5], #16
  	subs	x6, x6, #16
  	b.ne	_CopyLoop

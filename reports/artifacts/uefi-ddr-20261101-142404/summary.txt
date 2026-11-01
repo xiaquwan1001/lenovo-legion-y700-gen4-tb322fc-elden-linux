@@ -1,0 +1,8 @@
+label=ddrmarks-a image=reports/artifacts/uefi-ddr-20261101/clean2/uefi-v0.img sha=423188a02f2cc9bf out=reports/artifacts/uefi-ddr-20261101-142404
+--- shot 1/3 ---
+  verdict=REJECT  abl='Sending 'boot.img' (2384 KB)                       OKAY [  0.055s] Booting                                            FA'
+--- shot 2/3 ---
+  verdict=REJECT  abl='Sending 'boot.img' (2384 KB)                       OKAY [  0.055s] Booting                                            FA'
+--- shot 3/3 ---
+  verdict=REJECT  abl='Sending 'boot.img' (2384 KB)                       OKAY [  0.055s] Booting                                            FA'
+== 真正交棒 0/3 发 ==
