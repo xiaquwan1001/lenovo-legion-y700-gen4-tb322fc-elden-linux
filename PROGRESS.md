@@ -81,10 +81,15 @@
 | 2026-10-29 | **M4 camss v3 上机复验 = 无回归**（镜像 `vk182-camssv3`，父会话执行）：前摄 90 帧 30.25 fps rc=0、后摄 90 帧 30.01 fps rc=0，dmesg `camss|csid` **0 条**、`BUG/WARNING/lockdep` **0 条**；但 sashiko #4 [High]「多 RDI 累积位」**未被判别**（两路走不同 CSID 实例）。同日出**上游 v6 对照**（v6 8/8、重叠 5/9、0004 与 v6 5/7 函数名 15/15 全同）⇒ 推荐 **C→B**：先 3 句回信定调，落地只发 0007/0003/0006。过程代价：自建 boot.img 前三刷「USB 整个消失」，真因三条硬条件（`elden_early_gadget=1` / ramdisk 必须是可用那份 / UTS 必须匹配 `/lib/modules`）⇒ `PITFALLS #468` | 
 | 2026-10-29（晚） | **双口充电实测定案 + 上游两系列投递**：① 只留短边 PD 时电池 **0.199→12.21 A**（`capacity` 19%→27%，≈46 W），两口同插只吃长边 SDP 0.891 A；内核逐口建模但 `qcom-battmgr-usb` 只读跟随被 ADSP 选中的那口 ⇒ **归因固件选口策略**（事实正文 `DEVICE` §1.4、`TASKS` Q35）；② `[PATCH 0/3] media: camss: three fixes …` 与 `[PATCH v2 0/3] drm/msm/mdss: reset all MDSS block resets …` 各 4 封 250、lore `/all/` 各 4/4 归档；③ M8 撤回收尾信退信后**重投 Michael Turquette**；④ M8 v2 投前修掉 binding 的 `maxItems` 违反 dtschema meta 规则（改 `minItems: 1`，两态 `dt-validate` 实测）⇒ `PITFALLS #470` |
 | 2026-10-29 | **camss 线程回信已发**（`<179325717815.489400.16602455641444097904@mail.ustc.edu.cn>`，lore `/linux-media/` 命中）：发送前发现上游最新是 **`[PATCH v23 00/15] media: qcom: camss: Add Kaanapali support`**（Hangxiang Ma，10-28），其 changelog 明写「Replace the CSID AUP/RUP union with separate reg_update/addr_update field pairs」= 与我方 0004 同处 ⇒ **主动放弃 0001/0002/0004/0005/0008/0009**，只保留 0007/0003/0006 三枚通用修复待 rebase 后单发。教训 `PITFALLS #469`（对照上游要取最新 revision，重合点常只写在 cover 的 changelog 里） | 
-
+| 2026-10-30 | **传感器（G1-34）修好并上机**：根因不是库版本而是「修复从未进镜像」——`fastrpc` 里的 DT 改动只活在未提交工作区 ⇒ 抽成独立 DT commit 重编 | `HasAccelerometer/AmbientLight/Proximity` 三真、`ssccli` 出真值；`TASKS/README.md` §1 G1-34、`reports/code-style-and-duty-overlap-audit-20261030.md` C-01 |
 | 2026-10-31 | **平板单 Linux 分区扩容落地**：删 `linux18`（Alpine 回退根）→ `linux17` 扩到 **192 GiB**（起始扇区 73277435 未变），在线 `partx -u` + `resize2fs`，重启复验 `/` = 188 G（可用 163 G）；GPT 双表 + `sgdisk --backup` 留档。踩坑：`sgdisk --new` 默认 2 扇区对齐把奇数起点挪 +1（ext4 会挂不上）⇒ `PITFALLS #473` | `DEVICE/README.md §3.3`、`backup/gpt-20261031/` |
 | 2026-10-31 | **上游批次（用户按批放行）**：wl2868c **v3 0/3** 与 camss **v2 0/2** 各 3–4 封 250、lore 命中；两封回 Krzysztof（wl2868c 逐条答复 + 8 条 consumer 证据；camss 线程重锚定），开头均如实披露「AI 辅助起草、内容与决定由本人负责」；patchwork 9 枚旧件标 `superseded`；Shuai Liu 的 icc 表 finding 转成 fix 素材（binding+DTS 收敛到驱动实际投票的 2 条，**归属 Hangxiang，不投递**） | `reports/m4-camss-v2-20261031.md`、`reports/camss-icc-table-fix-20261031.md`、`patches/upstream/{m4-camss-v2-20261031,camss-icc-20261031}/` |
 | 2026-10-31 | **平板夜间通道可用**：平板（Debian sid/arm64）装 git 2.55 / node 24.22 / pi 1.4.0 / ble.sh，模型走直连 USTC（主机 litellm 不可用时自动切换）；仓库 clone + PAT + 会话 617 M 同步；`pi-tablet-night.timer` 23:00 跑 6 个低 CPU 任务（文档审计/邮件分诊/补丁备料/日志分析/证伪复核/SSOT 并入草案），只推 `tablet/<task>` 分支；runner 冒烟 `done=1 rc=0` | `reports/tablet-{dev-env,offload-plan}-20261030.md`、`.pi/plans/tablet-*` |
+| 2026-10-31 | **`vk183-fastrpc` 转正为日常件**：用户物理断电做真 POR | Q28 七项计数全 0、1639 个 `.ko`、失败单元 0、传感器出 `face-up`；`reports/trials/20261031T073414Z-vk183-daily-por-r1.json` |
+| 2026-10-31 | **UEFI `E1-v0b` 上机 = 不交棒**（证伪「含 UFSDxe 就会交棒」，零写盘） | 60/60 s 采样恒为 `18d1:d00d`、同一 bus/device ⇒ 从未离开 ABL；`reports/uefi-e1-v0b-onboard-20261031.md` |
+| 2026-11-01 | **「只能进 fastboot」事故闭环**：U2 一度无 Android/ssh/adb | 真根因 = **引导固件代次与 A/B 槽脱钩**（`*_a`+LUN1 = 259 原厂 UEFI、`*_b`+LUN2 = 上一版），ABL 按活动槽选 boot LUN ⇒ `fastboot --set-active` 另一槽，双向复现；`reports/uefi-slotboot-stuck-fastboot-20261101.md`、`PITFALLS #484/#485` |
+| 2026-11-01 | **DDR 取证通道打通 + 硬结论：本机 DRAM 跨复位不保真** | 1 MiB 写 `0xA5`，热复位后 26–32% 字节 1–3 bit 翻转（几乎全 1→0）；判据必须改用单调编码；`reports/uefi-ddr-blackbox-20261101.md` §0/§2 |
+| 2026-11-02 | **UEFI「载荷到底有没有被执行」四臂判别 = 四臂全 0**，并撤回一条错判 | A1/A2/A3 的 `stage1` 全 0；中途「A3 挂死=被执行」经现场证实为**回落 Android**；新事实：`a` 槽 `unbootable` 只挡一次，ABL 会自己换槽并清位；`reports/uefi-ddrcut-fallback-20261101.md` §6-A/§6-D、`PITFALLS #487` |
 ---
 
 ## 2. 当前完成度（诚实版）
@@ -202,7 +207,7 @@
    `reports/gunyah-roadmap-20261021.md`。UEFI：用 `~/下载/tb322fc/*.elf` 逆向运行期注册表（不重下 1 G Mu）+ 回帖 issue #12；
    Gunyah：阶段 0 零成本探测 + 上游现状复核。产出 = 各项「可不可重启 / 立不立项」定性 + 最小成本账。
    **2026-10-24 用户裁决：WoaA 走纯 Linux（Gunyah 自建栈），Android/AVF 只作材料参考，最终不保留 Android 分区**（详见 `TASKS` §4 N1/N2）。**首轮已出（`reports/uefi-gunyah-reassess-20261024.md`）**：
-   UEFI 维持搁置（issue #12 追问 0 回复；厂商 DXE 在 XBL 打包体里，取证成本反升）；**Gunyah 阶段 0/0b 阳性**
+   UEFI（G1-29）：**路线 A 首轮（2026-10-05）失败后搁置 → 2026-11-01 用户放行恢复推进**；当前口径与四臂判别只读 `TASKS/README.md` §5。~~厂商 DXE 在 XBL 打包体里~~（**2026-10-24 已作废：厂商 UFSDxe 就在 `uefi.elf` 内嵌 FV 中**，见 `TASKS` §4 N1 纠正块）；**Gunyah 阶段 0/0b 阳性**
    （`gunyah-wdt` 在 + 自编 `gunyah_wdt.ko` probe 通 ⇒ 本机确实在 Gunyah 下且 SMCCC 通道可用，`reports/gunyah-stage0-positive-20261024.md`）。
    **★2026-10-25 终局：Gunyah 子 VM 结项 = 不可行（用户定 C）** —— RM 建 VM 恒 `VM_INIT 0xA MEM_INVALID`，
    对 DTB/内存模型（含整块急切 LEND）/驱动代次（6.6、6.12、厂商内核同 harness）全不敏感；厂商可用路径依赖主线没有的

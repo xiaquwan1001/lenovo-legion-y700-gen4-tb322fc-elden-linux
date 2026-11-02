@@ -1,0 +1,16 @@
+# 2026-11-02# 2026-11-02 静默损坏记录（来源：commit 996ae48 的 versions/vk-kernel-identity.tsv）
+# 现象：两枚 out/*.img 的 boot header 结构正常、偏移 4096 处有 gzip magic，但 zlib 解压报
+#   "incorrect data check"（CRC 校验失败）；文件 sha256 与其 manifest 的 image_sha256 不符，
+#   而 mtime 未变（vk155 = 10-24 14:12，m3v5-onboard-b = 10-31 10:23）。
+# 实测：
+#   sha256(out/boot-elden-vk155.img)          = 8eef9acad8dc82b6c345760250525211b175691affb56e556658b331fb24216b
+#     manifest image_sha256                    = 933e4786ab50e25059e850c8d182aac91eb55f0bbfb04f1d66c6f9268dc2a096
+#   sha256(out/boot-elden-m3v5-onboard-b.img) = bde9f88dda1476e8163f48e0877c88c8f6a63ccd10d6a6113d9da6f76b4c3e42
+#     manifest image_sha256                    = a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3
+# 影响：无法再据这两枚镜像做构建身份判断（check-doctor §5d 每轮 WARN 报出）。
+# 处置：身份表按当前实际重生成（两行标 kernel-unreadable）；下表为损坏前的历史行，保留备查。
+#   重建或删除镜像后，本节与其 WARN 一并收口。
+#
+# ---- 损坏前的历史行（commit 996ae48）----
+m3v5-onboard-b	boot-elden-m3v5-onboard-b.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	c4e884ada929	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173	34865c8915bf	clean	tree_head_diff|kbin_shared3|uts_dup12
+vk155	boot-elden-vk155.img	vk155	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+	82e5c4b2cc43	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173	24223e44ad80	dirty	num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup8
