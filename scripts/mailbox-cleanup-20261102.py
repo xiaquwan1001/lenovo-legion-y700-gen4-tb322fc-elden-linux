@@ -245,13 +245,24 @@ def cmd_classify(args):
     m.logout()
 
 
+def live_delete_uids(m, folder):
+    """按当前规则重算要删的 UID（不依赖 classify-state.json，避免拿上次的旧 UID 空转）。"""
+    return [uid for f, uid, mid, klass, reason in iter_classified(m, folder) if klass == 'DELETE']
+
+
 def cmd_delete(args):
     m = connect()
-    st = load_state(m)
     batches = 0
     total_del = 0
+    # 2026-11-02 修：默认按当前规则**重算**（旧的 classify-state 会让每周任务重复上报
+    # 「deleted=6035」而 remaining 不变）；需要复用上次分类时显式 --from-state。
+    st = None if not getattr(args, 'from_state', False) else load_state(m)
     for folder in ['Junk E-mail', 'Trash', 'INBOX']:
-        uids = [s for s, _ in st['folders'].get(folder, [])]
+        if st is not None:
+            uids = [u for u, _ in st['folders'].get(folder, [])]
+        else:
+            uids = live_delete_uids(m, folder)
+            print(f'{folder}: live-classified delete={len(uids)}')
         if not uids:
             continue
         typ, cnt = m.select(f'"{folder}"', readonly=False)
@@ -264,7 +275,9 @@ def cmd_delete(args):
                 typ, _ = m.uid('STORE', uidset, '+FLAGS', '(\\Deleted)')
                 assert typ == 'OK', f'STORE failed {folder} {uidset}'
                 m.expunge()
-                total_del += len(chunk)
+                typ, left = m.uid('FETCH', uidset, '(UID)')
+                survivors = sum(1 for it in left if isinstance(it, tuple))
+                total_del += len(chunk) - survivors
             batches += 1
             typ, cnt = m.select(f'"{folder}"')
             remaining = int(cnt[0])
@@ -290,6 +303,8 @@ def main():
     g.add_argument('--classify', action='store_true')
     g.add_argument('--delete', action='store_true')
     ap.add_argument('--dry-run', action='store_true')
+    ap.add_argument('--from-state', action='store_true',
+                    help='复用上次 --classify 的 UID 计划（默认按当前规则重算）')
     ap.add_argument('--recent-days', type=int, default=None,
                     help='覆盖「非我方邮件保留天数」窗口（默认 45；配合 --aggressive 用 7）')
     ap.add_argument('--aggressive', action='store_true',

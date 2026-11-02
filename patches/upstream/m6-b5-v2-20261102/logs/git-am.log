@@ -1,0 +1,36 @@
+# git am gate: base 6628e7d4c6, 4 patches in order
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+6628e7d4c6 Linux 7.4-rc1
+应用：drm/msm/dsi: add per-SoC bonded command-path config
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+应用：drm/msm/dsi: add the bonded command broadcast host ops
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+应用：drm/msm/dsi: route bonded commands through the DSI manager
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+应用：drm/msm/dsi: reject bonded commands issued on the peer link
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+warning: filtering not recognized by server, ignoring
+fatal: 远程错误：upload-pack: not our ref 4c152950a2474b8228277bb955e2a51d25f9525e
+am_rc=0
+3e383ed7e8 drm/msm/dsi: reject bonded commands issued on the peer link
+594760b07f drm/msm/dsi: route bonded commands through the DSI manager
+3baae1cfb2 drm/msm/dsi: add the bonded command broadcast host ops
+458e8b8a45 drm/msm/dsi: add per-SoC bonded command-path config
+6628e7d4c6 Linux 7.4-rc1

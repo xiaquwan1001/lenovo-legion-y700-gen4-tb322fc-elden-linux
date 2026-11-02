@@ -1,0 +1,276 @@
+From 76ec90f0fd8001c1587753d8850fdeb7e34fca36 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 2 Nov 2026 17:29:00 +0800
+Subject: [PATCH 1/4] drm/msm/dsi: add per-SoC bonded command-path config
+
+A bonded DSI pair can carry one command over both links: the controller
+stages the packet in both DMA engines and starts them together, with the
+broadcast bit set and one link acting as master for completion.
+
+The registers that implement this are described in dsi.xml, but nothing
+in the driver uses them, so the broadcast bit, the master bit, the DMA
+FIFO watermark controls, the DMA schedule registers and the two v2.9
+command-DMA controls are missing from the generated header. Describe them
+again together with the code that will consume them.
+
+The values a bonded transfer needs are controller facts, not command
+facts: the error bits masked around a command, the sticky FIFO bits
+cleared afterwards, the bits the packet is staged with and the peer poll
+budget. Put them in the existing per-SoC table, next to the regulators and
+bus clocks, behind a NULL pointer that every other SoC leaves unset.
+
+SM8750 reports the same 6G v2.9 revision as SM8650, so the revision alone
+cannot pick this data. Add an optional compatible to the handler table and
+let a compatible match take precedence over the revision; SM8750 gets its
+own entry, SM8650 keeps the plain one with bonded == NULL.
+
+The FIFO error bits are named rather than spelled as magic numbers: the
+FIFO_STATUS side has public names in dsi.xml, the ERR_INT_MASK0 side does
+not, so its layout is written out and the grouping is attributed to the
+vendor driver's mask_error_intr().
+
+No functional change: no SoC selects this data yet.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/dsi/dsi_cfg.c             | 76 ++++++++++++++++++-
+ drivers/gpu/drm/msm/dsi/dsi_cfg.h             | 25 +++++-
+ drivers/gpu/drm/msm/dsi/dsi_host.c            |  2 +-
+ drivers/gpu/drm/msm/registers/display/dsi.xml | 21 +++++
+ 4 files changed, 121 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.c b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+index da3fe68244..1109e7465b 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.c
+@@ -4,6 +4,7 @@
+  */
+ 
+ #include "dsi_cfg.h"
++#include "dsi.xml.h"
+ 
+ static const char * const dsi_v2_bus_clk_names[] = {
+ 	"core_mmss", "iface", "bus",
+@@ -194,6 +195,60 @@ static const struct regulator_bulk_data sm8650_dsi_regulators[] = {
+ 	{ .supply = "vdda", .init_load_uA = 16600 },	/* 1.2 V */
+ };
+ 
++/*
++ * FIFO error bits of ERR_INT_MASK0. dsi.xml does not describe the layout of
++ * that register, so the mask is spelled out: bits 20:16 cover the high speed
++ * FIFO overflow group (bits 16:19 are the DLN0..DLN3 overflows, bit 20 belongs
++ * to the group but carries no public name) and bit 9 is the command DMA FIFO
++ * underflow. The grouping is taken from the vendor driver, which masks exactly
++ * these bits as one FIFO error group in mask_error_intr().
++ */
++#define DSI_ERR_INT_MASK0_FIFO_OVERFLOW\
++			GENMASK(20, 16)
++#define DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW\
++			BIT(9)
++#define DSI_ERR_INT_MASK0_FIFO_ERRORS\
++			(DSI_ERR_INT_MASK0_FIFO_OVERFLOW |\
++			 DSI_ERR_INT_MASK0_CMD_DMA_FIFO_UNDERFLOW)
++
++/*
++ * Matching sticky FIFO_STATUS bits, write-1-to-clear. Unlike the mask above,
++ * these have public names in dsi.xml: the command DMA FIFO underflow and the
++ * DLN0..DLN3 high speed FIFO overflows.
++ */
++#define DSI_FIFO_STATUS_FIFO_ERRORS\
++			(DSI_FIFO_STATUS_CMD_DMA_FIFO_UNDERFLOW |\
++			 DSI_FIFO_STATUS_DLN0_HS_FIFO_OVERFLOW |\
++			 DSI_FIFO_STATUS_DLN1_HS_FIFO_OVERFLOW |\
++			 DSI_FIFO_STATUS_DLN2_HS_FIFO_OVERFLOW |\
++			 DSI_FIFO_STATUS_DLN3_HS_FIFO_OVERFLOW)
++
++/*
++ * Bonded command path. SM8750 reports the same 6G v2.9 revision as SM8650, so
++ * the revision alone cannot select this data; the entry is matched on the
++ * compatible instead. It is the only SoC that has the data today - if a second
++ * SoC turns out to be identical the two entries collapse back into one.
++ */
++static const struct msm_dsi_bonded_cfg sm8750_dsi_bonded_cfg = {
++	.cmd_dma_ctrl = DSI_CMD_DMA_CTRL_BROADCAST_EN |
++			DSI_CMD_DMA_CTRL_FROM_FRAME_BUFFER,
++	.err_clear_bits = DSI_ERR_INT_MASK0_FIFO_ERRORS,
++	.err_cleanup_bits = DSI_FIFO_STATUS_FIFO_ERRORS,
++	.poll_timeout_us = 5000,	/* 500 polls, 10 us apart */
++};
++
++static const struct msm_dsi_config sm8750_dsi_cfg = {
++	.io_offset = DSI_6G_REG_SHIFT,
++	.regulator_data = sm8650_dsi_regulators,
++	.num_regulators = ARRAY_SIZE(sm8650_dsi_regulators),
++	.bus_clk_names = dsi_v2_4_clk_names,
++	.num_bus_clks = ARRAY_SIZE(dsi_v2_4_clk_names),
++	.io_start = {
++		{ 0xae94000, 0xae96000 },
++	},
++	.bonded = &sm8750_dsi_bonded_cfg,
++};
++
+ static const struct msm_dsi_config sm8650_dsi_cfg = {
+ 	.io_offset = DSI_6G_REG_SHIFT,
+ 	.regulator_data = sm8650_dsi_regulators,
+@@ -343,16 +398,35 @@ static const struct msm_dsi_cfg_handler dsi_cfg_handlers[] = {
+ 		&sm8650_dsi_cfg, &msm_dsi_6g_v2_host_ops},
+ 	{MSM_DSI_VER_MAJOR_6G, MSM_DSI_6G_VER_MINOR_V2_9_0,
+ 		&sm8650_dsi_cfg, &msm_dsi_6g_v2_9_host_ops},
++	{MSM_DSI_VER_MAJOR_6G, MSM_DSI_6G_VER_MINOR_V2_9_0,
++		&sm8750_dsi_cfg, &msm_dsi_6g_v2_9_host_ops,
++		.compatible = "qcom,sm8750-dsi-ctrl"},
+ 	{MSM_DSI_VER_MAJOR_6G, MSM_DSI_6G_VER_MINOR_V2_10_0,
+ 		&kaanapali_dsi_cfg, &msm_dsi_6g_v2_9_host_ops},
+ };
+ 
+-const struct msm_dsi_cfg_handler *msm_dsi_cfg_get(u32 major, u32 minor)
++const struct msm_dsi_cfg_handler *msm_dsi_cfg_get(u32 major, u32 minor,
++						  struct device_node *np)
+ {
+ 	const struct msm_dsi_cfg_handler *cfg_hnd = NULL;
+ 	int i;
+ 
++	/*
++	 * A compatible match wins over the revision: several SoCs report the
++	 * same 6G revision but do not carry the same data.
++	 */
++	for (i = 0; np && i < ARRAY_SIZE(dsi_cfg_handlers); i++) {
++		if (dsi_cfg_handlers[i].compatible &&
++		    dsi_cfg_handlers[i].major == major &&
++		    dsi_cfg_handlers[i].minor == minor &&
++		    of_device_is_compatible(np, dsi_cfg_handlers[i].compatible))
++			return &dsi_cfg_handlers[i];
++	}
++
+ 	for (i = ARRAY_SIZE(dsi_cfg_handlers) - 1; i >= 0; i--) {
++		/* Entries that need the compatible are not revision fallbacks. */
++		if (dsi_cfg_handlers[i].compatible)
++			continue;
+ 		if ((dsi_cfg_handlers[i].major == major) &&
+ 			(dsi_cfg_handlers[i].minor == minor)) {
+ 			cfg_hnd = &dsi_cfg_handlers[i];
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_cfg.h b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
+index ccf0667960..355791cf99 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_cfg.h
++++ b/drivers/gpu/drm/msm/dsi/dsi_cfg.h
+@@ -41,6 +41,20 @@
+ /* Maximum number of configurations matched against the same hw revision */
+ #define VARIANTS_MAX			2
+ 
++/**
++ * struct msm_dsi_bonded_cfg - per-SoC data for the bonded command path
++ * @cmd_dma_ctrl: CMD_DMA_CTRL bits both engines are staged with
++ * @err_clear_bits: ERR_INT_MASK0 FIFO error bits masked around a command
++ * @err_cleanup_bits: FIFO_STATUS FIFO error bits cleared after a command
++ * @poll_timeout_us: how long the peer engine is polled for completion
++ */
++struct msm_dsi_bonded_cfg {
++	u32 cmd_dma_ctrl;
++	u32 err_clear_bits;
++	u32 err_cleanup_bits;
++	u32 poll_timeout_us;
++};
++
+ struct msm_dsi_config {
+ 	u32 io_offset;
+ 	const struct regulator_bulk_data *regulator_data;
+@@ -48,6 +62,8 @@ struct msm_dsi_config {
+ 	const char * const *bus_clk_names;
+ 	const int num_bus_clks;
+ 	const resource_size_t io_start[VARIANTS_MAX][DSI_MAX];
++	/* NULL on every SoC without a bonded command path */
++	const struct msm_dsi_bonded_cfg *bonded;
+ };
+ 
+ struct msm_dsi_host_cfg_ops {
+@@ -67,9 +83,16 @@ struct msm_dsi_cfg_handler {
+ 	u32 minor;
+ 	const struct msm_dsi_config *cfg;
+ 	const struct msm_dsi_host_cfg_ops *ops;
++	/*
++	 * Optional: several SoCs report the same hw revision but do not share
++	 * the same data, so a compatible match takes precedence over the
++	 * revision.
++	 */
++	const char *compatible;
+ };
+ 
+-const struct msm_dsi_cfg_handler *msm_dsi_cfg_get(u32 major, u32 minor);
++const struct msm_dsi_cfg_handler *msm_dsi_cfg_get(u32 major, u32 minor,
++						  struct device_node *np);
+ 
+ #endif /* __MSM_DSI_CFG_H__ */
+ 
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
+index d92659d80f..a53b4f29de 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_host.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
+@@ -229,7 +229,7 @@ dsi_get_config(struct msm_dsi_host *msm_host)
+ 		goto disable_clks;
+ 	}
+ 
+-	cfg_hnd = msm_dsi_cfg_get(major, minor);
++	cfg_hnd = msm_dsi_cfg_get(major, minor, dev->of_node);
+ 
+ 	DBG("%s: Version %x:%x\n", __func__, major, minor);
+ 
+diff --git a/drivers/gpu/drm/msm/registers/display/dsi.xml b/drivers/gpu/drm/msm/registers/display/dsi.xml
+index e40125f751..5ea2615d2d 100644
+--- a/drivers/gpu/drm/msm/registers/display/dsi.xml
++++ b/drivers/gpu/drm/msm/registers/display/dsi.xml
+@@ -188,8 +188,11 @@ xsi:schemaLocation="https://gitlab.freedesktop.org/freedreno/ rules-fd.xsd">
+ 
+ 	<reg32 offset="0x00038" name="CMD_DMA_CTRL">
+ 		<bitfield name="BROADCAST_EN" pos="31" type="boolean"/>
++		<bitfield name="BROADCAST_MASTER" pos="30" type="boolean"/>
++		<bitfield name="WC_SEL" pos="29" type="boolean"/>
+ 		<bitfield name="FROM_FRAME_BUFFER" pos="28" type="boolean"/>
+ 		<bitfield name="LOW_POWER" pos="26" type="boolean"/>
++		<bitfield name="PACKET_TYPE" pos="24" type="boolean"/>
+ 	</reg32>
+ 	<reg32 offset="0x0003c" name="CMD_CFG0">
+ 		<bitfield name="DST_FORMAT" low="0" high="3" type="dsi_cmd_dst_format"/>
+@@ -206,6 +209,10 @@ xsi:schemaLocation="https://gitlab.freedesktop.org/freedreno/ rules-fd.xsd">
+ 	</reg32>
+ 	<reg32 offset="0x00044" name="DMA_BASE"/>
+ 	<reg32 offset="0x00048" name="DMA_LEN"/>
++	<reg32 offset="0x0004c" name="DMA_FIFO_CTRL">
++		<bitfield name="DISABLE_READ_WATERMARK" pos="16" type="boolean"/>
++		<bitfield name="DISABLE_WRITE_WATERMARK" pos="20" type="boolean"/>
++	</reg32>
+ 	<reg32 offset="0x00054" name="CMD_MDP_STREAM0_CTRL">
+ 		<bitfield name="DATA_TYPE" low="0" high="5" type="uint"/>
+ 		<bitfield name="VIRTUAL_CHANNEL" low="8" high="9" type="uint"/>
+@@ -233,8 +240,16 @@ xsi:schemaLocation="https://gitlab.freedesktop.org/freedreno/ rules-fd.xsd">
+ 		<bitfield name="MDP_TRIGGER" low="4" high="6" type="dsi_cmd_trigger"/>
+ 		<bitfield name="STREAM" low="8" high="9" type="uint"/>
+ 		<bitfield name="BLOCK_DMA_WITHIN_FRAME" pos="12" type="boolean"/>
++		<bitfield name="DMA_TRG_MUX" pos="16" type="boolean"/>
++		<bitfield name="DMA_TRIGGER_EXT" low="17" high="19" type="uint"/>
+ 		<bitfield name="TE" pos="31" type="boolean"/>
+ 	</reg32>
++	<!-- 6G v2.2+ raw offsets are 0x100/0x104 after DSI_6G_REG_SHIFT. -->
++	<reg32 offset="0x000fc" name="DMA_SCHEDULE_CTRL">
++		<bitfield name="LINE" low="0" high="15" type="uint"/>
++		<bitfield name="ENABLE" pos="28" type="boolean"/>
++	</reg32>
++	<reg32 offset="0x00100" name="DMA_SCHEDULE_CTRL2"/>
+ 	<reg32 offset="0x0008c" name="TRIG_DMA"/>
+ 	<reg32 offset="0x000b0" name="DLN0_PHY_ERR">
+ 		<bitfield name="DLN0_ERR_ESC" pos="0" type="boolean"/>
+@@ -314,6 +329,12 @@ xsi:schemaLocation="https://gitlab.freedesktop.org/freedreno/ rules-fd.xsd">
+ 	<reg32 offset="0x00128" name="PHY_RESET">
+ 		<bitfield name="RESET" pos="0" type="boolean"/>
+ 	</reg32>
++	<reg32 offset="0x001c8" name="VBIF_CTRL">
++		<bitfield name="PRIORITY" low="0" high="2" type="uint"/>
++	</reg32>
++	<reg32 offset="0x0038c" name="CMD_DMA_CTRL1">
++		<bitfield name="MULTI_DMA_BURST_EN" pos="1" type="boolean"/>
++	</reg32>
+ 	<reg32 offset="0x00160" name="TEST_PATTERN_GEN_VIDEO_INIT_VAL"/>
+ 	<reg32 offset="0x00198" name="TPG_MAIN_CONTROL">
+ 		<bitfield name="CHECKERED_RECTANGLE_PATTERN" pos="8" type="boolean"/>
+-- 
+2.53.0
+

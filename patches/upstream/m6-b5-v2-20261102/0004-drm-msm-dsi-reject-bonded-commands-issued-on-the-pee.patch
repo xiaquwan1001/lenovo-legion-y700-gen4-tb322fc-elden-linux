@@ -1,0 +1,70 @@
+From 57494c1d209132379eed0b2a93a2aa9ead3d7d9b Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 2 Nov 2026 17:50:17 +0800
+Subject: [PATCH 4/4] drm/msm/dsi: reject bonded commands issued on the peer
+ link
+
+Only the master link owns the broadcast engine and the completion
+interrupt, so a command sent through the peer link cannot be broadcast.
+That used to be accepted silently: the engines were armed on the master
+while the caller wrote through the peer, and the failure surfaced several
+layers down as a bare -EINVAL from the controller.
+
+Check the issuing link against the master link on entry to the bonded
+transaction, before any hardware state is touched, and fail with a message
+that names both links. The error path has no side effects, so a rejected
+call leaves the pair exactly as it found it.
+
+The master link comes from the device tree and is not derived from the
+order in which the two hosts probe.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+index 4bff105566..f767e943a9 100644
+--- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
++++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
+@@ -557,7 +557,7 @@ static bool dsi_mgr_use_bonded_write(const struct mipi_dsi_msg *msg)
+  * dsi_mgr_parse_of() stores it in master_dsi_link_id and the link ids are the
+  * DSI host indices. The per-SoC data only describes the transfer itself.
+  */
+-static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
++static int dsi_mgr_bonded_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+ {
+ 	struct msm_dsi *master_dsi, *slave_dsi;
+ 	const struct msm_dsi_host_cfg_ops *ops;
+@@ -567,6 +567,19 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+ 	if (master_id < 0 || master_id >= DSI_MAX)
+ 		return -EINVAL;
+ 
++	/*
++	 * Only the master link owns the broadcast engine and its completion
++	 * interrupt, so a command issued on the peer link cannot be broadcast.
++	 * Reject it here, before any hardware state is touched, instead of
++	 * arming the engines on a link that does not drive them.
++	 */
++	if (id != master_id) {
++		dev_err(&dsi_mgr_get_dsi(id)->pdev->dev,
++			"bonded command on link %d, but link %d is the master\n",
++			id, master_id);
++		return -EINVAL;
++	}
++
+ 	master_dsi = dsi_mgr_get_dsi(master_id);
+ 	slave_dsi = dsi_mgr_get_other_dsi(master_id);
+ 	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host)
+@@ -601,7 +614,7 @@ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+ 		if (dsi_mgr_bonded_cmd_failed())
+ 			return -EIO;
+ 		mutex_lock(&dsi_bonded_cmd_lock);
+-		ret = dsi_mgr_bonded_cmd_xfer(msg);
++		ret = dsi_mgr_bonded_cmd_xfer(id, msg);
+ 		mutex_unlock(&dsi_bonded_cmd_lock);
+ 
+ 		return ret;
+-- 
+2.53.0
+

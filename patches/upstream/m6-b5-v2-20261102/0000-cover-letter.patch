@@ -1,0 +1,86 @@
+From 57494c1d209132379eed0b2a93a2aa9ead3d7d9b Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 2 Nov 2026 17:52:08 +0800
+Subject: [PATCH 0/4] drm/msm/dsi: add the bonded command path for SM8750
+
+*** AI-assistance disclosure ***: this series was drafted by a coding
+agent (Pi) working from the author's design and measurements; the author
+reviewed, built and approved the final text. The design, the measurements
+and the decisions are the author's own.
+
+Upstream drives a bonded DSI pair for clocks and PHY only. dsi.xml has
+described the broadcast bit of CMD_DMA_CTRL all along and dsi_host.c has
+never set it (git show 6628e7d4c6:drivers/gpu/drm/msm/dsi/dsi_host.c |
+grep -c BROADCAST -> 0), so no code path can send one command over both
+links.
+
+On this board (SM8750, 1904x3040, bonded C-PHY + DSC) that is directly
+observable. The panel's first DCS command goes out on one link only and
+fails:
+
+    panel-novatek-nt36536 ae94000.dsi.0: sending dcs data ff 20 failed: -22
+    (three attempts, then "Failed to initialize panel: -22";
+     reports/b5-step4-master-from-cfg-20261027.md)
+
+with the command DMA engine left armed and never completing
+(STATUS0=0x20003, TRIG_DMA=0x1 self-clearing never happens;
+patches/upstream/m6-b5-p4-rfc-20261027/RFC-SCOPE.md). Staging the peer
+first and arming the master last, with the completion IRQ on the master
+alone, removes all of it: the seven error counters stay at zero in ten
+consecutive blank/wake cycles on the same hardware.
+
+So the missing piece is a command transfer over the broadcast path. This
+series adds exactly that, and nothing else:
+
+  1/4 describes the registers the path needs and puts the per-SoC values
+      it uses (staged command-DMA bits, FIFO error bits, poll budget)
+      into the existing per-SoC config table. SM8750 reports the same 6G
+      v2.9 revision as SM8650, so its entry is matched on the compatible;
+      every other SoC leaves the pointer NULL and keeps the old path.
+  2/4 implements the transaction as a host op: both engines are staged
+      with the same packet, the peer is started first and polled, the
+      master is armed last and owns the completion interrupt. Whatever the
+      transaction reprograms is saved and restored.
+  3/4 routes bonded writes from the manager through that op. The master
+      link is the one the DT marks with "qcom,master-dsi" -
+      dsi_mgr_parse_of() stores it in master_dsi_link_id and the link ids
+      are the DSI host indices, not the probe order. The DT stays the
+      authority for the role.
+  4/4 rejects a bonded command issued on the peer link with a message that
+      names both links, instead of arming the engines on a link that does
+      not drive them.
+
+There is no separate "move the state" patch: the failure flag and the
+mutex are introduced where they belong from the start, in msm_dsim_glb
+next to is_bonded_dsi/is_sync_needed, so no mutable bonded state is
+file-scoped at any point in the series.
+
+Behaviour for every SoC without bonded data is unchanged: .bonded is
+NULL, .bonded_cmd_xfer is never called, and the manager takes the same
+path it took before.
+
+Verified on top of v7.4-rc1 (6628e7d4c6):
+  - checkpatch --strict: 0 errors on all four patches (one CHECK on the
+    10 us poll delay, kept: the peer poll is a tight register loop);
+  - arm64 make -j26 drivers/gpu/drm/msm/: rc=0, no warnings;
+  - the four patches apply in order to 6628e7d4c6 with git am.
+
+Qianhui Xu (4):
+  drm/msm/dsi: add per-SoC bonded command-path config
+  drm/msm/dsi: add the bonded command broadcast host ops
+  drm/msm/dsi: route bonded commands through the DSI manager
+  drm/msm/dsi: reject bonded commands issued on the peer link
+
+ drivers/gpu/drm/msm/dsi/dsi.h                 |   5 +
+ drivers/gpu/drm/msm/dsi/dsi_cfg.c             |  78 +++-
+ drivers/gpu/drm/msm/dsi/dsi_cfg.h             |  33 +-
+ drivers/gpu/drm/msm/dsi/dsi_host.c            | 407 +++++++++++++++++-
+ drivers/gpu/drm/msm/dsi/dsi_manager.c         | 115 +++++
+ drivers/gpu/drm/msm/registers/display/dsi.xml |  21 +
+ 6 files changed, 653 insertions(+), 6 deletions(-)
+
+
+base-commit: 6628e7d4c6b25c8d18f1345e3a20d21829aae7e4
+-- 
+2.53.0
+

@@ -1,0 +1,163 @@
+make[1]: 进入目录“/tmp/b5v2-out”
+  CC      scripts/mod/empty.o
+  CC      scripts/mod/devicetable-offsets.s
+  MKELF   scripts/mod/elfconfig.h
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/mod/symsearch.o
+  HOSTLD  scripts/mod/modpost
+  CC      kernel/bounds.s
+  CC      arch/arm64/kernel/asm-offsets.s
+  CC      kernel/sched/rq-offsets.s
+  CALL    /home/xuqianhui/y700-elden/build/b5-v2/scripts/checksyscalls.sh 
+  LDS     arch/arm64/kernel/vdso/vdso.lds
+  CC      arch/arm64/kernel/vdso/vgettimeofday.o
+  AS      arch/arm64/kernel/vdso/note.o
+  AS      arch/arm64/kernel/vdso/sigreturn.o
+  CC      arch/arm64/kernel/vdso/vgetrandom.o
+  AS      arch/arm64/kernel/vdso/vgetrandom-chacha.o
+  LD      arch/arm64/kernel/vdso/vdso.so.dbg
+  VDSOSYM include/generated/vdso-offsets.h
+  OBJCOPY arch/arm64/kernel/vdso/vdso.so
+  CC [M]  drivers/gpu/drm/msm/msm_debugfs.o
+  CC [M]  drivers/gpu/drm/msm/msm_drv.o
+  CC [M]  drivers/gpu/drm/msm/msm_fence.o
+  CC [M]  drivers/gpu/drm/msm/msm_gem.o
+  CC [M]  drivers/gpu/drm/msm/msm_gem_prime.o
+  CC [M]  drivers/gpu/drm/msm/msm_gem_shrinker.o
+  CC [M]  drivers/gpu/drm/msm/msm_gem_submit.o
+  CC [M]  drivers/gpu/drm/msm/msm_gem_vma.o
+  CC [M]  drivers/gpu/drm/msm/msm_gpu.o
+  CC [M]  drivers/gpu/drm/msm/msm_gpu_devfreq.o
+  CC [M]  drivers/gpu/drm/msm/msm_io_utils.o
+  CC [M]  drivers/gpu/drm/msm/msm_iommu.o
+  CC [M]  drivers/gpu/drm/msm/msm_perfcntr.o
+  CC [M]  drivers/gpu/drm/msm/msm_rd.o
+  CC [M]  drivers/gpu/drm/msm/msm_ringbuffer.o
+  CC [M]  drivers/gpu/drm/msm/msm_submitqueue.o
+  CC [M]  drivers/gpu/drm/msm/msm_syncobj.o
+  CC [M]  drivers/gpu/drm/msm/msm_gpu_tracepoints.o
+  CC [M]  drivers/gpu/drm/msm/msm_atomic.o
+  CC [M]  drivers/gpu/drm/msm/msm_atomic_tracepoints.o
+  CC [M]  drivers/gpu/drm/msm/msm_fb.o
+  CC [M]  drivers/gpu/drm/msm/msm_kms.o
+  CC [M]  drivers/gpu/drm/msm/msm_fbdev.o
+  CC [M]  drivers/gpu/drm/msm/adreno/adreno_device.o
+  CC [M]  drivers/gpu/drm/msm/adreno/adreno_gpu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a2xx_catalog.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a2xx_gpu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a2xx_gpummu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a3xx_catalog.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a3xx_gpu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a4xx_catalog.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a4xx_gpu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a5xx_catalog.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a5xx_gpu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a5xx_power.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a5xx_preempt.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a6xx_catalog.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a6xx_gpu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a6xx_gmu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a6xx_hfi.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a6xx_preempt.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a7xx_catalog.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a8xx_catalog.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a8xx_gpu.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a8xx_preempt.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a5xx_debugfs.o
+  CC [M]  drivers/gpu/drm/msm/adreno/a6xx_gpu_state.o
+  CC [M]  drivers/gpu/drm/msm/generated/a2xx_perfcntrs.json.o
+  CC [M]  drivers/gpu/drm/msm/generated/a5xx_perfcntrs.json.o
+  CC [M]  drivers/gpu/drm/msm/generated/a6xx_perfcntrs.json.o
+  CC [M]  drivers/gpu/drm/msm/generated/a7xx_perfcntrs.json.o
+  CC [M]  drivers/gpu/drm/msm/generated/a8xx_perfcntrs.json.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_audio.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_bridge.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_hpd.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_i2c.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_phy.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_phy_8960.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_phy_8996.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_phy_8998.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_phy_8x60.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_phy_8x74.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_pll_8960.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp4/mdp4_crtc.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp4/mdp4_dsi_encoder.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp4/mdp4_dtv_encoder.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp4/mdp4_lcdc_encoder.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp4/mdp4_lvds_pll.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp4/mdp4_irq.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp4/mdp4_kms.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp4/mdp4_plane.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_cfg.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_cmd_encoder.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_ctl.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_crtc.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_encoder.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_irq.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_kms.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_pipe.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_mixer.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_plane.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp5/mdp5_smp.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_core_perf.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_encoder.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_wb.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_formats.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_cdm.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_ctl.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_cwb.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dsc_1_2.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_interrupts.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_intf.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_lm.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_pingpong.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_sspp.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_sspp_v13.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_dspp.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_merge3d.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_top.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_util.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_vbif.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_wb.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_kms.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_plane.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_rm.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_vbif.o
+  CC [M]  drivers/gpu/drm/msm/disp/dpu1/dpu_writeback.o
+  CC [M]  drivers/gpu/drm/msm/msm_mdss.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp_format.o
+  CC [M]  drivers/gpu/drm/msm/disp/mdp_kms.o
+  CC [M]  drivers/gpu/drm/msm/disp/msm_disp_snapshot.o
+  CC [M]  drivers/gpu/drm/msm/disp/msm_disp_snapshot_util.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_aux.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_ctrl.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_debug.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_display.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_drm.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_link.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_panel.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_audio.o
+  CC [M]  drivers/gpu/drm/msm/dp/dp_utils.o
+  CC [M]  drivers/gpu/drm/msm/hdmi/hdmi_hdcp.o
+  CC [M]  drivers/gpu/drm/msm/dsi/dsi.o
+  CC [M]  drivers/gpu/drm/msm/dsi/dsi_cfg.o
+  CC [M]  drivers/gpu/drm/msm/dsi/dsi_host.o
+  CC [M]  drivers/gpu/drm/msm/dsi/dsi_manager.o
+  CC [M]  drivers/gpu/drm/msm/dsi/phy/dsi_phy.o
+  CC [M]  drivers/gpu/drm/msm/dsi/phy/dsi_phy_28nm.o
+  CC [M]  drivers/gpu/drm/msm/dsi/phy/dsi_phy_20nm.o
+  CC [M]  drivers/gpu/drm/msm/dsi/phy/dsi_phy_28nm_8960.o
+  CC [M]  drivers/gpu/drm/msm/dsi/phy/dsi_phy_14nm.o
+  CC [M]  drivers/gpu/drm/msm/dsi/phy/dsi_phy_10nm.o
+  CC [M]  drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.o
+  LD [M]  drivers/gpu/drm/msm/msm.o
+make[1]: 离开目录“/tmp/b5v2-out”
