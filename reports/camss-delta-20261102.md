@@ -69,6 +69,22 @@ change. It is kept so the table matches the downstream description.
 
 ---
 
+## §3b ★2026-11-02 收尾更正：§3 第 1 条的「4 枚可先投」**只有 3 枚成立**
+
+- **3 枚已于 2026-10-29 投出并归档**：`patches/upstream/m4-camss-fixes-20261029/`（`[PATCH 0/3] three fixes for the CSID power and VFE streaming paths`，
+  MID `20261029123107.28705-1..4`，lore `/all/` 4/4）。逐枚对位 = csid power-on unwind / video DMA 连续性 + `prepare_buffer` 钩子 / video 起流失败回退。
+  ⇒ §3 第 1 条写成「待投」是**与 10-29 已投事实脱节**，本轮更正。
+- **第 4 枚（2/9 csiphy 2.4.0 lane 表）不是独立小修**：在公开 `6628e7d4c6`(v7.4-rc1) 上它**树内无使用者** ——
+  `camss.c` 无任何 SM8750 `camss_resources` 表项（`grep -c 8750` = **0**），`CAMSS_8750` 因此永不被赋值，
+  新表只死在 `csiphy_init()` 的 `switch` 里。⇒ 与 M6 B5 v2 是同一个「who uses it」问题，**不能自成线程**。
+  正确落点 = 挂 Hangxiang `[v6 0/7]` 线程（其 SoC 使能被接受后作为增量/回帖），本批不发。
+  已重切并过门禁备料：`patches/upstream/camss-csiphy-24-20261102/`（+125 −0，`checkpatch --strict` 0E/0W/0C，
+  `W=1` camss 编译 rc=0 / 0 warning，见其 `GATES.md`）。
+
+⇒ **camss 侧当前无「可立即投」的件**；M4 的推进完全取决于 Hangxiang v6 与 Bryan SOF 系列的走向。
+
+---
+
 ## §4 复跑命令
 
 ```bash

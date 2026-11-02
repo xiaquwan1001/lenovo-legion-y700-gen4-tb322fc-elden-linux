@@ -1,0 +1,2 @@
+  CC [M]  drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.o
+  LD [M]  drivers/media/platform/qcom/camss/qcom-camss.o
