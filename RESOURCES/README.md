@@ -170,6 +170,9 @@
 
 ### 2.3 主机大容量资产（占盘大户，勿误删）
 
+> **2026-11-02 起**：设备的可重建工作区也归项目内 `external/`（`mesa-out`/`lc-cross`/`alpine-sysroot`/`phoc-work`/`aosp-vndk33`），
+> 原 `~/` 路径保留**同名软链**（文档与 cross-file 里的绝对路径不用改）；`external/` 与 `wt/` 均 gitignore。
+
 > **2026-10-23 状态**：外置盘 `/mnt/Samsung` **未挂**（`./l2` 断链、`~/mnt/Samsung/l2` 空目录）⇒ 下表前两行目标**本机不存在**；现现盘最大项改为 `build/` 40 G 与 `.pi/trash/` 21 G（见 §3.2）。
 
 | 路径 | 内容 | 规模 |
@@ -177,6 +180,10 @@
 | `/mnt/Samsung/waydroid-build` | Waydroid AOSP 树（1254 项目 / 1219 对象库 fsck 全 OK） | 550 G（**2026-10-16 告知将随盘清空**：本地提交已推两个 USTC 仓、树外件已留档 `reference/waydroid-buildtree/`、构建产物 `vendor.img` 已进云盘包 ⇒ 可清） |
 | `/mnt/Samsung/l2`（本 repo `./l2`） | 原厂 super / system_a / system_a.pristine（sha256 逐侧一致）；**stock-259 13 分区备份里没 super，这里是唯一一份**；自研 `lp_tool.py`（LP v1.2 dump/extract/splice）唯一副本 | 45 G |
 | `external/mesa-out`（`~/mesa-out` 软链） | Waydroid bionic Mesa 构建产物（11 `.so` + `manifest.txt`），即上表自编产物的落地包；**2026-11-02 从 `~/mesa-out` 迁入项目** | ~7 M |
+| `external/lc-cross`（`~/lc-cross` 软链） | libcamera v0.7.1 源码 + 交叉构建树（b-dbg/b-time/b-gcc）；相机 AE/sensor helper 改动的工作区 | ~450 M |
+| `external/alpine-sysroot`（`~/alpine-sysroot` 软链） | 设备侧 sysroot（include + lib，含 libyaml），aarch64 musl 交叉编译用 | ~94 M |
+| `external/phoc-work`（`~/phoc-work` 软链） | phoc 合成器源码/补丁工作区（`patches-userland/` 的构建源） | ~9 M |
+| `external/aosp-vndk33`（`~/aosp-vndk33` 软链） | VNDK33/AIDL 头与接口源（相机 HAL 交叉编译的依赖面） | ~74 M |
 | `~/下载/tb322fc` | EDL 全量包 | 599 M |
 | `stock-src/` | 联想 GPL 源码 | 400 M |
 
