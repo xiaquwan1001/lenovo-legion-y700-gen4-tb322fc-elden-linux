@@ -1,0 +1,18 @@
+{
+  "label": "ddr-marks-sysram-r1",
+  "ts": "2026-11-02T03:06:28Z",
+  "vk": "",
+  "image": "out/uefi-ddrmarks-sysram-20261102/uefi-v0.img",
+  "image_sha256": "3de803af9fdff344cd35ad131f0188e03e50e5ed1668facadf5817dec4cedc04",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "A2臂：标记改写普通 System RAM 0xE3F00000/0xC2500000（+1 carveout对照）。同路径 ⇒ 数秒回 fastboot，stage1=0 ⇒ 排除『carveout 被保护写不进』，指向 ABL 根本没跳"
+}

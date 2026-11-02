@@ -1,0 +1,18 @@
+{
+  "label": "ddr-marks-cacheclean-r1",
+  "ts": "2026-11-02T03:06:28Z",
+  "vk": "",
+  "image": "out/uefi-ddrmarks-clean-20261102/uefi-v0.img",
+  "image_sha256": "623acee656709a9424065b3a3265d5fe7ed70a3a3b2437fa17142c843e798ddf",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "A1臂：标记页填 0xFF 后加 dc civac+dsb sy 回写。a 槽 unbootable + boot_b←载荷 + sysrq-b ⇒ 数秒回 fastboot，三窗 stage1=0 ⇒ 排除『标记只落 D-cache 被复位丢弃』"
+}

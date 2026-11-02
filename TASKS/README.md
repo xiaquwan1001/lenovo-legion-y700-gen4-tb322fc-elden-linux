@@ -411,6 +411,24 @@ EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案
 - **lane B（合体 BOOT）中止**（`status=stopped`，9 轮 12 调用 0 字正文）；已把它 clone 的 SunUEFI 仓库从 `/tmp` 搬到 `~/ext-repos/sunuefi`（20 MB），
   骨架报告里写好了三点续作入口。
 
+### 2026-11-02 上午：UEFI ①「载荷到底有没有被执行」四臂判别 —— **全部为 0**，并更正一条错判
+
+**一句话**：在「a 槽 unbootable 切断回落 + `boot_b`←载荷 + `sysrq-b`」同一路径上做了 4 个变体，
+**四臂 `stage1` 全部为 0**（载荷第一条指令从未执行）；中途一度判「A3 挂死 = 载荷被执行」，**用户现场证实设备其实正常进了 Android，结论已撤回**。
+报告 `reports/uefi-ddrcut-fallback-20261101.md` §6-A/6-B/6-C/6-D；record 三条：`reports/trials/20261102T03*-ddr-marks-{cacheclean,sysram}-r1.json`、`…-ddr-marks-ramdisk-r1.json`。全程零写盘除 `boot_b` 两轮（均已读回核验并复原）。
+
+- **四臂**（shim 变体均已入库 `patches/uefi/20261102-ddr-clean/`，构建选项 `--shim ddrmarksclean|ddrmarkssys`）：
+  A1 = 标记页加 `dc civac`+`dsb sy` 回写（排除「只落 D-cache」）；A2 = 标记改写**普通 System RAM** `0xE3F00000`/`0xC2500000`（排除「carveout 被保护写不进」）；
+  A3 = A2 + v0 image 补 `--ramdisk`(92 B) + `--cmdline`（排除「v0 无 ramdisk 被静默丢弃」）。**三臂 `stage1` 皆 0**。
+- **正控（必做，已通过）**：`a` unbootable + `boot_b` = 日常 Linux ⇒ `sysrq-b` 后 **3 s 回 Linux** ⇒ 切断动作本身不阻塞槽位启动。
+- **机制硬事实（`PITFALLS #487` 追加条）**：**「a 槽 unbootable」只能挡住一次** —— b 槽失败后 ABL **自己把活动槽切到 a 并清掉它的 unbootable 位**，
+  然后正常起 Android（实测 `current-slot=a`、`slot-unbootable:a=no`）。要真切断必须让 a 槽**内容**不可用（`backup/stock-259/boot_a.img` 可回滚）。
+  另：`17ef:7f3d` = **Android MTP**（class255/sub66/proto1），看到它 + `adb devices` 有设备 = 进了 Android，**别误判成挂死**。
+- **下一步（已排好，未做）**：① **正控**——把日常 Linux 内核极早期入口打同样的三窗标记、走同一路径，验证「装载后可写 DRAM」这条链；
+  ② 正控通过后换「真 Linux `Image` 头 + 内联 FD」的壳做单变量。
+- **设备终态**：Linux 在机（`boot_id 109a2bce…`、UTS `…vk172`、根 `/dev/sda17` ext4、失败单元 0）、`boot_b` = `fb55997c…`（读回逐字节一致）、
+  `current-slot=_b`、**a/b 均 Bootable**。
+
 **以下为 2026-11-01 19:40 的当时记录（结论已被上条取代，仅留沿革）**
 
 **现状（2026-11-01 19:40，只读实测）**：`current-slot:b`、`a/b` 均 `successful:yes`、`retry:7`、`unbootable:no`、
