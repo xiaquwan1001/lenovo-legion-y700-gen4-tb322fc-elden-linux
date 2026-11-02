@@ -3,6 +3,9 @@
 > 状态：**2026-11-02 收尾轮修掉一处会打崩 SM8650 双 DSI 板的门控缺陷后重出；未发送**
 > （投递按 `TASKS/README.md` §7 逐次批准）。
 >
+> **★用户裁决（2026-11-02）= 保守处理，本轮不发**：等之后一轮「项目全盘审计与重构」再定投递
+> 优先级与叙事。本目录即完整投递源（`send-email` 0000–0004 即可），无需重做任何门禁。
+>
 > **★2026-11-02 收尾修订（v2 内容变更，见 `GATES.md` §0）**：原 v2 把 `bonded_cmd_xfer` 挂在
 > 共用的 `msm_dsi_6g_v2_9_host_ops` 上，而 `dsi_mgr_uses_bonded_cmd()` 只探测该 op 是否存在
 > ⇒ **SM8650 的双 DSI 板（`sm8650-ayaneo-pocket-s2` 等，`qcom,sync-dual-dsi` + `qcom,master-dsi`）
