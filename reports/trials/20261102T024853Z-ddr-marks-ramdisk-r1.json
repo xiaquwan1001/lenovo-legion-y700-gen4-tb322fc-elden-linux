@@ -1,0 +1,18 @@
+{
+  "label": "ddr-marks-ramdisk-r1",
+  "ts": "2026-11-02T02:48:53Z",
+  "vk": "",
+  "image": "out/uefi-ddrmarks-sysram-rd.img",
+  "image_sha256": "f623bd18a5630dc2e04d383ddcbd58b04a1550f9903e8d7db4f7525de5181450",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "INCONCLUSIVE",
+  "log_dir": "",
+  "note": "关键正向信号：给载荷 boot.img 补上 ramdisk(92B cpio.gz)+cmdline 后，同一 slot 路径的终态从『数秒回落 fastboot』变成『设备彻底失联（无 fastboot/EDL/ssh），USB 只剩 17ef:7f3d vendor 模式(class255 sub66 proto1)』⇒ 首次出现『载荷被执行』的强证据（终态改变）。前置对照：boot_b=日常 Linux + a 槽 unbootable 能正常启动(3s)，故『切断回落』本身不阻塞槽位启动。待物理断电恢复后读 DDR 三窗。sha 载荷 f26e79c5…"
+}

@@ -102,3 +102,39 @@ fastboot -s HA2EXB0E --set-active=b && fastboot -s HA2EXB0E reboot
 scripts/blackbox.py read --pa 0x84A00000        # 三窗各一次
 ssh root@192.168.7.1 'python3 /tmp/slot-attr.py set a --no-unbootable'
 ```
+
+---
+
+# ★ 2026-11-02 上午续作：判别「ABL 没跳」vs「跳了没写进去」——最后一条判据指向「载荷被执行了，但缺 ramdisk/cmdline 时被静默丢弃」
+
+> 承接 §4「下一发判据」。四条臂，全部走同一路径（a 槽 unbootable 切断回落 + `boot_b` ← 载荷 + `sysrq-b`），
+> 每臂后 `fastboot flash boot_b 备份` → `--set-active=b` → `reboot` → Linux 读窗口。设备当前**待物理断电**（见 §6-B）。
+
+## §6-A 四臂结果
+
+| 臂 | shim 变化 | 载荷 | 结果 | 判读 |
+|---|---|---|---|---|
+| A0（11-01 夜） | 三 carveout 标记 | `dsm/uefi-v0.img` | 数秒 → fastboot，**三窗 stage1=0** | 未执行 或 写了没落 DRAM |
+| A1 | **+ `dc civac`/`dsb sy` 回写标记页**（`patches/uefi/20261102-ddr-clean/0001-*`，`--shim ddrmarksclean`） | `out/uefi-ddrmarks-clean-20261102`（`623acee6…`） | 数秒 → fastboot，**stage1=0** | 排除「只落 cache」 |
+| A2 | 标记改写到 **普通 System RAM** 保留窗 `0xE3F00000` / `0xC2500000`（+ 保留一个 carveout 对照）（`0002-*`，`--shim ddrmarkssys`） | `out/uefi-ddrmarks-sysram-20261102`（`3de803af…`） | 数秒 → fastboot，**三窗 stage1=0** | 排除「carveout 被保护写不进」⇒ 指向**根本没跳** |
+| **A3（关键）** | 同 A2，但 **v0 image 补 `--ramdisk`（92 B 空 cpio.gz）+ `--cmdline "console=tty0"`** | `out/uefi-ddrmarks-sysram-rd.img`（签后 `f26e79c5…`） | **终态改变**：设备**彻底失联**（无 fastboot、无 EDL、无 ssh），USB 只剩 `17ef:7f3d` Lenovo vendor 模式（class 255 / sub 66 / proto 1，serial `HA2EXB0E`） | **首次出现「载荷被执行」的强证据** |
+
+**对照组（本轮必做，已通过）**：`a` 槽 unbootable + `boot_b` = 日常 Linux（`fb55997c…`）⇒ `sysrq-b` 后 **3 s 回 Linux**
+（`boot_id 3ad45c5f…`）⇒ **「切断回落」本身不阻塞槽位启动**，A0–A2 的失败只能归给载荷本身。
+
+## §6-B 当前状态与恢复（待物理动作）
+
+- 设备现在**没有任何可用 USB 模式**（`18d1:d00d`/`05c6:9008` 都不在），`lsusb` 仅 `17ef:7f3d`；`edl-ng ramdump --vid 0x17ef --pid 0x7f3d` 读超时 ⇒ **不是 Sahara/crashdump**。
+- `boot_b` 里仍是 A3 载荷（`f26e79c5…`）、`a` 槽仍 unbootable ⇒ **恢复前不要让它正常启动**（会再次进入该状态）。
+- 恢复（用户物理 + 我这边执行）：① 长按电源 15–20 s 强制关机；② **按住音量上 + 插 USB 长边口** 进 EDL（`lsusb` 应见 `05c6:9008`）；
+  ③ 我写入备份件回 `boot_b`（EDL 直写 LUN4，不依赖 fastboot）：
+  `edl-ng write-part boot_b reports/artifacts/uefi-ddrcut-20261101/boot_b-backup-2350.img -u 4 -l ~/下载/tb322fc/xbl_s_devprg_ns.melf --memory Ufs`
+  ④ `slot-attr.py set a --no-unbootable`（EDL 起来后设备在 Linux 则直接跑；否则 EDL 写 GPT 回滚件 `lun4-gpt-primary.bin`/`-backup.bin`）。
+- 恢复后**先读三窗**（`0xE3F00000` / `0xC2500000` / `0x84A00000`）——若出现 stage1/2/4 ⇒ 「载荷执行 + 标记落 DRAM」一次坐实，
+  `PITFALLS #481` 的「载荷从未执行」结论将被推翻/限定。
+
+## §6-C 机制假设（待验证）
+
+Android boot image v0 的 `ramdisk_size=0` 可能让 ABL 走「非 AndroidOS」分支而**不下载内核**（静默丢弃 → 直接回落/进 fastboot）；
+补上 ramdisk 后走正常分支 → 下载并跳转 → 我们的 shim 开始执行（终态因此改变）。
+⇒ 若 A3 的 DDR 标记能读回，则**上一代所有「载荷未执行」的实验都可以归因到这个 header 字段**（不是载荷代码问题）。

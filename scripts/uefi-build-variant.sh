@@ -6,7 +6,7 @@
 #
 # 用法：
 #   scripts/uefi-build-variant.sh <outdir> [--ufsdxe mu|vendor] [--rmvmdxe mu|vendor]
-#                                 [--shim stock|cachefix|markers|ddrmarks|custom:<file>]
+#                                 [--shim stock|cachefix|markers|ddrmarks|ddrmarksclean|ddrmarkssys|custom:<file>]
 #                                 [--patch <patchfile>]... [--clean] [--no-restore]
 #
 # 默认：--ufsdxe mu --rmvmdxe mu --shim stock（= 纯 Mu 基线 N）
@@ -46,7 +46,7 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-[ -n "$OUT" ] || { echo "usage: $0 <outdir> [--ufsdxe mu|vendor] [--rmvmdxe mu|vendor] [--shim stock|cachefix|markers|ddrmarks|custom:<file>] [--patch <p>]... [--clean]" >&2; exit 2; }
+[ -n "$OUT" ] || { echo "usage: $0 <outdir> [--ufsdxe mu|vendor] [--rmvmdxe mu|vendor] [--shim stock|cachefix|markers|ddrmarks|ddrmarksclean|ddrmarkssys|custom:<file>] [--patch <p>]... [--clean]" >&2; exit 2; }
 [ -d "$REPO" ] || { echo "missing repo: $REPO" >&2; exit 1; }
 mkdir -p "$OUT"
 OUT=$(cd "$OUT" && pwd)
@@ -112,6 +112,8 @@ case "$SHIM" in
 	markers) git apply "$ROOT/patches/uefi/0001-bootshim-add-dc-civac-ic-iallu-before-entry.patch" \
 	                "$ROOT/patches/uefi/20261031-vis/0002-bootshim-framebuffer-milestone-markers.patch" 2>>"$OUT/build.log";;
 	ddrmarks) git apply "$ROOT/patches/uefi/20261101-ddr/0001-bootshim-ddr-stage-markers.patch" 2>>"$OUT/build.log";;
+	ddrmarksclean) git apply "$ROOT/patches/uefi/20261102-ddr-clean/0001-bootshim-ddr-stage-markers-clean.patch" 2>>"$OUT/build.log";;
+	ddrmarkssys) git apply "$ROOT/patches/uefi/20261102-ddr-clean/0002-bootshim-ddr-markers-sysram.patch" 2>>"$OUT/build.log";;
 	custom:*) cp "${SHIM#custom:}" "$SHIM_BIN";;
 	*) echo "bad --shim $SHIM" >&2; exit 2;;
 esac
