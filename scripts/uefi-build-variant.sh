@@ -27,6 +27,7 @@ OUT=""
 UFSDXE=mu
 RMVMDXE=mu
 SHIM=stock
+SCALE3=0
 PATCHES=()
 CLEAN=0
 RESTORE=1
@@ -36,6 +37,7 @@ while [ $# -gt 0 ]; do
 		--ufsdxe) UFSDXE=$2; shift 2;;
 		--rmvmdxe) RMVMDXE=$2; shift 2;;
 		--shim) SHIM=$2; shift 2;;
+		--scale3) SCALE3=1; shift;;
 		--patch) PATCHES+=("$2"); shift 2;;
 		--clean) CLEAN=1; shift;;
 		--no-restore) RESTORE=0; shift;;
@@ -58,9 +60,11 @@ SHIM_BIN=$REPO/BootShim/BootShim.bin
 cd "$REPO"
 
 # ---------- 还原用快照 ----------
+FONT_H=Platforms/AndromedaPkg/Include/Resources/font5x12.h
 BK=$(mktemp -d)
 trap 'rm -rf "$BK"' EXIT
 cp "$SHIM_SRC" "$BK/BootShim.S"
+cp "$FONT_H" "$BK/font5x12.h"
 cp "$SHIM_BIN" "$BK/BootShim.bin" 2>/dev/null || true
 cp "$UFSDXE_DST" "$BK/UFSDxe.efi"
 cp "$RMVMDXE_DST" "$BK/RmVmDxe.efi"
@@ -72,6 +76,7 @@ reset_tree() {
 	cp "$BK/BootShim.S" "$SHIM_SRC"
 	[ -f "$BK/BootShim.bin" ] && cp "$BK/BootShim.bin" "$SHIM_BIN"
 	cp "$BK/UFSDxe.efi" "$UFSDXE_DST"
+	cp "$BK/font5x12.h" "$FONT_H"
 	cp "$BK/RmVmDxe.efi" "$RMVMDXE_DST"
 	rm -f BootShim/BootShim.elf
 }
@@ -81,6 +86,7 @@ reset_tree() {
 case "$UFSDXE" in
 	mu) ;;  # PatchedBinaries 默认就是 Mu 件
 	vendor) cp "$ART/uefi-dxe-20261024/vendor-UFSDxe.efi" "$UFSDXE_DST";;
+	treevendor) cp "$DEV/Binaries/QcomPkg/Drivers/UFSDxe/UFSDxe.efi" "$UFSDXE_DST";;
 	*) echo "bad --ufsdxe $UFSDXE" >&2; exit 2;;
 esac
 case "$RMVMDXE" in
@@ -88,6 +94,11 @@ case "$RMVMDXE" in
 	vendor) cp "$ART/uefi-dxe-20261024/vendor-RmVmDxe.efi" "$RMVMDXE_DST";;
 	*) echo "bad --rmvmdxe $RMVMDXE" >&2; exit 2;;
 esac
+
+if [ "$SCALE3" = 1 ]; then
+	sed -i 's/^#define SCALE_FACTOR 1$/#define SCALE_FACTOR 3/' "$FONT_H"
+	grep -q '^#define SCALE_FACTOR 3$' "$FONT_H" || { echo "scale3 patch failed" >&2; exit 1; }
+fi
 
 for p in "${PATCHES[@]:-}"; do
 	[ -n "$p" ] || continue
@@ -150,7 +161,7 @@ python3 "$REPO/ImageResources/mkbootimg.py" --kernel "$OUT/kernel.bin" --header_
 	echo "clang=$(clang --version | head -1)"
 	echo "python=$(python3 --version)"
 	echo "uefi_base=$UEFI_BASE uefi_size=$UEFI_SIZE"
-	echo "variant.ufsdxe=$UFSDXE variant.rmvmdxe=$RMVMDXE variant.shim=$SHIM"
+	echo "variant.ufsdxe=$UFSDXE variant.rmvmdxe=$RMVMDXE variant.shim=$SHIM variant.scale3=$SCALE3"
 	echo "patches=${PATCHES[*]:-none}"
 	echo "worktree_after=$(git status --porcelain | tr '\n' ';')"
 } > "$OUT/manifest.txt"

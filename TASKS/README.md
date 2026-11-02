@@ -396,6 +396,20 @@ EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案
 - **并行 lane 状态**：② 合体 BOOT 与 ③ EUD 仍在跑（报告骨架已落盘）；
   ②的目标 = SunUEFI 合体 BOOT 机制 + 本机 ABL 加载语义 + `xiaomi-piano` vs `lenovo-y700g4` delta；
   ③的目标 = 本机 `eud` 是否 probe、固件是否启用、最小验证清单。
+- **★ 11-01 23:1x–11-02 02:0x 切断回落实验（`reports/uefi-ddrcut-fallback-20261101.md`，verdict FAIL）**：
+  三块 carveout 窗口（`0x84A00000`/`0x9C300000`/`0x89300000`）清零后走完「载荷进 boot_b → reboot → ABL 失败 → fastboot
+  → `flash boot_b` 备份 → reboot → Linux」整圈**仍逐页为 0** ⇒ **「回落启动清掉 marker」假设作废**（0x00 是稳定态）；
+  但 **stage1 三窗全 0**：`fastboot boot` **3/3 被拒**（a 槽 unbootable 期间，`Invalid Parameter`）、
+  槽位路径上 ABL 数秒直奔 fastboot 且**未留 `logfs` 段** ⇒ **载荷两条路径都没执行到第一条指令**。
+  设备已完全恢复：`boot_b` = `fb55997c…`、`current-slot=_b`、a/b 均 bootable。
+  操作层教训 = `PITFALLS #487`（改非活动槽属性必须用 `scripts/slot-attr.py` 直写 LUN4 双表，`qbootctl -u a` 必失败）。
+  **下一发判据（成本低）**：先把 `boot_b` 换成纯 Linux 内核确认槽位路径本身通，再换「真 Linux `Image` 头的壳内嵌 FD」——
+  若日志出现 `Loading Image boot_b` 且尺寸≈载荷大小而 stage1 仍 0 ⇒ 「ABL 加载层拒」被否、「跳了即异常」成立。
+- **lane D（EUD）已收口（`reports/uefi-eud-feasibility-20261101.md`）**：本机 `eud` 驱动在（`qcom_eud.ko`）但运行 DT 里 `eud` **节点 0 个** ⇒ **0 次 probe**；
+  `logfs` 10/10 段有 `EUD Init` 但 `EUD wait` **0/10**（XBL 放行未证）；官方文档只承诺 Linux 起来后可用。
+  **L0 待用户做（物理）**：设备接 Linux PC 冷启动，10 s 内 `lsusb` 看 `05c6:9500/9501`；不出现则 EUD 降级为 Linux/UEFI 期调试器。
+- **lane B（合体 BOOT）中止**（`status=stopped`，9 轮 12 调用 0 字正文）；已把它 clone 的 SunUEFI 仓库从 `/tmp` 搬到 `~/ext-repos/sunuefi`（20 MB），
+  骨架报告里写好了三点续作入口。
 
 **以下为 2026-11-01 19:40 的当时记录（结论已被上条取代，仅留沿革）**
 

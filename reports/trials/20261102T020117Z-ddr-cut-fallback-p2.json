@@ -1,0 +1,18 @@
+{
+  "label": "ddr-cut-fallback-p2",
+  "ts": "2026-11-02T02:01:17Z",
+  "vk": "",
+  "image": "reports/artifacts/uefi-ddr-20261101/dsm/uefi-v0.img",
+  "image_sha256": "ee3d2b13a74c1893a8ca57cd43fa0f16ab2dc879e6d60a39ec5ca0ff681fb3f5",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "FAIL",
+  "log_dir": "",
+  "note": "切断回落实验：a 槽 unbootable(GPT 直写) + 载荷写 boot_b + 正常 reboot。结果：ABL 直奔 fastboot，三窗口(0x84A00000/0x9C300000/0x89300000) stage1 全 0（载荷首条指令未执行）；该发未留下 logfs 段。另：a unbootable 时 fastboot boot 3/3 被拒(Invalid Parameter)。已恢复 boot_b=fb55997c + a 重新 bootable。"
+}
