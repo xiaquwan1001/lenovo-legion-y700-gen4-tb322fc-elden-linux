@@ -4,6 +4,8 @@
 - base：`6628e7d4c6b25c8d18f1345e3a20d21829aae7e4`（`Linux 7.4-rc1`，公开 torvalds 树）
 - 序列：4 枚（见本目录 `0001..0004`），净 **+673 −6**
 - 全部日志留档于 `logs/`
+- checkpatch 一律 **stdin**（`--patch - < file`）：本轮实测同一批补丁用**文件参数**会假报
+  15/18/12/3 条 ERROR（`PITFALLS #474` 复现），stdin 才是 0E/0W
 
 ## 0. ★为什么重出（本轮修的缺陷）
 
@@ -33,8 +35,9 @@
 ## 1. checkpatch --strict
 
 ```sh
+# 必须 stdin 喂（PITFALLS #474）：给文件参数会把邮件头当正文，实测假报 15/18/12/3 条 ERROR
 for f in patches/upstream/m6-b5-v2-20261102/000[1-4]-*.patch; do
-    ./scripts/checkpatch.pl --strict --no-signoff "$f"
+    ./scripts/checkpatch.pl --strict --no-signoff --patch - < "$f"
 done
 ```
 
