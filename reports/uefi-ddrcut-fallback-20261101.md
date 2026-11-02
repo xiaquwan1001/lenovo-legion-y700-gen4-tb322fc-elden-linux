@@ -117,7 +117,7 @@ ssh root@192.168.7.1 'python3 /tmp/slot-attr.py set a --no-unbootable'
 | A0（11-01 夜） | 三 carveout 标记 | `dsm/uefi-v0.img` | 数秒 → fastboot，**三窗 stage1=0** | 未执行 或 写了没落 DRAM |
 | A1 | **+ `dc civac`/`dsb sy` 回写标记页**（`patches/uefi/20261102-ddr-clean/0001-*`，`--shim ddrmarksclean`） | `out/uefi-ddrmarks-clean-20261102`（`623acee6…`） | 数秒 → fastboot，**stage1=0** | 排除「只落 cache」 |
 | A2 | 标记改写到 **普通 System RAM** 保留窗 `0xE3F00000` / `0xC2500000`（+ 保留一个 carveout 对照）（`0002-*`，`--shim ddrmarkssys`） | `out/uefi-ddrmarks-sysram-20261102`（`3de803af…`） | 数秒 → fastboot，**三窗 stage1=0** | 排除「carveout 被保护写不进」⇒ 指向**根本没跳** |
-| **A3（关键）** | 同 A2，但 **v0 image 补 `--ramdisk`（92 B 空 cpio.gz）+ `--cmdline "console=tty0"`** | `out/uefi-ddrmarks-sysram-rd.img`（签后 `f26e79c5…`） | **终态改变**：设备**彻底失联**（无 fastboot、无 EDL、无 ssh），USB 只剩 `17ef:7f3d` Lenovo vendor 模式（class 255 / sub 66 / proto 1，serial `HA2EXB0E`） | **首次出现「载荷被执行」的强证据** |
+| **A3** | 同 A2，但 **v0 image 补 `--ramdisk`（92 B 空 cpio.gz）+ `--cmdline "console=tty0"`** | `out/uefi-ddrmarks-sysram-rd.img`（签后 `f26e79c5…`） | 当时判「彻底失联」（`17ef:7f3d`）；**10:5x 用户实测 = 正常进 Android**，`17ef:7f3d` 就是 Android MTP | **撤回**：不是挂死、载荷同样没执行（见 §6-D） |
 
 **对照组（本轮必做，已通过）**：`a` 槽 unbootable + `boot_b` = 日常 Linux（`fb55997c…`）⇒ `sysrq-b` 后 **3 s 回 Linux**
 （`boot_id 3ad45c5f…`）⇒ **「切断回落」本身不阻塞槽位启动**，A0–A2 的失败只能归给载荷本身。
@@ -138,3 +138,19 @@ ssh root@192.168.7.1 'python3 /tmp/slot-attr.py set a --no-unbootable'
 Android boot image v0 的 `ramdisk_size=0` 可能让 ABL 走「非 AndroidOS」分支而**不下载内核**（静默丢弃 → 直接回落/进 fastboot）；
 补上 ramdisk 后走正常分支 → 下载并跳转 → 我们的 shim 开始执行（终态因此改变）。
 ⇒ 若 A3 的 DDR 标记能读回，则**上一代所有「载荷未执行」的实验都可以归因到这个 header 字段**（不是载荷代码问题）。
+
+## §6-D ★★更正（2026-11-02 10:5x，用户实测 + 本编排者复核）：A3 **不是挂死，是回落到 Android**——§6-A 的「载荷被执行」结论**撤回**
+
+- **事实**：用户现场看到设备**正常进入 Android**（`lsusb` 的 `17ef:7f3d` = Android MTP 模式，class 255 / sub 66 / proto 1，**不是** vendor 下载模式）；
+  `adb devices` = `HA2EXB0E device`；`adb reboot bootloader` 后 `fastboot getvar current-slot` = **`a`**、
+  `slot-unbootable:a` = **`no`** ⇒ **ABL 自己把活动槽切到了 `a` 并清掉了它的 unbootable 位**，然后正常启动了 Android。
+- **因此撤回 §6-A 表里 A3 的判读**：终态改变 = 「回落到 Android」而不是「载荷执行导致的挂死」。
+  恢复后读三窗仍是 **stage1 = 0**（`0x84A00000` / `0x89300000` 逐页 0；`0x9C300000` 只有 10–12% 背景噪声）⇒ **A3 的载荷同样没执行**。
+- **新增硬事实（机制级，重要）**：**用「a 槽 unbootable」切断回落只能挡住第一次** —— b 槽失败后 ABL 会**改活动槽到 a 并清 unbootable**，
+  于是下一次尝试回落目标重新变成 Android（11-01 23:5x 那次停在 fastboot，是因为当时还没走到「换槽」这一步）。
+  要真正切断回落，必须让 a 槽**内容**不可用（如临时写坏 `boot_a`，有 `backup/stock-259/boot_a.img` 可回滚），而不是只改属性位。
+- **恢复已完成（本轮）**：`adb reboot bootloader` → `fastboot flash boot_b <备份>`（`fb55997c…`，读回逐字节一致）→
+  `fastboot --set-active=b` → reboot → **Linux 5×3 s 起来**（`boot_id 109a2bce…`）；`qbootctl`：slot `_b`，a/b **均 Bootable 1**。
+- **对 §4/§6-C 的影响**：「ramdisk/cmdline 是门」这条假设**未被证实也未被否证**（A3 与 A0–A2 一样看不到 stage1）。
+  下一步优先级改为：① 用「**真 Linux Image 头 + 内联 FD**」的壳（而不是 gzip 的 Mu payload）走同一路径，有时序对照；
+  ② 若仍无 stage1，则必须先拿到 ABL 是否执行过 b 槽载荷的**独立证据**（例如在 `boot_a` 里放一个已知能跑的 Linux 变体做同路径对照）。
