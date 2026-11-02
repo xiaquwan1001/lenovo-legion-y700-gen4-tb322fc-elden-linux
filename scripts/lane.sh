@@ -15,7 +15,8 @@
 #   scripts/lane.sh merge <lane>            # parent-only: merge lane into main
 #   scripts/lane.sh remove <lane>
 #
-# Env: LANES_DIR (default .pi/lanes), WT_ROOT (default sibling of main checkout),
+# Env: LANES_DIR (default .pi/lanes), WT_ROOT (default <main>/wt —— lane 工作树归项目内,
+#      2026-11-02 起不再散落在 $HOME 旁边),
 #      KERNEL_REPO (default <main>/geekidos-linux), KERNEL_BASE (default v7.2-elden)
 set -euo pipefail
 
@@ -23,7 +24,7 @@ repo_root() { git worktree list --porcelain | sed -n 's/^worktree //p' | head -1
 ROOT=$(repo_root)
 [ -n "$ROOT" ] || { echo "lane.sh: not in a git repo" >&2; exit 1; }
 LANES=${LANES_DIR:-$ROOT/.pi/lanes}
-WT_ROOT=${WT_ROOT:-$(dirname "$ROOT")}
+WT_ROOT=${WT_ROOT:-$ROOT/wt}
 KERNEL_REPO=${KERNEL_REPO:-$ROOT/geekidos-linux}
 KERNEL_BASE=${KERNEL_BASE:-v7.2-elden}
 REGISTRY=$ROOT/versions/vk-registry.tsv

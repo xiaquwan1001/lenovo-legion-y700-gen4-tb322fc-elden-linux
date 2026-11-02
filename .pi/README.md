@@ -5,6 +5,9 @@
 
 ## 目录分工
 
+> 2026-11-02：项目资产/记忆/技能/会话全部收归仓库内（`memory/` `skills/` `sessions/`），
+> lane 工作树改在 `../wt/`、外部工作区在 `../external/`（均 ignore）。仓库外只留机器级资产（`~/.pi/agent/`）。
+
 | 路径 | 内容 | 版本控制 | 说明 |
 |---|---|---|---|
 | `settings.json` | 本项目模型/会话/重试配置（`sessionDir`、provider、`retry`） | ✅ track | 项目级覆盖全局 |
@@ -12,12 +15,13 @@
 | `CONCURRENCY.md` | **并发细则**（基线+fork / 提交 trailer / vk 分配 / lane 归属 / 父合并；入口 `scripts/lane.sh`） | ✅ track | `AGENT-OPS` 的下级；派子代理前必读 |
 | `ORCHESTRATION.md` | **三层编排协议**（总管 / 一级角色 / 二级叶级）：职责、递归硬条件、深派判据、回执与复核、树内并发配额 | ✅ track | 2026-10-31 立；与 `CONCURRENCY.md` 同级，均受 `AGENT-OPS` 约束 |
 | `lanes/` | lane 运行时元数据（worktree/分支/baseline/状态） | ❌ ignore | 由 `scripts/lane.sh new` 写；机器本地 |
-| `skills/` | **项目技能**（`SKILL.md` + `references/`）。与全局 `~/.pi/agent/skills/` 叠加 | ✅ track | `qualcomm-android-flashing` / `qualcomm-edl-flashing` / `gsi-device-adaptation`。references 正文不入上下文，**用时 grep** |
+| `memory/` | **项目记忆本体（唯一可写面）**：`MEMORY.md` + 记忆类技能 `skills/*/SKILL.md` | ✅ track | 2026-11-02 从仓库外收回；`~/.pi/agent/projects-memory/y700-elden` 是指向本目录的**软链**（`mem -t project` 仍可用）。自检 = `scripts/check-project-memory.sh`；`.recovery-*`/`.retired-*` 派生历史不入库 |
+| `skills/` | **项目技能**（`SKILL.md` + `references/`）。与全局 `~/.pi/agent/skills/` 叠加 | ✅ track | `qualcomm-android-flashing` / `qualcomm-edl-flashing` / `gsi-device-adaptation` / `upstream-mail-ustc` / `vk-ledger-audit` / `waydroid-*` / `wifi-link-flap-triage` / `y700-adsp-ssc-sensors-bringup`。references 正文不入上下文，**用时 grep** |
 | `plans/` | `plan` 技能产出的方案草稿（非权威，落地后结论进领域层） | ✅ track | 临时规划产物 |
 | `missions/` | **子代理任务卡**（作为 `fabric_exec` 里 `agents.run({task})` 的派工背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
 | `agents/` | **子代理角色卡（提示词源）**：一级 Lead（`physical-exec`/`doc-audit-lead`/`mail-io`/`code-boundary`）+ 二级叶级（`impl-worker`/`verify-worker`）+ 既有专题卡 | ✅ track | pi-fabric **会按 `name` 直接读取**本目录 `*.md`（正文作 systemPrompt，`tools`/`model` 可被调用覆盖）；派工时也可只传 `agent` 名 |
 | ~~`workflows/`~~ | ✅ **已清空移除（2026-10-12）**：pi-subagents workflow 脚本（5 个）+ `plans/*-workflow.js`（5 个）已移入 `archive/2026-10-12-retired-pi-subagents-workflows/` | — | 旧方言已废弃、仅供追溯；复用须按 fabric 重写（`agents.run`/`Promise.allSettled`），**不要原地改语法** |
-| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | **逐会话快照档案见 `../SESSIONS/`**（检索仍用 `session_search`/`/resume`）；归档策略见 `../RESOURCES/README.md` §3 |
+| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | **逐会话快照档案见 `../SESSIONS/`**（检索仍用 `session_search`/`/resume`）；归档策略见 `../RESOURCES/README.md` §3。2026-11-02 已把 `~/.pi/agent/sessions/` 下残余的本项目会话（含旧 home 路径 `/home/xuqianhui1001/y700-elden` 起步的）并回本目录，全局不再留副本 |
 
 ## `missions/` vs `agents/`（易混）
 
@@ -39,4 +43,6 @@
   项目级 `.pi/fabric.json` 已把全部别名指向该池。**`agents.run` 的 `tools` 是完整白名单**（不列就用不了；递归调用才会自动附加 `fabric_exec`）。
   - **角色工具集**：角色卡 frontmatter `tools` 即默认白名单（一级 `mail-io` 含 `web_*`，`code-boundary` 含 `edit/write` 用于写报告）；调用时传 `tools` 会整体覆盖。Fabric 的 `tools:[...]` 是**完整白名单**（不显式列出 `web_*` 的子代理只会回 NO_WEB_TOOL），所以需要联网时务必显式传/写。
 - `sessions/` 不入 git；`sn.img`、`bootslot-b/avb.key` 等敏感物禁止入库。已退场的插件入口（`pi-messenger.json`、`messenger/`、`swarm*.sh`）不再放回本目录 → `archive/2026-10-04-retired-entrypoints/`。
-- 记忆只存**跨会话有用**的偏好/教训/决策，不存可随时重推的临时细节。项目记忆已迁 hermes（`~/.pi/agent/pi-hermes-memory/` + `~/.pi/agent/projects-memory/<repo>/`，`memory_search` 可检索）——`.pi/memory/` 已于 2026-10-05 删除。
+- 记忆只存**跨会话有用**的偏好/教训/决策，不存可随时重推的临时细节。**项目记忆 = `.pi/memory/`（本仓库内，入库）**：
+  `~/.pi/agent/projects-memory/y700-elden` 只是指向它的软链（2026-11-02 变更，此前是仓库外活文件 + `.pi/hermes-memory-mirror/` 镜像，镜像已废弃）。
+  全局 `~/.pi/agent/pi-hermes-memory/` 只放跨项目事实（环境/引擎/网络/工具通用坑）；项目机制/契约/测试坑写在 `.pi/memory/` 或角度层 `README.md`。

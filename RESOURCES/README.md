@@ -153,7 +153,7 @@
 | 相机模块包（20 个） | `out/camera-modules/` + tar | ✅ 冷启自加载已在机验证 |
 | **运行内核对齐模块包**（25 个，g4c68eb5ed4e3） | `out/camera-modules-7.2.0-debug-g4c68eb5ed4e3-dirty.tar.gz` | ✅ sha256 `4146dfd0…`；持久根相机/音频已复现（`archive/topics/KMOD-ALIGN-2026-10-05.md`） |
 | **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | 3.44 GB / 30852 项，tar/gzip 完好 |
-| **Waydroid Mesa 26.1.8（bionic，自编）** | `~/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz`（6.9 M，**11 个 .so**：`libgallium_dri` / `libgbm_mesa` / `dri_gbm` / `libgbm_mesa_wrapper` / `egl/{libEGL,libGLESv1_CM,libGLESv2,libGLES}_mesa` / `hw/{vulkan.freedreno,gralloc.minigbm_gbm_mesa,gralloc.gbm}` + `manifest.txt`） | sha256 全 OK，含 DRM chip-id 魔数 `0xffff44050000`；**重建** = `scripts/mesa-build.sh`（freedreno-only 定向 make，5.5 min；ccache 热 ~10 min）；部署 = `extract-mesa-libs.sh`+`waydroid-mesa-swap.sh`（bind-mount，可回退） |
+| **Waydroid Mesa 26.1.8（bionic，自编）** | `external/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz`（`~/mesa-out` 是指向它的软链；6.9 M，**11 个 .so**：`libgallium_dri` / `libgbm_mesa` / `dri_gbm` / `libgbm_mesa_wrapper` / `egl/{libEGL,libGLESv1_CM,libGLESv2,libGLES}_mesa` / `hw/{vulkan.freedreno,gralloc.minigbm_gbm_mesa,gralloc.gbm}` + `manifest.txt`） | sha256 全 OK，含 DRM chip-id 魔数 `0xffff44050000`；**重建** = `scripts/mesa-build.sh`（freedreno-only 定向 make，5.5 min；ccache 热 ~10 min）；部署 = `extract-mesa-libs.sh`+`waydroid-mesa-swap.sh`（bind-mount，可回退） |
 | Waydroid 镜像 | `~/下载/` GAPPS `system.zip`(1.17 G) + MAINLINE `vendor.zip`(77 M) | ✅ |
 | x86 chroot 资产 | `pkgs-x86/`（ubuntu-base-arm64、box64 0.4.5、Strings64） | ✅ PoC 已通 |
 | 原厂分区备份 | `backup/stock-259/`（abl/boot/dtbo/init_boot/recovery 双槽 + SHA256SUMS） | ✅ |
@@ -176,7 +176,7 @@
 |---|---|---|
 | `/mnt/Samsung/waydroid-build` | Waydroid AOSP 树（1254 项目 / 1219 对象库 fsck 全 OK） | 550 G（**2026-10-16 告知将随盘清空**：本地提交已推两个 USTC 仓、树外件已留档 `reference/waydroid-buildtree/`、构建产物 `vendor.img` 已进云盘包 ⇒ 可清） |
 | `/mnt/Samsung/l2`（本 repo `./l2`） | 原厂 super / system_a / system_a.pristine（sha256 逐侧一致）；**stock-259 13 分区备份里没 super，这里是唯一一份**；自研 `lp_tool.py`（LP v1.2 dump/extract/splice）唯一副本 | 45 G |
-| `~/mesa-out` | Waydroid bionic Mesa 构建产物（11 `.so` + `manifest.txt`），即上表自编产物的落地包 | ~7 M |
+| `external/mesa-out`（`~/mesa-out` 软链） | Waydroid bionic Mesa 构建产物（11 `.so` + `manifest.txt`），即上表自编产物的落地包；**2026-11-02 从 `~/mesa-out` 迁入项目** | ~7 M |
 | `~/下载/tb322fc` | EDL 全量包 | 599 M |
 | `stock-src/` | 联想 GPL 源码 | 400 M |
 
@@ -254,11 +254,12 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
     （`audit/early-reboot` / `lane/doctor-refactor` / `lane/upstream`）与 **8 个标签**
     （`base/2026100{5,5,12,14}-*` / `merge/{bootchain,bootslim,userland-session}` / `pre-docs-v2`）
     ⇒ **复核后 `origin` 与本地 refs 完全一致（5 分支 / 57 标签，`main` 零欠账）**；GitHub 镜像同批同步（含 `history/pre-vk34`）。
-  - **本地独有工作 = 三条通道（2026-10-16 落）**：
-    - **① hermes 项目记忆 → 入库**：`scripts/sync-hermes-memory.sh` 把**仓库之外**的 `~/.pi/agent/projects-memory/<repo>/` **单向快照**进 `.pi/hermes-memory-mirror/`
-      （`MEMORY.md` + `skills/*/SKILL.md`，共 620 K / 9 文件；**不含** hermes 自滚动的 `.MEMORY.md.recovery-*`/`.retired-*` 26 M 派生历史），
-      随本仓推 USTC/GitHub；`scripts/sync-hermes-memory.sh --check` 判新鲜度。
-      **方向纪律：记忆只改 hermes 活文件（`memory_add` 等），勿手改镜像**（下次同步原样覆盖）。
+  - **本地独有工作 = 三条通道（2026-10-16 落，2026-11-02 修订）**：
+    - **① 项目记忆本来就在仓库里**：唯一可写面 = `.pi/memory/`（`MEMORY.md` + `skills/*/SKILL.md`），
+      全局 `~/.pi/agent/projects-memory/<repo>` 只是指向它的**符号链接**（`mem -t project` 等老入口仍可用）；
+      自检 `scripts/check-project-memory.sh`（`--fix` 可重建软链）。
+      **2026-11-02 前**的做法（仓库外活文件 + `sync-hermes-memory.sh` 单向快照进 `.pi/hermes-memory-mirror/`）已废弃：
+      镜像目录删除，旧脚本留档 `archive/2026-11-02-hermes-mirror-retired/`。
     - **② 不可重下的大二进制 → 云盘**：`scripts/pack-cloud-backup.sh [DEST]` 按 **T1/T2** 硬链接整理（link count=2，**0 额外占盘**）+ `MANIFEST.sha256`；
       清单/理由 = `../reports/cloud-backup-manifest-20261016.md`。已生成 `~/cloud-backup-y700-elden-20261016/`（**6.9 G / 3594 文件，sha256 全验 OK**）⇒ **待用户上传云盘**。
       分层：**T1** 不可再生（设备独有分区/GPT/解锁前取证/内核 bundle/AVF/rootfs 归档）· **T2** 可重下但代价高（原厂厂商资产/EDL 全量包/厂商工具）·
@@ -284,7 +285,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | 路径 | 体积（2026-10-23 现查） | 版本控制 | 说明 / 处置 |
 |---|---|---|---|
 | 领域层 `INDEX/DEVICE/TASKS/RESOURCES/RUNBOOK.md` + `AGENTS.md`（各角度 `README.md` 单列） | 领域层合计 ≈ 0.8 M（`TASKS/` 456 K、`HISTORY/` 144 K、`RESOURCES/` 84 K、`DEVICE/` 48 K、`RUNBOOK-BRINGUP/` 44 K、`INDEX.md` 20 K、`PROGRESS.md` 20 K、`README.md` 12 K、`AGENTS.md` 4 K） | ✅ track | 平面 1 领域层＝唯一维护面；分层与 SSOT 见 `INDEX.md` §2（GAPS/ANDROID-COMPAT 已并入 `../TASKS/README.md` §5/§6） |
-| `.pi/{skills,missions,agents}` `.pi/README.md` `.pi/AGENT-OPS.md` `.pi/CONCURRENCY.md` `.pi/ORCHESTRATION.md` `.pi/settings.json` `.pi/plans` `.pi/hermes-memory-mirror` `.pi/fabric.json` | 1.5 M | ✅ track | AI 大脑：行为规范/并发细则/三层编排协议/技能/子代理/模型/计划（分工见 `.pi/README.md`）+ hermes 项目记忆单向镜像 620 K。⚠️ `.pi/memory/` 已于 2026-10-05 删除（迁 hermes）；`pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1）。`.pi/lanes/`、`.pi/fabric/` 为运行时，已 ignore |
+| `.pi/{memory,skills,missions,agents}` `.pi/README.md` `.pi/AGENT-OPS.md` `.pi/CONCURRENCY.md` `.pi/ORCHESTRATION.md` `.pi/settings.json` `.pi/plans` `.pi/fabric.json` | 1.5 M | ✅ track | AI 大脑：行为规范/并发细则/三层编排协议/技能/子代理/模型/计划（分工见 `.pi/README.md`）+ **项目记忆本体 `.pi/memory/`**（`MEMORY.md` + 记忆技能；`~/.pi/agent/projects-memory/y700-elden` 是指向它的软链）。`pi-messenger.json` 与 `messenger/` 已随插件卸载清除（`PITFALLS` §15.1）。`.pi/lanes/`、`.pi/fabric/` 为运行时，已 ignore |
 | **`.pi/trash/`**（trash-cli 回收站） | **0（已清空 2026-10-23）** | ignore（依据在 `.git/info/exclude:7`） | **2026-10-23 A0**：曾 **21 G**（单件最大 `out-m1-73` 11 G + 5.07 G 云盘包 tar），已核实无独有价值件（抢救 2 件已恢复）后整删。⚠ **别再攒**：本机 pi bash 会把 `rm -rf` 转成 trash，批量删用 `python3 shutil.rmtree` |
 | `.pi/sessions/`（jsonl 会话轨迹，含会话子目录副本） | **现查**（2026-10-23 = 496 M / 209 个 jsonl） | ignore | 会话轨迹。**会话数不在这里维护**：现查 `ls .pi/sessions/*.jsonl \| wc -l`；检索用 `scripts/sess.sh` 或 `/resume`。**整理候选**：旧会话归档（见 §3 H1） |
 | `scripts/` | **现查 1.4 M（197 文件）** | ✅ track | 构建/刷机/GPT/温控/基准/容器脚本全集（6 个 swarm 脚本已移入归档，§15.1） |

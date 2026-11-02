@@ -7,7 +7,7 @@
 set -euo pipefail
 
 DEVICE="${DEVICE:-root@192.168.7.1}"
-SRC="${SRC:-$HOME/mesa-out}"          # extract-mesa-libs.sh 的产出目录
+SRC="${SRC:-$(cd "$(dirname "$0")/.." && pwd)/external/mesa-out}"   # extract-mesa-libs.sh 的产出目录（~ /mesa-out 是软链）
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REMOTE_TMP=/root/wd
 REMOTE_NEW=/root/wd/mesa-new

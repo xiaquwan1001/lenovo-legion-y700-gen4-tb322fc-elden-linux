@@ -20,7 +20,9 @@ if [ "${1:-}" = "--list" ]; then LIST_ONLY=1; shift; fi
 DEST=${1:-"$HOME/cloud-backup-y700-elden-$(date +%Y%m%d)"}
 DL=${EDL_PACKAGE_DIR:-"$HOME/下载/tb322fc"}
 L2=${L2_DIR:-"/mnt/Samsung/l2"}
-MESA=${MESA_OUT_DIR:-"/mnt/Samsung/mesa-out"}
+MESA_DEFAULT="/mnt/Samsung/mesa-out"
+[ -d "$MESA_DEFAULT" ] || MESA_DEFAULT="$ROOT/external/mesa-out"   # 2026-11-02 起归项目内
+MESA=${MESA_OUT_DIR:-"$MESA_DEFAULT"}
 WBD=${WAYDROID_BUILD_DIR:-"/mnt/Samsung/waydroid-build"}
 
 # ---- T1：不可再生 ----

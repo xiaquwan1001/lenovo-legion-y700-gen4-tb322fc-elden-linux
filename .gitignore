@@ -22,6 +22,9 @@
 # ---- 构建产物 / 可再生成 ----
 # /build = 2026-10-10 起内核构建目录（scripts/build-kernel.sh 工作区，~4G 可再生）
 /build/
+# 2026-11-02 起 lane 工作树与外部工作区归项目内（不再散落 $HOME）
+/wt/
+/external/
 # /out 用 /* 而非整目录忽略：否则 `!` 无法复活子文件（git 规则）；manifest 是可复现指纹，要入库
 /out/*
 !/out/*.manifest
@@ -155,3 +158,8 @@ reports/artifacts/uefi-ddr-20261101/*.img
 
 # EDL 只读取证件：二进制本体不入库（README + SHA256SUMS 是唯一账，33 MB 可由 SHA 对账重抓）
 /reports/artifacts/uefi-edl-read-20261101/*.bin
+
+# ---- 项目记忆（2026-11-02 收归仓库内 .pi/memory/）----
+# hermes 自动滚动的派生历史不入库（.recovery-* / .retired-*）
+/.pi/memory/.recovery-*
+/.pi/memory/.retired-*

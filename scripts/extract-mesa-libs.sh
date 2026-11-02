@@ -4,7 +4,7 @@
 # 用法：
 #   bash extract-mesa-libs.sh                 # 默认产品 waydroid_arm64_only
 #   PRODUCT=waydroid_arm64_only TREE=/mnt/Samsung/waydroid-build bash extract-mesa-libs.sh
-#   OUTDIR=~/mesa-out bash extract-mesa-libs.sh
+#   OUTDIR=<repo>/external/mesa-out bash extract-mesa-libs.sh
 #
 # 产出：
 #   $OUTDIR/lib64/...                          # 按 vendor 层次排好的库
@@ -15,7 +15,7 @@ set -uo pipefail
 TREE="${TREE:-${AOSP_TREE:-/mnt/Samsung/waydroid-build}}"   # 2026-10-02 迁到 1T Samsung 盘
 PRODUCT="${PRODUCT:-waydroid_arm64_only}"
 JOBS="${JOBS:-16}"
-OUTDIR="${OUTDIR:-$HOME/mesa-out}"
+OUTDIR="${OUTDIR:-$(cd "$(dirname "$0")/.." && pwd)/external/mesa-out}"   # 2026-11-02 起产出归项目 external/mesa-out（~ /mesa-out 是软链）
 OUT="$TREE/out/target/product/$PRODUCT"
 VENDOR_LIB="$OUT/vendor/lib64"
 
