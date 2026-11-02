@@ -1,0 +1,18 @@
+# M8 mdss v3 — 实发件与 Message-ID 清单（2026-11-02 05:50Z / 05:52Z）
+# 来源：Sent Items 回读（IMAP seq 236-241），非 dry-run 预测值
+
+SEQ   	Message-ID                                                	In-Reply-To
+236	<20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>	-
+237	<20261102055026.438521-2-xiaqinghuan@mail.ustc.edu.cn>	<20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+238	<20261102055026.438521-3-xiaqinghuan@mail.ustc.edu.cn>	<20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+239	<20261102055026.438521-4-xiaqinghuan@mail.ustc.edu.cn>	<20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+240	<179359872904.440020.4978864415299817827@mail.ustc.edu.cn>	<odog4t5j3y7j4tatqsiywfj27iufeazkzp3vtfvzce2knct25n@ephs3ngmt2i6>
+241	<179359872977.440050.668410399098679331@mail.ustc.edu.cn>	<dkwloahmxcka2ykjdrf6nh6d6cde6zgd7fe5s763h7s6nv3eqe@pm32d33ghgbb>
+
+# 回读文件 sha256
+85de19303769bc080dc63b22bba015dfaf5af3a29a4e346bb36043c43b071c7a  readback-236.txt
+375ad65c75dda5e8f39262cb5b712f111831e02a877e07b1a7230e4d1449f079  readback-237.txt
+d1232899dbca1ca335574858ad5ae6ce37f32746b5e15f1f64d733c77d110627  readback-238.txt
+6ff548f86908ced0be9f01e12a9948c91c326d88763aecf45910cad955a66ef3  readback-239.txt
+b269f65ab792919f1b4c89ed8a74159b7bfe2c070c95f8c1d66fd9f2e086fbec  readback-240.txt
+78c2e75e1dd49e8841bcfdd22e4de3c2c4c05ba3f1895f7593103995d30edb51  readback-241.txt

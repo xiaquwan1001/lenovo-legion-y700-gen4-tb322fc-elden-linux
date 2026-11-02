@@ -1,0 +1,18 @@
+====================================================================================================
+SEQ 241 | Mon, 02 Nov 2026 13:52:09 +0800 | Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+SUBJ Re: [PATCH v2 3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets
+MID  <179359872977.440050.668410399098679331@mail.ustc.edu.cn>
+IRT  <dkwloahmxcka2ykjdrf6nh6d6cde6zgd7fe5s763h7s6nv3eqe@pm32d33ghgbb>
+TO   Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+----------------------------------------------------------------------------------------------------
+Dropped.  v3 is at <20261102055026.438521-4-xiaqinghuan@mail.ustc.edu.cn>: the
+node lists only DISP_CC_MDSS_CORE_BCR and DISP_CC_MDSS_CORE_INT2_BCR, and the
+binding and the commit messages are trimmed to match.
+
+Those two are what the failing boots leave unreset, so the judgement does not
+depend on the RSC.
+
+(AI-assisted draft, edited by me; content and decisions are mine.)
+
+Qianhui Xu
+

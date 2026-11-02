@@ -132,29 +132,11 @@
 
 | # | 待办 | 需要设备 | 判据 / 完成标志 |
 |---|---|---|---|
-| **T1** | ~~M3-1 上游回信 v2~~ ✅ **已投递并复核（2026-10-17 08:13Z）**：`patches/upstream/m3-v2-2026-10-17/`（cover + 2 枚）= 撤 `usb-psy-name` 整枚、binding 不再踩属性顺序、lkp `mux_role` 删除、sashiko 4 条全修（pm 不平衡 / 中途退出致 UAF / freezable wq `flush_work` 死锁 / oldest-wins 真实现）、Konrad 拓扑质疑用板 DTS 片段正面回答。门：checkpatch 2/2 0E/0W/0C、`dt-doc-validate` rc=0、`make … W=1 drivers/usb/dwc3/` rc=0 零 warning。**投递**：3 封 `Result: 250`；Message-ID `20261017081320.220525-1/-2/-3-xiaqinghuan@mail.ustc.edu.cn`；**`/linux-usb/` 与 `/linux-devicetree/` 各 3/3 归档**（lore 独立取回）+ diff 段逐行比对缺失 0 | ❌ | ✅ 全部达成（回信跟踪 = `read-mail-ustc.py --replies-only`）。**后续 v4 重发（2026-10-26，`[PATCH v4 0/3..3/3]`，Message-ID `20261026123211.243224-1..4`，4 封 250、`/linux-usb/` 4/4 与 `/linux-devicetree/` 0/1/3 归档）证据与 sashiko 12 条逐条处置见 `reports/m3-v4-series-20261026.md`** |
-| **T2** | ~~邮箱凭据正规化~~ ✅ **已完成（2026-10-17）**：密码由用户在 GNOME keyring 设好（service `smtp`）；两个脚本改为**优先 `keyring.get_password("smtp", …)`**，git 凭据助手按 `smtp.ustc.edu.cn:465` 补存；**`~/.gitconfig` 明文 `smtppass` 已删除**（备份 `.gitconfig.bak-*`）。实测：IMAP 读信 OK、`send-mail-ustc.py --send` 发出并在 INBOX 回读到 | ❌ | 配置内无明文口令 ✅；收发链路实测通 ✅ |
-| **T3** | ~~构建链复位（P2+P3）~~ ✅ **已完成（2026-10-17）**：重放配方**换轨**——旧 payload 基点（v7.2 tag）对象已随换机丢失，改用 USTC 镜像的 pristine 7.2 重建基点；下游态**不能取 `v7.2-elden` tip**（缺 12 个运行期提交，DTB 少 12.5 KB），改取 **`vk64` 树 + cambist 回上游 parity**（DTB 与在机基线**同尺寸 153101 B**），16 冲突按 §2 表裁决。补丁固化 `patches/replay-2026-10-17/`（干净 worktree `git am` 2/2 OK）。详见 `reports/replay-2026-10-17-m1-73-vk127.md` | ❌ | ✅ `make dtbs` rc=0/0 warn；✅ `dtbs_check` rc=0/0 诊断；✅ 板 DTB 153101 B（与在机 `boot_b` 同尺寸，语义差异仅 q6apm 端口 3/7 keep） |
-| **T4** | ~~重编一个日常镜像（P4）~~ ✅ **已完成（2026-10-17）**：新号 **vk127**（`lane.sh alloc`）；`Image.gz` 20 800 597 B、**1497 `.ko`**（与在机模块树数量一致）、镜像 `out/boot-elden-vk127.img`（85 585 920 B，sha256 `7515f6a4…`）+ manifest（`kernel_release_matches_image=yes`）；ramdisk 取自基线镜像以排除变量 | ⚠️（构建✅/上机✅/写盘待人在场） | ✅ **真 POR 冷起 3/3 GOOD**（s4/s5/s6：`l1=0`、`dsi_isr=41`、目视有桌面）+ s4 功能抽查全绿；warm 路径 s3 = 坏（打折）⇒ 合计 3 好/1 坏。**Q28 口径不变**（3/3 好 ≠ 好转）。**★ 新坑**：RAM 启动前必须先部署 `/lib/modules/<新UTS>`（否则无 DRM，见 `PITFALLS #293`）。证据 `reports/vk127-sampling-20261017.md`、`reports/trials/20261017T-s{3,4,5,6}-vk127-q28.json`；`boot_b` **当时仍 = `m1-baseline-f3`**（写盘未做；**2026-10-17 时点快照，当前在机口径见 `DEVICE/README.md` §1.1**） |
-| **T5** | ~~Q24 回 Taniya Das（10-13 请求）：三件套~~ ✅ **已投递、回读 + lore 复核（2026-10-20 11:02Z）**：`<179249416915.570120.11194300523322683054@mail.ustc.edu.cn>`（正文逐字节同本地版，5 附件全在）（To Taniya Das / Cc linux-arm-msm + linux-clk / In-Reply-To 她 10-13 那封），5 个附件（dmesg 970 行 t=0 起、dmesg delta 10 行、`pm_genpd_summary` 116 行、`clk_summary` 804 行、`summary.txt`），Sent Items [134] 回读。**数据集结论**：vk127（7.3-rc7）上「camcc+cambistmclkcc 配对 + 真实熄屏 60 s+」**未复现硬复位**（`boot_id` 全程不变，`dpms On→Off→On`，dmesg 仅 +10 行 = DSI 重算 timing + 触摸重下固件）；熄屏期 `cam_cc_titan_top_gdsc on→off-0`、两个 CCI `active→suspended`、`mdss_gdsc off`、`gcc_ufs_phy_gdsc` 子设备 64→0。**采集副作用已实证并写进邮件**：读 `clk_summary` 即 resume 时钟控制器（`wsa_macro … flat cache` @ t=4152.99）。**语境门**：采集前 `dpms=On`（面板 GOOD），未用 Q28 坏发快照。**★ 上游新动态**：Konrad Dybcio 同日 09:37+0200（`<101257b5-7e43-4cc1-ba17-1507dad27b52@oss.qualcomm.com>`）给出单变量实验 —— 注释 `rpmhpd_driver.sync_state` 把所有 rail 钉在最大档；**下一步 = 在 7.2 血统（vk64 台架）上跑该单变量**（7.3-rc7 这一发本来就不死，跑它没有判别力） | ✅（已采完） | ✅ 回信发出 + 口径写明 + Sent Items 回读；数据集 `reports/artifacts/t5-20261020-185318/`、报告 `reports/t5-q24-dataset-20261020.md`、脚本 `scripts/t5-q24-capture.sh`。**★2026-10-23 最终回复已投递**：`<179275354134.2172061.11015656020262592672@mail.ustc.edu.cn>`（To Konrad / linux-pm，Cc linux-arm-msm + Bjorn + Mike Tipton + Taniya），Sent Items [145] 回读；正文 = （a）报告 `sync_state` 臂 4/4 活已跑、（b）**交叉指向上游 `Skip retention by default`**（含 cmd-db 实测档位表 + ADSP/CDSP proxy_pd 交集）、（c）**明确写明 vk149 臂 0 有效样本、既不作证实也不作否证**、（d）声明对我方已结项（7.3 无需本地补丁）。草稿 `out/mail-20261023/re-konrad-q24-retention.txt`（out/ 不入库）|
-| **T8** | ~~suspend 启动即死取证~~ ✅ **已闭环（2026-10-20，实证）**：**不是 suspend 代码 bug，是 ABI 失配**。① 取证：panic 栈 `software_node_notify+0x54` ← `device_add` ← `cscfg_init [coresight]`，`x1/x2` 是 **ARM64 指令字节**；② 机理：`struct dev_pm_info` 对 `CONFIG_PM_SLEEP` 真 `#ifdef`，它在 `struct device` 里排在 `fwnode` 之前 ⇒ `dev->fwnode` 偏移 **632→688（差 56 B，pahole 双树实测）**，而设备 `coresight.ko` 仍是 vk127 布局、`CONFIG_MODVERSIONS` 未开 ⇒ 无 CRC 门；③ **实验证实**：内核字节级不变（`Image.gz` sha `f2d073bd…` = vk129 镜像内 kernel），只重编部署模块树 ⇒ **vk129 完整起机、oops=0、`cs_system_cfg: CoreSight Configuration manager initialised`、`/sys/power/state` = `freeze mem`、`mem_sleep` = `[s2idle] deep`**。⇒ vk128/vk129 的「suspend 代码本身启动即死」结论**正式推翻**，该项失败全部作废 | ✅ 已上机 | `reports/vk129-abi-fix-verified-20261020.md`、`reports/suspend-panic-rootcause-20261020.md`、`reports/artifacts/vk129-abi-fix-verified-20261020.txt`；**能力固化** = `scripts/switch-kernel-abi.sh`（内核∪模块树原子切换，`--list`/`--check` 已验）见 `reports/kernel-abi-variants-20261020.md` |
 | **T9** | suspend 掉电率 —— **🔽 2026-10-28 用户裁决：优先级放到最低、暂不排期（本轮及后续不投入；恢复时按本行历史口径）**；历史：**🔴 被新根因阻塞（2026-10-20）**：真因不是 RTC、不是 s2idle 特有，而是 **`qcom-pcie` L2 进入超时**（`LTSSM: 0x12`）⇒ PCIe link 重拉 ⇒ **WiFi 被重新上电/重探** ⇒ `hwmon parent phy0 should not be sleeping` + 唤醒 ⇒ **每次 suspend 只待 ~1.4 s**（4/4 确定性复现，deep 同样）。已排除：coresight pm_runtime 干扰（卸载后仍 3 s）、`pcie_aspm=performance`（写报 Resource busy，且 L2 由 driver 主动请求）。⇒ **在修好 PCIe L2 前不得记录任何 `%/h` 数字**（挂 1.4 s 能耗≈0）。待做：① DT/驱动层修 qcom-pcie L2（参考上游 sm8750）；② 修 ath12k hwmon parent 睡眠访问；③ 之后才测掉电率。**2026-10-20 静态方案已出**（`reports/pcie-l2-static-20261020.md`）：纠正三前提（该 printk 已是 `ret=0` 非致命；link 重拉是 resume 常规路径；hwmon 告警是 WiFi 重 probe 下游症状）；`0x12 = DW_PCIE_LTSSM_L0S`（链路停在 L0s，从未朝 L2 走）；qcom 驱动从不设 `skip_l23_ready`；**风险最低方案 A = `skip_l23_ready`**（patch 草稿 `reports/artifacts/0001-pci-qcom-skip-l23-ready-wait-for-sm8750.patch`，**已编译并上机：vk130**） **🆕 2026-10-21 实测（vk130，RAM 启动零写盘）= 补丁有效但 L2 不是真阻塞**：`Timeout waiting for L2 entry` → **0 次**；BT 开时 3 次 suspend 全弹回（trial1 24.9 s 因 `ath12k: timeout while waiting for restart complete` → `pci_pm_resume -110`；trial2/3 **3.5 s** 因 `hci_uart_qca qca_suspend -110` → `PM: Some devices failed to suspend`，`suspend_stats.last_failed_dev=serial0-0`）；**`rfkill block bluetooth` 后 success=2**，其中一发 **held 56.5 min 直到人工按电源键**、`boot_id` 不变、无 panic ⇒ **真阻塞 = BT `qca_suspend`（3 s 超时）+ ath12k resume -110**，与 PCIe L2 无关。**方法学修正**：设备 RTC epoch 与 userland 不同（`rtc0/since_epoch=225770` vs `sys=1792543996`），`wakealarm` 必须用 RTC epoch 写，否则闹钟落在几十年后（旧「RTC 未参与」结论部分作废）。顺带复验 **Linux→fastboot 通道**：`reboot2 bootloader` 后 2 s 出现在 `fastboot devices`（`HA2EXB0E`），`fastboot boot` 全程零写盘。**🆕 2026-10-21 收口（真因已定 + 已修）**：`qca_suspend` 只等 `FW_DOWNLOAD_TIMEOUT`=**3 s**，而 WCN7850 固件+NVM 下载实测 **23.0 / 25.4 s** ⇒ 落在下载窗口内的 suspend 必然 `-110` 并 abort 整机挂起（`last_failed_dev=serial0-0`）；BT 稳定后挂起完全正常（21.7/22.0/22.0 s，另有一发 5 min held **302 129 ms**）。**修复 = 两处**：① 内核 `hci_qca`（`FW_DOWNLOAD_SUSPEND_TIMEOUT`=40 s；仍超时则 warn `FW download still running, skipping in-band sleep` + `return 0` 不打断整机；resume `QCA_RESUME_RESET_NEEDED` + `hci_reset_dev`）—— vk131/vk132 实测窗口内 suspend **成功 fail=0**（held 361 711 / 385 858 ms）；② 用户态 elogind 钩子 `50-elden-bt-guard`（等窗口过去，端到端 24 s 命中、success 12→13 无 `-110`）。**已知副作用**：被打断的下载不自愈（唤醒后 `hci0` 停在 `DOWN`，`hciconfig up`=Not supported 95）；**resume 里强制 serdev re-probe 会挂死整机（vk133 实测，已回退）** ⇒ 保底用用户态 `rc-service bluetooth restart`。仍未修：`HS-PHY not in L2`、`hwmon parent phy0 should not be sleeping`（均每挂起 1 条、非阻塞） | ✅ + 拔线 + 人工唤醒 | `reports/qca-fw-download-suspend-20261021.md`（权威）、`reports/t9-vk130-pcie-l2-live-20261021.md`、`reports/suspend-pcie-l2-blocker-20261020.md`（旧归因已修正）、`scripts/deploy-bt-suspend-guard.sh`、`scripts/test-bt-guard.sh` |
-| **T10** | ~~N5b 扩样~~ **✅ 已终止（2026-10-23，用户裁决）** —— **Q24 根因已指名，采样到此为止**：7.2 血统缺上游 `skip retention by default`（详见 §5 Q24 `★2026-10-23 根因`），7.3 线本就带修复 ⇒ 继续扩样不再产生判别力。**剩余唯一动作** = `vk149`（vk64 + 回移那 9 行）复现取证，判据见 `reports/q24-retention-rootcause-20261023.md`。以下为历史记录。**历史**：N5b：vk64 台架上「完整相机栈 + 真实熄屏」扩样 n≥5（T5 数据源）—— **🟡 2026-10-20 首轮：n=1 有效**（Round1 ALIVE：vk64 + 19 相机模块 + `dpms On→Off` 真实跃迁）。其余 4 轮无效：Round2 `INVALID-NO-BLANK`、Round3/5 `SETUP-FAIL`、Round4 **`WRONG-KERNEL`（跑成 vk127）**；失败主因 = **残留的 nohup 后台脚本反复重启设备**（PITFALLS #358，已修脚本：连续 SETUP-FAIL 上限 + 轮内内核复核）。**★2026-10-23：本轮 n=6 有效（4 DEAD / 2 ALIVE）= 死率 67%**（Wilson 95% CI ≈23–88%），判据全满足（`powerlog_hits=0`/`pstore` 空/回落 vk127）；**死亡分两个相位**：熄屏瞬间（ADSP watchdog + TZ fatal）与熄屏后唤醒（<6 s 无痕复位）。新签名（首次抓到）：`dpms Off` 后 **ADSP watchdog + `sys_m_smsm.c:322` TZ `err fatal notification` + UCSI `-5`** ⇒ SoC 硬复位（`powerlog_hits=0`/`pstore` 空），判据符合 Q24（证据 `logs/n5b-vk64-20261023-133658.log.round2.serial`）；另一次失效是**唤醒路径 DPU vblank timeout + `reset failure: -22`**（Q28 同族，不计入 Q24）。顺带修了脚本两处假阴性（`SetActive` 冷启动 no-op、空读数掩盖真死亡）。**新阻塞**：`reboot2 bootloader` 在硬复位后 ~11 s 下发 ⇒ 设备不进 fastboot 且 USB 全不枚举，需人工断电（`PITFALLS #368`）。**★2026-10-23 Konrad `sync_state` 单变量臂已建并测：4/4 ALIVE（含 1 发 FRESH 独立冷启；基线同协议 8 发 6 死；超几何单侧 p≈0.030）**；**采样按用户决定停止**，恢复条件 = Q28 v2 落地压掉坏 boot 类之后再对拍，臂镜像 `out/boot-elden-vk148.img`（原 vk64-syncarm 已按 vkNN 账本改号）（UTS 钉住复用模块树；变量生效判据 = `/proc/kallsyms` 无 `rpmhpd_sync_state`），见 `reports/q24-syncarm-test-20261023.md`、`reports/q24-syncarm-build-20261023.md`、`patches/candidate-q24-syncarm/`。**待做（按决定暂停）**：基线/臂各补 ≥5 发 `FRESH=1` 独立样本；相位样本同批补 | ✅（需人在场，vk64 是 RAM 内核每轮要 `fastboot boot`） | `scripts/n5b-vk64-death-rate.sh`；`reports/q24-n5b-20261023.md`；会话 `TASKS/sessions/2026-10-20-suspend打通-pcieL2阻塞-T10首样本.md` §6 |
-| **T12** | ~~`build/m3v2-7.3rc7` git pack 物理损坏~~ ✅ **已修好（2026-10-20）**：它是 `build/m1-73` 的 **worktree 宿主**，`.git/objects/pack/pack-d19c589d….pack` 报 `checksum mismatch` + 8 对象 `cannot unpack`（5 blob 可从工作树复原、3 tree 从 `geekidos-linux` 取回）；4 个 worktree 的 `index` 也坏（`m1-73` index 里出现 **`drirers/`、`drivers/s398/`** 翻位路径名）。修法：`git cat-file --batch` 导出全部 **118 357** 对象 → 逐个重算 sha1 验 → 干净对象库替换 → `git reset` 重建 index。**结果**：`git fsck`（排除 reflog）**0 错误**、工作树 diff 干净。备份 `backup/git-pack-repair-20261020/`（574 M，12 文件） | ❌ | ✅ `git -C build/m3v2-7.3rc7 fsck` 无对象错误；`m1-73` 5 个有意修改仍在 |
-| **T6** | ~~Q28 归档本轮证据~~ ✅ **已完成（2026-10-17）**：`reports/q28-DOSSIER.md` 新增 **§r**（镜像/UTS/驻留 1 h 58 min/签名逐字同型/假 GOOD 反例 + 三条结论 + 产物指针 + 交接镜像 vk127） | ❌ | ✅ DOSSIER 有 §r；口径仍「未解、恢复=重启」；未起 `[REPORT v3]`（本轮无新机理） |
-| **T7** | ~~文档指针清理（PITFALLS #292）~~ ✅ **已完成（2026-10-17）**：四个入口文档里指向不存在脚本的**可执行配方**已清——`q24-rebuild-arms.sh` 标注换机丢失并给替代路径、`extract-ikconfig` 改为内核树内路径、`eldroid-sensord` 标注为需从源码编译（二进制不入仓）；其余命中均为路径内嵌子串（`env-pass/scripts/…`、`linux/scripts/…`）与通配描述，非悬空指针 | ❌ | ✅ 入口文档不再有指向不存在脚本的可执行配方（残余为假阳性） |
-
-| **T13** | ✅ **已完成（唯一即时动作「回 Konrad battmgr」2026-10-23 已发出）** —— **六项重型任务可行性裁决（用户 2026-10-21 提出）**：UEFI / Mobian / f2fs / kexec / 上游邮件 / Gunyah —— **6 项只读研究已全部落盘，只有 1 项建议现在动手（回 Konrad 的 battmgr 澄清）**。裁决：UEFI ⛔ 不重启（阻塞两层 + 前置资产 2.3 G 全丢 + 收益已被 kexec 覆盖）；Mobian 🟡 可做但不必现在（0 个上游内核能启动本机、必须 forky/sid、7 类 unit + 120 行包清单）；f2fs 🟡 P2（内核已就绪、唯一代码阻断 = `/init:246` 写死 ext4、LUN0 已满）；kexec ✅ **唯一建议动手**（mask=1 ~40 行 + 6–8 轮零写盘）；邮件 ✅ 查询完成（**唯一必须回 = Konrad 10-21 battmgr**，订阅动作待批准）；Gunyah ⛔ 不开工（零成本判据 = `ls /sys/bus/platform/devices/ \| grep gunyah`） | ❌（研究侧零设备操作） | 报告 6 份：`reports/{uefi-restart,mobian-migration-plan,f2fs-plan,kexec-plan,mail-triage,gunyah-roadmap}-20261021.md`；会话 `TASKS/sessions/2026-10-21-六项重型任务可行性裁决.md`（含 6 项差量结论 + 下一步排序） |
 | **T14** | 🟡 **第一步完成（2026-10-25）** —— **用户态驱动/服务独立固化**（用户 2026-10-25 提问「先固化？」+ f2fs/Mobian 迁移的前置）：把散落 4 处（`scripts/` / `rootfs/persistent-overlay/` / `build-rootfs.sh` 手抄白名单 / **设备**）的黑资产收敛成 **1 份语义真源 + 2 套 init 渲染 + 8 段门禁** = `packaging/elden-userland/`（`MANIFEST.tsv` 73 行 / `services.tsv` 20 行 / 18 systemd + 18 openrc unit / `verify.sh` **FAIL=0 WARN=3**）。**新事实**：① 7 个 ELF 里 3 个**无源**（`ffrumble`、`waydroid-sensord`、`-udp`），其中两个是**动态 musl** ⇒ 换 glibc 发行版必重编而无 recipe（Mobian 的新阻断项）；② `/init` 与 `local.d` 对 5 个后台脚本**双入口启动**（`charge-watch` 无锁，实测当前仅 1 进程）；③ OpenRC 名 ≠ systemd 单元名（`Requires=localmount` 静默失效）⇒ 已内建映射并让未映射项 FAIL。**剩余三步已于 2026-10-26 全部落地**（见 `reports/userland-dealpine-audit-20261026.md` §5：`scripts/ffrumble.c` 重写+ABI 检查 / `scripts/host-arm64-chroot.sh --build-sensord` 宿主 recipe / local.d 双入口实测已退役收敛）。**★2026-10-28 收口：门禁迁到「根画像 + overlay 真值」** —— 换根到 Debian 后 `verify.sh` 曾是 **FAIL=3 WARN=12 全假阳性**（openrc 专属路径 13 条在 systemd 根上不存在、`overrides.tsv` 的 `/etc/conf.d/greetd` 本就该不同、渲染单元↔设备这层原先无门禁）：现期望 sha 优先取 `out/stage-debian/`、按画像聚合跳过、新增 **F2 渲染单元↔设备**、全量 sha 一次 ssh（73 条 2.5 s）⇒ 真机 **FAIL=0 WARN=0**（80 条含 19 个 unit 逐字一致）；唯一真漂移 = 设备 `81-libssc-elden.rules` 旧短版（规则行逐字同，仅注释）已部署归位（备份 `/root/bak/…bak-20261028-102049`） | ✅（本步零设备写，只读） | 报告 `reports/userland-service-inventory-20261025.md`、`reports/userland-dealpine-audit-20261026.md`、PITFALLS #397/**#455**、门禁 `packaging/elden-userland/tools/verify.sh`（`LOCAL_ROOT=` 可离线做正/负向测试） |
-| **T15** | ✅ **完成（2026-10-25 真机执行）** —— **f2fs 根迁移已落地（路线 A：并存）**：`linux17` ext4 缩到 **96 GiB**（`resize2fs` → 25 164 800 块）+ 尾部新建 `linux18` **f2fs 96 GiB**（`mkfs.f2fs -l linux18`）+ 同盘本地复制（216 882 → 216 876 文件，差 6 = socket；`tar -d` **零差异**）+ `fsck.f2fs` 干净；写槽 `boot_b` 后**真 POR 冷起 = `f2fs @/dev/sda18`**、模块 37、vermagic 0、`phoc=1`、DSI connected、`succ=1`、读回 sha 一致；**ext4 回退实测可起**（94 G/28 G 用）。过程中修掉 5 个 RAM-root 工具级坑（`PITFALLS #400–#405`）。证据 `TASKS/sessions/2026-10-25-f2fs路线A落地.md`、`RUNBOOK-BRINGUP/f2fs-migration.md`。**遗留**：最后一次 `reboot -f` 后 USB gadget 未再枚举（串口停在 21:50:42），设备态待物理确认；恢复件齐备（`out/boot-elden-{vk152,vk162-rescue}.img`）。 | ✅ 完成 | ✅ | `TASKS/sessions/2026-10-25-f2fs路线A落地.md`、`PITFALLS/sessions/89-f2fs手术五个工具级坑.md` |
-| **T16** | ✅ **第一步完成（2026-10-26，零写盘上机）** —— **驱动模块化迁到 7.3 日常线 + Mobian 迁移的首批物料**：① `patches/fragment-modular.config` 在 `build/vk151`(@`24223e4`) 上落地并补 BT（`BT_HCIUART=m`，hci_qca 编在 `hci_uart.ko` 内；**不需要改 Kconfig**）+ 更正 pwrseq 结论；产物 `out/boot-elden-vk163.img`（sha `70fefa73…`、UTS `…-debug-vk163`）+ 设备侧模块树 1539 `.ko`；**生产 f2fs 根零写盘启动全绿**（66 模块、wlan0/BT/音频 card0/触屏/触觉 amp255/背光/相机/phoc+phosh、模块错误 0），`mod-loop` 热换触屏驱动实测通过；② 脚本层补 `KDIR` 支持（`env-build`/`build-kernel`/`mod-loop` 不再写死 7.2 符号链接）、载荷加载器改为区分 builtin/loaded；③ Mobian **S2+S3** 交付：`rootfs/debian/pkgmap.tsv`（120 apk→map97/drop23/add7，门禁 FAIL=0 WARN=0，生成 107 包 apt 清单）+ `rootfs/debian/elden-firmware/`（自建固件 deb 21 MB/116 项，DTS `firmware-name` 门禁全绿，含 tplg；BT 实际路径是 `qca/`）。**未做**：未把 vk163 刷 `boot_b`（需用户裁决）、未做真 POR；Mobian S4/S5/S6 未动 | ✅ 上机（零写盘） | ✅ `out/boot-elden-vk163.img` + `uname`/`lsmod`/服务判据 | `reports/vk163-modular-20261026.md`、`reports/mobian-rootfs-artifacts-20261026.md`、`PITFALLS #406–#409` |
-| **T16-补** | ✅ **已闭环（2026-10-26 21:26，`boot_b` 已升 vk173）** —— RTC 回退已修：`patches/dt/0002` 进板 DTB（`nvmem-cells` 就位）⇒ `hwclock -w` rc=0、`hwclock -r` = 真实时间且**跨重启保持**（修前每次回 1970-01-09）。日常线 = **vk173**（= vk172 内核载荷 + RTC DTB，签后 sha `1a05a89d…`，`flash-b.sh` 写入读回一致，回退件 `bootslot-b/boot_b-vk163-signed-20261026.img`）。证据 `reports/vk172-modular-v2-build-20261026.md` §5。以下为原始登记：✅ **vk163 已在 `boot_b`（2026-10-26 复核）+ 一项回退登记** —— ① 在机读回 `boot_b` sha256 **`65ae2ff0…`**（签后）= vk163 ⇒ **T16 的「未刷盘」已不成立**，无需再刷；② **⚠ vk151 系列缺 RTC 补丁**：`build/vk151` 板 DTB 的 `rtc@6100` 无 `nvmem`（`patches/dt/0002-arm64-dts-qcom-sm8750-elden-pmk8550-rtc-offset.patch` 未进 7.3 线）⇒ 设备 `hwclock -r`=**1970-01-09**、`rtc0/since_epoch=695530`。影响：T9 `wakealarm` 必须用 RTC epoch、日常时间不可靠；修法 = 把 0002 打进下一条 7.3 载荷（DTB-only） | ❌ | ✅ 读回 sha 一致；✅ `date`/`hwclock -r` 取证 | `reports/uefi-n2-v0-attempt-20261026.md` §5 |
 | **T17** | 🟡 **交界面核对完成（2026-10-26，零写盘）** —— **驱动模块化 × Alpine→Mobian 迁移**：① **落点改判**（f2fs 并存后已有两块 96 GiB）⇒ Debian 装 **`linux17` ext4**，Alpine 留 `linux18` f2fs 不动 ⇒ 迁移方案 §3.3 的「原地覆盖 + 无 live 回退（R2）」**作废**，回退 = 重启回 `boot_b` 秒级；② **换根必须换 boot 镜像**（根由 cmdline `elden_root=LABEL=` 决定）⇒ S7 = 一条 `fastboot boot`（零写盘），不碰 AVB/qbotctl；③ S4 可**免 root**（`depmod -b` 实测 rc=0）；④ `/init` 保留为 pre-systemd lifeline（Debian busybox applet **10/10** 命中）⇒ 省掉一半 systemd unit 改写；⑤ **抓到 S2 门禁缺口**：apt-list 依赖闭包缺 7 个包（`python3`/`libglib2.0-bin`/`sysvinit-utils(pidof)`/`psmisc(killall)`/`alsa-ucm-conf`/`ca-certificates`/`login`，`systemd`/`udev`/`dbus`/`kmod` 已由闭包带入）；⑥ **新事实**：`hexagonrpcd 0.4.0` 无 `-adsp-sensorspd` 二进制，用 `-s` + override 复刻；传感器 DSP 目录在 **`/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors`**（不在 `elden-firmware` 包的 `/lib/firmware` 里）⇒ S3 需补 | ✅ 只读 | ⬜ | `reports/modular-mobian-transition-20261026.md` |
-| **T18** | ✅ **M1+M3+M4 物料落地（2026-10-26，纯主机，零设备写盘）** —— 承接 T17 的 M1/M3/M4：① **M1 包集补口 + 依赖闭包门**：`pkgmap.tsv` add 7→14 行（`apt-list.txt` **114 包**）+ 新 `rootfs/debian/svc-deps.tsv`（15 条）+ `check-pkgmap.sh` **E 段**（provider 必须落在 **minbase 空-status 闭包** ∪ 自建 deb；命令型条目必须真被 userland 引用）；`FAIL=0 WARN=0`，**负向测试**通过（改坏 `alsa-ucm-conf` → FAIL，改回 → 0）。**测量更正**：初版报「缺 7 包」是用**有 build-essential 的 chroot status** 模拟出的假缺口，真缺只有 **3** 个（`alsa-ucm-conf`/`ca-certificates`/`login`），另 4 个由闭包带入但仍显式钉住（`kmod` 要早于 systemd、`python3` 只由 waydroid 拉）；`psmisc` 已撤（错报）。② **M3 固件双树**：`elden-firmware` 现含 `/lib/firmware`（114）+ **`/usr/share/qcom/sm8750/LENOVO/TB322FC`**（140，`-R` 根，载荷在 `sensors/`）⇒ `out/debian/elden-firmware_1.0~20261026_all.deb` 21 MB / **256 条目**，解包后 DT + 传感器树双检绿。③ **M4 overlay 组装**：新脚本 `rootfs/debian/stage.sh` ⇒ `out/stage-debian/`（134 MB）= 模块 1529 `.ko` + `depmod -b`（免 root）+ 19 systemd 单元 + `hexagonrpcd` **drop-in**（`-s` + `fw_dir`）+ `/init` + `/etc/elden-init-mode=systemd`；门禁 A–F `FAIL=0 WARN=0`。④ **`/init` 第三模式 `systemd`**（本轮唯一代码改动）：判定由「是不是 openrc」改成「是不是 legacy」⇒ openrc 行为逐字等价，legacy 不变，新增 systemd = 只做 lifeline 后 `exec /sbin/init`；sha `24074be1…` → `e4c67e0c…`。**未做**：M2（归档 linux17，28 G 设备读）、M5（完整 rootfs，需 root）、M6/M7（上机） | ✅ 门禁全绿 | ⬜ | `reports/modular-mobian-transition-20261026.md` §7.5、`PITFALLS #410–#412`（`PITFALLS/sessions/94-…`） |
-| **T19** | ✅ **已收口（2026-10-27；容器/传感器续作在 T22）** —— Debian 根从「全静默」到**全自动进 phosh 桌面 + Waydroid 起完**。根因四层：① **不是 busybox `switch_root` 内部**——磁盘 `/init` 已以 PID 1 起来，但 preflight 因 Debian `busybox` 不装 `switch_root` applet 链接而自杀（无 tty ⇒ 全静默，rest+静默被误读成「没跑到」）；修法 = staging 造链接 + `SWITCH_ROOT_CMD` 可拆词 + `root_phase_disk()` 阶段化 preflight（门禁 I 段 + `scripts/test-init-preflight.sh` 4/4）；② **六条静默失败**：overlay `tar` 顶掉 usr-merge、`.pre` hook 无 shebang 从不安装、`_greetd` 名差、`greetd-phrog` drop-in 覆盖 ExecStart（排序须晚于 `phrog.conf`）、debootstrap 根缺桌面用户、`wlan0` vs `wlp1s0` 且只探测一次；③ `accounts-daemon` 竞态（`After=systemd-logind`）、`/dev/fastrpc-adsp` 缺 `qcom,non-secure-domain`（纯上游件）；④ 电量 = 缺 `upower` 包、usb0 = busybox `udhcpd` 无符号链接（`/init` 加 `usb0_dhcp()` 回退）。**判据**：桌面 uptime≈13 s 起来、失败单元 **0**、`/init` trace 无 missing-tool。配方/门禁见 `reports/m6-switch-root-breakpoint-resolved-20261026.md` §8–§9、`reports/debian-root-accounts-sensors-20261026.md`、`PITFALLS #414–#430`；`boot_b` 未改（回退 = 重启回 Alpine `linux18` —— ⚠ **`linux18` 已于 2026-10-31 删除并入 `linux17`，见 `DEVICE/README.md` §3.3**） | ✅ 零写盘 | ✅ | `reports/m6-debian-candidate-boot-nousb-20261026.md` §6、`PITFALLS/sessions/95-*.md`/`96-*.md`、`reports/shutdown-greetd-hang-plan-20261030.md`（关机/greetd 冷起卡死取证计划） |
-| **T20** | ✅ **用户态门禁可用 + TF G1-6 收口（2026-10-26，零写盘上机）** —— ① 派发两 lane：`mail-uefi-waydroid` 完成（3 报告 + 1 session：邮件增量 **8 封新来信/5 条行动/阻塞迁移 0**；UEFI×迁移冲突 **6 条**，含 `linux17` 被 UEFI 契约与 Debian 落点**双占用**；用户态硬依赖 **14 条**、droidloom 改变接口 **7 类**、解耦清单 **10 行**，其中**现在必须抽象 3 条**=容器后端/传感器源/触觉桥）；`userland-dealpine` 67 轮后**卡死**（根因 = 它写的 `check-coupling.sh` 全仓 `grep -r` 遍历 13 GiB 内核树 + `grep -qE` rc 误判 ⇒ `PITFALLS #417`），编排者直接修完，**未重派**。② 门禁现状：`check-coupling.sh` **2.7 s / FAIL=0 / --self-test 全绿**；`verify.sh --offline` FAIL=0 WARN=0；`render.py --check` 21 服务；`check-pkgmap.sh` FAIL=0。代码侧落地 `deps.tsv`（抽象依赖层）+ `render.py`(+192)+`services.tsv`+`debian-exclude.tsv`（「不进 Debian 根」唯一真源）。③ **TF G1-6 收口**：新卡 CBADS 58.6 GiB ext4 后 `tf-stress --fsck -r 3` = 不一致 **0**、`err_stats` 15 项全 0、`e2fsck -fn` clean；ios **37.5 MHz/4-bit/SD_HS/3.3 V**；**旧卡废置（用户裁定）**，候选补丁不实施。**未收口→已收口（2026-10-26 晚）**：`reports/userland-dealpine-audit-20261026.md` **已补**（364 行，21 服务/27 抽象/12 豁免逐条带 `file:line`），四门禁复跑 `FAIL=0 WARN=0`；3 个抽象点已声明式落地（`deps.tsv` provider 列 + `render.py` 校验 + `services.tsv` 依赖改名）；T14 三步：ffrumble 规格/ABI 检查已建、sensord recipe 已存在、`/init`↔`local.d` 双入口实测已收敛（无需改 `initramfs/init`）。M2/M5/M6/M7 仍待；`linux17` 双占用需裁决 | ✅ 零写盘 | ✅ `reports/tf-g16-retest-20261026.md` + trial record |
-| **T21** | ✅ **六 lane 批次收口（2026-10-26，5/6 主机侧完成；设备侧待恢复）** —— ① **模块化 v2**：分类 a=49 / b=43 / c=16；`fragment-modular-v2.config`（42 符号）→ `=y 3364 / =m 1464`；`check-modular-config.sh`（27 锚点 + olddefconfig 幂等 + `--self-test` 正/负向）；全量构建 0 error/0 warning；MMC 整链可 `=m`（root 在 UFS），DRM 不动；**v2 未上机**。② **用户态解耦**：见 T20 收口段。③ **文档审计**：`reports/doc-audit-20261026.md` P0=3/P1=11/P2=15；P0 已修（`TASKS` vk171/Q28、`INDEX` 未解清单+`boot_b-f2fs-root.img`、`README` 门面、`DEVICE` 内核树、`RESOURCES` §3 台账+两新行）；`check-doctor` FAIL=0 WARN=3 不变。④ **上游化**：M3-1 需正式 `[PATCH v4]`；M6 B5-P4 草案已备（`patches/upstream/m6-b5-p4-20261026/`）；M8 窗口内 0 新回复；**M9 被 Marc Zyngier 否方案**（EFI/bootloader memreserve 才是正解）⇒ 待裁决；**M2 A2 已核完（2026-10-26，`reports/m2-a2-vendor-repo-check-20261026.md`）**：厂商 repo 确是本地 GPL drop 血统，真通道 = downstream `qti_battery_charger`（依赖 3 个上游不收的接口族），厂商自己的 `qcom_battmgr.c` 也不含 SM8750 variant ⇒「先看 vendor 怎么做」技术上无参考实现（旧论据「无厂商通道」已更正）。⑤ **UEFI**：BootShim cache maintenance 已补（`dc civac`→`dsb`→`ic iallu`→`dsb`→`isb`）；A2/N2 已重建（`251953b9…`/`528702c6…`）；**上机未执行**（`reboot2 bootloader` 后 USB 全不枚举，按 `PITFALLS #368` 停止，待物理恢复）。⑥ **安卓兼容**：J1 TRUE / J2 FALSE（STRICT 结构性否证：软 keymaster + 仅 ClearKey）/ J3 droidloom 不立项；C5/U7 新卡点 = 当前 UTS 无 `v4l2loopback.ko`；五维 3.3/5。**产物**：6 份 `reports/*-20261026.md` + 6 个 `TASKS/sessions/`；设备全程零写盘。**vk163 真 POR 启动时延拆解**（bt-alias oneshot `sleep 30` 阻塞 runlevel + WCD939X 5425 行读风暴 20 s）见 `reports/vk163-por-boot-latency-20261026.md`。 **★2026-10-26 晚：v2 已构建 + 零写盘上机全绿**（`reports/vk172-modular-v2-build-20261026.md`）：**vk172** = `build/vk151`(@`24223e44a`) + `patches/config-vk163-modular-v2-20261026`，门禁 PASS（27 锚点/olddefconfig 幂等/tristate 依赖），`Image.gz+dtbs+modules` rc=0 0E/0W（5889 个 `CC [M]`），**1638 `.ko` 且 vermagic 1638/1638 逐字一致**，镜像 `out/boot-elden-vk172.img`（84 525 056 B，sha `70d550a7…`，manifest `kernel_release_matches_image=yes`）。**上机判据全绿**：UTS vk172、根 `f2fs /dev/sda18`、`lsmod` **106**、**MMC 整链 `=m` 成立**（`mmc_core/mmc_block/sdhci/sdhci_msm` Live + `CBADS 58.6 GiB` + `mmcblk0p1` ext4 挂载 + `dd` 64 MiB @17.9 MB/s）、载荷模块全 Live、`module_err=0`、Q28 签名 0、显示/无线/BT/音频/相机全在。**已做（2026-10-26 21:26）**：`boot_b` 升 **vk173**（= vk172 载荷 + `patches/dt/0002` RTC DTB），`hwclock` 可写且跨重启保持；回退件留档。 | ✅ 已恢复（上机完成） | ✅ 各 lane 报告 + 编排者复跑 |
-| **T22** | ✅ **Debian 根 Waydroid 已 boot 完成（2026-10-27，零写盘）** —— 承接 T19 §3 的三个「每 5 s 自杀」服务：① `waydroid-sensord` 是 **musl 动态**件（`ldd` = `libc.musl-aarch64.so.1 => not found`）⇒ glibc 根上 exec ENOENT，而 Waydroid `which()` 仍命中 ⇒ 不再设 `waydroid.stub_sensors_hal`、却没有能注册的 HAL ⇒ `sensorservice` 每秒重试 `ISensors/default` ⇒ **Android 卡 bootanimation**；修法 = `scripts/deploy-sensord-routec-debian.sh`（依赖→编译→装→重启）；② `elden-hapticd` 的 systemd `ExecStart` 写 `${HAPTIC_ARGS}` ⇒ systemd **不分词** ⇒ 整串一个 argv ⇒ `status=2` 无限重启（restart 6796）；修法 = `render.py: _systemd_args()` 降级成 `$VAR`；③ `ssc-udp-relay` 缺 `ssccli`（Debian 在 **`libssc-bin`**，pkgmap 已改）；④ 附带：`waydroid-{session,ui}.sh` 的 `/run/phosh` 写死 → `XDG_RUNTIME_DIR` 探测；`stage.sh` 把 `lxc-net.service` mask 进 overlay。**上机判据全绿**：`sys.boot_completed=1`、`dumpsys sensorservice` = **6 h/w sensors running**、加速计读数与 `ssccli` 逐位一致、`cmd vibrator_manager synced oneshot 500` → `amp=255/255` ON/OFF、`waydroid0`=192.168.240.112、session/container 双 RUNNING；门禁 `stage.sh` FAIL=0 WARN=1（T14 债务）/`verify.sh` FAIL=0 WARN=1/`check-pkgmap` FAIL=0 WARN=0/`check-doctor` FAIL=0 WARN=2。；**⑤ 冷起自启（同日）**：`/etc/xdg/autostart/elden-waydroid.desktop` → `waydroid-session.sh`，实测 `systemctl restart greetd` 后 **10 s 内 session RUNNING**（坑：Debian sid gnome-session 见到 `X-GNOME-Autostart-Phase` 就**不执行**该条目、`X-GNOME-Autostart-Delay` 同样失效 ⇒ 脚本自己等 wayland socket ≤30 s，PITFALLS #436/#437）；**⑥ 可重现性**：Deploy 脚本优先用 **主机 arm64 chroot** 产物 `out/sensord-host/`（sha `22028ffd…`，`scripts/host-arm64-chroot.sh --build-sensord`），目标根不再留 g++/dev 包；MANIFEST 两条 elf 已改记 glibc sha | **⑦ 2026-10-27 收尾（半死态自愈 + 两条误判纠正）**：`restart waydroid-container` 后容器**不会自己起**（unit 是 `Type=dbus`，只有会话握手才由 initializer 起容器；老会话不重新握手 ⇒ 永久 `Session RUNNING / Container STOPPED`，unit 仍报 active）⇒ 修法落进我们自己的 `waydroid-session.sh`：检测半死态**先 stop 再 start**，并在 `session start` 前兜底建 `waydroid0`（网桥缺失时 lxc-start 会直接失败）。实测「restart 容器服务 + 跑该脚本」= **3/3 在 5 s 内 Container RUNNING**（Android 随后 boot 完，`boot_completed=1`）。`Container: FROZEN` 定性 = **正常省电**（Android 请求 suspend ⇒ `hardware_manager.suspend()` → `container_manager.freeze()`；`waydroid app launch` 触发 `Unfreeze`，实测立刻回 RUNNING）。**否证并回退**：`KillMode=process` 假设（stop 时 control-group 连带杀 net-down）实测 3/3 仍不起、且 stop 后 `waydroid0` 残留 ⇒ 不入仓库 | ✅ 零写盘 | ✅ | `TASKS/sessions/2026-10-27-Debian根Waydroid打通-sensorsHAL与马达桥.md`、`PITFALLS/sessions/104-*.md`、`scripts/deploy-sensord-routec-debian.sh` ；**⑧ 容器相机（C5/U7）推进到「App 预览流 STREAMING」（2026-10-27）**：宿主链路 = mainline 相机 → libcamera → gst(NV12 1280x720@30) → `/dev/video100`（v4l2loopback 需为当前 UTS 重编；**保持 stock**，buffer 数量在写端用 `v4l2-ctl --stream-out-mmap=8` 控，模块只抬 `max_buffers=8`）；容器侧 `Number of camera devices: 1`、`configureStreams` 通过、`start V4L2 streaming`、`StreamStateObserver: Preview stream state to STREAMING`、`Active Camera Clients` 见 App PID。**三道门**（PITFALLS #438–#441）：① external HAL 的 JPEG(BLOB) 只在 MJPEG 源下存在 ⇒ 需要"拍照尺寸"的 App（OpenCamera，且它默认还走 Camera1 API）初始化即退出，绕法 = preview+analyze 类 App（本轮 Binary Eye）；② 源格式必须 NV12、`exclusive_caps=1`；③ `REQBUFS expected 4, got 3` 只能**写端**解决（`gst v4l2sink` 默认 3；驱动侧两种补丁都失败——数量不一致会 dqbuf 报错并在压力下 SIGSEGV）⇒ 写端换 `v4l2-ctl --stream-out-mmap=8`（实测 30.9 fps、0 报错）。**框架级已通**（CameraX `onConfigured/onReady` + `STREAMING` + App PID 在 Active Clients）；**未收口** = App 自己的分析器在 97 帧（≈3 s）后不再 request ⇒ 界面停在 App 加载遮罩（App 侧，待查） ；**⑨ 门禁口径**：设备已换 Debian 根，而 `MANIFEST.tsv` 是 Alpine 根 sync 的 ⇒ `verify.sh` 的 F 段（设备逐字比对）整批判 FAIL/不存在是**前提变化不是漂移**；Debian 根上用 `verify.sh --offline`（FAIL=0 WARN=0） ；**⑩ G1-34 分层结论（2026-10-27）**：**SSC 已注册且可用** —— `qrtr-lookup` 有 `400 = Snapdragon Sensor Core service`，`ssccli --sensor accelerometer` 出真值（连续），`iio-sensor-proxy -v` 显示它确实连上 SSC 并发现 `rotv`/`mn`；**旧结论「svc 400 未注册」作废**。`HasAccelerometer=false` 的真因 = **iio-sensor-proxy 3.9 的 SSC 发现没有 accel**（不是内核/DSP/固件）。顺带修掉一个静默缺陷：Debian 根缺 **`qrtr-tools`** ⇒ 我们的 `iio-sensor-proxy.pre` 判据永远命中不了、**白等 60 s** 且日志误报「svc 400 not seen」；已进 `pkgmap`、pre hook 改为「工具缺失立刻退出」，并给 hook 补 `#!/bin/sh`（否则 203/EXEC）。判据速查表见 `PITFALLS/sessions/107-…`、`reports/droidloom-build-device-plan-20261030.md`（容器构建/设备侧计划） |
+
+> **T1–T22 里已 ✅ 收口的 19 行**（T1–T8、T10、T12、T13、T15、T16、T16-补、T18–T22）已整体下沉 → `sessions/2026-11-02-T1-T22-收口台账.md`（原文逐字保留）；**本节表格只维护未完成项**。
 
 **已在本日完成、不再列入待办**：换机可重建度审计 · 邮箱通道验证 · P0 设备资产抢救（`boot_b` sha `78a2beb1…`、1497 `.ko`、207 项配置）· `fastboot fetch` 幻觉清理（PITFALLS #290–#292）· Q28 M1 线坏发现场采集与 3/4 采样 · 身份表误报降级（`check-doctor` FAIL 1→0）· **串口常驻采集通道（2026-10-20：用户执行 `install-serial-logger.sh`，`elden-serial-logger` active+enabled、端到端探针通过；见 `TASKS/sessions/2026-10-20-串口采集通道与P1预检.md` §4）** · **PITFALLS 编号撞车修正（2026-10-20：`#360`–`#363` 重新分配，见 `PITFALLS/README.md`）**。
 
@@ -300,116 +282,13 @@ TF 卡（G1-6 / Q10）**已收口（2026-10-26 新卡 3 轮 0 不一致 + fsck c
 ## 5. 查漏补缺（GAPS）
 
 ### 2026-11-01：UEFI 线**判据纠正 + 恢复推进**（10 发上机，零写盘）
-
-**一句话**：10-30/31 那批「交棒条件」结论是 **boot image v0 header 的产物，不是载荷属性**；那 7 发载荷**从未被执行**。
-报告 `reports/uefi-cleanheader-reframe-20261101.md`，坑 `PITFALLS #479/#480`，逐发 record `reports/trials/20261101T*Z-uefi-*.json`。
-
-- **「重建即失效」→ 已证伪**：同源重建 FD 与 10-24 原件 `eb00db73…` **只差 6 字节**（`0xb2d9–0xb2ed` 的构建时间串
-  `21:54:49`/`Oct 24 2026` → `23:52:38`/`Oct 31 2026`），重打包上机**被接受并执行**。10-31 §5 待办 1 **闭合**。
-- **判据污染**：`N2-v0b.img`（拒绝，2/2 复现）与 `N2-repack-v0.img`（接受）**载荷字节完全相同**，只差 7 段 header 字段
-  （`ramdisk_addr`/`second_addr`/`os_version`/`id`/`dtb_size`/`dtb_addr` 高位）；`id` 与 `kernel_size` 已各自单变量排除。
-  ⇒ 接受口径 = 「0.05 s 内 `usb_read failed` + USB 消失」，拒绝口径 = 「恰好 ~10.1 s 后 `Booting OKAY`、USB 不断」。
-- **干净 header 下 7/7 发被 ABL 接手（`usb_read failed`）** —— ⚠ **同日晚间已被 `reports/uefi-ddr-blackbox-20261101.md` §7/§8 + `PITFALLS #481` 二次作废**：
-  「接手」**≠** 载荷被执行（50 ms USB 间隙对照：不写东西的 shim 20.53/20.05 s vs `b .` 自旋 20.20/19.99 s，完全相同）。
-  判执行必须有**独立通道**（DDR 标记 / UART / EUD-SWD / 屏上输出）。
-  ⇒ 10-30/31 的「厂商 UFSDxe × cachefix shim」「E1/X1/X2 换件」「早期写 FB 致命」全部**作废（不是测到变量）**，
-  且 **header 逐字段差分路线整体放弃**（接受与否不是 header 的唯一函数，见 `PITFALLS #482`）。
-- **「ABL 跳转后 ~1–2 s 整机掉电」口径作废**（发生在 header 污染期的目视观测，且那时载荷根本没执行）；
-  现行口径 = `fastboot boot` 之后 ~20 s 复位回落（`PITFALLS #481`）。**J1（屏上出字）仍 0**。
-- **下轮顺序（已被 `reports/uefi-ddr-blackbox-20261101.md` §6.4/§7/§10 取代）**：
-  ① `fastboot boot` 判定只能统计式（同镜像多发，只取真 HANDOFF 发次）；
-  ② 判「载荷是否执行」只认独立通道（DDR 标记 / USB 可见性），不认 `usb_read failed`；
-  ③ 改走「槽位正常启动」路径（P2 合体 BOOT 最小形态）——**已于 11-01 16:39 上机，结果见本节末「槽位启动」块**。
+- **一句话（当时）**：10-30/31 的「交棒条件」= boot image v0 **header** 的产物、那 7 发载荷**从未被执行**；header 逐字段差分路线整体放弃 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §1 ｜ **报告**：`reports/uefi-cleanheader-reframe-20261101.md`；坑 `PITFALLS #479/#480/#481/#482`
 
 ### 2026-11-01 16:39：UEFI 走「槽位正常启动」路径（P2 最小形态）→ **载荷未被执行，且设备进入「只能进 fastboot」状态**
-
-**做法**：把 `reports/artifacts/uefi-ddr-20261101/slotb-uefi-marks.img`（sha `769c3800…` = ddrmarks shim + Mu FD 的
-v0 boot.img，96 MiB AVB testkey）写进 **`boot_b`**（读回 sha 逐字节一致），然后 **Linux 侧 `reboot`**（不走 `fastboot boot`）。
-
-**结果**
-- `reboot` 后 **+14 s 直接进 fastboot**，全程**无 Android gadget** ⇒ 载荷没有留下任何可观测痕迹（DDR 标记仍未读回，见下）。
-- 恢复链路：`fastboot flash boot_b bootslot-b/boot_b.img`（在机原件 `fb55997c…`，16:2x 还在跑 vk183）→ `--set-active=b` → reboot
-  **仍进 fastboot**；`--set-active=a`（原厂槽，当时 `successful:yes`）**仍进 fastboot**；
-  `fastboot continue` 对 a/b 两槽均报 `Failed to load image from partition: Device Error`。
-- 对照排除：`misc` BCB（`bootonce-bootloader`）清零 → 无效；`fastboot erase misc` → 无效；
-  刷回**原厂 `backup/stock-259/boot_a.img`** + `--set-active=a` → **仍进 fastboot**；用户**物理断电重启一次** → 仍进 fastboot。
-- ⇒ **不是镜像问题（同一件之前能启动）、不是 BCB 问题、不是 Android 槽损坏**。`--set-active` 会把 retry 重置为 7，
-  之后 reboot 再读为 6 ⇒ **ABL 确实尝试启动并失败**，随后落入 fastboot（~6–8 s 复现）。
-
-**★2026-11-01 19:00–19:40 EDL 取证（已归入 `reports/uefi-slotboot-stuck-fastboot-20261101.md`，结论仍未闭环）**
-- **工具链**：`~/edl-tool/bkerler-edl-1cda1a6`（已装依赖）+ loader `~/下载/tb322fc/xbl_s_devprg_ns.melf`；
-  `sahara v3 → firehose` 均通过（vendor 未卡权限）。
-- **镜像内容彻底排除**：EDL 读回 `boot_a` sha `d4772c11…` = `backup/stock-259/boot_a.img` 逐字节相同；
-  `boot_b` sha `fb55997c…` = 16:2x 仍在跑 vk183 时的分区值 ⇒ **两侧都是已知能启动的件**。
-- **槽位元数据已排除**：LUN4 GPT 实测 `boot_a byte6=0x37`(retry6/succ0)、`boot_b=0x32`(retry6/succ0)；
-  用 `scripts/slot-attr.py --image` 离线改成 a=`0x78`、b=`0x7f`（active+successful+retry7），**双表 + 双 CRC 重算**，
-  `edl.py ws` 写回后 **主/备 GPT 读回均逐字节一致**；`getvar` 实测 `a/b` 均 `successful:yes`、`retry:7`，
-  且**连续 reboot 后 retry 不再递减** ⇒ **ABL 确实读到了新属性** —— 但**仍进 fastboot**。
-- **`logfs` 判读（修复前那份 `efc88d9f…`）**：最新段只有 `PM: PON by SYSOK` → `Start EBS [ 7940]`，
-  **没有 `Booting from slot`、没有 `Loading Image`** ⇒ 那一次 ABL **根本没走槽位启动路径**；
-  而早先正常段是 `Loading Image recovery_a/init_boot_a/pvmfw_a/boot_a` + `Booting from slot (_a)` + `Start EBS [13302]`。
-  ⇒ `[7940]` 是介于「正常 13302」与「fastboot 4085」之间的**第三种进入路径**，成因未知。
-- **⚠ 判据更正**：本机 `Image size : 4096 Bytes` 出现在**能正常启动的段里**，**不能**当 ABL 解析失败的判据（`PITFALLS` 里那条属别的机型）。
-- **回滚保险**：LUN4 GPT 原始双表 34 块已存 `reports/artifacts/uefi-slotboot-20261101/lun4-gpt-{primary,backup}-raw.bin`
-  （`ed56f1da…` / `0bbfa568…`），改后件 `lun4-gpt-{primary,backup}-new.bin`（`fb18e8ea…` / `bab69f0f…`）。
-
-**★★2026-11-01 21:xx 闭环：真根因 = 引导固件代次与 A/B 槽脱钩（`PITFALLS #484`），已恢复**
-
-EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案，**推翻本节下方「未解问题」1–3 与「待办」**：
-
-- **根因**：本机是**双代引导固件并存** —— `*_a` + **LUN1** = 259 原厂（`uefi_a` = 官方包 `uefi.elf` 逐字节相同，
-  UEFI `6.0.260611` Jun 11 2026；`abl_a`/`xbl_a`/`xbl_config_a` 亦同）；`*_b` + **LUN2** = 上一版
-  （`uefi_b` 差 550 846 B，UEFI `6.0.260514` May 14 2026；`abl_b`/`xbl_b` 亦不同）。**ABL 按活动槽选 boot LUN**
-  ⇒ 槽位与 LUN 必须配对。卡死那次是 `slot=b` 却跑在 `UFS Boot LUN: 1`。
-- **判据**（`logfs` seg0 三连）：① `UFS Boot LUN` 与 `current-slot` 不配对；② **无 `Booting from slot (_x)`**；
-  ③ `POST Time` 后只剩 1 行 `VB: RWDeviceState` 就 `Start EBS [7845]`，总时长 7.8 s（正常 13.3 s）。
-- **修复**：`fastboot --set-active=a`（→ 进 Android，实测成功）与 `fastboot --set-active=b`（→ 回 Linux，实测成功），
-  **双向复现**。Linux 终态：`slot_suffix=_b`、`boot_id fbfec355`、UTS `…vk172`、`/` = `/dev/sda17`、
-  `card0-DSI-1=connected`、`systemctl --failed` 空、`boot_b` 未改（`fb55997c…`）。
-- **顺带排除**：`vbmeta_a` = 官方包逐字节相同；b 槽 `vbmeta_b` 的 `avb_slot_verify.c:913` 公钥拒绝在**能正常启动**的
-  日志里也存在 ⇒ 是 unlocked/orange 常态，**AVB 全程无关**。`misc` 全 0、`devinfo` = `ANDROID-BOOT!` + `u.1.1.1`
-  （= is_unlocked/is_unlock_critical/is_charger_screen_enabled，正常值）。主/备 GPT header+entry CRC 均 OK。
-- **`logfs` 判读纠错**（`PITFALLS #485`）：seg1–9 属**另一台 12+256 机器**（ECID `0x045AC096892B`）且与官方包
-  `logfs_ufs_8mb.bin` 9/10 段逐字节相同 = 工厂模板 ⇒ 本机历史只能看 **seg0**（旧 §4「第三种路径」作废）。
-- 附带：EDL `05c6:9008` 需 udev 规则 + `udevadm trigger --action=change`；`out/` 三个「内核段不可读」镜像
-  （`dtbo3`/`gh612b`/`vk146-BADSUSPEND`）实测**均可正常解压**（UTS `…vk172`），身份表已重生成（`check-doctor` FAIL=0）。
+- **一句话（当时）**：`boot_b`←载荷 + `reboot` 后 14 s 进 fastboot、两槽皆不启；**闭环 = 引导固件代次与 A/B 槽脱钩（`PITFALLS #484`）**，`--set-active` 双向修复 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §2 ｜ **报告**：`reports/uefi-slotboot-stuck-fastboot-20261101.md`、取证 `reports/artifacts/uefi-edl-read-20261101/`；坑 `PITFALLS #484/#485`
 
 ### 2026-11-01 23:0x：UEFI 线按推荐顺序开工（4 lane）——**① 通道定案：EDL `peek` 本机不可用**，改「切断回落 + 回读」
-
-**一句话**：四条 lane 并行（① DDR 通道前置 / ② 合体 BOOT / ③ EUD / ④ 10-05 出字配方），
-其中 **① 的「EDL 直读 DDR」被一发上机否证（`PITFALLS #486`）**，① 方案已改写；④ 镜像已备好待上机。全程**零写盘**。
-
-- **实测（今晚，一发定案）**：`fastboot oem edl` **可用**（`OKAY [0.001s]`，4 s 后 `lsusb` = `05c6:9008`，首次拿到实测证据）；
-  但 loader `xbl_s_devprg_ns.melf` 的 **Supported Functions 无 `peek`**
-  （`program,read,nop,patch,configure,setbootablestoragedrive,erase,power,firmwarewrite,getstorageinfo,benchmark,emmc,ufs,fixgpt,getsha256digest`）
-  ⇒ `check_cmd("peek")` 拒；**绕过 host 检查用 `rawxml` 手发 `<peek>` 两发也是 `failed.` + 空回包** ⇒ **EDL 读 DDR 不可行**。
-  顺带坐实：udev `99-edl.rules` 生效（节点 `crw-rw-rw- root plugdev`，无需 sudo；非 root `udevadm reload` 报 varlink Permission denied ≠ 规则未写）、
-  **edl-ng 1.6.0 可用**（`printgpt -u 4` 正常列 LUN4 全表）、`edl-ng reset` 约 9 s 回 Linux（`boot_id fb08d9d7…`，槽位未变）。
-  record `reports/trials/20261101T150336Z-edl-peek-probe-r1.json`。
-- **① 方案改写**：只剩「**切断回落**」一条 —— a 槽 unbootable ⇒ 载荷崩溃后 ABL 停 fastboot（无 Android 启动）
-  ⇒ `fastboot boot <Linux boot.img>`（零写盘）⇒ 设备侧用 `probes/blackbox` 读窗口。报告 `reports/uefi-ddr-fallback-plan-20261101.md`
-  （§1.4 编排者实测更正、§3 窗口×清除者表、§4 三案实验单），工具 `scripts/edl-peek.sh`（仅存档，勿再用）。
-- **④ 已备件未上机**：`out/uefi-20261101-1005recipe-v0.img`（2 441 216 B，sha `97c95cc1…`）= 10-05 出字配方
-  （`PakalaNoSb.dsc` RELEASE + `SCALE_FACTOR 3` + 未补丁厂商 UFSDxe `dac620ac…` + stock shim `054e114d…`）
-  × **干净 v0 header**（v0/`0x10008000`/4096/其余全零）；构建 0 error、620 条 warning 与 10-31 基线逐条同型（零增量）。
-  判据 = 屏上出现可辨认文字/色块（J1）。报告 `reports/uefi-1005recipe-cleanheader-20261101.md`。
-- **并行 lane 状态**：② 合体 BOOT 与 ③ EUD 仍在跑（报告骨架已落盘）；
-  ②的目标 = SunUEFI 合体 BOOT 机制 + 本机 ABL 加载语义 + `xiaomi-piano` vs `lenovo-y700g4` delta；
-  ③的目标 = 本机 `eud` 是否 probe、固件是否启用、最小验证清单。
-- **★ 11-01 23:1x–11-02 02:0x 切断回落实验（`reports/uefi-ddrcut-fallback-20261101.md`，verdict FAIL）**：
-  三块 carveout 窗口（`0x84A00000`/`0x9C300000`/`0x89300000`）清零后走完「载荷进 boot_b → reboot → ABL 失败 → fastboot
-  → `flash boot_b` 备份 → reboot → Linux」整圈**仍逐页为 0** ⇒ **「回落启动清掉 marker」假设作废**（0x00 是稳定态）；
-  但 **stage1 三窗全 0**：`fastboot boot` **3/3 被拒**（a 槽 unbootable 期间，`Invalid Parameter`）、
-  槽位路径上 ABL 数秒直奔 fastboot 且**未留 `logfs` 段** ⇒ **载荷两条路径都没执行到第一条指令**。
-  设备已完全恢复：`boot_b` = `fb55997c…`、`current-slot=_b`、a/b 均 bootable。
-  操作层教训 = `PITFALLS #487`（改非活动槽属性必须用 `scripts/slot-attr.py` 直写 LUN4 双表，`qbootctl -u a` 必失败）。
-  **下一发判据（成本低）**：先把 `boot_b` 换成纯 Linux 内核确认槽位路径本身通，再换「真 Linux `Image` 头的壳内嵌 FD」——
-  若日志出现 `Loading Image boot_b` 且尺寸≈载荷大小而 stage1 仍 0 ⇒ 「ABL 加载层拒」被否、「跳了即异常」成立。
-- **lane D（EUD）已收口（`reports/uefi-eud-feasibility-20261101.md`）**：本机 `eud` 驱动在（`qcom_eud.ko`）但运行 DT 里 `eud` **节点 0 个** ⇒ **0 次 probe**；
-  `logfs` 10/10 段有 `EUD Init` 但 `EUD wait` **0/10**（XBL 放行未证）；官方文档只承诺 Linux 起来后可用。
-  **L0 待用户做（物理）**：设备接 Linux PC 冷启动，10 s 内 `lsusb` 看 `05c6:9500/9501`；不出现则 EUD 降级为 Linux/UEFI 期调试器。
-- **lane B（合体 BOOT）中止**（`status=stopped`，9 轮 12 调用 0 字正文）；已把它 clone 的 SunUEFI 仓库从 `/tmp` 搬到 `~/ext-repos/sunuefi`（20 MB），
-  骨架报告里写好了三点续作入口。
+- **一句话（当时）**：**EDL `peek` 本机不可用**（loader Supported Functions 无 `peek`）⇒ 改「切断回落 + 回读」；「回落清 marker」假设被否证；EUD lane 收口（DT 无 `eud` 节点） ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §3 ｜ **报告**：`reports/uefi-ddr-fallback-plan-20261101.md`、`reports/uefi-ddrcut-fallback-20261101.md`、`reports/uefi-eud-feasibility-20261101.md`；坑 `PITFALLS #486/#487`
 
 ### 2026-11-02 上午：UEFI ①「载荷到底有没有被执行」四臂判别 —— **全部为 0**，并更正一条错判
 
@@ -451,87 +330,19 @@ EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案
 现场件 `reports/artifacts/uefi-slotboot-20261101/`。
 
 ### 2026-10-31 晚：UEFI 线**暂停深入**（用户裁决；2026-11-01 已按上方纠正块恢复推进）—— 两项主机侧待办挂起
-
-用户 2026-10-31 裁决：**「更新文档并提交，暂不深入」**。UEFI 可见性线**本轮到此为止**，结论已全部落盘，**不再派工**。
-恢复该线时按下面两项**主机侧**任务顺序做（**都在拿到结论前不得再打「重建+插桩」组合**，理由见下）：
-
-1. ~~**「重建即失效」字节级对比**~~ **✅ 2026-11-01 已完成（结论：不存在该效应，只差 6 字节时间串）—— 见本节顶部纠正块**：`SM8750_EFI-A2.fd`（`eb00db73…`，10-30 原件）
-   vs 同源重建的 FD —— 比 FV 大小/对齐、`FVMAIN` 头字段、文件序、校验和，以及构建环境的 clang 版本与并行度；
-   目标 = 找出「同源重建后不交棒」的那一个差异。**未做**。
-2. ~~**早期写的真实死因定位**~~ **⚠ 2026-11-01 改判：本项前提被否证（R1/R2 那两发载荷从未被执行 ⇒ 无变量）**，需用干净 header 重做；新的更强候选 = 跳转后 1–2 s 掉电窗口（`PITFALLS #480`）。原设计保留：用「写到已知安全的 DDR 暂存区」做对照 ——
-   交棒 ⇒ 坐实是 `0xFC800000` 这个地址的问题；不交棒 ⇒ 问题在「PrePi 里多一行 C 代码」这个更粗的层面。**未做**。
-
-**判定纪律（已记 `PITFALLS` #477）**：静态推理（关 MMU + 普通 DDR + SEC 无 SMMU）**不能**证明早期写 FB 安全 ——
-实测两次致命；凡涉及 MMIO/reserved-memory/电源域/保护域的写，静态结论只写「候选」，判据必须带对照组（本轮靠 A2 原件对照才没跑偏）。
+- **一句话（当时）**：用户裁决「更新文档并提交，暂不深入」；两项主机侧待办挂起，其前提后被 11-01 否证（见上方纠正块） ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §4 ｜ **报告**：判定纪律 = `PITFALLS #477`；两项待办的后续见 `reports/uefi-cleanheader-reframe-20261101.md`
 
 ### 2026-10-31 晚：UEFI 控制组 + R2 —— **A2 原件今天仍交棒**，而三发重建全不交棒
-
-> ⚠ **2026-11-01/02 勘误：本块的「交棒」判据已被 `PITFALLS #481/#482` 作废（那批发射因脏 boot header 从未被 ABL 执行）；结论只读本节 11-01/11-02 块与 `reports/uefi-ddr-blackbox-20261101.md` §7/§8。以下为当时记录，保留不改。**
-
-- **控制组（关键）**：10-30 原件 `A2-v0b.img`（sha `a38bd563…`，未改一字节）今日上机 **仍交棒** ——
-  `Booting FAILED (usb_read failed: No such device)`、USB 掉线、45 s 内 fastboot 采样 0/45，随后 ABL 回落 stock Android。
-  ⇒ 「10-30 交棒是运气」被排除，交棒条件**可复现**。
-- **R2**（A2 的 160 B shim + PrePi 入口插桩 FD `c6e0e887…`）**不交棒**（60/60 `18d1:d00d`，屏上无字，12 s 回 Linux）。
-- **两个独立故障，不得混谈**：① **早期写 FB = 致命**（R1 在 shim 写、R2 在 PrePi `CEntryPoint` 写，两发都死）⇒
-  `reports/uefi-prepi-visibility-static-20261031.md` 的「安全」判定**被实测否证**，改判「不安全，原因未证实」；
-  ② **重建 FD 本身就不交棒**（X1/X2 只换 FV 里的 UFSDxe 槽、无任何 FB 写，也不交棒）⇒ 需主机侧字节级对比，**未做**。
-- **恢复路径（新增，写进实验单）**：A2 交棒回落 Android 后本机 **adb 可直接用**（无需按键）：
-  `adb -s HA2EXB0E reboot bootloader` → `fastboot --set-active=b`（自动清 `slot-unbootable:b`）→ `fastboot reboot` → 12 s 回 Linux。
-  终态 `boot_id` `baf06456`、根 `sda17` ext4、面板 connected、`boot_b` 仍 `aedae5f1…`、失败单元 0。
-- **纪律**：在拿到「重建即失效」的字节级结论前，**不再打任何「重建 + 插桩」组合**（每发要用户盯屏且可能落 Android，成本过高）。
-- 报告 `reports/uefi-vis-control-20261031.md`，证据 `reports/artifacts/uefi-vis-{r2,control}-20261031/`。
+- **一句话（当时）**：⚠ 已被 `PITFALLS #481/#482` 作废（那批发射因脏 header 从未被 ABL 执行）；当时记录「A2 原件仍交棒、三发重建全不交棒」 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §5 ｜ **报告**：`reports/uefi-vis-control-20261031.md`，证据 `reports/artifacts/`
 
 ### 2026-10-31 晚：UEFI R1 上机 —— 里程碑 shim **不交棒**，色条方案作废
-
-> ⚠ **2026-11-01/02 勘误：同上——那批发的载荷从未被执行，「不交棒」不构成对 shim 的否证；`PITFALLS #481/#482`，结论只读 11-02 块。**
-
-- 载荷 `VIS-R1.img`（sha `d2ebbd47…`）= **A2 同一份 FD** + **带里程碑色条的 cachefix shim**（384 B）；header 与前四发逐字段同；
-  gunzip 反解 shim/FD 均逐字节相等。**零写盘**。
-- **结果**：60 s × 每秒采样 **60/60** 为 `18d1:d00d`、bus/device 恒 `001/033` ⇒ **未交棒**；用户目视「屏幕依然卡联想 logo」⇒ **无任何色条**。
-  回退 `fastboot reboot` → 12 s 回 Linux，`boot_id` `acffb17c`、根 `sda17` ext4、面板 connected、`boot_b` 仍 `aedae5f1…`、失败单元 0。
-- **关键判读**：与 10-30 的 A2（同 FD + 160 B cachefix shim）**交棒**对照 ⇒ **唯一变量是 shim 内容**。反汇编显示 384 B 版在拷贝/cache 维护**之前**
-  先写 `0xFC800000`（`movk x20,#0xfc80,lsl16` + `str w23,[x20],#4`）；该时刻写 display reserved 极可能触发异常且无处理者 ⇒
-  **shim 自毁 ⇒ ABL 停在 fastboot**。⇒ 结论写成「shim 不能早写 FB」，**不是**「A2 形态不交棒」。
-- **作废**：色条/里程碑方案（除非把标记点移到重定位之后，那已进入 UEFI 内部、不是新信息）。**保留资产**：A2 的 FD 与 160 B cachefix shim 均未改。
-- **下一步（需人参与/待定）**：① control 一发（原始 `A2-v0b.img`）坐实「变量是 shim 内容」，代价 = 若交棒则 ~30 s 回落 stock Android，需按键进 fastboot 再 `set_active b`；
-  ② 若 control 交棒，观测点改到 UEFI 内部（`PrePi`/`ArmPlatformSec` 入口），但须先静态确认该时刻 `0xFC800000` 可写。
-- 报告 `reports/uefi-vis-r1-20261031.md`，证据 `reports/artifacts/uefi-vis-r1-20261031/`。
+- **一句话（当时）**：⚠ 同上作废（载荷未被执行，「不交棒」不构成对 shim 的否证）；当时记录「里程碑 shim 不交棒、色条方案作废」 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §6 ｜ **报告**：`reports/uefi-vis-r1-20261031.md`
 
 ### 2026-10-31 晚（并行 lane）：UEFI 早期可见性四通道调查 —— 结论「改 0 行代码就有观测面」
-
-> ⚠ **2026-11-01/02 勘误：四个观测面的结论仍成立（DDR 标记/logfs/EUD/USB），但「1–2 s 掉电属载荷」被 `PITFALLS #480/#481` 重归因到 ABL/槽位路径；EUD 的 `EUD Init` 是 XBL 打印≠驱动 probe（`PITFALLS #488`）。**
-
-- **lane**：`uefi-vis`（L1，纯静态取证 + 上游只读，未上机）。报告 `reports/uefi-visibility-channels-20261031.md`。
-- **★核心发现（已证）**：**A2 载荷里可见性代码本来就是编进去的** —— `Platforms/PakalaPkg/PakalaNoSb.dsc:31`
-  `USE_SCREEN_FOR_SERIAL_OUTPUT = 1` ⇒ `SerialPortLib = FrameBufferSerialPortLib`，直接写 ABL 已点亮的 framebuffer
-  （`Display Reserved` `0xFC800000`，1904×3040），**不调 GOP、不碰 DSI/panel PHY**；异常路径 `ArchSec.c:45` 是
-  **无宏门控的裸 `SerialPortWrite`**（RELEASE 下仍活）。⇒ **A2 交棒后全静默 ⇒ 最合理解释是「死在它之前」（PrePi 之前/之中）**，
-  而观测面本身**不需要新代码**。
-- **四通道决策表**：① 屏上出字 = **已证可行、0 行新代码**（推荐主通道）；② 内存落盘（InMemorySerialPortLib→PStore 区）=
-  本机 MemoryMap **无 `PStore` 区**，需自划 ⇒ 备选可叠加；③ USB ACM = **未证实**（树内无 `UsbSerialDxe`，上游 code search `UsbFnSerial`=0）；
-  ④ 硬件 UART = **未证实**（无公开测试点证据；树内有 `QcomGeniSerialPortLib` 现成实现，本机 PCD 未覆盖）。
-- **备料（已编译验证 rc=0）**：`patches/uefi/20261031-vis/0002-bootshim-framebuffer-milestone-markers.patch`
-  （BootShim 里程碑色条，基于 0001 的 `dc civac`/`ic iallu` 叠加）+ `reports/artifacts/uefi-vis-20261031/BootShim-vis-cachefix.bin`（384 B）。
-  **判读表**（报告 §1 F-V2）：无 M1 = 根本没交棒；仅有 M1(红) = 死在 shim 拷贝/cache 维护；M1+M2+M3 = 死在 UEFI 入口~SEC 异常处理器生效前；
-  色条全有且有文字 = 活过 SEC。**观测窗口前移到 shim 第一条指令**。
-- **未做**：未造 A2+markers 整镜像、未上机（判读需**目视/手机录像**，属物理动作）；issue #12 自 10-29 后无新评论（gh api 实测），无需回帖。
-- **顺带结论**：tiny UFSDxe 现在不值得做（功能已被 `00ae059f` 三补丁覆盖；可测性为 0 = 同病；裸 MMIO 写错可致 UFS 链路不可恢复）。
+- **一句话（当时）**：四通道结论（屏上出字 0 行新代码 / 内存落盘 / USB ACM / 硬件 UART）**仍成立**；但「1–2 s 掉电属载荷」已被 `PITFALLS #480/#481` 重归因 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §7 ｜ **报告**：`reports/uefi-visibility-channels-20261031.md`、备料 `patches/uefi/20261031-vis/`
 
 ### 2026-10-31 晚（并行 lane）：UEFI 2×2 补全 —— 交棒需「厂商 UFSDxe × cachefix shim 基座」
-
-> ⚠ **2026-11-01/02 勘误：该「交棒条件」是 boot image header 的产物，不是载荷属性（`PITFALLS #481/#482`）；本块整体作废，只作历史记录保留。**
-
-- **lanes**（`physical-exec`，零写盘）：造出两发交叉载荷并各打一发 ——
-  **X1 = A2 基座 + dodge UFSDxe**（sha `ed46b709…`）、**X2 = E1 基座 + 厂商 UFSDxe**（sha `9dd1c16a…`）。
-  四发 header 逐字段相同（`hv=0`/`pagesize=4096`/`kernel_addr=0x10008000`）；`FVMAIN.Fv@0x1e561c` 实测段长
-  X1=`e76b555f…`(155 648 B)、X2=`00ae059f…`(151 552 B) ⇒ 单变量拆分成立。
-- **结果：两发都不交棒**（父代理独立复核 `x1/x2-usb-watch.txt`：各 **60/60** 采样为 `18d1:d00d`、bus/device 号不变、无重枚举）。
-  2×2 补全：**A2 ✅ / X1 ❌ / X2 ❌ / E1 ❌**。
-- **归因（本轮唯一新增结论）**：交棒不是「有没有 UFSDxe」，也不是「哪个 UFSDxe」单独决定，而是
-  **「厂商 UFSDxe × cachefix shim 基座」二元组合同时成立**；dodge 件放到 A2 基座上仍不交棒，厂商件放到 E1 基座上也不交棒。
-- **状态**：`boot_b` 前后均 `aedae5f1…`（零写盘、未改槽）、两发各回 Linux 24–25 s、终态 DSI connected / 根 `sda17` ext4 / 失败单元 0；
-  trial record `reports/trials/20261031T0837{04,05}Z-X1,X2-v0b-nohandoff.json`；报告 `reports/uefi-swap-x1x2-20261031.md`、证据 `reports/artifacts/uefi-swap-20261031/`。
-- **仍未解**：交棒后**全静默**（A2 是唯一交棒发，J1 屏上出字 = 0）⇒ 观测面仍是最大瓶颈（硬件串口 / `UsbSerial` 单独立项）。
+- **一句话（当时）**：⚠ 整块作废（「交棒需厂商 UFSDxe × cachefix shim 基座」是 header 产物，不是载荷属性） ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §8 ｜ **报告**：`reports/uefi-swap-x1x2-20261031.md`
 
 ### 2026-10-31 晚：启动提速（net-selfheal 白等 120 s 修掉）
 
@@ -701,7 +512,7 @@ EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案
 | ~~解锁 U2 = 永久失去 Widevine L1 / 保修 / FOTA（全项目唯一 locked 单元）~~ **已解锁（2026-10-03），本条关闭**；残余 = 新单元若在 1.5.x 上试解锁会白跑一轮 | 低 / 中 | 解锁前 locked 基线已入库（`backup/HA2EXB0E-16+512/pre-unlock/`，Widevine=L1 已记）；G2 的 U5 用例按 L3 上限做预期 |
 | 1.5.10.259 屏蔽解锁指令导致白跑一轮 | ~~低/低~~ **已发生（2026-10-03）** | 已由全量降级 1.1.11.073 解决（G1-0 已关闭）；**以后新单元直接判版本门→降级，不再在 1.5.x 上试解锁**（`RUNBOOK` §0.5）。注：U2 现态已回 **259 + unlocked**（2026-10-03 实机核验） |
 | 覆盖 a 槽后强检测/银行类 App 完全不可用 | 中 / 中 | Q5 先取证；保留 stock + EDL 恢复；容器不行就换路线而不是硬扛 |
-| GPT 手术/回收分区写坏 LUN0 | 低 / **高** | 手术前**分区镜像备份（设备侧 `dd` / 线刷包解出；本 ABL 无 `fastboot fetch`，#290）** + GPT 双表 dump + EDL 包在手；只写主/备表两处；写后读回校验 |
+| GPT 手术/回收分区写坏 LUN0 | 低 / **高** | 手术前**分区镜像备份（三选一：设备侧 `dd` / 线刷包解出 / **EDL 读回**；本 ABL 无 `fastboot fetch`，#290；**EDL 工具链与 loader 见 `RESOURCES/README.md` §2.1（其能力限制：本机 loader 不放行 `peek`，`PITFALLS #486`）**）** + GPT 双表 dump + EDL 包在手；只写主/备表两处；写后读回校验 |
 | 设备热失控（曾 103 °C） | 低 / 高 | 分级 trips 已在线；压测必带 `thermal-watch`，超 90 °C 自动降级 |
 | ~~空闲熄屏→重启（U2 实测）~~ **已关闭（2026-10-24 用户裁决：不值得取证）**：日常线（7.3 血统）免疫，Q24 只读 §5 | 低 / 低 | 禁止空闲熄屏（`idle-delay=0` 或 phosh caffeine 常开）作为临时规避，并把它写进 `start-desktop.sh`/rootfs 归档；根治前 **不要**在不可回滚的持久系统上做熄屏实验（详见 `archive/topics/复盘-2026-10-03-持久化与睡眠.md`） |
 | **未验证内核增量（vk34 之后）** | 已发生 / 中（风险已降级） | 2026-10-03 二分只能说明「vk34→vk40 叠加体内有回归」；**熄屏复位的真因后续定为单模块 `cambistmclkcc-sm8750` × DT 电源域（不在那 5 文件内）**，见 Q24。残留风险 = vblank/PPM 计数回归未复核（G1-23）|
@@ -859,6 +670,13 @@ EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案
 
 ## 7. 上游化任务（M 系列，用户 2026-10-04 定：日后可合并为主线）
 
+> **★2026-11-02 投递批次（用户按批放行；14 封，逐封实发件在 `patches/upstream/*/sent/`）**
+> - **M8 mdss v3**（新线程）：`[PATCH v3 0/3]` + 两封回 Dmitry（删长注释 / drop RSCC）⇒ arm-msm + dri-devel + devicetree 全部归档；净 diff +9/−6。见 `reports/mail-send-20261102-mdss.md`。
+> - **wl2868c v5**（新线程，纠正 v4 误挂旧线程）：`[PATCH v5 0/4]` + 回 Mark Brown 的流程投诉 ⇒ 归档；High 项 `cci1_1` 引脚改 **gpio111/164**（三重证据见报告 §1）。见 `reports/mail-send-20261102-wl2868c.md`。
+> - **M6 B5**：一封合并回复逐条答 Dmitry 四条（立项理由 / lock 归属 / per-SoC 适用范围 / **master 由 DT 不 by probe order** 的认错），承诺 v2 在 torvalds master 重切；**未投新补丁**。见 `reports/mail-send-20261102-b5-m3dt.md`。
+> - **M3-1 dwc3 v5**：只补投 **1/2 binding** 到 `devicetree@vger.kernel.org`（早前 `linux-devicetree@` 被 vger 550 拒），内容零改动。
+> - 归档**独立复核方式更正**：lore `/<list>/<mid>/raw` 现在返 Anubis 挑战页（HTTP 200 但非原文），不能当归档证据；本轮改用 **patchwork API**（`patches/?submitter=xiaqinghuan@mail.ustc.edu.cn&since=…`）确证三系列全部进列表。
+
 > 审查已完成（2026-10-04，只审不改）：payload=相对主线 v7.2 的 **125 改 + 11 新文件（≈12.4k 行）**，
 > 分级 A/B/C/D 与推进顺序见 `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`。机械检查全净
 > (checkpatch/DTC/dt-validate 仅 1 红点=usb@a600000)。
@@ -878,77 +696,7 @@ EDL 全量只读取证（`reports/artifacts/uefi-edl-read-20261101/`）后定案
 | **M9** | **kexec：irqchip/gic-v3-its 认领继承的 LPI 表（DT）** — 2026-10-24 立项（Q11/K6 收口产物） | 🔴 **方案被否（2026-10-26，Marc Zyngier：nothing works at all；EFI/bootloader 配表 + DT memreserve 才是正解）⇒ 撤回或改「引导器预置 + DT memreserve」待用户裁决**。旧记录：🟢 **已投递（2026-10-24，用户批准）** `<20261024075856.835932-1-xiaqinghuan@mail.ustc.edu.cn>`，`/lkml/` + `/linux-arm-kernel/` 已归档；投递前用最终文本重跑上机确认（vk161：0 超时、`/init` 1.275 s）。补丁 = `patches/upstream/m-gic-its-claim-20261024/0001-*`：把源树 `gic_check_reserved_range()` 拆成纯查询 `gic_range_is_reserved()` + 认领助手 `gic_claim_inherited_lpi_table()`，`enabled_lpis_allowed()` 与 `its_cpu_init_lpis()` 的 preallocated 分支改为「未保留就 `memblock_reserve` 认领」，claim 失败才 taint。**机械门**：`checkpatch --strict` 0E/0W/0C；`drivers/irqchip/irq-gic-v3-its.o` 编译 0 warning（首版 `-Wunused-function` 已消）；干净 worktree `git am --3way` rc=0；收件人 = To Thomas Gleixner / Cc Marc Zyngier + linux-arm-kernel + linux-kernel；`send-email --dry-run` `Result: OK`（预生成 Message-ID `<20261024073343.795643-1-xiaqinghuan@mail.ustc.edu.cn>`）。**上机判据**：目标 `ITS queue timeout` 99→**0**、`Failed to disable LPIs` 8→**0**、`/init` 126.35 s→**1.31 s**（`reports/kexec-target-boots-20261024.md` §8）。已知局限：待发表认领属 CPU bring-up 期的尽力而为，reviewer 若要求严格则 v2 改在 `its_init()` 遍历 RD 帧一次性认领 | —（不阻塞） | ① ~~投递~~ 已发；② 盯 review（Marc/Thomas），视反馈出 v2；③ 若进树则回填上游提交号 | `patches/upstream/m-gic-its-claim-20261024/README.md`、`reports/kexec-target-boots-20261024.md`、`TASKS/sessions/2026-10-24-kexec-its-lpi-claim.md` |
 | **M9-收口** | ✅ **已撤回（2026-10-26，长期规划取舍）** —— Marc Zyngier 2026-10-24 12:39 +0100 `<87v76r8h0o.wl-maz@kernel.org>` 三点的原文要点（逐字核对自 INBOX，非二手转述）：①「***nothing* works at all** ... Everything is dead」，与 command queue 无关；②「What makes you think that EFI and DT are incompatible? 90% of my machines are DT based and yet boot with EFI」；③「**No.** This is way too late, and nothing guarantees that these are not already used for other purposes by the new kernel ... **Either it works always, or it doesn't at all.**」⇒ 正解 = 「configure the LPI tables from the bootloader, reserving them at boot time by sticking the reservation in the DT ... preserved along the whole of the kexec chain」。**我方决定 = 撤回整个系列**（不发 v2、不重做内核代领路径）；回信已投并复核（2026-10-26T11:41Z，Message-ID `<179301488974.13269.12823732532276833194@mail.ustc.edu.cn>`，`In-Reply-To` Marc 原件，正文 31 行纯 ASCII，Sent Items [151] 回读）。**长期归位**（不进内核）：kexec 链的「bootloader」= kexec loader 自己 ⇒ 以后若真需 kexec 后 LPI，修在 loader（把 memreserve 写进交接 FDT（不够就扩容 blob）+ 预置 LPI 表），内核侧不再动；当前 kexec 只当「不需显示/网络的调试快环」，需要 LPI 的场景直接全重启。 | ❌ | ✅ 回信已发 + Sent Items 回读；✅ `TASKS`/`reports/` 口径已改 | `out/mail-20261026/re-m9-withdraw.txt`、`reports/upstream-status-20261026.md` §4 |
 
-### ★ 2026-10-13 晚：M1-7.3（7.3-rc7 重基树）首次上机 bringup
+### ★ 2026-10-11 → 2026-10-14 的历史叙事已下沉（本节只留 M 系列台账）
 
-> 证据层：`reports/m1-rebase-7.3rc7-{feasibility,execution}-20261013.md`、`reports/m1-73-{onboard-image,boot-failure,dts-fix-catchup,daily-config-rebuild}-20261013.md`。
-> 新树 = `build/m1-upstream/clean-tree-73` @ 分支 `m1/clean-tree-7.3rc7`；镜像族 `out/boot-elden-m1-73{,b,c,d,e,f,h,i,j}.img`（`out/` 不入 git；`versions/vk-kernel-identity.tsv` 已登记这 9 行；每个镜像附 `.manifest`）。
-
-| 镜像 | 变量 | 上机结果 |
-|---|---|---|
-| `73` | 新内核 + 旧板 DTB（`&i2c0` okay、`splash-region@…`）+ vk126 ramdisk **+36 模块** | 无背光；**有声音、有马达**；随后硬关机 |
-| `73b` | 同上但**纯 vk126 ramdisk（0 个 .ko）** | 同样硬关机 ⇒ **排除模块层** |
-| `73e` | + `&i2c0 → disabled` | **能起**：有背光、有马达；无声音、无 USB gadget |
-| `73f` | + `splash-region`→**`splash_region`** + 去 `simple-framebuffer` + `sdhc_2 no-1-8-v` | 有背光；无声音、无马达、无 USB |
-| `73h` | = `73f` + ramdisk「日志黑匣子」层（`/init` 自起脱离进程，把 `dmesg` 快照写磁盘根 `/root/m1-73-dmesg.txt`，每 3 s + `sync`） | 首轮 0 字节（硬断电丢页缓存）→ 已加 `sync` 重出，**复测成功**（74 KB，含 0.0 s 起全量 dmesg） |
-| `73i` | = `73h` + DTB `&mdss_dp0 disabled`（单变量，验「DP 阻塞 DRM」） | 能画到 `card0`：`card0-DSI-1`+`greetd`+`phoc`；**但用户实机确认屏幕未亮** ⇒ 不作好发 |
-| `73j` | = `73h` 的 DTB（dp0 enabled）+ ramdisk 内置 `fsa4480`/`fastrpc` + `/init` 加载钩子（零写盘功能镜像） | 切根正常、模块自动加载（`[m1-73j] loaded fsa4480/fastrpc`）、`card0`+`card0-DP-1`+`card0-DSI-1`、`/dev/fastrpc-adsp`+QRTR svc400；**2/2 命中 Q28 坏发** ⇒ 未亮屏 |
-
-**已确证的设备侧修复（都在 `clean/base` 上早已存在——M1 血统落后于它们）**：
-1. `&i2c0 { status = "okay" }` = **硬关机根因**（`PITFALLS #108` 原样复发，单变量已证）⇒ 已改 `disabled`（M1-73 树提交 `1e4077f13f`）。
-2. `splash-region@fc800000` 命名不符 ⇒ ABL 按名字 `splash_region` 查找失败、**跳内核前关显示**（`PITFALLS #11`）⇒ 已改名并去 `simple-framebuffer`（提交 `b3815fb150`）。
-3. 「配置缺 `PROC_SYSCTL`」= **误判**（7.3 已把该符号改名 `SYSCTL`；用内核树内 `linux/scripts/extract-ikconfig` 从成品内核抽内嵌 config 实测 `CONFIG_SYSCTL=y` + `PROC_FS=y`）⇒ 教训记入 `PITFALLS #247`。
-
-**★ 2026-10-13 深夜 更正（原「USB 不枚举 / 无声音 / 无马达」判断作废）**：真因 = **纯 ramdisk 镜像（0 个 `.ko`）+ 磁盘无 7.3 `/lib/modules` ⇒ 所有 `=m` 驱动都没加载**（`PITFALLS #176` vermagic 失配的另一种表现），**不是代码回归、也不是板级 DTS**。已单变量证实（`reports/m1-73-port-bringup-20261013.md`、`PITFALLS #248`）：
-1. **显示/桌面被 DP 阻塞**：`fsa4480`（`CONFIG_TYPEC_MUX_FSA4480=m`）缺 → 无 typec mode-switch → `pmic_glink.altmode` defer → `af54000.displayport-controller` 永久 defer → `disp_cc-sm8750 sync_state() pending` → **阻塞 `msm_drm_bind` → 无 `card0`**。运行时 `insmod fsa4480.ko` 立即出 `card0`+`card0-DP-1`+`msm_dpu: bound af54000.displayport-controller`。
-2. **传感器被 `fastrpc` 阻塞**：`CONFIG_QCOM_FASTRPC=m` 缺 → 无 `/dev/fastrpc-adsp`；`insmod fastrpc.ko` → `/dev/fastrpc-adsp` + QRTR svc400（Sensor Core）上线。
-3. **`73j`（零写盘）** 把这两个模块 + `/init` 加载钩子打进 ramdisk（`scripts/m1-73-modules-overlay.sh`）：切根正常、模块自动加载、`card0-DSI-1`+`card0-DP-1`+传感器全在。
-4. **但仍无亮屏好发**：`73j` 2/2、`73i` 1/1 都画到 `card0` 但用户实机**屏幕未亮**，面板 init 报 Q28 签名（`command DMA timeout` / `sending dcs data ff 20 failed` / `Failed to initialize panel`）⇒ **「DP 阻塞 DRM」与「Q28 面板 init 失败」是两个独立问题，前者已解（补模块），后者仍卡亮屏**。 **⚠️ 2026-10-14 更正（`reports/m1-73-display-regression-20261014.md`）**：同窗口对照日常 vk94（桌面正常）与 m1-73j（L1=L2=0、CRTC active、grim 出图，但**面板只有背光**）⇒ **M1 7.3-rc7 树本身有显示回归**，"73i/73j 未亮屏 = Q28 坏发"的归因不成立；M1 树上任何"显示通过"的判据必须面板实测（`PITFALLS #255`）；**该回归 2026-10-14 已由 E1b 修复（1 行 `PLL_SYSTEM_MUXES`，见下节）**。
-5. **慢启动（已定位并修复）**：M1 内核到用户态 `Run /init` 曾 **~95 s**（daily ~5 s）= WCN MHI 首探 91 s 拖住 init（`PITFALLS #250/#259`）；`CONFIG_ATH12K=m` + 后台 insmod ⇒ **4.486 s**（`PITFALLS #259/#260`；见下「修法已实测有效」）。
-
-**方法沉淀**：`tools/mkbootimg` 手工**单变量对照镜像** + **磁盘黑匣子**（USB 不通也能取证）+ **运行时 `insmod` 单模块归因**（比反复烧镜像快得多）。
-**方法沉淀**：`tools/mkbootimg` 手工打**单变量对照镜像**（每次只换内核/DTB/ramdisk 之一）+ **磁盘黑匣子**（USB 不通也能取证）。
-
-### 本轮其它交付（2026-10-13 晚，**全部备料封存不发**，投递冻结见本节顶部）
-- **M3-6 无线片**：`patches/upstream/m3-6-2026-10-13/`（2 枚：binding `qcom,wcn7861-pmu` + `pwrseq-qcom-wcn` WCN7861 支持）。pwrseq 591 行里**仅 ≈70 行可上游**，≈520 行须拆出（AOSS QMP PDC / OL-CPR 动态电压投票 / 导出 API），`vreg_cfgs` 逐轨投票属 Q3 违例应进 DT；ath12k PEACH ≈127 行纯数据表可先出 RFC。证据 `reports/m3-6-wireless-slice-20261013.md`。
-- **M3-3 音频片**：2 枚（binding enum 加 `awinic,aw88461` + 家族成员驱动 `sound/soc/codecs/aw88461.c`）；**Q2 裁定「并入 aw88395 家族」**（payload 已 `#include "aw88395/aw88395_device.h"` 并复用 ACF 加载函数）。证据 `reports/m3-3-audio-thermal-slice-20261013.md`。
-- **B5 DSI per-SoC cfg 预研**（policy §4 B5，与 Q28 合流）：56 hunk 逐条分类 + 4 枚补丁切分方案（P1 机制 → P2 控制器硬件事实 → P3 PHY+binding → P4 bonded/Q28 现场代码）；首个机械样例已落地（分支 `b5/dsi-compat-cleanup`，删除 2 处冗余 compat 判定，编译 rc=0）。证据 `reports/b5-dsi-resoc-20261013.md`。
-
-**邮件列表订阅台账**：`linux-arm-msm`（2026-10-12）、`linux-pm` / `linux-input`（用户 2026-10-13 08:0x）、**`linux-clk`（2026-10-13 10:21，本会话按 `+subscribe → confsub → Welcome` 流程完成，实测确认信 ~5 min）**；未订但按需：`linux-remoteproc`/`linux-bluetooth`/`linux-sound`（vger，M4 面）、`dri-devel`（freedesktop 表单）、`ath12k`（infradead 表单）；**只追踪不订**：lkml / devicetree / linux-media / regressions。清单与理由见 `reports/mail-lists-subscription-20261013.md`。
-
-### ★ 2026-10-13 深夜：上游显示栈对照（P1–P2c，回答「Q28 是否 vendor 栈引入」）
-
-> 证据层：`reports/p1-upstream-dsi-20261013.md`（含 §5–§10 追加）；trial 记录 `reports/trials/*p1*p2*`。树 = `build/p1-upstream-dsi`（分支 `p1/upstream-dsi`，`5f0c2c668f`→`2851bcaff6`）；镜像 `out/boot-elden-p{1,b,c,d,e}-*`、`p2b`、`p2c`（`out/` 不入 git；**仅 p1 有 manifest**）。全程零写盘 `fastboot boot`。
-
-| 臂 | DSI | DPU | 结果 |
-|---|---|---|---|
-| m1-73j | vendor | vendor | 过 kickoff → panel DCS `-110`（Q28 签名） |
-| P1/P1b | **upstream** | vendor | `Failed to set rate pixel clk -22`（比 Q28 **更早**失败；缺 SM8750 DSI PLL/C-PHY 时钟块） |
-| P1c/P1d/P1e | upstream（+vendor PHY C-PHY 位路径） | vendor / upstream | **面板 DCS init 成功**（`panel prepared`、0 次 `command DMA timeout`），但 DPU INTF/CTL kickoff `-22` → 无画面 |
-| **P2b** | **upstream host/manager + vendor PHY** | **pristine upstream** | **1 发 GOOD**：`card0-DSI-1 connected`、无 `ctl reset -22`/无 Q28 签名、phoc/phosh 起来 |
-| P2c | 同 P2b | **vendor DPU** | 合成器 modeset + `grim` 截图全 GOOD，但**面板实测仍只有背光** |
-
-- **结论 1（上游化缺口收窄）**：「上游规范点亮屏幕」的 vendor 缺口 = **DSI PHY（最大块，必需）+ 少量 DSI host/manager/msm_mdss 位点**（P2b 清单见报告 §7.2）；**DPU 侧无需 vendor 改动**（P2b 用 pristine DPU 即 GOOD）⇒ 直接作 b5/M3 显示片输入。
-- **结论 2（Q28 线索）**：P2b 用上游 DSI 命令路径（无 `bonded_cmd_*`）**1 发即 GOOD 且无 `command DMA timeout`** ⇒ **Q28 疑为 vendor DSI 命令路径专有**；**单发不作数**（vendor 栈坏发 ~50%）。【2026-10-14 更正/悬置（`reports/p2b-retest-20261014.md`）】同一 P2b 镜像（sha `71016e08…`）复测 **4/4 未复现** 10-13 的 l2=0 状态（4 发均 `ctl 1 reset failure -22` + frame-done/vblank 超时，L2STORM），且 10-13 那次 GOOD **从未做面板实测**（当时只查 `card0`+`phoc/phosh`）⇒ 该结论 **悬置（未证实亦未否证）**；上游 DSI host 目前**点不亮面板**（P2c 用户实测仅背光）⇒ 上游栈暂不能作 Q28 对照臂，下一步转 B5-P4（成组移植 vendor `dsi_host` 的 video/bonded 使能增量）。 ，须多发改冷/温起采样坐实。
-- **结论 3（判据更正）**：P2c 上 DRM/合成器/`grim` 全 GOOD 但面板无内容 ⇒ **判「屏幕点亮」只认面板实测**（`PITFALLS #251/#252`）。
-- 事故：P2c 上 `kmscube` 触发整机硬挂（同 `PITFALLS #106`）；显示坏态下 `reboot`/`reboot2` 卡 DRM cleanup，恢复靠 **`echo b > /proc/sysrq-trigger`**（`PITFALLS #253`）。
-
-### ★ 2026-10-14：M1 7.3-rc7 树显示回归（同窗口 vk94 对照）
-
-> 证据层：`reports/m1-73-display-regression-20261014.md`（实测）、`reports/m1-display-rootcause-analysis-20261014.md`（根因分析与 E1）、`reports/lanes/20261014-{m1-display-audit,m1-web-research,upstream-replies}.md`（lane 产物，关键论断已由编排者复核）。状态/样本数权威 = §5 Q31。
-
-- **实测（同一会话窗口 ~09:00–09:40）**：日常 `vk94`（7.2 血统 `linux/` 树）**面板出桌面**；M1 树 `m1-73j` **L1=L2=0、phoc/phosh 在、CRTC active、grim 出图 39 965 B，但面板只有背光**；上游臂（P2b/P2c/P4a/P4d）连 modeset 都失败（`no supported format`）、强制 `modetest` 后 `dsi_isr=0` ⇒ **M1 树显示回归**，非 Q28 / 非暖复位粘态 / 非面板故障；**73i/73j「未亮屏 = Q28 坏发」的归因作废**。
-- **DIAG 探针（P4d）**：`dsi_mgr_bridge_enable` 与 `msm_dsi_host_enable` 都被调用、`DSI_CTRL 0x171→0x173`（`VID_MODE_EN` 置位）⇒ 缺口在"video 真正跑起来"的条件，不在 enable 是否被调用。**DSC 1.2 已否证**（P4a = P2c + DSC1.2，行为无差别）。
-- **静态审计**：显示域差异全部可归属（上游 7.2→7.3 演进 / vendor payload），**未发现 rebase 解冲突错误**；`dispcc-sm8750.c`、`msm_mdss.c`、`msm_kms.c`、`dpu_kms.c`、`dsi_cfg.c`、`dsi_phy.c`、两树 .config 显示项、DTS 显示节点 = **0 差异**。
-- **强候选 H1**：上游 `44784327815b` revert 了 `93c97bc8d85d ("drm/msm: dsi: fix PLL init in bonded mode")`（v7.3-rc1 起；我们 7.2 血统树仍带修复版）⇒ `dsi_pll_enable_pll_bias()` 首次调用即早退 + `pll_enable_cnt = 1` 预置 ⇒ `PLL_SYSTEM_MUXES=0xc0` 不再写入；elden 正是 **bonded 双 DSI + DSC**。
-- **上游回信**：Pengyu Luo（2026-10-13，回 Q28 报告）称 *"the panel driver is supported, the DPU may not be … we need to hack the dsi clk source select for the 10-bit CPHY plane"*。
-- **★E1 上机 = 根因确认（2026-10-14 11:35，用户实机确认面板有内容 + 触屏可操作）**：臂 `out/boot-elden-e1-pllfix.img`（sha `918d47d3…`）= `73j` 的 config/ramdisk/DTB/cmdline **逐字节复用**，唯一变量 = `dsi_pll_enable_pll_bias()` 还原为无条件重编程 + `Q28-E1` 探针；UTS 用 `LOCALVERSION_AUTO=n` + `CONFIG_LOCALVERSION="-debug-ged6f232d10e3"` + 临时 annotated tag 精确钉死（否则 ramdisk 内模块 vermagic 失配）。**探针实证**：`phy_enable id=0 preseed cnt=1 muxes=0x0` → `bias_en enter cnt=1 muxes=0x0` → `done cnt=2 muxes=0xc0`（21/31 次读到 `0xc0`）⇒ 上游 revert 后形态**必然早退、`PLL_SYSTEM_MUXES=0xc0` 永不写入**。与 `73j` 的软件可见结构量**逐项相同**（L1/L2=0、`dsi_isr`=41、`dsi0vco`=756 839 941、pclk=172 991 986、phoc/phosh/wayland 在）⇒ 差异只在 `PLL_SYSTEM_MUXES` 一处。证据 `reports/m1-73-e1-pllfix-20261014.md`、`patches/m1-73-e1-pllfix.patch`、`logs/arm-e1-pllfix-20261014-112756/`。
-- **推论（待验）**：P1/P2c 等**上游 DSI 臂**同在 7.3 树 ⇒ 应先带此修复复测（其"modeset 失败 / `dsi_isr=0`"可能是同一缺口的更深形态），再谈 P4/DPU clk source select。
-- **★E1b = 最终形态（2026-10-14 12:40 实测确认）**：把 `writel(0xc0, …PLL_SYSTEM_MUXES)` 放进 `dsi_7nm_phy_enable()` 的预置块（**refcount 语义原样不动**）即点亮：干净 POR 发 L1=0/L2=0、`dsi_isr`=41、phoc/phosh/wayland 在、**面板有内容 + 触屏可操作**；净差异 vs 上游 7.3-rc7 = **1 行语义**（另加探针）。⇒ E1 的 refcount 变更**废弃**，上游提交走此 1 行版。另注：本轮第 1 发（同镜像）为 **Q28 坏发**（`command DMA timeout … master=-110 peer=0`，L1=2）⇒ M1 树同样有 Q28 偶发；**从坏显示态暖链会污染台架**（已知 GOOD 的 E1 同链复现 `dsi_isr=0` + L2 风暴）。
-- **★启动停滞（同日定位，与显示无关）**：M1 树 boot 到出画面 ~100 s 的元凶 = **WCN 的 MHI 首探等待 91 s**（`mhi mhi0: Wait for device to enter SBL or Mission mode` 4.90→96.08 s → `ath12k … -110`），`kernel_init` 的 `async_synchronize_full()`/`wait_for_device_probe()`（`init/main.c:1567`）等它 ⇒ init 到 96.5 s 才起（`Run /init as init process`）。日常 vk94 对照：WCN 探针 23.09 s 起、0.4 s 成功。详见 `reports/m1-73-boot-stall-20261014.md`、`PITFALLS #259`。
-- **★修法已实测有效（E1g，2026-10-14 下午）**：`CONFIG_ATH12K=m`（+ 本地 Kconfig：`ath12k/Kconfig` 不加 `select PCI_PWRCTRL_PWRSEQ`、`pci/pwrctrl/Kconfig` 给该符号加 prompt 以便 `.config` 钉 `=y`，提交 `fcefad3592`）⇒ **`Run /init` 4.486 s**、GUI ~7 s（好发）。配套：ramdisk overlay 必须含 **`ath12k.ko` + `wifi7/ath12k_wifi7.ko`**（PCI driver 在后者；`PITFALLS #260`），且**后台** `insmod`（否则 91 s 等待照旧堵 init）。
-- **★基线收敛（2026-10-14 晚，主机侧）**：M1-7.3 功能基线分支 = `m1-73/baseline`（`build/m1-upstream/clean-tree-73`，tip `c7da05b1d8`）= `m1/clean-tree-7.3rc7` + 2 提交 —— `54dc4dd8fe`（DSI `PLL_SYSTEM_MUXES` 1 行，**上游件**）+ `c7da05b1d8`（ath12k MHI 超时 90s→3s，**本地件**，`reports/upstream-policy-20261013.md` §3 D4 判 Q3 违例、正确解 = `probe defer`）；**E1（refcount 变更）/ E1g（Kconfig hack）已剔除**。全量 `Image.gz dtbs` rc=0/0err/0warn（`Image.gz` 20 798 895 B、板 DTB 153 101 B 与补丁前逐字节同）。**无探针上游补丁备料 = `patches/upstream/m1-2026-10-14/`**（0001；checkpatch `--strict` 0E/1W/0C，唯一 W = partial clone 无 `44784327815b` 的良性 commit-id 告警；pristine `24a19b953e` `git am` rc=0；目标文件编译 rc=0）——**投递冻结中，不发**。会话记录 `sessions/2026-10-14-m1-73-baseline-consolidation.md`。
-- **★机上验收（2026-10-14，一发通过）**：基线镜像 `out/boot-elden-m1-baseline.img`（sha `1254324a…`，UTS `7.3.0-rc7-debug-ged6f232d10e3`）= 基线树 `Image.gz` + 73j ramdisk（`4d4834e6…`）+ 树 DTB（`c801884334…`）+ 73j cmdline；`fastboot boot` 零写盘（reset=cold）实测：**`Run /init` 7.67 s**（ath12k 3 s 超时生效、retry 22.6 s 成功）、**L1=0/L2=0**、`card0-DSI-1` connected、phoc/phosh、**`wlan0` 关联 ustc-guest（5805 MHz，−48 dBm，458/516 Mbit/s）**、**用户实机确认面板有内容 + 触屏可操作** ⇒ **单发同时取到「快启动+面板+WiFi」**（E 系列当时受限坏发簇未取到）。trial `reports/trials/20261014T115840Z-m1-baseline.json`（GOOD/cold）、证据 `logs/arm-m1-baseline-20261014-195235/`、会话记录 `sessions/2026-10-14-m1-73-baseline-onboard.md`。**未写 `boot_b`（需用户在场）**；本发为 Q28 GOOD 单样本，Q28 状态与 `boot_b=vk94` 不变。
-- **未决（下一轮，用户已指定）**：① WCN 首探时序——M1(7.3) 在 4.4 s 探测时 chip 不应答（日常 23 s 即成功）；「MHI 等待 90 s→3 s」补丁**已并入基线**（见上「修法已实测有效」）。**★2026-10-14 E3 取证已结**：首探失败**与「上电/probe 时序」无关**（pwrseq **3.9 s** 上电早于 probe **4.4 s**；`pci_pwrctrl_power_on_devices()` 设计上先上电后枚举），**且加大 MHI 超时无效**（3 s→**30 s 用满**仍 −110）⇒ **根因 = 首次 MHI power-on 不可用、必须重发（fresh re-probe）**；附带观察：首探等待窗口内 WCN 被 pwrseq 掉电（BT 侧释放引用，待查 refcount）。证据 `reports/e3-wcn-dyndbg-20261014.md`、`TASKS/sessions/2026-10-14-wcn-firstprobe-dyndbg.md`；**E3c/E3d/冷起复核/E4 已闭合（`PITFALLS #263`）**：fresh re-probe 最早 **11.4 s** 成功（好发；受 OpenRC 拉起时刻限制，坏发可晚到 162 s）；E3d 见首探等待窗口内 WCN 被 pwrseq 掉电（稳态 refcount 2/2，引用归属未决）；物理 POR 冷起与 warm 逐字同 ⇒ 与复位类型无关；**E4（首探延后 8.6 s 到 12.6 s）仍 −110 ⇒ 否证「延后/晚加载」**，分类 = **首次 vs 之后** ⇒ **修法只剩内核内重发（A）或延迟 work 重探（C）**，用户态 daemon 提前（D）为兜底；**★2026-10-15 三臂实测已结（`PITFALLS #264/#265`、`reports/f1-f3-wcn-firstprobe-20261014.md`）**：MHI 层重发（F1：try2–6 全 `-5`，设备停在 SBL）与「每轮先 SoC 全局复位再重发」（F2：**6/6 全 -110**）**均否证** ⇒ 判别量 = 有没有**整轮重探**；**F3 = `ath12k_core_init()` 失败且 `-ETIMEDOUT` 时返 `-EPROBE_DEFER`（上限 4 次）** 让驱动 core 重跑整轮 probe ⇒ 重探#3 **11.78 s `chip_id 0x2` 成功**、**`Run /init` 7.670 s（与基线逐字同）**、`wlan0` 19.1 s 关联 ustc-guest、用户态 `ath12k-retry` 醒来只见 `phy0 up` ⇒ **内核内自愈成立（免用户态依赖、零启动回归）**；镜像 `out/boot-elden-f3-defer.img`（sha `4303ac80…`）、分支 `m1-73/f3-defer`（`fba09b5385`）；**已闭环（2026-10-15）**：F3 已 cherry-pick 并入功能基线 **`m1-73/baseline`（新 tip `ad5f03c43c`）**，重出镜像 **`out/boot-elden-m1-baseline-f3.img`**（sha `40e13f8a…`；全量构建 0 err/0 warn、DTB/config 与旧基线逐字节同）；**先零写盘冒烟**（同签名：defer 1/4@7.654 s → `Run /init` 7.671 s → defer 2/4@11.00 s → `chip_id` 11.78 s）⇒ **已刷 `boot_b`**（用户 2026-10-15 授权免在场；`scripts/flash-b.sh` 签名+写+读回一致）；**boot_b 冷起实测（SysRq-b 自启，非 RAM 镜像）**：`Run /init` **7.667 s**、WCN 重探 **11.767 s 成功**、`wlan0` **17.52 s 关联**、**L1=0/L2=0 + `dsi_isr`=41 ⇒ 面板 GOOD**、槽位 `marked successful`；外设抽检（触屏/BT/声卡/fastrpc/电池/DP）全在；② Q28 坏发是否被 `fsa4480=y` 的提前 bring-up 放大（需并列采样，`PITFALLS #261`）。
-
-**用户态上游（独立于 M 系列，2026-10-11 新增）**：phoc/phosh 两个显示显示修正（刷新率恒 165Hz、非整数比例显 100%）已备好对上游 `main` 的 patch + MR 草案（`patches-userland/upstream/`），**待发**。
-阻塞：`gitlab.gnome.org` **按 IP 拦截注册**（2026-10-11，本机出口在该黑名单上），只能等申诉/换出口。资产已封存成「一键待发」。 **【下面这段 10-29 camss 复验/对照 = §7 M4 的最新状态，但 §7 M4 行尚无对应文字；正确修法 = 把本段并入 M4 行的状态列，而不是删除。在并入之前，本段是台账内唯一记录，勿删】** **★2026-10-29 上机复验（父会话，镜像 `vk182-camssv3`）**：v3（锁 + write-then-clear）**无回归** —— 前摄 90 帧 30.25 fps rc=0、后摄 90 帧 30.01 fps rc=0，dmesg `camss|csid` **0 条**、`BUG/WARNING/lockdep` **0 条**；但 sashiko #4 [High]「多 RDI 累积位」路径**未被判别**（两路走不同 CSID 实例）；另出**上游 v6 对照**（`reports/camss-v3-vs-upstream-v6-20261029.md`）：v6 8/8 取到、与我方 v3 重叠 **5/9**、0004 与 v6 5/7 函数名 15/15 全同 ⇒ 推荐 **C→B**（先 3 句回信定调，落地只发 **0007 / 0003 / 0006** 三枚通用修复，0001/0004/0008 属同文件竞争必判 duplicate）。复验镜像与回滚见 `TASKS/sessions/2026-10-29-camss-v3上机复验（完成）.md`；**★2026-10-29 15:00 回信已发**：`<179325717815.489400.16602455641444097904@mail.ustc.edu.cn>`（Sent Items [197]，lore `/linux-media/` 命中 `2026-10-29T06:59:46Z`）；发送前发现**上游最新是 `[PATCH v23 00/15] media: qcom: camss: Add Kaanapali support`**（Hangxiang Ma，2026-10-28，series `20261028-kaanapali-camss-v23-*`），其 changelog 明写「Replace the CSID AUP/RUP union with separate reg_update/addr_update field pairs」= 与我们 0004 同一处 ⇒ 回信**改为引用 v23 并主动放弃** 0001/0002/0004/0008/0009（binding / CSIPHY / CSID-980 / VFE-gen4 / DTS），0005 也放弃（改看 `V4L2_EVENT_FRAME_SYNC`），只保留 0007 / 0003 / 0006 三枚通用修复待 rebase 后单发。正文与取证 = `reports/camss-v3-reply-draft-20261029.md`。**★同日晚两件事见 `TASKS/sessions/2026-10-29-双口定案与上游三封投递-2.md`**（双口实测 12.2 A 定案 + camss/M8 两系列投递 + Turquette 重投）；**★2026-10-29 并行批次（阅读审计 + 文档整改 + M4/M8 返工 + 双口归因）见 `TASKS/sessions/2026-10-29-并行批次-审计整改-上游返工-双口.md`**：§0 完成度改可复算（G1 30/34、G2 8/12）、`DEVICE §1.1` 补 10-29 权威行（运行根反转）、跨文档矛盾 7 处修复；camss 降为 3 枚通用修复（`patches/upstream/m4-camss-fixes-20261029/`，门禁见其 `GATES.md`）、M8 出 v2 三枚（`patches/upstream/q28-dispcc-v2-20261029/`，同样独立复核）；当前上游状态一页 = `reports/upstream-status-20261029.md`。**patchwork 已收口（2026-10-29）**：v1（1195087）与 v2（1195271）在 linux-media 各 9 枚全部 `superseded`，arm-msm / devicetree 侧 8 枚为 `handled-elsewhere`、剩 1 枚亦已置 `superseded`；凭据存 keyring（service=`patchwork.kernel.org`, user=`xiaqinghuan@mail.ustc.edu.cn`），**不入仓库**；自建 boot.img 三条件见 `PITFALLS #468` |
+- M1-7.3 首次上机 bringup（`73`–`73j` 单变量表 + 设备侧修复三条 + 深夜更正）、本轮其它交付（M3-6/M3-3/B5 预研、邮件列表订阅台账）、上游显示栈对照 P1–P2c、M1 7.3-rc7 树显示回归与 E1/E1b/E1g 定案、用户态上游（phoc/phosh）——**原文逐字**在 `sessions/2026-11-02-M系列历史叙事归档.md`。
+- **口径**：M 系列的当前状态只读上面的 M1–M9 表（含各行的投递/评审状态）与 `reports/upstream-status-20261029.md`；上面那份归档只作沿革，不回写。

@@ -1,0 +1,49 @@
+====================================================================================================
+SEQ 238 | Mon, 2 Nov 2026 13:50:25 +0800 | Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+SUBJ [PATCH v3 2/3] drm/msm/mdss: reset all block resets described in DT
+MID  <20261102055026.438521-3-xiaqinghuan@mail.ustc.edu.cn>
+IRT  <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+TO   linux-arm-msm@vger.kernel.org, dri-devel@lists.freedesktop.org
+----------------------------------------------------------------------------------------------------
+msm_mdss_reset() acquires only the first reset listed in the MDSS
+device node.  Platforms can describe more than one MDSS block reset: the
+SM8750 display clock controller also provides a reset for the MDSS core
+INT2 interrupt controller, which is left out of reset when the
+bootloader hands over with the display block still running.
+
+Switch to the reset control array API so that every reset listed in the
+device node is asserted and released as one group.  Devices without a
+reset in DT are unaffected, and for devices describing a single reset
+the assert/deassert sequence is unchanged.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/msm_mdss.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
+index 9087c4b290..84b8b4bc9b 100644
+--- a/drivers/gpu/drm/msm/msm_mdss.c
++++ b/drivers/gpu/drm/msm/msm_mdss.c
+@@ -310,7 +310,8 @@ static int msm_mdss_reset(struct device *dev)
+ {
+ 	struct reset_control *reset;
+ 
+-	reset = reset_control_get_optional_exclusive(dev, NULL);
++	reset = devm_reset_control_array_get(dev,
++					     RESET_CONTROL_OPTIONAL_EXCLUSIVE);
+ 	if (!reset) {
+ 		/* Optional reset not specified */
+ 		return 0;
+@@ -327,8 +328,6 @@ static int msm_mdss_reset(struct device *dev)
+ 	msleep(20);
+ 	reset_control_deassert(reset);
+ 
+-	reset_control_put(reset);
+-
+ 	return 0;
+ }
+ 
+-- 
+2.53.0
+

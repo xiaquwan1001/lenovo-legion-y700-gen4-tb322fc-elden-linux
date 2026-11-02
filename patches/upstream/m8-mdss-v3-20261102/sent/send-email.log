@@ -1,0 +1,149 @@
+0000-cover-letter.patch
+0001-dt-bindings-display-msm-mdss-common-describe-additio.patch
+0002-drm-msm-mdss-reset-all-block-resets-described-in-DT.patch
+0003-arm64-dts-qcom-sm8750-describe-all-MDSS-block-resets.patch
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<konrad.dybcio@oss.qualcomm.com>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<abhinav.kumar@linux.dev>
+RCPT TO:<jesszhan0024@gmail.com>
+RCPT TO:<taniya.das@oss.qualcomm.com>
+RCPT TO:<andersson@kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org
+Cc: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Abhinav Kumar <abhinav.kumar@linux.dev>,
+	Jessica Zhang <jesszhan0024@gmail.com>,
+	Taniya Das <taniya.das@oss.qualcomm.com>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Rob Herring <robh@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Subject: [PATCH v3 0/3] drm/msm/mdss: reset all block resets described in DT
+Date: Mon,  2 Nov 2026 13:50:23 +0800
+Message-ID: <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+(mbox) Adding cc: devicetree@vger.kernel.org from line 'Cc: devicetree@vger.kernel.org'
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<konrad.dybcio@oss.qualcomm.com>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<abhinav.kumar@linux.dev>
+RCPT TO:<jesszhan0024@gmail.com>
+RCPT TO:<taniya.das@oss.qualcomm.com>
+RCPT TO:<andersson@kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org
+Cc: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Abhinav Kumar <abhinav.kumar@linux.dev>,
+	Jessica Zhang <jesszhan0024@gmail.com>,
+	Taniya Das <taniya.das@oss.qualcomm.com>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Rob Herring <robh@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>,
+	devicetree@vger.kernel.org
+Subject: [PATCH v3 1/3] dt-bindings: display: msm: mdss-common: describe additional block resets
+Date: Mon,  2 Nov 2026 13:50:24 +0800
+Message-ID: <20261102055026.438521-2-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<konrad.dybcio@oss.qualcomm.com>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<abhinav.kumar@linux.dev>
+RCPT TO:<jesszhan0024@gmail.com>
+RCPT TO:<taniya.das@oss.qualcomm.com>
+RCPT TO:<andersson@kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org
+Cc: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Abhinav Kumar <abhinav.kumar@linux.dev>,
+	Jessica Zhang <jesszhan0024@gmail.com>,
+	Taniya Das <taniya.das@oss.qualcomm.com>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Rob Herring <robh@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Subject: [PATCH v3 2/3] drm/msm/mdss: reset all block resets described in DT
+Date: Mon,  2 Nov 2026 13:50:25 +0800
+Message-ID: <20261102055026.438521-3-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<konrad.dybcio@oss.qualcomm.com>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<abhinav.kumar@linux.dev>
+RCPT TO:<jesszhan0024@gmail.com>
+RCPT TO:<taniya.das@oss.qualcomm.com>
+RCPT TO:<andersson@kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org
+Cc: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+	Abhinav Kumar <abhinav.kumar@linux.dev>,
+	Jessica Zhang <jesszhan0024@gmail.com>,
+	Taniya Das <taniya.das@oss.qualcomm.com>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Rob Herring <robh@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Subject: [PATCH v3 3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets
+Date: Mon,  2 Nov 2026 13:50:26 +0800
+Message-ID: <20261102055026.438521-4-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 

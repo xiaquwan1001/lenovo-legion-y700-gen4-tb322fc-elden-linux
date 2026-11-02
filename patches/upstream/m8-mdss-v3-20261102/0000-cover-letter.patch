@@ -1,0 +1,62 @@
+From d35e3a06f9e82df77aba05a8598d473399e6e9a4 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 2 Nov 2026 13:38:23 +0800
+Subject: [PATCH v3 0/3] drm/msm/mdss: reset all block resets described in DT
+
+AI disclosure first: this mail was drafted with an AI assistant and edited
+by me; the content, the measurements and every decision are mine.
+
+Changes in v3:
+ - 1/3, 3/3: drop the MDSS RSC reset.  Dmitry: "Please drop the RSCC reset";
+   Konrad: "MDSS RSC is not part of MDSS itself".  The RSC has no node inside
+   the MDSS block and no device tree in the tree consumes that reset; v2
+   listed it only because the reset bit is generated inside dispcc, which is
+   a register-map argument, not a block-ownership one.
+ - 2/3: remove the long comment above msm_mdss_reset() (Dmitry).  What is
+   left of the reasoning stays in the changelog, not in the source.
+ - 1/3 keeps "minItems: 1", so every device tree describing a single reset
+   (all of them in the tree today) still validates.  The SM8750 example now
+   shows two resets.
+ - I also have to correct the v2 cover, which said the shape had not been run
+   on hardware.  That was wrong.  Details below.
+
+Evidence, none of it new:
+ - This position (mdss probe, after dispcc has programmed its PLLs) was
+   already measured on this board: with core + INT2 + RSC reset there, 5 real
+   POR boots and 2 warm resets came up with the panel connected and no DPU
+   errors, while driving the core reset alone failed in 5 of 9 boots.  That
+   test used the shared-reset bulk API and all three resets; the array API in
+   2/3 and the two-reset list here have not been on hardware.
+ - The two resets kept here were asserted and released in all 8 boots of the
+   Q28 operating line with no bad boot (5 POR, 3 warm).  That is coverage of
+   what is left in the series, not an isolation experiment: I could never
+   separate the three, which is why dropping the RSC entry was cheap.  The
+   failing state only involves these two anyway - the SM8750 MDSS node
+   described a single reset, so in the failures the core was reset while INT2
+   was left as the bootloader had it.
+
+So the ordering caveat from v2 shrinks rather than disappears: resetting the
+blocks after the PLLs are up did not disturb them in those boots, no scanout
+was ever in flight during the reset, and only block resets are driven, never
+the PLL registers.
+
+Built with W=1 for drivers/gpu/drm/msm/; binding checked with dt-doc-validate,
+dt-validate (with two resets and with one, so the old shape still passes) and
+dt-check-style; the series applies cleanly on v7.3-rc7.  Only SM8750 is
+touched here.
+
+Qianhui Xu (3):
+  dt-bindings: display: msm: mdss-common: describe additional block
+    resets
+  drm/msm/mdss: reset all block resets described in DT
+  arm64: dts: qcom: sm8750: describe all MDSS block resets
+
+ .../devicetree/bindings/display/msm/mdss-common.yaml         | 4 +++-
+ .../devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml    | 3 ++-
+ arch/arm64/boot/dts/qcom/sm8750.dtsi                         | 3 ++-
+ drivers/gpu/drm/msm/msm_mdss.c                               | 5 ++---
+ 4 files changed, 9 insertions(+), 6 deletions(-)
+
+-- 
+2.53.0
+

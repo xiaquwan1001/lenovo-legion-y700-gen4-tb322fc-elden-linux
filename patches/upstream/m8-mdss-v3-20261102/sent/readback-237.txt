@@ -1,0 +1,54 @@
+====================================================================================================
+SEQ 237 | Mon, 2 Nov 2026 13:50:24 +0800 | Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+SUBJ [PATCH v3 1/3] dt-bindings: display: msm: mdss-common: describe additional block resets
+MID  <20261102055026.438521-2-xiaqinghuan@mail.ustc.edu.cn>
+IRT  <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+TO   linux-arm-msm@vger.kernel.org, dri-devel@lists.freedesktop.org
+----------------------------------------------------------------------------------------------------
+Some platforms provide more than one reset for the MDSS hardware block:
+beside the MDSS core reset, the SM8750 display clock controller also
+exposes a block reset for the MDSS core INT2 interrupt controller.
+
+Allow the resets property to list one or two resets, keeping the MDSS
+core reset as the first entry so that existing device trees describing
+a single reset remain valid.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../devicetree/bindings/display/msm/mdss-common.yaml          | 4 +++-
+ .../devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml     | 3 ++-
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
+index c6305a6e03..51ef4cc74e 100644
+--- a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
++++ b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
+@@ -84,8 +84,10 @@ properties:
+           - const: cpu-cfg
+ 
+   resets:
++    minItems: 1
+     items:
+-      - description: MDSS_CORE reset
++      - description: MDSS core reset
++      - description: MDSS core INT2 interrupt controller reset
+ 
+   memory-region:
+     maxItems: 1
+diff --git a/Documentation/devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml b/Documentation/devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml
+index 46dc0d28da..729de45ec8 100644
+--- a/Documentation/devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml
++++ b/Documentation/devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml
+@@ -101,7 +101,8 @@ examples:
+             interconnect-names = "mdp0-mem",
+                                  "cpu-cfg";
+ 
+-            resets = <&disp_cc_mdss_core_bcr>;
++            resets = <&disp_cc_mdss_core_bcr>,
++                     <&disp_cc_mdss_core_int2_bcr>;
+ 
+             power-domains = <&mdss_gdsc>;
+ 
+-- 
+2.53.0
+

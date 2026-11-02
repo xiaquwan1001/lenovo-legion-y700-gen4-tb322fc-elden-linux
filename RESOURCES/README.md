@@ -107,7 +107,7 @@
 | kShimC 启动菜单（5.4 MB 源码，**GPL-3.0**）+ `kshim-tools`（MultiBootKernelPatcher/UnpackTool） | ⛔ 不 vendor（许可与启动架构都要立项另议）；仅作外部依赖 |
 | 显示/电池/SM8750 基础设施（`0142/0143/0144/0145/0149/0150/0033/0038/0066/0521`…） | ✅ 本仓已有或更全（逐条对照见该 README §4） |
 
-### 1.4 方法论 / 运维参考
+### 1.9 方法论 / 运维参考（原误编为 1.4，2026-11-02 改号；无任何文档引用旧号）
 
 - 本项目坑表：`../PITFALLS/README.md`（**动手前扫一眼**，#80/#81 是本轮新增的流程坑）。
 - 解锁链签名取证（2026-10-03）：`archive/topics/UNLOCK-BLOB-FORENSICS-2026-10-03.md`
@@ -393,6 +393,8 @@ git log --oneline -10
 | 资产树 | `build/`（原 ~4 G） | ✅ **已重建（2026-10-23：40 G / 7 棵）**，但**不是纯可再生** | 两独立仓含本地独有 commit（`base-7.2` 的 `master`/`elden-payload-v2`、`m3v2-7.3rc7` 的 `m3v2`/`replay-m1-73-vk127`）；回收前先 bundle（`reports/assets-inventory-20261023.md` §4.1） |
 | 镜像 | `out/*.img`（`vk42–vk126`） | ◐ **部分重建**：现查 img 数 `ls out/*.img | wc -l`（实测 67；vk130/vk131 仅剩 `.manifest`，A4 已删其 `.img`） | 旧号仍缺；`.manifest` 172 个；台架臂不可复跑（在机 b 槽 + `backup/HA2EXB0E` 各留 1 份） |
 | 日志/工具 | `logs/`（原 92 M）、`tools/`（原 14 M，含 `tools/wd-audio-test/`） | ◐ `logs/` 已到 204 M；`tools/` 只剩 232 K | 旧证据指针 `logs/bench-20261011`、`logs/ui-20261011` 仍悬空；`venv-avb`、`wd-audio-test` 仍缺 |
+| Q28 取证脚本 | `scripts/q28-boot-cycle.sh`、`scripts/q28-ab-delay.sh`、`scripts/q28-verdict.sh`、`scripts/q28-race-hunt.sh` | ⚠️MIGRATION-LOST（2026-10-17；**2026-11-02 复核仍缺**，现存只有 `scripts/q28-devprobe{,2}.sh`） | Q28 取证/采样链的**重放配方**在 `TASKS/README.md` §5 的 Q28 行；§2.1 表内引用处已就地带 `⚠️MIGRATION-LOST` 注 |
+| 签名密钥 | AOSP testkey `env-pass/keys/testkey_rsa4096.pem`（`env-pass/` 整目录不入 git） | ⚠️MIGRATION-LOST（2026-10-17；**2026-11-02 复核本机已无该目录**） | 现役 b 槽自签密钥 = **`bootslot-b/avb.key`**（`scripts/sign-boot-b.sh:14` 实际取值）；locked 全链重打 = `scripts/build-locked-chain.sh`；§2.1 表内引用处已就地带注 |
 | 可重下 | `edk2-*`、`mu_wide_platforms`、`uefi-firmware-backup`、`qdl`、`twrp`、`pkgs*`、`probe`、`rootfs/{alpine,dl,debs}` | LOST-REDOWNLOADABLE（2026-10-23：仍均为空） | 重下/重建，非硬伤 |
 
 **2026-11-02 新增：两枚镜像静默损坏（不是迁移缺口，是内容坏了）** —— `out/boot-elden-vk155.img`、`out/boot-elden-m3v5-onboard-b.img` 的 boot header 正常、4096 处有 gzip magic，但 zlib 解压 CRC 失败；文件 sha256 与各自 `.manifest` 的 `image_sha256` 不符，而 mtime 未变 ⇒ 不可再作构建身份证据。`check-doctor` §5d 每轮 WARN 报出；损坏前的身份行留档 `reports/artifacts/vk-identity-corrupt-20261102.txt`。重建或删除后本条与 WARN 一并收口。

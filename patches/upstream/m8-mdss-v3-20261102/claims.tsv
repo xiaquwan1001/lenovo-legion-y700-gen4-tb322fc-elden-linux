@@ -1,0 +1,22 @@
+id	claim	evidence	status
+V1	v2 三枚已归档（linux-arm-msm / dri-devel / linux-devicetree）	reports/mail-triage-20261102.md §3 M8 行：/<list>/<完整msgid>/raw = HTTP 200	已核（历史）
+V2	Dmitry 要求删掉 msm_mdss_reset() 上方新增的长注释	INBOX seq 16141，MID <odog4t5j3y7j4tatqsiywfj27iufeazkzp3vtfvzce2knct25n@ephs3ngmt2i6>，原文 "The comment should go away. AI agents like to insert lengthy comments."	已核（本轮 IMAP 回读，python3 /tmp/eld-body-1102.py INBOX 16141）
+V3	Dmitry 要求 drop the RSCC reset	INBOX seq 16143，MID <dkwloahmxcka2ykjdrf6nh6d6cde6zgd7fe5s763h7s6nv3eqe@pm32d33ghgbb>，原文 "Please drop the RSCC reset"	已核（同上，seq 16143）
+V4	Konrad 同向：MDSS RSC 不属于 MDSS	reports/m8-rsc-ownership-20261031.md §0/§7；我方 10-31 回信 IRT <d265dd66-d8fb-4fd2-b6cb-d50462e4b6e2@oss.qualcomm.com>（out/mail-20261031-b/re-konrad-mdss-rsc.txt）	已核
+V5	上游 dtsi 对 DISP RSCC 零消费者	rg -n "RSCC" build/vk151/arch/arm64/boot/dts/qcom/*.dtsi | wc -l → 0（reports/m8-rsc-ownership-20261031.md §7 第 1 行）	已核（复核过）
+V6	vendor RSCC 块 sde_cesta 的 "rscc" reg 在 0x0af20000，在 mdss 与 dispcc 窗口外	reference/stock-elden.dts:11622-11640；reports/m8-rsc-ownership-20261031.md §3 E2/E4	已核
+V7	mdss probe（PLL 编程之后）位置曾上机：复位 core+INT2+RSC 时 5/5 真 POR GOOD + 2/2 暖复位 GOOD	reports/q28-v2-mdss-reset-20261023.md §4.5.2 / §4.5.2b（每发 verdict=GOOD、storm_sig=0、card0=1、DSI-1 connected）	已核（历史记录；API 形状为 shared bulk get + 三枚，非本次数组 API）
+V8	只复位 core 的 base 臂 9 发冷起中 5 次 STORM	reports/q28-disp-init-ab-20261022.md §1.3 表（base 9/5）、§4.5.2c 对照表	已核（历史记录）
+V9	Q28 运营线 8/8 无坏发（5 次真 POR + 3 次暖复位）	reports/q28-workaround-closeout-20261024.md §2（"合计 8/8 无坏发"）	已核（历史记录；统计口径见该节，非统计证明）
+V10	复现失败态时 INT2 处于未复位状态（MDSS 节点只描述一个复位）	本系列 v2 之前的 upstream 原状：build/vk151/arch/arm64/boot/dts/qcom/sm8750.dtsi:3074 `resets = <&dispcc DISP_CC_MDSS_CORE_BCR>;`；reports/m8-dispcc-v2-20261029.md §1.4	已核
+V11	数组 optional 语义：DT 无 resets ⇒ 返回 NULL ⇒ msm_mdss_reset() 原样早退	reset 数 <0 时 `return optional ? NULL : ERR_PTR(num)`，drivers/reset/core.c:1527；msm_mdss.c 中 `if (!reset) return 0;`	已核（源码）
+V12	checkpatch --strict --no-tree 三枚 0 errors / 0 warnings / 0 checks	本轮：build/m8-dispcc-v2/scripts/checkpatch.pl --strict --no-tree --patch 逐枚（20 / 17 / 9 行）	已核（本轮）
+V13	pristine v7.3-rc7 逐枚 git am 3/3 干净，终态与本系列分支逐字节一致	/tmp/amtest-m8v3（worktree @24a19b953e）：git am 0001..0003 全"应用"，随后 `git diff --stat m8/v3-20261102` 为空	已核（本轮）
+V14	binding 致命版校验：dt-doc-validate rc=0、dt-check-style rc=0	本轮：dt-doc-validate -u Documentation/devicetree/bindings（mdss-common.yaml + qcom,sm8750-mdss.yaml）；~/.local/opt/dtschema-venv/bin/python scripts/dtc/dt-check-style（两文件）	已核（本轮）
+V15	向后兼容：example 用两项复位与临时改成一项复位，dt-validate 均 rc=0	本轮：make dt_binding_check DT_SCHEMA_FILES=display/msm/qcom,sm8750-mdss.yaml 生成 example.dtb → dt-validate -l qcom,sm8750-mdss.yaml -s processed-schema.json（两态各 rc=0）；单复位态见 /tmp/sm8750-mdss.yaml.bak 的临时改动	已核（本轮）
+V16	W=1 编译 drivers/gpu/drm/msm/ rc=0 / 0 warning（msm_mdss.o 删净强制重编）	本轮：/tmp/m8v3-build2.log（`CC [M] drivers/gpu/drm/msm/msm_mdss.o`、`LD [M] msm.o`，warning/error 计数 0）	已核（本轮）
+G1	数组取复位 + EXCLUSIVE 在 2026-10-23 的形态下曾撞 -EBUSY（当时改 shared + prime deassert 才过）	reports/q28-v2-mdss-reset-20261023.md §4.5.1（`error -EBUSY: failed to acquire mdss resets`）	风险：v3 用 array_get(OPTIONAL_EXCLUSIVE) 且未上机，probe -EBUSY 未被排除
+G2	20 ms 保持时长对两项复位是否足够	沿用 upstream msm_mdss_reset() 既有值（20 ms，注释称"一帧"）	未测（v1 曾用 50 ms）
+G3	v3 形状（数组 API + 两项复位）未上机	cover letter 明写；本目录 README §3	显式 gap
+X1	"RSCC 复位是治面板 init 失败的 load-bearing 项"	无法静态判定（三项从未单变量隔离，reports/m8-rsc-ownership-20261031.md J5）	已从补丁与正文删除的主张
+X2	"报告里有新做的 A/B"	本轮未上机、无新样本	不作为主张

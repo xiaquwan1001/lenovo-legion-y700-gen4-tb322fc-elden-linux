@@ -1,0 +1,98 @@
+From ba8957064765d2ef153811f9e2e5f7b95f7e9fa1 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 2 Nov 2026 14:03:55 +0800
+Subject: [PATCH v5 0/4] regulator: add the Will Semiconductor WL2868C camera
+ PMIC
+
+This series was drafted with AI assistance; I reviewed and edited every
+line myself, and I am responsible for its content, measurements and
+decisions.  Evidence for the review-driven changes below is listed in
+the text.
+
+The WL2868C is the camera PMIC on the Lenovo Legion Tab (TB322FC,
+SM8750); its seven LDOs feed the rear camera, the front camera and the
+VCM on i2c10.
+
+Changes in v5:
+
+ - Sent as a new thread.  v4 was sent with --in-reply-to pointing at the
+   v3 cover, which buried it in the old thread; every revision from now
+   on starts its own thread (Mark Brown).
+
+ - cci1 bus 1 sits on gpio111/gpio164, not on gpio119/gpio120: the
+   latter pair is cci2 bus 1.  gpio111 and gpio164 are the two CCI pads
+   that the TLMM shares with cci_timer, while gpio119/120 are plain
+   cci_i2c pads, so having cci1 claim them would mux cci2's bus while
+   leaving cci1's own pads unmuxed (sashiko, High).  Evidence: for
+   SM8750 the six CCI SDA pads are gpio111/112/113/115/117/119 and the
+   six SCL pads gpio114/116/118/120/153/164
+   (drivers/pinctrl/qcom/pinctrl-sm8750.c, the sm8750 pin groups);
+   Qualcomm's own SM8750 CCI submission assigns cci1_1 to
+   gpio111/164, cci2_0 to gpio112/153 and cci2_1 to gpio119/120
+   (https://lore.kernel.org/all/20260618-pakala-camera-v2-2-9fbb729fd242@oss.qualcomm.com/);
+   and the vendor DTB of our unit uses gpio113/114 for cci0 bus 0 and
+   gpio117/118 for cci1 bus 0, matching that table.  The vendor
+   devicetree source itself is not available to us (the tree only
+   carries a dangling sm8750-devicetrees link), so the bus 1 mapping
+   rests on the two sources above.
+
+ - cci0_i2c1 and cci1_i2c1 no longer carry status = "disabled".  The
+   parent CCI nodes claim the bus 1 pinctrl states, and cci_probe()
+   only registers available child buses, so disabling the children
+   while claiming their pads was inconsistent; both buses are now
+   described and available as on sm8550 and sm8650 (sashiko, Medium).
+
+ - The CCI pinctrl states are placed in alphabetical order inside the
+   TLMM node, before hub-i2c0-data-clk-state, with cci0-1 preceding
+   cci1-0 (sashiko, Low).
+
+ - The arm/qcom.yaml board compatible entry is no longer part of the
+   regulator binding patch; it moved to the board DTS patch, which is
+   what it documents (sashiko, Low).  checkpatch still wants binding
+   files in their own patch, so 4/4 keeps that one warning.
+
+ - The board DTS keeps the scope of this series: camera PMIC and its
+   consumers only.  The rest of the board enablement (SPMI PMICs
+   including the parents of the WL2868C inputs, console, storage)
+   cannot be validated on hardware here and is left to a separate board
+   series rather than being guessed.  chassis-type was already present.
+   The rear lens and sensor nodes use the giantec,gt9764 and
+   samsung,s5kjns bindings that were posted separately to the media
+   list and are still under review, and their CSI endpoint has no
+   remote-endpoint until the SM8750 CAMSS nodes land; dtbs_check
+   reports "failed to match any schema" for the two compatibles until
+   those series are merged.
+
+ - Patch 1/4 (binding) and 2/4 (driver) are unchanged from v4 apart
+   from the qcom.yaml move.
+
+Everything here is host-side only.  The i2c10 probe and the runtime
+existence of the regulators are still unverified on hardware; the
+on-board evidence reported earlier (i2c-10 present, camera_ldo1..5,7
+registered, LDO6 without consumer) comes from our own downstream board
+DTS, not from the files in this series.
+
+Qianhui Xu (4):
+  regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+  regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+  arm64: dts: qcom: sm8750: describe two of the three CCI I2C
+    controllers
+  arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators
+
+ .../devicetree/bindings/arm/qcom.yaml         |   1 +
+ .../bindings/regulator/willsemi,wl2868c.yaml  |  79 ++++++++
+ MAINTAINERS                                   |   7 +
+ arch/arm64/boot/dts/qcom/Makefile             |   1 +
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 175 ++++++++++++++++++
+ arch/arm64/boot/dts/qcom/sm8750.dtsi          | 156 ++++++++++++++++
+ drivers/regulator/Kconfig                     |  11 ++
+ drivers/regulator/Makefile                    |   1 +
+ drivers/regulator/wl2868c-regulator.c         | 155 ++++++++++++++++
+ 9 files changed, 586 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+ create mode 100644 arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+ create mode 100644 drivers/regulator/wl2868c-regulator.c
+
+-- 
+2.53.0
+

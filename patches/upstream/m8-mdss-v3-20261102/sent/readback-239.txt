@@ -1,0 +1,40 @@
+====================================================================================================
+SEQ 239 | Mon, 2 Nov 2026 13:50:26 +0800 | Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+SUBJ [PATCH v3 3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets
+MID  <20261102055026.438521-4-xiaqinghuan@mail.ustc.edu.cn>
+IRT  <20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>
+TO   linux-arm-msm@vger.kernel.org, dri-devel@lists.freedesktop.org
+----------------------------------------------------------------------------------------------------
+The SM8750 display clock controller provides, beside the MDSS core
+reset, a block reset for the MDSS core INT2 interrupt controller.  On
+devices whose bootloader hands over with the display block still active,
+the kernel so far reset only the MDSS core and left the INT2 block in
+the state left behind by the bootloader; command-mode panel
+initialisation then fails with command DMA timeouts and the display
+comes up as backlight only, without a DRM device.
+
+Describe both block resets so that the MDSS reset returns the MDSS
+blocks to a known state before any display hardware is programmed.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index dd738d13df..e8e2832f91 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -3071,7 +3071,8 @@ mdss: display-subsystem@ae00000 {
+ 				 <&gcc GCC_DISP_HF_AXI_CLK>,
+ 				 <&dispcc DISP_CC_MDSS_MDP_CLK>;
+ 
+-			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>;
++			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>,
++				 <&dispcc DISP_CC_MDSS_CORE_INT2_BCR>;
+ 
+ 			interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
+ 					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
+-- 
+2.53.0
+

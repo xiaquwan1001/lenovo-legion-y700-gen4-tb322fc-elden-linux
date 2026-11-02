@@ -1,0 +1,18 @@
+====================================================================================================
+SEQ 240 | Mon, 02 Nov 2026 13:52:09 +0800 | Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+SUBJ Re: [PATCH v2 2/3] drm/msm/mdss: reset all block resets described in DT
+MID  <179359872904.440020.4978864415299817827@mail.ustc.edu.cn>
+IRT  <odog4t5j3y7j4tatqsiywfj27iufeazkzp3vtfvzce2knct25n@ephs3ngmt2i6>
+TO   Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+----------------------------------------------------------------------------------------------------
+The comment is gone; v3 is at <20261102055026.438521-3-xiaqinghuan@mail.ustc.edu.cn>.
+What was worth keeping from it is in the changelog instead of the source.
+
+RSCC is dropped there too, so the series rests on core + core INT2 only: the
+two blocks that were left unreset in the failing boots, since the SM8750 node
+described a single reset.
+
+(AI-assisted draft, edited by me; content and decisions are mine.)
+
+Qianhui Xu
+

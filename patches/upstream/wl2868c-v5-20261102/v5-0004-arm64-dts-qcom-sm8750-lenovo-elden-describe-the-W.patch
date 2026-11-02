@@ -1,0 +1,251 @@
+From ba8957064765d2ef153811f9e2e5f7b95f7e9fa1 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 2 Nov 2026 13:46:31 +0800
+Subject: [PATCH v5 4/4] arm64: dts: qcom: sm8750-lenovo-elden: describe the
+ WL2868C regulators
+
+The Lenovo Legion Y700 Gen4 (TB322FC) is an SM8750 tablet. Its camera
+devices are powered by a WL2868C camera PMIC on i2c10: LDO1 feeds the
+rear sensor DVDD, LDO2 the front sensor DVDD, LDO3 the front sensor
+AVDD, LDO4 the rear sensor AVDD, LDO5 the VCM VDD, LDO7 the DOVDD of
+both sensors and the VCM VDDIO, all at fixed voltages including the
+offsets programmed by the stock firmware. LDO2 and LDO3 are wired to
+the front sensor, whose binding is still pending, so its node follows
+with that series. LDO6 is not wired out on this board.
+
+The rear camera hangs off cci0 with the VCM. The front camera hangs
+off cci1 and arrives together with its binding. The rear sensor and VCM
+compatibles are the ones documented by the bindings sent separately to
+the media list; the CSI endpoint receiver follows with the SM8750 CAMSS
+series, which is why the endpoint has no remote-endpoint yet.
+
+i2c10 is a GENI I2C controller inside the qupv3_2 wrapper, so both
+qupv3_2 and its gpi_dma2 parent are enabled alongside, otherwise
+i2c10 never populates and the regulators would never register.
+
+The board clocks (XO, sleep clock and the two divided CXO derivatives)
+that the SM8750 dtsi consumes are described here, as done on the other
+SM8750 boards. The board compatible is added to arm/qcom.yaml here, as
+it documents this board and not the regulator binding.
+
+The file is otherwise limited to the camera PMIC and its consumers: the
+rest of the board enablement (SPMI PMICs including the parents of the
+WL2868C inputs, console and storage) cannot be validated on hardware in
+this series and is left to a separate board series.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../devicetree/bindings/arm/qcom.yaml         |   1 +
+ arch/arm64/boot/dts/qcom/Makefile             |   1 +
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 175 ++++++++++++++++++
+ 3 files changed, 177 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+
+diff --git a/Documentation/devicetree/bindings/arm/qcom.yaml b/Documentation/devicetree/bindings/arm/qcom.yaml
+index ff8a35df78..41d5e65c4e 100644
+--- a/Documentation/devicetree/bindings/arm/qcom.yaml
++++ b/Documentation/devicetree/bindings/arm/qcom.yaml
+@@ -1168,6 +1168,7 @@ properties:
+ 
+       - items:
+           - enum:
++              - lenovo,elden
+               - qcom,sm8750-mtp
+               - qcom,sm8750-qrd
+           - const: qcom,sm8750
+diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
+index 1c86e7e98f..a18fea7beb 100644
+--- a/arch/arm64/boot/dts/qcom/Makefile
++++ b/arch/arm64/boot/dts/qcom/Makefile
+@@ -406,6 +406,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-hdk-rear-camera-card.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-hdk.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-mtp.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-qrd.dtb
++dtb-$(CONFIG_ARCH_QCOM)	+= sm8750-lenovo-elden.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8750-mtp.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8750-qrd.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= talos-evk.dtb
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+new file mode 100644
+index 0000000000..de186b4477
+--- /dev/null
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -0,0 +1,175 @@
++// SPDX-License-Identifier: BSD-3-Clause
++/*
++ * Copyright (c) 2026, Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
++ */
++
++/dts-v1/;
++
++#include <dt-bindings/gpio/gpio.h>
++#include "sm8750.dtsi"
++
++/ {
++	model = "Lenovo Legion Y700 Gen4";
++	compatible = "lenovo,elden", "qcom,sm8750";
++	chassis-type = "tablet";
++
++	clocks {
++		xo_board: xo-board {
++			compatible = "fixed-clock";
++			clock-frequency = <76800000>;
++			#clock-cells = <0>;
++		};
++
++		sleep_clk: sleep-clk {
++			compatible = "fixed-clock";
++			clock-frequency = <32000>;
++			#clock-cells = <0>;
++		};
++
++		bi_tcxo_div2: bi-tcxo-div2-clk {
++			compatible = "fixed-factor-clock";
++			#clock-cells = <0>;
++
++			clocks = <&rpmhcc RPMH_CXO_CLK>;
++			clock-mult = <1>;
++			clock-div = <2>;
++		};
++
++		bi_tcxo_ao_div2: bi-tcxo-ao-div2-clk {
++			compatible = "fixed-factor-clock";
++			#clock-cells = <0>;
++
++			clocks = <&rpmhcc RPMH_CXO_CLK_A>;
++			clock-mult = <1>;
++			clock-div = <2>;
++		};
++	};
++};
++
++&cci0 {
++	status = "okay";
++};
++
++&cci0_i2c0 {
++	clock-frequency = <400000>;
++
++	rear_lens: lens@c {
++		compatible = "giantec,gt9764";
++		reg = <0x0c>;
++		vddio-supply = <&camera_ldo7>;
++		vdd-supply = <&camera_ldo5>;
++		giantec,aac-mode = <0x40>;
++		giantec,aac-timing = <0x7c>;
++		settling-time-us = <7000>;
++	};
++
++	rear_camera: camera@56 {
++		compatible = "samsung,s5kjns";
++		reg = <0x56>;
++		clocks = <&cambistmclkcc CAM_BIST_MCLK_CC_MCLK3_CLK>;
++		assigned-clocks = <&cambistmclkcc CAM_BIST_MCLK_CC_MCLK3_CLK>;
++		assigned-clock-rates = <19200000>;
++		reset-gpios = <&tlmm 11 GPIO_ACTIVE_LOW>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&rear_camera_default>;
++		dovdd-supply = <&camera_ldo7>;
++		dvdd-supply = <&camera_ldo1>;
++		avdd-supply = <&camera_ldo4>;
++		lens-focus = <&rear_lens>;
++		orientation = <1>;
++		rotation = <90>;
++
++		port {
++			rear_camera_ep: endpoint {
++				data-lanes = <1 2 3 4>;
++				link-frequencies = /bits/ 64 <672000000>;
++			};
++		};
++	};
++};
++
++&gpi_dma2 {
++	status = "okay";
++};
++
++&qupv3_2 {
++	status = "okay";
++};
++
++&i2c10 {
++	status = "okay";
++
++	pmic@2f {
++		compatible = "willsemi,wl2868c";
++		reg = <0x2f>;
++		reset-gpios = <&tlmm 126 GPIO_ACTIVE_LOW>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&camera_pmic_default>;
++
++		regulators {
++			/* Voltages include the offsets programmed by stock firmware. */
++			camera_ldo1: ldo1 {
++				regulator-name = "camera_ldo1";
++				regulator-min-microvolt = <1128000>;
++				regulator-max-microvolt = <1128000>;
++			};
++
++			camera_ldo2: ldo2 {
++				regulator-name = "camera_ldo2";
++				regulator-min-microvolt = <1288000>;
++				regulator-max-microvolt = <1288000>;
++			};
++
++			camera_ldo3: ldo3 {
++				regulator-name = "camera_ldo3";
++				regulator-min-microvolt = <2816000>;
++				regulator-max-microvolt = <2816000>;
++			};
++
++			camera_ldo4: ldo4 {
++				regulator-name = "camera_ldo4";
++				regulator-min-microvolt = <2824000>;
++				regulator-max-microvolt = <2824000>;
++			};
++
++			camera_ldo5: ldo5 {
++				regulator-name = "camera_ldo5";
++				regulator-min-microvolt = <2808000>;
++				regulator-max-microvolt = <2808000>;
++			};
++
++			/* LDO6 is not wired out on this board. */
++			camera_ldo7: ldo7 {
++				regulator-name = "camera_ldo7";
++				regulator-min-microvolt = <1800000>;
++				regulator-max-microvolt = <1800000>;
++			};
++		};
++	};
++};
++
++&tlmm {
++	gpio-reserved-ranges = <39 1>, <74 1>;
++
++	camera_pmic_default: camera-pmic-default-state {
++		pins = "gpio126";
++		function = "gpio";
++		bias-disable;
++	};
++
++	rear_camera_default: rear-camera-default-state {
++		mclk-pins {
++			pins = "gpio92";
++			function = "cam_mclk";
++			drive-strength = <2>;
++			bias-disable;
++		};
++
++		reset-pins {
++			pins = "gpio11";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-disable;
++		};
++	};
++};
+-- 
+2.53.0
+
