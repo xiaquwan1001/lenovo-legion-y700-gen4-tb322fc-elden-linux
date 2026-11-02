@@ -1,4 +1,4 @@
-From be4425b7c93e48e2d6f3e5f0aa1ddb2472ce7a51 Mon Sep 17 00:00:00 2001
+From e7436e99d3623b8d8b74443486bc5eee44fc0dd1 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Mon, 2 Nov 2026 17:40:47 +0800
 Subject: [PATCH 2/4] drm/msm/dsi: add the bonded command broadcast host ops
@@ -19,6 +19,10 @@ The register layout it needs comes from the per-SoC bonded data: the staged
 command-DMA bits, the FIFO error bits masked around the command and the
 peer poll budget. Only the 6G v2.9 op set fills in the hook, and only the
 SM8750 config entry reaches it.
+
+The peer is polled with a 10 us busy-wait on a register the CPU has to read
+anyway, at most 500 times, so the wait is bounded to 5 ms and runs once per
+command rather than in a loop over the transfer.
 
 The completion path also gets a sequence number so a stale command-done
 status cannot be mistaken for the completion of the current transfer.

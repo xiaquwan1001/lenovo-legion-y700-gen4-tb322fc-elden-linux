@@ -1,0 +1,21 @@
+## 门禁 4：SM8650 不再进入 bonded 事务（本次收尾修复的缺陷）
+
+```
+$ grep -n "bonded = " drivers/gpu/drm/msm/dsi/dsi_cfg.c    # 只有 sm8750 有数据
+249:	.bonded = &sm8750_dsi_bonded_cfg,
+
+$ grep -n -A12 "dsi_mgr_uses_bonded_cmd(void)" drivers/gpu/drm/msm/dsi/dsi_manager.c | tail -8
+	if (!dsi || !dsi->host)
+		return false;
+
+	ops = msm_dsi_host_get_cfg_ops(dsi->host);
+	if (!ops || !ops->bonded_cmd_xfer)
+		return false;
+
+	return msm_dsi_host_get_bonded_cfg(dsi->host);
+}
+
+# SM8650 走 v2_9 ops（有 bond_cmd_xfer），但其 cfg->bonded == NULL ⇒ 上面的 gate 返回 false
+401:	{MSM_DSI_VER_MAJOR_6G, MSM_DSI_6G_VER_MINOR_V2_9_0,
+403:	{MSM_DSI_VER_MAJOR_6G, MSM_DSI_6G_VER_MINOR_V2_9_0,
+```

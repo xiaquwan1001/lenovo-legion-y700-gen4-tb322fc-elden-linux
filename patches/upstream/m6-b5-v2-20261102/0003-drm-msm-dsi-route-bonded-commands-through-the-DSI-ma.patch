@@ -1,4 +1,4 @@
-From f38983e7b4531e07e7e7adedef9aa2ada3ccbf77 Mon Sep 17 00:00:00 2001
+From 8121eab8c8d16bd6afd0d55c8cc9eceffdbef856 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Mon, 2 Nov 2026 17:48:27 +0800
 Subject: [PATCH 3/4] drm/msm/dsi: route bonded commands through the DSI
@@ -17,9 +17,14 @@ tree, which dsi_mgr_parse_of() stores in master_dsi_link_id; the link ids
 are the DSI host indices and are not assigned by probe order. The DT stays
 the authority for the role.
 
-Whether the pair can do this at all is a property of the controller
-generation, so the manager asks the host ops rather than checking a
-compatible itself. SoCs without the hook keep taking the old path.
+Whether the pair can do this at all is a property of the controller, so the
+manager asks the host rather than checking a compatible itself: the host op
+tells that this generation has the transaction, and the per-SoC data tells
+that this SoC provides what the transaction needs. The op set is shared by
+all SoCs reporting the same 6G v2.9 revision, so testing the op alone would
+route SM8650 pairs - which have no bonded data - into a transaction built
+from an empty config. SoCs without the hook or without the data keep
+taking the old path.
 
 The sequence number in the transaction and the failure flag belong to the
 bonded state, so both live in msm_dsim_glb next to is_bonded_dsi and
@@ -30,29 +35,31 @@ powered off again.
 
 Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
- drivers/gpu/drm/msm/dsi/dsi.h         |   2 +
- drivers/gpu/drm/msm/dsi/dsi_host.c    |   6 ++
- drivers/gpu/drm/msm/dsi/dsi_manager.c | 102 ++++++++++++++++++++++++++
- 3 files changed, 110 insertions(+)
+ drivers/gpu/drm/msm/dsi/dsi.h         |   4 +
+ drivers/gpu/drm/msm/dsi/dsi_host.c    |  17 ++++
+ drivers/gpu/drm/msm/dsi/dsi_manager.c | 109 ++++++++++++++++++++++++++
+ 3 files changed, 130 insertions(+)
 
 diff --git a/drivers/gpu/drm/msm/dsi/dsi.h b/drivers/gpu/drm/msm/dsi/dsi.h
-index 89bdbc1fcc..5dcc5a423f 100644
+index 89bdbc1fcc..d88a422f16 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi.h
 +++ b/drivers/gpu/drm/msm/dsi/dsi.h
-@@ -58,6 +58,8 @@ void msm_dsi_manager_tpg_enable(void);
+@@ -58,6 +58,10 @@ void msm_dsi_manager_tpg_enable(void);
  
  /* dsi host */
  struct msm_dsi_host;
 +struct msm_dsi_host_cfg_ops;
 +const struct msm_dsi_host_cfg_ops *msm_dsi_host_get_cfg_ops(struct mipi_dsi_host *host);
++const struct msm_dsi_bonded_cfg *
++msm_dsi_host_get_bonded_cfg(struct mipi_dsi_host *host);
  int msm_dsi_host_xfer_prepare(struct mipi_dsi_host *host,
  					const struct mipi_dsi_msg *msg);
  void msm_dsi_host_xfer_restore(struct mipi_dsi_host *host,
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_host.c b/drivers/gpu/drm/msm/dsi/dsi_host.c
-index 687cbcc04d..9175370d94 100644
+index 687cbcc04d..e47b04c105 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_host.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_host.c
-@@ -2228,6 +2228,12 @@ void msm_dsi_host_unregister(struct mipi_dsi_host *host)
+@@ -2228,6 +2228,23 @@ void msm_dsi_host_unregister(struct mipi_dsi_host *host)
  	}
  }
  
@@ -62,11 +69,22 @@ index 687cbcc04d..9175370d94 100644
 +	return to_msm_dsi_host(host)->cfg_hnd->ops;
 +}
 +
++/*
++ * The bonded command hooks live in a host-ops table several SoCs share, so the
++ * per-SoC data - not the presence of the hooks - tells whether this controller
++ * can actually run a bonded command.
++ */
++const struct msm_dsi_bonded_cfg *
++msm_dsi_host_get_bonded_cfg(struct mipi_dsi_host *host)
++{
++	return to_msm_dsi_host(host)->cfg_hnd->cfg->bonded;
++}
++
  static void dsi_bonded_wait_video(struct mipi_dsi_host *host)
  {
  	dsi_wait4video_eng_busy(to_msm_dsi_host(host));
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
-index 531d4ff78f..4bff105566 100644
+index 531d4ff78f..d1b71d7f12 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
 @@ -7,6 +7,7 @@
@@ -97,7 +115,7 @@ index 531d4ff78f..4bff105566 100644
  #define IS_BONDED_DSI()		(msm_dsim_glb.is_bonded_dsi)
  #define IS_SYNC_NEEDED()	(msm_dsim_glb.is_sync_needed)
  #define IS_MASTER_DSI_LINK(id)	(msm_dsim_glb.master_dsi_link_id == id)
-@@ -44,6 +53,43 @@ static inline struct msm_dsi *dsi_mgr_get_other_dsi(int id)
+@@ -44,6 +53,50 @@ static inline struct msm_dsi *dsi_mgr_get_other_dsi(int id)
  	return msm_dsim_glb.dsi[(id + 1) % DSI_MAX];
  }
  
@@ -105,6 +123,10 @@ index 531d4ff78f..4bff105566 100644
 + * A bonded command path exists only if this pair is bonded and the controller
 + * generation provides the broadcast hooks. Which generation that is stays a
 + * property of the host, not of the manager.
++ *
++ * The hooks are shared by every SoC on the same host-ops entry, so the per-SoC
++ * data decides: an SoC without it keeps the plain one-command-per-link path even
++ * though the hooks are there.
 + */
 +static bool dsi_mgr_uses_bonded_cmd(void)
 +{
@@ -120,7 +142,10 @@ index 531d4ff78f..4bff105566 100644
 +		return false;
 +
 +	ops = msm_dsi_host_get_cfg_ops(dsi->host);
-+	return ops && ops->bonded_cmd_xfer;
++	if (!ops || !ops->bonded_cmd_xfer)
++		return false;
++
++	return msm_dsi_host_get_bonded_cfg(dsi->host);
 +}
 +
 +static bool dsi_mgr_bonded_cmd_failed(void)
@@ -141,7 +166,7 @@ index 531d4ff78f..4bff105566 100644
  static int dsi_mgr_parse_of(struct device_node *np, int id)
  {
  	struct msm_dsi_manager *msm_dsim = &msm_dsim_glb;
-@@ -273,6 +319,9 @@ static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
+@@ -273,6 +326,9 @@ static void dsi_mgr_bridge_power_off(struct drm_bridge *bridge)
  	}
  	msm_dsi_host_power_off(host);
  	dsi_mgr_phy_disable(id);
@@ -151,7 +176,7 @@ index 531d4ff78f..4bff105566 100644
  }
  
  static void dsi_mgr_bridge_pre_enable(struct drm_bridge *bridge,
-@@ -493,6 +542,47 @@ int msm_dsi_manager_connector_init(struct msm_dsi *msm_dsi,
+@@ -493,6 +549,47 @@ int msm_dsi_manager_connector_init(struct msm_dsi *msm_dsi,
  	return 0;
  }
  
@@ -199,7 +224,7 @@ index 531d4ff78f..4bff105566 100644
  int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
  {
  	struct msm_dsi *msm_dsi = dsi_mgr_get_dsi(id);
-@@ -505,6 +595,18 @@ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+@@ -505,6 +602,18 @@ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
  	if (!msg->tx_buf || !msg->tx_len)
  		return 0;
  

@@ -1,0 +1,5 @@
+0001 total: 0 errors, 0 warnings, 0 checks, 205 lines checked
+0002 CHECK: usleep_range is preferred over udelay; see function description of usleep_range() and udelay().
+0002 total: 0 errors, 0 warnings, 1 checks, 486 lines checked
+0003 total: 0 errors, 0 warnings, 0 checks, 183 lines checked
+0004 total: 0 errors, 0 warnings, 0 checks, 35 lines checked

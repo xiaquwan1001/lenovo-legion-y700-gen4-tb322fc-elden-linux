@@ -3,7 +3,7 @@
 - 复核对象：`reports/m6-b5-v2-20261102.md`、`patches/upstream/m6-b5-v2-20261102/`（4 枚 + cover，未发送）。
 - 复核方式：父会话独立重跑（base 真实性、门禁、覆盖性），不采信 worker 自报。
 
-## §0 结论：**门禁 PASS，但续发条件不满足 ⇒ 暂不投**
+## §0 结论：**门禁 PASS，但续发条件不满足 ⇒ 暂不投**（2026-11-02 收尾轮：仍维持「不投」，另修掉一处崩溃级缺陷，见 §2b）
 
 | 检查 | 结果 | 证据 |
 |---|---|---|
@@ -35,6 +35,23 @@ Dmitry 已经在 0/5 上质疑过立项理由（「bonded DSI is seemingly worki
 2. `0002` 的 `udelay` CHECK：在 commit message 里留一句「busy-wait is bounded and runs once per command」，别让评审猜。
 3. cover 的动机段保留「STATUS0=0x20003 / `ff 20` 三连 -22」这两个可复现观测，但**不要**写「bonded DSI 现在是坏的」——
    Dmitry 的反例（多数板子正常）成立；正确口径是「本板在该路径缺 broadcast 主从语义时会挂起」。
+
+## §2b ★2026-11-02 收尾轮：本复核的 §2 三条已落实，另**发现并修掉一处崩溃级缺陷**
+
+| 本复核 §2 的建议 | 落实处 |
+|---|---|
+| ① 报告/commit 里「re-add removed definitions」措辞 | 1/4 正文改为「describe them again together with the code that will consume them」（不再暗示"谁删的"） |
+| ② `udelay` 的 CHECK 要在 commit message 里说明 | 2/4 已加一段：紧寄存器轮询、上限 500 次 = 5 ms、每条命令只走一次 |
+| ③ cover 动机保留可复现观测、不写「bonded DSI 现在是坏的」 | cover 已按此措辞（只给 `BROADCAST` 命中 0 / `ff 20` 三连 `-22` / `STATUS0=0x20003`） |
+
+**新增缺陷（本复核当时漏掉，收尾轮抓到）**：v2 把 `.bonded_cmd_xfer` 加在
+**SM8650/SM8750 共用**的 `msm_dsi_6g_v2_9_host_ops` 上，而 manager 门控只探测该 op 是否存在
+⇒ 树内 `sm8650-ayaneo-pocket-s2`（`qcom,dual-dsi-mode` + `qcom,sync-dual-dsi` + `qcom,master-dsi`）
+在面板 DCS 写上会进入 `dsi_bonded_xfer_prepare()` → `dsi_cmd_error_prepare()`，
+`cfg->bonded == NULL` ⇒ **空指针**（v1 靠 `is_sm8750` 特判安全，v2 删特判时把门一起丢了）。
+已修为「op 存在 ∧ per-SoC 数据非空」+ 新增 `msm_dsi_host_get_bonded_cfg()`。
+⇒ 本报告 §1 的「树内无使用者」结论需**补一句**：树内没有**需要**它的板子，但**有会被它误伤**的板子；
+这个缺陷本身也证明「这段代码在树内是可到达的」。详见 `PITFALLS #489`。
 
 ## §3 复跑命令
 

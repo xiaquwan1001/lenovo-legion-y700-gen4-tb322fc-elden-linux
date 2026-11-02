@@ -1,6 +1,14 @@
 # M6 B5 系列 v2（2026-11-02）—— 在公开 base `6628e7d4c6` 上重切
 
-> 状态：**已重切 + 四条门禁全绿；未发送**（投递按 `TASKS/README.md` §7 逐次批准）。
+> 状态：**2026-11-02 收尾轮修掉一处会打崩 SM8650 双 DSI 板的门控缺陷后重出；未发送**
+> （投递按 `TASKS/README.md` §7 逐次批准）。
+>
+> **★2026-11-02 收尾修订（v2 内容变更，见 `GATES.md` §0）**：原 v2 把 `bonded_cmd_xfer` 挂在
+> 共用的 `msm_dsi_6g_v2_9_host_ops` 上，而 `dsi_mgr_uses_bonded_cmd()` 只探测该 op 是否存在
+> ⇒ **SM8650 的双 DSI 板（`sm8650-ayaneo-pocket-s2` 等，`qcom,sync-dual-dsi` + `qcom,master-dsi`）
+> 会在面板 DCS 写时进入 bonded 事务，解引用 `cfg->bonded` 的 NULL**（v1 用 `is_sm8750` 门控，
+> v2 去掉 SoC 特判时把这个门丢了）。现改为「op 存在 **且** per-SoC 数据非空」才走该路径，
+> 并把这段理由写进 3/4 的 commit message 与 cover。净 diff **+673 −6**（原 +653 −6）。
 
 ## §0 要点（三条，先看这个）
 
@@ -11,8 +19,8 @@
    `is_sm8750`、无 `dsi_bonded_cmd_failed`）。v1 的重构对象是本地 payload（`0f1fb1c9c1` =
    v7.3-rc7 + 一个 squashed 载荷提交）。因此 v2 只能是**把这半条路径本身**作为增量带上公开 base
    —— 这也正是 2026-11-02 回信里承诺的口径（"this series is the data half of proposing that path"）。
-3. **净 diff**（`6628e7d4c6..HEAD`，仅 `drivers/gpu/drm/msm/`）：**6 文件 +653 −6**，
-   4 枚补丁，全部落盘见 §2。
+3. **净 diff**（`6628e7d4c6..HEAD`，仅 `drivers/gpu/drm/msm/`）：**6 文件 +673 −6**
+   （2026-11-02 收尾修订前为 +653 −6），4 枚补丁，全部落盘见 §2。
 
 ## §1 与上游的差集（`差集原则`落实）
 
@@ -39,17 +47,18 @@ partial clone，那两个 sha 不在本地对象里，`git show` 取不到，改
 | 0003 | drm/msm/dsi: route bonded commands through the DSI manager | dsi.h、dsi_host.c、dsi_manager.c | 0E/0W/0C |
 | 0004 | drm/msm/dsi: reject bonded commands issued on the peer link | dsi_manager.c | 0E/0W/0C |
 
-树内提交（`b5/v2-20261102`）：
+树内提交（`b5/v2-fixed`，`/tmp/wt-b5v2fix` 为一次性 worktree，树内真源仍是本目录的 patch）：
 
 ```
-57494c1d20 drm/msm/dsi: reject bonded commands issued on the peer link
-f38983e7b4 drm/msm/dsi: route bonded commands through the DSI manager
-be4425b7c9 drm/msm/dsi: add the bonded command broadcast host ops
-76ec90f0fd drm/msm/dsi: add per-SoC bonded command-path config
+66a17d6c34 drm/msm/dsi: reject bonded commands issued on the peer link
+8121eab8c8 drm/msm/dsi: route bonded commands through the DSI manager
+e7436e99d3 drm/msm/dsi: add the bonded command broadcast host ops
+b3dedf8339 drm/msm/dsi: add per-SoC bonded command-path config
 6628e7d4c6 Linux 7.4-rc1
 ```
 
-逐枚行数：0001 +121/−3、0002 +409/−3、0003 +110/−0、0004 +15/−2。
+逐枚行数（修订后）：0001 +121/−3、0002 +409/−3、0003 +123/−0（含 gate 与 accessor）、0004 +15/−2。
+原 `b5/v2-20261102`（`57494c1d20`）留在 `build/b5-v2` 作对照，**已不是投递源**。
 
 ## §3 与 v1（`patches/local/b5-resoc-20261027`，5 枚）的差异
 
@@ -80,19 +89,31 @@ link_clk_enable`（公开 base 已有 v2.9 实现）。
 ## §5 复现命令
 
 ```sh
-cd build/b5-v2
-git log --oneline 6628e7d4c6..HEAD
-for f in patches/upstream/m6-b5-v2-20261102/000[1-4]-*.patch; do
-    perl scripts/checkpatch.pl --strict --no-tree - < "$f"
-done
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j26 O=/tmp/b5v2-out drivers/gpu/drm/msm/
-git checkout -B /tmp-am 6628e7d4c6 && git am patches/upstream/m6-b5-v2-20261102/000[1-4]-*.patch
+cd ~/y700-elden
+# 序列自足性（临时 worktree 内逐枚重放，不污染仓库）
+scripts/check-series-selfcontained.sh patches/upstream/m6-b5-v2-20261102 6628e7d4c6 --repo build/b5-v2
+# 逐枚 checkpatch
+git -C build/b5-v2 worktree add -f /tmp/wt-b5v2fix 6628e7d4c6 -b b5/v2-fixed
+cd /tmp/wt-b5v2fix && git am ../patches/upstream/m6-b5-v2-20261102/000[1-4]-*.patch
+for f in ~/y700-elden/patches/upstream/m6-b5-v2-20261102/000[1-4]-*.patch; do ./scripts/checkpatch.pl --strict --no-signoff "$f"; done
+cp ~/y700-elden/build/m4-base/.config . && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j26 olddefconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j26 W=1 drivers/gpu/drm/msm/
 ```
 
-## §6 发送前需要总管裁决的两点
+## §6 发布状态与两条待裁决
+
+**当前决定：不发（保留意见）**。理由 = 本系列自己设的发布条件（`reports/m6-b5-v2-parent-review-20261102.md` §1）
+是「树内要有使用者」，而 v7.4-rc1 里**没有任何板子启用 command-mode bonded 对**：树内 6 块
+`qcom,dual-dsi-mode` 板（`sm8650-ayaneo-pocket-s2`、`sm8250-xiaomi-elish-common`、`sdm845-db845c`、
+`sdm845-mtp`、`sm8150-hdk`、`qrb5165-rb5`）都不是 SM8750，也没有板级 DTS 可承载这次新增的路径。
+把 elden 整套板级 DTS（含面板）塞进一个驱动系列不是选项 ⇒ **方案 A 不可行**，cover 改为如实声明
+「使用者板级件另发」+ 顺手把 3/4 的 data-gate 缺陷讲清（这反而是本轮最有说服力的段落）。
 
 1. **立场变化**：v1 是"纯重构、no functional change"，v2 是"新增一条命令路径"（SoC 无 bonded 数据时
    行为不变）。回信里已按后者措辞，但 review 难度与"为什么现在做"的举证责任都变了。
 2. **`dsi.xml` 补回 10 处寄存器描述**：这些正是 v7.4-rc1 删掉的（删的时候本路径下游才有用），
    补回即等于宣告"上游缺失的登记册"。若担心 reviewer 对"重加已删定义"敏感，可退一步只在
    `dsi_host.c` 用本地宏——但那样更像 vendor hack，不建议。
+
+> 发送只需一步：`git send-email` 本目录 0000–0004，收件人 `dri-devel@` + `linux-arm-msm@` + Dmitry
+> （沿用 10-31 那批的 To/Cc 拓扑，见 `out/mail-20261031/`）。**未做**：等用户二次确认。

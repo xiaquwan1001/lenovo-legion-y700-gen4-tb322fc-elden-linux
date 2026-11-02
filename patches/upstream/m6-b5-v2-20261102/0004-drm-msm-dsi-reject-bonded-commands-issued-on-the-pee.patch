@@ -1,4 +1,4 @@
-From 57494c1d209132379eed0b2a93a2aa9ead3d7d9b Mon Sep 17 00:00:00 2001
+From 66a17d6c341388d0169abd7dc4b1e0093538a2c3 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Mon, 2 Nov 2026 17:50:17 +0800
 Subject: [PATCH 4/4] drm/msm/dsi: reject bonded commands issued on the peer
@@ -24,10 +24,10 @@ Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
  1 file changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dsi/dsi_manager.c b/drivers/gpu/drm/msm/dsi/dsi_manager.c
-index 4bff105566..f767e943a9 100644
+index d1b71d7f12..6cee79248b 100644
 --- a/drivers/gpu/drm/msm/dsi/dsi_manager.c
 +++ b/drivers/gpu/drm/msm/dsi/dsi_manager.c
-@@ -557,7 +557,7 @@ static bool dsi_mgr_use_bonded_write(const struct mipi_dsi_msg *msg)
+@@ -564,7 +564,7 @@ static bool dsi_mgr_use_bonded_write(const struct mipi_dsi_msg *msg)
   * dsi_mgr_parse_of() stores it in master_dsi_link_id and the link ids are the
   * DSI host indices. The per-SoC data only describes the transfer itself.
   */
@@ -36,7 +36,7 @@ index 4bff105566..f767e943a9 100644
  {
  	struct msm_dsi *master_dsi, *slave_dsi;
  	const struct msm_dsi_host_cfg_ops *ops;
-@@ -567,6 +567,19 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
+@@ -574,6 +574,19 @@ static int dsi_mgr_bonded_cmd_xfer(const struct mipi_dsi_msg *msg)
  	if (master_id < 0 || master_id >= DSI_MAX)
  		return -EINVAL;
  
@@ -56,7 +56,7 @@ index 4bff105566..f767e943a9 100644
  	master_dsi = dsi_mgr_get_dsi(master_id);
  	slave_dsi = dsi_mgr_get_other_dsi(master_id);
  	if (!master_dsi || !slave_dsi || !master_dsi->host || !slave_dsi->host)
-@@ -601,7 +614,7 @@ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
+@@ -608,7 +621,7 @@ int msm_dsi_manager_cmd_xfer(int id, const struct mipi_dsi_msg *msg)
  		if (dsi_mgr_bonded_cmd_failed())
  			return -EIO;
  		mutex_lock(&dsi_bonded_cmd_lock);

@@ -1,6 +1,6 @@
-From 57494c1d209132379eed0b2a93a2aa9ead3d7d9b Mon Sep 17 00:00:00 2001
+From 66a17d6c341388d0169abd7dc4b1e0093538a2c3 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Mon, 2 Nov 2026 17:52:08 +0800
+Date: Mon, 2 Nov 2026 21:17:45 +0800
 Subject: [PATCH 0/4] drm/msm/dsi: add the bonded command path for SM8750
 
 *** AI-assistance disclosure ***: this series was drafted by a coding
@@ -36,7 +36,7 @@ series adds exactly that, and nothing else:
       it uses (staged command-DMA bits, FIFO error bits, poll budget)
       into the existing per-SoC config table. SM8750 reports the same 6G
       v2.9 revision as SM8650, so its entry is matched on the compatible;
-      every other SoC leaves the pointer NULL and keeps the old path.
+      every other SoC leaves the pointer NULL.
   2/4 implements the transaction as a host op: both engines are staged
       with the same packet, the peer is started first and polled, the
       master is armed last and owns the completion interrupt. Whatever the
@@ -50,19 +50,32 @@ series adds exactly that, and nothing else:
       names both links, instead of arming the engines on a link that does
       not drive them.
 
+3/4 is also where the per-SoC data becomes the switch. The host op lives in
+the 6G v2.9 op set, which SM8650 shares, so "the op exists" cannot mean
+"this SoC can run the transaction": SM8650 has no bonded data and every
+SM8650 dual-DSI pair in the tree (sm8650-ayaneo-pocket-s2, for one) would
+otherwise take a path built from an empty config. The manager therefore
+requires the per-SoC data as well, and an SoC without it keeps the old
+path. The alternative - a second copy of the v2.9 op table with the field
+left out - would duplicate the whole table to express one bit of
+information.
+
 There is no separate "move the state" patch: the failure flag and the
 mutex are introduced where they belong from the start, in msm_dsim_glb
 next to is_bonded_dsi/is_sync_needed, so no mutable bonded state is
 file-scoped at any point in the series.
 
-Behaviour for every SoC without bonded data is unchanged: .bonded is
-NULL, .bonded_cmd_xfer is never called, and the manager takes the same
-path it took before.
+On who needs this: no board in the tree enables a command-mode bonded
+pair today, so the path is exercised by the SM8750 board this work started
+from, whose panel driver and DT are being prepared as a separate series.
+The existing dual-DSI boards keep the behaviour they have now, which the
+gate in 3/4 is what guarantees.
 
 Verified on top of v7.4-rc1 (6628e7d4c6):
-  - checkpatch --strict: 0 errors on all four patches (one CHECK on the
-    10 us poll delay, kept: the peer poll is a tight register loop);
-  - arm64 make -j26 drivers/gpu/drm/msm/: rc=0, no warnings;
+  - checkpatch --strict: 0 errors, 0 warnings on all four patches (one
+    CHECK on the 10 us poll delay, kept: the peer poll is a tight
+    register loop, bounded to 5 ms and run once per command);
+  - arm64 make -j26 W=1 drivers/gpu/drm/msm/: rc=0, no warnings;
   - the four patches apply in order to 6628e7d4c6 with git am.
 
 Qianhui Xu (4):
@@ -71,16 +84,14 @@ Qianhui Xu (4):
   drm/msm/dsi: route bonded commands through the DSI manager
   drm/msm/dsi: reject bonded commands issued on the peer link
 
- drivers/gpu/drm/msm/dsi/dsi.h                 |   5 +
+ drivers/gpu/drm/msm/dsi/dsi.h                 |   7 +
  drivers/gpu/drm/msm/dsi/dsi_cfg.c             |  78 +++-
  drivers/gpu/drm/msm/dsi/dsi_cfg.h             |  33 +-
- drivers/gpu/drm/msm/dsi/dsi_host.c            | 407 +++++++++++++++++-
- drivers/gpu/drm/msm/dsi/dsi_manager.c         | 115 +++++
+ drivers/gpu/drm/msm/dsi/dsi_host.c            | 418 +++++++++++++++++-
+ drivers/gpu/drm/msm/dsi/dsi_manager.c         | 122 +++++
  drivers/gpu/drm/msm/registers/display/dsi.xml |  21 +
- 6 files changed, 653 insertions(+), 6 deletions(-)
+ 6 files changed, 673 insertions(+), 6 deletions(-)
 
-
-base-commit: 6628e7d4c6b25c8d18f1345e3a20d21829aae7e4
 -- 
 2.53.0
 
