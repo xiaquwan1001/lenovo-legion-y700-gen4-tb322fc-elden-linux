@@ -1,0 +1,17 @@
+magic=ANDROID!
+kernel_size=2437036
+kernel_addr=0x10008000
+ramdisk_size=0x00000000
+ramdisk_addr=0x00000000
+second_size=0x00000000
+second_addr=0x00000000
+tags_addr=0x10000100
+page_size=4096
+header_version=0
+os_version=0x00000000
+boot_name=
+cmdline=
+id_sha1=5bf0f992a0e4270e520636bb4828f1dd9833e941
+extra_cmdline=
+file_size=2441216
+sha256=97c95cc12f2c8af9cd06b62b7de617006f04e5f00477244ac104ac95376b6470
