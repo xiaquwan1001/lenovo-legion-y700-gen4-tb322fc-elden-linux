@@ -182,7 +182,7 @@
 
 - **⚠️MIGRATION-LOST（2026-10-17 换机）**：登记与重建路径只读 `RESOURCES/README.md` §3.5 与 `versions/migration-gaps-2026-10-17.tsv`（当时的重建账与 P0–P4 顺序是快照，已下沉 `TASKS/sessions/2026-11-02-INDEX现状速览下沉.md`）。
 - **去哪读（本节唯一职能）**：未解/开放集 = `TASKS/README.md` §5（Q 表，含 Q28/Q24/Q32 的样本数与复启条件，另见 `PITFALLS #106`）；待办 = `TASKS/README.md` §4；进度与里程碑 = `PROGRESS.md` §1/§2；上游化与投递 = `TASKS/README.md` §7 的 M 行 + 当前一页 `reports/upstream-status-20261029.md`（投递解冻由用户按批放行，agent 不等回复）；设备在机态与单元台账 = `DEVICE/README.md` §1.1/§2.2；换机缺口 = `RESOURCES/README.md` §3.5；内核分界线 = `TASKS/README.md` §4。
-- **kexec**：不在「不做」之列，定位 = 不需显示/网络的调试快环；**当前口径只读** `TASKS/README.md` §4 第 10 条与 §7 的 M9 / M9-收口 行。
+- **kexec**：不在「不做」之列，定位 = 不需显示/网络的调试快环；**当前口径只读** `TASKS/README.md` §4「当前口径 → 迭代通道」条与 §7 的 M9 / M9-收口 行（全过程在 `TASKS/sessions/2026-11-03-TASKS-§4-待办沿革.md`）。
 - **宿主 rootfs（Alpine → Debian/Mobian、systemd）**：用户 2026-10-26 定的方向，**不是「勿重推」项**；路径与成本只读 `reports/mobian-migration-plan-20261021.md`（S0–S7，完成项见其 §4 状态标记）与 `TASKS/README.md` T14/T17。
 - **两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy`（trixie 3.7 无 SSC 后端）+ `libssc2`，否则传感器栈直接死。
 - **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-10 NFC、G1-30 slim initramfs；
@@ -213,7 +213,7 @@ scripts/iterate.sh mod <driver-dir>              # 环0：=m 模块热载 ~30s �
 #   成功判据 = build-id 匹配（脚本会自己打印 ✅/❌ 并在未确认时 rc=1；见 PITFALLS #447）
 LOCALVERSION=-debug-vkNN scripts/mod-loop.sh <driver-dir> --reload <mod-name>
 #   设备 UTS 与本树 KV 不一致时脚本会 REFUSING；跨 KV 只能用 --bootstrap 或 --allow-mismatch
-scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（零写盘快环：kexec 可用，但目标无显示/USB，见 §4 第 10 条）
+scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（零写盘快环：kexec 可用，但目标无显示/USB，见 §4「迭代通道」条）
 scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 先备份后执行）
 scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
 # ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM → 死内核，PITFALLS #162）
