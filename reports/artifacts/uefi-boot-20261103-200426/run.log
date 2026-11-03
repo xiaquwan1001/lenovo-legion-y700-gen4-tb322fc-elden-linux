@@ -1,0 +1,6 @@
+[20:04:26] ===== trial START label=uefi-prog image=uefi-20261104-prog.img sha=ce3292d4cc6f8fa9fc327dfa3e519b8d9cffb5f52a9f06a2a45506acaa5cff43 =====
+[20:04:26] image_size=67194880
+[trial] boot_b: succ=1 retry=6 unbootable=0
+[trial] GATE=OK
+[20:04:27] pre boot_id=# ssh pre 2026-11-03T20:04:27+08:00
+[20:04:27] ssh -> reboot bootloader (eldroid-bootctl)

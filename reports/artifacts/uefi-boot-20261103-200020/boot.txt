@@ -1,0 +1,2 @@
+Sending 'boot.img' (65620 KB)                      FAILED (reap_urb(0) failed: urb returned error: Protocol error)
+fastboot: error: Command failed

@@ -1,0 +1,22 @@
+[19:52:30] ===== trial START label=uefi-dual image=uefi-20261104-dual.img sha=351640e254a94b572b425493a649ea7bc91d78132e61c2d68c5cb28dabd47bb4 =====
+[19:52:30] image_size=67194880
+[trial] boot_b: succ=1 retry=6 unbootable=0
+[trial] GATE=OK
+[19:52:30] pre boot_id=# ssh pre 2026-11-03T19:52:30+08:00
+[19:52:30] ssh -> reboot bootloader (eldroid-bootctl)
+[19:52:52] fastboot up after ~2s
+[19:52:53] SER=HA2EXB0E
+# fastboot pre 2026-11-03T19:52:53+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.004s
+current-slot: b
+Finished. Total time: 0.005s
+slot-unbootable:b: no
+Finished. Total time: 0.005s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.005s
+[19:52:53] fastboot boot uefi-20261104-dual.img
+Sending 'boot.img' (65620 KB)                      OKAY [  1.490s]
+Booting                                            OKAY [ 10.102s]
+Finished. Total time: 11.621s
+[19:53:05] fastboot boot returned after 11s

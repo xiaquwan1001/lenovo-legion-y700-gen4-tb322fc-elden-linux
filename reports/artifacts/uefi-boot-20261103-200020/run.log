@@ -1,0 +1,26 @@
+[20:00:20] ===== trial START label=uefi-m3block image=uefi-20261104-m3block.img sha=e18f0be425e910b73373cd35bd7ddf16ef16122e11431ef839a079cd4fb70038 =====
+[20:00:20] image_size=67194880
+[trial] boot_b: succ=1 retry=6 unbootable=0
+[trial] GATE=OK
+[20:00:21] pre boot_id=# ssh pre 2026-11-03T20:00:21+08:00
+[20:00:21] ssh -> reboot bootloader (eldroid-bootctl)
+[20:00:43] fastboot up after ~2s
+[20:00:44] SER=HA2EXB0E
+# fastboot pre 2026-11-03T20:00:44+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.005s
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.005s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.004s
+[20:00:44] fastboot boot uefi-20261104-m3block.img
+Sending 'boot.img' (65620 KB)                      FAILED (reap_urb(0) failed: urb returned error: Protocol error)
+fastboot: error: Command failed
+[20:00:45] fastboot boot returned after 0s
+[20:01:17] watch: usb_present_last=1 samples_with_usb=24/25
+[20:01:17] VERDICT(candidate)=NOJUMP
+[20:01:17] recovering...
+[20:01:17] ABL alive -> try 'fastboot continue'（同会话续启动，保留 logfs）
+[20:01:23] continue failed/unsupported -> fastboot reboot

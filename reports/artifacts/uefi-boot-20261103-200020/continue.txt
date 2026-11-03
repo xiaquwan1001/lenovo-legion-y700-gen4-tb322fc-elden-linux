@@ -1,0 +1,3 @@
+< waiting for HA2EXB0E>
+Resuming boot                                      FAILED (reap_urb(0) failed: urb returned error: Protocol error)
+fastboot: error: Command failed
