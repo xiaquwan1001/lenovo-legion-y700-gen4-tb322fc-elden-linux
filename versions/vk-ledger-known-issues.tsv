@@ -13,10 +13,10 @@
 #
 # 内核 payload 与构建时树不一致（同一 bug 类：#111 双层 gzip 之外的「Image.gz 陈旧」）
 #
-# 2026-11-03 计数更正：uts_dup 的 N 是「同 UTS 串背后的不同内核二进制数」，是**派生量**，不是语义。
-#   本次 out/boot-elden-m3v5-daily.img 被检出**载荷 CRC 坏**（镜像 sha256 与自身 manifest 不符，见
-#   reports/asset-tidy-20261103.md §3），该二进制退出扫描 ⇒ 钉 vk172 UTS 的那一族从 12 降到 11。
-#   本表对应行 uts_dup12 → uts_dup11（仅计数，理由与锚定 sha 不变）。
+# 2026-11-03 事件记录（已修复，计数回到原值）：out/boot-elden-m3v5-daily.img 被检出**载荷 CRC 坏**
+#   （镜像 sha256 与自身 manifest 不符），该二进制一度退出扫描 ⇒ 钉 vk172 UTS 的那族曾降到 11。
+#   用 manifest 里记录的 mkbootimg argv 重打后**逐字节复现**原 sha256（4d7e2ea9…）⇒ 证实是落盘后静默损坏、
+#   输入无误。镜像已恢复、uts_dup 回到 12，本表无需改动（记录见 reports/asset-tidy-20261103.md §3）。
 vk52-slim	tree_drift	包入 vk42 内核（geb432f18a0d1），当时树=vk48/vk50；slim 失败归因（缺 /bin/sh）不受影响
 vk54-slim	tree_drift	复用 vk54-dirty 内核镜像（b3b87ed1），非当时树（vk54 提交 g26cd13b1c4a2）
 vk56-slim	tree_drift	同 vk54-slim 内核（仅换 ramdisk）
@@ -368,7 +368,7 @@ m8ab-v2	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 
 m3v5-daily	uts_dup	M3-1 双口 role mux 上机镜像：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；二进制不同属预期，身份由 kernel_payload_sha256 锚定
 m3v5-f2	uts_dup	M3-1 v5 + F2 上机镜像（defer 上抛）：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；本轮同时替换了 dwc3/ucsi/typec 的 4 个 .ko，二进制不同属预期，身份由 kernel_payload_sha256 锚定 685ad1d9409b
 vk183-fastrpc	num_ne_tag	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref
-vk183-fastrpc	uts_dup11	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）
-m3v5-onboard	uts_dup11	M3-1 v5 pristine 候选（实验内核，未入日常线）：刻意钉 vk172 UTS 以复用 /lib/modules；pristine 缺下游 DSI、initramfs 未含 dwc3/ucsi 模块 ⇒ A1 启动期失联（根因未证实，见 reports/m3v5-onboard-plan-20261030.md §6）；身份由 kernel_payload_sha256 锚定 c4e884ad
-vk183-fastrpc	uts_dup11	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）
-m3v5-onboard-b	uts_dup11	M3-1 v5 复测件（实验内核，未入日常线）：复用 pinned vk172 UTS；initramfs 补 gadget 14 模块后仍 USB 零枚举 ⇒ pristine 平台启动假设；不做上机载体；身份由 kernel_payload_sha256 锚定
+vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）
+m3v5-onboard	uts_dup12	M3-1 v5 pristine 候选（实验内核，未入日常线）：刻意钉 vk172 UTS 以复用 /lib/modules；pristine 缺下游 DSI、initramfs 未含 dwc3/ucsi 模块 ⇒ A1 启动期失联（根因未证实，见 reports/m3v5-onboard-plan-20261030.md §6）；身份由 kernel_payload_sha256 锚定 c4e884ad
+vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）
+m3v5-onboard-b	uts_dup12	M3-1 v5 复测件（实验内核，未入日常线）：复用 pinned vk172 UTS；initramfs 补 gadget 14 模块后仍 USB 零枚举 ⇒ pristine 平台启动假设；不做上机载体；身份由 kernel_payload_sha256 锚定
