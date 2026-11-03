@@ -123,7 +123,7 @@
 - **T14 用户态驱动/服务独立固化** —— 🟡 门禁已收口（2026-10-28 真机 `verify.sh` **FAIL=0 WARN=0**，80 条含 19 unit 逐字一致）；剩余 = Mobian 换根后的重建 recipe（7 个 ELF 里 3 个无源、其中 2 个动态 musl）。权威 `reports/userland-service-inventory-20261025.md`、`reports/userland-dealpine-audit-20261026.md`、`packaging/elden-userland/tools/verify.sh`；历史与三步落地 → 归档。
 - **T17 驱动模块化 × Alpine→Mobian 迁移** —— 🟡 交界面核对完成（2026-10-26，零写盘）；下一步 = 执行 S2–S7：装 `linux17` ext4（Alpine 留 `linux18` f2fs 不动）、S7 = 一条 `fastboot boot` 换根、S2 补 7 个依赖闭包包、S3 补 `/usr/share/qcom/.../sensors`；回退 = 重启回 `boot_b`（秒级）。权威 `reports/modular-mobian-transition-20261026.md`。
 - **C3 Play Integrity / DRM 取证**（G2）—— C1 已收官（vk95 起 `ip rule` 生效；去 workaround 出网 200，`reports/c1-noworkaround-20261013.md`）⇒ 下一步 = C3 身份/DRM 取证，其后 C2 GMS 登录（需上行 + 代理 + 凭据）。权威 = §2 C1/C2/C3 行。
-- **N1 UEFI 间接引导** —— 🟡 2026-11-01 用户放行恢复推进；当前口径与四臂判别**只读 §5 的 11-01/11-02 块**，首轮定性 `reports/uefi-gunyah-reassess-20261024.md` §1。**解冻条件（任一）**：上游 issue #12 给出层级答案 / 出现 SM8750 上 UEFI 真正枚举 UFS 的第三方案例 / kexec 不可用而又需要启动菜单。
+- **N1 UEFI 间接引导** —— 🟡 2026-11-01 用户放行恢复推进；当前口径**只读 §5 的 11-04 晚块**（该块推翻「已交 DXE Core」的旧判读），首轮定性 `reports/uefi-gunyah-reassess-20261024.md` §1。**解冻条件（任一）**：上游 issue #12 给出层级答案 / 出现 SM8750 上 UEFI 真正枚举 UFS 的第三方案例 / kexec 不可用而又需要启动菜单。
   - **2026-11-03 裁决（邮件+GitHub+外部三线核查后）**：解冻条件②**已满足** —— `7Night-kqx/UniXNU-dada`（小米 15 / SM8750）README 明写 UEFI「framebuffer/menu/**UFS**-works in Mu-Silicium」，并附 boot-image v3/v4 header + BootShim header-size 现成补丁。**下一步只做一件事**：用该打包链补「载荷被执行」（P1 主机侧搬 patch + 装对树内 `PatchedBinaries/UFSDxe.efi`(`00ae059f…`)，P2 单发零写盘 `fastboot boot`，判据 `stage1≠0`）。issue #12 无新回复（末条 `2026-10-29T04:19:30Z`）、邮件 UEFI 相关 0 封 ⇒ **不回帖、不升 Mu 基座**。权威 `reports/uefi-next-step-decision-20261103.md`（三份子报告同目录 `uefi-{mail-triage,github-scan,external-scan}-20261103.md`）。
   - **2026-11-03 下午（9 发零写盘）**：**DDR 黑匣子正控打通**（真内核 `primary_entry` 标记，断电重启读回 95%–98%）；并**推翻两条旧判据**——① `usb_read failed` ≠ 交棒（自旋探针同样触发但标记全 0；真内核是 `Booting OKAY 10.106 s` 后真执行，我们 UEFI 件是 `0.056 s` 早期拒绝）；② **不存在 1–2 s 看门狗**（自旋载荷躺数分钟无人复位）。`text_offset=0` 单独不够（`8ed4ffc1…` 仍被 0.056 s 否掉）⇒ 下一步 = 把载荷 Image 头（`code0` 必须 branch / `image_size`=解压真实长度 / `flags=0xa`）+ 打包头（v2 base0）逐字段对齐真内核。权威 `reports/uefi-posctrl-20261103-summary.md`。
   - **2026-11-03 晚 → 11-04（7 发零写盘）**：**载荷首次被真正执行，并一路跑到 DXE**。① 打包配方定案 = **v2 base 0 + Image 头对齐**（`text_offset=0` / `image_size`=解压真实长 / `flags=0xa`）⇒ ABL 从 `0.056 s usb_read failed` 变 `Sending 1.49 s` + `Booting OKAY 10.108 s`；② **屏上可见性达成（J1 首次）**：shim 直涂设备 DT 的 `splash_region`（`0xFC800000`），色带逐段推进可肉眼判读；③ **FD 4 MiB 全部拷到 `0xFF300000`**（进度 4/4），死点收窄到 `dc civac` 段，跳过该段后 shim 顺利 `br` 进 UEFI；④ **Mu PrePi 整段走完**：屏上出现 `UEFI firmware (version …)`（`AndromedaPkg/PrePi/PrePi.c:137`）+ 插桩 `[P01]`–`[P08]`/`[P10]`/`[P11]` 全部打印（含 `MemoryPeim`/`PlatformPeim`/`DecompressFirstFv`/`LoadDxeCoreFromFv`）⇒ **控制权已交给 DXE Core**；⑤ **DDR 标记通道在本类场景失效**：载荷跑过之后低 4 GiB 出现 ~1.9 GB `0xFF` 填充（两次对照确认来自自家载荷，定位在 PrePi `MemoryPeim` 段），会抹掉 shim 早写的 stage 页。**下一步 = 把同款屏上串口插桩打进 DXE Core**（`DxeMain.c` 9 个相位点 + `Dispatcher.c` 每 dispatch 一个 `>`），判据 `[D08]`（`gBds->Entry`）= 进 BDS 菜单。权威 `reports/uefi-payload-execution-20261104.md`；坑 `PITFALLS #490/#491/#492`。
@@ -138,6 +138,15 @@
 ---
 
 ## 5. 查漏补缺（GAPS）
+
+### 2026-11-04（晚）：UEFI **DxeCore 从未被启动** —— 真卡点 = 内层 FV 解压失败（11 发零写盘）
+
+- **一句话**：给 DXE Core 打屏上串口插桩后，**推翻上一块「已交给 DXE Core」的结论** —— `[P11]` 打在 `LoadDxeCoreFromFv()` **返回之后**，实测返回 `0x800000000000000E`（EFI_NOT_FOUND）⇒ DxeCore 一次都没执行。卡点在更前一层：`DecompressFirstFv` 的 GUIDED/LZMA 段 `Decode` 返回 `EFI_INVALID_PARAMETER`（`GetInfo` 反而成功、解压后 `0xC45008`）⇒ 无内层 FV HOB ⇒ `FfsAnyFvFindFirstFile(DXE_CORE)` 失败。
+- **主机侧反证**：同一份 `Sdk/C/LzmaDec.c` 在主机解压 `res=0`、Python `lzma` 亦成功 ⇒ 压缩数据与参数没问题；且 `LzmaDecode` 只分配 16 KB probs（`p.dic = dest`），**「scratch 64 KiB 不足 / 字典 16 MiB」两条假设均被否**。
+- **设备侧硬事实**：64×64 KiB 块表显示 **FD 块 0–15（0–1 MiB）全部正确**（仅 2 个单比特翻转），**从块 16（`0x100000`）起 48 块全错**；坏内容 ≠ ramdisk / gz 载荷 / `0xFF` / `0x00`。**未定**：损坏在 PrePi 之前（shim 拷贝 / ABL 解 gz）还是 PrePi 之内（内存图把 `0xFF300000` 声明为 `BsData` = 可分配）；第 11 发两张块表屏纯黑无输出，判据未取到，用户裁决收尾。
+- **下一步（若复起）**：① 把 `Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c` 里 `"UEFI FD"` 的 `BsData` 改 `Reserv` 单变量验证；② 若仍错，做「shim 与 FD 之间加 `.space` 偏移」变体，看 1 MiB 边界跟**源**走还是跟**目标**走。
+- **正文**：`PITFALLS/sessions/2026-11-04-UEFI-DxeCore从未启动.md`；坑 `PITFALLS #493/#494/#495/#496`；镜像 `out/uefi-20261104-dxe{,2…11}.img`、补丁 `patches/uefi/20261104-dxe/0001…0014`、现场 `reports/artifacts/uefi-boot-20261103-dxe{,2…11}/`。
+- **作废**：`reports/uefi-payload-execution-20261104.md` §7「`[P11]` ⇒ 已交 DXE Core」的判读。
 
 ### 2026-11-04：UEFI **载荷被执行 → Mu PrePi 走完 → 交给 DXE**（7 发零写盘）
 

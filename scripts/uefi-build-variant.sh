@@ -27,7 +27,7 @@ OUT=""
 UFSDXE=mu
 RMVMDXE=mu
 SHIM=stock
-SCALE3=0
+SCALE=0
 PATCHES=()
 CLEAN=0
 RESTORE=1
@@ -37,7 +37,8 @@ while [ $# -gt 0 ]; do
 		--ufsdxe) UFSDXE=$2; shift 2;;
 		--rmvmdxe) RMVMDXE=$2; shift 2;;
 		--shim) SHIM=$2; shift 2;;
-		--scale3) SCALE3=1; shift;;
+		--scale) SCALE=$2; shift 2;;
+		--scale3) SCALE=3; shift;;
 		--patch) PATCHES+=("$2"); shift 2;;
 		--clean) CLEAN=1; shift;;
 		--no-restore) RESTORE=0; shift;;
@@ -69,9 +70,36 @@ cp "$SHIM_BIN" "$BK/BootShim.bin" 2>/dev/null || true
 cp "$UFSDXE_DST" "$BK/UFSDxe.efi"
 cp "$RMVMDXE_DST" "$BK/RmVmDxe.efi"
 APPLIED=()
+
+# ---- 补丁应用（支持子模块内的补丁：路径按子模块根生成）----
+SUBMODULES="MU_BASECORE Common/MU Common/MU_TIANO Silicon/Arm/MU_TIANO Features/CONFIG Platforms/CranePkg Platforms/SurfaceDuoACPI"
+apply_patch() {
+	local p=$1 sm
+	if git apply --check "$p" 2>/dev/null; then
+		git apply --verbose "$p" && { APPLIED+=(":$p"); return 0; }
+		return 1
+	fi
+	for sm in $SUBMODULES; do
+		[ -d "$sm/.git" ] || [ -f "$sm/.git" ] || continue
+		if git -C "$sm" apply --check "$p" 2>/dev/null; then
+			git -C "$sm" apply --verbose "$p" && { APPLIED+=("$sm:$p"); return 0; }
+			return 1
+		fi
+	done
+	echo "patch does not apply anywhere: $p" >&2
+	return 1
+}
+revert_patch() {
+	local sm=${1%%:*} p=${1#*:}
+	if [ -z "$sm" ]; then git apply -R "$p" 2>/dev/null || true
+	else git -C "$sm" apply -R "$p" 2>/dev/null || true; fi
+}
 reset_tree() {
-	for p in "${APPLIED[@]:-}"; do
-		[ -n "$p" ] && git apply -R "$p" 2>/dev/null || true
+	# 必须逆序回滚：后打的补丁依赖先打的补丁的上下文
+	local i
+	for ((i=${#APPLIED[@]}-1; i>=0; i--)); do
+		p=${APPLIED[$i]}
+		[ -n "$p" ] && revert_patch "$p"
 	done
 	cp "$BK/BootShim.S" "$SHIM_SRC"
 	[ -f "$BK/BootShim.bin" ] && cp "$BK/BootShim.bin" "$SHIM_BIN"
@@ -95,15 +123,14 @@ case "$RMVMDXE" in
 	*) echo "bad --rmvmdxe $RMVMDXE" >&2; exit 2;;
 esac
 
-if [ "$SCALE3" = 1 ]; then
-	sed -i 's/^#define SCALE_FACTOR 1$/#define SCALE_FACTOR 3/' "$FONT_H"
-	grep -q '^#define SCALE_FACTOR 3$' "$FONT_H" || { echo "scale3 patch failed" >&2; exit 1; }
+if [ "$SCALE" != 0 ]; then
+	sed -i "s/^#define SCALE_FACTOR [0-9]*$/#define SCALE_FACTOR $SCALE/" "$FONT_H"
+	grep -q "^#define SCALE_FACTOR $SCALE$" "$FONT_H" || { echo "scale patch failed" >&2; exit 1; }
 fi
 
 for p in "${PATCHES[@]:-}"; do
 	[ -n "$p" ] || continue
-	git apply --verbose "$p" >>"$OUT/build.log" 2>&1
-	APPLIED+=("$p")
+	apply_patch "$p" >>"$OUT/build.log" 2>&1 || { echo "failed to apply $p" >&2; exit 1; }
 done
 
 case "$SHIM" in
@@ -125,12 +152,19 @@ fi
 
 # ---------- 构建 ----------
 if [ "$CLEAN" = 1 ]; then rm -rf Build/PakalaPkg/RELEASE_CLANGPDB; fi
+BUILD_START=$(date +%s)
 PATH=$HOME/.local/bin:$PATH GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null \
 	timeout -k 10 ${BUILD_TIMEOUT:-2400} ./build_uefi.py -d lenovo-y700g4 -t RELEASE >>"$OUT/build.log" 2>&1 \
 	|| echo "note: build_uefi.py rc!=0 (see build.log)" >>"$OUT/build.log"
 
 FD=Build/PakalaPkg/RELEASE_CLANGPDB/FV/SM8750_EFI.fd
 [ -f "$FD" ] || { echo "no FD produced" >&2; exit 1; }
+# 防止把上一轮的旧 FD 当成本轮产物（增量构建失败时 build_uefi.py 仍返回 0 的情形）
+FD_MTIME=$(stat -c %Y "$FD")
+if [ "$FD_MTIME" -lt "$BUILD_START" ]; then
+	echo "BUILD FAILED: FD 未被重新生成（mtime $(date -d @$FD_MTIME '+%F %T') < 构建开始）—— 见 $OUT/build.log" >&2
+	exit 1
+fi
 
 cp "$FD" "$OUT/SM8750_EFI.fd"
 cp BootShim/BootShim.bin "$OUT/BootShim.bin"
@@ -163,7 +197,7 @@ python3 "$REPO/ImageResources/mkbootimg.py" --kernel "$OUT/kernel.bin" --header_
 	echo "clang=$(clang --version | head -1)"
 	echo "python=$(python3 --version)"
 	echo "uefi_base=$UEFI_BASE uefi_size=$UEFI_SIZE"
-	echo "variant.ufsdxe=$UFSDXE variant.rmvmdxe=$RMVMDXE variant.shim=$SHIM variant.scale3=$SCALE3"
+	echo "variant.ufsdxe=$UFSDXE variant.rmvmdxe=$RMVMDXE variant.shim=$SHIM variant.scale=$SCALE"
 	echo "patches=${PATCHES[*]:-none}"
 	echo "worktree_after=$(git status --porcelain | tr '\n' ';')"
 } > "$OUT/manifest.txt"

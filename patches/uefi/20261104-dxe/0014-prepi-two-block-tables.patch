@@ -1,0 +1,113 @@
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index bbade5ed..820d511e 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -21,9 +21,14 @@
+ #include <Ppi/SecPerformance.h>
+ 
+ #include "PrePi.h"
++#include <Library/SerialPortLib.h>   /* y700-elden debug */
+ 
+ #include <Library/MemoryMapHelperLib.h>
+ 
++STATIC VOID SbBlocks (VOID);
++STATIC VOID SbHex (IN UINT64 Value);
++STATIC VOID SbTag (IN CONST CHAR8 *Tag);
++
+ ////////////////////////////////////////////
+ // Patch: call lk scheduler related function.
+ #include <Library/ConfigurationMapHelperLib.h>
+@@ -237,7 +242,11 @@ PeiContinueBoot(VOID* ARGS)
+ //
+ /////////////////////////////////////////////
+   // Assume the FV that contains the SEC (our code) also contains a compressed FV.
++  SbTag ("[B]");
++  SbBlocks ();
+   Status = DecompressFirstFv ();
++  SbTag ("[R]");
++  SbHex ((UINT64)Status);
+   ASSERT_EFI_ERROR (Status);
+ 
+   // Load the DXE Core and transfer control to it
+@@ -254,6 +263,8 @@ CEntryPoint ()
+ 
+   // Initialize the platform specific controllers
+   ArmPlatformInitialize (0);
++  SbTag ("[A]");
++  SbBlocks ();
+ 
+   if (PerformanceMeasurementEnabled ()) {
+     // Initialize the Timer Library to setup the Timer HW controller
+@@ -304,3 +315,72 @@ SecondaryCoreCEntry (
+   BootSecondaryCpu (CpuIdx);
+ }
+ ////////////////////////////////////////////
++
++/* ---------------- y700-elden debug instrumentation ---------------- */
++STATIC VOID SbTag (IN CONST CHAR8 *Tag)
++{
++  CHAR8  Buf[16];
++  UINTN  Len;
++
++  for (Len = 0; Tag[Len] != 0 && Len < 12; Len++) {
++    Buf[Len] = Tag[Len];
++  }
++
++  Buf[Len++] = '\n';
++  Buf[Len++] = '\r';
++  SerialPortWrite ((UINT8 *)Buf, Len);
++}
++
++STATIC VOID SbHex (IN UINT64 Value)
++{
++  STATIC CONST CHAR8  Hex[] = "0123456789ABCDEF";
++  CHAR8               Buf[20];
++  UINTN               i;
++
++  Buf[0] = '0';
++  Buf[1] = 'x';
++  for (i = 0; i < 16; i++) {
++    Buf[2 + i] = Hex[(Value >> ((15 - i) * 4)) & 0xF];
++  }
++
++  Buf[18] = '\n';
++  Buf[19] = '\r';
++  SerialPortWrite ((UINT8 *)Buf, 20);
++}
++
++/* 每个 64 KiB 块一个 32 位 FNV-1a，8 个一行（共 8 行） */
++STATIC VOID SbBlocks (VOID)
++{
++  STATIC CONST CHAR8  Hex[] = "0123456789ABCDEF";
++  UINT8               *Fd = (UINT8 *)(UINTN)0xFF300000ULL;
++  CHAR8                Buf[80];
++  UINTN                Blk;
++  UINTN                Pos;
++
++  for (Blk = 0; Blk < 64; Blk++) {
++    UINT32  H = 0x811C9DC5u;
++    UINTN   i;
++    INTN    k;
++
++    for (i = 0; i < 0x10000; i++) {
++      H ^= Fd[Blk * 0x10000 + i];
++      H *= 0x01000193u;
++    }
++
++    if ((Blk % 8) == 0) {
++      Pos = 0;
++    }
++
++    for (k = 7; k >= 0; k--) {
++      Buf[Pos++] = Hex[(H >> (k * 4)) & 0xF];
++    }
++
++    Buf[Pos++] = ((Blk % 8) == 7) ? '\n' : ' ';
++    if ((Blk % 8) == 7) {
++      Buf[Pos++] = '\r';
++      SerialPortWrite ((UINT8 *)Buf, Pos);
++    }
++  }
++}
++/* ---------------------------------------------------------------- */
++

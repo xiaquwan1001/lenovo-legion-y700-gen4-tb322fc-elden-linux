@@ -1,0 +1,48 @@
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index 2951ad92..32c000a5 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -24,6 +24,7 @@
+ 
+ /* 2026-11-04 y700-elden 调试插桩：屏上串口步进痕迹（前置声明） */
+ STATIC VOID SbMark (IN CONST CHAR8 *Tag);
++STATIC VOID SbHex (IN UINT64 Value);
+ 
+ #include <Library/MemoryMapHelperLib.h>
+ 
+@@ -254,6 +255,7 @@ PeiContinueBoot(VOID* ARGS)
+   // Load the DXE Core and transfer control to it
+   Status = LoadDxeCoreFromFv (NULL, 0);
+   SbMark ("[P11]");
++  SbHex ((UINT64)Status);
+   ASSERT_EFI_ERROR (Status);
+ }
+ 
+@@ -262,6 +264,27 @@ PeiContinueBoot(VOID* ARGS)
+ // 2026-11-04 y700-elden 调试插桩：屏上串口步进痕迹（FrameBufferSerialPortLib 已生效）
+ // 每条 = 一行 "[Pxx]\n\r"；看到最后一条就知道死在它之后的那一步。
+ //
++STATIC
++VOID
++SbHex (
++  IN UINT64  Value
++  )
++{
++  STATIC CONST CHAR8  Hex[] = "0123456789ABCDEF";
++  CHAR8               Buf[20];
++  UINTN               i;
++
++  Buf[0] = '0';
++  Buf[1] = 'x';
++  for (i = 0; i < 16; i++) {
++    Buf[2 + i] = Hex[(Value >> ((15 - i) * 4)) & 0xF];
++  }
++
++  Buf[18] = '\n';
++  Buf[19] = '\r';
++  SerialPortWrite ((UINT8 *)Buf, 20);
++}
++
+ STATIC
+ VOID
+ SbMark (

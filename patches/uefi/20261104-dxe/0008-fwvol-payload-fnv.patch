@@ -1,0 +1,24 @@
+diff --git a/EmbeddedPkg/Library/PrePiLib/FwVol.c b/EmbeddedPkg/Library/PrePiLib/FwVol.c
+index ed69f3e..7bf7c4e 100644
+--- a/EmbeddedPkg/Library/PrePiLib/FwVol.c
++++ b/EmbeddedPkg/Library/PrePiLib/FwVol.c
+@@ -419,6 +419,19 @@ FfsProcessSection (
+         FvHex ((UINT64)Status);
+         FvHex ((UINT64)DstBufferSize);
+         FvHex ((UINT64)ScratchBufferSize);
++        {
++          UINT8  *Cp     = (UINT8 *)Section + ((EFI_GUID_DEFINED_SECTION *)Section)->DataOffset + 13;
++          UINTN   CpLen  = SECTION_SIZE (Section) - ((EFI_GUID_DEFINED_SECTION *)Section)->DataOffset - 13;
++          UINT64  Fnv    = 0xcbf29ce484222325ULL;
++          UINTN   i;
++          for (i = 0; i < CpLen; i++) {
++            Fnv ^= Cp[i];
++            Fnv *= 0x100000001b3ULL;
++          }
++          FvMark ("[G23]");
++          FvHex ((UINT64)CpLen);
++          FvHex (Fnv);
++        }
+       }
+ 
+       if (EFI_ERROR (Status)) {

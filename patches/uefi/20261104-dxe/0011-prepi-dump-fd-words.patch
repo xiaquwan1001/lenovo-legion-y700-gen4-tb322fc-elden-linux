@@ -1,0 +1,47 @@
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index 1789f0e1..138fde4d 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -27,6 +27,7 @@ STATIC VOID SbMark (IN CONST CHAR8 *Tag);
+ STATIC VOID SbHex (IN UINT64 Value);
+ 
+ STATIC VOID SbFnvFd (IN CONST CHAR8 *Tag);
++STATIC VOID SbDump (IN UINT64 Off);
+ 
+ #include <Library/MemoryMapHelperLib.h>
+ 
+@@ -251,6 +252,10 @@ PeiContinueBoot(VOID* ARGS)
+ /////////////////////////////////////////////
+   // Assume the FV that contains the SEC (our code) also contains a compressed FV.
+   SbFnvFd ("[F01]");
++  SbDump (0x8E275);
++  SbDump (0x90000);
++  SbDump (0x9E000);
++  SbDump (0x1E275);
+   Status = DecompressFirstFv ();
+   SbMark ("[P10]");
+   ASSERT_EFI_ERROR (Status);
+@@ -295,6 +300,23 @@ SbHex (
+ #define SB_FD_BASE  0xFF300000ULL
+ #define SB_FD_SIZE  0x00400000ULL
+ 
++/* 打印 FD 内若干个 64-bit 字（判断是 0xFF 未写 / 内容错位 / 被覆盖） */
++STATIC
++VOID
++SbDump (
++  IN UINT64  Off
++  )
++{
++  UINT64  *P = (UINT64 *)(UINTN)(SB_FD_BASE + Off);
++  UINTN    i;
++
++  SbMark ("[DUMP]");
++  SbHex (Off);
++  for (i = 0; i < 4; i++) {
++    SbHex (P[i]);
++  }
++}
++
+ STATIC
+ VOID
+ SbFnvFd (

@@ -1,2 +1,25 @@
---- a/MU_BASECORE/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c
-+++ b/MU_BASECORE/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c
+diff --git a/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c b/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c
+index 023af6c..6528e48 100644
+--- a/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c
++++ b/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c
+@@ -34,6 +34,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ 
+ #include "DxeMain.h"
+ 
++// y700-elden debug instrumentation (defined in DxeMain.c)
++VOID
++SbMark (
++  IN CONST CHAR8  *Tag
++  );
++
+ //
+ // The Driver List contains one copy of every driver that has been discovered.
+ // Items are never removed from the driver list. List of EFI_CORE_DRIVER_ENTRY
+@@ -519,6 +525,7 @@ CoreDispatcher (
+         ASSERT (DriverEntry->ImageHandle != NULL);
+ 
+         Status = CoreStartImage (DriverEntry->ImageHandle, NULL, NULL);
++        SbMark (">");   // y700-elden: 每个 DXE driver 启动完成打一个 '>'
+ 
+         REPORT_STATUS_CODE_WITH_EXTENDED_DATA (
+           EFI_PROGRESS_CODE,

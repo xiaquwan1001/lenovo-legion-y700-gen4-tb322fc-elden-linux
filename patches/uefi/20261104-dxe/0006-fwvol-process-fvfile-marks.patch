@@ -1,0 +1,90 @@
+diff --git a/EmbeddedPkg/Library/PrePiLib/FwVol.c b/EmbeddedPkg/Library/PrePiLib/FwVol.c
+index 5aee497..d50488e 100644
+--- a/EmbeddedPkg/Library/PrePiLib/FwVol.c
++++ b/EmbeddedPkg/Library/PrePiLib/FwVol.c
+@@ -10,6 +10,49 @@
+ **/
+ 
+ #include <PrePi.h>
++#include <Library/SerialPortLib.h>   /* y700-elden debug marks */
++
++/* 2026-11-04 y700-elden 调试插桩：FV 解包/注册阶段痕迹 */
++
++STATIC
++VOID
++FvMark (
++  IN CONST CHAR8  *Tag
++  )
++{
++  CHAR8  Buf[16];
++  UINTN  Len;
++
++  for (Len = 0; Tag[Len] != 0 && Len < 12; Len++) {
++    Buf[Len] = Tag[Len];
++  }
++
++  Buf[Len++] = '\n';
++  Buf[Len++] = '\r';
++  SerialPortWrite ((UINT8 *)Buf, Len);
++}
++
++STATIC
++VOID
++FvHex (
++  IN UINT64  Value
++  )
++{
++  STATIC CONST CHAR8  Hex[] = "0123456789ABCDEF";
++  CHAR8               Buf[20];
++  UINTN               i;
++
++  Buf[0] = '0';
++  Buf[1] = 'x';
++  for (i = 0; i < 16; i++) {
++    Buf[2 + i] = Hex[(Value >> ((15 - i) * 4)) & 0xF];
++  }
++
++  Buf[18] = '\n';
++  Buf[19] = '\r';
++  SerialPortWrite ((UINT8 *)Buf, 20);
++}
++
+ #include <Library/ExtractGuidedSectionLib.h>
+ 
+ #define GET_OCCUPIED_SIZE(ActualSize, Alignment) \
+@@ -849,9 +892,13 @@ FfsProcessFvFile (
+   //
+   Status = FfsFindSectionDataWithHook (EFI_SECTION_FIRMWARE_VOLUME_IMAGE, NULL, FvFileHandle, (VOID **)&FvImageHandle);
+   if (EFI_ERROR (Status)) {
++    FvMark ("[G11e]");
++    FvHex ((UINT64)Status);
+     return Status;
+   }
+ 
++  FvMark ("[G11]");
++
+   //
+   // Collect FvImage Info.
+   //
+@@ -859,6 +906,12 @@ FfsProcessFvFile (
+   Status = FfsGetVolumeInfo (FvImageHandle, &FvImageInfo);
+   ASSERT_EFI_ERROR (Status);
+ 
++  // y700-elden: 解压后的内层 FV 基址/大小（能打出来 = LZMA 解压成功）
++  FvMark ("[G12]");
++  FvHex ((UINT64)FvImageInfo.FvStart);
++  FvHex ((UINT64)FvImageInfo.FvSize);
++  FvHex ((UINT64)Status);
++
+   //
+   // FvAlignment must be more than 8 bytes required by FvHeader structure.
+   //
+@@ -886,7 +939,7 @@ FfsProcessFvFile (
+   //
+   // Inform HOB consumer phase, i.e. DXE core, the existence of this FV
+   //
+-  BuildFvHob ((EFI_PHYSICAL_ADDRESS)(UINTN)FvImageInfo.FvStart, FvImageInfo.FvSize);
++  BuildFvHob ((EFI_PHYSICAL_ADDRESS)(UINTN)FvImageInfo.FvStart, FvImageInfo.FvSize);  FvMark ("[G13]");
+ 
+   // MU_CHANGE Start
+   Status = FfsGetVolumeInfo (ParentVolumeHandle, &ParentVolumeInfo);

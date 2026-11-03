@@ -1,0 +1,69 @@
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index 1789f0e1..a24447dd 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -27,6 +27,7 @@ STATIC VOID SbMark (IN CONST CHAR8 *Tag);
+ STATIC VOID SbHex (IN UINT64 Value);
+ 
+ STATIC VOID SbFnvFd (IN CONST CHAR8 *Tag);
++STATIC VOID SbBlocks (VOID);
+ 
+ #include <Library/MemoryMapHelperLib.h>
+ 
+@@ -251,6 +252,7 @@ PeiContinueBoot(VOID* ARGS)
+ /////////////////////////////////////////////
+   // Assume the FV that contains the SEC (our code) also contains a compressed FV.
+   SbFnvFd ("[F01]");
++  SbBlocks ();
+   Status = DecompressFirstFv ();
+   SbMark ("[P10]");
+   ASSERT_EFI_ERROR (Status);
+@@ -295,6 +297,48 @@ SbHex (
+ #define SB_FD_BASE  0xFF300000ULL
+ #define SB_FD_SIZE  0x00400000ULL
+ 
++/*
++  每个 64 KiB 块算一个 32 位 FNV-1a，8 个一行打印（共 64 块 = 8 行）。
++  与主机同表对比即可看出「哪些块被改坏」。
++*/
++STATIC
++VOID
++SbBlocks (
++  VOID
++  )
++{
++  STATIC CONST CHAR8  Hex[] = "0123456789ABCDEF";
++  UINT8                *Fd = (UINT8 *)(UINTN)SB_FD_BASE;
++  CHAR8                 Buf[96];
++  UINTN                 Blk;
++  UINTN                 Pos;
++
++  for (Blk = 0; Blk < 64; Blk++) {
++    UINT32  H = 0x811C9DC5u;
++    UINTN   i;
++    INTN    k;
++
++    for (i = 0; i < 0x10000; i++) {
++      H ^= Fd[Blk * 0x10000 + i];
++      H *= 0x01000193u;
++    }
++
++    if ((Blk % 8) == 0) {
++      Pos = 0;
++    }
++
++    for (k = 7; k >= 0; k--) {
++      Buf[Pos++] = Hex[(H >> (k * 4)) & 0xF];
++    }
++
++    Buf[Pos++] = ((Blk % 8) == 7) ? '\n' : ' ';
++    if ((Blk % 8) == 7) {
++      Buf[Pos++] = '\r';
++      SerialPortWrite ((UINT8 *)Buf, Pos);
++    }
++  }
++}
++
+ STATIC
+ VOID
+ SbFnvFd (

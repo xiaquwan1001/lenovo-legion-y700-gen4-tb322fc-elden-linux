@@ -1,0 +1,60 @@
+diff --git a/EmbeddedPkg/Library/PrePiLib/PrePiLib.c b/EmbeddedPkg/Library/PrePiLib/PrePiLib.c
+index b34330d..2dc5417 100644
+--- a/EmbeddedPkg/Library/PrePiLib/PrePiLib.c
++++ b/EmbeddedPkg/Library/PrePiLib/PrePiLib.c
+@@ -50,6 +50,36 @@ LbHex (
+   SerialPortWrite ((UINT8 *)Buf, 20);
+ }
+ 
++STATIC
++VOID
++FvHobDump (
++  VOID
++  )
++{
++  EFI_PEI_HOB_POINTERS  Hob;
++  UINTN                 Count;
++
++  Count   = 0;
++  Hob.Raw = GetHobList ();
++  while (Hob.Raw != NULL) {
++    Hob.Raw = GetNextHob (EFI_HOB_TYPE_FV, Hob.Raw);
++    if (Hob.Raw == NULL) {
++      break;
++    }
++
++    Count++;
++    if (Count <= 8) {
++      LbHex ((UINT64)Hob.FirmwareVolume->BaseAddress);
++      LbHex ((UINT64)Hob.FirmwareVolume->Length);
++    }
++
++    Hob.Raw = GET_NEXT_HOB (Hob);
++  }
++
++  LbMark ("[G04n]");
++  LbHex ((UINT64)Count);
++}
++
+ //
+ // Hack to work in NT32
+ //
+@@ -290,10 +320,18 @@ DecompressFirstFv (
+   EFI_PEI_FV_HANDLE    VolumeHandle;
+   EFI_PEI_FILE_HANDLE  FileHandle;
+ 
++  LbMark ("[G01]");
+   Status = FfsAnyFvFindFirstFile (EFI_FV_FILETYPE_FIRMWARE_VOLUME_IMAGE, &VolumeHandle, &FileHandle);
+   if (!EFI_ERROR (Status)) {
++    LbMark ("[G02]");
+     Status = FfsProcessFvFile (FileHandle, VolumeHandle); // MU_CHANGE
++    LbMark ("[G03]");
++  } else {
++    LbMark ("[G02e]");
+   }
+ 
++  LbHex ((UINT64)Status);
++  FvHobDump ();
++
+   return Status;
+ }

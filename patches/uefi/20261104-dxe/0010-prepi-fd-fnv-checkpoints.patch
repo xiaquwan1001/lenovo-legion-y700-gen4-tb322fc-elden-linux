@@ -1,0 +1,62 @@
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index 32c000a5..1789f0e1 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -26,6 +26,8 @@
+ STATIC VOID SbMark (IN CONST CHAR8 *Tag);
+ STATIC VOID SbHex (IN UINT64 Value);
+ 
++STATIC VOID SbFnvFd (IN CONST CHAR8 *Tag);
++
+ #include <Library/MemoryMapHelperLib.h>
+ 
+ ////////////////////////////////////////////
+@@ -248,6 +250,7 @@ PeiContinueBoot(VOID* ARGS)
+ //
+ /////////////////////////////////////////////
+   // Assume the FV that contains the SEC (our code) also contains a compressed FV.
++  SbFnvFd ("[F01]");
+   Status = DecompressFirstFv ();
+   SbMark ("[P10]");
+   ASSERT_EFI_ERROR (Status);
+@@ -285,6 +288,32 @@ SbHex (
+   SerialPortWrite ((UINT8 *)Buf, 20);
+ }
+ 
++/*
++  2026-11-04 y700-elden 调试插桩：对 DDR 中的 UEFI FD 算 FNV-1a64，
++  用来判断「FD 内容在什么时刻被改坏」。基址与 shim 的 UEFI_BASE 一致。
++*/
++#define SB_FD_BASE  0xFF300000ULL
++#define SB_FD_SIZE  0x00400000ULL
++
++STATIC
++VOID
++SbFnvFd (
++  IN CONST CHAR8  *Tag
++  )
++{
++  UINT8   *P   = (UINT8 *)(UINTN)SB_FD_BASE;
++  UINT64  Fnv = 0xcbf29ce484222325ULL;
++  UINTN   Idx;
++
++  for (Idx = 0; Idx < (UINTN)SB_FD_SIZE; Idx++) {
++    Fnv ^= P[Idx];
++    Fnv *= 0x100000001b3ULL;
++  }
++
++  SbMark (Tag);
++  SbHex (Fnv);
++}
++
+ STATIC
+ VOID
+ SbMark (
+@@ -311,6 +340,7 @@ CEntryPoint ()
+   // Initialize the platform specific controllers
+   ArmPlatformInitialize (0);
+   SbMark ("[P01]");
++  SbFnvFd ("[F00]");
+ 
+   if (PerformanceMeasurementEnabled ()) {
+     // Initialize the Timer Library to setup the Timer HW controller

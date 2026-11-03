@@ -75,6 +75,17 @@ vk64	boot-elden-vk64.img	vk64	7.2.0-debug-vk64-gd02658e63cf6	1483a9c6c542	d02658
 (no-payload)	uefi-20261101-1005recipe-v0.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261103-v2aligned.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104-dual.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe10.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe11.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe2.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe3.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe4.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe5.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe6.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe7.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe8.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dxe9.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104-fbband.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104-fbfill.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104-m3block.img	-	(无内核载荷)						-	skip

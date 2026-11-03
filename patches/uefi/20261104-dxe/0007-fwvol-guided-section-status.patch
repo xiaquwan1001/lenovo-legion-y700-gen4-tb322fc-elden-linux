@@ -1,0 +1,47 @@
+diff --git a/EmbeddedPkg/Library/PrePiLib/FwVol.c b/EmbeddedPkg/Library/PrePiLib/FwVol.c
+index d50488e..ed69f3e 100644
+--- a/EmbeddedPkg/Library/PrePiLib/FwVol.c
++++ b/EmbeddedPkg/Library/PrePiLib/FwVol.c
+@@ -11,6 +11,7 @@
+ 
+ #include <PrePi.h>
+ #include <Library/SerialPortLib.h>   /* y700-elden debug marks */
++#include <Library/ExtractGuidedSectionLib.h>
+ 
+ /* 2026-11-04 y700-elden 调试插桩：FV 解包/注册阶段痕迹 */
+ 
+@@ -400,12 +401,24 @@ FfsProcessSection (
+                    &ScratchBufferSize
+                    );
+       } else if (Section->Type == EFI_SECTION_GUID_DEFINED) {
++        {
++          GUID  *GuidList;
++          UINTN  GuidCount;
++          GuidCount = ExtractGuidedSectionGetGuidList (&GuidList);
++          FvMark ("[G20]");
++          FvHex ((UINT64)GuidCount);
++          FvHex ((UINT64)DstBufferSize);
++        }
+         Status = ExtractGuidedSectionGetInfo (
+                    Section,
+                    &DstBufferSize,
+                    &ScratchBufferSize,
+                    &SectionAttribute
+                    );
++        FvMark ("[G21]");
++        FvHex ((UINT64)Status);
++        FvHex ((UINT64)DstBufferSize);
++        FvHex ((UINT64)ScratchBufferSize);
+       }
+ 
+       if (EFI_ERROR (Status)) {
+@@ -464,6 +477,9 @@ FfsProcessSection (
+                    ScratchBuffer,
+                    &AuthenticationStatus
+                    );
++        FvMark ("[G22]");
++        FvHex ((UINT64)Status);
++        FvHex ((UINT64)DstBufferSize);
+       }
+ 
+       if (EFI_ERROR (Status)) {

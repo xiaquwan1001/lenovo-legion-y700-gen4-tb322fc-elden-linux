@@ -1,0 +1,59 @@
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index 1789f0e1..71e5b91f 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -27,6 +27,7 @@ STATIC VOID SbMark (IN CONST CHAR8 *Tag);
+ STATIC VOID SbHex (IN UINT64 Value);
+ 
+ STATIC VOID SbFnvFd (IN CONST CHAR8 *Tag);
++STATIC VOID SbDump (IN UINT64 Off);
+ 
+ #include <Library/MemoryMapHelperLib.h>
+ 
+@@ -251,6 +252,9 @@ PeiContinueBoot(VOID* ARGS)
+ /////////////////////////////////////////////
+   // Assume the FV that contains the SEC (our code) also contains a compressed FV.
+   SbFnvFd ("[F01]");
++  SbDump (0x8E275);
++  SbDump (0x90000);
++  SbDump (0x9E000);
+   Status = DecompressFirstFv ();
+   SbMark ("[P10]");
+   ASSERT_EFI_ERROR (Status);
+@@ -295,6 +299,36 @@ SbHex (
+ #define SB_FD_BASE  0xFF300000ULL
+ #define SB_FD_SIZE  0x00400000ULL
+ 
++/*
++  紧凑打印 FD 内 6 个 32-bit 字（一行 60 字符，3 倍字号下一屏放得下）。
++  Off 为 4 字节对齐偏移。
++*/
++STATIC
++VOID
++SbDump (
++  IN UINT64  Off
++  )
++{
++  UINT32  *P = (UINT32 *)(UINTN)(SB_FD_BASE + Off);
++  CHAR8   Buf[64];
++  UINTN   i;
++  UINTN   Pos;
++
++  Pos = 0;
++  for (i = 0; i < 6; i++) {
++    UINT32  V = P[i];
++    INTN    k;
++    for (k = 7; k >= 0; k--) {
++      Buf[Pos++] = "0123456789ABCDEF"[(V >> (k * 4)) & 0xF];
++    }
++    Buf[Pos++] = (i == 5) ? '\n' : ' ';
++  }
++
++  Buf[Pos++] = '\r';
++  SbMark ("[D]");
++  SerialPortWrite ((UINT8 *)Buf, Pos);
++}
++
+ STATIC
+ VOID
+ SbFnvFd (
