@@ -73,4 +73,12 @@ vk64	boot-elden-vk64.img	vk64	7.2.0-debug-vk64-gd02658e63cf6	1483a9c6c542	d02658
 (unversioned)	boot-elden.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	c4e884ada929	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	unversioned|no_manifest|kbin_shared3|uts_dup12
 (no-payload)	dtbo-dummy.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261101-1005recipe-v0.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261103-v2aligned.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-dual.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-fbband.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-fbfill.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-m3block.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-nocivac.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-prepi.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104-prog.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-ddrmarks-sysram-rd.img	-	(无内核载荷)						-	skip
