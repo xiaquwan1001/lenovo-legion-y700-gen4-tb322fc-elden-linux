@@ -77,6 +77,8 @@
 | **`Project-Aloha/UEFIFirmwareBackup`** → `lenovo-y700g4/BOOT.MXF.2.5.1-00240.1-PAKALA-1/`（480 文件，`3a48f03cf` 2026-04-21） | 从原厂固件提取的 **Y700g4 UEFI DXE 二进制备份**；README §SM8750 Pakala 表：`Lenovo y700 gen4 = lenovo-y700g4`、`Oneplus 13 = oneplus-pjz110`、`Xiaomi Piano = xiaomi-piano` | 上述 `Binaries/` 的来源；也可离线核对设备自带 DXE |
 | **`Project-Silicium/Mu-Silicium`** + `Device-Binaries`（2026-10-22 复核：Mu `42fe5637` / Bin `a1501e0c`） | SM8750 已有**在用**设备：OnePlus 13 `dodge` —— `Status.md` 记 `Display ✅ / Internal Storage ✅ / Mass Storage ✅ / Linux Boot ✅`。关键：其 `UFSDxe` 用**打过补丁的二进制** `UFSDxe.patched.efi`，补丁内容 = 「sleep→wakeup」+「gear check 前强制 link 唤醒」（作者 `sunflower2333`/N1kroks），**正是上游对我们 UFS 失败的答复所指的 UFSDxe 专用补丁** | **G1-29 重试的最小增量**：只换这一个二进制（sha256 与本仓 `reference/upstream-mu-silicium/README.md` 对照），配方见该 README §3 |
 
+> **★2026-11-03 增第二路线（同芯片开源实现）**：`slwyts/Project-SunUEFI`（小米平板 8 Pro = `piano` = **SM8750**）**不加载厂商 `UFSDxe`**，从寄存器层自写 UFS 只读栈（`uefi/core/PianoUfsReadOnlyDma.c` 1138 行 + `PianoUfsProbe.c` 时钟/GDSC 账本），实机 **133 GPT 分区 / 139 BlockIO 句柄 / 7 个只读 SFS 卷**（`docs/archive/storage-usb/blockio-usb-progress.md`）。同一仓库还提供**合体 BOOT 全套**（bootselect + BootShim + 2×4 KiB 请求页 + `RSTRv1` 无损恢复目录 + repack/restore 工具）与**UEFI 屏上可见性方法**（延后原厂 ClockDxe CESTA/media + DCD 初始化、GOP 色块检查点、LoadImage 副本内 trampoline 插桩）。本地克隆已在 `external/ext-repos/sunuefi`（`afe922b`，2026-10-28）。逐条裁决见 **`sessions/2026-11-03-Project-SunUEFI复用盘点.md`**。
+
 > **要点**：资源已「现成」⇒ G1-29 Route A 由「自造 UEFI」变为「取用 + 主机构建 + 设备侧零写盘 `fastboot boot` 验证」。
 > **⚠ MIGRATION-LOST（2026-10-22 核实）**：2026-10-05 曾落盘 `mu_wide_platforms/`（fork `xiaquwan1001/mu_wide_platforms`，1.0 G，含设备包 391 文件）+ `uefi-firmware-backup/`（`Project-Aloha/UEFIFirmwareBackup`，1.3 G，二者同名驱动 sha256 逐字节一致），**2026-10-17 换机未随迁，本机已不存在** ⇒ 路线 A 重试须先重取。Mu-Silicium 与 `Device-Binaries` 本轮改为**按需取件**（小件快照 + 结论见 `reference/upstream-mu-silicium/`），不再全量 clone。
 > **仍未解**：① `lenovo-y700g4` 无 CI/产物/公开验证记录；② `DeviceTreeBlob/Linux/*.dtb` 均为 **6 字节 `dummy` 占位符**（但 `PakalaPkg/PostBuild.py` 构建只用 `BootShim+SM8750_EFI.fd`，**不引用 DTB**，故不阻塞 boot.img 产出）；③ 平台默认 `PcdSystemMemorySize=12 GiB` ≠ 本单元 16 GB（按容量档需核内存映射）；④ 四代 ABL 是否接受 BootShim 壳（BOOTCHAIN **E4** 未做）；⑤ 备份 `uefi.elf`（2.79 MB）≠ 本机 `~/下载/tb322fc/uefi.elf`（5.24 MB，不同固件线）。
@@ -226,6 +228,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | `sessions/2026-11-03-项目整理.md` | 本轮整理（外部资产收拢 / 布局注册表 / SSOT 瘦身 / 纠错） |
 | `sessions/2026-11-03-顶层台账快照-20261023.md` | 顶层台账 2026-10-23 快照（§3.2 收口归档） |
 | `sessions/2026-11-03-资产瘦身优先级-1002审计.md` | 资产瘦身 P 级方案原文（§2.5 作废归档） |
+| `sessions/2026-11-03-Project-SunUEFI复用盘点.md` | Project-SunUEFI（piano/SM8750）可复用资产盘点：UEFI 自研 UFS 栈 / 合体 BOOT / 屏上插桩法 / 内核补丁对照表 |
 
 ## 3. 文件与资产台账（FILES）
 
