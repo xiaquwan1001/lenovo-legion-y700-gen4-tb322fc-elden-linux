@@ -306,6 +306,9 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 > 顶层布局注册表（`versions/layout.tsv` + `scripts/check-layout.sh` + `check-doctor` §14）、零风险冗余删除 3.0 G、
 > 以及一份 `out/` 镜像静默损坏的检出 ⇒ 全过程与数字见 **`../reports/asset-tidy-20261103.md`**、
 > 会话记录 `sessions/2026-11-03-项目整理.md`。
+> **2026-11-03 git 树精简合并**（分支 5→1、`.git` 450 M→201 M、历史剔除 2.8 GB 串口 delta 与 96 MiB 槽位镜像、
+> `main` 已与 GitHub 同步）+ 损坏镜像 `out/boot-elden-m3v5-daily.img` 重打后**逐字节复现** ⇒
+> **`../reports/git-tree-consolidation-20261103.md`**（含重写前全量 bundle 位置与代价说明）。
 >
 > **2026-10-23 全量对账 + 清理**（`reports/assets-inventory-20261023.md`、`archive/topics/清理清单-20261023.md`）：对账时为 **83.5 GB**；按 A0–A7 执行后 **≈47 GB**（根盘 `df` 184.0→146.7 GiB，净回收 **37.3 GiB**）。入 git **2399 文件 / 49 MB**（`.git` 另 31 MB）。
 > 下表体积为**清理后 2026-10-23 晚现查**。**删除仍按 §3 纪律（逐级、记 df、删前导出独有件）；批量删用 `python3 shutil.rmtree`——本机 pi bash 会把 `rm` 改成 trash（教训见清理清单 §0）。**
