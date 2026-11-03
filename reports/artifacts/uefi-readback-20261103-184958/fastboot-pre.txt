@@ -1,0 +1,15 @@
+== current-slot
+current-slot: b
+Finished. Total time: 0.007s
+== slot-successful:b
+slot-successful:b: yes
+Finished. Total time: 0.005s
+== slot-unbootable:b
+slot-unbootable:b: no
+Finished. Total time: 0.005s
+== slot-retry-count:b
+slot-retry-count:b: 6
+Finished. Total time: 0.005s
+== product
+product: elden_prc_wifi
+Finished. Total time: 0.004s

@@ -1,0 +1,121 @@
+--- a/BootShim/BootShim.S
++++ b/BootShim/BootShim.S
+@@ -36,48 +36,74 @@
+ 	.long 0
+ 
+ _Start:
+-/* DDR 黑匣子 stage 标记（2026-11-01 第三版）：Android 回落实测**不清**的三块 carveout
+-   （dsm-partition-1 / video / dsm-partition-2，存活率 77-88%），按「最不易受保护」顺序写：
+-     0x84A00000 dsm1 -> 0x9C300000 video -> 0x89300000 dsm2
+-   单调编码：整页 0xFF = 到过该 stage。stage：1=shim 入口 2=FD 拷完 4=即将跳入 FD。 */
+-#define BB_MARK_REG(base, stage)                          \
+-	movz	x7, #((base) & 0xffff);                   \
+-	movk	x7, #(((base) >> 16) & 0xffff), lsl #16;  \
+-	movz	w8, #(stage);                             \
+-	lsl	x8, x8, #12;                              \
+-	add	x7, x7, x8;                               \
+-	mov	x11, x7;                                  \
+-	mov	x9, #-1;                                  \
+-	mov	w10, #512;                                \
+-1:	str	x9, [x7], #8;                            \
+-	subs	w10, w10, #1;                             \
+-	b.ne	1b;                                       \
+-/* 回写：标记若只落在 D-cache，看门狗复位会丢，必须 clean to PoC */ \
+-	mov	x7, x11;                                  \
+-	mov	w10, #64;                                 \
+-2:	dc	civac, x7;                                \
+-	add	x7, x7, #64;                              \
+-	subs	w10, w10, #1;                             \
+-	b.ne	2b;                                       \
++/* 屏幕里程碑（2026-11-04 第二版）：**色带**，不是整屏填充。
++   实测（19:31）：DT 声明的 splash_region 是 0xFC800000/0x02B00000，但**只有前 ~1 MiB
++   可访问** —— 写/读 0xFC900000 会把 SoC 总线挂死（第一版整屏填充就是撞在这上面：
++   屏幕从上往下红到约 137 行后整机无响应）。所以所有标记必须落在前 1 MiB 内。
++   布局：每 64 KiB 一条纯色带（stride 7616 时约 8.6 行），自上而下按执行顺序排列：
++     +0x00000 红    = M1 shim 第一条指令已执行
++     +0x10000 青    = 拷贝 1 MiB
++     +0x20000 品红  = 拷贝 2 MiB
++     +0x30000 白    = 拷贝 3 MiB
++     +0x40000 绿    = M2 FD 4 MiB 全拷完
++     +0x50000 蓝    = M3 cache 维护完、即将 br 进 UEFI
++     +0x60000 黄    = MD 落进 _Dead（不该出现）
++   判读：屏幕顶部出现哪些颜色的条 = 执行到哪一步；最后一条颜色就是死点。 */
++#define FB_BASE 0xfc800000
++#define FB_BAND_R(offreg, color)                                \
++	movz	x20, #(FB_BASE & 0xffff);                       \
++	movk	x20, #((FB_BASE >> 16) & 0xffff), lsl #16;      \
++	add	x20, x20, x19;                                  \
++	add	x21, x20, #0x10000;                             \
++	movz	w23, #((color) & 0xffff);                       \
++	movk	w23, #(((color) >> 16) & 0xffff), lsl #16;      \
++	mov	x22, x20;                                       \
++5:	str	w23, [x20], #4;                                 \
++	cmp	x20, x21;                                       \
++	b.lo	5b;                                             \
++	dsb	sy;                                             \
++6:	dc	civac, x22;                                     \
++	add	x22, x22, #64;                                  \
++	cmp	x22, x21;                                       \
++	b.lo	6b;                                             \
+ 	dsb	sy
+-#define BB_MARK(stage)                                    \
+-	BB_MARK_REG(0x84A00000, stage);                   \
+-	BB_MARK_REG(0x9C300000, stage);                   \
+-	BB_MARK_REG(0x89300000, stage)
++#define FB_BAND(off, color)                                     \
++	movz	x19, #((off) & 0xffff);                         \
++	movk	x19, #(((off) >> 16) & 0xffff), lsl #16;        \
++	FB_BAND_R(x19, color)
+ 
+-	BB_MARK(1)
++	FB_BAND(0x00000, 0x00ff0000)	/* 红 M1 */
+ 	mov		x4, x1
+ 	ldr		x5, _UefiBase
+ 	cmp		x4, x5
+ 	beq		_Entry
+ 	ldr		x6,  _StackSize
+ 
++	mov	x24, #0x100000		/* 1 MiB 一块 */
++	mov	x19, #0x10000			/* 进度色带起始偏移 */
++_CopyChunk:
++	mov	x25, x24
+ _CopyLoop:
+ 	ldp		x2, x3, [x4], #16
+ 	stp		x2, x3, [x5], #16
+-	subs	x6, x6, #16
++	subs	x25, x25, #16
+ 	b.ne	_CopyLoop
+-	BB_MARK(2)
++	subs	x6, x6, x24
++	b.eq	_CopyDone
++	/* 每拷完 1 MiB 出一条色带：青(1 MiB) -> 品红(2 MiB) -> 白(3 MiB) */
++	cmp	x19, #0x10000
++	b.ne	7f
++	FB_BAND_R(x19, 0x0000ffff)
++	b	9f
++7:	cmp	x19, #0x20000
++	b.ne	8f
++	FB_BAND_R(x19, 0x00ff00ff)
++	b	9f
++8:	FB_BAND_R(x19, 0x00ffffff)
++9:	add	x19, x19, #0x10000
++	b	_CopyChunk
++_CopyDone:
++	FB_BAND(0x40000, 0x0000ff00)	/* 绿 M2 拷贝完成 */
+ 
+ /*
+  * Cache maintenance before executing the copied image:
+@@ -100,11 +126,12 @@
+ 	isb
+ 
+ _Entry:
+-	BB_MARK(4)
++	FB_BAND(0x50000, 0x000000ff)	/* 蓝 M3 即将跳入 */
+ 	ldr		x5, _UefiBase
+ 	br		x5
+ 
+ _Dead:
++	FB_BAND(0x60000, 0x00ffff00)	/* 黄 MD（不该出现） */
+ 	/* We should never get here */
+ 	b		_Dead
+ 

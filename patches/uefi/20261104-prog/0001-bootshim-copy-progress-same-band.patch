@@ -1,0 +1,36 @@
+--- a/BootShim/BootShim.S
++++ b/BootShim/BootShim.S
+@@ -106,19 +106,21 @@
+ 	subs	x25, x25, #16
+ 	b.ne	_CopyLoop
+ 	subs	x6, x6, x24
+-	b.eq	_CopyDone
+-	/* 每拷完 1 MiB 出一条色带：青(1 MiB) -> 品红(2 MiB) -> 白(3 MiB) */
+-	cmp	x19, #0x10000
+-	b.ne	7f
+-	FB_BAND_R(x19, 0x0000ffff)
+-	b	9f
+-7:	cmp	x19, #0x20000
+-	b.ne	8f
+-	FB_BAND_R(x19, 0x00ff00ff)
+-	b	9f
+-8:	FB_BAND_R(x19, 0x00ffffff)
+-9:	add	x19, x19, #0x10000
++	/* 进度：同一块（FB+0x30000）换色 —— 顶条颜色 = 最后完成的 1 MiB 块
++	   青=1/4  品红=2/4  白=3/4  绿=4/4 */
++	cmp	x6, #0x300000
++	b.ne	11f
++	FB_BAND(0x30000, 0x0000ffff)
+ 	b	_CopyChunk
++11:	cmp	x6, #0x200000
++	b.ne	12f
++	FB_BAND(0x30000, 0x00ff00ff)
++	b	_CopyChunk
++12:	cmp	x6, #0x100000
++	b.ne	13f
++	FB_BAND(0x30000, 0x00ffffff)
++	b	_CopyChunk
++13:	FB_BAND(0x30000, 0x0000ff00)	/* 绿：4/4 拷完 */
+ _CopyDone:
+ 	FB_BAND(0x40000, 0x0000ff00)	/* 绿 M2 拷贝完成 */
+ 

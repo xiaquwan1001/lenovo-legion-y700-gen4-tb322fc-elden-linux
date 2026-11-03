@@ -1,0 +1,41 @@
+--- a/BootShim/BootShim.S
++++ b/BootShim/BootShim.S
+@@ -67,6 +67,23 @@
+ 	cmp	x22, x21;                                       \
+ 	b.lo	6b;                                             \
+ 	dsb	sy
++
++#define FB_FILL192(color)                                        \
++	movz	x20, #(FB_BASE & 0xffff);                        \
++	movk	x20, #((FB_BASE >> 16) & 0xffff), lsl #16;       \
++	add	x21, x20, #0x30000;                              \
++	movz	w23, #((color) & 0xffff);                        \
++	movk	w23, #(((color) >> 16) & 0xffff), lsl #16;       \
++	mov	x22, x20;                                        \
++7:	str	w23, [x20], #4;                                  \
++	cmp	x20, x21;                                        \
++	b.lo	7b;                                              \
++	dsb	sy;                                              \
++8:	dc	civac, x22;                                      \
++	add	x22, x22, #64;                                   \
++	cmp	x22, x21;                                        \
++	b.lo	8b;                                              \
++	dsb	sy
+ #define FB_BAND(off, color)                                     \
+ 	movz	x19, #((off) & 0xffff);                         \
+ 	movk	x19, #(((off) >> 16) & 0xffff), lsl #16;        \
+@@ -126,12 +143,12 @@
+ 	isb
+ 
+ _Entry:
+-	FB_BAND(0x50000, 0x000000ff)	/* 蓝 M3 即将跳入 */
++	FB_FILL192(0x000000ff)	/* 蓝 M3：整块覆盖 => 顶部整块蓝 = 已跳进 UEFI */
+ 	ldr		x5, _UefiBase
+ 	br		x5
+ 
+ _Dead:
+-	FB_BAND(0x60000, 0x00ffff00)	/* 黄 MD（不该出现） */
++	FB_FILL192(0x00ffff00)	/* 黄 MD（不该出现） */
+ 	/* We should never get here */
+ 	b		_Dead
+ 

@@ -1,0 +1,39 @@
+=== 0x84A00000
+stage 页判读（阈值：popcount>=6 的字节占比 >= 50%）:
+   0  （未写任何标记）                                       100.0% REACHED
+   1  shim:entry（载荷第一条指令开始执行）                        100.0% REACHED
+   2  shim:cold-copy-done（FD 已拷到装载基址）                100.0% REACHED
+   3  shim:cache-maint-done（dc civac / ic iallu 完成）  100.0% REACHED
+   4  shim:about-to-jump（即将跳入 FD 入口）                 100.0% REACHED
+   5  prepi:entry（Mu PrePi 已开始执行）                     99.9% REACHED
+   6  prepi:arch-done（PrePi 平台早期初始化返回）                99.9% REACHED
+   7  dxe:sec-done                                   100.0% REACHED
+   8  dxe:after-drivers                              100.0% REACHED
+   9  dxe:before-ebs                                 100.0% REACHED
+  10  stage10                                        100.0% REACHED
+=== 0x9C300000
+stage 页判读（阈值：popcount>=6 的字节占比 >= 50%）:
+   0  （未写任何标记）                                       100.0% REACHED
+   1  shim:entry（载荷第一条指令开始执行）                        100.0% REACHED
+   2  shim:cold-copy-done（FD 已拷到装载基址）                 99.9% REACHED
+   3  shim:cache-maint-done（dc civac / ic iallu 完成）   99.9% REACHED
+   4  shim:about-to-jump（即将跳入 FD 入口）                  99.9% REACHED
+   5  prepi:entry（Mu PrePi 已开始执行）                    100.0% REACHED
+   6  prepi:arch-done（PrePi 平台早期初始化返回）                99.9% REACHED
+   7  dxe:sec-done                                   100.0% REACHED
+   8  dxe:after-drivers                              100.0% REACHED
+   9  dxe:before-ebs                                 100.0% REACHED
+  10  stage10                                        100.0% REACHED
+=== 0x89300000
+stage 页判读（阈值：popcount>=6 的字节占比 >= 50%）:
+   0  （未写任何标记）                                       100.0% REACHED
+   1  shim:entry（载荷第一条指令开始执行）                        100.0% REACHED
+   2  shim:cold-copy-done（FD 已拷到装载基址）                100.0% REACHED
+   3  shim:cache-maint-done（dc civac / ic iallu 完成）  100.0% REACHED
+   4  shim:about-to-jump（即将跳入 FD 入口）                 100.0% REACHED
+   5  prepi:entry（Mu PrePi 已开始执行）                     99.9% REACHED
+   6  prepi:arch-done（PrePi 平台早期初始化返回）               100.0% REACHED
+   7  dxe:sec-done                                   100.0% REACHED
+   8  dxe:after-drivers                              100.0% REACHED
+   9  dxe:before-ebs                                  99.9% REACHED
+  10  stage10                                        100.0% REACHED

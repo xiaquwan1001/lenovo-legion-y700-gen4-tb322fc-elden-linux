@@ -1,0 +1,18 @@
+--- a/BootShim/BootShim.S
++++ b/BootShim/BootShim.S
+@@ -134,12 +134,9 @@
+  */
+ 	ldr		x5, _UefiBase
+ 	ldr		x6, _StackSize
+-_CivacLoop:
+-	dc		civac, x5
+-	add		x5, x5, #64
+-	subs	x6, x6, #64
+-	b.ne	_CivacLoop
+-	dsb		sy
++	/* 2026-11-04 nocivac 变体：跳过对 FD 区的 dc civac 扫描。
++	   依据：上一发绿带（4 MiB 拷完 + M2）出现、蓝块（M3）没出现 ⇒ 死点只可能在
++	   这段 4 MiB cache 维护里。只保留 ic iallu。 */
+ 	ic		iallu
+ 	dsb		sy
+ 	isb
