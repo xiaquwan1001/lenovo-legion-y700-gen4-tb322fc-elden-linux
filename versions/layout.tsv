@@ -1,0 +1,53 @@
+# versions/layout.tsv — 顶层布局注册表（唯一真源，机器门 scripts/check-layout.sh 读它）
+#
+# 规则：仓库根目录的**每个**顶层条目都必须在此登记（`.git` 除外）；新增目录/文件先加行、再落盘。
+# 列：zone <TAB> path <TAB> vcs <TAB> 职责（一句话；详情指向领域层文档）
+# zone 取值：entry(入口) doc(角度文档) evidence(证据/备份) src(源码/补丁/工具) work(工作区,gitignore) ai(AI 大脑)
+# vcs：track = 入 git；ignore = 按 .gitignore 排除（台账见 RESOURCES/README.md §3）
+zone	path	vcs	note
+entry	AGENTS.md	track	项目身份：机型唯一性、G1–G3 目标与优先级、核心原则
+entry	INDEX.md	track	唯一入口：使命/布局/路由/现状指针/快速命令
+entry	README.md	track	公开门面（面向 GitHub 读者）
+entry	PROGRESS.md	track	公开时间线（诚实进度叙事，非权威数字）
+entry	LICENSE	track	许可
+doc	DEVICE/	track	设备状态与描述（规格/固件/驱动矩阵/单元台账/存储策略）
+doc	TASKS/	track	唯一任务台账 + 进度权威（§0 总览 / §5 未解 / §7 上游化）
+doc	RESOURCES/	track	外部参考 + 本地资源 + 文件与资产台账（§3）
+doc	RUNBOOK-BRINGUP/	track	上机手册（Phase −1…9）
+doc	PITFALLS/	track	开发经验唯一入口（§0 纪律 + 分类正文）
+doc	SESSIONS/	track	逐会话档案（2026-10-15 起冻结，只读）
+doc	HISTORY/	track	逐提交史（scripts/gen-history.sh 机械生成，不手写）
+doc	archive/	track	过程证据（追加为主；不得作为当前结论引用）
+evidence	reports/	track	报告与活跃证据工作区（md 入库；大件按 .gitignore 排除）
+evidence	backup/	ignore	原厂固件/分区 dump/内核 bundle/官方线刷包（不可再生，见 RESOURCES §3）
+src	scripts/	track	脚本全集（构建/刷机/诊断/门禁）
+src	tools/	track	第三方或自研小工具（avbtool/mkbootimg/l2-extract…）
+src	patches/	track	内核补丁与 config 快照（内核进度的权威文本）
+src	patches-userland/	track	用户态（Phosh/phoc）补丁与构建/安装脚本
+src	reference/	track	外部同机型/厂商资料快照与裁决
+src	versions/	track	机器对账派生表（vk 身份/registry/布局注册表）
+src	packaging/	track	用户态解耦真源（manifest/services/deps）
+src	initramfs/	track	initramfs 重建输入（init + busybox）
+src	rootfs/	track	rootfs 覆盖物与设备侧还原副本
+src	probes/	track	设备侧诊断探针源码
+src	net/	track	网络小资产
+src	waydroid-ota/	track	Waydroid OTA 小资产
+src	restore-259/	track	恢复说明（二进制不入库）
+src	.githooks/	track	提交钩子（core.hooksPath=.githooks）
+src	cycle.sh	track	软回 fastboot 快环脚本
+src	elden-net.sh	track	USB 网络（RNDIS/ssh 通道）
+src	.gitignore	track	版本控制边界
+work	build/	ignore	内核构建树/独立仓/worktree（含未提交改动，删除前必须先 bundle + 导 diff，见 RESOURCES §3）
+work	out/	ignore	构建产物（*.manifest 入库）
+work	logs/	ignore	串口/构建/agent 日志
+work	bootslot-b/	ignore	自签 b 槽包（含 avb 私钥，禁止入库）
+work	env-pass/	ignore	过环境里程碑件
+work	dl-cam/	ignore	相机 provider 交叉编译工作区（部分纳管）
+work	wt/	ignore	lane git worktree（scripts/lane.sh WT_ROOT）
+work	external/	ignore	外部构建工作区（$HOME 同名软链指回此处）
+work	geekidos-linux/	ignore	上游内核 clone（GEEKiDoS/linux v7.2-elden）
+work	Y700-elden-linux/	ignore	旧迭代上游 clone
+work	stock-src/	ignore	联想 GPL 源码 clone
+work	y700四代工具/	ignore	厂商工具与解锁工具包
+work	linux	track	目录约定软链 -> geekidos-linux
+ai	.pi/	track	AI 大脑：行为规范/并发/编排/技能/记忆/会话（分工见 .pi/README.md）

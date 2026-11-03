@@ -314,7 +314,10 @@ ANGLES = ['PITFALLS', 'TASKS', 'DEVICE', 'RESOURCES', 'RUNBOOK-BRINGUP',
 # 顺序编号角度：文件名前导 `NN-` 必须唯一。
 SEQ_NUM_ANGLES = {'PITFALLS'}
 # 声明「README 逐文件登记 sessions/」的角度（opt-in；未列入者不检查覆盖）。
-INDEXED_ANGLES = {'PITFALLS', 'SESSIONS'}
+# 2026-11-03 增 RESOURCES：该角度只有几篇会话，逐文件登记成本低、收益高（原先 3 篇孤儿无人引用）。
+# TASKS/ 仍 opt-out：188 篇按日期滚动的会话日志，按主题在 §1/§5/§7 引用，逐文件登记会变成维护负担
+#   （口径已写进 RESOURCES/README.md §2.9 与本注释，不是遗漏）。
+INDEXED_ANGLES = {'PITFALLS', 'SESSIONS', 'RESOURCES'}
 for ang in ANGLES:
     sdir = os.path.join(root, ang, 'sessions')
     idx = os.path.join(root, ang, 'README.md')
@@ -617,6 +620,22 @@ else
     ok "文档资产路径齐全（$(printf '%s' "$_da" | grep -o 'checked=[0-9]*' | head -1)）"
   else
     bad "文档引用了不存在的路径：$(printf '%s' "$_da" | grep '^MISSING' | head -3 | awk '{print $2}' | tr '\n' ' ')"
+  fi
+fi
+
+# ---------------------------------------------------------------- 14. 顶层布局注册表
+# 立此节的原因（2026-11-03 项目整理）：根目录条目会随专题自发增长（现 46 项），
+# 没有注册表就无法判断「这个目录能不能删、要不要入库」。真源 versions/layout.tsv，
+# 人读面渲染在 INDEX.md §2「顶层布局」表。
+echo
+echo "== 14. 顶层布局注册表（委托 check-layout.sh）=="
+if [ ! -f scripts/check-layout.sh ]; then
+  bad "scripts/check-layout.sh 缺失"
+else
+  if _lo=$(bash scripts/check-layout.sh 2>&1); then
+    ok "顶层条目全部已登记（$(printf '%s' "$_lo" | grep -o 'entries=[0-9]*' | head -1)）"
+  else
+    bad "布局注册表不一致：$(printf '%s' "$_lo" | grep '^FAIL' | head -3 | sed 's/^FAIL: //' | tr '\n' ' ')"
   fi
 fi
 

@@ -37,7 +37,7 @@
 
 1. **只写 1 个新文件**：`<角度>/sessions/YYYY-MM-DD-<主题>.md`；同一会话多主题加 `-2`。**不新建目录、不改已存在的 sessions 文件、不建索引表**。
 2. **可用角度 4 个**：`TASKS/`（任务/进度/未解）、`PITFALLS/`（踩坑）、`DEVICE/`（单元/镜像状态）、`RESOURCES/`（资产/资源）。
-   `SESSIONS/` **冻结不写**；`HISTORY/` 由脚本生成**不手写**；`RUNBOOK-BRINGUP/` 目前空壳，需要时再启用。跨角度时写**主角度**一个文件，其余角度补一行指针。
+   `SESSIONS/` **冻结不写**；`HISTORY/` 由脚本生成**不手写**；`RUNBOOK-BRINGUP/` 已有正文（Phase −1…9 + `sessions/`），属可写角度。跨角度时写**主角度**一个文件，其余角度补一行指针。
 3. 文件头只写 6 个字段：`日期 / pi 会话 id / 主题 / 结论 / 证据指针 / ★SSOT 待并入`。`pi 会话 id` 取 `$PI_SESSION_ID`。
 4. **状态数字只改一处**：`TASKS/README.md` §0（总览）/ §5（Q 行）。其它任何地方**不写状态数字**，只写指针。
 5. **会话全文不复述、不复制**——它就在 `.pi/sessions/*.jsonl`；文件里只放「结论 + 指向证据的路径/命令」。
@@ -95,6 +95,62 @@
 | **会话档案（逐会话）** | **`SESSIONS/`** | ⚠ **已冻结的历史快照（2026-10-15 起不再增补）**：`README.md` = 索引表/统计/内核时间线 + `sessions/YYYY-MM-DD-<名称>.md`。**新会话一律不进本目录**；会话身份与全文检索 = pi 原生会话（`scripts/sess.sh` / `/resume`）。此处保留仅为档案 + `check-sessions.sh` 校验基准 |
 | **git 提交史（逐提交）** | **`HISTORY/`** | 提交视角权威：`README.md` = 规范/查询入口（**不写死数字**）+ `days/YYYY-MM-DD.md`（机械生成）。统计现查 `scripts/gen-history.sh --stats` |
 
+### 顶层布局（4 区 + 注册表；新增顶层条目必须先登记）
+
+> **机器真源 = `versions/layout.tsv`**，门 = `scripts/check-layout.sh`（`check-doctor.sh` §14）。
+> 规则：**根目录新增任何条目，先登记 `versions/layout.tsv`，再在本表加一行**；未登记即自检 FAIL。
+> 分区的意义是回答「这个目录能不能删、要不要入库」：`work/` 全是可再生成的构建/日志/外部工作区，
+> `evidence/` 里的 `backup/` 是不可再生件（删前必须先云盘或 bundle 兜底），`src/` 才是随代码走的资产。
+
+| 区 | 顶层条目 | 版本控制 | 职责（详情指向领域层） |
+|---|---|---|---|
+| 入口 | `AGENTS.md` | track | 项目身份：机型唯一性、G1–G3 目标与优先级、核心原则 |
+| 入口 | `INDEX.md` | track | 唯一入口：使命/布局/路由/现状指针/快速命令 |
+| 入口 | `README.md` | track | 公开门面（面向 GitHub 读者） |
+| 入口 | `PROGRESS.md` | track | 公开时间线（诚实进度叙事，非权威数字） |
+| 入口 | `LICENSE` | track | 许可 |
+| 角度文档 | `DEVICE/` | track | 设备状态与描述（规格/固件/驱动矩阵/单元台账/存储策略） |
+| 角度文档 | `TASKS/` | track | 唯一任务台账 + 进度权威（§0 总览 / §5 未解 / §7 上游化） |
+| 角度文档 | `RESOURCES/` | track | 外部参考 + 本地资源 + 文件与资产台账（§3） |
+| 角度文档 | `RUNBOOK-BRINGUP/` | track | 上机手册（Phase −1…9） |
+| 角度文档 | `PITFALLS/` | track | 开发经验唯一入口（§0 纪律 + 分类正文） |
+| 角度文档 | `SESSIONS/` | track | 逐会话档案（2026-10-15 起冻结，只读） |
+| 角度文档 | `HISTORY/` | track | 逐提交史（scripts/gen-history.sh 机械生成，不手写） |
+| 角度文档 | `archive/` | track | 过程证据（追加为主；不得作为当前结论引用） |
+| 证据/备份 | `reports/` | track | 报告与活跃证据工作区（md 入库；大件按 .gitignore 排除） |
+| 证据/备份 | `backup/` | ignore | 原厂固件/分区 dump/内核 bundle/官方线刷包（不可再生，见 RESOURCES §3） |
+| 源码/补丁/工具 | `scripts/` | track | 脚本全集（构建/刷机/诊断/门禁） |
+| 源码/补丁/工具 | `tools/` | track | 第三方或自研小工具（avbtool/mkbootimg/l2-extract…） |
+| 源码/补丁/工具 | `patches/` | track | 内核补丁与 config 快照（内核进度的权威文本） |
+| 源码/补丁/工具 | `patches-userland/` | track | 用户态（Phosh/phoc）补丁与构建/安装脚本 |
+| 源码/补丁/工具 | `reference/` | track | 外部同机型/厂商资料快照与裁决 |
+| 源码/补丁/工具 | `versions/` | track | 机器对账派生表（vk 身份/registry/布局注册表） |
+| 源码/补丁/工具 | `packaging/` | track | 用户态解耦真源（manifest/services/deps） |
+| 源码/补丁/工具 | `initramfs/` | track | initramfs 重建输入（init + busybox） |
+| 源码/补丁/工具 | `rootfs/` | track | rootfs 覆盖物与设备侧还原副本 |
+| 源码/补丁/工具 | `probes/` | track | 设备侧诊断探针源码 |
+| 源码/补丁/工具 | `net/` | track | 网络小资产 |
+| 源码/补丁/工具 | `waydroid-ota/` | track | Waydroid OTA 小资产 |
+| 源码/补丁/工具 | `restore-259/` | track | 恢复说明（二进制不入库） |
+| 源码/补丁/工具 | `.githooks/` | track | 提交钩子（core.hooksPath=.githooks） |
+| 源码/补丁/工具 | `cycle.sh` | track | 软回 fastboot 快环脚本 |
+| 源码/补丁/工具 | `elden-net.sh` | track | USB 网络（RNDIS/ssh 通道） |
+| 源码/补丁/工具 | `.gitignore` | track | 版本控制边界 |
+| 工作区（ignore） | `build/` | ignore | 内核构建树/独立仓/worktree（含未提交改动，删除前必须先 bundle + 导 diff，见 RESOURCES §3） |
+| 工作区（ignore） | `out/` | ignore | 构建产物（*.manifest 入库） |
+| 工作区（ignore） | `logs/` | ignore | 串口/构建/agent 日志 |
+| 工作区（ignore） | `bootslot-b/` | ignore | 自签 b 槽包（含 avb 私钥，禁止入库） |
+| 工作区（ignore） | `env-pass/` | ignore | 过环境里程碑件 |
+| 工作区（ignore） | `dl-cam/` | ignore | 相机 provider 交叉编译工作区（部分纳管） |
+| 工作区（ignore） | `wt/` | ignore | lane git worktree（scripts/lane.sh WT_ROOT） |
+| 工作区（ignore） | `external/` | ignore | 外部构建工作区（$HOME 同名软链指回此处） |
+| 工作区（ignore） | `geekidos-linux/` | ignore | 上游内核 clone（GEEKiDoS/linux v7.2-elden） |
+| 工作区（ignore） | `Y700-elden-linux/` | ignore | 旧迭代上游 clone |
+| 工作区（ignore） | `stock-src/` | ignore | 联想 GPL 源码 clone |
+| 工作区（ignore） | `y700四代工具/` | ignore | 厂商工具与解锁工具包 |
+| 工作区（ignore） | `linux` | track | 目录约定软链 -> geekidos-linux |
+| AI 大脑 | `.pi/` | track | AI 大脑：行为规范/并发/编排/技能/记忆/会话（分工见 .pi/README.md） |
+
 ### 证据层（`archive/`，追加为主）
 
 > 专题档案＝**过程证据**；结论一律以领域层为准，archive 不得被引用为「当前结论」。
@@ -109,7 +165,8 @@
 - 会话回忆：pi 原生会话选择器（`/resume`）/ `scripts/sess.sh`；**逐会话快照** `SESSIONS/`、**逐提交史** `HISTORY/`（`scripts/gen-sessions.py` / `gen-history.sh` 再生）。
 - 机器账自检：`scripts/check-doctor.sh`（退场入口 / vk 版本账 §5+§5d / manifest §5e / **§5f ABI 敏感项一致性（`.config`↔模块树）** / 静态卫生 /
   **§7 入口文档完整性（围栏·截断·证据指针泄漏）** / **§8 索引↔磁盘对账（编号撞车·索引行超长）** /
-  **§9 SESSIONS 快照** / **§10 HISTORY 对账** / **§11 提交钩子生效性**）。
+  **§9 SESSIONS 快照** / **§10 HISTORY 对账** / **§11 提交钩子生效性** / **§14 顶层布局注册表**）。
+  顶层布局真源 = **`versions/layout.tsv`**（46 项，4 区：入口/文档 · 源码/补丁 · 证据/备份 · 工作区；人读面 = 本节「顶层布局」表，门 = `scripts/check-layout.sh`）。
   **入库前门已接线**（`core.hooksPath=.githooks`）：`pre-commit` 跑 `--staged-fast`（§7/§8/§9，~0.2 s）。
 - **打包前门**：`scripts/assert-kernel-sane.sh`（config 锚点 / System.map 符号 / UTS 对齐 / 非陈旧 / **§1b ABI 敏感项**，后者调 `scripts/check-abi-config.sh` 比对 SSOT config 的 27 项）。
 - 版本对账：**`versions/vk-kernel-identity.tsv`**（构建号 ↔ 内核二进制 ↔ 源提交，含每个镜像的失真标记）。
