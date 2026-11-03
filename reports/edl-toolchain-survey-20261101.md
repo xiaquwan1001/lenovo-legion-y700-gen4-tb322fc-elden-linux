@@ -10,14 +10,17 @@
 
 ## #0 一页结论
 
-| 项 | 结论 |
+> ⚠ **§0 已于 2026-11-02 修正**（原结论「qdl 主跟 / edl-ng 不跟」被推翻，改为「按能力分工」）。修正依据与逐条核实见 **§6**；下表为修正后版本。
+
+| 项 | 结论（2026-11-02 修正后） |
 |---|---|
-| **主跟** | **`linux-msm/qdl` v2.8**：工具链基线，刷写/读写/校验/整盘备份一律以它为准 |
-| **备胎** | `bkerler/edl`：只用于 loader 检索、Diag、老设备兼容；**不再作为写路径主力** |
+| **日常主力** | **`strongtz/edl-ng` 1.6.0**（`/usr/local/bin/edl-ng`，.NET AOT）：读/写/擦/GPT/`reset`/`ramdump`/UFS provisioning。**已在本机真机验证**（`printgpt -u 4`、`read-part`、`write-part boot_b`、`reset` 9 s 回 Linux） |
+| **整包刷写/校验** | **`linux-msm/qdl` v2.9**（自建 `~/edl-survey/qdl/build/qdl`，实际 `v2.9-rc1-6-g524d31f`；系统 `apt` 版 2.4-3 只当兜底）：`flashmap`/`contents.xml` 整包、sparse 展开、`sha256` 设备端摘要、`--skipblock=sha256`、`--dry-run`、512/4096 扇区探测。**尚未上机** |
+| **备胎** | `bkerler/edl`：只用于 loader 检索、Diag、`peek` 族（edl-ng 与 qdl 都没有 peek；本机 loader 亦不放行，见 PITFALLS #150） |
 | **观察** | `qualcomm/qdlrs`：官方 Rust 版，等 v1.0 + UFS provisioning/VIP/erase 补齐 |
-| **不跟** | `strongtz/edl-ng`：除非明确需要 MIT 许可的单文件嵌入工具 |
-| **本轮动作** | **无**（用户裁定「先记录文档，暂不动手」）；设备侧验证列入复启条件 |
-| **复启条件** | ① 需要整包刷写/救砖；② 需要 `--skipblock=sha256` 省时；③ 原 `qdl/build/qdl` 路径被修好之前 |
+| **不跟** | 无（原「edl-ng 不跟」的判定作废，理由见 §6） |
+| **切换前置** | qdl 首次上机必须**只读**：`qdl list` → `qdl <melf> read xbl_a /tmp/x.img` → `qdl <melf> sha256 xbl_a`，确认 melf 上传与 4096 扇区语义后再谈写路径 |
+| **已知缺口** | qdl **无 `printgpt`**（只能 `read 0/0+34` + 本地 sgdisk），而项目 GPT 取证日常依赖 edl-ng 的 `printgpt` |
 
 ---
 
@@ -37,10 +40,13 @@
 
 | 项目 | ★ | 开放 issue | 近 100 次更新 PR/合并 | issue 中位关闭 | 代码量 | 测试/CI | 许可 |
 |---|---|---|---|---|---|---|---|
-| linux-msm/qdl | 449 | **4** | 80 / **59** | ~57 d | 21.8k C | 15 测试含 HIL，checkpatch/codeql/qcom-preflight | BSD-3 |
-| qualcomm/qdlrs | 85 | 10 | 44 / 38 | ~42 d | 3.1k Rust | 无测试 | BSD-3 |
-| strongtz/edl-ng | 133 | 5 | 23 / 18 | ~9.5 d | 14.4k C# | 9 测试文件 | MIT |
-| bkerler/edl | 2671 | **285** | 28 / 8 | ~35 d | Python | 无 CI | GPL-3 |
+| linux-msm/qdl | 451 | **11**（+13 PR，2026-11-02） | 80 / **59** | ~57 d | 21.8k C | 15 测试含 HIL，checkpatch/codeql/qcom-preflight | BSD-3 |
+| qualcomm/qdlrs | 85 | 15 | 44 / 38 | ~42 d | 3.1k Rust | 无测试 | BSD-3 |
+| strongtz/edl-ng | 132 | 5 | 23 / 18 | ~9.5 d | 14.4k C# | 9 测试文件 | MIT |
+| bkerler/edl | 2673 | **285** | 28 / 8 | ~35 d | Python | 无 CI | GPL-3 |
+
+> 计数口径：2026-11-02 用 `gh api search/issues?type:issue|pr&state:open` 重取（原表为 2026-11-01 快照，
+> qdl 写「4 条」已不准——那时 v2.9 尚未发布，issue 批量进入）。★ 与开放数为当日值。
 
 关键条目（原文要点）：
 
@@ -52,8 +58,12 @@
 - **qdlrs**：开放即 roadmap 缺口 —— `#36` UFS provisioning 未实现、`#37` VIP 未实现、
   `#38` 多镜像/MBN 加载「从 qdl 移植」、`#47` `rawprogram` 的 `<erase>` 直接报
   `unknown instruction (erase)`（实测）。
-- **edl-ng**：`#29` SM8850 报 `Could not find Image ID: 59`（多镜像 loader 直接失败）、
-  `#25` 忽略 storage info / 默认扇区大小错、`#31` libusb 写超时；源码确认 **无 sparse 展开、无写后校验**。
+- **edl-ng**：`#25` 忽略 storage info / 默认扇区大小错、`#31` libusb 写超时；源码确认
+  **无 sparse 展开**（`QCEDL.CLI/Commands/RawProgramCommand.cs` 不读 `sparse` 属性）、**无写后校验**。
+  ⚠ **原列入的 `#29` 已作废，见 §6.2**：那不是 SM8850 的 edl-ng bug，而是用户传错 loader 格式 +
+  该机型要求签名 firehose（auth）；且 v1.6.0 本身已加入 Kaanapali(SM8850+) Firehose 支持。
+  两条短板对本机的实际权重：**sparse = 零影响**（TB322FC 官方包 153 条 `program` 全 `sparse="false"`，
+  `sparse="true"` 计数 0）；**无写后校验 = 真实差距**（qdl 有 `sha256 <addr>` + `--skipblock=sha256`）。
 
 上游动向（`已证`）：qdl 2026-10-08 提交 `github/qc_transition_prep`（准备迁入 Qualcomm org）、
 CI 增 `qcom-preflight-checks.yml` 与 `CODEOWNERS: qdl-maintainers`；qdlrs 反向把 qdl 当参考实现（#38）。
@@ -78,7 +88,10 @@ CI 增 `qcom-preflight-checks.yml` 与 `CODEOWNERS: qdl-maintainers`；qdlrs 反
 
 ## §4 风险与待办（未做，仅登记）
 
-1. **Ubuntu 仓库只有 qdl 2.4**（resolute/universe）→ 需自建 2.8（本机已在 `~/edl-survey/qdl/build/qdl`）或 Debian trixie-backports。
+1. **Ubuntu 仓库只有 qdl 2.4** —— 本机 2026-11-02 实测 `apt` 装到 `2.4-3`（`/usr/bin/qdl`），
+   比自建的 v2.9 少 `erase`/`sha256`/`reset`/`list`/`chipinfo`/`--skipblock`/`--backend`/`-R`/`--quiet`
+   ⇒ **系统包只当兜底，实际用 `~/edl-survey/qdl/build/qdl`（v2.9-rc1-6-g524d31f）**。
+   自建未 `meson install`，udev 仍只有系统的 `77-mm-qdl-device-blacklist.rules`（无 qdl 自带规则）。
 2. 需装仓库自带 `udev/` 规则 + 停 ModemManager；USB 2.0 口/线（既有 PITFALLS 仍适用）。
 3. **未上机**：melf 上传、`read xbl_a`/`sha256 xbl_a` 在 4096 扇区下的语义、`--skipblock` 在 SM8750 的表现。
    建议并入既有「第 0 号 9008 只读验证」一次完成。
@@ -93,6 +106,45 @@ CI 增 `qcom-preflight-checks.yml` 与 `CODEOWNERS: qdl-maintainers`；qdlrs 反
 - 其他历史引用（保留原文，恢复 EDL 能力前需先确认路径）：
   `restore-259/README.md:74`、`restore-259/AVB-KSU-2026-09-29.md:108,127`、`RUNBOOK-BRINGUP/README.md:47,437,452`、
   `PITFALLS/sessions/08-恢复Android免解BLroot资产.md:12`。
+
+## §6 修正记录（2026-11-02）
+
+### 6.1 结论变更
+
+原 §0「**主跟 qdl v2.8 / edl-ng 不跟**」→ 改为「**edl-ng 日常主力 + qdl 整包刷写与校验**」的双工具分工。
+理由不是 qdl 变差，而是原判定**忽略了两件事**：本机 edl-ng 已真机验证可用；qdl 至今零上机（只有 dry-run）。
+
+### 6.2 关键证据纠错：`edl-ng#29` 与 SM8850
+
+原 §2 写「`#29` SM8850 报 `Could not find Image ID: 59`（多镜像 loader 直接失败）」，据此判 edl-ng 不适配本 SoC。
+复核 issue 全文（`gh api repos/strongtz/edl-ng/issues/29` + 3 条评论，2026-11-02 取）：
+
+- 报错原因是用户把 `prog_firehose_ddr.elf` 直接当 loader 传；维护者（0x8008）原话
+  「**wrong format - I'll hint that you need one of the .xml files**」⇒ 多镜像 ELF 必须配
+  `qsahara_device_programmer.xml`，属用法错误而非工具缺陷。
+- 用户改传 `qsahara_device_programmer.xml` 后：`Loader uploaded and started successfully via Sahara`（**上传成功**），
+  随后 `Configure command NAKed` / `Program command NAKed`（存储命令被拒），
+  ⇒ 维护者结论「**firehose requires auth which you clearly don't have**」，即该机型（Xiaomi K90 Pro Max，SM8850）
+  要求**签名 firehose**，本机 TB322FC 无此要求。
+- 反向证据：edl-ng **v1.6.0 changelog 明确含**「Add Firehose support for Kaanapali (SM8850+) and above」(PR #20)。
+
+### 6.3 本机反证（真机，非静态）
+
+| 证据 | 内容 | 等级 |
+|---|---|---|
+| 安装态 | `/usr/local/bin/edl-ng` → `/usr/share/edl-ng/edl-ng`，`--version` = **1.6.0**（.NET AOT） | 已证 |
+| GPT | `edl-ng printgpt -u 4 -l <melf> --memory Ufs` 正常列 LUN4 全表（含 `spunvm`/`xbl_sc_logs`/`dpm`） | 已证（PITFALLS #150、`2026-11-02-UEFI四臂判别与收尾.md`） |
+| 写 | `edl-ng write-part boot_b ... -u 4 -l <melf>` 实际写通过 | 已证（`reports/uefi-ddrcut-fallback-20261101.md:131`） |
+| reset | `edl-ng reset` 约 9 s 回 Linux，`boot_id` 不变槽 | 已证 |
+| 短板核实 | 无 sparse（源码级确认）、无写后校验（命令表无 verify 类）——两条成立，但见 §2 的权重修正 | 已证 |
+
+### 6.4 复现与计数刷新（2026-11-02）
+
+- qdl dry-run 重跑（自建 v2.9）：`qdl --dry-run -f -s ufs xbl_s_devprg_ns.melf rawprogram{1..5}.xml patch{0..5}.xml`
+  → `flashed 47 partitions (562.2 MiB written in 0.2 s), applied 78 patches`，与 §1 一致 | 已证
+- 上游计数（`gh api search/issues`）：qdl **11 open issue + 13 open PR**（原报告写「4 条」应为发行前快照，予更正）；
+  edl-ng 5 issue + 2 PR；bkerler 仍 285 开放（`#808-#810` 自 2026-08 未修，判定不变）；qdlrs 15 开放 | 已证
+- **qdl v2.9 于 2026-11-02 正式发布**；二进制 `--version` 报 `v2.9-rc1-6-g524d31f`（原报告写 v2.8，予更正） | 已证
 
 ## 证据指针
 
