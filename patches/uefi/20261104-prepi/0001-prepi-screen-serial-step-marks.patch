@@ -1,0 +1,101 @@
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -22,6 +22,9 @@
+ 
+ #include "PrePi.h"
+ 
++/* 2026-11-04 y700-elden 调试插桩：屏上串口步进痕迹（前置声明） */
++STATIC VOID SbMark (IN CONST CHAR8 *Tag);
++
+ #include <Library/MemoryMapHelperLib.h>
+ 
+ ////////////////////////////////////////////
+@@ -128,9 +131,11 @@
+ 
+   // Initialize the architecture specific bits
+   ArchInitialize ();
++  SbMark ("[P02]");
+ 
+   // Initialize the Serial Port
+   SerialPortInitialize ();
++  SbMark ("[P03]");
+   CharCount = AsciiSPrint (
+                 Buffer,
+                 sizeof (Buffer),
+@@ -158,12 +163,15 @@
+ 
+   // Initialize MMU and Memory HOBs (Resource Descriptor HOBs)
+   Status = MemoryPeim (UefiMemoryBase, UefiMemorySize);
++  SbMark ("[P04]");
+   ASSERT_EFI_ERROR (Status);
+ 
+   BuildStackHob (StacksBase, StacksSize);
++  SbMark ("[P05]");
+ 
+   // TODO: Call CpuPei as a library
+   BuildCpuHob (ArmGetPhysicalAddressBits (), PcdGet8 (PcdPrePiCpuIoSize));
++  SbMark ("[P06]");
+ 
+   if (ArmIsMpCore ()) {
+     // Only MP Core platform need to produce gArmMpCoreInfoPpiGuid
+@@ -192,6 +200,7 @@
+ 
+   // Initialize Platform HOBs (CpuHob and FvHob)
+   Status = PlatformPeim ();
++  SbMark ("[P07]");
+   ASSERT_EFI_ERROR (Status);
+ 
+   DxeSettings =
+@@ -210,6 +219,7 @@
+ 
+   // SEC phase needs to run library constructors by hand.
+   ProcessLibraryConstructorList ();
++  SbMark ("[P08]");
+ /////////////////////////////////////////////
+ // Patch: call lk scheduler related function.
+ //
+@@ -238,13 +248,36 @@
+ /////////////////////////////////////////////
+   // Assume the FV that contains the SEC (our code) also contains a compressed FV.
+   Status = DecompressFirstFv ();
++  SbMark ("[P10]");
+   ASSERT_EFI_ERROR (Status);
+ 
+   // Load the DXE Core and transfer control to it
+   Status = LoadDxeCoreFromFv (NULL, 0);
++  SbMark ("[P11]");
+   ASSERT_EFI_ERROR (Status);
+ }
+ 
++
++//
++// 2026-11-04 y700-elden 调试插桩：屏上串口步进痕迹（FrameBufferSerialPortLib 已生效）
++// 每条 = 一行 "[Pxx]\n\r"；看到最后一条就知道死在它之后的那一步。
++//
++STATIC
++VOID
++SbMark (
++  IN CONST CHAR8  *Tag
++  )
++{
++  CHAR8  Buf[32];
++  UINTN  Len;
++  for (Len = 0; Tag[Len] != 0 && Len < 8; Len++) {
++    Buf[Len] = Tag[Len];
++  }
++  Buf[Len++] = '\n';
++  Buf[Len++] = '\r';
++  SerialPortWrite ((UINT8 *)Buf, Len);
++}
++
+ VOID
+ CEntryPoint ()
+ {
+@@ -254,6 +287,7 @@
+ 
+   // Initialize the platform specific controllers
+   ArmPlatformInitialize (0);
++  SbMark ("[P01]");
+ 
+   if (PerformanceMeasurementEnabled ()) {
+     // Initialize the Timer Library to setup the Timer HW controller

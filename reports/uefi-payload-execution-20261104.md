@@ -83,3 +83,24 @@ fastboot boot out/uefi-20261104-nocivac.img
 - 补丁：`patches/uefi/20261104-{fbfill,fbband,dual,m3block,prog,nocivac}/`、`patches/uefi/20261103-posctrl/0002-*`
 - 工具：`scripts/uefi-repack-v2aligned.py`（v2 base0 + Image 头对齐打包，含 `only-kernel-differs` 断言）、`scripts/fb-survey.py`（FB 区颜色普查）
 - 读回取证：`reports/artifacts/uefi-readback-20261103-184958/`（三窗读回、iomem、0xFF 覆盖扫描 `ffscan.txt`、**纯重启对照** `control-plainboot.txt`）
+
+## §7 追加（同日更晚）：**Mu UEFI 全流程跑到 DXE** —— 屏上串口把 PrePi 走通了
+
+判据来自屏上串口（`FrameBufferSerialPortLib`，`USE_SCREEN_FOR_SERIAL_OUTPUT=1` 本机已开）：
+
+| 观察 | 含义 |
+|---|---|
+| 屏上出现 `UEFI firmware (version … built at … on …)` | `Platforms/AndromedaPkg/PrePi/PrePi.c:133-143` 的 `SerialPortWrite` —— **Mu PrePi 已执行，且屏上串口输出生效**（字符串在本机 FD 内 `strings` 命中） |
+| 插桩后依次出现 `[P01]`…`[P08]`、`[P10]`、`[P11]`（`[P09]` 未布点，非漏执行） | `ArmPlatformInitialize`→`ArchInitialize`→`SerialPortInitialize`→**`MemoryPeim`**→`BuildStackHob`→`BuildCpuHob`→`PlatformPeim`→`ProcessLibraryConstructorList`→**`DecompressFirstFv`**→**`LoadDxeCoreFromFv`** 全部返回 |
+
+⇒ **PrePi 整段走完，已把控制交给 DXE Core**（`LoadDxeCoreFromFv` 返回后才打的 `[P11]`）。
+这同时解释了 §4 的 1.9 GB `0xFF` 大填充：它发生在 PrePi 侧（`MemoryPeim`/MMU/内存 HOB 这段），不是 shim。
+
+插桩与镜像：
+- `patches/uefi/20261104-prepi/0001-prepi-screen-serial-step-marks.patch`（`SbMark()`，每步一行 `[Pnn]`）
+- `out/uefi-20261104-prepi.img`（`e5aa7164…`，FD `53b5bdad…`）
+- 前置：`patches/uefi/20261103-posctrl/0002-*` + `20261104-{fbband,m3block,prog,nocivac}/*`
+
+**下一步（唯一）**：把同样的屏上串口插桩打进 **DXE Core**（`MU_BASECORE/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c` 的 9 个相位点 + `Dispatcher/Dispatcher.c` 每 dispatch 一个 `>`），
+判据 = `[D00]`…`[D08]` 与 dispatch 进度点；能打到 `[D08]`（`gBds->Entry`）就说明 DXE 全量 dispatch 完成、进 BDS 菜单。
+注意：`MU_BASECORE` 是 **submodule**，改文件后还原要在子模块里 `git checkout --`（主仓 `git checkout` 不认这两个路径）。
