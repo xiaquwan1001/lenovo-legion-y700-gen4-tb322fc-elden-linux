@@ -153,10 +153,11 @@ CI 增 `qcom-preflight-checks.yml` 与 `CODEOWNERS: qdl-maintainers`；qdlrs 反
 | 动作 | 内容 |
 |---|---|
 | 卸载 | `apt remove qdl`（`2.4-3`）、`apt remove edl-ng`（`1.6.0`）——`/usr/bin/qdl`、`/usr/local/bin/edl-ng`、`/usr/share/edl-ng/` 全部消失 |
-| 归一 | `~/edl-ng`、`~/edl-survey`、`~/edl-tool`、`~/qdl` → 合并为 **`~/edl/`** 单根目录：`qdl/`（v2.9）、`edl-ng/`（`v1.6.0-2-g4a658ee`）、`bkerler-edl/`（保留带 `.venv` 的那份）、`qdlrs/`、`survey/`（issue 快照） |
+| 归一 | `~/edl-ng`、`~/edl-survey`、`~/edl-tool`、`~/qdl` → 合并为 **`~/edl/`** 单根目录：`qdl/`（v2.9）、`edl-ng/`（`v1.6.0-2-g4a658ee`）、`bkerler-edl/`（改 `git clone --depth 200`，`uv venv` 重建依赖）、`qdlrs/`、`survey/`（issue 快照） |
 | 新建构建 | `~/edl/qdl` tag `v2.9` → `meson setup build -Dzip-container=disabled -Dtests=disabled -Dnbdkit=disabled` + `ninja -C build` → `qdl version v2.9`；`~/.local/bin/qdl` 软链。dry-run 复跑：47 分区 / 562.2 MiB / 78 patch（与 §1 一致） |
 | 依赖 | 装 `libusb-1.0-0-dev` ⇒ 手工解包的 `sysroot/` 废弃（进回收站） |
-| 清理 | 旧 qdl 克隆 `524d31f`、bkerler 重复解包 `edl-master`、`edl.gh.tgz`/`t.tgz`、旧二进制 `v2.9-rc1-6` 全部移入 `~/.pi/trash/files/`（可恢复，非 `rm`） |
+| 清理 | 旧 qdl 克隆 `524d31f`、bkerler 重复解包 `edl-master` + 无 git 的 `bkerler-edl-1cda1a6`、`edl.gh.tgz`/`t.tgz`、旧二进制 `v2.9-rc1-6` 全部移入 `~/.pi/trash/files/`（可恢复，非 `rm`） |
+| 依赖修复 | bkerler 旧 `.venv` 实为空壳（`python3 -m venv` 建但未装包，`import usb` 直接失败）⇒ 改用 `uv venv` + `requirements.txt` 重建，`edl.py --help` 现可运行 |
 | 影响 | §0/§4 中「edl-ng = 日常主力」是 **2026-11-01/02 旧安装态**的结论，取证价值不变，但**当前机器上没有 edl-ng 可执行**（源码需 .NET 8 SDK 才能重建）；现行唯一可用客户端 = `~/edl/qdl/build/qdl` |
 | 索引 | `~/edl/README.md`（职责表/用法/追新/清理清单） |
 
