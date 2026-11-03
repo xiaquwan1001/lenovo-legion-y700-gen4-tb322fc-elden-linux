@@ -14,8 +14,8 @@
 
 | 项 | 结论（2026-11-02 修正后） |
 |---|---|
-| **日常主力** | **`strongtz/edl-ng` 1.6.0**（`/usr/local/bin/edl-ng`，.NET AOT）：读/写/擦/GPT/`reset`/`ramdump`/UFS provisioning。**已在本机真机验证**（`printgpt -u 4`、`read-part`、`write-part boot_b`、`reset` 9 s 回 Linux） |
-| **整包刷写/校验** | **`linux-msm/qdl` v2.9**（自建 `~/edl-survey/qdl/build/qdl`，实际 `v2.9-rc1-6-g524d31f`；系统 `apt` 版 2.4-3 只当兜底）：`flashmap`/`contents.xml` 整包、sparse 展开、`sha256` 设备端摘要、`--skipblock=sha256`、`--dry-run`、512/4096 扇区探测。**尚未上机** |
+| **日常主力** | **`strongtz/edl-ng` 1.6.0**（源码 `~/edl/edl-ng`，.NET AOT）：读/写/擦/GPT/`reset`/`ramdump`/UFS provisioning。**旧 .deb 安装态已真机验证**（2026-11-03 卸载，改源码跟踪）（`printgpt -u 4`、`read-part`、`write-part boot_b`、`reset` 9 s 回 Linux） |
+| **整包刷写/校验** | **`linux-msm/qdl` v2.9**（源码 `~/edl/qdl`，tag `v2.9` 干净构建；`~/.local/bin/qdl` 软链到它）：`flashmap`/`contents.xml` 整包、sparse 展开、`sha256` 设备端摘要、`--skipblock=sha256`、`--dry-run`、512/4096 扇区探测。**尚未上机** |
 | **备胎** | `bkerler/edl`：只用于 loader 检索、Diag、`peek` 族（edl-ng 与 qdl 都没有 peek；本机 loader 亦不放行，见 PITFALLS #150） |
 | **观察** | `qualcomm/qdlrs`：官方 Rust 版，等 v1.0 + UFS provisioning/VIP/erase 补齐 |
 | **不跟** | 无（原「edl-ng 不跟」的判定作废，理由见 §6） |
@@ -28,7 +28,7 @@
 
 | 项 | 内容 | 等级 |
 |---|---|---|
-| 克隆 | `~/edl-survey/qdl`（`524d31f`，2026-10-30）、`~/edl-survey/qdlrs`（`75fe2f7`，2026-08-25） | 已证 |
+| 克隆 | `~/edl-survey/qdl`（`524d31f`，2026-10-30；2026-11-03 已退役，见 §7）、`~/edl-survey/qdlrs`（`75fe2f7`，2026-08-25） | 已证 |
 | 构建 | `meson setup build -Dzip-container=disabled -Dtests=disabled -Dnbdkit=disabled` + ninja → `build/qdl`（657 KB） | 已证 |
 | dry-run | 在 `~/下载/tb322fc`：`qdl --dry-run -f -s ufs xbl_s_devprg_ns.melf rawprogram{1..5}.xml patch{0..5}.xml` → `flashed 47 partitions (562.2 MiB), applied 78 patches`、每 LUN 的 PrimaryGPT/BackupGPT 均解析 | 已证 |
 | 包内格式 | 153 条 `program` 全部 `SECTOR_SIZE_IN_BYTES="4096"`、`sparse="false"`；`<erase>` = 0 | 已证 |
@@ -88,10 +88,10 @@ CI 增 `qcom-preflight-checks.yml` 与 `CODEOWNERS: qdl-maintainers`；qdlrs 反
 
 ## §4 风险与待办（未做，仅登记）
 
-1. **Ubuntu 仓库只有 qdl 2.4** —— 本机 2026-11-02 实测 `apt` 装到 `2.4-3`（`/usr/bin/qdl`），
-   比自建的 v2.9 少 `erase`/`sha256`/`reset`/`list`/`chipinfo`/`--skipblock`/`--backend`/`-R`/`--quiet`
-   ⇒ **系统包只当兜底，实际用 `~/edl-survey/qdl/build/qdl`（v2.9-rc1-6-g524d31f）**。
-   自建未 `meson install`，udev 仍只有系统的 `77-mm-qdl-device-blacklist.rules`（无 qdl 自带规则）。
+1. ~~**Ubuntu 仓库只有 qdl 2.4**~~ **已结（2026-11-03）**：`apt` 版 qdl `2.4-3` 与 `.deb` 版 edl-ng `1.6.0`
+   均已卸载；改 **GitHub 源码自建**，`~/edl/qdl`（tag `v2.9`）+ `~/edl/edl-ng`（源码）。
+   构建依赖 `libusb-1.0-0-dev` 已装，不再需要解包 `sysroot`。udev 仍用系统既有
+   `/etc/udev/rules.d/99-edl.rules`（qdl 自带 `udev/70-qdl.rules.in` 未安装，因不做 `meson install`）。
 2. 需装仓库自带 `udev/` 规则 + 停 ModemManager；USB 2.0 口/线（既有 PITFALLS 仍适用）。
 3. **未上机**：melf 上传、`read xbl_a`/`sha256 xbl_a` 在 4096 扇区下的语义、`--skipblock` 在 SM8750 的表现。
    建议并入既有「第 0 号 9008 只读验证」一次完成。
@@ -146,9 +146,23 @@ CI 增 `qcom-preflight-checks.yml` 与 `CODEOWNERS: qdl-maintainers`；qdlrs 反
   edl-ng 5 issue + 2 PR；bkerler 仍 285 开放（`#808-#810` 自 2026-08 未修，判定不变）；qdlrs 15 开放 | 已证
 - **qdl v2.9 于 2026-11-02 正式发布**；二进制 `--version` 报 `v2.9-rc1-6-g524d31f`（原报告写 v2.8，予更正） | 已证
 
+## §7 目录与安装态变更（2026-11-03）
+
+**用户裁定：以后只用 GitHub 上游源码构建，不用 apt/.deb 打包版**（避免版本误导）。据此：
+
+| 动作 | 内容 |
+|---|---|
+| 卸载 | `apt remove qdl`（`2.4-3`）、`apt remove edl-ng`（`1.6.0`）——`/usr/bin/qdl`、`/usr/local/bin/edl-ng`、`/usr/share/edl-ng/` 全部消失 |
+| 归一 | `~/edl-ng`、`~/edl-survey`、`~/edl-tool`、`~/qdl` → 合并为 **`~/edl/`** 单根目录：`qdl/`（v2.9）、`edl-ng/`（`v1.6.0-2-g4a658ee`）、`bkerler-edl/`（保留带 `.venv` 的那份）、`qdlrs/`、`survey/`（issue 快照） |
+| 新建构建 | `~/edl/qdl` tag `v2.9` → `meson setup build -Dzip-container=disabled -Dtests=disabled -Dnbdkit=disabled` + `ninja -C build` → `qdl version v2.9`；`~/.local/bin/qdl` 软链。dry-run 复跑：47 分区 / 562.2 MiB / 78 patch（与 §1 一致） |
+| 依赖 | 装 `libusb-1.0-0-dev` ⇒ 手工解包的 `sysroot/` 废弃（进回收站） |
+| 清理 | 旧 qdl 克隆 `524d31f`、bkerler 重复解包 `edl-master`、`edl.gh.tgz`/`t.tgz`、旧二进制 `v2.9-rc1-6` 全部移入 `~/.pi/trash/files/`（可恢复，非 `rm`） |
+| 影响 | §0/§4 中「edl-ng = 日常主力」是 **2026-11-01/02 旧安装态**的结论，取证价值不变，但**当前机器上没有 edl-ng 可执行**（源码需 .NET 8 SDK 才能重建）；现行唯一可用客户端 = `~/edl/qdl/build/qdl` |
+| 索引 | `~/edl/README.md`（职责表/用法/追新/清理清单） |
+
 ## 证据指针
 
-- issue 快照：`~/edl-survey/gh/{bkerler_edl,linux-msm_qdl,qualcomm_qdlrs,strongtz_edl-ng}.json`
-- 源码：`~/edl-survey/qdl`@`524d31f`、`~/edl-survey/qdlrs`@`75fe2f7`、`~/edl-ng`@`4a658ee`
-- 二进制：`~/edl-survey/qdl/build/qdl`（v2.8）；依赖 sysroot：`~/edl-survey/sysroot`
+- issue 快照：`~/edl/survey/{bkerler_edl,linux-msm_qdl,qualcomm_qdlrs,strongtz_edl-ng}.json`
+- 源码（2026-11-03 起，单根目录 `~/edl/`）：`qdl`@`v2.9`、`edl-ng`@`4a658ee`、`qdlrs`@`75fe2f7`、`bkerler-edl`
+- 二进制：`~/edl/qdl/build/qdl`（`qdl version v2.9`），软链 `~/.local/bin/qdl`；目录说明见 `~/edl/README.md`
 - dry-run 输入：`~/下载/tb322fc/`（`xbl_s_devprg_ns.melf` + `rawprogram{1..5}.xml` + `patch{0..5}.xml`）

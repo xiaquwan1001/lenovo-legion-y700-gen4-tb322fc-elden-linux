@@ -36,7 +36,7 @@ pi 会话 id: 01a196f3-27e8-7466-a690-e95236db1b43
 ## 取证方法（全部只读，零风险）
 
 ```bash
-cd ~/edl-tool/bkerler-edl-1cda1a6
+cd ~/edl/bkerler-edl
 L=~/下载/tb322fc/xbl_s_devprg_ns.melf
 python3 edl.py --loader=$L r logfs  <out>       # 8 MiB 环形，10 段
 python3 edl.py --loader=$L r uefi_a  <out>      # 5 MiB

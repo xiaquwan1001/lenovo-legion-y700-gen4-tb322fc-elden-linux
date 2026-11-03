@@ -51,7 +51,7 @@
 ### 1.2 peek 确切命令行（1b）
 
 ```bash
-cd ~/edl-tool/bkerler-edl-1cda1a6
+cd ~/edl/bkerler-edl
 L=~/下载/tb322fc/xbl_s_devprg_ns.melf
 # 单步探活（推荐第一发）：读 8 字节 QWORD
 python3 edl.py --loader=$L --memory=Ufs peekqword 0xFEF00000
@@ -71,7 +71,7 @@ python3 edl.py --loader=$L --memory=Ufs --skipstorageinit peek 0xFEF00000 0x1000
 
 ### 1.3 edl-ng vs python edl 能力对照（1c）
 
-| 能力 | edl-ng 1.6.0（`/usr/local/bin/edl-ng`，.NET AOT） | bkerler python edl（本目录） |
+| 能力 | edl-ng 1.6.0（旧 .deb 安装态，`.NET AOT`；**2026-11-03 已卸载**，源码在 `~/edl/edl-ng`，重建需 .NET 8 SDK） | bkerler python edl（`~/edl/bkerler-edl`） |
 |---|---|---|
 | 分区读 / 扇区读 / 整 LUN 读 | ✅ `read-part` / `read-sector <start> <n> [-u lun]` / `read-lun` | ✅ `r` / `rs` / `rf`（`--lun`） |
 | GPT 打印 / dump | ✅ `printgpt`（省略 `-u` 扫全部 LUN）/ `dump-rawprogram` | ✅ `printgpt` / `gpt` |
@@ -152,7 +152,7 @@ python3 edl.py --loader=$L --memory=Ufs --skipstorageinit peek 0xFEF00000 0x1000
   2. 载荷实验照旧（`fastboot boot` ddrmarks 变体，零写盘）
   3. 崩溃后设备应停 **fastboot**（不再落 Android）——判据：主机 fastboot 可枚举 + `getvar current-slot`
   4. `fastboot oem edl` → `lsusb` 应见 `05c6:9008`
-  5. `cd ~/edl-tool/bkerler-edl-1cda1a6 && python3 edl.py --loader=$L --memory=Ufs peekqword 0x81D00000`（探活）
+  5. `cd ~/edl/bkerler-edl && python3 edl.py --loader=$L --memory=Ufs peekqword 0x81D00000`（探活）
   6. `python3 edl.py --loader=$L --memory=Ufs --skipstorageinit peek 0xFEF00000 0x100000 /tmp/p1.bin`
   7. `python3 edl.py --loader=$L --memory=Ufs --skipstorageinit peek 0x89300000 0x100000 /tmp/p2.bin`
   8. 回 Linux：`python3 edl.py --loader=$L reset`（9008 内软复位）→ 正常起 b 槽 Linux → `qbootctl -m a`（恢复 a 槽 bootable）

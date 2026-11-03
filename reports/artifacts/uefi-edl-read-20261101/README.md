@@ -2,7 +2,7 @@
 
 事故/结论：`../../uefi-slotboot-stuck-fastboot-20261101.md` §8；坑 `PITFALLS #484/#485`。
 
-工具链：`~/edl-tool/bkerler-edl-1cda1a6` + loader `~/下载/tb322fc/xbl_s_devprg_ns.melf`。
+工具链：`~/edl/bkerler-edl` + loader `~/下载/tb322fc/xbl_s_devprg_ns.melf`。
 EDL 9008 需 udev 规则（`05c6:9008` → `MODE=0666,GROUP=plugdev`）+ **必须**
 `udevadm control --reload-rules && udevadm trigger --subsystem-match=usb --action=change`（只 reload 不生效）。
 
@@ -39,7 +39,7 @@ EDL 9008 需 udev 规则（`05c6:9008` → `MODE=0666,GROUP=plugdev`）+ **必�
 ## 复现
 
 ```bash
-cd ~/edl-tool/bkerler-edl-1cda1a6
+cd ~/edl/bkerler-edl
 L=~/下载/tb322fc/xbl_s_devprg_ns.melf
 python3 edl.py --loader=$L r logfs   <out>
 python3 edl.py --loader=$L r uefi_a  <out>   # 同理 uefi_b / abl_a / abl_b / xbl_a / xbl_b

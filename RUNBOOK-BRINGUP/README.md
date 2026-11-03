@@ -44,7 +44,7 @@ export BAK="backup/${SN}-${CAP}"; mkdir -p "$BAK"
 | **相机模块包** | `out/camera-modules-*.tar.gz` | 20 个（外科部署用） |
 | **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | 规格（大小/项数）见 `../RESOURCES/README.md` §2.2 |
 | **Waydroid Mesa** | `~/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz` | 已校验 |
-| **EDL 救砖** | `qdl/build/qdl` + `~/下载/tb322fc/xbl_s_devprg_ns.melf` | 仅备用 |
+| **EDL 救砖** | `~/edl/qdl/build/qdl` + `~/下载/tb322fc/xbl_s_devprg_ns.melf` | 仅备用 |
 
 ### 0.1 主机侧一次性配置 — USB lifeline 自动拿地址（**每台主机做一次**）
 
@@ -115,7 +115,7 @@ nmcli connection add type ethernet ifname enx021e5eede102 con-name elden-usb-gad
 | **A 自造解锁 blob** | 模板改字段：**A1** `0x2048` 写 `ro.serialno`（三代工具箱原法）· **A2** 改 `Bootloader_SN Part1+Part2`（= 本机 `ro.boot.bootload_sn` 两段 32 hex；本技能早前记录法，见 `PITFALLS` #83） | 零成本、失败不改设备状态；**四代 1.5.x 已实测无效**（ABL 换 key + 高固件不开放解锁命令） | ⛔ **已判死**（仅对 ≤1.1.11.073 或三代机有意义） |
 | **A3 第三方签名 blob** | `backup/HA2EXB0E-16+512/sn-neko-zuxos.img`（356 B，`lenovobl.neko.ink` 选 **ZUX OS** + 本机 64 位 `Bootloader_SN`）→ `flash unlock` → `oem unlock` | 结构自洽、SN 绑定正确，但 **2026-10-03 实测 `oem unlock` 在 259 上被拒**（离线 18 组合验签全败 ⇒ 四代 ABL 换 key）。取证 §5 | ⛔ **已判死**（不再买/不再求） |
 | **B 官网 `sn.img`** | 见 ② | 要账号/大陆邮箱/审核；1 号·年 3 台；**与 A3 同一道门 ⇒ 1.5.x 上同样无用** | ⚪ 仅旧固件（≤.073/.076）才值得申请 |
-| **C 不解锁，走 EDL** | `qdl/build/qdl` + `xbl_s_devprg_ns.melf`（`fastboot oem edl` 进 9008） | 写分区/写 GPT 不受 lock 位限制；AVB 用 testkey 自签即被接受。**管线已就绪（2026-10-03 验证全绿）**：`scripts/build-locked-chain.sh`（从本单元 stock dump 自动读参数 → testkey 重打全链：vbmeta_b 顶层 2597c218 + chain boot:3 + recovery:1/vbmeta_system:2 原样 + 14 条原厂 props；`--follow_chain_partitions` 验证全绿）。⚠ **现有 `bootslot-b/` 的 fc1e3b33 自造密钥链不适用 locked**（green 态过不了 root-of-trust），必须用本管线重新生成 | ✅ **保留资产**（locked 单元/回锁场景；U2 已不需要） |
+| **C 不解锁，走 EDL** | `~/edl/qdl/build/qdl` + `xbl_s_devprg_ns.melf`（`fastboot oem edl` 进 9008） | 写分区/写 GPT 不受 lock 位限制；AVB 用 testkey 自签即被接受。**管线已就绪（2026-10-03 验证全绿）**：`scripts/build-locked-chain.sh`（从本单元 stock dump 自动读参数 → testkey 重打全链：vbmeta_b 顶层 2597c218 + chain boot:3 + recovery:1/vbmeta_system:2 原样 + 14 条原厂 props；`--follow_chain_partitions` 验证全绿）。⚠ **现有 `bootslot-b/` 的 fc1e3b33 自造密钥链不适用 locked**（green 态过不了 root-of-trust），必须用本管线重新生成 | ✅ **保留资产**（locked 单元/回锁场景；U2 已不需要） |
 | D 社区「免解重签包」 | `restore-259/重签包/`（**第三方改过的 `abl`**，与原厂差 229109 B） | 引第三方闭源引导器，与「只用自己引导链」冲突；只给 root 不给 fastboot 写权限 | ⛔ 应急 |
 
 > ★ **2026-10-03 实测结论（U2/HA2EXB0E）：实际走通的是「降级路」——第 5 条**。
@@ -434,7 +434,7 @@ bash scripts/iterate.sh kernel --boot       # 全量重编一次；此后驱动�
 | 回 stock Android | `fastboot --set-active=a; fastboot reboot`（a 槽全程未动）= 回 G2-S0 |
 | 恢复 b 槽原厂 | `fastboot flash boot_b/dtbo_b/vbmeta_b "$BAK"/*` |
 | 恢复原 GPT | `dd` 写回 `"$BAK"/gpt_{main0,backup0}.bin`（主 seek=0、备 seek=**本单元** `backup_lba`） |
-| 救砖 | EDL：`qdl/build/qdl ~/下载/tb322fc/xbl_s_devprg_ns.melf ...`（见 `restore-259/README.md`） |
+| 救砖 | EDL：`~/edl/qdl/build/qdl ~/下载/tb322fc/xbl_s_devprg_ns.melf ...`（见 `restore-259/README.md`） |
 
 ---
 
@@ -449,7 +449,7 @@ bash scripts/iterate.sh kernel --boot       # 全量重编一次；此后驱动�
   metadata / misc / oemdrv 类本地数据分区
 不可动：xbl* / abl* / tz* / hyp* / modem / ddr / 安全存列（Q6/SOTP）—— 动=砖
 流程：先 `list` 导出全表 → 生成新表 → 主表 seek=0 + 备表 seek=backup_lba → **读回 md5 与分区表校验**
-回退：写回本次 dump 的 `"$BAK"/gpt_{main0,backup0}.bin`；最坏 EDL（`qdl/build/qdl` + `~/下载/tb322fc/`）
+回退：写回本次 dump 的 `"$BAK"/gpt_{main0,backup0}.bin`；最坏 EDL（`~/edl/qdl/build/qdl` + `~/下载/tb322fc/`）
 ```
 
 ---

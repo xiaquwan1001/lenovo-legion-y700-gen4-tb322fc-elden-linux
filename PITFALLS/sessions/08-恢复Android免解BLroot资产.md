@@ -9,7 +9,7 @@
 40. **回 Android 两步走**：① 先 `fastboot --set-active=<另一槽>`（非破坏，见第 1 条）；
     ② 不行才按 `restore-259/README.md` 刷重签包（abl 有砖风险，需 qdl+`xbl_s_devprg_ns.melf` 兜底）。
 
-41. **EDL 救砖链**：`fastboot oem edl` 或 `adb reboot edl` → `~/y700-elden/qdl/build/qdl -s ufs restore-259/xbl_s_devprg_ns.melf read/write <分区> <文件>`。
+41. **EDL 救砖链**：`fastboot oem edl` 或 `adb reboot edl` → `~/edl/qdl/build/qdl -s ufs restore-259/xbl_s_devprg_ns.melf read/write <分区> <文件>`。
     原厂固件目录 `~/下载/tb322fc/`（**不含 dtbo/vendor_boot/recovery/super**，不能全量恢复，只能逐分区）。
 
 ### 八之二、Android 应用数据备份 / 解密（2026-09-29）

@@ -15,7 +15,7 @@
 ## 回滚一条命令
 
 ```bash
-cd ~/edl-tool/bkerler-edl-1cda1a6
+cd ~/edl/bkerler-edl
 L=~/下载/tb322fc/xbl_s_devprg_ns.melf
 python3 edl.py --loader=$L ws 0        ~/y700-elden/reports/artifacts/uefi-slotboot-20261101/lun4-gpt-primary-raw.bin --lun=4
 python3 edl.py --loader=$L ws 1048542  ~/y700-elden/reports/artifacts/uefi-slotboot-20261101/lun4-gpt-backup-raw.bin  --lun=4

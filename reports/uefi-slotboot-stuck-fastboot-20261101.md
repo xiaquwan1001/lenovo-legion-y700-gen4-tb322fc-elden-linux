@@ -50,7 +50,7 @@
 工具与 loader（本机已装好，路径固定）：
 
 ```bash
-cd ~/edl-tool/bkerler-edl-1cda1a6
+cd ~/edl/bkerler-edl
 L=~/下载/tb322fc/xbl_s_devprg_ns.melf
 python3 edl.py --loader=$L printgpt
 python3 edl.py --loader=$L r logfs  <out>
@@ -216,7 +216,7 @@ UTS `7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172`、`findmnt /` 
 ## §8.4 取证方法（可复现，全只读）
 
 ```bash
-cd ~/edl-tool/bkerler-edl-1cda1a6
+cd ~/edl/bkerler-edl
 L=~/下载/tb322fc/xbl_s_devprg_ns.melf
 python3 edl.py --loader=$L r logfs   <out>          # 8 MiB 环形 × 10 段
 python3 edl.py --loader=$L r uefi_a|uefi_b <out>    # 各 5 MiB

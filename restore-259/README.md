@@ -71,7 +71,7 @@ fastboot reboot
 - **回原厂 Android**：重刷原厂 `boot`/`init_boot`/`vbmeta`（见 `~/下载/tb322fc/`）+ 原厂 dtbo（`backup/dtbo_a.img`），或切回另一槽。
 - **abl 刷坏（起不来）**：EDL 救回
   ```bash
-  ~/y700-elden/qdl/build/qdl -s ufs restore-259/xbl_s_devprg_ns.melf write abl_a 重签包/abl_a.img
+  ~/edl/qdl/build/qdl -s ufs restore-259/xbl_s_devprg_ns.melf write abl_a 重签包/abl_a.img
   # 或写回原厂 abl.elf
   ```
   进 EDL：`fastboot oem edl`（fastboot 下）或 `adb reboot edl`（Android 下）。
