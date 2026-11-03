@@ -1,0 +1,38 @@
+diff --git a/Platforms/Xiaomi/dadaPkg/dada.dsc b/Platforms/Xiaomi/dadaPkg/dada.dsc
+index d8f14dac..2c5dece7 100644
+--- a/Platforms/Xiaomi/dadaPkg/dada.dsc
++++ b/Platforms/Xiaomi/dadaPkg/dada.dsc
+@@ -91,11 +91,13 @@
+   dadaPkg/Drivers/UefiTraceDxe/UefiTraceDxe.inf
+ 
+   #
+-  # UniXNU: the menu application, the registrar that makes the platform BDS start it, and the
+-  # DarwinBoot loader it hands the kernel to.
++  # UniXNU: the menu application, the registrar that makes the platform BDS start it, the driver
++  # that publishes the boot image's FAT initrd as a block device, and the DarwinBoot loader it hands
++  # the kernel to.
+   #
+   UniXNUPkg/Application/UniXNU/UniXNU.inf
+   UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
++  UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
+   DarwinBootPkg/Driver/DarwinBoot.inf
+ 
+   #
+diff --git a/Platforms/Xiaomi/dadaPkg/dada.fdf b/Platforms/Xiaomi/dadaPkg/dada.fdf
+index 09cc14f7..6b60a1e4 100644
+--- a/Platforms/Xiaomi/dadaPkg/dada.fdf
++++ b/Platforms/Xiaomi/dadaPkg/dada.fdf
+@@ -109,9 +109,11 @@ READ_LOCK_STATUS   = TRUE
+   # 防止内核启动时显示死（先关再开，1 ms delay）。
+   INF QcomPkg/Drivers/DisplayReEnablerDxe/DisplayReEnablerDxe.inf
+ 
+-  # UniXNU: the registrar publishes the application as the first Boot#### option, the application is
+-  # the menu, and DarwinBoot is the optional loader for type = "xnu" entries.
++  # UniXNU: the registrar publishes the application as the first Boot#### option, UniXNURamDiskDxe
++  # publishes the boot image's FAT initrd so the menu can read unixnu.toml, the application is the
++  # menu, and DarwinBoot is the optional loader for type = "xnu" entries.
+   INF UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
++  INF UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
+   INF UniXNUPkg/Application/UniXNU/UniXNU.inf
+   INF DarwinBootPkg/Driver/DarwinBoot.inf
+ 

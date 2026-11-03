@@ -1,0 +1,6 @@
+[16:26:41] ===== trial START label=uefi-posctrl-markspin3gz-v2 image=boot-elden-posctrl-markspin3gz-v2-20261103.img sha=05d43285f4a789d449dfe15a3735f6f7be1a4016dff96d50984e9f54cbc0e09c =====
+[16:26:41] image_size=64761856
+[trial] boot_b: succ=1 retry=5 unbootable=0
+[trial] GATE=OK
+[16:26:42] pre boot_id=# ssh pre 2026-11-03T16:26:42+08:00
+[16:26:42] ssh -> reboot bootloader (eldroid-bootctl)

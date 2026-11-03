@@ -1,0 +1,44 @@
+--- a/Platforms/Xiaomi/dadaPkg/dada.dsc
++++ b/Platforms/Xiaomi/dadaPkg/dada.dsc
+@@ -78,6 +78,11 @@
+   #
+   ConfigurationMapLib|dadaPkg/Library/ConfigurationMapLib/ConfigurationMapLib.inf
+ 
++  #
++  # UniXNU boot manager core, shared by the application and the registrar driver
++  #
++  UniXNULib|UniXNUPkg/Library/UniXNULib/UniXNULib.inf
++
+ [Components]
+   #
+   # Drivers
+@@ -85,6 +90,14 @@
+   dadaPkg/Drivers/PmicKeysDxe/PmicKeysDxe.inf
+ 
+   #
++  # UniXNU: the menu application, the registrar that makes the platform BDS start it, and the
++  # DarwinBoot loader the menu hands a kernel to.
++  #
++  UniXNUPkg/Application/UniXNU/UniXNU.inf
++  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
++  DarwinBootPkg/Driver/DarwinBoot.inf
++
++  #
+   # ACPI Tables
+   #
+   dadaPkg/AcpiTables/AcpiTables.inf
+--- a/Platforms/Xiaomi/dadaPkg/dada.fdf
++++ b/Platforms/Xiaomi/dadaPkg/dada.fdf
+@@ -105,6 +105,12 @@
+     SECTION UI = "DeviceTreeBlob"
+   }
+ 
++  # UniXNU: the registrar publishes the application as the first Boot#### option, the application is
++  # the menu, and DarwinBoot is the optional loader for type = "xnu" entries.
++  INF UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
++  INF UniXNUPkg/Application/UniXNU/UniXNU.inf
++  INF DarwinBootPkg/Driver/DarwinBoot.inf
++
+   !include QcomPkg/Extra.fdf.inc
+ 
+ [FV.FVMAIN_COMPACT]

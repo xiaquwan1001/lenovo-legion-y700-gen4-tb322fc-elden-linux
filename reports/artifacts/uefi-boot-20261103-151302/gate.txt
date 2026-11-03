@@ -1,0 +1,2 @@
+[trial] boot_b: succ=0 retry=6 unbootable=0
+[trial] GATE=WARN succ=0（每次真开机倒计时）→ 建议先 trial.sh gate --fix

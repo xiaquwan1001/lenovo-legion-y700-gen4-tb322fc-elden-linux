@@ -1,0 +1,30 @@
+diff --git a/arch/arm64/kernel/head.S b/arch/arm64/kernel/head.S
+index 87a822e5c4..c9f72ae823 100644
+--- a/arch/arm64/kernel/head.S
++++ b/arch/arm64/kernel/head.S
+@@ -83,6 +83,25 @@
+ 	 *  x21        primary_entry() .. start_kernel()        FDT pointer passed at boot in x0
+ 	 */
+ SYM_CODE_START(primary_entry)
++	/*
++	 * elden UEFI 正控（2026-11-03）：在 arm64 内核的最早入口（MMU/缓存仍关）
++	 * 向四块「已知不被回落启动清零」的 carveout 写 stage-1 标记（整页 0xFF），
++	 * 用于判定「经 boot.img 装载的代码在该阶段能否写 DRAM 且复位后可见」。
++	 * 只碰 x9/x10/x11/x12/x13，不动 x0(DTB) 与任何会被 record_mmu_state 使用的寄存器。
++	 */
++	movz	x9,  #0x84A0, lsl #16		// 0x84A00000 dsm1
++	movz	x10, #0x9C30, lsl #16		// 0x9C300000 video
++	movz	x11, #0x8930, lsl #16		// 0x89300000 dsm2
++	movz	x12, #0xE3F0, lsl #16		// 0xE3F00000 sysram（boot_b cmdline 已保留）
++	mov	x13, #-1
++	mov	w14, #512
++0:	str	x13, [x9], #8
++	str	x13, [x10], #8
++	str	x13, [x11], #8
++	str	x13, [x12], #8
++	subs	w14, w14, #1
++	b.ne	0b
++	dsb	sy
+ 	bl	record_mmu_state
+ 	bl	preserve_boot_args
+ 

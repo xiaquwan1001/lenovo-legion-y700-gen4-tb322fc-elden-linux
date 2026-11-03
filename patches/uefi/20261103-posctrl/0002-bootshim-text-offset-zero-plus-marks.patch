@@ -1,0 +1,99 @@
+diff --git a/BootShim/BootShim.S b/BootShim/BootShim.S
+index 76dcb4f9..9da92902 100644
+--- a/BootShim/BootShim.S
++++ b/BootShim/BootShim.S
+@@ -8,8 +8,10 @@ _Head:
+ 	/* Fake Linux kernel header */
+ 
+ _StackBase:
+-	/* Text Offset */
+-	.quad UEFI_BASE
++	/* Text Offset（Linux Image 头 offset 8）：必须为 0 ——
++	   2026-11-03 定位：ABL 按 load_address + text_offset 跳转，填 UEFI_BASE 会跳到野地址，
++	   这正是「0.056 s usb_read failed、载荷从未执行」的候选机制。真正的拷贝目标见 _UefiBase。 */
++	.quad 0
+ 
+ _StackSize:
+ 	/* Image Size */
+@@ -34,8 +36,38 @@ _StackSize:
+ 	.long 0
+ 
+ _Start:
++/* DDR 黑匣子 stage 标记（2026-11-01 第三版）：Android 回落实测**不清**的三块 carveout
++   （dsm-partition-1 / video / dsm-partition-2，存活率 77-88%），按「最不易受保护」顺序写：
++     0x84A00000 dsm1 -> 0x9C300000 video -> 0x89300000 dsm2
++   单调编码：整页 0xFF = 到过该 stage。stage：1=shim 入口 2=FD 拷完 4=即将跳入 FD。 */
++#define BB_MARK_REG(base, stage)                          \
++	movz	x7, #((base) & 0xffff);                   \
++	movk	x7, #(((base) >> 16) & 0xffff), lsl #16;  \
++	movz	w8, #(stage);                             \
++	lsl	x8, x8, #12;                              \
++	add	x7, x7, x8;                               \
++	mov	x11, x7;                                  \
++	mov	x9, #-1;                                  \
++	mov	w10, #512;                                \
++1:	str	x9, [x7], #8;                            \
++	subs	w10, w10, #1;                             \
++	b.ne	1b;                                       \
++/* 回写：标记若只落在 D-cache，看门狗复位会丢，必须 clean to PoC */ \
++	mov	x7, x11;                                  \
++	mov	w10, #64;                                 \
++2:	dc	civac, x7;                                \
++	add	x7, x7, #64;                              \
++	subs	w10, w10, #1;                             \
++	b.ne	2b;                                       \
++	dsb	sy
++#define BB_MARK(stage)                                    \
++	BB_MARK_REG(0x84A00000, stage);                   \
++	BB_MARK_REG(0x9C300000, stage);                   \
++	BB_MARK_REG(0x89300000, stage)
++
++	BB_MARK(1)
+ 	mov		x4, x1
+-	ldr		x5, _StackBase
++	ldr		x5, _UefiBase
+ 	cmp		x4, x5
+ 	beq		_Entry
+ 	ldr		x6,  _StackSize
+@@ -45,9 +77,31 @@ _CopyLoop:
+ 	stp		x2, x3, [x5], #16
+ 	subs	x6, x6, #16
+ 	b.ne	_CopyLoop
+-	ldr		x5, _StackBase
++	BB_MARK(2)
++
++/*
++ * Cache maintenance before executing the copied image:
++ * the stp loop above may leave dirty D-cache lines at the destination
++ * (UEFI_BASE..UEFI_BASE+UEFI_SIZE) if XBL entered with the D-cache
++ * enabled. Clean+invalidate them to PoC so DRAM holds the payload,
++ * then invalidate the whole I-cache so no stale instructions are
++ * fetched at the new entry point.
++ */
++	ldr		x5, _UefiBase
++	ldr		x6, _StackSize
++_CivacLoop:
++	dc		civac, x5
++	add		x5, x5, #64
++	subs	x6, x6, #64
++	b.ne	_CivacLoop
++	dsb		sy
++	ic		iallu
++	dsb		sy
++	isb
+ 
+ _Entry:
++	BB_MARK(4)
++	ldr		x5, _UefiBase
+ 	br		x5
+ 
+ _Dead:
+@@ -57,5 +111,8 @@ _Dead:
+ .text
+ .align 4
+ 
++_UefiBase:
++	.quad UEFI_BASE
++
+ _Payload:
+ 	/* Your code will get ran right after this binary */

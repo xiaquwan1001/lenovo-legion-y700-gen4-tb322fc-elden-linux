@@ -372,3 +372,4 @@ vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉
 m3v5-onboard	uts_dup12	M3-1 v5 pristine 候选（实验内核，未入日常线）：刻意钉 vk172 UTS 以复用 /lib/modules；pristine 缺下游 DSI、initramfs 未含 dwc3/ucsi 模块 ⇒ A1 启动期失联（根因未证实，见 reports/m3v5-onboard-plan-20261030.md §6）；身份由 kernel_payload_sha256 锚定 c4e884ad
 vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）
 m3v5-onboard-b	uts_dup12	M3-1 v5 复测件（实验内核，未入日常线）：复用 pinned vk172 UTS；initramfs 补 gadget 14 模块后仍 USB 零枚举 ⇒ pristine 平台启动假设；不做上机载体；身份由 kernel_payload_sha256 锚定
+posctrl-20261103	uts_dup8	正控载荷（2026-11-03）：刻意复用 pinned vk172 UTS 以匹配设备 /lib/modules；身份由 kernel_payload_sha256 锚定；用途只在「内核最早入口写 DRAM 标记」取证，不作日常启动

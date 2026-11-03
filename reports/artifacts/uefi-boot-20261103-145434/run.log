@@ -1,0 +1,34 @@
+[14:54:34] ===== trial START label=uefi-posctrl-shimmarks image=uefi-ddrmarks-clean-v0.img sha=623acee656709a9424065b3a3265d5fe7ed70a3a3b2437fa17142c843e798ddf =====
+[14:54:34] image_size=2441216
+[trial] boot_b: succ=1 retry=6 unbootable=0
+[trial] GATE=OK
+[14:54:35] pre boot_id=# ssh pre 2026-11-03T14:54:35+08:00
+[14:54:35] ssh -> reboot bootloader (eldroid-bootctl)
+[14:54:58] fastboot up after ~2s
+[14:54:58] SER=HA2EXB0E
+# fastboot pre 2026-11-03T14:54:58+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.004s
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.005s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.005s
+[14:54:58] fastboot boot uefi-ddrmarks-clean-v0.img
+Sending 'boot.img' (2384 KB)                       OKAY [  0.056s]
+Booting                                            FAILED (usb_read failed: No such device)
+fastboot: error: Command failed
+[14:54:59] fastboot boot returned after 0s
+[14:56:53] watch: usb_present_last=0 samples_with_usb=2/50
+[14:56:53] VERDICT(candidate)=HANDOFF
+[14:56:53] recovering...
+[14:56:53] ABL gone (handoff) -> wait for fallback (Android) or ABL watchdog
+[14:56:59] post-OS mode=android after ~2s
+[14:56:59] in stock Android -> adb reboot bootloader + set_active b
+[14:57:35] post boot_id=# ssh post 2026-11-03T14:57:35+08:00 mode=linux
+[14:57:35] dump logfs (ABL/PBL log; 单文件 UEFILOG1.TXT，偏移 0x19 起 FAT)
+[14:57:36] abl log lines: 528
+[trial] RECORD=/home/xuqianhui/y700-elden/reports/trials/20261103T065736Z-uefi-posctrl-shimmarks.json
+[trial] VERDICT=HANDOFF  reset=warm vk=
+[14:57:36] ===== trial END verdict=HANDOFF outdir=/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261103-145434 =====

@@ -1,0 +1,58 @@
+diff --git a/scripts/unixnu/bootimg.py b/scripts/unixnu/bootimg.py
+index d2aa766..081e383 100644
+--- a/scripts/unixnu/bootimg.py
++++ b/scripts/unixnu/bootimg.py
+@@ -114,20 +114,46 @@ def build(ctx, uefi, fd, dtb, ramdisk=None, output=None):
+     return out
+ 
+ 
++def align(value, page):
++    return page * -(-value // page)
++
++
+ def verify(path, combined, tree, ramdisk_path, image):
+     """Unpack the image and compare every part with its input."""
+     data = Path(path).read_bytes()
+-    kernel_size, kernel_address, ramdisk_size, _, second_size, _, tags, page, version, _ = struct.unpack_from('<10I', data, 8)
+-    if data[:8] != b'ANDROID!' or second_size or version != image['header_version'] or page != image['pagesize']:
+-        raise Error('boot image header does not match the requested parameters')
+-    if kernel_address != image['base'] + image['kernel_offset'] or tags != image['base'] + image['tags_offset']:
+-        raise Error('boot image load addresses do not match the requested offsets')
++    if data[:8] != b'ANDROID!':
++        raise Error('boot image magic is missing')
++    version = struct.unpack_from('<I', data, 40)[0]
++    if version != image['header_version']:
++        raise Error(f'boot image header version is {version}, requested {image["header_version"]}')
++    kernel_size, ramdisk_size = struct.unpack_from('<II', data, 8)
++    if version >= 3:
++        # v3 and v4 carry no load addresses and always use a 4 KiB page; the header size field at
++        # offset 20 distinguishes them, and a v4 image appends a 4 KiB boot signature after the data.
++        header_size = struct.unpack_from('<I', data, 20)[0]
++        page = 4096
++        if header_size != (1584 if version == 4 else 1580) or image.get('pagesize', page) != page:
++            raise Error('boot image header does not match the requested parameters')
++        kernel_address = tags = None
++    else:
++        (kernel_size, kernel_address, ramdisk_size, _, second_size, _, tags, page,
++         version, _) = struct.unpack_from('<10I', data, 8)
++        if second_size or version != image['header_version'] or page != image['pagesize']:
++            raise Error('boot image header does not match the requested parameters')
++        if kernel_address != image['base'] + image['kernel_offset'] or tags != image['base'] + image['tags_offset']:
++            raise Error('boot image load addresses do not match the requested offsets')
+     kernel = data[page:page + kernel_size]
+     unpacker = zlib.decompressobj(16 + zlib.MAX_WBITS)
+     if unpacker.decompress(kernel) != combined or not unpacker.eof or unpacker.unused_data != tree:
+         raise Error('gzip, firmware and appended device tree do not round-trip')
+-    start = page * (1 + -(-kernel_size // page))
++    start = page + align(kernel_size, page)
+     if data[start:start + ramdisk_size] != Path(ramdisk_path).read_bytes():
+         raise Error('ramdisk bytes differ')
++    if version >= 4:
++        signature = start + align(ramdisk_size, page)
++        if data[signature:signature + 4096] != bytes(4096):
++            raise Error('the v4 boot signature is not the expected empty block')
+     return {'kernel_sha256': hashlib.sha256(kernel).hexdigest(), 'ramdisk_bytes': ramdisk_size,
+-            'header_version': version, 'kernel_address': hex(kernel_address), 'tags_address': hex(tags)}
++            'header_version': version,
++            'kernel_address': hex(kernel_address) if kernel_address is not None else None,
++            'tags_address': hex(tags) if tags is not None else None}

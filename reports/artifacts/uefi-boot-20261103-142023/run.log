@@ -1,0 +1,26 @@
+[14:20:23] ===== trial START label=uefi-posctrl-linuxentry image=boot-elden-posctrl-20261103.img sha=9dfdb3319b61860d472cf403a63730bf431f772a488d577f3870b8b59eb60993 =====
+[14:20:23] image_size=84525056
+[trial] boot_b: succ=1 retry=6 unbootable=0
+[trial] GATE=OK
+[14:20:24] pre boot_id=# ssh pre 2026-11-03T14:20:23+08:00
+[14:20:24] ssh -> reboot bootloader (eldroid-bootctl)
+[14:20:46] fastboot up after ~2s
+[14:20:46] SER=HA2EXB0E
+# fastboot pre 2026-11-03T14:20:46+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.004s
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.005s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.006s
+[14:20:46] fastboot boot boot-elden-posctrl-20261103.img
+Sending 'boot.img' (82544 KB)                      OKAY [  1.873s]
+Booting                                            OKAY [ 10.106s]
+Finished. Total time: 12.025s
+[14:20:59] fastboot boot returned after 12s
+[14:22:54] watch: usb_present_last=0 samples_with_usb=9/55
+[14:22:54] VERDICT(candidate)=HANDOFF
+[14:22:54] recovering...
+[14:22:54] ABL gone (handoff) -> wait for fallback (Android) or ABL watchdog
