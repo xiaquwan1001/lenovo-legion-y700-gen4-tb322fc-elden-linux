@@ -1,0 +1,71 @@
+Subject: [PATCH] QcomModulePkg: screen probes for LoadImageAndAuth / FindBootableSlot
+
+2026-11-04R14 y700-elden: R13 已能把 FV 内 LinuxLoader 拉起来并进 UEFI 侧 fastboot，但
+`fastboot continue` 与 `fastboot boot` 都返回 remote "Load Error"（= LoadImageAndAuth 的
+EFI_LOAD_ERROR）。RELEASE 把 DEBUG() 全编掉，屏上无任何线索，因此在四处补探针。
+用 AsciiPrint（UefiLib，LinuxLoader 已链接；SerialPortLib/PrintLib 均未链接，实测链接失败）。
+  1) LoadImageAndAuth 入口：AVBVersion 与 IsUnlocked()
+  2) LoadImageAndAuthVB2 主分支：avb_slot_verify 的 Result、SlotData 是否为空、NumRequestedPartition
+  3) NumLoadedImages/NumRequestedPartition 比较前
+  4) FindBootableSlot 出口：槽位后缀首字符与 Status
+
+判据：[V] avb=2 unl=1 为正常；res 不在 {0 OK, 1 VERIFICATION, 3 ROLLBACK_INDEX, 4 PUBLIC_KEY_REJECTED}
+之内即致命（OOM/IO/INVALID_METADATA/UNSUPPORTED_VERSION/INVALID_ARGUMENT 不因解锁而放行）。
+
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c b/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
+index d470a23e..c77ae0f2 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
+@@ -1662,6 +1662,8 @@ FindBootableSlot (Slot *BootableSlot)
+   }
+   MarkPtnActive (BootableSlot->Suffix);
+ out:
++  // 2026-11-04R14 y700-elden: RELEASE strips DEBUG(); show the slot-state decision.
++  AsciiPrint ("[V] slot0=%d st=%r\n\r", (INT32)BootableSlot->Suffix[0], Status);
+   if (Status != EFI_SUCCESS) {
+     /* clear bootable slot */
+     BootableSlot->Suffix[0] = '\0';
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index d90fa15a..f6a38c24 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -59,6 +59,7 @@
+ */
+ 
+ #include "VerifiedBoot.h"
++#include <Library/UefiLib.h>        // 2026-11-04R14 y700-elden
+ #include "BootLinux.h"
+ #include "BootImage.h"
+ #include "KeymasterClient.h"
+@@ -1274,6 +1275,10 @@ LoadImageAndAuthVB2 (BootInfo *Info)
+     }
+     Result = avb_slot_verify (Ops, (CONST CHAR8 *CONST *)RequestedPartition,
+                   SlotSuffix, VerifyFlags, VerityFlags, &SlotData);
++    // 2026-11-04R14 y700-elden: which AvbSlotVerifyResult made LoadImageAndAuth
++    // return EFI_LOAD_ERROR (only OK/VERIFICATION/ROLLBACK/KEY_REJECTED are tolerated).
++    AsciiPrint ("[V] res=%d data=%d rq=%d\n\r", Result,
++                SlotData != NULL ? 1 : 0, NumRequestedPartition);
+   }
+ 
+   if (SlotData == NULL) {
+@@ -1328,6 +1333,9 @@ LoadImageAndAuthVB2 (BootInfo *Info)
+     }
+   }
+ 
++  AsciiPrint ("[V] ld=%d rq=%d\n\r", Info->NumLoadedImages,
++              NumRequestedPartition);
++
+   if (Info->NumLoadedImages < NumRequestedPartition) {
+     DEBUG ((EFI_D_ERROR, "ERROR: AvbSlotVerify slot data error: num of "
+                          "loaded partitions %d, requested %d\n",
+@@ -1721,6 +1729,10 @@ LoadImageAndAuth (BootInfo *Info)
+ 
+   AVBVersion = GetAVBVersion ();
+   DEBUG ((EFI_D_VERBOSE, "AVB version %d\n", AVBVersion));
++  // 2026-11-04R14 y700-elden: RELEASE strips DEBUG(); print the two values that
++  // decide whether a verification error is tolerated.  AsciiPrint = UefiLib (already
++  // linked into LinuxLoader); SerialPortLib/PrintLib are not.
++  AsciiPrint ("[V] avb=%d unl=%d\n\r", AVBVersion, IsUnlocked ());
+ 
+   /* Load and Authenticate */
+   switch (AVBVersion) {

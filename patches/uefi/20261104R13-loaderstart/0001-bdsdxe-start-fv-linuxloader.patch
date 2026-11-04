@@ -1,0 +1,122 @@
+Subject: [PATCH] BdsDxe: start the FV-internal LinuxLoader at BDS entry
+
+2026-11-04R13 y700-elden: R10 已跑到底、R11/R12 证明 UFS 枚举成功（BlockIo=119）且整机没有 ESP，
+BDS 没有可交接目标。复核发现 loader 早就在 FV 里：QcomModulePkg/Application/LinuxLoader 已编入
+FVMAIN（GUID F536D559-459F-48FA-8BBC-43B554ECAE8D，偏移 0xC126B0），但它是 UEFI_APPLICATION，
+而 DxeCore 的 mDxeFileTypes[] 不含 EFI_FV_FILETYPE_APPLICATION ⇒ 从未被 LoadImage；BDS 也没有
+Boot#### 变量或可移动介质路径指向它。本补丁在 BdsEntry 入口按 GUID 用 FV2->ReadSection 取出 PE32
+并 LoadImage+StartImage。该树把 LinuxLoader 写死 BootIntoFastboot=TRUE，因此启动后进入 UEFI 侧
+fastboot，宿主可 `fastboot continue` / `fastboot boot <boot.img>`。
+
+判据（屏上单行）：[L] found=1 size=0x2b000 级 / [L] LoadImage=Success / 之后无 [L] StartImage=（未返回）。
+
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+index 79535cf..47d0251 100644
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -13,6 +13,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ **/
+ 
+ #include "Bds.h"
++#include <Library/SerialPortLib.h>   // 2026-11-04R13 y700-elden
++#include <Library/PrintLib.h>        // 2026-11-04R13 y700-elden
++#include <Protocol/FirmwareVolume2.h> // 2026-11-04R13 y700-elden
+ #include "Language.h"
+ #include "HwErrRecSupport.h"
+ #include <Library/VariablePolicyHelperLib.h>
+@@ -683,6 +686,85 @@ BdsFormalizeEfiGlobalVariable (
+   BdsFormalizeOSIndicationVariable ();
+ }
+ 
++// 2026-11-04R13 y700-elden: start the FV-internal LinuxLoader.
++//
++// Why: DxeCore only dispatches EFI_FV_FILETYPE_DRIVER / *_PEIM_DRIVER / DXE_CORE /
++// FIRMWARE_VOLUME_IMAGE (MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c, mDxeFileTypes[]).
++// LinuxLoader is a UEFI_APPLICATION, so although it sits in FVMAIN (GUID
++// F536D559-459F-48FA-8BBC-43B554ECAE8D, offset 0xC126B0) it is never loaded, and BDS has
++// no Boot#### variable / removable-media path pointing at it.  This tree also pins
++// LinuxLoader to BootIntoFastboot = TRUE, so starting it lands in UEFI-side fastboot,
++// from which the host can `fastboot continue` (active-slot boot partition) or
++// `fastboot boot <boot.img>` -> LoadImageAndAuth -> BootLinux.
++STATIC
++VOID
++R13StartLinuxLoader (
++  VOID
++  )
++{
++  EFI_STATUS                     Status;
++  EFI_HANDLE                     *FvHandles;
++  UINTN                          FvCount;
++  UINTN                          FvIdx;
++  EFI_FIRMWARE_VOLUME2_PROTOCOL  *Fv;
++  EFI_GUID                       LoaderGuid = { 0xF536D559, 0x459F, 0x48FA, { 0x8B, 0xBC, 0x43, 0xB5, 0x54, 0xEC, 0xAE, 0x8D } };
++  VOID                           *Pe;
++  UINTN                          PeSize;
++  UINT32                         AuthStatus;
++  EFI_HANDLE                     ImageHandle;
++  CHAR8                          Line[160];
++  UINTN                          Len;
++  BOOLEAN                        Found;
++
++  FvHandles   = NULL;
++  FvCount     = 0;
++  Pe          = NULL;
++  PeSize      = 0;
++  AuthStatus  = 0;
++  ImageHandle = NULL;
++  Found       = FALSE;
++
++  Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiFirmwareVolume2ProtocolGuid, NULL, &FvCount, &FvHandles);
++  if (EFI_ERROR (Status)) {
++    FvCount = 0;
++  }
++
++  for (FvIdx = 0; FvIdx < FvCount; FvIdx++) {
++    if (EFI_ERROR (gBS->HandleProtocol (FvHandles[FvIdx], &gEfiFirmwareVolume2ProtocolGuid, (VOID **)&Fv))) {
++      continue;
++    }
++
++    Pe     = NULL;
++    PeSize = 0;
++    if (!EFI_ERROR (Fv->ReadSection (Fv, &LoaderGuid, EFI_SECTION_PE32, 0, &Pe, &PeSize, &AuthStatus))) {
++      Found = TRUE;
++      break;
++    }
++  }
++
++  if (FvHandles != NULL) {
++    FreePool (FvHandles);
++  }
++
++  Len = AsciiSPrint (Line, sizeof (Line), "[L] found=%d size=0x%x\n\r", Found ? 1 : 0, PeSize);
++  SerialPortWrite ((UINT8 *)Line, Len);
++  if (!Found) {
++    return;
++  }
++
++  Status = gBS->LoadImage (TRUE, gImageHandle, NULL, Pe, PeSize, &ImageHandle);
++  Len    = AsciiSPrint (Line, sizeof (Line), "[L] LoadImage=%r\n\r", Status);
++  SerialPortWrite ((UINT8 *)Line, Len);
++  if (EFI_ERROR (Status)) {
++    FreePool (Pe);
++    return;
++  }
++
++  Status = gBS->StartImage (ImageHandle, NULL, NULL);
++  Len    = AsciiSPrint (Line, sizeof (Line), "[L] StartImage=%r\n\r", Status);
++  SerialPortWrite ((UINT8 *)Line, Len);
++}
++
+ /**
+ 
+   Service routine for BdsInstance->Entry(). Devices are connected, the
+@@ -720,6 +802,9 @@ BdsEntry (
+   EFI_BOOT_MANAGER_LOAD_OPTION    PlatformDefaultBootOption;
+   BOOLEAN                         PlatformDefaultBootOptionValid;
+ 
++  // 2026-11-04R13 y700-elden: hand off to the FV-internal LinuxLoader (UEFI fastboot).
++  R13StartLinuxLoader ();
++
+   HotkeyTriggered = NULL;
+   Status          = EFI_SUCCESS;
+   BootSuccess     = FALSE;

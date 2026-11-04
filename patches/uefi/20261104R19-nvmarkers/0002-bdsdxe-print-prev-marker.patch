@@ -1,0 +1,57 @@
+Subject: [PATCH] BdsDxe: print the previous run's last marker (NV) and halt
+
+2026-11-04R19 y700-elden: BDS 入口读 `SbMarkR19`：
+  * 有值 ⇒ 屏上打 `[S] prev: <上一轮最后一条标记>` 并 `CpuDeadLoop()`（画面只剩这一行，拍照即可）；
+  * 无值 ⇒ 写一个种子值并打 `[S] setvar=<status>`，继续正常启动（"prime" 轮）。
+因此同一发镜像：第 1 次启动 = 记录，第 2 次启动 = 读出最后一步。
+
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+index 47d0251..5cd060e 100644
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -696,6 +696,8 @@ BdsFormalizeEfiGlobalVariable (
+ // LinuxLoader to BootIntoFastboot = TRUE, so starting it lands in UEFI-side fastboot,
+ // from which the host can `fastboot continue` (active-slot boot partition) or
+ // `fastboot boot <boot.img>` -> LoadImageAndAuth -> BootLinux.
++STATIC CONST EFI_GUID SbMarkGuid = { 0x5b4d4152, 0x4b31, 0x5259, { 0x9a, 0x31, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 } };
++
+ STATIC
+ VOID
+ R13StartLinuxLoader (
+@@ -802,6 +804,36 @@ BdsEntry (
+   EFI_BOOT_MANAGER_LOAD_OPTION    PlatformDefaultBootOption;
+   BOOLEAN                         PlatformDefaultBootOptionValid;
+ 
++  // 2026-11-04R19 y700-elden: 异常打印会滚屏且 ArmCpuDxe 是预编译件，屏上取证极不可靠。
++  // 因此 LinuxLoader/BootLinux 的每条标记都会写进 NV 变量 "SbMarkR19"；
++  // 下一次启动在这里把它读出来打在屏尾并停机 —— 一张照片就是"最后一步"。
++  {
++    CHAR8       SbMark[192];
++    UINTN       SbMarkSize;
++    CHAR8       SbLine[224];
++    UINTN       SbLen;
++    EFI_STATUS  SbSt;
++
++    ZeroMem (SbMark, sizeof (SbMark));
++    SbMarkSize = sizeof (SbMark) - 1;
++    SbSt = gRT->GetVariable ((CHAR16 *)L"SbMarkR19", (EFI_GUID *)(&SbMarkGuid),
++                             NULL, &SbMarkSize, SbMark);
++    if (!EFI_ERROR (SbSt) && (SbMarkSize > 0) && (SbMarkSize < sizeof (SbMark))) {
++      SbMark[SbMarkSize] = '\0';
++      if (SbMark[0] != '\0') {
++        SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[S] prev: %a\n\r", SbMark);
++        SerialPortWrite ((UINT8 *)SbLine, SbLen);
++        CpuDeadLoop ();
++      }
++    }
++
++    SbSt = gRT->SetVariable ((CHAR16 *)L"SbMarkR19", (EFI_GUID *)(&SbMarkGuid),
++                             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
++                             4, (VOID *)"[S]b");
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[S] setvar=%r\n\r", SbSt);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
++
+   // 2026-11-04R13 y700-elden: hand off to the FV-internal LinuxLoader (UEFI fastboot).
+   R13StartLinuxLoader ();
+ 

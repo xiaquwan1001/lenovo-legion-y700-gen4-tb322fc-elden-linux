@@ -1,0 +1,149 @@
+Subject: [PATCH] BootLib: visible [K] markers on the BootLinux path + treat empty dtbo as "no overlay"
+
+2026-11-04R17 y700-elden: R16（dtbo 按 total_size 装载）之后 `continue` 不再返回 "Load Error"，
+但设备中途复位、屏上只有 `Synchronous Exception at 0xCFE99344` + 递归打印。R16 的 dtbo 块先读一页
+表头：本机 `dtbo_b` **整块为 0**（`dd ... | od -tx4` 全 0），magic 不匹配，于是走到"size 仍
+32 MiB > 24 MiB"→ 依然会被判 OUT_OF_RESOURCES；说明真正让流程往下走的是别处/或尺寸查表不同。
+因此这一发把「后面到底走到哪一步」变成可见：
+
+1) VerifiedBoot.c 的 dtbo 块：把空/无效 dtbo 明确当成 `EFI_NO_MEDIA`（语义 = 没有 overlay，
+   走 LoadImageNoAuth 既有的 "No dtbo partition is found, Skip dtbo" 分支），并打印
+   `[V] dtbm=<magic> tot=<total_size> ps=<分区大小>`；有效 dtbo 仍按 total_size 装载，
+   且缓冲区按 4 KiB 向上取整（LoadImageFromPartition 会按块大小取整读取，否则越界）；
+2) BootLinux.c 加 `[K]` 标记（SerialPortWrite，唯一可见通道）：
+   enter → img（GetImage 大小）→ addr（内核/ramdisk/dtb 载入地址 + page size）→
+   dtb（DTBImgCheckAndAppendDT 状态）→ ldt（LoadAddrAndDTUpdate 状态）→
+   jump（跳内核前的 k/d 地址与 DTB magic）。
+
+判据：
+  * 若停在 `[K] jump` 之后才异常 ⇒ 内核已进场，问题在 kernel/DTB/cmdline；
+  * 若某 `[K]` 之后的下一行是异常 ⇒ 定位到 BootLinux 对应阶段；
+  * `[V] dtbm=0` ⇒ dtbo_b 确实是空块（overlay 缺失属预期）。
+
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index 2e3003a4..5f08280f 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -82,6 +82,27 @@
+ #include "BootLinux.h"
+ #include "BootStats.h"
+ #include "UpdateDeviceTree.h"
++#include <Library/SerialPortLib.h>  // 2026-11-04R17 y700-elden
++#include <Library/PrintLib.h>       // 2026-11-04R17 y700-elden
++
++// 2026-11-04R17 y700-elden: 与 VerifiedBoot.c 的 SbVProbe 同一理由（DEBUG 被编掉、
++// ConOut 被 R7 换成 no-op），boot 链只能用 SerialPortWrite 留痕。
++STATIC
++VOID
++SbBootProbe (
++  CONST CHAR8  *Fmt,
++  ...
++  )
++{
++  CHAR8    Buf[160];
++  UINTN    Len;
++  VA_LIST  Marker;
++
++  VA_START (Marker, Fmt);
++  Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
++  VA_END (Marker);
++  SerialPortWrite ((UINT8 *)Buf, Len);
++}
+ #include "libfdt.h"
+ #include <ufdt_overlay.h>
+ 
+@@ -916,6 +937,8 @@ BootLinux (BootInfo *Info)
+     return EFI_INVALID_PARAMETER;
+   }
+ 
++  SbBootProbe ("[K] enter\n\r");
++
+   if (IsVmEnabled ()) {
+     Status = CheckAndSetVmData (&BootParamlistPtr);
+     if (Status != EFI_SUCCESS) {
+@@ -954,6 +977,8 @@ BootLinux (BootInfo *Info)
+              !IsBuildUseRecoveryAsBoot ()))? "Recovery" : "Boot"));
+     return EFI_NOT_STARTED;
+   }
++  SbBootProbe ("[K] img sz=%lx\n\r", (UINT64)BootParamlistPtr.ImageSize);
++
+   /* Find if MDTP is enabled and Active */
+ 
+   Status = CheckMDTPStatus (PartitionName, Info);
+@@ -986,6 +1011,11 @@ BootLinux (BootInfo *Info)
+     return Status;
+   }
+   SetandGetLoadAddr (&BootParamlistPtr, LOAD_ADDR_NONE);
++  SbBootProbe ("[K] addr k=%lx r=%lx d=%lx p=%d\n\r",
++               (UINT64)BootParamlistPtr.KernelLoadAddr,
++               (UINT64)BootParamlistPtr.RamdiskLoadAddr,
++               (UINT64)BootParamlistPtr.DeviceTreeLoadAddr,
++               BootParamlistPtr.PageSize);
+   Status = GZipPkgCheck (&BootParamlistPtr);
+   if (Status != EFI_SUCCESS) {
+     return Status;
+@@ -1033,6 +1063,7 @@ BootLinux (BootInfo *Info)
+   }
+ 
+   Status = DTBImgCheckAndAppendDT (Info, &BootParamlistPtr);
++  SbBootProbe ("[K] dtb=%r\n\r", Status);
+   if (Status != EFI_SUCCESS) {
+     return Status;
+   }
+@@ -1056,6 +1087,7 @@ BootLinux (BootInfo *Info)
+   }
+ 
+   Status = LoadAddrAndDTUpdate (Info, &BootParamlistPtr);
++  SbBootProbe ("[K] ldt=%r\n\r", Status);
+   if (Status != EFI_SUCCESS) {
+        return Status;
+   }
+@@ -1114,6 +1146,10 @@ BootLinux (BootInfo *Info)
+   }
+ 
+   LinuxKernel = (LINUX_KERNEL) (UINT64)BootParamlistPtr.KernelLoadAddr;
++  SbBootProbe ("[K] jump k=%lx d=%lx m=%x\n\r",
++                 (UINT64)BootParamlistPtr.KernelLoadAddr,
++                 (UINT64)BootParamlistPtr.DeviceTreeLoadAddr,
++                 *(UINT32 *)(UINTN)BootParamlistPtr.DeviceTreeLoadAddr);
+   LinuxKernel ((UINT64)BootParamlistPtr.DeviceTreeLoadAddr, 0, 0, 0);
+ 
+ // Kernel should never exit
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index d2ba0bb2..f17ad8ab 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -271,10 +271,21 @@ NoAVBLoadReqImage (BootInfo *Info, VOID **DtboImage,
+       goto out;
+     }
+ 
+-    if (fdt32_to_cpu (DtboHdr->Magic) == DTBO_TABLE_MAGIC) {
++    if (fdt32_to_cpu (DtboHdr->Magic) != DTBO_TABLE_MAGIC) {
++      // 2026-11-04R17 y700-elden: 空/无效 dtbo 分区（本机 dtbo_b 整块为 0）不是错误，
++      // 语义等于"没有 overlay" —— 返回 EFI_NO_MEDIA 让 LoadImageNoAuth 按既有分支跳过。
++      SbVProbe ("[V] dtbm=%x ps=%lx\n\r", fdt32_to_cpu (DtboHdr->Magic), PartSize);
++      FreePool (DtboHdr);
++      Status = EFI_NO_MEDIA;
++      goto out;
++    }
++
++    {
+       UINT32 DtboTotalSize;
+ 
+       DtboTotalSize = fdt32_to_cpu (DtboHdr->TotalSize);
++      SbVProbe ("[V] dtbm=%x tot=%x ps=%lx\n\r", fdt32_to_cpu (DtboHdr->Magic),
++                DtboTotalSize, PartSize);
+       if ((DtboTotalSize != 0) && (DtboTotalSize <= PartSize)) {
+         PartSize = DtboTotalSize;
+       }
+@@ -291,7 +302,9 @@ NoAVBLoadReqImage (BootInfo *Info, VOID **DtboImage,
+   DEBUG ((EFI_D_VERBOSE, "VB: Trying to allocate memory "
+                          "for DTBO: 0x%x\n", PartSize));
+   *DtboSize = (UINT32) PartSize;
+-  *DtboImage = AllocateZeroPool (PartSize);
++  // 2026-11-04R17: LoadImageFromPartition 会按块大小向上取整读取，
++  // 缓冲区必须按同样粒度取整，否则 total_size 未对齐时会写越界。
++  *DtboImage = AllocateZeroPool ((UINTN) ROUND_TO_PAGE (PartSize, 0xFFF));
+ 
+   if (*DtboImage == NULL) {
+     DEBUG ((EFI_D_ERROR, "VB: Unable to allocate memory for DTBO\n"));

@@ -1,0 +1,207 @@
+Subject: [PATCH] QcomModulePkg: visible (SerialPortWrite) probes on the NO_AVB load path
+
+2026-11-04R15 y700-elden: R14 的探针一条都没出现在屏上，原因已定位（不是链接丢弃）：
+  1) 这棵树 GetAVBVersion() 直接 `ret i32 0`（VERIFIED_BOOT/_2/_LE 全 0）⇒ LoadImageAndAuthVB2
+     整段在编译期消失，R14 的 [V] res= / ld= 属于死代码；
+  2) 更关键：R7 把 gST->ConOut->OutputString 换成 no-op（防空屏滚动二次异常），因此 **AsciiPrint
+     一律不可见**；屏上能看到的 [I]/[E]/[L] 全部走 SerialPortWrite（FrameBufferSerialPortLib）。
+
+本补丁把探针统一改成 AsciiSPrint + SerialPortWrite，并在 LinuxLoader/BootLib/AvbLib 三个 .inf
+补 SerialPortLib + PrintLib，覆盖 R14 之后真正会跑的 noauth 路径：
+  [V] ms=    MultiSlotBoot / BootIntoRecovery （LoadImageAndAuth 入口）
+  [V] slot0= FindBootableSlot 的槽位与 Status（R14 已有，改可见通道）
+  [V] avb=   AVBVersion / IsUnlocked
+  [V] hdr=   LoadImageHeader 结果与首块大小 / 是否已是内存镜像
+  [V] chk=   CheckImageHeader 结果、实际镜像长度、页大小、header 版本
+  [V] pld=   按分区整镜像 LoadImage 结果
+  [V] vbi=   vendor_boot 装载结果（v3+ 才有）
+  [V] na=    LoadImageNoAuth 整体
+  [V] dt=    dtbo 装载结果 / 已装镜像数
+  [V] wr=    LoadImageNoAuthWrapper
+  [V] sw=    switch(AVBVersion) 出来的状态
+判据：任一非 Success 的那一行就是 EFI_LOAD_ERROR 的来源；`slot0=` 非 98（'b'）或 st 非 Success
+⇒ 根因在槽位元数据（misc/boot_control），否则在装图链。
+
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.inf b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.inf
+index 8395a57c..c9cd318b 100644
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.inf
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.inf
+@@ -42,6 +42,8 @@
+ [LibraryClasses]
+ 	DxeServicesTableLib
+ 	UefiLib
++	SerialPortLib  # 2026-11-04R15 y700-elden
++	PrintLib       # 2026-11-04R15 y700-elden
+ 	UefiApplicationEntryPoint
+ 	CacheMaintenanceLib
+ 	Zlib
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf b/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf
+index 9da1d193..928cf8b2 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf
+@@ -87,6 +87,8 @@
+ [LibraryClasses]
+ 	DxeServicesTableLib
+ 	UefiLib
++	SerialPortLib  # 2026-11-04R15 y700-elden
++	PrintLib       # 2026-11-04R15 y700-elden
+ 	CacheMaintenanceLib
+ 	Zlib
+ 	ArmLib
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c b/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
+index c77ae0f2..cae7587e 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
+@@ -27,6 +27,8 @@
+  *
+  */
+ #include "PartitionTableUpdate.h"
++#include <Library/SerialPortLib.h>  // 2026-11-04R15 y700-elden
++#include <Library/PrintLib.h>       // 2026-11-04R15 y700-elden
+ #include "AutoGen.h"
+ #include <Library/Board.h>
+ #include <Library/BootLinux.h>
+@@ -1663,7 +1665,14 @@ FindBootableSlot (Slot *BootableSlot)
+   MarkPtnActive (BootableSlot->Suffix);
+ out:
+   // 2026-11-04R14 y700-elden: RELEASE strips DEBUG(); show the slot-state decision.
+-  AsciiPrint ("[V] slot0=%d st=%r\n\r", (INT32)BootableSlot->Suffix[0], Status);
++  // 2026-11-04R15: AsciiPrint is invisible (R7 把 ConOut 换 no-op)，改走 SerialPortWrite。
++  {
++    CHAR8  SbBuf[96];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbBuf, sizeof (SbBuf), "[V] slot0=%d st=%r\n\r",
++                         (INT32)BootableSlot->Suffix[0], Status);
++    SerialPortWrite ((UINT8 *)SbBuf, SbLen);
++  }
+   if (Status != EFI_SUCCESS) {
+     /* clear bootable slot */
+     BootableSlot->Suffix[0] = '\0';
+diff --git a/Platforms/QcomModulePkg/Library/avb/AvbLib.inf b/Platforms/QcomModulePkg/Library/avb/AvbLib.inf
+index 89128db6..55f9621d 100644
+--- a/Platforms/QcomModulePkg/Library/avb/AvbLib.inf
++++ b/Platforms/QcomModulePkg/Library/avb/AvbLib.inf
+@@ -76,6 +76,8 @@
+ [LibraryClasses]
+ 	DxeServicesTableLib
+ 	UefiLib
++	SerialPortLib  # 2026-11-04R15 y700-elden
++	PrintLib       # 2026-11-04R15 y700-elden
+ 	ArmLib
+ 	BaseLib
+ 	DebugLib
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index f6a38c24..f8ed0e3c 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -68,6 +68,28 @@
+ #include <Library/MenuKeysDetection.h>
+ #include <Library/VerifiedBootMenu.h>
+ #include <Library/LEOEMCertificate.h>
++#include <Library/SerialPortLib.h>  // 2026-11-04R15 y700-elden
++#include <Library/PrintLib.h>       // 2026-11-04R15 y700-elden
++
++// 2026-11-04R15 y700-elden: RELEASE 把 DEBUG() 编掉，而 R7 已把 gST->ConOut->OutputString
++// 换成 no-op（防空屏滚动二次异常），所以连 AsciiPrint 都不会出现在屏上。唯一可见通道
++// = SerialPortWrite（FrameBufferSerialPortLib 直接写帧缓冲），与 [I]/[E]/[L] 同一条路。
++STATIC
++VOID
++SbVProbe (
++  CONST CHAR8  *Fmt,
++  ...
++  )
++{
++  CHAR8    Buf[160];
++  UINTN    Len;
++  VA_LIST  Marker;
++
++  VA_START (Marker, Fmt);
++  Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
++  VA_END (Marker);
++  SerialPortWrite ((UINT8 *)Buf, Len);
++}
+ 
+ STATIC CONST CHAR8 *VerityMode = " androidboot.veritymode=";
+ STATIC CONST CHAR8 *VerifiedState = " androidboot.verifiedbootstate=";
+@@ -437,6 +459,7 @@ LoadBootImageNoAuth (BootInfo *Info, UINT32 *PageSize, BOOLEAN *FastbootPath)
+ 
+     BootIntoRecovery = Info->BootIntoRecovery;
+   }
++  SbVProbe ("[V] hdr=%r sz=%x bi=%d\n\r", Status, ImageHdrSize, Info->Images[0].ImageBuffer != NULL);
+ 
+   Info->HeaderVersion = ((boot_img_hdr *)(ImageHdrBuffer))->header_version;
+ 
+@@ -459,6 +482,7 @@ LoadBootImageNoAuth (BootInfo *Info, UINT32 *PageSize, BOOLEAN *FastbootPath)
+   Status = CheckImageHeader (ImageHdrBuffer, ImageHdrSize,
+                              VendorImageHdrBuffer, VendorImageHdrSize,
+                              &ImageSizeActual, PageSize, BootIntoRecovery);
++  SbVProbe ("[V] chk=%r a=%x p=%d hv=%d\n\r", Status, ImageSizeActual, *PageSize, Info->HeaderVersion);
+   if (Status != EFI_SUCCESS) {
+     DEBUG ((EFI_D_ERROR, "Invalid boot image header:%r\n", Status));
+     goto Err;
+@@ -467,6 +491,7 @@ LoadBootImageNoAuth (BootInfo *Info, UINT32 *PageSize, BOOLEAN *FastbootPath)
+   if (!BootImageLoaded) {
+     Status = LoadImage (Info->Pname, (VOID **)&(Info->Images[0].ImageBuffer),
+                         ImageSizeActual, *PageSize);
++    SbVProbe ("[V] pld=%r\n\r", Status);
+     if (Status != EFI_SUCCESS) {
+       DEBUG ((EFI_D_ERROR, "ERROR: Failed to load image from partition: %r\n",
+               Status));
+@@ -486,6 +511,7 @@ LoadBootImageNoAuth (BootInfo *Info, UINT32 *PageSize, BOOLEAN *FastbootPath)
+ 
+   if (Info->HeaderVersion >= BOOT_HEADER_VERSION_THREE) {
+     Status = NoAVBLoadVendorBootImage (Info);
++    SbVProbe ("[V] vbi=%r\n\r", Status);
+     if (Status != EFI_SUCCESS) {
+         DEBUG ((EFI_D_ERROR,
+                "ERROR: Failed to load vendor_boot Image : %r\n", Status));
+@@ -533,6 +559,7 @@ LoadImageNoAuth (BootInfo *Info)
+   BOOLEAN FastbootPath;
+ 
+   Status = LoadBootImageNoAuth (Info, &PageSize, &FastbootPath);
++  SbVProbe ("[V] na=%r i=%d\n\r", Status, Info->NumLoadedImages);
+   if (Status != EFI_SUCCESS) {
+     return Status;
+   }
+@@ -564,6 +591,7 @@ LoadImageNoAuth (BootInfo *Info)
+     ++(*ImgIdx);
+   }
+ 
++  SbVProbe ("[V] dt=%r i=%d\n\r", Status, *ImgIdx);
+   return EFI_SUCCESS;
+ 
+ Err:
+@@ -622,6 +650,7 @@ LoadImageNoAuthWrapper (BootInfo *Info)
+     }
+   }
+ 
++  SbVProbe ("[V] wr=%r\n\r", Status);
+   return Status;
+ }
+ 
+@@ -1677,6 +1706,8 @@ LoadImageAndAuth (BootInfo *Info)
+     return EFI_INVALID_PARAMETER;
+   }
+ 
++  SbVProbe ("[V] ms=%d rec=%d\n\r", Info->MultiSlotBoot, Info->BootIntoRecovery);
++
+   /* Get Partition Name*/
+   if (!Info->MultiSlotBoot) {
+     if (Info->BootIntoRecovery) {
+@@ -1732,7 +1763,7 @@ LoadImageAndAuth (BootInfo *Info)
+   // 2026-11-04R14 y700-elden: RELEASE strips DEBUG(); print the two values that
+   // decide whether a verification error is tolerated.  AsciiPrint = UefiLib (already
+   // linked into LinuxLoader); SerialPortLib/PrintLib are not.
+-  AsciiPrint ("[V] avb=%d unl=%d\n\r", AVBVersion, IsUnlocked ());
++  SbVProbe ("[V] avb=%d unl=%d\n\r", AVBVersion, IsUnlocked ());
+ 
+   /* Load and Authenticate */
+   switch (AVBVersion) {
+@@ -1752,6 +1783,7 @@ LoadImageAndAuth (BootInfo *Info)
+     DEBUG ((EFI_D_ERROR, "Unsupported AVB version %d\n", AVBVersion));
+     Status = EFI_UNSUPPORTED;
+   }
++  SbVProbe ("[V] sw=%r v=%d\n\r", Status, AVBVersion);
+ 
+   // if MDTP is active Display Recovery UI
+   if (Status != EFI_SUCCESS && MdtpActive) {

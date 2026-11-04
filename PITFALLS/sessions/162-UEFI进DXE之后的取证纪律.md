@@ -31,3 +31,26 @@
 - `DEBUG()` 在 RELEASE 全空 ⇒ 默认构建**看不到任何模块装载信息**；一旦后面的异常把屏刷掉，早先的 `[Pxx]` 全部丢失。
 - 有效做法（本轮落地）：`Image.c` 里 `[I] <name.efi> base=… size=…`、`Dispatcher.c` 里每次 `CoreStartImage` 前 `[E] start=base`，两者用 base 配对即可定位「最后一个被启动的驱动」。
 - 注意：ELR **不落在任何已装载区间**时，不要硬往驱动代码上归因 —— 那是被跳进的野地址（坏函数指针 / `0xFF` 填充区）。
+
+## #506 ConOut 被 no-op 之后，AsciiPrint/DEBUG 一律不可见（2026-11-04R14–R15）
+
+R7 的 `DxeMain.c` 补丁把 `gST->ConOut->OutputString` 换成 no-op（让异常处理器能走到
+`CpuDeadLoop`）。副作用：**所有** `AsciiPrint`/`Print`/`DEBUG` 都不再上屏，
+屏上能看到的只有走 `SerialPortWrite`（FrameBufferSerialPortLib）的行。
+⇒ 探针一律 `AsciiSPrint` + `SerialPortWrite`，并给目标模块的 `.inf` 补
+`SerialPortLib`/`PrintLib`（LinuxLoader / BootLib / AvbLib 三处都要，替换文件不必改）。
+
+## #507 这棵树 AVB 是编译期关闭的：`GetAVBVersion()` = `ret i32 0`
+
+`VERIFIED_BOOT/_2/_LE` 全 0 ⇒ `LoadImageAndAuthVB2`/`avb_slot_verify` 整段被编译器删掉。
+在 `LoadImageAndAuthVB2` 里加探针 = 给死代码加探针（`llvm-nm` 里连符号都没有）。
+判断方法：`llvm-dis` 目标文件后看 `GetAVBVersion` 的函数体，或用 `llvm-nm` 查符号是否存在。
+
+## #508 dtbo 分区 32 MiB > DTBO_MAX_SIZE_ALLOWED 24 MiB 会把 boot 变成 "Load Error"
+
+noauth 路径把整个分区当 dtbo 镜像读取；本机 `dtbo_b` 是 32 MiB 且**内容全 0**。
+`EFI_OUT_OF_RESOURCES` 被 `LoadImageNoAuth()` 改写成 `EFI_LOAD_ERROR`，
+fastboot 两条路（`continue` / `boot`）都报 "Load Error"。
+修法见 `patches/uefi/20261104R16-dtboclamp` + `20261104R17-bootmarkers`：
+先读一页表头，magic 不合法 ⇒ `EFI_NO_MEDIA`（当没有 overlay），合法 ⇒ 按 `total_size`
+装载并把缓冲区按 4 KiB 取整（`LoadImageFromPartition` 按块大小向上取整读）。

@@ -1,0 +1,23 @@
+Subject: [PATCH] BootLinux: halt right before the kernel jump so the [K]/[V] markers stay on screen
+
+2026-11-04R18 y700-elden: 异常打印（ArmCpuDxe 预编译）会滚屏覆盖取证行，是这一线每轮
+都拿不到 [K]/[V] 的主因。本补丁在 `LinuxKernel(...)` 之前插入 `CpuDeadLoop()`：
+画面冻结在跳内核前一刻，全部标记可读。
+判据：见到 [K] enter/img/addr/dtb/ldt/jump 且画面静止 ⇒ BootLinux 准备阶段全通，
+崩溃发生在跳内核之后（内核/DTB/交接状态）；否则最后一条 [K] 就是崩溃点。
+
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index 5f08280f..0aadfd46 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1150,6 +1150,10 @@ BootLinux (BootInfo *Info)
+                  (UINT64)BootParamlistPtr.KernelLoadAddr,
+                  (UINT64)BootParamlistPtr.DeviceTreeLoadAddr,
+                  *(UINT32 *)(UINTN)BootParamlistPtr.DeviceTreeLoadAddr);
++  // 2026-11-04R18 y700-elden: 诊断用停机点 —— 在跳内核前主动 CpuDeadLoop，让屏上
++  // 完整保留 [K]/[V] 全部标记（异常打印会滚动覆盖屏幕，是取证的主要障碍）。
++  // 上机判据：见到全部 [K] 且画面静止 ⇒ BootLinux 准备阶段全通，崩溃发生在跳内核之后。
++  CpuDeadLoop ();
+   LinuxKernel ((UINT64)BootParamlistPtr.DeviceTreeLoadAddr, 0, 0, 0);
+ 
+ // Kernel should never exit

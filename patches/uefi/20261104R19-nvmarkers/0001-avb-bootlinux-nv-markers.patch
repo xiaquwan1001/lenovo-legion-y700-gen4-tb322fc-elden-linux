@@ -1,0 +1,61 @@
+Subject: [PATCH] VerifiedBoot/BootLinux: also persist every [V]/[K] marker into an NV variable
+
+2026-11-04R19 y700-elden: 异常打印（ArmCpuDxe 预编译件）会滚屏覆盖取证行，是这一线
+拿不到标记的主因。R18 的"跳内核前停机"实测也没走到（崩溃在 BootLinux 准备阶段）。
+本补丁让每条标记同时写进 NV 变量 `SbMarkR19`（GUID 见 SbMarkGuid），供下一轮启动读出。
+配套见 0002（BdsDxe 在 BDS 入口读出并停机）。
+
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index 0aadfd46..e4b6668f 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -87,6 +87,8 @@
+ 
+ // 2026-11-04R17 y700-elden: 与 VerifiedBoot.c 的 SbVProbe 同一理由（DEBUG 被编掉、
+ // ConOut 被 R7 换成 no-op），boot 链只能用 SerialPortWrite 留痕。
++STATIC CONST EFI_GUID SbMarkGuid = { 0x5b4d4152, 0x4b31, 0x5259, { 0x9a, 0x31, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 } };
++
+ STATIC
+ VOID
+ SbBootProbe (
+@@ -102,6 +104,13 @@ SbBootProbe (
+   Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
+   VA_END (Marker);
+   SerialPortWrite ((UINT8 *)Buf, Len);
++  // 2026-11-04R19 y700-elden: 同时落 NV 变量；异常滚屏/复位之后下一轮仍能读出"最后一步"。
++  if (Len > 160) {
++    Len = 160;
++  }
++  gRT->SetVariable ((CHAR16 *)L"SbMarkR19", (EFI_GUID *)(&SbMarkGuid),
++                    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
++                    Len, (VOID *)Buf);
+ }
+ #include "libfdt.h"
+ #include <ufdt_overlay.h>
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index f17ad8ab..c12b7205 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -74,6 +74,8 @@
+ // 2026-11-04R15 y700-elden: RELEASE 把 DEBUG() 编掉，而 R7 已把 gST->ConOut->OutputString
+ // 换成 no-op（防空屏滚动二次异常），所以连 AsciiPrint 都不会出现在屏上。唯一可见通道
+ // = SerialPortWrite（FrameBufferSerialPortLib 直接写帧缓冲），与 [I]/[E]/[L] 同一条路。
++STATIC CONST EFI_GUID SbMarkGuid = { 0x5b4d4152, 0x4b31, 0x5259, { 0x9a, 0x31, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 } };
++
+ STATIC
+ VOID
+ SbVProbe (
+@@ -89,6 +91,13 @@ SbVProbe (
+   Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
+   VA_END (Marker);
+   SerialPortWrite ((UINT8 *)Buf, Len);
++  // 2026-11-04R19 y700-elden: 同时落 NV 变量；异常滚屏/复位之后下一轮仍能读出"最后一步"。
++  if (Len > 160) {
++    Len = 160;
++  }
++  gRT->SetVariable ((CHAR16 *)L"SbMarkR19", (EFI_GUID *)(&SbMarkGuid),
++                    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
++                    Len, (VOID *)Buf);
+ }
+ 
+ STATIC CONST CHAR8 *VerityMode = " androidboot.veritymode=";

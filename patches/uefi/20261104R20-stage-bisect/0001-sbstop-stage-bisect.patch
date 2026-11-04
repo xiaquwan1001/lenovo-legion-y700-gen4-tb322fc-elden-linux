@@ -1,0 +1,108 @@
+Subject: [PATCH] BootLinux: host-programmable stop stage (cmdline sbstop=N) for photo-free bisect
+
+2026-11-04R20 y700-elden: 屏上异常打印会滚屏、NV 变量在本机不可用（R19 实测
+`[S] prev` 未出现 ⇒ GetVariable 拿不到上一轮写入），因此改用**宿主可编程停机点**：
+boot.img 的 cmdline 带 `sbstop=N` 时，BootLinux 走到第 N 阶段就以 `EFI_ABORTED` 返回。
+宿主判据：
+  * fastboot 回 `Failed to load image/authenticate boot image: Aborted` ⇒ 已到达 N 阶段；
+  * USB 直接掉线（`usb_read failed: No such device`）⇒ 崩溃在 N 之前。
+于是二分崩溃点完全不需要拍照，且每个阶段只需 repack 改 cmdline（秒级）。
+阶段表：1 enter / 2 GetImage / 3 UpdateBootParams / 4 DTBImgCheckAndAppendDT /
+5 LoadAddrAndDTUpdate / 6 FreeVerifiedBootResource / 7 跳内核前。
+
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index e4b6668f..fccd2c53 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -112,6 +112,20 @@ SbBootProbe (
+                     EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                     Len, (VOID *)Buf);
+ }
++
++// 2026-11-04R20 y700-elden: 宿主可编程停机点。boot.img 的 cmdline 里带 "sbstop=N" 时，
++// BootLinux 走到第 N 个阶段就以 EFI_ABORTED 返回 —— 宿主看到 fastboot 的
++// "Failed to load image from partition: Aborted" 即"到达 N"；看到 USB 掉线即"崩在 N 之前"。
++// 这样可以在不拍照的情况下二分布置崩溃点。
++STATIC INT32  SbStopStage = -1;
++
++#define SB_STOP(n, tag)                                                        \
++  do {                                                                         \
++    if (SbStopStage == (n)) {                                                  \
++      SbBootProbe ("[K] stop=" tag "\n\r");                                     \
++      return EFI_ABORTED;                                                      \
++    }                                                                          \
++  } while (0)
+ #include "libfdt.h"
+ #include <ufdt_overlay.h>
+ 
+@@ -947,6 +961,7 @@ BootLinux (BootInfo *Info)
+   }
+ 
+   SbBootProbe ("[K] enter\n\r");
++  SB_STOP (1, "1");
+ 
+   if (IsVmEnabled ()) {
+     Status = CheckAndSetVmData (&BootParamlistPtr);
+@@ -987,6 +1002,7 @@ BootLinux (BootInfo *Info)
+     return EFI_NOT_STARTED;
+   }
+   SbBootProbe ("[K] img sz=%lx\n\r", (UINT64)BootParamlistPtr.ImageSize);
++  SB_STOP (2, "2");
+ 
+   /* Find if MDTP is enabled and Active */
+ 
+@@ -1003,6 +1019,16 @@ BootLinux (BootInfo *Info)
+     return Status;
+   }
+ 
++  {
++    CHAR8  *SbTok;
++
++    SbTok = AsciiStrStr (BootParamlistPtr.CmdLine, "sbstop=");
++    if (SbTok != NULL) {
++      SbStopStage = (INT32) AsciiStrDecimalToUintn (SbTok + AsciiStrLen ("sbstop="));
++    }
++    SbBootProbe ("[K] stopcfg=%d\n\r", SbStopStage);
++  }
++
+   // Retrive Base Memory Address from Ram Partition Table
+   Status = BaseMem (&BootParamlistPtr.BaseMemory);
+   if (Status != EFI_SUCCESS) {
+@@ -1025,6 +1051,7 @@ BootLinux (BootInfo *Info)
+                (UINT64)BootParamlistPtr.RamdiskLoadAddr,
+                (UINT64)BootParamlistPtr.DeviceTreeLoadAddr,
+                BootParamlistPtr.PageSize);
++  SB_STOP (3, "3");
+   Status = GZipPkgCheck (&BootParamlistPtr);
+   if (Status != EFI_SUCCESS) {
+     return Status;
+@@ -1073,6 +1100,7 @@ BootLinux (BootInfo *Info)
+ 
+   Status = DTBImgCheckAndAppendDT (Info, &BootParamlistPtr);
+   SbBootProbe ("[K] dtb=%r\n\r", Status);
++  SB_STOP (4, "4");
+   if (Status != EFI_SUCCESS) {
+     return Status;
+   }
+@@ -1097,11 +1125,13 @@ BootLinux (BootInfo *Info)
+ 
+   Status = LoadAddrAndDTUpdate (Info, &BootParamlistPtr);
+   SbBootProbe ("[K] ldt=%r\n\r", Status);
++  SB_STOP (5, "5");
+   if (Status != EFI_SUCCESS) {
+        return Status;
+   }
+ 
+   FreeVerifiedBootResource (Info);
++  SB_STOP (6, "6");
+ 
+   /* Free the boot logo blt buffer before starting kernel */
+   FreeBootLogoBltBuffer ();
+@@ -1162,6 +1192,7 @@ BootLinux (BootInfo *Info)
+   // 2026-11-04R18 y700-elden: 诊断用停机点 —— 在跳内核前主动 CpuDeadLoop，让屏上
+   // 完整保留 [K]/[V] 全部标记（异常打印会滚动覆盖屏幕，是取证的主要障碍）。
+   // 上机判据：见到全部 [K] 且画面静止 ⇒ BootLinux 准备阶段全通，崩溃发生在跳内核之后。
++  SB_STOP (7, "7");
+   CpuDeadLoop ();
+   LinuxKernel ((UINT64)BootParamlistPtr.DeviceTreeLoadAddr, 0, 0, 0);
+ 

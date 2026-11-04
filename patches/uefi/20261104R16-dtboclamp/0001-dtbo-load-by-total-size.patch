@@ -1,0 +1,76 @@
+Subject: [PATCH] QcomModulePkg: load dtbo by its table total_size, not the whole partition
+
+2026-11-04R16 y700-elden: `fastboot continue` 与 `fastboot boot` 的 remote "Load Error"
+根因（已在机上核实分区尺寸 + 源码路径）：
+
+  * `dtbo_a/dtbo_b` = **0x2000000 (32 MiB)**（`fastboot getvar partition-size:dtbo_b`）；
+  * `NoAVBLoadReqImage()` 把「整个分区」当 dtbo 镜像：`PartSize > DTBO_MAX_SIZE_ALLOWED`
+    (24 MiB, `LocateDeviceTree.h:69`) ⇒ `EFI_OUT_OF_RESOURCES`；
+  * `LoadImageNoAuth()` 把 dtbo 的**任何**失败改写成 `EFI_LOAD_ERROR`（VerifiedBoot.c:554）；
+  * dtbo 是 continue / boot 两条路的公共步骤 ⇒ 两边都报 Load Error。
+
+这棵树 `GetAVBVersion()` 恒为 `NO_AVB`（`VERIFIED_BOOT*/`_LE` 全 0），所以走的正是这条
+noauth 路径，与 AVB 校验无关。
+
+修法：dtbo 只读一页表头，用 `total_size` 当真实长度（仍是整表，不是单个 dtb），
+既恢复旧上限校验，也避免按 32 MiB 分配/读取整分区。
+
+判据：同一发里 R15 的 `[V] hdr=/chk=/pld=/na=` 全 Success，`[V] dt=` 出现后不再有
+`Load Error`；`continue` 返回 OKAY 并进内核。
+
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index f8ed0e3c..d2ba0bb2 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -246,11 +246,46 @@ NoAVBLoadReqImage (BootInfo *Info, VOID **DtboImage,
+     goto out;
+   }
+ 
+-  if ((AsciiStrStr (AsciiPname, "dtbo")) &&
+-      (PartSize > DTBO_MAX_SIZE_ALLOWED)) {
+-    DEBUG ((EFI_D_ERROR, "DTBO size is too big: 0x%x\n", PartSize));
+-    Status = EFI_OUT_OF_RESOURCES;
+-    goto out;
++  // 2026-11-04R16 y700-elden: dtbo 分区固定 32 MiB（0x2000000），真正的内容长度在
++  // 表头 total_size 里（本机只有几百 KiB）。旧逻辑把"整个分区"当镜像：
++  //   32 MiB > DTBO_MAX_SIZE_ALLOWED(24 MiB) -> EFI_OUT_OF_RESOURCES
++  //   -> LoadImageNoAuth 改写成 EFI_LOAD_ERROR
++  //   -> fastboot "Failed to load image from partition / load/authenticate boot image: Load Error"
++  //   （continue 与 boot 两条路都撞这里，因为 dtbo 是公共步骤）
++  // 先读一页表头，按 total_size 装载。
++  if (AsciiStrStr (AsciiPname, "dtbo")) {
++    struct DtboTableHdr  *DtboHdr;
++    UINT32               DtboHdrSize;
++
++    DtboHdrSize = 4096;
++    DtboHdr = AllocateZeroPool (DtboHdrSize);
++    if (DtboHdr == NULL) {
++      Status = EFI_OUT_OF_RESOURCES;
++      goto out;
++    }
++
++    Status = LoadImageFromPartition (DtboHdr, &DtboHdrSize, Pname);
++    if (Status != EFI_SUCCESS) {
++      DEBUG ((EFI_D_ERROR, "VB: Failed to read dtbo header: %r\n", Status));
++      FreePool (DtboHdr);
++      goto out;
++    }
++
++    if (fdt32_to_cpu (DtboHdr->Magic) == DTBO_TABLE_MAGIC) {
++      UINT32 DtboTotalSize;
++
++      DtboTotalSize = fdt32_to_cpu (DtboHdr->TotalSize);
++      if ((DtboTotalSize != 0) && (DtboTotalSize <= PartSize)) {
++        PartSize = DtboTotalSize;
++      }
++    }
++    FreePool (DtboHdr);
++
++    if (PartSize > DTBO_MAX_SIZE_ALLOWED) {
++      DEBUG ((EFI_D_ERROR, "DTBO size is too big: 0x%x\n", (UINT32)PartSize));
++      Status = EFI_OUT_OF_RESOURCES;
++      goto out;
++    }
+   }
+ 
+   DEBUG ((EFI_D_VERBOSE, "VB: Trying to allocate memory "
