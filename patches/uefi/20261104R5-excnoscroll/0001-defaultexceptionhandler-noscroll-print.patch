@@ -1,0 +1,45 @@
+Subject: [PATCH] DefaultExceptionHandlerLib: no-scroll print of ELR/ESR/FAR/SP then halt
+
+2026-11-04R5 y700-elden: 屏满后带 \n 的打印走滚屏路径并再次异常 => Recursive 无限重印。
+改为只用 \r 覆盖同一行，打 ELR/ESR/FAR/SP 后 CpuDeadLoop。
+
+diff --git a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+index 5f9bcf7..ef7d223 100644
+--- a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
++++ b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+@@ -203,9 +203,34 @@ DefaultExceptionHandler (
+ 
+   mRecursiveException = TRUE;
+ 
+-  CharCount = AsciiSPrint (Buffer, sizeof (Buffer), "\n\n%a Exception at 0x%016lx\n", gExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR);
++  //
++  // 2026-11-04R5 y700-elden: NO-SCROLL print.
++  // Observed: once the FB console is full, any print containing '\n' takes the scroll
++  // path of FrameBufferSerialPortLib and faults there again => 'Recursive exception'
++  // repeats forever and no register value ever stays on screen.
++  // Here: overwrite the same line with '\r' only, print ELR/ESR/FAR/SP, then halt.
++  //
++  CharCount = AsciiSPrint (
++                Buffer,
++                sizeof (Buffer),
++                "\r%a EXC ELR=%016lx\n\r",
++                gExceptionTypeString[ExceptionType],
++                SystemContext.SystemContextAArch64->ELR
++                );
+   SerialPortWrite ((UINT8 *)Buffer, CharCount);
+ 
++  CharCount = AsciiSPrint (
++                Buffer,
++                sizeof (Buffer),
++                "\rESR=%08lx FAR=%016lx SP=%016lx\n\r",
++                SystemContext.SystemContextAArch64->ESR,
++                SystemContext.SystemContextAArch64->FAR,
++                SystemContext.SystemContextAArch64->SP
++                );
++  SerialPortWrite ((UINT8 *)Buffer, CharCount);
++
++  CpuDeadLoop ();
++
+   // Prepare a unicode buffer for ConOut, if applicable, in case the buffer
+   // gets reused.
+   UnicodeSPrintAsciiFormat (UnicodeBuffer, MAX_PRINT_CHARS, Buffer);

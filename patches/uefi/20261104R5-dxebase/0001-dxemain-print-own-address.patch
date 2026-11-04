@@ -1,0 +1,43 @@
+Subject: [PATCH] DxeMain: print own address at [D00]
+
+2026-11-04R5 y700-elden: 屏上异常只给 ELR（DDR 地址），需换算成 DxeCore 内偏移；
+在 [D00] 之后打印 (UINT64)&DxeMain。
+
+diff --git a/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c b/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
+index 8c6e461..a749d01 100644
+--- a/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
++++ b/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
+@@ -31,6 +31,25 @@ SbMark (
+   Buf[Len++] = '\r';
+   SerialPortWrite ((UINT8 *)Buf, Len);
+ }
++// 2026-11-04R5 y700-elden: print this image's own DxeMain address, so a screen-dumped
++// ELR (synchronous exception) can be turned into an offset inside DxeCore on the host.
++VOID
++SbHexDxe (
++  IN UINT64  Value
++  )
++{
++  STATIC CONST CHAR8  Hex[] = "0123456789ABCDEF";
++  CHAR8               B[20];
++  UINTN               i;
++
++  B[0] = '0';
++  B[1] = 'x';
++  for (i = 0; i < 16; i++) {
++    B[2 + i] = Hex[(Value >> ((15 - i) * 4)) & 0xF];
++  }
++
++  SerialPortWrite ((UINT8 *)B, 18);
++}
+ 
+ //
+ // DXE Core Global Variables for Protocols from PEI
+@@ -274,6 +293,7 @@ DxeMain (
+   // y700-elden: 屏上串口先初始化（DXE 侧的 FrameBufferSerialPortLib 与 PrePi 是两份拷贝）
+   SerialPortInitialize ();
+   SbMark ("[D00]");
++  SbHexDxe ((UINT64)(UINTN)DxeMain);
+ 
+   //
+   // Setup the default exception handlers

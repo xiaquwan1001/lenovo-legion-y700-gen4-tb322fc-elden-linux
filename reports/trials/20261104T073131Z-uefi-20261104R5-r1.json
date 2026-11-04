@@ -1,0 +1,17 @@
+{
+  "trial": "uefi-20261104R5-r1",
+  "date_utc": "2026-11-04T07:31:31Z",
+  "image": "out/uefi-20261104R5-r1.img",
+  "image_sha256": "fe0f0c8f54c5c086bffa91ebacafc547d7154f3c24d4d888cf01e1487c3dffd4",
+  "build_artifact": "reports/artifacts/uefi-20261104R5-r1/",
+  "variant": "慢速屏显(40k)+scale3 + [D00]后打印 &DxeMain + 异常处理器 no-scroll 打印 ELR/ESR/FAR/SP 后停机",
+  "fastboot": {"sending_s": 1.496, "booting_okay_s": 10.112, "result": "HANDOFF"},
+  "why_r5": "r4 仍无限重印：推测「屏满后带 \\n 的打印走滚屏路径并在那里二次异常」。本发改为 \\r 覆盖同行 + 直接 CpuDeadLoop；另打印 &DxeMain 以便主机侧把 ELR 换算成模块偏移。",
+  "host_side_facts": {
+    "DxeCore.efi_size": 111104,
+    "DxeCore_entry_RVA": "0x123c",
+    "implication": "若 ELR 落在 DxeCore 内，则 load_base = &DxeMain - 0x123c 且 ELR-load_base < 0x1b200；0xD2B9B224 与「DxeCore 在 0xD2Bxxxxx 附近」并存时，该偏移(~0x9b224)已超出 DxeCore 大小 ⇒ 故障点很可能是**另一个被 DXE 载入的模块**而非 DxeCore 本体。"
+  },
+  "verdict": "pending-optical-read",
+  "ask_user": ["屏是否停住(不再滚)", "最后几行原文（尤其 [D00] 后的地址、EXC/ESR/FAR/SP 两行）", "异常前最后一条标记是 [P10]/[P11]/[D00] 哪一条"]
+}
