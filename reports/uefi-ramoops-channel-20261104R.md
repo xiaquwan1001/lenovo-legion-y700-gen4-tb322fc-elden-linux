@@ -5,6 +5,8 @@
 
 ---
 
+> ⚠ 本通道已于 2026-11-04 14:1x 被实机证伪（pstore 全空，carveout 被清），见 §5；今后以屏上判据为准，见 §6。
+
 ## 1. 判据通道（为什么是 ramoops）
 
 内核侧早已具备（本轮只读核实，未改内核）：
@@ -68,7 +70,25 @@ ls -l /sys/fs/pstore/ ; cat /sys/fs/pstore/dmesg-ramoops-0 /sys/fs/pstore/dmesg-
 | `dmesg-ramoops-0` 有块表但 `[P11]` 非 0（如 `0x8000…0E`） | 仍停在 `LoadDxeCoreFromFv` 之前（FV 发现/解压链） |
 | 两个文件都没有 / 只有旧的内核记录 | 记录没落进 DDR（地址错/被 DXE 分配器覆盖/冷起清空）⇒ 退回色带判读或换地址重试 |
 
-## 4. 风险与回滚
+## 4. 2026-11-04 14:13 首次上机（r1）——结果与修正
+
+- **载荷真被执行**：`Sending 1.497 s` + `Booting OKAY 10.112 s`（与 fixcopylen 逐秒同型）。
+- **屏上真相（用户目视）：`synchronous exception at 0x…0d2b9224` + `recursive exception while dumping the cpu state`**
+  ⇒ 11-04「反复刷屏」不是 kernel panic、也不是 ABL 回落，而是 **EDK2 自己的异常处理器在 dump 期间再次异常 ⇒ 无限重印**。
+- **ramoops 通道证伪**：`fastboot reboot` 后 22 s 回 Linux（`boot_id ea859761`），`/sys/fs/pstore/` **全空**——连「上一 boot 的内核 console 区」都没留下；
+  在机 DT 实测 `ramoops@c2000000` 只有 **4 MiB**（`reg = 0xc2000000 0x400000`，与 `build/m1-73` 树的 8 MiB 不一致）；`/dev/mem` 读被 `CONFIG_STRICT_DEVMEM=y` 挡。
+  ⇒ 该 carveout 在 `fastboot boot → UEFI → fastboot reboot` 路径上被清（冷复位 / ABL / PrePi 的 0xFF 填充三者之一，未区分），本通道不成立。
+- 现场：`reports/artifacts/uefi-boot-20261104R-r1/`、trial `reports/trials/20261104T061344Z-uefi-20261104R-r1.json`。
+
+## 5. 第二发（r2）——判据回到屏上，但把屏**变慢**
+
+件：`out/uefi-20261104R2-r1.img`，sha256 `6a31f243cd0ef06d07b9393860b37d0b11f18177b1c9b4519bef2ee2a2f835b8`
+（= r1 补丁集 **去掉 DxeCore 持久化** + `patches/uefi/20261104R2-slow-serial/0001`：`SerialPortWrite()` 每字符忙等 ~3 M 次，屏显慢到能录像）。
+
+要取的证据：`[P01]`–`[P11]` 打到哪条、`[D00]`–`[D04]` 是否出现、异常首屏的 `Synchronous Exception at` / `ESR` / `FAR` / `ELR`。
+判读：出现 `[D00]` ⇒ DxeCore 真进场（历史首次），卡点转 DXE dispatch；只到 `[P11]` ⇒ 仍在 PrePi；提前停在 `[P0x]` ⇒ 早期内存/解压链。
+
+## 6. 风险与回滚（两发共用）
 
 - **零写盘**：`fastboot boot` 不改任何分区；`boot_b` 仍是 `fb55997c…`（`DEVICE/README.md` §1.1 首条）。
 - **DDR 清空风险**：若 UEFI 挂死需要物理断电，ramoops 记录随之丢失（这是本通道唯一硬限制）。缓解 = 屏上标记同时存在，且本发刻意不再无限滚动。

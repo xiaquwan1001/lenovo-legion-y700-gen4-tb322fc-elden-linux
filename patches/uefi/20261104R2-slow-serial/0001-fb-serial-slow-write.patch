@@ -1,0 +1,28 @@
+Subject: [PATCH] FrameBufferSerialPortLib: per-char busy-wait for on-screen forensics
+
+2026-11-04R2 y700-elden: 每字符后加忙等，把屏上标记与 EDK2 异常首屏慢到可拍照。
+只用于取证变体；正式构建不要带。
+
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+index abf5b87b..b01435dd 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -305,6 +305,18 @@ SerialPortWrite(IN UINT8 *Buffer, IN UINTN NumberOfBytes)
+ 
+   while (Buffer < Final) {
+     FbConPutCharWithFactor(*Buffer++, FBCON_COMMON_MSG, SCALE_FACTOR);
++    /*
++      2026-11-04R2 y700-elden：上机取证用「慢速屏显」。
++      上一发落在 EDK2 同步异常，异常处理器递归 dump 把屏刷成流，人眼/相机一帧都抢不到。
++      这里在每字符后加一段忙等（粗标定 ~1–3 ms），让标记与异常首屏都慢到能拍照。
++      只在本变体里用；正式构建不要带这个补丁。
++    */
++    {
++      volatile UINTN  SbSpins = 0;
++      while (SbSpins < 3000000u) {
++        SbSpins++;
++      }
++    }
+   }
+ 
+   if (InterruptState)
