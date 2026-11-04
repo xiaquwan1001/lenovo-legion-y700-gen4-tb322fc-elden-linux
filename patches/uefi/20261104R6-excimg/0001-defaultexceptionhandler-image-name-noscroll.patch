@@ -1,0 +1,62 @@
+Subject: [PATCH] DefaultExceptionHandlerLib: no-scroll report + faulting image name/base/offset
+
+2026-11-04R6 y700-elden: 只给 ELR 无法定位驱动；用 GetImageName/BaseName 把镜像名与偏移打到屏上，
+并且只用 \r 避免屏满后滚屏路径二次异常。打完 CpuDeadLoop。
+
+diff --git a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+index 5f9bcf7..10eebad 100644
+--- a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
++++ b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+@@ -203,8 +203,50 @@ DefaultExceptionHandler (
+ 
+   mRecursiveException = TRUE;
+ 
+-  CharCount = AsciiSPrint (Buffer, sizeof (Buffer), "\n\n%a Exception at 0x%016lx\n", gExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR);
+-  SerialPortWrite ((UINT8 *)Buffer, CharCount);
++  //
++  // 2026-11-04R6 y700-elden: RELEASE-visible, NO-SCROLL exception report.
++  //  - '\n' after the FB console is full takes the scroll path of
++  //    FrameBufferSerialPortLib and re-faults there => 'Recursive exception' forever,
++  //    so only '\r' (overwrite same line) is used here.
++  //  - also print which PE image ELR belongs to (name/base/offset): that is what
++  //    identifies the faulting DXE driver without any debugger.
++  //
++  {
++    CHAR8        *Pdb;
++    UINTN        ImageBase;
++    UINTN        PeCoffSizeOfHeader;
++    UINTN        Off;
++    CHAR8 CONST  *Name;
++
++    Pdb       = GetImageName ((UINTN)SystemContext.SystemContextAArch64->ELR, &ImageBase, &PeCoffSizeOfHeader);
++    ImageBase = (Pdb != NULL) ? ImageBase : 0;
++    Off       = (UINTN)SystemContext.SystemContextAArch64->ELR - ImageBase;
++    Name      = (Pdb != NULL) ? BaseName (Pdb) : "unknown";
++
++    CharCount = AsciiSPrint (
++                  Buffer,
++                  sizeof (Buffer),
++                  "\rEXC %a ELR=%016lx ESR=%08lx\n\r",
++                  gExceptionTypeString[ExceptionType],
++                  SystemContext.SystemContextAArch64->ELR,
++                  SystemContext.SystemContextAArch64->ESR
++                  );
++    SerialPortWrite ((UINT8 *)Buffer, CharCount);
++
++    CharCount = AsciiSPrint (
++                  Buffer,
++                  sizeof (Buffer),
++                  "\rIMG %a base=%016lx off=%lx FAR=%016lx SP=%016lx\n\r",
++                  Name,
++                  (UINT64)ImageBase,
++                  (UINT64)Off,
++                  SystemContext.SystemContextAArch64->FAR,
++                  SystemContext.SystemContextAArch64->SP
++                  );
++    SerialPortWrite ((UINT8 *)Buffer, CharCount);
++  }
++
++  CpuDeadLoop ();
+ 
+   // Prepare a unicode buffer for ConOut, if applicable, in case the buffer
+   // gets reused.

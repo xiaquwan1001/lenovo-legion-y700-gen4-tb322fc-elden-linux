@@ -1,0 +1,80 @@
+Subject: [PATCH] DxeCore: RELEASE load-map print + ConOut no-op so exceptions halt
+
+2026-11-04R7 y700-elden:
+1) Image.c: RELEASE 下也打印 [I] base/size（DEBUG 被编掉，屏上无法把 ELR 映射到模块）。
+2) DxeMain.c: gST->ConOut->OutputString 换 no-op。实测屏满后 ConOut 在 FB 滚动路径里二次异常，
+   DefaultExceptionHandler 永远停在打印阶段；换 no-op 后可走到 CpuDeadLoop，屏停在最后内容。
+   另加 [D08] 标记。
+
+diff --git a/MdeModulePkg/Core/Dxe/Image/Image.c b/MdeModulePkg/Core/Dxe/Image/Image.c
+index edffef0..5b5fac7 100644
+--- a/MdeModulePkg/Core/Dxe/Image/Image.c
++++ b/MdeModulePkg/Core/Dxe/Image/Image.c
+@@ -10,6 +10,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ #include "DxeMain.h"
+ #include "Image.h"
+ #include "MemoryProtectionSupport.h" // MU_CHANGE
++#include <Library/PrintLib.h>       // 2026-11-04R7 y700-elden
++#include <Library/SerialPortLib.h>  // 2026-11-04R7 y700-elden
+ 
+ //
+ // Module Globals
+@@ -883,6 +885,20 @@ CoreLoadPeImage (
+     (VOID *)(UINTN)Image->ImageContext.ImageAddress,
+     FUNCTION_ENTRY_POINT (Image->ImageContext.EntryPoint)
+     ));
++  {
++    // 2026-11-04R7 y700-elden: RELEASE-visible load-map line, so a screen-dumped ELR can be
++    // mapped to a module by address range (base .. base+size).
++    CHAR8  SbLine[96];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (
++              SbLine,
++              sizeof (SbLine),
++              "[I] base=%016lx size=%08lx\n\r",
++              (UINT64)(UINTN)Image->ImageContext.ImageAddress,
++              (UINT64)Image->ImageContext.ImageSize
++              );
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+ 
+   //
+   // Print Module Name by Pdb file path.
+diff --git a/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c b/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
+index a749d01..1caf623 100644
+--- a/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
++++ b/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
+@@ -31,6 +31,20 @@ SbMark (
+   Buf[Len++] = '\r';
+   SerialPortWrite ((UINT8 *)Buf, Len);
+ }
++// 2026-11-04R7 y700-elden: ConOut no-op stub.
++// Once the FB console is full, ConOut->OutputString re-faults inside the scroll path, so
++// DefaultExceptionHandler can never reach CpuDeadLoop (endless Recursive loop). Replacing
++// OutputString with a no-op lets the handler halt, leaving the last screen content visible.
++STATIC
++EFI_STATUS
++EFIAPI
++SbNoopOutString (
++  IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL  *This,
++  IN CHAR16                           *String
++  )
++{
++  return EFI_SUCCESS;
++}
+ // 2026-11-04R5 y700-elden: print this image's own DxeMain address, so a screen-dumped
+ // ELR (synchronous exception) can be turned into an offset inside DxeCore on the host.
+ VOID
+@@ -616,6 +630,12 @@ DxeMain (
+   //
+   // Invoke the DXE Dispatcher
+   //
++  // 2026-11-04R7 y700-elden: see SbNoopOutString comment
++  if ((gST != NULL) && (gST->ConOut != NULL)) {
++    gST->ConOut->OutputString = SbNoopOutString;
++  }
++
++  SbMark ("[D08]");
+   CoreDispatcher ();
+   SbMark ("[D07b]");
+ 

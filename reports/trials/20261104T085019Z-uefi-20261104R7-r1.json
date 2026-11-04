@@ -1,0 +1,11 @@
+{
+  "trial": "uefi-20261104R7-r1",
+  "date_utc": "2026-11-04T08:50:19Z",
+  "image": "out/uefi-20261104R7-r1.img",
+  "image_sha256": "331fb365c038b02307b7cd214f3acdfee4202286507741b173803d8b760836ff",
+  "build_artifact": "reports/artifacts/uefi-20261104R7-r1/",
+  "variant": "慢速屏显+scale3 + [I] load map(RELEASE) + ConOut no-op + [D08]",
+  "fastboot": {"sending_s": 1.490, "booting_okay_s": 10.064, "result": "HANDOFF"},
+  "goal": "让屏停在崩溃点（ConOut no-op 后异常处理器能走到 CpuDeadLoop），并拿到 load map 以便把 ELR=0xD2B9B224 映射到具体驱动",
+  "verdict": "pending-optical-read"
+}
