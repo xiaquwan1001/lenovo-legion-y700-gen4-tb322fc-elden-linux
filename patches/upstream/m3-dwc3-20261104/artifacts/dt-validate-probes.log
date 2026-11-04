@@ -1,0 +1,21 @@
+# dt-validate 形状探针（v6 树内 binding，/home/xuqianhui/y700-elden/build/m3v6-dwc3/Documentation/devicetree/bindings）
+# 判据 = 诊断行数（dt-validate rc 恒 0，见 PITFALLS #470/#471）
+dt-doc-validate: rc=0, 无输出
+--- boardshape: diag_lines=0
+
+--- n_dup0: diag_lines=5
+/tmp/m3v6/n_dup0.dtb: usb@a600000 (snps,dwc3): ports: 'oneOf' conditional failed, one must be fixed:
+	1 was expected
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+--- n_extra: diag_lines=9
+/tmp/m3v6/n_extra.dtb: usb@a600000 (snps,dwc3): ports:port@2:endpoint: Unevaluated properties are not allowed ('bogus-property' was unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+/tmp/m3v6/n_extra.dtb: usb@a600000 (snps,dwc3): ports: 'oneOf' conditional failed, one must be fixed:
+--- n_port1: diag_lines=10
+/tmp/m3v6/n_port1.dtb: usb@a600000 (snps,dwc3): ports: 'port@2' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+/tmp/m3v6/n_port1.dtb: usb@a600000 (snps,dwc3): ports: 'oneOf' conditional failed, one must be fixed:
+--- nomuxprop: diag_lines=9
+/tmp/m3v6/nomuxprop.dtb: usb@a600000 (snps,dwc3): 'usb-role-switch' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+/tmp/m3v6/nomuxprop.dtb: usb@a600000 (snps,dwc3): ports: 'port@2' is a required property

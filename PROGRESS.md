@@ -93,6 +93,8 @@
 | 2026-11-03 | **UEFI 三线核查（邮件/GitHub/外部）后裁决下一步 + 载荷可执行性重定位（9 发零写盘）** | DDR 黑匣子正控打通（真内核标记读回 95–98%）；**推翻两条旧判据**：`usb_read failed` ≠ 交棒、**不存在 1–2 s 看门狗**；解冻条件②满足（同芯片 SM8750 的 SunUEFI/UniXNU 已有 UEFI 用 UFS 先例）；`reports/uefi-posctrl-20261103-summary.md`、`reports/uefi-next-step-decision-20261103.md` |
 | 2026-11-04 | **UEFI 载荷首次被执行 → Mu PrePi 走完 → 卡点定位到 DxeCore 未启动** | 打包配方定案（v2 base 0 + `text_offset=0`/`image_size`=真实长/`flags=0xa`）；屏上可见性达成；`LoadDxeCoreFromFv()` 返回 `EFI_NOT_FOUND`，失败在 `FV_IMAGE` 的 GUIDED/LZMA 段 `Decode`；设备侧块表 0–1 MiB 正确、其后 48 块全错；`reports/uefi-payload-execution-20261104.md`、`PITFALLS #490–#496` |
 | 2026-11-04（主机侧收口） | **UEFI 卡点真因定位并出修复件（未上机）** | 反汇编定到指令级：shim 把 `Image` 头 offset 16（repack 改写成的真实长度 `0x400308`）当拷贝长度，等值比较型分块循环首轮即落“完成”分支 ⇒ **只拷了 FD 的前 1 MiB**；修法 = 拷贝长度/目标改构建期常量 + 循环改硬上界 + repack 加 16B 对齐断言；产物 `out/uefi-20261104-fixcopylen.img`、补丁 `patches/uefi/20261104-fixcopylen/`；`PITFALLS #497` |
+| 2026-11-04（上机 1 发） | **UEFI 修复件首发现场：HANDOFF 达成，屏上判据未取到** | `fastboot boot` 零写盘：`Sending 1.496 s` + `Booting OKAY 10.109 s`（与旧 11 发同签名 ⇒ ABL 真跳）；随后 300 s USB 无枚举、`192.168.7.1` 不通；用户报告「反复刷屏、疑似 kernel panic」⇒ **本轮不能判定 E0 是否生效**（`verdict=indeterminate`）。后续设备进入 fastboot（slot b/successful），`fastboot reboot` 后仍未回 Linux。`reports/artifacts/uefi-boot-20261104-fixcopylen/`、`reports/trials/20261104T024726Z-uefi-fixcopylen-r1.json` |
+| 2026-11-04（上游） | **两批投递 10 封全 250：wl2868c v6 0/5 + dwc3 0/3 正确形态重发** | patchwork 8 枚全命中、0 退信。v6：修 apply 失败（`sm8650-valve-deckard.dtb` 插入点）、按 Conor 拆 `arm/qcom.yaml`、binding 补 `vsys`、CCI 让给 Hangxiang、driver 改整字节写；dwc3：base 回退公开 `v7.3-rc7`、三枚自足合并 v4+v5、cover 逐条答 Krishna/Krzysztof。顺带定案 `linux-regulator@vger` 不存在（上批 6 封 550 的源）。`reports/mail-send-20261104-wl2868c-v6-dwc3.md` |
 ---
 
 ## 2. 当前完成度（诚实版）

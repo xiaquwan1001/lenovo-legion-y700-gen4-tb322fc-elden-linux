@@ -1,0 +1,108 @@
+From 2a533369566710c78ff82d545fb17454ea332df8 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 4 Nov 2026 11:10:05 +0800
+Subject: [PATCH v6 0/5] regulator: add the Will Semiconductor WL2868C camera
+ PMIC
+
+This series was drafted with AI assistance; I reviewed and edited every
+line myself, and I am responsible for its content, measurements and
+decisions.  The commands behind the verification claims below are listed
+in the series README that accompanies this posting.
+
+The WL2868C is the camera PMIC on the Lenovo Legion Tab (TB322FC,
+SM8750); its seven LDOs feed the rear camera, the front camera and the
+VCM on i2c10.
+
+Changes in v6:
+
+ - Rebased onto current mainline (v7.3-20183-g05441d697f7f, tip of
+   master on 2026-11-03).  v5 no longer applied: the board patch anchors
+   its arch/arm64/boot/dts/qcom/Makefile hunk on the sm8650-qrd.dtb line,
+   and sm8650-valve-deckard.dtb was inserted right there in between, so
+   git am stopped on that file (Mark Brown: "This doesn't apply against
+   current code, please check and resend").  v6 applies cleanly on the
+   new base.
+
+ - The SM8750 CCI patch is gone.  There is an identical CCI series in
+   flight from Hangxiang Ma (Konrad: "There's an identical patchset in
+   flight, please don't send competing series without a clear reason"),
+   so this series no longer competes for those nodes.  The two
+   observations sashiko made on the CCI patch (cci2 is not described; the
+   sleep states change the pin function to gpio instead of keeping
+   cci_i2c_sda/scl) belong to that series as well and are not addressed
+   here.
+
+ - The board compatible in arm/qcom.yaml is now a patch of its own
+   instead of riding along with another binding (Conor asked for the
+   split; checkpatch wants the same).
+
+ - regulator binding: the paragraph that described which board supply
+   comes from which LDO is gone from the binding description, it belongs
+   to the board patch (Conor).  vsys-supply is added and at least one of
+   vin7-supply and vsys-supply is now required, because both feed the
+   internal control logic, which is powered from the higher of the two
+   (Conor: "the higher of the two powers the internal control logic").
+   The other inputs stay optional: they only feed LDOs, so an input may
+   be left unconnected on a board that does not use those outputs, which
+   the description now says.
+
+ - driver: the enable register is written as a whole instead of doing a
+   read-modify-write of SYS_EN plus one LDO bit.  The per-LDO bits can be
+   preset by the firmware while SYS_EN is clear, so setting SYS_EN and
+   the requested bit would switch the preset outputs on as well
+   (sashiko, Medium).  The driver keeps the set of LDOs that consumers
+   enabled and writes exactly those bits, so enabling one output cannot
+   power another one.
+
+ - The board DTS is split in two: a skeleton patch (compatible, chassis
+   type, reserved GPIOs, board clocks) and the WL2868C regulators.  The
+   rear sensor and its VCM are gone from this series together with the
+   CCI controllers they hang off; they follow with the camera series
+   that depends on the CCI nodes.  The board clocks stay: they are the
+   XO, sleep and divided CXO clocks that sm8750.dtsi consumes, so every
+   SM8750 board file has to provide them (Konrad asked why the board
+   repeats what the binding example has; the binding example contains no
+   clock, and these four are consumed by the SoC dtsi, as on
+   sm8750-mtp.dts).
+
+ - The VSYS input is described as a fixed regulator, as it is the
+   always-on system rail.  VIN12, VIN34, VIN5 and VIN7 are fed by SPMI
+   PMIC rails that this series does not describe yet, so they are left
+   out and follow with the board series that adds those PMICs.
+
+Verification, host-side only: every patch passes checkpatch.pl --strict
+with 0 errors (the only two warnings are "MAINTAINERS need updating" for
+the two new files, one of them being the driver's own entry added in
+2/5); the series replays with plain git am on a pristine checkout of the
+base commit, 5/5, and the result is the same tree as the branch it is
+generated from; drivers/regulator/ builds with W=1 without warnings;
+sm8750-lenovo-elden.dtb builds and dt-validate has nothing to report on
+it; dt_binding_check passes for the new binding.
+
+The regulators are still not exercised on hardware: the i2c10 probe, the
+regulator registration and the LDO voltages come from our own downstream
+board DTS, not from a measured boot of this series.
+
+Qianhui Xu (5):
+  regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+  regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+  dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4
+  arm64: dts: qcom: sm8750-lenovo-elden: add the Lenovo Legion Y700 Gen4
+  arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators
+
+ .../devicetree/bindings/arm/qcom.yaml         |   1 +
+ .../bindings/regulator/willsemi,wl2868c.yaml  | 104 +++++++++
+ MAINTAINERS                                   |   7 +
+ arch/arm64/boot/dts/qcom/Makefile             |   1 +
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 129 +++++++++++
+ drivers/regulator/Kconfig                     |  11 +
+ drivers/regulator/Makefile                    |   1 +
+ drivers/regulator/wl2868c-regulator.c         | 212 ++++++++++++++++++
+ 8 files changed, 466 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+ create mode 100644 arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+ create mode 100644 drivers/regulator/wl2868c-regulator.c
+
+-- 
+2.53.0
+

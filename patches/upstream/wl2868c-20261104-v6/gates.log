@@ -1,0 +1,83 @@
+### 0) 环境
+2026年 11月 04日 星期三 03:14:21 UTC
+base=05441d697f7f9a927264f4058cbbc6a03dfcac9d
+tip=2a533369566710c78ff82d545fb17454ea332df8
+branch tip: 2a533369566710c78ff82d545fb17454ea332df8 arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators
+
+### 1) checkpatch.pl --strict（stdin 喂补丁，PITFALLS #474）
+--- v6-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL286.patch
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+    
+    NOTE: If any of the errors are false positives, please report
+          them to the maintainer, see CHECKPATCH in MAINTAINERS.
+--- v6-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera-PM.patch
+    total: 0 errors, 0 warnings, 0 checks, 249 lines checked
+    
+    "[PATCH v6 2/5] regulator: willsemi,wl2868c: add the WL2868C camera" has no obvious style problems and is ready for submission.
+--- v6-0003-dt-bindings-arm-qcom-document-the-Lenovo-Legion-Y700.patch
+    total: 0 errors, 0 warnings, 0 checks, 7 lines checked
+    
+    "[PATCH v6 3/5] dt-bindings: arm: qcom: document the Lenovo Legion" has no obvious style problems and is ready for submission.
+--- v6-0004-arm64-dts-qcom-sm8750-lenovo-elden-add-the-Lenovo-Le.patch
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+    
+    NOTE: If any of the errors are false positives, please report
+          them to the maintainer, see CHECKPATCH in MAINTAINERS.
+--- v6-0005-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-WL28.patch
+    total: 0 errors, 0 warnings, 0 checks, 93 lines checked
+    
+    "[PATCH v6 5/5] arm64: dts: qcom: sm8750-lenovo-elden: describe the" has no obvious style problems and is ready for submission.
+
+### 2) 系列自足性重放 scripts/check-series-selfcontained.sh
+== 门禁: /home/xuqianhui/y700-elden/patches/upstream/wl2868c-20261104-v6  base=05441d697f7f9a927264f4058cbbc6a03dfcac9d  repo=/home/xuqianhui/y700-elden/build/wl-v2 ==
+  ok    v6-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL286.patch
+  ok    v6-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera-PM.patch
+  ok    v6-0003-dt-bindings-arm-qcom-document-the-Lenovo-Legion-Y700.patch
+  ok    v6-0004-arm64-dts-qcom-sm8750-lenovo-elden-add-the-Lenovo-Le.patch
+  ok    v6-0005-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-WL28.patch
+PASS  wl2868c-20261104-v6: 全部 6 个文件按序重放成功于 05441d697f7f9a927264f4058cbbc6a03dfcac9d
+== 汇总: PASS=5 FAIL=0 WARN=0 退出码=0 ==
+rc=0
+
+### 3) pristine worktree 逐枚 git am（无 --3way）
+v6-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL286.patch rc=0
+v6-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera-PM.patch rc=0
+v6-0003-dt-bindings-arm-qcom-document-the-Lenovo-Legion-Y700.patch rc=0
+v6-0004-arm64-dts-qcom-sm8750-lenovo-elden-add-the-Lenovo-Le.patch rc=0
+v6-0005-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-WL28.patch rc=0
+final tree == branch tip 2a533369566710c78ff82d545fb17454ea332df8
+
+### 4) 驱动编译（W=1，-j26）
+drivers/regulator rc=0
+make[1]: 进入目录“/tmp/wlv6-out”
+make[1]: 离开目录“/tmp/wlv6-out”
+wl2868c-regulator.o rc=0
+
+### 5) DTB 构建 + dt-validate
+dtb rc=0
+-rw-rw-r-- 1 xuqianhui xuqianhui 104044 Nov  4 11:11 /tmp/wlv6-out/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+dt-validate rc=0 (无输出=0 诊断)
+
+### 6) binding 校验（只跑该 binding）
+dt-doc-validate rc=0
+dt-check-style rc=0
+  STYLE   /tmp/wlv6/Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/regulator/willsemi,wl2868c.example.dts
+  DTC [C] Documentation/devicetree/bindings/regulator/willsemi,wl2868c.example.dtb
+make[1]: 离开目录“/tmp/wlv6-out”
+dt_binding_check rc=0
+
+### 7) apply 失败根因复现（v5 在同一 base 上失败，v6 通过）
+v5 v5-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL.patch rc=0
+v5 v5-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera.patch rc=0
+v5 v5-0003-arm64-dts-qcom-sm8750-describe-two-of-the-three-C.patch rc=0
+v5 v5-0004-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-W.patch rc=128
+    error: 打补丁失败：arch/arm64/boot/dts/qcom/Makefile:406
+    error: arch/arm64/boot/dts/qcom/Makefile：补丁未应用
+    hint: 用 'git am --show-current-patch=diff' 命令查看失败的补丁
+    hint: When you have resolved this problem, run "git am --continue".
+
+### 8) cover-letter 也过 checkpatch
+WARNING: Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+ERROR: Does not appear to be a unified-diff format patch
+cover: 上面无输出 = 0 ERROR/0 WARNING

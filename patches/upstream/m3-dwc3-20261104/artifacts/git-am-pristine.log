@@ -1,0 +1,7 @@
+# pristine git am 逐枚（base 24a19b953e2a3d0ea5a8c4951a0ab8f32720c907, worktree /tmp/m3v6-amlog-Btuo）
+git am 0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-sh.patch rc=0
+git am 0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch rc=0
+git am 0003-usb-dwc3-support-two-connectors-sharing-one-HS-data-.patch rc=0
+--- 终态树 vs 系列 tip fce197bb2e8c ---
+e3842ca408 usb: dwc3: support two connectors sharing one HS data bus
+diff 行数=0

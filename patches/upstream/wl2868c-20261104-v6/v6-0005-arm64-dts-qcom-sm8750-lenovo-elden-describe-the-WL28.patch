@@ -1,0 +1,134 @@
+From 2a533369566710c78ff82d545fb17454ea332df8 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 4 Nov 2026 11:03:43 +0800
+Subject: [PATCH v6 5/5] arm64: dts: qcom: sm8750-lenovo-elden: describe the
+ WL2868C regulators
+
+The camera devices of the Lenovo Legion Y700 Gen4 are powered by a
+WL2868C camera PMIC on i2c10: LDO1 feeds the rear sensor DVDD, LDO2 the
+front sensor DVDD, LDO3 the front sensor AVDD, LDO4 the rear sensor
+AVDD, LDO5 the VCM VDD, LDO7 the DOVDD of both sensors and the VCM
+VDDIO, all at fixed voltages including the offsets programmed by the
+stock firmware. LDO6 is not wired out on this board.
+
+i2c10 is a GENI I2C controller inside the qupv3_2 wrapper, so both
+qupv3_2 and its gpi_dma2 parent are enabled alongside, otherwise i2c10
+never populates and the regulators would never register.
+
+The VSYS input of the PMIC is the always-on system rail of the tablet
+and is described as a fixed regulator. The VIN12, VIN34, VIN5 and VIN7
+inputs are fed by SPMI PMIC rails that are not described yet, so they
+are left out and follow with the board series that adds the PMICs.
+
+The consumers of these regulators (the rear sensor and its VCM on
+cci0) are not described here: the CCI controllers are being added by
+Hangxiang Ma's SM8750 series, and the sensor nodes follow with the
+camera series that depends on it.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 79 +++++++++++++++++++
+ 1 file changed, 79 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 821950715c..73f4452f46 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -5,6 +5,7 @@
+ 
+ /dts-v1/;
+ 
++#include <dt-bindings/gpio/gpio.h>
+ #include "sm8750.dtsi"
+ 
+ / {
+@@ -43,8 +44,86 @@ bi_tcxo_ao_div2: bi-tcxo-ao-div2-clk {
+ 			clock-div = <2>;
+ 		};
+ 	};
++
++	/*
++	 * VSYS of the camera PMIC is the always-on system rail of the tablet.
++	 * The SPMI PMICs that generate it are not described yet, so it is
++	 * modelled as a fixed regulator without a voltage constraint.
++	 */
++	wl2868c_vsys: regulator-vsys {
++		compatible = "regulator-fixed";
++		regulator-name = "wl2868c_vsys";
++		regulator-always-on;
++	};
++};
++
++&gpi_dma2 {
++	status = "okay";
++};
++
++&qupv3_2 {
++	status = "okay";
++};
++
++&i2c10 {
++	status = "okay";
++
++	pmic@2f {
++		compatible = "willsemi,wl2868c";
++		reg = <0x2f>;
++		reset-gpios = <&tlmm 126 GPIO_ACTIVE_LOW>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&camera_pmic_default>;
++		vsys-supply = <&wl2868c_vsys>;
++
++		regulators {
++			/* Voltages include the offsets programmed by stock firmware. */
++			camera_ldo1: ldo1 {
++				regulator-name = "camera_ldo1";
++				regulator-min-microvolt = <1128000>;
++				regulator-max-microvolt = <1128000>;
++			};
++
++			camera_ldo2: ldo2 {
++				regulator-name = "camera_ldo2";
++				regulator-min-microvolt = <1288000>;
++				regulator-max-microvolt = <1288000>;
++			};
++
++			camera_ldo3: ldo3 {
++				regulator-name = "camera_ldo3";
++				regulator-min-microvolt = <2816000>;
++				regulator-max-microvolt = <2816000>;
++			};
++
++			camera_ldo4: ldo4 {
++				regulator-name = "camera_ldo4";
++				regulator-min-microvolt = <2824000>;
++				regulator-max-microvolt = <2824000>;
++			};
++
++			camera_ldo5: ldo5 {
++				regulator-name = "camera_ldo5";
++				regulator-min-microvolt = <2808000>;
++				regulator-max-microvolt = <2808000>;
++			};
++
++			/* LDO6 is not wired out on this board. */
++			camera_ldo7: ldo7 {
++				regulator-name = "camera_ldo7";
++				regulator-min-microvolt = <1800000>;
++				regulator-max-microvolt = <1800000>;
++			};
++		};
++	};
+ };
+ 
+ &tlmm {
+ 	gpio-reserved-ranges = <39 1>, <74 1>;
++
++	camera_pmic_default: camera-pmic-default-state {
++		pins = "gpio126";
++		function = "gpio";
++		bias-disable;
++	};
+ };
+-- 
+2.53.0
+

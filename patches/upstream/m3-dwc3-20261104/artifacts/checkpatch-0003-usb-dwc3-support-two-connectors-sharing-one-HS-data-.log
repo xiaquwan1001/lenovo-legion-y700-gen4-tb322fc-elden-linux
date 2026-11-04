@@ -1,0 +1,3 @@
+total: 0 errors, 0 warnings, 0 checks, 441 lines checked
+
+"[PATCH 3/3] usb: dwc3: support two connectors sharing one HS data bus" has no obvious style problems and is ready for submission.

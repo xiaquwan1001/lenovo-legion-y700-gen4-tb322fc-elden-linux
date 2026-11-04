@@ -5,11 +5,53 @@
   "image_sha256": "c0118018ccadec8a01af5a54437edf42af42893d7130988e46141c3d359ef624",
   "build_artifact": "reports/artifacts/uefi-fixcopylen-20261104/",
   "patch_set": "patches/uefi/20261104-fixcopylen + 20261104-prepi/0001 + 20261104-dxe/{0004,0010,0013,0003,0005,0006,0007,0001,0002}",
-  "baseline_before": {"uts": "7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172", "boot_id": "bf8d2fb1-558f-438c-97f4-b9629170ec58", "root": "/dev/sda17 ext4", "slot": "_b"},
-  "fastboot": {"sending_s": 1.496, "booting_okay_s": 10.109, "result": "HANDOFF"},
-  "usb_after": {"t_0_120s": "none (18d1:d00d 消失)", "t_120_300s": "none", "ping_192.168.7.1": "down"},
+  "baseline_before": {
+    "uts": "7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172",
+    "boot_id": "bf8d2fb1-558f-438c-97f4-b9629170ec58",
+    "root": "/dev/sda17 ext4",
+    "slot": "_b"
+  },
+  "fastboot": {
+    "sending_s": 1.496,
+    "booting_okay_s": 10.109,
+    "result": "HANDOFF"
+  },
+  "usb_after": {
+    "t_0_120s": "none (18d1:d00d 消失)",
+    "t_120_300s": "none",
+    "ping_192.168.7.1": "down"
+  },
   "judgement_channel": "屏上串口（需人工判读）",
-  "verdict": "pending-screen-read",
-  "expected_marks": ["UEFI firmware (version ...) 版本行", "[P01]..[P11]（PrePi 步进）", "64 块 FNV 块表（8 行 x8 值）", "[D00]..[Dnn]（DxeMain 相位点 / Dispatcher 点）"],
-  "criteria": {"pass": "[D00] 出现 且 [P11] 不出现 且 块表 64/64 与主机 FD 一致", "fail_variants": ["只到 [P11] 且状态 != 0", "块表仍只前 1 MiB 对", "黑屏无输出"]}
+  "verdict": "indeterminate-no-optical-read",
+  "expected_marks": [
+    "UEFI firmware (version ...) 版本行",
+    "[P01]..[P11]（PrePi 步进）",
+    "64 块 FNV 块表（8 行 x8 值）",
+    "[D00]..[Dnn]（DxeMain 相位点 / Dispatcher 点）"
+  ],
+  "criteria": {
+    "pass": "[D00] 出现 且 [P11] 不出现 且 块表 64/64 与主机 FD 一致",
+    "fail_variants": [
+      "只到 [P11] 且状态 != 0",
+      "块表仍只前 1 MiB 对",
+      "黑屏无输出"
+    ]
+  },
+  "post_boot_events": [
+    "10:47:26 fastboot boot 发出（零写盘）",
+    "t+10..300s USB 无枚举、192.168.7.1 down",
+    "11:0x 用户报告「反复刷屏，疑似 kernel panic，刷屏导致看不清」（未取到画面/文字）",
+    "11:3x 设备出现在 fastboot（current-slot b, slot-successful:b yes）",
+    "11:4x fastboot reboot 后 120 s 内 USB/网络均未回来（疑似再次进入刷屏/panic 循环）"
+  ],
+  "unresolved": [
+    "屏上判据（[P01]..[P11] / 块表 / [D00]）未取得任何一帧 → 本轮不能判定 E0 是否生效",
+    "「反复刷屏」的性质未证（UEFI 侧 Dispatcher 循环 / Linux 侧 kernel panic / ABL 回落 三者都可能）",
+    "boot_b 内容未复核（本轮零写盘，理论未变；复核需设备可达）"
+  ],
+  "next_evidence_path": [
+    "强制关机后进 fastboot：fastboot boot 已知可用日常镜像（零写盘）验证 boot_b 是否仍可起",
+    "Linux 起来后读 /sys/fs/pstore（ramoops）取上一次崩溃的 dmesg",
+    "若能进 fastboot 但起不来：检查 slot 属性 + 用 boot_a 回退"
+  ]
 }
