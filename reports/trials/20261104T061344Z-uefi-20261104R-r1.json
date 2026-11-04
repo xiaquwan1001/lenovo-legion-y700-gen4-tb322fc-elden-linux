@@ -1,0 +1,32 @@
+{
+  "trial": "uefi-20261104R-r1",
+  "date_utc": "2026-11-04T06:13:44Z",
+  "image": "out/uefi-20261104R-r1.img",
+  "image_sha256": "e7f8b5445c05bd3c0c7a0a7d444e262bde66d1bc4b1faee6714525cc57b85e73",
+  "build_artifact": "reports/artifacts/uefi-20261104R-r1/",
+  "criterion_channel": "ramoops 持久化（主机可读）+ 屏上标记",
+  "fastboot": {"sending_s": 1.497, "booting_okay_s": 10.112, "result": "HANDOFF"},
+  "device_screen_report": {
+    "source": "用户目视（两次独立实验一致）",
+    "text": "synchronous exception at 0x…0d2b9224，recursive exception while dumping the cpu state",
+    "interpretation": "EDK2 ArmExceptionLib 同步异常 + 异常处理器在 dump 期间再次异常 ⇒ 无限刷屏。这是 11-04「反复刷屏」的真身，不是 Linux kernel panic。"
+  },
+  "pstore_readback": {
+    "result": "FAIL-empty",
+    "evidence": [
+      "/sys/fs/pstore/ 为空（无 dmesg-ramoops-0/1，也无上一 boot 的 console-ramoops-0）",
+      "dmesg: 'OF: reserved mem: 0xc2000000..0xc23fffff (4096 KiB) nomap non-reusable ramoops@c2000000'",
+      "dmesg: 'ramoops: using 0x400000@0xc2000000, ecc: 0'",
+      "/proc/device-tree/.../reg = 00000000 000000c2 00000000 00004000 ⇒ 在机 DT 是 4 MiB（build/m1-73 树里是 8 MiB）",
+      "/dev/mem 读 0xC2000000 = 'Bad address'（CONFIG_STRICT_DEVMEM=y）⇒ 无法旁证 DDR 内容"
+    ],
+    "conclusion": "本通道在本路径不成立：连「上一 boot 的内核 console zone」都没留下 ⇒ 该 carveout 在 fastboot boot → UEFI → fastboot reboot 路径上被清（冷复位/ABL/UEFI 自身 0xFF 填充三选一，未区分）。"
+  },
+  "recovery": {"method": "fastboot reboot", "linux_back_s": 22, "boot_id": "ea859761-f5c9-429a-b5bd-b4396638f7f0", "uname_v": "#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026"},
+  "verdict": "advance: 载荷真被执行且进入 EDK2 异常路径；判据通道需改为「屏上异常转储 + 有限延迟」",
+  "next": [
+    "取屏上异常首屏（照片）：确认 [D00]…[D0x] 停在哪一点 + 异常类型/ESR/FAR",
+    "v2 件：Dispatcher 打印被 dispatch 的驱动名（有界、带延迟）+ ArmExceptionLib 去递归（dump 一次即死循环等待）",
+    "ramoops 通道暂缓：需先证明该 carveout 在冷复位后仍保留（否则不投第二发）"
+  ]
+}
