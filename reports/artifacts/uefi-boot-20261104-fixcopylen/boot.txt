@@ -1,0 +1,24 @@
+Sending 'boot.img' (65624 KB)                      OKAY [  1.496s]
+Booting                                            OKAY [ 10.109s]
+Finished. Total time: 11.632s
+t+10s usb=none fastboot=none
+t+20s usb=none fastboot=none
+t+30s usb=none fastboot=none
+t+40s usb=none fastboot=none
+t+50s usb=none fastboot=none
+t+60s usb=none fastboot=none
+t+70s usb=none fastboot=none
+t+80s usb=none fastboot=none
+t+90s usb=none fastboot=none
+t+100s usb=none fastboot=none
+t+110s usb=none fastboot=none
+t+120s usb=none fastboot=none
+t+140s usb=none ping=down
+t+160s usb=none ping=down
+t+180s usb=none ping=down
+t+200s usb=none ping=down
+t+220s usb=none ping=down
+t+240s usb=none ping=down
+t+260s usb=none ping=down
+t+280s usb=none ping=down
+t+300s usb=none ping=down

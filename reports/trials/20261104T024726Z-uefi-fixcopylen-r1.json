@@ -1,0 +1,15 @@
+{
+  "trial": "uefi-fixcopylen-r1",
+  "date_utc": "2026-11-04T02:47:26Z",
+  "image": "out/uefi-20261104-fixcopylen.img",
+  "image_sha256": "c0118018ccadec8a01af5a54437edf42af42893d7130988e46141c3d359ef624",
+  "build_artifact": "reports/artifacts/uefi-fixcopylen-20261104/",
+  "patch_set": "patches/uefi/20261104-fixcopylen + 20261104-prepi/0001 + 20261104-dxe/{0004,0010,0013,0003,0005,0006,0007,0001,0002}",
+  "baseline_before": {"uts": "7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172", "boot_id": "bf8d2fb1-558f-438c-97f4-b9629170ec58", "root": "/dev/sda17 ext4", "slot": "_b"},
+  "fastboot": {"sending_s": 1.496, "booting_okay_s": 10.109, "result": "HANDOFF"},
+  "usb_after": {"t_0_120s": "none (18d1:d00d 消失)", "t_120_300s": "none", "ping_192.168.7.1": "down"},
+  "judgement_channel": "屏上串口（需人工判读）",
+  "verdict": "pending-screen-read",
+  "expected_marks": ["UEFI firmware (version ...) 版本行", "[P01]..[P11]（PrePi 步进）", "64 块 FNV 块表（8 行 x8 值）", "[D00]..[Dnn]（DxeMain 相位点 / Dispatcher 点）"],
+  "criteria": {"pass": "[D00] 出现 且 [P11] 不出现 且 块表 64/64 与主机 FD 一致", "fail_variants": ["只到 [P11] 且状态 != 0", "块表仍只前 1 MiB 对", "黑屏无输出"]}
+}
