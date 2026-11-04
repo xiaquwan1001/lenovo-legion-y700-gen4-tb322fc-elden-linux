@@ -1,0 +1,21 @@
+# artifacts.tsv — ELF ↔ 重建配方 ↔ 已产出件（`tools/verify.sh --rebuildable` 的唯一真源）
+#
+# 列：dst <TAB> recipe <TAB> artifact
+#   dst      : 设备上的绝对路径（必须与 MANIFEST.tsv 的 elf 行一一对应）
+#   recipe   : packaging/elden-userland/build/ 下的配方文件名
+#   artifact : 配方产物相对仓库根的路径（`-` = 只有设备上有，宿主不产）
+#
+# 判据（--rebuildable）：
+#   1. MANIFEST 有该 elf 行；2. sources.tsv 有 status=ok 行；3. 其 source 全部存在；
+#   4. 其 build 命令的入口（脚本或程序）存在；5. recipe 存在且 `--dry-run` rc=0 且有输出；
+#   6. artifact 存在时 sha 与 MANIFEST 比对（**identical / diff / absent 仅作参考**，
+#      重编会改 sha，「功能等价」才是判据 —— 见 sources.tsv 头部口径）。
+#
+# 2026-11-04 基线：ok=7 missing=0（10-25 报告里的「4 ok / 3 missing」已被 0e60a55 补齐）
+/usr/local/bin/elden-hapticd	elden-hapticd.sh	out/hapticd/elden-hapticd
+/usr/local/bin/eldroid-sensord	eldroid-sensord.sh	out/sensord/eldroid-sensord
+/usr/local/bin/ffrumble	ffrumble.sh	out/ffrumble/ffrumble
+/usr/local/bin/waydroid-sensord	waydroid-sensord.sh	out/sensord-host/waydroid-sensord
+/usr/local/bin/waydroid-sensord-udp	waydroid-sensord-udp.sh	out/sensord-host/waydroid-sensord-udp
+/usr/local/bin/elden-ime-focusd	elden-ime-focusd.sh	out/ime-host/elden-ime-focusd
+/usr/local/sbin/reboot2	reboot2.sh	out/reboot2/reboot2

@@ -9,8 +9,15 @@
 #   E. 语义红线（README 里那 5 条）逐条断言
 #   F. 在线时：设备逐字比对「根画像」下的期望表（MANIFEST/渲染单元 + 暂存 overlay 优先）
 #   F2. 渲染单元 ↔ 设备（systemd → /usr/lib/systemd/system，openrc → /etc/init.d）
+#   H. --rebuildable（仅该段，2026-11-04 新增，不改 A–G 判据）：
+#      build/artifacts.tsv 里 7 个 ELF 逐个判「源在 + build 入口在 + 配方可 --dry-run」，
+#      输出 `ok=N missing=M` 的**可复现数字**（10-25 报告口径 4 ok/3 missing 的自动化版本）。
+#   H2. --rebuild（同上，另加）：真编 4 个静态交叉件（不动 chroot/root 配方）并与 MANIFEST 比 sha，
+#      只写仓库内 out/；sha 差异仅提示（重编改字节 ≠ 功能漂移）。
 #
 # 用法：bash tools/verify.sh [--offline] [user@host]
+#       bash tools/verify.sh --rebuildable   只跑 H 段（重建性数字，零写盘）
+#       bash tools/verify.sh --rebuild       只跑 H+H2 段（真编静态件，写 out/）
 #       ROOT_PROFILE=systemd|openrc   强制根画像（默认自动探测 /etc/elden-init-mode → /run/systemd/system）
 #       LOCAL_ROOT=<dir>              不连设备，改读本地树（负向测试 / 预演 overlay 用）
 set -uo pipefail
@@ -22,9 +29,12 @@ SSH_TARGET=${SSH_TARGET:-root@192.168.7.1}
 LOCAL_ROOT=${LOCAL_ROOT:-}
 STAGE=${STAGE:-$REPO/out/stage-debian}
 [ -d "$STAGE" ] || STAGE=
+REBUILD_ONLY=0   # 0=不跑 H；1=只跑 H（--rebuildable）；2=H+H2（--rebuild）
 for a in "$@"; do
   case "$a" in
     --offline) OFFLINE=1 ;;
+    --rebuildable) OFFLINE=1; [ "$REBUILD_ONLY" = 2 ] || REBUILD_ONLY=1 ;;
+    --rebuild) OFFLINE=1; REBUILD_ONLY=2 ;;
     *@*) SSH_TARGET=$a ;;
   esac
 done
@@ -37,6 +47,119 @@ warn() { printf '  WARN  %s\n' "$*"; warns=$((warns + 1)); }
 sec()  { printf '\n[%s]\n' "$*"; }
 
 [ -f "$HERE/MANIFEST.tsv" ] || { echo "verify: 先跑 tools/sync-from-device.sh"; exit 1; }
+
+# ---------------------------------------------------------------- H. 重建性（--rebuildable）
+# 判据只做加法：默认路径完全不进本函数（见末尾 dispatch），A–G 判据一字未改。
+section_rebuild() {
+  local map=$HERE/build/artifacts.tsv
+  sec "H. ELF 重建性（build/artifacts.tsv）"
+  if [ ! -f "$map" ]; then fail "缺 build/artifacts.tsv（ELF ↔ 配方 ↔ 产物）"; return 1; fi
+
+  local n_ok=0 n_missing=0 n_recipe=0 n_dry=0 n_art_same=0 n_art_diff=0 n_rows=0
+  local dst recipe art
+  while IFS=$'\t' read -r dst recipe art; do
+    case "$dst" in \#*|"") continue ;; esac
+    n_rows=$((n_rows + 1))
+
+    # H1. dst 必须在 MANIFEST 里，且 kind=elf
+    local sha size
+    sha=$(awk -F'\t' -v d="$dst" '$1==d && $2=="elf"{print $3}' "$HERE/MANIFEST.tsv")
+    if [ -z "$sha" ]; then fail "$dst: MANIFEST 无该 elf 行"; n_missing=$((n_missing + 1)); continue; fi
+
+    # H2. sources.tsv 行 + source 存在 + build 入口存在
+    local line status src build bad=0
+    line=$(grep -P "^\Q$dst\E\t" "$HERE/sources.tsv" 2>/dev/null | head -1)
+    if [ -z "$line" ]; then fail "$dst: sources.tsv 无记录"; n_missing=$((n_missing + 1)); continue; fi
+    IFS=$'\t' read -r _ build src status _ <<<"$line"
+    if [ "$status" != "ok" ]; then warn "$dst: sources.tsv status=$status"; n_missing=$((n_missing + 1)); continue; fi
+    local spec
+    IFS=',' read -ra specs <<<"$src"
+    for spec in "${specs[@]}"; do
+      spec=$(echo "$spec" | xargs)
+      [ -e "$REPO/$spec" ] || { fail "$dst: 源不存在 $spec"; bad=1; }
+    done
+    # build 入口：第一个 token 是 bash/sh 时看第二个；否则看 PATH
+    local b1 b2
+    b1=$(printf '%s' "$build" | awk '{print $1}')
+    b2=$(printf '%s' "$build" | awk '{print $2}')
+    case "$b1" in
+      bash|sh) [ -n "$b2" ] && [ -e "$REPO/${b2#./}" ] || { fail "$dst: build 脚本不存在 ${b2:-（空）}"; bad=1; } ;;
+      '') fail "$dst: build 为空" ; bad=1 ;;
+      *) command -v "$b1" >/dev/null 2>&1 || { fail "$dst: build 命令 $b1 不在 PATH"; bad=1; } ;;
+    esac
+    [ "$bad" = 0 ] || { n_missing=$((n_missing + 1)); continue; }
+
+    # H3. 配方存在 + --dry-run rc=0 且有输出（零写盘演练）
+    local rp=$HERE/build/$recipe
+    if [ ! -f "$rp" ]; then
+      fail "$dst: 配方缺失 build/$recipe"; n_missing=$((n_missing + 1)); continue
+    fi
+    n_recipe=$((n_recipe + 1))
+    local out rc
+    out=$(bash "$rp" --dry-run 2>/dev/null); rc=$?
+    if [ "$rc" = 0 ] && printf '%s' "$out" | grep -q '^+ '; then
+      n_dry=$((n_dry + 1))
+    else
+      fail "$dst: 配方 $recipe --dry-run 失败（rc=$rc）"
+      n_missing=$((n_missing + 1)); continue
+    fi
+
+    # H4. 已产出件 sha 对照（参考项，不算 FAIL）
+    local rel=""
+    if [ "$art" != "-" ] && [ -f "$REPO/$art" ]; then
+      local got; got=$(sha256sum "$REPO/$art" | cut -d' ' -f1)
+      if [ "$got" = "$sha" ]; then rel=identical; n_art_same=$((n_art_same + 1))
+      else rel=diff; n_art_diff=$((n_art_diff + 1)); fi
+    else
+      rel=absent
+    fi
+    ok "$dst ← $src（配方 $recipe dry-run ok；产物 $rel）"
+    n_ok=$((n_ok + 1))
+  done <"$map"
+
+  # 反向：MANIFEST 里的每个 elf 都在表里
+  local d
+  while read -r d; do
+    awk -F'\t' -v d="$d" '$1==d{f=1} END{exit !f}' "$map" \
+      || { fail "$d: build/artifacts.tsv 无记录（重建性未登记）"; n_missing=$((n_missing + 1)); }
+  done < <(awk -F'\t' '$2=="elf"{print $1}' "$HERE/MANIFEST.tsv")
+
+  printf '\n  ELF 共 %d 个：ok=%d missing=%d；配方 %d 个可 --dry-run；产物 sha 与清单 identical=%d diff=%d\n' \
+    "$n_rows" "$n_ok" "$n_missing" "$n_dry" "$n_art_same" "$n_art_diff"
+  # 机器可读的稳定行（供脚本/CI 抓数字）
+  printf '==== rebuildable: elf=%d ok=%d missing=%d recipe=%d dry-run-ok=%d identical=%d ====\n' \
+    "$n_rows" "$n_ok" "$n_missing" "$n_recipe" "$n_dry" "$n_art_same"
+
+  # -------------------------------------------------------------- H2. 真编静态件（--rebuild）
+  if [ "$REBUILD_ONLY" = 2 ]; then
+    sec "H2. 真编静态交叉件并比 sha（写 out/；sha 差异仅提示）"
+    local r
+    for r in ffrumble elden-hapticd eldroid-sensord reboot2; do
+      if bash "$HERE/build/$r.sh" >/tmp/.verify_rb.$$ 2>&1; then
+        local dst2 art2 sha2 got2
+        dst2=$(awk -F'\t' -v r="$r.sh" '$2==r{print $1}' "$HERE/build/artifacts.tsv")
+        art2=$(awk -F'\t' -v r="$r.sh" '$2==r{print $3}' "$HERE/build/artifacts.tsv")
+        sha2=$(awk -F'\t' -v d="$dst2" '$1==d{print $3}' "$HERE/MANIFEST.tsv")
+        got2=$(sha256sum "$REPO/$art2" 2>/dev/null | cut -d' ' -f1)
+        if [ -z "$got2" ]; then fail "$r: 构建成功但无产物 $art2"
+        elif [ "$got2" = "$sha2" ]; then ok "$r: 重建产物与 MANIFEST 逐字一致（${got2:0:16}…）"
+        else warn "$r: 重建产物 sha 与清单不同（重建 ${got2:0:12}… / 清单 ${sha2:0:12}…）⇒ 功能等价口径"; fi
+      else
+        fail "$r: 构建失败（见 /tmp/.verify_rb.$$ 尾部）"; tail -3 /tmp/.verify_rb.$$ | sed 's/^/        /'
+      fi
+    done
+    rm -f /tmp/.verify_rb.$$
+  fi
+  return 0
+}
+
+if [ "$REBUILD_ONLY" != 0 ]; then
+  section_rebuild
+  printf '\n==== verify --%s: FAIL=%d WARN=%d ====\n' \
+    "$([ "$REBUILD_ONLY" = 2 ] && echo rebuild || echo rebuildable)" "$fails" "$warns"
+  [ "$fails" = 0 ] || exit 1
+  exit 0
+fi
 
 # ---------------------------------------------------------------- A. 清单自洽
 sec "A. MANIFEST ↔ files/ 自洽"
