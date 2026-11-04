@@ -1,0 +1,68 @@
+Subject: [PATCH] BdsDxe: print SimpleFileSystem device paths at BDS entry
+
+2026-11-04R12 y700-elden: R11 实测 BlockIo=119 / SimpleFileSystem=1，但不知道那个 FAT 卷是谁；
+这里把每个 SFS 句柄的 device path 打到屏上，决定 GRUB/systemd-boot 的落点。
+
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+index 79535cf..f9c5016 100644
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -13,6 +13,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ **/
+ 
+ #include "Bds.h"
++#include <Library/SerialPortLib.h>  // 2026-11-04R12 y700-elden
++#include <Library/PrintLib.h>       // 2026-11-04R12 y700-elden
++#include <Library/DevicePathLib.h> // 2026-11-04R12 y700-elden
+ #include "Language.h"
+ #include "HwErrRecSupport.h"
+ #include <Library/VariablePolicyHelperLib.h>
+@@ -720,6 +723,48 @@ BdsEntry (
+   EFI_BOOT_MANAGER_LOAD_OPTION    PlatformDefaultBootOption;
+   BOOLEAN                         PlatformDefaultBootOptionValid;
+ 
++  // 2026-11-04R12 y700-elden: BDS-entry storage snapshot (RELEASE-visible).
++  // R11 measured BlockIo=119 / SimpleFileSystem=1 but we do not know whose FAT volume it is,
++  // so print the device path of every SimpleFileSystem handle.
++  {
++    EFI_HANDLE                 *SbHandles;
++    UINTN                      SbCount;
++    UINTN                      SbQ;
++    UINTN                      SbIdx;
++    CHAR8                      SbLine[320];
++    UINTN                      SbLen;
++
++    SbQ       = 0;
++    SbHandles = NULL;
++    SbCount   = 0;
++    if (!EFI_ERROR (gBS->LocateHandleBuffer (ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &SbCount, &SbHandles))) {
++      SbQ = SbCount;
++      FreePool (SbHandles);
++    }
++
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[B] BlockIo=%d\n\r", SbQ);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++
++    SbQ       = 0;
++    SbHandles = NULL;
++    SbCount   = 0;
++    if (!EFI_ERROR (gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &SbCount, &SbHandles))) {
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[B] SimpleFileSystem=%d\n\r", SbCount);
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
++
++      for (SbIdx = 0; SbIdx < SbCount; SbIdx++) {
++        SbLen = AsciiSPrint (
++                  SbLine,
++                  sizeof (SbLine),
++                  "[S] %s\n\r",
++                  ConvertDevicePathToText (DevicePathFromHandle (SbHandles[SbIdx]), FALSE, FALSE)
++                  );
++        SerialPortWrite ((UINT8 *)SbLine, SbLen);
++      }
++
++      FreePool (SbHandles);
++    }
++  }
+   HotkeyTriggered = NULL;
+   Status          = EFI_SUCCESS;
+   BootSuccess     = FALSE;
