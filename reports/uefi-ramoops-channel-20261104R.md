@@ -135,3 +135,38 @@ ls -l /sys/fs/pstore/ ; cat /sys/fs/pstore/dmesg-ramoops-0 /sys/fs/pstore/dmesg-
 `out/uefi-20261104R11-r1.img`（sha `db7c1b35…`）= R10 + `patches/uefi/20261104R11-bdsprobe`：
 在 **BdsDxe 入口**打印 `[B] BlockIo=<n>` 与 `[B] SimpleFileSystem=<n>`（RELEASE 下 DEBUG 全空，这是唯一能在屏上回答「UFS/分区枚举出来没有」的办法）。
 判读：`BlockIo ≥ 1` ⇒ UFS 枚举成功，下一发直接上「从 UFS 引导 Linux」；`BlockIo = 0` ⇒ 存储栈仍是真卡点，转去补 `gEfiKernelProtocolGuid` 提供者（QcomModulePkg/UFSDxe 依赖）。
+
+## 11. R11/R12 结果：**UFS 枚举成功，但整机没有 ESP**
+
+R11（`out/uefi-20261104R11-r1.img`，sha `db7c1b35…`）屏上：
+
+```
+[I] BlockIo: 119
+[I] SimpleFileSystem: 1
+```
+
+R12（`out/uefi-20261104R12-r1.img`，sha `8db0aecd…`）把那个唯一的 FAT 卷打印出来：
+
+```
+[S] VenHw(D3F1985-F107-4AB5-DE39-68DCA7AD32CEA)/HD(39,GPT,347B1061-E3EC-30E1-D8BB-C89066CA82A,0x34180,0x15E00)
+```
+
+**解码**：`HD(39, … start=0x34180, size=0x15E00)`（4096 B 扇区）对照 `reports/artifacts/uefi-ddrcut-20261101/lun4-gpt-primary.bin`：
+
+| 分区 | 名字 | 起始 LBA | 大小 |
+|---|---|---|---|
+| **part 39** | **`modem_b`** | `0x34180` | 89 599 扇区（≈350 MB） |
+
+⇒ 唯一的 SimpleFileSystem 是 **LUN4 上的 `modem_b`**（Qualcomm modem 分区是 FAT，里面装 `image/*.mbn`），
+**不是 ESP，也绝不能拿来当 ESP**（刷坏 = 射频/基带全废）。
+
+**结论：整机不存在 ESP/FAT 启动分区** ⇒ Mu BDS 枚举完 UFS 后没有可交接的目标 ⇒ 复位 ⇒ ABL 起原厂 recovery（`dsu.metro/recovery` 二维码页，该字符串在本仓与 `Binaries/` 里 0 命中，确认来自原厂固件）。
+`gEfiKernelProtocolGuid 0xE`（`QcomModulePkg` 才提供）与 `CPU_Vectors region not present` 都不阻断枚举，只影响「原厂那套 kernel 交接」。
+
+### 三条可行路线（按「零写盘优先」排序）
+
+| 路线 | 做法 | 写盘 | 风险/代价 |
+|---|---|---|---|
+| **A（推荐，零写盘）** | 把 **standalone GRUB arm64**（内嵌 `grub.cfg` + `ext2/fat/linux` 模块）或自写最小 loader 打进我们的 FD，由 BDS `LoadImage` 直接启动；GRUB 用 `ext2` 模块读 **`linux17`（ext4）** 的 `/boot/vmlinuz*` + `dtb` + `initrd`，`root=LABEL=linux17` 交接 | 无 | 需要解决「FV 内 app 的 device path / 启动方式」（可复用 BdsDxe 插桩：BDS 入口直接 `LoadImage` 一个 FV 内文件或内存镜像） |
+| B | GPT 手术新增 200–500 MB FAT ESP（写盘），GRUB 装进去，BDS 自动发现 | 有（可回退） | 需要备份 + 回退脚本；`linux17` 已有数据不宜缩 |
+| C | 复用现有分区做 ESP | 有 | `modem_b` 绝对不行；`recovery_b`(100 MB) 会破坏原厂恢复；`toolsfv`(1 MB)/`logfs`(8 MB) 太小 |
