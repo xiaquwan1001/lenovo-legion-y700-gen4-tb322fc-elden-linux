@@ -1,0 +1,22 @@
+Subject: [PATCH] lenovo-y700g4: exclude QRKSDxe from the FV
+
+2026-11-04R10 y700-elden: QRKSDxe 依赖 gQcomScmProtocolGuid/ScmGetClientEnv，实测在 SCM 客户端环境
+失败后调用空/脏指针，崩在 0xD2B9B224（确定性、不落在任何已装载镜像区间）。本线不需要
+license/KP 检查，先从 FV 里剔除，看崩溃是否移位。
+
+diff --git a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc
+index 41424448..c2833ee7 100644
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc
+@@ -73,7 +73,10 @@ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/QcomWDogDxe.inf
+ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/TzDxe/ScmDxeCompat.inf
+ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/TzDxe/TzDxeLA.inf
+ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/ShmBridgeDxe/ShmBridgeDxeLA.inf
+-INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/QRKSDxe/QRKSDxe.inf
++# 2026-11-04R10 y700-elden: QRKSDxe uses gQcomScmProtocolGuid/ScmGetClientEnv;
++# it crashed at 0xD2B9B224 after the SCM client env failed (probably a stale/NULL call).
++# This bring-up does not need the license/KP check, so drop it from the FV for now.
++#INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/QRKSDxe/QRKSDxe.inf
+ 
+ FILE DRIVER = 6b38f7b4-ad98-40e9-9093-aca2b5a253c4 {
+     SECTION PE32 = $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.efi

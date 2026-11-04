@@ -1,0 +1,32 @@
+{
+  "trial": "uefi-20261104R10-r1",
+  "image": "out/uefi-20261104R10-r1.img",
+  "image_sha256": "23dab1f4a6de315975073314d738d2f84e89c7e312b0d07a139350dddaeea13c",
+  "build_artifact": "reports/artifacts/uefi-20261104R10-r1/",
+  "variant": "r8 全量插桩 + 剔除 QRKSDxe（DXE.inc 注释，FVMAIN 中 QRKSDxe 计数 2→0）",
+  "result": "BREAKTHROUGH",
+  "verdict": "DXE dispatch 全程走完、无同步异常；USB PHY 初始化成功；末端进入图形界面（白箭头 + 扳手/螺丝刀图标 + 二维码）",
+  "evidence": {
+    "no_exception": "屏上不再出现 Synchronous Exception / Recursive exception（连跑 300 s 无异常）",
+    "dxe_marks": "[D00]..[D08] 全出；DxeMain=0xB4CB7B90，DxeCore base=0xB4CB6000",
+    "block_table": "64 块表 64/64 与主机期望一致（块 38+ 恒 1DC99DC5）",
+    "driver_count": "约 150 条 [I]/[E] 配对（QCOM 平台驱动 + EDK2 通用驱动）",
+    "usb": "usb_repeater_reset → ssusb_phy_init_success lane:0x0（UEFI 侧 USB PHY 起来了）",
+    "tail": "GetLibProductString: Product string is NULL ×3 → 图形界面（白箭头 / 扳手螺丝刀 / 二维码）",
+    "host_side": "此时主机侧 lsusb 无 18d1/无 Google/Qualcomm 设备；fastboot devices 空；192.168.7.1 不通 ⇒ 该界面不提供 USB device 模式"
+  },
+  "remaining_errors_in_log": [
+    "ERROR: CPU Vectors region not present in cfg file !",
+    "ERROR: uefi_init: Failed to locate SCM protocol for Mailbox 14",
+    "ERROR: Fail to init client handle to QUSS clock node",
+    "Error getting gEfiKernelProtocolGuid handle, Status: 0xE（UFSDxe 启动后立刻出现）",
+    "Error: Gunyah Interface init error: Load Error / Skipping RmVmProtocol Install（RmVmDxe 仍失败，但不再致崩）",
+    "qpp_open: h.ctxt is NULL / Failed to init i2c: 12 / usb_redriver Failed slave 0x10",
+    "GetLibProductString: Product string is NULL ×3（进入图形界面前）"
+  ],
+  "conclusion": [
+    "排除 QRKSDxe 即可越过 0xD2B9B224 ⇒ 该异常确由 QRKSDxe 触发（其依赖 gQcomScmProtocolGuid/ScmGetClientEnv，SCM 客户端环境失败后调用脏指针）。",
+    "UEFI 现在能走完 DXE dispatch 并进入 BDS 之后的图形阶段 —— 这是本线第一次「UEFI 跑到底」。",
+    "下一个真卡点仍是存储枚举：UFSDxe 启动后立刻报 gEfiKernelProtocolGuid 0xE，需确认 BlockIo/分区是否装上。"
+  ]
+}
