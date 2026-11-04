@@ -1,0 +1,14 @@
+{
+  "trial": "uefi-20261104R2-r2",
+  "date_utc": "2026-11-04T06:49:41Z",
+  "image": "out/uefi-20261104R2-r2.img",
+  "image_sha256": "23b48a837911415d27d0a44d7daa960d6989171441fc45b22f4cf9c98f0ba4d9",
+  "build_artifact": "reports/artifacts/uefi-20261104R2-r2/",
+  "variant": "r1 补丁集 - DxeCore持久化 + 慢速屏显(3M spins/char) + scale=3(大字,便于OCR)",
+  "fastboot": {"sending_s": 1.495, "booting_okay_s": 10.107, "result": "HANDOFF"},
+  "usb_after_0_100s": "none (18d1:d00d 消失), 192.168.7.1 down",
+  "judgement_channel": "屏上慢速文本（录像）",
+  "expected_marks": ["[F01]", "64 块 FNV 表 8 行", "[P01]..[P11]", "[D00]..[D0x]"],
+  "verdict": "pending-optical-read",
+  "note": "异常 dump 递归重印，录像任意晚些时候都还能取到；取完需物理断电回 Linux（DDR 记录已证明会被清）"
+}
