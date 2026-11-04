@@ -94,3 +94,22 @@ ls -l /sys/fs/pstore/ ; cat /sys/fs/pstore/dmesg-ramoops-0 /sys/fs/pstore/dmesg-
 - **DDR 清空风险**：若 UEFI 挂死需要物理断电，ramoops 记录随之丢失（这是本通道唯一硬限制）。缓解 = 屏上标记同时存在，且本发刻意不再无限滚动。
 - **DXE allocator 覆盖风险**：UEFI 自己的内存图是否把 `0xC2000000` 当可用 RAM 未核实；记录在每条标记后重写，最新状态总在。
 - **回退**：`fastboot reboot`；若两槽都不起，`fastboot --set-active=b` + `fastboot reboot`（PITFALLS #484）。
+
+## 8. 2026-11-04 下午（r1→r8，八发零写盘）最终链条
+
+| 发 | 件 | 关键变化 | 结果 |
+|---|---|---|---|
+| r1 | `out/uefi-20261104R-r1.img` | 判据写 ramoops（PrePi+DxeCore 两个 record zone） | 载荷执行；pstore 回读**全空** ⇒ 通道证伪（见 §4） |
+| r2 | `…R2-r1` | 慢速屏显 3M spins/char + scale3 | 屏变成「缓慢滚动」，读到 `Synchronous Exception at 0xD2B9B224` + `Recursive exception` 无限重印 |
+| r3 | `…R3-r1` | 慢速降到 40k spins/char | 未上机（被 r2 结论取代） |
+| r4 | `…R4-r1` | 异常处理器补 ESR/FAR/SP | **无效**：运行时用的是设备 `Binaries/` 里**预编译 CpuDxe**，源码补丁不生效（PITFALLS #499） |
+| r5 | `…R5-r1` | `[D00]` 后打 `&DxeMain`；异常改 no-scroll | **决定性证据**：`[D00]=0xD4CA7D90`、`[D01]…[D07]` 全出、64 块表与主机期望一致 ⇒ **DxeCore 真进场** |
+| r6 | `…R6-r1` | 尝试异常处理器打镜像名 | 未上机（同 #499 问题，放弃该路线） |
+| r7 | `…R7-r1` | `[I] base/size`（RELEASE 可见）+ `ConOut` 换 no-op | 屏给出约 90 条装载表；崩溃前最后 `[E] start` = `QRKSDxe` |
+| r8 | `…R8-r1` | `[I]` 加模块名、`CoreStartImage` 前打 `[E]` | 完整 load map（QCOM 驱动逐个 init）→ `RmVmDxe`(Gunyah) 报 `Merge Overlay: -3 / Gunyah Interface init error: Load Error / Skipping RmVmProtocol Install` → `QRKSDxe` 启动瞬间 `Synchronous Exception at 0xD2B9B224` |
+
+**本日结论（UEFI 线）**：
+1. 「DxeCore 从未启动」**已被推翻**（那是只拷 1 MiB 的伪结论）；`fixcopylen` 的 4 MiB 拷贝链收口。
+2. DXE dispatch 已经在跑真实 QCOM 驱动（SCM/PMIC/Clock/PIL/UFS/Display/USB/I2C…），缺件集中在 `CPU_Vectors region`、`SCM mailbox 14`、`SE_Fuse`。
+3. 崩溃点 `0xD2B9B224` 三次实验逐字节相同，且**不落在任何已装载镜像区间** ⇒ 不是某驱动代码内的正常指令，而是被跳进的野地址（坏函数指针 / `0xFF` 填充区）；最后被启动的是 `QRKSDxe`，其前 `RmVmDxe` 初始化失败是最大嫌疑（协议没装上，调用方拿到空/脏指针）。
+4. 下一发（未做，设备已回 Linux）：`--rmvmdxe vendor` 或直接剔除 `RmVmDxe`/`QRKSDxe` 看崩溃是否移位；若移位即定位到 Gunyah 依赖链。**判据仍是屏停住 + 最后一条 `[E]`。**
