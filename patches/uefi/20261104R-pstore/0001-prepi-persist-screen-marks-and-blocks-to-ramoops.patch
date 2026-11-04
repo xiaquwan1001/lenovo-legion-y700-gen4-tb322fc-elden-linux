@@ -1,0 +1,121 @@
+Subject: [PATCH] PrePi.c
+
+2026-11-04R y700-elden: ramoops 持久化判据（零写盘上机用）。
+回到 Linux 后 cat /sys/fs/pstore/dmesg-ramoops-{0,1} 即可判「走到哪一步」。
+
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -27,8 +27,9 @@
+ STATIC VOID SbHex (IN UINT64 Value);
+ 
+ STATIC VOID SbFnvFd (IN CONST CHAR8 *Tag);
+ STATIC VOID SbBlocks (VOID);
++STATIC VOID SbPersist (IN UINTN Base, IN CONST CHAR8 *Text, IN UINTN Len);
+ 
+ #include <Library/MemoryMapHelperLib.h>
+ 
+ ////////////////////////////////////////////
+@@ -296,8 +297,13 @@
+ */
+ #define SB_FD_BASE  0xFF300000ULL
+ #define SB_FD_SIZE  0x00400000ULL
+ 
++/* ramoops record zone 0（DT ramoops@c2000000 的 dprzs[0]）与写入上限 */
++#define SB_LOG_PREPI  0xC2000000ULL
++#define SB_LOG_MAGIC  0x43474244u   /* PERSISTENT_RAM_SIG ^ PSTORE_TYPE_DMESG(0) */
++#define SB_LOG_MAX    0x001FF000u
++
+ /*
+   每个 64 KiB 块算一个 32 位 FNV-1a，8 个一行打印（共 64 块 = 8 行）。
+   与主机同表对比即可看出「哪些块被改坏」。
+ */
+@@ -334,8 +340,9 @@
+     Buf[Pos++] = ((Blk % 8) == 7) ? '\n' : ' ';
+     if ((Blk % 8) == 7) {
+       Buf[Pos++] = '\r';
+       SerialPortWrite ((UINT8 *)Buf, Pos);
++      SbPersist (SB_LOG_PREPI, Buf, Pos);
+     }
+   }
+ }
+ 
+@@ -371,8 +378,79 @@
+   }
+   Buf[Len++] = '\n';
+   Buf[Len++] = '\r';
+   SerialPortWrite ((UINT8 *)Buf, Len);
++  SbPersist (SB_LOG_PREPI, Buf, Len);
++}
++
++/*
++  2026-11-04R y700-elden：把同一条痕迹**同时**写进 Linux 的 ramoops dmesg record zone，
++  让判据不再依赖人眼看屏——回到 Linux 后 cat /sys/fs/pstore/dmesg-ramoops-0 即可。
++
++  布局必须逐字节符合内核（fs/pstore/ram_core.c + ram.c）：
++    persistent_ram_buffer { u32 sig=0x43474244("DBGC"), u32 start=0, u32 size=n }
++    data = "====0.000000-D\n" + 文本   ← ramoops_read_kmsg_hdr() 靠这个头认出记录
++  在机 DT（build/m1-73/.../sm8750-lenovo-elden.dts:1469）ramoops@c2000000 = 8 MiB，
++  record-size=0x200000 ×2（dprzs[0]=+0x000000 PrePi 用、dprzs[1]=+0x200000 DxeCore 用），
++  console-size=0x200000，pmsg-size=0x400000。无 ecc-size ⇒ 无 ECC，无需算校验。
++*/
++STATIC
++VOID
++SbCleanInv (
++  IN UINTN  Start,
++  IN UINTN  Len
++  )
++{
++  UINTN  A;
++
++  for (A = Start & ~0x3FULL; A < Start + Len; A += 64) {
++    __asm__ __volatile__ ("dc civac, %0" ::
++                          "r" (A) : "memory");
++  }
++
++  __asm__ __volatile__ ("dsb sy" ::: "memory");
++}
++
++STATIC
++VOID
++SbPersist (
++  IN UINTN         Base,
++  IN CONST CHAR8   *Text,
++  IN UINTN         Len
++  )
++{
++  STATIC CONST CHAR8  KmsgHdr[] = "====0.000000-D\n";
++  volatile UINT32     *Hdr = (volatile UINT32 *)Base;
++  CHAR8               *Data = (CHAR8 *)(Base + 12);
++  UINTN               Size;
++  UINTN               i;
++
++  SbCleanInv (Base, 128);
++  if (Hdr[0] != SB_LOG_MAGIC) {
++    for (i = 0; i < sizeof (KmsgHdr) - 1; i++) {
++      Data[i] = KmsgHdr[i];
++    }
++
++    Hdr[1] = 0;
++    Hdr[2] = (UINT32)(sizeof (KmsgHdr) - 1);
++    Hdr[0] = SB_LOG_MAGIC;
++  }
++
++  Size = Hdr[2];
++  if ((Size < sizeof (KmsgHdr) - 1) || (Size > SB_LOG_MAX)) {
++    return;
++  }
++
++  if (Size + Len > SB_LOG_MAX) {
++    return;   /* 写满就停：保留最早的状态，不冲掉判据 */
++  }
++
++  for (i = 0; i < Len; i++) {
++    Data[Size + i] = Text[i];
++  }
++
++  Hdr[2] = (UINT32)(Size + Len);
++  SbCleanInv (Base, 12 + Size + Len);
+ }
+ 
+ VOID
+ CEntryPoint ()

@@ -21,7 +21,7 @@
 | Hypervisor | **签名 Gunyah 占 EL2**（内核只到 EL1）→ mainline **无 KVM**（`hyp` 分区受 XBL 签名校验） |
 | 原厂 build | `TB322FC_CN_OPEN_USER_Q00041.1_W_ZUXOS_1.5.10.259_ST_260611`（Android 16） |
 | BL | 已解锁；`boot` 是 **chained AVB** 分区：自签必须 **AOSP testkey（sha1 `2597c218`）+ rollback `1738713600` + 3 条 prop**，缺任一被 ABL 拒 |
-| 主机 | `5700g-x8664`（Ubuntu 26.04），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
+| 主机 | `xuqianhui`（Ubuntu 26.04；旧文档里的 `5700g-x8664` 是历史名，2026-11 起不再使用），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
 - ★**2026-11-02 上午（当前状态，唯一权威）—— ✅ 在机 Linux，本轮 UEFI 实验后已完全复原**：
@@ -130,7 +130,7 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget `HA2CB1KY`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259**（Android 16；Widevine **L1**）。**进 Android = `fastboot --set-active=a` + `fastboot reboot`（无需刷 dtbo，实测 2026-10-11，HANDOFF §20 再次成立）**；未 root、无 Google 账号。C0 基线已采：`backup/HA2EXB0E-16+512/c0-baseline/` | **mainline 持久直启**（当前运行根与 boot_b 形态**只读本节 §1.1 首条**，本行不维护这些数字）；`recovery_b` 已刷 TWRP。**外设/驱动功能状态不在本表维护**，一律看 `../TASKS/README.md` §0/§1（当前未解：Q28 DSI host 楔死、Q24 熄屏×相机（权威 = `../TASKS/README.md` §0/§5）） | **已手术（2026-10-25 二次手术 = f2fs 并存；2026-10-31 `linux18` 已删除并入 `linux17`）**：`linux17` ext4 **192.0 GiB**（idx16，`/` 可用 163 G；分区参数与扇区见 §3.3）+ `userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/`（手术前基线另存 `gpt-20261025/`，合并/扩容日志 `backup/gpt-20261031/`） | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259**（Android 16；Widevine **L1**）。**进 Android = `fastboot --set-active=a` + `fastboot reboot`（无需刷 dtbo，实测 2026-10-11，HANDOFF §20 再次成立）**；未 root、无 Google 账号。C0 基线已采：`backup/HA2EXB0E-16+512/c0-baseline/` | **mainline 持久直启**（当前运行根与 boot_b 形态**只读本节 §1.1 首条**，本行不维护这些数字）；`recovery_b` 已刷 TWRP。**外设/驱动功能状态不在本表维护**，一律看 `../TASKS/README.md` §0/§1「未解项只读 §5」 | **已手术（2026-10-25 二次手术 = f2fs 并存；2026-10-31 `linux18` 已删除并入 `linux17`）**：`linux17` ext4 **192.0 GiB**（idx16，`/` 可用 163 G；分区参数与扇区见 §3.3）+ `userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/`（手术前基线另存 `gpt-20261025/`，合并/扩容日志 `backup/gpt-20261031/`） | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
 
 > **★ 熄屏→整机硬复位：未解（间歇性）**。根因已锁定为单模块 `cambistmclkcc-sm8750` × DT 电源域耦合（H1/D1/D2/H2 均未根治）；**无相机模块态安全**。设备侧规避（持久根现状，不得轻改）：cmdline `elden_nocamera=1` + `/etc/modules-load.d/camera.conf` 置空 + `idle-delay=0`。
 > 状态/样本数以 `../TASKS/README.md` §5 Q24 为准；历史二分过程见 `archive/topics/G1-22-2026-10-05.md`、`REBOOT-5MIN-2026-10-05.md` §7.9。

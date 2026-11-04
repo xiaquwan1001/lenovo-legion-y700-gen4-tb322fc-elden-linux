@@ -1,0 +1,88 @@
+Subject: [PATCH] DxeMain.c: persist step marks to ramoops
+
+2026-11-04R y700-elden: DxeCore 的 [Dxx] 步进标记同时写进 ramoops dmesg record zone 1
+(DT ramoops@c2000000 的 dprzs[1] = +0x200000)，回到 Linux 后 dmesg-ramoops-1 可读。
+
+diff --git a/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c b/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
+index 8c6e461..3d0e530 100644
+--- a/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
++++ b/MdeModulePkg/Core/Dxe/DxeMain/DxeMain.c
+@@ -10,6 +10,70 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ 
+ #include <Library/SerialPortLib.h>   // y700-elden debug instrumentation
+ 
++/*
++  ramoops record zone 1（DT ramoops@c2000000 的 dprzs[1] = +0x200000）。
++  与 PrePi 用 zone 0，互不覆盖：两边各自一份“走到哪”的轨迹。
++  回到 Linux 后 dmesg-ramoops-0 = PrePi，dmesg-ramoops-1 = DxeCore。
++*/
++#define SB_LOG_DXE    0xC2200000ULL
++#define SB_LOG_MAGIC  0x43474244u   /* PERSISTENT_RAM_SIG ^ PSTORE_TYPE_DMESG(0) */
++#define SB_LOG_MAX    0x001FF000u
++
++STATIC
++VOID
++SbCleanInv (
++  IN UINTN  Start,
++  IN UINTN  Len
++  )
++{
++  UINTN  A;
++
++  for (A = Start & ~0x3FULL; A < Start + Len; A += 64) {
++    __asm__ __volatile__ ("dc civac, %0" ::
++                          "r" (A) : "memory");
++  }
++
++  __asm__ __volatile__ ("dsb sy" ::: "memory");
++}
++
++// 把一段文本追加进 ramoops dmesg record（格式见 fs/pstore/ram_core.c/ram.c）
++STATIC
++VOID
++SbPersist (
++  IN CONST CHAR8  *Text,
++  IN UINTN        Len
++  )
++{
++  STATIC CONST CHAR8  KmsgHdr[] = "====0.000000-D\n";
++  volatile UINT32     *Hdr = (volatile UINT32 *)SB_LOG_DXE;
++  CHAR8               *Data = (CHAR8 *)(SB_LOG_DXE + 12);
++  UINTN               Size;
++  UINTN               i;
++
++  SbCleanInv (SB_LOG_DXE, 128);
++  if (Hdr[0] != SB_LOG_MAGIC) {
++    for (i = 0; i < sizeof (KmsgHdr) - 1; i++) {
++      Data[i] = KmsgHdr[i];
++    }
++
++    Hdr[1] = 0;
++    Hdr[2] = (UINT32)(sizeof (KmsgHdr) - 1);
++    Hdr[0] = SB_LOG_MAGIC;
++  }
++
++  Size = Hdr[2];
++  if ((Size < sizeof (KmsgHdr) - 1) || (Size > SB_LOG_MAX) || (Size + Len > SB_LOG_MAX)) {
++    return;
++  }
++
++  for (i = 0; i < Len; i++) {
++    Data[Size + i] = Text[i];
++  }
++
++  Hdr[2] = (UINT32)(Size + Len);
++  SbCleanInv (SB_LOG_DXE, 12 + Size + Len);
++}
++
+ //
+ // 2026-11-04 y700-elden 调试插桩：屏上串口步进痕迹。
+ // SerialPortLib 在本平台已映射到 FrameBufferSerialPortLib（屏上输出），
+@@ -30,6 +94,7 @@ SbMark (
+   Buf[Len++] = '\n';
+   Buf[Len++] = '\r';
+   SerialPortWrite ((UINT8 *)Buf, Len);
++  SbPersist (Buf, Len);
+ }
+ 
+ //

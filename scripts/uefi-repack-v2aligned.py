@@ -33,6 +33,7 @@ import os
 import struct
 import subprocess
 import sys
+import zlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_BASE = os.path.join(ROOT, "reports/artifacts/uefi-posctrl-20261103/boot_b-live.img")
@@ -59,6 +60,38 @@ def align_payload(shim: bytes, fd: bytes) -> bytes:
     return bytes(p)
 
 
+def verify_built_image(path, shim_lit=0x400000):
+    """上机前硬断言（2026-11-04R）：镜像里的 shim 必须是「拷贝长度取构建期常量」的修后版。
+
+    背景：2026-11-04 的 nocivac/prog/dxe* 等变体都是旧 shim（拷贝长度读被 repack 改写的
+    Image 头 offset16），仍只会拷 1 MiB；拿它们上机得到的结论全是伪的（PITFALLS #497）。
+    断言点（shim 内字面量池，见 patches/uefi/20261104-fixcopylen/0001）：
+      +0xa8 base=0xff300000  +0xb0 size=0x00400000  +0xb8 end=0xff700000
+    """
+    d = open(path, "rb").read()
+    if d[:8] != b"ANDROID!":
+        sys.exit("ASSERT: %s 不是 Android boot 镜像" % path)
+    ver = struct.unpack_from("<I", d, 40)[0]
+    if ver != 2:
+        sys.exit("ASSERT: header_version=%d != 2（v0/v3/v4 都会被 ABL 静默拒绝）" % ver)
+    ks = struct.unpack_from("<I", d, 8)[0]
+    page = struct.unpack_from("<I", d, 36)[0]
+    k = d[page:page + ks]
+    p = zlib.decompressobj(31).decompress(k)
+    text_off = struct.unpack_from("<Q", p, 8)[0]
+    img_size = struct.unpack_from("<Q", p, 16)[0]
+    flags = struct.unpack_from("<Q", p, 24)[0]
+    base, size, end = struct.unpack_from("<QQQ", p, 0xa8)
+    if text_off != 0 or flags != 0xA:
+        sys.exit("ASSERT: text_offset=%#x flags=%#x（应为 0 / 0xa）" % (text_off, flags))
+    if (base, size, end) != (0xff300000, shim_lit, 0xff300000 + shim_lit):
+        sys.exit("ASSERT: shim 字面量池 = (%#x,%#x,%#x)，不是修后版" % (base, size, end))
+    if img_size != len(p):
+        sys.exit("ASSERT: image_size=%#x != 解压长度 %#x" % (img_size, len(p)))
+    print("assert-ok: header v2, text_offset=0, flags=0xa, shim size literal=%#x, payload=%#x"
+          % (size, len(p)))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build-dir", required=True)
@@ -82,6 +115,7 @@ def main():
                     "--verify", a.out, a.base], check=True)
     print("image %s %d B sha256 %s"
           % (a.out, os.path.getsize(a.out), hashlib.sha256(open(a.out, "rb").read()).hexdigest()))
+    verify_built_image(a.out)
 
 
 if __name__ == "__main__":
