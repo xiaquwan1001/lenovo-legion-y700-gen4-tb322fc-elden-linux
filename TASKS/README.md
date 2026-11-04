@@ -141,6 +141,13 @@
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-11-04（更深夜）：路线重排 —— **loader 早就在 FV 里（`LinuxLoader`），只是没人启动它** ⇒ 首选改成路线 D
+
+- **下轮入口**：`.pi/plans/2026-11-04_late-uefi-routeD-linuxloader.md`（复核 + 7 条新增主机侧事实 + R13 实施单 + 风险表）。
+- **更正上块**：`QcomModulePkg` **在树里也编了**（`build.log:4354`），`LinuxLoader` 的 FFS（GUID `F536D559-459F-48FA-8BBC-43B554ECAE8D`）就在 `FVMAIN.Fv.txt` 末行 `0xC126B0`；它没跑的唯一原因是 `MODULE_TYPE = UEFI_APPLICATION`，而 `Dispatcher.c:73 mDxeFileTypes[]` 不含 `APPLICATION`（`PITFALLS #503`）。
+- **路线重排 D > A > B**：D = BdsDxe 里 `LoadImage`+`StartImage` 这个 FV 内应用 → 它写死 `BootIntoFastboot=TRUE` ⇒ 进 UEFI 侧 fastboot → 宿主 `fastboot continue` 启 `boot_b`（`FastbootCmds.c:2685/2854` → `LoadImageAndAuth` → `BootLinux`）；**新增字节 0、不动盘、启的就是今天 ABL 启的同一份 boot.img**。解锁态 AVB 走 `ALLOW_VERIFICATION_ERROR`（`VerifiedBoot.c:1105`）、`EnableMdtpSupport=FALSE` ⇒ 自签镜像不被拦。
+- **A（GRUB 进 FD）降为退路且已验尺寸**：FD 尾部空 `1 727 675 B`；`grub-mkstandalone -O arm64-efi` 最小集 = `2 093 056 B`、`xz -9` = `1 174 968 B` ⇒ 压得进。arm64 模块可从 USTC 镜像 `grub-efi-arm64-bin_2.14-2ubuntu1_arm64.deb` 现取（本机已解包实测）。
+
 ### 2026-11-04（深夜）：UEFI **DXE 全走完、UFS 枚举成功（BlockIo=119）、整机无 ESP** ⇒ 只差一个 loader
 
 - **下轮入口**：`.pi/plans/2026-11-04_handoff-uefi-dxe-to-linux.md`（现状/12 发清单/方案 A（零写盘 GRUB 进 FD）/判据/复现步骤/新坑）。
