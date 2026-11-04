@@ -1,0 +1,93 @@
+Subject: [PATCH] DxeCore: load map with module name + print each start
+
+2026-11-04R8 y700-elden:
+1) Image.c: [I] 行加模块名（RELEASE 下 DEBUG 被编掉）。
+2) Dispatcher.c: 每次 CoreStartImage 前打 [E] start=base；崩溃前最后一条 [E] 即故障驱动。
+
+diff --git a/MdeModulePkg/Core/Dxe/Image/Image.c b/MdeModulePkg/Core/Dxe/Image/Image.c
+index 5b5fac7..e36507d 100644
+--- a/MdeModulePkg/Core/Dxe/Image/Image.c
++++ b/MdeModulePkg/Core/Dxe/Image/Image.c
+@@ -885,20 +885,7 @@ CoreLoadPeImage (
+     (VOID *)(UINTN)Image->ImageContext.ImageAddress,
+     FUNCTION_ENTRY_POINT (Image->ImageContext.EntryPoint)
+     ));
+-  {
+-    // 2026-11-04R7 y700-elden: RELEASE-visible load-map line, so a screen-dumped ELR can be
+-    // mapped to a module by address range (base .. base+size).
+-    CHAR8  SbLine[96];
+-    UINTN  SbLen;
+-    SbLen = AsciiSPrint (
+-              SbLine,
+-              sizeof (SbLine),
+-              "[I] base=%016lx size=%08lx\n\r",
+-              (UINT64)(UINTN)Image->ImageContext.ImageAddress,
+-              (UINT64)Image->ImageContext.ImageSize
+-              );
+-    SerialPortWrite ((UINT8 *)SbLine, SbLen);
+-  }
++
+ 
+   //
+   // Print Module Name by Pdb file path.
+@@ -941,6 +928,26 @@ CoreLoadPeImage (
+ 
+   DEBUG ((DEBUG_INFO | DEBUG_LOAD, "\n"));
+ 
++  //
++  // 2026-11-04R8 y700-elden: RELEASE-visible load map WITH module name.
++  // DEBUG() is compiled out in RELEASE, so the screen never showed which image sits where;
++  // a screen-dumped ELR cannot be attributed without this.
++  //
++  {
++    CHAR8        SbLine[160];
++    UINTN        SbLen;
++
++    SbLen = AsciiSPrint (
++              SbLine,
++              sizeof (SbLine),
++              "[I] %a base=%016lx size=%08lx\n\r",
++              (Image->ImageContext.PdbPointer != NULL) ? EfiFileName : "?",
++              (UINT64)(UINTN)Image->ImageContext.ImageAddress,
++              (UINT64)Image->ImageContext.ImageSize
++              );
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
++
+   return EFI_SUCCESS;
+ 
+ Done:
+diff --git a/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c b/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c
+index 023af6c..f5027e9 100644
+--- a/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c
++++ b/MdeModulePkg/Core/Dxe/Dispatcher/Dispatcher.c
+@@ -33,6 +33,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ **/
+ 
+ #include "DxeMain.h"
++#include <Library/PrintLib.h>       // 2026-11-04R8 y700-elden
++#include <Library/SerialPortLib.h>  // 2026-11-04R8 y700-elden
+ 
+ //
+ // The Driver List contains one copy of every driver that has been discovered.
+@@ -518,6 +520,20 @@ CoreDispatcher (
+           );
+         ASSERT (DriverEntry->ImageHandle != NULL);
+ 
++        {
++          // 2026-11-04R8 y700-elden: print the image base we are about to start, so the last
++          // [E] line before a crash identifies the driver that faulted.
++          EFI_LOADED_IMAGE_PROTOCOL  *SbLi;
++          CHAR8                      SbB[64];
++          UINTN                      SbL;
++
++          SbLi = NULL;
++          if (!EFI_ERROR (CoreHandleProtocol (DriverEntry->ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **)&SbLi)) && (SbLi != NULL)) {
++            SbL = AsciiSPrint (SbB, sizeof (SbB), "[E] start=%016lx\n\r", (UINT64)(UINTN)SbLi->ImageBase);
++            SerialPortWrite ((UINT8 *)SbB, SbL);
++          }
++        }
++
+         Status = CoreStartImage (DriverEntry->ImageHandle, NULL, NULL);
+ 
+         REPORT_STATUS_CODE_WITH_EXTENDED_DATA (

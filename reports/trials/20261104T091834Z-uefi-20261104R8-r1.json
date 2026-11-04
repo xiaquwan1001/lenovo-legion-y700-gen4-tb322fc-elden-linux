@@ -1,0 +1,11 @@
+{
+  "trial": "uefi-20261104R8-r1",
+  "date_utc": "2026-11-04T09:18:34Z",
+  "image": "out/uefi-20261104R8-r1.img",
+  "image_sha256": "4c0a2c19a6dd78ddc28b5a6de438755e6de2e321a22f508d08187e4359b0dd86",
+  "variant": "R7 + [I] 带模块名 + 每次 CoreStartImage 前打 [E] start=base",
+  "fastboot": {"sending_s": 1.491, "booting_okay_s": 23.119, "result": "HANDOFF"},
+  "goal": "把崩溃前最后一条 [E] 与对应 [I] 模块名配起来 => 定位 0xD2B9B224 属于哪个驱动",
+  "verdict": "pending-optical-read",
+  "prior_r7_observation": "load map 已出（约 90 条 [I] base/size）；ELR=0xD2B9B224 不落在任何已列区间 ⇒ 不是已装载 PE 镜像内的指令，疑为被跳进野地址（可能与 PrePi 在低 4GiB 的 0xFF 填充/坏函数指针有关）。"
+}
