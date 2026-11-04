@@ -96,6 +96,7 @@ vk64	boot-elden-vk64.img	vk64	7.2.0-debug-vk64-gd02658e63cf6	1483a9c6c542	d02658
 (no-payload)	uefi-20261104R-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R10-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R11-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R12-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R2-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R2-r2.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R3-r1.img	-	(无内核载荷)						-	skip

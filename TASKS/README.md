@@ -141,6 +141,13 @@
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-11-04（深夜）：UEFI **DXE 全走完、UFS 枚举成功（BlockIo=119）、整机无 ESP** ⇒ 只差一个 loader
+
+- **下轮入口**：`.pi/plans/2026-11-04_handoff-uefi-dxe-to-linux.md`（现状/12 发清单/方案 A（零写盘 GRUB 进 FD）/判据/复现步骤/新坑）。
+- **一句话**：`0xD2B9B224` 已定案 = `QRKSDxe`（剔除后零异常）；`BlockIo=119` 证明 UFS 枚举通了；唯一的 `SimpleFileSystem` 是 **LUN4 `modem_b`**（FAT，绝不能写）⇒ BDS 无交接目标 ⇒ 复位 ⇒ 原厂 recovery。
+- **下一步**：方案 A = standalone GRUB arm64（或自写最小 loader）打进 FD，由 BdsDxe `LoadImage` 启动，GRUB 用 ext2 读 `linux17`(ext4) 的 `/boot`；退路 = GPT 手术建 ESP。
+- **正文**：`reports/uefi-ramoops-channel-20261104R.md` §9–§11；会话记录 `sessions/2026-11-04-UEFI-DXE走完到BDS之后的handoff.md`。
+
 ### 2026-11-04（傍晚）：UEFI **DxeCore 真进场、QCOM DXE 驱动在跑**，卡点 = 某驱动同步异常 0xD2B9B224
 
 - **推翻 11-04 早间的「DxeCore 从未被启动」**（那批 11 发只拷 1 MiB 的伪结论）：屏上实测 `[D00]`（附 `&DxeMain=0xD4CA7D90`，DxeCore 装载基址 `0xD4CA6000`/`0x210000`，来自 `[L04]`）与 `[D01]…[D07]` 全部出现。
