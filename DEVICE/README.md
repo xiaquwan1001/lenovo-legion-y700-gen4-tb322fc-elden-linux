@@ -24,8 +24,9 @@
 | 主机 | `xuqianhui`（Ubuntu 26.04；旧文档里的 `5700g-x8664` 是历史名，2026-11 起不再使用），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-11-02 上午（当前状态，唯一权威）—— ✅ 在机 Linux，本轮 UEFI 实验后已完全复原**：
-  `boot_id` `109a2bce-b3e9-4648-a4be-03aed6862764`、`uname -v` `#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026`（UTS `…vk172`）、
+- ★**2026-11-04 傍晚（当前状态，唯一权威）—— ✅ 在机 Linux，UEFI 八发零写盘实验后完全复原**：
+  `boot_id` `2422f8cd-29dc-4efa-ae01-ebcdd85e531b`、`systemctl --failed` 0、根 `/dev/sda17` ext4；`boot_b` 仍 `fb55997c…`（未写盘）。
+  历史（2026-11-02）：`boot_id` `109a2bce-b3e9-4648-a4be-03aed6862764`、`uname -v` `#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026`（UTS `…vk172`）、
   根 `/dev/sda17` ext4、`current-slot=_b`、**a/b 两槽均 `Bootable:1`**、`systemctl --failed` **0**、
   `boot_b` 分区 sha256 = **`fb55997c524ea26201841b5fdcc657c011423c7049766f7e36d5d994b3c35169`**（与本轮备份件逐字节一致）。
   本轮（UEFI ① 四臂判别）只在 `boot_b` 上写过 3 轮载荷、每轮都刷回本备份并读回核验；`a` 槽的 unbootable 位已复原（GPT 主/备双表 + CRC，脚本 `scripts/slot-attr.py`），
