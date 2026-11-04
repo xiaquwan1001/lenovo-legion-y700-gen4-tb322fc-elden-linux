@@ -141,6 +141,15 @@
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-11-04（傍晚）：UEFI **DxeCore 真进场、QCOM DXE 驱动在跑**，卡点 = 某驱动同步异常 0xD2B9B224
+
+- **推翻 11-04 早间的「DxeCore 从未被启动」**（那批 11 发只拷 1 MiB 的伪结论）：屏上实测 `[D00]`（附 `&DxeMain=0xD4CA7D90`，DxeCore 装载基址 `0xD4CA6000`/`0x210000`，来自 `[L04]`）与 `[D01]…[D07]` 全部出现。
+- **64 块 FNV 表 64/64 与主机期望一致**（块 1–37 逐值相同、块 38–63 恒 `1DC99DC5`；仅块 0 有差异，待查是否为运行时改写的 FV 头）⇒ **`fixcopylen` 的 4 MiB 拷贝链已收口**。
+- **QCOM DXE 驱动确实被 dispatch**：`HW Wdog Setting from PCD`、`mbox_os_init`（缺 SCM mailbox 14）、`pm8550b`、`IsArmVBSmc`、QDSS clock、`Overriding PIL cfg`、`usb_redriver`、`qup_open` 等日志；随后 `RmVmDxe`（Gunyah）报 `Merge Overlay: -3 / Gunyah Interface init error: Load Error / Skipping RmVmProtocol Install`。
+- **卡点**：紧跟其后 `Synchronous Exception at 0x00000000D2B9B224`（三次独立实验逐字节相同 = 确定性），且异常处理器在 RELEASE 下只剩 ConOut 打印、该打印在 FB 滚屏路径二次异常 ⇒ `Recursive exception` 无限重印（「反复刷屏」真身）。
+- **下一步判据**：`[I] base/size` 装载表 + ConOut no-op 使处理器走到 `CpuDeadLoop`，屏停在最后内容 ⇒ 用 `0xD2B9B224 ∈ [base, base+size)` 定位驱动；件 `out/uefi-20261104R7-r1.img`（sha `331fb365…`）。
+- **正文/证据**：`reports/uefi-ramoops-channel-20261104R.md`、trial `reports/trials/20261104T0{6,7,8}…-uefi-*.json`、屏上原文见会话；补丁 `patches/uefi/20261104R2-slow-serial|R5-dxebase|R7-loadmap/`。
+
 ### 2026-11-04R（下午）：UEFI 判据换成 **ramoops 主机可读**（零写盘件已构建，未上机）
 
 - **一句话**：上一发 `fixcopylen` 的 verdict=indeterminate 是因为唯一判据是「人眼看屏」而屏在刷；本轮把同一条轨迹（`[F01]/[P01]…[P11]`、64 块 FNV 表、`[D00]…`）**同时写进 Linux 的 pstore record 区**（`dprzs[0]=0xC2000000` PrePi、`dprzs[1]=0xC2200000` DxeCore，格式照 `persistent_ram_buffer` + `"====<sec>.<usec>-D\n"` 头），回到 Linux `cat /sys/fs/pstore/dmesg-ramoops-{0,1}` 即可判；**刻意去掉 Dispatcher 进度点**（那是无限滚屏的元凶）。
