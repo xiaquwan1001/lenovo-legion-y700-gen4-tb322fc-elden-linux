@@ -113,3 +113,25 @@ ls -l /sys/fs/pstore/ ; cat /sys/fs/pstore/dmesg-ramoops-0 /sys/fs/pstore/dmesg-
 2. DXE dispatch 已经在跑真实 QCOM 驱动（SCM/PMIC/Clock/PIL/UFS/Display/USB/I2C…），缺件集中在 `CPU_Vectors region`、`SCM mailbox 14`、`SE_Fuse`。
 3. 崩溃点 `0xD2B9B224` 三次实验逐字节相同，且**不落在任何已装载镜像区间** ⇒ 不是某驱动代码内的正常指令，而是被跳进的野地址（坏函数指针 / `0xFF` 填充区）；最后被启动的是 `QRKSDxe`，其前 `RmVmDxe` 初始化失败是最大嫌疑（协议没装上，调用方拿到空/脏指针）。
 4. 下一发（未做，设备已回 Linux）：`--rmvmdxe vendor` 或直接剔除 `RmVmDxe`/`QRKSDxe` 看崩溃是否移位；若移位即定位到 Gunyah 依赖链。**判据仍是屏停住 + 最后一条 `[E]`。**
+
+## 9. 2026-11-04 晚：**R10 突破 —— UEFI 首次跑到底、无异常**
+
+- 变体 = r8 全量插桩 **+ 剔除 `QRKSDxe`**（`DXE.inc` 注释；`FVMAIN.Fv` 里 `QRKSDxe` 计数 2→0）。
+- 结果：`[D00]..[D08]` 全出、约 **150 条** `[I]/[E]` 配对（QCOM 平台驱动 + EDK2 通用驱动全部 dispatch），
+  `usb_repeater_reset → ssusb_phy_init_success lane:0x0`（UEFI 侧 USB PHY 起来），
+  **全程无 `Synchronous Exception`**；末端 `GetLibProductString: Product string is NULL ×3` 之后进入图形界面
+  （白箭头 + 扳手/螺丝刀 + 二维码 = Android recovery 类 UI）。
+- **`0xD2B9B224` 的归属定案**：`QRKSDxe`。它的字符串里只有 `gQcomScmProtocolGuid - Fail %d` /
+  `ScmGetClientEnv - Fail %d` / `IQRKS_CheckLicenseKP`，而 `MailboxDxe` 已报 `Failed to locate SCM protocol for
+  Mailbox 14` ⇒ SCM 客户端环境失败后调用了脏/空指针，`ELR` 落在任何已装载区间之外（野地址）。
+- **注意**：`GetLibProductString` 在本仓源码与 `Binaries/` 里**都搜不到** ⇒ 屏幕末段的那个 UI 来自**原厂固件**（我们的 payload 在 BDS 之后复位/回落）。也就是说：**UEFI 跑完了，但没交出 Linux**。
+- 遗留缺件（按对「能不能引导 Linux」的相关度排序）：
+  1. `UFSDxe` 启动后立刻 `Error getting gEfiKernelProtocolGuid handle, Status: 0xE` —— 该协议由 **`Platforms/QcomModulePkg`**（`Include/Protocol/EFIKernelInterface.h`）提供，而本 Mu 构建**不含 QcomModulePkg**；
+  2. `CPU_Vectors region not present in cfg file`、`SCM protocol for Mailbox 14`、`QUSS clock node`、`i2c:12`；
+  3. `RmVmDxe`(Gunyah) 仍失败但不致命。
+
+## 10. 下一发（R11，已构建待上机）
+
+`out/uefi-20261104R11-r1.img`（sha `db7c1b35…`）= R10 + `patches/uefi/20261104R11-bdsprobe`：
+在 **BdsDxe 入口**打印 `[B] BlockIo=<n>` 与 `[B] SimpleFileSystem=<n>`（RELEASE 下 DEBUG 全空，这是唯一能在屏上回答「UFS/分区枚举出来没有」的办法）。
+判读：`BlockIo ≥ 1` ⇒ UFS 枚举成功，下一发直接上「从 UFS 引导 Linux」；`BlockIo = 0` ⇒ 存储栈仍是真卡点，转去补 `gEfiKernelProtocolGuid` 提供者（QcomModulePkg/UFSDxe 依赖）。

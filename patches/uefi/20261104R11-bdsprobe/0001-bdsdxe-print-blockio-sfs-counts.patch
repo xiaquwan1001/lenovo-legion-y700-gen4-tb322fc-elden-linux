@@ -1,0 +1,57 @@
+Subject: [PATCH] BdsDxe: print BlockIo / SimpleFileSystem handle counts at BDS entry
+
+2026-11-04R11 y700-elden: RELEASE 下 DEBUG 全空；BDS 入口直接打 BlockIo / SimpleFileSystem 句柄数，
+用来回答「UFS/分区到底枚举出来没有」。
+
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+index 79535cf..aec1715 100644
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -13,6 +13,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ **/
+ 
+ #include "Bds.h"
++#include <Library/SerialPortLib.h>  // 2026-11-04R11 y700-elden
++#include <Library/PrintLib.h>       // 2026-11-04R11 y700-elden
+ #include "Language.h"
+ #include "HwErrRecSupport.h"
+ #include <Library/VariablePolicyHelperLib.h>
+@@ -720,6 +722,38 @@ BdsEntry (
+   EFI_BOOT_MANAGER_LOAD_OPTION    PlatformDefaultBootOption;
+   BOOLEAN                         PlatformDefaultBootOptionValid;
+ 
++  // 2026-11-04R11 y700-elden: BDS-entry device enumeration snapshot.
++  // RELEASE builds compile out DEBUG(), so the only on-screen way to answer
++  // 'were UFS/partitions enumerated at all?' is to print handle counts here.
++  {
++    EFI_HANDLE  *SbHandles;
++    UINTN       SbCount;
++    UINTN       SbQ;
++    CHAR8       SbLine[80];
++    UINTN       SbLen;
++
++    SbQ       = 0;
++    SbHandles = NULL;
++    SbCount   = 0;
++    if (!EFI_ERROR (gBS->LocateHandleBuffer (ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &SbCount, &SbHandles))) {
++      SbQ = SbCount;
++      FreePool (SbHandles);
++    }
++
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[B] BlockIo=%d\n\r", SbQ);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++
++    SbQ       = 0;
++    SbHandles = NULL;
++    SbCount   = 0;
++    if (!EFI_ERROR (gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &SbCount, &SbHandles))) {
++      SbQ = SbCount;
++      FreePool (SbHandles);
++    }
++
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[B] SimpleFileSystem=%d\n\r", SbQ);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   HotkeyTriggered = NULL;
+   Status          = EFI_SUCCESS;
+   BootSuccess     = FALSE;
