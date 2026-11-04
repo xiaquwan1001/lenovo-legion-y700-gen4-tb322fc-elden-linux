@@ -1,0 +1,15 @@
+{
+  "trial": "uefi-20261104R4-r1",
+  "date_utc": "2026-11-04T07:14:57Z",
+  "image": "out/uefi-20261104R4-r1.img",
+  "image_sha256": "a9efd60351d6953f66f0c0b303d2719879a7e8304eb06adee9a44b5533ffee48",
+  "build_artifact": "reports/artifacts/uefi-20261104R4-r1/",
+  "variant": "慢速屏显 40k spins/char + scale=3 + DefaultExceptionHandler 打 ELR/ESR/FAR/SP 后 CpuDeadLoop",
+  "fastboot": {"sending_s": 1.496, "booting_okay_s": 10.107, "result": "HANDOFF"},
+  "why": "r2 观测到 EDK2 同步异常 0xD2B9B224 + Recursive exception 无限重印；RELEASE 下寄存器 dump 全被编掉，只剩 ConOut 打印且二次异常 => 看不到任何寄存器。本发把 ESR/FAR/SP 直接打到屏上并停机。",
+  "verdict": "pending-optical-read",
+  "prior_r2_observation": {
+    "screen": ["Marge Overlay -3", "MergedFile Status: 1", "Error: Grub Interface init error: Load Error", "Skipping RiveProtocol Install", "Synchronous Exception at 0x00000000D2B9B224 (x N)"],
+    "note": "Marge/Grub/Rive 三条字符串在本仓 Mu 树与 stock abl/uefi/imagefv 里都搜不到；最可能是 XBL 侧常规启动打印（每次开机都有），不是 DxeCore 之后的内容。0xD2B9B224 三次独立实验逐字节相同 = 确定性故障点。"
+  }
+}

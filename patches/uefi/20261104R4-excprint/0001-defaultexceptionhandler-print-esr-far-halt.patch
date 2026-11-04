@@ -1,0 +1,35 @@
+Subject: [PATCH] DefaultExceptionHandlerLib: print ESR/FAR/SP and halt (RELEASE-visible)
+
+2026-11-04R4 y700-elden: RELEASE 构建把寄存器 dump 编掉，只剩 ConOut 打印且它二次异常，
+导致「Recursive exception」无限重印。改为纯 SerialPortWrite 打 ELR/ESR/FAR/SP 后 CpuDeadLoop。
+
+diff --git a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+index 5f9bcf7..c44ef11 100644
+--- a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
++++ b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+@@ -206,6 +206,25 @@ DefaultExceptionHandler (
+   CharCount = AsciiSPrint (Buffer, sizeof (Buffer), "\n\n%a Exception at 0x%016lx\n", gExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR);
+   SerialPortWrite ((UINT8 *)Buffer, CharCount);
+ 
++  //
++  // 2026-11-04R4 y700-elden: RELEASE build compiles out the DEBUG() register/stack dump,
++  // leaving only ConOut->OutputString(UnicodeBuffer) which re-faults here => infinite
++  // 'Recursive exception' repeat and no register ever visible. Print ESR/FAR/SP directly
++  // with SerialPortWrite, then halt (no stack dump: SP may already be garbage).
++  //
++  CharCount = AsciiSPrint (
++                Buffer,
++                sizeof (Buffer),
++                "  ELR=0x%016lx ESR=0x%08lx FAR=0x%016lx SP=0x%016lx\n",
++                SystemContext.SystemContextAArch64->ELR,
++                SystemContext.SystemContextAArch64->ESR,
++                SystemContext.SystemContextAArch64->FAR,
++                SystemContext.SystemContextAArch64->SP
++                );
++  SerialPortWrite ((UINT8 *)Buffer, CharCount);
++
++  CpuDeadLoop ();
++
+   // Prepare a unicode buffer for ConOut, if applicable, in case the buffer
+   // gets reused.
+   UnicodeSPrintAsciiFormat (UnicodeBuffer, MAX_PRINT_CHARS, Buffer);

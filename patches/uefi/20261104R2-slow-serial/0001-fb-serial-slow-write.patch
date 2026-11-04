@@ -19,7 +19,7 @@ index abf5b87b..b01435dd 100644
 +    */
 +    {
 +      volatile UINTN  SbSpins = 0;
-+      while (SbSpins < 3000000u) {
++      while (SbSpins < 40000u) {
 +        SbSpins++;
 +      }
 +    }
