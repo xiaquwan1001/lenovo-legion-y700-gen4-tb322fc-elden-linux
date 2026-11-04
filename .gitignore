@@ -165,3 +165,17 @@ reports/artifacts/uefi-ddrcut-20261101/*.img
 # hermes 自动滚动的派生历史不入库（.recovery-* / .retired-*）
 /.pi/memory/.recovery-*
 /.pi/memory/.retired-*
+
+# ---- 2026-11-04：UEFI DXE 轮 11+1 个变体构建件（合计 ~226 MB）----
+# 每个变体目录只入库「可复现身份三件」= BootShim.bin + manifest.txt + SHA256SUMS；
+# 其余重件由 manifest + scripts/uefi-build-variant.sh 可重建，不入库。
+reports/artifacts/uefi-dxe*-20261104/*.img
+reports/artifacts/uefi-dxe*-20261104/*.gz
+reports/artifacts/uefi-dxe*-20261104/*.fd
+reports/artifacts/uefi-dxe*-20261104/*payload*
+reports/artifacts/uefi-dxe*-20261104/kernel.bin
+reports/artifacts/uefi-fixcopylen-20261104/*.img
+reports/artifacts/uefi-fixcopylen-20261104/*.gz
+reports/artifacts/uefi-fixcopylen-20261104/*.fd
+reports/artifacts/uefi-fixcopylen-20261104/*payload*
+reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
