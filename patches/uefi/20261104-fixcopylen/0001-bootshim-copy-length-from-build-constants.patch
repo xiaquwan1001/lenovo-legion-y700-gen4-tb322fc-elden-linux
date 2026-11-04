@@ -1,0 +1,106 @@
+diff --git a/BootShim/BootShim.S b/BootShim/BootShim.S
+index 76dcb4f9..574f2b04 100644
+--- a/BootShim/BootShim.S
++++ b/BootShim/BootShim.S
+@@ -5,18 +5,18 @@ _Head:
+ 	/* Jump to the real code */
+ 	b		_Start
+ 
+-	/* Fake Linux kernel header */
++	/* Fake Linux kernel header（ABL 只读这几个字段，取值见 reports/uefi-payload-execution-20261104.md） */
+ 
+-_StackBase:
+-	/* Text Offset */
+-	.quad UEFI_BASE
++_TextOffset:
++	/* offset 8: text_offset —— ABL 按 load_address + text_offset 跳转，必须为 0 */
++	.quad 0
+ 
+-_StackSize:
+-	/* Image Size */
++_ImageSize:
++	/* offset 16: image_size —— repack 会改写成载荷真实长度（ABL 要这个值） */
+ 	.quad UEFI_SIZE
+ 
+-	/* Flags */
+-	.quad 0
++	/* offset 24: flags = PAGE_SIZE_4K | LE */
++	.quad 0xA
+ 
+ 	/* Reserved */
+ 	.quad 0
+@@ -33,29 +33,65 @@ _StackSize:
+ 	/* Reserved */
+ 	.long 0
+ 
++/*
++ * 2026-11-04 修法（E0）：拷贝的**目标与长度一律取构建期常量**，绝不读上面被
++ * repack 改写的 offset 8 / offset 16 —— 旧版把 image_size（真实长度 0x400308）
++ * 当长度，等值比较型循环第一轮就落到「完成」分支，只把 FD 的前 1 MiB 拷进去，
++ * 其后 LZMA 段读到的全是上一轮遗留内容（PITFALLS #497）。
++ */
+ _Start:
+-	mov		x4, x1
+-	ldr		x5, _StackBase
+-	cmp		x4, x5
+-	beq		_Entry
+-	ldr		x6,  _StackSize
++	adr		x5, _UefiBaseLit
++	ldr		x5, [x5]
++	cmp		x1, x5
++	b.eq		_Entry
++
++	adr		x6, _UefiSizeLit
++	ldr		x6, [x6]
+ 
+ _CopyLoop:
+-	ldp		x2, x3, [x4], #16
++	ldp		x2, x3, [x1], #16
+ 	stp		x2, x3, [x5], #16
+ 	subs	x6, x6, #16
+-	b.ne	_CopyLoop
+-	ldr		x5, _StackBase
++	b.ne		_CopyLoop
++
++/*
++ * 拷完 clean to PoC：stp 若只落在 D-cache，后面 PrePi 的 ArmDisableCachesAndMmu
++ * 不 clean ⇒ 脏行被丢弃。长度 0x400000 是 64 的整数倍，循环必然归零；
++ * 但仍用「地址 < 上界」作硬条件，避免任何非倍数长度把扫描带出窗口。
++ */
++	adr		x7, _UefiBaseLit
++	ldr		x7, [x7]
++	adr		x8, _UefiEndLit
++	ldr		x8, [x8]
++_CleanLoop:
++	dc		civac, x7
++	add		x7, x7, #64
++	cmp		x7, x8
++	b.lo		_CleanLoop
++	dsb		sy
++	ic		iallu
++	dsb		sy
++	isb
+ 
+ _Entry:
++	adr		x5, _UefiBaseLit
++	ldr		x5, [x5]
+ 	br		x5
+ 
+ _Dead:
+ 	/* We should never get here */
+ 	b		_Dead
+ 
++.balign 8
++_UefiBaseLit:
++	.quad UEFI_BASE
++_UefiSizeLit:
++	.quad UEFI_SIZE
++_UefiEndLit:
++	.quad (UEFI_BASE + UEFI_SIZE)
++
+ .text
+-.align 4
++.balign 16
+ 
+ _Payload:
+ 	/* Your code will get ran right after this binary */

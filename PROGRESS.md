@@ -90,6 +90,9 @@
 | 2026-11-01 | **「只能进 fastboot」事故闭环**：U2 一度无 Android/ssh/adb | 真根因 = **引导固件代次与 A/B 槽脱钩**（`*_a`+LUN1 = 259 原厂 UEFI、`*_b`+LUN2 = 上一版），ABL 按活动槽选 boot LUN ⇒ `fastboot --set-active` 另一槽，双向复现；`reports/uefi-slotboot-stuck-fastboot-20261101.md`、`PITFALLS #484/#485` |
 | 2026-11-01 | **DDR 取证通道打通 + 硬结论：本机 DRAM 跨复位不保真** | 1 MiB 写 `0xA5`，热复位后 26–32% 字节 1–3 bit 翻转（几乎全 1→0）；判据必须改用单调编码；`reports/uefi-ddr-blackbox-20261101.md` §0/§2 |
 | 2026-11-02 | **UEFI「载荷到底有没有被执行」四臂判别 = 四臂全 0**，并撤回一条错判 | A1/A2/A3 的 `stage1` 全 0；中途「A3 挂死=被执行」经现场证实为**回落 Android**；新事实：`a` 槽 `unbootable` 只挡一次，ABL 会自己换槽并清位；`reports/uefi-ddrcut-fallback-20261101.md` §6-A/§6-D、`PITFALLS #487` |
+| 2026-11-03 | **UEFI 三线核查（邮件/GitHub/外部）后裁决下一步 + 载荷可执行性重定位（9 发零写盘）** | DDR 黑匣子正控打通（真内核标记读回 95–98%）；**推翻两条旧判据**：`usb_read failed` ≠ 交棒、**不存在 1–2 s 看门狗**；解冻条件②满足（同芯片 SM8750 的 SunUEFI/UniXNU 已有 UEFI 用 UFS 先例）；`reports/uefi-posctrl-20261103-summary.md`、`reports/uefi-next-step-decision-20261103.md` |
+| 2026-11-04 | **UEFI 载荷首次被执行 → Mu PrePi 走完 → 卡点定位到 DxeCore 未启动** | 打包配方定案（v2 base 0 + `text_offset=0`/`image_size`=真实长/`flags=0xa`）；屏上可见性达成；`LoadDxeCoreFromFv()` 返回 `EFI_NOT_FOUND`，失败在 `FV_IMAGE` 的 GUIDED/LZMA 段 `Decode`；设备侧块表 0–1 MiB 正确、其后 48 块全错；`reports/uefi-payload-execution-20261104.md`、`PITFALLS #490–#496` |
+| 2026-11-04（主机侧收口） | **UEFI 卡点真因定位并出修复件（未上机）** | 反汇编定到指令级：shim 把 `Image` 头 offset 16（repack 改写成的真实长度 `0x400308`）当拷贝长度，等值比较型分块循环首轮即落“完成”分支 ⇒ **只拷了 FD 的前 1 MiB**；修法 = 拷贝长度/目标改构建期常量 + 循环改硬上界 + repack 加 16B 对齐断言；产物 `out/uefi-20261104-fixcopylen.img`、补丁 `patches/uefi/20261104-fixcopylen/`；`PITFALLS #497` |
 ---
 
 ## 2. 当前完成度（诚实版）
