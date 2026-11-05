@@ -1,0 +1,80 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH 1/2] VerifiedBoot: bisect inside LoadImageAndAuth (sbstop=20..25)
+
+2026-11-05 y700-elden: sbstop=13（LoadImageAndAuth 之前）回话、sbstop=14（之后）崩，
+崩溃点落在 LoadImageAndAuth 内部。本补丁把这一段再切六刀（只置标志 + 返回 EFI_ABORTED，
+由 CmdBoot 统一回 diag st=Aborted last=[vs-N]）：
+
+  20  LoadImageNoAuthWrapper 入口
+  21  VBAllocateCmdLine 之后
+  22  LoadImageNoAuth 入口
+  23  LoadBootImageNoAuth 返回之后
+  24  NoAVBLoadReqImage(dtbo) 之后
+  25  LoadImageNoAuthWrapper 返回之前
+
+判据：收到 last=[vs-N] ⇒ 该点之前不崩；无响应 ⇒ 崩在该点之前。
+打序 25 → 24 → 23 → 22 → 21 → 20（信息量最大优先）。
+
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index cba899b9..f43ed404 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -594,6 +594,18 @@ ErrV3:
+   return Status;
+ }
+ 
++
++// 2026-11-05 y700-elden: LoadImageAndAuth 内部细二分 —— 只置标志并返回 EFI_ABORTED，
++// 由 FastbootCmds.c 的 CmdBoot 统一把 diag st=Aborted last=[vs-N] 回给宿主。
++INT32  SbDiagAbort = 0;
++#define VS_STOP(n)                                                             \
++  do {                                                                         \
++    if (SbStopStage == (n)) {                                                  \
++      SbDiagAbort = (n);                                                       \
++      return EFI_ABORTED;                                                      \
++    }                                                                          \
++  } while (0)
++
+ STATIC EFI_STATUS
+ LoadImageNoAuth (BootInfo *Info)
+ {
+@@ -603,11 +615,13 @@ LoadImageNoAuth (BootInfo *Info)
+   UINT32 PageSize = 0;
+   BOOLEAN FastbootPath;
+ 
++  VS_STOP (22);
+   Status = LoadBootImageNoAuth (Info, &PageSize, &FastbootPath);
+   SbVProbe ("[V] na=%r i=%d\n\r", Status, Info->NumLoadedImages);
+   if (Status != EFI_SUCCESS) {
+     return Status;
+   }
++  VS_STOP (23);
+ 
+   /*load dt overlay when avb is disabled*/
+   Status = NoAVBLoadReqImage (Info,
+@@ -637,6 +651,7 @@ LoadImageNoAuth (BootInfo *Info)
+   }
+ 
+   SbVProbe ("[V] dt=%r i=%d\n\r", Status, *ImgIdx);
++  VS_STOP (24);
+   return EFI_SUCCESS;
+ 
+ Err:
+@@ -681,7 +696,9 @@ LoadImageNoAuthWrapper (BootInfo *Info)
+   CHAR8 *SystemPath = NULL;
+   UINT32 SystemPathLen = 0;
+ 
++  VS_STOP (20);
+   GUARD (VBAllocateCmdLine (Info));
++  VS_STOP (21);
+   GUARD (LoadImageNoAuth (Info));
+ 
+    if (!IsDynamicPartitionSupport () &&
+@@ -696,6 +713,7 @@ LoadImageNoAuthWrapper (BootInfo *Info)
+   }
+ 
+   SbVProbe ("[V] wr=%r\n\r", Status);
++  VS_STOP (25);
+   return Status;
+ }
+ 

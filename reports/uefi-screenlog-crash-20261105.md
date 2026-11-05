@@ -131,3 +131,44 @@ SetBootDevImage()  →  Info.Images[] 装填 / PartitionHasMultiSlot()  →  Cle
 
 判据仍是宿主字符串：收到 `diag st=Success last=[<tag>]` ⇒ 该点之前不崩；无响应 ⇒ 崩在该点之前。
 **每次"无响应"要一次物理断电**，所以按 13 → 11 → 14 顺序打，命中即止。
+
+---
+
+## 9. 21:2x 细二分结果：崩溃点 = **`LoadImageAndAuth()` 内部**
+
+同一次 ABL 会话内连打三发（无需断电的那几发都是即时回话）：
+
+| 件 | 停机点 | 结果 |
+|---|---|---|
+| `fb-stop13.img` | `LoadImageAndAuth()` **之前** | ✅ `diag st=Success last=[before-loadimageauth]`（之后 `getvar product` 仍 `sun`） |
+| `fb-stop14.img` | `LoadImageAndAuth()` **之后** | ❌ 无响应，随后 `getvar` 也死 ⇒ 崩 |
+
+⇒ **`SetBootDevImage()` / `ClearUnbootable()` 干净；崩溃严格发生在 `LoadImageAndAuth()` 内部。**
+这也解释了此前所有"无响应"：我们一直在 `BootLinux` 里找，而崩溃发生在**进 `BootLinux` 之前**。
+
+### 该函数在 NO_AVB 分支下的实际调用链（源码）
+
+```
+LoadImageAndAuth()                      VerifiedBoot.c:1658
+  AVBVersion = GetAVBVersion() → NO_AVB
+  → LoadImageNoAuthWrapper()             :604
+      → VBAllocateCmdLine()              （分配 Info->VBCmdLine）
+      → LoadImageNoAuth()                :588
+          → LoadBootImageNoAuth()        （fastboot 路径：直接用上传的 65 MB buffer）
+          → NoAVBLoadReqImage(dtbo)      （读 dtbo 分区）
+      → GetSystemPath() / AppendVBCmdLine()
+```
+
+下一发用 `out/r21-sbstop/uefi-vsbisect-r1.img`（sha `a4148f17…`，
+补丁 `patches/uefi/20261105-vsbisect/`），六个只回话的停机点：
+
+| 件 | 停机点 | 命中含义 |
+|---|---|---|
+| `vs-stop25` | `LoadImageNoAuthWrapper` 返回前 | 整段无问题 ⇒ 崩在 `LoadImageAndAuth` 的后半（MDTP/milestone 段） |
+| `vs-stop24` | `NoAVBLoadReqImage(dtbo)` 之后 | 崩在 `GetSystemPath`/`AppendVBCmdLine` |
+| `vs-stop23` | `LoadBootImageNoAuth` 返回之后 | 崩在 dtbo 装载 |
+| `vs-stop22` | `LoadImageNoAuth` 入口 | 崩在 `LoadBootImageNoAuth`（header 校验/分区读） |
+| `vs-stop21` | `VBAllocateCmdLine` 之后 | 崩在 `VBAllocateCmdLine` |
+| `vs-stop20` | wrapper 入口 | 崩在 `LoadImageNoAuthWrapper` 之前（`GetAVBVersion`/`FindBootableSlot` 段） |
+
+判据仍是宿主字符串 `diag st=Aborted last=[vs-N]`；打序 25 → 24 → 23 → 22 → 21 → 20。

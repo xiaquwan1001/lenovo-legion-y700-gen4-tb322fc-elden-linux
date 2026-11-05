@@ -1,0 +1,31 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH 2/2] Fastboot: CmdBoot 把 VS_STOP 的 abort 回给宿主
+
+配合 0001：LoadImageAndAuth 内部的 VS_STOP 只置 SbDiagAbort 并返回 EFI_ABORTED，
+本补丁让 CmdBoot 在 LoadImageAndAuth 返回失败时优先回 `diag st=Aborted last=[vs-N]`。
+
+diff --git a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+index af979dbd..a912bdc5 100644
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -2679,6 +2679,7 @@ CmdUpdateSnapshot (IN CONST CHAR8 *Arg, IN VOID *Data, IN UINT32 Size)
+ extern CHAR8  SbLastMark[160];
+ extern INT32  SbStopStage;
+ INT32 SbParseStopStage (CONST CHAR8 *CmdLine);
++extern INT32  SbDiagAbort;   // 2026-11-05 y700-elden: VerifiedBoot.c 的 VS_STOP 标志
+ 
+ STATIC VOID
+ CmdContinue (IN CONST CHAR8 *Arg, IN VOID *Data, IN UINT32 Size)
+@@ -2881,6 +2882,12 @@ CmdBoot (CONST CHAR8 *Arg, VOID *Data, UINT32 Size)
+ 
+   Status = LoadImageAndAuth (&Info);
+   if (Status != EFI_SUCCESS) {
++    // 2026-11-05 y700-elden: LoadImageAndAuth 内的细二分停机点（VS_STOP）统一在这里回话。
++    if (SbDiagAbort > 0) {
++      AsciiSPrint (Resp, sizeof (Resp), "diag st=Aborted last=[vs-%d]", SbDiagAbort);
++      FastbootFail (Resp);
++      goto out;
++    }
+     AsciiSPrint (Resp, sizeof (Resp),
+                  "Failed to load/authenticate boot image: %r", Status);
+     FastbootFail (Resp);
