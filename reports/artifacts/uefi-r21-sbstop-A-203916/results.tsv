@@ -1,0 +1,2 @@
+stage	run	verdict	elapsed_s	marker	note
+5	1	NO_SERVICE	45	-	枚举着但 getvar 无应答（递归 dump 死循环）

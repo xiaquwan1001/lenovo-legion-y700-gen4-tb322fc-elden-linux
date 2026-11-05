@@ -1,0 +1,7 @@
+file            /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img (67198976 B)
+sha256          a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+kernel_size     0x25325f
+page_size       4096
+header_version  2
+os_version      0x1e000133
+cmdline@64      'console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel pr' (64 B used of 64)

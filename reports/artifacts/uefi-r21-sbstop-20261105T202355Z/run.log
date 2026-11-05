@@ -1,0 +1,24 @@
+[20:23:55] ===== r21 sbstop ladder START mode=run =====
+[20:23:55] src  /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img
+[20:23:55] sha  a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+[20:23:55] stages=5 repeats=1 uefi_ser=51318dc0 abl_ser=HA2EXB0E cmd_timeout=90s
+[20:23:55] records /home/xuqianhui/y700-elden/reports/artifacts/uefi-r21-sbstop-20261105T202355Z
+scripts/uefi-r21-sbstop-ladder.sh: 行 140: IMG_MANIFEST: 未绑定的变量
+[20:23:55] images  /home/xuqianhui/y700-elden/out/r21-sbstop  (manifest: )
+file            /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img (67198976 B)
+sha256          a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+kernel_size     0x25325f
+page_size       4096
+header_version  2
+os_version      0x1e000133
+cmdline@64      'console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel pr' (64 B used of 64)
+[20:23:56] 造件完成 1 件：
+stage  token      file           sha256                                                            size      diff_bytes
+5      sbstop=5   r21-stop5.img  a4c7cdb9ad0c901a8e7d28cc571b7f08a57a3e3fe54edf5602793310dfe8d710  67198976  8
+[20:23:56] 镜像指纹 /home/xuqianhui/y700-elden/reports/artifacts/uefi-r21-sbstop-20261105T202355Z/variants.sha256.tsv
+[20:23:56] WARN: stage 5 run 1：UEFI 侧 fastboot 不在，重做 ABL 载入
+[20:23:56] ABL 侧载 UEFI: fastboot boot uefi-20261104R21-hostdiag-r1.img
+Sending 'boot.img' (65624 KB)                      OKAY [  1.487s]
+Booting                                            OKAY [ 10.109s]
+Finished. Total time: 11.628s
+[20:24:21] UEFI 侧 fastboot 出现（51318dc0，~13s）

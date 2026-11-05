@@ -1,0 +1,37 @@
+[20:39:16] ===== r21 sbstop ladder START mode=run =====
+[20:39:16] src  /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img
+[20:39:16] sha  a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+[20:39:16] stages=5 repeats=1 uefi_ser=51318dc0 abl_ser=HA2EXB0E cmd_timeout=45s
+[20:39:16] records reports/artifacts/uefi-r21-sbstop-A-203916
+[20:39:16] images  /home/xuqianhui/y700-elden/out/r21-sbstop
+file            /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img (67198976 B)
+sha256          a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+kernel_size     0x25325f
+page_size       4096
+header_version  2
+os_version      0x1e000133
+cmdline@64      'console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel pr' (64 B used of 64)
+[20:39:18] 造件完成 1 件：
+stage  token      file           sha256                                                            size      diff_bytes
+5      sbstop=5   r21-stop5.img  a4c7cdb9ad0c901a8e7d28cc571b7f08a57a3e3fe54edf5602793310dfe8d710  67198976  8
+[20:39:18] 镜像指纹 reports/artifacts/uefi-r21-sbstop-A-203916/variants.sha256.tsv
+[20:39:18] WARN: stage 5 run 1：UEFI 侧 fastboot 不在，重做 ABL 载入
+[20:39:18] ABL 侧载 UEFI: fastboot boot uefi-20261104R21-hostdiag-r1.img
+Sending 'boot.img' (65624 KB)                      OKAY [  1.489s]
+Booting                                            OKAY [ 10.106s]
+Finished. Total time: 11.629s
+[20:39:42] UEFI 侧 fastboot 出现（51318dc0，~12s）
+[20:40:43] stage 5 run 1 → NO_SERVICE (45s) - 枚举着但 getvar 无应答（递归 dump 死循环）
+[20:40:43] WARN: 设备已卡死（枚举着但 fastboot 不应答）⇒ 需要**物理断电**再开机才能继续（这一步只能你来）。
+[20:40:43] WARN: 恢复后重跑：按 SUMMARY 里已取到的最大应答档位继续，或先用 --control 跑基线。
+[20:40:43] ===== 汇总 =====
+stage  run  verdict     elapsed_s  marker  note
+5      1    NO_SERVICE  45         -       枚举着但 getvar 无应答（递归 dump 死循环）
+| stage | 语义 | REACHED | CRASH_BEFORE | HUNG | INCONC | 判读 |
+|---|---|---|---|---|---|---|
+| 5 | LoadAddrAndDTUpdate 后 | 0 | 0 | 0 | 0 | 不确定性，需重跑 |
+
+原始：`reports/artifacts/uefi-r21-sbstop-A-203916/results.tsv`
+[20:40:43] 产物目录 reports/artifacts/uefi-r21-sbstop-A-203916
+[20:40:43] 设备安全态核对（零写盘）：boot_b 应仍未变；如需回 Linux 走你惯用的恢复动作，本脚本不写盘
+[20:40:43] ===== ladder DONE =====

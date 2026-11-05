@@ -1,0 +1,2 @@
+stage	run	verdict	elapsed_s	marker	note
+5	1	CRASH_BEFORE	90	-	timeout 90s + USB 消失
