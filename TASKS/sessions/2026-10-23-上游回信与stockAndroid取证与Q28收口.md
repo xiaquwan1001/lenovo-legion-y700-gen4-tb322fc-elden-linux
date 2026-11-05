@@ -5,7 +5,7 @@
 - **主题**：① 按序执行：回 Konrad → 对齐 Pengyu → Q28 下一变量 ② 设备侧 stock Android 取证 ③ 事故与门禁（误发 adb / 背光 4%）
 - **结论（一句话）**：两封信已发（含 1 封更正）；**stock Android 侧取证完成**（QBG 共享量一致、Android 栈无 `power_now`、user 版无法读下游 sysfs）；**Q28 下一变量已定量口径**并出了只读取证脚本 + 好启动基线；**3 轮冷起采样按用户决定暂缓**。
 - **证据指针**：`reports/artifacts/reply-konrad-vendor-20261023.txt`、`…-addendum-…`、`reports/artifacts/reply-pengyu-dt-coord-20261023.txt`、`reports/q28-dpu-intf-next-20261023.md`、`reports/artifacts/q28-clkdiag-good-20261023.txt`、`PITFALLS #371`
-- **★SSOT 待并入**：无（`DEVICE/README.md` §1.1、`TASKS/README.md` §5 Q28 行已就地更新）
+- ★SSOT 待并入：无（已并入 §1.1，2026-11-05）
 
 ---
 

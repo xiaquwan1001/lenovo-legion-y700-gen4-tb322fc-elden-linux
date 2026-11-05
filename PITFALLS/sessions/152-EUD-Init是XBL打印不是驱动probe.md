@@ -5,7 +5,7 @@ pi 会话 id: 01a19a46-ece4-740f-9b6b-1b8fd59a7915
 主题: UEFI/EDL 调试通道可行性（lane D）——「固件里出现某条日志」与「设备就绪」的区分
 结论: `logfs` 里有 `EUD Init` 只证明该代码路径被编进固件；实测 `EUD wait` 0/10、运行 DT 无 `qcom,eud` 节点 ⇒ **0 次 probe**，不能当可用通道
 证据指针: `../../reports/uefi-eud-feasibility-20261101.md`、复核命令见下
-★SSOT 待并入: 已并入本文件（PITFALLS 索引 #488）
+★SSOT 待并入：无（已并入 PITFALLS/README.md 索引 #488，2026-11-05）
 
 ---
 

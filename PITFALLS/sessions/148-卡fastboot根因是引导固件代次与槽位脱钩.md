@@ -5,7 +5,7 @@ pi 会话 id: 01a196f3-27e8-7466-a690-e95236db1b43
 主题: 「只能进 fastboot」真根因 = 引导固件代次与槽位脱钩（LUN1=Jun11 / LUN2=May14）
 结论: 见 §0；`--set-active=a` 立刻进 Android、`--set-active=b` 立刻回 Linux，双向可复现
 证据指针: `../reports/uefi-slotboot-stuck-fastboot-20261101.md`（事故）、`../reports/artifacts/uefi-edl-read-20261101/`（全部取证件）
-★SSOT 待并入: `TASKS/README.md` §5 事故块；#482/#483 的「不可恢复」措辞需降级
+★SSOT 待并入：无（已并入 TASKS/README.md §5 事故块，2026-11-05）
 
 ---
 

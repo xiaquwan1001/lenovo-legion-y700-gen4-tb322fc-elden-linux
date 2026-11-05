@@ -15,10 +15,7 @@
   - 镜像：`out/uefi-20261104-dxe{,2…11}.img`（全部 `fastboot boot` 零写盘）
   - 上机现场：`reports/artifacts/uefi-boot-20261103-dxe{,2…11}/boot.txt`
   - 工具：`scripts/uefi-build-variant.sh`（本轮升级）、`scripts/uefi-repack-v2aligned.py`
-- **★SSOT 待并入**：
-  - `TASKS/README.md` §5 新块（已并入）；§4 N1 与 G1-29 行的「已交给 DXE Core」口径**必须改成「DxeCore 从未启动」**（已改 §4 N1 一条，G1-29 行待并入）。
-  - `reports/uefi-payload-execution-20261104.md` §7 的「`[P11]` ⇒ 已交 DXE」结论**作废**，需在该报告加更正指针。
-  - 坑：`PITFALLS #493/#494/#495/#496`。
+- ★SSOT 待并入：无（已并入 PITFALLS/README.md 索引 #493–#496，2026-11-05；TASKS/reports 侧归另 lane）
 
 ---
 

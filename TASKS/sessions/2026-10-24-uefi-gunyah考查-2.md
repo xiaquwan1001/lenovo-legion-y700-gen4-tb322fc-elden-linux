@@ -6,7 +6,7 @@
 - 结论（一句话）：**两项都维持「不重启 / 不立项」**，但各拿到一条新证据：UEFI 侧唯一信息入口（issue #12）在我方 10-21 追问后 3 天 0 回复、厂商 DXE 仍是压缩态（取 UFSDxe 需再投 1–2 h 写递归解压器）；Gunyah 侧主线今日仍无 `drivers/virt/gunyah`，而本机 `hypvm.mbn` 证实 EL2 里 Gunyah + RM-RPC **齐全** ⇒ 「能不能用」变成一个待设备的二值探测。
 - 证据指针：`reports/uefi-gunyah-reassess-20261024.md`（§1 UEFI、§2 Gunyah、§4 复现命令）；
   `TASKS/README.md` §4 N1/N2；设备未接入（`fastboot devices`/`adb devices` 均空、SSH 22 拒连）
-- ★SSOT 待并入：`TASKS/README.md` §4 N1/N2（已就地写）、§5 Q4/C8（口径未变，无需改）
+- ★SSOT 待并入：无（已并入 §4 N1/N2，2026-11-05）
 
 ## 1. 本轮新增的可复核事实
 

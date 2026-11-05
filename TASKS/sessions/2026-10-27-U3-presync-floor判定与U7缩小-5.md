@@ -16,5 +16,5 @@
   5. 台账：M1 §4 未决 **9 → 4 条**（累计关闭 U3/U4/U6/U8/U9；剩 U1/U2/U5 DSI bonded 一族 + U7 收缩项）。
 - **证据指针**：`reports/u3-rpmhpd-presync-floor-20261027.md`（§1 设备证据、§3 若将来真需要时的正确上游形态）、
   `patches/local/rpmhpd-drop-presync-floor-20261027/{README.md,0001-*.diff}`、`reports/upstream-status-20261027.md` §0/§3。
-- **★SSOT 待并入**：`TASKS/README.md` §7 M1 行（U3 判定 + U7 缩小 + 未决 4 条）与状态页 §0/§3 已并入。
+- ★SSOT 待并入：无（已并入 §7 M1，2026-11-05）
 - **未做**：U1/U2/U5（DSI bonded 重构：需 per-SoC cfg 设计 + 上机时序确认）；aw86927 5 提交系列实建；任何投递。

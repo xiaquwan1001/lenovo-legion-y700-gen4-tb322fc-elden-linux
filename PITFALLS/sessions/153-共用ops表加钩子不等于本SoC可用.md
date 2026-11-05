@@ -5,7 +5,7 @@ pi 会话 id: 01a19c09-0624-77a4-9612-428ce040917a（收尾轮，父会话）
 主题: M6 B5 v2（drm/msm dsi bonded 命令路径）在重出时发现的门控缺陷；推广到「ops 表共享 + per-SoC 数据」这一结构
 结论: 把新钩子塞进**被多个 SoC 共用**的 host-ops 表，再用 `ops->hook != NULL` 当「本 SoC 支持」的判据，等于让**所有**共享该表的 SoC 都走进新路径 —— 本机 SM8650 双 DSI 板会在面板 DCS 写上解引用 NULL 的 per-SoC 数据。判据必须是 **ops 存在 ∧ per-SoC 数据非空**
 证据指针: `patches/upstream/m6-b5-v2-20261102/{GATES.md §0,logs/gate-sm8650-no-bonded.txt}`、`reports/m6-b5-v2-parent-review-20261102.md`
-★SSOT 待并入: 已并入本文件（PITFALLS 索引 #489）
+★SSOT 待并入：无（已并入 PITFALLS/README.md 索引 #489，2026-11-05）
 
 ---
 

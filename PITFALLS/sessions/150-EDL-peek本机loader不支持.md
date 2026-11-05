@@ -6,7 +6,7 @@ pi 会话 id: 01a19772-4f38-7466-a690-e9551ed1e955
 结论: loader `xbl_s_devprg_ns.melf` 的 Supported Functions **不含 peek**，`rawxml` 手发也被空回包拒绝；
       ⇒ UEFI「载荷是否执行」的 DDR 标记无法靠 EDL 读回，只能「切断回落 + `fastboot boot` Linux 回读」
 证据指针: `../reports/uefi-ddr-fallback-plan-20261101.md` §1.4（编排者实测更正）、`../reports/trials/20261101T150336Z-edl-peek-probe-r1.json`
-★SSOT 待并入: `TASKS/README.md` §5 的 2026-11-01 UEFI 线；UEFI ①「EDL peek」方案作废
+★SSOT 待并入：无（已并入 TASKS/README.md §5 2026-11-01 UEFI 线，2026-11-05）
 
 ---
 

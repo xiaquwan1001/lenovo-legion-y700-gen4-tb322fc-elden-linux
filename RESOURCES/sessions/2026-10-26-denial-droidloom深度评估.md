@@ -5,7 +5,7 @@
 - **主题**：只读拆解同一作者（`denialwm` / Doctor Logix）的两个仓库——`denial`（Wayland 合成器）与 `droidloom`（shared-kernel Android 用户空间），判定对本仓 G1/G2/G3 的真实增量
 - **结论（一句话）**：**G2 不换路线（Waydroid/redroid 仍是主线），但拿到 3 类可搬资产**——① droidloom 的 **19 个 AOSP/Mesa 共享内核补丁**（binder SID 回退、netd/bpfload 适配、cgroup 描述、Mali/Adreno 用户态）；② **「release 式构建属性投影」**（`ro.debuggable` 清零、`test-keys` 替换、secure ADB）这条对 C3/Play Integrity 的**必要不充分**对策；③ **Android 层直出 Wayland 子表面**的架构（跳过 SurfaceFlinger 合成，per-task `xdg_toplevel`）。同时 **G1 多一个 UI 候选**：Denial 已有 mobile 模式并在 Moto Edge 70 真机做过 FOD/双击唤醒/旋转锁定/insets，是唯一被同代手机+平板验证过的 Flutter 壳合成器。**两者都不进当前施工队列**（需自建 ARM64 包，且 droidloom 要求合成器支持 `linux-drm-syncobj`）。
 - **证据指针**：本文件 §2–§5（逐节标出上游文件路径）；上游 == `github.com/denialwm/denial@c96375a`（main，2026-10-11）、`github.com/denialwm/droidloom@ffccef6`（main，2026-10-24）；总览行仍见 `RESOURCES/README.md` §1.3 与 `TASKS/README.md` §5 Q3
-- **★SSOT 待并入**：✅ **已并入（2026-10-26，同会话）**：`TASKS/README.md` §5 **Q3**（arm64 从「官方目标但无公开包」→「aarch64 一等产品 + 合成器 `linux-drm-syncobj` 前置 + PI 未验证」）与 §5 **R3** 行；`RESOURCES/README.md` §1.3 droidloom 行（251★→406★）与**新增 `denialwm/denial` 行**（G1 UI 层候选）；另拆掉原 `Droid-VM/DroidVM、denial` 的错误合并行。
+- ★SSOT 待并入：无（已并入 RESOURCES/README.md §1.3 + TASKS/README.md §5，2026-11-05）
 
 ---
 

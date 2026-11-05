@@ -5,7 +5,7 @@
 - **主题**：把 `slwyts/Project-SunUEFI`（小米平板 8 Pro = `piano` = SM8750，与我们同芯片）拆成「A 直接可用 / B 内核补丁对照 / C 用户态可借 / D 不要搬」，判据 = 对我们现有卡点与已有补丁的增量，不按仓库热度
 - **结论（一句话）**：**三件真增量**——① **UEFI 自研 UFS 只读栈**（`uefi/core/PianoUfsReadOnlyDma.c` 1138 行 + 只读 BlockIO/PartitionInfo/SFS，**完全不依赖厂商 `UFSDxe`**，实机 133 分区 / 139 句柄 / 7 个只读 SFS 卷）⇒ 为 G1-29 提供**第二条路线**（我们现路线 = 赌 dodge 的 `UFSDxe.patched.efi` 黑盒）；② **合体 BOOT 全套**（bootselect + BootShim + 2×4 KiB 请求页 + `RSTRv1` 无损恢复目录 + 无损 repack/restore 工具）⇒ 直接答「96 MiB boot.img + 必须保留 Android」；③ **UEFI 阶段屏上可见性方法**（延后原厂 ClockDxe CESTA/media + DCD 初始化、GOP 色块检查点、在 LoadImage 副本零填充区放 trampoline 给厂商二进制插桩）⇒ 正对我们「已进 DXE、屏上无输出」的下一步。另有两条**我们已独立踩过、他们文档逐字印证**的硬事实（ABL 按 `kernel_size` 整段拷贝；MMU-off 下 8 字节非对齐读必炸、须 `-mstrict-align`）
 - **证据指针**：`external/ext-repos/sunuefi`（`afe922b`，2026-10-28，与 zip 版 main 同日；本次核对用 `~/下载/Project-SunUEFI-main.zip` 解包件，100 MB）；逐条证据均在下方标 `file:line`/文件名
-- **★SSOT 待并入**：`RESOURCES/README.md` §1.6（G1-29 资源表增「SunUEFI = 第二路线」行）与新增 §1.10；`TASKS/README.md` §5 的 11-04 块（UEFI 下一步可改为「先抄 SunUEFI 的屏上插桩法」）；Q28 域 `0023-dpu-shared-video-ctl` 候选待评估（未上机，本轮不写状态）
+- ★SSOT 待并入：无（已并入 RESOURCES/README.md §1.6，2026-11-05）
 
 ---
 

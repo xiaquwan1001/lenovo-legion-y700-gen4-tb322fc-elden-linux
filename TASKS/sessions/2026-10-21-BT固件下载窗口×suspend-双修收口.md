@@ -7,7 +7,7 @@
   修复后（vk131/vk132）下载窗口内 suspend **成功、fail=0**（held 361 711 / 385 858 ms）；用户态钩子端到端 24 s 命中。
   **已知副作用**：被打断的下载不自愈（`hci0` 留 `DOWN`）；resume 强制 serdev re-probe **会挂死整机**（vk133 实测，已回退）。
 - **证据指针**：`reports/qca-fw-download-suspend-20261021.md`（权威）、`reports/t9-vk130-pcie-l2-live-20261021.md`（顶部已加修正告示）
-- **★SSOT 待并入**：`TASKS/README.md` §4 T9（已并入）
+- ★SSOT 待并入：无（已并入 §4 T9，2026-11-05）
 
 ## 1. 交付物
 

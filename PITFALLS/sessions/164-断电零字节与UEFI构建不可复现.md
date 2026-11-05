@@ -3,7 +3,7 @@
 日期 2026-11-05 · pi 会话 id `01a1a959-3abb-72e6-8a5b-b622e60b0041` · 主题 掉电损坏的识别与恢复 / 构建等价性判据
 结论 掉电会把「已写未落盘」的页按 0 重放：源码→0 字节、追加内容→NUL 尾巴；UEFI 构建带编译时间戳，两次构建 sha 必不同，等价性要用逐块比对
 证据指针 `reports/uefi-noavb-dtbo-bootchain-20261104R.md` §9；`scripts/uefi-build-variant.sh`；`scripts/uefi-repack-v2aligned.py`
-★SSOT 待并入 #509/#510/#511 → `PITFALLS/README.md`
+★SSOT 待并入：无（已并入 PITFALLS/README.md 索引 #509/#510/#511，2026-11-05）
 
 ## #509 掉电后的三种损坏形态：**0 字节 / NUL 尾巴 / 元数据已增长但内容全 0**
 

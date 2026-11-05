@@ -7,7 +7,7 @@
 - 证据指针：`reports/gunyah-rm-probe-20261024.md`、`reports/gunyah-port-20261024.md`、`reports/gunyah-boot-test-20261024.md`、
   `reports/gunyah-dt-capid-20261024.md`、`reports/gunyah-kernel-build-20261024.md`、`reports/uefi-experiment-build-20261024.md`、
   `reports/uefi-runtime-table-provider-20261024.md`、`reports/woa-gunyah-survey-20261024.md`
-- ★SSOT 待并入：无（`TASKS` §4 N1/N2、C8、§0 均已就地更新）
+- ★SSOT 待并入：无（已并入 §4 N1/N2，2026-11-05）
 
 ## 1. 设备当前状态（重要）
 

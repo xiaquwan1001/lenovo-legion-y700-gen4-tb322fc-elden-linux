@@ -35,4 +35,4 @@
   - `patches/q28-v2-20261023/0001-display-reset-mdss-at-probe-once-early-and-verify.patch`
   - 树 `build/q28-v2`（worktree @ `24223e44ad80`）
   - 镜像 `out/boot-elden-vk150-q28v2.img`（**修正版** `sha256 831ca7c4…`；旧 `2898d006…` 有 `-EBUSY` bug 勿用）
-- **★SSOT 待并入**：`TASKS/README.md` §5 **Q28** 行已就地补入 v2 状态（本会话已改）。
+- ★SSOT 待并入：无（已并入 Q28，2026-11-05）

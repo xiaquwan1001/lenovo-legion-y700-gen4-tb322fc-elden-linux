@@ -6,7 +6,7 @@
 - 结论（一句话）：**方向 B 阳性 —— Gunyah API v1，doorbell/msgq/vcpu/memextent 四项特性全支持（`flags[0]=0x10010fff`），hypervisor 侧对「起 VM」已无缺口**；剩下唯一硬前置是 **capid 的来源**（只在 stock Android 的 DT 里，本机 mainline DT / `dtbo_a` / `vendor_boot_a` 都没有）。
 - 证据指针：`reports/gunyah-rm-probe-20261024.md`、`probes/gunyah-identify/gunyah_identify.c`、
   `reports/artifacts/gunyah-probe-20261024/{identify.txt,gunyah_identify.ko}`
-- ★SSOT 待并入：`TASKS/README.md` §4 N2（已就地写）
+- ★SSOT 待并入：无（已并入 §4 N2，2026-11-05）
 
 ## 1. 本轮实测（数字）
 

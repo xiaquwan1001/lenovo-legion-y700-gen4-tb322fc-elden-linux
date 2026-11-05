@@ -11,4 +11,4 @@
   - patchwork：9 枚旧件标 `superseded`（wl2868c v1×2、camss 0/3×3、dwc3 RFC v3×4）。
   - D6：camss icc 表 fix 素材落盘（binding+DTS 收敛 2 条），**归属 Hangxiang，不投递**。
 - **证据指针**：`reports/m4-camss-v2-20261031.md`、`reports/camss-icc-table-fix-20261031.md`、`patches/upstream/{m4-camss-v2-20261031,camss-icc-20261031}/`、`out/mail-20261031/`
-- **★SSOT 待并入**：无（TASKS §5 D1–D6 与 §7 M3/M4 已同步）
+- ★SSOT 待并入：无（已并入 §5 D1，2026-11-05）

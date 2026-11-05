@@ -7,7 +7,7 @@
 - 证据指针：`reports/kexec-target-boots-20261024.md` §6/§7/§8；
   `reports/artifacts/kexec-pstore-probe-20261024/{k5,k8,k13,k15,k16}-*`（目标逐字 dmesg + 载具 `k8-carrier-kmsg.log` + 内核写盘报告）；
   registry `vk153/vk157/vk159/vk160`（lane `kexec-its`）
-- ★SSOT 待并入：`TASKS/README.md` §4 第 10 条（已就地补）、§5 Q32 口径（已补）；`TASKS/README.md` §7 上游化（本条待立 M 项）
+- ★SSOT 待并入：无（已并入 §5 Q32，2026-11-05）
 
 ## 1. 取证链（每一步否决了什么）
 
