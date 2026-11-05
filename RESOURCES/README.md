@@ -309,12 +309,12 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | P2-d | `backup/stock-259/` 13 分区 | 443 M | 须先核对云全量包含 abl/dtbo/recovery/vbmeta 且 =1.5.10.259 | ⬜ 仍在 |
 | P3-a | AOSP `.repo` 历史 + 工作树（外置） | — | — | ⛔ 目标不存在（`/mnt/Samsung/waydroid-build` 未挂，随盘清空） |
 | P3-b | `l2/` super/system 镜像 | — | — | ⛔ 目标断链（`~/mnt/Samsung/l2` 空） |
-| H1 | `.pi/sessions/` 旧会话 | **705 M / 290 件**（2026-11-05 复测，原 496 M） | 归档非活跃会话（保留最近若干） | ⬜ **索引已完成**；删除待用户确认（建议先上云盘） |
+| H1 | `.pi/sessions/` 旧会话 | **705 M / 290 件**（2026-11-05 复测，原 496 M） | 归档非活跃会话（保留最近若干） | ⏸ **挂起 = 用户统一操作**（先上云盘再本地瘦身；索引已完成为 2026-10-17 口径） |
 | **A8** | `reports/artifacts/uefi-dxe{,2..11}-20261104/` 二进制载荷（77 件，7 类/目录） | 236 200 182 B | 已打包 `backup/artifacts-bundle-20261105/uefi-dxe-20261104-binaries.tar.zst`（45.9 M，`zstd -t` OK、抽检 sha 一致）+ `SHA256SUMS.all`（77 行） | ✅ **2026-11-05 已执行**（净释放 ≈ 172 MiB；文本三件 `build.log/manifest.txt/SHA256SUMS` 与 `BootShim.bin` 留原处） |
 | **B1** | `build/` 旧线 worktree（29 棵：vk151 / vk-camssv3 / gunyah-port / m3v5-{fix,daily,pristine} / m4-* / b5-* / m8ab-* / q28-* / m1-73 / vk64-{sync,ret}-arm 等） | 释放 **174 G**（`build/` 190.7 G → **16 G**） | 逐棵：detached HEAD 先建 `tidy-20261105/<name>` 保留 ref；脏树导出 `tracked.diff` + `untracked.tgz`；共享 `.git` 整体备份 `backup/build-bundles/m3v2-7.3rc7-git-20261105.tar.zst`（1.33 G，含全部 142 个未推送提交 + 26 个 worktree 元数据，已抽验） | ✅ **2026-11-05 已执行**（明细 `backup/build-bundles/MANIFEST-20261105.tsv` + `dirty-20261105/*/`；新增日常线树 `build/daily` = `replay-m1-73-vk127` + `patches/config-vk163-modular-v2-20261026`，`patches/current-tree` 已改指它） |
-| **B2** | `env-pass/backup-20261002/`（2026-10-02 老 rootfs 整包 3.44 G） | 3.44 G | 先验证 `rootfs/` 重建链能覆盖 10-02 时期内容 | ⬜ 待批准（建议打包上云盘后再删） |
-| **B3** | `out/` 历史镜像（129 个 `*.img`，9.43 G；可回收 ≈ 8.2 G） | 9.43 G | **账目闸**：每件都在 `versions/vk-kernel-identity.tsv` 有行，直接删会让 §5d 报缺 ⇒ 必须与账目同批处理（删行或移 `backup/` 后改路径） | ⬜ 待批准（建议按「在机件 + m3v5-onboard 系 + 最新线」留 1–2 G，其余按月龄归档） |
-| **B4** | `.pi/trash/files/`（pi 回收站，90 项） | 484 M | 无（回收站语义） | ⬜ 待批准（内容多为 11-02~11-04 的中间物，可清空） |
+| **B2** | `env-pass/backup-20261002/`（2026-10-02 老 rootfs 整包 3.44 G） | 3.44 G | 先验证 `rootfs/` 重建链能覆盖 10-02 时期内容 | ⏸ **挂起 = 用户 2026-11-05「等最后统一操作」**（云盘备份与 trash 清理由用户统一做；本机无 `reccli-ts`/`rclone`，新云盘走 WebDAV 需凭据） |
+| **B3** | `out/` 历史镜像（129 个 `*.img`，9.43 G；可回收 ≈ 8.2 G） | 9.43 G | **账目闸**：每件都在 `versions/vk-kernel-identity.tsv` 有行，直接删会让 §5d 报缺 ⇒ 必须与账目同批处理（删行或移 `backup/` 后改路径） | ⏸ **挂起（下一轮单独立项）**：须与 `versions/vk-kernel-identity.tsv` **同批**改路径（移 `backup/out-history-<date>/` → 改 ledger 路径列），**禁重跑 `vk-identity.py`**；sha 底本 = `versions/out-images-sha256-20261105.tsv` |
+| **B4** | `.pi/trash/files/`（pi 回收站，90 项） | 484 M | 无（回收站语义） | ⏸ **挂起 = 用户统一操作**（`.pi/trash` 受 harness 保护，agent 不能删；实测 `rm -rf build/<tree>` 的残留也会进这里，当前 14 G 含 `vk-camssv3` 12.5 G） |
 
 **纪律**：按 P0→P3 逐级、不并行；每级前后记 `df -h`；删前先导出独有内容；删后回改
 `README.md §2.5` 与本节状态、并记 `archive/topics/清理清单-<date>.md`。
