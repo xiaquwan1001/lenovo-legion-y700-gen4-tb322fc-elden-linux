@@ -149,11 +149,11 @@
 
 | 资产 | 路径 | 状态/校验 |
 |---|---|---|
-| RAM 版基线（零写盘 bring-up） | `out/boot-elden-vk40-ram.img`、`bootslot-b/boot_b_vk40-ram.img` | ✅ 已签（testkey+rollback 1738713600） |
-| 持久版基线 | `out/boot-elden-vk40.img`、`bootslot-b/boot_b_vk40.img` | ✅ |
-| 全模块包（1484 个 `.ko`） | `out/modules-7.2.0-debug-gba28ec16f01f-dirty.tar.gz`（20 M strip） | vermagic 必须与内核一致 |
-| 相机模块包（20 个） | `out/camera-modules/` + tar | ✅ 冷启自加载已在机验证 |
-| **运行内核对齐模块包**（25 个，g4c68eb5ed4e3） | `out/camera-modules-7.2.0-debug-g4c68eb5ed4e3-dirty.tar.gz` | ✅ sha256 `4146dfd0…`；持久根相机/音频已复现（`archive/topics/KMOD-ALIGN-2026-10-05.md`） |
+| RAM 版基线（零写盘 bring-up） | `out/boot-elden-vk40-ram.img`、`bootslot-b/boot_b_vk40-ram.img` | ✅ 已签（testkey+rollback 1738713600）；⚠️MIGRATION-LOST（产物已轮转，2026-11-05 实测不在盘） |
+| 持久版基线 | `out/boot-elden-vk40.img`、`bootslot-b/boot_b_vk40.img` | ✅；⚠️MIGRATION-LOST（同上，`out/` 侧已不在盘） |
+| 全模块包（1484 个 `.ko`） | `out/modules-7.2.0-debug-gba28ec16f01f-dirty.tar.gz`（20 M strip） | vermagic 必须与内核一致；⚠️MIGRATION-LOST（2026-11-05 实测不在盘，可由 build/ 树重编） |
+| 相机模块包（20 个） | `out/camera-modules/` + tar | ✅ 冷启自加载已在机验证；⚠️MIGRATION-LOST（目录 2026-11-05 实测不在盘） |
+| **运行内核对齐模块包**（25 个，g4c68eb5ed4e3） | `out/camera-modules-7.2.0-debug-g4c68eb5ed4e3-dirty.tar.gz` | ✅ sha256 `4146dfd0…`；持久根相机/音频已复现（`archive/topics/KMOD-ALIGN-2026-10-05.md`）；⚠️MIGRATION-LOST（2026-11-05 实测不在盘） |
 | **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | 3.44 GB / 30852 项，tar/gzip 完好 |
 | **Waydroid Mesa 26.1.8（bionic，自编）** | `external/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz`（`~/mesa-out` 是指向它的软链；6.9 M，**11 个 .so**：`libgallium_dri` / `libgbm_mesa` / `dri_gbm` / `libgbm_mesa_wrapper` / `egl/{libEGL,libGLESv1_CM,libGLESv2,libGLES}_mesa` / `hw/{vulkan.freedreno,gralloc.minigbm_gbm_mesa,gralloc.gbm}` + `manifest.txt`） | sha256 全 OK，含 DRM chip-id 魔数 `0xffff44050000`；**重建** = `scripts/mesa-build.sh`（freedreno-only 定向 make，5.5 min；ccache 热 ~10 min）；部署 = `extract-mesa-libs.sh`+`waydroid-mesa-swap.sh`（bind-mount，可回退） |
 | Waydroid 镜像 | `~/下载/` GAPPS `system.zip`(1.17 G) + MAINLINE `vendor.zip`(77 M) | ✅ |
@@ -286,6 +286,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 
 编号对应 `README.md` §2.5 的 P 级；状态：⬜ 未执行 / ◐ 部分 / ✅ 已执行 / ⛔ 无需执行。
 **2026-10-23 复核**：A0–A7 见 `../reports/assets-inventory-20261023.md` §5；**用户 2026-10-23 批准后已全部执行**（执行记录 + 每级 df + 保留理由 = `../archive/topics/清理清单-20261023.md`）。
+**2026-11-05 复核**：全仓逐项盘点（含引用命中/可再生性/前置闸）= `../reports/asset-tidy-20261105.md` + 机器账 `../reports/asset-inventory-20261105.tsv`（56 行，含每行 `verify_cmd`）；文档账目 = `../reports/doc-audit-20261105.md`。本轮**只执行了 A8**，B1–B4 为父进程裁决后的待批项（数字与闸门见下表）。
 
 | 标记 | 目标 | 体积 | 前置闸 | 状态 |
 |---|---|---|---|---|
@@ -307,7 +308,12 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 | P2-d | `backup/stock-259/` 13 分区 | 443 M | 须先核对云全量包含 abl/dtbo/recovery/vbmeta 且 =1.5.10.259 | ⬜ 仍在 |
 | P3-a | AOSP `.repo` 历史 + 工作树（外置） | — | — | ⛔ 目标不存在（`/mnt/Samsung/waydroid-build` 未挂，随盘清空） |
 | P3-b | `l2/` super/system 镜像 | — | — | ⛔ 目标断链（`~/mnt/Samsung/l2` 空） |
-| H1 | `.pi/sessions/` 旧会话 | 496 M | 归档非活跃会话（保留最近若干） | ⬜ **索引已完成**；删除待用户确认 |
+| H1 | `.pi/sessions/` 旧会话 | **705 M / 290 件**（2026-11-05 复测，原 496 M） | 归档非活跃会话（保留最近若干） | ⬜ **索引已完成**；删除待用户确认（建议先上云盘） |
+| **A8** | `reports/artifacts/uefi-dxe{,2..11}-20261104/` 二进制载荷（77 件，7 类/目录） | 236 200 182 B | 已打包 `backup/artifacts-bundle-20261105/uefi-dxe-20261104-binaries.tar.zst`（45.9 M，`zstd -t` OK、抽检 sha 一致）+ `SHA256SUMS.all`（77 行） | ✅ **2026-11-05 已执行**（净释放 ≈ 172 MiB；文本三件 `build.log/manifest.txt/SHA256SUMS` 与 `BootShim.bin` 留原处） |
+| **B1** | `build/` 十条旧线 worktree（vk151 / vk-camssv3 / gunyah-port / m3v5-{fix,pristine} / uefi-woa-prep / q28-v2 / m1-73 / q28-disp-73 / vk64-{sync,ret}-arm） | 101.2 G（含 `build/` 其余大棵合计 177 G） | **RESOURCES §3 前置闸**：逐棵 `git bundle --all` + 导出 dirty diff（13 棵有脏文件；`build/m3v2-7.3rc7` 共享 .git 有 142 个未推送提交、`build/base-7.2` 有 2 个） | ⬜ **待批准**（建议试点 `build/m3v5-pristine`：dirty=0、head `34865c89` = 在机 m3v5-onboard tree_head） |
+| **B2** | `env-pass/backup-20261002/`（2026-10-02 老 rootfs 整包 3.44 G） | 3.44 G | 先验证 `rootfs/` 重建链能覆盖 10-02 时期内容 | ⬜ 待批准（建议打包上云盘后再删） |
+| **B3** | `out/` 历史镜像（129 个 `*.img`，9.43 G；可回收 ≈ 8.2 G） | 9.43 G | **账目闸**：每件都在 `versions/vk-kernel-identity.tsv` 有行，直接删会让 §5d 报缺 ⇒ 必须与账目同批处理（删行或移 `backup/` 后改路径） | ⬜ 待批准（建议按「在机件 + m3v5-onboard 系 + 最新线」留 1–2 G，其余按月龄归档） |
+| **B4** | `.pi/trash/files/`（pi 回收站，90 项） | 484 M | 无（回收站语义） | ⬜ 待批准（内容多为 11-02~11-04 的中间物，可清空） |
 
 **纪律**：按 P0→P3 逐级、不并行；每级前后记 `df -h`；删前先导出独有内容；删后回改
 `README.md §2.5` 与本节状态、并记 `archive/topics/清理清单-<date>.md`。

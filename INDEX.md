@@ -181,7 +181,7 @@
 > **本节只回答「现在还没解决什么」，任何数字与当前口径都不在此维护**（见 §2 公开层豁免）。
 
 - **⚠️MIGRATION-LOST（2026-10-17 换机）**：登记与重建路径只读 `RESOURCES/README.md` §3.5 与 `versions/migration-gaps-2026-10-17.tsv`（当时的重建账与 P0–P4 顺序是快照，已下沉 `TASKS/sessions/2026-11-02-INDEX现状速览下沉.md`）。
-- **去哪读（本节唯一职能）**：未解/开放集 = `TASKS/README.md` §5（Q 表，含 Q28/Q24/Q32 的样本数与复启条件，另见 `PITFALLS #106`）；待办 = `TASKS/README.md` §4；进度与里程碑 = `PROGRESS.md` §1/§2；上游化与投递 = `TASKS/README.md` §7 的 M 行 + 当前一页 `reports/upstream-status-20261029.md`（投递解冻由用户按批放行，agent 不等回复）；设备在机态与单元台账 = `DEVICE/README.md` §1.1/§2.2；换机缺口 = `RESOURCES/README.md` §3.5；内核分界线 = `TASKS/README.md` §4。
+- **去哪读（本节唯一职能）**：未解/开放集 = `TASKS/README.md` §5（Q 表，含 Q28/Q24/Q32 的样本数与复启条件，另见 `PITFALLS #106`）；待办 = `TASKS/README.md` §4；进度与里程碑 = `PROGRESS.md` §1/§2；上游化与投递 = `TASKS/README.md` §7 的 M 行 + 当前一页 `reports/upstream-status-20261105.md`（取代 `-20261029`；投递解冻由用户按批放行，agent 不等回复）；设备在机态与单元台账 = `DEVICE/README.md` §1.1/§2.2；换机缺口 = `RESOURCES/README.md` §3.5；内核分界线 = `TASKS/README.md` §4。
 - **kexec**：不在「不做」之列，定位 = 不需显示/网络的调试快环；**当前口径只读** `TASKS/README.md` §4「当前口径 → 迭代通道」条与 §7 的 M9 / M9-收口 行（全过程在 `TASKS/sessions/2026-11-03-TASKS-§4-待办沿革.md`）。
 - **宿主 rootfs（Alpine → Debian/Mobian、systemd）**：用户 2026-10-26 定的方向，**不是「勿重推」项**；路径与成本只读 `reports/mobian-migration-plan-20261021.md`（S0–S7，完成项见其 §4 状态标记）与 `TASKS/README.md` T14/T17。
 - **两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy`（trixie 3.7 无 SSC 后端）+ `libssc2`，否则传感器栈直接死。

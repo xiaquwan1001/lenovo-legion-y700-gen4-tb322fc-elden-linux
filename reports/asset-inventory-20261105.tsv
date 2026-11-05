@@ -1,0 +1,56 @@
+path	bytes	files	mtime	class	zonereason	reference_hits	regenerable	verify_cmd
+out	11478045229	6089	2026-11-04	mixed	构建产物+取证件混合；身份账 versions/vk-kernel-identity.tsv(130行)	见分项	部分(需build树)	du -sb out; ls out/*.img|wc -l
+out/linuxstop1.img	100663296	1	2026-11-04	archive-candidate	slot_dump×7，内核段kbin_sha同=5543b181(identity.tsv:75-81)，整件sha各异	identity.tsv:75-81(slot_dump)	是(重dump即得)	sha256sum out/linuxstop*.img
+out/linuxstop2.img	100663296	1	2026-11-04	archive-candidate	同上，slot_dump重复序列	identity.tsv:76	是	sha256sum out/linuxstop*.img
+out/linuxstop3.img	100663296	1	2026-11-04	archive-candidate	同上	identity.tsv:77	是	sha256sum out/linuxstop*.img
+out/linuxstop4.img	100663296	1	2026-11-04	archive-candidate	同上	identity.tsv:78	是	sha256sum out/linuxstop*.img
+out/linuxstop5.img	100663296	1	2026-11-04	archive-candidate	同上	identity.tsv:79	是	sha256sum out/linuxstop*.img
+out/linuxstop6.img	100663296	1	2026-11-04	archive-candidate	同上	identity.tsv:80	是	sha256sum out/linuxstop*.img
+out/linuxstop7.img	100663296	1	2026-11-04	archive-candidate	同上	identity.tsv:81	是	sha256sum out/linuxstop*.img
+out/*.img(历史主体,非在机非取证)	8166915360	53	2026-10-21~11-02	archive-candidate	vk系列历史件53个4.08G+其余历史img；均登记identity.tsv，可由build树+patches重放再生	identity.tsv全表	是(replay技能)	ls out/boot-elden-vk*.img|wc -l
+out/corrupt-20261102	110292992	2	2026-11-02	keep	静默损坏取证件(TASKS/sessions/2026-11-02-重建损坏镜像.md)	reports/rebuild-corrupt-img-20261102.md	否(取证)	ls out/corrupt-20261102
+out/debian	714663007	5	2026-10-28	keep	rootfs固件链+debian包，G1依赖	RESOURCES §3	否	du -sb out/debian
+out/stage-debian	134384685	5	2026-10-26	delete-candidate	staging副本，与out/debian、modstage大量同sha(asset-inventory-20261101.md表1#9)	0(rg)	是(重staging)	rg -lF stage-debian --glob '!out/**' --glob '!build/**'
+out/m3v5-onboard	111234585	7	2026-10-30	keep	当前主线镜像配套内核+模块散件集	m3v5-onboard系列manifest/报告	部分	du -sb out/m3v5-onboard
+out/modstage-vk163	87908850	1	2026-10-26	keep	模块树(uts_dup共用,/lib/modules锚点)	DEVICE §1.1	是(重编译)	ls out/modstage-*
+out/modstage-vk172	92988900	1	2026-10-30	keep	当前在机vk172模块树(UTS锚)	DEVICE §1.1	是(重编译)	ls out/modstage-*
+bootslot-b	1610620899	20	2026-11-02	never-delete	avb私钥+全部boot_b分区备份(回退链)	DEVICE §1.1/scripts/sign-boot-b.sh	否	ls -l bootslot-b
+env-pass	3443814333	3	2026-10-02	mixed	主体=backup-20261002老rootfs归档	未证(无md引用命中)	部分(rootfs/脚本可重建)	du -sb env-pass/*
+env-pass/backup-20261002	3443799223	1	2026-10-02	archive-candidate	10-02老rootfs整包，rootfs/脚本可重建新rootfs	0(rg -lF backup-20261002)	是	rg -lF backup-20261002 .
+logs	35381575	258	2026-11-02	keep	体积小，含构建/排障日志原始证据	分散	否	du -sb logs
+dl-cam	2745503645	23	2026-11-03	keep	G1相机线AOSP/donor源+vendor镜像	RESOURCES §3/TASKS	部分(AOSP可重fetch)	du -sb dl-cam
+external	1927530016	1	2026-11-03	keep	ext-repos(UEFI专用mu/dl等)2026-11-03刚收拢	RESOURCES/reports/asset-tidy-20261103.md §2	是(git clone)	du -sb external/ext-repos
+stock-src	2105289516	3	2026-10	keep	Lenovo sm8750 stock内核源参考树	RESOURCES §3	未证(Lenovo源可否重下)	du -sb stock-src
+reference	5623678	11	2026-10	keep	外部参考仓库,体积小	RESOURCES	是	du -sb reference
+geekidos-linux	2825170506	43	2026-10	keep	发行树,仅记账不评估删除	RESOURCES §3	未证	du -sb geekidos-linux
+reports	1735492334	602	2026-11-04	mixed	报告+证据；artifacts 1.71G为诱因	—	否	du -sb reports/*
+reports/artifacts	1709094518	~118	2026-11-04	keep	正式报告证据链(20261101盘点:46/80被引用)	reports/*.md	否	rg -l uefi reports/*.md|wc -l
+reports/artifacts/uefi-dxe-20261104	21464581	1	2026-11-04	archive-candidate	UEFI DXE二分中间件,终态证据在uefi报告	reports/uefi-*.md(汇总)	是(重编译UEFI)	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe2-20261104	21450510	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe3-20261104	21657770	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe4-20261104	21456218	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe5-20261104	21445396	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe6-20261104	21448374	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe7-20261104	21452017	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe8-20261104	21458201	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe9-20261104	21448715	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe10-20261104	21450656	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/artifacts/uefi-dxe11-20261104	21467744	1	2026-11-04	archive-candidate	同上	同上	是	du -sb reports/artifacts/uefi-dxe*-20261104
+reports/trials	20267857	602	2026-11-04	keep	trial record JSON账(trial--reset审计链)	TASKS §5	否	find reports/trials -type f|wc -l
+.pi/sessions	704898264	290	2026-11-05	archive-candidate	会话jsonl,旧会话可压缩/外移(历史账已在reports)	部分(检索用)	否	du -sb .pi/sessions; ls .pi/sessions|wc -l
+build	190717538999	37	2026-11-04	mixed	最大项;全部是4个共享.git的worktree;13棵脏;删除前置闸=RESOURCES §3 bundle+diff导出	git status账	是(replay)	du -sb build
+build/m3v2-7.3rc7	5029195454	1	2026-10-26	never-delete	共享主.git容器(m3v2-7.3rc7/.git被27棵worktree引用),unpushed=142	git -C build/m3v2-7.3rc7 log --branches --not --remotes|wc -l	否	git -C build/m3v2-7.3rc7 rev-parse --git-common-dir
+build/base-7.2	2224425023	1	2026-10-20	never-delete	共享.git容器(q28-disp/q28-disp2引用),unpushed=2	—	否	git -C build/base-7.2 rev-parse --git-common-dir
+build/vk151	12757112261	1	2026-10-26	archive-candidate	独立head 509f271d,dirty=11;vk151线已进identity账,可bundle后删	identity.tsv vk151行	是(bundle后)	git -C build/vk151 status --porcelain|wc -l
+build/vk-camssv3	12757118414	1	2026-10-29	archive-candidate	dirty=13;相机v3线,活跃度看TASKS;bundle+diff后可删	identity.tsv/reports camssv3	是(bundle后)	git -C build/vk-camssv3 status --porcelain|wc -l
+build/gunyah-port	12755395831	1	2026-10-26	archive-candidate	dirty=16;Gunyah线非主线(G2拓展);bundle后可删	TASKS §4	是(bundle后)	git -C build/gunyah-port status --porcelain|wc -l
+build/m3v5-fix	12754600355	1	2026-10-30	archive-candidate	dirty=17,head 7abd1781(identity m3v5-f2行tree_head)	identity.tsv m3v5-f2	是(bundle后)	git -C build/m3v5-fix status --porcelain|wc -l
+build/m3v5-pristine	12738335866	1	2026-10-30	archive-candidate	dirty=0,head 34865c89=m3v5-onboard tree_head;干净可重建	identity.tsv m3v5-onboard	是	sha256sum out/boot-elden-m3v5-onboard-b.img
+build/uefi-woa-prep	7924270321	1	2026-10-24	archive-candidate	UEFI线工作区(droidloom主仓worktree,dirty=1)	TASKS §4/archive/topics	是(bundle后)	git -C build/uefi-woa-prep status --porcelain
+build/q28-v2	7533313867	1	2026-10-27	archive-candidate	dirty=3;Q28已结项(TASKS Q28计数0)	TASKS Q28	是(bundle后)	git -C build/q28-v2 status --porcelain
+build/m1-73	7519939860	1	2026-10-26	archive-candidate	dirty=13;M1重放线,产物已在out	identity.tsv m1-73*	是(bundle后)	git -C build/m1-73 status --porcelain
+build/q28-disp-73	7505452855	1	2026-10-27	archive-candidate	dirty=4;Q28显示线已结项	TASKS Q28	是(bundle后)	git -C build/q28-disp-73 status --porcelain
+build/vk64-sync-arm	7433225422	1	2026-10-29	archive-candidate	geekidos-linux worktree,dirty=1;vk64线	TASKS	是(bundle后)	git -C build/vk64-sync-arm status --porcelain
+build/vk64-ret-arm	7433213212	1	2026-10-29	archive-candidate	同上	ret后可删	是(bundle后)	git -C build/vk64-ret-arm status --porcelain
+build/其余大棵(m3v5-daily/m8ab-base/m8ab-v2/vk183-fastrpc/q28-disp2/m4-v3等)	75764104580	1	2026-10-21~11-01	archive-candidate	同规则:先bundle+导diff,再按线逐棵裁决	TASKS §7 M系列	是(bundle后)	du -sb build/*|sort -rn
+backup	21164604918	25	2026-11-03	never-delete	不可再生:官方线刷包16.8G/EDL包/整机备份/GPT/槽件/corrupt取证(84529152B)	RESOURCES §3	否	du -sb backup/*
