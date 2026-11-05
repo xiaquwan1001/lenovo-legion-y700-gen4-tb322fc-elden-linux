@@ -86,3 +86,48 @@ Recursive exception occurred while dumping the CPU state   ← ×N，死循环
 - `usb_redriver Failed slave: 0x10` / `Failed to init i2c: 12` / 成片 `ERROR:NAK SAr:0x0E` + `Geni command not active`
   ⇒ Redriver（`usb_shared_wcd_*`）在这条路径上 I2C 全挂；不影响「USB 能枚举」，但**可能是 USB 重初始化那一瞬的次要干扰源**（第 3 点嫌疑时一并考虑）。
 - `ButtonsDxeTest: Keypress SDAM data payload 3` ⇒ 按键栈确实起来了（之前没到这一步）。
+
+---
+
+## 7. 21:0x 决定性一发：`sbstop=0` 入口探针 —— 回传通路成立
+
+新件 `out/uefi-20261105-diagentry-r1.img`（sha `6974296f…`，25 条 R21 补丁 + `patches/uefi/20261105-diagentry/`）：
+`CmdBoot` 在 `SetBootDevImage()` **之前**、只要 cmdline 带 `sbstop=0` 就直接
+`FastbootFail("diag st=Success last=[entry]")` 并 return。
+
+```
+$ fastboot -s 51318dc0 boot out/r21-sbstop/r21-stop0.img
+Sending 'boot.img' (65624 KB)  OKAY [  1.494s]
+Booting                        FAILED (remote: 'diag st=Success last=[entry]')
+$ fastboot -s 51318dc0 getvar product
+product: sun                    ← 固件仍应答（没崩）
+```
+
+**一发同时排除三件事**：
+1. `SbParseStopStage()` 解析**成立**（令牌被正确读到）；
+2. `FastbootFail()` 回传通路**成立**（宿主完整收到字符串）；
+3. 探针之后固件**活着**（`getvar` 仍应答；且 `product: sun` 是 UEFI 侧 LinuxLoader 自报，
+   与 ABL 的 `elden_prc_wifi` 区分开）。
+
+## 8. 崩溃窗口收窄到 CmdBoot 内 4 步
+
+`sbstop=1`（`BootLinux` 第一行 `SB_STOP(1)`，紧接 `SbBootProbe("[K] enter")`）**崩了**
+（设备进递归 dump 循环，宿主端点 shutdown）。⇒ 崩溃在
+**`CmdBoot` 入口 → `SbBootProbe("[K] enter")` 之前**，即下面 4 步之内：
+
+```
+SetBootDevImage()  →  Info.Images[] 装填 / PartitionHasMultiSlot()  →  ClearUnbootable()  →  LoadImageAndAuth()
+```
+
+下一发用细二分件 `out/uefi-20261105-finebisect-r1.img`（sha `47ba2cb2…`，
+加 `patches/uefi/20261105-finebisect/`），四个只回话的停机点：
+
+| 件 | 停机点 | 命中含义 |
+|---|---|---|
+| `fb-stop13.img` | `LoadImageAndAuth()` **之前** | 11/12 都不崩 ⇒ 崩在 `LoadImageAndAuth` 内部 |
+| `fb-stop11.img` | `SetBootDevImage()` 之后 | 崩在 `SetBootDevImage` 或更早 |
+| `fb-stop14.img` | `LoadImageAndAuth()` 返回之后 | 崩在 `BootLinux` 早段（`[K] enter` 前后） |
+| `fb-stop12.img` | `ClearUnbootable()` 之后 | 崩在 `ClearUnbootable` 或 `PartitionHasMultiSlot` |
+
+判据仍是宿主字符串：收到 `diag st=Success last=[<tag>]` ⇒ 该点之前不崩；无响应 ⇒ 崩在该点之前。
+**每次"无响应"要一次物理断电**，所以按 13 → 11 → 14 顺序打，命中即止。

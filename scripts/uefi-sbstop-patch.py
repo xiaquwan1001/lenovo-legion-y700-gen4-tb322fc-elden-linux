@@ -77,8 +77,9 @@ def do_check(path):
 
 
 def do_patch(src, stage, dst):
-    if not 1 <= stage <= 9:
-        fail("stage=%d out of range 1..9" % stage)
+    # 0 = diag 入口探针；1..7 = BootLinux 内停机点；11..14 = CmdBoot 内细二分
+    if not 0 <= stage <= 99:
+        fail("stage=%d out of range 0..99" % stage)
     blob = bytearray(open(src, "rb").read())
     h = parse_header(blob)
     if h["header_version"] != 2:

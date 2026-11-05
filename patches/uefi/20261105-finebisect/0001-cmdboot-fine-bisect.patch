@@ -1,0 +1,73 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] Fastboot: fine bisect probes in CmdBoot (sbstop=11..14)
+
+2026-11-05 y700-elden: sbstop=0（入口即回话）通过、sbstop=1（BootLinux 第一行）崩，
+说明崩溃发生在 CmdBoot 入口到 BootLinux 之间。本补丁把这一段再切四刀：
+
+  sbstop=11  SetBootDevImage() 之后
+  sbstop=12  ClearUnbootable() 之后（多槽位才走到）
+  sbstop=13  LoadImageAndAuth() 之前
+  sbstop=14  LoadImageAndAuth() 返回之后
+
+每一刀都只回话（FastbootFail）并 return，不碰镜像、不停 USB。
+判据：收到 diag st=Success last=[<tag>] ⇒ 该点之前不崩；无响应 ⇒ 崩在该点之前。
+
+diff --git a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -2847,8 +2847,16 @@
+   }
+ 
+   SetBootDevImage ();
+ 
++  // 2026-11-05 y700-elden: 细二分停机点 sbstop=11（after-setbootdevimage）—— 只回话、不动镜像/不停 USB。
++  if (SbParseStopStage ((CONST CHAR8 *)hdr->cmdline) == 11) {
++    AsciiSPrint (Resp, sizeof (Resp), "diag st=Success last=[after-setbootdevimage]");
++    FastbootFail (Resp);
++    return;
++  }
++
++
+   Info.Images[0].ImageBuffer = Data;
+   /* The actual image size will be updated in LoadImageAndAuth */
+   Info.Images[0].ImageSize = Size;
+   Info.Images[0].Name = "boot";
+@@ -2862,8 +2870,22 @@
+       FastbootFail ("CmdBoot: ClearUnbootable failed");
+       goto out;
+     }
+   }
++  // 2026-11-05 y700-elden: 细二分停机点 sbstop=12（after-clearunbootable）—— 只回话、不动镜像/不停 USB。
++  if (SbParseStopStage ((CONST CHAR8 *)hdr->cmdline) == 12) {
++    AsciiSPrint (Resp, sizeof (Resp), "diag st=Success last=[after-clearunbootable]");
++    FastbootFail (Resp);
++    return;
++  }
++
++
++  // 2026-11-05 y700-elden: 细二分停机点 sbstop=13（before-loadimageauth）—— 只回话、不动镜像/不停 USB。
++  if (SbParseStopStage ((CONST CHAR8 *)hdr->cmdline) == 13) {
++    AsciiSPrint (Resp, sizeof (Resp), "diag st=Success last=[before-loadimageauth]");
++    FastbootFail (Resp);
++    return;
++  }
+ 
+   Status = LoadImageAndAuth (&Info);
+   if (Status != EFI_SUCCESS) {
+     AsciiSPrint (Resp, sizeof (Resp),
+@@ -2880,8 +2902,15 @@
+   }
+   if ((MaxDownLoadSize - (ImageSizeActual - SigActual)) < PageSize) {
+     FastbootFail ("BootImage: Size is greater than boot image buffer can hold");
+     goto out;
++  }
++
++  // 2026-11-05 y700-elden: 细二分停机点 sbstop=14（after-loadimageauth）—— 只回话、不动镜像/不停 USB。
++  if (SbParseStopStage ((CONST CHAR8 *)hdr->cmdline) == 14) {
++    AsciiSPrint (Resp, sizeof (Resp), "diag st=Success last=[after-loadimageauth]");
++    FastbootFail (Resp);
++    return;
+   }
+ 
+   /* Exit keys' detection firstly */
+   ExitMenuKeysDetection ();

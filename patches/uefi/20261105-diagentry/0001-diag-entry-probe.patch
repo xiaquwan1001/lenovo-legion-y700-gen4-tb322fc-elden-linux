@@ -1,0 +1,39 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] Fastboot: diag entry probe —— sbstop=0 在碰任何镜像之前就回话
+
+2026-11-05 y700-elden: R20/R21 的 sbstop 阶梯至今**从未收到过一条 diag st=… 响应**。
+屏上日志只能证明「BdsDxe 起了 FV 内 LinuxLoader（[L] LoadImage=Success）」，
+无法区分三种沉默：
+
+  (a) SbParseStopStage() 解析失败 ⇒ 诊断分支没进，走正常路径（FastbootUsbDeviceStop() + 崩）；
+  (b) 诊断分支进了，但 BootLinux 在 stage N 之前就崩；
+  (c) 诊断分支进了、也 abort 了，但 FastbootFail() 送不出去。
+
+本补丁加「进入即回话」探针：cmdline 带 sbstop=0 时，CmdBoot 在 SetBootDevImage() /
+LoadImageAndAuth() / BootLinux() **之前**就回 diag st=Success last=[entry]，并往屏上打 [L] diag-entry。
+
+判据（一发定性，零写盘）：
+  宿主收到 diag st=Success last=[entry] ⇒ (a) 排除，回传通路成立；
+  收不到且屏上有 [L] diag-entry        ⇒ (c) 成立（回传通路坏，须换通道）；
+  收不到且屏上无该行                    ⇒ (a) 成立（解析/分支问题）。
+
+diff --git a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -2845,8 +2845,16 @@
+   } else {
+     HdrV3->cmdline[BOOT_ARGS_SIZE + BOOT_EXTRA_ARGS_SIZE - 1] = '\0';
+   }
+ 
++  // 2026-11-05 y700-elden: diag 入口探针 —— sbstop=0 时**不碰镜像**、不停 USB，直接回话。
++  // 目的：把「解析失败」「早崩」「回传送不出去」三种沉默区分开（见补丁头）。
++  if (SbParseStopStage ((CONST CHAR8 *)hdr->cmdline) == 0) {
++    AsciiSPrint (Resp, sizeof (Resp), "diag st=Success last=[entry]");
++    FastbootFail (Resp);
++    return;
++  }
++
+   SetBootDevImage ();
+ 
+   Info.Images[0].ImageBuffer = Data;
+   /* The actual image size will be updated in LoadImageAndAuth */
