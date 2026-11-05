@@ -158,6 +158,23 @@
 - **正文/坑**：`reports/uefi-noavb-dtbo-bootchain-20261104R.md` §8/§9；`PITFALLS` #509–#511；
   会话记录 `sessions/2026-11-05-断电收尾R21取证通道重建.md`。
 
+### 2026-11-05（夜）：判据彻底改为**宿主可读**，崩溃点从「DXE 里某处」收敛到 `LoadImageAndAuth` 前导 3 步
+
+- **一句话**：`sbstop=0` 入口探针证明「令牌解析 + `FastbootFail` 回传 + 探针后固件仍活」三件全成立
+  （`diag st=Success last=[entry]`，随后 `getvar product` = **`sun`**，与 ABL 的 `elden_prc_wifi` 区分）；
+  随后 10 发零写盘阶梯把崩溃点锁进 `LoadImageAndAuth()` 前导（`fb-stop13` 回话 / `pre-stop19` 崩）。
+- **关键判据变更**：崩在 `ShutdownUefiBootServices` 附近时 USB 端点会死（`reap_urb … transport endpoint shutdown`），
+  `FastbootFail` **结构性送不出去** ⇒ 改用「宿主是否收到 `diag`」+「崩不崩」双判据；**代价 = 每次崩一次物理断电**。
+- **已排除**：`WaitForFlashFinished()`（`gEfiKernelProtocolGuid` 查找失败 `Status:0xE` ⇒ `KernIntf==NULL` ⇒ 多线程路径不启用）、
+  `GetAVBVersion()`（编译期 `NO_AVB`）、`Images[1]` 越界（数组 32 项）、`GUARD()`、`CheckImageHeader()`、`VBAllocateCmdLine()`。
+- **首要嫌疑**：`FindBootableSlot()`（`PartitionTableUpdate.c:1603`，槽位属性读/写 + `ValidateSlotGuids` + `MarkPtnActive`），
+  与 `PITFALLS #484` 同一片区域；崩溃 ELR **固定 `0xCFE988F0`、落在 DXE Heap `[0xB90C0000,0xD6610000)` 内** ⇒ 跳进堆（坏函数指针/返回地址）。
+- **下一步（件已就绪）**：`out/r21-sbstop/uefi-preamble-r1.img`（`7757114d…`）+ `pre-stop{18,17,16}.img`，
+  打序 18 → 17 → 16，判据 `diag st=Aborted last=[vs-N]`；`pre-stop19` 已证崩在 `GetAVBVersion` 之前。
+- **正文/工具**：`reports/uefi-screenlog-crash-20261105.md` §7–§12（含全部 10 发表格）；
+  补丁 `patches/uefi/20261105-{diagentry,finebisect,vsbisect}/`；工具 `scripts/uefi-sbstop-patch.py`、
+  `scripts/uefi-r21-sbstop-ladder.sh`；会话记录 `sessions/2026-11-05-UEFI宿主侧判据阶梯.md`。
+
 ### 2026-11-04（更深夜）：路线重排 —— **loader 早就在 FV 里（`LinuxLoader`），只是没人启动它** ⇒ 首选改成路线 D
 
 - **下轮入口**：`.pi/plans/2026-11-04_late-uefi-routeD-linuxloader.md`（复核 + 7 条新增主机侧事实 + R13 实施单 + 风险表）。

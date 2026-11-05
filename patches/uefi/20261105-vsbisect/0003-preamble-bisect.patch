@@ -1,0 +1,38 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH 3/3] VerifiedBoot: bisect LoadImageAndAuth preamble (sbstop=16..19)
+
+2026-11-05 y700-elden: vs-stop20（wrapper 入口）崩、fb-stop13（LoadImageAndAuth 之前）回话
+⇒ 崩溃在 LoadImageAndAuth 的前导代码里。本补丁切四刀：
+
+  16  LoadImageAndAuth 入口（WaitForFlashFinished 之前）
+  17  WaitForFlashFinished 之后
+  18  分区名块（FindBootableSlot）之后
+  19  GetAVBVersion 之后
+
+判据：diag st=Aborted last=[vs-N] ⇒ 该点之前不崩；无响应 ⇒ 崩在该点之前。
+打序 19 → 18 → 17 → 16。
+
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index f43ed404..0a14c668 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -1762,7 +1762,9 @@ LoadImageAndAuth (BootInfo *Info)
+   QCOM_MDTP_PROTOCOL *MdtpProtocol;
+   UINT32 AVBVersion = NO_AVB;
+ 
++  VS_STOP (16);
+   WaitForFlashFinished ();
++  VS_STOP (17);
+ 
+   if (Info == NULL) {
+     DEBUG ((EFI_D_ERROR, "Invalid parameter Info\n"));
+@@ -1821,7 +1823,9 @@ LoadImageAndAuth (BootInfo *Info)
+     }
+   }
+ 
++  VS_STOP (18);
+   AVBVersion = GetAVBVersion ();
++  VS_STOP (19);
+   DEBUG ((EFI_D_VERBOSE, "AVB version %d\n", AVBVersion));
+   // 2026-11-04R14 y700-elden: RELEASE strips DEBUG(); print the two values that
+   // decide whether a verification error is tolerated.  AsciiPrint = UefiLib (already

@@ -172,3 +172,96 @@ LoadImageAndAuth()                      VerifiedBoot.c:1658
 | `vs-stop20` | wrapper 入口 | 崩在 `LoadImageNoAuthWrapper` 之前（`GetAVBVersion`/`FindBootableSlot` 段） |
 
 判据仍是宿主字符串 `diag st=Aborted last=[vs-N]`；打序 25 → 24 → 23 → 22 → 21 → 20。
+
+## 10. vs-stop25（wrapper 返回前）也崩 ⇒ 窗口 = `LoadImageNoAuthWrapper` 全段 (20, 25]
+
+```
+$ fastboot -s 51318dc0 boot out/r21-sbstop/vs-stop25.img
+Sending 'boot.img' (65624 KB)  OKAY [  1.489s]
+Booting                        ← 无 diag，随后 getvar 也死（端点 shutdown）
+```
+
+⇒ 崩溃不在 `LoadImageAndAuth` 的后半（MDTP / milestone / DisplayVerifiedBootScreen），
+而在 `LoadImageNoAuthWrapper` 内部：`VBAllocateCmdLine` → `LoadImageNoAuth`
+（`LoadBootImageNoAuth` + `NoAVBLoadReqImage(dtbo)`）→ `GetSystemPath`/`AppendVBCmdLine` 之间。
+
+下一发打 `vs-stop23`（`LoadBootImageNoAuth` 返回之后）：回话 ⇒ 窗口右移到 dtbo/GetSystemPath；
+崩 ⇒ 窗口左移到 `LoadBootImageNoAuth` 内（那正是 fastboot 上传 buffer 与分区读两条路径分叉处）。
+
+## 11. vs-stop23 也崩 ⇒ 窗口 (20, 23]；源码侧可疑点清单
+
+`vs-stop23`（`LoadBootImageNoAuth` 返回之后）无响应 ⇒ 崩溃在
+`VBAllocateCmdLine()` / `LoadBootImageNoAuth()` 之内（22、23 之间或其左）。
+
+源码侧已排除/存疑：
+
+| 项 | 结论 |
+|---|---|
+| `Info.Images[1]` 越界（`NumLoadedImages=1` 时 `NoAVBLoadReqImage` 写 `Images[1]`） | **排除**：`MAX_NUMBER_OF_LOADED_IMAGES = 32`（`BootLinux.h:83`） |
+| `CheckImageHeader()` 整数溢出路径 | 只有 `EFI_BAD_BUFFER_SIZE` 返回，无指针调用 |
+| `VBAllocateCmdLine()` | 只 `AllocateZeroPool(DTB_PAD_SIZE)` + 置 0，**本身无堆执行风险** |
+| `LoadBootImageNoAuth()` fastboot 分支 | `BootImageLoaded=TRUE` ⇒ 跳过 `Images[0].Name` 分配与 `LoadImage()`，**只做 header 校验 + 尺寸计算** |
+| 崩溃地址固定 `0xCFE988F0`（DXE Heap 内） | 说明是**跳进堆**：坏函数指针 / 栈上返回地址被覆盖 / 结构体里存的指针被当代码调用 |
+
+⇒ 下一发 `vs-stop22`（`LoadImageNoAuth` 入口）就是二选一：
+回话 ⇒ 崩在 `LoadBootImageNoAuth`（header 校验/尺寸计算段）；
+崩 ⇒ 崩在 `VBAllocateCmdLine` 或 wrapper 入口。
+
+---
+
+## 12. 收尾（2026-11-05 夜）：崩溃窗口最终收敛到 `LoadImageAndAuth` 前导 3 步
+
+### 12.1 本轮全部发次（均为零写盘 `fastboot boot`，判据全部宿主可读）
+
+| # | 件 | 停机点 / 路径 | 结果 | 结论 |
+|---|---|---|---|---|
+| 1 | `r21-stop0` | `CmdBoot` 入口 | ✅ `diag st=Success last=[entry]` | 解析+回传通路成立；探针后固件仍活（`product: sun`） |
+| 2 | `r21-stop1` | `BootLinux` 第一行 | ❌ 崩 | 崩在进 `BootLinux` 之前 |
+| 3 | `fb-stop13` | `LoadImageAndAuth()` 之前 | ✅ `last=[before-loadimageauth]` | `SetBootDevImage`/`ClearUnbootable` 干净 |
+| 4 | `fb-stop14` | `LoadImageAndAuth()` 之后 | ❌ 崩 | 崩溃严格在 `LoadImageAndAuth()` 内 |
+| 5 | `vs-stop25` | wrapper 返回前 | ❌ 崩 | 排除函数后半（MDTP/milestone） |
+| 6 | `vs-stop23` | `LoadBootImageNoAuth` 之后 | ❌ 崩 | 排除 dtbo 装载 / `GetSystemPath` |
+| 7 | `vs-stop22` | `LoadImageNoAuth` 入口 | ❌ 崩 | 排除其后的 dtbo/GetSystemPath 段 |
+| 8 | `vs-stop21` | `VBAllocateCmdLine` 之后 | ❌ 崩 | 排除 `VBAllocateCmdLine` 之后的段 |
+| 9 | `vs-stop20` | wrapper 入口 | ❌ 崩 | 崩在 wrapper 之前 ⇒ 进 `LoadImageAndAuth` 前导 |
+| 10 | `pre-stop19` | `GetAVBVersion()` 之后 | ❌ 崩 | 崩在 `GetAVBVersion()` 之前 |
+
+**最终窗口 = `fb-stop13` 之后 → `pre-stop19` 之前**，即 `LoadImageAndAuth()` 前导的 3 步：
+
+```c
+LoadImageAndAuth (BootInfo *Info)          // VerifiedBoot.c:1658
+  WaitForFlashFinished ();                 // ① 已可排除（见 12.2）
+  if (Info == NULL) ...
+  /* Get Partition Name */
+  ... FindBootableSlot (&CurrentSlot) ...  // ② 首要嫌疑
+  AVBVersion = GetAVBVersion ();           // ③ 编译期常量，已可排除
+  switch (AVBVersion) { case NO_AVB: return LoadImageNoAuthWrapper (Info); }
+```
+
+### 12.2 源码审计已排除项
+
+| 项 | 依据 |
+|---|---|
+| ① `WaitForFlashFinished()` | 屏上 `Error getting gEfiKernelProtocolGuid handle, Status: 0xE` ⇒ `KernIntf == NULL` ⇒ `InitMultiThreadEnv` 早退 ⇒ `IsMultiThreadSupported = FALSE` ⇒ `IsUseMThreadParallel()` 为假 ⇒ 其中的 `KernIntf->Lock->AcquireLock()` 间接调用**不会执行** |
+| ③ `GetAVBVersion()` | 预处理常量：`#else return NO_AVB;`（`VERIFIED_BOOT*` 全 0） |
+| `Info.Images[1]` 越界 | `MAX_NUMBER_OF_LOADED_IMAGES = 32`（`BootLinux.h:83`） |
+| `GUARD()` 宏 | 纯 `do{...}while(0)`，无函数指针 |
+| `CheckImageHeader()` | 只返回错误码，无间接调用 |
+| `VBAllocateCmdLine()` | 仅 `AllocateZeroPool(DTB_PAD_SIZE=2048)` |
+
+⇒ **首要嫌疑 = ② `FindBootableSlot()`**（`PartitionTableUpdate.c:1603`）：
+`GetActiveSlot` → `GetBootPartitionEntry`（`GetPartitionIndex(boot_a/boot_b)` → `&PtnEntries[Index]`）
+→ 读槽位属性（`PART_ATT_UNBOOTABLE/SUCCESSFUL/MAX_RETRY`）→ 必要时 `UpdatePartitionAttributes(PARTITION_ATTRIBUTES)`
+→ `ValidateSlotGuids` → `MarkPtnActive`。与 `PITFALLS #484`（引导固件代次与 A/B 槽脱钩）同一片区域。
+
+### 12.3 下一次接着跑（件已就绪，各 1 发，崩了断电）
+
+`out/r21-sbstop/uefi-preamble-r1.img`（sha `7757114d…`）+ `pre-stop{16,17,18}.img`：
+
+| 打序 | 件 | 停机点 | 回话 ⇒ | 崩 ⇒ |
+|---|---|---|---|---|
+| 1 | `pre-stop18` | `FindBootableSlot` 之后 | 崩在 `GetAVBVersion`→`switch`→调用 wrapper 之间 | 崩在 `FindBootableSlot` 内（锁定 ②） |
+| 2 | `pre-stop17` | `WaitForFlashFinished` 之后 | 崩在 `Info==NULL` 或分区名块 | 崩在 `WaitForFlashFinished`（需重查 ①） |
+| 3 | `pre-stop16` | 函数入口 | 崩在 `WaitForFlashFinished` 之前（`fb-stop13` 与函数入口之间） | — |
+
+判据仍是 `diag st=Aborted last=[vs-N]`；`pre-stop19` 已证崩在 `GetAVBVersion` 之前。
