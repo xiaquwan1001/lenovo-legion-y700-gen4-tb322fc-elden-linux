@@ -25,7 +25,9 @@
 #   scripts/uefi-r21-sbstop-ladder.sh --dry-run                    # 造件 + 打印排产，不碰设备
 #   scripts/uefi-r21-sbstop-ladder.sh                              # 默认：5,3,4,2 × 3 次
 #   scripts/uefi-r21-sbstop-ladder.sh --stages 5,3,6,4,2 --repeats 2
+#   scripts/uefi-r21-sbstop-ladder.sh --control                    # 先跑基线（未改动的 R21 件）再跑阶梯
 #   scripts/uefi-r21-sbstop-ladder.sh --no-setup                   # UEFI 侧 fastboot 已在，跳过 ABL 载入
+#   scripts/uefi-r21-sbstop-ladder.sh --keep-going                 # 卡死也继续（默认遇 NO_SERVICE/HUNG 即停，等物理断电）
 #
 # 环境变量：UEFI_SER（默认 51318dc0 = UEFI 侧 fastboot 序列号）、ABL_SER、TAB（SSH 目标）、
 #           UEFI_SIZE/… 与本脚本无关；R21_IMG 可覆盖源镜像路径。
@@ -39,7 +41,8 @@ UEFI_SER=${UEFI_SER:-51318dc0}
 ABL_SER=${ABL_SER:-}
 TAB=${TAB:-root@192.168.7.1}
 SETUP_TIMEOUT=${SETUP_TIMEOUT:-240}    # ABL 载 UEFI 后等 UEFI 侧 fastboot 出现
-CMD_TIMEOUT=${CMD_TIMEOUT:-90}         # 单条 `fastboot boot` 的硬上限（含 -k 强杀）
+CMD_TIMEOUT=${CMD_TIMEOUT:-45}         # 单条 `fastboot boot` 的硬上限（含 -k 强杀）
+KEEP_GOING=${KEEP_GOING:-0}            # 崩在 dump 循环里（设备卡死）时默认停下，不留一堆废发
 OUTDIR=${OUTDIR:-}
 MODE=run
 
@@ -56,11 +59,14 @@ while [ $# -gt 0 ]; do
 		--abl-serial)  ABL_SER=$2; shift 2;;
 		--cmd-timeout) CMD_TIMEOUT=$2; shift 2;;
 		--selftest)   MODE=selftest; shift;;
+		--control)    CONTROL=1; shift;;
+		--keep-going) KEEP_GOING=1; shift;;
 		-h|--help) sed -n '2,32p' "$0"; exit 0;;
 		*) echo "unknown arg: $1" >&2; exit 2;;
 	esac
 done
 NO_SETUP=${NO_SETUP:-0}
+CONTROL=${CONTROL:-0}
 
 say()  { echo "[$(date +%H:%M:%S)] $*"; }
 warn() { echo "[$(date +%H:%M:%S)] WARN: $*" >&2; }
@@ -87,9 +93,27 @@ IFS=',' read -r -a STAGE_LIST <<< "$STAGES"
 
 # ---------- 判据分类（纯字符串，主机侧；--selftest 会用它跑合成样本） ----------
 # USB_ALIVE_OVERRIDE：仅 selftest 用（无设备时 lsusb 恒空，会把 CRASH_BEFORE 误判成 HUNG）
+# 两种 VID 都要认：ABL fastboot = 18d1:d00d，**UEFI 侧 fastboot = 045e:0c2f**（2026-11-05 实测，
+# 换手时设备会先 disconnect 再以新 VID 重新枚举）。
 usb_gone() {
 	if [ -n "${USB_ALIVE_OVERRIDE:-}" ]; then [ "$USB_ALIVE_OVERRIDE" = 1 ] && return 1 || return 0; fi
-	! lsusb 2>/dev/null | grep -q '18d1:d00d'
+	! lsusb 2>/dev/null | grep -qE '18d1:d00d|045e:0c2f'
+}
+# 设备枚举着 ≠ 固件还在应答：递归 sync-exception dump 会把 fastboot 主循环卡死，
+# 此时 `fastboot devices` 仍能看到序列号，但 getvar 永远没有输出（实测 rc=124）。
+# 注意：不能用"有输出"当活着的判据 —— 端点已 shutdown 时 fastboot 会打印
+# `getvar:product FAILED (reap_urb(0) failed … transport endpoint shutdown)`，那是有输出但已死。
+svc_ok() {
+	[ -n "${SVC_OVERRIDE:-}" ] && return "$((1-SVC_OVERRIDE))"
+	local o
+	o=$(timeout -k 3 8 fastboot -s "${1:-$UEFI_SER}" getvar product 2>&1)
+	printf '%s' "$o" | grep -q '^product:'
+}
+# 端点被 shutdown = 固件真的死了（宿主仍缓存设备描述符，`fastboot devices` 还会列出序列号）
+svc_dead() {
+	local o
+	o=$(timeout -k 3 8 fastboot -s "${1:-$UEFI_SER}" getvar product 2>&1)
+	printf '%s' "$o" | grep -qiE 'endpoint shutdown|No such device|LIBUSB_ERROR_NO_DEVICE'
 }
 classify() { # $1=stage $2=raw output file $3=rc
 	local n=$1 f=$2 rc=$3 marker st
@@ -100,9 +124,11 @@ classify() { # $1=stage $2=raw output file $3=rc
 	elif grep -qE 'last=\[[^]]*\] stop=[0-9]+' "$f" 2>/dev/null; then
 		echo "OTHER_STAGE|$marker|"
 	elif [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
-		if usb_gone; then echo "CRASH_BEFORE|-|timeout ${CMD_TIMEOUT}s + USB 消失";
-		elif [ -n "$st" ]; then echo "INCONC|$marker|timeout 但收到 st=$st";
-		else echo "HUNG|-|timeout 但设备仍在枚举"; fi
+		if usb_gone; then echo "CRASH_BEFORE|-|timeout ${CMD_TIMEOUT}s + USB 消失"
+		elif [ -n "$st" ]; then echo "INCONC|$marker|timeout 但收到 st=$st"
+		elif svc_ok; then echo "HUNG|-|timeout 但 fastboot 仍应答（卡在命令里）"
+		elif svc_dead; then echo "CRASH_BEFORE|-|USB 端点 shutdown（固件已死，宿主仍缓存描述符）"
+		else echo "NO_SERVICE|-|枚举着但 getvar 无应答（递归 dump 死循环）"; fi
 	elif [ -n "$st" ]; then
 		echo "INCONC|$marker|st=$st 但无 stop 标记"
 	else
@@ -122,8 +148,9 @@ if [ "$MODE" = selftest ]; then
 	t REACHED      7 1 'diag st=Aborted last=[K] stop=7'
 	t OTHER_STAGE  5 1 'diag st=Aborted last=[K] stop=3'
 	USB_ALIVE_OVERRIDE=0; t CRASH_BEFORE 5 124 ''
-	USB_ALIVE_OVERRIDE=1; t HUNG         5 124 'waiting for device'
-	unset USB_ALIVE_OVERRIDE
+	USB_ALIVE_OVERRIDE=1; SVC_OVERRIDE=1; t HUNG       5 124 'waiting for device'
+	USB_ALIVE_OVERRIDE=1; SVC_OVERRIDE=0; t NO_SERVICE 5 124 'Booting'
+	unset USB_ALIVE_OVERRIDE SVC_OVERRIDE
 	t INCONC       5 0 'FAILED (remote: device not found)'
 	t INCONC       5 1 'diag st=Success last=[V] x'
 	rm -rf "$T"
@@ -137,7 +164,7 @@ say "src  $SRC"
 say "sha  $SRC_SHA"
 say "stages=${STAGE_LIST[*]} repeats=$REPEATS uefi_ser=$UEFI_SER abl_ser=${ABL_SER:-auto} cmd_timeout=${CMD_TIMEOUT}s"
 say "records $OUTDIR"
-say "images  $IMGDIR  (manifest: $(basename "$IMG_MANIFEST"))"
+say "images  $IMGDIR"
 
 # ---------- 1) 头校验（源） ----------
 python3 "$ROOT/scripts/uefi-sbstop-patch.py" --check "$SRC" > "$OUTDIR/header-src.txt" 2>&1 \
@@ -153,7 +180,7 @@ for n in "${STAGE_LIST[@]}"; do
 	out=$(python3 "$ROOT/scripts/uefi-sbstop-patch.py" "$SRC" "$n" "$dst" 2>&1)
 	rc=$?
 	echo "$out" > "$OUTDIR/patch-stage$n.txt"
-	if [ $rc -ne 0 ]; then cat "$OUTDIR/img/patch-stage$n.txt"; die "stage $n 打补丁失败"; fi
+	if [ $rc -ne 0 ]; then cat "$OUTDIR/patch-stage$n.txt"; die "stage $n 打补丁失败"; fi
 	cnt=$(printf '%s\n' "$out" | sed -n 's/.*changed_bytes \([0-9]*\).*/\1/p')
 	sha=$(printf '%s\n' "$out" | sed -n 's#^dst   .* sha256 \([0-9a-f]\{64\}\).*#\1#p')
 	IMGOF[$n]=$dst
@@ -239,12 +266,41 @@ run_one() { # $1=stage $2=run
 	grep -E 'diag st=|stop=|Booting|FAILED|Err' "$f" | tail -5 >> "$OUTDIR/diag-tail.txt" 2>/dev/null
 }
 
+# ---------- 4a) 基线对照：未改动的 R21 件走同一条 UEFI 侧 `boot` 路径 ----------
+# 目的：证明「卡死」不是我们注入的 `sbstop=N ` 令牌造成的（令牌只改 8 字节 cmdline，
+# 但判据必须能排除它）。基线也卡死 ⇒ 卡死是 R21 件本身的随机异常，令牌无关。
+if [ "$CONTROL" = 1 ]; then
+	if ! have_ser "$UEFI_SER"; then ensure_uefi_fastboot "control" || die "基线：UEFI 侧 fastboot 没起来"; fi
+	f="$OUTDIR/run-control.txt"; t0=$(date +%s)
+	fb_uefi boot "$SRC" > "$f" 2>&1; rc=$?; t1=$(date +%s); el=$((t1-t0))
+	if grep -q 'diag st=' "$f" 2>/dev/null; then v=CONTROL_ALIVE; mk=$(grep -o 'diag st=[^ ]* last=\[[^]]*\]' "$f" | tail -1)
+	elif usb_gone; then v=CRASH_BEFORE; mk=-
+	elif svc_ok; then v=HUNG; mk=-
+	else v=NO_SERVICE; mk=-; fi
+	printf '0	1	%s	%s	%s	%s
+' "$v" "$el" "$mk" "control=未改动 R21 件" >> "$OUTDIR/results.tsv"
+	say "control（未改动 R21）→ $v (${el}s)"
+	if [ "$v" = NO_SERVICE ] || [ "$v" = HUNG ]; then
+		warn "基线也卡死 ⇒ 与 sbstop 令牌无关；设备需要物理断电后才能跑阶梯。"
+		[ "$KEEP_GOING" = 1 ] || exit 0
+	fi
+fi
+
+STUCK=0
 for n in "${STAGE_LIST[@]}"; do
 	for r in $(seq 1 "$REPEATS"); do
 		run_one "$n" "$r"
+		# 设备卡进 dump 循环后必须物理断电才能继续 ⇒ 默认不再往下浪费
+		case "$(tail -1 "$OUTDIR/results.tsv" | cut -f3)" in
+			NO_SERVICE|HUNG) [ "$KEEP_GOING" = 1 ] || { STUCK=1; break 2; };;
+		esac
 		sleep 2
 	done
 done
+if [ "$STUCK" = 1 ]; then
+	warn "设备已卡死（枚举着但 fastboot 不应答）⇒ 需要**物理断电**再开机才能继续（这一步只能你来）。"
+	warn "恢复后重跑：按 SUMMARY 里已取到的最大应答档位继续，或先用 --control 跑基线。"
+fi
 
 # ---------- 5) 汇总 ----------
 say "===== 汇总 ====="

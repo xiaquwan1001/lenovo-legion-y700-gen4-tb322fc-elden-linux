@@ -1,0 +1,24 @@
+[20:31:39] ===== r21 sbstop ladder START mode=run =====
+[20:31:39] src  /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img
+[20:31:39] sha  a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+[20:31:39] stages=2 repeats=1 uefi_ser=51318dc0 abl_ser=HA2EXB0E cmd_timeout=45s
+[20:31:39] records reports/artifacts/uefi-r21-sbstop-r2-203139
+[20:31:39] images  /home/xuqianhui/y700-elden/out/r21-sbstop
+file            /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img (67198976 B)
+sha256          a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+kernel_size     0x25325f
+page_size       4096
+header_version  2
+os_version      0x1e000133
+cmdline@64      'console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel pr' (64 B used of 64)
+[20:31:40] 造件完成 1 件：
+stage  token      file           sha256                                                            size      diff_bytes
+2      sbstop=2   r21-stop2.img  22de7836c4e14d4374c9838766adb5628dd380cc2d779e7af596ac22ce40bd53  67198976  8
+[20:31:40] 镜像指纹 reports/artifacts/uefi-r21-sbstop-r2-203139/variants.sha256.tsv
+[20:31:40] ABL 侧载 UEFI: fastboot boot uefi-20261104R21-hostdiag-r1.img
+Sending 'boot.img' (65624 KB)                      OKAY [  1.490s]
+Booting                                            OKAY [ 10.108s]
+Finished. Total time: 11.630s
+[20:32:05] UEFI 侧 fastboot 出现（51318dc0，~13s）
+[20:32:58] control（未改动 R21）→ NO_SERVICE (45s)
+[20:32:58] WARN: 基线也卡死 ⇒ 与 sbstop 令牌无关；设备需要物理断电后才能跑阶梯。

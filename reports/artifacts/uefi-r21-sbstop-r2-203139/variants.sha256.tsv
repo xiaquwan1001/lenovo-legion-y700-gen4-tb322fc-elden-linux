@@ -1,0 +1,4 @@
+# r21 sbstop variants — src a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+# 2026-11-05T20:31:40+08:00
+stage	token	file	sha256	size	diff_bytes
+2	sbstop=2 	r21-stop2.img	22de7836c4e14d4374c9838766adb5628dd380cc2d779e7af596ac22ce40bd53	67198976	8

@@ -1,0 +1,2 @@
+stage	run	verdict	elapsed_s	marker	note
+0	1	CRASH_BEFORE	45	-	control=未改动 R21 件；USB 端点 shutdown（见 reports/uefi-screenlog-crash-20261105.md §4）
