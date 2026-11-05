@@ -25,7 +25,9 @@ if [ -z "${KDIR:-}" ]; then
 	_t=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$ROOT/patches/current-tree" 2>/dev/null | grep -v '^$' | head -1)
 	KDIR="${_t:+$ROOT/$_t}"
 fi
-KDIR="${KDIR:-$ROOT/build/vk151}"
+# 兜底（2026-11-05）：current-tree 指向的树可能已被归档 ⇒ 退到任意现有 build/*/.config
+for _c in "$ROOT"/build/*/.config; do [ -f "$_c" ] && { KDIR="${_c%/.config}"; break; }; done
+KDIR="${KDIR:-$ROOT/build/m3v2-7.3rc7}"
 CFG="${CONFIG:-$KDIR/.config}"
 CROSS="${CROSS:-aarch64-linux-gnu-}"
 DEFAULT_ANCHORS="ARCH_QCOM DRM_MSM DRM_MSM_DSI DRM_PANEL_NOVATEK_NT36536 CLK_GLYMUR_GCC QCOM_CLK_RPMH QCOM_RPMH QCOM_RPMHPD QCOM_COMMAND_DB PINCTRL_SM8750 PINCTRL_GLYMUR INTERCONNECT_QCOM_SM8750 SPMI_MSM_PMIC_ARB MFD_SPMI_PMIC REGULATOR_QCOM_SPMI REGULATOR_QCOM_RPMH SERIAL_QCOM_GENI SERIAL_QCOM_GENI_CONSOLE QCOM_GENI_SE BLK_DEV_SD SCSI_UFS_QCOM SCSI_UFSHCD_PLATFORM PHY_QCOM_QMP_UFS QCOM_TSENS NVMEM_QCOM_QFPROM I2C_QCOM_GENI SPI_QCOM_GENI"

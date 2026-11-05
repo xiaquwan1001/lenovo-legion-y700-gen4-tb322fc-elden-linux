@@ -403,7 +403,7 @@ FRAG="patches/fragment-modular.config patches/fragment-modular-v2.config" \
 bash scripts/check-modular-config.sh        # 门禁：锚点不回退 / olddefconfig 幂等
 bash scripts/iterate.sh kernel --boot       # 全量重编一次；此后驱动改动走环 0
 ```
-- 树默认 = `patches/current-tree`（日常线 `build/vk151`），`KDIR=` 可覆盖；脚本会打印实际用的树。
+- 树默认 = `patches/current-tree`（2026-11-05 起 = `build/daily`；旧值 `build/vk151` 已随资产清理归档，见 `RESOURCES/README.md` §3 B1），`KDIR=` 可覆盖；脚本会打印实际用的树。
 - 片段逐条符号取值会被核对（`DRIFT` 行 = 被 bool 子项/依赖拉回，属既定行为，见 `PITFALLS #162`）。
 
 **kexec 热重载**（`--kexec`，kernel 默认；**⚠️ 本机已定论不可用**）：

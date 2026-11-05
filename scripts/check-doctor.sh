@@ -177,11 +177,13 @@ fi
 echo
 echo "== 5f. ABI 敏感项一致性（内核 ↔ 模块树）=="
 _abi_trees=""
-for _t in build/m1-73 build/base-7.2 build/q28-disp-73 linux; do
-  [ -f "$_t/.config" ] && _abi_trees="$_abi_trees $_t"
+# 2026-11-05 清理后改为**动态发现**：任何 build/*/.config 或 linux/.config 都参与核对
+# （原写死 build/m1-73 等，树被归档后会静默跳过 ⇒ 门禁失效）。
+for _c in build/*/.config linux/.config; do
+  [ -f "$_c" ] && _abi_trees="$_abi_trees ${_c%/.config}"
 done
 if [ -z "$_abi_trees" ]; then
-  warnf "未找到任何内核树的 .config（build/m1-73 等）→ 跳过"
+  warnf "未找到任何内核树的 .config（build/*/ 或 linux/）→ 跳过（重建树后自动恢复核对）"
 else
   for _t in $_abi_trees; do
     if bash scripts/check-abi-config.sh "$_t/.config" >/tmp/abi5f.$$ 2>&1; then
@@ -194,15 +196,16 @@ else
   done
 fi
 
-if [ -d build/m1-73 ] && command -v pahole >/dev/null 2>&1 && [ -f build/m1-73/vmlinux ]; then
-  _off=$(pahole -C device build/m1-73/vmlinux 2>/dev/null | awk '/struct device_node \* +of_node/{gsub(/\*/,"",$(NF-2)); print $(NF-2)}' | tr -d ';')
+_of_tree=$(for _t in $_abi_trees; do [ -f "$_t/vmlinux" ] && { echo "$_t"; break; }; done)
+if [ -n "${_of_tree:-}" ] && command -v pahole >/dev/null 2>&1; then
+  _off=$(pahole -C device "$_of_tree/vmlinux" 2>/dev/null | awk '/struct device_node \* +of_node/{gsub(/\*/,"",$(NF-2)); print $(NF-2)}' | tr -d ';')
   if [ -n "$_off" ]; then
-    ok "build/m1-73 vmlinux: struct device.of_node @ $_off（部署的模块必须读同一偏移）"
+    ok "$_of_tree vmlinux: struct device.of_node @ $_off（部署的模块必须读同一偏移）"
   else
-    warnf "build/m1-73/vmlinux 取不到 of_node 偏移（pahole 无该成员？）"
+    warnf "$_of_tree/vmlinux 取不到 of_node 偏移（pahole 无该成员？）"
   fi
 else
-  [ -d build/m1-73 ] && warnf "缺 pahole 或 build/m1-73/vmlinux → 跳过 of_node 偏移核对"
+  [ -n "${_of_tree:-}" ] && warnf "缺 pahole 或 $_of_tree/vmlinux → 跳过 of_node 偏移核对"
 fi
 
 # ---------------------------------------------------------------- 6. 静态卫生（防造轮回退）
@@ -594,8 +597,10 @@ done
 # 但没有任何调用方 —— 与 §11 同类问题：门写在仓库里，实际从不执行。
 echo
 echo "== 12. 驱动模块化门禁（锚点不回退 / olddefconfig 幂等 / tristate 自洽）=="
-if [ ! -d build/vk151 ]; then
-  warnf "无 build/vk151 构建树 → 跳过模块化门禁（换机/清理后属预期，不影响入库）"
+_mcfg_tree=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' patches/current-tree 2>/dev/null | grep -v '^$' | head -1)
+[ -z "${_mcfg_tree:-}" ] && _mcfg_tree=$(for _c in build/*/.config; do [ -f "$_c" ] && { echo "${_c%/.config}"; break; }; done)
+if [ -z "${_mcfg_tree:-}" ] || [ ! -f "$_mcfg_tree/.config" ]; then
+  warnf "无构建树可用（patches/current-tree = ${_mcfg_tree:-空}）→ 跳过模块化门禁（重建树后自动恢复；不影响入库）"
 elif [ ! -f scripts/check-modular-config.sh ]; then
   bad "scripts/check-modular-config.sh 缺失"
 else

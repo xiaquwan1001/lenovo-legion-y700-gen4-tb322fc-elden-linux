@@ -106,3 +106,46 @@
 
 - **不重生成** `versions/vk-kernel-identity.tsv`、**不动** `versions/vk-ledger-known-issues.tsv`（迁移纪律：镜像缺失会清空/污染 118 行表）。
 - 在机 `boot_b` 现值仍只认 `DEVICE/README.md` §1.1（vk172 `fb55997c…`）；lane B 未证 `bootslot-b/boot_b.img` 与在机值的关系（该文件是随刷写变动的工作副本），下次上机先 `sha256sum` 对读回再动槽备份。
+
+---
+
+## §7 父进程执行记录 — `build/` 清扫（2026-11-05 第二轮，用户批准后执行）
+
+> 用户 2026-11-05「可以，开始逐步推进」放行 B1。本节是**执行账**（§2/§3 是 lane B 的只读盘点，保留原样）。
+> 命令级明细：`backup/build-bundles/MANIFEST-20261105.tsv`（干净树 13 行）、`backup/build-bundles/dirty-20261105/MANIFEST.tsv`（脏树 16 行）。
+
+### 7.1 数字
+
+| 项 | 前 | 后 |
+|---|---:|---:|
+| `build/` 总体积 | 190.7 G | **16 G**（释放 **≈174 G**） |
+| `build/` 顶层条目 | 37 | **13**（+ 新增 `build/daily`） |
+| 宿主可用空间 | 346 G | **≈503 G**（`df -h /home`） |
+| 备份代价 | — | `backup/build-bundles/m3v2-7.3rc7-git-20261105.tar.zst` **1.33 G** + 脏树 diff/untracked **756 K** |
+
+### 7.2 做法（不是 `rm -rf`）
+
+1. **共享 `.git` 整体备份**：`build/m3v2-7.3rc7/.git`（1.5 G，26 个 worktree 引用 + **142 个未推送提交**）→ `tar | zstd` 1.33 G。
+   **先试图 `git bundle --all` 但失败**：该仓是**浅克隆**（`.git/shallow` 435 行），bundle 无法独立 clone（`Failed to traverse parents of commit 6eca69fc…`）
+   ⇒ 改 tar `.git`；抽验 = 解包到 `/tmp` 后 `cat-file -t` 10 个关键提交全为 commit、`rev-list --count --all` = 41750、`--branches --not --remotes` = **142**（与清理前一致）。
+2. **detached HEAD 全部先落 ref**：删前对每个 detached 树建 `tidy-20261105/<name>`（例：`tidy-20261105/m3v5-pristine` = `34865c8915` = 在机 m3v5-onboard 的 tree_head；`tidy-20261105/vk151` = `509f271d52` = vk172 起的 fastrpc 线）。
+   有分支的树直接保留原分支（`b5/send-20261028`、`m4/v3-20261029`、`wl2868c-v5`、`m3v6` 等）。
+3. **脏树先导 diff**：16 棵脏树各自 `status.txt` + `diff --binary HEAD` + `untracked.tgz`（`gunyah-port` 10 个未跟踪文件 359 K、`b5-v2` 4 个 5 K）。
+4. **只删工作树**：`git worktree remove --force`（`build/vk64-{sync,ret}-arm` 在 `geekidos-linux` 仓下；`vk-camssv3` 已脱管，`rm -rf` 前 diff 已导出）。
+5. **重建日常线树**：`git worktree add --detach build/daily replay-m1-73-vk127`（= `24223e44ad`，在机 vk172 源）+ `patches/config-vk163-modular-v2-20261026`；`patches/current-tree` 由已删的 `build/vk151` 改指 `build/daily`。
+
+### 7.3 附带修复（删树暴露的三个门禁失效）
+
+| 问题 | 原状 | 修法 |
+|---|---|---|
+| `patches/current-tree` 指向已删树 | `build/vk151`（`iterate.sh`/`mod-loop`/`apply-kernel-fragment` 的默认树全落空） | 改指 `build/daily`；`scripts/check-modular-config.sh` 增加「current-tree 失效 ⇒ 退到任意 `build/*/.config`」兜底 |
+| `check-doctor` §5f 写死树名 | 只查 `build/m1-73 build/base-7.2 build/q28-disp-73 linux`，树没了就**静默跳过**（门禁失效） | 改**动态发现** `build/*/.config` + 首个有 `vmlinux` 的树做 of_node 偏移核对 |
+| `check-doctor` §12 只在 `build/vk151` 存在时跑 | 删树后整节跳过 | 改为按 `patches/current-tree`（含兜底）解析，解析不到才 warn |
+
+### 7.4 已知损失与残留风险（如实登记）
+
+- **`build/b5-v2` 的 3 个已改文件**（`dsi.h`/`dsi_host.c`/`dsi_manager.c`）**未能导出 diff**：该树是 partial clone，基对象不可读（`fatal: unable to read 6ec5e0a0…`），`tracked.diff` 为 0 字节。
+  该树同时出现**文件名位翻转**（`tools/testijg/`、`ublj`、`vdSo`、`dr)vers` 等 D/?? 对）——与 2026-11-03 `out/boot-elden-m3v5-daily.img` 静默损坏同型，**疑存储/RAM 层问题，非本轮操作造成**；已入 `assets` 取证清单（`status.txt` 原样留档）。
+  影响面有限：该树的 B5 v2 系列**完整存档**在 `patches/upstream/m6-b5-v2-20261102/`（4 枚 + `GATES.md` + logs），未提交改动属 v3 在写内容 ⇒ 需重做，不属不可恢复资产。**建议下次任务优先排查硬件**（本机另有 `hw-stability` 取证项目）。
+- `build/m3v2-7.3rc7/.config` 原为 2026-10-26 m3v4 实验遗留（`CONFIG_SUSPEND=y`，正是 §5f 注释里记的那类 ABI 漂移源），已用 `patches/config-vk163-modular-v2-20261026` 覆盖；该树不是构建树，仅作分支宿主。
+- 删除后 `check-doctor` 的 §5f/§12 从「跳过」恢复为**真实检查并通过**（`build/daily` ABI 27 项一致、模块化门禁 3 项 PASS）。
