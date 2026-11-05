@@ -1,0 +1,403 @@
+git	/home/xuqianhui/y700-elden [git fsck --full --no-dangling]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden [git count-objects -v]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden [git verify-pack -v .git/objects/pack/*.idx]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden HEAD	-	ea27e6827bbf78cc56f5fdafaa50ba57a4159b7c	-	INFO(shallow=no)
+git	/home/xuqianhui/y700-elden/geekidos-linux [git fsck --full --no-dangling]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden/geekidos-linux [git count-objects -v]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden/geekidos-linux [git verify-pack -v .git/objects/pack/*.idx]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden/geekidos-linux HEAD	-	ba28ec16f01f59ba8f5099e8af9e95b061fc5c78	-	INFO(shallow=yes)
+git	/home/xuqianhui/y700-elden/build/m3v2-7.3rc7 [git fsck --full --no-dangling]	ok	rc=2	still-fail	RED: error: HEAD：无效的引用日志条目 98c24fc886658f93149bba6baab1fa6fc5d1f052;error: HEAD：无效的引用日志条目 98c24fc886658f93149bba6baab1fa6fc5d1f052;
+git	/home/xuqianhui/y700-elden/build/m3v2-7.3rc7 [git count-objects -v]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden/build/m3v2-7.3rc7 [git verify-pack -v .git/objects/pack/*.idx]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden/build/m3v2-7.3rc7 HEAD	-	3d3b6da9bfeb78a1f49bbe0fafd71e1d4a83e056	-	INFO(shallow=yes)
+git	/home/xuqianhui/y700-elden/build/base-7.2 [git fsck --full --no-dangling]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden/build/base-7.2 [git count-objects -v]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden/build/base-7.2 [git verify-pack -v .git/objects/pack/*.idx]	ok	-	-	OK(retry=1)
+git	/home/xuqianhui/y700-elden/build/base-7.2 HEAD	-	378459aff2d853960f9f6f07ef75ea57d25c73c9	-	INFO(shallow=no)
+git	/home/xuqianhui/y700-elden/build/daily	na	not-a-repo	na	SKIP
+img	out/boot-elden-dtbo1.img	5d6ba6222b84a829cba81af7d35f5b742bbcbcea24c5f2bde9bd1b96f3bb634a	5d6ba6222b84a829cba81af7d35f5b742bbcbcea24c5f2bde9bd1b96f3bb634a	-	OK
+img	out/boot-elden-dtbo2.img	de99080d926027f66e7568f8776f4509fcd7cb801f5ba95b84aa997f79c666a5	de99080d926027f66e7568f8776f4509fcd7cb801f5ba95b84aa997f79c666a5	-	OK
+img	out/boot-elden-dtbo3.img	46bf4baeb263a3e1d8a31f18afdf38773c8f0c47bbd3ab15a7a31abdde5b175e	46bf4baeb263a3e1d8a31f18afdf38773c8f0c47bbd3ab15a7a31abdde5b175e	-	OK
+img	out/boot-elden-f2fs-root.img	434ec9db203848f7291d33176206fdc7ff097e5b5f4f4401f60ad5f847e8a882	434ec9db203848f7291d33176206fdc7ff097e5b5f4f4401f60ad5f847e8a882	-	OK
+img	out/boot-elden-gh612a.img	950aa0b61226604a7e15985357758fac58822f39eb31ad8289ef9ed73ccedadc	950aa0b61226604a7e15985357758fac58822f39eb31ad8289ef9ed73ccedadc	-	OK
+img	out/boot-elden-gh612b.img	c3fd81eb5565c71499098acb748515198411e16e524ea257f635e0b9b5faaad9	c3fd81eb5565c71499098acb748515198411e16e524ea257f635e0b9b5faaad9	-	OK
+img	out/boot-elden-gunyah1.img	4d97e7e7a5d1a3766992bd3669f7f0c3a0f78e5890352519b96e0b9b8ff84646	4d97e7e7a5d1a3766992bd3669f7f0c3a0f78e5890352519b96e0b9b8ff84646	-	OK
+img	out/boot-elden-m3v5-daily.img	4d7e2ea9a10ca0f4ed0d97946089b6d6cabccea9a9a209b867c23c47c4143e73	4d7e2ea9a10ca0f4ed0d97946089b6d6cabccea9a9a209b867c23c47c4143e73	-	OK
+img	out/boot-elden-m3v5-f2.img	072ddb9a6991b71e5206cfac8abe4881a942bf603ad72b009d36c5fa8d9c3477	072ddb9a6991b71e5206cfac8abe4881a942bf603ad72b009d36c5fa8d9c3477	-	OK
+img	out/boot-elden-m3v5-onboard-b.img	a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	-	OK
+img	out/boot-elden-m3v5-onboard.img	b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66	b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66	-	OK
+img	out/boot-elden-m8ab-base.img	87f6b767671749ab605e83300ddf1201942c62b9bced7185d9cba3afde5f619d	87f6b767671749ab605e83300ddf1201942c62b9bced7185d9cba3afde5f619d	-	OK
+img	out/boot-elden-m8ab-v2.img	b314287bae3efcec757b0a21daf381beac17c3f27398a38e918c2467ba267d57	b314287bae3efcec757b0a21daf381beac17c3f27398a38e918c2467ba267d57	-	OK
+img	out/boot-elden-posctrl-20261103.img	no-baseline	9dfdb3319b61860d472cf403a63730bf431f772a488d577f3870b8b59eb60993	na	NO-BASELINE
+img	out/boot-elden-posctrl-markspin-v2-20261103.img	no-baseline	f7008388f143556cd0e8a6837b5c59c87dc8d2d3e4cdbdc5d3f8e8726d90525e	na	NO-BASELINE
+img	out/boot-elden-posctrl-markspin2-v2-20261103.img	no-baseline	df561f591efa3227c4ef2678e14f88ead08c24275b4ae0571b9d3ecda236d4b4	na	NO-BASELINE
+img	out/boot-elden-posctrl-markspin3-v2-20261103.img	no-baseline	c1168e6552bc17161db20f666a2987bee50712db43a7513d02d11cd5b359bb79	na	NO-BASELINE
+img	out/boot-elden-posctrl-markspin3gz-v2-20261103.img	no-baseline	05d43285f4a789d449dfe15a3735f6f7be1a4016dff96d50984e9f54cbc0e09c	na	NO-BASELINE
+img	out/boot-elden-vk127.img	7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633	7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633	-	OK
+img	out/boot-elden-vk132.img	87b73d2c11d2a6dfd5daf48cfa1928ef6eb8ee9abdc8c7bab6210d9896fdcef1	87b73d2c11d2a6dfd5daf48cfa1928ef6eb8ee9abdc8c7bab6210d9896fdcef1	-	OK
+img	out/boot-elden-vk133.img	2955438d2d300e86e71fe3cc04b70d009262d05ea874a7b87dbfda5a1d82c584	2955438d2d300e86e71fe3cc04b70d009262d05ea874a7b87dbfda5a1d82c584	-	OK
+img	out/boot-elden-vk134.img	342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65	342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65	-	OK
+img	out/boot-elden-vk135.img	be5fe313869b2faefc72fc016fb61bdff4477e1ab6c4a9eff1299b6b5b384bd4	be5fe313869b2faefc72fc016fb61bdff4477e1ab6c4a9eff1299b6b5b384bd4	-	OK
+img	out/boot-elden-vk136.img	4883f6cea267dc510d06be8f13785cd6643e9b13092c87a7e3126905de3c2b29	4883f6cea267dc510d06be8f13785cd6643e9b13092c87a7e3126905de3c2b29	-	OK
+img	out/boot-elden-vk137-q28base.img	7fb5a8fee99b221a1958b7270ee7dd3ec58facb56d62ba26ff224385b7a2bef6	7fb5a8fee99b221a1958b7270ee7dd3ec58facb56d62ba26ff224385b7a2bef6	-	OK
+img	out/boot-elden-vk138-q28disp.img	a0318ffa12c4ed6c1938e5ced774ac2012c018735ee51d671cf8416808fbbd7c	a0318ffa12c4ed6c1938e5ced774ac2012c018735ee51d671cf8416808fbbd7c	-	OK
+img	out/boot-elden-vk139-q28only0155.img	dcb49fef797761e705a87295b03d123119b9afb85d8ed5a289747c4476fd0d68	dcb49fef797761e705a87295b03d123119b9afb85d8ed5a289747c4476fd0d68	-	OK
+img	out/boot-elden-vk140-q28disp73.img	b70a7f29e15ca2be5ed45b59c61e8dc41b1eb47b70d65a15bdd0a21ebfbee645	b70a7f29e15ca2be5ed45b59c61e8dc41b1eb47b70d65a15bdd0a21ebfbee645	-	OK
+img	out/boot-elden-vk141-q28disp73.img	10a38c4e7bab557fdef994742b99bd9a8aa861bdc1cc6b12d629fa0d74f7ca1d	10a38c4e7bab557fdef994742b99bd9a8aa861bdc1cc6b12d629fa0d74f7ca1d	-	OK
+img	out/boot-elden-vk142-q28disp73dt.img	10a38c4e7bab557fdef994742b99bd9a8aa861bdc1cc6b12d629fa0d74f7ca1d	10a38c4e7bab557fdef994742b99bd9a8aa861bdc1cc6b12d629fa0d74f7ca1d	-	OK
+img	out/boot-elden-vk143-q28-73-0155only.img	159bdcf512a445bb778938ef82739be3c5e08f654b01b159ca9e2ddfc5f209ac	159bdcf512a445bb778938ef82739be3c5e08f654b01b159ca9e2ddfc5f209ac	-	OK
+img	out/boot-elden-vk144-q28only0154.img	9309dbc5238475861d3cec567ed81c9f97918ac7c88da4f2a41eb3fa99ec8102	9309dbc5238475861d3cec567ed81c9f97918ac7c88da4f2a41eb3fa99ec8102	-	OK
+img	out/boot-elden-vk145-q28daily.img	e7c8539c9f1a07872b14a9d2036765d99fc9f7d288b5bf9068721fbaa64e3137	e7c8539c9f1a07872b14a9d2036765d99fc9f7d288b5bf9068721fbaa64e3137	-	OK
+img	out/boot-elden-vk146-BADSUSPEND.img	9ffd14ea46b706a15c96032c57a16239edef5f7cf47e82ba52a3ffc1945861a6	9ffd14ea46b706a15c96032c57a16239edef5f7cf47e82ba52a3ffc1945861a6	-	OK
+img	out/boot-elden-vk147.img	cc60adf598ea7215796f70504066bb56bc6635232664487fa924a6bb01721f98	cc60adf598ea7215796f70504066bb56bc6635232664487fa924a6bb01721f98	-	OK
+img	out/boot-elden-vk148.img	93bbc4e265ae06a0e302f86d741137cace8d9f233ab60d719069804042435815	93bbc4e265ae06a0e302f86d741137cace8d9f233ab60d719069804042435815	-	OK
+img	out/boot-elden-vk149.img	8aedd98a7d8161cb53428b961a01fa88572290625c4a57fd105553ddf5dfc9cb	8aedd98a7d8161cb53428b961a01fa88572290625c4a57fd105553ddf5dfc9cb	-	OK
+img	out/boot-elden-vk150-q28v2.img	831ca7c4653eae67ef96a4580017412d84351e8f885b35b91ba0401caf7793f7	831ca7c4653eae67ef96a4580017412d84351e8f885b35b91ba0401caf7793f7	-	OK
+img	out/boot-elden-vk151.img	628b97554e35a06f52bdcc669eb891a57842280c9a7770b0deb6f34bbb5d9204	628b97554e35a06f52bdcc669eb891a57842280c9a7770b0deb6f34bbb5d9204	-	OK
+img	out/boot-elden-vk152.img	1b4ec8f8cf08fe38f31760f2eebc81b038493c5181df746cfb81b04c4b8b3862	1b4ec8f8cf08fe38f31760f2eebc81b038493c5181df746cfb81b04c4b8b3862	-	OK
+img	out/boot-elden-vk153.img	5efca31f1a5fba10917ded2143eefd1a64899f1db3b72437072dd5fc04e1fc1b	5efca31f1a5fba10917ded2143eefd1a64899f1db3b72437072dd5fc04e1fc1b	-	OK
+img	out/boot-elden-vk154.img	bcc5ecfc87d75a857aa63088a4fd1db75fadad705b08af6d5b69b77fa049aad7	bcc5ecfc87d75a857aa63088a4fd1db75fadad705b08af6d5b69b77fa049aad7	-	OK
+img	out/boot-elden-vk156.img	385fd3cb3dd2619390294552fa0000ea93e30465951dab7d188cd0e9578427ab	385fd3cb3dd2619390294552fa0000ea93e30465951dab7d188cd0e9578427ab	-	OK
+img	out/boot-elden-vk157.img	d2fd1cd6e47e80b9c837ee969373608fc730f58242ef7d80261d00bc161fccf9	d2fd1cd6e47e80b9c837ee969373608fc730f58242ef7d80261d00bc161fccf9	-	OK
+img	out/boot-elden-vk158.img	b882abcd1a4ba1cd1d41dc38b21a5a9ef31f3e448839a33dc65adb4caf73fda7	b882abcd1a4ba1cd1d41dc38b21a5a9ef31f3e448839a33dc65adb4caf73fda7	-	OK
+img	out/boot-elden-vk159.img	a43230ecb3671441ff95d609cd3d5223a1967ff79723e1e479c3e5a5e53599ab	a43230ecb3671441ff95d609cd3d5223a1967ff79723e1e479c3e5a5e53599ab	-	OK
+img	out/boot-elden-vk161.img	0a7e0982b8c4f380fd89af00433c4fa48a2fc575160a342c4fe9ceb3182c4c99	0a7e0982b8c4f380fd89af00433c4fa48a2fc575160a342c4fe9ceb3182c4c99	-	OK
+img	out/boot-elden-vk162-fstype.img	a0ef33818ada03bfaddd09f4a8e5b3e13235ea5c5789f23b877d882ebf92e9d9	a0ef33818ada03bfaddd09f4a8e5b3e13235ea5c5789f23b877d882ebf92e9d9	-	OK
+img	out/boot-elden-vk162-rescue.img	0e9c982a92ce64bf195495e87ffe7aff1b8a65e5b0049dc245b749d1649b04c4	0e9c982a92ce64bf195495e87ffe7aff1b8a65e5b0049dc245b749d1649b04c4	-	OK
+img	out/boot-elden-vk163.img	70fefa733340f4f3b352d19a81e6772ef26a63416bbcdfcc36aff50b2b04c396	70fefa733340f4f3b352d19a81e6772ef26a63416bbcdfcc36aff50b2b04c396	-	OK
+img	out/boot-elden-vk164-debianroot.img	56644bc754112a85cfc45b140d4205a578a9e14ce4af2fba3b85c9a0180ba688	56644bc754112a85cfc45b140d4205a578a9e14ce4af2fba3b85c9a0180ba688	-	OK
+img	out/boot-elden-vk165-earlygadget.img	f31f2acb1e96fc339b05853d4085a0dac21c9757da1825848c60ef9731e25392	f31f2acb1e96fc339b05853d4085a0dac21c9757da1825848c60ef9731e25392	-	OK
+img	out/boot-elden-vk166-dbg.img	7d1a1876dabec5a9f801b3c0289e73749099a61ca8893f57da7762f9a076934b	7d1a1876dabec5a9f801b3c0289e73749099a61ca8893f57da7762f9a076934b	-	OK
+img	out/boot-elden-vk167-trace.img	6c5059f0dededc4ceaed156b3b9e6c3b5e58f1dab211140ea8f31dff1a64ce56	6c5059f0dededc4ceaed156b3b9e6c3b5e58f1dab211140ea8f31dff1a64ce56	-	OK
+img	out/boot-elden-vk168-ramprobe.img	c57c17ce7b8ec0d925dd1855d1e7fc7c7b9205dcf75de4be293e9d8338964895	c57c17ce7b8ec0d925dd1855d1e7fc7c7b9205dcf75de4be293e9d8338964895	-	OK
+img	out/boot-elden-vk169-trace2.img	12ca6ca30d14eb656a601af86619d26e22c1e3f6d1620696f02be8ad0842d038	12ca6ca30d14eb656a601af86619d26e22c1e3f6d1620696f02be8ad0842d038	-	OK
+img	out/boot-elden-vk170-trace3.img	bb1d8a33091c49daa6959fe383f174e042ebfee47099b01e462f5c3df6c54db4	bb1d8a33091c49daa6959fe383f174e042ebfee47099b01e462f5c3df6c54db4	-	OK
+img	out/boot-elden-vk171-swrerr.img	551ac3a848aedd354aa0cb4b48f1b1e742c4a980b9032fe04203dd6f115cf41f	551ac3a848aedd354aa0cb4b48f1b1e742c4a980b9032fe04203dd6f115cf41f	-	OK
+img	out/boot-elden-vk172.img	70d550a74d45dcb05f1f8d0be0e3af2d1105544f8af75c92c3cba760842186f9	70d550a74d45dcb05f1f8d0be0e3af2d1105544f8af75c92c3cba760842186f9	-	OK
+img	out/boot-elden-vk173.img	9f969f12aad6369e4370658ea12f0d591429923fbc4532db8f309e887594ba29	9f969f12aad6369e4370658ea12f0d591429923fbc4532db8f309e887594ba29	-	OK
+img	out/boot-elden-vk174.img	fa2deac486b045b08aed99c1984f20c4660deaae92f68af4a7a0a7ce605fd748	fa2deac486b045b08aed99c1984f20c4660deaae92f68af4a7a0a7ce605fd748	-	OK
+img	out/boot-elden-vk175.img	416da940988819dc56bd77c46e7a85f28d3bb1b70b17cab106afb111edafddb4	416da940988819dc56bd77c46e7a85f28d3bb1b70b17cab106afb111edafddb4	-	OK
+img	out/boot-elden-vk176.img	dfb9384963c6817ce1ca6054484b60eb377e3f139531a52260790e4080c0afea	dfb9384963c6817ce1ca6054484b60eb377e3f139531a52260790e4080c0afea	-	OK
+img	out/boot-elden-vk177.img	aa196ff0e945c3c0f0f4516c318640dd690de30fce9e5aaa86d476abebd4d78e	aa196ff0e945c3c0f0f4516c318640dd690de30fce9e5aaa86d476abebd4d78e	-	OK
+img	out/boot-elden-vk178-b5verify.img	ad8d975ee2e9a9cd64f5f3d34679b4e500b32704b33810d8b4300bb825b0ed5d	ad8d975ee2e9a9cd64f5f3d34679b4e500b32704b33810d8b4300bb825b0ed5d	-	OK
+img	out/boot-elden-vk179-b5step4a.img	05ce69e70d11e9f1ce59a7e41c4a78311ed6f4549c7f9467c046d6269e8aa4b3	05ce69e70d11e9f1ce59a7e41c4a78311ed6f4549c7f9467c046d6269e8aa4b3	-	OK
+img	out/boot-elden-vk180-b5step4b.img	f5517296b8cddc02f83331d9d48a6df04bdee9752b972dcfdeb6b9058ba61d2b	f5517296b8cddc02f83331d9d48a6df04bdee9752b972dcfdeb6b9058ba61d2b	-	OK
+img	out/boot-elden-vk181-daily.img	c8953ba0ea3ed55d4ebdb37ac897bafa9e6e6449608efe1cc8621deb544aab27	c8953ba0ea3ed55d4ebdb37ac897bafa9e6e6449608efe1cc8621deb544aab27	-	OK
+img	out/boot-elden-vk182-camssv3.img	19c8bcb015376df53793a1247792b410ae2c741dcbd5c94d78a075f9bcb82048	19c8bcb015376df53793a1247792b410ae2c741dcbd5c94d78a075f9bcb82048	-	OK
+img	out/boot-elden-vk183-fastrpc.img	no-baseline	30e6a4c4bcfcd707993178e5554d5086964a104adde1a3227968342cda8c752b	na	NO-BASELINE
+img	out/boot-elden-vk64.img	983936396fd7bbacb45b40d28eb58c11972a3b51bb06358bab4f94279714e725	983936396fd7bbacb45b40d28eb58c11972a3b51bb06358bab4f94279714e725	-	OK
+img	out/boot-elden.img	no-baseline	a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	na	NO-BASELINE
+img	out/dtbo-dummy.img	no-baseline	ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7	na	NO-BASELINE
+img	out/linuxstop1.img	no-baseline	cdc8acf2587de4f3ad3352ecbc441babdee37625b87d64ea0e12717ac09deab4	na	NO-BASELINE
+img	out/linuxstop2.img	no-baseline	c619072390eefab7015242a4dc5f33c962b4826669fc46896af78f44526c389b	na	NO-BASELINE
+img	out/linuxstop3.img	no-baseline	42e6d6b25bf5b47253029664517c1e9e1be42680190964020d0d82bdcbc8ae3a	na	NO-BASELINE
+img	out/linuxstop4.img	no-baseline	283ed9a05218b679821dd1748ec7d9f4c04bc256d177be513012c4effecb1cb6	na	NO-BASELINE
+img	out/linuxstop5.img	no-baseline	71edd5bda8a53628c07781d69baaf7804f7b6958301d0642c307789b69bcb521	na	NO-BASELINE
+img	out/linuxstop6.img	no-baseline	03ede066b993aa48d8212daf0ef8cca160c1a3ffe5a869a818135312a9fd250c	na	NO-BASELINE
+img	out/linuxstop7.img	no-baseline	a4ecf2692a3573c95b861de2c84619419f802a5a6f03bd8847bc58ce530d99bb	na	NO-BASELINE
+img	out/r20-stop1.img	no-baseline	ab546cb1219ceba9379777bf3f5c6d723b784fe9bc8f0075e1ef1dbc542875cb	na	NO-BASELINE
+img	out/r20-stop2.img	no-baseline	dcb7f56497c5a36e32e46aa866ba1bcd290a9e296256643776b350ea4874793c	na	NO-BASELINE
+img	out/r20-stop3.img	no-baseline	84a75dd32c2472874a184ed2faab7c00c61f07f1f81fc0fc6ef6fddbb6f9b3a0	na	NO-BASELINE
+img	out/r20-stop4.img	no-baseline	3519fdbd97a7dba1a9692b2ae19645f19b34de602e6138db1434c5b48e9c9af4	na	NO-BASELINE
+img	out/r20-stop5.img	no-baseline	54e3da6bb10e63e665d72aceae8ec3ae9c3d7cb14ffe126a70a8ae56ea2daf8c	na	NO-BASELINE
+img	out/r20-stop6.img	no-baseline	4fce687b6ce81790c064322cb0a6b4786e00565f366799f08bf068e3af7e1ceb	na	NO-BASELINE
+img	out/uefi-20261101-1005recipe-v0.img	no-baseline	97c95cc12f2c8af9cd06b62b7de617006f04e5f00477244ac104ac95376b6470	na	NO-BASELINE
+img	out/uefi-20261103-v2aligned.img	no-baseline	3724ce340413944f81ed72423006f69c11437f7cd57b3ef85de789d55542c478	na	NO-BASELINE
+img	out/uefi-20261104-dual.img	no-baseline	351640e254a94b572b425493a649ea7bc91d78132e61c2d68c5cb28dabd47bb4	na	NO-BASELINE
+img	out/uefi-20261104-dxe.img	no-baseline	d172723184dc3192e63a53f9eaa36917923d25e9d70c5ec3d97b6146b4e1021f	na	NO-BASELINE
+img	out/uefi-20261104-dxe10.img	no-baseline	dd3ca219f22f4e10c56b4a620a9a993717496e04d033fcb7e2250d627f418fee	na	NO-BASELINE
+img	out/uefi-20261104-dxe11.img	no-baseline	f2a9e4b939c050b117297b7ddd58fed989ab4a405fd7dac0aaefd7adf2fb6c78	na	NO-BASELINE
+img	out/uefi-20261104-dxe2.img	no-baseline	c6b93b253efad9c43c55acf4ca9a6f54135bd86149ae11710b84a21a319db930	na	NO-BASELINE
+img	out/uefi-20261104-dxe3.img	no-baseline	9d74be1258bae3630ee221f7ac0ddf63d0c94374309df58511b9e2eb842872f7	na	NO-BASELINE
+img	out/uefi-20261104-dxe4.img	no-baseline	9e4dffcd630cde3c270a89a69d90cc8cf313395b7bbabf82d7739ecff57ad667	na	NO-BASELINE
+img	out/uefi-20261104-dxe5.img	no-baseline	8fb6755af475adac24d3f2455418340f8c1e01e72f62a1e7b771680e1043829d	na	NO-BASELINE
+img	out/uefi-20261104-dxe6.img	no-baseline	3364d61e7b6b38701b08dc0c3f6c2e557b410339cbd8b58a961a51d3d72dc29f	na	NO-BASELINE
+img	out/uefi-20261104-dxe7.img	no-baseline	a8f0fc0ead5018d924a338e97bc5d863bdcb4b243843af9a75a450e789a7b931	na	NO-BASELINE
+img	out/uefi-20261104-dxe8.img	no-baseline	bfd04e84cc7a75f51563706461165a9bc083156965806aa861c1bf8386dcdaff	na	NO-BASELINE
+img	out/uefi-20261104-dxe9.img	no-baseline	400206d779eb9b58b1d2a469f79f8a5313e28e1926b02d3db94c03c9efd12796	na	NO-BASELINE
+img	out/uefi-20261104-fbband.img	no-baseline	23f1cbdb26d47ac1ffc13bacdf3be45618f53fd5a54491a261b718e3927300f0	na	NO-BASELINE
+img	out/uefi-20261104-fbfill.img	no-baseline	fca136d94925e9b2a1a78aaca935348e1920ec9416d3d0815ff1064cb9091de2	na	NO-BASELINE
+img	out/uefi-20261104-fixcopylen.img	no-baseline	c0118018ccadec8a01af5a54437edf42af42893d7130988e46141c3d359ef624	na	NO-BASELINE
+img	out/uefi-20261104-m3block.img	no-baseline	e18f0be425e910b73373cd35bd7ddf16ef16122e11431ef839a079cd4fb70038	na	NO-BASELINE
+img	out/uefi-20261104-nocivac.img	no-baseline	daf8d8911f73b3fa6ab36e18f79f0c9d61f0d28c7968a340ba0926118fbaed32	na	NO-BASELINE
+img	out/uefi-20261104-prepi.img	no-baseline	e5aa7164e9f4dbfb9604f3c4a60a3cfd305a7b6504e25779b4e14f79621adc9d	na	NO-BASELINE
+img	out/uefi-20261104-prog.img	no-baseline	ce3292d4cc6f8fa9fc327dfa3e519b8d9cffb5f52a9f06a2a45506acaa5cff43	na	NO-BASELINE
+img	out/uefi-20261104R-r1.img	no-baseline	e7f8b5445c05bd3c0c7a0a7d444e262bde66d1bc4b1faee6714525cc57b85e73	na	NO-BASELINE
+img	out/uefi-20261104R10-r1.img	no-baseline	23dab1f4a6de315975073314d738d2f84e89c7e312b0d07a139350dddaeea13c	na	NO-BASELINE
+img	out/uefi-20261104R11-r1.img	no-baseline	db7c1b358b7c6e55d0ef782d7efcbcdb05eae22e79ffd0e63c53df169b4fc240	na	NO-BASELINE
+img	out/uefi-20261104R12-r1.img	no-baseline	8db0aecd461c78a487c15b0c29fe4564669db36e645c4ceff66d2dd8e9ea623d	na	NO-BASELINE
+img	out/uefi-20261104R13-r1.img	no-baseline	983a58d0fcd93c5a090f6cb69e8eca549c980ff28b9628e89feaa6579d4d84c8	na	NO-BASELINE
+img	out/uefi-20261104R14-r1.img	no-baseline	fba181d6d66b176fe7f513fca00eb7eb8ec884ad3b7d17a462538f25c8d919a3	na	NO-BASELINE
+img	out/uefi-20261104R15-noavbprobe-r1.img	no-baseline	1cbb544b99884a38b19b18407485e808daf509e1c83ef9d6bbb0430f8ca44b15	na	NO-BASELINE
+img	out/uefi-20261104R16-dtboclamp-r1.img	no-baseline	ed1067b53e0319a22c4950d8578f3a54d07195390119e48e54992629f7456ce5	na	NO-BASELINE
+img	out/uefi-20261104R17-bootmarkers-r1.img	no-baseline	7d71b53fe00c7a3795c5d797a294d9e7768bfca62a757fb831402f6440324af7	na	NO-BASELINE
+img	out/uefi-20261104R18-haltbeforejump-r1.img	no-baseline	6a73d9f744f7447025ffa0e5275c1b81097a6c575cebd7f520abde79500494ac	na	NO-BASELINE
+img	out/uefi-20261104R19-nvmarkers-r1.img	no-baseline	433c600234613a8f6ef322fddb9885159c57231c65871020e79273d09925c265	na	NO-BASELINE
+img	out/uefi-20261104R2-r1.img	no-baseline	6a31f243cd0ef06d07b9393860b37d0b11f18177b1c9b4519bef2ee2a2f835b8	na	NO-BASELINE
+img	out/uefi-20261104R2-r2.img	no-baseline	23b48a837911415d27d0a44d7daa960d6989171441fc45b22f4cf9c98f0ba4d9	na	NO-BASELINE
+img	out/uefi-20261104R20-stage-bisect-r1.img	no-baseline	04fc0eb6577d016a6e19a8ca0bcc162b60f4b66fc4fd0f744d4928e9baea84b7	na	NO-BASELINE
+img	out/uefi-20261104R21-hostdiag-r1.img	no-baseline	a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30	na	NO-BASELINE
+img	out/uefi-20261104R3-r1.img	no-baseline	cdea96efc55f2471955e1284469619d294c075963307faab26caf9c349acb592	na	NO-BASELINE
+img	out/uefi-20261104R4-r1.img	no-baseline	a9efd60351d6953f66f0c0b303d2719879a7e8304eb06adee9a44b5533ffee48	na	NO-BASELINE
+img	out/uefi-20261104R5-r1.img	no-baseline	fe0f0c8f54c5c086bffa91ebacafc547d7154f3c24d4d888cf01e1487c3dffd4	na	NO-BASELINE
+img	out/uefi-20261104R7-r1.img	no-baseline	331fb365c038b02307b7cd214f3acdfee4202286507741b173803d8b760836ff	na	NO-BASELINE
+img	out/uefi-20261104R8-r1.img	no-baseline	4c0a2c19a6dd78ddc28b5a6de438755e6de2e321a22f508d08187e4359b0dd86	na	NO-BASELINE
+img	out/uefi-20261104R9-r1.img	no-baseline	28658a3cb14a119595e3475a510b054e6184a0eebe7f27b352426166e5f01d45	na	NO-BASELINE
+img	out/uefi-ddrmarks-sysram-rd.img	no-baseline	f623bd18a5630dc2e04d383ddcbd58b04a1550f9903e8d7db4f7525de5181450	na	NO-BASELINE
+backup	backup/build-bundles/m3v2-7.3rc7-git-20261105.tar.zst	intact	-	-	OK
+backup	backup/git-repair-20261105/git-before-repair-20261105.tar.zst	intact	-	-	OK
+sums	backup/stock-259/SHA256SUMS	match	sha256sum: backup/stock-259/abl_a.img: No such file or directory;backup/stock-259/abl_a.img: FAILED open or read;sha256sum: backup/stock-259/abl_b.img: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	backup/HA2EXB0E-16+512/c0-baseline/SHA256SUMS	all-match	-	-	OK
+sums	backup/HA2EXB0E-16+512/pre-unlock/SHA256SUMS	match	sha256sum: backup/HA2EXB0E-16+512/pre-unlock/by-name.txt: No such file or directory;backup/HA2EXB0E-16+512/pre-unlock/by-name.txt: FAILED open or read;sha256sum: backup/HA2EXB0E-16+512/pre-unlock/dumpsys-services.txt: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	backup/HA2EXB0E-16+512/unique/SHA256SUMS	all-match	-	-	OK
+sums	backup/avf/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R12-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-swap-20261031/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R6-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-prog-20261104/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-dxe10-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-20261104R5-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-ddr-20261101/control/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-ddr-20261101/clean2/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-ddr-20261101/marks/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-ddr-20261101/tri/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-ddr-20261101/dsm/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-ddr-20261101/f7d/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-ddr-20261101/dual/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R4-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R18-haltbeforejump/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R14-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R11-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R15-noavbprobe/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R20-stage-bisect/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-dxe3-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-dual-20261104/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-m3block-20261104/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R19-nvmarkers/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-vis-r1-20261031/SHA256SUMS	match	sha256sum: reports/artifacts/uefi-vis-r1-20261031/VIS-R1.img: No such file or directory;reports/artifacts/uefi-vis-r1-20261031/VIS-R1.img: FAILED open or read;sha256sum: WARNING: 1 listed file could not be read;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-dxe2-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-20261104R2-r2/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-prepi-20261104b/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-dxe9-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-prepi-20261104/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-1005recipe-20261101/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R16-dtboclamp/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R7-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-dxe7-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-fixcopylen-20261104/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-vis-control-20261031/SHA256SUMS	match	sha256sum: reports/artifacts/uefi-onboard-20261030/A2-v0b.img: No such file or directory;reports/artifacts/uefi-onboard-20261030/A2-v0b.img: FAILED open or read;sha256sum: WARNING: 1 listed file could not be read;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-dxe5-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-posctrl-20261103/v2aligned/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-posctrl-20261103/textoffset0/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R13-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R10-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-fbfill-20261104/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-rb-20261031/a2-replay/SHA256SUMS	match	sha256sum: kernel.bin: No such file or directory;kernel.bin: FAILED open or read;sha256sum: WARNING: 1 listed file could not be read;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-dxe8-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-20261104R9-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-dxe6-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-20261104R2-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R3-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-onboard-20261030/SHA256SUMS	match	sha256sum: reports/artifacts/uefi-onboard-20261030/A2-v0b.img: No such file or directory;reports/artifacts/uefi-onboard-20261030/A2-v0b.img: FAILED open or read;sha256sum: reports/artifacts/uefi-onboard-20261030/E0-v0b.img: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-dxe11-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-20261104R8-r1/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R21-hostdiag/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-fbband-20261104/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-20261104R17-bootmarkers/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-dxe-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-prepi-vis-20261031/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-nocivac-20261104/SHA256SUMS	all-match	-	-	OK
+sums	reports/artifacts/uefi-dxe4-20261104/SHA256SUMS	match	sha256sum: SM8750_EFI.fd: No such file or directory;SM8750_EFI.fd: FAILED open or read;sha256sum: kernel.bin: No such file or directory;	see-detail	YELLOW-missing-files-only
+sums	reports/artifacts/uefi-20261104R-r1/SHA256SUMS	all-match	-	-	OK
+text	patches+versions+scripts	run1==run2	-	-	OK (822 files)
+text	zero-byte files	0	patches/out-of-tree-dm-default-key/tests/.gitkeep
+patches/out-of-tree-dm-default-key/patches/.gitkeep
+patches/upstream/m3-dwc3-20261104/artifacts/dt_binding_check.log
+versions/vk-registry.tsv.lock	-	YELLOW
+text	patches/0008-panel-165hz-default.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/0009-q6apm-apm-cmd-header.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/0011-q6apm-mi2s-start-graph-at-prepare.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/0013-flash-led-ntc-thermal.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/MODULAR-BOUNDARY.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/camera-ae-fix-20261017/0002-ipa-libipa-add-s5kjns-gc08a8-sensor-helpers.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/camera-ae-fix-20261017/0003-ipa-simple-agc-make-exposure-target-tunable.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/camera-ae-fix-20261017/gc08a8.yaml	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/camera-ae-fix-20261017/s5kjns.yaml	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/camera-kver	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-before-fragment-20261001-195141.bak	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-before-fragment-20261001-195621.bak	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-before-fragment-20261001-195636.bak	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-before-fragment-20261001-202254.bak	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-before-fragment-20261001-211254.bak	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-daily-c1	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-suspend-s2idle-20261018-173529	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk127-working-20261018	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk163-modular-20261025	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk163-modular-v2-20261026	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk20-debug	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk26-android-container	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk27-container-netfilter	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk28-netd-ipv6-xfrm	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk32-camera-base.bak	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk38-camera	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk40-bringup	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk50-modular	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk76-modular	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk89-modular	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/config-vk95-c1routing	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/current-tree	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/fragment-c1-iprule.config	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/fragment-c1-iprule6.config	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/fragment-camera-sensors.config	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/fragment-modular-v2.config	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/fragment-modular-video.config	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/fragment-modular.config	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/fragment-netd-ipv6-xfrm.config	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/fragment-suspend-s2idle.config	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/kernel-history/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/kernel-history/REFS.tsv	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-20261018/0001-elden-probe-debayer-output.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-20261018/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-20261018/build-on-device.sh	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-ae-totalfix-20261018/0001-ipa-simple-agc-exposure-target-tunable-and-clamped.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-ae-totalfix-20261018/0002-ipa-simple-agc-gain-step-must-survive-code-quantization.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-ae-totalfix-20261018/0003-ipa-libipa-add-gc08a8-s5kjns-sensor-helpers-identity-gain.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-ae-totalfix-20261018/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-ae-totalfix-20261018/gc08a8.yaml	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/libcamera-ae-totalfix-20261018/s5kjns.yaml	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/local/aw86927-chipdata-20261027/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/local/b5-resoc-20261027/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/local/rpmhpd-drop-presync-floor-20261027/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/out-of-tree-dm-default-key/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/out-of-tree-dm-default-key/patches/.gitkeep	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/out-of-tree-dm-default-key/tests/.gitkeep	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/q28-methodB-NOTES.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/q28-methodB-round-byteclk.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261031-vis/0002-bootshim-framebuffer-milestone-markers.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-posctrl/markspin.S	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-posctrl/markspin.bin	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-posctrl/markspin2.S	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-posctrl/markspin2.bin	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-posctrl/markspin3.S	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-posctrl/markspin3.bin	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-posctrl/markspin3.bin.gz	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-v4header/mu-silicium-bootshim-header-size.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261103-v4header/mu-silicium-unixnu-components.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261104-dual/0001-bootshim-dual-channel-stage-marks.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261104-fbband/0001-bootshim-fb-band-milestones.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261104-fbfill/0001-bootshim-fb-solid-fill-milestones.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261104-m3block/0001-bootshim-m3-full-block-marker.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261104-nocivac/0001-bootshim-skip-fd-civac-sweep.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261104-prepi/0001-prepi-screen-serial-step-marks.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261104-prog/0001-bootshim-copy-progress-same-band.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/uefi/20261104R-pstore/0001-prepi-persist-screen-marks-and-blocks-to-ramoops.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/aw86927-20261027-v2/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/aw86927-20261027/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/camss-csiphy-24-20261102/GATES.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/camss-csiphy-24-20261102/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/camss-csiphy-24-20261102/logs/checkpatch.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/camss-csiphy-24-20261102/logs/make-W1-camss.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/gunyah-v17/v17.mbox	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/gunyah-v17/v17p.mbox	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/gunyah-v17/v17raw.txt	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/gunyah-v17/v17t.mbox.gz	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m-gic-its-claim-20261024/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m1-2026-10-14/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m1-pas-dtbfw-20261027/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m1-pas-dtbfw-20261027/SENT.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m2-2026-10-13/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m2-a2-linuxnext-20261027/REPLY-kaanapali.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m2-a2-linuxnext-20261027/SENT.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-2026-10-13/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-2026-10-13/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-3-2026-10-13/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-4-2026-10-13/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-6-2026-10-13/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/GATES.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/build-w1-dwc3-roles.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/checkpatch-0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-sh.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/checkpatch-0002-usb-roles-look-up-role-switches-attached-to-a-graph-.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/checkpatch-0003-usb-dwc3-support-two-connectors-sharing-one-HS-data-.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/dt-validate-probes.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/dt_binding_check.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/git-am-pristine.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/selfcontained.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-dwc3-20261104/artifacts/send-email-dry-run.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-v2-2026-10-17/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-v2-2026-10-17/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-v3-2026-10-19/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-v3-2026-10-19/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-v4-20261026/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3-v4-20261026/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m3v5-20261030/v5-0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-2026-10-13/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-2026-10-13/sent-20261027/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-fixes-20261029/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-fixes-20261029/COVER-BLURB.txt	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-fixes-20261029/GATES.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-fixes-20261029/SENT.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-series-20261027/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-series-20261028-v2/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-series-20261028-v2/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-series-20261028/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-series-20261028/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-series-20261029-v3/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-series-20261029-v3/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m4-camss-v2-20261031/v2-0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-p4-20261026/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-p4-rfc-20261027/RFC-SCOPE.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-v2-20261102/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-v2-20261102/GATES.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-v2-20261102/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-v2-20261102/logs/checkpatch.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-v2-20261102/logs/gate-sm8650-no-bonded.txt	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-v2-20261102/logs/make-W1-drivers-gpu-drm-msm.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m6-b5-v2-20261102/logs/make-drivers-gpu-drm-msm.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/GATES.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/SENT.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/claims.tsv	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/sent/msgids.txt	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/sent/readback-236.txt	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/sent/readback-240.txt	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/sent/readback-241.txt	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/m8-mdss-v3-20261102/sent/send-email.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/phoc-im-keyboard-grab-2026-10-18/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/phoc-im-keyboard-grab-2026-10-18/imtest.c	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/q28-dispcc-2026-10-22/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/q28-dispcc-v2-20261029/GATES.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/q28-dispcc-v2-20261029/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/q28-dispcc-v2-20261029/SENT.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-20261104-v6/GATES.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-20261104-v6/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-20261104-v6/gates.log	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-20261104-v6/v6-0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-driver-20261028/0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-v2-20261029/v2-0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-v2b-20261030/v3-0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-v4-20261031/v4-0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/upstream/wl2868c-v5-20261102/v5-0000-cover-letter.patch	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/README.md	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/build-cam-provider.sh	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/cam-producer.sh	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/egltest.cpp	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/external-fetch-shim.cpp	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/external-service-direct.cpp	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/gen-headers.sh	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/gen-src.sh	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/hidl-smoke.cpp	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/iface-compat.h	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/libcxx-__config_site	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/vendor-manifest-cam.xml	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261018/wd-restart.sh	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261019/IBinder.h.patched	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261019/build-cam-provider.sh	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261019/elden-cam-exports.map	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+text	patches/waydroid-camera-64bit-20261019/gen-src.sh	contains diff --git	none found	-	OK(false-positive: valid bare-diff/mbox, verified via file+head)
+sums	ALL-63-SHA256SUMS	no-hash-mismatch	0 FAILED(checksum)	-	OK
+patch	git-tracked *.patch	format-valid	6初筛疑点复核全合法	-	OK

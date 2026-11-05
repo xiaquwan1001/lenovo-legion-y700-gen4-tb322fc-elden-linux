@@ -17,7 +17,7 @@
 - **未做 / 待做**：**读 `vk171-swrerr` 的结果**（`switch_root` 的 stderr 已重定向进 trace，错误文案就是答案）；若确系删除阶段 → 改「自实现 mount --move + chroot + exec」或 slim ramdisk 复验；M2（归档旧 root）已判定**不必要**（`linux17` 内容 = f2fs 手术的复制源，`linux18` 上有同一份）。
 - **设备态**：**需物理 POR**（USB 有 `1d6b:0104`，无 SSH/fastboot）。`boot_b` 未变（`retry=6 succ=1 unbootable=0`），`linux18`（Alpine）未动。
 
-## ★SSOT 待并入
+- ★SSOT 待并入：无（过程叙事留 sessions/，2026-11-05）
 
 - `TASKS/README.md` 已加 **T19**。
 - `reports/mobian-migration-plan-20261021.md` §4 状态块的 **S7** 行可补：候选镜像链 + 断点位置。

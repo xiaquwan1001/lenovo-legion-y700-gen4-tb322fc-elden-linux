@@ -39,7 +39,7 @@
   - `reports/artifacts/uefi-e1v0b-20261030/`（10-30 15:04 E1-v0b 未归档事故的补证：`OKAY [10.110s]` = 未交棒）
   - 本轮新产物：`out/uefi-1005-recover/PakalaPkg/ci_artifacts/lenovo-y700g4/lenovo-y700g4_NOSB.img`
     （`9607a394…`）、`/tmp/uefi-text-20261031/{T1-v3,T2-v0}.img`、`/tmp/fbtest/{FB-v3,FB2-v3}.img`（临时件，未入库）
-- ★SSOT 待并入：
+- ★SSOT 待并入：无（过程叙事留 sessions/，2026-11-05）
   - `TASKS/README.md` §5 **Q25（UEFI）**：补「原始 10-05 件今天同样不交棒 ⇒ 交棒是随机的，与镜像无关」+
     「交棒后不亮屏即复位」；`reports/uefi-consolidated-20261030.md` §3 的 B 系列判据需按本条改写。
   - `PITFALLS` 待新增三条（本文件先记，索引待并入）：

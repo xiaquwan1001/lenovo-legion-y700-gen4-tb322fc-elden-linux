@@ -47,7 +47,7 @@
 - **订阅确认信**：发信后 5 min 内未到，需下一轮 `read-mail-ustc.py --days 1 --grep 'confirm,Welcome'` 跟进并回 Confirm（vger 灰名单）。
 - **f2fs E1（只换 initramfs 零写盘验证）**：本次只改了仓库 `initramfs/init`，**在机 ramdisk 未重建**（重建会连带引入 16 行 `payload-modules-load` 预热段，需按单变量单独设计）。
 
-## ★SSOT 待并入
+- ★SSOT 待并入：无（已并入，2026-11-05）
 
 - `TASKS/README.md` §2 **C8**：状态改为「**hyp = Gunyah 已实证**（`gunyah-wdt` 平台设备），驱动仍缺」（原「存在性未测」作废）。
 - `TASKS/README.md` §4 第 10 条（kexec）：补一行「**2026-10-21 实测：mask=1 在 7.3 成立，到 `Starting new kernel`；目标未进用户态（R1 无 initrd / R2 有 initrd 都回 boot_b）⇒ 下一步 C5 单变量**」。

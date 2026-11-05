@@ -286,7 +286,8 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 
 编号对应 `README.md` §2.5 的 P 级；状态：⬜ 未执行 / ◐ 部分 / ✅ 已执行 / ⛔ 无需执行。
 **2026-10-23 复核**：A0–A7 见 `../reports/assets-inventory-20261023.md` §5；**用户 2026-10-23 批准后已全部执行**（执行记录 + 每级 df + 保留理由 = `../archive/topics/清理清单-20261023.md`）。
-**2026-11-05 复核**：全仓逐项盘点（含引用命中/可再生性/前置闸）= `../reports/asset-tidy-20261105.md` + 机器账 `../reports/asset-inventory-20261105.tsv`（56 行，含每行 `verify_cmd`）；文档账目 = `../reports/doc-audit-20261105.md`。本轮**只执行了 A8**，B1–B4 为父进程裁决后的待批项（数字与闸门见下表）。
+**2026-11-05 复核**：全仓逐项盘点（含引用命中/可再生性/前置闸）= `../reports/asset-tidy-20261105.md` + 机器账 `../reports/asset-inventory-20261105.tsv`（56 行，含每行 `verify_cmd`）；文档账目 = `../reports/doc-audit-20261105.md`。本轮**执行了 A8 + B1**（B1 见下表），B2–B4 仍待批。
+**2026-11-05 完整性基线（BIOS 静默损坏事件后设）**：`../versions/out-images-sha256-20261105.tsv` = 129 个 `out/*.img` 的 sha256 + 是否入账 + manifest 比对结果；全仓校验报告（重试定性）= `../reports/integrity-audit-20261105.md`。复算：`awk -F'\t' 'NR>3{print $1"  out/"$3}' versions/out-images-sha256-20261105.tsv | sha256sum -c --quiet`。
 
 | 标记 | 目标 | 体积 | 前置闸 | 状态 |
 |---|---|---|---|---|

@@ -10,4 +10,4 @@
   - **UEFI `E1-v0b` = 不交棒**（60/60 `18d1:d00d`，同一 bus/device），零写盘，9 s 回 Linux 且状态全绿 ⇒ **证伪「含 UFSDxe 就交棒」**；四点表只剩 A2（厂商件）交棒。
   - **vk183 转正未完成**：需物理断电一发真 POR ⇒ 待用户在机。
 - **证据指针**：`reports/uefi-e1-v0b-onboard-20261031.md`、`reports/artifacts/uefi-e1v0b-20261031/`、`reports/wl2868c-v4-20261031.md`、`packaging/elden-userland/{stop.tsv,hooks/greetd.stop}`、`reports/shutdown-greetd-hang-plan-20261030.md`（§3.2 方案）
-- **★SSOT 待并入**：已并入 `TASKS/README.md` §5「2026-10-31 下午（续）」与 UEFI E1 行。剩余：真 POR 后需回填 `DEVICE` §1.1（vk183 转正）。
+- **★SSOT 待并入**：无（已并入 `TASKS` §5「10-31 下午续」+ UEFI E1，2026-11-05；残留：真 POR 后回填 `DEVICE` §1.1 vk183）

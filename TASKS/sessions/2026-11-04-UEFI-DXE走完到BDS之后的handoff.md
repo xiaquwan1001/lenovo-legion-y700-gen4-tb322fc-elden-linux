@@ -16,5 +16,5 @@
   - 交接文档（下轮入口）：`.pi/plans/2026-11-04_handoff-uefi-dxe-to-linux.md`
   - 上机件：`out/uefi-20261104R{1..12}-r1.img`，现场 `reports/artifacts/uefi-boot-20261104R*-r1/`，trial `reports/trials/20261104T*.json`
   - 新坑：`PITFALLS/sessions/162-UEFI进DXE之后的取证纪律.md`（#498–#502）
-- **★SSOT 待并入**：`DEVICE/README.md` §1.1 在机状态（本轮结束后设备停在 fastboot，`boot_b` 未写）；
+- ★SSOT 待并入：无（DEVICE §1.1 已记录设备停在 fastboot，2026-11-05）
   `TASKS/README.md` §5 的 11-04 傍晚块已写，后续若定案 A/B 路线再补一行。

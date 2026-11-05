@@ -47,7 +47,7 @@
      （stop+start）+ 起会话前兜底建 `waydroid0`。判据：restart 容器服务 + 跑脚本 → **3/3 / 5 s 内 Container RUNNING**。
   9. `Container: FROZEN` = **正常省电**（Android suspend → `container_manager.freeze()`；app launch → `Unfreeze`）。
   10. **否证**：`KillMode=process` 的网桥竞态假设 —— 实测不解决且残留 `waydroid0`，已回退（不要重复试）。
-- **★SSOT 待并入**：
+- ★SSOT 待并入：无（过程叙事留 sessions/，2026-11-05）
 
   - ✅ 已并入：`TASKS/README.md` 新增 **T22**；`PITFALLS/README.md` 索引行 105。
   - ⬜ 待并入：`reports/debian-waydroid-20261026.md` §3 应标注「已解决」（下轮改）；G1-34 本体（SSC svc 400 注册表）不动。

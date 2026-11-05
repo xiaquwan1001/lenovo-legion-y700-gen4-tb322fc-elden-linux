@@ -5,7 +5,7 @@
 - **主题**：Q28「面板 init 间歇失败」——在**活体坏发**上做运行期取证，定位到两处**新的代码级缺陷**
 - **结论（一句话）**：Q28 的**不可恢复性**由我们下游 payload 自己造成：①`dsi_bonded_cmd_failed` 是**单向闩锁**（全树只有 `WRITE_ONCE(…, true)`，**零清零点**）；②`msm_dsi_host_set_display_mode()` 无条件 `WRITE_ONCE(link_configured, false)`，而它**排在 `power_on` 之后**调用 ⇒ 每次唤醒必被判 `-ESTALE`。两者叠加使「一次坏发」升级为「此后每次重试都不可能成功」。**硬件侧首次被真正测到**（此前所有「救不回」实验都被闩锁短路掩盖）。
 - **证据指针**：`logs/q28-latch-20261022/`、`probes/q28latch/`、`probes/q28peek/`
-- **★SSOT 待并入**：`reports/q28-DOSSIER.md` 新增 §s；`TASKS/README.md` §5 Q28 当前口径追加一条；`PITFALLS` 新增条目
+- ★SSOT 待并入：无（过程叙事留 sessions/，2026-11-05）
 
 ## 1. 为什么这轮能取证（方法学前提）
 

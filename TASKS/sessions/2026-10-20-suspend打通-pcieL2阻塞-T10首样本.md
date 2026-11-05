@@ -4,7 +4,7 @@
 - **主题**：① vk128/vk129「suspend 启动即死」根因取证与实证修复；② suspend 能力固化；③ T9 掉电率被新根因阻塞；④ T10（N5b 相机扩样）首轮有效样本
 - **结论**：**suspend 可用（s2idle + deep）**；但**待不住约 1.4 s**，真因是 `qcom-pcie` L2 进入超时 → WiFi 重探 → 立即唤醒；T9 因此无法测掉电率。T10 只拿到 n=1 有效样本。
 - **证据指针**：`reports/suspend-panic-rootcause-20261020.md`、`reports/vk129-abi-fix-verified-20261020.md`、`reports/kernel-abi-variants-20261020.md`、`reports/suspend-pcie-l2-blocker-20261020.md`、`reports/artifacts/vk129-*.txt`
-- **★SSOT 待并入**：`TASKS/README.md` 的 T8（已闭环）/ T9（被阻塞）/ T10（n=1）
+- ★SSOT 待并入：无（过程叙事留 sessions/，2026-11-05）
 
 ---
 

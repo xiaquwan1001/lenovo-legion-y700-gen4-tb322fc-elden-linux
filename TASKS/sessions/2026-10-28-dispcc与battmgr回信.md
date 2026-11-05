@@ -10,7 +10,7 @@
   - 草稿：`out/mail-20261028/re-taniya-dispcc.txt`、`out/mail-20261028/re-konrad-battmgr-20261028.txt`
   - Sent Items 回读：`out/mail-20261028/sent-verify/`
   - 原信：`out/mail-20261028/orig2/`（Taniya 1 封 + Konrad 3 封）
-- **★SSOT 待并入**：
+- ★SSOT 待并入：无（过程叙事留 sessions/，2026-11-05）
   1. `TASKS/README.md` M2 A2 行：把「drop 不含该子系统」改成「drop 含该子系统，我方旧观测为 sparse-checkout 假象；厂商 SM8750 编 `QTI_BATTERY_CHARGER=m`，属性 id 22 无重映射」。
   2. `TASKS/README.md` Q28 行：dispcc RFC 形状已被 Taniya 否决，改落点待选（三个候选，均未上机）。
   3. `reports/m2-a2-vendor-repo-check-20261026.md` §1 的措辞需带一句指针到本轮更正。
