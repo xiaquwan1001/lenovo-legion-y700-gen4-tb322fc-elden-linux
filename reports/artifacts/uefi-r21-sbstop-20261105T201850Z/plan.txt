@@ -1,0 +1,7 @@
+# 排产（mkimg）
+1) fastboot  boot /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img          # ABL 侧载 UEFI（零写盘）
+2) 等 UEFI 侧 fastboot 出现（序列号 51318dc0，上限 240s）
+3) for r in 1..3: fastboot -s 51318dc0 boot /home/xuqianhui/y700-elden/out/r21-sbstop/r21-stop5.img   # 判据 diag st=… last=[K] stop=5
+3) for r in 1..3: fastboot -s 51318dc0 boot /home/xuqianhui/y700-elden/out/r21-sbstop/r21-stop3.img   # 判据 diag st=… last=[K] stop=3
+3) for r in 1..3: fastboot -s 51318dc0 boot /home/xuqianhui/y700-elden/out/r21-sbstop/r21-stop4.img   # 判据 diag st=… last=[K] stop=4
+3) for r in 1..3: fastboot -s 51318dc0 boot /home/xuqianhui/y700-elden/out/r21-sbstop/r21-stop2.img   # 判据 diag st=… last=[K] stop=2

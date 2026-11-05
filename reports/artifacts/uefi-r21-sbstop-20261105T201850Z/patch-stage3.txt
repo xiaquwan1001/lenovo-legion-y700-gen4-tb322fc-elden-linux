@@ -1,0 +1,4 @@
+src   /home/xuqianhui/y700-elden/out/uefi-20261104R21-hostdiag-r1.img  sha256 a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30
+dst   /home/xuqianhui/y700-elden/out/r21-sbstop/r21-stop3.img  sha256 2577c249ca9a283c0c46f2ffe388ff4eab9d905f73a9c37e0bc7978f6942917e  size 67198976
+stage 3  token 'sbstop=3 '  changed_bytes 8  cmdline_field 'sbstop=3 tyGS0,115200 console=tty0 loglevel=8 ignore_loglevel pr'
+NOTE  console= 前缀已被覆盖（sbstop 路径不启内核，不影响判读）
