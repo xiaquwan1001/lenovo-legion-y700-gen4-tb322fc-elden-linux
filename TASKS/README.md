@@ -141,6 +141,21 @@
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-11-05（上午）：R21 **取证通道改走 fastboot 响应**（断电收尾，重建完成、未上机）
+
+- **一句话**：屏上三条通道全废（`ConOut` no-op / LinuxLoader 的 `SerialPortWrite` 不上屏 / NV 变量不跨上电）
+  ⇒ 把最后一条 `[V]`/`[K]` 标记塞进 **fastboot 响应**（`diag st=%r last=[%a]`），取证完全在宿主侧、不用拍照。
+- **判据**：`diag st=Aborted last=[K] …` ⇒ 到达第 N 阶段；命令无响应 / USB 掉线 ⇒ 崩在第 N 阶段之前。
+  诊断模式（cmdline 带 `sbstop=`）**不调** `FastbootUsbDeviceStop()`，解析必须在调用 `BootLinux` 之前当场做。
+- **断电事故**：11-05 09:32 前掉电 ⇒ UEFI 树 15 个文件变 0 字节、R21 产物 9 个文件全 0、报告尾部 2456 B 变 NUL。
+  已 `git checkout` 恢复 + 用 manifest 的 25 条补丁序列重建（增量 15 s）；与 11-04 那发 payload 逐块比对
+  **仅差构建时间字符串**（`Nov  4 2026 23:18:14` → `Nov  5 2026 09:39:49`）⇒ 代码等价、sha 不跨构建可复现。
+- **产物**：`reports/artifacts/uefi-20261104R21-hostdiag/`（FD `cd100f81…`）、镜像 `out/uefi-20261104R21-hostdiag-r1.img`
+  （`a9e0b059…`，67 198 976 B）；补丁 `patches/uefi/20261104R21-hostdiag/0001-fastboot-host-visible-diag.patch`。
+- **下一步（未上机）**：`sbstop` 阶梯 5 → 3 → 4 → 2，每档重复 3 次（崩溃随机）；**设备仍在安全态**，`boot_b` 未写。
+- **正文/坑**：`reports/uefi-noavb-dtbo-bootchain-20261104R.md` §8/§9；`PITFALLS` #509–#511；
+  会话记录 `sessions/2026-11-05-断电收尾R21取证通道重建.md`。
+
 ### 2026-11-04（更深夜）：路线重排 —— **loader 早就在 FV 里（`LinuxLoader`），只是没人启动它** ⇒ 首选改成路线 D
 
 - **下轮入口**：`.pi/plans/2026-11-04_late-uefi-routeD-linuxloader.md`（复核 + 7 条新增主机侧事实 + R13 实施单 + 风险表）。

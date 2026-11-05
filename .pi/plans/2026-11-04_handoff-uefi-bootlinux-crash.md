@@ -23,6 +23,26 @@
 
 ## 2. 下一轮第一步（照做即可）
 
+> **2026-11-05 更新（R21，优先用这条）**：R20 只是「返回 `EFI_ABORTED` 让宿主看 Aborted」，
+> R21 在此基础上进**诊断模式**：不停 USB、跑完 `BootLinux` 的 N 阶段后用
+> `FastbootFail("diag st=%r last=[%a]")` 回传**最后一条标记**。
+> 
+> ```bash
+> python3 - <<'PY'
+> src="out/uefi-20261104R21-hostdiag-r1.img"          # sha256 a9e0b059…ff6c3b30
+> for n in (1,2,3,4,5,6,7):
+>     d=bytearray(open(src,'rb').read())
+>     tok=("sbstop=%d " % n).encode()
+>     d[64:64+len(tok)]=tok                            # v2 header: cmdline 在 offset 64
+>     open("out/r21-stop%d.img"%n,'wb').write(d)
+> PY
+> fastboot boot out/uefi-20261104R21-hostdiag-r1.img   # ABL 侧载 UEFI
+> fastboot -s 51318dc0 boot out/r21-stop5.img          # UEFI 侧 fastboot，判据：diag st=… last=[K]
+> ```
+> 
+> 判据：`diag st=Aborted last=[K] …` ⇒ 到达第 N 阶段；**无响应/USB 掉线 ⇒ 崩在第 N 阶段之前**。
+> 阶梯 5 → 3 → 4 → 2，每档 3 次（崩溃随机）。详见 `reports/uefi-noavb-dtbo-bootchain-20261104R.md` §8。
+
 ```bash
 # 1) 造测试件：R20 镜像 + 注入 cmdline 令牌
 cd /home/xuqianhui/y700-elden

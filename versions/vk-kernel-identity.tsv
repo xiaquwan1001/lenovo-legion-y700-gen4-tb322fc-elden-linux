@@ -72,6 +72,19 @@ vk183-fastrpc	boot-elden-vk183-fastrpc.img	vk183	7.3.0-rc7-debug-vk127-00002-g24
 vk64	boot-elden-vk64.img	vk64	7.2.0-debug-vk64-gd02658e63cf6	1483a9c6c542	d02658e63cf6	branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70,vk79,vk81,vk82,vk83	bundle/vk64,vk64	d02658e63cf6	clean	ok|uts_dup7
 (unversioned)	boot-elden.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	c4e884ada929	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	unversioned|no_manifest|kbin_shared3|uts_dup12
 (no-payload)	dtbo-dummy.img	-	(无内核载荷)						-	skip
+(slot-dump)	linuxstop1.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	5543b181e162	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	slot_dump
+(slot-dump)	linuxstop2.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	5543b181e162	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	slot_dump
+(slot-dump)	linuxstop3.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	5543b181e162	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	slot_dump
+(slot-dump)	linuxstop4.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	5543b181e162	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	slot_dump
+(slot-dump)	linuxstop5.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	5543b181e162	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	slot_dump
+(slot-dump)	linuxstop6.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	5543b181e162	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	slot_dump
+(slot-dump)	linuxstop7.img	-	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	5543b181e162	24223e44ad80-dirty	branch:replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173	vk127,vk163-modular,vk172,vk173		-	slot_dump
+(no-payload)	r20-stop1.img	-	(无内核载荷)						-	skip
+(no-payload)	r20-stop2.img	-	(无内核载荷)						-	skip
+(no-payload)	r20-stop3.img	-	(无内核载荷)						-	skip
+(no-payload)	r20-stop4.img	-	(无内核载荷)						-	skip
+(no-payload)	r20-stop5.img	-	(无内核载荷)						-	skip
+(no-payload)	r20-stop6.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261101-1005recipe-v0.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261103-v2aligned.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104-dual.img	-	(无内核载荷)						-	skip
@@ -97,8 +110,17 @@ vk64	boot-elden-vk64.img	vk64	7.2.0-debug-vk64-gd02658e63cf6	1483a9c6c542	d02658
 (no-payload)	uefi-20261104R10-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R11-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R12-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R13-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R14-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R15-noavbprobe-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R16-dtboclamp-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R17-bootmarkers-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R18-haltbeforejump-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R19-nvmarkers-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R2-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R2-r2.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R20-stage-bisect-r1.img	-	(无内核载荷)						-	skip
+(no-payload)	uefi-20261104R21-hostdiag-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R3-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R4-r1.img	-	(无内核载荷)						-	skip
 (no-payload)	uefi-20261104R5-r1.img	-	(无内核载荷)						-	skip

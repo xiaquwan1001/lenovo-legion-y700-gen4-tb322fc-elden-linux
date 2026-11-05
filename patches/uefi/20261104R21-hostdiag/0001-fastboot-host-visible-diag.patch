@@ -1,0 +1,159 @@
+Subject: [PATCH] Fastboot: host-visible diag mode — report the last [V]/[K] marker in the fastboot response
+
+2026-11-04R21 y700-elden: 屏上取证三条路都废了（ConOut 被 R7 换成 no-op；LinuxLoader 的
+SerialPortWrite 不出现在屏上；NV 变量报 Success 但跨上电不保留）。改为把「最后一条标记」
+直接塞进 fastboot 响应，取证彻底走宿主侧：
+
+  * `SbLastMark[]`：每条 [V]/[K] 探针同时记一份单行副本（定义在 AvbLib，BootLib/FastbootLib extern）；
+  * `SbParseStopStage()` / `SbStopStage`：从 boot.img cmdline 解析 `sbstop=N`（-1 = 正常启动）；
+  * `CmdContinue`/`CmdBoot`：cmdline 带 `sbstop=` 时进入**诊断模式** —— 不调用
+    `FastbootUsbDeviceStop()`，直接跑 `BootLinux`，在第 N 阶段 `EFI_ABORTED` 返回，
+    再用 `FastbootFail("diag st=<status> last=<marker>")` 回给宿主。
+    （两处都必须在**调用 BootLinux 之前**从镜像头 cmdline 解析，不能用全局 SbStopStage。）
+
+判据（全在宿主侧，不需要拍照）：
+  * 收到 `diag st=Aborted last=[K] stop=N` ⇒ 到达 N 阶段；
+  * 命令无响应 / USB 掉线 ⇒ 崩在 N 阶段之前（诊断模式没停 USB，掉线就是真崩）。
+
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index fccd2c53..79d4f92d 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -84,6 +84,8 @@
+ #include "UpdateDeviceTree.h"
+ #include <Library/SerialPortLib.h>  // 2026-11-04R17 y700-elden
+ #include <Library/PrintLib.h>       // 2026-11-04R17 y700-elden
++extern INT32  SbStopStage;      // 2026-11-04R21: 定义在 AvbLib/VerifiedBoot.c
++extern CHAR8  SbLastMark[160];  // 2026-11-04R21
+ 
+ // 2026-11-04R17 y700-elden: 与 VerifiedBoot.c 的 SbVProbe 同一理由（DEBUG 被编掉、
+ // ConOut 被 R7 换成 no-op），boot 链只能用 SerialPortWrite 留痕。
+@@ -104,6 +106,17 @@ SbBootProbe (
+   Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
+   VA_END (Marker);
+   SerialPortWrite ((UINT8 *)Buf, Len);
++  {
++    UINTN  SbIdx;
++
++    for (SbIdx = 0; (SbIdx < (sizeof (SbLastMark) - 1)) && (SbIdx < Len); SbIdx++) {
++      if ((Buf[SbIdx] == '\r') || (Buf[SbIdx] == '\n')) {
++        break;
++      }
++      SbLastMark[SbIdx] = Buf[SbIdx];
++    }
++    SbLastMark[SbIdx] = '\0';
++  }
+   // 2026-11-04R19 y700-elden: 同时落 NV 变量；异常滚屏/复位之后下一轮仍能读出"最后一步"。
+   if (Len > 160) {
+     Len = 160;
+@@ -117,7 +130,6 @@ SbBootProbe (
+ // BootLinux 走到第 N 个阶段就以 EFI_ABORTED 返回 —— 宿主看到 fastboot 的
+ // "Failed to load image from partition: Aborted" 即"到达 N"；看到 USB 掉线即"崩在 N 之前"。
+ // 这样可以在不拍照的情况下二分布置崩溃点。
+-STATIC INT32  SbStopStage = -1;
+ 
+ #define SB_STOP(n, tag)                                                        \
+   do {                                                                         \
+diff --git a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+index 5fd00e8e..af979dbd 100644
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -2675,6 +2675,11 @@ CmdUpdateSnapshot (IN CONST CHAR8 *Arg, IN VOID *Data, IN UINT32 Size)
+ #endif
+ #endif
+ 
++// 2026-11-04R21 y700-elden: 见 VerifiedBoot.c 的 SbLastMark / SbStopStage。
++extern CHAR8  SbLastMark[160];
++extern INT32  SbStopStage;
++INT32 SbParseStopStage (CONST CHAR8 *CmdLine);
++
+ STATIC VOID
+ CmdContinue (IN CONST CHAR8 *Arg, IN VOID *Data, IN UINT32 Size)
+ {
+@@ -2694,6 +2699,16 @@ CmdContinue (IN CONST CHAR8 *Arg, IN VOID *Data, IN UINT32 Size)
+   /* Exit keys' detection firstly */
+   ExitMenuKeysDetection ();
+ 
++  // 2026-11-04R21 y700-elden: 诊断模式 —— boot.img cmdline 带 sbstop=N 时**不**停 USB，
++  // 直接跑 BootLinux 并在第 N 阶段以 EFI_ABORTED 返回，然后把最后一条标记打进 fastboot 响应。
++  // 判据：宿主收到 "diag st=Aborted last=[K] ..." ⇒ 到达 N；无响应/USB 掉线 ⇒ 崩在 N 之前。
++  if (SbParseStopStage ((CONST CHAR8 *)(((boot_img_hdr *)Info.Images[0].ImageBuffer)->cmdline)) >= 0) {
++    Status = BootLinux (&Info);
++    AsciiSPrint (Resp, sizeof (Resp), "diag st=%r last=[%a]", Status, SbLastMark);
++    FastbootFail (Resp);
++    return;
++  }
++
+   FastbootOkay ("");
+   FastbootUsbDeviceStop ();
+   Finished = TRUE;
+@@ -2886,6 +2901,15 @@ CmdBoot (CONST CHAR8 *Arg, VOID *Data, UINT32 Size)
+   /* Exit keys' detection firstly */
+   ExitMenuKeysDetection ();
+ 
++  // 2026-11-04R21 y700-elden: 同 CmdContinue 的诊断模式；这里必须**当场**从镜像头解析
++  // sbstop（BootLinux 内的解析还没跑，全局 SbStopStage 此刻仍是 -1）。
++  if (SbParseStopStage ((CONST CHAR8 *)(((boot_img_hdr *)Info.Images[0].ImageBuffer)->cmdline)) >= 0) {
++    Status = BootLinux (&Info);
++    AsciiSPrint (Resp, sizeof (Resp), "diag st=%r last=[%a]", Status, SbLastMark);
++    FastbootFail (Resp);
++    goto out;
++  }
++
+   FastbootOkay ("");
+   FastbootUsbDeviceStop ();
+   ResetBootDevImage ();
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index c12b7205..1dbea35d 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -76,6 +76,31 @@
+ // = SerialPortWrite（FrameBufferSerialPortLib 直接写帧缓冲），与 [I]/[E]/[L] 同一条路。
+ STATIC CONST EFI_GUID SbMarkGuid = { 0x5b4d4152, 0x4b31, 0x5259, { 0x9a, 0x31, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 } };
+ 
++// 2026-11-04R21 y700-elden: 最后一条标记的单行副本（去 \r\n）。宿主可以在 fastboot 响应里
++// 直接看到它 —— 屏上取证彻底不依赖。定义在 AvbLib、被 BootLib/FastbootLib 以 extern 引用。
++CHAR8  SbLastMark[160] = { '\0' };
++
++// 2026-11-04R21: 宿主可编程停机点（cmdline `sbstop=N`），-1 = 正常启动。
++INT32  SbStopStage = -1;
++
++// 2026-11-04R21: 从 boot.img 的 cmdline 里解析 sbstop=N（无则 -1）。
++INT32
++SbParseStopStage (
++  CONST CHAR8  *CmdLine
++  )
++{
++  CONST CHAR8  *Tok;
++
++  if (CmdLine == NULL) {
++    return -1;
++  }
++  Tok = AsciiStrStr (CmdLine, "sbstop=");
++  if (Tok == NULL) {
++    return -1;
++  }
++  return (INT32) AsciiStrDecimalToUintn (Tok + AsciiStrLen ("sbstop="));
++}
++
+ STATIC
+ VOID
+ SbVProbe (
+@@ -91,6 +116,17 @@ SbVProbe (
+   Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
+   VA_END (Marker);
+   SerialPortWrite ((UINT8 *)Buf, Len);
++  {
++    UINTN  SbIdx;
++
++    for (SbIdx = 0; (SbIdx < (sizeof (SbLastMark) - 1)) && (SbIdx < Len); SbIdx++) {
++      if ((Buf[SbIdx] == '\r') || (Buf[SbIdx] == '\n')) {
++        break;
++      }
++      SbLastMark[SbIdx] = Buf[SbIdx];
++    }
++    SbLastMark[SbIdx] = '\0';
++  }
+   // 2026-11-04R19 y700-elden: 同时落 NV 变量；异常滚屏/复位之后下一轮仍能读出"最后一步"。
+   if (Len > 160) {
+     Len = 160;

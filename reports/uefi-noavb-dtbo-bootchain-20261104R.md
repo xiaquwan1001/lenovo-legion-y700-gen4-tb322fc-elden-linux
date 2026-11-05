@@ -71,3 +71,48 @@ magic 合法 ⇒ 按 `total_size` 装载，且缓冲区按 4 KiB 取整（`LoadI
    （`0xB90C0000+0x1D500000`）是否相交、以及 `LoadImageFromPartition` 的按块取整读；
 3. 备选（不改 Qcom 老路）：按 handoff 的方案 A，直接在 FD 里放 arm64 GRUB / 一个自写 loader，
    由 BDS `LoadImage` 启动，绕开 `BootLinux` 这套 Android 语义。
+
+## 8. R21：取证改走 **fastboot 响应头**（屏与 NV 两条通道全部退场）
+
+三条屏上/持久通道逐个证伪（R19–R21）：
+
+| 通道 | 结论 |
+|---|---|
+| `ConOut->OutputString` | R7 已替换为 no-op（`PITFALLS` #506），`AsciiPrint`/`Print`/`DEBUG` 一律不可见 |
+| LinuxLoader 内 `SerialPortWrite` | 帧缓冲串口在这条路径上不出现在屏上（R20 的 `[K]` 行拍不到） |
+| UEFI NV 变量 | `SetVariable` 返 `Success`，但**跨上电不保留**（R19 的 `[S] prev:` 从未出现） |
+
+⇒ 改为**把最后一条标记直接塞进 fastboot 响应**，取证 100% 在宿主侧（补丁
+`patches/uefi/20261104R21-hostdiag/0001-fastboot-host-visible-diag.patch`）：
+
+- `SbLastMark[160]`：每条 `[V]`/`[K]` 探针同时留一份单行副本（定义在 AvbLib，BootLib/FastbootLib `extern`）；
+- `SbParseStopStage()` / `SbStopStage`：从 boot.img 头 cmdline 解析 `sbstop=N`（无则 −1）；
+- `CmdContinue`/`CmdBoot`：cmdline 带 `sbstop=` ⇒ 进入**诊断模式** —— 不调 `FastbootUsbDeviceStop()`，
+  直接跑 `BootLinux`，在第 N 阶段 `EFI_ABORTED` 返回，再 `FastbootFail("diag st=%r last=[%a]")`。
+  两处都必须在**调用 BootLinux 之前**当场从镜像头解析（全局 `SbStopStage` 此刻仍是 −1）。
+
+判据（不需要拍照）：
+
+- 收到 `diag st=Aborted last=[K] …` ⇒ 已到达第 N 阶段；
+- 命令无响应 / USB 掉线 ⇒ 崩在第 N 阶段**之前**（诊断模式没停 USB，掉线就是真崩）。
+
+产物（2026-11-05 09:39 重建，`reports/artifacts/uefi-20261104R21-hostdiag/`）：
+`SM8750_EFI.fd` 4 194 304 B sha256 `cd100f81…a2ac664d`；镜像 `out/uefi-20261104R21-hostdiag-r1.img`
+67 198 976 B sha256 `a9e0b059…ff6c3b30`；打包断言 `header v2 / text_offset=0 / flags=0xa /
+shim size literal=0x400000 / payload=0x4000c0` 全绿。
+二进制侧已验：`Build/.../LinuxLoader.efi` 含 `diag st=%r last=[%a]`、`sbstop=`、`[K] stop=1…7`。
+
+## 9. 断电事故与恢复（2026-11-05 上午）
+
+- **现象**（09:32 前断电，机器重启后）：UEFI 树里 15 个文件变 **0 字节**（主仓 10：
+  `VerifiedBoot.c`/`BootLinux.c`/`FastbootCmds.c`/`BootLib.inf`/`AvbLib.inf`/`LinuxLoader.inf`/
+  `PartitionTableUpdate.c`/`DXE.inc`/`PrePi.c`/`FrameBufferSerialPortLib.c`；`Common/MU_TIANO` 2；
+  `MU_BASECORE` 5）；R21 产物目录 9 个文件全 0；本报告尾部追加的 2456 B 变成 NUL 填充
+  （「已写入但未落盘」的页在掉电后按 0 重放）。
+- **恢复**：全部 `git checkout --`；用 R20 的完整 `--patch` 序列 + R21 补丁重跑
+  `scripts/uefi-build-variant.sh`（增量，15 s），产物齐全、manifest 记录 25 条补丁。
+- **等价性校验**（不是看 sha 相等）：把重建 payload 与 11-04 那发镜像里的 payload 逐块比对，
+  4194496 B 中仅 4 处差异、合计 63 832 B，全部落在**构建时间字符串**
+  （`Nov  4 2026 23:18:14` → `Nov  5 2026 09:39:49`）及其引起的 `adrp/add` 立即数偏移上
+  ⇒ 代码等价，但 **FD sha 天然不跨构建可复现**（`PITFALLS` #510）。
+- **纪律**：收尾前扫一遍 `find . -size 0` 与 `git status`；报告类文件出现 NUL 即当作损坏丢弃重建。
