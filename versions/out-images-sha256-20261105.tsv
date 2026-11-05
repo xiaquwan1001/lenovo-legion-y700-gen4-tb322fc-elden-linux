@@ -1,132 +1,132 @@
-# out/*.img 完整性基线（2026-11-05 生成；BIOS 静默损坏事件后的对照底本）。复算校验：awk -F'\t' 'NR>1{print $1"  out/"$3}' versions/out-images-sha256-20261105.tsv | sha256sum -c
-# 列：sha256 / bytes / image / in_ledger(是否在 vk-kernel-identity.tsv 有行) / manifest(ok|MISMATCH|no-sha-field|–) / kernel_release_normalized
-sha256	bytes	image	in_ledger	manifest	kernel_release
-5d6ba6222b84a829cba81af7d35f5b742bbcbcea24c5f2bde9bd1b96f3bb634a	22081536	boot-elden-dtbo1.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-de99080d926027f66e7568f8776f4509fcd7cb801f5ba95b84aa997f79c666a5	85639168	boot-elden-dtbo2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-46bf4baeb263a3e1d8a31f18afdf38773c8f0c47bbd3ab15a7a31abdde5b175e	85639168	boot-elden-dtbo3.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-434ec9db203848f7291d33176206fdc7ff097e5b5f4f4401f60ad5f847e8a882	85557248	boot-elden-f2fs-root.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-950aa0b61226604a7e15985357758fac58822f39eb31ad8289ef9ed73ccedadc	85590016	boot-elden-gh612a.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-c3fd81eb5565c71499098acb748515198411e16e524ea257f635e0b9b5faaad9	85639168	boot-elden-gh612b.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-4d97e7e7a5d1a3766992bd3669f7f0c3a0f78e5890352519b96e0b9b8ff84646	85590016	boot-elden-gunyah1.img	Y	ok	
-4d7e2ea9a10ca0f4ed0d97946089b6d6cabccea9a9a209b867c23c47c4143e73	84529152	boot-elden-m3v5-daily.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-072ddb9a6991b71e5206cfac8abe4881a942bf603ad72b009d36c5fa8d9c3477	84529152	boot-elden-m3v5-f2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	88260608	boot-elden-m3v5-onboard-b.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66	84496384	boot-elden-m3v5-onboard.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-87f6b767671749ab605e83300ddf1201942c62b9bced7185d9cba3afde5f619d	84529152	boot-elden-m8ab-base.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-b314287bae3efcec757b0a21daf381beac17c3f27398a38e918c2467ba267d57	84529152	boot-elden-m8ab-v2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-9dfdb3319b61860d472cf403a63730bf431f772a488d577f3870b8b59eb60993	84525056	boot-elden-posctrl-20261103.img	Y	–	
-f7008388f143556cd0e8a6837b5c59c87dc8d2d3e4cdbdc5d3f8e8726d90525e	64761856	boot-elden-posctrl-markspin-v2-20261103.img	Y	–	
-df561f591efa3227c4ef2678e14f88ead08c24275b4ae0571b9d3ecda236d4b4	64761856	boot-elden-posctrl-markspin2-v2-20261103.img	Y	–	
-c1168e6552bc17161db20f666a2987bee50712db43a7513d02d11cd5b359bb79	64761856	boot-elden-posctrl-markspin3-v2-20261103.img	Y	–	
-05d43285f4a789d449dfe15a3735f6f7be1a4016dff96d50984e9f54cbc0e09c	64761856	boot-elden-posctrl-markspin3gz-v2-20261103.img	Y	–	
-7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633	85585920	boot-elden-vk127.img	Y	ok	
-87b73d2c11d2a6dfd5daf48cfa1928ef6eb8ee9abdc8c7bab6210d9896fdcef1	85712896	boot-elden-vk132.img	Y	ok	
-2955438d2d300e86e71fe3cc04b70d009262d05ea874a7b87dbfda5a1d82c584	85712896	boot-elden-vk133.img	Y	ok	
-342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65	85712896	boot-elden-vk134.img	Y	ok	
-be5fe313869b2faefc72fc016fb61bdff4477e1ab6c4a9eff1299b6b5b384bd4	85712896	boot-elden-vk135.img	Y	ok	
-4883f6cea267dc510d06be8f13785cd6643e9b13092c87a7e3126905de3c2b29	85712896	boot-elden-vk136.img	Y	ok	
-7fb5a8fee99b221a1958b7270ee7dd3ec58facb56d62ba26ff224385b7a2bef6	85352448	boot-elden-vk137-q28base.img	Y	ok	
-a0318ffa12c4ed6c1938e5ced774ac2012c018735ee51d671cf8416808fbbd7c	85352448	boot-elden-vk138-q28disp.img	Y	ok	
-dcb49fef797761e705a87295b03d123119b9afb85d8ed5a289747c4476fd0d68	85352448	boot-elden-vk139-q28only0155.img	Y	ok	
-b70a7f29e15ca2be5ed45b59c61e8dc41b1eb47b70d65a15bdd0a21ebfbee645	85590016	boot-elden-vk140-q28disp73.img	Y	ok	
-10a38c4e7bab557fdef994742b99bd9a8aa861bdc1cc6b12d629fa0d74f7ca1d	85590016	boot-elden-vk141-q28disp73.img	Y	ok	
-10a38c4e7bab557fdef994742b99bd9a8aa861bdc1cc6b12d629fa0d74f7ca1d	85590016	boot-elden-vk142-q28disp73dt.img	Y	ok	
-159bdcf512a445bb778938ef82739be3c5e08f654b01b159ca9e2ddfc5f209ac	85590016	boot-elden-vk143-q28-73-0155only.img	Y	ok	
-9309dbc5238475861d3cec567ed81c9f97918ac7c88da4f2a41eb3fa99ec8102	85352448	boot-elden-vk144-q28only0154.img	Y	ok	
-e7c8539c9f1a07872b14a9d2036765d99fc9f7d288b5bf9068721fbaa64e3137	85590016	boot-elden-vk145-q28daily.img	Y	ok	
-9ffd14ea46b706a15c96032c57a16239edef5f7cf47e82ba52a3ffc1945861a6	85712896	boot-elden-vk146-BADSUSPEND.img	Y	ok	
-cc60adf598ea7215796f70504066bb56bc6635232664487fa924a6bb01721f98	85590016	boot-elden-vk147.img	Y	ok	
-93bbc4e265ae06a0e302f86d741137cace8d9f233ab60d719069804042435815	85352448	boot-elden-vk148.img	Y	ok	
-8aedd98a7d8161cb53428b961a01fa88572290625c4a57fd105553ddf5dfc9cb	85352448	boot-elden-vk149.img	Y	ok	
-831ca7c4653eae67ef96a4580017412d84351e8f885b35b91ba0401caf7793f7	85590016	boot-elden-vk150-q28v2.img	Y	ok	
-628b97554e35a06f52bdcc669eb891a57842280c9a7770b0deb6f34bbb5d9204	85585920	boot-elden-vk151.img	Y	ok	
-1b4ec8f8cf08fe38f31760f2eebc81b038493c5181df746cfb81b04c4b8b3862	85590016	boot-elden-vk152.img	Y	ok	
-5efca31f1a5fba10917ded2143eefd1a64899f1db3b72437072dd5fc04e1fc1b	22032384	boot-elden-vk153.img	Y	ok	
-bcc5ecfc87d75a857aa63088a4fd1db75fadad705b08af6d5b69b77fa049aad7	22032384	boot-elden-vk154.img	Y	ok	
-385fd3cb3dd2619390294552fa0000ea93e30465951dab7d188cd0e9578427ab	22032384	boot-elden-vk156.img	Y	ok	
-d2fd1cd6e47e80b9c837ee969373608fc730f58242ef7d80261d00bc161fccf9	22036480	boot-elden-vk157.img	Y	ok	
-b882abcd1a4ba1cd1d41dc38b21a5a9ef31f3e448839a33dc65adb4caf73fda7	22036480	boot-elden-vk158.img	Y	ok	
-a43230ecb3671441ff95d609cd3d5223a1967ff79723e1e479c3e5a5e53599ab	22032384	boot-elden-vk159.img	Y	ok	
-0a7e0982b8c4f380fd89af00433c4fa48a2fc575160a342c4fe9ceb3182c4c99	22032384	boot-elden-vk161.img	Y	ok	
-a0ef33818ada03bfaddd09f4a8e5b3e13235ea5c5789f23b877d882ebf92e9d9	85557248	boot-elden-vk162-fstype.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-0e9c982a92ce64bf195495e87ffe7aff1b8a65e5b0049dc245b749d1649b04c4	85590016	boot-elden-vk162-rescue.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-70fefa733340f4f3b352d19a81e6772ef26a63416bbcdfcc36aff50b2b04c396	85811200	boot-elden-vk163.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty
-56644bc754112a85cfc45b140d4205a578a9e14ce4af2fba3b85c9a0180ba688	85811200	boot-elden-vk164-debianroot.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
-f31f2acb1e96fc339b05853d4085a0dac21c9757da1825848c60ef9731e25392	85815296	boot-elden-vk165-earlygadget.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
-7d1a1876dabec5a9f801b3c0289e73749099a61ca8893f57da7762f9a076934b	85819392	boot-elden-vk166-dbg.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
-6c5059f0dededc4ceaed156b3b9e6c3b5e58f1dab211140ea8f31dff1a64ce56	85819392	boot-elden-vk167-trace.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
-c57c17ce7b8ec0d925dd1855d1e7fc7c7b9205dcf75de4be293e9d8338964895	85819392	boot-elden-vk168-ramprobe.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
-12ca6ca30d14eb656a601af86619d26e22c1e3f6d1620696f02be8ad0842d038	85819392	boot-elden-vk169-trace2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
-bb1d8a33091c49daa6959fe383f174e042ebfee47099b01e462f5c3df6c54db4	85815296	boot-elden-vk170-trace3.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
-551ac3a848aedd354aa0cb4b48f1b1e742c4a980b9032fe04203dd6f115cf41f	85819392	boot-elden-vk171-swrerr.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163
-70d550a74d45dcb05f1f8d0be0e3af2d1105544f8af75c92c3cba760842186f9	84525056	boot-elden-vk172.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-9f969f12aad6369e4370658ea12f0d591429923fbc4532db8f309e887594ba29	84525056	boot-elden-vk173.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-fa2deac486b045b08aed99c1984f20c4660deaae92f68af4a7a0a7ce605fd748	84520960	boot-elden-vk174.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-416da940988819dc56bd77c46e7a85f28d3bb1b70b17cab106afb111edafddb4	84520960	boot-elden-vk175.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-dfb9384963c6817ce1ca6054484b60eb377e3f139531a52260790e4080c0afea	84525056	boot-elden-vk176.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-aa196ff0e945c3c0f0f4516c318640dd690de30fce9e5aaa86d476abebd4d78e	84525056	boot-elden-vk177.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-ad8d975ee2e9a9cd64f5f3d34679b4e500b32704b33810d8b4300bb825b0ed5d	84525056	boot-elden-vk178-b5verify.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-05ce69e70d11e9f1ce59a7e41c4a78311ed6f4549c7f9467c046d6269e8aa4b3	84525056	boot-elden-vk179-b5step4a.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-f5517296b8cddc02f83331d9d48a6df04bdee9752b972dcfdeb6b9058ba61d2b	84525056	boot-elden-vk180-b5step4b.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-c8953ba0ea3ed55d4ebdb37ac897bafa9e6e6449608efe1cc8621deb544aab27	84520960	boot-elden-vk181-daily.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-19c8bcb015376df53793a1247792b410ae2c741dcbd5c94d78a075f9bcb82048	84520960	boot-elden-vk182-camssv3.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
-30e6a4c4bcfcd707993178e5554d5086964a104adde1a3227968342cda8c752b	84525056	boot-elden-vk183-fastrpc.img	Y	–	
-983936396fd7bbacb45b40d28eb58c11972a3b51bb06358bab4f94279714e725	85352448	boot-elden-vk64.img	Y	ok	
-a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	88260608	boot-elden.img	Y	–	
-ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7	4096	dtbo-dummy.img	Y	–	
-cdc8acf2587de4f3ad3352ecbc441babdee37625b87d64ea0e12717ac09deab4	100663296	linuxstop1.img	Y	–	
-c619072390eefab7015242a4dc5f33c962b4826669fc46896af78f44526c389b	100663296	linuxstop2.img	Y	–	
-42e6d6b25bf5b47253029664517c1e9e1be42680190964020d0d82bdcbc8ae3a	100663296	linuxstop3.img	Y	–	
-283ed9a05218b679821dd1748ec7d9f4c04bc256d177be513012c4effecb1cb6	100663296	linuxstop4.img	Y	–	
-71edd5bda8a53628c07781d69baaf7804f7b6958301d0642c307789b69bcb521	100663296	linuxstop5.img	Y	–	
-03ede066b993aa48d8212daf0ef8cca160c1a3ffe5a869a818135312a9fd250c	100663296	linuxstop6.img	Y	–	
-a4ecf2692a3573c95b861de2c84619419f802a5a6f03bd8847bc58ce530d99bb	100663296	linuxstop7.img	Y	–	
-ab546cb1219ceba9379777bf3f5c6d723b784fe9bc8f0075e1ef1dbc542875cb	67198976	r20-stop1.img	Y	–	
-dcb7f56497c5a36e32e46aa866ba1bcd290a9e296256643776b350ea4874793c	67198976	r20-stop2.img	Y	–	
-84a75dd32c2472874a184ed2faab7c00c61f07f1f81fc0fc6ef6fddbb6f9b3a0	67198976	r20-stop3.img	Y	–	
-3519fdbd97a7dba1a9692b2ae19645f19b34de602e6138db1434c5b48e9c9af4	67198976	r20-stop4.img	Y	–	
-54e3da6bb10e63e665d72aceae8ec3ae9c3d7cb14ffe126a70a8ae56ea2daf8c	67198976	r20-stop5.img	Y	–	
-4fce687b6ce81790c064322cb0a6b4786e00565f366799f08bf068e3af7e1ceb	67198976	r20-stop6.img	Y	–	
-97c95cc12f2c8af9cd06b62b7de617006f04e5f00477244ac104ac95376b6470	2441216	uefi-20261101-1005recipe-v0.img	Y	–	
-3724ce340413944f81ed72423006f69c11437f7cd57b3ef85de789d55542c478	67194880	uefi-20261103-v2aligned.img	Y	–	
-351640e254a94b572b425493a649ea7bc91d78132e61c2d68c5cb28dabd47bb4	67194880	uefi-20261104-dual.img	Y	–	
-d172723184dc3192e63a53f9eaa36917923d25e9d70c5ec3d97b6146b4e1021f	67198976	uefi-20261104-dxe.img	Y	–	
-dd3ca219f22f4e10c56b4a620a9a993717496e04d033fcb7e2250d627f418fee	67198976	uefi-20261104-dxe10.img	Y	–	
-f2a9e4b939c050b117297b7ddd58fed989ab4a405fd7dac0aaefd7adf2fb6c78	67198976	uefi-20261104-dxe11.img	Y	–	
-c6b93b253efad9c43c55acf4ca9a6f54135bd86149ae11710b84a21a319db930	67198976	uefi-20261104-dxe2.img	Y	–	
-9d74be1258bae3630ee221f7ac0ddf63d0c94374309df58511b9e2eb842872f7	67198976	uefi-20261104-dxe3.img	Y	–	
-9e4dffcd630cde3c270a89a69d90cc8cf313395b7bbabf82d7739ecff57ad667	67198976	uefi-20261104-dxe4.img	Y	–	
-8fb6755af475adac24d3f2455418340f8c1e01e72f62a1e7b771680e1043829d	67198976	uefi-20261104-dxe5.img	Y	–	
-3364d61e7b6b38701b08dc0c3f6c2e557b410339cbd8b58a961a51d3d72dc29f	67198976	uefi-20261104-dxe6.img	Y	–	
-a8f0fc0ead5018d924a338e97bc5d863bdcb4b243843af9a75a450e789a7b931	67198976	uefi-20261104-dxe7.img	Y	–	
-bfd04e84cc7a75f51563706461165a9bc083156965806aa861c1bf8386dcdaff	67198976	uefi-20261104-dxe8.img	Y	–	
-400206d779eb9b58b1d2a469f79f8a5313e28e1926b02d3db94c03c9efd12796	67198976	uefi-20261104-dxe9.img	Y	–	
-23f1cbdb26d47ac1ffc13bacdf3be45618f53fd5a54491a261b718e3927300f0	67194880	uefi-20261104-fbband.img	Y	–	
-fca136d94925e9b2a1a78aaca935348e1920ec9416d3d0815ff1064cb9091de2	67194880	uefi-20261104-fbfill.img	Y	–	
-c0118018ccadec8a01af5a54437edf42af42893d7130988e46141c3d359ef624	67198976	uefi-20261104-fixcopylen.img	Y	–	
-e18f0be425e910b73373cd35bd7ddf16ef16122e11431ef839a079cd4fb70038	67194880	uefi-20261104-m3block.img	Y	–	
-daf8d8911f73b3fa6ab36e18f79f0c9d61f0d28c7968a340ba0926118fbaed32	67194880	uefi-20261104-nocivac.img	Y	–	
-e5aa7164e9f4dbfb9604f3c4a60a3cfd305a7b6504e25779b4e14f79621adc9d	67194880	uefi-20261104-prepi.img	Y	–	
-ce3292d4cc6f8fa9fc327dfa3e519b8d9cffb5f52a9f06a2a45506acaa5cff43	67194880	uefi-20261104-prog.img	Y	–	
-e7f8b5445c05bd3c0c7a0a7d444e262bde66d1bc4b1faee6714525cc57b85e73	67198976	uefi-20261104R-r1.img	Y	–	
-23dab1f4a6de315975073314d738d2f84e89c7e312b0d07a139350dddaeea13c	67194880	uefi-20261104R10-r1.img	Y	–	
-db7c1b358b7c6e55d0ef782d7efcbcdb05eae22e79ffd0e63c53df169b4fc240	67194880	uefi-20261104R11-r1.img	Y	–	
-8db0aecd461c78a487c15b0c29fe4564669db36e645c4ceff66d2dd8e9ea623d	67194880	uefi-20261104R12-r1.img	Y	–	
-983a58d0fcd93c5a090f6cb69e8eca549c980ff28b9628e89feaa6579d4d84c8	67194880	uefi-20261104R13-r1.img	Y	–	
-fba181d6d66b176fe7f513fca00eb7eb8ec884ad3b7d17a462538f25c8d919a3	67194880	uefi-20261104R14-r1.img	Y	–	
-1cbb544b99884a38b19b18407485e808daf509e1c83ef9d6bbb0430f8ca44b15	67194880	uefi-20261104R15-noavbprobe-r1.img	Y	–	
-ed1067b53e0319a22c4950d8578f3a54d07195390119e48e54992629f7456ce5	67194880	uefi-20261104R16-dtboclamp-r1.img	Y	–	
-7d71b53fe00c7a3795c5d797a294d9e7768bfca62a757fb831402f6440324af7	67194880	uefi-20261104R17-bootmarkers-r1.img	Y	–	
-6a73d9f744f7447025ffa0e5275c1b81097a6c575cebd7f520abde79500494ac	67194880	uefi-20261104R18-haltbeforejump-r1.img	Y	–	
-433c600234613a8f6ef322fddb9885159c57231c65871020e79273d09925c265	67198976	uefi-20261104R19-nvmarkers-r1.img	Y	–	
-6a31f243cd0ef06d07b9393860b37d0b11f18177b1c9b4519bef2ee2a2f835b8	67198976	uefi-20261104R2-r1.img	Y	–	
-23b48a837911415d27d0a44d7daa960d6989171441fc45b22f4cf9c98f0ba4d9	67198976	uefi-20261104R2-r2.img	Y	–	
-04fc0eb6577d016a6e19a8ca0bcc162b60f4b66fc4fd0f744d4928e9baea84b7	67198976	uefi-20261104R20-stage-bisect-r1.img	Y	–	
-a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30	67198976	uefi-20261104R21-hostdiag-r1.img	Y	–	
-cdea96efc55f2471955e1284469619d294c075963307faab26caf9c349acb592	67198976	uefi-20261104R3-r1.img	Y	–	
-a9efd60351d6953f66f0c0b303d2719879a7e8304eb06adee9a44b5533ffee48	67198976	uefi-20261104R4-r1.img	Y	–	
-fe0f0c8f54c5c086bffa91ebacafc547d7154f3c24d4d888cf01e1487c3dffd4	67198976	uefi-20261104R5-r1.img	Y	–	
-331fb365c038b02307b7cd214f3acdfee4202286507741b173803d8b760836ff	67198976	uefi-20261104R7-r1.img	Y	–	
-4c0a2c19a6dd78ddc28b5a6de438755e6de2e321a22f508d08187e4359b0dd86	67198976	uefi-20261104R8-r1.img	Y	–	
-28658a3cb14a119595e3475a510b054e6184a0eebe7f27b352426166e5f01d45	67198976	uefi-20261104R9-r1.img	Y	–	
-f623bd18a5630dc2e04d383ddcbd58b04a1550f9903e8d7db4f7525de5181450	2445312	uefi-ddrmarks-sysram-rd.img	Y	–	
+# 镜像完整性基线（2026-11-05 生成；同日 out/ 归档后增 path 列 —— 114 件历史镜像移到 backup/out-history-20261105/，见 scripts/out-archive.py 与 reports/out-archive-20261105.md）。复算校验：awk -F'\t' 'NR>3{print $1"  "$7}' versions/out-images-sha256-20261105.tsv | sha256sum -c --quiet
+# 列：sha256 / bytes / image / in_ledger(是否在 vk-kernel-identity.tsv 有行) / manifest(ok|MISMATCH|no-sha-field|–) / kernel_release_normalized / path(相对仓库根；勿再用 "out/"+image 拼接)
+sha256	bytes	image	in_ledger	manifest	kernel_release	path
+5d6ba6222b84a829cba81af7d35f5b742bbcbcea24c5f2bde9bd1b96f3bb634a	22081536	boot-elden-dtbo1.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-dtbo1.img
+de99080d926027f66e7568f8776f4509fcd7cb801f5ba95b84aa997f79c666a5	85639168	boot-elden-dtbo2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-dtbo2.img
+46bf4baeb263a3e1d8a31f18afdf38773c8f0c47bbd3ab15a7a31abdde5b175e	85639168	boot-elden-dtbo3.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-dtbo3.img
+434ec9db203848f7291d33176206fdc7ff097e5b5f4f4401f60ad5f847e8a882	85557248	boot-elden-f2fs-root.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-f2fs-root.img
+950aa0b61226604a7e15985357758fac58822f39eb31ad8289ef9ed73ccedadc	85590016	boot-elden-gh612a.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-gh612a.img
+c3fd81eb5565c71499098acb748515198411e16e524ea257f635e0b9b5faaad9	85639168	boot-elden-gh612b.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-gh612b.img
+4d97e7e7a5d1a3766992bd3669f7f0c3a0f78e5890352519b96e0b9b8ff84646	85590016	boot-elden-gunyah1.img	Y	ok		backup/out-history-20261105/boot-elden-gunyah1.img
+4d7e2ea9a10ca0f4ed0d97946089b6d6cabccea9a9a209b867c23c47c4143e73	84529152	boot-elden-m3v5-daily.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-m3v5-daily.img
+072ddb9a6991b71e5206cfac8abe4881a942bf603ad72b009d36c5fa8d9c3477	84529152	boot-elden-m3v5-f2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-m3v5-f2.img
+a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	88260608	boot-elden-m3v5-onboard-b.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-m3v5-onboard-b.img
+b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66	84496384	boot-elden-m3v5-onboard.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-m3v5-onboard.img
+87f6b767671749ab605e83300ddf1201942c62b9bced7185d9cba3afde5f619d	84529152	boot-elden-m8ab-base.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-m8ab-base.img
+b314287bae3efcec757b0a21daf381beac17c3f27398a38e918c2467ba267d57	84529152	boot-elden-m8ab-v2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-m8ab-v2.img
+9dfdb3319b61860d472cf403a63730bf431f772a488d577f3870b8b59eb60993	84525056	boot-elden-posctrl-20261103.img	Y	–		out/boot-elden-posctrl-20261103.img
+f7008388f143556cd0e8a6837b5c59c87dc8d2d3e4cdbdc5d3f8e8726d90525e	64761856	boot-elden-posctrl-markspin-v2-20261103.img	Y	–		backup/out-history-20261105/boot-elden-posctrl-markspin-v2-20261103.img
+df561f591efa3227c4ef2678e14f88ead08c24275b4ae0571b9d3ecda236d4b4	64761856	boot-elden-posctrl-markspin2-v2-20261103.img	Y	–		backup/out-history-20261105/boot-elden-posctrl-markspin2-v2-20261103.img
+c1168e6552bc17161db20f666a2987bee50712db43a7513d02d11cd5b359bb79	64761856	boot-elden-posctrl-markspin3-v2-20261103.img	Y	–		backup/out-history-20261105/boot-elden-posctrl-markspin3-v2-20261103.img
+05d43285f4a789d449dfe15a3735f6f7be1a4016dff96d50984e9f54cbc0e09c	64761856	boot-elden-posctrl-markspin3gz-v2-20261103.img	Y	–		backup/out-history-20261105/boot-elden-posctrl-markspin3gz-v2-20261103.img
+7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633	85585920	boot-elden-vk127.img	Y	ok		backup/out-history-20261105/boot-elden-vk127.img
+87b73d2c11d2a6dfd5daf48cfa1928ef6eb8ee9abdc8c7bab6210d9896fdcef1	85712896	boot-elden-vk132.img	Y	ok		backup/out-history-20261105/boot-elden-vk132.img
+2955438d2d300e86e71fe3cc04b70d009262d05ea874a7b87dbfda5a1d82c584	85712896	boot-elden-vk133.img	Y	ok		backup/out-history-20261105/boot-elden-vk133.img
+342ff21618b7940ab65baeecd2e3ab2e5d208dec99646d5516ee56def7f9eb65	85712896	boot-elden-vk134.img	Y	ok		backup/out-history-20261105/boot-elden-vk134.img
+be5fe313869b2faefc72fc016fb61bdff4477e1ab6c4a9eff1299b6b5b384bd4	85712896	boot-elden-vk135.img	Y	ok		backup/out-history-20261105/boot-elden-vk135.img
+4883f6cea267dc510d06be8f13785cd6643e9b13092c87a7e3126905de3c2b29	85712896	boot-elden-vk136.img	Y	ok		backup/out-history-20261105/boot-elden-vk136.img
+7fb5a8fee99b221a1958b7270ee7dd3ec58facb56d62ba26ff224385b7a2bef6	85352448	boot-elden-vk137-q28base.img	Y	ok		backup/out-history-20261105/boot-elden-vk137-q28base.img
+a0318ffa12c4ed6c1938e5ced774ac2012c018735ee51d671cf8416808fbbd7c	85352448	boot-elden-vk138-q28disp.img	Y	ok		backup/out-history-20261105/boot-elden-vk138-q28disp.img
+dcb49fef797761e705a87295b03d123119b9afb85d8ed5a289747c4476fd0d68	85352448	boot-elden-vk139-q28only0155.img	Y	ok		backup/out-history-20261105/boot-elden-vk139-q28only0155.img
+b70a7f29e15ca2be5ed45b59c61e8dc41b1eb47b70d65a15bdd0a21ebfbee645	85590016	boot-elden-vk140-q28disp73.img	Y	ok		backup/out-history-20261105/boot-elden-vk140-q28disp73.img
+10a38c4e7bab557fdef994742b99bd9a8aa861bdc1cc6b12d629fa0d74f7ca1d	85590016	boot-elden-vk141-q28disp73.img	Y	ok		backup/out-history-20261105/boot-elden-vk141-q28disp73.img
+10a38c4e7bab557fdef994742b99bd9a8aa861bdc1cc6b12d629fa0d74f7ca1d	85590016	boot-elden-vk142-q28disp73dt.img	Y	ok		backup/out-history-20261105/boot-elden-vk142-q28disp73dt.img
+159bdcf512a445bb778938ef82739be3c5e08f654b01b159ca9e2ddfc5f209ac	85590016	boot-elden-vk143-q28-73-0155only.img	Y	ok		backup/out-history-20261105/boot-elden-vk143-q28-73-0155only.img
+9309dbc5238475861d3cec567ed81c9f97918ac7c88da4f2a41eb3fa99ec8102	85352448	boot-elden-vk144-q28only0154.img	Y	ok		backup/out-history-20261105/boot-elden-vk144-q28only0154.img
+e7c8539c9f1a07872b14a9d2036765d99fc9f7d288b5bf9068721fbaa64e3137	85590016	boot-elden-vk145-q28daily.img	Y	ok		backup/out-history-20261105/boot-elden-vk145-q28daily.img
+9ffd14ea46b706a15c96032c57a16239edef5f7cf47e82ba52a3ffc1945861a6	85712896	boot-elden-vk146-BADSUSPEND.img	Y	ok		backup/out-history-20261105/boot-elden-vk146-BADSUSPEND.img
+cc60adf598ea7215796f70504066bb56bc6635232664487fa924a6bb01721f98	85590016	boot-elden-vk147.img	Y	ok		backup/out-history-20261105/boot-elden-vk147.img
+93bbc4e265ae06a0e302f86d741137cace8d9f233ab60d719069804042435815	85352448	boot-elden-vk148.img	Y	ok		backup/out-history-20261105/boot-elden-vk148.img
+8aedd98a7d8161cb53428b961a01fa88572290625c4a57fd105553ddf5dfc9cb	85352448	boot-elden-vk149.img	Y	ok		backup/out-history-20261105/boot-elden-vk149.img
+831ca7c4653eae67ef96a4580017412d84351e8f885b35b91ba0401caf7793f7	85590016	boot-elden-vk150-q28v2.img	Y	ok		backup/out-history-20261105/boot-elden-vk150-q28v2.img
+628b97554e35a06f52bdcc669eb891a57842280c9a7770b0deb6f34bbb5d9204	85585920	boot-elden-vk151.img	Y	ok		backup/out-history-20261105/boot-elden-vk151.img
+1b4ec8f8cf08fe38f31760f2eebc81b038493c5181df746cfb81b04c4b8b3862	85590016	boot-elden-vk152.img	Y	ok		backup/out-history-20261105/boot-elden-vk152.img
+5efca31f1a5fba10917ded2143eefd1a64899f1db3b72437072dd5fc04e1fc1b	22032384	boot-elden-vk153.img	Y	ok		backup/out-history-20261105/boot-elden-vk153.img
+bcc5ecfc87d75a857aa63088a4fd1db75fadad705b08af6d5b69b77fa049aad7	22032384	boot-elden-vk154.img	Y	ok		backup/out-history-20261105/boot-elden-vk154.img
+385fd3cb3dd2619390294552fa0000ea93e30465951dab7d188cd0e9578427ab	22032384	boot-elden-vk156.img	Y	ok		backup/out-history-20261105/boot-elden-vk156.img
+d2fd1cd6e47e80b9c837ee969373608fc730f58242ef7d80261d00bc161fccf9	22036480	boot-elden-vk157.img	Y	ok		backup/out-history-20261105/boot-elden-vk157.img
+b882abcd1a4ba1cd1d41dc38b21a5a9ef31f3e448839a33dc65adb4caf73fda7	22036480	boot-elden-vk158.img	Y	ok		backup/out-history-20261105/boot-elden-vk158.img
+a43230ecb3671441ff95d609cd3d5223a1967ff79723e1e479c3e5a5e53599ab	22032384	boot-elden-vk159.img	Y	ok		backup/out-history-20261105/boot-elden-vk159.img
+0a7e0982b8c4f380fd89af00433c4fa48a2fc575160a342c4fe9ceb3182c4c99	22032384	boot-elden-vk161.img	Y	ok		backup/out-history-20261105/boot-elden-vk161.img
+a0ef33818ada03bfaddd09f4a8e5b3e13235ea5c5789f23b877d882ebf92e9d9	85557248	boot-elden-vk162-fstype.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-vk162-fstype.img
+0e9c982a92ce64bf195495e87ffe7aff1b8a65e5b0049dc245b749d1649b04c4	85590016	boot-elden-vk162-rescue.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-vk162-rescue.img
+70fefa733340f4f3b352d19a81e6772ef26a63416bbcdfcc36aff50b2b04c396	85811200	boot-elden-vk163.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-vk163.img
+56644bc754112a85cfc45b140d4205a578a9e14ce4af2fba3b85c9a0180ba688	85811200	boot-elden-vk164-debianroot.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163	backup/out-history-20261105/boot-elden-vk164-debianroot.img
+f31f2acb1e96fc339b05853d4085a0dac21c9757da1825848c60ef9731e25392	85815296	boot-elden-vk165-earlygadget.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163	backup/out-history-20261105/boot-elden-vk165-earlygadget.img
+7d1a1876dabec5a9f801b3c0289e73749099a61ca8893f57da7762f9a076934b	85819392	boot-elden-vk166-dbg.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163	backup/out-history-20261105/boot-elden-vk166-dbg.img
+6c5059f0dededc4ceaed156b3b9e6c3b5e58f1dab211140ea8f31dff1a64ce56	85819392	boot-elden-vk167-trace.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163	backup/out-history-20261105/boot-elden-vk167-trace.img
+c57c17ce7b8ec0d925dd1855d1e7fc7c7b9205dcf75de4be293e9d8338964895	85819392	boot-elden-vk168-ramprobe.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163	backup/out-history-20261105/boot-elden-vk168-ramprobe.img
+12ca6ca30d14eb656a601af86619d26e22c1e3f6d1620696f02be8ad0842d038	85819392	boot-elden-vk169-trace2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163	backup/out-history-20261105/boot-elden-vk169-trace2.img
+bb1d8a33091c49daa6959fe383f174e042ebfee47099b01e462f5c3df6c54db4	85815296	boot-elden-vk170-trace3.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163	backup/out-history-20261105/boot-elden-vk170-trace3.img
+551ac3a848aedd354aa0cb4b48f1b1e742c4a980b9032fe04203dd6f115cf41f	85819392	boot-elden-vk171-swrerr.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163	backup/out-history-20261105/boot-elden-vk171-swrerr.img
+70d550a74d45dcb05f1f8d0be0e3af2d1105544f8af75c92c3cba760842186f9	84525056	boot-elden-vk172.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-vk172.img
+9f969f12aad6369e4370658ea12f0d591429923fbc4532db8f309e887594ba29	84525056	boot-elden-vk173.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-vk173.img
+fa2deac486b045b08aed99c1984f20c4660deaae92f68af4a7a0a7ce605fd748	84520960	boot-elden-vk174.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-vk174.img
+416da940988819dc56bd77c46e7a85f28d3bb1b70b17cab106afb111edafddb4	84520960	boot-elden-vk175.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-vk175.img
+dfb9384963c6817ce1ca6054484b60eb377e3f139531a52260790e4080c0afea	84525056	boot-elden-vk176.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-vk176.img
+aa196ff0e945c3c0f0f4516c318640dd690de30fce9e5aaa86d476abebd4d78e	84525056	boot-elden-vk177.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-vk177.img
+ad8d975ee2e9a9cd64f5f3d34679b4e500b32704b33810d8b4300bb825b0ed5d	84525056	boot-elden-vk178-b5verify.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-vk178-b5verify.img
+05ce69e70d11e9f1ce59a7e41c4a78311ed6f4549c7f9467c046d6269e8aa4b3	84525056	boot-elden-vk179-b5step4a.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-vk179-b5step4a.img
+f5517296b8cddc02f83331d9d48a6df04bdee9752b972dcfdeb6b9058ba61d2b	84525056	boot-elden-vk180-b5step4b.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-vk180-b5step4b.img
+c8953ba0ea3ed55d4ebdb37ac897bafa9e6e6449608efe1cc8621deb544aab27	84520960	boot-elden-vk181-daily.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-vk181-daily.img
+19c8bcb015376df53793a1247792b410ae2c741dcbd5c94d78a075f9bcb82048	84520960	boot-elden-vk182-camssv3.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-vk182-camssv3.img
+30e6a4c4bcfcd707993178e5554d5086964a104adde1a3227968342cda8c752b	84525056	boot-elden-vk183-fastrpc.img	Y	–		out/boot-elden-vk183-fastrpc.img
+983936396fd7bbacb45b40d28eb58c11972a3b51bb06358bab4f94279714e725	85352448	boot-elden-vk64.img	Y	ok		backup/out-history-20261105/boot-elden-vk64.img
+a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	88260608	boot-elden.img	Y	–		out/boot-elden.img
+ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7	4096	dtbo-dummy.img	Y	–		backup/out-history-20261105/dtbo-dummy.img
+cdc8acf2587de4f3ad3352ecbc441babdee37625b87d64ea0e12717ac09deab4	100663296	linuxstop1.img	Y	–		backup/out-history-20261105/linuxstop1.img
+c619072390eefab7015242a4dc5f33c962b4826669fc46896af78f44526c389b	100663296	linuxstop2.img	Y	–		backup/out-history-20261105/linuxstop2.img
+42e6d6b25bf5b47253029664517c1e9e1be42680190964020d0d82bdcbc8ae3a	100663296	linuxstop3.img	Y	–		backup/out-history-20261105/linuxstop3.img
+283ed9a05218b679821dd1748ec7d9f4c04bc256d177be513012c4effecb1cb6	100663296	linuxstop4.img	Y	–		backup/out-history-20261105/linuxstop4.img
+71edd5bda8a53628c07781d69baaf7804f7b6958301d0642c307789b69bcb521	100663296	linuxstop5.img	Y	–		backup/out-history-20261105/linuxstop5.img
+03ede066b993aa48d8212daf0ef8cca160c1a3ffe5a869a818135312a9fd250c	100663296	linuxstop6.img	Y	–		backup/out-history-20261105/linuxstop6.img
+a4ecf2692a3573c95b861de2c84619419f802a5a6f03bd8847bc58ce530d99bb	100663296	linuxstop7.img	Y	–		backup/out-history-20261105/linuxstop7.img
+ab546cb1219ceba9379777bf3f5c6d723b784fe9bc8f0075e1ef1dbc542875cb	67198976	r20-stop1.img	Y	–		backup/out-history-20261105/r20-stop1.img
+dcb7f56497c5a36e32e46aa866ba1bcd290a9e296256643776b350ea4874793c	67198976	r20-stop2.img	Y	–		backup/out-history-20261105/r20-stop2.img
+84a75dd32c2472874a184ed2faab7c00c61f07f1f81fc0fc6ef6fddbb6f9b3a0	67198976	r20-stop3.img	Y	–		backup/out-history-20261105/r20-stop3.img
+3519fdbd97a7dba1a9692b2ae19645f19b34de602e6138db1434c5b48e9c9af4	67198976	r20-stop4.img	Y	–		backup/out-history-20261105/r20-stop4.img
+54e3da6bb10e63e665d72aceae8ec3ae9c3d7cb14ffe126a70a8ae56ea2daf8c	67198976	r20-stop5.img	Y	–		backup/out-history-20261105/r20-stop5.img
+4fce687b6ce81790c064322cb0a6b4786e00565f366799f08bf068e3af7e1ceb	67198976	r20-stop6.img	Y	–		backup/out-history-20261105/r20-stop6.img
+97c95cc12f2c8af9cd06b62b7de617006f04e5f00477244ac104ac95376b6470	2441216	uefi-20261101-1005recipe-v0.img	Y	–		backup/out-history-20261105/uefi-20261101-1005recipe-v0.img
+3724ce340413944f81ed72423006f69c11437f7cd57b3ef85de789d55542c478	67194880	uefi-20261103-v2aligned.img	Y	–		backup/out-history-20261105/uefi-20261103-v2aligned.img
+351640e254a94b572b425493a649ea7bc91d78132e61c2d68c5cb28dabd47bb4	67194880	uefi-20261104-dual.img	Y	–		backup/out-history-20261105/uefi-20261104-dual.img
+d172723184dc3192e63a53f9eaa36917923d25e9d70c5ec3d97b6146b4e1021f	67198976	uefi-20261104-dxe.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe.img
+dd3ca219f22f4e10c56b4a620a9a993717496e04d033fcb7e2250d627f418fee	67198976	uefi-20261104-dxe10.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe10.img
+f2a9e4b939c050b117297b7ddd58fed989ab4a405fd7dac0aaefd7adf2fb6c78	67198976	uefi-20261104-dxe11.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe11.img
+c6b93b253efad9c43c55acf4ca9a6f54135bd86149ae11710b84a21a319db930	67198976	uefi-20261104-dxe2.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe2.img
+9d74be1258bae3630ee221f7ac0ddf63d0c94374309df58511b9e2eb842872f7	67198976	uefi-20261104-dxe3.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe3.img
+9e4dffcd630cde3c270a89a69d90cc8cf313395b7bbabf82d7739ecff57ad667	67198976	uefi-20261104-dxe4.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe4.img
+8fb6755af475adac24d3f2455418340f8c1e01e72f62a1e7b771680e1043829d	67198976	uefi-20261104-dxe5.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe5.img
+3364d61e7b6b38701b08dc0c3f6c2e557b410339cbd8b58a961a51d3d72dc29f	67198976	uefi-20261104-dxe6.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe6.img
+a8f0fc0ead5018d924a338e97bc5d863bdcb4b243843af9a75a450e789a7b931	67198976	uefi-20261104-dxe7.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe7.img
+bfd04e84cc7a75f51563706461165a9bc083156965806aa861c1bf8386dcdaff	67198976	uefi-20261104-dxe8.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe8.img
+400206d779eb9b58b1d2a469f79f8a5313e28e1926b02d3db94c03c9efd12796	67198976	uefi-20261104-dxe9.img	Y	–		backup/out-history-20261105/uefi-20261104-dxe9.img
+23f1cbdb26d47ac1ffc13bacdf3be45618f53fd5a54491a261b718e3927300f0	67194880	uefi-20261104-fbband.img	Y	–		backup/out-history-20261105/uefi-20261104-fbband.img
+fca136d94925e9b2a1a78aaca935348e1920ec9416d3d0815ff1064cb9091de2	67194880	uefi-20261104-fbfill.img	Y	–		backup/out-history-20261105/uefi-20261104-fbfill.img
+c0118018ccadec8a01af5a54437edf42af42893d7130988e46141c3d359ef624	67198976	uefi-20261104-fixcopylen.img	Y	–		out/uefi-20261104-fixcopylen.img
+e18f0be425e910b73373cd35bd7ddf16ef16122e11431ef839a079cd4fb70038	67194880	uefi-20261104-m3block.img	Y	–		backup/out-history-20261105/uefi-20261104-m3block.img
+daf8d8911f73b3fa6ab36e18f79f0c9d61f0d28c7968a340ba0926118fbaed32	67194880	uefi-20261104-nocivac.img	Y	–		backup/out-history-20261105/uefi-20261104-nocivac.img
+e5aa7164e9f4dbfb9604f3c4a60a3cfd305a7b6504e25779b4e14f79621adc9d	67194880	uefi-20261104-prepi.img	Y	–		backup/out-history-20261105/uefi-20261104-prepi.img
+ce3292d4cc6f8fa9fc327dfa3e519b8d9cffb5f52a9f06a2a45506acaa5cff43	67194880	uefi-20261104-prog.img	Y	–		backup/out-history-20261105/uefi-20261104-prog.img
+e7f8b5445c05bd3c0c7a0a7d444e262bde66d1bc4b1faee6714525cc57b85e73	67198976	uefi-20261104R-r1.img	Y	–		out/uefi-20261104R-r1.img
+23dab1f4a6de315975073314d738d2f84e89c7e312b0d07a139350dddaeea13c	67194880	uefi-20261104R10-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R10-r1.img
+db7c1b358b7c6e55d0ef782d7efcbcdb05eae22e79ffd0e63c53df169b4fc240	67194880	uefi-20261104R11-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R11-r1.img
+8db0aecd461c78a487c15b0c29fe4564669db36e645c4ceff66d2dd8e9ea623d	67194880	uefi-20261104R12-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R12-r1.img
+983a58d0fcd93c5a090f6cb69e8eca549c980ff28b9628e89feaa6579d4d84c8	67194880	uefi-20261104R13-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R13-r1.img
+fba181d6d66b176fe7f513fca00eb7eb8ec884ad3b7d17a462538f25c8d919a3	67194880	uefi-20261104R14-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R14-r1.img
+1cbb544b99884a38b19b18407485e808daf509e1c83ef9d6bbb0430f8ca44b15	67194880	uefi-20261104R15-noavbprobe-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R15-noavbprobe-r1.img
+ed1067b53e0319a22c4950d8578f3a54d07195390119e48e54992629f7456ce5	67194880	uefi-20261104R16-dtboclamp-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R16-dtboclamp-r1.img
+7d71b53fe00c7a3795c5d797a294d9e7768bfca62a757fb831402f6440324af7	67194880	uefi-20261104R17-bootmarkers-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R17-bootmarkers-r1.img
+6a73d9f744f7447025ffa0e5275c1b81097a6c575cebd7f520abde79500494ac	67194880	uefi-20261104R18-haltbeforejump-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R18-haltbeforejump-r1.img
+433c600234613a8f6ef322fddb9885159c57231c65871020e79273d09925c265	67198976	uefi-20261104R19-nvmarkers-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R19-nvmarkers-r1.img
+6a31f243cd0ef06d07b9393860b37d0b11f18177b1c9b4519bef2ee2a2f835b8	67198976	uefi-20261104R2-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R2-r1.img
+23b48a837911415d27d0a44d7daa960d6989171441fc45b22f4cf9c98f0ba4d9	67198976	uefi-20261104R2-r2.img	Y	–		backup/out-history-20261105/uefi-20261104R2-r2.img
+04fc0eb6577d016a6e19a8ca0bcc162b60f4b66fc4fd0f744d4928e9baea84b7	67198976	uefi-20261104R20-stage-bisect-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R20-stage-bisect-r1.img
+a9e0b0596d4be877939a579c98a13d5d53a41b8a2e0d58adc4c3aaffff6c3b30	67198976	uefi-20261104R21-hostdiag-r1.img	Y	–		out/uefi-20261104R21-hostdiag-r1.img
+cdea96efc55f2471955e1284469619d294c075963307faab26caf9c349acb592	67198976	uefi-20261104R3-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R3-r1.img
+a9efd60351d6953f66f0c0b303d2719879a7e8304eb06adee9a44b5533ffee48	67198976	uefi-20261104R4-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R4-r1.img
+fe0f0c8f54c5c086bffa91ebacafc547d7154f3c24d4d888cf01e1487c3dffd4	67198976	uefi-20261104R5-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R5-r1.img
+331fb365c038b02307b7cd214f3acdfee4202286507741b173803d8b760836ff	67198976	uefi-20261104R7-r1.img	Y	–		out/uefi-20261104R7-r1.img
+4c0a2c19a6dd78ddc28b5a6de438755e6de2e321a22f508d08187e4359b0dd86	67198976	uefi-20261104R8-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R8-r1.img
+28658a3cb14a119595e3475a510b054e6184a0eebe7f27b352426166e5f01d45	67198976	uefi-20261104R9-r1.img	Y	–		backup/out-history-20261105/uefi-20261104R9-r1.img
+f623bd18a5630dc2e04d383ddcbd58b04a1550f9903e8d7db4f7525de5181450	2445312	uefi-ddrmarks-sysram-rd.img	Y	–		backup/out-history-20261105/uefi-ddrmarks-sysram-rd.img

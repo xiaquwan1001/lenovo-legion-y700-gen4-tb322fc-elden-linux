@@ -45,6 +45,11 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'out')
+# 归档目录（scripts/out-archive.py 把 out/ 里的历史镜像 mv 到这里）。
+# 归档件**仍参与身份扫描**：文件内容不变、只换路径；账表 image 列是 basename，
+# 因此按 basename 排序后扫出来的行与归档前逐行一致 ⇒ §5d 新鲜度门（--check）保持 0，
+# 而 `.manifest` 一律留在 out/（入库、是身份账），故 manifest 查找要回退到 out/。
+ARCHIVE_GLOB = os.path.join(ROOT, 'backup', 'out-history-*')
 REG = os.path.join(ROOT, 'versions', 'vk-registry.tsv')
 KERNEL = os.path.join(ROOT, 'geekidos-linux')
 TSV = os.path.join(ROOT, 'versions', 'vk-kernel-identity.tsv')
@@ -52,6 +57,23 @@ INFLIGHT = os.path.join(ROOT, 'versions', 'vk-identity-inflight.txt')
 
 COLS = ['build', 'image', 'reg', 'img_uts', 'kbin_sha', 'src_sha', 'src_ref',
         'src_tag', 'tree_head', 'tree_state', 'flag']
+
+
+def out_images():
+    """out/ + 归档目录里全部 *.img，按 basename 排序（= 归档之前的顺序）。"""
+    ps = []
+    for d in [OUT] + sorted(glob.glob(ARCHIVE_GLOB)):
+        ps += glob.glob(os.path.join(d, '*.img'))
+    return sorted(ps, key=os.path.basename)
+
+
+def manifest_for(img):
+    """镜像对应的 .manifest 路径：同目录优先，其次 out/（归档件的账留在 out/ 入库）。"""
+    base = os.path.basename(img)[:-len('.img')] + '.manifest'
+    for p in (img[:-len('.img')] + '.manifest', os.path.join(OUT, base)):
+        if os.path.exists(p):
+            return p
+    return img[:-len('.img')] + '.manifest'
 
 
 def git(*a):
@@ -276,8 +298,11 @@ def gate_lines(rows, skip_names):
     new_hard, legacy, held, noted, exempt = [], 0, [], [], []
     unreadable = []
     known = known_issues()
+    # 归档件不在 out/：按 basename 建立“账表 image 列 → 实际路径”的索引，
+    # 否则 §5d 的“新构建 vs 存量欠账”归类会把归档件误当存量而放宽。
+    img_index = {os.path.basename(p): p for p in out_images()}
     for r in rows:
-        img = os.path.join(OUT, r[1])
+        img = img_index.get(r[1]) or os.path.join(OUT, r[1])
         name = r[0] if r[0] != '(unversioned)' else r[1]
         flags = r[10].split('|')
         # 内核段不可读 = 坏镜像（2026-10-15 增）：必须显式报出，不得静默归入「无载荷」。
@@ -406,13 +431,13 @@ def ledger_lines():
         m = re.search(r'g([0-9a-f]{12,})(-dirty)?', s or '')
         return (m.group(1), bool(m.group(2))) if m else None
 
-    imgs = sorted(glob.glob(os.path.join(OUT, 'boot-elden-vk*.img')))
+    imgs = [p for p in out_images() if os.path.basename(p).startswith('boot-elden-vk')]
     no_manifest, mismatch, orphan_img, tree_drift, dirty_drift = [], [], [], [], []
     for img in imgs:
         base = os.path.basename(img)[len('boot-elden-'):-len('.img')]
         m = re.match(r'^vk(\d+)', base)
         num = int(m.group(1)) if m else None
-        mf = img[:-len('.img')] + '.manifest'
+        mf = manifest_for(img)
         has_mf = os.path.exists(mf)
         if num is not None and num in regset and not has_mf:
             no_manifest.append(base)
@@ -489,12 +514,12 @@ def main():
 
     # 一次并行抽取全部 out/*.img 的内核载荷：§5 版本账与 §5d 身份表共用同一缓存，
     # 不再对同一批镜像各解压一遍（旧版三处扫描 = check-doctor 墙钟 ~110s 的主因）。
-    prefill_payloads(sorted(glob.glob(os.path.join(OUT, '*.img'))))
+    prefill_payloads(out_images())
 
     dup = collections.defaultdict(list)      # kbin_sha -> [build]
     rows = []
 
-    for img in sorted(glob.glob(os.path.join(OUT, '*.img'))):
+    for img in out_images():
         base = os.path.basename(img)
         if not base.startswith('boot-elden'):
             continue                          # 槽位转储/dtbo：见下方 (slot-dump) 段单独入账
@@ -508,7 +533,7 @@ def main():
                          kbin, '', flag, '', '', '', 'skip' if pstat == 'absent' else flag])
             continue
         dup[kbin].append(build)
-        mf = manifest(img[:-len('.img')] + '.manifest')
+        mf = manifest(manifest_for(img))
         m = re.match(r'^vk(\d+)', build)
         num = int(m.group(1)) if m else None
         regr = 'vk%d' % num if num is not None and num in reg else '-'
@@ -574,7 +599,7 @@ def main():
             r[10] += '|' + '|'.join(extra)
 
     # ---- 槽位转储入账（不参与构建号规则，也不计入 kbin_shared/uts_dup 口径）----
-    for img in sorted(glob.glob(os.path.join(OUT, '*.img'))):
+    for img in out_images():
         base = os.path.basename(img)
         if base.startswith('boot-elden'):
             continue
