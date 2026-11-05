@@ -133,7 +133,11 @@ def main():
         with open(tsv, 'w') as f:
             f.write('# out/ 历史镜像归档账（%s 生成；列=sha256/bytes/image/in_ledger/归档路径）\n'
                     % datetime.date.today().isoformat())
-            f.write('# 复算：awk -F\'\\t\' \'!/^#/{print $1"  "$5}\' ARCHIVE.tsv | sha256sum -c --quiet\n')
+            f.write('# ⚠ 复核必须走 O_DIRECT（本机 2026-11-05 实测普通 read 会读到被位翻转的页缓存副本，'
+                    '见 PITFALLS #513）：\n')
+            f.write('#   grep -v \'^#\' ARCHIVE.tsv | while IFS=$\'\\t\' read -r s b n l path; do '
+                    '[ "$(dd if="$path" iflag=direct bs=1M status=none | sha256sum | cut -d\' \' -f1)" = "$s" ] '
+                    '|| echo "MISMATCH $path"; done\n')
             for r in rows:
                 f.write('\t'.join(str(x) for x in r) + '\n')
         rb = os.path.join(dest, 'ROLLBACK.sh')
