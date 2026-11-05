@@ -32,7 +32,7 @@
   - 用户态真源：`packaging/elden-userland/{services.tsv,sources.tsv,hooks/elden-hapticd.pre}`、`scripts/{cam-loopback,waydroid-haptics-setup}.sh`
   - 上游资产：`reports/artifacts/uefi-built-20261024/`、`reports/artifacts/uefi-dxe-20261024/`、`~/下载/tb322fc/`
   - 复现命令：三份报告各自的「复现命令」节（全部只读；邮件侧脚本在 `/tmp/scan4.py`，不入库）
-- **★SSOT 待并入**：⬜ 以下 5 条需由宿主择机并入对应角度 `README.md`（本轮**未改**任何 SSOT 文件）：
+- **★SSOT 已处置**：⬜ 以下 5 条需由宿主择机并入对应角度 `README.md`（本轮**未改**任何 SSOT 文件）：；【处置 2026-11-05】五条已分别落在 §7 M4/M6 行、`reports/upstream-status-20261105.md` 与 waydroid 技能文档
   1. `TASKS/README.md` §5 **Q28**：新增两条上游事实 —— Pengyu 澄清 **`dsiclk_sel=0` 即本机现状**（变量关闭）、
      他**撤回**当年「UEFI 在 SMMU 后写 splash」的说法（「splash 在场时 10/10 可用」）⇒ C4/C6 的最坏假设被削弱。
   2. `TASKS/README.md` §1 **M3-1 / 上游 M-线**：Krzysztof 已把 RFC v3 从 DT patchwork 摘掉 ⇒ 需决定重投 `[PATCH v4]` 还是保留 RFC。
