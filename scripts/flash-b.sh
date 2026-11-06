@@ -59,10 +59,8 @@ if [ "$REBOOT" = 1 ]; then
 	# `sysrq-b` 是当前唯一可靠通道（实测 uptime 归零 + boot_id 换新）。
 	timeout 30 ssh $SSH_OPTS "$TAB" 'sync; echo b > /proc/sysrq-trigger' || true
 	echo "[flash-b] waiting for Linux..."
-	for i in $(seq 1 90); do
-		sleep 2
-		ping -c1 -W1 192.168.7.1 >/dev/null 2>&1 && timeout 8 ssh $SSH_OPTS \
-			"$TAB" 'uptime' 2>/dev/null && { echo "[flash-b] up (~$((i*2))s)"; break; }
-	done
+	# 2026-11-05：lib-wait 换代判据（旧实现只测 ping+ssh，重启前旧系统仍在答 ⇒ 会立刻"成功"）
+	. "$(dirname "$0")/lib-wait.sh"
+	wait_reboot wa_ssh_alive 180 && echo "[flash-b] up" || echo "[flash-b] 等待超时（继续做版本读取，失败即暴露）"
 	timeout 15 ssh $SSH_OPTS "$TAB" 'cat /proc/version' || true
 fi

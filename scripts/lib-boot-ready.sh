@@ -28,24 +28,56 @@
 : "${BOOT_READY_REJECT_STORM:=0}"
 
 boot_ready_or_die() {
-	local S="${S:-S}" up phoc phosh storm reason=""
+	# $S 缺省时自动加载同目录 lib-ssh.sh（拿统一的 BatchMode/超时口径），而不是留一个
+	# 名叫 "S" 的不存在命令等它失败（2026-11-05 脚本审计顺手修掉的老坑）。
+	if [ -z "${S:-}" ]; then
+		if ! declare -F S >/dev/null 2>&1 && [ -f "$(dirname "${BASH_SOURCE[0]}")/lib-ssh.sh" ]; then
+			# shellcheck disable=SC1091
+			. "$(dirname "${BASH_SOURCE[0]}")/lib-ssh.sh"
+		fi
+		S=S
+	fi
+	local up phoc phosh storm reason=""
 	if [ "${ELDEN_FORCE_REBOOT:-0}" = 1 ]; then
 		echo "[boot-ready] WARN ELDEN_FORCE_REBOOT=1 -- skip readiness gate (self-inflicted hang risk)" >&2
 		return 0
 	fi
 
-	# 1) fire 前复核 SSH 仍活
-	if [ "$($S 'echo up' 10)" != "up" ]; then
+	# ★ 2026-11-05（脚本审计 P2）：就绪判定的 4–5 项**合成一条远端命令**。
+	#   旧版顺序发 4 条 ssh（ssh 活 + uptime + phoc + phosh，可选第 5 条 dmesg），
+	#   每条 timeout 10–15 s ⇒ 弱链路/忙设备最坏 ~40 s 才得出「能不能重启」；而且分开发的
+	#   4 次探测彼此跨秒，不是同一时刻的快照。合成一条后：1 个往返、1 个时刻、输出可解析。
+	#   解析用 bash 内建，不依赖 awk/tr 的多次拉取。
+	# ★ 单引号是**必须**的：这些 $( ) 要在远端求值，双引号会在主机上就地展开
+	#   （试过：双引号版把主机 uptime 当设备 uptime，判据静默失效——自检用例抓到的正是这条）。
+	local probe
+	probe='echo alive=yes; echo up=$(cut -d. -f1 /proc/uptime 2>/dev/null); '
+	probe="$probe"'echo phoc=$(ps -eo comm | grep -cx phoc); echo phosh=$(ps -eo comm | grep -cx phosh); '
+	if [ "$BOOT_READY_REJECT_STORM" = 1 ]; then
+		probe="$probe"'echo storm=$(dmesg 2>/dev/null | grep -cE "vblank wait timed out|power-up failed|command DMA timeout"); '
+	fi
+	local out alive="" up="" phoc="" phosh="" storm="" line
+	out="$($S "$probe" 20)"
+	while IFS= read -r line; do
+		line="${line%$'\r'}"
+		case "$line" in
+			alive=*) alive="${line#alive=}" ;;
+			up=*)    up=$(printf '%s' "${line#up=}" | tr -dc '0-9') ;;
+			phoc=*)  phoc=$(printf '%s' "${line#phoc=}" | tr -dc '0-9') ;;
+			phosh=*) phosh=$(printf '%s' "${line#phosh=}" | tr -dc '0-9') ;;
+			storm=*) storm=$(printf '%s' "${line#storm=}" | tr -dc '0-9') ;;
+		esac
+	done <<< "$out"
+
+	# 1) SSH 活（同一趟里拿到的第一个信号；整趟空 = 不可达）
+	if [ "$alive" != yes ]; then
 		echo "[boot-ready] FAIL: SSH 未答（设备不在 Linux 或通道未起）-- 拒绝 reboot" >&2
 		echo "[boot-ready]   若目标是物理 POR 冷起样本，见 archive/2026-10-15-retired-scripts/q28-cold-run.sh，别在此强发复位。" >&2
 		exit 3
 	fi
 
 	# 2) uptime（busybox 上 pgrep -x 不可靠，桌面用 ps|grep -cx，见 PITFALLS #68）
-	up="$($S "cut -d. -f1 /proc/uptime" 10 | tr -dc '0-9')"; up="${up:-0}"
-	phoc="$($S "ps -eo comm | grep -cx phoc" 10 | tr -dc '0-9')"; phoc="${phoc:-0}"
-	phosh="$($S "ps -eo comm | grep -cx phosh" 10 | tr -dc '0-9')"; phosh="${phosh:-0}"
-
+	up="${up:-0}"; phoc="${phoc:-0}"; phosh="${phosh:-0}"
 	[ "$up" -lt "$BOOT_READY_MIN_UPTIME" ] && reason="$reason uptime=${up}s<${BOOT_READY_MIN_UPTIME}s;"
 	if [ "$BOOT_READY_ALLOW_NODESKTOP" != 1 ] && [ "$((phoc + phosh))" -lt 1 ]; then
 		reason="$reason desktop-not-up(phoc+phosh=0);"
@@ -53,7 +85,7 @@ boot_ready_or_die() {
 
 	# 3) 可选风暴拒绝（坏发态软复位不可靠，PITFALLS #150/#170）
 	if [ "$BOOT_READY_REJECT_STORM" = 1 ]; then
-		storm="$($S "dmesg 2>/dev/null | grep -cE 'vblank wait timed out|power-up failed|command DMA timeout'" 15 | tr -dc '0-9')"; storm="${storm:-0}"
+		storm="${storm:-0}"
 		[ "$storm" -gt 0 ] && reason="$reason storm-sig=${storm};"
 	fi
 

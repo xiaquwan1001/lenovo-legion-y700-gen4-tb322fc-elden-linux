@@ -41,14 +41,10 @@ echo "[to-fastboot] device -> fastboot (PSCI vendor reset)..."
 $SSH 'sync; eldroid-bootctl reboot bootloader' || true
 
 echo "[to-fastboot] waiting for fastboot..."
-ok=0
-for i in $(seq 1 45); do
-	sleep 2
-	if timeout 6 fastboot devices 2>/dev/null | grep -q .; then
-		echo "[to-fastboot] fastboot ok (~$((i*2))s)"; ok=1; break
-	fi
-done
-[ "$ok" = 1 ] || { echo "[to-fastboot] fastboot timeout — check USB cable / physical keys" >&2; exit 1; }
+# 2026-11-05：改走 lib-wait（先判后睡 + 退避；旧实现固定 45×2 s，且第一拍必睡满 2 s）。
+. "$(dirname "$0")/lib-wait.sh"
+wait_until "fastboot 上线" 90 wa_fastboot_alive || { echo "[to-fastboot] fastboot timeout — check USB cable / physical keys" >&2; exit 1; }
+echo "[to-fastboot] fastboot ok"
 
 if [ -n "$BOOT" ]; then
 	echo "[to-fastboot] fastboot boot $BOOT"

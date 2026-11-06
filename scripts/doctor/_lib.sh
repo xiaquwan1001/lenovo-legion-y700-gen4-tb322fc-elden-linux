@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # _lib.sh — check-doctor 子门的公共外壳（被 scripts/doctor/*.sh source）。
 #
 # 契约（2026-11-05 脚本审计定的调度协议）：

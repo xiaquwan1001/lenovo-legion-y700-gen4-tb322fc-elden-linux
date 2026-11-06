@@ -11,7 +11,9 @@ SCAN="${ELF_STATIC_SCAN:-$HELPERS/static-scan.py}"
 section '6. 静态卫生（重复 / 死代码 / bashism）'
 
 # 6a. 设备锁必须单一真源：除 lib-device-lock.sh 外不得内联锁块
-lockdup=$(grep -rl 'DEVICE_LOCK_HELD' --include='*.sh' scripts cycle.sh iterate.sh 2>/dev/null | grep -v 'lib-device-lock.sh' | grep -v 'check-doctor.sh' || true)
+# 排除项 = 真源本身 + 本检查器自己（它把标记名当**搜索模式**写着，必然自命中）。
+lockdup=$(grep -rl 'DEVICE_LOCK_HELD' --include='*.sh' scripts cycle.sh iterate.sh 2>/dev/null \
+  | grep -v 'lib-device-lock.sh' | grep -v 'check-doctor.sh' | grep -v 'scripts/doctor/' || true)
 if [ -n "$lockdup" ]; then
   bad "设备锁块被复制（应只用 scripts/lib-device-lock.sh）: $(echo $lockdup | tr '\n' ' ')"
 else

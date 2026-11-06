@@ -20,7 +20,7 @@
 #     （OpenRC 下会变成 halt+VBUS 自开机，PITFALLS #150–#152 一类）。
 #   · 切槽会写 GPT：脚本每次写前把 fastboot 侧当前槽读回并打印；回退 = 再切回。
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 ROOT=$PWD
 TAB=${TAB:-root@192.168.7.1}
 . "$(dirname "$0")/lib-device-lock.sh"
@@ -67,9 +67,14 @@ have_fastboot() { resolve_target >/dev/null 2>&1 || return 1; [ "$(fb getvar cur
 have_adb()      { [ -n "$SER" ] && [ "$(adbx -s "$SER" get-state | tr -d '\r')" = device ]; }
 have_linux()    { timeout 8 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "$TAB" true 2>/dev/null; }
 
-wait_fastboot() { for i in $(seq 1 60); do have_fastboot && { echo "[slot] fastboot 上线 (~$((i*2))s)"; return 0; }; sleep 2; done; echo "[slot] fastboot 超时" >&2; return 1; }
-wait_adb()      { for i in $(seq 1 60); do sleep 5; s=$(adb get-state 2>/dev/null | tr -d '\r'); [ "$s" = device ] && { echo "[slot] Android adb 上线 (~$((i*5))s)"; return 0; }; done; echo "[slot] Android adb 超时" >&2; return 1; }
-wait_linux()    { for i in $(seq 1 60); do sleep 3; have_linux && { echo "[slot] Linux ssh 上线 (~$((i*3))s)"; return 0; }; done; echo "[slot] Linux ssh 超时" >&2; return 1; }
+# 等待一律走 scripts/lib-wait.sh（2026-11-05 脚本审计）：先判后睡 + 退避 + 换代判据。
+#   · 旧 wait_adb **必睡 5 s 才看一眼**（300 s 预算里最差的一档），且用裸 `adb get-state`
+#     ——与同文件 have_adb（只认 -s，PITFALLS #371）自相矛盾，总线上有第二台手机就误判。
+#   · 旧 wait_linux 只测 ssh 可达 ⇒ 切槽重启命令刚发出时旧系统仍在答 ⇒ 假成功。
+. "$(dirname "$0")/lib-wait.sh"
+wait_fastboot() { wait_until "fastboot 上线" 120 wa_fastboot_alive && { echo "[slot] fastboot 上线"; return 0; }; echo "[slot] fastboot 超时" >&2; return 1; }
+wait_adb()      { wait_until "Android adb ($SER) 上线" 300 wa_adb_alive "$SER" && { echo "[slot] Android adb 上线"; return 0; }; echo "[slot] Android adb 超时" >&2; return 1; }
+wait_linux()    { wait_fresh_boot 300 180 && { echo "[slot] Linux ssh 上线（uptime<180s = 本次开机）"; return 0; }; echo "[slot] Linux ssh 超时" >&2; return 1; }
 
 show_attrs() {
 	echo "[slot] 槽位属性："
