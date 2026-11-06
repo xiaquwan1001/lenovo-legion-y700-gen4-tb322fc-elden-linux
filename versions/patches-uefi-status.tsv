@@ -3,6 +3,9 @@
 # 列：dir <TAB> patches <TAB> in_recipe <TAB> status <TAB> 理由 <TAB> 证据
 # status：ACTIVE=当前活线累积栈 / RETIRED=结论已推翻或作废（补丁留档，勿再应用）/ UNCLEAR=待确认
 dir	patches	in_recipe	status	reason	evidence
+20261106R3-bootlinux-eb	1	1	ACTIVE	p10 世代：BootLinux 里 EB 前后 40/41/42 标记（把「崩在 EB」与「EB 后回不了话」分开）	patches/uefi/p10-recipe.txt；reports/uefi-onboard-walkthrough-20261106.md
+20261106R4-real-boot	1	1	ACTIVE	p11 世代：SbProbeMode 默认 3 + 去 R18 CpuDeadLoop（= 真启动件）	patches/uefi/p11-recipe.txt；reports/uefi-onboard-walkthrough-20261106.md
+20261106R5-jump-banner	1	1	ACTIVE	p12 世代：跳内核前强制一行屏显（EB 后唯一可用通道）	patches/uefi/p12-recipe.txt；reports/uefi-onboard-walkthrough-20261106.md
 20261106-vsstop35	1	1	ACTIVE	p8/p9 世代新增：FindBootableSlot 尾段 VS_STOP(35..38)（34→27 窗口二分）	patches/uefi/p8-recipe.txt；reports/uefi-vsstop35-tail-static-20261106.md
 20261106R2-gate-outwrite	1	1	ACTIVE	p9 世代新增：out: 的诊断 SerialPortWrite 按 SbProbeMode 门控（修 sbprobe=3 契约漏洞）	patches/uefi/p9-recipe.txt；reports/uefi-vsstop35-tail-static-20261106.md
 20261031-prepi-vis	1	0	RETIRED	同上（PrePi 入口 FB marker）	reports/uefi-prepi-visibility-static-20261031.md

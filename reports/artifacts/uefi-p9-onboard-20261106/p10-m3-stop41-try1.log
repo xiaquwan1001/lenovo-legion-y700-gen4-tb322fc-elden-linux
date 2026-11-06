@@ -1,0 +1,3 @@
+Sending 'boot.img' (65624 KB)                      OKAY [  1.487s]
+Booting                                            FAILED (remote: 'diag st=Load Error last=[[K] ldt=Load Error]')
+fastboot: error: Command failed

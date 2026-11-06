@@ -1,0 +1,44 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] BootLinux: bisect the (SB_STOP(6), SB_STOP(7)) gap — ShutdownUefiBootServices
+
+2026-11-06R3 y700-elden: 门控住屏显写之后（`p9` 世代，`sbprobe=3`）阶梯重推结果：
+
+  VS_STOP 18/19/26/27/28/35/36/37/38 全回话（p7 时代崩在 27 的那点现在通过），
+  BootLinux SB_STOP 1..6 全回话、**只有 7 无应答**。
+
+但 `SB_STOP(7)` 本身有歧义：它位于 `ShutdownUefiBootServices()` **之后**，
+「无应答」既可能是崩在 EB 里，也可能是 EB 之后**根本无法再回宿主**（gBS/ConOut/USB 栈已拆）。
+本补丁在三点加标记，把这两种情形分开：
+
+  40  `ShutdownUefiBootServices()` 之前（全流程最后一个仍有 gBS 的点）
+  41  紧接着 `ShutdownUefiBootServices()` 返回之后（**回话即证明 EB 后仍能回宿主**）
+  42  `PreparePlatformHardware()` 之后、跳内核之前
+
+判据：`diag st=Aborted last=[[K] stop=N]` ⇒ 到达 N；无应答 ⇒ 崩在 N 之前。
+若 41 也回话，则「7 无应答」的归因只能是 `PreparePlatformHardware`/跳转/BootStats 那一小段，
+而不是 EB。
+
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1160,10 +1160,13 @@
+       IsModeSwitch = TRUE;
+   }
+ 
++  SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
++
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/
+   Status = ShutdownUefiBootServices ();
++  SB_STOP (41, "41");   // 2026-11-06R3: ExitBootServices 之后（回话即证明「EB 后仍能回宿主」）
+   if (EFI_ERROR (Status)) {
+     DEBUG ((EFI_D_ERROR,
+             "ERROR: Can not shutdown UEFI boot services. Status=0x%X\n",
+@@ -1172,6 +1175,7 @@
+   }
+ 
+   PreparePlatformHardware ();
++  SB_STOP (42, "42");   // 2026-11-06R3: PreparePlatformHardware 之后、跳内核之前
+ 
+   BootStatsSetTimeStamp (BS_KERNEL_ENTRY);
+ 

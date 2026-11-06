@@ -1,0 +1,34 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] BootLinux: forced one-line screen banner right before the kernel jump
+
+2026-11-06R5 y700-elden: `sbprobe=3` 下已证「EB 之后宿主侧收不到 fastboot 响应」
+（屏上刷 `Usbfn is not enabled` = USB 设备栈被拆，不是崩溃）。于是「真启动件到底有没有
+走到 `LinuxKernel()`」只能靠屏上判据 —— 但屏上又只有约 1.6 行预算（`PITFALLS #492/#515`）。
+
+本补丁在跳内核前**强制**打一行（不受 `SbProbeMode` 控制，全程唯一一行）：
+
+    [K] JUMP-BANNER
+
+判据：真启动件（cmdline 无 `sbstop=`/`sbprobe=`）上机后
+  * 屏上出现 `[K] JUMP-BANNER` ⇒ 已走到跳内核，之后的异常/递归 dump 发生在跳转之后；
+  * 没出现、直接进递归 dump ⇒ 故障在 `PreparePlatformHardware()` 或 `BootStatsSetTimeStamp()`
+    这一小段（`SB_STOP(40)` 之前之后已二分过：40 回话、41 之后宿主不可达）。
+
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1217,6 +1217,15 @@
+   SB_STOP (7, "7");
+   // 2026-11-06R4 y700-elden: 去掉 R18 的 `CpuDeadLoop ()` —— 它是给屏上取证用的主动停机，
+   // 会让「真启动」永远走不到 LinuxKernel()。停机点 `SB_STOP(7)` 已能单独覆盖那一档。
++  //
++  // 2026-11-06R5: **强制一行屏显**（不受 SbProbeMode 控制）。EB 之后宿主侧已收不到 fastboot
++  // 响应（USB 设备栈被拆，屏上刷 `Usbfn is not enabled`），所以「到底有没有走到跳内核」
++  // 只能用屏上这一行判。预算：splash 区只前 ~448 KiB 可安全写（PITFALLS #492），
++  // SCALE 3 一行 = 274 176 B ⇒ mode 3 全程不写屏时，打出这一行仍在预算内。
++  {
++    STATIC CONST CHAR8  SbBanner[] = "[K] JUMP-BANNER\n\r";
++    SerialPortWrite ((UINT8 *)SbBanner, AsciiStrLen (SbBanner));
++  }
+   LinuxKernel ((UINT64)BootParamlistPtr.DeviceTreeLoadAddr, 0, 0, 0);
+ 
+ // Kernel should never exit

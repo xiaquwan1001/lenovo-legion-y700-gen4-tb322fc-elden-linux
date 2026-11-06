@@ -1,0 +1,2 @@
+Booting                                            FAILED (remote: 'diag st=Aborted last=[[K] stop=40]')
+fastboot: error: Command failed

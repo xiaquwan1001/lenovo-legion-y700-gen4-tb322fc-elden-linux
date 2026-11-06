@@ -1,0 +1,47 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] real-boot build: SbProbeMode 默认 3（沉默）+ 去掉跳内核前的 CpuDeadLoop
+
+2026-11-06R4 y700-elden: 上机结论（`sbprobe=3`、p10 世代）已把 UEFI 侧全流程走通到跳内核：
+
+  VS_STOP 18/19/26/27/28/35/36/37/38 全回话；BootLinux SB_STOP 1..6 全回话；
+  SB_STOP(40)（`ShutdownUefiBootServices` 之前）回话；
+  SB_STOP(41/42/7)（EB 之后）**无回话且屏上出现 `Usbfn is not enabled` 刷屏**
+  ⇒ 那是 **ExitBootServices 把 USB 设备栈拆掉后的「回不了宿主」**，不是崩溃。
+
+于是「真启动」只差两件事，都在本补丁里：
+
+1. `SbProbeMode` 默认值 `0 → 3`：真启动件（cmdline 里不带 `sbstop=`/`sbprobe=`）本来会走 mode 0
+   = 每次探针都直写帧缓冲；屏显写穿是本机已定案的崩溃元凶 ⇒ 默认沉默，要屏上输出时显式 `sbprobe=1`。
+2. 去掉 2026-11-04R18 加的 `CpuDeadLoop ()`：它是给屏上取证用的**主动停机**，留着就永远到不了
+   `LinuxKernel()`。该档的停机点 `SB_STOP(7)` 保留，诊断用法不变。
+
+判据（真启动件，cmdline 原样不动）：Linux 起来 ⇒ 设备侧 `usb0`/ssh 在 30–60 s 内可达；
+起不来 ⇒ 屏上停在哪、或宿主侧 USB 再无枚举。
+
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1215,7 +1215,8 @@
+   // 完整保留 [K]/[V] 全部标记（异常打印会滚动覆盖屏幕，是取证的主要障碍）。
+   // 上机判据：见到全部 [K] 且画面静止 ⇒ BootLinux 准备阶段全通，崩溃发生在跳内核之后。
+   SB_STOP (7, "7");
+-  CpuDeadLoop ();
++  // 2026-11-06R4 y700-elden: 去掉 R18 的 `CpuDeadLoop ()` —— 它是给屏上取证用的主动停机，
++  // 会让「真启动」永远走不到 LinuxKernel()。停机点 `SB_STOP(7)` 已能单独覆盖那一档。
+   LinuxKernel ((UINT64)BootParamlistPtr.DeviceTreeLoadAddr, 0, 0, 0);
+ 
+ // Kernel should never exit
+
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -83,7 +83,10 @@
+ // 动机：崩溃窗口已收进 VS_STOP(17) 与 VS_STOP(26) 之间，而这两点之间**只有一次 SbVProbe**
+ // （反汇编 0x8460 `bl SbVProbe`）⇒ 嫌疑 = 探针通道本身（尤其 gRT->SetVariable 的写变量/回收
+ // 路径；症状「ELR 落在 DXE heap 内 = 跳进堆」与「变量报 Success 但不跨上电保留」都吻合）。
+-INT32  SbProbeMode = 0;
++// 2026-11-06R4 y700-elden: 默认值 0→3（只更新 SbLastMark，完全不碰屏）。
++// 理由：真启动件（不带 `sbstop=`/`sbprobe=` 令牌）也该沉默 —— 屏显写穿是本机已定案的崩溃元凶，
++// 而 mode 0 会在每一次 SbVProbe 上直写帧缓冲。要屏上输出时显式给 `sbprobe=1`（只串口）即可。
++INT32  SbProbeMode = 3;
+ 
+ // 2026-11-04R21 y700-elden: 最后一条标记的单行副本（去 \r\n）。宿主可以在 fastboot 响应里
+ // 直接看到它 —— 屏上取证彻底不依赖。定义在 AvbLib、被 BootLib/FastbootLib 以 extern 引用。

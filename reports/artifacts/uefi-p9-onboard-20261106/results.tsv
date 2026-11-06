@@ -1,0 +1,26 @@
+stage	file	rc	elapsed	verdict	marker
+m3-stop35	p9-m3-stop35.img	rc=1	2s	REPLY	diag st=Aborted last=[vs-35]
+m3-stop36	p9-m3-stop36.img	rc=1	1s	REPLY	diag st=Aborted last=[vs-36]
+m3-stop27	p9-m3-stop27.img	rc=1	2s	REPLY	diag st=Aborted last=[vs-27]
+m3-stop28	p9-m3-stop28.img	rc=1	1s	REPLY	diag st=Aborted last=[vs-28]
+m3-stop38	p9-m3-stop38.img	rc=1	2s	REPLY	diag st=Aborted last=[vs-38]
+m3-stop26	p9-s26-pb3.img	rc=1	1s	REPLY	diag st=Aborted last=[vs-26]
+m3-stop18	p9-m3-stop18.img	rc=1	2s	REPLY	diag st=Aborted last=[vs-18]
+m3-stop19	p9-m3-stop19.img	rc=1	2s	REPLY	diag st=Aborted last=[vs-19]
+m3-stop7	p9-m3-stop7.img	rc=1	2s	DEAD	-
+!! sbstop=7 未回话 ⇒ 停
+m3-stop6	p9-m3-stop6.img	rc=1	3s	REPLY	diag st=Aborted last=[[K]
+m3-stop5	p9-m3-stop5.img	rc=1	2s	REPLY	diag st=Aborted last=[[K]
+m3-stop4	p9-m3-stop4.img	rc=1	2s	REPLY	diag st=Aborted last=[[K]
+m3-stop3	p9-m3-stop3.img	rc=1	1s	REPLY	diag st=Aborted last=[[K]
+m3-stop2	p9-m3-stop2.img	rc=1	2s	REPLY	diag st=Aborted last=[[K]
+m3-stop1	p9-m3-stop1.img	rc=1	2s	REPLY	diag st=Aborted last=[[K]
+p10-m3-stop42	p10-m3-stop42.img	rc=1	2s	DEAD	-
+!! p10-42 未回话 ⇒ 停（后续需断电）
+p10-m3-stop40	p10-m3-stop40.img	rc=1	3s	REPLY	diag st=Aborted last=[[K] stop=40]
+p10-m3-stop41	p10-m3-stop41.img	rc=1	2s	HUNG_ALIVE	-
+p10-m3-stop411	p10-m3-stop41.img	rc=1	2s	REPLY	diag st=Load Error last=[[K]
+p10-m3-stop412	p10-m3-stop41.img	rc=1	2s	REPLY	diag st=Load Error last=[[K]
+p10-m3-stop413	p10-m3-stop41.img	rc=1	2s	REPLY	diag st=Load Error last=[[K]
+p10-m3-stop402	p10-m3-stop40.img	rc=1	2s	REPLY	diag st=Load Error last=[[K]
+p10-fresh-stop41	p10-m3-stop41.img	rc=1	3s	DEAD	-
