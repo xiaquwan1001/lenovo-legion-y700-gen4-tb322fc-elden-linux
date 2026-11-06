@@ -79,13 +79,17 @@ p9（`reports/artifacts/uefi-20261106R9-gateout/`）同一位置变成
 | `patches/uefi/p8-recipe.txt` / `p9-recipe.txt` | p7 + 上述（p7 不动，在盘四件仍可逐字节复现） | — |
 | `reports/artifacts/uefi-20261106R8-vsstop35/` | p8 构建（FD + manifest + build.log，35+1 补丁全绿） | `SM8750_EFI.fd 6a8b4162…a73f4407` |
 | `reports/artifacts/uefi-20261106R9-gateout/` | p9 构建 | `SM8750_EFI.fd f67af2fe…1a54155` |
-| `out/r21-sbstop-p8/` | `uefi-preamble8-r1.img` + `p8-m3-stop{27,28,34,35,36,37,38}.img` | preamble `e7708221…f6eec5` |
+| `out/r21-sbstop-p8/` | `uefi-preamble8-r1.img` + `p8-m3-stop{27,28,34,35,36,37,38}.img` | preamble `236dbea1…eac3ce8f`（KEPT 见下） |
 | `out/r21-sbstop-p9/` | `uefi-preamble9-r1.img` + `p9-m3-stop{18,19,27,28,35,36,37,38}.img` + `p9-s26-pb3.img` | preamble `ceee8d1a…211713`；stop27 `b36ebcb9…542b94`；stop36 `f50bea42…9b0986`；stop37 `8bb8c56b…cee48c` |
 
 **归档口径**：这两个 `reports/artifacts/uefi-20261106R{8,9}-*/` 只入库**复现必需件**
 （`SM8750_EFI.fd` + `BootShim.bin` + `manifest.txt` + `build.log` + `SHA256SUMS`，共约 3.6 MB/个）；
 `payload-v2aligned*` / `kernel.bin` / `lenovo-y700g4-v3.img` / `uefi-v0.img`（约 11 MB/个、全部可由 FD 重新生成）
 **故意不入库**——`uefi-r21-p7-ladder.sh` 的 repack 只需要前两个文件。
+
+**两代都已逐字节可复现**：`PFX=p8/p9 … KEPT=<归档>/KEPT.sha256 BUILD_DIR=<归档> --verify` **rc=0**
+（p8 的 7 件 + preamble、p9 的 9 件 + preamble 全部与在盘件 sha256 相同）；KEPT 指纹文件随归档入库。
+注意 `--rebuild` 当天两次构建的 preamble sha 会不同（`PITFALLS #510`），**以归档 FD 为基点**的这一发才可比。
 
 脚本侧（同时修掉「活线件不可再生」的老账）：`scripts/uefi-r21-p7-ladder.sh` 新增
 `PFX`（世代前缀）/`BUILD_ARCHIVE`（构建目录落持久位）两个开关；`--verify` 在 p7 世代仍 **rc=0**（回归通过）。

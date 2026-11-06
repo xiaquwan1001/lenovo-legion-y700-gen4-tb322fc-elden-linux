@@ -193,3 +193,7 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 
 # ---- 2026-11-05 脚本审计工具链的缓存（可再生，勿入库）----
 /.cache/
+
+# UEFI 世代归档（2026-11-06）：payload-v2aligned* 每次 repack 都会重写，可由 FD + BootShim 重生成
+/reports/artifacts/uefi-20261106R8-vsstop35/payload-v2aligned*
+/reports/artifacts/uefi-20261106R9-gateout/payload-v2aligned*
