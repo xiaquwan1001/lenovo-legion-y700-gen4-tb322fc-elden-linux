@@ -1,5 +1,4 @@
-am ok 0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-sh.patch
-am ok 0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch
-am ok 0003-usb-dwc3-support-two-connectors-sharing-one-HS-data-.patch
---- diff vs series tip:
-(empty = identical)
+am ok
+am ok
+am ok
+--- diff vs tip (empty=identical):

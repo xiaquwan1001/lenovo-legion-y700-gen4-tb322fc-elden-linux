@@ -1,6 +1,7 @@
 # wl2868c — v7 备料（2026-11-06）
 
-> 状态：**备料完成、门禁全绿、未发信**（发信仍由用户按批放行）。
+> 状态：**已投 `[PATCH v8]`（2026-11-06 11:42Z）**；发信记录 `out/mail-20261106/REPORT.md`。
+> 目录名保留 `-v7-`（首次备料时的版本号），**实发版本号 = v8**（首轮漏 `-vN` 后重投）。
 > 上一版 = `patches/upstream/wl2868c-20261104-v6/`（11-04 实投 `[PATCH v6 0/5]`）。
 > **本版只有 2 枚**：binding + driver。板 DTS（v6 4/5、5/5）**主动拆出**，内容存 `held-back/`。
 
@@ -40,11 +41,11 @@ v7 = binding + driver。`arm/qcom.yaml` 的 compatible 与那句 commit message 
 
 ## 4. base commit 与生成树
 
-- `base-commit: 24a19b953e2a3d0ea5a8c4951a0ab8f32720c907`（`v7.3-rc7`）
-- 树 = `build/m3v2-7.3rc7`，分支 **`wl7b`**（tip `10555ad6cc`）；板系列在 **`wl7board`**（`8de8a5a52b`）
-- 重出：`git format-patch -2 --cover-letter --no-signature -o patches/upstream/wl2868c-v7-20261106 HEAD`
+- `base-commit: f66469d9905b39d2c260a15d7d6db450f4db67c1`（torvalds master，2026-11-06；发信前已从 `v7.3-rc7` 重基并重跑门禁）
+- 树 = `build/m3v2-7.3rc7`，分支 **`wl7b`**（已 rebase 到 torvalds/master）；板系列在 **`wl8board`**（已同步到 master 基线，`held-back/` 由它重出）
+- 重出（**必须带 `-v8`**）：`git format-patch -v8 -2 --cover-letter --no-signature -o patches/upstream/wl2868c-v7-20261106 HEAD`
   （**cover 需手工补** `Subject: [PATCH v7 0/2] …` 与末尾 `base-commit:`）
-- 板件：`git format-patch -1 --no-signature -o …/held-back wl7board`
+- 板件：`git format-patch -1 --no-signature -o …/held-back wl8board`
 
 ## 5. ⚠ 顺带查到的 v6 事实（值得记一笔）
 
@@ -63,6 +64,6 @@ v6 的 **4/5 对声明的 base 不可 apply**：它的 `Makefile` 插入点写�
 
 ## 7. 未证 / 已知限制
 
-1. **base 仍是 7.3-rc7**（上游已 `7.4-rc1`）；发信前按 `TASKS` §7 在当前 `regulator/for-next` 上复跑 `git am`。
+1. **base 已重基到 torvalds master `f66469d9905b`**（7.4-rc2 线），重基后门禁已重跑。
 2. **驱动无 in-tree 用户**（板 DTS 拆出）——cover 已如实写明，并用「板子上跑了几周」的实测作证据；若维护者要求必须带用户，则先落板系列。
 3. 三处修复都是状态一致性，**没有 fault-injection 运行期证据**（静态论证 + 编译 + 门禁）。

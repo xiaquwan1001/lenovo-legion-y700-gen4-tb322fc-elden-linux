@@ -1,6 +1,6 @@
-== 门禁: patches/upstream/m3-dwc3-v7-20261106  base=24a19b953e2a3d0ea5a8c4951a0ab8f32720c907  repo=build/m3v2-7.3rc7 ==
+== 门禁: patches/upstream/m3-dwc3-v7-20261106  base=f66469d9905b39d2c260a15d7d6db450f4db67c1  repo=build/m3v2-7.3rc7 ==
   ok    0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-sh.patch
   ok    0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch
   ok    0003-usb-dwc3-support-two-connectors-sharing-one-HS-data-.patch
-PASS  m3-dwc3-v7-20261106: 全部 4 个文件按序重放成功于 24a19b953e2a3d0ea5a8c4951a0ab8f32720c907
+PASS  m3-dwc3-v7-20261106: 全部 4 个文件按序重放成功于 f66469d9905b39d2c260a15d7d6db450f4db67c1
 == 汇总: PASS=3 FAIL=0 WARN=0 退出码=0 ==

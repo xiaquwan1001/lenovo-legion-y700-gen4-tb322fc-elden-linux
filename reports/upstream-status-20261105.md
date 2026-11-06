@@ -102,7 +102,10 @@ curl -s --noproxy '*' "https://patchwork.kernel.org/api/1.2/patches/?submitter=x
 ⇒ **欠的动作没变**：① dwc3 两条 High（锁序 + err 路径 teardown 同步）→ v6；② wl2868c 5/5 并入 4/5、3/5 commit message 改写、driver 三处状态一致性、板 DT 是否单发。
 两条都**只需主机侧**，不占设备。
 
-**2026-11-06 晚：两条欠账已出备料件（仍未发信）** —— `patches/upstream/m3-dwc3-v7-20261106/`（`[PATCH v7 0/3]`，只答两条 High，门禁全绿）与
+**2026-11-06 晚：两条欠账已出件并投出（用户放行）** —— 两系列先重基到 torvalds master `f66469d9905b`（7.4-rc2 线）并重跑全部门禁，
+再发 `[PATCH v8 0/3]`（dwc3，4 封 250，cover `<20261106114208.987284-1-…>`）与 `[PATCH v8 0/2]`（wl2868c，3 封 250，cover `<20261106114252.988023-1-…>`）；
+patchwork 非 cover 8/8 在档。**sashiko 对 dwc3 2/3、3/3 已回「found no issues」**。首轮 11:28/11:30 那批漏了 `-vN` 版本标签，已以 v8 重投并说明。详见 `out/mail-20261106/REPORT.md`。
+（以下为当时备料记录） —— `patches/upstream/m3-dwc3-v7-20261106/`（`[PATCH v7 0/3]`，只答两条 High，门禁全绿）与
 `patches/upstream/wl2868c-v7-20261106/`（`[PATCH v7 0/2]`，**板 DTS 整段拆出**只发 binding+driver，driver 修三条 Medium，板件存 `held-back/`）。
 两系列均 `FAIL=0` 门禁、pristine `git am` 逐字节等价、`send-email --dry-run` 通过；**发信仍需用户按批放行**。
 

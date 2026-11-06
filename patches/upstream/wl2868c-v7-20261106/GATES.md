@@ -86,3 +86,12 @@ checkpatch：`0 errors, 2 warnings` —— 两条都不是缺陷：
 **与 v6 的差别（重要）**：v6 的 4/5 把 `Makefile` 插入点写在 `sm8650-valve-deckard.dtb` 之后，
 而 `v7.3-rc7` 的 `Makefile` **没有 deckard 这一行**（`grep -c sm8650-valve-deckard` = 0）⇒
 **v6 4/5 对其声明的 base 不可 apply**。本版改为插在 `sm8750-mtp.dtb` 之前，`dtc` 通过。
+
+## 8. 发信前重基到 torvalds master + 复跑（2026-11-06 11:4x）
+
+- 新 base = `f66469d9905b39d2c260a15d7d6db450f4db67c1`（`git fetch --depth 1 torvalds master`，2026-11-06，7.4-rc2 线）
+- `git rebase --onto torvalds/master 24a19b953e2a3d0ea5a8c4951a0ab8f32720c907 <branch>` ⇒ **无冲突**
+- 复跑结果：checkpatch 同上（0 errors）；自足性 **PASS**（base 换成新 sha）；`make W=1` **0 warning**；
+  `dt-doc-validate` rc=0；pristine `git am` **逐字节等价**（`git diff --stat` 空）
+- **实发版本号 = `v8`**（首轮 11:28/11:30 那批 `format-patch` 漏 `-vN`，逐枚 Subject 无版本号 ⇒ 已重投并说明）
+- 投递记录：`out/mail-20261106/REPORT.md`

@@ -1,3 +1,3 @@
-am ok 0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL286.patch
-am ok 0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera-PM.patch
---- diff vs series tip (empty = identical):
+am ok
+am ok
+--- diff vs tip (empty=identical):

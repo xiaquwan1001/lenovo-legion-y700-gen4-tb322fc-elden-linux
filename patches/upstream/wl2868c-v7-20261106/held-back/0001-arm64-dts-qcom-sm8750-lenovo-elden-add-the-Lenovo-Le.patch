@@ -1,6 +1,6 @@
-From 8de8a5a52bf46c2a74d4dd7fa04aecf601b4db7e Mon Sep 17 00:00:00 2001
+From e18a4a66eb7fc247f0286fcb982e2147565c6a12 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Fri, 6 Nov 2026 19:18:28 +0800
+Date: Fri, 6 Nov 2026 19:46:29 +0800
 Subject: [PATCH] arm64: dts: qcom: sm8750-lenovo-elden: add the Lenovo Legion
  Y700 Gen4
 
@@ -39,13 +39,13 @@ Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
  create mode 100644 arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
 
 diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
-index 1c86e7e98f..a18fea7beb 100644
+index 88230c4e00..e0b65a36c5 100644
 --- a/arch/arm64/boot/dts/qcom/Makefile
 +++ b/arch/arm64/boot/dts/qcom/Makefile
-@@ -406,6 +406,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-hdk-rear-camera-card.dtb
- dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-hdk.dtb
+@@ -453,6 +453,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-hdk.dtb
  dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-mtp.dtb
  dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-qrd.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-valve-deckard.dtb
 +dtb-$(CONFIG_ARCH_QCOM)	+= sm8750-lenovo-elden.dtb
  dtb-$(CONFIG_ARCH_QCOM)	+= sm8750-mtp.dtb
  dtb-$(CONFIG_ARCH_QCOM)	+= sm8750-qrd.dtb

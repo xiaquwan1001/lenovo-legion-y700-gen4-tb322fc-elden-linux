@@ -6,11 +6,27 @@ Dry-OK. Log says:
 Server: smtp.ustc.edu.cn
 MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
 RCPT TO:<gregkh@linuxfoundation.org>
+RCPT TO:<Thinh.Nguyen@synopsys.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<linux-usb@vger.kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-To: gregkh@linuxfoundation.org
+To: gregkh@linuxfoundation.org,
+	Thinh.Nguyen@synopsys.com,
+	robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org
+Cc: linux-usb@vger.kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org
 Subject: [PATCH v7 0/3] usb: dwc3: two Type-C connectors sharing one HS data bus
-Date: Fri,  6 Nov 2026 19:10:12 +0800
-Message-ID: <20261106111015.924508-1-xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri,  6 Nov 2026 19:27:59 +0800
+Message-ID: <20261106112802.963762-1-xiaqinghuan@mail.ustc.edu.cn>
 X-Mailer: git-send-email 2.53.0
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -20,14 +36,30 @@ Dry-OK. Log says:
 Server: smtp.ustc.edu.cn
 MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
 RCPT TO:<gregkh@linuxfoundation.org>
+RCPT TO:<Thinh.Nguyen@synopsys.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<linux-usb@vger.kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-To: gregkh@linuxfoundation.org
+To: gregkh@linuxfoundation.org,
+	Thinh.Nguyen@synopsys.com,
+	robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org
+Cc: linux-usb@vger.kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org
 Subject: [PATCH 1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus
-Date: Fri,  6 Nov 2026 19:10:13 +0800
-Message-ID: <20261106111015.924508-2-xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri,  6 Nov 2026 19:28:00 +0800
+Message-ID: <20261106112802.963762-2-xiaqinghuan@mail.ustc.edu.cn>
 X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20261106111015.924508-1-xiaqinghuan@mail.ustc.edu.cn>
-References: <20261106111015.924508-1-xiaqinghuan@mail.ustc.edu.cn>
+In-Reply-To: <20261106112802.963762-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261106112802.963762-1-xiaqinghuan@mail.ustc.edu.cn>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
@@ -36,14 +68,30 @@ Dry-OK. Log says:
 Server: smtp.ustc.edu.cn
 MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
 RCPT TO:<gregkh@linuxfoundation.org>
+RCPT TO:<Thinh.Nguyen@synopsys.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<linux-usb@vger.kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-To: gregkh@linuxfoundation.org
+To: gregkh@linuxfoundation.org,
+	Thinh.Nguyen@synopsys.com,
+	robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org
+Cc: linux-usb@vger.kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org
 Subject: [PATCH 2/3] usb: roles: look up role switches attached to a graph endpoint
-Date: Fri,  6 Nov 2026 19:10:14 +0800
-Message-ID: <20261106111015.924508-3-xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri,  6 Nov 2026 19:28:01 +0800
+Message-ID: <20261106112802.963762-3-xiaqinghuan@mail.ustc.edu.cn>
 X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20261106111015.924508-1-xiaqinghuan@mail.ustc.edu.cn>
-References: <20261106111015.924508-1-xiaqinghuan@mail.ustc.edu.cn>
+In-Reply-To: <20261106112802.963762-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261106112802.963762-1-xiaqinghuan@mail.ustc.edu.cn>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
@@ -52,14 +100,30 @@ Dry-OK. Log says:
 Server: smtp.ustc.edu.cn
 MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
 RCPT TO:<gregkh@linuxfoundation.org>
+RCPT TO:<Thinh.Nguyen@synopsys.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<linux-usb@vger.kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-To: gregkh@linuxfoundation.org
+To: gregkh@linuxfoundation.org,
+	Thinh.Nguyen@synopsys.com,
+	robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org
+Cc: linux-usb@vger.kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org
 Subject: [PATCH 3/3] usb: dwc3: support two connectors sharing one HS data bus
-Date: Fri,  6 Nov 2026 19:10:15 +0800
-Message-ID: <20261106111015.924508-4-xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri,  6 Nov 2026 19:28:02 +0800
+Message-ID: <20261106112802.963762-4-xiaqinghuan@mail.ustc.edu.cn>
 X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20261106111015.924508-1-xiaqinghuan@mail.ustc.edu.cn>
-References: <20261106111015.924508-1-xiaqinghuan@mail.ustc.edu.cn>
+In-Reply-To: <20261106112802.963762-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261106112802.963762-1-xiaqinghuan@mail.ustc.edu.cn>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 

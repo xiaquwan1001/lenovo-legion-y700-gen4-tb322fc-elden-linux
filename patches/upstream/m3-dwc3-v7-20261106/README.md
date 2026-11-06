@@ -1,6 +1,7 @@
 # M3-1 dwc3 — v7 备料（2026-11-06）
 
-> 状态：**备料完成、门禁全绿、未发信**（发信仍由用户按批放行）。
+> 状态：**已投 `[PATCH v8]`（2026-11-06 11:42Z）**；发信记录 `out/mail-20261106/REPORT.md`。
+> 目录名保留 `-v7-`（首次备料时的版本号），**实发版本号 = v8**（首轮漏 `-vN` 后重投）。
 > 本目录只做主机侧：不含设备操作、不含主仓 commit。
 > 上一版 = `patches/upstream/m3-dwc3-20261104/`（11-04 实投 `[PATCH 0/3]`）。
 
@@ -25,8 +26,8 @@
 
 ## 3. base commit 与生成树
 
-- `base-commit: 24a19b953e2a3d0ea5a8c4951a0ab8f32720c907`（= `v7.3-rc7`，与 11-04 版相同，**未 rebase**）
-- 树 = `build/m3v2-7.3rc7`，分支 **`m3v7`**（从 `m3v6` 切出，`git commit --amend` 改 3/3 一枚）
+- `base-commit: f66469d9905b39d2c260a15d7d6db450f4db67c1`（torvalds master，2026-11-06，7.4-rc2 线；发信前已从 `v7.3-rc7` 重基并重跑门禁）
+- 树 = `build/m3v2-7.3rc7`，分支 **`m3v7`**（已 rebase 到 torvalds/master；`git commit --amend` 改 3/3 一枚）
 - 提交：`1e1e1560fc45`（binding）/ `7d1d0ea9822f`（roles）/ **`07ab397efd`**（dwc3，v7）
 - 重出：`git -C build/m3v2-7.3rc7 format-patch -3 --cover-letter --no-signature -o patches/upstream/m3-dwc3-v7-20261106 HEAD`
   （**cover 需手工补**：`Subject: [PATCH v7 0/3] …` 与末尾 `base-commit:` 尾行）
@@ -49,7 +50,7 @@ git send-email --thread --no-chain-reply-to \
 
 ## 5. 未证 / 已知限制（发信前必读）
 
-1. **base 仍是 7.3-rc7**；发信时上游已到 `7.4-rc1`（2026-11-01）。**发信前**按 `TASKS` §7 流程在当前 `usb-next`/`master` 上复跑一次 `git am`（本目录未联网取新树）。
+1. **base 已重基到 torvalds master `f66469d9905b`**（7.4-rc2 线），重基后全部门禁已重跑（见 `GATES.md` §7）。
 2. **未上机**：本轮零设备操作。上一版 cover 里那段「12 次拔插、0 WARNING/BUG/lockdep」仍是**日常内核同源代码**的证据，不是「pristine + 本系列」镜像（pristine 血统内核在本板起不来，与本系列无关）。
 3. **H1/H2 的修复本身没有运行期证据**：都是并发/错误路径，静态论证 + 编译 + 门禁，没有复现器。cover 里已如实写明（若维护者要，我可以写一个 fault-injection 复现脚本）。
 4. `b4 send --dry-run` 仍未跑（环境缺件）；`git send-email --dry-run` 通过。
