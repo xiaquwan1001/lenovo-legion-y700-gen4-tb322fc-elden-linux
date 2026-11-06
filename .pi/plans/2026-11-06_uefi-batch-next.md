@@ -1,3 +1,7 @@
+> **2026-11-06 22:40 执行完毕（本文件已兑现）**：H1/H2 已建（`20261106R17-faulthandler-image` / `R18-rehook-exception`），
+> D1/D2 两发已打（p25 无输出、p26 命中），**问题不在「哪个驱动」而改判**：PC 在 `LinuxLoader` 自己的 `SerialPortWrite` 内。
+> 结果与更正见 `reports/uefi-flt-attribution-20261106.md`；**下一批执行单 = 本文件 §7**（p27：帧缓冲控制台硬边界 + 清剩余未门控屏显写）。
+
 # 2026-11-06 夜 UEFI 下一批（p25/p26）：把崩溃 PC 落到模块名，再决定「剔除驱动」还是「跳内核调用约定」
 
 > 入口前提：读 `reports/uefi-day-20261106-digest.md`（当日 4 段推进 + 5 条作废）。
@@ -64,6 +68,21 @@
   判据 = `[K] JUMP-BANNER` 出现。理由：Linux 起来不需要 UEFI 侧的 USB 设备栈；剔除它不影响 `LoadImage/StartImage` 链路。
 - **B｜若不是 USB 一族**（`QcomBds`/`Pildxe`/`HiiDatabase`/`Ebl` 一类）：先看该模块在 `BootLinux()` 尾段的**调用链**（谁 `LocateProtocol` 了它），
   再决定是「EB 之前先 `DisconnectController`」还是「把该模块的 protocol 调用挪到 EB 之后」。此分支要额外 2–3 发，届时再排。
+
+## 7. 2026-11-06 22:40 之后的新排产（p27，取代 §3/§4 的分支 A/B）
+
+判据链已经闭合到「是谁崩」：`Synchronous Exception` 的 PC 落在 `LinuxLoader` 的 `SerialPortWrite`
+（`LinuxLoader.map`: `00013bd8 000000d0`，PC=`b+0x13C84`，函数内 `+0xAC`；`SizeOfImage=0x45000` 全树唯一）。
+所以 §4 的「剔除 USB 驱动 / 改调用链」两条分支**都不适用**，直接修屏显写通道：
+
+| # | 事项 | 判据 |
+|---|---|---|
+| H1 | **帧缓冲控制台加硬边界**：`FbConPutCharWithFactor()` 算出像素地址后，若越过安全区（`splash_region` 前 ~448 KiB 可写）就**回卷 `p_Position->y = 0`**（或丢弃该字符）；`ResetFb()` 也在同一预算内 | 反汇编核对门控；任何调用方都写不出界 |
+| H2 | **清掉真路径上剩余的未门控 `SerialPortWrite`**：`20261104R15-noavbprobe` 的 no-AVB 探针、`R2-slow-serial`、`20261106R5/R6`（banner）等，全部纳入 `SbProbeMode != 0` | 真件（无令牌）第一次屏写出现在我们**显式要取证**的那一行 |
+| H3 | **归因行补 `ESR`/`FAR`**（R17 的 found 分支加上） | 下一发若再崩，能区分「写穿」vs「野指针」 |
+| H4 | 上机 1 发（p27 真载荷） | 先看 `[K] JUMP-BANNER`；再看内核是否接管（USB 行为 + 是否起 Linux） |
+
+止损不变：p27 之后累计再 3 发无 `[K] JUMP-BANNER` ⇒ 本轮收口写 handoff。
 
 ## 5. 时间盒与止损
 

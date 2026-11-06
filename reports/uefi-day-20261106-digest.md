@@ -1,4 +1,7 @@
-# 2026-11-06 UEFI 线（G1-29）当日盘点：四次判据翻转，卡点从「能不能跑」搬到「第三方二进制 DXE 驱动」
+# 2026-11-06 UEFI 线（G1-29）当日盘点：四次判据翻转，卡点收敛到「屏显写通道」
+
+> ⚠ 本文件成稿于 21:51；随后 22:40 的 p25/p26 两发把「第三方二进制 DXE 驱动」推翻（PC 在 `LinuxLoader`
+> 的 `SerialPortWrite` 内），以 `reports/uefi-flt-attribution-20261106.md` 与 `TASKS` §5「夜·二」块为准。
 
 > 一站式读法：本文只做**当日合并视图**（4 段推进 + 5 条作废 + 稳定资产 + 未定三事）。
 > 逐段权威仍在 `TASKS/README.md` §5 的 11-06 四个块；下批执行单在 `.pi/plans/2026-11-06_uefi-batch-next.md`。
@@ -26,7 +29,7 @@
 
 ## 3. 现在到底走到哪一步（一句话定位）
 
-真内核载荷在真启动路径上：**完整装载 → AVB/槽位/DTB/ramdisk/释放全通 → 越过 `LoadImageAndAuth`/`ExitMenuKeysDetection`/`FastbootOkay` → 宿主收到 `Booting OKAY` → 崩在一个第三方二进制 DXE 驱动里**（PC `0xCFE98C8x`，距离 `LinuxLoader` 基址下 ~0x1C000，`[K] JUMP-BANNER` 始终未出现 ⇒ **死在跳内核之前**）。
+真内核载荷在真启动路径上：**完整装载 → AVB/槽位/DTB/ramdisk/释放全通 → 越过 `LoadImageAndAuth`/`ExitMenuKeysDetection`/`FastbootOkay` → 宿主收到 `Booting OKAY` → 崩在**自己的屏显写函数 `SerialPortWrite`** 里**（PC `0xCFE98C8x`；22:40 的 p26 归因：`b=0xCFEA2000 z=0x45000 o=0x13C84` ⇒ LinuxLoader+`SerialPortWrite`；`[K] JUMP-BANNER` 始终未出现 ⇒ 打 banner 的那次打印自己先崩，**不等于**跳内核失败）。
 
 ## 4. 当日产出的可复用资产
 

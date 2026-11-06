@@ -61,4 +61,6 @@ dir	patches	in_recipe	status	reason	evidence
 20261106R13-skip-usbstop	1	1	RETIRED	p21：跳过 FastbootUsbDeviceStop()——被否证（仍崩同一 PC）	reports/artifacts/real-vs-ladder-20261106T21*.tsv
 20261106R14-eb-oneline	1	1	RETIRED	p22：EB 后同行 B/C/D 覆盖标记——被异常 dump 冲掉、读不出	patches/uefi/p22-recipe.txt
 20261106R15-eb-halt	1	1	ACTIVE	p23：EB 后打 [K] EB-OK st= 再 CpuDeadLoop 停机取证（仍崩 ⇒ 不在 EB 内）	patches/uefi/p23-recipe.txt
-20261106R16-no-eb	1	1	ACTIVE	p24：完全跳过 ExitBootServices 只停机——仍崩 0xCFE98C84 ⇒ 崩点在第三方二进制驱动	patches/uefi/p24-recipe.txt
+20261106R16-no-eb	1	1	ACTIVE	p24：完全跳过 ExitBootServices 只停机——仍崩同一 PC（当时读成「第三方二进制驱动」，已被 p26 推翻：PC 在 LinuxLoader 的 SerialPortWrite 内，见 PITFALLS #527）	patches/uefi/p24-recipe.txt
+20261106R17-faulthandler-image	1	1	ACTIVE	★单行把故障 PC 归到已装载映像（RELEASE 可见）+ 立即停机不打印递归 dump；单独用时无效（预编译 CpuDxe 覆盖）	patches/uefi/p25-recipe.txt；PITFALLS #528/#529
+20261106R18-rehook-exception	1	1	ACTIVE	★关键：BDS 交接前重新注册打过补丁的 handler（覆盖预编译 CpuDxe 那份）；p26 实测打出 [K] FLT 单行	patches/uefi/p26-recipe.txt；PITFALLS #499 晚注册修法

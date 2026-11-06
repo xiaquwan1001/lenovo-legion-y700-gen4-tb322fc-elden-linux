@@ -1,0 +1,136 @@
+Subject: [PATCH] DefaultExceptionHandler: 单行把故障 PC 归到已装载映像（RELEASE 可见）
+
+2026-11-06R17 y700-elden: 2026-11-06 深夜定案「真启动崩溃 = 我们自己的探针写屏（R12 已修）」之后，
+真路径推进到宿主 `Booting OKAY`，随后崩在 `0xCFE98C8x` —— 该地址落在 LinuxLoader
+（屏上 `[I]? base=0xCFEB2000 size=0x45000`）基址下 ~0x1C000，**不在自家模块内**，即崩在第三方二进制
+DXE 驱动里，源码级探针改不动它。而上游 handler 里本来就有 `GetImageName(ELR,…)` + 名字打印，
+却被 `DEBUG_CODE_BEGIN()` 包着 ⇒ RELEASE 全被编掉，屏上永远只有 PC 数字。
+
+本补丁把归因搬到 RELEASE 路径：直接遍历 `gEfiDebugImageInfoTableGuid`（只读 config table + 只读 PE 头，
+异常上下文里不做任何分配），命中就打**一行**
+  `[K] FLT pc=<PC> img=<Pdb 基名> b=<base> z=<size> o=<off>`
+然后立即 `CpuDeadLoop()`，**不再打印**递归 dump / 32 个 V 寄存器 / 栈窗口 —— 那些内容在 scale 3 下
+每行 ≈274 KiB，而 splash 安全区只有 ~448 KiB（PITFALLS #514/#515），多打一行就可能在异常上下文里
+二次写穿，把我们真正要的那一行冲掉。
+
+没命中（表为空/PC 在映像之外/映像已卸载）时打
+  `[K] FLT pc=<PC> ids=<TableSize>/<有效条目> esr=<ESR> <base>/<size> …`
+把 PC 下方 0x40000 内的映像 base/size（最多 2 条）压在同一行，宿主侧用静态 `SizeOfImage` 表翻译名字
+（已验证：`LinuxLoader.efi` 静态 SizeOfImage = 0x45000 与屏上 `size=0x45000` 逐位一致）。
+
+判据：屏上**只有这一行**（`[K] FLT …`）。`ids=0/0` ⇒ Mu 这个 DXE Core 没装 debug image table，
+退回 BdsDxe 侧的邻域装载表（p26）路线。`img=?` ⇒ 表在但 PE 没有 Pdb 指针，仍可用 base/size 离线翻译。
+diff --git a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+index 5f9bcf7..54c879d 100644
+--- a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
++++ b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+@@ -203,6 +203,109 @@ DefaultExceptionHandler (
+ 
+   mRecursiveException = TRUE;
+ 
++  // 2026-11-06R17 y700-elden: 单行把故障 PC 归到已装载映像。
++  // DXE 尾段崩在第三方二进制驱动里（没有源码可插桩），EB 之后宿主通道天然失效、屏是唯一判据；
++  // 打完立即 CpuDeadLoop，不打印递归 dump / 寄存器表 —— scale 3 下一行 ≈274 KiB，splash 安全区
++  // 只有 ~448 KiB，多打一行就可能在异常上下文里二次写穿（PITFALLS #514/#515）。
++  {
++    EFI_STATUS                         SbStat;
++    EFI_DEBUG_IMAGE_INFO_TABLE_HEADER  *SbHdr;
++    EFI_DEBUG_IMAGE_INFO               *SbTbl;
++    EFI_LOADED_IMAGE_PROTOCOL          *SbLi;
++    UINTN                              SbIdx, SbEntries, SbSeen;
++    UINTN                              SbPc, SbBase, SbSize, SbOff;
++    CHAR8                              *SbPdb, *SbName, *SbP, *SbQ;
++    CHAR8                              SbLine[192], SbNear[96];
++    UINTN                              SbLen, SbNearLen;
++
++    SbPc      = (UINTN)SystemContext.SystemContextAArch64->ELR;
++    SbHdr     = NULL;
++    SbBase    = 0;
++    SbSize    = 0;
++    SbOff     = 0;
++    SbName    = "-";
++    SbEntries = 0;
++    SbSeen    = 0;
++    SbNear[0] = '\0';
++    SbNearLen = 0;
++
++    // 只读 config table + 只读 PE 头，异常上下文里不做任何分配。
++    SbStat = EfiGetSystemConfigurationTable (&gEfiDebugImageInfoTableGuid, (VOID **)&SbHdr);
++    if (!EFI_ERROR (SbStat) && (SbHdr != NULL) && (SbHdr->EfiDebugImageInfoTable != NULL)) {
++      SbEntries = SbHdr->TableSize;
++      SbTbl     = SbHdr->EfiDebugImageInfoTable;
++      for (SbIdx = 0; SbIdx < SbEntries; SbIdx++) {
++        SbLi = NULL;
++        if ((SbTbl[SbIdx].NormalImage != NULL) &&
++            (SbTbl[SbIdx].NormalImage->ImageInfoType == EFI_DEBUG_IMAGE_INFO_TYPE_NORMAL))
++        {
++          SbLi = SbTbl[SbIdx].NormalImage->LoadedImageProtocolInstance;
++        }
++
++        if (SbLi == NULL) {
++          continue;
++        }
++
++        SbSeen++;
++        if ((SbPc >= (UINTN)SbLi->ImageBase) &&
++            (SbPc < (UINTN)SbLi->ImageBase + (UINTN)SbLi->ImageSize))
++        {
++          SbBase = (UINTN)SbLi->ImageBase;
++          SbSize = (UINTN)SbLi->ImageSize;
++          SbOff  = SbPc - SbBase;
++          SbPdb  = PeCoffLoaderGetPdbPointer (SbLi->ImageBase);
++          if (SbPdb != NULL) {
++            SbName = SbPdb;
++            for (SbP = SbPdb; *SbP != '\0'; SbP++) {
++              if ((*SbP == '/') || (*SbP == '\\')) {
++                SbName = SbP + 1;
++              }
++            }
++          }
++          break;
++        }
++      }
++
++      // 没命中时给出 PC 下方 0x40000 内的映像 base/size（最多 2 条），宿主侧用静态表翻译名字。
++      if ((SbSize == 0) && (SbEntries != 0)) {
++        for (SbIdx = 0; SbIdx < SbEntries; SbIdx++) {
++          SbLi = NULL;
++          if ((SbTbl[SbIdx].NormalImage != NULL) &&
++              (SbTbl[SbIdx].NormalImage->ImageInfoType == EFI_DEBUG_IMAGE_INFO_TYPE_NORMAL))
++          {
++            SbLi = SbTbl[SbIdx].NormalImage->LoadedImageProtocolInstance;
++          }
++          if (SbLi == NULL) {
++            continue;
++          }
++          if ((((UINTN)SbLi->ImageBase + 0x40000) < SbPc) || ((UINTN)SbLi->ImageBase > (SbPc + 0x1000))) {
++            continue;
++          }
++          if (SbNearLen + 20 >= sizeof (SbNear)) {
++            break;
++          }
++          SbQ        = SbNear + SbNearLen;
++          SbNearLen += AsciiSPrint (SbQ, sizeof (SbNear) - SbNearLen, " %08lx/%05lx",
++                                    (UINT64)(UINTN)SbLi->ImageBase, (UINT64)(UINTN)SbLi->ImageSize);
++        }
++      }
++    }
++
++    if (SbSize != 0) {
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] FLT pc=%08lx img=%a b=%08lx z=%05lx o=%04lx\n\r",
++                           (UINT64)SbPc, SbName, (UINT64)SbBase, (UINT64)SbSize, (UINT64)SbOff);
++    } else {
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] FLT pc=%08lx ids=%d/%d esr=%08lx%s\n\r",
++                           (UINT64)SbPc, (UINT64)SbEntries, (UINT64)SbSeen,
++                           (UINT64)SystemContext.SystemContextAArch64->ESR, SbNear);
++    }
++    if (SbLen >= sizeof (SbLine)) {
++      SbLen = sizeof (SbLine) - 1;
++    }
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    CpuDeadLoop ();
++  }
++
+   CharCount = AsciiSPrint (Buffer, sizeof (Buffer), "\n\n%a Exception at 0x%016lx\n", gExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR);
+   SerialPortWrite ((UINT8 *)Buffer, CharCount);
+ 

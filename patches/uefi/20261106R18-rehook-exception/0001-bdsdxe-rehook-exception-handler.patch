@@ -1,0 +1,79 @@
+Subject: [PATCH] BdsDxe: 重新注册打过补丁的 DefaultExceptionHandler（覆盖预编译 CpuDxe 的那份）
+
+2026-11-06R18 y700-elden: p25（`20261106R17-faulthandler-image`，把故障 PC 单行归到已装载映像）
+上机后**一次都没打出来** —— 屏上仍然只有 `Synchronous Exception at 0xCFE94C84` + 递归 dump。
+主机侧定因：本平台用的是**预编译**的 `Binaries/ArmPkg/Drivers/CpuDxe/CpuDxe.efi`，它自带一份
+`DefaultExceptionHandlerLib`（字符串 `Exception at 0x%016lx` 在全树只出现在 `CpuDxe.efi` 与
+我们编出来的 `DxeCore.efi` 里），而它在 DxeCore 之后注册 ⇒ **覆盖**了 DxeCore 里那份。
+所以「改树内 DefaultExceptionHandlerLib」对运行期无效，必须**在 CpuDxe 之后再注册一次**。
+
+本补丁在 BDS 交接前（`R13StartLinuxLoader()` 里、`StartImage` 之前）：
+  gBS->LocateProtocol(gEfiCpuArchProtocolGuid) → Cpu->RegisterInterruptHandler(
+      EXCEPT_AARCH64_SYNCHRONOUS_EXCEPTIONS, DefaultExceptionHandler)
+`RegisterInterruptHandler` 是覆盖语义，故此后同步异常走的是打了 R17 的 handler。
+.inf 加 `DefaultExceptionHandlerLib`（LibraryClasses）与 `gEfiCpuArchProtocolGuid`（Protocols）。
+
+判据：屏上先出现 `[L] cpu-hook=ok`（`=no-proto` ⇒ Cpu 协议没找到，说明时机太早），
+崩溃后应出现**一行** `[K] FLT pc=… img=… b=… z=… o=…`（或 `img=-` 时的 `ids=/` + 邻域 base/size 表）。
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf b/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+index d8f9c29..2f879b4 100644
+--- a/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
++++ b/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+@@ -54,6 +54,7 @@
+   PlatformBootManagerLib
+   PcdLib
+   PrintLib
++  DefaultExceptionHandlerLib
+ 
+ [Guids]
+   gEfiGlobalVariableGuid                        ## SOMETIMES_PRODUCES ## Variable:L"BootNext" (The number of next boot option)
+@@ -76,6 +77,7 @@
+   gEfiEventReadyToBootGuid                      ## CONSUMES           ## Event
+ 
+ [Protocols]
++  gEfiCpuArchProtocolGuid                       ## CONSUMES
+   gEfiBdsArchProtocolGuid                       ## PRODUCES
+   gEfiSimpleTextInputExProtocolGuid             ## CONSUMES
+   gEdkiiVariablePolicyProtocolGuid              ## SOMETIMES_CONSUMES
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+index 47d0251..1de37ab 100644
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -16,6 +16,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ #include <Library/SerialPortLib.h>   // 2026-11-04R13 y700-elden
+ #include <Library/PrintLib.h>        // 2026-11-04R13 y700-elden
+ #include <Protocol/FirmwareVolume2.h> // 2026-11-04R13 y700-elden
++#include <Protocol/Cpu.h>          // 2026-11-06R18 y700-elden
++#include <Protocol/DebugSupport.h> // 2026-11-06R18 y700-elden
++// 2026-11-06R18 y700-elden: ArmPkg 的 DefaultExceptionHandlerLib.h 不在本模块 include 路径里，
++// 直接声明原型（实现由 [LibraryClasses] 里的 DefaultExceptionHandlerLib 提供）。
++VOID EFIAPI DefaultExceptionHandler (IN EFI_EXCEPTION_TYPE ExceptionType, IN OUT EFI_SYSTEM_CONTEXT SystemContext);
+ #include "Language.h"
+ #include "HwErrRecSupport.h"
+ #include <Library/VariablePolicyHelperLib.h>
+@@ -760,6 +765,25 @@ R13StartLinuxLoader (
+     return;
+   }
+ 
++  // 2026-11-06R18 y700-elden: 重新注册本树打过补丁的 DefaultExceptionHandler。
++  // 平台用的是**预编译**的 Binaries/ArmPkg/Drivers/CpuDxe/CpuDxe.efi（它自带一份
++  // DefaultExceptionHandlerLib，字符串 "Exception at 0x%016lx" 在全树只出现在它和我们编出来的
++  // DxeCore.efi 里），而它在 DxeCore 之后注册 ⇒ 覆盖了 DxeCore 里的那份（p25 实测：屏上只有
++  // "Synchronous Exception at 0xCFE94C84" + 递归 dump，我们的 [K] FLT 一次也没打出来）。
++  // 这里在 BDS 交接前重新注册一次（RegisterInterruptHandler 是覆盖语义）。
++  {
++    EFI_CPU_ARCH_PROTOCOL  *SbCpu;
++
++    SbCpu = NULL;
++    if (!EFI_ERROR (gBS->LocateProtocol (&gEfiCpuArchProtocolGuid, NULL, (VOID **)&SbCpu)) && (SbCpu != NULL)) {
++      SbCpu->RegisterInterruptHandler (SbCpu, EXCEPT_AARCH64_SYNCHRONOUS_EXCEPTIONS, DefaultExceptionHandler);
++      Len = AsciiSPrint (Line, sizeof (Line), "[L] cpu-hook=ok\n\r");
++    } else {
++      Len = AsciiSPrint (Line, sizeof (Line), "[L] cpu-hook=no-proto\n\r");
++    }
++    SerialPortWrite ((UINT8 *)Line, Len);
++  }
++
+   Status = gBS->StartImage (ImageHandle, NULL, NULL);
+   Len    = AsciiSPrint (Line, sizeof (Line), "[L] StartImage=%r\n\r", Status);
+   SerialPortWrite ((UINT8 *)Line, Len);
