@@ -4,7 +4,7 @@
 # fastboot action below is a SINGLE command. If `fastboot boot` fails with
 # "Write to device failed", run `fastboot reboot bootloader` first, wait, retry.
 set -u
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 DUMMY=out/dtbo-dummy.img
 
 # --- device lock (serialize across concurrent agents; see scripts/device-lock.sh) ---
@@ -12,8 +12,12 @@ TAB=${TABLET:-root@192.168.7.1}
 . "$(dirname "$0")/scripts/lib-device-lock.sh"
 device_lock_acquire
 
-wait_fastboot() { for i in $(seq 1 60); do sleep 2; timeout 6 fastboot devices 2>/dev/null | grep -q . && { echo "[cycle] fastboot ok (~$((i*2))s)"; return 0; }; done; echo "[cycle] fastboot timeout"; return 1; }
-wait_linux()   { for i in $(seq 1 60); do sleep 3; ping -c1 -W1 192.168.7.1 >/dev/null 2>&1 && timeout 8 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 root@192.168.7.1 true 2>/dev/null && { echo "[cycle] linux up (~$((i*3))s): ssh root@192.168.7.1"; return 0; }; done; echo "[cycle] linux timeout"; return 1; }
+# 等待统一走 scripts/lib-wait.sh（2026-11-05 脚本审计）：先判后睡 + 退避，
+# 并且 wait_linux 用「boot_id 变了」判「新内核已经在跑」，不再把「重启前的旧系统还在答」
+# 当成成功（旧实现的假成功形态）。
+. "$(dirname "$0")/scripts/lib-wait.sh"
+wait_fastboot() { wait_until "fastboot 上线" 120 wa_fastboot_alive && { echo "[cycle] fastboot ok"; return 0; }; echo "[cycle] fastboot timeout"; return 1; }
+wait_linux()   { wait_reboot wa_ssh_alive 180 && { echo "[cycle] linux up: ssh root@192.168.7.1"; return 0; }; echo "[cycle] linux timeout"; return 1; }
 
 case "${1:-}" in
   --soft)  echo "[cycle] soft reboot -> fastboot"; ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 root@192.168.7.1 'sync; echo b > /proc/sysrq-trigger' || true; wait_fastboot ;;

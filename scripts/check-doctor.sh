@@ -2,648 +2,141 @@
 # elden 项目医生 — 机器账自检（只读，不改任何文件）
 #
 # 用法:  scripts/check-doctor.sh                 退出码: 0 = 全绿；1 = 有 FAIL
-#        scripts/check-doctor.sh --staged-fast  只跑 §7/§8/§9（纯文本，~0.2 s）
-#                                               —— 供 .githooks/pre-commit 用；
-#                                               跳过 §5/§5d 的 vk 镜像解压（那是墙钟大头）
+#        scripts/check-doctor.sh --staged-fast  入库前档（pre-commit 用）：只跑纯文本/廉价段
+#        scripts/check-doctor.sh --only 6       只跑某一节（调试判据时用，见 --list）
+#        scripts/check-doctor.sh --list         列出全部子门（含所属档位）
+#        scripts/check-doctor.sh --json         机器可读汇总（fail/warn/sections）
 #
-# 文档 v2 起不再做文档计数 / 死链 / 口径字样检查：记录的区分度靠写入时的
-# 文件夹(角度) + 文件名(日期+主题) + pi 会话 id 保证（见 INDEX.md §2 / .pi/AGENT-OPS.md §4）。
-# 只保留机器可核对的账：
-#   4. 已退场入口不得复辟
-#   5. vk 版本账（registry / manifest / 镜像内 UTS 一致）
-#   5d. 内核身份表新鲜度 + 命名/溯源规则门
-#   5e. manifest 完整性（config_sha256）
-#   5f. ABI 敏感项一致性（.config ↔ 模块树，防 struct 偏移静默漂移）  ← 2026-10-23
-#   6. 静态卫生（设备锁单一真源 / bashism / 死脚本）
-#   7. 入口文档完整性（围栏闭合 / 截断哨兵 / 机器指针泄漏）  ← 2026-10-15 L1
-#   8. 索引↔磁盘对账（编号撞车=FAIL；索引覆盖仅对声明角度=WARN）  ← 2026-10-15 L1
-#   9. SESSIONS/ 快照一致性（委托 scripts/check-sessions.sh）  ← 2026-10-15 L1
-#   12. 驱动模块化门禁（锚点 / olddefconfig 幂等 / tristate 自洽）  ← 2026-10-27
-#   13. 文档引用的资产路径必须存在（委托 scripts/check-doc-assets.sh）  ← 2026-10-27
+# ★ 2026-11-05 重构（脚本审计轮）：649 行单体 → **调度器 + 独立子门**。
+#   动机与验收数据见 reports/script-audit-20261105.md 与 accept/RESULTS.md：
+#     · 旧版全量 12.5 s，其中 90% 在四个**互不依赖**的段（§5 vk 镜像解压 3.3 s、§6 静态扫描
+#       3.75 s、§12 olddefconfig 3.2 s、§5f pahole 1.05 s），却全部串行 `$(...)` 执行；
+#     · 旧版 --staged-fast 自称「纯文本 ~0.2 s」，实测 3.79 s —— §12 在 fast 档那个 `fi`
+#       之后，等于每次 commit 都白跑两遍 make olddefconfig。
+#   现在：子门并发跑（scripts/doctor/NN-*.sh|py），fast 档剔除 §12，三处重活各加缓存。
+#   判定契约没变：判据只看子门输出的 `  [ok]/[FAIL]/[warn]` 行，退出码不参与。
+#
+# 子门（scripts/doctor/，每个都能单独手跑，输出与 doctor 内一致）：
+#   04-retired.sh    已退场入口不得复辟                            [全量]
+#   05-vk.sh         vk 版本账(§5) + 内核身份表(§5d)               [全量] 一次扫描出两节
+#   05e-manifest.sh  manifest 完整性（config_sha256）               [全量]
+#   05f-abi.sh       ABI 敏感项一致性（.config ↔ 模块树）           [全量]
+#   06-hygiene.sh    静态卫生（设备锁单一真源 / bashism / 死脚本）  [全量]
+#   s07-08-docs.py   入口文档完整性(§7) + 索引↔磁盘对账(§8)         [全量+fast]
+#   09-sessions.sh   SESSIONS/ 快照一致性                           [全量+fast]
+#   10-history.sh    HISTORY 对账                                   [全量+fast]
+#   11-hooks.sh      提交钩子生效性                                 [全量+fast]
+#   12-modular.sh    驱动模块化门禁                                 [全量]  ← fast 档不跑
+#   13-assets.sh     文档引用的资产路径存在性                       [全量+fast]
+#   14-layout.sh     顶层布局注册表                                 [全量+fast]
+#
+# 验收用环境变量（正常使用无需设置）：
+#   ELF_ROOT=<dir>        被检查的树（默认 = 本脚本上一级）—— A/B 时指向主仓
+#   ELF_HELPERS=<dir>     助手脚本目录（默认 = 本脚本所在目录）
+#   ELF_VK_IDENTITY / ELF_MODULAR_CFG / ELF_STATIC_SCAN
+#                         分别覆盖三个被重写过的助手（A/B 时指向暂存副本）
+#   ELF_SEC_TIMEOUT=<s>   单个子门超时（默认 600）
 set -uo pipefail
 
-FAST=0
-for a in "$@"; do
-  case "$a" in
-    --staged-fast|--fast) FAST=1 ;;
-    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
-    *) echo "check-doctor: 未知参数 $a（支持 --staged-fast）" >&2; exit 2 ;;
+SELFDIR=$(cd "$(dirname "$0")" && pwd)
+ROOT="${ELF_ROOT:-$(cd "$SELFDIR/.." && pwd)}"
+HELPERS="${ELF_HELPERS:-$SELFDIR}"
+SEC_TIMEOUT="${ELF_SEC_TIMEOUT:-600}"
+export ROOT HELPERS
+
+# 子门清单：按输出顺序排列（数字 = 与旧版 §N 对齐）。
+ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh"
+# fast 档 = 旧版 --staged-fast 的语义（§7/§8/§9 + 其后的廉价段）**减去 §12**：
+# 文档/索引提交与内核 .config 无关，那 3.2 s 是纯浪费；手改 .config 的拦截交给收尾轮全量 doctor。
+FAST="s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 13-assets.sh 14-layout.sh"
+
+PROFILE=full
+ONLY=""
+JSON=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --staged-fast|--fast) PROFILE=fast ;;
+    --full) PROFILE=full ;;
+    --only) ONLY="${2:?--only 需要节号/文件名}"; shift ;;
+    --only=*) ONLY="${1#--only=}" ;;
+    --json) JSON=1 ;;
+    --list)
+      for s in $ALL; do
+        case " $FAST " in *" $s "*) p="full+fast" ;; *) p="full" ;; esac
+        printf '%-18s %s\n' "$s" "$p"
+      done
+      exit 0 ;;
+    -h|--help) sed -n '2,35p' "$0"; exit 0 ;;
+    *) echo "check-doctor: 未知参数 $1（支持 --staged-fast / --only N / --list / --json）" >&2; exit 2 ;;
   esac
+  shift
 done
 
-cd "$(dirname "$0")/.."
-ROOT=$PWD
+# --only：接受 `6` / `06` / `06-hygiene.sh` / `s07-08-docs.py` / 唯一子串
+if [ -n "$ONLY" ]; then
+  SEL=""
+  for s in $ALL; do
+    case "$s" in
+      "$ONLY"|"$ONLY".*|*"$ONLY"*) SEL="$s"; break ;;
+    esac
+  done
+  [ -n "$SEL" ] || { echo "check-doctor: 没有匹配 '$ONLY' 的子门（用 --list）" >&2; exit 2; }
+  LIST="$SEL"
+elif [ "$PROFILE" = fast ]; then
+  LIST="$FAST"
+else
+  LIST="$ALL"
+fi
 
+TMP=$(mktemp -d "${TMPDIR:-/tmp}/doctor.XXXXXX")
+trap 'rm -rf "$TMP"' EXIT
+
+if [ "$JSON" != 1 ]; then
+  if [ "$PROFILE" = fast ] && [ -z "$ONLY" ]; then
+    echo "== elden check-doctor (--staged-fast: 纯文本档，跳过 §4/§5/§5d/§5e/§5f/§6/§12) — $ROOT =="
+  else
+    echo "== elden check-doctor — $ROOT =="
+  fi
+fi
+
+# ---- 并发调度：子门互不共享状态（§5 只读镜像 / §6+§7/8 只读文本 / §12 只在 mktemp 里跑
+#      olddefconfig / §5f 只读 vmlinux），因此可全部同时起。输出各自落盘后按固定顺序拼接，
+#      所以并发不会打乱报告顺序，也不会让某一段的输出插进另一段。
+pids=""
+for s in $LIST; do
+  f="$SELFDIR/doctor/$s"
+  out="$TMP/$s.out"
+  if [ ! -f "$f" ]; then
+    printf '\n== %s ==\n  [FAIL] 子门脚本缺失: %s\n' "$s" "$f" > "$out"
+    continue
+  fi
+  ( cd "$ROOT" && timeout "$SEC_TIMEOUT" "$f" ) > "$out" 2>&1 &
+  pids="$pids $!:"
+done
+for p in $pids; do wait "${p%:}"; done
+
+# ---- 按固定顺序输出 + 统计 ----
 fail=0
 warn=0
-ok()   { printf '  [ok]   %s\n' "$1"; }
-bad()  { printf '  [FAIL] %s\n' "$1"; fail=$((fail+1)); }
-warnf(){ printf '  [warn] %s\n' "$1"; warn=$((warn+1)); }
-
-if [ "$FAST" = 1 ]; then
-  echo "== elden check-doctor (--staged-fast: 只跑 §7/§8/§9) — $ROOT =="
-else
-  echo "== elden check-doctor — $ROOT =="
-fi
-
-if [ "$FAST" = 1 ]; then
-  # ---- 快速路径：跳过 §4/§5/§5d/§5e/§6（含 vk 镜像解压，墙钟 ~14 s） ----
-  # 这些节的内容与「文档/索引改动」无关，pre-commit 无需承担其成本。
-  :
-else
-
-# ---------------------------------------------------------------- 4. 已退场入口不得复辟
-echo
-echo "== 4. 已退场入口（2026-10-04 清理，见 archive/2026-10-04-retired-entrypoints/）=="
-for p in .pi/pi-messenger.json .pi/messenger \
-         scripts/swarm.sh scripts/swarm-monitor.sh scripts/y700-swarm-reset.sh \
-         scripts/y700-harness-restart.sh scripts/start-y700-harness.sh scripts/apply-swarm-patch.sh \
-         patches/pi-messenger-swarm-detach-spawn.patch patches/pi-messenger-swarm-spawn.js.patched; do
-  if [ -e "$p" ]; then bad "已退场资产又出现在活跃树: $p"; else ok "无 $p"; fi
-done
-for f in flashing eacndev lob-remake; do
-  [ -e "$HOME/.local/bin/$f" ] && warnf "机器层快捷入口复辟: ~/.local/bin/$f（现役 = cd ~/y700-elden && pi）" || ok "无 ~/.local/bin/$f"
-done
-
-# ---------------------------------------------------------------- 5. vk 版本账
-echo
-echo "== 5. vk 版本账（registry / manifest / 镜像内 UTS）=="
-# 背景：vk52-slim 曾被静默打进 vk42 内核（manifest kernel_release 与镜像 UTS 自相矛盾），
-# 而当时无人校验。这里做三条机读检查；历史留白（vk43/49 等）只 warn 不 FAIL。
-# 证据与结论：archive/topics/VK-LEDGER-AUDIT-2026-10-06.md
-# 单次调用 vk-identity --all：一次全量扫描同时产出 §5 结论、§5d 门禁、§5d 新鲜度。
-# 旧版此处内联 python + §5d 再调 --gate/--check，同一批镜像被 gzip 解压三遍（墙钟 ~110s）。
-_all=$(python3 scripts/vk-identity.py --all 2>/dev/null)
-_ledger_st=(); _ledger_msg=(); _gate_st=(); _gate_msg=(); _cst=""
-while read -r _tag _st _msg; do
-  case "$_tag" in
-    L) _ledger_st+=("$_st"); _ledger_msg+=("$_msg") ;;
-    G) _gate_st+=("$_st"); _gate_msg+=("$_msg") ;;
-    C) _cst="$_st" ;;
-  esac
-done <<< "$_all"
-if [ ${#_ledger_st[@]} -eq 0 ]; then
-  # 反静默（2026-10-19 实测教训）：scripts/vk-identity.py 曾因一行语法错误
-  # （`detail)i)` 多一个字符）而完全无法运行，但这里只报「python3 缺失？」的 warn
-  # ⇒ 整个 §5/§5d 静默失效，而 git 的 stat 缓存还让文件显示「未修改」，更难发现。
-  # 现在先做语法自检，语法坏 = FAIL（不是 warn）。
-  if ! python3 -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" scripts/vk-identity.py 2>/dev/null; then
-    bad "scripts/vk-identity.py 有语法错误，vk 版本账/内核身份检查全部失效（跑 python3 scripts/vk-identity.py 看报错）"
-  else
-    warnf "vk 版本账检查未产出结果（python3 缺失或脚本运行失败，请手工跑 scripts/vk-identity.py --all 确认）"
+for s in $LIST; do
+  out="$TMP/$s.out"
+  if [ ! -s "$out" ]; then
+    printf '\n== %s ==\n  [warn] 子门无输出（超时 %ss 或异常退出？单独跑一次看）\n' "$s" "$SEC_TIMEOUT" > "$out"
   fi
-else
-  for _i in "${!_ledger_st[@]}"; do
-    case "${_ledger_st[$_i]}" in
-      OK)   ok   "${_ledger_msg[$_i]}" ;;
-      WARN) warnf "${_ledger_msg[$_i]}" ;;
-      FAIL) bad  "${_ledger_msg[$_i]}" ;;
-    esac
+  cat "$out"
+  fail=$((fail + $(grep -c '^  \[FAIL\]' "$out")))
+  warn=$((warn + $(grep -c '^  \[warn\]' "$out")))
+done
+
+if [ "$JSON" = 1 ]; then
+  secs=""
+  for s in $LIST; do
+    secs="$secs${secs:+,}\"$s\""
   done
-fi
-
-# ---------------------------------------------------------------- 5d. 内核身份表
-# §5 只看 boot-elden-vk*.img、且只比 manifest 内部两个同源字段（永远相等），抓不到
-# 「同 UTS 串不同二进制」和「vk 号其实装的是别的号的内核」。这里补上。
-echo
-echo "== 5d. 内核身份表（号 ↔ 内核二进制 ↔ 源提交）=="
-if [ ${#_gate_st[@]} -eq 0 ]; then
-  warnf "内核身份检查未产出结果（python3 / geekidos-linux 缺失？）"
+  printf '{"fail":%d,"warn":%d,"profile":"%s","sections":[%s]}\n' \
+    "$fail" "$warn" "$PROFILE" "$secs"
 else
-  for _i in "${!_gate_st[@]}"; do
-    case "${_gate_st[$_i]}" in
-      OK)    ok   "${_gate_msg[$_i]}" ;;
-      WARN)  warnf "${_gate_msg[$_i]}" ;;
-      FAIL)  bad  "${_gate_msg[$_i]}" ;;
-      *)     warnf "身份表检查输出无法解析：${_gate_st[$_i]} ${_gate_msg[$_i]}" ;;
-    esac
-  done
+  echo
+  echo "== 汇总: FAIL=$fail  WARN=$warn =="
 fi
-# MIGRATION-LOST 例外（2026-10-17）：换机后 out/*.img 全部未随迁，身份表重生成只能产出
-# (slot-dump)/(no-payload) 两行 ⇒ 新鲜度比对失去物理含义（比的是「镜像在不在」而非「表过期」）。
-# 此时降级为 warn：表保留为历史账（它记录的镜像 sha 已不可再生成，删掉即永久失账）。
-_img_n=$(ls out/boot-elden-*.img 2>/dev/null | wc -l)
-if [ "$_cst" = "0" ]; then
-  ok "versions/vk-kernel-identity.tsv 与当前镜像/registry/内核 ref 一致"
-elif [ "$_img_n" -eq 0 ]; then
-  warnf "内核身份表无法新鲜度比对：out/*.img 为 0（MIGRATION-LOST，见 reports/migration-rebuild-audit-20261017.md P4）——表按历史账保留、不重生成"
-else
-  bad "内核身份表已过期 → 跑 scripts/vk-identity.py > versions/vk-kernel-identity.tsv 并重提交"
-fi
-
-# ---------------------------------------------------------------- 5e. manifest 完整性
-echo
-echo "== 5e. manifest 完整性（构建产物身份可对账）=="
-# 正常 build-manifest.sh 始终写 config_sha256；缺号 = 手写 manifest 旁路。
-# 2026-10-10 #162：vk81/82/83 死内核的 manifest 全缺号 → 事后无从对账。
-# 历史事故见 versions/manifest-incomplete-allowlist.txt（白名单降 WARN）。
-_wf=versions/manifest-incomplete-allowlist.txt
-declare -A _wfallow=()
-if [ -f "$_wf" ]; then
-  while read -r _name _rest; do
-    [ -z "$_name" ] && continue
-    case "$_name" in \#*) continue ;; esac
-    _wfallow["$_name"]=1
-  done < "$_wf"
-fi
-_miss=(); _waived=0; _hist=0
-# 纪律起始日：2026-10-10（#162 事故当天 manifest 完整性纳入流程）。此前的 ad-hoc 构建
-# （dp*/vkB*/vkB*/vkX/vkY 等与 vk59-61）一律 grandfather，不再逐个白名单。
-_CUTOFF="2026-10-10"
-for _m in out/*.manifest; do
-  [ -e "$_m" ] || continue
-  grep -qE '^config_sha256=[0-9a-f]{64}' "$_m" && continue
-  _b=$(basename "$_m")
-  if [ -n "${_wfallow[$_b]:-}" ]; then _waived=$((_waived+1)); continue; fi
-  _gen=$(grep -m1 '^generated=' "$_m" | cut -d= -f2 | cut -c1-10)
-  if [ -n "$_gen" ] && [[ "$_gen" < "$_CUTOFF" ]]; then _hist=$((_hist+1)); continue; fi
-  _miss+=("$_b")
-done
-if [ ${#_miss[@]} -eq 0 ]; then
-  ok "所有 ≥$_CUTOFF 的 manifest 含 config_sha256（白名单 $_waived / 历史 grandfather $_hist）"
-else
-  bad "manifest 缺 config_sha256（应走 scripts/build-manifest.sh，勿手写）: ${_miss[*]}"
-fi
-
-# ---------------------------------------------------------------- 5f. ABI 敏感项一致性
-# 2026-10-23 实受：build/m1-73/.config 遗留 CONFIG_SUSPEND=y（vk128/vk129 失败实验未还原），
-# 它把 struct device.of_node 从 624 推到 680。而 /lib/modules/<UTS> 符号链接当时指向
-# -abi-suspend 模块树（UTS 与内核逐字相同）⇒ vermagic 拦不住 ⇒ 后果：
-#   · fastrpc 读 of_node=NULL → rpmsg add/remove 死循环 → dmesg 刷屏 300+/发、
-#     /dev/fastrpc-* 全缺、SSC 传感器全废（vk127 起一直如此）
-#   · 用该 config 编出的内核上机「背光亮一下即掉电」
-# 本节查两件事：(a) 构建树 .config 与 SSOT 的 ABI 敏感项；(b) 构建树产出的
-# of_node 偏移是否与「模块树链接指向的那套 .ko」一致（缺省双盲检查）。
-echo
-echo "== 5f. ABI 敏感项一致性（内核 ↔ 模块树）=="
-_abi_trees=""
-# 2026-11-05 清理后改为**动态发现**：任何 build/*/.config 或 linux/.config 都参与核对
-# （原写死 build/m1-73 等，树被归档后会静默跳过 ⇒ 门禁失效）。
-for _c in build/*/.config linux/.config; do
-  [ -f "$_c" ] && _abi_trees="$_abi_trees ${_c%/.config}"
-done
-if [ -z "$_abi_trees" ]; then
-  warnf "未找到任何内核树的 .config（build/*/ 或 linux/）→ 跳过（重建树后自动恢复核对）"
-else
-  for _t in $_abi_trees; do
-    if bash scripts/check-abi-config.sh "$_t/.config" >/tmp/abi5f.$$ 2>&1; then
-      ok "$_t/.config ABI 敏感项与 SSOT 一致"
-    else
-      _d=$(grep -E '\[FAIL\]' /tmp/abi5f.$$ | sed -E 's/^ +\[FAIL\] +//' | tr '\n' ';' | cut -c1-200)
-      bad "$_t/.config ABI 敏感项漂移（与机内模块树不兼容）: $_d"
-    fi
-    rm -f /tmp/abi5f.$$
-  done
-fi
-
-_of_tree=$(for _t in $_abi_trees; do [ -f "$_t/vmlinux" ] && { echo "$_t"; break; }; done)
-if [ -n "${_of_tree:-}" ] && command -v pahole >/dev/null 2>&1; then
-  _off=$(pahole -C device "$_of_tree/vmlinux" 2>/dev/null | awk '/struct device_node \* +of_node/{gsub(/\*/,"",$(NF-2)); print $(NF-2)}' | tr -d ';')
-  if [ -n "$_off" ]; then
-    ok "$_of_tree vmlinux: struct device.of_node @ $_off（部署的模块必须读同一偏移）"
-  else
-    warnf "$_of_tree/vmlinux 取不到 of_node 偏移（pahole 无该成员？）"
-  fi
-else
-  [ -n "${_of_tree:-}" ] && warnf "缺 pahole 或 $_of_tree/vmlinux → 跳过 of_node 偏移核对"
-fi
-
-# ---------------------------------------------------------------- 6. 静态卫生（防造轮回退）
-echo
-echo "== 6. 静态卫生（重复 / 死代码 / bashism）=="
-# 依据：.pi/plans/2026-10-07-造轮子审计.md（P0 防回归门）
-
-# 6a. 设备锁必须单一真源：除 lib-device-lock.sh 外不得内联锁块
-lockdup=$(grep -rl 'DEVICE_LOCK_HELD' --include='*.sh' scripts cycle.sh build.sh iterate.sh 2>/dev/null | grep -v 'lib-device-lock.sh' | grep -v 'check-doctor.sh' || true)
-if [ -n "$lockdup" ]; then
-  bad "设备锁块被复制（应只用 scripts/lib-device-lock.sh）: $(echo $lockdup | tr '\n' ' ')"
-else
-  ok "设备锁单一真源（lib-device-lock.sh）"
-fi
-
-# 6b/6c. bashism 与死脚本（Python，避免 shell 误判）
-static=$(python3 - "$ROOT" <<'PY'
-import glob, os, re, sys
-root = sys.argv[1]
-scripts = sorted(glob.glob(os.path.join(root, 'scripts', '*.sh')))
-# 引用语料：全仓 md/脚本（排除归档快照与生成物），避免把「仅被文档引用」误判为死代码。
-SKIP = {'.git', 'node_modules', 'out', 'logs', 'backup', 'flashing-bundle', 'linux', 'geekidos-linux', 'Y700-elden-linux', 'stock-src', 'qdl', 'env-pass', 'edk2-aarch64-gunyah', 'edk2-gunyah', 'edk2-gunyah-qemu', 'mu_wide_platforms'}
-corpus_files = []
-for dirpath, dirnames, filenames in os.walk(root):
-    dirnames[:] = [d for d in dirnames if d not in SKIP]
-    for fn in filenames:
-        if fn.endswith(('.md', '.sh', '.py', '.tsv', '.json')):
-            corpus_files.append(os.path.join(dirpath, fn))
-text = {}
-for cf in set(corpus_files):
-    try:
-        text[cf] = open(cf, encoding='utf-8', errors='replace').read()
-    except OSError:
-        pass
-bashism = []
-for f in scripts:
-    body = open(f, encoding='utf-8', errors='replace').read()
-    if body.startswith('#!/bin/sh') and re.search(r"\[\[(?!:)|declare -|[A-Za-z_][A-Za-z0-9_]*=\(", body):
-        bashism.append(os.path.basename(f))
-dead = [os.path.basename(f) for f in scripts
-        if not any(os.path.basename(f) in t for cf, t in text.items() if cf != f)]
-print('BASHISM\t' + (','.join(bashism) or '-'))
-print('DEAD\t' + (','.join(dead) or '-'))
-PY
-)
-while IFS=$'\t' read -r st msg; do
-  case "$st" in
-    BASHISM) [ "$msg" = "-" ] && ok "#!/bin/sh 脚本无常见 bashism" || warnf "bashism 风险（改 #!/bin/bash 或改写法）: $msg" ;;
-    DEAD)    [ "$msg" = "-" ] && ok "scripts/*.sh 无死脚本" || warnf "疑似死脚本（无任何活跃引用，核实后删/标 legacy）: $msg" ;;
-  esac
-done <<< "$static"
-
-fi   # ← --staged-fast 快速路径到此结束；以下 §7/§8/§9 两条路径都跑
-
-# ---------------------------------------------------------------- 7/8/9. 入口与索引完整性（L1）
-# 立此节的直接原因（2026-10-15 独立审查）：三项硬故障全部落在此前自检的盲区里——
-#   a) INDEX.md（自称唯一入口）在未闭合 ``` 围栏内物理截断，且尾部泄漏机器证据指针；
-#      自首次提交起即存在，无任何检查发现。
-#   b) PITFALLS/sessions 有两个 `33-`，索引只登记其一 ⇒ 另一份成孤儿；且其条目号
-#      #171–#178 与 22-构建守卫 已定义的 #171–#178 撞车（全库唯一一组重复号），
-#      而 reports/ 全量引用的正是后者 ⇒ 静默的引用歧义。
-#   c) scripts/check-sessions.sh 早已存在且可跑，但从未被任何门调用（静默腐烂）。
-# 本节的判据全部是「纯文本/行数」级，无镜像解压，墙钟 <1 s。
-_media=$(python3 - "$ROOT" <<'PY'
-import glob, os, re, sys
-root = sys.argv[1]
-
-# ---- 7. 入口文档：围栏闭合 + 截断哨兵 + 机器指针泄漏 ----
-# 受管入口文件（人类/agent 的第一落点）；改动此清单需同步 INDEX.md §2。
-ENTRY = ['INDEX.md', 'AGENTS.md', 'README.md', 'PROGRESS.md',
-         '.pi/AGENT-OPS.md', '.pi/README.md', '.pi/ORCHESTRATION.md',
-         'TASKS/README.md', 'PITFALLS/README.md', 'DEVICE/README.md',
-         'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md',
-         'SESSIONS/README.md', 'HISTORY/README.md']
-fence, leak, tail = [], [], []
-for rel in ENTRY:
-    p = os.path.join(root, rel)
-    if not os.path.isfile(p):
-        continue
-    try:
-        raw = open(p, 'rb').read()
-        txt = raw.decode('utf-8', 'replace')
-    except OSError:
-        continue
-    n = sum(1 for ln in txt.split('\n') if ln.startswith('```'))
-    if n % 2:
-        fence.append('%s(%d)' % (rel, n))
-    if 'Exact evidence:' in txt or 'pi-fold-evidence' in txt:
-        leak.append(rel)
-    if raw and not raw.endswith(b'\n'):
-        tail.append(rel)
-    # 截断哨兵：正文以孤立的未完成标记结尾（本案形态 = 行尾 `# 【`）
-    if re.search(r'# 【\s*$', txt.rstrip('\n'), flags=re.M):
-        fence.append('%s(截断:#【)' % rel)
-
-# ---- 8. 索引 <-> 磁盘对账 ----
-# 口径依据 INDEX.md §2 / .pi/AGENT-OPS.md §4（文档 v2）：
-#   「记录时的区分度靠 文件夹(角度) + 文件名(日期+主题) + pi 会话 id；不手抄索引表」
-# ⇒ **README 逐文件登记 sessions/ 不是 v2 的硬要求**，故不能一刀切当 FAIL。
-#   本节只做两件有明确判据的事：
-#     ① 编号撞车 = 硬错（FAIL）：顺序编号角度里同名编号 ⇒ 引用歧义（2026-10-15 实测两个 33-）。
-#        PITFALLS 条目号 `NNN. ` 全局唯一，同属硬错。
-#     ② 索引覆盖 = 仅对「声明逐文件登记」的角度核（opt-in），且只 WARN：
-#        PITFALLS（README 有 §索引表，实测 36/36）、SESSIONS（171/171）已事实上全登记；
-#        TASKS 等未声明，不计（避免把合规写法判成缺陷）。
-orphan, dupnum = [], []
-ANGLES = ['PITFALLS', 'TASKS', 'DEVICE', 'RESOURCES', 'RUNBOOK-BRINGUP',
-          'SESSIONS', 'HISTORY']
-# 顺序编号角度：文件名前导 `NN-` 必须唯一。
-SEQ_NUM_ANGLES = {'PITFALLS'}
-# 声明「README 逐文件登记 sessions/」的角度（opt-in；未列入者不检查覆盖）。
-# 2026-11-03 增 RESOURCES：该角度只有几篇会话，逐文件登记成本低、收益高（原先 3 篇孤儿无人引用）。
-# TASKS/ 仍 opt-out：188 篇按日期滚动的会话日志，按主题在 §1/§5/§7 引用，逐文件登记会变成维护负担
-#   （口径已写进 RESOURCES/README.md §2.9 与本注释，不是遗漏）。
-INDEXED_ANGLES = {'PITFALLS', 'SESSIONS', 'RESOURCES'}
-for ang in ANGLES:
-    sdir = os.path.join(root, ang, 'sessions')
-    idx = os.path.join(root, ang, 'README.md')
-    if not os.path.isdir(sdir) or not os.path.isfile(idx):
-        continue
-    itxt = open(idx, encoding='utf-8', errors='replace').read()
-    seqdir = ang in SEQ_NUM_ANGLES
-    seen = {}
-    for f in sorted(glob.glob(os.path.join(sdir, '*.md'))):
-        base = os.path.basename(f)
-        if base == 'README.md':      # 角度自述文件，不是条目
-            continue
-        if ang in INDEXED_ANGLES and base not in itxt:
-            orphan.append('%s/sessions/%s' % (ang, base))
-        if seqdir:
-            m = re.match(r'^(\d+)-', base)
-            if m:
-                seen.setdefault(m.group(1), []).append(base)
-    for num, files in sorted(seen.items()):
-        if len(files) > 1:
-            dupnum.append('%s: %s- (%s)' % (ang, num, ' | '.join(files)))
-
-# 条目号撞车：PITFALLS 正文里 `NNN. **` 形式的编号必须全局唯一
-pdefs = {}
-for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
-    for ln in open(f, encoding='utf-8', errors='replace'):
-        m = re.match(r'^(\d{1,3})\. ', ln)
-        if m:
-            pdefs.setdefault(m.group(1), []).append(os.path.basename(f))
-for num, files in sorted(pdefs.items(), key=lambda kv: int(kv[0])):
-    if len(files) > 1:
-        dupnum.append('PITFALLS: #%s (%s)' % (num, ' | '.join(sorted(set(files)))))
-
-# ---- 8c. 索引行长度门：索引只放「一句话主题」，超长即说明它在替正文做二次编排 ----
-# 判据来源（2026-10-19 整理轮）：PITFALLS/README.md 曾有 9 行 ≥500 B、最长 2682 B，
-# 单元格是正文的整段搬运 ⇒ 必然与正文漂移（实测已出现一条被正文推翻的旧结论）。
-IDXROW = []
-for rel, lim in (('PITFALLS/README.md', 800),):
-    p = os.path.join(root, rel)
-    if not os.path.isfile(p):
-        continue
-    for i, ln in enumerate(open(p, encoding='utf-8', errors='replace'), 1):
-        if ln.startswith('|') and 'sessions/' in ln and len(ln.encode()) > lim:
-            IDXROW.append('%s:%d 索引行 %d B > %d' % (rel, i, len(ln.encode()), lim))
-
-# ---- 8d. PITFALLS 正文条目编号必须是 `#NNN` 且全局只定义一次 ----
-# 旧规则只认行首 `NNN. `，而 45/46/47/49/51 用的是 `## #NNN ...` 形式 ⇒ #293–#353 长期
-# 不受任何唯一性保护（实测 #337/#338/#339 一度只存在于 README 索引里，正文一次都没出现）。
-pnum = {}
-for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
-    for ln in open(f, encoding='utf-8', errors='replace'):
-        # 「定义」= 标题行里出现的 #NNN（一条目一节的写法多样：`## #323 …`、`## 2. #337 …`、
-        # `# 四十七、…（#331–#336）`），或行首 `NNN. **标题**`。
-        # 两条去噪规则（2026-10-19 实测，否则全库误报）：
-        #   ① 反引号代码段里的 `#NNN` 是**引用**不是定义（`## 289. ★★ \`PITFALLS #212\` 12 发全存活`）；
-        #   ② 同一文件内多次出现不算撞车（一节讲一组编号是正常写法），只报**跨文件**重复。
-        line = re.sub(r'`[^`]*`', '`X`', ln)
-        if re.match(r'^#{1,4}\s', line):
-            # 只取标题里的**第一个**编号：`## #324 推翻 #322 的方法论教训` 里 #322 是引用。
-            m = re.search(r'#(\d{1,3})\b', line)
-            if m:
-                pnum.setdefault(m.group(1), set()).add(os.path.basename(f))
-        else:
-            m = re.match(r'^(\d{1,3})\.\s+\*\*', line)
-            if m:
-                pnum.setdefault(m.group(1), set()).add(os.path.basename(f))
-for num, files in sorted(pnum.items(), key=lambda kv: int(kv[0])):
-    if len(files) > 1:
-        dupnum.append('PITFALLS 正文 #%s 被多处定义 (%s)' % (num, ' | '.join(sorted(set(files)))))
-
-# ---- 8e. PITFALLS 索引里的 #NNN 必须有正文「定义」（悬空=硬错）----
-# 8d 只查「跨文件重复」；索引有、正文没有（或正文用 `# 98 ·` 这类文件序号式标题）
-# 长期无人发现（2026-10-30 实测 #418/#419/#471）。本门用**宽松定义集**（标题 + 行首 NNN.
-# + 正文粗体 `**#NNN**` 也算定义），且**只喂悬空门**、绝不回喂 8d 的 pnum（否则行内引用
-# `**#143**` 会被当成定义，制造假的跨文件重复）。
-pdef_all = {k: set(v) for k, v in pnum.items()}
-for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
-    base = os.path.basename(f)
-    for ln in open(f, encoding='utf-8', errors='replace'):
-        line = re.sub(r'`[^`]*`', '`X`', ln)
-        if re.match(r'^#{1,4}\s', line):
-            continue  # 标题首编号已在 pnum
-        m = re.search(r'\*\*\s*#(\d{1,3})\s*\*\*', line)
-        if m:
-            pdef_all.setdefault(m.group(1), set()).add(base)
-idxnums = set()
-for ln in open(os.path.join(root, 'PITFALLS', 'README.md'), encoding='utf-8', errors='replace'):
-    if ln.startswith('|') and 'sessions/' in ln:
-        idxnums |= set(re.findall(r'#(\d{1,3})\b', re.sub(r'`[^`]*`', 'X', ln)))
-DANGLING = ['PITFALLS 索引 #%s 无正文定义' % n
-            for n in sorted(idxnums, key=int) if n not in pdef_all]
-
-def emit(tag, items):
-    print('%s\t%s' % (tag, '; '.join(items) if items else '-'))
-emit('FENCE', fence)
-emit('LEAK', leak)
-emit('TAIL', tail)
-emit('ORPHAN', orphan)
-emit('DUPNUM', dupnum)
-emit('DANGLING', DANGLING)
-
-# ---- 8b. 写死在文档里的「N 节 / N 条」计数必须与磁盘实际条数一致 ----
-# 依据：2026-10-15 实测 INDEX.md 写「PITFALLS §0 + 33 节索引」，而实际已 36 节——
-# 这类手写计数只会在每次新增条目时静默漂移，属可机读的账（readme 的表格行数 = 真值）。
-stale = []
-# (受管文档, 正则捕获组1=声明的数, 真值来源目录)
-COUNT_RULES = [
-    ('INDEX.md', r'PITFALLS[^\n]*?(\d+)\s*节', 'PITFALLS'),
-]
-for rel, pat, ang in COUNT_RULES:
-    p = os.path.join(root, rel)
-    if not os.path.isfile(p):
-        continue
-    txt = open(p, encoding='utf-8', errors='replace').read()
-    idx = os.path.join(root, ang, 'README.md')
-    if not os.path.isfile(idx):
-        continue
-    # 真值 = 该角度 README 索引表里指向 sessions/ 的行数（与 §8 的正文对账同源）
-    # 注：链接是相对的（`sessions/NN-...`），**不带**前导斜杠 —— 用 '/sessions/' 会恒为 0。
-    real = sum(1 for ln in open(idx, encoding='utf-8', errors='replace')
-               if ln.startswith('|') and 'sessions/' in ln)
-    for m in re.finditer(pat, txt):
-        if int(m.group(1)) != real:
-            stale.append('%s 声明「%s 节」但实际 %d 节' % (rel, m.group(1), real))
-emit('STALECOUNT', stale)
-emit('IDXROW', IDXROW)
-
-# ---- 8e. 表格结构完整性（GFM：遇首个非 `|` 行即终止表格）----
-# 立此判据的原因（2026-10-19 实测）：TASKS/README.md 有 4 处把一个表格行写成跨 4–6 个物理行的
-# 整段叙事（续行不以 `|` 开头）⇒ 源文件看着能读，渲染出来该行后半截 + 其后**全部数据行**
-# 降级为纯文本段落；同时 grep/表格解析工具会读丢内容。这是「人肉可读但机器不可读」的静默故障。
-TBL = []
-TBL_DOCS = ['TASKS/README.md', 'PITFALLS/README.md', 'DEVICE/README.md',
-            'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md', 'INDEX.md']
-for rel in TBL_DOCS:
-    p = os.path.join(root, rel)
-    if not os.path.isfile(p):
-        continue
-    lines = open(p, encoding='utf-8', errors='replace').read().split('\n')
-    for i, ln in enumerate(lines):
-        if i == 0 or not ln.strip():
-            continue
-        # 续行 = 上一行是表格行，本行既不是表格行也不是标题/引用/围栏
-        if lines[i-1].startswith('|') and not ln.startswith('|') \
-           and not ln.lstrip().startswith(('#', '>', '```', '- ')):
-            TBL.append('%s:%d 表格行被换行拆开（该行及其后全部数据行会退化成纯文本）' % (rel, i + 1))
-emit('TBL', TBL)
-
-# ---- 8f. reports/ 不得有孤儿（AGENT-OPS §3「报告必须被引用」的机器版）----
-# 立此判据的原因：2026-10-15 实例——`reports/q24-causal-audit-20261015.md` 既未入 git
-# 也无人引用，结论随文件沉底。2026-10-19 复盘又查出 5 篇孤儿报告。
-# 判据：报告文件名必须出现在**自身以外**的 md/sh/py/tsv 里（含 glob 写法）。
-# 白名单 = reports/ 下的索引类文件（它们引用别人，不需要被别人引用）。
-ORPHANR = []
-RP = os.path.join(root, 'reports')
-if os.path.isdir(RP):
-    selfdocs = {'Q24-Q28-INDEX.md', 'q28-INDEX.md', 'q28-DOSSIER.md'}
-    corpus = []
-    for dp, dns, fns in os.walk(root):
-        dns[:] = [d for d in dns if d not in {'.git', 'node_modules', 'out', 'logs', 'backup',
-                                              'geekidos-linux', 'Y700-elden-linux', 'stock-src',
-                                              'dl-cam', 'env-pass', 'build'}]
-        for fn in fns:
-            if fn.endswith(('.md', '.sh', '.py', '.tsv')):
-                corpus.append(os.path.join(dp, fn))
-    texts = {}
-    for cf in corpus:
-        try:
-            texts[cf] = open(cf, encoding='utf-8', errors='replace').read()
-        except OSError:
-            pass
-    for rp in sorted(glob.glob(os.path.join(RP, '*.md'))):
-        base = os.path.basename(rp)
-        if base in selfdocs:
-            continue
-        if not any(base in tx for cf, tx in texts.items() if cf != rp):
-            ORPHANR.append('reports/' + base)
-emit('ORPHANR', ORPHANR)
-PY
-)
-echo
-echo "== 7. 入口文档完整性（围栏 / 截断 / 机器指针）=="
-while IFS=$'\t' read -r _st _msg; do
-  case "$_st" in
-    FENCE)  [ "$_msg" = "-" ] && ok "受管入口文档围栏闭合、无截断标记" || bad "围栏未闭合或疑似截断（补齐代码围栏 / 恢复被截正文）: $_msg" ;;
-    LEAK)   [ "$_msg" = "-" ] && ok "无机器证据指针泄漏进入口文档" || bad "入口文档混入 pi-fold 证据指针（应只留相对路径引用）: $_msg" ;;
-    TAIL)   [ "$_msg" = "-" ] && ok "受管入口文档均以换行结尾" || warnf "文件缺少结尾换行: $_msg" ;;
-  esac
-done <<< "$_media"
-
-echo
-echo "== 8. 索引↔磁盘对账（编号撞车=硬错 / 索引覆盖=仅声明角度）=="
-while IFS=$'\t' read -r _st _msg; do
-  case "$_st" in
-    ORPHAN) [ "$_msg" = "-" ] && ok "已声明登记的角度：sessions/ 正文均被 README 引用" || warnf "索引未登记（仅对声明逐文件登记的角度核；补 README 行或移出该口径）: $_msg" ;;
-    DUPNUM) [ "$_msg" = "-" ] && ok "文件名/条目编号无撞车" || bad "编号撞车（引用歧义，必须重编）: $_msg" ;;
-    DANGLING) [ "$_msg" = "-" ] && ok "PITFALLS 索引 #NNN 均有正文定义" || bad "PITFALLS 索引悬空（正文缺 #NNN 锚点，或正文标题用文件序号式）: $_msg" ;;
-    STALECOUNT) [ "$_msg" = "-" ] && ok "文档内手写条目计数与磁盘一致" || bad "文档手写计数已过期（改为不写死数字，或同步修正）: $_msg" ;;
-    IDXROW) [ "$_msg" = "-" ] && ok "索引行长度合规（结论只在正文，索引只放一句话主题）" || bad "索引行超长（内容应搬进正文，索引留一段主题 + 链接）: $_msg" ;;
-    TBL)    [ "$_msg" = "-" ] && ok "入口文档表格结构完整（无被换行拆断的表格行）" || bad "表格行被换行拆开（合并成一行，叙事搬去 reports/）: $_msg" ;;
-    ORPHANR) [ "$_msg" = "-" ] && ok "reports/ 无孤儿报告（每篇都被至少一处引用）" || warnf "报告无人引用（结论会随文件沉底，补一处指针到对应 README/TASKS 行）: $_msg" ;;
-  esac
-done <<< "$_media"
-
-# ---------------------------------------------------------------- 9. SESSIONS/ 快照一致性
-# check-sessions.sh 自 2026-10-14 落地后长期无人调用（审查发现）。此处委托执行：
-# 它校验的是「SESSIONS/ 冻结快照 vs git show d8ae437:RESOURCES.md」，属可机读账，故并入 doctor。
-# 抽检数固定 3（doctor 应快；全量抽检可手动跑 bash scripts/check-sessions.sh 20）。
-echo
-echo "== 9. SESSIONS/ 快照一致性（委托 check-sessions.sh）=="
-if [ ! -x scripts/check-sessions.sh ] && [ ! -f scripts/check-sessions.sh ]; then
-  warnf "scripts/check-sessions.sh 缺失，跳过"
-else
-  _cs=$(bash scripts/check-sessions.sh 3 2>&1)
-  _csrc=$?
-  _csl=$(printf '%s\n' "$_cs" | grep -E '^checks OK=|ALL PASS|FAIL' | tail -2 | tr '\n' ' ')
-  if [ $_csrc -eq 0 ]; then
-    ok "SESSIONS 快照与源一致（$_csl）"
-  else
-    bad "SESSIONS 快照与源不一致（$_csl）→ 跑 bash scripts/check-sessions.sh 看细节"
-  fi
-fi
-
-# ---------------------------------------------------------------- 10. HISTORY 对账（<0.1 s）
-# 立此节的原因（2026-10-19 整理轮）：HISTORY/README.md 曾写死「总提交数 448 / 生成时 HEAD 265e77c」，
-# 而实际 493，且 days/ 缺 10-15～10-19 整整 5 天 —— 无任何检查发现，因为 doctor 从不看 HISTORY。
-# 判据分两档：
-#   FAIL = README 又写死了计数（数字唯一出口 = scripts/gen-history.sh --stats）；
-#   WARN = days/ 落后于 git（正常状态：刚提交完还没重生成，收尾时跑一次即可）。
-echo
-echo "== 10. HISTORY 对账（days 覆盖 / README 不写死数字）=="
-if grep -qE '^\| *总提交数 *\|' HISTORY/README.md 2>/dev/null; then
-  bad "HISTORY/README.md 又写死了提交数（应改为 scripts/gen-history.sh --stats 现查）"
-else
-  ok "HISTORY/README.md 无写死计数"
-fi
-_hd=$(cat HISTORY/days/*.md 2>/dev/null | grep -cE '^- [0-9a-f]{7,} ' || true)
-# 判据不能简单写「days 条数 == HEAD 条数」：收尾时「重生成 days → 提交」这一步本身会让 HEAD +1，
-# 于是永远差 1 条、永远 WARN（形成无法收敛的循环）。改为判「最近一次生成覆盖到哪个提交」：
-#   HEAD 在 days 里    ⇒ 完全新鲜；
-#   HEAD~1 在 days 里  ⇒ 正常收尾态（days 由上一个提交更新，本次提交只改文档）；
-#   都不是             ⇒ 真落后。
-_headh=$(git rev-parse --short=10 HEAD 2>/dev/null || true)
-_prevh=$(git rev-parse --short=10 HEAD~1 2>/dev/null || true)
-_days_all=$(cat HISTORY/days/*.md 2>/dev/null || true)
-if [ -n "$_headh" ] && printf '%s' "$_days_all" | grep -q "^- $_headh "; then
-  ok "HISTORY/days 新鲜（覆盖 HEAD ${_headh}，共 ${_hd} 条）"
-elif [ -n "$_prevh" ] && printf '%s' "$_days_all" | grep -q "^- $_prevh "; then
-  ok "HISTORY/days 新鲜（覆盖 HEAD~1 ${_prevh}；本次提交仅改文档，共 ${_hd} 条）"
-else
-  warnf "HISTORY/days 落后（未覆盖 HEAD ${_headh} 或 HEAD~1 ${_prevh}）→ 跑一次 scripts/gen-history.sh"
-fi
-
-# ---------------------------------------------------------------- 11. 提交钩子生效性
-# 立此节的原因（2026-10-19 整理轮实测）：.githooks/{pre-commit,commit-msg} 两个脚本早就写好、
-# 文档也一直声称「入库前门会跑 check-doctor --staged-fast」，但 `git config core.hooksPath` 是空的、
-# `.git/hooks/pre-commit` 不存在 ⇒ **两个钩子从未执行过一次**。这类「文档承诺了一个不存在的门」
-# 只能靠机器对账发现，故在此固化。
-echo
-echo "== 11. 提交钩子生效性（hooksPath 必须指向 .githooks）=="
-_hp=$(git config --get core.hooksPath || true)
-if [ "$_hp" = ".githooks" ]; then
-  ok "core.hooksPath = .githooks"
-else
-  bad "core.hooksPath='${_hp}' → 钩子未生效（跑一次 git config core.hooksPath .githooks）"
-fi
-for _h in pre-commit commit-msg; do
-  if [ -x ".githooks/$_h" ]; then ok ".githooks/$_h 可执行"; else bad ".githooks/$_h 缺失或不可执行"; fi
-done
-
-# ---------------------------------------------------------------- 12. 驱动模块化门禁
-# 立此节的原因（2026-10-27 收尾轮）：scripts/check-modular-config.sh 2026-10-26 就写好了
-# （28 锚点不回退 + olddefconfig 幂等 + tristate 依赖自洽 + 可选模块树 vermagic），
-# 但没有任何调用方 —— 与 §11 同类问题：门写在仓库里，实际从不执行。
-echo
-echo "== 12. 驱动模块化门禁（锚点不回退 / olddefconfig 幂等 / tristate 自洽）=="
-_mcfg_tree=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' patches/current-tree 2>/dev/null | grep -v '^$' | head -1)
-[ -z "${_mcfg_tree:-}" ] && _mcfg_tree=$(for _c in build/*/.config; do [ -f "$_c" ] && { echo "${_c%/.config}"; break; }; done)
-if [ -z "${_mcfg_tree:-}" ] || [ ! -f "$_mcfg_tree/.config" ]; then
-  warnf "无构建树可用（patches/current-tree = ${_mcfg_tree:-空}）→ 跳过模块化门禁（重建树后自动恢复；不影响入库）"
-elif [ ! -f scripts/check-modular-config.sh ]; then
-  bad "scripts/check-modular-config.sh 缺失"
-else
-  if _mo=$(bash scripts/check-modular-config.sh 2>&1); then
-    ok "模块化 config 门禁通过（$(printf '%s' "$_mo" | grep -c '^PASS:') 项 PASS）"
-  else
-    bad "模块化 config 门禁失败：$(printf '%s' "$_mo" | grep -E '^FAIL' | head -3 | tr '\n' ' ')"
-  fi
-fi
-
-# ---------------------------------------------------------------- 13. 文档资产路径存在性
-# 立此节的原因（2026-10-27）：三条 lane 的产物（patches/ reports/ scripts/）提交在各自
-# worktree 分支上，主仓 main 只落了收口总结 ⇒ TASKS/README.md §7 与 upstream 状态页引用的
-# 一批路径在主仓不存在，下个会话按路径找不到就会重做一遍。§8 只查「报告是否被引用」，
-# 不查「被引用的路径是否存在」，这一节补的正是后半句。
-echo
-echo "== 13. 文档引用的资产路径（委托 check-doc-assets.sh）=="
-if [ ! -f scripts/check-doc-assets.sh ]; then
-  bad "scripts/check-doc-assets.sh 缺失"
-else
-  if _da=$(bash scripts/check-doc-assets.sh 2>&1); then
-    ok "文档资产路径齐全（$(printf '%s' "$_da" | grep -o 'checked=[0-9]*' | head -1)）"
-  else
-    bad "文档引用了不存在的路径：$(printf '%s' "$_da" | grep '^MISSING' | head -3 | awk '{print $2}' | tr '\n' ' ')"
-  fi
-fi
-
-# ---------------------------------------------------------------- 14. 顶层布局注册表
-# 立此节的原因（2026-11-03 项目整理）：根目录条目会随专题自发增长（现 46 项），
-# 没有注册表就无法判断「这个目录能不能删、要不要入库」。真源 versions/layout.tsv，
-# 人读面渲染在 INDEX.md §2「顶层布局」表。
-echo
-echo "== 14. 顶层布局注册表（委托 check-layout.sh）=="
-if [ ! -f scripts/check-layout.sh ]; then
-  bad "scripts/check-layout.sh 缺失"
-else
-  if _lo=$(bash scripts/check-layout.sh 2>&1); then
-    ok "顶层条目全部已登记（$(printf '%s' "$_lo" | grep -o 'entries=[0-9]*' | head -1)）"
-  else
-    bad "布局注册表不一致：$(printf '%s' "$_lo" | grep '^FAIL' | head -3 | sed 's/^FAIL: //' | tr '\n' ' ')"
-  fi
-fi
-
-echo
-echo "== 汇总: FAIL=$fail  WARN=$warn =="
-[ $fail -eq 0 ] && exit 0 || exit 1
+[ "$fail" -eq 0 ] && exit 0 || exit 1

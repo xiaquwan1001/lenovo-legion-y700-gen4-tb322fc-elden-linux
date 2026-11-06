@@ -98,11 +98,12 @@ echo "[kexec] executing (device will switch kernel; SSH will drop)..."
 # -e does not return; subshell so the SSH error is expected.
 $SSH "sync; kexec -e" || true
 echo "[kexec] waiting for the device to come back..."
-for i in $(seq 1 60); do
-	sleep 3
-	if timeout 6 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "$TAB" 'uname -r' 2>/dev/null; then
-		echo "[kexec] back (~$((i*3))s)"; exit 0
-	fi
-done
+# 2026-11-05：lib-wait 的换代判据（boot_id 变）= 「新内核真的起来了」；旧实现只要 ssh 一答
+# 就退出，而 kexec -e 生效前那一瞬旧内核还在答（假成功）。180 s 预算与旧版相当。
+. "$(dirname "$0")/lib-wait.sh"
+if wait_reboot wa_ssh_alive 180; then
+	timeout 8 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "$TAB" 'uname -r' 2>/dev/null || true
+	exit 0
+fi
 echo "[kexec] device did not return; fall back to scripts/to-fastboot.sh + fastboot boot" >&2
 exit 1

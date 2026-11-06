@@ -179,3 +179,6 @@ reports/artifacts/uefi-fixcopylen-20261104/*.gz
 reports/artifacts/uefi-fixcopylen-20261104/*.fd
 reports/artifacts/uefi-fixcopylen-20261104/*payload*
 reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
+
+# ---- 2026-11-05 脚本审计工具链的缓存（可再生，勿入库）----
+/.cache/
