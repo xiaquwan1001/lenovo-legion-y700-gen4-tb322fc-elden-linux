@@ -1,0 +1,48 @@
+# versions/patches-uefi-status.tsv — patches/uefi/ 逐目录分级（2026-11-06 整理轮）
+# 生成方式：分类由 in_recipe（对半自动：p7-recipe.txt 求交）+ 人工读报告判定理由；方法与逐条理由见 reports/patches-uefi-grading-20261106.md
+# 列：dir <TAB> patches <TAB> in_recipe <TAB> status <TAB> 理由 <TAB> 证据
+# status：ACTIVE=当前活线累积栈 / RETIRED=结论已推翻或作废（补丁留档，勿再应用）/ UNCLEAR=待确认
+dir	patches	in_recipe	status	reason	evidence
+20261031-prepi-vis	1	0	RETIRED	同上（PrePi 入口 FB marker）	reports/uefi-prepi-visibility-static-20261031.md
+20261031-vis	1	0	RETIRED	屏显通道已判废（ConOut no-op/写穿帧缓冲，PITFALLS #514/#515）；marker 方案由宿主可读通道取代	reports/uefi-visibility-channels-20261031.md
+20261101-ddr	1	0	RETIRED	DDR 读回恒 0xFF ⇒ 黑匣子通道不可用（--shim ddrmarks 仍留档）	reports/uefi-ddr-blackbox-20261101.md
+20261102-ddr-clean	2	0	RETIRED	同族：ddrmarks 的 cache 维护清洗版，结论仍不可用	reports/uefi-ddrcut-fallback-20261101.md
+20261103-posctrl	2	0	RETIRED	superseded：`text_offset=0` 已固化进 `scripts/uefi-repack-v2aligned.py`（不再需要补丁）；DDR marks 部分属已废通道；目录内 markspin*.S/bin/o 是该轮的 BootShim 试验件	reports/uefi-posctrl-20261103-summary.md
+20261103-v4header	4	0	RETIRED	ABL 静默拒 v3/v4 头（PITFALLS #387/#418）；现行打包一律 v2+base 0	reports/uefi-next-step-decision-20261103.md
+20261104-dual	1	0	RETIRED	同上（色带+DDR 分级）	reports/uefi-payload-execution-20261104.md
+20261104-dxe	14	8	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104-fbband	1	0	RETIRED	同上（色带探针）	reports/uefi-payload-execution-20261104.md
+20261104-fbfill	1	0	RETIRED	早期 payload 执行探针；真因已由 fixcopylen（#497）解释	reports/uefi-payload-execution-20261104.md
+20261104-fixcopylen	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104-m3block	1	0	RETIRED	同上（M3 整块蓝）	reports/uefi-payload-execution-20261104.md
+20261104-nocivac	1	0	RETIRED	同上（去 dc civac）；cache 死点已由 #497 同源解释	reports/uefi-payload-execution-20261104.md
+20261104-prepi	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104-prog	1	0	RETIRED	同上（进度改色）	reports/uefi-payload-execution-20261104.md
+20261104R-pstore	2	0	RETIRED	pstore/pmsg 不能当取证通道（PITFALLS #414）	reports/uefi-ramoops-channel-20261104R.md
+20261104R10-noqrks	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R11-bdsprobe	1	0	RETIRED	BDS/SFS 探针 → 被 R13 loaderstart（进 FV loader）取代	reports/uefi-ramoops-channel-20261104R.md
+20261104R12-sfsprobe	1	0	RETIRED	同上	reports/uefi-ramoops-channel-20261104R.md
+20261104R13-loaderstart	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R14-avbprobe	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R15-noavbprobe	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R16-dtboclamp	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R17-bootmarkers	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R18-haltbeforejump	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R19-nvmarkers	2	2	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R2-slow-serial	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R20-stage-bisect	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R21-hostdiag	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R4-excprint	1	0	RETIRED	异常打印探针：DXE 异常从未打出（异常处理不在该路径）	reports/uefi-ramoops-channel-20261104R.md
+20261104R5-dxebase	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R5-excnoscroll	1	0	RETIRED	同上（滚屏版）	reports/uefi-ramoops-channel-20261104R.md
+20261104R6-excimg	1	0	RETIRED	同上（带 Image 名）	reports/uefi-ramoops-channel-20261104R.md
+20261104R7-loadmap	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261104R8-names	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261105-diagentry	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261105-finebisect	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261105-vsbisect	3	3	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261105R2-vsstop-fix	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261105R4-preamble2-bisect	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261105R5-probemode	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261105R6-probe-orthogonal	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261105R7-probe-markonly	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh

@@ -1,7 +1,7 @@
-# `out/r21-sbstop` 处置：先记指纹与可复现性缺口，本轮不删（2026-11-06）
+# `out/r21-sbstop` 处置：先记指纹与可复现性缺口（2026-11-06）→ **同日已执行清仓**
 
 > 起因：2026-11-06 整理轮盘点资产时，`out/` 7.9 G 里 **4.8 G 是 `out/r21-sbstop/`**（76 件 × ~65 MiB，UEFI R21 诊断阶梯的中间镜像）。
-> 结论：**本轮不删**，改为「记全量 sha256 + 定出保留口径 + 指明真正的缺口（构建配方未脚本化）」。
+> 结论：**先记指纹不删**（当日第一轮）；缺口补齐后**同日已删 72 件**（见文末 §4）。
 > 机器指纹已落 `reports/artifacts/uefi-r21-sbstop-trim-20261106/`。
 
 ## 0. 为什么不是「直接删」
@@ -42,7 +42,7 @@ while read -r f; do rm -f "out/r21-sbstop/$f"; done < reports/artifacts/uefi-r21
 du -sh out/r21-sbstop        # 预期 4.8 G → ~270 M
 ```
 
-## 3. 下轮要补的「精简修补」（真正的欠账）
+## 3. 缺口与修法（2026-11-06 已补齐，见 §4）
 
 `p7-m3` / `uefi-preamble7` 这一族的构建是**手敲命令**（`R7 mode-3` + 逐档改 `sbstop` 常量后再 repack）。
 当前活线每一步都依赖它，却无法复现 ⇒ 应新增 `uefi-r21-p7-ladder.sh`（脚本名，待新建）（或给 `uefi-build-variant.sh` 加 `--preamble7 --stages …`），
@@ -50,3 +50,10 @@ du -sh out/r21-sbstop        # 预期 4.8 G → ~270 M
 
 判据：`bash uefi-r21-p7-ladder.sh --mkimg-only`（待新建） 能在空 `out/r21-sbstop` 下重建 §1 的 4 件，
 且与 `KEPT.sha256` **逐字节一致**（不一致就说明配方还缺参数，不要删旧件）。
+
+## 4. 已执行（2026-11-06 同日第二轮）
+
+1. **配方脚本化** ⇒ `scripts/uefi-r21-p7-ladder.sh` + `patches/uefi/p7-recipe.txt`；
+   `--verify` **rc=0**，四件 sha256 与 `KEPT.sha256` **逐字节相同**（详 `reports/patches-uefi-grading-20261106.md` §1）。
+2. **删 72 件**：删前 `sha256sum -c DELETED-*.sha256` **72/72 OK**；`out/r21-sbstop` **4.8 G → 257 M**，`out/` **7.9 G → 3.1 G**。
+3. 保留 4 件仍可随时用 `--mkimg-only` 重建（不再是不可再生件，只是省一次构建的缓存）。

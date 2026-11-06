@@ -13,7 +13,7 @@ r"""uefi-sbstop-patch.py — 把 boot.img v2 头里的 cmdline 换成 `sbstop=N`
 因此本工具只用于停机点阶梯，不得拿来造正常启动件。
 
 用法：
-  scripts/uefi-sbstop-patch.py <src.img> <stage> <dst.img>
+  scripts/uefi-sbstop-patch.py <src.img> <stage> <dst.img> [--probe N]
   scripts/uefi-sbstop-patch.py --check <img>          # 只做头校验，打印头字段与 cmdline
 
 自校验（三件，任一失败即非零退出）：
@@ -76,10 +76,12 @@ def do_check(path):
         fail("page_size=%d != 4096" % h["page_size"])
 
 
-def do_patch(src, stage, dst):
+def do_patch(src, stage, dst, probe=None):
     # 0 = diag 入口探针；1..7 = BootLinux 内停机点；11..14 = CmdBoot 内细二分
     if not 0 <= stage <= 99:
         fail("stage=%d out of range 0..99" % stage)
+    if probe is not None and not 0 <= probe <= 9:
+        fail("probe=%d out of range 0..9" % probe)
     blob = bytearray(open(src, "rb").read())
     h = parse_header(blob)
     if h["header_version"] != 2:
@@ -87,7 +89,11 @@ def do_patch(src, stage, dst):
     if h["page_size"] != 4096:
         fail("page_size=%d != 4096" % h["page_size"])
 
+    # 2026-11-06：第二个令牌 `sbprobe=N`（utexi R7 probe-mode）。
+    # 历史上是手敲 cmdline 前级得到 `p7-s26-pb3.img`，无脚本产出 ⇒ 本轮补齐（见 scripts/uefi-r21-p7-ladder.sh）。
     token = ("sbstop=%d " % stage).encode()
+    if probe is not None:
+        token += ("sbprobe=%d " % probe).encode()
     if len(token) > CMDLINE_LEN:
         fail("token too long (%d > %d)" % (len(token), CMDLINE_LEN))
 
@@ -127,6 +133,8 @@ def do_patch(src, stage, dst):
 def main():
     ap = argparse.ArgumentParser(add_help=True)
     ap.add_argument("--check", metavar="IMG", help="只校验镜像头并打印 cmdline")
+    ap.add_argument("--probe", type=int, metavar="N",
+                    help="紧跟在 sbstop 后写第二个令牌 `sbprobe=N`（R7 probe-mode；3 = 只记标记不写屏）")
     ap.add_argument("src", nargs="?")
     ap.add_argument("stage", nargs="?", type=int)
     ap.add_argument("dst", nargs="?")
@@ -136,7 +144,7 @@ def main():
         return
     if not (a.src and a.stage is not None and a.dst):
         ap.error("需要 <src.img> <stage> <dst.img>，或 --check <img>")
-    do_patch(a.src, a.stage, a.dst)
+    do_patch(a.src, a.stage, a.dst, a.probe)
 
 
 if __name__ == "__main__":

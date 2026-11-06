@@ -158,11 +158,12 @@
   **首要嫌疑 = `MarkPtnActive()`**（槽位属性写回，与 `PITFALLS #484` 同片区域），是唯一未被探针覆盖的大调用。
   另：`sbstop=7`（跳内核前，mode 3）也崩，与上表自洽。
 - **下一步**：① 加探针 35（`MarkPtnActive()` 之后）单发定案；再决定是否单独判别 `FbConFlush()` 的整块 cache 维护。
-  ② **补可复现性欠账**：`uefi-preamble7-r1.img` 与 `p7-m3-*`（含保留的 `stop27/stop34`、`p7-s26-pb3`）**没有任何脚本产出**
-  ⇒ 当前活线全部基线镜像事实上不可再生；`p2–p6/r21/fb/pre/vs` 各家族可由 `scripts/uefi-r21-sbstop-ladder.sh --mkimg-only` 重造。
-  要新写 `uefi-r21-p7-ladder.sh`（脚本名，待新建）（或给 `uefi-build-variant.sh` 加 `--preamble7 --stages …`），
-  判据 = 空 `out/r21-sbstop` 下重建 4 件并与 `reports/artifacts/uefi-r21-sbstop-trim-20261106/KEPT.sha256` 逐字节一致；
-  做完才可删 `out/r21-sbstop` 其余 72 件（4.6 G，清单与指纹见 `reports/out-uefi-trim-20261106.md` §2）。
+  ② ~~补可复现性欠账~~ **✅ 2026-11-06 已完成**：`scripts/uefi-r21-p7-ladder.sh`（配方 `patches/uefi/p7-recipe.txt`，
+  35 个补丁按序）+ `uefi-sbstop-patch.py --probe N`（第二个令牌 `sbprobe=3`）⇒ `--verify` **rc=0**，
+  `uefi-preamble7-r1` 与 `p7-m3-stop{27,34}`、`p7-s26-pb3` 四件与在盘件 **sha256 逐字节相同**；
+  **构建段仍不逐字节可复现**（`PITFALLS #510`：`--rebuild` 只验关键字串，不比 sha）。
+  连带已执行清仓：`out/r21-sbstop` **4.8 G → 257 M**（72 件删前 sha 全对），`out/` 7.9 G → 3.1 G。
+  详见 `reports/patches-uefi-grading-20261106.md`、`patches/uefi/README.md`。
 - **正文/坑**：`reports/uefi-vsstop-and-fbconsole-20261106.md`；`PITFALLS #514/#515/#516`；
   会话记录 `sessions/2026-11-06-UEFI探针失效与帧缓冲写穿.md`；补丁 `patches/uefi/20261105R{2,4,5,6,7}-*/`。
 
