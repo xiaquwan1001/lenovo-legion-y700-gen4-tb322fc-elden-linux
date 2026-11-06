@@ -1,0 +1,37 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] CmdBoot: return to the host right after LoadImageAndAuth returns (no screen writes)
+
+2026-11-06R10 y700-elden：p16（`SbProgRaw('0'/'1'/'a')` + `FastbootFail("ret-after-lia")` + `goto out`，
+不进 `ExitMenuKeysDetection/FastbootOkay/FastbootUsbDeviceStop/BootLinux`）上机**仍然崩**：宿主只到
+`Booting`，`getvar product` 无应答（USB 端点已死）。
+
+⇒ 「崩在三个调用里」这条假设作废（`FastbootUsbDeviceStop()` 不是凶手），但 p16 同时带了屏显写
+（`SerialPortWrite` → `FbConPutCharWithFactor`），而**屏通道本身是待验的**（p14/p15 一个 `[K]` 字母都没出）。
+本补丁把这两个变量彻底分开：**完全不碰 `SerialPortWrite`/FrameBuffer/`FbConFlush`**，
+`LoadImageAndAuth()` 一返回到宿主可读的 `FAILED (remote: 'ret-after-lia')` 就 `goto out` 结束。
+
+判据：
+  * 宿主收到 `ret-after-lia` ⇒ 真启动路径下 LoadImageAndAuth 正常返回 ⇒ p16 的崩是**我们自己的屏显写**；
+    后续所有探针只能走 fastboot 响应（屏通道在本上下文不可用）。
+  * 宿主仍无回话 ⇒ 崩在 `LoadImageAndAuth()` 内部，与屏显无关；下一个嫌疑回到 AVB/槽位/USB 那一段
+    （`[V]`/`[O70]`/`[O08]` 之后、`usb_repeater_reset` 一带）。
+---
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -2942,6 +2942,16 @@
+     return;
+   }
+ 
++  // 2026-11-06R10 y700-elden: **单变量判据** —— 真启动路径（cmdline 无 sbstop=）下，
++  // LoadImageAndAuth 一旦返回就立刻用宿主可读的 fastboot 回话结束本发，**不做任何屏显写**。
++  // p16 在同一位置带了 SbProgRaw（不 flush），仍是不回话地崩 ⇒ 必须拆开「AVB 内部」 vs「我们的写」。
++  // 本发完全不碰 SerialPortWrite / FrameBuffer / FbConFlush，也不进
++  // ExitMenuKeysDetection / FastbootOkay / FastbootUsbDeviceStop / BootLinux。
++  //   · 宿主收到 `FAILED (remote: 'ret-after-lia')` ⇒ 真启动路径下 LoadImageAndAuth 正常返回；
++  //   · 宿主无回话 ⇒ 崩在 LoadImageAndAuth 内部（与屏显无关）。
++  FastbootFail ("ret-after-lia");
++  goto out;
++
+   /* Exit keys' detection firstly */
+   ExitMenuKeysDetection ();
+ 

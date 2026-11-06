@@ -199,3 +199,20 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261106R9-gateout/payload-v2aligned*
 
 /reports/artifacts/uefi-20261106R13-ebnbanners/payload-v2aligned*
+
+# ---- 2026-11-06 深夜 UEFI 世代归档（R14..R24，11 个变体 ≈270 MB）----
+# 只入库「可复现身份三件」= BootShim.bin + manifest.txt + SHA256SUMS；
+# FD / kernel.bin / payload / build.log 均可由 p14…p24-recipe.txt + scripts/uefi-r21-p7-ladder.sh --rebuild 重建。
+# （gitignore 不支持 {a,b} 花括号，必须逐类写 glob）
+/reports/artifacts/uefi-20261106R1[4-9]-*/*.fd
+/reports/artifacts/uefi-20261106R1[4-9]-*/*.gz
+/reports/artifacts/uefi-20261106R1[4-9]-*/*.img
+/reports/artifacts/uefi-20261106R1[4-9]-*/*payload*
+/reports/artifacts/uefi-20261106R1[4-9]-*/kernel.bin
+/reports/artifacts/uefi-20261106R1[4-9]-*/build.log
+/reports/artifacts/uefi-20261106R2[0-4]-*/*.fd
+/reports/artifacts/uefi-20261106R2[0-4]-*/*.gz
+/reports/artifacts/uefi-20261106R2[0-4]-*/*.img
+/reports/artifacts/uefi-20261106R2[0-4]-*/*payload*
+/reports/artifacts/uefi-20261106R2[0-4]-*/kernel.bin
+/reports/artifacts/uefi-20261106R2[0-4]-*/build.log

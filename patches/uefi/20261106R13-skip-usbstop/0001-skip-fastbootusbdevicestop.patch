@@ -1,0 +1,40 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] CmdBoot: skip FastbootUsbDeviceStop() on the real-boot path (candidate fix)
+
+2026-11-06R13 y700-elden：R12 修好「探针写屏」后，真件（`out/boot-elden-vk172.img`）已经能
+越过 `LoadImageAndAuth` / `ExitMenuKeysDetection` / `FastbootOkay`（宿主收到 `Booting OKAY [0.001s]`），
+但随后仍崩在 `0xCFE98C4C`（与 p12 的 `0xCFE98C38` 同一处）。
+
+`Booting OKAY` 之后真启动分支依次做三件事：
+
+    FastbootUsbDeviceStop ();   // 释放 fastboot Tx/Rx 传输缓冲（两次函数指针调用）
+    ResetBootDevImage ();       // BootDevImage = FALSE（一条 store，无风险）
+    BootLinux (&Info);
+
+本补丁**跳过第一件**（注释掉调用）：它是 OKAY 之后第一个未被排除的动作，而它一执行 USB 端点
+就再无 fastboot 通路，正好对应「宿主此后既收不到回话、也拿不到任何后续标记」。
+
+判据：真件 + 本补丁
+  * 起 Linux（设备侧 `usb0`/ssh 在 60 s 内可达）⇒ 凶手即 `FastbootUsbDeviceStop()`；
+  * 仍崩同一处 ⇒ 凶手在 `ResetBootDevImage`/`BootLinux` 前导（下一步用强制单行屏显切）。
+
+代价：泄漏两个传输缓冲（ExitBootServices 后由内核接管 USB），对 RAM 启动无副作用。
+---
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -2955,7 +2955,14 @@
+   }
+ 
+   FastbootOkay ("");
+-  FastbootUsbDeviceStop ();
++  // 2026-11-06R13 y700-elden: **候选修复** —— 真启动分支跳过 `FastbootUsbDeviceStop()`。
++  // 它只做两件事：释放 fastboot 的 Tx/Rx 传输缓冲（`Fbd.UsbDeviceProtocol->FreeTransferBuffer` ×2）。
++  // 释放后 USB 端点不再有任何 fastboot 通路，而 `Booting OKAY` 之后我们仍然崩（0xCFE98C4C）
++  // ⇒ 这两次函数指针调用是 OKAY 之后第一个未被排除的动作。跳过它最多泄漏两个缓冲（后续
++  // ExitBootServices + 内核接管 USB），对 RAM 启动无副作用。
++  // 判据：真件 + 本补丁能起 Linux（usb0/ssh 在 60 s 内可达）⇒ 凶手就是它；
++  //       仍崩在同一处 ⇒ 凶手在 ResetBootDevImage/BootLinux 前导。
++  // FastbootUsbDeviceStop ();
+   ResetBootDevImage ();
+   BootLinux (&Info);
+ 

@@ -1,0 +1,42 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] BootLinux: halt right after ExitBootServices with an overwrite banner (decisive, screen-only)
+
+2026-11-06R15 y700-elden：真载荷上已证 `SB_STOP(1..6)` 与 `SB_STOP(40)` 全部回话，
+窗口只剩 `ShutdownUefiBootServices()` → `PreparePlatformHardware()` → `LinuxKernel()`。
+EB 之后 USB 设备栈被拆，宿主结构性收不到任何回话；而异常 dump 会把屏刷成流，
+之前 `\r[K] B/C/D` 那种"同一行覆盖、靠 dump flush"的取证明明有信息也读不出来。
+
+本补丁改成**强制停机**：EB 返回后立刻打一行覆盖式 `[K] EB-OK st=<status>`，再 `CpuDeadLoop()`。
+
+  * 不复用 `'\n'`：换行会触发整屏 ~23 MB 的 `FbConFlush()`，而 `Display Reserved` 的
+    内存类型是 `WRITE_THROUGH_XN`（`PlatformMemoryMapLib.c:35`）⇒ 像素写直达内存，无需 cache 维护；
+  * `CpuDeadLoop()` 让设备停住，屏上那一行**不会被 dump 冲掉**，可由人眼/相机稳定判读。
+
+判据（真件、cmdline 原样）：
+  * 屏上稳定出现 `[K] EB-OK st=0`（或非 0 的 status）⇒ **EB 正常返回**，
+    崩溃在其后的 `PreparePlatformHardware`/跳转准备，下一刀把它挪到 PPH 之后；
+  * 屏上不出现、仍直接递归 dump ⇒ **死在 `ShutdownUefiBootServices()` 内部**（EB 本身）。
+
+代价：本件是"取证件"，会停住不回，必须物理断电才能继续。
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1166,6 +1166,19 @@
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/
+   Status = ShutdownUefiBootServices ();
++  // 2026-11-06R15 y700-elden: **强制停机取证**。EB 一执行 USB 设备栈就拆 ⇒ 宿主再也收不到 fastboot
++  // 响应（PITFALLS #523），而异常 dump 会把屏刷成流 ⇒ 之前那种"同一行覆盖、靠 dump flush"的标记
++  // 有信息也读不出来。这里打一行覆盖式 `[K] EB-OK st=<status>` 后 CpuDeadLoop()，设备停住不动。
++  // 不写 `'\n'`：换行会触发整屏 ~23 MB FbConFlush；而 Display Reserved 是 WRITE_THROUGH_XN
++  // （PlatformMemoryMapLib.c:35）⇒ 像素写直达内存即已可见，无需 cache 维护。
++  // 判据：屏上稳定出现 `[K] EB-OK st=…` ⇒ EB 正常返回；不出现而直接递归 dump ⇒ 死在 EB 内部。
++  {
++    CHAR8  SbEb[48];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbEb, sizeof (SbEb), "\r[K] EB-OK st=%x      ", Status);
++    SerialPortWrite ((UINT8 *)SbEb, SbLen);
++  }
++  CpuDeadLoop ();
+   SB_STOP (41, "41");   // 2026-11-06R3: ExitBootServices 之后（回话即证明「EB 后仍能回宿主」）
+   if (EFI_ERROR (Status)) {
+     DEBUG ((EFI_D_ERROR,

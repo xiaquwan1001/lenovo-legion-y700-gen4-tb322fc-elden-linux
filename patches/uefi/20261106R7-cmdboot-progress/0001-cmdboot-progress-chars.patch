@@ -1,0 +1,128 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] CmdBoot/BootLinux: single-line progress characters on the real-boot path
+
+2026-11-06R7 y700-elden: 真启动件（p12）在跳内核之前触发 `Synchronous Exception`
+（异常 PC 0xCFE98C38），而 `[K] JUMP-BANNER` 没有出现 ⇒ 死点在
+`LoadImageAndAuth()` 返回之后、`BootLinux()` 之前的三个调用里：
+
+    LoadImageAndAuth → ExitMenuKeysDetection → FastbootOkay("")
+      → FastbootUsbDeviceStop() → ResetBootDevImage() → BootLinux()
+
+诊断模式（cmdline 带 `sbstop=`）**不是**这条路径（PITFALLS #524：`FastbootOkay`/
+`FastbootUsbDeviceStop`/`ResetBootDevImage` 只在真启动分支），所以不能拿诊断档的回话外推；
+而 EB 之后宿主侧收不到任何 fastboot 响应（PITFALLS #523）⇒ 只能用屏。
+
+屏预算（PITFALLS #492/#515）：splash 只前 ~448 KiB 可写；`FbConPutCharWithFactor()` 单字符
+只写 (FONT_WIDTH+1)×FONT_HEIGHT×scale² 像素（scale 1 ≈ 288 B），**只有 '\n' 才触发
+`FbConFlush()` 的整屏 ~23 MB WriteBackInvalidateDataCacheRange 与 y 前进**。因此本补丁把
+进度字符全部打在同一行、不带换行（总写入 ≈ 2 KiB），一个字符一个阶段：
+
+    a = LoadImageAndAuth 返回成功        b = ExitMenuKeysDetection 返回
+    c = FastbootOkay("") 返回            d = FastbootUsbDeviceStop 返回
+    e = ResetBootDevImage 返回           f = 已进入 BootLinux
+    g = BootLinux 前导通过、即将 ExitBootServices
+
+判据：屏上 `[K] ` 之后**最后出现的字母** = 最后通过的那个调用；再往后才是 p12 的
+`[K] JUMP-BANNER`（= 真走到跳内核）。字符不受 `SbProbeMode` 控制（真启动件里它恒 3）。
+
+变体 B（若反而在某个字符处崩）：去掉 `SbProg()` 里的 `FbConFlush()`，靠异常 dump 自身的
+换行 flush 落地，即可分辨「是 flush 崩还是下一个调用崩」。
+---
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -88,6 +88,7 @@
+ #include <Library/PartitionTableUpdate.h>
+ #include <Library/PcdLib.h>
+ #include <Library/PrintLib.h>
++#include <Library/SerialPortLib.h>  // 2026-11-06R7 y700-elden
+ #include <Library/ThreadStack.h>
+ #include <Library/UefiApplicationEntryPoint.h>
+ #include <Library/UefiBootServicesTableLib.h>
+@@ -2817,6 +2818,31 @@
+   FastbootFail ("GetVar Variable Not found");
+ }
+ 
++// 2026-11-06R7 y700-elden: 真启动路径的**单行进度字符**（不受 SbProbeMode 控制）。
++//
++// 动机：真启动件在跳内核之前触发 `Synchronous Exception`，而 `[K] JUMP-BANNER` 没出现 ⇒
++// 死点在 `LoadImageAndAuth` 返回之后、`BootLinux()` 之前的三个调用里。诊断模式与真启动
++// 是两条路径（PITFALLS #524），不能拿诊断档的回话来外推，只能用屏。
++//
++// 屏预算（PITFALLS #492/#515）：splash 只前 ~448 KiB 可写；FrameBufferSerialPortLib 的
++// `FbConPutCharWithFactor()` 单字符只写 (FONT_WIDTH+1)×FONT_HEIGHT×scale² 像素（scale 1 ≈ 288 B），
++// 而**只有 '\n' 才触发 `FbConFlush()` 的整屏 ~23 MB WriteBackInvalidateDataCacheRange 与 y 前进**。
++// ⇒ 全部字符打在同一行、不带换行，总写入 ≈ 2 KiB。
++//
++// 判据：屏上 `[K] ` 之后**最后出现的字母** = 最后通过的那个调用
++//   a=LoadImageAndAuth 返回  b=ExitMenuKeysDetection  c=FastbootOkay
++//   d=FastbootUsbDeviceStop  e=ResetBootDevImage   f=进 BootLinux   g=pre-EB
++// 每个字符后显式 flush（`FbConFlush` 非 static，见 FrameBufferSerialPortLib.c），
++// 保证字符不留在 cache 里；若反而在某个字符处崩，去掉 flush 即可分辨（变体 B）。
++extern void FbConFlush (VOID);
++
++STATIC VOID
++SbProg (IN CONST CHAR8 *Tag)
++{
++  SerialPortWrite ((UINT8 *)Tag, AsciiStrLen (Tag));
++  FbConFlush ();
++}
++
+ #ifdef ENABLE_BOOT_CMD
+ STATIC VOID
+ CmdBoot (CONST CHAR8 *Arg, VOID *Data, UINT32 Size)
+@@ -2942,8 +2968,11 @@
+     return;
+   }
+ 
++  SbProg ("[K] a");   // 2026-11-06R7: LoadImageAndAuth 返回成功
++
+   /* Exit keys' detection firstly */
+   ExitMenuKeysDetection ();
++  SbProg ("b");   // 2026-11-06R7: ExitMenuKeysDetection 返回
+ 
+   // 2026-11-04R21 y700-elden: 同 CmdContinue 的诊断模式；这里必须**当场**从镜像头解析
+   // sbstop（BootLinux 内的解析还没跑，全局 SbStopStage 此刻仍是 -1）。
+@@ -2955,8 +2984,11 @@
+   }
+ 
+   FastbootOkay ("");
++  SbProg ("c");   // 2026-11-06R7: FastbootOkay（USB 回 OKAY）返回
+   FastbootUsbDeviceStop ();
++  SbProg ("d");   // 2026-11-06R7: FastbootUsbDeviceStop 返回（两次 FreeTransferBuffer 都成功）
+   ResetBootDevImage ();
++  SbProg ("e");   // 2026-11-06R7: ResetBootDevImage 返回
+   BootLinux (&Info);
+ 
+ out:
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -953,9 +953,21 @@
+   return EFI_SUCCESS;
+ }
+ 
++// 2026-11-06R7 y700-elden: 真启动路径的单行进度字符（与 FastbootCmds.c 的同名 static 各一份，
++// 两处必须字字一致：屏上看到的是同一条 "[K] abcdefg"）。前缀 `[K] ` 由 CmdBoot 在 'a' 处打出。
++extern void FbConFlush (VOID);
++
++STATIC VOID
++SbProg (IN CONST CHAR8 *Tag)
++{
++  SerialPortWrite ((UINT8 *)Tag, AsciiStrLen (Tag));
++  FbConFlush ();
++}
++
+ EFI_STATUS
+ BootLinux (BootInfo *Info)
+ {
++  SbProg ("f");   // 2026-11-06R7: 已进入 BootLinux（CmdBoot 的 'e' 之后）
+ 
+   EFI_STATUS Status;
+   CHAR16 *PartitionName = NULL;
+@@ -1160,6 +1172,7 @@
+       IsModeSwitch = TRUE;
+   }
+ 
++  SbProg ("g");   // 2026-11-06R7: BootLinux 前导全部通过，即将 ExitBootServices
+   SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
+ 
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",

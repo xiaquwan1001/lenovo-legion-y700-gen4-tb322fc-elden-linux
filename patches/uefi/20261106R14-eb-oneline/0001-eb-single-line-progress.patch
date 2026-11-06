@@ -1,0 +1,54 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] BootLinux: single-line overwrite markers around EB/PPH/jump (screen-only channel)
+
+2026-11-06R14 y700-elden：R12 修好探针写屏后，真件在真载荷上已验证到 `SB_STOP(40)`（pre-EB）回话；
+而 `40` 到 `41` 之间只有 `ShutdownUefiBootServices()`、之后是 `PreparePlatformHardware()` 与
+`LinuxKernel()` —— EB 一执行 USB 设备栈就被拆，宿主再也收不到任何 fastboot 响应
+（`PITFALLS #523`），所以这段**只能用屏**。
+
+屏预算（`PITFALLS #492/#515`）：splash 只前 ~448 KiB 可写；scale 3 一行 ≈ 274 KiB ⇒ 只装 ~1.6 行。
+因此本补丁用**同一行覆盖写**（`\r` 归零 x、不换行、不推进 y），三个标记共用同一行：
+
+    B  `ShutdownUefiBootServices()` 之前（x 归零后写 "B"，随后 EB）
+    C  `PreparePlatformHardware()` 之后
+    D  进 `LinuxKernel()` 之前（取代 R5 的 JUMP-BANNER 整行）
+
+并且**不显式调用 `FbConFlush()`**：像素先落内存，等异常 dump（或任何后续换行输出）自己 flush 时
+一起刷出 ⇒ 屏上最终只看到**最后到达的那个字母**，这一次写不会引入 23 MB 的 cache 维护。
+
+判据（真件、cmdline 原样、无令牌）：
+  * 屏上停 `B` ⇒ 卡在 `ShutdownUefiBootServices()`（EB）内部；
+  * 屏上停 `C` ⇒ EB 通过，卡在 `BootStatsSetTimeStamp`/跳转准备；
+  * 屏上出现 `D:JUMP` 且之后仍是递归 dump ⇒ 已经跳到 `LinuxKernel()`，问题在内核入口约定。
+---
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1165,6 +1165,10 @@
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/
++  // 2026-11-06R14 y700-elden: EB 之后只能看屏。**同一行覆盖写**（`\r` 不换行 ⇒ 只占 1 行，
++  // scale 3 ≈274 KiB < splash 前 ~448 KiB 可写区），且**不显式 flush** —— 像素落在内存里，
++  // 由异常 dump 自己的换行触发 flush 时一起刷出。屏上最终只会看到**最后到达的那个字母**。
++  SerialPortWrite ((UINT8 *)"\r[K] B", 6);
+   Status = ShutdownUefiBootServices ();
+   SB_STOP (41, "41");   // 2026-11-06R3: ExitBootServices 之后（回话即证明「EB 后仍能回宿主」）
+   if (EFI_ERROR (Status)) {
+@@ -1175,6 +1179,7 @@
+   }
+ 
+   PreparePlatformHardware ();
++  SerialPortWrite ((UINT8 *)"\r[K] C", 6);   // R14: EB 正常返回 + PreparePlatformHardware 完成
+   SB_STOP (42, "42");   // 2026-11-06R3: PreparePlatformHardware 之后、跳内核之前
+ 
+   BootStatsSetTimeStamp (BS_KERNEL_ENTRY);
+@@ -1223,8 +1228,7 @@
+   // 只能用屏上这一行判。预算：splash 区只前 ~448 KiB 可安全写（PITFALLS #492），
+   // SCALE 3 一行 = 274 176 B ⇒ mode 3 全程不写屏时，打出这一行仍在预算内。
+   {
+-    STATIC CONST CHAR8  SbBanner[] = "[K] JUMP-BANNER\n\r";
+-    SerialPortWrite ((UINT8 *)SbBanner, AsciiStrLen (SbBanner));
++    SerialPortWrite ((UINT8 *)"\r[K] D:JUMP", 11);   // R14: 已到 LinuxKernel 之前
+   }
+   LinuxKernel ((UINT64)BootParamlistPtr.DeviceTreeLoadAddr, 0, 0, 0);
+ 

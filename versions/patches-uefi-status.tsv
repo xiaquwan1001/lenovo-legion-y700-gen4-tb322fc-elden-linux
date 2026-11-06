@@ -52,3 +52,13 @@ dir	patches	in_recipe	status	reason	evidence
 20261105R5-probemode	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
 20261105R6-probe-orthogonal	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
 20261105R7-probe-markonly	1	1	ACTIVE	在 p7 配方里（`patches/uefi/p7-recipe.txt`，35 项累积栈，= 当前活线）	scripts/uefi-r21-p7-ladder.sh
+20261106R7-cmdboot-progress	1	1	ACTIVE	p14 世代：真启动路径单行进度字符 a–e/p8 f,g（后由 R8/R9 取代；历史判据件）	patches/uefi/p14-recipe.txt
+20261106R8-progress-accum	1	1	ACTIVE	p15 世代：进度串累积、每步重打一行（scale 3）	patches/uefi/p15-recipe.txt
+20261106R9-dual-channel	1	1	ACTIVE	p16 世代：SbProgRaw 不 flush + FastbootFail(ret-after-lia) 早退，双通道判据	patches/uefi/p16-recipe.txt
+20261106R10-ret-after-lia	1	1	ACTIVE	p17 世代：零屏显写，LIA 返回即回话（单变量：AVB vs 屏显）	patches/uefi/p17-recipe.txt
+20261106R11-lia-tail	1	1	ACTIVE	p18 世代：LIA 尾部 VS_STOP 43..45（43 不可达：NO_AVB 路径提前 return）	patches/uefi/p18-recipe.txt
+20261106R12-probemode-guard	1	1	ACTIVE	★关键修复：SbProbeMode 只有带 sbstop= 令牌才改；修好真启动被自己探针写屏搞崩	patches/uefi/p19-recipe.txt；PITFALLS #526
+20261106R13-skip-usbstop	1	1	RETIRED	p21：跳过 FastbootUsbDeviceStop()——被否证（仍崩同一 PC）	reports/artifacts/real-vs-ladder-20261106T21*.tsv
+20261106R14-eb-oneline	1	1	RETIRED	p22：EB 后同行 B/C/D 覆盖标记——被异常 dump 冲掉、读不出	patches/uefi/p22-recipe.txt
+20261106R15-eb-halt	1	1	ACTIVE	p23：EB 后打 [K] EB-OK st= 再 CpuDeadLoop 停机取证（仍崩 ⇒ 不在 EB 内）	patches/uefi/p23-recipe.txt
+20261106R16-no-eb	1	1	ACTIVE	p24：完全跳过 ExitBootServices 只停机——仍崩 0xCFE98C84 ⇒ 崩点在第三方二进制驱动	patches/uefi/p24-recipe.txt

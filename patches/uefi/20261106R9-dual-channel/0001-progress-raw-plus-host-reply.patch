@@ -1,0 +1,85 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] CmdBoot: flush-free progress markers + host-visible reply before ExitMenuKeysDetection
+
+2026-11-06R9 y700-elden：p14/p15 两发上机（scale 1 / scale 3）屏上**一个 `[K]` 字母都没有**，
+而这两版的 `SbProg()` 都带 `FbConFlush()`（整屏 ~23 MB `WriteBackInvalidateDataCacheRange`）。
+同时本轮确认 `[L] LoadImage=Success` 是 **BdsDxe**（`MU_BASECORE/MdeModulePkg/Universal/BdsDxe/BdsEntry.c:758`）
+在 `gBS->StartImage(LinuxLoader)` **之前**打的 ⇒ 真启动路径上 `[L]` 之后再无我们的输出，
+说明崩溃发生在 `LoadImageAndAuth()` **内部、它返回之前**，a..g 全在崩点之后。
+
+本补丁把两件事拆开判：
+
+  1. `SbProgRaw()` —— 只写像素、**不换行、不 flush**（变体 B）：排除「我们的 cache 维护本身是凶手」；
+     标记 `'0'`=CmdBoot 入口、`'1'`=进 LoadImageAndAuth 之前、`'a'`=它返回之后。
+  2. 到 `'a'` 就 **`FastbootFail("ret-after-lia")` + `goto out`**，不进
+     `ExitMenuKeysDetection/FastbootOkay/FastbootUsbDeviceStop/BootLinux`
+     ⇒ 宿主可读（与 `sbstop=14` 同一条通道，那里已实测能回话），本发**不会崩、不需断电**。
+
+判据：
+  * 宿主收到 `FAILED (remote: 'ret-after-lia')` ⇒ 真启动路径下 LoadImageAndAuth 正常返回
+    ⇒ 崩溃在之后的三个调用里（下一个嫌疑仍 = `FastbootUsbDeviceStop()`）。
+  * 宿主无回话 ⇒ 崩在 LoadImageAndAuth 内部（`[V]`/`[O]` 那一段）。
+  * 屏上有 `[K] 01a` ⇒ 屏通道正常、且 flush 才是之前的隐形原因；
+    屏上没有而宿主有回话 ⇒ 屏通道在这个上下文不可用，后续一律用 fastboot 响应作判据。
+---
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -2856,6 +2856,26 @@
+   FbConFlush ();
+ }
+ 
++// 2026-11-06R9 y700-elden: 变体 B —— **不换行、不 flush** 的进度写。
++// 动机：p14/p15 两发上机都是「一个字母都没有」，而那两个版本的 SbProg 都带 `FbConFlush()`
++// （整屏 ~23 MB `WriteBackInvalidateDataCacheRange`）。该 cache 维护本身就在嫌疑清单里，
++// 所以这一发把「写像素」与「cache 维护」拆开：本函数只把累积串写进帧缓冲。
++// 若本发屏上能看到 `[K] 01` ⇒ 屏通道 + 补丁都在跑；若看不到而宿主收到回话
++// ⇒ 屏通道在这个上下文不可用，后续一律走 fastboot 响应。
++STATIC VOID
++SbProgRaw (IN CHAR8 C)
++{
++  UINTN  Len;
++
++  Len = AsciiStrLen (SbProgBuf);
++  if (Len + 1 < sizeof (SbProgBuf)) {
++    SbProgBuf[Len]     = C;
++    SbProgBuf[Len + 1] = '\0';
++  }
++
++  SerialPortWrite ((UINT8 *)SbProgBuf, AsciiStrLen (SbProgBuf));
++}
++
+ #ifdef ENABLE_BOOT_CMD
+ STATIC VOID
+ CmdBoot (CONST CHAR8 *Arg, VOID *Data, UINT32 Size)
+@@ -2870,6 +2890,8 @@
+   BOOLEAN MdtpActive = FALSE;
+   BootInfo Info = {0};
+ 
++  SbProgRaw ('0');   // 2026-11-06R9: 真启动入口标记（验证屏通道 + 补丁在位）
++
+   if (FixedPcdGetBool (EnableMdtpSupport)) {
+     Status = IsMdtpActive (&MdtpActive);
+ 
+@@ -2949,6 +2971,7 @@
+     return;
+   }
+ 
++  SbProgRaw ('1');   // 2026-11-06R9: 即将进 LoadImageAndAuth
+   Status = LoadImageAndAuth (&Info);
+   if (Status != EFI_SUCCESS) {
+     // 2026-11-05 y700-elden: LoadImageAndAuth 内的细二分停机点（VS_STOP）统一在这里回话。
+@@ -2981,7 +3004,13 @@
+     return;
+   }
+ 
+-  SbProg ('a');   // 2026-11-06R7: LoadImageAndAuth 返回成功
++  SbProgRaw ('a');   // 2026-11-06R9: LoadImageAndAuth 返回成功（变体 B：不 flush）
++  // 2026-11-06R9: 本发**到此为止** —— 不进 ExitMenuKeysDetection/FastbootOkay/
++  // FastbootUsbDeviceStop/BootLinux，改用宿主可读的 fastboot 回话作判据（与 sbstop=14
++  // 同一条通道，那里已实测能回话）。宿主收到 `FAILED (remote: 'ret-after-lia')`
++  // ⇒ 真启动路径下 LoadImageAndAuth 正常返回 ⇒ 崩溃在之后的三个调用里。
++  FastbootFail ("ret-after-lia");
++  goto out;
+ 
+   /* Exit keys' detection firstly */
+   ExitMenuKeysDetection ();

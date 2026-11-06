@@ -1,0 +1,46 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] VerifiedBoot: keep SbProbeMode silent unless a sbstop= token is present
+
+2026-11-06R12 y700-elden：**真启动崩溃的真因**（本轮单变量定案）。
+
+`LoadImageAndAuth()` 入口（R5 引入）：
+
+    SbStopStage = SbParseStopStage (cmdline);
+    SbProbeMode = ((SbStopStage >= 90) && (SbStopStage <= 92)) ? (SbStopStage - 90) : 0;
+
+第二行**无条件**把 `SbProbeMode` 重置为 0（完整模式），把 R4 特意设的默认值 3（沉默）覆盖掉。
+后果：真启动件（cmdline 不带 `sbstop=`/`sbprobe=`）里十几次 `SbVProbe` 全部直写帧缓冲
+（`[V] ms/avb/na/hdr/chk/pld/vbi/dt/wr/slot0` …），scale 3 下一行 ≈ 274 KiB，十几行远超
+splash 前 ~448 KiB 可写区 ⇒ 帧缓冲写穿（**PITFALLS #514/#515 已定案的崩溃机制**）。
+
+上机证据（本轮，全部零写盘，同一 p18 件、同一 82 MB 真内核载荷）：
+
+  * cmdline 带 `sbstop=N sbprobe=3`（⇒ 模式 3，静默）：VS_STOP 16/20/24/26/27/28/34/35/36/37/38
+    **全部回话**，`vs43` 甚至走到 `ret-after-lia`（LIA 正常返回）—— 一次都没崩。
+  * cmdline 用真件原文（⇒ 模式被重置为 0，狂写屏）：
+    `boot-elden-vk172.img`、`console=tty0` 变体、`ret-after-lia` 单变量件 —— **全部崩**（`0xCFE98C38`）。
+
+⇒ 差别只有「有没有令牌」＝「探针写不写屏」。修法：**只有带令牌时才改模式**。
+
+判据（重建后）：真件（cmdline 原样）应当不再崩，至少能回 `ret-after-lia`；随后去掉该早退即可
+继续把真启动推到 `[K] a..g` / `JUMP-BANNER` / `LinuxKernel()`。
+---
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -1842,7 +1842,15 @@
+     SbStopStage = -1;
+   }
+   // 2026-11-05R5: sbstop=9X ⇒ 探针模式 X（90=完整 91=只串口 92=静默）
+-  SbProbeMode = ((SbStopStage >= 90) && (SbStopStage <= 92)) ? (SbStopStage - 90) : 0;
++  //
++  // 2026-11-06R12 y700-elden: **只有带 sbstop= 令牌时才改模式**。
++  // 原写法无条件把 SbProbeMode 重置为 0 ⇒ 真启动件（cmdline 无令牌）里十几次 SbVProbe 全部
++  // 直写帧缓冲（scale 3 每行 274 KiB，远超 splash 前 ~448 KiB 可写区），正是 11-06 定案的
++  // 「帧缓冲写穿」崩溃机制（PITFALLS #514/#515）。R4 把默认值改成 3 就是为真启动沉默，
++  // 却被本行在运行期覆盖掉 —— 这才是「真件必崩、带 sbprobe=3 的阶梯件不崩」的唯一差别。
++  if (SbStopStage >= 0) {
++    SbProbeMode = ((SbStopStage >= 90) && (SbStopStage <= 92)) ? (SbStopStage - 90) : 0;
++  }
+   // 2026-11-05R6: 与停机点**正交**的探针开关 `sbprobe=M`（0=完整 1=只串口 2=静默）。
+   // R5 的 sbstop=9X 有个设计缺陷：关探针的同时也取消了停机点 ⇒ 流程会继续进 BootLinux，
+   // 那里还有自己的 SbBootProbe 与既有的 ShutdownUefiBootServices 崩溃 ⇒ 崩了无法归因。

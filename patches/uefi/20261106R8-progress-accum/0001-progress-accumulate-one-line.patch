@@ -1,0 +1,124 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] progress markers: accumulate and re-print the whole line each step
+
+2026-11-06R8 y700-elden: p14 上机实测（scale 1）暴露两个问题：
+  ① scale 1 的字太小，屏上读不出字母；
+  ② USB redriver/I2C 的噪音（`usb_redriver_reset` / `ERROR:NAK` / `Dev_Common_Speed`）
+     会把我们的字符插花、甚至滚走 —— 单行「追加一个字符」不保证可判读。
+
+改法：进度串放进一个共享缓冲 `SbProgBuf[24]`（定义在 BootLinux.c，FastbootCmds.c extern），
+每个标记**把整串重打一行**（`\n\r[K] <累积串>`，不带行尾换行）。代价 = 每标记
+(5 + 已打字母数) 个字符；scale 3 下单字符 ≈ 2.6 KiB ⇒ 七个标记合计 ≈ 150 KiB，
+仍在 splash 可写预算内（PITFALLS #492/#515），而「最后一行」永远显示完整进度。
+
+判据不变：屏上 `[K] ` 之后**最后出现的字母** = 最后通过的那个调用
+  a=LoadImageAndAuth 返回  b=ExitMenuKeysDetection  c=FastbootOkay
+  d=FastbootUsbDeviceStop  e=ResetBootDevImage   f=进 BootLinux   g=pre-EB
+---
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -2834,12 +2834,25 @@
+ //   d=FastbootUsbDeviceStop  e=ResetBootDevImage   f=进 BootLinux   g=pre-EB
+ // 每个字符后显式 flush（`FbConFlush` 非 static，见 FrameBufferSerialPortLib.c），
+ // 保证字符不留在 cache 里；若反而在某个字符处崩，去掉 flush 即可分辨（变体 B）。
+-extern void FbConFlush (VOID);
++extern void  FbConFlush (VOID);
++extern CHAR8 SbProgBuf[24];
+ 
+ STATIC VOID
+-SbProg (IN CONST CHAR8 *Tag)
++SbProg (IN CHAR8 C)
+ {
+-  SerialPortWrite ((UINT8 *)Tag, AsciiStrLen (Tag));
++  UINTN  Len;
++
++  Len = AsciiStrLen (SbProgBuf);
++  if (Len + 1 < sizeof (SbProgBuf)) {
++    SbProgBuf[Len]     = C;
++    SbProgBuf[Len + 1] = '\0';
++  }
++
++  // 2026-11-06R8: 每次都把「累积串」重打一行（不带行尾换行）。
++  // 动机：上机实测（p14，scale 1）字符太小读不出，且 USB redriver/I2C 的噪音会把我们的字符插花；
++  // 重打保证「最后一行」总是完整进度串。代价 = 每标记 (5+已打字母数) 个字符。
++  SerialPortWrite ((UINT8 *)"\n\r[K] ", 6);
++  SerialPortWrite ((UINT8 *)SbProgBuf, AsciiStrLen (SbProgBuf));
+   FbConFlush ();
+ }
+ 
+@@ -2968,11 +2981,11 @@
+     return;
+   }
+ 
+-  SbProg ("[K] a");   // 2026-11-06R7: LoadImageAndAuth 返回成功
++  SbProg ('a');   // 2026-11-06R7: LoadImageAndAuth 返回成功
+ 
+   /* Exit keys' detection firstly */
+   ExitMenuKeysDetection ();
+-  SbProg ("b");   // 2026-11-06R7: ExitMenuKeysDetection 返回
++  SbProg ('b');   // 2026-11-06R7: ExitMenuKeysDetection 返回
+ 
+   // 2026-11-04R21 y700-elden: 同 CmdContinue 的诊断模式；这里必须**当场**从镜像头解析
+   // sbstop（BootLinux 内的解析还没跑，全局 SbStopStage 此刻仍是 -1）。
+@@ -2984,11 +2997,11 @@
+   }
+ 
+   FastbootOkay ("");
+-  SbProg ("c");   // 2026-11-06R7: FastbootOkay（USB 回 OKAY）返回
++  SbProg ('c');   // 2026-11-06R7: FastbootOkay（USB 回 OKAY）返回
+   FastbootUsbDeviceStop ();
+-  SbProg ("d");   // 2026-11-06R7: FastbootUsbDeviceStop 返回（两次 FreeTransferBuffer 都成功）
++  SbProg ('d');   // 2026-11-06R7: FastbootUsbDeviceStop 返回（两次 FreeTransferBuffer 都成功）
+   ResetBootDevImage ();
+-  SbProg ("e");   // 2026-11-06R7: ResetBootDevImage 返回
++  SbProg ('e');   // 2026-11-06R7: ResetBootDevImage 返回
+   BootLinux (&Info);
+ 
+ out:
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -955,19 +955,32 @@
+ 
+ // 2026-11-06R7 y700-elden: 真启动路径的单行进度字符（与 FastbootCmds.c 的同名 static 各一份，
+ // 两处必须字字一致：屏上看到的是同一条 "[K] abcdefg"）。前缀 `[K] ` 由 CmdBoot 在 'a' 处打出。
++// 2026-11-06R8: 进度串的**唯一存储**（定义在这里，FastbootCmds.c 用 extern 引用）。
++// 上机实测（p14）字符太小且会被 USB 噪音插花 ⇒ 改成「累积串每次重打一行」。
++CHAR8  SbProgBuf[24] = { '\0' };
++
+ extern void FbConFlush (VOID);
+ 
+ STATIC VOID
+-SbProg (IN CONST CHAR8 *Tag)
++SbProg (IN CHAR8 C)
+ {
+-  SerialPortWrite ((UINT8 *)Tag, AsciiStrLen (Tag));
++  UINTN  Len;
++
++  Len = AsciiStrLen (SbProgBuf);
++  if (Len + 1 < sizeof (SbProgBuf)) {
++    SbProgBuf[Len]     = C;
++    SbProgBuf[Len + 1] = '\0';
++  }
++
++  SerialPortWrite ((UINT8 *)"\n\r[K] ", 6);
++  SerialPortWrite ((UINT8 *)SbProgBuf, AsciiStrLen (SbProgBuf));
+   FbConFlush ();
+ }
+ 
+ EFI_STATUS
+ BootLinux (BootInfo *Info)
+ {
+-  SbProg ("f");   // 2026-11-06R7: 已进入 BootLinux（CmdBoot 的 'e' 之后）
++  SbProg ('f');   // 2026-11-06R7: 已进入 BootLinux（CmdBoot 的 'e' 之后）
+ 
+   EFI_STATUS Status;
+   CHAR16 *PartitionName = NULL;
+@@ -1172,7 +1185,7 @@
+       IsModeSwitch = TRUE;
+   }
+ 
+-  SbProg ("g");   // 2026-11-06R7: BootLinux 前导全部通过，即将 ExitBootServices
++  SbProg ('g');   // 2026-11-06R7: BootLinux 前导全部通过，即将 ExitBootServices
+   SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
+ 
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",

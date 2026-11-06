@@ -23,7 +23,22 @@
   `p12` = p11 + `20261106R5-jump-banner`（跳内核前强制一行屏显）。上机结论见
   `reports/uefi-onboard-walkthrough-20261106.md`（含「EB 后宿主判据失效」与「一会话一发电平 ≥40」两条纪律）。
   `p13` = p12 + `20261106R6-eb-banners`（`--scale 1` 的四行 banner：A pre-EB / B post-EB / C post-PPH / D JUMP），
-  **仅用于屏上定位、字号小需拍照判读**。
+  **仅用于屏上定位、字号小需拍照判读**。**⚠ 2026-11-06 深夜判定：p13 的判据设计错** —— 四行全在
+  `BootLinux()` 内，而当时的崩点在它之前，上机只会"四行全无"、信息量为 0（未上机即作废）。
+- **2026-11-06 深夜世代链（p14→p24，全部上机过）**：
+  `p14`=p12+`R7-cmdboot-progress`（单行进度字符，scale 1，字太小读不出）；
+  `p15`=p14+`R8-progress-accum`（累积串每步重打，scale 3）；
+  `p16`=p15+`R9-dual-channel`（`SbProgRaw` 不 flush + `FastbootFail("ret-after-lia")` 早退）；
+  `p17`=p12+`R10-ret-after-lia`（零屏显写、LIA 返回即回话）；
+  `p18`=p17+`R11-lia-tail`（LIA 尾部 `VS_STOP 43..45`）；
+  **`p19`=p18+`R12-probemode-guard` ← 关键修复**（只有带 `sbstop=` 令牌才改 `SbProbeMode`；
+  详见 `README-p19-p20-NOTE.md`）；`p20`=p19 去早退（全路径）；
+  `p21`=p20+`R13-skip-usbstop`（跳过 `FastbootUsbDeviceStop()`，**被否证**）；
+  `p22`=p21+`R14-eb-oneline`（EB 后同行 `B/C/D` 覆盖标记，被 dump 冲掉读不出）；
+  `p23`=p21+`R15-eb-halt`（EB 后打 `[K] EB-OK st=` 再 `CpuDeadLoop()`，仍崩 ⇒ 不在 EB 内）；
+  `p24`=p21+`R16-no-eb`（**完全跳过 EB** 只停机，仍崩 `0xCFE98C84` ⇒ 崩点在第三方二进制驱动里）。
+  上机判据账 `reports/artifacts/real-vs-ladder-20261106T21*.tsv`；会话
+  `TASKS/sessions/2026-11-06-UEFI真启动崩溃真因-探针写屏.md`。
 
 不在配方里的 18 个目录**不是"待用"，是"已废"**——它们各自服务的通道/结论都已推翻，逐条理由在 tsv 里，
 列几条最容易再次被想起的：

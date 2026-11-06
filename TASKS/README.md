@@ -143,6 +143,29 @@
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-11-06（深夜）：**真启动崩溃真因 = 我们自己的探针写屏**（修好后真路径首次到 EB）— p13→p24 十一代件
+
+- **一句话**：`LoadImageAndAuth()` 入口那行 `SbProbeMode = … : 0;` **无条件**把探针模式重置为 0，
+  把 R4 设的默认 3（沉默）覆盖掉 ⇒ 真件（cmdline 无令牌）里十几次 `SbVProbe` 直写帧缓冲
+  （scale 3 每行 ≈274 KiB × 十几行 ≫ splash 前 ~448 KiB）⇒ `PITFALLS #514/#515` 写穿机制。
+  修法 `20261106R12-probemode-guard`（**只有带 `sbstop=` 令牌才改模式**）。
+- **判据链**：真件 vs 令牌件唯一差别 = "写不写屏"；**只改 cmdline 文本（`console=tty0` 变体）照崩**
+  ⇒ 与 cmdline 内容无关。修复后（p19）真件回 `ret-after-lia` 且设备存活；p20 全路径 → 宿主
+  `Booting OKAY [0.001s]`（越过 LIA/ExitMenuKeys/FastbootOkay）后崩 `0xCFE98C4C`。
+- **真载荷阶梯**（历史上从未在真内核载荷上做过）：`VS_STOP 16/20/24/26/27/28/34/35/36/37/38`
+  与 `SB_STOP 1..6`、`40` **全部回话** ⇒ 装载/AVB/槽位/DTB/ramdisk/释放/pre-EB 全通。
+- **排除**：`FastbootUsbDeviceStop()`（p21 跳过它仍崩同一 PC）；EB（p24 跳过 EB 仍崩）⇒ 崩点不在 EB 内部。
+- **PC 不在自家模块内**：`[L] Found=1` 后那条 `[I]? base=0xCFEB2000 size=0x45000` 是 LinuxLoader，
+  崩溃 PC `0xCFE98C84` 在它**下面 ~0x1C000** ⇒ 崩在第三方二进制 DXE 驱动（EB/尾段做 USB redriver 重初始化的那个）。
+- **三条旧归因作废**：「跳进堆」（DXE Heap 是 `Conv`，DXE 映像本就分配在此，DxeCore 自身在 `0xD4CA6000`）、
+  「`MarkPtnActive()` 崩」、「`FastbootUsbDeviceStop()` 崩」。
+- **纪律/副作用**：82 MB 真件**一会话一发**（第二发必 `Load Error`）；**ABL 会写槽位 retry**
+  （实测 `boot_b` 7→6，已 `set-retry 7 b` 补回）⇒「零写盘」只对 agent 动作成立（`PITFALLS #525`）；
+  `eldroid-bootctl reboot bootloader` 偶发卡死关机路径。
+- **正文/坑**：`TASKS/sessions/2026-11-06-UEFI真启动崩溃真因-探针写屏.md`、
+  `patches/uefi/README-p19-p20-NOTE.md`；`PITFALLS #525/#526`；
+  配方 `p14…p24-recipe.txt`（`p7` 仍是逐字节复现基点，未动）；阶梯账 `reports/artifacts/real-vs-ladder-20261106T21*.tsv`。
+
 ### 2026-11-06（傍晚）：**首次上机全场走通到跳内核** + 三条判据更正（EB 后宿主失联 / 会话污染 / 跳进堆）
 
 - **一句话**：门控住 `out:` 那条诊断写后，`vs-18/19/26/27/28/35/36/37/38` **九档全回话**（p7 同一点崩）、

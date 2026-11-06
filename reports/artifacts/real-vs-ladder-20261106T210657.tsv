@@ -1,0 +1,8 @@
+stage	verdict	reply
+1	ALIVE-NO-REPLY	Sending 'boot.img' (82544 KB)                      OKAY [  1.873s] Booting                                            FAILED (remote: 'diag st=Aborted last=[[K] stop=1]') fastboot: error: Command failed 
+2	ALIVE-NO-REPLY	Sending 'boot.img' (82544 KB)                      OKAY [  1.873s] Booting                                            FAILED (remote: 'diag st=Aborted last=[[K] stop=2]') fastboot: error: Command failed 
+3	ALIVE-NO-REPLY	Sending 'boot.img' (82544 KB)                      OKAY [  1.867s] Booting                                            FAILED (remote: 'diag st=Aborted last=[[K] stop=3]') fastboot: error: Command failed 
+4	ALIVE-NO-REPLY	Sending 'boot.img' (82544 KB)                      OKAY [  1.870s] Booting                                            FAILED (remote: 'diag st=Aborted last=[[K] stop=4]') fastboot: error: Command failed 
+5	ALIVE-NO-REPLY	Sending 'boot.img' (82544 KB)                      OKAY [  1.872s] Booting                                            FAILED (remote: 'diag st=Aborted last=[[K] stop=5]') fastboot: error: Command failed 
+6	ALIVE-NO-REPLY	Sending 'boot.img' (82544 KB)                      OKAY [  1.874s] Booting                                            FAILED (remote: 'diag st=Load Error last=[[K] ldt=Load Error]') fastboot: error: Command failed 
+7	ALIVE-NO-REPLY	Sending 'boot.img' (82544 KB)                      OKAY [  1.879s] Booting                                            FAILED (remote: 'diag st=Load Error last=[[K] ldt=Load Error]') fastboot: error: Command failed 

@@ -1,0 +1,38 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] BootLinux: skip ExitBootServices and halt (single-variable proof for the EB fault)
+
+2026-11-06R16 y700-elden：R15（EB 返回后打一行 `[K] EB-OK st=…` 再 `CpuDeadLoop()`）上机仍是
+**递归 dump**，且那一行 banner **没有出现** ⇒ 崩点在 banner 之前，即 **`ShutdownUefiBootServices()` 内部**。
+旁证：崩前屏上最后一段是 `usb_redriver`/`usb_shared_i2c` 的 NAK 刷屏 —— EB 会逐个调用驱动 exit handler，
+那串输出正来自某个二进制驱动的退出路径。
+
+本件把 EB **整个注释掉**，只打一行覆盖式 banner 再 `CpuDeadLoop()`：
+
+  屏上稳定出现 `[K] NO-EB OK` ⇒ EB 就是凶手，且我们的 banner/停机取证机制本身可用；
+  仍是递归 dump 且无 banner ⇒ 连 EB 之前这一小段也不成立，探针要继续往前挪
+  （`FreeBootLogoBltBuffer` / `32-bit kernel LocateProtocol` 一带）。
+
+不跳内核（本件是取证件）。
+---
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1165,7 +1165,18 @@
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/
+-  Status = ShutdownUefiBootServices ();
++  // 2026-11-06R16 y700-elden: **单变量确认：完全跳过 ExitBootServices**。
++  // R15（EB 之后打 banner 再停机）上机仍是递归 dump 且 banner 没出现 ⇒ 崩点在 banner 之前，即 EB 内部。
++  // 本件把 EB 整个注释掉，只打一行覆盖式 banner 然后 CpuDeadLoop()：
++  //   · 屏上稳定出现 `[K] NO-EB OK` ⇒ EB 就是凶手（且我们的 banner/停机机制本身是好的）；
++  //   · 仍是递归 dump 且无 banner ⇒ 连"EB 之前这一小段"都不成立，要继续往前挪。
++  // 注意：不调用 EB 就直接 `CpuDeadLoop()`，不会跳内核（本件是取证件）。
++  // Status = ShutdownUefiBootServices ();
++  {
++    STATIC CONST CHAR8  SbNoEb[] = "\r[K] NO-EB OK      ";
++    SerialPortWrite ((UINT8 *)SbNoEb, AsciiStrLen (SbNoEb));
++  }
++  CpuDeadLoop ();
+   SB_STOP (41, "41");   // 2026-11-06R3: ExitBootServices 之后（回话即证明「EB 后仍能回宿主」）
+   if (EFI_ERROR (Status)) {
+     DEBUG ((EFI_D_ERROR,

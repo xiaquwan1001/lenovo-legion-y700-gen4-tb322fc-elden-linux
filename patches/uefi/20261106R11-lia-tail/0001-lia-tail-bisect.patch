@@ -1,0 +1,43 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] VerifiedBoot: bisect the LoadImageAndAuth tail (VS_STOP 43..45)
+
+2026-11-06R11 y700-elden：真内核载荷（`out/boot-elden-vk172.img`，82 MB）上的 `VS_STOP` 阶梯
+16→38 **全部回话**（含 `FindBootableSlot` 尾段与 `out:` 那条无条件写），但每一档都是
+**在 `LoadImageAndAuth()` 内提前 `return EFI_ABORTED`**，因此从未证明 LIA 的**尾部**能走完。
+而 p17（真路径、零屏显写、LIA 返回后立刻 `FastbootFail("ret-after-lia")`）仍然崩 `0xCFE98C38`
+⇒ 崩点就在 LIA 尾部、`FindBootableSlot` 之后那三句里：
+
+    if (AVBVersion != AVB_LE) {
+      DisplayVerifiedBootScreen (Info);                 // 画验证屏/Lenovo logo
+      Status = Info->VbIntf->VBSendMilestone (...)      // 函数指针进 blob，SMC 进 TZ
+    }
+    return Status;
+
+本补丁把这三点切开（`sbprobe=3` 通道，不写屏）：
+
+  43  `DisplayVerifiedBootScreen()` 之前
+  44  它之后（回话 ⇒ 画屏不是凶手）
+  45  `VBSendMilestone()` 之后（回话 ⇒ milestone 也不是）
+
+判据：`diag st=Aborted last=[vs-N]` ⇒ 该点之前不崩；无响应 + `getvar` 死 ⇒ 崩在该点。
+打序 43 → 44 → 45。
+
+背景（同轮确认的两条）：`StopImage` 之后的 `[L] LoadImage=Success` 是 **BdsDxe** 在
+`gBS->StartImage(LinuxLoader)` **之前**打的，不能当"已进 fastboot 会话"的判据；
+递归 dump 打出来的 PC（`…DA8`/`…DA9` 每次差 1）是垃圾值，不可作判据。
+---
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -1972,9 +1972,12 @@
+   }
+ 
+   if (AVBVersion != AVB_LE) {
++    VS_STOP (43);   // 2026-11-06R11: DisplayVerifiedBootScreen 之前
+     DisplayVerifiedBootScreen (Info);
++    VS_STOP (44);   // 2026-11-06R11: DisplayVerifiedBootScreen 之后
+     DEBUG ((EFI_D_VERBOSE, "Sending Milestone Call\n"));
+     Status = Info->VbIntf->VBSendMilestone (Info->VbIntf);
++    VS_STOP (45);   // 2026-11-06R11: VBSendMilestone 之后
+     if (Status != EFI_SUCCESS) {
+       DEBUG ((EFI_D_ERROR, "Error sending milestone call to TZ\n"));
+       return Status;

@@ -1,0 +1,6 @@
+stage	verdict	reply
+16	REPLY	remote: 'diag st=Aborted last=[vs-16]')
+20	REPLY	remote: 'diag st=Aborted last=[vs-20]')
+24	REPLY	remote: 'diag st=Aborted last=[vs-24]')
+26	REPLY	remote: 'diag st=Aborted last=[vs-26]')
+27	REPLY	remote: 'diag st=Aborted last=[vs-27]')
