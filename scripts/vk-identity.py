@@ -43,7 +43,9 @@ import re
 import subprocess
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# VK_ROOT：仓库根覆盖（默认 = 本文件上级目录）。用于在 lane/worktree 里跑**已安装的脚本**
+# 去对账**主仓或另一份树**的镜像（验收 A/B、缓存重建、CI 式对账），而无需复制 4 G 的 out/。
+ROOT = os.environ.get('VK_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'out')
 # 归档目录（scripts/out-archive.py 把 out/ 里的历史镜像 mv 到这里）。
 # 归档件**仍参与身份扫描**：文件内容不变、只换路径；账表 image 列是 basename，
@@ -184,6 +186,88 @@ def points_at_map():
 
 _PAYLOAD_CACHE = {}
 
+# ---- 跨调用载荷缓存（2026-11-05 脚本审计）----
+# check-doctor 每轮都跑 `vk-identity.py --all`，而 out/*.img 绝大多数是**已归档、不再变动**
+# 的历史镜像；旧版每轮重新 gzip 解压全部 129 个镜像（即使 8 进程并行仍 ~3.3 s，串行时代
+# 曾 ~110 s）。解压结果只依赖文件内容 ⇒ 用 (path, size, mtime_ns) 做键持久化到磁盘缓存，
+# 稳态下零解压（实测 3.3 s → 0.2 s）。
+#   失效条件：文件被原地重建（size 或 mtime 变）/ 缓存 schema 升级 / 显式关闭。
+#   关闭：`VK_PAYLOAD_CACHE=off` 或 `--no-cache`（调试、怀疑缓存脏时用）。
+_CACHE_VER = 1
+_CACHE_PATH = os.environ.get('VK_PAYLOAD_CACHE') or ''
+if _CACHE_PATH == 'off':
+    _CACHE_PATH = ''
+_disk = None
+_disk_dirty = False
+
+
+def _cache_path():
+    return _CACHE_PATH or os.path.join(ROOT, '.cache', 'vk-payload.json')
+
+
+def _disk_cache():
+    global _disk
+    if _disk is None:
+        _disk = {}
+        p = _cache_path()
+        if p:
+            try:
+                import json
+                raw = json.load(open(p, encoding='utf-8'))
+                if raw.get('ver') == _CACHE_VER:
+                    _disk = raw.get('entries', {})
+            except Exception:
+                _disk = {}
+    return _disk
+
+
+def _cache_key(path):
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return [st.st_size, st.st_mtime_ns]
+
+
+def _disk_get(path):
+    key = _cache_key(path)
+    ent = _disk_cache().get(path)
+    if key and ent and ent[:2] == key and len(ent) == 5:
+        return (ent[2] or None, ent[3], ent[4])
+    return None
+
+
+def _disk_put(path, res):
+    global _disk_dirty
+    key = _cache_key(path)
+    if key is None:
+        return
+    _disk_cache()[path] = key + [res[0], res[1], res[2]]
+    _disk_dirty = True
+
+
+def _disk_flush():
+    """原子写回；顺带剪掉已不存在的镜像条目（缓存文件不会无限长）。"""
+    global _disk_dirty
+    if not _disk_dirty or not _disk_cache():
+        return
+    import json
+    entries = {p: v for p, v in _disk_cache().items() if os.path.exists(p)}
+    p = _cache_path()
+    try:
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        tmp = p + '.tmp.%d' % os.getpid()
+        with open(tmp, 'w', encoding='utf-8') as fh:
+            json.dump({'ver': _CACHE_VER, 'entries': entries}, fh, ensure_ascii=False)
+        os.replace(tmp, p)
+        _disk_dirty = False
+    except OSError:
+        pass
+
+
+import atexit
+atexit.register(_disk_flush)
+
 
 def _payload_raw(path):
     """boot.img 的内核载荷 → (uts|None, kbin_sha12, status)。
@@ -239,32 +323,47 @@ def _payload_raw(path):
 
 
 def payload(path):
-    """带进程内缓存的载荷抽取；同一路径只解压一次（§5 版本账与 §5d 身份表共用）。"""
+    """带两层缓存的载荷抽取：进程内 dict + 跨调用磁盘缓存（未变动的镜像零解压）。
+    §5 版本账与 §5d 身份表共用同一结果。"""
     if path not in _PAYLOAD_CACHE:
-        _PAYLOAD_CACHE[path] = _payload_raw(path)
+        cached = _disk_get(path)
+        if cached is None:
+            cached = _payload_raw(path)
+            _disk_put(path, cached)
+        _PAYLOAD_CACHE[path] = cached
     return _PAYLOAD_CACHE[path]
 
 
 def prefill_payloads(paths):
-    """并行预填载荷缓存：gzip 解压是 check-doctor 墙钟的大头。
+    """并行预填载荷缓存：gzip 解压曾是 check-doctor 墙钟的大头。
 
-    ~108 个 boot 镜像串行解压约 30s；16 核机上 8 进程降到 ~7s。多进程不可用时退回串行。
+    ~129 个镜像串行解压约 30 s，8 进程 ~3.3 s；磁盘缓存命中时 **0 解压**。
     """
-    todo = [p for p in paths if p not in _PAYLOAD_CACHE]
+    todo = []
+    for p in paths:
+        if p in _PAYLOAD_CACHE:
+            continue
+        cached = _disk_get(p)
+        if cached is not None:
+            _PAYLOAD_CACHE[p] = cached
+        else:
+            todo.append(p)
     if not todo:
         return
+    res = []
     try:
         import multiprocessing as mp
         jobs = min(os.cpu_count() or 1, 8)
-        if jobs > 1:
+        if jobs > 1 and len(todo) > 1:
             with mp.Pool(jobs) as pool:
                 res = pool.map(_payload_raw, todo, chunksize=1)
-            _PAYLOAD_CACHE.update(zip(todo, res))
-            return
     except Exception:
-        pass
-    for p in todo:
-        payload(p)
+        res = []
+    if not res:
+        res = [_payload_raw(p) for p in todo]
+    for p, r in zip(todo, res):
+        _PAYLOAD_CACHE[p] = r
+        _disk_put(p, r)
 
 
 def manifest(path):
@@ -491,6 +590,9 @@ def ledger_lines():
 
 def main():
     args = sys.argv[1:]
+    if '--no-cache' in args:
+        global _CACHE_PATH
+        _CACHE_PATH = 'off'
     check = '--check' in args or '--all' in args
     allmode = '--all' in args
     skip_names = inflight_images()

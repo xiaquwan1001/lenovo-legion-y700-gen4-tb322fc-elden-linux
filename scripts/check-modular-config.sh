@@ -36,6 +36,51 @@ ANCHORS="${ANCHORS:-$DEFAULT_ANCHORS}"
 fail() { echo "FAIL: $*"; exit 1; }
 pass() { echo "PASS: $*"; }
 
+# ---------------------------------------------------------------- 结果缓存（2026-11-05）
+# 为什么：本节是 check-doctor 里最贵的一段（实测 3.23 s = 两遍 `make olddefconfig` +
+# 全 Kconfig 树静态依赖扫描），而它**只在 .config / 锚点清单 / 本脚本 / Kconfig 树改动时
+# 才可能改变结论**；文档类提交、收尾轮、pre-commit 里反复跑同一份结论纯属重算。
+# 失效键 = .config 内容 + 本脚本内容 + ANCHORS + KDIR + CROSS + 被扫描目录里最新 Kconfig 的
+# (mtime, 路径)。任何一项变 ⇒ key 变 ⇒ 重算；**不做 TTL**（时间不能证明结论有效）。
+# 关闭：MOD_CFG_CACHE=off（调试/怀疑缓存脏）或 --refresh（强制重算并刷新）。
+cfg_fingerprint() {
+	{
+		sha256sum "$CFG" 2>/dev/null | cut -d' ' -f1
+		sha256sum "${BASH_SOURCE[0]}" 2>/dev/null | cut -d' ' -f1
+		printf '%s\n%s\n%s\n%s\n' "$ANCHORS" "$KDIR" "$CROSS" "${MODDIR:-}"
+		# head 会 SIGPIPE 掉 sort；pipefail 下不接住就会让整个指纹命令"失败"而退化成每轮全算。
+		( cd "$KDIR" 2>/dev/null && find drivers sound net firmware arch/arm64 mm security \
+		    -name 'Kconfig*' -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 ) || :
+	} | sha256sum | cut -c1-16
+}
+
+check_cached() {
+	local key dir out rcfile rc
+	key=$(cfg_fingerprint) || { check_real; return; }
+	dir="${MOD_CFG_CACHE_DIR:-$ROOT/.cache/modular-config}"
+	out="$dir/$key.out"; rcfile="$dir/$key.rc"
+	if [ "${REFRESH:-0}" != 1 ] && [ -f "$out" ] && [ -f "$rcfile" ]; then
+		cat "$out"
+		rc=$(cat "$rcfile")
+		echo "  info: 命中缓存 key=$key（.config/锚点/脚本/Kconfig 树均未变；--refresh 可强算）"
+		return "$rc"
+	fi
+	mkdir -p "$dir" 2>/dev/null || { check_real; return; }
+	# 注意：不能用裸 `( check_real ) > "$out"`——check_real 失败时 `set -e` 会提前终止，
+	# 结果既没缓存也没输出（doctor 会收到空输出 → FAIL 详情为空）。用 `|| rc=$?` 接住。
+	rc=0
+	( check_real ) > "$out.tmp.$$" 2>&1 || rc=$?
+	mv "$out.tmp.$$" "$out"
+	printf '%s\n' "$rc" > "$rcfile"
+	# 清掉崩溃残留的临时文件（保留最近 20 分钟内的，避免误删并发实例）
+	find "$dir" -maxdepth 1 -name '*.out.tmp.*' -mmin +20 -delete 2>/dev/null || :
+	# 只保留最近 12 份结论（每个 key 一份，键变了旧 key 就没用）
+	ls -1t "$dir"/*.out 2>/dev/null | tail -n +13 | while read -r _f; do
+		rm -f "$_f" "${_f%.out}.rc"; done || :
+	cat "$out"
+	return "$rc"
+}
+
 cfg_value() { grep -E "^${1}=" "$CFG" | tail -1 | sed "s/^${1}=//"; }
 
 dedupe() { # Kconfig 语义：同名行后者生效
@@ -43,7 +88,7 @@ dedupe() { # Kconfig 语义：同名行后者生效
 	     {print} END{for(i=1;i<=n;i++) print seen[order[i]]}' "$1" > "$2"
 }
 
-check() {
+check_real() {
 	local rc=0
 	echo "== 门禁目标: $CFG =="
 	[ -f "$CFG" ] || fail "config 不存在: $CFG"
@@ -161,5 +206,7 @@ self_test() {
 
 case "${1:-}" in
 	--self-test) self_test ;;
-	*) check ;;
+	--refresh) REFRESH=1; if [ -n "${MODDIR:-}" ]; then check_real; else check_cached; fi ;;
+	*) if [ -n "${MODDIR:-}" ] || [ "${MOD_CFG_CACHE:-}" = off ]; then check_real
+	   else check_cached; fi ;;
 esac
