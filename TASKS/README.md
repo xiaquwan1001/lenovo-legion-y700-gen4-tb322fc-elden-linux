@@ -154,8 +154,14 @@
   **「EB → `PreparePlatformHardware()` → `LinuxKernel()`」**。
 - **纪律**（新账）：① **一个固件会话只能打一发电平 ≥40 的件**（连打必退化 `diag st=Load Error … ldt=Load Error`，
   换会话即恢复）；② EB 之后只能看屏，`--scale 1` 把一行压到 91 KiB（448 KiB 预算 ≈ 4 行）。
-- **下一步**：p13 = `--scale 1` + 四行强制 banner（pre-EB / post-EB / post-PPH / JUMP）定位死点；
-  四行全出则转读 `LinuxKernel` 调用约定与 `PreparePlatformHardware()`。
+- **第二轮（同日 18:34，照片判读）**：p12（`scale 3`）真启动的屏上顺序是 `[L] LoadImage=Success` →
+  USB redriver/I2C 刷屏 → **直接** `Synchronous Exception at 0xCFE98C38`，
+  **`[K] JUMP-BANNER` 没出现** ⇒ **死在跳内核之前**；宿主连 `Booting OKAY` 都没收到。
+  **最重要更正**：诊断模式与真启动是两条路径（`FastbootOkay`/`FastbootUsbDeviceStop`/`ResetBootDevImage` 只在真启动分支，
+  且诊断件还前缀覆写 cmdline 丢 `root=`/`console=`）⇒ `PITFALLS #524`。
+- **下一步**：**p14 = p12 + `SbForceDiagPath`**（cmdline 原样、只跳过那三个调用），判据 = `[K] JUMP-BANNER` 出不出现；
+  出现 ⇒ 凶手在这三个调用里，仍不出现 ⇒ 回到 `LoadImageAndAuth` 返回后的收尾。再往后才是
+  `--scale 1` 四行 banner（pre-EB / post-EB / post-PPH / JUMP）那套 EB 之后定位。
 - **正文/坑**：`reports/uefi-onboard-walkthrough-20261106.md`；`PITFALLS #523`；
   会话记录 `sessions/2026-11-06-UEFI上机全场走通到跳内核.md`；判据 `reports/artifacts/uefi-p9-onboard-20261106/results.tsv`。
 

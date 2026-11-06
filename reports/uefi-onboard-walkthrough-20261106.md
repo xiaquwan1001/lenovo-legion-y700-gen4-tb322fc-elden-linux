@@ -96,3 +96,66 @@ fastboot -s HA2EXB0E boot out/r21-sbstop-p13/uefi-preamble13-r1.img   # ~11.6 s
 | 用户物理断电/开机 | 3 |
 | 软件换会话（`reboot bootloader` → Linux → `eldroid-bootctl`） | 2 |
 | 写盘（flash/set_active/GPT/槽位） | **0** |
+
+---
+
+## 6. 第二轮取证（18:34，照片判读）：**`[K] JUMP-BANNER` 没有出现** ⇒ 死在跳内核之前
+
+用 p12（`scale 3`，字大可读）再打一发真启动 `out/boot-elden-vk172.img`，用户连拍 9 张。判读：
+
+### 6.1 屏上顺序（照片 8 → 9 连续，中间无断层）
+
+```
+[O70] [O08] [S] setvar=Success
+[L] Found=1 size=0x2C600
+[L] Y base=…CFB5000 size=0x45000
+[L] LoadImage=Success                     ← VerifiedBoot 装载段结束
+usb_redriver_reset / usb_wcd_init / ERROR:NAK …（一长串 usb_shared_i2c 失败）
+usb_repeater_reset … ssusb_phy_init_success lane: 0x0
+Dev_Common_Speed: Dev Bus Speed: High, state 2   ×2
+Synchronous Exception at 0x00000000CFE98C38     ← 直接进异常
+Recursive exception occurred while dumping the CPU state   ×∞
+```
+
+**`[K] JUMP-BANNER` 这一行不存在** ⇒ 崩溃点**在 `LinuxKernel()` 之前**（不是「跳进去才炸」）。
+异常仍是 `Synchronous Exception`（固件上下文）+ dump 递归（handler 自己也炸，取不到 ESR/ELR）。
+
+### 6.2 宿主侧同发的判据
+
+`fastboot boot out/boot-elden-vk172.img` 只打印到 `Booting` 就 `rc=124`，
+**从未收到 `Booting OKAY`** ⇒ 崩点在 `FastbootOkay("")` 之前或正在发送时。
+
+### 6.3 因此窗口缩到（`LoadImageAndAuth` 返回 → `FastbootOkay`）这段
+
+`CmdBoot()` 真启动分支的顺序是：
+`LoadImageAndAuth()` → `ExitMenuKeysDetection()` → `FastbootOkay("")` → `FastbootUsbDeviceStop()` → `ResetBootDevImage()` → `BootLinux()`。
+屏上最后一条我们的标记是 `[L] LoadImage=Success`（在 `LoadImageAndAuth` 内），之后全是 USB redriver/I2C 噪音，
+再之后就是异常 ⇒ 两个候选：**(a) `LoadImageAndAuth` 的尾巴（`FindBootableSlot` 之后到返回）**、
+**(b) `ExitMenuKeysDetection()` / `FastbootOkay()` 里的 USB 发送**。
+
+### 6.4 本地图上最重要的一条更正：**诊断模式 ≠ 真启动路径**
+
+| | 诊断模式（`sbstop=` 存在） | 真启动（无令牌） |
+|---|---|---|
+| `FastbootOkay("")` | 不调 | **调** |
+| `FastbootUsbDeviceStop()` | **跳过** | **调** |
+| `ResetBootDevImage()` | 走 `out:` 后再一次 | 先调再 `BootLinux` |
+| 镜像 cmdline | 被 `sbstop=N sbprobe=M ` 前缀**顶掉** ⇒ `root=`/`console=` 全丢 | 原样 |
+
+⇒ 本轮之前所有「诊断模式 stop=40 回话 ⇒ 那一段没问题」的推断，**不能外推到真启动**
+（`PITFALLS #524`）。这也是为什么「诊断到 40 全通」与「真启动立刻崩」能同时成立。
+
+### 6.5 下一刀（**已设计、未执行**，用户要求先收尾）
+
+**p14 = p12 配方 + 强制诊断路径**（`SbForceDiagPath`：`CmdBoot` 里 `SbParseStopStage(...) >= 0 || SbForceDiagPath`），
+好处是 **cmdline 保持原样**（真启动镜像）却跳过 `FastbootOkay/FastbootUsbDeviceStop/ResetBootDevImage`：
+
+- 出现 `[K] JUMP-BANNER` ⇒ 凶手在 `FastbootUsbDeviceStop()`/`ResetBootDevImage()` 或 `FastbootOkay` 的 USB 发送；
+- 仍然不给 banner、直接 dump ⇒ 死点在 `LoadImageAndAuth` 自身的尾巴（回到 `FindBootableSlot` 返回后的收尾，
+  注意那条 `out:` 诊断写在 mode 3 下已被门控，且 `UpdatePartitionAttributes()` 是空转）。
+
+再往后（按需）：`--scale 1` 的四行 banner 复用作 EB 之后的屏上定位；`FbCon` 的 22 MiB `WriteBackInvalidateDataCacheRange` 单独立项。
+
+### 6.6 设备终态
+
+`fastboot reboot` → 设备回到 **Linux（`7.3.0-rc7-…-vk172`，持久根 `/dev/sda17`）**，本轮零写盘、无遗留异常态。

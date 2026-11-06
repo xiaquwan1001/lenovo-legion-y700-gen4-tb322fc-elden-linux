@@ -1,0 +1,63 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] BootLinux: forced screen banners A/B/C across ExitBootServices (scale-1 builds)
+
+2026-11-06R6 y700-elden: 上机已定案「EB 之后宿主侧收不到任何东西」（USB 设备栈被拆，
+屏上刷 `Usbfn is not enabled`，`PITFALLS #523`），而真启动件在跳内核前触发**递归 dump**
+（异常 PC `0xcfe98c38` 落在 DXE heap ⇒ 跳进堆）。要把死点定在 EB↔跳转之间，只剩屏通道。
+
+屏预算（`PITFALLS #492/#515`）：splash 只前 ~448 KiB 可写；`SCALE_FACTOR 3` 下一行 274 176 B
+（只够 1.6 行）⇒ 本世代**用 `--scale 1` 构建**，一行 12*1904*4 = 91 200 B ⇒ 四行仍在预算内。
+
+本补丁加 `SB_FORCE(tag)`（不受 `SbProbeMode` 控制）与三行 banner，配合 p12 已有的
+`[K] JUMP-BANNER`（= D）共四行：
+
+    A:pre-EB     ShutdownUefiBootServices() 之前
+    B:post-EB    返回之后（打得出 = EB 正常返回）
+    C:post-PPH   PreparePlatformHardware() 之后
+    D:JUMP-BANNER（p12） LinuxKernel() 之前
+
+判据：屏上停在哪个字母之后就是死点。A 出现、B 不出现 ⇒ 死点在 EB 内部；
+B、C 出现而 D 不出现 ⇒ 死在 `PreparePlatformHardware` 之后的 `BootStatsSetTimeStamp` 一带；
+四行全出 ⇒ 死在 `LinuxKernel()` 调用/进入本身（下一轮读寄存器调用约定与 `SCTLR` 状态）。
+
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -144,6 +144,15 @@
+       return EFI_ABORTED;                                                      \
+     }                                                                          \
+   } while (0)
++
++// 2026-11-06R6 y700-elden: **强制屏显**一行（不受 SbProbeMode 管）。EB 之后宿主收不到任何东西
++// （USB 设备栈已拆，PITFALLS #523）⇒ EB 之后的每一步只能靠屏。预算：splash 只前 ~448 KiB 可写
++// （#492），本世代用 `--scale 1` 构建 ⇒ 一行 = 12*1904*4 = 91 200 B ⇒ 4 行仍在预算内。
++#define SB_FORCE(tag)                                                          \
++  do {                                                                         \
++    CHAR8  SbF[] = "[K] " tag "\n\r";                                          \
++    SerialPortWrite ((UINT8 *)SbF, sizeof (SbF) - 1);                          \
++  } while (0)
+ #include "libfdt.h"
+ #include <ufdt_overlay.h>
+ 
+@@ -1160,12 +1169,14 @@
+       IsModeSwitch = TRUE;
+   }
+ 
++  SB_FORCE ("A:pre-EB");   // 2026-11-06R6: EB 之前的最后一行屏显
+   SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
+ 
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/
+   Status = ShutdownUefiBootServices ();
++  SB_FORCE ("B:post-EB");   // 2026-11-06R6: EB 之后（能打出来 = EB 正常返回）
+   SB_STOP (41, "41");   // 2026-11-06R3: ExitBootServices 之后（回话即证明「EB 后仍能回宿主」）
+   if (EFI_ERROR (Status)) {
+     DEBUG ((EFI_D_ERROR,
+@@ -1175,6 +1186,7 @@
+   }
+ 
+   PreparePlatformHardware ();
++  SB_FORCE ("C:post-PPH");   // 2026-11-06R6: PreparePlatformHardware 之后
+   SB_STOP (42, "42");   // 2026-11-06R3: PreparePlatformHardware 之后、跳内核之前
+ 
+   BootStatsSetTimeStamp (BS_KERNEL_ENTRY);

@@ -1,8 +1,8 @@
 # `patches/uefi/` — UEFI（G1-29）补丁栈：谁在活线上、谁已经废了
 
-> 本目录是 UEFI 间接引导线 2026-10-28 → 2026-11-06 的全部补丁，**48 个目录 / 70 个 `.patch`**（另含顶层 1 个 BootShim cache 补丁、本文件、`p7…p12-recipe.txt`，以及少量试验件 `.S/.bin/.o`）。
+> 本目录是 UEFI 间接引导线 2026-10-28 → 2026-11-06 的全部补丁，**49 个目录 / 71 个 `.patch`**（另含顶层 1 个 BootShim cache 补丁、本文件、`p7…p13-recipe.txt`，以及少量试验件 `.S/.bin/.o`）。
 > 逐目录分级（机器可读）= **`../../versions/patches-uefi-status.tsv`**（列：dir / patches / in_recipe / status / 理由 / 证据）。
-> 结论：**ACTIVE 30 目录 / RETIRED 18 目录 / UNCLEAR 0**。
+> 结论：**ACTIVE 31 目录 / RETIRED 18 目录 / UNCLEAR 0**。
 
 ## 1. 怎么区分（唯一判据：在不在这份配方里）
 
@@ -22,6 +22,8 @@
   `p11` = p10 + `20261106R4-real-boot`（`SbProbeMode` 默认 3 + 去掉 R18 的 `CpuDeadLoop`，= **真启动件**）；
   `p12` = p11 + `20261106R5-jump-banner`（跳内核前强制一行屏显）。上机结论见
   `reports/uefi-onboard-walkthrough-20261106.md`（含「EB 后宿主判据失效」与「一会话一发电平 ≥40」两条纪律）。
+  `p13` = p12 + `20261106R6-eb-banners`（`--scale 1` 的四行 banner：A pre-EB / B post-EB / C post-PPH / D JUMP），
+  **仅用于屏上定位、字号小需拍照判读**。
 
 不在配方里的 18 个目录**不是"待用"，是"已废"**——它们各自服务的通道/结论都已推翻，逐条理由在 tsv 里，
 列几条最容易再次被想起的：
@@ -51,7 +53,7 @@ scripts/uefi-r21-p7-ladder.sh --mkimg-only --rebuild   # 从配方重建 UEFI（
 
 ## 3. 纪律
 
-- 新增补丁 = 新目录 + 进当前世代的配方（`p7…p12-recipe.txt`，若要留在活线上）+ 跑 `--verify`；
+- 新增补丁 = 新目录 + 进当前世代的配方（`p7…p13-recipe.txt`，若要留在活线上）+ 跑 `--verify`；
   改活线时优先**新建世代配方**（p8/p9）而不是就地改 `p7-recipe.txt`——p7 是在盘四件的唯一复现基点。
   **不要**把新补丁只塞进某个报告然后靠记忆重放（2026-11-06 的四件活线镜像就是这么差点变成不可再生件）。
 - 本目录里除 `p7-recipe.txt` 与本文件外，**不应出现构建产物**；`20261103-posctrl/` 下的
