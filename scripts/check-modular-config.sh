@@ -57,7 +57,8 @@ cfg_fingerprint() {
 check_cached() {
 	local key dir out rcfile rc
 	key=$(cfg_fingerprint) || { check_real; return; }
-	dir="${MOD_CFG_CACHE_DIR:-$ROOT/.cache/modular-config}"
+	# 缓存默认放仓库外（同 vk-identity.py 的理由：仓库根目录的任何新条目都会撞 §14 布局门）
+	dir="${MOD_CFG_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/elden-doctor/$(printf '%s' "$ROOT" | sha256sum | cut -c1-8)/modular-config}"
 	out="$dir/$key.out"; rcfile="$dir/$key.rc"
 	if [ "${REFRESH:-0}" != 1 ] && [ -f "$out" ] && [ -f "$rcfile" ]; then
 		cat "$out"

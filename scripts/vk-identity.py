@@ -202,7 +202,21 @@ _disk_dirty = False
 
 
 def _cache_path():
-    return _CACHE_PATH or os.path.join(ROOT, '.cache', 'vk-payload.json')
+    """缓存默认落在**仓库外**（$XDG_CACHE_HOME/elden-doctor/<root 哈希>/）。
+
+    为什么不放仓库里 `$ROOT/.cache/`：`scripts/check-layout.sh`（§14）要求根目录每个条目
+    都在 versions/layout.tsv 登记 ⇒ 一个工具随手建的 `.cache/` 会把门禁弄成 FAIL。
+    缓存是可再生产物，本来就该跟着机器走，而不是跟着 git 走。
+    """
+    if _CACHE_PATH:
+        return _CACHE_PATH
+    return os.path.join(_cache_dir(), 'vk-payload.json')
+
+
+def _cache_dir():
+    base = os.environ.get('XDG_CACHE_HOME') or os.path.join(os.path.expanduser('~'), '.cache')
+    tag = hashlib.sha256(ROOT.encode()).hexdigest()[:8]      # 每棵树一份（lane/worktree 互不干扰）
+    return os.path.join(base, 'elden-doctor', tag)
 
 
 def _disk_cache():

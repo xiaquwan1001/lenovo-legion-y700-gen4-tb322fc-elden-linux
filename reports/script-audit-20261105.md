@@ -47,12 +47,17 @@
 | 文件 | 缓存键 | 冷 → 热 |
 |---|---|---|
 | `scripts/static-scan.py`（新，§6 抽出） | 语料改 `git ls-files`（2531 个纳管/未忽略文本，20 MB）；死脚本用 `grep -F`（Aho-Corasick）一次扫完 | 3.75 s → **0.11 s** |
-| `scripts/vk-identity.py` | `(path, size, mtime_ns)` → 载荷 `(UTS, kbin_sha, status)`，存 `.cache/vk-payload.json` | 3.9 s → **0.23 s** |
+| `scripts/vk-identity.py` | `(path, size, mtime_ns)` → 载荷 `(UTS, kbin_sha, status)` | 3.9 s → **0.23 s** |
 | `scripts/check-modular-config.sh` | `.config` + 本脚本 + `ANCHORS` + `KDIR` + `CROSS` + 扫描目录里最新 `Kconfig` 的 `(mtime, path)` | 3.2 s → **0.06 s** |
+
+缓存位置 = **仓库外** `${XDG_CACHE_HOME:-~/.cache}/elden-doctor/<root 路径哈希>/`
+（每棵树一份，lane/worktree 互不串）。踩过的坑：第一版放 `$ROOT/.cache/`，
+结果 `scripts/check-layout.sh`（§14）立刻把 `.cache` 判成「顶层条目未登记」= FAIL ⇒
+工具自己把门禁弄红。缓存是可再生产物，跟机器走、不跟 git 走。
 
 关闭方式（怀疑缓存脏时）：`static-scan.py` 走 `git` 实时语料（无持久缓存）；
 `vk-identity.py --no-cache` / `VK_PAYLOAD_CACHE=off`；`check-modular-config.sh --refresh` /
-`MOD_CFG_CACHE=off`。三者都会在 `.cache/` 下留文件（已入 `.gitignore`）。
+`MOD_CFG_CACHE=off`。
 
 ### 2.3 设备侧等待：`scripts/lib-wait.sh` + `scripts/lib-ssh.sh`（新）
 
@@ -74,7 +79,9 @@
 「就绪时不付首拍」「超时预算准确」「**boot_id 未变期间不得判成功**」「adb 只认正确序列号」
 「boot-ready 只发 1 条 ssh」等 16 项，全绿（`ALL PASS`）。
 
-## 3. 验收数据（`scripts/doctor/ab-bench.sh`，同一棵树、团队基线 `aea0eab`）
+## 3. 验收数据（`scripts/doctor/ab-bench.sh`，主仓、基线提交 `aea0eab`、每组 3 次取中位数）
+
+**审计当天**（`out/` 129 个镜像 + `build/daily` 在场，即最重的情形）：
 
 | 档 | 旧版 | 新版（冷） | 新版（热） | 加速 |
 |---|---|---|---|---|
@@ -82,6 +89,19 @@
 | 全量 | 10.98 s | 4.54 s | **1.37 s** | 2.4× / **8.0×** |
 
 判定行 48 行逐行相同，汇总行相同（`FAIL=0 WARN=5`，均为既有 WARN）。
+
+**合入后复测**（另一 lane 收尾时把 `build/` 清掉了 ⇒ 旧版 §6 语料与 §12 olddefconfig
+都不再有那么大，旧版自己也变快；这也说明「用比值当唯一判据」会随环境漂，
+所以 `ab-bench.sh` 对 fast 档另设了绝对值上限 1.0 s）：
+
+| 档 | 旧版 | 新版（冷） | 新版（热） | 加速 |
+|---|---|---|---|---|
+| `--staged-fast` | 0.66 s | — | **0.38 s** | 1.7× |
+| 全量 | 5.06 s | 1.43 s | **1.43 s** | 3.5× / **3.5×** |
+
+判定行（滤掉两条工具自身观测噪声后）47 行逐行相同，FAIL 行集合相同，`ACCEPT: PASS`。
+> 观测噪声 = 旧版医生跑在「已含新子门」的树上：① §6a 把检查器自己当成了「设备锁块被复制」；
+> ② 它的排版里少一条 `[ok] 设备锁单一真源`。这两条与判据无关，比对时显式过滤并在此留痕。
 
 ## 4. 未做 / 待验证
 
@@ -105,7 +125,7 @@ rm -rf scripts/doctor .cache
 ## 6. 复现验收
 
 ```bash
-scripts/doctor/ab-bench.sh                      # 新旧 A/B + 判定行 diff（约 40 s）
+scripts/doctor/ab-bench.sh                      # 新旧 A/B + 判定行 diff（约 30 s；BASE= 可换基线提交）
 scripts/check-doctor.sh                         # 全量：期望 FAIL=0
 scripts/check-doctor.sh --staged-fast           # 入库前档：期望 < 1 s
 scripts/test-lib-wait.sh                        # 等待语义自检：期望 ALL PASS

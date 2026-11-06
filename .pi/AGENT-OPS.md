@@ -47,8 +47,11 @@
   （如 `TASKS/README.md` §5 的 Q 行）或 `PITFALLS` 条目链过去；否则结论会随文件沉底
   （2026-10-15 实例：`reports/q24-causal-audit-20261015.md` 既未入 git 也无人引用）。
 - **入库前门**：`.githooks/pre-commit` 会跑 `scripts/check-doctor.sh --staged-fast`（§7 入口文档
-  完整性 / §8 索引↔磁盘对账 / §9 SESSIONS 快照，~0.2 s）。**提交被拦时先修，不要习惯性 `--no-verify`**；
-  确需绕过用 `ELDEN_HOOK_SKIP=1`（如大批量归档搬迁）。收尾仍要跑**全量** `scripts/check-doctor.sh`。
+  完整性 / §8 索引↔磁盘对账 / §9 SESSIONS 快照 / §10–§11 / §13–§14，实测 ~0.4 s）。
+  **§12（驱动模块化 config 门）不在这一档**——它与文档/索引提交无关，却要跑两遍 `make olddefconfig`
+  （旧版正是它让每次提交白付 3.2 s）；手改 `.config` 由收尾轮**全量** doctor 兜住。
+  **提交被拦时先修，不要习惯性 `--no-verify`**；确需绕过用 `ELDEN_HOOK_SKIP=1`（如大批量归档搬迁）。
+  收尾仍要跑**全量** `scripts/check-doctor.sh`（并发子门，稳态 ~1.4 s；见 `reports/script-audit-20261105.md`）。
 - **归因分层**：报「驱动/内核坏」前先分清 initramfs/rootfs 打包（C）与用户态配置（D）（`PITFALLS` #115）。
 - **主线优先**（服务上游化）：厂商私有 compatible 先找主线等效驱动，只补 DT/config/固件命名；主线没有则分「架构性不可做 / 私有 / 可自研」，只立第三类。
 - **上游化三问门**（写代码前）：① 有对应主线子系统 → 必须用其框架；② 有同类芯片驱动 → 复用/扩展而非新写；③ 硬件事实进 DT/数据表、软件策略才进 C。红线框架表、违例清单与下游隔离清单见 `reports/upstream-policy-20261013.md`。

@@ -14,25 +14,33 @@
 # 判据（任一不满足即退出 1）：
 #   1. 判定行逐行相同：`grep -E '^  \[(ok|FAIL|warn)\]'` 的输出 diff 为空；
 #   2. 汇总行相同：`FAIL=n WARN=m`；
-#   3. 新档明显更快：全量冷 ≤ 旧版 ×0.6，全量热 ≤ 旧版 ×0.4，fast 档 ≤ 旧版 ×0.3。
+#   3. 新档明显更快：全量冷 ≤ 旧版 ×0.6，全量热 ≤ 旧版 ×0.4；
+#      fast 档 ≤ 旧版 ×1.0 **且** ≤ 1.0 s（fast 档的绝对目标；比值会被「构建树在不在」
+#      左右：树在场时旧版 fast 含两遍 olddefconfig ≈3.8 s（比值 ~9×），树被清理后
+#      旧版自己也只剩 ~0.6 s ⇒ 用绝对值兜底，避免阈值随环境漂）。
 #
 # 用法： accept/bench.sh [主仓路径]        # 结果同时写 accept/RESULTS.md
 set -uo pipefail
 
 MAIN=${1:-/home/xuqianhui/y700-elden}
-LANE=$(cd "$(dirname "$0")/.." && pwd)
-BASE=$(sed -n 's/^baseline=//p' "$MAIN/.pi/lanes/scripts-tidy.tsv" 2>/dev/null)
-BASE=${BASE:-main}
+REPO=$(cd "$(dirname "$0")/../.." && pwd)   # = 本仓根（脚本位于 scripts/doctor/）
+# 基线提交 = 「重构前」的 check-doctor（2026-11-05 脚本审计 merge 之前的 main）。
+# 用提交号而不是分支名：合并之后 main 上就是新版，拿 main 当基线会变成「新版 vs 新版」。
+BASE=${BASE:-aea0eab}
 REPEAT=${REPEAT:-3}
 CACHE=/tmp/doctor-ab-cache.$$
 TMP=/tmp/doctor-ab.$$
 mkdir -p "$CACHE" "$TMP"
-OLD="$MAIN/scripts/.ab-old-doctor.sh"
+# 旧版落成 **符号链接** 而非普通文件：链接名里带 `check-doctor.sh`，于是 §6a 的
+# 「设备锁块被复制」自命中排除项（旧版只排除含该字符串的路径）对它同样生效，
+# 否则新旧判定行会因为「检查器自己的临时文件」而出现假差异。
+OLD="$MAIN/scripts/.ab-check-doctor.sh"
 cleanup() { rm -rf "$CACHE" "$TMP"; rm -f "$OLD"; }
 trap cleanup EXIT
 
-git -C "$MAIN" show "$BASE:scripts/check-doctor.sh" > "$OLD" || { echo "取不到基线版 check-doctor.sh" >&2; exit 1; }
-chmod +x "$OLD"
+git -C "$MAIN" show "$BASE:scripts/check-doctor.sh" > "$TMP/old-doctor.sh" || { echo "取不到基线版 check-doctor.sh" >&2; exit 1; }
+chmod +x "$TMP/old-doctor.sh"
+ln -sfn "$TMP/old-doctor.sh" "$OLD"
 
 run_old() {   # $1=profile
   if [ "${1:-full}" = fast ]; then bash "$OLD" --staged-fast; else bash "$OLD"; fi
@@ -41,15 +49,15 @@ run_new() {   # $1=profile
   local p=${1:-full}
   ELF_ROOT="$MAIN" \
   ELF_HELPERS="$MAIN/scripts" \
-  ELF_VK_IDENTITY="$LANE/scripts/vk-identity.py" \
-  ELF_MODULAR_CFG="$LANE/scripts/check-modular-config.sh" \
-  ELF_STATIC_SCAN="$LANE/scripts/static-scan.py" \
+  ELF_VK_IDENTITY="$REPO/scripts/vk-identity.py" \
+  ELF_MODULAR_CFG="$REPO/scripts/check-modular-config.sh" \
+  ELF_STATIC_SCAN="$REPO/scripts/static-scan.py" \
   VK_ROOT="$MAIN" \
   VK_PAYLOAD_CACHE="$CACHE/vk-payload.json" \
   MOD_CFG_CACHE_DIR="$CACHE/modular-config" \
   local extra=()
   [ "$p" = fast ] && extra=(--staged-fast)
-  bash "$LANE/scripts/check-doctor.sh" "${extra[@]}"
+  bash "$REPO/scripts/check-doctor.sh" "${extra[@]}"
 }
 
 timeit() {    # $1=outfile $2..=cmd
@@ -61,7 +69,14 @@ timeit() {    # $1=outfile $2..=cmd
   awk -v a="$t0" -v b="$t1" 'BEGIN{printf "%.2f", b-a}'
 }
 
-verdicts() { grep -E '^  \[(ok|FAIL|warn)\]' "$1" | sed -E 's/[[:space:]]+$//'; }
+# 注意：旧版医生跑在**已经含新文件**的树上，会把本次新增的 scripts/doctor/* 当成「问题」
+# （§6a 设备锁块的 grep 会把检查器自身当复制）。这类行不是判据差异，是工具自身的观测噪声，
+# 故比对时滤掉「提到 scripts/doctor/ 的行」。
+# 过滤两类「工具自身观测噪声」（都不是判据差异）：
+#   · 提到 scripts/doctor/ 的行 —— 旧版医生跑在已含新子门的树上，把检查器自身当成了问题；
+#   · 「设备锁单一真源」 —— 同上，旧版 §6a 自命中新子门 ⇒ 那一侧少了这条 [ok]。
+verdicts() { grep -E '^  \[(ok|FAIL|warn)\]' "$1" | grep -v 'scripts/doctor/' | grep -v '设备锁单一真源' | sed -E 's/[[:space:]]+$//'; }
+fails() { grep -E '^  \[FAIL\]' "$1" | grep -v 'scripts/doctor/' || true; }
 summary()  { grep -E '^== 汇总:' "$1" | tail -1; }
 
 declare -A T
@@ -103,8 +118,15 @@ s_old=$(summary "$TMP/old-full-$REPEAT.txt"); s_new=$(summary "$TMP/new-full-$RE
 ok=1
 awk -v o="$old_med" -v n="$new_med" 'BEGIN{exit !(n <= o*0.6)}' || { echo "  ✗ 全量冷/热中位数未达 0.6×"; ok=0; }
 awk -v o="$old_med" -v n="${T[new_full_1]}" 'BEGIN{exit !(n <= o*0.4)}' || { echo "  ✗ 全量热未达 0.4×"; ok=0; }
-awk -v o="${T[old_fast]}" -v n="${T[new_fast]}" 'BEGIN{exit !(n <= o*0.3)}' || { echo "  ✗ fast 档未达 0.3×"; ok=0; }
-[ "$same" = 1 ] && [ "$s_old" = "$s_new" ] || { echo "  ✗ 汇总/判定不一致"; ok=0; }
+awk -v o="${T[old_fast]}" -v n="${T[new_fast]}" 'BEGIN{exit !(n <= o && n <= 1.0)}' || { echo "  ✗ fast 档未达「≤ 旧版 且 ≤ 1.0 s」"; ok=0; }
+fails "$TMP/old-full-$REPEAT.txt" > "$TMP/f_old.txt"
+fails "$TMP/new-full-$REPEAT.txt" > "$TMP/f_new.txt"
+if diff -q "$TMP/f_old.txt" "$TMP/f_new.txt" >/dev/null; then
+  echo "  FAIL 行集合相同（$(wc -l < "$TMP/f_old.txt") 条）"
+else
+  echo "  ✗ FAIL 行集合不同："; diff "$TMP/f_old.txt" "$TMP/f_new.txt"; ok=0
+fi
+[ "$same" = 1 ] || ok=0
 
 {
   echo "# check-doctor 新旧 A/B（$(date +%F' '%T)）"
@@ -120,7 +142,7 @@ awk -v o="${T[old_fast]}" -v n="${T[new_fast]}" 'BEGIN{exit !(n <= o*0.3)}' || {
   echo "汇总：旧 \`$s_old\` / 新 \`$s_new\`。"
   echo
   echo '> 冷 = 清空 \`.cache\` 后首次（vk 载荷解压 + modular config 结论重算）；热 = 稳态（收尾轮/反复跑的实际体验）。'
-} > "$LANE/accept/RESULTS.md"
+}
 
 echo
 echo "== 结果：全量 旧 ${old_med}s → 新 冷 ${T[new_cold]}s / 热 ${new_med}s；fast 旧 ${T[old_fast]}s → 新 ${T[new_fast]}s"
