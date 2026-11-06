@@ -49,10 +49,11 @@ STAGE_NAMES = {
     1: "shim:entry（载荷第一条指令开始执行）",
     2: "shim:cold-copy-done（FD 已拷到装载基址）",
     3: "shim:cache-maint-done（dc civac / ic iallu 完成）",
-    4: "shim:about-to-jump（即将跳入 FD 入口）",
-    5: "prepi:entry（Mu PrePi 已开始执行）",
-    6: "prepi:arch-done（PrePi 平台早期初始化返回）",
-    7: "dxe:sec-done",
+    4: "uefi:eb-returned（2026-11-06R23：ExitBootServices 已返回）",
+    5: "uefi:before-LinuxKernel（2026-11-06R23：已到 LinuxKernel() 调用点）",
+    6: "legacy:prepi:arch-done（旧 ddrmarks 方案，未使用）",
+    7: "legacy:dxe:sec-done（旧 ddrmarks 方案，未使用）",
+
     8: "dxe:after-drivers",
     9: "dxe:before-ebs",
 }

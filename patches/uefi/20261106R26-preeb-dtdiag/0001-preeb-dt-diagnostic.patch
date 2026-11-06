@@ -1,0 +1,43 @@
+Subject: [PATCH] BootLinux: 跳内核前打印交接参数（必须在 EB 之前，EB 后屏会被熄）
+
+2026-11-06R26 y700-elden: p30 的 DDR checkpoint 读回结果：**page 4 与 page 5 都 REACHED**
+⇒ `ShutdownUefiBootServices()` 正常返回，且**已经调用到 `LinuxKernel()`**；
+而设备在 65 s 内没有任何 USB/网络 ⇒ 内核没有起来。卡点由此搬到「跳内核的交接参数」这一层。
+
+本补丁在 `SB_STOP(40)` 之前打一行：
+  `[K] dtb=<DeviceTreeLoadAddr> m=<DTB 首 4 字节，应为 AED00DF0/d00dfeed> sz=<fdt totalsize> k=<KernelLoadAddr>`
+必须放在 EB **之前**：EB 一过显示驱动就把面板熄了（`PITFALLS #531`），之后打的什么都看不见。
+
+判据：
+ - `m` 不是 `d00dfeed` ⇒ DTB 指针/内容不对，内核 head.S 会立刻死；
+ - `sz` 明显异常（0 或 > 4 MiB）⇒ FDT 头损坏；
+ - 三者都正常 ⇒ 问题在 MMU/cache/入口约定（`LinuxKernel()` 的参数与 `arch/arm64/kernel/head.S` 的期望不一致）。
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index 709a99f3..a0477a28 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1182,6 +1182,24 @@ BootLinux (BootInfo *Info)
+       IsModeSwitch = TRUE;
+   }
+ 
++  // 2026-11-06R26 y700-elden: 跳内核前的交接参数自检（**必须在 EB 之前打**：EB 一过面板就被熄）。
++  // p30 的 DDR checkpoint 4/5 都是 REACHED ⇒ 已经调用过 LinuxKernel()，卡点搬到「交接参数」这一层：
++  // DTB 地址/魔数、内核装载地址、fdt totalsize 决定内核能不能走过 early boot。
++  {
++    UINT32  SbMagic = 0;
++    UINT32  SbFdtTot = 0;
++    CHAR8   SbLine[128];
++    UINTN   SbLen;
++    if (BootParamlistPtr.DeviceTreeLoadAddr != 0) {
++      SbMagic  = *(volatile UINT32 *)(UINTN)BootParamlistPtr.DeviceTreeLoadAddr;
++      SbFdtTot = *(volatile UINT32 *)(UINTN)(BootParamlistPtr.DeviceTreeLoadAddr + 4);
++    }
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] dtb=%lx m=%08x sz=%x k=%lx\n\r",
++                         (UINT64)BootParamlistPtr.DeviceTreeLoadAddr, (UINT64)SbMagic,
++                         (UINT64)SbFdtTot, (UINT64)BootParamlistPtr.KernelLoadAddr);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
++
+   SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
+ 
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",

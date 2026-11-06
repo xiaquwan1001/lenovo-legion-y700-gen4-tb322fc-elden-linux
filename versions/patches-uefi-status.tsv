@@ -64,3 +64,7 @@ dir	patches	in_recipe	status	reason	evidence
 20261106R16-no-eb	1	1	ACTIVE	p24：完全跳过 ExitBootServices 只停机——仍崩同一 PC（当时读成「第三方二进制驱动」，已被 p26 推翻：PC 在 LinuxLoader 的 SerialPortWrite 内，见 PITFALLS #527）	patches/uefi/p24-recipe.txt
 20261106R17-faulthandler-image	1	1	ACTIVE	★单行把故障 PC 归到已装载映像（RELEASE 可见）+ 立即停机不打印递归 dump；单独用时无效（预编译 CpuDxe 覆盖）	patches/uefi/p25-recipe.txt；PITFALLS #528/#529
 20261106R18-rehook-exception	1	1	ACTIVE	★关键：BDS 交接前重新注册打过补丁的 handler（覆盖预编译 CpuDxe 那份）；p26 实测打出 [K] FLT 单行	patches/uefi/p26-recipe.txt；PITFALLS #499 晚注册修法
+20261106R25-fbbudget-fullpanel	1	1	ACTIVE	预算从 448 KiB 放回整块面板（448 KiB 结论疑似 NULL 崩误判）+ 面板字节数夹一次	patches/uefi/p31-recipe.txt
+20261106R26-preeb-dtdiag	1	1	ACTIVE	EB 之前打 dtb 地址/魔数/fdt 总长/内核地址（EB 后屏会被熄，必须提前）	patches/uefi/p31-recipe.txt
+20261106R27-fbscroll	1	1	PARTIAL	满屏有界清屏+回顶 + [F] 报有效 scale（s=4 已实测）；但仍有「满屏不刷新」遗留（PITFALLS #532）	patches/uefi/p32-recipe.txt
+20261106R28-fbexplicit-init	1	1	ACTIVE	去掉 SerialPortWrite 惰性初始化（异常上下文二次崩），改 LinuxLoader 入口显式初始化；已构建未上机	patches/uefi/p33-recipe.txt

@@ -1,0 +1,45 @@
+Subject: [PATCH] FrameBufferSerialPortLib: 预算放回整块面板（448 KiB 那条结论是 NULL 崩造成的误判）
+
+2026-11-06R25 y700-elden: p27 的 `[F]` 行把三个数钉死了：
+`len=0x2B00000`（描述符声明 43 MiB）、`lim=0x70000`（我们夹的 448 KiB）、`line=0x16500`（一行文字 91 392 B）。
+而 p21 起那批「屏显写穿」结论是在 **`p_Position` 恒 NULL** 的状态下测出来的（R21 才修好）⇒
+「只有前 448 KiB 可写」极可能是把 NULL 崩读成了越界崩。
+
+本补丁把预算改成 `min(FBCON_SAFE_LIMIT=24 MiB, 描述符长度, gWidth*gHeight*(gBpp/8))`：
+既不会写出描述符之外，也允许整块面板使用。若真有越界，R20 的归因行会带 `far=` 直接指出来。
+配合构建侧 `scale 4`（用户 2026-11-06 要求字体放大四倍）⇒ 一行 = 48 px ≈ 365 KiB，整屏 ≈ 60 行。
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+index 3595c67d..9745ef22 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -35,9 +35,13 @@ UINTN gBpp    = FixedPcdGet32(PcdMipiFrameBufferPixelBpp);
+ // splash 区声明 43 MiB，实测只有前 ~448 KiB 可安全写（PITFALLS #492/#515）；此前的唯一防线是
+ // 「真路径别打印」，而 2026-11-06 夜 p26 已把崩溃 PC 定到 SerialPortWrite 内部（PITFALLS #527）⇒
+ // 改成写不出去：所有绘制先算字节偏移，越过 m_FbSafe 就回卷到 y=0，且绝不再做 23 MiB 的 ResetFb 清屏。
+-#ifndef FBCON_SAFE_LIMIT
+-#define FBCON_SAFE_LIMIT  (448 * 1024)
+-#endif
++// 2026-11-06R25 y700-elden: 预算从 448 KiB 放回「一整个面板」。
++// 2026-11-06 夜 p27 的 [F] 行给出：描述符声明 len=0x2B00000(43 MiB)、面板 1904x3040x32bpp=22 MiB、
++// 一行文字 0x16500 字节(scale 1)。上一条「只有前 448 KiB 可写」的结论（PITFALLS #492/#515）
++// 是在 p_Position 恒 NULL 的状态下测出来的，很可能把 NULL 崩误当成越界崩。
++// 现在改成 min(描述符长度, 面板字节数)，既不会写出描述符之外，也允许整屏使用；
++// 若真的越界，R20 的归因行会带 FAR 指出来。
++#define FBCON_SAFE_LIMIT  (24 * 1024 * 1024)
+ 
+ STATIC UINTN  m_FbSafe   = 0;   // 可写预算（字节，从帧缓冲基址起算）
+ STATIC UINTN  m_FbStride = 0;   // 一个像素行的字节数 = (gBpp/8)*gWidth
+@@ -83,6 +87,13 @@ SerialPortInitialize(VOID)
+   if ((DisplayMemoryRegion.Length > 0x1000) && ((UINTN)DisplayMemoryRegion.Length < m_FbSafe)) {
+     m_FbSafe = (UINTN)DisplayMemoryRegion.Length;
+   }
++  // 2026-11-06R25: 面板实际字节数（不含末尾的结构体），再夹一次。
++  {
++    UINTN  SbPanel = gWidth * gHeight * (gBpp / 8);
++    if ((SbPanel > 0) && (SbPanel < m_FbSafe)) {
++      m_FbSafe = SbPanel;
++    }
++  }
+   {
+     CHAR8  SbLine[128];
+     UINTN  SbLen;

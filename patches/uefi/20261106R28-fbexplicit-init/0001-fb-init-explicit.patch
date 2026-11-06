@@ -1,0 +1,70 @@
+Subject: [PATCH] 屏显初始化改成 LinuxLoader 入口显式做；SerialPortWrite 不再惰性初始化
+
+2026-11-06R28 y700-elden: p32（scale 4 + 整屏预算 + 满屏有界清屏）上机屏上只剩
+`[F] len=2B00000 lim=164800 stride=1DC0 line=16500 s=4` + **`Recursive exception occurred while dumping the CPU state`**
+⇒ 第一次异常之后 handler 自己又崩了一次，于是真正的 `[K] FLT` 行永远打不出来。
+
+原因：R21 把初始化放进 `SerialPortWrite` 的惰性路径，而 **handler 也走 `SerialPortWrite`**
+（R17/R20 的归因行）⇒ `SerialPortInitialize()` → `LocateMemoryMapAreaByName` / HOB / MemoryMapHelperLib
+在 **ExitBootServices 之后不可用** ⇒ 二次异常 ⇒ 只剩那句 Recursive。
+
+本补丁：
+1. `SerialPortWrite` / `SerialPortWriteCritical`：未初始化就**静默丢弃**，绝不回头调 UEFI 服务；
+2. `LinuxLoaderEntry()` 开头显式 `SerialPortInitialize()`（非致命）。
+
+判据：真件应重新出现可读的 `[K] FLT … esr=… far=…`，或 `[K] dtb=…` 这类跳前自检行。
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+index b388a631..f535eda7 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -372,10 +372,12 @@ SerialPortWrite(IN UINT8 *Buffer, IN UINTN NumberOfBytes)
+   // （`[K] FLT pc=cfeb5c84 b=cfea2000 z=45000 o=13c84` = LinuxLoader 的 SerialPortWrite）；
+   // 反证：`LinuxLoader.map` 里根本没有 SerialPortInitialize 符号（LTO 把它当死代码丢了）。
+   // 这里第一次写就补初始化；初始化失败（找不到 "Display Reserved"）就静默丢弃，绝不带着 NULL 往下走。
++  // 2026-11-06R28 y700-elden: 这里**不再惰性初始化**（R21 的惰性初始化会在异常上下文里被
++  // handler 自己触发，而 SerialPortInitialize 要走 MemoryMapHelperLib/HOB，EB 之后不可用
++  // ⇒ 二次异常「Recursive exception」，2026-11-06 p32 上机撞到的正是这个）。
++  // 未初始化就静默丢弃；初始化由 LinuxLoader 入口显式做一次。
+   if (!m_Initialized || (p_Position == NULL)) {
+-    if (RETURN_ERROR (SerialPortInitialize ())) {
+-      return NumberOfBytes;
+-    }
++    return NumberOfBytes;
+   }
+ 
+   if (InterruptState)
+@@ -416,10 +418,12 @@ SerialPortWriteCritical(IN UINT8 *Buffer, IN UINTN NumberOfBytes)
+   // （`[K] FLT pc=cfeb5c84 b=cfea2000 z=45000 o=13c84` = LinuxLoader 的 SerialPortWrite）；
+   // 反证：`LinuxLoader.map` 里根本没有 SerialPortInitialize 符号（LTO 把它当死代码丢了）。
+   // 这里第一次写就补初始化；初始化失败（找不到 "Display Reserved"）就静默丢弃，绝不带着 NULL 往下走。
++  // 2026-11-06R28 y700-elden: 这里**不再惰性初始化**（R21 的惰性初始化会在异常上下文里被
++  // handler 自己触发，而 SerialPortInitialize 要走 MemoryMapHelperLib/HOB，EB 之后不可用
++  // ⇒ 二次异常「Recursive exception」，2026-11-06 p32 上机撞到的正是这个）。
++  // 未初始化就静默丢弃；初始化由 LinuxLoader 入口显式做一次。
+   if (!m_Initialized || (p_Position == NULL)) {
+-    if (RETURN_ERROR (SerialPortInitialize ())) {
+-      return NumberOfBytes;
+-    }
++    return NumberOfBytes;
+   }
+ 
+   if (InterruptState)
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+index be884abd..65b91b69 100644
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -182,6 +182,14 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+   DEBUG ((EFI_D_VERBOSE, "LinuxLoaderEntry Address: 0x%llx\n",
+          (UINTN)LinuxLoaderEntry));
+ 
++  // 2026-11-06R28 y700-elden: 本映像链接了 FrameBufferSerialPortLib 却从不初始化它（LTO 连符号
++  // 都丢了）。R21 曾用惰性初始化，但那会在**异常上下文**里被触发 → 二次异常。改为入口显式初始化；
++  // 失败也不要紧，之后 SerialPortWrite 会静默丢弃。
++  {
++    RETURN_STATUS  EFIAPI  SerialPortInitialize (VOID);
++    (VOID)SerialPortInitialize ();
++  }
++
+   Status = InitThreadUnsafeStack ();
+ 
+   if (Status != EFI_SUCCESS) {

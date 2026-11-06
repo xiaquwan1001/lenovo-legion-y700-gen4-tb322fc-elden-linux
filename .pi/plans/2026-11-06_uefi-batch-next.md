@@ -95,3 +95,18 @@
 - `TASKS/README.md` §5：新块（p25/p26 结果 + 分支决定）；`versions/patches-uefi-status.tsv` 加 R17/R18 行。
 - `patches/uefi/README.md`：p25/p26 世代行 + 上面 H3 的反汇编核对记录。
 - `PITFALLS`（若踩到新坑）：候选条目已识别——「debug image table 在 Mu RELEASE 可能为空」、「异常上下文禁止 allocate」。
+
+## 8. 2026-11-06 收尾后的下轮入口（p34）
+
+**已知状态**：DDR 读回证明 **EB 正常返回、且已到 `LinuxKernel()` 调用点**；内核没起来。
+卡点 = 交接参数 / 内核极早期。**但当前取证被一个屏显 bug 卡住**（`PITFALLS #532`）：满屏后不刷新，
+异常 dump 打不出来就卡死。所以 p34 先修通道，再看交接参数。
+
+| # | 事项 | 判据 |
+|---|---|---|
+| 1 | 量清真面板几何：`PcdMipiFrameBufferWidth/Height/PixelBpp` 的实际值 vs `Display Reserved` 描述符 `len=0x2B00000` vs 实测「一行字节」；解释 `lim=0x164800` 是怎么夹出来的 | 三个数写进 `[F]` 行并自洽 |
+| 2 | 帧缓冲控制台重做「满屏 → 有界清屏 → 回顶」：像素语义（`y += FONT_HEIGHT*scale`）、清屏 `SetMem(min(描述符长度, 面板字节))`、同步 `x=0`；**保留 `log=` 行数上限** | 连续打印 >200 行仍能刷新，最后一行可见 |
+| 3 | 异常归因两档：`sbprobe=3` 单行（现状）、`sbprobe=1` 完整 dump（PC/ESR/FAR + 前若干栈行），并先清屏再打 | 真件触发异常时能看到 PC/ESR/FAR |
+| 4 | 上机 1 发：先看 `[K] dtb=… m=…`（魔数必须 `d00dfeed`） | 魔数错 ⇒ 查 DTB 装载；对 ⇒ 查 `LinuxKernel()` 的 MMU/cache 与入口约定 |
+
+止损不变：p34 之后累计再 3 发无实质进展 ⇒ 写 handoff 收口（UEFI 是拓展项，不阻塞主线）。

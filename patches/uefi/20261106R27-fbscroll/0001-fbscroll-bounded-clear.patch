@@ -1,0 +1,59 @@
+Subject: [PATCH] FrameBufferSerialPortLib: 满屏时有界清屏再回顶（否则像"不刷新"）+ [F] 行报有效 scale
+
+2026-11-06R27 y700-elden: p31（预算放回整块面板 + scale 4）上机现象：**第一次写满屏幕之后就不再刷新**。
+原因是我们 R19 的「回卷到 y=0」只回卷不清屏 ⇒ 新内容只覆盖最上面几行，屏幕其余部分留着旧字，
+看起来就是"卡住"。原始实现里满屏会走 `ResetFb()`（逐像素三重循环清 23 MiB），我们为了避写穿把它去掉了。
+
+本补丁改成**有界清屏**：`SetMem(DisplayMemoryRegion.Address, m_FbSafe, 0)` —— 只清 `m_FbSafe`
+（= min(描述符长度, 面板字节数)）以内，再做 `FbConFlush()` 与 `y=0`。`.inf` 加 `BaseMemoryLib`。
+
+另在 `[F]` 行末尾加 `s=%d`（编译期 `SCALE_FACTOR`）—— 用来确认构建侧的 `scale N` 到底有没有生效
+（历史现象与此不符：配方写 3，屏上却能装 6 行，怀疑 knob 没落到 `font5x12.h`）。
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+index 9745ef22..b388a631 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -13,6 +13,7 @@
+ #include <Library/MemoryMapHelperLib.h>
+ #include <Library/SerialPortLib.h>
+ #include <Library/PrintLib.h>        // 2026-11-06R19 y700-elden
++#include <Library/BaseMemoryLib.h>   // 2026-11-06R27 y700-elden
+ 
+ #include <Resources/FbColor.h>
+ #include <Resources/font5x12.h>
+@@ -97,9 +98,9 @@ SerialPortInitialize(VOID)
+   {
+     CHAR8  SbLine[128];
+     UINTN  SbLen;
+-    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] len=%lx lim=%lx stride=%lx line=%lx\n\r",
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] len=%lx lim=%lx stride=%lx line=%lx s=%d\n\r",
+                          (UINT64)DisplayMemoryRegion.Length, (UINT64)m_FbSafe,
+-                         (UINT64)m_FbStride, (UINT64)m_FbLine);
++                         (UINT64)m_FbStride, (UINT64)m_FbLine, (UINT64)SCALE_FACTOR);
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
+   }
+ 
+@@ -199,6 +200,10 @@ newline:
+   // 2026-11-06R19: 预算用完就回卷到顶，**不再 ResetFb()**（23 MiB 清屏本身就是写穿风险）。
+   // 这样最新内容永远留在最上面 ⇒ 崩溃前的最后一行必定可见，这是我们现在唯一的判据通道。
+   if ((m_FbSafe != 0) && (((p_Position->y + (UINTN)FONT_HEIGHT * scale_factor) * m_FbStride) > m_FbSafe)) {
++    // 2026-11-06R27 y700-elden: 满屏时**有界清屏再回到顶部** —— 只清 m_FbSafe（= 面板字节数），
++    // 不再用原来的逐像素三重循环 ResetFb()。只回卷不清屏的话，新内容只覆盖最上面几行，
++    // 下面留的全是旧字，看起来就像"不刷新"（2026-11-06 上机实测）。
++    SetMem ((VOID *)(UINTN)DisplayMemoryRegion.Address, m_FbSafe, 0);
+     p_Position->y = 0;
+     FbConFlush ();
+     if (intstate)
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.inf b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.inf
+index 98f3889b..001ee240 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.inf
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.inf
+@@ -17,6 +17,7 @@
+ [LibraryClasses]
+   ArmLib
+   PcdLib
++  BaseMemoryLib
+   PrintLib
+   IoLib
+   HobLib
