@@ -216,3 +216,20 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261106R2[0-4]-*/*payload*
 /reports/artifacts/uefi-20261106R2[0-4]-*/kernel.bin
 /reports/artifacts/uefi-20261106R2[0-4]-*/build.log
+# 2026-11-06 夜 UEFI 线（p25–p33）构建产物：只留 manifest/SHA256SUMS/BootShim.bin，其余是二进制
+/reports/artifacts/uefi-20261106R1[7-9]-*/*.efi
+/reports/artifacts/uefi-20261106R1[7-9]-*/*.fd
+/reports/artifacts/uefi-20261106R1[7-9]-*/*.img
+/reports/artifacts/uefi-20261106R1[7-9]-*/*.gz
+/reports/artifacts/uefi-20261106R1[7-9]-*/bootpayload.bin
+/reports/artifacts/uefi-20261106R1[7-9]-*/kernel.bin
+/reports/artifacts/uefi-20261106R1[7-9]-*/payload-v2aligned.bin
+/reports/artifacts/uefi-20261106R1[7-9]-*/build.log
+/reports/artifacts/uefi-20261106R2[0-8]-*/*.efi
+/reports/artifacts/uefi-20261106R2[0-8]-*/*.fd
+/reports/artifacts/uefi-20261106R2[0-8]-*/*.img
+/reports/artifacts/uefi-20261106R2[0-8]-*/*.gz
+/reports/artifacts/uefi-20261106R2[0-8]-*/bootpayload.bin
+/reports/artifacts/uefi-20261106R2[0-8]-*/kernel.bin
+/reports/artifacts/uefi-20261106R2[0-8]-*/payload-v2aligned.bin
+/reports/artifacts/uefi-20261106R2[0-8]-*/build.log
