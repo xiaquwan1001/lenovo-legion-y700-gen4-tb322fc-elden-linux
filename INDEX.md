@@ -187,7 +187,7 @@
 - **宿主 rootfs（Alpine → Debian/Mobian、systemd）**：用户 2026-10-26 定的方向，**不是「勿重推」项**；路径与成本只读 `reports/mobian-migration-plan-20261021.md`（S0–S7，完成项见其 §4 状态标记）与 `TASKS/README.md` T14/T17。
 - **两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy`（trixie 3.7 无 SSC 后端）+ `libssc2`，否则传感器栈直接死。
 - **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-10 NFC、G1-30 slim initramfs；
-  **G1-29 UEFI 不在「勿重推」之列** —— 路线 A 首轮（2026-10-05）失败后曾搁置，**2026-11-01 用户放行恢复推进**，当前口径只读 `TASKS/README.md` §5（**11-03/11-04 块**；11-01/11-02 块已下沉到 `TASKS/sessions/2026-11-02-UEFI历史块归档.md`）：11-04 晚块 = 卡点定位到内层 FV 的 LZMA 段解码失败；`reports/uefi-payload-execution-20261104.md`、`reports/uefi-posctrl-20261103-summary.md` 为两条主报告。
+  **G1-29 UEFI 不在「勿重推」之列** —— 路线 A 首轮（2026-10-05）失败后曾搁置，**2026-11-01 用户放行恢复推进**，当前口径只读 `TASKS/README.md` §5（**2026-11-06 块**；11-01/11-02 块已下沉到 `TASKS/sessions/2026-11-02-UEFI历史块归档.md`）：11-06 块 = 崩溃元凶 = **屏显写穿帧缓冲**（`SerialPortWrite`），探针通道改 `sbprobe=3`，窗口收敛到 `MarkPtnActive()` 附近；主报告 = `reports/uefi-vsstop-and-fbconsole-20261106.md`、`reports/uefi-screenlog-crash-20261105.md`（§1–§9 仍有效，§10–§12 已作废）。
 - **单元**：U1 / U2 台账见 `DEVICE/README.md` §1；解锁议题已定稿关闭（`RUNBOOK` §0.5 + `archive/topics/复盘-2026-10-03-BL解锁.md`），不要重新论证。
 
 ---
@@ -201,6 +201,8 @@ scripts/check-doctor.sh
 # 【版本对账】“这个 boot.img 里到底是哪个内核” / 重生成对齐表
 python3 scripts/vk-identity.py --gate                    # 只看命名/溯源规则结果
 python3 scripts/vk-identity.py > versions/vk-kernel-identity.tsv   # 重生成（随后连表一起提交）
+# 【脚本账】全量可执行入口清单（live / hist-only / unreferenced；整理轮用，勿手改表）
+python3 scripts/static-scan.py --inventory | sed '1d' > versions/scripts-inventory.tsv
 # 【动手前 30 秒】引导链类问题（解锁/AVB/降级/GPT/EDL）先查本地既有结论（PITFALLS #87）
 grep -rn -iE "unlock|解锁|sn\.img|rollback|testkey|073" \
   .pi/skills/*/references/*.md *.md archive/topics/*.md | grep -v '^Binary'

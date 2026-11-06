@@ -1,0 +1,57 @@
+/dts-v1/;
+/* vmmtest guest DT, v2 — adds the /gunyah-vm-config resource description that the
+ * Gunyah RM parses at GUNYAH_RM_RPC_VM_INIT (reference: qemu-for-gunyah
+ * accel/kvm/gunyah.c:gunyah_arm_fdt_customize and crosvm
+ * hypervisor/src/gunyah/aarch64.rs:create_fdt).  v1 had no config node at all.
+ */
+/ {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	compatible = "elden,vmmtest-guest";
+	model = "elden vmmtest guest";
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x0 0x800000>;
+	};
+
+	chosen {
+		bootargs = "console=none";
+	};
+
+	intc: interrupt-controller@8000000 {
+		compatible = "arm,gic-v3";
+		#interrupt-cells = <3>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		interrupt-controller;
+		reg = <0x0 0x08000000 0x0 0x10000>,	/* GICD */
+		      <0x0 0x080a0000 0x0 0xf60000>;	/* GICR */
+		interrupts = <0x1 0x9 0x4>;		/* PPI 9, level high */
+	};
+
+	gunyah-vm-config {
+		image-name = "vmmtest";
+		os-type = "linux";
+
+		memory {
+			#address-cells = <2>;
+			#size-cells = <2>;
+			base-address = <0x0 0x80000000>;
+			size-max = <0x0 0x800000>;
+		};
+
+		interrupts {
+			config = <&intc>;
+		};
+
+		vcpus {
+			affinity = "proxy";
+		};
+
+		vdevices {
+			generate = "/hypervisor";
+		};
+	};
+};

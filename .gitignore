@@ -12,7 +12,18 @@
 /Y700-elden-linux/
 /stock-src/
 /qdl/
-/tools/
+# /tools 用 /* 而非整目录忽略（同 /out 的理由）：整目录忽略会让 `!` 复活失效。
+# 2026-11-06：原 `/tools/` 档口使 tools/mkbootimg 换机后全丢（.pi/memory/MEMORY.md 2026-10-17 条）。
+# 现纳管「小体积 / 自研 / 上游取件成本高」的文本工具，只挡构建产物与二进制。
+/tools/*
+!/tools/avbtool.py
+!/tools/l2-extract/
+!/tools/gunyah-modules/
+/tools/gunyah-modules/*/*.dtb
+/tools/gunyah-modules/*/*.bin
+/tools/gunyah-modules/*/vmmtest
+/tools/gunyah-modules/*/rmtest
+/tools/gunyah-modules/*/hypprobe
 /edk2-gunyah/
 /edk2-gunyah-qemu/
 # G1-29 资源：SM8750/TB322FC UEFI 设备包 + 原厂 DXE 备份（2026-10-05 落盘，见 RESOURCES §1.6/§3）

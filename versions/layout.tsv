@@ -21,7 +21,7 @@ doc	archive/	track	过程证据（追加为主；不得作为当前结论引用�
 evidence	reports/	track	报告与活跃证据工作区（md 入库；大件按 .gitignore 排除）
 evidence	backup/	ignore	原厂固件/分区 dump/内核 bundle/官方线刷包（不可再生，见 RESOURCES §3）
 src	scripts/	track	脚本全集（构建/刷机/诊断/门禁）
-src	tools/	track	第三方或自研小工具（avbtool/mkbootimg/l2-extract…）
+src	tools/	track	第三方或自研小工具文本（avbtool/l2-extract/gunyah-modules 源码；2026-11-06 起从整目录忽略改为 `/*` + 白名单，构建产物仍挡；`mkbootimg` 已改住 `scripts/mkbootimg.py`）
 src	patches/	track	内核补丁与 config 快照（内核进度的权威文本）
 src	patches-userland/	track	用户态（Phosh/phoc）补丁与构建/安装脚本
 src	reference/	track	外部同机型/厂商资料快照与裁决

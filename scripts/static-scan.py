@@ -23,6 +23,7 @@
   scripts/static-scan.py            # 人类可读
   scripts/static-scan.py --tsv      # `TAG<TAB>值` 格式（check-doctor §6 消费）
   scripts/static-scan.py --json     # 机器可读
+  scripts/static-scan.py --inventory # 全量可执行入口清单（path/行数/字节/live/hist/verdict）
   scripts/static-scan.py --root DIR # 指定仓库根（默认 = 本文件上级目录）
 """
 import json
@@ -32,6 +33,9 @@ import subprocess
 import sys
 
 TEXT_EXT = ('.md', '.sh', '.py', '.tsv', '.json')
+
+# 本工具自己的输出不得进语料：否则清单表会把每个脚本名都「引用」一次（--inventory 自吞）。
+SELF_OUTPUT = ('versions/scripts-inventory.tsv',)
 BASHISM_PAT = re.compile(r"\[\[(?!:)|declare -|[A-Za-z_][A-Za-z0-9_]*=\(")
 
 
@@ -52,7 +56,7 @@ def corpus(root):
         if r.returncode != 0:
             continue
         files += [p for p in r.stdout.split('\0') if p.endswith(TEXT_EXT)]
-    return sorted(set(files))
+    return sorted(set(files) - set(SELF_OUTPUT))
 
 
 def bashisms(root, scripts):
@@ -123,6 +127,41 @@ def dead_scripts(root, scripts, corpus_files):
     return dead
 
 
+HIST_PAT = re.compile(r'(^|/)(reports|sessions|plans|archive)/|^\.pi/plans/')
+
+
+def inventory(root, scripts, cfiles):
+    """全量可执行入口清单（2026-11-06 整理轮新增）。
+
+    与 dead_scripts() 的区别：不只判「有没有人提过」，而是把引用分成**两类**——
+      live = 入口文档（INDEX/TASKS/RESOURCES/…/AGENTS/README）与非历史文档/脚本里的引用；
+      hist = 只出现在 reports/ | */sessions/ | .pi/plans/ | archive/ 里的引用。
+    “hist>0 且 live=0” 的脚本 = 只能从历史记录里得知的入口：它们未必是死的（例：
+    gpt-restore 只写在报告里），但**缺一个受管注册点**，正是历轮整理反复重查的那批。
+
+    输出列：path / ext / lines / bytes / live / hist / verdict
+    verdict：live=LIVE / hist=HIST-ONLY / none=UNREFERENCED（由本工具判定；人工裁决记在
+    `PITFALLS/sessions/15-过时废弃功能缺陷登记.md` §15.1，本工具不读也不改它）。
+    """
+    names = sorted({os.path.basename(s) for s in scripts}, key=len, reverse=True)
+    pairs = _found_pairs_grep(root, names, cfiles) if names else {}
+    rows = []
+    for rel in scripts:
+        base = os.path.basename(rel)
+        refs = {p for p in (pairs or {}).get(base, set()) if p != rel}
+        hist = sorted(p for p in refs if HIST_PAT.search(p))
+        live = sorted(refs - set(hist))
+        verdict = 'LIVE' if live else ('HIST-ONLY' if hist else 'UNREFERENCED')
+        try:
+            body = open(os.path.join(root, rel), encoding='utf-8', errors='replace').read()
+            lines, size = body.count('\n'), len(body.encode())
+        except OSError:
+            lines = size = 0
+        rows.append((rel, os.path.splitext(rel)[1], lines, size, len(live), len(hist), verdict))
+    rows.sort(key=lambda r: (r[6] != 'UNREFERENCED', r[6] != 'HIST-ONLY', r[0]))
+    return rows
+
+
 def main(argv):
     root = None
     mode = 'tsv'
@@ -138,6 +177,8 @@ def main(argv):
             mode = 'tsv'
         elif a == '--human':
             mode = 'human'
+        elif a == '--inventory':
+            mode = 'inventory'
         elif a in ('-h', '--help'):
             print(__doc__)
             return 0
@@ -154,6 +195,15 @@ def main(argv):
     scripts = [p for p in git(root, 'ls-files', '-z', '--', 'scripts/*.sh').stdout.split('\0')
                if re.match(r'^scripts/[^/]+\.sh$', p)]
     cfiles = corpus(root)
+    if mode == 'inventory':
+        spec = ('scripts/*.sh', 'scripts/*.py', 'scripts/*/*.sh', 'scripts/*/*.py',
+                'initramfs/*.sh', 'rootfs/*.sh', 'rootfs/*.py', 'rootfs/*/*.sh', 'rootfs/*/*.py',
+                'tools/*.py', 'tools/*/*.sh', 'tools/*/*.py', 'packaging/*/*/*.sh')
+        alls = [p for p in git(root, 'ls-files', '-z', '--', *spec).stdout.split('\0') if p]
+        print('path\text\tlines\tbytes\tlive\thist\tverdict')
+        for r in inventory(root, alls, cfiles):
+            print('\t'.join(str(x) for x in r))
+        return 0
     res = {'BASHISM': bashisms(root, scripts),
            'DEAD': dead_scripts(root, scripts, cfiles),
            'scripts': len(scripts), 'corpus': len(cfiles)}

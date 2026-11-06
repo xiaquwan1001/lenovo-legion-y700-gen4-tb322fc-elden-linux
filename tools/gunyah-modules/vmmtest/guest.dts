@@ -1,0 +1,17 @@
+/dts-v1/;
+/* Minimal Gunyah guest DT for the vmmtest payload (RM appends its own overlay). */
+/ {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	compatible = "elden,vmmtest-guest";
+	model = "elden vmmtest guest";
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x0 0x800000>;
+	};
+
+	chosen {
+		bootargs = "console=none";
+	};
+};

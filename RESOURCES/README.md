@@ -130,7 +130,7 @@
 |---|---|
 | 交叉编译 | `~/bin/aarch64-linux-gnu-gcc` 15.2.0 |
 | 内核构建 | `linux/`（tree 605 M）+ `scripts/build-kernel.sh`、`scripts/build-boot.sh` |
-| boot 打包/签名 | `tools/mkbootimg/`、`scripts/sign-boot-b.sh`、b 槽自签密钥 **`bootslot-b/avb.key`**（`scripts/sign-boot-b.sh:14` 实际取值；原 AOSP testkey `env-pass/keys/testkey_rsa4096.pem` ⚠️MIGRATION-LOST(2026-10-17)，见 §3.5） |
+| boot 打包/签名 | `scripts/mkbootimg.py`（自研 v2 头，pack/unpack/`--selftest`；**取代 2026-10-17 丢失的 `tools/mkbootimg/`**，后者已于 2026-11-06 清掉空壳）、`scripts/sign-boot-b.sh`、b 槽自签密钥 **`bootslot-b/avb.key`**（`scripts/sign-boot-b.sh:14` 实际取值；原 AOSP testkey `env-pass/keys/testkey_rsa4096.pem` ⚠️MIGRATION-LOST(2026-10-17)，见 §3.5） |
 | AVB | `avbtool`（**实测不需 pycryptodome**）；b 槽自签密钥 `bootslot-b/avb.key` |
 | GPT | `scripts/gpt-surgery-tb322fc.py`（list/build，读实际 GPT）、`scripts/gpt-dump.sh`（4096 B 扇区专用）、`scripts/slot-attr.py` |
 | EDL 工具链（**源码自建，单根目录 `~/edl/`**，2026-11-03 重编） | **不再用 apt/.deb 打包版**（qdl 2.4-3 与 edl-ng 1.6.0 均已于 2026-11-03 卸载）。① **`~/edl/qdl`** = `linux-msm/qdl` **v2.9** 源码（干净构建，`qdl/build/qdl`，`~/.local/bin/qdl` 软链）——整包 `rawprogram`/`flashmap`/sparse/`sha256`/`--skipblock`/`--dry-run`/512·4096 扇区探测，**仍未上机**；② `~/edl/edl-ng` = `strongtz/edl-ng` 源码（`v1.6.0-2-g4a658ee`，提供 `printgpt`/`read-part`/`write-part`/`erase-*`/`reset`/`ramdump`；**本机无 dotnet，暂不可构建**，已真机验证的是旧 .deb 安装态，取证结论仍有效）；③ `~/edl/bkerler-edl`（含 `.venv`）= `peek` 族/Diag/loader 检索备胎；④ `~/edl/qdlrs` 只观察；⑤ `~/edl/survey` = 调研 issue 快照。loader：`~/下载/tb322fc/xbl_s_devprg_ns.melf`。构建依赖已装 `libusb-1.0-0-dev`（不再需 sysroot）。说明/追新/清理记录见 `~/edl/README.md`；选型与勘误见 `reports/edl-toolchain-survey-20261101.md`（§6/§7） |
@@ -143,7 +143,8 @@
 | AVF 离线提取 | `scripts/extract-avf-assets.sh`（从原厂 system 镜像 debugfs 取 crosvm/vm/microdroid_kernel/u-boot.bin，无需设备） |
 | C0 真机取证 | `scripts/c0-android-evidence.sh`（adb 采身份/DRM/传感器/分区，输出 `backup/<SN>-<档>/c0-baseline/` + SHA256SUMS；手工项见脚本尾提示） |
 | 磁盘/挂载工具 | `qemu-img`/`qemu-nbd` 已装（A13 ✅）；fstab nofail 已修（A18 ✅） |
-| **全量脚本** | 上表仅列构建/刷机链骨干；全量见 `ls scripts/*.sh`（含快环 `scripts/iterate.sh` 四档环、`mod-loop/kexec-boot/to-fastboot/flash-b/cycle` 均自锁、`device-lock.sh` 设备锁、`build-manifest.sh` 版本指纹、`audio-alsa-init.sh` 裸 ALSA 路由、`apply-kernel-fragment.sh` 模块化片段等） |
+| **全量脚本** | 上表仅列构建/刷机链骨干；**全量清单 = `../versions/scripts-inventory.tsv`**（2026-11-06 起，机器生成：`python3 scripts/static-scan.py --inventory`，列 = path/行数/字节/live/hist/verdict；`HIST-ONLY` = 只能从历史记录得知的入口，`UNREFERENCED` 需人工裁决，见 `../PITFALLS/sessions/15-过时废弃功能缺陷登记.md` §15.1）；人读面 = `ls scripts/*.sh`（含快环 `scripts/iterate.sh` 四档环、`mod-loop/kexec-boot/to-fastboot/flash-b/cycle` 均自锁、`device-lock.sh` 设备锁、`build-manifest.sh` 版本指纹、`audio-alsa-init.sh` 裸 ALSA 路由、`apply-kernel-fragment.sh` 模块化片段等） |
+| 低频但现役的诊断件（2026-11-06 补登记） | `rootfs/vk-probe.py`（ctypes 直调 Vulkan loader 枚举物理设备，本机无 `vulkan-tools`；G1-8 基准用）、`initramfs/probe-device.sh`（initramfs 内 DT/`msm-id`/`board-id`/reserved-memory 一次性 dump，bring-up 现场用）、`scripts/rambuild.sh`（内存盘构建区助手，设计见 `.pi/plans/2026-10-15_081500-内存盘构建区规划.md`）——这三件在 `scripts-inventory.tsv` 里无 live 引用，**不是废件** |
 
 ### 2.2 可上机资产（**设备无关**，任一单元通用）
 
@@ -349,7 +350,7 @@ git log --oneline -10
 | 内核线 | `geekidos-linux` refs `vk87–vk126`、`m1/*`、`m3/*` | ⚠️MIGRATION-LOST（**2026-10-23 复核：仍缺**；但 bundle 已补齐到当前全量） | 现役线（含部署 vk94、`m1-73/baseline` tip `c7da05b1d8`）无提交对象。**2026-10-23 已重做一版全量 bundle**：`backup/kernel-git-repair-2026-10-23/elden-all-refs-66.bundle`（290 M / 67 heads，含 `replay/m1-73-vk127`）；旧的 10-10 pre-boundary（265 M）保留（唯一保存悬空提交 `f61b4b82ca`） |
 | 资产树 | `build/`（原 ~4 G） | ✅ **已重建（2026-10-23：40 G / 7 棵）**，但**不是纯可再生** | 两独立仓含本地独有 commit（`base-7.2` 的 `master`/`elden-payload-v2`、`m3v2-7.3rc7` 的 `m3v2`/`replay-m1-73-vk127`）；回收前先 bundle（`reports/assets-inventory-20261023.md` §4.1） |
 | 镜像 | `out/*.img`（`vk42–vk126`）+ 归档件 | ◐ **部分重建**：现查 `ls out/*.img back backup/out-history-*/\*.img 2>/dev/null \| wc -l`（2026-11-05 归档后 = `out/` 15 + 归档 114 = 129；vk130/vk131 仅剩 `.manifest`，A4 已删其 `.img`） | 旧号仍缺；`.manifest` 220 个；台架臂不可复跑（在机 b 槽 + `backup/HA2EXB0E` 各留 1 份）；历史镜像路径见 `backup/out-history-20261105/ARCHIVE.tsv` |
-| 日志/工具 | `logs/`（原 92 M）、`tools/`（原 14 M，含 `tools/wd-audio-test/`） | ◐ `logs/` 已到 204 M；`tools/` 只剩 232 K | 旧证据指针 `logs/bench-20261011`、`logs/ui-20261011` 仍悬空；`venv-avb`、`wd-audio-test` 仍缺 |
+| 日志/工具 | `logs/`、`tools/` | ✅ **2026-11-06 `tools/` 已入库**（`.gitignore` 由整目录 `/tools/` 改为 `/tools/*` + 白名单：`avbtool.py`、`l2-extract/`、`gunyah-modules/` 源码；构建产物 `.dtb/.bin/vmmtest` 仍挡；20 个文本文件）；`tools/mkbootimg/` 空壳（只剩 pyc）已删，打包器在 `scripts/mkbootimg.py` | `tools/` 原 232 K → 现 1.0 M（多出来的是 `avbtool.py` 204 K + gunyah 源码）；`wd-audio-test` 仍未迁（C6 工具，`reports/container-audio-20261011.md`） |
 | Q28 取证脚本 | `scripts/q28-boot-cycle.sh`、`scripts/q28-ab-delay.sh`、`scripts/q28-verdict.sh`、`scripts/q28-race-hunt.sh` | ⚠️MIGRATION-LOST（2026-10-17；**2026-11-02 复核仍缺**，现存只有 `scripts/q28-devprobe{,2}.sh`） | Q28 取证/采样链的**重放配方**在 `TASKS/README.md` §5 的 Q28 行；§2.1 表内引用处已就地带 `⚠️MIGRATION-LOST` 注 |
 | 签名密钥 | AOSP testkey `env-pass/keys/testkey_rsa4096.pem`（`env-pass/` 整目录不入 git） | ⚠️MIGRATION-LOST（2026-10-17；**2026-11-02 复核本机已无该目录**） | 现役 b 槽自签密钥 = **`bootslot-b/avb.key`**（`scripts/sign-boot-b.sh:14` 实际取值）；locked 全链重打 = `scripts/build-locked-chain.sh`；§2.1 表内引用处已就地带注 |
 | 可重下 | `edk2-*`、`mu_wide_platforms`、`uefi-firmware-backup`、`qdl`、`twrp`、`pkgs*`、`probe`、`rootfs/{alpine,dl,debs}` | LOST-REDOWNLOADABLE（2026-10-23：仍均为空） | 重下/重建，非硬伤 |

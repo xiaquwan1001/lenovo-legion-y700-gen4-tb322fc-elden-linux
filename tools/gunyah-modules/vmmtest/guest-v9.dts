@@ -1,0 +1,69 @@
+/dts-v1/;
+/* v9 = v2 (gunyah-vm-config, no fw) + the `rm-rpc` vdevice that BOTH reference VMMs emit:
+ *   qemu-for-gunyah  accel/kvm/gunyah.c      (creates /gunyah-vm-config/vdevices/bell-*)
+ *   DroidVM/crosvm   hypervisor/src/gunyah/aarch64.rs:187  (rm-rpc + message-size + queue-depth,
+ *                    with the comment "declare an rm-rpc vdevice so RM builds a RM<->guest
+ *                    message-queue pair ...  if VM_START fails here, RM is rejecting it")
+ * Our earlier v2..v8 never had this node -- a genuine untested variable.
+ *
+ * This variant carries NO firmware address (matches crosvm --protected-vm-without-firmware,
+ * the mode DroidVM actually runs on tb322fc).
+ */
+/ {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	compatible = "elden,vmmtest-guest";
+	model = "elden vmmtest guest";
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x0 0x800000>;
+	};
+
+	chosen {
+		bootargs = "console=none";
+	};
+
+	intc: interrupt-controller@8000000 {
+		compatible = "arm,gic-v3";
+		#interrupt-cells = <3>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		interrupt-controller;
+		reg = <0x0 0x08000000 0x0 0x10000>,	/* GICD */
+		      <0x0 0x080a0000 0x0 0xf60000>;	/* GICR */
+		interrupts = <0x1 0x9 0x4>;		/* PPI 9, level high */
+	};
+
+	gunyah-vm-config {
+		image-name = "vmmtest";
+		os-type = "linux";
+
+		memory {
+			#address-cells = <2>;
+			#size-cells = <2>;
+			base-address = <0x0 0x80000000>;
+			size-max = <0x1 0x00000000>;
+		};
+
+		interrupts {
+			config = <&intc>;
+		};
+
+		vcpus {
+			affinity = "proxy";
+		};
+
+		vdevices {
+			generate = "/hypervisor";
+
+			rm-rpc {
+				vdevice-type = "rm-rpc";
+				generate = "/hypervisor/qcom,resource-mgr";
+				message-size = <0xf0>;
+				queue-depth = <0x8>;
+			};
+		};
+	};
+};
