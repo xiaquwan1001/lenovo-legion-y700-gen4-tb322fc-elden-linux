@@ -24,8 +24,12 @@
 | 主机 | `xuqianhui`（Ubuntu 26.04；旧文档里的 `5700g-x8664` 是历史名，2026-11 起不再使用），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-11-04 深夜（当前状态，唯一权威）—— ⚠ 设备停在 fastboot（UEFI 实验十二发全部零写盘）**：
-  最后 4 发（R9–R12）只 `fastboot boot`，`boot_b` 仍 `fb55997c…`；回 Linux 直接 `fastboot reboot` 即可。
+- ★**2026-11-06 傍晚（当前状态，唯一权威）—— 设备在 Linux（`vk172`，持久根 `/dev/sda17` ext4），`boot_b` 未动（`fb55997c…`）**：
+  11-05 夜 → 11-06 傍晚两轮 UEFI 实验**全部 `fastboot boot` RAM 件、零写盘**（11-06 傍晚一轮 26 发），
+  `a`/`b` 两槽仍 `Bootable:1`；最后一发真启动件崩后 `fastboot reboot` 回 Linux，**无遗留异常态**
+  （`TASKS/sessions/2026-11-06-UEFI上机全场走通到跳内核.md` §6.6、`reports/uefi-onboard-walkthrough-20261106.md` §6）。
+  ⚠ 11-06 有一发真启动件崩到 USB 只枚举不应答 ⇒ 只能**物理断电**回 fastboot（`PITFALLS #523` 的「一会话一发电平 ≥40」纪律）。
+- ★**2026-11-04 深夜（历史快照，已被上一条取代）**：当时设备停在 fastboot，最后 4 发（R9–R12）只 `fastboot boot`，`boot_b` 仍 `fb55997c…`。
   最近一次在机 Linux 记录：`boot_id` `2422f8cd-29dc-4efa-ae01-ebcdd85e531b`、`systemctl --failed` 0、根 `/dev/sda17` ext4。
   历史（2026-11-02）：`boot_id` `109a2bce-b3e9-4648-a4be-03aed6862764`、`uname -v` `#1 SMP PREEMPT Fri Oct 30 19:00:42 CST 2026`（UTS `…vk172`）、
   根 `/dev/sda17` ext4、`current-slot=_b`、**a/b 两槽均 `Bootable:1`**、`systemctl --failed` **0**、

@@ -89,4 +89,17 @@ curl -s --noproxy '*' "https://patchwork.kernel.org/api/1.2/patches/?submitter=x
 6. 本轮脚本全部在 `/tmp/laneA/`（`scan.py`、`body.py`、`sent.py`、`hdr.json`（2635 头条目）、`pw.json`、`pw9.json`、`matrix.txt`、`b1..b3.txt`）——**临时，可能被清**；仓库内只新增本文件与 `mail-triage-20261105.md`。
 7. 时区一律 UTC；原信 `+0200`/`+0800`/`+0530` 已换算。
 
+## 5. 2026-11-06 复核（增量窗：11-05 02:40Z → 11-06 10:54Z）
+
+> 本轮只做两件事：重查**有没有新回信**、重查**patchwork 状态有没有动**。结论 = **两者都没有** ⇒ §1 的「我方欠什么」整表仍然有效，不需要新报告。
+
+| 项 | 方法 | 结果 |
+|---|---|---|
+| 新回信 | IMAP `readonly=True`（EXAMINE）+ `BODY.PEEK`，`SINCE 05-Nov-2026` 扫 `INBOX`(2211 封) 与 `"Junk E-mail"`(29 封)，命中判据 = 头里出现我方 9 个系列 MID 前缀（`20261104032648/20261104032706/20261102055026/20261102060458/20261031150154/20261031150305/20261031041154/20261027051048/20261027132929`） | **0 命中** ⇒ 无新回信、无退信 |
+| patchwork | `patches/?submitter=…&since=2026-10-25&per_page=200` 重拉 | **168 条不变**；最后状态变化仍停在 11-04 批（dwc3 3/3 两 High、wl2868c 5/5+3/5 changes-requested） |
+| 上游基线 | `https://www.kernel.org/releases.json` | **`7.3.1`（10-30）= 当前 stable、`7.4-rc1`（11-01）= mainline**；我方日常线 `build/daily` 仍是 **`7.3.0-rc7`**（`24223e44ad`）⇒ **多了一个「rc7 → 7.3 定版 / 7.4-rc1」重基决策点**（见 `reports/progress-review-20261106.md` §4） |
+
+⇒ **欠的动作没变**：① dwc3 两条 High（锁序 + err 路径 teardown 同步）→ v6；② wl2868c 5/5 并入 4/5、3/5 commit message 改写、driver 三处状态一致性、板 DT 是否单发。
+两条都**只需主机侧**，不占设备。
+
 DONE-UPSTREAM-STATUS-20261105
