@@ -143,6 +143,24 @@
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-11-06：**上一轮 10 发作废（探针从未命中）+ 崩溃真因 = 屏显写穿帧缓冲 + 新通道 `sbprobe=3`**
+
+- **一句话**：`VS_STOP(n)` 判的全局 `SbStopStage` 只在 `BootLinux()` 内赋值，而 `LoadImageAndAuth()` 先被调用
+  ⇒ 11-05 夜那 10 发（`vs-stop20…25`、`pre-stop16/18/19`）**一次都没命中探针**，行为等于对照组；
+  修好探针后单变量判别定案：崩溃元凶是 **`SerialPortWrite`（帧缓冲控制台）**，不是 `gRT->SetVariable`。
+- **机制**：`splash_region` 声明 43 MiB 但只有前 ~448 KiB 可安全写（`PITFALLS #492`），面板 1904×3040@32bpp，
+  `SCALE_FACTOR 3` 下一行文字占 **274 176 B** ⇒ 只装 ~1.6 行 ⇒ 「17 回话、18 崩」是我们自己的调试输出越界，
+  不是随机崩溃。
+- **新通道**：`sbprobe=3` = 只更新 `SbLastMark`、不写帧缓冲/不写 NV 变量；标记仍随 fastboot 响应
+  （`diag st=%r last=[%a]`）回宿主 ⇒ 二分不再付断电代价（不崩的档 1–2 s）。
+- **重推后的窗口**：`26/30/31/32/33/34` 全回话、`27` 崩 ⇒ 窗口 = (`VS_STOP(34)`, `VS_STOP(27)`)，
+  只剩 `MarkPtnActive()` + `out:` 收尾 + `IsSuffixEmpty`/`IsDynamicPartitionSupport`/`StrnCpyS`/`StrnCatS`。
+  **首要嫌疑 = `MarkPtnActive()`**（槽位属性写回，与 `PITFALLS #484` 同片区域），是唯一未被探针覆盖的大调用。
+  另：`sbstop=7`（跳内核前，mode 3）也崩，与上表自洽。
+- **下一步**：加探针 35（`MarkPtnActive()` 之后）单发定案；再决定是否单独判别 `FbConFlush()` 的整块 cache 维护。
+- **正文/坑**：`reports/uefi-vsstop-and-fbconsole-20261106.md`；`PITFALLS #514/#515/#516`；
+  会话记录 `sessions/2026-11-06-UEFI探针失效与帧缓冲写穿.md`；补丁 `patches/uefi/20261105R{2,4,5,6,7}-*/`。
+
 ### 2026-11-05（上午）：R21 **取证通道改走 fastboot 响应**（断电收尾，重建完成、未上机）
 
 - **一句话**：屏上三条通道全废（`ConOut` no-op / LinuxLoader 的 `SerialPortWrite` 不上屏 / NV 变量不跨上电）

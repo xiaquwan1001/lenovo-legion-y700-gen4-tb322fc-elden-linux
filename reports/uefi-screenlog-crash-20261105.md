@@ -1,5 +1,12 @@
 # 屏上日志取证（2026-11-05 20:3x，用户拍屏 5 张）—— 崩溃点 = **DXE Heap 内的 ELR**
 
+> ⛔ **2026-11-06 作废头：§10–§12 的窗口结论与「首要嫌疑 FindBootableSlot」全部作废。**
+> 原因：那些档位用的 `VS_STOP(n)` 判的是全局 `SbStopStage`，而它的唯一赋值点在 `BootLinux()` 内、
+> `LoadImageAndAuth()` 先被调用 ⇒ **探针一次都没命中**，那 10 发（`vs-stop20…25`、`pre-stop16/18/19`）
+> 的行为等于未加探针的对照件。§1–§9 的屏上事实（`[L]/[I]` 装载表、ELR、USB 重初始化、按键栈）**仍有效**。
+> 修好探针后的有效判据与新窗口见 `reports/uefi-vsstop-and-fbconsole-20261106.md` 与
+> `TASKS/sessions/2026-11-06-UEFI探针失效与帧缓冲写穿.md`（坑 `PITFALLS #514/#515/#516`）。
+
 > 来源：用户在 20:3x 这一轮（control / 未改动 R21 件经 UEFI 侧 `fastboot boot`）拍到的屏上串口。
 > 用途：把「崩溃落点」从猜变成可复算 —— 这批日志第一次给出了**模块装载基址表**与**崩溃 ELR**。
 
@@ -175,6 +182,10 @@ LoadImageAndAuth()                      VerifiedBoot.c:1658
 
 ## 10. vs-stop25（wrapper 返回前）也崩 ⇒ 窗口 = `LoadImageNoAuthWrapper` 全段 (20, 25]
 
+> ⛔ **本节作废（2026-11-06）**：这一档及 §11/§12 全部档位用的 `VS_STOP` 探针**从未命中**
+> （`SbStopStage` 的赋值点在 `BootLinux()` 内，此处恒 `-1`）⇒ 它们是未加探针的对照件，
+> 不能用来判断「崩在该点之前」。有效判据见 `reports/uefi-vsstop-and-fbconsole-20261106.md`。
+
 ```
 $ fastboot -s 51318dc0 boot out/r21-sbstop/vs-stop25.img
 Sending 'boot.img' (65624 KB)  OKAY [  1.489s]
@@ -189,6 +200,8 @@ Booting                        ← 无 diag，随后 getvar 也死（端点 shut
 崩 ⇒ 窗口左移到 `LoadBootImageNoAuth` 内（那正是 fastboot 上传 buffer 与分区读两条路径分叉处）。
 
 ## 11. vs-stop23 也崩 ⇒ 窗口 (20, 23]；源码侧可疑点清单
+
+> ⛔ **本节作废（2026-11-06）**，理由同 §10。
 
 `vs-stop23`（`LoadBootImageNoAuth` 返回之后）无响应 ⇒ 崩溃在
 `VBAllocateCmdLine()` / `LoadBootImageNoAuth()` 之内（22、23 之间或其左）。
@@ -210,6 +223,9 @@ Booting                        ← 无 diag，随后 getvar 也死（端点 shut
 ---
 
 ## 12. 收尾（2026-11-05 夜）：崩溃窗口最终收敛到 `LoadImageAndAuth` 前导 3 步
+
+> ⛔ **本节（含 §12.3 打序）作废（2026-11-06）**：探针从未命中，见 `PITFALLS #514`。
+> 有效窗口与下一步见 `reports/uefi-vsstop-and-fbconsole-20261106.md` §5/§7。
 
 ### 12.1 本轮全部发次（均为零写盘 `fastboot boot`，判据全部宿主可读）
 

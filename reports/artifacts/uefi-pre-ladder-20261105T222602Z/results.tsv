@@ -1,0 +1,2 @@
+stage	run	verdict	elapsed_s	marker	note
+18	1	NO_SERVICE	45	-	USB 仍枚举(045e:0c2f/ser 51318dc0)但 getvar 12s 零字节无应答 ⇒ 崩在 FindBootableSlot 之后标记点之前

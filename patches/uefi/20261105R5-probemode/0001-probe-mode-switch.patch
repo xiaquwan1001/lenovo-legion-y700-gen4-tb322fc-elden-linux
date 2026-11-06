@@ -1,0 +1,90 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] VerifiedBoot: probe-channel mode switch (isolate SbVProbe as crash cause)
+
+2026-11-05R5 y700-elden: 修好 VS_STOP 之后，窗口被收进 `VS_STOP(17)` 与 `VS_STOP(26)` 之间。
+按源码这两点之间只剩 `if (Info == NULL)`（RELEASE 下 DEBUG 编掉），但**反汇编**显示
+`Info == NULL` 已被编译器删掉（我们的解析块先解引用了 `Info`），真正的代码是：
+
+```
+8424: bl  WaitForFlashFinished
+8428: ldr w8,[SbStopStage]; cmp w8,#0x11      <- VS_STOP(17)
+8450: ldrb w2,[x19,#1]; ldrb w1,[x19]
+8458: adrp x0,0x2b000; add x0,x0,#0xc0
+8460: bl  SbVProbe                            <- SbVProbe("[V] ms=%d rec=%d")
+8464: ldr w21,[SbStopStage]; cmp w21,#0x1a    <- VS_STOP(26)
+```
+
+⇒ 崩溃点 = **一次 `SbVProbe` 调用**。而 `SbVProbe` 干两件事：
+`SerialPortWrite`（FrameBufferSerialPortLib 直写帧缓冲）与
+`gRT->SetVariable("SbMarkR19", NV|BS)`（R19 加进来的）。
+
+症状吻合度：崩溃 ELR 固定落在 **DXE Heap** 内（= 跳进堆，坏函数指针），且 R19 起
+「变量报 Success 但**不跨上电保留**」——都指向 `SetVariable` 的写变量/回收路径。
+
+本补丁把探针通道做成 **cmdline 可选模式**，一次构建即可做单变量判别（不崩就不用断电）：
+
+  sbstop=90  完整（SerialPortWrite + SetVariable）—— 与今天的行为一致（对照）
+  sbstop=91  只 SerialPortWrite（不写 NV 变量）
+  sbstop=92  静默（两条通道都不走）
+
+判据：90 崩 / 91 或 92 不崩（能回 `diag st=…`）⇒ 锁定探针通道；再按 91 vs 92 区分是哪一条。
+
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -76,6 +76,15 @@
+ // = SerialPortWrite（FrameBufferSerialPortLib 直接写帧缓冲），与 [I]/[E]/[L] 同一条路。
+ STATIC CONST EFI_GUID SbMarkGuid = { 0x5b4d4152, 0x4b31, 0x5259, { 0x9a, 0x31, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 } };
+ 
++// 2026-11-05R5 y700-elden: 探针通道自身的单变量开关（cmdline 令牌 `sbstop=9X` 选择）：
++//   0 = 完整（SerialPortWrite + gRT->SetVariable），默认
++//   1 = 只 SerialPortWrite（不写 NV 变量）
++//   2 = 静默（两条通道都不走）
++// 动机：崩溃窗口已收进 VS_STOP(17) 与 VS_STOP(26) 之间，而这两点之间**只有一次 SbVProbe**
++// （反汇编 0x8460 `bl SbVProbe`）⇒ 嫌疑 = 探针通道本身（尤其 gRT->SetVariable 的写变量/回收
++// 路径；症状「ELR 落在 DXE heap 内 = 跳进堆」与「变量报 Success 但不跨上电保留」都吻合）。
++INT32  SbProbeMode = 0;
++
+ // 2026-11-04R21 y700-elden: 最后一条标记的单行副本（去 \r\n）。宿主可以在 fastboot 响应里
+ // 直接看到它 —— 屏上取证彻底不依赖。定义在 AvbLib、被 BootLib/FastbootLib 以 extern 引用。
+ CHAR8  SbLastMark[160] = { '\0' };
+@@ -115,7 +124,9 @@
+   VA_START (Marker, Fmt);
+   Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
+   VA_END (Marker);
+-  SerialPortWrite ((UINT8 *)Buf, Len);
++  if (SbProbeMode != 2) {
++    SerialPortWrite ((UINT8 *)Buf, Len);
++  }
+   {
+     UINTN  SbIdx;
+ 
+@@ -128,12 +139,15 @@
+     SbLastMark[SbIdx] = '\0';
+   }
+   // 2026-11-04R19 y700-elden: 同时落 NV 变量；异常滚屏/复位之后下一轮仍能读出"最后一步"。
+-  if (Len > 160) {
+-    Len = 160;
++  // 2026-11-05R5: 可用 SbProbeMode 关掉（见文件上方全局的注释）。
++  if (SbProbeMode == 0) {
++    if (Len > 160) {
++      Len = 160;
++    }
++    gRT->SetVariable ((CHAR16 *)L"SbMarkR19", (EFI_GUID *)(&SbMarkGuid),
++                      EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
++                      Len, (VOID *)Buf);
+   }
+-  gRT->SetVariable ((CHAR16 *)L"SbMarkR19", (EFI_GUID *)(&SbMarkGuid),
+-                    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+-                    Len, (VOID *)Buf);
+ }
+ 
+ STATIC CONST CHAR8 *VerityMode = " androidboot.veritymode=";
+@@ -1822,6 +1836,8 @@
+   } else {
+     SbStopStage = -1;
+   }
++  // 2026-11-05R5: sbstop=9X ⇒ 探针模式 X（90=完整 91=只串口 92=静默）
++  SbProbeMode = ((SbStopStage >= 90) && (SbStopStage <= 92)) ? (SbStopStage - 90) : 0;
+ 
+   VS_STOP (16);
+   WaitForFlashFinished ();

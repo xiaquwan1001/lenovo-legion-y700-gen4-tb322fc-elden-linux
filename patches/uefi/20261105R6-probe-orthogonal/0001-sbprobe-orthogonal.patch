@@ -1,0 +1,85 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] probe channel: orthogonal `sbprobe=M` token (SerialPortWrite / SetVariable)
+
+2026-11-05R6 y700-elden: R5 用 `sbstop=9X` 同时关探针**和**取消停机点，是个设计缺陷 ——
+流程会继续进 `BootLinux`，那里有自己的 `SbBootProbe`（同样 SerialPortWrite + SetVariable）
+和既有的 `ShutdownUefiBootServices` 崩溃 ⇒ 崩了无法归因（实测 `sbstop=92` 仍崩，不可判读）。
+
+本补丁把两件事拆成正交令牌：
+
+  sbstop=N     停机点（不变）
+  sbprobe=M    探针通道：0=完整(SerialPortWrite+SetVariable) 1=只 SerialPortWrite 2=静默
+
+并把 `BootLinux.c` 的 `SbBootProbe` 也纳入同一开关（此前只有 VerifiedBoot.c 的 `SbVProbe` 受控）。
+
+于是「停机点 26 + 静默」= 干净单变量：崩溃窗口 (VS_STOP(17), VS_STOP(26)) 之间只有一次
+`SbVProbe` 调用（反汇编 0x8460），
+  `sbstop=26 sbprobe=0` 崩 / `sbprobe=1` 或 `2` 回 `diag st=Aborted last=[vs-26]`
+⇒ 锁定探针通道；再按 1 vs 2 区分是 SerialPortWrite 还是 gRT->SetVariable。
+
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -1838,6 +1838,22 @@
+   }
+   // 2026-11-05R5: sbstop=9X ⇒ 探针模式 X（90=完整 91=只串口 92=静默）
+   SbProbeMode = ((SbStopStage >= 90) && (SbStopStage <= 92)) ? (SbStopStage - 90) : 0;
++  // 2026-11-05R6: 与停机点**正交**的探针开关 `sbprobe=M`（0=完整 1=只串口 2=静默）。
++  // R5 的 sbstop=9X 有个设计缺陷：关探针的同时也取消了停机点 ⇒ 流程会继续进 BootLinux，
++  // 那里还有自己的 SbBootProbe 与既有的 ShutdownUefiBootServices 崩溃 ⇒ 崩了无法归因。
++  // 两个令牌分开后，"停机点 26 + 静默" 才是干净的单变量。
++  if (Info->Images[0].ImageBuffer != NULL) {
++    CONST CHAR8  *SbProbeTok;
++
++    SbProbeTok = AsciiStrStr ((CONST CHAR8 *) &(((boot_img_hdr *) (Info->Images[0].ImageBuffer))->cmdline[0]),
++                              "sbprobe=");
++    if (SbProbeTok != NULL) {
++      INT32  SbMode;
++
++      SbMode = (INT32) AsciiStrDecimalToUintn (SbProbeTok + AsciiStrLen ("sbprobe="));
++      SbProbeMode = ((SbMode >= 0) && (SbMode <= 2)) ? SbMode : 0;
++    }
++  }
+ 
+   VS_STOP (16);
+   WaitForFlashFinished ();
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -85,6 +85,7 @@
+ #include <Library/SerialPortLib.h>  // 2026-11-04R17 y700-elden
+ #include <Library/PrintLib.h>       // 2026-11-04R17 y700-elden
+ extern INT32  SbStopStage;      // 2026-11-04R21: 定义在 AvbLib/VerifiedBoot.c
++extern INT32  SbProbeMode;      // 2026-11-05R6: 同上，探针通道开关（0=完整 1=只串口 2=静默）
+ extern CHAR8  SbLastMark[160];  // 2026-11-04R21
+ 
+ // 2026-11-04R17 y700-elden: 与 VerifiedBoot.c 的 SbVProbe 同一理由（DEBUG 被编掉、
+@@ -105,7 +106,9 @@
+   VA_START (Marker, Fmt);
+   Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
+   VA_END (Marker);
+-  SerialPortWrite ((UINT8 *)Buf, Len);
++  if (SbProbeMode != 2) {
++    SerialPortWrite ((UINT8 *)Buf, Len);
++  }
+   {
+     UINTN  SbIdx;
+ 
+@@ -118,12 +121,14 @@
+     SbLastMark[SbIdx] = '\0';
+   }
+   // 2026-11-04R19 y700-elden: 同时落 NV 变量；异常滚屏/复位之后下一轮仍能读出"最后一步"。
+-  if (Len > 160) {
+-    Len = 160;
++  if (SbProbeMode == 0) {
++    if (Len > 160) {
++      Len = 160;
++    }
++    gRT->SetVariable ((CHAR16 *)L"SbMarkR19", (EFI_GUID *)(&SbMarkGuid),
++                      EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
++                      Len, (VOID *)Buf);
+   }
+-  gRT->SetVariable ((CHAR16 *)L"SbMarkR19", (EFI_GUID *)(&SbMarkGuid),
+-                    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+-                    Len, (VOID *)Buf);
+ }
+ 
+ // 2026-11-04R20 y700-elden: 宿主可编程停机点。boot.img 的 cmdline 里带 "sbstop=N" 时，

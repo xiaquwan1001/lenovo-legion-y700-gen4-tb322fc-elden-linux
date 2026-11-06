@@ -1,0 +1,46 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] VerifiedBoot: parse sbstop inline at LoadImageAndAuth entry (VS_STOP fix)
+
+2026-11-05R2 y700-elden: 2026-11-05 夜那 10 发 vs/pre 阶梯**全部无效**，根因在探针本身：
+
+  * `VS_STOP(n)`（patches/uefi/20261105-vsbisect/0001）判的是全局 `SbStopStage`；
+  * `SbStopStage` 的**唯一**赋值点在 `BootLinux()` 内部（`[K] img sz` 之后，
+    patches/uefi/20261104R20-stage-bisect/0001），而 `CmdBoot` 的调用序是
+    `LoadImageAndAuth()` → `BootLinux()`；
+  * ⇒ 进入 `LoadImageAndAuth` 时 `SbStopStage == -1`，`VS_STOP(16..25)` 一次都不会命中，
+    这些件的行为与**未加探针的对照件完全相同**（一律崩在同一处）。
+
+于是「崩在 N 之前」的判读不成立：它只说明「LoadImageAndAuth 自己崩了」，与 N 无关。
+
+修法：与 FastbootCmds.c 的 finebisect 同一做法 —— 在 `LoadImageAndAuth()` 入口当场从
+boot image 头的 cmdline 解析（`Info->Images[0].ImageBuffer` 就是 boot.img，同文件
+`LoadImageAndAuth` 里 `GetCmdLine` 已在用同一表达式）。
+
+判据不变：`diag st=Aborted last=[vs-N]` ⇒ 该点之前不崩；无响应 ⇒ 崩在该点之前。
+
+2026-11-05R3（本版修正）：解析**必须每次无条件重做** —— `SbStopStage` 跨 fastboot 命令保留，
+加了 `SbStopStage < 0` 守卫后，同一固件会话里连打第二发会沿用上一发的值
+（实测 `sbstop=18` 被打成 `vs-16`，判据直接错）。
+
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -1810,6 +1810,19 @@
+   QCOM_MDTP_PROTOCOL *MdtpProtocol;
+   UINT32 AVBVersion = NO_AVB;
+ 
++  // 2026-11-05R2/R3 y700-elden: 全局 SbStopStage 的**唯一**赋值点在 BootLinux() 内，而
++  // LoadImageAndAuth() 先于 BootLinux() 被 CmdBoot 调用 ⇒ 到这里它恒为 -1，VS_STOP(16..25)
++  // 永不命中（2026-11-05 夜那 10 发 vs/pre 阶梯因此全部无效：只是未加探针的对照件）。
++  // 修法：与 FastbootCmds.c 的 finebisect 一致 —— 当场从 boot image 头的 cmdline 解析。
++  // 且**不能**加 `SbStopStage < 0` 守卫：该全局跨 fastboot 命令保留，同一固件会话连打第二发
++  // 会沿用上一发的值（实测 sbstop=18 被打成 vs-16）。每次无条件重解析。
++  if (Info != NULL && Info->Images[0].ImageBuffer != NULL) {
++    SbStopStage = SbParseStopStage (
++                    (CONST CHAR8 *) &(((boot_img_hdr *) (Info->Images[0].ImageBuffer))->cmdline[0]));
++  } else {
++    SbStopStage = -1;
++  }
++
+   VS_STOP (16);
+   WaitForFlashFinished ();
+   VS_STOP (17);

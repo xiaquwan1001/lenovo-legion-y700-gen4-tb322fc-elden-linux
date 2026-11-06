@@ -1,0 +1,3 @@
+file	sbstop	sbprobe	verdict	elapsed_s	marker
+p6-s26-pb2.img	26	2	REPLY	2	diag st=Aborted last=[vs-26]（随后 product: sun 存活）⇒ 探针静默时不崩
+p6-s26-pb1.img	26	1	NOSERVICE	40	只 SerialPortWrite 仍崩（40s 超时、无 diag）⇒ 元凶 = SerialPortWrite/帧缓冲，不是 SetVariable

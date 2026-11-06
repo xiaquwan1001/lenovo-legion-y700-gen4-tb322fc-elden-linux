@@ -1,0 +1,3 @@
+Sending 'boot.img' (65624 KB)                      OKAY [  1.492s]
+Booting                                            FAILED (remote: 'diag st=Aborted last=[vs-16]')
+fastboot: error: Command failed

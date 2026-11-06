@@ -1,0 +1,8 @@
+=== 1) ABL 载 UEFI preamble ===
+Sending 'boot.img' (65624 KB)                      OKAY [  1.488s]
+Booting                                            OKAY [ 10.108s]
+Finished. Total time: 11.628s
+rc=0
+Sending 'boot.img' (65624 KB)                      OKAY [  1.488s]
+Booting                                            OKAY [ 10.109s]
+Finished. Total time: 11.630s

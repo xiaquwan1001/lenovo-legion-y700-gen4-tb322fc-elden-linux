@@ -1,0 +1,2 @@
+Sending 'boot.img' (65624 KB)                      OKAY [  1.494s]
+Booting                                            

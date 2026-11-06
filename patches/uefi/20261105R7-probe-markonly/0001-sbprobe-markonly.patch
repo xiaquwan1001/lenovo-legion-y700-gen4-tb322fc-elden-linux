@@ -1,0 +1,63 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] probe channel: `sbprobe=3` = SbLastMark only (no framebuffer, no NV)
+
+2026-11-05R7 y700-elden: R6 的单变量判别已定案 —— 崩溃来自 `SerialPortWrite`
+（帧缓冲控制台），不是 `gRT->SetVariable`：
+
+  sbstop=26 sbprobe=2（全静默）        -> `diag st=Aborted last=[vs-26]`，固件存活
+  sbstop=26 sbprobe=1（只 SerialPortWrite）-> 崩（40 s 超时、无 diag）
+
+机制与实机数据一致：
+  * `splash_region` / UEFI "Display Reserved" = `0xFC800000` + `0x02B00000`（43 MiB 声明）；
+  * 实机面板 1904x3040@32bpp（`/sys/class/drm/*/modes` 与 `PcdsFixedAtBuild.dsc.inc` 一致）；
+  * 但 `PITFALLS #492` 实测**只有前 ~448 KiB 可安全写**，按声明整块填充会挂死 SoC；
+  * `SCALE_FACTOR 3` 下一行文字占 `3*FONT_HEIGHT(12)` = 36 像素行 = 36*1904*4 = **274 176 B**
+    ⇒ 448 KiB 只装得下 ~1.6 行 ⇒ 换行后继续画就越界，于是「17 回档、下一发必崩」。
+  * 每次换行还有一次 `FbConFlush()` = 对整块 `gWidth*gHeight*bpp/8`（22.08 MiB）做
+    `WriteBackInvalidateDataCacheRange`，是第二个可疑点（未单独判别）。
+
+关键点：探针信息其实**已有一条不碰屏的通道** —— `SbLastMark[]` 会被 `CmdBoot` 的诊断模式
+塞进 fastboot 响应（`diag st=%r last=[%a]`）。本补丁新增 mode 3：
+
+  sbprobe=0  帧缓冲 + NV 变量 + SbLastMark（旧默认）
+  sbprobe=1  帧缓冲 + SbLastMark
+  sbprobe=2  全静默
+  sbprobe=3  **只更新 SbLastMark**（不写帧缓冲、不写 NV 变量）
+
+于是「不崩 + 仍能读到最后一条标记」可以同时成立，整条 BootLinux 路径的判据不再受屏显限制。
+`BootLinux.c` 的 `SbBootProbe` 同步处理。
+
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -124,7 +124,9 @@
+   VA_START (Marker, Fmt);
+   Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
+   VA_END (Marker);
+-  if (SbProbeMode != 2) {
++  // 2026-11-05R7: 只有 0/1 才真的写帧缓冲。mode 3 = 只更新 SbLastMark
++  // （走 fastboot 响应 `diag st=%r last=[%a]` 回宿主），完全不碰屏。
++  if ((SbProbeMode == 0) || (SbProbeMode == 1)) {
+     SerialPortWrite ((UINT8 *)Buf, Len);
+   }
+   {
+@@ -1851,7 +1853,7 @@
+       INT32  SbMode;
+ 
+       SbMode = (INT32) AsciiStrDecimalToUintn (SbProbeTok + AsciiStrLen ("sbprobe="));
+-      SbProbeMode = ((SbMode >= 0) && (SbMode <= 2)) ? SbMode : 0;
++      SbProbeMode = ((SbMode >= 0) && (SbMode <= 3)) ? SbMode : 0;
+     }
+   }
+ 
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -106,7 +106,8 @@
+   VA_START (Marker, Fmt);
+   Len = AsciiVSPrint (Buf, sizeof (Buf), Fmt, Marker);
+   VA_END (Marker);
+-  if (SbProbeMode != 2) {
++  // 2026-11-05R7: 同 VerifiedBoot.c —— 只有 0/1 写帧缓冲；3 = 只更新 SbLastMark。
++  if ((SbProbeMode == 0) || (SbProbeMode == 1)) {
+     SerialPortWrite ((UINT8 *)Buf, Len);
+   }
+   {

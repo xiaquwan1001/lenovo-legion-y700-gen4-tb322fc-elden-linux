@@ -1,0 +1,108 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] VerifiedBoot/PartitionTableUpdate: bisect (VS_STOP(17), VS_STOP(18))
+
+2026-11-05R4 y700-elden: 修好 VS_STOP 之后首批有效判据把窗口收进 `VS_STOP(17)` 与
+`VS_STOP(18)` 之间（17 回话 `diag st=Aborted last=[vs-17]`、18 崩），
+这段源码只剩「Info==NULL 检查 + 分区名块（含 FindBootableSlot）」，
+（`EnableMdtpSupport` 为 FALSE，MDTP 块被编译掉）。
+
+本补丁在这段里再切八刀：
+
+  LoadImageAndAuth:
+    26  Info==NULL 检查之后（分区名块之前）
+    27  FindBootableSlot 返回之后
+    28  分区名块整体之后
+  FindBootableSlot（PartitionTableUpdate.c，用 SB_VSTOP，同一套 SbDiagAbort 回传）:
+    30  函数入口
+    31  GetActiveSlot 之后
+    32  GetBootPartitionEntry 之后
+    33  槽位属性分支之后、ValidateSlotGuids 之前
+    34  ValidateSlotGuids 之后、MarkPtnActive 之前
+
+判据：`diag st=Aborted last=[vs-N]` ⇒ 该点之前不崩；无响应 ⇒ 崩在该点之前。
+打序 26 → 30 → 31 → 32 → 33 → 34（信息量优先，崩一次要一次物理断电）。
+
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -1834,6 +1834,7 @@
+ 
+   SbVProbe ("[V] ms=%d rec=%d\n\r", Info->MultiSlotBoot, Info->BootIntoRecovery);
+ 
++  VS_STOP (26);   // 2026-11-05R4: Info==NULL 检查之后、分区名块之前
+   /* Get Partition Name*/
+   if (!Info->MultiSlotBoot) {
+     if (Info->BootIntoRecovery) {
+@@ -1849,6 +1850,7 @@
+     Slot CurrentSlot = {{0}};
+ 
+     GUARD (FindBootableSlot (&CurrentSlot));
++    VS_STOP (27);   // 2026-11-05R4: FindBootableSlot 返回之后
+     if (IsSuffixEmpty (&CurrentSlot)) {
+       DEBUG ((EFI_D_ERROR, "No bootable slot\n"));
+       return EFI_LOAD_ERROR;
+@@ -1869,6 +1871,7 @@
+                      StrLen (CurrentSlot.Suffix)));
+   }
+ 
++  VS_STOP (28);   // 2026-11-05R4: 分区名块整体之后
+   DEBUG ((EFI_D_VERBOSE, "MultiSlot %a, partition name %s\n",
+           BooleanString[Info->MultiSlotBoot].name, Info->Pname));
+ 
+--- a/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
+@@ -1601,6 +1601,18 @@
+   return EFI_SUCCESS;
+ }
+ 
++// 2026-11-05R4 y700-elden: FindBootableSlot 内部细二分（与 VerifiedBoot.c 的 VS_STOP 同一套：
++// 置 SbDiagAbort 后返回 EFI_ABORTED，由 FastbootCmds.c 的 CmdBoot 回 diag st=Aborted last=[vs-N]）。
++extern INT32  SbStopStage;
++extern INT32  SbDiagAbort;
++#define SB_VSTOP(n)                                                            \
++  do {                                                                         \
++    if (SbStopStage == (n)) {                                                  \
++      SbDiagAbort = (n);                                                       \
++      return EFI_ABORTED;                                                      \
++    }                                                                          \
++  } while (0)
++
+ EFI_STATUS
+ FindBootableSlot (Slot *BootableSlot)
+ {
+@@ -1610,12 +1622,14 @@
+   UINT64 BootSuccess = 0;
+   UINT64 RetryCount = 0;
+ 
++  SB_VSTOP (30);   // 2026-11-05R4: 函数入口
+   if (BootableSlot == NULL) {
+     DEBUG ((EFI_D_ERROR, "FindBootableSlot: input parameter invalid\n"));
+     return EFI_INVALID_PARAMETER;
+   }
+ 
+   GUARD (GetActiveSlot (BootableSlot));
++  SB_VSTOP (31);   // 2026-11-05R4: GetActiveSlot 之后
+ 
+   /* Validate Active Slot is bootable */
+   BootEntry = GetBootPartitionEntry (BootableSlot);
+@@ -1626,6 +1640,7 @@
+     return EFI_NOT_FOUND;
+   }
+ 
++  SB_VSTOP (32);   // 2026-11-05R4: GetBootPartitionEntry 之后
+   Unbootable = (BootEntry->PartEntry.Attributes & PART_ATT_UNBOOTABLE_VAL) >>
+                PART_ATT_UNBOOTABLE_BIT;
+   BootSuccess = (BootEntry->PartEntry.Attributes & PART_ATT_SUCCESSFUL_VAL) >>
+@@ -1657,11 +1672,13 @@
+     GUARD_OUT (HandleActiveSlotUnbootable ());
+   }
+ 
++  SB_VSTOP (33);   // 2026-11-05R4: 槽位属性分支之后、ValidateSlotGuids 之前
+   /* Validate slot suffix and partition guids */
+   if (Status == EFI_SUCCESS &&
+       NAND != CheckRootDeviceType ()) {
+     GUARD_OUT (ValidateSlotGuids (BootableSlot));
+   }
++  SB_VSTOP (34);   // 2026-11-05R4: ValidateSlotGuids 之后、MarkPtnActive 之前
+   MarkPtnActive (BootableSlot->Suffix);
+ out:
+   // 2026-11-04R14 y700-elden: RELEASE strips DEBUG(); show the slot-state decision.

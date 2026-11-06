@@ -1,0 +1,3 @@
+stage	run	verdict	elapsed_s	marker	note
+0	1	REACHED	2	diag st=Success last=[entry]	入口对照：解析+回传+存活三件成立（随后 getvar product = sun）
+19	1	NO_SERVICE	45	-	45s 超时；设备仍枚举(045e:0c2f/ser 51318dc0)但 getvar 零字节 ⇒ 崩在 VS_STOP(19) 之前；~60s 后看门狗复位回 ABL fastboot

@@ -1,0 +1,9 @@
+file	sbstop	sbprobe	verdict	elapsed_s	marker
+p7-s26-pb3.img	26	3	REPLY	2	diag st=Aborted last=[vs-26]，product: sun 存活 ⇒ mode3（只 SbLastMark、不写帧缓冲）成立
+p7-s7-pb3.img	7	3	NOSERVICE	-	崩（无 diag）⇒ 崩溃点移到 VS_STOP(26) 之后：LoadImageAndAuth 后半段或 BootLinux
+m3-stop27.img	27	3	NOSERVICE	-	崩（无 diag）⇒ 窗口收进 FindBootableSlot() 体内（26 回话、27 崩）
+m3-stop30	30	3	REPLY	2	diag st=Aborted last=[vs-30]	alive=1
+m3-stop31	31	3	REPLY	1	diag st=Aborted last=[vs-31]	alive=1
+m3-stop32	32	3	REPLY	2	diag st=Aborted last=[vs-32]	alive=1
+m3-stop33	33	3	REPLY	1	diag st=Aborted last=[vs-33]	alive=1
+m3-stop34	34	3	REPLY	2	diag st=Aborted last=[vs-34]	alive=1

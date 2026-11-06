@@ -1,0 +1,3 @@
+stage	run	verdict	elapsed_s	marker	note
+0	1	REPLY	2	diag st=Success last=[entry]	alive=1
+18	1	NOSERVICE	23:05:44	-	Booting 中 USB 掉(usb_read failed) ⇒ 崩在 VS_STOP(18) 之前

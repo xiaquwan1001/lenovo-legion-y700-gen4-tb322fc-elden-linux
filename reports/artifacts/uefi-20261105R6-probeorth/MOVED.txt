@@ -1,0 +1,16 @@
+# 2026-11-06 中间构建：大文件已移出仓库（保留 manifest/build.log/SHA256SUMS 以便复现）
+# 去向：backup/uefi-builds-20261106/uefi-20261105R6-probeorth/
+# 复现：patches 序列 = manifest.txt 的 patches= 行 + patches/uefi/20261105R{2,4,5,6}*/
+
+7542dd09fda8a0a7a6be77fe70b470af1306dd8fab89dcf8100eddba1d46bbca  bootpayload.bin
+51a57a9e224fe017e34462dea067ccaf1b2910cb6d59a4f77d353c7d74f21f66  BootShim.bin
+445ab2aa5f2373400acf8bc38bc5f2fadc9aacca6b25fc4d77fe2122b1b55637  build.log
+7542dd09fda8a0a7a6be77fe70b470af1306dd8fab89dcf8100eddba1d46bbca  kernel.bin
+e907d4e9484e36577f6ea7f8bd8675945a633e3aa08b8beffac4b71fd4b764d5  lenovo-y700g4-v3.img
+81b110b28b5c844110318b701f4b241b64504c17cabf759c1c02686f1ee7a028  manifest.txt
+b3f69a03272e5efbd3fb0004d0a530d01fa6c3a8dc3ac50cd32917f59015981b  MOVED.txt
+5ef88fd47a4d65b7758f30548993d765d4273a9ca0506a54e811d7cfcbd60f08  payload-v2aligned.bin
+0af512b613022ffbc07d6fc6d639c269e58a271cfeacab9970c37cae37d62c8d  payload-v2aligned.bin.gz
+f34c7f7557709b6e9b9de1748b8167bd3778ee08ad3e5ef8d201f647e04efa67  SHA256SUMS
+086877bb2d7c04014cc2be3183e13ee58d184617ecdbdcf06cf455207ffc39d2  SM8750_EFI.fd
+9555bad3e01b83bc1b33e35a03ae1e552b58a7a5770f2e26d7597420ad20452f  uefi-v0.img
