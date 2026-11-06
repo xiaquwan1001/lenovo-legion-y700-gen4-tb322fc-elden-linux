@@ -1,0 +1,5 @@
+== 0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL286.patch
+total: 0 errors, 0 warnings, 0 checks, 117 lines checked
+== 0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera-PM.patch
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+total: 0 errors, 1 warnings, 0 checks, 270 lines checked

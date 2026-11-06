@@ -102,4 +102,8 @@ curl -s --noproxy '*' "https://patchwork.kernel.org/api/1.2/patches/?submitter=x
 ⇒ **欠的动作没变**：① dwc3 两条 High（锁序 + err 路径 teardown 同步）→ v6；② wl2868c 5/5 并入 4/5、3/5 commit message 改写、driver 三处状态一致性、板 DT 是否单发。
 两条都**只需主机侧**，不占设备。
 
+**2026-11-06 晚：两条欠账已出备料件（仍未发信）** —— `patches/upstream/m3-dwc3-v7-20261106/`（`[PATCH v7 0/3]`，只答两条 High，门禁全绿）与
+`patches/upstream/wl2868c-v7-20261106/`（`[PATCH v7 0/2]`，**板 DTS 整段拆出**只发 binding+driver，driver 修三条 Medium，板件存 `held-back/`）。
+两系列均 `FAIL=0` 门禁、pristine `git am` 逐字节等价、`send-email --dry-run` 通过；**发信仍需用户按批放行**。
+
 DONE-UPSTREAM-STATUS-20261105

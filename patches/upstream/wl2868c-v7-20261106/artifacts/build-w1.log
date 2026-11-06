@@ -1,0 +1,2 @@
+  SYNC    include/config/auto.conf
+  CC [M]  drivers/regulator/wl2868c-regulator.o

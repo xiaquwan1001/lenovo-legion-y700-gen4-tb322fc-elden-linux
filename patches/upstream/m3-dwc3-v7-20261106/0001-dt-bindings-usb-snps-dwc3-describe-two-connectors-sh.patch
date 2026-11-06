@@ -1,0 +1,187 @@
+From 1e1e1560fc4566224f105d98bcb3e20784b7a494 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 4 Nov 2026 10:54:42 +0800
+Subject: [PATCH 1/3] dt-bindings: usb: snps,dwc3: describe two connectors
+ sharing one HS bus
+
+Two connectors can share the High Speed D+/D- pair of one DWC3 controller,
+with a GPIO selecting which of them is connected, while their Super Speed
+lanes stay separate.
+
+Describe that in snps,dwc3-common.yaml:
+
+  - "port-select-gpios" selects which connector drives the shared bus;
+  - each connector is a port of the controller's "ports" node, "port@0"
+    and "port@2", with one endpoint per port, so that "ports" keeps
+    describing the controller's own buses as the graph bindings expect
+    (port@1 is the Super Speed lane of the PHY, described by
+    snps,dwc3.yaml);
+  - the endpoint of a connector carries "mux-state", the level of the
+    port-select GPIO that reaches it, and "usb-role-switch", declaring
+    that this connector has its own role-switch input.
+
+The controller node must carry "usb-role-switch" as well, and dr_mode is
+required to be "otg": dwc3_get_dr_mode() otherwise forces dr_mode back to
+peripheral, dwc3_get_extcon() skips the role-switch branch and
+dwc3_drd_init() never sets the mux up, so a device tree that passed the
+schema would not describe a device tree the driver can act on.
+
+The two connectors must claim opposite levels of the GPIO, which is
+expressed as one choice between the two assignments, and endpoint names
+use the pattern of graph.yaml so that an unnumbered or third endpoint is
+rejected instead of escaping "unevaluatedProperties: false".  When
+port-select-gpios is absent the endpoint properties are rejected, so
+existing single-connector descriptions are unaffected.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../bindings/usb/snps,dwc3-common.yaml        | 116 +++++++++++++++++-
+ 1 file changed, 114 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+index 6c0b8b6538..0be2a6e83e 100644
+--- a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
++++ b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+@@ -13,6 +13,40 @@ description:
+   Defines the properties of the DWC3 core as being embedded in either an
+   vendor-specific implementation or as a standalone component.
+ 
++$defs:
++  hs-endpoint:
++    $ref: /schemas/graph.yaml#/$defs/endpoint-base
++    unevaluatedProperties: false
++
++    properties:
++      usb-role-switch:
++        type: boolean
++        description:
++          This connector endpoint has its own USB role switch. The switch is
++          registered against this endpoint and looked up with
++          usb_role_switch_at_endpoint().
++
++      mux-state:
++        $ref: /schemas/types.yaml#/definitions/uint32
++        enum: [0, 1]
++        description:
++          Logical level of the port-select GPIO which connects this
++          connector to the shared High Speed data bus.  The two connectors of
++          one controller must use different levels; the driver rejects a
++          device tree where two connectors claim the same one.
++
++    dependentRequired:
++      usb-role-switch: [mux-state]
++      mux-state: [usb-role-switch]
++
++  hs-port:
++    $ref: /schemas/graph.yaml#/$defs/port-base
++    unevaluatedProperties: false
++
++    patternProperties:
++      '^endpoint(@[0-9a-f]+)?$':
++        $ref: '#/$defs/hs-endpoint'
++
+ allOf:
+   - $ref: usb-drd.yaml#
+   - if:
+@@ -26,8 +60,87 @@ allOf:
+       $ref: usb.yaml#
+     else:
+       $ref: usb-xhci.yaml#
++  - if:
++      required: [port-select-gpios]
++    then:
++      # The mux path is only taken when the controller itself carries
++      # "usb-role-switch": dwc3_get_dr_mode() forces dr_mode back to
++      # peripheral, dwc3_get_extcon() skips the role-switch branch and
++      # dwc3_drd_init() never calls dwc3_role_mux_init() without it.
++      required: [dr_mode, ports, usb-role-switch]
++      properties:
++        dr_mode:
++          const: otg
++        ports:
++          # Each connector is one port with a single endpoint: the mux-state
++          # property on that endpoint says which level of the port-select GPIO
++          # reaches it, so two connectors are two ports, not two endpoints of
++          # one port.  port@1 is the SuperSpeed lane of the PHY and is already
++          # described by snps,dwc3.yaml, so the second High Speed connector
++          # lands on port@2.
++          required: [port@0, port@2]
++          properties:
++            port@0:
++              $ref: '#/$defs/hs-port'
++            port@2:
++              $ref: '#/$defs/hs-port'
++
++          # The two connectors must claim opposite levels of the port-select
++          # GPIO; requiring both ports in every branch is what makes the two
++          # cases mutually exclusive for oneOf.
++          oneOf:
++            - required: [port@0, port@2]
++              properties:
++                port@0:
++                  $ref: '#/$defs/hs-port'
++                  properties:
++                    endpoint:
++                      properties:
++                        mux-state:
++                          const: 0
++                port@2:
++                  $ref: '#/$defs/hs-port'
++                  properties:
++                    endpoint:
++                      properties:
++                        mux-state:
++                          const: 1
++            - required: [port@0, port@2]
++              properties:
++                port@0:
++                  $ref: '#/$defs/hs-port'
++                  properties:
++                    endpoint:
++                      properties:
++                        mux-state:
++                          const: 1
++                port@2:
++                  $ref: '#/$defs/hs-port'
++                  properties:
++                    endpoint:
++                      properties:
++                        mux-state:
++                          const: 0
++    else:
++      properties:
++        ports:
++          properties:
++            port@0:
++              patternProperties:
++                '^endpoint(@[0-9a-f]+)?$':
++                  properties:
++                    usb-role-switch: false
++                    mux-state: false
+ 
+ properties:
++  port-select-gpios:
++    maxItems: 1
++    description:
++      Selects which of the two connectors drives the controller's shared High
++      Speed data bus.  Each connector is described by "port@0" or "port@2",
++      and the endpoint of that port carries the connector's own role-switch
++      input and the "mux-state" level selecting it.
++
+   extcon:
+     maxItems: 1
+     deprecated: true
+@@ -411,7 +524,7 @@ properties:
+ 
+     properties:
+       port@0:
+-        $ref: /schemas/graph.yaml#/properties/port
++        $ref: '#/$defs/hs-port'
+         description: High Speed (HS) data bus.
+ 
+       port@1:
+@@ -429,4 +542,3 @@ required:
+ 
+ additionalProperties: true
+ ...
+-

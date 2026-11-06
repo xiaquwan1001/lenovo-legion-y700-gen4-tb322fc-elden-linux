@@ -1,0 +1,5 @@
+  CC      drivers/usb/roles/class.o
+  CC [M]  drivers/usb/dwc3/core.o
+  CC [M]  drivers/usb/dwc3/drd.o
+  AR      drivers/usb/roles/built-in.a
+  LD [M]  drivers/usb/dwc3/dwc3.o

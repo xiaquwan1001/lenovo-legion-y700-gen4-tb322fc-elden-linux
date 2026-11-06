@@ -1,0 +1,49 @@
+patches/upstream/wl2868c-v7-20261106/0000-cover-letter.patch
+patches/upstream/wl2868c-v7-20261106/0001-regulator-dt-bindings-willsemi-wl2868c-add-the-WL286.patch
+patches/upstream/wl2868c-v7-20261106/0002-regulator-willsemi-wl2868c-add-the-WL2868C-camera-PM.patch
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<lgirdwood@gmail.com>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: lgirdwood@gmail.com
+Subject: [PATCH v7 0/2] regulator: add the Will Semiconductor WL2868C camera PMIC
+Date: Fri,  6 Nov 2026 19:20:40 +0800
+Message-ID: <20261106112042.949571-1-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<lgirdwood@gmail.com>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: lgirdwood@gmail.com
+Subject: [PATCH 1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+Date: Fri,  6 Nov 2026 19:20:41 +0800
+Message-ID: <20261106112042.949571-2-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261106112042.949571-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261106112042.949571-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<lgirdwood@gmail.com>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: lgirdwood@gmail.com
+Subject: [PATCH 2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+Date: Fri,  6 Nov 2026 19:20:42 +0800
+Message-ID: <20261106112042.949571-3-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261106112042.949571-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261106112042.949571-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
