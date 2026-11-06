@@ -1,0 +1,43 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] PartitionTableUpdate: gate the FindBootableSlot diagnostic write by SbProbeMode
+
+2026-11-06R2 y700-elden: 2026-11-04R15 在 `FindBootableSlot` 的 `out:` 收尾里加了一条**无条件**
+`SerialPortWrite ("[V] slot0=%d st=%r")` —— 它走的是 FrameBufferSerialPortLib（直写帧缓冲），
+却没有纳入 2026-11-05R5/R7 引入的 `SbProbeMode` 开关。
+
+后果：`sbprobe=3`（「只更新 SbLastMark、完全不碰屏」）在这一条上是失效的 ——
+只要流程走到 `out:`（正常路径与 GUARD_OUT 路径都会走到），帧缓冲照样被写。
+而 11-06 已定案「帧缓冲控制台写穿」是崩溃元凶之一（`PITFALLS #514–#516`）⇒
+这一条足以独立造成「34 回话 / 27 崩」的表象。
+
+本补丁把它改成与 `SbVProbe` 同一口径：只有 mode 0/1 才写，mode 2/3 跳过。
+
+判据（配 20261106-vsstop35/0001 的 36/37）：
+  * `sbstop=37 sbprobe=3` 回话 ⇒ 该写点已被关掉；
+  * `sbstop=37 sbprobe=1` 崩    ⇒ 该写点就是崩溃点（单变量）。
+
+--- a/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
+@@ -1605,6 +1605,8 @@
+ // 置 SbDiagAbort 后返回 EFI_ABORTED，由 FastbootCmds.c 的 CmdBoot 回 diag st=Aborted last=[vs-N]）。
+ extern INT32  SbStopStage;
+ extern INT32  SbDiagAbort;
++// 2026-11-06R2 y700-elden: VerifiedBoot.c 的探针模式全局（0/1 写帧缓冲，2 静默，3 只记 SbLastMark）。
++extern INT32  SbProbeMode;
+ #define SB_VSTOP(n)                                                            \
+   do {                                                                         \
+     if (SbStopStage == (n)) {                                                  \
+@@ -1690,7 +1692,12 @@
+     SB_VSTOP (36);   // 2026-11-06: out: 块入口（尚无任何串口/屏动作）
+     SbLen = AsciiSPrint (SbBuf, sizeof (SbBuf), "[V] slot0=%d st=%r\n\r",
+                          (INT32)BootableSlot->Suffix[0], Status);
+-    SerialPortWrite ((UINT8 *)SbBuf, SbLen);
++    // 2026-11-06R2 y700-elden: 与 SbVProbe 同一口径 —— 只有 mode 0/1 才写帧缓冲，
++    // mode 3（只记 SbLastMark）/2（全静默）跳过。此前这条 R15 诊断写是**无条件**的，
++    // 在 sbprobe=3 下仍会真写屏（正是 36→37 要判别的那个点）。
++    if ((SbProbeMode == 0) || (SbProbeMode == 1)) {
++      SerialPortWrite ((UINT8 *)SbBuf, SbLen);
++    }
+   }
+   SB_VSTOP (37);   // 2026-11-06: out: 的诊断 SerialPortWrite 之后
+   if (Status != EFI_SUCCESS) {

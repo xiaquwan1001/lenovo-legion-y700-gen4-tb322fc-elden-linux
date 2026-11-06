@@ -25,6 +25,12 @@
 #   scripts/uefi-r21-p7-ladder.sh --mkimg-only --build-dir DIR  # 指定别的变体目录
 #   STAGES="26 34" scripts/uefi-r21-p7-ladder.sh --mkimg-only   # 只造指定档
 #
+# 世代（2026-11-06 新增）：默认为 p7 世代（R7 配方 + 在盘件 sha 比对）。后续世代用环境变量切：
+#   PFX=p8 RECIPE=patches/uefi/p8-recipe.txt OUTDIR=out/r21-sbstop-p8 \
+#     scripts/uefi-r21-p7-ladder.sh --mkimg-only --rebuild
+#   （非 p7 世代件名 = $PFX-*.img / uefi-preamble<N>-r1.img，默认不比对 p7 的在盘指纹）
+#   BUILD_ARCHIVE=<dir> 可把变体构建目录落到持久位置（否则临时目录随 trap 删掉，只留镜像）。
+#
 # 判据与「可复现」的精确含义（2026-11-06 实测）：
 #   · **镜像段可逐字节复现**：以归档的 R7 构建目录（`reports/artifacts/uefi-20261105R7-markonly/`，FD 已入 git）
 #     为基点，repack + 前缀改写后的 4 件 sha256 与在盘件**完全相同**（`--verify` rc=0）。
@@ -43,6 +49,14 @@ OUTDIR=${OUTDIR:-$ROOT/out/r21-sbstop}
 STAGES=${STAGES:-"26 27 30 31 32 33 34 5 7"}
 PROBE=${PROBE:-3}
 KEPT=${KEPT:-$ROOT/reports/artifacts/uefi-r21-sbstop-trim-20261106/KEPT.sha256}
+# 2026-11-06: 世代前缀。p7 = R7 基线（在盘件，KEPT 逐字节可复现）；
+# p8 = p7 配方 + VS_STOP(35..38) 尾段二分；p9 = p8 + out: 诊断写按 SbProbeMode 门控。
+# 非 p7 世代默认不比对在盘指纹（件名不同，比也无意义），要双跑比对请显式 KEPT=…。
+PFX=${PFX:-p7}
+PREAMBLE=uefi-preamble${PFX#p}-r1.img
+if [ "$PFX" != p7 ] && [ "$KEPT" = "$ROOT/reports/artifacts/uefi-r21-sbstop-trim-20261106/KEPT.sha256" ]; then
+	KEPT=/dev/null
+fi
 DEFAULT_BUILD_DIR=$ROOT/reports/artifacts/uefi-20261105R7-markonly
 MODE=list
 REBUILD=0
@@ -53,8 +67,8 @@ note() { echo "[p7] $*" >&2; }   # 一律 stderr：build_variant 用 stdout 回�
 # 件名：26 用历史名 s26-pb3（阶段基件），其余 m3-stopN
 piece_name() {
 	case "$1" in
-		26) echo "p7-s26-pb3.img" ;;
-		*)  echo "p7-m3-stop$1.img" ;;
+		26) echo "$PFX-s26-pb3.img" ;;
+		*)  echo "$PFX-m3-stop$1.img" ;;
 	esac
 }
 
@@ -112,7 +126,7 @@ case "$MODE" in
 		echo "配方: $RECIPE"
 		echo "在盘判据: $KEPT"
 		echo "产出目录: $OUTDIR"
-		printf '会产出: uefi-preamble7-r1.img'
+		printf '会产出: %s' "$PREAMBLE"
 		for s in $STAGES; do printf ' + %s' "$(piece_name "$s")"; done
 		echo
 		echo "档位语义: 5/7 = BootLinux 内停机点（mode 3 也崩）; 26..34 = CmdBoot 窗口二分; 27 = GUARD 之后（崩）"
@@ -124,7 +138,7 @@ case "$MODE" in
 		bd=${BUILD_DIR:-}
 		if [ -z "$bd" ]; then
 			if [ "$REBUILD" = 1 ]; then
-				build_variant "$WORK/build"
+				build_variant "${BUILD_ARCHIVE:-$WORK/build}"
 				bd=$BUILT_DIR
 				note "⚠ --rebuild：FD 与归档件不同是预期（PITFALLS #510），下面的 sha 比对将失败，属正常"
 			else
@@ -133,9 +147,9 @@ case "$MODE" in
 			fi
 		fi
 		[ -d "$bd" ] || die "变体目录不存在: $bd"
-		repack_preamble "$bd" "$WORK/uefi-preamble7-r1.img"
+		repack_preamble "$bd" "$WORK/$PREAMBLE"
 		for s in $STAGES; do
-			python3 "$ROOT/scripts/uefi-sbstop-patch.py" "$WORK/uefi-preamble7-r1.img" "$s" \
+			python3 "$ROOT/scripts/uefi-sbstop-patch.py" "$WORK/$PREAMBLE" "$s" \
 				"$WORK/$(piece_name "$s")" --probe "$PROBE" >/dev/null \
 				|| die "patch stage=$s 失败"
 		done
@@ -158,13 +172,13 @@ case "$MODE" in
 			done < "$KEPT"
 		else
 			note "无在盘指纹文件（$KEPT），只列产物 sha："
-			sha256sum "$WORK"/uefi-preamble7-r1.img "$WORK"/p7-*.img 2>/dev/null
+			sha256sum "$WORK"/"$PREAMBLE" "$WORK"/$PFX-*.img 2>/dev/null
 		fi
 		if [ "$MODE" = mkimg ]; then
 			mkdir -p "$OUTDIR"
-			cp -f "$WORK"/uefi-preamble7-r1.img "$WORK"/p7-*.img "$OUTDIR"/ || die "拷贝到 $OUTDIR 失败"
+			cp -f "$WORK"/"$PREAMBLE" "$WORK"/$PFX-*.img "$OUTDIR"/ || die "拷贝到 $OUTDIR 失败"
 			note "已写入 $OUTDIR"
-			sha256sum "$OUTDIR"/uefi-preamble7-r1.img "$OUTDIR"/p7-*.img | sed 's|.*/|  |'
+			sha256sum "$OUTDIR"/"$PREAMBLE" "$OUTDIR"/$PFX-*.img | sed 's|.*/|  |'
 		fi
 		[ "$rc" = 0 ] && note "PASS（镜像段可逐字节复现）" || note "FAIL（见上）"
 		exit "$rc"

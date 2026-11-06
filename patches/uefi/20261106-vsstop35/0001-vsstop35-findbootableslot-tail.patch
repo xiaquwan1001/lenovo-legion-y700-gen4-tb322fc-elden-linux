@@ -1,0 +1,49 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] PartitionTableUpdate: bisect the tail of FindBootableSlot (VS_STOP 35..38)
+
+2026-11-06 y700-elden: `sbprobe=3` 通道把窗口推到 (VS_STOP(34), VS_STOP(27)) —— 34 回话
+`diag st=Aborted last=[vs-34]`，而 27（`GUARD (FindBootableSlot (…))` 之后）崩。这段源码只剩
+`MarkPtnActive()` + `out:` 收尾 + 一次诊断 `SerialPortWrite` + `return Status`。
+
+本补丁切成四刀（全部在 PartitionTableUpdate.c 的 FindBootableSlot 内，用既有 SB_VSTOP）：
+
+  35  MarkPtnActive 之后（34→35 之间只有这一个调用）
+  36  out: 块入口（尚未做任何串口/屏动作）
+  37  out: 的诊断 SerialPortWrite 之后
+  38  return 之前（FindBootableSlot 全部收尾完成）
+
+为什么 36/37 必须分开：`out:` 里有一条 **2026-11-04R15 加的无条件**
+`SerialPortWrite ("[V] slot0=…")`，它没有纳入 `SbProbeMode` 开关 ⇒ 即使 `sbprobe=3`
+也会真写帧缓冲。而 11-06 已定案「帧缓冲控制台写穿」是崩溃元凶（`PITFALLS #514–#516`）⇒
+35→36 回话、36→37 崩 本身就是对该写点的独立判别。
+
+判据不变：`diag st=Aborted last=[vs-N]` ⇒ 该点之前不崩；无响应 ⇒ 崩在该点之前。
+打序 36 → 37 → 35 → 38（先验收尾，再验写点）。
+
+--- a/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c
+@@ -1680,20 +1680,24 @@
+   }
+   SB_VSTOP (34);   // 2026-11-05R4: ValidateSlotGuids 之后、MarkPtnActive 之前
+   MarkPtnActive (BootableSlot->Suffix);
++  SB_VSTOP (35);   // 2026-11-06: MarkPtnActive 之后（34→35 之间只有这一个调用）
+ out:
+   // 2026-11-04R14 y700-elden: RELEASE strips DEBUG(); show the slot-state decision.
+   // 2026-11-04R15: AsciiPrint is invisible (R7 把 ConOut 换 no-op)，改走 SerialPortWrite。
+   {
+     CHAR8  SbBuf[96];
+     UINTN  SbLen;
++    SB_VSTOP (36);   // 2026-11-06: out: 块入口（尚无任何串口/屏动作）
+     SbLen = AsciiSPrint (SbBuf, sizeof (SbBuf), "[V] slot0=%d st=%r\n\r",
+                          (INT32)BootableSlot->Suffix[0], Status);
+     SerialPortWrite ((UINT8 *)SbBuf, SbLen);
+   }
++  SB_VSTOP (37);   // 2026-11-06: out: 的诊断 SerialPortWrite 之后
+   if (Status != EFI_SUCCESS) {
+     /* clear bootable slot */
+     BootableSlot->Suffix[0] = '\0';
+   }
++  SB_VSTOP (38);   // 2026-11-06: return 之前（FindBootableSlot 全部收尾完成）
+   return Status;
+ }
+ 
