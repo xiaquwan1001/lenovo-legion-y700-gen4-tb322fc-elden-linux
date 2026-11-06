@@ -143,6 +143,20 @@
 
 ## 5. 查漏补缺（GAPS）
 
+### 2026-11-06（夜·三）：屏显 NULL 崩修好 → **EB 正常返回** → 面板被熄 ⇒ 转 DDR 黑匣子（p27–p30 四发）
+
+- **一句话**：p27 证明屏显崩的真因是 `LinuxLoader` 里 **`p_Position` 恒 NULL**（该映像从不调 `SerialPortInitialize`，
+  `LinuxLoader.map` 连符号都没有），`R21` 惰性初始化修好并顺带钉死预算数字（`len=0x2B00000`=43 MiB 声明 /
+  `lim=0x70000`=448 KiB 实夹 / `line=0x16500`）；p28 恢复 EB 后**只剩背光**；p29 的 fault
+  `far=E3F04000 esr=96000046`（write, translation fault level 2）证明 `SbBbMark(4)` 写不进未映射的 carveout，
+  **同时证明 `ShutdownUefiBootServices()` 是正常返回的** ⇒ EB 不是卡点；p30 把该 1 MiB 登记进平台内存图（`R24`）。
+- **新纪律**：EB 之后屏会被驱动退出流程熄掉、USB 也被拆 ⇒ **唯一通道 = DDR 黑匣子**
+  （`scripts/blackbox.py prep/read --pa 0xE3F00000`），屏上判据在 EB 之后一律无效。
+- **下一步**：读回 p30 的 DDR checkpoint（page 4 = EB 返回后、page 5 = `LinuxKernel()` 前）判定卡点在 `PreparePlatformHardware()` 还是跳内核本身。
+- **正文/坑**：`reports/uefi-eb-and-ddr-20261106.md`；`PITFALLS #530`（`p_Position` NULL）、`#531`（EB 后熄屏）；
+  补丁 `patches/uefi/20261106R21-fblazyinit/`、`20261106R22-restore-eb/`、`20261106R23-ddr-checkpoint/`、`20261106R24-blackbox-map/`；
+  配方 `p27…p30-recipe.txt`；镜像 `out/r21-sbstop-p{27,28,29,30}/`。
+
 ### 2026-11-06（夜·二）：崩溃 PC 归因成功 = **`LinuxLoader` 自己的 `SerialPortWrite`**（p25/p26 两发）
 
 - **一句话**：两发零写盘把 `Synchronous Exception` 从「一个数字」变成「模块 + 函数」——屏上

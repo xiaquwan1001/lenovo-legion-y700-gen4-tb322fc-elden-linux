@@ -1,0 +1,63 @@
+Subject: [PATCH] BootLinux: DDR 黑匣子 checkpoint（EB 之后屏显被熄，只剩这条通道）
+
+2026-11-06R23 y700-elden: p28（恢复 EB + banner 带 EB 状态）上机结果：**屏上只剩背光**。
+USB 全程消失 ⇒ 与「EB 成功拆掉 USB 设备栈」自洽（EB 失败会 `goto Exit` 回 fastboot，USB 会活着），
+但 EB 之后显示驱动退出流程把面板一起熄了，`[K] EB-OK` / `[K] JUMP-BANNER` 都看不见；
+内核若起来会重新枚举 USB，实测 65 s 无任何 USB ⇒ **要么没跳到内核，要么内核极早期就死了**。这两者只能靠 DDR 区分。
+
+本补丁在 `BootLinux()` 里加 `SbBbMark(page)`：往 `0xE3F00000 + page*0x1000` 整页填 `0xFF` 并
+`WriteBackDataCacheRange`，布局与 `scripts/blackbox.py` 一致（页 k 被填 ⇒ checkpoint k 到达过；
+0x00 稳定、0xFF 只会掉成 0 ⇒ popcount 判读单调）。
+- `page 4`：`ShutdownUefiBootServices()` 返回之后；
+- `page 5`：`LinuxKernel()` 调用点之前一条指令处。
+
+判据（断电/复位 → 正常起 Linux → `scripts/blackbox.py read`）：
+ - 4 有、5 无 ⇒ EB 过了但没走到跳内核（`PreparePlatformHardware()` 一带卡住）；
+ - 4、5 都有而设备无 USB ⇒ 已经调用 `LinuxKernel()`，问题在跳内核参数/内核极早期；
+ - 4、5 都没有 ⇒ EB 没返回（EB 内部挂死）。
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index ed1f62c2..709a99f3 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -147,6 +147,25 @@ SbBootProbe (
+ // 2026-11-06R22 y700-elden: 把 ExitBootServices 的返回值一路带到 banner 那一行 ——
+ // EB 之后宿主通道已失效（USB 设备栈被拆），屏上每一行都要用来判读，不能各打一行浪费预算。
+ STATIC EFI_STATUS  SbEbStatus = EFI_NOT_READY;
++
++// 2026-11-06R23 y700-elden: DDR 黑匣子 checkpoint。
++// EB 之后屏显会被驱动退出流程熄掉（2026-11-06 p28 上机：全程只剩背光），宿主通道也已被拆，
++// 于是「到底走到哪」只剩 DDR 一条通道。布局与 tools 对齐（scripts/blackbox.py）：
++//   PA 0xE3F00000 + page*0x1000 整页填 0xFF ⇒ 该 checkpoint 到达过；页 0x00 是稳定态，0xFF 只会掉成 0。
++STATIC VOID
++SbBbMark (
++  UINTN  Page
++  )
++{
++  volatile UINT8  *P;
++  UINTN            i;
++
++  P = (volatile UINT8 *)(UINTN)(0xE3F00000ULL + Page * 0x1000ULL);
++  for (i = 0; i < 0x1000; i++) {
++    P[i] = 0xFF;
++  }
++  WriteBackDataCacheRange ((VOID *)P, 0x1000);
++}
+ #include "libfdt.h"
+ #include <ufdt_overlay.h>
+ 
+@@ -1170,6 +1189,7 @@ BootLinux (BootInfo *Info)
+   /*Shut down UEFI boot services*/
+   Status      = ShutdownUefiBootServices ();
+   SbEbStatus  = Status;
++  SbBbMark (4);   // 2026-11-06R23: checkpoint 4 = ShutdownUefiBootServices() 返回
+   // 2026-11-06R22 y700-elden: EB 之后打一行（R21 之后屏显写已安全：惰性初始化 + 448 KiB 硬边界）。
+   // 与 banner 分行是故意的：EB 卡住时屏上只有这一行，EB 正常时它会被 banner 顶掉/并排可见。
+   {
+@@ -1241,6 +1261,7 @@ BootLinux (BootInfo *Info)
+     SbBannerLen = AsciiSPrint (SbBanner, sizeof (SbBanner), "[K] JUMP-BANNER eb=%r\n\r", SbEbStatus);
+     SerialPortWrite ((UINT8 *)SbBanner, SbBannerLen);
+   }
++  SbBbMark (5);   // 2026-11-06R23: checkpoint 5 = 已到 LinuxKernel() 调用点（下一条指令就是跳）
+   LinuxKernel ((UINT64)BootParamlistPtr.DeviceTreeLoadAddr, 0, 0, 0);
+ 
+ // Kernel should never exit

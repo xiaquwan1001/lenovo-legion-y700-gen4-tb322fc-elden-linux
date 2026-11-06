@@ -1,0 +1,62 @@
+Subject: [PATCH] BootLinux: 恢复 ExitBootServices，并把 EB 状态带进 banner 那一行
+
+2026-11-06R22 y700-elden: p27（R19 帧缓冲硬边界 + R20 归因行带 ESR/FAR + R21 惰性初始化）上机结果：
+屏上出现 `[F] len=2B00000 lim=70000 stride=1DC0 line=16500` ⇒ **惰性初始化成立**（`len` = 描述符声明的
+43 MiB，`lim` = 我们夹到的 448 KiB），随后 `[K] NO-EB OK` 出现、**没有** `[K] FLT`（无异常）
+⇒ 真因是 LinuxLoader 里 `p_Position` 恒 NULL（该映像从不调 `SerialPortInitialize`，`PITFALLS` 新增），
+不是写穿；一旦屏显打不出去，EB 之后的一切都没法判读。
+
+本补丁：① 把 p24 起为二分用的「跳过 EB + `CpuDeadLoop()`」（`20261106R16-no-eb`）恢复成真正调用
+`ShutdownUefiBootServices()`；② 把它的返回值存进文件静态变量 `SbEbStatus`，并把 banner 改成
+`[K] JUMP-BANNER eb=%r` —— EB 之后宿主通道已失效，屏上每多打一行就少一行预算（448 KiB 只装 1.6 行 @scale 3），
+所以两件事必须并到同一行；③ 另在 EB 返回处打一行 `[K] EB-OK st=%r`，用于「EB 卡住」与「EB 过了但跳内核卡住」的区分。
+
+判据：
+ - 只看到 `[K] NO-EB OK` 以外的 `[K] EB-OK st=Success` 但无 banner ⇒ 卡在 `PreparePlatformHardware()/LinuxKernel()` 之前段；
+ - 看到 `[K] JUMP-BANNER eb=Success` ⇒ 已调用 `LinuxKernel()`；再看内核是否接管（网络/USB 重新枚举）。
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index 8ee4a8a5..ed1f62c2 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -144,6 +144,9 @@ SbBootProbe (
+       return EFI_ABORTED;                                                      \
+     }                                                                          \
+   } while (0)
++// 2026-11-06R22 y700-elden: 把 ExitBootServices 的返回值一路带到 banner 那一行 ——
++// EB 之后宿主通道已失效（USB 设备栈被拆），屏上每一行都要用来判读，不能各打一行浪费预算。
++STATIC EFI_STATUS  SbEbStatus = EFI_NOT_READY;
+ #include "libfdt.h"
+ #include <ufdt_overlay.h>
+ 
+@@ -1165,7 +1168,16 @@ BootLinux (BootInfo *Info)
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/
+-  Status = ShutdownUefiBootServices ();
++  Status      = ShutdownUefiBootServices ();
++  SbEbStatus  = Status;
++  // 2026-11-06R22 y700-elden: EB 之后打一行（R21 之后屏显写已安全：惰性初始化 + 448 KiB 硬边界）。
++  // 与 banner 分行是故意的：EB 卡住时屏上只有这一行，EB 正常时它会被 banner 顶掉/并排可见。
++  {
++    CHAR8  SbLine[96];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] EB-OK st=%r\n\r", Status);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   SB_STOP (41, "41");   // 2026-11-06R3: ExitBootServices 之后（回话即证明「EB 后仍能回宿主」）
+   if (EFI_ERROR (Status)) {
+     DEBUG ((EFI_D_ERROR,
+@@ -1223,8 +1235,11 @@ BootLinux (BootInfo *Info)
+   // 只能用屏上这一行判。预算：splash 区只前 ~448 KiB 可安全写（PITFALLS #492），
+   // SCALE 3 一行 = 274 176 B ⇒ mode 3 全程不写屏时，打出这一行仍在预算内。
+   {
+-    STATIC CONST CHAR8  SbBanner[] = "[K] JUMP-BANNER\n\r";
+-    SerialPortWrite ((UINT8 *)SbBanner, AsciiStrLen (SbBanner));
++    // 2026-11-06R22 y700-elden: banner 带上 EB 返回值 —— 一行同时回答「EB 成功了吗」和「走到跳内核了吗」。
++    CHAR8  SbBanner[96];
++    UINTN  SbBannerLen;
++    SbBannerLen = AsciiSPrint (SbBanner, sizeof (SbBanner), "[K] JUMP-BANNER eb=%r\n\r", SbEbStatus);
++    SerialPortWrite ((UINT8 *)SbBanner, SbBannerLen);
+   }
+   LinuxKernel ((UINT64)BootParamlistPtr.DeviceTreeLoadAddr, 0, 0, 0);
+ 

@@ -1,0 +1,31 @@
+Subject: [PATCH] PlatformMemoryMap: 登记 DDR 黑匣子窗口 0xE3F00000（否则 DXE 页表不映射它）
+
+2026-11-06R24 y700-elden: p29（R23 加了 DDR checkpoint）上机后拿到了**关键的一条**：
+  `[K] FLT pc=CFD0F448 img=- b=CFD04000 z=46000 o=B448 esr=96000046 far=E3F04000`
+`esr=0x96000046` ⇒ EC=0x25（Data Abort, current EL）、WnR=1（**写**）、DFSC=0b000110（translation fault, level 2）
+⇒ 我们写 `0xE3F04000`（黑匣子 page 4）时该页**没有被 UEFI 页表映射**。
+
+顺带得到一条正面结论：`SbBbMark(4)` 位于 `SbEbStatus = Status;` 之后 ⇒ **`ShutdownUefiBootServices()` 是正常返回的**，
+EB 不是卡点（p28「只剩背光」不是 EB 挂住）。
+
+修复：把该 1 MiB 作为 Reserved 内存区登记进平台内存图（`AddMem` + `WRITE_BACK_XN`，与 "XBL DT" 同型），
+DXE 建页表时就会映射它；内核侧本来就有 `memmap=1M$0xE3F00000` 保留，两边地址对齐。
+
+判据（下一发）：屏上不再出现 `far=E3F04000` 的 fault；复位后 `scripts/blackbox.py read --pa 0xE3F00000`
+应看到 stage 4 / 5 的 0xFF 页。
+diff --git a/Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c b/Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c
+index 35fc1b1c..695c83e3 100644
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c
+@@ -34,6 +34,11 @@ static ARM_MEMORY_REGION_DESCRIPTOR_EX gDeviceMemoryDescriptorEx[] = {
+     { "DXE Heap",          0xB90C0000, 0x1D500000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN },
+     { "Display Reserved",  0xFC800000, 0x02B00000, AddMem, MEM_RES, SYS_MEM_CAP, Reserv, WRITE_THROUGH_XN },    
+     { "UEFI FD",           0xFF300000, 0x00400000, AddMem, SYS_MEM, SYS_MEM_CAP, BsData, WRITE_BACK },
++    // 2026-11-06R24 y700-elden: DDR 黑匣子窗口（EB 之后唯一取证通道）。
++    // 必须在这里登记，否则 DXE 页表不映射它 —— 实测对 0xE3F00000 写入直接 data abort：
++    //   [K] FLT far=E3F04000 esr=96000046（EC=0x25 data abort current EL，WnR=1，DFSC=translation fault level 2）
++    // 内核侧用 boot.img cmdline 的 memmap=1M$0xE3F00000 保留，两边地址必须一致。
++    { "Blackbox",          0xE3F00000, 0x00100000, AddMem, SYS_MEM, SYS_MEM_CAP, Reserv, WRITE_BACK_XN },
+ 
+     /* Other memory regions */
+     {"IMEM Base",           0x14680000, 0x0002A000, NoHob,  MMAP_IO, INITIALIZED, Conv,   NS_DEVICE},

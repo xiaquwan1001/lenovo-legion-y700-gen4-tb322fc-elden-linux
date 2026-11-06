@@ -1,0 +1,60 @@
+Subject: [PATCH] FrameBufferSerialPortLib: SerialPortWrite 惰性初始化（LinuxLoader 里 p_Position 恒 NULL）
+
+2026-11-06R21 y700-elden: p26 的归因行 `[K] FLT pc=cfeb5c84 img=- b=cfea2000 z=45000 o=13c84`
+= `LinuxLoader` 的 `SerialPortWrite`（`LinuxLoader.map`: `00013bd8 000000d0 SerialPortWrite`）。
+按 `.map` 继续查发现 **`LinuxLoader` 里根本没有 `SerialPortInitialize` 符号** —— 该映像链接了本库
+却从不调用初始化 ⇒ 本映像内的 `p_Position` 恒为 `NULL`，第一次打印就在 `p_Position->y`
+（`FBCON_POSITION` 的 offset 8）上做 data abort。这与「splash 只有 448 KiB 可写」无关：
+是 NULL 指针，不是越界。
+
+为什么历史探针能"工作"：带 `sbstop=`/`sbprobe=3` 的令牌件整条路径**不打印**，判据走的是
+`FastbootFail` 回给宿主的响应；一旦真路径上有任何一次未门控的 `SerialPortWrite`
+（`2026-11-06R5` 的 `[K] JUMP-BANNER` 就是），就必然崩在这里。
+
+修法：`SerialPortWrite` / `SerialPortWriteCritical` 入口先判 `m_Initialized`/`p_Position`，
+未初始化就补调 `SerialPortInitialize()`（顺带把 R19 的 `[F]` 预算行打出来）；初始化失败
+（找不到 `Display Reserved`）就静默丢弃这次写，绝不带 NULL 继续。
+
+判据：真件第一次屏上输出应是 `[F] len=… lim=… stride=… line=…`，随后 `[K] JUMP-BANNER` 能打出来。
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+index 405bffa5..3595c67d 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -350,6 +350,18 @@ SerialPortWrite(IN UINT8 *Buffer, IN UINTN NumberOfBytes)
+   UINT8 *CONST Final          = &Buffer[NumberOfBytes];
+   UINTN        InterruptState = ArmGetInterruptState();
+ 
++  // 2026-11-06R21 y700-elden: 惰性初始化。
++  // LinuxLoader（以及任何链接了本库却没显式调 SerialPortInitialize 的映像）里 p_Position 恒为 NULL，
++  // 第一次打印就在 `p_Position->y`（结构体 offset 8）上 data abort —— 这正是 p26 归因到的崩溃
++  // （`[K] FLT pc=cfeb5c84 b=cfea2000 z=45000 o=13c84` = LinuxLoader 的 SerialPortWrite）；
++  // 反证：`LinuxLoader.map` 里根本没有 SerialPortInitialize 符号（LTO 把它当死代码丢了）。
++  // 这里第一次写就补初始化；初始化失败（找不到 "Display Reserved"）就静默丢弃，绝不带着 NULL 往下走。
++  if (!m_Initialized || (p_Position == NULL)) {
++    if (RETURN_ERROR (SerialPortInitialize ())) {
++      return NumberOfBytes;
++    }
++  }
++
+   if (InterruptState)
+     ArmDisableInterrupts();
+ 
+@@ -382,6 +394,18 @@ SerialPortWriteCritical(IN UINT8 *Buffer, IN UINTN NumberOfBytes)
+   UINTN        CurrentForeground = m_Color.Foreground;
+   UINTN        InterruptState    = ArmGetInterruptState();
+ 
++  // 2026-11-06R21 y700-elden: 惰性初始化。
++  // LinuxLoader（以及任何链接了本库却没显式调 SerialPortInitialize 的映像）里 p_Position 恒为 NULL，
++  // 第一次打印就在 `p_Position->y`（结构体 offset 8）上 data abort —— 这正是 p26 归因到的崩溃
++  // （`[K] FLT pc=cfeb5c84 b=cfea2000 z=45000 o=13c84` = LinuxLoader 的 SerialPortWrite）；
++  // 反证：`LinuxLoader.map` 里根本没有 SerialPortInitialize 符号（LTO 把它当死代码丢了）。
++  // 这里第一次写就补初始化；初始化失败（找不到 "Display Reserved"）就静默丢弃，绝不带着 NULL 往下走。
++  if (!m_Initialized || (p_Position == NULL)) {
++    if (RETURN_ERROR (SerialPortInitialize ())) {
++      return NumberOfBytes;
++    }
++  }
++
+   if (InterruptState)
+     ArmDisableInterrupts();
+ 

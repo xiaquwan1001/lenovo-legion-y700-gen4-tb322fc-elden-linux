@@ -1,0 +1,127 @@
+Subject: [PATCH] FrameBufferSerialPortLib: 帧缓冲控制台加硬边界（写不出界）
+
+2026-11-06R19 y700-elden: p26 已把真启动的 `Synchronous Exception` 定位到 **`SerialPortWrite` 内部**
+（屏上 `[K] FLT pc=cfeb5c84 b=cfea2000 z=45000 o=13c84`；`LinuxLoader.map` 里 `00013bd8 000000d0 SerialPortWrite`），
+即崩溃就是我们自己的屏显写，不是「某个第三方驱动」（旧判断作废，`PITFALLS #527`）。
+
+根因机制不变（`PITFALLS #492/#515`）：`splash_region` 声明 43 MiB，实际只有前 **~448 KiB** 可安全写，
+而 `SCALE_FACTOR 3` 下一行文字 = `(gBpp/8)*FONT_HEIGHT*gWidth` 字节。此前的唯一防线是「真路径别打印」，
+但 `20261104R15-noavbprobe` / `R2-slow-serial` / `2026-11-06R5`（`[K] JUMP-BANNER`）这些调用点仍在
+真路径上无条件写屏 ⇒ 迟早写到界外。
+
+本补丁把它改成**结构性防护**，不依赖任何调用方自觉：
+
+1. 预算 `m_FbSafe = min(DisplayMemoryRegion.Length, FBCON_SAFE_LIMIT=448 KiB)`，只在 `SerialPortInitialize()`
+   算出一次；`m_FbStride/m_FbLine` 一并算好。
+2. `FbConPutCharWithFactor()` 在 `paint:` 处先判「这一整行是否落在预算内」，越界就**回卷到 y=0**；
+   连一行都放不下就直接丢弃该字符（宁可不打印，也不能崩）。
+3. `newline:` 分支**不再 `ResetFb()`**（23 MiB 清屏本身就是写穿风险），改为回卷到顶；
+   `m_FbSafe == 0`（未初始化）时保留原行为。
+4. `SerialPortInitialize()` 成功后打一行 `[F] len=<描述符长度> lim=<预算> stride=<行字节> line=<一行文字字节>`，
+   用来在真机验证「43 MiB 声明 vs 448 KiB 可写」这个前提，并把预算写成可核对的数字。
+
+判据：`[F]` 那行的 `len` 若真是 43 MiB 而 `lim` 取 448 KiB，则后续所有打印都被夹在 448 KiB 内，
+`[K] JUMP-BANNER` 应能在最上面一行看到且不再触发异常。
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+index 6f5c2a69..405bffa5 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -12,6 +12,7 @@
+ #include <Library/HobLib.h>
+ #include <Library/MemoryMapHelperLib.h>
+ #include <Library/SerialPortLib.h>
++#include <Library/PrintLib.h>        // 2026-11-06R19 y700-elden
+ 
+ #include <Resources/FbColor.h>
+ #include <Resources/font5x12.h>
+@@ -30,6 +31,18 @@ UINTN gWidth = FixedPcdGet32(PcdMipiFrameBufferWidth);
+ UINTN gHeight = FixedPcdGet32(PcdMipiFrameBufferHeight);
+ UINTN gBpp    = FixedPcdGet32(PcdMipiFrameBufferPixelBpp);
+ 
++// 2026-11-06R19 y700-elden: 帧缓冲控制台硬边界（结构性防护）。
++// splash 区声明 43 MiB，实测只有前 ~448 KiB 可安全写（PITFALLS #492/#515）；此前的唯一防线是
++// 「真路径别打印」，而 2026-11-06 夜 p26 已把崩溃 PC 定到 SerialPortWrite 内部（PITFALLS #527）⇒
++// 改成写不出去：所有绘制先算字节偏移，越过 m_FbSafe 就回卷到 y=0，且绝不再做 23 MiB 的 ResetFb 清屏。
++#ifndef FBCON_SAFE_LIMIT
++#define FBCON_SAFE_LIMIT  (448 * 1024)
++#endif
++
++STATIC UINTN  m_FbSafe   = 0;   // 可写预算（字节，从帧缓冲基址起算）
++STATIC UINTN  m_FbStride = 0;   // 一个像素行的字节数 = (gBpp/8)*gWidth
++STATIC UINTN  m_FbLine   = 0;   // 一行文字的字节数 = m_FbStride*FONT_HEIGHT
++
+ // Module-used internal routine
+ void FbConPutCharWithFactor(char c, int type, unsigned scale_factor);
+ 
+@@ -62,6 +75,23 @@ SerialPortInitialize(VOID)
+   // Set flag
+   m_Initialized = TRUE;
+ 
++  // 2026-11-06R19: 预算 = min(描述符长度, FBCON_SAFE_LIMIT)，并把四个数打一行到屏上供取证
++  // （"len" 是 DT/HOB 里声明的长度，用来验证 #492 的 43 MiB vs 448 KiB 说法）。
++  m_FbStride = (gBpp / 8) * gWidth;
++  m_FbLine   = m_FbStride * FONT_HEIGHT;
++  m_FbSafe   = FBCON_SAFE_LIMIT;
++  if ((DisplayMemoryRegion.Length > 0x1000) && ((UINTN)DisplayMemoryRegion.Length < m_FbSafe)) {
++    m_FbSafe = (UINTN)DisplayMemoryRegion.Length;
++  }
++  {
++    CHAR8  SbLine[128];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] len=%lx lim=%lx stride=%lx line=%lx\n\r",
++                         (UINT64)DisplayMemoryRegion.Length, (UINT64)m_FbSafe,
++                         (UINT64)m_FbStride, (UINT64)m_FbLine);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
++
+   return RETURN_SUCCESS;
+ }
+ 
+@@ -105,6 +135,15 @@ paint:
+   if ((unsigned char)c > 127)
+     return;
+ 
++  // 2026-11-06R19: 越界保护。整行文字必须落在 m_FbSafe 内，否则回卷到顶；连一行都放不下就丢弃。
++  if (m_FbSafe != 0) {
++    if ((p_Position->y + (UINTN)FONT_HEIGHT * scale_factor) * m_FbStride > m_FbSafe) {
++      p_Position->y = 0;
++      if ((UINTN)FONT_HEIGHT * scale_factor * m_FbStride > m_FbSafe)
++        return;
++    }
++  }
++
+   if ((unsigned char)c < 32) {
+     if (c == '\n') {
+       goto newline;
+@@ -146,7 +185,18 @@ paint:
+ newline:
+   p_Position->y += scale_factor;
+   p_Position->x = 0;
+-  if (p_Position->y >= m_MaxPosition.y - scale_factor) {
++  // 2026-11-06R19: 预算用完就回卷到顶，**不再 ResetFb()**（23 MiB 清屏本身就是写穿风险）。
++  // 这样最新内容永远留在最上面 ⇒ 崩溃前的最后一行必定可见，这是我们现在唯一的判据通道。
++  if ((m_FbSafe != 0) && (((p_Position->y + (UINTN)FONT_HEIGHT * scale_factor) * m_FbStride) > m_FbSafe)) {
++    p_Position->y = 0;
++    FbConFlush ();
++    if (intstate)
++      ArmEnableInterrupts();
++    if ((unsigned char)c >= 32)
++      goto paint;                  // 只有可打印字符需要在本行重画
++    return;
++  }
++  if ((m_FbSafe == 0) && (p_Position->y >= m_MaxPosition.y - scale_factor)) {
+     ResetFb();
+     FbConFlush();
+     p_Position->y = 0;
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.inf b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.inf
+index 10975dc6..98f3889b 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.inf
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.inf
+@@ -17,6 +17,7 @@
+ [LibraryClasses]
+   ArmLib
+   PcdLib
++  PrintLib
+   IoLib
+   HobLib
+   CompilerIntrinsicsLib

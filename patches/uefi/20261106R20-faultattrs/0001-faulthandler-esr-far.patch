@@ -1,0 +1,26 @@
+Subject: [PATCH] DefaultExceptionHandler: 归因行补 ESR/FAR
+
+2026-11-06R20 y700-elden: R17 的单行归因只打了 `pc/img/base/size/off`，恰好缺了区分
+「越界写（FAR 落在帧缓冲后面）」与「野指针（FAR 在别处）」的唯一依据（`PITFALLS #529`）。
+补丁在命中分支追加 `esr=` 与 `far=`，整行仍约 84 字符（`SCALE 3` 下一行 ≈105 列）。
+
+判据：`[K] FLT pc=… img=… b=… z=… o=… esr=… far=…`
+ - `esr` 的 EC 位（`esr[31:26]`）区分 data abort / instruction abort；
+ - `far` 若落在 `0xFC800000 + 448 KiB` 之后 ⇒ 越界写确认；若在 `0x0` 附近 ⇒ 野指针。
+diff --git a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+index 54c879d..17c01af 100644
+--- a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
++++ b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+@@ -292,8 +292,10 @@ DefaultExceptionHandler (
+     }
+ 
+     if (SbSize != 0) {
+-      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] FLT pc=%08lx img=%a b=%08lx z=%05lx o=%04lx\n\r",
+-                           (UINT64)SbPc, SbName, (UINT64)SbBase, (UINT64)SbSize, (UINT64)SbOff);
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] FLT pc=%08lx img=%a b=%08lx z=%05lx o=%04lx esr=%08lx far=%08lx\n\r",
++                           (UINT64)SbPc, SbName, (UINT64)SbBase, (UINT64)SbSize, (UINT64)SbOff,
++                           (UINT64)SystemContext.SystemContextAArch64->ESR,
++                           (UINT64)SystemContext.SystemContextAArch64->FAR);
+     } else {
+       SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] FLT pc=%08lx ids=%d/%d esr=%08lx%s\n\r",
+                            (UINT64)SbPc, (UINT64)SbEntries, (UINT64)SbSeen,
