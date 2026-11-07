@@ -62,7 +62,7 @@ bash "$ROOT/scripts/trial.sh" gate 2>&1 | tee "$OUTDIR/gate.txt" | tail -3
 	echo "# ssh pre $(date -Is)"
 	S 'cat /proc/sys/kernel/random/boot_id; uptime -p; cat /proc/cmdline; lsblk -o NAME,SIZE,PARTLABEL | grep -E "boot_b|logfs"'
 } > "$OUTDIR/ssh-pre.txt" 2>&1
-PRE_BOOTID=$(head -1 "$OUTDIR/ssh-pre.txt")
+PRE_BOOTID=$(sed -n 2p "$OUTDIR/ssh-pre.txt")   # 第 1 行是 "# ssh pre <时间>" 表头（2026-11-07 修正）
 say "pre boot_id=$PRE_BOOTID"
 grep -q . "$OUTDIR/ssh-pre.txt" || say "WARN: ssh pre-state empty"
 
@@ -125,7 +125,11 @@ say "watch: usb_present_last=$USB_ALIVE samples_with_usb=$N_OF/$WATCH"
 if grep -q 'Booting FAILED' "$OUTDIR/boot.txt"; then V=HANDOFF
 elif [ "${USB_ALIVE:-0}" = 0 ]; then V=HANDOFF
 else V=NOJUMP; fi
-say "VERDICT(candidate)=$V"
+# 2026-11-07 修正：`fastboot 无应答` 只说明 ABL 的 gadget 被销毁，**不证明 UEFI 交棒**
+# （PITFALLS #549：跳转后复位、ABL 自己引导 boot_b 也会这样）。真正的排他判据是内核
+# `/proc/cmdline` 里的 `elden_bootpath=uefi`（R43 起 UEFI 才写），所以候选判定只作记录。
+V_CAND=$V
+say "VERDICT(candidate)=$V_CAND"
 
 # ---------- 恢复 ----------
 say "recovering..."
@@ -168,8 +172,24 @@ fi
 	echo "# ssh post $(date -Is)"
 	S 'cat /proc/sys/kernel/random/boot_id; uptime -p; cat /proc/cmdline; lsblk -o NAME,SIZE,PARTLABEL | grep -E "boot_b|logfs"'
 } > "$OUTDIR/ssh-post.txt" 2>&1
-POST_BOOTID=$(head -1 "$OUTDIR/ssh-post.txt")
+POST_BOOTID=$(sed -n 2p "$OUTDIR/ssh-post.txt")
 say "post boot_id=$POST_BOOTID mode=$MODE"
+
+# ---------- 排他判据：UEFI 的 cmdline 令牌（R43+）----------
+TAG=absent
+if [ "$MODE" = linux ] && grep -q "elden_bootpath=uefi" "$OUTDIR/ssh-post.txt"; then TAG=present; fi
+say "cmdline elden_bootpath=$TAG"
+if [ "$MODE" = linux ]; then
+	if [ "$TAG" = present ]; then
+		V=HANDOFF_TAGGED
+	else
+		# 内核起了但没有令牌 ⇒ 这一次内核不是 UEFI 交棒的那个（ABL 自己引导 boot_b）
+		V=ABLBOOT_NOTAG
+	fi
+else
+	V=NOBOOT
+fi
+say "VERDICT(final)=$V"
 
 if [ "$MODE" = linux ]; then
 	say "dump logfs (ABL/PBL log; 单文件 UEFILOG1.TXT，偏移 0x19 起 FAT)"
@@ -212,6 +232,6 @@ fi
 # ---------- record ----------
 bash "$ROOT/scripts/trial.sh" record --label "$LABEL" --image "$IMG" --reset warm \
 	--deploy fastboot-boot --probe uefi-vis --verdict "$V" --logdir "$OUTDIR" \
-	--note "handoff-witness: boot.txt/$( [ "$V" = HANDOFF ] && echo 'FAILED-usb' || echo 'still-fastboot' ); post mode=$MODE boot_id=$POST_BOOTID" || true
+	--note "verdict=$V（判据=内核 cmdline elden_bootpath：$TAG）; candidate=$V_CAND; usb-gone=$( [ "$V_CAND" = HANDOFF ] && echo yes || echo no ); post mode=$MODE boot_id=$POST_BOOTID/$(echo "$PRE_BOOTID" | cut -c1-8)" || true
 
 say "===== trial END verdict=$V outdir=$OUTDIR ====="

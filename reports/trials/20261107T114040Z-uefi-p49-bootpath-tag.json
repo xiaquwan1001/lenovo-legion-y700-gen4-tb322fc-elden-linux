@@ -1,0 +1,21 @@
+{
+  "label": "uefi-p49-bootpath-tag",
+  "ts": "2026-11-07T11:40:40Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/out/r21-sbstop-p49/uefi-preamble49-r1.img",
+  "image_sha256": "15d0b7780fbcacd67f4866a0b26d0e18389ce0e3a503a896173465cfc2c39b7f",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "HANDOFF",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261107-193644",
+  "note": "handoff-witness: boot.txt/FAILED-usb; post mode=linux boot_id=# ssh post 2026-11-07T19:40:39+08:00",
+  "verdict_tag": "absent",
+  "verdict_final": "ABLBOOT_NOTAG",
+  "correction": "verdict 字段为旧判据（fastboot 无应答/USB 消失）写的候选值，不代表结论；本轮改为必须看内核 cmdline 是否含 elden_bootpath=uefi。结论见 reports/uefi-p49-p50-cmdline-witness-20261107.md"
+}

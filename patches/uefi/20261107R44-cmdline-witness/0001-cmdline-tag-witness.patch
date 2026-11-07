@@ -1,0 +1,67 @@
+Subject: [PATCH] BootLinux: 在 EB 之前把「cmdline 有没有 elden_bootpath=uefi」写进环并上屏
+
+2026-11-07R44 y700-elden（p49 上机后的判据补强）。
+
+## 为什么加（p49 上机的两难）
+
+p49（R43 v2）上机后：UEFI 的持久 logfs 只到 `dump-ring-ok preeb`（这是 `SbDumpLog("preeb")`
+写盘时的环快照，`dump-write`/`preeb-ok` 在写盘之后，本来就看不到），主机侧 USB 只出现
+**一次** `1d6b:0104`，复用 `boot_b` 的那个内核 `/proc/cmdline` **没有** `elden_bootpath=uefi`。
+于是剩下两种互斥解释，现有证据分不开：
+
+  ① R43 的令牌没生效（没写进 `FinalCmdLine`，或写进去但没进 DTB）；
+  ② UEFI 没交棒 —— 跳到内核后内核早崩/没起，复位后 **ABL 自己**引导了 `boot_b`。
+
+`UpdateCmdLine()` 打印的 `Cmdline:` 行在环里被**按 200 字符截断**，令牌在行尾 ⇒ 看不见（实测）。
+
+## 改法
+
+在 `UpdateCmdLine()` 成功之后、`LoadAddrAndDTUpdate()`（把 FinalCmdLine 写进 DTB）之前，打一行：
+
+    [K] cmdline len=<总长> tag=<0|1> tail=<cmdline 尾 56 字符>.
+
+`tag` = `AsciiStrStr (FinalCmdLine, "elden_bootpath") != NULL`；同时 `SerialPortWrite`（屏）
+与 `SerialPortLogPutString`（环 ⇒ 随下一次 `preeb` 转储持久化）。
+
+## 判据
+
+| 环/logfs 里 | 内核 `/proc/cmdline` | 结论 |
+|---|---|---|
+| `tag=1` + 尾串含 `elden_bootpath=uefi` | 含该令牌 | **UEFI 交棒成立** |
+| `tag=1` + 尾串含令牌 | 不含（且只出现一次内核） | 令牌进了 UEFI 的 cmdline 但没进内核 ⇒ 不是 UEFI 交棒（ABL 引导） |
+| `tag=0` | 不含 | R43 改写点不对（`FinalCmdLine` 不是真正被用的那份） |
+| 环里连这一行都没有 | — | 没到 `UpdateCmdLine()` 之后（崩在 `BL-in` 之前） |
+
+---
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1310,9 +1310,26 @@
+   Status = UpdateCmdLine (BootParamlistPtr.CmdLine, FfbmStr, Recovery,
+                    AlarmBoot, Info->VBCmdLine, &BootParamlistPtr.FinalCmdLine,
+                    Info->HeaderVersion);
+-  if (EFI_ERROR (Status)) {
+-    DEBUG ((EFI_D_ERROR, "Error updating cmdline. Device Error %r\n", Status));
+-    return Status;
++  // 2026-11-07R44 y700-elden: 给「cmdline 里到底有没有 elden_bootpath=uefi」一个**持久判据**。
++  // 动机（p49 上机）：内核起了但 `/proc/cmdline` 没有该令牌，而 UEFI 侧 logfs 只能看到
++  // `dump-ring-ok preeb`（环是 200 字符/行截断，令牌在末尾看不见）⇒ 无法区分
++  // 「R43 没生效」与「UEFI 没交棒、是 ABL 自己引导 boot_b」。这里在 UpdateCmdLine 之后、
++  // EB 之前把「长度 + 有没有令牌 + cmdline 尾 56 字符」写进环（preeb 转储会带上）并上屏。
++  {
++    CHAR8        SbLine[160];
++    UINTN        SbLen;
++    UINTN        SbTotal;
++    CONST CHAR8 *SbTail;
++
++    SbTotal = (UINTN)AsciiStrLen (BootParamlistPtr.FinalCmdLine);
++    SbTail  = (SbTotal > 56) ? (BootParamlistPtr.FinalCmdLine + SbTotal - 56)
++                             : BootParamlistPtr.FinalCmdLine;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] cmdline len=%d tag=%d tail=%a.\n\r",
++                         SbTotal,
++                         (AsciiStrStr (BootParamlistPtr.FinalCmdLine, "elden_bootpath") != NULL),
++                         SbTail);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    SerialPortLogPutString (SbLine);
+   }
+ 
+   Status = LoadAddrAndDTUpdate (Info, &BootParamlistPtr);

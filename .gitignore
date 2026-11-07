@@ -311,3 +311,15 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261107R43b-p49/*payload*
 /reports/artifacts/uefi-20261107R43b-p49/kernel.bin
 /reports/artifacts/uefi-20261107R43b-p49/build.log
+
+# 2026-11-07 夜 UEFI R44（p50）：同口径，只入库 BootShim.bin + manifest.txt + SHA256SUMS
+/reports/artifacts/uefi-20261107R44-p50/*.fd
+/reports/artifacts/uefi-20261107R44-p50/*.img
+/reports/artifacts/uefi-20261107R44-p50/*.gz
+/reports/artifacts/uefi-20261107R44-p50/*payload*
+/reports/artifacts/uefi-20261107R44-p50/kernel.bin
+/reports/artifacts/uefi-20261107R44-p50/build.log
+# 2026-11-07 夜上机证据（p49/p50）：logfs.img 8 MiB 原始分区镜像不入库（可设备侧 dd 重取），
+# 文本解码件（abl-log.txt）、ssh-pre/post、usb-watch、boot.txt 全入库
+/reports/artifacts/uefi-boot-20261107-193644/logfs.img
+/reports/artifacts/uefi-boot-20261107-195415/logfs.img
