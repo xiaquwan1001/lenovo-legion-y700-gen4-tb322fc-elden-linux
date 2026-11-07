@@ -16,7 +16,7 @@
 | Message-ID | `<20261107032646.32363-1-xiaqinghuan@mail.ustc.edu.cn>` |
 | SMTP | 1 封 `Result: 250`（日志 `out/mail-20261107/send-adsp-nonsecure.log`） |
 | 回环 | 自家 INBOX 收到副本（uid 15707），**无退信** |
-| patchwork | 投后 30 min 查询未摄取（wl2868c v9 已入）；下一轮复核 |
+| patchwork | ✅ 已摄取：`2026-11-07T03:26 new`（投后约 1 h；同窗 wl2868c v9 = 1/2 `needs-ack`、2/2 `new`） |
 
 ## 门禁（发信前现跑）
 
