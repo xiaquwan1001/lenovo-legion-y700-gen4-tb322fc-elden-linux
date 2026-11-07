@@ -76,3 +76,13 @@
 4. **上游**：只等 review（dwc3 v8 / wl2868c v9 / M10），按「不主动 ping」口径；下次增量窗复核新回信。
 5. **内核**：`7.3.1` 已上机并写 `boot_b`；`7.4-rc1` 按 `reports/kernel-rebase-cost-20261107.md` 暂不跳。
 6. **门禁补强（可选）**：`check-progress-counts.sh` 与 `TASKS` §0 的 `完成 N / 在范围 M` 目前靠人比；可加一条 doctor 子门自动比对（否则 `PITFALLS #548` 这类漂移仍只能靠运气发现）。
+
+---
+
+## §5 子代理并行 lane 的产物（2026-11-07 晚，ustc-pool 网关）
+
+| lane | 产物 | 复核结论（编排者独立复跑） |
+|---|---|---|
+| **B 账目加固** | `scripts/doctor/s16-tasks-counts.py`（新增）、`scripts/check-doctor.sh` 接线（ALL + FAST 两档）、`reports/counts-gate-20261107.md` | ✅ 独立复跑：`check-doctor` **FAIL=0 WARN=4**（基线不变）、`--staged-fast` **FAIL=0 WARN=0**；负向验证用 `/tmp` 副本改 `34/36→35/36`，`ELF_TASKS_FILE=/tmp/T.md scripts/check-doctor.sh` **FAIL=1**（§16 精确报「§0 说 35/36，脚本算 34/36」）⇒ 这条漂移从此机器可查（对应本报告 D12 / `PITFALLS #548`） |
+| **C 文档精简** | `reports/tasks-slim-20261107.md` | ✅ 复核：`doc-audit-20261106` §2 列的 10 处**已在 11-03/11-06 轮完成下沉**，本轮 0 处需改；现量状态格 217–365 B（C8 行另有一个 838 B 的证据格，非状态格），计数仍 34/36 与 8/12 |
+| **A 投递账对账** | 见 `reports/patch-delivery-audit-20261107.md`（提交时以该报告为准） | 待复核 |
