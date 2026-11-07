@@ -1,0 +1,371 @@
+Subject: [PATCH] FrameBufferSerialPortLib: 帧缓冲控制台改成像素语义几何（修「写满不刷新」）
+
+2026-11-06R29 y700-elden: p31/p32/p33 三代共同的遗留 bug = **屏幕写满后不刷新**，异常 dump 打不出来就被卡死。
+根因不是单一 bug，而是三个数互相矛盾（PITFALLS #532）：
+
+1. `m_MaxPosition.y = (gHeight-1)/FONT_HEIGHT` = 253 行，**没除 scale**；而 `p_Position->y` 每次只 += scale
+   ⇒ scale 4 时它以为还有 253 行，实际只装得下 63 行，于是先画出可视区（如果预算允许）或一直不触发满屏逻辑。
+   `m_MaxPosition.x` 却除了 scale（`/scale_factor`）⇒ x/y 两套行语义不一致。
+2. R19 引入的字节预算检查用 `(y + FONT_HEIGHT*scale)*stride > m_FbSafe`，与上面那套「253 行」的语义混用。
+3. R27 的满屏处理 `SetMem(addr, m_FbSafe, 0)` 大小取自「预算」而不是「画到哪」，加上 `FbConFlush()` 每次换行
+   都刷 `gWidth*gHeight*bpp/8`=22 MiB（与描述符 43 MiB、实际面板 22 MiB 三个数不一致）。
+4. `FbConScrollUp()` 用 `unsigned short *` 搬 32bpp 缓冲、count 按像素算 ⇒ 只搬一半字节且行宽错位（PITFALLS #515）。
+5. `ResetFb()` 是 gWidth×gHeight 的逐像素三重循环（5.8M 次），且不查预算。
+
+本补丁把几何**一次算定**并全部用像素语义：
+ - `m_FbPanel = stride*gHeight`、`m_FbSafe = min(24MiB, 描述符长度, m_FbPanel)`；
+ - `m_FbRows = m_FbSafe/stride`（像素行）、`m_TextRows = m_FbRows/(FONT_HEIGHT*SCALE_FACTOR)`（文字行）、
+   `m_TextCols = gWidth/((FONT_WIDTH+1)*SCALE_FACTOR)`（每行字符数）；
+ - 绘制只用 `y*FONT_HEIGHT*scale*stride + x*scale*(FONT_WIDTH+1)*(bpp/8)`，并在画前再验一次
+   「整行文字不越 m_FbSafe」，越界就丢弃（宁可不打，也不能写穿）；
+ - 满屏 → `FbConClearScreen()`（`SetMem` 到 m_FbSafe + 有界 `WriteBackInvalidate`）→ 回顶，继续画当前字符；
+ - `FbConScrollUp()` 改按字节 + 真实行宽 + 预算内；`ResetFb()` 改 SetMem；`FbConFlush()` 只刷 m_FbSafe；
+ - 新增导出 `SerialPortClearScreen()`，给异常处理器清屏用（未初始化/无预算时静默返回，绝不调 UEFI 服务）；
+ - `[F]` 行拆成三行（scale 4 下每行只有 79 列，旧的 100 列一行会折行，上机抄读出现过 `lim=164800`
+   与真实 `lim=1614400` 对不上的争议），并带 `ck=OK/BAD` 自洽判据。
+
+判据：真件 `[F] geom=… ck=OK` / `[F] len=… panel=… lim=…`（lim 应等于 panel=0x1614400）/
+`[F] stride=1DC0 line=59400 cols=79 rows=63`；连续打印 >80 行仍能看到最后一行（清屏回顶生效）。
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -44,9 +44,17 @@
+ // 若真的越界，R20 的归因行会带 FAR 指出来。
+ #define FBCON_SAFE_LIMIT  (24 * 1024 * 1024)
+ 
++// 2026-11-06R29 y700-elden: 几何账一律用**像素语义**重算（原实现的 y 边界没除 scale，
++// `m_MaxPosition.y=(gHeight-1)/FONT_HEIGHT`=253 行与实际可容纳的行数差 scale 倍；
++// 再叠加 R19 的字节预算 ⇒ scale 4 时满屏判定/回卷/清屏三者互相矛盾，现象就是「写满不刷新」
++// 与「一行都看不见」（PITFALLS #532）。现在四个数在初始化时一次算定，绘制只做算术。
+ STATIC UINTN  m_FbSafe   = 0;   // 可写预算（字节，从帧缓冲基址起算）
+ STATIC UINTN  m_FbStride = 0;   // 一个像素行的字节数 = (gBpp/8)*gWidth
+-STATIC UINTN  m_FbLine   = 0;   // 一行文字的字节数 = m_FbStride*FONT_HEIGHT
++STATIC UINTN  m_FbLine   = 0;   // 一行文字的字节数 = m_FbStride*FONT_HEIGHT*SCALE_FACTOR
++STATIC UINTN  m_FbPanel  = 0;   // 整块面板字节数 = m_FbStride*gHeight
++STATIC UINTN  m_FbRows   = 0;   // 预算内可用**像素行**数 = m_FbSafe/m_FbStride
++STATIC UINTN  m_TextRows = 0;   // 预算内可用**文字行**数 = m_FbRows/(FONT_HEIGHT*SCALE_FACTOR)
++STATIC UINTN  m_TextCols = 0;   // 每行字符数 = gWidth/((FONT_WIDTH+1)*SCALE_FACTOR)
+ 
+ // Module-used internal routine
+ void FbConPutCharWithFactor(char c, int type, unsigned scale_factor);
+@@ -58,6 +66,7 @@
+ void FbConReset(void);
+ void FbConScrollUp(void);
+ void FbConFlush(void);
++void FbConClearScreen(void);
+ 
+ RETURN_STATUS
+ EFIAPI
+@@ -80,27 +89,45 @@
+   // Set flag
+   m_Initialized = TRUE;
+ 
+-  // 2026-11-06R19: 预算 = min(描述符长度, FBCON_SAFE_LIMIT)，并把四个数打一行到屏上供取证
+-  // （"len" 是 DT/HOB 里声明的长度，用来验证 #492 的 43 MiB vs 448 KiB 说法）。
++  // 2026-11-06R19/R25: 预算 = min(描述符长度, FBCON_SAFE_LIMIT, 面板字节数)。
++  // 2026-11-06R29: 几何一次算定（像素行/文字行/每行列数），并把**自洽**结果分三行打印。
++  // 旧版本把 len/lim/stride/line/scale 挤在一行（约 100 列），scale 4 下每行只有 79 列 ⇒ 直接折行，
++  // 上机抄读时出现过 `lim=164800` 与真实 `lim=1614400` 对不上的争议（PITFALLS #532）。
+   m_FbStride = (gBpp / 8) * gWidth;
+-  m_FbLine   = m_FbStride * FONT_HEIGHT;
++  m_FbPanel  = m_FbStride * gHeight;
++  m_FbLine   = m_FbStride * FONT_HEIGHT * SCALE_FACTOR;
+   m_FbSafe   = FBCON_SAFE_LIMIT;
+   if ((DisplayMemoryRegion.Length > 0x1000) && ((UINTN)DisplayMemoryRegion.Length < m_FbSafe)) {
+     m_FbSafe = (UINTN)DisplayMemoryRegion.Length;
+   }
+-  // 2026-11-06R25: 面板实际字节数（不含末尾的结构体），再夹一次。
+-  {
+-    UINTN  SbPanel = gWidth * gHeight * (gBpp / 8);
+-    if ((SbPanel > 0) && (SbPanel < m_FbSafe)) {
+-      m_FbSafe = SbPanel;
+-    }
++  if ((m_FbPanel > 0) && (m_FbPanel < m_FbSafe)) {
++    m_FbSafe = m_FbPanel;
+   }
++  m_FbRows   = (m_FbStride != 0) ? (m_FbSafe / m_FbStride) : 0;
++  m_TextRows = (m_FbRows > 0) ? (m_FbRows / (FONT_HEIGHT * SCALE_FACTOR)) : 0;
++  if (m_TextRows == 0) {
++    m_TextRows = 1;
++  }
++  m_TextCols = gWidth / ((FONT_WIDTH + 1) * SCALE_FACTOR);
++  if (m_TextCols == 0) {
++    m_TextCols = 1;
++  }
++  // 几何自洽判据：预算必须容纳至少一行文字、且不超过面板与描述符。
++  m_MaxPosition.x = (INTN)m_TextCols;
++  m_MaxPosition.y = (INTN)m_TextRows;
+   {
+-    CHAR8  SbLine[128];
++    CHAR8  SbLine[96];
+     UINTN  SbLen;
+-    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] len=%lx lim=%lx stride=%lx line=%lx s=%d\n\r",
+-                         (UINT64)DisplayMemoryRegion.Length, (UINT64)m_FbSafe,
+-                         (UINT64)m_FbStride, (UINT64)m_FbLine, (UINT64)SCALE_FACTOR);
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] geom=%dx%d bpp=%d s=%d ck=%a\n\r",
++                         (UINT64)gWidth, (UINT64)gHeight, (UINT64)gBpp, (UINT64)SCALE_FACTOR,
++                         ((m_TextRows >= 1) && (m_TextCols >= 1) && (m_FbLine <= m_FbSafe)) ? "OK" : "BAD");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] len=%lx panel=%lx lim=%lx\n\r",
++                         (UINT64)DisplayMemoryRegion.Length, (UINT64)m_FbPanel, (UINT64)m_FbSafe);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] stride=%lx line=%lx cols=%d rows=%d\n\r",
++                         (UINT64)m_FbStride, (UINT64)m_FbLine,
++                         (UINT64)m_TextCols, (UINT64)m_TextRows);
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
+   }
+ 
+@@ -109,29 +136,45 @@
+ 
+ void ResetFb(void)
+ {
+-  // Clear current screen.
+-  char *Pixels  = (void *)DisplayMemoryRegion.Address;
+-  UINTN BgColor = FB_BGRA8888_BLACK;
+-
+-  // Set to black color.
+-  for (UINTN i = 0; i < gWidth; i++) {
+-    for (UINTN j = 0; j < gHeight; j++) {
+-      BgColor = FB_BGRA8888_BLACK;
+-      // Set pixel bit
+-      for (UINTN p = 0; p < (gBpp / 8); p++) {
+-        *Pixels = (unsigned char)BgColor;
+-        BgColor = BgColor >> 8;
+-        Pixels++;
+-      }
+-    }
++  // 2026-11-06R29: 原实现是 gWidth×gHeight 的逐像素三重循环（1904×3040 = 5.8M 次，且不查预算）。
++  // 改成一次 SetMem，且只在预算内清（预算外一律不碰）。
++  UINTN  Bytes = (m_FbSafe != 0) ? m_FbSafe : (gWidth * gHeight * (gBpp / 8));
++
++  SetMem ((VOID *)(UINTN)DisplayMemoryRegion.Address, Bytes, 0);
++  if (p_Position != NULL) {
++    p_Position->x = 0;
++    p_Position->y = 0;
++  }
++  FbConFlush ();
++}
++
++void FbConClearScreen(void)
++{
++  SetMem ((VOID *)(UINTN)DisplayMemoryRegion.Address, m_FbSafe, 0);
++  if (p_Position != NULL) {
++    p_Position->x = 0;
++    p_Position->y = 0;
++  }
++  FbConFlush ();
++}
++
++// 2026-11-06R30 y700-elden: 给异常处理器的导出入口（同一条 SerialPortLib）。
++// 只能在已初始化、且预算已算出的情况下清屏；否则静默返回 —— 异常上下文里绝不回头调
++// MemoryMapHelperLib/HOB（那正是 p32 「Recursive exception」的成因，PITFALLS #533）。
++VOID
++EFIAPI
++SerialPortClearScreen (VOID)
++{
++  if ((m_Initialized) && (m_FbSafe != 0) && (p_Position != NULL) && (DisplayMemoryRegion.Address != 0)) {
++    FbConClearScreen ();
+   }
+ }
+ 
+ void FbConReset(void)
+ {
+-  // Calc max position.
+-  m_MaxPosition.x = gWidth / (FONT_WIDTH + 1);
+-  m_MaxPosition.y = (gHeight - 1) / FONT_HEIGHT;
++  // Calc max position（2026-11-06R29：文字行/列已在 SerialPortInitialize 里按 scale 与预算算定）。
++  m_MaxPosition.x = (INTN)((m_TextCols != 0) ? m_TextCols : (gWidth / (FONT_WIDTH + 1)));
++  m_MaxPosition.y = (INTN)((m_TextRows != 0) ? m_TextRows : ((gHeight - 1) / FONT_HEIGHT));
+ 
+   // Reset color.
+   m_Color.Foreground = FB_BGRA8888_WHITE;
+@@ -140,33 +183,29 @@
+ 
+ void FbConPutCharWithFactor(char c, int type, unsigned scale_factor)
+ {
+-  char *Pixels;
++  char   *Pixels;
++  UINTN   LineBytes;
++  UINTN   Offset;
++  BOOLEAN intstate;
+ 
+ paint:
+ 
+   if ((unsigned char)c > 127)
+     return;
+ 
+-  // 2026-11-06R19: 越界保护。整行文字必须落在 m_FbSafe 内，否则回卷到顶；连一行都放不下就丢弃。
+-  if (m_FbSafe != 0) {
+-    if ((p_Position->y + (UINTN)FONT_HEIGHT * scale_factor) * m_FbStride > m_FbSafe) {
+-      p_Position->y = 0;
+-      if ((UINTN)FONT_HEIGHT * scale_factor * m_FbStride > m_FbSafe)
+-        return;
+-    }
+-  }
++  // 2026-11-06R29: 未初始化或未算出几何（异常上下文里就是这种状态）⇒ 静默丢弃，绝不走 NULL。
++  if ((m_FbSafe == 0) || (p_Position == NULL) || (m_TextRows == 0) || (m_TextCols == 0))
++    return;
+ 
++  // 控制字符先处理（不参与预算计算）。
+   if ((unsigned char)c < 32) {
+-    if (c == '\n') {
+-      goto newline;
+-    }
+-    else if (c == '\r') {
++    if (c == '\r') {
+       p_Position->x = 0;
+       return;
+     }
+-    else {
++    if (c != '\n')
+       return;
+-    }
++    goto newline;
+   }
+ 
+   // Save some space
+@@ -174,58 +213,62 @@
+       type != FBCON_SUBTITLE_MSG && type != FBCON_TITLE_MSG)
+     return;
+ 
+-  BOOLEAN intstate = ArmGetInterruptState();
++  // 行/列越界（预算变小或 scale 变大时可能）⇒ 先清屏回顶，再继续画这个字符。
++  if ((p_Position->x < 0) || ((UINTN)p_Position->x >= m_TextCols))
++    goto newline;
++  if ((p_Position->y < 0) || ((UINTN)p_Position->y >= m_TextRows))
++    goto fullscreen;
++
++  LineBytes = FONT_HEIGHT * scale_factor * m_FbStride;
++
++  intstate = ArmGetInterruptState();
+   if (intstate)
+     ArmDisableInterrupts();
+ 
+   Pixels = (void *)DisplayMemoryRegion.Address;
+-  Pixels += p_Position->y * ((gBpp / 8) * FONT_HEIGHT * gWidth);
+-  Pixels += p_Position->x * scale_factor * ((gBpp / 8) * (FONT_WIDTH + 1));
++  Offset = (UINTN)p_Position->y * LineBytes;
++  Offset += (UINTN)p_Position->x * scale_factor * ((gBpp / 8) * (FONT_WIDTH + 1));
++
++  // 2026-11-06R19/R29: 硬边界 —— 任何情况下这一整行文字必须落在 m_FbSafe 内，否则丢弃（不画）。
++  if ((Offset + LineBytes) > m_FbSafe) {
++    if (intstate)
++      ArmEnableInterrupts();
++    return;
++  }
++  Pixels += Offset;
+ 
+   FbConDrawglyph(
+       Pixels, gWidth, (gBpp / 8), font5x12 + (c - 32) * 2, scale_factor);
+ 
+   p_Position->x++;
+ 
+-  if (p_Position->x >= (int)(m_MaxPosition.x / scale_factor))
++  if ((UINTN)p_Position->x >= m_TextCols) {
++    if (intstate)
++      ArmEnableInterrupts();
+     goto newline;
++  }
+ 
+   if (intstate)
+     ArmEnableInterrupts();
+   return;
+ 
+ newline:
+-  p_Position->y += scale_factor;
+   p_Position->x = 0;
+-  // 2026-11-06R19: 预算用完就回卷到顶，**不再 ResetFb()**（23 MiB 清屏本身就是写穿风险）。
+-  // 这样最新内容永远留在最上面 ⇒ 崩溃前的最后一行必定可见，这是我们现在唯一的判据通道。
+-  if ((m_FbSafe != 0) && (((p_Position->y + (UINTN)FONT_HEIGHT * scale_factor) * m_FbStride) > m_FbSafe)) {
+-    // 2026-11-06R27 y700-elden: 满屏时**有界清屏再回到顶部** —— 只清 m_FbSafe（= 面板字节数），
+-    // 不再用原来的逐像素三重循环 ResetFb()。只回卷不清屏的话，新内容只覆盖最上面几行，
+-    // 下面留的全是旧字，看起来就像"不刷新"（2026-11-06 上机实测）。
+-    SetMem ((VOID *)(UINTN)DisplayMemoryRegion.Address, m_FbSafe, 0);
+-    p_Position->y = 0;
+-    FbConFlush ();
+-    if (intstate)
+-      ArmEnableInterrupts();
+-    if ((unsigned char)c >= 32)
+-      goto paint;                  // 只有可打印字符需要在本行重画
+-    return;
+-  }
+-  if ((m_FbSafe == 0) && (p_Position->y >= m_MaxPosition.y - scale_factor)) {
+-    ResetFb();
+-    FbConFlush();
+-    p_Position->y = 0;
++  p_Position->y++;
++  // 2026-11-06R29: 文字行数是按 scale 与预算算定的（原实现直接用 (gHeight-1)/FONT_HEIGHT，
++  // 没除 scale ⇒ scale 4 时多算 4 倍的行数，与 R19 的字节预算夹在一起就出现了“写满不刷新”）。
++  if ((p_Position->y < 0) || ((UINTN)p_Position->y >= m_TextRows))
++    goto fullscreen;
++  FbConFlush();
++  return;
+ 
+-    if (intstate)
+-      ArmEnableInterrupts();
++fullscreen:
++  // 2026-11-06R27/R29: 满屏时**有界清屏再回到顶部**（只清 m_FbSafe，最多一块面板）。
++  // 不回卷也不清屏就会“看起来像卡住”；而原实现的逐像素 ResetFb() 不查预算，已废弃。
++  FbConClearScreen();
++  if ((unsigned char)c >= 32)
+     goto paint;
+-  }
+-  else {
+-    FbConFlush();
+-    if (intstate)
+-      ArmEnableInterrupts();
+-  }
++  return;
+ }
+ 
+ void FbConDrawglyph(
+@@ -329,34 +372,31 @@
+ /* TODO: Take stride into account */
+ void FbConScrollUp(void)
+ {
+-  unsigned short *dst   = (void *)DisplayMemoryRegion.Address;
+-  unsigned short *src   = dst + (gWidth * FONT_HEIGHT);
+-  unsigned        count = gWidth * (gHeight - FONT_HEIGHT);
++  // 2026-11-06R29: 原实现用 `unsigned short *`（16 bit）搬 32bpp 帧缓冲、count 按像素算而非字节 ⇒
++  // 只搬一半字节且行宽错位（PITFALLS #515）。改成按字节、按真实行宽、且限制在可写预算内。
++  UINT8 *Base   = (void *)DisplayMemoryRegion.Address;
++  UINTN  Rows   = (m_FbStride != 0) ? (m_FbSafe / m_FbStride) : gHeight;
++  UINTN  Scroll = (UINTN)FONT_HEIGHT * SCALE_FACTOR;
++  UINTN  Bytes;
+ 
+-  while (count--) {
+-    *dst++ = *src++;
+-  }
++  if ((Base == NULL) || (m_FbStride == 0) || (Rows <= Scroll))
++    return;
+ 
+-  count = gWidth * FONT_HEIGHT;
+-  while (count--) {
+-    *dst++ = m_Color.Background;
+-  }
++  Bytes = (Rows - Scroll) * m_FbStride;
++  for (UINTN i = 0; i < Bytes; i++)
++    Base[i] = Base[i + Scroll * m_FbStride];
+ 
++  SetMem (Base + Bytes, Scroll * m_FbStride, 0);
+   FbConFlush();
+ }
+ 
+ void FbConFlush(void)
+ {
+-  unsigned total_x, total_y;
+-  unsigned bytes_per_bpp;
++  // 2026-11-06R29: 原实现每次换行都对整块面板（gWidth*gHeight*bpp/8 = 22 MiB）做
++  // WriteBackInvalidateDataCacheRange，既慢又越过预算。改成只刷可写预算。
++  UINTN  Bytes = (m_FbSafe != 0) ? m_FbSafe : (gWidth * gHeight * (gBpp / 8));
+ 
+-  total_x       = gWidth;
+-  total_y       = gHeight;
+-  bytes_per_bpp = (gBpp / 8);
+-
+-  WriteBackInvalidateDataCacheRange(
+-      (void *)DisplayMemoryRegion.Address,
+-      (total_x * total_y * bytes_per_bpp));
++  WriteBackInvalidateDataCacheRange((void *)DisplayMemoryRegion.Address, Bytes);
+ }
+ 
+ UINTN

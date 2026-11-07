@@ -233,3 +233,23 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261106R2[0-8]-*/kernel.bin
 /reports/artifacts/uefi-20261106R2[0-8]-*/payload-v2aligned.bin
 /reports/artifacts/uefi-20261106R2[0-8]-*/build.log
+# 2026-11-06 深夜 UEFI 线（p34–p36，R29R30/R31/R32）：产物在 build/ 子目录
+# 入库同前：只留 BootShim.bin + manifest.txt + SHA256SUMS（可复现身份三件）
+/reports/artifacts/uefi-20261106R29R30-p34/build/*.fd
+/reports/artifacts/uefi-20261106R29R30-p34/build/*.gz
+/reports/artifacts/uefi-20261106R29R30-p34/build/*.img
+/reports/artifacts/uefi-20261106R29R30-p34/build/*.bin
+/reports/artifacts/uefi-20261106R29R30-p34/build/*.efi
+/reports/artifacts/uefi-20261106R29R30-p34/build/*.log
+/reports/artifacts/uefi-20261106R31-p35c/build/*.fd
+/reports/artifacts/uefi-20261106R31-p35c/build/*.gz
+/reports/artifacts/uefi-20261106R31-p35c/build/*.img
+/reports/artifacts/uefi-20261106R31-p35c/build/*.bin
+/reports/artifacts/uefi-20261106R31-p35c/build/*.efi
+/reports/artifacts/uefi-20261106R31-p35c/build/*.log
+/reports/artifacts/uefi-20261106R32-p36e/build/*.fd
+/reports/artifacts/uefi-20261106R32-p36e/build/*.gz
+/reports/artifacts/uefi-20261106R32-p36e/build/*.img
+/reports/artifacts/uefi-20261106R32-p36e/build/*.bin
+/reports/artifacts/uefi-20261106R32-p36e/build/*.efi
+/reports/artifacts/uefi-20261106R32-p36e/build/*.log

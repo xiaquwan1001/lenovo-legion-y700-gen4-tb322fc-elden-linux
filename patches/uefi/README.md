@@ -1,6 +1,6 @@
 # `patches/uefi/` — UEFI（G1-29）补丁栈：谁在活线上、谁已经废了
 
-> 本目录是 UEFI 间接引导线 2026-10-28 → 2026-11-06 的全部补丁，**49 个目录 / 71 个 `.patch`**（另含顶层 1 个 BootShim cache 补丁、本文件、`p7…p13-recipe.txt`，以及少量试验件 `.S/.bin/.o`）。
+> 本目录是 UEFI 间接引导线 2026-10-28 → 2026-11-06 的全部补丁，**75 个目录 / 98 个 `.patch`**（另含顶层 1 个 BootShim cache 补丁、本文件、`p7…p36-recipe.txt`，以及少量试验件 `.S/.bin/.o`）。
 > 逐目录分级（机器可读）= **`../../versions/patches-uefi-status.tsv`**（列：dir / patches / in_recipe / status / 理由 / 证据）。
 > 结论：**ACTIVE 31 目录 / RETIRED 18 目录 / UNCLEAR 0**。
 
@@ -52,6 +52,16 @@
 | `20261104R-pstore/` | pstore/pmsg **不能**当取证通道（`PITFALLS #414`） |
 | `20261104R{11-bdsprobe,12-sfsprobe}/` | 被 `R13-loaderstart`（进 FV 里的 `LinuxLoader`）取代 |
 | `20261104R{4-excprint,5-excnoscroll,6-excimg}/` | 异常打印探针：DXE 异常从未走到打印路径 |
+
+- **2026-11-06 夜·五世代链（p34→p36，全部上机过）**：
+  `p34` = p33 + `R29-fbgeometry`（帧缓冲控制台改**像素语义**几何，关 `PITFALLS #532`）+ `R30-faultdump`
+  （异常归因两档：`[K] FLT …esr/far` → 清屏重钉 → `[K] sp=` → x0..x28/FP/LR，不读栈内存）；
+  `p35` = p34 + `R31-logfsdump`（控制台环形日志 + `logfs` 尾部 16 KiB 转储 + `oem sbread:<off>:<len>`）；
+  `p36` = p35 + `R32-ringshared`（环放 **`0xE3F80000` 全固件共享**、`[F]` 自检**只进环不上屏**
+  —— 修 `PITFALLS #534` 的刷屏、EB 后用缓存 `BlkIo` 转储 `tag=posteb`）。**当前活线 = p36**。
+  上机账与判据：`reports/uefi-p34-p36-logfs-20261106.md`；宿主读端 `scripts/uefi-logfs-read.py`。
+  ⚠ 纪律：`oem sbread` 一次 ≤512 B、块间 sleep（连读 1200 B 会把 USB 端点打死，`PITFALLS #537`）；
+  真内核件（82 MB）仍**一会话一发**。
 
 ## 2. 重建与"可复现"的精确含义
 

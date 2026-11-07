@@ -68,3 +68,7 @@ dir	patches	in_recipe	status	reason	evidence
 20261106R26-preeb-dtdiag	1	1	ACTIVE	EB 之前打 dtb 地址/魔数/fdt 总长/内核地址（EB 后屏会被熄，必须提前）	patches/uefi/p31-recipe.txt
 20261106R27-fbscroll	1	1	PARTIAL	满屏有界清屏+回顶 + [F] 报有效 scale（s=4 已实测）；但仍有「满屏不刷新」遗留（PITFALLS #532）	patches/uefi/p32-recipe.txt
 20261106R28-fbexplicit-init	1	1	ACTIVE	去掉 SerialPortWrite 惰性初始化（异常上下文二次崩），改 LinuxLoader 入口显式初始化；已构建未上机	patches/uefi/p33-recipe.txt
+20261106R29-fbgeometry	1	1	ACTIVE	★帧缓冲控制台改像素语义几何（lim=min(24MiB,描述符,面板)、cols/rows 按 scale 算定、绘制前验预算、满屏有界清屏回顶、ScrollUp 按字节）；上机 OCR 验证 [F] 三数自洽	patches/uefi/p34-recipe.txt；reports/uefi-p34-p36-logfs-20261106.md §3.1；PITFALLS #532(关闭)
+20261106R30-faultdump	1	1	ACTIVE	★异常归因两档：先一行 [K] FLT(pc/esr/far) → 清屏重钉 → [K] sp= → x0..x28/FP/LR；刻意不读栈内存（避免二次异常）	patches/uefi/p34-recipe.txt；reports/uefi-p34-p36-logfs-20261106.md §1
+20261106R31-logfsdump	1	1	ACTIVE	★控制台环形日志 + logfs 尾部 16 KiB 转储（entry/preeb）+ oem sbread 读回；含 LBA/BufferSize/响应 64B 三个坑的修法	patches/uefi/p35-recipe.txt；scripts/uefi-logfs-read.py；PITFALLS #535/#537
+20261106R32-ringshared	1	1	ACTIVE	★环改全固件共享（0xE3F80000 32KiB）+ [F] 自检只进环不上屏（修 #534 刷屏）+ EB 后用缓存 BlkIo 转储（tag=posteb）	patches/uefi/p36-recipe.txt；reports/uefi-p34-p36-logfs-20261106.md §3.2/§3.4

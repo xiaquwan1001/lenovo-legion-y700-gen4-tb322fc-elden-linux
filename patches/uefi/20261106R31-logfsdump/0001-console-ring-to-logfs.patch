@@ -1,0 +1,400 @@
+Subject: [PATCH] 屏上日志落盘：控制台环形日志 → logfs 尾部 16 KiB（+ oem sbread 读回）
+
+2026-11-06R31 y700-elden: 屏是这条线上**唯一会"滚走"**的取证通道 ——
+p31–p33 三代都是好不容易打印出来，却被后续输出冲掉；EB 之后面板还会被驱动退出流程熄掉
+（`PITFALLS #531`）；而 NV 变量在本机「报 Success 但不跨上电保留」（`#511`），DDR 黑匣子
+复位后有 26–32% 字节的 1→0 位翻转（`reports/uefi-ddr-blackbox-20261101.md`），都不适合放长文本。
+
+本补丁把证据搬到**磁盘**，一劳永逸：
+
+1. `FrameBufferSerialPortLib`：新增 8 KiB 环形日志，`SerialPortWrite` / `SerialPortWriteCritical`
+   每写一字节同步抄一份；导出 `SerialPortLogGet()` 按时间顺序取回最近 N 字节。
+2. `LinuxLoaderLib`：`SbWriteLogWindow()` / `SbReadLogWindow()` —— 按**分区类型 GUID**
+   （`gEfiLogFSPartitionGuid`）定位 `logfs`，读写其**尾部 16 KiB**窗口
+   （基址 = `(LastBlock+1)*BlockSize - 0x4000`）。
+   选 logfs 的理由：纯日志分区、没有任何东西从它启动、ABL 只用自己的前段；尾部 16 KiB 写坏也
+   不影响任何启动路径。
+3. `BootLinux`：`SbDumpLog(tag)` 把环 + 头（`SBLOG01 tag=… len=…`）落到该窗口。两处调用：
+   * `LinuxLoaderEntry()` 一进来（tag=`entry`）—— 保证**即使后面在 `LoadImageAndAuth` 一带就崩**，
+     `[F]` 几何三行与前面的 `[V]` 标记也已经在盘上；
+   * `BootLinux()` 跳内核前（tag=`preeb`）—— 含 `[K] dtb=… m=… sz=… k=…` 与 EB 前全部标记。
+4. Fastboot 新增 `oem sbread:<off>:<len>`：从同一窗口读回十六进制（len ≤ 96），
+   这样**不依赖设备能否起 Linux**也能把记录取出。
+
+参数形式：`oem sbread:<off>:<len>`（十六进制，len ≤ 96；省略即 0:40）\n\n宿主侧读法（设备起 Linux 后，最省事）：
+  dd if=/dev/disk/by-partlabel/logfs bs=4096 skip=$((2048-4)) count=4 status=none | strings
+（logfs = 2048 sectors；尾部 16 KiB = sector 2016..2019）
+
+判据：`strings` 里应看到 `SBLOG01 tag=preeb`，其后是完整启动日志（`[F] geom=… ck=OK`、
+`[K] dtb=… m=d00dfeed`、`[K] JUMP-BANNER` 或 `[K] FLT …`）。
+--- a/Platforms/QcomModulePkg/Library/BootLib/LinuxLoaderLib.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/LinuxLoaderLib.c
+@@ -766,6 +766,119 @@
+   return Status;
+ }
+ 
++// 2026-11-06R31 y700-elden: 持久化诊断日志的读/写（`logfs` 分区尾部 SB_LOG_WINDOW 字节窗口）。
++// 布局：窗口基址 = (LastBlock + 1) * BlockSize - SB_LOG_WINDOW，与写入时一致。
++STATIC EFI_STATUS
++SbLogWindowBlkIo (
++  OUT EFI_BLOCK_IO_PROTOCOL  **BlkIoOut
++  )
++{
++  EFI_STATUS        Status;
++  PartiSelectFilter HandleFilter;
++  HandleInfo        HandleInfoList[1];
++  UINT32            MaxHandles;
++  UINT32            BlkIOAttrib;
++
++  BlkIOAttrib  = BLK_IO_SEL_PARTITIONED_GPT;
++  BlkIOAttrib |= BLK_IO_SEL_MEDIA_TYPE_NON_REMOVABLE;
++  BlkIOAttrib |= BLK_IO_SEL_MATCH_PARTITION_TYPE_GUID;
++
++  HandleFilter.RootDeviceType = NULL;
++  HandleFilter.PartitionType  = (EFI_GUID *)&gEfiLogFSPartitionGuid;
++  HandleFilter.VolumeName     = NULL;
++
++  MaxHandles = ARRAY_SIZE (HandleInfoList);
++  Status     = GetBlkIOHandles (BlkIOAttrib, &HandleFilter, HandleInfoList, &MaxHandles);
++  if (EFI_ERROR (Status) || (MaxHandles != 1)) {
++    return EFI_NOT_FOUND;
++  }
++  *BlkIoOut = HandleInfoList[0].BlkIo;
++  return EFI_SUCCESS;
++}
++
++EFI_STATUS
++SbWriteLogWindow (
++  IN VOID    *Msg,
++  IN UINT32   MsgSize
++  )
++{
++  EFI_STATUS             Status;
++  EFI_BLOCK_IO_PROTOCOL  *BlkIo;
++  UINTN                 BlockSize;
++  UINT64                 Base;
++  UINT8                 *Buf;
++
++  if ((Msg == NULL) || (MsgSize == 0) || (MsgSize > SB_LOG_WINDOW)) {
++    return EFI_INVALID_PARAMETER;
++  }
++  Status = SbLogWindowBlkIo (&BlkIo);
++  if (EFI_ERROR (Status)) {
++    return Status;
++  }
++  BlockSize = BlkIo->Media->BlockSize;
++  if ((BlockSize == 0) || (((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize <= SB_LOG_WINDOW)) {
++    return EFI_UNSUPPORTED;
++  }
++  Base = ((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize - SB_LOG_WINDOW;
++
++  Buf = AllocatePool (SB_LOG_WINDOW);
++  if (Buf == NULL) {
++    return EFI_OUT_OF_RESOURCES;
++  }
++  ZeroMem (Buf, SB_LOG_WINDOW);
++  CopyMem (Buf, Msg, MsgSize);
++  Status = BlkIo->WriteBlocks (BlkIo, BlkIo->Media->MediaId, Base, SB_LOG_WINDOW, Buf);
++  FreePool (Buf);
++  return Status;
++}
++
++EFI_STATUS
++SbReadLogWindow (
++  IN UINT32   Offset,
++  OUT VOID   *Buf,
++  IN UINT32   Len
++  )
++{
++  EFI_STATUS             Status;
++  EFI_BLOCK_IO_PROTOCOL  *BlkIo;
++  UINTN                 BlockSize;
++  UINT64                 Base;
++
++  if ((Buf == NULL) || (Len == 0) || ((Offset + Len) > SB_LOG_WINDOW)) {
++    return EFI_INVALID_PARAMETER;
++  }
++  Status = SbLogWindowBlkIo (&BlkIo);
++  if (EFI_ERROR (Status)) {
++    return Status;
++  }
++  BlockSize = BlkIo->Media->BlockSize;
++  Base      = ((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize - SB_LOG_WINDOW;
++
++  // 2026-11-06R31: ReadBlocks 的 BufferSize 必须是块大小的整数倍（实测非整倍返回
++  // EFI_BAD_BUFFER_SIZE）。按块对齐读进 bounce buffer，再拷出调用方要的那段。
++  {
++    UINT32  AlignedOff;
++    UINT32  AlignedLen;
++    UINT8  *Tmp;
++
++    AlignedOff = Offset & ~(UINT32)(BlockSize - 1);
++    AlignedLen = (Offset + Len + (UINT32)BlockSize - 1) & ~(UINT32)(BlockSize - 1);
++    if (AlignedLen > SB_LOG_WINDOW) {
++      AlignedLen = SB_LOG_WINDOW;
++    }
++    Tmp = AllocatePool (AlignedLen);
++    if (Tmp == NULL) {
++      return EFI_OUT_OF_RESOURCES;
++    }
++    Status = BlkIo->ReadBlocks (BlkIo, BlkIo->Media->MediaId, Base + AlignedOff, AlignedLen, Tmp);
++    if (!EFI_ERROR (Status)) {
++      CopyMem (Buf, Tmp + (Offset - AlignedOff), Len);
++    }
++    FreePool (Tmp);
++    return Status;
++  }
++}
++
+ BOOLEAN IsSecureBootEnabled (VOID)
+ {
+   /*EFI_STATUS Status = EFI_INVALID_PARAMETER;
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -187,7 +187,11 @@
+   // 失败也不要紧，之后 SerialPortWrite 会静默丢弃。
+   {
+     RETURN_STATUS  EFIAPI  SerialPortInitialize (VOID);
++    VOID  SbDumpLog (CONST CHAR8 *Tag);
+     (VOID)SerialPortInitialize ();
++    // 2026-11-06R31 y700-elden: 入口就把屏上日志落一次盘（含 [F] 几何三行）。
++    // 这样即使后面在 LoadImageAndAuth 一带就崩，logfs 里也有完整的启动日志可读。
++    SbDumpLog ("entry");
+   }
+ 
+   Status = InitThreadUnsafeStack ();
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -56,6 +56,50 @@
+ STATIC UINTN  m_TextRows = 0;   // 预算内可用**文字行**数 = m_FbRows/(FONT_HEIGHT*SCALE_FACTOR)
+ STATIC UINTN  m_TextCols = 0;   // 每行字符数 = gWidth/((FONT_WIDTH+1)*SCALE_FACTOR)
+ 
++// 2026-11-06R31 y700-elden: 控制台**环形日志**。屏上输出会被后续内容冲掉、EB 之后面板还会被熄，
++// 屏是唯一会“滚走”的证据源。这里把每一条屏上写都抄一份到 RAM 环（最多 8 KiB），
++// 再由 BootLinux 把它写到 `logfs` 分区尾部 16 KiB（持久化：重启/掉电后仍在，Linux 里 dd 即可读）。
++#define SB_LOG_CAP  8192
++STATIC UINT8  m_SbLogRing[SB_LOG_CAP];
++STATIC UINTN  m_SbLogHead  = 0;   // 下一个写入位置
++STATIC UINTN  m_SbLogTotal = 0;   // 累计写入字节数（封顶）
++
++STATIC VOID
++SbLogPut (
++  UINT8  c
++  )
++{
++  m_SbLogRing[m_SbLogHead] = c;
++  m_SbLogHead = (m_SbLogHead + 1) % SB_LOG_CAP;
++  if (m_SbLogTotal < 0x7FFFFFFF) {
++    m_SbLogTotal++;
++  }
++}
++
++// 导出：把环里最近的 min(累计, Cap, Max) 字节按时间顺序拷出，返回字节数。
++UINTN
++EFIAPI
++SerialPortLogGet (
++  OUT UINT8  *Buf,
++  IN  UINTN   Max
++  )
++{
++  UINTN  n, start, i;
++
++  if ((Buf == NULL) || (Max == 0)) {
++    return 0;
++  }
++  n = (m_SbLogTotal < SB_LOG_CAP) ? m_SbLogTotal : SB_LOG_CAP;
++  if (n > Max) {
++    n = Max;
++  }
++  start = (m_SbLogHead + SB_LOG_CAP - n) % SB_LOG_CAP;
++  for (i = 0; i < n; i++) {
++    Buf[i] = m_SbLogRing[(start + i) % SB_LOG_CAP];
++  }
++  return n;
++}
++
+ // Module-used internal routine
+ void FbConPutCharWithFactor(char c, int type, unsigned scale_factor);
+ 
+@@ -424,7 +468,10 @@
+     ArmDisableInterrupts();
+ 
+   while (Buffer < Final) {
+-    FbConPutCharWithFactor(*Buffer++, FBCON_COMMON_MSG, SCALE_FACTOR);
++    UINT8  SbCh = *Buffer++;
++
++    SbLogPut (SbCh);   // 2026-11-06R31: 同步到环形日志（落盘取证用，与屏无关）
++    FbConPutCharWithFactor(SbCh, FBCON_COMMON_MSG, SCALE_FACTOR);
+     /*
+       2026-11-04R2 y700-elden：上机取证用「慢速屏显」。
+       上一发落在 EDK2 同步异常，异常处理器递归 dump 把屏刷成流，人眼/相机一帧都抢不到。
+@@ -472,7 +519,10 @@
+   m_Color.Foreground = FB_BGRA8888_YELLOW;
+ 
+   while (Buffer < Final) {
+-    FbConPutCharWithFactor(*Buffer++, FBCON_COMMON_MSG, SCALE_FACTOR);
++    UINT8  SbCh = *Buffer++;
++
++    SbLogPut (SbCh);   // 2026-11-06R31
++    FbConPutCharWithFactor(SbCh, FBCON_COMMON_MSG, SCALE_FACTOR);
+   }
+ 
+   m_Color.Foreground = CurrentForeground;
+--- a/Platforms/QcomModulePkg/Include/Library/LinuxLoaderLib.h
++++ b/Platforms/QcomModulePkg/Include/Library/LinuxLoaderLib.h
+@@ -175,6 +175,16 @@
+ UINT64 GetTimerCountms (VOID);
+ EFI_STATUS
+ WriteToPartition (EFI_GUID *Ptype, VOID *Msg, UINT32 MsgSize);
++
++// 2026-11-06R31 y700-elden: 持久化诊断日志（`logfs` 分区**尾部** 16 KiB 窗口）。
++// 为什么不用屏：屏会被后续输出冲掉、EB 之后面板被熄；为什么不用 NV 变量：本机
++// `gRT->SetVariable` 报 Success 但不跨上电保留（PITFALLS #511）。logfs 是纯日志分区
++// （没有任何东西从它启动），写尾部 16 KiB 不影响启动，ABL 也只会覆盖它自己的前段。
++#define SB_LOG_WINDOW  0x4000
++EFI_STATUS
++SbWriteLogWindow (IN VOID *Msg, IN UINT32 MsgSize);
++EFI_STATUS
++SbReadLogWindow (IN UINT32 Offset, OUT VOID *Buf, IN UINT32 Len);
+ BOOLEAN IsSecureBootEnabled (VOID);
+ EFI_STATUS ResetDeviceState (VOID);
+ EFI_STATUS
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -171,6 +171,53 @@
+ 
+ #include <Library/MemoryMapHelperLib.h>
+ 
++// 2026-11-06R31 y700-elden: 屏上日志的持久化转储。
++// 背景：屏是唯一“会滑走”的通道 —— p31–p33 三代都是好不容易打印出来但被后续内容冲掉；
++// EB 之后面板直接被驱动退出流程熄掉（PITFALLS #531）。NV 变量在本机又不跨上电保留（#511）。
++// 因此把控制台环形日志（FrameBufferSerialPortLib 维护）写到 `logfs` 分区尾部 16 KiB：
++// 磁盘上的东西重启/掉电后都在，Linux 里 `dd if=/dev/disk/by-partlabel/logfs …` 就能读到。
++UINTN  EFIAPI SerialPortLogGet (OUT UINT8 *Buf, IN UINTN Max);
++
++// 记录格式（纯 ASCII，可直接 strings 读）：
++//   SBLOG01 tag=<entry|preeb> len=<n>\n--\n<最近 n 字节的屏上输出>
++VOID
++SbDumpLog (
++  IN CONST CHAR8  *Tag
++  )
++{
++  UINT8  *Ring;
++  UINT8  *Rec;
++  UINTN   Cap;
++  UINTN   Len;
++  UINTN   HdrLen;
++  UINTN   RecLen;
++  CHAR8   Hdr[96];
++
++  Cap = 8192;
++  Ring = AllocatePool (Cap);
++  if (Ring == NULL) {
++    return;
++  }
++  Len = SerialPortLogGet (Ring, Cap);
++
++  HdrLen = AsciiSPrint (Hdr, sizeof (Hdr), "SBLOG01 tag=%a len=%d\n--\n", Tag, Len);
++  RecLen = HdrLen + Len;
++  if (RecLen > (SB_LOG_WINDOW - 64)) {
++    RecLen = SB_LOG_WINDOW - 64;
++  }
++
++  Rec = AllocatePool (RecLen);
++  if (Rec != NULL) {
++    CopyMem (Rec, Hdr, HdrLen);
++    if (RecLen > HdrLen) {
++      CopyMem (Rec + HdrLen, Ring, RecLen - HdrLen);
++    }
++    (VOID)SbWriteLogWindow (Rec, (UINT32)RecLen);
++    FreePool (Rec);
++  }
++  FreePool (Ring);
++}
++
+ STATIC QCOM_SCM_MODE_SWITCH_PROTOCOL *pQcomScmModeSwitchProtocol = NULL;
+ STATIC BOOLEAN BootDevImage;
+ 
+@@ -1200,6 +1247,10 @@
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
+   }
+ 
++  // 2026-11-06R31: 跳内核前把屏上日志全部落盘（logfs 尾部 16 KiB）。EB 之后屏与 USB 都会没，
++  // 而磁盘上的这条记录会在重启/掉电后仍在 ⇒ 手交失败时仍能查到 [F] 几何、[K] dtb、EB 返回值。
++  SbDumpLog ("preeb");
++
+   SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
+ 
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -3263,6 +3263,61 @@
+   }
+ }
+ 
++// 2026-11-06R31 y700-elden: `oem sbread:<off>:<len>` —— 从 `logfs` 尾部诊断窗口读回十六进制。
++// 目的：让「屏上日志 → logfs」这条链**自证**，不依赖设备能否起 Linux。len 默认 64，上限 96
++// （响应缓冲 256 B，十六进制翻倍，留前缀余量）。off/len 相对窗口基址（= 分区尾部 16 KiB）。
++STATIC VOID
++CmdOemSbRead (IN CONST CHAR8 *Arg, IN VOID *Data, IN UINT32 Size)
++{
++  EFI_STATUS  Status;
++  UINT8       Buf[96];
++  CHAR8       Resp[256];
++  UINT32      Offset;
++  UINT32      Len;
++  UINT32      i;
++  UINTN       Pos;
++
++  Offset = 0;
++  Len    = 64;
++  if (Arg != NULL) {
++    CONST CHAR8  *P = Arg;
++
++    // 命令表已吃掉 "oem sbread"，剩下的形如 ":<off>:<len>"、":<off>" 或 "<off>:<len>"。
++    while (*P == ':') {
++      P++;
++    }
++    if (*P != '\0') {
++      Offset = (UINT32)AsciiStrHexToUintn (P);
++      P      = AsciiStrStr (P, ":");
++      if (P != NULL) {
++        while (*P == ':') {
++          P++;
++        }
++        if (*P != '\0') {
++          Len = (UINT32)AsciiStrHexToUintn (P);
++        }
++      }
++    }
++  }
++  if ((Len == 0) || (Len > sizeof (Buf))) {
++    FastbootFail ("sbread: len out of range");
++    return;
++  }
++
++  Status = SbReadLogWindow (Offset, Buf, Len);
++  if (EFI_ERROR (Status)) {
++    AsciiSPrint (Resp, sizeof (Resp), "sbread st=%r", Status);
++    FastbootFail (Resp);
++    return;
++  }
++
++  Pos = AsciiSPrint (Resp, sizeof (Resp), "sb o=%x l=%x ", Offset, Len);
++  for (i = 0; (i < Len) && ((Pos + 2) < sizeof (Resp)); i++) {
++    Pos += AsciiSPrint (Resp + Pos, sizeof (Resp) - Pos, "%02x", Buf[i]);
++  }
++  FastbootOkay (Resp);
++}
++
+ STATIC VOID
+ CmdOemSelectDisplayPanel (CONST CHAR8 *arg, VOID *data, UINT32 sz)
+ {
+@@ -3820,6 +3875,7 @@
+       {"getvar:", CmdGetVar},
+       {"download:", CmdDownload},
+       {"oem display-cmdline", CmdOemDisplayCommandLine},
++      {"oem sbread", CmdOemSbRead},   // 2026-11-06R31: 读 logfs 尾部诊断窗口
+   };
+ 
+   /* Register the commands only for non-user builds */

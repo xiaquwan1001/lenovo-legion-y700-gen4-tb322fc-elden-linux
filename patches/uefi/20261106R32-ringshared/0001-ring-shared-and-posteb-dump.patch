@@ -1,0 +1,535 @@
+Subject: [PATCH] 控制台环形日志改全固件共享 + [F] 只进环不上屏 + EB 后仍转储
+
+2026-11-06R32 y700-elden: 上机的 OCR 证据把两件事同时钉死了：
+
+1. **R29 的几何修好了**：屏上 `[F] geom=1904x3040 bpp=32 s=4 ck=OK` /
+   `[F] len=2B00000 panel=1614800 lim=1614800` / `[F] stride=1DC0 line=59400 cols=79 rows=63`
+   三个数自洽（lim == panel，一行 59400 B，79 列 × 63 行）。PITFALLS #532 关掉。
+2. **我们自己的 `[F]` 把屏冲爆了**：这三行在启动过程中被重复打印**上百遍** —— 每个 DXE 映像都
+   链接了本库、各有自己一份静态变量（`m_Initialized` 等），于是每加载一个驱动就重新初始化并打三行。
+   这就是「`[F]` 明明打了却被冲刷掉」的真因（自伤第 18 条，`PITFALLS` 待入 #534）。
+
+本补丁做三件事：
+
+1. **环形日志改成固定物理地址、全固件共享一份**（`0xE3F80000`，32 KiB，头 `Magic/Size/Head/Total`）。
+   以前每模块一份静态环 ⇒ DXE 阶段的日志永远转储不出来（LinuxLoader 那份是从它自己启动才开始记的）。
+   地址与 1 MiB 黑匣子窗同段（`0xE3F00000`，R24 已登记 Reserved + WRITE_BACK_XN）。
+2. **`[F]` 几何自检只进环、不上屏**：`ck=OK` 时屏上不再出现；只有 `ck=BAD` 才占屏一行。
+   要查几何时从 logfs 落盘记录里看 —— 通道不再与屏预算争。
+3. **EB 之后仍尝试转储**：`SbWriteLogWindow()` 成功后缓存 `BlkIo/MediaId`，EB 之后用
+   `SbWriteLogWindowNoBs()` 直接写一次（不碰 `gBS`），tag=`posteb`。
+   EB 段正是 USB redriver 重初始化 + I2C NACK 洪水所在（OCR 里 `usb_repeater_reset` /
+   `Failed to init i2c: 12` / `qup_open h_ctxt is NULL` 那一大段），也恰恰是屏上必然被冲掉的一段。
+
+判据：`oem sbread:0:40`（fastboot 侧）或 Linux 侧
+`dd if=/dev/disk/by-partlabel/logfs bs=4096 skip=2016 count=4` 里出现
+`SBLOG01 tag=posteb`，其后是一整段启动日志（含 `[F] geom=…`、`[I] LoadImage=Success`、
+`[K] EB-returned st=…`）。
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -56,27 +56,81 @@
+ STATIC UINTN  m_TextRows = 0;   // 预算内可用**文字行**数 = m_FbRows/(FONT_HEIGHT*SCALE_FACTOR)
+ STATIC UINTN  m_TextCols = 0;   // 每行字符数 = gWidth/((FONT_WIDTH+1)*SCALE_FACTOR)
+ 
+-// 2026-11-06R31 y700-elden: 控制台**环形日志**。屏上输出会被后续内容冲掉、EB 之后面板还会被熄，
+-// 屏是唯一会“滚走”的证据源。这里把每一条屏上写都抄一份到 RAM 环（最多 8 KiB），
+-// 再由 BootLinux 把它写到 `logfs` 分区尾部 16 KiB（持久化：重启/掉电后仍在，Linux 里 dd 即可读）。
+-#define SB_LOG_CAP  8192
+-STATIC UINT8  m_SbLogRing[SB_LOG_CAP];
+-STATIC UINTN  m_SbLogHead  = 0;   // 下一个写入位置
+-STATIC UINTN  m_SbLogTotal = 0;   // 累计写入字节数（封顶）
++// 2026-11-06R31/R32 y700-elden: 控制台**共享环形日志**。屏上输出会被后续内容冲掉、EB 之后面板还会被熄；
++// 更要命的是**每个 DXE 映像都有自己一份本库的静态变量** —— 2026-11-06 末次上机的 OCR 显示
++// `[F]` 三行被刷了上百遍（每加载一个驱动就重新初始化 + 打三行），把屏吃光、把真正的证据顶出去。
++// ⇒ 环改成放**固定物理地址**、全固件共享一份：任何模块的 SerialPortWrite 都写同一个环，
++// `[F]` 几何自检只进环不上屏。再由 BootLinux 把整个环写进 `logfs` 尾部 16 KiB（持久化）。
++// 选 0xE3F80000：与 1 MiB 黑匣子窗（0xE3F00000）同段，已被 R24 登记进平台内存图
++// （Reserved + WRITE_BACK_XN）；注意 PrePi 的 MemoryPeim 会给 0x82600000–0xF37FFFFF 填 0xFF
++// （PITFALLS #491），但那发生在 DXE 之前，DXE 阶段的记录不受影响。
++#define SB_RING_PA    0xE3F80000ULL
++#define SB_RING_SIZE  0x8000U          // 32 KiB 环体
++#define SB_RING_MAGIC 0x31524253U      // 'SBR1'
++typedef struct {
++  UINT32  Magic;
++  UINT32  Size;
++  UINT32  Head;                        // 下一个写入位置
++  UINT32  Total;                       // 累计写入字节（饱和）
++} SB_RING_HDR;
++
++STATIC volatile SB_RING_HDR *
++SbRing (
++  VOID
++  )
++{
++  return (volatile SB_RING_HDR *)(UINTN)SB_RING_PA;
++}
++
++STATIC volatile UINT8 *
++SbRingData (
++  VOID
++  )
++{
++  return (volatile UINT8 *)(UINTN)(SB_RING_PA + sizeof (SB_RING_HDR));
++}
+ 
+ STATIC VOID
+ SbLogPut (
+   UINT8  c
+   )
+ {
+-  m_SbLogRing[m_SbLogHead] = c;
+-  m_SbLogHead = (m_SbLogHead + 1) % SB_LOG_CAP;
+-  if (m_SbLogTotal < 0x7FFFFFFF) {
+-    m_SbLogTotal++;
++  volatile SB_RING_HDR  *H = SbRing ();
++  volatile UINT8        *D;
++
++  if (H->Magic != SB_RING_MAGIC) {
++    H->Size  = SB_RING_SIZE - sizeof (SB_RING_HDR);
++    H->Head  = 0;
++    H->Total = 0;
++    H->Magic = SB_RING_MAGIC;
++  }
++  if ((H->Size == 0) || (H->Size > (SB_RING_SIZE - sizeof (SB_RING_HDR)))) {
++    H->Size = SB_RING_SIZE - sizeof (SB_RING_HDR);
++  }
++  D = SbRingData ();
++  D[H->Head] = c;
++  H->Head    = (H->Head + 1) % H->Size;
++  if (H->Total < 0x7FFFFFFF) {
++    H->Total++;
++  }
++}
++
++// 导出：只进环、不上屏（几何自检、阶段标记这类“不需要占屏”的记录走这里）。
++VOID
++EFIAPI
++SerialPortLogPutString (
++  IN CONST CHAR8  *Str
++  )
++{
++  if (Str == NULL) {
++    return;
++  }
++  while (*Str != '\0') {
++    SbLogPut ((UINT8)*Str++);
+   }
+ }
+ 
+-// 导出：把环里最近的 min(累计, Cap, Max) 字节按时间顺序拷出，返回字节数。
++// 导出：把环里最近的 min(累计, Size, Max) 字节按时间顺序拷出，返回字节数。
+ UINTN
+ EFIAPI
+ SerialPortLogGet (
+@@ -84,18 +138,21 @@
+   IN  UINTN   Max
+   )
+ {
+-  UINTN  n, start, i;
++  volatile SB_RING_HDR  *H = SbRing ();
++  volatile UINT8        *D;
++  UINTN                  n, start, i;
+ 
+-  if ((Buf == NULL) || (Max == 0)) {
++  if ((Buf == NULL) || (Max == 0) || (H->Magic != SB_RING_MAGIC) || (H->Size == 0)) {
+     return 0;
+   }
+-  n = (m_SbLogTotal < SB_LOG_CAP) ? m_SbLogTotal : SB_LOG_CAP;
++  D = SbRingData ();
++  n = (H->Total < H->Size) ? H->Total : H->Size;
+   if (n > Max) {
+     n = Max;
+   }
+-  start = (m_SbLogHead + SB_LOG_CAP - n) % SB_LOG_CAP;
++  start = (H->Head + H->Size - n) % H->Size;
+   for (i = 0; i < n; i++) {
+-    Buf[i] = m_SbLogRing[(start + i) % SB_LOG_CAP];
++    Buf[i] = D[(start + i) % H->Size];
+   }
+   return n;
+ }
+@@ -160,19 +217,26 @@
+   m_MaxPosition.x = (INTN)m_TextCols;
+   m_MaxPosition.y = (INTN)m_TextRows;
+   {
+-    CHAR8  SbLine[96];
+-    UINTN  SbLen;
++    CHAR8   SbLine[96];
++    UINTN   SbLen;
++    BOOLEAN SbOk;
++
++    SbOk = ((m_TextRows >= 1) && (m_TextCols >= 1) && (m_FbLine <= m_FbSafe));
++    // 2026-11-06R32: 一律先进环（供 logfs 落盘取证），只在上屏预算确实不成立时才打上屏。
+     SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] geom=%dx%d bpp=%d s=%d ck=%a\n\r",
+                          (UINT64)gWidth, (UINT64)gHeight, (UINT64)gBpp, (UINT64)SCALE_FACTOR,
+-                         ((m_TextRows >= 1) && (m_TextCols >= 1) && (m_FbLine <= m_FbSafe)) ? "OK" : "BAD");
+-    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++                         SbOk ? "OK" : "BAD");
++    SerialPortLogPutString (SbLine);
+     SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] len=%lx panel=%lx lim=%lx\n\r",
+                          (UINT64)DisplayMemoryRegion.Length, (UINT64)m_FbPanel, (UINT64)m_FbSafe);
+-    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    SerialPortLogPutString (SbLine);
+     SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] stride=%lx line=%lx cols=%d rows=%d\n\r",
+                          (UINT64)m_FbStride, (UINT64)m_FbLine,
+                          (UINT64)m_TextCols, (UINT64)m_TextRows);
+-    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    SerialPortLogPutString (SbLine);
++    if (!SbOk) {
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);   // 只有真异常才占屏
++    }
+   }
+ 
+   return RETURN_SUCCESS;
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -177,10 +177,16 @@
+ // 因此把控制台环形日志（FrameBufferSerialPortLib 维护）写到 `logfs` 分区尾部 16 KiB：
+ // 磁盘上的东西重启/掉电后都在，Linux 里 `dd if=/dev/disk/by-partlabel/logfs …` 就能读到。
+ UINTN  EFIAPI SerialPortLogGet (OUT UINT8 *Buf, IN UINTN Max);
++VOID   EFIAPI SerialPortLogPutString (IN CONST CHAR8 *Str);
+ 
+ // 记录格式（纯 ASCII，可直接 strings 读）：
+ //   SBLOG01 tag=<entry|preeb> len=<n>\n--\n<最近 n 字节的屏上输出>
+ VOID
++SbDumpLogNoBs (
++  IN CONST CHAR8  *Tag
++  );
++
++VOID
+ SbDumpLog (
+   IN CONST CHAR8  *Tag
+   )
+@@ -218,6 +224,42 @@
+   FreePool (Ring);
+ }
+ 
++// 2026-11-06R32: EB 之后的转储（用缓存的 BlkIo，不碰 gBS）。EB 段是 USB redriver 重初始化 +
++// I2C NACK 洪水所在（2026-11-06 末次上机 OCR 证据），恰恰是屏上必然被冲刷掉的一段。
++VOID
++SbDumpLogNoBs (
++  IN CONST CHAR8  *Tag
++  )
++{
++  UINT8  *Ring;
++  UINT8  *Rec;
++  UINTN   Len;
++  UINTN   HdrLen;
++  UINTN   RecLen;
++  CHAR8   Hdr[96];
++
++  Ring = AllocatePool (8192);
++  if (Ring == NULL) {
++    return;
++  }
++  Len    = SerialPortLogGet (Ring, 8192);
++  HdrLen = AsciiSPrint (Hdr, sizeof (Hdr), "SBLOG01 tag=%a len=%d\n--\n", Tag, Len);
++  RecLen = HdrLen + Len;
++  if (RecLen > (SB_LOG_WINDOW - 64)) {
++    RecLen = SB_LOG_WINDOW - 64;
++  }
++  Rec = AllocatePool (RecLen);
++  if (Rec != NULL) {
++    CopyMem (Rec, Hdr, HdrLen);
++    if (RecLen > HdrLen) {
++      CopyMem (Rec + HdrLen, Ring, RecLen - HdrLen);
++    }
++    (VOID)SbWriteLogWindowNoBs (Rec, (UINT32)RecLen);
++    FreePool (Rec);
++  }
++  FreePool (Ring);
++}
++
+ STATIC QCOM_SCM_MODE_SWITCH_PROTOCOL *pQcomScmModeSwitchProtocol = NULL;
+ STATIC BOOLEAN BootDevImage;
+ 
+@@ -1259,6 +1301,17 @@
+   Status      = ShutdownUefiBootServices ();
+   SbEbStatus  = Status;
+   SbBbMark (4);   // 2026-11-06R23: checkpoint 4 = ShutdownUefiBootServices() 返回
++  // 2026-11-06R32: EB 段（USB redriver 重初始化 + I2C NACK 洪水）是屏上必然被冲刷的一段，
++  // 用缓存的 BlkIo 把它落盘一次（EB 之后没有 gBS，所以走 NoBs 版本；失败也无损失）。
++  {
++    CHAR8  SbMark[64];
++    UINTN  SbMarkLen;
++    SbMarkLen = AsciiSPrint (SbMark, sizeof (SbMark), "[K] EB-returned st=%r\n\r", Status);
++    SerialPortLogPutString (SbMark);
++    SbMarkLen = AsciiSPrint (SbMark, sizeof (SbMark), "[K] marks: reached-eb\n\r");
++    SerialPortLogPutString (SbMark);
++  }
++  SbDumpLogNoBs ("posteb");
+   // 2026-11-06R22 y700-elden: EB 之后打一行（R21 之后屏显写已安全：惰性初始化 + 448 KiB 硬边界）。
+   // 与 banner 分行是故意的：EB 卡住时屏上只有这一行，EB 正常时它会被 banner 顶掉/并排可见。
+   {
+--- a/Platforms/QcomModulePkg/Library/BootLib/LinuxLoaderLib.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/LinuxLoaderLib.c
+@@ -796,6 +796,11 @@
+   return EFI_SUCCESS;
+ }
+ 
++// 2026-11-06R32: 把 BlkIo 缓存下来，EB（拆驱动）之后仍try着再用一次 —— 若 UFS 栈没被拆，
++// 就能把 EB 段（USB redriver 重初始化/NACK 洪水）的记录也落盘；失败也无损失。
++STATIC EFI_BLOCK_IO_PROTOCOL  *m_SbLogBlkIo   = NULL;
++STATIC UINT32                  m_SbLogMediaId = 0;
++
+ EFI_STATUS
+ SbWriteLogWindow (
+   IN VOID    *Msg,
+@@ -819,7 +824,9 @@
+   if ((BlockSize == 0) || (((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize <= SB_LOG_WINDOW)) {
+     return EFI_UNSUPPORTED;
+   }
+-  Base = ((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize - SB_LOG_WINDOW;
++  // 2026-11-06R32: ReadBlocks/WriteBlocks 的 LBA 参数是**块号**不是字节偏移
++  // （传字节偏移会被 ScsiDisk 以 Lba > LastBlock 判成 EFI_INVALID_PARAMETER，实测两发都是这个）。
++  Base = (UINT64)BlkIo->Media->LastBlock + 1 - (SB_LOG_WINDOW / BlockSize);
+ 
+   Buf = AllocatePool (SB_LOG_WINDOW);
+   if (Buf == NULL) {
+@@ -828,6 +835,43 @@
+   ZeroMem (Buf, SB_LOG_WINDOW);
+   CopyMem (Buf, Msg, MsgSize);
+   Status = BlkIo->WriteBlocks (BlkIo, BlkIo->Media->MediaId, Base, SB_LOG_WINDOW, Buf);
++  if (!EFI_ERROR (Status)) {
++    m_SbLogBlkIo   = BlkIo;                 // 2026-11-06R32: 供 EB 之后复用
++    m_SbLogMediaId = BlkIo->Media->MediaId;
++  }
++  FreePool (Buf);
++  return Status;
++}
++
++// 2026-11-06R32: EB 之后没法再走 GetBlkIOHandles（gBS 已拆）⇒ 用之前缓存的 BlkIo 直接写一次。
++EFI_STATUS
++SbWriteLogWindowNoBs (
++  IN VOID    *Msg,
++  IN UINT32   MsgSize
++  )
++{
++  EFI_STATUS   Status;
++  UINTN        BlockSize;
++  UINT64       Base;
++  UINT8       *Buf;
++  EFI_BLOCK_IO_PROTOCOL *BlkIo;
++
++  BlkIo = m_SbLogBlkIo;
++  if ((BlkIo == NULL) || (Msg == NULL) || (MsgSize == 0) || (MsgSize > SB_LOG_WINDOW)) {
++    return EFI_NOT_READY;
++  }
++  BlockSize = BlkIo->Media->BlockSize;
++  if ((BlockSize == 0) || (((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize <= SB_LOG_WINDOW)) {
++    return EFI_UNSUPPORTED;
++  }
++  Base = ((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize - SB_LOG_WINDOW;
++  Buf  = AllocatePool (SB_LOG_WINDOW);
++  if (Buf == NULL) {
++    return EFI_OUT_OF_RESOURCES;
++  }
++  ZeroMem (Buf, SB_LOG_WINDOW);
++  CopyMem (Buf, Msg, MsgSize);
++  Status = BlkIo->WriteBlocks (BlkIo, m_SbLogMediaId, Base, SB_LOG_WINDOW, Buf);
+   FreePool (Buf);
+   return Status;
+ }
+@@ -852,17 +896,18 @@
+     return Status;
+   }
+   BlockSize = BlkIo->Media->BlockSize;
+-  Base      = ((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize - SB_LOG_WINDOW;
+-
+-  // 2026-11-06R31: ReadBlocks 的 BufferSize 必须是块大小的整数倍（实测非整倍返回
+-  // EFI_BAD_BUFFER_SIZE）。按块对齐读进 bounce buffer，再拷出调用方要的那段。
++  if ((BlockSize == 0) || (((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize <= SB_LOG_WINDOW)) {
++    return EFI_UNSUPPORTED;
++  }
++  // 2026-11-06R32: LBA 是块号（见 SbWriteLogWindow 的注释）+ BufferSize 必须是块大小整数倍。
++  Base = (UINT64)BlkIo->Media->LastBlock + 1 - (SB_LOG_WINDOW / BlockSize);
+   {
+     UINT32  AlignedOff;
+     UINT32  AlignedLen;
+     UINT8  *Tmp;
+ 
+-    AlignedOff = Offset & ~(UINT32)(BlockSize - 1);
+-    AlignedLen = (Offset + Len + (UINT32)BlockSize - 1) & ~(UINT32)(BlockSize - 1);
++    AlignedOff = Offset & ~((UINT32)BlockSize - 1);
++    AlignedLen = (Offset + Len + (UINT32)BlockSize - 1) & ~((UINT32)BlockSize - 1);
+     if (AlignedLen > SB_LOG_WINDOW) {
+       AlignedLen = SB_LOG_WINDOW;
+     }
+@@ -870,7 +915,8 @@
+     if (Tmp == NULL) {
+       return EFI_OUT_OF_RESOURCES;
+     }
+-    Status = BlkIo->ReadBlocks (BlkIo, BlkIo->Media->MediaId, Base + AlignedOff, AlignedLen, Tmp);
++    Status = BlkIo->ReadBlocks (BlkIo, BlkIo->Media->MediaId,
++                                Base + (AlignedOff / (UINT32)BlockSize), AlignedLen, Tmp);
+     if (!EFI_ERROR (Status)) {
+       CopyMem (Buf, Tmp + (Offset - AlignedOff), Len);
+     }
+--- a/Platforms/QcomModulePkg/Include/Library/LinuxLoaderLib.h
++++ b/Platforms/QcomModulePkg/Include/Library/LinuxLoaderLib.h
+@@ -185,6 +185,8 @@
+ SbWriteLogWindow (IN VOID *Msg, IN UINT32 MsgSize);
+ EFI_STATUS
+ SbReadLogWindow (IN UINT32 Offset, OUT VOID *Buf, IN UINT32 Len);
++EFI_STATUS
++SbWriteLogWindowNoBs (IN VOID *Msg, IN UINT32 MsgSize);
+ BOOLEAN IsSecureBootEnabled (VOID);
+ EFI_STATUS ResetDeviceState (VOID);
+ EFI_STATUS
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootCmds.c
+@@ -3263,42 +3263,99 @@
+   }
+ }
+ 
+-// 2026-11-06R31 y700-elden: `oem sbread:<off>:<len>` —— 从 `logfs` 尾部诊断窗口读回十六进制。
++// 2026-11-06R31/R32 y700-elden: `oem sbread:<off>:<len>` —— 从 `logfs` 尾部诊断窗口读回十六进制。
+ // 目的：让「屏上日志 → logfs」这条链**自证**，不依赖设备能否起 Linux。len 默认 64，上限 96
+ // （响应缓冲 256 B，十六进制翻倍，留前缀余量）。off/len 相对窗口基址（= 分区尾部 16 KiB）。
++//
++// 2026-11-06R32 教训：fastboot 传进来的 `Arg` **不保证只含参数** —— 实测它带着命令名/分隔符，
++// 于是「按字面剥 sbread 前缀」两种写法都被它绕过去了（两次上机都只看到 Invalid Parameter）。
++// 现在不再猜前缀：按 ':' 切段，取**尾部两个纯十六进制段**（倒数第一 = len，倒数第二 = off）。
++STATIC BOOLEAN
++SbIsHexSeg (
++  IN CONST CHAR8  *S,
++  IN UINTN         Len
++  )
++{
++  UINTN  i;
++
++  if ((S == NULL) || (Len == 0) || (Len > 15)) {
++    return FALSE;
++  }
++  for (i = 0; i < Len; i++) {
++    CHAR8  c = S[i];
++
++    if (!(((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F')))) {
++      return FALSE;
++    }
++  }
++  return TRUE;
++}
++
+ STATIC VOID
+ CmdOemSbRead (IN CONST CHAR8 *Arg, IN VOID *Data, IN UINT32 Size)
+ {
+-  EFI_STATUS  Status;
+-  UINT8       Buf[96];
+-  CHAR8       Resp[256];
+-  UINT32      Offset;
+-  UINT32      Len;
+-  UINT32      i;
+-  UINTN       Pos;
++  EFI_STATUS   Status;
++  UINT8        Buf[96];
++  CHAR8        Resp[256];
++  UINT32       Offset;
++  UINT32       Len;
++  UINT32       i;
++  UINTN        Pos;
++  CONST CHAR8 *Segs[8];
++  UINTN        SegL[8];
++  UINTN        nSeg;
++  CONST CHAR8 *P;
+ 
+   Offset = 0;
+   Len    = 64;
+-  if (Arg != NULL) {
+-    CONST CHAR8  *P = Arg;
+ 
+-    // 命令表已吃掉 "oem sbread"，剩下的形如 ":<off>:<len>"、":<off>" 或 "<off>:<len>"。
+-    while (*P == ':') {
++  nSeg = 0;
++  P    = Arg;
++  while ((P != NULL) && (*P != '\0') && (nSeg < ARRAY_SIZE (Segs))) {
++    CONST CHAR8  *S = P;
++
++    while ((*P != '\0') && (*P != ':')) {
+       P++;
+     }
+-    if (*P != '\0') {
+-      Offset = (UINT32)AsciiStrHexToUintn (P);
+-      P      = AsciiStrStr (P, ":");
+-      if (P != NULL) {
+-        while (*P == ':') {
+-          P++;
+-        }
+-        if (*P != '\0') {
+-          Len = (UINT32)AsciiStrHexToUintn (P);
+-        }
++    if (P > S) {
++      Segs[nSeg] = S;
++      SegL[nSeg] = (UINTN)(P - S);
++      nSeg++;
++    }
++    if (*P == ':') {
++      P++;
++    } else {
++      break;
++    }
++  }
++
++  // 从尾部取最多两个纯十六进制段：倒数第一 = len（若存在两段），倒数第二 = offset。
++  {
++    UINT32  Vals[2];
++    UINTN   nVals = 0;
++    UINTN   k;
++
++    for (k = nSeg; (k > 0) && (nVals < 2); k--) {
++      CHAR8  Tmp[16];
++      UINTN  L = SegL[k - 1];
++
++      if (!SbIsHexSeg (Segs[k - 1], L)) {
++        continue;
+       }
++      CopyMem (Tmp, Segs[k - 1], L);
++      Tmp[L]     = '\0';
++      Vals[nVals] = (UINT32)AsciiStrHexToUintn (Tmp);
++      nVals++;
++    }
++    if (nVals >= 2) {
++      Offset = Vals[1];
++      Len    = Vals[0];
++    } else if (nVals == 1) {
++      Offset = Vals[0];
++      Len    = 64;
+     }
+   }
++
+   if ((Len == 0) || (Len > sizeof (Buf))) {
+     FastbootFail ("sbread: len out of range");
+     return;
+@@ -3306,16 +3363,27 @@
+ 
+   Status = SbReadLogWindow (Offset, Buf, Len);
+   if (EFI_ERROR (Status)) {
+-    AsciiSPrint (Resp, sizeof (Resp), "sbread st=%r", Status);
++    AsciiSPrint (Resp, sizeof (Resp), "sbread st=%r o=%x l=%x", Status, Offset, Len);
+     FastbootFail (Resp);
+     return;
+   }
+ 
+-  Pos = AsciiSPrint (Resp, sizeof (Resp), "sb o=%x l=%x ", Offset, Len);
+-  for (i = 0; (i < Len) && ((Pos + 2) < sizeof (Resp)); i++) {
+-    Pos += AsciiSPrint (Resp + Pos, sizeof (Resp) - Pos, "%02x", Buf[i]);
++  // 2026-11-06R32: 响应缓冲只有 MAX_RSP_SIZE=64 B（"OKAY"+载荷一起截断，实测客户端什么都看不到），
++  // 所以改成分块 INFO 回传（客户端逐条打印），每块 20 字节 hex = 40 字符 + 前缀，留足余量。
++  {
++    UINT32  Off;
++
++    for (Off = 0; Off < Len; Off += 20) {
++      UINT32  Chunk = ((Len - Off) > 20) ? 20 : (Len - Off);
++
++      Pos = AsciiSPrint (Resp, sizeof (Resp), "o=%x ", Offset + Off);
++      for (i = 0; i < Chunk; i++) {
++        Pos += AsciiSPrint (Resp + Pos, sizeof (Resp) - Pos, "%02x", Buf[Off + i]);
++      }
++      FastbootInfo (Resp);
++    }
+   }
+-  FastbootOkay (Resp);
++  FastbootOkay ("");
+ }
+ 
+ STATIC VOID

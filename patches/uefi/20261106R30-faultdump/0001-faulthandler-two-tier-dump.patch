@@ -1,0 +1,93 @@
+Subject: [PATCH] DefaultExceptionHandler: 两档 dump（归因行 + 全部 GPR），先清屏再钉在最上方
+
+2026-11-06R30 y700-elden: R17/R20 的 handler 只打**一行**归因就 CpuDeadLoop，理由是 scale 3 下一行 ≈274 KiB、
+splash 安全区只有 ~448 KiB ⇒ 多打一行就可能二次写穿。R29 之后控制台有了硬边界与满屏「有界清屏 + 回顶」，
+这个理由不再成立；而 p32/p33 的教训是**没有寄存器就看不出「谁传了坏参数」**（PITFALLS #532/#533）。
+
+本补丁：
+1. 归因行（`[K] FLT pc=… esr=… far=…`）**先**打一次 —— 即使后面任何一步再出事，证据已经留证；
+2. `SerialPortClearScreen()` 清屏（同一条 SerialPortLib；未初始化就静默返回，**不碰** HOB/UEFI 服务）；
+3. 清屏后重打归因行，让它钉在屏幕最上方，然后打 `sp/spsr/far` 一行 + x0..x28/FP/LR（一行三个，
+   scale 4 下 79 列不折行）；
+4. 刻意**不读栈内存**：异常上下文里读未映射的 SP 区间会二次异常，把那行归因冲掉（R21 的惰性初始化
+   就是这样把 p32 变成 `Recursive exception` 的）。寄存器全在 SystemContext 里，不产生任何访存。
+
+判据：屏上第一行 = `[K] FLT …`，其后 `[K] sp=…`，再 11 行 `[K] xNN=…`；全程无 `Recursive exception`。
+--- a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
++++ b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+@@ -305,6 +305,75 @@
+       SbLen = sizeof (SbLine) - 1;
+     }
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
++
++    // 2026-11-06R30 y700-elden: 两档 dump。
++    // 第 1 行（上面）**先**打出去：即使下面任何一步再出事，归因也已留证。
++    // R29 之后控制台有硬边界与满屏「有界清屏 + 回顶」，多行不再写穿（PITFALLS #532）⇒
++    // 可以安全地「清屏 → 重打归因行 → 打全部 GPR」，让证据固定在屏幕最上方。
++    // 刻意**不读栈内存**：异常上下文里读一个未映射的 SP 区域会二次异常，把真正的
++    // 归因行冲掉（PITFALLS #533 那一类）。寄存器全在 SystemContext 里，不产生任何访存。
++    {
++      CHAR8   SbBuf[96];
++      UINTN   SbI, SbN;
++      UINT64  SbReg[31];
++
++      // 显式逐个取：不依赖结构体字段连续性。
++      SbReg[0]  = SystemContext.SystemContextAArch64->X0;
++      SbReg[1]  = SystemContext.SystemContextAArch64->X1;
++      SbReg[2]  = SystemContext.SystemContextAArch64->X2;
++      SbReg[3]  = SystemContext.SystemContextAArch64->X3;
++      SbReg[4]  = SystemContext.SystemContextAArch64->X4;
++      SbReg[5]  = SystemContext.SystemContextAArch64->X5;
++      SbReg[6]  = SystemContext.SystemContextAArch64->X6;
++      SbReg[7]  = SystemContext.SystemContextAArch64->X7;
++      SbReg[8]  = SystemContext.SystemContextAArch64->X8;
++      SbReg[9]  = SystemContext.SystemContextAArch64->X9;
++      SbReg[10] = SystemContext.SystemContextAArch64->X10;
++      SbReg[11] = SystemContext.SystemContextAArch64->X11;
++      SbReg[12] = SystemContext.SystemContextAArch64->X12;
++      SbReg[13] = SystemContext.SystemContextAArch64->X13;
++      SbReg[14] = SystemContext.SystemContextAArch64->X14;
++      SbReg[15] = SystemContext.SystemContextAArch64->X15;
++      SbReg[16] = SystemContext.SystemContextAArch64->X16;
++      SbReg[17] = SystemContext.SystemContextAArch64->X17;
++      SbReg[18] = SystemContext.SystemContextAArch64->X18;
++      SbReg[19] = SystemContext.SystemContextAArch64->X19;
++      SbReg[20] = SystemContext.SystemContextAArch64->X20;
++      SbReg[21] = SystemContext.SystemContextAArch64->X21;
++      SbReg[22] = SystemContext.SystemContextAArch64->X22;
++      SbReg[23] = SystemContext.SystemContextAArch64->X23;
++      SbReg[24] = SystemContext.SystemContextAArch64->X24;
++      SbReg[25] = SystemContext.SystemContextAArch64->X25;
++      SbReg[26] = SystemContext.SystemContextAArch64->X26;
++      SbReg[27] = SystemContext.SystemContextAArch64->X27;
++      SbReg[28] = SystemContext.SystemContextAArch64->X28;
++      SbReg[29] = SystemContext.SystemContextAArch64->FP;
++      SbReg[30] = SystemContext.SystemContextAArch64->LR;
++
++      // 清屏：从 SerialPortLib 取不到头文件时也能用（同一库实例，BdsDxe 已初始化过）。
++      {
++        VOID EFIAPI SerialPortClearScreen (VOID);
++        SerialPortClearScreen ();
++      }
++
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);   // 清屏后把归因行钉在最上面
++
++      SbN = AsciiSPrint (SbBuf, sizeof (SbBuf), "[K] sp=%lx spsr=%lx far=%lx\n\r",
++                         (UINT64)SystemContext.SystemContextAArch64->SP,
++                         (UINT64)SystemContext.SystemContextAArch64->SPSR,
++                         (UINT64)SystemContext.SystemContextAArch64->FAR);
++      SerialPortWrite ((UINT8 *)SbBuf, SbN);
++
++      // 一行三个（scale 4 下只有 79 列，一行四个会被折行打乱定位置）。
++      for (SbI = 0; SbI < 31; SbI += 3) {
++        SbN = AsciiSPrint (SbBuf, sizeof (SbBuf), "[K] x%02d=%lx x%02d=%lx x%02d=%lx\n\r",
++                           (UINT64)SbI, SbReg[SbI],
++                           (UINT64)(SbI + 1), (SbI + 1 < 31) ? SbReg[SbI + 1] : 0,
++                           (UINT64)(SbI + 2), (SbI + 2 < 31) ? SbReg[SbI + 2] : 0);
++        SerialPortWrite ((UINT8 *)SbBuf, SbN);
++      }
++    }
++
+     CpuDeadLoop ();
+   }
+ 
