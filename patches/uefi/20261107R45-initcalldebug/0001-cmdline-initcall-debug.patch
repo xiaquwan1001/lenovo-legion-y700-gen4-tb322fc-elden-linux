@@ -1,0 +1,67 @@
+Subject: [PATCH] UpdateCmdLine: 追加 initcall_debug（定位「交棒后内核停在 4.1 s」的那个 initcall）
+
+2026-11-07R45 y700-elden（诊断令牌，零写盘）。
+
+## 现状（p50 两发实测）
+
+UEFI **交棒成立** —— 那个内核自己的 console（持久 `ramoops` → 下一次 boot 由 systemd 归档到
+`/var/lib/systemd/pstore/console-ramoops-0`）里打印了：
+
+    Kernel command line: … elden_nocamera=1 elden_bootpath=uefi
+    Unknown kernel command line parameters "elden_root=LABEL=linux17
+        elden_nocamera=1 elden_bootpath=uefi", will be passed to user space.
+
+但两发都停在 **~4.07–4.12 s**、且 **64 KiB 的 ramoops 环没有回绕**（文件头仍是 boot banner）
+⇒ 内核此后一条都没再打印。停点是**块设备枚举段**，但最后一行不同：
+
+| 发 | 最后一行 |
+|---|---|
+| r1 | `[4.122504] mmc0: ADMA error: 0x02000000` + SDHCI 寄存器转储 |
+| r2 | `[4.076102] ALSA device list:   No soundcards found.` |
+
+同一内核由 **ABL** 引导时这一切都在 3.9–4.2 s 内正常走完（`mmc0: new high speed SDXC card`、
+`sd 0:0:0:3: [sdd] Attached SCSI disk`…，`mmcblk0: p1` 也在）。
+
+## 本补丁
+
+在 R43 的令牌之后追加 ` initcall_debug`（缓冲长度同步扩容）。内核会对每个 initcall 打印
+
+    calling  <fn>+0x0/0x... @ N
+    initcall <fn>+0x0/0x... returned 0 after N usecs
+
+⇒ 环里**最后一条没有配对 `returned` 的 `calling` 行**就是卡住的那一个。
+
+## 代价与注意
+
+- `initcall_debug` 输出量大：64 KiB 环会被填满并**回绕**，早期内容会丢（但我们要的正是
+  末尾那几行，回绕不影响）；判读方式相应改为「看文件尾部最后一条 `calling`」。
+- 只在 UEFI 路径生效（令牌由 UEFI 追加，ABL 引导不会带上）⇒ 天然是 A/B 对照。
+
+---
+--- a/Platforms/QcomModulePkg/Library/BootLib/UpdateCmdLine.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/UpdateCmdLine.c
+@@ -402,8 +402,14 @@
+   // ABL 自己引导」这条替代解释（PITFALLS #549）。令牌写进 cmdline 后，`/proc/cmdline` 里
+   // 有没有它就能一刀切；ABL 自己引导时不会出现（它只拼 boot_b 头部的 cmdline）。
+   STATIC CONST CHAR8  SbBootPathTag[] = " elden_bootpath=uefi";
++  // 2026-11-07R45 y700-elden: 交接诊断令牌。上一发（p50）证明交棒成立（内核自己的
++  // `Kernel command line:` 里带 elden_bootpath=uefi），但内核在 ~4.07–4.12 s 的块设备枚举段
++  // 停住（ramoops 环未回绕）。`initcall_debug` 会让内核逐个打印
++  // `calling <fn>+0x../0x.. @ N` / `<fn> returned 0 after N usecs` ⇒ 停住的那一行就是卡住的 initcall。
++  STATIC CONST CHAR8  SbDbgTag[] = " initcall_debug";
+ 
+-  MaxCmdLineLen = Param->CmdLineLen + (UINT32)AsciiStrLen (SbBootPathTag) + 1;
++  MaxCmdLineLen = Param->CmdLineLen + (UINT32)AsciiStrLen (SbBootPathTag)
++                  + (UINT32)AsciiStrLen (SbDbgTag) + 1;
+ 
+   Dst = AllocateZeroPool (MaxCmdLineLen);
+   if (!Dst) {
+@@ -566,6 +572,8 @@
+ 
+   // 2026-11-07R43: 排他令牌放最后（缓冲区上面已按 +len+1 扩容，不会越界）。
+   AsciiStrCatS (Dst, MaxCmdLineLen, SbBootPathTag);
++  // 2026-11-07R45: 诊断令牌同样放末尾（缓冲区上面已按 +len+1 扩容）。
++  AsciiStrCatS (Dst, MaxCmdLineLen, SbDbgTag);
+ 
+   return EFI_SUCCESS;
+ }

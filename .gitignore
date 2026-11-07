@@ -323,3 +323,24 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 # 文本解码件（abl-log.txt）、ssh-pre/post、usb-watch、boot.txt 全入库
 /reports/artifacts/uefi-boot-20261107-193644/logfs.img
 /reports/artifacts/uefi-boot-20261107-195415/logfs.img
+# 2026-11-07 夜 UEFI p51–p53 世代：构建归档只留身份三件；失败内核 console 原件（数百 KB）入库（判读用）
+/reports/artifacts/uefi-20261107R45-p51/*.fd
+/reports/artifacts/uefi-20261107R45-p51/*.img
+/reports/artifacts/uefi-20261107R45-p51/*.gz
+/reports/artifacts/uefi-20261107R45-p51/*payload*
+/reports/artifacts/uefi-20261107R45-p51/kernel.bin
+/reports/artifacts/uefi-20261107R45-p51/build.log
+/reports/artifacts/uefi-20261107R47-p52/*.fd
+/reports/artifacts/uefi-20261107R47-p52/*.img
+/reports/artifacts/uefi-20261107R47-p52/*.gz
+/reports/artifacts/uefi-20261107R47-p52/*payload*
+/reports/artifacts/uefi-20261107R47-p52/kernel.bin
+/reports/artifacts/uefi-20261107R47-p52/build.log
+/reports/artifacts/uefi-20261107R48-p53/*.fd
+/reports/artifacts/uefi-20261107R48-p53/*.img
+/reports/artifacts/uefi-20261107R48-p53/*.gz
+/reports/artifacts/uefi-20261107R48-p53/*payload*
+/reports/artifacts/uefi-20261107R48-p53/kernel.bin
+/reports/artifacts/uefi-20261107R48-p53/build.log
+# 上机证据里的 logfs.img（8 MiB 原始分区镜像）不入库，文本解码件入库
+/reports/artifacts/uefi-boot-20261107-20*/*.img

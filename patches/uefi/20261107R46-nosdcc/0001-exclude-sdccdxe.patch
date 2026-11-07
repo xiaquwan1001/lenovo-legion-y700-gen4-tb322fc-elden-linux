@@ -1,0 +1,30 @@
+Subject: [PATCH] lenovo-y700g4: 不 dispatch SdccDxe（SD 主控交给内核前保持干净）
+
+2026-11-07R46 y700-elden（**备料，未上机** —— 单变量候选修法之一，先存档）。
+
+p50 两发证明 **UEFI 交棒成立**（那个内核自己的 `Kernel command line:` 里带 `elden_bootpath=uefi`，
+见 `reports/artifacts/uefi-p51-uefi-kernel-console/console-ramoops-0.bin`），但内核都在
+**~4.07–4.12 s 的 UFS/SD 块设备枚举段**停住（ramoops 64 KiB 环未回绕）：
+第 1 发最后一行 `mmc0: ADMA error: 0x02000000`、第 2 发最后一行 `No soundcards found`（同段早一点）。
+同一内核由 ABL 引导时 mmc0 在 3.96 s 正常认出 `SDXC card 58.6 GiB`、无 ADMA 错误。
+
+本补丁做单变量：从 FV 里剔除 `SdccDxe`（fastboot boot 路径上它会初始化 SD 主控，正常 ABL 路径
+不会），看内核接手时主控是否干净、停点是否移位。
+
+---
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc
+@@ -491,7 +491,12 @@
+ INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
+ 
+ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SPIDxe/SPIDxe.inf
+-INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
++# 2026-11-07R45 y700-elden: 不 dispatch SdccDxe —— p50 那发 UEFI 交棒成功、但内核在
++# 4.1225 s 的 `mmc0: ADMA error: 0x02000000` 之后不再打印任何东西（ramoops 64 KiB 环未回绕）。
++# 而同一内核由 ABL 引导时 mmc0 在 3.983 s 正常认出 SDXC 卡、无 ADMA 错误 ⇒ 差值指向「SD 主控
++# 在 fastboot boot 路径上被 UEFI 自己的 SdccDxe 初始化过、状态没收尾」。本发做单变量：从 FV 里
++# 剔除 SdccDxe，让内核接手时主控是干净的。
++#INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
+ #INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
+ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/PmicGlinkDxe/PmicGlinkDxe.inf
+ #INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf

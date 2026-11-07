@@ -1,0 +1,35 @@
+[20:10:47] ===== trial START label=uefi-p51-look-screen image=uefi-preamble50-r1.img sha=9a7e22c1a10cfbb6d3cfd85839b7350bce025fafaa9b65d371403562d5a257eb =====
+[20:10:47] image_size=67219456
+[trial] boot_b: succ=1 retry=7 unbootable=0
+[trial] GATE=OK
+[20:10:48] pre boot_id=178be281-ac8e-441d-b8eb-e1cb5c1cc5a3
+[20:10:48] ssh -> reboot bootloader (eldroid-bootctl)
+[20:11:10] fastboot up after ~2s
+[20:11:10] SER=HA2EXB0E
+# fastboot pre 2026-11-07T20:11:10+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.004s
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.004s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.004s
+[20:11:11] fastboot boot uefi-preamble50-r1.img
+Sending 'boot.img' (65644 KB)                      OKAY [  1.490s]
+Booting                                            OKAY [ 10.109s]
+Finished. Total time: 11.635s
+[20:11:23] fastboot boot returned after 11s
+[20:15:53] watch: usb_present_last=0 samples_with_usb=6/120
+[20:15:53] VERDICT(candidate)=HANDOFF
+[20:15:53] recovering...
+[20:15:53] ABL gone (handoff) -> wait for fallback (Android) or ABL watchdog
+[20:15:53] post-OS mode=linux after ~2s
+[20:15:54] post boot_id=2d196234-f1e3-4c72-be0f-5826ec673562 mode=linux
+[20:15:54] cmdline elden_bootpath=absent
+[20:15:54] VERDICT(final)=ABLBOOT_NOTAG
+[20:15:54] dump logfs (ABL/PBL log; 单文件 UEFILOG1.TXT，偏移 0x19 起 FAT)
+[20:16:14] abl log lines: 526
+[trial] RECORD=/home/xuqianhui/y700-elden/reports/trials/20261107T121614Z-uefi-p51-look-screen.json
+[trial] VERDICT=ABLBOOT_NOTAG  reset=warm vk=
+[20:16:14] ===== trial END verdict=ABLBOOT_NOTAG outdir=/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261107-201047 =====

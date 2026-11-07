@@ -6,6 +6,40 @@
 
 ---
 
+## ⛔ 2026-11-07 20:20 更正（本页 §0/§3 的「内核连 printk 都没跑到」**已作废**）
+
+用户当场看屏：**`JUMP-BANNER` 之后屏幕全亮、开始进 Linux** ⇒ 跳转是成功的。
+复查发现 `/sys/fs/pstore` 空**根本不说明任何事** —— `systemd-pstore.service` 在每次 boot 时会把
+`/sys/fs/pstore/*` **搬到 `/var/lib/systemd/pstore/`** 并清空源目录。真正的记录在那里：
+
+```
+/var/lib/systemd/pstore/console-ramoops-0   (64 858 B)
+  [    0.000000][    T0] Booting Linux on physical CPU 0x0000000000 [0x514f0014]
+  [    0.000000][    T0] Machine model: Lenovo Legion Y700 Gen4
+  …  Kernel command line: … elden_nocamera=1 elden_bootpath=uefi
+  [    0.000000][    T0] Unknown kernel command line parameters "elden_root=LABEL=linux17
+                          elden_nocamera=1 elden_bootpath=uefi", …
+  …（1 s 内的 mmc/pcie/ufs 逐条）
+  [    4.051881][   T92] mmc0: SDHCI controller on 8804000.mmc using ADMA 64-bit
+  [    4.122504][    C0] mmc0: ADMA error: 0x02000000      ← 日志到此为止（64 KiB 环未回绕）
+  [    4.122698][    C0] mmc0: sdhci: Host ctl2: 0x00000000
+```
+
+⇒ **两条硬结论改写**：
+
+1. **UEFI 交棒成立**（R43 的令牌出现在那个内核自己的 `Kernel command line:` 里，排他）；本页
+   §0.2–§0.4 与 §3 的「交棒没成/内核没跑到 printk」**作废**。
+2. 新的卡点 = **那个内核在 4.1225 s 的 `mmc0: ADMA error` 之后停住**：ramoops 环 64 KiB **没有回绕**
+   （文件头仍是 boot banner）⇒ 内核此后**没有再打印任何东西** ⇒ 卡死/复位在 sdhci 出错处理里。
+   同一台机器由 **ABL** 引导同一内核时，mmc0 在 3.983 s 正常认出 `SDXC card 58.6 GiB`、无 ADMA 错误。
+
+新的持久通道（本轮最大收获）：**失败那次的内核 console 会留在 `ramoops` 里，下一次 boot 由
+`systemd-pstore` 归档到 `/var/lib/systemd/pstore/console-ramoops-0`** ⇒ 每次 `fastboot boot`
+失败后都能拿到那个内核的**完整早期日志**（不再依赖看屏）。证据：
+`reports/artifacts/uefi-p51-uefi-kernel-console/console-ramoops-0.bin`。
+
+---
+
 ## 0. 一句话结论
 
 1. **R43（cmdline 令牌）确定生效**：p50 新增的 R44 见证行在持久 logfs 里读到

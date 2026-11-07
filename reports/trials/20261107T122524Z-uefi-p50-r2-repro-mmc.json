@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p50-r2-repro-mmc",
+  "ts": "2026-11-07T12:25:24Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/out/r21-sbstop-p50/uefi-preamble50-r1.img",
+  "image_sha256": "9a7e22c1a10cfbb6d3cfd85839b7350bce025fafaa9b65d371403562d5a257eb",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "ABLBOOT_NOTAG",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261107-202128",
+  "note": "verdict=ABLBOOT_NOTAG（判据=内核 cmdline elden_bootpath：absent）; candidate=HANDOFF; usb-gone=yes; post mode=linux boot_id=1124fbff-a464-46f5-87da-95bc2d54aaf1/2d196234"
+}

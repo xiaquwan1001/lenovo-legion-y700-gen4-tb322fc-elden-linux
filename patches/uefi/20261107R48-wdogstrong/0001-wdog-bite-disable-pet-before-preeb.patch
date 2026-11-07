@@ -1,0 +1,98 @@
+Subject: [PATCH] BootLinux: 看门狗三连（bite 超时拉满 + Disable + ForcePet），并把结论前移到 preeb 转储之前
+
+2026-11-07R48 y700-elden（R47 的加强版，判据同时进 logfs）。
+
+## R47 的实测与遗留
+
+- R47（跳转前 `WDog->WdogDisable()`）上机一发：那个**交棒成立**的内核（cmdline 带
+  `elden_bootpath=uefi`，见 `reports/artifacts/uefi-p52-wdog-console/`）死点从
+  **4.04–4.12 s** 推到 **9.909 s**，但仍未存活（ramoops 记录最后一行
+  `ucsi_glink … timeout waiting for UCSI read response`，之后无输出；随后整机硬复位）。
+- **判据没进 logfs**：R47 的 `[K] wdog-off` 落在 `SbDumpLog("preeb")` **之后**，而 logfs 的内容是
+  那次转储时的环快照 ⇒ 看不到。
+
+## 本补丁
+
+1. 把整段**前移到 `SbDumpLog("preeb")` 之前** ⇒ `[K] wdog-off ok bite=<status>` 会随 logfs 持久化。
+2. 三连：`WdogSetBiteTimeout(0x7FFFFFFF)` → `WdogDisable()` → `WdogForcePet()`；
+   前两个的 EFI_STATUS 都打进环（`bite=%r`、`loc/miss`）。
+
+## 判读
+
+| 环/logfs | 内核存活 | 结论 |
+|---|---|---|
+| `wdog-off ok bite=Success` | 越过 10 s | WDT 就是元凶且已解决 |
+| `wdog-off ok bite=Success` | 仍 ~10 s 死 | 不是这个 WDT（转查 PMIC/PON 与 secure wdog） |
+| `wdog-off ok bite=<非 Success>` / `miss` | 仍 ~10 s 死 | 协议调用路径有问题（QcomWDogDxe 未提供该接口/超时不可改） |
+
+同发仍带 `initcall_debug`（R45）与 `elden_bootpath=uefi`（R43）⇒ 无论死活都能定位到具体一步。
+
+---
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1393,41 +1393,40 @@
+     SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] preeb-go\n\r");
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
+   }
+-  SbDumpLog ("preeb");
+-  {
+-    CHAR8  SbLine[64];
+-    UINTN  SbLen;
+-    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] preeb-ok\n\r");
+-    SerialPortWrite ((UINT8 *)SbLine, SbLen);
+-  }
+-
+-  SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
+-
+-  // 2026-11-07R47 y700-elden: **跳转前关掉硬件看门狗**。
+-  // 证据链：① 本构建的 UEFI 日志里有 `HW Wdog Setting from PCD : Enabled`（QcomWDogDxe 主动开了
+-  // 硬件 WDT）；② p50/p51 三发里**交棒成立**的那个内核（其 `Kernel command line` 带
+-  // `elden_bootpath=uefi`）都在 **~4.04–4.12 s** 处日志戛然而止、随后整机硬复位（`PM: Reset by
+-  // PSHOLD / Hard Reset`）；③ 同一内核由 ABL 引导时能跑满（无 wdog 类事件），主线上没有
+-  // `qcom_wdt` 驱动去喂它 ⇒ 最合理解释 = UEFI 开着的 HW WDT 在交棒后无人 pet，约 4 s 咬掉。
+-  // 这里用 Qcom 的 KernelInterface（`gEfiKernelProtocolGuid` 的 `WDog->WdogDisable`）在
+-  // **EB 之前**（协议还活着）关掉它，并上屏 + 进环留痕。
++  // 2026-11-07R48 y700-elden: **跳转前关掉/喂饱硬件看门狗**（放在 `preeb` 转储之前 ⇒ 结论会进 logfs）。
++  // R47 的实测：加 `WdogDisable()` 后死点从 4.04–4.12 s 推到 9.909 s（仍未存活）⇒ 更像
++  // 「WDT bite 超时 ≈10 s，UEFI 的 QcomWDogDxe 每隔几秒 pet 一次，最后一次 pet 离跳转多近就决定
++  // 咬在几秒后」。本发把三件事都做：置 bite 超时到最大、Disable、再 ForcePet 一次，
++  // 并把每个 EFI_STATUS 打进环（logfs 的 preeb 转储会带上）。
+   {
+-    CHAR8              SbLine[96];
+-    UINTN              SbLen;
++    CHAR8               SbLine[128];
++    UINTN               SbLen;
+     EFI_KERNEL_PROTOCOL *SbKern = NULL;
+-    EFI_STATUS         SbWdogSt;
++    EFI_STATUS          SbLoc, SbBite;
+ 
+-    SbWdogSt = gBS->LocateProtocol (&gEfiKernelProtocolGuid, NULL, (VOID **)&SbKern);
+-    if (!EFI_ERROR (SbWdogSt) && (SbKern != NULL) && (SbKern->WDog != NULL)) {
++    SbLoc = gBS->LocateProtocol (&gEfiKernelProtocolGuid, NULL, (VOID **)&SbKern);
++    if (!EFI_ERROR (SbLoc) && (SbKern != NULL) && (SbKern->WDog != NULL)) {
++      SbBite = SbKern->WDog->WdogSetBiteTimeout (0x7FFFFFFF);
+       SbKern->WDog->WdogDisable ();
+-      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-off ok\n\r");
++      SbKern->WDog->WdogForcePet ();
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-off ok bite=%r\n\r", SbBite);
+     } else {
+-      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-off miss st=%r\n\r", SbWdogSt);
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-off miss loc=%r\n\r", SbLoc);
+     }
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
+     SerialPortLogPutString (SbLine);
+   }
+ 
++  SbDumpLog ("preeb");
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] preeb-ok\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
++
++  SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
++
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/

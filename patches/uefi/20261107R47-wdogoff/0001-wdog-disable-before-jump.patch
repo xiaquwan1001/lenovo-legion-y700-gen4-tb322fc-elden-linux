@@ -1,0 +1,78 @@
+Subject: [PATCH] BootLinux: 跳转前关掉硬件看门狗（UEFI 开了它，主线内核没人喂 ⇒ 交棒后 ~4 s 被咬）
+
+2026-11-07R47 y700-elden。
+
+## 证据链（这一发之前的全部实测）
+
+1. 本构建的 UEFI 持久日志里明确写着 **`HW Wdog Setting from PCD : Enabled`**（`QcomWDogDxe`，
+   `PatchedBinaries/QcomWDogDxe.efi`，APRIORI 第一梯队）⇒ fastboot-boot 路径上**硬件 WDT 是开着的**。
+2. p50/p51 三发已证明 **UEFI 交棒成立**：那个内核自己的 console
+   （`/var/lib/systemd/pstore/console-ramoops-0`，由 systemd 从 `ramoops` 归档）里
+   `Kernel command line: … elden_bootpath=uefi`。
+3. 但该内核三发都在 **~4.04–4.12 s** 处日志戛然而止，ramoops 环**未回绕**（文件头仍是 boot banner）
+   ⇒ 之后一条都没再打印；随后整机硬复位（下次 ABL 启动记 `PM: Reset by PSHOLD / Hard Reset`）。
+   三发最后一行各不相同（`mmc0: ADMA error` / `No soundcards found` / `probe … -517`）⇒ **不是某个驱动挂住**，
+   而是**时间到就复位**的形态。
+4. 同一内核由 **ABL** 引导时能跑满（无任何 wdog 类事件），主线上也**没有** `qcom_wdt` 驱动
+   （`dmesg` 只有 `watchdog: NMI not fully supported` / `Hard watchdog permanently disabled`，
+   那是内核 lockup 检测器，不是 Qcom HW WDT）⇒ 没有人 pet 它。
+
+⇒ 最合理解释：UEFI 打开的 HW WDT 在交棒后无人喂，约 4 s 咬掉整机。
+
+## 改法
+
+在 `ShutdownUefiBootServices()` **之前**（协议仍可用）Locate `gEfiKernelProtocolGuid`，
+调 `KernIntf->WDog->WdogDisable()`；成功/失败都上屏 + 进环：
+
+    [K] wdog-off ok
+    [K] wdog-off miss st=%r
+
+## 判据（下一发 p52）
+
+- 环/屏出现 `[K] wdog-off ok`，且那个内核**活过 5 s**（ramoops 记录能到 5 s 之后）⇒ 假设成立。
+- 仍停在 ~4 s ⇒ 不是这个 WDT（转查 PMIC/SYSOK 复位源），`wdog-off ok` 会证明协议调用本身成功。
+- 若内核一路起到用户态 ⇒ **G1-29 的文件级目标达成**（`/proc/cmdline` 里应带 `elden_bootpath=uefi`）。
+
+---
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -82,6 +82,7 @@
+ #include "BootLinux.h"
+ #include "BootStats.h"
+ #include "UpdateDeviceTree.h"
++#include <Protocol/EFIKernelInterface.h>   // 2026-11-07R47 y700-elden: WDog->WdogDisable()
+ #include <Library/SerialPortLib.h>  // 2026-11-04R17 y700-elden
+ #include <Library/PrintLib.h>       // 2026-11-04R17 y700-elden
+ extern INT32  SbStopStage;      // 2026-11-04R21: 定义在 AvbLib/VerifiedBoot.c
+@@ -1402,6 +1403,31 @@
+ 
+   SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
+ 
++  // 2026-11-07R47 y700-elden: **跳转前关掉硬件看门狗**。
++  // 证据链：① 本构建的 UEFI 日志里有 `HW Wdog Setting from PCD : Enabled`（QcomWDogDxe 主动开了
++  // 硬件 WDT）；② p50/p51 三发里**交棒成立**的那个内核（其 `Kernel command line` 带
++  // `elden_bootpath=uefi`）都在 **~4.04–4.12 s** 处日志戛然而止、随后整机硬复位（`PM: Reset by
++  // PSHOLD / Hard Reset`）；③ 同一内核由 ABL 引导时能跑满（无 wdog 类事件），主线上没有
++  // `qcom_wdt` 驱动去喂它 ⇒ 最合理解释 = UEFI 开着的 HW WDT 在交棒后无人 pet，约 4 s 咬掉。
++  // 这里用 Qcom 的 KernelInterface（`gEfiKernelProtocolGuid` 的 `WDog->WdogDisable`）在
++  // **EB 之前**（协议还活着）关掉它，并上屏 + 进环留痕。
++  {
++    CHAR8              SbLine[96];
++    UINTN              SbLen;
++    EFI_KERNEL_PROTOCOL *SbKern = NULL;
++    EFI_STATUS         SbWdogSt;
++
++    SbWdogSt = gBS->LocateProtocol (&gEfiKernelProtocolGuid, NULL, (VOID **)&SbKern);
++    if (!EFI_ERROR (SbWdogSt) && (SbKern != NULL) && (SbKern->WDog != NULL)) {
++      SbKern->WDog->WdogDisable ();
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-off ok\n\r");
++    } else {
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-off miss st=%r\n\r", SbWdogSt);
++    }
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    SerialPortLogPutString (SbLine);
++  }
++
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/
