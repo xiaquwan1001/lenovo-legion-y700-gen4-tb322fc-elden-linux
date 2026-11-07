@@ -187,7 +187,8 @@
 - **宿主 rootfs（Alpine → Debian/Mobian、systemd）**：用户 2026-10-26 定的方向，**不是「勿重推」项**；路径与成本只读 `reports/mobian-migration-plan-20261021.md`（S0–S7，完成项见其 §4 状态标记）与 `TASKS/README.md` T14/T17。
 - **两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy`（trixie 3.7 无 SSC 后端）+ `libssc2`，否则传感器栈直接死。
 - **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-10 NFC、G1-30 slim initramfs；
-  **G1-29 UEFI 不在「勿重推」之列** —— 路线 A 首轮（2026-10-05）失败后曾搁置，**2026-11-01 用户放行恢复推进**，当前口径只读 `TASKS/README.md` §5（**2026-11-06 块**；11-01/11-02 块已下沉到 `TASKS/sessions/2026-11-02-UEFI历史块归档.md`）：11-06 块 = 崩溃元凶 = **屏显写穿帧缓冲**（`SerialPortWrite`），探针通道改 `sbprobe=3`，窗口收敛到 `MarkPtnActive()` 附近；主报告 = `reports/uefi-vsstop-and-fbconsole-20261106.md`、`reports/uefi-screenlog-crash-20261105.md`（§1–§9 仍有效，§10–§12 已作废）。
+  **G1-29 UEFI 不在「勿重推」之列** —— 路线 A 首轮（2026-10-05）失败后曾搁置，**2026-11-01 用户放行恢复推进**，当前口径只读 `TASKS/README.md` §5（**2026-11-07「深夜，p45→p46」块**；更早的 11-06/11-05/11-04 块与 11-01/11-02 下沉件在同节/`TASKS/sessions/2026-11-02-UEFI历史块归档.md`）：
+  **2026-11-07 = ✅ 间接引导已打通** —— p45 定死崩点 = EB 之后复用缓存的 `BlkIo` 写盘（`WriteBlocks=0` ⇒ `blr 0`），p46 删掉该转储 + `PreparePlatformHardware()` 双侧标记后一发起内核（7.3.1 / `root=/dev/sda17`，零写盘、`boot_b` 未动）；**剩 BDS 菜单与「绕开 boot.img」**。主报告 = `reports/uefi-p46-kernel-boot-success-20261107.md`；沿革主报告 = `reports/uefi-vsstop-and-fbconsole-20261106.md`、`reports/uefi-screenlog-crash-20261105.md`（§1–§9 仍有效，§10–§12 已作废）。
 - **单元**：U1 / U2 台账见 `DEVICE/README.md` §1；解锁议题已定稿关闭（`RUNBOOK` §0.5 + `archive/topics/复盘-2026-10-03-BL解锁.md`），不要重新论证。
 
 ---

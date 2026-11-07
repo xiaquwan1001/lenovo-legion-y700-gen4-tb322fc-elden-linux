@@ -1,7 +1,8 @@
-# wl2868c v9 备料（2026-11-07，**未投递**）
+# wl2868c v9（2026-11-07 备料，**2026-11-07T01:50Z 已投递**）
 
 > 触发：`reports/upstream-delta-20261107.md` §3 第 1 条（我方唯一未答的上游欠账）。
-> 状态：**备料完成、门禁全绿、等用户批准投递**（本项目投递按 `TASKS/README.md` §7 逐次放行）。
+> 状态：**已投递（2026-11-07 09:50 CST，3 封全 `Result: 250`，封面 `<20261107015014.22374-1-xiaqinghuan@mail.ustc.edu.cn>`）**；日志 `out/mail-20261107/send-wl2868c-v9.log`。
+> 归档复核（2026-11-07 现查 patchwork API）：`devicetree 1/2 needs-ack` + `arm-msm 2/2 new`；v8 两枚已自动 `superseded`。
 > 基线：**发信前已按 §7 重基到当轮 master** `d48723711b`（7.4-rc2 线，`Merge tag 'arm64-fixes'`，2026-11-06 13:18 -0800）；
 > 首次验证在 `v7.3-rc7`，重基后全部门禁复跑绿（见下 §"重基后复跑"）。
 > 未发信前基线是 `v7.3-rc7`（worktree `/tmp/kw9`）。
@@ -50,14 +51,14 @@ make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION= W=1 drivers/regul
                                                     # → rc=0，54 688 B，0 warning
 ```
 
-## 投递前还需要用户决定
+## 投递事实（2026-11-07，已执行）
 
-1. 是否发 v9（2 封：cover + 1/2；2/2 内容未变 —— 但按 `b4`/维护者习惯，重发系列应整列重发，**建议 3 封全发**）。
-2. `In-Reply-To` 串到 v8 cover `<20261106114252.988023-1-xiaqinghuan@mail.ustc.edu.cn>`（与 v8→v7 的做法一致）。
-3. 发信后立刻复核：patchwork `devicetree` 中 1/2 状态应从 `changes-requested` 转 `new`，并回一封短信给 Conor 的 bot 线程说明时序（可选，避免被判"无视评审"）。
+1. 实发 3 封（cover + 1/2 + 2/2；按 `b4`/维护者习惯整列重发），每封均 `Result: 250`。
+2. `In-Reply-To`/`References` 串到 v8 cover `<20261106114252.988023-1-xiaqinghuan@mail.ustc.edu.cn>`（与 v8→v7 一致）。
+3. 发信后 patchwork 复核：`devicetree 1/2` = `needs-ack`、`arm-msm 2/2` = `new`（2026-11-07 现查）——**未**如预期停在 `changes-requested`（Rob 的两点已落）。
 
 ## 未做（明确边界）
 
-- 没有发任何邮件；没有改 patchwork；held-back 的板 DTS（v6 4/5、5/5）仍留在
+- ~~没有发任何邮件~~ **已作废：v9 已于 2026-11-07 投出**；patchwork 未手动改（靠自动 superseded）；held-back 的板 DTS（v6 4/5、5/5）仍留在
   `patches/upstream/wl2868c-v7-20261106/held-back/`，等 `TASKS` §7 的复启条件。
 - 没碰设备。

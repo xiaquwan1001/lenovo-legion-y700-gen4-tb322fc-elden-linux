@@ -109,4 +109,15 @@ patchwork 非 cover 8/8 在档。**sashiko 对 dwc3 2/3、3/3 已回「found no 
 `patches/upstream/wl2868c-v7-20261106/`（`[PATCH v7 0/2]`，**板 DTS 整段拆出**只发 binding+driver，driver 修三条 Medium，板件存 `held-back/`）。
 两系列均 `FAIL=0` 门禁、pristine `git am` 逐字节等价、`send-email --dry-run` 通过；**发信仍需用户按批放行**。
 
+## 6. 2026-11-07 增量（两封新投 + 欠账清零）
+
+> 本段由项目整理第六轮补入（2026-11-07 现查 patchwork API）；**权威口径仍为 `TASKS/README.md` §7 各 M 行**。
+
+| 项 | 事实 |
+|---|---|
+| **wl2868c v9 已投** | 3 封全 `Result: 250`，cover `<20261107015014.22374-1-xiaqinghuan@mail.ustc.edu.cn>`（2026-11-07T01:50Z，日志 `out/mail-20261107/send-wl2868c-v9.log`）；落 Rob Herring 11-06 两点（YAML `>` 折叠块 ×3、example 删固定 regulator provider），2/2 与 v8 逐字节同。patchwork：`devicetree 1/2 needs-ack` + `arm-msm 2/2 new`，v8 两枚自动 `superseded`。备料账 `patches/upstream/wl2868c-v9-20261107/README.md` |
+| **M10 `sm8750: ADSP fastrpc non-secure-domain` 已投** | 1 封 250，MID `<20261107032646.32363-1-xiaqinghuan@mail.ustc.edu.cn>`（2026-11-07T03:26Z），patchwork 已摄取（`new`）；在机证据 = `vk185-adsp` 上 `/dev/fastrpc-adsp` 在、SensorProxy 三项 true。详见 `TASKS` §7 M10 行 |
+| **欠账状态** | 11-04 批的两条欠账已**全部还完**：dwc3 2×High（v8 修 + sashiko 对 2/3、3/3 各回「found no issues」）、wl2868c 2×changes-requested（板 DTS 整段拆出 + v9）。当前我方**无未答项**，各系列只等 review |
+| 未做 | 本轮**未发任何其他邮件、未改 patchwork 状态、未碰设备**；dwc3 v8 与 M10 的新回信待下一轮增量窗复核 |
+
 DONE-UPSTREAM-STATUS-20261105

@@ -276,3 +276,18 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261107R34-p39/*payload*
 /reports/artifacts/uefi-20261107R34-p39/kernel.bin
 /reports/artifacts/uefi-20261107R34-p39/build.log
+
+# 2026-11-07 深夜 UEFI p45/p46（R39R40 / R41）：目录命名带多重代号，逐目录写 glob
+# 入库仍只留可复现身份三件（BootShim.bin / manifest.txt / SHA256SUMS）+ recipe + p45 的 obj/LinuxLoader.{efi,map}
+/reports/artifacts/uefi-20261107R39R40-p45/SM8750_EFI.fd
+/reports/artifacts/uefi-20261107R39R40-p45/*.img
+/reports/artifacts/uefi-20261107R39R40-p45/*.gz
+/reports/artifacts/uefi-20261107R39R40-p45/*payload*
+/reports/artifacts/uefi-20261107R39R40-p45/kernel.bin
+/reports/artifacts/uefi-20261107R39R40-p45/build.log
+/reports/artifacts/uefi-20261107R41-p46/SM8750_EFI.fd
+/reports/artifacts/uefi-20261107R41-p46/*.img
+/reports/artifacts/uefi-20261107R41-p46/*.gz
+/reports/artifacts/uefi-20261107R41-p46/*payload*
+/reports/artifacts/uefi-20261107R41-p46/kernel.bin
+/reports/artifacts/uefi-20261107R41-p46/build.log
