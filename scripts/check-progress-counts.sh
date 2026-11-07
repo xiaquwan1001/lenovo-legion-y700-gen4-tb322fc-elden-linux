@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # check-progress-counts.sh — 从 TASKS/README.md §1/§2 的行内状态标记现算完成度
 #
-# 背景：TASKS §0 的 33/35、8/12 原先靠人手在注里推导（2026-11-02 那次复算写了 3.5 KB 推导过程），
+# 背景：TASKS §0 的 34/36、8/12 原先靠人手在注里推导（2026-11-02 那次复算写了 3.5 KB 推导过程），
 # 数字一改就漂。本脚本把同一套口径机器化：**§1/§2 的行内标记 = 真值**，§0 只贴数字与公式。
 #
 # 口径（2026-11-02 定，INDEX/§0 同源）：
@@ -12,7 +12,7 @@
 #
 # 用法：scripts/check-progress-counts.sh            # 人类可读
 #       scripts/check-progress-counts.sh --tsv      # 机器可读（键<TAB>值）
-#       scripts/check-progress-counts.sh --selftest  # 断言当前口径 33/35、8/12（漂了就 rc=1）
+#       scripts/check-progress-counts.sh --selftest  # 断言当前口径 34/36、8/12（漂了就 rc=1）
 set -u
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MODE=${1:-}
@@ -73,7 +73,7 @@ else:
               % (r['label'], r['complete'], r['in_scope'], r['total'], r['cancelled'], r['partial'], r['detail']))
 
 if mode == '--selftest':
-    exp = (('G1', 33, 35), ('G2', 8, 12))
+    exp = (('G1', 34, 36), ('G2', 8, 12))
     bad = 0
     for r, (lb, c, d) in zip(rows, exp):
         if (r['complete'], r['in_scope']) != (c, d):

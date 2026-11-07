@@ -1,0 +1,58 @@
+#pkg	category	prio	reason	pitfalls
+sudo	管理员与shell	P1	Mobian mobian-base 直接 Depends sudo；CLI 提权日常刚需	不装也能用 pkexec/polkit 走图形提权；须把用户加入 sudo 组
+polkitd(polkit-1 系列随 phosh)	管理员与shell	P0	pkexec/udisks2/NM 全部依赖 PolicyKit	Debian 包名 polkitd；phosh 自带 agent，无需另装
+man-db	管理员与shell	P1	mobian-base Depends；无 man 无法查文档	—
+bash-completion	管理员与shell	P1	mobian-base Depends；CLI 体验基线	—
+dialog/less/psmisc/file/curl	管理员与shell	P2	mobian-base 控制台工具集	按需
+htop/git/dnsutils	管理员与shell	P2	mobian-devtools 集合，开发调试常用	可选
+locales	locale与字体	P0	minbase + --no-install-recommends 后 /etc/locale.gen 为空，LC_ALL 报错	mobian-base 还装 locales-all；装 locales 后必须 locale-gen
+locales-all	locale与字体	P2	mobian-base 用法，免手工 locale-gen	体积大，手工生成则不装
+fonts-noto-cjk	locale与字体	P0	中文显示必装；deb ~58MB/装后 ~89MB，含 Sans/Serif CJK SC	不装则 fc-match zh-cn 回退到无 CJK 字体或文泉驿
+fonts-noto-cjk-extra	locale与字体	P2	多字重覆盖（装后 ~210MB）	非必需，P2 取舍见报告 §3c
+fonts-noto-color-emoji	locale与字体	P1	emoji 显示	phosh-core/mobian-phosh-base 都含
+fonts-noto / fonts-noto-core / fonts-noto-ui-core	locale与字体	P1	西文 UI 覆盖，Mobian mobian-phosh-base Depends	体积可控，只取 -core/-ui-core 亦可
+fonts-cantarell / fonts-inter-variable	locale与字体	P2	phosh-core Depends 的 UI 字体	phosh-core 元包会带入
+fonts-wqy-zenhei	locale与字体	P2	~8MB 的 CJK 轻量替代	缺粗体/衬线，仅应急
+fcitx5	输入法	P1	中文输入主框架（含 fcitx5-configtool、wayland-launcher）	Debian 不带 systemd user unit；见 §3d 与 phoc 单 IM 限制坑
+fcitx5-rime	输入法	P1	Rime 输入引擎（拼音/双拼/全拼，可配繁简）	词库配置在 ~/.local/share/fcitx5/rime
+fcitx5-chinese-addons	输入法	P2	fcitx5 拼音/五笔备选引擎	与 rime 二选一即可
+kde-config-fcitx5(fcitx5-configtool 已随 fcitx5)	输入法	P2	GUI 配置	—
+gnome-keyring	桌面/会话	P0	WiFi 密码/应用密钥存储；phosh-core Depends	gnome-keyring-daemon 需 PAM 解锁（libpam-gnome-keyring）
+libpam-gnome-keyring	桌面/会话	P0	登录时自动解锁 keyring	无 PAM 模块则每次首用要手输密码
+xdg-desktop-portal-phosh	桌面/会话	P0	Phosh 官方 portal 后端，截图/文件选择依赖	sid 自 meta-phosh 0.52 起为 phosh-core Depends
+xdg-desktop-portal-gtk	桌面/会话	P1	portal 兜底（设置/文件对话框），phosh-core 与 mobian-phosh-base 均推荐	—
+xdg-desktop-portal-wlr	桌面/会话	P2	mobian-phosh-base Depends；备用后端	可精简
+gnome-settings-daemon	桌面/会话	P0	电源/亮度/键鼠等会话策略，phosh-core Depends	—
+gnome-control-center	桌面/会话	P0	GNOME 设置面板（WiFi/蓝牙/显示），phosh-core Depends	面板提权走 polkit，无需 sudo
+gnome-session-bin + gnome-session-common	桌面/会话	P0	会话管理，phosh-core Depends	—
+gvfs-backends + gvfs-fuse	桌面/会话	P1	文件管理/挂载（mtp、smb、trash），phosh-core Depends	—
+gnome-themes-extra-data	桌面/会话	P1	深色/主题数据，mobian-phosh-base Depends	—
+at-spi2-core	桌面/会话	P1	无障碍总线；不少 GTK 应用警告其缺失	mobian-phosh-base Depends
+iio-sensor-proxy	桌面/会话	P0	加速度计/光感→GNOME 自动旋转与亮度	elden 传感器 bring-up 的用户态出口
+xdg-user-dirs	桌面/会话	P1	中文用户目录名/标准目录初始化	—
+network-manager	蓝牙网络	P0	WiFi 管理，phosh-core 与 mobian-base 均 Depends	用户需在 netdev 组
+network-manager-applet(nm-connection-editor)	蓝牙网络	P1	Phosh 快捷面板编辑受限时的连接编辑器	mobian-phosh-base Depends
+wireless-regdb + wpasupplicant + iw	蓝牙网络	P0	WiFi 底座，mobian-base Depends	缺 regdb 会卡国家码/信道
+rfkill	蓝牙网络	P1	软阻塞诊断/恢复	实测缺失
+libspa-0.2-bluetooth	蓝牙网络	P0	PipeWire 蓝牙音频 codec（A2DP/HFP）	phosh-core Depends；--no-install-recommends 常漏
+bluetooth(jbluez) + bluez 系	蓝牙网络	P0	bluez 守护与工具，mobian-base Depends	—
+dnsmasq-base	蓝牙网络	P2	NM 热点/共享所需，mobian-base Depends	—
+systemd-resolved	蓝牙网络	P2	mobian-base Depends，DNS 解析统一	与手写 resolv.conf 冲突需注意
+pipewire-audio + pipewire-pulse + wireplumber	音频	P0	音频三件套；mobian-base/phosh-core Depends	纯 pipewire 包不够，必须 -pulse 会话件
+alsa-ucm-conf + alsa-utils	音频	P0	SM8750 音频通路 UCM 配置	mobian-base Depends；UCM 缺则无声
+callaudiod	音频	P1	通话/模式音频路由，mobian-base 依赖（band aid）	桌面场景影响小
+sound-theme-freedesktop + sound-theme-phosh	音频	P2	提示音	phosh-core rec
+rtkit	音频	P1	PipeWire 实时调度，mobian-base Depends	缺了可能有 xrun 卡顿
+gstreamer1.0-plugins-base/good + gstreamer1.0-libav	音频	P1	系统级多媒体解码（预览/铃声/相机）	--no-install-recommends 下解码器普遍缺失
+power-profiles-daemon	电源与温控	P0	GNOME 设置电源模式/性能档依赖	Phosh/控制中心按其 D-Bus 接口
+upower	电源与温控	P0	电量/状态上报（顶栏电池）	通常已被带入，须核实
+brightnessctl	电源与温控	P1	CLI 背光调节	实测缺失；需用户加入 video 组或 udev 规则
+thermald/Qualcomm 方案(thermal zones 由内核+用户态)	电源与温控	P1	sid 通用降频策略	arm64 无 intel thermald；标「未证实」，按内核 thermal governor
+wl-clipboard	截图剪贴板	P0	Wayland 剪贴板 CLI（wl-copy/wl-paste），phosh-full Depends	纯 CLI 环境（无 wayland 显示）下不可用，注意
+grim/slurp	截图剪贴板	P2	Phosh 自带截图；CLI 级补充用	未证实 phoc 下可用性，标未证实
+xdg-desktop-portal(核心)	截图剪贴板	P0	Screenshot/Screencast portal 总线	随 -phosh 后端带入，勿单独精简
+mesa-libgallium + mesa-vulkan-drivers	调试工具	P0	GPU 用户态驱动	mobian-phosh-base Depends mesa-libgallium
+inxi	调试工具	P2	mobian-base 自带的一页式硬件摘要	—
+usbutils/mmc-utils/dosfstools/e2fsprogs	调试工具	P1	USB/存储/文件系统工具，mobian-base Depends	—
+systemd-coredump	调试工具	P2	崩溃取证，phosh-core Suggests	可选
+network-manager-config-connectivity-debian	调试工具	P2	连通性检测（ captive portal），phosh-core rec	可选

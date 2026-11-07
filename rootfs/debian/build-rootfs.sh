@@ -207,6 +207,14 @@ if [ -x "$HERE_D/ensure-desktop-user.sh" ]; then
 	step ok "桌面用户 xuqianhui1001（uid 1001）"
 fi
 
+# 日用基线配置（与设备侧 scripts/mobian-daily-baseline.sh 同一份逻辑，见 rootfs/debian/daily-baseline.tsv 头注释）：
+# sudo 组 + 无口令账户的 NOPASSWD、locale-gen + 中文 LANG、fcitx5 user unit、zram 内核门。
+# 只在目标根里写 /etc 下的小文件；包本身由 apt-list.txt（= pkgmap + daily-baseline P0/P1）装上。
+if [ -x "$HERE_D/daily-baseline.sh" ]; then
+	bash "$HERE_D/daily-baseline.sh" --root "$ROOTDIR" 2>&1 | sed 's/^/    /' || say "warn: daily-baseline.sh 有 MISS（见上），不阻塞构建"
+	step ok "日用基线配置已应用"
+fi
+
 # ---------------------------------------------------------------- 6 depmod
 say "6 depmod -b（模块树索引）"
 depmod -b "$ROOTDIR" "$UTS" || die "depmod 失败"
@@ -234,6 +242,12 @@ chroot "$ROOTDIR" systemctl --version >/dev/null 2>&1 && o "systemd 可执行" |
 vm=$(modinfo -F vermagic "$ROOTDIR/lib/modules/$UTS/kernel/drivers/net/wireless/ath/ath12k/ath12k.ko" 2>/dev/null | awk '{print $1}')
 [ "$vm" = "$UTS" ] && o "vermagic 逐字匹配" || b "vermagic 不符（'$vm' ≠ '$UTS'）"
 [ -f "$ROOTDIR/lib/firmware/qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin" ] && o "tplg 在" || b "缺 tplg（音频必死）"
+# 日用基线（2026-11-07 新增）：这三条任一不满足 = 设备上「能跑但没法日常用」
+[ -x "$ROOTDIR/usr/bin/sudo" ] && o "sudo 在" || b "缺 sudo（daily-baseline.tsv P0）"
+[ -f "$ROOTDIR/etc/sudoers.d/90-elden-desktop" ] && o "sudoers.d 可用性规则在（$(awk 'NR>1{print $3}' "$ROOTDIR/etc/sudoers.d/90-elden-desktop" | tr -d '\n')" || b "缺 /etc/sudoers.d/90-elden-desktop"
+[ -f "$ROOTDIR/etc/environment.d/50-elden-ime.conf" ] && [ -L "$ROOTDIR/etc/systemd/user/graphical-session.target.wants/fcitx5.service" ] \
+	&& o "输入法自启已配置（environment.d + fcitx5 user unit）" || b "输入法基线缺失"
+find "$ROOTDIR/usr/share/fonts" -name 'NotoSansCJK*' -print -quit 2>/dev/null | grep -q . && o "CJK 字体在" || b "缺 CJK 字体（中文全是豆腐块）"
 [ -f "$ROOTDIR/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors/sns_reg.conf" ] && o "传感器 DSP 树在" || b "缺传感器 DSP 树"
 # 判据看**活行**（注释里提到 linux18 是说明，不算违规）
 grep -vE '^[[:space:]]*#' "$ROOTDIR/etc/fstab" | grep -q 'LABEL=linux17' \

@@ -76,6 +76,27 @@ done < <(awk -F'\t' 'BEGIN{OFS="\x1f"} !/^#/ && NF {print $1,$2,$3,$4}' "$MAP")
 
 sort -u -o "$tmp_apt" "$tmp_apt"
 
+# --- F: 日用基线 daily-baseline.tsv（P0+P1 并进 apt-list；P2 只登记，不装） ---
+# 为什么单列一张表：pkgmap.tsv 的来源是 Alpine apk-world（硬件 bring-up + 调试），
+# 覆盖不到「当日常平板用」的那一片（sudo/locales/CJK 字体/keyring/portal…），见该文件头注释。
+# 这里只做「并入 + 可解析性校验」，配置动作在 rootfs/debian/daily-baseline.sh。
+DAILY="$ROOT/rootfs/debian/daily-baseline.tsv"
+ndaily=0; np2=0; ndmiss=0
+if [ -f "$DAILY" ]; then
+	while IFS=$'\t' read -r pkg prio cat reason; do
+		case "$pkg" in ''|\#*) continue ;; esac
+		case "$prio" in
+			P0|P1)
+				ndaily=$((ndaily+1)); printf '%s\n' "$pkg" >> "$tmp_apt"
+				[ -z "$(apt_show "$pkg")" ] && { bad "daily-baseline: sid 索引里不存在: $pkg（prio=$prio）"; ndmiss=$((ndmiss+1)); }
+				;;
+			P2) np2=$((np2+1)) ;;
+			*)  warnf "daily-baseline: 未知 prio '$prio'（$pkg）" ;;
+		esac
+	done < "$DAILY"
+	sort -u -o "$tmp_apt" "$tmp_apt"
+fi
+
 # --- A: 覆盖度（apk-world 每行都必须有映射） ---
 missing_rows=$(comm -23 \
 	<(sed 's/>.*$//' "$WORLD" | grep -vE '^\s*$' | sort -u) \
@@ -100,6 +121,7 @@ if [ "$LIST_ONLY" = 1 ]; then cat "$tmp_apt"; exit 0; fi
 
 say ""
 say "统计: map=$nmap drop=$ndrop add=$nadd  解析失败=$nmiss  apt 包数=$(wc -l < "$tmp_apt")"
+say "日用基线: P0+P1=$ndaily（已并入）  P2=$np2（只登记）  解析失败=$ndmiss"
 say "生成: ${OUT#$ROOT/}（$(grep -c -v '^#' "$OUT") 个包）"
 
 # --- E: 服务运行时依赖（命令/路径 → 提供包 → 证据） ---

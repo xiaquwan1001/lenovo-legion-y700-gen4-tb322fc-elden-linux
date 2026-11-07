@@ -11,7 +11,7 @@
 
 | 目标 | 已完成 | 进行中 | 未开始 | 完成度 |
 |---|---|---|---|---|
-| **G1** 完整 Linux + 上游化（驱动原厂固件 + 上游提交） | **33 项 / 在范围 35 项**（显示/图形/触屏/网络/**G1-36 WiFi 候选榜**/电源/相机出流+App 实测/音频播放+输入/温控/串口/CDSP/DP/BT 配对+TWS/**G1-8 基准**/**G1-23 vblank/PPM 残留复核（2026-10-26 三窗 47.5 min 全 0）**…）——**明细与证据只在 §1** | 0 项（WiFi Q26 已关闭，2026-10-10 用户确认）+ ✅ TF 卡 G1-6 **新卡已收口（3 轮 0 不一致 + fsck clean；旧卡废置，不再追）**——证据见 §1 G1-6 | 上游化 **M 系列**（状态/队列**只读 §7**）、G1-34 已收口（SSC 路线两棵根全绿；SLPI 原生 IIO 为后续可选线） | **33/35**（口径见下表注） |
+| **G1** 完整 Linux + 上游化（驱动原厂固件 + 上游提交） | **34 项 / 在范围 36 项**（显示/图形/触屏/网络/**G1-36 WiFi 候选榜**/**G1-37 日用用户态基线（sudo/locale/中文字体）**/电源/相机出流+App 实测/音频播放+输入/温控/串口/CDSP/DP/BT 配对+TWS/**G1-8 基准**/**G1-23 vblank/PPM 残留复核（2026-10-26 三窗 47.5 min 全 0）**…）——**明细与证据只在 §1** | 0 项（WiFi Q26 已关闭，2026-10-10 用户确认）+ ✅ TF 卡 G1-6 **新卡已收口（3 轮 0 不一致 + fsck clean；旧卡废置，不再追）**——证据见 §1 G1-6 | 上游化 **M 系列**（状态/队列**只读 §7**）、G1-34 已收口（SSC 路线两棵根全绿；SLPI 原生 IIO 为后续可选线） | **34/36**（口径见下表注） |
 | **G1 阻塞项速览**（**本行只列 ID**；状态/样本数/口径唯一权威 = §5 的 Q 行） | — | 🟢 **Q28/Q32 已结项（2026-10-24）=「已规避」**（运营线 vk152：0154/0155 + `dsi_bonded_cmd_failed` 闩锁清零 + `link_configured` 修复 + 开机看门狗 + 三态探针；线上真 POR 5/5、暖复位 3/3 = **8/8 无坏发**；**原定 ≥8 发 POR 门槛按用户裁决不再补 ⇒ 补采样项标记完成**；Q32 五发判据表已出：三个复位入口无差异、并入 Q28；复启条件与局限**只读 §5 Q28/Q32**）· ⛔ **Q24** 熄屏×相机（**2026-10-24 用户裁决：不值得取证 ⇒ 关闭**；根因已指名 = 7.2 血统缺上游 `skip retention by default`，7.3 线自带该修复 ⇒ 41 发 0 死亡 vs 7.2 的 6/8 死是**版本差不是随机**；日常线仅保留 `cam-mode.sh on/off` 互斥策略；**只读 §5 Q24**） | — | — |
 | **G2** 安卓容器（可用性 + 风控/完整性等级） | **8**（注：Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC 属 `C-历史` 聚合行，不计入 12 项分母；以下为分母内 12 项：**C4 传感器 HAL 路线 C**/**C7 切槽脚本**/**C6 容器音频**/**C2 GMS 登录（用户人工验证）**/**C10 马达透传（2026-10-13：桥 + 自编 AIDL V2 幅度/cancel + 固化进 vendor 镜像 + 强度档位 RRO）**/**C11 触屏中文输入法（2026-10-20：squeekboard + fcitx5/Rime + focusd 唤起/折叠）**） | 3（C3 待装 PI Checker 取三档回包；C5 剩 U7 App 实开预览；C8 书面结论已出、未立项） | 1（C9 打分表出数）；附 C5 的 ②b（容器识别到 1 个相机）2026-10-19 已达成、2026-10-23 修好 `/dev/video100` bind 持久化，只差 App 实开预览 | **8/12**（口径见下表注） |
 | **G3** x86 模拟（Steam 载体） | 2（Box64 0.4.5 + Wine 9 PoC 成功；**官方 ARM64 Steam 客户端已起到登录界面**，2026-10-28 设备实测 3/3 轮 `SetLoginState: WaitingForCredentials - OK`、`steamwebhelper` 恒 7 进程存活 130–301 s、0 SIGSEGV、0 联网报错；**截图判据 2026-10-29 已可闭环**：当时失败真因是面板输出 `enabled=disabled`/`dpms=Off`（`grim` 报 `no supported format found`）；当前 `dpms=On` 下 **`grim` 一次成功出图**（`reports/artifacts/c5-u7-l1d-shot-20261029.png`），降级路径见 `reports/g3-steam-screenshot-paths-20261029.md`） | 1（x86 游戏端到端：FEX/box64 层待接，与「起客户端」已解耦） | Steam 游戏端到端（图形/音频/性能） | PoC ✅ / **Steam 登录界面 ✅（证据 `reports/g3-steam-20261028.md` §0b/§5–§8、`reports/artifacts/g3-steam-20261028/`）** |
@@ -20,8 +20,8 @@
 
 > **注（口径 2026-11-03 机器化；手算推导已删，改为脚本现出）**：本表数字**一律由 §1 / §2 的行内状态标记导出**，不另设分母。
 > **公式**：`完成 / 在范围`，其中 `在范围 = ID 总数 − ❌/⛔`，`完成 = ✅ + 🟢 + 🎯`；合并行（`| ✅ G1-12…21 |`）按区间展开计 10 项。
-> **现查（唯一出口）**：`scripts/check-progress-counts.sh`（`--tsv` 机读 / `--selftest` 断言 33/35 与 8/12，漂了就 rc=1）。
-> 现状：**G1 33/35**（37 ID − ❌2：`G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线；不含上游化 M 系列，以 §7 为准）、**G2 8/12**（`C-历史` 是 5 项聚合行、不进分母）。
+> **现查（唯一出口）**：`scripts/check-progress-counts.sh`（`--tsv` 机读 / `--selftest` 断言 34/36 与 8/12，漂了就 rc=1）。
+> 现状：**G1 34/36**（38 ID − ❌2：`G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线；不含上游化 M 系列，以 §7 为准）、**G2 8/12**（`C-历史` 是 5 项聚合行、不进分母）。
 > **词表（8 类）**：`✅` 完成 / `🟢` 已结项（已规避·已出分·已随根因结项）/ `🟡` 部分·进行中 / `🎯` 治本完成 / `🆕` 取证已做未收口 / `⛔` 搁置 / `❌` 取消 / `⬜` 未开始；`🟢`/`🎯` 计入完成，`🟡`/`🆕`/`⬜` 计入未完成。
 > **改数字只改 §1/§2 的行内标记**：§0 上下表由脚本导出，勿手改（历史手算推导见 `sessions/2026-11-03-TASKS-§4-待办沿革.md` 前后版本）。
 
@@ -50,6 +50,7 @@
 | **G1-34** | **加速度计/重力传感器（SSC/QRTR 路线上线；SLPI 原生 IIO 为后续可选线）** |✅ **已修好并上机验证（2026-10-30）**：根因是「**修复从未进镜像**」—— `fastrpc.c:2599` 用 `qcom,non-secure-domain` 决定建不建非安全域实例，而该属性只存在于 `build/vk151` 的未提交工作区 ⇒ 在机 vk172 的 DTB 早于它 ⇒ 只建 `fastrpc-adsp-secure`。 ⟪全文见 `TASKS/sessions/2026-11-03-TASKS行55-G1-34.md`⟫ | Alpine 根 + Debian 根 | `net.hadess.SensorProxy` accel/light/prox 全 true（两棵根） | `PITFALLS` #442/#443（`PITFALLS/sessions/107-*`）、`reports/debian-root-accounts-sensors-20261026.md` |
 | **G1-35** | **设备网络自愈（HTTPS 信任链 + PMTU）** | ✅ **信任链已修复并冷启动验证（2026-10-18）**：8 个 `/etc` 配置被清成 **0 字节**，`/etc/ca-certificates.conf` 空 ⇒ `update-ca-certificates` 每次写出 **0 字节** bundle（rc=0 静默成功）⇒ **所有 HTTPS 立即失败**（`curl: (77) error adding trust anchors` / git reset / apk 校验失败）。**`apk fix ca-certificates` 修不了**（把 0 字节活文件当"用户改动"，只再写 `.apk-new`，实测两次无效）⇒ 显式 `mv *.apk-new → 活文件`，无 `.apk-new` 时从 `mozilla/*.crt` 重建 conf。修后 bundle 181724 字节/121 证书，curl 全 200。 🟡 **PMTU 黑洞已缓解未根治**：手机热点广播 MTU 1500、上游实际 **1400** 且无 ICMP frag-needed；OpenSSL 3.5 默认后量子曲线 `X25519MLKEM768` 把 ClientHello 撑到 **1423 字节**必然拆段 ⇒ 抓包见「满 MSS 首段被丢 + 服务端 `ack 1` 回退 + SACK 只认尾段 ⇒ 无限重传死锁」；同 MTU 下 MLKEM 80% vs `X25519` 98%（各 40 次）⇒ 仅 `gitlab.freedesktop.org`/`gnome`（Fastly 段）受影响，国内站 0 失败。已落地 `wlan0 mtu 1400` + `power_save off`，git 失败 35%→~10%。自愈脚本 `scripts/net-selfheal.sh`（幂等，`--check` 只报告），触发 = OpenRC `local`（等 wlan0 UP）+ `NM dispatcher.d`，**冷启动注故障态验证通过**。证据 `reports/net-https-mtu-rootcause-20261018.md`、`PITFALLS §49 #340–#342` | 任一 mainline | `net-selfheal.sh --check` rc=0；冷重启后 mtu=1400、conf/bundle 非空、curl 200；git fd.o 失败率 <15% | `scripts/net-selfheal.sh`、`rootfs/persistent-overlay/{etc-local.d,etc-NM-dispatcher,usr-local-sbin}.tar.gz`、`PITFALLS/sessions/49-设备网络HTTPS全废与PMTU黑洞.md` |
 | **G1-36** | **WiFi 可用候选榜不刷新（连通态只剩已连接项）** | ✅ **根因已定并修复（2026-10-19 U2 vk127）**：不是 ath12k/固件问题——NM 1.52.2 在 ACTIVATED 时 **禁止自己做周期扫描**（`_scan_notify_allowed()` → `periodic_allowed=FALSE`），把复扫交给 supplicant 的 `bgscan`，而 NM 把该串**写死**为 `simple:30:-70:86400`（`nm_supplicant_config_add_bgscan()`；连接级 `802-11-wireless.bgscan` 在 1.52 里**不被读取**）⇒ 信号好于 -70 dBm 时 = 24 h 才扫 ⇒ supplicant BSS 缓存按 age(180 s) 过期被清 ⇒ NM 删 AP 对象 ⇒ 候选榜只剩当前连接项。**实测**：NM 重启后仅 1 次连接期扫描，120 s 内 0 次扫描事件，AP **35 → 1**；`nmcli dev wifi rescan` 后 **1 → 24**（12 s）——与用户「关开一次即恢复」完全一致。**修复** = `wifi-scan-refresh` OpenRC 服务：连通态每 **150 s** 显式 RequestScan（间隔必须 < `bss_expiration_age` 180 s；全信道 110 信道 5.6–8.4 s ≈ 4–6% 占空比），未连接时跳过（NM 自扫 ≤120 s）。**上机验证**：服务存活 470 s、扫描按 +0/+150 s 节奏、aps 24→27→26→22→26→28 不再塌；断开后 `--once` 正确跳过 | 任一 mainline | 连通态每 ~150 s 有 `scan started`；`nmcli dev wifi list --rescan no` 的 BSSID 数不跌到 1；`wifi-scan-refresh.sh --check` rc=0 | `scripts/wifi-scan-refresh.sh`、`rootfs/persistent-overlay/etc-initd-wifi-scan-refresh`、`etc-conf.d-wifi-scan-refresh`、`reports/wifi-scan-stale-20261019.md`、`PITFALLS §52 #354–#356` |
+| **G1-37** | **日用用户态基线（sudo / locale / 中文字体 / 输入法 / portal / keyring）** | ✅ **已完成（2026-11-07 U2 vk172）**：根因不是掉包，而是「两张清单覆盖面差」——`apt-list.txt` 源自 Alpine `apk-world`（硬件 bring-up + 调试）+ `--no-install-recommends`，不含 `sudo`/`locales`/`man-db`/`bash-completion`/CJK 字体，而 `phosh-core`/Mobian `mobian-base` 是把这些写进 **Depends** 才兜住的。处置：**不引入 mobian-*/phosh-core 元包**（与 greetd appliance、自维护 userland 打架），自建正交三件套 `rootfs/debian/daily-baseline.tsv`（47 条 P0/P1 + 9 条 P2 只登记）+ `rootfs/debian/daily-baseline.sh`（配置，构建 chroot 与设备同一份）+ `scripts/mobian-daily-baseline.sh`（设备侧驱动，`--check`/`--list`，幂等）。**实测**：设备包数 **1355→1625**（全新增、0 升级/0 删除）、构建侧 `apt-list.txt` **121→147**；`sudo -n true` OK（无口令账户 ⇒ NOPASSWD）、`locale -a` 有 zh_CN.utf8、`fc-match 'sans-serif:lang=zh-cn'`=`Noto Sans CJK SC`（补前 `fc-list :lang=zh`=**0**）、`systemctl --failed` 空。**未收口（P1）**：中文**组词上屏未证实**——合成 `wtype` 按键在 fcitx5/ibus 两臂都是字面量（`fcitx5-remote` 恒 inactive），但触摸 OSK 的真实按键路径未被否证，须屏上点一次（分支见报告 §5.1）。**新发现**：内核缺 `CONFIG_ZRAM`（`zramswap` 每启 FAILED ⇒ 已 mask，配置侧补 `CONFIG_ZRAM=m` 后脚本自动解除）。 | 任一 mainline + Debian/Mobian 根 | `bash scripts/mobian-daily-baseline.sh --check` rc=0；`sudo -n true` rc=0；`fc-match 'sans-serif:lang=zh-cn'` 含 CJK；`bash rootfs/debian/tools/check-pkgmap.sh` FAIL=0 | `rootfs/debian/daily-baseline.tsv`、`rootfs/debian/daily-baseline.sh`、`scripts/mobian-daily-baseline.sh`、`reports/mobian-daily-baseline-20261107.md`、`reports/mobian-daily-pkgs-20261107.md`、`PITFALLS/sessions/05-设备上装包环境.md` #538–#541 |
 | **G1-4** | **音频可听（播放+输入）** | ✅ **播放 2026-10-04 实测听声**：根因=tplg MI2S **SD 线错**（SD0→SD1，`PITFALLS` #90）；PipeWire+UCM2 桌面链路 ✅。**输入 ✅ 2026-10-04**：本机麦克风=**模拟麦接 WCD939x**（非 DMIC）；WCD939x bring-up（DTS codec+swr1/2+TX3、去 VA DMIC）+采集 DAPM 控件 → `arecord -D default` 出数据并持久化 UCM2 `Mic`。**R3 裸 ALSA**：`scripts/audio-alsa-init.sh` 幂等设路由，无桌面 `aplay/arecord -D default` 开箱可用（增益 400）。R1 有线耳麦：代码就绪、**硬件缺失（无 3.5mm/转接头）冻结**；FSA4480（非 `wcd_usbss`）需编 built-in。R2 双麦=AMIC1+AMIC4（未做，低价值） | 任一 mainline | 扬声器出声 ✅；`arecord`/`aplay -D default` rc=0 ✅ | `archive/topics/AUDIO-SDLINE-2026-10-04.md`、`WCD939X-2026-10-04.md`、`HEADSET-HW-2026-10-04.md`、`MIC-ARRAY-2026-10-04.md`、`patches/0011`、`scripts/audio-alsa-init.sh` |
 | **G1-5** | **相机出流** | ✅ **出流 + AE + 相机 App 出图全部达成（2026-10-18 在机 vk127 / 7.3-rc7）**：后摄 `s5kjns` **30.06 fps / 4072×3072 满帧**、前摄 `gc08a8` **30.26 fps / 3264×2448 满帧**，dmesg 零 `camss/vfe/EPIPE/EINVAL`；AE 收敛后**后摄 115.2 / 前摄 133.5**（RGB mean 均正常）。三个 AE 独立 bug 已修：`exposureTarget` 有不可达下限、`gainMinStep` 被整数除法截断、helper 增益语义必须与驱动一致（identity）。**⚠ 已推翻两条旧结论**：「软 ISP 只写第 0 帧」、「libcrypto 构建致黑帧」——后者两臂同配方对照证明无因果。详见 `PITFALLS` #320–#330、`reports/camera-linux-vk127-20261018-agc-rootcause.md`、过程叙事 `reports/tasks-narrative-archive-20261019.md` | 任一 mainline | `cam`/`libcamerasrc` 出真实画面；Snapshot 预览+录像朝向正 | `patches/libcamera-ae-totalfix-20261018/`、`logs/cam-bright-20261018/`；**闪光灯（2026-10-19 核实）：PM8550 `rear_flash` 驱动/DT 已就位（`white:flash` + `/dev/v4l-subdev30`，torch/strobe 寄存器级实测），硬件只有一颗后摄 LED、无独立前摄闪光灯；剩余缺口 = libcamera 不认 `MEDIA_ENT_F_FLASH`（`cam` 无闪光灯控制）+ flash LED NTC 温度监控（`patches/0013-flash-led-ntc-thermal.patch` 提案未上机）→ `reports/front-camera-flash-20261019.md`** |
 | **G1-6** | TF 卡写稳定性 | 🟡 **新卡有条件收口（2026-10-26 复测，判据一次跑完）**：新卡 `mmcblk0` **CBADS 58.6 GiB / 03\/2022 / CID `6f0303434241445310aa000e02016300`** ⇒ `mkfs.ext4 -L tftest` 后 `tf-stress.sh --fsck -r 3`（small=2000×4K、large=64×1M）= **不一致 0**、`err_stats` **15 项全 0**、`e2fsck -fn` **clean**；ios = **37.5 MHz / 4-bit / SD_HS / 3.3 V**（与「level-shifter 只封顶 SD_HS」旧结论逐字一致）。**判据「≥3 轮 0 不一致 + fsck clean」已满足 ⇒ 收口（新卡）**。**旧卡已废置（用户 2026-10-26 明确）**，不再做旧卡 A/B，也不再按候选补丁做方向选择；`-d`(O_DIRECT)/加倍样本列为**不追**（仅当再出现新坏卡时重开）。2026-10-09「用户裁决搁置」**解除**。证据 `reports/tf-g16-retest-20261026.md`、`reports/trials/20261026T070115Z-tf-g16-card2-3r.json`。历史：历史状态：根因倾向卡本身 70–80%（2026-10-04 子代理）**：尺寸相关性（64MB 大块全对 / 8MB 小写间歇丢）、`err_stats` 全 0、`e2fsck` 前后一致、已是最保守 3.3V/SD_HS 档仍坏。**关键更正**：厂商 `qcom,uses_level_shifter` 唯一作用=SD_HS 封顶 37.5MHz，主线 `max-sd-hs-hz=<37500000>` 已等价 ⇒ 无效移植。5 个候选补丁（`patches/candidate-tf-*.patch`，按代价排序）+ 压测脚本 `scripts/tf-stress.sh` 就绪。**新卡已装入并复测通过（2026-10-26，见本条首段）；旧卡废置** | 任一 | 新卡连续 ≥3 轮 0 不一致 + `e2fsck -fn` 干净 | `archive/topics/TF卡-2026-10-04-subagent.md`、`scripts/tf-stress.sh` |
@@ -120,6 +121,7 @@
 
 ### 开放待办（按顺序；需要物理 POR 的排最后）
 
+- **G1-37 日用用户态基线（收尾两小项）** —— ✅ 包+配置已落地（2026-11-07：设备 1355→1625 包，`daily-baseline.tsv/.sh` + `scripts/mobian-daily-baseline.sh`，`--check` rc=0）；**剩 ① 中文「组词上屏」实测**（屏上点输入框→OSK 敲 `nihao`；合成 `wtype` 键在 fcitx5/ibus 两臂均为字面量，见报告 §5.1 三分支）**② 内核补 `CONFIG_ZRAM=m`**（现内核无 zram 模块，`zramswap` 已 mask；配置侧补完重编后脚本自动解除）。权威 `reports/mobian-daily-baseline-20261107.md`、§1 G1-37 行。
 - **T14 用户态驱动/服务独立固化** —— 🟡 门禁已收口（2026-10-28 真机 `verify.sh` **FAIL=0 WARN=0**，80 条含 19 unit 逐字一致）；剩余 = Mobian 换根后的重建 recipe（7 个 ELF 里 3 个无源、其中 2 个动态 musl）。权威 `reports/userland-service-inventory-20261025.md`、`reports/userland-dealpine-audit-20261026.md`、`packaging/elden-userland/tools/verify.sh`；历史与三步落地 → 归档。
 - **T17 驱动模块化 × Alpine→Mobian 迁移** —— 🟡 交界面核对完成（2026-10-26，零写盘）；下一步 = 执行 S2–S7：装 `linux17` ext4、S7 = 一条 `fastboot boot` 换根（⚠ 2026-10-31 已把 `linux18` 删除并入 `linux17`，见 `PROGRESS.md` 2026-10-31 里程碑 ⇒ 本行原「留 linux18」的回退项已失效）、S2 补 7 个依赖闭包包、S3 补 `/usr/share/qcom/.../sensors`；回退 = 重启回 `boot_b`（秒级）。权威 `reports/modular-mobian-transition-20261026.md`。
 - **C3 Play Integrity / DRM 取证**（G2）—— C1 已收官（vk95 起 `ip rule` 生效；去 workaround 出网 200，`reports/c1-noworkaround-20261013.md`）⇒ 下一步 = C3 身份/DRM 取证，其后 C2 GMS 登录（需上行 + 代理 + 凭据）。权威 = §2 C1/C2/C3 行。
@@ -142,6 +144,40 @@
 ---
 
 ## 5. 查漏补缺（GAPS）
+
+### 2026-11-06（夜·五）：取证通道从「屏」搬到 **`logfs` 持久化窗口**（p34–p36，上机 4 发零写盘）
+
+- **一句话**：屏的三个致命属性（会被后续输出冲掉 / EB 后被熄 / 被自家探针写穿或刷爆）已由
+  **控制台共享环形日志 → `logfs` 尾部 16 KiB → `oem sbread` 回读**替代，**通道已实测打通**
+  （读到 `SBLOG01 … n=8192` 记录头 + 日志正文）；同时关掉 `PITFALLS #532`（满屏不刷新）。
+- **三件结构性修复**：`R29-fbgeometry`（帧缓冲控制台改**像素语义**：`lim=min(24MiB,描述符,面板)`、
+  `cols/rows` 按 scale 一次算定、绘制前再验预算、满屏有界清屏回顶、`FbConScrollUp` 改按字节）；
+  `R30-faultdump`（异常归因两档：先一行 `[K] FLT …esr/far` → 清屏重钉 → `[K] sp=` → x0..x28/FP/LR，
+  **不读栈内存**）；`R31-logfsdump` + `R32-ringshared`（环放 `0xE3F80000` 全固件共享、`[F]` 只进环、
+  `entry/preeb/posteb` 三次转储、`oem sbread:<off>:<len>` 读回、宿主端 `scripts/uefi-logfs-read.py`）。
+- **OCR 判读（第 2 发）**：`[F] geom=1904x3040 bpp=32 s=4 ck=OK` / `len=2B00000 panel=1614800 lim=1614800` /
+  `stride=1DC0 line=59400 cols=79 rows=63` ⇒ 三个数自洽（scale 4：一行 365 568 B，整屏 63 行）。
+  **且发现自伤 #18**：`[F]` 三行被打印**上百遍**（每个 DXE 映像各链接一份库、静态量不共享）⇒
+  「`[F]` 被冲刷」的真因是我们自己把屏吃光（`PITFALLS #534`），p36 已修。
+- **崩溃前位置（仍成立）**：`[I] LoadImage=Success` → `[I] cpu-hook=ok` → `usb_repeater_reset` /
+  `usb_wcd_init` / `usb_shared_i2c_*` 数十行 `ERROR:NACK` 洪水 → `ssusb_phy_init_success`。
+  更早的日志给出上游根因链：`qup_open : h_ctxt is NULL, se_id 5, qup_id 1` → `open core … ERROR 11` →
+  `Failed to init i2c: 12` → `usb_redriver, Failed slave: 0x10`。**⇒ EB 段 USB redriver 重初始化这条旧归因
+  重新获得支持，但仍未被证明是崩因**（需 `posteb` 记录定）。
+- **主机侧四个 bug（三条自伤，各吃一发上机）**：`ReadBlocks/WriteBlocks` 的 `Lba` 传成字节偏移
+  （⇒ 读恒 `Invalid Parameter`、**写侧同 bug 意味着 logfs 一直没真写进去**）；`BufferSize` 非块整数倍；
+  `MAX_RSP_SIZE=64` 把载荷截断；`oem` 的 `Arg` 带命令名（`sbread` 里 `b/a/d/e/f` 都是 hex，两种剥法都被绕过）。
+  见 `PITFALLS #535/#537`。
+- **新纪律**：连续 60 次 `oem sbread` 会把 USB 端点打死（`DwcSubmitURB … endpoint 3 in invalid state 4` →
+  `UsbDevice2Send … Device Error` → `TRB ring of EpIndex 3 is full`）⇒ **一次 ≤512 B、块间 sleep、
+  不在同一固件会话里拉整窗**（`PITFALLS #537`）。
+- **下一步（p37）**：① 真内核载荷（`out/boot-elden-vk172.img`，一会话一发）跑一次，让 `entry/preeb/posteb`
+  三条都落盘；② 崩了就断电 → 起 Linux → `dd if=/dev/disk/by-partlabel/logfs bs=4096 skip=2016 count=4`
+  判读：`posteb` 在 ⇒ 崩在 EB 之后（交接参数/内核极早期）；只有 `preeb` ⇒ 崩在 EB 之内，
+  回到 QUP 句柄缺失（`se_id 5`/`qmcs`）这条线单独立项。止损不变（再 3 发无进展 ⇒ 收口）。
+- **正文/坑**：`reports/uefi-p34-p36-logfs-20261106.md`；`PITFALLS #532（关闭）/ #534 / #535 / #536 / #537`；
+  补丁 `patches/uefi/20261106R{29-fbgeometry,30-faultdump,31-logfsdump,32-ringshared}/`；
+  配方 `p34/p35/p36-recipe.txt`；镜像 `out/r21-sbstop-p{34,35,36}/`；读端 `scripts/uefi-logfs-read.py`。
 
 ### 2026-11-06（夜·四）：**已调用到 `LinuxKernel()`**（DDR 读回）⇒ 卡点搬到交接参数；并暴露「满屏不刷新」取证 bug（p30–p33）
 

@@ -1,0 +1,102 @@
+# daily-baseline.tsv — 「日用可用」包基线（Debian/Mobian 目标根）
+#
+# 为什么需要单独一张表（2026-11-07）：
+#   `apt-list.txt` 的来源是 `pkgmap.tsv`（= Alpine apk-world 的等价映射），那份清单是为了
+#   **硬件 bring-up + 调试** 建的，只装了 minbase 闭包 + 显式 add 的 121 个包，而且构建时用
+#   `--no-install-recommends`。结果是设备能跑桌面（phosh/phoc/pipewire 都在），但「当日常
+#   Linux 平板用」缺一大片：**没有 sudo**（桌面用户 passwd -S = NP，无口令）、**没有 locales**
+#   （/etc/locale.gen 为空，LC_ALL 报错）、**没有任何 CJK 字体**（fc-match zh-cn 回退 DejaVu）、
+#   没有 man-db / bash-completion / vim、没有 gnome-keyring（WiFi 密码无处存）、没有
+#   xdg-desktop-portal-phosh（截图/文件选择走不通）。
+#   ⇒ 单列一张「日用基线」，与 bring-up 清单正交，互不污染。
+#
+# 列（TAB 分隔）：pkg  prio  category  reason
+#   prio   P0 = 不装就不能日常用（会导致功能缺失或每步卡住）
+#          P1 = 日常高频（强烈建议；缺了能用但难用）
+#          P2 = 可选/体积换体验（**不自动安装**，只登记取舍，按需 `apt install`）
+#   category  用于汇报分组，无逻辑含义
+#
+# 谁读这张表：
+#   1. `rootfs/debian/tools/check-pkgmap.sh`：把 **P0+P1** 并进 `apt-list.txt`（构建侧固化），
+#      并校验它们在 sid 索引里可解析；P2 只做存在性提示，不进清单。
+#   2. `scripts/mobian-daily-baseline.sh`：设备侧把 P0+P1 装齐（幂等，`--check` 只报告）。
+#
+# 硬纪律：
+#   * 与 pkgmap.tsv 相同：**绝不**写 linux-image-* / firmware-qcom-soc。
+#   * 只写 Debian 归档里**真实存在**的包名（sid 会改名/合并；P2 行也尽量核实）。
+#   * 装了包但需要**配置**才生效的（sudo 组、locale-gen、IM 自启、zram），配置逻辑一律放
+#     `rootfs/debian/daily-baseline.sh`，不在本表里描述步骤。
+
+## ---- 管理员 / shell ----
+sudo	P0	管理员与shell	本机桌面账户 passwd -S = NP（无口令）、greetd 自动登录 ⇒ 没有 sudo 就只能靠 root@ssh；装完由 daily-baseline.sh 建 NOPASSWD 规则（无口令账户无法用口令提权）
+bash-completion	P1	管理员与shell	mobian-base Depends；补全缺失时 TAB 全哑
+man-db	P1	管理员与shell	mobian-base Depends；无 man 无法查文档
+command-not-found	P1	管理员与shell	敲错命令时给出「装哪个包」（Debian 侧 command-not-found 数据）
+vim	P1	管理员与shell	默认只有 nano；改配置/看日志高频
+ncdu	P1	管理员与shell	磁盘占用排查（本项目 log/report 大文件多）
+
+## ---- locale / 字体 ----
+locales	P0	locale与字体	minbase + --no-install-recommends 后 /etc/locale.gen 为空 ⇒ 每次登录 `setlocale` 失败、中文乱码；装完必须 locale-gen（daily-baseline.sh 负责）
+fonts-noto-cjk	P0	locale与字体	中文显示的唯一来源（装前 fc-list 只有 DejaVu/Lato，中文全是豆腐块）；~58MB deb / 装后 ~180MB
+fonts-noto-core	P0	locale与字体	mobian-phosh-base Depends；西文/符号覆盖，Phosh 顶栏与提示依赖
+fonts-cantarell	P1	locale与字体	Phosh/GNOME 默认 UI 字体
+fonts-noto-color-emoji	P1	locale与字体	emoji 显示（phosh-core 与 mobian-phosh-base 都带）
+
+## ---- 输入法（中文）----
+fcitx5	P1	输入法	中文输入主框架；Debian 不带 systemd user unit，daily-baseline.sh 落一个 `--disable waylandim` 的单元（OSK 槽位归 phosh-osk-stevia）
+fcitx5-rime	P1	输入法	Rime 引擎（拼音/双拼）
+fcitx5-frontend-gtk3	P1	输入法	GTK3 IM 模块（候选窗由它自绘）
+fcitx5-frontend-gtk4	P1	输入法	GTK4/libadwaita 应用（Phosh 自身与 gnome-control-center）
+
+## ---- 桌面 / 会话 ----
+gnome-keyring	P0	桌面与会话	WiFi 密码/应用密钥存储（phosh-core Depends）；缺了 NM 每次都要重输密码
+libpam-gnome-keyring	P0	桌面与会话	登录时用 PAM 口令解锁 keyring（无 PAM 模块则首用要手输）
+xdg-desktop-portal-phosh	P0	桌面与会话	Phosh 官方 portal 后端（截图/文件选择/壁纸）；缺了 Phosh 截图与文件对话框走不通
+xdg-desktop-portal-gtk	P1	桌面与会话	portal 兜底后端（GTK 设置/文件对话框）
+gnome-control-center	P0	桌面与会话	设置面板（显示/深色模式/键鼠/共享）；Phosh 自带 mobile-settings 只覆盖手机项
+gvfs-backends	P1	桌面与会话	文件管理/挂载（mtp、smb、回收站）
+xdg-user-dirs	P1	桌面与会话	中文用户目录（下载/文档/图片）初始化
+at-spi2-core	P1	桌面与会话	无障碍总线；缺了 GTK 应用刷警告，屏幕阅读/取词也不可用
+
+## ---- 音频 ----
+pipewire	P0	音频	会话音频服务（已随 bring-up 装，登记在此防止重建时被裁掉）
+pipewire-pulse	P0	音频	PulseAudio 兼容层（Firefox/Wine/多数 App 走这条）
+wireplumber	P0	音频	PipeWire 会话/策略管理器
+libspa-0.2-bluetooth	P0	音频	蓝牙 A2DP/HFP codec（--no-install-recommends 常漏）
+gstreamer1.0-pipewire	P1	音频	让 GStreamer 应用（手机/相机/录音）走 PipeWire
+gstreamer1.0-plugins-good	P1	音频	常用解码/视频链路（播放器、预览）
+gstreamer1.0-libav	P1	音频	ffmpeg 后端解码（H.264/AAC 等）
+playerctl	P1	音频	媒体键/播放控制 CLI（蓝牙耳机按键）
+rtkit	P0	音频	PipeWire 实时调度；缺了会 xrun 卡顿
+
+## ---- 蓝牙 / 网络 ----
+bluetooth	P0	蓝牙网络	bluez 的 systemd 使能包（只有 bluez 时服务不 enable）
+bluez	P0	蓝牙网络	蓝牙协议栈（bring-up 已装）
+rfkill	P0	蓝牙网络	软阻塞诊断/恢复（WiFi 与 BT 都会用到）
+network-manager	P0	蓝牙网络	WiFi 管理（bring-up 已装）
+wpasupplicant	P0	蓝牙网络	WPA 认证（bring-up 已装）
+wireless-regdb	P0	蓝牙网络	国家码/信道数据库（缺则部分信道不可用）
+iw	P0	蓝牙网络	无线链路取证（bring-up 已装）
+
+## ---- 电源 / 传感器 ----
+upower	P0	电源与传感器	顶栏电量/充放电状态的唯一依赖链（bring-up 已装）
+power-profiles-daemon	P0	电源与传感器	设置面板的性能/省电档位走它的 D-Bus 接口
+iio-sensor-proxy	P0	电源与传感器	加速度计/光感 → 自动旋转与自动亮度（G1-34 的用户态出口）
+brightnessctl	P1	电源与传感器	CLI 背光调节（脚本/调试用；滑块本身走 logind）
+rtkit	P0	电源与传感器	（见音频行；同一包两处引用只为分类完整）
+
+## ---- 显示 / 截图 ----
+wl-clipboard	P0	截图剪贴板	Wayland 剪贴板 CLI（wl-copy/wl-paste）；SSH 里取屏内文本必备
+wtype	P1	截图剪贴板	Wayland 虚拟键盘注入（自动化取证的唯一按键通道）
+grim	P1	截图剪贴板	截图（Phosh 自带 UI，CLI 取证用；bring-up 已装）
+
+## ---- 可选（P2，不自动安装）----
+fonts-noto-cjk-extra	P2	locale与字体	多字重 CJK（装后 ~210MB），只在排版/阅读需求高时加
+pavucontrol	P2	音频	图形音量控制（Phosh 有快捷面板，这个用于路由细调）
+seahorse	P2	桌面与会话	密钥库 GUI（gnome-keyring 的图形前端）
+wf-recorder	P2	截图剪贴板	录屏 CLI
+gstreamer1.0-plugins-bad	P2	音频	冷门/专利格式；34 个依赖，按需
+zram-tools	P2	电源与传感器	**当前内核没有 CONFIG_ZRAM**（modprobe zram = Module not found）⇒ 装了也无法启动，见 reports/mobian-daily-baseline-20261107.md §5；内核补上后再启用
+inxi	P2	调试	一页式硬件摘要（已有 /proc 直读脚本，非必需）
+rsyslog	P2	调试	持久文本日志（当前 journald 已够；查崩溃现场时更有用）
+mlocate	P2	调试	locate 数据库（rg/find 已够）
