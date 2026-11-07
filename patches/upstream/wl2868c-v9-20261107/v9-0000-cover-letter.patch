@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 7 Nov 2026 10:20:00 +0800
+Subject: [PATCH v9 0/2] regulator: add the Will Semiconductor WL2868C camera PMIC
+
+*** AI-assistance disclosure ***
+This cover letter and the two patches below were prepared with the help of
+an LLM coding assistant.  The author reviewed every line, ran every gate
+quoted in this letter himself, and takes full responsibility for the
+content.
+
+This is v9 of the WL2868C binding+driver series.  It supersedes v8
+(<20261106114252.988023-1-xiaqinghuan@mail.ustc.edu.cn>).
+
+What changed in v9
+==================
+
+v9 is v8 plus the two binding points Rob Herring raised on v6 1/5
+(<20261106141036.GA2921668-robh@kernel.org>).  Only 1/2 changes; 2/2 (the
+driver) is byte-identical to v8.
+
+1. Multi-paragraph descriptions now use the folded block scalar:
+
+   -  description:
+   +  description: >
+   ...same for vin7-supply and vsys-supply, the other two properties whose
+   description spans more than one paragraph.
+
+2. The example no longer defines a supply provider.  The
+   "vsys_reg: regulator-vsys" node (compatible = "regulator-fixed") is
+   gone; the consumer keeps "vsys-supply = <&vreg_vsys>", which is the
+   same shape other regulator bindings in the tree use
+   (e.g. docs: microchip,mcp16502.yaml, ti,tps65132.yaml).
+
+About the pw-bot "changes-requested" on v8 1/2
+==============================================
+
+Conor Dooley's bot marked v8 1/2 changes-requested
+(<20261106-lucrative-sadden-741ffe6c43e9@spud>) with the note that Rob's
+v6 feedback was ignored.  It was not ignored, it was overtaken: v8 was
+sent at 11:42Z on 2026-11-06, Rob's reply arrived at 14:10Z, i.e. 28
+minutes later.  v9 fixes exactly those two points.  No other v8 content
+was touched, so every review tag already given to v8 2/2 still applies.
+
+Krzysztof's two v6 points stay addressed the way v8 did it
+==========================================================
+
+- "One logical action, one commit" (5/5): the board enablement is not part
+  of this series at all; it is held back (patches/held-back in the author's
+  tree).
+- 3/5 compatible/commit-message wording: moot, that patch is not here.
+
+Gates run on v9 (on top of v7.3-rc7)
+====================================
+
+  make DT_SCHEMA_FILES=Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml dt_binding_check
+    -> rc=0, no output (schema and example both validate)
+  scripts/checkpatch.pl --strict --no-tree v9-0001*.patch  -> 0 errors, 0 warnings, 0 checks
+  scripts/checkpatch.pl --strict --no-tree v9-0002*.patch  -> 0 errors, 1 warning
+       (the warning is "does MAINTAINERS need updating?", which 1/2 does)
+
+Qianhui Xu (2):
+  regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+  regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+
+ .../devicetree/bindings/regulator/willsemi,wl2868c.yaml   | 98 ++++++++++++++++++++
+ MAINTAINERS                                                |  7 ++
+ drivers/regulator/Kconfig                                  | 10 ++
+ drivers/regulator/Makefile                                 |  1 +
+ drivers/regulator/wl2868c-regulator.c                      | 262 ++++++++++++++++++++++++++++++++++++
+ 5 files changed, ...
