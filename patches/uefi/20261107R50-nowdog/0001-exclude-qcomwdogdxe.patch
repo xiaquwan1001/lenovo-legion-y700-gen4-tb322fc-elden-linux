@@ -1,0 +1,77 @@
+Subject: [PATCH] lenovo-y700g4: 把 QcomWDogDxe 从 FV 里摘掉（单变量：硬件看门狗是不是它开的）
+
+2026-11-07R50 y700-elden（p55）。承接 p54（R49）的两条阴性判据：
+
+- `[K] wdog-arch loc=ok set=Success` ⇒ UEFI 标准 `EFI_WATCHDOG_TIMER_ARCH_PROTOCOL` 存在、
+  `SetTimerPeriod(0)` 调用成功，**但那不是这枚看门狗**；
+- `[K] wdog-scm loc=ok st=Device Error rsp=-4` + logfs 里的 `tz_armv8_smc_call failed,
+  TzStatus = 0xFFFFFFFE, SmcId = 0x2000107` ⇒ TZ 直接拒了这个 SIP（`TZ_SECURE_WDOG_DISABLE_ID`，
+  头文件写明「debug 功能关掉时是 NOP」）；
+- 交棒成立且内核仍在 **4.1077 s** 硬复位（`console-ramoops-0` 里 `Kernel command line: … elden_bootpath=uefi
+  initcall_debug`，最后一行 mmc0 ADMA error），ABL 下次启动记 `PM: Reset by PSHOLD / Hard Reset`。
+
+⇒ 剩下的唯一候选就是**这个 DXE 驱动自己**：本构建日志一路 `HW Wdog Setting from PCD : Enabled`
+（`QcomWDogDxe`，APRIORI 第一梯队，且它注册了 RSC handler / ExitBootServices 回调）。
+
+## 改法
+
+三处同步摘掉（缺一处就编不过或又被拉回 FV）：
+
+| 文件 | 作用 |
+|---|---|
+| `Device/lenovo-y700g4/APRIORI.inc` | APRIORI FV 的文件清单（`Pakala.fdf:81`） |
+| `Device/lenovo-y700g4/DXE.inc` | 主 FV 的文件清单（`Pakala.fdf:82`） |
+| `Device/lenovo-y700g4/DXE.dsc.inc` | `[Components]`（`PakalaNoSb.dsc:91`）——不编它 |
+
+## 判读表（p55）
+
+| 现象 | 结论 |
+|---|---|
+| 内核越过 10 s / 进用户态 | **硬件看门狗 = QcomWDogDxe 开的**，这就是本线的修法（UEFI 自己不再武装 WDT） |
+| UEFI 阶段就被复位（无 `preeb` 记录、fastboot 中途掉） | 该 WDT 由更早阶段（XBL）武装、QcomWDogDxe 只是在喂它 ⇒ 同样证明是这枚 WDT，下一步改成「保留驱动 + 交棒前用它的 HW 通道关掉」或让主线内核接管 |
+| 仍在 ~4.1 s 死（`preeb` 记录齐全） | **WDT 被排除**，转 `mmc0 ADMA`（3/5 次）与 `glink/UCSI` 两条现场线，或 PMIC/PON 复位源 |
+
+同发保留 R43/R45/R48/R49 的全部判据（令牌、initcall_debug、三行 wdog 结论）。
+
+diff --git a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.inc
+@@ -59,7 +59,11 @@
+ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/UsbConfigDxe.inf
+ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/ClockDxe.inf
+ INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/PmicDxeLa.inf
+-INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/QcomWDogDxe.inf
++# 2026-11-07R50 y700-elden: **把 QcomWDogDxe 从 FV 里摘掉**（单变量：硬件看门狗到底是不是它开的）。
++# 证据：本构建一路 `HW Wdog Setting from PCD : Enabled`；p54 已把 UEFI 标准 arch protocol 关掉
++# （`[K] wdog-arch loc=ok set=Success`）而内核仍在 4.1077 s 硬复位（`PM: Reset by PSHOLD`）；
++# SCM `TZ_SECURE_WDOG_DISABLE_ID` 被 TZ 拒（TzStatus=0xFFFFFFFE）。⇒ 只剩这个 DXE 驱动本身。
++#INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/QcomWDogDxe.inf
+ 
+ #INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/DisplayDxe.inf
+ #INF AndromedaPkg/Driver/DisplayCallerDxe/DisplayCallerDxe.inf
+diff --git a/Platforms/PakalaPkg/Device/lenovo-y700g4/APRIORI.inc b/Platforms/PakalaPkg/Device/lenovo-y700g4/APRIORI.inc
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/APRIORI.inc
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/APRIORI.inc
+@@ -7,7 +7,8 @@
+     INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+     INF MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
+     INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
+-    INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/QcomWDogDxe.inf
++    # 2026-11-07R50 y700-elden: 与 DXE.inc 同步摘掉（APRIORI FV 也要去掉，否则引用未构建组件）
++    # INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/QcomWDogDxe.inf
+      # INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/QcomWDogDxe/QcomWDogDxe.inf
+ 
+     # Next, install cpu protocol and enable the interrupt controller
+diff --git a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.dsc.inc b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.dsc.inc
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.dsc.inc
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.dsc.inc
+@@ -85,7 +85,8 @@
+ $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/ClockDxe.inf
+ $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/PmicDxeLa.inf
+ $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/SPMIDxe.inf
+-$(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/QcomWDogDxe.inf
++# 2026-11-07R50 y700-elden: 与 DXE.inc/APRIORI.inc 同步摘掉（[Components] 里不再编它）
++#$(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/QcomWDogDxe.inf
+ #$(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/DisplayDxe.inf
+ #AndromedaPkg/Driver/DisplayCallerDxe/DisplayCallerDxe.inf
+ AndromedaPkg/Driver/SimpleFbDxe/SimpleFbDxe.inf

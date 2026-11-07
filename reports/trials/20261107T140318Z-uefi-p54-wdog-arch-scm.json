@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p54-wdog-arch-scm",
+  "ts": "2026-11-07T14:03:18Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/out/r21-sbstop-p54/uefi-preamble54-r1.img",
+  "image_sha256": "214bf5ff78433507d5b7815745464b48e5097c114a784a5c2b9a88fabe040af5",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "ABLBOOT_NOTAG",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261107-220032",
+  "note": "verdict=ABLBOOT_NOTAG（判据=内核 cmdline elden_bootpath：absent）; candidate=HANDOFF; usb-gone=yes; post mode=linux boot_id=ae7e9166-6fa0-42d6-a1f7-5051c5a8868f/630598ad"
+}

@@ -344,3 +344,27 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261107R48-p53/build.log
 # 上机证据里的 logfs.img（8 MiB 原始分区镜像）不入库，文本解码件入库
 /reports/artifacts/uefi-boot-20261107-20*/*.img
+/reports/artifacts/uefi-20261107R49-p54/*.fd
+/reports/artifacts/uefi-20261107R49-p54/*.img
+/reports/artifacts/uefi-20261107R49-p54/*.gz
+/reports/artifacts/uefi-20261107R49-p54/*payload*
+/reports/artifacts/uefi-20261107R49-p54/kernel.bin
+/reports/artifacts/uefi-20261107R49-p54/build.log
+/reports/artifacts/uefi-20261107R50-p55/*.fd
+/reports/artifacts/uefi-20261107R50-p55/*.img
+/reports/artifacts/uefi-20261107R50-p55/*.gz
+/reports/artifacts/uefi-20261107R50-p55/*payload*
+/reports/artifacts/uefi-20261107R50-p55/kernel.bin
+/reports/artifacts/uefi-20261107R50-p55/build.log
+/reports/artifacts/uefi-20261107R51-p56/*.fd
+/reports/artifacts/uefi-20261107R51-p56/*.img
+/reports/artifacts/uefi-20261107R51-p56/*.gz
+/reports/artifacts/uefi-20261107R51-p56/*payload*
+/reports/artifacts/uefi-20261107R51-p56/kernel.bin
+/reports/artifacts/uefi-20261107R51-p56/build.log
+/reports/artifacts/uefi-20261107R52-p57/*.fd
+/reports/artifacts/uefi-20261107R52-p57/*.img
+/reports/artifacts/uefi-20261107R52-p57/*.gz
+/reports/artifacts/uefi-20261107R52-p57/*payload*
+/reports/artifacts/uefi-20261107R52-p57/kernel.bin
+/reports/artifacts/uefi-20261107R52-p57/build.log

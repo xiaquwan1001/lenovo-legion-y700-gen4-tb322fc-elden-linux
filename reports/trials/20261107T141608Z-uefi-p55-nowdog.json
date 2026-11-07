@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p55-nowdog",
+  "ts": "2026-11-07T14:16:08Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/out/r21-sbstop-p55/uefi-preamble55-r1.img",
+  "image_sha256": "1659e5151d7a70667f04be1790bd8250706915c06b1e75c2e106e3e011771dac",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "ABLBOOT_NOTAG",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261107-221322",
+  "note": "verdict=ABLBOOT_NOTAG（判据=内核 cmdline elden_bootpath：absent）; candidate=HANDOFF; usb-gone=yes; post mode=linux boot_id=5175c5c0-8906-4e63-996c-551bf5dfd559/ae7e9166"
+}

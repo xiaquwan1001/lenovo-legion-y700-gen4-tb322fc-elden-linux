@@ -1,0 +1,118 @@
+Subject: [PATCH] BootLinux: 交棒前关硬件看门狗——改走 UEFI 标准 arch protocol + TZ SCM（各打一行 EFI_STATUS）
+
+2026-11-07R49 y700-elden（p54）。承接 R47/R48 的「KernelInterface 路线被证伪」：
+p53 的 logfs 判据是 `[K] wdog-off miss loc=Not Found`，即我们的 FV 里**没有**
+`gEfiKernelProtocolGuid`（`KernelInterfaceDxe` 不在 `Device/lenovo-y700g4/DXE.inc`，
+`Binaries/` 下也没有该件）⇒ R47/R48 的 `WdogDisable()` 一次都没真正执行过，
+p52 的 4.1→9.9 s 只是「最后一次 pet 时刻」不同，不是我们改出来的。
+
+本补丁换两条**更可能真实存在**的通道，各打一行结论进环（位置在 `SbDumpLog ("preeb")`
+之前 ⇒ 随 logfs 持久化，PITFALLS #551）：
+
+- (a) `EFI_WATCHDOG_TIMER_ARCH_PROTOCOL->SetTimerPeriod(This, 0)`：
+      UEFI 标准的「关表」接口（方法名是 SetTimerPeriod，TimerPeriod==0 即关；
+      写成 SetTimer 会被编译器直接拒；用 MdePkg 的 `gEfiWatchdogTimerArchProtocolGuid`
+      会链接失败 ⇒ GUID 在文件内本地定义）。本 FV 未必有人安装它（ArmPkg 的 Generic/SP805 都没编进来），
+      所以 **loc= 的 EFI_STATUS 本身就是判据**：`loc=Not Found` ⇒ 此路不存在。
+- (b) SCM SIP `TZ_SECURE_WDOG_DISABLE_ID`（`disable = TRUE`）：
+      TZ 侧 secure watchdog，走 `gQcomScmProtocolGuid`；本树 `avb_util.c:ReadSecurityState()`
+      已在同一条路径上用同一协议（`TZ_INFO_GET_SECURE_STATE`）⇒ 协议可用性高。
+      `st=` 是协议调用返回值，`rsp=` 是 TZ 的 `tz_syscall_rsp_t.status`（1 = 命令完成）。
+
+## 判读表（p54）
+
+| logfs 行 | 内核存活 | 结论 |
+|---|---|---|
+| `wdog-arch loc=ok set=Success` 或 `wdog-scm loc=ok st=Success rsp=1` | 越过 10 s | WDT 元凶成立且已关掉 ⇒ G1-29 文件级目标达成 |
+| 两行都 loc=ok 且内核仍 ~4 s 死 | 否 | **不是**这枚 WDT（转 mmc0 ADMA / glink 两条现场线） |
+| 两行都 miss | 否 | 本 FV 无这两条通道 ⇒ 下一步只能「把 QcomWDogDxe 从 DXE.inc 摘掉」做单变量 |
+
+同发仍带 `elden_bootpath=uefi`（R43）、`initcall_debug`（R45）与 R48 的 KernelInterface 尝试
+（保留作旁证：它会继续打 `wdog-off miss loc=…`）。
+
+---
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -83,6 +83,9 @@
+ #include "BootStats.h"
+ #include "UpdateDeviceTree.h"
+ #include <Protocol/EFIKernelInterface.h>   // 2026-11-07R47 y700-elden: WDog->WdogDisable()
++#include <Protocol/WatchdogTimer.h>        // 2026-11-07R49 y700-elden: EFI_WATCHDOG_TIMER_ARCH_PROTOCOL
++#include <Protocol/EFIScm.h>               // 2026-11-07R49 y700-elden: SCM SIP（TZ_SECURE_WDOG_DISABLE_ID）
++#include <Protocol/scm_sip_interface.h>    // 2026-11-07R49 y700-elden: 同上（SIP id / 请求结构）
+ #include <Library/SerialPortLib.h>  // 2026-11-04R17 y700-elden
+ #include <Library/PrintLib.h>       // 2026-11-04R17 y700-elden
+ extern INT32  SbStopStage;      // 2026-11-04R21: 定义在 AvbLib/VerifiedBoot.c
+@@ -93,6 +96,11 @@
+ // ConOut 被 R7 换成 no-op），boot 链只能用 SerialPortWrite 留痕。
+ STATIC CONST EFI_GUID SbMarkGuid = { 0x5b4d4152, 0x4b31, 0x5259, { 0x9a, 0x31, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 } };
+ 
++// 2026-11-07R49 y700-elden: EFI_WATCHDOG_TIMER_ARCH_PROTOCOL 的 GUID 直接写字面量。
++// 用 MdePkg 的 `gEfiWatchdogTimerArchProtocolGuid` 会 **链接失败**（LinuxLoader 没拉那个库：
++// `lld-link: error: undefined symbol: gEfiWatchdogTimerArchProtocolGuid`），所以本地定义。
++STATIC CONST EFI_GUID SbWdArchGuid = { 0x665E3FF5, 0x46CC, 0x11d4, { 0x9A, 0x38, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D } };
++
+ STATIC
+ VOID
+ SbBootProbe (
+@@ -1417,6 +1425,60 @@
+     SerialPortLogPutString (SbLine);
+   }
+ 
++  // 2026-11-07R49 y700-elden: **交棒前关硬件看门狗**，两条独立通道各打一行 EFI_STATUS。
++  // R47/R48 走的是 Qcom 的 KernelInterface（`gEfiKernelProtocolGuid`），p53 的 logfs 判据
++  // `[K] wdog-off miss loc=Not Found` 已证明**我们的 FV 里没有这个协议**（KernelInterfaceDxe
++  // 未编进 DXE.inc）⇒ 那条路一次都没真正执行过。本发改走 UEFI 标准与 TZ 两条更可能存在的路：
++  //   (a) `EFI_WATCHDOG_TIMER_ARCH_PROTOCOL->SetTimerPeriod(0)`（标准关表；本 FV 里未必有人装它，
++  //       装了才有 loc=ok，否则 loc=<EFI_STATUS> 直接判死）；
++  //   (b) SCM SIP `TZ_SECURE_WDOG_DISABLE_ID`（disable=TRUE）：TZ 侧的 secure wdog，走
++  //       `gQcomScmProtocolGuid`（本树 avb 的 ReadSecurityState 已在用同一协议，可用性高）。
++  // 判读：两行都在 logfs 的 preeb 快照里 ⇒ 即使内核仍死，也能区分「通道没有」与「调用了没用」。
++  // 位置必须在 `SbDumpLog ("preeb")` 之前（PITFALLS #551：结论行排在转储之后就不进 logfs）。
++  {
++    CHAR8      SbLine[160];
++    UINTN      SbLen;
++    EFI_STATUS SbSt;
++
++    // (a) 标准 watchdog timer arch protocol
++    {
++      EFI_WATCHDOG_TIMER_ARCH_PROTOCOL *SbArch = NULL;
++      SbSt = gBS->LocateProtocol ((EFI_GUID *) &SbWdArchGuid, NULL, (VOID **)&SbArch);
++      if (!EFI_ERROR (SbSt) && (SbArch != NULL)) {
++        // 注意接口名：arch protocol 的方法是 SetTimerPeriod (TimerPeriod==0 ⇒ 关表)，不是 SetTimer。
++        EFI_STATUS SbSet = SbArch->SetTimerPeriod (SbArch, 0);
++        SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-arch loc=ok set=%r\n\r", SbSet);
++      } else {
++        SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-arch loc=%r\n\r", SbSt);
++      }
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
++      SerialPortLogPutString (SbLine);
++    }
++
++    // (b) SCM SIP: TZ secure wdog disable
++    {
++      QCOM_SCM_PROTOCOL *SbScm = NULL;
++      UINT64             SbParams[SCM_MAX_NUM_PARAMETERS] = { 0 };
++      UINT64             SbResults[SCM_MAX_NUM_RESULTS] = { 0 };
++      tz_secure_wdog_disable_req_t *SbReq = (tz_secure_wdog_disable_req_t *)SbParams;
++
++      SbSt = gBS->LocateProtocol (&gQcomScmProtocolGuid, NULL, (VOID **)&SbScm);
++      if (!EFI_ERROR (SbSt) && (SbScm != NULL)) {
++        EFI_STATUS SbCall;
++        SbReq->disable = TRUE;
++        SbCall = SbScm->ScmSipSysCall (SbScm, TZ_SECURE_WDOG_DISABLE_ID,
++                                       TZ_SECURE_WDOG_DISABLE_ID_PARAM_ID,
++                                       SbParams, SbResults);
++        SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-scm loc=ok st=%r rsp=%ld\n\r",
++                             SbCall, ((tz_syscall_rsp_t *)SbResults)->status);
++      } else {
++        SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] wdog-scm loc=%r\n\r", SbSt);
++      }
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
++      SerialPortLogPutString (SbLine);
++    }
++  }
++
+   SbDumpLog ("preeb");
+   {
+     CHAR8  SbLine[64];
