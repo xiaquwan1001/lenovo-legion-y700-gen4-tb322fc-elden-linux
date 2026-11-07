@@ -253,3 +253,12 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261106R32-p36e/build/*.bin
 /reports/artifacts/uefi-20261106R32-p36e/build/*.efi
 /reports/artifacts/uefi-20261106R32-p36e/build/*.log
+
+# 2026-11-07 UEFI p38 世代（R33）构建归档：二进制可由 p38-recipe.txt + uefi-r21-p7-ladder.sh --rebuild 重建；
+# 只留 manifest/SHA256SUMS，加上 obj/LinuxLoader.{efi,map}（静态复核要用的 DWARF-free 反汇编输入）
+/reports/artifacts/uefi-20261107R33-p38/*.fd
+/reports/artifacts/uefi-20261107R33-p38/*.img
+/reports/artifacts/uefi-20261107R33-p38/*.gz
+/reports/artifacts/uefi-20261107R33-p38/*payload*
+/reports/artifacts/uefi-20261107R33-p38/kernel.bin
+/reports/artifacts/uefi-20261107R33-p38/build.log

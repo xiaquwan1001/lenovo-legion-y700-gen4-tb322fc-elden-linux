@@ -51,3 +51,20 @@
 - **另一条新纪律**：连续 `oem sbread`（60 次/1200 B）会把 USB 端点打死 ——
   `DwcSubmitURB: physical endpoint 3 is in invalid state 4` → `UsbDeviceSend … Device Error` →
   `TRB ring of EpIndex 3 is full`。一次只拉 ≤512 B，块间 `sleep`，不在同一固件会话里拉整窗。
+
+## #543 「EB 之后专用」的 NoBs 路径里仍然调用了 boot services（`AllocatePool`）+ LBA 单位漏改
+
+- **现象**：p37 上机（真内核载荷）拿到 `preeb`、**永远拿不到 `posteb`**；屏上
+  `[K] FLT pc=00000000 ids=131/131 esr=86000007`（= `blr` 到 0 的指令异常），帧里 `x30` 落在 `LinuxLoader` 内。
+- **根因（静态可复算，2026-11-07）**：`#536` 加的 EB 后转储链**并不真的 NoBs** ——
+  `SbDumpLogNoBs()` 里两次 `AllocatePool`/`FreePool`，`SbWriteLogWindowNoBs()` 里又一次
+  `AllocatePool`/`FreePool`。EB 之后 `gBS` 已失效（本例 `+0x40` 取出 0，`+0xE8` 才是 ExitBootServices）
+  ⇒ `blr x8` 跳 0。**这一次「EB 之后立刻死」极可能是我方探针自杀**，与 `#534`（探针把屏写爆）同类。
+- **第二处漏改**：`SbWriteLogWindowNoBs()` 的 `Base` 仍按**字节偏移**算却当 LBA 传（`SbWriteLogWindow()`
+  在 `R32` 已修，NoBs 版本漏了）⇒ 即使不崩也恒 `EFI_INVALID_PARAMETER`。
+- **修法**（`patches/uefi/20261107R33-true-nobs/`）：EB 后路径全部改**静态缓冲 + 内存拷贝**，
+  Base 走 `LastBlock + 1 - (窗口/BlockSize)`；并在 EB 前后各留环内标记（`[K] EBC-call` / `EBC-ret0|ret!`）
+  与一次带 `cbz` 守卫的 `gBS` 内存读，让下一发能把「EB 之前成员就已为 0」与「EB 把它失效了」分开。
+- **纪律**：写「某阶段不可用的服务」时，**先机械扫一遍该路径上的符号**（`grep -n "AllocatePool\|FreePool\|gBS->"`），
+  不要凭函数名（`NoBs`）相信它不含 boot service；同族的「单位/口径修正」要**按函数逐个改**，
+  漏一个副本等于没改（第二处漏改就是这么来的）。

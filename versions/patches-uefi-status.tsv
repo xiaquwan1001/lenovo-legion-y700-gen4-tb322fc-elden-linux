@@ -72,3 +72,4 @@ dir	patches	in_recipe	status	reason	evidence
 20261106R30-faultdump	1	1	ACTIVE	★异常归因两档：先一行 [K] FLT(pc/esr/far) → 清屏重钉 → [K] sp= → x0..x28/FP/LR；刻意不读栈内存（避免二次异常）	patches/uefi/p34-recipe.txt；reports/uefi-p34-p36-logfs-20261106.md §1
 20261106R31-logfsdump	1	1	ACTIVE	★控制台环形日志 + logfs 尾部 16 KiB 转储（entry/preeb）+ oem sbread 读回；含 LBA/BufferSize/响应 64B 三个坑的修法	patches/uefi/p35-recipe.txt；scripts/uefi-logfs-read.py；PITFALLS #535/#537
 20261106R32-ringshared	1	1	ACTIVE	★环改全固件共享（0xE3F80000 32KiB）+ [F] 自检只进环不上屏（修 #534 刷屏）+ EB 后用缓存 BlkIo 转储（tag=posteb）	patches/uefi/p36-recipe.txt；reports/uefi-p34-p36-logfs-20261106.md §3.2/§3.4
+20261107R33-true-nobs	1	1	ACTIVE	★EB 后转储改**真**无 boot service（SbDumpLogNoBs/SbWriteLogWindowNoBs 全改静态缓冲）+ 修 NoBs 版 LBA 单位漏改 + EB 前后环内标记（BL-in/BL-vm/EBC-call/EBC-ret/post gbs）——p37 的 pc=0 崩点	patches/uefi/p38-recipe.txt；reports/uefi-p38-true-nobs-20261107.md；PITFALLS #543

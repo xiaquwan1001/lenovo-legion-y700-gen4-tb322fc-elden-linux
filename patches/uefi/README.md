@@ -63,6 +63,15 @@
   ⚠ 纪律：`oem sbread` 一次 ≤512 B、块间 sleep（连读 1200 B 会把 USB 端点打死，`PITFALLS #537`）；
   真内核件（82 MB）仍**一会话一发**。
 
+- **2026-11-07 世代（p37→p38，p38 已构建、未上机）**：
+  `p37` = p36 原样件（无新构建）上机真内核载荷 ⇒ 拿到 `preeb`、**拿不到 `posteb`**，屏上
+  `[K] FLT pc=00000000 esr=86000007`（见 `reports/uefi-p37-logfs-20261107.md`）。
+  `p38` = p36 + `R33-true-nobs`（**修 R32 的伪 NoBs**：`SbDumpLogNoBs()`/`SbWriteLogWindowNoBs()`
+  仍用 `AllocatePool/FreePool`，EB 后 `gBS` 已死 ⇒ `blr` 到 0；并修 NoBs 版 LBA 单位漏改），
+  另加 EB 前后环内标记 `[K] BL-in` / `BL-vm=` / `gbs=…` / `EBC-call` / `EBC-ret0|ret!` / `post gbs=`。
+  配方 `p38-recipe.txt`；镜像 `out/r21-sbstop-p38/uefi-preamble38-r1.img`（`0e2bddbd…`）；
+  静态复核 `reports/uefi-p38-static-verify-20261107.md`（PASS）；上机单 `reports/uefi-p38-true-nobs-20261107.md` §2。
+
 ## 2. 重建与"可复现"的精确含义
 
 ```bash

@@ -1,0 +1,215 @@
+Subject: [PATCH] EB 后转储改成真·无 boot service（修 p37 的 pc=0 崩点）+ EB 前后标记
+
+2026-11-07R33 y700-elden: p37 上机（真内核载荷 + R32 logfs 通道）拿到 `preeb`、拿不到 `posteb`，
+屏上 `[K] FLT pc=00000000 ids=131/131 esr=86000007`（= `blr` 到 0 的指令异常），帧里 `x30`
+落在 `LinuxLoader` 内。
+
+**静态结论（本补丁的依据）**：R32 加的「EB 之后专用」写入链**并不真的 NoBs** ——
+`SbDumpLogNoBs()` 用了两次 `AllocatePool`/`FreePool`，`SbWriteLogWindowNoBs()` 又用了一次
+`AllocatePool`/`FreePool`；而 EB 之后 `gBS` 已失效（p37 屏上 `gBS+0x40` 取出 0 后 `blr` 到 0
+正是这个形态）。也就是说 **posteb 永不可能落盘，而且这一次「EB 之后立刻死」极可能是我方探针
+自杀**，与 p31–p33 的「探针写屏把屏写穿」同类（PITFALLS #534 一族）。
+
+另外同时修掉一处 R32 漏改：`SbWriteLogWindowNoBs()` 的 `Base` 仍按**字节偏移**算却当 **LBA**
+传给 `WriteBlocks`（`SbWriteLogWindow()` 在 R32 已修 LBA，NoBs 版本漏了）⇒ 即使不崩也恒
+`Invalid Parameter`。
+
+判据（p38 一发）：
+ - `[K] BL-in` / `SbDumpLog("early")`（BootLinux 入口）—— 与 `[K] dtb`（同函数 +0x52C）配对，
+   用来分辨「p37 的 LR 落在 +0xA0」到底是「崩在入口→EB 之间」还是「BootLinux 被重入」；
+ - `[K] BL-vm=<0|1> ok`（`CheckAndSetVmData` 之后）—— 若入口崩，这条不会出现；
+ - `[K] gbs=… ap=… eb=… fp=…`（EB 之前，进环）与 `[K] post gbs=… ap=…`（EB 之后，纯内存读）
+   —— 一次就分清「EB 之前成员就已为 0」与「EB 把它失效了」；
+ - `[K] EBC-call` / `[K] EBC-ret0|ret!`（`ShutdownUefiBootServices()` 内部、紧贴 EB 调用两侧，
+   只写内存不写盘：GetMemoryMap 与 EB 之间不许改内存图）；
+ - `[K] posteb` 记录**出现**（= 真·无 BS 的落盘路径可用）；其后还有 `[K] post-dump-ok`。
+
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index 52925d3..1bf0e71 100755
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -226,11 +226,19 @@ SbDumpLog (
+ 
+ // 2026-11-06R32: EB 之后的转储（用缓存的 BlkIo，不碰 gBS）。EB 段是 USB redriver 重初始化 +
+ // I2C NACK 洪水所在（2026-11-06 末次上机 OCR 证据），恰恰是屏上必然被冲刷掉的一段。
++//
++// 2026-11-07R33 y700-elden（**真 bug 修复**）：R32 这个“NoBs”版本其实**并不 NoBs** ——
++// 它也用了 AllocatePool/FreePool（两处）以及 SbWriteLogWindowNoBs 里的 AllocatePool。
++// EB 之后 gBS 已失效，`gBS->AllocatePool` 取出 0 后 `blr x8` ⇒ **pc=0**；p37 上机的
++// `[K] FLT pc=00000000 esr=86000007` 与「`posteb` 记录永远不出现」都由这一条解释。
++// 现在整条 EB 后路径改成**静态缓冲 + 内存拷贝**，不再有任何 boot service 引用。
+ VOID
+ SbDumpLogNoBs (
+   IN CONST CHAR8  *Tag
+   )
+ {
++  STATIC UINT8  m_SbNoBsRing[8192];
++  STATIC UINT8  m_SbNoBsRec[SB_LOG_WINDOW - 64];
+   UINT8  *Ring;
+   UINT8  *Rec;
+   UINTN   Len;
+@@ -238,26 +246,19 @@ SbDumpLogNoBs (
+   UINTN   RecLen;
+   CHAR8   Hdr[96];
+ 
+-  Ring = AllocatePool (8192);
+-  if (Ring == NULL) {
+-    return;
+-  }
++  Ring   = m_SbNoBsRing;
++  Rec    = m_SbNoBsRec;
+   Len    = SerialPortLogGet (Ring, 8192);
+   HdrLen = AsciiSPrint (Hdr, sizeof (Hdr), "SBLOG01 tag=%a len=%d\n--\n", Tag, Len);
+   RecLen = HdrLen + Len;
+   if (RecLen > (SB_LOG_WINDOW - 64)) {
+     RecLen = SB_LOG_WINDOW - 64;
+   }
+-  Rec = AllocatePool (RecLen);
+-  if (Rec != NULL) {
+-    CopyMem (Rec, Hdr, HdrLen);
+-    if (RecLen > HdrLen) {
+-      CopyMem (Rec + HdrLen, Ring, RecLen - HdrLen);
+-    }
+-    (VOID)SbWriteLogWindowNoBs (Rec, (UINT32)RecLen);
+-    FreePool (Rec);
++  CopyMem (Rec, Hdr, HdrLen);
++  if (RecLen > HdrLen) {
++    CopyMem (Rec + HdrLen, Ring, RecLen - HdrLen);
+   }
+-  FreePool (Ring);
++  (VOID)SbWriteLogWindowNoBs (Rec, (UINT32)RecLen);
+ }
+ 
+ STATIC QCOM_SCM_MODE_SWITCH_PROTOCOL *pQcomScmModeSwitchProtocol = NULL;
+@@ -1090,6 +1091,14 @@ BootLinux (BootInfo *Info)
+   }
+ 
+   SbBootProbe ("[K] enter\n\r");
++  // 2026-11-07R33 y700-elden: 无门控的入口标记 + 立即落盘一次（tag=early）。
++  // 目的：p37 的 LR 落在 `BootLinux+0xA0`（= `CheckAndSetVmData` 里那次 AllocatePool），
++  // 与「`[K] dtb` 已打印」（同函数 +0x52C）矛盾 ⇒ 要么帧里的 LR 不可信，要么 BootLinux 被
++  // **进过两次**。有了这条「进到哪一步」的磁盘记录，两种情形一发就能分开：
++  //   只有 `early` ⇒ 崩在入口→EB 之间（那 LR 指向 CheckAndSetVmData 就自洽）；
++  //   有 `preeb` 而 `[K] BL-vm` 在记录里出现两次 ⇒ 确属重入。
++  SerialPortLogPutString ("[K] BL-in\n\r");
++  SbDumpLog ("early");
+   SB_STOP (1, "1");
+ 
+   if (IsVmEnabled ()) {
+@@ -1099,6 +1108,12 @@ BootLinux (BootInfo *Info)
+       return Status;
+     }
+   }
++  {
++    CHAR8  SbLine[96];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] BL-vm=%d ok\n\r", (UINT64)IsVmEnabled ());
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+ 
+   PartitionName = Info->Pname;
+   Recovery = Info->BootIntoRecovery;
+@@ -1289,6 +1304,19 @@ BootLinux (BootInfo *Info)
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
+   }
+ 
++  // 2026-11-07R33 y700-elden: EB 之前把 gBS 与它将要用的三个成员打出来（同时进环）。
++  // p37 判读说「gBS+0x40 取出 0」——这条把「EB 之前就已经是 0」与「EB 之后才被失效」直接分开。
++  {
++    CHAR8  SbLine[128];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] gbs=%lx ap=%lx eb=%lx fp=%lx\n\r",
++                         (UINT64)(UINTN)gBS,
++                         (gBS != NULL) ? (UINT64)(UINTN)gBS->AllocatePool : 0,
++                         (gBS != NULL) ? (UINT64)(UINTN)gBS->ExitBootServices : 0,
++                         (gBS != NULL) ? (UINT64)(UINTN)gBS->FreePool : 0);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
++
+   // 2026-11-06R31: 跳内核前把屏上日志全部落盘（logfs 尾部 16 KiB）。EB 之后屏与 USB 都会没，
+   // 而磁盘上的这条记录会在重启/掉电后仍在 ⇒ 手交失败时仍能查到 [F] 几何、[K] dtb、EB 返回值。
+   SbDumpLog ("preeb");
+@@ -1310,8 +1338,15 @@ BootLinux (BootInfo *Info)
+     SerialPortLogPutString (SbMark);
+     SbMarkLen = AsciiSPrint (SbMark, sizeof (SbMark), "[K] marks: reached-eb\n\r");
+     SerialPortLogPutString (SbMark);
++    // 2026-11-07R33: EB 之后再把 gBS / AllocatePool 读一次（纯内存读，不调用）——
++    // 若这里 ap=0 而 EB 前 ap≠0，就实锤「EB 把 boot services 表失效了」，而不是别处早已为 0。
++    SbMarkLen = AsciiSPrint (SbMark, sizeof (SbMark), "[K] post gbs=%lx ap=%lx\n\r",
++                             (UINT64)(UINTN)gBS,
++                             ((gBS != NULL) ? (UINT64)(UINTN)gBS->AllocatePool : 0));
++    SerialPortLogPutString (SbMark);
+   }
+   SbDumpLogNoBs ("posteb");
++  SerialPortLogPutString ("[K] post-dump-ok\n\r");
+   // 2026-11-06R22 y700-elden: EB 之后打一行（R21 之后屏显写已安全：惰性初始化 + 448 KiB 硬边界）。
+   // 与 banner 分行是故意的：EB 卡住时屏上只有这一行，EB 正常时它会被 banner 顶掉/并排可见。
+   {
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/LinuxLoaderLib.c b/Platforms/QcomModulePkg/Library/BootLib/LinuxLoaderLib.c
+index d000bd3..b8657e2 100755
+--- a/Platforms/QcomModulePkg/Library/BootLib/LinuxLoaderLib.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/LinuxLoaderLib.c
+@@ -850,6 +850,11 @@ SbWriteLogWindowNoBs (
+   IN UINT32   MsgSize
+   )
+ {
++  // 2026-11-07R33 y700-elden：两处真 bug（都在 EB 之后才暴露）：
++  //  ① AllocatePool/FreePool 在 EB 之后失效（p37 的 pc=0 崩点）；改成静态缓冲。
++  //  ② Base 算成了**字节偏移**却当 LBA 传（R32 只修了 SbWriteLogWindow，漏了这一个）
++  //     ⇒ 即使不崩也会写到一个远超 LastBlock 的 LBA、恒返回 Invalid Parameter。
++  STATIC UINT8  m_SbNoBsBuf[SB_LOG_WINDOW];
+   EFI_STATUS   Status;
+   UINTN        BlockSize;
+   UINT64       Base;
+@@ -864,15 +869,11 @@ SbWriteLogWindowNoBs (
+   if ((BlockSize == 0) || (((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize <= SB_LOG_WINDOW)) {
+     return EFI_UNSUPPORTED;
+   }
+-  Base = ((UINT64)BlkIo->Media->LastBlock + 1) * BlockSize - SB_LOG_WINDOW;
+-  Buf  = AllocatePool (SB_LOG_WINDOW);
+-  if (Buf == NULL) {
+-    return EFI_OUT_OF_RESOURCES;
+-  }
++  Base = (UINT64)BlkIo->Media->LastBlock + 1 - (SB_LOG_WINDOW / BlockSize);
++  Buf  = m_SbNoBsBuf;
+   ZeroMem (Buf, SB_LOG_WINDOW);
+   CopyMem (Buf, Msg, MsgSize);
+   Status = BlkIo->WriteBlocks (BlkIo, m_SbLogMediaId, Base, SB_LOG_WINDOW, Buf);
+-  FreePool (Buf);
+   return Status;
+ }
+ 
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/ShutdownServices.c b/Platforms/QcomModulePkg/Library/BootLib/ShutdownServices.c
+index 037d883..04e147d 100755
+--- a/Platforms/QcomModulePkg/Library/BootLib/ShutdownServices.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/ShutdownServices.c
+@@ -30,6 +30,19 @@
+ #include <Library/TimerLib.h>
+ #include <Library/UefiRuntimeServicesTableLib.h>
+ 
++// 2026-11-07R33 y700-elden: EB 前后的**环内**标记（只写内存，不分配、不写盘 ——
++// GetMemoryMap 与 ExitBootServices 之间严禁任何会改内存图/MapKey 的操作）。
++// 这三条会把「卡在 EB 调用本身」与「EB 返回后才死」彻底分开（p37 只有屏上 pc=0，分不出）。
++VOID EFIAPI SerialPortLogPutString (IN CONST CHAR8 *Str);
++
++STATIC VOID
++SbEbMark (
++  IN CONST CHAR8  *What
++  )
++{
++  SerialPortLogPutString (What);
++}
++
+ EFI_STATUS ShutdownUefiBootServices (VOID)
+ {
+   EFI_STATUS Status;
+@@ -67,7 +80,9 @@ EFI_STATUS ShutdownUefiBootServices (VOID)
+ 
+     // Don't do anything between the GetMemoryMap() and ExitBootServices()
+     if (!EFI_ERROR (Status)) {
++      SbEbMark ("[K] EBC-call\n\r");
+       Status = gBS->ExitBootServices (gImageHandle, MapKey);
++      SbEbMark ((!EFI_ERROR (Status)) ? "[K] EBC-ret0\n\r" : "[K] EBC-ret!\n\r");
+       if (EFI_ERROR (Status)) {
+         FreePages (MemoryMap, Pages);
+         MemoryMap = NULL;

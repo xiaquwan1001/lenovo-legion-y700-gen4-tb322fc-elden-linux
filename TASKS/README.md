@@ -125,7 +125,7 @@
 - **T14 用户态驱动/服务独立固化** —— 🟡 门禁已收口（2026-10-28 真机 `verify.sh` **FAIL=0 WARN=0**，80 条含 19 unit 逐字一致）；剩余 = Mobian 换根后的重建 recipe（7 个 ELF 里 3 个无源、其中 2 个动态 musl）。权威 `reports/userland-service-inventory-20261025.md`、`reports/userland-dealpine-audit-20261026.md`、`packaging/elden-userland/tools/verify.sh`；历史与三步落地 → 归档。
 - **T17 驱动模块化 × Alpine→Mobian 迁移** —— 🟢 **口径更正（2026-11-07 现场核实）：S2/S3/S7 事实上已完成，本行不再挂待办**。判据：设备 `findmnt /` = `/dev/sda17 ext4`、`/etc/os-release` = `Debian GNU/Linux forky/sid`、`/dev/disk/by-partlabel` 只剩 `linux17`（`linux18` 已于 2026-10-31 并入），且 `check-pkgmap.sh` 的 S2 三项缺口（`alsa-ucm-conf`/`ca-certificates`/`login`）早已钉进 `pkgmap.tsv` 并在机；换根后遗留的真缺口只剩 **T14（userland 重建 recipe）**。权威 `reports/modular-mobian-transition-20261026.md`、`DEVICE/README.md` §1.1。
 - **C3 Play Integrity / DRM 取证**（G2）—— C1 已收官（vk95 起 `ip rule` 生效；去 workaround 出网 200，`reports/c1-noworkaround-20261013.md`）⇒ 下一步 = C3 身份/DRM 取证，其后 C2 GMS 登录（需上行 + 代理 + 凭据）。权威 = §2 C1/C2/C3 行。
-- **N1 UEFI 间接引导** —— 🟡 2026-11-01 用户放行恢复推进；当前口径**只读 §5 的 2026-11-06「夜·二」块**（该块用 p25/p26 两发把崩溃 PC 归到 `LinuxLoader` 的 `SerialPortWrite`，推翻「第三方二进制驱动」；更早的 11-06 白天块定案元凶 = 屏显写穿帧缓冲；11-04 晚块推翻更早的「已交 DXE Core」判读，逐块沿革在同一节），首轮定性 `reports/uefi-gunyah-reassess-20261024.md` §1。**解冻条件（任一）**：上游 issue #12 给出层级答案 / 出现 SM8750 上 UEFI 真正枚举 UFS 的第三方案例 / kexec 不可用而又需要启动菜单。
+- **N1 UEFI 间接引导** —— 🟡 2026-11-01 用户放行恢复推进；当前口径**只读 §5 的 2026-11-07「p38」块**（该块静态定案：p37 的「EB 后立刻死」= 自家 `R32` 转储链在 EB 后仍调 `AllocatePool`，`R33` 已改成真·无 boot service 并构建好上机件，**待一发上机**；其前的 11-06「夜·二」块定案元凶 = 屏显写穿帧缓冲，11-06 白天块把崩溃 PC 归到 `LinuxLoader` 的 `SerialPortWrite`，更早的 11-04 晚块推翻「已交 DXE Core」判读，逐块沿革在同一节），首轮定性 `reports/uefi-gunyah-reassess-20261024.md` §1。**解冻条件（任一）**：上游 issue #12 给出层级答案 / 出现 SM8750 上 UEFI 真正枚举 UFS 的第三方案例 / kexec 不可用而又需要启动菜单。
   - **2026-11-03 裁决（邮件+GitHub+外部三线核查后）**：解冻条件②**已满足** —— `7Night-kqx/UniXNU-dada`（小米 15 / SM8750）README 明写 UEFI「framebuffer/menu/**UFS**-works in Mu-Silicium」，并附 boot-image v3/v4 header + BootShim header-size 现成补丁。**下一步只做一件事**：用该打包链补「载荷被执行」（P1 主机侧搬 patch + 装对树内 `PatchedBinaries/UFSDxe.efi`(`00ae059f…`)，P2 单发零写盘 `fastboot boot`，判据 `stage1≠0`）。issue #12 无新回复（末条 `2026-10-29T04:19:30Z`）、邮件 UEFI 相关 0 封 ⇒ **不回帖、不升 Mu 基座**。权威 `reports/uefi-next-step-decision-20261103.md`（三份子报告同目录 `uefi-{mail-triage,github-scan,external-scan}-20261103.md`）。
   - **2026-11-03 下午（9 发零写盘）**：**DDR 黑匣子正控打通**（真内核 `primary_entry` 标记，断电重启读回 95%–98%）；并**推翻两条旧判据**——① `usb_read failed` ≠ 交棒（自旋探针同样触发但标记全 0；真内核是 `Booting OKAY 10.106 s` 后真执行，我们 UEFI 件是 `0.056 s` 早期拒绝）；② **不存在 1–2 s 看门狗**（自旋载荷躺数分钟无人复位）。`text_offset=0` 单独不够（`8ed4ffc1…` 仍被 0.056 s 否掉）⇒ 下一步 = 把载荷 Image 头（`code0` 必须 branch / `image_size`=解压真实长度 / `flags=0xa`）+ 打包头（v2 base0）逐字段对齐真内核。权威 `reports/uefi-posctrl-20261103-summary.md`。
 
@@ -147,6 +147,24 @@
 ---
 
 ## 5. 查漏补缺（GAPS）
+
+### 2026-11-07（p38）：p37 的「EB 后立刻死」= **自家探针调 boot service**（静态定案，已构建上机件，未上机）
+
+- **一句话**：`R32` 那条「EB 之后专用、不碰 gBS」的转储链**并不真的 NoBs** —— `SbDumpLogNoBs()` 两次
+  `AllocatePool`/`FreePool`、`SbWriteLogWindowNoBs()` 又一次；EB 后 `gBS` 已失效（`+0x40` 取到 0）
+  ⇒ `blr` 到 **pc=0**，与 p37 屏上 `[K] FLT pc=00000000 esr=86000007` 同形，也是「`posteb` 永不出现」的因。
+- **`R33` 修法**：EB 后路径全改**静态缓冲 + 内存拷贝**；顺手修 `SbWriteLogWindowNoBs()` 的 `Base`
+  仍是字节偏移却当 LBA 传（`R32` 只修了 `SbWriteLogWindow()`，漏了这份）。新增环内标记
+  `[K] BL-in` / `BL-vm=` / `gbs=…ap=…eb=…fp=` / `EBC-call` / `EBC-ret0|ret!` / `post gbs=…` / `post-dump-ok`。
+  上机件：`out/r21-sbstop-p38/uefi-preamble38-r1.img`（`0e2bddbd…272badad`，67 219 456 B），配方 `p38-recipe.txt`。
+- **静态复核（verify-worker 独立反汇编，编排者已抽样复跑）**：EB 调用 = `0x5a9c bl 0x1630c`；
+  其后到跳内核前 **0 处 boot service 调用**（唯一 gBS 触点是 `0x5b2c` 的带 `cbz` 的内存读）；
+  `SbDumpLogNoBs`（`0x47f4–0x49c8`）内 gBS 0 处、池调用 0 处。
+- **未闭合（诚实标注）**：① p37 帧里 `x30 = LinuxLoader+0x4B28`（`BootLinux+0xA0` = `CheckAndSetVmData`）
+  与「`[K] dtb`（同函数 `+0x52C`）已打印」矛盾 ⇒ 或为相片转录误差、或 `BootLinux` 重入，`R33` 用
+  `[K] BL-in` + `tag=early` 两发分辨；② `BlkIo->WriteBlocks` 在 EB 后是否仍可用只能上机证。
+- **正文/坑**：`reports/uefi-p38-true-nobs-20261107.md`（含上机单与判读表）、
+  `reports/uefi-p38-static-verify-20261107.md`、`PITFALLS #543`、`patches/uefi/20261107R33-true-nobs/`。
 
 ### 2026-11-06（夜·五）：取证通道从「屏」搬到 **`logfs` 持久化窗口**（p34–p36，上机 4 发零写盘）
 
