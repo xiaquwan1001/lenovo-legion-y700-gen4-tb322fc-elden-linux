@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p58-nosdcc",
+  "ts": "2026-11-07T15:19:55Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/out/r21-sbstop-p58/uefi-preamble58-r1.img",
+  "image_sha256": "d76ede2725b3fd2756f77415a1ef01f786ff056979710b81aef8150dcd2e31b7",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "HANDOFF_TAGGED",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261107-231716",
+  "note": "verdict=HANDOFF_TAGGED（判据=内核 cmdline elden_bootpath：present）; candidate=HANDOFF; usb-gone=yes; post mode=linux boot_id=79f5b7a7-5d3c-4ace-9d13-fcc7247bf7be/"
+}

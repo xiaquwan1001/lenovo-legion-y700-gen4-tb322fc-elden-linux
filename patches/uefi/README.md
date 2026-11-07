@@ -96,6 +96,14 @@
   `fastboot boot` 之后再发 `fastboot continue`；且内核 cmdline 来自 `boot_b` 头部，
   `sbstop=`/`sbprobe=` 走这条路无效（`PITFALLS #547`）。**
 
+- **2026-11-07 深夜·三 世代（p58，✅ 间接引导打通）**：
+  `p58` = `p54` + `20261107R46-nosdcc`（`DXE.inc` 注掉 `SdccDxe`）+ `20261107R53-nosdcc-all`
+  （`APRIORI.inc` + `DXE.dsc.inc` 同步注掉 —— 只改 `DXE.inc` 会被 APRIORI 拉回 FV，单变量白做）。
+  真因 = `SdccDxe` 抢初始化 SD 主控（`8804000.mmc`）→ 内核接手 `mmc0: ADMA error` → 整机硬复位。
+  配方 `p58-recipe.txt`（76）；镜像 `out/r21-sbstop-p58/uefi-preamble58-r1.img`（`d76ede27…`）；
+  报告 `reports/uefi-p58-sdccdxe-handoff-success-20261107.md`；坑 `PITFALLS #554/#555`。
+  ⚠ 摘任何 DXE 件都要三处清单同步（`APRIORI.inc`/`DXE.inc`/`DXE.dsc.inc`）。
+
 ## 2. 重建与"可复现"的精确含义
 
 ```bash

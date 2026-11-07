@@ -1,0 +1,33 @@
+# 2026-11-07T23:24:19+08:00
+Linux elden 7.3.1-debug-vk184-00003-gec74c4795a43 #2 SMP PREEMPT Sat Nov  7 10:23:14 CST 2026 aarch64 GNU/Linux
+
+== /proc/cmdline
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 androidboot.serialno=51318dc0 androidboot.baseband=apq elden_bootpath=uefi initcall_debug
+
+== uptime
+ 23:24:19 up 6 min,  2 users,  load average: 0.03, 0.24, 0.16
+== boot_id
+79f5b7a7-5d3c-4ace-9d13-fcc7247bf7be
+== systemctl
+degraded
+● pi-tablet-night.service loaded failed failed y700-elden tablet night runner (queued low-CPU jobs)
+== mmc0
+[    3.930156] [     T74] mmc0: SDHCI controller on 8804000.mmc [8804000.mmc] using ADMA 64-bit
+[    4.008383] [    T165] mmc0: new high speed SDXC card at address b368
+[    4.008540] [    T165] mmcblk0: mmc0:b368 CBADS 58.6 GiB
+[    4.009657] [    T165]  mmcblk0: p1
+[    4.009781] [    T165] probe of mmc0:b368 with driver mmcblk returned 0 after 1366 usecs
+[   13.432205] [   T3462] init: Could not open file '/d/mmc0/mmc0:0001/ext_csd': Failed to open file '/d/mmc0/mmc0:0001/ext_csd': No such file or directory
+== watchdog
+[    0.081065] [      T1] calling  watchdog_init+0x0/0xf8 @ 1
+[    0.081100] [      T1] initcall watchdog_init+0x0/0xf8 returned 0 after 0 usecs
+[    0.279743] [      T1] calling  qcom_watchdog_driver_init+0x0/0x40 @ 1
+[    0.279907] [      T1] initcall qcom_watchdog_driver_init+0x0/0x40 returned 0 after 154 usecs
+[    0.322862] [     T92] watchdog: NMI not fully supported
+[    0.322865] [     T92] watchdog: Hard watchdog permanently disabled
+== pstore(src)
+总计 0
+== pstore(archive)
+总计 320
+-rw------- 1 root root 279376 10月17日 05:54 console-ramoops-0
+-rw------- 1 root root  43588 10月17日 05:54 pmsg-ramoops-0

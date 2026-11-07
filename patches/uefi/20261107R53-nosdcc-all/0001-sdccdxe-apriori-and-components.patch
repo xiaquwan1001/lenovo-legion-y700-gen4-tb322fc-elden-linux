@@ -1,0 +1,38 @@
+Subject: [PATCH] lenovo-y700g4: SdccDxe 也从 APRIORI FV 与 [Components] 里摘掉（补 R46 的漏）
+
+2026-11-07R53 y700-elden（p58）。R46 只改了 `DXE.inc`，但 `SdccDxe.inf` **同时**出现在：
+
+- `APRIORI.inc:75`（APRIORI FV 的文件清单 ⇒ 只改 DXE.inc 的话它仍会被拉进来 dispatch），
+- `DXE.dsc.inc:41`（`[Components]`）。
+
+本补丁把这两处同步注掉，R46 的「不 dispatch SdccDxe」才真正成立（与 p55 摘 `QcomWDogDxe`
+时的三处同步同一条纪律：**APRIORI.inc / DXE.inc / DXE.dsc.inc 三处都要动**）。
+
+---
+diff --git a/Platforms/PakalaPkg/Device/lenovo-y700g4/APRIORI.inc b/Platforms/PakalaPkg/Device/lenovo-y700g4/APRIORI.inc
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/APRIORI.inc
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/APRIORI.inc
+@@ -72,7 +72,9 @@
+     
+     INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
+     INF MdeModulePkg/Universal/FvSimpleFileSystemDxe/FvSimpleFileSystemDxe.inf
+-    INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
++    # 2026-11-07R53 y700-elden: 与 R46（DXE.inc）同步摘掉 —— 本件也在 APRIORI FV 清单里，
++    # 只改 DXE.inc 的话它仍会被 APRIORI 拉进来 dispatch（单变量就白做了）。
++    # INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
+     INF $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/PatchedBinaries/UFSDxe.inf
+ 
+     INF FatPkg/EnhancedFatDxe/Fat.inf
+diff --git a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.dsc.inc b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.dsc.inc
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.dsc.inc
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/DXE.dsc.inc
+@@ -38,7 +38,8 @@
+ $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SimpleTextInOutSerialDxe/SimpleTextInOutSerial.inf
+ 
+ $(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SPIDxe/SPIDxe.inf
+-$(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
++# 2026-11-07R53 y700-elden: 与 R46 同步（[Components] 里不再编它）
++#$(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/SdccDxe/SdccDxe.inf
+ #$(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/FeatureEnablerDxe/FeatureEnablerDxe.inf
+ 
+ #$(PACKAGE_NAME)/Device/$(TARGET_DEVICE)/Binaries/QcomPkg/Drivers/QRKSDxe/QRKSDxe.inf

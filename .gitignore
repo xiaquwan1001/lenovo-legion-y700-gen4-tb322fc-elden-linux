@@ -343,7 +343,7 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261107R48-p53/kernel.bin
 /reports/artifacts/uefi-20261107R48-p53/build.log
 # 上机证据里的 logfs.img（8 MiB 原始分区镜像）不入库，文本解码件入库
-/reports/artifacts/uefi-boot-20261107-20*/*.img
+/reports/artifacts/uefi-boot-*/*.img
 /reports/artifacts/uefi-20261107R49-p54/*.fd
 /reports/artifacts/uefi-20261107R49-p54/*.img
 /reports/artifacts/uefi-20261107R49-p54/*.gz
