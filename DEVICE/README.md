@@ -31,7 +31,7 @@
   `power-profiles-daemon` / `wl-clipboard` / `wtype` / gst 解码插件。固化三件套 = `rootfs/debian/daily-baseline.tsv` + `daily-baseline.sh`
   + `scripts/mobian-daily-baseline.sh`（`--check` rc=0 = 达标，幂等）。
   **未收口**：中文「组词上屏」未证实（合成 `wtype` 按键在 fcitx5/ibus 两臂均为字面量；须屏上真点一次）；
-  **内核缺 `CONFIG_ZRAM`** ⇒ `zramswap.service` 已 mask（脚本有内核门，补 `CONFIG_ZRAM=m` 后自动解除）。
+  **内核缺 `CONFIG_ZRAM`** ⇒ `zramswap.service` 已 mask（脚本有内核门；配置侧 2026-11-07 已补 `CONFIG_ZRAM=m`，编进镜像后自动解除）。
   证据 `reports/mobian-daily-baseline-20261107.md`、任务行 `TASKS` G1-37、坑 `PITFALLS` §05 #538–#541。
 - ★**2026-11-06 傍晚（历史快照，已被上一条取代）—— 设备在 Linux（`vk172`，持久根 `/dev/sda17` ext4），`boot_b` 未动（`fb55997c…`）**：
   11-05 夜 → 11-06 傍晚两轮 UEFI 实验**全部 `fastboot boot` RAM 件、零写盘**（11-06 傍晚一轮 26 发），

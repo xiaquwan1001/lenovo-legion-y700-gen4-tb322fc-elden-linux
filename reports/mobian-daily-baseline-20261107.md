@@ -138,12 +138,23 @@ $ bash scripts/mobian-daily-baseline.sh --check
   ① 有候选 ⇒ 收口；② 无候选但字面量上屏 ⇒ 换 C11 的 squeekboard 栈（`squeekboard` 已在 apt-list，配 `elden-ime-focusd`）；
   ③ 无候选且无反应 ⇒ 用 `fcitx5 --verbose '*'`（或 `journalctl --user -u fcitx5 -f`）看 IC 是否 `CreateInputContext`。
 
-### 5.2 🆕 内核缺 `CONFIG_ZRAM`（G1 配置面缺口）
+### 5.2 ✅ 内核缺 `CONFIG_ZRAM`（配置侧已补，2026-11-07 同日）
 
 `modprobe zram` → `FATAL: Module zram not found in directory /lib/modules/7.3.0-rc7-…`；
 `lsmod | grep zram` = 0；`systemctl start zramswap` 每次开机 FAILED。
 ⇒ 不是包问题，是 `arch/arm64/configs/*`（本工程 `config-daily-c1` 系列）没开 `CONFIG_ZRAM`（且大概率也没 `CONFIG_ZSWAP`）。
-处置：本脚本 mask 该 unit（可逆），**配置侧补 `CONFIG_ZRAM=m` + `zram-tools` 即可生效**；16 GB 机器上属 P2，不阻塞。
+处置：本脚本 mask 该 unit（可逆）。
+
+**配置侧已补齐（2026-11-07）**：
+- `patches/config-daily-c1` 与 `patches/config-vk163-modular-v2-20261026` 均写入 `CONFIG_ZRAM=m` + `CONFIG_ZSMALLOC=m` + LZO backend
+  （`ZRAM_BACKEND_LZO=y` / `FORCE_LZO=y`，其余 backend 保持关闭）。
+- 判据（在 `build/daily`，7.3-rc7 树）：seed 该 config → `make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION= olddefconfig`
+  ⇒ `CONFIG_ZRAM=m` / `CONFIG_ZSMALLOC=m` 解析成立；**第二遍 olddefconfig 零变化**；
+  `scripts/check-modular-config.sh` → `PASS: 锚点全部 =y（27 个）/ olddefconfig 幂等 / tristate 自洽`；
+  `make modules M=drivers/block/zram`（`KBUILD_MODPOST_WARN=1`，无 vmlinux 时属预期）→ `zram.ko` **786 792 B**。
+- **尚差一步**：编进日常镜像并上机（现役 vk172 内核仍无 `zram` 模块）。镜像一旦带 `zram.ko`，
+  `rootfs/debian/daily-baseline.sh` 的内核门会自动**解除** `zramswap` 的 mask，无需人工。
+- 树卫生：验证用的 `.config` 已还原（备份 `/tmp/daily-config-before-zram-20261107`），`build/` 不入库。
 
 ### 5.3 `p7zip-full` 在 sid 已无此包名
 
