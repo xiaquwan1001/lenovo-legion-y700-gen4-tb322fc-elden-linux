@@ -88,6 +88,14 @@
   `reports/uefi-p45-ebscreen-prebuilt-20261107.md`。**同一轮把 `apply_patch()` 加了
   `--ignore-whitespace` 兜底、`revert_patch()` 不再吞错（`PITFALLS #545`）。**
 
+- **2026-11-07 深夜 世代（p46，✅ 上机成功：UEFI 路径真起内核）**：
+  `p46` = `p45` + `R41-noebdump`（删掉 `SbDumpLogNoBs("posteb")` 整段 —— p45 实锤 EB 之后
+  `BlkIo->WriteBlocks` 读出 0 ⇒ `blr 0`；并给 `PreparePlatformHardware()` 加 `pph-go`/`pph-ok`）。
+  配方 `p46-recipe.txt`；镜像 `out/r21-sbstop-p46/uefi-preamble46-r1.img`（`e78b86bc…`）；
+  上机账/证据 `reports/uefi-p46-kernel-boot-success-20261107.md`。**纪律：UEFI 路径必须
+  `fastboot boot` 之后再发 `fastboot continue`；且内核 cmdline 来自 `boot_b` 头部，
+  `sbstop=`/`sbprobe=` 走这条路无效（`PITFALLS #547`）。**
+
 ## 2. 重建与"可复现"的精确含义
 
 ```bash

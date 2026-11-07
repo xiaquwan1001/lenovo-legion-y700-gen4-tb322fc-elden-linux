@@ -1,0 +1,84 @@
+Subject: [PATCH] 删掉 EB 之后的磁盘转储（p45 实锤 `BlkIo->WriteBlocks` 在 EB 后读出 0）+ PPH 段上屏
+
+2026-11-07R41 y700-elden：p45 上机一发（零写盘，`fastboot boot` + `continue`）拿到关键一帧：
+
+    [K] posteb-go
+    [K] FLT pc=00000000 esr=86000007 ... x03=00004000 x04=CFCFA810 ...
+
+判定链：
+ 1. `eb-go`/`eb-ret st=`/`bb4`/`posteb-go` 都出现过 ⇒ **`ExitBootServices()` 本身完全正常**，
+    EB 段不是崩点（p37 起一直怀疑的「EB 后立刻死」= 我方探针自杀）；
+ 2. 崩点在 `SbDumpLogNoBs("posteb")` 内部：`x03=0x4000`（BufferSize）、`x04`=静态缓冲指针
+    正是 `WriteBlocks(This, MediaId, Lba, 0x4000, Buf)` 的参数；
+ 3. 静态反汇编（`LinuxLoader.map` 定址 + `llvm-objdump`）证实：`SbDumpLogNoBs` 内联了
+    `SbWriteLogWindowNoBs`，`0x4c14: blr x9`，而 `x9` 来自前一拍的 `ldr x9,[x20,#0x20]`
+    = `EFI_BLOCK_IO_PROTOCOL.WriteBlocks`。**EB 之后这个字段读出 0** ⇒ `blr 0` ⇒ `pc=0` IABT
+    （`esr=86000007` = 同 EL 指令异常 / 翻译 fault level 3）。
+ 4. 机制：`ExitBootServices()` 释放 boot-services 拥有的内存并卸载非 runtime 映像 ⇒ 缓存的
+    `BlkIo` 协议实例失效。**「EB 后用缓存 BlkIo 落盘」结构性不可用**，不是再补一枚能修的。
+
+本补丁：
+ - 删掉 `SbDumpLogNoBs("posteb")` 及其前后标记与 `[K] post-dump-ok`，换一行 `[K] posteb-skip`；
+ - `PreparePlatformHardware()` 前后加 `[K] pph-go` / `[K] pph-ok`（这段此前只有 `JUMP-BANNER` 一行，
+   「PPH 卡住」与「跳内核之后崩」分不开）。
+
+判据（p46 一发）：屏上应依次出现 `eb-go` → `eb-ret st=Success` → `bb4` → `posteb-skip` →
+`EB-OK st=` → `pph-go` → `pph-ok` → `[K] JUMP-BANNER eb=Success`；此后若仍崩，就**真的**是
+`PreparePlatformHardware()`/跳内核段，而不是自家探针。若内核能起（DSI 亮屏/SSH 出现），
+则 UEFI 间接引导的文件级目标达成。
+
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1427,20 +1427,21 @@
+                              ((gBS != NULL) ? (UINT64)(UINTN)gBS->AllocatePool : 0));
+     SerialPortLogPutString (SbMark);
+   }
++  // 2026-11-07R41 y700-elden: **EB 之后的磁盘转储整段删掉**（p45 上机实锤它是自杀）。
++  // 屏上拿到 `[K] eb-go` → `eb-ret st=` → `bb4` → `posteb-go` → 然后 `[K] FLT pc=00000000
++  // esr=86000007`（IABT），x03=4000 / x04=缓冲指针 正是 `WriteBlocks(This, MediaId, Lba,
++  // 0x4000, Buf)` 的参数 ⇒ 崩在 `blr x9`，而 x9 = `[BlkIo+0x20]` = `WriteBlocks` 读出 **0**。
++  // 静态反汇编证实：`SbDumpLogNoBs` 内联了 `SbWriteLogWindowNoBs`，0x4c14 处 `blr x9`，
++  // x9 来自 `ldr x9, [x20, #0x20]`（`EFI_BLOCK_IO_PROTOCOL.WriteBlocks` 偏移 0x20）。
++  // 机制：`ExitBootServices()` 会释放 boot-services 拥有的内存/卸载非 runtime 映像，
++  // 缓存的 `BlkIo` 协议实例（及其函数表）随之失效 ⇒ 读出来是 0。**这条通道结构性不可用**，
++  // 不是「再加一个补丁」能修的；EB 之后的取证只能靠屏（R39 的屏显标记 + R40 的不清屏）。
+   {
+     CHAR8  SbLine[64];
+     UINTN  SbLen;
+-    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] posteb-go\n\r");
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] posteb-skip\n\r");
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
+   }
+-  SbDumpLogNoBs ("posteb");
+-  {
+-    CHAR8  SbLine[64];
+-    UINTN  SbLen;
+-    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] posteb-ok\n\r");
+-    SerialPortWrite ((UINT8 *)SbLine, SbLen);
+-  }
+-  SerialPortLogPutString ("[K] post-dump-ok\n\r");
+   // 2026-11-06R22 y700-elden: EB 之后打一行（R21 之后屏显写已安全：惰性初始化 + 448 KiB 硬边界）。
+   // 与 banner 分行是故意的：EB 卡住时屏上只有这一行，EB 正常时它会被 banner 顶掉/并排可见。
+   {
+@@ -1457,7 +1458,21 @@
+     goto Exit;
+   }
+ 
++  // 2026-11-07R41 y700-elden: EB 段之后每一步也上屏（此前这一整段只有 JUMP-BANNER 一行，
++  // 「PPH 卡住」与「跳内核之后崩」分不开）。
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] pph-go\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   PreparePlatformHardware ();
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] pph-ok\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   SB_STOP (42, "42");   // 2026-11-06R3: PreparePlatformHardware 之后、跳内核之前
+ 
+   BootStatsSetTimeStamp (BS_KERNEL_ENTRY);

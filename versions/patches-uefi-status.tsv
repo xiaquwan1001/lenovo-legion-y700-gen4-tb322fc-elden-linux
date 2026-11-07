@@ -79,3 +79,4 @@ dir	patches	in_recipe	status	reason	evidence
 20261107R38-cached-dump	1	1	ACTIVE	SbDumpLog 先走缓存 BlkIo 直写（**预防性**；后证 preeb 转储本来就成功）	patches/uefi/p43-recipe.txt；同上
 20261107R39-ebscreen	1	1	ACTIVE	p41/p43 崩在 preeb 段分不下去：把 SbDumpLog 三步（in/ring-ok/write）+ EB 段每步（eb-go/eb-ret/bb4/posteb-go/posteb-ok）全改屏显	patches/uefi/p45-recipe.txt；reports/uefi-p45-ebscreen-prebuilt-20261107.md
 20261107R40-noclear	1	1	ACTIVE	异常 dump 不再清屏（R30 清屏会抹掉崩溃前全部 [K] 标记，而那是唯一判据）；R29 后 63 行装得下	同上
+20261107R41-noebdump	1	1	ACTIVE	删掉 EB 后落盘（p45 实锤 BlkIo->WriteBlocks 读出 0 ⇒ blr 0）+ PPH 段 pph-go/pph-ok；**删掉这枚探针后 UEFI 路径一发打通内核**	patches/uefi/p46-recipe.txt；reports/uefi-p46-kernel-boot-success-20261107.md

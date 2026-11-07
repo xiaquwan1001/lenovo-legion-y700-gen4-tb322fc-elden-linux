@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p46-kernel-boot",
+  "ts": "2026-11-07T10:11:41Z",
+  "vk": "",
+  "image": "out/r21-sbstop-p46/uefi-preamble46-r1.img",
+  "image_sha256": "e78b86bc00a4172cc010307fa6f7165f387a056dbdbb027d479f8799f8d43a53",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "fastboot-boot",
+  "probe": "none",
+  "verdict": "success",
+  "log_dir": "reports/artifacts/uefi-p46-boot-success",
+  "note": "UEFI(BDS->LinuxLoader) 真实交棒内核成功：fastboot boot p45 崩在 EB 后 BlkIo 转储；p46 删除该转储后 DDR 环日志拿到 eb-go/EBC-ret0/eb-ret st=Success/bb4/posteb-skip/EB-OK/pph-go/pph-ok/JUMP-BANNER，随后内核 7.3.1-debug-vk184 #2 (boot_b) 起来：DSI connected/wlp1s0 关联/fastrpc-adsp 在/root=/dev/sda17"
+}
