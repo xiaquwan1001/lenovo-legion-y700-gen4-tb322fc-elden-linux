@@ -1,6 +1,6 @@
 # M1-U6 补丁：`qcom_q6v5_pas` 成功路径释放 DTB 固件（2026-10-27）
 
-面向上游 `linux-remoteproc` 的小修。**未投递**（等用户批准）。证据与分析 =
+面向上游 `linux-remoteproc` 的小修。**已投递**（2026-10-27 13:29Z，MID `20261027132944.242550-1-xiaqinghuan@mail.ustc.edu.cn`，patchwork `linux-remoteproc 1/1` 在档，见 `reports/mail-triage-20261030.md`）。证据与分析 =
 `reports/m1-u6-pas-dtbfw-leak-20261027.md`（本目录只放补丁与机械门）。
 
 ## 内容

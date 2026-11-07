@@ -12,7 +12,7 @@
   linux-next 内容生成，**5 枚顺序 `git apply` 到 linux-next 全绿**。
 - **构建树**：`build/aw-series` 分支 `aw-v2-fix`，tip `1bcb43ad8`；base commit
   `5197725fc`（= `24a19b953` + 上面那行 include，**不属于提交系列**）。
-- **状态**：draft only —— **未投递、未上行**；投递需用户逐系列批准。
+- **状态**：**已投递**（2026-10-27 13:29Z，`[PATCH 0/5]` 共 6 封，MID `20261027132929.242158-1..6`；patchwork `linux-input 5/5` 在档，见 `reports/mail-triage-20261030.md`；详情见下文「投递记录」）。
 
 ## 与 v1 的差别（为什么少了「固件波形装载」）
 

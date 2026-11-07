@@ -1,0 +1,48 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] LinuxLoader: drop the orphan BootIntoFastboot = TRUE (let UEFI boot by itself)
+
+把 LinuxLoader 里漏删的裸语句 `BootIntoFastboot = TRUE;` 删掉 —— UEFI 才能自己起内核
+
+2026-11-07R42 y700-elden。上游把 `GetKeyPress` 整段注释掉时，`if (KeyPressed == SCAN_DOWN)`
+这条分支的**语句体**（`BootIntoFastboot = TRUE;`）没被一起注释，成了裸语句 ⇒ 本映像
+**永远** `BootIntoFastboot = TRUE`，进 UEFI 侧 fastboot 等宿主。
+
+p46 已经证明「continue 之后」的链路完全通（`CmdContinue` → `LoadImageAndAuth` → `BootLinux`
+→ EB → PPH → `LinuxKernel`，内核真起来）。所以这一句不是安全门，是**多余的门**：
+UEFI 起来之后无法自己引导，必须插着 USB 让宿主发 `fastboot continue`。
+
+删掉后正常启动直接走 `LoadImageAndAuth` → `BootLinux`；回退通道一个不少：
+
+- fastboot 入口仍由 `switch (BootReason)` 的 `FASTBOOT_MODE` 分支提供（`reboot bootloader` 照旧进 fastboot）；
+- `LoadImageAndAuth` 失败仍然 `goto fastboot`（原有行为）；
+- `cmdline` 仍来自 `boot_b` 头部（`PITFALLS #547` 不变）。
+
+静态判据：`BootIntoFastboot` 在 `LinuxLoader.c` 里只剩两处赋值 —— 声明处 `FALSE` 与
+`FASTBOOT_MODE` 分支的 `TRUE`；`grep -c '^ *BootIntoFastboot = TRUE'` 应为 1。
+
+上机判据（p47 一发，零写盘）：
+- 屏上/环内依次 `[K] flags fb=0 …` → `[K] LIA st=Success` → `[K] pre-BL` → EB 段 `[K] eb-go…pph-ok` → `[K] JUMP-BANNER`；
+- 宿主**不发** `continue` 也能起来：`ssh root@192.168.7.1` 通、`uname -r` = `7.3.1-debug-vk184-…`；
+- ⚠ 副作用：不再进 fastboot ⇒ 本次不再有 `fastboot continue` 可用；若失败会落到 `goto fastboot`
+  （LIA 失败）或停在原处，恢复靠物理断电 + ABL fastboot（键组合）。
+
+---
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -240,7 +240,13 @@
+   //Status = GetKeyPress (&KeyPressed);
+   //if (Status == EFI_SUCCESS) {
+   //  if (KeyPressed == SCAN_DOWN)
+-      BootIntoFastboot = TRUE;
++  //    2026-11-07R42 y700-elden: 这一行原先是**裸语句** `BootIntoFastboot = TRUE;`（上游把
++  //    GetKeyPress 分支整段注释掉时漏删了它）⇒ 本映像**永远**进 UEFI 侧 fastboot，必须由宿主
++  //    `fastboot continue` 才能继续。p46 已证明 continue 之后链路是通的（EB→PPH→LinuxKernel），
++  //    所以这里只是**一句多余的门**：删掉它，正常启动就直接走 LoadImageAndAuth → BootLinux。
++  //    回退通道不变：fastboot 入口仍由下面 BootReason switch 的 FASTBOOT_MODE 分支提供
++  //    （`reboot bootloader` 照旧进 fastboot），LoadImageAndAuth 失败也仍然 `goto fastboot`。
++  //    BootIntoFastboot = TRUE;   // 2026-11-07R42: 删除（理由见上）
+   //  if (KeyPressed == SCAN_UP)
+   //    BootIntoRecovery = TRUE;
+   //  if (KeyPressed == SCAN_ESC)
+

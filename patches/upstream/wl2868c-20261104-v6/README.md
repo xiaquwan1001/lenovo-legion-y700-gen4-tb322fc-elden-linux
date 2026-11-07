@@ -1,6 +1,6 @@
 # wl2868c v6（2026-11-04）— 系列说明与答复要点
 
-> **状态：只备料，未发信。** 发信由编排者执行（本目录 = 待投递产物）。
+> **状态：已投 `[PATCH v6 0/5]`（2026-11-04 03:26Z，6 封全 `Result: 250`，cover `<20261104032648.209747-1-xiaqinghuan@mail.ustc.edu.cn>`）**；报告 `reports/mail-send-20261104-wl2868c-v6-dwc3.md`；后续 v7/v8/v9 见 `../wl2868c-v7-20261106/`、`../wl2868c-v9-20261107/`。
 > 本轮未 commit 主仓、未 `git send-email`、未碰设备、未改 SSOT 文档。
 > 分支：`build/wl-v2` @ `wl2868c-v6`（不在主仓）。
 > base commit（40 位）：**`05441d697f7f9a927264f4058cbbc6a03dfcac9d`**（torvalds master，`v7.3-20183-g05441d697f7f`，2026-11-03）。

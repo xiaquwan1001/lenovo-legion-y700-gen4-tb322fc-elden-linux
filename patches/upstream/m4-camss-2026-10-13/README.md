@@ -35,6 +35,6 @@ git -C build/m1-rebase-worktree apply --check patches/upstream/m4-camss-2026-10-
 
 ## 未决
 
-- MAINTAINERS 条目的 `M:` 为占位身份 `Elden Mainline Agent <elden-mainline@localhost>`，**投递前必须替换为真实维护者**（项目口径：凭据/身份属外部干预，须用户决定）。
+- MAINTAINERS 条目的 `M:` 曾为占位身份；**本目录补丁已投**（2026-10-27，gt9764+s5kjns `[PATCH 0/2]` MID `20261027051048.213177-1..3`；wl2868c binding v1 MID `20261027051055.213301-1`，发件以真实身份、归档见 `reports/upstream-status-20261105.md` §1 M4-1 行）。
 - 本草案只含 binding + MAINTAINERS，**不含驱动**；对应驱动在 M4-1 系列（`drivers/media/i2c/*.c`、`drivers/regulator/wl2868c-regulator.c`）。
 - 未做全量构建/上机验证（binding 只需 schema 校验）。

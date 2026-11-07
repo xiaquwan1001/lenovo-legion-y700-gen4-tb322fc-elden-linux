@@ -12,7 +12,7 @@
 > 基线分支的两枚提交分工与 E2 会话结论一致（`../TASKS/sessions/2026-10-14-m1-73-mainlining.md` §3）：
 > **E1b 无探针版 = 上游件**；**`0001`（ath12k）/ Kconfig / 板 DTS = 本地件**。
 
-## 0001 —— 唯一可上游补丁（未发送）
+## 0001 —— 唯一可上游补丁（已投 2026-10-19，MID `<20261019130041.305805-1-xiaqinghuan@mail.ustc.edu.cn>`，lore `/linux-arm-msm/` 已归档）
 
 **文件**：`0001-drm-msm-dsi-phy-program-PLL_SYSTEM_MUXES-on-the-firs.patch`
 

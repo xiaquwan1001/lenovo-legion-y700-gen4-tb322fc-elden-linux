@@ -291,3 +291,23 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261107R41-p46/*payload*
 /reports/artifacts/uefi-20261107R41-p46/kernel.bin
 /reports/artifacts/uefi-20261107R41-p46/build.log
+
+# 2026-11-07 深夜 UEFI R42/R43（p47/p48/p49）构建归档：只入库 BootShim.bin + manifest + SHA256SUMS + recipe
+/reports/artifacts/uefi-20261107R42-p47/*.fd
+/reports/artifacts/uefi-20261107R42-p47/*.img
+/reports/artifacts/uefi-20261107R42-p47/*.gz
+/reports/artifacts/uefi-20261107R42-p47/*payload*
+/reports/artifacts/uefi-20261107R42-p47/kernel.bin
+/reports/artifacts/uefi-20261107R42-p47/build.log
+/reports/artifacts/uefi-20261107R43-p48/*.fd
+/reports/artifacts/uefi-20261107R43-p48/*.img
+/reports/artifacts/uefi-20261107R43-p48/*.gz
+/reports/artifacts/uefi-20261107R43-p48/*payload*
+/reports/artifacts/uefi-20261107R43-p48/kernel.bin
+/reports/artifacts/uefi-20261107R43-p48/build.log
+/reports/artifacts/uefi-20261107R43b-p49/*.fd
+/reports/artifacts/uefi-20261107R43b-p49/*.img
+/reports/artifacts/uefi-20261107R43b-p49/*.gz
+/reports/artifacts/uefi-20261107R43b-p49/*payload*
+/reports/artifacts/uefi-20261107R43b-p49/kernel.bin
+/reports/artifacts/uefi-20261107R43b-p49/build.log

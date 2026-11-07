@@ -1,0 +1,66 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH v2] BootLinux: tag the cmdline with elden_bootpath=uefi (exclusive hand-off proof)
+
+给「UEFI 交棒」一个内核侧可见的排他判据：cmdline 追加 `elden_bootpath=uefi`
+
+2026-11-07R43 y700-elden（v2，2026-11-07 深夜修正）。
+
+## 为什么要这个令牌
+
+p46 曾判「UEFI 间接引导打通」，唯一证据是易失 DDR 环里的 `…pph-ok → JUMP-BANNER`。该证据
+**不能排除**替代解释：跳转后内核早崩 → 复位 → ABL 自己引导 `boot_b`（同一个 `uname -r`、
+同一个根分区、同样 `efi: UEFI not found.`）。事后核查确认那次判定还叠加了一个更硬的错误：
+主机日志里「内核起来」那条 USB 事件（`1d6b:0104`，product `TB322FC mainline`）序列号是
+**`HA2CB1KY`（U1，另一台机器）**，不是被测的 `HA2EXB0E`（U2）⇒ 结论撤回（`PITFALLS #549`）。
+
+## 改法与判据
+
+`UpdateCmdLineParams()`：先按 `Param->CmdLineLen + len(tag) + 1` 扩容目标缓冲，
+再在所有已有参数拼接完之后追加 ` elden_bootpath=uefi`（`AsciiStrCatS`，容量已预留）。
+
+- 起来的内核 `/proc/cmdline` 含 `elden_bootpath=uefi` ⇒ **本次是 UEFI 交棒**（排他：ABL 引导不出这个串）；
+- 不含 ⇒ 不是 UEFI 交棒（或 UEFI 未走到 `UpdateCmdLine`）。
+
+## v2 删掉的部分（第一发实测否证）
+
+v1 还在 `LinuxKernel()` 之前加了 `SbDumpLog("jump")`（想用 logfs 记一条「到了跳转点」）。
+**p48 上机一发即触发 pc=0 IABT**：`SbDumpLog` 在 `ExitBootServices()` 之后调用，
+`gBS` 已失效 ⇒ `AllocatePool` 读出 0 ⇒ `blr 0`（与 `PITFALLS #543/#546` 同一条坑）。
+证据：`reports/artifacts/uefi-20261107R43-p48/screen-dump-p48-fault.txt`
+（`[K] dump-in jump` 紧随 `[K] FLT pc=00000000 esr=86000010`）。
+⇒ v2 只保留 cmdline 令牌；「到达跳转点」的判据改用既有的 RAM checkpoint `SbBbMark(5)`
+与屏上 `[K] JUMP-BANNER`，不再在 EB 之后碰任何 boot service。
+
+---
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/UpdateCmdLine.c b/Platforms/QcomModulePkg/Library/BootLib/UpdateCmdLine.c
+--- a/Platforms/QcomModulePkg/Library/BootLib/UpdateCmdLine.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/UpdateCmdLine.c
+@@ -395,7 +395,15 @@
+ {
+   CONST CHAR8 *Src;
+   CHAR8 *Dst;
+-  UINT32 MaxCmdLineLen = Param->CmdLineLen;
++  UINT32 MaxCmdLineLen;
++  // 2026-11-07R43 y700-elden: 给「本次是 UEFI 交棒」留一个**内核侧可见**的排他令牌。
++  // 动机：UEFI 与 ABL 启的是同一份 `boot_b`（同样 `uname -r`/同样根、`efi: UEFI not found.`），
++  // 2026-11-07 p46 的「打通」判定只有易失 DDR 环作证，无法排除「跳转后内核早崩 → 复位 →
++  // ABL 自己引导」这条替代解释（PITFALLS #549）。令牌写进 cmdline 后，`/proc/cmdline` 里
++  // 有没有它就能一刀切；ABL 自己引导时不会出现（它只拼 boot_b 头部的 cmdline）。
++  STATIC CONST CHAR8  SbBootPathTag[] = " elden_bootpath=uefi";
++
++  MaxCmdLineLen = Param->CmdLineLen + (UINT32)AsciiStrLen (SbBootPathTag) + 1;
+ 
+   Dst = AllocateZeroPool (MaxCmdLineLen);
+   if (!Dst) {
+@@ -555,6 +563,10 @@
+     Src = Param->SoftSkuStr;
+     AsciiStrCatS (Dst, MaxCmdLineLen, Src);
+   }
++
++  // 2026-11-07R43: 排他令牌放最后（缓冲区上面已按 +len+1 扩容，不会越界）。
++  AsciiStrCatS (Dst, MaxCmdLineLen, SbBootPathTag);
++
+   return EFI_SUCCESS;
+ }
+ 
+

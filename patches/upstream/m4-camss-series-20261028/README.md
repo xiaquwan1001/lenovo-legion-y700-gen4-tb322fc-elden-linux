@@ -4,8 +4,7 @@
 `patches/upstream/m4-camss-2026-10-13/sent-20261027/`）。
 规则 = `reports/upstream-policy-20261013.md`；拆解方案 = `reports/m4-camss-project-20261013.md` §2.1。
 
-**状态：可发（未发）。** `git send-email --dry-run` 全绿（10 × `Result: OK`，10 封同一线程 `…-306629-1..10`，
-正文纯 ASCII）；**发送需用户按系列批准**。上一版草稿（7 提交、含 `NOT FOR UPSTREAM` 提交、未拆 R3/R4）
+**状态：v1 已投**（2026-10-28 03:41Z，`[PATCH 0/9]` 10 封全 `Result: 250`，cover MID `<20261028034105.326535-1..10@mail.ustc.edu.cn>`，实发转录 `out/mail-20261028/m4-camss-20261028-send.txt`；v2 见 `../m4-camss-series-20261028-v2/`）。上一版草稿（7 提交、含 `NOT FOR UPSTREAM` 提交、未拆 R3/R4）
 保留在 `../m4-camss-series-20261027/` 作历史，**不要再发那一版**。
 
 ## 1. 基线与复现

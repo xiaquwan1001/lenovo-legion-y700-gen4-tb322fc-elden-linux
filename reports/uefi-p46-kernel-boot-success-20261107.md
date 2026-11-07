@@ -1,4 +1,27 @@
-# UEFI p46：**间接引导成功** —— BDS → `LinuxLoader` → 内核真正起来（2026-11-07 夜）
+# UEFI p46：BDS → `LinuxLoader` 走到跳内核；**「内核真起来」= 误判，已撤回（2026-11-07 夜；2026-11-07 深夜更正）**
+
+> ## ⛔ 更正（2026-11-07 深夜，第六轮整理 + 用户质疑）
+>
+> **本文 §0/§3 的「UEFI 间接引导打通 / 内核真起来」结论撤回，降级为「未证实」。**
+>
+> 判据错误（两条，均可复现）：
+> 1. **USB 事件没按 SerialNumber 归属**：主机日志里 17:31:56 上线的 `1d6b:0104`（product
+>    `TB322FC mainline`）序列号是 **`HA2CB1KY`（U1，另一台机器）**，不是被测的 **`HA2EXB0E`（U2）**；
+>    我把它当成了「U2 的内核起来」。`ssh root@192.168.7.1` 通也不能区分两台机（地址相同，谁插着就是谁）。
+> 2. **只有易失 DDR 环作证**：环里 `…pph-ok → JUMP-BANNER eb=Success` 只证明「跑过一条走到跳转的
+>    UEFI 链」，**不能排除**「跳转后内核早崩 → 复位 → ABL 自己引导 `boot_b`」——同一个 `uname -r`、
+>    同一个根分区、同样 `efi: UEFI not found.`；而环是环形缓冲、跨启动残留，同一次 32 KiB 里就混着
+>    别的世代的**乱码**记录（`dulp` / `pr%Db lEn=802t` / ``dl`gs db=1``）。
+>
+> 后续实证（2026-11-07 19:1x，p47/p48 两发）：`flags fb=0` + `LIA st=Success` + `pre-BL` + `BL-in`
+> 证明 UEFI 确实进了 `BootLinux()`，但两发**都死在 preeb 之后**（设备黑屏、USB 全无），
+> 即「正常路径交棒内核」至今**未成功过**；p46 的成功走的是我手动触发的 `fastboot continue` 路径，
+> 且其结果证据如上不可靠。
+>
+> 已登记的排他判据（`patches/uefi/20261107R43-bootpath-proof/`）：UEFI 把 ` elden_bootpath=uefi`
+> 追加进 cmdline（内核侧 `/proc/cmdline` 可见，ABL 引导不会出现），并在跳转前写
+> `SBLOG01 tag=jump` 到 logfs（持久）。**下一发以此二判据为准**；坑见 `PITFALLS #549`。
+
 
 > 线：G1-29（UEFI 间接引导）。承接 `reports/uefi-p45-ebscreen-prebuilt-20261107.md`（p45 备料）
 > 与 `reports/uefi-p39-p43-continue-20261107.md`（`fastboot continue` 纪律）。
@@ -6,9 +29,9 @@
 
 ---
 
-## 0. 一句话结论
+## 0. 一句话结论（**已撤回，见文首更正**）
 
-**UEFI 间接引导链路打通**：`fastboot boot` 起 Mu UEFI → 本树写死的 fastboot → 宿主发
+~~**UEFI 间接引导链路打通**~~：`fastboot boot` 起 Mu UEFI → 本树写死的 fastboot → 宿主发
 `fastboot continue` → `LinuxLoader`（`QcomModulePkg`，AVB 解锁态走 `ALLOW_VERIFICATION_ERROR`）
 → `BootLinux()` → `CheckAndSetVmData` → `ExitBootServices()`（**成功**）→ `PreparePlatformHardware()`
 → `LinuxKernel()`，**内核 7.3.1 真起来**（DSI connected / WiFi 关联 / `root=/dev/sda17`）。

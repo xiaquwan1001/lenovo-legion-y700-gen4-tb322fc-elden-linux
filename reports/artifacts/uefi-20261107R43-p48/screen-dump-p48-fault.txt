@@ -1,0 +1,30 @@
+# p48 上机（2026-11-07 19:14，fastboot boot 零写盘）屏上复现的故障转储（用户拍照转录）
+# 判读：JUMP-BANNER 之后 [K] dump-in jump 里出现 pc=0 IABT
+#   ⇒ R43 把 SbDumpLog("jump") 放在 ExitBootServices 之后 ⇒ gBS 失效 ⇒ blr 0
+#   ⇒ 与 PITFALLS #546/#543 同一条坑（EB 后不得再用 boot services / cached BlkIo）
+[K] dump-tag=preeb cached=Success
+[K] preeb-ok
+[K] eb-go
+[K] DBI dump table info not found, Status = (0x0)
+[K] APP Log Flush : 0 ms
+[K] eb-ret st=Success
+[K] bb4
+[K] posteb-skip
+[K] EB-OK st=Success
+[K] pph-ok
+[K] JUMP-BANNER eb=Success
+[K] dump-in jump
+[K] FLT pc=00000000 lds=131/131 esr=86000010
+[K] FLT pc=00000000 lds=131/131 esr=86000010
+[K] sp=A764AC90 spsr=40000BC5 far=0
+[K] x00=4 x01=2000 x02=A764AC98
+[K] x03=40 x04=1 x05=A764AC98
+[K] x06=A0D50423538 x07=0 x08=0
+[K] x09=4 x10=1614800 x11=0
+[K] x12=0 x13=5 x14=4
+[K] x15=0 x16=0 x17=A
+[K] x18=1 x19=CFCF2690 x20=1
+[K] x21=E3F04000 x22=A7644F05 x23=CFCF0000
+[K] x24=CFCFE000 x25=8000000000000013 x26=CFCE0000
+[K] x27=CFD0F000 x28=CAB04024 x29=A764AE0
+[K] x30=CFCCB730 x31=0 x32=0

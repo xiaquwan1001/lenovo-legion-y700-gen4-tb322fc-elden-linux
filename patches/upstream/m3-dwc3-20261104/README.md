@@ -1,6 +1,6 @@
 # M3-1 dwc3 — 单一自足系列（v6 备料，2026-11-04）
 
-> 状态：**备料完成、门禁全绿、未发信**（发信由编排者按批执行）。
+> 状态：**已投 `[PATCH 0/3]`（2026-11-04 03:27Z，4 封全 `Result: 250`，cover `<20261104032706.210042-1-xiaqinghuan@mail.ustc.edu.cn>`）**；报告 `reports/mail-send-20261104-wl2868c-v6-dwc3.md`；后续 v7/v8 见 `../m3-dwc3-v7-20261106/`。
 > 本目录不含设备操作、不含主仓 commit。产物 = `0000-cover-letter.patch` + `0001..0003` + 本 README + `GATES.md` + `artifacts/`。
 
 ## 1. 这一版要解决的两条上游否决
