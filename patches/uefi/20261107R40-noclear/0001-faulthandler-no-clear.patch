@@ -1,0 +1,38 @@
+Subject: [PATCH] DefaultExceptionHandler: 异常 dump 不再清屏（清屏会抹掉崩溃前的全部 [K] 标记）
+
+2026-11-07R40 y700-elden: R30 在 dump 之前调 `SerialPortClearScreen()`，目的是把归因行钉在屏幕
+最上方；代价是**把崩溃前的全部 `[K]` 标记抹掉**。p41/p43 的判读（`preeb-ok`？`eb-go`？`eb-ret`？）
+恰恰只能靠那些标记，而 R30 的清屏让「崩在哪一步」重新变成不可判。
+
+R29 之后帧缓冲控制台几何已统一为像素语义（scale 4：79 列 × 63 行，满屏有界清屏 + 回顶），
+13 行 dump 直接**追加**在归因行之后完全放得下 —— 早先的标记最多被顶掉 13 行、仍留在屏上。
+
+本补丁：
+1. 删掉 `SerialPortClearScreen()` 调用（以及只为它存在的局部声明）；
+2. 归因行仍打两次（第一次在最前、第二次紧贴 dump 块），便于拍照定位；
+3. `sp/spsr/far` 与 x0..x28/FP/LR 的打印一字未改。
+
+判据（p45 一发）：屏上先是崩溃前的一串 `[K] …`（含 `preeb-go`/`eb-go` 等），紧接着 `[K] FLT …`、
+`[K] sp=…`、11 行 `[K] xNN=…`；**不再是**「只剩 FLT + 寄存器、前面的标记全没了」。
+--- a/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
++++ b/ArmPkg/Library/DefaultExceptionHandlerLib/AArch64/DefaultExceptionHandler.c
+@@ -350,13 +350,12 @@
+       SbReg[29] = SystemContext.SystemContextAArch64->FP;
+       SbReg[30] = SystemContext.SystemContextAArch64->LR;
+ 
+-      // 清屏：从 SerialPortLib 取不到头文件时也能用（同一库实例，BdsDxe 已初始化过）。
+-      {
+-        VOID EFIAPI SerialPortClearScreen (VOID);
+-        SerialPortClearScreen ();
+-      }
+-
+-      SerialPortWrite ((UINT8 *)SbLine, SbLen);   // 清屏后把归因行钉在最上面
++      // 2026-11-07R40 y700-elden: **不清屏**。R30 的清屏是为了把 dump 钉在屏幕最上方，
++      // 但它同时抹掉了崩溃前的全部 `[K]` 标记 —— 而 p41/p43 的判读恰恰只能靠那些标记
++      // （`preeb-ok`/`eb-go`/`eb-ret` 有没有出现）。R29 之后控制台有 63 行硬边界与有界滚动，
++      // 13 行 dump 直接追加在归因行之后即可，早先的标记最多被顶掉 13 行、仍留在屏上。
++      // 归因行在上面已经打过一次（第 1 行），这里**再打一次**紧贴 dump 块，便于拍照定位。
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
+ 
+       SbN = AsciiSPrint (SbBuf, sizeof (SbBuf), "[K] sp=%lx spsr=%lx far=%lx\n\r",
+                          (UINT64)SystemContext.SystemContextAArch64->SP,

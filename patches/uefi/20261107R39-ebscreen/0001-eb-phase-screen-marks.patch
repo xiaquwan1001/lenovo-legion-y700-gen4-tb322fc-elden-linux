@@ -1,0 +1,114 @@
+Subject: [PATCH] 把转储内部分步 + EB 段每一步都打成屏显（p41/p43 崩在 preeb 段，屏是唯一活着的通道）
+
+2026-11-07R39 y700-elden: p41/p43 两发都停在「`[K] preeb-go` 有、`[K] preeb-ok` 没有」，
+而 R38 加的 `[K] dump-tag=preeb cached=…` 也没留证 ⇒ 崩点在「进 `SbDumpLog("preeb")`」
+到「打出那行状态」之间，只靠现有标记再也分不下去了。本补丁把这段拆成三步：
+ - `[K] dump-in <tag>`（入口）
+ - `[K] dump-ring-ok <tag>`（`AllocatePool` 成功 + `SerialPortLogGet` 之前）
+ - `[K] dump-write <tag> len=<n>`（真正调 `SbWriteLogWindowNoBs()` 之前）
+配合已有的 `[K] dump-tag=%a cached=%r` / `preeb-ok`，一发就能定位到「分配 / 取环 / 写盘」哪一步。
+
+同时把 EB 段（`ShutdownUefiBootServices()` 前后）每一步也上屏 —— p37/p41/p43 都是 `posteb` 记录
+永远拿不到，只有屏能说话；R39 之后屏上会依次出现：
+`[K] eb-go` → `[K] eb-ret st=<status>` → `[K] bb4` → `[K] posteb-go` → `[K] posteb-ok`。
+全部只是 `SerialPortWrite`（R21 之后帧缓冲控制台惰性初始化、不碰 gBS），EB 前后都安全。
+
+判据（p45 一发）：
+ - 见 `dump-in` 不见 `dump-ring-ok` ⇒ 崩在 `AllocatePool(8192)` 本身（gBS 已失效）；
+ - 见 `dump-ring-ok` 不见 `dump-write` ⇒ 崩在 `SerialPortLogGet`（纯内存）—— 基本排除；
+ - 见 `dump-write` 不见 `dump-tag cached=` ⇒ 崩在写盘调用里（缓存 BlkIo 句柄失效）；
+ - 见 `preeb-ok` 且 `eb-go`/`eb-ret`/`bb4`/`posteb-go` 逐条出现 ⇒ 崩点已搬到 EB 之后，
+   按哪一条缺失继续二分（缺 `eb-ret` = 崩在 EB 调用内；缺 `posteb-ok` = 崩在 NoBs 写入）。
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -199,11 +199,26 @@
+   UINTN   RecLen;
+   CHAR8   Hdr[96];
+ 
++  // 2026-11-07R39 y700-elden: 这一段的**每一步**都要上屏。p41/p43 的 `preeb-ok` 都没出现，
++  // 而 R38 的 `[K] dump-tag=preeb cached=…` 也没有留证 ⇒ 崩点在「进 SbDumpLog」到「打那行」之间，
++  // 只有把入口/分配/取环三段各打一行才能把它钉死（屏是唯一在崩后还活着的通道）。
++  {
++    CHAR8  SbLine[80];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] dump-in %a\n\r", Tag);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   Cap = 8192;
+   Ring = AllocatePool (Cap);
+   if (Ring == NULL) {
+     return;
+   }
++  {
++    CHAR8  SbLine[80];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] dump-ring-ok %a\n\r", Tag);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   Len = SerialPortLogGet (Ring, Cap);
+ 
+   HdrLen = AsciiSPrint (Hdr, sizeof (Hdr), "SBLOG01 tag=%a len=%d\n--\n", Tag, Len);
+@@ -225,6 +240,13 @@
+     // `blr` 到 0（寄存器里那串 "Part"/"ufs " 正是句柄/卷名匹配的碎片）。
+     // 入口那次转储已经缓存了 logfs 的 BlkIo（`m_SbLogBlkIo`），所以这里**先用缓存直写**，
+     // 只有缓存不可用时才退回「枚举句柄」那条（现在已知会崩的）路径。
++    // 2026-11-07R39: 写盘前再打一行 —— 若屏上到此为止、没有 dump-tag 行，则崩在写盘调用里。
++    {
++      CHAR8  SbLine[96];
++      UINTN  SbLen;
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] dump-write %a len=%d\n\r", Tag, (UINT64)RecLen);
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    }
+     SbSt = SbWriteLogWindowNoBs (Rec, (UINT32)RecLen);
+     {
+       CHAR8  SbLine[112];
+@@ -1366,9 +1388,29 @@
+   DEBUG ((EFI_D_INFO, "\nShutting Down UEFI Boot Services: %lu ms\n",
+           GetTimerCountms ()));
+   /*Shut down UEFI boot services*/
++  // 2026-11-07R39 y700-elden: EB 段逐步屏显（`posteb` 记录永远拿不到时只有屏能说话）。
++  // 这几行都只是 SerialPortWrite（R21 之后帧缓冲控制台惰性初始化、不碰 gBS），EB 前后都能写。
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] eb-go\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   Status      = ShutdownUefiBootServices ();
+   SbEbStatus  = Status;
++  {
++    CHAR8  SbLine[80];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] eb-ret st=%r\n\r", (UINT64)Status);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   SbBbMark (4);   // 2026-11-06R23: checkpoint 4 = ShutdownUefiBootServices() 返回
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] bb4\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   // 2026-11-06R32: EB 段（USB redriver 重初始化 + I2C NACK 洪水）是屏上必然被冲刷的一段，
+   // 用缓存的 BlkIo 把它落盘一次（EB 之后没有 gBS，所以走 NoBs 版本；失败也无损失）。
+   {
+@@ -1385,7 +1427,19 @@
+                              ((gBS != NULL) ? (UINT64)(UINTN)gBS->AllocatePool : 0));
+     SerialPortLogPutString (SbMark);
+   }
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] posteb-go\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   SbDumpLogNoBs ("posteb");
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] posteb-ok\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   SerialPortLogPutString ("[K] post-dump-ok\n\r");
+   // 2026-11-06R22 y700-elden: EB 之后打一行（R21 之后屏显写已安全：惰性初始化 + 448 KiB 硬边界）。
+   // 与 banner 分行是故意的：EB 卡住时屏上只有这一行，EB 正常时它会被 banner 顶掉/并排可见。

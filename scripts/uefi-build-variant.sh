@@ -73,10 +73,17 @@ APPLIED=()
 
 # ---- 补丁应用（支持子模块内的补丁：路径按子模块根生成）----
 SUBMODULES="MU_BASECORE Common/MU Common/MU_TIANO Silicon/Arm/MU_TIANO Features/CONFIG Platforms/CranePkg Platforms/SurfaceDuoACPI"
+# 2026-11-07R39: 子模块里的补丁若含 CRLF，`git diff` 会把它归一化 ⇒ 裸 `git apply` 对不上，
+# 补丁被静默跳过（2026-11-07 的 R40「异常 dump 不清屏」就是这样没进配方）。
+# 现在每层都给一次 `--ignore-whitespace` 的兜底，只在严格 apply 失败后才用。
 apply_patch() {
 	local p=$1 sm
 	if git apply --check "$p" 2>/dev/null; then
 		git apply --verbose "$p" && { APPLIED+=(":$p"); return 0; }
+		return 1
+	fi
+	if git apply --check --ignore-whitespace "$p" 2>/dev/null; then
+		git apply --verbose --ignore-whitespace "$p" && { APPLIED+=(":$p"); echo "note: 以 --ignore-whitespace 应用 $p" >&2; return 0; }
 		return 1
 	fi
 	for sm in $SUBMODULES; do
@@ -85,21 +92,28 @@ apply_patch() {
 			git -C "$sm" apply --verbose "$p" && { APPLIED+=("$sm:$p"); return 0; }
 			return 1
 		fi
+		if git -C "$sm" apply --check --ignore-whitespace "$p" 2>/dev/null; then
+			git -C "$sm" apply --verbose --ignore-whitespace "$p" && { APPLIED+=("$sm:$p"); echo "note: 以 --ignore-whitespace 应用 $sm:$p" >&2; return 0; }
+			return 1
+		fi
 	done
 	echo "patch does not apply anywhere: $p" >&2
 	return 1
 }
 revert_patch() {
 	local sm=${1%%:*} p=${1#*:}
-	if [ -z "$sm" ]; then git apply -R "$p" 2>/dev/null || true
-	else git -C "$sm" apply -R "$p" 2>/dev/null || true; fi
+	if [ -z "$sm" ]; then
+		git apply -R "$p" 2>/dev/null || git apply -R --ignore-whitespace "$p" 2>/dev/null || return 1
+	else
+		git -C "$sm" apply -R "$p" 2>/dev/null || git -C "$sm" apply -R --ignore-whitespace "$p" 2>/dev/null || return 1
+	fi
 }
 reset_tree() {
 	# 必须逆序回滚：后打的补丁依赖先打的补丁的上下文
 	local i
 	for ((i=${#APPLIED[@]}-1; i>=0; i--)); do
 		p=${APPLIED[$i]}
-		[ -n "$p" ] && revert_patch "$p"
+		[ -n "$p" ] && { revert_patch "$p" || echo "WARN: 回滚失败，工作区可能残留改动: $p" >&2; }
 	done
 	cp "$BK/BootShim.S" "$SHIM_SRC"
 	[ -f "$BK/BootShim.bin" ] && cp "$BK/BootShim.bin" "$SHIM_BIN"

@@ -80,6 +80,14 @@
   **关键纪律**：本树 `BootIntoFastboot` 写死 TRUE ⇒ `fastboot boot` 之后**必须再发 `fastboot continue`**
   才会走 `BootLinux`（前四发就是漏了这一步）。崩点与判读见 `reports/uefi-p39-p43-continue-20261107.md`。
 
+- **2026-11-07 夜 世代（p45，已构建、静态复核 PASS，未上机）**：
+  `p45` = `p43` + `R39-ebscreen`（`SbDumpLog` 内三步上屏 `dump-in`/`dump-ring-ok`/`dump-write`，
+  EB 段每步上屏 `eb-go`/`eb-ret`/`bb4`/`posteb-go`/`posteb-ok`）+ `R40-noclear`（异常 dump
+  **不再清屏**——R30 的清屏会抹掉崩溃前全部 `[K]` 标记）。配方 `p45-recipe.txt`；镜像
+  `out/r21-sbstop-p45/uefi-preamble45-r1.img`（`fbde3a70…`）；报告
+  `reports/uefi-p45-ebscreen-prebuilt-20261107.md`。**同一轮把 `apply_patch()` 加了
+  `--ignore-whitespace` 兜底、`revert_patch()` 不再吞错（`PITFALLS #545`）。**
+
 ## 2. 重建与"可复现"的精确含义
 
 ```bash

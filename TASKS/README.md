@@ -125,7 +125,7 @@
 - **T14 用户态驱动/服务独立固化** —— 🟡 门禁已收口（2026-10-28 真机 `verify.sh` **FAIL=0 WARN=0**，80 条含 19 unit 逐字一致）；剩余 = Mobian 换根后的重建 recipe（7 个 ELF 里 3 个无源、其中 2 个动态 musl）。权威 `reports/userland-service-inventory-20261025.md`、`reports/userland-dealpine-audit-20261026.md`、`packaging/elden-userland/tools/verify.sh`；历史与三步落地 → 归档。
 - **T17 驱动模块化 × Alpine→Mobian 迁移** —— 🟢 **口径更正（2026-11-07 现场核实）：S2/S3/S7 事实上已完成，本行不再挂待办**。判据：设备 `findmnt /` = `/dev/sda17 ext4`、`/etc/os-release` = `Debian GNU/Linux forky/sid`、`/dev/disk/by-partlabel` 只剩 `linux17`（`linux18` 已于 2026-10-31 并入），且 `check-pkgmap.sh` 的 S2 三项缺口（`alsa-ucm-conf`/`ca-certificates`/`login`）早已钉进 `pkgmap.tsv` 并在机；换根后遗留的真缺口只剩 **T14（userland 重建 recipe）**。权威 `reports/modular-mobian-transition-20261026.md`、`DEVICE/README.md` §1.1。
 - **C3 Play Integrity / DRM 取证**（G2）—— C1 已收官（vk95 起 `ip rule` 生效；去 workaround 出网 200，`reports/c1-noworkaround-20261013.md`）⇒ 下一步 = C3 身份/DRM 取证，其后 C2 GMS 登录（需上行 + 代理 + 凭据）。权威 = §2 C1/C2/C3 行。
-- **N1 UEFI 间接引导** —— 🟡 2026-11-01 用户放行恢复推进；当前口径**只读 §5 的 2026-11-07「p39–p43」块**（该块定案：① 前四发白打是因为**漏发 `fastboot continue`** —— 本树 `BootIntoFastboot` 写死 TRUE；② 补发后 p41 **第一次真进 `BootLinux`**，`preeb` 转储成功，崩点回到 **`ExitBootServices()` 段**（`[K] FLT pc=0 / esr=86|96000007`），下一发 p45 = EB 段逐步屏显 + 异常 dump 不清屏；其前的 11-06「夜·二」块定案元凶 = 屏显写穿帧缓冲，11-06 白天块把崩溃 PC 归到 `LinuxLoader` 的 `SerialPortWrite`，更早的 11-04 晚块推翻「已交 DXE Core」判读，逐块沿革在同一节），首轮定性 `reports/uefi-gunyah-reassess-20261024.md` §1。**解冻条件（任一）**：上游 issue #12 给出层级答案 / 出现 SM8750 上 UEFI 真正枚举 UFS 的第三方案例 / kexec 不可用而又需要启动菜单。
+- **N1 UEFI 间接引导** —— 🟡 2026-11-01 用户放行恢复推进；**当前最新 = §5 的 2026-11-07「夜，p45」块（`p45` 已构建、静态复核 PASS、未上机，判读表在上机单里）**；其上一定案块 = §5 的 2026-11-07「p39–p43」块（该块定案：① 前四发白打是因为**漏发 `fastboot continue`** —— 本树 `BootIntoFastboot` 写死 TRUE；② 补发后 p41 **第一次真进 `BootLinux`**，`preeb` 转储成功，崩点回到 **`ExitBootServices()` 段**（`[K] FLT pc=0 / esr=86|96000007`），下一发 p45 = EB 段逐步屏显 + 异常 dump 不清屏；其前的 11-06「夜·二」块定案元凶 = 屏显写穿帧缓冲，11-06 白天块把崩溃 PC 归到 `LinuxLoader` 的 `SerialPortWrite`，更早的 11-04 晚块推翻「已交 DXE Core」判读，逐块沿革在同一节），首轮定性 `reports/uefi-gunyah-reassess-20261024.md` §1。**解冻条件（任一）**：上游 issue #12 给出层级答案 / 出现 SM8750 上 UEFI 真正枚举 UFS 的第三方案例 / kexec 不可用而又需要启动菜单。
   - **2026-11-03 裁决（邮件+GitHub+外部三线核查后）**：解冻条件②**已满足** —— `7Night-kqx/UniXNU-dada`（小米 15 / SM8750）README 明写 UEFI「framebuffer/menu/**UFS**-works in Mu-Silicium」，并附 boot-image v3/v4 header + BootShim header-size 现成补丁。**下一步只做一件事**：用该打包链补「载荷被执行」（P1 主机侧搬 patch + 装对树内 `PatchedBinaries/UFSDxe.efi`(`00ae059f…`)，P2 单发零写盘 `fastboot boot`，判据 `stage1≠0`）。issue #12 无新回复（末条 `2026-10-29T04:19:30Z`）、邮件 UEFI 相关 0 封 ⇒ **不回帖、不升 Mu 基座**。权威 `reports/uefi-next-step-decision-20261103.md`（三份子报告同目录 `uefi-{mail-triage,github-scan,external-scan}-20261103.md`）。
   - **2026-11-03 下午（9 发零写盘）**：**DDR 黑匣子正控打通**（真内核 `primary_entry` 标记，断电重启读回 95%–98%）；并**推翻两条旧判据**——① `usb_read failed` ≠ 交棒（自旋探针同样触发但标记全 0；真内核是 `Booting OKAY 10.106 s` 后真执行，我们 UEFI 件是 `0.056 s` 早期拒绝）；② **不存在 1–2 s 看门狗**（自旋载荷躺数分钟无人复位）。`text_offset=0` 单独不够（`8ed4ffc1…` 仍被 0.056 s 否掉）⇒ 下一步 = 把载荷 Image 头（`code0` 必须 branch / `image_size`=解压真实长度 / `flags=0xa`）+ 打包头（v2 base0）逐字段对齐真内核。权威 `reports/uefi-posctrl-20261103-summary.md`。
 
@@ -147,6 +147,27 @@
 ---
 
 ## 5. 查漏补缺（GAPS）
+
+### 2026-11-07（夜，p45）：**备料完成、已构建、静态复核 PASS、未上机** —— `p43` + EB 段逐步屏显 + 异常 dump 不清屏
+
+- **一句话**：p41/p43 的分辨力用尽（屏上只有 `preeb-go`、没有 `preeb-ok`，R38 的 `dump-tag cached=` 也没留证），
+  于是把判据做细：`p45` = `p43` + **R39**（`SbDumpLog` 内三步上屏 `dump-in`/`dump-ring-ok`/`dump-write`；
+  EB 段每步上屏 `eb-go`→`eb-ret st=`→`bb4`→`posteb-go`→`posteb-ok`）+ **R40**（异常 dump **不清屏** ——
+  R30 的清屏会把崩溃前全部 `[K]` 标记抹掉，而那正是唯一判据；R29 后 63 行装得下 13 行 dump）。
+- **构建（零写盘、主机侧）**：配方 `p45-recipe.txt`（66 枚补丁），`--mkimg-only --rebuild` 59 s 成功，
+  `成功应用补丁` 99 处 / `does not apply` 0 处；镜像 `out/r21-sbstop-p45/uefi-preamble45-r1.img`
+  （`fbde3a70…eb9911e6`，67 219 456 B）+ 二分件 `p45-s26-pb3.img`（`98b7d4aa…`）。
+- **静态复核 PASS**：`LinuxLoader.efi` 里 8 条新标记串全在；`DefaultExceptionHandler.obj` 的未定义符号
+  **没有** `SerialPortClearScreen`（清屏调用确已删）。⚠ FD 内部 LZMA 压缩，**不能**在 FD 上用 `strings` 验标记。
+- **同轮修的真问题**：`uefi-build-variant.sh` 的 `revert_patch()` 曾 `|| true` 吞掉回滚失败
+  ⇒ 主仓 `git status` 报干净、改动却藏在 `MU_BASECORE`/`Common/MU_TIANO`/`Silicon/Arm/MU_TIANO` 里；
+  现在失败即 `WARN`，`apply_patch()` 另加 `--ignore-whitespace` 兜底（子模块 CRLF 补丁）。
+- **下一发（上机 p45，需用户在场）**：`fastboot boot` **之后必须补发 `fastboot continue`**；判读表
+  （`dump-in`/`dump-ring-ok`/`dump-write`/`preeb-ok`/`eb-go`/`eb-ret`/`bb4`/`posteb-ok` 缺哪条 ⇒ 崩在哪一步）
+  见报告 §5。设备当前在 Linux（`7.3.1-debug-vk184`），`boot_b` 仍 `vk185-adsp`、槽位 `retry=7 succ=1`，本轮未动盘。
+- **正文/坑**：`reports/uefi-p45-ebscreen-prebuilt-20261107.md`、`PITFALLS #545`、
+  补丁 `patches/uefi/20261107R39-ebscreen/`、`patches/uefi/20261107R40-noclear/`、配方 `p45-recipe.txt`、
+  归档 `reports/artifacts/uefi-20261107R39R40-p45/`（含 `obj/LinuxLoader.{efi,map}`）。
 
 ### 2026-11-07（p39–p43）：**漏了 `fastboot continue`** 白打 4 发；补发后第一次真进 `BootLinux`，崩点回到 EB 段
 

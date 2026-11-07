@@ -77,3 +77,5 @@ dir	patches	in_recipe	status	reason	evidence
 20261107R35-fastboot-branch	1	1	ACTIVE	打死分支判据（flags/LIA st/goto-fastboot）——**打在 USB 洪水之前会被冲掉**（教训）	patches/uefi/p40-recipe.txt；同上
 20261107R36-fastboot-loopmark	1	1	ACTIVE	判据搬到 FastbootInitialize() 循环里再打（`[K] fb-loop LIA=… flags=…`）= 走 fastboot 分支的直证	patches/uefi/p41-recipe.txt；同上
 20261107R38-cached-dump	1	1	ACTIVE	SbDumpLog 先走缓存 BlkIo 直写（**预防性**；后证 preeb 转储本来就成功）	patches/uefi/p43-recipe.txt；同上
+20261107R39-ebscreen	1	1	ACTIVE	p41/p43 崩在 preeb 段分不下去：把 SbDumpLog 三步（in/ring-ok/write）+ EB 段每步（eb-go/eb-ret/bb4/posteb-go/posteb-ok）全改屏显	patches/uefi/p45-recipe.txt；reports/uefi-p45-ebscreen-prebuilt-20261107.md
+20261107R40-noclear	1	1	ACTIVE	异常 dump 不再清屏（R30 清屏会抹掉崩溃前全部 [K] 标记，而那是唯一判据）；R29 后 63 行装得下	同上
