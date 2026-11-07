@@ -72,6 +72,14 @@
   配方 `p38-recipe.txt`；镜像 `out/r21-sbstop-p38/uefi-preamble38-r1.img`（`0e2bddbd…`）；
   静态复核 `reports/uefi-p38-static-verify-20261107.md`（PASS）；上机单 `reports/uefi-p38-true-nobs-20261107.md` §2。
 
+- **2026-11-07 世代（p39→p43，全部上机过）**：
+  `p39` = p38 + `R34-screenmarks`（`pre-BL`/`BL-in`/`preeb-go`/`preeb-ok` 改成**屏显**；去掉 R33 的入口大转储）；
+  `p40` = p39 + `R35-fastboot-branch`（`flags`/`LIA st`/`goto-fastboot`，打在进 fastboot **之前**——会被随后的
+  USB 洪水冲掉）；`p41` = p40 + `R36-fastboot-loopmark`（把判据搬到 `FastbootInitialize()` 的循环里，
+  屏上 `[K] fb-loop LIA=… flags=…`）；`p43` = p41 + `R38-cached-dump`（`SbDumpLog` 先走缓存 BlkIo 直写）。
+  **关键纪律**：本树 `BootIntoFastboot` 写死 TRUE ⇒ `fastboot boot` 之后**必须再发 `fastboot continue`**
+  才会走 `BootLinux`（前四发就是漏了这一步）。崩点与判读见 `reports/uefi-p39-p43-continue-20261107.md`。
+
 ## 2. 重建与"可复现"的精确含义
 
 ```bash

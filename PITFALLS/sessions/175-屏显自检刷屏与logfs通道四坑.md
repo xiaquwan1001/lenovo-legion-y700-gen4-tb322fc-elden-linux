@@ -68,3 +68,17 @@
 - **纪律**：写「某阶段不可用的服务」时，**先机械扫一遍该路径上的符号**（`grep -n "AllocatePool\|FreePool\|gBS->"`），
   不要凭函数名（`NoBs`）相信它不含 boot service；同族的「单位/口径修正」要**按函数逐个改**，
   漏一个副本等于没改（第二处漏改就是这么来的）。
+
+## #544 工作区文件「静默改坏」但 `git status` 仍报干净（stat 缓存 + size/mtime 未变）
+
+- **现象（2026-11-07）**：UEFI 构建在 `Platforms/OpensslPkg/Library/OpensslLib/openssl/crypto/evp/legacy_sha.c:192`
+  报 `error: expected ';' after top level declarator`，源码行是 `const EVP_MD *EVP_{ha512(void)`（应为 `EVP_sha512`）。
+  更诡异的三件事同时成立：`git status --short` 干净、`git fsck` 无异常、`git cat-file -p HEAD:<file>`
+  里内容是**正确**的。
+- **机制**：git 的 index 用 `mtime + size` 判断「是否改过」。文件被就地改坏而**长度与 mtime 都没变**时，
+  status 直接跳过内容比对；`git checkout --` 也不会重写它（认为无需恢复）⇒ 只有先 `rm` 才会真正落回。
+- **修法**：`rm -f <file> && git checkout -- <file>`；排查同族问题时先 `git update-index --refresh`
+  再看 status（它会把 stat 缓存刷掉一部分），必要时 `git diff --no-ext-diff --stat` 或直接
+  `git cat-file -p HEAD:<file> | diff - <file>` 逐文件比。
+- **同族**：`PITFALLS #512/#513`（磁盘/页缓存位翻转）。本条是**工作区**层面：不一定是位翻转，
+  也可能是「编辑器/脚本半途写坏 + 长度未变」。**构建报的语法错误先怀疑源码被改坏，再怀疑编译器/版本。**

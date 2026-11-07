@@ -1,0 +1,75 @@
+Subject: [PATCH] 把「走内核还是走 fastboot」的决策点打上屏（含 LoadImageAndAuth 的 EFI 状态码）
+
+2026-11-07R35 y700-elden: p38 / p39 / 以及 **p36 原样件（对照）** 三发都停在同一形态 ——
+屏上只剩 `usb_repeater_reset` / `usb_shared_i2c_*` 的 `ERROR:NACK` 洪水与 `Dev Bus Speed … state 2`，
+**没有任何 `[K]` 行**；logfs 窗口里只有 `tag=entry`（= `LinuxLoaderEntry` 开头那次转储），
+没有 `preeb`；同时 UEFI 侧 fastboot 一直应答（`product: sun`）⇒ 不是崩，而是**没走内核引导分支**。
+对照件 p36 也如此 ⇒ 与 R33/R34 无关（不是回归），是当前状态下 `!BootIntoFastboot` 分支没走到
+`BootLinux`。
+
+最可能的分支：`LoadImageAndAuth()` 返回失败（AVB/镜像校验）或 `BootIntoFastboot` 为真 ⇒
+`goto fastboot` ⇒ `FastbootInitialize()` 重新初始化 USB（那串 redriver NACK 正是它的输出）。
+注意 2026-11-07 深夜我们把 `boot_b` 换成了自签的 vk185，时间点在 p37（还能进 BootLinux）之后。
+
+本补丁只加三条屏显标记，不改任何控制流：
+ - `[K] flags fb=<0|1> rec=<0|1> msb=<0|1>`（进入分支判断前）；
+ - `[K] LIA st=<EFI_STATUS 文本>`（`LoadImageAndAuth()` 之后，成败都打）；
+ - `[K] goto-fastboot`（`fastboot:` 标号处）。
+
+判据（p40 一发）：
+ - `glossary`：`fb=1` ⇒ 根本没尝试引导（按键/变量导致），查 fastboot 变量的来源；
+ - `LIA st=Security Violation`（或 `Access Denied`/`Load Error`）⇒ **AVB/镜像校验拒了 boot 分区**，
+   与「刚换过自签 boot_b」对照；此时应在 Linux 侧核 `vbmeta_b`/`avbtool verify_image`；
+ - `LIA st=Success` 且随后无 `pre-BL` ⇒ 卡在 `WaitForDisplayCompletion()`（屏显握手）；
+ - 出现 `pre-BL` ⇒ 回到 p39 的判读链。
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+index 2ea6f78e..cd0e5804 100755
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -314,12 +314,32 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+     DEBUG ((EFI_D_ERROR, "VM Hyp calls not present\n"));
+   }
+ 
++  // 2026-11-07R35 y700-elden: 把「到底走哪条分支」打上屏。p38/p39/p36-control 三发都停在
++  // 「屏上只有 USB redriver 洪水 + fastboot 一直应答」、logfs 只到 tag=entry；
++  // 若 LoadImageAndAuth() 失败或 BootIntoFastboot=1，就会落到 `goto fastboot` ⇒
++  // FastbootInitialize() 重初始化 USB（那串 redriver NACK 正是它），与现象吻合。
++  {
++    CHAR8  SbLine[112];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] flags fb=%d rec=%d msb=%d\n\r",
++                         (UINT64)BootIntoFastboot, (UINT64)BootIntoRecovery,
++                         (UINT64)MultiSlotBoot);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
++
+   if (!BootIntoFastboot) {
+     BootInfo Info = {0};
+     Info.MultiSlotBoot = MultiSlotBoot;
+     Info.BootIntoRecovery = BootIntoRecovery;
+     Info.BootReasonAlarm = BootReasonAlarm;
+     Status = LoadImageAndAuth (&Info);
++    // 2026-11-07R35: 无论成败都打 EFI 状态码（`security violation` 会直接指出是 AVB 拒了镜像）。
++    {
++      CHAR8  SbLine[96];
++      UINTN  SbLen;
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] LIA st=%r\n\r", (UINT64)Status);
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    }
+     if (Status != EFI_SUCCESS) {
+       DEBUG ((EFI_D_ERROR, "LoadImageAndAuth failed: %r\n", Status));
+       goto fastboot;
+@@ -343,6 +363,13 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+   }
+ 
+ fastboot:
++  // 2026-11-07R35: 到这里就意味着「不走内核引导」了（LIA 失败 / BootIntoFastboot / 其他 goto）。
++  {
++    CHAR8  SbLine[80];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] goto-fastboot\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   Status = WaitForDisplayCompletion ();
+   if (Status != EFI_SUCCESS) {
+     DEBUG ((EFI_D_ERROR, "Failed to wait for display completion: %r\n",

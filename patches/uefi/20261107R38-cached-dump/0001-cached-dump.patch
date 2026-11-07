@@ -1,0 +1,62 @@
+Subject: [PATCH] 跳内核前的 logfs 转储先走「缓存 BlkIo」直写（绕开已被 USB 拆除污染的句柄枚举）
+
+2026-11-07R38 y700-elden: 补发 `fastboot continue` 后 p41 **第一次真正进了 `BootLinux`**：
+logfs `tag=preeb` 里有完整链 `[K] BL-in vm=1` → `BL-vm=1 ok` → `dtb=…` → `gbs=D4C0B010 ap=… eb=… fp=…`
+（EB 之前 gBS 成员全非 0）→ `preeb-go`，但**没有 `preeb-ok`**；随后屏上
+`[K] FLT pc=00000000 esr=86000007`（`blr` 到 0），寄存器里带 `"Part"` / `"ufs "` 字符串碎片
+⇒ 崩点在 `SbDumpLog("preeb")` 内部的 `SbWriteLogWindow()` → `GetBlkIOHandles()`（枚举全部
+BlockIo 句柄并按分区/卷名匹配 —— 正好对得上那些字符串碎片）。
+
+关键时序：`fastboot continue` 走的是 `CmdContinue()`，它**在调用 `BootLinux()` 之前**
+已经执行了 `FastbootUsbDeviceStop()` ⇒ 句柄表里有被拆掉的 USB 存储句柄，枚举到它时
+`gBS->HandleProtocol`/卷名匹配链上出现空指针 ⇒ `blr` 到 0。而入口那次 `SbDumpLog("entry")`
+是在 USB 还活着时做的，**成功并把 logfs 的 BlkIo 缓存进了 `m_SbLogBlkIo`**。
+
+本补丁：`SbDumpLog()` 改成**先用缓存直写**（`SbWriteLogWindowNoBs()`，静态缓冲 + LBA 已修），
+失败才退回枚举句柄；两条都打一行 `[K] dump-tag=<tag> cached|search=<%r>` 自证。
+
+判据（p43 一发）：
+ - 出现 `[K] dump-tag=preeb cached=Success` 且随后 `[K] preeb-ok` ⇒ 转储链修好，继续看 EB 段；
+ - `cached=…` 非 Success 且屏上出现 `search=` 后崩 ⇒ 缓存句柄也失效（EB 后另一类问题）；
+ - 仍在 `cached` 之前崩 ⇒ 崩溃点不在转储（回到 `BootLinux` 更早处）。
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index 16a44780..d4a93e0a 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -214,11 +214,35 @@ SbDumpLog (
+ 
+   Rec = AllocatePool (RecLen);
+   if (Rec != NULL) {
++    EFI_STATUS  SbSt;
+     CopyMem (Rec, Hdr, HdrLen);
+     if (RecLen > HdrLen) {
+       CopyMem (Rec + HdrLen, Ring, RecLen - HdrLen);
+     }
+-    (VOID)SbWriteLogWindow (Rec, (UINT32)RecLen);
++    // 2026-11-07R38 y700-elden: p41 的崩溃点就在这一句 —— `SbWriteLogWindow()` 内部要
++    // `GetBlkIOHandles()` 走一遍全部 BlockIo handle，而 `fastboot continue`（CmdContinue）在调
++    // `BootLinux()` **之前**已经 `FastbootUsbDeviceStop()` 拆过 USB 设备栈 ⇒ 枚举到被拆的句柄时
++    // `blr` 到 0（寄存器里那串 "Part"/"ufs " 正是句柄/卷名匹配的碎片）。
++    // 入口那次转储已经缓存了 logfs 的 BlkIo（`m_SbLogBlkIo`），所以这里**先用缓存直写**，
++    // 只有缓存不可用时才退回「枚举句柄」那条（现在已知会崩的）路径。
++    SbSt = SbWriteLogWindowNoBs (Rec, (UINT32)RecLen);
++    {
++      CHAR8  SbLine[112];
++      UINTN  SbLen;
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] dump-tag=%a cached=%r\n\r",
++                           Tag, (UINT64)SbSt);
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    }
++    if (EFI_ERROR (SbSt)) {
++      SbSt = SbWriteLogWindow (Rec, (UINT32)RecLen);
++      {
++        CHAR8  SbLine[112];
++        UINTN  SbLen;
++        SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] dump-tag=%a search=%r\n\r",
++                             Tag, (UINT64)SbSt);
++        SerialPortWrite ((UINT8 *)SbLine, SbLen);
++      }
++    }
+     FreePool (Rec);
+   }
+   FreePool (Ring);

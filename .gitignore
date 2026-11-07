@@ -262,3 +262,17 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261107R33-p38/*payload*
 /reports/artifacts/uefi-20261107R33-p38/kernel.bin
 /reports/artifacts/uefi-20261107R33-p38/build.log
+
+# 2026-11-07 UEFI p39..p43 世代构建归档（同 R33 口径：只留 manifest/SHA256SUMS + obj/LinuxLoader.{efi,map}）
+/reports/artifacts/uefi-20261107R3[4-9]-p4*/*.fd
+/reports/artifacts/uefi-20261107R3[4-9]-p4*/*.img
+/reports/artifacts/uefi-20261107R3[4-9]-p4*/*.gz
+/reports/artifacts/uefi-20261107R3[4-9]-p4*/*payload*
+/reports/artifacts/uefi-20261107R3[4-9]-p4*/kernel.bin
+/reports/artifacts/uefi-20261107R3[4-9]-p4*/build.log
+/reports/artifacts/uefi-20261107R34-p39/*.fd
+/reports/artifacts/uefi-20261107R34-p39/*.img
+/reports/artifacts/uefi-20261107R34-p39/*.gz
+/reports/artifacts/uefi-20261107R34-p39/*payload*
+/reports/artifacts/uefi-20261107R34-p39/kernel.bin
+/reports/artifacts/uefi-20261107R34-p39/build.log

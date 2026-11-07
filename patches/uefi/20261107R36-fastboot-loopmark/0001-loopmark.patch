@@ -1,0 +1,89 @@
+Subject: [PATCH] 分支判据改在 fastboot USB 启动**之后**打（`[K] fb-loop LIA=… flags=…`）
+
+2026-11-07R36 y700-elden: R35 把 `flags`/`LIA st`/`goto-fastboot` 三条标记打在进入 fastboot
+**之前**，而紧接着 `FastbootInitialize()` → `FastbootUsbDeviceStart()` 会吐出 ~45 行
+`usb_shared_i2c_* ERROR:NACK` + `Dev Bus Speed`，正好占满一屏 ⇒ 那三条标记被自己后面的输出冲掉，
+p40 那一发等于没采集到（屏上仍只有洪水）。
+
+本补丁把判据「搬过洪水」：在 `FastbootInitialize()` 的 USB 启动与菜单绘制之后、事件循环开头，
+**打一次** `[K] fb-loop LIA=<EFI_STATUS hex> flags=<bitmask>`（bit0=BootIntoFastboot,
+bit1=BootIntoRecovery, bit2=MultiSlotBoot）。值由 `LinuxLoaderEntry()` 在跳进 fastboot 前写入
+两个全局（`g_SbDbgLiaStatus` / `g_SbDbgFlags`），不改变任何控制流。
+
+判据：
+ - `LIA=0` 且 `flags=0` ⇒ `LoadImageAndAuth()` 成功却仍落到 fastboot（看 R35 的 `pre-BL` 是否出现）；
+ - `LIA!=0` ⇒ 直接读 EFI 状态码：`0x1a`=`Security Violation`（AVB 拒）、`0x15`=`Access Denied`、
+   `0x1b`=`Compromised Data`、`0x12`=`Load Error` 等；
+ - `flags&1` ⇒ 压根没尝试引导（`BootIntoFastboot` 为真），去查它的来源（按键/变量）。
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+index cd0e580..79274f2 100644
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -168,6 +168,12 @@ WaitForDisplayCompletion (VOID)
+ 
+  **/
+ 
++
++// 2026-11-07R36 y700-elden: 给 fastboot 侧（FastbootMain.c）转递分支判据 —— 屏显必须打在
++// USB redriver 洪水**之后**才看得见，所以值先存在这里，由 FastbootInitialize() 的循环里打一次。
++UINT64  g_SbDbgLiaStatus = 0xFFFFFFFFFFFFFFFFULL;
++UINT64  g_SbDbgFlags     = 0;
++
+ EFI_STATUS EFIAPI  __attribute__ ( (no_sanitize ("safe-stack")))
+ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+ {
+@@ -325,6 +331,8 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+                          (UINT64)BootIntoFastboot, (UINT64)BootIntoRecovery,
+                          (UINT64)MultiSlotBoot);
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    g_SbDbgFlags = (BootIntoFastboot ? 1ULL : 0ULL) | (BootIntoRecovery ? 2ULL : 0ULL) |
++                   (MultiSlotBoot ? 4ULL : 0ULL);
+   }
+ 
+   if (!BootIntoFastboot) {
+@@ -339,6 +347,7 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+       UINTN  SbLen;
+       SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] LIA st=%r\n\r", (UINT64)Status);
+       SerialPortWrite ((UINT8 *)SbLine, SbLen);
++      g_SbDbgLiaStatus = (UINT64)Status;
+     }
+     if (Status != EFI_SUCCESS) {
+       DEBUG ((EFI_D_ERROR, "LoadImageAndAuth failed: %r\n", Status));
+diff --git a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootMain.c b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootMain.c
+index e06cf3b..030d4fa 100644
+--- a/Platforms/QcomModulePkg/Library/FastbootLib/FastbootMain.c
++++ b/Platforms/QcomModulePkg/Library/FastbootLib/FastbootMain.c
+@@ -55,6 +55,9 @@ found at
+ #include <Library/UefiRuntimeServicesTableLib.h>
+ #include <Protocol/EFIUsbDevice.h>
+ 
++#include <Library/PrintLib.h>
++#include <Library/SerialPortLib.h>
++
+ #include "BootStats.h"
+ #include "FastbootCmds.h"
+ #include "FastbootMain.h"
+@@ -370,6 +373,23 @@ EFI_STATUS FastbootInitialize (VOID)
+ 
+   DisplayFastbootMenu ();
+ 
++  // 2026-11-07R36 y700-elden: 分支判据要打在**这串 USB redriver 洪水之后**（在它之前打会被冲掉，
++  // p40 那一发就是如此）。值由 LinuxLoaderEntry() 在跳进 fastboot 之前填进这两个全局。
++  {
++    extern UINT64 g_SbDbgLiaStatus;
++    extern UINT64 g_SbDbgFlags;
++    static INT32 SbOnceDone = 0;
++    CHAR8  SbLine[128];
++    UINTN  SbLen;
++
++    while (!SbOnceDone) {
++      SbOnceDone = 1;
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] fb-loop LIA=%lx flags=%lx\n\r",
++                           (UINT64)g_SbDbgLiaStatus, (UINT64)g_SbDbgFlags);
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    }
++  }
++
+   /* Wait for USB events in tight loop */
+   while (1) {
+     Status = HandleUsbEvents ();

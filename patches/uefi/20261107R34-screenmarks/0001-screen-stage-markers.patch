@@ -1,0 +1,101 @@
+Subject: [PATCH] 把「进到哪一步」打成屏显标记（p38 停在 BootLinux 之前的定位）
+
+2026-11-07R34 y700-elden: p38 那一发（R33）的结果不是崩溃，而是**停在原地**：屏上只剩
+`usb_repeater_reset` / `usb_shared_i2c_*` 的 `ERROR:NACK` 洪水与 `Dev Bus Speed … state 2`，
+**一条 `[K]` 行都没有**；logfs 窗口里只有 `tag=entry`（= `LinuxLoaderEntry` 开头那次转储），
+没有 `tag=early` / `tag=preeb`；同时 UEFI 侧 fastboot 一直应答（`product: sun`）⇒ 既没崩也没起内核。
+
+两种可能分不开：① 卡在 `LinuxLoaderEntry` 里 `LoadImageAndAuth()`/`WaitForDisplayCompletion()`
+这一段（`PITFALLS #543` 之外的旧账：QUP/I2C `se_id 5` 句柄缺失）；② 已经进了 `BootLinux`，
+但卡在 R33 新加的**入口 16 KiB logfs 转储**里（自己的探针）。
+
+本补丁把判断点全部变成**屏显**（不再只进环），并去掉入口那次大转储：
+ - `LinuxLoaderEntry()`：`BootLinux()` 调用前打 `[K] pre-BL`（区分「没离开 LoadImageAndAuth」）；
+ - `BootLinux()` 入口：`[K] BL-in vm=<0|1>` 上屏；**删掉** `SbDumpLog("early")`；
+ - `SbDumpLog("preeb")` 前后各一条：`[K] preeb-go` / `[K] preeb-ok`（簿记转储本身是否返回）。
+
+判据（p39 一发）：
+ - 只见 `[K] pre-BL` ⇒ 卡在 `BootLinux` 入口之前（旧账 QUP/I2C/USB 重初始化那条线）；
+ - 见 `BL-in` 不见 `preeb-go` ⇒ 卡在 `BootLinux` 入口→EB 之间（含 `CheckAndSetVmData`）；
+ - 见 `preeb-go` 不见 `preeb-ok` ⇒ **转储本身**把流程卡住（自伤，需改小/异步）；
+ - 见 `preeb-ok` ⇒ 进到 EB 段，按 p38 的 EB 前后标记继续判。
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+index 1bf0e71c..16a44780
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLinux.c
+@@ -1091,14 +1091,16 @@ BootLinux (BootInfo *Info)
+   }
+ 
+   SbBootProbe ("[K] enter\n\r");
+-  // 2026-11-07R33 y700-elden: 无门控的入口标记 + 立即落盘一次（tag=early）。
+-  // 目的：p37 的 LR 落在 `BootLinux+0xA0`（= `CheckAndSetVmData` 里那次 AllocatePool），
+-  // 与「`[K] dtb` 已打印」（同函数 +0x52C）矛盾 ⇒ 要么帧里的 LR 不可信，要么 BootLinux 被
+-  // **进过两次**。有了这条「进到哪一步」的磁盘记录，两种情形一发就能分开：
+-  //   只有 `early` ⇒ 崩在入口→EB 之间（那 LR 指向 CheckAndSetVmData 就自洽）；
+-  //   有 `preeb` 而 `[K] BL-vm` 在记录里出现两次 ⇒ 确属重入。
+-  SerialPortLogPutString ("[K] BL-in\n\r");
+-  SbDumpLog ("early");
++  // 2026-11-07R34 y700-elden: 入口标记改成**上屏**（R33 只进了环 ⇒ p38 那一发屏上看不到它，
++  // 分不出「根本没进 BootLinux」与「进了但卡在下面那次磁盘写」）。
++  // 同时去掉 R33 在入口做的那次 16 KiB logfs 转储（它本身就是可疑的卡点）——
++  // 入口级取证靠这一行屏显 + 后面的 preeb 转储就够了。
++  {
++    CHAR8  SbLine[80];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] BL-in vm=%d\n\r", (UINT64)IsVmEnabled ());
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   SB_STOP (1, "1");
+ 
+   if (IsVmEnabled ()) {
+@@ -1319,7 +1321,21 @@ BootLinux (BootInfo *Info)
+ 
+   // 2026-11-06R31: 跳内核前把屏上日志全部落盘（logfs 尾部 16 KiB）。EB 之后屏与 USB 都会没，
+   // 而磁盘上的这条记录会在重启/掉电后仍在 ⇒ 手交失败时仍能查到 [F] 几何、[K] dtb、EB 返回值。
++  // 2026-11-07R34: 给这次转储加前后两条**屏显**标记 —— p38 那一发停在「屏上只有 USB NACK 洪水、
++  // logfs 里只有 tag=entry」的状态，看不出是「没进 BootLinux」还是「卡在这 16 KiB 写」。
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] preeb-go\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+   SbDumpLog ("preeb");
++  {
++    CHAR8  SbLine[64];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] preeb-ok\n\r");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
+ 
+   SB_STOP (40, "40");   // 2026-11-06R3: ShutdownUefiBootServices 之前（全流程最后一个有 gBS 的点）
+ 
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+index edbd6298..2ea6f78e
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -42,6 +42,8 @@
+ #include <Library/DrawUI.h>
+ #include <Library/MemoryAllocationLib.h>
+ #include <Library/PartitionTableUpdate.h>
++#include <Library/PrintLib.h>
++#include <Library/SerialPortLib.h>
+ #include <Library/ShutdownServices.h>
+ #include <Library/StackCanary.h>
+ #include "Library/ThreadStack.h"
+@@ -328,6 +330,15 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+       DEBUG ((EFI_D_ERROR, "Failed to wait for display completion: %r\n",
+                   Status));
+     }
++    // 2026-11-07R34 y700-elden: 「即将进 BootLinux」上屏标记。
++    // p38 那一发屏上停在 usb_repeater_reset / usb_shared_i2c NACK 洪水之后、没有任何 [K] 行，
++    // 而 logfs 只到 tag=entry ⇒ 需要把「离开 LoadImageAndAuth/WaitForDisplayCompletion 了没」分开。
++    {
++      CHAR8  SbLine[64];
++      UINTN  SbLen;
++      SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[K] pre-BL\n\r");
++      SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    }
+     BootLinux (&Info);
+   }
+ 
