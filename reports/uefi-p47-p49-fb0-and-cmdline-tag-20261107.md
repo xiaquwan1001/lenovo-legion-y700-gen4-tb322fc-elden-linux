@@ -8,9 +8,11 @@
 
 ## 0. 一句话结论
 
-1. **p46 的「UEFI 间接引导打通」= 误判，已撤回**。根因两条：主机 USB 事件没按 SerialNumber 归属
-   （把 U1 `HA2CB1KY` 的上线当成 U2 `HA2EXB0E`），且唯一证据是易失 DDR 环（无法排除「跳转后复位、
-   ABL 自己引导」）。详见 `PITFALLS #549`。
+1. **p46 的「UEFI 间接引导打通」= 未证实，已撤回**（不是「确认误判」）。判据缺陷两条：
+   ① 「内核起来」的旁证（主机 USB 事件）**不可归属** —— 同型号机 gadget iSerialNumber 是硬编码常量
+   `HA2CB1KY`（`rootfs/usb-gadget:37`），对「哪台机」零信息量；`ssh 192.168.7.1` 也不区分机器。
+   ② 唯一「走到跳转」的证据是易失 DDR 环，无法排除「跳转后复位、ABL 自己引导 `boot_b`」。
+   详见 `PITFALLS #549`。
 2. **R42（删掉漏删的裸语句 `BootIntoFastboot = TRUE`）确实生效**：p47/p48 的持久 logfs 记录里
    `[K] flags fb=0` → `[K] LIA st=Success` → `[K] pre-BL` → `[K] BL-in` → `[K] preeb-go`，
    即 **UEFI 自己走进了 `BootLinux()`，不再需要宿主发 `fastboot continue`**。

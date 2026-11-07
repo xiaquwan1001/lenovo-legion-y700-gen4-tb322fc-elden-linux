@@ -5,9 +5,11 @@
 > **本文 §0/§3 的「UEFI 间接引导打通 / 内核真起来」结论撤回，降级为「未证实」。**
 >
 > 判据错误（两条，均可复现）：
-> 1. **USB 事件没按 SerialNumber 归属**：主机日志里 17:31:56 上线的 `1d6b:0104`（product
->    `TB322FC mainline`）序列号是 **`HA2CB1KY`（U1，另一台机器）**，不是被测的 **`HA2EXB0E`（U2）**；
->    我把它当成了「U2 的内核起来」。`ssh root@192.168.7.1` 通也不能区分两台机（地址相同，谁插着就是谁）。
+> 1. **「内核起来」的证据不可归属**：当时唯一的旁证是主机 USB 事件（`1d6b:0104`，product
+>    `TB322FC mainline`）。但同型号机的 gadget iSerialNumber 是**硬编码常量 `HA2CB1KY`**
+>    （`rootfs/usb-gadget:37`）⇒ 这条证据对「哪台机/是不是 U2」**零信息量**；
+>    `ssh root@192.168.7.1` 同样不区分机器。认设备只认 `fastboot getvar serialno` 或
+>    内核 `androidboot.serialno`（`PITFALLS #549`）。
 > 2. **只有易失 DDR 环作证**：环里 `…pph-ok → JUMP-BANNER eb=Success` 只证明「跑过一条走到跳转的
 >    UEFI 链」，**不能排除**「跳转后内核早崩 → 复位 → ABL 自己引导 `boot_b`」——同一个 `uname -r`、
 >    同一个根分区、同样 `efi: UEFI not found.`；而环是环形缓冲、跨启动残留，同一次 32 KiB 里就混着
