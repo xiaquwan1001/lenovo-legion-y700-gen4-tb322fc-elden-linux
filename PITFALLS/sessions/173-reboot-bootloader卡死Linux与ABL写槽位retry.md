@@ -29,3 +29,21 @@
 `[L] found=1 / [L] LoadImage=Success` 是 **BdsDxe** 在 `gBS->StartImage(LinuxLoader)` **之前**打的
 （`MU_BASECORE/MdeModulePkg/Universal/BdsDxe/BdsEntry.c:758`）⇒ 不能当作"已进入 fastboot 会话/已跑到
 LinuxLoader"的证据。
+
+---
+
+## #542（2026-11-07 补）：卡死实锤 + 兜底看门狗落进 `eldroid-bootctl`
+
+- **复现**：2026-11-07 两次 `eldroid-bootctl reboot bootloader`（都在设备跑 7.3.1 重基件时）第一次直接卡死：
+  SSH 断、屏不动、只能物理断电。第二次正常 4 s 进 fastboot ⇒ **确为间歇性，不是配置问题**。
+- **机制判读**：magic 由 `nvmem-reboot-mode` 的 *reboot-notifier* 在 `kernel_restart()` **早期**写进 PMIC SDAM；
+  卡死点在**其后**的关机/复位阶段。因此「绕开正常关机路径」不会丢 reason —— emergency restart 虽然不跑 notifier，
+  但 ABL 只读 SDAM magic，目标仍然正确。
+- **落地方案（已进 `scripts/eldroid-bootctl`，设备侧 `/usr/local/bin/eldroid-bootctl` 同步）**：
+  带 reason 的重启前**预挂**一个 detached 看门狗 —— `sleep 6; echo b > /proc/sysrq-trigger`。
+  正常路径成功 ⇒ 进程随复位消失、看门狗无处落脚；卡死 ⇒ 6 s 后被 sysrq-b 强制复位，**落在同一个 ABL 目标**。
+  `sysrq` 被关（`/proc/sys/kernel/sysrq=0`）时打印警告并放弃兜底；`--no-watchdog` 可关（调关机链本身时用）。
+- **判据**：`eldroid-bootctl reboot bootloader` 后 **≤10 s** 应出现 `fastboot devices`；超时即被兜底复位（也仍是 fastboot）。
+  2026-11-07 实测：正常路径 **4 s** 进 fastboot（未触发兜底）。
+- **共用纪律（仍有效）**：每轮崩后核 `eldroid-bootctl slot info`，必要时 `slot set-retry 7 b` 补余量
+  （本日 p37 一发确实把 `boot_b` 从 `retry=7` 扣到 `6`，已补回）。

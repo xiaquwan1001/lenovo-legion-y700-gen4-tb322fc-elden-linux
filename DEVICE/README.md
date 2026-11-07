@@ -24,7 +24,18 @@
 | 主机 | `xuqianhui`（Ubuntu 26.04；旧文档里的 `5700g-x8664` 是历史名，2026-11 起不再使用），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-11-07 晚（当前状态，唯一权威）：在机 = `vk185-adsp`（`7.3.1` 重基件，RAM 起、`boot_b` 仍未动）** ——
+- ★**2026-11-07 深夜（当前状态，唯一权威）：`boot_b` 已写 `vk185-adsp`（持久，重启即回它）** ——
+  `boot_b` 分区 sha256 = **`4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`**
+  （= `bootslot-b/boot_b-vk185.img`，100 663 296 B，AVB 自签，公钥 sha1 `1e54e86ef19fad73…`；flash 后**设备侧 dd 读回逐字节一致**）。
+  写前备份 = `backup/HA2EXB0E-16+512/boot_b-before-vk185-20261107.img`（`fb55997c…`，旧 vk172 件）。
+  槽位 = `boot_b retry=7 succ=1 unbootable=0`（ABL 因 p37 崩溃扣到 6，已用 `slot-attr.py set b --retry 7` 补回）。
+  **从 `boot_b` 冷启实测**：30 s 内 SSH、`findmnt /` = `/dev/sda17`、`systemctl --failed` 空、DSI connected、声卡 2 张、
+  WiFi（首试 `MHI -110` → `ath12k-retry` try2 关联）、`/dev/fastrpc-adsp`、`zramswap` active；
+  `eldroid-bootctl reboot bootloader`（**带新加的 sysrq-b 兜底看门狗**，见 `PITFALLS` #542）→ **4 s 进 fastboot**、
+  `fastboot reboot` 回 Linux 正常 ⇒ **G1-24 在新内核上复验通过**。
+  件身份：`out/boot-elden-vk185-adsp.img`（`3fa8f7bb…`，85 594 112 B）+ `.manifest`（`kernel_release_matches_image=yes`）；
+  UTS `7.3.1-debug-vk184-00003-gec74c4795a43`；tag `vk185`。
+- ★**2026-11-07 晚（历史快照，已被上一条取代）：在机 = `vk185-adsp`（`7.3.1` 重基件，RAM 起、`boot_b` 未动）** ——
   `fastboot boot out/boot-elden-vk185-adsp.img`（`3fa8f7bb…`，85 594 112 B）。**全绿**：10 s SSH、`card0-DSI-1=connected`、声卡 2 张、
   WiFi（首试 MHI `-110` → `ath12k-retry` **try2 成功**关联 ustcnet）、`/dev/fastrpc-adsp` + `qrtr svc 400` + `iio-sensor-proxy`
   HasAccelerometer/Light/Proximity **全 true**、`modprobe zram` OK + `zramswap` **7.3 G active**、thermal 44.9 °C。

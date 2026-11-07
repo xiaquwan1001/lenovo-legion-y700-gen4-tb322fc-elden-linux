@@ -54,11 +54,38 @@ def _require_root(what: str) -> None:
         sys.exit(f"eldroid-bootctl: {what} 需要 root（当前 uid={os.geteuid()}）")
 
 
-def _do_reboot(cmd: int, reason: str | None) -> int:
+def _arm_emergency_watchdog(delay: int = 6) -> None:
+    """预挂一个 sysrq-b 看门狗：正常重启路径若在关机阶段卡住，X 秒后强制 emergency restart。
+
+    为什么（PITFALLS #525，2026-11-07 复现两次）：`eldroid-bootctl reboot bootloader`
+    偶发卡在关机路径（SSH 断、屏不动、只能物理断电）。机制上：
+      * reason magic 由 `nvmem-reboot-mode` 的 reboot-notifier 在 `kernel_restart()`
+        **早期**写进 PMIC SDAM ⇒ 到卡死点时 magic 已落盘；
+      * emergency restart（`machine_emergency_restart()`）不再走 notifier，但 ABL 只看 SDAM
+        magic，所以 watchdog 兜底后**目标仍正确**；
+      * 若正常路径成功，进程随复位消失，watchdog 自然不再有宿主可写。
+    仅在 `sysrq` 打开（/proc/sys/kernel/sysrq != 0）时挂；否则打印警告。
+    """
+    try:
+        if int(open("/proc/sys/kernel/sysrq").read().strip() or "0") == 0:
+            print("⚠ sysrq 被禁用（/proc/sys/kernel/sysrq=0）⇒ 无兜底，卡死需物理断电",
+                  file=sys.stderr)
+            return
+    except OSError:
+        pass
+    subprocess.Popen(["/bin/sh", "-c", f"sleep {delay}; echo b > /proc/sysrq-trigger"],
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL, start_new_session=True)
+    print(f"[reboot] 已挂 emergency 看门狗：{delay} s 内未复位则 sysrq-b")
+
+
+def _do_reboot(cmd: int, reason: str | None, watchdog: bool = False) -> int:
     """直调 syscall(SYS_reboot, ...)；成功不返回，失败返回 errno。"""
     libc = ctypes.CDLL("libc.so.6", use_errno=True)
     libc.syscall.restype = ctypes.c_long
     os.sync()
+    if watchdog:
+        _arm_emergency_watchdog()
     arg = ctypes.c_char_p(reason.encode()) if reason else None
     libc.syscall(SYS_REBOOT, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, arg)
     return ctypes.get_errno()  # 成功则不会到这里
@@ -126,7 +153,9 @@ def cmd_reboot(args) -> int:
 
     cmd = LINUX_REBOOT_CMD_POWER_OFF if args.poweroff else \
         (LINUX_REBOOT_CMD_RESTART2 if reason else LINUX_REBOOT_CMD_RESTART)
-    err = _do_reboot(cmd, reason)
+    # 2026-11-07：带 reason 的重启（bootloader/recovery）在关机路径偶发卡死（PITFALLS #525）
+    # ⇒ 预挂 sysrq-b 看门狗；`--no-watchdog` 可关（调试关机链本身时用）。
+    err = _do_reboot(cmd, reason, watchdog=(not args.poweroff and not args.no_watchdog))
     print(f"reboot(2) 失败: errno={err} ({os.strerror(err)})", file=sys.stderr)
     return 1
 
@@ -183,6 +212,8 @@ def main() -> int:
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--force", action="store_true", help="edl 未支持时也继续")
     p.add_argument("--poweroff", action="store_true", help="关机而非重启（忽略 target）")
+    p.add_argument("--no-watchdog", action="store_true",
+                   help="不挂 sysrq-b 兜底看门狗（默认挂 6 s；调试关机链本身时用）")
     p.set_defaults(func=cmd_reboot)
 
     p = sub.add_parser("slot", help="A/B 槽位元数据（GPT attribute byte6）")
