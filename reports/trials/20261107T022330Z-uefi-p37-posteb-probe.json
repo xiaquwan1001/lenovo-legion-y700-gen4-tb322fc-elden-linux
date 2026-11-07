@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p37-posteb-probe",
+  "ts": "2026-11-07T02:23:30Z",
+  "vk": "",
+  "image": "out/r21-sbstop-p36/uefi-preamble36-r1.img",
+  "image_sha256": "bf559e977cacdc53024233bfbd88d07037f7f98165d587f2e561cc022c950a34",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "cold",
+  "deploy": "fastboot-boot",
+  "probe": "none",
+  "verdict": "no-posteb-gBS-null-in-LinuxLoader",
+  "log_dir": "",
+  "note": "p37: UEFI p36 preamble 一发零写盘；起 UEFI 后 oem sbread 一读即打死 USB 端点（UsbfnDwc endpoint3 invalid state 4）；用户物理断电回 Linux；logfs 只落 tag=preeb（无 entry/posteb），末条 [K] dtb=B4063000 m=EDFE0DD0 sz=259D2 k=A8080000；屏上 [K] FLT pc=0 esr=86000007，LR=0xCFCD2B28 = LinuxLoader(base 0xCFCCE000 size 0x46000)+0x4B28，该处代码为 gBS(0x43a10)->+0x40 = AllocatePool 的间接调用"
+}

@@ -24,7 +24,16 @@
 | 主机 | `xuqianhui`（Ubuntu 26.04；旧文档里的 `5700g-x8664` 是历史名，2026-11 起不再使用），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-11-07（当前状态，唯一权威）：用户态已补到「日用基线」** —— 设备在 Linux（`vk172`，持久根 `/dev/sda17` ext4），`boot_b` 未动（`fb55997c…`）。
+- ★**2026-11-07 晚（当前状态，唯一权威）：在机 = `vk185-adsp`（`7.3.1` 重基件，RAM 起、`boot_b` 仍未动）** ——
+  `fastboot boot out/boot-elden-vk185-adsp.img`（`3fa8f7bb…`，85 594 112 B）。**全绿**：10 s SSH、`card0-DSI-1=connected`、声卡 2 张、
+  WiFi（首试 MHI `-110` → `ath12k-retry` **try2 成功**关联 ustcnet）、`/dev/fastrpc-adsp` + `qrtr svc 400` + `iio-sensor-proxy`
+  HasAccelerometer/Light/Proximity **全 true**、`modprobe zram` OK + `zramswap` **7.3 G active**、thermal 44.9 °C。
+  **模块树**：`/lib/modules/7.3.1-debug-vk184-00003-gec74c4795a43/`（1499 `.ko`，`INSTALL_MOD_STRIP=1`）；
+  另留 `...-00002-g4da9a8b69fc8/`（vk184 首件，同一 payload、无 ADSP DT 修复）。
+  **新增一枚 DT**（=`G1-34` 在机真因）：`sm8750.dtsi` 的 ADSP `fastrpc` 节点缺 `qcom,non-secure-domain`（提交树里只有 `cdsp` 有）
+  ⇒ 缺它时 `/dev/fastrpc-adsp` 不出现、传感器全哑。上游件在 `patches/upstream/sm8750-adsp-nonsecure-20261107/`。
+  ⚠ 记忆点：`/lib/modules` 现在有 **3 棵**树（vk172/vk184-vk185），换 UTS 一定先 `depmod -a <UTS>` 再判显示/传感器。
+- ★**2026-11-07（同日早，历史快照）：用户态已补到「日用基线」** —— 设备在 Linux（`vk172`，持久根 `/dev/sda17` ext4），`boot_b` 未动（`fb55997c…`）。
   已装包 **1355 → 1625**（全新增，**0 升级 / 0 删除**）：`sudo`（无口令账户 ⇒ `/etc/sudoers.d/90-elden-desktop` NOPASSWD）、`locales` + `zh_CN.UTF-8`、
   `fonts-noto-cjk`（补前 `fc-list :lang=zh` = **0**）、`gnome-keyring`(+libpam) / `xdg-desktop-portal-phosh` / `gnome-control-center` / `gvfs-backends`、
   `man-db` / `bash-completion` / `vim` / `ncdu` / `command-not-found`、`fcitx5`(systemd user unit，`--disable waylandim`) + Rime、`bluetooth` / `rfkill` /

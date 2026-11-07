@@ -1,0 +1,18 @@
+{
+  "label": "reb731-vk185-adsp-functional",
+  "ts": "2026-11-07T02:32:00Z",
+  "vk": "vk185-adsp",
+  "image": "out/boot-elden-vk185-adsp.img",
+  "image_sha256": "3fa8f7bbb1b7031967d67e29c0624338b3449cc5e6be83cab6eb345fd204b441",
+  "manifest": "out/boot-elden-vk185-adsp.manifest",
+  "kernel_uts": "Linux version 7.3.1-debug-vk184-00003-gec74c4795a43",
+  "kernel_payload_sha256": "c95a73bd7d25faf08551113bdb79a0458e4b73ce9b796e6991c5f693036ecb60",
+  "config_sha256": "6f7f592af29b16f189b0cbb5c89478e0bf8c0b40ab52f01e5d0372b6bbce3236",
+  "dtb_packed_sha256": "fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f",
+  "reset_type": "cold",
+  "deploy": "fastboot-boot",
+  "probe": "none",
+  "verdict": "POR-ok-functional-green",
+  "log_dir": "",
+  "note": "7.3.1 重基件 vk185-adsp（v7.3.1 + payload replay + M1 DSI + ADSP non-secure DT）零写盘 fastboot boot：10 s SSH、DSI connected、aplay 2 cards、WiFi 首试 MHI -110 后 ath12k-retry try2 成功关联 ustcnet、/dev/fastrpc-adsp 出现、qrtr svc400 在、iio-sensor-proxy HasAccelerometer/Light/Proximity 全 true、modprobe zram OK + zramswap 7.3G active、thermal 44.9C；boot_b 未动"
+}

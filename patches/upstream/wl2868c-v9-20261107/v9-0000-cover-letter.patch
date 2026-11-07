@@ -50,7 +50,7 @@ Krzysztof's two v6 points stay addressed the way v8 did it
   tree).
 - 3/5 compatible/commit-message wording: moot, that patch is not here.
 
-Gates run on v9 (on top of v7.3-rc7)
+Gates run on v9 (on top of v7.4-rc2 line, master d48723711b)
 ====================================
 
   make DT_SCHEMA_FILES=Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml dt_binding_check
@@ -69,3 +69,5 @@ Qianhui Xu (2):
  drivers/regulator/Makefile                                 |  1 +
  drivers/regulator/wl2868c-regulator.c                      | 262 ++++++++++++++++++++++++++++++++++++
  5 files changed, ...
+
+base-commit: d48723711bae9b8cdc56719c448ba42fef28cbee

@@ -1,0 +1,35 @@
+From ec74c4795a43db620071628f43d138ff5b749b4b Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 7 Nov 2026 10:22:48 +0800
+Subject: [PATCH] arm64: dts: qcom: sm8750: mark the ADSP fastrpc node as
+ non-secure domain
+
+The SM8750 firmware only exposes the non-secure fastrpc instance of the
+ADSP; without qcom,non-secure-domain the driver creates only
+/dev/fastrpc-adsp-secure and userspace (libssc / hexagonrpcd, and hence
+iio-sensor-proxy) cannot attach.  cdsp already carries the property.
+
+Observed on Lenovo Legion Tab Y700 Gen4 (TB322FC): with the property the
+sensor core is reachable through QRTR and iio-sensor-proxy reports
+accel/light/prox; without it /dev/fastrpc-adsp never appears.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 01eee5c2ad..c0d4d04cf0 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -2288,6 +2288,7 @@ fastrpc {
+ 					compatible = "qcom,fastrpc";
+ 					qcom,glink-channels = "fastrpcglink-apps-dsp";
+ 					label = "adsp";
++					qcom,non-secure-domain;
+ 					memory-region = <&adsp_rpc_remote_heap_mem>;
+ 					qcom,vmids = <QCOM_SCM_VMID_LPASS
+ 						      QCOM_SCM_VMID_ADSP_HEAP>;
+-- 
+2.53.0
+

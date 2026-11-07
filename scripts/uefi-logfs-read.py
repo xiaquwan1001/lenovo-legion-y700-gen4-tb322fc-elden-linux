@@ -46,23 +46,44 @@ def read_window(serial, off, length):
     return bytes(out)
 
 
+def read_via_ssh(target, off, length):
+    """从设备侧的 logfs 分区直接读（2026-11-07 p37 结论：`oem sbread` 一读就打死 USB 端点，
+    而这才是可靠通道 —— 断电重启后 Linux 起来 `dd` 一条命令即可）。
+
+    logfs 分区 = 8 MiB，记录在**分区尾 16 KiB**：off=8372224 (0x7FC000) 起。
+    """
+    cmd = ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=8", target,
+           "dd if=/dev/disk/by-partlabel/logfs bs=1 skip=%d count=%d status=none" % (off, length)]
+    r = subprocess.run(cmd, capture_output=True, timeout=120)
+    if r.returncode != 0:
+        sys.exit("ssh 读 logfs 失败：%s" % r.stderr.decode("utf-8", "replace").strip())
+    return r.stdout
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--serial", default=None)
-    ap.add_argument("--off", type=lambda s: int(s, 0), default=0)
+    ap.add_argument("--ssh", default=None,
+                    help="用 SSH 从设备读分区（推荐；例 root@192.168.7.1）。给了它就不走 fastboot")
+    ap.add_argument("--off", type=lambda s: int(s, 0), default=None,
+                    help="sbread 偏移；--ssh 模式下默认 0x7FC000（分区尾 16 KiB，记录头所在）")
     ap.add_argument("--len", type=lambda s: int(s, 0), default=4096)
     ap.add_argument("--raw", default=None)
     a = ap.parse_args()
 
-    if not a.serial:
-        dev = fastboot(None, "devices")
-        m = re.search(r"^([0-9a-fA-F]+)\s+fastboot", dev, re.M)
-        if not m:
-            sys.exit("没有 fastboot 设备：\n" + dev)
-        a.serial = m.group(1)
-        print("# device %s" % a.serial, file=sys.stderr)
-
-    data = read_window(a.serial, a.off, a.len)
+    if a.ssh:
+        off = 0x7FC000 if a.off is None else a.off
+        data = read_via_ssh(a.ssh, off, a.len)
+    else:
+        off = 0 if a.off is None else a.off
+        if not a.serial:
+            dev = fastboot(None, "devices")
+            m = re.search(r"^([0-9a-fA-F]+)\s+fastboot", dev, re.M)
+            if not m:
+                sys.exit("没有 fastboot 设备：\n" + dev)
+            a.serial = m.group(1)
+            print("# device %s" % a.serial, file=sys.stderr)
+        data = read_window(a.serial, off, a.len)
     if a.raw:
         open(a.raw, "wb").write(data)
         print("wrote %s (%d B)" % (a.raw, len(data)), file=sys.stderr)

@@ -2,7 +2,9 @@
 
 > 触发：`reports/upstream-delta-20261107.md` §3 第 1 条（我方唯一未答的上游欠账）。
 > 状态：**备料完成、门禁全绿、等用户批准投递**（本项目投递按 `TASKS/README.md` §7 逐次放行）。
-> 基线：`v7.3-rc7`（worktree `/tmp/kw9`，`git am` 逐枚验过）。
+> 基线：**发信前已按 §7 重基到当轮 master** `d48723711b`（7.4-rc2 线，`Merge tag 'arm64-fixes'`，2026-11-06 13:18 -0800）；
+> 首次验证在 `v7.3-rc7`，重基后全部门禁复跑绿（见下 §"重基后复跑"）。
+> 未发信前基线是 `v7.3-rc7`（worktree `/tmp/kw9`）。
 
 ## 相对 v8 的改动（只有 1/2 变；2/2 与 v8 逐字节相同）
 
@@ -36,6 +38,16 @@ make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION= W=1 drivers/regul
 # 4) checkpatch --strict
 perl scripts/checkpatch.pl --strict --no-tree <本目录>/v9-0001-*.patch   # 0 errors, 0 warnings, 0 checks
 perl scripts/checkpatch.pl --strict --no-tree <本目录>/v9-0002-*.patch   # 0 errors, 1 warning（MAINTAINERS 提示，1/2 已做）
+```
+
+## 重基后复跑（master `d48723711b`）
+
+```
+git worktree add -f /tmp/kw9m d48723711b
+git am -q v9-0001-*.patch v9-0002-*.patch          # → 2/2 OK（零冲突）
+make ARCH=arm64 DT_SCHEMA_FILES=…/willsemi,wl2868c.yaml dt_binding_check   # → rc=0，无输出
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- LOCALVERSION= W=1 drivers/regulator/wl2868c-regulator.o
+                                                    # → rc=0，54 688 B，0 warning
 ```
 
 ## 投递前还需要用户决定
