@@ -80,3 +80,24 @@ grep -n "PartitionNameLen" -B4 -A2 Platforms/QcomModulePkg/Library/BootLib/BootL
 sed -n '70,80p' Platforms/QcomModulePkg/Include/Library/BootImage.h   # id[8] 是 UINT32 ⇒ extra_cmdline=608
 grep -n "extra_cmdline" ~/y700-elden/scripts/mkbootimg.py
 ```
+
+---
+
+## 8. 追加核对（2026-11-08 收尾后）：dtbo **不是**阻塞点，但 ESP 上那份 dtbo.img 是多余的
+
+| 事实 | 位置/证据 |
+|---|---|
+| `LoadAndValidateDtboImg()` 先查 dtbo **表头魔数** `0xD7B7AB1E`，不符即返回 FALSE | `PartitionTableUpdate.c:1746`、`LocateDeviceTree.h:66` |
+| 返回 FALSE ⇒ `BootLinux()` 走 `else`（DTB overlay 分支）：先 `GetSocDtb()`（从 kernel 的 appended DTB 取），再 `GetDtboNeeded()` | `BootLinux.c:511,556,569` |
+| `DtboNeed` 默认 **TRUE**，只有当 appended DTB 的 compatible **全位精确匹配**时才置 FALSE | `LocateDeviceTree.c:48,1036` |
+| 本机 `dtbo_b`（`sde49`，33 554 432 B）**前 64 字节全 0** ⇒ 魔数不匹配 | 设备 `dd | xxd` 实测 |
+| `DTBO_MAX_SIZE_ALLOWED = 24 MiB`，而该分区 32 MiB | `LocateDeviceTree.h:69` |
+
+**结论**：
+1. 本机 dtbo 分区**本来就是空的**，分区路径与 ESP 路径拿到的都是「无效 dtbo」⇒ **行为等价**，dtbo 不是路线 B 的变量。
+2. p58 能起，说明本机 appended DTB（`elden.dtb`）与 SoC 精确匹配 ⇒ `DtboNeed=FALSE` ⇒ 不查 dtbo。
+   **路线 B 用的是同一份 `boot.img`（含 appended DTB）⇒ 下游代码路径与 p58 完全相同**。
+3. 由此可反推：若 R55 真的把 `boot.img` 交给了 `BootLinux()`，那么它**应该能起来**（与 p58 同路）。
+   14:33 那发没起来 ⇒ 更可能是 **R55 分支根本没跑到**（与 `#559` 的两个盲区一致），而不是「B 路线撞墙」。
+4. ESP 上的 `/boot/dtbo.img`（32 MiB 全零 dump）**多余且误导**，已删除（保留 `/boot/boot.img` 与 `Loader.efi`）；
+   若将来真需要 dtbo，必须放**有效 dtbo 表**且 ≤24 MiB。

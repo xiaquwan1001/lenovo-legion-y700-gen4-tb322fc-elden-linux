@@ -1,0 +1,22 @@
+=== loader.log ===
+[L] entry
+[L] pre-boardinit
+[L] boardinit st 0
+[L] pre-vmdata
+[L] bootfastboot 1
+[L] to-fastboot
+
+=== espboot.log ===
+cat: /mnt/esp/espboot.log: 没有那个文件或目录
+
+/mnt/esp:
+总计 12
+drwx------ 2 root root 4096 11月 8日 18:08 boot
+drwx------ 4 root root 4096 11月 8日 14:19 EFI
+-rw------- 1 root root    0 11月 8日 18:38 espboot.force
+-rw------- 1 root root   99 2019年 1月 1日 loader.log
+
+/mnt/esp/boot:
+总计 181892
+-rw------- 1 root root  85594112 11月 8日 14:28 boot.img
+-rw------- 1 root root 100663296 11月 8日 18:08 vendor_boot.img

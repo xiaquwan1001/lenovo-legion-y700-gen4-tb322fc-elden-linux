@@ -1,0 +1,17 @@
+7.3.1-debug-vk184-00003-gec74c4795a43
+lrwxrwxrwx 1 root root 11 11月 5日 23:40 /dev/disk/by-partlabel/vendor_boot_b -> ../../sde55
+/mnt/esp/boot:
+总计 83588
+-rw------- 1 root root 85594112 11月 8日 14:28 boot.img
+
+/mnt/esp/EFI/BOOT:
+总计 6892
+-rw------- 1 root root  179712 11月 8日 15:43 BOOTAA64.EFI
+-rw------- 1 root root 6877184 11月 8日 15:43 BOOTAA64.EFI.grub.bak
+vendor_boot_b size=100663296
+7ab99dc6aae8fdc432d42ef6bcfa07d19311444bc51db626515084bd83707a0c  /mnt/esp/EFI/BOOT/BOOTAA64.EFI
+33a67e1fca4090c8a6d9bcb71719d9495404c2b3d47155d97541fce3f188fc46  /mnt/esp/boot/boot.img
+aa98d194604ea18c06f95ad75aa94ae64263195e72fb08305f62e34aceb4f639  /mnt/esp/boot/vendor_boot.img
+/dev/sda18      511M  185M  327M   37% /mnt/esp
+Leaving filesystem unchanged.
+/dev/sda18: 10 files, 47245/130752 clusters

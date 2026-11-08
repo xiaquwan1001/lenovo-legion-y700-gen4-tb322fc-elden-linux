@@ -40,3 +40,14 @@
   `AsciiStrnCatS` 的 ASSERT 会直接炸，且 `StrnCmp(PartitionName, L"boot", 4)` 恒不等 ⇒ FFBM 参数被静默跳过。
 - 修法（R56 顺手做）：ESP-first 命中后**先** `StrnCpyS(Info->Pname, …, L"boot", …)`（或按 `FindBootableSlot` 填 `boot_b`）再返回；
   纪律同 `#526`：**早退分支要复刻被跳过的那段「前置状态设置」**，否则下游拿到的不是零就是垃圾。
+
+## #562 ESP（vfat）的 dirty bit 会让 `mount -o ro` **直接失败**，而且「脏」是 `umount` 不干净留下的
+
+- 现象：设备上 `mount -o ro /dev/sda18 /mnt/esp` 报
+  `mount warning: sda18: Can't mount, would change RO state` + `already mounted or mount point busy`
+  —— 看起来像「设备/分区坏」，其实只是 **FAT 的 dirty 位被置上**（上次 rw 挂载没干净 `sync`+`umount`）。
+- 判据：`fsck.vfat -n /dev/sda18` 会先打 `Dirty bit is set. Fs was not properly unmounted`。
+- 修法：`fsck.vfat -a /dev/sda18`（会写盘、清 dirty 位）→ 再 `fsck.vfat -n` 应只剩 `N files, M clusters`。
+- 纪律：**读写 ESP 一律「rw 挂载 → cp → `sync` → `umount`」**，并且**读回校验也要 rw 挂载**（ro 在脏盘上必失败）；
+  已固化成 `scripts/esp-put-loader.sh`（写后 sha 对账 + `fsck.vfat -n` 干净门 + 空间预检）。
+- 2026-11-08 本轮踩了两次（14:20 与 14:28 两次 rw 挂载后各留一次脏位），每次都要 `fsck -a` 才恢复。

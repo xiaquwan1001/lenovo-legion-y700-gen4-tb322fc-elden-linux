@@ -1,0 +1,13 @@
+7.3.1-debug-vk184-00003-gec74c4795a43
+=== espboot.log ===
+cat: /mnt/esp/espboot.log: 没有那个文件或目录
+=== ls ===
+/mnt/esp:
+总计 8
+drwx------ 2 root root 4096 2026年11月 8日 boot
+drwx------ 4 root root 4096 2026年11月 8日 EFI
+
+/mnt/esp/boot:
+总计 181892
+-rw------- 1 root root  85594112 2026年11月 8日 boot.img
+-rw------- 1 root root 100663296 2026年11月 8日 vendor_boot.img

@@ -1,0 +1,4 @@
+4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5  /dev/disk/by-partlabel/boot_b
+Sending 'boot.img' (65620 KB)                      OKAY [  1.505s]
+Booting                                            OKAY [ 10.111s]
+Finished. Total time: 11.651s

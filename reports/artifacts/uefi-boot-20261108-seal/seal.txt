@@ -1,0 +1,24 @@
+7.3.1-debug-vk184-00002-g4da9a8b69fc8
+--- cmdline ---
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 elden_bootloader=esp androidboot.serialno=51318dc0 androidboot.baseband=apq
+--- root ---
+/dev/sda17
+--- boot_b ---
+4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5  /dev/disk/by-partlabel/boot_b
+--- booted at ---
+2026-11-08 19:25:06
+--- ESP logs ---
+[L] entry
+[L] pre-boardinit
+[L] boardinit st 0
+[L] pre-vmdata
+[L] force-boot
+[L] bootfastboot 0
+[L] pre-auth
+[L] post-auth st 0
+[L] pre-bootlinux
+[E] esp in
+[E] esp boot 85594112
+[E] esp boot 100663296
+[E] esp dtbo 33554432
+[E] esp done 0

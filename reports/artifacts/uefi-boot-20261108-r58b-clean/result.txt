@@ -1,0 +1,27 @@
+7.3.1-debug-vk184-00002-g4da9a8b69fc8
+elden_root=LABEL=linux17
+elden_nocamera=1
+ 19:19:33 up 2 min,  2 users,  load average: 0.18, 0.23, 0.10
+=== files ===
+总计 16
+drwx------ 2 root root 4096 11月 8日 18:08 boot
+drwx------ 4 root root 4096 11月 8日 14:19 EFI
+-rw------- 1 root root    0 11月 8日 18:38 espboot.force
+-rw------- 1 root root   92 2019年 1月 1日 espboot.log
+-rw------- 1 root root  149 2019年 1月 1日 loader.log
+=== loader.log ===
+[L] entry
+[L] pre-boardinit
+[L] boardinit st 0
+[L] pre-vmdata
+[L] force-boot
+[L] bootfastboot 0
+[L] pre-auth
+[L] post-auth st 0
+[L] pre-bootlinux
+=== espboot.log ===
+[E] esp in
+[E] esp boot 85594112
+[E] esp boot 100663296
+[E] esp dtbo none
+[E] esp done 0

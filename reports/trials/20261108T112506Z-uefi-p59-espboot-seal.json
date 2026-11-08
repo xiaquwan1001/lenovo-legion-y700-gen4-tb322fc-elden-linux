@@ -1,0 +1,18 @@
+{
+  "label": "uefi-p59-espboot-r58b-seal",
+  "ts": "2026-11-08T11:25:06Z",
+  "vk": "vk184(esp-side)",
+  "image": "/home/xuqianhui/y700-elden/out/r21-sbstop-p59/uefi-preamble59-r1.img",
+  "image_sha256": "cd73fbdc093c6a45de22d86af19007d87dd4682e022aa8d8b57e17b5bb7bab6a",
+  "manifest": "out/boot-elden-vk184.manifest",
+  "kernel_uts": "7.3.1-debug-vk184-00002-g4da9a8b69fc8",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "ESPBOOT_TAGGED",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261108-seal",
+  "note": "判据三条全中：① /proc/cmdline 含 elden_bootloader=esp（该令牌只写在 ESP 的 /boot/boot.img 里，sha 27bd6ddd…）；② uname -r = 7.3.1-debug-vk184-00002-g4da9a8b69fc8（= ESP boot.img 的内核；boot_b 是 00003）；③ boot_b sha 4e38bc2c… 全程未变；root=/dev/sda17；booted 19:25:06。ESP 侧 loader.log=[L] entry/pre-boardinit/boardinit st 0/pre-vmdata/force-boot/bootfastboot 0/pre-auth/post-auth st 0/pre-bootlinux；espboot.log=[E] esp in/boot 85594112/boot 100663296/dtbo 33554432/done 0。零写盘（只动 ESP 的 FAT 文件）。"
+}

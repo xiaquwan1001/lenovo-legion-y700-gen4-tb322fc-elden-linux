@@ -1,0 +1,98 @@
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf
+@@ -103,6 +103,7 @@
+ 	AvbLib
+ 	UbsanLib
+   	MemoryMapHelperLib
++  	SerialPortLib
+ 
+ [Guids]
+ 	gEfiFileInfoGuid
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -68,6 +68,8 @@
+ #include <Library/VerifiedBootMenu.h>
+ #include <Library/LEOEMCertificate.h>
+ #include <Library/UefiBootServicesTableLib.h>
++#include <Library/PrintLib.h>
++#include <Library/SerialPortLib.h>
+ #include <Protocol/LoadedImage.h>
+ #include <Protocol/SimpleFileSystem.h>
+ 
+@@ -1670,10 +1672,34 @@
+  * so "boot" / "dtbo" are the correct Names here (same as partition names
+  * "boot_a" etc. which also match by prefix).
+  */
++/* R56: panel-visible markers for the ESP-first path. SerialPortLib is
++ * resolved (Andromeda.dsc.inc) to FrameBufferSerialPortLib, which paints the
++ * Display Reserved region -- the only visible channel on this platform.
++ * Sentinels: Val == ESP_MARK_NO_VAL means print the line as-is. */
++#define ESP_MARK_NO_VAL  MAX_UINT64
++
++STATIC VOID
++EspMark (CONST CHAR8 *Line, UINT64 Val)
++{
++  CHAR8 Buf[128];
++  UINTN N;
++
++  if (Val == ESP_MARK_NO_VAL) {
++    N = AsciiStrLen (Line);
++    CopyMem (Buf, Line, N);
++    Buf[N++] = '\n';
++  } else {
++    N = AsciiSPrint (Buf, sizeof (Buf) - 1, "%a %lu\n", Line, Val);
++  }
++  SerialPortWrite ((UINT8 *)Buf, N);
++}
++
+ STATIC EFI_STATUS
+ LoadImageFromEsp (BootInfo *Info)
+ {
+   EFI_STATUS Status;
++
++  EspMark ("[E] esp in", ESP_MARK_NO_VAL);
+   EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
+   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Sfs = NULL;
+   EFI_FILE_PROTOCOL *Root = NULL;
+@@ -1732,6 +1758,7 @@
+       }
+       DEBUG ((EFI_D_INFO, "ESPBOOT: %s not found, skipping (optional)\n",
+               EspFiles[Idx].Path));
++      EspMark ("[E] esp dtbo none", ESP_MARK_NO_VAL);
+       continue;
+     }
+     if (EFI_ERROR (Status)) {
+@@ -1792,9 +1819,11 @@
+ 
+     if (EspFiles[Idx].Required) {
+       BootLoaded = TRUE;
++      EspMark ("[E] esp boot", (UINT64)FileSize);
+       DEBUG ((EFI_D_ERROR, "ESPBOOT: boot.img from ESP %lu bytes\n",
+               FileSize));
+     } else {
++      EspMark ("[E] esp dtbo", (UINT64)FileSize);
+       DEBUG ((EFI_D_ERROR, "ESPBOOT: dtbo.img from ESP %lu bytes\n",
+               FileSize));
+     }
+@@ -1864,10 +1893,21 @@
+    * and return immediately; on any failure fall through unchanged. */
+   Status = LoadImageFromEsp (Info);
+   if (Status == EFI_SUCCESS) {
++    /* R56 (#561): the partition path sets Pname before auth; the ESP path
++     * skips that. BootLinux's CheckMDTPStatus subtracts
++     * (MAX_SLOT_SUFFIX_SZ - 1) from AsciiStrLen(PnameAscii) when
++     * MultiSlotBoot -- Pname must be the base name without slot suffix,
++     * i.e. L"boot" (matches what the partition path writes here too). */
++    StrnCpyS (Info->Pname, ARRAY_SIZE (Info->Pname), L"boot",
++              StrLen (L"boot"));
++    EspMark ("[E] esp take", ESP_MARK_NO_VAL);
+     DEBUG ((EFI_D_ERROR, "ESPBOOT: ESP-first path taken, AVB skipped\n"));
+     return EFI_SUCCESS;
+   }
+ 
++  /* Fallback to the original partition path. */
++  EspMark ("[E] esp miss", (UINT64)Status);
++
+   /* Get Partition Name*/
+   if (!Info->MultiSlotBoot) {
+     if (Info->BootIntoRecovery) {

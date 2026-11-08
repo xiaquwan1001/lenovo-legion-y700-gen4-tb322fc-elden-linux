@@ -1,0 +1,7 @@
+b9f95d60e4506a729906fc96d33e39ff6c4cb23b5a89362fab803da7e2217fa3  BOOTAA64.EFI
+7993adfc1e505a6b1173d35735d06f5cefbfaf8aeeacb58096ea0158b37fc3e0  BOOTAA64.EFI.grub.bak
+总计 6892
+-rw------- 1 root root  179712 11月 8日 15:43 BOOTAA64.EFI
+-rw------- 1 root root 6877184 11月 8日 15:43 BOOTAA64.EFI.grub.bak
+fsck.fat 4.2 (2021-01-31)
+/dev/sda18: 9 files, 22669/130752 clusters
