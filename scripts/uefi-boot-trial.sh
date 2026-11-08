@@ -16,6 +16,15 @@
 #   未交棒(NOJUMP)  = 60 s 内 fastboot 持续应答、bus/device 不变
 #
 # 纪律：fastboot 一律单条；设备锁串行；--reset warm（Linux→fastboot 是暖复位，本判据不依赖复位深度）。
+#
+# ★目标设备锁定（2026-11-08，PITFALLS #569）：总线上可能同时挂着**别的手机**的 fastboot。
+#   旧版直接取 `fastboot devices` 的第一行当目标 —— 2026-11-08 21:42 的一发把 65 MB 的 UEFI
+#   载荷 `fastboot boot` 发给了华为裸机（`product: kirin990`，被对方 `invalid command` 拒），
+#   我们的板子（product=elden_prc_wifi）在总线上排第二 ⇒ 这一发根本没打到目标。
+#   现行规则（与 `scripts/slot-switch.sh` 同一口径，PITFALLS #371）：
+#     · 显式 `SER=<SN>` 优先；否则**按 product 匹配 `$PRODUCT_MATCH`（默认 elden）** 逐个探测，
+#       恰好一个匹配才采用，0 个或多个匹配一律 FATAL；
+#     · `fb()` 在 SER 为空时**直接拒绝执行**（不再“裸 fastboot”）；adb 侧永不猜设备。
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 TAB=${TAB:-root@192.168.7.1}
@@ -48,8 +57,46 @@ device_lock_acquire
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 SSH="ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=8 $TAB"
 S() { timeout "${2:-20}" $SSH "$1" 2>/dev/null; }
-fb() { timeout "${FBTO:-30}" fastboot ${SER:+-s "$SER"} "$@" 2>&1; }
-fb_ok() { timeout 8 fastboot devices 2>/dev/null | grep -q .; }
+fb_devices() { timeout 8 fastboot devices 2>/dev/null | awk 'NF{print $1}'; }
+fb() {
+	if [ -z "$SER" ]; then
+		echo "[trial] ❌ 拒绝执行 \`fastboot $*\`：目标设备未锁定（PITFALLS #569）" >&2
+		return 2
+	fi
+	timeout "${FBTO:-30}" fastboot -s "$SER" "$@" 2>&1
+}
+fb_product() { fb getvar product 2>&1 | awk -F': ' '/^product:/{print $2}'; }
+
+# 选定目标设备：显式 SER，或 product 唯一匹配 $PRODUCT_MATCH
+resolve_target() {
+	[ -n "$SER" ] && return 0
+	local list n ser prod hits="" hitp="" cnt=0
+	list=$(fb_devices); n=$(printf '%s\n' "$list" | grep -c . || true)
+	if [ "$n" -eq 0 ]; then
+		echo "[trial] ❌ 总线上没有 fastboot 设备"
+		return 1
+	fi
+	while read -r ser; do
+		[ -n "$ser" ] || continue
+		prod=$(timeout 8 fastboot -s "$ser" getvar product 2>&1 | awk -F': ' '/^product:/{print $2}')
+		case "$prod" in
+			*"$PRODUCT_MATCH"*) hits="$hits $ser"; hitp="$prod"; cnt=$((cnt+1));;
+			*) echo "[trial] 跳过非目标 fastboot 设备：$ser (product=${prod:-?})";;
+		esac
+	done <<< "$list"
+	if [ "$cnt" -ne 1 ]; then
+		echo "[trial] ❌ 目标设备不唯一（match=$cnt，条件 product 含 '$PRODUCT_MATCH'）。请显式 SER=<SN>：见 `fastboot devices`" >&2
+		return 1
+	fi
+	SER=$(printf '%s' "$hits" | tr -d ' ')
+	echo "[trial] 自动锁定 fastboot 设备：$SER (product=$hitp)"
+	return 0
+}
+
+# 在 fastboot 里且就是目标设备（product 复核过）
+fb_ok() { resolve_target >/dev/null 2>&1 && [ -n "$SER" ] && [ -n "$(fb_product)" ]; }
+# adb 只认显式 SER（永不用裸 adb：总线上别的手机也会答 device）
+adbx() { [ -n "$SER" ] && timeout "${ADBTO:-15}" adb -s "$SER" "$@" 9>&- 2>/dev/null; }
 
 say "===== trial START label=$LABEL image=$(basename "$IMG") sha=$SHA ====="
 say "image_size=$(stat -c%s "$IMG")"
@@ -78,8 +125,13 @@ else
 	done
 	fb_ok || { say "FATAL: fastboot did not come up (PITFALLS #368: 复位后 ~11 s 内再 reboot2 需物理断电)"; exit 1; }
 fi
-if [ -z "$SER" ]; then SER=$(timeout 8 fastboot devices | awk 'NF{print $1; exit}'); fi
+resolve_target || { say "FATAL: 目标设备未锁定，拒绝发 fastboot 命令（PITFALLS #569）"; exit 1; }
 say "SER=$SER"
+{
+	echo "# devices $(date -Is)"
+	echo "## all fastboot devices"; fb_devices
+	echo "## adb devices (仅供参考，不使用)"; timeout 8 adb devices 9>&- 2>/dev/null
+} > "$OUTDIR/devices.txt" 2>&1
 
 {
 	echo "# fastboot pre $(date -Is)"
@@ -89,6 +141,11 @@ say "SER=$SER"
 	fb getvar bootloader
 } > "$OUTDIR/fastboot-pre.txt" 2>&1
 sed -n '1,40p' "$OUTDIR/fastboot-pre.txt"
+PROD=$(awk -F': ' '/^product:/{print $2; exit}' "$OUTDIR/fastboot-pre.txt")
+case "$PROD" in
+	*"$PRODUCT_MATCH"*) say "product gate OK ($PROD)";;
+	*) say "FATAL: product='$PROD' 不含 '$PRODUCT_MATCH' —— 目标设备不对，拒绝继续（PITFALLS #569）"; exit 1;;
+esac
 
 # ---------- 采样器 ----------
 # 每秒 lsusb 计数（18d1:d00d），每 3 秒一次 fastboot getvar（证明 ABL 还活着），带时间戳
@@ -98,7 +155,7 @@ watch_usb() {
 		usb=$(lsusb 2>/dev/null | grep -c '18d1:d00d')
 		busdev=$(lsusb 2>/dev/null | awk '/18d1:d00d/{print $2"/"$4; exit}')
 		if [ $((i % 3)) -eq 0 ]; then
-			if timeout 4 fastboot ${SER:+-s "$SER"} getvar product >/dev/null 2>&1; then alive=1; else alive=0; fi
+			if FBTO=4 fb getvar product >/dev/null 2>&1; then alive=1; else alive=0; fi
 		else alive="-"; fi
 		printf '%3d usb=%s %s abalive=%s\n' "$i" "$usb" "${busdev:-none}" "$alive" >> "$out"
 		sleep 1
@@ -147,7 +204,7 @@ fi
 MODE=none
 for i in $(seq 1 120); do
 	if [ "$(S 'echo up' 6)" = up ]; then MODE=linux; break; fi
-	if timeout 5 adb ${SER:+-s "$SER"} get-state 9>&- 2>/dev/null | grep -q device; then MODE=android; break; fi
+	if [ -n "$SER" ] && [ "$(adbx get-state | tr -d '\r')" = device ]; then MODE=android; break; fi
 	if fb_ok; then
 		# 又回到 fastboot（坠落）：直接 reboot 一次
 		say "back in fastboot at ~$((i*2))s -> reboot"
@@ -160,7 +217,7 @@ echo "mode=$MODE" > "$OUTDIR/post-mode.txt"
 
 if [ "$MODE" = android ]; then
 	say "in stock Android -> adb reboot bootloader + set_active b"
-	timeout 20 adb ${SER:+-s "$SER"} reboot bootloader > "$OUTDIR/android-recover.txt" 2>&1 9>&-
+	adbx reboot bootloader > "$OUTDIR/android-recover.txt"
 	for i in $(seq 1 30); do sleep 2; fb_ok && break; done
 	fb --set-active=b >> "$OUTDIR/android-recover.txt" 2>&1
 	fb reboot >> "$OUTDIR/android-recover.txt" 2>&1
@@ -175,19 +232,24 @@ fi
 POST_BOOTID=$(sed -n 2p "$OUTDIR/ssh-post.txt")
 say "post boot_id=$POST_BOOTID mode=$MODE"
 
-# ---------- 排他判据：UEFI 的 cmdline 令牌（R43+）----------
-TAG=absent
-if [ "$MODE" = linux ] && grep -q "elden_bootpath=uefi" "$OUTDIR/ssh-post.txt"; then TAG=present; fi
-say "cmdline elden_bootpath=$TAG"
+# ---------- 排他判据：UEFI 写入内核 cmdline 的令牌 ----------
+#   R43+ 路线 A（EFI-stub 交棒）：elden_bootpath=uefi
+#   R55+ 路线 B（ESP 侧 boot.img 由 Mu LinuxLoader 读起）：elden_bootloader=esp  ← 现行
+TAG=absent; TAG_B=absent
 if [ "$MODE" = linux ]; then
-	if [ "$TAG" = present ]; then
-		V=HANDOFF_TAGGED
-	else
-		# 内核起了但没有令牌 ⇒ 这一次内核不是 UEFI 交棒的那个（ABL 自己引导 boot_b）
-		V=ABLBOOT_NOTAG
-	fi
-else
+	grep -q "elden_bootpath=uefi"     "$OUTDIR/ssh-post.txt" && TAG=present
+	grep -q "elden_bootloader=esp"    "$OUTDIR/ssh-post.txt" && TAG_B=present
+fi
+say "cmdline elden_bootpath=$TAG elden_bootloader=$TAG_B"
+if [ "$MODE" != linux ]; then
 	V=NOBOOT
+elif [ "$TAG_B" = present ]; then
+	V=ESPBOOT_TAGGED          # 路线 B 判据（ESP 侧的 boot.img 才是带 token 的那个）
+elif [ "$TAG" = present ]; then
+	V=HANDOFF_TAGGED          # 路线 A 判据
+else
+	# 内核起了但没有令牌 ⇒ 这一次内核不是 UEFI 路径起的（ABL 自己引导 boot_b）
+	V=ABLBOOT_NOTAG
 fi
 say "VERDICT(final)=$V"
 
