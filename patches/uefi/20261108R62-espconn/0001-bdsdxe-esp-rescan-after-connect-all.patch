@@ -1,0 +1,69 @@
+Subject: [PATCH] BdsDxe: ESP 扫描加一次「连所有句柄 + Stall + 重扫」（修 flash 启动形态下 fs=1）
+
+2026-11-08R62 y700-elden（对应 PITFALLS #571）：
+
+实测：**同一份固件**，用 `fastboot boot` 起时 `[K] esp blk=120 / fs=8 / ld=Success i=1`；
+把同样的件 `fastboot flash boot_a` 后正常启动，只剩 `[K] esp fs=1` ⇒ ESP 找不到 ⇒ R54 回退
+FV LinuxLoader ⇒ 它去读 `boot_a`（= 固件本身）当内核 ⇒ 必失败（ABL 连试 7 次后置
+`slot-unbootable:a=yes` 并回退 `_b`，见 #572）。
+
+最可能的解释 = 枚举时机：flash 启动没有 USB 传输那 10 s 前摇，UFS→分区→FAT 的绑定还没走完
+就进了 BDS 的后段。本补丁在 R54 的第一次 `SimpleFileSystem` 扫描之后加一跳：
+`fs < 2` 时 `LocateHandleBuffer(AllHandles)` 逐个 `ConnectController(..., TRUE)` + `Stall(300 ms)`
++ 重扫，取句柄数更大的那一批，并打 `[K] esp fs2=<n> all=<n>`。
+
+判据：flash 启动时应出现 `[K] esp fs2=8 all=…`，随后 `[K] esp ld=Success i=<n>`，
+ESP loader 正常跑起来（`\loader.log` 出现 `[L] entry …`）。
+
+不改任何既有语义：`fs >= 2` 时整段跳过，`fastboot boot` 路径行为不变。
+
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -896,6 +896,47 @@
+ 
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp fs=%d\n\r", (UINT32)Count);
+   SerialPortWrite ((UINT8 *)Line, Len);
++  // 2026-11-08R62 y700-elden: 从 flash 的 boot 槽启动时，这里可能只绑出 1 个 FAT 卷
++  // （实测 fresh-flash 启动 `fs=1`，同一份固件用 `fastboot boot` 起是 `fs=8`，PITFALLS #571），
++  // 于是 ESP 找不到、整条路线回退到 FV LinuxLoader 去读 boot_a（= 固件本身）当内核 ⇒ 必失败。
++  // 这里补一次「连所有句柄 + 等待 + 重扫」：flash 路径没有 USB 传输前摇，链路枚举可能还没走完。
++  if (Count < 2) {
++    EFI_HANDLE  *All      = NULL;
++    EFI_HANDLE  *FsHandles = NULL;
++    UINTN       AllCount  = 0;
++    UINTN       FsCount   = 0;
++    UINTN       K;
++
++    if (!EFI_ERROR (gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &AllCount, &All))) {
++      for (K = 0; K < AllCount; K++) {
++        gBS->ConnectController (All[K], NULL, NULL, TRUE);
++      }
++
++      FreePool (All);
++    }
++
++    gBS->Stall (300000);   /* 300 ms：给 UFS/分区/FAT 的绑定一次稳定窗口 */
++
++    if (!EFI_ERROR (gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleFileSystemProtocolGuid,
++                                             NULL, &FsCount, &FsHandles)) &&
++        (FsCount > Count)) {
++      if (Handles != NULL) {
++        FreePool (Handles);
++      }
++
++      Handles = FsHandles;
++      Count   = FsCount;
++      FsHandles = NULL;
++    }
++
++    if (FsHandles != NULL) {
++      FreePool (FsHandles);
++    }
++
++    Len = AsciiSPrint (Line, sizeof (Line), "[K] esp fs2=%d all=%d\n\r", (UINT32)Count, (UINT32)AllCount);
++    SerialPortWrite ((UINT8 *)Line, Len);
++  }
++
+ 
+   for (Idx = 0; (Idx < Count) && (!Found); Idx++) {
+     Dp = FileDevicePath (Handles[Idx], Path);

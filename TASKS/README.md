@@ -193,6 +193,28 @@
 - **附带（2026-11-08 晚，已结案·不追究）**：用户报「ESP 启动时不显示充电」。用新工具 `scripts/driver-snapshot.sh` 做 A/B（ESP 启动 vs `boot_b`，同机同线同口）：`usb/input_current_limit` 两边都 **500 mA**、`battery STATUS=Charging` 但 `charge_counter` 同值不增长（5 118 580）⇒ **净放电**，与启动路径、与模块加载均无关（`modules_loaded 42/42`、`module_problems 0/0`）。归因方向 = ADSP 选口/PD 协商（与 §5 Q35「双口被 ADSP 选口策略挡住」同源）；**用户裁决：不追究**。正文 `reports/driver-ab-charging-20261108.md`，坑 `#568`。
   失败链保留 `reports/uefi-espboot-r55-indeterminate-20261108.md`；静态发现 `reports/uefi-route-b-static-findings-20261108.md`。
 
+### 2026-11-08（深夜）：崩溃定因两处修 + **启动菜单闭环** + 落地第一发（写 `boot_a`）定位到缺口
+
+- **「神奇的递归 dump」定因（零上机）**：① 真异常 = `Root->Open(Root, NULL, …)` 想「删旧日志」，
+  但本树 `EnhancedFatDxe` 的 `FatOpenEx()` **没有 `NewHandle == NULL` 分支** ⇒ 文件存在就打开成功 ⇒
+  `*NewHandle = &NewIFile->Handle` **写地址 0** ⇒ `Synchronous Exception at 0xD0B99E2C`
+  = `Fat` 基址 `0xD0B95000` + RVA `0x4E2C` 的 `str x8,[x22]`（`\loader.log` / `\espboot.log` 两处都中）；
+  ② 只有一个数字 = `R18` 的异常重挂写在 `R13StartLinuxLoader()` 体内，R54 把 R13 调用挪到 ESP 失败之后
+  ⇒ ESP 路径用预编译 `CpuDxe` 的 stock handler（无 `[K] FLT`、无有界滚屏）⇒ 递归。
+  修：两处改成「打开拿句柄再 `Delete()`」+ 新补丁 `20261108R61-hoist-exchook`（配方 `p60`）。
+  坑 `#569/#570`；正文 `reports/uefi-espboot-recursive-dump-rootcause-20261108.md`。
+- **上机两发**：p60+r62（只修第一处）⇒ `[L] esp cpu-hook=ok` + `[K] FLT … esr=96000047 far=0 x22=0`（铁证，屏不再递归）；
+  p60+r63（两处全修）⇒ `elden_bootloader=esp`、vk184-00002、`\loader.log` 完整序列。
+- **启动菜单闭环（R60/r65）**：屏显菜单（复用 `BootLib/DrawUI`，不用 `SerialPortWrite`）+ 音量上/下移动 + 电源确认；
+  上机日志 `menu entry n 4 / timeout s 8 / key 2 / sel 1 / key 258 / boot \boot\boot2.img`，
+  实际起来的是备选内核 `vk184-00003`。首次 r64 无菜单的真因 = 调用被 `\menu.enable` 门控而该文件不存在（#571 同族）。
+- **落地第一发（写 `boot_a`，零引导分区写盘）**：`flash boot_a` p60 + `--set-active=a` ⇒ **ABL 认这个件并跳到它**，
+  但 flashed 形态下 `[K] esp fs=1`（`fastboot boot` 形态是 `8`）⇒ 回退 FV loader 去读 `boot_a`（=固件本身）当内核 ⇒ 失败；
+  ABL 7 次后置 `slot-unbootable:a=yes` 并切 `_b`，**无需救砖**。已 `flash boot_a` 回灌备份
+  `backup/boot_a-pre-uefi-20261108.img`（`d4772c11…`），`uefi_a/imagefv_a/abl_a/xbl_a/GPT` 全程未动。坑 `#571/#572`。
+- **G1-29 剩余**：① ~~启动菜单~~ ✅；② **落地**——`20261108R62-espconn`（配方 `p61`，`out/r21-sbstop-p61/uefi-preamble61-r1.img`
+  `b8a87c0d…`）已就绪**未上机**：`fs < 2` 时「连所有句柄 + `Stall(300 ms)` + 重扫」并打 `[K] esp fs2=`；
+  ③ 「直接从 FAT/EXT4 读 kernel/initrd」仍未做；④ 正式化清理（`\espboot.force`、`LinuxLoader.c:295` 写死 `BootIntoFastboot`，`#562`）。
 ### 2026-11-08（下午）：路线定案 B + **首试判 indeterminate**（RELEASE 剥 DEBUG + 菜单歧义 = 无法归因）
 
 - **路线裁决**：走 **B**（ESP 放 `boot.img`，由 Mu `LinuxLoader` 变体 ESP-first 读件），不做 A（改固件内存表）。

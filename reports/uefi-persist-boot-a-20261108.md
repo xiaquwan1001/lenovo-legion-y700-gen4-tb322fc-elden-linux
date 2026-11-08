@@ -69,3 +69,18 @@ fastboot -s HA2EXB0E reboot                                            # 仍 act
   - 把 ESP 定位从「扫 SimpleFileSystem」升级为「按 GPT 名 `eldenesp` 找 `BlockIo` → 手工读 FAT 引导扇区」，
     彻底绕开 ConnectController 时序；
   - 再发一次 `flash boot_a` + `--set-active=a`；判据 = `[K] esp fs>=8` 且出现 `[K] esp ld=Success i=n`。
+
+## 5. R62 已就绪（本发**未上机**，待验收）
+
+- 补丁 `patches/uefi/20261108R62-espconn/0001-bdsdxe-esp-rescan-after-connect-all.patch`：
+  R54 第一次 `SimpleFileSystem` 扫描后，若 `fs < 2` 则 `LocateHandleBuffer(AllHandles)` →
+  逐句柄 `ConnectController(..., TRUE)` → `Stall(300 ms)` → 重扫，取句柄数更大的那一批，
+  并打 `[K] esp fs2=<n> all=<n>`。`fs >= 2` 时整段跳过（`fastboot boot` 路径行为不变）。
+- 配方：`patches/uefi/p61-recipe.txt`（= p60 + R62，79 条）。
+- 产物：`out/r21-sbstop-p61/uefi-preamble61-r1.img`（`b8a87c0d…`，67 194 880 B）；
+  FD 内层 FV 实测含 `esp fs2` / `esp cpu-hook` / `esp ld=`（`BdsDxe`，GUID `6D33944A…`）。
+- 验收口径（下一发）：
+  1. `fastboot flash boot_a out/r21-sbstop-p61/…` + `--set-active=a` + reboot；
+  2. 屏上/环形日志应出现 `[K] esp fs2=8 all=…` → `[K] esp ld=Success i=<n>`；
+  3. 起来后 `uname -r` = `…vk184-00002…`、`/proc/cmdline` 含 `elden_bootloader=esp`、`\loader.log` 有 `[L] entry …`；
+  4. 失败仍可自动回退：ABL 7 次后置 `slot-unbootable:a=yes` 并切 `_b`（#572），`boot_a` 备份在 `backup/`。
