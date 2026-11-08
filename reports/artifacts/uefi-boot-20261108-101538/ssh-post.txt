@@ -1,0 +1,8 @@
+# ssh post 2026-11-08T10:20:45+08:00
+121424a8-297e-48c4-b5f1-01efd0f684da
+up 4 minutes
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 androidboot.serialno=51318dc0 androidboot.baseband=apq elden_bootpath=uefi initcall_debug
+├─sde45        96M boot_b
+├─sde55        96M vendor_boot_b
+├─sde59         8M init_boot_b
+├─sde68         8M logfs

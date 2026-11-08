@@ -1,0 +1,196 @@
+Subject: [PATCH] BdsDxe: start an ESP \EFI\BOOT\BOOTAA64.EFI before the FV LinuxLoader
+
+2026-11-08R54 y700-elden: G1-29 后半。p58 已让 UEFI 交棒内核（走 FV 内 LinuxLoader →
+boot_b 的 boot.img，受 96 MiB 槽与「内核在分区头里」两个限制）。要让 bootloader 从
+ext4(linux17) 直接读 kernel/initrd 并出菜单，得先让它自己被启动：UEFI 里唯一能放
+第三方 EFI 应用的位置 = 一个 FAT 卷上的 \EFI\BOOT\BOOTAA64.EFI（本轮已在 GPT 尾部纯追加
+建出 512 MiB ESP = /dev/sda18 名 eldenesp，里面放 arm64 GRUB standalone 件）。
+
+为什么自己扫、不靠 BDS 的 BootOption 顺序：
+  1) 本固件是 `fastboot boot` 的 RAM 载荷 ⇒ Boot#### 变量不持久，BDS 每次自己重新枚举；
+  2) 枚举结果里有 FAT 的 LUN4 `modem_b`（modem 固件分区）⇒ 绝不能让它当默认启动项；
+  3) 顺序不可控 ⇒ 判据不可复现。
+所以：先按 SimpleFileSystem 逐个 OpenVolume + Open("\EFI\BOOT\BOOTAA64.EFI")，
+命中就 LoadImage/StartImage；找不到/加载失败 ⇒ 退回 R13 的老行为（UEFI 侧 fastboot，
+宿主可 `fastboot continue`），保证任何时候都还有回退路径。
+
+判据（屏上单行，scale 4 可读）：
+  [K] esp fs=<SimpleFileSystem 个数> found=<0|1>
+  [K] esp load=<Status> size=0x<size>        （命中时）
+  [K] esp start=<Status> (returned => fallback)（应用返回时才打；GRUB 交棒后永不返回）
+
+判据（屏上单行；本路径还没有内核，宿主读不到任何东西，只能靠屏）：
+  [K] esp blk=<n>            BlockIo 句柄数（据此逐个 ConnectController）
+  [K] esp fs=<n>             SimpleFileSystem 句柄数（期望 >0）
+  [K] esp ld=<Status> i=<i>  第 i 个句柄上 LoadImage(BOOTAA64.EFI) 的结果（期望 Success）
+  [K] esp none               没找到 ⇒ 已退回 LinuxLoader
+  [K] esp start=<Status>     StartImage 返回了（GRUB 只在重启/关机时返回）
+
+四次上机的过程事实（本补丁的写法就是为了绕开它们）：
+  1) BdsEntry 入口处 SimpleFileSystem = 0（设备还没连）⇒ 在那里扫必然静默回退（第 1 版）。
+  2) 在入口调 EfiBootManagerConnectAll() 会把「连所有驱动」提前到 BDS 未初始化时，本板直接
+     死在同步异常、屏上地址循环刷（第 2 版）。
+  3) 本平台链接的 PlatformBootManagerLib 是 MsCorePkg 那份，其 AfterConsole 只跑
+     ConnectSequence()，**不做** ConnectAll ⇒ 放在 AfterConsole 之后仍是 fs=0（第 3 版）。
+  ⇒ 本版自己**定向**连接：对每个 BlockIo 句柄 ConnectController(..., TRUE)，
+     让 UFS→分区→FAT→SimpleFileSystem 逐级绑出来，然后再扫。
+
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -16,6 +16,9 @@
+ #include <Library/SerialPortLib.h>   // 2026-11-04R13 y700-elden
+ #include <Library/PrintLib.h>        // 2026-11-04R13 y700-elden
+ #include <Protocol/FirmwareVolume2.h> // 2026-11-04R13 y700-elden
++#include <Protocol/SimpleFileSystem.h> // 2026-11-08R54 y700-elden
++#include <Protocol/BlockIo.h>          // 2026-11-08R54 y700-elden
++#include <Library/DevicePathLib.h>     // 2026-11-08R54 y700-elden
+ #include <Protocol/Cpu.h>          // 2026-11-06R18 y700-elden
+ #include <Protocol/DebugSupport.h> // 2026-11-06R18 y700-elden
+ // 2026-11-06R18 y700-elden: ArmPkg 的 DefaultExceptionHandlerLib.h 不在本模块 include 路径里，
+@@ -791,6 +794,110 @@
+   SerialPortWrite ((UINT8 *)Line, Len);
+ }
+ 
++// 2026-11-08R54 y700-elden: prefer an ESP application over the FV-internal LinuxLoader.
++//
++// Why: the FV-internal LinuxLoader boots the active slot's boot.img (96 MiB slot, kernel
++// inside a partition header).  A UEFI-visible FAT volume holding \EFI\BOOT\BOOTAA64.EFI
++// lets a real bootloader (GRUB arm64-efi) read kernel/initrd straight from ext4(linux17)
++// and show a boot menu.
++//
++// Three facts learned the hard way on this platform (each cost a device round):
++//  1) At BdsEntry entry the SimpleFileSystem handle count is 0 (devices are not connected
++//     yet) -- scanning there silently falls back.
++//  2) Calling EfiBootManagerConnectAll() early (before BDS initialized) crashes this Mu
++//     port in a synchronous exception (panel showed a looping fault address).
++//  3) The linked PlatformBootManagerLib (MsCorePkg) only runs `ConnectSequence()` after
++//     console init -- it does NOT connect all devices.
++// Therefore we connect just what we need: ConnectController(..., TRUE) on every BlockIo
++// handle (UFS disk -> partitions -> FAT -> SimpleFileSystem), then scan.
++//
++// LoadImage is device-path based (FileDevicePath), so the firmware does the file I/O;
++// no manual EFI_FILE GetInfo/Read (that probe is not portable).
++//
++// Judgement lines (panel only -- there is no kernel yet on this path):
++//   [K] esp blk=<n> / [K] esp fs=<n> / [K] esp ld=<st> i=<i> / [K] esp none|start=<st>
++STATIC
++BOOLEAN
++R54TryEspBoot (
++  VOID
++  )
++{
++  EFI_STATUS                Status;
++  EFI_HANDLE                *Handles;
++  UINTN                     Count;
++  UINTN                     Idx;
++  EFI_DEVICE_PATH_PROTOCOL  *Dp;
++  EFI_HANDLE                ImageHandle;
++  CHAR8                     Line[160];
++  UINTN                     Len;
++  CHAR16                    *Path;
++  BOOLEAN                   Found;
++
++  Path        = L"\\EFI\\BOOT\\BOOTAA64.EFI";
++  Found       = FALSE;
++  ImageHandle = NULL;
++
++  // --- 1) connect the storage chain so partitions + FAT get bound ---
++  Handles = NULL;
++  Count   = 0;
++  Status  = gBS->LocateHandleBuffer (ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &Count, &Handles);
++  if (EFI_ERROR (Status)) {
++    Count = 0;
++  }
++
++  Len = AsciiSPrint (Line, sizeof (Line), "[K] esp blk=%d\n\r", (UINT32)Count);
++  SerialPortWrite ((UINT8 *)Line, Len);
++
++  for (Idx = 0; Idx < Count; Idx++) {
++    gBS->ConnectController (Handles[Idx], NULL, NULL, TRUE);
++  }
++
++  if (Handles != NULL) {
++    FreePool (Handles);
++  }
++
++  // --- 2) scan for the ESP default application ---
++  Handles = NULL;
++  Count   = 0;
++  Status  = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &Count, &Handles);
++  if (EFI_ERROR (Status)) {
++    Count = 0;
++  }
++
++  Len = AsciiSPrint (Line, sizeof (Line), "[K] esp fs=%d\n\r", (UINT32)Count);
++  SerialPortWrite ((UINT8 *)Line, Len);
++
++  for (Idx = 0; (Idx < Count) && (!Found); Idx++) {
++    Dp = FileDevicePath (Handles[Idx], Path);
++    if (Dp == NULL) {
++      continue;
++    }
++
++    Status = gBS->LoadImage (TRUE, gImageHandle, Dp, NULL, 0, &ImageHandle);
++    Len    = AsciiSPrint (Line, sizeof (Line), "[K] esp ld=%r i=%d\n\r", Status, (UINT32)Idx);
++    SerialPortWrite ((UINT8 *)Line, Len);
++    FreePool (Dp);
++    if (!EFI_ERROR (Status)) {
++      Found = TRUE;
++    }
++  }
++
++  if (Handles != NULL) {
++    FreePool (Handles);
++  }
++
++  if (!Found) {
++    Len = AsciiSPrint (Line, sizeof (Line), "[K] esp none\n\r");
++    SerialPortWrite ((UINT8 *)Line, Len);
++    return FALSE;
++  }
++
++  Status = gBS->StartImage (ImageHandle, NULL, NULL);
++  Len    = AsciiSPrint (Line, sizeof (Line), "[K] esp start=%r\n\r", Status);
++  SerialPortWrite ((UINT8 *)Line, Len);
++  return FALSE;   // app returned -> let the caller keep the LinuxLoader fallback
++}
++
+ /**
+ 
+   Service routine for BdsInstance->Entry(). Devices are connected, the
+@@ -858,9 +965,6 @@
+     SerialPortWrite ((UINT8 *)SbLine, SbLen);
+   }
+ 
+-  // 2026-11-04R13 y700-elden: hand off to the FV-internal LinuxLoader (UEFI fastboot).
+-  R13StartLinuxLoader ();
+-
+   HotkeyTriggered = NULL;
+   Status          = EFI_SUCCESS;
+   BootSuccess     = FALSE;
+@@ -1122,6 +1226,12 @@
+   PlatformBootManagerAfterConsole ();
+   PERF_INMODULE_END ("PlatformBootManagerAfterConsole");
+ 
++  // 2026-11-08R54 y700-elden: 先试 ESP 上的启动器（GRUB：出菜单 + 从 ext4 读内核/initrd）；
++  // 找不到才走 R13 的 FV LinuxLoader（UEFI 侧 fastboot / 直接 BootLinux 的既有路径）。
++  if (!R54TryEspBoot ()) {
++    R13StartLinuxLoader ();   // 2026-11-04R13 y700-elden
++  }
++
+   //
+   // If any component set PcdTestKeyUsed to TRUE because use of a test key
+   // was detected, then display a warning message on the debug log and the console
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf b/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+--- a/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
++++ b/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+@@ -82,6 +82,8 @@
+   gEfiSimpleTextInputExProtocolGuid             ## CONSUMES
+   gEdkiiVariablePolicyProtocolGuid              ## SOMETIMES_CONSUMES
+   gEfiDeferredImageLoadProtocolGuid             ## CONSUMES
++  gEfiSimpleFileSystemProtocolGuid              ## CONSUMES           ## 2026-11-08R54 y700-elden
++  gEfiBlockIoProtocolGuid                       ## CONSUMES           ## 2026-11-08R54 y700-elden
+ 
+ [FeaturePcd]
+   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangDeprecate    ## CONSUMES

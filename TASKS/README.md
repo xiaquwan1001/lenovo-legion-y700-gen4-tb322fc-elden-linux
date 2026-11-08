@@ -170,6 +170,28 @@
   补丁 `20261107R46-nosdcc/`+`20261107R53-nosdcc-all/`、配方 `p58-recipe.txt`、镜像 `out/r21-sbstop-p58/`；
   坑 `PITFALLS #554/#555`。
 
+### 2026-11-08（上午）：ESP + GRUB **菜单出来了**，但 EFI-stub 交接撞平台墙 —— 已按判据收窄
+
+- **已写盘（用户批准）**：GPT 尾部**纯追加** 512 MiB ESP（`/dev/sda18 el…esp`，`sgdisk -v` 干净；
+  GPT 备份 `backup/HA2EXB0E-16+512/gpt_before-esp-20261108-0934_*.bin`，写入读回 sha 逐字节一致）；
+  ESP 内 `EFI/BOOT/BOOTAA64.EFI` = GRUB standalone（`7993adfc…`）；linux17 的 `/boot` 放了
+  `Image/initrd.img/elden.dtb/grub/grub.cfg`（cmdline 由 `scripts/grub-bootfiles.sh` 从 boot.img 解出 + 补 panel 参数）。
+- **链的前半段已是事实**（屏照）：`[K] esp blk=120` → `fs=8` → `ld=Not Found i=0`（modem_b）/ **`ld=Success i=1`（我们的 ESP）**
+  → GRUB 2.14 菜单渲染 → `[I] base=…C5D80000 size=03F40000`（63.4 MB = 我们的内核 PE）。
+- **卡的是一段新墙**：紧接着 `DBI dump table info not found` + `App Log Flush : 0 ms`（= Mu `CoreExitBootServices()` 尾巴）
+  ⇒ 内核 EFI stub 调过 EB 后**再没有任何输出**，整机复位；`boot_b` sha 全程未变、两次失败都靠 R54 的 fallback 自动回 Linux。
+  四条取证通道同时空：无 fbcon（`# CONFIG_SYSFB_SIMPLEFB is not set`）、gadget 未起、ramoops 注册(0.08 s)未到、`ConOut` no-op。
+  同芯片项目（`external/ext-repos/sunuefi`）对同一交接也有同一记录；平台侧差异 = `PlatformMemoryMapLib` 只有
+  `DXE Heap` ≈469 MiB 是 Conv，其余 DDR 全 Reserv（raw DT 有 ~15 GiB）。
+- **固件世代**：`p59` = `p58` + `R54-espfirst`（`patches/uefi/20261108R54-espfirst/`，镜像
+  `out/r21-sbstop-p59/uefi-preamble59-r1.img` `cd73fbdc…`，`--gen p59 --verify` PASS）。R54 四轮演进与判据写在补丁头。
+- **下方待选路线**（正文 §3）：A 改固件内存表把 DDR 标 Conv（解锁通用 EFI-stub/GRUB 路线，风险高）；
+  B 自写 raw-jump loader 从 ESP 读 kernel/initrd/dtb（复用 p58 已验证的交接口，最稳，无菜单——本机无键盘，菜单只能超时自动选）；
+  C 回退：内核仍走 `boot_b`，ESP/GRUB 留着铺路。
+- **正文/证据**：`reports/uefi-grub-esp-handoff-wall-20261108.md`；坑 `PITFALLS #558`；
+  会话 `TASKS/sessions/2026-11-08-G1-29后半-GRUB菜单主机侧备料.md`。判据（A/B 通用）= `/proc/cmdline` 含
+  **只写在 ESP 侧配置里**的令牌 + `boot_b` sha 未变 + `findmnt /` = `/dev/sda17`。
+
 ### 2026-11-08（清晨）：G1-29 后半**主机侧备料**—— arm64 GRUB 造得出来，且 QEMU 端到端跑通「FAT 起 loader → 读 ext4 起内核」
 
 - **纯主机、零上机、零写盘**。三件新事实：

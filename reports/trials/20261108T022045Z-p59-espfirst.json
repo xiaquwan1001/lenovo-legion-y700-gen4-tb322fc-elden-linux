@@ -1,0 +1,18 @@
+{
+  "label": "p59-espfirst",
+  "ts": "2026-11-08T02:20:45Z",
+  "vk": "",
+  "image": "/home/xuqianhui/y700-elden/out/r21-sbstop-p59/uefi-preamble59-r1.img",
+  "image_sha256": "57a4cc27754faa2f58a25d992338f920d955a5174f2c4a3b3102539a7d049d0a",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "fastboot-boot",
+  "probe": "uefi-vis",
+  "verdict": "HANDOFF_TAGGED",
+  "log_dir": "/home/xuqianhui/y700-elden/reports/artifacts/uefi-boot-20261108-101538",
+  "note": "verdict=HANDOFF_TAGGED（判据=内核 cmdline elden_bootpath：present）; candidate=HANDOFF; usb-gone=yes; post mode=linux boot_id=121424a8-297e-48c4-b5f1-01efd0f684da/5efa7009"
+}

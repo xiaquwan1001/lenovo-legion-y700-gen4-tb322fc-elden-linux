@@ -326,6 +326,79 @@ def cmd_shrink_append(a):
     print("self-check: both headers CRC OK")
 
 
+def cmd_append_free(a):
+    """在**尾部现有空闲区**追加一个分区（不缩任何已有分区）。
+
+    场景：linux17.last < last_usable（本机 2026-11-08 实测尾余 262144 扇区 = 1024 MiB）
+    ⇒ 可纯追加 512 MiB 的 ESP，**不动 userdata/linux17**，回退 = 删该分区。
+    与 build/shrink-append 的区别：本模式**不改任何 existing entry 的边界**，
+    也不改 first_usable/last_usable，因此备份表位置不变，只重写条目区 + 两份头 CRC。
+    """
+    main = bytearray(open(a.main, "rb").read())
+    backup = bytearray(open(a.backup, "rb").read())
+    hdr = parse_header(main, SECTOR)
+    b_hdr = parse_header(backup, 4 * SECTOR)
+    assert check_header_crc(hdr), "primary header CRC invalid"
+    assert check_header_crc(b_hdr), "backup header CRC invalid"
+    pblock = main[hdr["ent_lba"] * SECTOR: hdr["ent_lba"] * SECTOR + hdr["nents"] * hdr["entsz"]]
+    assert binascii.crc32(pblock) & 0xFFFFFFFF == hdr["entries_crc"], "primary entries CRC mismatch"
+    assert binascii.crc32(backup[0: b_hdr["nents"] * b_hdr["entsz"]]) & 0xFFFFFFFF == b_hdr["entries_crc"], \
+        "backup entries CRC mismatch"
+
+    ents = parse_entries(main, hdr["ent_lba"], hdr["nents"], hdr["entsz"])
+    first_usable, last_usable = hdr["first_usable"], hdr["last_usable"]
+    used = [e for e in ents if e is not None]
+    free_slot = next((i for i, e in enumerate(ents) if e is None), None)
+    assert free_slot is not None, "GPT 条目表已满（32 项全用）"
+    last_end = max(e["last"] for e in used)
+    free_sectors = last_usable - last_end
+    print(f"尾部空闲：{last_end + 1}..{last_usable} = {free_sectors} 扇区 "
+          f"({free_sectors * SECTOR // 2**20} MiB)；条目槽 {free_slot}")
+
+    want = a.size_mib * 2**20 // SECTOR
+    assert want <= free_sectors, f"空间不足：要 {a.size_mib} MiB，只有 {free_sectors * SECTOR // 2**20} MiB"
+    # 1 MiB 对齐起点（本盘 4096 B 扇区 ⇒ 256 扇区）
+    align = 2**20 // SECTOR
+    p_first = ((last_end + 1 + align - 1) // align) * align
+    p_last = p_first + want - 1
+    assert p_last <= last_usable, "对齐后越界"
+    assert not any(e["first"] <= p_last and p_first <= e["last"] for e in used), "新分区与现有分区重叠"
+    print(f"{a.name}: slot {free_slot} {p_first}..{p_last} "
+          f"({(p_last - p_first + 1) * SECTOR // 2**20} MiB) type={'EFI' if a.efi else 'Linux'}")
+    newp = make_entry(free_slot, EFI_SYS_GUID if a.efi else LINUX_FS_GUID,
+                      uuid.uuid4(), p_first, p_last, a.name)
+
+    new_block = bytearray()
+    for i in range(hdr["nents"]):
+        if i == free_slot:
+            new_block += newp
+        elif ents[i] is not None:
+            new_block += ents[i]["raw"]
+        else:
+            new_block += bytes(hdr["entsz"])
+    assert len(new_block) == hdr["nents"] * hdr["entsz"]
+    entries_crc = binascii.crc32(bytes(new_block)) & 0xFFFFFFFF
+
+    out_main = bytearray(main)
+    out_main[hdr["ent_lba"] * SECTOR: hdr["ent_lba"] * SECTOR + len(new_block)] = new_block
+    out_main[SECTOR:SECTOR + 92] = build_primary_header(
+        1, hdr["backup_lba"], first_usable, last_usable, hdr["disk_guid"],
+        hdr["ent_lba"], hdr["nents"], hdr["entsz"], entries_crc)
+    out_backup = bytearray(backup)
+    out_backup[0:len(new_block)] = new_block
+    off = 4 * SECTOR
+    out_backup[off:off + 92] = build_primary_header(
+        b_hdr["cur_lba"], 1, first_usable, last_usable, hdr["disk_guid"],
+        b_hdr["ent_lba"], b_hdr["nents"], b_hdr["entsz"], entries_crc)
+
+    open(a.out_prefix + "_main0.bin", "wb").write(out_main)
+    open(a.out_prefix + "_backup0.bin", "wb").write(out_backup)
+    v = parse_header(bytes(out_main), SECTOR); assert check_header_crc(v)
+    vb = parse_header(bytes(out_backup), off); assert check_header_crc(vb)
+    print(f"wrote {a.out_prefix}_{{main0,backup0}}.bin  entries_crc={entries_crc:#010x}")
+    print("self-check: both headers CRC OK；未改动任何已有分区边界")
+
+
 def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -342,6 +415,13 @@ def main():
     sa.add_argument("--new-name", default="linux18")
     sa.add_argument("--keep-gib", type=int, required=True, help="缩后保留 GiB（含分区开销）")
     sa.add_argument("--new-gib", type=int, required=True, help="新分区 GiB")
+    af = sub.add_parser("append-free", help="在尾部现有空闲区追加分区（不缩任何已有分区）")
+    af.add_argument("--main", required=True); af.add_argument("--backup", required=True)
+    af.add_argument("--out-prefix", required=True)
+    af.add_argument("--name", default="eldenesp")
+    af.add_argument("--size-mib", type=int, default=512)
+    af.add_argument("--efi", action="store_true", help="类型 = EFI System（默认 Linux filesystem）")
+    af.set_defaults(f=cmd_append_free)
     sa.set_defaults(f=cmd_shrink_append)
     b.set_defaults(f=cmd_build)
     a = p.parse_args()

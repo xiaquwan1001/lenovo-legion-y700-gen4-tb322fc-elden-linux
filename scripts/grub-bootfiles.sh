@@ -20,6 +20,12 @@ BOOT_IMG=
 OUT=${OUT:-/tmp/grub-bootfiles}
 DEVICE=
 APPLY=0
+# 设备侧必需、但**不在 boot.img cmdline 里**的参数（ABL/LinuxLoader 平时从 DT/设备信息补）：
+#   面板选择（缺了就没显示）+ 序列号（脚本/备份目录按它认机器，PITFALLS #549）。
+# 可用 --extra-cmdline 追加/覆盖。
+BOARD_CMDLINE=${BOARD_CMDLINE:-"msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid:"}
+EXTRA=
+SERIALNO=${SERIALNO:-}
 
 die() { echo "grub-bootfiles: $*" >&2; exit 1; }
 say() { echo "[grub-bootfiles] $*" >&2; }
@@ -29,6 +35,8 @@ while [ $# -gt 0 ]; do
 		--boot-img) BOOT_IMG=$2; shift 2;;
 		--out)      OUT=$2; shift 2;;
 		--device)   DEVICE=$2; shift 2;;
+		--extra-cmdline) EXTRA=$2; shift 2;;
+		--serialno) SERIALNO=$2; shift 2;;
 		--apply)    APPLY=1; shift;;
 		-h|--help)  sed -n '2,22p' "$0"; exit 0;;
 		*) die "unknown arg: $1";;
@@ -91,14 +99,14 @@ menuentry "Elden Linux（GRUB 直启；内核/initrd 在 linux17）" {
   search --no-floppy --label --set=root linux17
   # 本板 Mu UEFI 是否经 EFI config table 传 DT 尚未验证 ⇒ 默认显式给 DTB（有 elden.dtb 才加这行）
   if [ -f ($root)/boot/elden.dtb ]; then devicetree ($root)/boot/elden.dtb; fi
-  linux ($root)/boot/Image CMDLINE_PLACEHOLDER root=LABEL=linux17
+  linux ($root)/boot/Image CMDLINE_PLACEHOLDER root=LABEL=linux17 elden_bootmenu=grub
   initrd ($root)/boot/initrd.img
 }
 
 menuentry "同内核 + initcall_debug（排障用）" {
   search --no-floppy --label --set=root linux17
   if [ -f ($root)/boot/elden.dtb ]; then devicetree ($root)/boot/elden.dtb; fi
-  linux ($root)/boot/Image CMDLINE_PLACEHOLDER root=LABEL=linux17 initcall_debug
+  linux ($root)/boot/Image CMDLINE_PLACEHOLDER root=LABEL=linux17 elden_bootmenu=grub initcall_debug
   initrd ($root)/boot/initrd.img
 }
 
@@ -106,10 +114,10 @@ menuentry "UEFI 固件设置（重启）" { reboot }
 menuentry "关机" { halt }
 EOF
 } > "$OUT/grub.cfg"
-python3 - "$OUT/grub.cfg" "$CMDLINE" <<'PY'
+python3 - "$OUT/grub.cfg" "$CMDLINE" "${BOARD_CMDLINE} ${EXTRA}${SERIALNO:+ androidboot.serialno=$SERIALNO}" <<'PY'
 import sys
-cfg, cmdf = sys.argv[1], sys.argv[2]
-cl = open(cmdf).read().strip()
+cfg, cmdf, board = sys.argv[1], sys.argv[2], sys.argv[3]
+cl = (open(cmdf).read().strip() + ' ' + board).strip()
 # 去掉会与 GRUB 冲突/无意义的项：BOOT_IMAGE、重复 root=、androidboot.slot_suffix 保留（设备脚本按它判断）
 parts = [t for t in cl.split() if not t.startswith('root=') and not t.startswith('BOOT_IMAGE=')]
 txt = open(cfg).read()                     # 先读完再写（否则 'w' 会先把文件截成 0）
