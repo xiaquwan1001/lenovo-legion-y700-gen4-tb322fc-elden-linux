@@ -24,6 +24,17 @@
 #   scripts/uefi-r21-p7-ladder.sh --mkimg-only --rebuild        # 从配方重建 UEFI（~5-10 min；sha 必变，见 PITFALLS #510）
 #   scripts/uefi-r21-p7-ladder.sh --mkimg-only --build-dir DIR  # 指定别的变体目录
 #   STAGES="26 34" scripts/uefi-r21-p7-ladder.sh --mkimg-only   # 只造指定档
+#   scripts/uefi-r21-p7-ladder.sh --gen p58 --verify            # 按「世代」一键复现（见下）
+#
+# 世代（--gen，2026-11-08 新增）：把「配方 + 构建归档 + 在盘指纹」绑成一个名字，
+#   避免每次手敲 PFX/RECIPE/BUILD_DIR/KEPT 四件套（敲漏 BUILD_DIR 会退回 R7 归档、静默造错件）：
+#     p7  → patches/uefi/p7-recipe.txt  + reports/artifacts/uefi-20261105R7-markonly
+#            + reports/artifacts/uefi-r21-sbstop-trim-20261106/KEPT.sha256（= 历史默认）
+#     p54 → patches/uefi/p54-recipe.txt + reports/artifacts/uefi-20261107R49-p54
+#            + patches/uefi/p54-kept.sha256（p58 的前一代，留作对照）
+#     p58 → patches/uefi/p58-recipe.txt + reports/artifacts/uefi-20261107R46R53-p58
+#            + patches/uefi/p58-kept.sha256  ← **当前有效世代**（UEFI 交棒打通那一发）
+#   环境变量 PFX/RECIPE/BUILD_DIR/KEPT 显式给出时优先于 --gen。
 #
 # 世代（2026-11-06 新增）：默认为 p7 世代（R7 配方 + 在盘件 sha 比对）。后续世代用环境变量切：
 #   PFX=p8 RECIPE=patches/uefi/p8-recipe.txt OUTDIR=out/r21-sbstop-p8 \
@@ -60,6 +71,7 @@ fi
 DEFAULT_BUILD_DIR=$ROOT/reports/artifacts/uefi-20261105R7-markonly
 MODE=list
 REBUILD=0
+GEN=${GEN:-}
 
 die() { echo "uefi-r21-p7-ladder: $*" >&2; exit 1; }
 note() { echo "[p7] $*" >&2; }   # 一律 stderr：build_variant 用 stdout 回传路径
@@ -83,10 +95,29 @@ REBUILD=0; shift;;
 		--rebuild)    REBUILD=1; shift;;
 		--stages)     STAGES=$2; shift 2;;
 		--probe)      PROBE=$2; shift 2;;
+		--gen)        GEN=$2; shift 2;;
 		-h|--help)    sed -n '2,40p' "$0"; exit 0;;
 		*) die "unknown option: $1";;
 	esac
 done
+
+# ---------- 0. 世代表（--gen）：只填「未显式给出」的那几项 ----------
+if [ -n "$GEN" ]; then
+	case "$GEN" in
+		p7)  _rec=patches/uefi/p7-recipe.txt;  _bd=uefi-20261105R7-markonly;         _kept=reports/artifacts/uefi-r21-sbstop-trim-20261106/KEPT.sha256; _out=r21-sbstop;;
+		p54) _rec=patches/uefi/p54-recipe.txt; _bd=uefi-20261107R49-p54;               _kept=patches/uefi/p54-kept.sha256; _out=r21-sbstop-p54;;
+		p58) _rec=patches/uefi/p58-recipe.txt; _bd=uefi-20261107R46R53-p58;            _kept=patches/uefi/p58-kept.sha256; _out=r21-sbstop-p58;;
+		*) die "--gen 只认 p7/p54/p58（见脚本头部）；收到: $GEN";;
+	esac
+	[ -n "${PFX_EXPLICIT:-}" ] || PFX=$GEN
+	[ -n "${RECIPE_EXPLICIT:-}" ] || RECIPE=$ROOT/$_rec
+	[ -n "${BUILD_DIR:-}" ] || BUILD_DIR=$ROOT/reports/artifacts/$_bd
+	[ -n "$_kept" ] && { [ -n "${KEPT_EXPLICIT:-}" ] || KEPT=$ROOT/$_kept; }
+	# 无指纹的代次：清掉可能残留的 p7 指纹，否则会拿 p7 件去比而误报 FAIL
+	[ -z "$_kept" ] && [ -z "${KEPT_EXPLICIT:-}" ] && KEPT=/dev/null
+	note "世代 $GEN ⇒ 配方 $_rec / 构建 $_bd / 指纹 ${_kept:-（无）}"
+	PREAMBLE=uefi-preamble${PFX#p}-r1.img   # 必须在改完 PFX 后重算（否则仍叫 preamble7）
+fi
 
 [ -r "$RECIPE" ] || die "缺配方 $RECIPE"
 
@@ -180,7 +211,7 @@ case "$MODE" in
 			note "已写入 $OUTDIR"
 			sha256sum "$OUTDIR"/"$PREAMBLE" "$OUTDIR"/$PFX-*.img | sed 's|.*/|  |'
 		fi
-		[ "$rc" = 0 ] && note "PASS（镜像段可逐字节复现）" || note "FAIL（见上）"
+		[ "$rc" = 0 ] && { [ -f "$KEPT" ] && note "PASS（镜像段可逐字节复现，与 $KEPT 逐件相同）" || note "PASS（未提供指纹，仅产出；可比对请给 KEPT=…）"; } || note "FAIL（见上）"
 		exit "$rc"
 		;;
 esac

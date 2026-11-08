@@ -1,5 +1,9 @@
-# 来源：reports/artifacts/uefi-20261105R7-markonly/manifest.txt（2026-11-06T09:19:38）
-# 消费：scripts/uefi-r21-p7-ladder.sh --mkimg-only（唯一重建入口）
+# 世代：p58 = 当前有效世代（UEFI 交棒打通那一发）；自 p7 基线依次叠加 p8…p58 历代补丁。
+# 来源：本次构建归档 reports/artifacts/uefi-20261107R46R53-p58/（2026-11-07T23:16:29+08:00，FD sha 9ac3db04…）
+#       历史首行（p7 归档）已不适用：本配方是叠加后的全量列表，不是 R7 manifest 的导出。
+# 复现（唯一入口）：scripts/uefi-r21-p7-ladder.sh --gen p58 --verify     # 与 patches/uefi/p58-kept.sha256 逐件比 sha
+# 产件：out/r21-sbstop-p58/uefi-preamble58-r1.img = d76ede2725b3fd2756f77415a1ef01f786ff056979710b81aef8150dcd2e31b7
+# 用法：消费：scripts/uefi-r21-p7-ladder.sh --mkimg-only（唯一重建入口）
 # 格式：flag<TAB>value（可重复）；patch<TAB>路径（按出现顺序 git apply）
 
 scale	4
