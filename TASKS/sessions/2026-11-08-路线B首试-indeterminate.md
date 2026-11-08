@@ -27,3 +27,38 @@
 - **★SSOT 待并入**：`TASKS/README.md` §5「2026-11-08（下午）」块（本会话已加）+ §1 G1-29 行剩余项一句；
   `PITFALLS` 拟新增一条「RELEASE 剥 DEBUG ⇒ 无标记的实验无法归因」（编号待总管分配）
 - **设备态**：U2 在 Linux（vk184，root=`/dev/sda17`），`boot_b` 未变；`grub.cfg` = 单条目（下次经 UEFI 起必走 B）
+
+---
+
+## 收尾补记（同日，用户要求「先收尾」）
+
+### 子代理产出账（本轮 5 个派工，2 成 3 空）
+
+| 派工 | 结果 |
+|---|---|
+| `doc-audit-lead`（文档审计） | ✅ `reports/doc-audit-20261108.md`（P0=0 P1=1 P2=2） |
+| `physical-exec`（工具资产盘点） | ✅ `reports/asset-inventory-20261108.md` + `reports/artifacts/asset-inventory-20261108/*.tsv` |
+| `android-compat`（droidloom 可行性） | ✅ `reports/droidloom-feasibility-20261108.md` |
+| `mail-io`（邮件新况） | ✅ `reports/mail-triage-20261108.md`（后来补上的，第一次 ls 时还没有） |
+| `impl-worker`（路线 B D1/D2） | ✅ `reports/route-b-impl-20261108.md` + `patches/uefi/20261108R55-espboot/` + `out/espboot-20261108/Loader.efi` |
+| `uefi`（新仓库搜查）×2 派 | ❌ **两次都零产物**（无报告、无 session） |
+| `task-planner`（下一批任务草案）×2 派 | ❌ **两次都零产物** |
+| `impl-worker`（R56 面板标记） | ❌ 零产物（`out/espboot-20261108/Loader-r56.efi` 不存在） |
+
+**操作层教训（非技术）**：主机重启后 `fabric_exec` 后台程序不存活，且**重启前后的两批派工都静默消失**
+（`ps` 里无进程、`reports/` 无新文件、无报错回执）。⇒ 以后后台派工一律：
+① 派完立刻记「应产出的文件名」；② 收尾前 `ls` 逐个核对；③ 缺失就当「没派过」重派，不要相信「已经跑过」。
+
+### 新增静态发现
+
+见 `reports/uefi-route-b-static-findings-20261108.md`（交接口确认、`Info->Pname` 早退缺陷、`extra_cmdline` 偏移 608、
+被 AVB 跳过的副作用、85 MB pool 分配风险、`dtbo` 语义未证、diag 内核为何不亮）。
+新增坑：`PITFALLS #559/#560/#561`（`PITFALLS/sessions/188-路线B首试判不出来与早退漏填Pname.md`）。
+
+### 收尾时的设备与仓库状态
+
+- 设备：U2 在 Linux（`7.3.1-debug-vk184-00003-gec74c4795a43`，root=`/dev/sda17`），`boot_b` sha `4e38bc2c…` 未变；
+  `/boot/grub/grub.cfg` = **单条目**（`timeout=3` + 只 chainloader ESP 的 `Loader.efi`），`grub.cfg.bak-20261108` 为回退件；
+  ESP 三件在位（`boot.img`/`dtbo.img`/`Loader.efi`），`fsck.vfat` 干净。
+  ⚠ **下次经 UEFI 起机会自动走 B 路线**（单条目），若要回普通启动，把 `grub.cfg` 换回 `.bak` 或直接让 R54 fallback 回 `boot_b`。
+- 仓库：`scripts/check-doctor.sh` FAIL=0；工作区提交见下一条 git log。
