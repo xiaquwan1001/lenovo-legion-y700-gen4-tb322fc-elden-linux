@@ -146,3 +146,29 @@ uname -r                 = 7.3.1-debug-vk184-00002-g4da9a8b69fc8
   ④ 全程零写盘（`fastboot boot`，没碰任何分区）。
 
 ⇒ `#569`（Fat 空指针）在**两个调用点**都修掉；`#570`（rehook 漏挂）由 `R61` 修掉并实测有效。
+
+---
+
+# 附：启动菜单（R60 = 屏显 UI + 按键选择）上机通过（2026-11-08 23:26）
+
+- 件：ESP loader `r65`（`3523b320…`，184 320 B）= r63 全套修复 + `LMenuDrawScreen/LMenuDrawSelect`
+  （复用 `BootLib/DrawUI` 的 `DrawMenuInit/SetMenuMsgInfo/DrawMenu/UpdateMsgBackground`，
+  **不用** `SerialPortWrite` 画菜单 —— 避开 `#514/#515/#567` 的帧缓冲写穿）。
+- 首次尝试（r64）**屏上无菜单、直接进 Linux**，`\loader.log` 里连 `[L] menu in` 都没有：
+  菜单调用被 `LEspHasFile(L"\\menu.enable")` 门控，而那个文件从来不在 ESP 上 ⇒ 整段菜单静默不执行。
+  ⇒ 判据：**任何「加了开关文件」的功能，第一次上机必须确认那个文件真的存在**；否则「功能没生效」会被误读成
+  「功能有 bug」（同族坑 `#559`/`#564`）。修法 = 去掉门控，开关改成 `\menu.cfg` 的 `#timeout`（缺文件或 0 ⇒ 零等待、不登屏）。
+- 上机（`fastboot boot` p60 + `\menu.cfg` `#timeout=8`，4 个条目）：
+  ```
+  [L] menu entry n 4
+  [L] menu timeout s 8
+  [L] menu in 4
+  [L] menu ui 4
+  [L] menu key 2          ← 音量下（SCAN_DOWN）
+  [L] menu sel 1
+  [L] menu key 258        ← 电源（SCAN_SUSPEND）确认
+  [L] menu boot \boot\boot2.img
+  ```
+  `uname -r` = `…vk184-00003…` ⇒ 确实按选择起了 `\boot\boot2.img`（备选内核），而不是默认项。
+  用户屏照确认：菜单正常显示、反白项随音量键移动。
+- 结论：**G1-29「启动菜单」这一项闭环**（屏显 + 按键 + 选择生效 + 日志可审）。
