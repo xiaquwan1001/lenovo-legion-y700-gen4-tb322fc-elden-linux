@@ -1,0 +1,31 @@
+# p60 (= p59 + R61 hoist-exchook) + ESP loader r62（只修了 LLogOpen 的 NULL-delete）
+# 上机 2026-11-08 22:52 屏上原文（用户粘贴），关键行：
+[L] esp cpu-hook=ok
+[K] esp blk=120
+[K] esp fs=8
+[K] esp ld=Not Found i=0
+[I] ? base=00000000CE5F2000 size=00047000
+[K] esp ld=Success i=1
+[K] FLT pc=D0B99E2C img=- b=D0B95000 z=0D000 o=4E2C esr=96000047 far=00000000
+[K] FLT pc=D0B99E2C img=- b=D0B95000 z=0D000 o=4E2C esr=96000047 far=00000000
+[K] sp=A764AB00 spsr=20000305 far=0
+[K] x00=0 x01=CE6411C0 x02=0
+[K] x03=C x04=0 x05=0
+[K] x06=0 x07=0 x08=CE641120
+[K] x09=20000 x10=10000 x11=47
+[K] x12=47 x13=65 x14=60
+[K] x15=40 x16=A764AED8 x17=0
+[K] x18=1 x19=0 x20=CE641518
+[K] x21=0 x22=0 x23=CE641118
+[K] x24=CE641618 x25=0 x26=CE61E5E0
+[K] x27=DFAC3498 x28=8000000000000004 x29=A764AD70
+[K] x30=D0B99E20 x31=0 x32=0
+
+# 判读：
+#  · R61 生效：显式出现 [L] esp cpu-hook=ok；异常归因行 + 全寄存器 dump 出来；屏停住不再递归。
+#  · esr=0x96000047 => EC=0x25（同 EL1 数据异常）IL=1 ISS=0x47：DFSC=0b000111（translation fault L3）
+#    + WnR=1（写）。far=0 且 x22=0 => **往地址 0 写**。
+#  · 这条 store 与 p59 时推断的 `FatOpenEx(): *NewHandle = &NewIFile->Handle`
+#    （Fat RVA 0x4E2C = `str x8,[x22]`，x22 = 参数 NewHandle）完全对上。
+#  · 本发 LLogOpen 已修（打开拿句柄再 Delete），所以撞的是**同一 bug 的第二处**：
+#    VerifiedBoot.c 的 EspMark 里两条 `Root->Open(Root, NULL, L"\\espboot.log", …)`。

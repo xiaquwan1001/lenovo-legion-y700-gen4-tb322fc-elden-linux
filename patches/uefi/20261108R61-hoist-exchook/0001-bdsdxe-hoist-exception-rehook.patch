@@ -1,0 +1,73 @@
+Subject: [PATCH] BdsDxe: 把异常处理器重挂提到 ESP 启动之前（R18 漏在 R13 体内）
+
+2026-11-08R61 y700-elden（纯诊断线，不动启动逻辑）：
+
+R18 把 `Cpu->RegisterInterruptHandler(EXCEPT_AARCH64_SYNCHRONOUS_EXCEPTIONS,
+DefaultExceptionHandler)` 写在 `R13StartLinuxLoader()` **体内**；R54 把
+`R13StartLinuxLoader()` 的调用点挪到 `R54TryEspBoot()` **失败之后**。于是
+「ESP 上的 BOOTAA64.EFI 被 StartImage 起来」这条路径上，运行期用的仍是
+**预编译** `Binaries/ArmPkg/Drivers/CpuDxe/CpuDxe.efi` 自带的 stock handler（PITFALLS #499）：
+
+  · 没有 `[K] FLT pc=… img=… b=… z=… esr=… far=…` 归因行（R17/R20 编进去了却没被注册）；
+  · handler 用的是 stock 那份 SerialPortLib，没有本树 `FrameBufferSerialPortLib` 的有界滚屏
+    （R19/R25/R27/R29 全在源码侧）⇒ 屏满后 handler 自己二次异常 ⇒ 屏上无限
+    `Recursive exception occurred while dumping the CPU state`（PITFALLS #498 的机制）。
+
+主机侧判据（不用上机）：p59 FD 解压后内层 FV 里 `DxeCore` 含 `FLT pc=`、`BdsDxe` 含 `esp ld=`，
+而屏上两者一个都没出现 ⇒ 不是补丁没编进去，是**注册的那份没被用上**。
+
+本补丁：新增 `R61HookException()`（内容同 R18 的插入块，抽成函数，判据行改成 `[L] esp cpu-hook=`），
+并在 `R54TryEspBoot()` 一进来就调用（任何 ESP LoadImage/StartImage 之前）。
+
+判据：ESP 路径崩溃时屏上应出现**一行** `[K] FLT pc=… img=… b=… z=… o=… esr=… far=…`，
+且屏**停住不动**（不再成对重印）；正常路径应多一行 `[L] esp cpu-hook=ok`。
+
+历史：R18 原块留在 `R13StartLinuxLoader()` 里不动（那条路径仍需要它），本补丁只加一次冗余注册
+（RegisterInterruptHandler 是覆盖语义，重复注册同一指针无副作用）。
+
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -816,6 +816,34 @@
+ //
+ // Judgement lines (panel only -- there is no kernel yet on this path):
+ //   [K] esp blk=<n> / [K] esp fs=<n> / [K] esp ld=<st> i=<i> / [K] esp none|start=<st>
++// 2026-11-08R61 y700-elden: 抽自 R18（原本内联在 R13StartLinuxLoader() 里），只为让 **ESP 路径**
++// 也能装上本树打过补丁的异常处理器。R18 的 rehook 在 R13 体内，而 R54 把 R13 的调用挪到了
++// 「ESP 失败之后」⇒ ESP 件崩溃时用的是预编译 CpuDxe.efi 的 stock handler：既没有 [K] FLT 归因行，
++// 也没有本树 FrameBufferSerialPortLib 的有界滚屏 ⇒ 屏满后 handler 自己二次异常，单次真异常被放大成
++// 屏上无限 `Recursive exception occurred while dumping the CPU state`（PITFALLS #569/#570）。
++// RegisterInterruptHandler 是覆盖语义，重复注册同一指针安全。
++// 判据行用 `[L] esp cpu-hook=` 前缀，与 R13 那条 `[L] cpu-hook=` 区分。
++STATIC
++VOID
++R61HookException (
++  VOID
++  )
++{
++  EFI_CPU_ARCH_PROTOCOL  *Cpu;
++  CHAR8                  Line[64];
++  UINTN                  Len;
++
++  Cpu = NULL;
++  if (!EFI_ERROR (gBS->LocateProtocol (&gEfiCpuArchProtocolGuid, NULL, (VOID **)&Cpu)) && (Cpu != NULL)) {
++    Cpu->RegisterInterruptHandler (Cpu, EXCEPT_AARCH64_SYNCHRONOUS_EXCEPTIONS, DefaultExceptionHandler);
++    Len = AsciiSPrint (Line, sizeof (Line), "[L] esp cpu-hook=ok\n\r");
++  } else {
++    Len = AsciiSPrint (Line, sizeof (Line), "[L] esp cpu-hook=no-proto\n\r");
++  }
++
++  SerialPortWrite ((UINT8 *)Line, Len);
++}
++
+ STATIC
+ BOOLEAN
+ R54TryEspBoot (
+@@ -836,6 +864,8 @@
+   Path        = L"\\EFI\\BOOT\\BOOTAA64.EFI";
+   Found       = FALSE;
+   ImageHandle = NULL;
++  // 2026-11-08R61 y700-elden: 先重挂异常处理器，再碰 ESP（见 R61HookException 注释）。
++  R61HookException ();
+ 
+   // --- 1) connect the storage chain so partitions + FAT get bound ---
+   Handles = NULL;
