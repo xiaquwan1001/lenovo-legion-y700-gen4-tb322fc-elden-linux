@@ -152,6 +152,17 @@
 
 ---
 
+### 1.5 面板按键（EC）映射 —— GRUB/UEFI 菜单下实测
+
+| 场景 | 按键 | 证据 |
+|---|---|---|
+| GRUB 2.14 菜单 | **音量上 / 音量下 = 上下移动高亮**；**电源键 = 确认启动** | 用户 2026-11-08 实测（`reports/uefi-grub-esp-handoff-wall-20261108.md` §2b） |
+| 超时 | `grub.cfg` 里 `set timeout=8` ⇒ 8 s 后自动选第一项 | 同上 |
+
+⇒ 后续任何「启动菜单」方案（沿用 GRUB 或自写 loader）都以这组按键为输入契约：**不需要键盘，也不需要触摸**。
+
+---
+
 ## 2. 设备状态
 
 ### 2.1 设备等价原则（★）
@@ -206,7 +217,8 @@
 | `backup_lba` | `61390847` | **`123871231`**（现 dump；头 0x20 处 8B LE） | `gpt-dump.sh` 会打印 |
 | `userdata` | 211.4 GiB | **256.7 GiB**（手术后；first=5972392 last=73277434） | `gpt-surgery-tb322fc.py list` |
 | `linux17` | （已删） | **192.0 GiB**（idx16，first=73277435 **last=123609082**，`/dev/sda17`；★2026-10-31 删 `linux18` 后并回，见 §3.3。本表其余列仍为 **2026-10-03 快照**，当时 `linux17` = 193.0 GiB / last=123871226） | 同上（**写前一律以 `scripts/gpt-surgery-tb322fc.py list` 实测为准**） |
-| free slots | 16–31（可加 16 个分区） | 17–31 | 同上 |
+| `eldenesp`（ESP） | — | **512 MiB**（idx17，first=123609088 **last=123740159**，EFI System，`/dev/sda18`；2026-11-08 在**尾部空闲区纯追加**，未动任何已有分区，见 `reports/uefi-grub-esp-handoff-wall-20261108.md`） | `scripts/gpt-surgery-tb322fc.py append-free`（`list` 复核） |
+| free slots | 16–31（可加 16 个分区） | 18–31（ESP 占用 idx17） | 同上 |
 | boot/dtbo/vbmeta 大小 | 100663296 / 33554432 / 65536 | 同（同型号同布局） | `fastboot getvar partition-size:*` |
 | 备份目录规范 | `backup/<SN>-<容量档>/`（**禁用 `new-tablet`**） | 同 | — |
 
