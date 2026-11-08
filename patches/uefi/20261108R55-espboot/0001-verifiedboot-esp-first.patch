@@ -1,0 +1,257 @@
+From: y700-elden worker (D1, 2026-11-08)
+Subject: [PATCH] QcomModulePkg/avb: ESP-first boot path in LoadImageAndAuth()
+
+判据（母计划 .pi/plans/2026-11-08-g1-29-route-b-espboot.md §1）：
+- BootLinux() 取件只查 Info->Images[]（BootLinux.c:1445 GetImage，前缀
+  AsciiStrnCmp 匹配 Name），表由 LoadImageAndAuth()（VerifiedBoot.c:1658）
+  填。把 Images[] 直接从 ESP 卷填好，p58 已验证的 BootLinux() 全程复用。
+- 自签 boot.img 过不了 AVB ⇒ ESP 路径命中时整体跳过
+  LoadImageAndAuthVB2/DisplayVerifiedBootScreen/VBSendMilestone。
+- 任何一步失败（缺 \boot\boot.img / 读失败 / 内存不足）→ 释放全部已分配、
+  返回 EFI_NOT_FOUND，调用方原样走分区路径（原行为零改动）。
+
+实现：
+- gBS->OpenProtocol(gImageHandle, LoadedImage) → DeviceHandle 上的
+  SimpleFileSystem → OpenVolume → 读 \boot\boot.img（必需）与
+  \boot\dtbo.img（可选，缺/败不影响 boot）。
+- Name 用 "boot"/"dtbo"，与 GetImage 的比较口径一致。
+- 命中时 DEBUG 固定标记 "ESPBOOT: boot.img from ESP <size>"。
+- GUID 实例 gEfiLoadedImageProtocolGuid/gEfiSimpleFileSystemProtocolGuid
+  已由 LinuxLoader.inf [Protocols] 链接，无需改 .inf。
+
+验证：RELEASE_CLANGPDB/AARCH64 LinuxLoader 构建通过；产物 sha256 见
+reports/route-b-impl-20261108.md §2。
+
+应用方式（不提交 Mu 树 git）：
+  cd build/uefi-woa-prep/repos/7-mu-lenovo
+  git apply 0001-verifiedboot-esp-first.body.diff
+
+Signed-off-by: elden worker <worker@elden>
+---
+ 0001-verifiedboot-esp-first.body.diff | 224 +++++++++++++++++++++++++++++
+ 1 file changed, 224 insertions(+)
+
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index d90fa15a..81036aa6 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -67,6 +67,9 @@
+ #include <Library/MenuKeysDetection.h>
+ #include <Library/VerifiedBootMenu.h>
+ #include <Library/LEOEMCertificate.h>
++#include <Library/UefiBootServicesTableLib.h>
++#include <Protocol/LoadedImage.h>
++#include <Protocol/SimpleFileSystem.h>
+ 
+ STATIC CONST CHAR8 *VerityMode = " androidboot.veritymode=";
+ STATIC CONST CHAR8 *VerifiedState = " androidboot.verifiedbootstate=";
+@@ -1654,6 +1657,193 @@ skip_verification:
+     return Status;
+ }
+ 
++/*
++ * ESP-first boot (2026-11-08 R55): when this loader itself sits on a volume
++ * (e.g. the ESP) that carries \boot\boot.img (optionally \boot\dtbo.img),
++ * load the images from there and skip AVB entirely -- self-signed images
++ * cannot pass AVB. On any failure, free everything and return EFI_NOT_FOUND
++ * so that the caller falls back to the original partition-load path with
++ * behaviour unchanged.
++ *
++ * Comparison口径: GetImage() matches Info->Images[i].Name against the
++ * requested image name with AsciiStrnCmp(Name, ImageName, len(ImageName)),
++ * so "boot" / "dtbo" are the correct Names here (same as partition names
++ * "boot_a" etc. which also match by prefix).
++ */
++STATIC EFI_STATUS
++LoadImageFromEsp (BootInfo *Info)
++{
++  EFI_STATUS Status;
++  EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
++  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Sfs = NULL;
++  EFI_FILE_PROTOCOL *Root = NULL;
++  EFI_FILE_PROTOCOL *File = NULL;
++  UINT64 FileSize = 0;
++  UINTN Idx;
++  BOOLEAN BootLoaded = FALSE;
++  STATIC CONST struct {
++    CONST CHAR16 *Path;
++    CONST CHAR8  *Name;
++    BOOLEAN      Required;
++  } EspFiles[] = {
++    { L"\\boot\\boot.img", "boot", TRUE  },
++    { L"\\boot\\dtbo.img", "dtbo", FALSE },
++  };
++
++  Status = gBS->OpenProtocol (gImageHandle,
++                              &gEfiLoadedImageProtocolGuid,
++                              (VOID **)&LoadedImage,
++                              gImageHandle, gImageHandle,
++                              EFI_OPEN_PROTOCOL_GET_PROTOCOL);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((EFI_D_INFO, "ESPBOOT: LoadedImage not available (%r), "
++            "falling back to partition path\n", Status));
++    return EFI_NOT_FOUND;
++  }
++
++  Status = gBS->HandleProtocol (LoadedImage->DeviceHandle,
++                                &gEfiSimpleFileSystemProtocolGuid,
++                                (VOID **)&Sfs);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((EFI_D_INFO, "ESPBOOT: no SimpleFileSystem on DeviceHandle (%r), "
++            "falling back to partition path\n", Status));
++    return EFI_NOT_FOUND;
++  }
++
++  Status = Sfs->OpenVolume (Sfs, &Root);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((EFI_D_INFO, "ESPBOOT: OpenVolume failed (%r), "
++            "falling back to partition path\n", Status));
++    return EFI_NOT_FOUND;
++  }
++
++  for (Idx = 0; Idx < ARRAY_SIZE (EspFiles); Idx++) {
++    UINT8 ImgIdx;
++    CHAR8 *Name = NULL;
++    VOID *Buffer = NULL;
++
++    Status = Root->Open (Root, &File, (CHAR16 *)EspFiles[Idx].Path,
++                         EFI_FILE_MODE_READ, 0);
++    if (Status == EFI_NOT_FOUND) {
++      if (EspFiles[Idx].Required) {
++        DEBUG ((EFI_D_INFO, "ESPBOOT: %s not found, "
++                "falling back to partition path\n", EspFiles[Idx].Path));
++        goto Out;
++      }
++      DEBUG ((EFI_D_INFO, "ESPBOOT: %s not found, skipping (optional)\n",
++              EspFiles[Idx].Path));
++      continue;
++    }
++    if (EFI_ERROR (Status)) {
++      DEBUG ((EFI_D_INFO, "ESPBOOT: open %s failed (%r)\n",
++              EspFiles[Idx].Path, Status));
++      goto Out;
++    }
++
++    /* Determine file size: seek to EOF then query position. */
++    Status = File->SetPosition (File, 0xFFFFFFFFFFFFFFFFULL);
++    if (EFI_ERROR (Status)) {
++      goto ReadFail;
++    }
++    Status = File->GetPosition (File, &FileSize);
++    if (EFI_ERROR (Status) || FileSize == 0) {
++      goto ReadFail;
++    }
++    Status = File->SetPosition (File, 0);
++    if (EFI_ERROR (Status)) {
++      goto ReadFail;
++    }
++
++    Buffer = AllocatePool (FileSize);
++    if (Buffer == NULL) {
++      DEBUG ((EFI_D_INFO, "ESPBOOT: AllocatePool %lu failed for %s\n",
++              FileSize, EspFiles[Idx].Path));
++      goto ReadFail;
++    }
++
++    Status = File->Read (File, (UINTN *)&FileSize, Buffer);
++    if (EFI_ERROR (Status)) {
++      FreePool (Buffer);
++      goto ReadFail;
++    }
++    File->Close (File);
++    File = NULL;
++
++    if (Info->NumLoadedImages >= ARRAY_SIZE (Info->Images)) {
++      FreePool (Buffer);
++      Status = EFI_OUT_OF_RESOURCES;
++      goto Out;
++    }
++
++    Name = AllocateZeroPool (AsciiStrLen (EspFiles[Idx].Name) + 1);
++    if (Name == NULL) {
++      FreePool (Buffer);
++      Status = EFI_OUT_OF_RESOURCES;
++      goto Out;
++    }
++    AsciiStrCpyS (Name, AsciiStrLen (EspFiles[Idx].Name) + 1,
++                  EspFiles[Idx].Name);
++
++    ImgIdx = Info->NumLoadedImages;
++    Info->Images[ImgIdx].Name = Name;
++    Info->Images[ImgIdx].ImageBuffer = Buffer;
++    Info->Images[ImgIdx].ImageSize = (UINTN)FileSize;
++    Info->NumLoadedImages++;
++
++    if (EspFiles[Idx].Required) {
++      BootLoaded = TRUE;
++      DEBUG ((EFI_D_ERROR, "ESPBOOT: boot.img from ESP %lu bytes\n",
++              FileSize));
++    } else {
++      DEBUG ((EFI_D_ERROR, "ESPBOOT: dtbo.img from ESP %lu bytes\n",
++              FileSize));
++    }
++    continue;
++
++ReadFail:
++    if (File != NULL) {
++      File->Close (File);
++      File = NULL;
++    }
++    if (EspFiles[Idx].Required) {
++      DEBUG ((EFI_D_INFO, "ESPBOOT: read %s failed (%r), "
++              "falling back to partition path\n", EspFiles[Idx].Path,
++              Status));
++      goto Out;
++    }
++    /* Optional dtbo failed: keep going with what we have. */
++    DEBUG ((EFI_D_INFO, "ESPBOOT: read optional %s failed (%r), skipping\n",
++            EspFiles[Idx].Path, Status));
++  }
++
++  Status = BootLoaded ? EFI_SUCCESS : EFI_NOT_FOUND;
++  goto Done;
++
++Out:
++  /* Any failure: release every image we allocated on the ESP path. */
++  {
++    UINTN CleanupIdx;
++    for (CleanupIdx = 0; CleanupIdx < Info->NumLoadedImages;
++         CleanupIdx++) {
++      if (Info->Images[CleanupIdx].Name != NULL) {
++        FreePool (Info->Images[CleanupIdx].Name);
++        Info->Images[CleanupIdx].Name = NULL;
++      }
++      if (Info->Images[CleanupIdx].ImageBuffer != NULL) {
++        FreePool (Info->Images[CleanupIdx].ImageBuffer);
++        Info->Images[CleanupIdx].ImageBuffer = NULL;
++      }
++      Info->Images[CleanupIdx].ImageSize = 0;
++    }
++    Info->NumLoadedImages = 0;
++    Status = EFI_NOT_FOUND;
++  }
++
++Done:
++  Root->Close (Root);
++  return Status;
++}
++
+ EFI_STATUS
+ LoadImageAndAuth (BootInfo *Info)
+ {
+@@ -1669,6 +1859,15 @@ LoadImageAndAuth (BootInfo *Info)
+     return EFI_INVALID_PARAMETER;
+   }
+ 
++  /* ESP-first (R55): try loading boot/dtbo from the volume this loader was
++   * launched from. On success skip AVB (self-signed images cannot pass AVB)
++   * and return immediately; on any failure fall through unchanged. */
++  Status = LoadImageFromEsp (Info);
++  if (Status == EFI_SUCCESS) {
++    DEBUG ((EFI_D_ERROR, "ESPBOOT: ESP-first path taken, AVB skipped\n"));
++    return EFI_SUCCESS;
++  }
++
+   /* Get Partition Name*/
+   if (!Info->MultiSlotBoot) {
+     if (Info->BootIntoRecovery) {

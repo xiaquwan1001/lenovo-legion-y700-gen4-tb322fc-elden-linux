@@ -1,0 +1,37 @@
+/dev/sda18      511M  6.6M  505M    2% /mnt/esp
+/mnt/esp
+/mnt/esp/EFI
+/mnt/esp/EFI/BOOT
+/mnt/esp/EFI/BOOT/BOOTAA64.EFI
+7993adfc1e505a6b1173d35735d06f5cefbfaf8aeeacb58096ea0158b37fc3e0  /mnt/esp/EFI/BOOT/BOOTAA64.EFI
+总计 8
+drwx------ 2 root root 4096 11月 8日 14:19 boot
+drwx------ 4 root root 4096 11月 8日 14:19 EFI
+/mnt/esp/boot:
+总计 116356
+-rw------- 1 root root 85594112 11月 8日 14:20 boot.img
+-rw------- 1 root root 33554432 11月 8日 14:20 dtbo.img
+
+/mnt/esp/EFI/elden:
+总计 176
+-rw------- 1 root root 176640 11月 8日 14:20 Loader.efi
+1de2f13ae8b529edf3ecce8f047d8c2085f2267a250455a33eadd607c6ac2403  /mnt/esp/boot/boot.img
+3a846511810ec76c54b3fc515aaf3f00f57706b706aa3dd21fb4bc764e12eb7a  /mnt/esp/EFI/elden/Loader.efi
+27d5405022d5a941300aec4d69ce1f891f446fc14cf76d6fdc7512edfde231f9  /mnt/esp/boot/dtbo.img
+2:set timeout=15
+3:set default=1
+5:menuentry "Elden fbcon-diag（vk184 + CONFIG_SYSFB_SIMPLEFB=y）" {
+12:menuentry "Elden ESP loader（路线 B：chainloader ESP 上的 Loader.efi）" {
+17:menuentry "Elden Linux（GRUB 直启；内核/initrd 在 linux17）" {
+25:menuentry "同内核 + initcall_debug（排障用）" {
+32:menuentry "UEFI 固件设置（重启）" { reboot }
+33:menuentry "关机" { halt }
+
+Leaving filesystem unchanged.
+/dev/sda18: 9 files, 30817/130752 clusters
+33a67e1fca4090c8a6d9bcb71719d9495404c2b3d47155d97541fce3f188fc46  /mnt/esp/boot/boot.img
+总计 116356
+-rw------- 1 root root 85594112 11月 8日 14:28 boot.img
+-rw------- 1 root root 33554432 11月 8日 14:20 dtbo.img
+Leaving filesystem unchanged.
+/dev/sda18: 9 files, 9920/130752 clusters

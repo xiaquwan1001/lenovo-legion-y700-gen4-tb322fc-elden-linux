@@ -1,0 +1,14 @@
+7.3.1-debug-vk184-00003-gec74c4795a43
+elden_root=LABEL=linux17
+elden_nocamera=1
+msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid:
+ 14:04:18 up 1 min,  2 users,  load average: 2.34, 1.06, 0.39
+console-ramoops-0
+pmsg-ramoops-0
+[   10.358383] [    T172] msm_dpu ae01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5  /dev/disk/by-partlabel/boot_b
+Active slot: _b
+---
+[   13.190454] [   T3690] logd: FrameworkListener: read() failed (Connection reset by peer)
+---
+-rw-r--r-- 1 root root 63443456 11月 8日 13:55 /boot/Image.fbdiag
