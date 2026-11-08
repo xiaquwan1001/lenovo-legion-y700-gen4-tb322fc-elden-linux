@@ -189,7 +189,8 @@
 - **G1-29 剩余**：① **启动菜单**（原始验收的另一半）—— GRUB 路撞 EFI-stub 墙（`#558`），现 loader 无菜单；
   下一步二选一：loader 自己接音量/电源键做菜单，或支持多个 `boot*.img`；② **落地方式**（写成默认启动 = 写 `uefi_a`，属写盘，需单独批准）；
   ③ 正式化时**必须**处理 `\espboot.force` 这个实验开关（改 `#562` 的写死赋值或走正常启动路径）。
-- 正文/证据：`reports/uefi-espboot-r58b-success-20261108.md`；坑 `#562/#563/#564`（`PITFALLS/sessions/189-*.md`）；
+- 正文/证据：`reports/uefi-espboot-r58b-success-20261108.md`；坑 `#565/#566/#567`（`PITFALLS/sessions/189-ESPfirst打通的三个坑.md`）；
+- **附带（2026-11-08 晚，已结案·不追究）**：用户报「ESP 启动时不显示充电」。用新工具 `scripts/driver-snapshot.sh` 做 A/B（ESP 启动 vs `boot_b`，同机同线同口）：`usb/input_current_limit` 两边都 **500 mA**、`battery STATUS=Charging` 但 `charge_counter` 同值不增长（5 118 580）⇒ **净放电**，与启动路径、与模块加载均无关（`modules_loaded 42/42`、`module_problems 0/0`）。归因方向 = ADSP 选口/PD 协商（与 §5 Q35「双口被 ADSP 选口策略挡住」同源）；**用户裁决：不追究**。正文 `reports/driver-ab-charging-20261108.md`，坑 `#568`。
   失败链保留 `reports/uefi-espboot-r55-indeterminate-20261108.md`；静态发现 `reports/uefi-route-b-static-findings-20261108.md`。
 
 ### 2026-11-08（下午）：路线定案 B + **首试判 indeterminate**（RELEASE 剥 DEBUG + 菜单歧义 = 无法归因）

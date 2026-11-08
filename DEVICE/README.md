@@ -24,7 +24,17 @@
 | 主机 | `xuqianhui`（Ubuntu 26.04；旧文档里的 `5700g-x8664` 是历史名，2026-11 起不再使用），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 
 ### 1.1 内核与软件基线
-- ★**2026-11-07 深夜（当前状态，唯一权威）：`boot_b` 已写 `vk185-adsp`（持久，重启即回它）** ——
+- ★**2026-11-08 晚间（当前状态，唯一权威）：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）** ——
+  `boot_b` sha256 = `4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`（今日全程未变）。
+  **另有一条「路线 B」启动路径可用（非默认、零写盘）**：`fastboot boot out/r21-sbstop-p59/uefi-preamble59-r1.img`（`cd73fbdc…`）
+  → Mu UEFI（p59）→ R54 定向连 BlockIo → 优先起 ESP(`/dev/sda18`) 的 `\EFI\BOOT\BOOTAA64.EFI`（= 我们的 `Loader-r58b.efi`，`ea8e0cfb…`）
+  → 从 ESP 的 `/boot/{boot,vendor_boot,dtbo}.img` 直接起 Linux（**不碰 `boot_img` 槽/bin 槽限制**）。
+  判据：`/proc/cmdline` 含 `elden_bootloader=esp`、`uname -r` = `7.3.1-debug-vk184-00002-g4da9a8b69fc8`（ESP 侧内核，与 `boot_b` 的 `00003` 不同）、`boot_b` sha 不变。
+  ESP 上的实验开关 `/espboot.force`（存在即强制 `BootIntoFastboot=FALSE`，绕开 `LinuxLoader.c` 里写死的 TRUE，`PITFALLS #565`）；
+  两份日志 `/loader.log`、`/espboot.log` 是这条线的唯一可靠证据通道（`#567`）。
+  正文 = `reports/uefi-espboot-r58b-success-20261108.md`；trial `reports/trials/20261108T112506Z-uefi-p59-espboot-seal.json`（`ESPBOOT_TAGGED`）。
+  **回退**：删/改 ESP 上文件即可（`\espboot.force` 一删就不再强制）；GRUB 原件备份在 `BOOTAA64.EFI.grub.bak`（`7993adfc…`）。
+- ★**2026-11-07 深夜（boot_b 身份的权威记录，内容仍有效）：`boot_b` 已写 `vk185-adsp`（持久，重启即回它）** ——
   `boot_b` 分区 sha256 = **`4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`**
   （= `bootslot-b/boot_b-vk185.img`，100 663 296 B，AVB 自签，公钥 sha1 `1e54e86ef19fad73…`；flash 后**设备侧 dd 读回逐字节一致**）。
   写前备份 = `backup/HA2EXB0E-16+512/boot_b-before-vk185-20261107.img`（`fb55997c…`，旧 vk172 件）。
@@ -217,7 +227,7 @@
 | `backup_lba` | `61390847` | **`123871231`**（现 dump；头 0x20 处 8B LE） | `gpt-dump.sh` 会打印 |
 | `userdata` | 211.4 GiB | **256.7 GiB**（手术后；first=5972392 last=73277434） | `gpt-surgery-tb322fc.py list` |
 | `linux17` | （已删） | **192.0 GiB**（idx16，first=73277435 **last=123609082**，`/dev/sda17`；★2026-10-31 删 `linux18` 后并回，见 §3.3。本表其余列仍为 **2026-10-03 快照**，当时 `linux17` = 193.0 GiB / last=123871226） | 同上（**写前一律以 `scripts/gpt-surgery-tb322fc.py list` 实测为准**） |
-| `eldenesp`（ESP） | — | **512 MiB**（idx17，first=123609088 **last=123740159**，EFI System，`/dev/sda18`；2026-11-08 在**尾部空闲区纯追加**，未动任何已有分区，见 `reports/uefi-grub-esp-handoff-wall-20261108.md`） | `scripts/gpt-surgery-tb322fc.py append-free`（`list` 复核） |
+| `eldenesp`（ESP） | — | **512 MiB**（idx17，first=123609088 **last=123740159**，EFI System，`/dev/sda18`；2026-11-08 在**尾部空闲区纯追加**，未动任何已有分区，见 `reports/uefi-grub-esp-handoff-wall-20261108.md`）。**2026-11-08 晚内容**：`/EFI/BOOT/BOOTAA64.EFI`=路线 B 的 `Loader-r58b.efi`（另存 GRUB 原件 `BOOTAA64.EFI.grub.bak`）、`/boot/{boot.img(85.6M,含令牌),vendor_boot.img(96M),dtbo.img(32M)}`、`/espboot.force`、`/loader.log`、`/espboot.log`；**FAT 写后必须 `sync`+`umount` 再 `fsck.vfat -n` 核对文件数**（曾因 dirty bit 被 `fsck -a` 丢掉 `dtbo.img`） | 同上 |
 | free slots | 16–31（可加 16 个分区） | 18–31（ESP 占用 idx17） | 同上 |
 | boot/dtbo/vbmeta 大小 | 100663296 / 33554432 / 65536 | 同（同型号同布局） | `fastboot getvar partition-size:*` |
 | 备份目录规范 | `backup/<SN>-<容量档>/`（**禁用 `new-tablet`**） | 同 | — |
