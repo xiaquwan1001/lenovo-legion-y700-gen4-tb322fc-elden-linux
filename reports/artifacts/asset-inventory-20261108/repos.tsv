@@ -1,0 +1,11 @@
+repo	remote	head	branch	dirty
+external/ext-repos/sunuefi	https://github.com/slwyts/Project-SunUEFI	afe922b	main	0
+external/aosp-vndk33/system-core	https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/system/core	8301b33	detached	0
+external/aosp-vndk33/system-libhwbinder	https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/system/libhwbinder	bfbbb04	detached	0
+external/aosp-vndk33/system-libhidl	https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/system/libhidl	3f58213	detached	0
+external/aosp-vndk33/frameworks-native	https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/frameworks/native	938b812	detached	0
+external/aosp-vndk33/system-logging	https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/system/logging	ec3daa6	detached	0
+external/aosp-vndk33/system-libbase	https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/system/libbase	8436e04	detached	0
+external/lc-cross/lc-src	(none)	(no-commit)	master	17
+geekidos-linux	git@github.com:GEEKiDoS/linux.git	ba28ec16f01	detached	0
+wt/reb-731	https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git	ec74c4795a	detached	0

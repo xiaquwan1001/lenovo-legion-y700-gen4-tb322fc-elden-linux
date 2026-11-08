@@ -1,0 +1,5 @@
+tool	sha256	status	refs_in_scripts
+tools/avbtool.py	e5a664a38db623da	ok	3
+tools/l2-extract/lp_tool.py	7625f3df3f6011bb	ok	0
+tools/l2-extract/dump-super.sh	fb89455759b7ff08	ok	0
+tools/gunyah-modules/vmmtest/vmmtest	426c6660f308579a	ok	0

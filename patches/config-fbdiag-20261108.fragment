@@ -1,0 +1,4 @@
+# fbcon-diag fragment (2026-11-08, G1-29 早期可见性)
+# 应用：wt/reb-731（= vk184/vk185 源树），scripts/config --file .config -e SYSFB_SIMPLEFB && make ARCH=arm64 olddefconfig
+# 注意：#162 —— olddefconfig 必须带 ARCH=arm64，否则按宿主 x86 重写 .config（ARCH_QCOM 等全部消失）。
+CONFIG_SYSFB_SIMPLEFB=y
