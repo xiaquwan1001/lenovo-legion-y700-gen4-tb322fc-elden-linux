@@ -1,0 +1,23 @@
+[21:50:24] ===== trial START label=uefi-p59-r59b-nokeys image=uefi-preamble59-r1.img sha=cd73fbdc093c6a45de22d86af19007d87dd4682e022aa8d8b57e17b5bb7bab6a =====
+[21:50:24] image_size=67194880
+[trial] boot_b: succ=1 retry=7 unbootable=0
+[trial] GATE=OK
+[21:50:24] pre boot_id=ea9633c5-168d-49bc-bd95-1e0328dc74cc
+[21:50:24] ssh -> reboot bootloader (eldroid-bootctl)
+[21:50:47] fastboot up after ~2s
+[21:50:47] SER=HA2EXB0E
+# fastboot pre 2026-11-08T21:50:47+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.003s
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.004s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.004s
+[21:50:47] product gate OK (elden_prc_wifi)
+[21:50:47] fastboot boot uefi-preamble59-r1.img
+Sending 'boot.img' (65620 KB)                      OKAY [  1.505s]
+Booting                                            OKAY [ 10.062s]
+Finished. Total time: 11.599s
+[21:50:59] fastboot boot returned after 11s

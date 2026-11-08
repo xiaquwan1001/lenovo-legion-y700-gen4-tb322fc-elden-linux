@@ -1,0 +1,7 @@
+# devices 2026-11-08T22:51:14+08:00
+## all fastboot devices
+MDX5T20730009849
+HA2EXB0E
+## adb devices (仅供参考，不使用)
+List of devices attached
+

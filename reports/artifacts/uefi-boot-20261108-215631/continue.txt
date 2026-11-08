@@ -1,0 +1,2 @@
+Resuming boot                                      OKAY [ 10.140s]
+Finished. Total time: 10.140s

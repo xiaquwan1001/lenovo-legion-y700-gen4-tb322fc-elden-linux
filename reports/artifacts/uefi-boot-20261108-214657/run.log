@@ -1,0 +1,21 @@
+[21:46:57] ===== trial START label=uefi-p59-r59-menu-default image=uefi-preamble59-r1.img sha=cd73fbdc093c6a45de22d86af19007d87dd4682e022aa8d8b57e17b5bb7bab6a =====
+[21:46:57] image_size=67194880
+[trial] GATE=FAIL 设备不可达（root@192.168.7.1）——先起 SSH 通道（elden-net.sh）
+[21:47:13] pre boot_id=
+[21:47:14] already in fastboot
+[21:47:14] SER=HA2EXB0E
+# fastboot pre 2026-11-08T21:47:14+08:00
+product: elden_prc_wifi
+Finished. Total time: 0.003s
+current-slot: b
+Finished. Total time: 0.004s
+slot-unbootable:b: no
+Finished. Total time: 0.004s
+getvar:bootloader                                  FAILED (remote: 'GetVar Variable Not found')
+Finished. Total time: 0.004s
+[21:47:14] product gate OK (elden_prc_wifi)
+[21:47:14] fastboot boot uefi-preamble59-r1.img
+Sending 'boot.img' (65620 KB)                      OKAY [  1.503s]
+Booting                                            OKAY [ 10.105s]
+Finished. Total time: 11.641s
+[21:47:26] fastboot boot returned after 11s

@@ -1,0 +1,3 @@
+Sending 'boot.img' (65620 KB)                      OKAY [  1.509s]
+Booting                                            FAILED (remote: 'invalid command')
+fastboot: error: Command failed

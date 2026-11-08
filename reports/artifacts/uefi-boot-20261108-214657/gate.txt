@@ -1,0 +1,1 @@
+[trial] GATE=FAIL 设备不可达（root@192.168.7.1）——先起 SSH 通道（elden-net.sh）

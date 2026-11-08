@@ -1,0 +1,22 @@
+[21:42:23] ===== trial START label=uefi-p59-r59-menu-default image=uefi-preamble59-r1.img sha=cd73fbdc093c6a45de22d86af19007d87dd4682e022aa8d8b57e17b5bb7bab6a =====
+[21:42:23] image_size=67194880
+[trial] boot_b: succ=1 retry=7 unbootable=0
+[trial] GATE=OK
+[21:42:23] pre boot_id=cc092589-a845-4fc8-9d55-1ec2da3f6e83
+[21:42:23] ssh -> reboot bootloader (eldroid-bootctl)
+[21:42:45] fastboot up after ~2s
+[21:42:46] SER=MDX5T20730009849
+# fastboot pre 2026-11-08T21:42:46+08:00
+product: kirin990
+Finished. Total time: 0.003s
+getvar:current-slot                                FAILED (remote: 'invalid command')
+Finished. Total time: 0.011s
+getvar:slot-unbootable:b                           FAILED (remote: 'invalid command')
+Finished. Total time: 0.012s
+getvar:bootloader                                  FAILED (remote: 'invalid command')
+Finished. Total time: 0.011s
+[21:42:46] fastboot boot uefi-preamble59-r1.img
+Sending 'boot.img' (65620 KB)                      OKAY [  1.509s]
+Booting                                            FAILED (remote: 'invalid command')
+fastboot: error: Command failed
+[21:42:48] fastboot boot returned after 1s

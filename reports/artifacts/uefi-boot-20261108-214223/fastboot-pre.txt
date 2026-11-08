@@ -1,0 +1,9 @@
+# fastboot pre 2026-11-08T21:42:46+08:00
+product: kirin990
+Finished. Total time: 0.003s
+getvar:current-slot                                FAILED (remote: 'invalid command')
+Finished. Total time: 0.011s
+getvar:slot-unbootable:b                           FAILED (remote: 'invalid command')
+Finished. Total time: 0.012s
+getvar:bootloader                                  FAILED (remote: 'invalid command')
+Finished. Total time: 0.011s
