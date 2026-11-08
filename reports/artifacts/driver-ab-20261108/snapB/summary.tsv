@@ -1,0 +1,29 @@
+probe	value
+release	7.3.1-debug-vk184-00003-gec74c4795a43
+modules_loaded	42
+module_problems	0
+failed_units	0
+power_supplies	5
+battery_status	Charging
+battery_current_uA	-304000
+battery_charge_counter	5118580
+usb_online	1
+usb_input_limit_uA	500000
+usb_current_now_uA	500000
+typec_power_role	source [sink]
+typec_data_role	host [device]
+udc	a600000.usb
+drm_cards	4
+drm_connected	2
+backlight	1
+asound_cards	1
+iio_devices	1
+input_devices	7
+leds	2
+net_wlan	1
+bt_devices	1
+video_nodes	17
+regulators	52
+thermal_zones	55
+devfreq	2
+pstore_records	0

@@ -1,0 +1,11 @@
+release=7.3.1-debug-vk184-00002-g4da9a8b69fc8
+kernel=#1 SMP PREEMPT Sat Nov  7 10:04:10 CST 2026
+booted_at=2026-11-08T19:25:06
+uptime=3038.49
+root=/dev/sda17
+cmdline=console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 elden_bootloader=esp androidboot.serialno=51318dc0 androidboot.baseband=apq
+bootloader_esp=1
+bootslot=androidboot.slot_suffix=_b
+modules_loaded=42
+modules_dir=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163,7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172,7.3.1-debug-vk184-00002-g4da9a8b69fc8,7.3.1-debug-vk184-00003-gec74c4795a43,
+dmi=

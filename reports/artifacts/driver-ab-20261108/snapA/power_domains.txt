@@ -1,0 +1,68 @@
+## genpd
+1d84000.ufs
+3d00000.gpu
+## devfreq_detail
+1d84000.ufs 100000000
+3d00000.gpu 160000000
+## regulators
+regulator.0 regulator-dummy 
+regulator.10 vreg_l3i_0p88 enabled
+regulator.11 vreg_l2d_0p88 enabled
+regulator.12 vreg_l3d_0p88 unknown
+regulator.13 vreg_1v8_vddio enabled
+regulator.14 vreg_6v1_vsp enabled
+regulator.15 vreg_5v8_vsn enabled
+regulator.16 vreg_s1g_0p5 unknown
+regulator.17 vreg_s3g_1p8 enabled
+regulator.18 vreg_s4g_0p75 unknown
+regulator.19 vreg_s2j_1p1 unknown
+regulator.1 vph_pwr 
+regulator.20 vreg_l1g_0p91 unknown
+regulator.21 vreg_s3j_1p1 unknown
+regulator.22 vreg_l2g_1p8 unknown
+regulator.23 vreg_l1j_0p91 enabled
+regulator.24 vreg_l3g_1p2 enabled
+regulator.25 vreg_l2j_1p2 unknown
+regulator.26 vreg_bob1 enabled
+regulator.27 vreg_s5f_0p5 enabled
+regulator.28 vreg_l1f_0p88 enabled
+regulator.29 vreg_l2f_1p2 enabled
+regulator.2 vreg_s1d_0p97 enabled
+regulator.30 vreg_bob2 enabled
+regulator.31 vreg_l3f_1p8 enabled
+regulator.32 vreg_l1b_1p8 unknown
+regulator.33 vreg_l2b_3p0 unknown
+regulator.34 vreg_l4b_1p8 unknown
+regulator.35 vreg_l5b_3p1 enabled
+regulator.36 vreg_l6b_1p8 unknown
+regulator.37 vreg_l7b_1p8 unknown
+regulator.38 vreg_l8b_1p8 enabled
+regulator.39 vreg_l9b_2p9 enabled
+regulator.3 vreg_s7i_1p2 enabled
+regulator.40 vreg_l10b_1p8 unknown
+regulator.41 vreg_l14b_3p2 unknown
+regulator.42 vreg_l15b_1p8 enabled
+regulator.43 vreg_l16b_2p8 unknown
+regulator.44 vreg_l17b_2p5 enabled
+regulator.45 camera_ldo1 disabled
+regulator.46 camera_ldo2 disabled
+regulator.47 camera_ldo3 disabled
+regulator.48 camera_ldo4 disabled
+regulator.49 camera_ldo5 disabled
+regulator.4 vreg_s8i_0p9 unknown
+regulator.50 ldo6 disabled
+regulator.51 camera_ldo7 disabled
+regulator.5 vreg_s3d_1p2 unknown
+regulator.6 vreg_l1i_1p2 unknown
+regulator.7 vreg_s4d_0p85 enabled
+regulator.8 vreg_l2i_1p2 enabled
+regulator.9 vreg_l1d_1p2 enabled
+## regulator_count
+52
+## clk_summary_head
+                                 enable  prepare  protect                                duty  hardware                            connection
+   clock                          count    count    count        rate   accuracy phase  cycle    enable   consumer                         id
+---------------------------------------------------------------------------------------------------------------------------------------------
+ LPASS_HW_LPR_VOTE                   0       0        0        0           0          0     50000      Y   deviceless                      no_connection_id         
+ LPASS_HW_DCODEC                     6       6        0        0           0          0     50000      Y   codec@6b00000                   no_connection_id         
+## interconnect

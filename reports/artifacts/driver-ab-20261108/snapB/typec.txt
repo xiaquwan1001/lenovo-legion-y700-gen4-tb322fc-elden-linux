@@ -1,0 +1,8 @@
+## port0 data_role=host [device] power_role=source [sink]
+  port0-partner partner=
+## port0-partner data_role= power_role=
+## port1 data_role=host [device] power_role=source [sink]
+## altmodes
+/sys/class/typec/port0/port0-partner/device/
+/sys/class/typec/port0/port0-partner/power/
+/sys/class/typec/port0/port0-partner/subsystem/

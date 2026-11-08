@@ -1,0 +1,200 @@
+## block
+NAME          SIZE FSTYPE LABEL    MOUNTPOINT
+loop0         2.4G ext4   /        /var/lib/waydroid/rootfs
+loop1         256M ext4   vendor   /var/lib/waydroid/rootfs/vendor
+sda         472.5G                 
+├─sda1          3M                 
+├─sda2        512K                 
+├─sda3        300M ext4            
+├─sda4         16M                 
+├─sda5          8K                 
+├─sda6         32M ext4            
+├─sda7          1M                 
+├─sda8        512K                 
+├─sda9        512K                 
+├─sda10        22G                 
+├─sda11        64K                 
+├─sda12        64K                 
+├─sda13        64M f2fs            
+├─sda14       256M                 
+├─sda15       128M                 
+├─sda16     256.7G                 
+├─sda17       192G ext4   linux17  /
+└─sda18       512M vfat   ELDENESP /efi
+sdb            20M                 
+├─sdb1        3.5M                 
+├─sdb2        344K                 
+├─sdb3         32K                 
+├─sdb4         32K                 
+└─sdb5        256K                 
+sdc            20M                 
+├─sdc1        3.5M                 
+├─sdc2        344K                 
+├─sdc3         32K                 
+├─sdc4         32K                 
+└─sdc5        256K                 
+sdd            32M                 
+├─sdd1        104K                 
+├─sdd2        128K                 
+└─sdd3          1M                 
+sde             4G                 
+├─sde1          5M                 
+├─sde2        512K                 
+├─sde3        512K                 
+├─sde4          5M                 
+├─sde5          8M                 
+├─sde6        350M vfat            
+├─sde7          8M vfat            
+├─sde8          1M                 
+├─sde9         64M ext4            
+├─sde10       512K                 
+├─sde11       128K                 
+├─sde12        96M                 
+├─sde13       128K                 
+├─sde14        80K                 
+├─sde15        64K                 
+├─sde16        32M                 
+├─sde17         2M                 
+├─sde18         2M                 
+├─sde19       256K                 
+├─sde20         1M                 
+├─sde21       128K                 
+├─sde22        96M                 
+├─sde23        30M vfat            
+├─sde24       256K                 
+├─sde25       100M                 
+├─sde26         2M                 
+├─sde27         8M                 
+├─sde28        64K                 
+├─sde29         1M                 
+├─sde30       512K                 
+├─sde31        24K                 
+├─sde32       256K                 
+├─sde33       128K                 
+├─sde34         5M                 
+├─sde35       512K                 
+├─sde36       512K                 
+├─sde37         5M                 
+├─sde38         8M                 
+├─sde39       350M vfat            
+├─sde40         8M vfat            
+├─sde41         1M                 
+├─sde42        64M ext4            
+├─sde43       512K                 
+├─sde44       128K                 
+├─sde45        96M                 
+├─sde46       128K                 
+├─sde47        80K                 
+├─sde48        64K                 
+├─sde49        32M                 
+├─sde50         2M                 
+├─sde51         2M                 
+├─sde52       256K                 
+├─sde53         1M                 
+├─sde54       128K                 
+├─sde55        96M                 
+├─sde56       256K                 
+├─sde57       100M                 
+├─sde58         2M                 
+├─sde59         8M                 
+├─sde60        64K                 
+├─sde61         1M                 
+├─sde62       512K                 
+├─sde63        24K                 
+├─sde64       256K                 
+├─sde65       128K                 
+├─sde66         4K                 
+├─sde67         1M                 
+├─sde68         8M vfat   LOGFS    
+├─sde69       128K                 
+├─sde70       512K                 
+├─sde71        28K                 
+├─sde72        20M                 
+├─sde73       128K                 
+├─sde74       128K                 
+├─sde75        32M vfat            
+├─sde76        64K                 
+├─sde77       128K                 
+└─sde78         8K                 
+sdf            32M                 
+├─sdf1        104K                 
+├─sdf2          4M                 
+├─sdf3          4M                 
+├─sdf4          4M                 
+└─sdf5        128K                 
+mmcblk0      58.6G                 
+└─mmcblk0p1  58.6G ext4   tftest   
+zram0         7.3G swap            [SWAP]
+## mmc
+/sys/class/mmc_host/mmc0/
+device
+mmc0:b368
+power
+subsystem
+uevent
+## thermal
+thermal_zone0 aoss0-thermal 35700
+thermal_zone1 cpu-0-0-0-thermal 42300
+thermal_zone10 cpu-0-4-1-thermal 42300
+thermal_zone11 cpu-0-5-0-thermal 38800
+thermal_zone12 cpu-0-5-1-thermal 40300
+thermal_zone13 cpuss-0-0-thermal 41500
+thermal_zone14 cpuss-0-1-thermal 41500
+thermal_zone15 aoss1-thermal 35500
+thermal_zone16 cpu-1-0-0-thermal 37000
+thermal_zone17 cpu-1-0-1-thermal 37400
+thermal_zone18 cpu-1-1-0-thermal 37800
+thermal_zone19 cpu-1-1-1-thermal 37400
+thermal_zone2 cpu-0-0-1-thermal 41500
+thermal_zone20 cpuss-1-0-thermal 37800
+thermal_zone21 cpuss-1-1-thermal 37800
+thermal_zone22 aoss2-thermal 34800
+thermal_zone23 gpuss0-thermal 34800
+thermal_zone24 gpuss1-thermal 35200
+thermal_zone25 gpuss2-thermal 34800
+thermal_zone26 gpuss3-thermal 34000
+thermal_zone27 gpuss4-thermal 36000
+thermal_zone28 gpuss5-thermal 36300
+thermal_zone29 gpuss6-thermal 35200
+thermal_zone3 cpu-0-1-0-thermal 40300
+thermal_zone30 gpuss7-thermal 35200
+thermal_zone31 modem0-thermal 35200
+thermal_zone32 modem1-thermal 34000
+thermal_zone33 modem2-thermal 34000
+thermal_zone34 modem3-thermal 34800
+thermal_zone35 camera0-thermal 34800
+thermal_zone36 camera1-thermal 35200
+thermal_zone37 video-thermal 36000
+thermal_zone38 aoss3-thermal 35500
+thermal_zone39 nsphvx0-thermal 34300
+thermal_zone4 cpu-0-1-1-thermal 40300
+thermal_zone40 nsphvx1-thermal 34300
+thermal_zone41 nsphvx2-thermal 34300
+thermal_zone42 nsphmx0-thermal 35100
+thermal_zone43 nsphmx1-thermal 35100
+thermal_zone44 nsphmx2-thermal 35100
+thermal_zone45 nsphmx3-thermal 35100
+thermal_zone46 ddr-thermal 35900
+thermal_zone47 pm8550-thermal 37000
+thermal_zone48 pm8550ve-thermal 37000
+thermal_zone49 pmih0108-thermal 37000
+thermal_zone5 cpu-0-2-0-thermal 41100
+thermal_zone50 pm8550ve-d-thermal 37000
+thermal_zone51 pm8550ve-f-thermal 37000
+thermal_zone52 pm8550ve-g-thermal 37000
+thermal_zone53 pm8550vs-j-thermal 37000
+thermal_zone54 qcom-battmgr-bat 30700
+thermal_zone6 cpu-0-2-1-thermal 40700
+thermal_zone7 cpu-0-3-0-thermal 39200
+thermal_zone8 cpu-0-3-1-thermal 39900
+thermal_zone9 cpu-0-4-0-thermal 40700
+## cooling
+4
+## pstore
+/sys/fs/pstore/:
+总计 0
+
+/var/lib/systemd/pstore/:
+总计 392
+-rw------- 1 root root 359682 11月 5日 23:40 console-ramoops-0
+-rw------- 1 root root  40672 11月 5日 23:40 pmsg-ramoops-0

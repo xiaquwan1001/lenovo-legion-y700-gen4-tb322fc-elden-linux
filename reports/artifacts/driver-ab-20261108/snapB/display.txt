@@ -1,0 +1,19 @@
+## drm cards
+card0
+card0-DP-1
+card0-DSI-1
+card0-Writeback-1
+renderD128
+version
+## connector status
+/sys/class/drm/card0/card0-DP-1 =disconnected
+/sys/class/drm/card0/card0-DSI-1 =connected
+/sys/class/drm/card0/card0-Writeback-1 =unknown
+## backlight
+aw99706-backlight brightness=1024 max=4095
+## dpms
+/sys/class/drm/card0/card0-DP-1/dpms=On
+/sys/class/drm/card0/card0-DSI-1/dpms=On
+/sys/class/drm/card0/card0-Writeback-1/dpms=On
+## gpu devfreq
+160000000

@@ -1,0 +1,44 @@
+## asound
+ 0 [LenovoY700Gen4 ]: sm8750 - Lenovo-Y700-Gen4
+                      Lenovo-Y700-Gen4
+## pcm
+00-00: MultiMedia1 Playback (*) :  : playback 1
+00-01: MultiMedia2 Playback (*) :  : playback 1
+00-02: MultiMedia3 Capture (*) :  : capture 1
+## iio
+iio:device0 spmi-adc5-gen3
+## input
+N: Name="pmic_pwrkey"
+H: Handlers=kbd event0 
+N: Name="pmic_resin"
+H: Handlers=kbd event1 
+N: Name="aw86927-haptics"
+H: Handlers=event2 
+N: Name="aw86927-haptics"
+H: Handlers=event3 
+N: Name="NVTCapacitiveTouchScreen"
+H: Handlers=mouse0 event4 
+N: Name="gpio-keys"
+H: Handlers=kbd event5 
+N: Name="Lenovo-Y700-Gen4 Headset Jack"
+H: Handlers=kbd event6 
+## leds
+mmc0::
+white:flash
+## ff devices
+event0
+event1
+event2
+event3
+event4
+event5
+event6
+input0
+input1
+input3
+input4
+input5
+input6
+input7
+mice
+mouse0

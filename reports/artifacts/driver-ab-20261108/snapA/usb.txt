@@ -1,0 +1,30 @@
+## udc
+a600000.usb
+## gadget_config
+bcdDevice
+bcdUSB
+bDeviceClass
+bDeviceProtocol
+bDeviceSubClass
+bMaxPacketSize0
+configs
+functions
+idProduct
+idVendor
+max_speed
+os_desc
+strings
+UDC
+webusb
+## gadget_links
+/sys/kernel/config/usb_gadget/g1/
+acm.GS0
+acm.GS1
+bmAttributes
+MaxPower
+ncm.usb0
+strings
+## usb devices
+## usb bus tree
+## dwc3 state
+## dr_mode

@@ -1,0 +1,74 @@
+## failed_units
+## dmesg_errors_by_driver
+    186 init
+    170 libprocessgroup
+     36 LibBpfLoader
+      7 qcom_pmic_glink
+      6 ath12k_wifi7_pci
+      5 ueventd
+      5 binder
+      4 PLL(0)
+      4 DSI
+      2 vold
+      2 apexd
+      2 adreno
+      1 vreg_s3j_1p1
+      1 vreg_s2j_1p1
+      1 vreg_s1d_0p97
+      1 ufshcd-qcom
+      1 qcom-apm
+      1 prng_seeder
+      1 No
+      1 msm_dsi
+      1 logd
+      1 incfs
+      1 faux_driver
+      1 efi
+      1 disp_cc_mdss_pclk1_clk_src
+      1 disp_cc_mdss_pclk0_clk_src
+      1 disp_cc_mdss_byte1_clk_src
+      1 disp_cc_mdss_byte0_clk_src
+      1 cfg80211
+      1 arm-scmi
+## module_problems
+## dmesg_error_sample
+[   13.012288] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1010: Read-only file system
+[   13.012301] [   T3544] init: createProcessGroup(1010, 129) failed for service 'wificond': Read-only file system
+[   13.012714] [   T3852] libprocessgroup: Failed to open /dev/cpuset/system-background/tasks: No such file or directory
+[   13.012723] [   T3852] libprocessgroup: Failed to apply ServiceCapacityLow task profile: No such file or directory
+[   13.012727] [   T3852] init: failed to set task profiles
+[   13.021565] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+[   13.021592] [   T3544] init: createProcessGroup(0, 130) failed for service 'adb_root': Read-only file system
+[   13.053733] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1046: Read-only file system
+[   13.053787] [   T3544] init: createProcessGroup(1046, 131) failed for service 'media.swcodec': Read-only file system
+[   13.054730] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+[   13.054746] [   T3544] init: createProcessGroup(1000, 132) failed for service 'gatekeeperd': Read-only file system
+[   13.054875] [   T3855] libprocessgroup: Failed to open /dev/cpuset/foreground/tasks: No such file or directory
+[   13.054894] [   T3855] libprocessgroup: Failed to apply ProcessCapacityHigh task profile: No such file or directory
+[   13.054898] [   T3855] init: failed to set task profiles
+[   13.055345] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+[   13.055410] [   T3544] init: createProcessGroup(0, 133) failed for service 'usbd': Read-only file system
+[   13.055590] [   T3856] libprocessgroup: Failed to open /dev/cpuset/system-background/tasks: No such file or directory
+[   13.055598] [   T3856] libprocessgroup: Failed to apply ServiceCapacityLow task profile: No such file or directory
+[   13.055603] [   T3856] init: failed to set task profiles
+[   13.056419] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+[   13.056442] [   T3544] init: createProcessGroup(1000, 134) failed for service 'exec 17 (/system/bin/flags_health_check BOOT_FAILURE)': Read-only file system
+[   13.085682] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1020: Read-only file system
+[   13.085690] [   T3544] init: createProcessGroup(1020, 154) failed for service 'mdnsd': Read-only file system
+[   13.228750] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1003: Read-only file system
+[   13.228771] [   T3544] init: createProcessGroup(1003, 222) failed for service 'bootanim': Read-only file system
+[   13.229781] [   T3956] libprocessgroup: Failed to open /dev/stune/top-app/tasks: No such file or directory
+[   13.229812] [   T3956] libprocessgroup: Failed to apply MaxPerformance task profile: No such file or directory
+[   13.229820] [   T3956] init: failed to set task profiles
+[   14.819474] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+[   14.819488] [   T3544] init: createProcessGroup(0, 354) failed for service 'exec 18 (/system/bin/extra_free_kbytes.sh 64593)': Read-only file system
+[   22.178315] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+[   22.178373] [   T3544] init: createProcessGroup(1000, 871) failed for service 'exec 19 (/bin/rm -rf /data/per_boot)': Read-only file system
+[   22.185740] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+[   22.185764] [   T3544] init: createProcessGroup(0, 878) failed for service 'exec 20 (/system/bin/sh -c sleep 3; for i in 1 2 3 4 5 6 7 8 9 10; do /system/bin/ip route replace default via 192.168.240.1 dev eth0 && exit 0; sleep 2; done)': Read-only file system
+[   25.197693] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+[   25.197730] [   T3544] init: createProcessGroup(1000, 1574) failed for service 'exec 21 (/system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l)': Read-only file system
+[   25.202281] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1036: Read-only file system
+[   25.202322] [   T3544] init: createProcessGroup(1036, 1575) failed for service 'logd-auditctl': Read-only file system
+[   25.257095] [   T3544] libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+[   25.257109] [   T3544] init: createProcessGroup(0, 1577) failed for service 'exec 22 (/system/bin/lmkd --reinit)': Read-only file system

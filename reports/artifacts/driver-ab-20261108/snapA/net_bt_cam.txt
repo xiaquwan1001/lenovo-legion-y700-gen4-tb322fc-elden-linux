@@ -1,0 +1,34 @@
+## links
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+usb0             UP             192.168.7.1/24 fe80::1e:5eff:feed:e101/64 
+waydroid0        UP             192.168.240.1/24 fd00:240::1/64 fe80::216:3eff:fe00:1/64 
+veth9BfDeY@if2   UP             
+wlp1s0           DOWN           
+## wlan
+/sys/class/net/wlp1s0 down 1500
+## ath12k
+## bt
+hci0
+## video
+/dev/media0
+/dev/video0
+/dev/video1
+/dev/video10
+/dev/video11
+/dev/video12
+/dev/video13
+/dev/video14
+/dev/video15
+/dev/video16
+/dev/video2
+/dev/video3
+/dev/video4
+/dev/video5
+/dev/video6
+/dev/video7
+/dev/video8
+/dev/video9
+
+/dev/media:
+by-path
+## camss
