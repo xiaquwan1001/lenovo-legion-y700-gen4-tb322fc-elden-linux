@@ -1,0 +1,264 @@
+Subject: [PATCH] LinuxLoader/VerifiedBoot: 正式化 ESP-first 默认启动路径（去掉 \espboot.force 与写死 fastboot）
+
+2026-11-08R63 y700-elden（G1-29 路线 B 正式化，TASKS §5 2026-11-08 深夜块 ④）
+前置：本补丁打在**当前 Mu 工作区**（已含 R55/R56/R57/R58/R58b/R59/R60/R61-loader 的手工改动，
+未提交）。它不是独立可复现的最小件 —— 正式化落地时应连同这些改动一起固化成
+patches/uefi/20261108R63-*，再进 p62 配方。
+
+内容（五条，按文件:函数列出，理由见各 hunk 注释）：
+ 1. LinuxLoader.c: LinuxLoaderEntry()   写死的 `BootIntoFastboot = TRUE;` -> `\fastboot.force` 开关
+ 2. LinuxLoader.c: LEspForceBoot()      删除（+ 调用点），`\espboot.force` 变惰性文件
+ 3. LinuxLoader.c: LMenuLoad()          `\menu.enable` 门控确认移除；#timeout 契约 + 缺省 5 s
+ 4. LinuxLoader.c: LMenuResolveFallback() 新增：选中项在 ESP 上不存在则顺延到存在的条目（回退链第一跳）
+ 5. VerifiedBoot.c: LoadImageAndAuth()  ESP-first 前置 `!BootIntoRecovery`（恢复 recovery 意图）
+
+未编译、未上机。判据见 /tmp/elden-r63/README.md。
+
+---
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -315,6 +315,8 @@
+ 
+ STATIC UINTN   mLMenuCount;
+ STATIC UINTN   mLMenuTimeout;
++STATIC BOOLEAN mLMenuTimeoutSet;   /* R63: menu.cfg 里写了 #timeout（含 0）才算显式 */
++STATIC UINTN   mLMenuSel;          /* R63: 用户最终选中项，供失败顺延使用 */
+ STATIC CHAR16  mLMenuPath[L_MENU_MAX][L_MENU_PATH_LEN];
+ STATIC CHAR8   mLMenuPathA[L_MENU_MAX][L_MENU_PATH_LEN];
+ STATIC CHAR8   mLMenuLabel[L_MENU_MAX][L_MENU_LABEL_LEN];
+@@ -363,6 +365,8 @@
+ {
+   mLMenuCount = 0;
+   mLMenuTimeout = 0;
++  mLMenuTimeoutSet = FALSE;   /* R63 */
++  mLMenuSel = 0;              /* R63 */
+   (VOID)LMenuAdd ("Elden Linux (ESP default)", 25, "\\boot\\boot.img", 15);
+ }
+ 
+@@ -398,6 +402,7 @@
+           }
+           if (Val <= 60) {
+             mLMenuTimeout = Val;
++            mLMenuTimeoutSet = TRUE;   /* R63: #timeout=0 是「显式零等待」 */
+           }
+         }
+       } else {
+@@ -475,6 +480,16 @@
+   }
+   File->Close (File);
+   Root->Close (Root);
++  /* R63 正式化：\menu.enable 那种「文件门控」不再存在，唯一开关就是这里的 #timeout。
++   * 契约（写进 ESP 上的 menu.cfg 头注释即可）：
++   *   没有 menu.cfg            ⇒ 单条目 \boot\boot.img，零等待、不登屏
++   *   menu.cfg 但没写 #timeout ⇒ 有条目就默认 5 s 交互窗口（否则条目形同虚设：
++   *                               mLMenuTimeout==0 时只取第 0 项）
++   *   #timeout=0               ⇒ 显式零等待（脚本化/无人值守）
++   *   #timeout=1..60           ⇒ 该秒数后自动取第 0 项 */
++  if (!mLMenuTimeoutSet && (mLMenuCount > 1)) {
++    mLMenuTimeout = 5;
++  }
+   LLog ("[L] menu entry n", (UINT64)mLMenuCount);
+   LLog ("[L] menu timeout s", (UINT64)mLMenuTimeout);
+ }
+@@ -571,6 +586,8 @@
+   mLMenuUISel = (UINT32)Sel;
+ }
+ 
++STATIC BOOLEAN LMenuPickPath (IN UINTN Sel);   /* R63 */
++
+ /* Key-driven selection. Returns TRUE if the caller should boot something,
+  * FALSE if the menu already handled the choice (fastboot / power off). */
+ STATIC BOOLEAN
+@@ -579,8 +596,7 @@
+   UINTN  Sel = 0;
+   UINT64 Start;
+   UINT32 Last = SCAN_NULL;
+-  UINTN  Idx;
+-  CHAR8  Line[96];
++  CHAR8  Line[96];   /* R63: Idx 随 LMenuPickPath() 抽出而移除 */
+ 
+   if (LEspHasFile (ImageHandle, L"\\menu.cfg")) {
+     LMenuLoad (ImageHandle);
+@@ -629,6 +645,8 @@
+     Sel = 0;
+   }
+ 
++  mLMenuSel = Sel;   /* R63: 记下选中项，LoadImageAndAuth 失败时从这里顺延 */
++
+   /* Apply the selection. */
+   if (AsciiStrnCmp (mLMenuPathA[Sel], "-fastboot", 9) == 0) {
+     LLog ("[L] menu pick fastboot", MAX_UINT64);
+@@ -641,6 +659,21 @@
+     return FALSE;
+   }
+ 
++  (VOID)LMenuPickPath (Sel);
++  return TRUE;
++}
++
++/* R63: 把第 Sel 项写成 ESP 引导路径；伪条目（-fastboot/-poweroff）返回 FALSE。 */
++STATIC BOOLEAN
++LMenuPickPath (IN UINTN Sel)
++{
++  UINTN Idx;
++
++  if ((Sel >= mLMenuCount) ||
++      (AsciiStrnCmp (mLMenuPathA[Sel], "-fastboot", 9) == 0) ||
++      (AsciiStrnCmp (mLMenuPathA[Sel], "-poweroff", 9) == 0)) {
++    return FALSE;
++  }
+   for (Idx = 0; (Idx < L_MENU_PATH_LEN - 1) && (mLMenuPathA[Sel][Idx] != 0);
+        Idx++) {
+     gEspBootPath[Idx] = mLMenuPath[Sel][Idx];
+@@ -650,46 +683,48 @@
+   return TRUE;
+ }
+ 
+-
+-/* R58b y700-elden: \\espboot.force exists on the volume we were loaded from
+- * => ignore the hard-wired/BootReason fastboot decision and take the normal
+- * LoadImageAndAuth -> BootLinux path. Needed because this tree sets
+- * BootIntoFastboot = TRUE unconditionally, so `fastboot boot` never reaches
+- * BootLinux and the ESP experiment can never run. */
+-STATIC BOOLEAN
+-LEspForceBoot (IN EFI_HANDLE ImageHandle)
++/* R63 正式化（回退链第一跳）：选中项在 ESP 上不存在时，顺延到下一个**真实存在**的条目。
++ * 为什么放在 LoadImageAndAuth 之前：这里只做 Open(FILE_MODE_READ) 探测，不分配镜像缓冲、
++ * 不进 AVB，失败也不会留下任何半成品；真正的失败回退仍然交给 LoadImageAndAuth 的原分区路径
++ * （ESP 拿不到卷时本函数什么都不做 ⇒ flashed 形态行为与 R58b 逐字相同）。 */
++STATIC VOID
++LMenuResolveFallback (IN EFI_HANDLE ImageHandle)
+ {
+-  EFI_STATUS                       Status;
+-  EFI_LOADED_IMAGE_PROTOCOL        *LI  = NULL;
+-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *Sfs = NULL;
+-  EFI_FILE_PROTOCOL                *Root = NULL;
+-  EFI_FILE_PROTOCOL                *File = NULL;
++  UINTN   Attempt;
++  UINTN   Idx;
++  CHAR16  Path[L_MENU_PATH_LEN];
+ 
+-  if (EFI_ERROR (gBS->OpenProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid,
+-                                    (VOID **)&LI, ImageHandle, NULL,
+-                                    EFI_OPEN_PROTOCOL_GET_PROTOCOL)) ||
+-      (LI == NULL)) {
+-    return FALSE;
+-  }
+-  if (EFI_ERROR (gBS->HandleProtocol (LI->DeviceHandle,
+-                                      &gEfiSimpleFileSystemProtocolGuid,
+-                                      (VOID **)&Sfs)) || (Sfs == NULL)) {
+-    return FALSE;
+-  }
+-  if (EFI_ERROR (Sfs->OpenVolume (Sfs, &Root)) || (Root == NULL)) {
+-    return FALSE;
++  if (LEspHasFile (ImageHandle, gEspBootPath)) {
++    return;
+   }
+-  Status = Root->Open (Root, &File, (CHAR16 *)L"\\espboot.force",
+-                       EFI_FILE_MODE_READ, 0);
+-  if (!EFI_ERROR (Status) && (File != NULL)) {
+-    File->Close (File);
+-    Root->Close (Root);
+-    return TRUE;
++  for (Attempt = 1; Attempt < mLMenuCount; Attempt++) {
++    UINTN Sel = (mLMenuSel + Attempt) % mLMenuCount;
++
++    if ((AsciiStrnCmp (mLMenuPathA[Sel], "-fastboot", 9) == 0) ||
++        (AsciiStrnCmp (mLMenuPathA[Sel], "-poweroff", 9) == 0)) {
++      continue;
++    }
++    for (Idx = 0; (Idx < L_MENU_PATH_LEN - 1) && (mLMenuPath[Sel][Idx] != 0);
++         Idx++) {
++      Path[Idx] = mLMenuPath[Sel][Idx];
++    }
++    Path[Idx] = 0;
++    if (LEspHasFile (ImageHandle, Path) && LMenuPickPath (Sel)) {
++      LLog ("[L] menu fallback", (UINT64)Sel);
++      return;
++    }
+   }
+-  Root->Close (Root);
+-  return FALSE;
++  LLog ("[L] menu keep", (UINT64)mLMenuSel);
+ }
+ 
++
++/* 2026-11-08R63 y700-elden 正式化：R58b 的 `LEspForceBoot()`（读 ESP 上 `\espboot.force`
++ * 强行把 BootIntoFastboot/BootIntoRecovery 清成 FALSE）已删除 —— 它的唯一存在理由就是抵消
++ * 上面那行写死的 TRUE。开关改成 `\fastboot.force`（见 LinuxLoaderEntry 内注释）：
++ *   ESP 上有 `\fastboot.force`  ⇒ 进 UEFI fastboot（老的开发态）
++ *   ESP 上有 `\espboot.force`   ⇒ 现在是惰性文件，无任何作用（可留可删）
++ * 恢复 recovery 意图由 VerifiedBoot.c 的 ESP-first 前置条件负责（BootIntoRecovery ⇒ 不试 ESP）。 */
++
+ EFI_STATUS EFIAPI  __attribute__ ( (no_sanitize ("safe-stack")))
+ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+ {
+@@ -755,7 +790,21 @@
+   //Status = GetKeyPress (&KeyPressed);
+   //if (Status == EFI_SUCCESS) {
+   //  if (KeyPressed == SCAN_DOWN)
+-      BootIntoFastboot = TRUE;
++  /* 2026-11-08R63 y700-elden 正式化（原为一行裸赋值 `BootIntoFastboot = TRUE;`）：
++   * 那行是上游把整段 GetKeyPress 注释掉之后残存的唯一活代码，本意是「`fastboot boot`
++   * 形态停在 UEFI fastboot，等宿主发 `fastboot continue`」；代价是正常启动（NORMAL_MODE）
++   * 永远跳过 LoadImageAndAuth/BootLinux（PITFALLS #565），路线 B 才被迫加 `\espboot.force`
++   * 这个反向开关。正式化后语义如下：
++   *   - 默认 FALSE ⇒ 正常启动走 LoadImageAndAuth -> BootLinux（ESP-first 或分区路径）；
++   *   - ESP 上有 `\fastboot.force` ⇒ TRUE，回到老的「开发态」fastboot 等待（等价旧行为，
++   *     零写盘调试时仍可用）；flashed 形态下 loader 在 FV 里、拿不到 Fat ⇒ 本判据恒 FALSE；
++   *   - ABL 给的 FASTBOOT_MODE/RECOVERY_MODE 仍由下面 switch 覆盖（不动）。
++   * 副作用（可接受）：BootIntoFastboot=FALSE 后 IsABRetryCountUpdateRequired() 返回 TRUE，
++   * 于是 FindBootableSlot() 会在「当前槽 BootSuccess==0」时扣 retry —— 与 AOSP 语义一致；
++   * 本机 boot_b 已是 successful=1 ⇒ 不扣（PITFALLS #181 的历史坑不会重演）。 */
++  if (LEspHasFile (ImageHandle, L"\\fastboot.force")) {
++    BootIntoFastboot = TRUE;
++  }
+   //  if (KeyPressed == SCAN_UP)
+   //    BootIntoRecovery = TRUE;
+   //  if (KeyPressed == SCAN_ESC)
+@@ -838,11 +887,8 @@
+     DEBUG ((EFI_D_ERROR, "VM Hyp calls not present\n"));
+   }
+ 
+-  if (LEspForceBoot (ImageHandle)) {
+-    LLog ("[L] force-boot", MAX_UINT64);
+-    BootIntoFastboot = FALSE;
+-    BootIntoRecovery = FALSE;
+-  }
++  /* R63: `LEspForceBoot()`/`\espboot.force` 已移除（见函数原址注释）。
++   * 下面的菜单 + ESP-first 就是默认路径；需要 fastboot 时用 ESP 上的 `\fastboot.force`。 */
+   /* R59: boot menu (ESP \menu.cfg). Decides *which* boot.img and can also send
+    * us to fastboot / power off, so it runs after the force-boot decision. */
+   /* R60: 菜单默认启用（开关改为「\menu.cfg 里的 #timeout」：缺文件或 timeout=0 ⇒ 零等待、不登屏）。
+@@ -851,6 +897,7 @@
+   if (!LMenuSelect (ImageHandle)) {
+     goto fastboot;
+   }
++  LMenuResolveFallback (ImageHandle);   /* R63: 选中项不存在 -> 顺延到存在的条目 */
+   LLog ("[L] bootfastboot", (UINT64)BootIntoFastboot);
+   if (!BootIntoFastboot) {
+     BootInfo Info = {0};
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -1934,8 +1934,19 @@
+ 
+   /* ESP-first (R55): try loading boot/dtbo from the volume this loader was
+    * launched from. On success skip AVB (self-signed images cannot pass AVB)
+-   * and return immediately; on any failure fall through unchanged. */
+-  Status = LoadImageFromEsp (Info);
++   * and return immediately; on any failure fall through unchanged.
++   *
++   * 2026-11-08R63 y700-elden 正式化：
++   *  1) 显式尊重 recovery 意图 —— ESP 上的 boot.img 是正常系统，不是 recovery。
++   *     R58b 是靠 `\espboot.force` 顺手把 BootIntoRecovery 清掉才「看不出问题」的，
++   *     那个开关已删除（LinuxLoader.c），所以这里必须自己否定。
++   *  2) 位置不变：仍在 FindBootableSlot()/MarkPtnActive() 之前 ⇒ ESP 路径**完全不写**
++   *     GPT 槽属性（零写盘语义由这条保证，别把它挪到分区路径之后）。 */
++  if (!Info->BootIntoRecovery) {
++    Status = LoadImageFromEsp (Info);
++  } else {
++    Status = EFI_NOT_FOUND;
++  }
+   if (Status == EFI_SUCCESS) {
+     /* R56 (#561): the partition path sets Pname before auth; the ESP path
+      * skips that. BootLinux's CheckMDTPStatus subtracts

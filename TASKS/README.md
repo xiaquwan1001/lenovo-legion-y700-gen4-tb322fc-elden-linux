@@ -179,10 +179,10 @@
 - **ESP 侧日志（决定性证据通道）**：`loader.log` = `entry → pre-boardinit → boardinit st 0 → pre-vmdata → force-boot →
   bootfastboot 0 → pre-auth → post-auth st 0 → pre-bootlinux`（无 `post-bootlinux` 是**预期**：`LinuxKernel()` 不返回）；
   `espboot.log` = `[E] esp in → boot 85594112 → boot 100663296（vendor_boot）→ dtbo 33554432 → done 0`。
-- **真因复盘（四步）**：R55 不可判（RELEASE 剥 `DEBUG`，`#559`）→ R56 面板标记被打断（`#564`）→
+- **真因复盘（四步）**：R55 不可判（RELEASE 剥 `DEBUG`，`#559`）→ R56 面板标记被打断（`#567`）→
   **R58 用 `\loader.log` 定位到 `bootfastboot 1`**（本树 `LinuxLoader.c:295` 把 `BootIntoFastboot` 写死 TRUE，`#562`）
   → R58b 用 `\espboot.force` 开关覆盖 + ESP 备齐 `boot/vendor_boot/dtbo` ⇒ 打通。
-  另：令牌最初写在 `extra_cmdline`(608) 不生效，改到主 cmdline 才出现（`#563`）。
+  另：令牌最初写在 `extra_cmdline`(608) 不生效，改到主 cmdline 才出现（`#566`）。
 - **实现件**：`out/espboot-20261108/Loader-r58b.efi`（`ea8e0cfb…`）= R55+R56+R57+R58b；ESP 内容
   `/EFI/BOOT/BOOTAA64.EFI`（GRUB 备份 `BOOTAA64.EFI.grub.bak`）+ `/boot/{boot,vendor_boot,dtbo}.img` + `/espboot.force`；
   固件仍 `p59`（`cd73fbdc…`），**未重刷任何分区**。
@@ -217,7 +217,7 @@
   `b8a87c0d…`）已就绪**未上机**：`fs < 2` 时「连所有句柄 + `Stall(300 ms)` + 重扫」并打 `[K] esp fs2=`；
   **（2026-11-09 可复现性收口）** p60/p61 已绑进 `--gen`：`scripts/uefi-r21-p7-ladder.sh --gen p61 --verify`（及 `--gen p60`）
   **rc=0 逐件 PASS**，指纹 `patches/uefi/p6{0,1}-kept.sha256`（世代表见 `patches/uefi/README.md` §0）；
-  ③ 「直接从 FAT/EXT4 读 kernel/initrd」仍未做；④ 正式化清理（`\espboot.force`、`LinuxLoader.c:295` 写死 `BootIntoFastboot`，`#562`）。
+  ③ 「直接从 FAT/EXT4 读 kernel/initrd」仍未做（现走 ESP 上的 `boot.img`，够用）；④ 正式化清理（`\espboot.force`、`LinuxLoader.c:295` 写死 `BootIntoFastboot`，`#562`）—— **2026-11-09 静态分析出两份草案**（`patches/uefi/20261109-boot-policy-drafts/`：R63 文件型后门 + 菜单顺延/默认 5 s；R66 变量型后门 `EldenFastboot`），**均未编译、未上机**，顺序 = 先 R62 再正式化（否则 flashed 形态观察不到效果）。
 ### 2026-11-08（下午）：路线定案 B + **首试判 indeterminate**（RELEASE 剥 DEBUG + 菜单歧义 = 无法归因）
 
 - **路线裁决**：走 **B**（ESP 放 `boot.img`，由 Mu `LinuxLoader` 变体 ESP-first 读件），不做 A（改固件内存表）。

@@ -1,0 +1,172 @@
+From: y700-elden worker (static analysis, 2026-11-08R66)
+Subject: [PATCH] LinuxLoader: formalise the boot policy (drop hard-wired BootIntoFastboot,
+ replace \espboot.force with the EldenFastboot EFI variable, log the fastboot fallback)
+
+2026-11-08R66 y700-elden（正式化清理，对应 TASKS §5 2026-11-08 深夜块剩余项 ④）。
+只改 Application/LinuxLoader/LinuxLoader.c 一个文件；不动 BdsDxe（R54/R61/R62）与 avb（R55/R56）。
+
+① 删裸语句 `BootIntoFastboot = TRUE;`（LinuxLoaderEntry 里 GetKeyPress 注释块的遗留）。
+   它让本映像永远进 UEFI fastboot（`fastboot boot` 后必须补 `fastboot continue`，
+   PITFALLS #544/#549），是路线 B 第一次误判的根因（reports/uefi-espboot-r58b-success §1 第 3 步）。
+   若保留，任何「默认启动」都只能靠 ESP 上的实验文件绕开 —— 那正是要清理的形态。
+② `\espboot.force`（R58b）删除，改成 UEFI 变量 `EldenFastboot`（BOOT+RT+NV）：
+   断电保持、不需要启动链先枚举出 FAT（flashed 形态 fs=1，PITFALLS #571）、不碰 FAT（#562）。
+   用 SystemTable->RuntimeServices 取变量 => 不新增 .inf 库类依赖。
+③ `\menu.cfg` 的唯一门控写进代码头注释（文件存在且 #timeout>0；否则零等待走默认条目）。
+④ 回退链加一行判据 `[L] fallback fastboot st`：区分「取件失败回退」与「显式要 fastboot」。
+
+---
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c	2026-11-09 07:09:40.030789960 +0800
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c	2026-11-09 07:09:40.031557341 +0800
+@@ -293,13 +293,19 @@
+ }
+ 
+ /* ==========================================================================
+- * R59 y700-elden: boot menu on the ESP (route B).
++ * y700-elden 启动策略（2026-11-08R66 正式化；取代 R59/R60/R63/R65 的实验态）
+  *
+- * Why keys-only first: the panel (SerialPortWrite) is NOT a reliable channel on
+- * this platform (PITFALLS #567) while \loader.log on the ESP is. So R59 proves
+- * the *input* path (ConIn -> SCAN_UP/SCAN_DOWN/SCAN_SUSPEND) with a log-only
+- * menu; the on-screen UI (BootLib/DrawUI.c) comes in R60 only after that is
+- * confirmed. Menu file = \menu.cfg on the ESP:
++ * 正常启动**不依赖任何卷上的任何文件**（这才是「默认路径」的定义）：
++ *   1) 默认：LoadImageAndAuth -> BootLinux
++ *        · 本 loader 是从某个卷起的、且该卷有 \boot\boot.img  => 从该卷读
++ *        · 否则（FV 内起的）                                => 原来的活动槽 boot.img
++ *   2) 进 fastboot 只能由**显式请求**触发，三种来源：
++ *        a) UEFI 变量 "EldenFastboot" == 1（Linux 经 efivarfs 写入，跨断电保持，不碰 FAT）
++ *        b) \menu.cfg 里带 "-fastboot" 的条目（交互）
++ *        c) ABL 给的 boot reason = FASTBOOT_MODE（下面的 switch (BootReason)）
++ *   3) 1) 的任何一步失败 => 落到 `fastboot:` 标签（卷不可用时唯一还能用的通道）。
++ *
++ * 可选交互菜单 = \menu.cfg（放在 loader 自己所在的卷上）：
+  *
+  *   #timeout=5
+  *   Label one|\boot\boot.img
+@@ -307,7 +313,9 @@
+  *   Mu fastboot|-fastboot
+  *   Power off|-poweroff
+  *
+- * No \menu.cfg => single default entry (\boot\boot.img), zero key waiting.
++ * **唯一门控 = 该文件存在且 #timeout>0**。没有 \menu.cfg / #timeout=0 / 解析出 0 条目
++ * => 单一默认条目（\boot\boot.img）+ 零按键等待。除此之外没有别的开关文件
++ * （\menu.enable 已删：PITFALLS #571 —— 开关文件不在卷上，整段菜单静默不执行）。
+  * ========================================================================== */
+ #define L_MENU_MAX        8
+ #define L_MENU_PATH_LEN   64
+@@ -651,43 +659,42 @@
+ }
+ 
+ 
+-/* R58b y700-elden: \\espboot.force exists on the volume we were loaded from
+- * => ignore the hard-wired/BootReason fastboot decision and take the normal
+- * LoadImageAndAuth -> BootLinux path. Needed because this tree sets
+- * BootIntoFastboot = TRUE unconditionally, so `fastboot boot` never reaches
+- * BootLinux and the ESP experiment can never run. */
++/* y700-elden (R66): 唯一非交互的「进 UEFI fastboot」请求通道。
++ *
++ * 与 R58b 的 \\espboot.force 的区别（为什么换掉文件开关）：
++ *   · 断电保持，且**不需要**启动链先枚举出 FAT —— flashed 形态实测 fs=1
++ *     （PITFALLS #571），那时 ESP 上的开关文件根本读不到，默认路径就会随环境漂移；
++ *   · 写变量不碰 FAT，天然不会踩 #562（vfat dirty bit ⇒ mount -o ro 失败）；
++ *   · 语义单一：变量存在且非 0 = 要 fastboot，缺席 = 正常启动（正式默认）。
++ *
++ * Linux 侧置位/清除（BOOT+RT+NV，attributes 前缀 4 字节小端 0x00000007）：
++ *   printf '\x07\x00\x00\x00\x01' > /sys/firmware/efi/efivars/EldenFastboot-9d1f4a52-3c11-4dc8-8f2b-6a710e5513a1
++ *   printf '\x07\x00\x00\x00\x00' > /sys/firmware/efi/efivars/EldenFastboot-9d1f4a52-3c11-4dc8-8f2b-6a710e5513a1
++ *   rm -f /sys/firmware/efi/efivars/EldenFastboot-9d1f4a52-3c11-4dc8-8f2b-6a710e5513a1
++ * （或者交互：\menu.cfg 里的 "-fastboot" 条目。）
++ *
++ * 注意：用 SystemTable->RuntimeServices 传进来（不新增 .inf 库类依赖）。 */
++STATIC CHAR16  mEldenFastbootVar[] = L"EldenFastboot";
++STATIC EFI_GUID mEldenLoaderVarGuid = {
++  0x9d1f4a52, 0x3c11, 0x4dc8, { 0x8f, 0x2b, 0x6a, 0x71, 0x0e, 0x55, 0x13, 0xa1 }
++};
++
+ STATIC BOOLEAN
+-LEspForceBoot (IN EFI_HANDLE ImageHandle)
++LDebugFastbootRequested (IN EFI_RUNTIME_SERVICES *Rt)
+ {
+-  EFI_STATUS                       Status;
+-  EFI_LOADED_IMAGE_PROTOCOL        *LI  = NULL;
+-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *Sfs = NULL;
+-  EFI_FILE_PROTOCOL                *Root = NULL;
+-  EFI_FILE_PROTOCOL                *File = NULL;
++  EFI_STATUS  Status;
++  UINT8       Val  = 0;
++  UINTN       Size = sizeof (Val);
+ 
+-  if (EFI_ERROR (gBS->OpenProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid,
+-                                    (VOID **)&LI, ImageHandle, NULL,
+-                                    EFI_OPEN_PROTOCOL_GET_PROTOCOL)) ||
+-      (LI == NULL)) {
++  if ((Rt == NULL) || (Rt->GetVariable == NULL)) {
+     return FALSE;
+   }
+-  if (EFI_ERROR (gBS->HandleProtocol (LI->DeviceHandle,
+-                                      &gEfiSimpleFileSystemProtocolGuid,
+-                                      (VOID **)&Sfs)) || (Sfs == NULL)) {
+-    return FALSE;
+-  }
+-  if (EFI_ERROR (Sfs->OpenVolume (Sfs, &Root)) || (Root == NULL)) {
+-    return FALSE;
+-  }
+-  Status = Root->Open (Root, &File, (CHAR16 *)L"\\espboot.force",
+-                       EFI_FILE_MODE_READ, 0);
+-  if (!EFI_ERROR (Status) && (File != NULL)) {
+-    File->Close (File);
+-    Root->Close (Root);
+-    return TRUE;
++  Status = Rt->GetVariable (mEldenFastbootVar, &mEldenLoaderVarGuid, NULL,
++                            &Size, &Val);
++  if (EFI_ERROR (Status) || (Size == 0)) {
++    return FALSE;   /* 变量缺席 = 正常启动（正式默认） */
+   }
+-  Root->Close (Root);
+-  return FALSE;
++  return (Val != 0);
+ }
+ 
+ EFI_STATUS EFIAPI  __attribute__ ( (no_sanitize ("safe-stack")))
+@@ -755,7 +762,12 @@
+   //Status = GetKeyPress (&KeyPressed);
+   //if (Status == EFI_SUCCESS) {
+   //  if (KeyPressed == SCAN_DOWN)
+-      BootIntoFastboot = TRUE;
++  //    BootIntoFastboot = TRUE;   // 2026-11-08R66 y700-elden: 上游把 GetKeyPress 那一大段
++  //                               // 注释掉时漏删了这条**裸语句**，于是本映像**永远**进 UEFI
++  //                               // fastboot（`fastboot boot` 之后还必须补 `fastboot continue`
++  //                               // 才继续，PITFALLS #544/#549；路线 B 的第一次误判也源于它）。
++  //                               // 正常启动应由下面的 switch (BootReason) 与 \.menu.cfg 决定；
++  //                               // 调试需求改由 UEFI 变量 EldenFastboot 提供（LDebugFastbootRequested）。
+   //  if (KeyPressed == SCAN_UP)
+   //    BootIntoRecovery = TRUE;
+   //  if (KeyPressed == SCAN_ESC)
+@@ -838,9 +850,12 @@
+     DEBUG ((EFI_D_ERROR, "VM Hyp calls not present\n"));
+   }
+ 
+-  if (LEspForceBoot (ImageHandle)) {
+-    LLog ("[L] force-boot", MAX_UINT64);
+-    BootIntoFastboot = FALSE;
++  /* y700-elden (R66): 显式「要 fastboot」的请求来自 UEFI 变量 EldenFastboot
++   * （R58b 的 \\espboot.force 文件开关已删，理由见 LDebugFastbootRequested 注释）。
++   * 语义改成「置位」而不是 R58b 的「清位」：默认已经是正常启动，开关只做加法。 */
++  if (LDebugFastbootRequested (SystemTable->RuntimeServices)) {
++    LLog ("[L] dbg-fastboot", MAX_UINT64);
++    BootIntoFastboot = TRUE;
+     BootIntoRecovery = FALSE;
+   }
+   /* R59: boot menu (ESP \menu.cfg). Decides *which* boot.img and can also send
+@@ -862,6 +877,10 @@
+     LLog ("[L] post-auth st", (UINT64)Status);
+     if (Status != EFI_SUCCESS) {
+       DEBUG ((EFI_D_ERROR, "LoadImageAndAuth failed: %r\n", Status));
++      /* R66: 回退链 = ESP/分区取件失败 => UEFI fastboot（宿主仍可 `fastboot boot`/
++       * `continue`，卷不可用时这是唯一通道）。这一行是归因判据：有它 = 走的是回退，
++       * 没有它而 `[L] to-fastboot` 出现 = 有人显式要 fastboot。 */
++      LLog ("[L] fallback fastboot st", (UINT64)Status);
+       goto fastboot;
+     }
+ 
