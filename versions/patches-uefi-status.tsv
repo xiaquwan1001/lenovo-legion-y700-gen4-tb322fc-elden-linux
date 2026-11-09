@@ -1,5 +1,7 @@
 # versions/patches-uefi-status.tsv — patches/uefi/ 逐目录分级（2026-11-06 整理轮）
-# 生成方式：分类由 in_recipe（对半自动：p7-recipe.txt 求交）+ 人工读报告判定理由；方法与逐条理由见 reports/patches-uefi-grading-20261106.md
+# 生成方式：分类由 in_recipe（对半自动：当时世代配方求交）+ 人工读报告判定理由；方法与逐条理由见 reports/patches-uefi-grading-20261106.md
+# ⚠ 快照口径（2026-11-09 补记）：本表主体是 2026-11-06 的分级；R19–R62 这 18 个目录当时尚未产生，已定额补登（理由列注明）。
+#   「现查某目录在不在配方」别读本表：用 `grep -c 该目录 patches/uefi/<最新>-recipe.txt` 或 `--gen <最新> --verify`（配方现查）。
 # 列：dir <TAB> patches <TAB> in_recipe <TAB> status <TAB> 理由 <TAB> 证据
 # status：ACTIVE=当前活线累积栈 / RETIRED=结论已推翻或作废（补丁留档，勿再应用）/ UNCLEAR=待确认
 dir	patches	in_recipe	status	reason	evidence
@@ -80,3 +82,21 @@ dir	patches	in_recipe	status	reason	evidence
 20261107R39-ebscreen	1	1	ACTIVE	p41/p43 崩在 preeb 段分不下去：把 SbDumpLog 三步（in/ring-ok/write）+ EB 段每步（eb-go/eb-ret/bb4/posteb-go/posteb-ok）全改屏显	patches/uefi/p45-recipe.txt；reports/uefi-p45-ebscreen-prebuilt-20261107.md
 20261107R40-noclear	1	1	ACTIVE	异常 dump 不再清屏（R30 清屏会抹掉崩溃前全部 [K] 标记，而那是唯一判据）；R29 后 63 行装得下	同上
 20261107R41-noebdump	1	1	ACTIVE	删掉 EB 后落盘（p45 实锤 BlkIo->WriteBlocks 读出 0 ⇒ blr 0）+ PPH 段 pph-go/pph-ok；**删掉这枚探针后 UEFI 路径一发打通内核**	patches/uefi/p46-recipe.txt；reports/uefi-p46-kernel-boot-success-20261107.md
+20261106R19-fbconsole-bound	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261106R20-faultattrs	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261106R21-fblazyinit	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261106R22-restore-eb	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261106R23-ddr-checkpoint	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261106R24-blackbox-map	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R42-normalboot	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R43-bootpath-proof	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R44-cmdline-witness	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R45-initcalldebug	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R46-nosdcc	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R47-wdogoff	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R48-wdogstrong	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R49-wdogarchscm	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261107R53-nosdcc-all	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261108R54-espfirst	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261108R61-hoist-exchook	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+20261108R62-espconn	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify

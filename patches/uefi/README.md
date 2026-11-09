@@ -4,19 +4,20 @@
 > 逐目录分级（机器可读）= **`../../versions/patches-uefi-status.tsv`**（列：dir / patches / in_recipe / status / 理由 / 证据）。
 > 结论：**ACTIVE 31 目录 / RETIRED 18 目录 / UNCLEAR 0**。
 
-## 0. 当前有效世代 = **p58**（2026-11-08 固化）
+## 0. 当前世代 = **p61**（最新，未上机）/ 上机验证过的最新 = **p60**（2026-11-09 登记）
 
 | 项 | 值 |
 |---|---|
-| 世代名 | **`p58`**（UEFI 交棒打通那一发，`HANDOFF_TAGGED`） |
-| 配方 | `p58-recipe.txt`（76 补丁，含 **R46+R53 `SdccDxe` 三处清单全摘**） |
-| 构建归档 | `reports/artifacts/uefi-20261107R46R53-p58/`（`SM8750_EFI.fd` `9ac3db04…`） |
-| 在盘指纹 | **`p58-kept.sha256`**（10 件，含 `uefi-preamble58-r1.img` `d76ede27…`） |
-| 复现（一条命令） | `scripts/uefi-r21-p7-ladder.sh --gen p58 --verify` → **rc=0 / PASS** |
-| 上一代（留作对照） | `--gen p54`（同法 PASS，指纹 `p54-kept.sha256`） |
-| 历史基线 | `--gen p7`（R7 归档 + trim KEPT，PASS；只用于复现早期在盘件） |
+| 最新世代 | **`p61`** = p60 + `20261108R62-espconn`（ESP 扫描：连所有句柄 + `Stall(300 ms)` + 重扫，修 flashed 形态 `fs=1`）；**已构建、未上机** |
+| 上机验证的最新世代 | **`p60`** = p59 + `20261108R61-hoist-exchook`（把异常重挂提到 ESP 之前）——r62/r63 两发 + 菜单 r65 都跑在这一代上 |
+| 复现（一条命令） | `scripts/uefi-r21-p7-ladder.sh --gen p61 --verify` → **rc=0 / PASS**（`--gen p60` 同法 PASS） |
+| 构建归档 | p61 `reports/artifacts/uefi-20261108R62-p61/` / p60 `reports/artifacts/uefi-20261108R61-p60/` |
+| 在盘指纹 | `p61-kept.sha256` / `p60-kept.sha256`（各 10 件，含 `uefi-preamble61-r1.img` `b8a87c0d…`、`uefi-preamble60-r1.img` `533f09a3…`） |
+| 历史世代（留作对照） | `--gen p59`（ESP-first 首通）/ `p58`（交棒打通，`HANDOFF_TAGGED`）/ `p54` / `p7`，均 PASS |
 
-- **`SdccDxe` 剔除已是 p58 及后续世代的基线**：新世代从 `p58-recipe.txt` 拷贝派生，**不要**再从 p7 起算。
+- **新世代从 `p61-recipe.txt` 派生**（p58 起 `SdccDxe` 三处全摘已是基线，`PITFALLS #554`）。
+  ⚠ 2026-11-09 之前本节写的是 p58：p59/p60/p61 一度只能靠手敲 `PFX=/RECIPE=/BUILD_DIR=/KEPT=` 四件套复现
+  ⇒ 现在 `--gen` 已把 p60/p61 也绑好（手敲漏 `BUILD_DIR` 会静默退回 R7 归档造错件，`#520` 同族）。
   摘任何 DXE 件仍须三处清单同步（`APRIORI.inc`/`DXE.inc`/`DXE.dsc.inc`，`PITFALLS #554`）。
 - 其他世代（p54 及更早）的命令行四件套（`PFX=`/`RECIPE=`/`BUILD_DIR=`/`KEPT=`）仍可手敲，
   但 `--gen` 已把它们绑好——手敲最容易漏 `BUILD_DIR`，那会静默退回 R7 归档造出错件（`#520` 同族）。
@@ -139,9 +140,9 @@ scripts/uefi-r21-p7-ladder.sh --mkimg-only --rebuild   # 从配方重建 UEFI（
 
 ## 3. 纪律
 
-- 新增补丁 = 新目录 + 进当前世代的配方（**现在从 `p58-recipe.txt` 派生**）+ 跑 `--verify`；
-  改活线时优先**新建世代配方**（p59/p60…）而不是就地改 `p58-recipe.txt`——p58 是在盘件与
-  `p58-kept.sha256` 的唯一复现基点。
+- 新增补丁 = 新目录 + 进当前世代的配方（**现在从 `p61-recipe.txt` 派生**）+ 跑 `--verify`；
+  改活线时优先**新建世代配方**（p62…）而不是就地改 `p61-recipe.txt`——p61 是在盘件与
+  `p61-kept.sha256` 的唯一复现基点。
   **不要**把新补丁只塞进某个报告然后靠记忆重放（2026-11-06 的四件活线镜像就是这么差点变成不可再生件）。
 - 本目录里除 `p7-recipe.txt` 与本文件外，**不应出现构建产物**；`20261103-posctrl/` 下的
   `markspin*.S/.bin/.o` 是该轮 BootShim 试验件的既有遗留，勿扩散。

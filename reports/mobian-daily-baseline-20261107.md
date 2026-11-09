@@ -18,7 +18,7 @@
 | 中文字体 | ❌ `fc-list :lang=zh` = **0**（只有 DejaVu/Lato，中文全豆腐块） | ✅ **30** 个字族；`fc-match 'sans-serif:lang=zh-cn'` → `Noto Sans CJK SC` |
 | 桌面组件 | 缺 keyring / portal-phosh / g-c-c / gvfs-backends | ✅ 全在（详见 §2） |
 | 输入法 | fcitx5 装了但**没有任何自启**、无 IM 环境变量 | 🟡 有 user unit + environment.d + Rime；**组词端到端未证实**（§5） |
-| zram | 装了但每次启动 `zramswap.service` FAILED（内核无 `CONFIG_ZRAM`） | 🟢 已 mask，脚本在模块出现时自动解除（§5） |
+| zram | 装了但每次启动 `zramswap.service` FAILED（内核无 `CONFIG_ZRAM`） | ✅ **已收口（2026-11-09 核实）**：在机 `7.3.1-debug-vk184-00003` 有 `CONFIG_ZRAM=m`，`zramswap` active、`zram0` 7.3 G（§5.2） |
 
 三条产物（构建侧固化 + 设备侧可复现）：
 
@@ -155,6 +155,23 @@ $ bash scripts/mobian-daily-baseline.sh --check
 - **尚差一步**：编进日常镜像并上机（现役 vk172 内核仍无 `zram` 模块）。镜像一旦带 `zram.ko`，
   `rootfs/debian/daily-baseline.sh` 的内核门会自动**解除** `zramswap` 的 mask，无需人工。
 - 树卫生：验证用的 `.config` 已还原（备份 `/tmp/daily-config-before-zram-20261107`），`build/` 不入库。
+
+**✅ 收口（2026-11-09 在机核实，U2）** —— 这一项已无剩余动作：
+
+| 判据 | 实测值 |
+|---|---|
+| 在机内核 | `7.3.1-debug-vk184-00003-gec74c4795a43`（`boot_b` 启动） |
+| `/proc/config.gz` | `CONFIG_ZRAM=m` / `CONFIG_ZSMALLOC=m`（后端仅 LZO：`CONFIG_ZRAM_BACKEND_LZO=y`、`DEF_COMP="lzo-rle"`） |
+| 模块树 | `/lib/modules/<rel>/kernel/drivers/block/zram/zram.ko` 44 288 B |
+| `zramswap.service` | `enabled` / `active` / `Result=success` / `ExecMainStatus=0` |
+| 实际 swap | `zramctl` = `/dev/zram0 lzo-rle 7.3G [SWAP]`；`swapon --show` 7.3 G |
+| 基线门 | `daily-baseline.sh --check` → `[4. zram] ok 内核有 zram 模块，zramswap 可用`，`MISS=0` |
+
+- **mask 已自动解除**（脚本内核门的「有模块就 unmask」分支），无需人工；`systemctl --failed` 不再有 `zramswap`。
+- 两个静默不一致（不阻塞，只登记）：① `/etc/default/zramswap` 写 `ALGO=lz4`，内核无 `CONFIG_ZRAM_BACKEND_LZ4`
+  ⇒ 静默回退 `lzo-rle`（`/sys/block/zram0/comp_algorithm` = `[lzo-rle] lzo`）；② `PERCENT=50` 优先于 `SIZE=512`，
+  所以盘是内存一半（7.3 G）而非 512 MiB。坑 → `PITFALLS #573`。
+- 取证原文：`reports/artifacts/zram-closeout-20261109/verify.txt`。
 
 ### 5.3 `p7zip-full` 在 sid 已无此包名
 

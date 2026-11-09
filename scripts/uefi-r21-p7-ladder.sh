@@ -35,7 +35,11 @@
 #     p58 → patches/uefi/p58-recipe.txt + reports/artifacts/uefi-20261107R46R53-p58
 #            + patches/uefi/p58-kept.sha256  （UEFI 交棒打通那一发）
 #     p59 → patches/uefi/p59-recipe.txt + reports/artifacts/uefi-20261108R54-espfirst-p59
-#            + patches/uefi/p59-kept.sha256  ← **当前有效世代**（R54：先起 ESP 的 BOOTAA64.EFI，出 GRUB 菜单）
+#            + patches/uefi/p59-kept.sha256  （R54：先起 ESP 的 BOOTAA64.EFI，出 GRUB 菜单）
+#     p60 → patches/uefi/p60-recipe.txt + reports/artifacts/uefi-20261108R61-p60
+#            + patches/uefi/p60-kept.sha256  （+R61 把异常重挂提到 ESP 之前；r62/r63 上机两发、菜单 r65 用此代）
+#     p61 → patches/uefi/p61-recipe.txt + reports/artifacts/uefi-20261108R62-p61
+#            + patches/uefi/p61-kept.sha256  ← **最新世代**（+R62 ESP 连所有句柄后重扫，修 flashed 形态 fs=1；未上机）
 #   环境变量 PFX/RECIPE/BUILD_DIR/KEPT 显式给出时优先于 --gen。
 #
 # 世代（2026-11-06 新增）：默认为 p7 世代（R7 配方 + 在盘件 sha 比对）。后续世代用环境变量切：
@@ -110,7 +114,9 @@ if [ -n "$GEN" ]; then
 		p54) _rec=patches/uefi/p54-recipe.txt; _bd=uefi-20261107R49-p54;               _kept=patches/uefi/p54-kept.sha256; _out=r21-sbstop-p54;;
 		p58) _rec=patches/uefi/p58-recipe.txt; _bd=uefi-20261107R46R53-p58;            _kept=patches/uefi/p58-kept.sha256; _out=r21-sbstop-p58;;
 		p59) _rec=patches/uefi/p59-recipe.txt; _bd=uefi-20261108R54-espfirst-p59;     _kept=patches/uefi/p59-kept.sha256; _out=r21-sbstop-p59;;
-		*) die "--gen 只认 p7/p54/p58/p59（见脚本头部）；收到: $GEN";;
+		p60) _rec=patches/uefi/p60-recipe.txt; _bd=uefi-20261108R61-p60;               _kept=patches/uefi/p60-kept.sha256; _out=r21-sbstop-p60;;
+		p61) _rec=patches/uefi/p61-recipe.txt; _bd=uefi-20261108R62-p61;               _kept=patches/uefi/p61-kept.sha256; _out=r21-sbstop-p61;;
+		*) die "--gen 只认 p7/p54/p58/p59/p60/p61（见脚本头部）；收到: $GEN";;
 	esac
 	[ -n "${PFX_EXPLICIT:-}" ] || PFX=$GEN
 	[ -n "${RECIPE_EXPLICIT:-}" ] || RECIPE=$ROOT/$_rec

@@ -1,0 +1,48 @@
+# zram 收口取证 2026-11-09 (U2, 在机 7.3.1-debug-vk184-00003, boot_b 启动)
+
+## uname -r
+7.3.1-debug-vk184-00003-gec74c4795a43
+
+## /proc/config.gz 相关行
+CONFIG_ZSMALLOC=m
+CONFIG_ZSMALLOC_CHAIN_SIZE=8
+CONFIG_ZRAM=m
+CONFIG_ZRAM_BACKEND_FORCE_LZO=y
+CONFIG_ZRAM_BACKEND_LZO=y
+CONFIG_ZRAM_DEF_COMP_LZORLE=y
+CONFIG_ZRAM_DEF_COMP="lzo-rle"
+
+## zram.ko 在模块树
+总计 44
+-rw-rw-r-- 1 1000 1000 44288 11月 7日 10:28 zram.ko
+
+## zramswap.service
+enabled
+ActiveState=active
+Result=success
+ExecMainStatus=0
+active
+
+## zramctl / swapon / free
+NAME       ALGORITHM DISKSIZE DATA COMPR TOTAL STREAMS MOUNTPOINT
+/dev/zram0 lzo-rle       7.3G   4K   74B   12K         [SWAP]
+NAME       TYPE      SIZE USED PRIO
+/dev/zram0 partition 7.3G   0B  100
+                总计        已用        空闲        共享   缓冲/缓存        可用
+内存：         14866        5003        6116        1160        5142        9862
+交换：          7433           0        7433
+
+## /etc/default/zramswap（非注释行）
+ALGO=lz4
+PERCENT=50
+SIZE=512
+PRIORITY=100
+
+## zram 内核支持的压缩后端（/sys/block/zram0/comp_algorithm）
+[lzo-rle] lzo 
+
+## daily-baseline.sh --check（摘要）
+[4. zram（有内核模块才启用）]
+  ok    内核有 zram 模块，zramswap 可用
+
+结果: MISS=0 FIX=0

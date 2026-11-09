@@ -96,7 +96,7 @@ pavucontrol	P2	音频	图形音量控制（Phosh 有快捷面板，这个用于�
 seahorse	P2	桌面与会话	密钥库 GUI（gnome-keyring 的图形前端）
 wf-recorder	P2	截图剪贴板	录屏 CLI
 gstreamer1.0-plugins-bad	P2	音频	冷门/专利格式；34 个依赖，按需
-zram-tools	P2	电源与传感器	**当前内核没有 CONFIG_ZRAM**（modprobe zram = Module not found）⇒ 装了也无法启动，见 reports/mobian-daily-baseline-20261107.md §5；内核补上后再启用
+zram-tools	P2	电源与传感器	内核已带 `CONFIG_ZRAM=m`（7.3.1 线起，见 reports/mobian-daily-baseline-20261107.md §5.2），设备已装且 `zramswap` active；保持 P2 不自动装（新根无 swap 需求时不占 7.3 G），`daily-baseline.sh` 的内核门会自动 mask/unmask
 inxi	P2	调试	一页式硬件摘要（已有 /proc 直读脚本，非必需）
 rsyslog	P2	调试	持久文本日志（当前 journald 已够；查崩溃现场时更有用）
 mlocate	P2	调试	locate 数据库（rg/find 已够）
