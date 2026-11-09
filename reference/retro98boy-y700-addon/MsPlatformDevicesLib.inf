@@ -1,0 +1,40 @@
+[Defines]
+  INF_VERSION = 0x00010005
+  BASE_NAME = MsPlatformDevicesLib
+  FILE_GUID = 87503222-9D17-4503-AB62-DFC783604303
+  MODULE_TYPE = DXE_DRIVER
+  LIBRARY_CLASS = MsPlatformDevicesLib
+[Sources]
+  MsPlatformDevicesLib.c
+  MsPlatformDevicesLib.h
+  StorageConnect.c
+  AndroidBootSlot.c
+[Packages]
+  PakalaPkg/PakalaPkg.dec
+  AndromedaPkg/AndromedaPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+  QcomModulePkg/QcomModulePkg.dec
+[LibraryClasses]
+  AcpiPlatformUpdateLib
+  IoLib
+  UefiLib
+  UefiBootManagerLib
+  UefiBootServicesTableLib
+  DevicePathLib
+  BaseMemoryLib
+  DebugLib
+[Guids]
+  gEfiUfsLU4Guid
+  gEdkiiNonDiscoverableUfsDeviceGuid
+  gEdkiiNonDiscoverableSdhciDeviceGuid
+[Protocols]
+  gEfiGraphicsOutputProtocolGuid
+  gEdkiiNonDiscoverableDeviceProtocolGuid
+  gEfiExtScsiPassThruProtocolGuid
+  gEfiScsiIoProtocolGuid
+  gEfiBlockIoProtocolGuid
+  gEfiPartitionInfoProtocolGuid

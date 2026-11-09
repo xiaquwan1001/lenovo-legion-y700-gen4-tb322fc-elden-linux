@@ -1,0 +1,1502 @@
+diff --git a/Common/MU_TIANO b/Common/MU_TIANO
+--- a/Common/MU_TIANO
++++ b/Common/MU_TIANO
+@@ -1 +1 @@
+-Subproject commit 2dd1beb9cd7631030dfc8e74cb4840a89b5d008d
++Subproject commit 2dd1beb9cd7631030dfc8e74cb4840a89b5d008d-dirty
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+index abf5b87b..d77c9707 100644
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -12,6 +12,8 @@
+ #include <Library/HobLib.h>
+ #include <Library/MemoryMapHelperLib.h>
+ #include <Library/SerialPortLib.h>
++#include <Library/PrintLib.h>        // 2026-11-06R19 y700-elden
++#include <Library/BaseMemoryLib.h>   // 2026-11-06R27 y700-elden
+ 
+ #include <Resources/FbColor.h>
+ #include <Resources/font5x12.h>
+@@ -30,6 +32,30 @@ UINTN gWidth = FixedPcdGet32(PcdMipiFrameBufferWidth);
+ UINTN gHeight = FixedPcdGet32(PcdMipiFrameBufferHeight);
+ UINTN gBpp    = FixedPcdGet32(PcdMipiFrameBufferPixelBpp);
+ 
++// 2026-11-06R19 y700-elden: 帧缓冲控制台硬边界（结构性防护）。
++// splash 区声明 43 MiB，实测只有前 ~448 KiB 可安全写（PITFALLS #492/#515）；此前的唯一防线是
++// 「真路径别打印」，而 2026-11-06 夜 p26 已把崩溃 PC 定到 SerialPortWrite 内部（PITFALLS #527）⇒
++// 改成写不出去：所有绘制先算字节偏移，越过 m_FbSafe 就回卷到 y=0，且绝不再做 23 MiB 的 ResetFb 清屏。
++// 2026-11-06R25 y700-elden: 预算从 448 KiB 放回「一整个面板」。
++// 2026-11-06 夜 p27 的 [F] 行给出：描述符声明 len=0x2B00000(43 MiB)、面板 1904x3040x32bpp=22 MiB、
++// 一行文字 0x16500 字节(scale 1)。上一条「只有前 448 KiB 可写」的结论（PITFALLS #492/#515）
++// 是在 p_Position 恒 NULL 的状态下测出来的，很可能把 NULL 崩误当成越界崩。
++// 现在改成 min(描述符长度, 面板字节数)，既不会写出描述符之外，也允许整屏使用；
++// 若真的越界，R20 的归因行会带 FAR 指出来。
++#define FBCON_SAFE_LIMIT  (24 * 1024 * 1024)
++
++// 2026-11-06R29 y700-elden: 几何账一律用**像素语义**重算（原实现的 y 边界没除 scale，
++// `m_MaxPosition.y=(gHeight-1)/FONT_HEIGHT`=253 行与实际可容纳的行数差 scale 倍；
++// 再叠加 R19 的字节预算 ⇒ scale 4 时满屏判定/回卷/清屏三者互相矛盾，现象就是「写满不刷新」
++// 与「一行都看不见」（PITFALLS #532）。现在四个数在初始化时一次算定，绘制只做算术。
++STATIC UINTN  m_FbSafe   = 0;   // 可写预算（字节，从帧缓冲基址起算）
++STATIC UINTN  m_FbStride = 0;   // 一个像素行的字节数 = (gBpp/8)*gWidth
++STATIC UINTN  m_FbLine   = 0;   // 一行文字的字节数 = m_FbStride*FONT_HEIGHT*SCALE_FACTOR
++STATIC UINTN  m_FbPanel  = 0;   // 整块面板字节数 = m_FbStride*gHeight
++STATIC UINTN  m_FbRows   = 0;   // 预算内可用**像素行**数 = m_FbSafe/m_FbStride
++STATIC UINTN  m_TextRows = 0;   // 预算内可用**文字行**数 = m_FbRows/(FONT_HEIGHT*SCALE_FACTOR)
++STATIC UINTN  m_TextCols = 0;   // 每行字符数 = gWidth/((FONT_WIDTH+1)*SCALE_FACTOR)
++
+ // Module-used internal routine
+ void FbConPutCharWithFactor(char c, int type, unsigned scale_factor);
+ 
+@@ -40,6 +66,7 @@ void FbConDrawglyph(
+ void FbConReset(void);
+ void FbConScrollUp(void);
+ void FbConFlush(void);
++void FbConClearScreen(void);
+ 
+ RETURN_STATUS
+ EFIAPI
+@@ -62,34 +89,92 @@ SerialPortInitialize(VOID)
+   // Set flag
+   m_Initialized = TRUE;
+ 
++  // 2026-11-06R19/R25: 预算 = min(描述符长度, FBCON_SAFE_LIMIT, 面板字节数)。
++  // 2026-11-06R29: 几何一次算定（像素行/文字行/每行列数），并把**自洽**结果分三行打印。
++  // 旧版本把 len/lim/stride/line/scale 挤在一行（约 100 列），scale 4 下每行只有 79 列 ⇒ 直接折行，
++  // 上机抄读时出现过 `lim=164800` 与真实 `lim=1614400` 对不上的争议（PITFALLS #532）。
++  m_FbStride = (gBpp / 8) * gWidth;
++  m_FbPanel  = m_FbStride * gHeight;
++  m_FbLine   = m_FbStride * FONT_HEIGHT * SCALE_FACTOR;
++  m_FbSafe   = FBCON_SAFE_LIMIT;
++  if ((DisplayMemoryRegion.Length > 0x1000) && ((UINTN)DisplayMemoryRegion.Length < m_FbSafe)) {
++    m_FbSafe = (UINTN)DisplayMemoryRegion.Length;
++  }
++  if ((m_FbPanel > 0) && (m_FbPanel < m_FbSafe)) {
++    m_FbSafe = m_FbPanel;
++  }
++  m_FbRows   = (m_FbStride != 0) ? (m_FbSafe / m_FbStride) : 0;
++  m_TextRows = (m_FbRows > 0) ? (m_FbRows / (FONT_HEIGHT * SCALE_FACTOR)) : 0;
++  if (m_TextRows == 0) {
++    m_TextRows = 1;
++  }
++  m_TextCols = gWidth / ((FONT_WIDTH + 1) * SCALE_FACTOR);
++  if (m_TextCols == 0) {
++    m_TextCols = 1;
++  }
++  // 几何自洽判据：预算必须容纳至少一行文字、且不超过面板与描述符。
++  m_MaxPosition.x = (INTN)m_TextCols;
++  m_MaxPosition.y = (INTN)m_TextRows;
++  {
++    CHAR8  SbLine[96];
++    UINTN  SbLen;
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] geom=%dx%d bpp=%d s=%d ck=%a\n\r",
++                         (UINT64)gWidth, (UINT64)gHeight, (UINT64)gBpp, (UINT64)SCALE_FACTOR,
++                         ((m_TextRows >= 1) && (m_TextCols >= 1) && (m_FbLine <= m_FbSafe)) ? "OK" : "BAD");
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] len=%lx panel=%lx lim=%lx\n\r",
++                         (UINT64)DisplayMemoryRegion.Length, (UINT64)m_FbPanel, (UINT64)m_FbSafe);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++    SbLen = AsciiSPrint (SbLine, sizeof (SbLine), "[F] stride=%lx line=%lx cols=%d rows=%d\n\r",
++                         (UINT64)m_FbStride, (UINT64)m_FbLine,
++                         (UINT64)m_TextCols, (UINT64)m_TextRows);
++    SerialPortWrite ((UINT8 *)SbLine, SbLen);
++  }
++
+   return RETURN_SUCCESS;
+ }
+ 
+ void ResetFb(void)
+ {
+-  // Clear current screen.
+-  char *Pixels  = (void *)DisplayMemoryRegion.Address;
+-  UINTN BgColor = FB_BGRA8888_BLACK;
+-
+-  // Set to black color.
+-  for (UINTN i = 0; i < gWidth; i++) {
+-    for (UINTN j = 0; j < gHeight; j++) {
+-      BgColor = FB_BGRA8888_BLACK;
+-      // Set pixel bit
+-      for (UINTN p = 0; p < (gBpp / 8); p++) {
+-        *Pixels = (unsigned char)BgColor;
+-        BgColor = BgColor >> 8;
+-        Pixels++;
+-      }
+-    }
++  // 2026-11-06R29: 原实现是 gWidth×gHeight 的逐像素三重循环（1904×3040 = 5.8M 次，且不查预算）。
++  // 改成一次 SetMem，且只在预算内清（预算外一律不碰）。
++  UINTN  Bytes = (m_FbSafe != 0) ? m_FbSafe : (gWidth * gHeight * (gBpp / 8));
++
++  SetMem ((VOID *)(UINTN)DisplayMemoryRegion.Address, Bytes, 0);
++  if (p_Position != NULL) {
++    p_Position->x = 0;
++    p_Position->y = 0;
++  }
++  FbConFlush ();
++}
++
++void FbConClearScreen(void)
++{
++  SetMem ((VOID *)(UINTN)DisplayMemoryRegion.Address, m_FbSafe, 0);
++  if (p_Position != NULL) {
++    p_Position->x = 0;
++    p_Position->y = 0;
++  }
++  FbConFlush ();
++}
++
++// 2026-11-06R30 y700-elden: 给异常处理器的导出入口（同一条 SerialPortLib）。
++// 只能在已初始化、且预算已算出的情况下清屏；否则静默返回 —— 异常上下文里绝不回头调
++// MemoryMapHelperLib/HOB（那正是 p32 「Recursive exception」的成因，PITFALLS #533）。
++VOID
++EFIAPI
++SerialPortClearScreen (VOID)
++{
++  if ((m_Initialized) && (m_FbSafe != 0) && (p_Position != NULL) && (DisplayMemoryRegion.Address != 0)) {
++    FbConClearScreen ();
+   }
+ }
+ 
+ void FbConReset(void)
+ {
+-  // Calc max position.
+-  m_MaxPosition.x = gWidth / (FONT_WIDTH + 1);
+-  m_MaxPosition.y = (gHeight - 1) / FONT_HEIGHT;
++  // Calc max position（2026-11-06R29：文字行/列已在 SerialPortInitialize 里按 scale 与预算算定）。
++  m_MaxPosition.x = (INTN)((m_TextCols != 0) ? m_TextCols : (gWidth / (FONT_WIDTH + 1)));
++  m_MaxPosition.y = (INTN)((m_TextRows != 0) ? m_TextRows : ((gHeight - 1) / FONT_HEIGHT));
+ 
+   // Reset color.
+   m_Color.Foreground = FB_BGRA8888_WHITE;
+@@ -98,24 +183,29 @@ void FbConReset(void)
+ 
+ void FbConPutCharWithFactor(char c, int type, unsigned scale_factor)
+ {
+-  char *Pixels;
++  char   *Pixels;
++  UINTN   LineBytes;
++  UINTN   Offset;
++  BOOLEAN intstate;
+ 
+ paint:
+ 
+   if ((unsigned char)c > 127)
+     return;
+ 
++  // 2026-11-06R29: 未初始化或未算出几何（异常上下文里就是这种状态）⇒ 静默丢弃，绝不走 NULL。
++  if ((m_FbSafe == 0) || (p_Position == NULL) || (m_TextRows == 0) || (m_TextCols == 0))
++    return;
++
++  // 控制字符先处理（不参与预算计算）。
+   if ((unsigned char)c < 32) {
+-    if (c == '\n') {
+-      goto newline;
+-    }
+-    else if (c == '\r') {
++    if (c == '\r') {
+       p_Position->x = 0;
+       return;
+     }
+-    else {
++    if (c != '\n')
+       return;
+-    }
++    goto newline;
+   }
+ 
+   // Save some space
+@@ -123,43 +213,62 @@ paint:
+       type != FBCON_SUBTITLE_MSG && type != FBCON_TITLE_MSG)
+     return;
+ 
+-  BOOLEAN intstate = ArmGetInterruptState();
++  // 行/列越界（预算变小或 scale 变大时可能）⇒ 先清屏回顶，再继续画这个字符。
++  if ((p_Position->x < 0) || ((UINTN)p_Position->x >= m_TextCols))
++    goto newline;
++  if ((p_Position->y < 0) || ((UINTN)p_Position->y >= m_TextRows))
++    goto fullscreen;
++
++  LineBytes = FONT_HEIGHT * scale_factor * m_FbStride;
++
++  intstate = ArmGetInterruptState();
+   if (intstate)
+     ArmDisableInterrupts();
+ 
+   Pixels = (void *)DisplayMemoryRegion.Address;
+-  Pixels += p_Position->y * ((gBpp / 8) * FONT_HEIGHT * gWidth);
+-  Pixels += p_Position->x * scale_factor * ((gBpp / 8) * (FONT_WIDTH + 1));
++  Offset = (UINTN)p_Position->y * LineBytes;
++  Offset += (UINTN)p_Position->x * scale_factor * ((gBpp / 8) * (FONT_WIDTH + 1));
++
++  // 2026-11-06R19/R29: 硬边界 —— 任何情况下这一整行文字必须落在 m_FbSafe 内，否则丢弃（不画）。
++  if ((Offset + LineBytes) > m_FbSafe) {
++    if (intstate)
++      ArmEnableInterrupts();
++    return;
++  }
++  Pixels += Offset;
+ 
+   FbConDrawglyph(
+       Pixels, gWidth, (gBpp / 8), font5x12 + (c - 32) * 2, scale_factor);
+ 
+   p_Position->x++;
+ 
+-  if (p_Position->x >= (int)(m_MaxPosition.x / scale_factor))
++  if ((UINTN)p_Position->x >= m_TextCols) {
++    if (intstate)
++      ArmEnableInterrupts();
+     goto newline;
++  }
+ 
+   if (intstate)
+     ArmEnableInterrupts();
+   return;
+ 
+ newline:
+-  p_Position->y += scale_factor;
+   p_Position->x = 0;
+-  if (p_Position->y >= m_MaxPosition.y - scale_factor) {
+-    ResetFb();
+-    FbConFlush();
+-    p_Position->y = 0;
++  p_Position->y++;
++  // 2026-11-06R29: 文字行数是按 scale 与预算算定的（原实现直接用 (gHeight-1)/FONT_HEIGHT，
++  // 没除 scale ⇒ scale 4 时多算 4 倍的行数，与 R19 的字节预算夹在一起就出现了“写满不刷新”）。
++  if ((p_Position->y < 0) || ((UINTN)p_Position->y >= m_TextRows))
++    goto fullscreen;
++  FbConFlush();
++  return;
+ 
+-    if (intstate)
+-      ArmEnableInterrupts();
++fullscreen:
++  // 2026-11-06R27/R29: 满屏时**有界清屏再回到顶部**（只清 m_FbSafe，最多一块面板）。
++  // 不回卷也不清屏就会“看起来像卡住”；而原实现的逐像素 ResetFb() 不查预算，已废弃。
++  FbConClearScreen();
++  if ((unsigned char)c >= 32)
+     goto paint;
+-  }
+-  else {
+-    FbConFlush();
+-    if (intstate)
+-      ArmEnableInterrupts();
+-  }
++  return;
+ }
+ 
+ void FbConDrawglyph(
+@@ -263,34 +372,31 @@ void FbConDrawglyph(
+ /* TODO: Take stride into account */
+ void FbConScrollUp(void)
+ {
+-  unsigned short *dst   = (void *)DisplayMemoryRegion.Address;
+-  unsigned short *src   = dst + (gWidth * FONT_HEIGHT);
+-  unsigned        count = gWidth * (gHeight - FONT_HEIGHT);
+-
+-  while (count--) {
+-    *dst++ = *src++;
+-  }
++  // 2026-11-06R29: 原实现用 `unsigned short *`（16 bit）搬 32bpp 帧缓冲、count 按像素算而非字节 ⇒
++  // 只搬一半字节且行宽错位（PITFALLS #515）。改成按字节、按真实行宽、且限制在可写预算内。
++  UINT8 *Base   = (void *)DisplayMemoryRegion.Address;
++  UINTN  Rows   = (m_FbStride != 0) ? (m_FbSafe / m_FbStride) : gHeight;
++  UINTN  Scroll = (UINTN)FONT_HEIGHT * SCALE_FACTOR;
++  UINTN  Bytes;
++
++  if ((Base == NULL) || (m_FbStride == 0) || (Rows <= Scroll))
++    return;
+ 
+-  count = gWidth * FONT_HEIGHT;
+-  while (count--) {
+-    *dst++ = m_Color.Background;
+-  }
++  Bytes = (Rows - Scroll) * m_FbStride;
++  for (UINTN i = 0; i < Bytes; i++)
++    Base[i] = Base[i + Scroll * m_FbStride];
+ 
++  SetMem (Base + Bytes, Scroll * m_FbStride, 0);
+   FbConFlush();
+ }
+ 
+ void FbConFlush(void)
+ {
+-  unsigned total_x, total_y;
+-  unsigned bytes_per_bpp;
++  // 2026-11-06R29: 原实现每次换行都对整块面板（gWidth*gHeight*bpp/8 = 22 MiB）做
++  // WriteBackInvalidateDataCacheRange，既慢又越过预算。改成只刷可写预算。
++  UINTN  Bytes = (m_FbSafe != 0) ? m_FbSafe : (gWidth * gHeight * (gBpp / 8));
+ 
+-  total_x       = gWidth;
+-  total_y       = gHeight;
+-  bytes_per_bpp = (gBpp / 8);
+-
+-  WriteBackInvalidateDataCacheRange(
+-      (void *)DisplayMemoryRegion.Address,
+-      (total_x * total_y * bytes_per_bpp));
++  WriteBackInvalidateDataCacheRange((void *)DisplayMemoryRegion.Address, Bytes);
+ }
+ 
+ UINTN
+@@ -300,11 +406,37 @@ SerialPortWrite(IN UINT8 *Buffer, IN UINTN NumberOfBytes)
+   UINT8 *CONST Final          = &Buffer[NumberOfBytes];
+   UINTN        InterruptState = ArmGetInterruptState();
+ 
++  // 2026-11-06R21 y700-elden: 惰性初始化。
++  // LinuxLoader（以及任何链接了本库却没显式调 SerialPortInitialize 的映像）里 p_Position 恒为 NULL，
++  // 第一次打印就在 `p_Position->y`（结构体 offset 8）上 data abort —— 这正是 p26 归因到的崩溃
++  // （`[K] FLT pc=cfeb5c84 b=cfea2000 z=45000 o=13c84` = LinuxLoader 的 SerialPortWrite）；
++  // 反证：`LinuxLoader.map` 里根本没有 SerialPortInitialize 符号（LTO 把它当死代码丢了）。
++  // 这里第一次写就补初始化；初始化失败（找不到 "Display Reserved"）就静默丢弃，绝不带着 NULL 往下走。
++  // 2026-11-06R28 y700-elden: 这里**不再惰性初始化**（R21 的惰性初始化会在异常上下文里被
++  // handler 自己触发，而 SerialPortInitialize 要走 MemoryMapHelperLib/HOB，EB 之后不可用
++  // ⇒ 二次异常「Recursive exception」，2026-11-06 p32 上机撞到的正是这个）。
++  // 未初始化就静默丢弃；初始化由 LinuxLoader 入口显式做一次。
++  if (!m_Initialized || (p_Position == NULL)) {
++    return NumberOfBytes;
++  }
++
+   if (InterruptState)
+     ArmDisableInterrupts();
+ 
+   while (Buffer < Final) {
+     FbConPutCharWithFactor(*Buffer++, FBCON_COMMON_MSG, SCALE_FACTOR);
++    /*
++      2026-11-04R2 y700-elden：上机取证用「慢速屏显」。
++      上一发落在 EDK2 同步异常，异常处理器递归 dump 把屏刷成流，人眼/相机一帧都抢不到。
++      这里在每字符后加一段忙等（粗标定 ~1–3 ms），让标记与异常首屏都慢到能拍照。
++      只在本变体里用；正式构建不要带这个补丁。
++    */
++    {
++      volatile UINTN  SbSpins = 0;
++      while (SbSpins < 40000u) {
++        SbSpins++;
++      }
++    }
+   }
+ 
+   if (InterruptState)
+@@ -320,6 +452,20 @@ SerialPortWriteCritical(IN UINT8 *Buffer, IN UINTN NumberOfBytes)
+   UINTN        CurrentForeground = m_Color.Foreground;
+   UINTN        InterruptState    = ArmGetInterruptState();
+ 
++  // 2026-11-06R21 y700-elden: 惰性初始化。
++  // LinuxLoader（以及任何链接了本库却没显式调 SerialPortInitialize 的映像）里 p_Position 恒为 NULL，
++  // 第一次打印就在 `p_Position->y`（结构体 offset 8）上 data abort —— 这正是 p26 归因到的崩溃
++  // （`[K] FLT pc=cfeb5c84 b=cfea2000 z=45000 o=13c84` = LinuxLoader 的 SerialPortWrite）；
++  // 反证：`LinuxLoader.map` 里根本没有 SerialPortInitialize 符号（LTO 把它当死代码丢了）。
++  // 这里第一次写就补初始化；初始化失败（找不到 "Display Reserved"）就静默丢弃，绝不带着 NULL 往下走。
++  // 2026-11-06R28 y700-elden: 这里**不再惰性初始化**（R21 的惰性初始化会在异常上下文里被
++  // handler 自己触发，而 SerialPortInitialize 要走 MemoryMapHelperLib/HOB，EB 之后不可用
++  // ⇒ 二次异常「Recursive exception」，2026-11-06 p32 上机撞到的正是这个）。
++  // 未初始化就静默丢弃；初始化由 LinuxLoader 入口显式做一次。
++  if (!m_Initialized || (p_Position == NULL)) {
++    return NumberOfBytes;
++  }
++
+   if (InterruptState)
+     ArmDisableInterrupts();
+ 
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+index be884abd..c9dd3a68 100644
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -52,6 +52,9 @@
+ #define MAX_NUM_FS 10
+ #define DEFAULT_STACK_CHK_GUARD 0xc0c0c0c0
+ 
++/* R59: defined in Library/avb/VerifiedBoot.c, consumed by LoadImageFromEsp() */
++extern CHAR16 gEspBootPath[64];
++
+ STATIC BOOLEAN BootReasonAlarm = FALSE;
+ STATIC BOOLEAN BootIntoFastboot = FALSE;
+ STATIC BOOLEAN BootIntoRecovery = FALSE;
+@@ -166,6 +169,527 @@ WaitForDisplayCompletion (VOID)
+ 
+  **/
+ 
++
++/* R58 y700-elden: stage log on the ESP (\\loader.log), opened as the very first
++ * thing in the entry point. The panel channel is unreliable inside LinuxLoader
++ * and a late failure powers the machine off, so the only dependable record is a
++ * file on the volume we were loaded from. */
++STATIC EFI_FILE_PROTOCOL  *mLLog = NULL;
++
++STATIC VOID
++LLogOpen (IN EFI_HANDLE ImageHandle)
++{
++  EFI_STATUS                       Status;
++  EFI_LOADED_IMAGE_PROTOCOL        *LI  = NULL;
++  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *Sfs = NULL;
++  EFI_FILE_PROTOCOL                *Root = NULL;
++
++  Status = gBS->OpenProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid,
++                              (VOID **)&LI, ImageHandle, NULL,
++                              EFI_OPEN_PROTOCOL_GET_PROTOCOL);
++  if (EFI_ERROR (Status) || (LI == NULL)) {
++    return;
++  }
++  Status = gBS->HandleProtocol (LI->DeviceHandle,
++                                &gEfiSimpleFileSystemProtocolGuid,
++                                (VOID **)&Sfs);
++  if (EFI_ERROR (Status) || (Sfs == NULL)) {
++    return;
++  }
++  if (EFI_ERROR (Sfs->OpenVolume (Sfs, &Root)) || (Root == NULL)) {
++    return;
++  }
++  /* delete a previous attempt, then create fresh.
++   * 2026-11-08R61 y700-elden: **绝不能**用 `Open(Root, NULL, ...)` 表达「删除」。UEFI 规范说
++   * NewHandle==NULL + 非 CREATE = 删除，但本树 EnhancedFatDxe 的 FatOpenEx() 只校验 FileName 和
++   * OpenMode，**没有 NewHandle==NULL 的检查**，于是「文件存在 ⇒ 打开成功 ⇒ `*NewHandle = &NewIFile->Handle`
++   * 写地址 0」→ 同步异常（data abort）落在 Fat.efi 的 `str x8,[x22]`（RVA 0x4E2C）。
++   * 现场证据：屏上 `Synchronous Exception at 0xD0B99E2C`，且 `0xD0B99E2C - 0xD0B95000(Fat 装载基址)
++   * = 0x4E2C` 正好是那条 store；一次成功之后每发必崩，正是「\loader.log 已存在」这条判据。
++   * 正确写法：打开拿到句柄再 `->Delete()`（Delete 兼带 Close）。 */
++  {
++    EFI_FILE_PROTOCOL  *Old = NULL;
++
++    if (!EFI_ERROR (Root->Open (Root, &Old, (CHAR16 *)L"\\loader.log",
++                                EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0)) &&
++        (Old != NULL)) {
++      Old->Delete (Old);
++    }
++  }
++  if (EFI_ERROR (Root->Open (Root, &mLLog, (CHAR16 *)L"\\loader.log",
++                             EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE |
++                             EFI_FILE_MODE_CREATE, 0))) {
++    mLLog = NULL;
++  }
++  Root->Close (Root);
++}
++
++STATIC VOID
++LLog (IN CONST CHAR8 *Line, IN UINT64 Val)
++{
++  CHAR8  Buf[128];
++  UINTN  N;
++
++  if (mLLog == NULL) {
++    return;
++  }
++  if (Val == MAX_UINT64) {
++    N = AsciiStrLen (Line);
++    CopyMem (Buf, Line, N);
++    Buf[N++] = '\n';
++  } else {
++    N = AsciiSPrint (Buf, sizeof (Buf) - 1, "%a %lu\n", Line, Val);
++  }
++  mLLog->Write (mLLog, &N, Buf);
++  mLLog->Flush (mLLog);
++}
++
++/* R59 y700-elden: does <Name> exist on the volume we were loaded from? */
++STATIC BOOLEAN
++LEspHasFile (IN EFI_HANDLE ImageHandle, IN CONST CHAR16 *Name)
++{
++  EFI_LOADED_IMAGE_PROTOCOL        *LI   = NULL;
++  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *Sfs  = NULL;
++  EFI_FILE_PROTOCOL                *Root = NULL;
++  EFI_FILE_PROTOCOL                *File = NULL;
++  BOOLEAN                           Found = FALSE;
++
++  if (EFI_ERROR (gBS->OpenProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid,
++                                    (VOID **)&LI, ImageHandle, NULL,
++                                    EFI_OPEN_PROTOCOL_GET_PROTOCOL)) ||
++      (LI == NULL)) {
++    return FALSE;
++  }
++  if (EFI_ERROR (gBS->HandleProtocol (LI->DeviceHandle,
++                                      &gEfiSimpleFileSystemProtocolGuid,
++                                      (VOID **)&Sfs)) || (Sfs == NULL)) {
++    return FALSE;
++  }
++  if (EFI_ERROR (Sfs->OpenVolume (Sfs, &Root)) || (Root == NULL)) {
++    return FALSE;
++  }
++  if (!EFI_ERROR (Root->Open (Root, &File, (CHAR16 *)Name, EFI_FILE_MODE_READ, 0)) &&
++      (File != NULL)) {
++    File->Close (File);
++    Found = TRUE;
++  }
++  Root->Close (Root);
++  return Found;
++}
++
++/* R59 y700-elden: log a line with a string value (menu labels/paths). */
++STATIC VOID
++LLogStr (IN CONST CHAR8 *Line, IN CONST CHAR8 *Val)
++{
++  CHAR8  Buf[160];
++  UINTN  N;
++
++  if (mLLog == NULL) {
++    return;
++  }
++  N = AsciiSPrint (Buf, sizeof (Buf) - 1, "%a %a\n", Line, Val);
++  mLLog->Write (mLLog, &N, Buf);
++  mLLog->Flush (mLLog);
++}
++
++/* ==========================================================================
++ * R59 y700-elden: boot menu on the ESP (route B).
++ *
++ * Why keys-only first: the panel (SerialPortWrite) is NOT a reliable channel on
++ * this platform (PITFALLS #567) while \loader.log on the ESP is. So R59 proves
++ * the *input* path (ConIn -> SCAN_UP/SCAN_DOWN/SCAN_SUSPEND) with a log-only
++ * menu; the on-screen UI (BootLib/DrawUI.c) comes in R60 only after that is
++ * confirmed. Menu file = \menu.cfg on the ESP:
++ *
++ *   #timeout=5
++ *   Label one|\boot\boot.img
++ *   Label two|\boot\boot2.img
++ *   Mu fastboot|-fastboot
++ *   Power off|-poweroff
++ *
++ * No \menu.cfg => single default entry (\boot\boot.img), zero key waiting.
++ * ========================================================================== */
++#define L_MENU_MAX        8
++#define L_MENU_PATH_LEN   64
++#define L_MENU_LABEL_LEN  40
++
++STATIC UINTN   mLMenuCount;
++STATIC UINTN   mLMenuTimeout;
++STATIC CHAR16  mLMenuPath[L_MENU_MAX][L_MENU_PATH_LEN];
++STATIC CHAR8   mLMenuPathA[L_MENU_MAX][L_MENU_PATH_LEN];
++STATIC CHAR8   mLMenuLabel[L_MENU_MAX][L_MENU_LABEL_LEN];
++
++STATIC BOOLEAN
++LMenuAdd (IN CONST CHAR8 *Label, IN UINTN LabelLen,
++          IN CONST CHAR8 *Path,  IN UINTN PathLen)
++{
++  UINTN Idx;
++
++  if (mLMenuCount >= L_MENU_MAX) {
++    return FALSE;
++  }
++  if ((PathLen == 0) || (PathLen >= L_MENU_PATH_LEN)) {
++    return FALSE;
++  }
++  if ((LabelLen == 0) || (LabelLen >= L_MENU_LABEL_LEN)) {
++    LabelLen = 0;   /* fall back to the path as the label */
++  }
++
++  for (Idx = 0; Idx < PathLen; Idx++) {
++    mLMenuPathA[mLMenuCount][Idx] = Path[Idx];
++    mLMenuPath[mLMenuCount][Idx]  = (CHAR16)(UINT8)Path[Idx];
++  }
++  mLMenuPathA[mLMenuCount][PathLen] = 0;
++  mLMenuPath[mLMenuCount][PathLen]  = 0;
++
++  if (LabelLen == 0) {
++    for (Idx = 0; Idx < PathLen; Idx++) {
++      mLMenuLabel[mLMenuCount][Idx] = Path[Idx];
++    }
++    mLMenuLabel[mLMenuCount][PathLen] = 0;
++  } else {
++    for (Idx = 0; Idx < LabelLen; Idx++) {
++      mLMenuLabel[mLMenuCount][Idx] = Label[Idx];
++    }
++    mLMenuLabel[mLMenuCount][LabelLen] = 0;
++  }
++
++  mLMenuCount++;
++  return TRUE;
++}
++
++STATIC VOID
++LMenuDefaults (VOID)
++{
++  mLMenuCount = 0;
++  mLMenuTimeout = 0;
++  (VOID)LMenuAdd ("Elden Linux (ESP default)", 25, "\\boot\\boot.img", 15);
++}
++
++/* Parse \menu.cfg (already read into Buf). Tolerant: malformed lines skipped. */
++STATIC VOID
++LMenuParse (IN CONST CHAR8 *Buf, IN UINTN Len)
++{
++  UINTN Start = 0;
++  UINTN Pos;
++
++  while (Start < Len) {
++    UINTN End = Start;
++    UINTN Bar = (UINTN)-1;
++    UINTN I;
++
++    while ((End < Len) && (Buf[End] != '\n')) {
++      End++;
++    }
++    I = End;
++    while ((I > Start) && ((Buf[I - 1] == '\r') || (Buf[I - 1] == ' '))) {
++      I--;
++    }
++    if (I > Start) {
++      if (Buf[Start] == '#') {
++        /* only #timeout=<sec> is meaningful */
++        if ((I - Start > 9) && (AsciiStrnCmp (&Buf[Start], "#timeout=", 9) == 0)) {
++          UINTN Val = 0, K;
++          for (K = Start + 9; K < I; K++) {
++            if ((Buf[K] < '0') || (Buf[K] > '9')) {
++              break;
++            }
++            Val = Val * 10 + (UINTN)(Buf[K] - '0');
++          }
++          if (Val <= 60) {
++            mLMenuTimeout = Val;
++          }
++        }
++      } else {
++        for (Pos = Start; Pos < I; Pos++) {
++          if (Buf[Pos] == '|') {
++            Bar = Pos;
++            break;
++          }
++        }
++        if (Bar == (UINTN)-1) {
++          (VOID)LMenuAdd (NULL, 0, &Buf[Start], I - Start);
++        } else {
++          (VOID)LMenuAdd (&Buf[Start], Bar - Start, &Buf[Bar + 1], I - Bar - 1);
++        }
++      }
++    }
++    Start = End + 1;
++  }
++}
++
++/* Read \menu.cfg from the volume we were loaded from (the ESP). */
++STATIC VOID
++LMenuLoad (IN EFI_HANDLE ImageHandle)
++{
++  EFI_STATUS                       Status;
++  EFI_LOADED_IMAGE_PROTOCOL        *LI   = NULL;
++  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *Sfs  = NULL;
++  EFI_FILE_PROTOCOL                *Root = NULL;
++  EFI_FILE_PROTOCOL                *File = NULL;
++  UINT64                           Size = 0;
++  CHAR8                            *Buf = NULL;
++
++  LMenuDefaults ();
++
++  if (EFI_ERROR (gBS->OpenProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid,
++                                    (VOID **)&LI, ImageHandle, NULL,
++                                    EFI_OPEN_PROTOCOL_GET_PROTOCOL)) ||
++      (LI == NULL)) {
++    return;
++  }
++  if (EFI_ERROR (gBS->HandleProtocol (LI->DeviceHandle,
++                                      &gEfiSimpleFileSystemProtocolGuid,
++                                      (VOID **)&Sfs)) || (Sfs == NULL)) {
++    return;
++  }
++  if (EFI_ERROR (Sfs->OpenVolume (Sfs, &Root)) || (Root == NULL)) {
++    return;
++  }
++
++  Status = Root->Open (Root, &File, (CHAR16 *)L"\\menu.cfg",
++                       EFI_FILE_MODE_READ, 0);
++  if (EFI_ERROR (Status) || (File == NULL)) {
++    LLog ("[L] menu default (no menu.cfg)", MAX_UINT64);
++    Root->Close (Root);
++    return;
++  }
++
++  if (!EFI_ERROR (File->SetPosition (File, 0xFFFFFFFFFFFFFFFFULL)) &&
++      !EFI_ERROR (File->GetPosition (File, &Size)) &&
++      (Size > 0) && (Size < 8192) &&
++      !EFI_ERROR (File->SetPosition (File, 0))) {
++    Buf = AllocatePool ((UINTN)Size + 1);
++    if (Buf != NULL) {
++      UINTN Read = (UINTN)Size;
++      if (!EFI_ERROR (File->Read (File, &Read, Buf))) {
++        Buf[Read] = 0;
++        mLMenuCount = 0;
++        LMenuParse (Buf, Read);
++        if (mLMenuCount == 0) {
++          LMenuDefaults ();
++        }
++      }
++      FreePool (Buf);
++    }
++  }
++  File->Close (File);
++  Root->Close (Root);
++  LLog ("[L] menu entry n", (UINT64)mLMenuCount);
++  LLog ("[L] menu timeout s", (UINT64)mLMenuTimeout);
++}
++
++/* Poll ConIn for one scancode; SCAN_NULL = nothing available. */
++STATIC UINT32
++LMenuKey (VOID)
++{
++  UINT32 Key = SCAN_NULL;
++
++  if (GetKeyPress (&Key) != EFI_SUCCESS) {
++    return SCAN_NULL;
++  }
++  return Key;
++}
++
++/* R60 y700-elden: on-screen menu. 走 BootLib/DrawUI 的既有绘制路径（fastboot 菜单同一套：
++ * DrawMenuInit 备份开屏 logo + 清屏，SetMenuMsgInfo/DrawMenu 逐行画，UpdateMsgBackground 反白选中项）。
++ * × 不用 printf/SerialPortWrite 画菜单：那是帧缓冲控制台写穿的老坑（PITFALLS #514/#515/#567）。 */
++STATIC MENU_MSG_INFO  mLMenuUI[L_MENU_MAX + 1];
++STATIC UINT32         mLMenuUILoc[L_MENU_MAX + 1];
++STATIC UINT32         mLMenuUILines;
++STATIC UINT32         mLMenuUIHeight;
++STATIC UINT32         mLMenuUISel = (UINT32)-1;
++
++STATIC VOID
++LMenuDrawRow (
++  IN UINT32    Row,
++  IN CHAR8    *Msg,
++  IN UINT32    BgColor,
++  IN UINT8     Attr
++  )
++{
++  UINT32         Height = 0;
++  MENU_MSG_INFO  *Item  = &mLMenuUI[Row];
++
++  SetMenuMsgInfo (Item, Msg, COMMON_FACTOR, BGR_WHITE, BgColor, Attr,
++                  mLMenuUILoc[Row], 0);
++  if (DrawMenu (Item, &Height) == EFI_SUCCESS) {
++    mLMenuUIHeight = Height;
++    if ((Row + 1) < ARRAY_SIZE (mLMenuUI)) {
++      mLMenuUILoc[Row + 1] = mLMenuUILoc[Row] + Height;
++    }
++  }
++}
++
++/* 画整屏：标题 + 各条目（选中项反白）+ 底部提示 */
++STATIC VOID
++LMenuDrawScreen (IN UINTN Sel)
++{
++  CHAR8   Title[80];
++  CHAR8   Hint[80];
++  UINTN   Idx;
++
++  /* 只初始化一次：DrawMenuInit 会备份 logo 并清屏，重复调用会清掉已画内容 */
++  if (mLMenuUILines == 0) {
++    DrawMenuInit ();
++    mLMenuUILoc[0] = 0;
++  }
++
++  AsciiSPrint (Title, sizeof (Title) - 1,
++               "Boot menu   (Vol +/- move, Power = OK, %lu s timeout)",
++               (UINT64)mLMenuTimeout);
++  LMenuDrawRow (0, Title, BGR_BLACK, COMMON);
++
++  for (Idx = 0; Idx < mLMenuCount; Idx++) {
++    LMenuDrawRow ((UINT32)Idx + 1, mLMenuLabel[Idx], BGR_BLACK, COMMON);
++  }
++
++  AsciiSPrint (Hint, sizeof (Hint) - 1, " ");
++  LMenuDrawRow ((UINT32)mLMenuCount + 1, Hint, BGR_BLACK, COMMON);
++  mLMenuUILines = 1;
++
++  /* 反白选中项 */
++  if ((Sel < mLMenuCount) && (mLMenuUI[Sel + 1].Msg[0] != 0)) {
++    (VOID)UpdateMsgBackground (&mLMenuUI[Sel + 1], BGR_BLUE);
++    mLMenuUISel = (UINT32)Sel;
++  }
++}
++
++/* 只移动高亮：把旧项底色还原、新项反白（避免整屏重画导致闪屏） */
++STATIC VOID
++LMenuDrawSelect (IN UINTN Sel)
++{
++  if (mLMenuUISel == (UINT32)Sel) {
++    return;
++  }
++  if (mLMenuUISel < mLMenuCount) {
++    (VOID)UpdateMsgBackground (&mLMenuUI[mLMenuUISel + 1], BGR_BLACK);
++  }
++  if (Sel < mLMenuCount) {
++    (VOID)UpdateMsgBackground (&mLMenuUI[Sel + 1], BGR_BLUE);
++  }
++  mLMenuUISel = (UINT32)Sel;
++}
++
++/* Key-driven selection. Returns TRUE if the caller should boot something,
++ * FALSE if the menu already handled the choice (fastboot / power off). */
++STATIC BOOLEAN
++LMenuSelect (IN EFI_HANDLE ImageHandle)
++{
++  UINTN  Sel = 0;
++  UINT64 Start;
++  UINT32 Last = SCAN_NULL;
++  UINTN  Idx;
++  CHAR8  Line[96];
++
++  if (LEspHasFile (ImageHandle, L"\\menu.cfg")) {
++    LMenuLoad (ImageHandle);
++  } else {
++    LMenuDefaults ();
++    LLog ("[L] menu default (no menu.cfg)", MAX_UINT64);
++  }
++  LLog ("[L] menu in", (UINT64)mLMenuCount);
++
++  /* R60: 有 menu.cfg 且给了 timeout 才登屏交互；timeout=0 时保持「零等待」的旧行为 */
++  if (mLMenuTimeout > 0) {
++    LMenuDrawScreen (Sel);
++    LLog ("[L] menu ui", (UINT64)mLMenuCount);
++  }
++
++  Start = GetTimerCountms ();
++  while (mLMenuTimeout > 0) {
++    UINT32 Key = LMenuKey ();
++
++    if (Key != Last) {
++      if (Key != SCAN_NULL) {
++        LLog ("[L] menu key", (UINT64)Key);
++        if (Key == SCAN_DOWN) {
++          Sel = (Sel + 1) % mLMenuCount;
++          LMenuDrawSelect (Sel);
++        } else if (Key == SCAN_UP) {
++          Sel = (Sel + mLMenuCount - 1) % mLMenuCount;
++          LMenuDrawSelect (Sel);
++        } else if (Key == SCAN_SUSPEND) {
++          Last = Key;
++          break;
++        }
++        AsciiSPrint (Line, sizeof (Line) - 1, "[L] menu sel %d", (UINT32)Sel);
++        LLog (Line, MAX_UINT64);
++      }
++      Last = Key;
++    }
++    if (((GetTimerCountms () - Start) / 1000) >= mLMenuTimeout) {
++      LLog ("[L] menu timeout", MAX_UINT64);
++      Sel = 0;
++      break;
++    }
++    gBS->Stall (50000);   /* 50 ms per poll */
++  }
++  if (mLMenuTimeout == 0) {
++    Sel = 0;
++  }
++
++  /* Apply the selection. */
++  if (AsciiStrnCmp (mLMenuPathA[Sel], "-fastboot", 9) == 0) {
++    LLog ("[L] menu pick fastboot", MAX_UINT64);
++    BootIntoFastboot = TRUE;
++    return FALSE;
++  }
++  if (AsciiStrnCmp (mLMenuPathA[Sel], "-poweroff", 9) == 0) {
++    LLog ("[L] menu pick poweroff", MAX_UINT64);
++    ShutdownDevice ();
++    return FALSE;
++  }
++
++  for (Idx = 0; (Idx < L_MENU_PATH_LEN - 1) && (mLMenuPathA[Sel][Idx] != 0);
++       Idx++) {
++    gEspBootPath[Idx] = mLMenuPath[Sel][Idx];
++  }
++  gEspBootPath[Idx] = 0;
++  LLogStr ("[L] menu boot", mLMenuPathA[Sel]);
++  return TRUE;
++}
++
++
++/* R58b y700-elden: \\espboot.force exists on the volume we were loaded from
++ * => ignore the hard-wired/BootReason fastboot decision and take the normal
++ * LoadImageAndAuth -> BootLinux path. Needed because this tree sets
++ * BootIntoFastboot = TRUE unconditionally, so `fastboot boot` never reaches
++ * BootLinux and the ESP experiment can never run. */
++STATIC BOOLEAN
++LEspForceBoot (IN EFI_HANDLE ImageHandle)
++{
++  EFI_STATUS                       Status;
++  EFI_LOADED_IMAGE_PROTOCOL        *LI  = NULL;
++  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *Sfs = NULL;
++  EFI_FILE_PROTOCOL                *Root = NULL;
++  EFI_FILE_PROTOCOL                *File = NULL;
++
++  if (EFI_ERROR (gBS->OpenProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid,
++                                    (VOID **)&LI, ImageHandle, NULL,
++                                    EFI_OPEN_PROTOCOL_GET_PROTOCOL)) ||
++      (LI == NULL)) {
++    return FALSE;
++  }
++  if (EFI_ERROR (gBS->HandleProtocol (LI->DeviceHandle,
++                                      &gEfiSimpleFileSystemProtocolGuid,
++                                      (VOID **)&Sfs)) || (Sfs == NULL)) {
++    return FALSE;
++  }
++  if (EFI_ERROR (Sfs->OpenVolume (Sfs, &Root)) || (Root == NULL)) {
++    return FALSE;
++  }
++  Status = Root->Open (Root, &File, (CHAR16 *)L"\\espboot.force",
++                       EFI_FILE_MODE_READ, 0);
++  if (!EFI_ERROR (Status) && (File != NULL)) {
++    File->Close (File);
++    Root->Close (Root);
++    return TRUE;
++  }
++  Root->Close (Root);
++  return FALSE;
++}
++
+ EFI_STATUS EFIAPI  __attribute__ ( (no_sanitize ("safe-stack")))
+ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+ {
+@@ -182,6 +706,17 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+   DEBUG ((EFI_D_VERBOSE, "LinuxLoaderEntry Address: 0x%llx\n",
+          (UINTN)LinuxLoaderEntry));
+ 
++  // 2026-11-06R28 y700-elden: 本映像链接了 FrameBufferSerialPortLib 却从不初始化它（LTO 连符号
++  // 都丢了）。R21 曾用惰性初始化，但那会在**异常上下文**里被触发 → 二次异常。改为入口显式初始化；
++  // 失败也不要紧，之后 SerialPortWrite 会静默丢弃。
++  {
++    RETURN_STATUS  EFIAPI  SerialPortInitialize (VOID);
++    (VOID)SerialPortInitialize ();
++  }
++
++  LLogOpen (ImageHandle);
++  LLog ("[L] entry r59-menu", MAX_UINT64);
++
+   Status = InitThreadUnsafeStack ();
+ 
+   if (Status != EFI_SUCCESS) {
+@@ -220,7 +755,13 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+   //Status = GetKeyPress (&KeyPressed);
+   //if (Status == EFI_SUCCESS) {
+   //  if (KeyPressed == SCAN_DOWN)
+-      BootIntoFastboot = TRUE;
++  //    2026-11-07R42 y700-elden: 这一行原先是**裸语句** `BootIntoFastboot = TRUE;`（上游把
++  //    GetKeyPress 分支整段注释掉时漏删了它）⇒ 本映像**永远**进 UEFI 侧 fastboot，必须由宿主
++  //    `fastboot continue` 才能继续。p46 已证明 continue 之后链路是通的（EB→PPH→LinuxKernel），
++  //    所以这里只是**一句多余的门**：删掉它，正常启动就直接走 LoadImageAndAuth → BootLinux。
++  //    回退通道不变：fastboot 入口仍由下面 BootReason switch 的 FASTBOOT_MODE 分支提供
++  //    （`reboot bootloader` 照旧进 fastboot），LoadImageAndAuth 失败也仍然 `goto fastboot`。
++  //    BootIntoFastboot = TRUE;   // 2026-11-07R42: 删除（理由见上）
+   //  if (KeyPressed == SCAN_UP)
+   //    BootIntoRecovery = TRUE;
+   //  if (KeyPressed == SCAN_ESC)
+@@ -286,8 +827,10 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+   if (Status != EFI_SUCCESS)
+     DEBUG ((EFI_D_VERBOSE, "RecoveryInit failed ignore: %r\n", Status));
+ 
++  LLog ("[L] pre-boardinit", MAX_UINT64);
+   /* Populate board data required for fastboot, dtb selection and cmd line */
+   Status = BoardInit ();
++  LLog ("[L] boardinit st", (UINT64)Status);
+   if (Status != EFI_SUCCESS) {
+     DEBUG ((EFI_D_ERROR, "Error finding board information: %r\n", Status));
+     return Status;
+@@ -296,16 +839,33 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+   DEBUG ((EFI_D_INFO, "KeyPress:%u, BootReason:%u\n", KeyPressed, BootReason));
+   DEBUG ((EFI_D_INFO, "Fastboot=%d, Recovery:%d\n",
+                                           BootIntoFastboot, BootIntoRecovery));
++  LLog ("[L] pre-vmdata", MAX_UINT64);
+   if (!GetVmData ()) {
+     DEBUG ((EFI_D_ERROR, "VM Hyp calls not present\n"));
+   }
+ 
++  if (LEspForceBoot (ImageHandle)) {
++    LLog ("[L] force-boot", MAX_UINT64);
++    BootIntoFastboot = FALSE;
++    BootIntoRecovery = FALSE;
++  }
++  /* R59: boot menu (ESP \menu.cfg). Decides *which* boot.img and can also send
++   * us to fastboot / power off, so it runs after the force-boot decision. */
++  /* R60: 菜单默认启用（开关改为「\menu.cfg 里的 #timeout」：缺文件或 timeout=0 ⇒ 零等待、不登屏）。
++   * 早期为了二分曾用 \menu.enable 文件门控 —— 那个文件不在 ESP 上，结果整段菜单从未执行
++   * （2026-11-08 实测：屏上直接进 Linux，\loader.log 里连 `[L] menu in` 都没有）。 */
++  if (!LMenuSelect (ImageHandle)) {
++    goto fastboot;
++  }
++  LLog ("[L] bootfastboot", (UINT64)BootIntoFastboot);
+   if (!BootIntoFastboot) {
+     BootInfo Info = {0};
+     Info.MultiSlotBoot = MultiSlotBoot;
+     Info.BootIntoRecovery = BootIntoRecovery;
+     Info.BootReasonAlarm = BootReasonAlarm;
++    LLog ("[L] pre-auth", MAX_UINT64);
+     Status = LoadImageAndAuth (&Info);
++    LLog ("[L] post-auth st", (UINT64)Status);
+     if (Status != EFI_SUCCESS) {
+       DEBUG ((EFI_D_ERROR, "LoadImageAndAuth failed: %r\n", Status));
+       goto fastboot;
+@@ -316,10 +876,13 @@ LinuxLoaderEntry (IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *SystemTable)
+       DEBUG ((EFI_D_ERROR, "Failed to wait for display completion: %r\n",
+                   Status));
+     }
++    LLog ("[L] pre-bootlinux", MAX_UINT64);
+     BootLinux (&Info);
++    LLog ("[L] post-bootlinux", MAX_UINT64);
+   }
+ 
+ fastboot:
++  LLog ("[L] to-fastboot", MAX_UINT64);
+   Status = WaitForDisplayCompletion ();
+   if (Status != EFI_SUCCESS) {
+     DEBUG ((EFI_D_ERROR, "Failed to wait for display completion: %r\n",
+diff --git a/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf b/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf
+index 9da1d193..71b76511 100644
+--- a/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf
++++ b/Platforms/QcomModulePkg/Library/BootLib/BootLib.inf
+@@ -103,6 +103,7 @@
+ 	AvbLib
+ 	UbsanLib
+   	MemoryMapHelperLib
++  	SerialPortLib
+ 
+ [Guids]
+ 	gEfiFileInfoGuid
+diff --git a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+index d90fa15a..0296ff51 100644
+--- a/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
++++ b/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c
+@@ -59,6 +59,7 @@
+ */
+ 
+ #include "VerifiedBoot.h"
++#include <Library/UefiLib.h>        // 2026-11-04R14 y700-elden
+ #include "BootLinux.h"
+ #include "BootImage.h"
+ #include "KeymasterClient.h"
+@@ -67,6 +68,11 @@
+ #include <Library/MenuKeysDetection.h>
+ #include <Library/VerifiedBootMenu.h>
+ #include <Library/LEOEMCertificate.h>
++#include <Library/UefiBootServicesTableLib.h>
++#include <Library/PrintLib.h>
++#include <Library/SerialPortLib.h>
++#include <Protocol/LoadedImage.h>
++#include <Protocol/SimpleFileSystem.h>
+ 
+ STATIC CONST CHAR8 *VerityMode = " androidboot.veritymode=";
+ STATIC CONST CHAR8 *VerifiedState = " androidboot.verifiedbootstate=";
+@@ -223,17 +229,65 @@ NoAVBLoadReqImage (BootInfo *Info, VOID **DtboImage,
+     goto out;
+   }
+ 
+-  if ((AsciiStrStr (AsciiPname, "dtbo")) &&
+-      (PartSize > DTBO_MAX_SIZE_ALLOWED)) {
+-    DEBUG ((EFI_D_ERROR, "DTBO size is too big: 0x%x\n", PartSize));
+-    Status = EFI_OUT_OF_RESOURCES;
+-    goto out;
++  // 2026-11-04R16 y700-elden: dtbo 分区固定 32 MiB（0x2000000），真正的内容长度在
++  // 表头 total_size 里（本机只有几百 KiB）。旧逻辑把"整个分区"当镜像：
++  //   32 MiB > DTBO_MAX_SIZE_ALLOWED(24 MiB) -> EFI_OUT_OF_RESOURCES
++  //   -> LoadImageNoAuth 改写成 EFI_LOAD_ERROR
++  //   -> fastboot "Failed to load image from partition / load/authenticate boot image: Load Error"
++  //   （continue 与 boot 两条路都撞这里，因为 dtbo 是公共步骤）
++  // 先读一页表头，按 total_size 装载。
++  if (AsciiStrStr (AsciiPname, "dtbo")) {
++    struct DtboTableHdr  *DtboHdr;
++    UINT32               DtboHdrSize;
++
++    DtboHdrSize = 4096;
++    DtboHdr = AllocateZeroPool (DtboHdrSize);
++    if (DtboHdr == NULL) {
++      Status = EFI_OUT_OF_RESOURCES;
++      goto out;
++    }
++
++    Status = LoadImageFromPartition (DtboHdr, &DtboHdrSize, Pname);
++    if (Status != EFI_SUCCESS) {
++      DEBUG ((EFI_D_ERROR, "VB: Failed to read dtbo header: %r\n", Status));
++      FreePool (DtboHdr);
++      goto out;
++    }
++
++    if (fdt32_to_cpu (DtboHdr->Magic) != DTBO_TABLE_MAGIC) {
++      // 2026-11-04R17 y700-elden: 空/无效 dtbo 分区（本机 dtbo_b 整块为 0）不是错误，
++      // 语义等于"没有 overlay" —— 返回 EFI_NO_MEDIA 让 LoadImageNoAuth 按既有分支跳过。
++      SbVProbe ("[V] dtbm=%x ps=%lx\n\r", fdt32_to_cpu (DtboHdr->Magic), PartSize);
++      FreePool (DtboHdr);
++      Status = EFI_NO_MEDIA;
++      goto out;
++    }
++
++    {
++      UINT32 DtboTotalSize;
++
++      DtboTotalSize = fdt32_to_cpu (DtboHdr->TotalSize);
++      SbVProbe ("[V] dtbm=%x tot=%x ps=%lx\n\r", fdt32_to_cpu (DtboHdr->Magic),
++                DtboTotalSize, PartSize);
++      if ((DtboTotalSize != 0) && (DtboTotalSize <= PartSize)) {
++        PartSize = DtboTotalSize;
++      }
++    }
++    FreePool (DtboHdr);
++
++    if (PartSize > DTBO_MAX_SIZE_ALLOWED) {
++      DEBUG ((EFI_D_ERROR, "DTBO size is too big: 0x%x\n", (UINT32)PartSize));
++      Status = EFI_OUT_OF_RESOURCES;
++      goto out;
++    }
+   }
+ 
+   DEBUG ((EFI_D_VERBOSE, "VB: Trying to allocate memory "
+                          "for DTBO: 0x%x\n", PartSize));
+   *DtboSize = (UINT32) PartSize;
+-  *DtboImage = AllocateZeroPool (PartSize);
++  // 2026-11-04R17: LoadImageFromPartition 会按块大小向上取整读取，
++  // 缓冲区必须按同样粒度取整，否则 total_size 未对齐时会写越界。
++  *DtboImage = AllocateZeroPool ((UINTN) ROUND_TO_PAGE (PartSize, 0xFFF));
+ 
+   if (*DtboImage == NULL) {
+     DEBUG ((EFI_D_ERROR, "VB: Unable to allocate memory for DTBO\n"));
+@@ -1274,6 +1328,10 @@ LoadImageAndAuthVB2 (BootInfo *Info)
+     }
+     Result = avb_slot_verify (Ops, (CONST CHAR8 *CONST *)RequestedPartition,
+                   SlotSuffix, VerifyFlags, VerityFlags, &SlotData);
++    // 2026-11-04R14 y700-elden: which AvbSlotVerifyResult made LoadImageAndAuth
++    // return EFI_LOAD_ERROR (only OK/VERIFICATION/ROLLBACK/KEY_REJECTED are tolerated).
++    AsciiPrint ("[V] res=%d data=%d rq=%d\n\r", Result,
++                SlotData != NULL ? 1 : 0, NumRequestedPartition);
+   }
+ 
+   if (SlotData == NULL) {
+@@ -1328,6 +1386,9 @@ LoadImageAndAuthVB2 (BootInfo *Info)
+     }
+   }
+ 
++  AsciiPrint ("[V] ld=%d rq=%d\n\r", Info->NumLoadedImages,
++              NumRequestedPartition);
++
+   if (Info->NumLoadedImages < NumRequestedPartition) {
+     DEBUG ((EFI_D_ERROR, "ERROR: AvbSlotVerify slot data error: num of "
+                          "loaded partitions %d, requested %d\n",
+@@ -1654,6 +1715,264 @@ skip_verification:
+     return Status;
+ }
+ 
++/*
++ * ESP-first boot (2026-11-08 R55): when this loader itself sits on a volume
++ * (e.g. the ESP) that carries \boot\boot.img (optionally \boot\dtbo.img),
++ * load the images from there and skip AVB entirely -- self-signed images
++ * cannot pass AVB. On any failure, free everything and return EFI_NOT_FOUND
++ * so that the caller falls back to the original partition-load path with
++ * behaviour unchanged.
++ *
++ * Comparison口径: GetImage() matches Info->Images[i].Name against the
++ * requested image name with AsciiStrnCmp(Name, ImageName, len(ImageName)),
++ * so "boot" / "dtbo" are the correct Names here (same as partition names
++ * "boot_a" etc. which also match by prefix).
++ */
++/* R56: panel-visible markers for the ESP-first path. SerialPortLib is
++ * resolved (Andromeda.dsc.inc) to FrameBufferSerialPortLib, which paints the
++ * Display Reserved region -- the only visible channel on this platform.
++ * Sentinels: Val == ESP_MARK_NO_VAL means print the line as-is. */
++#define ESP_MARK_NO_VAL  MAX_UINT64
++
++/* R57: every mark also lands in \espboot.log on the ESP, so the result is
++ * machine-readable even when the panel channel is dead (or when the machine
++ * powers off right after the failure). */
++STATIC EFI_FILE_PROTOCOL *mEspLog = NULL;
++
++STATIC VOID
++EspMark (CONST CHAR8 *Line, UINT64 Val)
++{
++  CHAR8 Buf[128];
++  UINTN N;
++
++  if (Val == ESP_MARK_NO_VAL) {
++    N = AsciiStrLen (Line);
++    CopyMem (Buf, Line, N);
++    Buf[N++] = '\n';
++  } else {
++    N = AsciiSPrint (Buf, sizeof (Buf) - 1, "%a %lu\n", Line, Val);
++  }
++  SerialPortWrite ((UINT8 *)Buf, N);
++
++  if (mEspLog != NULL) {
++    mEspLog->Write (mEspLog, &N, Buf);
++    mEspLog->Flush (mEspLog);
++  }
++}
++
++/* R59 y700-elden: which boot image on the ESP to load. The boot menu in
++ * LinuxLoader.c overwrites this before LoadImageAndAuth runs, so the selection
++ * is made without touching the rest of the ESP-first path. */
++CHAR16  gEspBootPath[64] = L"\\boot\\boot.img";
++
++STATIC EFI_STATUS
++LoadImageFromEsp (BootInfo *Info)
++{
++  EFI_STATUS Status;
++
++  EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL;
++  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Sfs = NULL;
++  EFI_FILE_PROTOCOL *Root = NULL;
++  EFI_FILE_PROTOCOL *File = NULL;
++  UINT64 FileSize = 0;
++  UINTN Idx;
++  BOOLEAN BootLoaded = FALSE;
++  struct {
++    CONST CHAR16 *Path;
++    CONST CHAR8  *Name;
++    BOOLEAN      Required;
++  } EspFiles[] = {
++    { L"\\boot\\boot.img",        "boot",        TRUE  },
++    { L"\\boot\\vendor_boot.img", "vendor_boot", TRUE  },
++    { L"\\boot\\dtbo.img",        "dtbo",        FALSE },
++  };
++
++  /* R59: boot image path comes from the boot menu (default \boot\boot.img). */
++  EspFiles[0].Path = gEspBootPath;
++
++  Status = gBS->OpenProtocol (gImageHandle,
++                              &gEfiLoadedImageProtocolGuid,
++                              (VOID **)&LoadedImage,
++                              gImageHandle, gImageHandle,
++                              EFI_OPEN_PROTOCOL_GET_PROTOCOL);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((EFI_D_INFO, "ESPBOOT: LoadedImage not available (%r), "
++            "falling back to partition path\n", Status));
++    return EFI_NOT_FOUND;
++  }
++
++  Status = gBS->HandleProtocol (LoadedImage->DeviceHandle,
++                                &gEfiSimpleFileSystemProtocolGuid,
++                                (VOID **)&Sfs);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((EFI_D_INFO, "ESPBOOT: no SimpleFileSystem on DeviceHandle (%r), "
++            "falling back to partition path\n", Status));
++    return EFI_NOT_FOUND;
++  }
++
++  Status = Sfs->OpenVolume (Sfs, &Root);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((EFI_D_INFO, "ESPBOOT: OpenVolume failed (%r), "
++            "falling back to partition path\n", Status));
++    return EFI_NOT_FOUND;
++  }
++
++  /* R57: fresh log per attempt (delete + create), so it always reflects this boot.
++   * 2026-11-08R61 y700-elden: **不能**用 `Open(Root, NULL, …)` 表达删除 —— 本树 EnhancedFatDxe 的
++   * FatOpenEx() 没有 NewHandle==NULL 分支，文件存在就打开成功，然后 `*NewHandle = &NewIFile->Handle`
++   * 写地址 0 ⇒ Synchronous Exception（esr=96000047 far=0，落在 Fat 的 `str x8,[x22]`）。
++   * 现场：p60 上机 `[K] FLT pc=D0B99E2C b=D0B95000 o=4E2C`，x22=0。⇒ 打开拿句柄再 Delete()。 */
++  {
++    EFI_FILE_PROTOCOL  *OldLog = NULL;
++
++    if (!EFI_ERROR (Root->Open (Root, &OldLog, (CHAR16 *)L"\\espboot.log",
++                                EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0)) &&
++        (OldLog != NULL)) {
++      OldLog->Delete (OldLog);
++    }
++  }
++  if (EFI_ERROR (Root->Open (Root, &mEspLog, (CHAR16 *)L"\\espboot.log",
++                             EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE |
++                             EFI_FILE_MODE_CREATE, 0))) {
++    mEspLog = NULL;
++  }
++  EspMark ("[E] esp in", ESP_MARK_NO_VAL);
++
++  for (Idx = 0; Idx < ARRAY_SIZE (EspFiles); Idx++) {
++    UINT8 ImgIdx;
++    CHAR8 *Name = NULL;
++    VOID *Buffer = NULL;
++
++    Status = Root->Open (Root, &File, (CHAR16 *)EspFiles[Idx].Path,
++                         EFI_FILE_MODE_READ, 0);
++    if (Status == EFI_NOT_FOUND) {
++      if (EspFiles[Idx].Required) {
++        DEBUG ((EFI_D_INFO, "ESPBOOT: %s not found, "
++                "falling back to partition path\n", EspFiles[Idx].Path));
++        goto Out;
++      }
++      DEBUG ((EFI_D_INFO, "ESPBOOT: %s not found, skipping (optional)\n",
++              EspFiles[Idx].Path));
++      EspMark ("[E] esp dtbo none", ESP_MARK_NO_VAL);
++      continue;
++    }
++    if (EFI_ERROR (Status)) {
++      DEBUG ((EFI_D_INFO, "ESPBOOT: open %s failed (%r)\n",
++              EspFiles[Idx].Path, Status));
++      goto Out;
++    }
++
++    /* Determine file size: seek to EOF then query position. */
++    Status = File->SetPosition (File, 0xFFFFFFFFFFFFFFFFULL);
++    if (EFI_ERROR (Status)) {
++      goto ReadFail;
++    }
++    Status = File->GetPosition (File, &FileSize);
++    if (EFI_ERROR (Status) || FileSize == 0) {
++      goto ReadFail;
++    }
++    Status = File->SetPosition (File, 0);
++    if (EFI_ERROR (Status)) {
++      goto ReadFail;
++    }
++
++    Buffer = AllocatePool (FileSize);
++    if (Buffer == NULL) {
++      DEBUG ((EFI_D_INFO, "ESPBOOT: AllocatePool %lu failed for %s\n",
++              FileSize, EspFiles[Idx].Path));
++      goto ReadFail;
++    }
++
++    Status = File->Read (File, (UINTN *)&FileSize, Buffer);
++    if (EFI_ERROR (Status)) {
++      FreePool (Buffer);
++      goto ReadFail;
++    }
++    File->Close (File);
++    File = NULL;
++
++    if (Info->NumLoadedImages >= ARRAY_SIZE (Info->Images)) {
++      FreePool (Buffer);
++      Status = EFI_OUT_OF_RESOURCES;
++      goto Out;
++    }
++
++    Name = AllocateZeroPool (AsciiStrLen (EspFiles[Idx].Name) + 1);
++    if (Name == NULL) {
++      FreePool (Buffer);
++      Status = EFI_OUT_OF_RESOURCES;
++      goto Out;
++    }
++    AsciiStrCpyS (Name, AsciiStrLen (EspFiles[Idx].Name) + 1,
++                  EspFiles[Idx].Name);
++
++    ImgIdx = Info->NumLoadedImages;
++    Info->Images[ImgIdx].Name = Name;
++    Info->Images[ImgIdx].ImageBuffer = Buffer;
++    Info->Images[ImgIdx].ImageSize = (UINTN)FileSize;
++    Info->NumLoadedImages++;
++
++    if (EspFiles[Idx].Required) {
++      BootLoaded = TRUE;
++      EspMark ("[E] esp boot", (UINT64)FileSize);
++      DEBUG ((EFI_D_ERROR, "ESPBOOT: boot.img from ESP %lu bytes\n",
++              FileSize));
++    } else {
++      EspMark ("[E] esp dtbo", (UINT64)FileSize);
++      DEBUG ((EFI_D_ERROR, "ESPBOOT: dtbo.img from ESP %lu bytes\n",
++              FileSize));
++    }
++    continue;
++
++ReadFail:
++    if (File != NULL) {
++      File->Close (File);
++      File = NULL;
++    }
++    if (EspFiles[Idx].Required) {
++      DEBUG ((EFI_D_INFO, "ESPBOOT: read %s failed (%r), "
++              "falling back to partition path\n", EspFiles[Idx].Path,
++              Status));
++      goto Out;
++    }
++    /* Optional dtbo failed: keep going with what we have. */
++    DEBUG ((EFI_D_INFO, "ESPBOOT: read optional %s failed (%r), skipping\n",
++            EspFiles[Idx].Path, Status));
++  }
++
++  Status = BootLoaded ? EFI_SUCCESS : EFI_NOT_FOUND;
++  goto Done;
++
++Out:
++  /* Any failure: release every image we allocated on the ESP path. */
++  {
++    UINTN CleanupIdx;
++    for (CleanupIdx = 0; CleanupIdx < Info->NumLoadedImages;
++         CleanupIdx++) {
++      if (Info->Images[CleanupIdx].Name != NULL) {
++        FreePool (Info->Images[CleanupIdx].Name);
++        Info->Images[CleanupIdx].Name = NULL;
++      }
++      if (Info->Images[CleanupIdx].ImageBuffer != NULL) {
++        FreePool (Info->Images[CleanupIdx].ImageBuffer);
++        Info->Images[CleanupIdx].ImageBuffer = NULL;
++      }
++      Info->Images[CleanupIdx].ImageSize = 0;
++    }
++    Info->NumLoadedImages = 0;
++    Status = EFI_NOT_FOUND;
++  }
++
++Done:
++  if (mEspLog != NULL) {
++    EspMark ("[E] esp done", (UINT64)Status);
++    mEspLog->Close (mEspLog);
++    mEspLog = NULL;
++  }
++  Root->Close (Root);
++  return Status;
++}
++
+ EFI_STATUS
+ LoadImageAndAuth (BootInfo *Info)
+ {
+@@ -1662,13 +1981,48 @@ LoadImageAndAuth (BootInfo *Info)
+   QCOM_MDTP_PROTOCOL *MdtpProtocol;
+   UINT32 AVBVersion = NO_AVB;
+ 
++  // 2026-11-05R2/R3 y700-elden: 全局 SbStopStage 的**唯一**赋值点在 BootLinux() 内，而
++  // LoadImageAndAuth() 先于 BootLinux() 被 CmdBoot 调用 ⇒ 到这里它恒为 -1，VS_STOP(16..25)
++  // 永不命中（2026-11-05 夜那 10 发 vs/pre 阶梯因此全部无效：只是未加探针的对照件）。
++  // 修法：与 FastbootCmds.c 的 finebisect 一致 —— 当场从 boot image 头的 cmdline 解析。
++  // 且**不能**加 `SbStopStage < 0` 守卫：该全局跨 fastboot 命令保留，同一固件会话连打第二发
++  // 会沿用上一发的值（实测 sbstop=18 被打成 vs-16）。每次无条件重解析。
++  if (Info != NULL && Info->Images[0].ImageBuffer != NULL) {
++    SbStopStage = SbParseStopStage (
++                    (CONST CHAR8 *) &(((boot_img_hdr *) (Info->Images[0].ImageBuffer))->cmdline[0]));
++  } else {
++    SbStopStage = -1;
++  }
++
++  VS_STOP (16);
+   WaitForFlashFinished ();
++  VS_STOP (17);
+ 
+   if (Info == NULL) {
+     DEBUG ((EFI_D_ERROR, "Invalid parameter Info\n"));
+     return EFI_INVALID_PARAMETER;
+   }
+ 
++  /* ESP-first (R55): try loading boot/dtbo from the volume this loader was
++   * launched from. On success skip AVB (self-signed images cannot pass AVB)
++   * and return immediately; on any failure fall through unchanged. */
++  Status = LoadImageFromEsp (Info);
++  if (Status == EFI_SUCCESS) {
++    /* R56 (#561): the partition path sets Pname before auth; the ESP path
++     * skips that. BootLinux's CheckMDTPStatus subtracts
++     * (MAX_SLOT_SUFFIX_SZ - 1) from AsciiStrLen(PnameAscii) when
++     * MultiSlotBoot -- Pname must be the base name without slot suffix,
++     * i.e. L"boot" (matches what the partition path writes here too). */
++    StrnCpyS (Info->Pname, ARRAY_SIZE (Info->Pname), L"boot",
++              StrLen (L"boot"));
++    EspMark ("[E] esp take", ESP_MARK_NO_VAL);
++    DEBUG ((EFI_D_ERROR, "ESPBOOT: ESP-first path taken, AVB skipped\n"));
++    return EFI_SUCCESS;
++  }
++
++  /* Fallback to the original partition path. */
++  EspMark ("[E] esp miss", (UINT64)Status);
++
+   /* Get Partition Name*/
+   if (!Info->MultiSlotBoot) {
+     if (Info->BootIntoRecovery) {
+@@ -1719,8 +2073,14 @@ LoadImageAndAuth (BootInfo *Info)
+     }
+   }
+ 
++  VS_STOP (18);
+   AVBVersion = GetAVBVersion ();
++  VS_STOP (19);
+   DEBUG ((EFI_D_VERBOSE, "AVB version %d\n", AVBVersion));
++  // 2026-11-04R14 y700-elden: RELEASE strips DEBUG(); print the two values that
++  // decide whether a verification error is tolerated.  AsciiPrint = UefiLib (already
++  // linked into LinuxLoader); SerialPortLib/PrintLib are not.
++  AsciiPrint ("[V] avb=%d unl=%d\n\r", AVBVersion, IsUnlocked ());
+ 
+   /* Load and Authenticate */
+   switch (AVBVersion) {
+@@ -1760,9 +2120,12 @@ LoadImageAndAuth (BootInfo *Info)
+   }
+ 
+   if (AVBVersion != AVB_LE) {
++    VS_STOP (43);   // 2026-11-06R11: DisplayVerifiedBootScreen 之前
+     DisplayVerifiedBootScreen (Info);
++    VS_STOP (44);   // 2026-11-06R11: DisplayVerifiedBootScreen 之后
+     DEBUG ((EFI_D_VERBOSE, "Sending Milestone Call\n"));
+     Status = Info->VbIntf->VBSendMilestone (Info->VbIntf);
++    VS_STOP (45);   // 2026-11-06R11: VBSendMilestone 之后
+     if (Status != EFI_SUCCESS) {
+       DEBUG ((EFI_D_ERROR, "Error sending milestone call to TZ\n"));
+       return Status;

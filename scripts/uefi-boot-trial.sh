@@ -155,7 +155,11 @@ watch_usb() {
 		usb=$(lsusb 2>/dev/null | grep -c '18d1:d00d')
 		busdev=$(lsusb 2>/dev/null | awk '/18d1:d00d/{print $2"/"$4; exit}')
 		if [ $((i % 3)) -eq 0 ]; then
-			if FBTO=4 fb getvar product >/dev/null 2>&1; then alive=1; else alive=0; fi
+			# 2026-11-09: 设备已不在 fastboot 时**不要**再发 getvar（会阻塞到 timeout，串行 90 次
+			# 就是十几分钟挂在那里，2026-11-09 p62 那一发实测）——先确认总线上还有我们的 SN。
+			if ! fb_devices | grep -qx "$SER"; then
+				alive=gone
+			elif FBTO=4 fb getvar product >/dev/null 2>&1; then alive=1; else alive=0; fi
 		else alive="-"; fi
 		printf '%3d usb=%s %s abalive=%s\n' "$i" "$usb" "${busdev:-none}" "$alive" >> "$out"
 		sleep 1
