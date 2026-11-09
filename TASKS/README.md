@@ -123,7 +123,7 @@
 
 - **G1-37 日用用户态基线（只剩一件）** —— ✅ 包+配置已落地（2026-11-07：设备 1355→1625 包，`daily-baseline.tsv/.sh` + `scripts/mobian-daily-baseline.sh`，`--check` rc=0）；**2026-11-09 输入法三连修（新）**：① 配置图标点不动 = 缺 `fcitx5-config-qt`（已进基线，实测可开窗）；
 ② Phosh 无 SNI ⇒ 顶栏不会有 fcitx5 图标，已自绘 **GTK4 layer-shell 胶囊**（右上角「中·rime / EN」，点击即切）；
-③ 触屏入口 = 应用网格「输入法 中/英 切换」。**取舍**：`text-input-v3` 槽位 OSK 与 fcitx5 二选一 ——
+③ 触屏入口 = 应用网格「输入法 中/英 切换」（**用户实机确认：胶囊可见、配置器可开**）。**未解（用户 2026-11-09 裁决不深究）**：点输入框**屏幕键盘不弹**（设置/Firefox 同）；已排除 OSK 服务死亡、`screen-keyboard-enabled`、fcitx5 占槽三项。**取舍**：`text-input-v3` 槽位 OSK 与 fcitx5 二选一 ——
 现为 `--disable waylandim`（保 OSK），Wayland 原生应用（Firefox-Wayland）可能只能字面输入。
 权威 `reports/ime-chinese-20261109.md`、`PITFALLS #576/#577/#578`、`rootfs/debian/ime/`。
 **剩 ① 中文「组词上屏」实测**（屏上点输入框→OSK 敲 `nihao`；合成 `wtype` 键在 fcitx5/ibus 两臂均为字面量，见报告 §5.1 三分支；需人手触摸，非 agent 可代办）**② ~~内核补 `CONFIG_ZRAM=m`~~ ✅ 已全链收口（2026-11-09 在机核实）**：配置侧 2026-11-07 已补，且今在机 `7.3.1-debug-vk184-00003` 的内核已带 `CONFIG_ZRAM=m` ⇒ `zramswap.service` `active`/`Result=success`、`zram0` 7.3 G、`daily-baseline.sh --check` `MISS=0`（mask 已自动解除）⇒ **本项无剩余动作**；附带坑 `ALGO=lz4` 在纯 LZO 内核上静默回退（在机内核仍是纯 LZO，配置侧已开 LZ4 后端、下次重建生效；`PITFALLS #573`）。权威 `reports/mobian-daily-baseline-20261107.md` §5.2、`reports/artifacts/zram-closeout-20261109/verify.txt`、§1 G1-37 行。

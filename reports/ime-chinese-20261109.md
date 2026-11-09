@@ -62,9 +62,24 @@ ssh root@192.168.7.1 'su - xuqianhui1001 -c "export XDG_RUNTIME_DIR=/run/user/10
 ssh root@192.168.7.1 'tail -3 /home/xuqianhui1001/.local/state/fcitx5-ime-toggle.log'  # 点击后 after=2 im=rime
 ```
 
-## 6. 未收口
+## 6. 上机确认（2026-11-09 用户实机）
 
-1. **屏上确认**（需人眼）：胶囊是否在右上角可见、点击是否切换、Firefox 里是否能出候选。
-2. Firefox 走 Wayland 还是 XWayland 未定（决定 A/B 哪条对它有效）。
-3. `fcitx5-remote` 在 service 作用域返回 0 的机理未深挖（不影响使用，只影响 SSH 侧取证口径）。
-4. 构建侧未重建镜像验证（`daily-baseline.sh` §3b 是新增段，chroot 路径靠 `--root` 生效，尚未实跑）。
+| 项 | 结果 |
+|---|---|
+| 右上角胶囊 | ✅ **可见**（「EN / 中·rime」） |
+| 配置器（`fcitx5-config-qt`） | ✅ 能打开（用户当场确认） |
+| **点输入框 → 屏幕键盘** | ❌ **弹不出来**（「设置」搜索框与 Firefox 都一样）；用户描述「输入法有候选表情，但依然无法打键盘」 |
+| 用户裁决 | **不深究，收尾**（本项按「已知限制」挂起，不再花设备时间） |
+
+- 本轮已排除的：`mobi.phosh.OSK.service` 活着（`active`，重启过）、`screen-keyboard-enabled=true`、
+  fcitx5 已确认**不占** `text-input-v3`（13:21 之后日志无 `Using Wayland native input method protocol`）。
+  ⇒ 「OSK 不弹」不是这两者，怀疑在 phoc↔stevia 的 `text-input` 焦点协商（stevia 10:01 有一条
+  `pos_osk_widget_locate_key: assertion 'row_num < self->layout.n_rows' failed`），但**未取证**。
+- 复启判据：需要触屏输入时再看（先用应用网格的「输入法 中/英 切换」+ 外接键盘/其它输入法顶着）。
+
+## 7. 已知限制（不再深究）
+
+1. **屏幕键盘不弹**（上面那条）——与 fcitx5 无关的部分未定位。
+2. Firefox 走 Wayland 还是 XWayland 未定（决定 A/B 哪条对它有效）；A 模式下 Wayland 原生应用只能字面输入。
+3. `fcitx5-remote` 在 systemd-user 作用域返回 0 的机理未深挖（只影响 SSH 侧取证口径）。
+4. 构建侧未重建镜像验证（`daily-baseline.sh` §3b 是新增段，靠 `--root` 在 chroot 生效，尚未实跑）。
