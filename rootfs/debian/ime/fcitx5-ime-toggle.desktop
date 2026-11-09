@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=输入法 中/英 切换
+Name[en]=Input Method 中/EN Toggle
+Comment=切换 Fcitx5 中文(Rime)/英文（等效 fcitx5-remote -t）
+Exec=@HOME@/.local/bin/fcitx5-ime-toggle
+Icon=input-keyboard
+Terminal=false
+Categories=Settings;
+StartupNotify=false
+X-GNOME-UsesNotifications=true
+Actions=config;
+
+[Desktop Action config]
+Name=打开 Fcitx5 配置
+Exec=fcitx5-configtool

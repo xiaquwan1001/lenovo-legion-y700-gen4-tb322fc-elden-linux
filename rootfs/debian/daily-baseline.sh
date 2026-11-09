@@ -38,6 +38,7 @@ R=${ROOT%/}
 P() { printf '%s%s\n' "$R" "$1"; }
 MISS=0; FIXED=0
 ok()   { printf '  ok    %s\n' "$*"; }
+warnf() { printf '  warn  %s\n' "$*"; }
 miss() { MISS=$((MISS+1)); printf '  MISS  %s\n' "$*"; }
 fix()  { FIXED=$((FIXED+1)); printf '  FIX   %s\n' "$*"; }
 say()  { printf '%s\n' "$*"; }
@@ -173,6 +174,83 @@ else
 	# 用系统级 wants 而不是 ~/.config：构建 chroot 里没有用户 home，构建/现场同一路径生效
 	mkdir -p "$(dirname "$LINK")"
 	ln -sf /etc/systemd/user/fcitx5.service "$LINK" && fix "enable fcitx5（graphical-session.target.wants）"
+fi
+
+# ---------------------------------------------------------------- 3b 输入法可用性（触摸可达的中/英开关 + 配置器）
+# 背景（2026-11-09）：Phosh 无 SNI 托盘 ⇒ fcitx5 的图标不在顶栏，触屏用户「找不到中文入口」；
+# 另外「配置」图标点了没反应的真因 = 只装了 `fcitx5-configtool` 薄壳、**缺 fcitx5-config-qt**（真 UI 包）。
+say "[3b. 输入法可用性（中/英切换图标 + 配置器）]"
+IMESRC="$(dirname "$0")/ime"
+UHOME="$(P /home/$USER_NAME)"
+if [ "$ROOT" = "" ] && [ "$(id -un)" != "$USER_NAME" ] && [ -d "/home/$USER_NAME" ]; then
+	UHOME="/home/$USER_NAME"
+fi
+TOGGLEBIN="$UHOME/.local/bin/fcitx5-ime-toggle"
+TOGGLEDESK="$UHOME/.local/share/applications/fcitx5-ime-toggle.desktop"
+if [ -f "$TOGGLEBIN" ]; then ok "中/英切换脚本已装（$TOGGLEBIN）"
+elif [ "$CHECK" = 1 ]; then miss "缺 $TOGGLEBIN（触屏无中文入口）"
+elif [ -f "$IMESRC/fcitx5-ime-toggle" ]; then
+	mkdir -p "$(dirname "$TOGGLEBIN")"
+	install -m 0755 "$IMESRC/fcitx5-ime-toggle" "$TOGGLEBIN" && fix "装中/英切换脚本"
+else warnf "缺源文件 $IMESRC/fcitx5-ime-toggle（跳过）"; fi
+if [ -f "$TOGGLEDESK" ]; then ok "应用网格图标已装（中/英切换）"
+elif [ "$CHECK" = 1 ]; then miss "缺 $TOGGLEDESK"
+elif [ -f "$IMESRC/fcitx5-ime-toggle.desktop" ]; then
+	mkdir -p "$(dirname "$TOGGLEDESK")"
+	sed "s#@HOME@#$UHOME#g" "$IMESRC/fcitx5-ime-toggle.desktop" > "$TOGGLEDESK" && fix "装应用网格图标（中/英切换）"
+	command -v update-desktop-database >/dev/null 2>&1 && \
+		update-desktop-database "$(dirname "$TOGGLEDESK")" >/dev/null 2>&1 || true
+else warnf "缺源文件 $IMESRC/fcitx5-ime-toggle.desktop（跳过）"; fi
+# fcitx5 配置器：只装薄壳会「点开没反应」，真 UI 在 fcitx5-config-qt（包在 tsv 里）
+if [ -x "$(P /usr/bin/fcitx5-config-qt)" ] || [ -x "$(P /usr/lib/aarch64-linux-gnu/libexec/fcitx5-config-qt)" ]; then
+	ok "fcitx5 配置器（fcitx5-config-qt）在位"
+elif [ "$CHECK" = 1 ]; then miss "缺 fcitx5-config-qt（配置图标点了没反应）"
+else warnf "缺 fcitx5-config-qt（apt 装；见 daily-baseline.tsv）"; fi
+# 顶栏输入法指示（Phosh 无 SNI ⇒ 自己画 layer-shell 小胶囊）
+INDHOME="$UHOME/.local/lib/elden"
+IND="$INDHOME/fcitx5-indicator.py"
+INDUNIT="$UHOME/.config/systemd/user/fcitx5-indicator.service"
+if [ -f "$IND" ]; then ok "顶栏输入法指示脚本已装"
+elif [ "$CHECK" = 1 ]; then miss "缺 $IND（顶栏看不到 中/英）"
+elif [ -f "$IMESRC/fcitx5-indicator.py" ]; then
+	mkdir -p "$INDHOME"
+	install -m 0755 "$IMESRC/fcitx5-indicator.py" "$IND" && fix "装顶栏输入法指示"
+else warnf "缺源文件 $IMESRC/fcitx5-indicator.py（跳过）"; fi
+if [ -f "$INDUNIT" ]; then ok "顶栏指示 user unit 已装"
+elif [ "$CHECK" = 1 ]; then miss "缺 $INDUNIT"
+elif [ -f "$IMESRC/fcitx5-indicator.service" ]; then
+	mkdir -p "$(dirname "$INDUNIT")"
+	install -m 0644 "$IMESRC/fcitx5-indicator.service" "$INDUNIT" && fix "装顶栏指示 unit"
+else warnf "缺源文件 $IMESRC/fcitx5-indicator.service（跳过）"; fi
+# 依赖：GTK4 layer-shell（缺了指示器会退化成普通窗口）
+if [ -f "$(P /usr/lib/aarch64-linux-gnu/libgtk4-layer-shell.so.0)" ] && \
+   [ -f "$(P /usr/lib/aarch64-linux-gnu/girepository-1.0/Gtk4LayerShell-1.0.typelib)" ]; then
+	ok "GTK4 layer-shell 运行库 + typelib 在位"
+elif [ "$CHECK" = 1 ]; then miss "缺 libgtk4-layer-shell0 / gir1.2-gtk4layershell-1.0（包在 tsv）"
+else warnf "缺 GTK4 layer-shell（apt 装；包在 daily-baseline.tsv）"; fi
+
+# 输入法组：Rime 必须在组内且为默认（否则切换后仍是英文）
+PROF="$UHOME/.config/fcitx5/profile"
+if [ -f "$PROF" ] && grep -qx 'DefaultIM=rime' "$PROF"; then ok "fcitx5 profile: DefaultIM=rime"
+elif [ "$CHECK" = 1 ]; then miss "fcitx5 profile 未把 rime 设为默认（$PROF）"
+else
+	mkdir -p "$(dirname "$PROF")"
+	cat > "$PROF" <<'PROFEOF'
+[Groups/0]
+Name=默认
+Default Layout=us
+DefaultIM=rime
+
+[Groups/0/Items/0]
+Name=keyboard-us
+
+[Groups/0/Items/1]
+Name=rime
+
+[GroupOrder]
+0=默认
+PROFEOF
+	fix "写 fcitx5 profile（rime 默认）"
 fi
 
 # ---------------------------------------------------------------- 4 zram（内核门）

@@ -1,0 +1,32 @@
+#!/bin/sh
+# fcitx5-ime-toggle — 触摸可达的「中/英」切换（Phosh 应用网格图标调用）
+#
+# 为什么需要它：Phosh 没有 SNI 托盘，fcitx5 的 classicui 图标不会出现在顶栏 ⇒ 触屏用户
+# 找不到「切到中文」的入口。这个脚本就是那个入口：点一下 = `fcitx5-remote -t`，
+# 并把结果发一条桌面通知（Phosh 顶部横幅）+ 落一行日志。
+#
+# 部署：rootfs/debian/daily-baseline.sh §3b（构建 chroot 与设备现场同一份）。
+# 判据：`~/.local/state/fcitx5-ime-toggle.log` 末行 after=2（中文）/1（英文）/0（未就绪）。
+set -eu
+
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
+
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/fcitx5-ime-toggle.log"
+mkdir -p "$(dirname "$LOG")"
+
+before=$(fcitx5-remote 2>/dev/null || echo "")
+fcitx5-remote -t 2>/dev/null || true
+sleep 0.5
+state=$(fcitx5-remote 2>/dev/null || echo "")
+im=$(fcitx5-remote -n 2>/dev/null || echo "")
+case "$state" in
+	2) label="中文 · Rime" ;;
+	1) label="英文 · English" ;;
+	*) label="输入法未就绪(state=$state)" ;;
+esac
+printf "%s before=%s after=%s im=%s\n" "$(date '+%F %T')" "$before" "$state" "$im" >> "$LOG"
+
+gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications \
+	--method org.freedesktop.Notifications.Notify elden-ime 0 fcitx5 "输入法" "$label" "[]" "{}" 3000 \
+	>/dev/null 2>&1 || true

@@ -22,7 +22,7 @@
 
 三条产物（构建侧固化 + 设备侧可复现）：
 
-1. `rootfs/debian/daily-baseline.tsv` — 日用包基线（**47 条 P0/P1 + 9 条 P2 只登记**），列 = 包 / 优先级 / 分类 / 理由。
+1. `rootfs/debian/daily-baseline.tsv` — 日用包基线（**50 条 P0/P1 + 9 条 P2 只登记**），列 = 包 / 优先级 / 分类 / 理由。
 2. `rootfs/debian/daily-baseline.sh` — 配置逻辑（sudo 组 + NOPASSWD、locale-gen + 中文 LANG、fcitx5 user unit + enable、zram 内核门），**构建 chroot 与设备跑同一份**。
 3. `scripts/mobian-daily-baseline.sh` — 主机侧驱动：解析 tsv → 设备 `apt-get install` → 推配置脚本 → 复查；`--check` 只报告（退出码 0 = 达标）、`--list` 只打印。
 

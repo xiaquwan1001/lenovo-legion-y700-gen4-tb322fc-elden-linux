@@ -100,3 +100,7 @@ zram-tools	P2	电源与传感器	内核已带 `CONFIG_ZRAM=m`（7.3.1 线起，�
 inxi	P2	调试	一页式硬件摘要（已有 /proc 直读脚本，非必需）
 rsyslog	P2	调试	持久文本日志（当前 journald 已够；查崩溃现场时更有用）
 mlocate	P2	调试	locate 数据库（rg/find 已够）
+fcitx5-config-qt	P1	locale与字体	**真 UI 包**：只装 `fcitx5-configtool` 薄壳时点图标「没反应」（2026-11-09 定位）；连同 `libfcitx5-qt6-1`、KF6 依赖一起装后配置器可开
+libgtk4-layer-shell0	P1	locale与字体	顶栏输入法指示（GTK4 layer-shell）运行库；缺它指示器起不来/退化成普通窗口
+gir1.2-gtk4layershell-1.0	P1	locale与字体	同上（GObject introspection typelib，Python 侧必需）
+

@@ -1,0 +1,16 @@
+[Unit]
+Description=Fcitx5 顶栏输入法指示（GTK4 + layer-shell）
+Documentation=https://github.com/wmww/gtk4-layer-shell
+After=graphical-session-pre.target fcitx5.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+# 链接顺序坑：python 进程里 libwayland-client 先于 libgtk4-layer-shell 载入 ⇒ 必须预载
+Environment=LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgtk4-layer-shell.so.0
+ExecStart=/usr/bin/env python3 %h/.local/lib/elden/fcitx5-indicator.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
