@@ -40,6 +40,9 @@
   **落地实验（2026-11-08 深夜，已回滚）**：`fastboot flash boot_a` + `--set-active=a` ⇒ ABL 认这个件并跳到它，但 **flashed 形态 ESP 枚举不到
   （`[K] esp fs=1`，`fastboot boot` 形态是 `8`）** ⇒ 回退 FV loader 失败 ⇒ ABL 7 次后自动回 `_b`（**无需救砖**）。
   `boot_a` 已回灌 `backup/boot_a-pre-uefi-20261108.img`（`d4772c11…`）；`uefi_a/imagefv_a/abl_a/xbl_a/GPT` 全程未动。
+  **2026-11-09 复测（p61/R62）**：同样负结果 —— 仍 `[K] esp fs=1` → `esp none` → PSHOLD 复位 → ABL 回 `_b`；
+  `[K] esp fs2=` 未出现（**不能据此判 R62 无效**，见 `reports/uefi-p61-flash-trial-20261109.md`）。已回灌 `boot_a`、
+  `slot` 回 `_b`、`boot_b` `mark-successful`（retry 6→7），`boot_a` 槽属性回到 `retry=7 succ=0 unbootable=0`。
   正文 = `reports/uefi-persist-boot-a-20261108.md`、`reports/uefi-espboot-r58b-success-20261108.md`；
   **下一步计划** = `.pi/plans/2026-11-09-p61-onboard.md`（p61/R62 待上机）。
   **回退**：删/改 ESP 上文件即可；GRUB 原件备份在 `BOOTAA64.EFI.grub.bak`（`7993adfc…`）。

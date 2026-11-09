@@ -1,0 +1,5 @@
+## pre-flash
+current-slot: b
+Finished. Total time: 0.004s
+partition-size:boot_a:  0x6000000
+Finished. Total time: 0.010s

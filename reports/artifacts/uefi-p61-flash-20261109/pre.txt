@@ -1,0 +1,25 @@
+date: 2026-11-09T10:10:31+08:00
+## pre ssh
+7.3.1-debug-vk184-00003-gec74c4795a43
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 androidboot.serialno=51318dc0 androidboot.baseband=apq
+4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5  -
+/dev/sde: sector=4096 nent=96 esz=128 prim_entries_lba=2 backup_entries_lba=1048571
+  uefi_a             byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  aop_a              byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  aop_config_a       byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  tz_a               byte6=0xcb retry=1 active=0 succ=1 unbootable=1
+  hyp_a              byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  modem_a            byte6=0xcb retry=1 active=0 succ=1 unbootable=1
+  bluetooth_a        byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  abl_a              byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  dsp_a              byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  keymaster_a        byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  spuservice_a       byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  boot_a             byte6=0x3b retry=7 active=0 succ=0 unbootable=0
+  devcfg_a           byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  qupfw_a            byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  vbmeta_a           byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  dtbo_a             byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  uefisecapp_a       byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  imagefv_a          byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  shrm_a             byte6=0x7b retry=7 active=0 succ=1 unbootable=0

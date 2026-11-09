@@ -1,0 +1,15 @@
+post at 2026-11-09T10:15:03+08:00
+7.3.1-debug-vk184-00003-gec74c4795a43
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.boot_devices=soc/1d84000.ufshc androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal androidboot.force_normal_boot=1 silent_boot.mode=nonsilent
+--- boot_b sha
+4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5  -
+--- slot
+  uefi_a             byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  aop_a              byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  aop_config_a       byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  tz_a               byte6=0xcb retry=1 active=0 succ=1 unbootable=1
+  hyp_a              byte6=0x4b retry=1 active=0 succ=1 unbootable=0
+  modem_a            byte6=0xcb retry=1 active=0 succ=1 unbootable=1
+--- uptime
+up 0 minute
+/dev/sda17 ext4

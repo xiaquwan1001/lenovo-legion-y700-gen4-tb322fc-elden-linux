@@ -1,0 +1,6 @@
+Sending 'boot_a' (98304 KB)                        OKAY [  2.252s]
+Writing 'boot_a'                                   OKAY [  0.032s]
+Finished. Total time: 2.317s
+Setting current slot to 'b'                        OKAY [  0.005s]
+Finished. Total time: 0.009s
+Finished. Total time: 0.251s

@@ -215,6 +215,9 @@
   正文 `reports/uefi-persist-boot-a-20261108.md`（含选路理由与 R62 就绪件 §5）。
 - **G1-29 剩余**：① ~~启动菜单~~ ✅；② **落地**——`20261108R62-espconn`（配方 `p61`，`out/r21-sbstop-p61/uefi-preamble61-r1.img`
   `b8a87c0d…`）已就绪**未上机**：`fs < 2` 时「连所有句柄 + `Stall(300 ms)` + 重扫」并打 `[K] esp fs2=`；
+  **（2026-11-09 上机一发，负结果）** `flash boot_a` p61 → 仍 `[K] esp fs=1` → `esp none` → PSHOLD 硬复位 → ABL 回 `_b`；
+  **`[K] esp fs2=` 全 logfs 0 命中** ⇒ 不能断言 R62 无效（两解释未分：补丁未进执行的二进制 / 分支未走到）。已回灌 `boot_a` 备份、`mark-successful b`。
+  正文 `reports/uefi-p61-flash-trial-20261109.md`，坑 `#575`；下一步 = 先加**函数入口无条件标记**出 p62，零写盘一发辨明，再谈 R62/根治路线（GPT 名找 BlockIo）。
   **（2026-11-09 可复现性收口）** p60/p61 已绑进 `--gen`：`scripts/uefi-r21-p7-ladder.sh --gen p61 --verify`（及 `--gen p60`）
   **rc=0 逐件 PASS**，指纹 `patches/uefi/p6{0,1}-kept.sha256`（世代表见 `patches/uefi/README.md` §0）；
   ③ 「直接从 FAT/EXT4 读 kernel/initrd」仍未做（现走 ESP 上的 `boot.img`，够用）；④ 正式化清理（`\espboot.force`、`LinuxLoader.c:295` 写死 `BootIntoFastboot`，`#562`）—— **2026-11-09 静态分析出两份草案**（`patches/uefi/20261109-boot-policy-drafts/`：R63 文件型后门 + 菜单顺延/默认 5 s；R66 变量型后门 `EldenFastboot`），**均未编译、未上机**，顺序 = 先 R62 再正式化（否则 flashed 形态观察不到效果）。
