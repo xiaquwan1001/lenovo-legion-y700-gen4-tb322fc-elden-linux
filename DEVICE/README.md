@@ -25,16 +25,24 @@
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
 ### 1.1 内核与软件基线
-- ★**2026-11-08 晚间（当前状态，唯一权威）：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）** ——
-  `boot_b` sha256 = `4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`（今日全程未变）。
-  **另有一条「路线 B」启动路径可用（非默认、零写盘）**：`fastboot boot out/r21-sbstop-p59/uefi-preamble59-r1.img`（`cd73fbdc…`）
-  → Mu UEFI（p59）→ R54 定向连 BlockIo → 优先起 ESP(`/dev/sda18`) 的 `\EFI\BOOT\BOOTAA64.EFI`（= 我们的 `Loader-r58b.efi`，`ea8e0cfb…`）
-  → 从 ESP 的 `/boot/{boot,vendor_boot,dtbo}.img` 直接起 Linux（**不碰 `boot_img` 槽/bin 槽限制**）。
-  判据：`/proc/cmdline` 含 `elden_bootloader=esp`、`uname -r` = `7.3.1-debug-vk184-00002-g4da9a8b69fc8`（ESP 侧内核，与 `boot_b` 的 `00003` 不同）、`boot_b` sha 不变。
-  ESP 上的实验开关 `/espboot.force`（存在即强制 `BootIntoFastboot=FALSE`，绕开 `LinuxLoader.c` 里写死的 TRUE，`PITFALLS #565`）；
-  两份日志 `/loader.log`、`/espboot.log` 是这条线的唯一可靠证据通道（`#567`）。
-  正文 = `reports/uefi-espboot-r58b-success-20261108.md`；trial `reports/trials/20261108T112506Z-uefi-p59-espboot-seal.json`（`ESPBOOT_TAGGED`）。
-  **回退**：删/改 ESP 上文件即可（`\espboot.force` 一删就不再强制）；GRUB 原件备份在 `BOOTAA64.EFI.grub.bak`（`7993adfc…`）。
+- ★**2026-11-09（当前状态，唯一权威）：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）；`boot_a` = 原 Android 内核（已回灌）**
+  `boot_b` sha256 = `4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`（自 11-08 起未变）；
+  `slot a` = **`unbootable=yes`（故意保留**：防止有人 `set_active a` 又踩同一坑；要用槽 a 先显式 `--set-active=a` 清标志）。
+  **「路线 B」启动路径（非默认、零写盘）**：`fastboot boot out/r21-sbstop-p59/uefi-preamble59-r1.img`（`cd73fbdc…`）
+  → Mu UEFI（p59）→ R54 定向连 BlockIo → 优先起 ESP(`/dev/sda18`) 的 `\EFI\BOOT\BOOTAA64.EFI`
+  → **loader 先读 ESP 的 `\menu.cfg` 出屏显菜单**（音量上/下移动、电源键确认，超时 8 s）
+  → 从 ESP 的 `/boot/*.img` 直接起 Linux（**不碰 boot 槽/96 MiB 限制**）。
+  现状件：ESP loader = **p60 世代 + R60/R61（含菜单）**（`out/espboot-20261108/Loader-r65.efi` `3523b320…` 为最新；源码快照
+  `patches/uefi/20261109R65-loader-snapshot/`）；默认项 `\boot\boot.img` = vk184 `00002`，备选项 `\boot\boot2.img` = vk184 `00003`。
+  判据：`/proc/cmdline` 含 `elden_bootloader=esp`、`uname -r` 以 ESP 侧内核为准（与 `boot_b` 的 `00003` 按选项对应）、`boot_b` sha 不变。
+  证据通道：ESP 上 `\loader.log`、`\espboot.log`（面板不可靠，`#567`）；`\espboot.force` 是**实验开关**（存在即强制 `BootIntoFastboot=FALSE`，
+  绕开 `LinuxLoader.c` 写死的 TRUE，`#565`）——正式化前不要当正式机制用。
+  **落地实验（2026-11-08 深夜，已回滚）**：`fastboot flash boot_a` + `--set-active=a` ⇒ ABL 认这个件并跳到它，但 **flashed 形态 ESP 枚举不到
+  （`[K] esp fs=1`，`fastboot boot` 形态是 `8`）** ⇒ 回退 FV loader 失败 ⇒ ABL 7 次后自动回 `_b`（**无需救砖**）。
+  `boot_a` 已回灌 `backup/boot_a-pre-uefi-20261108.img`（`d4772c11…`）；`uefi_a/imagefv_a/abl_a/xbl_a/GPT` 全程未动。
+  正文 = `reports/uefi-persist-boot-a-20261108.md`、`reports/uefi-espboot-r58b-success-20261108.md`；
+  **下一步计划** = `.pi/plans/2026-11-09-p61-onboard.md`（p61/R62 待上机）。
+  **回退**：删/改 ESP 上文件即可；GRUB 原件备份在 `BOOTAA64.EFI.grub.bak`（`7993adfc…`）。
 - ★**2026-11-07 深夜（boot_b 身份的权威记录，内容仍有效）：`boot_b` 已写 `vk185-adsp`（持久，重启即回它）** ——
   `boot_b` 分区 sha256 = **`4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`**
   （= `bootslot-b/boot_b-vk185.img`，100 663 296 B，AVB 自签，公钥 sha1 `1e54e86ef19fad73…`；flash 后**设备侧 dd 读回逐字节一致**）。
@@ -228,7 +236,7 @@
 | `backup_lba` | `61390847` | **`123871231`**（现 dump；头 0x20 处 8B LE） | `gpt-dump.sh` 会打印 |
 | `userdata` | 211.4 GiB | **256.7 GiB**（手术后；first=5972392 last=73277434） | `gpt-surgery-tb322fc.py list` |
 | `linux17` | （已删） | **192.0 GiB**（idx16，first=73277435 **last=123609082**，`/dev/sda17`；★2026-10-31 删 `linux18` 后并回，见 §3.3。本表其余列仍为 **2026-10-03 快照**，当时 `linux17` = 193.0 GiB / last=123871226） | 同上（**写前一律以 `scripts/gpt-surgery-tb322fc.py list` 实测为准**） |
-| `eldenesp`（ESP） | — | **512 MiB**（idx17，first=123609088 **last=123740159**，EFI System，`/dev/sda18`；2026-11-08 在**尾部空闲区纯追加**，未动任何已有分区，见 `reports/uefi-grub-esp-handoff-wall-20261108.md`）。**2026-11-08 晚内容**：`/EFI/BOOT/BOOTAA64.EFI`=路线 B 的 `Loader-r58b.efi`（另存 GRUB 原件 `BOOTAA64.EFI.grub.bak`）、`/boot/{boot.img(85.6M,含令牌),vendor_boot.img(96M),dtbo.img(32M)}`、`/espboot.force`、`/loader.log`、`/espboot.log`；**FAT 写后必须 `sync`+`umount` 再 `fsck.vfat -n` 核对文件数**（曾因 dirty bit 被 `fsck -a` 丢掉 `dtbo.img`） | 同上 |
+| `eldenesp`（ESP） | — | **512 MiB**（idx17，first=123609088 **last=123740159**，EFI System，`/dev/sda18`；2026-11-08 在**尾部空闲区纯追加**，未动任何已有分区，见 `reports/uefi-grub-esp-handoff-wall-20261108.md`）。**2026-11-09 内容**：`/EFI/BOOT/BOOTAA64.EFI`=路线 B 的 loader（p60 世代 + R60/R61 菜单；最新 `Loader-r65.efi` `3523b320…`，源码快照 `patches/uefi/20261109R65-loader-snapshot/`；GRUB 原件另存 `BOOTAA64.EFI.grub.bak`）、`/boot/{boot.img(85.6M,含令牌),boot2.img(备选 vk184-00003),vendor_boot.img(96M),dtbo.img(32M)}`、`/menu.cfg`、`/espboot.force`（实验开关）、`/loader.log`、`/espboot.log`；**FAT 写后必须 `sync`+`umount` 再 `fsck.vfat -n` 核对文件数**（曾因 dirty bit 被 `fsck -a` 丢掉 `dtbo.img`） | 同上 |
 | free slots | 16–31（可加 16 个分区） | 18–31（ESP 占用 idx17） | 同上 |
 | boot/dtbo/vbmeta 大小 | 100663296 / 33554432 / 65536 | 同（同型号同布局） | `fastboot getvar partition-size:*` |
 | 备份目录规范 | `backup/<SN>-<容量档>/`（**禁用 `new-tablet`**） | 同 | — |

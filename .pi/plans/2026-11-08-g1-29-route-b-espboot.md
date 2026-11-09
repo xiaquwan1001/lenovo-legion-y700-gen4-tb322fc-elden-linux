@@ -1,5 +1,8 @@
 # 计划：G1-29 路线 B —— ESP 上放 `boot.img`，由 Mu `LinuxLoader` 变体直接读起（2026-11-08）
 
+> ✅ **已执行完成（2026-11-08 晚）**：判据 `verdict=ESPBOOT_TAGGED`（`reports/uefi-espboot-r58b-success-20261108.md`）。
+> 本文件留作方案与判据底稿；现状一律以 `TASKS/README.md` §5 与 `DEVICE/README.md` §1.1 为准。
+
 > 承接 `reports/uefi-grub-esp-handoff-wall-20261108.md`（EFI-stub 交棒撞墙）与
 > `reports/uefi-p58-sdccdxe-handoff-success-20261107.md`（`LinuxKernel(dtb,0,0,0)` 这条路已验证）。
 > 本文件只写**方案与验收**，不动 SSOT；状态数字以 `TASKS/README.md` 为准。

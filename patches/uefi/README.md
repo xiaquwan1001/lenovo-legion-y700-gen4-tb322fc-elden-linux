@@ -15,6 +15,9 @@
 | 在盘指纹 | `p61-kept.sha256` / `p60-kept.sha256`（各 10 件，含 `uefi-preamble61-r1.img` `b8a87c0d…`、`uefi-preamble60-r1.img` `533f09a3…`） |
 | 历史世代（留作对照） | `--gen p59`（ESP-first 首通）/ `p58`（交棒打通，`HANDOFF_TAGGED`）/ `p54` / `p7`，均 PASS |
 
+- **两件套**：整套「跑通路线 B」的件 = **FD**（`--gen p61`）+ **`Loader.efi`**（`patches/uefi/20261109R65-loader-snapshot/`）。
+  loader 侧源码**从未提交**（Mu 树单提交浅克隆），此前 R55→R65 的 `.efi` 整体不可再生 ⇒ 2026-11-09 已冻结为整文件快照
+  （含基线 `6b6ac42a`、放回路径、`stuart_build` 命令；产物对应 `Loader-r65.efi` `3523b320…`）。见 `PITFALLS #574`。
 - **新世代从 `p61-recipe.txt` 派生**（p58 起 `SdccDxe` 三处全摘已是基线，`PITFALLS #554`）。
   ⚠ 2026-11-09 之前本节写的是 p58：p59/p60/p61 一度只能靠手敲 `PFX=/RECIPE=/BUILD_DIR=/KEPT=` 四件套复现
   ⇒ 现在 `--gen` 已把 p60/p61 也绑好（手敲漏 `BUILD_DIR` 会静默退回 R7 归档造错件，`#520` 同族）。
