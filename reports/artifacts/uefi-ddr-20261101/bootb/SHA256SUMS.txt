@@ -1,3 +1,0 @@
-e4fb43f0fafb7e5c2ea97b66b79be08dbe54f9aa22ae81d818b0f3d5145b8287  boot-elden-vk183-bb1.img
-335b0cc0b0141fd3bed434c1ac3178d34648fe3c7efc7c4c1147abcc8be17d18  boot-elden-vk183-bb2.img
-78f0812bd54d64e08c2afe84490c052bbfe62664a0bca8c27256a5c7a708c19c  boot-elden-vk183-bb3.img

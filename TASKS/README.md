@@ -419,8 +419,9 @@
   EB 段每步上屏 `eb-go`→`eb-ret st=`→`bb4`→`posteb-go`→`posteb-ok`）+ **R40**（异常 dump **不清屏** ——
   R30 的清屏会把崩溃前全部 `[K]` 标记抹掉，而那正是唯一判据；R29 后 63 行装得下 13 行 dump）。
 - **构建（零写盘、主机侧）**：配方 `p45-recipe.txt`（66 枚补丁），`--mkimg-only --rebuild` 59 s 成功，
-  `成功应用补丁` 99 处 / `does not apply` 0 处；镜像 `out/r21-sbstop-p45/uefi-preamble45-r1.img`
-  （`fbde3a70…eb9911e6`，67 219 456 B）+ 二分件 `p45-s26-pb3.img`（`98b7d4aa…`）。
+  `成功应用补丁` 99 处 / `does not apply` 0 处；镜像原为 `out/r21-sbstop-p45/uefi-preamble45-r1.img`
+  （`fbde3a70…eb9911e6`，67 219 456 B）+ 二分件 `p45-s26-pb3.img`（`98b7d4aa…`）——**该目录已于 2026-11-09 清理轮删除**，
+  可由 `patches/uefi/p45-recipe.txt` 重建（`reports/asset-cleanup-20261109.md`）。
 - **静态复核 PASS**：`LinuxLoader.efi` 里 8 条新标记串全在；`DefaultExceptionHandler.obj` 的未定义符号
   **没有** `SerialPortClearScreen`（清屏调用确已删）。⚠ FD 内部 LZMA 压缩，**不能**在 FD 上用 `strings` 验标记。
 - **同轮修的真问题**：`uefi-build-variant.sh` 的 `revert_patch()` 曾 `|| true` 吞掉回滚失败
@@ -461,7 +462,8 @@
 - **`R33` 修法**：EB 后路径全改**静态缓冲 + 内存拷贝**；顺手修 `SbWriteLogWindowNoBs()` 的 `Base`
   仍是字节偏移却当 LBA 传（`R32` 只修了 `SbWriteLogWindow()`，漏了这份）。新增环内标记
   `[K] BL-in` / `BL-vm=` / `gbs=…ap=…eb=…fp=` / `EBC-call` / `EBC-ret0|ret!` / `post gbs=…` / `post-dump-ok`。
-  上机件：`out/r21-sbstop-p38/uefi-preamble38-r1.img`（`0e2bddbd…272badad`，67 219 456 B），配方 `p38-recipe.txt`。
+  上机件：`out/r21-sbstop-p38/uefi-preamble38-r1.img`（`0e2bddbd…272badad`，67 219 456 B），配方 `p38-recipe.txt`——
+  **该目录已于 2026-11-09 清理轮删除**，可按配方重建（`reports/asset-cleanup-20261109.md`）。
 - **静态复核（verify-worker 独立反汇编，编排者已抽样复跑）**：EB 调用 = `0x5a9c bl 0x1630c`；
   其后到跳内核前 **0 处 boot service 调用**（唯一 gBS 触点是 `0x5b2c` 的带 `cbz` 的内存读）；
   `SbDumpLogNoBs`（`0x47f4–0x49c8`）内 gBS 0 处、池调用 0 处。

@@ -16,3 +16,4 @@ reports/vk152	文档原文写作 `reports/vk152`/`q28-v2`（两段拼接），�
 scripts/q24-rebuild-arms.sh	换机丢失，TASKS §0 已注明「按 §5 Q24 配方重放」
 scripts/module.lds	实指内核树内 arch/arm64/kernel/module.lds，非本仓库脚本
 rootfs-vk127.cpio.gz	PITFALLS 里指 out/rootfs-vk127.cpio.gz（out/ 不入库，实际件在 out/ 下）
+reports/artifacts/uefi-20261107R39R40-p45/	2026-11-09 清理轮删除（判死世代，p45 结论已入 TASKS §5；重建需按 p45-recipe.txt），见 reports/asset-cleanup-20261109.md
