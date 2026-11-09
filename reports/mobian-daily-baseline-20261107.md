@@ -171,6 +171,9 @@ $ bash scripts/mobian-daily-baseline.sh --check
 - 两个静默不一致（不阻塞，只登记）：① `/etc/default/zramswap` 写 `ALGO=lz4`，内核无 `CONFIG_ZRAM_BACKEND_LZ4`
   ⇒ 静默回退 `lzo-rle`（`/sys/block/zram0/comp_algorithm` = `[lzo-rle] lzo`）；② `PERCENT=50` 优先于 `SIZE=512`，
   所以盘是内存一半（7.3 G）而非 512 MiB。坑 → `PITFALLS #573`。
+- **①已从配置侧修掉（2026-11-09）**：`patches/config-daily-c1` 与 `config-vk163-modular-v2-20261026` 均改为
+  `CONFIG_ZRAM_BACKEND_LZ4=y`（`LZ4_COMPRESS/DECOMPRESS` 本就 `=y`，无新依赖）⇒ `olddefconfig` 两遍零变化、
+  `check-modular-config.sh` PASS、`zram.ko` 786 816 B（旧 786 792 B）。**在机内核仍是纯 LZO，下次重建才生效。**
 - 取证原文：`reports/artifacts/zram-closeout-20261109/verify.txt`。
 
 ### 5.3 `p7zip-full` 在 sid 已无此包名
