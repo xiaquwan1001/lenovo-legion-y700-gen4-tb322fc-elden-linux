@@ -289,6 +289,12 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 编号对应 `README.md` §2.5 的 P 级；状态：⬜ 未执行 / ◐ 部分 / ✅ 已执行 / ⛔ 无需执行。
 **2026-10-23 复核**：A0–A7 见 `../reports/assets-inventory-20261023.md` §5；**用户 2026-10-23 批准后已全部执行**（执行记录 + 每级 df + 保留理由 = `../archive/topics/清理清单-20261023.md`）。
 **2026-11-05 复核**：全仓逐项盘点（含引用命中/可再生性/前置闸）= `../reports/asset-tidy-20261105.md` + 机器账 `../reports/asset-inventory-20261105.tsv`（56 行，含每行 `verify_cmd`）；文档账目 = `../reports/doc-audit-20261105.md`。本轮**执行了 A8 + B1**（B1 见下表），B2–B4 仍待批。
+**2026-11-09 清理轮（用户当面批准「可以删掉冗余文件」）**：删 UEFI **判死世代**镜像目录 `out/r21-sbstop-p8…p53`（44 个目录）+
+`out/real-ladder` + 历史取证目录 `reports/artifacts/uefi-{ddr,ddrcut,posctrl}-2026110{1,3}` 与 `uefi-20261107R33…R40`（6 个）+
+5 个「内核段解不出/无版本号」镜像；**根分区 519 G→508 G**、`out/` 8.8 G、`reports/artifacts/` 2.3 G。
+保留 = `out/r21-sbstop`（p7 基点）+ `out/r21-sbstop-p54…p61`（`--gen` 可复现）。**设备 GPT 原始双表**删前已转存 `backup/lun4-gpt-20261101/`。
+逐项账（含重建入口）= `../reports/asset-cleanup-20261109.md`；候选来源 = `../.pi/plans/2026-11-09-整理候选清单.md`。
+
 **2026-11-05 完整性基线（BIOS 静默损坏事件后设）**：`../versions/out-images-sha256-20261105.tsv` = 129 件镜像的 sha256 + 是否入账 + manifest 比对 + 第 7 列 `path`（含 114 件已归档件）；全仓校验报告（重试定性）= `../reports/integrity-audit-20261105.md`。复算须走 `O_DIRECT`（页缓存会给出错哈希，`PITFALLS #513`）：表头注释带完整命令（`awk ... print $1"  "$7` 后逐件 `dd iflag=direct | sha256sum`）。
 
 | 标记 | 目标 | 体积 | 前置闸 | 状态 |
