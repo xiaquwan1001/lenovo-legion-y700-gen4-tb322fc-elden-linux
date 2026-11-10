@@ -63,3 +63,45 @@
 1. **零写盘上机 vk187**：`fastboot boot out/boot-elden-vk187.img` → 判据 `nft list ruleset` 不报错 + `droidloom-doctor` 的 `kernel.network_isolation` PASS。
 2. 下 image 包（0.90 GiB）+ 手工铺 `/etc/droidloom/cell.json`（照 `usr/share/droidloom/cell-template.json` 与 `packaging/cell-spec-arm64.json`）。
 3. `droidloomctl start` → 判据 `droidloomctl applications` 列得出 Android 应用。
+
+---
+
+## 追加 2（同日晚，上机实做）：L1 打通，L3 卡在 rootfs 的目录属主契约
+
+### A. L1 内核 nftables —— ✅ 打通（零写盘 1 发全绿）
+
+件 **`out/boot-elden-vk187b.img`**（sha `7be34b3d…`），`fastboot boot` 12 s 起飞、12 s 到 SSH。
+判据全过：`nft list ruleset` rc=0（Waydroid 的 `lxc` 表已从 `iptables-legacy` 迁到 nft，counter 在涨）、
+`nft add table/chain/rule` + `delete` OK、`droidloom-doctor` **ready=True blockers=0**、
+DSI connected、`wlp1s0` UP、`waydroid` RUNNING、容器 `baidu=200`。
+
+**踩到并修掉的坑（`PITFALLS #607`）**：首版 `vk187` 用 `LOCALVERSION=-vk187` ⇒ 设备上**没有**
+`/lib/modules/7.3.1-debug-vk187-*` ⇒ 所有 `=m` 驱动（`icc_bwmon`/`camcc_sm8750`/`cambistmclkcc_sm8750`…）加载不了
+⇒ `msm_dpu` 的 icc/clk 依赖永久 defer ⇒ **无 `/dev/dri`** ⇒ phoc `Found 0 GPUs`、doctor `graphics.render_node` fail。
+修法 = `LOCALVERSION=-vk184`（源提交同为 `4da9a8b69f`，UTS 自动逐字相同）复用现成 87 M 模块树。
+**顺带**：`build/daily` 的 HEAD 是 7.3-rc7 血统，现役 vk184 是 7.3.1 血统 ⇒ 必须 `git checkout vk184` 再编。
+
+### B. L3 image 包 —— 下载/摊装完成，起 cell 卡在 rootfs 属主契约
+
+- `droidloom-image-0.1.0-30-aarch64`（964 196 458 B）已下、已传设备、已 `tar --zstd` 摊到 `/opt/dl-test`
+  （2.5 GiB，四个分区镜像 `system/vendor/product/system_ext` 齐全）。
+- 手工铺好了 `droidloom-package-helper setup` 的等价物（`/etc/droidloom/{cell.json,runtime.env,package-state.json}`、
+  `/etc/polkit-1/rules.d/49-droidloom.rules`、user units、`/var/lib/droidloom/users/1001/data`）。
+- **presenter 侧已实证可用**：在 headless sway（有 `wp_linux_drm_syncobj_manager_v1`）下 `droidloom-wayland` 起来无 bind 失败；
+  在 phoc 0.58 下必然 `global bind failure`（本轮再次复现，`PITFALLS #604`）。
+- **卡点（结构性，不在我们能力边界内）**：`droidloomd` 的 `host_storage::check_parent()` 要求
+  **`data_dir` 的所有祖先目录都是 `uid==0` 且 `mode & 0o022 == 0`**。本 rootfs 的 `/`、`/etc`、`/usr`、`/var`
+  是 **`1000:1000` + `0775`**（Mobian/Alpine 迁移遗留，不是 Debian 标准）⇒ 直接报
+  `unsafe Android storage parent: /var/lib/droidloom/users/1001/data`。
+  **不去改 `/` `/etc` `/usr` `/var` 的属主/权限**（会波及全系统，风险远大于收益）。
+- 同一族契约还卡住了 `droidloom-package-helper prepare`（要求 `/etc` 是 `root:root` + `0755`），
+  所以 setup 只能手工铺（已铺好，可回退）。
+
+### C. 结论与退出
+
+**L1 = 完成**（C12 的内核门槛解除，`doctor ready=True`）。
+**L3 = 被 rootfs 属主契约挡住**，两条出路都超出「隔离试验」的成本边界：
+① 修 `/` `/etc` `/usr` `/var` 的属主（全系统风险）；② 在 chroot/独立 rootfs 里跑 droidloom（等于新起一套系统）。
+⇒ 按「隔离试验、不替换 Waydroid」的立项前提，**C12 停在 L1 收口**，L3 记为「已知阻塞、待将来 rootfs 重做时顺手解决」。
+设备侧临时物全部可删：`/opt/dl-test`（2.5 GiB）、`/etc/droidloom/`、`/etc/polkit-1/rules.d/49-droidloom.rules`、
+`/usr/share/droidloom/`、`/usr/lib/droidloom` 软链、`/var/lib/droidloom/users/1001`、user units。
