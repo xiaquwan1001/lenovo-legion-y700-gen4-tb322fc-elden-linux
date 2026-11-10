@@ -25,7 +25,19 @@
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
 ### 1.1 内核与软件基线
-- ★**2026-11-09（当前状态，唯一权威）：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）；`boot_a` = 原 Android 内核（已回灌）**
+- ★★**2026-11-10 20:15（当前状态，唯一权威）**：**落盘 UEFI = 干净世代 `pc1`**（`boot_a`，分区 sha `1ca2b8e69167…`，
+  件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；`active=a`、`retry=7 succ=0 unbootable=0`；
+  **flashed 形态实测总耗时 37.0 s**（`fastboot reboot` → SSH；对照 p69 = **129.2 s**，差 92 s 全是 R70 的 25 s×3 停留 + 慢速屏显），
+  `/proc/cmdline` 含 `elden_bootloader=esp`、内核 `7.3.1-debug-vk184-00002-g4da9a8b69fc8`（ESP 侧 `\boot\boot.img`）。
+  ESP：`\EFI\BOOT\BOOTAA64.EFI` = `\EFI\elden\Loader.efi` = **Loader-r73**（`6e51fc60…`，菜单倒计时可见 + 任何按键即取消自动启动，R72/R73）；
+  `\EFI\grub\{grub-menu,grub-stub,grub-chain}.efi` 为 GRUB 三件（**未**替换 BOOTAA64.EFI）；`dtbo_a` = 全 0（UEFI 前置，`scripts/uefi-a-slot-prepare.sh`）。
+  **EFI-stub 结论（2026-11-10，三发）**：GRUB 的 `linux`（EFI-stub）交接在本平台**不通** —— pc1/pc2（内存图加 612 MiB Conv）/fbdiag 内核
+  三发都是「先只剩背光 → 掉电」，`/sys/fs/pstore` 空 ⇒ 死在 ramoops 注册之前 ⇒ **菜单保持两层**（GRUB 选 loader/重启/关机，loader 选内核）。
+  **回滚**：`fastboot flash boot_a backup/boot_a-pre-uefi-20261108.img`（`d4772c11…`，原 Android 内核）+ `fastboot set_active b`。
+  **关机**：greetd 停等已压到 10 s（`/etc/systemd/system/greetd.service.d/zzz-faststop.conf`，实测 `final.target` 2 s、`Timed out`=0；
+  原件 `rootfs/debian/systemd/greetd.service.d/`，未接生成链 ⇒ 见 `reports/shutdown-greetd-hang-plan-20261030.md` §7）。
+
+- **2026-11-09（历史快照，已被上条覆盖）**：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）；`boot_a` = 原 Android 内核（已回灌）：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）；`boot_a` = 原 Android 内核（已回灌）**
   `boot_b` sha256 = `4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`（自 11-08 起未变）；
   `slot a` = **`unbootable=yes`（故意保留**：防止有人 `set_active a` 又踩同一坑；要用槽 a 先显式 `--set-active=a` 清标志）。
   **「路线 B」启动路径（非默认、零写盘）**：`fastboot boot out/r21-sbstop-p59/uefi-preamble59-r1.img`（`cd73fbdc…`）

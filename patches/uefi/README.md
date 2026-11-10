@@ -13,6 +13,8 @@
 | 件 | `out/r21-sbstop-pc1/uefi-preamblec1-r1.img`（67 186 688 B，`40d43397…`） |
 | R71 | `FrameBufferSerialPortLib` 的 `SerialPortWrite`/`Critical` 在 `m_Initialized` 守卫后**只进 `SbLogPut`、不上屏、不做 R2 的每字符忙等**；开回屏显 = 删 `#define ELDEN_FB_QUIET` 重编（或直接用 p69 件） |
 | 实测 | 暖复位 `fastboot boot pc1` ⇒ **+39 s** 到 SSH（含 fastboot 11.7 s + loader 菜单 8 s），`elden_bootloader=esp`、内核 `vk184-00002`；对照 p69 = 128.7 s（含 R70 74 s 停留） |
+| ★落盘 | **2026-11-10 20:15：`boot_a` 已刷 `pc1`**（分区 sha `1ca2b8e69167…`），flashed 形态实测 **T_total = 37.0 s**（p69 = 129.2 s）；`elden_bootloader=esp`、内核 `vk184-00002`、`retry=7 active=1`；回滚 `backup/boot_a-pre-uefi-20261108.img` |
+| EFI-stub 判定 | **不通**（2026-11-10 三发）：pc1 / pc2（内存图 +612 MiB Conv）/ fbdiag 内核 均为「只剩背光→掉电」，`/sys/fs/pstore` 空 ⇒ 死在 ramoops 注册前 ⇒ **菜单保持两层** |
 | R72 | **loader 侧**（不是 FD）：`20261110R72-loader-menu/` 修「倒计时不动 / 按键后仍到点启动 / 按过键反被强拉回第 0 项」；件 `out/espboot-20261110/Loader-r72.efi`（`566cb12d…`），已在 ESP 的 `BOOTAA64.EFI` 与 `/EFI/elden/Loader.efi` |
 | GRUB | 双层菜单定案：GRUB 选「loader/重启/关机」，loader 选内核；GRUB 的倒计时文字走 `ConOut`（本平台 no-op）⇒ 交互件 `timeout=-1`。件 `out/grub-20261110/{grub-menu.efi,grub-chain.efi}`（已放 ESP `/EFI/grub/`） |
 | 正文 | `reports/uefi-clean-pc1-and-grub-menu-20261110.md` |
