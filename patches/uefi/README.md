@@ -4,16 +4,26 @@
 > 逐目录分级（机器可读）= **`../../versions/patches-uefi-status.tsv`**（列：dir / patches / in_recipe / status / 理由 / 证据）。
 > 结论：**ACTIVE 31 目录 / RETIRED 18 目录 / UNCLEAR 0**。
 
-## 0. 当前世代 = **p61**（最新，未上机）/ 上机验证过的最新 = **p60**（2026-11-09 登记）
+## 0. 当前世代 = **p66**（最新，含屏上计数判据）/ 上机跑通的最新一代 = **p62**（`fastboot boot` 形态）
+
+> **2026-11-10 更正**：11-09 晚又推进了 p63–p66 四代，且**四发写 `boot_a` 全部失败回退 `_b`**；
+> 关键对照 = **`p60`（此前在 `fastboot boot` 形态验证过）写 `boot_a` 同样失败** ⇒ flashed 形态的失败
+> **与某一个补丁无关**，不要再用「换个补丁再刷一次」的方式试。
+> 正文/判据：`reports/uefi-p63-p66-beacon-20261109.md`；TASKS §5「2026-11-09（晚，p63→p66）」块。
 
 | 项 | 值 |
 |---|---|
-| 最新世代 | **`p61`** = p60 + `20261108R62-espconn`（ESP 扫描：连所有句柄 + `Stall(300 ms)` + 重扫，修 flashed 形态 `fs=1`）；**已构建、未上机** |
-| 上机验证的最新世代 | **`p60`** = p59 + `20261108R61-hoist-exchook`（把异常重挂提到 ESP 之前）——r62/r63 两发 + 菜单 r65 都跑在这一代上 |
-| 复现（一条命令） | `scripts/uefi-r21-p7-ladder.sh --gen p61 --verify` → **rc=0 / PASS**（`--gen p60` 同法 PASS） |
-| 构建归档 | p61 `reports/artifacts/uefi-20261108R62-p61/` / p60 `reports/artifacts/uefi-20261108R61-p60/` |
-| 在盘指纹 | `p61-kept.sha256` / `p60-kept.sha256`（各 10 件，含 `uefi-preamble61-r1.img` `b8a87c0d…`、`uefi-preamble60-r1.img` `533f09a3…`） |
-| 历史世代（留作对照） | `--gen p59`（ESP-first 首通）/ `p58`（交棒打通，`HANDOFF_TAGGED`）/ `p54` / `p7`，均 PASS |
+| 最新世代 | **`p66`** = p65 + `20261109R67-panelhold`（屏上 `[K] R67 blk=<blk 句柄数> fs=<SFS 卷数>` + `Stall(10 s)`，**零依赖**判据通道）；**已构建、上机一发但屏读数未记**（会话中断） |
+| 上机跑通的最新一代 | **`p65`/`p64`/`p63`/`p62`** 在 `fastboot boot`（零写盘）形态都能把内核从 ESP 起起来；**flashed 形态全部失败** |
+| 信标 | `20261109R66-beacon2`（v2，按内容指纹 `SBLOG0` 认 logfs）**可用**；`20261109R65-beacon`（v1，按容量 4–16 MiB 认分区）**已废**（本机 3 个 8 MiB 分区 ⇒ 必撞车） |
+| 复现（一条命令） | `scripts/uefi-r21-p7-ladder.sh --gen p6{3,4,5,6} --verify`（`--gen p62/p61/p60` 同法） |
+| 构建归档 | p66 `reports/artifacts/uefi-20261109R67-p66/` … p63 `reports/artifacts/uefi-20261109R64-p63/`；p62 `…R63-p62/`、p61 `…R62-p61/` |
+| 在盘指纹 | p60/p61 有 `p6{0,1}-kept.sha256`；p62–p66 未出指纹（`--verify` 给「未提供指纹，仅产出」） |
+| 历史世代（留作对照） | `--gen p59`（ESP-first 首通）/ `p58`（交棒打通）/ `p54` / `p7`，均 PASS |
+
+**信标的两个硬限制（读判据前必看）**：① v2 的写入 LBA 与内容都是**固定的**（最后 16 KiB 记录区第 2 块），
+`st=<n>` 只随检查点变、不含世代/计数 ⇒ 「读到 `st=8`」**不能**证明「这一发跑到了 8」；下一发必须加世代/计数。
+② 取证一律用 `/dev/disk/by-partlabel/logfs` + 内容指纹自检 —— `/dev/sde68` 跨启动不稳定（实测同一节点一次是 logfs、一次是 8.3 MB 的 FAT12）。
 
 - **两件套**：整套「跑通路线 B」的件 = **FD**（`--gen p61`）+ **`Loader.efi`**（`patches/uefi/20261109R65-loader-snapshot/`）。
   loader 侧源码**从未提交**（Mu 树单提交浅克隆），此前 R55→R65 的 `.efi` 整体不可再生 ⇒ 2026-11-09 已冻结为整文件快照

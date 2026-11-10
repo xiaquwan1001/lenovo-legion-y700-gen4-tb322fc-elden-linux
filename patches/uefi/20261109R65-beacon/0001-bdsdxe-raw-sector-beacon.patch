@@ -1,0 +1,169 @@
+Subject: [PATCH] BdsDxe: 落盘信标（直接 WriteBlocks 到 8 MiB 分区末段），判「flashed 形态跑到哪一行」
+
+2026-11-09R65 y700-elden（对应 PITFALLS #580/#585）。
+
+## 为什么需要 R65
+
+flashed 形态（写 `boot_a`）下的三条通道全部失效或不可判：
+  · 屏显一闪而过（用户只见联想 logo）；
+  · `logfs` 只由 FV 内 `LinuxLoader` 写（#580）⇒ 崩在它之前就 0 记录；
+  · ESP 上的 `\loader.log` 只有 ESP loader 真跑起来时才有。
+⇒ p61/p62/p63 三发 flashed 都只剩「无证据」。R65 换成**最原始**的通道：对一个 BlockIo
+分区直接 `WriteBlocks` 写 512 B，不依赖 Fat / PartitionInfo / LinuxLoader。
+
+目标分区的识别**不看名字**，只看几何：`(LastBlock+1)*BlockSize` ∈ [4 MiB, 16 MiB] 且可写
+⇒ 就是 `logfs`（8 MiB vfat，全盘唯一）。写入位置 = 分区末尾往前第 8 个块。
+
+## 检查点（stage 单调递增，最后一个出现的即「最后到达」）
+
+  1 bds-in    `BdsEntry()` 第一行
+  2 r54-in    `R54TryEspBoot()` 入口（R61 hook 之前）
+  3 blk-enum  BlockIo 枚举完（打印 `[K] esp blk=` 之后）
+  4 blk-conn  逐句柄 ConnectController 循环之后
+  5 fs-enum   SimpleFileSystem 枚举完（打印 `[K] esp fs=` 之后）
+  7 census    进入 R64 按名定位兜底之前
+  8 fallback  准备回退到 FV LinuxLoader 之前
+
+## 读法与判据（Linux 侧，失败后随时可读）
+
+  dd if=/dev/sde68 bs=1M | grep -a R65STG
+  · 出现 `R65STG st=<n>` ⇒ 我们的固件跑到了第 n 个检查点；
+  · 完全没有该串 ⇒ 代码没跑到 `BdsEntry()`（ABL 层就没执行我们的件）。
+
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -861,6 +861,81 @@
+ //   [K] fs i=<n> p=<分区号> nm=<分区名>     （每个 SimpleFileSystem 卷一条）
+ //   [K] espb name=<0|1>                     （找到 eldenesp 与否）
+ //   [K] espb conn=<Status> n=<匹配卷数>     （ConnectController 之后）
++// 2026-11-09R65 y700-elden: **落盘信标** —— 与本树其它通道全部解耦。
++//
++// 为什么需要它：flashed 形态（写 `boot_a`）下，屏显一闪而过、logfs 只由 FV 内 `LinuxLoader`
++// 写（PITFALLS #580）、ESP 上的 loader.log 只有在 ESP loader 真跑起来时才有。于是「我们的固件
++// 到底跑到哪一行」在两发里都判不了（p62/p63 全是 0 证据）。这里用**最原始**的通道：
++// 直接对一个 BlockIo 分区 `WriteBlocks` 写 512 B —— 不依赖 Fat/PartitionInfo/LinuxLoader。
++//
++// 目标分区 = `logfs`（8 MiB，vfat）。识别方式不看名字、不看 PartitionInfo，只看几何：
++// `(LastBlock+1) * BlockSize` 落在 [4 MiB, 16 MiB] 且可写 ⇒ 就是它（全盘唯一）。
++// 写入位置 = 分区末尾往前第 8 个块（不碰分区头、也不碰已有 SBLOG 记录区）。
++//
++// 读法（Linux 侧，失败后随时可读）：
++//   dd if=/dev/sde68 bs=1M | grep -a R65STG
++// 判据：出现 `R65STG st=<n> …`，n 就是**最后到达的检查点**；没有该串 ⇒ 我们的代码没跑到 BdsEntry。
++STATIC
++VOID
++R65Beacon (
++  IN UINT32       Stage,
++  IN CONST CHAR8  *Tag
++  )
++{
++  EFI_STATUS    Status;
++  EFI_HANDLE    *Handles;
++  UINTN         Count;
++  UINTN         Index;
++  EFI_BLOCK_IO  *BlkIo;
++  UINT64        Bytes;
++  UINT64        Lba;
++  UINT8         *Buf;
++  CHAR8         Line[128];
++  UINTN         Len;
++
++  Handles = NULL;
++  Count   = 0;
++  Status  = gBS->LocateHandleBuffer (ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &Count, &Handles);
++  if (EFI_ERROR (Status) || (Handles == NULL)) {
++    return;
++  }
++
++  for (Index = 0; Index < Count; Index++) {
++    BlkIo = NULL;
++    if (EFI_ERROR (gBS->HandleProtocol (Handles[Index], &gEfiBlockIoProtocolGuid, (VOID **)&BlkIo)) ||
++        (BlkIo == NULL) || (BlkIo->Media == NULL) || (!BlkIo->Media->MediaPresent) ||
++        (BlkIo->Media->ReadOnly) || (BlkIo->Media->LastBlock < 16))
++    {
++      continue;
++    }
++
++    Bytes = (UINT64)(BlkIo->Media->LastBlock + 1) * (UINT64)BlkIo->Media->BlockSize;
++    if ((Bytes < 4ULL * 1024 * 1024) || (Bytes > 16ULL * 1024 * 1024)) {
++      continue;
++    }
++
++    Buf = AllocatePool ((UINTN)BlkIo->Media->BlockSize);
++    if (Buf == NULL) {
++      break;
++    }
++
++    ZeroMem (Buf, (UINTN)BlkIo->Media->BlockSize);
++    Len = AsciiSPrint (Line, sizeof (Line), "R65STG st=%d tag=%a lba=%ld\n",
++                       Stage, (Tag != NULL) ? Tag : "-", (UINT64)BlkIo->Media->LastBlock);
++    CopyMem (Buf, Line, (Len < (UINTN)BlkIo->Media->BlockSize) ? Len : (UINTN)BlkIo->Media->BlockSize);
++
++    Lba    = (UINT64)BlkIo->Media->LastBlock - 8;
++    Status = BlkIo->WriteBlocks (BlkIo, BlkIo->Media->MediaId, Lba, (UINTN)BlkIo->Media->BlockSize, Buf);
++    FreePool (Buf);
++
++    Len = AsciiSPrint (Line, sizeof (Line), "[K] bec st=%d %r\n\r", Stage, Status);
++    SerialPortWrite ((UINT8 *)Line, Len);
++    break;
++  }
++
++  FreePool (Handles);
++}
++
+ STATIC
+ BOOLEAN
+ R64DpPart (
+@@ -1098,6 +1173,7 @@
+   // 2026-11-09R64 y700-elden: 入口无条件标记（判「补丁在不在执行的这份 BdsDxe 里」）。
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp in v=R64\n\r");
+   SerialPortWrite ((UINT8 *)Line, Len);
++  R65Beacon (2, "r54-in");   // 2026-11-09R65 y700-elden
+   // 2026-11-08R61 y700-elden: 先重挂异常处理器，再碰 ESP（见 R61HookException 注释）。
+   R61HookException ();
+ 
+@@ -1111,10 +1187,12 @@
+ 
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp blk=%d\n\r", (UINT32)Count);
+   SerialPortWrite ((UINT8 *)Line, Len);
++  R65Beacon (3, "blk-enum");   // 2026-11-09R65 y700-elden
+ 
+   for (Idx = 0; Idx < Count; Idx++) {
+     gBS->ConnectController (Handles[Idx], NULL, NULL, TRUE);
+   }
++  R65Beacon (4, "blk-conn");   // 2026-11-09R65 y700-elden
+ 
+   if (Handles != NULL) {
+     FreePool (Handles);
+@@ -1130,6 +1208,7 @@
+ 
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp fs=%d\n\r", (UINT32)Count);
+   SerialPortWrite ((UINT8 *)Line, Len);
++  R65Beacon (5, "fs-enum");   // 2026-11-09R65 y700-elden
+ 
+   for (Idx = 0; (Idx < Count) && (!Found); Idx++) {
+     Dp = FileDevicePath (Handles[Idx], Path);
+@@ -1155,6 +1234,7 @@
+     EFI_HANDLE  EspSfs;
+ 
+     EspSfs = NULL;
++    R65Beacon (7, "census");   // 2026-11-09R65 y700-elden
+     if (R64EspByName (&EspSfs)) {
+       Dp = FileDevicePath (EspSfs, Path);
+       if (Dp != NULL) {
+@@ -1169,6 +1249,7 @@
+     }
+   }
+ 
++  R65Beacon (8, "fallback");   // 2026-11-09R65 y700-elden
+   if (!Found) {
+     Len = AsciiSPrint (Line, sizeof (Line), "[K] esp none\n\r");
+     SerialPortWrite ((UINT8 *)Line, Len);
+@@ -1196,6 +1277,7 @@
+   )
+ {
+   EFI_BOOT_MANAGER_LOAD_OPTION    *LoadOptions;
++  R65Beacon (1, "bds-in");   // 2026-11-09R65 y700-elden
+   UINTN                           LoadOptionCount;
+   CHAR16                          *FirmwareVendor;
+   EFI_EVENT                       HotkeyTriggered;

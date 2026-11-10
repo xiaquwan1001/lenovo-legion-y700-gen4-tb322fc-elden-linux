@@ -82,7 +82,10 @@ wait_until() {
 
 # ------------------------------------------------------------------ 探测原语
 wa_ssh_alive() { [ "$(timeout 8 ssh $SSH_OPTS "$TAB" 'echo up' 2>/dev/null)" = up ]; }
-wa_fastboot_alive() { timeout 6 fastboot devices 2>/dev/null | grep -q .; }
+# 2026-11-09 PITFALLS #584：`fastboot … | grep -q` 会因 grep 提前退出把 SIGPIPE 送回 fastboot
+# 客户端，打断设备侧 fastboot bulk 通道（之后 devices 空、getvar 超时，只能物理 POR）。
+# 一律「先落变量/文件，再判断」，别把 fastboot 接在管道里。
+wa_fastboot_alive() { local d; d=$(timeout 6 fastboot devices 2>/dev/null) || return 1; [ -n "$d" ]; }
 wa_adb_alive() { # $1 = 序列号（必填：PITFALLS #371，裸 get-state 会把别的手机当成本机）
 	[ -n "${1:-}" ] && [ "$(timeout 8 adb -s "$1" get-state 2>/dev/null | tr -d '\r')" = device ]
 }

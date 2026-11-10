@@ -53,7 +53,9 @@ bootstrap_kernel() {
 	kbuild modules
 	VERSION=modloop-dev RAMDISK_KIND="$rk" bash "$ROOT/scripts/build-boot.sh" || {
 		echo "[mod] build-boot.sh 失败（内核闸门？见 scripts/assert-kernel-sane.sh）" >&2; exit 1; }
-	if ! fastboot devices 2>/dev/null | grep -q .; then
+	# 2026-11-09 PITFALLS #584：先落变量再判断（`| grep -q` 的 SIGPIPE 会打断 fastboot 通道）
+	_fbd=$(timeout 8 fastboot devices 2>/dev/null)
+	if [ -z "$_fbd" ]; then
 		echo "[mod] --bootstrap 需要设备在 fastboot（fastboot boot 零写盘）。" >&2
 		echo "      镜像已就绪：$img" >&2
 		echo "      手动：fastboot boot $img   或   scripts/to-fastboot.sh --boot $img" >&2

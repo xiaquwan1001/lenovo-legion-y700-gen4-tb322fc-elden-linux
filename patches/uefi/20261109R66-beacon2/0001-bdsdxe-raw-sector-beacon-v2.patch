@@ -1,0 +1,196 @@
+Subject: [PATCH] BdsDxe: 落盘信标 v2（按内容指纹认 logfs 分区，直接 WriteBlocks）
+
+2026-11-09R66 y700-elden（对应 PITFALLS #580/#585）。
+
+## 为什么有 v2（v1 = R65 的负结果）
+
+R65 按「容量 4–16 MiB」认分区 ⇒ 本机同时有三个 8 MiB 分区（`logfs` / `bluetooth_a` /
+`bluetooth_b`）⇒ 选错且写失败，实测在**已知能跑通**的 `fastboot boot` 形态下也一个信标都没落下
+（`dd /dev/sde7|sde40|sde68` 全无 `R65STG`）。v2 换成**内容指纹**：
+
+- 读候选分区最后 16 KiB，搜 `SBLOG0`（本树 logfs 记录头 `SBLOG01 tag=…` 的前 6 字节）
+  ⇒ 全盘只有 logfs 有；
+- 写入位置 = 「最后 16 KiB 记录区」的第 2 个块（保留记录头本身，不动它）；
+- 缓冲用静态数组（`AllocatePool` 在第 1 检查点未必可用）。
+
+## 检查点（stage 单调递增，出现过的最大值即「最后到达」）
+
+  1 bds-in / 2 r54-in / 3 blk-enum / 4 blk-conn / 5 fs-enum / 7 census / 8 fallback
+
+## 读法与判据（Linux 侧）
+
+  dd if=/dev/sde68 bs=1M | grep -a R66STG
+  · 出现 `R66STG st=<n>` ⇒ 我们的固件跑到第 n 个检查点；
+  · 完全没有 ⇒ 代码没跑到 `BdsEntry()`（ABL 层就没执行我们的件）。
+
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -861,6 +861,115 @@
+ //   [K] fs i=<n> p=<分区号> nm=<分区名>     （每个 SimpleFileSystem 卷一条）
+ //   [K] espb name=<0|1>                     （找到 eldenesp 与否）
+ //   [K] espb conn=<Status> n=<匹配卷数>     （ConnectController 之后）
++// 2026-11-09R66 y700-elden: **落盘信标 v2**（v1=R65 的教训：只按容量 4–16 MiB 认分区会撞到
++// 8 MiB 的 `bluetooth_a/b`，实测在 fastboot 形态下一个信标都没落下来）。
++//
++// 识别方式改成**内容指纹**：读该分区最后 16 KiB，搜 `SBLOG0`（本树 logfs 记录头
++// `SBLOG01 tag=…` 的前 6 字节）—— 全盘只有 logfs 有这串。
++// 写入位置 = 「最后 16 KiB 记录区」的第 2 个块（保留记录头，不去动它）。
++// 缓冲用静态数组（不进 AllocatePool：第 1 检查点要尽早，此时堆还未必好用）。
++//
++// 读法：dd if=/dev/sde68 bs=1M | grep -a R66STG ；出现即「跑到第 n 个检查点」。
++#define R66_BUF_SZ  16384
++STATIC UINT8  m_R66Buf[R66_BUF_SZ];
++
++STATIC
++BOOLEAN
++R66IsLogfs (
++  IN EFI_BLOCK_IO  *BlkIo
++  )
++{
++  UINTN       Bs;
++  UINTN       Need;
++  UINTN       N;
++  UINT64      Total;
++  UINT64      Lba;
++  EFI_STATUS  St;
++  UINTN       I;
++
++  Bs    = (UINTN)BlkIo->Media->BlockSize;
++  Total = (UINT64)(BlkIo->Media->LastBlock + 1) * (UINT64)Bs;
++  if ((Bs == 0) || (Total < 2ULL * 1024 * 1024) || (Total > 256ULL * 1024 * 1024)) {
++    return FALSE;
++  }
++
++  Need = (R66_BUF_SZ < Total) ? R66_BUF_SZ : (UINTN)Total;
++  N    = (Need + Bs - 1) / Bs;
++  if ((N == 0) || (N * Bs > R66_BUF_SZ)) {
++    return FALSE;
++  }
++
++  Lba = ((UINT64)BlkIo->Media->LastBlock + 1) - N;
++  St  = BlkIo->ReadBlocks (BlkIo, BlkIo->Media->MediaId, Lba, N * Bs, m_R66Buf);
++  if (EFI_ERROR (St)) {
++    return FALSE;
++  }
++
++  for (I = 0; I + 6 < N * Bs; I++) {
++    if (CompareMem (m_R66Buf + I, "SBLOG0", 6) == 0) {
++      return TRUE;
++    }
++  }
++
++  return FALSE;
++}
++
++STATIC
++VOID
++R66Beacon (
++  IN UINT32       Stage,
++  IN CONST CHAR8  *Tag
++  )
++{
++  EFI_STATUS    Status;
++  EFI_HANDLE    *Handles;
++  UINTN         Count;
++  UINTN         Index;
++  EFI_BLOCK_IO  *BlkIo;
++  UINT64        Total;
++  UINT64        Lba;
++  UINTN         Bs;
++  CHAR8         Line[160];
++  UINTN         Len;
++
++  Handles = NULL;
++  Count   = 0;
++  Status  = gBS->LocateHandleBuffer (ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &Count, &Handles);
++  if (EFI_ERROR (Status) || (Handles == NULL)) {
++    return;
++  }
++
++  for (Index = 0; Index < Count; Index++) {
++    BlkIo = NULL;
++    if (EFI_ERROR (gBS->HandleProtocol (Handles[Index], &gEfiBlockIoProtocolGuid, (VOID **)&BlkIo)) ||
++        (BlkIo == NULL) || (BlkIo->Media == NULL) || (!BlkIo->Media->MediaPresent) ||
++        (BlkIo->Media->LastBlock < 64))
++    {
++      continue;
++    }
++
++    if (!R66IsLogfs (BlkIo)) {
++      continue;
++    }
++
++    Bs    = (UINTN)BlkIo->Media->BlockSize;
++    Total = (UINT64)(BlkIo->Media->LastBlock + 1) * (UINT64)Bs;
++    Lba   = ((Total - R66_BUF_SZ) / (UINT64)Bs) + 1;   /* 记录区第 2 块：保留 SBLOG0 头 */
++
++    ZeroMem (m_R66Buf, Bs);
++    Len = AsciiSPrint (Line, sizeof (Line), "R66STG st=%d tag=%a bs=%d\n",
++                       Stage, (Tag != NULL) ? Tag : "-", (UINT32)Bs);
++    CopyMem (m_R66Buf, Line, (Len < Bs) ? Len : Bs);
++
++    Status = BlkIo->WriteBlocks (BlkIo, BlkIo->Media->MediaId, Lba, Bs, m_R66Buf);
++    Len    = AsciiSPrint (Line, sizeof (Line), "[K] bec st=%d %r\n\r", Stage, Status);
++    SerialPortWrite ((UINT8 *)Line, Len);
++    break;
++  }
++
++  FreePool (Handles);
++}
++
+ STATIC
+ BOOLEAN
+ R64DpPart (
+@@ -1098,6 +1207,7 @@
+   // 2026-11-09R64 y700-elden: 入口无条件标记（判「补丁在不在执行的这份 BdsDxe 里」）。
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp in v=R64\n\r");
+   SerialPortWrite ((UINT8 *)Line, Len);
++  R66Beacon (2, "r54-in");   // 2026-11-09R66 y700-elden
+   // 2026-11-08R61 y700-elden: 先重挂异常处理器，再碰 ESP（见 R61HookException 注释）。
+   R61HookException ();
+ 
+@@ -1111,10 +1221,12 @@
+ 
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp blk=%d\n\r", (UINT32)Count);
+   SerialPortWrite ((UINT8 *)Line, Len);
++  R66Beacon (3, "blk-enum");   // 2026-11-09R66 y700-elden
+ 
+   for (Idx = 0; Idx < Count; Idx++) {
+     gBS->ConnectController (Handles[Idx], NULL, NULL, TRUE);
+   }
++  R66Beacon (4, "blk-conn");   // 2026-11-09R66 y700-elden
+ 
+   if (Handles != NULL) {
+     FreePool (Handles);
+@@ -1130,6 +1242,7 @@
+ 
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp fs=%d\n\r", (UINT32)Count);
+   SerialPortWrite ((UINT8 *)Line, Len);
++  R66Beacon (5, "fs-enum");   // 2026-11-09R66 y700-elden
+ 
+   for (Idx = 0; (Idx < Count) && (!Found); Idx++) {
+     Dp = FileDevicePath (Handles[Idx], Path);
+@@ -1155,6 +1268,7 @@
+     EFI_HANDLE  EspSfs;
+ 
+     EspSfs = NULL;
++    R66Beacon (7, "census");   // 2026-11-09R66 y700-elden
+     if (R64EspByName (&EspSfs)) {
+       Dp = FileDevicePath (EspSfs, Path);
+       if (Dp != NULL) {
+@@ -1169,6 +1283,7 @@
+     }
+   }
+ 
++  R66Beacon (8, "fallback");   // 2026-11-09R66 y700-elden
+   if (!Found) {
+     Len = AsciiSPrint (Line, sizeof (Line), "[K] esp none\n\r");
+     SerialPortWrite ((UINT8 *)Line, Len);
+@@ -1196,6 +1311,7 @@
+   )
+ {
+   EFI_BOOT_MANAGER_LOAD_OPTION    *LoadOptions;
++  R66Beacon (1, "bds-in");   // 2026-11-09R66 y700-elden
+   UINTN                           LoadOptionCount;
+   CHAR16                          *FirmwareVendor;
+   EFI_EVENT                       HotkeyTriggered;

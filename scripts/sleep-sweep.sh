@@ -5,7 +5,8 @@
 set -u
 DEV=root@192.168.7.1
 S() { timeout 20 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 -o BatchMode=yes "$DEV" "$@" 2>/dev/null; }
-FB() { timeout 20 fastboot devices 2>/dev/null | grep -q HA2EXB0E; }
+# 2026-11-09 PITFALLS #584：不要把 fastboot 接在 `| grep -q` 里（SIGPIPE 会打断 fastboot 通道）
+FB() { local d; d=$(timeout 20 fastboot devices 2>/dev/null) || return 1; case "$d" in *HA2EXB0E*) return 0;; *) return 1;; esac; }
 CONF="${1:?conf}"
 [ "$CONF" = NONE ] && CONF=""
 N="${2:-3}"

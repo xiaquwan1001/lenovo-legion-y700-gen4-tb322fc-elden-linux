@@ -1,0 +1,13 @@
+7.3.1-debug-vk184-00002-g4da9a8b69fc8
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 elden_bootloader=esp androidboot.serialno=51318dc0 androidboot.baseband=apq
+---
+d4772c1189b5d4385718ef0db84ce4f32a6ef2629a32497554b65fba91705886  /dev/disk/by-partlabel/boot_a
+4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5  /dev/disk/by-partlabel/boot_b
+---
+3350166cc87704a134b7eb2195dbae23  /efi/loader.log
+fa4f1a6ef0adb65ce8ce5467181b7f91  /efi/espboot.log
+-rw------- 1 root root  97 2019年 1月 1日 /efi/espboot.log
+-rw------- 1 root root 277 2019年 1月 1日 /efi/loader.log
+/efi/espboot.force
+---
+androidboot.slot_suffix=_b

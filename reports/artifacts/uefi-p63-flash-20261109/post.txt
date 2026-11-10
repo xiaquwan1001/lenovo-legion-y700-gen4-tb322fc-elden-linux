@@ -1,0 +1,15 @@
+up 6 minutes
+7.3.1-debug-vk184-00003-gec74c4795a43
+androidboot.slot_suffix=_b
+---
+3350166cc87704a134b7eb2195dbae23  /efi/loader.log
+fa4f1a6ef0adb65ce8ce5467181b7f91  /efi/espboot.log
+---
+9b69622c93b81e81e61a5bc082fe742bcda96bdd009eefb154d3805c0b1b25ad  /dev/disk/by-partlabel/boot_a
+---
+  boot_a             byte6=0xb2 retry=6 active=0 succ=0 unbootable=1
+  vendor_boot_a      byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  init_boot_a        byte6=0x7b retry=7 active=0 succ=1 unbootable=0
+  boot_b             byte6=0x7f retry=7 active=1 succ=1 unbootable=0
+  vendor_boot_b      byte6=0xff retry=7 active=1 succ=1 unbootable=1
+  init_boot_b        byte6=0xff retry=7 active=1 succ=1 unbootable=1

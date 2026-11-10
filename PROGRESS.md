@@ -105,6 +105,8 @@
 | 2026-11-08（下午/晚间） | **★ 路线 B 打通：ESP 上的 `boot.img` 由 Mu `LinuxLoader` 变体直接读起（零写盘）** | 判据三条全中（`verdict=ESPBOOT_TAGGED`）：`/proc/cmdline` 含 `elden_bootloader=esp`、`uname -r` = ESP 侧内核（`vk184-00002`，与 `boot_b` 的 `00003` 不同）、`boot_b` sha 未变。转折点 = 用 ESP 上的 `\loader.log` 定位到本树 `LinuxLoader.c` 把 `BootIntoFastboot` **写死 TRUE**（此前所有「ESP-first 失败」推断都建立在没执行的分支上）；`reports/uefi-espboot-r58b-success-20261108.md`、`PITFALLS #565–#567` |
 | 2026-11-08（深夜） | **启动菜单闭环 + 落地第一发（写 `boot_a`）定位到新缺口** | 菜单（R60/r65）：屏显 + 音量上/下 + 电源确认，上机日志 `menu entry n 4 / key 2 / sel 1 / key 258 / boot \boot\boot2.img`；写 `boot_a` 一发证明 ABL 认这个件并跳过去，但 **flashed 形态 ESP 枚举不到（`fs=1` vs `fastboot boot` 形态 `8`）**，ABL 7 次后自动回 `boot_b`（无需救砖，`boot_a` 已回灌备份）；R62/p61 已构建待上机。`reports/uefi-persist-boot-a-20261108.md`、`reports/uefi-espboot-recursive-dump-rootcause-20261108.md` |
 | 2026-11-09 | **zram 全链收口 + UEFI 世代/loader 可复现性收口（离线轮）** | 在机内核已有 `CONFIG_ZRAM=m`：`zramswap` active、`zram0` 7.3 G、`daily-baseline.sh --check` `MISS=0` ⇒ G1-37 该项无剩余动作（配置侧补开 LZ4 后端，`PITFALLS #573`）；`--gen p60/p61 --verify` 双 PASS（新增 `p6{0,1}-kept.sha256`）；loader 侧源码此前**只在 Mu 工作区**、不可再生 ⇒ 冻结为 `patches/uefi/20261109R65-loader-snapshot/`（`PITFALLS #574`） |
+| 2026-11-09（晚） | **UEFI flashed 形态 4 发全败 + `p60` 对照同败；落盘信标 v1 废 / v2 可用但判不了「哪一发」** | 写 `boot_a` 四发（p63/p64/p65/p66）全部回退 `_b`；**`p60`（fastboot 形态已证明可用）同样失败** ⇒ 失败与补丁无关（`reports/uefi-p63-p66-beacon-20261109.md`）。信标 v1 按容量认分区撞到 8 MiB 的 `bluetooth_a/b` ⇒ 连已知可用的 fastboot 形态也 0 命中；v2 按内容指纹 `SBLOG0` 命中但**写入位置/内容固定** ⇒ `st=8` 不能区分是哪一发；`/dev/sde68` 跨启动不稳定（一次 logfs、一次 FAT12）⇒ 一律 `by-partlabel/logfs`。口径更正：fastboot 形态的内核是 FV `LinuxLoader` 的 espboot 起的（信标 `st=8 fallback`），**不是** BdsDxe 的 ESP-first。`PITFALLS #584/#585/#586/#587` |
+| 2026-11-10 | **11-09 晚那轮收口（原会话 23:29 被中断）：报告 + 坑 + 文档同步 + 世代入库** | 新增 `reports/uefi-p63-p66-beacon-20261109.md`（时间线/四条通道可用性/下发建议 `p67 = p62 + R66 + R67` 且信标带世代+计数）、`TASKS/sessions/2026-11-10-UEFI落盘信标收口p63-p66.md`；`patches/uefi/20261109R6{4,5,6,7}-*` 与 `p6{3,4,5,6}-recipe.txt` 入库；G1-29 单元格 4 939 B → 986 B（历史沿革下沉 `TASKS/sessions/2026-11-10-G1-29沿革.md`）；`scripts/lib-fastboot.sh` 入库。会话恢复用 `--gen p6x` |
 ---
 
 ## 2. 当前完成度（诚实版）
@@ -197,7 +199,7 @@
 > **Q28 补采样已完成（2026-10-24 收口）**：按「已规避」结项，原定 ≥8 发门槛**用户裁决不补**。权威口径 = [`TASKS/README.md`](TASKS/README.md) §4。
 
 1. **★UEFI 与 Gunyah 考查**（2026-10-24 用户定的下一步；只读优先、不写盘）：基线 = `reports/uefi-restart-20261021.md`、
-   `reports/gunyah-roadmap-20261021.md`。UEFI：用 `~/下载/tb322fc/*.elf` 逆向运行期注册表（不重下 1 G Mu）+ 回帖 issue #12；
+   `reports/gunyah-roadmap-20261021.md`。UEFI：~~逆向运行期注册表 + 回帖 issue #12~~（2026-11-10 起改为只读 `TASKS/README.md` §1 G1-29 行与 §5「2026-11-09（晚，p63→p66）」块）；
    Gunyah：阶段 0 零成本探测 + 上游现状复核。产出 = 各项「可不可重启 / 立不立项」定性 + 最小成本账。
    **2026-10-24 用户裁决：WoaA 走纯 Linux（Gunyah 自建栈），Android/AVF 只作材料参考，最终不保留 Android 分区**（详见 `TASKS` §4 N1/N2）。**首轮已出（`reports/uefi-gunyah-reassess-20261024.md`）**：
    UEFI（G1-29）：**路线 A 首轮（2026-10-05）失败后搁置 → 2026-11-01 用户放行恢复推进**；当前口径与四臂判别只读 `TASKS/README.md` §5。~~厂商 DXE 在 XBL 打包体里~~（**2026-10-24 已作废：厂商 UFSDxe 就在 `uefi.elf` 内嵌 FV 中**，见 `TASKS` §4 N1 纠正块）；**Gunyah 阶段 0/0b 阳性**

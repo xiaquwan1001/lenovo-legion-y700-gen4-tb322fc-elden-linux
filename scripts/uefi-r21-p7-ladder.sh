@@ -119,7 +119,11 @@ if [ -n "$GEN" ]; then
 		p60) _rec=patches/uefi/p60-recipe.txt; _bd=uefi-20261108R61-p60;               _kept=patches/uefi/p60-kept.sha256; _out=r21-sbstop-p60;;
 		p61) _rec=patches/uefi/p61-recipe.txt; _bd=uefi-20261108R62-p61;               _kept=patches/uefi/p61-kept.sha256; _out=r21-sbstop-p61;;
 		p62) _rec=patches/uefi/p62-recipe.txt; _bd=uefi-20261109R63-p62;               _kept=/dev/null; _out=r21-sbstop-p62;;
-		*) die "--gen 只认 p7/p54/p58/p59/p60/p61/p62（见脚本头部）；收到: $GEN";;
+		p63) _rec=patches/uefi/p63-recipe.txt; _bd=uefi-20261109R64-p63;               _kept=/dev/null; _out=r21-sbstop-p63;;
+		p64) _rec=patches/uefi/p64-recipe.txt; _bd=uefi-20261109R65-p64;               _kept=/dev/null; _out=r21-sbstop-p64;;
+		p65) _rec=patches/uefi/p65-recipe.txt; _bd=uefi-20261109R66-p65;               _kept=/dev/null; _out=r21-sbstop-p65;;
+		p66) _rec=patches/uefi/p66-recipe.txt; _bd=uefi-20261109R67-p66;               _kept=/dev/null; _out=r21-sbstop-p66;;
+		*) die "--gen 只认 p7/p54/p58/p59/p60/p61/p62/p63/p64/p65/p66（见脚本头部）；收到: $GEN";;
 	esac
 	[ -n "${PFX_EXPLICIT:-}" ] || PFX=$GEN
 	[ -n "${RECIPE_EXPLICIT:-}" ] || RECIPE=$ROOT/$_rec
@@ -159,9 +163,23 @@ build_variant() {
 
 # ---------- 2. repack → preamble7 ----------
 repack_preamble() {
-	local bd=$1 dst=$2
+	local bd=$1 dst=$2 extra=()
 	[ -f "$bd/BootShim.bin" ] && [ -f "$bd/SM8750_EFI.fd" ] || die "$bd 不是 uefi-build-variant.sh 的产物目录"
-	python3 "$ROOT/scripts/uefi-repack-v2aligned.py" --build-dir "$bd" -o "$dst" || die "repack 失败"
+	# 2026-11-09（PITFALLS #582）：uefi-repack-v2aligned.py 的默认 --base 指向
+	# reports/artifacts/uefi-posctrl-20261103/boot_b-live.img，该目录已被资产清理删除 ⇒
+	# 不显式给 --base 时 repack 必 FileNotFoundError。REPACK_BASE 允许覆盖；
+	# 未给且默认件不存在时自动退回「上一代 preamble」（同基座、only-kernel-differs 断言会替我们把关）。
+	if [ -n "${REPACK_BASE:-}" ]; then
+		extra+=(--base "$REPACK_BASE")
+	elif [ ! -f "$ROOT/reports/artifacts/uefi-posctrl-20261103/boot_b-live.img" ]; then
+		local fb
+		fb=$ROOT/out/r21-sbstop-p61/uefi-preamble61-r1.img
+		[ -f "$fb" ] || fb=$(ls -1 "$ROOT"/out/r21-sbstop-p*/uefi-preamble*-r1.img 2>/dev/null | sort -V | tail -1)
+		[ -n "$fb" ] || die "repack 缺 --base：默认 boot_b-live.img 不存在，且 out/ 下没有可用的 preamble 件（设 REPACK_BASE=…）"
+		note "repack --base 退回上一代件：$fb"
+		extra+=(--base "$fb")
+	fi
+	python3 "$ROOT/scripts/uefi-repack-v2aligned.py" --build-dir "$bd" "${extra[@]}" -o "$dst" || die "repack 失败"
 }
 
 case "$MODE" in

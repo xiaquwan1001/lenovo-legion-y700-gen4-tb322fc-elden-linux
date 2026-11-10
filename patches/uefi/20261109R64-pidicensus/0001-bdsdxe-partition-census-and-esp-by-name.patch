@@ -1,0 +1,320 @@
+Subject: [PATCH] BdsDxe: 分区/SFS 普查 + 按 GPT 名直接定位 ESP（去掉 R62 的 ConnectAll）
+
+2026-11-09R64 y700-elden（对应 PITFALLS #571/#580/#584）。
+
+## 为什么有 R64（R63 的负结果与真因）
+
+11-09 两发 flashed（p61=R62、p62=R63）都**没有**在 logfs 留下新记录：`tag=preeb` 与 11-08 p60
+那一发**逐字节相同**。而 logfs 只由 FV 内 `LinuxLoader` 写（入口 `SbDumpLog("entry")` +
+`BootLinux()` 的 `"preeb"`）⇒ 两发都**没走到 LinuxLoader**，也就是 `R54TryEspBoot()` 没走到
+`esp none` 的回退分支。p60→p61 的唯一差异就是 **R62 的「LocateHandleBuffer(AllHandles)
++ 逐句柄 ConnectController」**，而 R54 的注释里已记着「在本板早期做 ConnectAll 会同步异常」
+⇒ 判定 R62 就是崩点，本世代**删掉 R62**，改走只读普查 + 单分区连接。
+
+## 本补丁
+
+1) 普查（只读、不碰驱动）：`[K] pi n=` / `[K] pi <i>=<GPT 分区名>` /
+   每条 `[K] fs i=<n> p=<分区号> nm=<名>`（SimpleFileSystem 卷 → 分区号/名）
+   ⇒ 一发就能分辨「分区层没出来」与「分区在、FAT 没绑」。
+2) 兜底：按 GPT 分区名 `eldenesp` 命中后，**只对那一个分区句柄** `ConnectController(..., TRUE)`，
+   再按分区 GUID 认回 SimpleFileSystem 卷并 `LoadImage`。
+3) 所有判据行都在动作**之前**打印，便于「崩在哪一行」二分。
+
+## 判据
+
+`[K] esp in v=R64` → `[K] pi n=` / `[K] fs i=… nm=…` → `[K] espb name=1` →
+`[K] espb conn=<st> n=<n>` → `[K] espb ld=Success` → ESP 上的 loader 跑起来。
+
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -19,6 +19,7 @@
+ #include <Protocol/SimpleFileSystem.h> // 2026-11-08R54 y700-elden
+ #include <Protocol/BlockIo.h>          // 2026-11-08R54 y700-elden
+ #include <Library/DevicePathLib.h>     // 2026-11-08R54 y700-elden
++#include <Protocol/PartitionInfo.h>     // 2026-11-09R64 y700-elden
+ #include <Protocol/Cpu.h>          // 2026-11-06R18 y700-elden
+ #include <Protocol/DebugSupport.h> // 2026-11-06R18 y700-elden
+ // 2026-11-06R18 y700-elden: ArmPkg 的 DefaultExceptionHandlerLib.h 不在本模块 include 路径里，
+@@ -844,6 +845,235 @@
+   SerialPortWrite ((UINT8 *)Line, Len);
+ }
+ 
++// 2026-11-09R64 y700-elden: 分区/SFS 普查 + 「按 GPT 名直接定位 ESP」兜底。
++//
++// 动机：flashed 形态（写 boot_a）下 `[K] esp fs=1`，而同一份件 `fastboot boot` 起是 `fs=8`
++// （PITFALLS #571）。11-09 的 p61(R62) / p62(R63) 两发 flashed 都**没有**在 logfs 留下新记录
++// （`tag=preeb` 与 11-08 p60 那发逐字节相同）⇒ 说明它们都没走到 FV LinuxLoader（logfs 只由
++// LinuxLoader 写，PITFALLS #580）。p60→p61 的唯一差异是 R62 的「ConnectController 全部句柄」，
++// 而 R54 自己的注释就记着「在本板早期 ConnectAll 会同步异常」⇒ 本世代**去掉 R62**，改走窄路径：
++// 只用 PartitionInfo 读分区表（只读、不碰驱动），命中 `eldenesp` 才对**那一个**分区句柄
++// ConnectController，再按分区 GUID 认回 SimpleFileSystem 卷。
++//
++// 判据行（全部在动作之前打印，便于「崩在哪一行」二分）：
++//   [K] esp in v=R64
++//   [K] pi n=<PartitionInfo 句柄数>        [K] pi <i>=<GPT 分区名>（前 24 条）
++//   [K] fs i=<n> p=<分区号> nm=<分区名>     （每个 SimpleFileSystem 卷一条）
++//   [K] espb name=<0|1>                     （找到 eldenesp 与否）
++//   [K] espb conn=<Status> n=<匹配卷数>     （ConnectController 之后）
++STATIC
++BOOLEAN
++R64DpPart (
++  IN  EFI_DEVICE_PATH_PROTOCOL  *Dp,
++  OUT UINT32                    *Num,
++  OUT EFI_GUID                  *Guid
++  )
++{
++  HARDDRIVE_DEVICE_PATH  *Hd;
++
++  while ((Dp != NULL) && (!IsDevicePathEnd (Dp))) {
++    if ((DevicePathType (Dp) == MEDIA_DEVICE_PATH) && (DevicePathSubType (Dp) == MEDIA_HARDDRIVE_DP)) {
++      Hd = (HARDDRIVE_DEVICE_PATH *)Dp;
++      if (Num != NULL) {
++        *Num = Hd->PartitionNumber;
++      }
++
++      if (Guid != NULL) {
++        if (Hd->SignatureType == SIGNATURE_TYPE_GUID) {
++          CopyMem (Guid, Hd->Signature, sizeof (EFI_GUID));
++        } else {
++          ZeroMem (Guid, sizeof (EFI_GUID));
++        }
++      }
++
++      return TRUE;
++    }
++
++    Dp = NextDevicePathNode (Dp);
++  }
++
++  return FALSE;
++}
++
++STATIC
++BOOLEAN
++R64NameEq (
++  IN CHAR16       *Name,
++  IN CONST CHAR8  *Want
++  )
++{
++  UINTN  I;
++  CHAR16 C;
++
++  for (I = 0; Want[I] != 0; I++) {
++    C = Name[I];
++    if (C == 0) {
++      return FALSE;
++    }
++
++    if ((C >= L'A') && (C <= L'Z')) {
++      C = (CHAR16)(C - L'A' + L'a');
++    }
++
++    if (C != (CHAR16)Want[I]) {
++      return FALSE;
++    }
++  }
++
++  return TRUE;
++}
++
++STATIC
++BOOLEAN
++R64EspByName (
++  OUT EFI_HANDLE  *SfsOut
++  )
++{
++  EFI_STATUS                   Status;
++  EFI_HANDLE                   *PiHandles;
++  EFI_HANDLE                   *FsHandles;
++  UINTN                        PiCount;
++  UINTN                        FsCount;
++  UINTN                        K;
++  UINTN                        J;
++  EFI_PARTITION_INFO_PROTOCOL  *Pi;
++  EFI_DEVICE_PATH_PROTOCOL     *Dp;
++  EFI_GUID                     EspGuid;
++  EFI_GUID                     Guid;
++  UINT32                       PartNum;
++  CHAR8                        Nm[20];
++  CHAR8                        Line[160];
++  UINTN                        Len;
++  UINTN                        N;
++  BOOLEAN                      HaveEsp;
++  EFI_HANDLE                   EspHandle;
++  UINTN                        Match;
++
++  *SfsOut   = NULL;
++  PiHandles = NULL;
++  PiCount   = 0;
++  HaveEsp   = FALSE;
++  EspHandle = NULL;
++  Match     = 0;
++  ZeroMem (&EspGuid, sizeof (EspGuid));
++
++  Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiPartitionInfoProtocolGuid, NULL, &PiCount, &PiHandles);
++  if (EFI_ERROR (Status)) {
++    PiCount   = 0;
++    PiHandles = NULL;
++  }
++
++  Len = AsciiSPrint (Line, sizeof (Line), "[K] pi n=%d\n\r", (UINT32)PiCount);
++  SerialPortWrite ((UINT8 *)Line, Len);
++
++  for (K = 0; K < PiCount; K++) {
++    Pi = NULL;
++    if (EFI_ERROR (gBS->HandleProtocol (PiHandles[K], &gEfiPartitionInfoProtocolGuid, (VOID **)&Pi)) || (Pi == NULL)) {
++      continue;
++    }
++
++    Nm[0] = 0;
++    N     = 0;
++    if (Pi->Type == PARTITION_TYPE_GPT) {
++      while ((N < 14) && (Pi->Info.Gpt.PartitionName[N] != 0)) {
++        Nm[N] = (CHAR8)Pi->Info.Gpt.PartitionName[N];
++        N++;
++      }
++
++      Nm[N] = 0;
++    }
++
++    if (K < 24) {
++      Len = AsciiSPrint (Line, sizeof (Line), "[K] pi %d=%a\n\r", (UINT32)K, Nm);
++      SerialPortWrite ((UINT8 *)Line, Len);
++    }
++
++    if ((!HaveEsp) && (Pi->Type == PARTITION_TYPE_GPT) && R64NameEq (Pi->Info.Gpt.PartitionName, "eldenesp")) {
++      HaveEsp   = TRUE;
++      EspHandle = PiHandles[K];
++      CopyMem (&EspGuid, &Pi->Info.Gpt.UniquePartitionGUID, sizeof (EFI_GUID));
++    }
++  }
++
++  // 每个 SimpleFileSystem 卷是谁（分区号 + 名字）—— 这一行直接回答「那 1 个卷是哪个」。
++  FsHandles = NULL;
++  FsCount   = 0;
++  Status    = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &FsCount, &FsHandles);
++  if (!EFI_ERROR (Status)) {
++    for (J = 0; J < FsCount; J++) {
++      Nm[0]   = 0;
++      PartNum = 0;
++      ZeroMem (&Guid, sizeof (Guid));
++      Dp = DevicePathFromHandle (FsHandles[J]);
++      if (!R64DpPart (Dp, &PartNum, &Guid)) {
++        continue;
++      }
++
++      for (K = 0; K < PiCount; K++) {
++        EFI_GUID  Pg;
++        UINT32    Pn;
++
++        Dp = DevicePathFromHandle (PiHandles[K]);
++        if (!R64DpPart (Dp, &Pn, &Pg) || !CompareGuid (&Pg, &Guid)) {
++          continue;
++        }
++
++        Pi = NULL;
++        if (!EFI_ERROR (gBS->HandleProtocol (PiHandles[K], &gEfiPartitionInfoProtocolGuid, (VOID **)&Pi)) &&
++            (Pi != NULL) && (Pi->Type == PARTITION_TYPE_GPT)) {
++          N = 0;
++          while ((N < 14) && (Pi->Info.Gpt.PartitionName[N] != 0)) {
++            Nm[N] = (CHAR8)Pi->Info.Gpt.PartitionName[N];
++            N++;
++          }
++
++          Nm[N] = 0;
++        }
++
++        break;
++      }
++
++      Len = AsciiSPrint (Line, sizeof (Line), "[K] fs i=%d p=%d nm=%a\n\r", (UINT32)J, (UINT32)PartNum, Nm);
++      SerialPortWrite ((UINT8 *)Line, Len);
++    }
++
++    FreePool (FsHandles);
++  }
++
++  Len = AsciiSPrint (Line, sizeof (Line), "[K] espb name=%d\n\r", HaveEsp ? 1 : 0);
++  SerialPortWrite ((UINT8 *)Line, Len);
++
++  // 只对**那一个**分区句柄做一次递归连接（R54 已证：对本板 BlockIo 逐句柄连接是安全的）。
++  Status = EFI_NOT_FOUND;
++  if (HaveEsp && (EspHandle != NULL)) {
++    Status = gBS->ConnectController (EspHandle, NULL, NULL, TRUE);
++
++    FsHandles = NULL;
++    FsCount   = 0;
++    if (!EFI_ERROR (gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &FsCount, &FsHandles))) {
++      for (J = 0; J < FsCount; J++) {
++        ZeroMem (&Guid, sizeof (Guid));
++        Dp = DevicePathFromHandle (FsHandles[J]);
++        if (R64DpPart (Dp, &PartNum, &Guid) && CompareGuid (&Guid, &EspGuid)) {
++          *SfsOut = FsHandles[J];
++          Match++;
++        }
++      }
++
++      FreePool (FsHandles);
++    }
++  }
++
++  Len = AsciiSPrint (Line, sizeof (Line), "[K] espb conn=%r n=%d\n\r", Status, (UINT32)Match);
++  SerialPortWrite ((UINT8 *)Line, Len);
++
++  if (PiHandles != NULL) {
++    FreePool (PiHandles);
++  }
++
++  return (BOOLEAN)(*SfsOut != NULL);
++}
++
+ STATIC
+ BOOLEAN
+ R54TryEspBoot (
+@@ -864,6 +1094,10 @@
+   Path        = L"\\EFI\\BOOT\\BOOTAA64.EFI";
+   Found       = FALSE;
+   ImageHandle = NULL;
++
++  // 2026-11-09R64 y700-elden: 入口无条件标记（判「补丁在不在执行的这份 BdsDxe 里」）。
++  Len = AsciiSPrint (Line, sizeof (Line), "[K] esp in v=R64\n\r");
++  SerialPortWrite ((UINT8 *)Line, Len);
+   // 2026-11-08R61 y700-elden: 先重挂异常处理器，再碰 ESP（见 R61HookException 注释）。
+   R61HookException ();
+ 
+@@ -917,6 +1151,25 @@
+   }
+ 
+   if (!Found) {
++    // 2026-11-09R64 y700-elden: 枚举不到就走「按 GPT 名定位」兜底（不做 ConnectAll）。
++    EFI_HANDLE  EspSfs;
++
++    EspSfs = NULL;
++    if (R64EspByName (&EspSfs)) {
++      Dp = FileDevicePath (EspSfs, Path);
++      if (Dp != NULL) {
++        Status = gBS->LoadImage (TRUE, gImageHandle, Dp, NULL, 0, &ImageHandle);
++        Len    = AsciiSPrint (Line, sizeof (Line), "[K] espb ld=%r\n\r", Status);
++        SerialPortWrite ((UINT8 *)Line, Len);
++        FreePool (Dp);
++        if (!EFI_ERROR (Status)) {
++          Found = TRUE;
++        }
++      }
++    }
++  }
++
++  if (!Found) {
+     Len = AsciiSPrint (Line, sizeof (Line), "[K] esp none\n\r");
+     SerialPortWrite ((UINT8 *)Line, Len);
+     return FALSE;
+--- a/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
++++ b/MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+@@ -84,6 +84,7 @@
+   gEfiDeferredImageLoadProtocolGuid             ## CONSUMES
+   gEfiSimpleFileSystemProtocolGuid              ## CONSUMES           ## 2026-11-08R54 y700-elden
+   gEfiBlockIoProtocolGuid                       ## CONSUMES           ## 2026-11-08R54 y700-elden
++  gEfiPartitionInfoProtocolGuid                 ## CONSUMES           ## 2026-11-09R64 y700-elden
+ 
+ [FeaturePcd]
+   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangDeprecate    ## CONSUMES

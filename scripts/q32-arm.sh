@@ -43,7 +43,9 @@ pick_target() { $SSH true 2>/dev/null && { echo root@192.168.7.1; return 0; }; r
 fastboot_wait() {  # 等 fastboot 出现（单条命令，不接管道，PITFALLS #199）
 	local i
 	for i in $(seq 1 30); do
-		if fastboot devices 2>/dev/null | grep -q . ; then return 0; fi
+		# 2026-11-09 PITFALLS #584：先落变量再判断（SIGPIPE 会打断 fastboot 通道）
+		_fbd=$(timeout 8 fastboot devices 2>/dev/null)
+		if [ -n "$_fbd" ]; then return 0; fi
 		sleep 2
 	done
 	return 1

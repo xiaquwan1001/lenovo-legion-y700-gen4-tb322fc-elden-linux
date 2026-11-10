@@ -1,0 +1,60 @@
+Subject: [PATCH] BdsDxe: fs 枚举后把 blk/fs 计数打到屏上并 Stall 10 s（零依赖判据通道）
+
+2026-11-09R67 y700-elden（对应 PITFALLS #580）。
+
+## 为什么
+
+flashed 形态下三条证据通道全断：屏一闪而过、logfs 只由 FV `LinuxLoader` 写、
+ESP 上的 loader.log 只有 ESP loader 真跑起来才有。R66 的落盘信标已能工作（fastboot 形态
+实测 `R66STG st=8 tag=fallback bs=4096`），但若 UFS 在 flashed 形态根本没枚举出来，
+信标连分区都找不到 ⇒ 仍无法区分「没跑」与「跑了但没有存储」。
+
+屏是唯一**零依赖**通道。本补丁在 `SimpleFileSystem` 枚举之后把
+`[K] R67 blk=<BlockIo 句柄数> fs=<SFS 卷数>` 打到屏上，然后 `gBS->Stall(10 s)`
+⇒ 人眼/拍照可读；崩在这一行之前就说明更早死。
+
+## 判据
+
+屏上出现 `[K] R67 blk=N fs=M` 且停留约 10 s ⇒ 固件跑到这里，N/M 就是 flashed 形态的枚举实况。
+
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -1192,6 +1192,7 @@
+   EFI_STATUS                Status;
+   EFI_HANDLE                *Handles;
+   UINTN                     Count;
++  UINTN                     BlkCount;   // 2026-11-09R67 y700-elden
+   UINTN                     Idx;
+   EFI_DEVICE_PATH_PROTOCOL  *Dp;
+   EFI_HANDLE                ImageHandle;
+@@ -1200,6 +1201,7 @@
+   CHAR16                    *Path;
+   BOOLEAN                   Found;
+ 
++  BlkCount    = 0;
+   Path        = L"\\EFI\\BOOT\\BOOTAA64.EFI";
+   Found       = FALSE;
+   ImageHandle = NULL;
+@@ -1221,6 +1223,7 @@
+ 
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp blk=%d\n\r", (UINT32)Count);
+   SerialPortWrite ((UINT8 *)Line, Len);
++  BlkCount = Count;   // 2026-11-09R67 y700-elden
+   R66Beacon (3, "blk-enum");   // 2026-11-09R66 y700-elden
+ 
+   for (Idx = 0; Idx < Count; Idx++) {
+@@ -1244,6 +1247,14 @@
+   SerialPortWrite ((UINT8 *)Line, Len);
+   R66Beacon (5, "fs-enum");   // 2026-11-09R66 y700-elden
+ 
++  // 2026-11-09R67 y700-elden: 屏是唯一**零依赖**通道（不依赖 Fat/PartitionInfo/UFS）。
++  // 把三项计数打一行大字并停 10 s，供人眼/拍照读取；崩在它之前就说明更早死。
++  Len = AsciiSPrint (Line, sizeof (Line), "[K] R67 blk=%d fs=%d\n\r", (UINT32)BlkCount, (UINT32)Count);
++  SerialPortWrite ((UINT8 *)Line, Len);
++  Len = AsciiSPrint (Line, sizeof (Line), "[K] R67 hold=10s\n\r");
++  SerialPortWrite ((UINT8 *)Line, Len);
++  gBS->Stall (10000000);
++
+   for (Idx = 0; (Idx < Count) && (!Found); Idx++) {
+     Dp = FileDevicePath (Handles[Idx], Path);
+     if (Dp == NULL) {

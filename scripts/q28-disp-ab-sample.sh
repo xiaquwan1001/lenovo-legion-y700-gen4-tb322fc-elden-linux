@@ -37,7 +37,9 @@ case "$arm" in
 esac
 [ -f "$img" ] || { echo "缺镜像 $img（见 reports/q28-disp-init-ab-20261022.md 重建配方）" >&2; exit 2; }
 
-if ! fastboot devices 2>/dev/null | grep -q .; then
+# 2026-11-09 PITFALLS #584：先落变量再判断（`| grep -q` 的 SIGPIPE 会打断 fastboot 通道）
+_fbd=$(timeout 8 fastboot devices 2>/dev/null)
+if [ -z "$_fbd" ]; then
 	echo "❌ 设备不在 fastboot：先物理断电，再按住音量键 + 电源开机进 fastboot。" >&2
 	exit 1
 fi

@@ -40,7 +40,9 @@ fi
 # 2) wait for fastboot device
 ok=0
 for i in $(seq 1 60); do
-	if timeout 10 fastboot devices 2>/dev/null | grep -q fastboot; then ok=1; break; fi
+	# 2026-11-09 PITFALLS #584：先落变量再判断（SIGPIPE 会打断 fastboot 通道）
+	_fbd=$(timeout 10 fastboot devices 2>/dev/null)
+	case "$_fbd" in *fastboot*) ok=1; break;; esac
 	sleep 2
 done
 [ "$ok" = 1 ] || { echo "[run] ABORT: no fastboot device after 120s"; exit 1; }

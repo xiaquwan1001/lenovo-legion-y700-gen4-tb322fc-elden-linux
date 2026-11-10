@@ -314,7 +314,9 @@ writeslot() {
 	sha256sum "$signed"
 
 	say "2. 前置：设备必须已在 fastboot；记录槽基线"
-	timeout 30 fastboot devices | grep -q . || die "fastboot 里看不到设备（先 reboot2 bootloader）"
+	# 2026-11-09 PITFALLS #584：先落变量再判断（SIGPIPE 会打断 fastboot 通道）
+	_fbd=$(timeout 30 fastboot devices 2>/dev/null)
+	[ -n "$_fbd" ] || die "fastboot 里看不到设备（先 reboot2 bootloader）"
 	$SSH 'slot-attr.py show 2>/dev/null | grep "boot_b "' 2>/dev/null || \
 		echo "（fastboot 状态下读不到 slot-attr，基线以进入 fastboot 前记录为准）"
 
