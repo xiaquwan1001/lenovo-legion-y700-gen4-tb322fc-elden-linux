@@ -100,3 +100,18 @@ dir	patches	in_recipe	status	reason	evidence
 20261108R54-espfirst	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
 20261108R61-hoist-exchook	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
 20261108R62-espconn	1	1	ACTIVE	在 p61 配方内（2026-11-09 现查补登；11-06 分级时尚未产生）	patches/uefi/p61-recipe.txt；scripts/uefi-r21-p7-ladder.sh --gen p61 --verify
+# ---- 2026-11-10 收尾补登（R50/R51/R52/R55/R56/R63–R70；理由列注明「收尾现查」）----
+20261107R50-nowdog	1	0	RETIRED	看门狗三路证伪的第一路（把 QcomWDogDxe 摘出 FV），三路皆否 ⇒ 不采用（收尾现查：不在任何 p*-recipe 内）	patches/uefi/README.md §0；TASKS §5「2026-11-08」块
+20261107R51-wdtprobe	1	0	RETIRED	看门狗只读探测 v1；被 R52 取代（收尾现查：不在任何配方内）	patches/uefi/20261107R52-wdtprobe2/
+20261107R52-wdtprobe2	1	0	RETIRED	看门狗逐条只读探测 v2；结论「不是我们开的」后停用（收尾现查：不在任何配方内）	TASKS §5「2026-11-08」块
+20261108R55-espboot	1	0	RETIRED	ESP-first 早期探索，功能由 `20261108R54-espfirst` 承载并入 p61 起各代（收尾现查）	patches/uefi/20261108R54-espfirst/
+20261108R56-espmark	1	1	ACTIVE	在 p69 定版配方内（收尾现查；11-06 分级时尚未产生）	patches/uefi/p69-recipe.txt
+20261109R63-pidicensus	1	1	ACTIVE	在 p69 定版配方内（收尾现查）	patches/uefi/p69-recipe.txt
+20261109R64-pidicensus	1	1	ACTIVE	在 p69 定版配方内（收尾现查）	patches/uefi/p69-recipe.txt
+20261109R65-beacon	1	0	RETIRED	信标 v1（选错分区）已被 R66 beacon2 取代（收尾现查：只进 p64）	patches/uefi/p64-recipe.txt
+20261109R65-loader-snapshot	0	0	SNAPSHOT	loader 侧整文件源码快照（非 patch，不可再生件），见目录内 README/SHA256SUMS	patches/uefi/20261109R65-loader-snapshot/README.md
+20261109R66-beacon2	1	1	ACTIVE	在 p69 定版配方内（收尾现查）	patches/uefi/p69-recipe.txt
+20261109R67-panelhold	1	1	ACTIVE	在 p69 定版配方内（收尾现查）	patches/uefi/p69-recipe.txt
+20261110R68-trace	1	1	ACTIVE	在 p69 定版配方内（收尾现查）	patches/uefi/p69-recipe.txt
+20261110R69-prepi-hold	1	1	ACTIVE	在 p69 定版配方内（收尾现查）	patches/uefi/p69-recipe.txt
+20261110R70-prepi-timing	1	1	ACTIVE	在 p69 定版配方内（收尾现查）	patches/uefi/p69-recipe.txt

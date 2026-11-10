@@ -83,6 +83,15 @@ fastboot -s HA2EXB0E flash boot_a backup/boot_a-pre-uefi-20261108.img
 fastboot -s HA2EXB0E set_active b
 ```
 
+## 4b. 收尾（同日 18:4x–19:0x）：可重复性 + 前置脚本 + 定版
+
+- **n=2 / n=3 复现**：同件（p69）再次 flashed 起步，总耗时 **129.2 s**（与首发生成一致）；把 `active` 恢复成 `a` 后再发一次 = **131 s**。
+  信标计数 `n=3 → n=4 → n=5`（每次都 +1），落地内核恒为 `vk184-00002-g4da9a8b69fc8`（ESP 里那份 `boot.img`）。
+- **`scripts/uefi-a-slot-prepare.sh`（新建，幂等）**：`--check` 只报告；真做 = 备份原厂 `dtbo_a` → 写 32 MiB 全 0 →
+  回 Linux 读回校验（sha 必须 = `83ee4724…`）→ 打印回滚命令。**端到端实测过回滚路径**：
+  刷回原厂 `dtbo_a`（`45f51790…`）+ `set_active b` → 跑脚本 → 备份 `backup/dtbo_a-pre-uefi-20261110.img`（与 `backup/dtbo_a.img` 同 sha）→ 写全 0 → 读回一致 `STATUS=READY`。
+- **定版件 = p69**（`out/r21-sbstop-p69/uefi-preamble69-r1.img`，`38202e12…`），逐目录分级补登 `versions/patches-uefi-status.tsv`（R50–R70 共 14 行）。
+
 ## 5. 对 G1-29 的意义
 
 - 「flashed 形态」不再是门槛：**写 `boot_a` → 我们的 UEFI → BdsDxe → ESP 内核** 已实测闭环（129.2 s，三级停留都在）。

@@ -200,7 +200,12 @@
 > **Q28 补采样已完成（2026-10-24 收口）**：按「已规避」结项，原定 ≥8 发门槛**用户裁决不补**。权威口径 = [`TASKS/README.md`](TASKS/README.md) §4。
 
 1. **★UEFI 与 Gunyah 考查**（2026-10-24 用户定的下一步；只读优先、不写盘）：基线 = `reports/uefi-restart-20261021.md`、
-   `reports/gunyah-roadmap-20261021.md`。UEFI：~~逆向运行期注册表 + 回帖 issue #12~~（2026-11-10 起改为只读 `TASKS/README.md` §1 G1-29 行与 §5「2026-11-09（晚，p63→p66）」块）；
+   `reports/gunyah-roadmap-20261021.md`。UEFI：**🎯 已收口（2026-11-10 深夜）—— G1-29 两种形态都通**：`fastboot boot` 形态与 **flashed 形态（写 `boot_a`）** 都能走到
+   「我们的 UEFI → BdsDxe → ESP 里的 `boot.img` → Linux」，判据 = 129.2 s 总耗时（基线 + R70 三级停留）、信标 `R68LOG … s9:esp-ld-ok`、`elden_bootloader=esp`。
+   **关键的诚实记录**：11-09/10 曾三轮把失败归因到「我们的 payload 没被执行」「`vbmeta_a` 校验」「logfs 无记录」，**三条全被推翻**；
+   真根因是 2026-10-03 起就写在 `PITFALLS` 里的老坑 —— **ABL 会把原厂 `dtbo_a` 的 Android DTBO overlay 合进我们的 DTB**（当时只清了 `dtbo_b`）。
+   清 `dtbo_a` 后同件当场起。权威 = [`reports/uefi-dtbo-a-rootcause-20261110.md`](reports/uefi-dtbo-a-rootcause-20261110.md)；
+   前置固化脚本 = `scripts/uefi-a-slot-prepare.sh`；剩余仅「菜单交互目视」与「一次物理 POR」两项非阻塞。~~逆向运行期注册表 + 回帖 issue #12~~（归档）；
    Gunyah：阶段 0 零成本探测 + 上游现状复核。产出 = 各项「可不可重启 / 立不立项」定性 + 最小成本账。
    **2026-10-24 用户裁决：WoaA 走纯 Linux（Gunyah 自建栈），Android/AVF 只作材料参考，最终不保留 Android 分区**（详见 `TASKS` §4 N1/N2）。**首轮已出（`reports/uefi-gunyah-reassess-20261024.md`）**：
    UEFI（G1-29）：**路线 A 首轮（2026-10-05）失败后搁置 → 2026-11-01 用户放行恢复推进**；当前口径与四臂判别只读 `TASKS/README.md` §5。~~厂商 DXE 在 XBL 打包体里~~（**2026-10-24 已作废：厂商 UFSDxe 就在 `uefi.elf` 内嵌 FV 中**，见 `TASKS` §4 N1 纠正块）；**Gunyah 阶段 0/0b 阳性**

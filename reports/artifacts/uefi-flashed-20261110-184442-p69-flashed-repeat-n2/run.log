@@ -1,0 +1,23 @@
+[18:44:42] == 目标 p69-flashed-repeat-n2 ; 件 /home/xuqianhui/y700-elden/out/r21-sbstop-p69/uefi-preamble69-r1.img
+[18:44:42]    件 sha256=38202e129af58cc9d20881115de192d5f988e05e08ed50a39992a761940c4fcc size=67194880 B
+[18:44:42]    取证目录 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-184442-p69-flashed-repeat-n2
+[18:44:42] == [1/6] 前置态（Linux 侧只读）
+[18:44:44] 落 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-184442-p69-flashed-repeat-n2/pre.txt
+[18:44:58] logfs 快照 pre = 8388608 B ✔
+[18:44:58] == [2/6] Linux → fastboot
+[18:44:58]   ssh 可达 → 发 reboot bootloader
+[18:45:13] fastboot 在线: 
+[18:45:13] == [3/6] flash boot_a
+[18:45:15] Sending 'boot_a' (65620 KB)                        OKAY [  1.505s]
+Writing 'boot_a'                                   OKAY [  0.031s]
+Finished. Total time: 1.593s
+[18:45:15] == [4/6] set_active a（重置 _a 的 retry/unbootable）
+[18:45:15] Setting current slot to 'a'                        OKAY [  0.001s]
+Finished. Total time: 0.005s
+[18:45:15] == [5/6] t0: fastboot reboot → 轮询 SSH（判据 = 总耗时）
+[18:47:24] == [6/6] 后置态 + 判据
+[18:47:25] 落 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-184442-p69-flashed-repeat-n2/post.txt
+[18:47:26] logfs 快照 post = 8388608 B ✔
+[18:47:26] T_total = 129.2s   landed kernel = 7.3.1-debug-vk184-00002-g4da9a8b69fc8   androidboot.slot_suffix=_b
+[18:47:26] == 结束。判读表见 patches/uefi/20261110R70-prepi-timing/0001-prepi-timing-bands.patch 头部
+[18:47:26]    回滚：fastboot flash boot_a backup/boot_a-pre-uefi-20261108.img && fastboot set_active b

@@ -1,0 +1,6 @@
+T_total_s=129.2
+t0=2026-11-10T18:45:15+08:00
+image=/home/xuqianhui/y700-elden/out/r21-sbstop-p69/uefi-preamble69-r1.img sha256=38202e129af58cc9d20881115de192d5f988e05e08ed50a39992a761940c4fcc
+flash_s=1.6
+kernel_after=7.3.1-debug-vk184-00002-g4da9a8b69fc8
+androidboot.slot_suffix=_b

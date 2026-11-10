@@ -2,9 +2,15 @@
 
 > 本目录是 UEFI 间接引导线 2026-10-28 → 2026-11-06 的全部补丁，**75 个目录 / 98 个 `.patch`**（另含顶层 1 个 BootShim cache 补丁、本文件、`p7…p36-recipe.txt`，以及少量试验件 `.S/.bin/.o`）。
 > 逐目录分级（机器可读）= **`../../versions/patches-uefi-status.tsv`**（列：dir / patches / in_recipe / status / 理由 / 证据）。
-> 结论：**ACTIVE 31 目录 / RETIRED 18 目录 / UNCLEAR 0**。
+> 结论：**目录数与分级一律以 `versions/patches-uefi-status.tsv` 现查为准**（本行不写死计数，2026-11-10 收尾时加了 R50–R70 共 14 行补登）。
 
 ## 0. 当前世代 = **p69**（含 R70 计时停留）—— **flashed 与 `fastboot boot` 两种形态都已打通（2026-11-10 深夜）**
+
+> **★ 定版（2026-11-10 收尾）**：**p69 = 本线定版件** —— `out/r21-sbstop-p69/uefi-preamble69-r1.img`
+> （`38202e129af58cc9d20881115de192d5f988e05e08ed50a39992a761940c4fcc`，67 194 880 B），配方 `p69-recipe.txt`（104 行）。
+> 上机判据（flashed 形态，n=3 全部可复现）：总耗时 **129.2 / 129.2 / 131 s**、信标 `R68LOG n=3→4→5 … s9:esp-ld-ok`、`elden_bootloader=esp`。
+> **前置条件 = a 槽 `dtbo_a` 全 0**（一次性，用 `scripts/uefi-a-slot-prepare.sh`，幂等、带备份与读回校验）。
+> p60–p68 与 R63–R70 的逐目录状态已补登进 `versions/patches-uefi-status.tsv`（2026-11-10 收尾现查）。
 
 > **2026-11-10 深夜（最终口径，覆盖下面两条更正）**：flashed 形态的三年全败**真根因 = `dtbo_a`** —— 原厂 `dtbo_a` 是合法 Android DTBO
 > （`D7B7AB1E`/23.3 MB），ABL 在 `BootLinux` 后把它的 overlay 合进**我们的** Linux DTB ⇒ 卡联想 logo、~10 s 回落；`dtbo_b` 早在 10-03 就写成全 0
