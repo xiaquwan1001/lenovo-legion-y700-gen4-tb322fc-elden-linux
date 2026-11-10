@@ -1,0 +1,4 @@
+rc=0
+Sending 'boot_a' (98304 KB)                        OKAY [  2.253s]
+Writing 'boot_a'                                   OKAY [  0.037s]
+Finished. Total time: 2.313s

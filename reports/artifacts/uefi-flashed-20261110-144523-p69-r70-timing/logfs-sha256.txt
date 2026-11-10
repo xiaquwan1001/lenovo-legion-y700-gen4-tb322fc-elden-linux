@@ -1,0 +1,2 @@
+144f7be45f0ada4cd176434c8d97aae5472f400d0fed1aabd5aeb4599e053cd3  reports/artifacts/uefi-flashed-20261110-144523-p69-r70-timing/logfs-pre.bin
+7bb11754fee72d8ff64a871626f16370897e28a86ef59fcfbcba80bac7f74e11  reports/artifacts/uefi-flashed-20261110-144523-p69-r70-timing/logfs-post.bin

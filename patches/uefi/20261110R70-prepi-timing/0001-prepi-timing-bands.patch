@@ -1,0 +1,60 @@
+Subject: [PATCH] PrePi: 关键台阶各停 25 s（P00/P08/P10）—— 用**启动耗时**给 flashed 形态做免屏判据
+
+2026-11-10R70 y700-elden（承接 R69 的 6 s/3 s 屏停留；判据缺口见 reports/uefi-p67-flash-trial-20261110.md §4）
+
+## 为什么
+
+`p67` 的结论「flashed 形态连 BdsDxe 都没跑到」只剩**一条**证据（信标一字节未变），
+而它依赖的「ABL 侧 9 s 空窗」在 2026-11-10 复核时被推翻：logfs 里的 ABL 文本记录
+只在**走到 EBS** 时刷出，p67 报告把**两条历史 Android 启动记录**（`[3806]` 与 `[12984]`）
+拼成了一次启动（详见报告 §3 的更正）。⇒ 「我们的件在 flashed 形态跑到哪」**目前没有任何直接证据**。
+
+屏是唯一零依赖通道，但要求有人在设备旁。本补丁加**第二条零依赖通道：启动耗时**——
+把停留放大到 25 s 一档，使「回落到 `_b` 的总耗时」变成分级判据（无需人盯屏、无需串口、无需驱动）：
+
+| 从 `fastboot reboot` 到 SSH 可用的耗时 | 结论 |
+|---|---|
+| ≈ 基线（无停留，~40–60 s） | 我们的件**没执行到 PrePi 入口**（ABL 侧装载/跳转，或 BootShim 就死） |
+| ≈ 基线 + 25 s | 进过 PrePi `[P00]`，死在 `[P00]`→`[P08]` 之间 |
+| ≈ 基线 + 50 s | 走完 PrePi 初始化（`[P08]`），死在解压/装载 DxeCore 之间 |
+| ≈ 基线 + 75 s | FV 解压完成（`[P10]`），死在进 DxeCore 之前 |
+| 出现 `R68LOG s1:bds-in` 信标 | 到过 BdsDxe（与 p67 结论矛盾，需重测） |
+
+⚠ 判读前提：ABL/硬件看门狗若短于 25 s，会把这些停留**整段剪掉** ⇒ 每档之间必须能拉开，
+所以每档 25 s（而不是 6 s）；实测若只见到「0 s」而屏上也没有 `[P00]`，下一步才做 5 s 档去量看门狗。
+
+## 代价
+
+全链走完每次启动多约 **78 s**（25+25+25+3），只在定位轮使用；回归改用 `--gen p67`。
+
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index 337b5d6..a0fd265 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -224,6 +224,8 @@ PrePiMain (
+   // SEC phase needs to run library constructors by hand.
+   ProcessLibraryConstructorList ();
+   SbMark ("[P08]");
++  // 2026-11-10R70：25 s 一档，让「回落到 _b 的总耗时」成为免屏分级判据。
++  MicroSecondDelay (25000000);
+ /////////////////////////////////////////////
+ // Patch: call lk scheduler related function.
+ //
+@@ -255,7 +257,7 @@ PeiContinueBoot(VOID* ARGS)
+   SbBlocks ();
+   Status = DecompressFirstFv ();
+   SbMark ("[P10]");
+-  MicroSecondDelay (3000000);   // 2026-11-10R69 屏上停留 3 s
++  MicroSecondDelay (25000000);  // 2026-11-10R70 屏上停留 25 s（耗时判据档 +25 s）
+   ASSERT_EFI_ERROR (Status);
+ 
+   // Load the DXE Core and transfer control to it
+@@ -387,7 +389,7 @@ CEntryPoint ()
+   // flashed 形态（写 boot_a）此前只看到「联想 logo 一闪」，是否跑到 PrePi 无从判断；
+   // 这一停让「屏上出现 [P00] 并保持 6 s」成为零依赖硬判据（配合 BdsDxe 的 R68LOG 信标定位责任层）。
+   SbMark ("[P00]");
+-  MicroSecondDelay (6000000);
++  MicroSecondDelay (25000000);  // 2026-11-10R70 屏上停留 25 s（耗时判据档 +25 s）
+   // Initialize the platform specific controllers
+   ArmPlatformInitialize (0);
+   SbMark ("[P01]");

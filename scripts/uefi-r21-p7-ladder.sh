@@ -98,7 +98,7 @@ while [ $# -gt 0 ]; do
 REBUILD=0; shift;;
 		--verify)     MODE=verify; shift;;
 		--mkimg-only) MODE=mkimg; shift;;
-		--outdir)     OUTDIR=$2; shift 2;;
+		--outdir)     OUTDIR=$2; OUTDIR_EXPLICIT=1; shift 2;;
 		--build-dir)  BUILD_DIR=$2; shift 2;;
 		--rebuild)    REBUILD=1; shift;;
 		--stages)     STAGES=$2; shift 2;;
@@ -125,7 +125,8 @@ if [ -n "$GEN" ]; then
 		p66) _rec=patches/uefi/p66-recipe.txt; _bd=uefi-20261109R67-p66;               _kept=/dev/null; _out=r21-sbstop-p66;;
 		p67) _rec=patches/uefi/p67-recipe.txt; _bd=uefi-20261110R68-p67;               _kept=/dev/null; _out=r21-sbstop-p67;;
 		p68) _rec=patches/uefi/p68-recipe.txt; _bd=uefi-20261110R69-p68;               _kept=/dev/null; _out=r21-sbstop-p68;;
-		*) die "--gen 只认 p7/p54/p58/p59/p60/p61/p62/p63/p64/p65/p66/p67/p68（见脚本头部）；收到: $GEN";;
+		p69) _rec=patches/uefi/p69-recipe.txt; _bd=uefi-20261110R70-p69;               _kept=/dev/null; _out=r21-sbstop-p69;;
+		*) die "--gen 只认 p7/p54/p58/p59/p60/p61/p62/p63/p64/p65/p66/p67/p68/p69（见脚本头部）；收到: $GEN";;
 	esac
 	[ -n "${PFX_EXPLICIT:-}" ] || PFX=$GEN
 	[ -n "${RECIPE_EXPLICIT:-}" ] || RECIPE=$ROOT/$_rec
@@ -139,7 +140,10 @@ if [ -n "$GEN" ]; then
 	# 无指纹的代次：清掉可能残留的 p7 指纹，否则会拿 p7 件去比而误报 FAIL
 	[ -z "$_kept" ] && [ -z "${KEPT_EXPLICIT:-}" ] && KEPT=/dev/null
 	[ -n "${BUILD_ARCHIVE:-}" ] || BUILD_ARCHIVE=$ROOT/reports/artifacts/$_bd
-	note "世代 $GEN ⇒ 配方 $_rec / 构建 $_bd / 指纹 ${_kept:-（无）}"
+	# 2026-11-10R70：`_out` 此前**从未**被用上，`--gen p69` 的件默默落进 `out/r21-sbstop/`（p7 目录），
+	# 与 `p7-*` 件混在一起（错模式静默，PITFALLS #590 同族）。现在默认按世代分目录。
+	[ -n "${OUTDIR_EXPLICIT:-}" ] || OUTDIR=$ROOT/out/$_out
+	note "世代 $GEN ⇒ 配方 $_rec / 构建 $_bd / 指纹 ${_kept:-（无）} / 产出 out/$_out"
 	PREAMBLE=uefi-preamble${PFX#p}-r1.img   # 必须在改完 PFX 后重算（否则仍叫 preamble7）
 fi
 

@@ -1,0 +1,1 @@
+292f26910f853dcfa37ec25b737dd9e752fa1ebcc2d64f2dd41ad9d134fcd282  reports/artifacts/uefi-flashed-20261110-152923-ctrl-known-good-into-boot_a/logfs-pre.bin

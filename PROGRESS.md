@@ -116,7 +116,7 @@
 |---|---|---|
 | **G1** 功能健全的 Linux | 多数驱动已工作（暖起） | 按“驱动 bring-up 完整性”度量；**上游化 M 系列（以 `TASKS` §7 为准）进行中** |
 | **G2** 安卓容器（Waydroid） | 主链路已通 | 图形/内核/GAPPS/代理可用，**容器传感器 HAL 已打通**、**容器音频已打通**（C6）、**C2 GMS 登录**、**C10 马达透传**（AIDL V2 + 固化 vendor.img）、**C11 触屏中文输入法**（squeekboard + fcitx5/Rime + OSK0）；Play Integrity/SafetyNet、Widevine 等级仍在收口 |
-| **G3** x86 模拟（Steam） | **PoC ✅** | Box64 + Wine 成功；Steam 游戏端到端未上机 |
+| **G3** x86 模拟（Steam） | **PoC ✅ / Steam 登录界面 ✅** | Box64 + Wine 成功；官方 ARM64 Steam 客户端 2026-10-28 起到登录界面（3/3 轮、证据 `reports/g3-steam-20261028.md`）、截图判据 10-29 闭环；Steam 游戏端到端（图形/音频/性能）未上机 |
 
 ---
 

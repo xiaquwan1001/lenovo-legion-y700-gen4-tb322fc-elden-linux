@@ -13,9 +13,16 @@
 
 ## 0. 一句话现状
 
-主线 Linux（7.x）在这块板子上**大多数子系统已经能工作**（显示/图形/触屏/网络/音频/温控/串口/相机出流…）。
-显示子系统曾有一个冷启动竞态（`Q28`：冷开机有概率只有背光无画面），**2026-10-24 按「已规避」结项** ——
-代码级修复（MDSS 复位搬移 + 两处软件修）+ 看门狗兜底已上机，运营样本 8/8 无坏发；**根因未彻底定位**，复启与全部判据只读 [`TASKS/README.md`](TASKS/README.md) §5（Q28 行）。
+主线 Linux（当前日常线基于 **stable 7.3.1**，2026-11-07 重基上机全绿）在这块板子上**大多数子系统已经能工作**
+（显示/图形/触屏/网络/音频/温控/串口/相机出流+拍照、传感器、Waydroid 容器主链路…），日常已可日用。
+
+近期几件大事（详见 [`PROGRESS.md`](PROGRESS.md) 时间线）：
+
+- **2026-11-07**：内核重基到 `v7.3.1`（`vk185-adsp`）并写入 `boot_b`；同日 **UEFI 间接引导首次真交棒**（零写盘，`root=/dev/sda17` 直接起主线内核）。
+- **2026-11-08**：UEFI 路线 B 打通 —— ESP 上的 `boot.img` 由固件 `LinuxLoader` 变体直接读起；同晚启动菜单（屏显 + 音量键 + 电源键）闭环。
+- **2026-11-09…11-10**：**flashed 形态（写 `boot_a`）仍失败** —— 同件两形态对照证明失败点在 **BdsDxe 之前**（信标一字节未写），与任何单个补丁无关；还在定位（详见 [`TASKS/README.md`](TASKS/README.md) §4 N1）。
+- Waydroid 侧 11 月收尾：容器相机到 App 预览 `STREAMING`、触屏中文输入法上机、马达/音频/传感器全链固化进镜像。
+- 显示子系统历史竞态 `Q28`（冷开机概率只有背光）已于 2026-10-24 **按「已规避」结项**；**根因未彻底定位**，复启条件与全部判据只读 [`TASKS/README.md`](TASKS/README.md) §5（Q28 行）。
 
 **这个仓库不是“刷机教程”，是研究记录。** 刷机有变砖风险，详见 §6。
 
@@ -56,9 +63,10 @@
 
 | 目标 | 状态（权威数字见 [`TASKS/README.md`](TASKS/README.md) §0） | 说明 |
 |---|---|---|
-| **G1** 驱动 bring-up | 多数驱动已工作 | **冷起显示竞态 `Q28` 已按「已规避」结项**（2026-10-24，运营线 8/8 无坏发；不补样本、不挖根因，复启条件见 `TASKS` §5）；**上游化 M 系列（以 `TASKS` §7 为准）已启动**：多个系列已投递并归档（dwc3 / wl2868c 已到 **v8 → v9**、aw86927 v2、M10 ADSP DT），B5 bonded-DSI（M6）v2 按维护者复启条件封存（逐条见 `TASKS` §7 的 M 行） |
-| **G2** 安卓容器 | 主链路已通 | Waydroid 图形/内核/GAPPS/代理通路可用；**容器传感器 HAL 已打通**（宿主 gbinder 注入 + 真值 SSC→UDP）、**容器音频打通**（C6：闹钟出声 + 录音 + MediaCodec 53）、**C2 GMS 登录**（用户人工验证）、**C10 马达透传**（AIDL V2 幅度控制+固化进 vendor.img）；Play Integrity / SafetyNet、Widevine 等级仍在收口 |
-| **G3** x86 模拟 | **PoC ✅** | Box64 + Wine PoC 成功；Steam 端到端未上机 |
+| **G1** 驱动 bring-up | 多数驱动已工作；日常线基于 stable 7.3.1 | **日常内核 2026-11-07 重基到 `v7.3.1` 并写入 `boot_b`**（`vk185-adsp`，上机全绿）；**冷起显示竞态 `Q28` 已按「已规避」结项**（2026-10-24，运营线 8/8 无坏发；复启条件见 `TASKS` §5）；**上游化 M 系列（以 `TASKS` §7 为准）进行中**：多个系列已投递并归档（camss SM8750 系列、dwc3、wl2868c 已到 v9、aw86927、M9 ITS-kexec、M10 ADSP DT 等，逐条见 `TASKS` §7） |
+| **G2** 安卓容器 | 主链路已通 | Waydroid 图形/内核/GAPPS/代理通路可用；**容器传感器 HAL**（真值 SSC→UDP）、**容器音频**（C6）、**C2 GMS 登录**（用户人工验证）、**C10 马达透传**（AIDL V2 + 固化进 vendor.img + Settings 强度档位）、**C11 触屏中文输入法**（squeekboard + fcitx5/Rime，2026-10-20 上机验收）、**容器相机到 App 预览 `STREAMING`**（2026-10-29）；Play Integrity / SafetyNet、Widevine 等级仍在收口 |
+| **G3** x86 模拟 | **PoC ✅ / Steam 登录界面 ✅** | Box64 + Wine PoC 成功；官方 ARM64 Steam 客户端 2026-10-28 起到登录界面（实测证据 `reports/g3-steam-20261028.md`），截图判据 10-29 闭环；Steam 游戏端到端（图形/音频/性能）未上机 |
+| **拓展** UEFI 间接引导 | 🟡 零写盘形态已通，flashed 形态未通 | `fastboot boot` 的 UEFI 件已能读起 ESP 上的 `boot.img`（路线 B，2026-11-08）+ 启动菜单闭环；**写 `boot_a` 的 flashed 形态仍失败**，2026-11-10 同件对照定位到**失败点在 BdsDxe 之前**（详见 `TASKS` §4 N1 / §5 的 2026-11-10 块）。Gunyah 已终局裁决不做（2026-10-25） |
 
 已工作（有实测证据）：显示/图形（暖起）、触屏、WiFi/BT、USB（NCM 网卡 + ACM 串口）、
 音频播放与输入、温控、CDSP、DisplayPort、相机出流（按需加模块）、持久磁盘根 + Phosh 桌面自启、
@@ -66,11 +74,12 @@ A/B 槽管理、**安卓容器传感器**（加速/陀螺/光/磁/接近，真�
 **容器音频**（C6：闹钟出声、录音、`/dev/fuse` emulated storage）、桌面用户态深色模式/亮度滑块/自动旋转磁贴。
 明细与证据见 [`TASKS/README.md`](TASKS/README.md) §1。
 
-**未解决 / 正在查（见 §4）**：进桌面后整机卡死 `#106`（唯一仍开放的显示类问题）、
+**未解决 / 正在查（见 §4）**：进桌面后整机卡死 `#106`（唯一仍开放的显示类问题）、UEFI flashed 形态启动失败（失败点在 BdsDxe 之前，见 §4/`TASKS` §4 N1）、
 以及**若干被我们自己推翻的结论**（诚实记录，见 `PROGRESS.md`）。
 （`Q28` 冷起显示竞态与 `Q32` 暖/冷起差异已于 2026-10-24 **按「已规避」结项**：运营线 8/8 无坏发、看门狗在役，用户裁决不再补样本；判据与复启条件只读 `TASKS` §5。）
 （`Q24` 熄屏×相机已于 2026-10-23 **根因指名**：7.2 血统缺上游 `skip retention by default`，7.3 线自带该修复。）
 （此前记录在案的桌面用户态三项 —— 深色模式/电源菜单图标/亮度滑块 —— 于 2026-10-11 上机复核通过。）
+（日用用户态基线 `G1-37`：sudo/locale/中文字体/输入法/zram 已于 2026-11-07 落地、11-09 全链收口，见 `TASKS` §1。）
 
 ---
 
@@ -78,9 +87,10 @@ A/B 槽管理、**安卓容器传感器**（加速/陀螺/光/磁/接近，真�
 
 | ID | 问题 | 状态 |
 |---|---|---|
-| **Q28** | **冷起显示间歇失败**：首条 DCS 命令 `ff 20` 的命令 DMA 引擎 hang → 面板未使能 → 只有背光无画面。两种表现：**NOCARD**（`card0` 没出现）与 **STORM**（有 `card0` 但 cmd-DMA/DPU 风暴）。 | **🟢 已规避·结项（2026-10-24，用户裁决不补样本）**。**2026-10-24 口径**：根因收窄到「首次 modeset 时命令引擎撞上 DYN 像素时钟域切换」，并定位两处代码缺陷（`dsi_bonded_cmd_failed` 单向闩锁、`link_configured` 误清）；**修复已上机**：把 MDSS 三块 BCR 复位搬到 display 侧 `msm_mdss_reset()` + 两处软件修，运营样本 = 真 POR 5/5 + 暖复位 3/3 = **8/8 无坏发**（判据：`DSI_PLL_lockfail=0`、`storm_sig=0`、mdss reset 失败 0、两路 pclk/byte parent 一致）；用户裁决**不再补样本、不再挖根因**。在机镜像只读 [`DEVICE/README.md`](DEVICE/README.md) §1.1。上游 RFC 在评审（`reports/q28-v2-mdss-reset-20261023.md`、`reports/q28-por-samples-r1r2-20261023.md`）。⚠ 已否证：~~构建身份伪造~~、~~`to_primary_dsi`~~、~~DSI ctrl+PHY 复位/软件闩锁/自定义 bonded 序列/使能期 force-on~~；冷起 A/B 必须真 POR（暖复位会粘坏态）。d`）。⚠ 已否证：~~构建身份伪造~~、~~`to_primary_dsi`~~、~~DSI ctrl+PHY 复位/软件闩锁/自定义 bonded 序列/使能期 force-on~~；冷起 A/B 必须真实 POR（暖复位会粘坏态）。 |
+| **Q28** | **冷起显示间歇失败**：首条 DCS 命令 `ff 20` 的命令 DMA 引擎 hang → 面板未使能 → 只有背光无画面。两种表现：**NOCARD**（`card0` 没出现）与 **STORM**（有 `card0` 但 cmd-DMA/DPU 风暴）。 | **🟢 已规避·结项（2026-10-24，用户裁决不补样本）**。**2026-10-24 口径**：根因收窄到「首次 modeset 时命令引擎撞上 DYN 像素时钟域切换」，并定位两处代码缺陷（`dsi_bonded_cmd_failed` 单向闩锁、`link_configured` 误清）；**修复已上机**：把 MDSS 三块 BCR 复位搬到 display 侧 `msm_mdss_reset()` + 两处软件修，运营样本 = 真 POR 5/5 + 暖复位 3/3 = **8/8 无坏发**（判据：`DSI_PLL_lockfail=0`、`storm_sig=0`、mdss reset 失败 0、两路 pclk/byte parent 一致）；用户裁决**不再补样本、不再挖根因**。在机镜像只读 [`DEVICE/README.md`](DEVICE/README.md) §1.1。上游 RFC 在评审（`reports/q28-v2-mdss-reset-20261023.md`、`reports/q28-por-samples-r1r2-20261023.md`）。⚠ 已否证：~~构建身份伪造~~、~~`to_primary_dsi`~~、~~DSI ctrl+PHY 复位/软件闩锁/自定义 bonded 序列/使能期 force-on~~；冷起 A/B 必须真实 POR（暖复位会粘坏态）。 |
 | **Q32** | **暖起（warm reset）与冷起（真 POR）的差异** —— 同一内核/DTB 为何会因复位深度不同而结果不同 | **已结项（并入 Q28，2026-10-24）：三臂 5 发全 GOOD，三个复位入口无差异**。静态预研已发现：现有证据**自相矛盾**（暖复位既有→NOCARD 也有 2/2 GOOD），所以判据只能是「**同一复位深度内是否一致**」；最可能的差异源 = **ABL 交接的 framebuffer**（7.2 DT 有 `chosen/framebuffer@fc800000`，7.3 树显式删除并注明 MDSS BCR 会把 ABL 交接的显示从 simpledrm 底下抽走）⇒ 真正的变量是「**本次启动 ABL 有没有留活显示**」，不是「暖/冷」这个代理指标。三臂实验已于 2026-10-24 跑完（5 发全 GOOD、入口无差异；预研记录 `reports/q32-warm-vs-cold-preresearch-20261023.md`）。 |
 | **#106** | **亮屏进桌面后整机卡死**（无 panic、SSH/USB 全失、只能物理断电）。历史上被记为“偶发”，本仓库记录了它与 **“干净的 GOOD 显示”强相关**的实测：显示真正起来后数秒内冻结。 | 未定性。已装 `softlockup_panic`+`ramoops` 自动取证，但硬看门狗被禁用+只能冷断电，**至今没抓到栈**。 |
+| **N1** | **UEFI flashed 形态（写 `boot_a`）启动失败** —— 零写盘 `fastboot boot` 已通（路线 B + 启动菜单），但写分区后固件不走到 BdsDxe。 | 🟡 未解。2026-11-10 同件两形态对照：`fastboot boot` 信标全序列出现（ESP-first 成功），写 `boot_a` 则**信标一字节未写** ⇒ 失败点在 **BdsDxe 之前**（PrePi/DXE dispatch 或 ABL 装载），与任何单个补丁无关（`p60` 对照件同败）。历史口径「flashed ⇒ `fs=1`」已被推翻。全程与下一步见 [`TASKS/README.md`](TASKS/README.md) §4 N1、§5「2026-11-10（p67/R68 信标 v3）」块、`reports/uefi-p67-flash-trial-20261110.md`。 |
 | **Q24** | 熄屏 × 相机 → 共存会常态掉电。 | **⛔ 已关闭（2026-10-24 用户裁决：不再取证）**；2026-10-23 根因已指名、停止采样**：7.2 血统缺上游 `pmdomain: qcom: rpmhpd: Skip retention by default`（7.3 线自带该修复）⇒ 7.3 上 41 发真实熄屏 0 死亡、7.2 上 6/8 死，**是版本差不是随机**；日常线无需本地补丁。运营上仍保留 `cam-mode.sh on/off` 互斥（安全策略，非既成事实）。 |
 | — | **结论纪律**：`vk81/82/83` 曾因构建事故成为“无 QCOM 驱动的死内核”，其上的结果**已作废**；`Q28` 一度被判定为“按内核二进制确定性”，经独立溯源审计后**已降级**（见 `PROGRESS.md`）。 | 已是流程的一部分：worker 结论必须由编排者独立复跑。 |
 

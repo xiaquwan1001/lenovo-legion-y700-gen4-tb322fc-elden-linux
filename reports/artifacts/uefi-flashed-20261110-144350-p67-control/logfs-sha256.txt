@@ -1,0 +1,2 @@
+c1981b63ad06621b64336d0b365323b9e56dd0a49c7d5b951ecf769bdc6da5f2  reports/artifacts/uefi-flashed-20261110-144350-p67-control/logfs-pre.bin
+144f7be45f0ada4cd176434c8d97aae5472f400d0fed1aabd5aeb4599e053cd3  reports/artifacts/uefi-flashed-20261110-144350-p67-control/logfs-post.bin

@@ -368,3 +368,9 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261107R52-p57/*payload*
 /reports/artifacts/uefi-20261107R52-p57/kernel.bin
 /reports/artifacts/uefi-20261107R52-p57/build.log
+
+# ---- 2026-11-10：flashed 形态试验目录（scripts/uefi-flashed-trial.sh）----
+# 每个目录两份 8 MiB logfs 全量快照（pre/post）= 17 MB，且本轮已证明「失败那一发不写记录、
+# pre/post 除 slot0 外逐字节相同」⇒ binary 本身信息量极低。只留文本 + 一份 logfs-sha256.txt
+# （记录两份快照的 sha，据此可判断「是否变过」），重跑同一条命令即可复现。
+/reports/artifacts/uefi-flashed-*/logfs-*.bin

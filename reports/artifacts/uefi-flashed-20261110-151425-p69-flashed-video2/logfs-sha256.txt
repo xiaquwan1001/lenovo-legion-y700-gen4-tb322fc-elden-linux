@@ -1,0 +1,2 @@
+af1d491cba7fac50f362766825c74df7f2134824216b38bcf915611621057bb0  reports/artifacts/uefi-flashed-20261110-151425-p69-flashed-video2/logfs-pre.bin
+292f26910f853dcfa37ec25b737dd9e752fa1ebcc2d64f2dd41ad9d134fcd282  reports/artifacts/uefi-flashed-20261110-151425-p69-flashed-video2/logfs-post.bin
