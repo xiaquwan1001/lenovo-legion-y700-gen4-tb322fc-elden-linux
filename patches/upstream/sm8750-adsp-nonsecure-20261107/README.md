@@ -37,3 +37,19 @@ perl scripts/checkpatch.pl --strict --no-tree --terse 0001-*.patch              
 
 - 本补丁**不是** elden 板级 DTS（板件仍 held-back）；它只改 SoC dtsi 一行，对所有 SM8750 板适用。
 - 若维护者要求与「板件/消费者」一起发，按 `TASKS` §7 的 M 系列口径等待，不单独 ping。
+
+## v2 投递（2026-11-10，用户批准「先发送」）
+
+| 项 | 值 |
+|---|---|
+| 时间 | 2026-11-10T02:31:53Z（本地 10:31 +0800） |
+| 件 | `out/mail-20261110/0001-…-v2.patch`（= v1 + `[PATCH v2]` + v2 changelog + `Fixes:` 尾行，**diff 未变**） |
+| Message-ID | `<20261110023153.84262-1-xiaqinghuan@mail.ustc.edu.cn>` |
+| SMTP | `Result: 250`（日志 `out/mail-20261110/send.log`） |
+| `Fixes:` 哈希 | `be9d54c35312479ed92c85aec3cd43153513210d`，**投前用 lore 原始件独立复核**（`[2/2] arm64: dts: qcom: sm8750: add ADSP fastrpc-compute-cb nodes`） |
+| 门禁 | `checkpatch --strict` 0 error / 1 warning（`Unknown commit id`，本机压缩导入树无上游历史所致）；`git apply --check` 在 `build/m3v2-7.3rc7`、`build/daily` 均 OK |
+| lore | ✅ 已归档：`/all/20261110023153.84262-1-…/`（2026-11-10T02:32:02Z） |
+| 线程 | `In-Reply-To` 挂在 v1 上；本线程此前只有我方 v1 + sashiko 一封（11-07），无人工回复 |
+
+备注：`read-mail-ustc.py --days 1` 本轮**崩了（SIGTRAP/core dump）**，回环与退信因此未用该脚本核对；
+lore 归档 + `Result: 250` 是本轮的投递判据。下次用它之前先修脚本（另开一项）。
