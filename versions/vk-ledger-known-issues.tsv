@@ -373,3 +373,4 @@ m3v5-onboard	uts_dup12	M3-1 v5 pristine 候选（实验内核，未入日常线�
 vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）
 m3v5-onboard-b	uts_dup12	M3-1 v5 复测件（实验内核，未入日常线）：复用 pinned vk172 UTS；initramfs 补 gadget 14 模块后仍 USB 零枚举 ⇒ pristine 平台启动假设；不做上机载体；身份由 kernel_payload_sha256 锚定
 posctrl-20261103	uts_dup8	正控载荷（2026-11-03）：刻意复用 pinned vk172 UTS 以匹配设备 /lib/modules；身份由 kernel_payload_sha256 锚定；用途只在「内核最早入口写 DRAM 标记」取证，不作日常启动
+vk184	uts_dup2	C12/droidloom L1：vk187b 刻意复用 vk184 的 LOCALVERSION 以匹配设备现成 87 M 模块树（否则全部 =m 驱动不加载 ⇒ 无 /dev/dri，vk187 首版即栽在这）；两镜像内核二进制不同（c76bc2e8 vs 1d11e815），身份由 kernel_payload_sha256 锚定。**收口后应移除本行**（2026-11-10）

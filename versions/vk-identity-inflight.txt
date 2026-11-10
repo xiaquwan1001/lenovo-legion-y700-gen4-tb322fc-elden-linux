@@ -54,4 +54,5 @@
 # vk187 = vk184 + 仅 nftables 一档配置（.config 不入 git，故源提交与 vk184 相同 ⇒
 # num_ne_tag(vk184) 是预期噪声，不是溯源错误）。**未上机**；上机验收（nft list ruleset
 # 不报错 + droidloom-doctor kernel.network_isolation PASS）后**必须**从本文件删掉。
-boot-elden-vk187.img   # C12 L1：nftables 配置档，源提交同 vk184
+boot-elden-vk187.img   # C12 L1 首版（-vk187 无模块树，已作废，勿上机）
+boot-elden-vk187b.img  # C12 L1 可上机版（LOCALVERSION=-vk184 复用模块树），2026-11-10 上机全绿
