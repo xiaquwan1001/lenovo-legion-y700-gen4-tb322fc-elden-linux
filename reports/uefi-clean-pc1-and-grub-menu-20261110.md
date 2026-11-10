@@ -17,7 +17,7 @@
 | **对照** | p69（含 R70 三个 25 s 停留）：128.7 s；本轮 39 s ⇒ **R70 的 74 s 停留 + 慢速屏显已被去掉**。注意：与「p67 = 54.5 s」的口径可能不同（那一条是旧测法），同法复测后才能给严格差值 |
 | **GRUB 双层菜单** | GRUB 菜单可用（用户已确认）；**GRUB 侧看不到倒计时**是**结构性**的：GRUB 的倒计时文字走 `ConOut` 打印，而本平台 `ConOut` 被 R7 补丁设成 no-op（屏上是 GOP 绘制的菜单本体）⇒ 交互件改 `timeout=-1`（永不自动启动） |
 | **真正的 bug 在我们自己的 loader 菜单** | 用户看到的「8 s 到点仍进入下一阶段 / 进了非预期条目」= **`Loader.efi` 的 `LMenuSelect()`**：倒计时只画一次（数字不走）+ `Start` 不因按键重置 + 结尾 `if (mLMenuTimeout == 0) Sel = 0;` 会强拉回第 0 项 ⇒ 已修（R72） |
-| **R72 loader** | `out/espboot-20261110/Loader-r72.efi`（184 832 B，`566cb12d…`）：标题每秒重画剩余秒数、**任何按键即取消自动启动**（`[L] menu autoboot off`）、删掉强拉回第 0 项的老逻辑 |
+| **R72 loader**（已被 R73 取代，见 §4） | `out/espboot-20261110/Loader-r72.efi`（184 832 B，`566cb12d…`）：标题每秒重画剩余秒数、**任何按键即取消自动启动**（`[L] menu autoboot off`）、删掉强拉回第 0 项的老逻辑 |
 
 ---
 
@@ -118,3 +118,21 @@ ssh elden-root 'reboot bootloader'; fastboot boot out/r21-sbstop-pc1/uefi-preamb
   ESP 侧 `loader.log`/`espboot.log` 照写，cmdline 令牌 `elden_bootloader=esp` 照旧；需要屏上判据时用 `p69` 件或删掉 `#define ELDEN_FB_QUIET` 重编。
 * **残项（非阻塞）**：① 与「p67 = 54.5 s」同法复测以给严格差值；② R47/R48/R49（看门狗，已证无效但无害）仍在栈里，
   下一步「去无用调用」一轮再删；③ GRUB 直连内核要等 EFI-stub/内存图问题解决（`#558`），当前不做。
+---
+
+## 4. R72 上机第一发的结果与 R73 修正（2026-11-10 晚，用户实测）
+
+| 用户反馈 | 判读 |
+|---|---|
+| ①「倒计时」成功 | 标题秒数逐秒递减成立 ⇒ R72 的每秒重画有效 |
+| ②「按下音量键出现了 auto cancel 但**一下就进入系统**」 | **R72 自身的 bug**：把「取消自动启动」实现成 `Timeout = 0`，而主循环是 `while (Timeout > 0)` ⇒ 置 0 让循环**立刻退出**，随后照常「应用当前选择」⇒ 立刻启动；标题在退出前已被重画成 `autoboot cancelled`，所以看着像取消了 |
+| T2 GRUB 四条目正常 | GRUB 交互件（`timeout=-1`）与 chainload 条目可用 |
+
+**R73 修正**（`patches/uefi/20261110R73-loader-menu-wait/0001-loadermenu-wait-for-confirm.patch`）：
+主循环改 `while (TRUE)`，超时判定只在「从未按键」时生效；按键后**唯一**启动路径 = Power（`SCAN_SUSPEND`，
+落日志 `[L] menu confirm`）；`#timeout` 缺省时仍保持零等待旧行为。件 = `out/espboot-20261110/Loader-r73.efi`
+（184 832 B，`6e51fc60…`），已写入 ESP 的 `BOOTAA64.EFI` 与 `/EFI/elden/Loader.efi`（读回一致、`fsck.vfat` 干净）。
+
+**待验判据**：按音量键 → 标题 `autoboot cancelled` → 画面**长时间停住** → 按 Power 才起；
+`\loader.log` = `autoboot off` →（可选 `menu sel N`）→ `menu confirm` → `menu boot …`，**且无** `menu timeout`。
+

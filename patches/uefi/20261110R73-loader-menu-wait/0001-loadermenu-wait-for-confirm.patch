@@ -1,0 +1,93 @@
+Subject: [PATCH] LinuxLoader: 菜单按键后真正停在等待状态（R72 的循环条件错误）
+
+2026-11-10R73 y700-elden —— R72 上机第一发的实测反馈（用户，2026-11-10 晚）：
+
+  「1 成功，2 不对：按下音量键出现了 auto cancel 但**一下就进入系统**」
+
+## 根因（R72 自己的 bug）
+
+R72 把「按键 ⇒ 取消自动启动」实现成 `Timeout = 0`，而主循环是 `while (Timeout > 0)`：
+置 0 让循环**立刻退出**，随后照常走「应用当前选择」⇒ 立刻启动（正是用户看到的行为）。
+标题在退出前已被重画成 `autoboot cancelled`，所以看起来「取消了」，其实已经落到启动路径。
+
+## 改法
+
+* 循环改 `while (TRUE)`：超时判定只在 `!Keyed`（从未按键）时生效；按键后 `Timeout=0` 只表示「不再自动启动」。
+* 按键后唯一的启动路径 = **Power（`SCAN_SUSPEND`）**，并落日志 `[L] menu confirm`。
+* `Key != Last` 去抖语义保持（按住不放不连续触发）；无键时 `Last` 复位为 `SCAN_NULL`。
+* `menu.cfg` 未给 `#timeout` 时仍保持旧行为：零等待取第 0 项。
+
+## 判据（上机）
+
+按音量键 → 标题 `autoboot cancelled` → **画面长时间停住**（不再自己启动）→ 按 Power 才起。
+`\loader.log`：`[L] menu autoboot off` →（可选 `[L] menu sel N`）→ `[L] menu confirm` → `[L] menu boot …`；
+**且没有** `[L] menu timeout`。
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -607,10 +607,14 @@
+ 
+   Start   = GetTimerCountms ();
+   Timeout = (UINT64)mLMenuTimeout;
+-  while (Timeout > 0) {
++  /* 2026-11-10R73 y700-elden: 循环条件**不能**用 Timeout —— 按键后把 Timeout 置 0 会让 while 立刻退出，
++   * 随即按当时高亮项启动（2026-11-10 上机实证：按音量键 → 标题变 autoboot cancelled → 一下进系统）。
++   * 改为常真循环：超时只在**没有按键**时生效；按键之后必须按 Power（SCAN_SUSPEND）确认才启动。 */
++  while (TRUE) {
+     UINT32 Key = LMenuKey ();
+ 
+-    if (Key != SCAN_NULL) {
++    if ((Key != SCAN_NULL) && (Key != Last)) {
++      LLog ("[L] menu key", (UINT64)Key);
+       if (!Keyed) {
+         /* 第一次按键 ⇒ 关掉自动启动（此后只在按确认键时启动） */
+         Keyed   = TRUE;
+@@ -620,27 +624,30 @@
+                      "Boot menu   (Vol +/- move, Power = OK, autoboot cancelled)");
+         LMenuDrawRow (0, Title2, BGR_BLACK, COMMON);
+       }
+-    }
+-    if (Key != Last) {
+-      if (Key != SCAN_NULL) {
+-        LLog ("[L] menu key", (UINT64)Key);
+-        if (Key == SCAN_DOWN) {
+-          Sel = (Sel + 1) % mLMenuCount;
+-          LMenuDrawSelect (Sel);
+-        } else if (Key == SCAN_UP) {
+-          Sel = (Sel + mLMenuCount - 1) % mLMenuCount;
+-          LMenuDrawSelect (Sel);
+-        } else if (Key == SCAN_SUSPEND) {
+-          Last = Key;
+-          break;
+-        }
+-        AsciiSPrint (Line, sizeof (Line) - 1, "[L] menu sel %d", (UINT32)Sel);
+-        LLog (Line, MAX_UINT64);
++      if (Key == SCAN_DOWN) {
++        Sel = (Sel + 1) % mLMenuCount;
++        LMenuDrawSelect (Sel);
++      } else if (Key == SCAN_UP) {
++        Sel = (Sel + mLMenuCount - 1) % mLMenuCount;
++        LMenuDrawSelect (Sel);
++      } else if (Key == SCAN_SUSPEND) {
++        LLog ("[L] menu confirm", MAX_UINT64);
++        break;
+       }
++      AsciiSPrint (Line, sizeof (Line) - 1, "[L] menu sel %d", (UINT32)Sel);
++      LLog (Line, MAX_UINT64);
+       Last = Key;
++    } else if (Key == SCAN_NULL) {
++      Last = SCAN_NULL;
+     }
+-    /* 未按键时每秒重画一次标题上的剩余秒数（原实现只在开局画一次，看不出在走） */
+-    if (!Keyed || (Timeout > 0)) {
++
++    if (!Keyed) {
++      if (Timeout == 0) {
++        /* menu.cfg 没给 #timeout ⇒ 保持旧行为：零等待取第 0 项 */
++        Sel = 0;
++        break;
++      }
++      /* 未按键时每秒重画一次标题上的剩余秒数（原实现只在开局画一次，看不出在走） */
+       Elapsed = (GetTimerCountms () - Start) / 1000;
+       if (Elapsed != Tick) {
+         Tick = Elapsed;
