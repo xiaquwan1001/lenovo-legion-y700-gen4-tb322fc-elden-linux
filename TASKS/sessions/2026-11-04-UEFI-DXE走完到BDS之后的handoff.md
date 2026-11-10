@@ -13,7 +13,7 @@
   5. BDS 无目标 ⇒ 复位 ⇒ 原厂 recovery（二维码页，字符串在本仓 0 命中 ⇒ 非我们的 UI）。
 - **证据指针**：
   - 正文/逐发判据：`reports/uefi-ramoops-channel-20261104R.md` §8–§11
-  - 交接文档（下轮入口）：`.pi/plans/2026-11-04_handoff-uefi-dxe-to-linux.md`
+  - 交接文档（下轮入口）：`archive/plans-20261110/2026-11-04_handoff-uefi-dxe-to-linux.md`
   - 上机件：`out/uefi-20261104R{1..12}-r1.img`，现场 `reports/artifacts/uefi-boot-20261104R*-r1/`，trial `reports/trials/20261104T*.json`
   - 新坑：`PITFALLS/sessions/162-UEFI进DXE之后的取证纪律.md`（#498–#502）
 - ★SSOT 待并入：无（DEVICE §1.1 已记录设备停在 fastboot，2026-11-05）

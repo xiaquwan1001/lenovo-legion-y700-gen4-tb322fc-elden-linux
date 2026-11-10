@@ -146,4 +146,4 @@ for f in $FILES; do
 done
 $SSH 'mv -f /boot/grub.cfg /boot/grub/grub.cfg && ls -l /boot /boot/grub' || die "写 /boot/grub/grub.cfg 失败"
 say "已落设备：/boot/{Image,initrd.img$([ -f "$OUT/elden.dtb" ] && echo ,elden.dtb)}, /boot/grub/grub.cfg"
-say "下一步（需用户批准）：建 ESP + 把 build/grub-arm64/grubaa64.efi 放到 \\EFI\\BOOT\\BOOTAA64.EFI —— 见 .pi/plans/2026-11-08-g1-29-menu-esp-p59.md"
+say "下一步（需用户批准）：建 ESP + 把 build/grub-arm64/grubaa64.efi 放到 \\EFI\\BOOT\\BOOTAA64.EFI —— 见 archive/plans-20261110/2026-11-08-g1-29-menu-esp-p59.md"

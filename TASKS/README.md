@@ -142,7 +142,7 @@
 - **M 系列（G1 上游化）投递** —— 队列与状态以 §7 为准；投递解冻由用户按批放行，agent 不等回复。补丁目录投递状态对账（10 目录 README 状态行过期已修、3 未证实）见 `reports/patch-delivery-audit-20261107.md`。
 - **N2 Gunyah VM** —— 终局裁决 2026-10-25 = **本 firmware 下不做**（权威 `reports/gunyah-decision-20261025.md`）；6.12 驱动集只作 G1 上游补丁素材封存（§7 M9）。
 - **T9 suspend 掉电率** —— 🔽 2026-10-28 用户裁决：优先级最低、暂不排期（恢复时按归档的历史口径；权威 `reports/qca-fw-download-suspend-20261021.md`、`reports/t9-vk130-pcie-l2-live-20261021.md`）。
-- **H1 资产清理（2026-11-05 整理轮收尾）** —— `build/` 已清扫 190.7 G→17 G（执行账 `reports/asset-tidy-20261105.md` §7）；**`out/` 历史镜像已归档**（2026-11-05：129 件→`out/` 留 15 件，114 件移 `backup/out-history-20261105/`，逐件 sha + 回滚脚本；`vk-kernel-identity.tsv` 一行未改、`check-doctor` FAIL=0；执行账 `reports/out-archive-20261105.md`、工具 `scripts/out-archive.py`）；**11-06 的 UEFI 档清理执行账** = `reports/out-uefi-trim-20261106.md`（`out/r21-sbstop` 4.8 G → 删 72 件，逐件 sha 与回滚脚本）；**剩两件已结案（用户 2026-11-06 裁决）**：`.pi/trash` **不清理（等用户自己清）**、`backup/` 与 `.pi/sessions` **不上云、留本地** ⇒ 不再每轮询问（账目口径见 `RESOURCES/README.md` §3 的 B2/B4）。详见 `.pi/plans/2026-11-05-交接-下一轮会话.md` §2 与 `RESOURCES/README.md` §3 的 B2–B4/H1。
+- **H1 资产清理（2026-11-05 整理轮收尾）** —— `build/` 已清扫 190.7 G→17 G（执行账 `reports/asset-tidy-20261105.md` §7）；**`out/` 历史镜像已归档**（2026-11-05：129 件→`out/` 留 15 件，114 件移 `backup/out-history-20261105/`，逐件 sha + 回滚脚本；`vk-kernel-identity.tsv` 一行未改、`check-doctor` FAIL=0；执行账 `reports/out-archive-20261105.md`、工具 `scripts/out-archive.py`）；**11-06 的 UEFI 档清理执行账** = `reports/out-uefi-trim-20261106.md`（`out/r21-sbstop` 4.8 G → 删 72 件，逐件 sha 与回滚脚本）；**剩两件已结案（用户 2026-11-06 裁决）**：`.pi/trash` **不清理（等用户自己清）**、`backup/` 与 `.pi/sessions` **不上云、留本地** ⇒ 不再每轮询问（账目口径见 `RESOURCES/README.md` §3 的 B2/B4）。详见 `archive/plans-20261110/2026-11-05-交接-下一轮会话.md` §2 与 `RESOURCES/README.md` §3 的 B2–B4/H1。
 - **H2 完整性巡检（每轮收尾，2026-11-05 起）** —— `bash scripts/check-doctor.sh` + 镜像基线复算（`versions/out-images-sha256-20261105.tsv`，命令在表头；**必须走 `O_DIRECT`**，普通读会命中被位翻转的页缓存副本，见 `PITFALLS #513`）+ 项目仓与 `geekidos-linux` 的 `git fsck --full`。判据与背景 = `PITFALLS #512`/`#513`、`reports/integrity-audit-20261105.md`（磁盘侧真损坏 0）；§16「TASKS §0 手写数字 ↔ 计数脚本对账」子门来源 = `reports/counts-gate-20261107.md`。**整理轮审计账**：`reports/doc-audit-20261108.md`（三条发现已全部修完）、`reports/asset-inventory-20261108.md`（资产盘点）。。⚠ 禁用 `echo 3 > /proc/sys/vm/drop_caches`（本机实测卡死重启）。
 
 ### 收尾轮次纪律（2026-10-23 用户定，仍有效）
@@ -309,7 +309,7 @@
 - **路线裁决**：走 **B**（ESP 放 `boot.img`，由 Mu `LinuxLoader` 变体 ESP-first 读件），不做 A（改固件内存表）。
   静态核对把改动面收到**一个函数**：`LoadImageAndAuth()`（`VerifiedBoot.c:1658`）加「ESP 优先」分支——
   因为 `BootLinux()` 取件走 `GetImage()` 只是查 `Info->Images[]` 表（`BootLinux.c:1445`），内存图/DTB/ramdisk 全复用 p58 已验证路径。
-  计划 `.pi/plans/2026-11-08-g1-29-route-b-espboot.md`（D1–D5 + 回退），实现 `reports/route-b-impl-20261108.md`（R55 补丁 + `Loader.efi` 176 640 B `3a846511…`）。
+  计划 `archive/plans-20261110/2026-11-08-g1-29-route-b-espboot.md`（D1–D5 + 回退），实现 `reports/route-b-impl-20261108.md`（R55 补丁 + `Loader.efi` 176 640 B `3a846511…`）。
 - **上机 1 发（零写盘）**：p59 + GRUB `default=1` → chainloader ESP `/EFI/elden/Loader.efi`；ESP 侧 `/boot/boot.img`（vk184 + 令牌
   `elden_bootloader=esp`，`33a67e1f…`）、`/boot/dtbo.img`、`Loader.efi`。结果：**屏上与上午 EFI-stub 墙逐行相同**
   （`[I] ? base=…C5D80000 size=03F40000` → `DBI dump table info not found` → `App Log Flush`），随后随机掉电回 `boot_b`；
@@ -364,7 +364,7 @@
      不缩 `userdata`、不移动任何分区（回退 = 删该分区）。
 - **工具**：`scripts/grub-bootfiles.sh`（boot.img → Image/initrd/dtb/grub.cfg；`--device … --apply` 只写 `/boot`）；
   boot.img 里 kernel 是 **gzip**，GRUB 不认 ⇒ 必须先解压（脚本已做，并验 `MZ`+`ARMd` = EFI-stub）。
-- **下一步（需用户批准，属写盘/上机）**：`.pi/plans/2026-11-08-g1-29-menu-esp-p59.md` D1–D4：建 ESP → 装 GRUB+`/boot` 文件
+- **下一步（需用户批准，属写盘/上机）**：`archive/plans-20261110/2026-11-08-g1-29-menu-esp-p59.md` D1–D4：建 ESP → 装 GRUB+`/boot` 文件
   → p59 的 `R54-espfirst`（BDS 优先起 ESP 的 `BOOTAA64.EFI`，不赌 BootOption 排序/不去碰 FAT 的 `modem_b`）→ 上机 1 发；
   判据 = 屏上 GRUB 菜单 + `/proc/cmdline` 含只在 grub.cfg 里写的令牌 + `boot_b` sha 未变。
 - **正文/证据**：`reports/uefi-grub-menu-qemu-smoke-20261108.md`；会话 `TASKS/sessions/2026-11-08-G1-29后半-GRUB菜单主机侧备料.md`；
@@ -642,7 +642,7 @@
 ### 2026-11-06（深夜）：**真启动崩溃真因 = 我们自己的探针写屏**（修好后真路径首次到 EB）— p13→p24 十一代件
 
 - **当日合并盘点**：`reports/uefi-day-20261106-digest.md`（11-06 四段推进 + 5 条作废归因 + 稳定资产；本文四个 11-06 块仍是逐段权威）。
-- **下轮入口**：`.pi/plans/2026-11-06_uefi-batch-next.md`（p25 邻域装载表 / p26 异常处理器 PC→模块 + 2 发上机排产 + 分支 A/B + 止损线）。
+- **下轮入口**：`archive/plans-20261110/2026-11-06_uefi-batch-next.md`（p25 邻域装载表 / p26 异常处理器 PC→模块 + 2 发上机排产 + 分支 A/B + 止损线）。
 - **一句话**：`LoadImageAndAuth()` 入口那行 `SbProbeMode = … : 0;` **无条件**把探针模式重置为 0，
   把 R4 设的默认 3（沉默）覆盖掉 ⇒ 真件（cmdline 无令牌）里十几次 `SbVProbe` 直写帧缓冲
   （scale 3 每行 ≈274 KiB × 十几行 ≫ splash 前 ~448 KiB）⇒ `PITFALLS #514/#515` 写穿机制。
@@ -763,14 +763,14 @@
 
 ### 2026-11-04（更深夜）：路线重排 —— **loader 早就在 FV 里（`LinuxLoader`），只是没人启动它** ⇒ 首选改成路线 D
 
-- **下轮入口**：`.pi/plans/2026-11-04_late-uefi-routeD-linuxloader.md`（复核 + 7 条新增主机侧事实 + R13 实施单 + 风险表）。
+- **下轮入口**：`archive/plans-20261110/2026-11-04_late-uefi-routeD-linuxloader.md`（复核 + 7 条新增主机侧事实 + R13 实施单 + 风险表）。
 - **更正上块**：`QcomModulePkg` **在树里也编了**（`build.log:4354`），`LinuxLoader` 的 FFS（GUID `F536D559-459F-48FA-8BBC-43B554ECAE8D`）就在 `FVMAIN.Fv.txt` 末行 `0xC126B0`；它没跑的唯一原因是 `MODULE_TYPE = UEFI_APPLICATION`，而 `Dispatcher.c:73 mDxeFileTypes[]` 不含 `APPLICATION`（`PITFALLS #503`）。
 - **路线重排 D > A > B**：D = BdsDxe 里 `LoadImage`+`StartImage` 这个 FV 内应用 → 它写死 `BootIntoFastboot=TRUE` ⇒ 进 UEFI 侧 fastboot → 宿主 `fastboot continue` 启 `boot_b`（`FastbootCmds.c:2685/2854` → `LoadImageAndAuth` → `BootLinux`）；**新增字节 0、不动盘、启的就是今天 ABL 启的同一份 boot.img**。解锁态 AVB 走 `ALLOW_VERIFICATION_ERROR`（`VerifiedBoot.c:1105`）、`EnableMdtpSupport=FALSE` ⇒ 自签镜像不被拦。
 - **A（GRUB 进 FD）降为退路且已验尺寸**：FD 尾部空 `1 727 675 B`；`grub-mkstandalone -O arm64-efi` 最小集 = `2 093 056 B`、`xz -9` = `1 174 968 B` ⇒ 压得进。arm64 模块可从 USTC 镜像 `grub-efi-arm64-bin_2.14-2ubuntu1_arm64.deb` 现取（本机已解包实测）。
 
 ### 2026-11-04（深夜）：UEFI **DXE 全走完、UFS 枚举成功（BlockIo=119）、整机无 ESP** ⇒ 只差一个 loader
 
-- **下轮入口**：`.pi/plans/2026-11-04_handoff-uefi-dxe-to-linux.md`（现状/12 发清单/方案 A（零写盘 GRUB 进 FD）/判据/复现步骤/新坑）。
+- **下轮入口**：`archive/plans-20261110/2026-11-04_handoff-uefi-dxe-to-linux.md`（现状/12 发清单/方案 A（零写盘 GRUB 进 FD）/判据/复现步骤/新坑）。
 - **一句话**：`0xD2B9B224` 已定案 = `QRKSDxe`（剔除后零异常）；`BlockIo=119` 证明 UFS 枚举通了；唯一的 `SimpleFileSystem` 是 **LUN4 `modem_b`**（FAT，绝不能写）⇒ BDS 无交接目标 ⇒ 复位 ⇒ 原厂 recovery。
 - **下一步**：方案 A = standalone GRUB arm64（或自写最小 loader）打进 FD，由 BdsDxe `LoadImage` 启动，GRUB 用 ext2 读 `linux17`(ext4) 的 `/boot`；退路 = GPT 手术建 ESP。
 - **正文**：`reports/uefi-ramoops-channel-20261104R.md` §9–§11；会话记录 `sessions/2026-11-04-UEFI-DXE走完到BDS之后的handoff.md`。

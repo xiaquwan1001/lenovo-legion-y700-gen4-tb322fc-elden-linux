@@ -3,7 +3,7 @@
 > 线：G1-29（拓展，非主线）。设备 = U2 `HA2EXB0E`。**零写盘**：只改 ESP（`/dev/sda18` FAT）上的文件，
 > `boot_b` sha `4e38bc2c…` 全程未变。固件沿用 `p59`（p58 + R54-espfirst），**没有重刷任何分区**。
 > 承接 `reports/uefi-espboot-r55-indeterminate-20261108.md`（首试判 indeterminate）与
-> `.pi/plans/2026-11-08-g1-29-route-b-espboot.md`。
+> `archive/plans-20261110/2026-11-08-g1-29-route-b-espboot.md`。
 
 ---
 

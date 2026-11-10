@@ -15,7 +15,7 @@
   4. 过程中撞到自己埋的坑：裸 `make olddefconfig` 漏 `ARCH=arm64` 把 `.config` 按 x86 重写（`#162` 同型）；
      已从备份还原、带 ARCH 重跑、并在 `#162` 正文补记。
 - **证据指针**：
-  - `.pi/plans/2026-11-08-g1-29-route-b-espboot.md`（D1–D5 + 回退 + 判据）
+  - `archive/plans-20261110/2026-11-08-g1-29-route-b-espboot.md`（D1–D5 + 回退 + 判据）
   - `reports/uefi-route-b-prep-20261108.md`（本轮主机侧事实与复现命令）
   - `patches/config-fbdiag-20261108.fragment`、`out/fbdiag-20261108/`
   - `scripts/check-doctor.sh` → **FAIL=0 WARN=5**

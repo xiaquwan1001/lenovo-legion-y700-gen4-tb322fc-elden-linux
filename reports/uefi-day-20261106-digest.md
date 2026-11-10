@@ -4,7 +4,7 @@
 > 的 `SerialPortWrite` 内），以 `reports/uefi-flt-attribution-20261106.md` 与 `TASKS` §5「夜·二」块为准。
 
 > 一站式读法：本文只做**当日合并视图**（4 段推进 + 5 条作废 + 稳定资产 + 未定三事）。
-> 逐段权威仍在 `TASKS/README.md` §5 的 11-06 四个块；下批执行单在 `.pi/plans/2026-11-06_uefi-batch-next.md`。
+> 逐段权威仍在 `TASKS/README.md` §5 的 11-06 四个块；下批执行单在 `archive/plans-20261110/2026-11-06_uefi-batch-next.md`。
 > 全程零写盘（agent 动作层面；`boot_b` retry 被 ABL 写见 `PITFALLS #525`），载荷 = 真内核 `out/boot-elden-vk172.img`（82 MB）。
 
 ## 1. 四段推进（每段都推翻前一段的一条结论）

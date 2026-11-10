@@ -2,7 +2,7 @@
 
 > 线：G1-29（拓展，非主线）。设备 = U2 `HA2EXB0E`。**零写盘**（只动 ESP 的 FAT 文件），`boot_b` sha 全程 `4e38bc2c…`。
 > 承接 `reports/uefi-grub-esp-handoff-wall-20261108.md`、`reports/route-b-impl-20261108.md`（R55 补丁 + Loader.efi）、
-> `.pi/plans/2026-11-08-g1-29-route-b-espboot.md`（D1–D5）。
+> `archive/plans-20261110/2026-11-08-g1-29-route-b-espboot.md`（D1–D5）。
 
 ---
 
@@ -72,4 +72,4 @@
 - `reports/artifacts/uefi-boot-20261108-143155-p59-espboot/{fastboot-boot.log,observe.log,pre.log,verdict.md}`
 - `reports/artifacts/esp-stage-20261108/pre.log`（ESP 落件与 sha 核对全过程）
 - `out/espboot-20261108/{Loader.efi,boot-elden-vk184-espb.img}`、`patches/uefi/20261108R55-espboot/`
-- 计划 `.pi/plans/2026-11-08-g1-29-route-b-espboot.md`；实现 `reports/route-b-impl-20261108.md`
+- 计划 `archive/plans-20261110/2026-11-08-g1-29-route-b-espboot.md`；实现 `reports/route-b-impl-20261108.md`

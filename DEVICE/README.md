@@ -44,7 +44,7 @@
   `[K] esp fs2=` 未出现（**不能据此判 R62 无效**，见 `reports/uefi-p61-flash-trial-20261109.md`）。已回灌 `boot_a`、
   `slot` 回 `_b`、`boot_b` `mark-successful`（retry 6→7），`boot_a` 槽属性回到 `retry=7 succ=0 unbootable=0`。
   正文 = `reports/uefi-persist-boot-a-20261108.md`、`reports/uefi-espboot-r58b-success-20261108.md`；
-  **下一步计划** = `.pi/plans/2026-11-09-p61-onboard.md`（p61/R62 待上机）。
+  **下一步计划** = `archive/plans-20261110/2026-11-09-p61-onboard.md`（p61/R62 待上机）。
   **回退**：删/改 ESP 上文件即可；GRUB 原件备份在 `BOOTAA64.EFI.grub.bak`（`7993adfc…`）。
 - ★**2026-11-07 深夜（boot_b 身份的权威记录，内容仍有效）：`boot_b` 已写 `vk185-adsp`（持久，重启即回它）** ——
   `boot_b` 分区 sha256 = **`4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`**

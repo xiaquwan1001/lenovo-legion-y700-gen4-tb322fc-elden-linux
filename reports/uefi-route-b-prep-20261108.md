@@ -11,7 +11,7 @@
    静态核对把 B 的改动面收窄到**一个函数**：`LoadImageAndAuth()`（`Library/avb/VerifiedBoot.c:1658`）
    加「ESP 优先」分支 —— 因为 `BootLinux()` 取件走 `GetImage()` 只是查 `Info->Images[]` 表
    （`BootLinux.c:1445`），内存图/DTB/ramdisk 全在 `BootLinux()` 里且已由 p58 验证。
-   设计与 D1–D5 见 `.pi/plans/2026-11-08-g1-29-route-b-espboot.md`。
+   设计与 D1–D5 见 `archive/plans-20261110/2026-11-08-g1-29-route-b-espboot.md`。
 2. **可见性备用件已构建**（主机侧）：`out/fbdiag-20261108/Image.fbdiag`
    = vk184 同源树 `wt/reb-731` + `CONFIG_SYSFB_SIMPLEFB=y`，UTS `7.3.1-debug-fbdiag-00003-gec74c4795a43`，
    63 443 456 B，`sha256 b85afec4…`；打包前硬门 `assert-kernel-sane.sh` 以
@@ -64,7 +64,7 @@ cp wt/reb-731/arch/arm64/boot/Image out/fbdiag-20261108/Image.fbdiag
 
 ## 5. 证据指针
 
-- 计划：`.pi/plans/2026-11-08-g1-29-route-b-espboot.md`
+- 计划：`archive/plans-20261110/2026-11-08-g1-29-route-b-espboot.md`
 - 产物：`out/fbdiag-20261108/{Image,Image.fbdiag,initrd.img,elden.dtb,grub.cfg,cmdline.txt}`、
   `patches/config-fbdiag-20261108.fragment`
 - 上游代码位置：`build/uefi-woa-prep/repos/7-mu-lenovo/Platforms/QcomModulePkg/Library/avb/VerifiedBoot.c:1658`、

@@ -80,5 +80,5 @@ GNU GRUB  version 2.14
 - `scripts/grub-arm64-standalone.sh`（造 GRUB，自校验 PE+嵌入 cfg，sha 可复现）
 - `scripts/grub-bootfiles.sh`（boot.img → Image/initrd/dtb/grub.cfg；`--device … --apply` 只写 `/boot`）
 - `build/grub-arm64/grubaa64.efi`（`7993adfc…`，6 877 184 B）+ 缓存的 arm64 deb（sha 已钉在脚本里）
-- 计划与风险：`.pi/plans/2026-11-08-g1-29-menu-esp-p59.md`
+- 计划与风险：`archive/plans-20261110/2026-11-08-g1-29-menu-esp-p59.md`
 - QEMU 现场日志（临时）：`/tmp/grubtest/qemu{2,3}.log`
