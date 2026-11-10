@@ -198,6 +198,9 @@
   ④ 第三方同机型 flashed 件带 **AVB footer**，可作对照。
 - **工具**：`scripts/lib-fastboot.sh` 增 `wait_ssh_up`（**一有响应就返回**，不空等）；
   `--gen X --rebuild` 被预置 `BUILD_DIR` 静默吃掉的问题已修。坑 `#586/#587/#589/#590/#591`。
+- **备料（同日，未上机）**：`p68` = `p67` + `R69`（`patches/uefi/20261110R69-prepi-hold/`）—— PrePi 起手 `[P00]` + 停 6 s、
+  `[P10]`/`[P11]` 各停 3 s，把「我们的件跑到哪一层」变成**肉眼分级判据**（BdsDxe 之前没有持久化通道）。
+  件 `out/r21-sbstop-p68/uefi-preamble68-r1.img`（`66bd4bab…`）、`--gen p68` 已绑、83 条补丁；**未写盘**。
 - **正文/取证**：`reports/uefi-p67-flash-trial-20261110.md`、`reports/artifacts/uefi-p67-trial-20261110/`、
   补丁 `patches/uefi/20261110R68-trace/`、配方 `p67-recipe.txt`。
 

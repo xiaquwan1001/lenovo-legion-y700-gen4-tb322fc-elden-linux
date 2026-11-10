@@ -75,3 +75,21 @@
 - `scripts/uefi-r21-p7-ladder.sh`：`--gen X --rebuild` 曾被「预置 BUILD_DIR」静默吃掉（只报「变体目录不存在」）⇒ 已修（`#590` 同族）。
 - 坑 `#586`（固定 LBA 信标不能自证）、`#587`（dd 先验字节数）、`#589`（无条件检查点）、`#590`（等待循环自匹配 + 后台任务被连坐）、
   `#591`（信标与分区识别共用静态缓冲 ⇒ 轨迹被自己清掉）。
+
+## 6. 备料：p68 = p67 + R69（PrePi 分级上屏停留，**已构建、未上机**）
+
+BdsDxe 之前没有可用的持久化通道（`BlockIo` 要等 DXE 把 `UFSDxe` dispatch 完才存在），所以这一轮把判据交给**屏**：
+
+| 屏上看到 | 结论 |
+|---|---|
+| 只有联想 logo（无 `[P00]`） | 我们的件**根本没进 PrePi**（ABL 侧装载/跳转，或 BootShim 就死） |
+| `[P00]` 停 6 s 后黑掉 | 进了 PrePi，死在 PrePi 内部（看停在哪一级 `[Pxx]`） |
+| 走到 `[P10]` | FV 解压完成，还没进 DxeCore |
+| 走到 `[P11]` | DxeCore 已装载并交棒 ⇒ 问题在 dispatch（到 BdsDxe 之间） |
+| 又出现 `R68LOG s1:bds-in` | 与 2026-11-10 结论矛盾，需重测 |
+
+- 补丁 `patches/uefi/20261110R69-prepi-hold/0001-prepi-stage-hold.patch`：`CEntryPoint()` 起手 `SbMark("[P00]")` +
+  `MicroSecondDelay(6 s)`；`[P10]`/`[P11]` 各停 3 s（共约 +12 s/次启动，定位完即摘）。
+- 配方 `patches/uefi/p68-recipe.txt`（83 条）、`--gen p68` 已绑；归档 `reports/artifacts/uefi-20261110R69-p68/`；
+  件 `out/r21-sbstop-p68/uefi-preamble68-r1.img`（`66bd4bab…`，67 194 880 B）；`[P00]` 字串已在 FD 内层（`grep -ac` = 1）。
+- **状态：仅备料，未上机、未写盘**。回归 = 改用 `--gen p67`。

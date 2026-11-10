@@ -1,0 +1,56 @@
+Subject: [PATCH] PrePi: 入口/关键台阶上屏停留（P00 停 6 s、P10/P11 各停 3 s），给 flashed 形态一个肉眼硬判据
+
+2026-11-10R69 y700-elden（承接 PITFALLS #586/#589；判据缺口见 reports/uefi-p67-flash-trial-20261110.md §4）。
+
+## 为什么
+
+2026-11-10 p67 上机拿到决定性事实：**同一份件** `fastboot boot` 能写出完整信标
+（`s1 bds-in → s2 r54-in → … → s9 esp-ld-ok`），而写进 `boot_a` 后**信标一字节未变**
+（读回内容里连 `n=` 都没有）⇒ 我们的固件**没执行到 BdsDxe**。
+但「没到 BdsDxe」还分三种：ABL 没跳进来 / BootShim 或 PrePi 就死了 / DXE dispatch 死了。
+BdsDxe 之前的阶段**没有可用的持久化通道**（UFS 的 BlockIo 要等 DXE 把 UFSDxe dispatch 完才存在），
+所以这里只能给**屏**这条零依赖通道加分级停留：
+
+| 屏上看到 | 结论 |
+|---|---|
+| 只有联想 logo（无 `[P00]`） | 我们的件**根本没进 PrePi**（ABL 侧装载/跳转，或 BootShim 就死） |
+| `[P00]` 停 6 s 后黑掉 | 进了 PrePi，死在 PrePi 内部（看它停在哪一级 `[Pxx]`） |
+| 走到 `[P10]` | FV 解压完成，还没进 DxeCore |
+| 走到 `[P11]` | DxeCore 已装载并交棒 ⇒ 之后到 BdsDxe 之间（dispatch）出问题 |
+| 再出现 `R68LOG s1:bds-in` 类信标 | 那就与 2026-11-10 结论矛盾，需重测 |
+
+## 代价
+
+每次启动多约 **12 s** 停留（6+3+3），只用于这一轮定位；定位完把停留改 0 或摘下本补丁即可
+（`p69` 就是「p67 + R69」，回归只需改用 `--gen p67`）。
+
+diff --git a/Platforms/AndromedaPkg/PrePi/PrePi.c b/Platforms/AndromedaPkg/PrePi/PrePi.c
+index a24447d..337b5d6 100644
+--- a/Platforms/AndromedaPkg/PrePi/PrePi.c
++++ b/Platforms/AndromedaPkg/PrePi/PrePi.c
+@@ -255,11 +255,13 @@ PeiContinueBoot(VOID* ARGS)
+   SbBlocks ();
+   Status = DecompressFirstFv ();
+   SbMark ("[P10]");
++  MicroSecondDelay (3000000);   // 2026-11-10R69 屏上停留 3 s
+   ASSERT_EFI_ERROR (Status);
+ 
+   // Load the DXE Core and transfer control to it
+   Status = LoadDxeCoreFromFv (NULL, 0);
+   SbMark ("[P11]");
++  MicroSecondDelay (3000000);   // 2026-11-10R69 屏上停留 3 s
+   SbHex ((UINT64)Status);
+   ASSERT_EFI_ERROR (Status);
+ }
+@@ -381,6 +383,11 @@ CEntryPoint ()
+   EFI_STATUS Status;
+   ARM_MEMORY_REGION_DESCRIPTOR_EX UefiFd;
+ 
++  // 2026-11-10R69 y700-elden: 最早可肉眼判据 —— 屏上先停 6 s 再往下走。
++  // flashed 形态（写 boot_a）此前只看到「联想 logo 一闪」，是否跑到 PrePi 无从判断；
++  // 这一停让「屏上出现 [P00] 并保持 6 s」成为零依赖硬判据（配合 BdsDxe 的 R68LOG 信标定位责任层）。
++  SbMark ("[P00]");
++  MicroSecondDelay (6000000);
+   // Initialize the platform specific controllers
+   ArmPlatformInitialize (0);
+   SbMark ("[P01]");
