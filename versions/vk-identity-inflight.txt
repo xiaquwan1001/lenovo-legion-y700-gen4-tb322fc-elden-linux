@@ -49,3 +49,9 @@
 #   vk86-{base,round,round2} / vk90~vk93 / e4a-lv64 / lv64-nopd / vk106–vk111）的永久口径已转入
 #   versions/vk-ledger-known-issues.tsv（2026-10-12 段），本文件清空。
 #   新增在途 lane 时再登记（纪律：收口后必须删除本文件里的对应行）。
+
+# ---- 2026-11-10 C12 droidloom L1 内核门槛（vk187）----
+# vk187 = vk184 + 仅 nftables 一档配置（.config 不入 git，故源提交与 vk184 相同 ⇒
+# num_ne_tag(vk184) 是预期噪声，不是溯源错误）。**未上机**；上机验收（nft list ruleset
+# 不报错 + droidloom-doctor kernel.network_isolation PASS）后**必须**从本文件删掉。
+boot-elden-vk187.img   # C12 L1：nftables 配置档，源提交同 vk184
