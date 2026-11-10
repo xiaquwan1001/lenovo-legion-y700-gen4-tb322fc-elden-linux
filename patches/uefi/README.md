@@ -4,6 +4,23 @@
 > 逐目录分级（机器可读）= **`../../versions/patches-uefi-status.tsv`**（列：dir / patches / in_recipe / status / 理由 / 证据）。
 > 结论：**目录数与分级一律以 `versions/patches-uefi-status.tsv` 现查为准**（本行不写死计数，2026-11-10 收尾时加了 R50–R70 共 14 行补登）。
 
+## 0a. 2026-11-10 晚新增：**pc1「干净世代」**（去掉 debug 输出与人为停留）+ **R72 loader 菜单修复**
+
+| 项 | 值 |
+|---|---|
+| 世代 | **`pc1`** = p69 配方 − `R64/R66/R67/R68/R69/R70`（纯诊断/停留）**+ `R71-quiet`** |
+| 配方 | `pc1-recipe.txt`（80 条）；复现 `scripts/uefi-r21-p7-ladder.sh --gen pc1 --mkimg-only --rebuild` |
+| 件 | `out/r21-sbstop-pc1/uefi-preamblec1-r1.img`（67 186 688 B，`40d43397…`） |
+| R71 | `FrameBufferSerialPortLib` 的 `SerialPortWrite`/`Critical` 在 `m_Initialized` 守卫后**只进 `SbLogPut`、不上屏、不做 R2 的每字符忙等**；开回屏显 = 删 `#define ELDEN_FB_QUIET` 重编（或直接用 p69 件） |
+| 实测 | 暖复位 `fastboot boot pc1` ⇒ **+39 s** 到 SSH（含 fastboot 11.7 s + loader 菜单 8 s），`elden_bootloader=esp`、内核 `vk184-00002`；对照 p69 = 128.7 s（含 R70 74 s 停留） |
+| R72 | **loader 侧**（不是 FD）：`20261110R72-loader-menu/` 修「倒计时不动 / 按键后仍到点启动 / 按过键反被强拉回第 0 项」；件 `out/espboot-20261110/Loader-r72.efi`（`566cb12d…`），已在 ESP 的 `BOOTAA64.EFI` 与 `/EFI/elden/Loader.efi` |
+| GRUB | 双层菜单定案：GRUB 选「loader/重启/关机」，loader 选内核；GRUB 的倒计时文字走 `ConOut`（本平台 no-op）⇒ 交互件 `timeout=-1`。件 `out/grub-20261110/{grub-menu.efi,grub-chain.efi}`（已放 ESP `/EFI/grub/`） |
+| 正文 | `reports/uefi-clean-pc1-and-grub-menu-20261110.md` |
+
+> loader 侧仍按 §「两件套」纪律：FD（`--gen pc1`）+ `Loader.efi`（快照 + R72 补丁）。R57/R58/R59/R60/R63/R64/R65 仍无逐代补丁，靠快照。
+
+---
+
 ## 0. 当前世代 = **p69**（含 R70 计时停留）—— **flashed 与 `fastboot boot` 两种形态都已打通（2026-11-10 深夜）**
 
 > **★ 定版（2026-11-10 收尾）**：**p69 = 本线定版件** —— `out/r21-sbstop-p69/uefi-preamble69-r1.img`

@@ -126,7 +126,8 @@ if [ -n "$GEN" ]; then
 		p67) _rec=patches/uefi/p67-recipe.txt; _bd=uefi-20261110R68-p67;               _kept=/dev/null; _out=r21-sbstop-p67;;
 		p68) _rec=patches/uefi/p68-recipe.txt; _bd=uefi-20261110R69-p68;               _kept=/dev/null; _out=r21-sbstop-p68;;
 		p69) _rec=patches/uefi/p69-recipe.txt; _bd=uefi-20261110R70-p69;               _kept=/dev/null; _out=r21-sbstop-p69;;
-		*) die "--gen 只认 p7/p54/p58/p59/p60/p61/p62/p63/p64/p65/p66/p67/p68/p69（见脚本头部）；收到: $GEN";;
+		pc1) _rec=patches/uefi/pc1-recipe.txt; _bd=uefi-20261110R71-pc1;               _kept=/dev/null; _out=r21-sbstop-pc1;;
+		*) die "--gen 只认 p7/p54/p58/p59/p60/p61/p62/p63/p64/p65/p66/p67/p68/p69/pc1（见脚本头部）；收到: $GEN";;
 	esac
 	[ -n "${PFX_EXPLICIT:-}" ] || PFX=$GEN
 	[ -n "${RECIPE_EXPLICIT:-}" ] || RECIPE=$ROOT/$_rec

@@ -1,0 +1,25 @@
+up 36 minutes
+7.3.1-debug-vk184-00002-g4da9a8b69fc8
+elden_root=LABEL=linux17
+androidboot.slot_suffix=_b
+elden_nocamera=1
+elden_bootloader=esp
+---
+9ed6cab178318b946a25530351b680129cc2cd53678004cdd90c29f7c2f68071  /efi/loader.log
+b200882816fa91fc93f77a77b429415f5e0e48cb0fcabb037e8fa04db8d9afac  /efi/espboot.log
+---
+[L] entry r59-menu
+[L] pre-boardinit
+[L] boardinit st 0
+[L] pre-vmdata
+[L] force-boot
+[L] menu entry n 4
+[L] menu timeout s 8
+[L] menu in 4
+[L] menu ui 4
+[L] menu timeout
+[L] menu boot \boot\boot.img
+[L] bootfastboot 0
+[L] pre-auth
+[L] post-auth st 0
+[L] pre-bootlinux

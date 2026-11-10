@@ -1,0 +1,112 @@
+Subject: [PATCH] LinuxLoader: 启动菜单倒计时可见 + 任何按键即取消自动启动
+
+2026-11-10R72 y700-elden —— 用户 2026-11-10 上机反馈的两条：
+① 菜单标题只有静态的 "(8 s timeout)"，**数字不跳**，看不出还剩多少；
+② 按了音量键以后，8 s 到点**照旧自动启动**（并因此落到了非预期的条目，用户以为进了 vk185）。
+
+## 根因
+
+`LMenuSelect()` 里倒计时只有一处：`if (((GetTimerCountms () - Start) / 1000) >= mLMenuTimeout)`，
+`Start` 在按键时**不重置**，标题也只在开局 `LMenuDrawScreen()` 里画一次。
+
+## 改法
+
+* 标题每秒重画：`Boot menu (Vol +/- move, Power = OK, <n> s to autoboot)`，`n` 递减。
+* **任何按键都把自动启动关掉**（`Timeout = 0` + `[L] menu autoboot off` 落日志），标题改成
+  `autoboot cancelled`，此后只等 Power 确认 —— 与用户预期一致（GRUB/绝大多数 bootloader 的行为）。
+* 顺带修一处会咬人的老逻辑：结尾 `if (mLMenuTimeout == 0) Sel = 0;` 会把「按键后关掉自动启动」
+  的选择强拉回第 0 项；改为只在 `!Keyed` 时生效。
+
+## 判据（上机）
+
+屏上：标题秒数逐秒递减；按音量键后标题变 `autoboot cancelled` 并**长时间停住不再自动启动**；
+`\loader.log` 出现 `[L] menu autoboot off` 且**没有**紧随的 `[L] menu timeout`。
+diff --git a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+--- a/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
++++ b/Platforms/QcomModulePkg/Application/LinuxLoader/LinuxLoader.c
+@@ -576,11 +576,20 @@
+ STATIC BOOLEAN
+ LMenuSelect (IN EFI_HANDLE ImageHandle)
+ {
+-  UINTN  Sel = 0;
+-  UINT64 Start;
+-  UINT32 Last = SCAN_NULL;
+-  UINTN  Idx;
+-  CHAR8  Line[96];
++  UINTN   Sel = 0;
++  UINT64  Start;
++  UINT32  Last = SCAN_NULL;
++  UINTN   Idx;
++  CHAR8   Line[96];
++  CHAR8   Title2[96];
++  /* 2026-11-10R72 y700-elden: 倒计时与「输入即暂停」。
++   * 用户 2026-11-10 反馈两件事：① 标题里的超时秒数**不会走**，看不出还剩多少；
++   * ② 按了键之后 8 s 到点照旧自动启动（本函数原实现里 Start 不因按键重置）。
++   * 现在：每秒重画标题上的剩余秒数；**任何按键都把自动启动关掉**（Timeout 置 0，只等确认键）。 */
++  UINT64  Timeout = 0;
++  UINT64  Elapsed = 0;
++  UINT64  Tick    = MAX_UINT64;
++  BOOLEAN Keyed   = FALSE;
+ 
+   if (LEspHasFile (ImageHandle, L"\\menu.cfg")) {
+     LMenuLoad (ImageHandle);
+@@ -596,10 +605,22 @@
+     LLog ("[L] menu ui", (UINT64)mLMenuCount);
+   }
+ 
+-  Start = GetTimerCountms ();
+-  while (mLMenuTimeout > 0) {
++  Start   = GetTimerCountms ();
++  Timeout = (UINT64)mLMenuTimeout;
++  while (Timeout > 0) {
+     UINT32 Key = LMenuKey ();
+ 
++    if (Key != SCAN_NULL) {
++      if (!Keyed) {
++        /* 第一次按键 ⇒ 关掉自动启动（此后只在按确认键时启动） */
++        Keyed   = TRUE;
++        Timeout = 0;
++        LLog ("[L] menu autoboot off", MAX_UINT64);
++        AsciiSPrint (Title2, sizeof (Title2) - 1,
++                     "Boot menu   (Vol +/- move, Power = OK, autoboot cancelled)");
++        LMenuDrawRow (0, Title2, BGR_BLACK, COMMON);
++      }
++    }
+     if (Key != Last) {
+       if (Key != SCAN_NULL) {
+         LLog ("[L] menu key", (UINT64)Key);
+@@ -618,14 +639,29 @@
+       }
+       Last = Key;
+     }
+-    if (((GetTimerCountms () - Start) / 1000) >= mLMenuTimeout) {
+-      LLog ("[L] menu timeout", MAX_UINT64);
+-      Sel = 0;
+-      break;
++    /* 未按键时每秒重画一次标题上的剩余秒数（原实现只在开局画一次，看不出在走） */
++    if (!Keyed || (Timeout > 0)) {
++      Elapsed = (GetTimerCountms () - Start) / 1000;
++      if (Elapsed != Tick) {
++        Tick = Elapsed;
++        if (Elapsed < (UINT64)mLMenuTimeout) {
++          AsciiSPrint (Title2, sizeof (Title2) - 1,
++                       "Boot menu   (Vol +/- move, Power = OK, %lu s to autoboot)",
++                       (UINT64)((UINT64)mLMenuTimeout - Elapsed));
++          LMenuDrawRow (0, Title2, BGR_BLACK, COMMON);
++        }
++      }
++      if (Elapsed >= (UINT64)mLMenuTimeout) {
++        LLog ("[L] menu timeout", MAX_UINT64);
++        Sel = 0;
++        break;
++      }
+     }
+     gBS->Stall (50000);   /* 50 ms per poll */
+   }
+-  if (mLMenuTimeout == 0) {
++  /* 2026-11-10R72: 原来这里 `if (mLMenuTimeout == 0) Sel = 0;` —— 现在 timeout=0 是
++   * 「按键后已关自动启动」的正常状态，不能把选择强拉回第 0 项（那正是「按了键仍启动默认项」的另一个成因）。 */
++  if (!Keyed && (mLMenuTimeout == 0)) {
+     Sel = 0;
+   }
+ 

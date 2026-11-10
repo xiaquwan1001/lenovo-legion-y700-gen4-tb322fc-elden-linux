@@ -1,0 +1,75 @@
+Subject: [PATCH] FrameBufferSerialPortLib: pc1 干净世代默认屏上静默（不画帧缓冲、不做慢速忙等）
+
+2026-11-10R71 y700-elden —— 「去掉 debug 的 UEFI」世代（pc1）的单点改动。
+
+## 为什么
+
+1. **屏上输出是取证通道，不是产品行为**：本库 `SerialPortWrite` 是所有 `[K]/[L]/[E]/[I]` 标记的唯一出口，
+   落在帧缓冲上。真启动时它只制造噪声，而且历史上「写屏穿帧缓冲」本身就是定案过的崩溃元凶
+   （`PITFALLS #527`，2026-11-06 夜）。
+2. **R2 的慢速忙等是最大的人为开销**：`while (SbSpins < 40000u)` 每字符一轮（当年为了让异常首屏能拍照），
+   量级 ~1–3 ms/字符。启动过程中标记有上千行 ⇒ 光这一项就是数十秒量级，会把「真实启动耗时」完全淹没。
+3. 证据通道**不因此丢失**：标记仍逐字符进 `SbLogPut` 环形日志（固定物理地址、全固件共享），
+   由 `BootLinux` 落盘到 `logfs`；ESP 侧还有 `loader.log` / `espboot.log`；cmdline 令牌 `elden_bootloader=esp` 照旧。
+
+## 改法
+
+* 新增编译期开关 `ELDEN_FB_QUIET`（默认开，一行 `#define`）。
+* `SerialPortWrite` / `SerialPortWriteCritical` 在原有 `m_Initialized` 守卫之后早退：
+  只 `SbLogPut()`，不 `FbConPutCharWithFactor()`、不做忙等。
+
+## 怎么开回屏显（取证时）
+
+删掉 `#define ELDEN_FB_QUIET 1` 那一行重编即可；也可以直接用 `p69` 世代件（配方 `p69-recipe.txt`）。
+
+---
+
+diff --git a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+--- a/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
++++ b/Platforms/AndromedaPkg/Library/FrameBufferSerialPortLib/FrameBufferSerialPortLib.c
+@@ -20,6 +20,9 @@
+ 
+ #include <Library/FrameBufferSerialPortLib.h>
+ 
++// 2026-11-10R71 y700-elden: pc1「干净世代」——屏上静默（见 SerialPortWrite/Critical 的同名注释）
++#define ELDEN_FB_QUIET 1
++
+ ARM_MEMORY_REGION_DESCRIPTOR_EX DisplayMemoryRegion;
+ 
+ FBCON_POSITION* p_Position = NULL;
+@@ -528,6 +531,17 @@
+     return NumberOfBytes;
+   }
+ 
++  // 2026-11-10R71 y700-elden（pc1 干净世代）：默认**不上屏**。
++  // 标记仍进 SbLogPut 环形日志（落盘取证，与屏无关），但不画帧缓冲、也不做 R2 的每字符忙等
++  // （那是取证用的减速，实测 ~1–3 ms/字符，是启动耗时里最大的一笔人为开销）。
++  // 需要屏上输出时：删掉下面这行 #define 重编（p69 那套件仍在，供取证用）。
++#if defined (ELDEN_FB_QUIET)
++  while (Buffer < Final) {
++    SbLogPut (*Buffer++);
++  }
++  return NumberOfBytes;
++#endif
++
+   if (InterruptState)
+     ArmDisableInterrupts();
+ 
+@@ -577,6 +591,17 @@
+     return NumberOfBytes;
+   }
+ 
++  // 2026-11-10R71 y700-elden（pc1 干净世代）：默认**不上屏**。
++  // 标记仍进 SbLogPut 环形日志（落盘取证，与屏无关），但不画帧缓冲、也不做 R2 的每字符忙等
++  // （那是取证用的减速，实测 ~1–3 ms/字符，是启动耗时里最大的一笔人为开销）。
++  // 需要屏上输出时：删掉下面这行 #define 重编（p69 那套件仍在，供取证用）。
++#if defined (ELDEN_FB_QUIET)
++  while (Buffer < Final) {
++    SbLogPut (*Buffer++);
++  }
++  return NumberOfBytes;
++#endif
++
+   if (InterruptState)
+     ArmDisableInterrupts();
+ 
