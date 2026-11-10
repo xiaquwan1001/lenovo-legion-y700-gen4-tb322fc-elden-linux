@@ -190,9 +190,13 @@
   fastboot 形态也 0 命中）；② **v2 按内容指纹 `SBLOG0` 认 logfs 立刻命中**，但**写入 LBA 与内容都固定**
   ⇒ `st=8 tag=fallback` 在两种形态下完全相同，**不能判「这一发跑到哪」**（p66 因此判不了）；③ `logfs` 尾部 16 KiB 那条
   `SBLOG01 tag=preeb` 里只有帧缓冲几何行，**不是控制台环形全文** ⇒ 别拿它里面的 `[K] esp …` 当「新记录」判据；
-  ④ `/dev/sde68` **跨启动不稳定**（同节点一次读到 logfs、一次读到 8.3 MB 的 FAT12）⇒ 一律 `/dev/disk/by-partlabel/logfs` + 内容自检。
-- **口径更正**：fastboot 形态能起内核**不是** BdsDxe 的「ESP-first」分支干的（信标走的是 `st=8 fallback`），
-  是 FV `LinuxLoader` 的 espboot 路径兜住的 ⇒ p63 摘 R62 后 BdsDxe 退回 `fs=1` 而启动仍成功，这个「摘掉也没事」是假象。
+  ④ `logfs-beacon-p66.bin` 少了尾 32 KiB（记录区整个缺失，ssh/dd 短读）⇒ p66 那一发无证据 —— **不是**「sde68 换成了 FAT12 分区」（logfs 本身就是 vfat，偏移 3 也是 `MSDOS5.0`）⇒ `dd` 后必须校验字节数 8 388 608，取件用 `/dev/disk/by-partlabel/logfs` + `SBLOG0` 自检。
+- **⛔ 口径撤回（2026-11-10 复核）**：初版写「fastboot 形态能起内核不是 BdsDxe 的 ESP-first 干的，是 FV `LinuxLoader` 兜住的」——
+  **不成立**。`R66Beacon(8,"fallback")` 在补丁里位于 `if (!Found)` **之前**（无条件检查点，`fallback` 只是标签名）；
+  决定性反证 = `fastboot boot` 那一发 logfs 记录区（`SBLOG01 tag=preeb` 头块 + 尾块）**与历史基准逐字节相同** ⇒
+  `#580` 的通道语义 ⇒ FV `LinuxLoader` 没参与 ⇒ **R54 的 ESP-first 在 fastboot 形态是成功的**。
+  据此：p63 摘掉 R62 后 fastboot 形态仍成功 ⇒ **R62 在 fastboot 形态不是必需的**（仍需一次改名后的确认）。
+  复核 `reports/beacon-recheck-20261110.md` §命题 4；坑 `PITFALLS #589`。
 - **下一发（主机侧可做完）**：`p67` = `p62 + R66 + R67`，把信标 tag 换成带世代+计数（`gen=p67 cnt=<读改写+1>`）；
   上机时**只需人看屏**读 `[K] R67 blk=N fs=M`：`0/0` = 分区层没出来（搬第三方 `StorageConnect.c`）、`N>0 M=0` = FAT 没绑、
   `M>0` = ESP 在、问题在加载。

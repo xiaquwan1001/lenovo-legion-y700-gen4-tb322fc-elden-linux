@@ -23,7 +23,8 @@
 
 **信标的两个硬限制（读判据前必看）**：① v2 的写入 LBA 与内容都是**固定的**（最后 16 KiB 记录区第 2 块），
 `st=<n>` 只随检查点变、不含世代/计数 ⇒ 「读到 `st=8`」**不能**证明「这一发跑到了 8」；下一发必须加世代/计数。
-② 取证一律用 `/dev/disk/by-partlabel/logfs` + 内容指纹自检 —— `/dev/sde68` 跨启动不稳定（实测同一节点一次是 logfs、一次是 8.3 MB 的 FAT12）。
+② **`st=8 tag=fallback` 不是「走了 fallback」**：R66 里 `R66Beacon(8,"fallback")` 在 `if (!Found)` **之前**，是无条件检查点（下一代必须移进分支内并补 `st=9 esp-ld-ok`，坑 `PITFALLS #589`）。
+③ 取证一律 `/dev/disk/by-partlabel/logfs`，`dd` 后断言字节数 = 8 388 608（ssh/dd 会静默短读，曾把唯一一发证据读丢），分析前 `cmp` `0x7FC000` 的 `SBLOG01` 头块（`PITFALLS #587`）。
 
 - **两件套**：整套「跑通路线 B」的件 = **FD**（`--gen p61`）+ **`Loader.efi`**（`patches/uefi/20261109R65-loader-snapshot/`）。
   loader 侧源码**从未提交**（Mu 树单提交浅克隆），此前 R55→R65 的 `.efi` 整体不可再生 ⇒ 2026-11-09 已冻结为整文件快照
