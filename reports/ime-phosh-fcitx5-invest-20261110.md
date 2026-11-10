@@ -221,13 +221,83 @@ DONE 2
 
 DONE 3
 
-## §4 hook 方法全集（OSK 与 fcitx5 共存） —— 待填
+## §4 hook 方法全集（OSK 与 fcitx5 共存）
 
-DONE 4（待补）
+前提事实（已在 §1/§2 取证）：**一个 seat 只有一个 `zwp_input_method_v2` 槽位**；
+但**「给手机注入按键」不需要这个槽位**——`zwlr_virtual_keyboard_manager_v1` 是另一个全局，任何客户端都能用
+（phoc 的 handler 不做任何权限检查：`src/virtual.c:13-23` 直接 `phoc_seat_add_device (seat, &keyboard->keyboard.base)`）。
+这就是所有 hook 的共同地基。
 
-## §5 上游是否已合并修复 —— 待填
+### (a) 在 phoc 内部让 OSK 与 IM 分居不同协议
 
-DONE 5（待补）
+| 项 | 内容 |
+|---|---|
+| 现状 | phoc 只能把「键盘该出来」表达为 `zwp_input_method_v2.activate`（`input-method-relay.c:230-237`），而这个事件只能发给**占了槽位的那个客户端**。无法「激活 A 的键盘、把按键交给 B」。 |
+| 可行挂钩 | ① 在 `activate_osk()` 旁加一条旁路：除发 IM activate 外，再通过 D-Bus（如 `mobi.phosh.Phoc.DebugControl` 同款私有接口，`src/debug-control.c`）或 `phoc.ini` 策略通知独立的 OSK 进程；② 在 seat 的 keyboard focus 变化时（不只 text-input）调 `activate_osk`，即「有焦点就弹盘」。 |
+| 代价 | C 补丁 + 重新打 phoc 包（本项目已有先例：`patches/upstream/phoc-im-keyboard-grab-2026-10-18/`，设备上 meson 构建 14 s）；每次 phoc 升级要重做；② 会连终端/游戏里都弹盘，必须配 app_id 黑名单（stevia 已经有 `pos-activation-filter.c` 的同类机制可抄）。 |
+| 可验证判据 | 打完补丁后：`busctl --user monitor` 应看到道具发起的调用；phoc 日志出现 `Explcit request to show input panel` 或新加的点位日志；OSK 进程收到 activate（wvkbd/stevia 自身日志）。 |
+
+### (b) squeekboard 的 `sm.puri.OSK0` 控制面 + libei / virtual-keyboard 注入
+
+| 子项 | 事实（带出处） | 可用性 |
+|---|---|---|
+| `sm.puri.OSK0.SetVisible(bool)` 控制面 | squeekboard/stevia 都实现（stevia：`pos-osk-dbus.c:17-18,105-117,188`；在机 owner = pid 2394） | ✅ **现成可用**，`gdbus call … SetVisible true` 就能弹（与 fcitx5 无关） |
+| libei / EIS 注入 | **phoc 0.58 完全不支持**：源码树 `grep -rn "libei\|eis"` 零命中（只在 wlroots 外部才有 ei 支持） | ❌ 不可用，不要往这条路上投时间 |
+| virtual-keyboard 注入 | phoc 全局 `zwlr_virtual_keyboard_manager_v1`（`desktop.c:700`），无权限门槛 | ✅ **可用，是真正的共存地基** |
+| 【关键发现】**wvkbd 是唯一「不占槽位也能出键盘」的现成 OSK** | `jjsullivan5196/wvkbd` `main.c:1240-1252` **无条件** `zwp_virtual_keyboard_manager_v1_create_virtual_keyboard(...)`；`:1260-1263` 只是**额外**去抢 IM v2 槽位拿 activate/deactivate 做自动显隐，而 `im_unavailable()` 是**空函数**（`main.c` 定义 `{ }`）⇒ 槽位被 fcitx5 占了 wvkbd 依然能打字 | ✅ 协议层面 **与 fcitx5 waylandim 共存完全成立** |
+| wvkbd 活跃度 | stars **486**，`pushed 2026-10-27`，非归档 | ✅ 维护中 |
+
+⚠ 未取证的风险点（不要写成结论）：fcitx5 grab 键盘后，wvkbd 经 virtual-keyboard 注入的按键是否会先进入 grab（即被 fcitx5 拿去组词）而不是直接进应用。
+按 wlroots 的 grab 语义推断「会进 IM」，但**需实验确认**（§6 E4）。
+
+### (c) fcitx5 的 kimpanel/dbus 前端当「聚焦与几何」信号源（现有 focusd 走的这条）
+
+**上游源码证实这是被支持的钩子，不是 hack**：
+
+- `fcitx5/src/ui/kimpanel/kimpanel.cpp` 是 **UI/panel addon**，它一旦在 session bus 上看到
+  `org.kde.impanel`（`:205-232`），就向它 Introspect，并据此选光标矩形的下发方式：
+  `SetSpotRect` / `SetRelativeSpotRect` / `SetRelativeSpotRectV2`（`:55-57, 235-244`）。
+- 触发时机在源码里写死为两个事件（`:248-250`）：`EventType::InputContextFocusIn` 与
+  `EventType::InputContextCursorRectChanged`，且要求 `inputContext->hasFocus()`。
+- ⇒ `elden-ime-focusd` 把 `SetRelativeSpotRect` 当「聚焦」信号**是正解型 hook**（上游明确的事件点），
+  但注意两个边界：① 只有焦点**进入**，没有 FocusOut（所以收起键盘没有信号，这是个设计缺陷不是 bug）；
+  ② 它要求 fcitx5 自己有 InputContext（GTK/Qt IM 模块会创建），若应用走 waylandim（B 臂）则 kimpanel 仍活但无意义。
+- 代价：**最低**（二进制已存在 `patches-userland/zh-ime/elden-ime-focusd.c`；Debian 栈只是**没部署**，见 §7）。
+- 判据：`busctl --user list | grep -F org.kde.impanel` 有 owner；`/tmp/elden-ime-focusd.log` 每点一个输入框 +1 行；
+  同时 `gdbus call … sm.puri.OSK0 … Visible` 从 `false` 变 `true`。
+
+### (d) 三条路线收益/成本对比
+
+| 路线 | 能解决什么 | 代价 | 风险 | 判据 |
+|---|---|---|---|---|
+| **D1. 只补 focusd（当前栈：fcitx5 `--disable waylandim` + stevia）** | 「点输入框 OSK 不弹」——100% | 拷一个 158 行 C 程序 + 一个 systemd user unit；零上游改动 | ① 无自动收起（需手动/图标）；② 仍不支持「不用 GTK/Qt IM 模块的 Wayland 原生 app」组词（但 elden 当前环境三变量全设，覆盖了 GTK3/4/Qt/X11） | §6 E1/E2 |
+| **D2. fcitx5 waylandim（全协议）+ wvkbd 当 OSK** | 变成「真正 Wayland 原生 IM + 屏上键盘」两组件分居不同协议——**架构上最干净** | ① 必须 phoc ≥ 0.59（否则 keyboard-grab NULL 解引用崩合成器，§5）；② 装 wvkbd；③ 候选窗仍靠 fcitx5（无 SNI 托盘问题 #578 依旧） | 未验证点：grab 与 virtual-keyboard 的交互（§6 E4）；stevia 会因 `unavailable` 自动退出（需保留 `--allow-replacement`） | §6 E4/E5 |
+| **D3. 改换合成器（wlroots 系 + fcitx5 waylandim）** | 证明「协议层不缺东西」 | 丢掉整个 phosh shell（phosh 只能跑在 phoc 上）⇒ 手机 UX 全重做 | 对 G1 目标是倒退 | 仅作实验台：`sway` 同样建 `wlr_input_method_manager_v2` + `wlr_text_input_manager_v3`（`sway/server.c:463-469`） |
+| **D4. 换 OSK（phosh-osk-stub → 已改名 stevia；wvkbd）** | wvkbd = D2 的组件；stevia 已是在用 OSK | 低 | 单独换 OSK **不解决**「应用不报 text-input」这个根因（§1.3） | — |
+| **D5. 靠 stevia 自带 completer 做中文** | 零冲突（同一进程内） | 0 | **做不到**：`src/completers/` 只有 hunspell/presage/uim/fzf/pipe/varnam，无拼音引擎；上游 #108/#109 “Support for Chinese word completion” **仍 open** | — |
+
+### (e) 上游是否已合并修复
+
+见 §5。一句话：**与本项目最相关的那个 phoc 崩溃修复已在 0.59_rc1 里（commit `bb1f7465`），而安装的 0.58.0 没有**；
+但「OSK 不弹」**不是上游 bug**，是 text-input-v3 焦点语义的必然结果，上游不会修。
+
+DONE 4
+
+## §5 上游修复状态（截至 2026-11-10）
+
+| 项 | 状态 | 证据 |
+|---|---|---|
+| phoc **keyboard-grab NULL 解引用**（本项目 2026-10-18 自写补丁的那个 bug） | ✅ **已上游**：commit `bb1f7465` “input-method-relay: Fix keyboard-grab NULL deref”（2026-10-26），进 **v0.59_rc1（2026-11-08）**；v0.58.0（2026-10-04）**不含** | `GET /projects/World%2FPhosh%2Fphoc/repository/commits?path=src/input-method-relay.c`；tags API：`v0.58.0 2026-10-04`、`v0.59_rc1 2026-11-08`；0.58.0 tarball 里 `src/input-method-relay.c:119-123` 仍是裸 `keyboard_grab->keyboard`，wlroots 0.20.2 `types/wlr_input_method_v2.c:274` 仍发 `wl_signal_emit_mutable(..., NULL)` ⇒ **在机 phoc 0.58.0-1 理论上仍会崩**（Debian 是否 backport 未核验，见 §8） |
+| phoc **text-input-v3 version 2** | ✅ 在 0.58：`832125ad`（2026-09-19）+ wlroots.wrap 里 4 个 `text-input-v2/000x` patch | `subprojects/wlroots.wrap`；`src/desktop.c:60` |
+| phoc **#302 IME 安装后 OSK 不提层** | ❌ 仍 open（2022-10-10 至今） | §2.3 |
+| phosh **自动弹 OSK 的策略** | ❌ 上游不打算做：`osk-manager.c:26-30` 注释明写 “there's no way to ensure keyboard state via this interface … Any text input can make the keyboard…”；phosh #1004（可切换 OSK）2023-11-18 关闭 | §1.4 |
+| stevia **支持 fcitx5/ibus** | ❌ 未支持：#74 “Support Chinese input using ibus or fcitx5” 状态 **closed（2026-02-28）**，但代码里只有「把 gsettings 里 ibus engine id 映射成自带 layout」的逻辑，注释原文 `/* We don't actually do ibus bus but try to match these to completers */`（`src/pos-input-surface.c:2168`）⇒ 判定为「不接 ibus/fcitx 总线」 | GitLab API issue #74；stevia-main tarball 源码 |
+| stevia **中文词组补全** | ❌ 仍 open：#108 “Support for Chinese word completion”、#109 “Allow expanding the completion list for chinese”（2026-04-30 创建） | GitLab API |
+| squeekboard | ☠️ **unmaintained**（项目描述原字） | §1.5 |
+
+⇒ **最低版本建议（若走 D2）**：`phoc ≥ 0.59`（或给 0.58 打 `bb1f7465` 等价补丁 —— 与本仓 `patches/upstream/phoc-im-keyboard-grab-2026-10-18/` 思路一致但因 wlroots 0.20 行为变化需重写）。
+
+DONE 5
 
 ## §6 最小判别实验清单（不在本次执行） —— 待填
 

@@ -1,0 +1,12 @@
+## pre  2026-11-10T20:14:05+08:00
+7.3.1-debug-vk184-00003-gec74c4795a43
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 androidboot.serialno=51318dc0 androidboot.baseband=apq
+ 20:14:05 up 0 min,  2 users,  load average: 1.77, 0.46, 0.15
+-- boot partitions --
+f4024ba2fa42021f4b756e00dc0b5f03e40c43f8a8f1b18e6937c50ab4130c9e  /dev/disk/by-partlabel/boot_a
+4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5  /dev/disk/by-partlabel/boot_b
+55929c1580d437ad9d5f43e897c37f0d6aa1f1469ffb8ede5928f4b43387f387  /dev/disk/by-partlabel/vbmeta_a
+e974ebab2e591b5b6948afe6f3330a6b75fbc39873b744ef6cce0598c246097d  /dev/disk/by-partlabel/vbmeta_b
+-- slot attrs --
+  boot_a             byte6=0x37 retry=6 active=1 succ=0 unbootable=0
+  boot_b             byte6=0x7a retry=7 active=0 succ=1 unbootable=0

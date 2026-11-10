@@ -988,4 +988,17 @@ awk -v a=<Stopping epoch> -v b=<Stopped epoch> 'BEGIN{printf "stop wall = %.3f s
 | `TimeoutStopSec=5` 在慢 eMMC/fs 上过短（本机 root 是 ext4/`noatime`，实测其它单元 ≤1.5 s 停完） | 极少数情况被 SIGKILL（greetd 无状态，无数据丢失风险） | 5 s 是实测停等（1.9 s 用户会话 + 0.2 s logind）的 2.5 倍余量 |
 | 仓库与设备同批次落地要求 | 只部署一半 ⇒ `verify.sh` F2 FAIL | §3.2 部署段把「仓库改动 + 设备覆盖」写成同一批次，回滚也成对 |
 | 本报告未被 SSOT 引用（AGENT-OPS §3「报告必须被引用」） | 结论会沉底 | 需父会话在 `TASKS/README.md` 的 Q 行或 `PITFALLS/sessions/10-桌面Phosh.md` 加一条指针（**本 lane 不改 SSOT**） |
+---
+
+## §7 2026-11-10 落地与实测（补记）
+
+* 设备侧已落 `/etc/systemd/system/greetd.service.d/zzz-faststop.conf`（`[Service] TimeoutStopSec=10`），
+  `systemctl show greetd -p TimeoutStopUSec` = **10s**；仓库侧副本 = `rootfs/debian/systemd/greetd.service.d/zzz-faststop.conf`。
+* **关键新事实**：§3① 的「ExecStop 先杀 session-worker」**在 2026-11-10 没生效** ——
+  设备上 `ExecStop=/usr/local/libexec/elden/greetd.stop` 存在且可执行，但关机仍卡满
+  **`session-c1.scope/stop` 90 s**（`reboot bootloader` 实测 **+93 s**）。⇒ 只靠 hook 不够，**必须**有 `TimeoutStopSec` 兜底。
+* 落地后实测（同一单元）：`System is rebooting 20:05:17` → `Reached target final.target 20:05:19` = **2 s**；
+  该 boot 的 `Timed out` 计数 = **0**。
+* 仍是待办（不阻塞）：`services.tsv` 的 `stop` 语义 + `render.py` 渲染（本次是设备侧 + 仓库副本双落，
+  **未接到生成链**，换根/重渲染会丢设备侧那份 —— 下次动 `packaging/elden-userland` 时一并接）。
 
