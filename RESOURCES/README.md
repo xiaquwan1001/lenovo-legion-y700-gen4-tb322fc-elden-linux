@@ -295,6 +295,9 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 保留 = `out/r21-sbstop`（p7 基点）+ `out/r21-sbstop-p54…p61`（`--gen` 可复现）。**设备 GPT 原始双表**删前已转存 `backup/lun4-gpt-20261101/`。
 逐项账（含重建入口）= `../reports/asset-cleanup-20261109.md`；候选来源 = `../.pi/plans/2026-11-09-整理候选清单.md`。
 
+**2026-11-10 清理轮（用户当面批准「先发送，再清理，最后开始上机」）**：删 `out/r21-sbstop-p54…p61` + `p63…p65`（11 代，各 641 M，全部 `--gen pNN --verify` 可逐字节复现，删前现跑 `--gen p61 --verify` = **PASS**）+ `reports/artifacts/uefi-20261104R*`（R7-r1 除外，它是 p7 配方的导出源）+ 残留 `out/boot-elden-posctrl-20261103.img`；**释放 7.39 GiB**（根分区 558 G→551 G）。保留 = `out/r21-sbstop-p62`（零写盘成功形态对照）+ `p66`（最新世代，待 p67 取代）。
+逐项账（含重建入口）= `../reports/asset-cleanup-20261110.md`；候选来源 = `../reports/tidy-audit-20261110.md` §3。
+
 **2026-11-05 完整性基线（BIOS 静默损坏事件后设）**：`../versions/out-images-sha256-20261105.tsv` = 129 件镜像的 sha256 + 是否入账 + manifest 比对 + 第 7 列 `path`（含 114 件已归档件）；全仓校验报告（重试定性）= `../reports/integrity-audit-20261105.md`。复算须走 `O_DIRECT`（页缓存会给出错哈希，`PITFALLS #513`）：表头注释带完整命令（`awk ... print $1"  "$7` 后逐件 `dd iflag=direct | sha256sum`）。
 
 | 标记 | 目标 | 体积 | 前置闸 | 状态 |

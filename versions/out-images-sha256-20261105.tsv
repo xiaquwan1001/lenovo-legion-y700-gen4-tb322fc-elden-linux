@@ -15,10 +15,6 @@ b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66	84496384	boot-e
 87f6b767671749ab605e83300ddf1201942c62b9bced7185d9cba3afde5f619d	84529152	boot-elden-m8ab-base.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-m8ab-base.img
 b314287bae3efcec757b0a21daf381beac17c3f27398a38e918c2467ba267d57	84529152	boot-elden-m8ab-v2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-m8ab-v2.img
 9dfdb3319b61860d472cf403a63730bf431f772a488d577f3870b8b59eb60993	84525056	boot-elden-posctrl-20261103.img	Y	–		out/boot-elden-posctrl-20261103.img
-f7008388f143556cd0e8a6837b5c59c87dc8d2d3e4cdbdc5d3f8e8726d90525e	64761856	boot-elden-posctrl-markspin-v2-20261103.img	Y	–		backup/out-history-20261105/boot-elden-posctrl-markspin-v2-20261103.img
-df561f591efa3227c4ef2678e14f88ead08c24275b4ae0571b9d3ecda236d4b4	64761856	boot-elden-posctrl-markspin2-v2-20261103.img	Y	–		backup/out-history-20261105/boot-elden-posctrl-markspin2-v2-20261103.img
-c1168e6552bc17161db20f666a2987bee50712db43a7513d02d11cd5b359bb79	64761856	boot-elden-posctrl-markspin3-v2-20261103.img	Y	–		backup/out-history-20261105/boot-elden-posctrl-markspin3-v2-20261103.img
-05d43285f4a789d449dfe15a3735f6f7be1a4016dff96d50984e9f54cbc0e09c	64761856	boot-elden-posctrl-markspin3gz-v2-20261103.img	Y	–		backup/out-history-20261105/boot-elden-posctrl-markspin3gz-v2-20261103.img
 7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633	85585920	boot-elden-vk127.img	Y	ok		backup/out-history-20261105/boot-elden-vk127.img
 87b73d2c11d2a6dfd5daf48cfa1928ef6eb8ee9abdc8c7bab6210d9896fdcef1	85712896	boot-elden-vk132.img	Y	ok		backup/out-history-20261105/boot-elden-vk132.img
 2955438d2d300e86e71fe3cc04b70d009262d05ea874a7b87dbfda5a1d82c584	85712896	boot-elden-vk133.img	Y	ok		backup/out-history-20261105/boot-elden-vk133.img
