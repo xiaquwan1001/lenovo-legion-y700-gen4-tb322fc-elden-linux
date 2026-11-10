@@ -136,3 +136,36 @@ ssh elden-root 'reboot bootloader'; fastboot boot out/r21-sbstop-pc1/uefi-preamb
 **待验判据**：按音量键 → 标题 `autoboot cancelled` → 画面**长时间停住** → 按 Power 才起；
 `\loader.log` = `autoboot off` →（可选 `menu sel N`）→ `menu confirm` → `menu boot …`，**且无** `menu timeout`。
 
+
+---
+
+## 5. 「GRUB 条目 2（EFI-stub）能否起系统」——取证设计与已完成部分（2026-11-10 晚）
+
+### 5.1 为什么不能凭「进系统了」判定
+
+`/boot/Image`（ext4 上）与 ESP 的 `\boot\boot.img` 内嵌内核**都是 `vk184-00002`**，
+而且两条路径的桌面完全一样 ⇒ 「进系统」**不区分来源**。唯一判据 = 在 GRUB 的 `linux` 行里埋令牌
+（`elden_boot=grub_stub`）后看 `/proc/cmdline`；辅证 = `/efi/loader.log` 的 mtime/sha **不变**（说明我们的 loader 没跑过）。
+
+### 5.2 已完成的一发（无人值守 stub 件）结果
+
+`out/grub-20261110/grub-stub.efi`（单条目、`timeout=1`、直连 EFI-stub、cmdline 带 `elden_boot=grub_stub`）
+装成 `BOOTAA64.EFI` → `fastboot boot pc1` ⇒ **设备掉电后重启/停在关机态**（用户现场：「这会掉电然后重启」），
+主机侧随后 `ping`/`fastboot`/`usb` 全空（总线上只剩无关设备：vivo X200 Ultra、Huawei ELS-AN00 ⇒ `PITFALLS #569` 同族，
+**adb 看到的 `10AF5J0FHQ0039G` 不是我们的板子**）。⇒ 该发与 `PITFALLS #558` 的签名一致（EB 之后整机复位、四通道静默）。
+
+### 5.3 待做的干净 A/B（设备需先手动开机）
+
+| 臂 | 件 | cmdline | 判据 |
+|---|---|---|---|
+| A（基线） | `grub-chain.efi`（chainload loader） | loader 自己的 cmdline | `/proc/cmdline` 含 `elden_bootloader=esp` + `loader.log` 新写 |
+| B | `grub-stub.efi` | **与 A 逐字对齐**（含 `elden_root`/`console=ttyGS0`/`ignore_loglevel`/`panic=15`）+ `elden_boot=grub_stub` | 起来 ⇒ `cmdline` 有 `grub_stub` 且 `loader.log` **未变**（⇒ EFI-stub 成立，#558 需改写） |
+| C | `grub-stub.efi`（旧精简 cmdline） | 无 `elden_root` 等 | 用于解释第 5.2 节的掉电复活是否只是 cmdline 缺失 |
+
+### 5.4 顺带修的：GRUB 菜单字太小
+
+根因：Debian 的 `grub-efi-arm64-bin` **不带** `unicode.pf2`（在 `grub-common` 里）⇒ `gfxterm` 退化成 EFI 文本模式，
+就是用户看到的「Linux 通用 GRUB 小字」。`scripts/grub-arm64-standalone.sh` 已补：缺字体时从宿主
+`/usr/share/grub/unicode.pf2` 复制进 memdisk；三份 cfg 都加了 `insmod gfxterm` + `set gfxmode=1024x768x32,800x600x32,auto`
++ `terminal_output gfxterm`。新件（7 024 640 B，字体已嵌入）：
+`grub-menu.efi` `e0a91f84…`、`grub-stub.efi` `ccc1c9a0…`、`grub-chain.efi` `51ae8d92…`。

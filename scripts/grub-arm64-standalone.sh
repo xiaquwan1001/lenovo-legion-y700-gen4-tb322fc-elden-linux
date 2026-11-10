@@ -61,6 +61,20 @@ if [ ! -d "$MODDIR" ]; then
 fi
 [ -d "$MODDIR" ] || die "解包后没有 $MODDIR"
 
+# 2026-11-10：字体。Debian 的 `grub-efi-arm64-bin` **不带** unicode.pf2（它在 grub-common 里），
+# 而 gfxterm 没有字体就退化成 EFI 文本模式 ⇒ 上机看到「Linux 通用 GRUB 小字菜单」（用户 2026-11-10 反馈）。
+# 字体与架构无关，直接借宿主 /usr/share/grub/unicode.pf2 即可（grub-mkstandalone 按 -d 推出 …/share/grub）。
+FONTDIR=$WORK/usr/share/grub
+if [ ! -f "$FONTDIR/unicode.pf2" ]; then
+  mkdir -p "$FONTDIR"
+  if [ -f /usr/share/grub/unicode.pf2 ]; then
+    cp /usr/share/grub/unicode.pf2 "$FONTDIR/unicode.pf2"
+    say "补字体 $FONTDIR/unicode.pf2（取自宿主，$(stat -c%s "$FONTDIR/unicode.pf2") B）"
+  else
+    say "⚠ 宿主也没有 unicode.pf2（apt install grub-common）——gfxterm 会退化成文本模式"
+  fi
+fi
+
 # ---------- 2. 嵌入的 cfg：默认「前缀桩」 ----------
 EMBED=$WORK/embedded.cfg
 if [ -n "$CFG" ]; then
