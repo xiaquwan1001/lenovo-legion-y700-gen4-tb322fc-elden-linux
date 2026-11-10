@@ -169,3 +169,34 @@ ssh elden-root 'reboot bootloader'; fastboot boot out/r21-sbstop-pc1/uefi-preamb
 `/usr/share/grub/unicode.pf2` 复制进 memdisk；三份 cfg 都加了 `insmod gfxterm` + `set gfxmode=1024x768x32,800x600x32,auto`
 + `terminal_output gfxterm`。新件（7 024 640 B，字体已嵌入）：
 `grub-menu.efi` `e0a91f84…`、`grub-stub.efi` `ccc1c9a0…`、`grub-chain.efi` `51ae8d92…`。
+
+---
+
+## 6. 2026-11-10 晚（第二、三发）：EFI-stub 判定 + 菜单字体
+
+### 6.1 变量已排除：DTB 不是差异项（主机侧已证）
+
+`out/boot-elden-vk184.img` 里解出的 DTB（`scripts/grub-bootfiles.sh` ⇒ `elden.dtb`，153 089 B）
+sha256 = `df00cb19…`，与设备上 `/boot/elden.dtb` 的来源件 `out/fbdiag-20261108/elden.dtb` **逐字节相同**；
+ESP `\boot\boot.img` 与 `out/boot-elden-vk184.img` 同为 **85 594 112 B**。
+⇒ GRUB 条目 2 传给内核的 DTB 与可用路径（loader 读 `boot.img`）**同一份** ⇒ **DTB 不是死因**。
+
+### 6.2 cmdline 也已对齐（第二发）后仍然掉电
+
+第二发把 stub 的 cmdline 与可用启动**逐字对齐**（`console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel
+printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17`
++ 令牌 `elden_boot=grub_stub`），内核/initrd/DTB 与可用路径同源 ⇒ 结果**依旧掉电重启**
+（用户现场：「这一版 grub 是全屏了，但依然掉电」）。
+⇒ **`PITFALLS #558` 维持**：本平台「GRUB/EFI-stub 交接」在 `ExitBootServices` 之后整机复位；
+与 cmdline、DTB、内核来源都无关，属 Mu 侧内存图/无控制台那一层。
+⇒ 用户此前「条目 2 能进系统」**大概率是默认项（条目 1 chainload loader）**：两条路径桌面完全一样，
+只有 `elden_boot=grub_stub` 令牌与 `loader.log` 的 sha 能分辨（本轮把令牌加进 cfg 就是为了这个）。
+
+### 6.3 GRUB 菜单字体（小 → 大）
+
+* 第一版：Debian `grub-efi-arm64-bin` 不带 `unicode.pf2` ⇒ gfxterm 退化文本模式（小字、通用样式）。
+* 第二版：补上宿主 `unicode.pf2` + `insmod gfxterm` + `set gfxmode=1024x768x32,…` ⇒ **全屏**但 16px 字仍太小（用户实测）。
+* 第三版（已备好，待上机看）：`GRUB_FONT_SIZE=40 grub-mkfont` 现造 `elden-big.pf2`（287 596 B）显式塞进 memdisk
+  `boot/grub/fonts/elden-big.pf2`，cfg 里 `loadfont (memdisk)/boot/grub/fonts/elden-big.pf2` 后再 `terminal_output gfxterm`。
+  件（7 311 360 B）：`grub-menu.efi` `a43b91f5…`、`grub-stub.efi` `75308e94…`、`grub-chain.efi` `4f2c5e40…`。
+  脚本开关：`GRUB_FONT_SIZE=<px>`（可选 `GRUB_FONT_TTF=`）。

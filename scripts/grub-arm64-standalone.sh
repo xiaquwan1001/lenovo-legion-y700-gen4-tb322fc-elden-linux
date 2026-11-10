@@ -65,6 +65,19 @@ fi
 # 而 gfxterm 没有字体就退化成 EFI 文本模式 ⇒ 上机看到「Linux 通用 GRUB 小字菜单」（用户 2026-11-10 反馈）。
 # 字体与架构无关，直接借宿主 /usr/share/grub/unicode.pf2 即可（grub-mkstandalone 按 -d 推出 …/share/grub）。
 FONTDIR=$WORK/usr/share/grub
+# 2026-11-10（二）：面板 1904x3040 时 16x32 的默认 unicode.pf2 在整屏 gfxterm 下小到不可读
+# （用户实测：「全屏了但字很小」）。GRUB_FONT_SIZE 给出时，用 grub-mkfont 现造一份**同等路径**的
+# unicode.pf2（gfxterm 默认取它 ⇒ cfg 不用改）。GRUB_FONT_SIZE=40 已实测可读。
+if [ -n "${GRUB_FONT_SIZE:-}" ]; then
+  TTF=${GRUB_FONT_TTF:-/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf}
+  if command -v grub-mkfont >/dev/null && [ -f "$TTF" ]; then
+    mkdir -p "$FONTDIR"
+    grub-mkfont -s "$GRUB_FONT_SIZE" -o "$FONTDIR/elden-big.pf2" "$TTF" && \
+      say "造大字字体 $FONTDIR/elden-big.pf2（${GRUB_FONT_SIZE}px ← $(basename "$TTF")，$(stat -c%s "$FONTDIR/elden-big.pf2") B）"
+  else
+    say "⚠ GRUB_FONT_SIZE 给了但缺 grub-mkfont 或 $TTF"
+  fi
+fi
 if [ ! -f "$FONTDIR/unicode.pf2" ]; then
   mkdir -p "$FONTDIR"
   if [ -f /usr/share/grub/unicode.pf2 ]; then
@@ -100,8 +113,13 @@ fi
 
 # ---------- 3. 打包 ----------
 say "grub-mkstandalone -O arm64-efi（模块 $MODULES）"
+EXTRA_SRC=()
+if [ -n "${GRUB_FONT_SIZE:-}" ] && [ -f "$FONTDIR/elden-big.pf2" ]; then
+  # 显式把大字字体塞进 memdisk 的固定路径；cfg 里用 loadfont 指它。
+  EXTRA_SRC+=("boot/grub/fonts/elden-big.pf2=$FONTDIR/elden-big.pf2")
+fi
 grub-mkstandalone -O arm64-efi -d "$MODDIR" --modules="$MODULES" \
-  -o "$OUT" "boot/grub/grub.cfg=$EMBED" || die "grub-mkstandalone 失败"
+  -o "$OUT" "boot/grub/grub.cfg=$EMBED" "${EXTRA_SRC[@]}" || die "grub-mkstandalone 失败"
 [ -s "$OUT" ] || die "产物为空"
 
 # ---------- 4. 自校验（失败即红线，别上机） ----------
