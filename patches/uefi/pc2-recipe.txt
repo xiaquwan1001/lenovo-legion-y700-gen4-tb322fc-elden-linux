@@ -1,0 +1,99 @@
+# 世代：pc2 = pc1 + R74（内存图实验：DXE Heap 之上的无主 DDR 标 Conv），用来判决 PITFALLS #558
+# 上一代：pc1 = 「干净世代」（clean 1）—— p69 配方去掉全部**纯诊断/停留**世代（R64/R66/R67/R68/R69/R70）
+# 加 R71：FrameBufferSerialPortLib 的 SerialPortWrite 默认静默（屏上不再刷我们的标记）
+# 目的：① 去掉 debug 输出与人为停留，量「真实启动耗时」；② 作为可用件基线（不含取证插桩）
+# 保留：功能补丁全在（fixcopylen / noqrks / R13 loader 启动 / R16 dtbo clamp / R4 真启动 /
+#       R13 skip-usbstop / R42 normalboot / R43 cmdline 令牌 / R46+R53 no-SDCC / R54 ESP-first / R61 异常钩子提升）
+# 不保留：R47/R48/R49（看门狗，已证无效但无害）仍在栈里 —— 留待独立一轮「去无用调用」再删
+# 复现：scripts/uefi-r21-p7-ladder.sh --gen pc1 --mkimg-only --rebuild
+# 屏上静默的实现：R71 在 SerialPortWrite / SerialPortWriteCritical 入口早退（单一收敛点，全部标记走它）
+scale	4
+shim	stock
+ufsdxe	mu
+rmvmdxe	mu
+base	0xff300000
+size	0x400000
+
+patch	patches/uefi/20261104-fixcopylen/0001-bootshim-copy-length-from-build-constants.patch
+patch	patches/uefi/20261104-prepi/0001-prepi-screen-serial-step-marks.patch
+patch	patches/uefi/20261104-dxe/0004-prepi-print-loaddxecore-status.patch
+patch	patches/uefi/20261104-dxe/0010-prepi-fd-fnv-checkpoints.patch
+patch	patches/uefi/20261104-dxe/0013-prepi-block-fnv-table.patch
+patch	patches/uefi/20261104-dxe/0003-prepi-lib-loaddxecore-marks.patch
+patch	patches/uefi/20261104-dxe/0005-prepi-lib-fv-discovery-marks.patch
+patch	patches/uefi/20261104-dxe/0006-fwvol-process-fvfile-marks.patch
+patch	patches/uefi/20261104-dxe/0007-fwvol-guided-section-status.patch
+patch	patches/uefi/20261104-dxe/0001-dxemain-screen-serial-step-marks.patch
+patch	patches/uefi/20261104R5-dxebase/0001-dxemain-print-own-address.patch
+patch	patches/uefi/20261104R7-loadmap/0001-dxecore-loadmap-and-noop-conout.patch
+patch	patches/uefi/20261104R8-names/0001-dxecore-names-and-start-marks.patch
+patch	patches/uefi/20261104R10-noqrks/0001-exclude-qrksdxe.patch
+patch	patches/uefi/20261104R13-loaderstart/0001-bdsdxe-start-fv-linuxloader.patch
+patch	patches/uefi/20261104R14-avbprobe/0001-qcommodulepkg-avb-screen-probes.patch
+patch	patches/uefi/20261104R15-noavbprobe/0001-visible-serial-probes-noavb-path.patch
+patch	patches/uefi/20261104R16-dtboclamp/0001-dtbo-load-by-total-size.patch
+patch	patches/uefi/20261104R17-bootmarkers/0001-bootlinux-markers-empty-dtbo.patch
+patch	patches/uefi/20261104R18-haltbeforejump/0001-halt-before-kernel-jump.patch
+patch	patches/uefi/20261104R19-nvmarkers/0001-avb-bootlinux-nv-markers.patch
+patch	patches/uefi/20261104R19-nvmarkers/0002-bdsdxe-print-prev-marker.patch
+patch	patches/uefi/20261104R20-stage-bisect/0001-sbstop-stage-bisect.patch
+patch	patches/uefi/20261104R21-hostdiag/0001-fastboot-host-visible-diag.patch
+patch	patches/uefi/20261104R2-slow-serial/0001-fb-serial-slow-write.patch
+patch	patches/uefi/20261105-diagentry/0001-diag-entry-probe.patch
+patch	patches/uefi/20261105-finebisect/0001-cmdboot-fine-bisect.patch
+patch	patches/uefi/20261105-vsbisect/0001-verifiedboot-bisect.patch
+patch	patches/uefi/20261105-vsbisect/0002-cmdboot-report-vs-abort.patch
+patch	patches/uefi/20261105-vsbisect/0003-preamble-bisect.patch
+patch	patches/uefi/20261105R2-vsstop-fix/0001-vs-stop-inline-parse.patch
+patch	patches/uefi/20261105R4-preamble2-bisect/0001-preamble2-bisect.patch
+patch	patches/uefi/20261105R5-probemode/0001-probe-mode-switch.patch
+patch	patches/uefi/20261105R6-probe-orthogonal/0001-sbprobe-orthogonal.patch
+patch	patches/uefi/20261105R7-probe-markonly/0001-sbprobe-markonly.patch
+patch	patches/uefi/20261106-vsstop35/0001-vsstop35-findbootableslot-tail.patch
+patch	patches/uefi/20261106R2-gate-outwrite/0001-gate-findbootableslot-diagnostic-write.patch
+patch	patches/uefi/20261106R3-bootlinux-eb/0001-bootlinux-eb-bisect.patch
+patch	patches/uefi/20261106R4-real-boot/0001-real-boot-silent-default-and-drop-deadloop.patch
+patch	patches/uefi/20261106R5-jump-banner/0001-forced-jump-banner.patch
+patch	patches/uefi/20261106R11-lia-tail/0001-lia-tail-bisect.patch
+patch	patches/uefi/20261106R12-probemode-guard/0001-probemode-only-with-token.patch
+patch	patches/uefi/20261106R13-skip-usbstop/0001-skip-fastbootusbdevicestop.patch
+patch	patches/uefi/20261106R17-faulthandler-image/0001-faulthandler-one-line-image-attr.patch
+patch	patches/uefi/20261106R18-rehook-exception/0001-bdsdxe-rehook-exception-handler.patch
+patch	patches/uefi/20261106R19-fbconsole-bound/0001-fbconsole-bounded-draw.patch
+patch	patches/uefi/20261106R20-faultattrs/0001-faulthandler-esr-far.patch
+patch	patches/uefi/20261106R21-fblazyinit/0001-fbconsole-lazy-init.patch
+patch	patches/uefi/20261106R22-restore-eb/0001-restore-eb-banner-status.patch
+patch	patches/uefi/20261106R23-ddr-checkpoint/0001-ddr-checkpoint-eb-jump.patch
+patch	patches/uefi/20261106R24-blackbox-map/0001-platformmemmap-blackbox-window.patch
+patch	patches/uefi/20261106R25-fbbudget-fullpanel/0001-fbbudget-full-panel.patch
+patch	patches/uefi/20261106R26-preeb-dtdiag/0001-preeb-dt-diagnostic.patch
+patch	patches/uefi/20261106R27-fbscroll/0001-fbscroll-bounded-clear.patch
+patch	patches/uefi/20261106R28-fbexplicit-init/0001-fb-init-explicit.patch
+patch	patches/uefi/20261106R29-fbgeometry/0001-fbconsole-pixel-semantics.patch
+patch	patches/uefi/20261106R30-faultdump/0001-faulthandler-two-tier-dump.patch
+patch	patches/uefi/20261106R31-logfsdump/0001-console-ring-to-logfs.patch
+patch	patches/uefi/20261106R32-ringshared/0001-ring-shared-and-posteb-dump.patch
+patch	patches/uefi/20261107R33-true-nobs/0001-eb-true-nobs-and-markers.patch
+patch	patches/uefi/20261107R34-screenmarks/0001-screen-stage-markers.patch
+patch	patches/uefi/20261107R35-fastboot-branch/0001-branch-marks.patch
+patch	patches/uefi/20261107R36-fastboot-loopmark/0001-loopmark.patch
+patch	patches/uefi/20261107R38-cached-dump/0001-cached-dump.patch
+patch	patches/uefi/20261107R39-ebscreen/0001-eb-phase-screen-marks.patch
+patch	patches/uefi/20261107R40-noclear/0001-faulthandler-no-clear.patch
+patch	patches/uefi/20261107R41-noebdump/0001-drop-posteb-dump-and-pph-marks.patch
+patch	patches/uefi/20261107R42-normalboot/0001-drop-orphan-bootintofastboot.patch
+patch	patches/uefi/20261107R43-bootpath-proof/0001-bootpath-cmdline-tag.patch
+patch	patches/uefi/20261107R44-cmdline-witness/0001-cmdline-tag-witness.patch
+patch	patches/uefi/20261107R45-initcalldebug/0001-cmdline-initcall-debug.patch
+patch	patches/uefi/20261107R47-wdogoff/0001-wdog-disable-before-jump.patch
+patch	patches/uefi/20261107R48-wdogstrong/0001-wdog-bite-disable-pet-before-preeb.patch
+patch	patches/uefi/20261107R49-wdogarchscm/0001-wdog-arch-and-scm-disable.patch
+patch	patches/uefi/20261107R46-nosdcc/0001-exclude-sdccdxe.patch
+patch	patches/uefi/20261107R53-nosdcc-all/0001-sdccdxe-apriori-and-components.patch
+patch	patches/uefi/20261108R54-espfirst/0001-bdsdxe-esp-first.patch
+patch	patches/uefi/20261108R61-hoist-exchook/0001-bdsdxe-hoist-exception-rehook.patch
+# SKIP(2026-11-09): patch	patches/uefi/20261108R62-espconn/0001-bdsdxe-esp-rescan-after-connect-all.patch
+#   理由：R62 的「LocateHandleBuffer(AllHandles)+逐句柄 ConnectController」是 p61/p62
+#   两发 flashed 都没写 logfs 的疑点（R54 注释已记「本板早期 ConnectAll 会同步异常」）
+patch	patches/uefi/20261110R71-quiet/0001-fb-serial-quiet-default.patch
+patch	patches/uefi/20261110R74-memmap-appsfree/0001-memmap-appsfree-conv.patch

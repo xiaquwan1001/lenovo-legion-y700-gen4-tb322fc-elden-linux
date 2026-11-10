@@ -1,0 +1,41 @@
+Subject: [PATCH] PlatformMemoryMapLib: 把 DXE Heap 之上的无主 DDR 标成 Conv（EFI-stub 死因判决实验）
+
+2026-11-10R74 y700-elden —— 针对 `PITFALLS #558`（GRUB/EFI-stub 交接在 `ExitBootServices` 后整机复位）。
+
+## 假设
+
+本平台内存表里**只有 DXE Heap**（`0xB90C0000` + `0x1D500000` ≈ 469 MiB）是 `Conv`，其余 DDR 全 `Reserv`
+⇒ 经 EFI stub 起内核时，EFI 内存图里可用的只有那 469 MiB；而 `0xD65C0000`–`0xFC800000` 这段**根本没有任何条目**
+（既不是 Reserved 也不是 Conventional）。若内核死在「没有足够可用 RAM / 描述符不全」，本例应能救活。
+
+## 改法
+
+在 `DXE Heap` 之后插入
+`{ "Apps Free", 0xD65C0000, 0x26240000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv, WRITE_BACK_XN }`
+（`0xD65C0000`..`0xFC800000` = 612 MiB，正好到 `Display Reserved` 前）。
+
+## 判据
+
+同一个 GRUB stub 件（`grub-stub.efi`，cmdline 带 `elden_boot=grub_stub`）：
+* 起来（SSH + `/proc/cmdline` 有令牌 + `loader.log` 未变）⇒ `#558` 死因 = 内存图，**EFI-stub 可用**；
+* 仍掉电 ⇒ 内存图不是死因，回到「Mu 的 EB 之后状态 / 中断控制器 / 看门狗」方向再谈。
+
+## 风险与回退
+
+只改内存图、只打 RAM 形态（`fastboot boot`），不写任何分区；回退 = 用 `pc1` 件。
+注意这段在 Mu 阶段**没有驱动使用**（PIL 固件区在 `0x89E00000`+`0x19700000`，显示区在 `0xFC800000` 之后），
+但**内核一旦能用**，它会把这 612 MiB 纳入管理 —— 若 HW 侧另有使用者，可能表现为随机踩内存，届时只保留 pc1。
+diff --git a/Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c b/Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c
+--- a/Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c
++++ b/Platforms/PakalaPkg/Device/lenovo-y700g4/Library/PlatformMemoryMapLib/PlatformMemoryMapLib.c
+@@ -32,6 +32,10 @@
+     { "XBL Ramdump",       0xB8000000, 0x001C0000, AddMem, MEM_RES, UNCACHEABLE, Reserv, UNCACHED_UNBUFFERED_XN },
+     { "DBI Dump",          0xB81C0000, 0x00F00000, NoHob,  MMAP_IO, INITIALIZED, Reserv, UNCACHED_UNBUFFERED_XN },
+     { "DXE Heap",          0xB90C0000, 0x1D500000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN },
++    /* 2026-11-10R74 y700-elden: EFI-stub 实验 —— DXE Heap 之上到 Display Reserved 之前是**无主 DDR**，
++       原表里没有条目 ⇒ 内核经 EFI stub 起来时这块 RAM 不在 EFI 内存图里，可用内存只有 DXE Heap 那 469 MiB。
++       这里显式标成 Conv（EFI_CONVENTIONAL_MEMORY），用来判决 #558 的死因是不是「可用内存太少」。*/
++    { "Apps Free",         0xD65C0000, 0x26240000, AddMem, SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN },
+     { "Display Reserved",  0xFC800000, 0x02B00000, AddMem, MEM_RES, SYS_MEM_CAP, Reserv, WRITE_THROUGH_XN },    
+     { "UEFI FD",           0xFF300000, 0x00400000, AddMem, SYS_MEM, SYS_MEM_CAP, BsData, WRITE_BACK },
+     // 2026-11-06R24 y700-elden: DDR 黑匣子窗口（EB 之后唯一取证通道）。

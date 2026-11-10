@@ -200,3 +200,29 @@ printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_b
   `boot/grub/fonts/elden-big.pf2`，cfg 里 `loadfont (memdisk)/boot/grub/fonts/elden-big.pf2` 后再 `terminal_output gfxterm`。
   件（7 311 360 B）：`grub-menu.efi` `a43b91f5…`、`grub-stub.efi` `75308e94…`、`grub-chain.efi` `4f2c5e40…`。
   脚本开关：`GRUB_FONT_SIZE=<px>`（可选 `GRUB_FONT_TTF=`）。
+
+---
+
+## 7. pc2（内存图实验）首测：EFI-stub 仍未通过，但症状变了
+
+* `pc2` = `pc1` + **R74**（内存图：把 `0xD65C0000`–`0xFC800000` 这 612 MiB 无主 DDR 标成 `Conv`）。
+  件 `out/r21-sbstop-pc2/uefi-preamblec2-r1.img`（`271117f1…`）。
+* 判据件 = `grub-stub.efi`（单条目、`timeout=1`、`/boot/Image` + 令牌 `elden_boot=grub_stub`）装成 `BOOTAA64.EFI`。
+* **结果（用户现场）**：**屏幕先只剩背光 → 一段时间后掉电**。⇒ 仍不通，但**现象与 11-08「四通道全静默」不同**：
+  「只剩背光」说明**面板/背光那一段被碰过**（内核比之前走得更远，或 GRUB 退出后 ABL 状态变化），
+  随后掉电 ⇒ 复位源仍未定（watchdog / SError / 内存踩踏皆可能）。
+* 本轮**没有**拿到 pstore：`fastboot boot` 命令被中断（`Command aborted`），随后设备离线；
+  下轮开机第一件事读 `/var/log/pstore/`（`pstore-catch` 会把 ramoops 归档）与 `journalctl -b -1`。
+* **顺带暴露的无关缺陷**：这次关机 `session-c1.scope/stop` 卡满 **90 s** 才被 SIGKILL ⇒
+  `reboot bootloader` 实测 **+93 s**。该问题 2026-10-30 已定根因（greetd 上游死锁：
+  `check_children()` 持锁 await 与 SIGTERM 处理抢同一把写锁，见 `reports/shutdown-greetd-hang-plan-20261030.md`），
+  修法现成：drop-in `TimeoutStopSec=10` + `ExecStop` 先杀 session-worker（90 s → ≤2 s）。**每轮测试都被它拖掉 1.5 min，应先修。**
+
+### 7.1 下一步（顺序）
+
+1. **修关机**：写 `/etc/systemd/system/greetd.service.d/zz-elden-faststop.conf`（`TimeoutStopSec=10` + `ExecStop=/bin/kill -TERM $MAINPID` 前先杀 session-worker），
+   同源推进 `packaging/elden-userland/services.tsv` 的 `stop` 语义（长期）。
+2. **EFI-stub 诊断**：把 `out/fbdiag-20261108/Image.fbdiag`（`CONFIG_SYSFB_SIMPLEFB=y`，UTS `7.3.1-debug-fbdiag-00003`）
+   放到 linux17 的 `/boot/Image.fbdiag`，GRUB entry 2 改指它 ⇒ 若 EFI 路径能取到 GOP 帧缓冲，**屏上就能看到内核自己的日志**，
+   直接看死在哪一步；同时读 `/var/log/pstore/`。
+3. 若 2 仍盲：接受 `#558` 为平台墙，**菜单保持两层**（GRUB 只做 loader/重启/关机入口），不再投 EFI-stub。
