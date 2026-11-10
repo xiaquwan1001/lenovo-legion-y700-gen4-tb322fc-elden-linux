@@ -1,5 +1,8 @@
-# 镜像完整性基线（2026-11-05 生成；同日 out/ 归档后增 path 列 —— 114 件历史镜像移到 backup/out-history-20261105/，见 scripts/out-archive.py 与 reports/out-archive-20261105.md）。复算校验：awk -F'\t' 'NR>3{print $1"  "$7}' versions/out-images-sha256-20261105.tsv | sha256sum -c --quiet
+# 镜像完整性基线（2026-11-05 生成；同日 out/ 归档后增 path 列 —— 114 件历史镜像移到 backup/out-history-20261105/，见 scripts/out-archive.py 与 reports/out-archive-20261105.md）。复算校验（**数据行 = 非注释行且首列不是 `sha256`**，勿再用 `NR>3`——2026-11-10 起表内有 RETIRED 注释行）：awk -F'\t' '!/^#/ && $1!="sha256"{print $1"  "$7}' versions/out-images-sha256-20261105.tsv | while read -r want path; do got=$(dd if="$path" iflag=direct bs=1M status=none | sha256sum | cut -d' ' -f1); [ "$got" = "$want" ] || echo "MISMATCH $path got=$got"; done（**必须 O_DIRECT**，见 PITFALLS #513）
 # 列：sha256 / bytes / image / in_ledger(是否在 vk-kernel-identity.tsv 有行) / manifest(ok|MISMATCH|no-sha-field|–) / kernel_release_normalized / path(相对仓库根；勿再用 "out/"+image 拼接)
+# RETIRED(2026-11-10)：下列 2 件在 11-09/11-10 清理轮被有意删除，故从基线移出（sha 留档，不参与复算）；它们原属 out-archive 的「保留集」，删除理由见各自指针。
+# RETIRED	9dfdb3319b61860d472cf403a63730bf431f772a488d577f3870b8b59eb60993	84525056	boot-elden-posctrl-20261103.img	reports/tidy-audit-20261110.md 计划项 4 已执行（取证目录与残留件清理）
+# RETIRED	a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	88260608	boot-elden.img	reports/asset-cleanup-20261109.md（无版本号默认产物，内核段解不出；需要时 scripts/build-boot.sh 重建）
 sha256	bytes	image	in_ledger	manifest	kernel_release	path
 5d6ba6222b84a829cba81af7d35f5b742bbcbcea24c5f2bde9bd1b96f3bb634a	22081536	boot-elden-dtbo1.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-dtbo1.img
 de99080d926027f66e7568f8776f4509fcd7cb801f5ba95b84aa997f79c666a5	85639168	boot-elden-dtbo2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty	backup/out-history-20261105/boot-elden-dtbo2.img
@@ -14,7 +17,6 @@ a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	88260608	boot-e
 b24a64bb2475b51bd948a688f6e1fce7dc025946b64ad6403c18881721652b66	84496384	boot-elden-m3v5-onboard.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-m3v5-onboard.img
 87f6b767671749ab605e83300ddf1201942c62b9bced7185d9cba3afde5f619d	84529152	boot-elden-m8ab-base.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-m8ab-base.img
 b314287bae3efcec757b0a21daf381beac17c3f27398a38e918c2467ba267d57	84529152	boot-elden-m8ab-v2.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	backup/out-history-20261105/boot-elden-m8ab-v2.img
-9dfdb3319b61860d472cf403a63730bf431f772a488d577f3870b8b59eb60993	84525056	boot-elden-posctrl-20261103.img	Y	–		out/boot-elden-posctrl-20261103.img
 7515f6a453dfd6896ca0a79cef5201c75d4c1d3f86672e54205ce2ca021e9633	85585920	boot-elden-vk127.img	Y	ok		backup/out-history-20261105/boot-elden-vk127.img
 87b73d2c11d2a6dfd5daf48cfa1928ef6eb8ee9abdc8c7bab6210d9896fdcef1	85712896	boot-elden-vk132.img	Y	ok		backup/out-history-20261105/boot-elden-vk132.img
 2955438d2d300e86e71fe3cc04b70d009262d05ea874a7b87dbfda5a1d82c584	85712896	boot-elden-vk133.img	Y	ok		backup/out-history-20261105/boot-elden-vk133.img
@@ -68,7 +70,6 @@ c8953ba0ea3ed55d4ebdb37ac897bafa9e6e6449608efe1cc8621deb544aab27	84520960	boot-e
 19c8bcb015376df53793a1247792b410ae2c741dcbd5c94d78a075f9bcb82048	84520960	boot-elden-vk182-camssv3.img	Y	ok	7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172	out/boot-elden-vk182-camssv3.img
 30e6a4c4bcfcd707993178e5554d5086964a104adde1a3227968342cda8c752b	84525056	boot-elden-vk183-fastrpc.img	Y	–		out/boot-elden-vk183-fastrpc.img
 983936396fd7bbacb45b40d28eb58c11972a3b51bb06358bab4f94279714e725	85352448	boot-elden-vk64.img	Y	ok		backup/out-history-20261105/boot-elden-vk64.img
-a144e5ce1b374b928852bfb3503249ca48e81b37f53c4bb4005655bc597ec1e3	88260608	boot-elden.img	Y	–		out/boot-elden.img
 ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7	4096	dtbo-dummy.img	Y	–		backup/out-history-20261105/dtbo-dummy.img
 cdc8acf2587de4f3ad3352ecbc441babdee37625b87d64ea0e12717ac09deab4	100663296	linuxstop1.img	Y	–		backup/out-history-20261105/linuxstop1.img
 c619072390eefab7015242a4dc5f33c962b4826669fc46896af78f44526c389b	100663296	linuxstop2.img	Y	–		backup/out-history-20261105/linuxstop2.img

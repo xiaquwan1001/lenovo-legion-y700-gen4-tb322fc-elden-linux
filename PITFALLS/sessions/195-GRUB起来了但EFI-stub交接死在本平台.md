@@ -1,4 +1,4 @@
-# 187 — GRUB 起来了、内核也被 PE 装载了，但 EFI-stub 交接在本平台死掉（且一点日志都没有）
+# 195 — GRUB 起来了、内核也被 PE 装载了，但 EFI-stub 交接在本平台死掉（且一点日志都没有）
 
 日期：2026-11-08 · 线：G1-29 后半 · 正文：`reports/uefi-grub-esp-handoff-wall-20261108.md`
 
