@@ -222,3 +222,72 @@ waydroid shell -- curl -s -o /dev/null -w '%{http_code}\n' -m 8 https://www.baid
   wlroots 0.20.2 `types/wlr_linux_drm_syncobj_v1.c:425-461`、`render/gles2/renderer.c:687-691`、
   `backend/drm/drm.c:125`；sway `sway/server.c:297-302`。
 - 基线报告：`reports/droidloom-feasibility-20261108.md`（本轮不重复其 §1–§5 的协议/形态核对）。
+
+---
+
+## 8. 2026-11-10 追加：合成器门槛的实测突破（不必先编 phoc）
+
+### 8.1 headless sway 广告了 syncobj（实测）
+
+```sh
+# 设备上，普通用户，无需 DRM master
+export XDG_RUNTIME_DIR=/tmp/xdg-swaytest
+WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER_ALLOW_SOFTWARE=1 \
+  sway -c /tmp/sway-headless.conf &
+wayland-info | grep syncobj
+```
+
+输出（实测）：
+
+```
+interface: 'zwp_linux_dmabuf_v1',              version:  5, name:  3
+interface: 'wp_linux_drm_syncobj_manager_v1',  version:  1, name:  4
+interface: 'xdg_wm_base',                      version:  5, name: 13
+```
+
+`sway 1.12` + `libwlroots-0.20.2`（Debian sid 现成包，`apt install sway` 只装 4 个包）
+在 `WLR_BACKENDS=headless` 下**广告了** `wp_linux_drm_syncobj_manager_v1`。
+机制：`sway/server.c:297-302` 的条件是 `renderer->features.timeline && backend->features.timeline`；
+headless 后端 `backend/headless/backend.c:79` **恒置 `features.timeline = true`**
+（对比 `backend/drm/drm.c:125` 要 `DRM_CAP_SYNCOBJ_TIMELINE`，本机也满足；`backend/wayland` 则取决于上游合成器）。
+
+### 8.2 droidloom presenter 在 sway 下通过了全部绑定（实测）
+
+同一 headless sway 下跑 `/opt/dl-test/usr/bin/droidloom-wayland`：
+
+```
+DROIDLOOM_DIRECT_INPUT_ABI=1;
+DROIDLOOM_HOST_CHANNELS_ABI=1;
+DROIDLOOM_NOTIFICATIONS_ABI=3;
+Droidloom session mode: desktop
+DROIDLOOM_CLIPBOARD_ABI=1;
+Droidloom clipboard backend: ext-data-control
+```
+
+**没有** `Wayland global bind failure`（在 phoc 0.58 会话里是直接失败退出）。
+⇒ presenter 侧的全部门槛（`xdg-shell` / `linux-dmabuf` v4 feedback / `linux-drm-syncobj` /
+`zwlr_output_power` / `viewporter` / `fractional-scale` / `alpha-modifier`）在 sway 下齐了。
+
+### 8.3 这条改变了什么
+
+| 原计划 | 现在 |
+|---|---|
+| L2 必须先「补一行 + 重编 phoc」（需配 `deb-src` 或编 tarball，半天） | **可以用现成 `sway` 包做前置验证**（零编译），只在「要回 Phosh 日用」时才需要补 phoc |
+| 图形门槛判据 = `wayland-info` 有 syncobj | 同左，但**可以在 headless 后端上零风险取**，不动现有 Phosh 会话 |
+| 不知道 presenter 除 syncobj 外还缺不缺别的全局 | **已知不缺**（§8.2） |
+
+### 8.4 仍然卡住的两件（未变）
+
+1. **内核 `CONFIG_NF_TABLES`**：`DevelopmentNetwork::setup_rules()` 强制 `nft -f -`；
+   现役 `.config` 未开。片段 `patches/fragment-droidloom-nftables.config` 已备并验证。
+   ⚠ headless sway 验证**不需要**这一项（不起 cell），所以 L1 与 L2 可解耦。
+2. **image 包 0.90 GiB + GApps**：没下、没有 `LiteGapps-arm64-17.0.zip`。
+   起 cell 之前的 `droidloom-package-helper prepare` 还会走 `pkexec` + `/etc/droidloom/cell.json`
+   （`SPEC`/`RECIPE` 路径是 **Arch 打包路径**，Debian 上摊装需要手工铺 `cell.json` + `runtime.env`）。
+
+### 8.5 结论更新
+
+**图形前置不再是「半天编 phoc」，而是「`apt install sway` + headless 起一次」** —— 成本从半天降到 5 分钟，
+且零编译、零替换现有桌面。**内核 nftables 仍是真门槛**（起 cell 才需要）。
+⇒ C12 的最小可行试验 = `L1 内核 nftables` + `L3 image`；`L2 合成器` 已用 headless sway 验证通过，
+只在「真窗口上屏」时才需要真后端（sway DRM 或补过一行的 phoc）。
