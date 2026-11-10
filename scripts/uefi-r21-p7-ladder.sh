@@ -123,14 +123,21 @@ if [ -n "$GEN" ]; then
 		p64) _rec=patches/uefi/p64-recipe.txt; _bd=uefi-20261109R65-p64;               _kept=/dev/null; _out=r21-sbstop-p64;;
 		p65) _rec=patches/uefi/p65-recipe.txt; _bd=uefi-20261109R66-p65;               _kept=/dev/null; _out=r21-sbstop-p65;;
 		p66) _rec=patches/uefi/p66-recipe.txt; _bd=uefi-20261109R67-p66;               _kept=/dev/null; _out=r21-sbstop-p66;;
-		*) die "--gen 只认 p7/p54/p58/p59/p60/p61/p62/p63/p64/p65/p66（见脚本头部）；收到: $GEN";;
+		p67) _rec=patches/uefi/p67-recipe.txt; _bd=uefi-20261110R68-p67;               _kept=/dev/null; _out=r21-sbstop-p67;;
+		*) die "--gen 只认 p7/p54/p58/p59/p60/p61/p62/p63/p64/p65/p66/p67（见脚本头部）；收到: $GEN";;
 	esac
 	[ -n "${PFX_EXPLICIT:-}" ] || PFX=$GEN
 	[ -n "${RECIPE_EXPLICIT:-}" ] || RECIPE=$ROOT/$_rec
-	[ -n "${BUILD_DIR:-}" ] || BUILD_DIR=$ROOT/reports/artifacts/$_bd
+	# 2026-11-10R68：`--gen X --rebuild` 曾被这里静默吃掉 —— BUILD_DIR 被预置成归档名后，
+	# 重建分支永远进不去，随后只会报「变体目录不存在」（PITFALLS #590 同族：错模式静默）。
+	# 现在 --rebuild 时**不**预置 BUILD_DIR，让 build_variant() 去重建。
+	if [ "${REBUILD:-0}" != 1 ]; then
+		[ -n "${BUILD_DIR:-}" ] || BUILD_DIR=$ROOT/reports/artifacts/$_bd
+	fi
 	[ -n "$_kept" ] && { [ -n "${KEPT_EXPLICIT:-}" ] || KEPT=$ROOT/$_kept; }
 	# 无指纹的代次：清掉可能残留的 p7 指纹，否则会拿 p7 件去比而误报 FAIL
 	[ -z "$_kept" ] && [ -z "${KEPT_EXPLICIT:-}" ] && KEPT=/dev/null
+	[ -n "${BUILD_ARCHIVE:-}" ] || BUILD_ARCHIVE=$ROOT/reports/artifacts/$_bd
 	note "世代 $GEN ⇒ 配方 $_rec / 构建 $_bd / 指纹 ${_kept:-（无）}"
 	PREAMBLE=uefi-preamble${PFX#p}-r1.img   # 必须在改完 PFX 后重算（否则仍叫 preamble7）
 fi

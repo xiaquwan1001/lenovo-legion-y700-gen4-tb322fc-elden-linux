@@ -1,0 +1,185 @@
+Subject: [PATCH] BdsDxe: 信标 v3（每 boot 唯一时间戳 + 累积轨迹）并修正 stage 8 语义
+
+2026-11-10R68 y700-elden（对应 PITFALLS #586/#589，复核 reports/beacon-recheck-20261110.md）。
+
+## 为什么（v2 = R66 的两个缺陷，都是"判据骗人"）
+
+1. **固定 LBA + 内容只随 stage 变** ⇒ 上一发留下的字节与本发逐字节相同，读到 `st=8` 无法区分
+   「本发跑到了 8」与「上一发留下的残留」（2026-11-09 晚 p65/p66 flashed 就卡在这里，PITFALLS #586）。
+2. **`R66Beacon (8, "fallback")` 位于 `if (!Found)` 之前**（无条件检查点）⇒ `fallback` 只是标签名，
+   它不是"走了回退"的证据；两个会话据此误判「fastboot 形态靠 FV LinuxLoader 兜住」，反证就在手边
+   （该发 logfs 记录区逐字节未变 ⇒ LinuxLoader 根本没跑）——PITFALLS #589。
+
+## 改法
+
+* 函数 `R66Beacon` → `R68Trace`：首次调用清零整块并写头 `R68LOG b=<YYYYMMDDhhmmss> bs=<n>`，
+  其后每个 stage **追加** `s<n>:<tag>`，然后整块重写同一 LBA。
+  ⇒ 该块内容**只反映最后一次跑到它的那次启动**，且带秒级时间戳：两次启动时间戳不可能相同，
+    「本发有没有跑到 / 跑到哪」一发 dump 即可裁决，残留歧义消失。
+* stage 语义修正：`st=8` 移进 `if (!Found)` 内并改名 `notfound`；`LoadImage` 成功后新增 `st=9 esp-ld-ok`
+  ⇒ 成功/回退从此可判。
+* 串口行 `[K] bec st=<n> <Status>` → `[K] tr st=<n> <Status>`（写入状态照旧上报，写失败不静默）。
+
+## 实现注意（2026-11-10 上机首测踩到）
+
+`R66IsLogfs()` 用 `m_R66Buf` 读分区尾部做指纹自检 ⇒ **轨迹缓冲必须是独立数组**（`m_R68Buf`），
+否则每次调用识别分区都会先把已累积的轨迹清掉（首测即表现为「只有末尾那一个 stage 的残留」）。
+
+## 单调计数（2026-11-10 首测后补）
+
+第一发上机拿到 `R68LOG b=... s1..s9`，但 RTC 在本机是 2019 年且秒值可能跨启动相同 ⇒ 时间戳**不足以**区分「本发写的」与「上一发残留」。
+故头部再加 **`n=<单调计数>`**：首次调用先读回上一发的 `n` 再 +1 ⇒ 任何一次写入都会让 n 增长（PITFALLS #586 的硬要求）。
+
+## 判读（Linux 侧）
+
+  dd if=/dev/disk/by-partlabel/logfs bs=1M | grep -a "R68LOG"     # 必须校验 dd 字节数 = 8388608（#587）
+  · 出现 `R68LOG b=<ts> ... s9:esp-ld-ok`      ⇒ ESP 侧 boot.img 被 LoadImage 起来（成功路径）
+  · 出现 `R68LOG b=<ts> ... s8:notfound`       ⇒ 跑到回退判定且没找到（分区/FAT 层问题）
+  · 只有更低 stage（s1–s7）                    ⇒ 崩在该 stage 之后
+  · 完全没有 / 时间戳是本机已知旧值            ⇒ 我们的 BdsDxe 根本没执行到（ABL 层就没跳过来）
+
+diff --git a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+index 182ecc1..c03cde5 100644
+--- a/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
++++ b/MdeModulePkg/Universal/BdsDxe/BdsEntry.c
+@@ -872,6 +872,7 @@ R61HookException (
+ // 读法：dd if=/dev/sde68 bs=1M | grep -a R66STG ；出现即「跑到第 n 个检查点」。
+ #define R66_BUF_SZ  16384
+ STATIC UINT8  m_R66Buf[R66_BUF_SZ];
++STATIC UINT8  m_R68Buf[R66_BUF_SZ];   // 2026-11-10R68：轨迹专用（R66IsLogfs 会读写 m_R66Buf）
+ 
+ STATIC
+ BOOLEAN
+@@ -916,7 +917,7 @@ R66IsLogfs (
+ 
+ STATIC
+ VOID
+-R66Beacon (
++R68Trace (
+   IN UINT32       Stage,
+   IN CONST CHAR8  *Tag
+   )
+@@ -931,6 +932,10 @@ R66Beacon (
+   UINTN         Bs;
+   CHAR8         Line[160];
+   UINTN         Len;
++  EFI_TIME      Now;
++  STATIC UINTN   m_R68Len = 0;
++  STATIC BOOLEAN m_R68Init = FALSE;
++  STATIC UINTN   m_R68Seq = 0;
+ 
+   Handles = NULL;
+   Count   = 0;
+@@ -956,13 +961,38 @@ R66Beacon (
+     Total = (UINT64)(BlkIo->Media->LastBlock + 1) * (UINT64)Bs;
+     Lba   = ((Total - R66_BUF_SZ) / (UINT64)Bs) + 1;   /* 记录区第 2 块：保留 SBLOG0 头 */
+ 
+-    ZeroMem (m_R66Buf, Bs);
+-    Len = AsciiSPrint (Line, sizeof (Line), "R66STG st=%d tag=%a bs=%d\n",
+-                       Stage, (Tag != NULL) ? Tag : "-", (UINT32)Bs);
+-    CopyMem (m_R66Buf, Line, (Len < Bs) ? Len : Bs);
++    // 2026-11-10R68 y700-elden: **每 boot 唯一 + 累积轨迹**（R66 的固定单条无法区分"跑到过"与"本发跑到"）。
++    // 首次调用：清零整块、写入带时间戳的头（两次启动的秒级时间戳不可能相同）；其后每 stage 追加。
++    // 因此本块内容**只反映最后一次跑到它的那次启动**：读到什么 st 就是那一发跑到了什么。
++    if (!m_R68Init) {
++      // 单调计数 n：先读回上一发写下的 n 再 +1 ⇒ 「本发到底有没有跑」不再依赖内容是否巧合相同（PITFALLS #586）。
++      CHAR8         *SeqStr;
++
++      ZeroMem (m_R68Buf, R66_BUF_SZ);
++      ZeroMem (m_R66Buf, R66_BUF_SZ);
++      if (!EFI_ERROR (BlkIo->ReadBlocks (BlkIo, BlkIo->Media->MediaId, Lba, Bs, m_R66Buf))) {
++        SeqStr = AsciiStrStr ((CHAR8 *)m_R66Buf, "R68LOG n=");
++        if (SeqStr != NULL) {
++          m_R68Seq = AsciiStrDecimalToUintn (SeqStr + 9) + 1;
++        }
++      }
++      if (m_R68Seq == 0) {
++        m_R68Seq = 1;
++      }
++      if (!EFI_ERROR (gRT->GetTime (&Now, NULL))) {
++        m_R68Len = AsciiSPrint ((CHAR8 *)m_R68Buf, 96, "R68LOG n=%d b=%04d%02d%02d%02d%02d%02d bs=%d ",
++                                (UINT32)m_R68Seq, Now.Year, Now.Month, Now.Day, Now.Hour, Now.Minute, Now.Second,
++                                (UINT32)Bs);
++      } else {
++        m_R68Len = AsciiSPrint ((CHAR8 *)m_R68Buf, 96, "R68LOG n=%d b=0 bs=%d ", (UINT32)m_R68Seq, (UINT32)Bs);
++      }
++      m_R68Init = TRUE;
++    }
++    m_R68Len += AsciiSPrint ((CHAR8 *)m_R68Buf + m_R68Len, R66_BUF_SZ - m_R68Len, "s%u:%a ",
++                             Stage, (Tag != NULL) ? Tag : "-");
+ 
+-    Status = BlkIo->WriteBlocks (BlkIo, BlkIo->Media->MediaId, Lba, Bs, m_R66Buf);
+-    Len    = AsciiSPrint (Line, sizeof (Line), "[K] bec st=%d %r\n\r", Stage, Status);
++    Status = BlkIo->WriteBlocks (BlkIo, BlkIo->Media->MediaId, Lba, Bs, m_R68Buf);
++    Len    = AsciiSPrint (Line, sizeof (Line), "[K] tr st=%d %r\n\r", Stage, Status);
+     SerialPortWrite ((UINT8 *)Line, Len);
+     break;
+   }
+@@ -1209,7 +1239,7 @@ R54TryEspBoot (
+   // 2026-11-09R64 y700-elden: 入口无条件标记（判「补丁在不在执行的这份 BdsDxe 里」）。
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp in v=R64\n\r");
+   SerialPortWrite ((UINT8 *)Line, Len);
+-  R66Beacon (2, "r54-in");   // 2026-11-09R66 y700-elden
++  R68Trace (2, "r54-in");   // 2026-11-09R66 y700-elden
+   // 2026-11-08R61 y700-elden: 先重挂异常处理器，再碰 ESP（见 R61HookException 注释）。
+   R61HookException ();
+ 
+@@ -1224,12 +1254,12 @@ R54TryEspBoot (
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp blk=%d\n\r", (UINT32)Count);
+   SerialPortWrite ((UINT8 *)Line, Len);
+   BlkCount = Count;   // 2026-11-09R67 y700-elden
+-  R66Beacon (3, "blk-enum");   // 2026-11-09R66 y700-elden
++  R68Trace (3, "blk-enum");   // 2026-11-09R66 y700-elden
+ 
+   for (Idx = 0; Idx < Count; Idx++) {
+     gBS->ConnectController (Handles[Idx], NULL, NULL, TRUE);
+   }
+-  R66Beacon (4, "blk-conn");   // 2026-11-09R66 y700-elden
++  R68Trace (4, "blk-conn");   // 2026-11-09R66 y700-elden
+ 
+   if (Handles != NULL) {
+     FreePool (Handles);
+@@ -1245,7 +1275,7 @@ R54TryEspBoot (
+ 
+   Len = AsciiSPrint (Line, sizeof (Line), "[K] esp fs=%d\n\r", (UINT32)Count);
+   SerialPortWrite ((UINT8 *)Line, Len);
+-  R66Beacon (5, "fs-enum");   // 2026-11-09R66 y700-elden
++  R68Trace (5, "fs-enum");   // 2026-11-09R66 y700-elden
+ 
+   // 2026-11-09R67 y700-elden: 屏是唯一**零依赖**通道（不依赖 Fat/PartitionInfo/UFS）。
+   // 把三项计数打一行大字并停 10 s，供人眼/拍照读取；崩在它之前就说明更早死。
+@@ -1279,7 +1309,7 @@ R54TryEspBoot (
+     EFI_HANDLE  EspSfs;
+ 
+     EspSfs = NULL;
+-    R66Beacon (7, "census");   // 2026-11-09R66 y700-elden
++    R68Trace (7, "census");   // 2026-11-09R66 y700-elden
+     if (R64EspByName (&EspSfs)) {
+       Dp = FileDevicePath (EspSfs, Path);
+       if (Dp != NULL) {
+@@ -1294,13 +1324,15 @@ R54TryEspBoot (
+     }
+   }
+ 
+-  R66Beacon (8, "fallback");   // 2026-11-09R66 y700-elden
++  // 2026-11-10R68 y700-elden: st=8 **只在真的没找到时**写（R66 把它放在 if 之前，误导读了两轮）。
+   if (!Found) {
++    R68Trace (8, "notfound");
+     Len = AsciiSPrint (Line, sizeof (Line), "[K] esp none\n\r");
+     SerialPortWrite ((UINT8 *)Line, Len);
+     return FALSE;
+   }
+ 
++  R68Trace (9, "esp-ld-ok");   // 2026-11-10R68：ESP 侧 boot.img 已被 LoadImage 起来
+   Status = gBS->StartImage (ImageHandle, NULL, NULL);
+   Len    = AsciiSPrint (Line, sizeof (Line), "[K] esp start=%r\n\r", Status);
+   SerialPortWrite ((UINT8 *)Line, Len);
+@@ -1322,7 +1354,7 @@ BdsEntry (
+   )
+ {
+   EFI_BOOT_MANAGER_LOAD_OPTION    *LoadOptions;
+-  R66Beacon (1, "bds-in");   // 2026-11-09R66 y700-elden
++  R68Trace (1, "bds-in");   // 2026-11-09R66 y700-elden
+   UINTN                           LoadOptionCount;
+   CHAR16                          *FirmwareVendor;
+   EFI_EVENT                       HotkeyTriggered;

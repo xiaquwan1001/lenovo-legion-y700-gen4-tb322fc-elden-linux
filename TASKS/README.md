@@ -42,7 +42,7 @@
 | **G1-26** | **用户态深色模式 / 主题配色切换无效**（Phosh 0.55，Alpine） | ✅ **已上机复核通过（2026-10-11）**。根因（2026-10-05，lane `dt-ui` 会话 `01a10736-a2dd`）：`gtk-theme='Adwaita-dark'` 在 GTK3 **解析失败→回退浅色 Adwaita**（深色变体应靠 `prefer-dark`+主题名 **`Adwaita`**）。**修复=`gtk-theme='Adwaita'`**，设备 dconf 已持久（`/home/xuqianhui1001/.config/dconf/user`）；`grim` 截屏三态取证：`color-scheme=default`→浅色、`prefer-light`→浅色、`prefer-dark`→深色（`gnome-control-center`，GTK4/libadwaita）⇒ **深/浅即时切换成立**；portal `org.freedesktop.appearance color-scheme` 映射 0/2/1 正确。accent 同源：phosh 源码对 `theme_name=='Adwaita-dark'` 提前 return ⇒ 改 `Adwaita` 后放行。证据 `reports/userland-dark-brightness-verify-20261011.md`、`logs/ui-20261011/`⚠️MIGRATION-LOST(日志未随迁)。⚠️ 操作坑：`gsettings` 写入须 `dbus-run-session`（裸写不生效，见 `PITFALLS` #103） | U2 | ✅ 切深色即时变化（截屏为准） | `archive/topics/DT-UI-2026-10-05.md`、`reports/userland-dark-brightness-verify-20261011.md` |
 | **G1-27** | **长按电源键菜单图标反色**（关机/紧急联系/锁屏等图标非常黑、深色背景分不清） | ✅ **同源修复，2026-10-11 复核通过**（symbolic 图标取主题前景色；浅色主题→近黑前景画在深色弹窗上）。`gtk-theme='Adwaita'` 后前景转浅，顶栏 symbolic 图标清晰可辨 | U2 | 电源菜单四图标在深色背景下清晰可辨 | 同 G1-26 |
 | **G1-28** | **状态栏亮度滑块无效**（亮度固定） | ✅ **已闭环（用户 2026-10-11 实机确认滑块拖动生效）**。根因（2026-10-05）：elogind `Session.SetBrightness` 无真会话时恒 `EISDIR`。**候选 A（greetd `initial_session` 建真 logind 会话）已上机**：`loginctl list-sessions` 有 `c1`（user 1000/seat0/tty7/active）；2026-10-11 复核 `Session.SetBrightness backlight aw99706-backlight 1200` **实测生效**（sysfs 160→1200）；读 phosh 0.55.1 源码 `src/backlight-sysfs.c`：**背光只有 logind 一条路径、无 sysfs 直写后备** ⇒ 滑块后台链路成立。**剩**：滑块拖拽目视未做——本机 `CONFIG_INPUT_UINPUT` 未开、无 `/dev/uinput`，不能注入触摸打开快速设置；UI 同步（udev `on_backlight_changed`→`g_object_notify`）为代码可推断。附带：`gsd-power` 未导出 `Power.Screen` 接口 ⇒ g-c-c Power 面板无亮度行（另一条路径，与 Phosh 滑块无关，见 `PITFALLS` #187）。证据 `reports/userland-dark-brightness-verify-20261011.md` | U2 | ✅ 滑块拖动即时生效（用户实机确认） | `archive/topics/DT-UI-2026-10-05.md` §4、`archive/topics/USERLAND-PKGS-2026-10-05.md` §U1、`reports/userland-dark-brightness-verify-20261011.md` |
-| **G1-29** | **间接引导层（GRUB 类/UEFI）——摆脱 boot.img 96 MiB 限制** | 🟡 **进行中**：**零写盘形态已通** —— `fastboot boot` 的 UEFI 件交棒后内核从 ESP 的 `\boot\boot.img` 起、cmdline 带 `elden_bootloader=esp`（路线 B，2026-11-08 起）；**flashed 形态（写 `boot_a`）仍失败** —— 2026-11-09 晚 p63–p66 四发全败回退 `_b`，且 **`p60` 对照件（fastboot 形态已证明可用）写 `boot_a` 同样失败** ⇒ 失败**与某个补丁无关**，别再逐个补丁试。**当前门槛 = flashed 形态下 UFS/分区/SFS 枚举到哪一步**；下一发 = `p67`（`p62 + R66 + R67`，信标加世代/计数），屏上读 `[K] R67 blk=N fs=M` 三分类（`0/0` 分区层没出来 / `N>0 M=0` FAT 没绑 / `M>0` 加载问题）。**现状与判据只读** §5「2026-11-09（晚，p63→p66）」块 + `reports/uefi-p63-p66-beacon-20261109.md`；历史沿革（p45–p58 定案、看门狗三路证伪、路线 A 失败、上游 `#12`）见 `sessions/2026-11-10-G1-29沿革.md`。 | U2（只读） | **剩余验收**：flashed 形态（写 `boot_a`）也能起到用户态 + 出现 BDS/GRUB 菜单 + `root=LABEL=linux17`（现仍经 `boot_b` 引导）；判据 = 屏上 `[K] R67 blk/fs` 三分类 → 分区层/FAT/加载三段定责 | `archive/topics/BOOTCHAIN-2026-10-05.md`、`UEFI-UFS-BRINGUP-2026-10-05.md`、`UEFI-UFS-UPSTREAM-ASK-2026-10-05.md`、`TASKS §5 Q25` **历史（E0/E1 复现件、BootShim `dc civac` 判定、工具链更正）** 见 `sessions/2026-11-10-G1-29沿革.md` |
+| **G1-29** | **间接引导层（GRUB 类/UEFI）——摆脱 boot.img 96 MiB 限制** | 🟡 **进行中**：**零写盘形态已通** —— `fastboot boot` 的 UEFI 件交棒后内核从 ESP 的 `\boot\boot.img` 起、cmdline 带 `elden_bootloader=esp`（路线 B，2026-11-08 起）；**flashed 形态（写 `boot_a`）仍失败** —— 2026-11-09 晚 p63–p66 四发全败回退 `_b`，且 **`p60` 对照件（fastboot 形态已证明可用）写 `boot_a` 同样失败** ⇒ 失败**与某个补丁无关**，别再逐个补丁试。**当前门槛 = flashed 形态下我们的固件跑到哪（不是 ESP 枚举）** —— 2026-11-10 `p67`（信标 v3，`R68LOG n=<计数> b=<ts>`）同件两形态对照：`fastboot boot` 拿到 `s1…s5 + s9 esp-ld-ok`（R54 ESP-first **成功**），写 `boot_a` 则**信标一字节未变** ⇒ 失败点在 **BdsDxe 之前**（PrePi/DXE dispatch 或 ABL 装载）；旧口径「flashed ⇒ `fs=1`」被推翻。下一步 = 把同一套信标搬进 **BootShim/PrePi**。**现状与判据只读** §5「2026-11-10（p67/R68 信标 v3）」块 + `reports/uefi-p67-flash-trial-20261110.md`；历史沿革（p45–p58 定案、看门狗三路证伪、路线 A 失败、上游 `#12`）见 `sessions/2026-11-10-G1-29沿革.md`。 | U2（只读） | **剩余验收**：flashed 形态（写 `boot_a`）也能起到用户态 + 出现 BDS/GRUB 菜单 + `root=LABEL=linux17`（现仍经 `boot_b` 引导）；判据 = 屏上 `[K] R67 blk/fs` 三分类 → 分区层/FAT/加载三段定责 | `archive/topics/BOOTCHAIN-2026-10-05.md`、`UEFI-UFS-BRINGUP-2026-10-05.md`、`UEFI-UFS-UPSTREAM-ASK-2026-10-05.md`、`TASKS §5 Q25` **历史（E0/E1 复现件、BootShim `dc civac` 判定、工具链更正）** 见 `sessions/2026-11-10-G1-29沿革.md` |
 | **G1-30** | **boot.img 立即瘦身（=G1-29 路线 C）** | ❌ **口径更正（2026-10-06）**：slim 能打到 20.8 MiB，但 **vk60 实机=进桌面、外设全不可用**——**归因 = initramfs 打包（最小 initramfs 无 `/lib/firmware`），不是驱动/内核**（`PITFALLS` #113/#115、`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`）⇒ **slim 不作日常启动**。boot_b 替换版改走 **vk61**=原完整 ramdisk 只换修好的 `/init`（内核/固件/模块零回归，83.3 MB < 96 MiB，已零写盘验收）。真机 busybox **有 findfs、无 blkid/mountpoint**（#112） | U2 | —（slim 不用于日常启动） | `archive/topics/BOOTSLIM-2026-10-05.md`、`INIT-HARDEN-2026-10-06.md` §9–§11、`out/boot-elden-vk61.img` |
 | **G1-31** | **GNU 用户态工具补装**（AI 调试高频失效率） | ✅ **已完成（2026-10-06 U2）**：`coreutils findutils grep sed gawk procps-ng curl wget jq rsync socat tcpdump zstd xz tree less`（735→760 包，world 104→120 行）。设备无默认路由 ⇒ 借**主机代理** `http://192.168.7.2:7897`。**重启回归 ×2 通过**（GNU 会 shadow busybox，含 init 同 PATH）。 | 任一 mainline | `sed/grep/find/sort/awk/curl/jq --version`、`ps -p 1`、`date -d '1 hour ago'` 全 rc=0 | `.pi/plans/2026-10-06-用户态查漏补缺.md` P1、`PITFALLS` #120/#121/#122、`rootfs/build-rootfs.sh` |
 | **G1-32** | **OpenRC 化（init 交接，替代自研服务编排）** | ✅ **已完成（2026-10-06 U2）**：Alpine OpenRC 已装但 `runlevels` 空 ⇒ `/init` 保生命线（usb0/sshd/ttyGS0）后按 `/etc/elden-init-mode` `exec /sbin/init` → inittab → openrc。**PID1=`/sbin/init`**；`rc-status default` 全 `started`；**G1-25 关机链结构性修复**（干净 `loginctl reboot` 实测通过，wrapper 按模式选 `-f`）。回退 `echo legacy >/etc/elden-init-mode; reboot`。 | 任一 mainline | `rc-status` default 全 started + `ps -p 1` = `/sbin/init` + `loginctl reboot` 干净重启 | `scripts/openrc-enable.sh`、`initramfs/init`、`scripts/fix-logind-poweroff.sh`、`rootfs/persistent-overlay/` |
@@ -177,6 +177,29 @@
   件 `out/r21-sbstop-p62/uefi-preamble62-r1.img`（`f3459622…`）、归档 `reports/artifacts/uefi-20261109R63-p62/`、
   配方 `patches/uefi/p62-recipe.txt`（80 条）、补丁 `patches/uefi/20261109R63-pidicensus/`；
   工具 `scripts/uefi-fv-strings.py`；坑 `PITFALLS #579/#580/#581/#582/#583`。
+
+### 2026-11-10（p67/R68 信标 v3）：**flashed 形态连 BdsDxe 都没跑到** —— 旧口径「ESP 枚举 `fs=1`」被持久证据推翻
+
+- **世代**：`p67` = `p66` + `20261110R68-trace`（信标 v3：`R68LOG n=<单调计数> b=<ts>` + 每 stage 追加；
+  `st=8` 移进 `if (!Found)`、新增 `s9 esp-ld-ok`；轨迹换独立 `m_R68Buf`）。`--gen p67` 已绑，82 条补丁，
+  件 `out/r21-sbstop-p67/uefi-preamble67-r1.img`（`d69b06e6…`）。
+- **同件两形态对照（本轮唯一实质进展）**：
+  - `fastboot boot`：信标 `s1 bds-in → s2 r54-in → s3 blk-enum → s4 blk-conn → s5 fs-enum → s9 esp-ld-ok` ⇒
+    **R54 的 ESP-first 成功**（同时证伪了 11-09 晚「靠 FV LinuxLoader 兜住」的推断，见 `#589`）。
+  - 写 `boot_a`：logo 一闪→掉电→再亮→回 `_b`；**信标一个字节都没变**，且该件带 `n=` 而读回内容无 `n=`
+    ⇒ **该发根本没写信标** ⇒ **我们的固件没执行到 BdsDxe**。
+  - ⇒ 失败点在 BdsDxe **之前**（PrePi/DXE dispatch 或 ABL 侧装载/跳转）；`StorageConnect.c`/`#13`/R62/R63/R64
+    这些 BdsDxe 内部的改动**暂时都不是嫌疑**。
+- **ABL 侧证据**：logfs 里 `[2571] Booting from slot (_a)` → `[3806] BootLinux` → ~9 s 空窗 → `[12984]` 再走 `_b`；
+  两发都有的 `Failed to add memory space :0x8088F000 0x1000` / `DP DTB: No Valid DTB in image` / `Override DTB: … user_dtbo!`
+  因此**不是根因**（`_b` 正常启动那发同样有）。
+- **下一步（按代价排序）**：① 把同一套 `R68LOG` 搬进 **BootShim/PrePi**（最早阶段，决定性）；② 下次上机肉眼看
+  flashed 发里**有没有 PrePi 的 `[P01]…` 字**；③ 试「payload 缩到最小」切开「ABL 装载/校验」与「固件早期阶段」；
+  ④ 第三方同机型 flashed 件带 **AVB footer**，可作对照。
+- **工具**：`scripts/lib-fastboot.sh` 增 `wait_ssh_up`（**一有响应就返回**，不空等）；
+  `--gen X --rebuild` 被预置 `BUILD_DIR` 静默吃掉的问题已修。坑 `#586/#587/#589/#590/#591`。
+- **正文/取证**：`reports/uefi-p67-flash-trial-20261110.md`、`reports/artifacts/uefi-p67-trial-20261110/`、
+  补丁 `patches/uefi/20261110R68-trace/`、配方 `p67-recipe.txt`。
 
 ### 2026-11-09（晚，p63→p66）：**flashed 形态 4 发全败 + `p60` 对照同败**；落盘信标 v1 废、v2 可用但判不了「哪一发」
 

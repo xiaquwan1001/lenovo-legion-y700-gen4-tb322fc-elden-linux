@@ -73,3 +73,23 @@ sshc() {
 		-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
 		-o LogLevel=ERROR "$TAB" "$@"
 }
+
+# wait_ssh_up [max_s] [interval_s]
+#   **一有响应就返回**（用户 2026-11-10 要求：别按固定时长空等）。
+#   每次探测都是一条独立的短 ssh（ConnectTimeout=2），因此板子重启中途不会像
+#   已建立的连接那样卡到 tcp_retries2（#585）。
+#   rc: 0 = 已起来（并打印耗时）；1 = 超时。
+wait_ssh_up() {
+	local max=${1:-180} iv=${2:-3} t0=$SECONDS
+	while :; do
+		if timeout 4 ssh -o BatchMode=yes -o ConnectTimeout=2 \
+			-o ServerAliveInterval=2 -o ServerAliveCountMax=1 \
+			-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+			-o LogLevel=ERROR "$TAB" true 2>/dev/null; then
+			echo "[wait] ssh up after $((SECONDS - t0))s"
+			return 0
+		fi
+		[ $((SECONDS - t0)) -ge "$max" ] && { echo "[wait] ssh 未在 ${max}s 内起来" >&2; return 1; }
+		sleep "$iv"
+	done
+}
