@@ -31,3 +31,35 @@
 - **★SSOT 待并入**：`TASKS/README.md` §5 **Q3（droidloom）** 行可补一句「2026-11-10 设备实测：doctor 13 过/1 阻塞，
   阻塞只剩 NF_TABLES（片段已备）；合成器缺口 = phoc 少一行，0.59.rc1 也没有」；§5 **Q1/C3** 行可补「Waydroid 网络已定案，
   判据改 HTTP 码」。本轮只写会话记录 + 报告 + 片段 + PITFALLS，未改 TASKS。
+
+---
+
+## 追加（同日晚）：droidloom 正式立项 C12 + 试验条件就位
+
+### A. 立项
+- `TASKS/README.md` §2 新增 **C12 droidloom 隔离试验**（🟡 已立项），**G2 分母 12 → 13**；
+  `scripts/check-progress-counts.sh` 的 `--selftest` 断言与 §0 口径注同步改（`8/12` → `8/13`）。
+- 明确「**不替换 Waydroid**」：只做隔离试验，退出条件写在 C12 行内。
+
+### B. 试验条件（本轮已就位，除注明外均已实测）
+
+| 项 | 状态 | 证据 |
+|---|---|---|
+| runtime 包（aarch64） | ✅ 设备上摊开可执行 | `/opt/dl-test`，`droidloom-doctor/ctl/d` 直接跑 |
+| doctor 体检 | ✅ **13 过 / 1 阻塞 / 1 警告** | 阻塞 = `kernel.network_isolation`（NF_TABLES） |
+| subuid 100000 契约 | ✅ 已修（可回退） | `usermod --add-subuids 300000-399999 --add-subgids 300000-399999 xuqianhui1001` |
+| **图形前置** | ✅ **已用 headless sway 验证通过** | `sway 1.12` + `libwlroots-0.20.2` 在 `WLR_BACKENDS=headless` 下广告 `wp_linux_drm_syncobj_manager_v1` v1；`droidloom-wayland` 在其下**无 global bind failure** |
+| **内核 nftables** | ✅ **件已备：`out/boot-elden-vk187.img`** | vk184 + 仅 nftables（快照 `patches/config-vk186-nftables-20261110`，14 行纯 nftables diff，9/9 符号一致，`ARCH_QCOM` 未动）；UTS `7.3.1-debug-vk187-00002-g4da9a8b69fc8`，sha `7197997b…`；**未上机** |
+| image 包 0.90 GiB | ⬜ 未下 | 需要时下 `droidloom-image-0.1.0-30-aarch64` |
+| GApps | ⬜ 无本地 `LiteGapps-arm64-17.0.zip` | 需自建，未做 |
+| Debian 上的 `cell.json` | ⬜ 未铺 | 上游路径是 Arch 打包路径（`/etc/droidloom/cell.json` + `runtime.env` + `droidloom-package-helper prepare` 走 `pkexec`） |
+
+### C. 起编点纠错（重要，别再犯）
+`build/daily` 的 **HEAD 是 7.3-rc7 血统**（`24223e44ad`），而**现役内核 vk184 是 7.3.1 血统**（`4da9a8b69f`，tag `vk184`）。
+第一次从 HEAD 编出 `vk186`（UTS `7.3.0-rc7-…`）⇒ **作废**，必须 `git checkout vk184` 再编，
+否则「只差 nftables 一个变量」不成立。重编后 `vk187` 的 UTS 与现役同源（`g4da9a8b69fc8`），只差 `-vk187-` 标签与 nftables 配置。
+
+### D. 下一步（按成本）
+1. **零写盘上机 vk187**：`fastboot boot out/boot-elden-vk187.img` → 判据 `nft list ruleset` 不报错 + `droidloom-doctor` 的 `kernel.network_isolation` PASS。
+2. 下 image 包（0.90 GiB）+ 手工铺 `/etc/droidloom/cell.json`（照 `usr/share/droidloom/cell-template.json` 与 `packaging/cell-spec-arm64.json`）。
+3. `droidloomctl start` → 判据 `droidloomctl applications` 列得出 Android 应用。
