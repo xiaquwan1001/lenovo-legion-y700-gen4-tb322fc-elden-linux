@@ -1,0 +1,1 @@
+VERDICT=RECOVERED T_total_s=26.9

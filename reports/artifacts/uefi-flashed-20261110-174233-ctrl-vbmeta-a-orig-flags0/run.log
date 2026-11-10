@@ -1,0 +1,23 @@
+[17:42:33] == 目标 ctrl-vbmeta-a-orig-flags0 ; 件 /home/xuqianhui/y700-elden/backup/vbmeta_a-orig-20261110.img
+[17:42:33]    件 sha256=55929c1580d437ad9d5f43e897c37f0d6aa1f1469ffb8ede5928f4b43387f387 size=65536 B
+[17:42:33]    取证目录 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-174233-ctrl-vbmeta-a-orig-flags0
+[17:42:33] == [1/6] 前置态（Linux 侧只读）
+[17:42:34] 落 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-174233-ctrl-vbmeta-a-orig-flags0/pre.txt
+[17:42:35] logfs 快照 pre = 8388608 B ✔
+[17:42:35] == [2/6] Linux → fastboot
+[17:42:35]   ssh 可达 → 发 reboot bootloader
+[17:42:50] fastboot 在线: 
+[17:42:50] == [3/6] flash vbmeta_a
+[17:42:50] Sending 'vbmeta_a' (64 KB)                         OKAY [  0.002s]
+Writing 'vbmeta_a'                                 OKAY [  0.001s]
+Finished. Total time: 0.029s
+[17:42:50] == [4/6] set_active a（重置 _a 的 retry/unbootable）
+[17:42:50] Setting current slot to 'a'                        OKAY [  0.005s]
+Finished. Total time: 0.009s
+[17:42:50] == [5/6] t0: fastboot reboot → 轮询 SSH（判据 = 总耗时）
+[17:43:19] == [6/6] 后置态 + 判据
+[17:43:20] 落 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-174233-ctrl-vbmeta-a-orig-flags0/post.txt
+[17:43:23] logfs 快照 post = 8388608 B ✔
+[17:43:24] T_total = 29.2s   landed kernel = 7.3.1-debug-vk184-00003-gec74c4795a43   androidboot.slot_suffix=_b
+[17:43:24] == 结束。判读表见 patches/uefi/20261110R70-prepi-timing/0001-prepi-timing-bands.patch 头部
+[17:43:24]    回滚：fastboot flash vbmeta_a backup/vbmeta_a-orig-20261110.img（原厂 Flags=0）

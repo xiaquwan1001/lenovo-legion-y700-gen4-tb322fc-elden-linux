@@ -1,0 +1,6 @@
+T_total_s=29.2
+t0=2026-11-10T17:42:50+08:00
+image=/home/xuqianhui/y700-elden/backup/vbmeta_a-orig-20261110.img sha256=55929c1580d437ad9d5f43e897c37f0d6aa1f1469ffb8ede5928f4b43387f387
+flash_s=0.0
+kernel_after=7.3.1-debug-vk184-00003-gec74c4795a43
+androidboot.slot_suffix=_b

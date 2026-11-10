@@ -4,9 +4,16 @@
 > 逐目录分级（机器可读）= **`../../versions/patches-uefi-status.tsv`**（列：dir / patches / in_recipe / status / 理由 / 证据）。
 > 结论：**ACTIVE 31 目录 / RETIRED 18 目录 / UNCLEAR 0**。
 
-## 0. 当前世代 = **p66**（最新，含屏上计数判据）/ 上机跑通的最新一代 = **p62**（`fastboot boot` 形态）
+## 0. 当前世代 = **p69**（含 R70 计时停留）—— **flashed 与 `fastboot boot` 两种形态都已打通（2026-11-10 深夜）**
 
-> **2026-11-10 晚更正（口径下沉）**：`R70` 的计时判据证明「停留确实执行」，但**不能**判 flashed 形态跑到哪（硬复位剪断）；
+> **2026-11-10 深夜（最终口径，覆盖下面两条更正）**：flashed 形态的三年全败**真根因 = `dtbo_a`** —— 原厂 `dtbo_a` 是合法 Android DTBO
+> （`D7B7AB1E`/23.3 MB），ABL 在 `BootLinux` 后把它的 overlay 合进**我们的** Linux DTB ⇒ 卡联想 logo、~10 s 回落；`dtbo_b` 早在 10-03 就写成全 0
+> ⇒「`_b` 一直好、`_a` 一直坏」。清 `dtbo_a` 后 **p69 写 `boot_a` 直接闭环**：129.2 s（基线 54.5 + R70 **74.3 s**）、
+> 信标 `R68LOG n=3 s1:bds-in s2:r54-in s3:blk-enum s4:blk-conn s5:fs-enum s9:esp-ld-ok`、`elden_bootloader=esp`。
+> ⇒ **`vbmeta_a` 不是墙**（原厂 Flags 0 照样起），**不要再按下面那条 `vbmeta` 假设做实验**。
+> 正文 `reports/uefi-dtbo-a-rootcause-20261110.md`；坑 `PITFALLS #600/#601/#602`。
+>
+> **2026-11-10 晚更正（已被上条覆盖，保留作被推翻的记录）**：`R70` 的计时判据证明「停留确实执行」，但**不能**判 flashed 形态跑到哪（硬复位剪断）；
 > 真正的门槛在更前面 —— 把设备 `boot_b` **逐字节**刷进 `boot_a` 也起不来，而 `avbtool` 显示两槽唯一差异是
 > **`vbmeta_a` Flags 0 vs `vbmeta_b` Flags 3** ⇒ 根因假设 = `vbmeta_a` 校验失败导致 ABL 不交棒。
 > 正文 `reports/uefi-p69-flashed-and-vbmeta-20261110.md`；坑 `PITFALLS #593–#597`。

@@ -1,0 +1,28 @@
+[17:25:48] == 目标 slot-a-flashed-dtbo-blank ; 件 /home/xuqianhui/y700-elden/backup/boot_b-live-vk184-20261110.img
+[17:25:48]    件 sha256=4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5 size=100663296 B
+[17:25:48]    取证目录 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-172548-slot-a-flashed-dtbo-blank
+[17:25:48] == [1/6] 前置态（Linux 侧只读）
+ssh: connect to host 192.168.7.1 port 22: Connection timed out
+ssh: connect to host 192.168.7.1 port 22: Connection timed out
+[17:26:44] 落 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-172548-slot-a-flashed-dtbo-blank/pre.txt
+[17:26:52]   ⚠ logfs 短读 0 B（第 1 次），5 s 后重试
+[17:27:05]   ⚠ logfs 短读 0 B（第 2 次），5 s 后重试
+[17:27:18]   ⚠ logfs 短读 0 B（第 3 次），5 s 后重试
+[17:27:23] ⚠ logfs 快照 pre = 0 B（期望 8388608，已重试 3 次）
+[17:27:23] == [2/6] Linux → fastboot
+[17:27:24]   设备已在 fastboot（跳过 reboot）
+[17:27:24] fastboot 在线: 
+[17:27:24] == [3/6] flash boot_a
+[17:27:26] Sending 'boot_a' (98304 KB)                        OKAY [  2.255s]
+Writing 'boot_a'                                   OKAY [  0.040s]
+Finished. Total time: 2.319s
+[17:27:26] == [4/6] set_active a（重置 _a 的 retry/unbootable）
+[17:27:26] Setting current slot to 'a'                        OKAY [  0.001s]
+Finished. Total time: 0.004s
+[17:27:26] == [5/6] t0: fastboot reboot → 轮询 SSH（判据 = 总耗时）
+[17:27:53] == [6/6] 后置态 + 判据
+[17:27:54] 落 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-172548-slot-a-flashed-dtbo-blank/post.txt
+[17:28:00] logfs 快照 post = 8388608 B ✔
+[17:28:00] T_total = 27.1s   landed kernel = 7.3.1-debug-vk184-00003-gec74c4795a43   androidboot.slot_suffix=_b
+[17:28:00] == 结束。判读表见 patches/uefi/20261110R70-prepi-timing/0001-prepi-timing-bands.patch 头部
+[17:28:00]    回滚：fastboot flash boot_a backup/boot_a-pre-uefi-20261108.img && fastboot set_active b

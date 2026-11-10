@@ -1,0 +1,6 @@
+T_total_s=27.1
+t0=2026-11-10T17:27:26+08:00
+image=/home/xuqianhui/y700-elden/backup/boot_b-live-vk184-20261110.img sha256=4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5
+flash_s=2.3
+kernel_after=7.3.1-debug-vk184-00003-gec74c4795a43
+androidboot.slot_suffix=_b

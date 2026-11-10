@@ -11,7 +11,7 @@
 
 | 目标 | 已完成 | 进行中 | 未开始 | 完成度 |
 |---|---|---|---|---|
-| **G1** 完整 Linux + 上游化（驱动原厂固件 + 上游提交） | **34 项 / 在范围 36 项**（显示/图形/触屏/网络/**G1-36 WiFi 候选榜**/**G1-37 日用用户态基线（sudo/locale/中文字体）**/电源/相机出流+App 实测/音频播放+输入/温控/串口/CDSP/DP/BT 配对+TWS/**G1-8 基准**/**G1-23 vblank/PPM 残留复核（2026-10-26 三窗 47.5 min 全 0）**…）——**明细与证据只在 §1** | 0 项（WiFi Q26 已关闭，2026-10-10 用户确认）+ ✅ TF 卡 G1-6 **新卡已收口（3 轮 0 不一致 + fsck clean；旧卡废置，不再追）**——证据见 §1 G1-6 | 上游化 **M 系列**（状态/队列**只读 §7**）、G1-34 已收口（SSC 路线两棵根全绿；SLPI 原生 IIO 为后续可选线） | **34/36**（口径见下表注） |
+| **G1** 完整 Linux + 上游化（驱动原厂固件 + 上游提交） | **35 项 / 在范围 36 项**（显示/图形/触屏/网络/**G1-36 WiFi 候选榜**/**G1-37 日用用户态基线（sudo/locale/中文字体）**/电源/相机出流+App 实测/音频播放+输入/温控/串口/CDSP/DP/BT 配对+TWS/**G1-8 基准**/**G1-23 vblank/PPM 残留复核（2026-10-26 三窗 47.5 min 全 0）**…）——**明细与证据只在 §1** | 0 项（WiFi Q26 已关闭，2026-10-10 用户确认）+ ✅ TF 卡 G1-6 **新卡已收口（3 轮 0 不一致 + fsck clean；旧卡废置，不再追）**——证据见 §1 G1-6 | 上游化 **M 系列**（状态/队列**只读 §7**）、G1-34 已收口（SSC 路线两棵根全绿；SLPI 原生 IIO 为后续可选线） | **35/36**（口径见下表注） |
 | **G1 阻塞项速览**（**本行只列 ID**；状态/样本数/口径唯一权威 = §5 的 Q 行） | — | 🟢 **Q28/Q32 已结项（2026-10-24）=「已规避」**（运营线 vk152：0154/0155 + `dsi_bonded_cmd_failed` 闩锁清零 + `link_configured` 修复 + 开机看门狗 + 三态探针；线上真 POR 5/5、暖复位 3/3 = **8/8 无坏发**；**原定 ≥8 发 POR 门槛按用户裁决不再补 ⇒ 补采样项标记完成**；Q32 五发判据表已出：三个复位入口无差异、并入 Q28；复启条件与局限**只读 §5 Q28/Q32**）· ⛔ **Q24** 熄屏×相机（**2026-10-24 用户裁决：不值得取证 ⇒ 关闭**；根因已指名 = 7.2 血统缺上游 `skip retention by default`，7.3 线自带该修复 ⇒ 41 发 0 死亡 vs 7.2 的 6/8 死是**版本差不是随机**；日常线仅保留 `cam-mode.sh on/off` 互斥策略；**只读 §5 Q24**） | — | — |
 | **G2** 安卓容器（可用性 + 风控/完整性等级） | **8**（注：Waydroid 图形/内核/GAPPS 镜像/代理通路/Win-x86 PoC 属 `C-历史` 聚合行，不计入 12 项分母；以下为分母内 12 项：**C4 传感器 HAL 路线 C**/**C7 切槽脚本**/**C6 容器音频**/**C2 GMS 登录（用户人工验证）**/**C10 马达透传（2026-10-13：桥 + 自编 AIDL V2 幅度/cancel + 固化进 vendor 镜像 + 强度档位 RRO）**/**C11 触屏中文输入法（2026-10-20：squeekboard + fcitx5/Rime + focusd 唤起/折叠）**） | 3（C3 待装 PI Checker 取三档回包；C5 剩 U7 App 实开预览；C8 书面结论已出、未立项） | 1（C9 打分表出数）；附 C5 的 ②b（容器识别到 1 个相机）2026-10-19 已达成、2026-10-23 修好 `/dev/video100` bind 持久化，只差 App 实开预览 | **8/12**（口径见下表注） |
 | **G3** x86 模拟（Steam 载体） | 2（Box64 0.4.5 + Wine 9 PoC 成功；**官方 ARM64 Steam 客户端已起到登录界面**，2026-10-28 设备实测 3/3 轮 `SetLoginState: WaitingForCredentials - OK`、`steamwebhelper` 恒 7 进程存活 130–301 s、0 SIGSEGV、0 联网报错；**截图判据 2026-10-29 已可闭环**：当时失败真因是面板输出 `enabled=disabled`/`dpms=Off`（`grim` 报 `no supported format found`）；当前 `dpms=On` 下 **`grim` 一次成功出图**（`reports/artifacts/c5-u7-l1d-shot-20261029.png`），降级路径见 `reports/g3-steam-screenshot-paths-20261029.md`） | 1（x86 游戏端到端：FEX/box64 层待接，与「起客户端」已解耦） | Steam 游戏端到端（图形/音频/性能） | PoC ✅ / **Steam 登录界面 ✅（证据 `reports/g3-steam-20261028.md` §0b/§5–§8、`reports/artifacts/g3-steam-20261028/`）** |
@@ -20,8 +20,8 @@
 
 > **注（口径 2026-11-03 机器化；手算推导已删，改为脚本现出）**：本表数字**一律由 §1 / §2 的行内状态标记导出**，不另设分母。
 > **公式**：`完成 / 在范围`，其中 `在范围 = ID 总数 − ❌/⛔`，`完成 = ✅ + 🟢 + 🎯`；合并行（`| ✅ G1-12…21 |`）按区间展开计 10 项。
-> **现查（唯一出口）**：`scripts/check-progress-counts.sh`（`--tsv` 机读 / `--selftest` 断言 34/36 与 8/12，漂了就 rc=1）。
-> 现状：**G1 34/36**（38 ID − ❌2：`G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线；不含上游化 M 系列，以 §7 为准）、**G2 8/12**（`C-历史` 是 5 项聚合行、不进分母）。
+> **现查（唯一出口）**：`scripts/check-progress-counts.sh`（`--tsv` 机读 / `--selftest` 断言 35/36 与 8/12，漂了就 rc=1）。
+> 现状：**G1 35/36**（38 ID − ❌2：`G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线；不含上游化 M 系列，以 §7 为准）、**G2 8/12**（`C-历史` 是 5 项聚合行、不进分母）。
 > **词表（8 类）**：`✅` 完成 / `🟢` 已结项（已规避·已出分·已随根因结项）/ `🟡` 部分·进行中 / `🎯` 治本完成 / `🆕` 取证已做未收口 / `⛔` 搁置 / `❌` 取消 / `⬜` 未开始；`🟢`/`🎯` 计入完成，`🟡`/`🆕`/`⬜` 计入未完成。
 > **改数字只改 §1/§2 的行内标记**：§0 上下表由脚本导出，勿手改（历史手算推导见 `sessions/2026-11-03-TASKS-§4-待办沿革.md` 前后版本）。
 
@@ -42,7 +42,7 @@
 | **G1-26** | **用户态深色模式 / 主题配色切换无效**（Phosh 0.55，Alpine） | ✅ **已上机复核通过（2026-10-11）**。根因（2026-10-05，lane `dt-ui` 会话 `01a10736-a2dd`）：`gtk-theme='Adwaita-dark'` 在 GTK3 **解析失败→回退浅色 Adwaita**（深色变体应靠 `prefer-dark`+主题名 **`Adwaita`**）。**修复=`gtk-theme='Adwaita'`**，设备 dconf 已持久（`/home/xuqianhui1001/.config/dconf/user`）；`grim` 截屏三态取证：`color-scheme=default`→浅色、`prefer-light`→浅色、`prefer-dark`→深色（`gnome-control-center`，GTK4/libadwaita）⇒ **深/浅即时切换成立**；portal `org.freedesktop.appearance color-scheme` 映射 0/2/1 正确。accent 同源：phosh 源码对 `theme_name=='Adwaita-dark'` 提前 return ⇒ 改 `Adwaita` 后放行。证据 `reports/userland-dark-brightness-verify-20261011.md`、`logs/ui-20261011/`⚠️MIGRATION-LOST(日志未随迁)。⚠️ 操作坑：`gsettings` 写入须 `dbus-run-session`（裸写不生效，见 `PITFALLS` #103） | U2 | ✅ 切深色即时变化（截屏为准） | `archive/topics/DT-UI-2026-10-05.md`、`reports/userland-dark-brightness-verify-20261011.md` |
 | **G1-27** | **长按电源键菜单图标反色**（关机/紧急联系/锁屏等图标非常黑、深色背景分不清） | ✅ **同源修复，2026-10-11 复核通过**（symbolic 图标取主题前景色；浅色主题→近黑前景画在深色弹窗上）。`gtk-theme='Adwaita'` 后前景转浅，顶栏 symbolic 图标清晰可辨 | U2 | 电源菜单四图标在深色背景下清晰可辨 | 同 G1-26 |
 | **G1-28** | **状态栏亮度滑块无效**（亮度固定） | ✅ **已闭环（用户 2026-10-11 实机确认滑块拖动生效）**。根因（2026-10-05）：elogind `Session.SetBrightness` 无真会话时恒 `EISDIR`。**候选 A（greetd `initial_session` 建真 logind 会话）已上机**：`loginctl list-sessions` 有 `c1`（user 1000/seat0/tty7/active）；2026-10-11 复核 `Session.SetBrightness backlight aw99706-backlight 1200` **实测生效**（sysfs 160→1200）；读 phosh 0.55.1 源码 `src/backlight-sysfs.c`：**背光只有 logind 一条路径、无 sysfs 直写后备** ⇒ 滑块后台链路成立。**剩**：滑块拖拽目视未做——本机 `CONFIG_INPUT_UINPUT` 未开、无 `/dev/uinput`，不能注入触摸打开快速设置；UI 同步（udev `on_backlight_changed`→`g_object_notify`）为代码可推断。附带：`gsd-power` 未导出 `Power.Screen` 接口 ⇒ g-c-c Power 面板无亮度行（另一条路径，与 Phosh 滑块无关，见 `PITFALLS` #187）。证据 `reports/userland-dark-brightness-verify-20261011.md` | U2 | ✅ 滑块拖动即时生效（用户实机确认） | `archive/topics/DT-UI-2026-10-05.md` §4、`archive/topics/USERLAND-PKGS-2026-10-05.md` §U1、`reports/userland-dark-brightness-verify-20261011.md` |
-| **G1-29** | **间接引导层（GRUB 类/UEFI）——摆脱 boot.img 96 MiB 限制** | 🟡 **进行中**：**零写盘形态已通** —— `fastboot boot` 的 UEFI 件交棒后内核从 ESP 的 `\boot\boot.img` 起、cmdline 带 `elden_bootloader=esp`（路线 B，2026-11-08 起）；**flashed 形态（写 `boot_a`）仍失败** —— 2026-11-09 晚 p63–p66 四发全败回退 `_b`，且 **`p60` 对照件（fastboot 形态已证明可用）写 `boot_a` 同样失败** ⇒ 失败**与某个补丁无关**，别再逐个补丁试。**当前门槛 = flashed 形态下我们的固件跑到哪（不是 ESP 枚举）** —— 2026-11-10 `p67`（信标 v3，`R68LOG n=<计数> b=<ts>`）同件两形态对照：`fastboot boot` 拿到 `s1…s5 + s9 esp-ld-ok`（R54 ESP-first **成功**），写 `boot_a` 则**信标一字节未变** ⇒ 失败点在 **BdsDxe 之前**；旧口径「flashed ⇒ `fs=1`」被推翻。**2026-11-10 下午/晚再推进一层（口径更正）**：① R70 的「启动耗时」判据在 fastboot 形态成立（+74.3 s）、在 flashed 形态**被硬复位剪断**（+0 s，不可作反证）；② **金标准对照**（把设备 `boot_b` 逐字节刷进 `boot_a`）**同样起不来**，但死法不同（正常解锁警告→无缝回 bl 不掉电→`unbootable=0`）⇒ **失败与我们的固件无关**；③ `avbtool` 取证给出唯一槽位级差异 = **`vbmeta_a` Flags 0（校验开启、原厂哈希）vs `vbmeta_b` Flags 3（校验关闭、我方密钥）** ⇒ **当前根因假设 = `boot_a` 过不了 `vbmeta_a` 哈希校验，ABL 走「校验失败」分支不交棒**。**下一步 = 造 Flags=3 / 我方密钥的 `vbmeta_a` 并刷入（写盘，需批准；先备份 64 KiB）**，通过这道墙后再回到信标路线。**现状与判据只读** §5「2026-11-10（晚，p69/R70 + 金标准对照）」块 + `reports/uefi-p69-flashed-and-vbmeta-20261110.md`（该块 §3 已取代 p67 报告的时间线）；历史沿革（p45–p58 定案、看门狗三路证伪、路线 A 失败、上游 `#12`）见 `sessions/2026-11-10-G1-29沿革.md`。 | U2（只读） | **剩余验收**：flashed 形态（写 `boot_a`）也能起到用户态 + 出现 BDS/GRUB 菜单 + `root=LABEL=linux17`（现仍经 `boot_b` 引导）；判据 = 屏上 `[K] R67 blk/fs` 三分类 → 分区层/FAT/加载三段定责 | `archive/topics/BOOTCHAIN-2026-10-05.md`、`UEFI-UFS-BRINGUP-2026-10-05.md`、`UEFI-UFS-UPSTREAM-ASK-2026-10-05.md`、`TASKS §5 Q25` **历史（E0/E1 复现件、BootShim `dc civac` 判定、工具链更正）** 见 `sessions/2026-11-10-G1-29沿革.md` |
+| **G1-29** | **间接引导层（GRUB 类/UEFI）——摆脱 boot.img 96 MiB 限制** | ✅ **两种形态都通（2026-11-10 深夜）**：① **零写盘形态**（2026-11-08 起）：`fastboot boot` 的 UEFI 件交棒后内核从 ESP 的 `\boot\boot.img` 起，cmdline 带 `elden_bootloader=esp`；② **flashed 形态**（2026-11-10 打通）：`boot_a` = p69 UEFI + `active=a` → **129.2 s** 起 Linux（基线 54.5 s + R70 **74.3 s** 三级停留，证明我们的固件确实执行）+ logfs 信标 `R68LOG n=3 s1:bds-in s2:r54-in s3:blk-enum s4:blk-conn s5:fs-enum s9:esp-ld-ok` + `elden_bootloader=esp`。**flashed 三年（11-09/10）全败的真根因 = `dtbo_a`**：原厂 `dtbo_a` 是合法 Android DTBO（`D7B7AB1E`/23.3 MB），ABL 在 `BootLinux` 后把它的 overlay 合进**我们的** Linux DTB ⇒ 卡联想 logo、USB 不枚举、~10 s 回落；`dtbo_b` 早在 10-03 就写成全 0 ⇒「`_b` 一直好、`_a` 一直坏」。**这是项目第一天的坑**（`PITFALLS/sessions/01`「假 dtbo 必须两个槽都写」、`sessions/02` 第 10 条），p60–p69 全打在 `_a` 上 ⇒ 每发注定卡 logo。**两条旧结论否证**：`vbmeta_a` 不是墙（原厂 Flags 0、哈希必然不匹配也照样起，`#601`）；`logfs` 对最近启动根本不写（前后 sha 相同 ⇒ `#594/#597` 的「信标未变 ⇒ 没跑到」不成立，`#602`）。配方 = `truncate -s 33554432` 刷 `dtbo_a` 全 0 + `boot_a` 刷件（`vbmeta_a` 不用动）；工具 `scripts/uefi-flashed-trial.sh --part <分区>`。**剩余**：BDS/GRUB 菜单交互、冷启动回归、把「a 槽 dtbo 清零」写进设备分派脚本。**现状与判据只读** §5「2026-11-10（深夜，`dtbo_a` 真根因）」块 + `reports/uefi-dtbo-a-rootcause-20261110.md`；历史沿革（p45–p58 定案、看门狗三路证伪、路线 A 失败、p63–p69 各轮）见 §5 上方各块与 `sessions/2026-11-10-G1-29沿革.md`。 | U2（只读） | **已满足**：flashed 形态（写 `boot_a`）起到用户态 + 内核从 ESP 起（`elden_bootloader=esp`）；`root=LABEL=linux17`。**未做**：屏上 BDS/GRUB 菜单交互取证、`boot_a` 冷启动（POR）回归 | `archive/topics/BOOTCHAIN-2026-10-05.md`、`UEFI-UFS-BRINGUP-2026-10-05.md`、`UEFI-UFS-UPSTREAM-ASK-2026-10-05.md`、`TASKS §5 Q25`、`reports/uefi-dtbo-a-rootcause-20261110.md` |
 | **G1-30** | **boot.img 立即瘦身（=G1-29 路线 C）** | ❌ **口径更正（2026-10-06）**：slim 能打到 20.8 MiB，但 **vk60 实机=进桌面、外设全不可用**——**归因 = initramfs 打包（最小 initramfs 无 `/lib/firmware`），不是驱动/内核**（`PITFALLS` #113/#115、`archive/topics/ATTRIBUTION-AUDIT-2026-10-06.md`）⇒ **slim 不作日常启动**。boot_b 替换版改走 **vk61**=原完整 ramdisk 只换修好的 `/init`（内核/固件/模块零回归，83.3 MB < 96 MiB，已零写盘验收）。真机 busybox **有 findfs、无 blkid/mountpoint**（#112） | U2 | —（slim 不用于日常启动） | `archive/topics/BOOTSLIM-2026-10-05.md`、`INIT-HARDEN-2026-10-06.md` §9–§11、`out/boot-elden-vk61.img` |
 | **G1-31** | **GNU 用户态工具补装**（AI 调试高频失效率） | ✅ **已完成（2026-10-06 U2）**：`coreutils findutils grep sed gawk procps-ng curl wget jq rsync socat tcpdump zstd xz tree less`（735→760 包，world 104→120 行）。设备无默认路由 ⇒ 借**主机代理** `http://192.168.7.2:7897`。**重启回归 ×2 通过**（GNU 会 shadow busybox，含 init 同 PATH）。 | 任一 mainline | `sed/grep/find/sort/awk/curl/jq --version`、`ps -p 1`、`date -d '1 hour ago'` 全 rc=0 | `.pi/plans/2026-10-06-用户态查漏补缺.md` P1、`PITFALLS` #120/#121/#122、`rootfs/build-rootfs.sh` |
 | **G1-32** | **OpenRC 化（init 交接，替代自研服务编排）** | ✅ **已完成（2026-10-06 U2）**：Alpine OpenRC 已装但 `runlevels` 空 ⇒ `/init` 保生命线（usb0/sshd/ttyGS0）后按 `/etc/elden-init-mode` `exec /sbin/init` → inittab → openrc。**PID1=`/sbin/init`**；`rc-status default` 全 `started`；**G1-25 关机链结构性修复**（干净 `loginctl reboot` 实测通过，wrapper 按模式选 `-f`）。回退 `echo legacy >/etc/elden-init-mode; reboot`。 | 任一 mainline | `rc-status` default 全 started + `ps -p 1` = `/sbin/init` + `loginctl reboot` 干净重启 | `scripts/openrc-enable.sh`、`initramfs/init`、`scripts/fix-logind-poweroff.sh`、`rootfs/persistent-overlay/` |
@@ -212,6 +212,39 @@
 - **正文/取证**：`reports/uefi-p69-flashed-and-vbmeta-20261110.md`、试验目录 `reports/artifacts/uefi-flashed-20261110-*`、
   补丁 `patches/uefi/20261110R70-prepi-timing/` + 配方 `patches/uefi/p69-recipe.txt`、工具 `scripts/uefi-flashed-trial.sh`、
   坑 `PITFALLS #593–#597`。
+- **⚠ 上一段的「`vbmeta_a` 假设」已被下一条块否证**（2026-11-10 同日更晚），以 `### 2026-11-10（深夜，`dtbo_a` 真根因）` 为准。
+
+### 2026-11-10（深夜，`dtbo_a` 真根因）：**flashed 形态打通 —— 卡 logo 是 `dtbo_a` 的 Android DTBO overlay，不是 `vbmeta_a`**
+
+- **一句话**：`active=a` 时 ABL 会把**原厂 `dtbo_a`（合法 Android DTBO，magic `D7B7AB1E`、23.3 MB）** 的 overlay
+  合并进**我们自己的** Linux DTB（ABL 日志 `Load Image dtbo_a` → `Apply Overlay … 175 ms`）⇒ 卡联想 logo、USB 不枚举、
+  ~10 s 后 ABL 放弃回落。`dtbo_b` 早在 2026-10-03 就被写成全 0（「假 dtbo」）⇒ **`_b` 一直好、`_a` 一直坏**。
+  这是**项目第一天的坑**（`PITFALLS/sessions/01`「假 dtbo 必须两个槽都写」、`sessions/02` 第 10 条），
+  p60–p69 全部打在 `_a` 上 ⇒ 每发注定卡 logo，与补丁、payload、vbmeta 全无关。
+- **判据链（7 发，全部可复现）**：
+  | # | `dtbo_a` | `vbmeta_a` | `boot_a` | 形态 | 结果 |
+  |---|---|---|---|---|---|
+  | A | Android | Flags 3（我方） | = `boot_b`（`4e38bc2c…`） | flashed | ❌ 卡 logo/回 bl |
+  | B | Android | 原厂 Flags 0 | 原厂 Android 件 `d4772c11…` | flashed | ✅ 原厂 Android 16（`_a`, boot_completed=1） |
+  | C | Android | 任意 | 我们的 Linux 件 | `fastboot boot`（active=a） | ❌ **卡 logo**（用户目视） |
+  | D | **全 0** | Flags 3 | 我们的 Linux 件 | `fastboot boot`（active=a） | ✅ Linux **34 s** |
+  | E | 全 0 | Flags 3 | 带 `elden_bootmark=a` 的 Linux 件 | flashed | ✅ **27 s** + cmdline 有标记 ⇒ 确实从 `boot_a` 起 |
+  | F | 全 0 | **原厂 Flags 0** | 同 E | flashed | ✅ **29 s** ⇒ **Flags=3 不是必要条件** |
+  | G | 全 0 | 原厂 Flags 0 | **p69 UEFI**（`38202e12…`） | flashed | ✅ **129.2 s** = 基线 + **74.3 s**（R70 三级停留）；信标 `R68LOG n=3 … s9:esp-ld-ok`；落地 `elden_bootloader=esp` + 内核 `vk184-00002-g4da9a8b69fc8`（ESP 里那份 `boot.img`） |
+- **两条口径更正**：① `vbmeta_a` 不是墙 —— F 用原厂 Flags 0（哈希必然不匹配）照样起，B 也是 Flags 0 ⇒ 解锁态下 ABL 不因哈希失败拒绝；
+  ② **`logfs` 对最近的启动根本不写**（16:14 失败发与 16:20 成功 `_b` 启动前后 sha 完全相同 `9e614b36…`）⇒ `#594/#597` 的「信标未变 ⇒ 没跑到」不成立；
+  logfs 只能当**我们自己的固件跑没跑**的正控（G 的 `n=3` 就是它写的）。
+- **判别槽位/件的正解**：`androidboot.slot_suffix` **不能用**（我们的 `boot.img` 头里烤死 `_b`，ABL 对 Linux 件不追加 suffix）；
+  在镜像头 cmdline 里埋唯一标记（`elden_nocamera=1`→`elden_bootmark=a` 原地同长替换）再 `grep /proc/cmdline`。
+- **a 槽跑我们东西的配方**：`truncate -s 33554432`（32 MiB 全 0）→ `fastboot flash dtbo_a` → 照常在 `boot_a` 刷件
+  （`vbmeta_a` 不用动）；`scripts/uefi-flashed-trial.sh --part boot_a` 已通用化（`--part` 可指任意 a 槽分区）。
+- **§0 的影响**：G1-29 的「flashed 形态」门槛**撤销**（已实测闭环），剩余 = BDS/GRUB 菜单交互、冷启动回归、把「a 槽 dtbo 清零」写进设备分派脚本。
+- **正文/取证**：`reports/uefi-dtbo-a-rootcause-20261110.md`；试验目录 `reports/artifacts/uefi-dtbo-a-blank-20261110/`、
+  `uefi-flashed-20261110-174041-bootmark-a-discriminator/`、`uefi-flashed-20261110-174233-ctrl-vbmeta-a-orig-flags0/`、
+  `uefi-flashed-20261110-174442-p69-flashed-dtbo-blank/`、`uefi-slot-a-stock-android-20261110/`、`uefi-slot-a-ramboot-context-20261110/`、
+  `uefi-fastbootboot-control-20261110/`；件 `out/bootmark-a-test.img`（`96f4d9c4…`）；坑 `PITFALLS #600/#601/#602`。
+- **设备态（块末）**：`active=a`；`boot_a`=p69 UEFI（`f4024ba2…`）、`dtbo_a`=全 0（`83ee4724…`）、`vbmeta_a`=原厂 Flags 0（`55929c15…`）；
+  在机 `vk184-00002-g4da9a8b69fc8` + `elden_bootloader=esp`；`boot_b` 未动（`4e38bc2c…`），`set_active b` 即回日常。
 
 ### 2026-11-10（p67/R68 信标 v3）：**flashed 形态连 BdsDxe 都没跑到** —— 旧口径「ESP 枚举 `fs=1`」被持久证据推翻
 

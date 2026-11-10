@@ -1,0 +1,6 @@
+## pre  2026-11-10T17:26:20+08:00
+ssh: connect to host 192.168.7.1 port 22: Connection timed out
+-- boot partitions --
+ssh: connect to host 192.168.7.1 port 22: Connection timed out
+-- slot attrs --
+ssh: connect to host 192.168.7.1 port 22: Connection timed out

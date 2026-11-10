@@ -1,0 +1,2 @@
+T_total_s=>=300
+image=/home/xuqianhui/y700-elden/out/vbmeta-a-flags3/vbmeta_a-flags3-copy-b-20261110.img sha256=e974ebab2e591b5b6948afe6f3330a6b75fbc39873b744ef6cce0598c246097d

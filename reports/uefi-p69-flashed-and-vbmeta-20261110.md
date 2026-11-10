@@ -1,5 +1,10 @@
 # UEFI flashed 形态重判（2026-11-10 下午/晚）：计时判据失效、logfs 盲区、**金标准对照把矛头指到 `vbmeta_a`**
 
+> ⚠ **已被 2026-11-10 深夜的 `reports/uefi-dtbo-a-rootcause-20261110.md` 取代**：本报告的根因假设（`vbmeta_a` 校验失败）
+> 与 logfs 判据解释均已被否证，真根因 = **`dtbo_a` 的 Android DTBO overlay**（清掉后 p69 写 `boot_a` 直接闭环）。
+> 保留本文件作「被推翻的记录」，勿据此继续实验。
+
+
 > 设备 U2（`HA2EXB0E`）。件：`p69` = `p68` + `20261110R70-prepi-timing`（PrePi `[P00]`/`[P08]`/`[P10]` 各停 25 s），
 > 镜像 `out/r21-sbstop-p69/uefi-preamble69-r1.img`（`38202e129af58cc9d20881115de192d5f988e05e08ed50a39992a761940c4fcc`，67 194 880 B），
 > 归档 `reports/artifacts/uefi-20261110R70-p69/`，复现 `scripts/uefi-r21-p7-ladder.sh --gen p69 --mkimg-only --rebuild`。

@@ -1,0 +1,26 @@
+[16:14:12] == 目标 vbmeta-a-flags3 ; 件 /home/xuqianhui/y700-elden/out/vbmeta-a-flags3/vbmeta_a-flags3-copy-b-20261110.img
+[16:14:12]    件 sha256=e974ebab2e591b5b6948afe6f3330a6b75fbc39873b744ef6cce0598c246097d size=65536 B
+[16:14:12]    取证目录 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-161412-vbmeta-a-flags3
+[16:14:12] == [1/6] 前置态（Linux 侧只读）
+[16:14:13] 落 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-161412-vbmeta-a-flags3/pre.txt
+[16:14:15] logfs 快照 pre = 8388608 B ✔
+[16:14:15] == [2/6] Linux → fastboot
+[16:14:15] FATAL: 总线上没有 fastboot 设备
+[16:14:15]   ssh 可达 → 发 reboot bootloader
+[16:14:30]   bus: HA2EXB0E product=elden_prc_wifi
+[16:14:30] 目标锁定 SER=HA2EXB0E
+[16:14:30] fastboot 在线: 
+[16:14:30] == [3/6] flash vbmeta_a
+[16:14:31] Sending 'vbmeta_a' (64 KB)                         OKAY [  0.002s]
+Writing 'vbmeta_a'                                 OKAY [  0.001s]
+Finished. Total time: 0.037s
+[16:14:31] == [4/6] set_active a（重置 _a 的 retry/unbootable）
+[16:14:31] Setting current slot to 'a'                        OKAY [  0.021s]
+Finished. Total time: 0.025s
+[16:14:31] == [5/6] t0: fastboot reboot → 轮询 SSH（判据 = 总耗时）
+[16:19:32] == [6/6] 后置态 + 判据
+[16:19:32] T_total >= 300s：SSH 未起（可能停在 payload 或没回落）
+ssh: connect to host 192.168.7.1 port 22: Connection timed out
+[16:20:12] 落 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-161412-vbmeta-a-flags3/timeout-state.txt
+[16:20:12] == 结束。判读表见 patches/uefi/20261110R70-prepi-timing/0001-prepi-timing-bands.patch 头部
+[16:20:12]    回滚：fastboot flash vbmeta_a backup/vbmeta_a-orig-20261110.img（原厂 Flags=0）

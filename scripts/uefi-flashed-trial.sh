@@ -15,6 +15,8 @@
 #   scripts/uefi-flashed-trial.sh --image out/r21-sbstop-p69/uefi-preamble69-r1.img --label p69-r70-timing
 #   scripts/uefi-flashed-trial.sh --image ... --label ... --expect-kernel 'vk184-0000'   # 落地内核断言（可选）
 #   scripts/uefi-flashed-trial.sh --image ... --label ... --no-reboot   # 只刷不重启（备料核对用）
+#   scripts/uefi-flashed-trial.sh --part vbmeta_a --image out/vbmeta-a-flags3/….img --label vbmeta-a-flags3
+#                                                            # 2026-11-10 新增：不只 boot_a，任意 a 槽分区（默认 boot_a）
 #
 # 铁律（PITFALLS #569/#584/#585/#590）：
 #   · 目标必须显式锁定：SER 或 product 唯一匹配 `elden`，0 个/多个一律 FATAL；
@@ -25,11 +27,12 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 SER=${SER:-}
 PRODUCT_MATCH=${PRODUCT_MATCH:-elden}
-IMG=""; LABEL=""; OUTDIR=""; MAXWAIT=${MAXWAIT:-300}; DO_REBOOT=1; EXPECT_KERNEL=""
+IMG=""; LABEL=""; OUTDIR=""; MAXWAIT=${MAXWAIT:-300}; DO_REBOOT=1; EXPECT_KERNEL=""; PART=${PART:-boot_a}
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--image)  IMG=$2; shift 2;;
+		--part)   PART=$2; shift 2;;   # 刷哪个分区（默认 boot_a；2026-11-10 起也用于 vbmeta_a）
 		--label)  LABEL=$2; shift 2;;
 		--outdir) OUTDIR=$2; shift 2;;
 		--max-wait) MAXWAIT=$2; shift 2;;
@@ -117,7 +120,8 @@ snap() { # snap <tag>
 		echo "## $tag  $(date -Is)"
 		sshc 'uname -r; cat /proc/cmdline; uptime' 25 2>&1
 		echo "-- boot partitions --"
-		sshc "sha256sum /dev/disk/by-partlabel/boot_a /dev/disk/by-partlabel/boot_b" 40 2>&1
+		sshc "sha256sum /dev/disk/by-partlabel/boot_a /dev/disk/by-partlabel/boot_b \
+			/dev/disk/by-partlabel/vbmeta_a /dev/disk/by-partlabel/vbmeta_b" 40 2>&1
 		echo "-- slot attrs --"
 		sshc 'python3 /tmp/slot-attr.py show 2>/dev/null | grep -E "^  boot_[ab] "' 40 2>&1
 	} > "$f" 2>&1
@@ -178,9 +182,9 @@ done
 resolve_target || exit 3
 say "fastboot 在线: $(echo "$_FB_OUT")"
 
-say "== [3/6] flash boot_a"
+say "== [3/6] flash $PART"
 t_flash0=$(date +%s.%N)
-fbx flash boot_a "$IMG"; rc=$?; t_flash1=$(date +%s.%N)
+fbx flash "$PART" "$IMG"; rc=$?; t_flash1=$(date +%s.%N)
 printf 'rc=%s\n%s\n' "$rc" "$_FB_OUT" > "$OUTDIR/flash.txt"
 say "$_FB_OUT"
 [ "$rc" = 0 ] || { say "FATAL: flash 失败 rc=$rc"; echo "VERDICT=FLASHFAIL" > "$OUTDIR/verdict.txt"; exit 4; }
@@ -232,4 +236,8 @@ else
 	echo "VERDICT=NO_RECOVERY" > "$OUTDIR/verdict.txt"
 fi
 say "== 结束。判读表见 patches/uefi/20261110R70-prepi-timing/0001-prepi-timing-bands.patch 头部"
-say "   回滚：fastboot flash boot_a backup/boot_a-pre-uefi-20261108.img && fastboot set_active b"
+case "$PART" in
+	boot_a)   say "   回滚：fastboot flash boot_a backup/boot_a-pre-uefi-20261108.img && fastboot set_active b";;
+	vbmeta_a) say "   回滚：fastboot flash vbmeta_a backup/vbmeta_a-orig-20261110.img（原厂 Flags=0）";;
+	*)        say "   回滚：按 $PART 自行备份件";;
+esac

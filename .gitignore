@@ -374,3 +374,8 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 # pre/post 除 slot0 外逐字节相同」⇒ binary 本身信息量极低。只留文本 + 一份 logfs-sha256.txt
 # （记录两份快照的 sha，据此可判断「是否变过」），重跑同一条命令即可复现。
 /reports/artifacts/uefi-flashed-*/logfs-*.bin
+
+# ---- 2026-11-10 深夜：`dtbo_a` 根因试验目录 ----
+# 每个 trial 目录两份 8 MiB logfs 全量快照；本轮已证明「logfs 对最近启动根本不写、前后逐字节相同」
+# ⇒ binary 信息量为 0，只留文本取证（sha 记在 logfs-sha256.txt）
+/reports/artifacts/*/logfs-*.bin

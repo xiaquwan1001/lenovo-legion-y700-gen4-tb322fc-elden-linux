@@ -1,0 +1,6 @@
+[17:21:23] == 目标 slot-a-flashed-linux-dtbo-blank ; 件 /home/xuqianhui/y700-elden/backup/boot_b-live-vk184-20261110.img
+[17:21:23]    件 sha256=4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5 size=100663296 B
+[17:21:23]    取证目录 /home/xuqianhui/y700-elden/reports/artifacts/uefi-flashed-20261110-172123-slot-a-flashed-linux-dtbo-blank
+[17:21:23] == [1/6] 前置态（Linux 侧只读）
+ssh: connect to host 192.168.7.1 port 22: Connection timed out
+ssh: connect to host 192.168.7.1 port 22: Connection timed out

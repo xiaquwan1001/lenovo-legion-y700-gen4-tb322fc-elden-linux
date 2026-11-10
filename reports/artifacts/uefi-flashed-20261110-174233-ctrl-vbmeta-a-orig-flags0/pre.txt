@@ -1,0 +1,12 @@
+## pre  2026-11-10T17:42:33+08:00
+7.3.1-debug-vk184-00003-gec74c4795a43
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_bootmark=a androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.boot_devices=soc/1d84000.ufshc androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal androidboot.force_normal_boot=1 silent_boot.mode=nonsilent
+ 17:42:34 up 1 min,  2 users,  load average: 2.29, 0.89, 0.32
+-- boot partitions --
+96f4d9c44480cb21b94356fdbb5db5b06e0113e5a98dbe378db0863aa0fa4ca8  /dev/disk/by-partlabel/boot_a
+4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5  /dev/disk/by-partlabel/boot_b
+e974ebab2e591b5b6948afe6f3330a6b75fbc39873b744ef6cce0598c246097d  /dev/disk/by-partlabel/vbmeta_a
+e974ebab2e591b5b6948afe6f3330a6b75fbc39873b744ef6cce0598c246097d  /dev/disk/by-partlabel/vbmeta_b
+-- slot attrs --
+  boot_a             byte6=0x37 retry=6 active=1 succ=0 unbootable=0
+  boot_b             byte6=0x72 retry=6 active=0 succ=1 unbootable=0

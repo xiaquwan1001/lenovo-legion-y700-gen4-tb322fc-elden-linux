@@ -1,0 +1,6 @@
+T_total_s=26.9
+t0=2026-11-10T17:41:00+08:00
+image=/home/xuqianhui/y700-elden/out/bootmark-a-test.img sha256=96f4d9c44480cb21b94356fdbb5db5b06e0113e5a98dbe378db0863aa0fa4ca8
+flash_s=2.3
+kernel_after=7.3.1-debug-vk184-00003-gec74c4795a43
+androidboot.slot_suffix=_b
