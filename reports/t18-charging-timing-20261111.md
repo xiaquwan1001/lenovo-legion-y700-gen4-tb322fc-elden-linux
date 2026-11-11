@@ -84,3 +84,68 @@
 - 未做多 boot 时序统计（需要串口抓 1–13 s 窗口，本机无串口接线）。
 - 未验证 DT 修法（`pmic-glink` 的 5 条 link 失败）。
 - 未改动任何服务/配置。
+
+
+---
+
+## §6 已落地的修复（2026-11-11 23:10，用户批准「3 可以修」）
+
+### 6.1 `charge-watch.sh` 两处改动
+
+```sh
+# 1) 首轮前先阻塞等节点（原来是空转，下一轮要等 sleep 10）
+wait_for_usb() {
+    i=0
+    while [ ! -e "$USB/online" ] && [ "$i" -lt 600 ]; do i=$((i+1)); sleep 0.2; done
+    ...
+}
+wait_for_usb
+
+# 2) 轮询 10 s -> 2 s
+sleep 2
+```
+
+### 6.2 新增事件驱动兜底（不依赖轮询）
+
+- `rootfs/debian/udev/90-elden-charge.rules`
+  ```
+  ACTION=="change", SUBSYSTEM=="power_supply", ATTR{type}=="USB", RUN+="/usr/local/sbin/charge-icl-fix.sh"
+  ACTION=="add",    SUBSYSTEM=="power_supply", ATTR{type}=="USB", RUN+="/usr/local/sbin/charge-icl-fix.sh"
+  ```
+- `rootfs/debian/usr-local-sbin/charge-icl-fix.sh`（只做一次，不常驻；与 charge-watch 互补）
+
+> 注：写 sysfs 用 `RUN+=` 调脚本，**不能**用 `ATTR{...}=` 赋值——power_supply 的属性是函数，
+> 必须走 store 回调。
+
+### 6.3 上机验证（本机实测）
+
+```
+== 部署后 ==
+systemctl is-active charge-watch  -> active
+online=1  icl=2000000  max=2000000      # 判据满足
+/run/charge-watch.log:
+  23:09:29 started
+  23:09:29 usb node appeared after 0 s   # 新的 wait_for_usb 生效
+```
+
+**逻辑验证（用假 sysfs 模拟 cur<max）**：
+```
+before: 100000
+after : 3000000   (期望 3000000)   -> 通过
+```
+
+**未能做的负向测试**：`echo 100000 > input_current_limit` 报 `I/O error`
+（驱动拒绝手动降档），所以「ADSP 拉低后能否顶回」只能等真实重插事件复现。
+
+## §7 顺带修掉的干扰源（用户要求「免得老是干扰判断」）
+
+`patches/dt/0001-...-ramoops-record-size.patch`（项目里 **2026-10-22 就写好了**、注释推理与本次完全一致）
+**从未应用到 `build/daily`**。本轮已：
+
+1. `git apply` 到 `build/daily`（干净应用）；
+2. 重建 DTB：`ramoops` 从 4 MiB / 无 `record-size` → **8 MiB + `record-size=0x200000` + `pmsg-size=0x400000`**
+   ⇒ `dump_mem_sz` 从 **0** 变成 **2 MiB**，`persistent_ram_write` 有了合法目标区；
+3. 重打包镜像 `build/exp-cmdline/boot-elden-vk187b-ramoopsfix.img`
+   （kernel / ramdisk **逐字节不变**，只换 DTB，脚本自证 `SAME/SAME/SAME`）。
+
+**这直接针对三臂崩溃点**（`free_initmem` → `ramoops_pstore_write` → `memcpy_toio` 写坏地址）。

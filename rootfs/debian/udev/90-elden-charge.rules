@@ -1,0 +1,21 @@
+# /etc/udev/rules.d/90-elden-charge.rules — 充电 ICL 兜底（2026-11-11）
+#
+# 为什么需要（reports/t18-charging-timing-20261111.md）：
+#   充电策略在 ADSP 侧，`charge-watch.sh` 是**轮询**补救，而 ADSP 每次重插/重新协商
+#   都会把 `input_current_limit` 拉回 100 mA（脚本头注释原文：
+#   "the ADSP defaults it to 100 mA, which makes the tablet net-discharge even
+#   while plugged in"）。轮询再快也有窗口（原 10 s，现 2 s），
+#   而 udev 是**事件驱动**，change 事件一到就顶回，窗口趋零。
+#
+# 判据：插拔 USB 后立刻 `cat /sys/class/power_supply/qcom-battmgr-usb/input_current_limit`，
+#       应在 1 s 内变成 `current_max` 而不是 100000。
+#
+# 注意：写 sysfs 必须在 rules 里用 `RUN+=`（不是 `ATTR{}` 赋值），因为
+#       ATTR{} 赋值只对 **udev 自己** 可见，且 sysfs 的 power_supply 属性
+#       不是标准 ATTR（它们是函数，写入要经过 store 回调）。
+#       这里用 `RUN+=` 调一个小脚本，逻辑与 charge-watch 共用。
+#
+# 回退：`rm /etc/udev/rules.d/90-elden-charge.rules && udevadm control --reload`
+
+ACTION=="change", SUBSYSTEM=="power_supply", ATTR{type}=="USB", RUN+="/usr/local/sbin/charge-icl-fix.sh"
+ACTION=="add",    SUBSYSTEM=="power_supply", ATTR{type}=="USB", RUN+="/usr/local/sbin/charge-icl-fix.sh"
