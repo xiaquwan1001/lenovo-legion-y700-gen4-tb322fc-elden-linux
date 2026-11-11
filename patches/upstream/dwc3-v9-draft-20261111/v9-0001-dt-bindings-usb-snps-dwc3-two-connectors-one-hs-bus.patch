@@ -1,0 +1,184 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 11 Nov 2026 09:00:00 +0800
+Subject: [PATCH v9 DRAFT 1/3] dt-bindings: usb: snps,dwc3: two connectors are
+ two endpoints of one port
+
+DRAFT -- not sent.  Rework of the v8 binding per Rob Herring's review of
+2026-11-10 16:36Z (<20261110163640.GA85824-robh@kernel.org>):
+
+  "ports are for separate data streams. Endpoints are for mux'ed data
+   streams. This looks like the latter, so port@0 should have 2 endpoints
+   and port@2 dropped."
+
+and, for the GPIO property:
+
+  "Use the gpio mux binding."
+
+Two connectors sharing one High Speed D+/D- pair are two mux'ed data
+streams of one port, so they become endpoint@0 and endpoint@1 of port@0
+(the Super Speed lane stays port@1).  The GPIO that selects between them
+is no longer described by a private "port-select-gpios" property but by a
+"gpio-mux" controller referenced from "mux-controls", and the endpoint of
+each connector carries the mux state that reaches it.
+
+*** AI-assistance disclosure ***
+This patch was prepared with the help of an LLM coding assistant.  The
+author reviewed every line and ran the gates quoted in the series notes.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+
+DRAFT: driver (3/3) still uses a GPIO and must be ported to mux_control_*
+in the same series; DTS (2/3 equivalent) must be rewritten to the new
+shape.  See README.md in this directory.
+
+--- a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
++++ b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+@@ -13,6 +13,84 @@ description:
+   Defines the properties of the DWC3 core as being embedded in either an
+   vendor-specific implementation or as a standalone component.
+ 
++$defs:
++  hs-endpoint:
++    $ref: /schemas/graph.yaml#/$defs/endpoint-base
++    unevaluatedProperties: false
++
++    properties:
++      usb-role-switch:
++        type: boolean
++        description:
++          This connector endpoint has its own USB role switch. The switch is
++          registered against this endpoint and looked up with
++          usb_role_switch_at_endpoint().
++
++      mux-state:
++        $ref: /schemas/types.yaml#/definitions/uint32
++        enum: [0, 1]
++        description:
++          State of the High Speed data bus multiplexer which connects this
++          connector to the controller.  The two connectors of one controller
++          must use different states; the driver rejects a device tree where
++          two connectors claim the same one.
++
++    dependentRequired:
++      usb-role-switch: [mux-state]
++      mux-state: [usb-role-switch]
++
++  hs-port:
++    $ref: /schemas/graph.yaml#/$defs/port-base
++    unevaluatedProperties: false
++
++    # The two connectors are two mux'ed data streams of the same High Speed
++    # bus, so they are two endpoints of one port, not two ports: "ports"
++    # describes the controller's own data streams (HS in port@0, SS in
++    # port@1), and an endpoint describes one stream multiplexed onto a port.
++    properties:
++      '#address-cells':
++        const: 1
++
++      '#size-cells':
++        const: 0
++
++      endpoint@0:
++        $ref: '#/$defs/hs-endpoint'
++        required: [reg]
++
++      endpoint@1:
++        $ref: '#/$defs/hs-endpoint'
++        required: [reg]
++
++    required: ['#address-cells', '#size-cells', endpoint@0, endpoint@1]
++
++    # The two connectors must claim opposite mux states; requiring both
++    # endpoints in every branch is what makes the two cases mutually
++    # exclusive for oneOf.
++    oneOf:
++      - properties:
++          endpoint@0:
++            properties:
++              mux-state:
++                $ref: /schemas/types.yaml#/definitions/uint32
++                const: 0
++          endpoint@1:
++            properties:
++              mux-state:
++                $ref: /schemas/types.yaml#/definitions/uint32
++                const: 1
++      - properties:
++          endpoint@0:
++            properties:
++              mux-state:
++                $ref: /schemas/types.yaml#/definitions/uint32
++                const: 1
++          endpoint@1:
++            properties:
++              mux-state:
++                $ref: /schemas/types.yaml#/definitions/uint32
++                const: 0
++
+ allOf:
+   - $ref: usb-drd.yaml#
+   - if:
+@@ -26,8 +104,47 @@ allOf:
+       $ref: usb.yaml#
+     else:
+       $ref: usb-xhci.yaml#
++  - if:
++      required: [mux-controls]
++    then:
++      # The mux path is only taken when the controller itself carries
++      # "usb-role-switch": dwc3_get_dr_mode() forces dr_mode back to
++      # peripheral, dwc3_get_extcon() skips the role-switch branch and
++      # dwc3_drd_init() never sets the mux up without it.
++      required: [dr_mode, ports, usb-role-switch]
++      properties:
++        dr_mode:
++          const: otg
++        ports:
++          required: [port@0]
++          properties:
++            port@0:
++              $ref: '#/$defs/hs-port'
++    else:
++      properties:
++        ports:
++          properties:
++            port@0:
++              properties:
++                endpoint@0:
++                  properties:
++                    usb-role-switch: false
++                    mux-state: false
++                endpoint@1:
++                  properties:
++                    usb-role-switch: false
++                    mux-state: false
+ 
+ properties:
++  mux-controls:
++    maxItems: 1
++    description:
++      Phandle to the multiplexer that selects which of the two connectors
++      drives the controller's shared High Speed data bus, e.g. a
++      "gpio-mux" controller.  Each connector is described by the endpoint@0
++      or endpoint@1 of "port@0", and the endpoint of that connector carries
++      its own role-switch input and the "mux-state" it is reached in.
++
+   extcon:
+     maxItems: 1
+     deprecated: true
+@@ -411,7 +528,7 @@ properties:
+ 
+     properties:
+       port@0:
+-        $ref: /schemas/graph.yaml#/properties/port
++        $ref: '#/$defs/hs-port'
+         description: High Speed (HS) data bus.
+ 
+       port@1:
+@@ -429,4 +546,3 @@ required:
+ 
+ additionalProperties: true
+ ...
+-

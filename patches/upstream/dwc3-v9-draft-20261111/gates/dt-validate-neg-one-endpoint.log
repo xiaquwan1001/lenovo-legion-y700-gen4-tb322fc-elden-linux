@@ -1,0 +1,10 @@
+/tmp/v9/t/neg-one-endpoint.dtb: /: 'compatible' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml
+/tmp/v9/t/neg-one-endpoint.dtb: /: 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml
+/tmp/v9/t/neg-one-endpoint.dtb: usb@a600000 (snps,dwc3): ports:port@0: 'endpoint@1' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+/tmp/v9/t/neg-one-endpoint.dtb: usb@a600000 (snps,dwc3): ports:port@0: 'endpoint@1' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+/tmp/v9/t/neg-one-endpoint.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'ports', 'usb-role-switch' were unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml

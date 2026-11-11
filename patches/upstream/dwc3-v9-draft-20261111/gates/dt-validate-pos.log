@@ -1,0 +1,4 @@
+/tmp/v9/t/pos.dtb: /: 'compatible' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml
+/tmp/v9/t/pos.dtb: /: 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml
