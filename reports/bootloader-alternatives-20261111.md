@@ -1,32 +1,17 @@
+
 # 替代引导器评估（systemd-boot / Limine）—— EFI-stub 后掉电这个卡点下
 
 > lane: 20261111-bootloader-alternatives。纯主机侧调研，未做任何设备操作。
 > 每条结论附 URL 或 file:line；抓取失败明确标注「抓取失败，不采信」。
 
-## §0 结论表
-（待填）
 
-## §1 systemd-boot
-### 1.1 是否需要 EFI-stub
-### 1.2 arm64 现状
-### 1.3 EBS / 内存属性行为
-### 1.4 内存分配策略
-### 1.5 硬依赖协议
-### 1.6 能否 chainload 自定义 EFI app
-
-## §2 Limine
-### 2.1 是否需要 EFI-stub
-### 2.2 arm64 现状
-### 2.3 EBS / 内存属性行为
-### 2.4 内存分配策略
-### 2.5 硬依赖协议
-### 2.6 能否 chainload 自定义 EFI app
-
-## §3 EBS 后掉电的公开先例与绕过手段（含 cmdline 旋钮表）
-
-## §4 对我们这套固件的可执行建议
-
-## §5 抓取失败 / 未能核实清单
+## §0 结论表（先读这里）
+| 路线 | 有价值？ | 怎么用 | 风险 | 证据 |
+|---|---|---|---|---|
+| systemd-boot | **低**（判别增量≈0） | 仅当需要统一菜单；`linux` 条目直启 EFI-stub 内核或 chainload 均可 | arm64 成熟；无 4G 限制；但交接形态与 GRUB 相同（不碰 EBS） | §1（src/boot/linux.c:1-19,75,105；util.h:113-131；全 src/boot 无 ExitBootServices 调用） |
+| Limine | **高** | `PROTOCOL: linux` 直启，自己做 EBS+SetVirtualAddressMap，失败时无 runtime services 续命 | 需要固件提供健全 GetMemoryMap/EBS；SetVirtualAddressMap 依赖 RT 表 | §2（common/lib/misc.c:483；common/protos/linux_risc.c:1,151-155,540-543,576-613,776；GNUmakefile.in:362-368） |
+| cmdline 实验组 | **最高·零成本** | `efi=noruntime`（一发判定 RT remap 是否卡点）、`noefi` | 都只作用于 EBS 之后的内核阶段 | §3.3（efi.c:79-84,106；arm-runtime.c:130-152） |
+| 固件侧 watchdog 审计 | **高** | 对照 iPXE 先例审 EBS 里 SetWatchdogTimer/平台定时器处理 | 需要改固件 | §3.2（ipxe 9062544；denx 507614） |
 
 ## §1 systemd-boot（含 systemd-stub）
 
@@ -95,3 +80,50 @@
 ### 2.6 能否 chainload 自定义 EFI app
 - 能：`PROTOCOL: efi`（别名 `uefi`/`efi_chainload`），`path` 指向任意 EFI 应用（CONFIG.md:285-286,349-355）；实现 gBS->LoadImage + StartImage（common/protos/chainload.c:522-556）。
 - **价值判断：chainload 模式下 Limine 也不碰 EBS → 无判别价值；判别价值全在 `PROTOCOL: linux` 直启（2.3）——它替我们固件提前做了 EBS+SetVirtualAddressMap，且可走「无 runtime services」交接，直接对「EBS 后掉电」做定性实验。**
+
+## §3 EBS 后掉电的公开先例与绕过手段
+
+内核基线：torvalds/linux @ 067c5c24cef23d913b67eaaf71ae67e7169a6620（sparse clone `~/.cache/bootres/linux`）。
+
+### 3.1 内核侧 EBS 调用链（arm64，file:line）
+1. stub 里 EBS 封装：`drivers/firmware/efi/libstub/efi-stub.c:391-457` `efi_exit_boot_services()`（stale map key 时 GetMemoryMap+EBS 重试）。
+2. `SetVirtualAddressMap` 若固件 RT 表缺该项则强制 `efi_novamap`：`libstub/efi-stub.c:186-188`；novamap 时跳过 RT 描述符映射（:250-254）。
+3. 进入 kernel proper 后第一次「碰 EFI」的 initcall：`drivers/firmware/efi/arm-runtime.c:139` `pr_info("Remapping and enabling EFI services.\n")`（arm64 与 arm32 共用 arm-runtime.c）→ `efi_virtmap_init()` 检查 stub 留下的映射，`efi_native_runtime_setup()` 装函数指针，置 EFI_RUNTIME_SERVICES 位（arm-runtime.c:139-152，`early_initcall(arm_enable_runtime_services)`）。
+4. **之后 kernel proper 从不再主动调 boot services**；下一个固件交互点 = 第一次运行时服务调用（典型：shutdown/reboot 路径的 `RS->ResetSystem()`，`drivers/firmware/efi/reboot.c:13-49`）。
+- 推论：我们日志里 "Remapping and enabling EFI services" 之后、掉电前 ~60-70 s，kernel proper 理论上不碰固件 —— 掉电源更像是**固件/平台侧一个未关闭的计时器**（PMIC/AP watchdog），而不是内核在 EBS 后又调了什么。
+
+### 3.2 公开先例
+- **iPXE：固件在 EBS 时忘记关 UEFI watchdog → OS 起来 ~5 分钟后整机重启**（Hyper-V 观测，反例方向= watchdog 忘关；我们的固件方向相反，但证明「EBS 时固件没正确处理 watchdog → 定时整机复位」是一类真实 bug）：
+  https://github.com/ipxe/ipxe/commit/9062544f6a0c69c249b90d21a08d05518aafc2ec
+- UEFI spec 规定 EBS 成功即禁用 boot-services watchdog：systemd issue 讨论（poettering 引 spec 2.6 p.224 "On successful completion of ExitBootServices() the watchdog timer is disabled"，且 stub 侧在起内核前 SetWatchdogTimer）：https://github.com/systemd/systemd/issues/20623
+- **Qualcomm QCS9075：RuntimeServices->ResetSystem() 在 EBS 后 dead-loop，固件挂死**（meta-qcom #2680，「any OS that calls RuntimeServices->ResetSystem() after ExitBootServices hangs in firmware, by construction」）：https://github.com/qualcomm-linux/meta-qcom/issues/2680
+- Surface Pro X（arm64）：EFI ResetSystem() 在内核侧崩溃，绕过 = 禁用 efi power-off/reboot（linux-surface 补丁 b294014）：https://github.com/linux-surface/kernel/commit/b294014b26416f247e66d6ed63d4f76bd0c5d233
+- Qualcomm X Elite 笔电（Lenovo Yoga Slim 7x）：UEFI app 读地址 0 → **固件直接 reset 回 logo**（AArch64 UEFI 不映射 page 0）：https://github.com/seuros/meridian/pull/6
+- 「EBS 后 ~60-70 s 整机硬件掉电」**未找到完全同款公开报告**（上面最接近的是「定时复位」类）。
+- 一类「固件在 EBS 里停硬件 watchdog」的争议（U-Boot 邮件列表，Tom Rini 立场：不许停 hw watchdog，ExitBootServices 应最后一次喂狗）：https://lists.denx.de/pipermail/u-boot/2023-February/507614.html
+
+### 3.3 cmdline 旋钮表（都是 kernel proper 侧，作用域注明）
+| 旋钮 | 作用 | 证据 | 对「EBS 后掉电」的预期 |
+|---|---|---|---|
+| `noefi` | kernel proper 完全不用 EFI（RT 不安装） | `drivers/firmware/efi/efi.c:79-84` `early_param("noefi", setup_noefi)` | stub 早已 EBS 完成；只影响 initcall 后的 RT 使用。掉电若是固件计时器，无帮助；若是 RT remap 触发，可证实 |
+| `efi=noruntime` | disable_runtime=true，arm_enable_runtime_services 走 "runtime services will be disabled" 分支 | `efi.c:106`；`arm-runtime.c:130-133` | **一发判定「掉电是否发生在 RT remap 之后」**：noruntime 后仍掉电 ⇒ 与 RT 无关，指向固件计时器/PMIC |
+| `efi=debug` | EFI_DBG，打印 memmap/调用细节 | `efi.c:102-104` | 取证用 |
+| `efi=novamap`（stub 侧） | 让 stub 跳过 SetVirtualAddressMap | `libstub/efi-stub.c:186-188`（RT 表缺 SetVirtualAddressMap 时自动 novamap） | 判定是否 S/VAM 阶段触发固件雷区 |
+| `memmap=` / `efi_fake_mem=` | 改内存图 | Documentation/admin-guide/kernel-parameters.txt（本次 sparse clone 未含该文件，见 §5） | 缩小 memmap 项数，试「固件对 map 项数/大小过敏」假设 |
+| `efi=old_memmap` | x86-only，不适用 arm64 | efi.c | 不适用 |
+
+注意：以上所有旋钮都在 **EBS 之后** 才生效；如果掉电根因在固件 EBS 内部或 stub 阶段，cmdline 全部无效。
+
+## §4 可执行建议（按「一发就能证实/排除」排序）
+1. **低成本·纯 cmdline 实验组**（一次内核启动改参数即可）：`efi=noruntime` + `noefi` 对比跑。若 `efi=noruntime` 下不掉电 ⇒ 卡点在 RT remap/首次 RT 调用；仍掉电 ⇒ 与内核 EFI 使用无关，指向固件侧计时器（PMIC watchdog / AP watchdog），固件 bug。成本：改 1 行 cmdline，≈0。
+2. **Limine 直启实验（判别价值最高）**：Limine `PROTOCOL: linux` 直启同一 EFI-stub Image（甚至可试不带 stub 的裸 Image）。它**自己调 EBS+SetVirtualAddressMap**（`~/.cache/bootres/limine common/lib/misc.c:483`、`common/protos/linux_risc.c:540-543`），交接路径与 GRUB→stub 完全不同；且 SetVirtualAddressMap 失败时走「无 runtime services」续命。若 Limine 直启正常 ⇒ 墙在我们固件「EBS 前的最后一段/stub 的 EBS 调用序列」；若同样 60-70 s 掉电 ⇒ 固件计时器坐实。成本：编 limine-uefi-aarch64（已有构建系统，~10 min）+ 配置条目。
+3. **固件侧审计**（我们的 Mu 系 UEFI）：查 EBS 实现里 SetWatchdogTimer 的处理、以及有没有「EBS 后启动一个平台定时器但没人喂」的路径；对照 iPXE 先例（3.2 第一条）。成本：源码审计，≈1 h。
+4. sd-boot：只做 chainload 或 `linux` 条目直启都行，但**交接形态与 GRUB 几乎相同（不碰 EBS）**，判别增量 ≈ 0，除非前两条都跑完仍需对照。成本中等（要给最小 UEFI 补 LoadFile2 等）。
+5. u-boot 邮件线程同款思路的固件改动：让我们的固件在 EBS 时**最后一次喂平台 watchdog 而不是停它**（Rini 立场），或明确停掉 PMIC watchdog 并在内核侧接管。需要固件改动，成本最高，放最后。
+
+## §5 抓取失败 / 未能核实清单
+- `Documentation/admin-guide/kernel-parameters.txt`：sparse clone 未包含，`memmap=`/`efi_fake_mem=` 精确语法未逐字核对（https://docs.kernel.org/admin-guide/kernel-parameters.html 可补查）——**不采信为逐字证据，仅作指针**。
+- Limine `mm/pmm.c` 分配器细节（是否全 64-bit AllocateAnyPages 落到固件 AllocatePages）：未逐行核。
+- systemd-boot 何时首次加入 aarch64 构建支持（NEWS 检索未见明说；Debian/Ubuntu/Arch ARM 现状证明 ≥257 已成熟）：未定位到具体版本号。
+- 「EBS 后 60-70 s 硬件掉电」完全同款报告：未找到，不虚构。
+
