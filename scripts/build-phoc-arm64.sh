@@ -64,14 +64,36 @@ say "3/6 源码入 chroot + 打两层补丁（Debian upstream patches → 我们
 D=$CHROOT_DIR/build-phoc-src58
 mkdir -p "$D"
 rsync -a --delete "$WORK/phoc-$VER/" "$D/phoc/"
-rsync -a --delete "$WORK/debian-x/" "$D/debian/"
+# debian.tar.xz 的顶层目录是 `debian/`；两种解包形态都兼容（2026-11-11 实测：解到 debian-x/debian/）
+if [ -d "$WORK/debian-x/debian" ]; then SRC_DEB="$WORK/debian-x/debian/"; else SRC_DEB="$WORK/debian-x/"; fi
+rsync -a --delete "$SRC_DEB" "$D/debian/"
 cp "$PATCH" "$D/0001-syncobj.patch"
+# 额外补丁（可选）：patches/phoc-osk-versiongate-20261111/*.patch —— 让 enable 重新触发 OSK
+# （2026-11-11：phoc advertise text-input v3 version 2 ⇒ 版本门把所有客户端都挡掉，PITFALLS #615）
+EXTRA_DIR=${EXTRA_DIR:-$REPO/patches/phoc-osk-versiongate-20261111}
+EXTRA_N=0
+mkdir -p "$D/extra"; rm -f "$D/extra"/*.patch
+if [ -d "$EXTRA_DIR" ]; then
+  for p in "$EXTRA_DIR"/*.patch; do
+    [ -e "$p" ] || continue
+    EXTRA_N=$((EXTRA_N+1))
+    cp "$p" "$D/extra/$(printf '%02d' "$EXTRA_N")-$(basename "$p")"
+  done
+fi
 chroot "$CHROOT_DIR" /bin/sh -c "
   set -e
   cd /build-phoc-src58/phoc
   patch -p1 -l < ../debian/patches/Apply-upstream-patches.patch
   patch -p1 -l < ../0001-syncobj.patch
 "
+# 额外补丁按文件名顺序应用（上面已拷进 chroot 的 /build-phoc-src58/extra/）
+for ep in "$CHROOT_DIR"/build-phoc-src58/extra/*.patch; do
+  [ -e "$ep" ] || continue
+  inner=/build-phoc-src58/extra/$(basename "$ep")
+  say "3b/6 额外补丁 $(basename "$ep")"
+  chroot "$CHROOT_DIR" /bin/sh -c "cd /build-phoc-src58/phoc && patch -p1 -l < $inner"
+done
+
 
 say "4/6 meson 配置（内嵌 wlroots 静态、gles2、无 vulkan/glslang 依赖）"
 chroot "$CHROOT_DIR" /bin/sh -c "
@@ -86,13 +108,14 @@ chroot "$CHROOT_DIR" /bin/sh -c 'cd /build-phoc-src58/build && ninja src/phoc | 
 
 say "6/6 取产物 + 自校验（必须无 libwlroots 依赖）"
 mkdir -p "$OUT"
+TAG=${OUTTAG:-$([ "${EXTRA_N:-0}" -gt 0 ] && echo syncobj-osk || echo syncobj)}
 install -m 0755 -o "${SUDO_USER:-root}" -g "${SUDO_USER:-root}" \
-  "$CHROOT_DIR/build-phoc-src58/build/src/phoc" "$OUT/phoc-${VER}-syncobj"
-H=$(sha256sum "$OUT/phoc-${VER}-syncobj" | cut -d' ' -f1)
-NEEDED=$(readelf -d "$OUT/phoc-${VER}-syncobj" | grep -c NEEDED)
-WR=$(readelf -d "$OUT/phoc-${VER}-syncobj" | grep -ci wlroots || true)
+  "$CHROOT_DIR/build-phoc-src58/build/src/phoc" "$OUT/phoc-${VER}-${TAG}"
+H=$(sha256sum "$OUT/phoc-${VER}-${TAG}" | cut -d' ' -f1)
+NEEDED=$(readelf -d "$OUT/phoc-${VER}-${TAG}" | grep -c NEEDED)
+WR=$(readelf -d "$OUT/phoc-${VER}-${TAG}" | grep -ci wlroots || true)
 [ "$WR" = 0 ] || { echo "!! 产物仍依赖 libwlroots（$WR 处）⇒ 未静态内嵌" >&2; exit 1; }
 echo "sha256 = $H（NEEDED=$NEEDED，wlroots 依赖=$WR）"
-echo "$H  phoc-${VER}-syncobj" >> "$OUT/SHA256SUM"
-echo "DONE → $OUT/phoc-${VER}-syncobj"
+echo "$H  phoc-${VER}-${TAG}" >> "$OUT/SHA256SUM"
+echo "DONE → $OUT/phoc-${VER}-${TAG}"
 echo "上机：cp -a /usr/bin/phoc /usr/bin/phoc.orig && install -m0755 <件> /usr/bin/phoc && systemctl restart greetd"

@@ -1,0 +1,19 @@
+--- a/src/input-method-relay.c
++++ b/src/input-method-relay.c
+@@ -254,11 +254,11 @@
+   if (!text_input_is_focused (text_input->input))
+     return;
+ 
+-  /* TODO: only for osk input-methods */
+-  if (wl_resource_get_version (text_input->input->resource) >=
+-      ZWP_TEXT_INPUT_V3_SHOW_INPUT_PANEL_SINCE_VERSION)
+-    return;
+-
++  /* y700-elden: phoc advertises zwp_text_input_v3 version 2, so every client
++   * binds v2 and the guard below would make `enable` a no-op for all of them
++   * (only `show_input_panel` would activate the OSK, and GTK never sends it).
++   * Send activate on enable again so focusing an entry pops the on-screen
++   * keyboard; clients that do send show_input_panel still take that path. */
+   activate_osk (text_input);
+ }
+ 

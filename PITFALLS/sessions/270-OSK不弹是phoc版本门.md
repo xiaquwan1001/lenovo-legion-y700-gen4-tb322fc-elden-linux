@@ -94,3 +94,25 @@ handle_text_input_enable (...)
   整类证实/排除。其余候选机制 M1–M6、5 条实验清单与判据见 `reports/grub-project-scan-20261111.md` §3/§4。
 - **别再做的事**：在 GRUB 配置里用 `set` 变量拼 cmdline（E2a 因此拿到残缺 cmdline 秒死，曾被我方误读成「白闪与 msm 无关」）；
   把拍屏 OCR 出的驱动名当证据（`gcc_ao_clk_driver_init` 等名字在 vmlinux 里根本不存在）。
+
+### #615 后续（2026-11-11 已修 + 上机验证，用户批准「做 1」）
+
+- **补丁**：`patches/phoc-osk-versiongate-20261111/0001-input-method-relay-activate-osk-on-enable.patch`
+  （1 hunk：删掉那个版本门，`enable` 重新走 `activate_osk()`；`show_input_panel` 路径保留）。
+  该文件在 Debian 的 `Apply-upstream-patches.patch` 里 **0 命中** ⇒ 打补丁顺序（Debian → syncobj → 本补丁）无冲突。
+- **构建**：`sudo bash scripts/phoc-build-launch.sh`（= 以 root 在**独立 session** 跑 `scripts/build-phoc-arm64.sh`）。
+  本轮给脚本补了三处（都是踩出来的）：① 额外补丁目录 `EXTRA_DIR`（默认本补丁目录）+ `OUTTAG` 产物后缀；
+  ② **`debian.tar.xz` 解包后是 `debian-x/debian/`**，rsync 源要按是否存在 `debian-x/debian` 二选一（旧写法会把
+  `debian/` 再嵌一层，chroot 里 `../debian/patches/…` 就打不开）；③ **别在 chroot 里让 meson 克隆子项目**
+  ——`gitlab.gnome.org` 对 git 返回 **406**（走代理也 406），得把 `gmobile` 0.6.0.beta1 预先放进源树
+  `subprojects/gmobile`（本机现成副本在 `/opt/elden/arm64-sid/build-phoc/src58/phoc-0.58.0/subprojects/gmobile`）。
+  另：`tmux new-session -d` 起的构建会被 sudo 调用者的进程组连带杀掉 ⇒ 必须 `setsid nohup`。
+- **产物**：`out/phoc-syncobj-arm64-20261111/phoc-0.58.0-syncobj-osk`
+  （7539256 B，sha256 `cbfaa59adf34c929892229f241073747b624f07c17a98b59f4e50f2d0c3cb71f`，NEEDED=33、wlroots 依赖 0）。
+- **上机判据（两条，都过）**：① 客户端 `GTK_ENTRY` 抓焦后 `sm.puri.OSK0 Visible` = **true**，关窗后回 **false**；
+  ② stevia 调试日志出现 `pos-input-method-DEBUG: handle_activate` + `Showing keyboard: 1, 0`（之前是 0 次）；
+  ③ 截图（`/tmp/osk-shot.png`，1904×3042）肉眼可见底部键盘，顶栏胶囊显示 `EN`。
+- **回退**：设备上 `cp -a /usr/bin/phoc.syncobj-20261111 /usr/bin/phoc`（旧 syncobj 件），
+  或更早的 `phoc.orig-0.58.0`；然后 `systemctl restart greetd`。两个备份都在 `/usr/bin/`。
+- **仍未做**：Rime「组词上屏」需**真手指**在 OSK 上敲（agent 只能合成键，10-20 那轮已证 `wtype` 合成键是字面量）；
+  自动收起已随 `handle_deactivate` 验证（关窗即收），但「点空白处收」未验。
