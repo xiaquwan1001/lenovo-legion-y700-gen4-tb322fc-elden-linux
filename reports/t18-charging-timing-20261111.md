@@ -139,7 +139,7 @@ after : 3000000   (期望 3000000)   -> 通过
 
 ## §7 顺带修掉的干扰源（用户要求「免得老是干扰判断」）
 
-`patches/dt/0001-...-ramoops-record-size.patch`（项目里 **2026-10-22 就写好了**、注释推理与本次完全一致）
+`patches/dt/0001-arm64-dts-qcom-sm8750-elden-ramoops-record-size.patch`（项目里 **2026-10-22 就写好了**、注释推理与本次完全一致）
 **从未应用到 `build/daily`**。本轮已：
 
 1. `git apply` 到 `build/daily`（干净应用）；
