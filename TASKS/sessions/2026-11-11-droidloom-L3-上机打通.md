@@ -1,9 +1,10 @@
 # 2026-11-11（第二段）— droidloom **L3 上机打通**（Android ready + 应用列表）
 
-- **日期**：2026-11-11 中午
+- **日期**：2026-11-11 中午（L4 用户目视确认追加于同日）
 - **pi 会话 id**：本段会话（关键词「我们先做 droidloom，这个对用户观测要求更低」）
 - **主题**：把 droidloom 从「L3 结构性阻塞」推到「cell 起来 + Android ready + `applications` 列出应用」
 - **结论**：
+  1. **L4 也达成（用户目视确认「有窗口、确认可用」）**：`launch com.android.settings` 后 Settings 在 phoc 桌面上以原生窗口出现且可交互 ⇒ C12 的四个判据 L1/L2/L3/L4 全绿。
   1. **L3 判据达成**（原文判据 = 「`droidloomctl start` 后 `droidloomctl applications` 列出 Android 应用」）：
      `droidloomctl start --cell` → `started cell u1001`；`droidloomctl wait` → **`Droidloom is running; Android is ready`**；
      `droidloomctl status` → `cell u1001 is running from /etc/droidloom/cell.json; Android is ready`；
