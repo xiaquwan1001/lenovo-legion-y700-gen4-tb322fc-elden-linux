@@ -197,3 +197,78 @@ ssh root@192.168.7.1 'sh /tmp/kp-run.sh'      # 见 reports 的 §3 原始输出
 # 4) focusd 唤起 + 收起
 scp patches-userland/zh-ime/... ; sh /tmp/e10-autohide.sh
 ```
+
+---
+
+## §8 追加（2026-11-11 晚，用户报「能打中文但没有候选词」）
+
+§7 之后用户实测：键盘能弹、中文能上屏，但**没有候选窗**。本轮挖出**第 4 层根因**（`PITFALLS #619`）。
+
+### 8.1 层 A：`CurrentUI=classicui` 在 phoc 上出不了窗
+
+```
+fcitx5-diagnose → "Found 1 disabled addons: Classic User Interface"（切之后）
+CurrentUI → ('kimpanel',)
+```
+classicui 是默认 UI，但它需要的窗口协议 phoc 不提供 ⇒ 用户看不到候选窗。
+`SetAddonsState "[('classicui', false), ('kimpanel', true)]"` 切到 kimpanel 后，
+kimpanel owner（= `elden-ime-focusd`）就能收到候选数据。
+
+### 8.2 层 B（直接原因）：新 IC 恒拿 `keyboard-us`
+
+```bash
+$ fcitx5-remote -n          # 全局
+rime
+$ <开一个新窗口>
+$ fcitx5-remote -n          # 新 IC
+keyboard-us                 # ← 根因
+```
+
+机制 = fcitx5 新 IC 取 `profile` 的 **`Items/0`**；原 profile 是 `Items/0=keyboard-us`。
+`DefaultIM=rime` 只影响组内切换起点，**改不了新 IC 用哪个**。
+
+`SetLookupTable` 的判据对照（同一套命令，只差 profile）：
+
+| profile 的 Items/0 | `SetLookupTable` 候选数组 |
+|---|---|
+| `keyboard-us` | 空（9 次调用 0 个 string） |
+| **`rime`** | **`["你","那","呢","能","年"]`**（打 `ni`） |
+
+### 8.3 三个必须知道的坑
+
+- **fcitx5 退出时把内存态写回 `profile`** ⇒ 运行期改文件会被覆盖。
+- **`pkill -x fcitx5` 杀不掉**：`fcitx5.service`（systemd user unit）立刻拉起；
+  `systemctl --user stop` 后 `pgrep` 仍可能有实例；`mask` 也未能一次清干净。
+  **判据 = `pgrep -x fcitx5 | wc -l` 必须为 0 才写 profile**。
+- **`AddInputMethodGroup` 会污染 profile**：它新建 `[Groups/1]` 而 `GroupOrder` 只有 `0=默认` ⇒
+  顺序错乱且 `InputMethodGroupInfo` 读回仍是旧顺序。**不要用它改顺序**。
+
+### 8.4 正确配方（实测通过）
+
+```bash
+systemctl --user stop fcitx5
+for p in $(pgrep -x fcitx5); do kill -9 $p; done
+sleep 2; pgrep -x fcitx5 | wc -l      # 必须 = 0
+# 写 profile：rime 放 Items/0（全文见 PITFALLS #619）
+systemctl --user start fcitx5; sleep 8
+gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
+  --method org.fcitx.Fcitx.Controller1.InputMethodGroupInfo 默认
+# → ('us', [('rime', ''), ('keyboard-us', '')])
+```
+
+### 8.5 判据
+
+| 判据 | 期望 |
+|---|---|
+| `InputMethodGroupInfo 默认` | `('us', [('rime',''),('keyboard-us','')])` |
+| 全局 `fcitx5-remote -n` | `rime` |
+| **新 IC** `fcitx5-remote -n` | **`rime`** |
+| `SetLookupTable` | 真实候选汉字 |
+| 目视 | 候选窗可见（`reports/artifacts/ime-candidates-20261111.png`）；**用户已确认** |
+
+### 8.6 未闭环
+
+- `SetAddonsState` 切 kimpanel **不持久**（fcitx5 重启后回 classicui）⇒ 长期要写
+  addon conf `Enabled=False`；本轮未落地，重启后需重切。
+- 候选窗与 stevia 键盘是否重叠未目视。
+- XWayland / Qt 客户端未验。
