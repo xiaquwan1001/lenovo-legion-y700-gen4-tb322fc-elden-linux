@@ -1,0 +1,18 @@
+{
+  "label": "uefi-noruntime-via-fastboot-INVALID",
+  "ts": "2026-11-11T13:52:02Z",
+  "vk": "vk187b-noruntime",
+  "image": "build/exp-cmdline/boot-elden-vk187b-noruntime.img",
+  "image_sha256": "f5bdf2f8bbb8bcae916bca45af02d13e28296c51a4e1604b245c080b0a17a2c4",
+  "manifest": "",
+  "kernel_uts": "",
+  "kernel_payload_sha256": "",
+  "config_sha256": "",
+  "dtb_packed_sha256": "",
+  "reset_type": "warm",
+  "deploy": "none",
+  "probe": "none",
+  "verdict": "indeterminate",
+  "log_dir": "",
+  "note": "cmdline 生效(efi=noruntime 在 /proc/cmdline) 但内核 dmesg 打 'efi: UEFI not found.' + 'EFI services will not be available.' ⇒ fastboot boot 走 ABL LinuxLoader 裸跳，不是 EFI-stub 路径 ⇒ 本发不构成对 EBS 后掉电的判据"
+}
