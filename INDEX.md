@@ -188,9 +188,10 @@
 - **两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy`（trixie 3.7 无 SSC 后端）+ `libssc2`，否则传感器栈直接死。
 - **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-10 NFC、G1-30 slim initramfs；
   **G1-29 UEFI 不在「勿重推」之列** —— 路线 A 首轮（2026-10-05）失败后曾搁置，**2026-11-01 用户放行恢复推进**；
-  **未解决的只剩一条**：把路线 B（ESP 上放 `boot.img`，Mu `LinuxLoader` 读起）变成**默认启动** —— 卡在 flashed 形态（写 `boot_a`）
-  2026-11-09 晚 p63–p66 四发全败、连 `p60` 对照件同败 ⇒ 失败与补丁无关，下一步 = `p67`（信标带世代+计数）+ 屏上 `[K] R67 blk/fs` 三分类。
-  **当前口径只在 `TASKS/README.md` §5「2026-11-09（晚，p63→p66）」块**（其下依次为 11-09 傍晚 p62 普查、11-08 路线 B 打通、11-07 p58 交棒闭环、p54–p57 看门狗证伪、`#549` 撤回更正）；本节不再复述。
+  **2026-11-10 深夜已收口**：flashed 形态（写 `boot_a`）三年全败的真根因 = **`dtbo_a`**（原厂 Android DTBO overlay 被 ABL 合进我们的 DTB ⇒ 卡 logo）；
+  清 `dtbo_a` 后 p69 **129.2 s** 起 Linux（n=3 复现）、信标 `R68LOG … s9:esp-ld-ok`、`elden_bootloader=esp`；零写盘形态（11-08 起）本就通。
+  **剩余仅两项非阻塞**：屏上 BDS/GRUB 菜单交互取证（要人盯屏）、`boot_a` 冷启动（物理 POR）回归。
+  **当前口径只在 `TASKS/README.md` §5「2026-11-10（深夜，`dtbo_a` 真根因）」块 + `reports/uefi-dtbo-a-rootcause-20261110.md`**（其下依次为 11-10 早 pc1 世代与双层菜单、11-09 晚 p63→p66、11-08 路线 B 打通、11-07 p58 交棒闭环、`#549` 撤回更正）；本节不再复述。
 - **单元**：U1 / U2 台账见 `DEVICE/README.md` §1；解锁议题已定稿关闭（`RUNBOOK` §0.5 + `archive/topics/复盘-2026-10-03-BL解锁.md`），不要重新论证。
 
 ---

@@ -1,0 +1,57 @@
+--- a/src/desktop.c
++++ b/src/desktop.c
+@@ -14,6 +14,7 @@
+ #include <wlr/types/wlr_gamma_control_v1.h>
+ #include <wlr/types/wlr_idle_notify_v1.h>
+ #include <wlr/types/wlr_layer_shell_v1.h>
++#include <wlr/types/wlr_linux_drm_syncobj_v1.h>
+ #include <wlr/types/wlr_output_layout.h>
+ #include <wlr/types/wlr_output_power_management_v1.h>
+ #include <wlr/types/wlr_pointer_constraints_v1.h>
+@@ -36,6 +37,7 @@
+ #include "idle-inhibit.h"
+ #include "layer-shell.h"
+ #include "output.h"
++#include "render-private.h"
+ #include "seat.h"
+ #include "server.h"
+ #include "shortcuts-inhibit.h"
+@@ -96,6 +98,7 @@
+   struct wlr_data_control_manager_v1 *data_control_manager_v1;
+   struct wlr_idle_notifier_v1        *idle_notifier_v1;
+   struct wlr_screencopy_manager_v1   *screencopy_manager_v1;
++  struct wlr_linux_drm_syncobj_manager_v1 *linux_drm_syncobj_manager_v1;
+   struct wl_listener     gamma_control_set_gamma;
+   struct wl_listener     request_set_cursor_shape;
+ 
+@@ -750,6 +753,30 @@
+ 
+   wlr_alpha_modifier_v1_create (wl_display);
+   wlr_presentation_create (wl_display, wlr_backend, PHOC_PRESENTATION_TIME_VERSION);
++
++  /* Advertise explicit synchronization (wp_linux_drm_syncobj_manager_v1).
++   * Only when both the renderer and the backend support timelines, same
++   * condition as sway/labwc. Clients hard-requiring the global (e.g. the
++   * droidloom presenter) fail to start without it. */
++  {
++    PhocRenderer *renderer = phoc_server_get_renderer (server);
++    struct wlr_renderer *wlr_renderer = phoc_renderer_get_wlr_renderer (renderer);
++    int drm_fd = wlr_backend_get_drm_fd (wlr_backend);
++
++    /* Multi/headless backends may not expose a DRM fd; fall back to the one
++     * the renderer was created from (as sway does). */
++    if (drm_fd < 0)
++      drm_fd = wlr_renderer_get_drm_fd (wlr_renderer);
++
++    if (wlr_renderer->features.timeline && wlr_backend->features.timeline && drm_fd >= 0) {
++      priv->linux_drm_syncobj_manager_v1 =
++        wlr_linux_drm_syncobj_manager_v1_create (wl_display, 1, drm_fd);
++    } else {
++      g_message ("Explicit synchronization (linux-drm-syncobj-v1) not advertised: "
++                 "renderer timeline=%d, backend timeline=%d, drm_fd=%d",
++                 wlr_renderer->features.timeline, wlr_backend->features.timeline, drm_fd);
++    }
++  }
+   self->foreign_toplevel_manager_v1 = wlr_foreign_toplevel_manager_v1_create (wl_display);
+   self->ext_foreign_toplevel_list_v1 =
+     wlr_ext_foreign_toplevel_list_v1_create (wl_display, PHOC_EXT_FOREIGN_TOPLEVEL_LIST_VERSION);

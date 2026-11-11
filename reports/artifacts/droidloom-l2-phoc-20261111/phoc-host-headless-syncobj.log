@@ -1,0 +1,4 @@
+Running compositor on wayland display 'phoc-t3'
+phoc-output-Message: 08:54:43.078: Output 'HEADLESS-1' has invalid physical size, using default scale
+phoc-output-Message: 08:54:43.082: Output 'HEADLESS-1' added ('(null)'/'(null)'/'(null)'), 0mm x 0mm
+phoc-server-Message: 08:54:43.082: Enabling shell mode
