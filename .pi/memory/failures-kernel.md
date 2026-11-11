@@ -1,718 +1,711 @@
-# y700-elden — 内核/引导/显示类失败与洞察（355 条）。2026-11-09 从全局 pi-hermes-memory/failures.md 下沉，原文未改；全局序号对应 `~/.pi/agent/_archive/2026-11-09-memory-audit/failures.md.round5.orig`。
-§
-[failure] 刷机核心：① 用 qfil/默认全量刷会漏写关键分区（vbmeta/super/init_boot）→ 看似成功但 boot 链不配套，必须 EDL 逐分区补并读回哈希；② 把 fastboot「传输完成」当镜像完整是错的，大镜像会静默损坏，必须读回比对 hash；③ 坏线/老 USB 口导致的断联常被误判为设备砖——先换线换口；④ boot_a 是 vbmeta_a 的 chained AVB 分区，受信 AOSP testkey（公钥 sha1 2597c218，rollback index 3 = 1738713600）；第三方用别的 key+rollback=0 签会被 ABL 拒（fastboot boot 借道 AVB 看着能起，易误判），需 avbtool add_hash_footer 带原厂 props 与 rollback_index；⑤ 不要依赖 TWRP 恢复（ramdisk 体积受限，可能起不来），备 root 替代路径。
- <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 改 GPT/缩 userdata：TWRP 在线 resize.f2fs 保不住——ZUXOS 检测到容量不符会反复重启卡 logo，fs_mgr 也因 f2fs 自认旧容量挂载失败 bootloop。必须 GPT 手术后 `fastboot erase userdata` + `erase metadata` 让 Android 重建。
- <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 槽位陷阱：`fastboot boot <img>` 失败（Status read failed / No such device）会把 current-slot 翻到 b，而 b 槽引导链是另一套固件（vbmeta_b 密钥 8fcb864f…）永远起不来。失败后先单条 `fastboot reboot bootloader`，等 6–8 秒再重试单条 `fastboot boot`。另：自编 Linux 从 b 槽直启时 Linux 不更新 misc 里 bootloader_control 的 tries_remaining，重启几次后 ABL 判定该槽不可信直接停在 fastboot；恢复 `fastboot --set-active=b` + reboot，持久修复要在 Linux /init 写 misc 偏移 2048。
- <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 电源/桌面（主线 GEEKiDoS 7.2）：① 睡眠即挂死——/sys/power/mem_sleep 默认 [deep]，进 mem 就黑屏死机（PSCI SYSTEM_SUSPEND 未支持），缓解 `echo s2idle > /sys/power/mem_sleep` + 关空闲灭屏；② Phosh 熄屏后无法唤醒——phoc 打 "connector DSI-1: Turning off"，dpms=Off、bl_power=4，外部 echo 被拒（DRM master 在 phoc 手上），phoc 退出后 seatd 卡 "seat is VT-bound"，此时 reboot -f 最省事；③ 插充电器仍净掉电（PMIC charger 未驱动），长任务前先在 Android 充满，勿依赖边充边跑。
- <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Linux /init 不 export HOME 时 PID1 继承 HOME=/，phosh/phoc/dconf-service 把用户库写进 /.config/dconf/user，表现为 gsettings/dconf 改了不持久。修法：会话启动脚本 export HOME=/root 并迁移该文件。
- <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 设备实验脚本禁忌：不要把 reboot/fastboot boot 等副作用与长轮询写进同一条 bash 命令——harness 按超时杀整条命令（"Command aborted"），副作用是否发出无法判定；一条命令只做一件事，轮询自带 timeout。ssh 里也不要长 sleep 等设备（会被中断），应 nohup 起后台后立即返回，再用独立短命令轮询，每次 ConnectTimeout=6。`adb shell su -c '<复杂命令>'` 不可靠（复合/带引号命令被吞），可靠做法是在设备端 root 终端里逐条执行。
- <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 间歇性设备故障的观察者效应：为抓「静默硬复位」装 per-boot kmsg→UFS 落盘钩子后，被测坏内核从 ~1min 一次重启变成稳定 400s——取证装置本身改变了时序。① 用最小侵入读取（SSH 读 dmesg），改动前后各取样本；② 单次「没复现」无统计意义，需多轮长时窗；③ 主机 ModemManager 会独占 /dev/ttyACM*（EBUSY），USB-NCM SSH 更可靠。
- <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 设备 fastboot 回退产物位置：out/boot_b-vk49.img（100663296 B，vk49 时期的 b 槽备份，2026-10-04）；bootslot-b/ 目录是原厂槽位镜像集（dtbo_b/boot_b_vk40-ram.img/vbmeta_b_flags3.img 等）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 给用户执行 fastboot 命令时必须是「单条、可直接手敲」的形式，禁止用封装脚本（to-fastboot.sh / cycle.sh 等）跑 fastboot——命令有限、深层嵌套难预测、故障率高；脚本只用于主机侧构建/打包。每次进 fastboot 后、任何操作前先 `fastboot --set-active=a`。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] fastboot boot 失败会让 current-slot 翻到 b，而 b 槽引导链是另一套固件/另一把密钥，永远起不来。fb 报 `Status read failed` 时接 `fastboot reboot bootloader`，等 6~8 秒再单条重试。回 Android：先 `fastboot --set-active=<另一槽>`（非破坏）再 reboot。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 安卓端运行 Linux 时，/dev/ttyACM0 是设备侧 USB gadget（ttyGS0）提供的，只在 Linux 运行时存在；UEFI/早期引导阶段没有串口可取证，只能靠屏幕现象判断（如 EDK2 DxeCore 的 Synchronous Exception 刷屏）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] LZMA 解压出的 FFS type 0xb section 报告 "suspicious header" 属于正常现象（EDK2 卷常见），不要当构建错误排查。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] Mu/EDK2 的 stuart 依赖来自 Azure DevOps 内网 feed（pkgs.dev.azure.com/projectmu/*），不是 nuget.org。mono 的 nuget.exe 直接解析该 feed 会 TLS/证书失败；可靠做法：用 curl -x http://127.0.0.1:7897 直接抓 nupkg，再用 nuget 本地目录源（Feeds used: <本地目录>）喂给 stuart。 — Failed: 在本机配置 mu_wide_platforms 本地编译链时，mono+TLS 无法访问 Azure feed，且直连 flatcontainer 的 URL 返回 404（需从 service index 解析出真实 flat2 GUID URL） <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] EDK2/Mu 本地构建时若出现大量 'Compiler #7000 from : Failed to execute command'，通常是 toolchain 环境变量（CLANGPDB_BIN / CLANGPDB_AARCH64_PREFIX）没导出到 stuart_build 的环境里，而非编译器缺失；确认 /usr/lib/llvm-21/bin 下有 clang/clang++/ld.lld/lld-link/llvm-ar/llvm-lib/llvm-nm/llvm-objcopy/llvm-rc 后带 env 再跑即可。同一平台本地全量构建 DEBUG 约 237s。 — Failed: 本地 stuart_build 首轮失败，日志只有无信息的 Compiler #7000 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] EDK2 stuart/Mu 构建排障：`ext_dep.yaml` 里 nuget 依赖的 `source` 可指向本地目录（把 .nupkg 放进去，绕开 feed 与 mono TLS）；`stuart_update` 报 "We failed to install version X" 时要先 `unzip -t` 校验 nupkg 是否残包（残包不报下载错、file 仍显示 Zip）。CI（ubuntu-latest）与本地编译器版本不同（clang-18 vs clang-21）会导致产物字节不一致（FD 内容 ~64% 不同）但结构等价（同为 4 MiB FD + arm64 壳 + _FVH）。 — Failed: feed/下载/工具链变量的非显性失败模式 <!-- created=2026-10-05, last=2026-10-05 -->
-§
-[tool-quirk] Mu/EDK2 的 ClangPdbToolChain 插件读 CLANG_BIN：自动探测时才会在路径末尾补 os.sep，用户自设时原样拼接——缺结尾斜杠会得到 `/usr/lib/llvm-21/binclang: not found`，表现为满屏 "Compiler #7000 Failed to execute command"。必须 `export CLANG_BIN=/usr/lib/llvm-21/bin/`（结尾斜杠不可省）；CLANGPDB_BIN 不被该插件读取，设了无效。 — Failed: 本地首次 stuart_build 因缺斜杠导致全部 clang 调用失败，误判为工具链缺失。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] Mu/EDK2 本地构建依赖从 Azure DevOps 内网 feed 拉 nupkg：flatcontainer 直接路径（.../nuget/v3/flatcontainer/<id>/<ver>/<id>.<ver>.nupkg）会 404；必须先 GET index.json 拿带 GUID 的真实路径（.../_packaging/<guid>/nuget/v3/flat2/<id>/<ver>/...），该路径返回 303 重定向到 blob.core.windows.net。curl -L 直连可行（校内可直连 pkgs.dev.azure.com / nuget.org）。mono 的 nuget.exe 过不去 feed 的 TLS（证书校验失败）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Phosh 会话在无 logind 时的已知坑（上游 Qualcomm DSI 案例，pmos-xiaomi-thunder PR#7 2026-09-22）：用 logind 后端会导致 session 被 deactivate → phoc 释放显示 → 禁用 CRTC 会挂住面板直到 watchdog 复位设备；必须 LIBSEAT_BACKEND=seatd。与本机「熄屏→重启=未解/间歇性」高度相关，暗示排查时应先分用户态（seatd vs logind / phoc DPMS-CRTC 路径）与内核态（DSI panel blank/unlp/ULPS + APSS watchdog），不要混在一起。同类案例：Marker284/samsung-gts7xllite-display-touch（SM-T735 msm DPU 修复，GNOME/Plasma 默认 dim/blank 触发）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 调试纪律：用户态服务类 bug 的排查应被主动延后并与内核态问题分开——先标出「哪些 bug 可能与用户态服务（elogind/seatd/phoc/gsettings/D-Bus 激活等）有关」并单独建 lane，避免混入内核/驱动 bring-up 的定位。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] arm64 kexec 在 VA_BITS_52 且运行于 !FEAT_LPA2 硬件时的上游修复：commit 1537e55728ec（Breno Leitao，2026-08 前后）——machine_kexec.c 的 trans_pgd_create_copy 原用编译期 PAGE_OFFSET(52-bit)，应改为 _PAGE_OFFSET(vabits_actual)；否则线性映射被按 52 位克隆约 16 倍（~RAM/32），KASAN 关闭时表现为慢/耗内存，是否致挂死待验证。排查 arm64 kexec 挂死时应先确认树里是否已含该修复。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 定位 kexec/内核切换期间挂死的分支点必须有能在跳转期间存活的 console：ttyGS0（USB gadget 串口）在 kexec 时必然断开，输出「戛然而止/Bye!」之后什么都没有是设计使然，不能据此定位故障点。pstore/ramoops 在无 panic 的硬挂场景也为空。需要独立存活的 console（硬件串口等）才能取证。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] kexec_file_load 热重载硬挂的取证分析（archive/topics/KEXEC-2026-10-05.md）：装载成功（RC=0、/sys/kernel/kexec_loaded=1）但 kexec -e 硬挂整机（无 panic/无看门狗复位，需物理复位，复位后 pstore 空）。两个主机侧硬缺陷：① --dtb 对 kexec_file_load 是空操作；② 本树缺上游修复 1537e55728ec。旧证据链（ttyGS0 gadget console 在 kexec 时必断）无法定位失败分支点，需一次带跳转期间存活 console 的上机取证；首测还不同源（运行 vk46-dirty vs 装载 vk50 构建）。定位挂死分支点必须有跳转期间存活的 console。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 合并多份并发调查结果时的优先级裁决模式（2026-10-05）：用户会给出明确优先级（本案：kexec 解决方案 > 装完整发行版解决用户态问题 > 补全驱动），并要求把冲突按该优先级裁定后合并落盘。做法 = 先定位各调查的会话 jsonl 与专题文档，读最终结论，提取冲突点（本案 C1–C4）逐一裁决胜者 + 落地约束，产出合并文档（archive/topics/MERGE-*.md）并把决议回写领域层（TASKS §4 / INDEX）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] kexec 上机取证时控制台选择陷阱：设备 cmdline console=ttyGS0,115200（USB gadget 串口 ttyGS0/ttyACM0），kexec -e 跳转期间 USB gadget 会断掉，所以「无输出」这一证据不能用来定位失败分支点；要定位硬挂分支点必须有能在跳转期间存活的 console（如 ramoops/pstore 通路或物理 UART）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] kexec 取证上机发现（2026-10-05，U2）：① `kexec -e` 行为已不是「死挂」，而是设备自行复位落到 fastboot（ABL 记为该槽启动失败）；② `Hard watchdog permanently disabled` 是旁证——硬挂不会自复位，必须物理长按电源 ≥15s；③ `fastboot boot` 报 OKAY 但起来的是槽内内核（vk47clean），vk54 持久变体 RAM 镜像未真正接管 ⇒ 判断 RAM boot 是否真的生效要看 uname 与 DT 参数（如 ramoops record_size/max_reason），不能只看 fastboot 的 OKAY；④ 纯 RAM 变体 rootfs 里没有 eldroid-bootctl 也没有 python3（有 /usr/sbin/kexec），要进 fastboot 得先回 b 槽持久系统；⑤ `reboot bootloader` 在 vk47clean 持久系统里不生效（会走普通重启），须用 eldroid-bootctl 或 scripts/to-fastboot.sh（PSCI vendor reset + nvmem-reboot-mode）。 — Failed: fastboot OKAY 不等于 RAM 镜像接管；槽重试计数耗尽会被标 unbootable 停 fastboot <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[correction] `fastboot boot` 在某些失败/异常路径下会让 `current-slot` 翻到 b（旧记录已两次实测：报 `Status read failed (No such device)` 后 getvar current-slot=b）。但 2026-10-05 的项目现状是 Linux 跑在 b 槽（/dev/sda17），因此「进 fastboot 后先 --set-active=a」这条旧规则已不适用——照做会切回 Android。正确顺序是先只读确认 current-slot 与 Linux 期望槽位再操作。 — Failed: 旧规则与当前 Linux 常驻 b 槽的实际部署冲突 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] vk54 上机（2026-10-05）：内核本身与补过 record-size/max-reason 的新 DTB 均正常（能亮屏到锁屏），但落在锁屏处**卡死无法操作**——属历史出现过的罕见用户态/会话层 hang，无法定性，与内核/kexec 无关；该卡死导致 SSH/网络不通，会挡住需要 SSH 的取证，改用最小 busybox initramfs（无桌面/无锁屏）做 kexec 取证。 — Failed: 罕见锁屏 hang 挡住 SSH 取证通道 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] kexec -e 触发的复位会被 ABL 记为一次当前槽（b）启动失败：`slot-retry-count:b` 递减，耗尽后 b 被标 `slot-unbootable:b=yes` → 设备停在 fastboot（boot_b 内容未动，可恢复）。所以每次 kexec 取证实验前必须先 `slot-attr.py mark-successful b` 重置成功位，否则会反复砖；本轮用户手动重置过一次。注意 `fastboot boot` 失败也可能让 current-slot 翻到 b。 — Failed: kexec 副作用的项目化坑 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] kexec 取证的控制台限制：设备控制台是 ttyGS0 USB gadget 串口，kexec 跳转时必断，其「戛然而止」不能用来定位挂死分支点；/dev/ttyACM0（主机侧）才是设备实时内核日志口。主机侧 `Hard watchdog permanently disabled` ⇒ 死挂不会自复位，必须物理复位（长按电源 ≥15s）。另 kexec_file_load 无 DTB 形参（--dtb 空操作），DTB 只能走 --boot/--flash。 — Failed: 取证手段本身受限 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] kernel_kexec 路径会调 kmsg_dump(KMSG_DUMP_SHUTDOWN) 后跳转 ⇒ 要跨 kexec 保存最后日志必须让 ramoops 捕获 SHUTDOWN：DT 里 ramoops@c2000000 默认缺 record-size/max-reason（运行值 record_size=0、max_reason=2 不含 SHUTDOWN），需补 `max-reason`/`record-size` 属性才可能落盘。这是目前唯一可能跨 kexec 存活并保存日志的通路。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] phoc/phosh 在 logind 后端下会话被 deactivate 后 phoc 会释放显示并关闭 CRTC，Qualcomm mainline 面板会在关闭 CRTC 时挂死直到看门狗复位；必须用 LIBSEAT_BACKEND=seatd 而非 logind 后端（上游 pmos-xiaomi-thunder PR#7 同结论）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `kexec_file_load` 的 `--dtb` 是**空操作**：该 syscall 无 DTB 形参，新内核 FDT 由内核用 live DT 重建（drivers/of/kexec.c `of_kexec_alloc_and_setup_fdt`，只改 bootargs/kaslr-seed/linux,booted-from-kexec）。kexec-tools 自己就打印 `arch_process_options: dtb: (ignored)`。⇒ iterate.sh 的 DTB 环（依赖 kexec 传 DTB）从设计上不可能生效，DTB 变更只能走 `fastboot boot`/`--flash`。 — Failed: RUNBOOK §8 与 kexec-boot.sh 曾把 --dtb 当有效参数。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] kexec -e 触发的复位会被 ABL 记为一次 b 槽启动失败，retry 耗尽后 b 槽被标 UNBOOTABLE（slot-unbootable:b=yes / slot-retry-count:b=0）导致设备停在 fastboot；boot_b 内容其实未损，可恢复。根治 = 项目脚本 `slot-attr.py mark-successful b`（改 GPT 分区属性第 6 字节 bit2 ACTIVE / bit6 BOOT_SUCCESSFUL / bit7 UNBOOTABLE / bit5..3 tries，主备 GPT 都要修 CRC）。⚠️ 槽位 GPT 在 /dev/sde，`blockdev --getsz` 返回 512B 扇区数而 UFS 逻辑扇区是 4096B——按 4096 备份/换算必须 /8，否则 skip 位置偏 8 倍、tail 备份为 0 字节。 — Failed: 反复 kexec 实验后设备卡在 fastboot，与 dd 扇区换算错误同批出现。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[preference] 用户的 kexec 分析会话期望「以分析为主、上机需报备」；长实验（如 kexec 反复上机）出现设备不稳时应立即停手并汇报，而不是继续自动推进。 — Failed: 设备不稳时用户明确指示停手。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] kexec_file_load 无 DTB 参数：命令行 `--dtb` 被忽略（内核用 live DT 重建 FDT，drivers/of/kexec.c of_kexec_alloc_and_setup_fdt）；`kexec -v` 输出会直接打 `dtb: (ignored)`。⇒ 任何依赖 kexec 传 DTB 的迭代环（改 DTS → kexec 热加载）不成立，DTB 变更只能走 fastboot boot/--flash。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 串口（ttyGS0 / USB gadget console）在 kexec/machine_shutdown 切换期间必断，其「戛然而止」不能用来定位失败分支点；定位需要能在跳转期间存活的 console（物理 UART、`console=tty0` 拍屏、或 ramoops 保留 KMSG_DUMP_SHUTDOWN）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] kexec -e 触发的复位会被 ABL 记为一次槽启动失败，retry 耗尽后把该槽标 UNBOOTABLE 并停在 fastboot（boot 分区内容未动）。恢复：`slot-attr.py mark-successful <slot>`（改 GPT 分区属性 byte6：bit2=ACTIVE / bit6=BOOT_SUCCESSFUL / bit7=UNBOOTABLE / bits5..3=tries，主备 GPT 都要修 CRC）。 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `scripts/build-boot.sh` 与 `scripts/build-manifest.sh` 里的 `KDIR` 原本是硬编码 `KDIR=$ROOT/linux`，env 覆盖无效——想打包树外/已提取的内核会静默用到树内内核（曾误打出带 vk58 内核的「vk59」镜像）。已改为 `KDIR=${KDIR:-$ROOT/linux}` 并透传给 manifest；构建后必须核 manifest 的 kernel_uts 与镜像内提取的 UTS 一致。 — Failed: 误信 VERSION 名即内核版本，实际打进了树内内核 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] fastboot boot「报 OKAY 但 uname 仍是旧内核」时的单变量判定法：(1) 先用已知可启动镜像（如 vk58c-slim）确认 fastboot boot 机制本身正常；(2) 再交叉组合「新内核 + 旧 DTB」——vk59 内核 + vk47 DTB 能正常启动 ⇒ 挂启动的是 DTS 改动而不是内核 config。随后可用内核自带 dtc 反编译 DTB + fdtput 做逐项单变量（关 NFC / 关 CDSP / 回退 ramoops），免重编内核。 — Failed: 连续两次 fastboot boot 后 uname 仍是 vk47clean，易误判为 fastboot 失效 <!-- created=2026-10-05, last=2026-10-05, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 打包 boot.img 双层压缩陷阱（G1-30 slim 线）：boot_b 解包出来的「kernel」本身就是 gzip（gzip compressed, original size 62.5MB → Image），再用 Image.gz 打包会变成双层 gzip，ABL 解一层后拿到 gzip 流而非内核 ⇒ 卡联想 logo、屏幕无输出。判据：`unpack_bootimg.py` 后看 kernel payload magic，boot_b/vk58c 是 1f8b 0800，坏包是 1f8b 0808。build-boot-slim.sh 必须对 boot_b 的真 Image 打包，不要传 Image.gz。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] initramfs/busybox 的 applet 名单必须用真二进制校验，不能靠猜：本机那份 aarch64 busybox v1.38.0 静态二进制实际只有 282 个 applet，而手写的 busybox-applets.txt 有 272 项且是错的——含假项（blkid / mountpoint 实际不存在，会导致根分区解析失败回退纯 RAM），并漏 30+ 真项。权威判定：主机有 qemu-aarch64，直接 `qemu-aarch64 ./busybox --list` 拿真名单；scripts/check-init.sh 已加「名单 vs 实际 --list 一致」检查。另：新名单若含 `busybox` 自身，`ln -sf busybox bin/busybox` 会把真二进制替换成自指符号链接（ramdisk 缩到 12K）——build-boot.sh 已加防御。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[correction] G1-30 slim 最小 initramfs 的根分区解析器：busybox 里**没有 blkid 也没有 mountpoint 小程序**，只有 findfs。init 的 LABEL=/UUID=/PARTLABEL= 解析必须用 findfs 为主（blkid 仅作 fallback），不能依赖 blkid；check-init.sh 的判据是「findfs 或 blkid 至少有一个」。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 项目规则修正（2026-10-06，用户明确要求）：旧规则「每次进 fastboot 后、任何操作前先 `fastboot --set-active=a`」是错的，已从 AGENTS.md 删除——本意只是不影响可用的 b 槽。fastboot 类命令仍由用户亲自执行，助手只做分析并给可直接手敲的单条命令，不用封装脚本跑 fastboot。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核镜像重复压缩陷阱：若 boot 分区里的 kernel 载荷本身已是 gzip，再用 gzip 打包会形成双层压缩，ABL 解一层得到的是 gzip 流而非内核 → 卡 logo。打包自定义 initramfs 镜像时必须原样嵌入 boot_b 内的 Image，不要重新压缩。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] switch_root × 后台任务竞态：initramfs 的 init 里若用 `( ... ) &` 起后台子 shell 做挂载（如等 /dev/sde79 挂 /persist），主流程 exec switch_root 后 initramfs 被释放，孤儿子 shell 仍在旧根循环，刷屏报 `sleep: not found` / `can't create /dev/null: nonexistent directory`。修法：这类收尾必须同步执行，且仅在纯 RAM 启动分支运行。诊断手段：USB 串口抓不到早期输出（console 走 tty0）时可读屏幕缓冲 `/dev/vcs1`。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 文档纪律：无设备证据不得写「已修复」——PITFALLS §0 零号纪律第 4 条（2026-10-06 新增）；被推翻的中间态（如 #5 kexec 六段过程）收窄为结论+指针并标 ⛔superseded，保留沿革但移入 archive。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 项目文档中的「归因错误」典型例：min initramfs 缺 /lib/firmware 致功放/触屏/ath12k 报 firmware load failed -2，但 switch_root 后自愈；vk60「驱动全废」实际是 initramfs 打包问题而非内核/驱动问题。归因时先区分「本体问题」与「打包/部署层问题」。 — Failed: 差点把 initramfs 缺固件误写成内核/驱动缺陷 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] GNU cpio `--reproducible` 只归零 inode、**不归零 mtime**——同一输入连打两次 boot.img sha 仍不同（差异字节正好落在 cpio 头的 mtime 字段，差 1 秒）。这是版本台账里 ramdisk hash 乱跳的根因。让 initramfs/boot.img 可复现需三处一起做：全树 `touch @SOURCE_DATE_EPOCH` + `LC_ALL=C sort -z` 排序文件列表 + `gzip -n`（去掉 gzip 时间戳）。 — Failed: 曾据此把 manifest 里 ramdisk sha 不同误判成「ramdisk 内容变了」，污染 DTB/initramfs 归因结论 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] boot 镜像 manifest 里的 ramdisk/kernel/DTB sha 若在测试期间被重建过，会污染「单变量对照」的结论：vk58c/vk59/vk59a/vk59-nfcoff 四张镜像 manifest 引用同一路径 `out/initramfs.cpio.gz` 但 ramdisk sha 各异（1047383d / 69493ffd / 085b5345），实际解包后 init/busybox/文件链接数完全一致（同 3 文件 272 链接）⇒ 差异纯属 cpio mtime 噪声。**判两个镜像是否真的不同应先解包比对内容 sha，不能只看 manifest 哈希**。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 主机侧 diff 脚本若用 `grep -v` 过滤 phandle/注释行，容易把整段 diff 内容也滤掉只剩行号（本次出现过「我的过滤器把 diff 行全删了」），对 DTB 反编译产物做语义 diff 时要显式保留以 `>`/`<` 开头的差异行，或改用 dtc 反编译后去掉 phandle 属性再比较。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] manifest 里 ramdisk hash 不同 ≠ initramfs 内容不同：build-boot.sh 每跑一次都重打包，cpio mtime 噪声会让 sha 变化。判断两个镜像的 initramfs 是否等价，要解包后比 `/init` sha、busybox sha、文件/链接数（如 `3 files / 272 links`），不要只看 manifest 哈希。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 主机上 `dtc` 不在 PATH 里（command not found）；可用树内构建出的 linux/scripts/dtc/dtc（由内核构建产出）。反编译 DTB 核对内容时用它，不要以为没装 dtc 就没法验。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机给 kexec/fastboot 取证抓串口日志的可靠姿势：`while true; do [ -e /dev/ttyACM0 ] && cat /dev/ttyACM0; sleep 0.5; done >> logs/serial-<date>-<topic>.log`（配合 scripts/serial-run.sh 经 /dev/ttyACM0 执行命令，依赖设备侧 ttyGS0 挂 shell）。但 console 主要走 tty0，早期内容串口常抓不到；/dev/ttyACM0=ttyGS0（cmdline console=ttyGS0,115200）、/dev/ttyACM1=adb 口；pstore 为空。 — Failed: 串口抓不到早期内核日志，需知正确通道与局限 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 板级 DT 改动（如新使能一个 QUP/I2C 控制器）在本机可能直接导致整机无法进内核（亮屏即灭/掉电，无输出、复位回 b 槽）。此类改动一律做成独立 DTB 变体镜像走 fastboot boot 零写盘验证，绝不直接刷 boot_b。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 「用户亲自执行 fastboot/EDL」是断联场景下的一次性偏好，被升格成项目硬规则后已按用户口径放宽：agent 应首先自主执行（有写坏风险的先备份再执行），只有超出预期的错误再请用户检查/物理干预。项目级行为规范已统一入口到 .pi/AGENT-OPS.md（AGENTS.md 只留项目描述，不再夹带规则）。 — Failed: 偏好→硬规则升格 + 范围扩张（D1 语义漂移），用户随即要求放宽 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 项目文档会出现语义漂移：同一动作前后口径翻转（fastboot --set-active 从「进 fastboot 后先执行」变成「未授权写操作」）、禁令被压缩成理由（「不要用封装脚本跑 fastboot」只剩括号解释）、术语份数不一致（领域层 4 份 vs 5 份）。对策=定期做语义漂移审计（archive/topics/SEMANTIC-DRIFT-AUDIT-*.md），把规则按「行为规范 / 开发经验 / 项目描述」三分归口并互不复述。 — Failed: 2026-10-06 语义漂移排查发现 7 处矛盾 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 二分实验镜像命名靠 D/B/X/Y/f 等后缀区分（D=DTB 二分、B=最小二分、X/Y=kernel/DTB 交叉、f=full 载具重打），这些 ad-hoc 号不走 scripts/lane.sh alloc，会与账本冲突；构建前先 `ls out/ | grep -o 'vk[0-9]*' | sort -V | tail` 取最大+1，并把 ad-hoc 号补录进 versions/vk-registry.tsv。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 运维纪律：boot 镜像的 verNN 号若不是内核号而是载具号（如 vk61 = 只换 /init），就不能用 uname -r 验证刷入是否生效——必须比对 kernel/dtb 段 sha256（与 boot_b 逐字节相同）或 uname -v 的编译时间戳。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 同 UTS 串下区分不同内核构建必须用 `uname -v`（`#N SMP PREEMPT <date>`），**不能只看 `uname -r`**——候选内核为了对齐 LOCALVERSION 会锁成同一 UTS（如 vk47clean），只有编译时间戳能证明「新内核确实跑起来了」。相关：debug_mask=2 的 ath12k 调试日志会冲 ring buffer，使基于 dmesg 计数的差分统计变负。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核 .config 中 CONFIG_LOCALVERSION_AUTO 决定 vermagic 是否含 git sha：同一源码树在 AUTO=n 时构建得到 `7.2.0-debug-vk47clean-gbd114ca335e1` 之外的短名。比对 mirror 镜像与工作树 config 时，`diff` 只差这一行即说明是同一配置来源（config-vk40-bringup vs worktree/.config 仅 CONFIG_LOCALVERSION_AUTO 一行之差）。 — Failed: config 对比时误把 LOCALVERSION_AUTO 差异当成实质配置分歧 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] initramfs 载具号 ≠ 内核号（继 vk61 之后的普遍规律）：vk55/vk60/vk61 都无内核改动（用户态 / initramfs ∧ init），启动后 `uname -r` 仍显示基座内核（如 vk47clean）= 正确签名，不是刷入失败。判断「到底在跑哪个 vk」必须从镜像内抽 UTS（解 gzip 内核流取 Linux version），文件名不可信。 — Failed: 用户误把 vk61 当内核升级 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[preference] 评估「换发行版/换 init 能否解决技术坑」时，用户期望按「每笔成本单独归因、判断能否用装包/换服务解决」逐项算账，而不是笼统答「哪个发行版更健壮」；会明确要求「评估切换 init 的收益」。已验证结论：Alpine→Ubuntu 只能顺带清 U1–U7 共 7 项（会话/PAM/logind/busybox 类），这些 postmarketOS 已在 Alpine(musl) 上用 greetd+phrog+elogind 解决 ⇒ 维持不换发行版；分诊数字 = 装包可解 8 项 / 启用 OpenRC 可解 8 项 / 只有换发行版才有增量 3 项（增量都小）/ 内核+上游+硬件谁都解不了 6 项。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] QCOM fastboot 上 `fastboot boot <img>` 偶发 `Booting FAILED (remote: 'Failed to load/authenticate boot image: Load Error')`（Sending 已 OKAY）：重试一次（必要时先 `fastboot reboot bootloader` 回 fastboot）即成功，不需要改镜像或怀疑镜像损坏。 — Failed: 首次 flash/boot 报 Load Error 容易误判成镜像或签名问题。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] fastboot boot 首次报 `Failed to load/authenticate boot image: Load Error` 时不要改镜像——2026-10-06 实测：同一 83MB 镜像 `fastboot reboot bootloader` 后再 `fastboot boot` 即 OKAY（10.1s 启动）。ABL 首次注入/校验偶发失败，重试即可。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[insight] CDSP bring-up（G1-11）取证结论（2026-10-06，vkD2-cdsponly 实机）：remoteproc1 存在但 state=offline；`cdsp.mbn` 装载成功，`cdsp_dtb` 报 -22（EINVAL，来自 qcom_scm_pas_init_image —— SCM 拒绝 DTB metadata）。已排除「固件文件命名/格式」假设：换成 vendor 的 split 格式（cdsp_dtb.mdt + .b00/b01/b02，与 adsp 成功的方式一致）仍 -22 ⇒ 指向 PAS id 不匹配（驱动 sm8650_cdsp_resource 用 dtb_pas_id=0x25，需与 vendor SCM 期望的 id 对齐），下一步查 vendor DT/stock 源码里 cdsp 的加载 id。注意：remoteproc unbind/rebind 会因 reserved-mem 未释放而失败（`assign memory 0 failed`），验证固件改动必须冷启动（fastboot boot）。 <!-- created=2026-10-06, last=2026-10-06, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核构建坑（2026-10-06 实机遇到）：在已有 vmlinux.o 的大树上重跑 `make` 时 `LD vmlinux.unstripped` 段错误（make 错误 139，重试仍复现），而 vmlinux.o 本身完好（1.7GB）——属工具链链接阶段问题。绕法：不要在同一树上重编全量内核；改用已知良好的内核 Image.gz（如 /tmp/kdirD2 的 vkD2 产物）只重编 DTB，做「仅 DTB 变」的单变量镜像。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `wlr-randr --output <conn> --off` 与 `modetest -w <conn>:DPMS:3` 在本机 msm/DSI 上是**无效操作**（读回 DPMS value 仍 =0/On、sysfs dpms 仍 On，只触发面板 unprepare→重下固件）。modetest 需 DRM master（不停合成器报 Permission denied）。测「真熄屏」必须走 `org.gnome.ScreenSaver.SetActive(true)`（sysfs dpms 确实变 Off）。此前用 wlr-randr/modetest 得到的「DPMS off 必复位 / 免疫」数据全是噪声（2026-10-07 实测）。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核主树 `LD vmlinux.unstripped` 可连续两次段错误（exit 139，`vmlinux.o` 本身完好）。绕过：复用已知良好的 `/tmp/kdirD*/` 内核产物（Image.gz+dtb），只替换改动的 DTB 后重打包镜像，做单变量验证。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 只改 DTB 的 `fastboot boot` 镜像若静默回退 boot_b，特征 = 设备起来的 `uname -r` 是 boot_b 的 UTS（如 vk47clean）且 dmesg cmdline 带 `androidboot.*`。判「镜像到底起没起」必须比对镜像 manifest 的 kernel_uts 与设备实际 uname，别只看 fastboot 返回 OKAY。本案 dp1（带 `&i2c0 status=okay` 的 DTB）就是这样被误判为「role-switch 改动导致黑屏」。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] qbootctl（Alpine community 包，AOSP bootctrl HAL 的 musl/glibc 移植）可完全取代本项目自研 scripts/slot-attr.py 的 mark-successful：① 扇区大小走 ioctl(BLKSSZGET)，4K 自动识别，无 sgdisk 那类 512B/4096B 误判；② 多盘/LUN 支持（按盘分别提交，源码注释直接举 /dev/sde 为例）；③ `-m`（mark successful）纯 GPT 写，primary+backup+CRC 同改、不碰 UFS BSG，与 slot-attr.py 完全等价；④ `-s`（set active）会额外走 /dev/sgY 的 UFS boot-LUN 切换（xbl），本项目不适用 ⇒ 慎用或加 `-i`；⑤ 缺口 = 无离线 dump 编辑、无 retry-count 顶配。源码常量：AB_FLAG_OFFSET=attribute byte 6，bit2=SLOT_ACTIVE(0x04)/bit6=BOOT_SUCCESSFUL(0x40)/bit7=UNBOOTABLE(0x80)；gpt-utils 用 BOOT_DEV_DIR by-partlabel 定位 LUN；运行时必须 root。2026-10-07 设备实测通过（boot_a->/dev/sde12、boot_b->/dev/sde45，LUN4，4096 字节扇区）：只读逐项一致，`qbootctl -m b` 把 boot_b byte6 0x0f(retry=1) 改为 0x4f(succ=1)，primary+backup 双表都写，内核重扫 78 分区无 CRC 错误。坑：写入触发分区重扫时有瞬时竞态，紧随其后的 `qbootctl -n b` 会报 “No slots found”，重读即正常，不代表 GPT 损坏。注意内核 cmdline 无 slot_suffix 时 qbootctl 无参会默认按 slot a 处理（读当前槽用 -x）。 — Failed: 自研 slot-attr.py 有可用的标准替代物，且后者在扇区大小/C-LUN 处理上更稳 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 生态级核查否掉了两个曾以为可替代自研件的候选：① mkinitfs（Alpine 官方 initramfs 生成器）不适用本项目——本项目 initramfs 刻意不带模块，而 mkinitfs 依赖 nlplug-findfs/lddtree 且与自定义 /init 冲突；② pmbootstrap/pmaports 不推荐——与 lane/vk 工作流、kexec/mod-loop 快环冲突，除非把项目目标改成发行镜像/上游化。另：pil-squasher 方向相反（主线 qcom PIL 要的就是 .mdt+.bXX 拆分），msm-firmware-loader 不需要（固件已打包进 rootfs）。真正值得纳入的只有 qbootctl（已采纳）与 alpine-make-rootfs 启发的「apk --root --arch 免 chroot」手法。 — Failed: 避免后续会话再次误判这些标准轮子可直接替换本项目自研件 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 评估「是否用标准生态件替换自研轮子」时，先做本地命中数核查（grep 项目文档里该方案名出现次数）往往全为 0，说明该生态轮子从未被纳入候选；但命中数 0 不等于应当采纳——必须逐项核实兼容性（如 mkinitfs 与本项目刻意无模块的 initramfs 冲突）后才能裁决，裁决结论要写清「已采纳/不适用/不需要/方向相反」而不是笼统的「可选」。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[insight] PITFALLS #124 熄屏掉电（G1-22/Q24）单变量控制失败案例：头号假设「相机等 =m 模块的加载改变面板 disable 供电」无法验证——相机模块在用中无法 rmmod（绑定传感器），改用黑名单禁用后模块**仍被加载 12 个**，`modprobe --showconfig` 确认 `blacklist qcom_camss` 已生效但加载路径不是可被 blacklist 拦住的 udev autoload（或来自 RAM initramfs），单变量始终没隔离成功。 — Failed: 黑名单拦不住加载 ⇒ 无法做干净的单变量对照，熄屏掉电至今无法判定根因 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机 `dd` 备份磁盘时注意：`blockdev --getsz` 返回的是 512B 扇区数，而 UFS 设备逻辑扇区为 4096B ⇒ 直接拿该值做 bs=4096 的 skip 会得到偏差 8 倍的错误位置。正确换算 = 512B 扇区数 / 8。槽位 GPT 在 /dev/sde（LUN4，boot_a=/dev/sde12、boot_b=/dev/sde45）。 — Failed: 多次 dd 备份因扇区换算错误得到 0 字节 tail <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[insight] qualcomm remoteproc（qcom_q6v5_pas/qcom_pas）的固件必须用 stock **split** 形式（<name>.mdt + <name>.b00/b01/…）——单文件合并版 .mbn 会被 TZ PAS init 拒为 -22 EINVAL。且固件搜索路径在 switch_root 前由 initramfs 生效：只把固件放磁盘 rootfs 无效，`Direct firmware load ... failed with error -2` 表示载具（initramfs）里没有。诊断顺序：dmesg 看是 -22（格式/变体错）还是 -2（没找到文件）。 — Failed: G1-11 CDSP 曾长期 offline，旧假设「PAS id 不匹配」被否证；真因是单文件 .mbn 变体 + 固件必须打进 initramfs <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `fastboot fetch <partition>` 在本机 U2 上不支持（`Unable to get max-fetch-size. Device does not support fetch command.`）⇒ 无法从设备回读 boot_b 等分区做「刷写前备份」。替代：设备在 Linux 时从设备侧读块设备（`/dev/disk/by-partlabel/boot_b` → /dev/sde45）再 scp 回主机（/tmp 是 tmpfs，7.3G）。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] cat /dev/ttyACM0（设备内核日志串口）会刷 `drm_crtc_wait_one_vblank+0x1b0` 的 vblank 警告风暴（T116 worker_thread / drm_fb_helper_damage_work），导致设备侧 SSH 变得极慢乃至超时——遇到 SSH 卡顿时先查串口是否被该警告刷屏，不是网络问题。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `fastboot fetch boot_b` 在本机设备上不可用（报 Unable to get max-fetch-size. Device does not support fetch command），备份 boot_b 需改用设备侧 `dd` + scp 回主机。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机 `fastboot fetch boot_b <file>` 不可用：该设备不支持 fetch 命令（`fastboot: error: Unable to get max-fetch-size. Device does not support fetch command.`），会生成 0 字节文件。备份 boot_b 必须走设备侧 `dd if=/dev/disk/by-partlabel/boot_b of=/tmp/boot_b.bak bs=1M count=96` + scp 回主机。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机 `~/wt-athm`（worktree，detached bd114ca33 = vk47clean 源）里已有**完整的 vk47clean 构建产物**（vmlinux 658MB、Module.symvers、System.map，构建时间 2026-10-06 23:13），其中 `drivers/dma-buf/heaps/{system_heap,cma_heap}.ko` 的 vermagic = `7.2.0-debug-vk47clean-gbd114ca335e1`，与设备运行内核完全一致 ⇒ 可直接 scp 到设备 `/lib/modules/$(uname -r)/` 下 insmod，无需重编内核。设备 `/lib/modules/7.2.0-debug-vk47clean-gbd114ca335e1/` 原有 29 个模块但不含 dma_heap 这批。判「.ko 能否直接 insmod」= 比对 vermagic 与 `uname -r`。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 判断相机成像旋转差时：stock vendor DTB 的 `sensor-position-roll`（如后摄 90/前摄 270）与主线 DT 的 `rotation` 值可能完全一致却仍然整体颠倒——因为「应用方约定」与 DT 约定可能是反向的，此时 R=90/270 都表现成 180° 误差。旋转属性在驱动里是 read-only（`camera_sensor_rotation` v4l2 ctrl，flags=read-only），改朝向只能改 DT 重刷；libcamerasrc 无 video-direction 属性，消费端（Snapshot 等）是读 libcamera Orientation 自行旋转。 — Failed: 会话中相机颠倒排查的关键结论 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[insight] DTS 多变量实验纪律（2026-10-07 两次踩坑教训）：每轮实验跑完 `git checkout` 回退会把**上一轮已验证的改动一起回退**（dp5 两次构建得到与 dp3/dp4 逐字节相同的镜像）。正确做法：一轮实验需要的所有 DTS 改动**一次改齐** → 构建前 grep 逐项核验 → 编译 DTB 后比对 sha256 与上一版不同再打包镜像。快速拦截 = 比对 image_sha256 / dtb_sha256；发现与旧载具相同即说明改动丢了。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机（xuqianhui1001）内核树 `make syncconfig`/`olddefconfig` 会把 `.config` 的 QCOM 子树整体弄丢（实测 2026-10-07：`CONFIG_ARCH_QCOM` 消失，build-kernel.sh 报 `ERROR: CONFIG_ARCH_QCOM missing in .config (corrupted by olddefconfig?)`，.config 从 321948 B 掉到 244347 B）。恢复源 = `patches/config-vk50-modular`（Oct 4，模块化相机配置，321948 B）或 `patches/config-vk40-bringup`。另：想让 `uname -r` 里带上 `vk47clean` 中缀（对齐磁盘模块目录）需显式设 LOCALVERSION，仅 checkout bd114ca33 只会得到 `7.2.0-debug-gbd114ca335e1`。 — Failed: 重编 release 时 syncconfig 破坏关键 config，且 LOCALVERSION 中缀不会自动出现 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[correction] dp5 基线（内核 26cd13b1c）上执行 `ssh … 'sync; reboot bootloader'` 后设备从 USB 完全消失（fastboot devices 空、lsusb 无 18d1、无 enx*、无 /dev/ttyACM*）——该内核不含 vk41 的 PSCI SYSTEM_RESET2 vendor-reset 钩子，`reboot bootloader` 不生效。教训：在非 vk41 派生内核上要用 `reboot2 bootloader`（/sbin/reboot 被包装）+ 等 ~20s 再用 fastboot devices 判定，不要用裸 `reboot bootloader`。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `fastboot fetch` 在本机设备上不可用：报 `Unable to get max-fetch-size. Device does not support fetch command.`，输出文件 0 字节（sha256 为 e3b0c442… 空文件）。需要读回分区时改用设备侧 `dd if=/dev/disk/by-partlabel/<part> bs=1M count=<N>` + scp，或依赖已有的 bootslot-b/*.img 备份。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机 USB-NCM 调试链路重载：设备侧 `reboot bootloader` 后若内核缺 vk41 的 PSCI SYSTEM_RESET2 钩子（如 dp5 内核 26cd13b1c），设备会从 USB 完全消失（非 fastboot 未枚举，而是无任何 USB 设备：lsusb 无 Google/18d1、无 enx*、无 /dev/ttyACM*、SSH 超时）⇒ 必须用户物理进 fastboot。另外主机侧 USB-NCM 网卡名会变（本轮见 enx021e5eede102 配到 192.168.7.9/24 等），ping/ssh 前先 `ip -br a` 找当前 enx 名；设备侧的 `sync; reboot bootloader` 属于有风险的链，执行前先确认目标内核是否带 reboot-bootloader 钩子。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 熄屏掉电（Q24）二分协议教训：用「载具启动后 rmmod 全部相机模块，再只加载一个子集」做二分不可靠——rmmod 卸载不干净（本轮 CAM_LOADED_AFTER_UNLOAD=6，camss 栈仍在），致死的可能是残留模块而非被测子集，结论作废。更稳协议 = 做「不自动加载相机」的 camdp 变体（改 RAM initramfs 里的 /init 去掉 camera-modules-load 调用），再累积式加载、每次加载后真实熄屏，第一个致死的加载项即元凶——只有最后一次致掉电，前面安全，减少用户的物理恢复次数。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 本用户在设备已进 fastboot 时会主动告知「设备已经进入fastboot，可以继续」/「就绪」——不要因为 SSH/`fastboot devices` 一度为空就断言设备死掉或反复重试；按 AGENT-OPS 停下报告现场、等用户物理恢复即可。另：用户明确「ssh 走有线（USB-NCM，主机 192.168.7.2 / 设备 192.168.7.1），无线每次 IP 会变动」，排查连通性优先走有线。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 掉电/硬复位后设备可能停在 ABL fastboot 而非失联——此状态下 slot b 若缺 mark-successful（retry 耗尽被标 unbootable）会卡在 fastboot 不自动启动，须先 `qbootctl -m`（或 slot-attr.py mark-successful）再 reboot。判据：SSH 等待时间差异不是「启动慢」，而是槽位标志问题。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 在内核树里用 `make M=... modules` 单编模块会缺 vmlinux 上下文（报错）；且在 dirty 树上构建会得到 vermagic 末尾带 `+` 的模块，设备 insmod 会失败。两个可用手法：(1) 把实验改动提交使树变 clean 再编译；(2) 直接改 .ko 里 vermagic 字符串的尾部 `+` 为 NUL（CONFIG_MODVERSIONS 关时只需字符串精确匹配）——本次用此法把 `7.2.0-debug-vk47clean-gbd114ca335e1+` 修正为不带 `+`，部署成功。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机脚本调用 `scripts/to-fastboot.sh` / `cycle.sh` 走 `reboot bootloader` 时，若被外层 timeout 杀掉，设备会停在 Linux 不重启；且该步骤在 agent 侧常整体超时（本次 300s）。可靠做法 = 自身不被 timeout 包裹地跑 reboot 命令（detached），或直接请用户手动重启到 fastboot（用户 2026-10-07 就是手动做的）。 — Failed: 本轮 vk63 上机时 to-fastboot.sh 被 300s timeout 杀掉，设备仍在 Linux，用户手动重启进 fastboot <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机 `to-fastboot.sh` 在设备侧执行时会卡住（timeout 300s 被杀，设备仍在 Linux）——需要 reboot 到 fastboot 时，detached 地跑单条 reboot 命令，或直接请用户手动重启到 fastboot。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 真实熄屏 A/B 必须先确认桌面会话真的起来了（`ps -eo comm | grep -E '^phoc$|^phosh$'` + gsd-power + /run/user/0 会话总线），否则 `org.gnome.ScreenSaver.SetActive(true)` 是空操作、样本无效；本轮就因桌面未起产生过一轮无效样本。 <!-- created=2026-10-07, last=2026-10-07, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 对内核树只改 DTS 后重编 DTB：若上一次 make 已生成过 dtb，直接 `make arch/arm64/boot/dts/qcom/xxx.dtb` 会报「无需做任何事」或「没有规则可制作目标」；需先 `touch` 源 dtsi/dts 或删掉旧 .dtb 再编，并用 `dtc -I dtb -O dts` 反编译回读确认节点属性（如 power-domains phandle）真的改到了。 — Failed: DTS 改动未触发重编，容易误以为构建成功 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 上游内核 patch 的 commit message 与 DTB 源码注释必须全英文后才能发给邮件列表：仅把 commit subject 改成英文不够，diff 的 `-`/上下文行若来自中文注释 commit（如 H1 的「H1 实验：…」）仍会把中文留在 patch 里。正确做法 = 连同前置实验 commit 一起在分支上重做/改写（本条经历 git rebase --onto + 手工解 sm8750.dtsi 冲突），保证 patch 纯 ASCII；另注意 `git format-patch` 的 Subject 若此前已带 `[PATCH]` 前缀会叠成 `Subject: [PATCH] [PATCH] ...`，需用 --subject-prefix 或手改。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 做熄屏 A/B 前必须先确认桌面真的起来了（phoc / phosh / gsd-power 在跑 + /run/user/0/bus 会话总线存在），否则 ScreenSaver.SetActive 是空操作、样本无效——本轮曾出现「桌面未起导致熄屏空操作」，另有 phoc <defunct> 僵尸（start-desktop.sh 循环拉起会重启）。设备侧 boot_b = camdp-nocam/vk62 形态时普通 `reboot` 可自动回受控 Linux（约 70s）。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 「换设备/换 AP 就正常」类结论只能证明触发条件，不能排除本侧版本/DTB 变量；遇到这类现象若要归档成「已知限制」，必须先确认同一外设在早期版本是否工作过（用户会据此纠正）。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 该 ABL 的 fastboot 不支持 `fastboot fetch`（报 `Unable to get max-fetch-size. Device does not support fetch command.`）⇒ 取分区内容改用 Linux 侧只读读分区（如 `dd if=/dev/disk/by-partlabel/dtbo_b ...` 后再按镜像大小截断比较 sha）。另注意：只用 python 扫前 4K 判「全零」会误判——dtbo_b 是全零 payload + 在 4096 偏移处开始的 AVB footer（1686 个非零字节）。 — Failed: fastboot fetch 不可用 + 前缀扫描误判全零 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] PyPI wheel `dtc`（dtc-0.1.1-py3-none-any.whl）是 dataclass 工具，不是 device-tree compiler；`import fdt` 会 ModuleNotFoundError。反编译 DTB 用内核树自带的 `geekidos-linux/scripts/dtc/dtc`。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 手工改 linux/.config 后必须用交叉编译环境（`. scripts/env-build.sh`，CROSS_COMPILE=aarch64-linux-gnu-）跑 `olddefconfig`/`make`；用主机 gcc 跑会丢掉 43 项工具链相关项（CONFIG_ARM64_MTE/ARM64_AS_HAS_MTE/CC_HAVE_SHADOW_CALL_STACK/ARM64_ERRATUM_* 等），并引入 CONFIG_BROKEN_GAS_INST=y、CONFIG_CMDLINE=""。 — Failed: vk64 构建时用主机 gcc 跑 olddefconfig，config 被写坏 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[failure] vk64 v1 烧 boot_b 后过 BL 但内核起不来（只剩充电标志）——真因不是构建错误而是配置源错误：vk63 manifest 记的 config_sha256=26e7cad3 指向 `.config.old`，与 vk63 真内核 config（从镜像 extract-ikconfig 提取，11948 行）差 3000+ 项（缺 DRM_MSM=y、触屏=y、CONFIG_CMDLINE 等），产物 Image.gz 仅 15.2MB（正确 20.5MB）、解压 42MB（正确 62.5MB）。教训：内核配置的真源应是镜像内 extract-ikconfig，而不是仓库里的 .config/.config.old；manifest 里的 config_sha256 可能指向坏文件。 — Failed: manifest 记录的 config 与真内核不符，重建内核残缺 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 给 aarch64 内核模块 strip 必须用 `aarch64-linux-gnu-strip`，用主机 `strip` 会报 "Unable to recognise the architecture of the input file"（对象留在包里，未 strip 的全模块包 ~496MB → strip 后 ~16MB / 1610 项）。模块包须含 modules.order / modules.builtin*。 — Failed: vk64 模块打包时 strip 用错架构 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机 `fastboot fetch` 不被该设备支持（`fastboot fetch` → "Unable to get max-fetch-size"；`fastboot getvar max-fetch-size` → "GetVar Variable Not found"）⇒ 无法在 fastboot 下把分区读回主机做刷前备份。替代：以已知的 GPT 双表 dump（gpt_main0/gpt_backup0）+ 待刷分区已知内容（如已被写坏、无保留价值的镜像）替代，或走设备侧 `dd if=/dev/disk/by-partlabel/<part>` 再 scp。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 内核 uname（release 串）与设备 /lib/modules/<release>/ 目录名不匹配时，`=m` 模块全部无法加载（modprobe 报 not found 或 `Exec format error`——vermagic 不符）；表现为上游 DRM 组件 deferred → msm_drm_bind 不完成 → 连 card0 都没有（DP/显示全无）。软链目录不够（vermagic 仍不符），必须为当前内核构建并部署配套模块包（`scripts/build-kernel.sh modules`）到 /lib/modules/<release>/。本次 vk64 因此需要自己的 1610 个 .ko 模块目录。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[failure] vk64 的 Q28 retry 补丁（面板 prepare 失败后 redo reset 再试）**生效但不够**：attempt 1 报 `-110`（DSI DCS 首写超时），attempt 2 仅 30ms 后即报 `-5`——说明 DSI host 在首次 -110 后已楔死，面板级 reset 救不回。真修法需在 msm_dsi 级复位整个 DSI 控制器/host（更深的内核工作）。Q28 还有第二种失败面：`DSI PLL(0) lock failed, status=0x00000000` ×4 → dsi host enable 失败 → dpu 长时间不绑定（vk63 日志里同样有 PLL fail ×4 但 8.5s 后 dpu 仍绑定成功，说明该面有运气成分）。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 熄屏→硬复位未根治的最新增量证据（2026-10-08）：vk63（H2 DTB，cambist 单挂 MX）在**相机加载态**下 SSH 自动扫测真实熄屏（org.gnome.ScreenSaver.SetActive）3 轮 2 掉电 ⇒ 与 H1 同量级间歇，早前「用户实机 2/2 存活、H2 收盘」是低样本误判。无相机态仍稳定安全。掉电时死前几秒的用户态日志被 page cache 吞掉（脚本创建了 log 但 0 字节），符合既往「硬复位无痕」判据。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 版本号对账的统计口径要小心：`out/` 里 80 个 *.img 有 4 个是 boot_b-*/dtbo-* 类无内核载荷的副本 ⇒ 「带内核载荷的镜像」是 76 个；而「硬错行数」要按 flag 前缀逐个统计（num_ne_tag 24 + uts_dup5 18 + tree_drift 18 + dirty_drift 2 = 45），漏掉 uts_dup5 会得出错误的 36。数字入账前必须脚本重算核对。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] kexec 流程代码链（本树 kernel/kexec_core.c:1138 kernel_kexec）：kernel_restart_prepare("kexec reboot") [reboot.c:100] → blocking_notifier_call_chain(SYS_RESTART)【网络 teardown 在此杀掉 SSH/读取进程】→ usermodehelper_disable() → device_shutdown()（UFS host .shutdown 走这里；device list 反向遍历 ⇒ UFS 作为早期 probe 设备最后被关）→ migrate_to_reboot_cpu() → syscore_shutdown() → 重新 cpu_hotplug_enable() → pr_notice("Starting new kernel")。因此「落盘 kmsg 在 wlan deauth 之后停止」是 SSH 先死、不是 kexec 失败。调试 kexec 时不要把 SSH 断连当成失败里程碑。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 排查本机 kexec 时可参考的上游方向（2026-10 联网检索）：arm64 无 x86 的 machine_ops.shutdown 等价 teardown（Hyper-V 侧靠 syscore_ops.shutdown 修 VMBus kexec 失败，见 [PATCH v2] arm64: hyperv: run VMBus kexec handler via syscore_ops，2026-09）；reboot notifier 过早（在 kernel_restart_prepare 内、device_shutdown 之前）是已知机制限制；Qualcomm 侧关注 qcom-pon（drivers/power/reset/qcom-pon.c）在 kexec 路径的 pm_power_off / restart-mode 行为。引用时须复测，勿直接下结论。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] kexec 调试落盘（跨 kexec -e 存活日志）必须用「设备本地、与 SSH 无关」的 dumper：`scripts/kmsgspy.sh` 即 `stdbuf -oL dmesg -w >> /root/kmsg-live.log &` + `while :; do sync; sleep 0.5; done`。R2 落盘失败（拿不到 `Starting new kernel`/`Bye!`）的根因 = 用 SSH 驱动的 python 读 `/dev/kmsg`，而 kexec 走 `kernel_restart_prepare()` → `blocking_notifier_call_chain(SYS_RESTART)` 会先拆网络/杀 SSH，dumper 随之死亡。修法：`setsid nohup` 完全脱离 SSH 会话，且 sync 足够密以抓到 device_shutdown 早期的 `[KD]` 标记。 — Failed: 第二轮 kexec 上机（KEXEC-ONDEVICE-R2-2026-10-05）落盘 kmsg 抓取未拿到跳转里程碑日志，误以为掉电点在里程碑之前，实为 dumper 依赖 SSH 被杀。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] kexec 失败分支的代码层定位：`kernel_kexec()`（kernel/kexec_core.c:1138）非 preserve_context 路径依次执行 `kexec_in_progress=true` → `kernel_restart_prepare("kexec reboot")`（reboot.c:100，里面 `blocking_notifier_call_chain(SYS_RESTART)` 拆网络杀 SSH → `usermodehelper_disable()` → `device_shutdown()`）→ `migrate_to_reboot_cpu()` → `syscore_shutdown()` → cpu_hotplug_enable() → `pr_notice("Starting new kernel")`，再 machine_kexec。三段（notifier/device_shutdown/syscore_shutdown）任一挂死都会表现为「静默掉电且日志戛然而止」，故用 cmdline 掩码逐段跳过是可行的二分手段；另注意 UFS host 的 `.shutdown`（ufshcd_wl_shutdown）在 device_shutdown 的逆序遍历里通常最后被关，UFS 早期设备在 list 前部。 — Failed: kexec -e 硬挂/直接掉电，无跨切换存活的 console，无法定位失败分支点。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备侧『抓 kexec 掉电前最后日志』的正确做法：`setsid nohup` 起一个完全脱离 SSH 会话的本地落盘进程（`stdbuf -oL dmesg -w >> /root/kmsg-diag.log` + `while :; do sync; sleep 0.5; done`）。用 SSH 驱动的 python/进程读 /dev/kmsg 必失败——kexec 的 kernel_restart_prepare 会跑 SYS_RESTART notifier 链（网络 teardown 杀 SSH，读取进程随之被杀）。另注意观测硬墙：落盘写 UFS，device_shutdown 反向遍历到 UFS host controller 时会关闭落盘的存储自身，之后的 kernel 日志刷不出（本次捕获干净止于 `[KD] SD-done: sde51`，无孤立 start），只能收窄不能穷尽。 — Failed: R2 第一轮落盘 kmsg 未拿到 Starting new kernel/Bye! 里程碑，误以为掉电点在里程碑之前 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核 diag sysfs 开关命名坑：用 kobject_create_and_add("kexec_diag", kernel_kobj) + sysfs_create_file 同名属性时，实际文件路径是 /sys/kernel/kexec_diag/kexec_diag（目录套同名文件），直接 cat/write /sys/kernel/kexec_diag 会报 Is a directory。另 sysfs_create_file 在新内核要 const struct attribute *，传 kobj_attribute 须取 &attr.attr。cmdline 解析（kstrtoint + __setup）在 kexec 时可能读到 0（解析失败静默 return 保默认），改用 sysfs 运行时开关更可靠、可当场读回核验。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 从 boot.img 抽内核 UTS 的正确做法：找首个 b'\x1f\x8b\x08' 后 zlib.decompress(wbits=16+MAX_WBITS) 再 re.search(rb'Linux version (\S+)', k)。注意 \(S+ 贪婪会截错 manifest 字段，且脚本里正则须用 raw string（否则 SyntaxWarning invalid escape sequence）。105 个镜像中 99 个能抽到 UTS（dtbo-dummy.img 只有 4096 B 抽不到）。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 在 device_shutdown() 循环体里加 msleep 时绝不能碰 devices_kset->list_lock：该函数在调用每个 dev->shutdown() 前已 spin_unlock(list_lock)，之后循环底部再 spin_lock。在 msleep 前后误加 spin_unlock+spin_lock 会对未持有的锁解锁再抢 → 双重加锁死锁，表现为 CPU soft-lockup（queued_spin_lock_slowpath ← device_shutdown+0x174 ← kernel_restart_prepare），~100s 后 watchdog 才打印回溯，背光因显示设备被跳过而未灭。 — Failed: kexec 诊断内核 vk68 加 settle_ms 后设备挂起、背光常亮；抓日志得 CPU5 soft-lockup 回溯定位 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[convention] kexec 诊断内核的开关不要只靠 cmdline（kexec_dbg= 解析在某些启动路径下会读到默认 0，出现 cmdline 明明 =1 而 stage 打印 skip_mask=0 的自相矛盾）；权威做法是 sysfs 运行时开关，且 kobject 与属性同名时实际文件是 /sys/kernel/kexec_diag/kexec_diag（目录套同名文件），写路径时别漏一层。 — Failed: vk65 的 kexec_dbg=1 实测被解析成 0，改用 sysfs 旋钮后读写正常 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] kexec 诊断旋转开关必须跑在「运行内核」上：kernel_restart_prepare/syscore_shutdown/device_shutdown 都是发起 kexec 的运行内核在执行（不是被装载的目标 Image），所以必须 `fastboot boot` 起带开关的 diag boot.img 再发起 kexec——这是 R2 测试设计错的教训，vk65+ 已按此做。 — Failed: R1/R2 kexec 取证 design error，把 fix 装在目标镜像而非运行内核 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 本地落盘 dumper 抓 device_shutdown 早期标记的有效做法：setsid nohup 完全脱离 SSH 会话（不能用 SSH 驱动的 python 读 /dev/kmsg——reboot_notifier 跑 SYS_RESTART 时网络/SSH 断、子进程被杀，这正是 R2 落盘失败根因）；用 dmesg -w + 频繁 sync 循环落 UFS。但这是台车撞墙：device 反向遍历关到 UFS host controller 时把落盘用的存储自己关掉，之后的标记刷不出——「最后一条有 start 无 done」可能是观测截断而非真元凶。 — Failed: vk66 的 SD trace 止于 sde51 后无法继续，事后时间戳分析才知是观测截断/异步落电 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 本机（xuqianhui1001）设备重启通路分层：`eldroid-bootctl reboot bootloader`（PSCI SYSTEM_RESET2 带 reason 写 SDAM magic）会被反复 kexec 测试写坏——命令干净返回但设备 uptime 连续增长=根本没重启（SDAM/reboot-mode 写通路 wedged）。恢复法 = SysRq 'b' 硬重启（`echo b > /proc/sysrq-trigger`，绕过 reboot-mode/ABL）。稳定进 fastboot 的组合拳 = 先 `eldroid-bootctl reboot bootloader`（写 magic，即使 RESTART2 不重启也无妨）→ 再 SysRq b（硬重启时 ABL 读到残留 magic 0x02 → fastboot）；若只 SysRq b 无先写 magic，设备正常启动（magic 已被消费）。 — Failed: kexec 测试把 reboot bootloader 通路写坏，表现为 reboot 命令空操作、uptime 连续增长 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] kexec 诊断内核必须用**它自己**作为运行内核：`kernel_restart_prepare`/`device_shutdown`/`syscore_shutdown` 都是运行内核在 `kexec -e` 时执行的，不是目标 Image。第二轮 kexec 取证（R2）把 fix 装在目标镜像里 = 测试设计错。诊断手段优先用运行时 sysfs 开关（如 /sys/kernel/kexec_diag/{kexec_diag,stop_after,settle_ms}）而非 cmdline `xxx=` 解析——cmdline 方案曾出现解析值在 kexec 时读到 0 的歧义，sysfs 写读可当场核验。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] kobject 与属性同名时 sysfs 实际文件在 `/sys/kernel/<kobj名>/<attr名>`（目录套同名文件），`cat /sys/kernel/kexec_diag` 会报 "Is a directory"；须用 `/sys/kernel/kexec_diag/kexec_diag`。另 `sysfs_create_file` 在此内核版本要求 `const struct attribute *`，传 `&kobj_attr.attr`。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 本机（xuqianhui1001）长跑/无人值守脚本里的远程 ssh 触发命令必须套 `timeout`：`kexec -e` 之类会掐断连接的命令会让 ssh 一直挂到外层脚本超时（曾拖死到 300–460s），看起来像测试失败但实际已执行（日志已落盘）。实时落盘（tee -a / dmesg -w >> file + 定时 sync）是唯一可靠的取证通道，因为 SSH 会在 kexec 的 reboot_notifier 阶段断掉、任何经 SSH 的子进程 dumper 都会被杀死；dumper 须 `setsid nohup` 完全脱离会话。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] fastboot 变体镜像（101,425,152 B）**不能刷进 boot_b**（分区 100,663,296 B），avbtool 加 AVB footer 会报 `Image size ... exceeds maximum image size ... in order to fit in a partition size of 100663296`。要从 Linux 内免 fastboot 常驻换内核，镜像必须 ≤96MiB（或走 vk61 式 slim/full 载具瘦身）。flash-b.sh（Linux 内签 AVB + dd boot_b）因此只适用于 slim 尺寸镜像。 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机（xuqianhui1001）进 fastboot 的可靠组合拳（2026-10-08 起）：先 `eldroid-bootctl reboot bootloader`（只写 ABL bootloader magic 0x02，RESTART2 那步可能不重启也无妨）→ 再 `echo b > /proc/sysrq-trigger`（SysRq 硬重启，绕过被 kexec 测试写坏的 RESTART2 通路，ABL 读到残留 magic 即进 fastboot）。症状：多次 kexec（截断 device_shutdown / 跳 PON regulator 关机）后 `eldroid-bootctl reboot bootloader|system` 会变成空操作（uptime 持续增长、不重启）；SysRq b 是分水岭（能重启=硬件复位通路正常，只是 RESTART2 写通路 wedged）。脚本 scripts/kexec-bs-cycle.sh 已固化该组合。 — Failed: kexec 实验写坏 restart-mode/SDAM 写通路导致 reboot 命令静默失效，一度误判为硬件问题 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] boot.img（fastboot 变体）镜像 ≈101MB，超过 boot_b 分区 96MiB ⇒ `scripts/flash-b.sh`（Linux 内签 AVB + dd 到 boot_b）会失败：`avbtool: Image size 101425152 exceeds maximum image size 100593664 in order to fit in a partition size of 100663296`。诊断用的大 boot.img 只能 `fastboot boot` 零写盘，不能刷进 boot_b；只有 slim（~20.8MB）或完整但 <96MiB 的镜像才能 --flash。 — Failed: 误以为可从 Linux 内直接刷诊断镜像到 boot_b 以绕开失效的 fastboot 通路 <!-- created=2026-10-08, last=2026-10-08, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q24 H2「用户实机确认健康」是过早收盘（2026-10-07 2/2 存活 → 2026-10-08 3 轮扫测 2/3 掉电）。间歇率 ~20-60% 的 bug，2 样本无统计意义；最低门槛 = 6 轮连续无失败才可判「健康」。此前写进 TASKS 的「用户确认」口径已于 2026-10-08 改回 🟡。 — Failed: 低样本误判为根治，后续扫测推翻 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 面板 init retry 补丁（vk64 d02658e63）实机确认**不足**：首条 DCS `ce 8c a9 00` 在 bonded 双 DSI 命令 DMA 上超时 master=-110，retry 路径确实触发（`panel init attempt 1 failed: -110, resetting and retrying`），但第二次 `sending dcs data ff 20 failed: -5`（EIO）⇒ DSI host 已被首次超时楔死，面板级 reset 救不回。真修需 msm_dsi 级复位（未立项）。面板驱动 builtin（非模块），无法 rmmod 重载。 — Failed: panel-novatek-nt36536 bonded-DSI init retry: -110 → reset → -5, DSI host wedged after first timeout <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 熄屏×相机硬复位修复假设被原厂证据削弱：stock SunP DTS 里 `cambistmclkcc` 只有 `vdd_mx-supply`（MX），camcc 才有 vdd_mm/vdd_mx/vdd_mxc ⇒ 主线「cambist 单挂 MX」（H2）就是原厂写法，「改 MXC」假设证据弱。变体 vk71-mxc（MXC）/ vk71-mxnom（MX+nom corner）待上机对照。 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 用户 2026-10-09 明确修正：`scripts/to-fastboot.sh --boot`（脚本自动进 fastboot + 执行 `fastboot boot`）**对该设备不响应**。正确分工 = agent 准备好镜像路径，**`fastboot boot` 由用户手动执行**；agent 侧只做「等待 SSH 回来」的轮询。这与旧口径「单条 fastboot 命令优先由 agent 自己做」不矛盾——问题不是单条命令，而是脚本内嵌的 fastboot 交互链（进 fastboot + 发 boot 命令 + 等结果）在该设备上不可靠。 — Failed: Agent 调用 scripts/to-fastboot.sh --boot 试图自动完成 fastboot boot，被用户打断并告知 fastboot 对该脚本不响应，要求手动 boot。 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 面板 init 失败的**永久闩锁机制**（drivers/gpu/drm/msm/dsi/dsi_manager.c）：`static bool dsi_bonded_cmd_failed`（:41）被首次 bonded 命令失败置 true（:21 WRITE_ONCE），**全树无任何代码清除它**（grep 确认 0 处写 false）。后果：后续所有 `msm_dsi_manager_cmd_xfer` 在 :674 被 `msm_dsi_manager_cmd_failed()` 短路返回 -EIO，面板 retry 必然拿 -5。只有全新 boot（静态变量随进程空间复位）才有机会。这解释了 vk64 的 panel-retry 补丁为何完全无效。另：热重启 5/5 连续失败 vs 物理冷启正常 ⇒ 失败态不被 warm reset 清除（DSI PHY 寄存器/固件状态残留）；失败态下 `reboot -f` 会挂住（DPU 卡死挡住关机路径），必须用 `echo b > /proc/sysrq-trigger`。 — Failed: panel-novatek-nt36536 首条 DCS 在 bonded 双 DSI 命令 DMA 超时(-110)，闩锁置位后所有后续传输被 -EIO 短路，retry 补丁无意义 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备侧 `reboot2`（rootfs/reboot2.c → /usr/local/sbin/reboot2）**无参数时默认 mode="bootloader"**。这是 Alpine bring-up rootfs 的设计（busybox reboot 不能传 reason 字符串），但若脚本/用户误调 `reboot2` 而不带参数，会直接进 fastboot 而非正常重启。正常关机/重启应用 `reboot`（busybox）或 `loginctl reboot`，不要用 `reboot2`。 — Failed: 用户报「之前的版本修复引入了直接重启到fastboot」，调查内核 PSCI 钩子只对显式 `reboot bootloader`/`reboot edl` 生效，但 reboot2 的默认值是一个潜在陷阱 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 用 `fastboot boot` 起一个 LOCALVERSION_AUTO=y 且树 dirty 的内核时，UTS 会带 `-dirty` 后缀（如 `7.2.0-debug-vk64-gd02658e63cf6-dirty`），与设备上 `/lib/modules/7.2.0-debug-vk64-gd02658e63cf6/` 不匹配 → 所有 =m 模块（fsa4480/fastrpc/ath12k 等）加载被拒 → 连锁故障（例：fsa4480 不加载 → DP 控制器 defer → msm_drm_bind 永不完成 → 连 card0 都没有，显示全黑）。修复：测试构建时 `scripts/config --disable LOCALVERSION_AUTO` 并硬设 `CONFIG_LOCALVERSION="-debug-vk64-gd02658e63cf6"`（精确匹配磁盘模块目录），或接受 builtin-only 无模块的退化态。 — Failed: Q28 补丁测试镜像 vk72-q28dsi 因 tree dirty → UTS 带 -dirty → fsa4480.ko 装不上 → DRM 完全不绑定 → /sys/class/drm 只有 version 文件、无 card0，补丁效果无法验证 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 诊断：`command DMA timeout: status=0x2200200` 的 0x2200200 实际是 DSI IRQ_MASK 寄存器值（bit21=DSI_IRQ_CMD_DMA_DONE 的 mask 位被错误打印为 status），不是 IRQ_STATUS。真正失败 = cmd DMA 的 completion 从未触发（both master+peer 同值超时 -110）。更早期的 `DSI PLL(0) lock failed, status=0x00000000`（t≈0.87s，远早于面板 init t≈8.8s）表明 DSI PHY 的 PLL 从未锁定——命令 DMA 不完成是 PLL 不锁的下游后果，不是命令路径 bug。方向应查 PHY bring-up/PLL 初始化而非 cmd_xfer 逻辑。 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q28 测试镜像构建教训：用 `git diff` 打了补丁后直接 make → kernel.release 带 `-dirty` 后缀 → 设备 `/lib/modules/` 无匹配目录 → 所有模块（含 CONFIG_TYPEC_MUX_FSA4480=m）加载失败 → `msm_dpr_bind` 因 fsa4480 defer 永不完成 → 连 card0 都没有（比 Q28 面板 init 失败更严重，完全无 DRM）。正确做法：(a) 关 LOCALVERSION_AUTO + 硬编码 CONFIG_LOCALVERSION="-vk64-gd02658e63cf6" + 构建时传 `LOCALVERSION=`（空字符串但已设置，阻止 setlocalversion 追加 `+`）使 UTS 精确匹配；或 (b) 确保所有必要驱动 =y（全 builtin 不依赖模块加载）。 — Failed: dirty kernel vermagic mismatch caused total DRM failure on test boot <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] to-fastboot.sh 在设备已处于 fastboot 模式时无响应（脚本先尝试 ssh reboot bootloader，但设备已是 fastboot 无 SSH）。正确流程：若 fastboot devices 已见设备，直接 fastboot boot，不要走 to-fastboot.sh。用户明确说「fastboot对这个脚本不响应。我手动boot」。 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 排查方向错误被源码推翻的教训（G1-34 旋转 2026-10-09）：先假设「D-Bus 总线错配（系统 vs 会话）」→ 在设备上做在线实验（把 proxy 挪到会话总线）→ 失败 → 才去读 phosh 源码 → 发现 phosh 0.55 原生 rotation-manager 只读系统总线、gsd 50 根本没有 orientation 组件。教训 = 桌面栈行为（谁读谁、从哪读）必须**先读源码确认**再下根因假设，不能仅凭「gsd 管方向」的 GNOME 传统认知推断。Phosh ≠ GNOME 全栈，其子系统实现可能完全不同。 — Failed: 假设驱动而非源码驱动的排查导致做了一次无效在线实验（停服务→改总线→发现无用→恢复），浪费 10+ 分钟 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 good/bad 对照否掉的假差异（2026-10-09 vk75 冷启对照 vs vk74 坏发）：`dsi1vco_clk rate=0`（好发也是 0，不是未编程）、`dsi1_isr=0`（好发也低）、byte 时钟 108≠133 MHz、probe 期 `PLL lock failed ×8`（好发同样有）——全部在好发里一模一样，不是差异项。唯一真差异 = 中断计数（mdss irq 1733/dsi0_isr 41 vs 1-2/0），但这是「什么都没跑起来」的结果非原因。教训写进了 vk75 补丁 commit message：「调试差分必须有对照组，只有真差分能活下来」。 — Failed: 上一轮把 dsi1vco_clk=0 当头号线索，缺好发对照导致假阳性 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 设备图形界面冻死行为（2026-10-09 vk72 实测）：进入 phosh/phoc 图形界面后整机卡死（phoc compositor hang）⇒ 所有 USB 接口从主机 lsusb 消失（无 18d1:d00d fastboot、无 NCM enx、无 EDL 05c6）——这不是硬件断电，是内核/compositor 挂死导致 USB gadget 不响应枚举。远程通道全断，唯一出路 = 用户物理按 power+vol_down 进 fastboot（或长按 power 强制关机再开机）。诊断脚本里遇到 ping 不通 + lsusb 无设备时，应直接请用户物理操作，不要反复重试 SSH/fastboot。 — Failed: agent 把「USB 消失」误判为需要冷启断电，实际用户用按键切到了 fastboot <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] GUI 死挂 #106 新约束（2026-10-09）：用户确认「进了桌面然后卡死」（非 Q28 坏显示态，桌面正常出现过）。但压力测试（foot/chromium/btop + dpms 循环）期间 `gfx` genpd 全程 `off-0`（从未上电），原因 = 脚本以 root 跑但 Wayland 会话属 user 1000（/run/user/1000/wayland-0），foot 报 `failed to change working directory to /root: Permission denied` ⇒ 实际没有任何 GUI 渲染发生。⇒ 下一步复现必须以 xuqianhui1001 身份、正确 XDG_RUNTIME_DIR/WAYLAND_DISPLAY 施压。vk76-freezetrace（cmdline softlockup_panic=1 panic=20）已就绪，可在下次死挂时自动留证到 ramoops 并暖复位。APSS 硬看门狗永久禁用（历史原因）⇒ 无 cmdline 装弹则永不自复位。 — Failed: stress script ran as root but Wayland session belongs to uid 1000, preventing actual GPU rendering and making the 600s+ survival meaningless for reproducing the GUI freeze <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 「USB 消失」≠ reboot2 回归（2026-10-09 更正）：连续温复位循环里设备从 lsusb 完全消失，我第一反应归因 reboot2 有 bug，**实为 PITFALLS #106（进 GUI 后整机静默冻死）复发**——内核已挂死，reboot2 根本没机会执行。用户目视确认「进了桌面然后不懂」即定案。教训：设备离线先按「冻死 vs 关机 vs 掉 USB」三分，不要凭上一条命令的失败点推断。 — Failed: 连续 fastboot boot 温复位循环中设备从 USB 总线消失，误判为 reboot2 工具 bug，实际是 #106 GUI 冻死 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 静默冻死取证破法（2026-10-09 落地）：本机 ramoops 后端**本来就活着**（4 MiB @ 0xc2000000，ramoops-1 console 已注册，所有 printk 进 RAM），pstore 目录空只说明从未有 crash 落盘。APSS 硬看门狗被永久禁用 ⇒ 死挂永不自复位。破法 = cmdline 加 `softlockup_panic=1 softlockup_all_cpu_backtrace=1 panic=20`：软锁 → panic → 20s 暖复位 → 重启后 /sys/fs/pstore 带回完整栈。已做进 vk76-freezetrace（sha d696f08e…），持久化到 /etc/sysctl.d/ 或 boot.img cmdline 即可长期生效。 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 设备从 USB 完全消失（fastboot/NCM/EDL 全无）≠ reboot2 二进制的锅——真因 = **PITFALLS #106「进 GUI 整机卡死」复发**（内核已冻死，reboot2 根本没执行）。判据：用户目视确认「进桌面后卡死」→ 物理按键进 fastboot。不要凭 USB 消失归因给 reboot2 / 硬件。已改 PITFALLS #143 口径。 — Failed: agent 最初把设备 USB 消失归因为 reboot2 安全默认改动引入回归，用户纠正为 #106 图形冻死；agent 据此撤回旧结论并改 #143 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 坏发 vs 好发寄存器对拍（vk75 实测）：`dsi1vco_clk rate=0`、`dsi1_isr=0`、byte 时钟 108≠133 MHz 在好发里**一模一样**——全被否。唯一真差异 = 中断总数（mdss irq / dsi0_isr），但属「什么都没跑起来」的症状非原因。连续温复位（reboot2→fastboot→fastboot boot）会把面板**粘在失败态**（5/5 坏），冷启（长按电源 20s）恢复。诊断结论写进 vk75 补丁 commit message。 — Failed: agent 首轮上机仅采坏发、把 dsi1vco=0 当头号线索，冷启好发对照出来后被否——教训：差分必须有健康基线 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 设备侧 `reboot2` 二进制在 `/usr/local/sbin/reboot2`（**不是** /usr/local/bin/）。`/usr/local/bin/` 下有 `eldroid-bootctl`。混淆路径导致 ssh 命令 rc=127 + 30s timeout。进 fastboot 正确命令 = `ssh root@192.168.7.1 '/usr/local/sbin/reboot2 bootloader'`。 — Failed: assistant 假设 reboot2 在 /usr/local/bin/ 导致命令失败和超时 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] vk64 在机内核（7.2.0-debug-vk64-gd02658e63cf6）的 CONFIG_ATH12K=y / 触屏/音频/背光全 =y（**fragment-modular 之前**的构建），而构建树 .config 已全量应用 fragment-modular（1523 .ko 已编好）。模块化收益（mod-loop 30s 迭代）只在**下一次刷入基于新 .config 的镜像**后才兑现；当前 vk64/vk72 上 modprobe 找不到这些驱动（它们是 built-in）。验证模块化需 fastboot boot 新构建的 boot.img。 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[correction] ABL 槽位管理（2026-10-09 实机二次确认，补强旧条）：succ=1 后 retry 恒 7 不再递减，**无论 boot 多少次**。旧条「每次开机真的在扣次数」是基于 retry=6 的误判（那次 succ=0）。真正止血 = `qbootctl -m b`（或 `slot-attr.py mark-successful b`）一次置 succ=1，之后温启/循环测试不再累积风险。预检脚本应查 succ=1 而非「补 retry 到 7」。 — Failed: Agent 看到 retry=6 误判为「每次开机扣次数、RAM 实验在偷次数」，设 succ=1 后连掷 7 次 retry 一直是 7，当场打脸。已写入 PITFALLS #152 就地更正 + commit 372dda8。 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] phosh 桌面会话的 D-Bus session bus 路径**不是** `/run/user/1000/bus`（该 socket 不存在），而是 `/tmp/dbus-<随机>`（由 phoc 启动时 dbus-launch 创建）。主机侧 gsettings/dconf 操作必须从 phoc 进程 environ 读实际地址：`DBUS=$(tr '\0' '\n' < /proc/$(pgrep phoc)/environ | grep DBUS_SESSION_BUS_ADDRESS | cut -d= -f2-) && DBUS_SESSION_BUS_ADDRESS="$DBUS" gsettings set ...`。直接 `XDG_RUNTIME_DIR=/run/user/1000 gsettings` 报 `dconf-WARNING: Could not connect: No such file or directory`。 — Failed: gsettings/dconf 连不上 session bus，idle-delay 等设置看似成功实际未写入 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q28 首次好/坏寄存器差分（vk75 探针，2026-10-09）：坏发与好发仅 4 个寄存器不同——STATUS0 0x0→0x20003（CMD_MODE_ENGINE_BUSY|DSI_BUSY|INTERLEAVE_OP_CONTENTION）、CLK_STATUS 0x2343→0x3743（多 DYN_PCLK_ACTIVE+DYN_CMD_PCLK_ACTIVE）、cmd_dma_busy/cmd_engine_busy 0→1。其余 16 项（DMA_BASE/DMA_LEN/TRIG_CTRL/INTR_CTRL=0x2200200/PHY_RESET/LANE_STATUS/TIMEOUT_STATUS/ACK_ERR 等）全等。断点=面板首条 bonded DCS 写走命令 DMA 超时（master=-110），不是 DPU modeset/genpd/PLL。INTR_CTRL 好/坏相同→中断掩码不是变量。 — Failed: 此前多轮只看坏发现场推差异项（4 个假差异），首次有对照组才拿到真差分 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 设备「启动次数耗尽」的误判根因（2026-10-09）：`reboot2`（无参数=普通重启 RESTART2）被 ABL 当成「进 fastboot」——不是 retry 归零。真实判据 = `fastboot getvar slot-successful:b` 为 no（succ=0）；只要 succ=1，retry 恒 7 不递减。循环/温启脚本的预检 = **确认 succ=1**（`slot-attr.py show` 或 `qbootctl --get`），不是「补 retry」。`qbootctl -m b` 一次置 succ=1 永久止血。 — Failed: 误以为 retry 归零→进 fastboot，实际是 succ=0 + RESTART2 语义被 ABL 误解 <!-- created=2026-10-09, last=2026-10-09, project64=eTcwMC1lbGRlbg -->
-§
-[insight] RPMhPD Always-On (AO) 电源域语义纠正（2026-10-10 E4a worker 源码证据）：AO 域 = 「sleep 票清 0」即**更弱**（允许在 sleep 时掉电），不是更强。因此 Q24 修复方向「把 cambist 从 MMCX+MX 改为单挂 MXC」的正确逻辑 = MXC 是非 AO 域（保持 awake），而非「AO 保护更强」。此前 q24-deep 文档中「AO 保护」推断方向相反，以 worker 源码证据为准。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 实验/诊断内核（E0/E4a 等）从 dirty worktree 构建时，CONFIG_LOCALVERSION_AUTO=y 会在 UTS 尾部追加 `-dirty`（如 7.2.0-debug-ge3c5e9fea66e-dirty）。若模块从同 commit 的 clean checkout 单独编译（或 depmod 时 git 状态已恢复 clean），模块 vermagic 就不含 `-dirty`。部署到设备后即使建了符号链接 /lib/modules/<with-dirty> -> <without-dirty>，modprobe/insmod 仍按 vermagic **字符串**逐字比对 → 全部 `Exec format error`（dmesg: version magic '...ge3c5e9fea66e ...' should be '...ge3c5e9fea66e-dirty ...'）。vk80-e4amxc 的相机模块加载 100% 失败即此因。修法：(a) 构建内核时 `make LOCALVERSION_AUTO=n`（或 `set localversion=''`）去掉 -dirty；(b) 模块必须从**同一个 dirty 树**编译。判据：`modinfo <ko> | grep vermagic` 与 `uname -r` 逐字节比较，不要只看目录名/symlink 是否存在。 — Failed: E4a 诊断内核 dirty UTS vs clean modules 导致所有 modprobe Exec format error，相机模块全链失败 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] E4a MXC 变体上机判定（2026-10-10）：vk81（E0+E4a 补丁，cambist 挂 MXC + 干净 vermagic）上相机 10 模块加载成功 + 桌面起来，但熄屏（ScreenSaver.SetActive true）**即睡死关机**（ssh 连接即断）——MXC 单票未根治 Q24。加上此前 H2（MX 单票）3 轮 2 掉电：**「换轨」路线（MX/MXC/MX_AO）全部无效**，Q24 根因不在投票的轨名，而在 bare clock controller 的半成品态本身 → 唯一剩余路线 = FIX-2（probe 常持票）或 FIX-3（lazy-on + suspend quiesce），或确认该块本就不该从 Linux 实例化（原厂 vdd_mx-supply + 从不触碰）。 <!-- created=2026-10-10, last=2026-10-10 -->
-§
-[insight] Q24 电源域名称不是变量（2026-10-10 实机定案）：H2（MX 单票）间歇失败、E4a（MXC 单票 vk81）相机加载态熄屏**即睡死关机**（1/1 掉电）⇒ H1（去 PD）/H2（MX）/E4a（MXC）三种 DT 域切换全部未根治。根因不在「投哪条轨」，在 cambistmclkcc bare clock controller 的**半成品态本身**（probe 编程 PLL + 恒活 AHB 时钟 + 0 张 genpd 票 ⇒ 熄屏 DSI/面板 disable 路径触发电源域 collapse 时该块处于悬空不一致状态 → PMIC 硬复位）。剩余有效路线 = FIX-2（probe 后不 pm_runtime_put、常持票消除悬空窗口）/ FIX-3（lazy-on：probe 不编程 + runtime_suspend 彻底 quiesce 关 PLL+CBCR，最正/可上游）/ 不从 Linux 实例化该块（probe 黑名单）。不要再尝试换电源域。 — Failed: E4a (MXC) 实机熄屏即关机，与 H2 (MX) 同病，证明域名称不是变量 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q24 FIX-3（cambist PM lifecycle lazy-on + suspend quiesce，commit e1d2c658a）上机实测 = 卡联想 logo 无法启动（boot 死锁）。根因 = `gcc_sm8750_probe()`（gcc-sm8750.c）显式注释保持 `gcc_cam_bist_mclk_ahb_clk` always-on（同组还有 camera_ahb/camera_xo/disp_ahb/eva_ahb/gpu_cfg_ahb 等）；FIX-3 让 cambist 变为 PM-suspendable 后其 AHB 时钟可被 runtime_suspend 关掉，而 GCC 假设该 AHB 恒活 → 启动早期 AHB 被关、GCC 侧寄存器访问死锁。已 revert（commit 67fcff7f0）。结论：**「让 cambist 可挂起」方向被 GCC 硬约束否证**，剩余可行路线只剩 FIX-2（probe 后常持票不 put，消除悬空窗口但 AHB 仍活）或「不从 Linux 实例化该块」。 — Failed: FIX-3 上机 boot hang at Lenovo logo; GCC keeps cam_bist_mclk_ahb_clk always-on, PM-suspendable cambist violates that assumption <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 电源域换轨 + PM 生命周期两条线全部否证（2026-10-10 实机）：H1（去 PD）7/9 间歇、H2（MX 单票）3 轮 2 掉、E4a（MXC 单票 vk81）熄屏即睡死关机、D1（use_rpm=false）6/9、D2（去 critical cbcr）7/9、FIX-3（lazy-on PM lifecycle）boot 死锁。问题不在投票的轨名、不在 PM 是否可挂——在 cambistmclkcc 裸时钟控制器的**半成品态**（probe 编程 PLL + 恒活 AHB + 0 票/悬空窗口）本身，且受 GCC always-on AHB 约束无法走正常 PM 路径。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] agent_browser 在 Microsoft web 应用（Outlook Live 等）上做高频 DOM 操作（连续 5+ 次 eval/click/fill）会触发**反自动化风控**：表现 = compose 窗口关闭（看似发送成功）但邮件实际落入草稿夹，已发送夹无记录。判据 = 必须导航到「已发送邮件」文件夹确认有对应条目，不能只看 compose 消失。恢复 = 用户手动打开草稿点发送（绕过风控）。 — Failed: Q24 v2 邮件经 agent_browser 代填 Outlook 网页、点发送后 compose 消失，但邮件落入 Drafts；用户手动验证并发送成功 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q24 驱动侧修复上机判定（2026-10-10 深夜）：FIX-3（vk82，去 use_rpm + lazy-on + suspend quiesce）卡联想 logo 无法启动——删 use_rpm 让 probe 读写未 resume 的 MXC 域 MMIO → NoC hang；已 revert（67fcff7f0）。FIX-2（vk83，probe 后常持票）两次 boot 一次卡 logo、一次过 logo 但内核不响应 ssh（只剩充电标志）。结论：cambist 驱动侧 PM 改动都破启动链路，vk81（MXC DT + 原版 probe）能启动但熄屏即死。下一步：串口（ttyACM0）抓早期 dmesg 定位，或把「换轨+驱动侧均无效」写进上游 follow-up。教训：qcom_cc probe 流程的 use_rpm 不能随意删；boot 卡 logo 时设备不枚举 USB，只能物理重启恢复。 <!-- created=2026-10-10, last=2026-10-10 -->
-§
-[correction] Q28 根因框架彻底更正（2026-10-10 用户明确）：**Q28 与时间无关，变量是复位类型（冷/暖）**。用户日常观察「全天候发作」= 冷起（物理电源/ABL 从零启动）几乎必失败；本会话 8/8 GOOD 全是 `reboot2 bootloader → fastboot boot` = **暖复位**（ABL 已初始化过、PHY/PLL 状态残留不同），根本不代表冷起结果。之前记忆里「强时间相关：晚间坏下午好」是伪归因——下午实验都是暖起。含义：(1) 任何 Q28 A/B 实验**必须用冷起路径**（物理断电后长按电源、或 `fastboot reboot` 经 ABL 完整初始化），`reboot2 bootloader → fastboot boot` 循环测不出冷起行为；(2) 上游调研的「PLL re-lock / byte-clk 取整」方向仍然有效（PLL 状态不被 warm reset 清除 = 暖起时 PHY 已锁 = 跳过脆弱路径）；(3) vk84 delay 实验结论「不可判别」的真正原因不是「下午不坏」而是「暖起本身不触发」。旧口径（时间相关、下午窗不可复现、暖起 8/8 GOOD = 当前不发作）全部 superseded。 — Failed: 把暖复位循环的 8/8 GOOD 误读为「Q28 当前时间窗不复现」，实际是测试方法学错（暖复位绕过了触发条件），导致 A/B 结论框架完全错误 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 实验方法学禁忌（2026-10-10 定案）：用 `reboot2 bootloader → fastboot boot` 循环做 Q28 A/B = **测试暖复位**，与日常冷起（物理断电/长按电源→ABL 全初始化）是完全不同的复位类型。暖起时 DSI PHY/PLL 可能残留锁定态，跳过首次 modeset 的脆弱 PLL re-lock 路径 → 几乎必 GOOD。正确做法：(a) 物理冷起（需用户拔电/长按）；(b) `fastboot reboot`（经 ABL 完整初始化，接近冷起但不完全等价）；(c) 若只能暖起，则不能用它判别修复是否有效——只能用于「确认不 crash / 能 SSH 回来」的基本冒烟。脚本 scripts/q28-boot-cycle.sh 当前用暖起路径，**不能**用于 Q28 修复验证。 — Failed: 连续 2026-10-09~10-10 两天用暖起循环做 Q28 复现/修复实验，得出「时间相关」「当前不发作」的错误结论，浪费大量实验轮次 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] DSI PLL(0) lock failed status=0x00000000 是**开机 probe 期既存噪声**（t≈0.88s ×4），在好发(vk64/vk84)和坏发中**完全相同出现**（各 8 次）。它不是 Q28 判据、不是 Q28 触发点、不随好/坏变化。Q28 的真实判据仍是首次 bonded 命令的 `command DMA timeout: status=0x2200200` + `panel init attempt failed`。未来分析 DSI 日志时不要把 PLL(0) lock failed 当新信号。**2026-11-10 复核（UEFI/ESP 引导路径，`elden_bootloader=esp`）**：同 4 条 `DSI PLL(0) lock failed status=0x00000000` + 4 条 `disp_cc_mdss_{pclk0,pclk1,byte0,byte1}_clk_src: orphan reparent failed: -110` 照旧在 t≈0.87 s 出现，而同一次启动 `dsi_isr`=41、`card0-DSI-1`=connected、`fb0` 正常 ⇒ 该噪声**跨引导路径一致、与好坏发无关**；同批还有 `msm_dsi … Failed to create device link (0x180) with supplier ae96000.dsi for panel@0`（bonded 第二路 DSI 的 device link 未建），好发里同样出现，仅当 bonded 双 DSI 真出问题（Q28/M6）时才能当线索。成因口径 = `clk_ignore_unused` 在无 panel mode 时提前 enable DSI PLL（`archive/topics/复盘.md` 2026-09-30）。 <!-- created=2026-10-10, last=2026-11-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 判据不完备（2026-10-10 实机）：q28-boot-cycle.sh 只 grep `command DMA timeout` + `panel init attempt failed`，但 Q28 实际有**三种可观测签名**：① 首 modeset 的 `command DMA timeout`(-110) + `Failed to initialize panel: -110`（典型冷起）；② 后续 re-init（如 DPMS 唤醒）只看到 `panel init attempt failed: -5`（EIO，来自 dsi_bonded_cmd_failed 闩锁短路，无 -110 行）；③ 纯 vblank WARN 风暴（`drm_crtc_wait_one_vblank` WARNING from `drm_fb_helper_damage_work`，每 ~2s 一次，**无 DSI 命令错误**）= DPU 楔死但 DSI 层无错。分类器应 OR 三条件：`command DMA timeout` | `panel init attempt.*failed` | `vblank wait timed out on crtc`。只 grep 第一个会把 ②③ 误判 GOOD。 — Failed: A/B 测试 8/8 判 GOOD 但设备实际面板坏（vblank WARN 风暴 + 后续 -5），因为分类器只看 command DMA timeout <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] Q28 坏发时 USB 网络 gadget 不出现（主机侧无任何 usb 网卡接口、adb 空）⇒ SSH 完全不可达，**只有串口 ttyACM0 可用**。后果：① 标准 q28-boot-cycle.sh 的 SSH 取证路径在坏发时失效（脚本等 SSH 超时→判 ENV=1 而非 BAD）；② 诊断必须走串口。固化工具：scripts/serial-logger.sh（跨重启自动重连 cat，pid 文件 /tmp/q28_serial_logger.pid，`--all` 关共享 Chrome 用法同 pi-browser-reap）。另：设备坏发后可能**自发重启**（DPU commit 卡死→看门狗/panic），串口 logger 必须跨重启存活才能接住 t=0。 — Failed: Q28 坏发显示子系统卡死导致 USB gadget 函数注册失败，SSH 通道不可用，标准脚本判据失效 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[correction] q28-boot-cycle.sh 判据不完整（2026-10-10 实测定案）：只 grep `command DMA timeout`+`panel init failed` 会**漏判 L2 坏发**（vid 模式下 DPU 等 vblank/frame-done 超时，面板 init 本身过了、无 command DMA timeout 也无 panel init failed）。正确判据应加：`dpu_encoder_phys_vid.*ctl.*reset failure` 或 `frame done timeout`（出现=坏）；`vblank timeout` 单独用会误判（DPMS off 也产 vblank）。命令模式面板空闲不推帧 ⇒ dsi_isr 增量恒 0（好发也一样），只能看累计值（好>0/坏=0）。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 vk84 delay A/B 冷 A/B trial1 结果（2026-10-10）：vk84-exp（dsi_cmd_delay_us=1000）冷 fastboot→fastboot boot = **NOCARD**（非 STORM、非 GOOD）。原因：delay 只作用于 `msm_dsi_host_bonded_cmd_init_trigger()`（首次 DCS 写，t≈9s），而 NOCARD 的 DSI PLL lock failed 发生在 t≈0.86s 的 **DSI host probe** 阶段——两者相差 8 秒、不同代码路径、不同电源状态。⇒ delay 补丁在结构上**不可能影响** NOCARD 失效。⇒ 若后续要修 NOCARD 需在 `dsi_host_probe()` / `dsi_pll_init()` 加延时或 retry，而非 cmd_trigger。另：冷 fastboot→fastboot boot 是否真正触发 POR 态存疑（ABL 仍保留部分寄存器态），真正冷可能需拔电或 `fastboot oem reboot-edl`。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 取证通道硬约束：设备从 fastboot→Linux 时 ttyACM 先消失再重新枚举（gadget 重建），`cat /dev/ttyACM0` 循环会在 ttyACM 消失时报错退出、重连后已**错过 0–20s 内核早期输出**（含 ~9s 的 DSI init/modeset/Q28 触发窗口）。⇒ **串口时序不可靠**，不能用于判 GOOD/BAD。正确做法 = 启动后 SSH 进设备读完整 `dmesg`（环形缓冲含全部 boot 行，与串口何时接上无关）。scripts/q28-devprobe.sh 已按此实现。 — Failed: cold A/B trial1 串口只抓到 uptime=23s 之后的输出，0–20s（含 DSI init 与可能的 PLL lockfail）完全丢失，误判 NOBOOT <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 暖复位粘态（2026-10-10 实测）：连续 `reboot2 bootloader → fastboot boot`（暖复位，不清 PMIC/PHY 状态）会把显示驱动**粘在 NOCARD**（PLL lock fail、无 card0、modeset 从未到达），与内核补丁内容无关——vk86-base（干净 vk64 基线+无诊断补丁）暖机 4/4 也是 NOCARD。⇒ **Q28 A/B 只能用物理 POR（断电→等→上电→按键进 fastboot→fastboot boot）取冷样本，暖复位循环不可判别**。C2 证实同内核 vk64 冷 fastboot=STORM（到 modeset、cmd-DMA hang），冷 fastboot ≡ 真实 POR（C1+C2 配对坐实）。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] scripts/q28-boot-cycle.sh 判据缺陷（2026-10-10 实锤）：该脚本只数六种风暴签名（command DMA timeout / panel init fail / ctl reset / frame done / vblank / dpms off），**不检查 /sys/class/drm/card0 是否存在**——NOCARD（无 card0、零风暴签名）被误报为 GOOD。正确判据必须用 scripts/q28-devprobe.sh 的三态（NOCARD/STORM/GOOD），或至少额外 `[ -e /sys/class/drm/card0 ]`。本轮 vk86-round 暖机被报 GOOD 实为 NOCARD 即此因。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] build-boot.sh 静默回退 slim ramdisk 破坏单变量（2026-10-10 vk85 实测）：打包脚本在 RAMDISK_KIND 未显式设 full 且 out/rootfs-overlaid*.cpio.gz 不存在时，**静默回退到 slim（1MB）或空 ramdisk**，产出 21MB 镜像（正常完整 ramdisk 应 ~85MB），但 manifest 只写 `ramdisk_sha256=(absent)` 不报错。后果：vk85 与 vk84 载荷不可比（slim=无固件=驱动全废，PITFALLS #113）。规矩：打包后**必须核对输出镜像体积**（完整 ramdisk ≈80–90MB，slim≈21MB），并显式 `RAMDISK_KIND=full bash scripts/build-boot.sh` 或 `RAMDISK=<path>` 锁定 ramdisk。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] scripts/q28-boot-cycle.sh 的 GOOD/BAD 判据**不看 card0 是否存在**——NOCARD 启动（无显示驱动绑定、面板从未点亮）被误报为 GOOD。正确判据必须用 scripts/q28-devprobe.sh 的三态（NOCARD=无card0 / STORM=有card0但风暴签名>0 / GOOD=有card0且无风暴）。本轮 vk86-round 暖机被 q28-boot-cycle.sh 连续 4 次报 GOOD，实际 q28-devprobe 全是 NOCARD。 — Failed: 脚本 GOOD 判据只看 dmesg 风暴签名>0，不查 /sys/class/drm/card0* 存在性；NOCARD 启动风暴签名=0（因为从未 modeset）→ 误判 GOOD <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q28 台架混淆变量（2026-10-10 坐实）：(1) vk86-base 与 vk64 的内核 commit/config(a383cdb9)/DTB(386cc9bd) **逐字节相同**，但 ramdisk /init 不同（354 行 vs 364 行，多 payload-modules-load.sh ≤20s 模块加载器挪动用户态时序）→ 同一冷路径下 vk64=STORM、vk86-base=NOCARD，A/B 前提不成立。(2) vk73–85 诊断链 ca81318f2（propagate DPU/DSI power-up failures）把失败点从 STORM（modeset 后 cmd-DMA hang）推早到 NOCARD（PLL lock fail → 组件没聚齐 → 从未 modeset）→ 带诊断补丁的内核**不能**测 Q28 修法，必须用干净 vk64 基线（d02658e63）无诊断改动。 — Failed: vk86-base 的 ramdisk 是从 vk61 重建（多 payload-modules-load.sh），与 vk64 原 ramdisk 不同，首次 modeset 时序偏移导致冷起落在不同失败模式 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 冷起三态分布（2026-10-10 多轮实机）：同一条 POR 冷路径，同一内核(vk64 d02658e63)，冷起可落 STORM（cmd-DMA 超时，有 card0）也可落 NOCARD（PLL lock fail，无 card0）——两者不是不同 bug，是同一根因（冷起 DSI PHY 状态未初始化）的不同表现深度。区分判据唯一可靠 = SSH 后 q28-devprobe 三态 + 查 card0 有无。串口 logger 重连会漏 0–20s 窗口（NOCARD 断点在 0.86s），不能靠串口时序判。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] RUNBOOK §8 四档迭代环实际状态（2026-10-10 盘点确认）：mod 热载 ~30s 要求 tree KV==device KV（默认 boot_b=vk64 vs 树 HEAD 必拒，需先刷 boot_b 或 --force）；kexec 已定论不可用；dtb 环 kexec 不传 DT 是空操作；唯一实际可用环=全量编+`fastboot boot`（~5min），但冷起 Q28 面板间歇失败（~60%）阻塞日常迭代。结论：迭代链瓶颈不在编译速度，在「上机验证的可靠性」（Q28 冷起 + 无 kexec + mod-loop KV 锁）。 — Failed: vk81/82/83 三个死内核镜像（olddefconfig 静默删 ARCH_QCOM）流入上机浪费 3 轮设备时间；mod-loop 默认拒绝导致开发者绕过闸门手写 manifest <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] mod-loop.sh 的 KV 对齐守卫（device KV == tree kernelrelease 才放行）在 boot_b 固定为 vk64 时，任何内核树前移（新 commit/tag）都会使 mod-loop 立即失效，直到刷 boot_b 或手动 --force。实际效果：开发者要么每次刷 boot_b（失去零写盘优势），要么绕过闸门（风险）。正确做法=保持一个与树 HEAD 同步的「开发 boot」或用 `fastboot boot` 替代。 — Failed: 本次会话发现树 HEAD=7.2.0-debug-ga8c09a723254 而 boot_b=vk64（7.2.0-debug-vk64-gd02658e63cf6），mod-loop 必拒 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 软件 POR（`busybox poweroff -f`）实测结论（2026-10-10 vk64）：确实产生真断电（USB 重枚举 + 新 boot_id + uptime 归零 + VBUS 自动开机），**但不可用于无人值守自动循环**——3 轮连续跑中第 3 轮 boot 后内核卡死（GUI 冻住、音量键无响应、SSH 超时、不在 fastboot），需用户物理冷启恢复。判据：run1=GOOD、run2=STORM（正常概率）、run3=HANG（非 Q28 两种已知签名，是新故障模式）。另：`loginctl poweroff`（OpenRC 停服务路径）在 STORM 态下挂住——OpenRC 试图 stop 与死 DPU 交互的服务后永不返回；只有 `busybox poweroff -f`（直调 reboot(2) 绕过 init/notifier）或 `echo b > /proc/sysrq-trigger` 能脱离 STORM 态。结论：迭代流程第 3 项（软件 POR 替代人工断电）**否决**，仍须用户物理断电做冷起对照。 — Failed: 自动化 POR 循环第 3 轮内核卡死，证明软件 POR 后的一次 boot 可能触发未知内核死锁（与 Q28 STORM/NOCARD 均不同），不可无人值守 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Agent 仅凭 SSH 恢复 + 新 boot_id + USB 重枚举就宣布「软件 POR 成立」（busybox poweroff -f），但第二轮自动循环时设备 GUI 卡死（音量键无响应、USB/SSH/fastboot 全消失），用户纠正「实际上没有测试成功」。教训：对显示相关验证，SSH 活着 ≠ 系统正常；必须同时验屏幕输出 + 用户目视确认。自动密循环（poweroff→wait→probe→poweroff）在本设备上有内核挂死风险（第二轮触发），绝不能无人值守跑。 — Failed: Premature success claim based on partial signals (SSH+boot_id) while display was actually broken; unattended soft-POR loop caused kernel hang on iteration 2 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] `loginctl poweroff`（走 OpenRC init）在本设备上**永远卡在停服务阶段**（powerlog 有 stopped 记录但无 CLEAN-STOP），不执行实际 poweroff syscall——设备 uptime 持续增长。唯一能触发真实断电的用户态命令 = `busybox poweroff -f`（直接 syscall，绕过 init/OpenRC 停服务链）。且坏发（DPU storm sig>100）态下连 `busybox poweroff -f` 也无效（内核关机路径被 DRM 占死），只能物理断电。 — Failed: loginctl poweroff triggers OpenRC service stop but never reaches reboot(POFF); on STORM-state device even busybox poweroff -f is blocked by DRM storm in kernel shutdown notifier <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 用户会当场纠正 agent 对设备状态的误判：「实际上没有测试成功。从你busybox重启进入锁屏以后，你执行的脚本没有重启，设备的gui卡住不动了，音量按钮无响应（内核卡死的征兆）」——期望 agent 据此立即停手、不继续循环、入账事故。用户还会主动报告物理观察（「屏幕无图案（仅背光点亮）」、「物理断电重启成功」），期望据此修正判读方向。 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 自动设备循环（POR→boot→probe→POR→...）在 Q28 STORM 态下必死：坏发内核关机路径被 DRM storm 占死（reboot/reboot -f/busybox poweroff -f 全无效），USB gadget 可能不枚举，SSH 不通，fastboot 不在——设备变成只能物理断电的砖。本轮实测：run1 成功（暖态 GOOD）→ run2 自动发第二拍 poweroff -f → 内核卡死 → 设备失联 → 用户手动长按电源 20s 恢复。规则：任何涉及设备的循环脚本必须 (a) 每轮间等用户目视确认屏幕/物理按键响应（用户在场时 ≤3 轮），(b) 上轮 probe 返回非 GOOD 时立即 abort 不自动发下一拍，(c) 绝不无人值守密循环。 — Failed: Q28 软件 POR 自动循环 run2 在内核卡死态下继续发 poweroff -f，设备变砖需用户物理恢复 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 「按内核二进制确定性」claims (Q28 vk64=GOOD×7 / 新编=NOCARD×14) 溯源审计结论（2026-10-10 夜）：21 发台账**只有 7 发有原始日志**（vk64 GOOD×2、vk89×3、vk89-plain×2）；其余 14 发无 per-run 记录、vk64c*.img 已删。声称的 5,040,884 B 二进制差**主要是 LOCALVERSION 长度导致的 `.rodata` 4 字节平移**（`.text` 仅 26 word、全为地址立即数），不是真实代码变更。同一 vk64.img 在冷 POR 路径 3/3=STORM ⇒ 现口径 = 「reboot2 暖路径上 vk64 亮、vk89/vk64c 不亮，真因未定」，不是「确定性翻转」。教训：做确定性 claim 必须有 per-run 证据日志（scripts/trial.sh 正是为此而生），且声称的「二进制差异」必须先排除 UTS 字符串偏移、再看 .text。溯源文档 reports/q28-binary-determinism-provenance-20261010.md，commit 1c9a589。 — Failed: binary determinism claim made from device boots without per-run evidence; binary diff attributed to code change but was actually LOCALVERSION string offset <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 内核 Image 二进制对拍技巧（LOCALVERSION_AUTO=y 树）：同源码不同构建号的 Image（如 vk64 #60 vs vk64c #91）会因 UTS 串长度差（多一个字符如 'c'）导致 `.rodata` 整段后移，表现为 5M+ 字节差异，但 `.text` 段仅 26 个 word 不同且全为 adrp/add 立即数（= 符号地址平移产物）。判据：用 `b[i]==a[i-4]` 对齐率验证（>94% ⇒ 纯偏移）；真正代码改动看 `.text` 段逐 word XOR 排除偏移后剩余的 word 数。工具：`scripts/extract-ikconfig` 验 config 一致 + System.map 定位 kallsyms 符号确认偏移起点。 — Failed: naive binary diff of kernel Images misattributes LOCALVERSION string-length-driven .rodata shifts to real code differences <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 内核二进制「确定性」溯源的关键方法论教训（2026-10-10 Q28 调查）：LOCALVERSION 字符串长度差异（如 vk64→vk64c 多 1 字符）导致 .rodata 段整体 4 字节偏移，造成 ~5MB 假性字节差异（oct8_vk64 vs vk64c = 5,040,884 B diff），但 .text 段实际只差 1 个 word（q28a vs q28aa 实验证实：LOCALVERSION 长度差 1 字符 = 总 diff 仅 466 B / 1 text word）。结论：判断两个内核构建是否「功能不同」不能靠 Image 字节 diff，必须看 .text 段差异或反编译对比；字节 diff 的 94.7% 匹配 shift(+4) 只是 rodata 平移。这导致 Q28 的「按内核二进制确定性」结论被降级（commit 1c9a589 溯源审计）。 — Failed: 接受「21 发台账 vk64 GOOD×7 / 新编 NOCARD×14 + 5MB 二进制差异 → 确定性由内核二进制决定」的结论，未验证 per-run 日志（实际仅 7 发有记录）也未理解字节差异来源（LOCALVERSION 长度导致的 rodata 平移） <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 有第四种结局 HANG（2026-10-10 layout A/B 发现）：oct8 内核（原 GOOD 参照）在 uptime=14.6s 时 SSH probe 报 GOOD（card0 在、DSI-1 connected、风暴=0），但**进入桌面几秒后整机冻死**（SSH 超时→ping 全丢→USB 消失→reboot2 无响应→只能物理长按电源）。原三态判据（NOCARD/STORM/GOOD）漏判此态——probe 时点太早、只看 dmesg 签名不看后续存活。正确判 GOOD 必须 = 有 card0 + 无风暴 + **后续存活 ≥60s**（或在存活期内完成交互测试）。HANG 与 Q28 STORM 不同：STORM 有 dmesg 风暴但内核活；HANG = dmesg 安静但整机不再响应。待单独调查（可能是 DPU/DSI 卡死后 VBUS/PMIC 侧二次触发，或 Q24 cambist 路径在桌面活跃时才触发的子集）。 — Failed: probe 时点(14s)过早且只看瞬时 dmesg 签名，未验证后续存活——导致 oct8 被记为 GOOD 但实际几秒后 HANG <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28「按内核二进制确定性」实验的 GOOD 判定存在系统性误判：SSH 探针在 uptime≈14 s 读到 card0+无风暴 就记 GOOD，但设备随后数秒即冻死（= PITFALLS #106「进 GUI 后整机卡死」，硬看门狗禁用→不自复位→需物理断电）。原报告「vk64 GOOD×7」很可能全部是 GOOD→HANG，被单次探针误判为真 GOOD。后果：(1) 逆转说法的实验设计根本缺陷——单次探针无法区分「真正常」与「即将冻死」；(2) 任何 Q28 判 GOOD 必须持续观测（至少 2–3 个时间点或 uptime>60 s 仍 SSH 活），单次 uptime=14 s 探针不算 GOOD；(3) layout A/B 中 oct8 跑出 GOOD 的样本实际是 HANG 前窗口，与 STORM 同属失败谱系。#106 与 Q28 不是独立问题，而是同一冷起/复位路径在时间轴上的不同表现。 — Failed: Binary determinism experiment used single-point SSH probe as GOOD criterion; system froze seconds later (#106) but was never re-checked, so HANG was silently misclassified as GOOD <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28「按内核二进制确定性」溯源审计结论（2026-10-10，commit 1c9a589）：原报告 21 发台账仅 7 发有仓库原始日志；声称的 5,040,884 B 二进制差 94.72% 是 LOCALVERSION 字符串长度差导致的 .rodata 4 字节平移，.text 仅 26 word 且全为 kallsyms 地址立即数（无指令语义改变）；同源码仅改 LOCALVERSION（-q28a vs -q28aa）的 Image diff=466 B、.text diff=1 word。layout A/B（reboot2 暖路径）证实同一 oct8 镜像 4 次跑出 GOOD/STORM/STORM/GOOD（不自洽）⇒ 降级为「暖路径 vk64 亮/vk89 不亮，真因未定」。 — Failed: 原报告把 LOCALVERSION 字符串偏移误读为功能性二进制差异，且 21 发中 14 发无 per-run 证据，导致错误结论写入 SSOT <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 第四态 HANG（2026-10-10 实机定案）：STORM=0 的干净 GOOD 启动（有 card0、无风暴签名）在数秒内必定整机冻死（SSH/USB/ping 全消，APSS 硬看门狗禁用不自复位，需物理断电）。原 binary-determinism 测试的「GOOD×7」实际全是「t=14s 探针时看着 GOOD → 之后 HANG」，因为探针只拍一次、不验存活。正确判据=四态（NOCARD/STORM/GOOD-STABLE/HANG），GOOD 必须 uptime≥60s + SSH 仍活。RAM-only（无磁盘根、不起桌面）也 HANG ⇒ #106「进GUI卡死」不是 GUI 专属，任何显示 modeset 触发都可能冻死整机。STORM>0 反而存活（4/4），说明 DPU 报错风暴路径与冻结路径是两条独立失败模式。 — Failed: 原测试设计只拍 t=14s 单次快照判 GOOD/BAD，未设存活门，把 HANG 误录为 GOOD，导致「vk64 GOOD×7」的参照系本身不可靠 <!-- created=2026-10-10, last=2026-10-10, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 方法论缺口（2026-10-10 外部教程评估暴露）：核心机制「RPMh 轨塌 → NoC → PS_HOLD」至今是**推断**而非直接观测——60+ 轮二分只证了「cambistmclkcc 在位 + 熄屏 = 掉电」的共现，从未在掉电瞬间抓取 /sys/kernel/debug/regulator/regulator_summary 与 /sys/kernel/debug/clk/clk_summary 的前后对比来**直接观测**哪条轨先塌、塌的顺序、以及 cambist 的 MX 票是否真的阻止了轨关断。教程建议的「最小化 probe」= 我们的 FIX-3（vk82），但因死内核事故作废需在好档重做；而 regulator_summary 对比是**一条我们从未做的廉价新检查**（好发/坏发各采一次即可），应纳入下次 Q24 上机采集清单。 — Failed: 60+ 轮实验只做了共现二分，未做机制的直接观测（regulator 轨态 / RPMh 请求-响应对），导致所有修复实验都在「猜哪条轨」而非「看到哪条轨塌了」 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 熄屏复现有效性前提（2026-10-11 实测教训）：若当前 boot 是 Q28 坏发（dmesg 有 `panel init attempt … failed: -5/-110`、card0-DSI-1 虽 connected 但 DPU 从未完成 modeset），则 `ScreenSaver.SetActive(true)` **不会复现 Q24 掉电**（设备存活）——因为显示管线本身已死、熄屏路径走不到 cambist×DSI-blank 交互。Q24 扫测/复现的前置判据 = `grep -c 'panel init.*failed' /dev/null` 为 0（从 dmesg grep）+ `cat /sys/class/drm/card0-DSI-1/status` = connected + phosh 进程在 + **dpms 确实从 On→Off**（用 `wlr-randr` 或 `gdbus call … org.gnome.ScreenSaver GetActive` 验证，不能只发 SetActive 就假设生效）。坏发 boot 上的负样本一律标 INVALID 不计入统计。 — Failed: 2026-10-11 Q24 复现：vk64 boot_b 上 boot 已有 panel init -5（Q28 坏发），加载 cambist + SetActive(true) 后设备存活 12s+，差点误判为 Q24 已修复。实际是 Q28 坏发导致显示管线从未正常 modeset，熄屏走不到触发路径。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] RPMh tracepoint 局限性（2026-10-11 设备实测）：`/sys/kernel/debug/tracing/events/rpmh/` 下的 `rpmh_send_msg`/`rpmh_tx_done` 主要捕获 **BCM（Bus Communication Manager）周期心跳**（msgid=0x10008, 每 ~15ms 一条），**不是** genpd 电源域的 ARC（Active Resource Coordinator）corner level 投票。熄屏时 genpd `mx=on mmcx=on mxc=off-0` 全程不变（55 秒采样零变化），要么投票走不同路径（rpmh_regulator 而非 rpmh driver 直调），要么 collapse 发生在采样间隙内（原子掉电无中间态）。要抓真正的 corner 写需：(a) `/sys/kernel/debug/cmd_db` 读资源映射（已确认设备可读）；(b) 在 `drivers/power/domain/qcom-rpmh-power.c` 的 `rpmhpd_power_on/off` 里加 dev_dbg/printk；(c) 或 `rpmh_regulator_set_voltage` tracepoint（若内核有 CONFIG_TRACING）。genpd sysfs 采样不能证明「轨没塌」——只能证明「塌得比采样快」。 — Failed: 试图用 ftrace rpmh_send_msg 抓 Q24 掉电瞬间的 RPMh 轨投票，结果 24 行全是 BCM 心跳、0 行 genpd ARC 操作。genpd sysfs 采样（0.5s 间隔）显示熄屏全程 mx/mmcx=on、mxc=off-0 不变，与「MX/MXC 轨塌导致 NoC→PS_HOLD」假设矛盾，但采样分辨率不足以排除亚 500ms 原子塌。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核树脏文件致 -dirty（2026-10-11 复发）：`tools/testing/selftests/bpf/progs/` 下有一个文件名被截断的跟踪文件 `btf__coreOreloc_type_based___fn_wrong_args.c`（O 代替 _，git checkout 产物 bug）被删 + 正确名 `btf__core_reloc_type_based___fn_wrong_args.c`（89 B，内容不同）未跟踪 → `git status` 报 ` D` + `??` → `git describe --dirty` 返回 `-dirty` → UTS/vermagic 含 `-dirty` → 模块 insmod 报 `Exec format error`。修法：`git checkout -- tools/testing/selftests/bpf/progs/` 恢复跟踪文件 + `rm` 或 `git add` 未跟踪文件使树 clean。每次从 clean/base 创建分支后、make 前必跑此检查。 — Failed: vk90/91/92 构建时 manifest 的 kernel_release 全部含 `-dirty` 后缀，虽镜像本身能启动但模块 vermagic 不匹配设备已有模块目录，无法 insmod 相机模块。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q24 复现条件修正（2026-10-11 实测，用户裁定「以这次实验现象为主」）：**cambistmclkcc 单独加载 + 真实熄屏 = 9/9 存活**（vk64/H2 DTB，genpd 轨态在 blank 前后完全不动：mx=on mmcx=on mxc=off-0 cx=on）⇒ 旧口径「唯一触发模块 = cambistmclkcc / 单独加载它即 3/3 掉电」**不成立**。真正可复现的触发条件 = **完整相机栈**（camcc-sm8750 + cambistmclkcc-sm8750 + i2c-qcom-cci + wl2868c-regulator + qcom-camss + leds-qcom-flash + gt9764 + s5kjns + gc08a8 + system_heap）+ 真实熄屏 → 硬复位（uptime 归零、pstore 空、模块消失）。死前 1s 捕获 RPMh trace：`addr: 0x300a0 data: 0x2 → 0x0`（cmd-db 里需确认该 addr 对应哪个域）。历史 60+ 轮「单模块 cambist」二分样本的台架不干净（可能混入了完整相机栈或其他变量），新实验明确区分了 cambist-alone vs full-stack。 — Failed: 旧记忆中 20+ 条写「唯一触发=cambistmclkcc / 单独加载即掉电」，本次 vk64 干净台架 cambist-alone 9/9 存活直接否证 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q24 触发体修正（2026-10-11 干净复现）：cambistmclkcc-sm8750 **单独加载不触发熄屏掉电**（vk64 GOOD 启动 + cambist 单独 + 真实熄屏 ×9 全存活）；**cambist + camcc-sm8750 组合**才是触发体（加载 camcc 后首次熄屏即硬复位）。此前「单模块 cambist 即触发」的结论来自 -dirty 内核 + 非 GOOD 启动 + 可能含 camcc 的加载序列（camera.conf 顺序先 camcc 后 cambist），属台架不干净。用户明确「以这次实验现象为主，历史取证不干净」。RPMh 死前 trace：最后一笔 = tcs 1 cmd 0 addr 0x300a0 data 0x0（某轨掉到 0），紧接 reset。 — Failed: 旧记忆「cambist 单模块即触发」与干净复现矛盾；旧台架用 -dirty 内核 + 可能非 GOOD 启动 + camera.conf 含 camcc 在前 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 STORM 态 SSH 行为（2026-10-11 实测定案）：STORM（vblank timeout 风暴）时设备**网络层活着**（ping 通、TCP 3-way 握手成功、`ip neigh` 显示 REACHABLE），但 **ssh banner exchange 超时**——因 `drm_fb_helper_damage_work → drm_crtc_wait_one_vblank` 死循环占满 workqueue，sshd 子进程无法获得 CPU 完成 key exchange。串口 /dev/ttyACM0 可读（内核 printk 正常）但**无 shell**（不是 login shell 而是纯 console）。恢复 = 物理长按电源 ~20s → 音量下+电源进 fastboot → 反复 `fastboot boot vk64` 直到 GOOD（attempt 1~5，~40% 成功率）。**不要用 reboot2 暖路径做台架**（产生 NOCARD，非代表）。 — Failed: STORM 时 ping 通 + TCP connect 成功造成「SSH 应该能用」的错觉；实际 sshd 被 workqueue 饿死 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q28 STORM 态下 SSH 饥饿机制（2026-10-11 实机确认）：面板 init 失败（bonded DSI cmd-DMA timeout）→ DPU vblank/frame-done 风暴 → drm_fb_helper_damage_work 占满 workqueue → SSH sshd 虽 LISTEN 且 TCP SYN 可达（ping 通）但 banner exchange 永远超时（sshd 的 worker 排不上 workqueue）。串口 /dev/ttyACM0 只有内核 log 输出、**无 shell**（cmdline console=ttyGS0 是 log-only gadget，不挂 getty）。唯一恢复 = 物理长按电源 20s + 音量下+电源进 fastboot。不能靠 SSH 重试或等待（风暴无限循环，非瞬态）。 — Failed: Q28 面板 init 失败后设备 ping 通但 SSH 永久挂起，误判为网络问题导致浪费时间；实际是 workqueue 被 DPU 风暴占满、sshd 饿死 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24/Q28 实验的构建版本串陷阱（2026-10-11 实锤）：同一源码树 + 同一 .config + 同一工具链，只有 LOCALVERSION（UTS 版本串）不同，会导致 (a) Q28 的 card0 有/无翻转（-vk64 GOOD，其他 NOCARD 11/11），(b) 模块 vermagic 与内核不匹配 → modprobe 静默跳过 / insmod 报 Exec format error。修复方式：用 LOCALVERSION=-vk64 统一重建内核+模块+镜像。另一种 vermagic -dirty 陷阱：树 dirty 时 UTS 含 `-dirty`，但模块目录可用 symlink 指向无 `-dirty` 的目录 → insmod 报 `version magic 'X' should be 'X-dirty'`（CONFIG_MODVERSIONS 关时无 force-load 余地），正确修法 = 全部在途改动 commit 使树变 clean 后重编内核+模块。绝不要试图用 symlink 或 --force-modversion 绕过。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] @internal: 长命令/长测试被用户取消时 pi agent 看不到中断前的工具输出 ⇒ 任何长跑/扫掠脚本必须实时写文件（tee -a / 后台 nohup > log），agent 从文件读结果并在汇报里给 log 路径。本会话用户曾中断 `fastboot boot` 循环与 SSH 轮询，恢复靠持久日志而非 stdout。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] build-modular-overlay.sh 的 payload 闭包计算会包含 qcom-camss.ko（单 12MB）+ 全部音频模块（snd-usb-audio 7MB 等）共 25 模块 ≈ 35MB，导致镜像涨到 98MB 逼近 fastboot boot 96MiB 上限而被拒收（表现为 fastboot boot OKAY 但设备回落到 boot_b，串口确认跑的是旧内核）。修法 = 加 ROOTS 环境变量覆盖（默认含全部相机+音频根，设为 `ROOTS='camcc-sm8750 cambistmclkcc-sm8750'` 时只算 2 模块闭包 ≈ 2MB，镜像回到 86.7MB）。已落地到 scripts/build-modular-overlay.sh。 — Failed: vk91-fix3mx 首次上机时镜像 98.3MB 被 fastboot boot 静默拒收，串口显示跑的是 boot_b 旧内核（vk64），误判为 FIX-3 内核挂死。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 死前 RPMh 取证标准流程（2026-10-11 实测成功）：台架 = fastboot boot vk64(LOCALVERSION=-vk64) → 确认 GOOD（card0 存在 + vblank=0 + resetfail=0 + dsi_isr>0）→ `echo 1 > /sys/kernel/debug/tracing/events/rpmh/rpmh_send_msg/enable; echo 1 > /sys/kernel/debug/tracing/tracing_on; cat /sys/kernel/debug/tracing/trace_pipe > 主机文件` 流式抓 → modprobe 模块 + ScreenSaver.SetActive(true) → 掉电判据 = uptime 归零 + ping 不通 + /sys/fs/pstore 空 → 每轮结束 qbootctl -m b。绝不用 `pkill -f trace_pipe`（杀自己 shell），用记录 pid + `kill <pid>` 或 `timeout` 控制 streamer。 — Failed: 首次尝试用 pkill -f trace_pipe 清理 trace 进程，把当前 SSH 会话的 bash 进程一起杀掉（命令半截没跑），重新做时改用 pid 记录。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 模块级实验的 vermagic 匹配技法（2026-10-11 实测）：只改驱动 .ko（如 FIX-2/FIX-3）想装到已跑内核上时，模块 vermagic 必须与运行内核 kernelrelease 完全一致。若分支 HEAD 不同导致 vermagic 差（如 vk91-fix3mx vs vk64），正确做法 = 切到该分支后临时 `CONFIG_LOCALVERSION_AUTO=n` + `CONFIG_LOCALVERSION="-debug"`（或 export LOCALVERSION=-vk64）重编该模块 → vermagic 对齐目标内核。错误做法 = symlink / --force-modversion（MODVERSIONS 关时无余地）或 rmmod 已加载的模块（Used by≠0 时 rmmod rc=1）。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q24「单模块 cambistmclkcc 触发」是**取证方法论错误**（非实验设计错误）：历史扫测用的 `/etc/modules-load.d/camera.conf` 全栈加载器会同时 modprobe camcc+cambist+cci+camss+传感器等 11 个模块，研究者只盯 cambist 的 insmod 日志就归因「单模块」，但 camcc 早已同时在场。干净单变量实验（2026-10-11）证明：cambist 单独 12/12 存活、camcc 单独 3/3 存活、配对 2/2 死（双向顺序均死）。教训：增量加载实验必须从**零模块**起逐个加，不能基于已有全栈加载器做「单模块」归因。 — Failed: camera.conf 全栈加载器同时带 camcc，研究者未隔离变量就得出「cambist 单模块触发」结论 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] arm 镜像模块闭包膨胀超 fastboot boot 上限（~96MiB）：build-modular-overlay.sh 默认 ROOTS 含全部相机+音频模块（qcom-camss.ko 单 12MB、snd-usb-audio 7MB…），闭包算到 25 模块 11.8MB→镜像 98.3MB→fastboot boot 静默拒收→回落到 boot_b（表现为「vk91 启动后跑 vk64」）。修法=给 ROOTS 设环境变量覆盖，Q24 三臂只需 camcc+cambist 两个 .ko（86.7MB 通过）。判据：镜像 >96MiB 就大概率被 fastboot boot 拒收。 — Failed: 默认 ROOTS 含 qcom-camss 等 25 模块使闭包膨胀到 98MB 超 fastboot boot 的 ~96MiB 传输/加载上限 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 设备侧 meson 构建 phoc/phosh 时默认 buildtype=debug（-O0）——合成器必须用 --buildtype=release，否则性能不可用。本轮首编即栽此坑（debug 版 8.5MB vs release 2.2MB），发现后重编。正确 meson setup 命令：`meson setup output --prefix=/usr --buildtype=release`。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] phoc 构建时 wlroots subproject 的 `0001-Revert-layer-shell-error-on-0-dimension-without-anch.patch` 在 `meson setup` 阶段触发 `patch: File to patch: Skip this patch? [y]`（因 patch 文件路径与 subproject 目录结构不匹配），但 **不影响编译**（meson 静默 skip、wlroots 仍正常构建）。看到此输出不必中断构建流程。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] phoc/phosh 上游提交路径：真实上游 = gitlab.gnome.org/World/Phosh/{phoc,phosh}，GitHub 上的 PhoshMobi/phoc 和 PhoshMobi/phosh 是 read-only mirror（hasIssuesEnabled=false, viewerPermission=READ），gh CLI 无法开 PR。GNOME GitLab 支持 GitHub OAuth 登录（用户账号 xiaquwan1001 可直接 OAuth 授权进 GitLab），无需单独注册。提交方式 = GitLab 网页 Fork → 推分支 → 开 MR，或邮件给 phosh-devel。 — Failed: gh repo view GNOME/phosh 报 Could not resolve to a Repository；gh api 对 PhoshMobi/phoc 确认是 mirror 无写权限 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备上热替换 /usr/bin/phoc 或 /usr/libexec/phosh 会报 `Text file busy`（ETXTBSY）——因为 greetd→gnome-session→phoc→phosh 进程链正在持有这些二进制。正确顺序 = `rc-service greetd stop` → cp 新文件 → `rc-service greetd start`（完整重启会话，不能只 kill）。 — Failed: 直接 cp 到运行中的 phoc 报 Text file busy <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] GNOME GitLab (gitlab.gnome.org) 对本机出口 IP（USTC/CERNET 教育网段）拦截注册（2026-10-11 实测确认）。所有 GNOME 项目的上游提交（phoc/phosh/gnome-* 等）需等申诉通过或换出口。phoc/phosh 的 GitHub 镜像 PhoshMobi/{phoc,phosh} 是 read-only mirror（issues 关闭、viewerPermission=READ），不能开 PR/issue。gh CLI 无法提交到 gitlab.gnome.org（只能操作 GitHub）。 — Failed: 用户尝试用 gh CLI 和浏览器登录 gitlab.gnome.org 提交 phoc/phosh 补丁，注册被 IP 拦截 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] G1-8 GPU 基准（vkmark/es2gears）在设备上的 caveat：用户观察到「待渲染物体挤在左上角」，疑与 phoc 显示缩放/视口有关（非 GPU 性能问题）。解读 vkmark/GLES 分数时注明此 caveat，不要因绝对值偏低误判 GPU 驱动异常。vkmark ~25400、GLES es2gears ~165fps（= 面板刷新率上限）均正常。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q28 坏发时 USB-NCM 网络 gadget 可能起不来（面板 init 失败 → DPU 卡死 → 关机路径挂 → USB gadget 未初始化），此时主机侧无 usb 网卡、SSH 不通、adb 空——只有串口可用。用户 2026-10-11 明确：「注意到 q28 的 bug 可能会影响 ssh，为了防止误导，先停下来梳理现况」。做设备侧实验前必须先确认 boot 健康（ping 192.168.7.1 或 ssh uname），不要把 Q28 导致的 SSH 不通误判为设备断电或其他故障。 — Failed: Q28 bad boot can prevent USB-NCM gadget from coming up, making SSH appear dead when device is actually alive but display-failed <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核 `make modules_prepare` **必须带 ARCH=arm64 CROSS_COMPILE=...**——不带时 make 按 x86 原生跑，会**静默覆盖 .config 为 x86 配置**（sha 从 a383cdb9 变 5dee2b27，CONFIG_CC_VERSION_TEXT 变 gcc 而非 aarch64-linux-gnu-gcc）。正确姿势：先 source scripts/env-build.sh（export ARCH=arm64 CROSS_COMPILE=... LOCALVERSION=-vk64），再 make modules_prepare。恢复被覆盖的 config：从设备 `zcat /proc/config.gz > .config`（sha 必须回到 a383cdb9）。 — Failed: modules_prepare 不带 ARCH 被当 x86 跑，覆盖权威 config <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 内核构建：`make modules_prepare` 不带 `ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-` 会以 x86 原生跑，**覆盖 .config 为 x86 配置**（sha 从 a383cdb9 变 5dee2b27）。恢复法 = 从设备 `/proc/config.gz` 或 `extract-ikconfig` 取回权威 arm64 config。正确姿势 = 先 `. scripts/env-build.sh`（已设 ARCH/CROSS/LOCALVERSION/ccache），再 `make ARCH=arm64 CROSS_COMPILE=... modules_prepare`。历史教训：vk81/82/83 死内核（ARCH_QCOM 被 olddefconfig 静默丢弃）是同类根因，已加 apply-kernel-fragment.sh 回钉 + assert-kernel-sane.sh 硬门。 — Failed: make modules_prepare 不带 ARCH 参数被当 x86 原生编译，覆盖 arm64 .config，导致后续模块编译全部失败或产出 x86 .ko <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Waydroid 传感器 HAL（C4）部署链完整依赖：① `mount_overlays=True`（waydroid.cfg 默认 False）② 内核 `overlay.ko`+`fuse.ko` 必须部署到设备 /lib/modules/<KV>/（.config 里 =m 但从未 modules_install 到设备）③ `bridge.ko`+`stp.ko`+`llc.ko`+`8021q.ko` 同理（waydroid-net.sh 用 `ip link add type bridge`）④ 残留 `python3 /usr/bin/waydroid container start` 进程导致 lxc-info 假 RUNNING，需按 PID kill 后干净重启 ⑤ HAL 二进制（HIDL 1.0 UDP）能启动并监听 52012，但 Android framework `sensorservice` 在 VINTF manifest 找 `android.hardware.sensors.ISensors/default`（AIDL）而非 `@1.0-service.waydroid`（HIDL）⇒ `Service sensorservice didn't start`。下一步 = 对齐 VINTF manifest 或补 AIDL 包装。 — Failed: overlay/fuse/bridge 模块未部署到设备 + mount_overlays 默认关 + VINTF manifest 不匹配 HAL 版本 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核构建：`make modules_prepare`（或任何 `make` 目标）**不带 `ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-`** 会默认按 **x86 原生**运行，**静默覆盖 `.config`**（从 aarch64 变成 x86，sha 从 a383cdb9→5dee2b27），且 LOCALVERSION 丢失（因为它是命令行传的）。后果：后续模块编出的 vermagic 全是 x86，与设备不兼容。必须始终先 `. scripts/env-build.sh`（设置 ARCH/CROSS_COMPILE/ccache）再执行任何 make。 — Failed: 2026-10-11 C1 Waydroid bridge.ko 构建时，modules_prepare 未带 ARCH=arm64，把设备权威 config 覆盖为 x86，需从设备 scp 回 config 再带正确环境变量重做 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[failure] hexagonrpcd-adsp-sensorspd 未持久化到 runlevel（2026-10-11 发现）：上一会话（2026-10-09）手动 `rc-service hexagonrpcd-adsp-sensorspd start` 后 svc400 注册成功，但该服务**未被 `rc-update add`** 到 default runlevel ⇒ 每次重启后 `status: stopped`、`/dev/fastrpc-adsp` 不存在、`HasAccelerometer=false`。与 qbootctl 同类问题（已修复）。修法 = `rc-update add hexagonrpcd-adsp-sensorspd default`。注意该服务依赖 ADSP fastrpc 节点有 `qcom,non-secure-domain`（DTB vk72 已加，但 boot_b 当前=vk64 未含此属性）⇒ 传感器栈只在 vk72 DTB 下工作。 — Failed: 手动启动的服务未 rc-update add 到 runlevel，重启后丢失 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Waydroid 容器启动所需的内核模块部署缺口（2026-10-11 实机确认）：内核 config 有 CONFIG_BRIDGE=m / CONFIG_OVERLAY_FS=m / CONFIG_FUSE_FS=m，但设备 /lib/modules/7.2.0-debug-vk64-gd02658e63cf6/ 里**完全没有** kernel/net/bridge/、fs/overlayfs/、fs/fuse/ 目录（1217 个已部署 .ko 中无这些）。后果：`ip link add type bridge` = Unknown device type → Waydroid waydroid-net.sh 失败；`mount -t overlay` = unknown filesystem type → overlay 挂载失败；OpenRC waydroid-container 报 Module fuse not found。修法 = 在构建树（.config sha=a383cdb9 与设备一致）跑 `make modules_prepare ARCH=arm64`（**必须带 ARCH+CROSS_COMPILE**，否则按 x86 跑把 .config 覆盖成 x86）后 `make M=net/bridge net/802 net/8021q fs/overlayfs fs/fuse` 编出 .ko 部署。vermagic 验证：7.2.0-debug-vk64-gd02658e63cf6。 — Failed: 模块目录部署不完整——构建树有 .ko 但未复制到设备 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 内核模块增量编译时 `make modules_prepare`（不带 ARCH=arm64 CROSS_COMPILE）会静默把 .config 重写成 x86 原生默认（CONFIG_CC_VERSION_TEXT 变 gcc、平台选项全丢），且无任何警告。判据 = 跑前后比对 .config sha256。正确做法 = 必须先 `. scripts/env-build.sh`（设 ARCH=arm64 + cross + ccache），再 `make modules_prepare`；或从设备侧 `zcat /proc/config.gz` 恢复权威 config（sha a383cdb9…）。2026-10-11 差点用污染后的 config 编 bridge.ko 部署到设备。 — Failed: modules_prepare 默认按 native arch 跑 kconfig，覆盖 aarch64 .config <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核模块编译 `make modules_prepare` **必须带 `ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-`**（且 `LOCALVERSION=-vk64` 若靠命令行传入也需重复指定）；否则被当 x86 原生跑，**把 `.config` 从 arm64 覆盖成 x86**（sha 从 a383cdb9→5dee2b27，含 `CONFIG_CC_VERSION_TEXT="gcc"` 而非 `aarch64-linux-gnu-gcc`）。修法：先 `. scripts/env-build.sh`（source 不是执行）再 make，或从设备 `/proc/config.gz`（`zcat /proc/config.gz > .config`）恢复权威配置后重跑 `make ARCH=arm64 CROSS_COMPILE=... modules_prepare`。教训来源：2026-10-11 C1 Waydroid bridge.ko 编译时踩中，导致后续所有模块编译失败（`asm/compiler.h: 没有那个文件或目录`）+ 需要二次恢复。 — Failed: make modules_prepare 不带 ARCH=arm64 被当 x86 原生跑，覆盖 .config 为 x86 配置，后续所有 aarch64 模块编译失败 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] Waydroid 容器内 `waydroid session start` 需要正确的 `DBUS_SESSION_BUS_ADDRESS`——**不是** `/run/user/1000/bus`（该路径在此设备上不存在），而是 phosh/phoc 进程 environ 里的 `unix:path=/tmp/dbus-<random>`（如 `/tmp/dbus-zDSZhDcj9t`）。取法：`cat /proc/<phosh_pid>/environ | tr '\0' '\n' | grep DBUS_SESSION_BUS_ADDRESS`。错误表现：`Unable to autolaunch a dbus-daemon without a $DISPLAY for X11` 或 `Failed to connect to socket /run/user/1000/bus: No such file or directory`。 — Failed: waydroid session start 找不到 session bus 因为设备上 phosh 的 bus 在 /tmp/dbus-<random> 而非标准路径 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Waydroid 容器内音频（G2 C6）排查起点事实（2026-10-11 U2 vk64 实测）：容器内 /vendor/bin/hw/android.hardware.audio.service 与 /system/bin/audioserver 已起（分别在 host pid 25124/25152），但容器内 **没有 /dev/snd**、没有 /etc/asound.conf、音频资源在 /system/product/media/audio（不是 /system/media）。vendor HAL 二进制 ldd 链 libpulse.so + libasound.so + libsndfile.so（/vendor/lib64/）⇒ 上游 Waydroid audio HAL（hardware/waydroid/audio/audio_hw.c）是 pulse 后端，需要容器内能连到宿主 PulseAudio/PipeWire 的 pulse socket。容器内 /run/xdg/pulse 由 lxc 挂载提供（宿主 /run/pulse 或用户总线 socket），DBUS/PULSE 环境变量与 socket 路径是首要排查点。 — Failed: 容器音频无声的排查需要先确认 HAL 后端类型与 socket 通路，而不是先找 ALSA 设备 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] Waydroid 容器 state 可能显示 FROZEN（冻结）导致一切音频/媒体行为静默失效：`waydroid status` 显示 Container: FROZEN、cgroup freezer.state = frozen 1。排查容器内任何服务无响应时先 `cat /sys/fs/cgroup/.../freezer.state`（或 lxc-info）确认未冻结，用 `echo 0 > .../freezer.state` 解冻后再测；冻结态下 Android 侧线程全停、媒体无声但进程仍在。 — Failed: 容器被冻结时音频/媒体静默无输出，容易误判成 HAL 或内核问题 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 上游 Waydroid 容器音频的已知社区坑（2026-10-11 联网检索起点）：waydroid 主库 issue #1576「lxc pulse audio fails to mount，VM 未装 pulseaudio 时」= lxc 无法挂载宿主 pulse socket 导致容器内无声；排查关键词 = libasound_module_pcm_pulse / PULSE_RUNTIME_PATH / PULSE_SERVER / /run/xdg/pulse。搜索社区资源时应直接查 waydroid/waydroid 的 audio 相关 issue 与 hardware/waydroid/audio 上游实现，而不是从内核 ALSA 驱动方向找。 — Failed: 该路径已被社区踩过，先读上游 issue 可省去重复试错 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[convention] Q28 冷起 A/B 的配对臂除源码/config/LOCALVERSION 一致外，ramdisk/init 配方也必须一致——否则「golden ramdisk vs modular-overlay（重建模块层）」会引入 /init 时序差异（§h 已知 /init 时序能翻转 NOCARD/STORM），污染单变量。做法：两臂用同一 build 脚本产出的同配方 ramdisk（本轮 base 臂 vk93-lv64 用 golden ramdisk、round 臂用 modular-overlay，遂重建同 modular 配方的 vk97-base-lv64）。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 冷起 A/B 排除「构建身份伪影」的手段 = 构造 sham 臂（与对照臂同源码，只加一行无副作用的 pr_info 改变二进制但不改行为）。判定：sham 也 NOCARD ⇒ 是二进制身份效应（如 LOCALVERSION/链接顺序），该臂结论作废；sham GOOD ⇒ 差异来自被测补丁本身。这一方法用于区分「补丁逻辑」与「同源码不同二进制」造成的 card0 有/无翻转。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 与 Q28 根因独立（共享成分估 10–20%），仅工装/可测性强耦合，不是同一条电源链问题：Q28 触发 = 冷起（零相机模块照样坏，dmesg 可见）；Q24 触发 = {camcc-sm8750 + cambistmclkcc-sm8750} 配对 + 真实熄屏。三处耦合：① Q28 坏发时面板从未 enabled，熄屏只打 `Skipping disable of already disabled panel` ⇒ Q24 触发条件根本不存在（旧「cambist+熄屏 9/9 存活」是仪表坏、非无毛病）；② Q24 死亡把设备打回 Q28-bad，每次要物理 POR；③ Q24 可测性继承 Q28 的构建版本串（LOCALVERSION）敏感性。无 card0 ⇒ 无 phoc/Wayland ⇒ Waydroid session 起不来（headless weston/phoc 都试过，drmGetDevices2 failed）。解耦切入点 = 给内核加 vkms/vgem 虚拟显示。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 用户面对历史取证不干净时的裁决原则（2026-10-11 原话：「考虑到历史取证的不干净，我们以这次实验现象为主」）：新实验的干净单变量结果直接覆盖旧文档结论，不并列、不降级、不要求旧证据重做。案例：Q24 旧口径「单模块 cambistmclkcc-sm8750 触发」被本次 `{cambist}` 熄屏 12/12 存活 + `{camcc,cambist}` 配对首次熄屏即硬复位否证，改为「camcc + cambist 配对触发」。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 「钉死 UTS 版本串」破解 Q28 构建身份法则（2026-10-11 实测）：Q28 冷起 GOOD/NOCARD 由内核 UTS 版本串内容决定；用 `CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6` 把版本串钉回日常 GOOD 串后，**改内核+改 config 的镜像（vk102-c1pin，含 IP_ADVANCED_ROUTER/IP_MULTIPLE_TABLES）仍冷起 GOOD 且 `ip rule` 可用**。⇒ 有了「改代码也能冷起 GOOD」的可控台架，冷起 A/B 测 DSI 补丁才重新可行。脚本 scripts/q28-build-arm-lv64.sh 已加 PINUTS 支持。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 同 UTS 串 ≠ 保证 GOOD（2026-10-11 实机）：日常 boot_b 内核（UTS …-vk64-gd02658e63cf6）某次纯净冷起实测 **STORM**（card0 在、DSI-1 connected，但 storm=45、vblank wait timed out、phoc=1/phosh=0、greetd=2），而同一内核在测试台架上 GOOD 5/5。⇒ STORM 是独立随机事件，「UTS=GOOD 串」只是降低概率、不保证结果；启动后必须先实测判 GOOD/STORM 再谈后续实验。STORM 启动下 phoc/phosh 会消失、无 /run/user/1000/wayland-0、无会话总线 ⇒ 依赖桌面会话的实验（如容器网络）做不了。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 冷起 A/B 测补丁这条路已作废：因为冷起 GOOD/NOCARD 由内核版本串（构建身份）决定，任何重编（含空提交、一行常量 pr_info）都会把 base 的 GOOD 推成 NOCARD —— 观测行为自身改变结果。教训：在被测系统存在「构建身份敏感性」时，A/B 实验的对照臂必须钉死 UTS 串（PINUTS）才能隔离待测变量。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 「按内核二进制确定性」假说已被彻底否定，且 Q28 冷起 GOOD/NOCARD 由**内核 UTS 版本串内容**决定（2026-10-11 十二发冷起定案）：UTS 恰为 `7.2.0-debug-vk64-gd02658e63cf6` → 冷起 GOOD 5/5（base vk97 3/3 + 同源码重编 base2 vk100 2/2，二进制不同仍 GOOD）；任何其它版本串 → NOCARD 7/7（空提交 vk101 1/1、一行常量 pr_info vk99 2/2、clk_round_rate 查询 vk98 1/1、round 补丁 vk96 3/3）。⇒ 改代码/改 config 会经 setlocalversion 改变 UTS 串从而翻转结果；**冷起 A/B 测 DSI 补丁这条路作废**（观测行为自身改变结果），round/Method-B 的 NOCARD 不能当「修复无效」。可控手段 = 钉死 UTS 串（`CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6`，即 PINUTS）——vk102-c1pin/vk103 证明改内核+改 config 仍能冷起 GOOD。脚本 scripts/q28-build-arm-lv64.sh（含 PINUTS）/ q28-build-round-lv64.sh / q28-cold-run.sh；臂记录 reports/trials/index.tsv + logs/q28-cold-*。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 日常内核其实本来就 GOOD、不构成 Waydroid 阻塞（2026-10-11 十三发冷起 + 日常路径验证）：设备 boot_b 的 UTS 恰是 `7.2.0-debug-vk64-gd02658e63cf6`（会话初期已稳定跑 3h）。之前「Q28 挡路」= 实验内核自伤（任何重编都撞 NOCARD）。但注意：同 UTS 串**也会 STORM**（一次日常纯净冷起实测 storm=45、vblank wait timed out、phoc=1/phosh=0、greetd=2，无 wayland-0 无会话总线）⇒ STORM 是独立随机，GOOD 串不保证 GOOD。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Waydroid 容器启动的 UID/身份铁律（2026-10-11 实测）：`waydroid container start` 只起 DBus 管理服务（id.waydro.Container），真正的 LXC 容器由 `waydroid session start` 拉起；**会话必须以建立会话的普通用户（uid 1000）身份发起**，用 root 会因跨 UID 的 D-Bus 认证失败（NoReply）静默卡在 `container failed to start`（wait_for_running 超时）。正确姿势 = `setpriv --reuid=1000 --regid=1000 --init-groups env HOME=/home/xuqianhui1001 XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 DBUS_SESSION_BUS_ADDRESS=<phosh 的 /tmp/dbus-*>`。容器设备侧控制脚本 scripts/wd-ctl.sh（state/start/stop/session/net/route/egress/log/elapsed）与 scripts/waydroid-proxy-setup.sh 已按此修。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 冷起 A/B 测补丁的观察者效应（2026-10-11 实锤）：改内核代码本身会改变被观测对象——哪怕空提交（零代码，只换 git sha）或一行常量 pr_info 都会把 base 的冷起 GOOD 翻成 NOCARD；只有 UTS 逐字 = 7.2.0-debug-vk64-gd02658e63cf6 才 GOOD。⇒ 冷起 A/B 不能用来评估 Q28 补丁，round/Method-B 等的 NOCARD 不能当「修复无效」证据。绕过方法 = PINUTS 钉死 UTS 版本串（CONFIG_LOCALVERSION_AUTO=n + LOCALVERSION=<exact>），钉死后改内核/config 仍 GOOD。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 收尾口径（2026-10-11，DOSSIER §p / PITFALLS #192）：① NOCARD 分支已闭环=内核构建身份（UTS 版本串）伪影——12 发物理 POR 冷起，UTS 逐字 `7.2.0-debug-vk64-gd02658e63cf6`⇒GOOD 5/5，其它任何身份（含空提交、一行 pr_info、round 补丁）⇒NOCARD 7/7；空提交也翻⇒非补丁逻辑。② 冷起 A/B 方法前提=PINUTS（CONFIG_LOCALVERSION_AUTO=n + LOCALVERSION=-vk64-gd02658e63cf6）；钉死后改内核源码+config 仍 GOOD（vk102/vk104/vk105）⇒A/B 恢复可用；决定性证据=同一 round 补丁未钉 UTS(vk96)=NOCARD 3/3 vs 钉死(vk105-round-pin)=GOOD。③ 作废旧结论：§k「按内核二进制确定性」、vk90/vk92 NOCARD、round NOCARD=「修复无效」、T1/T2/T3。④ 剩余唯一未解=STORM（独立随机，与构建身份无关）：日常 boot_b 纯净冷起实测 STORM；round/Method-B 对 STORM 是否有效=未测。⑤ Q28 不再阻塞日常/Waydroid（日常 boot_b 即 GOOD 身份；之前「Q28 挡 Waydroid」是在 RAM 起实验内核 NOCARD 上验证所致）。台架=vk97/vk100/vk104/vk105。详见 reports/q28-DOSSIER.md §o/§p、reports/q28-retro-audit-20261011.md。 — Failed: 旧结论多被构建身份混淆，需以 PINUTS 重测才有效 <!-- created=2026-10-11, last=2026-10-11 -->
-§
-[insight] Q28「STORM 是探针误判」已被证据审计证伪（2026-10-11，commit d3b1831，reports/q28-storm-bias-audit-20261011.md）：10 个落盘 STORM 样本拆 L1（DSI/panel 真失败：`command DMA timeout` / `Failed to initialize panel`）后 L1 全部 ≥6，离线回放无任何「L1=0 却 L2>0」样本 ⇒ 不是把良性 vblank 误当坏发。但「STORM = 独立随机」的证据只有 1 条无原始日志样本（wd-net-baseline §4 的 vk94 一次 storm=45），且同镜像当日又被记为 GOOD 一次，两条都 n=1 无 dmesg。★新线索：STORM 与镜像高度共线——所有 STORM 样本都在旧内核+旧 ramdisk 镜像（vk64 Oct-8 / oct8 / vk94），16 发新 PINUTS 冷起（vk97/vk100/vk102-vk105）无一 STORM。⇒ 下一步应做内核×ramdisk 2×2 因子实验（vk106=newK-oldR、vk107=oldK-newR），判 STORM 是否同样是构建产物而非随机。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q28 2×2 因子实验（2026-10-12）设计教训：第一轮 A/B/C/D 全按固定顺序跑（A→B→C→D），导致 Round 1 的 C1/D1 连续坏发被误读为「首轮/时序状态效应」而非内核轴——因为 Round 2 全 GOOD 后「旧内核坏发率高」的结论被削弱。正确做法 = 同时间窗**交替采样**（C→A→C→A），消除 boot-to-boot 状态漂移。8 发样本 Fisher p≈0.43 远不够下判词，需 ≥20 发交替才能区分「内核坏发率」vs「会话内状态衰减」。 <!-- created=2026-10-11, last=2026-10-11, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 STORM 非独立随机——与内核构建身份强相关（2026-10-12 2×2 因子实验 + E2 定案）：源码全为 d02658e63（旧K vk94/vk64 与新K vk97/vk100/vk104 **完全相同**，之前「差 1 个 ADSP fastrpc 提交」是 DTB 差异非内核源码差异，已更正）。唯一内核构建差异 = `CONFIG_LOCALVERSION_AUTO=y`（旧，嵌 build 时间戳→payload 布局偏移 ~5.1M 字节）vs `n`（新，PINUTS）。实测：`#60`（Oct-8 构建）4 发冷起 2/4 L1FAIL；`#111+`（Oct-11 构建）20+ 发冷起 0 L1FAIL。E2 决定性实验：vk110（旧K #60 + 新DTB）= L1FAIL，vk109（新K #118 + 旧DTB）= GOOD ⇒ DTB 不是轴，内核二进制构建身份才是。机制假说：build 时间戳导致 .rodata/.data 段偏移 ~4B × 字符串数量，把 DSI bonded cmd-DMA completion 的中断/轮询时序推过竞态刀刃。ramdisk 无关（B 臂旧 ramdisk 恒 GOOD）。n 仍小（Fisher p≈0.43），但趋势极强。下一步 = 用 vk108（旧源码 d02658e63 + PINUTS + 新 .config 无 AUTO）冷起，若 GOOD 则坐实 AUTO 是唯一变量。 — Failed: 之前多次记忆将 STORM 定性为「独立随机」（如 TASKS §p 收尾口径「剩余唯一未解=STORM（独立随机）」），被 2×2 因子实验 + E2 推翻 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q28 旧K/新K 源码差异**已被更正**（2026-10-12 manifest 逐项核对）：vk94/vk64 的内核源码 = `d02658e63`，vk97/vk100/vk104 的内核源码也 = `d02658e63`——**完全相同**。之前「新K 比旧K 多 1 个提交 = ADSP fastrpc qcom,non-secure-domain」的说法混淆了 DTB 差异与内核源码差异（该属性只存在于 DTB 编译产物中，不在内核 C 代码里）。两臂真正的差异 = config 中 CONFIG_LOCALVERSION_AUTO（y/n）→ 影响 UTS 构建号 #N 嵌入方式 → 影响 payload 二进制布局（~5.1M 字节差异，shift+0 匹配仅 18%，非简单平移）。教训：「源码差」必须逐项核对 manifest 的 kernel_git_head 字段，不能从镜像文件名或分支名推断。 — Failed: 之前多份报告（DOSSIER §e、audit 表）将 vk104 标注为源码 5d01d3324（含 ADSP 提交），实际核对 manifest 后 vk97/vk104 的 kernel_git_head 均为 d02658e63 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 STORM 也是构建身份伪影（2026-10-12 E1'/E2 实验定案）：2×2 因子臂（内核×ramdisk）+ E2（内核×DTB）+ E1'（KBUILD_BUILD_VERSION=60+KBUILD_BUILD_TIMESTAMP 复刻 banner 重编，与 vk94 payload 仅差 0.14%/87605B）全部指向：源码(d02658e63)、DTB、ramdisk 都不是轴——**轴=内核 banner 构建号位数**（`#60` 2 位 → .rodata 平移 1 字节 → DSI cmd-DMA 竞态刀刃偏移 → ~67% STORM；3 位 = 0%）。机制假说 = banner 长度差使 Image 中字符串/常量表地址平移 1 字节，恰好落在 cmd-DMA trigger 路径的某个对齐敏感点。修法 = `KBUILD_BUILD_VERSION=100`（或任何≥100），`KBUILD_BUILD_TIMESTAMP` 任意，源码/DTB/ramdisk 不动。验证 = vk111 冷起 STORM（4 坏/2 好 vs 3 位 0/12+，Fisher p=0.005）。 — Failed: 此前多次将 STORM 判定为「独立随机」或「旧内核特定二进制」，经 E1'/E2 实验证明是构建号位数（banner 长度→rodata 平移）的系统性伪影 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 STORM 最终定案（2026-10-12 冷起 12 发）：STORM（bonded DSI 首条 DCS command DMA timeout -110）也是内核构建身份伪影，与 NOCARD 同一机制。E1'（vk111 = KBUILD_BUILD_VERSION=60 + KBUILD_BUILD_TIMESTAMP='Thu Oct 8 17:06:14 CST 2026' 复刻 #60 banner）冷起即复现 STORM；3 位构建号（#111–#120）冷起 0 STORM。Fisher p≈0.005。E2 排除 DTB 轴（vk109 好内核+旧DTB=GOOD；vk110 旧内核+新DTB=STORM）。2×2 排除 ramdisk 轴。源码完全相同（全 d02658e63）。治法 = 日常镜像用 3 位构建号重编即愈（日常 boot_b 恰好已是 #60→仍有间歇风险，需重编一次 3 位号）。判定脚本 scripts/q28-devprobe2.sh 分 L1（真失败）/L2（vblank 风暴可能良性）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q28「旧K vs 新K 差 1 个 ADSP DT 提交」是错的——那是 DTB 的差（vk94 带 qcom,non-secure-domain），内核源码全部 = d02658e63（E2 vk109/vk110 交叉实验证实 DTB 轴不影响结果）。真正的轴 = 构建身份（#60 vs #1xx），与源码/DTB/ramdisk/cmdline 全部无关。之前报告写「源码差 1 commit」的口径已作废（reports/q28-storm-bias-audit-20261011.md §7.2 已更正）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 「仪表先验证再计数」在本项目反复具现：Q24 熄屏触发实验必须先证明屏真的关了（GetActive=true / DPMS=Off / bl_power 变化 / RPMh trace 有事件），否则样本全是假阴性——本轮 phosh 0.55 上 SetActive(true)/Lock() 返回成功但 GetActive 恒 false、DPMS 恒 On、trace 零事件，三组 S3 样本全部无效。phoc 卡 D 态（wchan=rpm_resume，栈 adreno_get_param→__pm_runtime_resume）+ a6xx_gmu_set_oob/msm_gpu_fault_crashstate_capture 同批 D 态 ⇒ 暖复位路径会损坏台架（PITFALLS #198），必须物理 POR 冷起才能做熄屏实验。 — Failed: 熄屏类实验因控制通路静默失败产生整轮假阴性 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 对 fastboot 客户端用 `timeout ... | head/tail` 会在传输中途 SIGPIPE 掐断 fastboot 客户端，把设备的 fastboot bulk 通道打断——此后 bootloader 不再应答（`fastboot devices` 仍有 USB 描述符，但 `getvar` / 任何传输 rc=124 超时且永不再重枚举），必须物理 POR。规则：fastboot 包装命令不要管道给 head/tail，也不要中途 timeout 掐断；先 `fastboot getvar product` 探测应答、再发长传输。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 "熄屏类" 实验的三值硬门（2026-10-12 实测定型）：判「屏真的熄了」必须同时满足 ① `org.gnome.ScreenSaver.GetActive` = true（注意是**方法**不是属性，`busybox`/gdbus 下属性写法报 `No such property "Active"`）② `/sys/class/backlight/*/bl_power` = 0 或 dpms state = Off ③ RPMh trace 里看到 mmcx/cx 降档票。只有 GetActive 不够（phosh 0.55 下 SetActive 可被忽略、DPMS 仍 On），no-op 会被当成存活。三值不全过就不算有效样本。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24「死前共同签名」（加载第二个相机时钟控制器时 RPMh 一次性把 ebi/gfx/lcx/lmx/mss/nsp/nsp2/gmxc/mxc 投到 0）**不是死因**，是 cambist probe 注册 genpd 子域的常规行为——已更正定性（PITFALLS #197）。另：暖复位路径会损坏台架（phoc 卡 D 态 rpm_resume，D 态持有 DRM master ⇒ modetest DPMS:3 恒 Permission denied，kill -9 无效），Q24/Q28 冷起 A/B 必须走物理 POR（PITFALLS #198）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 对 `fastboot getvar` 等 fastboot 命令套 `timeout ... | head/tail` 会因 SIGPIPE 中途掐断 fastboot 客户端，把设备 fastboot bulk 通道打断 → gadget 从此不应答（`fastboot devices` 仍列出、`getvar` 超时 rc=124、USB 设备号不重枚举），恢复只能物理 POR。fastboot 命令不要接管道截断。 — Failed: 2026-10-12 本轮我操作失误导致设备卡 fastboot，用户被迫做物理 POR <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] hit Q24 第 3 轮要在「唤醒」阶段死（不是熄屏）：S3 真实熄屏后 +11s 仍存活，死亡发生在随后的唤醒，末票 = gfx.lvl(0x30050)=1 / gmxc.lvl(0x300d0)=1（GPU 域上电 + NoC 批），与历史 mxc→0 签名不同。方法学：空白-保持-唤醒必须分段记 DEATH_AT。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 C 系列（2026-10-12）GOOD 台架一次冷起内按序 C0(cam=0)/C1({camcc})/C2({camcc,cambist}) 各做「真熄屏→hold 60s→唤醒」+三值硬门：C0 存活 +89s、C1 存活 +89s、C2 ≤5s 静默硬复位（串口 0 panic/Oops/BUG）。⇒ 触发器 = 配对 {camcc,cambist} + 熄屏，{camcc} 单模块不致死，致死点随台架显示栈状态移动。commit a455295，PITFALLS #204。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[convention] Q24 台架准入判据 = 三值仪表硬门 3/3（GetActive=true + DPMS=Off + RPMh mmcx/cx 降档票 >0），**不是** Q28 GOOD —— Q28 L1FAIL 的台架照样能用于 Q24（PITFALLS #202）。台架损坏的一种形态 = phoc 卡 D 态 `wchan=rpm_resume`（GPU resume 路径，栈 adreno_get_param→__pm_runtime_resume），持有 DRM master ⇒ modetest DPMS 恒 Permission denied（PITFALLS #198/#203）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备侧会话总线：root 直连报 `Connection is closed`，必须 `setpriv --reuid=1000 --regid=1000 --init-groups` 降 uid=1000 并从 `pidof phosh` 的 /proc/<pid>/environ 取 DBUS_SESSION_BUS_ADDRESS / XDG_RUNTIME_DIR。另：`org.gnome.ScreenSaver.GetActive` 是**方法**不是属性，直接取属性报 `No such property "Active"`。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 在设备上以 root 直连用户的 phosh 会话总线（`DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus-*`）会报 `Error connecting: The connection is closed` 或 `Cannot autolaunch D-Bus without X11 $DISPLAY`——**必须 `setpriv --reuid=1000 --regid=1000 --init-groups env HOME=... XDG_RUNTIME_DIR=... DBUS_SESSION_BUS_ADDRESS=...` 降到会话属主 uid**（见 PITFALLS #203）。另 `org.gnome.ScreenSaver` 的 `GetActive` 是**方法**不是属性（属性读会报 `No such property “Active”`）；SetActive 的返回需显式取布尔（写成 `(true,)` 形式），`dbus-run-session` 起的会话每次冷启路径不同 ⇒ 每次都要从 `pidof phosh` 的 environ 现取 DBUS 地址。 — Failed: 在设备上以 root 直连用户会话总线失败，导致仪表硬门假失败、Q24 实验作废 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 对 `fastboot getvar` 之类交互式 fastboot 命令套 `timeout … | head/tail` 会 SIGPIPE 中途掐断客户端，**把设备的 fastboot bulk 通道打断**，此后 bootloader 从不应答（USB 描述符还在、getvar 恒 rc=124、84MB 传输全部白等），只能物理 POR 恢复。规则：fastboot 命令不要管道给 head/tail，也不要轻易加 timeout。 — Failed: 10:40 探测时对 fastboot getvar 用了 timeout+head，gadget 卡死，需用户物理 POR <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 设备侧脚本必须 POSIX sh 兼容或显式用 bash 调用：设备 shell 曾被误设 zsh（报 `zsh: no matches found`/`== not found` 会静默中断整条远端命令，不是设备/驱动问题）。已切回 bash（mainline root 登录 shell = /bin/bash）。另：给 /dev/ttyACM* 串口抓取脚本写 `timeout … | head/tail` 管道会因 SIGPIPE 掐断 fastboot/串口客户端（快排查询 `timeout … | head/tail` 曾打断设备 fastboot bulk 通道 → gadget 从此不应答，84MB 传输全部白等）——探测 fastboot getvar 也要用完整输出、不要管道截断。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 台架准入纪律（2026-10-12）：不要用 Q28 的 GOOD 作为 Q24 台架准入判据——Q28 L1FAIL 的冷起台架照样可能有效。唯一准入 = 三值仪表硬门 3/3（ScreenSaver GetActive=true + card0-DSI-1 dpms=Off + RPMh mmcx/cx 降档票 >0）。且同镜像不同冷起的仪表就绪度也不同（vk112 第 1 跑门失败、第 2 跑同镜像 3/3 通过），每跑必须重新验门。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24「死亡」实为 SoC 级复位 + 约 30–42 s 自动重启（USB 掉线→重新枚举实测 32s/42s/32s），不是静默永久挂死。⇒ 判死可用「USB 是否重枚举 / trace 流是否终止」而不用物理 POR。历史「需要物理 POR」的口径已作废。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 构建身份定量证据（2026-10-12，PITFALLS #195/#216）：`#60`（2 位构建号）内核臂 4 坏/2 好（~67% 冷起失败）vs 3 位构建号 0 坏/12+ 发（Fisher p≈0.005）。NOCARD 与 STORM 同族 = 内核构建身份（UTS/构建号位数）伪影，非独立随机。治法 = 用 3 位 KBUILD_BUILD_VERSION 重编日常镜像（vk113-dailyid 已构建未上机验证）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28「构建身份伪影」口径在 2026-10-12 上机复测中被**推翻**：vk113-dailyid（3 位构建号 #121）冷起 1 GOOD / 1 L1FAIL；vk94（2 位 #60）冷起也 L1FAIL。即 3 位身份并不保证不坏，NOCARD/STORM 不是纯构建身份伪影。此前「#195：3 位身份 ⇒ 0 坏」的定量结论（Fisher p≈0.005）作废，冷起好坏仍是随机/未定因素。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] scripts/serial-logger.sh 无执行位（nohup 直接跑报 Permission denied），须用 `bash scripts/serial-logger.sh <log>` 启动。串口 logger 依赖 /dev/ttyACM0 存在——设备在 fastboot 时 ttyACM 不出现，logger 会空转等待；用户手动拔/插串口会中断日志（本轮即因此漏掉一段冷起日志）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] generate_initramfs/内核 UTS 提取小坑：用 `zlib.decompressobj(16+MAX_WBITS).decompress(d[i:], 128<<20)` 解 gzip 取 UTS 时，`re.search(rb'Linux version ...')` 若正则过窄会返回 None（脚本里 `.group(0)` 直接 AttributeError）；应放宽正则并用 `m.group(0) if m else ''` 守卫。另 `python3 -c` 里别多写右括号（本轮 SyntaxError: unmatched ')'）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 绑定/解绑 DSI host 做运行期恢复会拆掉整个 DRM 栈：运行期重绑 ae94000.dsi 后 /sys/class/drm 只剩 version（card0-DSI-1 消失）、随后 dpu_kms_wait_for_commit_done 报 -110 风暴 ⇒ 不能用重绑 DSI host 当 Q28 坏发的恢复手段。PITFALLS #224，commit dcb61a8，证据 logs/q28-rebind-20261012/dmesg-after-rebind.txt。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] Q28 运行期重绑 DSI host 会把 DRM 拆掉，不能当恢复手段：`echo ae94000.dsi.0 > .../unbind` 再 bind 后 card0-DSI-1 消失、DPU 报 wait for commit done returned -110、GPU hangcheck recover（offending task: phoc）；且在 panal init 失败态下重绑无助于恢复显示。 — Failed: 被当作 Q28 恢复手段尝试，实测破坏 DRM 状态 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 排查的「脚本自动 reboot 到 fastboot」不可靠：q28-cold-sample-loop.sh / q28-cold-run.sh 这类脚本假设能从 Linux 自动 reboot2 bootloader 进 fastboot 做冷起 A/B，但实际不可用（用户原话「这个脚本有问题，没法做重启到fastboot」）。真正有效的冷起 = 用户手动物理 POR（长按电源彻底关机 → 音量下+电源进 fastboot），然后 agent 只用 `fastboot boot <img>` + 取证部分。凡涉及 Q28 冷起采样的脚本，应只负责「等 fastboot → boot → 取证」，把 POR 交给用户手动做。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 vk116-dsirec（DSI 链路失败自恢复臂）冷起采样结果（2026-10-12 晚）：前 3 发（用户手动 POR）全 GOOD、第 4 发 L1FAIL；且 q28 三类失败签名计数全 0 ⇒ 恢复路径一次都没被触发，补丁是 no-op，机制有效性**仍未验证**。判据 = 日志须出现 `command DMA failed before video enable, resetting DSI link`；未触发说明坏发没走到首条 DCS 超时那条路径（或坏发概率 ~50% 下 3 发不够）。 — Failed: 在 3/3 GOOD 时过早宣布方向成功；实际补丁未被触发，不能作为机制验证证据 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q28 恢复路线否证（2026-10-12 实测）：驱动内自恢复臂（清 `dsi_bonded_cmd_failed` 闩锁 + 复位 DSI ctrl/PHY 再重试）**不救场**。vk117 坏发寄存器转储（patch q28-dsi-recover2 新增能力）证明控制器真被复位（CTRL 0x175→0x171，CLK_STATUS 0x3743→0x1743，DYN_PCLK_ACTIVE 被清、CMD_PCLK 清），且 `unbalanced disables` 警告 0 次（vk116 同场景 6 次）；但第 2/3 次 DCS 仍逐字相同失败 `command DMA timeout status=0x2200200`（200ms 软超时）→ master=-110 peer=-110。⇒ 故障不在「软件闩锁/控制器状态」，复位-重试路线否证。同时更正旧口径：重试拿到 `-5` 并非硬件楔死，而是 `dsi_bonded_cmd_failed` 在 `dsi_mgr_bonded_cmd_xfer()` 开头短路（根本没碰 DMA）；清除闩锁后 `-5` 变 `-110`，证明闩锁机制如判。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 差异化判别量 = DYN pclk 域（2026-10-12 vk118 首命令探针 + CLK_STATUS 位解码）：坏发首命令**前** CLK_STATUS=0x343（AHBM AON+DYN、AON_BYTECLK、AON_ESCCLK、AON_PCLK）；失败后 0x3743（多出 DYN_PCLK 0x400 + DYN_CMD_PCLK 0x1000 + CMD_PCLK 0x2000）；好发同点（10-09 数据）= 0x2343，**无 DYN 位**。STATUS0: 首命令前 0x0 → 失败后 0x20003（ENGINE_BUSY|DMA_BUSY）。⇒ 坏发卡在 DYN pclk 域而非 AON。另：`Q28 power_on: link_clk_set_rate -> 0`（两 host 均 0 = 成功）。探针臂 vk118（首命令前 dump + set_rate 返回值）/ vk119（加成功路径 after-first-cmd-ok 同点 dump，patch q28-dsi-probe2.patch）均为冷起 L1FAIL。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 二阶循环脚本要「只等不推」：`scripts/q28-cold-sample-loop.sh`（2026-10-12）只负责等 fastboot（最多 900s）→ fastboot boot → SSH 起 → 三态判据（q28-devprobe.sh）→ 存活门 65s → 记 TSV；**不做自动重启进 fastboot**（自动路径因未就绪 reboot2 挂机不可用）。用户明确「这个脚本有问题，没法做重启到fastboot。我手动por两次，总共测试了三次，都成功」——冷起采样由用户手动 POR 驱动，脚本只等。每轮须过 device-lock，结束 qbootctl -m b。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 vk116 冷起 3/3 GOOD（18:36/18:42/18:52，用户手动 POR）但坏发签名计数全 0 ⇒ 恢复路径一次都没被触发、补丁实为 no-op，机制有效性未验证。当晚会话第 4 发冷起出现 L1FAIL（19:10），并观测到 `Turning OFF PHY while PLL is on` + `unbalanced disables for vreg_l3i_0p88`（regulator/core.c:3261 WARNING）——坏发还有 `disp_cc_mdss_pclk0/1_clk_src`/`byte0/1_clk_src: orphan reparent failed: -110`（t≈0.87s）与 `DSI PLL(0) lock failed status=0x00000000` ×4。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q28 冷起实验「vk114 上游 round 修复不修我们的 STORM」定论（2026-10-12）：vk114-dailyid-round（=vk113 同配方 + 上游 2028280686f4 机制的等价自落 patches/q28-methodB-round-byteclk.patch，落点 dsi_link_clk_set_rate_6g）冷起 #1 L1FAIL（同签名 t≈9.05s）⇒ 上游 byte-clk 取整不修本树 STORM（本树 bonded 双 DSI 路径为 GEEKiDOS/linux 自带，可能非同根因）。镜像 sha 4fb6c145…，payload 0857f458…（补丁串在 payload 内 True / vk113 内 False）。PITFALLS #223。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 驱动内自恢复路线已被两次不同臂否证：vk116（清 dsi_bonded_cmd_failed 闩锁 + 复位 DSI ctrl+PHY 后重试）机制从未被触发（4 发全 GOOD，三类签名计数全 0 ⇒ no-op）；vk117（恢复序列对齐 post_disable、去重复 phy_disable + 复位前后寄存器转储）在坏发上证明复位**确实生效**（CLK_STATUS 0x3743→0x1743，DYN_PCLK/DYN_CMD_PCLK 被清）但第 2/3 次 DCS 仍逐字相同地失败（status=0x2200200, master=-110 peer=-110）。⇒ 故障不在 DSI 控制器状态，驱动内 reset 救不回。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 坏发卡点精确定位（vk118/vk119/vk120 首命令探针）：**首条 DCS 命令是成功的**（after-first-cmd-ok CLK_STATUS=0x2343，与 2026-10-09 好发同点逐字相同），卡死在**后续命令**的 DYN pclk 域切换——失败后 CLK_STATUS=0x3743（置起 DYN_PCLK 0x400 + DYN_CMD_PCLK 0x1000 + CMD_PCLK 0x2000）、STATUS0=0x20003（CMD_MODE_ENGINE_BUSY|DSI_BUSY）。死前伴随 `Turning OFF PHY while PLL is on` + `unbalanced disables for vreg_l3i_0p88`（regulator/core.c:3261 WARNING）+ `disp_cc_mdss_pclk0/1_clk_src: rcg didn't update its configuration`（clk-rcg2.c:136 update_config/0xdc，调用链 clk_pixel_set_rate）⇒ 嫌疑指向 DYN pclk 时钟域切换 / RCG 配置未更新，而非 DSI 命令 DMA 硬件本身。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[correction] Q28 旧结论「首条 DCS 超时后 DSI host 楔死、面板级 reset 救不回、重试必然 -5」被代码级纠正（2026-10-12）：重试那条 `-5` (EIO) 来自 `dsi_manager.c` 静态闩锁 `dsi_bonded_cmd_failed` 在 `dsi_mgr_bonded_cmd_xfer()` 开头的 `return -EIO` 短路——第 2/3 次 DCS 根本没触碰 DMA 硬件。该 bool 全树只写 true、从不清零，且短路 5 处 bridge 上下电路径（pre_enable/power_off/enable/post_disable）⇒ 故障自锁。清闩锁后重试确实打到硬件（vk116 首个坏发日志第 2/3 次变成 -110 而非 -5）。但这不改变「驱动内 reset 不救场」的结论（见 vk117）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备侧复位路径陷阱（2026-10-12 实锤，待用户确认型号行为后落 PITFALLS）：桌面未起完（uptime≈20s）时执行 `reboot2 bootloader` 会把设备挂到**无任何 USB 通道**（既非 fastboot 也非 SSH，需物理 POR）。推测此前某些「hang 桌面挂起」现象是脚本里过早 reboot2 造成。对策已落地：`scripts/lib-boot-ready.sh`（复位前就绪门 = uptime>=90s + 桌面已起，fail-closed）已接线到 q28-boot-cycle.sh/q28-layout-ab.sh/q28-layout-one.sh（分支 audit/early-reboot，合并 commit bd97123，审计报告 reports/audit-early-reboot-20261012.md）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 冷起实验的「恢复路径未触发」陷阱：驱动内自恢复/重试补丁在 GOOD 发上完全走不到（失败签名计数为 0），4 发全 GOOD 不能当作「补丁有效」的证据，只能记为 no-op；必须等到坏发才能验证机制，且判据应是「日志出现补丁的恢复标记」而不是「本轮 GOOD」。vk116 前 3 GOOD + 1 坏的解释即此。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 脚本未经解释就不要拿来跑：`scripts/q28-cold-run.sh` / `q28-cold-sample-loop.sh` 设计上只**等** fastboot（无物理按键能力），冷起采样必须由用户手动 POR（长按电源 → Vol- + 电源进 fastboot），脚本再接手 fastboot boot + 判据 + 记录 TSV。用户当场指出「这个脚本有问题，没法做重启到 fastboot」是预期行为（不是 bug），派脚本前必须对用户讲清这一点。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 冷起采样统计口径（2026-10-12 实测）：坏发**按时间成簇**（当日观测 3 连 GOOD → 5 连坏 → 又 GOOD），单发 GOOD 无判别力，候选修复至少要 3/3 或 5/5 全 GOOD 才能写「有效」；出现 1 发坏发就要立刻看它卡在哪一步（若仍 DYN_PCLK_ACTIVE 闩住 + STATUS0=0x20003，说明 force-on 不是根因）。判据脚本 scripts/q28-devprobe.sh 三态 NOCARD/STORM/GOOD，必须 SSH 读完整 dmesg（只数签名会把「显示缺失」误判成 GOOD）。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q28「3 位构建身份 #N ⇒ 不坏」的治法假设**已作废**（2026-10-12 上机否证）：`vk113-dailyid`(#121) 冷起 3 次 1 GOOD/2 L1FAIL；`vk114-dailyid-round`（同配方 + 上游 2028280686f4 byte-clk 取整）仍 L1FAIL。≈7 发 4 坏/7（57%），与 2 位身份无统计差异。⇒ 坏发是**时间成簇的随机**（10-11 15:24–27、10-12 00:02–09、08:37–41、09:43–48 成串坏；10-11 11:51–14:51 10 GOOD 0 L1FAIL 成串好），**缓解不在镜像层**（PITFALLS #223）。历史「3 位身份 0/20 坏」落在一个好窗内，是采样偏差。严格 POR（断电 30 s）也无效。运行期重绑 panel/`msm_dsi` ⇒ card0 消失（副作用）。 — Failed: 以构建身份位数作为治法的假设被上机否证；后续不要再用「改构建号位数」当修复。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q28 坏发首条 DCS 超时后**驱动内复位 DSI ctrl/PHY 路线否证**（vk117 寄存器转储）：控制器确实被复位（CTRL 0x175→0x171、CLK_STATUS 0x3743→0x1743、CMD_DMA_CTRL 0xd4000000→0x14000000），`unbalanced disables` 6→0，但第 2/3 次 DCS 仍逐字相同失败（command DMA timeout status=0x2200200 → master=-110 peer=-110）。vk116 的清闩锁 + 重试使失败从 -5 变回 -110（证明软件闩锁真被清、重试真打到 DMA 硬件），但救不回场。 — Failed: 驱动内 DSI ctrl/PHY 复位不是 Q28 的修复路径。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 判别量与尚未证否的靶点（2026-10-12）：① 判别量 = **DYN pclk 域生命周期**（健康发 CLK_STATUS 0x343→0x743→0x343 随命令瞬开/放；坏发闩在 0x1743/0x3743 + STATUS0=0x20003 + DSI 中断计数 0）；② **DYN 位在控制器 sw_reset 后仍在 ⇒ 故障态不在 DSI 控制器内**（映向 dispcc/INTF 动态时钟请求）；③ 坏发首条命令前寄存器与好发逐字相同，且**首条命令其实成功**，卡死在第 2 条命令的 DYN pclk 域切换（master=-110 peer=0 从机已完成）；④ DYN 域一旦卡住永不释放（vk120 全 boot CLK_STATUS 只变 1 次）。已否证 6 条路线：面板 reset / 软件闩锁 / DSI ctrl+PHY 复位 / 自定义 bonded 序列（vk121 改走标准广播路径仍 L1FAIL）/ 使能期 force-on（vk122 首 2 发 GOOD 后仍 L1FAIL）/ VBIF 优先级。原厂 dyn-refresh 寄存器面（`DSI_DYNAMIC_REFRESH_CTRL=0x200`/`_STATUS=0x210`、LANE_CTRL bit28 请求、INT_CTRL bit28 done+ACK、PHY v7.2 dyn_refresh_*）本树一概没有，但 Lenovo 版与 OnePlus 版原厂 display 源码的 `dsi_ctrl_reg.h`/`dsi_clk_manager.c` 逐字节相同 ⇒ 「dispcc/INTF 是下一主靶」的前提也被削弱，需重新选靶。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] **`reboot2` 未就绪挂机**（2026-10-12 实测，PITFALLS #225）：设备 uptime < 25 s 时直接调 `reboot2` 会把设备挂到无 USB 通道（2/2 挂），uptime > 100 s 时正常（3/3）。⇒ 所有自动化复位脚本必须先过就绪门 `scripts/lib-boot-ready.sh`；`scripts/q28-cold-sample-loop.sh` 明确**不做自动重启到 fastboot**（自动路径不可用），只等用户手动 POR。 — Failed: 自动化循环里过早 reboot2 会挂死设备，需就绪门。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 已明确否证的路线清单（避免重复开发，2026-10-12/13）：面板 reset、软件闩锁清除、DSI ctrl+PHY 复位（vk117 寄存器转储证明复位执行但救不回）、自定义 bonded 序列（vk121 改走标准广播路径仍失败）、使能期 force-on（vk122）、VBIF 优先级、上游 2028280686f4 byte-clk 取整移植（vk114 L1FAIL，本树 bonded 路径是 GEEKiDOS 自带、非同根因）、vk125 resetterm（镜像原厂 ctrl_reset 终态仍 L1FAIL）。判别量 = DYN pclk 域生命周期（好发 CLK_STATUS 0x343→0x743→0x343 按命令瞬开/放；坏发闩在 0x1743/0x3743 + STATUS0=0x20003 + DSI 中断计数 0），且 DYN 位在控制器 sw_reset 后仍在 ⇒ 故障态不在 DSI 控制器内。 <!-- created=2026-10-12, last=2026-10-12, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 『上游报告已归档』只是投递成功，不等于有回信：Q28/Q24 报告发出后 In-Reply-To/References 命中回复 = 0 是常态。看『最新邮件有没有我们关心的』要走两条独立通道：① IMAP 巡自己的 INBOX/Junk（read-mail-ustc.py --replies-only；注意 USTC 会把自发邮件标 [SPAM]）；② lore 关键词查询（scripts/lore-query.py 自动过 Anubis PoW）。归档复核用 body sha256 逐字节比对（raw URL 带 `?x=A` 只拿到 Atom，要取 raw 正文直接用 /raw）。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 判断『上游是否有同族工作』要看 GIT PULL 邮件而非只搜关键词：本轮从 andersson 的「Qualcomm clock updates for v7.4」pull 请求里读出 sm8750-gcc 加 CX power domain、dispcc-sm8750 always-on 通用 probe、cambistmclkcc-sm8750 +7 行等，直接支撑 Q24 的 cx/mmcx 票面分析；而 [PATCH v21 14/14] kaanapali-mtp-camera 把 cambistmclkcc 当相机 MCLK 提供者（CAM_BIST_MCLK_CC_MCLK2_CLK），佐证『裸时钟控制器』质疑。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 用户会纠正关键实验事实的口径（2026-10-13 实例）：agent 报「vk124-merged 零写盘 RAM 直启后冷起 GOOD」，用户纠正「第一次冷起是 STORM，我手动第二次冷起后 GOOD」。⇒ 上机结论必须按**每发冷起逐次记录**（含坏发），不能用「最终 GOOD」概称；这与已有「新验收口径=1 次 GOOD 即可判候选可用」并存——判定可以宽，但事实陈述不能省掉坏发。 — Failed: agent 把 2 发（1 STORM + 1 GOOD）概括为「冷起 GOOD」，被用户当场纠正 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 用户口径修正（2026-10-13，vk124-merged 上机）：该镜像**第 1 次冷起是 STORM（只有背光无桌面），操作者手动 POR 后第 2 次冷起才 GOOD**——不要写成「冷起 GOOD」。这与 Q28 现状（~50% 随机坏发、与镜像无关、按时间成簇）一致，报告/台账须区分「第 N 次冷起」。 — Failed: 把操作者手动第二次冷起的结果记成单次冷起 GOOD，被用户当场纠正 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Waydroid 镜像自带 HIDL android.hardware.vibrator@1.0-service.waydroid 只写 AOSP leds/timed_output 节点（主线两处都没有），且 ofstream 不检查写失败 ⇒ 容器侧一切正常但马达不动——「HAL 无输出」的原因是内核缺对应 sysfs 节点而非 HAL 逻辑，定位此类问题要看节点是否存在，不要只看 lsof/lshal 是否注册。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] fcitx5-remote / fcitx5 通过 DBus 与 fcitx5 主进程通信，**必须以同一 uid（会话用户，如 uid 1000）运行**，否则报 `Failed to create dbus connection`（Aborted）。root 直连会失败；需 `setpriv --reuid=1000 --regid=1000 --init-groups` + 正确的 `DBUS_SESSION_BUS_ADDRESS`（phosh 会话的 /tmp/dbus-*，非 /run/user/1000/bus）与 `XDG_RUNTIME_DIR`。注意 `setpriv` 没有 `--env-dbus` 选项。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 探针臂 vs 门控臂判据（2026-10-13 定）：当臂的唯一目的为诊断（如 vk116/117/118/119/120/123——判据是日志里出现特定恢复/转储行，不是冷起成败），单变量可比是硬要求：UTS release 必须与要对照的基线臂==一致==（PINUTS 钉死 + 相同 #N 构建身份），刻意复用源提交/UTS 是预期例外，已登记 known-issues 降为 WARN。当臂为「候选功能修复」（如 vk125-resetterm、vk124-merged），判据是冷起三态（GOOD/L1FAIL/NOCARD），UTS 不同亦可比。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 「屏幕没拉起」这类 Q28 坏发时，设备 SSH **仍然可连、但响应极慢**——真因不是网络：坏发下 dmesg 出现 `msm_dpu ... [drm:hangcheck_handler] *ERROR*` 回收循环（hangcheck recover ×78）、`a6xx_gmu_set_oob Timeout`、`offending task: phoc`，GPU worker 吃 CPU 致 load 5–6。同时 `card0-DSI-1/status` 仍是 `connected` = 假阳性（连接器在但管线 hang）。判坏发要看 hangcheck 计数与 phoc 是否被点名，不能只看 card0 status。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 审计本机内核 payload 的上游合规性（2026-10-13）：相对主线 v7.2 为 125 文件 /≈7077 行改动 + 11 个新驱动或 DTS /≈5300 行；其中约 60% 属真实硬件缺口（方向正确）、25% 结构需重做、15%（D 类）永不上游。新驱动族已全部挂在强制框架下（panel-novatek-nt36536→drm_panel、wl2868c-regulator→regulator、aw86927→input FF、novatek-nvt36xxx-spi→spi/input、camss-*→V4L2/media+MC、pwrseq-qcom-wcn→pwrseq、hci_qca→bluetooth），binding 全过 dt-doc-validate，dt-validate 仅 usb@a600000 一处红点。策略定为「mainline + 薄下游层」（reports/upstream-policy-20261013.md + AGENT-OPS §3 + TASKS §7）。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] M1 资产树（build/m1-upstream/clean-tree 与 clean-tree-73）血统落后于 clean/base 的设备侧修复，带的是 PITFALLS #108 之前的板 DTS（&i2c0 status="okay"）⇒ 一上机必硬关机（fastboot boot 报 OKAY 后黑屏、无 USB gadget、~39s 回旧系统）。M1 系列上机前必须逐条对照 clean/base 的板 DTS 修复（i2c0 disabled、splash_region 命名、去 simple-framebuffer、sdhc no-1-8-v）。已在 M1-73 树提交 1e4077e13f / b3815fb150。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] M1-7.3 新内核「外设全废/无桌面」根因 = 模块集没带（不是代码回归）：73h 是纯 ramdisk（0 个 .ko）+ 磁盘无 7.3 的 /lib/modules ⇒ 所有 =m 驱动未加载。因果链（每环有实机日志）：fsa4480.ko 未加载（CONFIG_TYPEC_MUX_FSA4480=m）→ 无 typec mode-switch → pmic_glink.altmode defer（`failed to acquire mode-switch for port: 0`）→ af54000.displayport-controller 永久 defer → disp_cc-sm8750 sync_state() pending → msm_drm_bind 被卡 → 无 card0/无桌面。决定性证据：运行时 insmod 与内核同 vermagic 的 fsa4480.ko（13.7KB strip 后）→ 立刻出现 card0/card0-DP-1/card0-DSI-1/renderD128 + dmesg `msm_dpu: bound af54000.displayport-controller`。同类：fastrpc=m 缺失 → 无传感器。=y 的 USB/触摸/背光/部分音频照常——与观察一致。⚠不要误判成 Q28/DSI 问题。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] M1-7.3 另一个显示失败模式：`&mdss_dp0 { status="okay" }` + ADSP 起了但 fsa4480/typec mode-switch 缺失时，DP 控制器永久 defer 会**阻塞 msm_drm_bind** ⇒ 整机无 card0（但背光/部分外设正常）。单变量验证：只把 &mdss_dp0 改成 disabled 重建 DTB → card0 + card0-DSI-1 connected + greetd/phoc/phosh 全起。修法 = 确保 fsa4480.ko 加载（或 DP 实验期临时 disabled）。与 historic DP 修复（dr_mode=otg + usb-role-switch + mdss_dp0 okay 三处齐）一致。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[convention] M1 重基树（build/m1-upstream/clean-tree-73）上机验证经验：① 73h 内置「磁盘黑匣子」= ramdisk 第二段 cpio 覆盖 /init（后台子进程等 LABEL=linux17 → 挂 /mnt/dbg → fd9 每 3s 追加 dmesg + sync，跑 400 轮 ~20min，独立于正常启动）⇒ 零写盘取全量 dmesg（0.0s 起）的通道，但不带 sync 的旧版会留 0 字节文件。② 设备无 7.3 的 /lib/modules ⇒ 需要 =m 驱动时从 build/m1-upstream/clean-tree-73/ 下取 .ko（aarch64-linux-gnu-strip 后 vermagic 仍匹配）。③ M1 树已含 psci reboot 钩子（6776a30860），可 `reboot2 bootloader` 进 fastboot。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机构建产物核对：`fdtget` 未安装（读 DTB 节点/status 用不了）；boot.img 头部参数要用 `tools/mkbootimg/unpack_bootimg.py`（仓库内有 vendored 副本）。打包 M1 镜像时 mkbootimg 调用路径必须是仓根 `tools/mkbootimg/mkbootimg.py`，用绝对/临时路径（如 /tmp/73j-ovl/tools/...）会 `No such file or directory` 但外层不报失败。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 构建时 /tmp 是 tmpfs（31G，易满/有配额）⇒ 内核编译会报 `error closing /tmp/xxx.s: 超出磁盘配额`；修法 = 把 TMPDIR 指到大容量根文件系统（本次 TMPDIR=/var/tmp/p1build）再 make。清理 /tmp 前先看 df 与 du（本次 /tmp 有 /tmp/vk125wt 7.0G、/tmp/dailyid 7.0G 等残留）。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] trial.sh record 子命令强制要求 --label（报 '[trial] ❌ record 需要 --label'）；q28-devprobe2.sh 的 L2 正则原先漏了 'vblank wait timed out'（Q28 上游栈的典型失败签名），补充为 `ctl [0-9]+ reset failure|frame done timeout|vblank wait timed out|drm_crtc_wait_one_vblank`。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] M1-7.3 纯 ramdisk 上机「外设全废」真因 = 模块集没带（非代码回归，2026-10-13 单变量闭环）：fsa4480 未加载（CONFIG_TYPEC_MUX_FSA4480=m）→ 无 typec mode-switch → pmic_glink.altmode defer（failed to acquire mode-switch for port: 0）→ af54000.displayport-controller 永久 defer → disp_cc sync_state() pending → 阻塞 msm_drm_bind → 无 card0/无桌面；运行时 insmod fsa4480.ko 立刻出现 card0/card0-DP-1/card0-DSI-1/renderD128。insmod fastrpc.ko → /dev/fastrpc-adsp + QRTR svc400 上线、传感器恢复。最小必需模块 = fsa4480 + fastrpc；实测闭包 36–37 个（时钟族 + 相机 + fuse/stp/bridge/overlay）。 <!-- created=2026-10-13, last=2026-10-13, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 「某次启动 GOOD」在同硬件/同镜像上不可复现时必须先怀疑判据而非下结论：P2b 的 10-13 GOOD 只查了 card0+phoc/phosh（未看屏、未数风暴签名），10-14 同 sha 复测 196 次 kickoff reset failure ⇒ 伪阳性。纪律：写 verdict 前必须（a）设备端全 dmesg（不只 grep 一种签名）、（b）三类风暴签名全数、（c）目视或截图确认面板真的出图；缺失任一即标「未验证」而非 GOOD。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] `scripts/trial.sh record` 必须带 `--label`（缺参会报 `[trial] ❌ record 需要 --label`）；且 `--reset` 类型必须显式声明 por|cold|warm——用 warm（reboot2 bootloader→fastboot boot）记录会污染冷起样本，A/B 对照前必须区分复位类型。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 判据不能只看 card0 + phoc/phosh 就判「显示正常」——P2b 上游 DSI 臂 10-13 那次被记为 GOOD 的启动，10-14 同 sha（71016e08）复测翻转为 kickoff reset failure 196 + frame-done/vblank 195，且事后核对该次 GOOD 从未验屏。判「面板是否点亮」必须看三类风暴签名（kickoff reset failure / frame-done / vblank timeout），且两栈失败签名不同：vendor 栈 = command DMA timeout，上游栈 = ctl N reset failure -22 + vblank/frame-done。scripts/q28-devprobe2.sh 的 L2 正则原缺 vblank timeout（2026-10-14 已补）。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备侧 dsi_isr 中断计数恒为 0 是判断「上游 DSI host 是否真在发视频流」的硬指标：P4a 健康发（l1=l2=0、phoc/phosh/wayland 全起、card0-DSI-1 connected enabled dpms=On、backlight 511）下 `dsi_isr` 两个 host 都恒为 0，且 `grim` 报 no supported format found ⇒ 该「健康发」实际合成器未 modeset、DSI host 未启动视频引擎。注意命令模式面板空闲不推帧所以只能看累计值（好发>0/坏发=0）。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 构建 P1/P2b/P2c/P4a 这类上游对照臂时必须保持构建身份可比：kernel `CONFIG_LOCALVERSION_AUTO=y` 时 UTS 会出 `-g<sha>` 后缀（新提交变新身份），要得到与基准（P2c 的 7.3.0-rc7-debug-g2851bcaff64f）一致 UTS 需改 `CONFIG_LOCALVERSION="-debug-g2851bcaff64f"` + `LOCALVERSION_AUTO=n`。提交时漏 `git add` 某 tracked 文件会让 setlocalversion 产出 `+`/`-dirty` 后缀，需 amend 重编保可复现身份。overlay 的镜像内拷贝路径须用相对前缀（绝对路径会在 lib/modules/<KV>/ 下建出 home/xuqianhui1001/... 整条树）；fastboot boot 上限 100663296 B。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备探测 SSH 纪律（2026-10-14 补充）：轮询式 ssh 重试（本次 ~60 次）后设备 sshd 立刻回 `Not allowed at this time`（OpenSSH 9.8+ PerSourcePenalties 源惩罚，由 /usr/sbin/sshd 在 MaxStartups 触发时发出），随后连 banner 都不再给（Connection timed out during banner exchange）——TCP 能连上（内核 backlog）但用户态不回，极易误判成「系统挂死」。惩罚按源 IP 记账，安静等待也不可靠（新连接可能续期），最稳恢复 = 重启设备。纪律：单次连接 + ≥15s 退避，用 `-o ConnectionAttempts=1 -o ConnectTimeout=8`，禁止 for 循环里高频 ssh。scripts/trial.sh record 必须带 --label（缺参会报 `[trial] ❌ record 需要 --label`），实验中用 warm（reboot2 bootloader→fastboot boot）记录的 trial 会污染冷起样本，必须显式区分 reset 类型。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 上游臂实验方法学（2026-10-14 验证）：设备显示处于坏态时 `reboot`/`reboot2`/`eldroid-bootctl reboot system` 都会挂在 DRM cleanup（进程不退、uptime 继续涨），可靠软件恢复 = `echo b > /proc/sysrq-trigger` 或串口 BREAK+'h'+'b'（SysRq-b）。因此「窗口搜索脚本」应先单次 SSH `reboot2 bootloader`，失败（SSH 不可用）则改用 SysRq-b 两级复位（SysRq-b → 回日常 boot_b → 再进 fastboot）。`scripts/arm-console-run.sh` 已封装 arm 实验 + 常驻串口日志（logs/arm-<label>-<ts>/console.log）。健康发判据 = 串口从 t=0 全程捕获 + L1=L2=0 + 单次 SSH 状态全绿。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 上游 DSI 栈「结构健康但面板不亮」的决定性证据（2026-10-14 P2c/P4a/P4d 臂）：即使 modetest 强制 modeset（CRTC 106 fb=111 1904x3040，绕过合成器），`dsi_isr` 计数**恒为 0**（两个 DSI host 都不响）+ 用户目视「纯黑仅背光」⇒ 上游 DSI host **根本没启动视频引擎**；同窗口 vendor 栈（m1-73j）`dsi_isr=41`（不再增长）、grim 能出图，但用户目视同样「有声音和背光、屏幕无内容」⇒ 面板不亮不是上游臂独有。诊断探针结论（P4d DIAG）：`mgr bridge_enable id=0 powered=1 bonded=1`、`host_enable id=0/1 mode_flags=0x2e03 power_on=1 ctrl_before=0x171 → ctrl_after=0x173` ⇒ **video 使能路径确实被调用**（DSI_CTRL bit1 VID_MODE_EN 已置位），缺的是让 video 真跑起来的东西（时钟/PLL）。时钟侧：`dsi0vco=756.8MHz`、`disp_cc_mdss_pclk1_clk_src=172.992MHz` 正常；slave `dsi1vco=0` 待查。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[failure] Q28 健康发窗口是逐会话成簇的（2026-10-14 实测）：同一台设备同一构建身份，一个窗口里 P2c/P4a/P4d/m1-73j 连出「结构健康发」（L1=L2=0），而 vk94 对照组同窗口却是 L2STORM 坏发 ⇒ 「窗口好坏」不能一律按 L1/L2 签名判，还要看是否真出图（用户目视）。寻找健康发的实用手法 = scripts 自动复位 + 轮换臂直到单臂 L1=L2=0，然后请用户目视。复位路径：显示坏态下 `reboot2` 会挂 DRM cleanup（PITFALLS #253），可用串口 SysRq-b（BREAK+'h'+'b'）或 `echo b > /proc/sysrq-trigger`，无需物理 POR。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] M1 7.3-rc7 重基树显示回归（2026-10-14 同窗口 A/B 定案）：同硬件同启动路径下 vk94（7.2 血统）面板正常出桌面，而 M1 7.3-rc7 树的两条臂（m1-73j vendor 栈、P4a/P4d 上游 DSI 臂）都是「有声音+背光但屏幕无内容」⇒ 不是 Q28 粘态、不是面板坏，是 M1 树自身的显示回归。判据关键：vk94 与 m1-73j 都 dsi_isr=41（视频引擎在跑、grim 能出图），但只有 vk94 有画面；P4a/P4d 上游臂 dsi_isr=0（上游 DSI host 根本没起视频引擎）。回归在**内核侧**（两树源 DTS 几乎无差异，仅注释/无关节点）。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 显示类实验的复位纪律（2026-10-14 实锤修正）：「连续温复位（reboot2 bootloader→fastboot boot）会粘 DSI 坏态、必须物理 POR」这条旧口径**不能滥用**——本轮做了约 10 次温复位后一度以为全部现象都是粘态，但用户纠正 vk94 该窗口正常出桌面。正确做法 = 每轮实验都带上**已知健康的对照臂**（如 vk94 日常镜像）跑一次，用对照臂结果判定「是窗口坏还是被测臂坏」，不要先归因到粘态。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 判据 `q28-devprobe2.sh` 的 L2 正则漏了 `vblank timeout`（原只有 ctl reset failure / frame done timeout / vblank wait timed out / drm_crtc_wait_one_vblank），对上游 DSI 栈会报 GOOD-NOSESSION 实为显示未工作，已补。教训：判「面板是否点亮」不能只看 card0+phoc/phosh——两栈失败签名不同（vendor = command DMA timeout；上游 = ctl N reset failure -22 + vblank/frame-done 风暴），必须三类风暴签名一起数。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28「vendor DSI 命令路径专有」假设已悬置（2026-10-14）：P2b 上游 DSI 臂 10-13 记为 GOOD 的那次完全没看屏幕、10-14 同 sha（71016e08）复测 4/4 全是 ctl reset failure + vblank 风暴 ⇒ 那次 GOOD 是判据伪阳性，不能当「Q28 被修复」；但 Q28 签名在上游路径恒 0 属预期（上游不用 bonded_cmd_*），所以也**不能**据此说 Q28 是 vendor 专有。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] P4a DSC 1.2 补丁已否证（2026-10-14）：面板 csot_pp8807hb1_1 声明 .dsc_version_minor=2，上游只按 1.1 PRE-SCR 算 RC 参数且不给 first_line_bpg_offset，故移植 vendor 的 DSC-1.2 (SCR) RC 参数 + first_line_bpg_offset（+46/−2，分支 p4/p2c-dsc12）——健康发（L1=L2=0、phoc/phosh/wayland 全起、可交互、音量键有声、电源键可控背光）下屏幕仍纯黑 ⇒ DSC 不是缺口。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 上游 DSI 栈缺 video 使能（2026-10-14 探针臂定案）：P4d 诊断探针显示 `DSI_CTRL` bit1 VID_MODE_EN 已置位（ctrl 0x171→0x173）、bridge_enable/host_enable 都被调用、时钟侧 dsi0vco=756.8MHz 与 disp_cc_mdss_pclk1_clk_src=172.992MHz 都对，但 dsi_isr 恒 0、modetest 强制 modeset（CRTC fb=111/1904x3040）后面板仍纯黑 ⇒ 上游 DSI host 根本没让 video 跑起来，缺的是 trigger/engine start 那块（与 vendor 栈 dsi_isr=41 的关键差异）。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 暖复位路径（reboot2 bootloader→fastboot boot）会污染显示臂实验台架，与补丁无关：E1b 暖链得 L2STORM（dsi_isr=0 + 127 条 reset/vblank 风暴），但**已知 GOOD 的 E1 镜像走同一暖路径也 L2STORM + dsi_isr=0** ⇒ 控制组证明台架坏、不能据此判补丁。用法：判显示臂必须真实 POR；若只能暖链，先跑已知 GOOD 镜像做控制组，并检查 dsi_isr 累计值（暖链恒 0）。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 内核 DSI PHY 探针写寄存器时注意成员路径：`struct dsi_pll_7nm` **没有 `pll_base`** 成员，正确写法 `pll->phy->pll_base`；`dsi_7nm_phy_enable()` 里只有 `phy`/`base`。写错会 3.9s 即编译失败（`error: 'struct dsi_pll_7nm' has no member named 'pll_base'`），只影响 dsi_phy_7nm.o。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 单变量显示/内核臂打包纪律（2026-10-14 实践）：ramdisk/DTB 必须**逐字节复用参考成品镜像内的组件**（从现成 boot.img unpack 取，而不是用 out/rootfs-*.cpio.gz，两者不同），保证唯一变量在内核；UTS 必须精确钉死（`CONFIG_LOCALVERSION="-debug-<sha>"` + `CONFIG_LOCALVERSION_AUTO=n`），否则 `-dirty`/`-g<sha>` 后缀会破坏构建身份可比性（提交时漏 add tracked 文件也会带 dirty）。设备/主机上 `rm` 跨设备会报 EXDEV（/tmp vs 家目录不同挂载），属无害噪声。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] M1-7.3 树上 Q28 与日常内核的耦合：Q28 坏发（~50%）同样出现在 M1 臂上（E1b POR 第一发即 command DMA timeout status=0x2200200 → bonded command DMA failed master=-110 peer=0 @95.58s，L1=2；日常 vk94 的 SysRq-b 重启也命中 9.07s 经典签名 + phoc=0）。区分办法：坏发看 `command DMA timeout` / `dsi_isr=0` / `hw recovery is not complete for ctl:1`；好发看 dsi_isr=41、L1/L2=0。设备侧 `q28-watchdog.sh` 是 **disabled** 状态（/etc/q28-watchdog.disable），不会自愈，需手动 SysRq-b 重试等好发。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] M1-7.3 树 boot 停滞 91 s 的真因 = 内核在 WCN/ath12k 首探的 MHI 等待上卡住（`[4.90] mhi mhi0: Wait for device to enter SBL or Mission mode` → `[96.08] ath12k: failed to set mhi state: POWER_ON(2)` -110），不是 `insmod fsa4480` 阻塞。决定性判据 = `[96.45] Freeing unused kernel memory` + `[96.50] Run /init as init process`（PID1 到 96.5 s 才被 exec）。对比日常 vk94：WCN 探针 23.09 s 起、0.4 s 内成功 ⇒ M1 树探针过早（4.4 s）。修法（E1g）= `CONFIG_ATH12K=m` 让用户态晚加载、不 gate init ⇒ `Run /init` 回到 4.49 s、GUI ~7 s。注意 `ps -o etimes -p 1` 会给误导值（≈uptime），不能用它判断 PID1 何时起。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] scripts/arm-console-run.sh（零写盘启动显示臂 + 串口内核控制台取证，不依赖 SSH）的 verdict 行解析 bug：`[: 0\n0: 需要整数` —— L1/L2 计数被 multi-line 输出打断导致打印成两行，判据 VERDICT 仍可读但计数不准。用法 `scripts/arm-console-run.sh <boot.img> <label> [wait_s]`（前提设备已在 fastboot），输出 logs/arm-<label>-<ts>/{console.log,verdict.txt}。设备侧 console=ttyGS0,115200 经 USB gadget 暴露为 /dev/ttyACM0（控制台**无 shell**，只有内核日志）。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `fastboot` 对复杂脚本/封装的支持有限，可能根本不响应——`fastboot boot` 等指令必须作为**单条纯命令**直接执行（用户 2026-10-14 明确要求记为高优先级）。实测：`scripts/arm-console-run.sh` 这类复合脚本里的 `fastboot boot` 被静默取消（无输出、不进 fastboot），而手敲单条 `fastboot boot <img>` 立即成功（Sending OKAY 1.9s / Booting OKAY 10.1s）。同理 `to-fastboot.sh` 可用但其中封装的 fastboot 步骤不可靠。 — Failed: 复杂脚本内嵌 fastboot 调用静默失效，被误判为设备/脚本问题 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] fastboot 对复杂脚本/封装命令支持有限：把 `fastboot boot <img>` 放在复杂的 bash -c / wrapper / 多步脚本里（尤其带变量插值、nohup、串口 reader 同批）时可能根本不响应或静默不执行（表现为容积里无输出、日志目录未创建、设备仍停在 fastboot）。可靠做法 = 用**单条纯命令**执行 `fastboot boot out/xxx.img`（发送+启动两次 OKAY 约 12s），串口/SSH 读日志单独另开一条命令或后台进程。同理，需要看 fastboot 输出时不要把它塞进复合脚本。 — Failed: 用户 2026-10-14 观察并确认「脚本似乎没有启动fastboot 的boot指令，可能是复杂脚本对fastboot支持不好」，随后拆成单条命令即成功 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] fastboot 对复杂脚本/批量封装的调用支持有限，可能根本不响应：把 `fastboot boot` 塞进带引号、变量插值或多步逻辑的复合脚本（含 nohup/bash -c 包装）时，常表现为「脚本跑了但 fastboot 没启动镜像」或整段静默不执行（输出为空、日志目录未创建）。可靠做法 = 每条 fastboot 命令单独提为一条纯命令直接执行（PITFALLS #3 的口径），进 fastboot 用 scripts/to-fastboot.sh（PSCI vendor reset）单独一步，再单独一条 `fastboot boot <img>`，串口取证另起 reader。用户 2026-10-14 明确要求记住此条。 <!-- created=2026-10-14, last=2026-10-14, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q24 真机理（2026-10-15 复核，报告 reports/q24-causal-audit-20261015.md）：触发源不是「camcc+cambist 电学配对」，而是 rpmhpd 电源域 provider 的 sync_state 门控。rpmhpd.c：state_synced=false 时 aggregate 把全轨夹到最高档 (level_count-1)，仅 gfx/gmxc 有 presync_floor；driver core 在所有消费者绑定后调 rpmhpd_sync_state() 释放 clamp、按真实票重投 → 批量投 0（即 PITFALLS #197/F8 现象）。设备实测全天候只有两条 pending：`qcom-rpmhpd 16500000.rsc sync_state() pending due to ade0000.clock-controller (camcc)` 与 `… 1760000.clock-controller (cambist)` ⇒ 装其一仍 pending 存活、两个都装才触发。软件层验证（N1 配对加载前后 dmesg rpmhpd pending + pm_genpd current_state，不熄屏；N2 两 CC power/control=on 保票后真熄屏）。 <!-- created=2026-10-15, last=2026-10-15, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机（xuqianhui 新机，换机后）fastboot = ~/.local/opt/platform-tools/fastboot（v37.0.1，从 dl.google.com 直接下载 zip 解压，无需 sudo）；系统 PATH 里原本没有 fastboot。设备不支持 fetch：`fastboot fetch` 恒报 Unable to get max-fetch-size / Device does not support fetch command（会生成 0 字节文件）⇒ 备份分区只能用设备侧 `dd if=/dev/disk/by-partlabel/<part>` 再 scp 回主机。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] fastboot 不存在 fetch 功能（本 ABL 支持不了）：`fastboot fetch` 报 `Unable to get max-fetch-size. Device does not support fetch command.`（2026-10-17 复核，此前 2026-10-06/10-08 已两次证实）⇒ 「刷写前先用 fastboot fetch 备份分区」的配方一律错。备份分区可行手段只有：① 设备侧 `dd if=/dev/disk/by-label/<part>` 后 ssh/tar 取回；② EDL(9008) 读回；③ 事先已有的镜像副本。写文档/脚本前先查设备侧能力，别照抄 `fastboot --help`。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 文档/脚本里的命令能力必须在本机实测验证过才可写入口径——`fastboot --help`/工具帮助文本列出的子命令不等于本机设备支持（fastboot fetch 即典型幻觉）。用户要求「类似检查所有可能记错的地方」= 对全库做能力幻觉审计（grep 所有文档/脚本里的工具/命令用法，逐条核对是否本机可行），并对确认错误的处做替换修正 + 新增 PITFALLS 条目记录。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 写文档/脚本前应先在本机实测命令能力，不要照抄 `--help` 或历史文档；本仓曾有多处把 fastboot fetch 写进备份配方（INDEX/RUNBOOK/PITFALLS/AGENT-OPS/TASKS/build-locked-chain.sh/DEVICE 共 6+ 处）——属「能力幻觉」类错误，排查时要全库 grep 同类可能记错的命令。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 主机/文档排查「记错的能力」时的两类区分：① 命令能力幻觉（如 fastboot fetch、fastboot reboot fastboot 未验证）→ 改写成正确做法；② 文档指向已归档/不存在的脚本（本仓 26 处，如 scripts/q24-*.sh、q28-*.sh 已在 commit 6265d32「归档 32 个一次性 Q24/Q28 脚本」中被归档）→ 属文档指针陈旧，不是能力误判，登记为 debt 而不混入幻觉清理。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] fastboot 不存在 fetch 功能（2026-10-17 第 3 次实测证伪，用户原话「带有 fetch 的一律是幻觉」）：fastboot 客户端有 fetch 子命令但设备 ABL 未实现，实测 `Unable to get max-fetch-size. Device does not support fetch command.`。备份分区只能：① 设备侧 `dd if=/dev/disk/by-partlabel/<part>` 后 ssh/tar 取回；② EDL(9008) 读回；③ 已有镜像副本。写文档/脚本前先查设备侧能力，别照抄 fastboot --help。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 从内核 Image（Android boot.img 或 Image.gz 尾部）反查基线用的 DTB：Drive 用 Python fdt scan（fdt first 在 Image 文件里的偏移 + magic 检查 FDT_MAGIC=0xd00dfeed、total size 字段），2026-10-17 实测从 `boot_b-m1-baseline-f3-20261017.img` 里提出 153101B 板级 DTB，反编译后可与我们重放版 DTB（140537B）做节点名/diff 对账。内核 Image 内的裸 DTB 往往多块，要找 total size 匹配的那块，别拿第一个 fdt 头（常常是 `device-tree$header` 之类 730B 小段）。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] geekidos-linux 是 shallow 克隆 ⇒ 任何 `git fetch` 新 ref 都被拒：`fatal: Not a valid object name <sha>^{commit}`、`warning: 拒绝 refs/tags/vkNN 因为浅克隆的根不允许被更新`。要从某个 vk tag 取树内容只能用**本地 worktree**（`git worktree add build/vk83-tree vk83`）做文件级差分，不能 fetch 远端补对象。 — Failed: 换机后重建 payload 时想 fetch vk83 等 tag 失败；eyeballing 浅克隆限制 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 本机 `~/.local/bin/dt-validate` / `dt-doc-validate` 的 shebang 指向 `~/.local/opt/dtschema-venv/bin/python`，但该 venv 里 `import dtschema` 报 `ModuleNotFoundError: No module named 'dtschema'`（换机后 venv 未重装）。`dtbs_check` 因此不可靠；判断 DTB 保真度改走「抽基线 DTB + dtc -I dtb -O dts 与重放 DTB 文本 diff」的路子。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] geekidos-linux 是浅克隆 ⇒ 对已存在的 tag（vk81/vk82/vk83）`git fetch` 报 '拒绝 refs/tags/vkNN 因为浅克隆的根不允许被更新'、对新对象报 'Not a valid object name'（rc=128）。替代做法 = 用 `git worktree` 检出对应 tag 做文件级差分（本项目实测可行），不要试图 fetch 更新 ref。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] geekidos-linux 是浅克隆（.git/shallow），fetch 已有 ref 会被拒（`warning: 拒绝 refs/tags/vk81 因为浅克隆的根不允许被更新`，rc=128），`git fetch <hash>` 报 `无法找到远程引用`/`Not a valid object name`。替代做法 = 建本地 worktree/克隆做**文件级差分**（`git worktree add build/vk83-tree vk83`），不要试图 fetch。 — Failed: 浅克隆仓库不能 fetch 新 ref；payload 取源必须靠本地 worktree 文件对比 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 换机后 out/ 里的 ramdisk cpio 与 tools/mkbootimg 全部丢失（MIGRATION-LOST），且本机 python3 **没有 pip / 没有 mkbootimg 模块**（`ModuleNotFoundError: No module named 'mkbootimg'`，/usr/bin/python3 无 pip）。可行路径：① 从抢救回来的基线 boot_b 镜像原位抽出 ramdisk（boot.img v2 头 magic 'ANDROID!'、page 4096、kernel_size=20799275、ramdisk_size=64622358，kernel 偏移 4096、ramdisk 紧随 kernel 之后）——这就是能用的那个 ramdisk；② 自研 boot.img v2 头打包器放 tools/mkbootimg/mkbootimg.py，用「复刻基线镜像逐字节比对」做自校验。 — Failed: 迁移丢失 + 无 pip 环境下打包 boot.img <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 手写 Android boot.img v2 头极易把字段顺序写错：正确布局（在 8s magic + 10 个 u32 之后）是 name[16], args[512], id[32], extra_cmdline[1024]，随后才是 recovery_dtbo_size(u32), recovery_dtbo_offset(u32), header_size(u32), dtb_size(u32), dtb_addr(u64)。实测把 `header_size`/`dtb_size`/`dtb_addr` 排在 1632 而非 1644 就会 selftest FAIL（`first diff at byte 1632: 00 != 7c`）。本机内核用 v2 头，header_size=1660（0x67c），dtb_size=300，dtb_addr=0x01f00000。调试提示：`ljust(PAGE)` 若用错 PAGE 变量会出现 4084 而非 4096 的诡异长度。 — Failed: 自研 mkbootimg selftest 连续两轮在字节 1632/1644 失败——v2 header 尾部字段偏移写错 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 本机（换机后 xuqianhui）out/ 的 ramdisk cpio 与 tools/mkbootimg 已随迁丢失（MIGRATION-LOST），但**可从已抢救的基线 boot_b 镜像原位抽出 ramdisk**：boot.img v2 头（魔法 'ANDROID!'、page 4096、kernel_size/ramdisk_size 在头里），kernel 偏移 4096，ramdisk 紧随 kernel 之后（内层是 gzip：1f8b0800）。python3 无 pip 时需自研打包器。另：`scripts/build-boot.sh`/`assert-kernel-sane.sh` 的默认内核路径是 `linux/arch/arm64/boot/Image.gz`（linux → geekidos-linux 符号链接），in-tree 构建（LOCALVERSION=-vkNN）与 out-m1-73 外置构建是两套，闸门只查前者。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `fastboot boot` 启动自定义 boot.img 时，`/lib/modules/<新UTS>` 必须先在设备上就位——否则内核起来后 modules 全空（lsmod 零条），DP PHY/altmode 等 deferred，msm DPU 组件不齐永不 bind ⇒ 无 card0，会被 Q28 看门狗判成「坏发」而误归因。实测 2026-10-17 vk127：s1/s2 缺模块树 = 无 card0；装上 1497 个 .ko（85M，zstd/tgz 流式传）后 s3 立即 bind（msm_dpu bound ae94000/ae96000.dsi）并出现 card0。判据：boot 后先查 `lsmod | wc -l` 与 `/dev/dri`。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 自研 boot.img v2 头打包器的两个必踩字节级坑（2026-10-17 实测）：① AOSP 把 20 字节 sha1 digest 补零填进 32 字节 id 槽——直接 `hdr[576:608] = digest` 会让整个 header 缩 12 字节，所有后续字段错位（header_size/dtbsz/dtba 全落到错误偏移）；必须 `digest + b'\0'*12`。② 用 `bytearray` 分段 seek/write 容易出隐性 bug，改为「内存拼装完整镜像再一次写出」。自校验方法 = 用两个真实镜像（boot_b-m1-baseline-f3 / boot_b-before-vk94）逐字节复刻比对。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 判读时「无 card0」不等于 Q28 坏发：须先排除「模块树缺失导致 DPU 不绑定」这类构建侧缺件。诊断顺序：`lsmod` 条数（空=模块树没上）→ `dmesg | grep 'bound ae94000.dsi'`（缺=DPU 未绑）→ 再看 L1 签名。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] RAM 启动（`fastboot boot`）自编内核而不先部署 `/lib/modules/<新UTS>` ⇒ `lsmod` 空（所有 modprobe 静默失败）⇒ DP PHY/altmode 缺 ⇒ DP 控制器永久 defer ⇒ DPU 不绑定 ⇒ 无 `card0`；Q28 看门狗会按 `card=no` 在 ~85s 自动重启，表现为伪 Q28 坏发。诊断信号：`/sys/kernel/debug/devices_deferred` 里有 displayport-controller；dmesg 无 DPU bound 行。判据：换任何新 UTS 内核后，先部署 1497 个 .ko（85M）再评显示。2026-10-17 vk127 s1/s2 两次踩坑，s3 部署模块树后正常。已写 PITFALLS #293（sessions/40-RAM起新内核不部署模块树就没有DRM.md）。 — Failed: 缺模块树导致无 card0，被看门狗误判 Q28 坏发 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 在 Q28 坏发 boot 上仍可做相机/无显示依赖的验收：本次在 Q28 BAD（`boot_id=26262eee…`、dsi_isr=0、Q28sig 逐发递增 4→9）的会话里，相机前/后摄照样出流并抓到真实场景图。反过来，Q28 坏发态下用户无法用屏幕手动拍照，因此人工目视验收要另设通路（agent 侧抓帧转 PNG 给用户看）。 — Failed: 曾默认「Q28 坏发 ⇒ 显示栈废 ⇒ 相关实验作废」，实际只有显示相关项作废 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备侧 `dpms` 控制口不可写：`/sys/class/drm/card0-DSI-1/dpms` 是 `-r--r--r--`（只读），直接 echo Off 会 `Permission denied` 且静默保持 On（表现为「dpms On→On，没灭屏」的 INVALID-NO-BLANK 轮次）。设备侧真灭屏必须走会话总线（`busctl set-property … org.gnome.Mutter.DisplayConfig PowerSaveMode`）或内核 DPMS 路径；脚本要区分 A（ddcci/dbus）/K（kernel）两种臂并显式校验 On→Off 真跃迁，否则整轮样本是假阴性。 — Failed: 2026-10-17 N7 实验 ARM-K 6 轮全部 On→On 无效，重写脚本后才拿到真实跃迁 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[failure] RAM 启动自编内核（`fastboot boot`）前若没把对应 UTS 的 `/lib/modules/` 部署到持久根，会 `lsmod` 空 ⇒ DP PHY/altmode 模块缺 ⇒ DP 控制器永久 `-EPROBE_DEFER` ⇒ DPU 组件集不齐 ⇒ 无 `card0`，Q28 看门狗 84.9s 后按 `card=no` 自动重启 —— 极易误判成「Q28 又坏一发」。判别：Q28 坏发一定有 card0，且首条 DCS/`command DMA timeout` 签名。 — Failed: 2026-10-17 vk127 s1/s2 两次踩坑（后部署 1497 个 .ko 后 s3 起正常） <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] Q28 与 Q24 在当前实验条件（vk127 / 7.3 线）互不构成混杂：GOOD 态与 BAD 态各跑 6 次「完整 19 模块相机栈 + 真实灭屏 30s」全部存活（boot_id 全程不变），7.3 线累计 30 发存活，而 vk64 线仍是 1 死/2 发 ⇒ 显示态不是 Q24 的判别量，血统才是候选变量。以后不必为「Q28 坏发会污染相机/Q24 结果」而停实验。 — Failed: 此前长期担心 Q28 显示态会污染 Q24 判读 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 相机 RAW「全暗」判读分三级，别一看到暗就判链路坏：① 均匀 ~16 且 uniq=3 = 完全没光（AGC 未收敛或遮挡）；② 长采 N 百帧后 p50 升到 ~37、mean 38 = 正在收敛（有光但弱）；③ B/G/R mean=0.0 而 max 有值 = 该帧有极少数饱和像素、画面主体仍暗。真正判链路好坏看 STREAMON rc + 字节数（4080×3072 RAW10 = 15679488 B；libcamera 输出 4080×3072×8×3 帧 = 150994944 B）+ 目视 PNG，不要只看首帧均值。 — Failed: 用户反馈「已经是 Q28 坏态，无法手动拍照，不过我已经将前后摄像头移动到有光地方」，需要据此区分没光 vs 链路坏 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 用户拿「马达 1/2 good」反问是否该改用 vk127 测相机时，正确姿势是先纠正统计口径再回答：vk127 的 Q28 样本合规 5 发（s4/s5/s6 GOOD、s7 BAD，加打折 s3）4/6 = 67%，二项单侧 p=0.344 不显著，马达那次 1/2 是最低样本；且 Q28 不是 Q24 的靶——N2' 12/12 存活与 N5 致死都发生在 Q28 坏发 boot 上，显示态是协变量不是判别量。不要顺着用户的数字结论走。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 写 Python 单行脚本处理 RAW 图时不要用 `import numpy as np if False else None` 这类条件 import 表达式——它是 SyntaxError（`cannot use conditional expression as import target`），整段不执行。设备侧 python3 无 numpy，拆 RAW 帧要用纯 PIL/bytes 遍历（本机主机侧有 PIL 可拆 PNG）。 — Failed: 2026-10-17 vk127 相机后摄 RAW 拆帧时踩到，报 SyntaxError 导致没有生成 PNG <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 设备侧 `v4l2-ctl --stream-mmap` 返回 `VIDIOC_STREAMON returned -1 (Operation timed out)` + dmesg `qcom-camss ad27000.isp: CSID reset timeout` / `Failed to power up pipeline: -110` = **CSID/VFE 流水线复位失败**（不是格式问题，也不是 Q28：同 boot 下前摄正常）；`media-ctl` 报 `Unable to parse link: Resource busy (16)` = 上一次 stream 未干净释放，需重载相机模块或重启相机栈才能恢复。 — Failed: 2026-10-17 后摄多次 STREAMON 超时，重载模块后恢复 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[insight] 用户在现场报「Q28 坏态、无法手动拍照，不过我已经把前后摄像头移到有光地方」时，不要因首帧全暗就判链路坏：sensor AGC/libcamera 软 ISP 需若干帧收敛，应延长采集（如 200–300 帧）看 p50 是否上升，并用 test_pattern 区分通路问题与曝光问题；判真出流只看 STREAMON rc 与字节数。 — Failed: 首帧均值均匀 ~16 是好发/坏发都常见的（无光/未收敛）现象，误读会导致把正常链路判成驱动坏。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] libcamera `cam --capture=N` 打印的前两帧 fps（如 29.99/30.4）不能当作持续帧率：它只是首帧建立后的瞬时值。长采真值远低（本机 vk127：原生 4096×3072 ≈1.1 fps、1280×720 ≈2.0 fps，log 里 0.29/0.75 fps 才是真值）。判帧率必须看长采末尾的 fps 行或计时统计。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] `/sys/class/drm/card0-DSI-1/dpms` 在设备上是 0644（-r--r--r-- root root）：非 root 写入 Permission denied；即使是 root 写入也要约 2.5s 才生效（t+0.5 仍 On、t+2.5 才 Off）。熄屏自动化脚本必须带生效延时 + 回读校验，否则会得到一排假 INVALID-NO-BLANK。另：Q28 坏发会话里 phoc/phosh 会崩、SBU 为空 ⇒ 走会话总线的 dpms（gdbus/loginctl）不可用，需备「不依赖会话总线」的内核 DPMS 路径。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[failure] 内核树改 .config / LOCALVERSION 后 `make` 报 `"..." exceeds 64 characters`（utsrelease.h 生成失败）：根因是前一次构建残留在 include/config/auto.conf 里的 CONFIG_LOCALVERSION/LOCALVERSION_AUTO 与 .config 叠加重复拼接（如 `-debug-debug-vk127-...-00002-...-dirty` 双份）。修法 = 清 include/config 与 include/generated 后重编，或先 `make mrproper`/重新 olddefconfig。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[convention] 依赖设备在线长跑的任务（叉编、apt/apk 装包）中途掉 USB 很常见：设备 enx 网卡消失 + ping/SSH 全断 = 设备断电或 USB 链路掉，不是网络问题。恢复 = `fastboot devices` 看到 `HA2EXB0E fastboot` 后 `fastboot reboot`，约 24s 后 SSH 自动回来（2026-10-17 实测）。不要反复远程重试、也不要以为设备砖了。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] 设备失联判读：主机侧 USB 网卡 enx021e5eede102 消失、lsusb 出现 18d1:d00d（Google fastboot VID/PID）⇒ 设备在 fastboot，无写盘处置 = `fastboot reboot`（约 24s 回系统）。不要误判为系统挂死或 Q24/Q28。另注意：用户在平板上原生编译（ninja/make 8 核满载）会过热，用户会手动断电重启到 BL——遇到『编译中途失联』先怀疑过热而非驱动 bug。 <!-- created=2026-10-17, last=2026-10-17, project64=eTcwMC1lbGRlbg -->
-§
-[tool-quirk] avbtool 的可靠获取路径（2026-10-18 实测）：`https://android.googlesource.com/platform/external/avb/+/refs/heads/main/tools/avbtool.py?format=TEXT` 用 base64 -d 解出（文件在 tools/ 子目录，名字是 avbtool.py 而非 `avbtool`；codelinaro/avb 的 raw 路径 404）。本仓 scripts/sign-boot-b.sh 依赖 tools/avbtool.py + bootslot-b/avb.key 自签 b 槽，而 tools/ 因 .gitignore 的 `/tools/` 随换机丢失；签名后镜像 pad 到 96 MiB，fastboot 写回 readback sha 一致。 <!-- created=2026-10-18, last=2026-10-18, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 在设备上跑可能挂住的命令（如 `waydroid session start`）必须包 `timeout`，否则会话被卡、只能用户中断——2026-10-18 Q28 坏态时屏幕无法确认容器是否拉起，用户原话「命令没有设置超时」。另：waydroid session 需要 DISPLAY/WAYLAND_DISPLAY（否则报 'Unable to autolaunch a dbus-daemon without a $DISPLAY'），且 Q28 坏态下 phoc 可能尚未起。 <!-- created=2026-10-18, last=2026-10-18, project64=eTcwMC1lbGRlbg -->
-§
-[correction] 用户 2026-10-18 当场纠正：「设备当前是 q28 坏态，屏幕无法确认是否拉起了容器。命令没有设置超时」——凡可能阻塞/交互的命令（`waydroid session start`、`lxc-start`、ssh 轮询、容器启动类）必须包 `timeout -k`；且设备处于 Q28 坏态（面板未点亮）时不要用「屏幕上看不到」当启动成功/失败的证据，改用设备侧客观读数（`waydroid status`、/dev/binder、ps、dmesg、card0）。 — Failed: 前台阻塞命令未设 timeout，导致工具调用被用户手动中止；且当时设备 Q28 坏态无显示，无法目视确认容器是否起来。 <!-- created=2026-10-18, last=2026-10-18 -->
-§
-[correction] 用户纠正（2026-10-18）：「设备当前是 q28 坏态，屏幕无法确认是否拉起了容器。命令没有设置超时」——Q28 坏发（面板未点亮、屏幕全黑）下跑 `waydroid session start`、`lxc-start` 等前台阻塞命令必须包 `timeout -k`、丢后台写日志，并用 `waydroid status`/进程/日志判定是否起来，不能指望目视屏幕；否则命令挂死且无人能判断状态。 — Failed: 硬件坏态下前台阻塞命令会让会话卡死且无判据 <!-- created=2026-10-18, last=2026-10-18, project64=eTcwMC1lbGRlbg -->
+# y700-elden — 内核/引导/显示类失败与洞察（355 条）。2026-11-09 从全局记忆 failures.md 下沉（全局现已迁到 ~/.pi/agent/memory/，旧目录在 ~/.pi/agent/_archive/2026-11-11-hermes-memory/），原文未改；全局序号对应 `~/.pi/agent/_archive/2026-11-09-memory-audit/failures.md.round5.orig`。
+---
+刷机核心：① 用 qfil/默认全量刷会漏写关键分区（vbmeta/super/init_boot）→ 看似成功但 boot 链不配套，必须 EDL 逐分区补并读回哈希；② 把 fastboot「传输完成」当镜像完整是错的，大镜像会静默损坏，必须读回比对 hash；③ 坏线/老 USB 口导致的断联常被误判为设备砖——先换线换口；④ boot_a 是 vbmeta_a 的 chained AVB 分区，受信 AOSP testkey（公钥 sha1 2597c218，rollback index 3 = 1738713600）；第三方用别的 key+rollback=0 签会被 ABL 拒（fastboot boot 借道 AVB 看着能起，易误判），需 avbtool add_hash_footer 带原厂 props 与 rollback_index；⑤ 不要依赖 TWRP 恢复（ramdisk 体积受限，可能起不来），备 root 替代路径。
+---
+改 GPT/缩 userdata：TWRP 在线 resize.f2fs 保不住——ZUXOS 检测到容量不符会反复重启卡 logo，fs_mgr 也因 f2fs 自认旧容量挂载失败 bootloop。必须 GPT 手术后 `fastboot erase userdata` + `erase metadata` 让 Android 重建。
+---
+槽位陷阱：`fastboot boot <img>` 失败（Status read failed / No such device）会把 current-slot 翻到 b，而 b 槽引导链是另一套固件（vbmeta_b 密钥 8fcb864f…）永远起不来。失败后先单条 `fastboot reboot bootloader`，等 6–8 秒再重试单条 `fastboot boot`。另：自编 Linux 从 b 槽直启时 Linux 不更新 misc 里 bootloader_control 的 tries_remaining，重启几次后 ABL 判定该槽不可信直接停在 fastboot；恢复 `fastboot --set-active=b` + reboot，持久修复要在 Linux /init 写 misc 偏移 2048。
+---
+电源/桌面（主线 GEEKiDoS 7.2）：① 睡眠即挂死——/sys/power/mem_sleep 默认 [deep]，进 mem 就黑屏死机（PSCI SYSTEM_SUSPEND 未支持），缓解 `echo s2idle > /sys/power/mem_sleep` + 关空闲灭屏；② Phosh 熄屏后无法唤醒——phoc 打 "connector DSI-1: Turning off"，dpms=Off、bl_power=4，外部 echo 被拒（DRM master 在 phoc 手上），phoc 退出后 seatd 卡 "seat is VT-bound"，此时 reboot -f 最省事；③ 插充电器仍净掉电（PMIC charger 未驱动），长任务前先在 Android 充满，勿依赖边充边跑。
+---
+Linux /init 不 export HOME 时 PID1 继承 HOME=/，phosh/phoc/dconf-service 把用户库写进 /.config/dconf/user，表现为 gsettings/dconf 改了不持久。修法：会话启动脚本 export HOME=/root 并迁移该文件。
+---
+设备实验脚本禁忌：不要把 reboot/fastboot boot 等副作用与长轮询写进同一条 bash 命令——harness 按超时杀整条命令（"Command aborted"），副作用是否发出无法判定；一条命令只做一件事，轮询自带 timeout。ssh 里也不要长 sleep 等设备（会被中断），应 nohup 起后台后立即返回，再用独立短命令轮询，每次 ConnectTimeout=6。`adb shell su -c '<复杂命令>'` 不可靠（复合/带引号命令被吞），可靠做法是在设备端 root 终端里逐条执行。
+---
+间歇性设备故障的观察者效应：为抓「静默硬复位」装 per-boot kmsg→UFS 落盘钩子后，被测坏内核从 ~1min 一次重启变成稳定 400s——取证装置本身改变了时序。① 用最小侵入读取（SSH 读 dmesg），改动前后各取样本；② 单次「没复现」无统计意义，需多轮长时窗；③ 主机 ModemManager 会独占 /dev/ttyACM*（EBUSY），USB-NCM SSH 更可靠。
+---
+设备 fastboot 回退产物位置：out/boot_b-vk49.img（100663296 B，vk49 时期的 b 槽备份，2026-10-04）；bootslot-b/ 目录是原厂槽位镜像集（dtbo_b/boot_b_vk40-ram.img/vbmeta_b_flags3.img 等）。
+---
+给用户执行 fastboot 命令时必须是「单条、可直接手敲」的形式，禁止用封装脚本（to-fastboot.sh / cycle.sh 等）跑 fastboot——命令有限、深层嵌套难预测、故障率高；脚本只用于主机侧构建/打包。每次进 fastboot 后、任何操作前先 `fastboot --set-active=a`。
+---
+fastboot boot 失败会让 current-slot 翻到 b，而 b 槽引导链是另一套固件/另一把密钥，永远起不来。fb 报 `Status read failed` 时接 `fastboot reboot bootloader`，等 6~8 秒再单条重试。回 Android：先 `fastboot --set-active=<另一槽>`（非破坏）再 reboot。
+---
+安卓端运行 Linux 时，/dev/ttyACM0 是设备侧 USB gadget（ttyGS0）提供的，只在 Linux 运行时存在；UEFI/早期引导阶段没有串口可取证，只能靠屏幕现象判断（如 EDK2 DxeCore 的 Synchronous Exception 刷屏）。
+---
+LZMA 解压出的 FFS type 0xb section 报告 "suspicious header" 属于正常现象（EDK2 卷常见），不要当构建错误排查。
+---
+Mu/EDK2 的 stuart 依赖来自 Azure DevOps 内网 feed（pkgs.dev.azure.com/projectmu/*），不是 nuget.org。mono 的 nuget.exe 直接解析该 feed 会 TLS/证书失败；可靠做法：用 curl -x http://127.0.0.1:7897 直接抓 nupkg，再用 nuget 本地目录源（Feeds used: <本地目录>）喂给 stuart。 — Failed: 在本机配置 mu_wide_platforms 本地编译链时，mono+TLS 无法访问 Azure feed，且直连 flatcontainer 的 URL 返回 404（需从 service index 解析出真实 flat2 GUID URL）
+---
+EDK2/Mu 本地构建时若出现大量 'Compiler #7000 from : Failed to execute command'，通常是 toolchain 环境变量（CLANGPDB_BIN / CLANGPDB_AARCH64_PREFIX）没导出到 stuart_build 的环境里，而非编译器缺失；确认 /usr/lib/llvm-21/bin 下有 clang/clang++/ld.lld/lld-link/llvm-ar/llvm-lib/llvm-nm/llvm-objcopy/llvm-rc 后带 env 再跑即可。同一平台本地全量构建 DEBUG 约 237s。 — Failed: 本地 stuart_build 首轮失败，日志只有无信息的 Compiler #7000
+---
+EDK2 stuart/Mu 构建排障：`ext_dep.yaml` 里 nuget 依赖的 `source` 可指向本地目录（把 .nupkg 放进去，绕开 feed 与 mono TLS）；`stuart_update` 报 "We failed to install version X" 时要先 `unzip -t` 校验 nupkg 是否残包（残包不报下载错、file 仍显示 Zip）。CI（ubuntu-latest）与本地编译器版本不同（clang-18 vs clang-21）会导致产物字节不一致（FD 内容 ~64% 不同）但结构等价（同为 4 MiB FD + arm64 壳 + _FVH）。 — Failed: feed/下载/工具链变量的非显性失败模式
+---
+Mu/EDK2 的 ClangPdbToolChain 插件读 CLANG_BIN：自动探测时才会在路径末尾补 os.sep，用户自设时原样拼接——缺结尾斜杠会得到 `/usr/lib/llvm-21/binclang: not found`，表现为满屏 "Compiler #7000 Failed to execute command"。必须 `export CLANG_BIN=/usr/lib/llvm-21/bin/`（结尾斜杠不可省）；CLANGPDB_BIN 不被该插件读取，设了无效。 — Failed: 本地首次 stuart_build 因缺斜杠导致全部 clang 调用失败，误判为工具链缺失。
+---
+Mu/EDK2 本地构建依赖从 Azure DevOps 内网 feed 拉 nupkg：flatcontainer 直接路径（.../nuget/v3/flatcontainer/<id>/<ver>/<id>.<ver>.nupkg）会 404；必须先 GET index.json 拿带 GUID 的真实路径（.../_packaging/<guid>/nuget/v3/flat2/<id>/<ver>/...），该路径返回 303 重定向到 blob.core.windows.net。curl -L 直连可行（校内可直连 pkgs.dev.azure.com / nuget.org）。mono 的 nuget.exe 过不去 feed 的 TLS（证书校验失败）。
+---
+Phosh 会话在无 logind 时的已知坑（上游 Qualcomm DSI 案例，pmos-xiaomi-thunder PR#7 2026-09-22）：用 logind 后端会导致 session 被 deactivate → phoc 释放显示 → 禁用 CRTC 会挂住面板直到 watchdog 复位设备；必须 LIBSEAT_BACKEND=seatd。与本机「熄屏→重启=未解/间歇性」高度相关，暗示排查时应先分用户态（seatd vs logind / phoc DPMS-CRTC 路径）与内核态（DSI panel blank/unlp/ULPS + APSS watchdog），不要混在一起。同类案例：Marker284/samsung-gts7xllite-display-touch（SM-T735 msm DPU 修复，GNOME/Plasma 默认 dim/blank 触发）。
+---
+调试纪律：用户态服务类 bug 的排查应被主动延后并与内核态问题分开——先标出「哪些 bug 可能与用户态服务（elogind/seatd/phoc/gsettings/D-Bus 激活等）有关」并单独建 lane，避免混入内核/驱动 bring-up 的定位。
+---
+arm64 kexec 在 VA_BITS_52 且运行于 !FEAT_LPA2 硬件时的上游修复：commit 1537e55728ec（Breno Leitao，2026-08 前后）——machine_kexec.c 的 trans_pgd_create_copy 原用编译期 PAGE_OFFSET(52-bit)，应改为 _PAGE_OFFSET(vabits_actual)；否则线性映射被按 52 位克隆约 16 倍（~RAM/32），KASAN 关闭时表现为慢/耗内存，是否致挂死待验证。排查 arm64 kexec 挂死时应先确认树里是否已含该修复。
+---
+定位 kexec/内核切换期间挂死的分支点必须有能在跳转期间存活的 console：ttyGS0（USB gadget 串口）在 kexec 时必然断开，输出「戛然而止/Bye!」之后什么都没有是设计使然，不能据此定位故障点。pstore/ramoops 在无 panic 的硬挂场景也为空。需要独立存活的 console（硬件串口等）才能取证。
+---
+kexec_file_load 热重载硬挂的取证分析（archive/topics/KEXEC-2026-10-05.md）：装载成功（RC=0、/sys/kernel/kexec_loaded=1）但 kexec -e 硬挂整机（无 panic/无看门狗复位，需物理复位，复位后 pstore 空）。两个主机侧硬缺陷：① --dtb 对 kexec_file_load 是空操作；② 本树缺上游修复 1537e55728ec。旧证据链（ttyGS0 gadget console 在 kexec 时必断）无法定位失败分支点，需一次带跳转期间存活 console 的上机取证；首测还不同源（运行 vk46-dirty vs 装载 vk50 构建）。定位挂死分支点必须有跳转期间存活的 console。
+---
+合并多份并发调查结果时的优先级裁决模式（2026-10-05）：用户会给出明确优先级（本案：kexec 解决方案 > 装完整发行版解决用户态问题 > 补全驱动），并要求把冲突按该优先级裁定后合并落盘。做法 = 先定位各调查的会话 jsonl 与专题文档，读最终结论，提取冲突点（本案 C1–C4）逐一裁决胜者 + 落地约束，产出合并文档（archive/topics/MERGE-*.md）并把决议回写领域层（TASKS §4 / INDEX）。
+---
+kexec 上机取证时控制台选择陷阱：设备 cmdline console=ttyGS0,115200（USB gadget 串口 ttyGS0/ttyACM0），kexec -e 跳转期间 USB gadget 会断掉，所以「无输出」这一证据不能用来定位失败分支点；要定位硬挂分支点必须有能在跳转期间存活的 console（如 ramoops/pstore 通路或物理 UART）。
+---
+kexec 取证上机发现（2026-10-05，U2）：① `kexec -e` 行为已不是「死挂」，而是设备自行复位落到 fastboot（ABL 记为该槽启动失败）；② `Hard watchdog permanently disabled` 是旁证——硬挂不会自复位，必须物理长按电源 ≥15s；③ `fastboot boot` 报 OKAY 但起来的是槽内内核（vk47clean），vk54 持久变体 RAM 镜像未真正接管 ⇒ 判断 RAM boot 是否真的生效要看 uname 与 DT 参数（如 ramoops record_size/max_reason），不能只看 fastboot 的 OKAY；④ 纯 RAM 变体 rootfs 里没有 eldroid-bootctl 也没有 python3（有 /usr/sbin/kexec），要进 fastboot 得先回 b 槽持久系统；⑤ `reboot bootloader` 在 vk47clean 持久系统里不生效（会走普通重启），须用 eldroid-bootctl 或 scripts/to-fastboot.sh（PSCI vendor reset + nvmem-reboot-mode）。 — Failed: fastboot OKAY 不等于 RAM 镜像接管；槽重试计数耗尽会被标 unbootable 停 fastboot
+---
+`fastboot boot` 在某些失败/异常路径下会让 `current-slot` 翻到 b（旧记录已两次实测：报 `Status read failed (No such device)` 后 getvar current-slot=b）。但 2026-10-05 的项目现状是 Linux 跑在 b 槽（/dev/sda17），因此「进 fastboot 后先 --set-active=a」这条旧规则已不适用——照做会切回 Android。正确顺序是先只读确认 current-slot 与 Linux 期望槽位再操作。 — Failed: 旧规则与当前 Linux 常驻 b 槽的实际部署冲突
+---
+vk54 上机（2026-10-05）：内核本身与补过 record-size/max-reason 的新 DTB 均正常（能亮屏到锁屏），但落在锁屏处**卡死无法操作**——属历史出现过的罕见用户态/会话层 hang，无法定性，与内核/kexec 无关；该卡死导致 SSH/网络不通，会挡住需要 SSH 的取证，改用最小 busybox initramfs（无桌面/无锁屏）做 kexec 取证。 — Failed: 罕见锁屏 hang 挡住 SSH 取证通道
+---
+kexec -e 触发的复位会被 ABL 记为一次当前槽（b）启动失败：`slot-retry-count:b` 递减，耗尽后 b 被标 `slot-unbootable:b=yes` → 设备停在 fastboot（boot_b 内容未动，可恢复）。所以每次 kexec 取证实验前必须先 `slot-attr.py mark-successful b` 重置成功位，否则会反复砖；本轮用户手动重置过一次。注意 `fastboot boot` 失败也可能让 current-slot 翻到 b。 — Failed: kexec 副作用的项目化坑
+---
+kexec 取证的控制台限制：设备控制台是 ttyGS0 USB gadget 串口，kexec 跳转时必断，其「戛然而止」不能用来定位挂死分支点；/dev/ttyACM0（主机侧）才是设备实时内核日志口。主机侧 `Hard watchdog permanently disabled` ⇒ 死挂不会自复位，必须物理复位（长按电源 ≥15s）。另 kexec_file_load 无 DTB 形参（--dtb 空操作），DTB 只能走 --boot/--flash。 — Failed: 取证手段本身受限
+---
+kernel_kexec 路径会调 kmsg_dump(KMSG_DUMP_SHUTDOWN) 后跳转 ⇒ 要跨 kexec 保存最后日志必须让 ramoops 捕获 SHUTDOWN：DT 里 ramoops@c2000000 默认缺 record-size/max-reason（运行值 record_size=0、max_reason=2 不含 SHUTDOWN），需补 `max-reason`/`record-size` 属性才可能落盘。这是目前唯一可能跨 kexec 存活并保存日志的通路。
+---
+phoc/phosh 在 logind 后端下会话被 deactivate 后 phoc 会释放显示并关闭 CRTC，Qualcomm mainline 面板会在关闭 CRTC 时挂死直到看门狗复位；必须用 LIBSEAT_BACKEND=seatd 而非 logind 后端（上游 pmos-xiaomi-thunder PR#7 同结论）。
+---
+`kexec_file_load` 的 `--dtb` 是**空操作**：该 syscall 无 DTB 形参，新内核 FDT 由内核用 live DT 重建（drivers/of/kexec.c `of_kexec_alloc_and_setup_fdt`，只改 bootargs/kaslr-seed/linux,booted-from-kexec）。kexec-tools 自己就打印 `arch_process_options: dtb: (ignored)`。⇒ iterate.sh 的 DTB 环（依赖 kexec 传 DTB）从设计上不可能生效，DTB 变更只能走 `fastboot boot`/`--flash`。 — Failed: RUNBOOK §8 与 kexec-boot.sh 曾把 --dtb 当有效参数。
+---
+kexec -e 触发的复位会被 ABL 记为一次 b 槽启动失败，retry 耗尽后 b 槽被标 UNBOOTABLE（slot-unbootable:b=yes / slot-retry-count:b=0）导致设备停在 fastboot；boot_b 内容其实未损，可恢复。根治 = 项目脚本 `slot-attr.py mark-successful b`（改 GPT 分区属性第 6 字节 bit2 ACTIVE / bit6 BOOT_SUCCESSFUL / bit7 UNBOOTABLE / bit5..3 tries，主备 GPT 都要修 CRC）。⚠️ 槽位 GPT 在 /dev/sde，`blockdev --getsz` 返回 512B 扇区数而 UFS 逻辑扇区是 4096B——按 4096 备份/换算必须 /8，否则 skip 位置偏 8 倍、tail 备份为 0 字节。 — Failed: 反复 kexec 实验后设备卡在 fastboot，与 dd 扇区换算错误同批出现。
+---
+用户的 kexec 分析会话期望「以分析为主、上机需报备」；长实验（如 kexec 反复上机）出现设备不稳时应立即停手并汇报，而不是继续自动推进。 — Failed: 设备不稳时用户明确指示停手。
+---
+kexec_file_load 无 DTB 参数：命令行 `--dtb` 被忽略（内核用 live DT 重建 FDT，drivers/of/kexec.c of_kexec_alloc_and_setup_fdt）；`kexec -v` 输出会直接打 `dtb: (ignored)`。⇒ 任何依赖 kexec 传 DTB 的迭代环（改 DTS → kexec 热加载）不成立，DTB 变更只能走 fastboot boot/--flash。
+---
+串口（ttyGS0 / USB gadget console）在 kexec/machine_shutdown 切换期间必断，其「戛然而止」不能用来定位失败分支点；定位需要能在跳转期间存活的 console（物理 UART、`console=tty0` 拍屏、或 ramoops 保留 KMSG_DUMP_SHUTDOWN）。
+---
+kexec -e 触发的复位会被 ABL 记为一次槽启动失败，retry 耗尽后把该槽标 UNBOOTABLE 并停在 fastboot（boot 分区内容未动）。恢复：`slot-attr.py mark-successful <slot>`（改 GPT 分区属性 byte6：bit2=ACTIVE / bit6=BOOT_SUCCESSFUL / bit7=UNBOOTABLE / bits5..3=tries，主备 GPT 都要修 CRC）。
+---
+`scripts/build-boot.sh` 与 `scripts/build-manifest.sh` 里的 `KDIR` 原本是硬编码 `KDIR=$ROOT/linux`，env 覆盖无效——想打包树外/已提取的内核会静默用到树内内核（曾误打出带 vk58 内核的「vk59」镜像）。已改为 `KDIR=${KDIR:-$ROOT/linux}` 并透传给 manifest；构建后必须核 manifest 的 kernel_uts 与镜像内提取的 UTS 一致。 — Failed: 误信 VERSION 名即内核版本，实际打进了树内内核
+---
+fastboot boot「报 OKAY 但 uname 仍是旧内核」时的单变量判定法：(1) 先用已知可启动镜像（如 vk58c-slim）确认 fastboot boot 机制本身正常；(2) 再交叉组合「新内核 + 旧 DTB」——vk59 内核 + vk47 DTB 能正常启动 ⇒ 挂启动的是 DTS 改动而不是内核 config。随后可用内核自带 dtc 反编译 DTB + fdtput 做逐项单变量（关 NFC / 关 CDSP / 回退 ramoops），免重编内核。 — Failed: 连续两次 fastboot boot 后 uname 仍是 vk47clean，易误判为 fastboot 失效
+---
+打包 boot.img 双层压缩陷阱（G1-30 slim 线）：boot_b 解包出来的「kernel」本身就是 gzip（gzip compressed, original size 62.5MB → Image），再用 Image.gz 打包会变成双层 gzip，ABL 解一层后拿到 gzip 流而非内核 ⇒ 卡联想 logo、屏幕无输出。判据：`unpack_bootimg.py` 后看 kernel payload magic，boot_b/vk58c 是 1f8b 0800，坏包是 1f8b 0808。build-boot-slim.sh 必须对 boot_b 的真 Image 打包，不要传 Image.gz。
+---
+initramfs/busybox 的 applet 名单必须用真二进制校验，不能靠猜：本机那份 aarch64 busybox v1.38.0 静态二进制实际只有 282 个 applet，而手写的 busybox-applets.txt 有 272 项且是错的——含假项（blkid / mountpoint 实际不存在，会导致根分区解析失败回退纯 RAM），并漏 30+ 真项。权威判定：主机有 qemu-aarch64，直接 `qemu-aarch64 ./busybox --list` 拿真名单；scripts/check-init.sh 已加「名单 vs 实际 --list 一致」检查。另：新名单若含 `busybox` 自身，`ln -sf busybox bin/busybox` 会把真二进制替换成自指符号链接（ramdisk 缩到 12K）——build-boot.sh 已加防御。
+---
+G1-30 slim 最小 initramfs 的根分区解析器：busybox 里**没有 blkid 也没有 mountpoint 小程序**，只有 findfs。init 的 LABEL=/UUID=/PARTLABEL= 解析必须用 findfs 为主（blkid 仅作 fallback），不能依赖 blkid；check-init.sh 的判据是「findfs 或 blkid 至少有一个」。
+---
+项目规则修正（2026-10-06，用户明确要求）：旧规则「每次进 fastboot 后、任何操作前先 `fastboot --set-active=a`」是错的，已从 AGENTS.md 删除——本意只是不影响可用的 b 槽。fastboot 类命令仍由用户亲自执行，助手只做分析并给可直接手敲的单条命令，不用封装脚本跑 fastboot。
+---
+内核镜像重复压缩陷阱：若 boot 分区里的 kernel 载荷本身已是 gzip，再用 gzip 打包会形成双层压缩，ABL 解一层得到的是 gzip 流而非内核 → 卡 logo。打包自定义 initramfs 镜像时必须原样嵌入 boot_b 内的 Image，不要重新压缩。
+---
+switch_root × 后台任务竞态：initramfs 的 init 里若用 `( ... ) &` 起后台子 shell 做挂载（如等 /dev/sde79 挂 /persist），主流程 exec switch_root 后 initramfs 被释放，孤儿子 shell 仍在旧根循环，刷屏报 `sleep: not found` / `can't create /dev/null: nonexistent directory`。修法：这类收尾必须同步执行，且仅在纯 RAM 启动分支运行。诊断手段：USB 串口抓不到早期输出（console 走 tty0）时可读屏幕缓冲 `/dev/vcs1`。
+---
+文档纪律：无设备证据不得写「已修复」——PITFALLS §0 零号纪律第 4 条（2026-10-06 新增）；被推翻的中间态（如 #5 kexec 六段过程）收窄为结论+指针并标 ⛔superseded，保留沿革但移入 archive。
+---
+项目文档中的「归因错误」典型例：min initramfs 缺 /lib/firmware 致功放/触屏/ath12k 报 firmware load failed -2，但 switch_root 后自愈；vk60「驱动全废」实际是 initramfs 打包问题而非内核/驱动问题。归因时先区分「本体问题」与「打包/部署层问题」。 — Failed: 差点把 initramfs 缺固件误写成内核/驱动缺陷
+---
+GNU cpio `--reproducible` 只归零 inode、**不归零 mtime**——同一输入连打两次 boot.img sha 仍不同（差异字节正好落在 cpio 头的 mtime 字段，差 1 秒）。这是版本台账里 ramdisk hash 乱跳的根因。让 initramfs/boot.img 可复现需三处一起做：全树 `touch @SOURCE_DATE_EPOCH` + `LC_ALL=C sort -z` 排序文件列表 + `gzip -n`（去掉 gzip 时间戳）。 — Failed: 曾据此把 manifest 里 ramdisk sha 不同误判成「ramdisk 内容变了」，污染 DTB/initramfs 归因结论
+---
+boot 镜像 manifest 里的 ramdisk/kernel/DTB sha 若在测试期间被重建过，会污染「单变量对照」的结论：vk58c/vk59/vk59a/vk59-nfcoff 四张镜像 manifest 引用同一路径 `out/initramfs.cpio.gz` 但 ramdisk sha 各异（1047383d / 69493ffd / 085b5345），实际解包后 init/busybox/文件链接数完全一致（同 3 文件 272 链接）⇒ 差异纯属 cpio mtime 噪声。**判两个镜像是否真的不同应先解包比对内容 sha，不能只看 manifest 哈希**。
+---
+主机侧 diff 脚本若用 `grep -v` 过滤 phandle/注释行，容易把整段 diff 内容也滤掉只剩行号（本次出现过「我的过滤器把 diff 行全删了」），对 DTB 反编译产物做语义 diff 时要显式保留以 `>`/`<` 开头的差异行，或改用 dtc 反编译后去掉 phandle 属性再比较。
+---
+manifest 里 ramdisk hash 不同 ≠ initramfs 内容不同：build-boot.sh 每跑一次都重打包，cpio mtime 噪声会让 sha 变化。判断两个镜像的 initramfs 是否等价，要解包后比 `/init` sha、busybox sha、文件/链接数（如 `3 files / 272 links`），不要只看 manifest 哈希。
+---
+主机上 `dtc` 不在 PATH 里（command not found）；可用树内构建出的 linux/scripts/dtc/dtc（由内核构建产出）。反编译 DTB 核对内容时用它，不要以为没装 dtc 就没法验。
+---
+本机给 kexec/fastboot 取证抓串口日志的可靠姿势：`while true; do [ -e /dev/ttyACM0 ] && cat /dev/ttyACM0; sleep 0.5; done >> logs/serial-<date>-<topic>.log`（配合 scripts/serial-run.sh 经 /dev/ttyACM0 执行命令，依赖设备侧 ttyGS0 挂 shell）。但 console 主要走 tty0，早期内容串口常抓不到；/dev/ttyACM0=ttyGS0（cmdline console=ttyGS0,115200）、/dev/ttyACM1=adb 口；pstore 为空。 — Failed: 串口抓不到早期内核日志，需知正确通道与局限
+---
+板级 DT 改动（如新使能一个 QUP/I2C 控制器）在本机可能直接导致整机无法进内核（亮屏即灭/掉电，无输出、复位回 b 槽）。此类改动一律做成独立 DTB 变体镜像走 fastboot boot 零写盘验证，绝不直接刷 boot_b。
+---
+「用户亲自执行 fastboot/EDL」是断联场景下的一次性偏好，被升格成项目硬规则后已按用户口径放宽：agent 应首先自主执行（有写坏风险的先备份再执行），只有超出预期的错误再请用户检查/物理干预。项目级行为规范已统一入口到 .pi/AGENT-OPS.md（AGENTS.md 只留项目描述，不再夹带规则）。 — Failed: 偏好→硬规则升格 + 范围扩张（D1 语义漂移），用户随即要求放宽
+---
+项目文档会出现语义漂移：同一动作前后口径翻转（fastboot --set-active 从「进 fastboot 后先执行」变成「未授权写操作」）、禁令被压缩成理由（「不要用封装脚本跑 fastboot」只剩括号解释）、术语份数不一致（领域层 4 份 vs 5 份）。对策=定期做语义漂移审计（archive/topics/SEMANTIC-DRIFT-AUDIT-*.md），把规则按「行为规范 / 开发经验 / 项目描述」三分归口并互不复述。 — Failed: 2026-10-06 语义漂移排查发现 7 处矛盾
+---
+二分实验镜像命名靠 D/B/X/Y/f 等后缀区分（D=DTB 二分、B=最小二分、X/Y=kernel/DTB 交叉、f=full 载具重打），这些 ad-hoc 号不走 scripts/lane.sh alloc，会与账本冲突；构建前先 `ls out/ | grep -o 'vk[0-9]*' | sort -V | tail` 取最大+1，并把 ad-hoc 号补录进 versions/vk-registry.tsv。
+---
+运维纪律：boot 镜像的 verNN 号若不是内核号而是载具号（如 vk61 = 只换 /init），就不能用 uname -r 验证刷入是否生效——必须比对 kernel/dtb 段 sha256（与 boot_b 逐字节相同）或 uname -v 的编译时间戳。
+---
+同 UTS 串下区分不同内核构建必须用 `uname -v`（`#N SMP PREEMPT <date>`），**不能只看 `uname -r`**——候选内核为了对齐 LOCALVERSION 会锁成同一 UTS（如 vk47clean），只有编译时间戳能证明「新内核确实跑起来了」。相关：debug_mask=2 的 ath12k 调试日志会冲 ring buffer，使基于 dmesg 计数的差分统计变负。
+---
+内核 .config 中 CONFIG_LOCALVERSION_AUTO 决定 vermagic 是否含 git sha：同一源码树在 AUTO=n 时构建得到 `7.2.0-debug-vk47clean-gbd114ca335e1` 之外的短名。比对 mirror 镜像与工作树 config 时，`diff` 只差这一行即说明是同一配置来源（config-vk40-bringup vs worktree/.config 仅 CONFIG_LOCALVERSION_AUTO 一行之差）。 — Failed: config 对比时误把 LOCALVERSION_AUTO 差异当成实质配置分歧
+---
+initramfs 载具号 ≠ 内核号（继 vk61 之后的普遍规律）：vk55/vk60/vk61 都无内核改动（用户态 / initramfs ∧ init），启动后 `uname -r` 仍显示基座内核（如 vk47clean）= 正确签名，不是刷入失败。判断「到底在跑哪个 vk」必须从镜像内抽 UTS（解 gzip 内核流取 Linux version），文件名不可信。 — Failed: 用户误把 vk61 当内核升级
+---
+评估「换发行版/换 init 能否解决技术坑」时，用户期望按「每笔成本单独归因、判断能否用装包/换服务解决」逐项算账，而不是笼统答「哪个发行版更健壮」；会明确要求「评估切换 init 的收益」。已验证结论：Alpine→Ubuntu 只能顺带清 U1–U7 共 7 项（会话/PAM/logind/busybox 类），这些 postmarketOS 已在 Alpine(musl) 上用 greetd+phrog+elogind 解决 ⇒ 维持不换发行版；分诊数字 = 装包可解 8 项 / 启用 OpenRC 可解 8 项 / 只有换发行版才有增量 3 项（增量都小）/ 内核+上游+硬件谁都解不了 6 项。
+---
+QCOM fastboot 上 `fastboot boot <img>` 偶发 `Booting FAILED (remote: 'Failed to load/authenticate boot image: Load Error')`（Sending 已 OKAY）：重试一次（必要时先 `fastboot reboot bootloader` 回 fastboot）即成功，不需要改镜像或怀疑镜像损坏。 — Failed: 首次 flash/boot 报 Load Error 容易误判成镜像或签名问题。
+---
+fastboot boot 首次报 `Failed to load/authenticate boot image: Load Error` 时不要改镜像——2026-10-06 实测：同一 83MB 镜像 `fastboot reboot bootloader` 后再 `fastboot boot` 即 OKAY（10.1s 启动）。ABL 首次注入/校验偶发失败，重试即可。
+---
+CDSP bring-up（G1-11）取证结论（2026-10-06，vkD2-cdsponly 实机）：remoteproc1 存在但 state=offline；`cdsp.mbn` 装载成功，`cdsp_dtb` 报 -22（EINVAL，来自 qcom_scm_pas_init_image —— SCM 拒绝 DTB metadata）。已排除「固件文件命名/格式」假设：换成 vendor 的 split 格式（cdsp_dtb.mdt + .b00/b01/b02，与 adsp 成功的方式一致）仍 -22 ⇒ 指向 PAS id 不匹配（驱动 sm8650_cdsp_resource 用 dtb_pas_id=0x25，需与 vendor SCM 期望的 id 对齐），下一步查 vendor DT/stock 源码里 cdsp 的加载 id。注意：remoteproc unbind/rebind 会因 reserved-mem 未释放而失败（`assign memory 0 failed`），验证固件改动必须冷启动（fastboot boot）。
+---
+内核构建坑（2026-10-06 实机遇到）：在已有 vmlinux.o 的大树上重跑 `make` 时 `LD vmlinux.unstripped` 段错误（make 错误 139，重试仍复现），而 vmlinux.o 本身完好（1.7GB）——属工具链链接阶段问题。绕法：不要在同一树上重编全量内核；改用已知良好的内核 Image.gz（如 /tmp/kdirD2 的 vkD2 产物）只重编 DTB，做「仅 DTB 变」的单变量镜像。
+---
+`wlr-randr --output <conn> --off` 与 `modetest -w <conn>:DPMS:3` 在本机 msm/DSI 上是**无效操作**（读回 DPMS value 仍 =0/On、sysfs dpms 仍 On，只触发面板 unprepare→重下固件）。modetest 需 DRM master（不停合成器报 Permission denied）。测「真熄屏」必须走 `org.gnome.ScreenSaver.SetActive(true)`（sysfs dpms 确实变 Off）。此前用 wlr-randr/modetest 得到的「DPMS off 必复位 / 免疫」数据全是噪声（2026-10-07 实测）。
+---
+内核主树 `LD vmlinux.unstripped` 可连续两次段错误（exit 139，`vmlinux.o` 本身完好）。绕过：复用已知良好的 `/tmp/kdirD*/` 内核产物（Image.gz+dtb），只替换改动的 DTB 后重打包镜像，做单变量验证。
+---
+只改 DTB 的 `fastboot boot` 镜像若静默回退 boot_b，特征 = 设备起来的 `uname -r` 是 boot_b 的 UTS（如 vk47clean）且 dmesg cmdline 带 `androidboot.*`。判「镜像到底起没起」必须比对镜像 manifest 的 kernel_uts 与设备实际 uname，别只看 fastboot 返回 OKAY。本案 dp1（带 `&i2c0 status=okay` 的 DTB）就是这样被误判为「role-switch 改动导致黑屏」。
+---
+qbootctl（Alpine community 包，AOSP bootctrl HAL 的 musl/glibc 移植）可完全取代本项目自研 scripts/slot-attr.py 的 mark-successful：① 扇区大小走 ioctl(BLKSSZGET)，4K 自动识别，无 sgdisk 那类 512B/4096B 误判；② 多盘/LUN 支持（按盘分别提交，源码注释直接举 /dev/sde 为例）；③ `-m`（mark successful）纯 GPT 写，primary+backup+CRC 同改、不碰 UFS BSG，与 slot-attr.py 完全等价；④ `-s`（set active）会额外走 /dev/sgY 的 UFS boot-LUN 切换（xbl），本项目不适用 ⇒ 慎用或加 `-i`；⑤ 缺口 = 无离线 dump 编辑、无 retry-count 顶配。源码常量：AB_FLAG_OFFSET=attribute byte 6，bit2=SLOT_ACTIVE(0x04)/bit6=BOOT_SUCCESSFUL(0x40)/bit7=UNBOOTABLE(0x80)；gpt-utils 用 BOOT_DEV_DIR by-partlabel 定位 LUN；运行时必须 root。2026-10-07 设备实测通过（boot_a->/dev/sde12、boot_b->/dev/sde45，LUN4，4096 字节扇区）：只读逐项一致，`qbootctl -m b` 把 boot_b byte6 0x0f(retry=1) 改为 0x4f(succ=1)，primary+backup 双表都写，内核重扫 78 分区无 CRC 错误。坑：写入触发分区重扫时有瞬时竞态，紧随其后的 `qbootctl -n b` 会报 “No slots found”，重读即正常，不代表 GPT 损坏。注意内核 cmdline 无 slot_suffix 时 qbootctl 无参会默认按 slot a 处理（读当前槽用 -x）。 — Failed: 自研 slot-attr.py 有可用的标准替代物，且后者在扇区大小/C-LUN 处理上更稳
+---
+生态级核查否掉了两个曾以为可替代自研件的候选：① mkinitfs（Alpine 官方 initramfs 生成器）不适用本项目——本项目 initramfs 刻意不带模块，而 mkinitfs 依赖 nlplug-findfs/lddtree 且与自定义 /init 冲突；② pmbootstrap/pmaports 不推荐——与 lane/vk 工作流、kexec/mod-loop 快环冲突，除非把项目目标改成发行镜像/上游化。另：pil-squasher 方向相反（主线 qcom PIL 要的就是 .mdt+.bXX 拆分），msm-firmware-loader 不需要（固件已打包进 rootfs）。真正值得纳入的只有 qbootctl（已采纳）与 alpine-make-rootfs 启发的「apk --root --arch 免 chroot」手法。 — Failed: 避免后续会话再次误判这些标准轮子可直接替换本项目自研件
+---
+评估「是否用标准生态件替换自研轮子」时，先做本地命中数核查（grep 项目文档里该方案名出现次数）往往全为 0，说明该生态轮子从未被纳入候选；但命中数 0 不等于应当采纳——必须逐项核实兼容性（如 mkinitfs 与本项目刻意无模块的 initramfs 冲突）后才能裁决，裁决结论要写清「已采纳/不适用/不需要/方向相反」而不是笼统的「可选」。
+---
+PITFALLS #124 熄屏掉电（G1-22/Q24）单变量控制失败案例：头号假设「相机等 =m 模块的加载改变面板 disable 供电」无法验证——相机模块在用中无法 rmmod（绑定传感器），改用黑名单禁用后模块**仍被加载 12 个**，`modprobe --showconfig` 确认 `blacklist qcom_camss` 已生效但加载路径不是可被 blacklist 拦住的 udev autoload（或来自 RAM initramfs），单变量始终没隔离成功。 — Failed: 黑名单拦不住加载 ⇒ 无法做干净的单变量对照，熄屏掉电至今无法判定根因
+---
+本机 `dd` 备份磁盘时注意：`blockdev --getsz` 返回的是 512B 扇区数，而 UFS 设备逻辑扇区为 4096B ⇒ 直接拿该值做 bs=4096 的 skip 会得到偏差 8 倍的错误位置。正确换算 = 512B 扇区数 / 8。槽位 GPT 在 /dev/sde（LUN4，boot_a=/dev/sde12、boot_b=/dev/sde45）。 — Failed: 多次 dd 备份因扇区换算错误得到 0 字节 tail
+---
+qualcomm remoteproc（qcom_q6v5_pas/qcom_pas）的固件必须用 stock **split** 形式（<name>.mdt + <name>.b00/b01/…）——单文件合并版 .mbn 会被 TZ PAS init 拒为 -22 EINVAL。且固件搜索路径在 switch_root 前由 initramfs 生效：只把固件放磁盘 rootfs 无效，`Direct firmware load ... failed with error -2` 表示载具（initramfs）里没有。诊断顺序：dmesg 看是 -22（格式/变体错）还是 -2（没找到文件）。 — Failed: G1-11 CDSP 曾长期 offline，旧假设「PAS id 不匹配」被否证；真因是单文件 .mbn 变体 + 固件必须打进 initramfs
+---
+`fastboot fetch <partition>` 在本机 U2 上不支持（`Unable to get max-fetch-size. Device does not support fetch command.`）⇒ 无法从设备回读 boot_b 等分区做「刷写前备份」。替代：设备在 Linux 时从设备侧读块设备（`/dev/disk/by-partlabel/boot_b` → /dev/sde45）再 scp 回主机（/tmp 是 tmpfs，7.3G）。
+---
+cat /dev/ttyACM0（设备内核日志串口）会刷 `drm_crtc_wait_one_vblank+0x1b0` 的 vblank 警告风暴（T116 worker_thread / drm_fb_helper_damage_work），导致设备侧 SSH 变得极慢乃至超时——遇到 SSH 卡顿时先查串口是否被该警告刷屏，不是网络问题。
+---
+`fastboot fetch boot_b` 在本机设备上不可用（报 Unable to get max-fetch-size. Device does not support fetch command），备份 boot_b 需改用设备侧 `dd` + scp 回主机。
+---
+本机 `fastboot fetch boot_b <file>` 不可用：该设备不支持 fetch 命令（`fastboot: error: Unable to get max-fetch-size. Device does not support fetch command.`），会生成 0 字节文件。备份 boot_b 必须走设备侧 `dd if=/dev/disk/by-partlabel/boot_b of=/tmp/boot_b.bak bs=1M count=96` + scp 回主机。
+---
+本机 `~/wt-athm`（worktree，detached bd114ca33 = vk47clean 源）里已有**完整的 vk47clean 构建产物**（vmlinux 658MB、Module.symvers、System.map，构建时间 2026-10-06 23:13），其中 `drivers/dma-buf/heaps/{system_heap,cma_heap}.ko` 的 vermagic = `7.2.0-debug-vk47clean-gbd114ca335e1`，与设备运行内核完全一致 ⇒ 可直接 scp 到设备 `/lib/modules/$(uname -r)/` 下 insmod，无需重编内核。设备 `/lib/modules/7.2.0-debug-vk47clean-gbd114ca335e1/` 原有 29 个模块但不含 dma_heap 这批。判「.ko 能否直接 insmod」= 比对 vermagic 与 `uname -r`。
+---
+判断相机成像旋转差时：stock vendor DTB 的 `sensor-position-roll`（如后摄 90/前摄 270）与主线 DT 的 `rotation` 值可能完全一致却仍然整体颠倒——因为「应用方约定」与 DT 约定可能是反向的，此时 R=90/270 都表现成 180° 误差。旋转属性在驱动里是 read-only（`camera_sensor_rotation` v4l2 ctrl，flags=read-only），改朝向只能改 DT 重刷；libcamerasrc 无 video-direction 属性，消费端（Snapshot 等）是读 libcamera Orientation 自行旋转。 — Failed: 会话中相机颠倒排查的关键结论
+---
+DTS 多变量实验纪律（2026-10-07 两次踩坑教训）：每轮实验跑完 `git checkout` 回退会把**上一轮已验证的改动一起回退**（dp5 两次构建得到与 dp3/dp4 逐字节相同的镜像）。正确做法：一轮实验需要的所有 DTS 改动**一次改齐** → 构建前 grep 逐项核验 → 编译 DTB 后比对 sha256 与上一版不同再打包镜像。快速拦截 = 比对 image_sha256 / dtb_sha256；发现与旧载具相同即说明改动丢了。
+---
+本机（xuqianhui1001）内核树 `make syncconfig`/`olddefconfig` 会把 `.config` 的 QCOM 子树整体弄丢（实测 2026-10-07：`CONFIG_ARCH_QCOM` 消失，build-kernel.sh 报 `ERROR: CONFIG_ARCH_QCOM missing in .config (corrupted by olddefconfig?)`，.config 从 321948 B 掉到 244347 B）。恢复源 = `patches/config-vk50-modular`（Oct 4，模块化相机配置，321948 B）或 `patches/config-vk40-bringup`。另：想让 `uname -r` 里带上 `vk47clean` 中缀（对齐磁盘模块目录）需显式设 LOCALVERSION，仅 checkout bd114ca33 只会得到 `7.2.0-debug-gbd114ca335e1`。 — Failed: 重编 release 时 syncconfig 破坏关键 config，且 LOCALVERSION 中缀不会自动出现
+---
+dp5 基线（内核 26cd13b1c）上执行 `ssh … 'sync; reboot bootloader'` 后设备从 USB 完全消失（fastboot devices 空、lsusb 无 18d1、无 enx*、无 /dev/ttyACM*）——该内核不含 vk41 的 PSCI SYSTEM_RESET2 vendor-reset 钩子，`reboot bootloader` 不生效。教训：在非 vk41 派生内核上要用 `reboot2 bootloader`（/sbin/reboot 被包装）+ 等 ~20s 再用 fastboot devices 判定，不要用裸 `reboot bootloader`。
+---
+`fastboot fetch` 在本机设备上不可用：报 `Unable to get max-fetch-size. Device does not support fetch command.`，输出文件 0 字节（sha256 为 e3b0c442… 空文件）。需要读回分区时改用设备侧 `dd if=/dev/disk/by-partlabel/<part> bs=1M count=<N>` + scp，或依赖已有的 bootslot-b/*.img 备份。
+---
+本机 USB-NCM 调试链路重载：设备侧 `reboot bootloader` 后若内核缺 vk41 的 PSCI SYSTEM_RESET2 钩子（如 dp5 内核 26cd13b1c），设备会从 USB 完全消失（非 fastboot 未枚举，而是无任何 USB 设备：lsusb 无 Google/18d1、无 enx*、无 /dev/ttyACM*、SSH 超时）⇒ 必须用户物理进 fastboot。另外主机侧 USB-NCM 网卡名会变（本轮见 enx021e5eede102 配到 192.168.7.9/24 等），ping/ssh 前先 `ip -br a` 找当前 enx 名；设备侧的 `sync; reboot bootloader` 属于有风险的链，执行前先确认目标内核是否带 reboot-bootloader 钩子。
+---
+熄屏掉电（Q24）二分协议教训：用「载具启动后 rmmod 全部相机模块，再只加载一个子集」做二分不可靠——rmmod 卸载不干净（本轮 CAM_LOADED_AFTER_UNLOAD=6，camss 栈仍在），致死的可能是残留模块而非被测子集，结论作废。更稳协议 = 做「不自动加载相机」的 camdp 变体（改 RAM initramfs 里的 /init 去掉 camera-modules-load 调用），再累积式加载、每次加载后真实熄屏，第一个致死的加载项即元凶——只有最后一次致掉电，前面安全，减少用户的物理恢复次数。
+---
+本用户在设备已进 fastboot 时会主动告知「设备已经进入fastboot，可以继续」/「就绪」——不要因为 SSH/`fastboot devices` 一度为空就断言设备死掉或反复重试；按 AGENT-OPS 停下报告现场、等用户物理恢复即可。另：用户明确「ssh 走有线（USB-NCM，主机 192.168.7.2 / 设备 192.168.7.1），无线每次 IP 会变动」，排查连通性优先走有线。
+---
+掉电/硬复位后设备可能停在 ABL fastboot 而非失联——此状态下 slot b 若缺 mark-successful（retry 耗尽被标 unbootable）会卡在 fastboot 不自动启动，须先 `qbootctl -m`（或 slot-attr.py mark-successful）再 reboot。判据：SSH 等待时间差异不是「启动慢」，而是槽位标志问题。
+---
+在内核树里用 `make M=... modules` 单编模块会缺 vmlinux 上下文（报错）；且在 dirty 树上构建会得到 vermagic 末尾带 `+` 的模块，设备 insmod 会失败。两个可用手法：(1) 把实验改动提交使树变 clean 再编译；(2) 直接改 .ko 里 vermagic 字符串的尾部 `+` 为 NUL（CONFIG_MODVERSIONS 关时只需字符串精确匹配）——本次用此法把 `7.2.0-debug-vk47clean-gbd114ca335e1+` 修正为不带 `+`，部署成功。
+---
+本机脚本调用 `scripts/to-fastboot.sh` / `cycle.sh` 走 `reboot bootloader` 时，若被外层 timeout 杀掉，设备会停在 Linux 不重启；且该步骤在 agent 侧常整体超时（本次 300s）。可靠做法 = 自身不被 timeout 包裹地跑 reboot 命令（detached），或直接请用户手动重启到 fastboot（用户 2026-10-07 就是手动做的）。 — Failed: 本轮 vk63 上机时 to-fastboot.sh 被 300s timeout 杀掉，设备仍在 Linux，用户手动重启进 fastboot
+---
+本机 `to-fastboot.sh` 在设备侧执行时会卡住（timeout 300s 被杀，设备仍在 Linux）——需要 reboot 到 fastboot 时，detached 地跑单条 reboot 命令，或直接请用户手动重启到 fastboot。
+---
+真实熄屏 A/B 必须先确认桌面会话真的起来了（`ps -eo comm | grep -E '^phoc$|^phosh$'` + gsd-power + /run/user/0 会话总线），否则 `org.gnome.ScreenSaver.SetActive(true)` 是空操作、样本无效；本轮就因桌面未起产生过一轮无效样本。
+---
+对内核树只改 DTS 后重编 DTB：若上一次 make 已生成过 dtb，直接 `make arch/arm64/boot/dts/qcom/xxx.dtb` 会报「无需做任何事」或「没有规则可制作目标」；需先 `touch` 源 dtsi/dts 或删掉旧 .dtb 再编，并用 `dtc -I dtb -O dts` 反编译回读确认节点属性（如 power-domains phandle）真的改到了。 — Failed: DTS 改动未触发重编，容易误以为构建成功
+---
+上游内核 patch 的 commit message 与 DTB 源码注释必须全英文后才能发给邮件列表：仅把 commit subject 改成英文不够，diff 的 `-`/上下文行若来自中文注释 commit（如 H1 的「H1 实验：…」）仍会把中文留在 patch 里。正确做法 = 连同前置实验 commit 一起在分支上重做/改写（本条经历 git rebase --onto + 手工解 sm8750.dtsi 冲突），保证 patch 纯 ASCII；另注意 `git format-patch` 的 Subject 若此前已带 `[PATCH]` 前缀会叠成 `Subject: [PATCH] [PATCH] ...`，需用 --subject-prefix 或手改。
+---
+做熄屏 A/B 前必须先确认桌面真的起来了（phoc / phosh / gsd-power 在跑 + /run/user/0/bus 会话总线存在），否则 ScreenSaver.SetActive 是空操作、样本无效——本轮曾出现「桌面未起导致熄屏空操作」，另有 phoc <defunct> 僵尸（start-desktop.sh 循环拉起会重启）。设备侧 boot_b = camdp-nocam/vk62 形态时普通 `reboot` 可自动回受控 Linux（约 70s）。
+---
+「换设备/换 AP 就正常」类结论只能证明触发条件，不能排除本侧版本/DTB 变量；遇到这类现象若要归档成「已知限制」，必须先确认同一外设在早期版本是否工作过（用户会据此纠正）。
+---
+该 ABL 的 fastboot 不支持 `fastboot fetch`（报 `Unable to get max-fetch-size. Device does not support fetch command.`）⇒ 取分区内容改用 Linux 侧只读读分区（如 `dd if=/dev/disk/by-partlabel/dtbo_b ...` 后再按镜像大小截断比较 sha）。另注意：只用 python 扫前 4K 判「全零」会误判——dtbo_b 是全零 payload + 在 4096 偏移处开始的 AVB footer（1686 个非零字节）。 — Failed: fastboot fetch 不可用 + 前缀扫描误判全零
+---
+PyPI wheel `dtc`（dtc-0.1.1-py3-none-any.whl）是 dataclass 工具，不是 device-tree compiler；`import fdt` 会 ModuleNotFoundError。反编译 DTB 用内核树自带的 `geekidos-linux/scripts/dtc/dtc`。
+---
+手工改 linux/.config 后必须用交叉编译环境（`. scripts/env-build.sh`，CROSS_COMPILE=aarch64-linux-gnu-）跑 `olddefconfig`/`make`；用主机 gcc 跑会丢掉 43 项工具链相关项（CONFIG_ARM64_MTE/ARM64_AS_HAS_MTE/CC_HAVE_SHADOW_CALL_STACK/ARM64_ERRATUM_* 等），并引入 CONFIG_BROKEN_GAS_INST=y、CONFIG_CMDLINE=""。 — Failed: vk64 构建时用主机 gcc 跑 olddefconfig，config 被写坏
+---
+vk64 v1 烧 boot_b 后过 BL 但内核起不来（只剩充电标志）——真因不是构建错误而是配置源错误：vk63 manifest 记的 config_sha256=26e7cad3 指向 `.config.old`，与 vk63 真内核 config（从镜像 extract-ikconfig 提取，11948 行）差 3000+ 项（缺 DRM_MSM=y、触屏=y、CONFIG_CMDLINE 等），产物 Image.gz 仅 15.2MB（正确 20.5MB）、解压 42MB（正确 62.5MB）。教训：内核配置的真源应是镜像内 extract-ikconfig，而不是仓库里的 .config/.config.old；manifest 里的 config_sha256 可能指向坏文件。 — Failed: manifest 记录的 config 与真内核不符，重建内核残缺
+---
+给 aarch64 内核模块 strip 必须用 `aarch64-linux-gnu-strip`，用主机 `strip` 会报 "Unable to recognise the architecture of the input file"（对象留在包里，未 strip 的全模块包 ~496MB → strip 后 ~16MB / 1610 项）。模块包须含 modules.order / modules.builtin*。 — Failed: vk64 模块打包时 strip 用错架构
+---
+本机 `fastboot fetch` 不被该设备支持（`fastboot fetch` → "Unable to get max-fetch-size"；`fastboot getvar max-fetch-size` → "GetVar Variable Not found"）⇒ 无法在 fastboot 下把分区读回主机做刷前备份。替代：以已知的 GPT 双表 dump（gpt_main0/gpt_backup0）+ 待刷分区已知内容（如已被写坏、无保留价值的镜像）替代，或走设备侧 `dd if=/dev/disk/by-partlabel/<part>` 再 scp。
+---
+内核 uname（release 串）与设备 /lib/modules/<release>/ 目录名不匹配时，`=m` 模块全部无法加载（modprobe 报 not found 或 `Exec format error`——vermagic 不符）；表现为上游 DRM 组件 deferred → msm_drm_bind 不完成 → 连 card0 都没有（DP/显示全无）。软链目录不够（vermagic 仍不符），必须为当前内核构建并部署配套模块包（`scripts/build-kernel.sh modules`）到 /lib/modules/<release>/。本次 vk64 因此需要自己的 1610 个 .ko 模块目录。
+---
+vk64 的 Q28 retry 补丁（面板 prepare 失败后 redo reset 再试）**生效但不够**：attempt 1 报 `-110`（DSI DCS 首写超时），attempt 2 仅 30ms 后即报 `-5`——说明 DSI host 在首次 -110 后已楔死，面板级 reset 救不回。真修法需在 msm_dsi 级复位整个 DSI 控制器/host（更深的内核工作）。Q28 还有第二种失败面：`DSI PLL(0) lock failed, status=0x00000000` ×4 → dsi host enable 失败 → dpu 长时间不绑定（vk63 日志里同样有 PLL fail ×4 但 8.5s 后 dpu 仍绑定成功，说明该面有运气成分）。
+---
+Q24 熄屏→硬复位未根治的最新增量证据（2026-10-08）：vk63（H2 DTB，cambist 单挂 MX）在**相机加载态**下 SSH 自动扫测真实熄屏（org.gnome.ScreenSaver.SetActive）3 轮 2 掉电 ⇒ 与 H1 同量级间歇，早前「用户实机 2/2 存活、H2 收盘」是低样本误判。无相机态仍稳定安全。掉电时死前几秒的用户态日志被 page cache 吞掉（脚本创建了 log 但 0 字节），符合既往「硬复位无痕」判据。
+---
+版本号对账的统计口径要小心：`out/` 里 80 个 *.img 有 4 个是 boot_b-*/dtbo-* 类无内核载荷的副本 ⇒ 「带内核载荷的镜像」是 76 个；而「硬错行数」要按 flag 前缀逐个统计（num_ne_tag 24 + uts_dup5 18 + tree_drift 18 + dirty_drift 2 = 45），漏掉 uts_dup5 会得出错误的 36。数字入账前必须脚本重算核对。
+---
+kexec 流程代码链（本树 kernel/kexec_core.c:1138 kernel_kexec）：kernel_restart_prepare("kexec reboot") [reboot.c:100] → blocking_notifier_call_chain(SYS_RESTART)【网络 teardown 在此杀掉 SSH/读取进程】→ usermodehelper_disable() → device_shutdown()（UFS host .shutdown 走这里；device list 反向遍历 ⇒ UFS 作为早期 probe 设备最后被关）→ migrate_to_reboot_cpu() → syscore_shutdown() → 重新 cpu_hotplug_enable() → pr_notice("Starting new kernel")。因此「落盘 kmsg 在 wlan deauth 之后停止」是 SSH 先死、不是 kexec 失败。调试 kexec 时不要把 SSH 断连当成失败里程碑。
+---
+排查本机 kexec 时可参考的上游方向（2026-10 联网检索）：arm64 无 x86 的 machine_ops.shutdown 等价 teardown（Hyper-V 侧靠 syscore_ops.shutdown 修 VMBus kexec 失败，见 [PATCH v2] arm64: hyperv: run VMBus kexec handler via syscore_ops，2026-09）；reboot notifier 过早（在 kernel_restart_prepare 内、device_shutdown 之前）是已知机制限制；Qualcomm 侧关注 qcom-pon（drivers/power/reset/qcom-pon.c）在 kexec 路径的 pm_power_off / restart-mode 行为。引用时须复测，勿直接下结论。
+---
+kexec 调试落盘（跨 kexec -e 存活日志）必须用「设备本地、与 SSH 无关」的 dumper：`scripts/kmsgspy.sh` 即 `stdbuf -oL dmesg -w >> /root/kmsg-live.log &` + `while :; do sync; sleep 0.5; done`。R2 落盘失败（拿不到 `Starting new kernel`/`Bye!`）的根因 = 用 SSH 驱动的 python 读 `/dev/kmsg`，而 kexec 走 `kernel_restart_prepare()` → `blocking_notifier_call_chain(SYS_RESTART)` 会先拆网络/杀 SSH，dumper 随之死亡。修法：`setsid nohup` 完全脱离 SSH 会话，且 sync 足够密以抓到 device_shutdown 早期的 `[KD]` 标记。 — Failed: 第二轮 kexec 上机（KEXEC-ONDEVICE-R2-2026-10-05）落盘 kmsg 抓取未拿到跳转里程碑日志，误以为掉电点在里程碑之前，实为 dumper 依赖 SSH 被杀。
+---
+kexec 失败分支的代码层定位：`kernel_kexec()`（kernel/kexec_core.c:1138）非 preserve_context 路径依次执行 `kexec_in_progress=true` → `kernel_restart_prepare("kexec reboot")`（reboot.c:100，里面 `blocking_notifier_call_chain(SYS_RESTART)` 拆网络杀 SSH → `usermodehelper_disable()` → `device_shutdown()`）→ `migrate_to_reboot_cpu()` → `syscore_shutdown()` → cpu_hotplug_enable() → `pr_notice("Starting new kernel")`，再 machine_kexec。三段（notifier/device_shutdown/syscore_shutdown）任一挂死都会表现为「静默掉电且日志戛然而止」，故用 cmdline 掩码逐段跳过是可行的二分手段；另注意 UFS host 的 `.shutdown`（ufshcd_wl_shutdown）在 device_shutdown 的逆序遍历里通常最后被关，UFS 早期设备在 list 前部。 — Failed: kexec -e 硬挂/直接掉电，无跨切换存活的 console，无法定位失败分支点。
+---
+设备侧『抓 kexec 掉电前最后日志』的正确做法：`setsid nohup` 起一个完全脱离 SSH 会话的本地落盘进程（`stdbuf -oL dmesg -w >> /root/kmsg-diag.log` + `while :; do sync; sleep 0.5; done`）。用 SSH 驱动的 python/进程读 /dev/kmsg 必失败——kexec 的 kernel_restart_prepare 会跑 SYS_RESTART notifier 链（网络 teardown 杀 SSH，读取进程随之被杀）。另注意观测硬墙：落盘写 UFS，device_shutdown 反向遍历到 UFS host controller 时会关闭落盘的存储自身，之后的 kernel 日志刷不出（本次捕获干净止于 `[KD] SD-done: sde51`，无孤立 start），只能收窄不能穷尽。 — Failed: R2 第一轮落盘 kmsg 未拿到 Starting new kernel/Bye! 里程碑，误以为掉电点在里程碑之前
+---
+内核 diag sysfs 开关命名坑：用 kobject_create_and_add("kexec_diag", kernel_kobj) + sysfs_create_file 同名属性时，实际文件路径是 /sys/kernel/kexec_diag/kexec_diag（目录套同名文件），直接 cat/write /sys/kernel/kexec_diag 会报 Is a directory。另 sysfs_create_file 在新内核要 const struct attribute *，传 kobj_attribute 须取 &attr.attr。cmdline 解析（kstrtoint + __setup）在 kexec 时可能读到 0（解析失败静默 return 保默认），改用 sysfs 运行时开关更可靠、可当场读回核验。
+---
+从 boot.img 抽内核 UTS 的正确做法：找首个 b'\x1f\x8b\x08' 后 zlib.decompress(wbits=16+MAX_WBITS) 再 re.search(rb'Linux version (\S+)', k)。注意 \(S+ 贪婪会截错 manifest 字段，且脚本里正则须用 raw string（否则 SyntaxWarning invalid escape sequence）。105 个镜像中 99 个能抽到 UTS（dtbo-dummy.img 只有 4096 B 抽不到）。
+---
+在 device_shutdown() 循环体里加 msleep 时绝不能碰 devices_kset->list_lock：该函数在调用每个 dev->shutdown() 前已 spin_unlock(list_lock)，之后循环底部再 spin_lock。在 msleep 前后误加 spin_unlock+spin_lock 会对未持有的锁解锁再抢 → 双重加锁死锁，表现为 CPU soft-lockup（queued_spin_lock_slowpath ← device_shutdown+0x174 ← kernel_restart_prepare），~100s 后 watchdog 才打印回溯，背光因显示设备被跳过而未灭。 — Failed: kexec 诊断内核 vk68 加 settle_ms 后设备挂起、背光常亮；抓日志得 CPU5 soft-lockup 回溯定位
+---
+kexec 诊断内核的开关不要只靠 cmdline（kexec_dbg= 解析在某些启动路径下会读到默认 0，出现 cmdline 明明 =1 而 stage 打印 skip_mask=0 的自相矛盾）；权威做法是 sysfs 运行时开关，且 kobject 与属性同名时实际文件是 /sys/kernel/kexec_diag/kexec_diag（目录套同名文件），写路径时别漏一层。 — Failed: vk65 的 kexec_dbg=1 实测被解析成 0，改用 sysfs 旋钮后读写正常
+---
+kexec 诊断旋转开关必须跑在「运行内核」上：kernel_restart_prepare/syscore_shutdown/device_shutdown 都是发起 kexec 的运行内核在执行（不是被装载的目标 Image），所以必须 `fastboot boot` 起带开关的 diag boot.img 再发起 kexec——这是 R2 测试设计错的教训，vk65+ 已按此做。 — Failed: R1/R2 kexec 取证 design error，把 fix 装在目标镜像而非运行内核
+---
+本地落盘 dumper 抓 device_shutdown 早期标记的有效做法：setsid nohup 完全脱离 SSH 会话（不能用 SSH 驱动的 python 读 /dev/kmsg——reboot_notifier 跑 SYS_RESTART 时网络/SSH 断、子进程被杀，这正是 R2 落盘失败根因）；用 dmesg -w + 频繁 sync 循环落 UFS。但这是台车撞墙：device 反向遍历关到 UFS host controller 时把落盘用的存储自己关掉，之后的标记刷不出——「最后一条有 start 无 done」可能是观测截断而非真元凶。 — Failed: vk66 的 SD trace 止于 sde51 后无法继续，事后时间戳分析才知是观测截断/异步落电
+---
+本机（xuqianhui1001）设备重启通路分层：`eldroid-bootctl reboot bootloader`（PSCI SYSTEM_RESET2 带 reason 写 SDAM magic）会被反复 kexec 测试写坏——命令干净返回但设备 uptime 连续增长=根本没重启（SDAM/reboot-mode 写通路 wedged）。恢复法 = SysRq 'b' 硬重启（`echo b > /proc/sysrq-trigger`，绕过 reboot-mode/ABL）。稳定进 fastboot 的组合拳 = 先 `eldroid-bootctl reboot bootloader`（写 magic，即使 RESTART2 不重启也无妨）→ 再 SysRq b（硬重启时 ABL 读到残留 magic 0x02 → fastboot）；若只 SysRq b 无先写 magic，设备正常启动（magic 已被消费）。 — Failed: kexec 测试把 reboot bootloader 通路写坏，表现为 reboot 命令空操作、uptime 连续增长
+---
+kexec 诊断内核必须用**它自己**作为运行内核：`kernel_restart_prepare`/`device_shutdown`/`syscore_shutdown` 都是运行内核在 `kexec -e` 时执行的，不是目标 Image。第二轮 kexec 取证（R2）把 fix 装在目标镜像里 = 测试设计错。诊断手段优先用运行时 sysfs 开关（如 /sys/kernel/kexec_diag/{kexec_diag,stop_after,settle_ms}）而非 cmdline `xxx=` 解析——cmdline 方案曾出现解析值在 kexec 时读到 0 的歧义，sysfs 写读可当场核验。
+---
+kobject 与属性同名时 sysfs 实际文件在 `/sys/kernel/<kobj名>/<attr名>`（目录套同名文件），`cat /sys/kernel/kexec_diag` 会报 "Is a directory"；须用 `/sys/kernel/kexec_diag/kexec_diag`。另 `sysfs_create_file` 在此内核版本要求 `const struct attribute *`，传 `&kobj_attr.attr`。
+---
+本机（xuqianhui1001）长跑/无人值守脚本里的远程 ssh 触发命令必须套 `timeout`：`kexec -e` 之类会掐断连接的命令会让 ssh 一直挂到外层脚本超时（曾拖死到 300–460s），看起来像测试失败但实际已执行（日志已落盘）。实时落盘（tee -a / dmesg -w >> file + 定时 sync）是唯一可靠的取证通道，因为 SSH 会在 kexec 的 reboot_notifier 阶段断掉、任何经 SSH 的子进程 dumper 都会被杀死；dumper 须 `setsid nohup` 完全脱离会话。
+---
+fastboot 变体镜像（101,425,152 B）**不能刷进 boot_b**（分区 100,663,296 B），avbtool 加 AVB footer 会报 `Image size ... exceeds maximum image size ... in order to fit in a partition size of 100663296`。要从 Linux 内免 fastboot 常驻换内核，镜像必须 ≤96MiB（或走 vk61 式 slim/full 载具瘦身）。flash-b.sh（Linux 内签 AVB + dd boot_b）因此只适用于 slim 尺寸镜像。
+---
+本机（xuqianhui1001）进 fastboot 的可靠组合拳（2026-10-08 起）：先 `eldroid-bootctl reboot bootloader`（只写 ABL bootloader magic 0x02，RESTART2 那步可能不重启也无妨）→ 再 `echo b > /proc/sysrq-trigger`（SysRq 硬重启，绕过被 kexec 测试写坏的 RESTART2 通路，ABL 读到残留 magic 即进 fastboot）。症状：多次 kexec（截断 device_shutdown / 跳 PON regulator 关机）后 `eldroid-bootctl reboot bootloader|system` 会变成空操作（uptime 持续增长、不重启）；SysRq b 是分水岭（能重启=硬件复位通路正常，只是 RESTART2 写通路 wedged）。脚本 scripts/kexec-bs-cycle.sh 已固化该组合。 — Failed: kexec 实验写坏 restart-mode/SDAM 写通路导致 reboot 命令静默失效，一度误判为硬件问题
+---
+boot.img（fastboot 变体）镜像 ≈101MB，超过 boot_b 分区 96MiB ⇒ `scripts/flash-b.sh`（Linux 内签 AVB + dd 到 boot_b）会失败：`avbtool: Image size 101425152 exceeds maximum image size 100593664 in order to fit in a partition size of 100663296`。诊断用的大 boot.img 只能 `fastboot boot` 零写盘，不能刷进 boot_b；只有 slim（~20.8MB）或完整但 <96MiB 的镜像才能 --flash。 — Failed: 误以为可从 Linux 内直接刷诊断镜像到 boot_b 以绕开失效的 fastboot 通路
+---
+Q24 H2「用户实机确认健康」是过早收盘（2026-10-07 2/2 存活 → 2026-10-08 3 轮扫测 2/3 掉电）。间歇率 ~20-60% 的 bug，2 样本无统计意义；最低门槛 = 6 轮连续无失败才可判「健康」。此前写进 TASKS 的「用户确认」口径已于 2026-10-08 改回 🟡。 — Failed: 低样本误判为根治，后续扫测推翻
+---
+Q28 面板 init retry 补丁（vk64 d02658e63）实机确认**不足**：首条 DCS `ce 8c a9 00` 在 bonded 双 DSI 命令 DMA 上超时 master=-110，retry 路径确实触发（`panel init attempt 1 failed: -110, resetting and retrying`），但第二次 `sending dcs data ff 20 failed: -5`（EIO）⇒ DSI host 已被首次超时楔死，面板级 reset 救不回。真修需 msm_dsi 级复位（未立项）。面板驱动 builtin（非模块），无法 rmmod 重载。 — Failed: panel-novatek-nt36536 bonded-DSI init retry: -110 → reset → -5, DSI host wedged after first timeout
+---
+Q24 熄屏×相机硬复位修复假设被原厂证据削弱：stock SunP DTS 里 `cambistmclkcc` 只有 `vdd_mx-supply`（MX），camcc 才有 vdd_mm/vdd_mx/vdd_mxc ⇒ 主线「cambist 单挂 MX」（H2）就是原厂写法，「改 MXC」假设证据弱。变体 vk71-mxc（MXC）/ vk71-mxnom（MX+nom corner）待上机对照。
+---
+用户 2026-10-09 明确修正：`scripts/to-fastboot.sh --boot`（脚本自动进 fastboot + 执行 `fastboot boot`）**对该设备不响应**。正确分工 = agent 准备好镜像路径，**`fastboot boot` 由用户手动执行**；agent 侧只做「等待 SSH 回来」的轮询。这与旧口径「单条 fastboot 命令优先由 agent 自己做」不矛盾——问题不是单条命令，而是脚本内嵌的 fastboot 交互链（进 fastboot + 发 boot 命令 + 等结果）在该设备上不可靠。 — Failed: Agent 调用 scripts/to-fastboot.sh --boot 试图自动完成 fastboot boot，被用户打断并告知 fastboot 对该脚本不响应，要求手动 boot。
+---
+Q28 面板 init 失败的**永久闩锁机制**（drivers/gpu/drm/msm/dsi/dsi_manager.c）：`static bool dsi_bonded_cmd_failed`（:41）被首次 bonded 命令失败置 true（:21 WRITE_ONCE），**全树无任何代码清除它**（grep 确认 0 处写 false）。后果：后续所有 `msm_dsi_manager_cmd_xfer` 在 :674 被 `msm_dsi_manager_cmd_failed()` 短路返回 -EIO，面板 retry 必然拿 -5。只有全新 boot（静态变量随进程空间复位）才有机会。这解释了 vk64 的 panel-retry 补丁为何完全无效。另：热重启 5/5 连续失败 vs 物理冷启正常 ⇒ 失败态不被 warm reset 清除（DSI PHY 寄存器/固件状态残留）；失败态下 `reboot -f` 会挂住（DPU 卡死挡住关机路径），必须用 `echo b > /proc/sysrq-trigger`。 — Failed: panel-novatek-nt36536 首条 DCS 在 bonded 双 DSI 命令 DMA 超时(-110)，闩锁置位后所有后续传输被 -EIO 短路，retry 补丁无意义
+---
+设备侧 `reboot2`（rootfs/reboot2.c → /usr/local/sbin/reboot2）**无参数时默认 mode="bootloader"**。这是 Alpine bring-up rootfs 的设计（busybox reboot 不能传 reason 字符串），但若脚本/用户误调 `reboot2` 而不带参数，会直接进 fastboot 而非正常重启。正常关机/重启应用 `reboot`（busybox）或 `loginctl reboot`，不要用 `reboot2`。 — Failed: 用户报「之前的版本修复引入了直接重启到fastboot」，调查内核 PSCI 钩子只对显式 `reboot bootloader`/`reboot edl` 生效，但 reboot2 的默认值是一个潜在陷阱
+---
+用 `fastboot boot` 起一个 LOCALVERSION_AUTO=y 且树 dirty 的内核时，UTS 会带 `-dirty` 后缀（如 `7.2.0-debug-vk64-gd02658e63cf6-dirty`），与设备上 `/lib/modules/7.2.0-debug-vk64-gd02658e63cf6/` 不匹配 → 所有 =m 模块（fsa4480/fastrpc/ath12k 等）加载被拒 → 连锁故障（例：fsa4480 不加载 → DP 控制器 defer → msm_drm_bind 永不完成 → 连 card0 都没有，显示全黑）。修复：测试构建时 `scripts/config --disable LOCALVERSION_AUTO` 并硬设 `CONFIG_LOCALVERSION="-debug-vk64-gd02658e63cf6"`（精确匹配磁盘模块目录），或接受 builtin-only 无模块的退化态。 — Failed: Q28 补丁测试镜像 vk72-q28dsi 因 tree dirty → UTS 带 -dirty → fsa4480.ko 装不上 → DRM 完全不绑定 → /sys/class/drm 只有 version 文件、无 card0，补丁效果无法验证
+---
+Q28 诊断：`command DMA timeout: status=0x2200200` 的 0x2200200 实际是 DSI IRQ_MASK 寄存器值（bit21=DSI_IRQ_CMD_DMA_DONE 的 mask 位被错误打印为 status），不是 IRQ_STATUS。真正失败 = cmd DMA 的 completion 从未触发（both master+peer 同值超时 -110）。更早期的 `DSI PLL(0) lock failed, status=0x00000000`（t≈0.87s，远早于面板 init t≈8.8s）表明 DSI PHY 的 PLL 从未锁定——命令 DMA 不完成是 PLL 不锁的下游后果，不是命令路径 bug。方向应查 PHY bring-up/PLL 初始化而非 cmd_xfer 逻辑。
+---
+Q28 测试镜像构建教训：用 `git diff` 打了补丁后直接 make → kernel.release 带 `-dirty` 后缀 → 设备 `/lib/modules/` 无匹配目录 → 所有模块（含 CONFIG_TYPEC_MUX_FSA4480=m）加载失败 → `msm_dpr_bind` 因 fsa4480 defer 永不完成 → 连 card0 都没有（比 Q28 面板 init 失败更严重，完全无 DRM）。正确做法：(a) 关 LOCALVERSION_AUTO + 硬编码 CONFIG_LOCALVERSION="-vk64-gd02658e63cf6" + 构建时传 `LOCALVERSION=`（空字符串但已设置，阻止 setlocalversion 追加 `+`）使 UTS 精确匹配；或 (b) 确保所有必要驱动 =y（全 builtin 不依赖模块加载）。 — Failed: dirty kernel vermagic mismatch caused total DRM failure on test boot
+---
+to-fastboot.sh 在设备已处于 fastboot 模式时无响应（脚本先尝试 ssh reboot bootloader，但设备已是 fastboot 无 SSH）。正确流程：若 fastboot devices 已见设备，直接 fastboot boot，不要走 to-fastboot.sh。用户明确说「fastboot对这个脚本不响应。我手动boot」。
+---
+排查方向错误被源码推翻的教训（G1-34 旋转 2026-10-09）：先假设「D-Bus 总线错配（系统 vs 会话）」→ 在设备上做在线实验（把 proxy 挪到会话总线）→ 失败 → 才去读 phosh 源码 → 发现 phosh 0.55 原生 rotation-manager 只读系统总线、gsd 50 根本没有 orientation 组件。教训 = 桌面栈行为（谁读谁、从哪读）必须**先读源码确认**再下根因假设，不能仅凭「gsd 管方向」的 GNOME 传统认知推断。Phosh ≠ GNOME 全栈，其子系统实现可能完全不同。 — Failed: 假设驱动而非源码驱动的排查导致做了一次无效在线实验（停服务→改总线→发现无用→恢复），浪费 10+ 分钟
+---
+Q28 good/bad 对照否掉的假差异（2026-10-09 vk75 冷启对照 vs vk74 坏发）：`dsi1vco_clk rate=0`（好发也是 0，不是未编程）、`dsi1_isr=0`（好发也低）、byte 时钟 108≠133 MHz、probe 期 `PLL lock failed ×8`（好发同样有）——全部在好发里一模一样，不是差异项。唯一真差异 = 中断计数（mdss irq 1733/dsi0_isr 41 vs 1-2/0），但这是「什么都没跑起来」的结果非原因。教训写进了 vk75 补丁 commit message：「调试差分必须有对照组，只有真差分能活下来」。 — Failed: 上一轮把 dsi1vco_clk=0 当头号线索，缺好发对照导致假阳性
+---
+设备图形界面冻死行为（2026-10-09 vk72 实测）：进入 phosh/phoc 图形界面后整机卡死（phoc compositor hang）⇒ 所有 USB 接口从主机 lsusb 消失（无 18d1:d00d fastboot、无 NCM enx、无 EDL 05c6）——这不是硬件断电，是内核/compositor 挂死导致 USB gadget 不响应枚举。远程通道全断，唯一出路 = 用户物理按 power+vol_down 进 fastboot（或长按 power 强制关机再开机）。诊断脚本里遇到 ping 不通 + lsusb 无设备时，应直接请用户物理操作，不要反复重试 SSH/fastboot。 — Failed: agent 把「USB 消失」误判为需要冷启断电，实际用户用按键切到了 fastboot
+---
+GUI 死挂 #106 新约束（2026-10-09）：用户确认「进了桌面然后卡死」（非 Q28 坏显示态，桌面正常出现过）。但压力测试（foot/chromium/btop + dpms 循环）期间 `gfx` genpd 全程 `off-0`（从未上电），原因 = 脚本以 root 跑但 Wayland 会话属 user 1000（/run/user/1000/wayland-0），foot 报 `failed to change working directory to /root: Permission denied` ⇒ 实际没有任何 GUI 渲染发生。⇒ 下一步复现必须以 xuqianhui1001 身份、正确 XDG_RUNTIME_DIR/WAYLAND_DISPLAY 施压。vk76-freezetrace（cmdline softlockup_panic=1 panic=20）已就绪，可在下次死挂时自动留证到 ramoops 并暖复位。APSS 硬看门狗永久禁用（历史原因）⇒ 无 cmdline 装弹则永不自复位。 — Failed: stress script ran as root but Wayland session belongs to uid 1000, preventing actual GPU rendering and making the 600s+ survival meaningless for reproducing the GUI freeze
+---
+「USB 消失」≠ reboot2 回归（2026-10-09 更正）：连续温复位循环里设备从 lsusb 完全消失，我第一反应归因 reboot2 有 bug，**实为 PITFALLS #106（进 GUI 后整机静默冻死）复发**——内核已挂死，reboot2 根本没机会执行。用户目视确认「进了桌面然后不懂」即定案。教训：设备离线先按「冻死 vs 关机 vs 掉 USB」三分，不要凭上一条命令的失败点推断。 — Failed: 连续 fastboot boot 温复位循环中设备从 USB 总线消失，误判为 reboot2 工具 bug，实际是 #106 GUI 冻死
+---
+静默冻死取证破法（2026-10-09 落地）：本机 ramoops 后端**本来就活着**（4 MiB @ 0xc2000000，ramoops-1 console 已注册，所有 printk 进 RAM），pstore 目录空只说明从未有 crash 落盘。APSS 硬看门狗被永久禁用 ⇒ 死挂永不自复位。破法 = cmdline 加 `softlockup_panic=1 softlockup_all_cpu_backtrace=1 panic=20`：软锁 → panic → 20s 暖复位 → 重启后 /sys/fs/pstore 带回完整栈。已做进 vk76-freezetrace（sha d696f08e…），持久化到 /etc/sysctl.d/ 或 boot.img cmdline 即可长期生效。
+---
+设备从 USB 完全消失（fastboot/NCM/EDL 全无）≠ reboot2 二进制的锅——真因 = **PITFALLS #106「进 GUI 整机卡死」复发**（内核已冻死，reboot2 根本没执行）。判据：用户目视确认「进桌面后卡死」→ 物理按键进 fastboot。不要凭 USB 消失归因给 reboot2 / 硬件。已改 PITFALLS #143 口径。 — Failed: agent 最初把设备 USB 消失归因为 reboot2 安全默认改动引入回归，用户纠正为 #106 图形冻死；agent 据此撤回旧结论并改 #143
+---
+Q28 坏发 vs 好发寄存器对拍（vk75 实测）：`dsi1vco_clk rate=0`、`dsi1_isr=0`、byte 时钟 108≠133 MHz 在好发里**一模一样**——全被否。唯一真差异 = 中断总数（mdss irq / dsi0_isr），但属「什么都没跑起来」的症状非原因。连续温复位（reboot2→fastboot→fastboot boot）会把面板**粘在失败态**（5/5 坏），冷启（长按电源 20s）恢复。诊断结论写进 vk75 补丁 commit message。 — Failed: agent 首轮上机仅采坏发、把 dsi1vco=0 当头号线索，冷启好发对照出来后被否——教训：差分必须有健康基线
+---
+设备侧 `reboot2` 二进制在 `/usr/local/sbin/reboot2`（**不是** /usr/local/bin/）。`/usr/local/bin/` 下有 `eldroid-bootctl`。混淆路径导致 ssh 命令 rc=127 + 30s timeout。进 fastboot 正确命令 = `ssh root@192.168.7.1 '/usr/local/sbin/reboot2 bootloader'`。 — Failed: assistant 假设 reboot2 在 /usr/local/bin/ 导致命令失败和超时
+---
+vk64 在机内核（7.2.0-debug-vk64-gd02658e63cf6）的 CONFIG_ATH12K=y / 触屏/音频/背光全 =y（**fragment-modular 之前**的构建），而构建树 .config 已全量应用 fragment-modular（1523 .ko 已编好）。模块化收益（mod-loop 30s 迭代）只在**下一次刷入基于新 .config 的镜像**后才兑现；当前 vk64/vk72 上 modprobe 找不到这些驱动（它们是 built-in）。验证模块化需 fastboot boot 新构建的 boot.img。
+---
+ABL 槽位管理（2026-10-09 实机二次确认，补强旧条）：succ=1 后 retry 恒 7 不再递减，**无论 boot 多少次**。旧条「每次开机真的在扣次数」是基于 retry=6 的误判（那次 succ=0）。真正止血 = `qbootctl -m b`（或 `slot-attr.py mark-successful b`）一次置 succ=1，之后温启/循环测试不再累积风险。预检脚本应查 succ=1 而非「补 retry 到 7」。 — Failed: Agent 看到 retry=6 误判为「每次开机扣次数、RAM 实验在偷次数」，设 succ=1 后连掷 7 次 retry 一直是 7，当场打脸。已写入 PITFALLS #152 就地更正 + commit 372dda8。
+---
+phosh 桌面会话的 D-Bus session bus 路径**不是** `/run/user/1000/bus`（该 socket 不存在），而是 `/tmp/dbus-<随机>`（由 phoc 启动时 dbus-launch 创建）。主机侧 gsettings/dconf 操作必须从 phoc 进程 environ 读实际地址：`DBUS=$(tr '\0' '\n' < /proc/$(pgrep phoc)/environ | grep DBUS_SESSION_BUS_ADDRESS | cut -d= -f2-) && DBUS_SESSION_BUS_ADDRESS="$DBUS" gsettings set ...`。直接 `XDG_RUNTIME_DIR=/run/user/1000 gsettings` 报 `dconf-WARNING: Could not connect: No such file or directory`。 — Failed: gsettings/dconf 连不上 session bus，idle-delay 等设置看似成功实际未写入
+---
+Q28 首次好/坏寄存器差分（vk75 探针，2026-10-09）：坏发与好发仅 4 个寄存器不同——STATUS0 0x0→0x20003（CMD_MODE_ENGINE_BUSY|DSI_BUSY|INTERLEAVE_OP_CONTENTION）、CLK_STATUS 0x2343→0x3743（多 DYN_PCLK_ACTIVE+DYN_CMD_PCLK_ACTIVE）、cmd_dma_busy/cmd_engine_busy 0→1。其余 16 项（DMA_BASE/DMA_LEN/TRIG_CTRL/INTR_CTRL=0x2200200/PHY_RESET/LANE_STATUS/TIMEOUT_STATUS/ACK_ERR 等）全等。断点=面板首条 bonded DCS 写走命令 DMA 超时（master=-110），不是 DPU modeset/genpd/PLL。INTR_CTRL 好/坏相同→中断掩码不是变量。 — Failed: 此前多轮只看坏发现场推差异项（4 个假差异），首次有对照组才拿到真差分
+---
+设备「启动次数耗尽」的误判根因（2026-10-09）：`reboot2`（无参数=普通重启 RESTART2）被 ABL 当成「进 fastboot」——不是 retry 归零。真实判据 = `fastboot getvar slot-successful:b` 为 no（succ=0）；只要 succ=1，retry 恒 7 不递减。循环/温启脚本的预检 = **确认 succ=1**（`slot-attr.py show` 或 `qbootctl --get`），不是「补 retry」。`qbootctl -m b` 一次置 succ=1 永久止血。 — Failed: 误以为 retry 归零→进 fastboot，实际是 succ=0 + RESTART2 语义被 ABL 误解
+---
+RPMhPD Always-On (AO) 电源域语义纠正（2026-10-10 E4a worker 源码证据）：AO 域 = 「sleep 票清 0」即**更弱**（允许在 sleep 时掉电），不是更强。因此 Q24 修复方向「把 cambist 从 MMCX+MX 改为单挂 MXC」的正确逻辑 = MXC 是非 AO 域（保持 awake），而非「AO 保护更强」。此前 q24-deep 文档中「AO 保护」推断方向相反，以 worker 源码证据为准。
+---
+实验/诊断内核（E0/E4a 等）从 dirty worktree 构建时，CONFIG_LOCALVERSION_AUTO=y 会在 UTS 尾部追加 `-dirty`（如 7.2.0-debug-ge3c5e9fea66e-dirty）。若模块从同 commit 的 clean checkout 单独编译（或 depmod 时 git 状态已恢复 clean），模块 vermagic 就不含 `-dirty`。部署到设备后即使建了符号链接 /lib/modules/<with-dirty> -> <without-dirty>，modprobe/insmod 仍按 vermagic **字符串**逐字比对 → 全部 `Exec format error`（dmesg: version magic '...ge3c5e9fea66e ...' should be '...ge3c5e9fea66e-dirty ...'）。vk80-e4amxc 的相机模块加载 100% 失败即此因。修法：(a) 构建内核时 `make LOCALVERSION_AUTO=n`（或 `set localversion=''`）去掉 -dirty；(b) 模块必须从**同一个 dirty 树**编译。判据：`modinfo <ko> | grep vermagic` 与 `uname -r` 逐字节比较，不要只看目录名/symlink 是否存在。 — Failed: E4a 诊断内核 dirty UTS vs clean modules 导致所有 modprobe Exec format error，相机模块全链失败
+---
+E4a MXC 变体上机判定（2026-10-10）：vk81（E0+E4a 补丁，cambist 挂 MXC + 干净 vermagic）上相机 10 模块加载成功 + 桌面起来，但熄屏（ScreenSaver.SetActive true）**即睡死关机**（ssh 连接即断）——MXC 单票未根治 Q24。加上此前 H2（MX 单票）3 轮 2 掉电：**「换轨」路线（MX/MXC/MX_AO）全部无效**，Q24 根因不在投票的轨名，而在 bare clock controller 的半成品态本身 → 唯一剩余路线 = FIX-2（probe 常持票）或 FIX-3（lazy-on + suspend quiesce），或确认该块本就不该从 Linux 实例化（原厂 vdd_mx-supply + 从不触碰）。
+---
+Q24 电源域名称不是变量（2026-10-10 实机定案）：H2（MX 单票）间歇失败、E4a（MXC 单票 vk81）相机加载态熄屏**即睡死关机**（1/1 掉电）⇒ H1（去 PD）/H2（MX）/E4a（MXC）三种 DT 域切换全部未根治。根因不在「投哪条轨」，在 cambistmclkcc bare clock controller 的**半成品态本身**（probe 编程 PLL + 恒活 AHB 时钟 + 0 张 genpd 票 ⇒ 熄屏 DSI/面板 disable 路径触发电源域 collapse 时该块处于悬空不一致状态 → PMIC 硬复位）。剩余有效路线 = FIX-2（probe 后不 pm_runtime_put、常持票消除悬空窗口）/ FIX-3（lazy-on：probe 不编程 + runtime_suspend 彻底 quiesce 关 PLL+CBCR，最正/可上游）/ 不从 Linux 实例化该块（probe 黑名单）。不要再尝试换电源域。 — Failed: E4a (MXC) 实机熄屏即关机，与 H2 (MX) 同病，证明域名称不是变量
+---
+Q24 FIX-3（cambist PM lifecycle lazy-on + suspend quiesce，commit e1d2c658a）上机实测 = 卡联想 logo 无法启动（boot 死锁）。根因 = `gcc_sm8750_probe()`（gcc-sm8750.c）显式注释保持 `gcc_cam_bist_mclk_ahb_clk` always-on（同组还有 camera_ahb/camera_xo/disp_ahb/eva_ahb/gpu_cfg_ahb 等）；FIX-3 让 cambist 变为 PM-suspendable 后其 AHB 时钟可被 runtime_suspend 关掉，而 GCC 假设该 AHB 恒活 → 启动早期 AHB 被关、GCC 侧寄存器访问死锁。已 revert（commit 67fcff7f0）。结论：**「让 cambist 可挂起」方向被 GCC 硬约束否证**，剩余可行路线只剩 FIX-2（probe 后常持票不 put，消除悬空窗口但 AHB 仍活）或「不从 Linux 实例化该块」。 — Failed: FIX-3 上机 boot hang at Lenovo logo; GCC keeps cam_bist_mclk_ahb_clk always-on, PM-suspendable cambist violates that assumption
+---
+Q24 电源域换轨 + PM 生命周期两条线全部否证（2026-10-10 实机）：H1（去 PD）7/9 间歇、H2（MX 单票）3 轮 2 掉、E4a（MXC 单票 vk81）熄屏即睡死关机、D1（use_rpm=false）6/9、D2（去 critical cbcr）7/9、FIX-3（lazy-on PM lifecycle）boot 死锁。问题不在投票的轨名、不在 PM 是否可挂——在 cambistmclkcc 裸时钟控制器的**半成品态**（probe 编程 PLL + 恒活 AHB + 0 票/悬空窗口）本身，且受 GCC always-on AHB 约束无法走正常 PM 路径。
+---
+agent_browser 在 Microsoft web 应用（Outlook Live 等）上做高频 DOM 操作（连续 5+ 次 eval/click/fill）会触发**反自动化风控**：表现 = compose 窗口关闭（看似发送成功）但邮件实际落入草稿夹，已发送夹无记录。判据 = 必须导航到「已发送邮件」文件夹确认有对应条目，不能只看 compose 消失。恢复 = 用户手动打开草稿点发送（绕过风控）。 — Failed: Q24 v2 邮件经 agent_browser 代填 Outlook 网页、点发送后 compose 消失，但邮件落入 Drafts；用户手动验证并发送成功
+---
+Q24 驱动侧修复上机判定（2026-10-10 深夜）：FIX-3（vk82，去 use_rpm + lazy-on + suspend quiesce）卡联想 logo 无法启动——删 use_rpm 让 probe 读写未 resume 的 MXC 域 MMIO → NoC hang；已 revert（67fcff7f0）。FIX-2（vk83，probe 后常持票）两次 boot 一次卡 logo、一次过 logo 但内核不响应 ssh（只剩充电标志）。结论：cambist 驱动侧 PM 改动都破启动链路，vk81（MXC DT + 原版 probe）能启动但熄屏即死。下一步：串口（ttyACM0）抓早期 dmesg 定位，或把「换轨+驱动侧均无效」写进上游 follow-up。教训：qcom_cc probe 流程的 use_rpm 不能随意删；boot 卡 logo 时设备不枚举 USB，只能物理重启恢复。
+---
+Q28 根因框架彻底更正（2026-10-10 用户明确）：**Q28 与时间无关，变量是复位类型（冷/暖）**。用户日常观察「全天候发作」= 冷起（物理电源/ABL 从零启动）几乎必失败；本会话 8/8 GOOD 全是 `reboot2 bootloader → fastboot boot` = **暖复位**（ABL 已初始化过、PHY/PLL 状态残留不同），根本不代表冷起结果。之前记忆里「强时间相关：晚间坏下午好」是伪归因——下午实验都是暖起。含义：(1) 任何 Q28 A/B 实验**必须用冷起路径**（物理断电后长按电源、或 `fastboot reboot` 经 ABL 完整初始化），`reboot2 bootloader → fastboot boot` 循环测不出冷起行为；(2) 上游调研的「PLL re-lock / byte-clk 取整」方向仍然有效（PLL 状态不被 warm reset 清除 = 暖起时 PHY 已锁 = 跳过脆弱路径）；(3) vk84 delay 实验结论「不可判别」的真正原因不是「下午不坏」而是「暖起本身不触发」。旧口径（时间相关、下午窗不可复现、暖起 8/8 GOOD = 当前不发作）全部 superseded。 — Failed: 把暖复位循环的 8/8 GOOD 误读为「Q28 当前时间窗不复现」，实际是测试方法学错（暖复位绕过了触发条件），导致 A/B 结论框架完全错误
+---
+Q28 实验方法学禁忌（2026-10-10 定案）：用 `reboot2 bootloader → fastboot boot` 循环做 Q28 A/B = **测试暖复位**，与日常冷起（物理断电/长按电源→ABL 全初始化）是完全不同的复位类型。暖起时 DSI PHY/PLL 可能残留锁定态，跳过首次 modeset 的脆弱 PLL re-lock 路径 → 几乎必 GOOD。正确做法：(a) 物理冷起（需用户拔电/长按）；(b) `fastboot reboot`（经 ABL 完整初始化，接近冷起但不完全等价）；(c) 若只能暖起，则不能用它判别修复是否有效——只能用于「确认不 crash / 能 SSH 回来」的基本冒烟。脚本 scripts/q28-boot-cycle.sh 当前用暖起路径，**不能**用于 Q28 修复验证。 — Failed: 连续 2026-10-09~10-10 两天用暖起循环做 Q28 复现/修复实验，得出「时间相关」「当前不发作」的错误结论，浪费大量实验轮次
+---
+DSI PLL(0) lock failed status=0x00000000 是**开机 probe 期既存噪声**（t≈0.88s ×4），在好发(vk64/vk84)和坏发中**完全相同出现**（各 8 次）。它不是 Q28 判据、不是 Q28 触发点、不随好/坏变化。Q28 的真实判据仍是首次 bonded 命令的 `command DMA timeout: status=0x2200200` + `panel init attempt failed`。未来分析 DSI 日志时不要把 PLL(0) lock failed 当新信号。**2026-11-10 复核（UEFI/ESP 引导路径，`elden_bootloader=esp`）**：同 4 条 `DSI PLL(0) lock failed status=0x00000000` + 4 条 `disp_cc_mdss_{pclk0,pclk1,byte0,byte1}_clk_src: orphan reparent failed: -110` 照旧在 t≈0.87 s 出现，而同一次启动 `dsi_isr`=41、`card0-DSI-1`=connected、`fb0` 正常 ⇒ 该噪声**跨引导路径一致、与好坏发无关**；同批还有 `msm_dsi … Failed to create device link (0x180) with supplier ae96000.dsi for panel@0`（bonded 第二路 DSI 的 device link 未建），好发里同样出现，仅当 bonded 双 DSI 真出问题（Q28/M6）时才能当线索。成因口径 = `clk_ignore_unused` 在无 panel mode 时提前 enable DSI PLL（`archive/topics/复盘.md` 2026-09-30）。
+---
+Q28 判据不完备（2026-10-10 实机）：q28-boot-cycle.sh 只 grep `command DMA timeout` + `panel init attempt failed`，但 Q28 实际有**三种可观测签名**：① 首 modeset 的 `command DMA timeout`(-110) + `Failed to initialize panel: -110`（典型冷起）；② 后续 re-init（如 DPMS 唤醒）只看到 `panel init attempt failed: -5`（EIO，来自 dsi_bonded_cmd_failed 闩锁短路，无 -110 行）；③ 纯 vblank WARN 风暴（`drm_crtc_wait_one_vblank` WARNING from `drm_fb_helper_damage_work`，每 ~2s 一次，**无 DSI 命令错误**）= DPU 楔死但 DSI 层无错。分类器应 OR 三条件：`command DMA timeout` | `panel init attempt.*failed` | `vblank wait timed out on crtc`。只 grep 第一个会把 ②③ 误判 GOOD。 — Failed: A/B 测试 8/8 判 GOOD 但设备实际面板坏（vblank WARN 风暴 + 后续 -5），因为分类器只看 command DMA timeout
+---
+Q28 坏发时 USB 网络 gadget 不出现（主机侧无任何 usb 网卡接口、adb 空）⇒ SSH 完全不可达，**只有串口 ttyACM0 可用**。后果：① 标准 q28-boot-cycle.sh 的 SSH 取证路径在坏发时失效（脚本等 SSH 超时→判 ENV=1 而非 BAD）；② 诊断必须走串口。固化工具：scripts/serial-logger.sh（跨重启自动重连 cat，pid 文件 /tmp/q28_serial_logger.pid，`--all` 关共享 Chrome 用法同 pi-browser-reap）。另：设备坏发后可能**自发重启**（DPU commit 卡死→看门狗/panic），串口 logger 必须跨重启存活才能接住 t=0。 — Failed: Q28 坏发显示子系统卡死导致 USB gadget 函数注册失败，SSH 通道不可用，标准脚本判据失效
+---
+q28-boot-cycle.sh 判据不完整（2026-10-10 实测定案）：只 grep `command DMA timeout`+`panel init failed` 会**漏判 L2 坏发**（vid 模式下 DPU 等 vblank/frame-done 超时，面板 init 本身过了、无 command DMA timeout 也无 panel init failed）。正确判据应加：`dpu_encoder_phys_vid.*ctl.*reset failure` 或 `frame done timeout`（出现=坏）；`vblank timeout` 单独用会误判（DPMS off 也产 vblank）。命令模式面板空闲不推帧 ⇒ dsi_isr 增量恒 0（好发也一样），只能看累计值（好>0/坏=0）。
+---
+Q28 vk84 delay A/B 冷 A/B trial1 结果（2026-10-10）：vk84-exp（dsi_cmd_delay_us=1000）冷 fastboot→fastboot boot = **NOCARD**（非 STORM、非 GOOD）。原因：delay 只作用于 `msm_dsi_host_bonded_cmd_init_trigger()`（首次 DCS 写，t≈9s），而 NOCARD 的 DSI PLL lock failed 发生在 t≈0.86s 的 **DSI host probe** 阶段——两者相差 8 秒、不同代码路径、不同电源状态。⇒ delay 补丁在结构上**不可能影响** NOCARD 失效。⇒ 若后续要修 NOCARD 需在 `dsi_host_probe()` / `dsi_pll_init()` 加延时或 retry，而非 cmd_trigger。另：冷 fastboot→fastboot boot 是否真正触发 POR 态存疑（ABL 仍保留部分寄存器态），真正冷可能需拔电或 `fastboot oem reboot-edl`。
+---
+Q28 取证通道硬约束：设备从 fastboot→Linux 时 ttyACM 先消失再重新枚举（gadget 重建），`cat /dev/ttyACM0` 循环会在 ttyACM 消失时报错退出、重连后已**错过 0–20s 内核早期输出**（含 ~9s 的 DSI init/modeset/Q28 触发窗口）。⇒ **串口时序不可靠**，不能用于判 GOOD/BAD。正确做法 = 启动后 SSH 进设备读完整 `dmesg`（环形缓冲含全部 boot 行，与串口何时接上无关）。scripts/q28-devprobe.sh 已按此实现。 — Failed: cold A/B trial1 串口只抓到 uptime=23s 之后的输出，0–20s（含 DSI init 与可能的 PLL lockfail）完全丢失，误判 NOBOOT
+---
+Q28 暖复位粘态（2026-10-10 实测）：连续 `reboot2 bootloader → fastboot boot`（暖复位，不清 PMIC/PHY 状态）会把显示驱动**粘在 NOCARD**（PLL lock fail、无 card0、modeset 从未到达），与内核补丁内容无关——vk86-base（干净 vk64 基线+无诊断补丁）暖机 4/4 也是 NOCARD。⇒ **Q28 A/B 只能用物理 POR（断电→等→上电→按键进 fastboot→fastboot boot）取冷样本，暖复位循环不可判别**。C2 证实同内核 vk64 冷 fastboot=STORM（到 modeset、cmd-DMA hang），冷 fastboot ≡ 真实 POR（C1+C2 配对坐实）。
+---
+scripts/q28-boot-cycle.sh 判据缺陷（2026-10-10 实锤）：该脚本只数六种风暴签名（command DMA timeout / panel init fail / ctl reset / frame done / vblank / dpms off），**不检查 /sys/class/drm/card0 是否存在**——NOCARD（无 card0、零风暴签名）被误报为 GOOD。正确判据必须用 scripts/q28-devprobe.sh 的三态（NOCARD/STORM/GOOD），或至少额外 `[ -e /sys/class/drm/card0 ]`。本轮 vk86-round 暖机被报 GOOD 实为 NOCARD 即此因。
+---
+build-boot.sh 静默回退 slim ramdisk 破坏单变量（2026-10-10 vk85 实测）：打包脚本在 RAMDISK_KIND 未显式设 full 且 out/rootfs-overlaid*.cpio.gz 不存在时，**静默回退到 slim（1MB）或空 ramdisk**，产出 21MB 镜像（正常完整 ramdisk 应 ~85MB），但 manifest 只写 `ramdisk_sha256=(absent)` 不报错。后果：vk85 与 vk84 载荷不可比（slim=无固件=驱动全废，PITFALLS #113）。规矩：打包后**必须核对输出镜像体积**（完整 ramdisk ≈80–90MB，slim≈21MB），并显式 `RAMDISK_KIND=full bash scripts/build-boot.sh` 或 `RAMDISK=<path>` 锁定 ramdisk。
+---
+scripts/q28-boot-cycle.sh 的 GOOD/BAD 判据**不看 card0 是否存在**——NOCARD 启动（无显示驱动绑定、面板从未点亮）被误报为 GOOD。正确判据必须用 scripts/q28-devprobe.sh 的三态（NOCARD=无card0 / STORM=有card0但风暴签名>0 / GOOD=有card0且无风暴）。本轮 vk86-round 暖机被 q28-boot-cycle.sh 连续 4 次报 GOOD，实际 q28-devprobe 全是 NOCARD。 — Failed: 脚本 GOOD 判据只看 dmesg 风暴签名>0，不查 /sys/class/drm/card0* 存在性；NOCARD 启动风暴签名=0（因为从未 modeset）→ 误判 GOOD
+---
+Q28 台架混淆变量（2026-10-10 坐实）：(1) vk86-base 与 vk64 的内核 commit/config(a383cdb9)/DTB(386cc9bd) **逐字节相同**，但 ramdisk /init 不同（354 行 vs 364 行，多 payload-modules-load.sh ≤20s 模块加载器挪动用户态时序）→ 同一冷路径下 vk64=STORM、vk86-base=NOCARD，A/B 前提不成立。(2) vk73–85 诊断链 ca81318f2（propagate DPU/DSI power-up failures）把失败点从 STORM（modeset 后 cmd-DMA hang）推早到 NOCARD（PLL lock fail → 组件没聚齐 → 从未 modeset）→ 带诊断补丁的内核**不能**测 Q28 修法，必须用干净 vk64 基线（d02658e63）无诊断改动。 — Failed: vk86-base 的 ramdisk 是从 vk61 重建（多 payload-modules-load.sh），与 vk64 原 ramdisk 不同，首次 modeset 时序偏移导致冷起落在不同失败模式
+---
+Q28 冷起三态分布（2026-10-10 多轮实机）：同一条 POR 冷路径，同一内核(vk64 d02658e63)，冷起可落 STORM（cmd-DMA 超时，有 card0）也可落 NOCARD（PLL lock fail，无 card0）——两者不是不同 bug，是同一根因（冷起 DSI PHY 状态未初始化）的不同表现深度。区分判据唯一可靠 = SSH 后 q28-devprobe 三态 + 查 card0 有无。串口 logger 重连会漏 0–20s 窗口（NOCARD 断点在 0.86s），不能靠串口时序判。
+---
+RUNBOOK §8 四档迭代环实际状态（2026-10-10 盘点确认）：mod 热载 ~30s 要求 tree KV==device KV（默认 boot_b=vk64 vs 树 HEAD 必拒，需先刷 boot_b 或 --force）；kexec 已定论不可用；dtb 环 kexec 不传 DT 是空操作；唯一实际可用环=全量编+`fastboot boot`（~5min），但冷起 Q28 面板间歇失败（~60%）阻塞日常迭代。结论：迭代链瓶颈不在编译速度，在「上机验证的可靠性」（Q28 冷起 + 无 kexec + mod-loop KV 锁）。 — Failed: vk81/82/83 三个死内核镜像（olddefconfig 静默删 ARCH_QCOM）流入上机浪费 3 轮设备时间；mod-loop 默认拒绝导致开发者绕过闸门手写 manifest
+---
+mod-loop.sh 的 KV 对齐守卫（device KV == tree kernelrelease 才放行）在 boot_b 固定为 vk64 时，任何内核树前移（新 commit/tag）都会使 mod-loop 立即失效，直到刷 boot_b 或手动 --force。实际效果：开发者要么每次刷 boot_b（失去零写盘优势），要么绕过闸门（风险）。正确做法=保持一个与树 HEAD 同步的「开发 boot」或用 `fastboot boot` 替代。 — Failed: 本次会话发现树 HEAD=7.2.0-debug-ga8c09a723254 而 boot_b=vk64（7.2.0-debug-vk64-gd02658e63cf6），mod-loop 必拒
+---
+软件 POR（`busybox poweroff -f`）实测结论（2026-10-10 vk64）：确实产生真断电（USB 重枚举 + 新 boot_id + uptime 归零 + VBUS 自动开机），**但不可用于无人值守自动循环**——3 轮连续跑中第 3 轮 boot 后内核卡死（GUI 冻住、音量键无响应、SSH 超时、不在 fastboot），需用户物理冷启恢复。判据：run1=GOOD、run2=STORM（正常概率）、run3=HANG（非 Q28 两种已知签名，是新故障模式）。另：`loginctl poweroff`（OpenRC 停服务路径）在 STORM 态下挂住——OpenRC 试图 stop 与死 DPU 交互的服务后永不返回；只有 `busybox poweroff -f`（直调 reboot(2) 绕过 init/notifier）或 `echo b > /proc/sysrq-trigger` 能脱离 STORM 态。结论：迭代流程第 3 项（软件 POR 替代人工断电）**否决**，仍须用户物理断电做冷起对照。 — Failed: 自动化 POR 循环第 3 轮内核卡死，证明软件 POR 后的一次 boot 可能触发未知内核死锁（与 Q28 STORM/NOCARD 均不同），不可无人值守
+---
+Agent 仅凭 SSH 恢复 + 新 boot_id + USB 重枚举就宣布「软件 POR 成立」（busybox poweroff -f），但第二轮自动循环时设备 GUI 卡死（音量键无响应、USB/SSH/fastboot 全消失），用户纠正「实际上没有测试成功」。教训：对显示相关验证，SSH 活着 ≠ 系统正常；必须同时验屏幕输出 + 用户目视确认。自动密循环（poweroff→wait→probe→poweroff）在本设备上有内核挂死风险（第二轮触发），绝不能无人值守跑。 — Failed: Premature success claim based on partial signals (SSH+boot_id) while display was actually broken; unattended soft-POR loop caused kernel hang on iteration 2
+---
+`loginctl poweroff`（走 OpenRC init）在本设备上**永远卡在停服务阶段**（powerlog 有 stopped 记录但无 CLEAN-STOP），不执行实际 poweroff syscall——设备 uptime 持续增长。唯一能触发真实断电的用户态命令 = `busybox poweroff -f`（直接 syscall，绕过 init/OpenRC 停服务链）。且坏发（DPU storm sig>100）态下连 `busybox poweroff -f` 也无效（内核关机路径被 DRM 占死），只能物理断电。 — Failed: loginctl poweroff triggers OpenRC service stop but never reaches reboot(POFF); on STORM-state device even busybox poweroff -f is blocked by DRM storm in kernel shutdown notifier
+---
+用户会当场纠正 agent 对设备状态的误判：「实际上没有测试成功。从你busybox重启进入锁屏以后，你执行的脚本没有重启，设备的gui卡住不动了，音量按钮无响应（内核卡死的征兆）」——期望 agent 据此立即停手、不继续循环、入账事故。用户还会主动报告物理观察（「屏幕无图案（仅背光点亮）」、「物理断电重启成功」），期望据此修正判读方向。
+---
+自动设备循环（POR→boot→probe→POR→...）在 Q28 STORM 态下必死：坏发内核关机路径被 DRM storm 占死（reboot/reboot -f/busybox poweroff -f 全无效），USB gadget 可能不枚举，SSH 不通，fastboot 不在——设备变成只能物理断电的砖。本轮实测：run1 成功（暖态 GOOD）→ run2 自动发第二拍 poweroff -f → 内核卡死 → 设备失联 → 用户手动长按电源 20s 恢复。规则：任何涉及设备的循环脚本必须 (a) 每轮间等用户目视确认屏幕/物理按键响应（用户在场时 ≤3 轮），(b) 上轮 probe 返回非 GOOD 时立即 abort 不自动发下一拍，(c) 绝不无人值守密循环。 — Failed: Q28 软件 POR 自动循环 run2 在内核卡死态下继续发 poweroff -f，设备变砖需用户物理恢复
+---
+「按内核二进制确定性」claims (Q28 vk64=GOOD×7 / 新编=NOCARD×14) 溯源审计结论（2026-10-10 夜）：21 发台账**只有 7 发有原始日志**（vk64 GOOD×2、vk89×3、vk89-plain×2）；其余 14 发无 per-run 记录、vk64c*.img 已删。声称的 5,040,884 B 二进制差**主要是 LOCALVERSION 长度导致的 `.rodata` 4 字节平移**（`.text` 仅 26 word、全为地址立即数），不是真实代码变更。同一 vk64.img 在冷 POR 路径 3/3=STORM ⇒ 现口径 = 「reboot2 暖路径上 vk64 亮、vk89/vk64c 不亮，真因未定」，不是「确定性翻转」。教训：做确定性 claim 必须有 per-run 证据日志（scripts/trial.sh 正是为此而生），且声称的「二进制差异」必须先排除 UTS 字符串偏移、再看 .text。溯源文档 reports/q28-binary-determinism-provenance-20261010.md，commit 1c9a589。 — Failed: binary determinism claim made from device boots without per-run evidence; binary diff attributed to code change but was actually LOCALVERSION string offset
+---
+内核 Image 二进制对拍技巧（LOCALVERSION_AUTO=y 树）：同源码不同构建号的 Image（如 vk64 #60 vs vk64c #91）会因 UTS 串长度差（多一个字符如 'c'）导致 `.rodata` 整段后移，表现为 5M+ 字节差异，但 `.text` 段仅 26 个 word 不同且全为 adrp/add 立即数（= 符号地址平移产物）。判据：用 `b[i]==a[i-4]` 对齐率验证（>94% ⇒ 纯偏移）；真正代码改动看 `.text` 段逐 word XOR 排除偏移后剩余的 word 数。工具：`scripts/extract-ikconfig` 验 config 一致 + System.map 定位 kallsyms 符号确认偏移起点。 — Failed: naive binary diff of kernel Images misattributes LOCALVERSION string-length-driven .rodata shifts to real code differences
+---
+内核二进制「确定性」溯源的关键方法论教训（2026-10-10 Q28 调查）：LOCALVERSION 字符串长度差异（如 vk64→vk64c 多 1 字符）导致 .rodata 段整体 4 字节偏移，造成 ~5MB 假性字节差异（oct8_vk64 vs vk64c = 5,040,884 B diff），但 .text 段实际只差 1 个 word（q28a vs q28aa 实验证实：LOCALVERSION 长度差 1 字符 = 总 diff 仅 466 B / 1 text word）。结论：判断两个内核构建是否「功能不同」不能靠 Image 字节 diff，必须看 .text 段差异或反编译对比；字节 diff 的 94.7% 匹配 shift(+4) 只是 rodata 平移。这导致 Q28 的「按内核二进制确定性」结论被降级（commit 1c9a589 溯源审计）。 — Failed: 接受「21 发台账 vk64 GOOD×7 / 新编 NOCARD×14 + 5MB 二进制差异 → 确定性由内核二进制决定」的结论，未验证 per-run 日志（实际仅 7 发有记录）也未理解字节差异来源（LOCALVERSION 长度导致的 rodata 平移）
+---
+Q28 有第四种结局 HANG（2026-10-10 layout A/B 发现）：oct8 内核（原 GOOD 参照）在 uptime=14.6s 时 SSH probe 报 GOOD（card0 在、DSI-1 connected、风暴=0），但**进入桌面几秒后整机冻死**（SSH 超时→ping 全丢→USB 消失→reboot2 无响应→只能物理长按电源）。原三态判据（NOCARD/STORM/GOOD）漏判此态——probe 时点太早、只看 dmesg 签名不看后续存活。正确判 GOOD 必须 = 有 card0 + 无风暴 + **后续存活 ≥60s**（或在存活期内完成交互测试）。HANG 与 Q28 STORM 不同：STORM 有 dmesg 风暴但内核活；HANG = dmesg 安静但整机不再响应。待单独调查（可能是 DPU/DSI 卡死后 VBUS/PMIC 侧二次触发，或 Q24 cambist 路径在桌面活跃时才触发的子集）。 — Failed: probe 时点(14s)过早且只看瞬时 dmesg 签名，未验证后续存活——导致 oct8 被记为 GOOD 但实际几秒后 HANG
+---
+Q28「按内核二进制确定性」实验的 GOOD 判定存在系统性误判：SSH 探针在 uptime≈14 s 读到 card0+无风暴 就记 GOOD，但设备随后数秒即冻死（= PITFALLS #106「进 GUI 后整机卡死」，硬看门狗禁用→不自复位→需物理断电）。原报告「vk64 GOOD×7」很可能全部是 GOOD→HANG，被单次探针误判为真 GOOD。后果：(1) 逆转说法的实验设计根本缺陷——单次探针无法区分「真正常」与「即将冻死」；(2) 任何 Q28 判 GOOD 必须持续观测（至少 2–3 个时间点或 uptime>60 s 仍 SSH 活），单次 uptime=14 s 探针不算 GOOD；(3) layout A/B 中 oct8 跑出 GOOD 的样本实际是 HANG 前窗口，与 STORM 同属失败谱系。#106 与 Q28 不是独立问题，而是同一冷起/复位路径在时间轴上的不同表现。 — Failed: Binary determinism experiment used single-point SSH probe as GOOD criterion; system froze seconds later (#106) but was never re-checked, so HANG was silently misclassified as GOOD
+---
+Q28「按内核二进制确定性」溯源审计结论（2026-10-10，commit 1c9a589）：原报告 21 发台账仅 7 发有仓库原始日志；声称的 5,040,884 B 二进制差 94.72% 是 LOCALVERSION 字符串长度差导致的 .rodata 4 字节平移，.text 仅 26 word 且全为 kallsyms 地址立即数（无指令语义改变）；同源码仅改 LOCALVERSION（-q28a vs -q28aa）的 Image diff=466 B、.text diff=1 word。layout A/B（reboot2 暖路径）证实同一 oct8 镜像 4 次跑出 GOOD/STORM/STORM/GOOD（不自洽）⇒ 降级为「暖路径 vk64 亮/vk89 不亮，真因未定」。 — Failed: 原报告把 LOCALVERSION 字符串偏移误读为功能性二进制差异，且 21 发中 14 发无 per-run 证据，导致错误结论写入 SSOT
+---
+Q28 第四态 HANG（2026-10-10 实机定案）：STORM=0 的干净 GOOD 启动（有 card0、无风暴签名）在数秒内必定整机冻死（SSH/USB/ping 全消，APSS 硬看门狗禁用不自复位，需物理断电）。原 binary-determinism 测试的「GOOD×7」实际全是「t=14s 探针时看着 GOOD → 之后 HANG」，因为探针只拍一次、不验存活。正确判据=四态（NOCARD/STORM/GOOD-STABLE/HANG），GOOD 必须 uptime≥60s + SSH 仍活。RAM-only（无磁盘根、不起桌面）也 HANG ⇒ #106「进GUI卡死」不是 GUI 专属，任何显示 modeset 触发都可能冻死整机。STORM>0 反而存活（4/4），说明 DPU 报错风暴路径与冻结路径是两条独立失败模式。 — Failed: 原测试设计只拍 t=14s 单次快照判 GOOD/BAD，未设存活门，把 HANG 误录为 GOOD，导致「vk64 GOOD×7」的参照系本身不可靠
+---
+Q24 方法论缺口（2026-10-10 外部教程评估暴露）：核心机制「RPMh 轨塌 → NoC → PS_HOLD」至今是**推断**而非直接观测——60+ 轮二分只证了「cambistmclkcc 在位 + 熄屏 = 掉电」的共现，从未在掉电瞬间抓取 /sys/kernel/debug/regulator/regulator_summary 与 /sys/kernel/debug/clk/clk_summary 的前后对比来**直接观测**哪条轨先塌、塌的顺序、以及 cambist 的 MX 票是否真的阻止了轨关断。教程建议的「最小化 probe」= 我们的 FIX-3（vk82），但因死内核事故作废需在好档重做；而 regulator_summary 对比是**一条我们从未做的廉价新检查**（好发/坏发各采一次即可），应纳入下次 Q24 上机采集清单。 — Failed: 60+ 轮实验只做了共现二分，未做机制的直接观测（regulator 轨态 / RPMh 请求-响应对），导致所有修复实验都在「猜哪条轨」而非「看到哪条轨塌了」
+---
+Q24 熄屏复现有效性前提（2026-10-11 实测教训）：若当前 boot 是 Q28 坏发（dmesg 有 `panel init attempt … failed: -5/-110`、card0-DSI-1 虽 connected 但 DPU 从未完成 modeset），则 `ScreenSaver.SetActive(true)` **不会复现 Q24 掉电**（设备存活）——因为显示管线本身已死、熄屏路径走不到 cambist×DSI-blank 交互。Q24 扫测/复现的前置判据 = `grep -c 'panel init.*failed' /dev/null` 为 0（从 dmesg grep）+ `cat /sys/class/drm/card0-DSI-1/status` = connected + phosh 进程在 + **dpms 确实从 On→Off**（用 `wlr-randr` 或 `gdbus call … org.gnome.ScreenSaver GetActive` 验证，不能只发 SetActive 就假设生效）。坏发 boot 上的负样本一律标 INVALID 不计入统计。 — Failed: 2026-10-11 Q24 复现：vk64 boot_b 上 boot 已有 panel init -5（Q28 坏发），加载 cambist + SetActive(true) 后设备存活 12s+，差点误判为 Q24 已修复。实际是 Q28 坏发导致显示管线从未正常 modeset，熄屏走不到触发路径。
+---
+RPMh tracepoint 局限性（2026-10-11 设备实测）：`/sys/kernel/debug/tracing/events/rpmh/` 下的 `rpmh_send_msg`/`rpmh_tx_done` 主要捕获 **BCM（Bus Communication Manager）周期心跳**（msgid=0x10008, 每 ~15ms 一条），**不是** genpd 电源域的 ARC（Active Resource Coordinator）corner level 投票。熄屏时 genpd `mx=on mmcx=on mxc=off-0` 全程不变（55 秒采样零变化），要么投票走不同路径（rpmh_regulator 而非 rpmh driver 直调），要么 collapse 发生在采样间隙内（原子掉电无中间态）。要抓真正的 corner 写需：(a) `/sys/kernel/debug/cmd_db` 读资源映射（已确认设备可读）；(b) 在 `drivers/power/domain/qcom-rpmh-power.c` 的 `rpmhpd_power_on/off` 里加 dev_dbg/printk；(c) 或 `rpmh_regulator_set_voltage` tracepoint（若内核有 CONFIG_TRACING）。genpd sysfs 采样不能证明「轨没塌」——只能证明「塌得比采样快」。 — Failed: 试图用 ftrace rpmh_send_msg 抓 Q24 掉电瞬间的 RPMh 轨投票，结果 24 行全是 BCM 心跳、0 行 genpd ARC 操作。genpd sysfs 采样（0.5s 间隔）显示熄屏全程 mx/mmcx=on、mxc=off-0 不变，与「MX/MXC 轨塌导致 NoC→PS_HOLD」假设矛盾，但采样分辨率不足以排除亚 500ms 原子塌。
+---
+内核树脏文件致 -dirty（2026-10-11 复发）：`tools/testing/selftests/bpf/progs/` 下有一个文件名被截断的跟踪文件 `btf__coreOreloc_type_based___fn_wrong_args.c`（O 代替 _，git checkout 产物 bug）被删 + 正确名 `btf__core_reloc_type_based___fn_wrong_args.c`（89 B，内容不同）未跟踪 → `git status` 报 ` D` + `??` → `git describe --dirty` 返回 `-dirty` → UTS/vermagic 含 `-dirty` → 模块 insmod 报 `Exec format error`。修法：`git checkout -- tools/testing/selftests/bpf/progs/` 恢复跟踪文件 + `rm` 或 `git add` 未跟踪文件使树 clean。每次从 clean/base 创建分支后、make 前必跑此检查。 — Failed: vk90/91/92 构建时 manifest 的 kernel_release 全部含 `-dirty` 后缀，虽镜像本身能启动但模块 vermagic 不匹配设备已有模块目录，无法 insmod 相机模块。
+---
+Q24 复现条件修正（2026-10-11 实测，用户裁定「以这次实验现象为主」）：**cambistmclkcc 单独加载 + 真实熄屏 = 9/9 存活**（vk64/H2 DTB，genpd 轨态在 blank 前后完全不动：mx=on mmcx=on mxc=off-0 cx=on）⇒ 旧口径「唯一触发模块 = cambistmclkcc / 单独加载它即 3/3 掉电」**不成立**。真正可复现的触发条件 = **完整相机栈**（camcc-sm8750 + cambistmclkcc-sm8750 + i2c-qcom-cci + wl2868c-regulator + qcom-camss + leds-qcom-flash + gt9764 + s5kjns + gc08a8 + system_heap）+ 真实熄屏 → 硬复位（uptime 归零、pstore 空、模块消失）。死前 1s 捕获 RPMh trace：`addr: 0x300a0 data: 0x2 → 0x0`（cmd-db 里需确认该 addr 对应哪个域）。历史 60+ 轮「单模块 cambist」二分样本的台架不干净（可能混入了完整相机栈或其他变量），新实验明确区分了 cambist-alone vs full-stack。 — Failed: 旧记忆中 20+ 条写「唯一触发=cambistmclkcc / 单独加载即掉电」，本次 vk64 干净台架 cambist-alone 9/9 存活直接否证
+---
+Q24 触发体修正（2026-10-11 干净复现）：cambistmclkcc-sm8750 **单独加载不触发熄屏掉电**（vk64 GOOD 启动 + cambist 单独 + 真实熄屏 ×9 全存活）；**cambist + camcc-sm8750 组合**才是触发体（加载 camcc 后首次熄屏即硬复位）。此前「单模块 cambist 即触发」的结论来自 -dirty 内核 + 非 GOOD 启动 + 可能含 camcc 的加载序列（camera.conf 顺序先 camcc 后 cambist），属台架不干净。用户明确「以这次实验现象为主，历史取证不干净」。RPMh 死前 trace：最后一笔 = tcs 1 cmd 0 addr 0x300a0 data 0x0（某轨掉到 0），紧接 reset。 — Failed: 旧记忆「cambist 单模块即触发」与干净复现矛盾；旧台架用 -dirty 内核 + 可能非 GOOD 启动 + camera.conf 含 camcc 在前
+---
+Q28 STORM 态 SSH 行为（2026-10-11 实测定案）：STORM（vblank timeout 风暴）时设备**网络层活着**（ping 通、TCP 3-way 握手成功、`ip neigh` 显示 REACHABLE），但 **ssh banner exchange 超时**——因 `drm_fb_helper_damage_work → drm_crtc_wait_one_vblank` 死循环占满 workqueue，sshd 子进程无法获得 CPU 完成 key exchange。串口 /dev/ttyACM0 可读（内核 printk 正常）但**无 shell**（不是 login shell 而是纯 console）。恢复 = 物理长按电源 ~20s → 音量下+电源进 fastboot → 反复 `fastboot boot vk64` 直到 GOOD（attempt 1~5，~40% 成功率）。**不要用 reboot2 暖路径做台架**（产生 NOCARD，非代表）。 — Failed: STORM 时 ping 通 + TCP connect 成功造成「SSH 应该能用」的错觉；实际 sshd 被 workqueue 饿死
+---
+Q28 STORM 态下 SSH 饥饿机制（2026-10-11 实机确认）：面板 init 失败（bonded DSI cmd-DMA timeout）→ DPU vblank/frame-done 风暴 → drm_fb_helper_damage_work 占满 workqueue → SSH sshd 虽 LISTEN 且 TCP SYN 可达（ping 通）但 banner exchange 永远超时（sshd 的 worker 排不上 workqueue）。串口 /dev/ttyACM0 只有内核 log 输出、**无 shell**（cmdline console=ttyGS0 是 log-only gadget，不挂 getty）。唯一恢复 = 物理长按电源 20s + 音量下+电源进 fastboot。不能靠 SSH 重试或等待（风暴无限循环，非瞬态）。 — Failed: Q28 面板 init 失败后设备 ping 通但 SSH 永久挂起，误判为网络问题导致浪费时间；实际是 workqueue 被 DPU 风暴占满、sshd 饿死
+---
+Q24/Q28 实验的构建版本串陷阱（2026-10-11 实锤）：同一源码树 + 同一 .config + 同一工具链，只有 LOCALVERSION（UTS 版本串）不同，会导致 (a) Q28 的 card0 有/无翻转（-vk64 GOOD，其他 NOCARD 11/11），(b) 模块 vermagic 与内核不匹配 → modprobe 静默跳过 / insmod 报 Exec format error。修复方式：用 LOCALVERSION=-vk64 统一重建内核+模块+镜像。另一种 vermagic -dirty 陷阱：树 dirty 时 UTS 含 `-dirty`，但模块目录可用 symlink 指向无 `-dirty` 的目录 → insmod 报 `version magic 'X' should be 'X-dirty'`（CONFIG_MODVERSIONS 关时无 force-load 余地），正确修法 = 全部在途改动 commit 使树变 clean 后重编内核+模块。绝不要试图用 symlink 或 --force-modversion 绕过。
+---
+@internal: 长命令/长测试被用户取消时 pi agent 看不到中断前的工具输出 ⇒ 任何长跑/扫掠脚本必须实时写文件（tee -a / 后台 nohup > log），agent 从文件读结果并在汇报里给 log 路径。本会话用户曾中断 `fastboot boot` 循环与 SSH 轮询，恢复靠持久日志而非 stdout。
+---
+build-modular-overlay.sh 的 payload 闭包计算会包含 qcom-camss.ko（单 12MB）+ 全部音频模块（snd-usb-audio 7MB 等）共 25 模块 ≈ 35MB，导致镜像涨到 98MB 逼近 fastboot boot 96MiB 上限而被拒收（表现为 fastboot boot OKAY 但设备回落到 boot_b，串口确认跑的是旧内核）。修法 = 加 ROOTS 环境变量覆盖（默认含全部相机+音频根，设为 `ROOTS='camcc-sm8750 cambistmclkcc-sm8750'` 时只算 2 模块闭包 ≈ 2MB，镜像回到 86.7MB）。已落地到 scripts/build-modular-overlay.sh。 — Failed: vk91-fix3mx 首次上机时镜像 98.3MB 被 fastboot boot 静默拒收，串口显示跑的是 boot_b 旧内核（vk64），误判为 FIX-3 内核挂死。
+---
+Q24 死前 RPMh 取证标准流程（2026-10-11 实测成功）：台架 = fastboot boot vk64(LOCALVERSION=-vk64) → 确认 GOOD（card0 存在 + vblank=0 + resetfail=0 + dsi_isr>0）→ `echo 1 > /sys/kernel/debug/tracing/events/rpmh/rpmh_send_msg/enable; echo 1 > /sys/kernel/debug/tracing/tracing_on; cat /sys/kernel/debug/tracing/trace_pipe > 主机文件` 流式抓 → modprobe 模块 + ScreenSaver.SetActive(true) → 掉电判据 = uptime 归零 + ping 不通 + /sys/fs/pstore 空 → 每轮结束 qbootctl -m b。绝不用 `pkill -f trace_pipe`（杀自己 shell），用记录 pid + `kill <pid>` 或 `timeout` 控制 streamer。 — Failed: 首次尝试用 pkill -f trace_pipe 清理 trace 进程，把当前 SSH 会话的 bash 进程一起杀掉（命令半截没跑），重新做时改用 pid 记录。
+---
+模块级实验的 vermagic 匹配技法（2026-10-11 实测）：只改驱动 .ko（如 FIX-2/FIX-3）想装到已跑内核上时，模块 vermagic 必须与运行内核 kernelrelease 完全一致。若分支 HEAD 不同导致 vermagic 差（如 vk91-fix3mx vs vk64），正确做法 = 切到该分支后临时 `CONFIG_LOCALVERSION_AUTO=n` + `CONFIG_LOCALVERSION="-debug"`（或 export LOCALVERSION=-vk64）重编该模块 → vermagic 对齐目标内核。错误做法 = symlink / --force-modversion（MODVERSIONS 关时无余地）或 rmmod 已加载的模块（Used by≠0 时 rmmod rc=1）。
+---
+Q24「单模块 cambistmclkcc 触发」是**取证方法论错误**（非实验设计错误）：历史扫测用的 `/etc/modules-load.d/camera.conf` 全栈加载器会同时 modprobe camcc+cambist+cci+camss+传感器等 11 个模块，研究者只盯 cambist 的 insmod 日志就归因「单模块」，但 camcc 早已同时在场。干净单变量实验（2026-10-11）证明：cambist 单独 12/12 存活、camcc 单独 3/3 存活、配对 2/2 死（双向顺序均死）。教训：增量加载实验必须从**零模块**起逐个加，不能基于已有全栈加载器做「单模块」归因。 — Failed: camera.conf 全栈加载器同时带 camcc，研究者未隔离变量就得出「cambist 单模块触发」结论
+---
+arm 镜像模块闭包膨胀超 fastboot boot 上限（~96MiB）：build-modular-overlay.sh 默认 ROOTS 含全部相机+音频模块（qcom-camss.ko 单 12MB、snd-usb-audio 7MB…），闭包算到 25 模块 11.8MB→镜像 98.3MB→fastboot boot 静默拒收→回落到 boot_b（表现为「vk91 启动后跑 vk64」）。修法=给 ROOTS 设环境变量覆盖，Q24 三臂只需 camcc+cambist 两个 .ko（86.7MB 通过）。判据：镜像 >96MiB 就大概率被 fastboot boot 拒收。 — Failed: 默认 ROOTS 含 qcom-camss 等 25 模块使闭包膨胀到 98MB 超 fastboot boot 的 ~96MiB 传输/加载上限
+---
+设备侧 meson 构建 phoc/phosh 时默认 buildtype=debug（-O0）——合成器必须用 --buildtype=release，否则性能不可用。本轮首编即栽此坑（debug 版 8.5MB vs release 2.2MB），发现后重编。正确 meson setup 命令：`meson setup output --prefix=/usr --buildtype=release`。
+---
+phoc 构建时 wlroots subproject 的 `0001-Revert-layer-shell-error-on-0-dimension-without-anch.patch` 在 `meson setup` 阶段触发 `patch: File to patch: Skip this patch? [y]`（因 patch 文件路径与 subproject 目录结构不匹配），但 **不影响编译**（meson 静默 skip、wlroots 仍正常构建）。看到此输出不必中断构建流程。
+---
+phoc/phosh 上游提交路径：真实上游 = gitlab.gnome.org/World/Phosh/{phoc,phosh}，GitHub 上的 PhoshMobi/phoc 和 PhoshMobi/phosh 是 read-only mirror（hasIssuesEnabled=false, viewerPermission=READ），gh CLI 无法开 PR。GNOME GitLab 支持 GitHub OAuth 登录（用户账号 xiaquwan1001 可直接 OAuth 授权进 GitLab），无需单独注册。提交方式 = GitLab 网页 Fork → 推分支 → 开 MR，或邮件给 phosh-devel。 — Failed: gh repo view GNOME/phosh 报 Could not resolve to a Repository；gh api 对 PhoshMobi/phoc 确认是 mirror 无写权限
+---
+设备上热替换 /usr/bin/phoc 或 /usr/libexec/phosh 会报 `Text file busy`（ETXTBSY）——因为 greetd→gnome-session→phoc→phosh 进程链正在持有这些二进制。正确顺序 = `rc-service greetd stop` → cp 新文件 → `rc-service greetd start`（完整重启会话，不能只 kill）。 — Failed: 直接 cp 到运行中的 phoc 报 Text file busy
+---
+GNOME GitLab (gitlab.gnome.org) 对本机出口 IP（USTC/CERNET 教育网段）拦截注册（2026-10-11 实测确认）。所有 GNOME 项目的上游提交（phoc/phosh/gnome-* 等）需等申诉通过或换出口。phoc/phosh 的 GitHub 镜像 PhoshMobi/{phoc,phosh} 是 read-only mirror（issues 关闭、viewerPermission=READ），不能开 PR/issue。gh CLI 无法提交到 gitlab.gnome.org（只能操作 GitHub）。 — Failed: 用户尝试用 gh CLI 和浏览器登录 gitlab.gnome.org 提交 phoc/phosh 补丁，注册被 IP 拦截
+---
+G1-8 GPU 基准（vkmark/es2gears）在设备上的 caveat：用户观察到「待渲染物体挤在左上角」，疑与 phoc 显示缩放/视口有关（非 GPU 性能问题）。解读 vkmark/GLES 分数时注明此 caveat，不要因绝对值偏低误判 GPU 驱动异常。vkmark ~25400、GLES es2gears ~165fps（= 面板刷新率上限）均正常。
+---
+Q28 坏发时 USB-NCM 网络 gadget 可能起不来（面板 init 失败 → DPU 卡死 → 关机路径挂 → USB gadget 未初始化），此时主机侧无 usb 网卡、SSH 不通、adb 空——只有串口可用。用户 2026-10-11 明确：「注意到 q28 的 bug 可能会影响 ssh，为了防止误导，先停下来梳理现况」。做设备侧实验前必须先确认 boot 健康（ping 192.168.7.1 或 ssh uname），不要把 Q28 导致的 SSH 不通误判为设备断电或其他故障。 — Failed: Q28 bad boot can prevent USB-NCM gadget from coming up, making SSH appear dead when device is actually alive but display-failed
+---
+内核 `make modules_prepare` **必须带 ARCH=arm64 CROSS_COMPILE=...**——不带时 make 按 x86 原生跑，会**静默覆盖 .config 为 x86 配置**（sha 从 a383cdb9 变 5dee2b27，CONFIG_CC_VERSION_TEXT 变 gcc 而非 aarch64-linux-gnu-gcc）。正确姿势：先 source scripts/env-build.sh（export ARCH=arm64 CROSS_COMPILE=... LOCALVERSION=-vk64），再 make modules_prepare。恢复被覆盖的 config：从设备 `zcat /proc/config.gz > .config`（sha 必须回到 a383cdb9）。 — Failed: modules_prepare 不带 ARCH 被当 x86 跑，覆盖权威 config
+---
+内核构建：`make modules_prepare` 不带 `ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-` 会以 x86 原生跑，**覆盖 .config 为 x86 配置**（sha 从 a383cdb9 变 5dee2b27）。恢复法 = 从设备 `/proc/config.gz` 或 `extract-ikconfig` 取回权威 arm64 config。正确姿势 = 先 `. scripts/env-build.sh`（已设 ARCH/CROSS/LOCALVERSION/ccache），再 `make ARCH=arm64 CROSS_COMPILE=... modules_prepare`。历史教训：vk81/82/83 死内核（ARCH_QCOM 被 olddefconfig 静默丢弃）是同类根因，已加 apply-kernel-fragment.sh 回钉 + assert-kernel-sane.sh 硬门。 — Failed: make modules_prepare 不带 ARCH 参数被当 x86 原生编译，覆盖 arm64 .config，导致后续模块编译全部失败或产出 x86 .ko
+---
+Waydroid 传感器 HAL（C4）部署链完整依赖：① `mount_overlays=True`（waydroid.cfg 默认 False）② 内核 `overlay.ko`+`fuse.ko` 必须部署到设备 /lib/modules/<KV>/（.config 里 =m 但从未 modules_install 到设备）③ `bridge.ko`+`stp.ko`+`llc.ko`+`8021q.ko` 同理（waydroid-net.sh 用 `ip link add type bridge`）④ 残留 `python3 /usr/bin/waydroid container start` 进程导致 lxc-info 假 RUNNING，需按 PID kill 后干净重启 ⑤ HAL 二进制（HIDL 1.0 UDP）能启动并监听 52012，但 Android framework `sensorservice` 在 VINTF manifest 找 `android.hardware.sensors.ISensors/default`（AIDL）而非 `@1.0-service.waydroid`（HIDL）⇒ `Service sensorservice didn't start`。下一步 = 对齐 VINTF manifest 或补 AIDL 包装。 — Failed: overlay/fuse/bridge 模块未部署到设备 + mount_overlays 默认关 + VINTF manifest 不匹配 HAL 版本
+---
+内核构建：`make modules_prepare`（或任何 `make` 目标）**不带 `ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-`** 会默认按 **x86 原生**运行，**静默覆盖 `.config`**（从 aarch64 变成 x86，sha 从 a383cdb9→5dee2b27），且 LOCALVERSION 丢失（因为它是命令行传的）。后果：后续模块编出的 vermagic 全是 x86，与设备不兼容。必须始终先 `. scripts/env-build.sh`（设置 ARCH/CROSS_COMPILE/ccache）再执行任何 make。 — Failed: 2026-10-11 C1 Waydroid bridge.ko 构建时，modules_prepare 未带 ARCH=arm64，把设备权威 config 覆盖为 x86，需从设备 scp 回 config 再带正确环境变量重做
+---
+hexagonrpcd-adsp-sensorspd 未持久化到 runlevel（2026-10-11 发现）：上一会话（2026-10-09）手动 `rc-service hexagonrpcd-adsp-sensorspd start` 后 svc400 注册成功，但该服务**未被 `rc-update add`** 到 default runlevel ⇒ 每次重启后 `status: stopped`、`/dev/fastrpc-adsp` 不存在、`HasAccelerometer=false`。与 qbootctl 同类问题（已修复）。修法 = `rc-update add hexagonrpcd-adsp-sensorspd default`。注意该服务依赖 ADSP fastrpc 节点有 `qcom,non-secure-domain`（DTB vk72 已加，但 boot_b 当前=vk64 未含此属性）⇒ 传感器栈只在 vk72 DTB 下工作。 — Failed: 手动启动的服务未 rc-update add 到 runlevel，重启后丢失
+---
+Waydroid 容器启动所需的内核模块部署缺口（2026-10-11 实机确认）：内核 config 有 CONFIG_BRIDGE=m / CONFIG_OVERLAY_FS=m / CONFIG_FUSE_FS=m，但设备 /lib/modules/7.2.0-debug-vk64-gd02658e63cf6/ 里**完全没有** kernel/net/bridge/、fs/overlayfs/、fs/fuse/ 目录（1217 个已部署 .ko 中无这些）。后果：`ip link add type bridge` = Unknown device type → Waydroid waydroid-net.sh 失败；`mount -t overlay` = unknown filesystem type → overlay 挂载失败；OpenRC waydroid-container 报 Module fuse not found。修法 = 在构建树（.config sha=a383cdb9 与设备一致）跑 `make modules_prepare ARCH=arm64`（**必须带 ARCH+CROSS_COMPILE**，否则按 x86 跑把 .config 覆盖成 x86）后 `make M=net/bridge net/802 net/8021q fs/overlayfs fs/fuse` 编出 .ko 部署。vermagic 验证：7.2.0-debug-vk64-gd02658e63cf6。 — Failed: 模块目录部署不完整——构建树有 .ko 但未复制到设备
+---
+内核模块增量编译时 `make modules_prepare`（不带 ARCH=arm64 CROSS_COMPILE）会静默把 .config 重写成 x86 原生默认（CONFIG_CC_VERSION_TEXT 变 gcc、平台选项全丢），且无任何警告。判据 = 跑前后比对 .config sha256。正确做法 = 必须先 `. scripts/env-build.sh`（设 ARCH=arm64 + cross + ccache），再 `make modules_prepare`；或从设备侧 `zcat /proc/config.gz` 恢复权威 config（sha a383cdb9…）。2026-10-11 差点用污染后的 config 编 bridge.ko 部署到设备。 — Failed: modules_prepare 默认按 native arch 跑 kconfig，覆盖 aarch64 .config
+---
+内核模块编译 `make modules_prepare` **必须带 `ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-`**（且 `LOCALVERSION=-vk64` 若靠命令行传入也需重复指定）；否则被当 x86 原生跑，**把 `.config` 从 arm64 覆盖成 x86**（sha 从 a383cdb9→5dee2b27，含 `CONFIG_CC_VERSION_TEXT="gcc"` 而非 `aarch64-linux-gnu-gcc`）。修法：先 `. scripts/env-build.sh`（source 不是执行）再 make，或从设备 `/proc/config.gz`（`zcat /proc/config.gz > .config`）恢复权威配置后重跑 `make ARCH=arm64 CROSS_COMPILE=... modules_prepare`。教训来源：2026-10-11 C1 Waydroid bridge.ko 编译时踩中，导致后续所有模块编译失败（`asm/compiler.h: 没有那个文件或目录`）+ 需要二次恢复。 — Failed: make modules_prepare 不带 ARCH=arm64 被当 x86 原生跑，覆盖 .config 为 x86 配置，后续所有 aarch64 模块编译失败
+---
+Waydroid 容器内 `waydroid session start` 需要正确的 `DBUS_SESSION_BUS_ADDRESS`——**不是** `/run/user/1000/bus`（该路径在此设备上不存在），而是 phosh/phoc 进程 environ 里的 `unix:path=/tmp/dbus-<random>`（如 `/tmp/dbus-zDSZhDcj9t`）。取法：`cat /proc/<phosh_pid>/environ | tr '\0' '\n' | grep DBUS_SESSION_BUS_ADDRESS`。错误表现：`Unable to autolaunch a dbus-daemon without a $DISPLAY for X11` 或 `Failed to connect to socket /run/user/1000/bus: No such file or directory`。 — Failed: waydroid session start 找不到 session bus 因为设备上 phosh 的 bus 在 /tmp/dbus-<random> 而非标准路径
+---
+Waydroid 容器内音频（G2 C6）排查起点事实（2026-10-11 U2 vk64 实测）：容器内 /vendor/bin/hw/android.hardware.audio.service 与 /system/bin/audioserver 已起（分别在 host pid 25124/25152），但容器内 **没有 /dev/snd**、没有 /etc/asound.conf、音频资源在 /system/product/media/audio（不是 /system/media）。vendor HAL 二进制 ldd 链 libpulse.so + libasound.so + libsndfile.so（/vendor/lib64/）⇒ 上游 Waydroid audio HAL（hardware/waydroid/audio/audio_hw.c）是 pulse 后端，需要容器内能连到宿主 PulseAudio/PipeWire 的 pulse socket。容器内 /run/xdg/pulse 由 lxc 挂载提供（宿主 /run/pulse 或用户总线 socket），DBUS/PULSE 环境变量与 socket 路径是首要排查点。 — Failed: 容器音频无声的排查需要先确认 HAL 后端类型与 socket 通路，而不是先找 ALSA 设备
+---
+Waydroid 容器 state 可能显示 FROZEN（冻结）导致一切音频/媒体行为静默失效：`waydroid status` 显示 Container: FROZEN、cgroup freezer.state = frozen 1。排查容器内任何服务无响应时先 `cat /sys/fs/cgroup/.../freezer.state`（或 lxc-info）确认未冻结，用 `echo 0 > .../freezer.state` 解冻后再测；冻结态下 Android 侧线程全停、媒体无声但进程仍在。 — Failed: 容器被冻结时音频/媒体静默无输出，容易误判成 HAL 或内核问题
+---
+上游 Waydroid 容器音频的已知社区坑（2026-10-11 联网检索起点）：waydroid 主库 issue #1576「lxc pulse audio fails to mount，VM 未装 pulseaudio 时」= lxc 无法挂载宿主 pulse socket 导致容器内无声；排查关键词 = libasound_module_pcm_pulse / PULSE_RUNTIME_PATH / PULSE_SERVER / /run/xdg/pulse。搜索社区资源时应直接查 waydroid/waydroid 的 audio 相关 issue 与 hardware/waydroid/audio 上游实现，而不是从内核 ALSA 驱动方向找。 — Failed: 该路径已被社区踩过，先读上游 issue 可省去重复试错
+---
+Q28 冷起 A/B 的配对臂除源码/config/LOCALVERSION 一致外，ramdisk/init 配方也必须一致——否则「golden ramdisk vs modular-overlay（重建模块层）」会引入 /init 时序差异（§h 已知 /init 时序能翻转 NOCARD/STORM），污染单变量。做法：两臂用同一 build 脚本产出的同配方 ramdisk（本轮 base 臂 vk93-lv64 用 golden ramdisk、round 臂用 modular-overlay，遂重建同 modular 配方的 vk97-base-lv64）。
+---
+Q28 冷起 A/B 排除「构建身份伪影」的手段 = 构造 sham 臂（与对照臂同源码，只加一行无副作用的 pr_info 改变二进制但不改行为）。判定：sham 也 NOCARD ⇒ 是二进制身份效应（如 LOCALVERSION/链接顺序），该臂结论作废；sham GOOD ⇒ 差异来自被测补丁本身。这一方法用于区分「补丁逻辑」与「同源码不同二进制」造成的 card0 有/无翻转。
+---
+Q24 与 Q28 根因独立（共享成分估 10–20%），仅工装/可测性强耦合，不是同一条电源链问题：Q28 触发 = 冷起（零相机模块照样坏，dmesg 可见）；Q24 触发 = {camcc-sm8750 + cambistmclkcc-sm8750} 配对 + 真实熄屏。三处耦合：① Q28 坏发时面板从未 enabled，熄屏只打 `Skipping disable of already disabled panel` ⇒ Q24 触发条件根本不存在（旧「cambist+熄屏 9/9 存活」是仪表坏、非无毛病）；② Q24 死亡把设备打回 Q28-bad，每次要物理 POR；③ Q24 可测性继承 Q28 的构建版本串（LOCALVERSION）敏感性。无 card0 ⇒ 无 phoc/Wayland ⇒ Waydroid session 起不来（headless weston/phoc 都试过，drmGetDevices2 failed）。解耦切入点 = 给内核加 vkms/vgem 虚拟显示。
+---
+用户面对历史取证不干净时的裁决原则（2026-10-11 原话：「考虑到历史取证的不干净，我们以这次实验现象为主」）：新实验的干净单变量结果直接覆盖旧文档结论，不并列、不降级、不要求旧证据重做。案例：Q24 旧口径「单模块 cambistmclkcc-sm8750 触发」被本次 `{cambist}` 熄屏 12/12 存活 + `{camcc,cambist}` 配对首次熄屏即硬复位否证，改为「camcc + cambist 配对触发」。
+---
+「钉死 UTS 版本串」破解 Q28 构建身份法则（2026-10-11 实测）：Q28 冷起 GOOD/NOCARD 由内核 UTS 版本串内容决定；用 `CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6` 把版本串钉回日常 GOOD 串后，**改内核+改 config 的镜像（vk102-c1pin，含 IP_ADVANCED_ROUTER/IP_MULTIPLE_TABLES）仍冷起 GOOD 且 `ip rule` 可用**。⇒ 有了「改代码也能冷起 GOOD」的可控台架，冷起 A/B 测 DSI 补丁才重新可行。脚本 scripts/q28-build-arm-lv64.sh 已加 PINUTS 支持。
+---
+同 UTS 串 ≠ 保证 GOOD（2026-10-11 实机）：日常 boot_b 内核（UTS …-vk64-gd02658e63cf6）某次纯净冷起实测 **STORM**（card0 在、DSI-1 connected，但 storm=45、vblank wait timed out、phoc=1/phosh=0、greetd=2），而同一内核在测试台架上 GOOD 5/5。⇒ STORM 是独立随机事件，「UTS=GOOD 串」只是降低概率、不保证结果；启动后必须先实测判 GOOD/STORM 再谈后续实验。STORM 启动下 phoc/phosh 会消失、无 /run/user/1000/wayland-0、无会话总线 ⇒ 依赖桌面会话的实验（如容器网络）做不了。
+---
+Q28 冷起 A/B 测补丁这条路已作废：因为冷起 GOOD/NOCARD 由内核版本串（构建身份）决定，任何重编（含空提交、一行常量 pr_info）都会把 base 的 GOOD 推成 NOCARD —— 观测行为自身改变结果。教训：在被测系统存在「构建身份敏感性」时，A/B 实验的对照臂必须钉死 UTS 串（PINUTS）才能隔离待测变量。
+---
+「按内核二进制确定性」假说已被彻底否定，且 Q28 冷起 GOOD/NOCARD 由**内核 UTS 版本串内容**决定（2026-10-11 十二发冷起定案）：UTS 恰为 `7.2.0-debug-vk64-gd02658e63cf6` → 冷起 GOOD 5/5（base vk97 3/3 + 同源码重编 base2 vk100 2/2，二进制不同仍 GOOD）；任何其它版本串 → NOCARD 7/7（空提交 vk101 1/1、一行常量 pr_info vk99 2/2、clk_round_rate 查询 vk98 1/1、round 补丁 vk96 3/3）。⇒ 改代码/改 config 会经 setlocalversion 改变 UTS 串从而翻转结果；**冷起 A/B 测 DSI 补丁这条路作废**（观测行为自身改变结果），round/Method-B 的 NOCARD 不能当「修复无效」。可控手段 = 钉死 UTS 串（`CONFIG_LOCALVERSION_AUTO=n` + `LOCALVERSION=-vk64-gd02658e63cf6`，即 PINUTS）——vk102-c1pin/vk103 证明改内核+改 config 仍能冷起 GOOD。脚本 scripts/q28-build-arm-lv64.sh（含 PINUTS）/ q28-build-round-lv64.sh / q28-cold-run.sh；臂记录 reports/trials/index.tsv + logs/q28-cold-*。
+---
+Q28 日常内核其实本来就 GOOD、不构成 Waydroid 阻塞（2026-10-11 十三发冷起 + 日常路径验证）：设备 boot_b 的 UTS 恰是 `7.2.0-debug-vk64-gd02658e63cf6`（会话初期已稳定跑 3h）。之前「Q28 挡路」= 实验内核自伤（任何重编都撞 NOCARD）。但注意：同 UTS 串**也会 STORM**（一次日常纯净冷起实测 storm=45、vblank wait timed out、phoc=1/phosh=0、greetd=2，无 wayland-0 无会话总线）⇒ STORM 是独立随机，GOOD 串不保证 GOOD。
+---
+Waydroid 容器启动的 UID/身份铁律（2026-10-11 实测）：`waydroid container start` 只起 DBus 管理服务（id.waydro.Container），真正的 LXC 容器由 `waydroid session start` 拉起；**会话必须以建立会话的普通用户（uid 1000）身份发起**，用 root 会因跨 UID 的 D-Bus 认证失败（NoReply）静默卡在 `container failed to start`（wait_for_running 超时）。正确姿势 = `setpriv --reuid=1000 --regid=1000 --init-groups env HOME=/home/xuqianhui1001 XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 DBUS_SESSION_BUS_ADDRESS=<phosh 的 /tmp/dbus-*>`。容器设备侧控制脚本 scripts/wd-ctl.sh（state/start/stop/session/net/route/egress/log/elapsed）与 scripts/waydroid-proxy-setup.sh 已按此修。
+---
+Q28 冷起 A/B 测补丁的观察者效应（2026-10-11 实锤）：改内核代码本身会改变被观测对象——哪怕空提交（零代码，只换 git sha）或一行常量 pr_info 都会把 base 的冷起 GOOD 翻成 NOCARD；只有 UTS 逐字 = 7.2.0-debug-vk64-gd02658e63cf6 才 GOOD。⇒ 冷起 A/B 不能用来评估 Q28 补丁，round/Method-B 等的 NOCARD 不能当「修复无效」证据。绕过方法 = PINUTS 钉死 UTS 版本串（CONFIG_LOCALVERSION_AUTO=n + LOCALVERSION=<exact>），钉死后改内核/config 仍 GOOD。
+---
+Q28 收尾口径（2026-10-11，DOSSIER §p / PITFALLS #192）：① NOCARD 分支已闭环=内核构建身份（UTS 版本串）伪影——12 发物理 POR 冷起，UTS 逐字 `7.2.0-debug-vk64-gd02658e63cf6`⇒GOOD 5/5，其它任何身份（含空提交、一行 pr_info、round 补丁）⇒NOCARD 7/7；空提交也翻⇒非补丁逻辑。② 冷起 A/B 方法前提=PINUTS（CONFIG_LOCALVERSION_AUTO=n + LOCALVERSION=-vk64-gd02658e63cf6）；钉死后改内核源码+config 仍 GOOD（vk102/vk104/vk105）⇒A/B 恢复可用；决定性证据=同一 round 补丁未钉 UTS(vk96)=NOCARD 3/3 vs 钉死(vk105-round-pin)=GOOD。③ 作废旧结论：§k「按内核二进制确定性」、vk90/vk92 NOCARD、round NOCARD=「修复无效」、T1/T2/T3。④ 剩余唯一未解=STORM（独立随机，与构建身份无关）：日常 boot_b 纯净冷起实测 STORM；round/Method-B 对 STORM 是否有效=未测。⑤ Q28 不再阻塞日常/Waydroid（日常 boot_b 即 GOOD 身份；之前「Q28 挡 Waydroid」是在 RAM 起实验内核 NOCARD 上验证所致）。台架=vk97/vk100/vk104/vk105。详见 reports/q28-DOSSIER.md §o/§p、reports/q28-retro-audit-20261011.md。 — Failed: 旧结论多被构建身份混淆，需以 PINUTS 重测才有效
+---
+Q28「STORM 是探针误判」已被证据审计证伪（2026-10-11，commit d3b1831，reports/q28-storm-bias-audit-20261011.md）：10 个落盘 STORM 样本拆 L1（DSI/panel 真失败：`command DMA timeout` / `Failed to initialize panel`）后 L1 全部 ≥6，离线回放无任何「L1=0 却 L2>0」样本 ⇒ 不是把良性 vblank 误当坏发。但「STORM = 独立随机」的证据只有 1 条无原始日志样本（wd-net-baseline §4 的 vk94 一次 storm=45），且同镜像当日又被记为 GOOD 一次，两条都 n=1 无 dmesg。★新线索：STORM 与镜像高度共线——所有 STORM 样本都在旧内核+旧 ramdisk 镜像（vk64 Oct-8 / oct8 / vk94），16 发新 PINUTS 冷起（vk97/vk100/vk102-vk105）无一 STORM。⇒ 下一步应做内核×ramdisk 2×2 因子实验（vk106=newK-oldR、vk107=oldK-newR），判 STORM 是否同样是构建产物而非随机。
+---
+Q28 2×2 因子实验（2026-10-12）设计教训：第一轮 A/B/C/D 全按固定顺序跑（A→B→C→D），导致 Round 1 的 C1/D1 连续坏发被误读为「首轮/时序状态效应」而非内核轴——因为 Round 2 全 GOOD 后「旧内核坏发率高」的结论被削弱。正确做法 = 同时间窗**交替采样**（C→A→C→A），消除 boot-to-boot 状态漂移。8 发样本 Fisher p≈0.43 远不够下判词，需 ≥20 发交替才能区分「内核坏发率」vs「会话内状态衰减」。
+---
+Q28 STORM 非独立随机——与内核构建身份强相关（2026-10-12 2×2 因子实验 + E2 定案）：源码全为 d02658e63（旧K vk94/vk64 与新K vk97/vk100/vk104 **完全相同**，之前「差 1 个 ADSP fastrpc 提交」是 DTB 差异非内核源码差异，已更正）。唯一内核构建差异 = `CONFIG_LOCALVERSION_AUTO=y`（旧，嵌 build 时间戳→payload 布局偏移 ~5.1M 字节）vs `n`（新，PINUTS）。实测：`#60`（Oct-8 构建）4 发冷起 2/4 L1FAIL；`#111+`（Oct-11 构建）20+ 发冷起 0 L1FAIL。E2 决定性实验：vk110（旧K #60 + 新DTB）= L1FAIL，vk109（新K #118 + 旧DTB）= GOOD ⇒ DTB 不是轴，内核二进制构建身份才是。机制假说：build 时间戳导致 .rodata/.data 段偏移 ~4B × 字符串数量，把 DSI bonded cmd-DMA completion 的中断/轮询时序推过竞态刀刃。ramdisk 无关（B 臂旧 ramdisk 恒 GOOD）。n 仍小（Fisher p≈0.43），但趋势极强。下一步 = 用 vk108（旧源码 d02658e63 + PINUTS + 新 .config 无 AUTO）冷起，若 GOOD 则坐实 AUTO 是唯一变量。 — Failed: 之前多次记忆将 STORM 定性为「独立随机」（如 TASKS §p 收尾口径「剩余唯一未解=STORM（独立随机）」），被 2×2 因子实验 + E2 推翻
+---
+Q28 旧K/新K 源码差异**已被更正**（2026-10-12 manifest 逐项核对）：vk94/vk64 的内核源码 = `d02658e63`，vk97/vk100/vk104 的内核源码也 = `d02658e63`——**完全相同**。之前「新K 比旧K 多 1 个提交 = ADSP fastrpc qcom,non-secure-domain」的说法混淆了 DTB 差异与内核源码差异（该属性只存在于 DTB 编译产物中，不在内核 C 代码里）。两臂真正的差异 = config 中 CONFIG_LOCALVERSION_AUTO（y/n）→ 影响 UTS 构建号 #N 嵌入方式 → 影响 payload 二进制布局（~5.1M 字节差异，shift+0 匹配仅 18%，非简单平移）。教训：「源码差」必须逐项核对 manifest 的 kernel_git_head 字段，不能从镜像文件名或分支名推断。 — Failed: 之前多份报告（DOSSIER §e、audit 表）将 vk104 标注为源码 5d01d3324（含 ADSP 提交），实际核对 manifest 后 vk97/vk104 的 kernel_git_head 均为 d02658e63
+---
+Q28 STORM 也是构建身份伪影（2026-10-12 E1'/E2 实验定案）：2×2 因子臂（内核×ramdisk）+ E2（内核×DTB）+ E1'（KBUILD_BUILD_VERSION=60+KBUILD_BUILD_TIMESTAMP 复刻 banner 重编，与 vk94 payload 仅差 0.14%/87605B）全部指向：源码(d02658e63)、DTB、ramdisk 都不是轴——**轴=内核 banner 构建号位数**（`#60` 2 位 → .rodata 平移 1 字节 → DSI cmd-DMA 竞态刀刃偏移 → ~67% STORM；3 位 = 0%）。机制假说 = banner 长度差使 Image 中字符串/常量表地址平移 1 字节，恰好落在 cmd-DMA trigger 路径的某个对齐敏感点。修法 = `KBUILD_BUILD_VERSION=100`（或任何≥100），`KBUILD_BUILD_TIMESTAMP` 任意，源码/DTB/ramdisk 不动。验证 = vk111 冷起 STORM（4 坏/2 好 vs 3 位 0/12+，Fisher p=0.005）。 — Failed: 此前多次将 STORM 判定为「独立随机」或「旧内核特定二进制」，经 E1'/E2 实验证明是构建号位数（banner 长度→rodata 平移）的系统性伪影
+---
+Q28 STORM 最终定案（2026-10-12 冷起 12 发）：STORM（bonded DSI 首条 DCS command DMA timeout -110）也是内核构建身份伪影，与 NOCARD 同一机制。E1'（vk111 = KBUILD_BUILD_VERSION=60 + KBUILD_BUILD_TIMESTAMP='Thu Oct 8 17:06:14 CST 2026' 复刻 #60 banner）冷起即复现 STORM；3 位构建号（#111–#120）冷起 0 STORM。Fisher p≈0.005。E2 排除 DTB 轴（vk109 好内核+旧DTB=GOOD；vk110 旧内核+新DTB=STORM）。2×2 排除 ramdisk 轴。源码完全相同（全 d02658e63）。治法 = 日常镜像用 3 位构建号重编即愈（日常 boot_b 恰好已是 #60→仍有间歇风险，需重编一次 3 位号）。判定脚本 scripts/q28-devprobe2.sh 分 L1（真失败）/L2（vblank 风暴可能良性）。
+---
+Q28「旧K vs 新K 差 1 个 ADSP DT 提交」是错的——那是 DTB 的差（vk94 带 qcom,non-secure-domain），内核源码全部 = d02658e63（E2 vk109/vk110 交叉实验证实 DTB 轴不影响结果）。真正的轴 = 构建身份（#60 vs #1xx），与源码/DTB/ramdisk/cmdline 全部无关。之前报告写「源码差 1 commit」的口径已作废（reports/q28-storm-bias-audit-20261011.md §7.2 已更正）。
+---
+「仪表先验证再计数」在本项目反复具现：Q24 熄屏触发实验必须先证明屏真的关了（GetActive=true / DPMS=Off / bl_power 变化 / RPMh trace 有事件），否则样本全是假阴性——本轮 phosh 0.55 上 SetActive(true)/Lock() 返回成功但 GetActive 恒 false、DPMS 恒 On、trace 零事件，三组 S3 样本全部无效。phoc 卡 D 态（wchan=rpm_resume，栈 adreno_get_param→__pm_runtime_resume）+ a6xx_gmu_set_oob/msm_gpu_fault_crashstate_capture 同批 D 态 ⇒ 暖复位路径会损坏台架（PITFALLS #198），必须物理 POR 冷起才能做熄屏实验。 — Failed: 熄屏类实验因控制通路静默失败产生整轮假阴性
+---
+对 fastboot 客户端用 `timeout ... | head/tail` 会在传输中途 SIGPIPE 掐断 fastboot 客户端，把设备的 fastboot bulk 通道打断——此后 bootloader 不再应答（`fastboot devices` 仍有 USB 描述符，但 `getvar` / 任何传输 rc=124 超时且永不再重枚举），必须物理 POR。规则：fastboot 包装命令不要管道给 head/tail，也不要中途 timeout 掐断；先 `fastboot getvar product` 探测应答、再发长传输。
+---
+Q24 "熄屏类" 实验的三值硬门（2026-10-12 实测定型）：判「屏真的熄了」必须同时满足 ① `org.gnome.ScreenSaver.GetActive` = true（注意是**方法**不是属性，`busybox`/gdbus 下属性写法报 `No such property "Active"`）② `/sys/class/backlight/*/bl_power` = 0 或 dpms state = Off ③ RPMh trace 里看到 mmcx/cx 降档票。只有 GetActive 不够（phosh 0.55 下 SetActive 可被忽略、DPMS 仍 On），no-op 会被当成存活。三值不全过就不算有效样本。
+---
+Q24「死前共同签名」（加载第二个相机时钟控制器时 RPMh 一次性把 ebi/gfx/lcx/lmx/mss/nsp/nsp2/gmxc/mxc 投到 0）**不是死因**，是 cambist probe 注册 genpd 子域的常规行为——已更正定性（PITFALLS #197）。另：暖复位路径会损坏台架（phoc 卡 D 态 rpm_resume，D 态持有 DRM master ⇒ modetest DPMS:3 恒 Permission denied，kill -9 无效），Q24/Q28 冷起 A/B 必须走物理 POR（PITFALLS #198）。
+---
+对 `fastboot getvar` 等 fastboot 命令套 `timeout ... | head/tail` 会因 SIGPIPE 中途掐断 fastboot 客户端，把设备 fastboot bulk 通道打断 → gadget 从此不应答（`fastboot devices` 仍列出、`getvar` 超时 rc=124、USB 设备号不重枚举），恢复只能物理 POR。fastboot 命令不要接管道截断。 — Failed: 2026-10-12 本轮我操作失误导致设备卡 fastboot，用户被迫做物理 POR
+---
+hit Q24 第 3 轮要在「唤醒」阶段死（不是熄屏）：S3 真实熄屏后 +11s 仍存活，死亡发生在随后的唤醒，末票 = gfx.lvl(0x30050)=1 / gmxc.lvl(0x300d0)=1（GPU 域上电 + NoC 批），与历史 mxc→0 签名不同。方法学：空白-保持-唤醒必须分段记 DEATH_AT。
+---
+Q24 C 系列（2026-10-12）GOOD 台架一次冷起内按序 C0(cam=0)/C1({camcc})/C2({camcc,cambist}) 各做「真熄屏→hold 60s→唤醒」+三值硬门：C0 存活 +89s、C1 存活 +89s、C2 ≤5s 静默硬复位（串口 0 panic/Oops/BUG）。⇒ 触发器 = 配对 {camcc,cambist} + 熄屏，{camcc} 单模块不致死，致死点随台架显示栈状态移动。commit a455295，PITFALLS #204。
+---
+Q24 台架准入判据 = 三值仪表硬门 3/3（GetActive=true + DPMS=Off + RPMh mmcx/cx 降档票 >0），**不是** Q28 GOOD —— Q28 L1FAIL 的台架照样能用于 Q24（PITFALLS #202）。台架损坏的一种形态 = phoc 卡 D 态 `wchan=rpm_resume`（GPU resume 路径，栈 adreno_get_param→__pm_runtime_resume），持有 DRM master ⇒ modetest DPMS 恒 Permission denied（PITFALLS #198/#203）。
+---
+设备侧会话总线：root 直连报 `Connection is closed`，必须 `setpriv --reuid=1000 --regid=1000 --init-groups` 降 uid=1000 并从 `pidof phosh` 的 /proc/<pid>/environ 取 DBUS_SESSION_BUS_ADDRESS / XDG_RUNTIME_DIR。另：`org.gnome.ScreenSaver.GetActive` 是**方法**不是属性，直接取属性报 `No such property "Active"`。
+---
+在设备上以 root 直连用户的 phosh 会话总线（`DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus-*`）会报 `Error connecting: The connection is closed` 或 `Cannot autolaunch D-Bus without X11 $DISPLAY`——**必须 `setpriv --reuid=1000 --regid=1000 --init-groups env HOME=... XDG_RUNTIME_DIR=... DBUS_SESSION_BUS_ADDRESS=...` 降到会话属主 uid**（见 PITFALLS #203）。另 `org.gnome.ScreenSaver` 的 `GetActive` 是**方法**不是属性（属性读会报 `No such property “Active”`）；SetActive 的返回需显式取布尔（写成 `(true,)` 形式），`dbus-run-session` 起的会话每次冷启路径不同 ⇒ 每次都要从 `pidof phosh` 的 environ 现取 DBUS 地址。 — Failed: 在设备上以 root 直连用户会话总线失败，导致仪表硬门假失败、Q24 实验作废
+---
+对 `fastboot getvar` 之类交互式 fastboot 命令套 `timeout … | head/tail` 会 SIGPIPE 中途掐断客户端，**把设备的 fastboot bulk 通道打断**，此后 bootloader 从不应答（USB 描述符还在、getvar 恒 rc=124、84MB 传输全部白等），只能物理 POR 恢复。规则：fastboot 命令不要管道给 head/tail，也不要轻易加 timeout。 — Failed: 10:40 探测时对 fastboot getvar 用了 timeout+head，gadget 卡死，需用户物理 POR
+---
+设备侧脚本必须 POSIX sh 兼容或显式用 bash 调用：设备 shell 曾被误设 zsh（报 `zsh: no matches found`/`== not found` 会静默中断整条远端命令，不是设备/驱动问题）。已切回 bash（mainline root 登录 shell = /bin/bash）。另：给 /dev/ttyACM* 串口抓取脚本写 `timeout … | head/tail` 管道会因 SIGPIPE 掐断 fastboot/串口客户端（快排查询 `timeout … | head/tail` 曾打断设备 fastboot bulk 通道 → gadget 从此不应答，84MB 传输全部白等）——探测 fastboot getvar 也要用完整输出、不要管道截断。
+---
+Q24 台架准入纪律（2026-10-12）：不要用 Q28 的 GOOD 作为 Q24 台架准入判据——Q28 L1FAIL 的冷起台架照样可能有效。唯一准入 = 三值仪表硬门 3/3（ScreenSaver GetActive=true + card0-DSI-1 dpms=Off + RPMh mmcx/cx 降档票 >0）。且同镜像不同冷起的仪表就绪度也不同（vk112 第 1 跑门失败、第 2 跑同镜像 3/3 通过），每跑必须重新验门。
+---
+Q24「死亡」实为 SoC 级复位 + 约 30–42 s 自动重启（USB 掉线→重新枚举实测 32s/42s/32s），不是静默永久挂死。⇒ 判死可用「USB 是否重枚举 / trace 流是否终止」而不用物理 POR。历史「需要物理 POR」的口径已作废。
+---
+Q28 构建身份定量证据（2026-10-12，PITFALLS #195/#216）：`#60`（2 位构建号）内核臂 4 坏/2 好（~67% 冷起失败）vs 3 位构建号 0 坏/12+ 发（Fisher p≈0.005）。NOCARD 与 STORM 同族 = 内核构建身份（UTS/构建号位数）伪影，非独立随机。治法 = 用 3 位 KBUILD_BUILD_VERSION 重编日常镜像（vk113-dailyid 已构建未上机验证）。
+---
+Q28「构建身份伪影」口径在 2026-10-12 上机复测中被**推翻**：vk113-dailyid（3 位构建号 #121）冷起 1 GOOD / 1 L1FAIL；vk94（2 位 #60）冷起也 L1FAIL。即 3 位身份并不保证不坏，NOCARD/STORM 不是纯构建身份伪影。此前「#195：3 位身份 ⇒ 0 坏」的定量结论（Fisher p≈0.005）作废，冷起好坏仍是随机/未定因素。
+---
+scripts/serial-logger.sh 无执行位（nohup 直接跑报 Permission denied），须用 `bash scripts/serial-logger.sh <log>` 启动。串口 logger 依赖 /dev/ttyACM0 存在——设备在 fastboot 时 ttyACM 不出现，logger 会空转等待；用户手动拔/插串口会中断日志（本轮即因此漏掉一段冷起日志）。
+---
+generate_initramfs/内核 UTS 提取小坑：用 `zlib.decompressobj(16+MAX_WBITS).decompress(d[i:], 128<<20)` 解 gzip 取 UTS 时，`re.search(rb'Linux version ...')` 若正则过窄会返回 None（脚本里 `.group(0)` 直接 AttributeError）；应放宽正则并用 `m.group(0) if m else ''` 守卫。另 `python3 -c` 里别多写右括号（本轮 SyntaxError: unmatched ')'）。
+---
+绑定/解绑 DSI host 做运行期恢复会拆掉整个 DRM 栈：运行期重绑 ae94000.dsi 后 /sys/class/drm 只剩 version（card0-DSI-1 消失）、随后 dpu_kms_wait_for_commit_done 报 -110 风暴 ⇒ 不能用重绑 DSI host 当 Q28 坏发的恢复手段。PITFALLS #224，commit dcb61a8，证据 logs/q28-rebind-20261012/dmesg-after-rebind.txt。
+---
+Q28 运行期重绑 DSI host 会把 DRM 拆掉，不能当恢复手段：`echo ae94000.dsi.0 > .../unbind` 再 bind 后 card0-DSI-1 消失、DPU 报 wait for commit done returned -110、GPU hangcheck recover（offending task: phoc）；且在 panal init 失败态下重绑无助于恢复显示。 — Failed: 被当作 Q28 恢复手段尝试，实测破坏 DRM 状态
+---
+Q28 排查的「脚本自动 reboot 到 fastboot」不可靠：q28-cold-sample-loop.sh / q28-cold-run.sh 这类脚本假设能从 Linux 自动 reboot2 bootloader 进 fastboot 做冷起 A/B，但实际不可用（用户原话「这个脚本有问题，没法做重启到fastboot」）。真正有效的冷起 = 用户手动物理 POR（长按电源彻底关机 → 音量下+电源进 fastboot），然后 agent 只用 `fastboot boot <img>` + 取证部分。凡涉及 Q28 冷起采样的脚本，应只负责「等 fastboot → boot → 取证」，把 POR 交给用户手动做。
+---
+Q28 vk116-dsirec（DSI 链路失败自恢复臂）冷起采样结果（2026-10-12 晚）：前 3 发（用户手动 POR）全 GOOD、第 4 发 L1FAIL；且 q28 三类失败签名计数全 0 ⇒ 恢复路径一次都没被触发，补丁是 no-op，机制有效性**仍未验证**。判据 = 日志须出现 `command DMA failed before video enable, resetting DSI link`；未触发说明坏发没走到首条 DCS 超时那条路径（或坏发概率 ~50% 下 3 发不够）。 — Failed: 在 3/3 GOOD 时过早宣布方向成功；实际补丁未被触发，不能作为机制验证证据
+---
+Q28 恢复路线否证（2026-10-12 实测）：驱动内自恢复臂（清 `dsi_bonded_cmd_failed` 闩锁 + 复位 DSI ctrl/PHY 再重试）**不救场**。vk117 坏发寄存器转储（patch q28-dsi-recover2 新增能力）证明控制器真被复位（CTRL 0x175→0x171，CLK_STATUS 0x3743→0x1743，DYN_PCLK_ACTIVE 被清、CMD_PCLK 清），且 `unbalanced disables` 警告 0 次（vk116 同场景 6 次）；但第 2/3 次 DCS 仍逐字相同失败 `command DMA timeout status=0x2200200`（200ms 软超时）→ master=-110 peer=-110。⇒ 故障不在「软件闩锁/控制器状态」，复位-重试路线否证。同时更正旧口径：重试拿到 `-5` 并非硬件楔死，而是 `dsi_bonded_cmd_failed` 在 `dsi_mgr_bonded_cmd_xfer()` 开头短路（根本没碰 DMA）；清除闩锁后 `-5` 变 `-110`，证明闩锁机制如判。
+---
+Q28 差异化判别量 = DYN pclk 域（2026-10-12 vk118 首命令探针 + CLK_STATUS 位解码）：坏发首命令**前** CLK_STATUS=0x343（AHBM AON+DYN、AON_BYTECLK、AON_ESCCLK、AON_PCLK）；失败后 0x3743（多出 DYN_PCLK 0x400 + DYN_CMD_PCLK 0x1000 + CMD_PCLK 0x2000）；好发同点（10-09 数据）= 0x2343，**无 DYN 位**。STATUS0: 首命令前 0x0 → 失败后 0x20003（ENGINE_BUSY|DMA_BUSY）。⇒ 坏发卡在 DYN pclk 域而非 AON。另：`Q28 power_on: link_clk_set_rate -> 0`（两 host 均 0 = 成功）。探针臂 vk118（首命令前 dump + set_rate 返回值）/ vk119（加成功路径 after-first-cmd-ok 同点 dump，patch q28-dsi-probe2.patch）均为冷起 L1FAIL。
+---
+二阶循环脚本要「只等不推」：`scripts/q28-cold-sample-loop.sh`（2026-10-12）只负责等 fastboot（最多 900s）→ fastboot boot → SSH 起 → 三态判据（q28-devprobe.sh）→ 存活门 65s → 记 TSV；**不做自动重启进 fastboot**（自动路径因未就绪 reboot2 挂机不可用）。用户明确「这个脚本有问题，没法做重启到fastboot。我手动por两次，总共测试了三次，都成功」——冷起采样由用户手动 POR 驱动，脚本只等。每轮须过 device-lock，结束 qbootctl -m b。
+---
+Q28 vk116 冷起 3/3 GOOD（18:36/18:42/18:52，用户手动 POR）但坏发签名计数全 0 ⇒ 恢复路径一次都没被触发、补丁实为 no-op，机制有效性未验证。当晚会话第 4 发冷起出现 L1FAIL（19:10），并观测到 `Turning OFF PHY while PLL is on` + `unbalanced disables for vreg_l3i_0p88`（regulator/core.c:3261 WARNING）——坏发还有 `disp_cc_mdss_pclk0/1_clk_src`/`byte0/1_clk_src: orphan reparent failed: -110`（t≈0.87s）与 `DSI PLL(0) lock failed status=0x00000000` ×4。
+---
+Q28 冷起实验「vk114 上游 round 修复不修我们的 STORM」定论（2026-10-12）：vk114-dailyid-round（=vk113 同配方 + 上游 2028280686f4 机制的等价自落 patches/q28-methodB-round-byteclk.patch，落点 dsi_link_clk_set_rate_6g）冷起 #1 L1FAIL（同签名 t≈9.05s）⇒ 上游 byte-clk 取整不修本树 STORM（本树 bonded 双 DSI 路径为 GEEKiDOS/linux 自带，可能非同根因）。镜像 sha 4fb6c145…，payload 0857f458…（补丁串在 payload 内 True / vk113 内 False）。PITFALLS #223。
+---
+Q28 驱动内自恢复路线已被两次不同臂否证：vk116（清 dsi_bonded_cmd_failed 闩锁 + 复位 DSI ctrl+PHY 后重试）机制从未被触发（4 发全 GOOD，三类签名计数全 0 ⇒ no-op）；vk117（恢复序列对齐 post_disable、去重复 phy_disable + 复位前后寄存器转储）在坏发上证明复位**确实生效**（CLK_STATUS 0x3743→0x1743，DYN_PCLK/DYN_CMD_PCLK 被清）但第 2/3 次 DCS 仍逐字相同地失败（status=0x2200200, master=-110 peer=-110）。⇒ 故障不在 DSI 控制器状态，驱动内 reset 救不回。
+---
+Q28 坏发卡点精确定位（vk118/vk119/vk120 首命令探针）：**首条 DCS 命令是成功的**（after-first-cmd-ok CLK_STATUS=0x2343，与 2026-10-09 好发同点逐字相同），卡死在**后续命令**的 DYN pclk 域切换——失败后 CLK_STATUS=0x3743（置起 DYN_PCLK 0x400 + DYN_CMD_PCLK 0x1000 + CMD_PCLK 0x2000）、STATUS0=0x20003（CMD_MODE_ENGINE_BUSY|DSI_BUSY）。死前伴随 `Turning OFF PHY while PLL is on` + `unbalanced disables for vreg_l3i_0p88`（regulator/core.c:3261 WARNING）+ `disp_cc_mdss_pclk0/1_clk_src: rcg didn't update its configuration`（clk-rcg2.c:136 update_config/0xdc，调用链 clk_pixel_set_rate）⇒ 嫌疑指向 DYN pclk 时钟域切换 / RCG 配置未更新，而非 DSI 命令 DMA 硬件本身。
+---
+Q28 旧结论「首条 DCS 超时后 DSI host 楔死、面板级 reset 救不回、重试必然 -5」被代码级纠正（2026-10-12）：重试那条 `-5` (EIO) 来自 `dsi_manager.c` 静态闩锁 `dsi_bonded_cmd_failed` 在 `dsi_mgr_bonded_cmd_xfer()` 开头的 `return -EIO` 短路——第 2/3 次 DCS 根本没触碰 DMA 硬件。该 bool 全树只写 true、从不清零，且短路 5 处 bridge 上下电路径（pre_enable/power_off/enable/post_disable）⇒ 故障自锁。清闩锁后重试确实打到硬件（vk116 首个坏发日志第 2/3 次变成 -110 而非 -5）。但这不改变「驱动内 reset 不救场」的结论（见 vk117）。
+---
+设备侧复位路径陷阱（2026-10-12 实锤，待用户确认型号行为后落 PITFALLS）：桌面未起完（uptime≈20s）时执行 `reboot2 bootloader` 会把设备挂到**无任何 USB 通道**（既非 fastboot 也非 SSH，需物理 POR）。推测此前某些「hang 桌面挂起」现象是脚本里过早 reboot2 造成。对策已落地：`scripts/lib-boot-ready.sh`（复位前就绪门 = uptime>=90s + 桌面已起，fail-closed）已接线到 q28-boot-cycle.sh/q28-layout-ab.sh/q28-layout-one.sh（分支 audit/early-reboot，合并 commit bd97123，审计报告 reports/audit-early-reboot-20261012.md）。
+---
+Q28 冷起实验的「恢复路径未触发」陷阱：驱动内自恢复/重试补丁在 GOOD 发上完全走不到（失败签名计数为 0），4 发全 GOOD 不能当作「补丁有效」的证据，只能记为 no-op；必须等到坏发才能验证机制，且判据应是「日志出现补丁的恢复标记」而不是「本轮 GOOD」。vk116 前 3 GOOD + 1 坏的解释即此。
+---
+脚本未经解释就不要拿来跑：`scripts/q28-cold-run.sh` / `q28-cold-sample-loop.sh` 设计上只**等** fastboot（无物理按键能力），冷起采样必须由用户手动 POR（长按电源 → Vol- + 电源进 fastboot），脚本再接手 fastboot boot + 判据 + 记录 TSV。用户当场指出「这个脚本有问题，没法做重启到 fastboot」是预期行为（不是 bug），派脚本前必须对用户讲清这一点。
+---
+Q28 冷起采样统计口径（2026-10-12 实测）：坏发**按时间成簇**（当日观测 3 连 GOOD → 5 连坏 → 又 GOOD），单发 GOOD 无判别力，候选修复至少要 3/3 或 5/5 全 GOOD 才能写「有效」；出现 1 发坏发就要立刻看它卡在哪一步（若仍 DYN_PCLK_ACTIVE 闩住 + STATUS0=0x20003，说明 force-on 不是根因）。判据脚本 scripts/q28-devprobe.sh 三态 NOCARD/STORM/GOOD，必须 SSH 读完整 dmesg（只数签名会把「显示缺失」误判成 GOOD）。
+---
+Q28「3 位构建身份 #N ⇒ 不坏」的治法假设**已作废**（2026-10-12 上机否证）：`vk113-dailyid`(#121) 冷起 3 次 1 GOOD/2 L1FAIL；`vk114-dailyid-round`（同配方 + 上游 2028280686f4 byte-clk 取整）仍 L1FAIL。≈7 发 4 坏/7（57%），与 2 位身份无统计差异。⇒ 坏发是**时间成簇的随机**（10-11 15:24–27、10-12 00:02–09、08:37–41、09:43–48 成串坏；10-11 11:51–14:51 10 GOOD 0 L1FAIL 成串好），**缓解不在镜像层**（PITFALLS #223）。历史「3 位身份 0/20 坏」落在一个好窗内，是采样偏差。严格 POR（断电 30 s）也无效。运行期重绑 panel/`msm_dsi` ⇒ card0 消失（副作用）。 — Failed: 以构建身份位数作为治法的假设被上机否证；后续不要再用「改构建号位数」当修复。
+---
+Q28 坏发首条 DCS 超时后**驱动内复位 DSI ctrl/PHY 路线否证**（vk117 寄存器转储）：控制器确实被复位（CTRL 0x175→0x171、CLK_STATUS 0x3743→0x1743、CMD_DMA_CTRL 0xd4000000→0x14000000），`unbalanced disables` 6→0，但第 2/3 次 DCS 仍逐字相同失败（command DMA timeout status=0x2200200 → master=-110 peer=-110）。vk116 的清闩锁 + 重试使失败从 -5 变回 -110（证明软件闩锁真被清、重试真打到 DMA 硬件），但救不回场。 — Failed: 驱动内 DSI ctrl/PHY 复位不是 Q28 的修复路径。
+---
+Q28 判别量与尚未证否的靶点（2026-10-12）：① 判别量 = **DYN pclk 域生命周期**（健康发 CLK_STATUS 0x343→0x743→0x343 随命令瞬开/放；坏发闩在 0x1743/0x3743 + STATUS0=0x20003 + DSI 中断计数 0）；② **DYN 位在控制器 sw_reset 后仍在 ⇒ 故障态不在 DSI 控制器内**（映向 dispcc/INTF 动态时钟请求）；③ 坏发首条命令前寄存器与好发逐字相同，且**首条命令其实成功**，卡死在第 2 条命令的 DYN pclk 域切换（master=-110 peer=0 从机已完成）；④ DYN 域一旦卡住永不释放（vk120 全 boot CLK_STATUS 只变 1 次）。已否证 6 条路线：面板 reset / 软件闩锁 / DSI ctrl+PHY 复位 / 自定义 bonded 序列（vk121 改走标准广播路径仍 L1FAIL）/ 使能期 force-on（vk122 首 2 发 GOOD 后仍 L1FAIL）/ VBIF 优先级。原厂 dyn-refresh 寄存器面（`DSI_DYNAMIC_REFRESH_CTRL=0x200`/`_STATUS=0x210`、LANE_CTRL bit28 请求、INT_CTRL bit28 done+ACK、PHY v7.2 dyn_refresh_*）本树一概没有，但 Lenovo 版与 OnePlus 版原厂 display 源码的 `dsi_ctrl_reg.h`/`dsi_clk_manager.c` 逐字节相同 ⇒ 「dispcc/INTF 是下一主靶」的前提也被削弱，需重新选靶。
+---
+**`reboot2` 未就绪挂机**（2026-10-12 实测，PITFALLS #225）：设备 uptime < 25 s 时直接调 `reboot2` 会把设备挂到无 USB 通道（2/2 挂），uptime > 100 s 时正常（3/3）。⇒ 所有自动化复位脚本必须先过就绪门 `scripts/lib-boot-ready.sh`；`scripts/q28-cold-sample-loop.sh` 明确**不做自动重启到 fastboot**（自动路径不可用），只等用户手动 POR。 — Failed: 自动化循环里过早 reboot2 会挂死设备，需就绪门。
+---
+Q28 已明确否证的路线清单（避免重复开发，2026-10-12/13）：面板 reset、软件闩锁清除、DSI ctrl+PHY 复位（vk117 寄存器转储证明复位执行但救不回）、自定义 bonded 序列（vk121 改走标准广播路径仍失败）、使能期 force-on（vk122）、VBIF 优先级、上游 2028280686f4 byte-clk 取整移植（vk114 L1FAIL，本树 bonded 路径是 GEEKiDOS 自带、非同根因）、vk125 resetterm（镜像原厂 ctrl_reset 终态仍 L1FAIL）。判别量 = DYN pclk 域生命周期（好发 CLK_STATUS 0x343→0x743→0x343 按命令瞬开/放；坏发闩在 0x1743/0x3743 + STATUS0=0x20003 + DSI 中断计数 0），且 DYN 位在控制器 sw_reset 后仍在 ⇒ 故障态不在 DSI 控制器内。
+---
+『上游报告已归档』只是投递成功，不等于有回信：Q28/Q24 报告发出后 In-Reply-To/References 命中回复 = 0 是常态。看『最新邮件有没有我们关心的』要走两条独立通道：① IMAP 巡自己的 INBOX/Junk（read-mail-ustc.py --replies-only；注意 USTC 会把自发邮件标 [SPAM]）；② lore 关键词查询（scripts/lore-query.py 自动过 Anubis PoW）。归档复核用 body sha256 逐字节比对（raw URL 带 `?x=A` 只拿到 Atom，要取 raw 正文直接用 /raw）。
+---
+判断『上游是否有同族工作』要看 GIT PULL 邮件而非只搜关键词：本轮从 andersson 的「Qualcomm clock updates for v7.4」pull 请求里读出 sm8750-gcc 加 CX power domain、dispcc-sm8750 always-on 通用 probe、cambistmclkcc-sm8750 +7 行等，直接支撑 Q24 的 cx/mmcx 票面分析；而 [PATCH v21 14/14] kaanapali-mtp-camera 把 cambistmclkcc 当相机 MCLK 提供者（CAM_BIST_MCLK_CC_MCLK2_CLK），佐证『裸时钟控制器』质疑。
+---
+用户会纠正关键实验事实的口径（2026-10-13 实例）：agent 报「vk124-merged 零写盘 RAM 直启后冷起 GOOD」，用户纠正「第一次冷起是 STORM，我手动第二次冷起后 GOOD」。⇒ 上机结论必须按**每发冷起逐次记录**（含坏发），不能用「最终 GOOD」概称；这与已有「新验收口径=1 次 GOOD 即可判候选可用」并存——判定可以宽，但事实陈述不能省掉坏发。 — Failed: agent 把 2 发（1 STORM + 1 GOOD）概括为「冷起 GOOD」，被用户当场纠正
+---
+用户口径修正（2026-10-13，vk124-merged 上机）：该镜像**第 1 次冷起是 STORM（只有背光无桌面），操作者手动 POR 后第 2 次冷起才 GOOD**——不要写成「冷起 GOOD」。这与 Q28 现状（~50% 随机坏发、与镜像无关、按时间成簇）一致，报告/台账须区分「第 N 次冷起」。 — Failed: 把操作者手动第二次冷起的结果记成单次冷起 GOOD，被用户当场纠正
+---
+Waydroid 镜像自带 HIDL android.hardware.vibrator@1.0-service.waydroid 只写 AOSP leds/timed_output 节点（主线两处都没有），且 ofstream 不检查写失败 ⇒ 容器侧一切正常但马达不动——「HAL 无输出」的原因是内核缺对应 sysfs 节点而非 HAL 逻辑，定位此类问题要看节点是否存在，不要只看 lsof/lshal 是否注册。
+---
+fcitx5-remote / fcitx5 通过 DBus 与 fcitx5 主进程通信，**必须以同一 uid（会话用户，如 uid 1000）运行**，否则报 `Failed to create dbus connection`（Aborted）。root 直连会失败；需 `setpriv --reuid=1000 --regid=1000 --init-groups` + 正确的 `DBUS_SESSION_BUS_ADDRESS`（phosh 会话的 /tmp/dbus-*，非 /run/user/1000/bus）与 `XDG_RUNTIME_DIR`。注意 `setpriv` 没有 `--env-dbus` 选项。
+---
+Q28 探针臂 vs 门控臂判据（2026-10-13 定）：当臂的唯一目的为诊断（如 vk116/117/118/119/120/123——判据是日志里出现特定恢复/转储行，不是冷起成败），单变量可比是硬要求：UTS release 必须与要对照的基线臂==一致==（PINUTS 钉死 + 相同 #N 构建身份），刻意复用源提交/UTS 是预期例外，已登记 known-issues 降为 WARN。当臂为「候选功能修复」（如 vk125-resetterm、vk124-merged），判据是冷起三态（GOOD/L1FAIL/NOCARD），UTS 不同亦可比。
+---
+「屏幕没拉起」这类 Q28 坏发时，设备 SSH **仍然可连、但响应极慢**——真因不是网络：坏发下 dmesg 出现 `msm_dpu ... [drm:hangcheck_handler] *ERROR*` 回收循环（hangcheck recover ×78）、`a6xx_gmu_set_oob Timeout`、`offending task: phoc`，GPU worker 吃 CPU 致 load 5–6。同时 `card0-DSI-1/status` 仍是 `connected` = 假阳性（连接器在但管线 hang）。判坏发要看 hangcheck 计数与 phoc 是否被点名，不能只看 card0 status。
+---
+审计本机内核 payload 的上游合规性（2026-10-13）：相对主线 v7.2 为 125 文件 /≈7077 行改动 + 11 个新驱动或 DTS /≈5300 行；其中约 60% 属真实硬件缺口（方向正确）、25% 结构需重做、15%（D 类）永不上游。新驱动族已全部挂在强制框架下（panel-novatek-nt36536→drm_panel、wl2868c-regulator→regulator、aw86927→input FF、novatek-nvt36xxx-spi→spi/input、camss-*→V4L2/media+MC、pwrseq-qcom-wcn→pwrseq、hci_qca→bluetooth），binding 全过 dt-doc-validate，dt-validate 仅 usb@a600000 一处红点。策略定为「mainline + 薄下游层」（reports/upstream-policy-20261013.md + AGENT-OPS §3 + TASKS §7）。
+---
+M1 资产树（build/m1-upstream/clean-tree 与 clean-tree-73）血统落后于 clean/base 的设备侧修复，带的是 PITFALLS #108 之前的板 DTS（&i2c0 status="okay"）⇒ 一上机必硬关机（fastboot boot 报 OKAY 后黑屏、无 USB gadget、~39s 回旧系统）。M1 系列上机前必须逐条对照 clean/base 的板 DTS 修复（i2c0 disabled、splash_region 命名、去 simple-framebuffer、sdhc no-1-8-v）。已在 M1-73 树提交 1e4077e13f / b3815fb150。
+---
+M1-7.3 新内核「外设全废/无桌面」根因 = 模块集没带（不是代码回归）：73h 是纯 ramdisk（0 个 .ko）+ 磁盘无 7.3 的 /lib/modules ⇒ 所有 =m 驱动未加载。因果链（每环有实机日志）：fsa4480.ko 未加载（CONFIG_TYPEC_MUX_FSA4480=m）→ 无 typec mode-switch → pmic_glink.altmode defer（`failed to acquire mode-switch for port: 0`）→ af54000.displayport-controller 永久 defer → disp_cc-sm8750 sync_state() pending → msm_drm_bind 被卡 → 无 card0/无桌面。决定性证据：运行时 insmod 与内核同 vermagic 的 fsa4480.ko（13.7KB strip 后）→ 立刻出现 card0/card0-DP-1/card0-DSI-1/renderD128 + dmesg `msm_dpu: bound af54000.displayport-controller`。同类：fastrpc=m 缺失 → 无传感器。=y 的 USB/触摸/背光/部分音频照常——与观察一致。⚠不要误判成 Q28/DSI 问题。
+---
+M1-7.3 另一个显示失败模式：`&mdss_dp0 { status="okay" }` + ADSP 起了但 fsa4480/typec mode-switch 缺失时，DP 控制器永久 defer 会**阻塞 msm_drm_bind** ⇒ 整机无 card0（但背光/部分外设正常）。单变量验证：只把 &mdss_dp0 改成 disabled 重建 DTB → card0 + card0-DSI-1 connected + greetd/phoc/phosh 全起。修法 = 确保 fsa4480.ko 加载（或 DP 实验期临时 disabled）。与 historic DP 修复（dr_mode=otg + usb-role-switch + mdss_dp0 okay 三处齐）一致。
+---
+M1 重基树（build/m1-upstream/clean-tree-73）上机验证经验：① 73h 内置「磁盘黑匣子」= ramdisk 第二段 cpio 覆盖 /init（后台子进程等 LABEL=linux17 → 挂 /mnt/dbg → fd9 每 3s 追加 dmesg + sync，跑 400 轮 ~20min，独立于正常启动）⇒ 零写盘取全量 dmesg（0.0s 起）的通道，但不带 sync 的旧版会留 0 字节文件。② 设备无 7.3 的 /lib/modules ⇒ 需要 =m 驱动时从 build/m1-upstream/clean-tree-73/ 下取 .ko（aarch64-linux-gnu-strip 后 vermagic 仍匹配）。③ M1 树已含 psci reboot 钩子（6776a30860），可 `reboot2 bootloader` 进 fastboot。
+---
+本机构建产物核对：`fdtget` 未安装（读 DTB 节点/status 用不了）；boot.img 头部参数要用 `tools/mkbootimg/unpack_bootimg.py`（仓库内有 vendored 副本）。打包 M1 镜像时 mkbootimg 调用路径必须是仓根 `tools/mkbootimg/mkbootimg.py`，用绝对/临时路径（如 /tmp/73j-ovl/tools/...）会 `No such file or directory` 但外层不报失败。
+---
+构建时 /tmp 是 tmpfs（31G，易满/有配额）⇒ 内核编译会报 `error closing /tmp/xxx.s: 超出磁盘配额`；修法 = 把 TMPDIR 指到大容量根文件系统（本次 TMPDIR=/var/tmp/p1build）再 make。清理 /tmp 前先看 df 与 du（本次 /tmp 有 /tmp/vk125wt 7.0G、/tmp/dailyid 7.0G 等残留）。
+---
+trial.sh record 子命令强制要求 --label（报 '[trial] ❌ record 需要 --label'）；q28-devprobe2.sh 的 L2 正则原先漏了 'vblank wait timed out'（Q28 上游栈的典型失败签名），补充为 `ctl [0-9]+ reset failure|frame done timeout|vblank wait timed out|drm_crtc_wait_one_vblank`。
+---
+M1-7.3 纯 ramdisk 上机「外设全废」真因 = 模块集没带（非代码回归，2026-10-13 单变量闭环）：fsa4480 未加载（CONFIG_TYPEC_MUX_FSA4480=m）→ 无 typec mode-switch → pmic_glink.altmode defer（failed to acquire mode-switch for port: 0）→ af54000.displayport-controller 永久 defer → disp_cc sync_state() pending → 阻塞 msm_drm_bind → 无 card0/无桌面；运行时 insmod fsa4480.ko 立刻出现 card0/card0-DP-1/card0-DSI-1/renderD128。insmod fastrpc.ko → /dev/fastrpc-adsp + QRTR svc400 上线、传感器恢复。最小必需模块 = fsa4480 + fastrpc；实测闭包 36–37 个（时钟族 + 相机 + fuse/stp/bridge/overlay）。
+---
+「某次启动 GOOD」在同硬件/同镜像上不可复现时必须先怀疑判据而非下结论：P2b 的 10-13 GOOD 只查了 card0+phoc/phosh（未看屏、未数风暴签名），10-14 同 sha 复测 196 次 kickoff reset failure ⇒ 伪阳性。纪律：写 verdict 前必须（a）设备端全 dmesg（不只 grep 一种签名）、（b）三类风暴签名全数、（c）目视或截图确认面板真的出图；缺失任一即标「未验证」而非 GOOD。
+---
+`scripts/trial.sh record` 必须带 `--label`（缺参会报 `[trial] ❌ record 需要 --label`）；且 `--reset` 类型必须显式声明 por|cold|warm——用 warm（reboot2 bootloader→fastboot boot）记录会污染冷起样本，A/B 对照前必须区分复位类型。
+---
+Q28 判据不能只看 card0 + phoc/phosh 就判「显示正常」——P2b 上游 DSI 臂 10-13 那次被记为 GOOD 的启动，10-14 同 sha（71016e08）复测翻转为 kickoff reset failure 196 + frame-done/vblank 195，且事后核对该次 GOOD 从未验屏。判「面板是否点亮」必须看三类风暴签名（kickoff reset failure / frame-done / vblank timeout），且两栈失败签名不同：vendor 栈 = command DMA timeout，上游栈 = ctl N reset failure -22 + vblank/frame-done。scripts/q28-devprobe2.sh 的 L2 正则原缺 vblank timeout（2026-10-14 已补）。
+---
+设备侧 dsi_isr 中断计数恒为 0 是判断「上游 DSI host 是否真在发视频流」的硬指标：P4a 健康发（l1=l2=0、phoc/phosh/wayland 全起、card0-DSI-1 connected enabled dpms=On、backlight 511）下 `dsi_isr` 两个 host 都恒为 0，且 `grim` 报 no supported format found ⇒ 该「健康发」实际合成器未 modeset、DSI host 未启动视频引擎。注意命令模式面板空闲不推帧所以只能看累计值（好发>0/坏发=0）。
+---
+构建 P1/P2b/P2c/P4a 这类上游对照臂时必须保持构建身份可比：kernel `CONFIG_LOCALVERSION_AUTO=y` 时 UTS 会出 `-g<sha>` 后缀（新提交变新身份），要得到与基准（P2c 的 7.3.0-rc7-debug-g2851bcaff64f）一致 UTS 需改 `CONFIG_LOCALVERSION="-debug-g2851bcaff64f"` + `LOCALVERSION_AUTO=n`。提交时漏 `git add` 某 tracked 文件会让 setlocalversion 产出 `+`/`-dirty` 后缀，需 amend 重编保可复现身份。overlay 的镜像内拷贝路径须用相对前缀（绝对路径会在 lib/modules/<KV>/ 下建出 home/xuqianhui1001/... 整条树）；fastboot boot 上限 100663296 B。
+---
+设备探测 SSH 纪律（2026-10-14 补充）：轮询式 ssh 重试（本次 ~60 次）后设备 sshd 立刻回 `Not allowed at this time`（OpenSSH 9.8+ PerSourcePenalties 源惩罚，由 /usr/sbin/sshd 在 MaxStartups 触发时发出），随后连 banner 都不再给（Connection timed out during banner exchange）——TCP 能连上（内核 backlog）但用户态不回，极易误判成「系统挂死」。惩罚按源 IP 记账，安静等待也不可靠（新连接可能续期），最稳恢复 = 重启设备。纪律：单次连接 + ≥15s 退避，用 `-o ConnectionAttempts=1 -o ConnectTimeout=8`，禁止 for 循环里高频 ssh。scripts/trial.sh record 必须带 --label（缺参会报 `[trial] ❌ record 需要 --label`），实验中用 warm（reboot2 bootloader→fastboot boot）记录的 trial 会污染冷起样本，必须显式区分 reset 类型。
+---
+Q28 上游臂实验方法学（2026-10-14 验证）：设备显示处于坏态时 `reboot`/`reboot2`/`eldroid-bootctl reboot system` 都会挂在 DRM cleanup（进程不退、uptime 继续涨），可靠软件恢复 = `echo b > /proc/sysrq-trigger` 或串口 BREAK+'h'+'b'（SysRq-b）。因此「窗口搜索脚本」应先单次 SSH `reboot2 bootloader`，失败（SSH 不可用）则改用 SysRq-b 两级复位（SysRq-b → 回日常 boot_b → 再进 fastboot）。`scripts/arm-console-run.sh` 已封装 arm 实验 + 常驻串口日志（logs/arm-<label>-<ts>/console.log）。健康发判据 = 串口从 t=0 全程捕获 + L1=L2=0 + 单次 SSH 状态全绿。
+---
+上游 DSI 栈「结构健康但面板不亮」的决定性证据（2026-10-14 P2c/P4a/P4d 臂）：即使 modetest 强制 modeset（CRTC 106 fb=111 1904x3040，绕过合成器），`dsi_isr` 计数**恒为 0**（两个 DSI host 都不响）+ 用户目视「纯黑仅背光」⇒ 上游 DSI host **根本没启动视频引擎**；同窗口 vendor 栈（m1-73j）`dsi_isr=41`（不再增长）、grim 能出图，但用户目视同样「有声音和背光、屏幕无内容」⇒ 面板不亮不是上游臂独有。诊断探针结论（P4d DIAG）：`mgr bridge_enable id=0 powered=1 bonded=1`、`host_enable id=0/1 mode_flags=0x2e03 power_on=1 ctrl_before=0x171 → ctrl_after=0x173` ⇒ **video 使能路径确实被调用**（DSI_CTRL bit1 VID_MODE_EN 已置位），缺的是让 video 真跑起来的东西（时钟/PLL）。时钟侧：`dsi0vco=756.8MHz`、`disp_cc_mdss_pclk1_clk_src=172.992MHz` 正常；slave `dsi1vco=0` 待查。
+---
+Q28 健康发窗口是逐会话成簇的（2026-10-14 实测）：同一台设备同一构建身份，一个窗口里 P2c/P4a/P4d/m1-73j 连出「结构健康发」（L1=L2=0），而 vk94 对照组同窗口却是 L2STORM 坏发 ⇒ 「窗口好坏」不能一律按 L1/L2 签名判，还要看是否真出图（用户目视）。寻找健康发的实用手法 = scripts 自动复位 + 轮换臂直到单臂 L1=L2=0，然后请用户目视。复位路径：显示坏态下 `reboot2` 会挂 DRM cleanup（PITFALLS #253），可用串口 SysRq-b（BREAK+'h'+'b'）或 `echo b > /proc/sysrq-trigger`，无需物理 POR。
+---
+M1 7.3-rc7 重基树显示回归（2026-10-14 同窗口 A/B 定案）：同硬件同启动路径下 vk94（7.2 血统）面板正常出桌面，而 M1 7.3-rc7 树的两条臂（m1-73j vendor 栈、P4a/P4d 上游 DSI 臂）都是「有声音+背光但屏幕无内容」⇒ 不是 Q28 粘态、不是面板坏，是 M1 树自身的显示回归。判据关键：vk94 与 m1-73j 都 dsi_isr=41（视频引擎在跑、grim 能出图），但只有 vk94 有画面；P4a/P4d 上游臂 dsi_isr=0（上游 DSI host 根本没起视频引擎）。回归在**内核侧**（两树源 DTS 几乎无差异，仅注释/无关节点）。
+---
+显示类实验的复位纪律（2026-10-14 实锤修正）：「连续温复位（reboot2 bootloader→fastboot boot）会粘 DSI 坏态、必须物理 POR」这条旧口径**不能滥用**——本轮做了约 10 次温复位后一度以为全部现象都是粘态，但用户纠正 vk94 该窗口正常出桌面。正确做法 = 每轮实验都带上**已知健康的对照臂**（如 vk94 日常镜像）跑一次，用对照臂结果判定「是窗口坏还是被测臂坏」，不要先归因到粘态。
+---
+Q28 判据 `q28-devprobe2.sh` 的 L2 正则漏了 `vblank timeout`（原只有 ctl reset failure / frame done timeout / vblank wait timed out / drm_crtc_wait_one_vblank），对上游 DSI 栈会报 GOOD-NOSESSION 实为显示未工作，已补。教训：判「面板是否点亮」不能只看 card0+phoc/phosh——两栈失败签名不同（vendor = command DMA timeout；上游 = ctl N reset failure -22 + vblank/frame-done 风暴），必须三类风暴签名一起数。
+---
+Q28「vendor DSI 命令路径专有」假设已悬置（2026-10-14）：P2b 上游 DSI 臂 10-13 记为 GOOD 的那次完全没看屏幕、10-14 同 sha（71016e08）复测 4/4 全是 ctl reset failure + vblank 风暴 ⇒ 那次 GOOD 是判据伪阳性，不能当「Q28 被修复」；但 Q28 签名在上游路径恒 0 属预期（上游不用 bonded_cmd_*），所以也**不能**据此说 Q28 是 vendor 专有。
+---
+P4a DSC 1.2 补丁已否证（2026-10-14）：面板 csot_pp8807hb1_1 声明 .dsc_version_minor=2，上游只按 1.1 PRE-SCR 算 RC 参数且不给 first_line_bpg_offset，故移植 vendor 的 DSC-1.2 (SCR) RC 参数 + first_line_bpg_offset（+46/−2，分支 p4/p2c-dsc12）——健康发（L1=L2=0、phoc/phosh/wayland 全起、可交互、音量键有声、电源键可控背光）下屏幕仍纯黑 ⇒ DSC 不是缺口。
+---
+上游 DSI 栈缺 video 使能（2026-10-14 探针臂定案）：P4d 诊断探针显示 `DSI_CTRL` bit1 VID_MODE_EN 已置位（ctrl 0x171→0x173）、bridge_enable/host_enable 都被调用、时钟侧 dsi0vco=756.8MHz 与 disp_cc_mdss_pclk1_clk_src=172.992MHz 都对，但 dsi_isr 恒 0、modetest 强制 modeset（CRTC fb=111/1904x3040）后面板仍纯黑 ⇒ 上游 DSI host 根本没让 video 跑起来，缺的是 trigger/engine start 那块（与 vendor 栈 dsi_isr=41 的关键差异）。
+---
+暖复位路径（reboot2 bootloader→fastboot boot）会污染显示臂实验台架，与补丁无关：E1b 暖链得 L2STORM（dsi_isr=0 + 127 条 reset/vblank 风暴），但**已知 GOOD 的 E1 镜像走同一暖路径也 L2STORM + dsi_isr=0** ⇒ 控制组证明台架坏、不能据此判补丁。用法：判显示臂必须真实 POR；若只能暖链，先跑已知 GOOD 镜像做控制组，并检查 dsi_isr 累计值（暖链恒 0）。
+---
+内核 DSI PHY 探针写寄存器时注意成员路径：`struct dsi_pll_7nm` **没有 `pll_base`** 成员，正确写法 `pll->phy->pll_base`；`dsi_7nm_phy_enable()` 里只有 `phy`/`base`。写错会 3.9s 即编译失败（`error: 'struct dsi_pll_7nm' has no member named 'pll_base'`），只影响 dsi_phy_7nm.o。
+---
+单变量显示/内核臂打包纪律（2026-10-14 实践）：ramdisk/DTB 必须**逐字节复用参考成品镜像内的组件**（从现成 boot.img unpack 取，而不是用 out/rootfs-*.cpio.gz，两者不同），保证唯一变量在内核；UTS 必须精确钉死（`CONFIG_LOCALVERSION="-debug-<sha>"` + `CONFIG_LOCALVERSION_AUTO=n`），否则 `-dirty`/`-g<sha>` 后缀会破坏构建身份可比性（提交时漏 add tracked 文件也会带 dirty）。设备/主机上 `rm` 跨设备会报 EXDEV（/tmp vs 家目录不同挂载），属无害噪声。
+---
+M1-7.3 树上 Q28 与日常内核的耦合：Q28 坏发（~50%）同样出现在 M1 臂上（E1b POR 第一发即 command DMA timeout status=0x2200200 → bonded command DMA failed master=-110 peer=0 @95.58s，L1=2；日常 vk94 的 SysRq-b 重启也命中 9.07s 经典签名 + phoc=0）。区分办法：坏发看 `command DMA timeout` / `dsi_isr=0` / `hw recovery is not complete for ctl:1`；好发看 dsi_isr=41、L1/L2=0。设备侧 `q28-watchdog.sh` 是 **disabled** 状态（/etc/q28-watchdog.disable），不会自愈，需手动 SysRq-b 重试等好发。
+---
+M1-7.3 树 boot 停滞 91 s 的真因 = 内核在 WCN/ath12k 首探的 MHI 等待上卡住（`[4.90] mhi mhi0: Wait for device to enter SBL or Mission mode` → `[96.08] ath12k: failed to set mhi state: POWER_ON(2)` -110），不是 `insmod fsa4480` 阻塞。决定性判据 = `[96.45] Freeing unused kernel memory` + `[96.50] Run /init as init process`（PID1 到 96.5 s 才被 exec）。对比日常 vk94：WCN 探针 23.09 s 起、0.4 s 内成功 ⇒ M1 树探针过早（4.4 s）。修法（E1g）= `CONFIG_ATH12K=m` 让用户态晚加载、不 gate init ⇒ `Run /init` 回到 4.49 s、GUI ~7 s。注意 `ps -o etimes -p 1` 会给误导值（≈uptime），不能用它判断 PID1 何时起。
+---
+scripts/arm-console-run.sh（零写盘启动显示臂 + 串口内核控制台取证，不依赖 SSH）的 verdict 行解析 bug：`[: 0\n0: 需要整数` —— L1/L2 计数被 multi-line 输出打断导致打印成两行，判据 VERDICT 仍可读但计数不准。用法 `scripts/arm-console-run.sh <boot.img> <label> [wait_s]`（前提设备已在 fastboot），输出 logs/arm-<label>-<ts>/{console.log,verdict.txt}。设备侧 console=ttyGS0,115200 经 USB gadget 暴露为 /dev/ttyACM0（控制台**无 shell**，只有内核日志）。
+---
+`fastboot` 对复杂脚本/封装的支持有限，可能根本不响应——`fastboot boot` 等指令必须作为**单条纯命令**直接执行（用户 2026-10-14 明确要求记为高优先级）。实测：`scripts/arm-console-run.sh` 这类复合脚本里的 `fastboot boot` 被静默取消（无输出、不进 fastboot），而手敲单条 `fastboot boot <img>` 立即成功（Sending OKAY 1.9s / Booting OKAY 10.1s）。同理 `to-fastboot.sh` 可用但其中封装的 fastboot 步骤不可靠。 — Failed: 复杂脚本内嵌 fastboot 调用静默失效，被误判为设备/脚本问题
+---
+fastboot 对复杂脚本/封装命令支持有限：把 `fastboot boot <img>` 放在复杂的 bash -c / wrapper / 多步脚本里（尤其带变量插值、nohup、串口 reader 同批）时可能根本不响应或静默不执行（表现为容积里无输出、日志目录未创建、设备仍停在 fastboot）。可靠做法 = 用**单条纯命令**执行 `fastboot boot out/xxx.img`（发送+启动两次 OKAY 约 12s），串口/SSH 读日志单独另开一条命令或后台进程。同理，需要看 fastboot 输出时不要把它塞进复合脚本。 — Failed: 用户 2026-10-14 观察并确认「脚本似乎没有启动fastboot 的boot指令，可能是复杂脚本对fastboot支持不好」，随后拆成单条命令即成功
+---
+fastboot 对复杂脚本/批量封装的调用支持有限，可能根本不响应：把 `fastboot boot` 塞进带引号、变量插值或多步逻辑的复合脚本（含 nohup/bash -c 包装）时，常表现为「脚本跑了但 fastboot 没启动镜像」或整段静默不执行（输出为空、日志目录未创建）。可靠做法 = 每条 fastboot 命令单独提为一条纯命令直接执行（PITFALLS #3 的口径），进 fastboot 用 scripts/to-fastboot.sh（PSCI vendor reset）单独一步，再单独一条 `fastboot boot <img>`，串口取证另起 reader。用户 2026-10-14 明确要求记住此条。
+---
+Q24 真机理（2026-10-15 复核，报告 reports/q24-causal-audit-20261015.md）：触发源不是「camcc+cambist 电学配对」，而是 rpmhpd 电源域 provider 的 sync_state 门控。rpmhpd.c：state_synced=false 时 aggregate 把全轨夹到最高档 (level_count-1)，仅 gfx/gmxc 有 presync_floor；driver core 在所有消费者绑定后调 rpmhpd_sync_state() 释放 clamp、按真实票重投 → 批量投 0（即 PITFALLS #197/F8 现象）。设备实测全天候只有两条 pending：`qcom-rpmhpd 16500000.rsc sync_state() pending due to ade0000.clock-controller (camcc)` 与 `… 1760000.clock-controller (cambist)` ⇒ 装其一仍 pending 存活、两个都装才触发。软件层验证（N1 配对加载前后 dmesg rpmhpd pending + pm_genpd current_state，不熄屏；N2 两 CC power/control=on 保票后真熄屏）。
+---
+本机（xuqianhui 新机，换机后）fastboot = ~/.local/opt/platform-tools/fastboot（v37.0.1，从 dl.google.com 直接下载 zip 解压，无需 sudo）；系统 PATH 里原本没有 fastboot。设备不支持 fetch：`fastboot fetch` 恒报 Unable to get max-fetch-size / Device does not support fetch command（会生成 0 字节文件）⇒ 备份分区只能用设备侧 `dd if=/dev/disk/by-partlabel/<part>` 再 scp 回主机。
+---
+fastboot 不存在 fetch 功能（本 ABL 支持不了）：`fastboot fetch` 报 `Unable to get max-fetch-size. Device does not support fetch command.`（2026-10-17 复核，此前 2026-10-06/10-08 已两次证实）⇒ 「刷写前先用 fastboot fetch 备份分区」的配方一律错。备份分区可行手段只有：① 设备侧 `dd if=/dev/disk/by-label/<part>` 后 ssh/tar 取回；② EDL(9008) 读回；③ 事先已有的镜像副本。写文档/脚本前先查设备侧能力，别照抄 `fastboot --help`。
+---
+文档/脚本里的命令能力必须在本机实测验证过才可写入口径——`fastboot --help`/工具帮助文本列出的子命令不等于本机设备支持（fastboot fetch 即典型幻觉）。用户要求「类似检查所有可能记错的地方」= 对全库做能力幻觉审计（grep 所有文档/脚本里的工具/命令用法，逐条核对是否本机可行），并对确认错误的处做替换修正 + 新增 PITFALLS 条目记录。
+---
+写文档/脚本前应先在本机实测命令能力，不要照抄 `--help` 或历史文档；本仓曾有多处把 fastboot fetch 写进备份配方（INDEX/RUNBOOK/PITFALLS/AGENT-OPS/TASKS/build-locked-chain.sh/DEVICE 共 6+ 处）——属「能力幻觉」类错误，排查时要全库 grep 同类可能记错的命令。
+---
+主机/文档排查「记错的能力」时的两类区分：① 命令能力幻觉（如 fastboot fetch、fastboot reboot fastboot 未验证）→ 改写成正确做法；② 文档指向已归档/不存在的脚本（本仓 26 处，如 scripts/q24-*.sh、q28-*.sh 已在 commit 6265d32「归档 32 个一次性 Q24/Q28 脚本」中被归档）→ 属文档指针陈旧，不是能力误判，登记为 debt 而不混入幻觉清理。
+---
+fastboot 不存在 fetch 功能（2026-10-17 第 3 次实测证伪，用户原话「带有 fetch 的一律是幻觉」）：fastboot 客户端有 fetch 子命令但设备 ABL 未实现，实测 `Unable to get max-fetch-size. Device does not support fetch command.`。备份分区只能：① 设备侧 `dd if=/dev/disk/by-partlabel/<part>` 后 ssh/tar 取回；② EDL(9008) 读回；③ 已有镜像副本。写文档/脚本前先查设备侧能力，别照抄 fastboot --help。
+---
+从内核 Image（Android boot.img 或 Image.gz 尾部）反查基线用的 DTB：Drive 用 Python fdt scan（fdt first 在 Image 文件里的偏移 + magic 检查 FDT_MAGIC=0xd00dfeed、total size 字段），2026-10-17 实测从 `boot_b-m1-baseline-f3-20261017.img` 里提出 153101B 板级 DTB，反编译后可与我们重放版 DTB（140537B）做节点名/diff 对账。内核 Image 内的裸 DTB 往往多块，要找 total size 匹配的那块，别拿第一个 fdt 头（常常是 `device-tree$header` 之类 730B 小段）。
+---
+geekidos-linux 是 shallow 克隆 ⇒ 任何 `git fetch` 新 ref 都被拒：`fatal: Not a valid object name <sha>^{commit}`、`warning: 拒绝 refs/tags/vkNN 因为浅克隆的根不允许被更新`。要从某个 vk tag 取树内容只能用**本地 worktree**（`git worktree add build/vk83-tree vk83`）做文件级差分，不能 fetch 远端补对象。 — Failed: 换机后重建 payload 时想 fetch vk83 等 tag 失败；eyeballing 浅克隆限制
+---
+本机 `~/.local/bin/dt-validate` / `dt-doc-validate` 的 shebang 指向 `~/.local/opt/dtschema-venv/bin/python`，但该 venv 里 `import dtschema` 报 `ModuleNotFoundError: No module named 'dtschema'`（换机后 venv 未重装）。`dtbs_check` 因此不可靠；判断 DTB 保真度改走「抽基线 DTB + dtc -I dtb -O dts 与重放 DTB 文本 diff」的路子。
+---
+geekidos-linux 是浅克隆 ⇒ 对已存在的 tag（vk81/vk82/vk83）`git fetch` 报 '拒绝 refs/tags/vkNN 因为浅克隆的根不允许被更新'、对新对象报 'Not a valid object name'（rc=128）。替代做法 = 用 `git worktree` 检出对应 tag 做文件级差分（本项目实测可行），不要试图 fetch 更新 ref。
+---
+geekidos-linux 是浅克隆（.git/shallow），fetch 已有 ref 会被拒（`warning: 拒绝 refs/tags/vk81 因为浅克隆的根不允许被更新`，rc=128），`git fetch <hash>` 报 `无法找到远程引用`/`Not a valid object name`。替代做法 = 建本地 worktree/克隆做**文件级差分**（`git worktree add build/vk83-tree vk83`），不要试图 fetch。 — Failed: 浅克隆仓库不能 fetch 新 ref；payload 取源必须靠本地 worktree 文件对比
+---
+换机后 out/ 里的 ramdisk cpio 与 tools/mkbootimg 全部丢失（MIGRATION-LOST），且本机 python3 **没有 pip / 没有 mkbootimg 模块**（`ModuleNotFoundError: No module named 'mkbootimg'`，/usr/bin/python3 无 pip）。可行路径：① 从抢救回来的基线 boot_b 镜像原位抽出 ramdisk（boot.img v2 头 magic 'ANDROID!'、page 4096、kernel_size=20799275、ramdisk_size=64622358，kernel 偏移 4096、ramdisk 紧随 kernel 之后）——这就是能用的那个 ramdisk；② 自研 boot.img v2 头打包器放 tools/mkbootimg/mkbootimg.py，用「复刻基线镜像逐字节比对」做自校验。 — Failed: 迁移丢失 + 无 pip 环境下打包 boot.img
+---
+手写 Android boot.img v2 头极易把字段顺序写错：正确布局（在 8s magic + 10 个 u32 之后）是 name[16], args[512], id[32], extra_cmdline[1024]，随后才是 recovery_dtbo_size(u32), recovery_dtbo_offset(u32), header_size(u32), dtb_size(u32), dtb_addr(u64)。实测把 `header_size`/`dtb_size`/`dtb_addr` 排在 1632 而非 1644 就会 selftest FAIL（`first diff at byte 1632: 00 != 7c`）。本机内核用 v2 头，header_size=1660（0x67c），dtb_size=300，dtb_addr=0x01f00000。调试提示：`ljust(PAGE)` 若用错 PAGE 变量会出现 4084 而非 4096 的诡异长度。 — Failed: 自研 mkbootimg selftest 连续两轮在字节 1632/1644 失败——v2 header 尾部字段偏移写错
+---
+本机（换机后 xuqianhui）out/ 的 ramdisk cpio 与 tools/mkbootimg 已随迁丢失（MIGRATION-LOST），但**可从已抢救的基线 boot_b 镜像原位抽出 ramdisk**：boot.img v2 头（魔法 'ANDROID!'、page 4096、kernel_size/ramdisk_size 在头里），kernel 偏移 4096，ramdisk 紧随 kernel 之后（内层是 gzip：1f8b0800）。python3 无 pip 时需自研打包器。另：`scripts/build-boot.sh`/`assert-kernel-sane.sh` 的默认内核路径是 `linux/arch/arm64/boot/Image.gz`（linux → geekidos-linux 符号链接），in-tree 构建（LOCALVERSION=-vkNN）与 out-m1-73 外置构建是两套，闸门只查前者。
+---
+`fastboot boot` 启动自定义 boot.img 时，`/lib/modules/<新UTS>` 必须先在设备上就位——否则内核起来后 modules 全空（lsmod 零条），DP PHY/altmode 等 deferred，msm DPU 组件不齐永不 bind ⇒ 无 card0，会被 Q28 看门狗判成「坏发」而误归因。实测 2026-10-17 vk127：s1/s2 缺模块树 = 无 card0；装上 1497 个 .ko（85M，zstd/tgz 流式传）后 s3 立即 bind（msm_dpu bound ae94000/ae96000.dsi）并出现 card0。判据：boot 后先查 `lsmod | wc -l` 与 `/dev/dri`。
+---
+自研 boot.img v2 头打包器的两个必踩字节级坑（2026-10-17 实测）：① AOSP 把 20 字节 sha1 digest 补零填进 32 字节 id 槽——直接 `hdr[576:608] = digest` 会让整个 header 缩 12 字节，所有后续字段错位（header_size/dtbsz/dtba 全落到错误偏移）；必须 `digest + b'\0'*12`。② 用 `bytearray` 分段 seek/write 容易出隐性 bug，改为「内存拼装完整镜像再一次写出」。自校验方法 = 用两个真实镜像（boot_b-m1-baseline-f3 / boot_b-before-vk94）逐字节复刻比对。
+---
+Q28 判读时「无 card0」不等于 Q28 坏发：须先排除「模块树缺失导致 DPU 不绑定」这类构建侧缺件。诊断顺序：`lsmod` 条数（空=模块树没上）→ `dmesg | grep 'bound ae94000.dsi'`（缺=DPU 未绑）→ 再看 L1 签名。
+---
+RAM 启动（`fastboot boot`）自编内核而不先部署 `/lib/modules/<新UTS>` ⇒ `lsmod` 空（所有 modprobe 静默失败）⇒ DP PHY/altmode 缺 ⇒ DP 控制器永久 defer ⇒ DPU 不绑定 ⇒ 无 `card0`；Q28 看门狗会按 `card=no` 在 ~85s 自动重启，表现为伪 Q28 坏发。诊断信号：`/sys/kernel/debug/devices_deferred` 里有 displayport-controller；dmesg 无 DPU bound 行。判据：换任何新 UTS 内核后，先部署 1497 个 .ko（85M）再评显示。2026-10-17 vk127 s1/s2 两次踩坑，s3 部署模块树后正常。已写 PITFALLS #293（sessions/40-RAM起新内核不部署模块树就没有DRM.md）。 — Failed: 缺模块树导致无 card0，被看门狗误判 Q28 坏发
+---
+在 Q28 坏发 boot 上仍可做相机/无显示依赖的验收：本次在 Q28 BAD（`boot_id=26262eee…`、dsi_isr=0、Q28sig 逐发递增 4→9）的会话里，相机前/后摄照样出流并抓到真实场景图。反过来，Q28 坏发态下用户无法用屏幕手动拍照，因此人工目视验收要另设通路（agent 侧抓帧转 PNG 给用户看）。 — Failed: 曾默认「Q28 坏发 ⇒ 显示栈废 ⇒ 相关实验作废」，实际只有显示相关项作废
+---
+设备侧 `dpms` 控制口不可写：`/sys/class/drm/card0-DSI-1/dpms` 是 `-r--r--r--`（只读），直接 echo Off 会 `Permission denied` 且静默保持 On（表现为「dpms On→On，没灭屏」的 INVALID-NO-BLANK 轮次）。设备侧真灭屏必须走会话总线（`busctl set-property … org.gnome.Mutter.DisplayConfig PowerSaveMode`）或内核 DPMS 路径；脚本要区分 A（ddcci/dbus）/K（kernel）两种臂并显式校验 On→Off 真跃迁，否则整轮样本是假阴性。 — Failed: 2026-10-17 N7 实验 ARM-K 6 轮全部 On→On 无效，重写脚本后才拿到真实跃迁
+---
+RAM 启动自编内核（`fastboot boot`）前若没把对应 UTS 的 `/lib/modules/` 部署到持久根，会 `lsmod` 空 ⇒ DP PHY/altmode 模块缺 ⇒ DP 控制器永久 `-EPROBE_DEFER` ⇒ DPU 组件集不齐 ⇒ 无 `card0`，Q28 看门狗 84.9s 后按 `card=no` 自动重启 —— 极易误判成「Q28 又坏一发」。判别：Q28 坏发一定有 card0，且首条 DCS/`command DMA timeout` 签名。 — Failed: 2026-10-17 vk127 s1/s2 两次踩坑（后部署 1497 个 .ko 后 s3 起正常）
+---
+Q28 与 Q24 在当前实验条件（vk127 / 7.3 线）互不构成混杂：GOOD 态与 BAD 态各跑 6 次「完整 19 模块相机栈 + 真实灭屏 30s」全部存活（boot_id 全程不变），7.3 线累计 30 发存活，而 vk64 线仍是 1 死/2 发 ⇒ 显示态不是 Q24 的判别量，血统才是候选变量。以后不必为「Q28 坏发会污染相机/Q24 结果」而停实验。 — Failed: 此前长期担心 Q28 显示态会污染 Q24 判读
+---
+相机 RAW「全暗」判读分三级，别一看到暗就判链路坏：① 均匀 ~16 且 uniq=3 = 完全没光（AGC 未收敛或遮挡）；② 长采 N 百帧后 p50 升到 ~37、mean 38 = 正在收敛（有光但弱）；③ B/G/R mean=0.0 而 max 有值 = 该帧有极少数饱和像素、画面主体仍暗。真正判链路好坏看 STREAMON rc + 字节数（4080×3072 RAW10 = 15679488 B；libcamera 输出 4080×3072×8×3 帧 = 150994944 B）+ 目视 PNG，不要只看首帧均值。 — Failed: 用户反馈「已经是 Q28 坏态，无法手动拍照，不过我已经将前后摄像头移动到有光地方」，需要据此区分没光 vs 链路坏
+---
+用户拿「马达 1/2 good」反问是否该改用 vk127 测相机时，正确姿势是先纠正统计口径再回答：vk127 的 Q28 样本合规 5 发（s4/s5/s6 GOOD、s7 BAD，加打折 s3）4/6 = 67%，二项单侧 p=0.344 不显著，马达那次 1/2 是最低样本；且 Q28 不是 Q24 的靶——N2' 12/12 存活与 N5 致死都发生在 Q28 坏发 boot 上，显示态是协变量不是判别量。不要顺着用户的数字结论走。
+---
+写 Python 单行脚本处理 RAW 图时不要用 `import numpy as np if False else None` 这类条件 import 表达式——它是 SyntaxError（`cannot use conditional expression as import target`），整段不执行。设备侧 python3 无 numpy，拆 RAW 帧要用纯 PIL/bytes 遍历（本机主机侧有 PIL 可拆 PNG）。 — Failed: 2026-10-17 vk127 相机后摄 RAW 拆帧时踩到，报 SyntaxError 导致没有生成 PNG
+---
+设备侧 `v4l2-ctl --stream-mmap` 返回 `VIDIOC_STREAMON returned -1 (Operation timed out)` + dmesg `qcom-camss ad27000.isp: CSID reset timeout` / `Failed to power up pipeline: -110` = **CSID/VFE 流水线复位失败**（不是格式问题，也不是 Q28：同 boot 下前摄正常）；`media-ctl` 报 `Unable to parse link: Resource busy (16)` = 上一次 stream 未干净释放，需重载相机模块或重启相机栈才能恢复。 — Failed: 2026-10-17 后摄多次 STREAMON 超时，重载模块后恢复
+---
+用户在现场报「Q28 坏态、无法手动拍照，不过我已经把前后摄像头移到有光地方」时，不要因首帧全暗就判链路坏：sensor AGC/libcamera 软 ISP 需若干帧收敛，应延长采集（如 200–300 帧）看 p50 是否上升，并用 test_pattern 区分通路问题与曝光问题；判真出流只看 STREAMON rc 与字节数。 — Failed: 首帧均值均匀 ~16 是好发/坏发都常见的（无光/未收敛）现象，误读会导致把正常链路判成驱动坏。
+---
+libcamera `cam --capture=N` 打印的前两帧 fps（如 29.99/30.4）不能当作持续帧率：它只是首帧建立后的瞬时值。长采真值远低（本机 vk127：原生 4096×3072 ≈1.1 fps、1280×720 ≈2.0 fps，log 里 0.29/0.75 fps 才是真值）。判帧率必须看长采末尾的 fps 行或计时统计。
+---
+`/sys/class/drm/card0-DSI-1/dpms` 在设备上是 0644（-r--r--r-- root root）：非 root 写入 Permission denied；即使是 root 写入也要约 2.5s 才生效（t+0.5 仍 On、t+2.5 才 Off）。熄屏自动化脚本必须带生效延时 + 回读校验，否则会得到一排假 INVALID-NO-BLANK。另：Q28 坏发会话里 phoc/phosh 会崩、SBU 为空 ⇒ 走会话总线的 dpms（gdbus/loginctl）不可用，需备「不依赖会话总线」的内核 DPMS 路径。
+---
+内核树改 .config / LOCALVERSION 后 `make` 报 `"..." exceeds 64 characters`（utsrelease.h 生成失败）：根因是前一次构建残留在 include/config/auto.conf 里的 CONFIG_LOCALVERSION/LOCALVERSION_AUTO 与 .config 叠加重复拼接（如 `-debug-debug-vk127-...-00002-...-dirty` 双份）。修法 = 清 include/config 与 include/generated 后重编，或先 `make mrproper`/重新 olddefconfig。
+---
+依赖设备在线长跑的任务（叉编、apt/apk 装包）中途掉 USB 很常见：设备 enx 网卡消失 + ping/SSH 全断 = 设备断电或 USB 链路掉，不是网络问题。恢复 = `fastboot devices` 看到 `HA2EXB0E fastboot` 后 `fastboot reboot`，约 24s 后 SSH 自动回来（2026-10-17 实测）。不要反复远程重试、也不要以为设备砖了。
+---
+设备失联判读：主机侧 USB 网卡 enx021e5eede102 消失、lsusb 出现 18d1:d00d（Google fastboot VID/PID）⇒ 设备在 fastboot，无写盘处置 = `fastboot reboot`（约 24s 回系统）。不要误判为系统挂死或 Q24/Q28。另注意：用户在平板上原生编译（ninja/make 8 核满载）会过热，用户会手动断电重启到 BL——遇到『编译中途失联』先怀疑过热而非驱动 bug。
+---
+avbtool 的可靠获取路径（2026-10-18 实测）：`https://android.googlesource.com/platform/external/avb/+/refs/heads/main/tools/avbtool.py?format=TEXT` 用 base64 -d 解出（文件在 tools/ 子目录，名字是 avbtool.py 而非 `avbtool`；codelinaro/avb 的 raw 路径 404）。本仓 scripts/sign-boot-b.sh 依赖 tools/avbtool.py + bootslot-b/avb.key 自签 b 槽，而 tools/ 因 .gitignore 的 `/tools/` 随换机丢失；签名后镜像 pad 到 96 MiB，fastboot 写回 readback sha 一致。
+---
+在设备上跑可能挂住的命令（如 `waydroid session start`）必须包 `timeout`，否则会话被卡、只能用户中断——2026-10-18 Q28 坏态时屏幕无法确认容器是否拉起，用户原话「命令没有设置超时」。另：waydroid session 需要 DISPLAY/WAYLAND_DISPLAY（否则报 'Unable to autolaunch a dbus-daemon without a $DISPLAY'），且 Q28 坏态下 phoc 可能尚未起。
+---
+用户 2026-10-18 当场纠正：「设备当前是 q28 坏态，屏幕无法确认是否拉起了容器。命令没有设置超时」——凡可能阻塞/交互的命令（`waydroid session start`、`lxc-start`、ssh 轮询、容器启动类）必须包 `timeout -k`；且设备处于 Q28 坏态（面板未点亮）时不要用「屏幕上看不到」当启动成功/失败的证据，改用设备侧客观读数（`waydroid status`、/dev/binder、ps、dmesg、card0）。 — Failed: 前台阻塞命令未设 timeout，导致工具调用被用户手动中止；且当时设备 Q28 坏态无显示，无法目视确认容器是否起来。
+---
+用户纠正（2026-10-18）：「设备当前是 q28 坏态，屏幕无法确认是否拉起了容器。命令没有设置超时」——Q28 坏发（面板未点亮、屏幕全黑）下跑 `waydroid session start`、`lxc-start` 等前台阻塞命令必须包 `timeout -k`、丢后台写日志，并用 `waydroid status`/进程/日志判定是否起来，不能指望目视屏幕；否则命令挂死且无人能判断状态。 — Failed: 硬件坏态下前台阻塞命令会让会话卡死且无判据
