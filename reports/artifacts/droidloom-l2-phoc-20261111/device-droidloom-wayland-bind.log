@@ -1,0 +1,12 @@
+DROIDLOOM_DIRECT_INPUT_ABI=1;
+DROIDLOOM_HOST_CHANNELS_ABI=1;
+DROIDLOOM_NOTIFICATIONS_ABI=3;
+Droidloom notifications: session bus disconnected; retrying
+Droidloom session mode: desktop
+DROIDLOOM_CLIPBOARD_ABI=1;
+Droidloom clipboard backend: ext-data-control
+Droidloom output-power control retired; waiting for output topology
+Droidloom notifications: session bus disconnected; retrying
+Droidloom notifications: session bus disconnected; retrying
+Droidloom notifications: session bus disconnected; retrying
+Droidloom notifications: session bus disconnected; retrying

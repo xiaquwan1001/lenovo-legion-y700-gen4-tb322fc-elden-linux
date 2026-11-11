@@ -1,35 +1,46 @@
 #!/bin/bash
-# build-phoc-arm64.sh — 在主机上产出「广告 wp_linux_drm_syncobj_manager_v1」的 aarch64 phoc（C12 L2）
+# build-phoc-arm64.sh — 产出「广告 wp_linux_drm_syncobj_manager_v1」的 aarch64 phoc（C12 L2）
 #
-# 背景：phoc 0.55.1 / 0.58 / 0.59.rc1 全树都不调用
+# 背景：phoc（0.55.1 / 0.58 / 0.59.rc1 全树）都不调用
 #   wlr_linux_drm_syncobj_manager_v1_create() ⇒ droidloom 的 presenter（硬绑定该全局）起不来。
 #   补丁 = patches/phoc-syncobj-20261111/0001-desktop-advertise-linux-drm-syncobj-v1.patch
 #
-# 本机（x86_64）用 arm64 Debian sid chroot（qemu-user binfmt，编译在本机跑）构建，
-# 目标是 **对系统 libwlroots-0.20.2** 编（与设备 Debian sid 同版），不内嵌 wlroots。
+# **设备在版 = phoc 0.58.0 + phosh 0.59~alpha1**（2026-11-11 实测），所以本脚本按 Debian 打包方式
+# 用 **内嵌 wlroots 静态**（`-Dembed-wlroots=enabled -Dwlroots:default_library=static`）构建：
+#   · 0.58 的 desktop.c 用 wlroots 新 text-input API（`show_input_panel` 等），系统 libwlroots-0.20.2 没有
+#     ⇒ 必须内嵌 **并且** 先套 Debian 的 `debian/patches/Apply-upstream-patches.patch`（给内嵌树加该 API）；
+#   · 内嵌静态后 phoc 自包含（NEEDED 里没有 libwlroots），与设备在版二进制形态一致。
 #
-# 用法：sudo bash scripts/build-phoc-arm64.sh [--regen-chroot]
-# 产物：out/phoc-syncobj-arm64-<日期>/phoc（ELF aarch64，替换设备 /usr/bin/phoc）
-#
-# 判据（主机侧已实测，见 reports/droidloom-l2-phoc-syncobj-20261111.md）：
-#   WAYLAND_DISPLAY=<patched phoc> wayland-info | grep syncobj  → 有 wp_linux_drm_syncobj_manager_v1 v1
+# 用法：sudo bash scripts/build-phoc-arm64.sh
+# 产物：out/phoc-syncobj-arm64-<日期>/phoc-0.58.0-syncobj（替换设备 /usr/bin/phoc）
 set -euo pipefail
 
 CHROOT_DIR=${CHROOT_DIR:-/opt/elden/arm64-sid}
 MIRROR=${MIRROR:-https://mirrors.ustc.edu.cn/debian}
+POOL=$MIRROR/pool/main/p/phoc
+VER=${VER:-0.58.0}
+DEBVER=${DEBVER:-0.58.0-1}
 SUITE=${SUITE:-sid}
 REPO=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-SRC=$REPO/external/phoc-work/phoc
 PATCH=$REPO/patches/phoc-syncobj-20261111/0001-desktop-advertise-linux-drm-syncobj-v1.patch
 STAMP=$(date +%Y%m%d)
 OUT=$REPO/out/phoc-syncobj-arm64-$STAMP
+WORK=$REPO/build/phoc-src-$VER
 
 say() { printf '\n=== %s\n' "$*"; }
 [ "$(id -u)" = 0 ] || { echo "需要 root（chroot 构建）：sudo bash $0" >&2; exit 1; }
 [ -f "$PATCH" ] || { echo "缺补丁：$PATCH" >&2; exit 1; }
 
-say "1/5 chroot（$CHROOT_DIR）"
-if [ ! -x "$CHROOT_DIR/bin/sh" ] || [ "${1:-}" = "--regen-chroot" ]; then
+say "1/6 取源码（校园网 USTC Debian pool；sid 只有 0.59~rc1 的 Sources 索引，故直接抓 pool 文件）"
+mkdir -p "$WORK"; cd "$WORK"
+for f in phoc_${DEBVER}.dsc phoc_${VER}.orig.tar.xz phoc_${DEBVER}.debian.tar.xz; do
+  [ -s "$f" ] || curl -fsS -m 60 -O "$POOL/$f"
+done
+tar xf phoc_${VER}.orig.tar.xz
+mkdir -p debian-x && tar xf phoc_${DEBVER}.debian.tar.xz -C debian-x
+
+say "2/6 chroot（$CHROOT_DIR）依赖"
+if [ ! -x "$CHROOT_DIR/bin/sh" ]; then
   debootstrap --arch=arm64 --variant=minbase --include=ca-certificates "$SUITE" "$CHROOT_DIR" "$MIRROR"
 fi
 chroot "$CHROOT_DIR" /bin/sh -c "
@@ -46,31 +57,42 @@ chroot "$CHROOT_DIR" /bin/sh -c "
     libxcb-xinput-dev libxcb-xfixes0-dev libxcb-render0-dev libxcb-shm0-dev \
     libxcb-composite0-dev libxcb-errors-dev libxcb-util-dev libxcb-image0-dev \
     libxcb-xkb-dev libxcb-present-dev libxcb-dri3-dev libxcb-randr0-dev \
-    libjson-glib-dev libseat-dev libdisplay-info-dev libliftoff-dev \
-    libgtk-4-dev libwlroots-0.20-dev hwdata | tail -2
+    libjson-glib-dev libseat-dev libdisplay-info-dev libliftoff-dev libgtk-4-dev hwdata | tail -2
 "
 
-say "2/5 源码入 chroot（补丁已含在 external/phoc-work/phoc 工作区；这里用干净副本+打补丁）"
-mkdir -p "$CHROOT_DIR/build-phoc"
-rsync -a --delete --exclude build --exclude .git --exclude subprojects/wlroots "$SRC/" "$CHROOT_DIR/build-phoc/phoc/"
-cp "$PATCH" "$CHROOT_DIR/build-phoc/phoc/0001-syncobj.patch"
-chroot "$CHROOT_DIR" /bin/sh -c 'cd /build-phoc/phoc && patch -p1 -s < 0001-syncobj.patch'
+say "3/6 源码入 chroot + 打两层补丁（Debian upstream patches → 我们的 syncobj 补丁）"
+D=$CHROOT_DIR/build-phoc-src58
+mkdir -p "$D"
+rsync -a --delete "$WORK/phoc-$VER/" "$D/phoc/"
+rsync -a --delete "$WORK/debian-x/" "$D/debian/"
+cp "$PATCH" "$D/0001-syncobj.patch"
+chroot "$CHROOT_DIR" /bin/sh -c "
+  set -e
+  cd /build-phoc-src58/phoc
+  patch -p1 -l < ../debian/patches/Apply-upstream-patches.patch
+  patch -p1 -l < ../0001-syncobj.patch
+"
 
-say "3/5 meson 配置（系统 wlroots-0.20.2，与设备同版）"
-chroot "$CHROOT_DIR" /bin/sh -c '
-  cd /build-phoc/phoc
-  meson setup --wipe /build-phoc/build -Dembed-wlroots=disabled -Dxwayland=disabled -Dtests=false | tail -6
-'
+say "4/6 meson 配置（内嵌 wlroots 静态、gles2、无 vulkan/glslang 依赖）"
+chroot "$CHROOT_DIR" /bin/sh -c "
+  cd /build-phoc-src58/phoc
+  meson setup --wipe /build-phoc-src58/build \
+    -Dembed-wlroots=enabled -Dwlroots:default_library=static -Dwlroots:renderers=gles2 \
+    -Dxwayland=disabled -Dtests=false | tail -5
+"
 
-say "4/5 编译（qemu-user，约 10–20 min）"
-chroot "$CHROOT_DIR" /bin/sh -c 'cd /build-phoc/build && ninja src/phoc | tail -3'
+say "5/6 编译（qemu-user，约 15–25 min）"
+chroot "$CHROOT_DIR" /bin/sh -c 'cd /build-phoc-src58/build && ninja src/phoc | tail -2'
 
-say "5/5 取产物"
+say "6/6 取产物 + 自校验（必须无 libwlroots 依赖）"
 mkdir -p "$OUT"
-cp "$CHROOT_DIR/build-phoc/build/src/phoc" "$OUT/phoc"
-chown -R "$(logname 2>/dev/null || echo root)" "$OUT" 2>/dev/null || true
-( cd "$OUT" && sha256sum phoc > SHA256SUM && file phoc >> SHA256SUM )
-cat "$OUT/SHA256SUM"
-echo "DONE → $OUT/phoc"
-echo "上机判据（待设备）：wayland-info | grep wp_linux_drm_syncobj_manager_v1；"
-echo "  回退：dpkg -i /var/cache/apt/archives/phoc_*.deb 或还原备份的 /usr/bin/phoc"
+install -m 0755 -o "${SUDO_USER:-root}" -g "${SUDO_USER:-root}" \
+  "$CHROOT_DIR/build-phoc-src58/build/src/phoc" "$OUT/phoc-${VER}-syncobj"
+H=$(sha256sum "$OUT/phoc-${VER}-syncobj" | cut -d' ' -f1)
+NEEDED=$(readelf -d "$OUT/phoc-${VER}-syncobj" | grep -c NEEDED)
+WR=$(readelf -d "$OUT/phoc-${VER}-syncobj" | grep -ci wlroots || true)
+[ "$WR" = 0 ] || { echo "!! 产物仍依赖 libwlroots（$WR 处）⇒ 未静态内嵌" >&2; exit 1; }
+echo "sha256 = $H（NEEDED=$NEEDED，wlroots 依赖=$WR）"
+echo "$H  phoc-${VER}-syncobj" >> "$OUT/SHA256SUM"
+echo "DONE → $OUT/phoc-${VER}-syncobj"
+echo "上机：cp -a /usr/bin/phoc /usr/bin/phoc.orig && install -m0755 <件> /usr/bin/phoc && systemctl restart greetd"

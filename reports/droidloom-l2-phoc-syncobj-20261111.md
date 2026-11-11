@@ -82,3 +82,46 @@ WAYLAND_DISPLAY=phoc-proof wayland-info | grep syncobj
 2. 重起桌面会话 → `wayland-info | grep syncobj`（判据一）；
 3. `droidloom-wayland` 起停（判据二：不再 bind failure）；
 4. 若 3 通过 → 才值得投 L3 的 0.90 GiB image（L3 另被 rootfs 属主契约挡住，见 C12 行）。
+
+---
+
+## 9. 2026-11-11 上机收口（L2 两条判据全绿）
+
+设备通网/回 fastboot 后（`scripts/slot-switch.sh b --reboot` 从 UEFI 测试形态切回稳定 `_b`，
+自动 `qbootctl -m b`；`current-slot=b`、Linux 起于 `/dev/sda17`、内核 `7.3.1-debug-vk184-00003`）。
+
+**★先修正一件事实：设备在版 phoc 是 0.58.0（phosh 0.59~alpha1），不是 0.55.1。**
+本节 §3 那个 0.55.1 产物因此**不能上机**（跨两代降级），改为按 0.58.0 重编：
+
+| 尝试 | 结果 |
+|---|---|
+| 0.55.1 + 补丁（§3 的 `phoc`） | 只作主机 A/B 对照；**不上机** |
+| 0.58.0 + 补丁，对**系统** libwlroots-0.20.2 | **编不过**：`wlr_text_input_manager_v3_create` 参数个数与 `events.show_input_panel` 都不存在于 0.20.2 ⇒ 0.58 要求更新的 wlroots |
+| 0.58.0 + 补丁 + 内嵌 `subprojects/wlroots-0.20.x`(0.20.2) | 仍编不过，同样的 text-input 报错 |
+| **0.58.0 + Debian 的 `Apply-upstream-patches.patch` + 我们的补丁 + 内嵌 wlroots 静态** | ✅ **编过且上机全绿**（这才是 Debian 自己的打包方式：`debian/patches` 给内嵌 wlroots 补 text-input 新 API，`-Dwlroots:default_library=static` 使 phoc 自包含、NEEDED 里没有 libwlroots） |
+
+产物：`out/phoc-syncobj-arm64-20261111/phoc-0.58.0-syncobj`
+（7 543 080 B，sha256 `863731b0b323bc5122ec8892d62acd72646f45198d47e4426b8083bc61fb7cb5`，
+`readelf -h` = AArch64；上机步骤与回退见同目录 `MANIFEST.md`；构建脚本 `scripts/build-phoc-arm64.sh`）。
+
+上机操作（零内核改动、零写槽；只换一个二进制 + 重起会话）：
+
+```
+cp -a /usr/bin/phoc /usr/bin/phoc.orig-0.58.0      # d36d9d94…（发行版原件）
+install -m 0755 phoc-0.58.0-syncobj /usr/bin/phoc  # 863731b0…
+systemctl restart greetd
+```
+
+**判据一（合成器广告）**：会话内 `wayland-info` = **57 个全局**，含
+`interface: 'wp_linux_drm_syncobj_manager_v1', version: 1, name: 45`
+（证据 `reports/artifacts/droidloom-l2-phoc-20261111/device-wayland-info-with-syncobj.txt`）。
+
+**判据二（presenter 不再 bind 失败）**：`droidloom-wayland` 起停 **0 次** `bind failure`，
+日志进入 `Droidloom session mode: desktop`、复制后端 = `ext-data-control`
+（证据 `.../device-droidloom-wayland-bind.log`；其中 `session bus disconnected` 是 `su` 无会话总线导致的预期噪声）。
+
+**桌面完好**：`grim` 截屏 = Phosh 锁屏（时钟/WiFi/BT/电量正常），phoc/phosh/phosh-osk-stevia 均在跑
+（证据 `.../device-phosh-after-phoc-058-syncobj.png`）。
+
+**仍未验证**（不得当结论）：msm_dpu 上显式同步的 page-flip 稳定性（长时间/熄屏唤醒未测）、
+L3（droidloom cell）仍被 rootfs 属主契约挡住（`PITFALLS #608`）。
