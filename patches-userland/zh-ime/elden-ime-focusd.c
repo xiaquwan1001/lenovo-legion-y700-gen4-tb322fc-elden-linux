@@ -8,8 +8,11 @@
 //     `SetRelativeSpotRect`（本机 v5.1.19 实测每次都来；`Enable` 反而不发）
 //     ⇒ 用它当「有人要打字了」的信号，再调 sm.puri.OSK0.SetVisible(true) 弹键盘。
 //
-// 折叠：由 elden-ime-toggle（应用网格「键盘」图标）或 phosh 自身逻辑负责 —— fcitx5
-//       没有 FocusOut 的可靠信号，所以本程序**只负责唤起，不负责自动收起**（诚实边界）。
+// 折叠（2026-11-11 补）：原来写「fcitx5 没有 FocusOut 的可靠信号」是**错的**。
+//   `org.fcitx.Fcitx.Controller1.State`（fcitx5 的 InputContext 状态）实测 0↔1 精确跟随输入焦点：
+//   无输入上下文 = 0、Entry 拿到焦点 = 1、窗口关闭 = 0。⇒ 用它做收起判据（1 s 轮询，代价可忽略）。
+//   注意：不是所有客户端都走 fcitx 前端（`GTK_IM_MODULE=wayland` 时 GTK 走 text-input-v3），
+//   那种情况下 phoc 自己会把 activate 转发给 OSK，本程序只看到 State 恒 0 ⇒ 不会误收起。
 //
 // 编译：见同目录 build.sh（gcc + gio-2.0 + glib-2.0）
 
@@ -65,6 +68,33 @@ static void osk_set_visible(gboolean vis) {
     if (err) { logmsg("SetVisible(%d) failed: %s", vis, err->message); g_error_free(err); return; }
     osk_visible = vis;
     logmsg("SetVisible(%d)", vis);
+}
+
+// ---- fcitx5 输入上下文状态：0 = 无输入上下文（可收起），非 0 = 有输入框在编辑 ----
+static gint fcitx_state(void) {
+    GError *err = NULL;
+    GVariant *ret = g_dbus_connection_call_sync(
+        bus, "org.fcitx.Fcitx5", "/controller", "org.fcitx.Fcitx.Controller1", "State",
+        NULL, G_VARIANT_TYPE("(i)"), G_DBUS_CALL_FLAGS_NO_AUTO_START, 300, NULL, &err);
+    if (!ret) {
+        if (err) g_error_free(err);
+        return -1;   // fcitx5 不在/未就绪：不据此收起
+    }
+    gint st = -1;
+    g_variant_get(ret, "(i)", &st);
+    g_variant_unref(ret);
+    return st;
+}
+
+static gboolean idle_check(gpointer user) {
+    (void)user;
+    if (!osk_visible) return G_SOURCE_CONTINUE;
+    if (fcitx_state() == 0) {
+        logmsg("hide requested by fcitx State=0");
+        osk_visible = FALSE;   // 先本地置位，避免 osk_get_visible 往返
+        osk_set_visible(FALSE);
+    }
+    return G_SOURCE_CONTINUE;
 }
 
 static void want_keyboard(const char *why) {
@@ -153,6 +183,7 @@ int main(void) {
     logmsg("ready: owns org.kde.impanel");
 
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+    g_timeout_add_seconds(1, idle_check, NULL);
     g_main_loop_run(loop);
     return 0;
 }
