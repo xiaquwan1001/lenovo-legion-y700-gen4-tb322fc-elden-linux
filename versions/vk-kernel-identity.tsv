@@ -72,10 +72,11 @@ vk184	boot-elden-vk184.img	vk184	7.3.1-debug-vk184-00002-g4da9a8b69fc8	c76bc2e8e
 vk185-adsp	boot-elden-vk185-adsp.img	vk185	7.3.1-debug-vk184-00003-gec74c4795a43	c95a73bd7d25	ec74c4795a43	branch:vk185	vk185	ec74c4795a43	clean	ok
 vk187	boot-elden-vk187.img	vk187	7.3.1-debug-vk187-00002-g4da9a8b69fc8	d2a8bbc7f8c4	4da9a8b69fc8	branch:vk184,vk185	vk184	4da9a8b69fc8	clean	num_ne_tag(vk184)
 vk187b	boot-elden-vk187b.img	vk187	7.3.1-debug-vk184-00002-g4da9a8b69fc8	1d11e81557b4	4da9a8b69fc8	branch:vk184,vk185	vk184	4da9a8b69fc8	clean	num_ne_tag(vk184)|uts_dup2
-vk188	boot-elden-vk188.img	vk188	7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty	0cdb7a45f8f0	4da9a8b69fc8-dirty	branch:vk184,vk185	vk184	4da9a8b69fc8	dirty	num_ne_tag(vk184)|kbin_shared3
-vk188b	boot-elden-vk188b.img	vk188	7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty	0cdb7a45f8f0	4da9a8b69fc8-dirty	branch:vk184,vk185	vk184	4da9a8b69fc8	dirty	num_ne_tag(vk184)|kbin_shared3
+vk188	boot-elden-vk188.img	vk188	7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty	0cdb7a45f8f0	4da9a8b69fc8-dirty	branch:vk184,vk185	vk184	4da9a8b69fc8	dirty	num_ne_tag(vk184)|kbin_shared2
+vk188b	boot-elden-vk188b.img	vk188	7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty	0cdb7a45f8f0	4da9a8b69fc8-dirty	branch:vk184,vk185	vk184	4da9a8b69fc8	dirty	num_ne_tag(vk184)|kbin_shared2
+vk189	boot-elden-vk189.img	vk189	7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty	cab6a5c35667	4da9a8b69fc8-dirty	branch:vk184,vk185	vk184	4da9a8b69fc8	dirty	num_ne_tag(vk184)|kbin_shared2
 vk64	boot-elden-vk64.img	vk64	7.2.0-debug-vk64-gd02658e63cf6	1483a9c6c542	d02658e63cf6	branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70,vk79,vk81,vk82,vk83	bundle/vk64,vk64	d02658e63cf6	clean	ok|uts_dup7
-(unversioned)	boot-elden.img	-	7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty	0cdb7a45f8f0	4da9a8b69fc8-dirty	branch:vk184,vk185	vk184		-	unversioned|no_manifest|kbin_shared3
+(unversioned)	boot-elden.img	-	7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty	cab6a5c35667	4da9a8b69fc8-dirty	branch:vk184,vk185	vk184		-	unversioned|no_manifest|kbin_shared2
 (slot-dump)	bootmark-a-test.img	-	7.3.1-debug-vk184-00003-gec74c4795a43	c95a73bd7d25	ec74c4795a43	branch:vk185	vk185		-	slot_dump
 (no-payload)	dtbo-dummy.img	-	(无内核载荷)						-	skip
 (no-payload)	dtbo-dummy.img	-	(无内核载荷)						-	skip

@@ -1,0 +1,9 @@
+# 2026-11-12 待机功耗线重启（用户放行）：打开系统睡眠（qcom 走 s2idle / PSCI）
+# 用法：FRAG=patches/config-suspend-s2idle-20261112.fragment K=build/daily \
+#         SNAP=patches/config-vk189-suspend-20261112 bash scripts/apply-kernel-fragment.sh
+# 说明：只列**用户可选**项，依赖项（PM_SLEEP_SMP / SUSPEND_FREEZER 等）由 olddefconfig 自动拉入。
+CONFIG_SUSPEND=y
+# 让「可自动睡眠」成为可能（不做自动挂起，由用户态 logind/Phosh 决定）
+CONFIG_PM_AUTOSLEEP=y
+# 睡眠路径可观测（/sys/power/*_stats、suspend_test 不开启，只留 debugfs 计数）
+CONFIG_PM_SLEEP_DEBUG=y

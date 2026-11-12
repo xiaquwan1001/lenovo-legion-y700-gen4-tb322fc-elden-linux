@@ -376,3 +376,4 @@ posctrl-20261103	uts_dup8	正控载荷（2026-11-03）：刻意复用 pinned vk1
 vk184	uts_dup2	C12/droidloom L1：vk187b 刻意复用 vk184 的 LOCALVERSION 以匹配设备现成 87 M 模块树（否则全部 =m 驱动不加载 ⇒ 无 /dev/dri，vk187 首版即栽在这）；两镜像内核二进制不同（c76bc2e8 vs 1d11e815），身份由 kernel_payload_sha256 锚定。**收口后应移除本行**（2026-11-10）
 vk188	num_ne_tag	vk188 = vk184 源树 + 仅 SYSFB_SIMPLEFB 一档 config（config 不入 git ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 是预期噪声，不是溯源错误）；UTS 已用 -vk188-sysfbfb 与旧模块树显式区分；身份由 kernel_payload_sha256 锚定（2026-11-12）
 vk188b	num_ne_tag	vk188b = vk188 内核 + 仅换 ramdisk（config 不入 git ⇒ 源提交与 vk184/vk188 相同，num_ne_tag(vk184) 是预期噪声）；身份由 kernel_payload_sha256 锚定（2026-11-12）
+vk189	num_ne_tag	vk189 = vk184 源树 + 上游合并批 1（6 枚补丁，**patch 在树里但未 commit，config 亦不入 git** ⇒ 源提交与 vk184 相同，`num_ne_tag(vk184)` 属预期噪声，不是溯源错误）；UTS 用 `-debug-vk189-suspend` 与在机两套模块树显式区分；身份由 `kernel_payload_sha256` 锚定（2026-11-12）
