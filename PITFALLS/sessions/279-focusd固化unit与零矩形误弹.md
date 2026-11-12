@@ -49,8 +49,15 @@
 | 巡检 | `bash rootfs/debian/daily-baseline.sh --check` | §3b2 三项 ok、`MISS=0` |
 | 重建性 | `packaging/elden-userland/tools/verify.sh --rebuildable` | `FAIL=0 WARN=0`，identical=4 |
 
-**未验（需用户目视 / 真 IC）**：真人手指在 Firefox / GTK3 / Qt 里弹与收；`ELDEN_IME_IDLE_SEC` 兜底超时路径
-（要有真 IC 才触发）；候选窗与 stevia 键盘是否重叠。
+### 真客户端端到端（同日晚补测，`firefox about:blank` 的 URL 栏自动获焦 = 真 IC）
+
+| 场景 | 判据 | 结果 |
+|---|---|---|
+| 起 Firefox（URL 栏获焦） | `State` 0→1、`Visible` false→**true** | ✅ 日志 `show requested by SetRelativeSpotRect (0x72)` |
+| 关 Firefox | `State`→0、2 s 内 `Visible`→false | ✅ 自动收 |
+| 兜底超时（临时 drop-in `ELDEN_IME_IDLE_SEC=12`） | 有 IC 但 12 s 无 kimpanel 活动 | ✅ `hide requested by idle timeout`（随后 `set-environment` 复原 unit） |
+
+**仍未验**：GTK3 / Qt 各一例、Alt+Tab 跨窗口切换时是否漏收、候选窗与 stevia 键盘是否重叠。
 
 ## 文件
 
