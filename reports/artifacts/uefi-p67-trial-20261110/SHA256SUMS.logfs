@@ -1,0 +1,3 @@
+160ad14ddca36207a28edc8ee261c4b99ec3a8d4cc1ad2a2d50441121fe1ceb8  logfs-p67-fastboot.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+bb278af4c1f57dc8ea3f76fa114bcf13c27d4fb7380007f43a1599d2f1e299a2  logfs-p67-fastboot2.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+b37f974818601539ec62e6297f69508bea050032dc276f3fd4bff6ee71380619  logfs-p67-flashed.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst

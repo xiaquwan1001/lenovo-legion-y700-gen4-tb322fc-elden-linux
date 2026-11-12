@@ -74,7 +74,7 @@ C0 真 Android 对照取证已于 2026-10-11 完成（Android 16 / build ZUXOS_1
 ---
 用户会在设备旁做目视验收并逐字回报画面状态（如「这一版有背光，没有声音和马达，ssh 似乎无响应」「很接近答案但是不对。音频正常，电源键能控制背光亮暗，但是仅背光亮，屏幕依然无内容显示」「现在设备卡住了，有背光但无法交互，ssh 连不上」）——期望 agent 据此立即改为取证/归因，而不是继续按 DRM 逻辑层报成功。
 ---
-子代理网关偏好（2026-10-14 明确）：本项目的子代理都用 nexavlinks 网关（https://www.nexavlinks.com，项目级 provider `custom-nexavlinks-com`，模型 `deepseek-v4.1-flash`，凭据在 auth.json），不走 ustc-pool。派发前确认项目级生效方式（fabric 支持项目级 .pi/fabric.json）。
+子代理网关（2026-11-08 收紧，覆盖 2026-10-14 的 nexavlinks 口径）：本项目的子代理**一律走 ustc-pool**，**禁用** nexavlinks（`custom-nexavlinks-com`/`nexa`）与 DeepSeek 直连模型（`deepseek/*`，尤其 `deepseek-v4-pro`——烧钱）。这两个 provider 只留给用户交互式对话。
 ---
 文档/脚本整理偏好（2026-10-14）：要求「去掉脚本的过度检查，用记录时候的区分度代替」——即精简 check-doctor 之类的过度校验，靠文件夹 + 文件名 + pi 会话 id 等记录本身的区分度来定位，而不是维护计数/死链/口径字样检查。
 ---
@@ -82,7 +82,7 @@ C0 真 Android 对照取证已于 2026-10-11 完成（Android 16 / build ZUXOS_1
 ---
 GPU 基准（G1-8 vkmark/es2gears/fio/sysbench 等）用户已于 2026-10-14 前自行测过，相关文档部分过时——遇到需要更新时一并修文档，不要再重跑。
 ---
-派发子代理时用户会指定网关（如「子代理选 nexavlinks 网关」）；期望直接按指定 provider/模型派发。
+派发子代理时若用户点名网关/模型，仍以「一律 ustc-pool、禁 DeepSeek 与 nexavlinks」为硬性前提（2026-11-08）；点名与之冲突时先向用户确认，不自行改用被禁 provider。
 ---
 用户 2026-10-15 明确：**允许 agent 直接 flash（写 boot_b 等），不再需要用户在场**——此前「需 root/物理在场」的硬约束去掉。设备侧 reboot-to-bootloader 路径仍停用（会把整机卡死），进 fastboot 走 PSCI/物理 POR。
 ---

@@ -1,0 +1,8 @@
+d0d9faac9ef68d63aaa6c2a05ea9e40e1e275fdf1e31f2a6c6faca272111a58c  logfs-beacon-fb.boot  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+f7d30a96afa965680ac4fecb028a32e3e3a789ceb835ff2c8f9146c38a7d914c  logfs-beacon-flash.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+d80b2195e8d0ad6c2b4476dd170ca5f4f43c0fe2eb0b4b51d613b7d298af2761  logfs-beacon-p66.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+c714a86b1f32dfee50ebe596c35e9f1d8a686adc21c3632671c60431a91c0e9a  logfs-beacon.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+3baac15edcb03dd02c995788fc527a4bba31f004542641394225670a6f2071c2  logfs-beacon2-fb.boot  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+80e0911623d00376983af47b8cfdf213fe3b3c5a3f2873cc819b10e67301fae4  logfs-p60-control.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+f171caff853a8554a080f59ac25da1c0fdc2601824b32faaf3ab748f1a6e146e  logfs-run3.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+59b42e7a4d50a9c648f0eabc7caf541da4273dac87088bc71de20b550560a6e4  logfs-whole.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst

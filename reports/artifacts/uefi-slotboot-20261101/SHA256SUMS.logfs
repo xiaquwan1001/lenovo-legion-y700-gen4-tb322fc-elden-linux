@@ -1,0 +1,2 @@
+efc88d9ff281afe3d0a82802e93e803c2104f03545c2dc221dfd862343b2432c  logfs-after.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst
+492e112470359fa21346ead27840e68b0f8a6b54ed401913186c1b87cefa3270  logfs-before.bin  # direct-read 8MiB logfs payload, archived in payloads.tar.zst

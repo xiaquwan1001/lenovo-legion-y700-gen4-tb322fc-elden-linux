@@ -48,7 +48,7 @@
 - 内核仓 geekidos-linux 是浅克隆：`git fetch`/bundle 一律被拒 → 从本地 worktree `git fetch <wt> refs/heads/...`，或 `git worktree add build/<tag>-tree` 做文件级差分。
 - 顶层布局登记：每个根目录条目先进 `versions/layout.tsv` + INDEX §2 同源渲染，门 = `scripts/check-layout.sh`。
 - 「收尾」= 产物落盘 + SSOT 同步（INDEX/TASKS/DEVICE/PITFALLS）+ 设备安全态 + check-doctor FAIL=0/WARN=0 + 工作区 clean；文档不得要求 AI 写 summary。
-- 子代理网关 = nexavlinks（`custom-nexavlinks-com` / `deepseek-v4.1-flash`），不走 ustc-pool；2026-10-15 起允许 agent 直接 flash。
+- 子代理网关 = **ustc-pool**（`ustc-pool/ustc`、`ustc-pool/ustc-worker`）；**禁** nexavlinks（`custom-nexavlinks-com`）与 `deepseek/*`（尤其 v4-pro，烧钱）——那两个 provider 只给用户交互式对话（2026-11-08 定，推翻下文「不走 ustc-pool」）。2026-10-15 起允许 agent 直接 flash。
 - EDL 工具链单根 `~/edl/`：`qdl`（刷写主力，无 printgpt）、edl-ng（GPT 取证 `printgpt -u 4`）、bkerler（peek 备胎，不作写路径）。
 - 细节**不放这里**：显示/相机/Waydroid/刷写/寄存器级判据见 `.pi/memory/notes-display.md`、`failures-device.md`、`failures-kernel.md`。
 
