@@ -117,3 +117,61 @@ ssh root@192.168.7.1 'strings /mnt/esp/EFI/BOOT/BOOTAA64.EFI | grep -m2 "grub.cf
 dtc -I dtb -O dts build/daily/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb | grep -A8 ramoops
 #    → 无 record-size，console-size+pmsg-size == mem_size ⇒ dump_mem_sz = 0
 ```
+
+
+---
+
+## 八、2026-11-11 深夜补充（用户实测更正）
+
+### 8.1 我在这里又判错两次
+
+| # | 我写的 | 实际 |
+|---|---|---|
+| 1 | 「第 2 轮 GRUB 缺显示模块 ⇒ 菜单不显」 | **错**：上一版和这一版 **GRUB 菜单都能显**（用户实测） |
+| 2 | 「约 20 s 后重启 = `timeout=20` + panic」 | **错**：菜单既然显示了，超时早被选择动作取代；20 s 是 **panic 的时序** |
+
+### 8.2 「GRUB 选了之后没屏显」的真机制
+
+**「菜单能显」≠「内核能显」**：
+
+| 阶段 | 谁画 | 依赖 | 本机 |
+|---|---|---|---|
+| GRUB 菜单 | UEFI `ConOut` → GOP | GRUB `all_video`/`gfxterm`/`efi_gop` | ✅ |
+| 内核日志 / panic | 内核 fbcon | `SYSFB_SIMPLEFB` 注册 `simple-framebuffer` | ❌ |
+
+判据（`drivers/firmware/sysfb.c:19` 注释原文）：
+```
+ * If CONFIG_SYSFB_SIMPLEFB is not selected, never register "simple-framebuffer"
+```
+
+本机 `.config`：
+```
+CONFIG_SYSFB=y
+# CONFIG_SYSFB_SIMPLEFB is not set     ← 根因
+CONFIG_FB_EFI=y
+CONFIG_DRM_SIMPLEDRM=y
+CONFIG_FRAMEBUFFER_CONSOLE=y
+```
+
+`FB_EFI` 虽 `select SYSFB`，但 **`SYSFB_SIMPLEFB` 是独立 bool**（`depends on X86 || EFI`），
+没它就不注册 simple-framebuffer ⇒ fbcon 无后端 ⇒ 内核从 `start_kernel` 到 panic **一个字都不出**。
+
+这条 `#558` 原文就写着（「面板无输出：`CONFIG_SYSFB_SIMPLEFB` 未开」），
+**本夜我一直没把它接上**，反而去查固件计时器与显示模块 —— 这是本夜最大的弯路。
+
+### 8.3 「先强光一下 → 黑屏」
+
+`msm` DRM probe 接管显示控制器 + 初始化 DSI 面板时会短时拉高背光，随后因无 fbcon（或已进 panic）再黑。
+⇒ **不是掉电特征**。
+
+### 8.4 结论不变，但取证前提变了
+
+`#620` 的主结论（三臂日志是 ramoops oops，不是硬件掉电）**仍然成立**——那三份日志是**用户屏上抓拍**到的，
+恰好是仅有的几条能看到内核字的通道。但**要继续排查，必须先让 fbcon 有后端**：
+
+**下一发 = 开 `CONFIG_SYSFB_SIMPLEFB` 重编内核**（1 行 config）。在此之前不要靠 SSH 判断 panic（panic 后 SSH 必断）。
+
+### 8.5 字体太小（未修）
+
+GRUB 菜单字太小：ESP 上**没有任何 `.pf2` 字体**（`find /mnt/esp -name "*.pf2"` 为空），
+要 `loadfont` 一个更大的 unicode.pf2 才有得调。
