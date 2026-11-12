@@ -34,7 +34,16 @@ start() {
 	echo 0x01 > bDeviceProtocol
 
 	mkdir -p strings/0x409
-	echo "HA2CB1KY"          > strings/0x409/serialnumber
+	# 序列号必须锚定「原厂 SN」，不能再写死（PITFALLS #549：旧值 HA2CB1KY 是模板常量，
+	# 同型号多台机 + 同一个 192.168.7.1 ⇒ 主机侧按 iSerialNumber 认设备必然认错）。
+	# 取值顺序：DT serial-number（本板未导出）→ cmdline androidboot.serialno（ABL 恒给）→ /etc/elden-serial。
+	SN=$(tr -d '\000' < /proc/device-tree/serial-number 2>/dev/null | tr -d '[:space:]')
+	if [ -z "$SN" ]; then
+		SN=$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^androidboot\.serialno=//p' | head -1)
+	fi
+	[ -n "$SN" ] || SN=$(cat /etc/elden-serial 2>/dev/null | tr -d '[:space:]')
+	[ -n "$SN" ] || SN="TB322FC-unknown"
+	echo "$SN"                > strings/0x409/serialnumber
 	echo "Lenovo"            > strings/0x409/manufacturer
 	echo "TB322FC mainline"  > strings/0x409/product
 
