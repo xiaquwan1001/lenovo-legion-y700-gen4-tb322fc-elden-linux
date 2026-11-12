@@ -379,3 +379,9 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 # 每个 trial 目录两份 8 MiB logfs 全量快照；本轮已证明「logfs 对最近启动根本不写、前后逐字节相同」
 # ⇒ binary 信息量为 0，只留文本取证（sha 记在 logfs-sha256.txt）
 /reports/artifacts/*/logfs-*.bin
+
+# 2026-11-12：UEFI logfs 8 MiB 取证件（23 个 artifact 目录 / 32 件 / 256 MB）载荷已压缩归档为
+# 各目录 payloads.tar.zst（256 MB → 0.6 MB），原件不再入库；账目见同目录 SHA256SUMS.logfs。
+reports/artifacts/**/logfs*.bin
+reports/artifacts/**/logfs*.boot
+reports/artifacts/**/logfs.img
