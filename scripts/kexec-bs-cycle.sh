@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# elden kexec 二分单轮（SysRq-b 版；因 RESTART2 reboot-mode 通路被我们 kexec 测写坏，
-# 用 SysRq b 硬重启进 fastboot，再 fastboot boot 诊断内核 vk69）。
+# elden kexec 二分单轮。进 fastboot 只走一个入口：`eldroid-bootctl reboot bootloader`
+  # （脚本内部已挂 6 s sysrq-b 看门狗；**不要再叠加** sysrq-b —— 两个复位请求落同一关机窗口
+  # 正好是 PITFALLS #368 的症状区。kexec 不可用是 PITFALLS #154 的 device_shutdown()，与 restart 通路无关）。
 # 判据：落盘日志出现 "Starting new kernel" = 跳过成功(元凶>K,往大)；不出现 = 掉电(元凶<=K,往小)。
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -11,8 +12,7 @@ BOOT="$ROOT/out/boot-elden-vk69.img"
 LOG="/root/kmsg-bs$K.log"
 
 echo "== [K=$K] 设备须在 vk64/Linux；写 bootloader magic + SysRq b → fastboot =="
-timeout 12 $SSH 'eldroid-bootctl reboot bootloader' >/dev/null 2>&1; sleep 2
-timeout 15 $SSH 'sync; echo 1 > /proc/sys/kernel/sysrq; echo b > /proc/sysrq-trigger' >/dev/null 2>&1
+timeout 12 $SSH 'sync; eldroid-bootctl reboot bootloader' >/dev/null 2>&1 || true
 FB=""
 for i in $(seq 1 24); do FB=$(timeout 4 fastboot devices 2>/dev/null); [ -n "$FB" ] && { echo "fastboot: $FB"; break; }; sleep 3; done
 [ -z "$FB" ] && { echo "BOOT-FAIL: 没进 fastboot（可能需物理断电复位）"; exit 2; }

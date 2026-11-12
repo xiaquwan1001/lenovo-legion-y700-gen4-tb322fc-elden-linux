@@ -32,7 +32,7 @@ exec > >(tee -a "$LOG") 2>&1
 # 1) switch to bootloader (only if currently in Linux)
 if timeout 12 $SSH 'true' 2>/dev/null; then
 	echo "[run] Linux reachable -> reboot bootloader (eldroid-bootctl)"
-	timeout 15 $SSH 'sync; eldroid-bootctl reboot bootloader 2>/dev/null || reboot bootloader' || true
+	timeout 15 $SSH 'sync; eldroid-bootctl reboot bootloader' || true   # 无 reason 的 busybox reboot 不作兜底
 else
 	echo "[run] SSH not reachable (already fastboot / other session?)"
 fi

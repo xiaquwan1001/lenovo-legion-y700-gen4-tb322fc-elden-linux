@@ -54,11 +54,38 @@ def _require_root(what: str) -> None:
         sys.exit(f"eldroid-bootctl: {what} 需要 root（当前 uid={os.geteuid()}）")
 
 
-def _do_reboot(cmd: int, reason: str | None) -> int:
+def _arm_emergency_watchdog(delay: int = 6) -> None:
+    """预挂一个 sysrq-b 看门狗：正常重启路径若在关机阶段卡住，X 秒后强制 emergency restart。
+
+    为什么（PITFALLS #525，2026-11-07 复现两次）：`eldroid-bootctl reboot bootloader`
+    偶发卡在关机路径（SSH 断、屏不动、只能物理断电）。机制上：
+      * reason magic 由 `nvmem-reboot-mode` 的 reboot-notifier 在 `kernel_restart()`
+        **早期**写进 PMIC SDAM ⇒ 到卡死点时 magic 已落盘；
+      * emergency restart（`machine_emergency_restart()`）不再走 notifier，但 ABL 只看 SDAM
+        magic，所以 watchdog 兜底后**目标仍正确**；
+      * 若正常路径成功，进程随复位消失，watchdog 自然不再有宿主可写。
+    仅在 `sysrq` 打开（/proc/sys/kernel/sysrq != 0）时挂；否则打印警告。
+    """
+    try:
+        if int(open("/proc/sys/kernel/sysrq").read().strip() or "0") == 0:
+            print("⚠ sysrq 被禁用（/proc/sys/kernel/sysrq=0）⇒ 无兜底，卡死需物理断电",
+                  file=sys.stderr)
+            return
+    except OSError:
+        pass
+    subprocess.Popen(["/bin/sh", "-c", f"sleep {delay}; echo b > /proc/sysrq-trigger"],
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL, start_new_session=True)
+    print(f"[reboot] 已挂 emergency 看门狗：{delay} s 内未复位则 sysrq-b")
+
+
+def _do_reboot(cmd: int, reason: str | None, watchdog: bool = False) -> int:
     """直调 syscall(SYS_reboot, ...)；成功不返回，失败返回 errno。"""
     libc = ctypes.CDLL("libc.so.6", use_errno=True)
     libc.syscall.restype = ctypes.c_long
     os.sync()
+    if watchdog:
+        _arm_emergency_watchdog()
     arg = ctypes.c_char_p(reason.encode()) if reason else None
     libc.syscall(SYS_REBOOT, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, arg)
     return ctypes.get_errno()  # 成功则不会到这里
@@ -71,12 +98,45 @@ def cmd_reboot(args) -> int:
     _require_root("reboot")
     reason = REBOOT_REASON[target] if target else None
 
+    # EDL 的正确通道不是 reboot-mode magic，而是 **qcom_scm 的 download_mode**：
+    # 内核在 scm probe 时按 DT `qcom,dload-mode` 求出 TCSR 地址，并把
+    # QCOM_DLOAD_MASK(bits 5..4) 写进去；ABL/TZ 在该 cookie 置位时下一次 warm
+    # reset 直接进 9008。而 `qcom_scm_shutdown()` 会在干净关机时把它清成 NODUMP
+    # （drivers/firmware/qcom/qcom_scm.c），所以顺序必须是：
+    #   1) 写 /sys/module/qcom_scm/parameters/download_mode = full
+    #   2) 立刻 warm reset（RESTART，不是 RESTART2 —— 别让重启原因覆盖 cookie）
+    # 2026-10-20 之前 DT 缺 `qcom,dload-mode`（tcsr 块未描述）⇒ dload_mode_addr=0
+    # 且 SCM 无 SET_DLOAD_MODE 调用 ⇒ 写参数只会报
+    # "No available mechanism for setting download mode"，EDL 一直不可用。
+    # 修复见 patches/edl-dload-20261020/。
     if target == "edl":
-        print("⚠️  本内核 DT 无 mode-edl，EDL 未支持（见 archive/topics/FLASHCTL-2026-10-03.md）。",
-              file=sys.stderr)
-        print("   可先 reboot recovery 进 TWRP，再由 TWRP 重启到 EDL。", file=sys.stderr)
-        if not args.force:
+        dload = "/sys/module/qcom_scm/parameters/download_mode"
+        if not os.path.exists(dload):
+            print("❌ 本内核无 qcom_scm download_mode 参数（CONFIG_QCOM_SCM 缺失？）",
+                  file=sys.stderr)
             return 1
+        try:
+            cur = open(dload).read().strip()
+        except OSError as e:
+            print(f"❌ 读不到 {dload}: {e}", file=sys.stderr)
+            return 1
+        if args.dry_run:
+            print(f"[reboot] EDL: 将写 {dload}=full（当前 {cur!r}）然后 warm reset")
+            return 0
+        try:
+            with open(dload, "w") as f:
+                f.write("full")
+            after = open(dload).read().strip()
+        except OSError as e:
+            # 典型：DT 没有 qcom,dload-mode 且 SCM 也没这个 SMC ⇒ 以内核日志为准
+            print(f"❌ 写 download_mode 失败: {e}", file=sys.stderr)
+            print("   若为 EINVAL/ENODEV，检查 dmesg 是否有 \"No available mechanism "
+                  "for setting download mode\"（= DT 缺 qcom,dload-mode）", file=sys.stderr)
+            return 1
+        print(f"[reboot] EDL: download_mode {cur!r} -> {after!r}，发 warm reset")
+        err = _do_reboot(LINUX_REBOOT_CMD_RESTART, None)
+        print(f"reboot(2) 失败: errno={err} ({os.strerror(err)})", file=sys.stderr)
+        return 1
 
     if args.poweroff:
         print("[reboot] 关机（POWER_OFF）")
@@ -93,7 +153,9 @@ def cmd_reboot(args) -> int:
 
     cmd = LINUX_REBOOT_CMD_POWER_OFF if args.poweroff else \
         (LINUX_REBOOT_CMD_RESTART2 if reason else LINUX_REBOOT_CMD_RESTART)
-    err = _do_reboot(cmd, reason)
+    # 2026-11-07：带 reason 的重启（bootloader/recovery）在关机路径偶发卡死（PITFALLS #525）
+    # ⇒ 预挂 sysrq-b 看门狗；`--no-watchdog` 可关（调试关机链本身时用）。
+    err = _do_reboot(cmd, reason, watchdog=(not args.poweroff and not args.no_watchdog))
     print(f"reboot(2) 失败: errno={err} ({os.strerror(err)})", file=sys.stderr)
     return 1
 
@@ -150,6 +212,8 @@ def main() -> int:
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--force", action="store_true", help="edl 未支持时也继续")
     p.add_argument("--poweroff", action="store_true", help="关机而非重启（忽略 target）")
+    p.add_argument("--no-watchdog", action="store_true",
+                   help="不挂 sysrq-b 兜底看门狗（默认挂 6 s；调试关机链本身时用）")
     p.set_defaults(func=cmd_reboot)
 
     p = sub.add_parser("slot", help="A/B 槽位元数据（GPT attribute byte6）")

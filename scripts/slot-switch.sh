@@ -95,7 +95,7 @@ ensure_fastboot() {
 	elif have_linux; then
 		echo "[slot] 在 Linux(ssh) → eldroid-bootctl reboot bootloader"
 		timeout 25 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 "$TAB" \
-			'/usr/local/sbin/eldroid-bootctl reboot bootloader 2>/dev/null || eldroid-bootctl reboot bootloader 2>/dev/null' >/dev/null 2>&1 || true
+			'/usr/local/bin/eldroid-bootctl reboot bootloader 2>/dev/null || eldroid-bootctl reboot bootloader 2>/dev/null' >/dev/null 2>&1 || true
 	else
 		echo "[slot] 既非 fastboot/adb/ssh —— 请手动进 fastboot（电源键或 fastboot reboot bootloader）" >&2
 		return 1

@@ -1,10 +1,6 @@
 #!/bin/sh
 # Bring up a USB composite gadget: CDC-NCM (network, Windows 11 in-box
-# UsbNcm driver) + two CDC-ACM ports:
-#   GS0 = kernel console (matched by console=ttyGS0)  -> host /dev/ttyACM0
-#   GS1 = out-of-band root shell (respawn getty)      -> host /dev/ttyACM1
-# Keeping them separate means the interactive shell is not polluted by
-# dmesg/printk traffic (and vice versa).
+# UsbNcm driver) + CDC-ACM (serial, kernel console via console=ttyGS0).
 G=/sys/kernel/config/usb_gadget/g1
 
 wait_udc() {
@@ -38,7 +34,16 @@ start() {
 	echo 0x01 > bDeviceProtocol
 
 	mkdir -p strings/0x409
-	echo "HA2CB1KY"          > strings/0x409/serialnumber
+	# 序列号必须锚定「原厂 SN」，不能再写死（PITFALLS #549：旧值 HA2CB1KY 是模板常量，
+	# 同型号多台机 + 同一个 192.168.7.1 ⇒ 主机侧按 iSerialNumber 认设备必然认错）。
+	# 取值顺序：DT serial-number（本板未导出）→ cmdline androidboot.serialno（ABL 恒给）→ /etc/elden-serial。
+	SN=$(tr -d '\000' < /proc/device-tree/serial-number 2>/dev/null | tr -d '[:space:]')
+	if [ -z "$SN" ]; then
+		SN=$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^androidboot\.serialno=//p' | head -1)
+	fi
+	[ -n "$SN" ] || SN=$(cat /etc/elden-serial 2>/dev/null | tr -d '[:space:]')
+	[ -n "$SN" ] || SN="TB322FC-unknown"
+	echo "$SN"                > strings/0x409/serialnumber
 	echo "Lenovo"            > strings/0x409/manufacturer
 	echo "TB322FC mainline"  > strings/0x409/product
 
@@ -53,12 +58,8 @@ start() {
 	mkdir -p functions/acm.GS0
 	echo 1 > functions/acm.GS0/console 2>/dev/null
 
-	# GS1: OOB shell channel (no console flag -> not the printk console)
-	mkdir -p functions/acm.GS1
-
 	ln -s functions/ncm.usb0 configs/c.1/
 	ln -s functions/acm.GS0  configs/c.1/
-	ln -s functions/acm.GS1  configs/c.1/
 
 	echo "$UDC" > UDC
 	echo "[usb-gadget] bound to $UDC" > /dev/kmsg
@@ -69,9 +70,9 @@ stop() {
 	UDC=$(ls /sys/class/udc | head -n1)
 	cd "$G"
 	echo "" > UDC
-	rm -f configs/c.1/ncm.usb0 configs/c.1/acm.GS0 configs/c.1/acm.GS1
+	rm -f configs/c.1/ncm.usb0 configs/c.1/acm.GS0
 	rmdir configs/c.1/strings/0x409 configs/c.1
-	rmdir functions/ncm.usb0 functions/acm.GS0 functions/acm.GS1
+	rmdir functions/ncm.usb0 functions/acm.GS0
 	rmdir strings/0x409
 	cd /
 	rmdir "$G"

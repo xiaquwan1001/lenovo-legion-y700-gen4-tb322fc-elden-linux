@@ -33,12 +33,12 @@ case "${1:-}" in
 	"") echo "usage: device-lock.sh [-w sec] <command...>" >&2; exit 2 ;;
 esac
 
-# Advertise the holder for --status (best effort, informational).
-printf 'holder pid=%s cmd=%s\n' "$$" "$*" > "$LOCK" 2>/dev/null || true
-
 # Single source of truth: lib-device-lock.sh (holds fd 9 for our lifetime).
 DEVICE_LOCK=$LOCK LOCK_WAIT=$WAIT
 export DEVICE_LOCK LOCK_WAIT
 device_lock_acquire
+# holder 信息必须在**拿到锁之后**写：旧实现先 truncate+写入再等锁，
+# 会把「最后排队的人」当成 holder（--status 不可信）。
+printf 'holder pid=%s cmd=%s\n' "$$" "$*" > "$LOCK" 2>/dev/null || true
 echo "[lock] acquired ($LOCK)"
 "$@"

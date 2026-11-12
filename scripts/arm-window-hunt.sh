@@ -9,7 +9,9 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd); cd "$ROOT"
 WAIT=${1:?usage: arm-window-hunt.sh <wait_s> <label:img>...}; shift
 SSH="ssh -o StrictHostKeyChecking=no -o ConnectionAttempts=1 -o ConnectTimeout=8 -o UserKnownHostsFile=/dev/null -o BatchMode=yes -b 0 root@192.168.7.1"
 
-in_fastboot() { fastboot devices 2>/dev/null | grep -q .; }
+# PITFALLS #584：`fastboot devices | grep -q` 会 SIGPIPE 打断 bulk 通道 ⇒ 只能物理 POR。
+# 必须先取完整输出再在 shell 里判（不要接管道给 grep）。
+in_fastboot() { d=$(timeout 6 fastboot devices 2>/dev/null); case "$d" in *fastboot*) return 0 ;; *) return 1 ;; esac; }
 to_fastboot() {
 	in_fastboot && return 0
 	echo "[hunt] 单次 SSH reboot2 bootloader"

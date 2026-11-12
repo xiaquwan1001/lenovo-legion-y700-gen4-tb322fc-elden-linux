@@ -23,7 +23,8 @@ while [ $# -gt 0 ]; do case "$1" in
 [ -f "$IMG" ] || { echo "no image: $IMG" >&2; exit 2; }
 mkdir -p "$OUT"; echo "label=$LABEL image=$IMG sha=$(sha256sum "$IMG" | cut -c1-16) out=$OUT" | tee "$OUT/summary.txt"
 
-wait_fb() { for i in $(seq 1 40); do timeout 5 fastboot devices 2>/dev/null | grep -q . && return 0; sleep 3; done; return 1; }
+# PITFALLS #584：不要 `fastboot devices | grep -q`（SIGPIPE 打断 bulk 通道）。
+wait_fb() { for i in $(seq 1 40); do d=$(timeout 5 fastboot devices 2>/dev/null); case "$d" in *fastboot*) return 0 ;; esac; sleep 3; done; return 1; }
 wait_ssh() { for i in $(seq 1 30); do timeout 6 $SSH true 2>/dev/null && return 0; sleep 5; done; return 1; }
 
 handoff=0

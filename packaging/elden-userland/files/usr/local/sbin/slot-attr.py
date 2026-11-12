@@ -235,7 +235,8 @@ def main():
     ap.add_argument("--device", default="/dev/sde", help="device node (default /dev/sde = LUN4 boot LUN)")
     ap.add_argument("--sector", type=int, default=SECTOR_DEFAULT)
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--dry-run", action="store_true")
+    # default=SUPPRESS so the subparser copy does not override the global flag
+    common.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
     ap.add_argument("--dry-run", action="store_true")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
