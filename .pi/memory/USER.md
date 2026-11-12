@@ -68,7 +68,7 @@ C0 真 Android 对照取证已于 2026-10-11 完成（Android 16 / build ZUXOS_1
 ---
 用户会主动纠正 agent 对「冷/暖复位」的因果判断：明确「坏发和冷暖没有必然关系」，并指出内核与 init 脚本已支持 SSH 重启到 bootloader、上一任会话成功做到无人值守循环——期望 agent 不要再依赖人力物理 POR。
 ---
-用户 2026-10-13 明确更正 Q28 上机自动化口径：内核与 init 脚本已支持 **SSH 直接重启到 bootloader**（`reboot2 bootloader`，PSCI SYSTEM_RESET2 vendor-reset，~1s 进 fastboot），上一任会话成功过——无需人力 POR/按键；并明确「坏发和冷暖没有必然关系」。推翻此前「必须真 POR、reboot2 暖复位粘 NOCARD」的说法。
+用户 2026-10-13 明确更正 Q28 上机自动化口径：内核与 init 脚本已支持 **SSH 直接重启到 bootloader**（`reboot2 bootloader`，PSCI SYSTEM_RESET2 vendor-reset，~1s 进 fastboot），上一任会话成功过——无需人力 POR/按键；并明确「坏发和冷暖没有必然关系」。推翻此前「必须真 POR、reboot2 暖复位粘 NOCARD」的说法。**⚠ 2026-11-12 审计：该口径在本仓 MEMORY.md（10-17/18 vk127 多发实测：暖复位采样偏置打折、软件 reboot 不解除坏发簇）上部分失效——以 MEMORY 晚出实测为准；「桌面未起完就 reboot2 会挂死、需物理 POR」另见全局 failures-net 条。**
 ---
 屏幕方向的最高期望（2026-10-13 原话）：「尽可能符合上游规范的同时驱动屏幕」——即优先走上游主线实现（而不是继续堆下游补丁），因此接受「先做纯上游对照臂来区分本树下游改动 vs 上游本身」的实验路径。
 ---

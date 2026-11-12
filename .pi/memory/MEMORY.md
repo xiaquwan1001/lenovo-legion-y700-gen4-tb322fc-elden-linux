@@ -165,7 +165,7 @@ y700-elden 顶层布局注册表（2026-11-03 立，长期维护抓手）：根�
 ---
 y700-elden 机器级缓存（不入库、也不属项目资产，但占盘 13G）：`~/.cache/ccache-elden` = 内核构建 ccache；`~/.cache/pi-tmp` = pi 临时目录。清理前确认无构建在跑（`pgrep -af make`），ccache 可 `ccache -C` 清但不建议（重建会变慢）。
 ---
-y700-elden git 树口径（2026-11-03 精简合并后）：**唯一长驻分支 = `main`**，lane 走 `scripts/lane.sh`（worktree 在 `wt/`，`--no-ff` 合并后打 `merge/<lane>` 标签并删分支/worktree）。远端 = **GitHub 为权威**（`git push` 默认它），USTC `origin` 是保护分支旧线、已停用。历史重写两次的先例（`backup/git-history-rewrite-20261026/`、`-20261103/`）都是为剔除大二进制：**96 MiB 槽位镜像与 `reports/trials/*/serial-delta.log` 一律不入库**（`.gitignore` 只防未跟踪文件，已跟踪的必须 `git rm --cached` + 历史剔除）。重写只动 `github/main..main` 的本地独有段，代价 = 该段 SHA 全变 ⇒ **文档引用日期/路径，不引用短 SHA**。合并前先 `git bundle create ... --all` 兜底。
+y700-elden git 树口径（2026-11-03 精简合并后）：**唯一长驻分支 = `main`**，lane 走 `scripts/lane.sh`（worktree 在 `wt/`，`--no-ff` 合并后打 `merge/<lane>` 标签并删分支/worktree）。远端 = **GitHub 为权威**（`git push` 默认它），USTC `origin` 是保护分支旧线、已停用（**此项显式覆盖全局 AGENTS.md「默认双发布 GitHub+USTC GitLab」口径：本项目用户 2026-11-03 决定停用 USTC 线，勿按全局规则补推**）。历史重写两次的先例（`backup/git-history-rewrite-20261026/`、`-20261103/`）都是为剔除大二进制：**96 MiB 槽位镜像与 `reports/trials/*/serial-delta.log` 一律不入库**（`.gitignore` 只防未跟踪文件，已跟踪的必须 `git rm --cached` + 历史剔除）。重写只动 `github/main..main` 的本地独有段，代价 = 该段 SHA 全变 ⇒ **文档引用日期/路径，不引用短 SHA**。合并前先 `git bundle create ... --all` 兜底。
 ---
 y700-elden 项目整理第二轮（2026-11-05，commit 51892de）三条可复用裁决规则：① **`out/*.img` 不可直接删** —— 129 个镜像每件在 `versions/vk-kernel-identity.tsv` 都有行，删文件会让 `check-doctor §5d` 报缺；要清必须先移 `backup/out-history-<date>/` 并同批改账目路径，且**禁重跑 `vk-identity.py`**（镜像缺失会清空/污染整表）。② **`build/*` 删除前置闸 = 逐棵 `git bundle --all` + 导出 dirty diff**：37 棵中 19 棵有脏文件，`build/m3v2-7.3rc7` 共享 .git 内有 142 个未推送提交、`build/base-7.2` 有 2 个 —— 这两个 `.git` 容器本身不可删。③ **证据类 artifact 的压缩式清理**（本轮唯一执行项）：11 个 `reports/artifacts/uefi-dxe*-20261104/` 的 77 个二进制载荷 tar.zst 后删原件（236.2 MB → 45.9 MB，`SHA256SUMS.all` 逐件保 sha、抽检解包 sha 一致），文本三件（build.log/manifest.txt/SHA256SUMS）留原处 —— 这是「零证据损失」的可复制范式。另：`★SSOT 待并入` 积压 176 处（其中约 32 处是陈旧未清标记），逐条并入各角度 README 仍是待办。
 ---
@@ -224,3 +224,15 @@ Phosh 的 squeekboard（内置 OSK）是**纯虚拟键盘 UI 而非输入法引�
 check-doctor.sh 运行时间优化（2026-10-14）：重构后从 1m50s 降到 ~12.6s（vk-identity.py 两个 39s 调用是主要开销）。重跑时用 `time scripts/check-doctor.sh` 并与改动前输出 diff 作对账（可存到 /tmp 做基线），只有「可疑死脚本」一类 WARN 会随重构消失。
 ---
 本机（Ubuntu 26.04 resolute，mirrors.ustc.edu.cn）**无需 root 即可搭 Android HAL 构建工具链**：`apt download hidl-gen`（10.0.0+r36-3.1build1）与 `android-libbase/liblog/libutils/libcutils`（1:34.0.5-12build1）后 `dpkg-deb -x` 到 ~/.local/hidlgen，运行需 `LD_LIBRARY_PATH=…/usr/lib/x86_64-linux-gnu/android`（libbase.so.0/liblog.so.0/libutils.so.0/libcutils.so.0 都在该子目录）。Debian 的 `aidl` 包不认 `@VintfStability`/不认 `--structured`，AIDL 必须用 AOSP prebuilts 的 `linux-x86/bin/aidl`（并补 `linux-x86/lib64/libc++.so` 等 host 库到 LD_LIBRARY_PATH）。hidl-gen 的 `-r` 必须 `包名:路径` 形式，且 `android.hardware` 与 `android.hardware.graphics` 不能拆成两个 -r（报 conflicting package roots）。
+
+---
+
+fixture/分诊档命名习惯：项目内跨会话的「本地会话+进度+产物」合并台账固定放 `reports/<范围>-INDEX.md`（本轮新建 `reports/Q24-Q28-INDEX.md`），只做导航不复述状态；状态与结论 SSOT 仍归 `TASKS.md` §5 + `INDEX.md` §3。
+
+---
+
+`scripts/q28-devprobe2.sh` 的 L1 正则曾漏 `vblank timeout`，上游栈（7.3 线）会误报 GOOD-NOSESSION；2026-10-14 已补。但 2026-10-17 又见「本会话两次把黑屏误报 VERDICT=GOOD」，最终可靠判据仍是用户目视 + `dsi_isr` 计数。
+
+---
+
+Q26（WiFi 到可用 ~2 min）Step A 已证伪（2026-10-06 实机）：`CONFIG_ATH12K=m` 单次干净探测（绕开内建驱动启动首探 8.16s MHI POWER_ON 失败的 ath12k-retry 重试序列）后 MHI 首次即成功（`mhi0: Power on setup success`，无 -110），但连 P40 Pro 后 bmiss 仍每 ~16s（lost 4→15/126s）、`beacon rx` 恒 ≈1、130s 无 IPv4 ⇒ **驱动探测时序不是变量**。反证：同机连 vivo X200 Ultra 热点立刻通（10.191.87.31/24 + IPv6 秒到手、2.4GHz、-17dBm、beacon rx 154）⇒ Step C「AP 组合相关」得到活证据。
