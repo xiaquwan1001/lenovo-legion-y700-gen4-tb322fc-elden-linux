@@ -13,15 +13,19 @@
 
 ## 0. 一句话现状
 
-主线 Linux（当前日常线基于 **stable 7.3.1**，2026-11-07 重基上机全绿）在这块板子上**大多数子系统已经能工作**
-（显示/图形/触屏/网络/音频/温控/串口/相机出流+拍照、传感器、Waydroid 容器主链路…），日常已可日用。
+主线 Linux（当前日常线基于 **stable 7.3.1**，构建号到 **`vk188`**；2026-11-07 重基上机全绿，11-12 只做了显示/引导侧配置改动）
+在这块板子上**大多数子系统已经能工作**（显示/图形/触屏/网络/音频/温控/串口/相机出流+拍照、传感器、Waydroid 容器主链路…），日常已可日用。
 
-近期几件大事（详见 [`PROGRESS.md`](PROGRESS.md) 时间线）：
+近期几件大事（详见 [`PROGRESS.md`](PROGRESS.md) 时间线，11-11 / 11-12 两轮已补）：
 
 - **2026-11-07**：内核重基到 `v7.3.1`（`vk185-adsp`）并写入 `boot_b`；同日 **UEFI 间接引导首次真交棒**（零写盘，`root=/dev/sda17` 直接起主线内核）。
 - **2026-11-08**：UEFI 路线 B 打通 —— ESP 上的 `boot.img` 由固件 `LinuxLoader` 变体直接读起；同晚启动菜单（屏显 + 音量键 + 电源键）闭环。
-- **2026-11-09…11-10**：**flashed 形态（写 `boot_a`）仍失败** —— 同件两形态对照证明失败点在 **BdsDxe 之前**（信标一字节未写），与任何单个补丁无关；还在定位（详见 [`TASKS/README.md`](TASKS/README.md) §4 N1）。
-- Waydroid 侧 11 月收尾：容器相机到 App 预览 `STREAMING`、触屏中文输入法上机、马达/音频/传感器全链固化进镜像。
+- **2026-11-09…11-10**：**flashed 形态（写 `boot_a`）仍失败** —— 同件两形态对照证明失败点在 **BdsDxe 之前**（信标一字节未写），与任何单个补丁无关（详见 [`TASKS/README.md`](TASKS/README.md) §4 N1）。
+- **2026-11-11**：UEFI「掉电」判读整体重估 —— 三臂日志实为 **ramoops oops** 而非硬件掉电，真因是 **GRUB 缺显示模块导致盲等 + panic**；同轮修掉 `GRUB cfg` 位置写错（`noruntime/noefi` 从未生效）、把实验菜单改成**内嵌**（不再依赖磁盘 cfg）、补 ramoops DT 并重建打包。
+- **2026-11-11**：中文输入法候选窗**四层根因逐层打穿**（phoc 版本门 / `GTK_IM_MODULE=fcitx` 遮蔽 `text-input-v3` / classicui 在 phoc 出不了窗 / 新 IC 恒拿 `keyboard-us`）⇒ 候选窗与 OSK 上机可用（截图为证）。
+- **2026-11-11**：T18 充电掉流定位到时序（`charge-watch` 9.0 s 就位 vs `battmgr` 12.84 s 节点 ⇒ 约 20 s 无人顶回 ICL）并修复（等节点 + 2 s 轮询 + udev 兜底）；`boot_b` 持久化到 `vk187b` 并开机自启；新增 `scripts/boot-img-cmdline.py`（只改 cmdline 重打包 `boot.img`，载荷三段 sha 自证 + 往返自检 PASS）。
+- **2026-11-12**：**N1 口径更正**（#620 判读作废：菜单两版都能显，无屏显 = `CONFIG_SYSFB_SIMPLEFB` 未开）⇒ `vk188` 开该配置 + GRUB 字号上调（gfxterm 有 40 列/12 行硬上限），已部署待上机验；同轮把 32 件 8 MiB logfs 取证件压缩归档（256 MB → 0.6 MB，tar.zst + 直读 sha，零证据损失，见 `reports/artifacts/ARCHIVED-logfs-payloads-20261112.md`）。
+- Waydroid 侧 11 月收尾：容器相机到 App 预览 `STREAMING`、触屏中文输入法上机、马达/音频/传感器全链固化进镜像；`droidloom` 告警与 phoc 广报 syncobj 两条也在 11-11 上机打通（G2 9/13）。
 - 显示子系统历史竞态 `Q28`（冷开机概率只有背光）已于 2026-10-24 **按「已规避」结项**；**根因未彻底定位**，复启条件与全部判据只读 [`TASKS/README.md`](TASKS/README.md) §5（Q28 行）。
 
 **这个仓库不是“刷机教程”，是研究记录。** 刷机有变砖风险，详见 §6。

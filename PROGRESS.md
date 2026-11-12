@@ -108,6 +108,13 @@
 | 2026-11-09（晚） | **UEFI flashed 形态 4 发全败 + `p60` 对照同败；落盘信标 v1 废 / v2 可用但判不了「哪一发」** | 写 `boot_a` 四发（p63/p64/p65/p66）全部回退 `_b`；**`p60`（fastboot 形态已证明可用）同样失败** ⇒ 失败与补丁无关（`reports/uefi-p63-p66-beacon-20261109.md`）。信标 v1 按容量认分区撞到 8 MiB 的 `bluetooth_a/b` ⇒ 连已知可用的 fastboot 形态也 0 命中；v2 按内容指纹 `SBLOG0` 命中但**写入位置/内容固定** ⇒ `st=8` 不能区分是哪一发；`/dev/sde68` 跨启动不稳定（一次 logfs、一次 FAT12）⇒ 一律 `by-partlabel/logfs`。**口径撤回**：初版「fastboot 形态的内核是 FV `LinuxLoader` 的 espboot 起的（据信标 `st=8 fallback`）」**不成立** —— `st=8` 在 `if (!Found)` 之前是无条件检查点，且该发 logfs 记录区逐字节未变 ⇒ `LinuxLoader` 没参与、**R54 ESP-first 实为成功**（`reports/beacon-recheck-20261110.md` §命题 4、`PITFALLS #589`）。`PITFALLS #584/#585/#586/#587` |
 | 2026-11-10（上机） | **p67 信标 v3：flashed 形态连 BdsDxe 都没跑到（旧口径被推翻）** | 同件两形态对照：`fastboot boot` 得 `s1…s5 + s9 esp-ld-ok`（R54 ESP-first 成功，顺带证伪「靠 LinuxLoader 兜住」）；写 `boot_a` 后**信标一字节未变**且读回内容无 `n=` ⇒ 该发没写任何信标 ⇒ 固件没执行到 BdsDxe，失败点在更早阶段（PrePi/dispatch/ABL）。下一步 = 信标搬进 BootShim/PrePi。`reports/uefi-p67-flash-trial-20261110.md`、坑 `#586/#587/#589/#590/#591`、设备已回滚 |
 | 2026-11-10 | **11-09 晚那轮收口（原会话 23:29 被中断）：报告 + 坑 + 文档同步 + 世代入库** | 新增 `reports/uefi-p63-p66-beacon-20261109.md`（时间线/四条通道可用性/下发建议 `p67 = p62 + R66 + R67` 且信标带世代+计数）、`TASKS/sessions/2026-11-10-UEFI落盘信标收口p63-p66.md`；`patches/uefi/20261109R6{4,5,6,7}-*` 与 `p6{3,4,5,6}-recipe.txt` 入库；G1-29 单元格 4 939 B → 986 B（历史沿革下沉 `TASKS/sessions/2026-11-10-G1-29沿革.md`）；`scripts/lib-fastboot.sh` 入库。会话恢复用 `--gen p6x` |
+| 2026-11-11 | **UEFI「掉电」判读整体重估：推翻自家三臂结论，真因是 GRUB 缺显示模块** | 三臂日志全部是 **ramoops oops** 而非硬件掉电；同一批实验里 `GRUB cfg` 位置写错 ⇒ `noruntime/noefi` 从未生效（#620）；真因 = GRUB 缺显示模块 → 盲等 + panic。处置：实验菜单改**内嵌**（不再依赖磁盘 cfg）、ramoops DT 修复并重建打包、三处自我纠正落账 | `TASKS/sessions/2026-11-11-UEFI掉电判读重估与GRUB显示修复.md`、`PITFALLS #275`、`PITFALLS #276` |
+| 2026-11-11 | **中文输入法候选窗打通（四层根因逐层打穿）** | ① phoc 版本门：聚焦即弹 OSK（#270）② `GTK_IM_MODULE=fcitx` 遮蔽 `text-input-v3` ⇒ focusd kimpanel 桥修复并上机验证（#273）③ classicui 在 phoc 出不了窗 ④ 新 IC 恒拿 `keyboard-us`（#274）⇒ 候选窗 + OSK 上机可用 | `reports/artifacts/ime-candidates-20261111.png`、`reports/artifacts/ime-osk-firefox-20261111.png`、`TASKS/sessions/2026-11-11-IME候选窗四层根因.md` |
+| 2026-11-11 | **T18 充电掉流定位到时序并修复；`boot_b` 持久化到 `vk187b`** | 根因 = `charge-watch` 9.0 s 就位 vs `battmgr` 节点 12.84 s ⇒ 约 20 s 无人顶回 ICL；处置 = 等节点 + 2 s 轮询 + udev 事件兜底；同时 `boot_b`→`vk187b` 持久化并 enable 开机自启；C12 结项（通知通道已知问题入账） | `reports/artifacts/t18-sampling-20261111/`、`TASKS/sessions/2026-11-11-整理轮与C12-L2主机侧.md` |
+| 2026-11-11 | **Gunyah S1 静态对账 + 替代引导器评估 + `boot-img-cmdline.py`** | S1：piano vs g612 三条 parcel 生命周期差异可解释 `VM_INIT 0xA`；替代引导器：Limine 是唯一自己调 `EBS`+`SetVirtualAddressMap` 的路线，systemd-boot 判别增量 ≈ 0，故首选 `efi=noruntime` 单变量臂；新增 `scripts/boot-img-cmdline.py`（只改 cmdline 重打包 `boot.img`，载荷三段 sha 自证不变、往返自检 PASS） | `TASKS/README.md` §4 N1、`scripts/boot-img-cmdline.py` |
+| 2026-11-11 | **`droidloom` 告警收尾 + phoc 广报 syncobj（L2/L3 上机）** | 用户目视确认桌面回归正常（G2 9/13）；固件侧归因到「GRUB 墙 = 我方固件缺显示模块」；phoc 广报 syncobj 与 arm64 构建坑落 `PITFALLS #196`，启动四道门落 `#269` | `TASKS/sessions/2026-11-11-droidloom-L3-上机打通.md`、`reports/artifacts/droidloom-l2-phoc-20261111/` |
+| 2026-11-12 | **N1 口径更正（#620 判读作废）+ `vk188`** | 按用户实测改口径：**菜单两版都能显**，此前「无屏显」实为 `CONFIG_SYSFB_SIMPLEFB` 未开 ⇒ `vk188` 打开该配置 + GRUB 字号上调（gfxterm 有 **40 列/12 行硬上限**，`PITFALLS #276`）；已部署到设备，待上机验 | `TASKS/README.md` §4 N1、`DEVICE/README.md` §1.1 |
+| 2026-11-12 | **仓库整理：logfs 取证件压缩归档（零证据损失）** | 23 个试验目录里的 **32 件 8 MiB logfs 快照**（256.0 MiB，绝大多数是 0 填充）压缩为各目录 `payloads.tar.zst`（合计 **0.61 MiB**）+ 逐件 `SHA256SUMS.logfs`（`dd iflag=direct` 直读 sha，写入后回读校验 32/32 一致）；`.gitignore` 加护栏；文档里的文件名指针保持不变（原件在 tar 内按名可取） | `reports/artifacts/ARCHIVED-logfs-payloads-20261112.md` |
 ---
 
 ## 2. 当前完成度（诚实版）
@@ -205,7 +212,10 @@
    **关键的诚实记录**：11-09/10 曾三轮把失败归因到「我们的 payload 没被执行」「`vbmeta_a` 校验」「logfs 无记录」，**三条全被推翻**；
    真根因是 2026-10-03 起就写在 `PITFALLS` 里的老坑 —— **ABL 会把原厂 `dtbo_a` 的 Android DTBO overlay 合进我们的 DTB**（当时只清了 `dtbo_b`）。
    清 `dtbo_a` 后同件当场起。权威 = [`reports/uefi-dtbo-a-rootcause-20261110.md`](reports/uefi-dtbo-a-rootcause-20261110.md)；
-   前置固化脚本 = `scripts/uefi-a-slot-prepare.sh`；剩余仅「菜单交互目视」与「一次物理 POR」两项非阻塞。~~逆向运行期注册表 + 回帖 issue #12~~（归档）；
+   前置固化脚本 = `scripts/uefi-a-slot-prepare.sh`；剩余仅「菜单交互目视」与「一次物理 POR」两项非阻塞。
+   **2026-11-12 追加（判读再更正，以 `TASKS` §4 N1 为准）**：flashed 形态的失败判读在 11-11 被整体重估 —— 三臂日志实为 **ramoops oops** 而非硬件掉电，
+   真因是 **GRUB 缺显示模块 → 盲等 + panic**，同轮把实验菜单改成**内嵌**、补 ramoops DT 并重建打包；11-12 按用户实测再更正 `#620`
+   （**菜单两版都能显**；此前「无屏显」= `CONFIG_SYSFB_SIMPLEFB` 未开）⇒ 已出 `vk188`（开该配置 + GRUB 字号上调）**待上机验**。~~逆向运行期注册表 + 回帖 issue #12~~（归档）；
    Gunyah：阶段 0 零成本探测 + 上游现状复核。产出 = 各项「可不可重启 / 立不立项」定性 + 最小成本账。
    **2026-10-24 用户裁决：WoaA 走纯 Linux（Gunyah 自建栈），Android/AVF 只作材料参考，最终不保留 Android 分区**（详见 `TASKS` §4 N1/N2）。**首轮已出（`reports/uefi-gunyah-reassess-20261024.md`）**：
    UEFI（G1-29）：**路线 A 首轮（2026-10-05）失败后搁置 → 2026-11-01 用户放行恢复推进**；当前口径与四臂判别只读 `TASKS/README.md` §5。~~厂商 DXE 在 XBL 打包体里~~（**2026-10-24 已作废：厂商 UFSDxe 就在 `uefi.elf` 内嵌 FV 中**，见 `TASKS` §4 N1 纠正块）；**Gunyah 阶段 0/0b 阳性**
