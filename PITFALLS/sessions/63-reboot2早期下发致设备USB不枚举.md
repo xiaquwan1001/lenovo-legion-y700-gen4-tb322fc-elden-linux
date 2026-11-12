@@ -26,3 +26,20 @@
 - `scripts/n5b-vk64-death-rate.sh`（本轮修了 ScreenSaver no-op 与空读数误判；时序门仍未加）
 - `reports/q24-n5b-20261023.md`
 - `PITFALLS #166`（暖复位粘坏态）、`#363`（nohup 无人看管）
+
+---
+
+## 2026-11-12 复现（**长 uptime 也中招**，原口径「刚硬复位 ~11 s 才触发」不完整）
+
+- 现场：设备 uptime ≈ 6 h（19:41 之前一直正常，Phosh/fcitx5 在跑），文本 `reboot2 bootloader` 一次
+  ⇒ 上一轮 journal 到 `19:41:04` 结束；之后 **19:41–20:05 主机侧 `journalctl -k` 零 USB 事件**
+  （无 `18d1`/`05c6`/`1d6b`）⇒ fastboot gadget 根本没起来；屏幕不亮（无背光）。
+- 恢复：用户 ~20:05 人工断电重开 ⇒ 20:05:59 短暂出现 Android gadget（`18d1:d00d`，9 s），
+  20:06:50 回到 Linux gadget（`1d6b:0104`），20:07 起 Linux（`uptime` 可证）。
+- 结论：**触发条件不止「刚复位早发」**，长 uptime 下也可能中招；判据仍是「USB 全不枚举 + 无串口」
+  ⇒ 不要试图重试，直接请用户断电。**下发前无法预判**，因此把「进 fastboot」当作有物理依赖的动作、
+  在用户在场时做。
+- 附带发现（同轮）：Linux 侧 USB gadget 的 serial 是**写死 `HA2CB1KY`**（`/usr/local/sbin/usb-gadget:41`），
+  与真实 SN `HA2EXB0E`（ABL 在 cmdline 里给）不同 ⇒ 主机侧按 serial 认设备会认错，**只能按 USB 端口/product 串判**。
+  这也是本轮把另一台华为手机（`MDX5T20730009849` = ELS-AN00）误当目标板、把手机 `adb reboot bootloader`
+  送进 fastboot 的原因（已 `fastboot reboot` 恢复）。
