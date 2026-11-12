@@ -68,3 +68,14 @@
 - `packaging/elden-userland/{MANIFEST.tsv,sources.tsv}`（sha/尺寸同步）
 - 设备回退件：`/usr/local/bin/elden-ime-focusd.bak-20261112`、
   `~/.config/autostart/elden-ime-focusd.desktop.disabled-20261112`
+
+## 附：`#619` profile 顺序回归（同日晚发现并修）
+
+现场：`~/.config/fcitx5/profile` 的 `Items/0` 又变回 `keyboard-us`（`InputMethodGroupInfo 默认` =
+`('us', [('keyboard-us',''),('rime','')])`）⇒ 新 IC 拿英文，中文候选不参与。这正是 `#619` 记的
+「fcitx5 退出会把内存态写回 profile」那条机制的复发（不是新 bug）。
+处置（严格按 `#619` 顺序）：`systemctl --user stop fcitx5` → `pkill -9 -x fcitx5` 直到 `pgrep -cx` = 0 →
+备份 profile 后把 `Items/0` 写 `rime`、`Items/1` 写 `keyboard-us` → `systemctl --user start fcitx5`。
+判据（已实测）：`InputMethodGroupInfo 默认` = `('us', [('rime',''),('keyboard-us','')])`、
+**Firefox 新 IC** 下 `fcitx5-remote -n` = `rime`、`CurrentUI` = `kimpanel`、OSK `Visible`=true。
+回退件：`~/.config/fcitx5/profile.bak-20261112`。
