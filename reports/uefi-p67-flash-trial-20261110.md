@@ -1,5 +1,10 @@
 # UEFI p67 上机：信标 v3（R68）——**flashed 形态连 BdsDxe 都没跑到**
 
+
+<!-- pitfalls-entries -->
+> **本报告承载的 PITFALLS 条目正文锚点**（索引行在 `PITFALLS/README.md`；此处给 #NNN 定义，避免索引悬空）：
+> `#591`、`#592`
+
 > 世代 `p67` = `p66` + `20261110R68-trace`（信标 v3）。配方 `patches/uefi/p67-recipe.txt`（82 条）、
 > 归档 `reports/artifacts/uefi-20261110R68-p67/`、镜像 `out/r21-sbstop-p67/uefi-preamble67-r1.img`（`d69b06e6…`）、
 > 复现 `scripts/uefi-r21-p7-ladder.sh --gen p67 --mkimg-only --rebuild`。

@@ -5,6 +5,8 @@
 
 ## #414 pstore/pmsg **不能**当取证通道（这颗内核上写成功但读不到）
 
+> **与 #374 的矛盾在此收口（2026-11-12 审计）**：pstore **可以**当取证通道，前提是 DT `ramoops` 带 `record-size`（E4 起已补，见 #617 的取证用法）；本条的「恒空」样本 = **缺 `record-size`/`max-reason` 的那颗内核**，不是 pstore 本身不可用。因此：① 判「pstore 能不能用」的第一条 = 读回 DT 里 `ramoops` 的 `record-size`；② `#374`（复位深度证据在上一个内核的 pstore）与 `#377`（ramoops POR 后不清零 ⇒ 新旧文本交错）**才是常态**，本条只作「配置不齐时的症状」保留。
+
 **现象**：`echo x > /dev/pmsg0` 返回 0，`/sys/fs/pstore` **恒空**；`mount -t pstore pstore /sys/fs/pstore` 也空。
 
 **当时的内核侧证据（都是"看起来正常"的）**：

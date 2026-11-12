@@ -27,6 +27,7 @@
 `make LOCALVERSION=-vk127`（源码 `CONFIG_LOCALVERSION="-debug"` + `LOCALVERSION_AUTO=y`）。
 名字一旦不同，已部署的 **1597 个 `.ko` 全部失效**（含相机模块 ⇒ 相机直接不可用）。
 验收：从成品 `boot.img` 里解出 kernel → 找 `Linux version` 与 `vermagic` 两串，逐字比对。
+★ 本条为 UTS/vermagic 验收的**权威条目**，已收编 #95/#176/#99（2026-11-12 去重审计 §A5）。
 
 ## #333 `olddefconfig` 会偷偷加符号
 

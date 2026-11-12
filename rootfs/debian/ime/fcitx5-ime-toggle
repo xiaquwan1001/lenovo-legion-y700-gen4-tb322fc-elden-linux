@@ -20,10 +20,13 @@ fcitx5-remote -t 2>/dev/null || true
 sleep 0.5
 state=$(fcitx5-remote 2>/dev/null || echo "")
 im=$(fcitx5-remote -n 2>/dev/null || echo "")
-case "$state" in
-	2) label="中文 · Rime" ;;
-	1) label="英文 · English" ;;
-	*) label="输入法未就绪(state=$state)" ;;
+# ★2026-11-12 实测定案：state 与 IM 错位（1↔rime/中文，2↔keyboard-us/英文）。
+# 标签以 **IM 名字（-n）为准**，不信 state（详见 fcitx5-indicator.py 同日注释）。
+im_now=$(fcitx5-remote -n 2>/dev/null || echo "")
+case "$im_now" in
+	rime) label="中文 · Rime" ;;
+	"") label="输入法未就绪" ;;
+	*) label="英文 · $im_now" ;;
 esac
 printf "%s before=%s after=%s im=%s\n" "$(date '+%F %T')" "$before" "$state" "$im" >> "$LOG"
 

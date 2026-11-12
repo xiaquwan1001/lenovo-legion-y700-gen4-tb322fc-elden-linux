@@ -10,29 +10,19 @@ USB ACM 串口（ttyGS0，宿主 /dev/ttyACM0）抓不到进桌面之前的早�
 ---
 busybox applet 名单不能靠抄设备上的 /bin 符号链接生成——设备上 mount/mountpoint/ip 等实际来自 util-linux/iproute2 而非 busybox，抄表既漏 busybox 真项也混入假项（如 blkid、mountpoint 在 busybox 里根本没有）。权威做法：用 `qemu-aarch64 busybox --list`（本机有 /usr/bin/qemu-aarch64）生成名单（本机 busybox 1.38 = 282 项），并让自检脚本校验名单与实际二进制一致。另注意建链接时要防御：若 `busybox` 自身在名单里，会把 2MB 真二进制替换成自指链接、ramdisk 缩到 12K。
 ---
-向受控平板（Alpine rootfs，shell 解析能力弱）投递脚本的正确姿势：先 `scp` 到设备 `/tmp`，再 `sh /tmp/x.sh`；不要把长 inline 单引号命令塞进 ssh 一行——单引号地狱会静默失败（本次曾出现 `can't open '/tmp/x.sh': No such file or directory` 与命令被 aborted）。 — Failed: inline 长命令在设备侧解析失败
----
 单变量试验纪律（用户反复重申）：多变量连续失败时不要继续盲试，应停手归档、把口径更正写进文档、列出「已排除的假设」与「已确证的事实」，再让用户决定下一步；旧记忆里被推翻的结论要标注 superseded 与日期，而不是在新文档里并列矛盾说法。用户会主动在设备侧纠正助手的错误归因，期望据此撤回旧结论。 — Failed: 多次多变量盲试踩坑
----
-busybox `pgrep -x NAME` 恒假阴性（argv[0] 带路径，-x 不匹配）——仓库里 dpms-watch.sh、net-up-manual.sh、waydroid-proxy-setup.sh 里的 `pgrep -x`/`pkill -x` 守卫实际全是空操作。改判据用 `ps -eo comm | grep -cx NAME`（dpms-watch.sh 注释里已记此坑）。 — Failed: AI 脚本在 Alpine/busybox 上的高频隐性 bug
----
-busybox 的 `pgrep -x NAME` 在设备上是恒假阴性（argv[0] 是 `/sbin/udevd` 等带路径全串，`-x` 精确匹配不成立）⇒ 所有靠 `pgrep -x` 做的进程守卫都是空操作（仓库里 net-up-manual.sh、waydroid-proxy-setup.sh、dpms-watch.sh 都中）。正确做法：`ps -eo comm | grep -cx NAME` 或直接读 /proc/<pid>/comm；装 procps-ng（GNU pgrep）后 `-x` 语义自愈。busybox 的 pgrep/pkill 位于 /usr/bin/pgrep -> /bin/busybox。 — Failed: 空操作守卫会让「服务已在跑」检测失效，导致重复拉起或漏杀
----
-Alpine 上 AI 写的远程脚本常因 busybox ash 报 `syntax error: unexpected "("`，根因是 `[[ ]]`、`$'...'`、数组、`set -o pipefail`、`date -d`、`stat -c` 等 bashism。部署到设备的脚本（start-desktop.sh / net-up.sh / bt-up.sh / time-sync.sh / ath12k-retry.sh / charge-watch.sh）shebang 全是 `#!/bin/sh` 却各含 1–3 处 bashism。解法不是换发行版——bash 已在 rootfs world 里，修脚本或补装包（coreutils/findutils/grep/gawk/curl/jq/xz）即可，装后 GNU 工具会 shadow busybox（init 同 PATH），必须实测重启能起来。 — Failed: 多变量盲试成本高；根因是脚本语言选择而非发行版
 ---
 Alpine 的 openrc 包**不含 `/sbin/openrc-shutdown`**（只带 openrc/openrc-run/rc-service/rc-update/rc-sstat/service/start-stop-daemon/supervise-daemon/rc-sstat）；Alpine 关机链靠 /etc/inittab + busybox init 收信号，所以 G1-25 假关机只有换 PID1 到 busybox init（→ OpenRC）才能根治。
 ---
-busybox `pgrep -x NAME` 在设备上恒假阴性（按 argv[0] 全串匹配，实际 argv[0] 是 `/sbin/udevd` 等带路径）；我们脚本里的 `pgrep -x` 守卫全是空操作。修法：装 procps-ng 让 `-x` 语义自愈，或改用 `ps -eo comm | grep -cx NAME` / 扫 /proc/<pid>/comm。设备当初 /usr/bin/pgrep -> /bin/busybox。
----
 装 GNU 工具（coreutils/findutils/grep/sed/gawk）到 Alpine 设备会 **shadow busybox**（init 与 ssh 上下文同 PATH `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`）⇒ 每次装完必须实测重启能否起来（本次 ×2 通过，SSH ~30s 恢复、桌面/会话/服务全绿），不能只验证命令跑通。
 ---
-ede 设备（Alpine rootfs）上部署/执行的脚本必须 POSIX sh 兼容：`[[ ]]`、`$'...'`、数组、`set -o pipefail`、`date -d`、`stat -c` 等 bashism 在 busybox ash 下会直接报 `syntax error: unexpected "("`。设备上 bash 已存在（rootfs world），修法 = 修脚本或补装包，而非换发行版。部署脚本前先 `sh -n`。
+ede 设备（Alpine rootfs）上部署/执行的脚本必须 POSIX sh 兼容：`[[ ]]`、`$'...'`、数组、`set -o pipefail`、`date -d`、`stat -c` 等 bashism 在 busybox ash 下会直接报 `syntax error: unexpected "("`。设备上 bash 已存在（rootfs world），修法 = 修脚本或补装包，而非换发行版。部署脚本前先 `sh -n`。（同族现场：q24-s123-run.sh 的 case 模式、zsh 下 == 报错、滚动执行器把 case/if 切进两个 shell —— 结论同一：设备侧只写 POSIX sh 且整文件 scp 后再 sh。）
 ---
 装 GNU coreutils/findutils/grep/sed 后会 shadow busybox（init 的 PATH 也把 /usr/bin 排在 /bin 前）⇒ 必须实测重启回归验证，不能只验证命令本身。
 ---
 Alpine 侧 openrc 0.63.2 + 82 个 /etc/init.d 服务 + 全部 *-openrc 包已装齐，但 /etc/runlevels/* 全空、rc-update show 无输出、PID1 = 自研 /bin/sh /init ⇒ 三套服务管理并存、一套在跑。启用 OpenRC 后可解 8 类用户态 bug，无需换发行版。唯一结构性收益：/sbin/openrc-shutdown 不在 alpine 的 openrc 包里（openrc 包只带 openrc/rc-service/rc-update/openrc-run/start-stop-daemon/supervise-daemon），关机链需换 PID1 才能根治。
 ---
-Alpine 设备上 busybox `pgrep -x NAME` / `pkill -x NAME` 恒假阴性：busybox 匹配的是 argv[0] 全串（进程以 `/sbin/udevd` 启动时 `-x udevd` 不成立），而 GNU procps 的 -x 匹配 comm（语义相反）。后果：设备脚本里所有 `pgrep -x` 守卫都是空操作。修法：apk 装 procps-ng（装后 -x 语义自愈），或改用 `ps -eo comm | grep -qx NAME`；kill 用 `ps -eo pid,comm | awk '$2=="NAME"{print $1}' | xargs kill`。涉及脚本：scripts/net-up-manual.sh、scripts/waydroid-proxy-setup.sh、scripts/dpms-watch.sh 等。
+Alpine 设备上 busybox `pgrep -x NAME` / `pkill -x NAME` 恒假阴性（按 argv[0] 全串匹配，实际 argv[0] 是 `/sbin/udevd` 等带路径，GNU procps 语义相反）⇒ 设备脚本里出现 -x 一律当 bug；判据改 `ps -eo comm | grep -cx NAME`（装 procps-ng 后 -x 语义自愈）。权威 = PITFALLS #120。
 ---
 设备侧（Alpine/busybox）`depmod` 在 /lib/modules/<UTS>/ 缺 modules.order / modules.builtin 时会刷 WARNING（could not open modules.order / modules.builtin），属无害噪音；只要 modules.dep 生成成功，modprobe 仍可用（实测 rc=0 正常加载）。 — Failed: depmod 的一串 WARNING 容易被当成模块部署失败。
 ---
@@ -54,17 +44,7 @@ Alpine 3.24 无 /etc/bash.bashrc——bash 系统级启动文件只有 /etc/prof
 ---
 本 Alpine (v3.24) 的 OpenSSH sshd 不支持 sshd_config.d/*.conf 中的 `UsePAM` 选项（报 Unsupported option UsePAM），且 restart 会因「already running」失败——需 HUP 信号（`kill -HUP $(pgrep sshd)`）而非 OpenRC restart。PermitUserEnvironment 单独可用。
 ---
-设备侧 `pkill -f <模式>` 会匹配到执行该命令的远程 shell 自身（命令行含模式串）→ 自杀、无输出。改用 `pkill -x` 或精确 PID。
----
-远程 SSH 会话里 `pkill -f PATTERN` 会**自匹配杀死执行 shell 本身**（因为命令行字符串包含 PATTERN）→ 无输出、连接断。正确做法：用 `pkill -x NAME`（精确匹配进程名）或 `kill $(pidof NAME)`；若必须用 -f，加 `--older 1` 或 grep -v 排除自身。本机实测：`pkill -f monitor-sensor` 通过 SSH 执行时杀死了 zsh 自身（命令行含该串），导致远程命令无输出。 — Failed: Agent 在设备侧远程 shell 里用 pkill -f 杀 monitor-sensor，结果杀死了执行命令的 zsh 进程本身，导致连续两次远程命令返回空输出。
----
-远程 SSH 里 `pkill -f PATTERN`（如 `pkill -f monitor-sensor`）会匹配到**执行该命令的远程 shell 自身**（其 argv 含该模式串）→ 把 shell 自己杀掉 → 后续命令无输出、看似「无响应」。正确做法：用 `pkill -x NAME`（精确匹配进程名，不含路径），或直接 `kill $(pgrep -x NAME)`。 — Failed: 在设备侧用 pkill -f 清理后台采样脚本时，远程 shell 自匹配自杀，连续两轮无任何输出，误判为命令未执行
----
 多行脚本经 SSH 传输的可靠做法（反复踩坑 2026-10-09）：设备侧 shell = zsh/ash，`ssh root@... '多行带引号脚本'` 会被远端压平（grep 吞后续参数、sed 的 `s/` 被截、set -e + grep 非零退出码中断）。可靠做法 = ① 本地写好脚本文件 → `scp` 到设备 → `ssh root@... 'sh /tmp/script.sh'`；或 ② 本地 heredoc 喂给远端 cat：`cat <<'EOF' | ssh root@... 'cat > /tmp/x.sh && sh /tmp/x.sh'`。禁止把含引号/管道/多行逻辑的命令塞进单行 ssh 参数。
----
-pkill -f 匹配到发起命令自身（bash -c 的 cmdline 含搜索串）→ 自杀。设备侧或本地脚本中 pkill -f 一律用 `[g]ui-freeze` 括号法，或改用 `pkill -x <精确进程名>`。本项目内 agent-browser 的 bash 守卫已用同样技巧绕开。 — Failed: pkill -f "gui-freeze-watch" killed the bash process running the pkill command itself because the cmdline contained the search string
----
-pkill -f / pgrep -f 自杀（本会话 3+ 次 exit 137/143）：模式字符串出现在自身命令行（如 `pkill -f "device-lock"` 匹配到执行它的 ssh/脚本本身），所有分支必须用字符组 `[d]evice-lock` + `grep -vw $$` 排除自身；更安全的做法是先 `pgrep -f '[d]evice-lock' | grep -vw $$` 列 PID 确认再逐条 kill。 — Failed: agent 用 pkill -f "gui-stress" / pkill -f "device-lock" 三次打死自己的 ssh 会话（exit 143/137），导致设备侧清理不完整（屏幕反复亮暗 + foot 刷 tick 留给用户）
 ---
 Alpine aarch64 设备侧无 `glmark2` 包（apk 报 no such package）。GPU 快测可用 `mesa-demos`（已装，9.0.0-r6）里的 `kmscube`（DRM 直驱，无需 Wayland/X11，SSH 下可跑）和 `es2gears`。`es2_info` 需要 display 环境（WAYLAND_DISPLAY 或 X11 $DISPLAY），纯 SSH 下报 `couldn't open display`。
 ---
@@ -104,21 +84,13 @@ Waydroid 容器内 `app_process` 测试里 `Uri.fromFile(path)` 触发 `FileUtil
 ---
 Waydroid 容器 `debug.stagefright.ccodec=0` 根因已定位并修复持久化：waydroid Python 代码 `/usr/lib/waydroid/tools/helpers/lxc.py:272` 硬编码 `props.append("debug.stagefright.ccodec=0")`，而 Android 13 的 `Codec2InfoBuilder.cpp` 里 `GetIntProperty("debug.stagefright.ccodec", 4)` case 0 = 跳过全部 Codec2 软件组件（仅 OMX，而本镜像无 OMX）→ codec list=0。修复 = `waydroid prop set debug.stagefright.ccodec 4`（写 waydroid.cfg [properties]，重启 session 生效）；源头修复 = 改 lxc.py 或 waydroid_base.prop。验证判据 = codec list 53 个 + TestCodec 各 audio MIME start OK + 闹钟出声（宿主 pactl 出现 sink-input s16le 2ch 48000Hz）。 — Failed: waydroid 上游硬编码 ccodec=0 导致 Codec2 全禁，且无 OMX 服务时无任何解码器可用；该 prop 值不写入 waydroid.cfg 默认段、只靠运行时注入，极难追踪
 ---
-`pgrep -f`/`pkill -f` 会匹配到自己所在的 shell 命令行（整条命令文本含目标模式），导致把自身的 bash -c 打死、命令半截没跑（2026-10-11 本会话再次踩到：`pgrep -f "waydroid session start"` 自杀）。规则：模式每个分支都写成字符组形式（`[w]aydroid`、`ttyACM[0]`），同一行不再出现未加括号的字面量，先 `pgrep -af` 只列不杀。
----
-设备侧 `scripts/q24-s123-run.sh` 曾在设备（dash/busybox sh）上跑出 `Syntax error: "(" unexpected`（行 90 的 `case ... in *active=(true*)` 与 `$((...))`）——部署到设备的脚本必须 POSIX sh 兼容，`case` 模式里别带 `(`、别用 bash 专属展开；改写完先用 `sh -n` / 在设备上 `sh script 2>&1` 冒烟。
----
 设备侧会话总线：以 root SSH 直连进用户会话总线会 `Error connecting: The connection is closed`；必须 `setpriv --reuid=1000 --regid=1000 --init-groups env HOME=/home/xuqianhui1001 XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=$DB` 才能调 org.gnome.ScreenSaver / gsd 等用户会话 D-Bus 服务。
 ---
 `org.gnome.ScreenSaver` 的 `Active` 是方法 `GetActive`（返回 `(true,)`/`(false,)`），不是属性——`busybox`/gdbus 里按属性读会报 `Error: GDBus.Error:org.freedesktop.DBus.Error.InvalidArgs: No such property "Active" (According to introspection data, you need to pass 'ss')`。
 ---
 设备侧 `qcom_camss`/`wl2868c`/`gc08a8`/`s5kjns`/`camcc_sm8750` 常被 wireplumber 持有 /dev/media0 与 /dev/video0 的 fd，rmmod 报 in use——`killall wireplumber` 后即可全部卸载（可达 v4l2_cci/camcc 均 0 的干净态）。设备无 systemctl（Alpine/OpenRC）。
 ---
-设备侧脚本部署注意 shell 差异：设备 root shell 曾是 zsh（`==` 报 `zsh:2: == not found`），脚本内 `LIB=...; case ... in *active=(true*)` 这类 bash/ash 语法在 sh（dash/busybox ash）下报 `Syntax error: "(" unexpected`。写设备脚本要么严格 POSIX sh，要么显式 bash 调用。fabric 的 pi.edit 报 "Could not find edits[1] ... oldText must match exactly" 时是 old_text 与实际文件不匹配（含空白），需重新读文件再改。
----
-设备侧滚动执行器（把 host 脚本按行喂给设备 shell）会让 `case`/`if`/函数定义跨多行/跨语句落在**两个独立 shell**中 ⇒ 报 `Syntax error: "(" unexpected` / `未预期的记号 "("`。规则：写到设备的脚本必须整文件 scp 后 `sh file` 执行，禁止把含 shell 语法的多行块逐行通过 ssh 拼接（本项目 s123/instr 脚本连续踩过）。 — Failed: q24-s123-run.sh 与临时仪表脚本多次因跨行 case 语句被设备 shell 解析失败
----
-`pkill -f <pattern>` / `pgrep -f` 会匹配到自己这条 `bash -c "..."` 命令行（命令里含 pattern 文本）从而自杀、命令半截未跑——用户 2026-10-12 明确指出「怀疑 pkill 匹配自己了」。规则：模式每个分支写成字符组（如 driver[-]log、ttyACM[0]、dev[-]stress），同一行不要再出现未加括号的字面量，再 `| grep -vw "$$"` 兜底；顺序 = 先 `pgrep -af` 只列不杀，看清目标再杀。
+pkill -f / pgrep -f 会匹配到自己这条 bash -c 命令行（命令里含 pattern 文本）从而自杀、命令半截未跑（2026-10-12 用户指认；本仓已复发 ≥7 次）。规则：模式每个分支写成字符组（driver[-]log、ttyACM[0]、dev[-]stress…）+ grep -vw $$ 兜底，先 pgrep -af 只列不杀；权威条目 = PITFALLS #148，技能 = pkill-self-match。
 ---
 serial-logger.sh（bash while 循环 cat /dev/ttyACM0）被 kill 后会遗留孤儿 `cat` 进程占住 /dev/ttyACM0 ⇒ 后续多读者/停读读者、控制台背压、读数不完整（`Device or resource busy`）。修法 = 脚本内 trap EXIT/INT/TERM 回收子进程；排查命令 `lsof /dev/ttyACM0`。
 ---

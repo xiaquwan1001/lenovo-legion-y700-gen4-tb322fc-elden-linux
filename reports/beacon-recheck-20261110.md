@@ -1,5 +1,10 @@
 # UEFI「落盘信标」线独立复核 — 2026-11-10
 
+
+<!-- pitfalls-entries -->
+> **本报告承载的 PITFALLS 条目正文锚点**（索引行在 `PITFALLS/README.md`；此处给 #NNN 定义，避免索引悬空）：
+> `#587`、`#589`
+
 复核人：独立子代理（只读；未用 fastboot，仅 2 条 ssh 只读命令核实分区现状）。
 材料：`reports/artifacts/uefi-p63-flash-20261109/`、`reports/artifacts/uefi-p62-flash-20261109/`、
 `patches/uefi/20261109R64..R67/`、`patches/uefi/p63/p65/p66-recipe.txt`、

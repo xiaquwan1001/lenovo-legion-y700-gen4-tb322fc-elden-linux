@@ -2,7 +2,7 @@
 
 - boot.img 打包用 `scripts/mkbootimg.py`（v2 头，pack/unpack/--selftest）：magic `ANDROID!`、name@48、cmdline@64、id@576（20B sha1 必须补零到 32B）、header_size=1660；ramdisk 可从基线 boot_b 原位抽。
 - Q28 判据：GOOD = `L1=0` + `dsi_isr=41` + card0-DSI-1 connected + dmesg `panel prepared: scheduling firmware upload`；BAD 含 `command DMA timeout: status=0x2200200` / `bonded ... master=-110 peer=-110` / `dcs data ff 20 failed: -110 或 -5`。坏发按会话成簇，软件 reboot 不解除，只有真 POR 能恢复。
-- 桌面/熄屏判据：`/sys/class/drm/card0-DSI-1/dpms` 是 0644 只读、写入需 ~2.5s 生效 → 必须带延时 + 回读校验，否则整轮样本是假 INVALID-NO-BLANK；判桌面在不在要抓帧看亮度，不能只看 pgrep phoc。
+- 桌面/熄屏判据：`/sys/class/drm/card0-DSI-1/dpms` 在本机是 0444 只读（`-r--r--r--`，root 也写不进，echo 失败常被 ssh 吞掉），所以熄屏只能走 ScreenSaver.SetActive 且**必须读回校验 On→Off 跃迁**，否则整轮样本是假 INVALID-NO-BLANK；判桌面在不在要抓帧看亮度，不能只看 pgrep phoc。机理与权限值详见 PITFALLS #456（同坑另记 #294）。
 - 冷起无桌面根因 = greetd 崩溃 → initd 补 `after seatd elogind` + 交给 `supervise-daemon` 托管；应急旁路 `setsid /usr/sbin/greetd --config /etc/greetd/config.toml ... &`。
 - M1-7.3 内核重放 = 7.3-rc7(`24a19b953`) + payload v2（**取 vk64 树**）+ 上游 `PLL_SYSTEM_MUXES` → 稳定 16 个冲突；DTB 保真判据 = `sm8750-lenovo-elden.dtb` 153101 B 与基线相同、仅剩 q6apm/q6prm 8 行差异；资产 `patches/replay-2026-10-17/`。
 - a 槽跑自研件卡 logo = 原厂 `dtbo_a` 的 Android DTBO 被 ABL 合进我们的 DTB → `truncate -s 33554432` 全 0 刷 dtbo_a（`scripts/uefi-a-slot-prepare.sh`）；判槽不能看 `androidboot.slot_suffix`（boot.img 头烤死 `_b`），要在 cmdline 埋唯一标记。

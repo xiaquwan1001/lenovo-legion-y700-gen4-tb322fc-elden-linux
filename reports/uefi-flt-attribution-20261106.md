@@ -1,5 +1,10 @@
 # 2026-11-06 夜·第二轮：崩溃 PC 归因成功 —— **PC 在 `LinuxLoader` 自己的 `SerialPortWrite` 里**，「第三方二进制驱动」判断作废
 
+
+<!-- pitfalls-entries -->
+> **本报告承载的 PITFALLS 条目正文锚点**（索引行在 `PITFALLS/README.md`；此处给 #NNN 定义，避免索引悬空）：
+> `#527`、`#528`、`#529`、`#530`、`#531`
+
 > 两发零写盘（p25 / p26），把 `Synchronous Exception` 的 PC 从「一个数字」变成「模块 + 函数」。
 > 权威判据：屏上单行 `[K] FLT pc=cfeb5c84 img=- b=cfea2000 z=45000 o=13c84`。
 

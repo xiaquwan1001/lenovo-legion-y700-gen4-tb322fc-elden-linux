@@ -10,8 +10,7 @@
     **旧脚本 `scripts/sleep-sweep.sh` 里 root 直连的写法在新会话形态下会静默失效 ⇒ 假样本**：
     任何「熄屏类」自动化必须先做 `PATHCHECK`（实测 `dpms` 真变 Off 再变 On）再开始计数。
 141. **root 写 `/sys/class/drm/card0-DSI-1/dpms` = `Permission denied`（DRM 拒绝，和 uid 无关）**：
-    所以熄屏**没有 sysfs 退路**，唯一真实路径是会话总线 `ScreenSaver.SetActive`（`modetest -w :DPMS:` 也是空操作，
-    见 G1-22 记录）。判「有没有画面」用 `dpms` + dmesg `vblank timeout`，不要用亮度节点（背光在坏发里也亮）。
+    熄屏**没有 sysfs 退路**，唯一真实路径是会话总线 `ScreenSaver.SetActive`；权限值与机理见 **#456**（同坑另记 #294）。判「有没有画面」用 `dpms` + dmesg `vblank timeout`，不要用亮度节点（背光在坏发里也亮）。
 142. **`iio-sensor-proxy` 的能力属性挂在管理器对象本身**：`/net/hadess/SensorProxy` 上的
     `HasAccelerometer / HasAmbientLight / HasProximity / AccelerometerOrientation`（罗盘另在
     `/net/hadess/SensorProxy/Compass`）。**不存在** `net.hadess.SensorProxy.Accelerometer` 接口，

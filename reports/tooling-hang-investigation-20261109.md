@@ -1,5 +1,10 @@
 # 工具挂死调查：ssh+fastboot 复合命令整条挂住、timeout 失效（2026-11-09）
 
+
+<!-- pitfalls-entries -->
+> **本报告承载的 PITFALLS 条目正文锚点**（索引行在 `PITFALLS/README.md`；此处给 #NNN 定义，避免索引悬空）：
+> `#585`
+
 ## 现象
 
 本会话两次实例（命令形态相同）：

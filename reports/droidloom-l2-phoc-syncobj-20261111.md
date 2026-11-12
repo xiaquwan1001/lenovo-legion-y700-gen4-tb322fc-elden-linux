@@ -1,5 +1,10 @@
 # C12 L2：phoc 广告 `wp_linux_drm_syncobj_manager_v1`（主机侧全链打通 + aarch64 产物就位）
 
+
+<!-- pitfalls-entries -->
+> **本报告承载的 PITFALLS 条目正文锚点**（索引行在 `PITFALLS/README.md`；此处给 #NNN 定义，避免索引悬空）：
+> `#609`、`#610`、`#612`、`#613`
+
 - 日期：2026-11-11
 - pi 会话 id：本段（关键词「继续中断或未完成的任务，检查待办」）
 - 主题：把 droidloom 的合成器缺口（phoc 从不创建 linux-drm-syncobj 全局）从「一行 + 重编」推进到

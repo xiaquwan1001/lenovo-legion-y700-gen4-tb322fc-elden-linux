@@ -1,5 +1,7 @@
 ## #525 `eldroid-bootctl reboot bootloader` 可能卡死 Linux；UEFI 实验失败会让 **ABL 写槽位 retry**
 
+**已被 #542 取代（同一故障；看门狗已落地）**；本条只保留第 2 段「ABL 会自己写槽位 retry（`boot_b` 7→6）」这一独立事实。
+
 日期 2026-11-06 · pi 会话 id 见 `.pi/sessions/` · 主题 UEFI(G1-29) 实验的操作面副作用
 结论 ① Linux→ABL 的 `eldroid-bootctl reboot bootloader` **偶发在关机路径卡死**（需物理重启）；
 ② UEFI 载荷崩掉后，**ABL 自己会写 GPT 槽位元数据**（实测 `boot_b` retry 7→6），"零写盘"只对 agent 动作成立。

@@ -24,9 +24,8 @@
     解法：从 `/usr/share/gnome-session/sessions/phosh.session` 的 `RequiredComponents` 里删掉 `org.gnome.SettingsDaemon.Power`
     （原文件备份 `phosh.session.orig`）。
 
-52. **★ `pkill -f <模式>` 会匹配到自己的 ssh 命令行**：远程执行的 `sh -c '... pkill -f gnome-session-failed ...'`
-    里本身含该字符串 → pkill 杀死自己的 shell（甚至整个会话，导致 phoc/phosh 一起退出）。
-    用 **`pkill -x <精确进程名>`**，或把脚本写成文件再跑，绝不在 `-f` 模式里包含自己命令行的文本。
+52. **★ `pkill -f <模式>` 会匹配到自己的 ssh 命令行** ⇒ 见 **#148**（同族，含 ssh 场景与技能 `pkill-self-match`）。
+    - 规避：用 **`pkill -x <精确进程名>`**，或把脚本写成文件再跑，绝不在 `-f` 模式里包含自己命令行的文本。
 
 53. **Phosh 会话起来后要的东西**：`udevd`（libinput 认触屏，否则 phoc 报无设备）、`seatd`（libseat 拿 DRM/输入 seat）、
     `XDG_RUNTIME_DIR` 指向专用目录。启动脚本见 `scripts/start-desktop.sh`。

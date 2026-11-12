@@ -112,9 +112,17 @@ class Indicator(Gtk.Window):
         state = remote()
         name = remote("-n")
         # state: 2=active(中文) / 1=inactive(英文) / 0=closed（fcitx5 不接管按键，等价英文）
-        if state == "2":
-            text = "中" if name != "rime" else "中·rime"
-        elif state in ("1", "0", ""):
+        # ★2026-11-12 实测定案（vk184/Debian 根，双 IM profile rime+keyboard-us）：
+        #   fcitx5-remote 的 state 与当前 IM 是错位绑定的：state=1 ↔ rime（中文），
+        #   state=2 ↔ keyboard-us（英文）——与「2=active=中文」的直觉相反。
+        #   实测序列：start(2, keyboard-us) → toggle → (1, rime) → toggle → (2, keyboard-us)。
+        #   根因线索：新 IC 永远拿 profile Items/0（现在是 rime），state 只是切焦点计数错位。
+        #   判定中英文以 **当前 IM 名字（-n）为准**：含 rime=中文，否则英文。
+        if name == "rime":
+            text = "中·rime"
+        elif name and name != "keyboard-us":
+            text = "中·" + name
+        else:
             text = "EN"
         if self.label.get_text() != text:
             self.label.set_text(text)

@@ -77,6 +77,8 @@ handle_text_input_enable (...)
 
 ## #617 GRUB→EFI-stub 直启在本板「60–70 s 硬件掉电」，墙在我们这套 UEFI 件、不在机型/GRUB
 
+> ⚠️ **本条「60–70 s 硬件掉电」的判读已被 #620 否证（2026-11-11 深夜）**：三臂日志均为 ramoops oops + panic（`persistent_ram_write`←`ramoops_pstore_write`），非硬件掉电；「pstore 空 + 无 watchdog + uptime 归零」三判据不足以排除 panic。本条**仍成立**的部分 = ①「不能对外说本平台原理上不能 EFI-stub 直起」（PR #820 反证）②GRUB 2.14 无 arm64 EFI-stub 捷径 ③`efi=noruntime` 是最省的第一发。取证的当前口径见 **#620**。
+
 - **判据链（2026-11-11 三发一致）**：不是 panic —— `/sys/fs/pstore/` 为空（E4 已补 `record-size`）、
   `dmesg` 明确 `Hard watchdog permanently disabled` 且无 `/dev/watchdog`、下次起机 `uptime` 归零（冷上电）。
   `initcall_debug` 那发文字持续 100 s 量级（`earlycon=efifb` 逐行写像素 ≈45 ms/行）⇒ 内核在 EFI 路径下**能走完数百个

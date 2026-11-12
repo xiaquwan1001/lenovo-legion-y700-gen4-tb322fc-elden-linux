@@ -24,6 +24,7 @@
      ⇒ 规则：模式里**所有**分支都写成 `dev[-]stress` 这种字符组形式（字面量分支如 `cat /dev/ttyACM0`
      也要写成 `ttyACM[0]`），并且 `| grep -vw "$$"` 兜底；**同一行不要再出现任何未加括号的字面量**
      （第二次栽的就是行尾另一处 `... | grep ttyACM0`）。安全顺序：先 `pgrep -af` 只列不杀，看清目标再杀。
+     ★ 本条为 `pkill -f` 自匹配自杀的**权威条目**，已收编 #30/#52/#179 与 `.pi/memory/failures-device.md` 全部副本（2026-11-12 去重审计 §A1）。
 149. **会在设备上产生用户可见动作的脚本，必须自己兜底清理**：主机侧 `timeout`/Ctrl-C 杀掉 ssh 时，
      设备侧循环不受影响 ⇒ 平板被留在「反复亮暗 + 桌面刷 tick」的状态。`gui-stress.sh` 已加
      `trap cleanup EXIT INT TERM`（回去 `pkill -f "dev[-]stress"` + `pkill -x foot|btop|chromium`）

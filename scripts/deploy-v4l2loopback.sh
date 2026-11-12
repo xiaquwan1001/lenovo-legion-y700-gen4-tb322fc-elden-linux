@@ -16,7 +16,7 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 TARGET=${TARGET:-root@192.168.7.1}
 SSH_OPTS=${SSH_OPTS:--o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null}
-KSRC=${KSRC:-$ROOT/build/vk151}
+KSRC=${KSRC:-$ROOT/build/daily}
 SRC=$ROOT/build/extmod/v4l2loopback
 PATCH=$ROOT/patches/extmod/0001-v4l2loopback-min-4-buffers.patch
 PATCH2=$ROOT/patches/extmod/0002-v4l2loopback-mjpeg-sizeimage-2bytes.patch

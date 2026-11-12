@@ -1,5 +1,10 @@
 # Waydroid 网络现状定案 + droidloom 可行性复评（2026-11-10，设备实测）
 
+
+<!-- pitfalls-entries -->
+> **本报告承载的 PITFALLS 条目正文锚点**（索引行在 `PITFALLS/README.md`；此处给 #NNN 定义，避免索引悬空）：
+> `#603`、`#604`、`#605`、`#606`、`#607`、`#608`
+
 - **lane**：本会话（droidloom × Waydroid）。设备在线（USB-NCM `192.168.7.1`，`7.3.1-debug-vk184-00002`）。
 - **纪律**：只读为主；唯一写动作 = 设备 `/etc/subuid`/`subgid` 加一条 100000 的连续区间（可回退）、
   设备 `/opt/dl-test` 摊开一个 6.6 MB runtime 包、设备装 `wayland-utils`（读 registry 用）。

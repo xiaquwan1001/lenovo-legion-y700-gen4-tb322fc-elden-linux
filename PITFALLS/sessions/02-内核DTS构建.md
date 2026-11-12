@@ -1,9 +1,6 @@
 ## 二、内核 / DTS / 构建
 
-9. **`make olddefconfig` 会删掉 `CONFIG_ARCH_QCOM` 整行！** 改 `.config` 后**绝不**跑它。
-   用 `scripts/config -e/-d` 后直接 `make`，并每次 `grep ^CONFIG_ARCH_QCOM= .config` 验证。
-   （`scripts/build-kernel.sh` 已内置校验；根目录兼容包装 `build.sh`/`iterate.sh`/`pack.sh` 已删除。）
-   ⚠ **收窄（#162）**：`olddefconfig` 不止手动跑——`apply-kernel-fragment.sh` 合并片段后会**自动**跑它并删 `ARCH_QCOM`（致 vk81/82/83 无 QCOM 驱动的死内核）。原 `grep ^ARCH_QCOM` 守卫只**编前**查、有漏；现已升级为**编后符号守卫**（缺 gcc_sm8750/msm_dsi_host_bonded_cmd_trigger/rpmh → exit 1）+ 片段后回钉。详见 #162。
+9. **`make olddefconfig` 会删掉 `CONFIG_ARCH_QCOM` 整行（7.2 血统）** ⇒ 机制、判据、守卫与 2026-11-10 后的「已不复现」范围，**一律以 #162 为准**（含 7.3 树的收窄，见 #605）。
 
 9b. **★ 编内核忘了 `export ARCH=arm64` 会毁掉 `.config`**（2026-09-30 实际踩到）：
   裸跑 `make Image.gz dtbs` 时 Kbuild 按**宿主机**（x86_64）解析，把 arm64 的 `.config` 当垃圾、

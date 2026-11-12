@@ -24,7 +24,7 @@ fastboot boot 失败会让 current-slot 翻到 b，而 b 槽引导链是另一�
 ---
 LZMA 解压出的 FFS type 0xb section 报告 "suspicious header" 属于正常现象（EDK2 卷常见），不要当构建错误排查。
 ---
-Mu/EDK2 的 stuart 依赖来自 Azure DevOps 内网 feed（pkgs.dev.azure.com/projectmu/*），不是 nuget.org。mono 的 nuget.exe 直接解析该 feed 会 TLS/证书失败；可靠做法：用 curl -x http://127.0.0.1:7897 直接抓 nupkg，再用 nuget 本地目录源（Feeds used: <本地目录>）喂给 stuart。 — Failed: 在本机配置 mu_wide_platforms 本地编译链时，mono+TLS 无法访问 Azure feed，且直连 flatcontainer 的 URL 返回 404（需从 service index 解析出真实 flat2 GUID URL）
+Mu/EDK2 的 stuart 依赖来自 Azure DevOps 内网 feed（pkgs.dev.azure.com/projectmu/*），不是 nuget.org。mono 的 nuget.exe 直接解析该 feed 会 TLS/证书失败；可靠做法：现查代理端口（`curl -s 127.0.0.1:9090/configs | jq -r '.mixed-port'`，旧记录里的 7897 已退役）后 `curl -q --noproxy '' -x http://127.0.0.1:$MP` 直接抓 nupkg，再用 nuget 本地目录源（Feeds used: <本地目录>）喂给 stuart。 — Failed: 在本机配置 mu_wide_platforms 本地编译链时，mono+TLS 无法访问 Azure feed，且直连 flatcontainer 的 URL 返回 404（需从 service index 解析出真实 flat2 GUID URL）
 ---
 EDK2/Mu 本地构建时若出现大量 'Compiler #7000 from : Failed to execute command'，通常是 toolchain 环境变量（CLANGPDB_BIN / CLANGPDB_AARCH64_PREFIX）没导出到 stuart_build 的环境里，而非编译器缺失；确认 /usr/lib/llvm-21/bin 下有 clang/clang++/ld.lld/lld-link/llvm-ar/llvm-lib/llvm-nm/llvm-objcopy/llvm-rc 后带 env 再跑即可。同一平台本地全量构建 DEBUG 约 237s。 — Failed: 本地 stuart_build 首轮失败，日志只有无信息的 Compiler #7000
 ---
@@ -660,25 +660,15 @@ geekidos-linux 是浅克隆 ⇒ 对已存在的 tag（vk81/vk82/vk83）`git fetc
 ---
 geekidos-linux 是浅克隆（.git/shallow），fetch 已有 ref 会被拒（`warning: 拒绝 refs/tags/vk81 因为浅克隆的根不允许被更新`，rc=128），`git fetch <hash>` 报 `无法找到远程引用`/`Not a valid object name`。替代做法 = 建本地 worktree/克隆做**文件级差分**（`git worktree add build/vk83-tree vk83`），不要试图 fetch。 — Failed: 浅克隆仓库不能 fetch 新 ref；payload 取源必须靠本地 worktree 文件对比
 ---
-换机后 out/ 里的 ramdisk cpio 与 tools/mkbootimg 全部丢失（MIGRATION-LOST），且本机 python3 **没有 pip / 没有 mkbootimg 模块**（`ModuleNotFoundError: No module named 'mkbootimg'`，/usr/bin/python3 无 pip）。可行路径：① 从抢救回来的基线 boot_b 镜像原位抽出 ramdisk（boot.img v2 头 magic 'ANDROID!'、page 4096、kernel_size=20799275、ramdisk_size=64622358，kernel 偏移 4096、ramdisk 紧随 kernel 之后）——这就是能用的那个 ramdisk；② 自研 boot.img v2 头打包器放 tools/mkbootimg/mkbootimg.py，用「复刻基线镜像逐字节比对」做自校验。 — Failed: 迁移丢失 + 无 pip 环境下打包 boot.img
----
-手写 Android boot.img v2 头极易把字段顺序写错：正确布局（在 8s magic + 10 个 u32 之后）是 name[16], args[512], id[32], extra_cmdline[1024]，随后才是 recovery_dtbo_size(u32), recovery_dtbo_offset(u32), header_size(u32), dtb_size(u32), dtb_addr(u64)。实测把 `header_size`/`dtb_size`/`dtb_addr` 排在 1632 而非 1644 就会 selftest FAIL（`first diff at byte 1632: 00 != 7c`）。本机内核用 v2 头，header_size=1660（0x67c），dtb_size=300，dtb_addr=0x01f00000。调试提示：`ljust(PAGE)` 若用错 PAGE 变量会出现 4084 而非 4096 的诡异长度。 — Failed: 自研 mkbootimg selftest 连续两轮在字节 1632/1644 失败——v2 header 尾部字段偏移写错
----
-本机（换机后 xuqianhui）out/ 的 ramdisk cpio 与 tools/mkbootimg 已随迁丢失（MIGRATION-LOST），但**可从已抢救的基线 boot_b 镜像原位抽出 ramdisk**：boot.img v2 头（魔法 'ANDROID!'、page 4096、kernel_size/ramdisk_size 在头里），kernel 偏移 4096，ramdisk 紧随 kernel 之后（内层是 gzip：1f8b0800）。python3 无 pip 时需自研打包器。另：`scripts/build-boot.sh`/`assert-kernel-sane.sh` 的默认内核路径是 `linux/arch/arm64/boot/Image.gz`（linux → geekidos-linux 符号链接），in-tree 构建（LOCALVERSION=-vkNN）与 out-m1-73 外置构建是两套，闸门只查前者。
----
-`fastboot boot` 启动自定义 boot.img 时，`/lib/modules/<新UTS>` 必须先在设备上就位——否则内核起来后 modules 全空（lsmod 零条），DP PHY/altmode 等 deferred，msm DPU 组件不齐永不 bind ⇒ 无 card0，会被 Q28 看门狗判成「坏发」而误归因。实测 2026-10-17 vk127：s1/s2 缺模块树 = 无 card0；装上 1497 个 .ko（85M，zstd/tgz 流式传）后 s3 立即 bind（msm_dpu bound ae94000/ae96000.dsi）并出现 card0。判据：boot 后先查 `lsmod | wc -l` 与 `/dev/dri`。
+boot.img v2 头打包/解包正解 = scripts/mkbootimg.py（pack/unpack/--selftest）；丢失根因 = /tools/ 在 .gitignore:15（换机后 out/ 的 ramdisk cpio 与 tools/mkbootimg MIGRATION-LOST，可从抢救的基线 boot_b 镜像原位抽出 ramdisk：kernel 偏移 4096、ramdisk 紧随其后）。头字段坑：id 槽 20B sha1 必须补零到 32B、name@48/cmdline@64、header_size=1660。权威账 = MEMORY.md 的 mkbootimg 条 + PITFALLS 的 boot.img 打包条目。
 ---
 自研 boot.img v2 头打包器的两个必踩字节级坑（2026-10-17 实测）：① AOSP 把 20 字节 sha1 digest 补零填进 32 字节 id 槽——直接 `hdr[576:608] = digest` 会让整个 header 缩 12 字节，所有后续字段错位（header_size/dtbsz/dtba 全落到错误偏移）；必须 `digest + b'\0'*12`。② 用 `bytearray` 分段 seek/write 容易出隐性 bug，改为「内存拼装完整镜像再一次写出」。自校验方法 = 用两个真实镜像（boot_b-m1-baseline-f3 / boot_b-before-vk94）逐字节复刻比对。
 ---
-Q28 判读时「无 card0」不等于 Q28 坏发：须先排除「模块树缺失导致 DPU 不绑定」这类构建侧缺件。诊断顺序：`lsmod` 条数（空=模块树没上）→ `dmesg | grep 'bound ae94000.dsi'`（缺=DPU 未绑）→ 再看 L1 签名。
----
-RAM 启动（`fastboot boot`）自编内核而不先部署 `/lib/modules/<新UTS>` ⇒ `lsmod` 空（所有 modprobe 静默失败）⇒ DP PHY/altmode 缺 ⇒ DP 控制器永久 defer ⇒ DPU 不绑定 ⇒ 无 `card0`；Q28 看门狗会按 `card=no` 在 ~85s 自动重启，表现为伪 Q28 坏发。诊断信号：`/sys/kernel/debug/devices_deferred` 里有 displayport-controller；dmesg 无 DPU bound 行。判据：换任何新 UTS 内核后，先部署 1497 个 .ko（85M）再评显示。2026-10-17 vk127 s1/s2 两次踩坑，s3 部署模块树后正常。已写 PITFALLS #293（sessions/40-RAM起新内核不部署模块树就没有DRM.md）。 — Failed: 缺模块树导致无 card0，被看门狗误判 Q28 坏发
+RAM 起自编内核（fastboot boot）前必须先部署 /lib/modules/<新UTS>（1497 个 .ko ≈85M），否则 lsmod 空、modprobe 静默失败、DP PHY/altmode 缺、DP 控制器永久 -EPROBE_DEFER、DPU 组件集不齐 ⇒ 无 card0（症状伪装成 Q28 坏发，2026-10-17 vk127 s1/s2 两次踩坑）。判据顺序 = ① lsmod 条数（空=模块树没上）② dmesg | grep 'bound ae94000.dsi' ③ 才看 L1 签名。权威 = PITFALLS 四十节（#293）；AGENTS.md 项目记忆第 3 条为常驻口径。
 ---
 在 Q28 坏发 boot 上仍可做相机/无显示依赖的验收：本次在 Q28 BAD（`boot_id=26262eee…`、dsi_isr=0、Q28sig 逐发递增 4→9）的会话里，相机前/后摄照样出流并抓到真实场景图。反过来，Q28 坏发态下用户无法用屏幕手动拍照，因此人工目视验收要另设通路（agent 侧抓帧转 PNG 给用户看）。 — Failed: 曾默认「Q28 坏发 ⇒ 显示栈废 ⇒ 相关实验作废」，实际只有显示相关项作废
 ---
 设备侧 `dpms` 控制口不可写：`/sys/class/drm/card0-DSI-1/dpms` 是 `-r--r--r--`（只读），直接 echo Off 会 `Permission denied` 且静默保持 On（表现为「dpms On→On，没灭屏」的 INVALID-NO-BLANK 轮次）。设备侧真灭屏必须走会话总线（`busctl set-property … org.gnome.Mutter.DisplayConfig PowerSaveMode`）或内核 DPMS 路径；脚本要区分 A（ddcci/dbus）/K（kernel）两种臂并显式校验 On→Off 真跃迁，否则整轮样本是假阴性。 — Failed: 2026-10-17 N7 实验 ARM-K 6 轮全部 On→On 无效，重写脚本后才拿到真实跃迁
----
-RAM 启动自编内核（`fastboot boot`）前若没把对应 UTS 的 `/lib/modules/` 部署到持久根，会 `lsmod` 空 ⇒ DP PHY/altmode 模块缺 ⇒ DP 控制器永久 `-EPROBE_DEFER` ⇒ DPU 组件集不齐 ⇒ 无 `card0`，Q28 看门狗 84.9s 后按 `card=no` 自动重启 —— 极易误判成「Q28 又坏一发」。判别：Q28 坏发一定有 card0，且首条 DCS/`command DMA timeout` 签名。 — Failed: 2026-10-17 vk127 s1/s2 两次踩坑（后部署 1497 个 .ko 后 s3 起正常）
 ---
 Q28 与 Q24 在当前实验条件（vk127 / 7.3 线）互不构成混杂：GOOD 态与 BAD 态各跑 6 次「完整 19 模块相机栈 + 真实灭屏 30s」全部存活（boot_id 全程不变），7.3 线累计 30 发存活，而 vk64 线仍是 1 死/2 发 ⇒ 显示态不是 Q24 的判别量，血统才是候选变量。以后不必为「Q28 坏发会污染相机/Q24 结果」而停实验。 — Failed: 此前长期担心 Q28 显示态会污染 Q24 判读
 ---

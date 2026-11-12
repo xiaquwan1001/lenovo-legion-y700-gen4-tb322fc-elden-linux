@@ -113,7 +113,9 @@ for rel, lim in (('PITFALLS/README.md', 800),):
     if not os.path.isfile(p):
         continue
     for i, ln in enumerate(open(p, encoding='utf-8', errors='replace'), 1):
-        if ln.startswith('|') and 'sessions/' in ln and len(ln.encode()) > lim:
+        # 2026-11-12 去重审计 C-1：长度门不再要求行内含 `sessions/`——指向 ../reports/ 的
+        # 索引行同样是「结论堆进索引」，必须一并受 800B 门约束。
+        if ln.startswith('|') and '](' in ln and len(ln.encode()) > lim:
             IDXROW.append('%s:%d 索引行 %d B > %d' % (rel, i, len(ln.encode()), lim))
 
 # ---- 8d. PITFALLS 正文条目编号必须是 `#NNN` 且全局只定义一次 ----
@@ -137,6 +139,15 @@ for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
             m = re.match(r'^(\d{1,3})\.\s+\*\*', line)
             if m:
                 pnum.setdefault(m.group(1), set()).add(os.path.basename(f))
+        # 未受管的标题形式（`## 286. …`、`# 53. …`）：数字前没有 #，历史上让 9 条真条目对
+        # 门禁隐形，并造成 #53/#192/#282–#285 六处跨文件撞号无人报（2026-11-12 审计 C-0/C-4）。
+        # 只收 ≥10 的号：`## 1. …`–`## 6. …` 是大量旧文件内的**小节序号**（48/50/59/66/70/161/173/180
+        # 等都是），不是全局条目号，收进来会制造假撞号（2026-11-12 执行时实测）。
+        m2 = re.match(r'^#{1,4}\s+(\d{2,3})\.\s', line)
+        if m2:
+            pnum.setdefault(m2.group(1), set()).add(os.path.basename(f))
+            dupnum.append('PITFALLS 条目 #%s 标题形式未受管（应写 "## #%s …"）: %s'
+                          % (m2.group(1), m2.group(1), os.path.relpath(f, root)))
 for num, files in sorted(pnum.items(), key=lambda kv: int(kv[0])):
     if len(files) > 1:
         dupnum.append('PITFALLS 正文 #%s 被多处定义 (%s)' % (num, ' | '.join(sorted(set(files)))))
@@ -157,11 +168,39 @@ for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
         if m:
             pdef_all.setdefault(m.group(1), set()).add(base)
 idxnums = set()
+idxrows_reports = set()   # 指向 ../reports/ 的索引行里的 #NNN（正文在专题报告，不在 sessions）
 for ln in open(os.path.join(root, 'PITFALLS', 'README.md'), encoding='utf-8', errors='replace'):
-    if ln.startswith('|') and 'sessions/' in ln:
-        idxnums |= set(re.findall(r'#(\d{1,3})\b', re.sub(r'`[^`]*`', 'X', ln)))
-DANGLING = ['PITFALLS 索引 #%s 无正文定义' % n
-            for n in sorted(idxnums, key=int) if n not in pdef_all]
+    # 2026-11-12 去重审计 C-2：悬空门不再要求行内含 `sessions/`——指向 ../reports/ 的
+    # 索引行里的 #NNN 同样要有正文定义（2026-11-12 基线：36 行指向 reports/）。
+    if ln.startswith('|') and '](' in ln:
+        nums = set(re.findall(r'#(\d{1,3})\b', re.sub(r'`[^`]*`', 'X', ln)))
+        idxnums |= nums
+        if '../reports/' in ln:
+            idxrows_reports |= nums
+# 2026-11-12 执行收尾：正文只在专题报告（reports/*.md）的条目，不算悬空——但必须显式降为 WARN，
+# 不能静默放过（那正是本次审计 §C-1 抓的「索引变成正文替代品」）。判据 = 该 #NNN 在任一
+# reports/*.md 里以 `#NNN` 形式出现。
+def _defined_in_reports(num):
+    import glob as _g
+    pat = re.compile(r'#%s\b' % re.escape(num))
+    for rp in _g.glob(os.path.join(root, 'reports', '*.md')):
+        try:
+            if pat.search(open(rp, encoding='utf-8', errors='replace').read()):
+                return os.path.basename(rp)
+        except OSError:
+            pass
+    return None
+
+DANGLING = []
+REPORTS_ONLY = []
+for n in sorted(idxnums, key=int):
+    if n in pdef_all:
+        continue
+    where = _defined_in_reports(n)
+    if where:
+        REPORTS_ONLY.append('PITFALLS 索引 #%s 正文在专题报告 %s（无 sessions 条目；补正文或标 RETIRED）' % (n, where))
+    else:
+        DANGLING.append('PITFALLS 索引 #%s 无正文定义' % n)
 
 _RESULTS = []
 
@@ -174,6 +213,7 @@ emit('TAIL', tail)
 emit('ORPHAN', orphan)
 emit('DUPNUM', dupnum)
 emit('DANGLING', DANGLING)
+emit('REPORTS_ONLY', REPORTS_ONLY)
 
 # ---- 8b. 写死在文档里的「N 节 / N 条」计数必须与磁盘实际条数一致 ----
 # 依据：2026-10-15 实测 INDEX.md 写「PITFALLS §0 + 33 节索引」，而实际已 36 节——
@@ -265,6 +305,10 @@ MSG = {
     'DUPNUM': ('bad', '文件名/条目编号无撞车', '编号撞车（引用歧义，必须重编）'),
     'DANGLING': ('bad', 'PITFALLS 索引 #NNN 均有正文定义',
                  'PITFALLS 索引悬空（正文缺 #NNN 锚点，或正文标题用文件序号式）'),
+    # 2026-11-12：正文只在 reports/ 专题报告里的条目单列 WARN——不许静默放过（那正是
+    # 审计 §C-1 抓的「索引变成正文替代品」），也不升级为 FAIL（事实已在报告里落盘）。
+    'REPORTS_ONLY': ('warn', 'PITFALLS 索引条目均有 sessions 正文',
+                     '索引条目正文只在专题报告（无 sessions 条目；补正文或标 RETIRED）'),
     'STALECOUNT': ('bad', '文档内手写条目计数与磁盘一致',
                    '文档手写计数已过期（改为不写死数字，或同步修正）'),
     'IDXROW': ('bad', '索引行长度合规（结论只在正文，索引只放一句话主题）',
@@ -277,7 +321,7 @@ MSG = {
 GROUPS = [
     ('== 7. 入口文档完整性（围栏 / 截断 / 机器指针）==', ['FENCE', 'LEAK', 'TAIL']),
     ('== 8. 索引↔磁盘对账（编号撞车=硬错 / 索引覆盖=仅声明角度）==',
-     ['ORPHAN', 'DUPNUM', 'DANGLING', 'STALECOUNT', 'IDXROW', 'TBL', 'ORPHANR']),
+     ['ORPHAN', 'DUPNUM', 'DANGLING', 'REPORTS_ONLY', 'STALECOUNT', 'IDXROW', 'TBL', 'ORPHANR']),
 ]
 _res = dict(_RESULTS)
 if _TSV:

@@ -7,6 +7,7 @@
    2026-09-29 实测：`current-slot=b` 卡动画，仅 `fastboot --set-active=a` + `fastboot reboot` 就完好进系统、数据无损。
    **所以「进不去 Android」第一步 = 切另一个槽试试，别急着重刷/清数据。** a/b 都试一遍。
    ⚠️ **主语**：`--set-active` 属设备写操作，按 `.pi/AGENT-OPS.md` §1「先备份 GPT + 记当前 slot 再执行」；不再限定谁执行。
+   ⚠ **口径（#114 / §15.1）**：本条只适用于「Android 卡启动动画、数据完好」的**恢复**场景（现场取证：切槽即好）。**不得**把它读成「进 fastboot / 日常切槽用 `--set-active`」——那条规则已作废（会动在用的 b 槽 active），读状态与 mark-successful 用 `qbootctl`/`scripts/slot-attr.py`（#126/#133），见 `13-AVB免签KSU.md` 的作废行。
 
 2. **内核 `reboot` 后总落 fastboot，是 ABL 的正常回退**，不是故障：
    - ABL 对**当前 Android 槽**做 AVB 校验，`boot_b` 公钥不匹配 / `dtbo_b` hash 不匹配 → 无法启动 → 回退 **fastboot**。

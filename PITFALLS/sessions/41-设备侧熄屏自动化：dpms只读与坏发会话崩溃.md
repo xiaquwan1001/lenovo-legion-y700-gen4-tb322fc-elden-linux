@@ -5,6 +5,8 @@
 
 ## #294 `/sys/class/drm/card0-DSI-1/dpms` 是**只读**的（`-r--r--r--`），root 也写不进
 
+机理与权限值见 #456；本条只保留判据 = 必须读回并校验 On→Off 跃迁。
+
 - **现象**：`echo Off > /sys/class/drm/card0-DSI-1/dpms` → `bash: … Permission denied`；
   随后读回仍是 `On`。
 - **后果**：想「不依赖桌面会话、直接用内核 DPMS 制造显示断电」的做法在本机**不可行**。
@@ -13,7 +15,7 @@
   2. `modetest`/libdrm ioctl（要单独装工具）。
 - **坑中坑**：写失败时 `echo` 的退出码在一个 `ssh '…'` 串里容易被吞掉，于是 harness 若只看
   「命令发出去没报错」就会把 `On->On` 当成「已熄屏」⇒ **假阴性**。
-  ⇒ 熄屏必须**读回 `dpms` 并校验 `On -> Off` 跃迁**，否则该发记 `INVALID`（见 `#288` 的假 ALIVE 教训）。
+  ⇒ 熄屏必须**读回 `dpms` 并校验 `On -> Off` 跃迁**，否则该发记 `INVALID`（假 ALIVE 的实测现场与 `boot_id` 判据 = 四十节 N2'/N3 处置段；「死活唯一可信判据 = `/proc/sys/kernel/random/boot_id`」的账已记在 `.pi/memory/MEMORY.md`，**旧引用 `#288` 从未建条目，停用**）。
 - **附带**：`dpms` 只读但 `status`/`enabled` 正常可读，判断连接器状态不受影响。
 
 ## #295 Q28 坏发 boot 上的 `phoc` 会 crash-loop，约 3 分钟后才稳定

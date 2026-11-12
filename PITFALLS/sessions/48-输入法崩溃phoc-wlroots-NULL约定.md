@@ -112,7 +112,7 @@ gdb -p $(pgrep -x phoc) -batch -ex 'set confirm off' \
   -ex 'echo \n==SEGV==\n' -ex 'bt 12' -ex 'info registers x0 x1'
 ```
 
-坑（#339）：`gdbus` 的 variant 参数必须写成 `<["a","b"]>`（字符串要带引号、整体加 `<>`），
+坑（取证方法见 §4 / #337；#339 无条目）：`gdbus` 的 variant 参数必须写成 `<["a","b"]>`（字符串要带引号、整体加 `<>`），
 写成 `<[a,b]>` 会报 `unknown keyword`。
 
 ## 5. 结论与去向

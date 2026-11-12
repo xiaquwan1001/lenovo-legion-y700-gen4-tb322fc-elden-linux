@@ -16,7 +16,7 @@
 
 ## 规则
 
-① **死亡后不要立刻 `reboot2 bootloader`**：先 `wait_ssh` 成功 **且** `uptime` ≥ 60 s **且** `pidof phoc` 非空，再进 fastboot 流程。
+① **唯一入口 = `scripts/to-fastboot.sh`**（内部 `eldroid-bootctl reboot bootloader` + 6 s sysrq-b 看门狗，见 #542）。`reboot2 bootloader` 已停用：两者内核路径相同，`reboot2` 只是少了兜底看门狗（裁决 = `TASKS/README.md` §4、`reports/script-redundancy-audit-20261112.md` §1）。时序门（`wait_ssh` + `uptime` ≥ 60 s + `pidof phoc` 非空）**继续保留**，作用是降低撞上关机路径卡死的概率，不是「等够就改用 reboot2」。
 - `boot_vk64` 类函数先看当前内核：若已是目标内核，直接复用（脚本 2026-10-20 已加这条，但仍需上面的时序门）。
 - 自动化循环里 `SETUP-FAIL` 上限保持 2 —— 第 2 次不通就停，**不要重试**（重试会继续打设备，且此时设备已无通道可判断）。宁可人工确认。
 - 判「设备彻底没了」的三件套：`lsusb | grep -E '18d1|05c6'`、`ls /dev/ttyACM*`、`ping 192.168.7.1`。三者全空 = 物理断电复位，别在主机侧继续折腾（EDL 也不会出现，除非真的是 EDL 模式）。
@@ -25,6 +25,7 @@
 
 - `scripts/n5b-vk64-death-rate.sh`（本轮修了 ScreenSaver no-op 与空读数误判；时序门仍未加）
 - `reports/q24-n5b-20261023.md`
+- `PITFALLS #542`（**同一故障**：内核路径同为 RESTART2→PSCI SYSTEM_RESET2，差别只在 6 s sysrq-b 看门狗；`eldroid-bootctl` 已内置 ⇒ 唯一入口 `scripts/to-fastboot.sh`，`reboot2 bootloader` 停用，裁决见 `TASKS/README.md` §4 与 `reports/script-redundancy-audit-20261112.md` §1）
 - `PITFALLS #166`（暖复位粘坏态）、`#363`（nohup 无人看管）
 
 ---

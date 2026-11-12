@@ -26,7 +26,7 @@
   tar -C /tmp/modinst -czf /tmp/modules.tgz lib
   scp /tmp/modules.tgz root@192.168.7.1:/tmp/ && ssh root@192.168.7.1 'cd / && tar xzf /tmp/modules.tgz'
   ```
-  `vermagic` 必须与镜像 `uname -r` **逐字相同**（另见 `#282–#284` 的 `ARCH`/vermagic 坑）。
+  `vermagic` 必须与镜像 `uname -r` **逐字相同**（另见 `#628–#630`〔原 #282–#284，2026-11-12 改号〕的 `ARCH`/vermagic 坑）。
   部署后同一镜像立刻恢复正常：DPU 绑定成功、`card0` 出现、`dsi_isr=41`。
 - **纪律**：**任何 RAM 启动（`fastboot boot`）或写盘的新内核，先部署对应 `/lib/modules/<UTS>` 再判显示**；
   否则得到的「坏发」是缺件伪影（本次 s1/s2 两发已按此作废，不计入 Q28 样本）。
