@@ -229,6 +229,29 @@ if [ -f "$(P /usr/lib/aarch64-linux-gnu/libgtk4-layer-shell.so.0)" ] && \
 elif [ "$CHECK" = 1 ]; then miss "缺 libgtk4-layer-shell0 / gir1.2-gtk4layershell-1.0（包在 tsv）"
 else warnf "缺 GTK4 layer-shell（apt 装；包在 daily-baseline.tsv）"; fi
 
+# ---------------------------------------------------------------- 3b2 OSK 自动弹/收桥（elden-ime-focusd）
+# 背景（2026-11-12，G1-38）：桥原来只靠手工起 ⇒ 重登就没了（用户报「自动弹/收没做好」）。
+# 与 fcitx5 同一模式：/etc/systemd/user + graphical-session.target.wants（构建 chroot 与设备同路径生效）。
+say "[3b2. OSK 自动弹/收桥（elden-ime-focusd）]"
+FOCUSDBIN=$(P /usr/local/bin/elden-ime-focusd)
+FOCUSDUNIT=$(P /etc/systemd/user/elden-ime-focusd.service)
+FOCUSDLINK=$(P /etc/systemd/user/graphical-session.target.wants/elden-ime-focusd.service)
+if [ -x "$FOCUSDBIN" ]; then ok "focusd 二进制在位（$FOCUSDBIN）"
+elif [ "$CHECK" = 1 ]; then miss "缺 $FOCUSDBIN（OSK 不会自动弹）"
+else warnf "缺 $FOCUSDBIN（用 packaging/elden-userland/build/elden-ime-focusd.sh 生成后装）"; fi
+if [ -f "$FOCUSDUNIT" ]; then ok "focusd user unit 已装"
+elif [ "$CHECK" = 1 ]; then miss "缺 $FOCUSDUNIT（重登后桥不在）"
+elif [ -f "$IMESRC/elden-ime-focusd.service" ]; then
+	mkdir -p "$(dirname "$FOCUSDUNIT")"
+	install -m 0644 "$IMESRC/elden-ime-focusd.service" "$FOCUSDUNIT" && fix "装 focusd user unit"
+else warnf "缺源文件 $IMESRC/elden-ime-focusd.service（跳过）"; fi
+if [ -L "$FOCUSDLINK" ]; then ok "focusd 已 enable（graphical-session.target.wants）"
+elif [ "$CHECK" = 1 ]; then miss "focusd 未 enable（重登后不会自启）"
+else
+	mkdir -p "$(dirname "$FOCUSDLINK")"
+	ln -sf ../elden-ime-focusd.service "$FOCUSDLINK" && fix "enable focusd（graphical-session.target.wants）"
+fi
+
 # 输入法组：Rime 必须在组内且为默认（否则切换后仍是英文）
 PROF="$UHOME/.config/fcitx5/profile"
 if [ -f "$PROF" ] && grep -qx 'DefaultIM=rime' "$PROF"; then ok "fcitx5 profile: DefaultIM=rime"

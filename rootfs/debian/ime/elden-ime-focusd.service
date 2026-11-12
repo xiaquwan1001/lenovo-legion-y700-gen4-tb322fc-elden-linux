@@ -1,0 +1,20 @@
+[Unit]
+# elden-ime-focusd —— 输入法焦点守护：kimpanel 桥 → sm.puri.OSK0.SetVisible（OSK 自动弹/收）
+# 为什么需要它：GTK_IM_MODULE=fcitx 的客户端不走 zwp_text_input_v3 ⇒ phoc 拿不到 activate
+# ⇒ stevia 不会自己弹键盘（PITFALLS #615/#618）。桥是本机唯一不重编合成器的路径。
+Description=Input-method focus daemon (kimpanel -> sm.puri.OSK0 auto show/hide)
+Documentation=file:///usr/local/bin/elden-ime-focusd
+After=graphical-session-pre.target fcitx5.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+# 兜底超时：有输入上下文但长时间（300 s）无 kimpanel 活动时收起；0 = 关闭该兜底
+Environment=ELDEN_IME_IDLE_SEC=300
+ExecStart=/usr/local/bin/elden-ime-focusd
+# fcitx5 可能被重登/升级拉起，桥必须跟得上；崩溃也别悄悄没了（这正是 2026-11-12 报的「没做好」）
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=graphical-session.target

@@ -22,7 +22,7 @@ dst	kind	sha256	size	mode	repo_src
 /init	init	47af5f7d5400f52b944ffd8d5517e38dfa99531667a5cc2f18919209f6e7a539	34584	755	files/init
 /usr/local/bin/bwrap	script	79b77b2f375039b2d361a603cbd7d587f110c2be8b09655938e25ed563a5064f	236	755	files/usr/local/bin/bwrap
 /usr/local/bin/elden-hapticd	elf	aca55cb143fd0506991e8031fe059b8213f8fc7f5a3e08fa0eef34d645a47bf3	729312	755	-
-/usr/local/bin/elden-ime-focusd	elf	d23048278d492ca51fc68267eb9c7e78015343206aa527ad9d9b3d60d8202b04	74392	755	-
+/usr/local/bin/elden-ime-focusd	elf	c76dbee71d7ecde81f4f865691e7462ee16e8b961e32962179e7ba48a5db6ef2	72776	755	-
 /usr/local/bin/elden-ime-mode	script	9c752c2eaf9d27cd7aedc71e9f24c93ab3ce017e11abefce9618a07712169828	1465	755	files/usr/local/bin/elden-ime-mode
 /usr/local/bin/elden-ime-toggle	script	900b27b1564b4e7880e72961f2c00e96fe365e06a2391dc4e8f6b3d701909d12	1737	755	files/usr/local/bin/elden-ime-toggle
 /usr/local/bin/eldroid-bootctl	script	720796d767a580944ec307207a3de9549f126442b6686c9c64ffcd7be0073577	7715	755	files/usr/local/bin/eldroid-bootctl
