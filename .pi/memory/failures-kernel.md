@@ -709,3 +709,13 @@ avbtool 的可靠获取路径（2026-10-18 实测）：`https://android.googleso
 用户 2026-10-18 当场纠正：「设备当前是 q28 坏态，屏幕无法确认是否拉起了容器。命令没有设置超时」——凡可能阻塞/交互的命令（`waydroid session start`、`lxc-start`、ssh 轮询、容器启动类）必须包 `timeout -k`；且设备处于 Q28 坏态（面板未点亮）时不要用「屏幕上看不到」当启动成功/失败的证据，改用设备侧客观读数（`waydroid status`、/dev/binder、ps、dmesg、card0）。 — Failed: 前台阻塞命令未设 timeout，导致工具调用被用户手动中止；且当时设备 Q28 坏态无显示，无法目视确认容器是否起来。
 ---
 用户纠正（2026-10-18）：「设备当前是 q28 坏态，屏幕无法确认是否拉起了容器。命令没有设置超时」——Q28 坏发（面板未点亮、屏幕全黑）下跑 `waydroid session start`、`lxc-start` 等前台阻塞命令必须包 `timeout -k`、丢后台写日志，并用 `waydroid status`/进程/日志判定是否起来，不能指望目视屏幕；否则命令挂死且无人能判断状态。 — Failed: 硬件坏态下前台阻塞命令会让会话卡死且无判据
+
+---
+
+## 2026-11-12 · UEFI/GRUB 线三条取证通道结论（细节 `PITFALLS #621/#622/#623`，报告 `reports/uefi-vk188-fbcon-20261112.md`）
+
+- **屏上有内核字 = `earlycon=efifb keep_bootcon`**（光开 `CONFIG_SYSFB_SIMPLEFB` **无字**：fbcon 接管太晚 + msm 接管 DPU 后 GOP buffer 不再被扫描）。取证时同时写 `panic=0`，否则 `panic=15` 十几秒后自动重启，看起来和掉电一模一样。
+- **「十多秒掉电」不是掉电**：`panic=15` 的重启。判据 = 设 `panic=0` 后不再重启、屏上停在最后一行。
+- **GRUB 阶段没有串口**（ttyGS0 是 Linux gadget、物理 UART 未接）⇒ 需要机器可读时用 `save_env -f ($root)/boot/grub/grubenv` 每步留痕，Linux 起来 `cat /boot/grub/grubenv`。实测有效。
+- **`scripts/serial-logger.sh` 在本机会 open/close 狂抖**（`cat &` 拿 EOF 立即退出，日志只有 opened/closed 标记，真数据 0 行）。改用 `scripts/serial-tap.py`（一次 open 长期持有 + select + 断线重开一次；pty 冒烟已过）。
+- **initrd 判据**：`head -c4` 必须是 `1f8b0800`（gzip）或 `070701`（newc cpio）。`out/ramdisk-vk181-daily.cpio.gz` 前 **602 字节全 0**（boot.img 里也一样）⇒ `Initramfs unpacking failed: no cpio magic` ⇒ 没 `/init`/没 gadget/没 SSH **且不 panic**，极易误判「内核死了」。b 槽能启动不证明该 ramdisk 可用（b 用的是 boot_b 里的另一份）。
