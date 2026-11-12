@@ -55,6 +55,7 @@
 |---|---|---|
 | 起 Firefox（URL 栏获焦） | `State` 0→1、`Visible` false→**true** | ✅ 日志 `show requested by SetRelativeSpotRect (0x72)` |
 | 关 Firefox | `State`→0、2 s 内 `Visible`→false | ✅ 自动收 |
+| 目视（截图） | Firefox URL 栏获焦时 OSK 在屏 | ✅ `reports/artifacts/ime-osk-focusd-20261112/firefox-urlbar-osk.png`（sha `273eafcc…`） |
 | 兜底超时（临时 drop-in `ELDEN_IME_IDLE_SEC=12`） | 有 IC 但 12 s 无 kimpanel 活动 | ✅ `hide requested by idle timeout`（随后 `set-environment` 复原 unit） |
 
 **仍未验**：GTK3 / Qt 各一例、Alt+Tab 跨窗口切换时是否漏收、候选窗与 stevia 键盘是否重叠。
