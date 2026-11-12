@@ -12,7 +12,7 @@
 #
 # 用法：scripts/check-progress-counts.sh            # 人类可读
 #       scripts/check-progress-counts.sh --tsv      # 机器可读（键<TAB>值）
-#       scripts/check-progress-counts.sh --selftest  # 断言当前口径 35/36、9/13（漂了就 rc=1）
+#       scripts/check-progress-counts.sh --selftest  # 断言当前口径 36/37、9/13（漂了就 rc=1）
 set -u
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MODE=${1:-}
@@ -73,7 +73,7 @@ else:
               % (r['label'], r['complete'], r['in_scope'], r['total'], r['cancelled'], r['partial'], r['detail']))
 
 if mode == '--selftest':
-    exp = (('G1', 35, 36), ('G2', 9, 13))
+    exp = (("G1", 36, 37), ("G2", 9, 13))
     bad = 0
     for r, (lb, c, d) in zip(rows, exp):
         if (r['complete'], r['in_scope']) != (c, d):
