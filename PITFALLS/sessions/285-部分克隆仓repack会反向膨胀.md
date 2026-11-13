@@ -14,3 +14,14 @@
   ② 中断后**先删 `objects/pack/tmp_pack_*`** 再谈别的（不删会白占数 GB）；
   ③ 收口判据 = 该仓各 worktree 的 `git log` 与文件读取仍正常 + `fsck --connectivity-only` 只剩 dangling 无所谓。
 - **出处**：`reports/git-slim-exec-20261113.md` §4。
+
+## 追加（2026-11-13 夜，同族第二例）
+
+**任何「按对象名查询」都会触发同一按需取件**：子代理跑
+`git cat-file -t df53055c…`（该对象本地没有）⇒ 卡在 promisor fetch **91 min 不返回**
+（`ps` 里就是一个 `git -c http.version=HTTP/1.1 cat-file -t …`），并留下 878 MB 的
+`objects/pack/tmp_pack_POn282`。处置 = 杀掉该进程 + `rm objects/pack/tmp_pack_*`（.git 立刻从 1.5 GiB 回到 562 MB）。
+
+**判据**：在 `blob:none`/部分克隆仓里，凡是「不知道对象在不在本地」的命令（`cat-file`、`rev-list --objects`、
+`grep` 跨历史、`repack`）都要加 `GIT_NO_LAZY_FETCH=1`；只想看本地有什么就用 `git log --oneline` /
+`git ls-tree`（走 refs 与 tree，不取 blob）。
