@@ -122,23 +122,14 @@
 | 目标 | 状态（权威数字见 [`TASKS/README.md`](TASKS/README.md) §0） | 关键限定 |
 |---|---|---|
 | **G1** 功能健全的 Linux | 多数驱动已工作（暖起） | 按“驱动 bring-up 完整性”度量；**上游化 M 系列（以 `TASKS` §7 为准）进行中** |
-| **G2** 安卓容器（Waydroid） | 主链路已通 | 图形/内核/GAPPS/代理可用，**容器传感器 HAL 已打通**、**容器音频已打通**（C6）、**C2 GMS 登录**、**C10 马达透传**（AIDL V2 + 固化 vendor.img）、**C11 触屏中文输入法**（squeekboard + fcitx5/Rime + OSK0）；Play Integrity/SafetyNet、Widevine 等级仍在收口 |
+| **G2** 安卓容器（Waydroid） | 主链路已通 | 分项（传感器 HAL/音频 C6/GMS C2/马达 C10/输入法 C11/相机 STREAMING 等）与完成度**只读** [`TASKS/README.md`](TASKS/README.md) §0/§2（本表不另列 C 清单，避免与 README §3、TASKS 三处漂移） |
 | **G3** x86 模拟（Steam） | **PoC ✅ / Steam 登录界面 ✅** | Box64 + Wine 成功；官方 ARM64 Steam 客户端 2026-10-28 起到登录界面（3/3 轮、证据 `reports/g3-steam-20261028.md`）、截图判据 10-29 闭环；Steam 游戏端到端（图形/音频/性能）未上机 |
 
 ---
 
 ## 3. 已验证可用的部分（有证据）
 
-- **显示/图形**：暖起稳定出桌面（Phosh）；冷起有 `Q28` 竞态（见 §4）。
-- **触屏**：Novatek NT36536（SPI）可用。
-- **网络**：WiFi（WCN7861/ath12k）+ 蓝牙配对/TWS；USB-NCM 网卡（`192.168.7.1`）+ ACM 串口控制台。
-- **音频**：WCD939x 播放 + 输入（**模拟麦接 WCD939x，非 DMIC**）走 QDSP6/ADSP。
-- **相机**：后摄按需加载模块可出流并抓帧；容器侧已到 App 预览 `STREAMING`（`TASKS/README.md` C5/U7）。
-- **安卓容器传感器**：加速/陀螺/光/磁/接近进容器；真值走 `ssccli`（Qualcomm SSC）→ UDP → 宿主 gbinder HAL（`TASKS/README.md` C4）。
-- **安卓容器马达透传**：Waydroid HAL → 宿主桥 → `aw86927` 主线驱动；AIDL V2 幅度+cancel，固化进 `vendor.img`（`TASKS/README.md` C10、`reports/waydroid-haptics-20261013.md`）。
-- **桌面用户态**：深色模式、亮度滑块、自动旋转磁贴、非整数缩放/刷新率（`TASKS/README.md` G1-26/27/28）。
-- **温控**：分级 trips。
-- **存储/启动**：持久磁盘根 + A/B 槽（`qbootctl`）+ 零写盘 `fastboot boot` 迭代。
+> **唯一清单 = [`README.md`](README.md) §3（公开面）+ [`TASKS/README.md`](TASKS/README.md) §1 各行状态**；本节不再另列，避免两处漂移。
 
 证据位置：`reports/`（专题报告 + 会话台账）、`reports/trials/`（机器可读实验记录）、`logs/`（本机，未入库）。
 
@@ -224,10 +215,8 @@
    对 DTB/内存模型（含整块急切 LEND）/驱动代次（6.6、6.12、厂商内核同 harness）全不敏感；厂商可用路径依赖主线没有的
    `MEM_DONATE(0x51000010)` + `gunyah_loader` hypercall 族。⇒ **G2 回 Waydroid**；`drivers/virt/gunyah` 6.12 分层只作 G1 补丁素材封存。
    权威 = `reports/gunyah-decision-20261025.md`；过程 = `reports/gunyah-612-samebuild-20261025.md`；新坑 `PITFALLS #395/#396`。
-2. **Q28/Q32**：✅ **已结项（2026-10-24）=「已规避」** —— 运营线 vk152 线上 **8/8 无坏发**（真 POR 5/5 + 暖复位 3/3），
-   看门狗与三态探针在役；**不补样本、不挖根因**，复启条件只读 `TASKS/README.md` §5 Q28。
-3. **Q24**：⛔ **关闭（2026-10-24 用户裁决：不值得取证）** —— 根因已指名（7.2 缺上游 `skip retention by default`，7.3 自带），
-   `vk149` 臂复现**取消**；日常仍执行 `cam-mode.sh on/off` 互斥（安全策略，非既成事实）。
+2. **Q28/Q32**：✅ **已结项（2026-10-24）=「已规避」** —— 样本数、判据与复启条件只读 `TASKS/README.md` §5 Q28 行。
+3. **Q24**：⛔ **关闭（2026-10-24 用户裁决：不值得取证）** —— 根因与运营互斥策略只读 `TASKS` §5 Q24 行。
 4. **#106**：判据「GOOD 需 ≥60 s 存活/可交互」；ramoops 装弹已在位等它自己撞（见 `TASKS` §5 §2 表）。
 5. **上游化 M 系列（以 `TASKS` §7 为准）**：M1 树与 `m1-73/baseline` 已收敛；M3-1 v4 / v5 系列、M4 camss（v2 0/2）、M4-1 bindings、M6 L1、M8 RFC、wl2868c v3 均已投并归档；
    **2026-10-27 新增可评审分片**：B5 第 1–3 步（bonded-DSI 收进 per-SoC cfg + 2 个 host ops，`patches/local/b5-resoc-20261027/`）与 aw86927 五提交系列（`patches/upstream/aw86927-20261027-v2/`）均已过门禁；aw86927 v2 **已投**（`[PATCH 0/5]`，`/linux-input/` 6/6 归档）、M1-U6 与 M2 A2 同批已投；

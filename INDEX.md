@@ -182,16 +182,13 @@
 > **本节只回答「现在还没解决什么」，任何数字与当前口径都不在此维护**（见 §2 公开层豁免）。
 
 - **⚠️MIGRATION-LOST（2026-10-17 换机）**：登记与重建路径只读 `RESOURCES/README.md` §3.5 与 `versions/migration-gaps-2026-10-17.tsv`（当时的重建账与 P0–P4 顺序是快照，已下沉 `TASKS/sessions/2026-11-02-INDEX现状速览下沉.md`）。
-- **去哪读（本节唯一职能）**：未解/开放集 = `TASKS/README.md` §5（Q 表，含 Q28/Q24/Q32 的样本数与复启条件，另见 `PITFALLS #106`）；待办 = `TASKS/README.md` §4；进度与里程碑 = `PROGRESS.md` §1/§2；上游化与投递 = `TASKS/README.md` §7 的 M 行 + 当前一页 `reports/upstream-status-20261105.md`（取代 `-20261029`；投递解冻由用户按批放行，agent 不等回复）；设备在机态与单元台账 = `DEVICE/README.md` §1.1/§2.2；换机缺口 = `RESOURCES/README.md` §3.5；内核分界线 = `TASKS/README.md` §4。
+- **去哪读（本节唯一职能）**：未解/开放集 = `TASKS/README.md` §5（Q 表，含 Q28/Q24/Q32 的样本数与复启条件，另见 `PITFALLS #106`）；待办 = `TASKS/README.md` §4；进度与里程碑 = `PROGRESS.md` §1/§2；上游化与投递 = `TASKS/README.md` §7 的 M 行 + 当前一页 `reports/upstream-status-20261105.md`（取代 `-20261029`；投递解冻由用户按批放行，agent 不等回复）；设备在机态与单元台账 = `DEVICE/README.md` §1.1/§2.2；换机缺口 = `RESOURCES/README.md` §3.5；内核分界线 = `TASKS/README.md` §4；文档去重执行账 = `reports/docs-slim-20261113.md`（依据 `reports/doc-dedup-audit-20261112.md`）。
 - **kexec**：不在「不做」之列，定位 = 不需显示/网络的调试快环；**当前口径只读** `TASKS/README.md` §4「当前口径 → 迭代通道」条与 §7 的 M9 / M9-收口 行（全过程在 `TASKS/sessions/2026-11-03-TASKS-§4-待办沿革.md`）。
 - **宿主 rootfs（Alpine → Debian/Mobian、systemd）**：用户 2026-10-26 定的方向，**不是「勿重推」项**；路径与成本只读 `reports/mobian-migration-plan-20261021.md`（S0–S7，完成项见其 §4 状态标记）与 `TASKS/README.md` T14/T17。
 - **两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy`（trixie 3.7 无 SSC 后端）+ `libssc2`，否则传感器栈直接死。
 - **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-10 NFC、G1-30 slim initramfs；
   **G1-29 UEFI 不在「勿重推」之列** —— 路线 A 首轮（2026-10-05）失败后曾搁置，**2026-11-01 用户放行恢复推进**；
-  **2026-11-10 深夜已收口**：flashed 形态（写 `boot_a`）三年全败的真根因 = **`dtbo_a`**（原厂 Android DTBO overlay 被 ABL 合进我们的 DTB ⇒ 卡 logo）；
-  清 `dtbo_a` 后 p69 **129.2 s** 起 Linux（n=3 复现）、信标 `R68LOG … s9:esp-ld-ok`、`elden_bootloader=esp`；零写盘形态（11-08 起）本就通。
-  **剩余仅两项非阻塞**：屏上 BDS/GRUB 菜单交互取证（要人盯屏）、`boot_a` 冷启动（物理 POR）回归。
-  **当前口径只在 `TASKS/README.md` §5「2026-11-10（深夜，`dtbo_a` 真根因）」块 + `reports/uefi-dtbo-a-rootcause-20261110.md`**（其下依次为 11-10 早 pc1 世代与双层菜单、11-09 晚 p63→p66、11-08 路线 B 打通、11-07 p58 交棒闭环、`#549` 撤回更正）；本节不再复述。
+  **当前口径（含 flashed 形态真根因与收口状态）只读 `TASKS/README.md` §5「2026-11-10（深夜，`dtbo_a` 真根因）」块 + `reports/uefi-dtbo-a-rootcause-20261110.md`**；本节不复述数字与判读（见本节引言）。
 - **单元**：U1 / U2 台账见 `DEVICE/README.md` §1；解锁议题已定稿关闭（`RUNBOOK` §0.5 + `archive/topics/复盘-2026-10-03-BL解锁.md`），不要重新论证。
 
 ---
@@ -230,7 +227,7 @@ fastboot boot <img>                        # 零写盘·纯RAM变体（无桌面
 # 新单元开工三件套（先写台账，再备份，再手术）
 fastboot getvar serialno; adb shell getprop ro.boot.hwboardid   # → 写进 DEVICE/README.md §2.2
 sh scripts/gpt-dump.sh                                          # 打印本单元 backup_lba（禁跨容量档复用）
-# b 槽三件套备份：本 ABL **无 fastboot fetch**（`Unable to get max-fetch-size`，PITFALLS #290）
+# b 槽三件套备份：本 ABL **无 fastboot fetch**（实测与报错全文见 PITFALLS #290）
 ssh root@192.168.7.1 'dd if=/dev/disk/by-partlabel/boot_b of=/tmp/boot_b.img'  # 再取回；或从官方线刷包解出
 python3 scripts/slot-attr.py show                               # 槽位属性（在 GPT attribute，非 misc）
 # 设备侧三态判据（显示问题）：NOCARD / STORM / GOOD
