@@ -135,6 +135,21 @@
 
 ### 开放待办（按顺序；需要物理 POR 的排最后）
 
+- **2026-11-13 夜：主机侧 B 组 18 条全部收口（派 3 个 L1，产物全落盘，零发信/零写盘）** —— 逐条正文只读各自报告，这里只给结论与今晚可用性：
+  **① 上游备料（发信仍等下轮统一批准）**：`B1` camss CSIPHY 对账 = 上游 7.4-rc3 **没有** `csiphy_kaanapali`（camss 目录 0 命中），lane 表已迁到 `phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c` 的 `lane_regs_x1e80100[]`（其值 = vendor **v2.1.2**）；vendor 2.4.0 与它**地址 103/103 相同、13 个 data 字节不同**（逐版本扫证明是版本特征）⇒ **需要 2.4.0 delta，但形状必须改成 phy 驱动里新增 `lane_regs_sm8750[]`**（`reports/camss-csiphy-v6-vs-240-20261113.md`，B2 的 0007 独立评估同篇）；
+  `B3` mdss 三问取证（`reports/mdss-int2-evidence-20261113.md`：dispcc 只有 CORE `0x8000`/CORE_INT2 `0xa000`/RSCC `0xc000` 三枚 bit0 复位；INT2 **不是**独立中断控制器，MDSS 是只读状态寄存器的汇聚 irqchip；副作用双侧症状 + 只读判据）；
+  `B4` dsi/phy v2 **推翻了本日早间「上游已覆盖」的判读**（`dsi_7nm_phy_enable()` 先置 `pll_enable_cnt=1` ⇒ bias 里那行 0xc0 首次 bring-up 到不了）⇒ 9 行必须保留，备料 `patches/upstream/m6-dsi-pll-v2-20261113/`；
+  `B5` gamma LUT v2（补 `Fixes: 39a750ff5fc9`，`patches/upstream/dpu-gamma-lut-v2-20261113/`）；
+  `B6` dwc3 v9 四枚 + 兼容性结论「可投」（mux 可睡眠、唯一调用点在 freezable wq，`patches/upstream/dwc3-v9-20261113/`；我独立复跑 `git apply --check` 4/4 OK 于带板 DTS 的树）；
+  `B7` fastrpc 证据包（`reports/fastrpc-nonsecure-evidence-20261113.md`）；`B8` 板 DTS 单提交备料（`patches/upstream/board-dts-single-20261113/`）；`B9` haptics v2 + 同 binding 三系列冲突核查（`patches/upstream/haptics-v2-20261113/`）；
+  `B10` dispcc reset v2 的结论是「**不必另立 v2**：该形状已由今日 `m8-mdss-v4` 承载，建议撤回 RFC 线程」（`patches/upstream/dispcc-reset-v2-20261113/README.md`）；
+  `B11` 可选 9 条逐枚 rc 表（4 枚 `rc=0` 可直接 apply；camss v2 组与 drm/dp 需手工移植，`reports/optional-9-applycheck-20261113.md`）；`B17` 在审系列清单（`reports/upstream-inreview-inventory-20261113.md`）。
+  **② 主机侧工程件**：`B12` SN 锚定三问 = UEFI **否**（SMBIOS 是 SoC 串号、cmdline 是 CRC32）、adb/Waydroid 未见常量 SN、**现役 ramdisk 里 gadget 仍是写死 `HA2CB1KY` 的旧版** ⇒ **今晚任何「认设备」实验前必须先 `build-initramfs.sh` 重建**（`reports/sn-anchoring-audit-20261113.md`）；
+  `B13` 12 个脚本欠账一次性收口（写死 SN/IP 5 处必填化、默认输入 5 处必填化、新增唯一模块部署实现 `scripts/deploy-modules.sh` 带读回 sha、`trial.sh --a-slot` 前置门），判据 `verify.sh --rebuildable` **FAIL=0 WARN=0**；
+  `B14` `scripts/t14-rebuild.sh`（P0→R4 全链，R1/R3 已实跑）；`B15` Gunyah 两空（`0x51000018` 本机 RM **必认**、`0x56000032-34` stock 驱动 0 命中 ⇒ `0xA` 主嫌疑 = RM 世代差，`reports/gunyah-b15-iceland-rmdrv-20261113.md`）；
+  `B16` QEMU 复刻 GRUB→内核→串口 dmesg **PASS 4/4**（`scripts/qemu-full-chain-smoke.sh` 单轮 ≈35 s，`reports/qemu-full-chain-20261113.md`；关键修正 = 弃 vvfat 用真 vfat 镜像）；`B18` 闪光灯两件可编译（`patches/b18-flash-led-20261113/`，0x145 sid 映射未上机）。
+  **③ 今晚上机前置（按序）**：ESP `BOOTAA64.EFI` 的 `panic=0` 陷阱先 `--activate` 回 v3b → 重建 initramfs（SN）→ A10 的 `vk188b` 上机两发 → 其余（B6/B14/B18）都要设备窗口但**不阻塞**。
+
 - **2026-11-13 晚：三份盘点 + 一次可合性实验（本轮派发产物，结论只在各自 §0）** —— ① **上游 7.4 可合性**：`reports/upstream-74-replay-20261113.md`（现役 `build/daily` payload → 上游 `gh/master` = `9d66f26fef` 7.4-rc3：**107 文件自动干净 / 15 文件 19 个冲突 hunk**；对照从 `linux/`（7.2 快照）出发是 27 文件 46 hunk ⇒ **重放必须从 `build/daily` 出发**（**用户 2026-11-13 裁决：7.4 没有对我们有用的功能增量 ⇒ 本轮不追 7.4**，只留可合性结论与这条复用路径）；且 7.4 已吸收 `panel-novatek-nt36536` 与 `PLL_SYSTEM_MUXES` ⇒ 对应本地件可 retire）；② **待办/待测全量**：`reports/todo-inventory-20261113.md`（A 待裁决 22 / B 主机侧 18 / C 设备侧 27（未上机 13 + 判据不足 14） + X1–X9 旧口径冲突裁决）；③ **瘦身**：`reports/repo-slim-audit-20261113.md`（骨架无漂移；收益上限 = 文档 −1.82 MB + 入口文件 −880 行）与 `reports/git-tree-audit-20261113.md`（主仓 22 个 blob / 194 MB 已从 HEAD 不可达、`geekidos-linux` 可达仅 13.4% ⇒ repack 可回收 1.4–1.5 GiB、`reports/artifacts` 被跟踪 842 MiB 是唯一会动主仓工作树的项）。
 
 - **G1-37 日用用户态基线（只剩一件）** —— ✅ 包+配置已落地（2026-11-07：设备 1355→1625 包，`daily-baseline.tsv/.sh` + `scripts/mobian-daily-baseline.sh`，`--check` rc=0）；**2026-11-09 输入法三连修（新）**：① 配置图标点不动 = 缺 `fcitx5-config-qt`（已进基线，实测可开窗）；

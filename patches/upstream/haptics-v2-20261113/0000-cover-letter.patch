@@ -1,0 +1,45 @@
+From 5f1a30b76c60096109e41d5ea8ebeb4862175928 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 13 Nov 2026 18:45:47 +0800
+Subject: [PATCH] [PATCH 0/6] Input: aw86927 - add AW86937 support and fix the AW8693X layout
+
+This series adds support for the Awinic AW86937 LRA haptic IC on top of
+the existing AW86927/AW86938 driver, fixes two register definitions that
+are wrong on the AW8693x parts, and stops playback over suspend/shutdown.
+
+Patch 1 fixes the 7 V boost reference value that the AW86938 support
+introduced (0x11 programs 9 V, not 7 V).  Patch 2 widens the AW86938
+boost mode mask: the field is two bits wide at 6:5, so the existing
+one-bit mask leaves bit 6 untouched when the driver selects bypass.
+Patch 3 documents the awinic,aw86937 compatible as another member of the
+AW86927 fallback group; detection stays on the chip ID, so no new
+of_device_id entry is added.  Patch 4 adds the chip ID and init path.
+Patch 5 handles the AW8693x register layout differences (auto-boost bit,
+two-bit boost mode, VBAT mode and the two-step stop handshake).  Patch 6
+stops playback, drains the work item and parks the part in reset over
+suspend and shutdown, and registers the reset action with the device so
+that unbind and probe failure unwind leave the chip asserted.
+
+Two review points from the previous posting are addressed: the boost
+mode mask is now GENMASK(6, 5), and aw86927_reset() is registered with
+devm_add_action_or_reset() after the reset GPIO has been acquired.
+
+The AW86937 has no hardware in hand: the register data comes from the
+vendor driver and the part datasheet, and the commit message does not
+claim otherwise.
+
+Qianhui Xu (6):
+  Input: aw86927 - fix the 7 V boost reference for AW86938
+  Input: aw86927 - widen the AW86938 boost mode mask
+  dt-bindings: input: awinic,aw86927: document the AW86937 variant
+  Input: aw86927 - add support for Awinic AW86937
+  Input: aw86927 - handle the AW8693X play and boost register layout
+  Input: aw86927 - stop playback over suspend and on shutdown
+
+ .../bindings/input/awinic,aw86927.yaml        |   1 +
+ drivers/input/misc/aw86927.c                  | 154 +++++++++++++++---
+ 2 files changed, 131 insertions(+), 24 deletions(-)
+
+-- 
+2.53.0
+
