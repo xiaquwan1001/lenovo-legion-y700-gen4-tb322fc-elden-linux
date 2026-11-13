@@ -29,7 +29,7 @@
 | **A6** | **haptics aw86937 出 v2**：采纳 bot 两条（`GENMASK(6,5)`、`devm_add_action_or_reset`） | 发信批准（备料 → B9）；AW8695/AW8697 同 binding 文件冲突风险 | `upstream-status-20261113.md` §2 haptics 行；`upstream-watch-20261113.md` §A（14918448）+ §B6 |
 | **A7** | **counter/dispcc reset RFC**：出 v2（挪 display 侧 + `reset_control_*` + simple-framebuffer 在场对照）**或直接撤** | 两轮追问 0 维护者回信；二选一需裁决 | `upstream-status-20261113.md` §2 counter/dispcc 行；`upstream-watch-20261113.md` §A（14909706） |
 | **A8** | **M6 / dsi bonded 5 连发重做**（删无保护对象的锁、明确 base、主从按 DT 推导、per-SoC cfg 收敛到 sm8650 字段、块注释格式）并重切投递 | 全串 patchwork `handled-elsewhere`（等于未收）；4 枚备料受 §7 M6 三条复启条件约束；**7.4 重放后 base 要改成 7.4-rc3 线**（X10）；发信批准 | `upstream-watch-20261113.md` §A（14929539/42/43）；`TASKS/README.md` §7 M6 行 + §4:172；`patches/upstream/m6-b5-v2-20261102/` |
-| **A9** | **camss 改接 Qualcomm v6 后上机验证出流**（2.3.0 路线；先做 B1 对账） | 上机需批准；2.4.0 vs 2.3.0 未判（未证实） | `reports/camss-v6-rebase-plan-20261113.md` §2/§5；`upstream-status-20261113.md` §2 相机 camss 行 |
+| **A9** | **camss 改接 Qualcomm v6 后上机验证出流**（2.3.0 路线；B1 对账已于 2026-11-13 夜完成 ⇒ **前提已变，见右**） | 上机需批准。**★B1 复核结论（`reports/b1-csiphy-recheck-20261113.md`）：我们的树已有 2.4.0 且在役**（`CAMSS_8750` 走 `lane_regs_2_4_0`、103/103 地址与 vendor 相同、仅 4 条 SKEW_CAL 分歧）⇒ **接 v6 是降级到 v2.1.2 表**，A9 优先级应下调 | `reports/camss-v6-rebase-plan-20261113.md` §2/§5；`upstream-status-20261113.md` §2 相机 camss 行 |
 | **A10** | **UEFI 线上机两发**：① 验 `out/boot-elden-vk188b.img` 的 initrd 修复；② A2 臂复测 pstore console 是否还 Oops | 需 `fastboot boot` 放行；**ESP `BOOTAA64.EFI` 现为 v5（A2 + `panic=0`）会挂住不重启**，用人前必须先 `--activate` 回 v3b | `reports/uefi-vk188-fbcon-20261112.md` §3/§6/§7.1-2；`TASKS/README.md`:160 |
 | **A11** | **G1-29 剩余两件**：`boot_a` 冷启动（物理 POR）回归 + 屏上 BDS/GRUB 菜单交互取证 | 需物理断电/人盯屏；`boot_a` 现 = UEFI pc1，需先 `set_active a` | `TASKS/README.md`:51（§1 G1-29 行「剩余」）；`DEVICE/README.md` §1.1 首条 |
 | **A12** | **Gunyah S2 上机对照实验**：`gh_vmtest` 最小探针（4 MiB LEND + 1 vCPU + 16 B，不走 crosvm），并做「故意喂违规 DTB 看错码是否变 8」 | 需用户排期；前提 = 补 B15 两空（未证实 `0xA` = RM 太老还是状态机 bug）；风险自限：全程 `fastboot boot`、不 `fork()` 持 lend 页 | `TASKS/README.md`:175-176；`reports/gunyah-73-port-20261112.md`、`gunyah-s1-static-diff-20261111.md` |
@@ -65,7 +65,7 @@
 
 | # | 一句话 | 退出条件 / 判据 | 证据指针 |
 |---|---|---|---|
-| **B1** | **camss CSIPHY 对账**：用**现成** `gh/master`（`9d66f26fef`，7.4-rc3，`build/m3v2-7.3rc7` 部分克隆里已有）先确认 `csiphy_res_kaanapali` 是否在 7.4 内；在则与 vendor 2.4.0 表（2ph 103 条 / 3ph 72 条）逐条比地址+掩码；不在则记录「须等 v6 合入」 | 产出差集表（有差集 ⇒ 备 2.4.0 delta；无 ⇒ 接 v6）；**「7.4 是否含 kaanapali 表」当前未证实** | `camss-v6-rebase-plan-20261113.md` §2/§5.1；`upstream-74-replay-20261113.md` §1（gh/master 位置）；`reports/m4-csiphy-vendor-provenance-20261027.md` §2 |
+| **B1** | **camss CSIPHY 对账**：用**现成** `gh/master`（`9d66f26fef`，7.4-rc3，`build/m3v2-7.3rc7` 部分克隆里已有）先确认 `csiphy_res_kaanapali` 是否在 7.4 内；在则与 vendor 2.4.0 表（2ph 103 条 / 3ph 72 条）逐条比地址+掩码；不在则记录「须等 v6 合入」 | **✅ 已收口（见右）** | 产出差集表（有差集 ⇒ 备 2.4.0 delta；无 ⇒ 接 v6）；**「7.4 是否含 kaanapali 表」当前未证实**
 | **B2** | **camss `0007`（起流失败回退）**独立价值评估（v6 不碰 `camss-video.c`） | 能否独立成立 + `checkpatch`/`git am` 门；投不投交 A 类 | `camss-v6-rebase-plan-20261113.md` §1/§5.3 |
 | **B3** | **mdss 2/3 取证**：查 `sm8750 dispcc` 复位表与 `msm_mdss.c` 里 `mdss_intr` 实际用法，写准「是不是中断控制器」+ 副作用（command DMA timeout / 只有背光无 DRM 设备）+ 测法 | 三段文字可直接进 commit message（供 A1） | `mail-triage-20261112.md` §6.1-2；`upstream-watch-20261113.md` §A（14931324） |
 | **B4** | **dsi/phy v2 备料**（注释搬进 commit message，代码只留 `writel(0xc0, …)` + 一行理由）——**若 A3 裁决为「撤回」则本项改产出「上游已覆盖」的撤回说明** | `checkpatch --strict` 0/0/0 + `git am` 干净 | `mail-triage-20261112.md` §5 W4；X10 |
