@@ -1,0 +1,52 @@
+From 5449e4c885c8afcfece6eb35f4697073a83ffc57 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 2 Nov 2026 13:29:12 +0800
+Subject: [PATCH 3/3] arm64: dts: qcom: sm8750: describe the second MDSS block
+ reset
+
+The SM8750 display clock controller provides two block resets for the
+MDSS core area: DISP_CC_MDSS_CORE_BCR and DISP_CC_MDSS_CORE_INT2_BCR,
+at 0x8000 and 0xa000.  The second one belongs to a domain that dispcc
+describes with its own GDSC (mdss_int2_gdsc) and its own clock family
+(disp_cc_mdss_mdp1_clk, disp_cc_mdss_ahb1_clk, ...).
+
+Bootloaders hand over with the display hardware still running, so the
+MDSS reset should return the whole group to a known state before any
+display hardware is programmed.  Describe both resets so that the
+array-API change in the previous patch asserts and releases the group
+together.
+
+On this board, resetting only DISP_CC_MDSS_CORE_BCR leaves the display
+intermittently broken at cold boot (command DMA timeouts followed by a
+panel init failure, 5 of 9 cold PORs), while asserting the group gave
+15 clean boots out of 15.  That measurement used the three-reset shape
+that also included RSCC; it has not been repeated for this two-reset
+shape, and the second reset has not been isolated as a single variable.
+What is observable is that resetting the group correlates with a working
+display at cold boot.
+
+Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index dd738d13df..e8e2832f91 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -3071,7 +3071,8 @@ mdss: display-subsystem@ae00000 {
+ 				 <&gcc GCC_DISP_HF_AXI_CLK>,
+ 				 <&dispcc DISP_CC_MDSS_MDP_CLK>;
+ 
+-			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>;
++			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>,
++				 <&dispcc DISP_CC_MDSS_CORE_INT2_BCR>;
+ 
+ 			interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
+ 					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
+-- 
+2.53.0
+
