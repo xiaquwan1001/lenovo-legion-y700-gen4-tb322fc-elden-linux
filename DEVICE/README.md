@@ -38,7 +38,9 @@
     要用 UEFI 路先显式 `fastboot set_active a`（该槽 `unbootable=yes` 的历史口径见下方 11-09/11-10 块）。
   - **ESP（`/dev/sda18`）**：`\EFI\BOOT\BOOTAA64.EFI` = `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动）；
     `\boot\boot.img` = **vk190**（`54e84588…`，`menu.cfg` 首项已改名 `Elden vk190 (ESP boot.img)`）、
-    `\boot\boot2.img` = vk185-adsp（`3fa8f7bb…`）；FAT `fsck.vfat -n` 干净、avail ≈13 MiB（**ESP 已 98% 满，换文件必须先删后拷**）。
+    `\boot\dtbo.img`（32 MiB）、`\boot\vendor_boot.img`（96 MiB，Mu loader 的 Android 回退路径要用，**别删**）；
+    **2026-11-13 清理**：`\boot\boot2.img`（vk185-adsp，宿主留档 `out/boot-elden-vk185-adsp.img`）已删、`menu.cfg` 对应行一并去掉
+    ⇒ FAT `fsck.vfat -n` 干净、avail **97 MiB**（清理前 13 MiB）。现菜单 = `vk190 / Mu fastboot / Power off`。
     注：现用槽是 b ⇒ 这条 ESP 链只在 `set_active a` 后才会被走，先当**备用/对照**路径。
   - **回退**：`fastboot flash boot_b bootslot-b/boot_b-vk185.img`（或 `backup/HA2EXB0E-16+512/boot_b-before-vk185-20261107.img`）+ `fastboot oem ... ` → 回 vk185（无 s2idle）；
     ESP 旧件 `backup/HA2EXB0E-16+512/esp-boot.img-before-vk190-20261113.img`（= vk184 `27bd6ddd…`）。

@@ -1,3 +1,7 @@
+# ⚠️ 2026-11-13 复核（PITFALLS #640）：本快照内容**不是** vk189 实际用的 config ——
+#    LOCALVERSION 仍是 `-debug-vk188-sysfbfb`、且缺 GUNYAH/VIRT_DRIVERS/SYS_HYPERVISOR 三组符号，
+#    与 out/boot-elden-vk189.manifest 里的 config_sha256=feefc38b… 不一致（出快照后树上又改过 config）。
+#    保留只为留痕；**现役 ABI 参考 = patches/config-daily-c2-suspend-20261113**，勿再用本件当 SSOT。
 #
 # Automatically generated file; DO NOT EDIT.
 # Linux/arm64 7.3.1 Kernel Configuration
