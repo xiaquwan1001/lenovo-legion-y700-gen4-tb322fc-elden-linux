@@ -1,8 +1,10 @@
-# pakaging/elden-userland/build — 7 个 ELF 的宿主侧重建配方（T14 收尾，2026-11-04）
+# pakaging/elden-userland/build — 7 个 ELF + 1 个覆盖件的宿主侧重建配方
 
 > 目的：把「`sources.tsv` 说可重建」变成「**任何人一条命令就能演练、并有门禁数字**」。
 > 真相仍在 `scripts/build-*.sh` / `scripts/host-arm64-chroot.sh`（本目录是统一入口 + `--dry-run`），
 > 逐 ELF 的映射在 `artifacts.tsv`，机器检查在 `tools/verify.sh --rebuildable`。
+> **覆盖件**（用自编件盖住发行版包的文件，如 `/usr/bin/phoc`）单独登记在 `../overrides.tsv`，
+> 门禁是同一命令的 **H3** 段；为什么必须 divert+hold 见 `PITFALLS #654`。
 
 ## 用法
 
@@ -12,6 +14,7 @@ bash packaging/elden-userland/build/all.sh --apply         # 真跑（root 配�
 bash packaging/elden-userland/build/ffrumble.sh --dry-run  # 单个配方
 bash packaging/elden-userland/tools/verify.sh --rebuildable # 门禁：ok/missing + 配方可演练
 bash packaging/elden-userland/tools/verify.sh --rebuild     # 门禁：真编 4 个静态件并比 sha
+bash packaging/elden-userland/build/phoc.sh --dry-run       # 覆盖件：phoc 重建（真跑 15–25 min）
 ```
 
 `--dry-run` 的硬承诺：**不建目录、不编译、不 chroot、不写系统**；`run()` 只打印以 `+` 开头的命令。
@@ -43,3 +46,21 @@ bash packaging/elden-userland/tools/verify.sh --rebuild     # 门禁：真编 4 
   `scripts/deploy-sensord-routec-debian.sh` 头部注释）。
 - **不做的方案**：静态链接 / musl-cross-make —— 上游 `Makefile` 依赖 `pkg-config` 找
   gbinder/glibutil 的 `.pc`，静态交叉链没有对应的 `.pc`；改 Makefile 超出本任务范围。
+
+## 覆盖件：`phoc`（2026-11-13 纳入）
+
+`phoc.sh` 是**覆盖件配方**，不进 `artifacts.tsv`（phoc 是 Debian 包 `phoc` 的文件，不是我们的自编 ELF），
+登记在 `../overrides.tsv`。
+
+| 项 | 值 |
+|---|---|
+| 目标 | `/usr/bin/phoc`（pkg `phoc`） |
+| 回退基座 | `/usr/bin/phoc.dpkg-dist`（dpkg 原件，`dpkg-divert` 重定向） |
+| 补丁 | `patches/phoc-syncobj-20261111/`（C12 L2 的 syncobj 广告）+ `patches/phoc-osk-versiongate-20261111/`（G1-38 去版本门） |
+| 真跑 | `sudo env VER=0.59~rc1 DEBVER=0.59~rc1-1 WRAPMODE=nodownload bash build/phoc.sh --apply` |
+| 上机 | `scripts/phoc-install.sh --install <产物>`（**必须**走它，它做 divert + hold + 幂等） |
+| 复核 | `scripts/phoc-install.sh --check`（divert/hold/补丁特征串三判据） |
+
+**为什么不能只 `install`**：2026-11-13 实测 `/usr/bin/phoc` 被 `apt` 静默换回 dpkg 原件
+（`e561c4f5…`），`wayland-info` 少掉 syncobj 全局、OSK 补丁消失，而 greetd/phoc 进程/桌面**全部正常**、
+无任何报错 ⇒ 只能靠门禁与 `--check` 发现（`PITFALLS #654`）。

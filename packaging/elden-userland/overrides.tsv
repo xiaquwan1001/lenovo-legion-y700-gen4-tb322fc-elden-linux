@@ -1,0 +1,21 @@
+# overrides.tsv — 用自编件**覆盖发行版包**提供的二进制的登记表
+#
+# 与 MANIFEST.tsv 的区别（两者不混）：
+#   MANIFEST.tsv 的 `elf` 行 = 我们自编的 userland 件（repo_src=`-`，由 build/ 下配方重建）。
+#   本表 = **发行版包自己的文件**，我们装了一个打过补丁的版本盖住它；包的其它文件不动。
+#
+# 为什么必须登记（PITFALLS #654）：
+#   只 `install -m 0755` 到 /usr/bin 会被 apt 静默冲回上游件 —— 2026-11-13 实测 phoc 被换回
+#   dpkg 原件 e561c4f5…，`wayland-info` 少掉 syncobj 全局、OSK 版本门补丁消失，而
+#   `systemctl is-active greetd` / phoc 进程 / 桌面全部正常，**没有任何报错**。
+#   ⇒ 必须 `dpkg-divert`（根本）+ `apt-mark hold`（防升级连 .dpkg-dist 一起换）。
+#
+# 列：dst <TAB> pkg <TAB> divert_to <TAB> hold <TAB> recipe <TAB> patch_dirs <TAB> evidence
+#   dst        : 被覆盖的绝对路径
+#   pkg        : 提供它的 Debian 包名
+#   divert_to  : dpkg-divert 的重定向目标（发行版原件落这里 = 回退基座）
+#   hold       : yes | no —— 是否 `apt-mark hold`（yes 时版本也不升级）
+#   recipe     : packaging/elden-userland/build/ 下的配方（可 `--dry-run` 为门禁判据）
+#   patch_dirs : 打进去的本地补丁目录（逗号分隔，相对仓库根）
+#   evidence   : 判据/证据指针
+/usr/bin/phoc	phoc	/usr/bin/phoc.dpkg-dist	yes	phoc.sh	patches/phoc-syncobj-20261111/,patches/phoc-osk-versiongate-20261111/	2026-11-13 C-U7：我们的件 6125964331… vs dpkg 原件 e561c4f5…；`wayland-info` 56→57 全局、含 wp_linux_drm_syncobj_manager_v1 v1；droidloom-wayland 0 次 bind failure。全账 reports/device-session-20261113-vk191.md 追加节 + PITFALLS #653/#654

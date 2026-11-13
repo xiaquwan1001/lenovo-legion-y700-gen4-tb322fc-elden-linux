@@ -14,6 +14,9 @@
 #      输出 `ok=N missing=M` 的**可复现数字**（10-25 报告口径 4 ok/3 missing 的自动化版本）。
 #   H2. --rebuild（同上，另加）：真编 4 个静态交叉件（不动 chroot/root 配方）并与 MANIFEST 比 sha，
 #      只写仓库内 out/；sha 差异仅提示（重编改字节 ≠ 功能漂移）。
+#   H3. 覆盖件（--rebuildable 内）：overrides.tsv 每行 = 我们用自编件盖住发行版包的文件。
+#      判据 = dst/recipe/patch_dirs 都在 + 配方可 `--dry-run` + （在线时）设备上 divert 与 hold 在位。
+#      背景 PITFALLS #654：只 install 会被 apt 静默冲回上游件。
 #
 # 用法：bash tools/verify.sh [--offline] [user@host]
 #       bash tools/verify.sh --rebuildable   只跑 H 段（重建性数字，零写盘）
@@ -129,6 +132,36 @@ section_rebuild() {
   # 机器可读的稳定行（供脚本/CI 抓数字）
   printf '==== rebuildable: elf=%d ok=%d missing=%d recipe=%d dry-run-ok=%d identical=%d ====\n' \
     "$n_rows" "$n_ok" "$n_missing" "$n_recipe" "$n_dry" "$n_art_same"
+
+  # -------------------------------------------------------- H3. 覆盖件（发行版包被我们盖住的文件）
+  sec "H3. 覆盖件登记（overrides.tsv）"
+  local ov=$HERE/overrides.tsv
+  if [ -f "$ov" ]; then
+    local ov_n=0 ov_ok=0 ov_bad=0 d pkg dt hold rec pats ev
+    while IFS=$'\t' read -r d pkg dt hold rec pats ev; do
+      case "$d" in ''|'#'*) continue ;; esac
+      ov_n=$((ov_n + 1))
+      local bad=0
+      [ -n "$d" ] || { fail "overrides: 空 dst"; bad=1; }
+      [ -n "$rec" ] && [ -f "$HERE/build/$rec" ] || { fail "overrides: $d 的配方缺失 build/$rec"; bad=1; }
+      if [ -n "$pats" ]; then
+        local pd
+        for pd in $(printf '%s' "$pats" | tr ',' ' '); do
+          [ -d "$REPO/$pd" ] || { fail "overrides: $d 的补丁目录缺失 $pd"; bad=1; }
+        done
+      fi
+      if [ -n "$rec" ] && [ -f "$HERE/build/$rec" ]; then
+        if bash "$HERE/build/$rec" --dry-run >/dev/null 2>&1; then :; else
+          fail "overrides: build/$rec --dry-run 失败"; bad=1
+        fi
+      fi
+      [ "$bad" = 0 ] && { ok "$d（pkg=$pkg，divert=$dt，hold=$hold）"; ov_ok=$((ov_ok + 1)); } || ov_bad=$((ov_bad + 1))
+    done < "$ov"
+    printf '\n  覆盖件 %d 个：ok=%d bad=%d\n' "$ov_n" "$ov_ok" "$ov_bad"
+    printf '==== overrides: n=%d ok=%d bad=%d ====\n' "$ov_n" "$ov_ok" "$ov_bad"
+  else
+    warn "缺 overrides.tsv（用自编件覆盖发行版包时必须有登记，否则会被 apt 静默冲回；PITFALLS #654）"
+  fi
 
   # -------------------------------------------------------------- H2. 真编静态件（--rebuild）
   if [ "$REBUILD_ONLY" = 2 ]; then

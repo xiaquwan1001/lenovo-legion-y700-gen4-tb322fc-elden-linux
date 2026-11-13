@@ -1,6 +1,10 @@
 #!/bin/bash
 # all.sh — 逐个跑本目录所有配方（默认 --dry-run，只打印；要真跑加 --apply）
 #
+# 注意 `phoc` 是**覆盖件**（盖住 Debian 包的 /usr/bin/phoc），不是我们的自编 ELF：
+#   它的 dry-run 只打印构建命令；真跑约 15–25 min（qemu-user），上机还必须走
+#   `scripts/phoc-install.sh` 做 dpkg-divert + apt-mark hold（PITFALLS #654）。
+#
 # 用法:
 #   bash packaging/elden-userland/build/all.sh              # 全部 dry-run，逐一打印命令
 #   bash packaging/elden-userland/build/all.sh --apply      # 真跑（含 root 配方时会要求 sudo）
@@ -15,7 +19,7 @@ for a in "$@"; do
 	esac
 done
 
-RECIPES="ffrumble elden-hapticd eldroid-sensord waydroid-sensord waydroid-sensord-udp elden-ime-focusd reboot2"
+RECIPES="ffrumble elden-hapticd eldroid-sensord waydroid-sensord waydroid-sensord-udp elden-ime-focusd reboot2 phoc"
 rc=0
 for r in $RECIPES; do
 	printf '\n===== %s =====\n' "$r"
