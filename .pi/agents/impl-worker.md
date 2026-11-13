@@ -1,7 +1,7 @@
 ---
 name: impl-worker
 description: 二级叶级执行：在指派的唯一路径内完成一个有界实现子任务（代码/补丁/脚本/文档草稿），自检后回执；不可再派发
-model: custom.ustc-pool/ustc-worker
+model: custom.ustc-pool/ustc-glm
 thinking: low
 tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---

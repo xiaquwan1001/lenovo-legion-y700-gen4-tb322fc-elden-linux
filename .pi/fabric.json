@@ -8,14 +8,14 @@
   "models": {
     "aliases": {
       "default": "custom.ustc-pool/ustc",
-      "worker": "custom.ustc-pool/ustc-worker",
+      "worker": "custom.ustc-pool/ustc-glm",
       "scout": "custom.ustc-pool/ustc",
       "delegate": "custom.ustc-pool/ustc",
       "complex": "custom.ustc-pool/ustc",
-      "researcher": "custom.ustc-pool/ustc-research",
+      "researcher": "custom.ustc-pool/ustc-dsf",
       "oracle": "custom.ustc-pool/ustc",
-      "evidence-auditor": "custom.ustc-pool/ustc-audit",
-      "audit": "custom.ustc-pool/ustc-audit",
+      "evidence-auditor": "custom.ustc-pool/ustc-qwen",
+      "audit": "custom.ustc-pool/ustc-qwen",
       "fast": "custom.ustc-pool/ustc",
       "flash": "custom.ustc-pool/ustc"
     }

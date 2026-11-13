@@ -385,3 +385,7 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 reports/artifacts/**/logfs*.bin
 reports/artifacts/**/logfs*.boot
 reports/artifacts/**/logfs.img
+
+# 2026-11-13：`.pi/**` 的模型别名改写留了逐文件备份（`*.bak-alias-1112`，用户要求**有意保留在盘**，
+# 但不入库——它们是同一批配置改写的一次性快照，重生成成本≈0）
+*.bak-alias-*

@@ -1,7 +1,7 @@
 ---
 name: android-compat
 description: G2 安卓兼容调查（Waydroid/droidloom/redroid）与身份/DRM 取证口径，不依赖 Android 宿主
-model: custom.ustc-pool/ustc-research
+model: custom.ustc-pool/ustc-dsf
 thinking: high
 tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---

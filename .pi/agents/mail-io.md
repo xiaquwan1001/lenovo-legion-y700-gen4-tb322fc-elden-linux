@@ -1,7 +1,7 @@
 ---
 name: mail-io
 description: 一级角色·邮件收发：收信分诊/lore 归档核对/补丁与回信草稿/归档落盘；默认只读只起草，投递须用户按批放行；可派 ≤3 个二级
-model: custom.ustc-pool/ustc-research
+model: custom.ustc-pool/ustc-dsf
 thinking: medium
 tools: ["read", "grep", "find", "ls", "bash", "edit", "write", "web_search", "web_fetch", "web_providers"]
 ---

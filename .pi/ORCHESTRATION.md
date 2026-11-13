@@ -53,7 +53,7 @@
 3. **`tools` 是完整白名单**（不是增量）：不列 `bash`/`read`/`edit`/`write`/`grep`/`find`/`ls` 就没有；
    要 `web_*` 必须显式列。`recursive: true` 时 `fabric_exec` 由 Fabric 自动追加。
 4. **本项目模型一律用 ustc 池**（`custom.ustc-pool/*`，经本机 litellm 网关 `ustc-pool` 轮转 key）：
-   默认 `ustc`、执行/实现 `ustc-worker`、研究 `ustc-research`、审计/边界检查 `ustc-audit`。
+   默认 `ustc`、执行/实现 `ustc-glm`、研究 `ustc-dsf`、审计/边界检查 `ustc-qwen`。
    派工时写显式 `provider/model`（别名在会话内可能不解析）；池内 key 轮转/限流由 litellm 负责，不手动绑 key。
 5. 递归子代理还会继承 `agent` 风险授权；**不继承**网络/写盘授权——需要时在派工单里写清。
 6. **L1 派 L2 必须同步 await**：在一次普通 `fabric_exec`（可传 `timeoutMs`）里用 `Promise.allSettled` 起 L2，**不要用 `background: true`**。
@@ -68,7 +68,7 @@ const r = await agents.run({
   task: dispatchText,                     // 目标/边界/验收/回执字段
   recursive: true,                        // ★ 必须
   cwd: "/home/xuqianhui/y700-elden",
-  model: "custom.ustc-pool/ustc-worker",   // 例：物理执行走 worker 别名
+  model: "custom.ustc-pool/ustc-glm",   // 例：物理执行走 worker 别名
   timeoutMs: 6 * 3600_000,
 });
 ```

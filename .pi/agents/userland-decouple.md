@@ -1,7 +1,7 @@
 ---
 name: userland-decouple
 description: 驱动/服务用户态解耦审计与 3 个抽象点落地（容器后端/传感器源/触觉桥）+ T14 剩余
-model: custom.ustc-pool/ustc-worker
+model: custom.ustc-pool/ustc-glm
 thinking: high
 tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---

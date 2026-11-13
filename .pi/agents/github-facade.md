@@ -1,7 +1,7 @@
 ---
 name: github-facade
 description: 一级角色·公开门面：维护 README.md/PROGRESS.md 与 GitHub 仓库展示条目（About/description/topics/homepage），使其与 TASKS §0 当前进度一致；不改 SSOT
-model: custom.ustc-pool/ustc-worker
+model: custom.ustc-pool/ustc-glm
 thinking: high
 tools: ["read", "grep", "find", "ls", "bash", "edit", "write", "web_search", "web_fetch"]
 ---

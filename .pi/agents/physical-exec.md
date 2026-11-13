@@ -1,7 +1,7 @@
 ---
 name: physical-exec
 description: 一级角色·物理执行：设备探测/刷写/上机、构建打包、脚本落地；可派 ≤3 个二级并行（设备动作永远串行）
-model: custom.ustc-pool/ustc-worker
+model: custom.ustc-pool/ustc-glm
 thinking: medium
 tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---

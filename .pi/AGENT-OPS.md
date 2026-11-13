@@ -99,7 +99,7 @@
   树内配额：总管同时 ≤4 个一级、每个一级 ≤3 个二级（合计 ≤16）。按网关限流/预算自留余量，见全局 `AGENTS.md`。
 - **派工单（2026-10-19 起）**：可以要求子代理回执摘要；但仍优先要求**产物落盘 + 最小回执字段（路径 + 关键数字 + 复现命令）**，避免只回一段话而无文件（旧「禁止 summary」条款已作废，理由见 §5）。
 - 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。
-- **本项目子代理一律用 ustc 池**（`custom.ustc-pool/*`，本机 litellm 网关轮转 key）：默认 `ustc`、执行 `ustc-worker`、
-  研究 `ustc-research`、审计/边界 `ustc-audit`；项目级 `.pi/fabric.json` 已把全部别名指向该池，改后需 `/reload` 生效。
+- **本项目子代理一律用 ustc 池**（`custom.ustc-pool/*`，本机 litellm 网关轮转 key）：默认 `ustc`、执行 `ustc-glm`、
+  研究 `ustc-dsf`、审计/边界 `ustc-qwen`；项目级 `.pi/fabric.json` 已把全部别名指向该池，改后需 `/reload` 生效。
   派工时**显式传 `provider/model`**（别名在会话内可能不解析），并注意 **`agents.run` 的 `tools` 是完整白名单**（不列就用不了）。
 - **子代理自报“已写报告”必须由编排者 `ls`/`read` 验证**：2026-10-19 实例——lane-b 返回 `status=completed` 且自称已写 33 KB 报告，实际文件根本不存在，重派后才有。
