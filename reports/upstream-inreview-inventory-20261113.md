@@ -34,7 +34,8 @@
 | arm64: dts: qcom: sm8750: describe all MDSS block resets (1196231) | 2026-10-29 | 1 | new | 0 | 14924250 |
 | dt-bindings: display: msm: mdss-common: describe additional  (1196472) | 2026-10-29 | 3 | new | 0 | 14925276 |
 | regulator: dt-bindings: willsemi,wl2868c: add the WL2868C ca (1197605) | 2026-10-31 | 3 | new | 0 | 14928864 |
-| media: camss: csid: unwind the power-on path through a singl (1197609) | 2026-10-31 | 2 | new | 0 | 14928873 |
+| media: camss: CSID power-on unwind and VFE stream handling (**v2**, 1197609) | 2026-10-31 | 2 | new | 0 | 14928873 + 14928872 |
+| ~~media: camss 三枚 10-29 投件~~ | 2026-10-29 | 3 | **handled-elsewhere**（`linux-arm-msm` 项目，未被 media 采纳） | 0 | 14924247/48/49 |
 | dt-bindings: usb: snps,dwc3: tighten the two-connector share (1197789) | 2026-10-31 | 2 | new | 0 | 14929536 |
 | drm/msm/dsi: move bonded command failure flag into dsi manag (1198061) | 2026-10-31 | 5 | new | 0 | 14930241 |
 | dt-bindings: usb: snps,dwc3: tighten the two-connector share (1198438) | 2026-11-02 | 1 | new | 0 | 14931311 |

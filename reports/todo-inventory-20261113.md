@@ -66,7 +66,7 @@
 | # | 一句话 | 退出条件 / 判据 | 证据指针 |
 |---|---|---|---|
 | **B1** | **camss CSIPHY 对账**：用**现成** `gh/master`（`9d66f26fef`，7.4-rc3，`build/m3v2-7.3rc7` 部分克隆里已有）先确认 `csiphy_res_kaanapali` 是否在 7.4 内；在则与 vendor 2.4.0 表（2ph 103 条 / 3ph 72 条）逐条比地址+掩码；不在则记录「须等 v6 合入」 | **✅ 已收口（见右）** | 产出差集表（有差集 ⇒ 备 2.4.0 delta；无 ⇒ 接 v6）；**「7.4 是否含 kaanapali 表」当前未证实**
-| **B2** | **camss `0007`（起流失败回退）**独立价值评估（v6 不碰 `camss-video.c`） | 能否独立成立 + `checkpatch`/`git am` 门；投不投交 A 类 | `camss-v6-rebase-plan-20261113.md` §1/§5.3 |
+| **B2** | **camss `0007`（起流失败回退）**独立价值评估（v6 不碰 `camss-video.c`） | **✅ 已收口（2026-11-13 夜）：已由我们自己的 v2 系列覆盖，不再独立投**——`b2-camss-0003-recheck-20261113.md` | `camss-v6-rebase-plan-20261113.md` §1/§5.3 |
 | **B3** | **mdss 2/3 取证**：查 `sm8750 dispcc` 复位表与 `msm_mdss.c` 里 `mdss_intr` 实际用法，写准「是不是中断控制器」+ 副作用（command DMA timeout / 只有背光无 DRM 设备）+ 测法 | 三段文字可直接进 commit message（供 A1） | `mail-triage-20261112.md` §6.1-2；`upstream-watch-20261113.md` §A（14931324） |
 | **B4** | **dsi/phy v2 备料**（注释搬进 commit message，代码只留 `writel(0xc0, …)` + 一行理由）——**若 A3 裁决为「撤回」则本项改产出「上游已覆盖」的撤回说明** | `checkpatch --strict` 0/0/0 + `git am` 干净 | `mail-triage-20261112.md` §5 W4；X10 |
 | **B5** | **dpu gamma LUT v2 备料**：加 `Fixes: 39a750ff5fc9`，正文/RV 原样 | 同上 | `mail-triage-20261112.md` §3.1 T3 |
