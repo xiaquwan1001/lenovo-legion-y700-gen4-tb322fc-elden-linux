@@ -4,6 +4,9 @@
 > 承接：`reports/vk163-modular-20261026.md`（模块化上机）、`reports/mobian-migration-plan-20261021.md`（迁移方案 A/B/C/D）、
 > `reports/mobian-rootfs-artifacts-20261026.md`（S2/S3 产物）、`packaging/elden-userland`（用户态真源）。
 > 状态：**S4/S5/S6 仍未落地**；本报告只改「落点判据」+ 补齐 4 个原先「未证实」的门 + 抓出 1 个真实缺口。
+> **★2026-11-14 更新：S3/S4/S6 已实现并已离线复核**（`paths-qcom.txt` 双内容树 + `qcom_stage()` 门禁 A'；
+> `stage.sh` 的 B/D 段；数字与复现命令见 `reports/t14-s3s4s6-offline-verify-20261114.md`），
+> 唯一缺口 = 自家 `elden-hapticd` 二进制不可重建（T14 债务，对应 WARN D2）。
 
 ---
 
