@@ -36,7 +36,7 @@
 > 目标：**增量记录**——每次会话只新增文件，不改旧文件；状态数字只有一处出口。
 
 1. **只写 1 个新文件**：`<角度>/sessions/YYYY-MM-DD-<主题>.md`；同一会话多主题加 `-2`。**不新建目录、不改已存在的 sessions 文件、不建索引表**。
-2. **可用角度 4 个**：`TASKS/`（任务/进度/未解）、`PITFALLS/`（踩坑）、`DEVICE/`（单元/镜像状态）、`RESOURCES/`（资产/资源）。
+2. **可用角度 5 个**：`TASKS/`（任务/进度/未解）、`PITFALLS/`（踩坑）、`DEVICE/`（单元/镜像状态）、`RESOURCES/`（资产/资源）、`RUNBOOK-BRINGUP/`（bringup 流程与相变记录）。
    `SESSIONS/` **冻结不写**；`HISTORY/` 由脚本生成**不手写**；`RUNBOOK-BRINGUP/` 已有正文（Phase −1…9 + `sessions/`），属可写角度。跨角度时写**主角度**一个文件，其余角度补一行指针。
 3. 文件头只写 6 个字段：`日期 / pi 会话 id / 主题 / 结论 / 证据指针 / ★SSOT 待并入`。`pi 会话 id` 取 `$PI_SESSION_ID`。
 4. **状态数字只改一处**：`TASKS/README.md` §0（总览）/ §5（Q 行）。其它任何地方**不写状态数字**，只写指针。
@@ -116,7 +116,7 @@
 | 角度文档 | `PITFALLS/` | track | 开发经验唯一入口（§0 纪律 + 分类正文） |
 | 角度文档 | `SESSIONS/` | track | 逐会话档案（2026-10-15 起冻结，只读） |
 | 角度文档 | `HISTORY/` | track | 逐提交史（scripts/gen-history.sh 机械生成，不手写） |
-| 角度文档 | `archive/` | track | 过程证据（追加为主；不得作为当前结论引用） |
+| 角度文档 | `archive/` | track | 过程证据（追加为主；不得作为当前结论引用）。**无自己的 README**：分区与纪律正文 = 本篇 §2 的「证据层」段 |
 | 证据/备份 | `reports/` | track | 报告与活跃证据工作区（md 入库；大件按 .gitignore 排除） |
 | 证据/备份 | `backup/` | ignore | 原厂固件/分区 dump/内核 bundle/官方线刷包（不可再生，见 RESOURCES §3） |
 | 源码/补丁/工具 | `scripts/` | track | 脚本全集（构建/刷机/诊断/门禁） |
@@ -166,8 +166,8 @@
 - 机器账自检：`scripts/check-doctor.sh`（退场入口 / vk 版本账 §5+§5d / manifest §5e / **§5f ABI 敏感项一致性（`.config`↔模块树）** / 静态卫生 /
   **§7 入口文档完整性（围栏·截断·证据指针泄漏）** / **§8 索引↔磁盘对账（编号撞车·索引行超长）** /
   **§9 SESSIONS 快照** / **§10 HISTORY 对账** / **§11 提交钩子生效性** / **§14 顶层布局注册表**）。
-  顶层布局真源 = **`versions/layout.tsv`**（46 项，4 区：入口/文档 · 源码/补丁 · 证据/备份 · 工作区；人读面 = 本节「顶层布局」表，门 = `scripts/check-layout.sh`）。
-  **入库前门已接线**（`core.hooksPath=.githooks`）：`pre-commit` 跑 `--staged-fast`（§7/§8/§9/§10/§11/§13/§14，实测 **~0.4 s**；§12 内核 config 门不在这一档）。
+  顶层布局真源 = **`versions/layout.tsv`**（项数现查 `scripts/check-layout.sh --list | wc -l`；4 区：入口/文档 · 源码/补丁 · 证据/备份 · 工作区；人读面 = 本节「顶层布局」表，门 = `scripts/check-layout.sh`）。
+  **入库前门已接线**（`core.hooksPath=.githooks`）：`pre-commit` 跑 `--staged-fast`（§7/§8/§9/§10/§11/§13/§14，实测亚秒级（量级见 `reports/script-audit-20261105.md`）；§12 内核 config 门不在这一档）。
   全量 `scripts/check-doctor.sh` 现为**并发子门**（`scripts/doctor/`），稳态 **~1.4 s**（旧版单体串行 12.5 s）；口径与实测见 `reports/script-audit-20261105.md`。
 - **打包前门**：`scripts/assert-kernel-sane.sh`（config 锚点 / System.map 符号 / UTS 对齐 / 非陈旧 / **§1b ABI 敏感项**，后者调 `scripts/check-abi-config.sh` 比对 SSOT config 的 27 项）。
 - 版本对账：**`versions/vk-kernel-identity.tsv`**（构建号 ↔ 内核二进制 ↔ 源提交，含每个镜像的失真标记）。

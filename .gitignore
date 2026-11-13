@@ -389,3 +389,13 @@ reports/artifacts/**/logfs.img
 # 2026-11-13：`.pi/**` 的模型别名改写留了逐文件备份（`*.bak-alias-1112`，用户要求**有意保留在盘**，
 # 但不入库——它们是同一批配置改写的一次性快照，重生成成本≈0）
 *.bak-alias-*
+
+# ── 2026-11-13 仓库瘦身：reports/artifacts 下的大件试验二进制/构建日志不入库 ──
+# 判据：单件 >1 MiB（实测 277 件 / 823.9 MiB，占主仓被跟踪体积 88%）。
+# 可核验性保留：各目录 SHA256SUMS 仍入库；out/ 侧同名 manifest 仍入库；
+# 历史版本仍可从 git 历史取回（git show <commit>:<path>），磁盘上文件未删。
+/reports/artifacts/**/*.fd
+/reports/artifacts/**/*.img
+/reports/artifacts/**/*.bin
+/reports/artifacts/**/*.gz
+/reports/artifacts/**/*.log

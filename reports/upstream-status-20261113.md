@@ -1,6 +1,6 @@
 # 上游化当前一页（2026-11-13）
 
-> 取代 `reports/upstream-status-20261105.md`（11-05 快照，留作沿革）。
+> 取代 `archive/topics/upstream/upstream-status-20261105.md`（11-05 快照，留作沿革）。
 > 只写「逐系列状态 / 我方欠什么 / 复启条件」；每条论断的证据指针在行内。
 > 外部动向快照 = `reports/upstream-watch-20261113.md`（patchwork REST 取证 29 条）。
 

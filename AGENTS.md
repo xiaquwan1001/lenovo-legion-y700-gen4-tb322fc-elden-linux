@@ -39,7 +39,7 @@
 - `pkill -f`/`pgrep -f` 会自匹配打死自己的 shell → 模式写字符组（`[t]tyACM`）+ `grep -vw $$`。
 - `PITFALLS` 编号只补不重排；正文行首 `N. ` 会被当成条目定义（有序列表写 `- **…**`）；条目标题必须含 `## #NNN`。
 - **不要在本机平板上编译**（过热 → 断电重启到 BL）：内核用 aarch64-linux-gnu，musl 用户态用 `~/toolchains/aarch64-linux-musl-cross`。
-- 「收尾」= 产物落盘 + SSOT 同步 + 设备安全态 + `check-doctor` **FAIL=0/WARN=0** + 工作区 clean（全文 `.pi/AGENT-OPS.md` §5）。
+- 「收尾」= 产物落盘 + SSOT 同步 + 设备安全态 + `check-doctor` **FAIL=0**（WARN 必须逐条列出并归类：本轮修 / 已登记豁免；C 类存量 WARN 不阻塞收尾）+ 工作区 clean（全文 `.pi/AGENT-OPS.md` §5）。
 - 子代理网关一律 ustc 池（`.pi/ORCHESTRATION.md` §4）；**禁** nexavlinks 与 `deepseek/*`（v4-pro 尤耗经费）。
 - **其余判据不在本文件**（b 槽签名、双层压缩、kexec 取证、`build/*` 删除前 bundle、geekidos-linux 浅克隆、顶层布局登记、EDL 工具链、Q28 坏发协变量、`.pi/trash` 保护）：
   见 `.pi/memory/`（`MEMORY.md` / `failures-kernel.md` / `failures-device.md` / `notes-display.md`）与 `PITFALLS/`；检索用 `mem <关键词>`。
