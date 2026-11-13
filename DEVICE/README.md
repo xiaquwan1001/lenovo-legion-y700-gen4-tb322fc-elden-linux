@@ -36,6 +36,17 @@
   WiFi `wlp1s0` UP、DSI `bound ae94000.dsi`、Waydroid/zramswap active。
   - `boot_a` **未动** = UEFI 干净世代 `pc1`（分区 sha `1ca2b8e69167…`，件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；
     要用 UEFI 路先显式 `fastboot set_active a`（该槽 `unbootable=yes` 的历史口径见下方 11-09/11-10 块）。
+  - **★2026-11-13 夜（最新，覆盖下面 ESP 那一行的旧值）**：
+    ① **在机 = RAM 启动的 `vk191`**（`uname -r` 与 vk190 **同 UTS**：`7.3.1-debug-vk189-suspend-…`；
+    身份差别只在 ramdisk——`kernel`/`dtb` 与 vk190 **逐字节相同**，仅 `ramdisk` = `17cbcab1…`（含动态 SN 的 `usb-gadget`））。
+    `boot_b` **未被写**（仍是 vk190）；重启即回 vk190。
+    判据全绿：`Unpacking initramfs...` 无 `no cpio magic` / `Run /init` / gadget `iSerial=HA2EXB0E` /
+    DSI connected / WiFi up / `/dev/fastrpc-adsp` / sensors+waydroid active / s2idle 3/3（uptime 连续）。
+    证据 `reports/device-session-20261113-vk191.md`。
+    ② **ESP `\EFI\BOOT\BOOTAA64.EFI` 已从 v5（A2 + `panic=0`，会挂住像死机）切回 `v3b-bigfont`**
+    （sha `244c5f65…`，`--tag v3b-restore`）⇒ 从 a 槽起不再「挂住不重启」；旧值备份仍在 `\EFI\BOOT\BOOTAA64.EFI.v5.bak`。
+    ③ **上机通道口径（新，`PITFALLS #650`）**：进 fastboot 用 `ssh elden-root 'sync; reboot bootloader'`，
+    **不要**用 `scripts/to-fastboot.sh --boot`（暖复位后立刻 `fastboot boot` 实测黑屏+崩坏，同镜像 systemd 路径一次过）。
   - **ESP（`/dev/sda18`）**：`\EFI\BOOT\BOOTAA64.EFI` = `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动）；
     `\boot\boot.img` = **vk190**（`54e84588…`，`menu.cfg` 首项已改名 `Elden vk190 (ESP boot.img)`）、
     `\boot\dtbo.img`（32 MiB）、`\boot\vendor_boot.img`（96 MiB，Mu loader 的 Android 回退路径要用，**别删**）；

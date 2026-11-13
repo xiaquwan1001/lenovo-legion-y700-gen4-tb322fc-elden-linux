@@ -81,8 +81,15 @@ build_slim() {
 }
 
 build_full() {
-	base=${1:-$OUT/boot-elden-vk61.img}
+	# BASE 缺省：vk61 早已归档 ⇒ 取 out/ 里最新的 vk*.img；可用 BASE_FULL= 显式固定
+	# （verify 的可复现性只对「同一个 BASE」成立，换 BASE 必然换 sha）。
+	if [ -n "${1:-}" ]; then base=$1
+	elif [ -n "${BASE_FULL:-}" ]; then base=$BASE_FULL
+	else base=$(ls -1t "$OUT"/boot-elden-vk*.img 2>/dev/null | head -1); base=${base:-$OUT/boot-elden-vk61.img}; fi
 	[ -f "$base" ] || die "BASE 不存在: $base"
+	# 2026-11-13 修：BASE 若是相对路径，下面的 `cd "$R/root"` 之后会解析失败（实测报
+	# `gzip: out/xxx.cpio.gz: No such file or directory` ⇒ "解开 ramdisk 失败"）。
+	base=$(realpath "$base")
 	R=/tmp/bi-full.$$; mkdir -p "$R"
 	case "$base" in
 		*.img)  python3 "$UNPACK" --unpack "$base" --unpack-dir "$R/unpack" >/dev/null 2>&1 || die "解包 $base 失败"
@@ -95,6 +102,20 @@ build_full() {
 	( cd "$R/root" && gzip -dc "$rd" | cpio -idm --quiet 2>/dev/null ) || die "解开 ramdisk 失败"
 	[ -f "$R/root/init" ] || die "基底 ramdisk 没有 /init"
 	sed 's/\r$//' "$INIT" > "$R/root/init"; chmod 755 "$R/root/init"
+	# --- 同步 ramdisk 内的 usb-gadget（2026-11-13 修 B12③）------------------------
+	# 基底 ramdisk 里的 usr/local/sbin/usb-gadget 是 2026-10-26 的旧件（写死 `HA2CB1KY`），
+	# 而 init 在 switch_root 前调的就是它 ⇒ 只换 /init 不会让 SN 锚定生效。
+	# 真源 = initramfs/usb-gadget（运行时取 DT → cmdline androidboot.serialno → /etc/elden-serial）。
+	# 装到基底里**已存在**的那个路径（历史件在 usr/local/sbin/，新版 slim 在 bin/）。
+	GD="$ROOT/initramfs/usb-gadget"
+	if [ -f "$GD" ]; then
+		for gp in usr/local/sbin/usb-gadget bin/usb-gadget; do
+			if [ -f "$R/root/$gp" ]; then
+				sed 's/\r$//' "$GD" > "$R/root/$gp"; chmod 755 "$R/root/$gp"
+				echo "[initramfs] 刷新 $gp（SN 动态取值）"
+			fi
+		done
+	fi
 	# --- 注入 stock split CDSP 固件（2026-10-07 G1-11）---------------------------
 	# mainline q6v5_pas 在 switch_root 之前从 initramfs 加载固件；磁盘 rootfs 副本
 	# 不生效。CDSP 必须用 stock split 镜像（cdsp.mdt + cdsp.bNN + cdsp_dtb.mdt +

@@ -135,6 +135,13 @@
 
 ### 开放待办（按顺序；需要物理 POR 的排最后）
 
+- **2026-11-13 夜：上机一轮（零写盘）—— ramdisk 修复件 `vk191` 一次通过 + s2idle 3/3** —— 全账 `reports/device-session-20261113-vk191.md`，在机状态只读 `DEVICE/README.md` §1.1 首条。要点：
+  ① **`vk191` = vk190 的 kernel/dtb 原样 + 新 ramdisk**（`build-initramfs.sh` 两处修为真因：`BASE` 相对路径失效、`build_full` 原先**只换 `/init` 不换 `usb-gadget`** ⇒ SN 锚定在 ramdisk 里一直没生效）；上机判据 = 无 `no cpio magic`、`Run /init`、gadget `iSerial=HA2EXB0E`、DSI connected、WiFi up、fastrpc 在、sensors/waydroid active、**s2idle 3/3 且 uptime 连续**、`ASoC error (-16)` 0 次；
+  ② **一次事故已定因**：`scripts/to-fastboot.sh --boot`（PSCI 暖复位后立刻 `fastboot boot`）导致黑屏 + 崩坏/core dump 告警，设备自行回正常槽位；**同镜像**改 `ssh elden-root 'reboot bootloader'` 后一次通过 ⇒ `PITFALLS #650`，脚本头已标「不推荐」，**上机通道默认改 systemd `reboot bootloader`**；
+  ③ **ESP 陷阱已回收**：`\EFI\BOOT\BOOTAA64.EFI` 从 v5（A2+`panic=0`，会挂住像死机）切回 `v3b-bigfont`（`244c5f65…`）；
+  ④ **三条顺带查实**：本机 DT **无** `serial-number` 节点（gadget 恒走 `cmdline:androidboot.serialno`）；电源节点名是 `qcom-battmgr-bat`（不是 `battery`）；`dmesg | grep -ci 'arm-smmu.*fault'` 会命中 cmdline 假阳性；
+  ⑤ **未做**：`boot_b` 未写（重启即回 vk190）、A10 的 UEFI 侧两发（需 `set_active a`/物理 POR）、B6/B18 需先建树出镜像、C-I1 仍无电流实测。
+
 - **2026-11-13 夜：主机侧 B 组 18 条全部收口（派 3 个 L1，产物全落盘，零发信/零写盘）** —— 逐条正文只读各自报告，这里只给结论与今晚可用性：
   **① 上游备料（发信仍等下轮统一批准）**：`B1` camss CSIPHY 对账 = 上游 7.4-rc3 **没有** `csiphy_kaanapali`（camss 目录 0 命中），lane 表已迁到 `phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c` 的 `lane_regs_x1e80100[]`（其值 = vendor **v2.1.2**）；vendor 2.4.0 与它**地址 103/103 相同、13 个 data 字节不同**（逐版本扫证明是版本特征）⇒ **需要 2.4.0 delta，但形状必须改成 phy 驱动里新增 `lane_regs_sm8750[]`**（`reports/camss-csiphy-v6-vs-240-20261113.md`，B2 的 0007 独立评估同篇）；
   `B3` mdss 三问取证（`reports/mdss-int2-evidence-20261113.md`：dispcc 只有 CORE `0x8000`/CORE_INT2 `0xa000`/RSCC `0xc000` 三枚 bit0 复位；INT2 **不是**独立中断控制器，MDSS 是只读状态寄存器的汇聚 irqchip；副作用双侧症状 + 只读判据）；

@@ -6,6 +6,15 @@
 # The working path is the PSCI SYSTEM_RESET2 vendor reset added in vk41:
 #     eldroid-bootctl reboot bootloader
 #
+# ★ 2026-11-13 实测警告（PITFALLS #650）：`--boot` 这条组合**不推荐**。
+#   本脚本用 `eldroid-bootctl reboot bootloader`（PSCI 暖复位，跳过 systemd 关机序列），
+#   随后立刻 `fastboot boot` —— 实测出现过「进 fastboot 后灌镜像 → 黑屏 + 屏幕崩坏/core dump，
+#   设备自行回正常槽位」；同一镜像改用 `ssh elden-root 'reboot bootloader'`（systemd 正常关机）
+#   再 `fastboot boot` 一次通过。**上机默认改为**：
+#       ssh elden-root 'sync; reboot bootloader'   # 等 fastboot
+#       fastboot boot out/<img>
+#   若必须用本脚本：进 fastboot 后先 `fastboot reboot-bootloader` 让 ABL 重新初始化，再 `fastboot boot`。
+#
 # usage:
 #   scripts/to-fastboot.sh                       # reboot to fastboot, wait
 #   scripts/to-fastboot.sh --flash out/boot-elden-vk49.img
