@@ -154,10 +154,6 @@ qualcomm remoteproc（qcom_q6v5_pas/qcom_pas）的固件必须用 stock **split*
 ---
 cat /dev/ttyACM0（设备内核日志串口）会刷 `drm_crtc_wait_one_vblank+0x1b0` 的 vblank 警告风暴（T116 worker_thread / drm_fb_helper_damage_work），导致设备侧 SSH 变得极慢乃至超时——遇到 SSH 卡顿时先查串口是否被该警告刷屏，不是网络问题。
 ---
-`fastboot fetch boot_b` 在本机设备上不可用（报 Unable to get max-fetch-size. Device does not support fetch command），备份 boot_b 需改用设备侧 `dd` + scp 回主机。
----
-本机 `fastboot fetch boot_b <file>` 不可用：该设备不支持 fetch 命令（`fastboot: error: Unable to get max-fetch-size. Device does not support fetch command.`），会生成 0 字节文件。备份 boot_b 必须走设备侧 `dd if=/dev/disk/by-partlabel/boot_b of=/tmp/boot_b.bak bs=1M count=96` + scp 回主机。
----
 本机 `~/wt-athm`（worktree，detached bd114ca33 = vk47clean 源）里已有**完整的 vk47clean 构建产物**（vmlinux 658MB、Module.symvers、System.map，构建时间 2026-10-06 23:13），其中 `drivers/dma-buf/heaps/{system_heap,cma_heap}.ko` 的 vermagic = `7.2.0-debug-vk47clean-gbd114ca335e1`，与设备运行内核完全一致 ⇒ 可直接 scp 到设备 `/lib/modules/$(uname -r)/` 下 insmod，无需重编内核。设备 `/lib/modules/7.2.0-debug-vk47clean-gbd114ca335e1/` 原有 29 个模块但不含 dma_heap 这批。判「.ko 能否直接 insmod」= 比对 vermagic 与 `uname -r`。
 ---
 判断相机成像旋转差时：stock vendor DTB 的 `sensor-position-roll`（如后摄 90/前摄 270）与主线 DT 的 `rotation` 值可能完全一致却仍然整体颠倒——因为「应用方约定」与 DT 约定可能是反向的，此时 R=90/270 都表现成 180° 误差。旋转属性在驱动里是 read-only（`camera_sensor_rotation` v4l2 ctrl，flags=read-only），改朝向只能改 DT 重刷；libcamerasrc 无 video-direction 属性，消费端（Snapshot 等）是读 libcamera Orientation 自行旋转。 — Failed: 会话中相机颠倒排查的关键结论
@@ -167,8 +163,6 @@ DTS 多变量实验纪律（2026-10-07 两次踩坑教训）：每轮实验跑�
 本机（xuqianhui1001）内核树 `make syncconfig`/`olddefconfig` 会把 `.config` 的 QCOM 子树整体弄丢（实测 2026-10-07：`CONFIG_ARCH_QCOM` 消失，build-kernel.sh 报 `ERROR: CONFIG_ARCH_QCOM missing in .config (corrupted by olddefconfig?)`，.config 从 321948 B 掉到 244347 B）。恢复源 = `patches/config-vk50-modular`（Oct 4，模块化相机配置，321948 B）或 `patches/config-vk40-bringup`。另：想让 `uname -r` 里带上 `vk47clean` 中缀（对齐磁盘模块目录）需显式设 LOCALVERSION，仅 checkout bd114ca33 只会得到 `7.2.0-debug-gbd114ca335e1`。 — Failed: 重编 release 时 syncconfig 破坏关键 config，且 LOCALVERSION 中缀不会自动出现
 ---
 dp5 基线（内核 26cd13b1c）上执行 `ssh … 'sync; reboot bootloader'` 后设备从 USB 完全消失（fastboot devices 空、lsusb 无 18d1、无 enx*、无 /dev/ttyACM*）——该内核不含 vk41 的 PSCI SYSTEM_RESET2 vendor-reset 钩子，`reboot bootloader` 不生效。教训：在非 vk41 派生内核上要用 `reboot2 bootloader`（/sbin/reboot 被包装）+ 等 ~20s 再用 fastboot devices 判定，不要用裸 `reboot bootloader`。
----
-`fastboot fetch` 在本机设备上不可用：报 `Unable to get max-fetch-size. Device does not support fetch command.`，输出文件 0 字节（sha256 为 e3b0c442… 空文件）。需要读回分区时改用设备侧 `dd if=/dev/disk/by-partlabel/<part> bs=1M count=<N>` + scp，或依赖已有的 bootslot-b/*.img 备份。
 ---
 本机 USB-NCM 调试链路重载：设备侧 `reboot bootloader` 后若内核缺 vk41 的 PSCI SYSTEM_RESET2 钩子（如 dp5 内核 26cd13b1c），设备会从 USB 完全消失（非 fastboot 未枚举，而是无任何 USB 设备：lsusb 无 Google/18d1、无 enx*、无 /dev/ttyACM*、SSH 超时）⇒ 必须用户物理进 fastboot。另外主机侧 USB-NCM 网卡名会变（本轮见 enx021e5eede102 配到 192.168.7.9/24 等），ping/ssh 前先 `ip -br a` 找当前 enx 名；设备侧的 `sync; reboot bootloader` 属于有风险的链，执行前先确认目标内核是否带 reboot-bootloader 钩子。
 ---
@@ -638,9 +632,9 @@ fastboot 对复杂脚本/批量封装的调用支持有限，可能根本不响�
 ---
 Q24 真机理（2026-10-15 复核，报告 reports/q24-causal-audit-20261015.md）：触发源不是「camcc+cambist 电学配对」，而是 rpmhpd 电源域 provider 的 sync_state 门控。rpmhpd.c：state_synced=false 时 aggregate 把全轨夹到最高档 (level_count-1)，仅 gfx/gmxc 有 presync_floor；driver core 在所有消费者绑定后调 rpmhpd_sync_state() 释放 clamp、按真实票重投 → 批量投 0（即 PITFALLS #197/F8 现象）。设备实测全天候只有两条 pending：`qcom-rpmhpd 16500000.rsc sync_state() pending due to ade0000.clock-controller (camcc)` 与 `… 1760000.clock-controller (cambist)` ⇒ 装其一仍 pending 存活、两个都装才触发。软件层验证（N1 配对加载前后 dmesg rpmhpd pending + pm_genpd current_state，不熄屏；N2 两 CC power/control=on 保票后真熄屏）。
 ---
-本机（xuqianhui 新机，换机后）fastboot = ~/.local/opt/platform-tools/fastboot（v37.0.1，从 dl.google.com 直接下载 zip 解压，无需 sudo）；系统 PATH 里原本没有 fastboot。设备不支持 fetch：`fastboot fetch` 恒报 Unable to get max-fetch-size / Device does not support fetch command（会生成 0 字节文件）⇒ 备份分区只能用设备侧 `dd if=/dev/disk/by-partlabel/<part>` 再 scp 回主机。
+本机（xuqianhui 新机，换机后）fastboot = ~/.local/opt/platform-tools/fastboot（v37.0.1，从 dl.google.com 直接下载 zip 解压，无需 sudo）；系统 PATH 里原本没有 fastboot。设备不支持 fetch（判据与替代手段见本文「fastboot 不存在 fetch 功能」条）。
 ---
-fastboot 不存在 fetch 功能（本 ABL 支持不了）：`fastboot fetch` 报 `Unable to get max-fetch-size. Device does not support fetch command.`（2026-10-17 复核，此前 2026-10-06/10-08 已两次证实）⇒ 「刷写前先用 fastboot fetch 备份分区」的配方一律错。备份分区可行手段只有：① 设备侧 `dd if=/dev/disk/by-label/<part>` 后 ssh/tar 取回；② EDL(9008) 读回；③ 事先已有的镜像副本。写文档/脚本前先查设备侧能力，别照抄 `fastboot --help`。
+fastboot 不存在 fetch 功能（本 ABL 支持不了）：`fastboot fetch` 报 `Unable to get max-fetch-size. Device does not support fetch command.`（2026-10-17 复核，此前 2026-10-06/10-08 已两次证实）⇒ 「刷写前先用 fastboot fetch 备份分区」的配方一律错。备份分区可行手段只有：① 设备侧 `dd if=/dev/disk/by-label/<part>` 后 ssh/tar 取回；② EDL(9008) 读回；③ 事先已有的镜像副本。写文档/脚本前先查设备侧能力，别照抄 `fastboot --help`。补充判据：失败时输出文件 0 字节（sha256 e3b0c442… 空文件），`fastboot fetch boot_b` 同样报此错。
 ---
 文档/脚本里的命令能力必须在本机实测验证过才可写入口径——`fastboot --help`/工具帮助文本列出的子命令不等于本机设备支持（fastboot fetch 即典型幻觉）。用户要求「类似检查所有可能记错的地方」= 对全库做能力幻觉审计（grep 所有文档/脚本里的工具/命令用法，逐条核对是否本机可行），并对确认错误的处做替换修正 + 新增 PITFALLS 条目记录。
 ---
@@ -668,8 +662,6 @@ RAM 起自编内核（fastboot boot）前必须先部署 /lib/modules/<新UTS>�
 ---
 在 Q28 坏发 boot 上仍可做相机/无显示依赖的验收：本次在 Q28 BAD（`boot_id=26262eee…`、dsi_isr=0、Q28sig 逐发递增 4→9）的会话里，相机前/后摄照样出流并抓到真实场景图。反过来，Q28 坏发态下用户无法用屏幕手动拍照，因此人工目视验收要另设通路（agent 侧抓帧转 PNG 给用户看）。 — Failed: 曾默认「Q28 坏发 ⇒ 显示栈废 ⇒ 相关实验作废」，实际只有显示相关项作废
 ---
-设备侧 `dpms` 控制口不可写：`/sys/class/drm/card0-DSI-1/dpms` 是 `-r--r--r--`（只读），直接 echo Off 会 `Permission denied` 且静默保持 On（表现为「dpms On→On，没灭屏」的 INVALID-NO-BLANK 轮次）。设备侧真灭屏必须走会话总线（`busctl set-property … org.gnome.Mutter.DisplayConfig PowerSaveMode`）或内核 DPMS 路径；脚本要区分 A（ddcci/dbus）/K（kernel）两种臂并显式校验 On→Off 真跃迁，否则整轮样本是假阴性。 — Failed: 2026-10-17 N7 实验 ARM-K 6 轮全部 On→On 无效，重写脚本后才拿到真实跃迁
----
 Q28 与 Q24 在当前实验条件（vk127 / 7.3 线）互不构成混杂：GOOD 态与 BAD 态各跑 6 次「完整 19 模块相机栈 + 真实灭屏 30s」全部存活（boot_id 全程不变），7.3 线累计 30 发存活，而 vk64 线仍是 1 死/2 发 ⇒ 显示态不是 Q24 的判别量，血统才是候选变量。以后不必为「Q28 坏发会污染相机/Q24 结果」而停实验。 — Failed: 此前长期担心 Q28 显示态会污染 Q24 判读
 ---
 相机 RAW「全暗」判读分三级，别一看到暗就判链路坏：① 均匀 ~16 且 uniq=3 = 完全没光（AGC 未收敛或遮挡）；② 长采 N 百帧后 p50 升到 ~37、mean 38 = 正在收敛（有光但弱）；③ B/G/R mean=0.0 而 max 有值 = 该帧有极少数饱和像素、画面主体仍暗。真正判链路好坏看 STREAMON rc + 字节数（4080×3072 RAW10 = 15679488 B；libcamera 输出 4080×3072×8×3 帧 = 150994944 B）+ 目视 PNG，不要只看首帧均值。 — Failed: 用户反馈「已经是 Q28 坏态，无法手动拍照，不过我已经将前后摄像头移动到有光地方」，需要据此区分没光 vs 链路坏
@@ -677,8 +669,6 @@ Q28 与 Q24 在当前实验条件（vk127 / 7.3 线）互不构成混杂：GOOD 
 用户拿「马达 1/2 good」反问是否该改用 vk127 测相机时，正确姿势是先纠正统计口径再回答：vk127 的 Q28 样本合规 5 发（s4/s5/s6 GOOD、s7 BAD，加打折 s3）4/6 = 67%，二项单侧 p=0.344 不显著，马达那次 1/2 是最低样本；且 Q28 不是 Q24 的靶——N2' 12/12 存活与 N5 致死都发生在 Q28 坏发 boot 上，显示态是协变量不是判别量。不要顺着用户的数字结论走。
 ---
 写 Python 单行脚本处理 RAW 图时不要用 `import numpy as np if False else None` 这类条件 import 表达式——它是 SyntaxError（`cannot use conditional expression as import target`），整段不执行。设备侧 python3 无 numpy，拆 RAW 帧要用纯 PIL/bytes 遍历（本机主机侧有 PIL 可拆 PNG）。 — Failed: 2026-10-17 vk127 相机后摄 RAW 拆帧时踩到，报 SyntaxError 导致没有生成 PNG
----
-设备侧 `v4l2-ctl --stream-mmap` 返回 `VIDIOC_STREAMON returned -1 (Operation timed out)` + dmesg `qcom-camss ad27000.isp: CSID reset timeout` / `Failed to power up pipeline: -110` = **CSID/VFE 流水线复位失败**（不是格式问题，也不是 Q28：同 boot 下前摄正常）；`media-ctl` 报 `Unable to parse link: Resource busy (16)` = 上一次 stream 未干净释放，需重载相机模块或重启相机栈才能恢复。 — Failed: 2026-10-17 后摄多次 STREAMON 超时，重载模块后恢复
 ---
 用户在现场报「Q28 坏态、无法手动拍照，不过我已经把前后摄像头移到有光地方」时，不要因首帧全暗就判链路坏：sensor AGC/libcamera 软 ISP 需若干帧收敛，应延长采集（如 200–300 帧）看 p50 是否上升，并用 test_pattern 区分通路问题与曝光问题；判真出流只看 STREAMON rc 与字节数。 — Failed: 首帧均值均匀 ~16 是好发/坏发都常见的（无光/未收敛）现象，误读会导致把正常链路判成驱动坏。
 ---
