@@ -49,3 +49,18 @@
   不能是脚本自己打印的一行字。与 #364/#365 的「调用返回 0 ≠ 动作发生」同源。
 - 设备恢复基线时**回原始 ko**比回「重编的同源 ko」更严格：`rmmod` → 删 `updates/*.ko` → `depmod -a` → `modprobe`，
   再用 build-id 确认回到了开机那颗（本机基线 `2dd23e54…`）。
+
+## #647：新 worktree 里单独编模块，要先 `modules_prepare` + 复制 `Module.symvers`
+
+- 场景（2026-11-13，为撤掉相机「物理连续」约束建 `build/daily` 的 worktree）：直接
+  `KDIR=<worktree> scripts/mod-loop.sh drivers/media/platform/qcom/camss` 失败两处——
+  先是 `aarch64-linux-gnu-gcc: missing argument to '-mstack-protector-guard-offset='`，
+  补 `modules_prepare` 后变成 `Makefile:2179: modpost 错误 2`。
+- 根因：新 worktree **没有任何构建产物**。① 缺 `include/generated/*`（`asm-offsets.h`/`autoconf.h`）
+  ⇒ 编译参数展开为空；② 缺 `Module.symvers` ⇒ modpost 无从解析符号。
+- 正解四步（顺序不能换）：
+  `cp <主树>/.config .` → `make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig` →
+  `make … modules_prepare` → `cp <主树>/Module.symvers .`，然后
+  `KDIR=<worktree> scripts/mod-loop.sh <目录>`。
+- 前提：worktree 的 config/UTS 必须与主树一致（本轮都走 vk189 线），否则 vermagic 不匹配、
+  `modprobe` 必败——这与 #108 的「假 reloaded」是同一类静默失败。

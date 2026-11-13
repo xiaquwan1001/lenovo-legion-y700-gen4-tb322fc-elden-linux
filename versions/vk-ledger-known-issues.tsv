@@ -380,3 +380,6 @@ vk189	num_ne_tag	vk189 = vk184 源树 + 上游合并批 1（6 枚补丁，**patc
 vk190	num_ne_tag	vk190 = vk184 源树 + 上游合并批 1（6 枚补丁，**patch 在树里但未 commit，config 亦不入 git** ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 属预期噪声）+ 一行 ADSP DT（同属未 commit 的工作区改动）；UTS 用 `-debug-vk189-suspend` 与 vk189 逐字相同（DT-only 修复刻意复用机上 1499 .ko 模块树，避免为一行 DT 重编 85 MiB 模块）；身份由 `kernel_payload_sha256` 锚定（2026-11-13）
 vk189	uts_dup2	vk190 刻意复用 vk189 的 LOCALVERSION（ADSP fastrpc non-secure 一行 DT 修复，模块 vermagic/布局不变 ⇒ 直接沿用机上模块树）；两镜像内核二进制不同（cab6a5c3 vs 511e16a1），身份由 kernel_payload_sha256 锚定（2026-11-13）
 vk190	uts_dup2	同上：与 vk189 同 UTS 串、不同二进制（DT 修复 + `make` 重链）；这是「一行 DT 不重编模块树」的既定做法，不是溯源错误（2026-11-13）
+vk187	num_ne_tag	vk187 = vk184 源树 + 仅 nftables 一档 config（config 不入 git ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 是预期噪声）；**该镜像已作废、不上机**，C12 L1 门槛由 vk187b 承担（2026-11-13 收口）
+vk187b	num_ne_tag	vk187b = vk187 内核 + 可上机模块树（LOCALVERSION=-vk184 复用机上模块树 ⇒ num_ne_tag(vk184) 属预期）；2026-11-10 上机全绿，inflight 条目已删（2026-11-13）
+vk187b	uts_dup2	vk187b 刻意复用 vk184 的 LOCALVERSION（同一套模块树）；与 vk187 二进制不同，身份由 kernel_payload_sha256 锚定（2026-11-10）
