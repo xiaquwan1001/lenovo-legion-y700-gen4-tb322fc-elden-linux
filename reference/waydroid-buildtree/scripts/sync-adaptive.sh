@@ -1,16 +1,28 @@
 #!/bin/bash
 # sync-adaptive.sh — 每次 attempt 前**自动探测** github 该走直连还是代理，避免网络拓扑反转后静默卡死。
 #
-# 背景：本机 github 的「直连 vs 代理(127.0.0.1:7897)」可用性会互相反转，
+# 背景：本机 github 的「直连 vs 代理」可用性会互相反转，
 #       写死任一路径的脚本会在拓扑变了之后 0 B/s 挂着（git fetch 存活但不传数据）。
 #       清华 AOSP 镜像始终直连（no_proxy 保证）。
+# [2026-11-12] PROXY 缺省值不再写死 7897（旧 Clash 端口已退役）：默认现查 Bettbox
+#   `GET 127.0.0.1:9090/configs` 的 mixed-port，探不到再回退 7890→7897。
+#   注意本脚本会 `git config --global` 写按主机代理，用完最好 `PROXY_MODE=direct` 跑一次复核全局 gitconfig。
 #
 # 用法： nohup ./sync-adaptive.sh >> sync.log 2>&1 &
 set -u
 cd "$(dirname "$0")" || exit 1
 export PATH="$HOME/bin:$PATH"
 
-PROXY="${PROXY:-http://127.0.0.1:7897}"
+detect_proxy() {
+  local mp
+  mp=$(curl -s -m 2 --noproxy '*' http://127.0.0.1:9090/configs 2>/dev/null | sed -n 's/.*"mixed-port":[[:space:]]*\([0-9]*\).*/\1/p')
+  case "$mp" in ''|0) ;; *) echo "http://127.0.0.1:$mp"; return ;; esac
+  for p in 7890 7897; do
+    curl -s -m 2 --noproxy '' -x "http://127.0.0.1:$p" -o /dev/null https://github.com/ && { echo "http://127.0.0.1:$p"; return; }
+  done
+  echo "http://127.0.0.1:7890"
+}
+PROXY="${PROXY:-$(detect_proxy)}"
 PROBE_HOST="${PROBE_HOST:-https://github.com/}"
 TUNA="${TUNA:-mirrors.tuna.tsinghua.edu.cn}"
 
