@@ -1,0 +1,20 @@
+# WITHDRAWN 2026-11-13（PITFALLS #646）——设备上已 disable --now，daily-baseline.sh 不再安装/启用。
+[Unit]
+# elden-ime-candidates —— kimpanel 候选/preedit 浮条（PITFALLS #645）
+# 为什么需要它：CurrentUI=kimpanel 时 preedit 与候选窗只能由面板画；面板 focusd 只桥 OSK，
+# 于是「中文能上屏但看不见组字/候选」。本单元起 elden-ime-candidates.py 画那条浮条。
+# 数据来源：focusd 转发的 org.elden.ImePanel 信号（Lookup / Show / Spot）。
+Description=IME candidate/preedit strip (kimpanel panel UI)
+Documentation=file:///usr/local/lib/elden/elden-ime-candidates.py
+After=graphical-session-pre.target fcitx5.service elden-ime-focusd.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/lib/elden/elden-ime-candidates.py
+# GTK4 需要会话总线/wayland；崩溃别悄悄没了
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

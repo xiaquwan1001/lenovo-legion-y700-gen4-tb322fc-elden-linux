@@ -298,3 +298,48 @@ fcitx5 同一时刻只有一个 UI addon 生效：
 **「UI 是谁」这件事必须写死在判据里**：`CurrentUI=kimpanel` 意味着「没有面板就没有任何可见反馈」，
 而我们在验收时只看了 DBus 数据（`SetLookupTable` 有内容）就当成「候选窗可见」——
 **可见性必须以截图为准，不能以协议数据为准**。
+
+---
+
+# #646 候选浮条 v1 上机失败：**layer-surface 一 map，焦点/输入上下文被打断**，页面被顶掉再回来、组字缓冲被直接提交
+
+- 日期：2026-11-13
+- pi 会话 id：本项目会话（11-13 上午）
+- 主题：G1-38 候选窗的第一次真机试行（方案 A）与撤下
+
+## 做法（已落库，代码保留）
+
+`CurrentUI=kimpanel` 时候选/preedit 只能由面板画（`#645`）⇒ 新增两个件：
+- `patches-userland/zh-ime/elden-ime-focusd.c`：把 kimpanel 收到的内容转发成自己的信号
+  `org.elden.ImePanel`（`Lookup(preedit, items, cursor)` / `Show(b)` / `Spot(iiii)`）；
+- `rootfs/debian/ime/elden-ime-candidates.{py,service}`：GTK4 + layer-shell 浮条，订阅上面的信号画
+  「上行组字串 + 下行候选（当前项高亮）」。
+
+**渲染本身是通的**（主机侧用 `busctl emit` 灌数据能得到正确截图：
+`nihao` + `1 你 2 那 3 呢 4 能 5 年 6 宁`，第 2 项高亮）。
+
+## 真机症状（用户实测）
+
+「输入 `n` 的一瞬间弹出的候选窗把整个页面顶掉了，然后返回原页面；切换过程让刚刚缓冲的输入字符被直接打上屏幕。」
+
+⇒ 后果比没有候选窗更糟：**输入被打断/误提交**。已 `disable --now`，并从 `daily-baseline.sh` 撤下（不再安装/启用）。
+
+## 机制判断（下次重做的硬约束）
+
+`Lookup`/`Show(true)` 走的是 `set_visible(True) + present()`，`Show(false)` 走 `set_visible(False)`
+⇒ **每次组字开始/结束都会 map/unmap 一个 layer surface**。在这个合成器上（phoc 0.58 + 我们自己的 patch），
+layer surface 的 map/unmap 会触发焦点重算 ⇒ 客户端的输入上下文被打断（fcitx 提交/重置组字），
+表现出来就是「页面被顶掉再回来 + 缓冲字符被直接上屏」。
+另外实测 fcitx5 在组字期间会穿插「空 lookup」事件，v1 因此还叠加了 show/hide 抖动。
+
+**重做必须满足**：
+- layer surface **全程 mapped**（启动即 present 一次），显示/隐藏只切 **opacity / 内容**，绝不 unmap；
+- `keyboard-interactivity=none` + `gtk_window_set_focusable(False)` 之外，还要在合成器侧确认「映射新 surface 不改焦点」
+   （判据 = 打字过程中 `NotifyFocusOut` 计数必须为 0）；
+- 定位只用 `LayerShell.set_margin`，不要改 anchor/layer（这些在 mapped 后改也可能重排）。
+
+## 教训
+
+**「能画出来」≠「能用」**：主机侧灌数据渲染成功没有任何意义，UI 类改动的最小验收必须是
+**真机输入不被打断**（判据：组字期间不出现 `NotifyFocusOut`、缓冲字符不被直接提交）。
+先证明「新 surface 不影响焦点」再谈候选渲染。

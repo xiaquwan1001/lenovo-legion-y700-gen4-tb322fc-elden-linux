@@ -41,6 +41,15 @@ static gint64 zero_rect_since_us = 0; // 非 0 = 见到零矩形，等 400 ms �
 static gint fcitx_gone_ticks = 0;     // State==-1 的连续次数（5 s ⇒ fcitx5 真没了）
 static gint idle_sec = 300;           // 兜底超时：有 IC 但长时间无 kimpanel 活动
 static gboolean composing = FALSE;    // 正在组字（候选表非空 / preedit 非空）
+// ---- 候选浮条转发（2026-11-13，PITFALLS #645）----
+// CurrentUI=kimpanel 时 preedit/候选**只能由面板画**，classicui 在 phoc 建不出窗。
+// 面板侧再起一个小的 GTK4 layer-shell 浮条（rootfs/debian/ime/elden-ime-candidates.py），
+// focusd 只负责把 kimpanel 收到的内容转发成自己的信号，渲染/定位都在浮条里做。
+#define STRIP_PATH "/org/elden/ImePanel"
+#define STRIP_IFACE "org.elden.ImePanel"
+static gchar *strip_preedit = NULL;   // preedit 文本
+static gint strip_cursor = 0;         // 候选高亮下标
+static gchar **strip_items = NULL;    // 候选文本（带序号标签）
 // 组字期间的空闲收起阈值：比正常大一档，但**有界**（否则 Firefox 点空白不给 blur 时会永久悬浮）
 #define IDLE_COMPOSING_EXTRA 16
 
@@ -101,11 +110,54 @@ static gint fcitx_state(void) {
     return st;
 }
 
+static void strip_emit(const char *name, GVariant *params) {
+    if (!bus) return;
+    GError *e = NULL;
+    if (!g_dbus_connection_emit_signal(bus, NULL, STRIP_PATH, STRIP_IFACE, name, params, &e)) {
+        logmsg("strip emit %s failed: %s", name, e->message);
+        g_error_free(e);
+    }
+}
+
+static void strip_push(void) {
+    GVariantBuilder b;
+    g_variant_builder_init(&b, G_VARIANT_TYPE("as"));
+    if (strip_items) for (gchar **it = strip_items; *it; it++) g_variant_builder_add(&b, "s", *it);
+    strip_emit("Lookup", g_variant_new("(sasi)", strip_preedit ? strip_preedit : "", &b, strip_cursor));
+}
+
+static void strip_show(gboolean vis) {
+    strip_emit("Show", g_variant_new("(b)", vis));
+}
+
+static void strip_spot(int x, int y, int w, int h) {
+    strip_emit("Spot", g_variant_new("(iiii)", x, y, w, h));
+}
+
+static void strip_set_items(GVariant *labels, GVariant *texts) {
+    if (strip_items) { g_strfreev(strip_items); strip_items = NULL; }
+    gsize n = texts ? g_variant_n_children(texts) : 0;
+    gsize nl = labels ? g_variant_n_children(labels) : 0;
+    if (n == 0) return;
+    strip_items = g_new0(gchar *, n + 1);
+    for (gsize i = 0; i < n; i++) {
+        GVariant *tv = g_variant_get_child_value(texts, i);
+        GVariant *lv = (i < nl) ? g_variant_get_child_value(labels, i) : NULL;
+        const gchar *t = g_variant_get_string(tv, NULL);
+        const gchar *l = lv ? g_variant_get_string(lv, NULL) : "";
+        strip_items[i] = (l && *l) ? g_strdup_printf("%s%s", l, t)
+                                   : g_strdup_printf("%u %s", (unsigned)(i + 1), t);
+        g_variant_unref(tv);
+        if (lv) g_variant_unref(lv);
+    }
+}
+
 static void osk_hide(const char *why) {
     logmsg("hide requested by %s", why);
     osk_visible = FALSE;   // 先本地置位，避免往返
     composing = FALSE;
     zero_rect_since_us = 0;
+    strip_show(FALSE);
     osk_set_visible(FALSE);
 }
 
@@ -206,7 +258,7 @@ static void method_call(GDBusConnection *c, const gchar *sender, const gchar *pa
         int x = 0, y = 0, w = -1, h = -1;
         if (params && g_variant_is_of_type(params, G_VARIANT_TYPE("(iiii)")))
             g_variant_get(params, "(iiii)", &x, &y, &w, &h);
-        (void)x; (void)y;
+        if (x >= 0 && y >= 0) strip_spot(x, y, w, h);
         want_keyboard(method, w, h);
     } else if (!strcmp(method, "UpdateSpotLocation")) {
         // 只带坐标不带尺寸：算「还在编辑」的活动，但不据此弹键盘
@@ -225,19 +277,42 @@ static void method_call(GDBusConnection *c, const gchar *sender, const gchar *pa
         else composing = FALSE;
     } else if (!strcmp(method, "SetLookupTable")) {
         if (params && g_variant_is_of_type(params, G_VARIANT_TYPE("(asasasbbii)"))) {
-            GVariant *v = g_variant_get_child_value(params, 1);
-            if (v) {
-                composing = g_variant_n_children(v) > 0;
+            // 实测（2026-11-13，dbus-monitor）：第一个 as = labels（"1 " "2 " …），第二个 as = 候选文本（"你" "那" …）
+            GVariant *labels = g_variant_get_child_value(params, 0);
+            GVariant *texts  = g_variant_get_child_value(params, 1);
+            if (texts) {
+                composing = g_variant_n_children(texts) > 0;
                 if (composing) { last_activity_us = g_get_monotonic_time(); want_keyboard("SetLookupTable", -1, -1); }
-                g_variant_unref(v);
-            }
+                strip_set_items(labels, texts);
+                strip_push();
+                strip_show(composing);
+            } else composing = FALSE;
+            if (texts) g_variant_unref(texts);
+            if (labels) g_variant_unref(labels);
         }
+    } else if (!strcmp(method, "ShowLookupTable")) {
+        gboolean en = FALSE;
+        if (params && g_variant_is_of_type(params, G_VARIANT_TYPE("(b)")))
+            g_variant_get(params, "(b)", &en);
+        strip_show(en);
+    } else if (!strcmp(method, "UpdatePreeditCaret")) {
+        // 只标记活动；caret 位置暂不用于渲染
+        last_activity_us = g_get_monotonic_time();
     } else if (!strcmp(method, "UpdatePreeditText") || !strcmp(method, "UpdateLookupTableCursor")) {
         // 组字过程中的持续活动：刷新活动时间（保持键盘），并标记在组字
+        if (!strcmp(method, "UpdateLookupTableCursor") && params &&
+            g_variant_is_of_type(params, G_VARIANT_TYPE("(i)"))) {
+            g_variant_get(params, "(i)", &strip_cursor);
+            strip_push();
+        }
         if (!strcmp(method, "UpdatePreeditText") && params && g_variant_is_of_type(params, G_VARIANT_TYPE("(ss)"))) {
             const char *txt = NULL, *attr = NULL;
             g_variant_get(params, "(&s&s)", &txt, &attr);
             composing = (txt && *txt) ? TRUE : composing;
+            g_free(strip_preedit);
+            strip_preedit = g_strdup(txt ? txt : "");
+            strip_push();
+            strip_show(composing);
         }
         last_activity_us = g_get_monotonic_time();
     }

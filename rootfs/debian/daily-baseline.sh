@@ -252,6 +252,13 @@ else
 	ln -sf ../elden-ime-focusd.service "$FOCUSDLINK" && fix "enable focusd（graphical-session.target.wants）"
 fi
 
+# ---------------------------------------------------------------- 3b3 候选/preedit 浮条（**已撤下，2026-11-13**）
+# 试行版 = rootfs/debian/ime/elden-ime-candidates.{py,service}（GTK4 layer-shell 浮条 + focusd 的
+# org.elden.ImePanel 信号转发）。**上机实测不可用**：layer-surface 一 map，焦点/IC 被打断，
+# 页面被顶掉再回来，组字缓冲被直接提交上屏（PITFALLS #646）。
+# ⇒ 这里**故意不再安装/启用**；文件留在仓库里作下次重做的起点（要重做必须做到「surface 全程不
+#   unmap、只用透明度/内容切换」，并且先在合成器侧确认不抢焦点）。
+
 # 输入法组：**`Items/0` 必须是 rime**（PITFALLS #619）
 # 机制：fcitx5 给「每个新输入上下文」用的是 profile 的 `Items/0`，`DefaultIM=` 对它**无效**。
 # 本脚本 2026-11-13 前写的是 `Items/0=keyboard-us`（DefaultIM=rime）⇒ 新窗口恒拿英文、Rime 不参与、
