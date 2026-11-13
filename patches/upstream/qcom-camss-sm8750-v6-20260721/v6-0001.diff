@@ -1,0 +1,32 @@
+The SM8750 camera subsystem exposes six CSI2 D-PHY blocks that follow the
+same programming model as Kaanapali. Describe the SM8750 CSI2 PHY using a
+"qcom,sm8750-csi2-phy" compatible with the "qcom,kaanapali-csi2-phy"
+fallback, so the CAMSS binding can instantiate the CSIPHY nodes as
+separate phy devices.
+
+Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
+---
+ .../devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml        | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+index 7943049834f9..95375efb2597 100644
+--- a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
++++ b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+@@ -16,9 +16,13 @@ description:
+ 
+ properties:
+   compatible:
+-    enum:
+-      - qcom,kaanapali-csi2-phy
+-      - qcom,x1e80100-csi2-phy
++    oneOf:
++      - enum:
++          - qcom,kaanapali-csi2-phy
++          - qcom,x1e80100-csi2-phy
++      - items:
++          - const: qcom,sm8750-csi2-phy
++          - const: qcom,kaanapali-csi2-phy
+ 
+   reg:
+     maxItems: 1

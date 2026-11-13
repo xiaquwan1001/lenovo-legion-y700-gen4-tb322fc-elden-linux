@@ -1,0 +1,25 @@
+Add more detailed resource information for CSIPHY devices in the camss
+driver along with the support for v2.3.0 in the 2 phase CSIPHY driver
+that is responsible for the PHY lane register configuration, module
+reset and interrupt handling.
+
+Reviewed-by: Bryan O'Donoghue <bod@kernel.org>
+Signed-off-by: Hangxiang Ma <hangxiang.ma@oss.qualcomm.com>
+---
+ drivers/media/platform/qcom/camss/camss.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index 9982174ed1ad..1ab1a0cd82d2 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -6085,7 +6085,9 @@ static const struct camss_resources sm8650_resources = {
+ static const struct camss_resources sm8750_resources = {
+ 	.version = CAMSS_8750,
+ 	.pd_name = "top",
++	.csiphy_res = csiphy_res_kaanapali,
+ 	.icc_res = icc_res_sm8750,
++	.csiphy_num = ARRAY_SIZE(csiphy_res_kaanapali),
+ 	.icc_path_num = ARRAY_SIZE(icc_res_sm8750),
+ };
+ 

@@ -1,0 +1,58 @@
+From 507f20c70e53846f5ce8e06db65294a7e90ce9a2 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 13 Nov 2026 17:07:26 +0800
+Subject: [PATCH] media: camss: drop the DMA-contiguity requirement on capture
+ buffers
+
+The VFE programs a plane with a single DMA address, so the driver
+required every capture plane to be one contiguous DMA run and rejected
+any buffer whose sg list was not.  Nothing in the hardware or in the
+upstream driver asks for that: vb2_dma_sg produces the buffer and the
+IOMMU mapping is what the device sees.
+
+Use the first DMA address of each plane, as the rest of the driver
+already does.
+
+Tested on the reference unit (SM8750): qcom-camss rebuilt and
+hot-reloaded, front camera (gc08a8 -> csiphy4 -> csid0 -> vfe0_rdi0)
+streamed 5 frames with rc=0.
+---
+ drivers/media/platform/qcom/camss/camss-video.c | 15 +--------------
+ 1 file changed, 1 insertion(+), 14 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-video.c b/drivers/media/platform/qcom/camss/camss-video.c
+index ee9ffd0432c..1b2b372f4ff 100644
+--- a/drivers/media/platform/qcom/camss/camss-video.c
++++ b/drivers/media/platform/qcom/camss/camss-video.c
+@@ -155,10 +155,7 @@ static int video_buf_init(struct vb2_buffer *vb)
+ 	const struct v4l2_pix_format_mplane *format =
+ 						&video->active_fmt.fmt.pix_mp;
+ 	struct sg_table *sgt;
+-	struct scatterlist *sg;
+-	dma_addr_t end;
+-	unsigned int i, j;
+-	size_t contiguous;
++	unsigned int i;
+ 
+ 	for (i = 0; i < format->num_planes; i++) {
+ 		sgt = vb2_dma_sg_plane_desc(vb, i);
+@@ -166,16 +163,6 @@ static int video_buf_init(struct vb2_buffer *vb)
+ 			return -EFAULT;
+ 
+ 		buffer->addr[i] = sg_dma_address(sgt->sgl);
+-		end = buffer->addr[i];
+-		contiguous = 0;
+-		for_each_sgtable_dma_sg(sgt, sg, j) {
+-			if (sg_dma_address(sg) != end)
+-				break;
+-			contiguous += sg_dma_len(sg);
+-			end += sg_dma_len(sg);
+-		}
+-		if (contiguous < format->plane_fmt[i].sizeimage)
+-			return -EINVAL;
+ 	}
+ 
+ 	if (format->pixelformat == V4L2_PIX_FMT_NV12 ||
+-- 
+2.53.0
+
