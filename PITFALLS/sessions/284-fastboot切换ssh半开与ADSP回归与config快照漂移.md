@@ -183,3 +183,45 @@ sha256 `7b6b5137c6f8…`）+ `README.md`（内容分组、回灌命令、`.confi
 指针改回 `build/daily`（注释里写明 11-05 计划、11-07 重基、11-13 复位三段来由）。
 `check-doctor` 复跑 FAIL=0；`build/daily/.config` 与 `patches/config-daily-c2-suspend-20261113` 一致
 （ABI 参考已随世代换代，见 `#640`）。
+
+---
+
+# #643 「候选词又没了」的真凶是**我们自己的基线脚本**：`daily-baseline.sh` 把 `Items/0=keyboard-us` 写回去
+
+- 日期：2026-11-13
+- pi 会话 id：本项目会话（11-13 上午）
+- 主题：G1-38「候选窗」11-12 晚报「还是没有候选词」的根因
+
+## 症状
+
+2026-11-11 晚候选窗已验证出真候选（`[你 那 呢 能 年]`，`PITFALLS #619`），三项判据当时也全绿
+（`Items/0=rime` / `CurrentUI=kimpanel` / `org.kde.impanel` owner=1），但 11-12 晚用户报「还是没有候选词」。
+
+## 根因（实测对账，不是推测）
+
+设备上三份 profile 摆在一起就一目了然：
+
+| 文件 | `Items/0` | `DefaultIM` |
+|---|---|---|
+| `~/.config/fcitx5/profile`（现在，手改后） | **rime** | keyboard-us |
+| `profile.bak-20261111` | **keyboard-us** | rime |
+| `profile.bak-20261112` | **keyboard-us** | rime |
+
+后两份正是 `rootfs/debian/daily-baseline.sh` §3b 那段 heredoc **原样**写出的内容：
+`DefaultIM=rime` + `Items/0=keyboard-us`。而按 `#619` 的机制，**新输入上下文只拿 `Items/0`**、
+`DefaultIM` 对它无效 ⇒ 只要跑过一次基线脚本（或从脚本重建根），候选就必然空。
+脚本里那条「已达标」判据也只 `grep DefaultIM=rime` ⇒ **它认为自己是 OK 的**，缺陷每轮静默复发。
+
+## 处置（本轮已做）
+
+`rootfs/debian/daily-baseline.sh`：
+- 判据改成只看 `Items/0`（`awk` 取 `[Groups/0/Items/0]` 下的 `Name=`），`DefaultIM` 降级为提示；
+- 写回模板改成 `Items/0=rime` / `Items/1=keyboard-us`，并在写之前 **`systemctl --user stop fcitx5` + `pkill -x fcitx5`**
+  （`#619`：fcitx5 退出会把内存态写回 profile，先改后停等于白改）；
+- 设备实测：`scripts/mobian-daily-baseline.sh --check` ⇒ `MISS=0 FIX=0`（`Items/0=rime`）。
+
+## 规则
+
+- **修好一次 ≠ 修好**：同一缺陷若还写在「重置脚本」里，就等于给自己埋了定时炸弹。修设备态的同时必须搜一遍生成该状态的脚本
+  （`rg -n "Items/0|DefaultIM=rime" rootfs/ scripts/ packaging/`）。
+- 门禁要盯**真正生效的字段**：这条坑里 `DefaultIM` 是文档字段、`Items/0` 才是行为字段，门禁看错字段 ⇒ 假绿。

@@ -252,11 +252,27 @@ else
 	ln -sf ../elden-ime-focusd.service "$FOCUSDLINK" && fix "enable focusd（graphical-session.target.wants）"
 fi
 
-# 输入法组：Rime 必须在组内且为默认（否则切换后仍是英文）
+# 输入法组：**`Items/0` 必须是 rime**（PITFALLS #619）
+# 机制：fcitx5 给「每个新输入上下文」用的是 profile 的 `Items/0`，`DefaultIM=` 对它**无效**。
+# 本脚本 2026-11-13 前写的是 `Items/0=keyboard-us`（DefaultIM=rime）⇒ 新窗口恒拿英文、Rime 不参与、
+# 候选恒空（用户 11-12 报「还是没有候选词」的直接来源之一）。判据必须同时看两处。
 PROF="$UHOME/.config/fcitx5/profile"
-if [ -f "$PROF" ] && grep -qx 'DefaultIM=rime' "$PROF"; then ok "fcitx5 profile: DefaultIM=rime"
-elif [ "$CHECK" = 1 ]; then miss "fcitx5 profile 未把 rime 设为默认（$PROF）"
+# 判据只看 `Items/0`（#619 实测 `DefaultIM=` 对新建输入上下文无效，别拿它当门禁）
+prof_items0() {
+	awk '/^\[Groups\/0\/Items\/0\]/{f=1;next} f&&/^Name=/{sub(/^Name=/,"");print;exit}' "$PROF" 2>/dev/null
+}
+prof_ok() { [ -f "$PROF" ] && [ "$(prof_items0)" = rime ]; }
+if prof_ok; then
+	ok "fcitx5 profile: Items/0=rime（新窗口进 Rime）"
+	grep -qx 'DefaultIM=rime' "$PROF" || warnf "profile DefaultIM 不是 rime（不影响新 IC，仅提示）"
+elif [ "$CHECK" = 1 ]; then miss "fcitx5 profile 的 Items/0 不是 rime（$( [ -f "$PROF" ] && prof_items0 || echo 缺文件)）⇒ 新窗口拿英文、候选为空（#619）"
 else
+	# fcitx5 **退出时会把内存态写回 profile** ⇒ 必须先停 unit 再改（#619 的坑）
+	STOPPED=0
+	if [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -S "${XDG_RUNTIME_DIR}/bus" ] && command -v systemctl >/dev/null 2>&1; then
+		systemctl --user stop fcitx5 >/dev/null 2>&1 && STOPPED=1
+		pkill -x fcitx5 >/dev/null 2>&1 || true
+	fi
 	mkdir -p "$(dirname "$PROF")"
 	cat > "$PROF" <<'PROFEOF'
 [Groups/0]
@@ -265,15 +281,16 @@ Default Layout=us
 DefaultIM=rime
 
 [Groups/0/Items/0]
-Name=keyboard-us
+Name=rime
 
 [Groups/0/Items/1]
-Name=rime
+Name=keyboard-us
 
 [GroupOrder]
 0=默认
 PROFEOF
-	fix "写 fcitx5 profile（rime 默认）"
+	fix "写 fcitx5 profile（Items/0=rime，一律按 #619 顺序）"
+	[ "$STOPPED" = 1 ] && { systemctl --user start fcitx5 >/dev/null 2>&1 || true; }
 fi
 
 # ---------------------------------------------------------------- 4 zram（内核门）
