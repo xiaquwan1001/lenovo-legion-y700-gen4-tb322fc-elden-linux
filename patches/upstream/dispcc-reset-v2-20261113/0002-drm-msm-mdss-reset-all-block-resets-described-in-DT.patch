@@ -1,0 +1,69 @@
+From 6d2c015afdd3ff36d846eff4d3d24fda0a9193fb Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Thu, 29 Oct 2026 18:16:29 +0800
+Subject: [PATCH 2/3] drm/msm/mdss: reset all block resets described in DT
+
+msm_mdss_reset() acquires only the first reset listed in the MDSS
+device node.  Platforms can describe additional MDSS block resets: the
+SM8750 display clock controller provides resets for the MDSS core INT2
+interrupt controller and for the MDSS RSC, which can be left out of
+reset together with the MDSS core when the bootloader hands over with
+the display block still running.
+
+Switch to the reset control array API so that every reset listed in the
+device node is asserted and released as one group.  Devices without a
+reset in DT are unaffected, and for devices describing a single reset
+the assert/deassert sequence is unchanged.
+
+The resets are driven from the display driver rather than from the
+display clock controller: the clock controller supplies the MDSS clocks
+and power domain, so it probes first and has already programmed its
+PLLs when MDSS probes.  The block resets do not touch the PLL registers
+and no display pipeline is running yet, so the PLL configuration
+survives the reset.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/gpu/drm/msm/msm_mdss.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/msm_mdss.c b/drivers/gpu/drm/msm/msm_mdss.c
+index 9087c4b290..59343987bc 100644
+--- a/drivers/gpu/drm/msm/msm_mdss.c
++++ b/drivers/gpu/drm/msm/msm_mdss.c
+@@ -306,11 +306,22 @@ static void msm_mdss_destroy(struct msm_mdss *msm_mdss)
+ 	irq_set_chained_handler_and_data(irq, NULL, NULL);
+ }
+ 
++/*
++ * The MDSS block resets are driven from the display driver, not from the
++ * display clock controller: the clock controller supplies the MDSS clocks
++ * and power domain, so it probes first and has already programmed its PLLs
++ * when MDSS probes.  The block resets do not touch the PLL registers and no
++ * display pipeline is running yet, so the PLL configuration survives the
++ * reset and nothing visible can glitch.  Bootloaders that hand over with
++ * the display block still running (PLLs locked, blocks out of reset) are
++ * returned to a known-zero state before any display hardware is programmed.
++ */
+ static int msm_mdss_reset(struct device *dev)
+ {
+ 	struct reset_control *reset;
+ 
+-	reset = reset_control_get_optional_exclusive(dev, NULL);
++	reset = devm_reset_control_array_get(dev,
++					     RESET_CONTROL_OPTIONAL_EXCLUSIVE);
+ 	if (!reset) {
+ 		/* Optional reset not specified */
+ 		return 0;
+@@ -327,8 +338,6 @@ static int msm_mdss_reset(struct device *dev)
+ 	msleep(20);
+ 	reset_control_deassert(reset);
+ 
+-	reset_control_put(reset);
+-
+ 	return 0;
+ }
+ 
+-- 
+2.53.0
+

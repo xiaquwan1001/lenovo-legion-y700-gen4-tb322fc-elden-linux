@@ -7,7 +7,7 @@
 # our AVB key (scripts/sign-boot-b.sh) and dd it.
 #
 # usage: scripts/flash-b.sh [in.img] [--reboot]
-#        default in.img = out/boot-elden-vk40.img
+#        in.img 必填（旧默认 vk40 已随 out 清理删除）
 set -eu
 cd "$(dirname "$0")/.."
 TAB=${TABLET:-root@192.168.7.1}
@@ -16,13 +16,13 @@ TAB=${TABLET:-root@192.168.7.1}
 . "$(dirname "$0")/lib-device-lock.sh"
 device_lock_acquire
 REBOOT=0
-IN=out/boot-elden-vk40.img
 for a in "$@"; do
 	case "$a" in
 		--reboot) REBOOT=1 ;;
 		*) IN=$a ;;
 	esac
 done
+[ -n "$IN" ] || { echo "usage: $0 <in.img> [--reboot]" >&2; exit 1; }
 
 echo "[flash-b] signing $IN"
 ./scripts/sign-boot-b.sh "$IN" >/dev/null

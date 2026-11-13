@@ -7,8 +7,8 @@ set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 K="${1:?usage: kexec-bs-cycle.sh <stop_after K>}"
 export PATH="$HOME/bin:$PATH"
-SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 root@192.168.7.1"
-BOOT="$ROOT/out/boot-elden-vk69.img"
+SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 ${TAB:-root@192.168.7.1}"
+BOOT=${BOOT:?需 BOOT=<boot.img>（旧默认 vk69 已随 out 清理删除）}
 LOG="/root/kmsg-bs$K.log"
 
 echo "== [K=$K] 设备须在 vk64/Linux；写 bootloader magic + SysRq b → fastboot =="

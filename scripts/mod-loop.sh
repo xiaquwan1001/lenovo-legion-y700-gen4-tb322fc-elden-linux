@@ -1,4 +1,7 @@
 #!/bin/bash
+# 收口指针（script-redundancy-audit S15，2026-11-13）：设备侧整目录部署的统一实现 = scripts/deploy-modules.sh
+#       （带备份 + 读回校验）；本脚本是历史/专用形态（模块热载循环），新代码勿复制其传输逻辑。
+
 # mod-loop.sh — the fast iteration ring: rebuild ONE module dir, push it, reload
 # on the device.  No kernel rebuild, no boot image, no fastboot, no reboot (~30 s).
 #

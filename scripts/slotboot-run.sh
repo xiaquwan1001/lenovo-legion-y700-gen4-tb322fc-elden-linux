@@ -5,9 +5,9 @@
 #   3) 采样 150 s：lsusb / fastboot / ssh 三态，逐秒时间线
 # 零交互；恢复由 slotboot-recover.sh 负责。
 set -u
-cd /home/xuqianhui/y700-elden
+ROOT=$(cd "$(dirname "$0")/.." && pwd); cd "$ROOT"
 OUT=reports/artifacts/uefi-slotboot-20261101
-TAB=root@192.168.7.1
+TAB=${TAB:-root@192.168.7.1}
 IMG=reports/artifacts/uefi-ddr-20261101/slotb-uefi-marks.img
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes -o UserKnownHostsFile=/dev/null"
 

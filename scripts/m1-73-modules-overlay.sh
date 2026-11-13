@@ -1,4 +1,7 @@
 #!/bin/bash
+# 收口指针（script-redundancy-audit S15，2026-11-13）：设备侧整目录部署的统一实现 = scripts/deploy-modules.sh
+#       （带备份 + 读回校验）；本脚本是历史/专用形态（cpio overlay 注入），新代码勿复制其传输逻辑。
+
 # m1-73-modules-overlay.sh — 为 M1-7.3（7.3-rc7 重基树）RAM 镜像注入启动关键 `=m` 模块。
 #
 # 背景（PITFALLS #248）：`fastboot boot` 的纯 ramdisk 镜像不含 .ko，磁盘 /lib/modules 又对不上

@@ -24,7 +24,7 @@ N=${1:-2}
 WAIT=${2:-900}
 R0=${3:-1}
 SSH="ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=4"
-IMAGE=${IMAGE:-$ROOT/out/boot-elden-vk152.img}
+IMAGE=${IMAGE:?需 IMAGE=<boot.img>（旧默认 vk152 已随 out 清理删除）}
 TDIR="$ROOT/reports/trials"
 
 pick_target() {

@@ -13,8 +13,11 @@
 #          [--deploy D] [--probe P] [--logdir DIR] [--note ...]
 #                                 写一条机器可读 record（JSON + index.tsv），不碰设备
 #   run --label L --image IMG --reset T [--deploy none|fastboot-boot] [--probe q28|raw]
-#          [--note ...] [--force]
+#          [--note ...] [--force] [--a-slot]
 #                                 门 → 部署 → 探针 → 落 record（完整编排）
+#                                 --a-slot：目标 = a 槽（UEFI/flashed 形态）⇒ 前置「a 槽 dtbo 清零」门：
+#                                 先跑 scripts/uefi-a-slot-prepare.sh --check（只读），非 READY 即中止
+#                                 （真 dtbo_a 合 overlay 会卡 logo，reports/uefi-dtbo-a-rootcause-20261110.md）
 #   selftest                      离线自测（不碰设备）
 #
 # 约定：reset 必须显式声明；verdict 只允许在 record 里出现。
@@ -158,7 +161,7 @@ case "$cmd" in
 		write_record ;;
 
 	run)
-		LABEL=""; IMAGE=""; RESET=""; DEPLOY="none"; PROBE="none"; NOTE=""; FORCE=0
+		LABEL=""; IMAGE=""; RESET=""; DEPLOY="none"; PROBE="none"; NOTE=""; FORCE=0; ASLOT=0
 		while [ $# -gt 0 ]; do
 			case "$1" in
 				--label) LABEL=$2; shift ;;
@@ -168,11 +171,20 @@ case "$cmd" in
 				--probe) PROBE=$2; shift ;;
 				--note) NOTE=$2; shift ;;
 				--force) FORCE=1 ;;
+				--a-slot) ASLOT=1 ;;
 			esac
 			shift
 		done
 		[ -n "$LABEL" ] && [ -n "$IMAGE" ] || { echo "[trial] ❌ run 需要 --label 与 --image" >&2; exit 2; }
 		require_reset "$RESET"
+		if [ "$ASLOT" = 1 ]; then
+			st=$(bash "$ROOT/scripts/uefi-a-slot-prepare.sh" --check 2>/dev/null | grep -oE 'STATUS=[A-Z_]+' | head -1)
+			if [ "$st" != "STATUS=READY" ]; then
+				echo "[trial] ❌ a 槽前置不满足（$st）：先跑 scripts/uefi-a-slot-prepare.sh（幂等，带备份+读回），或改 --deploy fastboot-boot 零写盘路径" >&2
+				exit 1
+			fi
+			echo "[trial] a 槽前置 OK（dtbo_a 已清零）"
+		fi
 		. "$ROOT/scripts/lib-device-lock.sh"; device_lock_acquire
 
 		device_gate 0; gate_rc=$?

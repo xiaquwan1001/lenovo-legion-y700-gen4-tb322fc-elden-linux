@@ -8,12 +8,12 @@
 #   * 实测两 recovery 分区当前都是原厂（~16 MB ramdisk），TWRP 尚**未**安装。
 #
 # usage: TABLET=root@192.168.7.1 scripts/flash-recovery.sh [img] [--reboot]
-#        default img = twrp/twrp.img
+#        img 必填（旧默认 twrp/twrp.img 已删除）
 set -eu
 cd "$(dirname "$0")/.."
 TAB=${TABLET:-root@192.168.7.1}
 PART=${RECOVERY_PART:-recovery_b}
-IN=twrp/twrp.img
+IN=${1:?usage: $0 <recovery.img>}
 REBOOT=0
 for a in "$@"; do
 	case "$a" in

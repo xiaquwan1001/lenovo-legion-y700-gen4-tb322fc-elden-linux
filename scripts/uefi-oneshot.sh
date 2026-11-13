@@ -9,40 +9,42 @@
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 S=${FASTBOOT:-fastboot}
-ABL=${ABL_SERIAL:-HA2EXB0E}
-UEFI=${UEFI_SERIAL:-51318dc0}
+# 序列号不写死（PITFALLS #549 / script-redundancy-audit S7）：必填。
+ABL=${ABL_SERIAL:?需 ABL_SERIAL=<fastboot serialno>} 
+UEFI=${UEFI_SERIAL:?需 UEFI_SERIAL=<UEFI fastboot serial>}
 ST=${1:?usage: $0 <stage> [preamble]}
-PRE=${2:-$ROOT/out/r21-sbstop-p20/uefi-preamble20-r1.img}
+PRE=${2:-${PREAMBLE:?需第二参数 <preamble.img> 或设 PREAMBLE=none}}
+[ "$PRE" = none ] || [ -f "$PRE" ] || { echo "缺 $PRE" >&2; exit 1; }
 IMG=$ROOT/out/real-ladder/real-vs$ST.img
-[ -f "$IMG" ] || { echo "缺 $IMG" >&2; exit 1; }
+[ -f "$IMG" ] || { echo "缺 $IMG（out/real-ladder 已随 out 清理删除，改用 -f/现役件）" >&2; exit 1; }
 
 wait_serial() { # $1=serial  $2=超时秒
 	local i
 	for i in $(seq 1 "$2"); do
 		sleep 1
-		timeout 6 "$S" devices 2>/dev/null | grep -q "$1" && return 0
+		local d; d=$(timeout 6 "$S" devices 2>/dev/null); [ "${d#*$1}" != "$d" ] && return 0
 	done
 	return 1
 }
 
 # 1) 确保在 ABL
-if ! timeout 6 "$S" devices 2>/dev/null | grep -q "$ABL"; then
-	if timeout 6 "$S" devices 2>/dev/null | grep -q "$UEFI"; then
+d=$(timeout 6 "$S" devices 2>/dev/null); if [ "${d#*$ABL}" = "$d" ]; then
+	d=$(timeout 6 "$S" devices 2>/dev/null); if [ "${d#*$UEFI}" != "$d" ]; then
 		echo ">> UEFI→reboot bootloader" >&2
 		timeout 20 "$S" -s "$UEFI" reboot bootloader >/dev/null 2>&1
 		wait_serial "$ABL" 30 || {
 			echo ">> 落到 Linux？走 ssh" >&2
 			for i in $(seq 1 15); do
-				timeout 4 ping -c1 -W1 192.168.7.1 >/dev/null 2>&1 && break
+				timeout 4 ping -c1 -W1 ${TAB_IP:-192.168.7.1} >/dev/null 2>&1 && break
 				sleep 4
 			done
 			timeout 25 ssh -o BatchMode=yes -o StrictHostKeyChecking=no \
-				root@192.168.7.1 'eldroid-bootctl reboot bootloader' >/dev/null 2>&1
+				"${TAB:-root@192.168.7.1}" 'eldroid-bootctl reboot bootloader' >/dev/null 2>&1
 			wait_serial "$ABL" 40
 		}
 	fi
 fi
-timeout 6 "$S" devices 2>/dev/null | grep -q "$ABL" || { echo "!! 不在 ABL（需物理断电→开机→bootloader）" >&2; exit 2; }
+d=$(timeout 6 "$S" devices 2>/dev/null); [ "${d#*$ABL}" != "$d" ] || { echo "!! 不在 ABL（需物理断电→开机→bootloader）" >&2; exit 2; }
 
 # 2) 载 UEFI preamble
 echo ">> 载 $(basename "$PRE")" >&2

@@ -1,0 +1,56 @@
+From d1037a2b61751f080ed48861b993ecea6694da97 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Thu, 29 Oct 2026 18:16:29 +0800
+Subject: [PATCH 1/3] dt-bindings: display: msm: mdss-common: describe
+ additional block resets
+
+Some platforms provide more than one reset for the MDSS hardware block:
+beside the MDSS core reset, the SM8750 display clock controller also
+exposes block resets for the MDSS core INT2 interrupt controller and
+for the MDSS RSC (resource state controller).
+
+Allow the resets property to list up to three resets, keeping the MDSS
+core reset as the first entry so that existing device trees describing
+a single reset remain valid.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../devicetree/bindings/display/msm/mdss-common.yaml         | 5 ++++-
+ .../devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml    | 4 +++-
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
+index c6305a6e03..7c0ac90511 100644
+--- a/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
++++ b/Documentation/devicetree/bindings/display/msm/mdss-common.yaml
+@@ -84,8 +84,11 @@ properties:
+           - const: cpu-cfg
+ 
+   resets:
++    minItems: 1
+     items:
+-      - description: MDSS_CORE reset
++      - description: MDSS core reset
++      - description: MDSS core INT2 interrupt controller reset
++      - description: MDSS RSC (resource state controller) reset
+ 
+   memory-region:
+     maxItems: 1
+diff --git a/Documentation/devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml b/Documentation/devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml
+index 46dc0d28da..5408b48135 100644
+--- a/Documentation/devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml
++++ b/Documentation/devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml
+@@ -101,7 +101,9 @@ examples:
+             interconnect-names = "mdp0-mem",
+                                  "cpu-cfg";
+ 
+-            resets = <&disp_cc_mdss_core_bcr>;
++            resets = <&disp_cc_mdss_core_bcr>,
++                     <&disp_cc_mdss_core_int2_bcr>,
++                     <&disp_cc_mdss_rscc_bcr>;
+ 
+             power-domains = <&mdss_gdsc>;
+ 
+-- 
+2.53.0
+

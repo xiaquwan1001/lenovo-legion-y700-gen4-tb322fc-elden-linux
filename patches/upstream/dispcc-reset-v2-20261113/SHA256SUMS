@@ -1,0 +1,3 @@
+daf117c06e8c546cc05a6fff4aaf5e0793619d7b40e483d795c0332d246bf36e  0001-dt-bindings-display-msm-mdss-common-describe-additio.patch
+2c9a4a5716d1531e724cbef29f3a928ed6ffcaf4aa39dfa39bac87f5e05254b5  0002-drm-msm-mdss-reset-all-block-resets-described-in-DT.patch
+408394bf4063d288b7834d3b8ee47d905844528b2b3acae119a88f55732b6fc5  0003-arm64-dts-qcom-sm8750-describe-all-MDSS-block-resets.patch

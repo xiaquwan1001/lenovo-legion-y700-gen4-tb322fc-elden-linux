@@ -7,7 +7,7 @@
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd); cd "$ROOT"
 WAIT=${1:?usage: arm-window-hunt.sh <wait_s> <label:img>...}; shift
-SSH="ssh -o StrictHostKeyChecking=no -o ConnectionAttempts=1 -o ConnectTimeout=8 -o UserKnownHostsFile=/dev/null -o BatchMode=yes -b 0 root@192.168.7.1"
+SSH="ssh -o StrictHostKeyChecking=no -o ConnectionAttempts=1 -o ConnectTimeout=8 -o UserKnownHostsFile=/dev/null -o BatchMode=yes -b 0 ${TAB:-root@192.168.7.1}"
 
 # PITFALLS #584：`fastboot devices | grep -q` 会 SIGPIPE 打断 bulk 通道 ⇒ 只能物理 POR。
 # 必须先取完整输出再在 shell 里判（不要接管道给 grep）。

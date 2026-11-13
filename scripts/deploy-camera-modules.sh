@@ -1,4 +1,7 @@
 #!/bin/bash
+# 收口指针（script-redundancy-audit S15，2026-11-13）：设备侧整目录部署的统一实现 = scripts/deploy-modules.sh
+#       （带备份 + 读回校验）；本脚本是历史/专用形态（相机模块 tar + 依赖序加载），新代码勿复制其传输逻辑。
+
 # deploy-camera-modules.sh — deploy the mainline camera stack to a RUNNING
 # device WITHOUT flashing boot and WITHOUT rebooting (fallback path).
 #

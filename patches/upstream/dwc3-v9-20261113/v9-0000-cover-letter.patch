@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 13 Nov 2026 12:00:00 +0800
+Subject: [PATCH v9 0/4] usb: dwc3: support two connectors sharing one HS data
+ bus
+
+*** DRAFT - NOT SENT - send requires user approval (A4) ***
+
+Changes since v8 (Rob Herring, 2026-11-10, on the cover):
+- dt-bindings: the two connectors are two mux'ed data streams of one
+  High Speed bus, so port@0 now carries two endpoints and the second
+  High Speed port (port@2) is gone.
+- dt-bindings: the private "port-select-gpios" property is replaced by
+  a phandle to a mux controller ("mux-controls"), e.g. a "gpio-mux".
+- usb: dwc3: the shared data path is driven through the mux controller
+  API (devm_mux_control_get() / mux_control_select()) instead of a raw
+  GPIO.  mux_control_select() may sleep; it is only called from the
+  mode worker, never from the role-switch callbacks.
+- arm64: dts: qcom: sm8750: port@0 gets two endpoints, and the Lenovo
+  Legion Y700 Gen 4 describes the mux on GPIO 29.
+
+Gate results (tree: 7.4-rc2 line, base f66469d9905b):
+- checkpatch --strict: 0 errors / 0 warnings on all four patches.
+- make dt_binding_check DT_SCHEMA_FILES=.../snps,dwc3-common.yaml: rc=0.
+- CHECK_DTBS=y qcom/sm8750-lenovo-elden.dtb (with the schema): rc=0.
+- drivers/usb/dwc3/ builds clean for arm64 with CONFIG_MULTIPLEXER=y.
+

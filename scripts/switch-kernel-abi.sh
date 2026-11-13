@@ -46,7 +46,8 @@ done
 
 SSH() { timeout 30 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
 	-o ServerAliveInterval=15 "$DEV" "$@" 2>/dev/null; }
-FB_PRESENT() { timeout 15 fastboot devices >/tmp/skabi-fb.txt 2>&1; grep -q HA2EXB0E /tmp/skabi-fb.txt; }
+FB_SERIAL=${FB_SERIAL:?需 FB_SERIAL=<fastboot serialno>（PITFALLS #549：不写死 SN）}
+FB_PRESENT() { local d; d=$(timeout 15 fastboot devices 2>&1); [ "${d#*$FB_SERIAL}" != "$d" ]; }
 
 img_for() {
 	case "$1" in

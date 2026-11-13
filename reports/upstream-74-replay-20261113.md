@@ -63,7 +63,7 @@ git diff --stat HEAD | tail -1
 | 我们的东西 | 7.4 状态 | 证据 |
 |---|---|---|
 | `panel-novatek-nt36536.c` | **上游已有**（Pengyu Luo），我们的 elden delta = 8 行（`to_primary_dsi` 取 DSI0 命令主 + pps/prepare 微调） | `git show gh/master:...panel-novatek-nt36536.c`；重放后该文件**无冲突**、diff 只剩 elden 段 |
-| `PLL_SYSTEM_MUXES=0xc0`（M6 L1 / E1b） | **上游等价覆盖**：`dsi_pll_enable_pll_bias()` 首次 enable 就写 0xc0（`dsi_phy_7nm.c:439`） | `git cherry-pick -n 4da9a8b69fc` 在 gh/master 上仍 +9 行 ⇒ 与上游重复，**建议 retire** |
+| `PLL_SYSTEM_MUXES=0xc0`（M6 L1 / E1b） | **★本文原判「上游已覆盖、建议 retire」已被复核推翻（2026-11-13 晚，见 §3.1）**：上游那行 `writel(0xc0,…)` 在 `dsi_pll_enable_pll_bias()` 里，而 `dsi_7nm_phy_enable()` 更早把 `pll_enable_cnt=1`（`:1094`）⇒ bias 的 `if (pll_enable_cnt++)` 早退，**首次 bring-up 到不了那行**，7.4 上该寄存器仍停在 0x0 ⇒ 我们那 9 行不是重复、**不可 retire** | `dsi_phy_7nm.c:429/439/1094`（gh/master 现查）+ `patches/upstream/m6-dsi-pll-v2-20261113/README.md` §1 |
 | `rpmhpd` `skip_retention_level` | 上游 7.3 起**无条件 skip Retention**（`rpmhpd_update_level_mapping()` 内 `continue`） | v7.3/v7.4 `grep -c skip_retention_level` = 0；我们 payload 里该字段与上游语义重复 |
 | `rpmhpd` `presync_floor`（GPU/GMXC 轨） | **上游没有**（我们的本地 workaround） | 与上游冲突存在 ⇒ 保留，但要重写成上游形状 |
 
@@ -88,3 +88,17 @@ wl2868c（regulator 0 命中）、aw86927（codecs 0 命中）、gc08a8 / gt9764
 - **不要**把 treewide `devm_kzalloc_obj`（202 文件）当"上游增量"去 cherry-pick 回来——它正是本次多数机械冲突的来源。
 - **不要**从 `linux/`（7.2 快照）出发做这次重放（冲突翻倍，且 `fs/crypto/block.c` 这类上游已重构的文件会把 M5 的 vendor 血统带回来）。
 - `build/m3v2-7.3rc7` 是部分克隆（`blob:none`）+ 439 行 shallow；`git worktree` 演练完必须 `git worktree remove` + `prune`，否则 `check-doctor` 的身份账会漂。
+
+### §3.1 ★对 §3 的更正（2026-11-13 晚，独立复核后写入）
+
+`patches/upstream/m6-dsi-pll-v2-20261113/` 的复核推翻了我原来的判读，我按 `gh/master` 逐行核过：
+
+```
+:429  if (pll->pll_enable_cnt++) { ... return; }        # bias 的早退门
+:439  writel(0xc0, ... PLL_SYSTEM_MUXES);               # 早退门之后
+:1094 pll->pll_enable_cnt = 1;                          # dsi_7nm_phy_enable() 里先置 1
+```
+
+`dsi_pll_enable_pll_bias()` 由 clk op `dsi_pll_7nm_vco_prepare`（`:494`/`:626`）调用，发生在 `phy_enable()` **之后** ⇒
+首次 bring-up 时 `pll_enable_cnt` 已是 1 ⇒ `:439` 不执行 ⇒ **`PLL_SYSTEM_MUXES` 在 7.4 上不会被写**。
+结论修正：**这 9 行必须保留**（也正是它该出 v2 的理由），不能 retire。
