@@ -47,6 +47,10 @@
     （sha `244c5f65…`，`--tag v3b-restore`）⇒ 从 a 槽起不再「挂住不重启」；旧值备份仍在 `\EFI\BOOT\BOOTAA64.EFI.v5.bak`。
     ③ **上机通道口径（新，`PITFALLS #650`）**：进 fastboot 用 `ssh elden-root 'sync; reboot bootloader'`，
     **不要**用 `scripts/to-fastboot.sh --boot`（暖复位后立刻 `fastboot boot` 实测黑屏+崩坏，同镜像 systemd 路径一次过）。
+  - **★2026-11-13 夜已部署的资源采样器**：`/usr/local/sbin/suspend-resource-sample.sh`（sha256 前 16 = 现查 `sha256sum`）+
+    `elden-resource-sample.timer`（30 min，`OnBootSec=5min`）⇒ 追加写 `/var/lib/elden/suspend-resource.tsv`（TSV 表头 20 列）。
+    **判据**：`systemctl is-active elden-resource-sample.service` 应很快回 `inactive`（oneshot）；TSV 行数随时间增长。
+    取数：`scp elden-root:/var/lib/elden/suspend-resource.tsv .`。口径与判据纪律见 `TASKS/README.md` §4 的 T9 行、坑见 `PITFALLS #651`。
   - **ESP（`/dev/sda18`）**：`\EFI\BOOT\BOOTAA64.EFI` = `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动）；
     `\boot\boot.img` = **vk190**（`54e84588…`，`menu.cfg` 首项已改名 `Elden vk190 (ESP boot.img)`）、
     `\boot\dtbo.img`（32 MiB）、`\boot\vendor_boot.img`（96 MiB，Mu loader 的 Android 回退路径要用，**别删**）；
