@@ -1,0 +1,23 @@
+# 7.4 重放实验原始记录 2026-11-13T09:56:03Z
+## base: gh/master = 9d66f26fefacebfeed15de31c1123451a17ff119 2026-11-11 16:48:56 -0800 Merge tag 'vfs-7.4-rc3.fixes.2' of git://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs
+## payload: 79a907609d5 (Linux 7.3.1) -> 88cd0bc0f4f (elden payload v2)
+## cherry-pick 结果: 148 files changed, 16412 insertions(+), 649 deletions(-); 107 M / 26 A / 15 UU
+
+## 冲突文件与 hunk 数
+ 4  drivers/pci/controller/dwc/pcie-qcom.c
+ 2  sound/soc/qcom/qdsp6/q6apm.c
+ 1  sound/soc/qcom/qdsp6/q6apm-dai.c
+ 1  sound/soc/qcom/qdsp6/audioreach.h
+ 1  drivers/power/sequencing/pwrseq-qcom-wcn.c
+ 1  drivers/media/i2c/Makefile
+ 1  drivers/leds/flash/leds-qcom-flash.c
+ 1  drivers/gpu/drm/panel/Kconfig
+ 1  drivers/gpu/drm/msm/disp/dpu1/dpu_hw_catalog.c
+ 1  drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_vid.c
+ 1  drivers/gpu/drm/msm/adreno/a6xx_catalog.c
+ 1  drivers/clk/qcom/gcc-sm8750.c
+ 1  drivers/bluetooth/hci_qca.c
+ 1  arch/arm64/boot/dts/qcom/Makefile
+ 1  Documentation/devicetree/bindings/clock/qcom,sm8750-gcc.yaml
+
+## 未冲突但被本 payload 改动 = 107
