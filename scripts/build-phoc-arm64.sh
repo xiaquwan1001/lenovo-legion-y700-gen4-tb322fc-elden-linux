@@ -26,6 +26,12 @@ PATCH=$REPO/patches/phoc-syncobj-20261111/0001-desktop-advertise-linux-drm-synco
 STAMP=$(date +%Y%m%d)
 OUT=$REPO/out/phoc-syncobj-arm64-$STAMP
 WORK=$REPO/build/phoc-src-$VER
+# chroot 内构建目录按 VER 区分（0.58 与 0.59 不能共用，否则 rsync --delete 互相铲）
+SRCDIR=${SRCDIR:-build-phoc-src$(printf '%s' "$VER" | tr -cd '0-9')}
+# 已缓存的 Debian 源包目录（校园网池抓不到时复用；2026-11-13 加）
+SRC_CACHE=${SRC_CACHE:-/opt/elden/arm64-sid/build-phoc}
+# meson wrap-mode：chroot 内无网/无证书时用 nodownload（subprojects 需预先就位）
+WRAPMODE=${WRAPMODE:-default}
 
 say() { printf '\n=== %s\n' "$*"; }
 [ "$(id -u)" = 0 ] || { echo "需要 root（chroot 构建）：sudo bash $0" >&2; exit 1; }
@@ -34,9 +40,15 @@ say() { printf '\n=== %s\n' "$*"; }
 say "1/6 取源码（校园网 USTC Debian pool；sid 只有 0.59~rc1 的 Sources 索引，故直接抓 pool 文件）"
 mkdir -p "$WORK"; cd "$WORK"
 for f in phoc_${DEBVER}.dsc phoc_${VER}.orig.tar.xz phoc_${DEBVER}.debian.tar.xz; do
-  [ -s "$f" ] || curl -fsS -m 60 -O "$POOL/$f"
+  [ -s "$f" ] && continue
+  if [ -s "$SRC_CACHE/$f" ]; then cp "$SRC_CACHE/$f" "$f"; echo "    (cache) $f"
+  else curl -fsS -m 60 -O "$POOL/$f"; fi
 done
 tar xf phoc_${VER}.orig.tar.xz
+# orig tar 解出的目录名不一定 = phoc-$VER（0.59~rc1 解出 phoc-0.59.rc1）
+SRC_TREE=$(ls -d phoc-*/ 2>/dev/null | head -1); SRC_TREE=${SRC_TREE%/}
+[ -n "$SRC_TREE" ] || { echo "解包后找不到 phoc-*/ 源码目录" >&2; exit 1; }
+echo "    源码树 = $SRC_TREE"
 mkdir -p debian-x && tar xf phoc_${DEBVER}.debian.tar.xz -C debian-x
 
 say "2/6 chroot（$CHROOT_DIR）依赖"
@@ -61,9 +73,9 @@ chroot "$CHROOT_DIR" /bin/sh -c "
 "
 
 say "3/6 源码入 chroot + 打两层补丁（Debian upstream patches → 我们的 syncobj 补丁）"
-D=$CHROOT_DIR/build-phoc-src58
+D=$CHROOT_DIR/$SRCDIR
 mkdir -p "$D"
-rsync -a --delete "$WORK/phoc-$VER/" "$D/phoc/"
+rsync -a --delete "$WORK/$SRC_TREE/" "$D/phoc/"
 # debian.tar.xz 的顶层目录是 `debian/`；两种解包形态都兼容（2026-11-11 实测：解到 debian-x/debian/）
 if [ -d "$WORK/debian-x/debian" ]; then SRC_DEB="$WORK/debian-x/debian/"; else SRC_DEB="$WORK/debian-x/"; fi
 rsync -a --delete "$SRC_DEB" "$D/debian/"
@@ -82,35 +94,37 @@ if [ -d "$EXTRA_DIR" ]; then
 fi
 chroot "$CHROOT_DIR" /bin/sh -c "
   set -e
-  cd /build-phoc-src58/phoc
+  cd /$SRCDIR/phoc
   patch -p1 -l < ../debian/patches/Apply-upstream-patches.patch
   patch -p1 -l < ../0001-syncobj.patch
 "
-# 额外补丁按文件名顺序应用（上面已拷进 chroot 的 /build-phoc-src58/extra/）
-for ep in "$CHROOT_DIR"/build-phoc-src58/extra/*.patch; do
+# 额外补丁按文件名顺序应用（上面已拷进 chroot 的 /$SRCDIR/extra/）
+for ep in "$CHROOT_DIR/$SRCDIR"/extra/*.patch; do
   [ -e "$ep" ] || continue
-  inner=/build-phoc-src58/extra/$(basename "$ep")
+  inner=/$SRCDIR/extra/$(basename "$ep")
   say "3b/6 额外补丁 $(basename "$ep")"
-  chroot "$CHROOT_DIR" /bin/sh -c "cd /build-phoc-src58/phoc && patch -p1 -l < $inner"
+  chroot "$CHROOT_DIR" /bin/sh -c "cd /$SRCDIR/phoc && patch -p1 -l < $inner"
 done
 
 
 say "4/6 meson 配置（内嵌 wlroots 静态、gles2、无 vulkan/glslang 依赖）"
 chroot "$CHROOT_DIR" /bin/sh -c "
-  cd /build-phoc-src58/phoc
-  meson setup --wipe /build-phoc-src58/build \
+  cd /$SRCDIR/phoc
+  meson setup --wipe /$SRCDIR/build \
     -Dembed-wlroots=enabled -Dwlroots:default_library=static -Dwlroots:renderers=gles2 \
-    -Dxwayland=disabled -Dtests=false | tail -5
+    -Dxwayland=disabled -Dtests=false --wrap-mode=${WRAPMODE:-default} | tail -5
 "
 
 say "5/6 编译（qemu-user，约 15–25 min）"
-chroot "$CHROOT_DIR" /bin/sh -c 'cd /build-phoc-src58/build && ninja src/phoc | tail -2'
+# 注意：不要把 ninja 的输出接到 tail —— 管道 rc = tail 的 rc，会把编译失败吞成成功（2026-11-13 踩到）
+chroot "$CHROOT_DIR" /bin/sh -c "cd /$SRCDIR/build && ninja src/phoc" || { echo '!! 编译失败' >&2; exit 1; }
+[ -x "$CHROOT_DIR/$SRCDIR/build/src/phoc" ] || { echo "!! 产物缺失：/$SRCDIR/build/src/phoc" >&2; exit 1; }
 
 say "6/6 取产物 + 自校验（必须无 libwlroots 依赖）"
 mkdir -p "$OUT"
 TAG=${OUTTAG:-$([ "${EXTRA_N:-0}" -gt 0 ] && echo syncobj-osk || echo syncobj)}
 install -m 0755 -o "${SUDO_USER:-root}" -g "${SUDO_USER:-root}" \
-  "$CHROOT_DIR/build-phoc-src58/build/src/phoc" "$OUT/phoc-${VER}-${TAG}"
+  "$CHROOT_DIR/$SRCDIR/build/src/phoc" "$OUT/phoc-${VER}-${TAG}"
 H=$(sha256sum "$OUT/phoc-${VER}-${TAG}" | cut -d' ' -f1)
 NEEDED=$(readelf -d "$OUT/phoc-${VER}-${TAG}" | grep -c NEEDED)
 WR=$(readelf -d "$OUT/phoc-${VER}-${TAG}" | grep -ci wlroots || true)
