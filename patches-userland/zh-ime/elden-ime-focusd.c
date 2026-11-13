@@ -13,6 +13,10 @@
 //   无输入上下文 = 0、Entry 拿到焦点 = 1、窗口关闭 = 0。⇒ 用它做收起判据（1 s 轮询，代价可忽略）。
 //   注意：不是所有客户端都走 fcitx 前端（`GTK_IM_MODULE=wayland` 时 GTK 走 text-input-v3），
 //   那种情况下 phoc 自己会把 activate 转发给 OSK，本程序只看到 State 恒 0 ⇒ 不会误收起。
+//   ★2026-11-13 修实现与上句不符的缺陷（PITFALLS #653）：旧代码 `if (st == 0) osk_hide()`
+//   无条件生效 ⇒ 非 fcitx 客户端（GTK_IM_MODULE=wayland / phoc 0.59 下的 GTK3）
+//   State 恒 0，刚收到 kimpanel 信号 `Visible->1` 的同 1 s 内就被 `SetVisible(0)` 收回（弹了又收）。
+//   现改为「本 IC 曾真正进过 fcitx（State 见过 1）才允许用 State==0 当收起判据」。
 //
 // 2026-11-12（G1-38「自动弹/收没做好」的静态定案，reports/ime-osk-lifecycle-20261112.md）：
 //   ① 零矩形误弹 —— fcitx5 建 IC 时先发 SetRelativeSpotRect(0,0,0,0)，旧代码 `(void)params`
@@ -39,6 +43,10 @@ static gint64 last_show_us = 0;
 static gint64 last_activity_us = 0;   // 最近一次「真有人要打字」的 kimpanel 活动
 static gint64 zero_rect_since_us = 0; // 非 0 = 见到零矩形，等 400 ms 确认再收（2026-11-13：2 s 太慢，用户报「收起很慢」）
 static gint fcitx_gone_ticks = 0;     // State==-1 的连续次数（5 s ⇒ fcitx5 真没了）
+// 2026-11-13（PITFALLS #653）：本 IC 是否曾真正进过 fcitx。
+// 只有「进过」才允许用 State==0 当收起判据 —— GTK_IM_MODULE=wayland / 非 fcitx 客户端
+// 从头到尾 State 恒 0，旧代码会在 Visible->1 的同 1 s 内立刻 SetVisible(0)（弹了又收）。
+static gboolean fcitx_seen_active = FALSE;
 static gint idle_sec = 300;           // 兜底超时：有 IC 但长时间无 kimpanel 活动
 static gboolean composing = FALSE;    // 正在组字（候选表非空 / preedit 非空）
 // ---- 候选浮条转发（2026-11-13，PITFALLS #645）----
@@ -156,6 +164,7 @@ static void osk_hide(const char *why) {
     logmsg("hide requested by %s", why);
     osk_visible = FALSE;   // 先本地置位，避免往返
     composing = FALSE;
+    fcitx_seen_active = FALSE;   // 收起即重置：下次弹起重新判定这个 IC 是否真的走 fcitx
     zero_rect_since_us = 0;
     strip_show(FALSE);
     osk_set_visible(FALSE);
@@ -166,7 +175,14 @@ static gboolean idle_check(gpointer user) {
     if (!osk_visible) { fcitx_gone_ticks = 0; return G_SOURCE_CONTINUE; }
     gint64 now = g_get_monotonic_time();
     gint st = fcitx_state();
-    if (st == 0) { fcitx_gone_ticks = 0; osk_hide("fcitx State=0"); return G_SOURCE_CONTINUE; }
+    if (st == 1) fcitx_seen_active = TRUE;   // 见过真的输入上下文 ⇒ 之后 State==0 才可信
+    if (st == 0) {
+        fcitx_gone_ticks = 0;
+        // 本 IC 从未进过 fcitx（GTK_IM_MODULE=wayland / 非 fcitx 前端）⇒ State 恒 0 不具判据意义，
+        // 交给 zero-rect / idle / PropertiesChanged 三条去收，别在这里立刻收起。
+        if (fcitx_seen_active) { osk_hide("fcitx State=0"); return G_SOURCE_CONTINUE; }
+        return G_SOURCE_CONTINUE;
+    }
     if (st == -1) {
         // fcitx5 不在/未就绪：旧代码故意不收起 ⇒ fcitx5 崩了键盘会永久悬浮。给 5 s 宽限。
         if (++fcitx_gone_ticks >= 5) osk_hide("fcitx5 gone (State=-1 x5)");
