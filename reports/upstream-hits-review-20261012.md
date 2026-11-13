@@ -2,7 +2,7 @@
 
 - 日期：2026-10-12（本审计工作盒 ≤30 min）
 - 审计者：子代理「上游命中审计 lane 收尾」
-- 被审对象：项目仓 `lane/upstream` @ `53fbe5a`（未并入 main）新增的 `reports/upstream-hits-20261012.md`（118 行）
+- 被审对象：项目仓 `lane/upstream` @ `53fbe5a` 新增的 `reports/upstream-hits-20261012.md`（118 行；2026-11-13 已由该 lane 分支并入 main，此后本复核所指路径即本仓正文）
 - 审计对象（内核）：`/home/xuqianhui1001/y700-wt/wt-upstream-kernel`（分支 `elden/lane-upstream` @ `169d74806`）；主 worktree `/home/xuqianhui1001/y700-elden/geekidos-linux`（`clean/base` @ `5d01d3324`）
 - 纪律：**未**执行任何设备操作（无 fastboot/adb/ssh/EDL）；**未** merge/push；**未**改 main 分支；本次仅在 `reports/` **新增本文件**（untracked，未提交）。
 - 审计期间 main 被其它会话推进（`a10e853` → `168cee5`），本审计不涉及。
