@@ -1,0 +1,89 @@
+From 4ad69e8cfdef799d2f33ce1fdd43e539a2f515f5 Mon Sep 17 00:00:00 2001
+Message-ID: <cover.1794557667.git.xiaqinghuan@mail.ustc.edu.cn>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 13 Nov 2026 16:14:27 +0800
+Subject: [PATCH v11 0/2] regulator: add the Will Semiconductor WL2868C camera PMIC
+
+*** AI-assistance disclosure ***
+This cover letter and the two patches below were prepared with the help
+of an LLM coding assistant.  The author reviewed every line, ran every
+gate quoted in this letter himself, and takes full responsibility for
+the content.
+
+This is v11 of the WL2868C binding+driver series.  It supersedes v10
+(<20261111111132.1296892-1-xiaqinghuan@mail.ustc.edu.cn>) and differs
+from it in one place only: the LDOx_SEQ handling Mark asked about.
+
+What changed in v11
+===================
+
+Mark Brown asked on v10 2/2
+(<20261111111132.1296892-3-xiaqinghuan@mail.ustc.edu.cn>):
+
+> Should the driver not also override the LDOx_SEQ registers to make sure
+> we have software control of them, or hide the enable/disable ops if
+> they're non-zero?
+
+Taken the first way: the four slot registers are cleared in probe.
+
+The datasheet (WL2868C, Will Semiconductor, Rev 1.4, April 2022,
+"0x0A, 0x0B, 0x0C and 0x0D: LDOx_SEQ", p.35) defines LDOx_SEQ[3:0] as
+the power-up sequencer slot of each output:
+
+  - 0000, the reset value: the output is controlled by its LDOx_EN bit
+    in 0x0E;
+  - x001..x111: the output is controlled by the sequencer, which brings
+    the LDO up once SEQ_ON in 0x0F is set and SEQ_COUNT[2:0] reaches
+    the slot; writes to the LDOx_EN bit have no effect on it.
+
+So a non-zero slot silently defeats enable()/disable(): the register
+write succeeds, is_enabled() reports the LDOx_EN bit, and the output
+still follows the sequencer.  The binding describes no sequencing at
+all, so clearing the slots and keeping 0x0E as the only control path is
+the way to make the enable ops truthful.  The other option, hiding
+enable/disable when a slot is non-zero, would leave the outputs
+uncontrollable on exactly the boards where software needs them.
+
+Measured on the reference board (Lenovo Legion Y700 Gen4, SM8750;
+Linux 7.3.1, driver bound, read-only through regmap debugfs):
+0x0a..0x0d = 00 00 00 00, 0x0e = 0x80, 0x0f = 0x00.  The firmware left
+every slot at its reset value and the sequencer disabled, so the clear
+is a no-op on this board today; it is there so that a board whose
+firmware does program the slots does not end up with silently
+uncontrolled outputs.  Clearing a non-zero slot switches off the outputs
+it had turned on; at probe time no consumer is up yet, and the core
+re-enables whatever it needs through the enable register.
+
+Everything else is unchanged from v10, so the v10 changelog (sashiko's
+three Medium findings and the two Low binding points) still applies as
+written.
+
+Gates for v11
+=============
+
+- git am of the two patches onto pristine v7.2 (25f7927e6ccb) leaves no
+  local changes after the series.
+- checkpatch --strict on the driver change: 0 errors, 0 warnings,
+  0 checks.
+- W=1 build of drivers/regulator/wl2868c-regulator.o with
+  REGULATOR_WL2868C=y and its dependencies: rc=0, no warnings.
+- dt_binding_check: unchanged and passing; the binding is not touched
+  in v11.
+
+
+Qianhui Xu (2):
+  regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+  regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+
+ .../bindings/regulator/willsemi,wl2868c.yaml  |  99 ++++++
+ MAINTAINERS                                   |   7 +
+ drivers/regulator/Kconfig                     |  11 +
+ drivers/regulator/Makefile                    |   1 +
+ drivers/regulator/wl2868c-regulator.c         | 301 ++++++++++++++++++
+ 5 files changed, 419 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+ create mode 100644 drivers/regulator/wl2868c-regulator.c
+
+-- 
+2.53.0
+

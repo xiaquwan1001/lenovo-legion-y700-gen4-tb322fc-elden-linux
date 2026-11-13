@@ -1,0 +1,30 @@
+# WL2868C register read-back, 2026-11-13 16:0x CST
+# Unit: TB322FC (U2), Linux 7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty
+# Method: read-only via regmap debugfs (driver bound at i2c-10 addr 0x2f);
+#         i2cget is refused by the bus (driver owns the adapter), hence debugfs.
+# Expected from datasheet WL2868C Rev 1.4 p.35 (0x0A..0x0D = LDOx_SEQ[3:0]):
+#   0x0a..0x0d = 00 00 00 00  -> every LDO driven by LDOx_EN in 0x0E
+#   0x0e = 0x80              -> SYS_EN=1, all per-LDO enable bits 0
+#   0x0f = 0x00              -> SEQ_CTRL=0, SEQ_ON=0 (sequencer idle)
+
+$ ssh root@192.168.7.1 'cat /sys/kernel/debug/regmap/10-002f/registers'
+00: 82
+01: 33
+02: 00
+03: 4f
+04: 63
+05: a4
+06: a5
+07: a3
+08: a2
+09: 25
+0a: 00
+0b: 00
+0c: 00
+0d: 00
+0e: 80
+0f: 00
+10: 40
+11: c0
+12: 40
+13: c0

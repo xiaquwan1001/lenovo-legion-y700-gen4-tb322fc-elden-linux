@@ -1,4 +1,9 @@
-# UEFI issue #12 回帖定稿（2026-10-29，**草稿·未发送**）
+# UEFI issue #12 回帖定稿（2026-10-29；**已发送** comment 6487769609；2026-11-13 另发闭环 comment 6847932534）
+
+> **状态更正（2026-11-13）**：本文标题原写「草稿·未发送」，但 §2 正文已于 2026-10-29T04:16:34Z 作为新 comment 发布
+> （GitHub comment id 6487769609）。本轮另发闭环回帖（id 6847932534）：UFS 枚举通、两种形态都能起 Linux、
+> flashed 形态真阻塞 = `dtbo_a` 而非 UFSDxe ⇒ 不需要 tiny DXE。详见
+> `TASKS/sessions/2026-11-13-上游投递-wl2868c-v11-mdss-v4-uefi12闭环.md` §3。
 
 对象：`sunflower2333/mu_wide_platforms#12`
 （`SM8750 (Pakala) Lenovo Y700 Gen4: vendor UFSDxe fails UEFI_DEVICE_ERROR — which platform config is it missing?`）

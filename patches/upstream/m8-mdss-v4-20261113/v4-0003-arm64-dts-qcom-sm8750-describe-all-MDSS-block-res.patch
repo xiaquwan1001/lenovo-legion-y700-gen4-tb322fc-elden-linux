@@ -1,0 +1,42 @@
+From 8a0c75949fcf428a2163a2e63b27fcf08d3b4f9c Mon Sep 17 00:00:00 2001
+Message-ID: <8a0c75949fcf428a2163a2e63b27fcf08d3b4f9c.1794558882.git.xiaqinghuan@mail.ustc.edu.cn>
+In-Reply-To: <cover.1794558882.git.xiaqinghuan@mail.ustc.edu.cn>
+References: <cover.1794558882.git.xiaqinghuan@mail.ustc.edu.cn>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 2 Nov 2026 13:29:12 +0800
+Subject: [PATCH v4 3/3] arm64: dts: qcom: sm8750: describe all MDSS block
+ resets
+
+The SM8750 display clock controller provides, beside the MDSS core
+reset, a block reset for the MDSS core INT2 interrupt controller.  The
+MDSS node is an interrupt controller in DT and the DPU takes its IRQ
+from it, so INT2 is part of the same block, not a separate device.
+
+Bootloaders hand over with the display block still running, so describe
+both block resets and let the MDSS reset return the whole group to a
+known state before any display hardware is programmed.
+
+Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index dd738d13df8..e8e2832f918 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -3071,7 +3071,8 @@ mdss: display-subsystem@ae00000 {
+ 				 <&gcc GCC_DISP_HF_AXI_CLK>,
+ 				 <&dispcc DISP_CC_MDSS_MDP_CLK>;
+ 
+-			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>;
++			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>,
++				 <&dispcc DISP_CC_MDSS_CORE_INT2_BCR>;
+ 
+ 			interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
+ 					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
+-- 
+2.53.0
+

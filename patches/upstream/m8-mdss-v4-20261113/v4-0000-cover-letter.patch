@@ -1,0 +1,77 @@
+From 8a0c75949fcf428a2163a2e63b27fcf08d3b4f9c Mon Sep 17 00:00:00 2001
+Message-ID: <cover.1794558882.git.xiaqinghuan@mail.ustc.edu.cn>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 13 Nov 2026 16:34:42 +0800
+Subject: [PATCH v4 0/3] drm/msm/mdss: reset all block resets described in DT
+
+*** AI-assistance disclosure ***
+This cover letter and the three patches were prepared with the help of an
+LLM coding assistant.  The author reviewed every line, checked every
+statement against the tree and his own logs, and takes full responsibility
+for the content.
+
+This is v4 of the MDSS block-reset series.  It supersedes v3
+(<20261102055026.438521-1-xiaqinghuan@mail.ustc.edu.cn>) and changes only
+the last commit message, in response to Dmitry's three questions on v3 2/3
+(<awb7bslhrhemsgvu7ubaejvurk6fecotgvqlwtvsoe2benqdgq@tvh2sfjbuzyu>).
+
+What changed in v4
+==================
+
+v3 3/3 claimed that command-mode panel initialisation "fails with command
+DMA timeouts and the display comes up as backlight only" because INT2 was
+left out of reset.  That is a causal statement the data does not support:
+the failure is intermittent (~50%) and we never isolated INT2 as a single
+variable.  v4 drops the claim.  The commit now says only what holds: MDSS
+is an interrupt controller in DT and the DPU takes its IRQ from it, the
+display clock controller provides both block resets, and firmware can hand
+over with the block running, so DT describes both of them.
+
+The two Reviewed-by tags received on v3 3/3 are carried over; the diff of
+all three patches is byte-identical to v3 except for that commit message.
+
+Answers to the three questions, for the record:
+
+- it is an interrupt controller: sm8750.dtsi's mdss node has
+  "interrupt-controller;" and "#interrupt-cells = <1>", and the DPU child
+  uses "interrupts-extended = <&mdss 0>"; dispcc-sm8750 exposes INT2 as
+  MDSS_INT2_GDSC plus DISP_CC_MDSS_CORE_INT2_BCR (0xa000);
+- side effect: msm_mdss_reset() runs in msm_mdss_probe() (msm_mdss.c:372)
+  before the irq domain is created (:417) and before of_platform_populate()
+  (:537), the group is held for the existing 20 ms and released, and dispcc
+  PLLs/clocks are untouched;
+- testing: the reset at this position, with core+INT2+RSCC as one bulk
+  group, ran 5/5 cold POR and 2/2 warm resets without a bad boot, against
+  5 STORM in 9 cold boots when only the core was reset.  The exact v4 shape
+  (array API, two resets) has not been booted, and there is no per-reset
+  A/B.
+
+2/3 exists only so the driver honours a DT listing more than one MDSS
+reset.  If you would rather take 3/3 alone, we can drop it; say so and v5
+will be 3/3 by itself.
+
+Gates for v4
+============
+
+- git am of the three patches onto pristine v7.3-rc7 (24a19b953e) applies
+  cleanly, no fuzz.
+- checkpatch --strict on the rewritten 0003: 0 errors, 0 warnings, 0 checks.
+- dt_binding_check and the W=1 build are unchanged from v3 (no code or DT
+  diff in v4).
+
+
+Qianhui Xu (3):
+  dt-bindings: display: msm: mdss-common: describe additional block
+    resets
+  drm/msm/mdss: reset all block resets described in DT
+  arm64: dts: qcom: sm8750: describe all MDSS block resets
+
+ .../devicetree/bindings/display/msm/mdss-common.yaml         | 4 +++-
+ .../devicetree/bindings/display/msm/qcom,sm8750-mdss.yaml    | 3 ++-
+ arch/arm64/boot/dts/qcom/sm8750.dtsi                         | 3 ++-
+ drivers/gpu/drm/msm/msm_mdss.c                               | 5 ++---
+ 4 files changed, 9 insertions(+), 6 deletions(-)
+
+-- 
+2.53.0
+
