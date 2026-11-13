@@ -37,9 +37,12 @@ static GDBusConnection *bus;
 static gboolean osk_visible = FALSE;
 static gint64 last_show_us = 0;
 static gint64 last_activity_us = 0;   // 最近一次「真有人要打字」的 kimpanel 活动
-static gint64 zero_rect_since_us = 0; // 非 0 = 见到零矩形，等 2 s 确认再收（避免打字抖动误收）
+static gint64 zero_rect_since_us = 0; // 非 0 = 见到零矩形，等 400 ms 确认再收（2026-11-13：2 s 太慢，用户报「收起很慢」）
 static gint fcitx_gone_ticks = 0;     // State==-1 的连续次数（5 s ⇒ fcitx5 真没了）
 static gint idle_sec = 300;           // 兜底超时：有 IC 但长时间无 kimpanel 活动
+static gboolean composing = FALSE;    // 正在组字（候选表非空 / preedit 非空）
+// 组字期间的空闲收起阈值：比正常大一档，但**有界**（否则 Firefox 点空白不给 blur 时会永久悬浮）
+#define IDLE_COMPOSING_EXTRA 16
 
 static void logmsg(const char *fmt, ...) {
     static FILE *f;
@@ -101,6 +104,7 @@ static gint fcitx_state(void) {
 static void osk_hide(const char *why) {
     logmsg("hide requested by %s", why);
     osk_visible = FALSE;   // 先本地置位，避免往返
+    composing = FALSE;
     zero_rect_since_us = 0;
     osk_set_visible(FALSE);
 }
@@ -117,12 +121,16 @@ static gboolean idle_check(gpointer user) {
         return G_SOURCE_CONTINUE;
     }
     fcitx_gone_ticks = 0;
-    if (zero_rect_since_us && now - zero_rect_since_us > 2000000) {
-        osk_hide("zero spot rect persisted 2s");
+    if (zero_rect_since_us && now - zero_rect_since_us > 400000) {
+        osk_hide("zero spot rect persisted 400ms");
         return G_SOURCE_CONTINUE;
     }
-    if (idle_sec > 0 && last_activity_us && (now - last_activity_us) / G_USEC_PER_SEC > idle_sec) {
-        osk_hide("idle timeout");
+    if (idle_sec > 0 && last_activity_us) {
+        // 2026-11-13：组字中（候选/preedit 非空）把阈值放大 IDLE_COMPOSING_EXTRA 秒（打一半别被收），
+        // 但有界——Firefox 点页面空白不给任何 blur 信号，不能无限等下去。
+        gint64 eff = idle_sec + (composing ? IDLE_COMPOSING_EXTRA : 0);
+        if ((now - last_activity_us) / G_USEC_PER_SEC > eff)
+            osk_hide(composing ? "idle timeout (composing, extended)" : "idle timeout");
     }
     return G_SOURCE_CONTINUE;
 }
@@ -208,20 +216,30 @@ static void method_call(GDBusConnection *c, const gchar *sender, const gchar *pa
         if (params && g_variant_is_of_type(params, G_VARIANT_TYPE("(b)")))
             g_variant_get(params, "(b)", &en);
         if (en) want_keyboard("Enable(true)", -1, -1);
-        else if (osk_visible) osk_hide("Enable(false)");
+        else { composing = FALSE; if (osk_visible) osk_hide("Enable(false)"); }
     } else if (!strcmp(method, "ShowPreedit")) {
         gboolean en = FALSE;
         if (params && g_variant_is_of_type(params, G_VARIANT_TYPE("(b)")))
             g_variant_get(params, "(b)", &en);
         if (en) want_keyboard("ShowPreedit(true)", -1, -1);
+        else composing = FALSE;
     } else if (!strcmp(method, "SetLookupTable")) {
         if (params && g_variant_is_of_type(params, G_VARIANT_TYPE("(asasasbbii)"))) {
             GVariant *v = g_variant_get_child_value(params, 1);
             if (v) {
-                if (g_variant_n_children(v) > 0) want_keyboard("SetLookupTable", -1, -1);
+                composing = g_variant_n_children(v) > 0;
+                if (composing) { last_activity_us = g_get_monotonic_time(); want_keyboard("SetLookupTable", -1, -1); }
                 g_variant_unref(v);
             }
         }
+    } else if (!strcmp(method, "UpdatePreeditText") || !strcmp(method, "UpdateLookupTableCursor")) {
+        // 组字过程中的持续活动：刷新活动时间（保持键盘），并标记在组字
+        if (!strcmp(method, "UpdatePreeditText") && params && g_variant_is_of_type(params, G_VARIANT_TYPE("(ss)"))) {
+            const char *txt = NULL, *attr = NULL;
+            g_variant_get(params, "(&s&s)", &txt, &attr);
+            composing = (txt && *txt) ? TRUE : composing;
+        }
+        last_activity_us = g_get_monotonic_time();
     }
     g_dbus_method_invocation_return_value(inv, NULL);
 }
@@ -263,7 +281,8 @@ int main(void) {
     logmsg("ready: owns org.kde.impanel");
 
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
-    g_timeout_add_seconds(1, idle_check, NULL);
+    // 2026-11-13：轮询 1 s → 250 ms。收起延迟 = 零矩形确认 + 一次轮询，用户报「收起很慢」
+    g_timeout_add(250, idle_check, NULL);
     g_main_loop_run(loop);
     return 0;
 }

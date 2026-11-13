@@ -9,8 +9,10 @@ PartOf=graphical-session.target
 
 [Service]
 Type=simple
-# 兜底超时：有输入上下文但长时间（300 s）无 kimpanel 活动时收起；0 = 关闭该兜底
-Environment=ELDEN_IME_IDLE_SEC=300
+# 空闲收起：有输入上下文但 N 秒无 kimpanel 活动时收起；0 = 关闭该兜底。
+# 2026-11-13 实测：Firefox 点页面空白**不会**给任何 blur 信号（既无 Enable(false) 也无 State=0），
+# 桥只能靠这条超时收；300 s/45 s 都会让用户以为「收不起来」，改成 4 s（组字期间不生效，见 #644）。
+Environment=ELDEN_IME_IDLE_SEC=4
 ExecStart=/usr/local/bin/elden-ime-focusd
 # fcitx5 可能被重登/升级拉起，桥必须跟得上；崩溃也别悄悄没了（这正是 2026-11-12 报的「没做好」）
 Restart=always

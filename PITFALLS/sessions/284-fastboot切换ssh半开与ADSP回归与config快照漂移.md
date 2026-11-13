@@ -225,3 +225,76 @@ sha256 `7b6b5137c6f8…`）+ `README.md`（内容分组、回灌命令、`.confi
 - **修好一次 ≠ 修好**：同一缺陷若还写在「重置脚本」里，就等于给自己埋了定时炸弹。修设备态的同时必须搜一遍生成该状态的脚本
   （`rg -n "Items/0|DefaultIM=rime" rootfs/ scripts/ packaging/`）。
 - 门禁要盯**真正生效的字段**：这条坑里 `DefaultIM` 是文档字段、`Items/0` 才是行为字段，门禁看错字段 ⇒ 假绿。
+
+---
+
+# #644 「点空白处键盘收不起来」不是时延参数问题：**Firefox 根本不给 blur 信号**，桥只能靠空闲超时收
+
+- 日期：2026-11-13
+- pi 会话 id：本项目会话（11-13 上午）
+- 主题：用户三连报（无候选/空白处出光标/收起很慢）里的第 3 条
+
+## 实测（有仪器，不靠感觉）
+
+判据脚本：`vtap3.py`（/dev/uinput 虚拟触摸屏点一下）+ 50 ms 轮询 `sm.puri.OSK0.Visible`。
+
+| 场景 | 收起耗时 |
+|---|---|
+| 点 URL 栏（键盘出）→ 点页面空白 | **42 991 ms**（≈ 部署里的 `ELDEN_IME_IDLE_SEC=45`） |
+| 同上，focusd 改 4 s 空闲阈值后 | **2 183 ms** |
+
+**根因**：Firefox（Wayland/Gecko）点页面空白时，**既不向 fcitx5 发 `Enable(false)`，也不让 IC 变 `State=0`**
+（focusd 日志连续两条都是 `hide requested by idle timeout`，从来没有 `State=0` / `zero spot rect`）。
+`zero spot rect` 与 `Enable(false)` 两条快路径都拿不到信号 ⇒ 桥唯一能用的判据就是**空闲超时**，
+而当时部署值是 45 s（仓库 unit 写的是 300 s，**两份还漂移**）。
+
+## 处置（本轮已做）
+
+- `rootfs/debian/ime/elden-ime-focusd.service`：`ELDEN_IME_IDLE_SEC` 300 → **4 s**（设备上原为 45 s，已同步）；
+- focusd 源码两处：零矩形确认 2 s → **400 ms**、`idle_check` 轮询 1 s → **250 ms**；
+- 新增 `composing` 判定（`SetLookupTable` 非空 / `UpdatePreeditText` 非空）：组字期间空闲阈值 **+16 s**，
+  **有界**——否则 Firefox 不给 blur 时键盘会永久悬浮。
+- 判据：同一脚本复测 42 991 ms → **2 183 ms**；`verify.sh --rebuildable` FAIL=0 WARN=0。
+
+## 教训
+
+**「反应慢」先分清是参数问题还是信号问题**：本机看起来像「阈值调大调小」，实际是**上游客户端不发事件**——
+调参数只能把「永远不收」变成「N 秒后收」。凡是靠启发式兜底的桥（kimpanel→OSK），必须把
+「本应用到底会不会发 blur」当作已知量写进注释，并给启发式一个**有界**的兜底（本例 4 s / 组字 +16 s）。
+
+---
+
+# #645 候选窗一直没有：`CurrentUI=kimpanel` 时**面板（focusd）就是唯一该画候选的人**，而它只桥 OSK
+
+- 日期：2026-11-13
+- pi 会话 id：本项目会话（11-13 上午）
+- 主题：用户三连报里的第 1 条（中文能上屏但看不见组字/候选）
+
+## 证据链
+
+- 焦点在 Firefox URL 栏、敲 `n i` 时，`dbus-monitor` 抓到 fcitx5 在 `/kimpanel`
+  （`org.kde.kimpanel.inputmethod`）**连发 `ShowPreedit` / `ShowLookupTable` / `ShowAux`** ⇒ IME 侧组字/候选都存在；
+- 但屏上只有 URL 栏里的裸字母，**没有 preedit 下划线、也没有候选条**；
+- 回看 2026-11-11「用户目视确认候选窗」的那张 `reports/artifacts/ime-candidates-20261111.png`：
+  **其实只有 preedit `ni hao`，没有候选窗**（当时的「确认」是被 DBus 里的 `SetLookupTable` 数据误导了）。
+
+## 机制
+
+fcitx5 同一时刻只有一个 UI addon 生效：
+
+- `classicui` 在 phoc 上建不出窗（`PITFALLS #619` 实测）；
+- ⇒ 现役 `CurrentUI=kimpanel`，于是 **preedit 与候选都必须由 kimpanel 面板（= focusd）自己画**；
+- focusd 只为「弹/收 OSK」解析了 `SetLookupTable`/`SetRelativeSpotRect`，**没有渲染任何 UI**。
+
+## 处置（未做，待决策）
+
+在 focusd 里补一个 GTK4 + layer-shell 的小浮条：preedit 文本 + 候选行（高亮 `UpdateLookupTableCursor`），
+点选候选走 kimpanel 的 `SelectCandidate`（`libkimpanel.so` 里确有 `SelectCandidate`/`LookupTablePageUp/Down`/`TriggerProperty`）。
+替代路线（成本更高）：让 fcitx5 用 `waylandim` 接管 zwp_input_method_v2（stevia 让位）+ wvkbd，
+候选仍需 UI addon（classicui 那条路依旧堵着）⇒ **不值得先动**。
+
+## 教训
+
+**「UI 是谁」这件事必须写死在判据里**：`CurrentUI=kimpanel` 意味着「没有面板就没有任何可见反馈」，
+而我们在验收时只看了 DBus 数据（`SetLookupTable` 有内容）就当成「候选窗可见」——
+**可见性必须以截图为准，不能以协议数据为准**。
