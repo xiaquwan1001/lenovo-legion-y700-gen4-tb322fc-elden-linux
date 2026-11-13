@@ -3,5 +3,8 @@
 #          apply-kernel-fragment 全部经它取树）。
 # 历史：`linux` 符号链接 = GEEKiDoS v7.2-elden 血统（@ba28ec16f0），自 2026-10-27
 #       起不再是默认——日常线载荷是 7.3-rc7，裸跑脚本曾静默编错树。
+# 2026-11-13：指针从 `build/m3v2-7.3rc7`（7.3-rc7 的 M3 验证树，HEAD e18a4a66）改回
+#       **`build/daily`** —— 在机内核 vk184→vk190 全部出自这棵树（7.3.1 + payload v2，
+#       原指针会让裸跑 build-kernel/iterate 编出另一棵树的核，属 PITFALLS #162 同类静默错树）。
 # 换树时只改这一行（并同步 DEVICE/README 内核树一节）；临时覆盖用 KDIR=。
-build/m3v2-7.3rc7
+build/daily

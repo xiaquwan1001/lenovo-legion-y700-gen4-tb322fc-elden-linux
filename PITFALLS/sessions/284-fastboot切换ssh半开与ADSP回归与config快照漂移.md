@@ -116,3 +116,70 @@ cdsp 节点已经用了这串 ⇒ 计数恒为 1。必须二选一：
 
 **config 快照 = 打包那一刻的 `.config`，出完镜像立刻存**（`SNAP=` 用绝对路径，并在 registry 行里写文件名）；
 **参考 config 必须跟随在机模块树的世代**，换世代时同步换参考，并在注释/known-issues 里记「何时换、为什么」。
+
+---
+
+# #641 `build/` 被 gitignore ⇒ 「在机内核的源侧状态」根本不在 git 里，树一丢就重做
+
+- 日期：2026-11-13
+- pi 会话 id：本项目会话（11-13 上午）
+- 主题：收尾把 11-13 的散改动收进 git 时发现的存量欠账
+
+## 症状 / 风险
+
+`build/` 整个目录在 `.gitignore`（内核树 13 GB 量级，必须如此），但 **`build/daily` 的脏状态**才是
+「vk190 能复现」的全部依据：HEAD 停在 `4da9a8b69fc8`（7.3.1 + payload v2），其上叠着
+**6 枚上游批 1 补丁 + ADSP DT 一行 + ramoops DT + CDSP stream-ID + 12 MB Gunyah 移植源码（untracked）**。
+这些**一个都不在项目仓里**；历史上 `build/m1-73` 就整棵丢过（M1 行至今标 MIGRATION-LOST）。
+
+## 处置（本轮已做）
+
+出一条全量 worktree patch 入库：
+`patches/local/20261113-daily-worktree/0001-daily-worktree-state-vk190.patch`（38 文件 / +8976 −15 / 274 KB，
+sha256 `7b6b5137c6f8…`）+ `README.md`（内容分组、回灌命令、`.config` 另存 `patches/config-daily-c2-suspend-20261113`）。
+
+**自检判据**（比「看着对」硬）：在当前脏树上 `git -C build/daily apply --check --reverse <patch>` 必须成功
+⇒ reverse 能打 = patch 与工作区逐字一致。生成时注意：untracked 源文件要先 `git add -N` 才会进 `git diff`，
+出完 patch 记得 `git reset` 把索引还原。
+
+## 规则
+
+**每出一个要持久化的内核号，收尾必须二选一**：① 增量全部转成 `patches/{upstream,local}/<topic>/` 的独立 mbox；
+② 出一条整个 worktree 的 diff 入库。只写「树里已 apply」= 不可复现。
+
+---
+
+# #642 `patches/current-tree` 指到了「验证树」而不是「在机内核那棵树」（静默编错树，2 个月无人发现）
+
+- 日期：2026-11-13
+- pi 会话 id：本项目会话（11-13 上午）
+- 主题：收尾核对「裸跑脚本会编哪棵树」时发现
+
+## 症状
+
+`patches/current-tree` 的有效行是 `build/m3v2-7.3rc7`（7.3-**rc7** 的 M3 验证树，HEAD `e18a4a66eb7`），
+而在机内核 vk184→vk190 **全部出自 `build/daily`**（7.3.**1** + payload v2，HEAD `4da9a8b69fc8`）。
+`scripts/env-build.sh` 的 `KDIR` 默认值就取这个指针 ⇒ 裸跑 `scripts/build-kernel.sh` / `iterate.sh` /
+`apply-kernel-fragment.sh` 会**默默编另一棵树**，产出的 Image 与在机模块树/DTB 不同源
+（历史上同类事故：`#162` 死内核、`#109` 两份实现漂移）。
+
+## 为什么会漂
+
+2026-11-05 交接计划明确「日常线树重建 = `build/daily`，`patches/current-tree` 改指它」，
+11-07 又在 `build/daily` 上做了 7.3.1 重基 —— 但 11-12 评估上游合并候选时把指针当成「M3 验证树」
+改成了 `m3v2-7.3rc7`，**没有同步 DEVICE/README 的内核树一节**，随后 vk188/vk189/vk190 都靠 `KDIR=` 显式指定，
+于是指针错误一直没人碰到。
+
+## 判据（以后现查，不靠记忆）
+
+- `patches/current-tree` 的最后一行必须等于 `${在机内核的源树}`；
+- 交叉验证：该树 HEAD 必须能对上 `versions/vk-registry.tsv` 里在机 vk 行的源提交
+  （vk190：HEAD `4da9a8b69fc8-dirty` ← payload v2 + 6 枚批 1 + ADSP DT）；
+- `bash scripts/assert-kernel-sane.sh`（裸跑、不传 KDIR）必须绿 —— 它现在会拿指针指向的树做闸门
+  （本轮实测：`✅ ABI 27 项一致 / ✅ UTS 对齐 / ✅ 非陈旧`）。
+
+## 处置（本轮已做）
+
+指针改回 `build/daily`（注释里写明 11-05 计划、11-07 重基、11-13 复位三段来由）。
+`check-doctor` 复跑 FAIL=0；`build/daily/.config` 与 `patches/config-daily-c2-suspend-20261113` 一致
+（ABI 参考已随世代换代，见 `#640`）。
