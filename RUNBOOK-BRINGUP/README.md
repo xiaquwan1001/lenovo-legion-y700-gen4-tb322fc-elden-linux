@@ -214,8 +214,9 @@ fastboot getvar partition-size:dtbo_b      # 期望 0x2000000 (32 MiB)
 
 ### 2.1 备份将被覆盖的 b 槽分区（**必做**）
 
-> ⚠️ **本机 ABL 不支持 `fastboot fetch`**（实测 `fastboot: error: Unable to get max-fetch-size. Device does not support fetch command.`，fastboot 37.0.1 复核 2026-10-17；另见 2026-10-06/10-08 两次证实、用户原话「带有 fetch 的一律是幻觉」）——**PITFALLS #290**。
-> 任何写「先 fetch 备份」的旧配方都是错的，会留下 0 字节文件而让人误以为已备份。
+> ⚠️ **本机 ABL 不支持 `fastboot fetch`** ⇒ 任何「先 fetch 备份」的旧配方都是错的（会留 0 字节文件而让人以为已备份）。
+> 证据正文（报错全文、fastboot 版本、三次复现与用户原话）= **`PITFALLS #290`**
+> → `PITFALLS/sessions/39-能力靠实测不靠help：fastboot无fetch与同类记错.md`。
 
 三条可行路径，按代价排序：
 

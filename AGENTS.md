@@ -31,26 +31,18 @@
 
 > API 限流 / 模型选择见全局 `~/.pi/agent/AGENTS.md`「API 网关与限流」（本文件不重复）。
 
-## 项目记忆（2026-11-11 整理）
+## 项目记忆（2026-11-13 收束：只留「违反即事故」的一行判据；细节在指针处）
 
-- 版本账耦合：`versions/vk-kernel-identity.tsv` 的 image 列只有 basename，check-doctor §5d 拿「现扫 `out/*.img` 生成的表」逐行比对 → **禁重跑 `scripts/vk-identity.py`**（镜像缺失会清空整表）；清镜像只能走 `scripts/out-archive.py`（默认 dry-run），不直接删文件。
-- b 槽不是裸写：`scripts/sign-boot-b.sh`（`bootslot-b/avb.key` + `tools/avbtool.py`）签成 96 MiB 后 flash，读回 sha 必须逐字一致。
-- RAM 起自编内核（`fastboot boot`）前必须先部署 `/lib/modules/<新UTS>`（1497 个 .ko ≈85M）→ 否则 lsmod 空、DP 控制器 defer、无 card0、看门狗 84.9s 重启；判据顺序 = lsmod 条数 → `dmesg | grep 'bound ae94000.dsi'` → 再看 L1 签名。
-- Q28 坏发不污染 Q24/相机结论：7.3 线累计 30 发存活、vk64 线 1 死/2 发 → 显示态是协变量不是判别量。诊断前先 `scripts/q28-watchdog.sh off`。
-- 内核构建必须走 `scripts/build-kernel.sh`（ARCH=arm64、CROSS_COMPILE=aarch64-linux-gnu-）：裸 make 会按宿主 x86 重写 .config；LOCALVERSION 叠加报 `exceeds 64 characters` = include/config 残留。
-- 双层压缩陷阱：boot 分区 kernel 载荷本身是 gzip，再包 Image.gz → ABL 解一层拿到 gzip 流、卡联想 logo；判据 kernel payload magic `1f8b 0800`（好）vs `1f8b 0808`（坏）。
-- kexec 取证：`--dtb` 对 kexec_file_load 是空操作；ttyGS0 在 kexec 时必断；ramoops@c2000000 缺 record-size/max-reason 才拿不到跨 kexec dump。
-- 设备侧脚本必须 POSIX sh：整文件 `scp` 到 /tmp 再 `sh /tmp/x.sh`，禁长 inline ssh 单引号/多行块；busybox `pgrep -x` 恒假阴性 → 用 `ps -eo comm | grep -cx NAME`。
-- `pkill -f`/`pgrep -f` 会自匹配打死自己的 shell → 模式写字符组（`[t]tyACM`）+ `grep -vw $$`，先 `pgrep -af` 只列不杀。
-- 不要在本机平板上编译（过热 → 断电重启到 BL）：内核用 aarch64-linux-gnu，musl 用户态用 `~/toolchains/aarch64-linux-musl-cross` + 设备 sysroot。
-- `.pi/trash/` 受 harness 保护不可 rm；删 `build/*` 前逐棵 `git bundle --all` 并同步改 `patches/current-tree`、让 check-doctor 动态发现 `build/*/.config`。
-- PITFALLS 编号只补不重排；PITFALLS 正文行首 `N. ` 会被当成条目定义 → 有序列表写 `- **…**`；条目标题必须含 `## #NNN`。
-- 内核仓 geekidos-linux 是浅克隆：`git fetch`/bundle 一律被拒 → 从本地 worktree `git fetch <wt> refs/heads/...`，或 `git worktree add build/<tag>-tree` 做文件级差分。
-- 顶层布局登记：每个根目录条目先进 `versions/layout.tsv` + INDEX §2 同源渲染，门 = `scripts/check-layout.sh`。
-- 「收尾」= 产物落盘 + SSOT 同步（INDEX/TASKS/DEVICE/PITFALLS）+ 设备安全态 + check-doctor FAIL=0/WARN=0 + 工作区 clean；文档不得要求 AI 写 summary。
-- 子代理网关 = **ustc-pool**（`ustc-pool/ustc`、`ustc-pool/ustc-worker`）；**禁** nexavlinks（`custom-nexavlinks-com`）与 `deepseek/*`（尤其 v4-pro，烧钱）——那两个 provider 只给用户交互式对话（2026-11-08 定，推翻下文「不走 ustc-pool」）。2026-10-15 起允许 agent 直接 flash。
-- EDL 工具链单根 `~/edl/`：`qdl`（刷写主力，无 printgpt）、edl-ng（GPT 取证 `printgpt -u 4`）、bkerler（peek 备胎，不作写路径）。
-- 细节**不放这里**：显示/相机/Waydroid/刷写/寄存器级判据见 `.pi/memory/notes-display.md`、`failures-device.md`、`failures-kernel.md`。
+- 版本账：**禁重跑** `scripts/vk-identity.py`（镜像缺失会清空整表）；清镜像只走 `scripts/out-archive.py`（默认 dry-run）。
+- 内核构建只走 `scripts/build-kernel.sh`（裸 `make` 按宿主 x86 重写 `.config`）；RAM 起新核前先部署整套 `/lib/modules/<UTS>`。
+- 设备侧脚本只写 **POSIX sh**、整文件 `scp` 到 /tmp 再 `sh`；busybox `pgrep -x` 恒假阴性（用 `ps -eo comm | grep -cx`）。
+- `pkill -f`/`pgrep -f` 会自匹配打死自己的 shell → 模式写字符组（`[t]tyACM`）+ `grep -vw $$`。
+- `PITFALLS` 编号只补不重排；正文行首 `N. ` 会被当成条目定义（有序列表写 `- **…**`）；条目标题必须含 `## #NNN`。
+- **不要在本机平板上编译**（过热 → 断电重启到 BL）：内核用 aarch64-linux-gnu，musl 用户态用 `~/toolchains/aarch64-linux-musl-cross`。
+- 「收尾」= 产物落盘 + SSOT 同步 + 设备安全态 + `check-doctor` **FAIL=0/WARN=0** + 工作区 clean（全文 `.pi/AGENT-OPS.md` §5）。
+- 子代理网关一律 ustc 池（`.pi/ORCHESTRATION.md` §4）；**禁** nexavlinks 与 `deepseek/*`（v4-pro 尤耗经费）。
+- **其余判据不在本文件**（b 槽签名、双层压缩、kexec 取证、`build/*` 删除前 bundle、geekidos-linux 浅克隆、顶层布局登记、EDL 工具链、Q28 坏发协变量、`.pi/trash` 保护）：
+  见 `.pi/memory/`（`MEMORY.md` / `failures-kernel.md` / `failures-device.md` / `notes-display.md`）与 `PITFALLS/`；检索用 `mem <关键词>`。
 
 ## 细节
 

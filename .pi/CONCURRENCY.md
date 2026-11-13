@@ -22,14 +22,13 @@ main ──base/<date>-<sha>──┬── lane/c3-id    (worktree) ── comm
 
 ## 2. 不可变式（违反即回退）
 
-1. **单写者**：任何时刻一个文件只有一个写者。领域层 4 份 + `PITFALLS` + `.githooks` + `versions/` = 父专属。
+1. **单写者**：任何时刻一个文件只有一个写者。领域层 4 份 + `PITFALLS` + `.githooks` + `versions/` = 父专属
+   （文档层归属与子 agent 可写面见 `.pi/AGENT-OPS.md` §4）。
 2. **文件归属不重叠**：lane 只写自己的路径（见 §5）；跨路径需求 → 回父 agent 协调，不得私自扩权。
 3. **不 rebase / 不 merge main 进 lane**：lane 只从 baseline 前进；需要上游新基线时由父决定是否重开 lane。
 4. **内核改动必走 worktree**：`geekidos-linux`（13 G）绝不在主 checkout 上多 agent 同时改。
 5. **设备是单一串行资源**：所有上机/刷写/复现任务用 `scripts/device-lock.sh` 串行，任何时刻只有一个 lane 持设备。
-6. **并发上限 16 个后台子 agent**（`agents.maxConcurrent: 16`，递归深度 `agents.maxDepth: 2`，见 `.pi/ORCHESTRATION.md`）。
-   树内配额：总管同时 ≤4 个一级角色，每个一级 ≤3 个二级（合计 ≤16）；`agents.maxPerExecution: 16`。
-   按 ustc 池限流/预算自留余量（key 轮转由 litellm 负责），见全局 `AGENTS.md`。
+6. **并发上限 / 递归深度 / 树内配额只读 `.pi/ORCHESTRATION.md` §3**（配置真值 = 两份 `fabric.json`）。
 
 ## 3. 提交信息（子代理可区分）
 

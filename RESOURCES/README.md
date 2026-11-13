@@ -234,7 +234,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 
 ## 3. 文件与资产台账（FILES）
 
-### 1. 版本控制边界（`.gitignore` 权威）
+### 3.1 版本控制边界（`.gitignore` 权威）
 
 - **纳管（track）**：文档、脚本、内核补丁与 config、AI 记忆/技能/任务、小体积证据。
 - **排除（ignore）**：上游 clone、构建产物、可再生成物、大二进制 dump、运行时状态、设备敏感数据。
@@ -273,7 +273,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 - ⚠️ **内核仓现役线目前无站外 git 备份**（镜像冻结、`origin` 是上游 GEEKiDoS 不是我们的）。现役可用备份 = `backup/kernel-git-repair-2026-10-23/elden-all-refs-66.bundle`（**实测 303,660,780 B ≈ 290 MB / 67 head-ref，含 vk34→vk127**；体积/号段一律现查 `ls -l backup/kernel-git-repair-*/*.bundle` + `git bundle list-heads`。原 2026-10-08 / `elden-all-refs-1820.bundle` **目录已不在盘**）。要恢复站外备份只有两条路：① 把 bundle 传云盘（技能 `ustc-cloud-drive`，零 git 约束）；② `git fetch --unshallow origin` 补全上游历史后新建项目推（要下 1–2 GB，与「避免重复下载大文件」相左，需拍板）。
 - ⚠️ gitignore 注释必须独占一行（行尾 `#` 会被当作模式一部分，静默失效）。
 
-### 2. 顶层台账（**入口已收口，不再维护本表**）
+### 3.2 顶层台账（**入口已收口，不再维护本表**）
 
 > **2026-11-03 收口**：本表原先与 `INDEX.md` §2「顶层布局」47 行表、`versions/layout.tsv`（机器真源，46 项）
 > **三份同构**，且体积列冻结在 2026-10-23 后已漂 ⇒ 现行只读三处，本文件不再维护：
@@ -284,7 +284,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 > = `reports/asset-tidy-20261103.md`、`reports/git-tree-consolidation-20261103.md`。**删除纪律见 §3**。
 
 
-### 3. 可清理标记（不动手，等确认）
+### 3.3 可清理标记（不动手，等确认）
 
 编号对应 `README.md` §2.5 的 P 级；状态：⬜ 未执行 / ◐ 部分 / ✅ 已执行 / ⛔ 无需执行。
 **2026-10-23 复核**：A0–A7 见 `../reports/assets-inventory-20261023.md` §5；**用户 2026-10-23 批准后已全部执行**（执行记录 + 每级 df + 保留理由 = `../archive/topics/清理清单-20261023.md`）。
@@ -330,7 +330,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 **纪律**：按 P0→P3 逐级、不并行；每级前后记 `df -h`；删前先导出独有内容；删后回改
 `README.md §2.5` 与本节状态、并记 `archive/topics/清理清单-<date>.md`。
 
-### 4. 日常 git 工作流
+### 3.4 日常 git 工作流
 
 ```bash
 cd ~/y700-elden
@@ -349,7 +349,7 @@ git log --oneline -10
   `git -C geekidos-linux add -A && git commit -m "elden: vkN ..."`，从干净树构建。
 - **不要** `git add -f` 大文件；确需留档走磁盘备份 / 云盘，不入 git。
 
-### 5. ⚠️MIGRATION-LOST 迁移缺口登记（2026-10-17，2026-10-23 对账）
+### 3.5 ⚠️MIGRATION-LOST 迁移缺口登记（2026-10-17，2026-10-23 对账）
 
 > **标记约定**：凡引用下列路径的位置一律带 `⚠️MIGRATION-LOST`；机器可查登记 = `versions/migration-gaps-2026-10-17.tsv`。
 > 背景：2026-10-17 换机（`xuqianhui1001`→`xuqianhui`）。**已进 git 的一切 100% 恢复**（443 提交、HEAD `1a4bd89`、origin USTC HTTPS + GitHub 镜像）；

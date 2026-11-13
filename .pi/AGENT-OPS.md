@@ -34,7 +34,11 @@
 - 默认只动 **b 槽 + LUN0 GPT**；`fastboot --set-active` 属写操作，按「先备份 GPT + 记当前 slot → 再执行」处理（不再绝对禁止）；恢复步骤见 `RUNBOOK-BRINGUP/README.md`。
 - 覆盖 a 槽前确认真机对照取证已归档（2026-10-11 主体已采，指针 `TASKS/README.md §5` Q5）；回收 Android 专属分区需 G1 全绿 + EDL 备份在手。
 - **零写盘优先** `fastboot boot`；严格区分 **`-ram` 纯 RAM 变体（无桌面/服务）** 与**持久变体（RAM 内核 + 磁盘根）**——功能/服务级测试必须用持久变体（`PITFALLS` #92/#93）。
-- **封装脚本**：主机侧构建/打包脚本可跑；**不要用封装脚本代跑 fastboot/EDL**——该机对批量/连续命令容错差，命令一律拆单条（经验见 `PITFALLS` #3）。
+- **封装脚本**：主机侧构建/打包脚本可跑；**刷写/EDL 命令一律拆单条**（该机对批量/连续命令容错差，见 `PITFALLS` #3）。
+  **进 fastboot 的唯一入口 = `scripts/to-fastboot.sh`**（2026-11-12 定，`reports/script-redundancy-audit-20261112.md`）：
+  它内部走 `eldroid-bootctl reboot bootloader` 且带 6 s sysrq-b 兜底；`reboot2 bootloader`、`cycle.sh --fastboot/--soft`、
+  `uefi-oneshot.sh` 侧入口均已实测到不了 ABL，**不再使用**。停手判据 = 发出后 25 s 内 `fastboot devices` 空 +
+  `lsusb` 无 `18d1/05c6/1d6b` + SSH 不通 ⇒ 停，不重试，请用户断电。
 
 ---
 
@@ -95,11 +99,8 @@
   或既有专题卡）。角色卡在 `.pi/agents/`，Fabric 按 `name` 直接读取，正文作子代理 systemPrompt。
 - 子代理 = `fabric_exec`（pi-fabric）里的 `agents.run`/`agents.spawn`，**无守护进程**；2026-10-12 起不再用 pi-subagents。
 - **worker 自报成功不可信**：编排者必须独立重跑测试与全量回归；二级产物由一级 `ls`/`read` 验证，一级回执由总管复核。
-- 并发上限 **16** 个后台子 agent（`agents.maxConcurrent: 16`）；**递归深度 2**（`agents.maxDepth: 2`，L2 为叶）。
-  树内配额：总管同时 ≤4 个一级、每个一级 ≤3 个二级（合计 ≤16）。按网关限流/预算自留余量，见全局 `AGENTS.md`。
+- **并发上限 / 递归深度 / 树内配额只读 `.pi/ORCHESTRATION.md` §3**（配置真值 = `~/.pi/agent/fabric.json` + `.pi/fabric.json`；改后 `/reload`）。
 - **派工单（2026-10-19 起）**：可以要求子代理回执摘要；但仍优先要求**产物落盘 + 最小回执字段（路径 + 关键数字 + 复现命令）**，避免只回一段话而无文件（旧「禁止 summary」条款已作废，理由见 §5）。
 - 子代理的**行为标准一律以本文件为准**；`.pi/agents/*.md` 只写角色专属补充，不另行定义自主/授权边界。
-- **本项目子代理一律用 ustc 池**（`custom.ustc-pool/*`，本机 litellm 网关轮转 key）：默认 `ustc`、执行 `ustc-glm`、
-  研究 `ustc-dsf`、审计/边界 `ustc-qwen`；项目级 `.pi/fabric.json` 已把全部别名指向该池，改后需 `/reload` 生效。
-  派工时**显式传 `provider/model`**（别名在会话内可能不解析），并注意 **`agents.run` 的 `tools` 是完整白名单**（不列就用不了）。
+- **子代理模型路由与工具白名单只读 `.pi/ORCHESTRATION.md` §4**（一律 ustc 池；派工时显式传 `provider/model`；`tools` 是完整白名单）。
 - **子代理自报“已写报告”必须由编排者 `ls`/`read` 验证**：2026-10-19 实例——lane-b 返回 `status=completed` 且自称已写 33 KB 报告，实际文件根本不存在，重派后才有。
