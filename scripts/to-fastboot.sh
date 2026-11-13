@@ -38,7 +38,11 @@ if [ -n "$FLASH" ]; then
 fi
 
 echo "[to-fastboot] device -> fastboot (PSCI vendor reset)..."
-$SSH 'sync; eldroid-bootctl reboot bootloader' || true
+# 必须给 ssh 套 timeout（2026-11-13 实受，PITFALLS #628）：设备做的是 PSCI SYSTEM_RESET2
+# 暖复位，TCP 不会收到 FIN ⇒ 已建立的 ssh 连接会半开，默认要等内核重传超时（~15 min）才返回，
+# 期间脚本停在「device -> fastboot」不动、后面的 wait_until 根本轮不到。
+# 口径与 kexec-bs-cycle.sh / sd-run-variant.sh 一致：超时就当成功（复位已经发出）。
+timeout -k 5 12 $SSH 'sync; eldroid-bootctl reboot bootloader' >/dev/null 2>&1 || true
 
 echo "[to-fastboot] waiting for fastboot..."
 # 2026-11-05：改走 lib-wait（先判后睡 + 退避；旧实现固定 45×2 s，且第一拍必睡满 2 s）。

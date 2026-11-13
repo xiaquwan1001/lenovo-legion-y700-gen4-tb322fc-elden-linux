@@ -10,7 +10,9 @@
 #   - 用 `SUSPEND=y` 的 config 编出的内核上机「背光亮一下即掉电」（vk128/vk129 形态）
 #
 # 判据：把「会改变 struct 布局」的 config 项与参考 config 逐一比对。
-# 参考 config 用 `--ref` 指定；默认取 patches/config-vk127-working-*（现役日常线 SSOT）。
+# 参考 config 用 `--ref` 指定；默认取**最新** patches/config-daily-*（现役日常线 SSOT，
+# 2026-11-13 起含 CONFIG_SUSPEND=y 的 config-daily-c2-suspend-*），
+# 只有完全没有 config-daily-* 时才退回历史件 patches/config-vk127-working-*。
 #
 # 用法：
 #   scripts/check-abi-config.sh                      # 比 patches/current-tree 指向的现役树 .config
@@ -74,9 +76,11 @@ if [ "${SKIP_ABI_ASSERT:-0}" = 1 ]; then
 fi
 
 if [ -z "$REF" ]; then
-	# 默认参考：现役日常线 SSOT config（取最新一份）
-	REF=$(ls -1t "$ROOT"/patches/config-vk127-working-* 2>/dev/null | head -1)
-	[ -n "$REF" ] || REF=$(ls -1t "$ROOT"/patches/config-daily-* 2>/dev/null | head -1)
+	# 默认参考：现役日常线 SSOT config（取最新一份）。
+	# 2026-11-13 口径反转：config-daily-* 才是现役线（c2 起带 CONFIG_SUSPEND=y）；
+	# config-vk127-working-* 是 2026-10-18 的历史快照，只在没有 daily 件时兜底。
+	REF=$(ls -1t "$ROOT"/patches/config-daily-* 2>/dev/null | head -1)
+	[ -n "$REF" ] || REF=$(ls -1t "$ROOT"/patches/config-vk127-working-* 2>/dev/null | head -1)
 fi
 
 [ -f "$CONF" ] || { echo "[abi] ❌ 目标 config 不存在：$CONF" >&2; exit 1; }

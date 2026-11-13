@@ -25,6 +25,28 @@
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
 ### 1.1 内核与软件基线
+- ★★**2026-11-13（当前状态，唯一权威）：在机内核 = `vk190`，持久落 `boot_b`，ABL 现用槽 = `b`**。
+  `uname -r` = `7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty`（vk190 与 vk189 刻意同 UTS，
+  为了一行 DT 修复不重编 85 MiB 模块树；身份看 `kernel_payload_sha256`：vk190 = `511e16a1…`、vk189 = `cab6a5c3…`），
+  `boot_b` = 自签 vk190（`bootslot-b/boot_b.img`，分区读回 sha `4f020cb3…`），
+  `/lib/modules/<该 UTS>` = 1499 个 `.ko`；`/sys/power/state` = `freeze mem`、`mem_sleep` 默认 `[s2idle]`（**待机功耗线已重启**）。
+  **重启实测**（2026-11-13）：`boot_id` 换新、`/proc/cmdline` **无** `elden_bootloader=esp` ⇒ 走 **`boot_b` 槽**，不是 UEFI/ESP 路径。
+  **vk190 判据**：`/dev/fastrpc-adsp` 在 + `qrtr-lookup` 有 `400 Snapdragon Sensor Core service` +
+  `iio-sensor-proxy` active + `HasAccelerometer/HasProximity = true`；s2idle `rtcwake -m mem -s 45` 2/2 `success`、`fail=0`；
+  WiFi `wlp1s0` UP、DSI `bound ae94000.dsi`、Waydroid/zramswap active。
+  - `boot_a` **未动** = UEFI 干净世代 `pc1`（分区 sha `1ca2b8e69167…`，件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；
+    要用 UEFI 路先显式 `fastboot set_active a`（该槽 `unbootable=yes` 的历史口径见下方 11-09/11-10 块）。
+  - **ESP（`/dev/sda18`）**：`\EFI\BOOT\BOOTAA64.EFI` = `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动）；
+    `\boot\boot.img` = **vk190**（`54e84588…`，`menu.cfg` 首项已改名 `Elden vk190 (ESP boot.img)`）、
+    `\boot\boot2.img` = vk185-adsp（`3fa8f7bb…`）；FAT `fsck.vfat -n` 干净、avail ≈13 MiB（**ESP 已 98% 满，换文件必须先删后拷**）。
+    注：现用槽是 b ⇒ 这条 ESP 链只在 `set_active a` 后才会被走，先当**备用/对照**路径。
+  - **回退**：`fastboot flash boot_b bootslot-b/boot_b-vk185.img`（或 `backup/HA2EXB0E-16+512/boot_b-before-vk185-20261107.img`）+ `fastboot oem ... ` → 回 vk185（无 s2idle）；
+    ESP 旧件 `backup/HA2EXB0E-16+512/esp-boot.img-before-vk190-20261113.img`（= vk184 `27bd6ddd…`）。
+  - **传感器链路前置**：ADSP fastrpc 必须带 `qcom,non-secure-domain`（vk190 起日常线才有；判据 = `/proc/device-tree/soc@0/remoteproc@6800000/glink-edge/fastrpc/qcom,non-secure-domain` 存在，**别用 `strings dtb` 计数**，见 `PITFALLS #639`）。
+  - **构建门禁口径（2026-11-13 变更）**：ABI 参考 = `patches/config-daily-c2-suspend-20261113`（含 `CONFIG_SUSPEND=y`），
+    `scripts/check-abi-config.sh` 默认优先 `config-daily-*`；`build/m3v2-7.3rc7` 已同步开 SUSPEND ⇒ 打包不再需要 `SKIP_KERNEL_ASSERT=1`。
+
+- **2026-11-10 20:15（历史快照，已被上条覆盖；当时 `active=a` 走 UEFI/ESP 路径）**：**落盘 UEFI = 干净世代 `pc1`**（`boot_a`，分区 sha `1ca2b8e69167…`，
 - ★★**2026-11-10 20:15（当前状态，唯一权威）**：**落盘 UEFI = 干净世代 `pc1`**（`boot_a`，分区 sha `1ca2b8e69167…`，
   件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；`active=a`、`retry=7 succ=0 unbootable=0`；
   **flashed 形态实测总耗时 37.0 s**（`fastboot reboot` → SSH；对照 p69 = **129.2 s**，差 92 s 全是 R70 的 25 s×3 停留 + 慢速屏显），

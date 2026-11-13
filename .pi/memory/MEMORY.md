@@ -230,3 +230,11 @@ fixture/分诊档命名习惯：项目内跨会话的「本地会话+进度+产�
 ---
 
 Q26（WiFi 到可用 ~2 min）Step A 已证伪（2026-10-06 实机）：`CONFIG_ATH12K=m` 单次干净探测（绕开内建驱动启动首探 8.16s MHI POWER_ON 失败的 ath12k-retry 重试序列）后 MHI 首次即成功（`mhi0: Power on setup success`，无 -110），但连 P40 Pro 后 bmiss 仍每 ~16s（lost 4→15/126s）、`beacon rx` 恒 ≈1、130s 无 IPv4 ⇒ **驱动探测时序不是变量**。反证：同机连 vivo X200 Ultra 热点立刻通（10.191.87.31/24 + IPv6 秒到手、2.4GHz、-17dBm、beacon rx 154）⇒ Step C「AP 组合相关」得到活证据。
+
+---
+
+在机内核世代（2026-11-13 起）= **vk190**：`boot_b` 自签件 + ABL 现用槽 = `b`（重启实测 cmdline 无 `elden_bootloader=esp`），UEFI/ESP 链降为备用（`set_active a` 才走）。vk190 与 vk189 **刻意同 UTS** `-debug-vk189-suspend-…`（一行 DT 修复不重编 85 MiB 模块树），身份看 `kernel_payload_sha256`。ABI 门参考已换代 = `patches/config-daily-c2-suspend-20261113`（`check-abi-config.sh` 默认优先 `config-daily-*`）；打包不再需要 `SKIP_KERNEL_ASSERT=1`。ESP 已 98% 满 ⇒ 换文件必须先删后拷。详见 `DEVICE/README.md` §1.1、`PITFALLS #638–#640`。
+
+---
+
+ADSP 传感器链路的前置条件是 DT 里 ADSP fastrpc 节点带 `qcom,non-secure-domain`（日常线 2026-11-13 才补上，`patches/upstream/sm8750-adsp-nonsecure-20261107/`）。判据必须 `dtc` 解节点或设备侧 `ls /proc/device-tree/soc@0/remoteproc@6800000/glink-edge/fastrpc/`，**`strings <dtb> | grep -c` 恒为 1 会误判**（属性名在 strings 表按名去重）。
