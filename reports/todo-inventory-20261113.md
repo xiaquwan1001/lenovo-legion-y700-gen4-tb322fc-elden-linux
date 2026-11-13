@@ -21,7 +21,7 @@
 
 | # | 一句话 | 阻塞点 | 证据指针 |
 |---|---|---|---|
-| **A1** | 回 **mdss v3 2/3** 的 Dmitry 两问（INT2 是否中断控制器 / 不 reset 的副作用与测法）并重发 **v4** | 发信需逐系列批准；措辞与副作用证据尚未取（→ B3） | `reports/mail-triage-20261112.md` §5 W2；`upstream-watch-20261113.md` §A（14931324）；`TASKS/README.md`:1320 |
+| **A1** | 回 **mdss v3 2/3** 的 Dmitry 两问（INT2 是否中断控制器 / 不 reset 的副作用与测法）并重发 **v4** | **✅ 已推进（2026-11-14）：v4 已发（11-13，4×250，patchwork 14978766/67）；收到 Konrad R-b + sashiko Medium 质疑（0xa000 是未 attach 的独立域）；质疑成立 ⇒ 已回信（承认 + 给出测量边界 + 无 datasheet 直证）并发 v5（3/3 只改 message、diff 逐字节相同，4×250）。等维护者回信；若被要求则发 v6 删 3/3** | `reports/mail-triage-20261112.md` §5 W2；`upstream-watch-20261113.md` §A（14931324）；`TASKS/README.md`:1320 |
 | **A2** | **dpu gamma LUT 出 v2**：补 `Fixes: 39a750ff5fc9`，正文与已给的 RV 原样保留 | 新版本 = 发信，需批准（备料 → B5） | `mail-triage-20261112.md` §3.1 T3 + §5 W3 |
 | **A3** | **dsi/phy v1 → 决「出 v2」还是「撤回并说明上游已覆盖」** | Dmitry 只要注释搬家；但 `upstream-74-replay-20261113.md` §3 证明 **7.4 上游 `dsi_pll_enable_pll_bias()` 已等价写 `0xc0`** ⇒ 在 7.4 上语义重复 ⇒ 先裁决基线（见 X10），再决定动作 | `mail-triage-20261112.md` §3.2 Q3 + §5 W4；`upstream-status-20261113.md` §2 dsi/phy 行；`upstream-74-replay-20261113.md` §3 |
 | **A4** | **dwc3 v9**（Rob 结构性要求：`port@0` 双 endpoint / 删 `port@2` / `port-select-gpios`→gpio mux） | **当前不具备投递条件**：driver+DTS 未改；`mux_control_select` 持锁与 role-switch 回调（可能中断上下文）兼容性未评估；工作量最大、未排期 | `mail-triage-20261112.md` §5 W5 + §6.1-3；`upstream-status-20261113.md` §2 dwc3 行；`patches/upstream/dwc3-v9-draft-20261111/` |
