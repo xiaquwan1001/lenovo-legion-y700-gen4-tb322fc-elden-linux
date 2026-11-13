@@ -1,4 +1,6 @@
 # vk-registry.tsv — global monotonic version ledger (SSOT for vkN)
+# 历史 config 快照（vk20–vk189 线中已被取代的 15 件）已归档到 patches/config-history-20261113.tar.zst，
+# 逐件 sha256 与对应 vk 见 patches/config-history-20261113/README.md；本表下文对已归档件的文件名引用由此可复原。
 # vk	lane	date	note
 vk50	seed	2026-10-04	seed: 既有最高版本（out/boot-elden-vk50.img）；后继从 vk51 起
 vk51	bootchain	2026-10-04	G1-29 引导链机制判定+路线（间接引导/UEFI）
