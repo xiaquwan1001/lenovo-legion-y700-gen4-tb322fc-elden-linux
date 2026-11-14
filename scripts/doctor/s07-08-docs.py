@@ -169,14 +169,20 @@ for f in glob.glob(os.path.join(root, 'PITFALLS', 'sessions', '*.md')):
             pdef_all.setdefault(m.group(1), set()).add(base)
 idxnums = set()
 idxrows_reports = set()   # 指向 ../reports/ 的索引行里的 #NNN（正文在专题报告，不在 sessions）
+idx_archived = set()      # 行末带 `<!-- … archived=YYYY-MM-DD … -->` 的已归档索引条目（2026-11-14 起）
 for ln in open(os.path.join(root, 'PITFALLS', 'README.md'), encoding='utf-8', errors='replace'):
     # 2026-11-12 去重审计 C-2：悬空门不再要求行内含 `sessions/`——指向 ../reports/ 的
     # 索引行里的 #NNN 同样要有正文定义（2026-11-12 基线：36 行指向 reports/）。
     if ln.startswith('|') and '](' in ln:
-        nums = set(re.findall(r'#(\d{1,3})\b', re.sub(r'`[^`]*`', 'X', ln)))
+        # 2026-11-14：`#628–#635` 这类**范围引用**不是一条索引（历史上 #282–#289 让位改号后，
+        # #289 被当成一条「正文只在报告」的幽灵条目，WARN 恒挂）。先剔范围再取号。
+        _ln = re.sub(r'#\d{1,3}\s*[–—\-]\s*#?\d{1,3}', 'X', ln)
+        nums = set(re.findall(r'#(\d{1,3})\b', re.sub(r'`[^`]*`', 'X', _ln)))
         idxnums |= nums
         if '../reports/' in ln:
             idxrows_reports |= nums
+        if re.search(r'archived=20\d\d-\d\d-\d\d', ln):
+            idx_archived |= nums
 # 2026-11-12 执行收尾：正文只在专题报告（reports/*.md）的条目，不算悬空——但必须显式降为 WARN，
 # 不能静默放过（那正是本次审计 §C-1 抓的「索引变成正文替代品」）。判据 = 该 #NNN 在任一
 # reports/*.md 里以 `#NNN` 形式出现。
@@ -193,10 +199,16 @@ def _defined_in_reports(num):
 
 DANGLING = []
 REPORTS_ONLY = []
+ARCHIVED = []
 for n in sorted(idxnums, key=int):
     if n in pdef_all:
         continue
     where = _defined_in_reports(n)
+    if where and n in idx_archived:
+        # 2026-11-14 用户授权归档：条目行带 `archived=YYYY-MM-DD` 的，正文确在专题报告里，
+        # 显式登记为**已归档豁免**（C 类存量），单列一行计数，不静默、不混进普通 WARN。
+        ARCHIVED.append(n)
+        continue
     if where:
         REPORTS_ONLY.append('PITFALLS 索引 #%s 正文在专题报告 %s（无 sessions 条目；补正文或标 RETIRED）' % (n, where))
     else:
@@ -213,6 +225,8 @@ emit('TAIL', tail)
 emit('ORPHAN', orphan)
 emit('DUPNUM', dupnum)
 emit('DANGLING', DANGLING)
+if ARCHIVED:
+    emit('ARCHIVED', [' #' + n for n in ARCHIVED])
 emit('REPORTS_ONLY', REPORTS_ONLY)
 
 # ---- 8b. 写死在文档里的「N 节 / N 条」计数必须与磁盘实际条数一致 ----
@@ -305,6 +319,10 @@ MSG = {
     'DUPNUM': ('bad', '文件名/条目编号无撞车', '编号撞车（引用歧义，必须重编）'),
     'DANGLING': ('bad', 'PITFALLS 索引 #NNN 均有正文定义',
                  'PITFALLS 索引悬空（正文缺 #NNN 锚点，或正文标题用文件序号式）'),
+    # 2026-11-14：`archived=YYYY-MM-DD` 的条目 = 已归档豁免（正文在专题报告，2026-11-14 用户授权）。
+    # 只报计数与号段，不再每轮刷 28 条 WARN；新增条目仍必须补正文或先标 archived。
+    'ARCHIVED': ('ok', '已归档豁免：无（正文只在专题报告的旧条目都已显式标注 `archived=`）',
+                 '已归档豁免（正文在专题报告，行内 `archived=` 已标注）：%s'),
     # 2026-11-12：正文只在 reports/ 专题报告里的条目单列 WARN——不许静默放过（那正是
     # 审计 §C-1 抓的「索引变成正文替代品」），也不升级为 FAIL（事实已在报告里落盘）。
     'REPORTS_ONLY': ('warn', 'PITFALLS 索引条目均有 sessions 正文',
@@ -321,7 +339,7 @@ MSG = {
 GROUPS = [
     ('== 7. 入口文档完整性（围栏 / 截断 / 机器指针）==', ['FENCE', 'LEAK', 'TAIL']),
     ('== 8. 索引↔磁盘对账（编号撞车=硬错 / 索引覆盖=仅声明角度）==',
-     ['ORPHAN', 'DUPNUM', 'DANGLING', 'REPORTS_ONLY', 'STALECOUNT', 'IDXROW', 'TBL', 'ORPHANR']),
+     ['ORPHAN', 'DUPNUM', 'DANGLING', 'ARCHIVED', 'REPORTS_ONLY', 'STALECOUNT', 'IDXROW', 'TBL', 'ORPHANR']),
 ]
 _res = dict(_RESULTS)
 if _TSV:
@@ -335,7 +353,11 @@ else:
             kind, okmsg, badmsg = MSG[tag]
             items = _res.get(tag) or []
             if items:
-                print('  [%s] %s: %s' % ('FAIL' if kind == 'bad' else 'warn', badmsg,
-                                         '; '.join(items)))
+                if kind == 'ok':
+                    # 已归档豁免：是**已声明的状态**，不是待办 ⇒ 用 [ok] 行 + 计数，不刷 warn
+                    print('  [ok]   %s' % (badmsg % ' '.join(items)))
+                else:
+                    print('  [%s] %s: %s' % ('FAIL' if kind == 'bad' else 'warn', badmsg,
+                                             '; '.join(items)))
             else:
                 print('  [ok]   %s' % okmsg)
