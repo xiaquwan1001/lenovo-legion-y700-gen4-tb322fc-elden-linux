@@ -29,6 +29,7 @@
 #   12-modular.sh    驱动模块化门禁                                 [全量]  ← fast 档不跑
 #   13-assets.sh     文档引用的资产路径存在性                       [全量+fast]
 #   14-layout.sh     顶层布局注册表                                 [全量+fast]
+#   15-timeline.sh   INDEX §0「现在一页」核对日期 vs 最新会话证据   [全量+fast]
 #   s16-tasks-counts.py TASKS §0 手写数字 ↔ 计数脚本对账            [全量+fast]
 #
 # 验收用环境变量（正常使用无需设置）：
@@ -46,11 +47,12 @@ SEC_TIMEOUT="${ELF_SEC_TIMEOUT:-600}"
 export ROOT HELPERS
 
 # 子门清单：按输出顺序排列（数字 = 与旧版 §N 对齐）。
-ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh s16-tasks-counts.py"
+ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py"
 # fast 档 = 旧版 --staged-fast 的语义（§7/§8/§9 + 其后的廉价段）**减去 §12**：
 # 文档/索引提交与内核 .config 无关，那 3.2 s 是纯浪费；手改 .config 的拦截交给收尾轮全量 doctor。
 # 2026-11-07 加 s16（PITFALLS #548）：TASKS §0 手写数字漂移门，只读两个文件 ~0.04 s，纳入 fast。
-FAST="s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 13-assets.sh 14-layout.sh s16-tasks-counts.py"
+# 2026-11-14 加 15（M1）：INDEX §0 核对日期落后于最新会话证据 ⇒ WARN（时间序裁决的门，见 INDEX §2）。
+FAST="s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py"
 
 PROFILE=full
 ONLY=""

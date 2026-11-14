@@ -6,6 +6,46 @@
 
 ---
 
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-14）
+
+> 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
+> 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
+> 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
+
+**做到哪**
+
+1. **G1 = 36/37**（2026-11-14 现查；`❌` 仅 `G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线）。在机 = **RAM 启动的 `vk191`**（= `vk190` 的 kernel/dtb 逐字节原样 + 新 ramdisk），`boot_b` = vk190（**重启即回 vk190**）；判据全绿 = DSI/WiFi/`/dev/fastrpc-adsp`/传感器/Waydroid/zram + **s2idle 3/3**。→ `DEVICE/README.md` §1.1 首条、`reports/device-session-20261113-vk191.md`。
+2. **G2 = 9/13**（Waydroid 主链 + 传感器/音频/GMS/马达/输入法/相机 STREAMING 都通）；**C3 Play Integrity 已书面收口三档**（无 TEE、keymaster 软实现 ⇒ STRONG 结构性不可能），剩唯一动作 = 一次 SPIC 回包。→ `reports/c3-pi-tiers-closeout-20261110.md`。
+3. **G3 = Steam 登录界面 ✅**（2026-10-28 设备实测 3/3，截图判据 10-29 闭环），游戏端到端未做。→ `reports/g3-steam-20261028.md`。
+4. **拓展：UEFI 两种形态都通**（2026-11-10 深夜定案：flashed 失败真根因 = 原厂 `dtbo_a` 的 Android DTBO 被 ABL 合进我们的 DTB，清 `dtbo_a` 即通）；Gunyah = 有条件重启、非主线。→ `reports/uefi-dtbo-a-rootcause-20261110.md`、`TASKS` §5「2026-11-10（深夜…）」块。
+5. **上游**（2026-11-14）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**；dwc3 v9 / dsi-phy v2 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**。→ `reports/upstream-status-20261113.md`、`TASKS` §7。
+
+**卡什么**
+
+- **camss 唯一硬分歧 = CSIPHY 2.3.0 vs 2.4.0**：上游 7.4-rc3 已把表迁到 `phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c` 的 `lane_regs_x1e80100[]`（= vendor **v2.1.2**），本机 vendor `camera.ko` 是 **2.4.0**（地址 103/103 相同、13 个 data 字节不同，逐版本扫证明是版本特征）⇒ 要 2.4.0 delta，形状须改成 phy 驱动里新增 `lane_regs_sm8750[]`。**没拿到对照表就不发信提问**。→ `reports/camss-csiphy-v6-vs-240-20261113.md`、`PITFALLS #648`。
+- **fastrpc**：等上游 `accel/qda` v4 与 `nsessions` 废弃定调（不等我们动作）。→ `reports/fastrpc-nonsecure-evidence-20261113.md`。
+- **T14/T17 用户态固化**：S3+S4+S6 离线复核已过，**唯一缺口 = `hapticd` 二进制不可重建**（自家 ELF，chroot 步骤已闭合）。→ `reports/t14-s3s4s6-offline-verify-20261114.md`。
+- **T9 待机**：改成间接采样（设备 timer 30 min 追加 `/var/lib/elden/suspend-resource.tsv`），**要 1–2 天数据才能判**，取数是人的动作。→ `TASKS` §4 T9、`PITFALLS #651`。
+- **已结项、勿重推**：Q28/Q32 =「已规避」（运营线 8/8 无坏发）、Q24 = 根因指名（7.2 缺 `skip retention by default`）、Gunyah = 非主线、`#106` = 历史记录（2026-10 之后无复现样本，未取证）。
+
+**下一步（按顺序）**
+
+1. **camss CSIPHY 对账**（主机侧，无需设备）：拉 7.4-rc3+ 的 phy 表与 vendor 2.4.0 逐字节比 → 决定是否给上游 2.4.0 delta。
+2. **上游待批准批次**：dwc3 v9 四枚（`git apply --check` 4/4 OK）、dsi-phy v2 九行、gamma v2、haptics v2、board DTS 单提交 —— 逐系列等用户放行。
+3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
+4. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
+
+**怎么核实本节没漂**（开工前先跑，见 `.pi/AGENT-OPS.md` §0）
+
+```sh
+scripts/recent-sessions.sh 3          # 最近 3 轮会话的收尾结论（正文在 .pi/sessions/*.jsonl）
+scripts/check-progress-counts.sh --tsv   # G1/G2 完成度现查
+sed -n '/### 1.1/,/### 1.2/p' DEVICE/README.md | head -20   # 在机内核/槽位/判据
+scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否落后于最新会话证据
+```
+
+---
+
 ## 1. 使命与范围（8 行）
 
 1. **机型唯一**：只研究 **TB322FC / elden / SM8750(P)**；不做别的机型移植。研究面 = 让本机在主线 Linux 上功能完整。
@@ -46,6 +86,17 @@
 8. **收尾判据**（`.pi/AGENT-OPS.md` §5）：产物落盘 + SSOT 同步 + `check-doctor.sh` **FAIL=0** + `git commit` + 工作区干净。
 
 
+### ★ 时间序裁决（同一事实出现多个说法时的**唯一**规则）
+
+> 目的：文档里**不准并列两说**。历史上多次出现「旧结论 + 勘误 + 再勘误」同时躺在正文里，
+> 新会话无法判断哪个算数 —— 实测代价 = 每轮开工先花几十分钟考古。
+
+1. **同一事实只允许一个「当前口径」**，写在**离它职责最近的那一份 SSOT** 里（状态 → 本文件 §0 / `TASKS`；设备事实 → `DEVICE`；经验 → `PITFALLS`；行为 → `.pi/AGENT-OPS.md`）。
+2. **胜负判定 = 证据强度优先，其次日期**：会话内**实测证据（命令 + 原始输出）** > 带日期的报告（`reports/*.md`）> 文档叙述；同类证据取**日期更新**者。无日期、无证据的叙述直接输。
+3. **输了的那条只有两种待遇**：① 与现状无沿革价值 → **删**（commit 信息写明「删除旧口径 + 依据」）；② 有沿革价值（曾被当真、影响过判断）→ 就地改成一行 `~~旧说法~~ **作废（YYYY-MM-DD，真因 + 指针）**`，**不得**在别处再复述一遍旧的。
+4. **改口径必须同轮改完所有引用点**（grep 旧结论的关键词），并在提交信息里写「口径更正（YYYY-MM-DD）：旧 X → 新 Y（证据）」。发现新的实测证据与本文件 §0 冲突时，**先改本文件 §0 的结论与核对日期**，再改下游文档。
+5. **本节自身有门**：`scripts/check-doctor.sh` §15 比「§0 核对日期」与最新会话证据日期，落后就 WARN（不阻塞提交，但不允许装作没看见）。
+
 ### 入口（唯一，仍是文件）
 
 | 文件 | 装什么 |
@@ -69,9 +120,9 @@
 
 ### 1 分钟版（新人 / 第一次会话）
 
-1. **本文件 §1**（使命 8 行）→ 知道「在做什么、不做什么」。
-2. **`TASKS/README.md` §0**（总览表）→ 知道「做到哪、什么卡着」。
-3. **`PITFALLS/README.md` §0**（零号纪律 4 条）→ 知道「动手前必须先做什么」。
+1. **本文件 §0**（现在一页）→ 知道「做到哪、卡什么、下一步」。
+2. **`.pi/AGENT-OPS.md` §0**（开工三件事：核实最近 2–3 轮会话 / 查既有结论 / 认时间序）→ 知道「开工前必须先做什么」。
+3. **`PITFALLS/README.md` §0**（零号纪律 4 条）→ 知道「动手前必须先掌握哪些事实」。
 
 需要做事时再按下方文件夹按需展开；完整规范见 `.pi/AGENT-OPS.md`。
 
@@ -165,7 +216,8 @@
 - 会话回忆：pi 原生会话选择器（`/resume`）/ `scripts/sess.sh`；**逐会话快照** `SESSIONS/`、**逐提交史** `HISTORY/`（`scripts/gen-sessions.py` / `gen-history.sh` 再生）。
 - 机器账自检：`scripts/check-doctor.sh`（退场入口 / vk 版本账 §5+§5d / manifest §5e / **§5f ABI 敏感项一致性（`.config`↔模块树）** / 静态卫生 /
   **§7 入口文档完整性（围栏·截断·证据指针泄漏）** / **§8 索引↔磁盘对账（编号撞车·索引行超长）** /
-  **§9 SESSIONS 快照** / **§10 HISTORY 对账** / **§11 提交钩子生效性** / **§14 顶层布局注册表**）。
+  **§9 SESSIONS 快照** / **§10 HISTORY 对账** / **§11 提交钩子生效性** / **§14 顶层布局注册表** /
+  **§15 时间序健康（§0 核对日期 vs 最新会话证据；见 §2「时间序裁决」）**）。
   顶层布局真源 = **`versions/layout.tsv`**（项数现查 `scripts/check-layout.sh --list | wc -l`；4 区：入口/文档 · 源码/补丁 · 证据/备份 · 工作区；人读面 = 本节「顶层布局」表，门 = `scripts/check-layout.sh`）。
   **入库前门已接线**（`core.hooksPath=.githooks`）：`pre-commit` 跑 `--staged-fast`（§7/§8/§9/§10/§11/§13/§14，实测亚秒级（量级见 `reports/script-audit-20261105.md`）；§12 内核 config 门不在这一档）。
   全量 `scripts/check-doctor.sh` 现为**并发子门**（`scripts/doctor/`），稳态 **~1.4 s**（旧版单体串行 12.5 s）；口径与实测见 `reports/script-audit-20261105.md`。
@@ -176,21 +228,29 @@
 
 ---
 
-## 3. 现状速览（指针，不复述状态）
+## 3. 去哪读（**细节指针**；本节不写状态、不写结论）
 
-> **SSOT**：任务状态、完成度、样本数一律以 `TASKS/README.md` §0/§1/§5 为准；单元与镜像形态以 `DEVICE/README.md` §1.1/§2.2 为准。
-> **本节只回答「现在还没解决什么」，任何数字与当前口径都不在此维护**（见 §2 公开层豁免）。
+> 本文件 §0 = 唯一状态入口；数字 = `TASKS/README.md` §0；设备/镜像 = `DEVICE/README.md` §1.1/§2.2。
+> 本节只回答「某个细节去哪找」，不重复任何结论。
 
-- **⚠️MIGRATION-LOST（2026-10-17 换机）**：登记与重建路径只读 `RESOURCES/README.md` §3.5 与 `versions/migration-gaps-2026-10-17.tsv`（当时的重建账与 P0–P4 顺序是快照，已下沉 `TASKS/sessions/2026-11-02-INDEX现状速览下沉.md`）。
-- **去哪读（本节唯一职能）**：未解/开放集 = `TASKS/README.md` §5（Q 表，含 Q28/Q24/Q32 的样本数与复启条件，另见 `PITFALLS #106`）；待办 = `TASKS/README.md` §4；进度与里程碑 = `PROGRESS.md` §1/§2；上游化与投递 = `TASKS/README.md` §7 的 M 行 + 当前一页 `reports/upstream-status-20261113.md`（取代 `-20261105`/`-20261029`；投递解冻由用户按批放行，agent 不等回复）；设备在机态与单元台账 = `DEVICE/README.md` §1.1/§2.2；换机缺口 = `RESOURCES/README.md` §3.5；内核分界线 = `TASKS/README.md` §4；文档去重执行账 = `reports/docs-slim-20261113.md`（依据 `reports/doc-dedup-audit-20261112.md`）。
-- **kexec**：不在「不做」之列，定位 = 不需显示/网络的调试快环；**当前口径只读** `TASKS/README.md` §4「当前口径 → 迭代通道」条与 §7 的 M9 / M9-收口 行（全过程在 `TASKS/sessions/2026-11-03-TASKS-§4-待办沿革.md`）。
-- **宿主 rootfs（Alpine → Debian/Mobian、systemd）**：用户 2026-10-26 定的方向，**不是「勿重推」项**；路径与成本只读 `reports/mobian-migration-plan-20261021.md`（S0–S7，完成项见其 §4 状态标记）与 `TASKS/README.md` T14/T17。
-- **两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy`（trixie 3.7 无 SSC 后端）+ `libssc2`，否则传感器栈直接死。
-- **已定不做 / 搁置 / 取消**（勿重推）：G1-26/27/28（已收口）、G1-10 NFC、G1-30 slim initramfs；
-  **G1-29 UEFI 不在「勿重推」之列** —— 路线 A 首轮（2026-10-05）失败后曾搁置，**2026-11-01 用户放行恢复推进**；
-  **当前口径（含 flashed 形态真根因与收口状态）只读 `TASKS/README.md` §5「2026-11-10（深夜，`dtbo_a` 真根因）」块 + `reports/uefi-dtbo-a-rootcause-20261110.md`**；本节不复述数字与判读（见本节引言）。
-- **单元**：U1 / U2 台账见 `DEVICE/README.md` §1；解锁议题已定稿关闭（`RUNBOOK` §0.5 + `archive/topics/复盘-2026-10-03-BL解锁.md`），不要重新论证。
+| 要查什么 | 去哪 |
+|---|---|
+| 任务台账 / 未解（Q 表）/ 待办 / 上游化（M 系列） | `TASKS/README.md` §1–§2 / §5 / §4 / §7 |
+| 上游投递现状（当前一页） | `reports/upstream-status-20261113.md` |
+| 在机内核 / 槽位 / 单元台账 / 存储策略 | `DEVICE/README.md` §1.1 / §2.2 / §3 |
+| 动手前的坑 | `PITFALLS/README.md` §0 + 索引 |
+| 从原厂到 b 槽直启的操作步骤 | `RUNBOOK-BRINGUP/README.md`（Phase −1…9） |
+| 换机缺口 / 资产与 git 边界 | `RESOURCES/README.md` §3.5 / §3 |
+| 文档去重执行账 / 审计依据 | `reports/docs-slim-20261113.md`、`reports/doc-dedup-audit-20261112.md` |
 
+**已定不做 / 搁置（勿重推）**：`G1-26/27/28`、`G1-10`（无 NFC 硬件）、`G1-30`（slim initramfs）；
+`kexec` 定位 = 不需显示/网络的调试快环（`TASKS` §4「迭代通道」条）；BL 解锁议题已定稿关闭（`RUNBOOK` §0.5）。
+**两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy` + `libssc2`，否则传感器栈直接死。
+
+
+**保留但需知道的旧账**：换机缺口（`RESOURCES` §3.5 + `versions/migration-gaps-2026-10-17.tsv`）、
+宿主 rootfs 方向（Alpine → Debian/Mobian，2026-10-26 用户定，`reports/mobian-migration-plan-20261021.md` + `TASKS` T14/T17）、
+单元台账（`DEVICE` §1）。
 ---
 
 ## 4. 快速入口命令

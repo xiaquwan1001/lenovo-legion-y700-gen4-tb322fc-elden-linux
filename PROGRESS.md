@@ -1,7 +1,8 @@
 # 进度总结 / Progress Log
 
-> 面向公开读者的**诚实进度与问题记录**。内部权威台账是 [`TASKS/README.md`](TASKS/README.md) 与 [`INDEX.md`](INDEX.md)；
-> 本文件按时间线给出「做了啥、验证到哪、错在哪」。全部数字都有仓库内证据文件。
+> 面向公开读者的**诚实时间线**（做了啥、验证到哪、错在哪）。**当前状态只在 [`INDEX.md`](INDEX.md) §0**，
+> 任务台账/数字在 [`TASKS/README.md`](TASKS/README.md)；本文件凡与它冲突之处，**以它为准**（裁决规则见 `INDEX.md` §2）。
+> 时间线里保留的「被推翻的结论」是**历史记录**（明确标了推翻日期与依据），不是待办，也不得被引用为当前口径。
 
 ---
 
@@ -117,13 +118,11 @@
 | 2026-11-12 | **仓库整理：logfs 取证件压缩归档（零证据损失）** | 23 个试验目录里的 **32 件 8 MiB logfs 快照**（256.0 MiB，绝大多数是 0 填充）压缩为各目录 `payloads.tar.zst`（合计 **0.61 MiB**）+ 逐件 `SHA256SUMS.logfs`（`dd iflag=direct` 直读 sha，写入后回读校验 32/32 一致）；`.gitignore` 加护栏；文档里的文件名指针保持不变（原件在 tar 内按名可取） | `reports/artifacts/ARCHIVED-logfs-payloads-20261112.md` |
 ---
 
-## 2. 当前完成度（诚实版）
+## 2. 当前完成度
 
-| 目标 | 状态（权威数字见 [`TASKS/README.md`](TASKS/README.md) §0） | 关键限定 |
-|---|---|---|
-| **G1** 功能健全的 Linux | 多数驱动已工作（暖起） | 按“驱动 bring-up 完整性”度量；**上游化 M 系列（以 `TASKS` §7 为准）进行中** |
-| **G2** 安卓容器（Waydroid） | 主链路已通 | 分项（传感器 HAL/音频 C6/GMS C2/马达 C10/输入法 C11/相机 STREAMING 等）与完成度**只读** [`TASKS/README.md`](TASKS/README.md) §0/§2（本表不另列 C 清单，避免与 README §3、TASKS 三处漂移） |
-| **G3** x86 模拟（Steam） | **PoC ✅ / Steam 登录界面 ✅** | Box64 + Wine 成功；官方 ARM64 Steam 客户端 2026-10-28 起到登录界面（3/3 轮、证据 `reports/g3-steam-20261028.md`）、截图判据 10-29 闭环；Steam 游戏端到端（图形/音频/性能）未上机 |
+> **2026-11-14 收敛**：本节原有一张 G1/G2/G3 状态表，与 `INDEX.md` §0、`README.md` §3、`TASKS/README.md` §0
+> 四处并列（实测彼此漂移过 ≥3 次）。现只留指针：**状态结论 = [`INDEX.md`](INDEX.md) §0；数字 = [`TASKS/README.md`](TASKS/README.md) §0
+> （脚本 `scripts/check-progress-counts.sh --tsv` 现出）**。本文件只管「时间线上发生了什么」。
 
 ---
 
@@ -192,44 +191,15 @@
 
 ---
 
-## 6. 下一步（按优先级）
+## 6. 下一步
 
-> **2026-10-23 起的工作纪律（用户定）**：**需要物理 POR 的样本一律排最后**；**TF 卡（G1-6）暂时不做**；
-> **Q28 补采样已完成（2026-10-24 收口）**：按「已规避」结项，原定 ≥8 发门槛**用户裁决不补**。权威口径 = [`TASKS/README.md`](TASKS/README.md) §4。
+> **2026-11-14 收敛：本节不再自己列一套待办。** 当前「做到哪 / 卡什么 / 下一步」只在
+> [`INDEX.md`](INDEX.md) §0（现在一页）；排期与开放项在 [`TASKS/README.md`](TASKS/README.md) §4。
+> 历史上这里曾长期保留 2026-10-23 版的 8 条待办并逐条打补丁（UEFI/Gunyah/Q28/Q24/#106/B5/…），
+> 结果是同一事实三处说法、且旧条目比新结论活得久 —— 那套写法**已作废（2026-11-14）**。
+> 被删的旧正文可在本提交之前的历史版本里取回（`git show <此提交>^:PROGRESS.md`），沿革另见 `TASKS/sessions/2026-11-03-TASKS-§4-待办沿革.md`。
 
-1. **★UEFI 与 Gunyah 考查**（2026-10-24 用户定的下一步；只读优先、不写盘）：基线 = `reports/uefi-restart-20261021.md`、
-   `reports/gunyah-roadmap-20261021.md`。UEFI：**🎯 已收口（2026-11-10 深夜）—— G1-29 两种形态都通**：`fastboot boot` 形态与 **flashed 形态（写 `boot_a`）** 都能走到
-   「我们的 UEFI → BdsDxe → ESP 里的 `boot.img` → Linux」，判据 = 129.2 s 总耗时（基线 + R70 三级停留）、信标 `R68LOG … s9:esp-ld-ok`、`elden_bootloader=esp`。
-   **关键的诚实记录**：11-09/10 曾三轮把失败归因到「我们的 payload 没被执行」「`vbmeta_a` 校验」「logfs 无记录」，**三条全被推翻**；
-   真根因是 2026-10-03 起就写在 `PITFALLS` 里的老坑 —— **ABL 会把原厂 `dtbo_a` 的 Android DTBO overlay 合进我们的 DTB**（当时只清了 `dtbo_b`）。
-   清 `dtbo_a` 后同件当场起。权威 = [`reports/uefi-dtbo-a-rootcause-20261110.md`](reports/uefi-dtbo-a-rootcause-20261110.md)；
-   前置固化脚本 = `scripts/uefi-a-slot-prepare.sh`；剩余仅「菜单交互目视」与「一次物理 POR」两项非阻塞。
-   **2026-11-12 追加（判读再更正，以 `TASKS` §4 N1 为准）**：flashed 形态的失败判读在 11-11 被整体重估 —— 三臂日志实为 **ramoops oops** 而非硬件掉电，
-   真因是 **GRUB 缺显示模块 → 盲等 + panic**，同轮把实验菜单改成**内嵌**、补 ramoops DT 并重建打包；11-12 按用户实测再更正 `#620`
-   （**菜单两版都能显**；此前「无屏显」= `CONFIG_SYSFB_SIMPLEFB` 未开）⇒ 已出 `vk188`（开该配置 + GRUB 字号上调）**待上机验**。~~逆向运行期注册表 + 回帖 issue #12~~（归档）；
-   Gunyah：阶段 0 零成本探测 + 上游现状复核。产出 = 各项「可不可重启 / 立不立项」定性 + 最小成本账。
-   **2026-10-24 用户裁决：WoaA 走纯 Linux（Gunyah 自建栈），Android/AVF 只作材料参考，最终不保留 Android 分区**（详见 `TASKS` §4 N1/N2）。**首轮已出（`reports/uefi-gunyah-reassess-20261024.md`）**：
-   UEFI（G1-29）：**路线 A 首轮（2026-10-05）失败后搁置 → 2026-11-01 用户放行恢复推进**；当前口径与四臂判别只读 `TASKS/README.md` §5。~~厂商 DXE 在 XBL 打包体里~~（**2026-10-24 已作废：厂商 UFSDxe 就在 `uefi.elf` 内嵌 FV 中**，见 `TASKS` §4 N1 纠正块）；**Gunyah 阶段 0/0b 阳性**
-   （`gunyah-wdt` 在 + 自编 `gunyah_wdt.ko` probe 通 ⇒ 本机确实在 Gunyah 下且 SMCCC 通道可用，`reports/gunyah-stage0-positive-20261024.md`）。
-   **★2026-10-25 终局：Gunyah 子 VM 结项 = 不可行（用户定 C）** —— RM 建 VM 恒 `VM_INIT 0xA MEM_INVALID`，
-   对 DTB/内存模型（含整块急切 LEND）/驱动代次（6.6、6.12、厂商内核同 harness）全不敏感；厂商可用路径依赖主线没有的
-   `MEM_DONATE(0x51000010)` + `gunyah_loader` hypercall 族。⇒ **G2 回 Waydroid**；`drivers/virt/gunyah` 6.12 分层只作 G1 补丁素材封存。
-   权威 = `reports/gunyah-decision-20261025.md`；过程 = `reports/gunyah-612-samebuild-20261025.md`；新坑 `PITFALLS #395/#396`。
-2. **Q28/Q32**：✅ **已结项（2026-10-24）=「已规避」** —— 样本数、判据与复启条件只读 `TASKS/README.md` §5 Q28 行。
-3. **Q24**：⛔ **关闭（2026-10-24 用户裁决：不值得取证）** —— 根因与运营互斥策略只读 `TASKS` §5 Q24 行。
-4. **#106**：判据「GOOD 需 ≥60 s 存活/可交互」；ramoops 装弹已在位等它自己撞（见 `TASKS` §5 §2 表）。
-5. **上游化 M 系列（以 `TASKS` §7 为准）**：M1 树与 `m1-73/baseline` 已收敛；M3-1 v4 / v5 系列、M4 camss（v2 0/2）、M4-1 bindings、M6 L1、M8 RFC、wl2868c v3 均已投并归档；
-   **2026-10-27 新增可评审分片**：B5 第 1–3 步（bonded-DSI 收进 per-SoC cfg + 2 个 host ops，`patches/local/b5-resoc-20261027/`）与 aw86927 五提交系列（`patches/upstream/aw86927-20261027-v2/`）均已过门禁；aw86927 v2 **已投**（`[PATCH 0/5]`，`/linux-input/` 6/6 归档）、M1-U6 与 M2 A2 同批已投；
-   **2026-10-27 夜**：B5 **第 1–3 步已零写盘上机 = 行为中性**（7 项计数全 0）、**第 4 步已实现并上机**（同值臂中性；判别臂 `master=DSI1` ⇒ 面板 DCS `ff 20` 三连 `-22` ⇒ **主从角色不可自由换**，字段降级为事实登记）⇒ 见 `reports/b5-step4-master-from-cfg-20261027.md`；
-   投递前待办：① B5 的表挂在 `sm8650_dsi_cfg` 上（需拆独立 SM8750 表项）；② 第 4 步投递前把「调用者必须是 master」做成显式检查（当前只返回 `-22`）；
-   **2026-10-26 新增热验证通道**：日常线载荷驱动已模块化（`vk163`），叶驱动（触屏/背光/触觉/音频/无线）改一次 = `mod-loop` 秒级上机验证，不用整机重启；
-   **2026-10-27 该通道已可信**：`mod-loop.sh` 原先会在模块没换时假报成功（`PITFALLS #447`），现以 **build-id 校验**作唯一成功判据，失败非零退出；
-   M3-2 台账 / M3-3 音频 / M3-4 显示 / M4 camss 均备料封存（投递冻结，收盘统一投）。
-6. **G2**：容器相机 **HAL 侧缺陷已闭环（2026-10-29 修法上机，12 请求/0 崩溃/12 次布局修复）**，只剩 **容器图形层（surfaceflinger `Unable to generate SkImage` 自杀）+ App 端请求停止**；C3 身份/DRM 取证（PI 检测 App 需 APK 侧载）。
-7. **G3**：Steam 端到端。
-8. **★2026-10-28 收盘：三项已收掉**（不再列待办）：**G1-34 传感器两棵根全绿**（udev `ssc-accel` + ordering cycle，`PITFALLS #451/#453`）、**Q34 蓝牙 = 缺 `qca/tmel_peach_20.elf`**（`PITFALLS #454`，已加门禁 A2「驱动 `MODULE_FIRMWARE` 必须进包」）、**B5 第 1–4 步上机**（见上）。⇒ 当前真开放项只剩：M4-2…4 **已投递并复核**（`[PATCH 0/9]` 10 封 250，lore `/all/` 10/10，raw 重放 9/9 逐字节一致）、~~B5 第 5 步隔离层~~（**2026-10-28 解阻**：`0x44440400` 全位有上游符号、`ERR_INT_MASK0` 按厂商行为写明，patch 已落地且 `.text` 逐字节等价）、~~U2 原子回调时序~~（**2026-10-28 已证并关闭**：8 项原文判据全 PASS，现形状即上游形状）、UEFI issue #12 回帖（等你点头）、C5/U7 容器相机（**2026-10-28 推进**：无需装 APK，真卡点 = 容器 external HAL 静态元数据为空）、G3 Steam；**掉电率按用户指示最低优先、不排期**。
-
----
+固定纪律（不随轮次变）：需要物理 POR 的样本排最后；投递按系列逐次由用户批准；掉电率类精密测量不排期。
 
 ## 7. 协作方式说明
 

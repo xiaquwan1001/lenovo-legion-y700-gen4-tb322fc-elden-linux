@@ -33,6 +33,7 @@
 
 ## 项目记忆（2026-11-13 收束：只留「违反即事故」的一行判据；细节在指针处）
 
+- **开工三件事**（2026-11-14 立，硬规则）：① 先核实**最近 2–3 轮会话进度 vs 文档描述**（`scripts/recent-sessions.sh 3` + `*/sessions/` 最新 2 篇），不一致**以会话里有实测证据的那条为准**并同轮改文档；② 先查 `PITFALLS` 既有结论；③ 确认在机内核/槽位与网络现态。全文 = `.pi/AGENT-OPS.md` §0；裁决规则 = `INDEX.md` §2「时间序裁决」。
 - 版本账：**禁重跑** `scripts/vk-identity.py`（镜像缺失会清空整表）；清镜像只走 `scripts/out-archive.py`（默认 dry-run）。
 - 内核构建只走 `scripts/build-kernel.sh`（裸 `make` 按宿主 x86 重写 `.config`）；RAM 起新核前先部署整套 `/lib/modules/<UTS>`。
 - 设备侧脚本只写 **POSIX sh**、整文件 `scp` 到 /tmp 再 `sh`；busybox `pgrep -x` 恒假阴性（用 `ps -eo comm | grep -cx`）。
