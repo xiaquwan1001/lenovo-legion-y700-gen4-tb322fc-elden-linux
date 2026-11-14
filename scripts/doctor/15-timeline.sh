@@ -42,3 +42,27 @@ elif [ "$_latest" \> "$_claim" ]; then
 else
   ok "INDEX §0 未落后于最新会话证据（最新 = $_latest）"
 fi
+
+# ---- ①b 跨文档矛盾：INDEX §0 的「在机 vkNN」必须出现在 DEVICE §1.1 首条 ----
+# 反例（2026-11-14 实测）：INDEX §0 写「在机 = RAM 启动的 vk191」，而 DEVICE §1.1 首条挂着
+# 「2026-11-13（当前状态，唯一权威）：在机内核 = vk190」+ 下面又一条「最新：vk191」⇒ 同一事实两套说法，
+# 正是 §2「时间序裁决」禁止的形态。判据只用文件名/文本，不联网。
+_dev="$ROOT/DEVICE/README.md"
+if [ -f "$_dev" ]; then
+  _idx_vk=$(awk '/^## 0\. 现在一页/,/^## 1\./' "$_idx" | grep -o '在机[^。；|]\{0,40\}' | grep -o 'vk[0-9]\+' | head -1)
+  _dev_block=$(awk '/^### 1\.1 /{f=1;next} f&&/^### /{exit} f' "$_dev")
+  _dev_vk=$(printf '%s\n' "$_dev_block" | sed -n '1,12p' | grep -o 'vk[0-9]\+' | head -1)
+  _stars=$(printf '%s\n' "$_dev_block" | grep -c '^[- ]*★★')
+  if [ -n "$_stars" ] && [ "$_stars" -ne 1 ]; then
+    bad "DEVICE §1.1 有 $_stars 处 ★★ 权威行（只允许 1 处：多套「当前状态」= 读者无法判读）"
+  fi
+  if [ -z "$_idx_vk" ] || [ -z "$_dev_vk" ]; then
+    warnf "无法从 INDEX §0 / DEVICE §1.1 提取「在机 vkNN」，跳过跨文档矛盾比较（请检查两处措辞）"
+  elif [ "$_idx_vk" = "$_dev_vk" ]; then
+    ok "跨文档一致：INDEX §0 与 DEVICE §1.1 首条都指向 $_idx_vk"
+  else
+    bad "跨文档矛盾：INDEX §0 在机 = $_idx_vk，DEVICE §1.1 首条 = $_dev_vk（按 §2 时间序裁决同轮改成一致）"
+  fi
+else
+  warnf "DEVICE/README.md 缺失，跳过跨文档矛盾比较"
+fi

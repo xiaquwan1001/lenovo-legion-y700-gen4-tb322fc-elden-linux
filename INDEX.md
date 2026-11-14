@@ -1,7 +1,7 @@
 # 工作区索引 — TB322FC "elden"（SM8750P）固件与驱动研究
 
-> **入口。** 新会话：本文件 §1（使命）→ §2（文档结构）→ §3（现状）→ 需要细节再进对应文档/专题档案。
-> **唯一入口 = 本文件**；根目录 = 入口 `INDEX.md` + 项目身份 `AGENTS.md` + 公开 `README`/`PROGRESS`，**7 个角度文件夹**（`DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/`），各自 `README.md`（策展 SSOT）+ `sessions/`（会话进度）；标准见 §2。
+> **入口。** 新会话：**§0（现在一页）→ §2「入口阶梯」**（含时间序权重）→ 需要细节再进对应文档/专题档案。
+> **唯一入口 = 本文件**；根目录 = 入口 `INDEX.md` + 项目身份 `AGENTS.md` + 公开 `README`/`PROGRESS`（**公开门面，agent 默认不读**），**7 个角度文件夹**（`DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/`），各自 `README.md`（策展 SSOT）+ `sessions/`（会话进度）；标准见 §2。
 > 2026-10-03：git 纳管 + 文档收敛（12→6）；自检 `scripts/check-doctor.sh`；不再有 SQLite/生成物。
 
 ---
@@ -46,19 +46,11 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 
 ---
 
-## 1. 使命与范围（8 行）
+## 1. 使命与范围（3 行；目标定义只在一处）
 
-1. **机型唯一**：只研究 **TB322FC / elden / SM8750(P)**；不做别的机型移植。研究面 = 让本机在主线 Linux 上功能完整。
-2. **设备等价**：同型号多台单元**物理地位完全等价**，唯一差异 = **容量**（内存/UFS → GPT 数值）。
-   身份 = `(SN, hwboardid, 容量)`；**"新机/旧机"不是角色**，**任务按单元当前状态分派**。
-3. **G1 完整 Linux + 上游化**：跑**功能健全的 Linux**，**正常驱动原厂全部固件**（ADSP/CDSP/WCN/GPU/触屏/触觉/功放/tplg/相机…）；
-   达到上游规范后**按模块向上游提交**（checkpatch/DTC/`dtbs_check` 绿，见 `TASKS/README.md` §7 M 系列，以 §7 为准）。
-4. **G2 安卓容器**：**无 Android 宿主**下运行安卓（主路线 Waydroid，备胎 redroid）；核心验收 = **可用性 + 风控/完整性等级**：
-   GMS 登录、**Play Integrity / SafetyNet**、Widevine 能做到哪一级（**取证判定，不预设"不可能"也不承诺**；见 `RESOURCES/README.md` §1.3、`TASKS/README.md` §6）。
-5. **G3 x86 模拟运行**：以 **Steam 游戏**为验收载体，跑通 x86 用户态/游戏（Box64 + Wine/Proton 线）。
-6. **拓展（非主线）**：**UEFI 间接引导**、**Gunyah 高通虚拟化做 VM**——不阻塞 G1–G3，现状/裁决见 `TASKS/README.md` §4/§5。
-7. **Linux 存储容量不固定**：按项目体量估算后一次给足（`DEVICE/README.md` §3），并可回收 Android 专属分区扩容。
-8. 术语：设备称 **U1 / U2**；备份目录 `backup/<SN>-<容量档>/`；禁用 `new-tablet` 与"两轨分机"旧口径。
+- **机型唯一**：只研究 **TB322FC / elden / SM8750(P)**，不做别的机型移植；研究面 = 让本机在主线 Linux 上功能完整（固件/驱动为主，刷写只是手段）。
+- **G1 / G2 / G3 / 拓展 / 核心原则（设备等价 / 存储 / 构建并发 / 上游发信授权）= 唯一正文在 `AGENTS.md`**（每轮自动注入，此处不复述）。
+- **术语**：设备称 **U1 / U2**；备份目录 `backup/<SN>-<容量档>/`；禁用 `new-tablet` 与「两轨分机」旧口径；容量裁定见 `DEVICE/README.md` §3。
 
 ---
 
@@ -69,7 +61,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 > **记录时的区分度**（取代自检脚本的计数/索引）：写入时就靠 文件夹(角度) + 文件名(日期+主题) + pi 会话 id 区分。
 > **会话检索** = pi 原生项目会话（`.pi/sessions/*.jsonl`，项目级 `sessionDir`）：`scripts/sess.sh` / `/resume`；不手抄索引表。
 > **SSOT**：数字/结论只在该角度 `README.md` 维护，其余用链接；跨会话新增先落 `sessions/`，由宿主择机并入 `README.md`。
-> **推荐阅读顺序**：本文件 → `.pi/AGENT-OPS.md`（做事规范）→ `TASKS/README.md`（任务/进度/未解）→ `PITFALLS/README.md`（动手前扫）→ 需要时再进 `DEVICE/`/`RESOURCES/`/`RUNBOOK-BRINGUP/`。
+> **阅读顺序只在一处声明**：唯一路径 = 下面「入口阶梯」（按新鲜度加权；与 `.pi/AGENT-OPS.md` §0 开工三件事是同一阶梯）。
 
 ### ★ 会话结束时写什么（唯一规则，8 条）
 
@@ -95,13 +87,24 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 2. **胜负判定 = 证据强度优先，其次日期**：会话内**实测证据（命令 + 原始输出）** > 带日期的报告（`reports/*.md`）> 文档叙述；同类证据取**日期更新**者。无日期、无证据的叙述直接输。
 3. **输了的那条只有两种待遇**：① 与现状无沿革价值 → **删**（commit 信息写明「删除旧口径 + 依据」）；② 有沿革价值（曾被当真、影响过判断）→ 就地改成一行 `~~旧说法~~ **作废（YYYY-MM-DD，真因 + 指针）**`，**不得**在别处再复述一遍旧的。
 4. **改口径必须同轮改完所有引用点**（grep 旧结论的关键词），并在提交信息里写「口径更正（YYYY-MM-DD）：旧 X → 新 Y（证据）」。发现新的实测证据与本文件 §0 冲突时，**先改本文件 §0 的结论与核对日期**，再改下游文档。
-5. **本节自身有门**：`scripts/check-doctor.sh` §15 比「§0 核对日期」与最新会话证据日期，落后就 WARN（不阻塞提交，但不允许装作没看见）。
+5. **本节自身有门**：`scripts/check-doctor.sh` §15 做两项比对（落后就 WARN、矛盾就 FAIL）：
+   §0「核对日期」vs **最新会话证据日期**；以及 **§0 写的「在机 `vkNN`」必须出现在 `DEVICE` §1.1 首条**
+   （§1.1 只允许一个 `★★` 权威行 —— 2026-11-14 之前那里同时挂着 vk190/vk191 两套说法，就是本节的实测代价反例）。
 
-### 入口（唯一，仍是文件）
+### ★ 入口阶梯（**唯一**路径；数字越小越权威，冲突时上位胜 —— 这就是时间序权重）
 
-| 文件 | 装什么 |
-|---|---|
-| **`INDEX.md`** | 使命与范围、文件夹地图、现状快照、快速命令、专题档案索引 |
+| # | 读什么 | 为什么它在这个位置 |
+|---|---|---|
+| 0 | 本文件 **§0 现在一页**（做到哪 / 卡什么 / 下一步） | 最新会话证据的摘要，标题带核对日期 |
+| 1 | **`scripts/recent-sessions.sh 3`** + `*/sessions/` 最新 2 篇的「结论 / ★SSOT 待并入」 | **比任何 README 新**：本轮及上两轮的实测结论 |
+| 2 | **`.pi/AGENT-OPS.md` §0**（开工三件事）→ §1–§5 | 行为唯一入口；§0 直接要求先做第 1 行 |
+| 3 | **`PITFALLS/README.md` §0**（零号纪律）+ 索引 | 动手前必查的既有结论 |
+| 4 | **`TASKS/README.md`** §0 / §4 / §5 / §7 | 状态数字与台账的唯一出处 |
+| 5 | `DEVICE` §1.1（在机）/ `RESOURCES` §3（资产）/ `RUNBOOK-BRINGUP`（步骤） | 按需展开 |
+| 6 | `reports/*.md`（按日期）→ `archive/` · `SESSIONS/` · `PROGRESS.md` · `HISTORY/` | **只作沿革与证据，不得当「当前结论」引用** |
+
+> **权重规则（硬）**：第 1 行（最近会话）与第 4–6 行冲突时，**先按会话读**，并在**同一提交**内把下行文档改成一致；
+> 不允许「两边都写着，读者自己判」。`README.md` / `PROGRESS.md` 是**公开门面**，agent 默认不读（不占入口位）。
 
 ### ★ 根目录四文件的职责边界（单一事实源；2026-10-15 收敛）
 
@@ -112,27 +115,20 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 文件 | 唯一职责（正文位置） | 不得复述 |
 |---|---|---|
 | **`AGENTS.md`** | **项目身份**：机型唯一性、G1–G3 目标定义与优先级、核心原则（设备等价/存储/SSOT） | 不写进度数字 |
-| **`INDEX.md`**（本文件） | **路由**：使命 8 行、文件夹地图与 SSOT 口径、现状指针、快速命令 | 不写状态数字（指向 `TASKS` §0） |
+| **`INDEX.md`**（本文件） | **路由**：入口阶梯（含时间序权重）、文件夹地图与 SSOT 口径、§0 现状摘要、快速命令 | 不写状态数字（指向 `TASKS` §0）、不复述目标（指向 `AGENTS`） |
 | **`README.md`** | **公开门面**：面向 GitHub 读者的定位、免责/许可、快速开始 | 机型表/目标只留速查副本 + 指向 `DEVICE`/`AGENTS` |
 | **`PROGRESS.md`** | **公开时间线**：诚实进度叙事（含被推翻的结论） | 不写权威台账（指向 `TASKS`） |
 
 细节（机型规格、分区、单元台账）以 `DEVICE/README.md` 为准；状态数字以 `TASKS/README.md` §0 为准。
 
-### 1 分钟版（新人 / 第一次会话）
-
-1. **本文件 §0**（现在一页）→ 知道「做到哪、卡什么、下一步」。
-2. **`.pi/AGENT-OPS.md` §0**（开工三件事：核实最近 2–3 轮会话 / 查既有结论 / 认时间序）→ 知道「开工前必须先做什么」。
-3. **`PITFALLS/README.md` §0**（零号纪律 4 条）→ 知道「动手前必须先掌握哪些事实」。
-
-需要做事时再按下方文件夹按需展开；完整规范见 `.pi/AGENT-OPS.md`。
-
 ### 规范入口（agent 行为唯一入口）
 
 | 入口 | 文件（权威） | 装什么 |
 |---|---|---|
-| **行为/规范** | **`.pi/AGENT-OPS.md`** | agent **自主优先**（写坏风险先备份，超出预期的错误才上报）、物理干预边界、设备安全纪律、研发纪律、文档写入权限、汇报/时间盒；并发细则见 `.pi/CONCURRENCY.md`，三层编排（总管/一级角色/二级叶级）见 `.pi/ORCHESTRATION.md` |
+| **行为/规范** | **`.pi/AGENT-OPS.md`** | agent **自主优先**、物理干预边界、设备安全纪律、研发纪律、文档写入权限、汇报/时间盒；并发细则见 `.pi/CONCURRENCY.md`，三层编排见 `.pi/ORCHESTRATION.md` |
 
 > 项目描述（机型/目标/设备等价）在 `AGENTS.md`；各角度 `README.md` 不再复述规范与经验。
+> （原「1 分钟版」三步已于 2026-11-14 并入上方「入口阶梯」第 0/2/3 行，不再单列。）
 
 ### 角度文件夹（`README.md` = 权威正文；子目录 = 以会话/单元为单位的记录）
 
@@ -146,61 +142,21 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | **会话档案（逐会话）** | **`SESSIONS/`** | ⚠ **已冻结的历史快照（2026-10-15 起不再增补）**：`README.md` = 索引表/统计/内核时间线 + `sessions/YYYY-MM-DD-<名称>.md`。**新会话一律不进本目录**；会话身份与全文检索 = pi 原生会话（`scripts/sess.sh` / `/resume`）。此处保留仅为档案 + `check-sessions.sh` 校验基准 |
 | **git 提交史（逐提交）** | **`HISTORY/`** | 提交视角权威：`README.md` = 规范/查询入口（**不写死数字**）+ `days/YYYY-MM-DD.md`（机械生成）。统计现查 `scripts/gen-history.sh --stats` |
 
-### 顶层布局（4 区 + 注册表；新增顶层条目必须先登记）
+### 顶层布局（4 区 + AI 大脑；**逐项 = 机器表**）
 
-> **机器真源 = `versions/layout.tsv`**，门 = `scripts/check-layout.sh`（`check-doctor.sh` §14）。
-> 规则：**根目录新增任何条目，先登记 `versions/layout.tsv`，再在本表加一行**；未登记即自检 FAIL。
-> 分区的意义是回答「这个目录能不能删、要不要入库」：`work/` 全是可再生成的构建/日志/外部工作区，
-> `evidence/` 里的 `backup/` 是不可再生件（删前必须先云盘或 bundle 兜底），`src/` 才是随代码走的资产。
+> **机器真源 = `versions/layout.tsv`**（人读 `scripts/check-layout.sh --list`），门 = `check-layout.sh`（`check-doctor.sh` §14：
+> **每条路径必须在本节出现且磁盘存在**）。规则：**根目录新增条目先登记 `versions/layout.tsv`**，未登记即 FAIL。
+> 本节只回答「这个目录能不能删、要不要入库」的**分区级**口径；逐条职责/删除风险读 `RESOURCES/README.md` §3。
 
-| 区 | 顶层条目 | 版本控制 | 职责（详情指向领域层） |
-|---|---|---|---|
-| 入口 | `AGENTS.md` | track | 项目身份：机型唯一性、G1–G3 目标与优先级、核心原则 |
-| 入口 | `INDEX.md` | track | 唯一入口：使命/布局/路由/现状指针/快速命令 |
-| 入口 | `README.md` | track | 公开门面（面向 GitHub 读者） |
-| 入口 | `PROGRESS.md` | track | 公开时间线（诚实进度叙事，非权威数字） |
-| 入口 | `LICENSE` | track | 许可 |
-| 角度文档 | `DEVICE/` | track | 设备状态与描述（规格/固件/驱动矩阵/单元台账/存储策略） |
-| 角度文档 | `TASKS/` | track | 唯一任务台账 + 进度权威（§0 总览 / §5 未解 / §7 上游化） |
-| 角度文档 | `RESOURCES/` | track | 外部参考 + 本地资源 + 文件与资产台账（§3） |
-| 角度文档 | `RUNBOOK-BRINGUP/` | track | 上机手册（Phase −1…9） |
-| 角度文档 | `PITFALLS/` | track | 开发经验唯一入口（§0 纪律 + 分类正文） |
-| 角度文档 | `SESSIONS/` | track | 逐会话档案（2026-10-15 起冻结，只读） |
-| 角度文档 | `HISTORY/` | track | 逐提交史（scripts/gen-history.sh 机械生成，不手写） |
-| 角度文档 | `archive/` | track | 过程证据（追加为主；不得作为当前结论引用）。**无自己的 README**：分区与纪律正文 = 本篇 §2 的「证据层」段 |
-| 证据/备份 | `reports/` | track | 报告与活跃证据工作区（md 入库；大件按 .gitignore 排除） |
-| 证据/备份 | `backup/` | ignore | 原厂固件/分区 dump/内核 bundle/官方线刷包（不可再生，见 RESOURCES §3） |
-| 源码/补丁/工具 | `scripts/` | track | 脚本全集（构建/刷机/诊断/门禁） |
-| 源码/补丁/工具 | `tools/` | track | 第三方或自研小工具（avbtool/mkbootimg/l2-extract…） |
-| 源码/补丁/工具 | `patches/` | track | 内核补丁与 config 快照（内核进度的权威文本） |
-| 源码/补丁/工具 | `patches-userland/` | track | 用户态（Phosh/phoc）补丁与构建/安装脚本 |
-| 源码/补丁/工具 | `reference/` | track | 外部同机型/厂商资料快照与裁决 |
-| 源码/补丁/工具 | `versions/` | track | 机器对账派生表（vk 身份/registry/布局注册表） |
-| 源码/补丁/工具 | `packaging/` | track | 用户态解耦真源（manifest/services/deps） |
-| 源码/补丁/工具 | `initramfs/` | track | initramfs 重建输入（init + busybox） |
-| 源码/补丁/工具 | `rootfs/` | track | rootfs 覆盖物与设备侧还原副本 |
-| 源码/补丁/工具 | `probes/` | track | 设备侧诊断探针源码 |
-| 源码/补丁/工具 | `net/` | track | 网络小资产 |
-| 源码/补丁/工具 | `waydroid-ota/` | track | Waydroid OTA 小资产 |
-| 源码/补丁/工具 | `restore-259/` | track | 恢复说明（二进制不入库） |
-| 源码/补丁/工具 | `.githooks/` | track | 提交钩子（core.hooksPath=.githooks） |
-| 源码/补丁/工具 | `cycle.sh` | track | 软回 fastboot 快环脚本 |
-| 源码/补丁/工具 | `elden-net.sh` | track | USB 网络（RNDIS/ssh 通道） |
-| 源码/补丁/工具 | `.gitignore` | track | 版本控制边界 |
-| 工作区（ignore） | `build/` | ignore | 内核构建树/独立仓/worktree（含未提交改动，删除前必须先 bundle + 导 diff，见 RESOURCES §3） |
-| 工作区（ignore） | `out/` | ignore | 构建产物（*.manifest 入库） |
-| 工作区（ignore） | `logs/` | ignore | 串口/构建/agent 日志 |
-| 工作区（ignore） | `bootslot-b/` | ignore | 自签 b 槽包（含 avb 私钥，禁止入库） |
-| 工作区（ignore） | `env-pass/` | ignore | 过环境里程碑件 |
-| 工作区（ignore） | `dl-cam/` | ignore | 相机 provider 交叉编译工作区（部分纳管） |
-| 工作区（ignore） | `wt/` | ignore | lane git worktree（scripts/lane.sh WT_ROOT） |
-| 工作区（ignore） | `external/` | ignore | 外部构建工作区（$HOME 同名软链指回此处） |
-| 工作区（ignore） | `geekidos-linux/` | ignore | 上游内核 clone（GEEKiDoS/linux v7.2-elden） |
-| 工作区（ignore） | `Y700-elden-linux/` | ignore | 旧迭代上游 clone |
-| 工作区（ignore） | `stock-src/` | ignore | 联想 GPL 源码 clone |
-| 工作区（ignore） | `y700四代工具/` | ignore | 厂商工具与解锁工具包 |
-| 工作区（ignore） | `linux` | track | 目录约定软链 -> geekidos-linux |
-| AI 大脑 | `.pi/` | track | AI 大脑：行为规范/并发/编排/技能/记忆/会话（分工见 .pi/README.md） |
+| 区 | 顶层条目（与 `layout.tsv` 同源） | 版本控制 |
+|---|---|---|
+| 入口 | `AGENTS.md` `INDEX.md` `README.md` `PROGRESS.md` `LICENSE` | track |
+| 角度文档 | `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/` `archive/` | track |
+| 源码/补丁/工具 | `scripts/` `tools/` `patches/` `patches-userland/` `reference/` `versions/` `packaging/` `initramfs/` `rootfs/` `probes/` `net/` `waydroid-ota/` `restore-259/` `cycle.sh` `elden-net.sh` `.githooks/` `.gitignore` | track |
+| 证据/备份 | `reports/`（md 入库，大件 ignore）· `backup/`（**不可再生**：删前必须云盘或 bundle 兜底） | track / ignore |
+| 工作区（**可再生成**） | `build/` `out/` `logs/` `bootslot-b/` `env-pass/` `dl-cam/` `wt/` `external/` `geekidos-linux/` `Y700-elden-linux/` `stock-src/` `y700四代工具/` + 软链 `linux` | ignore（`build/` 删前先 bundle + 导 diff） |
+| AI 大脑 | `.pi/`（规范/并发/编排/技能/记忆/会话；分工见 `.pi/README.md`） | track |
+
 
 ### 证据层（`archive/`，追加为主）
 
@@ -241,11 +197,11 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 动手前的坑 | `PITFALLS/README.md` §0 + 索引 |
 | 从原厂到 b 槽直启的操作步骤 | `RUNBOOK-BRINGUP/README.md`（Phase −1…9） |
 | 换机缺口 / 资产与 git 边界 | `RESOURCES/README.md` §3.5 / §3 |
-| 文档去重执行账 / 审计依据 | `reports/docs-slim-20261113.md`、`reports/doc-dedup-audit-20261112.md` |
+| 文档去重执行账 / 审计依据 | `reports/docs-slim-20261114.md`（本轮：入口收敛二轮）、`reports/docs-slim-20261113.md`、`reports/doc-dedup-audit-20261112.md` |
 
-**已定不做 / 搁置（勿重推）**：`G1-26/27/28`、`G1-10`（无 NFC 硬件）、`G1-30`（slim initramfs）；
-`kexec` 定位 = 不需显示/网络的调试快环（`TASKS` §4「迭代通道」条）；BL 解锁议题已定稿关闭（`RUNBOOK` §0.5）。
-**两条不变的硬约束**：① 内核必须自编（Debian 任何 `linux-image` 都缺本机板 DTS）；② 必须有 forky/sid 级 `iio-sensor-proxy` + `libssc2`，否则传感器栈直接死。
+**已定不做 / 搁置（勿重推）**：正文只在 `TASKS` §4「本轮不投入」+ §1 各 ID 行（`G1-26/27/28` 已出列、`G1-10` 无 NFC 硬件、
+`G1-30` slim initramfs）与 `RUNBOOK` §0.5（BL 解锁已定稿关闭）；`kexec` 定位见 `TASKS` §4「迭代通道」条。
+**两条不变的硬约束**（内核必须自编 / 传感器栈要 forky-sid 级 `iio-sensor-proxy`+`libssc2`）= 正文在 `DEVICE/README.md` §1.1 末条。
 
 
 **保留但需知道的旧账**：换机缺口（`RESOURCES` §3.5 + `versions/migration-gaps-2026-10-17.tsv`）、

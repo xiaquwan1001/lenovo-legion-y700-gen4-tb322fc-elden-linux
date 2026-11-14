@@ -6,7 +6,7 @@
 # vcs：track = 入 git；ignore = 按 .gitignore 排除（台账见 RESOURCES/README.md §3）
 zone	path	vcs	note
 entry	AGENTS.md	track	项目身份：机型唯一性、G1–G3 目标与优先级、核心原则
-entry	INDEX.md	track	唯一入口：使命/布局/路由/现状指针/快速命令
+entry	INDEX.md	track	唯一入口：入口阶梯/布局/路由/§0 现状摘要/快速命令
 entry	README.md	track	公开门面（面向 GitHub 读者）
 entry	PROGRESS.md	track	公开时间线（诚实进度叙事，非权威数字）
 entry	LICENSE	track	许可

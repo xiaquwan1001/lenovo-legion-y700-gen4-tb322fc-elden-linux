@@ -83,5 +83,6 @@ done
 
 echo
 echo "== 下一步（判读，不是命令）=="
+echo "  0) 权重：上面的**会话结论 = 第 1 位**（比任何 README 新）；入口阶梯 = INDEX.md §2"
 echo "  1) 与本项目文档冲突处：以带实测证据的会话结论为准，同轮改文档（INDEX.md §2 时间序裁决）"
-echo "  2) 改完刷新 INDEX.md §0 的「核对日期」，门 = scripts/check-doctor.sh --only 15"
+echo "  2) 改完刷新 INDEX.md §0 的「核对日期」，门 = scripts/check-doctor.sh --only 15（含跨文档 vk 矛盾检查）"

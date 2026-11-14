@@ -25,27 +25,20 @@
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
 ### 1.1 内核与软件基线
-- ★★**2026-11-13（当前状态，唯一权威）：在机内核 = `vk190`，持久落 `boot_b`，ABL 现用槽 = `b`**。
-  `uname -r` = `7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty`（vk190 与 vk189 刻意同 UTS，
-  为了一行 DT 修复不重编 85 MiB 模块树；身份看 `kernel_payload_sha256`：vk190 = `511e16a1…`、vk189 = `cab6a5c3…`），
-  `boot_b` = 自签 vk190（`bootslot-b/boot_b.img`，分区读回 sha `4f020cb3…`），
-  `/lib/modules/<该 UTS>` = 1499 个 `.ko`；`/sys/power/state` = `freeze mem`、`mem_sleep` 默认 `[s2idle]`（**待机功耗线已重启**）。
-  **重启实测**（2026-11-13）：`boot_id` 换新、`/proc/cmdline` **无** `elden_bootloader=esp` ⇒ 走 **`boot_b` 槽**，不是 UEFI/ESP 路径。
-  **vk190 判据**：`/dev/fastrpc-adsp` 在 + `qrtr-lookup` 有 `400 Snapdragon Sensor Core service` +
-  `iio-sensor-proxy` active + `HasAccelerometer/HasProximity = true`；s2idle `rtcwake -m mem -s 45` 2/2 `success`、`fail=0`；
-  WiFi `wlp1s0` UP、DSI `bound ae94000.dsi`、Waydroid/zramswap active。
+- ★★**在机 = RAM 启动的 `vk191`（2026-11-13 夜；本节**唯一**权威状态行）**：`uname -r` = `7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty`
+  （vk191 / vk190 / vk189 **刻意同 UTS**，为一行 DT 修复不重编 85 MiB 模块树；身份看 `kernel_payload_sha256` 与 ramdisk —
+  vk191 与 vk190 的 `kernel`/`dtb` **逐字节相同**，仅 `ramdisk` = `17cbcab1…`（含动态 SN 的 `usb-gadget`））。
+  **持久件 = `boot_b` 的自签 `vk190`**（`bootslot-b/boot_b.img`，分区读回 sha `4f020cb3…`，payload `511e16a1…`）⇒ **重启即回 vk190**；ABL 现用槽 = `b`。
+  **判据（vk191 全绿）**：`Unpacking initramfs...` 无 `no cpio magic` / `Run /init` / gadget `iSerial=HA2EXB0E` /
+  DSI `bound ae94000.dsi` / WiFi `wlp1s0` UP / `/dev/fastrpc-adsp` + `qrtr-lookup` 的 `400 Snapdragon Sensor Core service` +
+  `iio-sensor-proxy` active（`HasAccelerometer/HasProximity = true`）/ Waydroid+zramswap active / s2idle `rtcwake -m mem -s 45` 3/3 `success` 且 `fail=0`。
+  `/lib/modules/<该 UTS>` = 1499 个 `.ko`；`/sys/power/state` = `freeze mem`、`mem_sleep` 默认 `[s2idle]`（待机功耗线已重启）。
+  **重启实测**（2026-11-13）：`boot_id` 换新、`/proc/cmdline` **无** `elden_bootloader=esp` ⇒ 走 `boot_b` 槽，不是 UEFI/ESP 路径。证据 `reports/device-session-20261113-vk191.md`。
   - `boot_a` **未动** = UEFI 干净世代 `pc1`（分区 sha `1ca2b8e69167…`，件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；
     要用 UEFI 路先显式 `fastboot set_active a`（该槽 `unbootable=yes` 的历史口径见下方 11-09/11-10 块）。
-  - **★2026-11-13 夜（最新，覆盖下面 ESP 那一行的旧值）**：
-    ① **在机 = RAM 启动的 `vk191`**（`uname -r` 与 vk190 **同 UTS**：`7.3.1-debug-vk189-suspend-…`；
-    身份差别只在 ramdisk——`kernel`/`dtb` 与 vk190 **逐字节相同**，仅 `ramdisk` = `17cbcab1…`（含动态 SN 的 `usb-gadget`））。
-    `boot_b` **未被写**（仍是 vk190）；重启即回 vk190。
-    判据全绿：`Unpacking initramfs...` 无 `no cpio magic` / `Run /init` / gadget `iSerial=HA2EXB0E` /
-    DSI connected / WiFi up / `/dev/fastrpc-adsp` / sensors+waydroid active / s2idle 3/3（uptime 连续）。
-    证据 `reports/device-session-20261113-vk191.md`。
-    ② **ESP `\EFI\BOOT\BOOTAA64.EFI` 已从 v5（A2 + `panic=0`，会挂住像死机）切回 `v3b-bigfont`**
+  - **ESP `\EFI\BOOT\BOOTAA64.EFI` 已从 v5（A2 + `panic=0`，会挂住像死机）切回 `v3b-bigfont`**
     （sha `244c5f65…`，`--tag v3b-restore`）⇒ 从 a 槽起不再「挂住不重启」；旧值备份仍在 `\EFI\BOOT\BOOTAA64.EFI.v5.bak`。
-    ③ **上机通道口径（新，`PITFALLS #650`）**：进 fastboot 用 `ssh elden-root 'sync; reboot bootloader'`，
+  - **上机通道口径（新，`PITFALLS #650`）**：进 fastboot 用 `ssh elden-root 'sync; reboot bootloader'`，
     **不要**用 `scripts/to-fastboot.sh --boot`（暖复位后立刻 `fastboot boot` 实测黑屏+崩坏，同镜像 systemd 路径一次过）。
   - **★2026-11-13 夜已部署的资源采样器**：`/usr/local/sbin/suspend-resource-sample.sh`（sha256 前 16 = 现查 `sha256sum`）+
     `elden-resource-sample.timer`（30 min，`OnBootSec=5min`）⇒ 追加写 `/var/lib/elden/suspend-resource.tsv`（TSV 表头 20 列）。
@@ -62,9 +55,10 @@
   - **传感器链路前置**：ADSP fastrpc 必须带 `qcom,non-secure-domain`（vk190 起日常线才有；判据 = `/proc/device-tree/soc@0/remoteproc@6800000/glink-edge/fastrpc/qcom,non-secure-domain` 存在，**别用 `strings dtb` 计数**，见 `PITFALLS #639`）。
   - **构建门禁口径（2026-11-13 变更）**：ABI 参考 = `patches/config-daily-c2-suspend-20261113`（含 `CONFIG_SUSPEND=y`），
     `scripts/check-abi-config.sh` 默认优先 `config-daily-*`；`build/m3v2-7.3rc7` 已同步开 SUSPEND ⇒ 打包不再需要 `SKIP_KERNEL_ASSERT=1`。
+  - **两条不变的硬约束（基线事实，违反 = 环境直接不可用）**：① **内核必须自编** — Debian 任何 `linux-image` 都缺本机板 DTS；
+    ② 传感器栈必须有 **forky/sid 级 `iio-sensor-proxy` + `libssc2`**，否则 `libssc`/`qrtr svc 400` 链路直接死（驱动侧坑见 `PITFALLS #114/#115`）。
 
-- **2026-11-10 20:15（历史快照，已被上条覆盖；当时 `active=a` 走 UEFI/ESP 路径）**：**落盘 UEFI = 干净世代 `pc1`**（`boot_a`，分区 sha `1ca2b8e69167…`，
-- ★★**2026-11-10 20:15（当前状态，唯一权威）**：**落盘 UEFI = 干净世代 `pc1`**（`boot_a`，分区 sha `1ca2b8e69167…`，
+- **2026-11-10 20:15（历史快照，已被上面 11-13 行覆盖；当时 `active=a` 走 UEFI/ESP 路径）**：**落盘 UEFI = 干净世代 `pc1`**（`boot_a`，分区 sha `1ca2b8e69167…`，
   件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；`active=a`、`retry=7 succ=0 unbootable=0`；
   **flashed 形态实测总耗时 37.0 s**（`fastboot reboot` → SSH；对照 p69 = **129.2 s**，差 92 s 全是 R70 的 25 s×3 停留 + 慢速屏显），
   `/proc/cmdline` 含 `elden_bootloader=esp`、内核 `7.3.1-debug-vk184-00002-g4da9a8b69fc8`（ESP 侧 `\boot\boot.img`）。
@@ -76,7 +70,7 @@
   **关机**：greetd 停等已压到 10 s（`/etc/systemd/system/greetd.service.d/zzz-faststop.conf`，实测 `final.target` 2 s、`Timed out`=0；
   原件 `rootfs/debian/systemd/greetd.service.d/`，未接生成链 ⇒ 见 `reports/shutdown-greetd-hang-plan-20261030.md` §7）。
 
-- **2026-11-09（历史快照，已被上条覆盖）**：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）；`boot_a` = 原 Android 内核（已回灌）：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）；`boot_a` = 原 Android 内核（已回灌）**
+- **2026-11-09（历史快照，已被上条覆盖）**：`boot_b` 仍 = `vk185-adsp`（持久，重启即回它）；`boot_a` = 原 Android 内核（已回灌）
   `boot_b` sha256 = `4e38bc2cd46a45b9c458c7f706ab3001a2aa3ccec693f7eb22c3ad0dc3ddb1e5`（自 11-08 起未变）；
   `slot a` = **`unbootable=yes`（故意保留**：防止有人 `set_active a` 又踩同一坑；要用槽 a 先显式 `--set-active=a` 清标志）。
   **「路线 B」启动路径（非默认、零写盘）**：`fastboot boot out/r21-sbstop-p59/uefi-preamble59-r1.img`（`cd73fbdc…`）

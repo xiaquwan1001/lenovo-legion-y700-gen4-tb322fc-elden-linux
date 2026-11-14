@@ -13,7 +13,8 @@
 
 1. **核实最近 2–3 轮会话进度 vs 文档**：`scripts/recent-sessions.sh 3`（收尾结论 + 证据指针）
    加 `ls -t */sessions/*.md | head -3`。**不一致时以会话里有实测证据（命令 + 原始输出）的那条为准**，
-   并**顺手把文档改成一致**（同一个提交内改完，不留两套说法）——具体裁决规则见 `INDEX.md` §2「时间序裁决」。
+   并**顺手把文档改成一致**（同一个提交内改完，不留两套说法）——具体裁决规则见 `INDEX.md` §2「时间序裁决」，
+   **阅读顺序与权重**见同节「入口阶梯」（最近会话 = 第 1 位，`reports`/`archive`/`SESSIONS`/`PROGRESS` 只作沿革）。
 2. **先查本地既有结论**（PITFALLS 零号纪律 1）：引导链/反复出现的问题先 `grep` `PITFALLS`/`archive/topics/`/`.pi/skills/*/references/`；
    命中则本轮只做「确认或推翻」，不从头重推。
 3. **确认设备与网络现态**：`DEVICE/README.md` §1.1 首条（在机内核/槽位）+ `adb devices`/`fastboot devices`/`ip route`。
