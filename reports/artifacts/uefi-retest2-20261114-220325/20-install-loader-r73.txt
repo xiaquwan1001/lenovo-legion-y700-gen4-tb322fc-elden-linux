@@ -1,0 +1,16 @@
+=== 现状
+-rw------- 1 root root 85819392 11月13日 09:56 boot/boot.img
+-rw------- 1 root root  9527296 11月14日 22:15 EFI/BOOT/BOOTAA64.EFI
+-rw------- 1 root root   184832 11月10日 19:43 EFI/elden/Loader.efi
+-rw------- 1 root root       95 11月13日 10:19 menu.cfg
+--- 回滚基座确认
+244c5f655966142161ac81aee47a23d9fc0e96b3d1af62f1b719bc4e55fc6805  EFI/BOOT/BOOTAA64.EFI.arming-v6.bak
+6e51fc60731f103484fad66822b4e9f86022822797a0f85aecd1b901a37b5f3d  EFI/elden/Loader.efi
+--- 把 BOOTAA64.EFI 换成 Loader-r73（文档里验证过的链）
+6e51fc60731f103484fad66822b4e9f86022822797a0f85aecd1b901a37b5f3d  EFI/BOOT/BOOTAA64.EFI
+--- menu.cfg
+#timeout=8
+Elden vk190 (ESP boot.img)|\boot\boot.img
+Mu fastboot|-fastboot
+Power off|-poweroff
+umount: /mnt/esp: target is busy.

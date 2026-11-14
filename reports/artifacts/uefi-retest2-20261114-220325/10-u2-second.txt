@@ -1,0 +1,4 @@
+=== U2 第 2 发（v7 = nopstorecons DTB）t0=22:16:11
+Sending 'boot.img' (65612 KB)                      OKAY [  1.480s]
+Booting                                            OKAY [ 10.106s]
+Finished. Total time: 11.625s

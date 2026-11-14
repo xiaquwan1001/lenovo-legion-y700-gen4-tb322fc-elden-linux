@@ -43,9 +43,17 @@
     改菜单只能重打 EFI（`scripts/grub-arm64-arming-build.sh` → `scripts/esp-install-grub.sh --activate`）。
     当时它嵌的菜单 = 11-11 的 A/B/C 实验组，`default=0` = **无 `earlycon=efifb keep_bootcon` 的 A 臂**
     ⇒ 直接 `set_active a` 起来会黑屏无字（`PITFALLS #622`），复测前必须先换 arming 件（`out/grub-20261114/grubaa64-arming-v6.efi`）。
-  - **ESP（`/dev/sda18`）实测身份（2026-11-14 现查，修正本节下方 11-09/11-10 历史块的错记）**：
-    `\EFI\BOOT\BOOTAA64.EFI` = **`244c5f65…` = v3b-bigfont GRUB**（**不是** Loader-r73）；
-    `\EFI\elden\Loader.efi` = `6e51fc60…` = Loader-r73（另一条链，只有 `menu.cfg`/`espboot.force` 那条路才走它）。
+  - **ESP（`/dev/sda18`）实测身份（2026-11-14 夜定案，取代先前“= Loader-r73 / = v3b GRUB”两种说法）**：
+    **现役** `\EFI\BOOT\BOOTAA64.EFI` = **Loader-r73**（`6e51fc60…`）—— 2026-11-14 22:29 从 `\EFI\elden\Loader.efi` 复制回来，
+    恢复文档验证过的那条链（`\menu.cfg` → `\boot\boot.img` vk190），当晚实测 **14 s 到 SSH 通过**。
+    历史件全在 ESP 上可回滚：`BOOTAA64.EFI.arming-v6.bak` = `244c5f65…`（v3b-bigfont **GRUB 嵌入菜单版**，不读 linux17 的 grub.cfg）、
+    `BOOTAA64.EFI.grub-arming-v7.bak` = `a63d2ab4…`（自造 arming GRUB，默认臂带 `earlycon=efifb keep_bootcon`，但卡 GRUB→initrd 交接，`PITFALLS #659`）、
+    `BOOTAA64.EFI.v3b-restore.bak` / `.v5.bak` 等更早备份。
+    **判据（新，旧的 `elden_bootloader=esp` 已失效）**：ESP 路径 = cmdline 里 `androidboot.serialno=51318dc0`（CRC32，**不是**真 SN）
+    且**无** ABL 追加的 `verifiedbootstate/hqsysfs/ufsffu`；b 槽路径反之。
+  - **`/boot` 下 DTB 现为「预置 initrd 属性」版（2026-11-14 22:41）**：`elden.dtb` = `84c2e0bf…`（153 193 B）、
+    `elden-nopstorecons.dtb` = `ac562717…`（153 164 B），均在 `/chosen` 预置了 `linux,initrd-start/end`（值 0）。
+    原件备份 `*.bak-20261114-224158`。**预置不是修法**（`PITFALLS #659` 已证否），仅保留无害。
   - **上机通道口径（新，`PITFALLS #650`）**：进 fastboot 用 `ssh elden-root 'sync; reboot bootloader'`，
     **不要**用 `scripts/to-fastboot.sh --boot`（暖复位后立刻 `fastboot boot` 实测黑屏+崩坏，同镜像 systemd 路径一次过）。
   - **★2026-11-13 夜已部署的资源采样器**：`/usr/local/sbin/suspend-resource-sample.sh`（sha256 前 16 = 现查 `sha256sum`）+

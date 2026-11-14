@@ -1,0 +1,11 @@
+--- 校验
+84c2e0bf938d8b6a2581db31f4545d604a513707430870cd69a7ba426606e348  /boot/elden.dtb
+ac562717da1edc80054f8e689956ce1f50b523bb514467c16081557b3883d9e3  /boot/elden-nopstorecons.dtb
+-rw-r--r-- 1 root root 153193 11月14日 22:41 /boot/elden.dtb
+-rw-r--r-- 1 root root 153117 11月12日 08:43 /boot/elden.dtb.bak-20261114-224158
+-rw-r--r-- 1 root root 153089 11月 8日 10:15 /boot/elden.dtb.vk184-20261112.bak
+-rw-r--r-- 1 root root 153164 11月14日 22:41 /boot/elden-nopstorecons.dtb
+-rw-r--r-- 1 root root 153088 11月12日 10:11 /boot/elden-nopstorecons.dtb.bak-20261114-224158
+--- chosen 属性确认
+0 0
+0 0

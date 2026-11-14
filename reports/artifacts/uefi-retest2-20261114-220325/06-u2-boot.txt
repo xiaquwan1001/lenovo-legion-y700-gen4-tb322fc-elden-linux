@@ -1,0 +1,5 @@
+=== U2: fastboot boot pc1（零写盘）t0=22:06:03
+Sending 'boot.img' (65612 KB)                      OKAY [  1.479s]
+Booting                                            OKAY [ 10.106s]
+Finished. Total time: 11.640s
+fastboot boot returned rc=0 after 12s

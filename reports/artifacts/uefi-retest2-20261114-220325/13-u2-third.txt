@@ -1,0 +1,4 @@
+=== U2 第 3 发（DTB 已预置 initrd-start/end）t0=22:42:51
+Sending 'boot.img' (65612 KB)                      OKAY [  1.481s]
+Booting                                            OKAY [ 10.109s]
+Finished. Total time: 11.625s

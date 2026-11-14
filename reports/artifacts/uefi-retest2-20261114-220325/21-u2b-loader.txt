@@ -1,0 +1,27 @@
+=== U2b: Loader-r73 链 t0=23:29:17
+Sending 'boot.img' (65612 KB)                      OKAY [  1.482s]
+Booting                                            OKAY [ 10.111s]
+Finished. Total time: 11.649s
+SSH up at +14s
+cmdline:
+7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty
+grubenv:
+# GRUB Environment Block
+elden_grub_log=31-A2p-initrd-ok-booting
+ESP logs:
+[L] menu boot \boot\boot.img
+[L] bootfastboot 0
+[L] pre-auth
+[L] post-auth st 0
+[L] pre-bootlinux
+
+=== 22:33 判读修正（原判「回落 b 槽」是错误的）===
+真判据 = /proc/cmdline 里 `androidboot.serialno=51318dc0`（CRC32，**不是**真 SN HA2EXB0E）
+      且**无** ABL 追加的 verifiedbootstate/hqsysfs/ufsffu ⇒ 这是 **ESP 路径**特征
+      （依据 reports/sn-anchoring-audit-20261113.md：UEFI 路径拿到的 serialno 是 CRC32 值）。
+旁证：ESP \loader.log = `menu entry n 3 / menu boot \boot\boot.img / pre-bootlinux`；
+      \espboot.log = `esp boot 85819392 / vendor_boot 100663296 / dtbo 33554432 / esp done 0`。
+⇒ **U2 间接形态（零写盘）通过**：ABL → pc1 Mu UEFI → ESP Loader-r73 → menu.cfg →
+   ESP \boot\boot.img (vk190, 85.8 MB) → Linux，14 s 到 SSH。
+★ 作废旧判据：11-10 记录说 ESP 路径 cmdline 含 `elden_bootloader=esp` —— 现查 ESP boot.img
+   头里**没有**这个 token（grep 计数 0），该判据已失效，改用 serialno=CRC32 + 无 ABL 追加 token。

@@ -1,0 +1,10 @@
+
+=== 2026-11-14 22:08 判读（屏上照片 IMG_20261114_220826.jpg）===
+U2 间接形态 = **链路通，崩在已知点**
+- ✅ ABL→pc1 UEFI→GRUB(arming v6)→内核 全链走到（BIOS 串 001.2024.12.74 = Mu 传入）
+- ✅ earlycon=efifb 屏上有字（#622 通道再次证实）
+- ✅ initramfs 解包成功，do_populate_rootfs 执行（#623 关闭；11-12 是 31 s "no cpio magic"）
+- ❌ 15.5 s Kernel panic：memcpy_toio ← ramoops_pstore_write ← pstore_console_write ← vprintk ← free_initrd_mem
+  = pstore console 写 ramoops 翻译失败（level 1 translation fault）——已知坑，11-12 的 A2 臂正是用
+  elden-nopstorecons.dtb 规避它；本轮 A2' 臂误用了 elden.dtb（带 pstore console）⇒ 我的备料错误
+- 下一步：A2' 臂的 devicetree 换 /boot/elden-nopstorecons.dtb，重打/重装 arming 件再跑

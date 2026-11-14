@@ -1,0 +1,17 @@
+[esp] 件 out/grub-20261114/grubaa64-arming-v6.efi  sha256=45632c799aa2b679a300f6e5e1a635ce6a26210a20510f91915504b0b0cc209d  tag=arming-v6
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+45632c799aa2b679a300f6e5e1a635ce6a26210a20510f91915504b0b0cc209d  EFI/grub/grub-arming-v6.efi
+[esp] 已切换 BOOTAA64.EFI
+45632c799aa2b679a300f6e5e1a635ce6a26210a20510f91915504b0b0cc209d  EFI/BOOT/BOOTAA64.EFI
+umount: /mnt/esp: target is busy.
+--- 校验
+UNMOUNTED
+45632c799aa2b679a300f6e5e1a635ce6a26210a20510f91915504b0b0cc209d  /efi/EFI/BOOT/BOOTAA64.EFI
+-rw------- 1 root root 9527296 2026年11月13日 /efi/EFI/BOOT/BOOTAA64.EFI.arming-v6.bak
+-rw------- 1 root root 9531392 2026年11月12日 /efi/EFI/BOOT/BOOTAA64.EFI.v3b-restore.bak
+
+Leaving filesystem unchanged.
+/dev/sda18: 57 files, 115793/130752 clusters
+244c5f655966142161ac81aee47a23d9fc0e96b3d1af62f1b719bc4e55fc6805  /efi/EFI/BOOT/BOOTAA64.EFI.arming-v6.bak
+244c5f655966142161ac81aee47a23d9fc0e96b3d1af62f1b719bc4e55fc6805  /efi/EFI/grub/grub-v3b-restore.efi
+45632c799aa2b679a300f6e5e1a635ce6a26210a20510f91915504b0b0cc209d  /efi/EFI/grub/grub-arming-v6.efi

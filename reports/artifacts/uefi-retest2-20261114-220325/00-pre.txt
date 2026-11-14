@@ -1,0 +1,33 @@
+## date
+2026-11-14T22:03:25+08:00
+## boot_id
+36eaebd5-99bf-49c9-a0a8-ed6ef7971225
+## uname
+7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty
+## cmdline
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal silent_boot.mode=nonsilent
+## uptime
+1181.44 9112.09
+## qbootctl
+Current slot: _b
+SLOT _a:
+	Active      : 0
+	Successful  : 0
+	Bootable    : 1
+SLOT _b:
+	Active      : 1
+	Successful  : 1
+	Bootable    : 1
+## boot_b sha
+2c433e515ca29afed91302a7d9778dd8ed69d190c54ff846012b4bb168989460  -
+## boot_a sha
+40d43397c14ce4ca18e99f553e618b40e901ed90d0c536dbed4fec76defb18de  -
+## dtbo
+00000000: 0000 0000 0000 0000                      ........
+## grubenv
+# GRUB Environment Block
+elden_grub_log=11-A2-initrd-ok-booting
+## ESP BOOTAA64
+244c5f655966142161ac81aee47a23d9fc0e96b3d1af62f1b719bc4e55fc6805  /efi/EFI/BOOT/BOOTAA64.EFI
+## esp avail
+/dev/sda18      511M  435M   77M   86% /efi

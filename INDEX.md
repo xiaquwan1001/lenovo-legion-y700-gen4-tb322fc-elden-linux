@@ -21,6 +21,9 @@
    **2026-11-14 复测被阻塞（不是固件问题）**：三次崩溃全是**主机侧 USB 命令通道被隔壁项目 13 个孤儿 `fastboot` 进程抢走**（`PITFALLS #658`）；设备每次安全回落 b 槽、`boot_a` 未动。
    同轮主机侧备料已完成：**ESP 的 `BOOTAA64.EFI` 是 GRUB「嵌入菜单」件（`244c5f65…`），不读 linux17 的 `/boot/grub/grub.cfg`** ⇒ 改默认臂只能重打 EFI（`scripts/grub-arm64-arming-build.sh` → `out/grub-20261114/grubaa64-arming-v6.efi`），
    且旧件默认臂**无 `earlycon=efifb keep_bootcon`**（直接 `set_active a` 必黑屏）。→ `TASKS/sessions/2026-11-14-UEFI复测-主机侧备料与USB抢占.md`、`DEVICE/README.md` §1.1
+   **2026-11-14 夜第 2 轮：U2 间接形态通过**（`fastboot boot` pc1 → ABL→Mu UEFI→ESP **Loader-r73**→`\menu.cfg`→ESP `\boot\boot.img` vk190→Linux，**14 s 到 SSH**，零写盘）；
+   新判据 = cmdline 里 `androidboot.serialno=51318dc0`（CRC32）且无 ABL 追加 token（旧的 `elden_bootloader=esp` 已失效）。
+   **GRUB 那条新路径卡在 initrd 交接**：设备上 36 ms `broken padding`，同件在 QEMU 直接启动 6.45 s 解包成功 ⇒ 断点在 GRUB 而非 initrd/内核。→ `PITFALLS #659`、`TASKS/sessions/2026-11-14-UEFI复测2-间接形态通过与GRUB-initrd断点.md`
 6. **桌面层两回归已闭环（2026-11-14 晚）**：**T20 电源键短按不熄屏**根因 = `zwlr_output_power_v1` 每屏只许一个请求者，phosh 的第二个请求被 `send_failed` 且资源被销毁 ⇒ `power_mode` 停在 `OFF` ⇒ 屏保管理器 `active` 恒 TRUE、press/release 双短路；修 = phoc（wlroots 放行多请求者）+ phosh（failed 回退为 ON）两枚自编件，已上机验收（短按熄屏/再按亮屏、长按菜单正常）。**T19 撕裂**仍停在「根因层 = 带 modifier 的 dmabuf 导入已锁定、缺 mesa 26.2.5 A/B」。
    → `TASKS/sessions/2026-11-14-T20-电源键不熄屏.md` §7、`PITFALLS` #371、`scripts/{phoc,phosh}-install.sh`
 5. **上游**（2026-11-14）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**；dwc3 v9 / dsi-phy v2 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**。→ `reports/upstream-status-20261113.md`、`TASKS` §7。

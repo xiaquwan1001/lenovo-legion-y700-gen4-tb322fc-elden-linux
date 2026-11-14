@@ -1,0 +1,6 @@
+=== 通道门：单发 getvar product
+product: elden_prc_wifi
+Finished. Total time: 0.004s
+current-slot: b
+Finished. Total time: 0.004s
+HA2EXB0E	 fastboot

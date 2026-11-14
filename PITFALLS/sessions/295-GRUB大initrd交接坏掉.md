@@ -1,0 +1,21 @@
+## #659 GRUB（arm64 standalone）把 64 MB initrd 交给内核时数据被毁：设备上 36 ms 就 `Initramfs unpacking failed: broken padding`，而同一份件在 QEMU `-kernel` 直接启动要 6.45 s 才解包成功
+
+结论: 2026-11-14 实测 —— **initrd 文件、内核解包代码都没问题，断点在 GRUB 交给内核这一步**。判据组合（缺一不可）：
+① 主机侧 `zlib` 精确复核 initrd：gzip 单流、`eof=True`、`unused_data=0`、解压 181 832 192 B（%4=0）、cpio 归档止于 181 832 008、尾部 184 字节全零、零后无数据；设备侧 sha 与主机一致；ext4 上是**单 extent**（`filefrag` 15771 块连续）。
+② QEMU `-kernel <同 Image> -initrd <同 initrd>` 直接启动（绕开 GRUB/UEFI）⇒ `Unpacking initramfs...` → **6.45 s** → `Freeing initrd memory: 63080K`，无任何 unpack 错误。
+③ 设备走 GRUB arm64 standalone（`\EFI\BOOT\BOOTAA64.EFI`，嵌入菜单，`linux`+`initrd`+`devicetree`）⇒ `Unpacking initramfs...` 之后 **36 ms** 就 `broken padding`。
+⇒ 解压耗时差 180 倍 = 设备上只解了几百 KB 就撞错 ⇒ **GRUB 递过去的 initrd 数据早期被截断/错位**（不是尺寸不够、不是 DTB 问题，见下）。
+
+判据: 屏上 `Unpacking initramfs...` 之后**几十毫秒**就报 `broken padding` / `no cpio magic` ⇒ **先怀疑交接方（GRUB/Loader），不要怀疑 initrd 件**。真解压 60+ MB 要**数秒**（本机 QEMU 实测 6.45 s），时间对不上就是没真解压。
+
+两条必须记住的**错判**（都是我本轮踩的）：
+- ❌「看到 `free_initrd_mem` / `Freeing initrd memory` ⇒ initramfs 解包成功」——**错**：`do_populate_rootfs()` 解包失败后照样调 `free_initrd_mem`。这句话只能证明「populate_rootfs 跑到了」，不能证明解包成功。
+- ❌「FDT 结构块与字符串块之间无空隙（gap=0）⇒ GRUB 为写 `linux,initrd-start/end` 必须扩容 FDT ⇒ initrd 布局错」——**假设已被否证**：用 `fdtput -t x <dtb> /chosen linux,initrd-start 0 0` 预置两个属性（GRUB 变成原地改值、不扩容）后，**第 3 发照样 `broken padding`**。预置本身无害可保留，但它**不是**修法。
+
+处置: 见 `TASKS/sessions/2026-11-14-UEFI复测2-间接形态通过与GRUB-initrd断点.md` §5 —— ①主机侧查 `grub-core/loader/arm64/linux.c` 的 initrd 分配/读取（重点：`grub_efi_allocate_pages` 返回区间是否与内核镜像重叠、`grub_file_read` 返回值是否校验）；②设备发小 initrd（1 MB slim）走同一臂做尺寸二分；③不想查就用**已验证的 ESP Loader 链**（`Loader-r73` + `\menu.cfg` + `\boot\boot.img`），那条链 2026-11-14 实测 14 s 到 SSH。
+
+附带两条同轮定案：
+- **ESP 路径的判据换了**：旧说法「cmdline 含 `elden_bootloader=esp`」**已失效**（ESP `boot.img` 头里没这个 token，`strings | grep -c` = 0）；新判据 = `/proc/cmdline` 里 `androidboot.serialno=51318dc0`（CRC32，**不是**真 SN `HA2EXB0E`）且**无** ABL 追加的 `verifiedbootstate/hqsysfs/ufsffu`。
+- **pstore 不保 UEFI 失败现场**：连续几发失败后 `/var/lib/systemd/pstore/console-ramoops-0` 会被后续启动覆盖（实测 2 MB → 503 KB），panic 文本全丢 ⇒ **屏拍照仍是失败细节的唯一通道**。
+
+证据指针: `reports/artifacts/uefi-retest2-20261114-220325/`（`10/13` 两发屏上照片、`21-u2b-loader.txt` 通过判据、`12-dtb-padded-install.txt` 否证记录）
