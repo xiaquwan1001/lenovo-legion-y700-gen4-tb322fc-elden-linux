@@ -1,0 +1,14 @@
+== 进 fastboot，同时观察 13 个孤儿进程是否抢 USB
+16020 usb_fd=0 hrtimer_nanosleep
+24167 usb_fd=0 hrtimer_nanosleep
+93293 usb_fd=0 hrtimer_nanosleep
+34531 usb_fd=0 hrtimer_nanosleep
+43695 usb_fd=0 hrtimer_nanosleep
+112250 usb_fd=0 hrtimer_nanosleep
+130803 usb_fd=0 hrtimer_nanosleep
+146514 usb_fd=0 hrtimer_nanosleep
+16072 usb_fd=0 hrtimer_nanosleep
+24189 usb_fd=0 hrtimer_nanosleep
+93455 usb_fd=0 hrtimer_nanosleep
+130855 usb_fd=0 hrtimer_nanosleep
+146612 usb_fd=0 hrtimer_nanosleep

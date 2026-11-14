@@ -1,0 +1,32 @@
+## 当前 boot 关键
+[    0.225640] [      T1] input: pmic_pwrkey as /devices/platform/soc@0/c400000.spmi/spmi-0/0-00/c400000.spmi:pmic@0:pon@1300/c400000.spmi:pmic@0:pon@1300:pwrkey/input/input0
+[    0.226166] [      T1] input: pmic_resin as /devices/platform/soc@0/c400000.spmi/spmi-0/0-00/c400000.spmi:pmic@0:pon@1300/c400000.spmi:pmic@0:pon@1300:resin/input/input1
+[    6.434397] [     T96] wcd939x_codec audio-codec: bound sdw:2:0:0217:010e:00:4 (ops wcd_sdw_component_ops)
+[    6.434430] [     T96] wcd939x_codec audio-codec: bound sdw:3:0:0217:010e:00:3 (ops wcd_sdw_component_ops)
+[   12.750702] [   T1738] servicemanager: Caller(pid=134,uid=9999,sid=u:r:droidloom_unconfined:s0) Found android.hardware.security.keymint.IRemotelyProvisionedComponent/default in device VINTF manifest.
+[   13.330047] [   T2601] UprobeStatsBpfLoad: map /sys/fs/bpf/uprobestats/map_DisruptiveApp_ComponentEnabledSetting_output_buf id 78
+[   13.332509] [   T2601] UprobeStatsBpfLoad: prog /sys/fs/bpf/uprobestats/prog_DisruptiveApp_uprobe_set_component_enabled_setting id 98
+[   13.689813] [   T1738] servicemanager: Caller(pid=268,uid=1046,sid=u:r:droidloom_unconfined:s0) Found android.hardware.media.c2.IComponentStore/software in framework VINTF manifest.
+[   13.690820] [   T1738] servicemanager: Caller(pid=268,uid=1046,sid=u:r:droidloom_unconfined:s0) Found android.hardware.media.c2.IComponentStore/software in framework VINTF manifest.
+[   13.691135] [   T1738] servicemanager: Caller(pid=268,uid=1046,sid=u:r:droidloom_unconfined:s0) Could not find android.hardware.media.c2.IComponentStore/default in the VINTF manifest. No alternative instances declared in VINTF.
+[   14.470149] [   T1738] servicemanager: Caller(pid=380,uid=1000,sid=u:r:droidloom_unconfined:s0) Could not find android.hardware.memtrack.IMemtrack/default in the VINTF manifest. No alternative instances declared in VINTF.
+[   15.662676] [   T1738] servicemanager: Caller(pid=608,uid=1013,sid=u:r:droidloom_unconfined:s0) Found android.hardware.media.c2.IComponentStore/software in framework VINTF manifest.
+[   15.841034] [   T1738] servicemanager: Caller(pid=380,uid=1000,sid=u:r:droidloom_unconfined:s0) Found android.hardware.media.c2.IComponentStore/software in framework VINTF manifest.
+[   16.503345] [   T1738] servicemanager: Caller(pid=885,uid=10098,sid=u:r:droidloom_unconfined:s0) Found android.hardware.media.c2.IComponentStore/software in framework VINTF manifest.
+## chosen
+#address-cells
+bootargs
+kaslr-seed
+linux,initrd-end
+linux,initrd-start
+name
+ranges
+#size-cells
+## powerlog 标记
+总计 16
+-rw-r--r-- 1 root root 13984 11月14日 21:13 suspend-resource.tsv
+## 分区 sha 复核
+40d43397c14ce4ca18e99f553e618b40e901ed90d0c536dbed4fec76defb18de  -
+2c433e515ca29afed91302a7d9778dd8ed69d190c54ff846012b4bb168989460  -
+00000000: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000010: 0000 0000 0000 0000 0000 0000 0000 0000  ................

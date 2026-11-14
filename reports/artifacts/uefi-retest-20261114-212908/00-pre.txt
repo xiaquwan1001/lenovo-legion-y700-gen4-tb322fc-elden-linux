@@ -1,0 +1,52 @@
+## date
+2026-11-14T21:28:48+08:00
+## boot_id
+dc897f83-8dcf-493e-9599-0e08f407665c
+## uname
+7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty
+## cmdline
+console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal
+## qbootctl
+Current slot: _b
+SLOT _a:
+	Active      : 0
+	Successful  : 0
+	Bootable    : 1
+SLOT _b:
+	Active      : 1
+	Successful  : 1
+	Bootable    : 1
+## ps slot
+androidboot.slot_suffix=_b
+## esp sha (mounted?)
+BOOTAA64.EFI
+BOOTAA64.EFI.e2-20261111.bak
+BOOTAA64.EFI.e2b-20261111.bak
+BOOTAA64.EFI.e3-20261111.bak
+BOOTAA64.EFI.e4-20261111.bak
+BOOTAA64.EFI.exp1.bak
+BOOTAA64.EFI.exp2.bak
+BOOTAA64.EFI.grub.bak
+BOOTAA64.EFI.loader-r73.bak
+BOOTAA64.EFI.loader-r73.pre-e1.bak
+BOOTAA64.EFI.r58b.bak
+BOOTAA64.EFI.r59c.bak
+BOOTAA64.EFI.r59c.bak2
+BOOTAA64.EFI.r62.bak
+BOOTAA64.EFI.r63.bak
+BOOTAA64.EFI.r64.bak
+BOOTAA64.EFI.r65.bak
+BOOTAA64.EFI.stub-old.bak
+BOOTAA64.EFI.v3b-bigfont.bak
+BOOTAA64.EFI.v3big160.bak
+BOOTAA64.EFI.v3b-restore.bak
+BOOTAA64.EFI.v4logs.bak
+BOOTAA64.EFI.v5.bak
+## grubenv
+总计 16
+-rw-r--r-- 1 root root 1878 11月11日 22:14 grub.cfg
+-rw-r--r-- 1 root root 1570 11月 8日 13:55 grub.cfg.bak-20261108
+-rw-r--r-- 1 root root  390 11月 8日 15:14 grub.cfg.bak-20261111-2158
+-rw-r--r-- 1 root root 1024 11月12日 10:12 grubenv
+## uptime
+up 1 day, 20 minutes

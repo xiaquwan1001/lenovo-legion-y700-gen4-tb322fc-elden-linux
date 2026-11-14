@@ -1,0 +1,3 @@
+getvar#1: < waiting for HA2EXB0E>
+getvar#2: < waiting for HA2EXB0E>
+getvar#3: < waiting for HA2EXB0E>

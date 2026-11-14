@@ -1,0 +1,9 @@
+## 现在
+2026-11-14T21:32:51+08:00
+up 2 minutes
+161.19 996.61
+## boot0 dmesg 精确异常
+## boot0 有无 efi 痕迹
+[    0.000000] [      T0] efi: UEFI not found.
+## 当前 boot_id 与 boot -1 的关系统计
+ok

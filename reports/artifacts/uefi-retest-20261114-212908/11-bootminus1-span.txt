@@ -1,0 +1,12 @@
+## boot -1 首尾
+2026-11-05T23:40:21+08:00 elden kernel: Booting Linux on physical CPU 0x0000000000 [0x514f0014]
+2026-11-05T23:40:21+08:00 elden kernel: Linux version 7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty (elden@y700) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #11 SMP PREEMPT Thu Nov 12 22:34:26 CST 2026
+2026-11-05T23:40:21+08:00 elden kernel: KASLR enabled
+...
+2026-11-14T21:29:25+08:00 elden udhcpd[475]: received SIGTERM
+2026-11-14T21:29:25+08:00 elden systemd-journald[529]: Received SIGTERM from PID 1 (systemd-shutdow).
+2026-11-14T21:29:25+08:00 elden systemd-journald[529]: Journal stopped
+## boot -1 是否 EFI 起
+11月 05 23:40:21 elden kernel: efi: UEFI not found.
+## boot -1 uptime 跨度
+146117

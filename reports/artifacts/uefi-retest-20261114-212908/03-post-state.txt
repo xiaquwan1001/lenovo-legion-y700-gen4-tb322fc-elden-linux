@@ -1,0 +1,23 @@
+## date/boot
+2026-11-05T23:40:35+08:00
+0cedb5d2-9a31-4cdc-ba0e-482e868d745b
+up 0 minute
+## boots
+ -5 456617863b304712b9110019f02eeeb9 Thu 2026-11-05 23:40:24 CST Fri 2026-11-13 20:26:40 CST
+ -4 a153d20929b74554adbbfbbfcf4c7a0a Thu 2026-11-05 23:40:21 CST Fri 2026-11-13 20:58:42 CST
+ -3 6f3ad2bac83649e28e2bdaf7475b51d2 Thu 2026-11-05 23:40:21 CST Thu 2026-11-05 23:40:42 CST
+ -2 a794c0d8b1834675ac030f4dd1c7ddb3 Thu 2026-11-05 23:40:21 CST Fri 2026-11-13 21:07:38 CST
+ -1 dc897f838dcf493e95990e08f407665c Thu 2026-11-05 23:40:21 CST Sat 2026-11-14 21:29:25 CST
+  0 0cedb5d29a314cdcba0e482e868d745b Thu 2026-11-05 23:40:21 CST Thu 2026-11-05 23:40:35 CST
+## pstore
+总计 0
+dr-xr-x---  2 1000 1007 0 11月 5日 23:40 .
+drwxr-xr-x 12 root root 0 1970年 1月 7日 ..
+## ramoops
+[    0.000000] [      T0] OF: reserved mem: 0x00000000c2000000..0x00000000c27fffff (8192 KiB) nomap non-reusable ramoops@c2000000
+[    0.053076] [      T1] pstore: Using crash dump compression: deflate
+[    0.053080] [      T1] printk: legacy console [ramoops-1] enabled
+[    0.053737] [      T1] pstore: Registered ramoops as persistent store backend
+[    0.053743] [      T1] ramoops: using 0x800000@0xc2000000, ecc: 0
+[    8.854090] [      T1] systemd[1]: modprobe@efi_pstore.service - Load Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore
+[    8.885706] [      T1] systemd[1]: Starting systemd-pstore.service - Platform Persistent Storage Archival...

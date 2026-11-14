@@ -38,13 +38,22 @@
     要用 UEFI 路先显式 `fastboot set_active a`（该槽 `unbootable=yes` 的历史口径见下方 11-09/11-10 块）。
   - **ESP `\EFI\BOOT\BOOTAA64.EFI` 已从 v5（A2 + `panic=0`，会挂住像死机）切回 `v3b-bigfont`**
     （sha `244c5f65…`，`--tag v3b-restore`）⇒ 从 a 槽起不再「挂住不重启」；旧值备份仍在 `\EFI\BOOT\BOOTAA64.EFI.v5.bak`。
+    **★2026-11-14 只读复核（定案，取代本条以前的含糊口径）**：它是 **GRUB 嵌入菜单件**（二进制含 6 个 `menuentry`、
+    **不含** `configfile …/boot/grub/grub.cfg` 桩）⇒ 它 **不读** linux17 上的 `/boot/grub/grub.cfg`，
+    改菜单只能重打 EFI（`scripts/grub-arm64-arming-build.sh` → `scripts/esp-install-grub.sh --activate`）。
+    当时它嵌的菜单 = 11-11 的 A/B/C 实验组，`default=0` = **无 `earlycon=efifb keep_bootcon` 的 A 臂**
+    ⇒ 直接 `set_active a` 起来会黑屏无字（`PITFALLS #622`），复测前必须先换 arming 件（`out/grub-20261114/grubaa64-arming-v6.efi`）。
+  - **ESP（`/dev/sda18`）实测身份（2026-11-14 现查，修正本节下方 11-09/11-10 历史块的错记）**：
+    `\EFI\BOOT\BOOTAA64.EFI` = **`244c5f65…` = v3b-bigfont GRUB**（**不是** Loader-r73）；
+    `\EFI\elden\Loader.efi` = `6e51fc60…` = Loader-r73（另一条链，只有 `menu.cfg`/`espboot.force` 那条路才走它）。
   - **上机通道口径（新，`PITFALLS #650`）**：进 fastboot 用 `ssh elden-root 'sync; reboot bootloader'`，
     **不要**用 `scripts/to-fastboot.sh --boot`（暖复位后立刻 `fastboot boot` 实测黑屏+崩坏，同镜像 systemd 路径一次过）。
   - **★2026-11-13 夜已部署的资源采样器**：`/usr/local/sbin/suspend-resource-sample.sh`（sha256 前 16 = 现查 `sha256sum`）+
     `elden-resource-sample.timer`（30 min，`OnBootSec=5min`）⇒ 追加写 `/var/lib/elden/suspend-resource.tsv`（TSV 表头 20 列）。
     **判据**：`systemctl is-active elden-resource-sample.service` 应很快回 `inactive`（oneshot）；TSV 行数随时间增长。
     取数：`scp elden-root:/var/lib/elden/suspend-resource.tsv .`。口径与判据纪律见 `TASKS/README.md` §4 的 T9 行、坑见 `PITFALLS #651`。
-  - **ESP（`/dev/sda18`）**：`\EFI\BOOT\BOOTAA64.EFI` = `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动）；
+  - **ESP（`/dev/sda18`）**：`\EFI\BOOT\BOOTAA64.EFI` = **v3b-bigfont GRUB**（`244c5f65…`，嵌入菜单版；
+    **不是** Loader-r73 —— 2026-11-14 只读 sha 定案，见 §1.1 同条）、`\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动）；
     `\boot\boot.img` = **vk190**（`54e84588…`，`menu.cfg` 首项已改名 `Elden vk190 (ESP boot.img)`）、
     `\boot\dtbo.img`（32 MiB）、`\boot\vendor_boot.img`（96 MiB，Mu loader 的 Android 回退路径要用，**别删**）；
     **2026-11-13 清理**：`\boot\boot2.img`（vk185-adsp，宿主留档 `out/boot-elden-vk185-adsp.img`）已删、`menu.cfg` 对应行一并去掉
@@ -62,7 +71,7 @@
   件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；`active=a`、`retry=7 succ=0 unbootable=0`；
   **flashed 形态实测总耗时 37.0 s**（`fastboot reboot` → SSH；对照 p69 = **129.2 s**，差 92 s 全是 R70 的 25 s×3 停留 + 慢速屏显），
   `/proc/cmdline` 含 `elden_bootloader=esp`、内核 `7.3.1-debug-vk184-00002-g4da9a8b69fc8`（ESP 侧 `\boot\boot.img`）。
-  ESP：`\EFI\BOOT\BOOTAA64.EFI` = `\EFI\elden\Loader.efi` = **Loader-r73**（`6e51fc60…`，菜单倒计时可见 + 任何按键即取消自动启动，R72/R73）；
+  ESP（**2026-11-10 历史快照，`BOOTAA64.EFI` 身份已被 11-14 只读复核推翻，见 §1.1**）：`\EFI\BOOT\BOOTAA64.EFI` 当时记为 Loader-r73（`6e51fc60…`）；
   `\EFI\grub\{grub-menu,grub-stub,grub-chain}.efi` 为 GRUB 三件（**未**替换 BOOTAA64.EFI）；`dtbo_a` = 全 0（UEFI 前置，`scripts/uefi-a-slot-prepare.sh`）。
   **EFI-stub 结论（2026-11-10，三发）**：GRUB 的 `linux`（EFI-stub）交接在本平台**不通** —— pc1/pc2（内存图加 612 MiB Conv）/fbdiag 内核
   三发都是「先只剩背光 → 掉电」，`/sys/fs/pstore` 空 ⇒ 死在 ramoops 注册之前 ⇒ **菜单保持两层**（GRUB 选 loader/重启/关机，loader 选内核）。
@@ -284,7 +293,7 @@
 | `backup_lba` | `61390847` | **`123871231`**（现 dump；头 0x20 处 8B LE） | `gpt-dump.sh` 会打印 |
 | `userdata` | 211.4 GiB | **256.7 GiB**（手术后；first=5972392 last=73277434） | `gpt-surgery-tb322fc.py list` |
 | `linux17` | （已删） | **192.0 GiB**（idx16，first=73277435 **last=123609082**，`/dev/sda17`；★2026-10-31 删 `linux18` 后并回，见 §3.3。本表其余列仍为 **2026-10-03 快照**，当时 `linux17` = 193.0 GiB / last=123871226） | 同上（**写前一律以 `scripts/gpt-surgery-tb322fc.py list` 实测为准**） |
-| `eldenesp`（ESP） | — | **512 MiB**（idx17，first=123609088 **last=123740159**，EFI System，`/dev/sda18`；2026-11-08 在**尾部空闲区纯追加**，未动任何已有分区，见 `reports/uefi-grub-esp-handoff-wall-20261108.md`）。**2026-11-09 内容**：`/EFI/BOOT/BOOTAA64.EFI`=路线 B 的 loader（p60 世代 + R60/R61 菜单；最新 `Loader-r65.efi` `3523b320…`，源码快照 `patches/uefi/20261109R65-loader-snapshot/`；GRUB 原件另存 `BOOTAA64.EFI.grub.bak`）、`/boot/{boot.img(85.6M,含令牌),boot2.img(备选 vk184-00003),vendor_boot.img(96M),dtbo.img(32M)}`、`/menu.cfg`、`/espboot.force`（实验开关）、`/loader.log`、`/espboot.log`；**FAT 写后必须 `sync`+`umount` 再 `fsck.vfat -n` 核对文件数**（曾因 dirty bit 被 `fsck -a` 丢掉 `dtbo.img`） | 同上 |
+| `eldenesp`（ESP） | — | **512 MiB**（idx17，first=123609088 **last=123740159**，EFI System，`/dev/sda18`；2026-11-08 在**尾部空闲区纯追加**，未动任何已有分区，见 `reports/uefi-grub-esp-handoff-wall-20261108.md`）。**现役内容以 `DEVICE/README.md` §1.1 为准**（2026-11-14 现查：`/EFI/BOOT/BOOTAA64.EFI`=`244c5f65…` v3b-bigfont GRUB 嵌入菜单版、`/EFI/elden/Loader.efi`=`6e51fc60…` r73、`/boot/boot.img`=vk190 `54e84588…`、`/boot/{dtbo.img(32M),vendor_boot.img(96M)}`、`/menu.cfg`、`/espboot.force`、`/loader.log`、`/espboot.log`）；**FAT 写后必须 `sync`+`umount` 再 `fsck.vfat -n` 核对文件数**（曾因 dirty bit 被 `fsck -a` 丢掉 `dtbo.img`） | 同上 |
 | free slots | 16–31（可加 16 个分区） | 18–31（ESP 占用 idx17） | 同上 |
 | boot/dtbo/vbmeta 大小 | 100663296 / 33554432 / 65536 | 同（同型号同布局） | `fastboot getvar partition-size:*` |
 | 备份目录规范 | `backup/<SN>-<容量档>/`（**禁用 `new-tablet`**） | 同 | — |

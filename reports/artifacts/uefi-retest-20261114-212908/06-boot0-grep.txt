@@ -1,0 +1,23 @@
+11月 05 23:40:21 elden kernel: printk: debug: ignoring loglevel setting.
+11月 05 23:40:21 elden kernel: OF: reserved mem: 0x00000000c2000000..0x00000000c27fffff (8192 KiB) nomap non-reusable ramoops@c2000000
+11月 05 23:40:21 elden kernel: Kernel command line: console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal silent_boot.mode=nonsilent
+11月 05 23:40:21 elden kernel: printk: legacy console [ramoops-1] enabled
+11月 05 23:40:21 elden kernel: pstore: Registered ramoops as persistent store backend
+11月 05 23:40:21 elden kernel: ramoops: using 0x800000@0xc2000000, ecc: 0
+11月 05 23:40:21 elden systemd-pstore[541]: PStore console-ramoops-0 moved to /var/lib/systemd/pstore/console-ramoops-0
+11月 05 23:40:21 elden systemd-pstore[541]: PStore pmsg-ramoops-0 moved to /var/lib/systemd/pstore/pmsg-ramoops-0
+11月 05 23:40:22 elden systemd[1]: Starting pstore-catch.service - Archive pstore/ramoops records to /var/log/pstore at boot...
+11月 05 23:40:22 elden systemd[1]: Finished pstore-catch.service - Archive pstore/ramoops records to /var/log/pstore at boot.
+11月 05 23:40:25 elden init: Command 'write /proc/sys/kernel/panic_on_oops 1' action=init (/system/etc/init/hw/init.rc:281) took 0ms and failed: Unable to write to file '/proc/sys/kernel/panic_on_oops': open() failed: Read-only file system
+11月 05 23:40:37 elden kernel: binder_debug: 3 callbacks suppressed
+## early dmesg 有无线索
+[    0.225640] [      T1] input: pmic_pwrkey as /devices/platform/soc@0/c400000.spmi/spmi-0/0-00/c400000.spmi:pmic@0:pon@1300/c400000.spmi:pmic@0:pon@1300:pwrkey/input/input0
+[    0.226166] [      T1] input: pmic_resin as /devices/platform/soc@0/c400000.spmi/spmi-0/0-00/c400000.spmi:pmic@0:pon@1300/c400000.spmi:pmic@0:pon@1300:resin/input/input1
+[    0.267231] [     T43] watchdog: NMI not fully supported
+[    0.267235] [     T43] watchdog: Hard watchdog permanently disabled
+[    6.434397] [     T96] wcd939x_codec audio-codec: bound sdw:2:0:0217:010e:00:4 (ops wcd_sdw_component_ops)
+[    6.434430] [     T96] wcd939x_codec audio-codec: bound sdw:3:0:0217:010e:00:3 (ops wcd_sdw_component_ops)
+[   12.750702] [   T1738] servicemanager: Caller(pid=134,uid=9999,sid=u:r:droidloom_unconfined:s0) Found android.hardware.security.keymint.IRemotelyProvisionedComponent/default in device VINTF manifest.
+[   13.330047] [   T2601] UprobeStatsBpfLoad: map /sys/fs/bpf/uprobestats/map_DisruptiveApp_ComponentEnabledSetting_output_buf id 78
+[   13.332509] [   T2601] UprobeStatsBpfLoad: prog /sys/fs/bpf/uprobestats/prog_DisruptiveApp_uprobe_set_component_enabled_setting id 98
+[   13.689813] [   T1738] servicemanager: Caller(pid=268,uid=1046,sid=u:r:droidloom_unconfined:s0) Found android.hardware.media.c2.IComponentStore/software in framework VINTF manifest.

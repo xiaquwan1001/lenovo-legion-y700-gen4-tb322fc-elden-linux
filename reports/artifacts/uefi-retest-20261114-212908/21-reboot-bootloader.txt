@@ -1,0 +1,2 @@
+== 尝试 1: fastboot reboot-bootloader（清状态）
+< waiting for HA2EXB0E>

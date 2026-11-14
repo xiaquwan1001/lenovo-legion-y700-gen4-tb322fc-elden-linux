@@ -1,0 +1,60 @@
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000D003E000 size=0000B000
+[E] start=00000000D003E000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000D007F000 size=00008000
+[E] start=00000000D007F000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000D0036000 size=00008000
+[E] start=00000000D0036000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000D002E000 size=00008000
+[E] start=00000000D002E000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000CFF3B000 size=00009000
+[E] start=00000000CFF3B000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000CFF2D000 size=0000E000
+[E] start=00000000CFF2D000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000CFF01000 size=00017000
+[E] start=00000000CFF01000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000CFDD3000 size=0006A000
+[E] start=00000000CFDD3000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000CFE72000 size=0001C000
+[E] start=00000000CFE72000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000CFF1F000 size=0000E000
+[E] start=00000000CFF1F000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000CFE98000 size=0000D000
+[E] start=00000000CFE98000
+[F] geom=1904x3040 bpp=32 s=4 ck=OK
+[F] len=2B00000 panel=1614800 lim=1614800
+[F] stride=1DC0 line=59400 cols=79 rows=63
+[I] ? base=00000000D0021000 size=00008000
+[ER68LOG n=9 b=20190100000137 bs=4096 s1:bds-in s2:r54-in s3:blk-enum s4:blk-conn s5:fs-enum s9:esp-ld-ok 
+ preeb
+[K] dump-ring-ok preeb
