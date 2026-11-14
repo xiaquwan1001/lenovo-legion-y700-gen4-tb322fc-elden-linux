@@ -65,7 +65,44 @@ phosh: Entering power save mode: 1      ← set_power_save_mode(OFF)
 - 已在设备上实测（**同一补丁打在 0.58 基线**、另一种是上游 main 源树编译通过）：
   `GetActive=false`、短按熄屏/亮屏、空闲熄屏、挂起不受影响。
 
-## 4. 卡在哪：需要能推的仓库
+## 4. 投递结果（2026-11-14 晚已发出）
+
+**MR !2005** — <https://gitlab.gnome.org/World/Phosh/phosh/-/merge_requests/2005>
+
+- 状态 `opened`；source = fork `xuqianhui1001/phosh:monitor-power-mode-unavailable` @ `88a0e237`，
+  target = `World/Phosh/phosh:main`，2026-11-14 20:2x 提交，CI pipeline 1146543/1146542 已触发。
+
+建 MR 的两个细节（下次省时间）：
+
+- **对上游项目** `POST /projects/16747/merge_requests` **会 403**（提交者不是上游成员）。
+  正确做法 = 对 **fork 项目**建 MR 并带 `target_project_id`：
+  `POST /projects/41528/merge_requests` + `{"target_project_id":16747,…}`。
+- HTTP 必须 **`--noproxy '*'`**：走代理会被 Fastly 拦成 406（API/网页都一样，且按 URL 缓存，
+  随机 query 参数也绕不过）。
+- 凭据来源 = `secret-tool lookup protocol https user xuqianhui1001 host gitlab.gnome.org`
+  （scope 含 `api`，到期 2027-06-01）；只在命令里传入，未落任何文件、未写记忆。
+
+## 5. 上一轮 MR（!820）的评审结果与口径（以后照这个来）
+
+phoc **!820 `input-method-relay: Fix NULL deref in keyboard grab destroy handler`**
+**已于 2026-10-31 21:22 合并**（merge commit `1ef2711f`，进 0.59 线）。过程有代价：
+
+- 维护者 guidog 原话：**"please continue without AI, this is too verbose. We're happy to help
+  with the code but don't want to talk to AI"**；并要求「short sentence + `Fixes:` tag instead of a
+  wall of text」「把旧的 data 取法也一并修掉」「能不能为它写个测试」。
+- 他**自己重写了整个 MR**（v2：删掉 AI 样板话、补 `tests/` 用例、提交信息改成「what changed when」），
+  然后 "All quiet, merging." 交 marge-bot 合并。
+
+→ **本项目以后提 GNOME 上游的固定口径**：
+
+1. 描述短、事实性：问题 → 症状 → 改法 → 测试环境，各 1–3 句；不写段落式样板话；
+2. 末尾**一行**如实交代 AI 辅助（作者本人复核/实测）；
+3. 能加测试就加（`tests/` + meson 一条）；
+4. 同类旧写法顺手一并改掉，别只修一处；
+5. 提交信息写清「改了什么、什么时候变的」，需要时带 `Fixes:`。
+
+## 6. 原卡点记录（历史，已解决）
+
 
 现状（2026-11-14 实测）：
 
