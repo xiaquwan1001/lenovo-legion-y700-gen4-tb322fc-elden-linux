@@ -1,7 +1,7 @@
 #!/bin/sh
 # phosh-install.sh — 把自编 phosh 装到设备并**钉住**，防 apt 覆盖（同 PITFALLS #654 的 phoc 做法）
 #
-# 背景：我们给 phosh 0.58.0 打了一枚补丁（patches-userland/upstream/phosh-power-mode-fallback.patch）：
+# 背景：我们给 phosh 0.58.0 打了一枚补丁（patches-userland/upstream/0001-monitor-keep-power-save-state-consistent.patch）：
 #   zwlr_output_power_v1 握手失败时把 power_mode 设为 ON 并 notify，否则
 #   PhoshScreenSaverManager 的 active 恒 TRUE ⇒ 电源键短按/空闲熄屏全失效。
 #   包名同为 `phosh`，只 `install -m0755 /usr/libexec/phosh` 会被下次 apt upgrade 静默冲刷

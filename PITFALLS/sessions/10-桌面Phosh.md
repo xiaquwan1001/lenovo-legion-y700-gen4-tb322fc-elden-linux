@@ -51,7 +51,7 @@
     - 修复（已上机，两处都要）：
       ① phoc 侧 `patches/phoc-output-power-20261114/0001-wlroots-allow-multiple-output-power-clients.patch`
          —— 重复请求时 `break` 放行，不再 send_failed（所有请求者都汇入同一个 `set_mode` 信号，phoc 自己序列化 commit）；
-      ② phosh 侧 `patches-userland/upstream/phosh-power-mode-fallback.patch`
+      ② phosh 侧 `patches-userland/upstream/0001-monitor-keep-power-save-state-consistent.patch`
          —— failed 时把 `power_mode` 设 `ON` 并 notify，避免「拿不到 power 控制权 ⇒ 以为屏已关」。
       安装：`scripts/phoc-install.sh --install`（仅换二进制，divert+hold 本就在位）+ 重建走
       `EXTRA_DIR=<patchdir> VER=0.59~rc1 bash scripts/build-phoc-arm64.sh`。phosh 侧走 `scripts/build-phosh-arm64.sh` +

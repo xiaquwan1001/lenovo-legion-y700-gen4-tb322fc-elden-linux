@@ -8,7 +8,7 @@
 #   `active = (mode == OFF)` 一开始就 TRUE 且永不变 ⇒ 电源键 press/release 全短路、
 #   空闲不熄屏；而电源菜单挂起走 logind 不受影响。
 #   修复 = failed 时把 power_mode 设为 ON 并 notify。
-#   详见 patches-userland/upstream/phosh-power-mode-fallback.patch
+#   详见 patches-userland/upstream/0001-monitor-keep-power-save-state-consistent.patch
 #   与 TASKS/sessions/2026-11-14-T20-电源键不熄屏.md
 #
 # 用法：sudo bash scripts/build-phosh-arm64.sh
@@ -22,7 +22,7 @@ VER=${VER:-0.58.0}
 DEBVER=${DEBVER:-0.58.0-1}
 SUITE=${SUITE:-sid}
 REPO=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-PATCH=$REPO/patches-userland/upstream/phosh-power-mode-fallback.patch
+PATCH=$REPO/patches-userland/upstream/0001-monitor-keep-power-save-state-consistent.patch
 STAMP=$(date +%Y%m%d)
 OUT=$REPO/out/phosh-arm64-$STAMP
 WORK=$REPO/build/phosh-src-$VER
