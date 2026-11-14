@@ -36,3 +36,25 @@
 
 ---
 
+371. **★ 电源键短按不熄屏 / 空闲不熄屏 = `zwlr_output_power_v1` 每屏只许一个请求者，phosh 拿到的是死 proxy**（2026-11-14 定案）
+    - 链条：wlroots 的 `output_power_manager_get_output_power()` 在同一 `wlr_output` 已有 power 对象时
+      直接 `zwlr_output_power_v1_send_failed()` **并销毁服务端资源**；phosh 的 `wlr_output_power_handle_failed()`
+      只打一行 warning，`PhoshMonitor.power_mode` 停在初始 `POWER_SAVE_MODE_OFF`（语义 = 屏已关）⇒
+      `PhoshScreenSaverManager.active` 从第一帧起恒 TRUE ⇒ `on_power_button_pressed()` 的 press/release 两支全短路。
+    - 第二个后果更隐蔽：proxy 已死 ⇒ 按电源键时 phosh 确实走到 `Entering power save mode: 1`、
+      也调了 `set_mode`，但**请求根本不到 phoc**（phoc 无 `Request to set output power mode` 行、strace 45 s 里 0 次 atomic commit）。
+      拿 `GetActive` 恒 `true`、`GetActiveTime=0`、`SetActive false` 无效当判据的就是这条。
+    - 判别（不用改代码）：`wlopm --off DSI-1` 若报 `Setting power mode for output 'DSI-1' failed` 而屏还亮着，
+      说明**别人已持有** power 对象；phosh 的 debug 里同时出现 `Failed to set output power mode for <out>`（每次会话启动一行）。
+      真证据要 `G_MESSAGES_DEBUG=all` 进 phosh/phoc 环境（greetd 的 `Environment=` **不会**传给会话，
+      要写在 `config.toml` 的 `command = "env G_MESSAGES_DEBUG=all …"`）。
+    - 修复（已上机，两处都要）：
+      ① phoc 侧 `patches/phoc-output-power-20261114/0001-wlroots-allow-multiple-output-power-clients.patch`
+         —— 重复请求时 `break` 放行，不再 send_failed（所有请求者都汇入同一个 `set_mode` 信号，phoc 自己序列化 commit）；
+      ② phosh 侧 `patches-userland/upstream/phosh-power-mode-fallback.patch`
+         —— failed 时把 `power_mode` 设 `ON` 并 notify，避免「拿不到 power 控制权 ⇒ 以为屏已关」。
+      安装：`scripts/phoc-install.sh --install`（仅换二进制，divert+hold 本就在位）+ 重建走
+      `EXTRA_DIR=<patchdir> VER=0.59~rc1 bash scripts/build-phoc-arm64.sh`。phosh 侧走 `scripts/build-phosh-arm64.sh` +
+      `scripts/phosh-install.sh --install`（`/usr/libexec/phosh` 的 divert+hold）。
+    - **不要**把 `sm.puri.phosh enable-suspend`（默认 false）当成电源键根因：它只决定电源菜单里「挂起」是否可点，
+      与短按熄屏无关（2026-11-14 已单独修，值改为 true）。

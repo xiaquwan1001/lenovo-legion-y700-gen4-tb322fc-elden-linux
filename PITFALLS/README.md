@@ -37,6 +37,7 @@
 | 08 | 恢复 Android / 免解 BL root 资产 | [08-恢复Android免解BLroot资产.md](sessions/08-恢复Android免解BLroot资产.md) |
 | 09 | WiFi / ath12k / 装包 | [09-WiFiath12k装包.md](sessions/09-WiFiath12k装包.md) |
 | 10 | 桌面 / Phosh | [10-桌面Phosh.md](sessions/10-桌面Phosh.md) |
+| 371 | 电源键短按不熄屏 = `zwlr_output_power_v1` 每屏只许一个请求者（phosh 拿死 proxy） | [10-桌面Phosh.md](sessions/10-桌面Phosh.md) |
 | 11 | 存储 / TF 卡 / 扩分区 | [11-存储TF卡扩分区.md](sessions/11-存储TF卡扩分区.md) |
 | 12 | userdata 缩容（TWRP 路线） | [12-userdata缩容.md](sessions/12-userdata缩容.md) |
 | 13 | AVB / 免签 / KSU | [13-AVB免签KSU.md](sessions/13-AVB免签KSU.md) |

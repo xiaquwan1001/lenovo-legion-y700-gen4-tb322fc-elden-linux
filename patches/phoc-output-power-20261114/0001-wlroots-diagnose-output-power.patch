@@ -1,0 +1,52 @@
+--- a/subprojects/wlroots-0.20.x/types/wlr_output_power_management_v1.c	2026-07-08 05:46:09.000000000 +0800
++++ b/subprojects/wlroots-0.20.x/types/wlr_output_power_management_v1.c	2026-11-14 19:37:26.312527596 +0800
+@@ -46,6 +46,8 @@
+ 		void *data) {
+ 	struct wlr_output_power_v1 *output_power =
+ 		wl_container_of(listener, output_power, output_destroy_listener);
++	wlr_log(WLR_ERROR, "output power: output %p dies, sending failed",
++		(void *)output_power->output);
+ 	zwlr_output_power_v1_send_failed(output_power->resource);
+ 	output_power_destroy(output_power);
+ }
+@@ -55,6 +57,9 @@
+ 
+ 	mode = output_power->output->enabled ? ZWLR_OUTPUT_POWER_V1_MODE_ON :
+ 		ZWLR_OUTPUT_POWER_V1_MODE_OFF;
++	wlr_log(WLR_ERROR, "output power: send mode %d for %s (enabled=%d)",
++		(int)mode, output_power->output->name,
++		(int)output_power->output->enabled);
+ 	zwlr_output_power_v1_send_mode(output_power->resource, mode);
+ }
+ 
+@@ -122,6 +127,8 @@
+ 	}
+ 	output_power->output = output;
+ 	output_power->manager = manager;
++	wlr_log(WLR_ERROR, "output power: get_output_power client=%p output=%p (%s)",
++		(void *)client, (void *)output, output ? output->name : "null");
+ 	wl_list_init(&output_power->link);
+ 
+ 	uint32_t version = wl_resource_get_version(manager_resource);
+@@ -136,6 +143,7 @@
+ 		output_power, output_power_handle_resource_destroy);
+ 
+ 	if (!output) {
++		wlr_log(WLR_ERROR, "output power: no wlr_output, sending failed");
+ 		wl_resource_set_user_data(output_power->resource, NULL);
+ 		zwlr_output_power_v1_send_failed(output_power->resource);
+ 		free(output_power);
+@@ -154,9 +162,10 @@
+ 	struct wlr_output_power_v1 *mgmt;
+ 	wl_list_for_each(mgmt, &manager->output_powers, link) {
+ 		if (mgmt->output == output) {
+-			zwlr_output_power_v1_send_failed(output_power->resource);
+-			output_power_destroy(output_power);
+-			return;
++			/* T20: 允许第二个请求者，两者都进同一个 set_mode 信号 */
++			wlr_log(WLR_ERROR, "output power: %s already has an object, "
++				"serving an extra one to client %p", output->name, (void *)client);
++			break;
+ 		}
+ 	}
+ 

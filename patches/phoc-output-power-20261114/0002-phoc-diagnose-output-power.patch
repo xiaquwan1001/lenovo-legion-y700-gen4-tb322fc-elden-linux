@@ -1,0 +1,42 @@
+--- a/src/output.c	2026-11-09 00:30:01.000000000 +0800
++++ b/src/output.c	2026-11-14 19:37:26.312389581 +0800
+@@ -20,6 +20,7 @@
+ #include "settings.h"
+ #include "surface.h"
+ #include "utils.h"
++#include <wlr/util/log.h>
+ #include "xwayland-surface.h"
+ 
+ #include <stdbool.h>
+@@ -2090,6 +2091,8 @@
+   g_return_if_fail (event && event->output && event->output->data);
+ 
+   self = event->output->data;
++  wlr_log (WLR_ERROR, "output power: set_mode arrived, output=%s mode=%d",
++           self->wlr_output->name, (int)event->mode);
+   g_debug ("Request to set output power mode of %p to %d", self->wlr_output->name, event->mode);
+   switch (event->mode) {
+   case ZWLR_OUTPUT_POWER_V1_MODE_OFF:
+@@ -2104,8 +2107,12 @@
+   }
+ 
+   current = self->wlr_output->enabled;
+-  if (enable == current)
++  wlr_log (WLR_ERROR, "output power: %s enabled=%d requested_enable=%d",
++           self->wlr_output->name, (int)current, (int)enable);
++  if (enable == current) {
++    wlr_log (WLR_ERROR, "output power: early return, already matches (stale enabled?)");
+     return;
++  }
+ 
+   wlr_output_state_init (&pending);
+   wlr_output_state_set_enabled (&pending, enable);
+@@ -2115,6 +2122,8 @@
+     wlr_output_state_finish (&pending);
+     return;
+   }
++  wlr_log (WLR_ERROR, "output power: commit ok, %s enabled=%d",
++           self->wlr_output->name, (int)self->wlr_output->enabled);
+ 
+   wlr_output_state_finish (&pending);
+   if (enable)

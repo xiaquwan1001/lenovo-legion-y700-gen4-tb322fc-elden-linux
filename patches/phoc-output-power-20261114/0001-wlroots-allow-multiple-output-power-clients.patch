@@ -1,0 +1,19 @@
+--- a/subprojects/wlroots-0.20.x/types/wlr_output_power_management_v1.c	2026-07-08 05:46:09.000000000 +0800
++++ b/subprojects/wlroots-0.20.x/types/wlr_output_power_management_v1.c	2026-11-14 19:41:21.497499945 +0800
+@@ -154,9 +154,13 @@
+ 	struct wlr_output_power_v1 *mgmt;
+ 	wl_list_for_each(mgmt, &manager->output_powers, link) {
+ 		if (mgmt->output == output) {
+-			zwlr_output_power_v1_send_failed(output_power->resource);
+-			output_power_destroy(output_power);
+-			return;
++			/* Allow more than one requester per output: every object ends up
++			 * in the same set_mode signal and phoc serialises the commits.
++			 * Refusing the second one breaks shells that create their power
++			 * object after some other client (e.g. a helper or a previous
++			 * shell instance) already did: the shell then sits on a proxy
++			 * whose resource was destroyed and can never blank the output. */
++			break;
+ 		}
+ 	}
+ 
