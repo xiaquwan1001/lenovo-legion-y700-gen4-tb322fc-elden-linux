@@ -1,0 +1,428 @@
+diff --git a/camera/common/1.0/default/HandleImporter.cpp b/camera/common/1.0/default/HandleImporter.cpp
+index fbe8686..18c6aa0 100644
+--- a/camera/common/1.0/default/HandleImporter.cpp
++++ b/camera/common/1.0/default/HandleImporter.cpp
+@@ -157,11 +157,99 @@ std::vector<PlaneLayout> getPlaneLayouts(const sp<IMapperV4> mapper, buffer_hand
+     return planeLayouts;
+ }
+ 
++namespace {
++
++// 2026-10-28 (y700-elden lane L1c): Waydroid/minigbm 的 IMapper@4.0 对
++// HAL_PIXEL_FORMAT_YV12 缓冲返回的 PlaneLayouts 可能自相矛盾——实测
++// (1280x720 YV12, usage 0x20930) 得到 y_str 2048 / c_str 0 / c_step 1，
++// 且 CB/CR 与 Y 基址重合。这种布局直接交给 libyuv::I420Copy() 会在
++// CopyRow_NEON 内写越界并触发 SEGV_ACCERR（tombstone_24 实证）。
++// 先做自洽校验；失败时对三平面 YUV420 用 plane1.offsetInBytes/height
++// 反推真实 yStride 并回退到标准 YV12/YU12 布局；仍不可用则返回全零布局，
++// 由调用方报错，绝不盲写。
++bool isLayoutSane(const YCbCrLayout& l, uint32_t width) {
++    if (l.y == nullptr || l.cb == nullptr || l.cr == nullptr) return false;
++    if (l.yStride <= 0 || l.yStride < static_cast<int32_t>(width)) return false;
++    if (l.cStride <= 0) return false;
++    if (l.cb == l.y || l.cr == l.y || l.cb == l.cr) return false;
++    const int32_t minCStride = ((static_cast<int32_t>(width) + 1) / 2)
++            * (l.chromaStep > 0 ? l.chromaStep : 1);
++    if (l.cStride < minCStride) return false;
++    return true;
++}
++
++YCbCrLayout repairPlanarYuv420Layout(
++        const YCbCrLayout& layout, const std::vector<PlaneLayout>& planeLayouts,
++        uint32_t width, uint32_t height) {
++    YCbCrLayout out = layout;
++    if (isLayoutSane(out, width)) return out;  // NV12 / 正常 YV12：原样返回
++
++    ALOGE("%s: inconsistent YCbCr layout (y %p cb %p cr %p y_str %d c_str %d c_step %d),"
++          " trying YV12/YU12 fallback", __FUNCTION__, out.y, out.cb, out.cr,
++          out.yStride, out.cStride, out.chromaStep);
++
++    uint8_t* base = reinterpret_cast<uint8_t*>(out.y);
++    if (base == nullptr || height == 0) return YCbCrLayout{};
++
++    // plane1.offsetInBytes == yStride * height，由此反推真实 yStride
++    // （实测 921600 / 720 = 1280，而 metadata 报 2048）。
++    int32_t yStride = 0;
++    uint64_t plane1Offset = 0;
++    bool vPlaneFirst = false;
++    size_t idx = 0;
++    for (const auto& planeLayout : planeLayouts) {
++        if (idx == 1) {
++            plane1Offset = planeLayout.offsetInBytes;
++            for (const auto& c : planeLayout.components) {
++                if (gralloc4::isStandardPlaneLayoutComponentType(c.type) &&
++                    static_cast<PlaneLayoutComponentType>(c.type.value) ==
++                            PlaneLayoutComponentType::CR) {
++                    vPlaneFirst = true;
++                }
++            }
++        }
++        ++idx;
++    }
++    if (plane1Offset != 0 && plane1Offset % height == 0) {
++        const uint64_t derived = plane1Offset / height;
++        if (derived >= width && derived <= (1ULL << 20)) {
++            yStride = static_cast<int32_t>(derived);
++        }
++    }
++    if (yStride == 0) yStride = out.yStride;
++    if (yStride <= 0 || yStride < static_cast<int32_t>(width)) return YCbCrLayout{};
++
++    const int32_t cStride = (yStride + 1) / 2;
++    uint8_t* crPlane = base + static_cast<uint64_t>(yStride) * height;
++    uint8_t* cbPlane = crPlane + static_cast<uint64_t>(yStride) * height / 4;
++    if (!vPlaneFirst) {
++        // YU12 (I420): 第二平面是 U
++        uint8_t* tmp = cbPlane;
++        cbPlane = crPlane;
++        crPlane = tmp;
++    }
++
++    out.yStride = yStride;
++    out.cb = cbPlane;
++    out.cr = crPlane;
++    out.cStride = cStride;
++    out.chromaStep = 1;
++
++    if (!isLayoutSane(out, width)) {
++        ALOGE("%s: fallback layout still unusable, refusing to convert", __FUNCTION__);
++        return YCbCrLayout{};
++    }
++    ALOGV("%s: repaired layout cb %p cr %p y_str %d c_str %d c_step %d",
++          __FUNCTION__, out.cb, out.cr, out.yStride, out.cStride, out.chromaStep);
++    return out;
++}
++
++}  // namespace
++
+ template <>
+ YCbCrLayout HandleImporter::lockYCbCrInternal<IMapperV4, MapperErrorV4>(
+         const sp<IMapperV4> mapper, buffer_handle_t& buf, uint64_t cpuUsage,
+-        const IMapper::Rect& accessRegion) {
+-    hidl_handle acquireFenceHandle;
++        const IMapper::Rect& accessRegion) {    hidl_handle acquireFenceHandle;
+     auto buffer = const_cast<native_handle_t*>(buf);
+     YCbCrLayout layout = {};
+     void* mapped = nullptr;
+@@ -215,7 +303,8 @@ YCbCrLayout HandleImporter::lockYCbCrInternal<IMapperV4, MapperErrorV4>(
+         }
+     }
+ 
+-    return layout;
++    return repairPlanarYuv420Layout(layout, planeLayouts, accessRegion.width,
++                                    accessRegion.height);
+ }
+ 
+ template<class M, class E>
+diff --git a/camera/device/3.4/default/ExternalCameraDevice.cpp b/camera/device/3.4/default/ExternalCameraDevice.cpp
+index 311c688..9b2eadf 100644
+--- a/camera/device/3.4/default/ExternalCameraDevice.cpp
++++ b/camera/device/3.4/default/ExternalCameraDevice.cpp
+@@ -39,8 +39,10 @@ namespace {
+ // Other formats to consider in the future:
+ // * V4L2_PIX_FMT_YVU420 (== YV12)
+ // * V4L2_PIX_FMT_YVYU (YVYU: can be converted to YV12 or other YUV420_888 formats)
+-const std::array<uint32_t, /*size*/ 2> kSupportedFourCCs{
+-    {V4L2_PIX_FMT_MJPEG, V4L2_PIX_FMT_Z16}};  // double braces required in C++11
++// ELDEN: upstream only accepts MJPEG (+Z16 for depth), which excludes raw YUV
++// devices such as anything fed by v4l2loopback (our libcamera bridge).
++const std::array<uint32_t, /*size*/ 4> kSupportedFourCCs{
++    {V4L2_PIX_FMT_MJPEG, V4L2_PIX_FMT_Z16, V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_NV12}};
+ 
+ constexpr int MAX_RETRY = 5; // Allow retry v4l2 open failures a few times.
+ constexpr int OPEN_RETRY_SLEEP_US = 100000; // 100ms * MAX_RETRY = 0.5 seconds
+@@ -275,6 +277,9 @@ status_t ExternalCameraDevice::initAvailableCapabilities(
+         switch (fmt.fourcc) {
+             case V4L2_PIX_FMT_Z16: hasDepth = true; break;
+             case V4L2_PIX_FMT_MJPEG: hasColor = true; break;
++            // ELDEN: raw YUV sources are rendered through the same I420 path.
++            case V4L2_PIX_FMT_YUYV:
++            case V4L2_PIX_FMT_NV12: hasColor = true; break;
+             default: ALOGW("%s: Unsupported format found", __FUNCTION__);
+         }
+     }
+@@ -696,11 +701,11 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
+     }
+ 
+     bool hasDepth = false;
+-    bool hasColor = false;
++    bool hasColorMjpeg = false;
+ 
+     // For V4L2_PIX_FMT_Z16
+     std::array<int, /*size*/ 1> halDepthFormats{{HAL_PIXEL_FORMAT_Y16}};
+-    // For V4L2_PIX_FMT_MJPEG
++    // For V4L2_PIX_FMT_MJPEG: JPEG stills + YUV preview
+     std::array<int, /*size*/ 3> halFormats{{HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YCbCr_420_888,
+                                             HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED}};
+ 
+@@ -710,7 +715,7 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
+                 hasDepth = true;
+                 break;
+             case V4L2_PIX_FMT_MJPEG:
+-                hasColor = true;
++                hasColorMjpeg = true;
+                 break;
+             default:
+                 ALOGW("%s: format %c%c%c%c is not supported!", __FUNCTION__,
+@@ -726,7 +731,7 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
+                 ANDROID_DEPTH_AVAILABLE_DEPTH_MIN_FRAME_DURATIONS,
+                 ANDROID_DEPTH_AVAILABLE_DEPTH_STALL_DURATIONS);
+     }
+-    if (hasColor) {
++    if (hasColorMjpeg) {
+         initOutputCharskeysByFormat(metadata, V4L2_PIX_FMT_MJPEG, halFormats,
+                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
+                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+@@ -734,6 +739,33 @@ status_t ExternalCameraDevice::initOutputCharsKeys(
+                 ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
+     }
+ 
++    // ELDEN: raw YUV inputs (v4l2loopback / libcamera bridge) — the external HAL
++    // upstream only advertises MJPEG+BLOB. The session converts these to I420
++    // itself, so we can expose YUV_420_888 + IMPLEMENTATION_DEFINED preview streams.
++    std::array<int, /*size*/ 2> halFormatsYuv{{HAL_PIXEL_FORMAT_YCbCr_420_888,
++                                               HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED}};
++    for (uint32_t yuvFourcc : {static_cast<uint32_t>(V4L2_PIX_FMT_YUYV),
++                               static_cast<uint32_t>(V4L2_PIX_FMT_NV12)}) {
++        bool present = false;
++        for (const auto& supportedFormat : mSupportedFormats) {
++            if (supportedFormat.fourcc == yuvFourcc) {
++                present = true;
++                break;
++            }
++        }
++        if (!present) {
++            continue;
++        }
++        ALOGI("%s: advertising YUV streams for %c%c%c%c", __FUNCTION__,
++              yuvFourcc & 0xFF, (yuvFourcc >> 8) & 0xFF,
++              (yuvFourcc >> 16) & 0xFF, (yuvFourcc >> 24) & 0xFF);
++        initOutputCharskeysByFormat(metadata, yuvFourcc, halFormatsYuv,
++                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT,
++                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
++                ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
++                ANDROID_SCALER_AVAILABLE_STALL_DURATIONS);
++    }
++
+     calculateMinFps(metadata);
+ 
+     SupportedV4L2Format maximumFormat {.width = 0, .height = 0};
+@@ -796,6 +828,24 @@ void ExternalCameraDevice::getFrameRateList(
+         }
+     }
+ 
++    if (format->frameRates.empty()) {
++        // ELDEN_FRAMERATE_FALLBACK: v4l2loopback has no ENUM_FRAMEINTERVALS; use G_PARM.
++        v4l2_streamparm parm{};
++        parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
++        if (TEMP_FAILURE_RETRY(ioctl(fd, VIDIOC_G_PARM, &parm)) == 0 &&
++                parm.parm.capture.timeperframe.numerator != 0) {
++            SupportedV4L2Format::FrameRate fr = {
++                    parm.parm.capture.timeperframe.numerator,
++                    parm.parm.capture.timeperframe.denominator};
++            double framerate = fr.getDouble();
++            if (framerate > 0 && framerate <= fpsUpperBound) {
++                ALOGI("%s: ENUM_FRAMEINTERVALS empty, falling back to G_PARM %f fps",
++                      __FUNCTION__, framerate);
++                format->frameRates.push_back(fr);
++            }
++        }
++    }
++
+     if (format->frameRates.empty()) {
+         ALOGE("%s: failed to get supported frame rates for format:%c%c%c%c w %d h %d",
+                 __FUNCTION__,
+@@ -880,6 +930,9 @@ std::vector<SupportedV4L2Format> ExternalCameraDevice::getCandidateSupportedForm
+                     kSupportedFourCCs.begin(), kSupportedFourCCs.end(), fmtdesc.pixelformat);
+             if (it != kSupportedFourCCs.end()) {
+                 // Found supported format
++                // ELDEN_FRAMESIZE_FALLBACK: some drivers (v4l2loopback) implement
++                // VIDIOC_ENUM_FRAMESIZES as -EINVAL and only answer VIDIOC_G_FMT.
++                size_t sizesBefore = outFmts.size();
+                 v4l2_frmsizeenum frameSize {
+                         .index = 0,
+                         .pixel_format = fmtdesc.pixelformat};
+@@ -915,6 +968,40 @@ std::vector<SupportedV4L2Format> ExternalCameraDevice::getCandidateSupportedForm
+                         }
+                     }
+                 }
++                if (outFmts.size() == sizesBefore) {
++                    v4l2_format fmt{};
++                    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
++                    int gret = TEMP_FAILURE_RETRY(ioctl(fd, VIDIOC_G_FMT, &fmt));
++                    if (gret != 0) {
++                        ALOGE("%s: G_FMT failed errno=%d (%s)", __FUNCTION__, errno, strerror(errno));
++                    } else {
++                        ALOGE("%s: G_FMT ok %ux%u fourcc=%c%c%c%c (want %c%c%c%c) min=%ux%u",
++                              __FUNCTION__, fmt.fmt.pix.width, fmt.fmt.pix.height,
++                              fmt.fmt.pix.pixelformat & 0xFF, (fmt.fmt.pix.pixelformat >> 8) & 0xFF,
++                              (fmt.fmt.pix.pixelformat >> 16) & 0xFF, (fmt.fmt.pix.pixelformat >> 24) & 0xFF,
++                              fmtdesc.pixelformat & 0xFF, (fmtdesc.pixelformat >> 8) & 0xFF,
++                              (fmtdesc.pixelformat >> 16) & 0xFF, (fmtdesc.pixelformat >> 24) & 0xFF,
++                              minStreamSize.width, minStreamSize.height);
++                    }
++                    if (gret == 0 &&
++                            fmt.fmt.pix.pixelformat == fmtdesc.pixelformat &&
++                            fmt.fmt.pix.height <= fmt.fmt.pix.width &&
++                            fmt.fmt.pix.width >= minStreamSize.width &&
++                            fmt.fmt.pix.height >= minStreamSize.height) {
++                        SupportedV4L2Format format {
++                            .width = (uint32_t)fmt.fmt.pix.width,
++                            .height = (uint32_t)fmt.fmt.pix.height,
++                            .fourcc = fmt.fmt.pix.pixelformat
++                        };
++                        ALOGI("%s: ENUM_FRAMESIZES empty, falling back to G_FMT %dx%d",
++                              __FUNCTION__, format.width, format.height);
++                        if (format.fourcc == V4L2_PIX_FMT_Z16 && depthEnabled) {
++                            updateFpsBounds(fd, cropType, depthFpsLimits, format, outFmts);
++                        } else {
++                            updateFpsBounds(fd, cropType, fpsLimits, format, outFmts);
++                        }
++                    }
++                }
+             }
+         }
+         fmtdesc.index++;
+diff --git a/camera/device/3.4/default/ExternalCameraDeviceSession.cpp b/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
+index ca7186b..2b38ec6 100644
+--- a/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
++++ b/camera/device/3.4/default/ExternalCameraDeviceSession.cpp
+@@ -1438,7 +1438,11 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
+         return false;
+     };
+ 
+-    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG && req->frameIn->mFourcc != V4L2_PIX_FMT_Z16) {
++    // ELDEN: raw YUV (v4l2loopback / libcamera bridge) is accepted too.
++    if (req->frameIn->mFourcc != V4L2_PIX_FMT_MJPEG && req->frameIn->mFourcc != V4L2_PIX_FMT_Z16 &&
++            req->frameIn->mFourcc != V4L2_PIX_FMT_YUYV &&
++            req->frameIn->mFourcc != V4L2_PIX_FMT_NV12 &&
++            req->frameIn->mFourcc != V4L2_PIX_FMT_YUV420) {
+         return onDeviceError("%s: do not support V4L2 format %c%c%c%c", __FUNCTION__,
+                 req->frameIn->mFourcc & 0xFF,
+                 (req->frameIn->mFourcc >> 8) & 0xFF,
+@@ -1519,6 +1523,47 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
+             signalRequestDone();
+             return true;
+         }
++    } else {
++        // ELDEN: raw YUV input -> intermediate YU12 (libyuv, same target as the JPEG path).
++        ATRACE_BEGIN("YUVtoI420");
++        int res = 0;
++        if (req->frameIn->mFourcc == V4L2_PIX_FMT_YUYV) {
++            res = libyuv::YUY2ToI420(
++                    inData, mYu12Frame->mWidth * 2,
++                    static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride,
++                    mYu12Frame->mWidth, mYu12Frame->mHeight);
++        } else if (req->frameIn->mFourcc == V4L2_PIX_FMT_NV12) {
++            res = libyuv::NV12ToI420(
++                    inData, mYu12Frame->mWidth,
++                    inData + mYu12Frame->mWidth * mYu12Frame->mHeight, mYu12Frame->mWidth,
++                    static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride,
++                    mYu12Frame->mWidth, mYu12Frame->mHeight);
++        } else {  // V4L2_PIX_FMT_YUV420
++            res = libyuv::I420Copy(
++                    inData, mYu12Frame->mWidth,
++                    inData + mYu12Frame->mWidth * mYu12Frame->mHeight, mYu12Frame->mWidth / 2,
++                    inData + mYu12Frame->mWidth * mYu12Frame->mHeight * 5 / 4,
++                    mYu12Frame->mWidth / 2,
++                    static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
++                    static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride,
++                    mYu12Frame->mWidth, mYu12Frame->mHeight);
++        }
++        ATRACE_END();
++        if (res != 0) {
++            ALOGE("%s: Convert raw YUV frame to YU12 failed! res %d", __FUNCTION__, res);
++            lk.unlock();
++            Status st = parent->processCaptureRequestError(req);
++            if (st != Status::OK) {
++                return onDeviceError("%s: failed to process capture request error!", __FUNCTION__);
++            }
++            signalRequestDone();
++            return true;
++        }
+     }
+ 
+     ATRACE_BEGIN("Wait for BufferRequest done");
+diff --git a/camera/device/3.4/default/ExternalCameraUtils.cpp b/camera/device/3.4/default/ExternalCameraUtils.cpp
+index 8f4626c..7f02079 100644
+--- a/camera/device/3.4/default/ExternalCameraUtils.cpp
++++ b/camera/device/3.4/default/ExternalCameraUtils.cpp
+@@ -300,8 +300,28 @@ int getCropRect(
+     return 0;
+ }
+ 
++// 2026-10-28 (y700-elden lane L1c): 写前前置校验。实测 Waydroid gralloc 对
++// YV12 输出缓冲给出 cStride==0 / cb==cr==y 的自相矛盾布局，libyuv::I420Copy
++// 会盲写到越界地址并 SIGSEGV（cameraserver 判 provider 死亡整链路断）。
++// 这里非法布局直接返回错误，把「进程崩溃」降级为「单次请求失败」，并打印
++// 完整布局以便取证。
++static bool isConvertLayoutUsable(const YCbCrLayout& l, Size sz) {
++    if (l.y == nullptr || l.cb == nullptr || l.cr == nullptr) return false;
++    if (l.yStride <= 0 || l.yStride < static_cast<int32_t>(sz.width)) return false;
++    if (l.cStride <= 0) return false;
++    if (l.cb == l.y || l.cr == l.y || l.cb == l.cr) return false;
++    return true;
++}
++
+ int formatConvert(
+         const YCbCrLayout& in, const YCbCrLayout& out, Size sz, uint32_t format) {
++    if (!isConvertLayoutUsable(out, sz)) {
++        ALOGE("%s: refuse to convert (format 0x%x %dx%d): output layout unusable"
++              " y %p cb %p cr %p y_str %d c_str %d c_step %d",
++              __FUNCTION__, format, sz.width, sz.height, out.y, out.cb, out.cr,
++              out.yStride, out.cStride, out.chromaStep);
++        return -EINVAL;
++    }
+     int ret = 0;
+     switch (format) {
+         case V4L2_PIX_FMT_NV21:
+diff --git a/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp b/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
+index 4fc7437..8497cef 100644
+--- a/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
++++ b/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
+@@ -41,10 +41,19 @@ namespace {
+ // "device@<version>/external/<id>"
+ const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/external/(.+)");
+ const int kMaxDevicePathLen = 256;
+-const char* kDevicePath = "/dev/";
++// ELDEN 2026-10-19: 上游这两行在 **64 位**上算错，必须修（这是上游只出 32 位构建的原因之一）。
++//   sizeof(kDevicePath) 里的 kDevicePath 是 `const char*` ⇒ 得到**指针大小**（arm64 = 8，
++//   32 位 = 4）。于是 kDevicePrefixLen = 8 + 5 + 1 = 14，而 "-/dev/video100" 的数字从下标 10 开始
++//   ⇒ atoi("/dev/video100" + 14) = atoi("00") = 0 ⇒ 所有设备号都被算成 0 ⇒
++//   addExternalCamera 报 "device@3.4/external/0"，随后 getCameraDeviceInterface_V3_x 用
++//   matchDeviceName 反算回 "/dev/video0"（容器里不存在）⇒ init failed ⇒ 永远 0 camera devices。
++//   32 位构建时 sizeof 指针 = 4 恰好凑出 10，所以上游 32 位一直"正常"。
++// 治法：用**字面量长度**而不是指针大小。
++constexpr char kDevicePath[] = "/dev/";
+ constexpr char kPrefix[] = "video";
+ constexpr int kPrefixLen = sizeof(kPrefix) - 1;
+-constexpr int kDevicePrefixLen = sizeof(kDevicePath) + kPrefixLen + 1;
++constexpr int kDevicePathLen = sizeof(kDevicePath) - 1;   // 5，不含 '\0'
++constexpr int kDevicePrefixLen = kDevicePathLen + kPrefixLen;  // "/dev/" + "video" = 10
+ 
+ bool matchDeviceName(int cameraIdOffset,
+                      const hidl_string& deviceName, std::string* deviceVersion,
+diff --git a/camera/provider/2.7/default/ExternalCameraProviderImpl_2_7.cpp b/camera/provider/2.7/default/ExternalCameraProviderImpl_2_7.cpp
+index b63e3bb..13df54c 100644
+--- a/camera/provider/2.7/default/ExternalCameraProviderImpl_2_7.cpp
++++ b/camera/provider/2.7/default/ExternalCameraProviderImpl_2_7.cpp
+@@ -39,10 +39,12 @@ namespace {
+ // "device@<version>/external/<id>"
+ const std::regex kDeviceNameRE("device@([0-9]+\\.[0-9]+)/external/(.+)");
+ const int kMaxDevicePathLen = 256;
+-const char* kDevicePath = "/dev/";
++// ELDEN 2026-10-19: kDevicePath 必须是**数组**，否则 sizeof 得到指针大小（arm64=8），
++// 使 kDevicePrefixLen 偏移错位、设备号恒为 0。详见 ExternalCameraProviderImpl_2_4.cpp。
++constexpr char kDevicePath[] = "/dev/";
+ constexpr char kPrefix[] = "video";
+ constexpr int kPrefixLen = sizeof(kPrefix) - 1;
+-constexpr int kDevicePrefixLen = sizeof(kDevicePath) + kPrefixLen + 1;
++constexpr int kDevicePrefixLen = (sizeof(kDevicePath) - 1) + kPrefixLen;
+ 
+ bool matchDeviceName(int cameraIdOffset, const hidl_string& deviceName, std::string* deviceVersion,
+                      std::string* cameraDevicePath) {
