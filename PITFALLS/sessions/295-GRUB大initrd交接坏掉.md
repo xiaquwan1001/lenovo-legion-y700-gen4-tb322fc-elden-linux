@@ -12,7 +12,11 @@
 - ❌「看到 `free_initrd_mem` / `Freeing initrd memory` ⇒ initramfs 解包成功」——**错**：`do_populate_rootfs()` 解包失败后照样调 `free_initrd_mem`。这句话只能证明「populate_rootfs 跑到了」，不能证明解包成功。
 - ❌「FDT 结构块与字符串块之间无空隙（gap=0）⇒ GRUB 为写 `linux,initrd-start/end` 必须扩容 FDT ⇒ initrd 布局错」——**假设已被否证**：用 `fdtput -t x <dtb> /chosen linux,initrd-start 0 0` 预置两个属性（GRUB 变成原地改值、不扩容）后，**第 3 发照样 `broken padding`**。预置本身无害可保留，但它**不是**修法。
 
-处置: 见 `TASKS/sessions/2026-11-14-UEFI复测2-间接形态通过与GRUB-initrd断点.md` §5 —— ①主机侧查 `grub-core/loader/arm64/linux.c` 的 initrd 分配/读取（重点：`grub_efi_allocate_pages` 返回区间是否与内核镜像重叠、`grub_file_read` 返回值是否校验）；②设备发小 initrd（1 MB slim）走同一臂做尺寸二分；③不想查就用**已验证的 ESP Loader 链**（`Loader-r73` + `\menu.cfg` + `\boot\boot.img`），那条链 2026-11-14 实测 14 s 到 SSH。
+**收窄一层（同轮深夜追加）**：QEMU `AAVMF(QEMU_EFI.fd)` + 同一份 GRUB + 同一份 64 MB initrd ⇒ `[0.388] Unpacking` → `[2.278] Freeing initrd memory: 63080K`（**1.89 s，无 broken padding**）。
+⇒ **GRUB 的 initrd 通用逻辑本身没问题**，断点在**我们的 Mu UEFI（pc1 载荷）环境 / 它给的内存图**（QEMU 标准 EDK2 与我们 Mu 件最大差异就是内存图；且第 1 发 panic 栈顶正落在 `ramoops` 那片 `no-map` 区）。
+**QEMU 配方的坑**：菜单里**不能**写 `devicetree` —— virt 上加载骁龙板 DTB（无 pl011/virtio）会让内核连控制台都没有，全程静默、误判成"内核没起来"。
+
+处置: 见 `TASKS/sessions/2026-11-14-UEFI复测2-间接形态通过与GRUB-initrd断点.md` §5、明天的完整清单 `.pi/plans/2026-11-15-uefi-grub-initrd-next.md` —— ①主机侧查 `grub-core/loader/arm64/linux.c` 的 initrd 分配/读取（重点：`grub_efi_allocate_pages` 返回区间是否与内核镜像重叠、`grub_file_read` 返回值是否校验）；②设备发小 initrd（1 MB slim）走同一臂做尺寸二分；③不想查就用**已验证的 ESP Loader 链**（`Loader-r73` + `\menu.cfg` + `\boot\boot.img`），那条链 2026-11-14 实测 14 s 到 SSH。
 
 附带两条同轮定案：
 - **ESP 路径的判据换了**：旧说法「cmdline 含 `elden_bootloader=esp`」**已失效**（ESP `boot.img` 头里没这个 token，`strings | grep -c` = 0）；新判据 = `/proc/cmdline` 里 `androidboot.serialno=51318dc0`（CRC32，**不是**真 SN `HA2EXB0E`）且**无** ABL 追加的 `verifiedbootstate/hqsysfs/ufsffu`。

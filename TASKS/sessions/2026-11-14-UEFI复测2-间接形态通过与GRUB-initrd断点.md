@@ -67,7 +67,21 @@
   原件备份 `*.bak-20261114-224158`。
 - 设备当前：Linux / `_b` 槽 / 本 boot 由 **ESP 路径**起来（serialno=51318dc0）。
 
-## 5. 下一步（判读，按代价排序）
+## 5. ★收尾新增（23:5x）：QEMU 已复现「GRUB + 64 MB initrd」并**成功**，断点收窄到我们的 Mu UEFI
+
+`AAVMF(QEMU_EFI.fd)` + 同一份 GRUB（arm64 standalone）+ 同一份 Image + 同一份 64 MB initrd：
+`[0.388] Unpacking initramfs...` → `[2.278] Freeing initrd memory: 63080K`（**1.89 s，无 broken padding**）。
+
+⇒ **GRUB 的 initrd 通用逻辑没问题**；设备上的 `broken padding` 只能来自**我们的 Mu UEFI（pc1）环境 / 它给的内存图**。
+两条支持性线索：① 第 1 发 panic 栈顶落在 **`ramoops` 那片 `no-map` 区**；② QEMU 标准 EDK2 与我们 Mu 件最大的差异就是内存图。
+（顺带排除：`/ #address-cells = 2`、`/chosen #address-cells = 2` ⇒ 不是 32 位地址截断。）
+
+**QEMU 配方的关键坑（今晚踩过）**：菜单里**不能**写 `devicetree` —— 在 virt 上加载骁龙板 DTB（无 pl011/virtio）会让内核连控制台都没有，全程静默、看起来像"内核没起来"。
+
+明天的完整待查清单（含已排除项、四档主攻方向、取证纪律、就绪检查、备好件）→
+**`.pi/plans/2026-11-15-uefi-grub-initrd-next.md`**。
+
+## 5b. 下一步（判读，按代价排序）
 
 1. **（主机侧，零设备）** 查 GRUB arm64 的 `initrd`/`linux` 在 64 MB 尺寸上的行为：
    `grub-core/loader/arm64/linux.c` 的 `initrd_start/end` 与 `grub_efi_allocate_pages` 返回区间；
