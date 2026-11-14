@@ -23,6 +23,9 @@ export EGL_PLATFORM=surfaceless
 # 另有 GPU 爬频补偿，见 rootfs/debian/daily-baseline.sh §5）。
 # 回归判据：`wayland-info` 仍会列出 QCOM_COMPRESSED（那是合成器侧），但本变量只影响客户端。
 export MESA_EXTENSION_OVERRIDE="-EGL_EXT_image_dma_buf_import_modifiers${MESA_EXTENSION_OVERRIDE:+ $MESA_EXTENSION_OVERRIDE}"
+# 与之配对：默认 GSK 渲染器（GTK 4.24 的 ngl/vulkan 档）在本机仍会抽搐+残留画面；
+# 只有 `gl` 档 + 上面的 modifier 关闭才是实测干净组合（2026-11-14 用户目视，T19）。
+export GSK_RENDERER=gl
 
 # elogind should provide XDG_RUNTIME_DIR; fallback if not
 [ -n "$XDG_RUNTIME_DIR" ] || export XDG_RUNTIME_DIR=/run/user/$(id -u)
