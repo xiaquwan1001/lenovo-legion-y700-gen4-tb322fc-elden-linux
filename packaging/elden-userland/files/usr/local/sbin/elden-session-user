@@ -16,6 +16,14 @@ export SDL_VIDEODRIVER=wayland
 export CLUTTER_BACKEND=wayland
 export EGL_PLATFORM=surfaceless
 
+# T19（2026-11-14）：**不要再让客户端用 dmabuf 修饰符导入**。
+# 本机（msm + freedreno + wlroots 0.20 + phoc 0.59）上，带 `QCOM_COMPRESSED`
+# (=0x0500000000000001) modifier 的 dmabuf 导入会产出：滚动撕裂/抽搐/方格/文字鬼影/
+# 大幅移动变形（用户实测）。禁用后视觉全正常，代价=首次绘制多一次回拷（第一下略卡，
+# 另有 GPU 爬频补偿，见 rootfs/debian/daily-baseline.sh §5）。
+# 回归判据：`wayland-info` 仍会列出 QCOM_COMPRESSED（那是合成器侧），但本变量只影响客户端。
+export MESA_EXTENSION_OVERRIDE="-EGL_EXT_image_dma_buf_import_modifiers${MESA_EXTENSION_OVERRIDE:+ $MESA_EXTENSION_OVERRIDE}"
+
 # elogind should provide XDG_RUNTIME_DIR; fallback if not
 [ -n "$XDG_RUNTIME_DIR" ] || export XDG_RUNTIME_DIR=/run/user/$(id -u)
 mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null || true

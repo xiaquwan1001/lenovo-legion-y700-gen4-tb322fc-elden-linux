@@ -317,6 +317,35 @@ else
 	else ok "未装 zram-tools，无需处理"; fi
 fi
 
+# ------------------------------------------------- 5 GPU devfreq 爬频（T19，2026-11-14）
+# 现象：桌面「触屏滑动的第一下」卡顿，后续操作正常。
+# 根因（实测 2026-11-14）：GPU `3d00000.gpu` 空闲停在 **160 MHz**（simple_ondemand，polling 50 ms），
+#   而第一帧通常是**全屏重绘**（1904x3040 = 12 MP）⇒ 在最低档吃几十 ms；
+#   把 min_freq 抬到 max 后第一下不再卡（用户目视确认）⇒ 固化「缩短 polling + 抬地板」，
+#   **不是钉死频率**：simple_ondemand 仍会按负载上跑（max 1.10 GHz）。
+# 代价：空闲频率从 160 → 525 MHz，待机耗电会略升；嫌耗电就调小 GPU_MIN（见下）。
+# 只对本机 sysfs 有意义：`--root`（chroot 构建）阶段目标设备的 GPU 不存在 ⇒ 直接跳过。
+say "[5. GPU devfreq 爬频（第一下卡顿，T19）]"
+GPU=/sys/class/devfreq/3d00000.gpu
+GPU_POLL=10          # ms（默认 50；缩短到 10 让负载上升被更快发现）
+GPU_MIN=525000000    # Hz（默认 160000000；要实现「完全不卡」可用 1100000000，代价=空闲耗电）
+if [ -n "$R" ]; then
+	ok "chroot 阶段跳过（GPU sysfs 属目标设备）"
+elif [ ! -d "$GPU" ]; then
+	miss "$GPU 不存在（GPU 未绑 devfreq？）"
+else
+	cur_poll=$(cat "$GPU/polling_interval" 2>/dev/null || echo '')
+	cur_min=$(cat "$GPU/min_freq" 2>/dev/null || echo '')
+	setv() { # setv <file> <want> <下文描述>
+		if [ "$CHECK" = 1 ]; then miss "$(basename "$1"): 现值=${2:-未取到}，期望 $3"; return; fi
+		if printf '%s' "$3" > "$1" 2>/dev/null; then fix "$(basename "$1") -> $3"; else miss "$(basename "$1") 写入失败（$3）"; fi
+	}
+	if [ "${cur_poll:-}" = "$GPU_POLL" ]; then ok "polling_interval = ${GPU_POLL} ms"; else setv "$GPU/polling_interval" "$cur_poll" "$GPU_POLL"; fi
+	# min_freq 允许 ≥ 目标值（有人手工抬更高时不回退）
+	if [ -n "${cur_min:-}" ] && [ "$cur_min" -ge "$GPU_MIN" ] 2>/dev/null; then ok "min_freq = ${cur_min} Hz (≥ ${GPU_MIN})"
+	else setv "$GPU/min_freq" "$cur_min" "$GPU_MIN"; fi
+fi
+
 say ""
 say "结果: MISS=$MISS FIX=$FIXED"
 [ "$CHECK" = 1 ] && [ "$MISS" -gt 0 ] && exit 1
