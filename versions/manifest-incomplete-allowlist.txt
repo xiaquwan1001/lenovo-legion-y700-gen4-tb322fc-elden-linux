@@ -9,3 +9,4 @@
 boot-elden-vk81-e0e4a.manifest  # 手写旁路；olddefconfig 删 ARCH_QCOM 的死内核（PITFALLS #162），镜像已删、仅 manifest 存留
 boot-elden-vk82-fix3.manifest   # 同上（死内核作废）
 boot-elden-vk83-fix2.manifest   # 同上（死内核作废）
+boot-elden-vk183-fastrpc.manifest  # 2026-11-14 从镜像重建（scripts/manifest-from-image.py）：源树 build/vk151@509f271d52 已删 ⇒ config_sha256 不可得；镜像内字段为真（kernel_payload_sha256=5543b181e162… 与 versions/vk-kernel-identity.tsv 第 70 行逐字一致），树侧字段已显式标 (absent)

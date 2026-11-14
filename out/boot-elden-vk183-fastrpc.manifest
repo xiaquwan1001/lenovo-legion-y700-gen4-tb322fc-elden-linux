@@ -1,0 +1,28 @@
+# boot image manifest — reconstructed by scripts/manifest-from-image.py
+# 只含镜像内客观字段；树侧字段标 (absent:…)，见文件头 reconstructed_* 三行。
+version=vk183-fastrpc
+generated=2026-11-14T05:32:08Z
+reconstructed_from=image
+reconstructed_note=源树 build/vk151@509f271d52 已删除（2026-11 清理）；字段取自镜像 + versions/vk-registry.tsv，2026-11-14 重建
+image=/home/xuqianhui/y700-elden/out/boot-elden-vk183-fastrpc.img
+image_sha256=30e6a4c4bcfcd707993178e5554d5086964a104adde1a3227968342cda8c752b
+image_size=84525056
+kernel_uts=Linux version 7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172
+kernel_release=(absent:source tree removed — 用 kernel_uts 作身份锚)
+kernel_release_matches_image=unknown
+kernel_payload_sha256=5543b181e162d54d8a354b99bbebdf56d419dbb2ac5382b515cb253cbd5e48b0
+kernel_image_sha256=5543b181e162d54d8a354b99bbebdf56d419dbb2ac5382b515cb253cbd5e48b0
+kernel_identity_source=image
+kernel_sha256=429f14a7b40595f7616dbf3e553a2ef9921a797b6358b318424442c56ae24ed1
+kernel_packed_sha256=429f14a7b40595f7616dbf3e553a2ef9921a797b6358b318424442c56ae24ed1
+ramdisk_sha256=3282ae6c0c4dbf2de55ad1be3b04f9a4ec1db9478ce2b8c6b1c5b38cf9b0706e
+ramdisk_size=64595425
+dtb_sha256=fbda2ade6fb32e0dc11114d5e6961a79628ee54633b04f9f916557683ee0547f
+dtb_size=153101
+config_sha256=(absent:source tree removed)
+cmdline=console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_early_gadget=1 elden_q28_nowd
+mkbootimg_args=--kernel <image:kern> --ramdisk <image:ramdisk> --dtb <image:dtb> --kernel_offset 0x8000 --ramdisk_offset 0x1000000 --tags_offset 0x100 --dtb_offset 0x1f00000 --cmdline 'console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_early_gadget=1 elden_q28_nowd' --header_version 2 --pagesize 4096
+kernel_git_head=(absent)
+kernel_git_state=(absent)
+project_git_head=(absent)
+verification=NOT_TESTED_ON_DEVICE

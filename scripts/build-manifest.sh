@@ -7,6 +7,11 @@
 # This closes the "vk49 build command was lost" gap: the manifest stores the
 # kernel/DTB/.config/ramdisk/image hashes, the exact cmdline and mkbootimg argv,
 # and both git HEADs.  Commit the manifests (they are tiny, text-only).
+#
+# 源树已删/换过时**不要**硬跑本脚本（会写入当前树的 config/kernel 哈希 = 假身份，
+# 见 PITFALLS #131/#162）；改用 scripts/manifest-from-image.py 从镜像重建（只写镜像内
+# 客观字段，树侧字段标 `(absent:…)`，缺 config_sha256 须登记
+# versions/manifest-incomplete-allowlist.txt）。首例 = vk183-fastrpc（2026-11-14）。
 set -euo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 . "$ROOT/scripts/env-build.sh"   # 树默认取 patches/current-tree（日常线），KDIR= 可覆盖

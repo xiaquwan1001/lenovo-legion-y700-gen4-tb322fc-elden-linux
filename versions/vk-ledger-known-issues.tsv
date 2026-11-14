@@ -6,6 +6,25 @@
 #   kind ∈ tree_drift | dirty_drift | no_manifest
 # 证据：archive/topics/VK-LEDGER-AUDIT-2026-10-06.md §2
 #
+# ---- 第 4 列（2026-11-14 增）：逐行证据（用户要求「已知例外尽可能给深入描述证据」）----
+# 取三种形态之一，都可现查复核：
+#   uts=<镜像内 UTS> payload=<解压后内核 sha 前 12> src=<源提交> refs=<该提交上的分支/tag>
+#       flags=<该行在 versions/vk-kernel-identity.tsv 里被记的软标记>
+#       ⇒ 复核：grep -P '^<build>\t' versions/vk-kernel-identity.tsv   （同一行，逐字一致）
+#   manifest-out 留档：uts=… payload=… tree_head=… config=yes|absent
+#       ⇒ 镜像已不在盘，但身份账还在 out/boot-elden-<build>.manifest（复核：grep … 该 manifest）
+#   无镜像、无 manifest：仅 registry + 审计报告留档 —— **不可再生身份项**，不得据此做构建判断
+#
+# ---- 每种 kind 的判据（为什么不是事故）----
+#   tree_drift     manifest 里 kernel_release 的 git sha ≠ 镜像内 UTS 的 git sha：打包内核不是构建时树的内核
+#                  （要么刻意复用旧内核做单变量实验，要么 #131 那类 manifest 记错列）。**必须逐行给理由**。
+#   dirty_drift    同上 sha，但 manifest 记录 dirty、镜像内不 dirty（或反之）：构建时树有未提交改动。
+#   no_manifest    registry 有号、镜像在盘却没有 `.manifest` ⇒ 身份不可复现（2026-11-14 起改为
+#                  「能从镜像重建就必须重建」：`scripts/manifest-from-image.py`，缺 config 走 allowlist）。
+#   num_ne_tag    镜像 UTS/源提交上没有任何与本构建号同名的 vkNN ref ⇒ 复用了别的号的内核（一次性诊断件）。
+#   uts_dup       多个不同二进制共享同一 UTS 串（钉 LOCALVERSION 复用设备 /lib/modules 的设计后果）。
+#   软标记 tree_head_diff/tree_head_missing/src_* 只进 identity.tsv 第 8+ 列，不进本表（不作为例外登记）。
+#
 # 注：本表按 build 名登记，与 images 生命周期无关。下列镜像已从 out/ 删除（仅 manifest 存留），
 #     其行保留作历史留档：vk72 / vk72-q28dsi / vk72-q28dsi2 / vk73-q28diag / vk75-q28ab /
 #     vk76-freezetrace（Q28 诊断链）/ vk71-mxc / vk71-mxnom（Q24 变体，已裁决收口）。
@@ -17,20 +36,20 @@
 #   （镜像 sha256 与自身 manifest 不符），该二进制一度退出扫描 ⇒ 钉 vk172 UTS 的那族曾降到 11。
 #   用 manifest 里记录的 mkbootimg argv 重打后**逐字节复现**原 sha256（4d7e2ea9…）⇒ 证实是落盘后静默损坏、
 #   输入无误。镜像已恢复、uts_dup 回到 12，本表无需改动（记录见 reports/asset-tidy-20261103.md §3）。
-vk52-slim	tree_drift	包入 vk42 内核（geb432f18a0d1），当时树=vk48/vk50；slim 失败归因（缺 /bin/sh）不受影响
-vk54-slim	tree_drift	复用 vk54-dirty 内核镜像（b3b87ed1），非当时树（vk54 提交 g26cd13b1c4a2）
-vk56-slim	tree_drift	同 vk54-slim 内核（仅换 ramdisk）
-vk57-slim	tree_drift	同 vk54-slim 内核（仅换 ramdisk）
+vk52-slim	tree_drift	包入 vk42 内核（geb432f18a0d1），当时树=vk48/vk50；slim 失败归因（缺 /bin/sh）不受影响	manifest-out 留档：uts=7.2.0-debug-vk42-geb432f18a0d1 payload=(absent) tree_head=5a70ade46a88 config=yes
+vk54-slim	tree_drift	复用 vk54-dirty 内核镜像（b3b87ed1），非当时树（vk54 提交 g26cd13b1c4a2）	manifest-out 留档：uts=7.2.0-debug-vk54-g2b5badef00fb-dirty payload=(absent) tree_head=26cd13b1c4a2 config=yes
+vk56-slim	tree_drift	同 vk54-slim 内核（仅换 ramdisk）	manifest-out 留档：uts=7.2.0-debug-vk54-g2b5badef00fb-dirty payload=(absent) tree_head=26cd13b1c4a2 config=yes
+vk57-slim	tree_drift	同 vk54-slim 内核（仅换 ramdisk）	manifest-out 留档：uts=7.2.0-debug-vk54-g2b5badef00fb-dirty payload=(absent) tree_head=26cd13b1c4a2 config=yes
 # 同 commit、镜像含未提交改动（dirty 位漂移）
-vk58b-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；vk58c 已实机 fastboot boot 验收
-vk58c-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；已实机 fastboot boot 验收
+vk58b-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；vk58c 已实机 fastboot boot 验收	manifest-out 留档：uts=7.2.0-debug-vk58-g26cd13b1c4a2-dirty payload=(absent) tree_head=26cd13b1c4a2 config=yes
+vk58c-slim	dirty_drift	同 commit g26cd13b1c4a2，镜像 -dirty；已实机 fastboot boot 验收	manifest-out 留档：uts=7.2.0-debug-vk58-g26cd13b1c4a2-dirty payload=(absent) tree_head=26cd13b1c4a2 config=yes
 # #131：manifest 的 kernel 列记录 linux/ 树的 Image.gz，而实际打包的是「原镜像 unpack 出的 kernel」
 #       （vk62/vk63 实际 kernel = vk47clean sha 2321e3b9；boot_b 实跑即 vk47clean，非真 drift）
-vk62	tree_drift	#131 manifest kernel 列=树 Image.gz；实际打包=vk47clean（sha 2321e3b9），boot_b 实跑 vk47clean
-vk63	tree_drift	同 vk62（#131；同内核 vk47clean，仅换 H2 DTB）
+vk62	tree_drift	#131 manifest kernel 列=树 Image.gz；实际打包=vk47clean（sha 2321e3b9），boot_b 实跑 vk47clean	manifest-out 留档：uts=7.2.0-debug-vk47clean-gbd114ca335e1 payload=(absent) tree_head=6c1376907dec config=yes
+vk63	tree_drift	同 vk62（#131；同内核 vk47clean，仅换 H2 DTB）	manifest-out 留档：uts=7.2.0-debug-vk47clean-gbd114ca335e1 payload=(absent) tree_head=1389ed11b063 config=yes
 # 2026-10-09 Q24 变体：DTB-only，刻意复用 vk47clean 内核（sha 2321e3b9）以保持单变量
-vk71-mxc	tree_drift	#131同类：打包内核=vk47clean（仅换 cambist DTB），构建时树 HEAD=0d4bedf55383；实验需固定内核
-vk71-mxnom	tree_drift	同 vk71-mxc（A/B 仅 DTB 的 power-domains/required-opps 不同）
+vk71-mxc	tree_drift	#131同类：打包内核=vk47clean（仅换 cambist DTB），构建时树 HEAD=0d4bedf55383；实验需固定内核	manifest-out 留档：uts=7.2.0-debug-vk47clean-gbd114ca335e1 payload=55883e0cdfb2 tree_head=0d4bedf55383 config=yes
+vk71-mxnom	tree_drift	同 vk71-mxc（A/B 仅 DTB 的 power-domains/required-opps 不同）	manifest-out 留档：uts=7.2.0-debug-vk47clean-gbd114ca335e1 payload=55883e0cdfb2 tree_head=0d4bedf55383 config=yes
 # ---- 2026-10-09 Q28 显示间歇：诊断/修复测试内核的「刻意复用 UTS」例外（经审计，永久）----
 # 背景：Q28 测试内核要能在**零写盘** `fastboot boot` 下加载持久盘已装的 1610 个模块，
 #   就必须让镜像内烤死的 UTS 串 ≡ 设备 /lib/modules/<uname -r> 目录名
@@ -42,215 +61,215 @@ vk71-mxnom	tree_drift	同 vk71-mxc（A/B 仅 DTB 的 power-domains/required-opps
 #   反向：boot_b 权威镜像 vk64 被这些测试内核牵连成 uts_dup，它本体无错（见下行）。
 # 清理条件：Q28 根因定案 + 最终修复以正式 vk 号（自己的 UTS + 配套 /lib/modules）上机后，
 #   删除这批一次性诊断镜像并删掉本段（连带 vk64 的 uts_dup 行）。
-vk64	uts_dup	本体=在机 boot_b 权威镜像（DEVICE.md §2.2，2026-10-08 烧录 + mark successful）；uts_dup 由下面 Q28 测试内核刻意复用其 UTS 串造成，非 vk64 自身问题
-vk72	tree_drift	Q28 测试内核（DSI cmd 闩锁恢复补丁）：UTS 刻意=vk64 以匹配在机模块，构建时树 HEAD=0d4bedf55383
-vk72	num_ne_tag	同上：一次性诊断内核，源提交不打 vk72 tag
-vk72	uts_dup	同上：刻意复用 vk64 的 UTS 串
-vk72-q28dsi	tree_drift	同 vk72（变体 1，含 G1-34 fastrpc DTB）
-vk72-q28dsi	num_ne_tag	同 vk72
-vk72-q28dsi	uts_dup	同 vk72
-vk72-q28dsi2	tree_drift	同 vk72（变体 2，恢复路径实测在跑）
-vk72-q28dsi2	num_ne_tag	同 vk72
-vk72-q28dsi2	uts_dup	同 vk72
-vk73-q28diag	tree_drift	同 vk72（Q28 诊断：cmd-DMA 超时点 DSI 寄存器 dump）
-vk73-q28diag	num_ne_tag	同 vk72
-vk73-q28diag	uts_dup	同 vk72
-vk74-q28power	tree_drift	同 vk72（Q28 诊断：power-on 路径 pm_runtime 返回值现形 + dsi_host power_on 传播）
-vk74-q28power	num_ne_tag	同 vk72
-vk74-q28power	uts_dup	同 vk72
-vk75-q28ab	tree_drift	同 vk73（Q28 诊断：cmd-DMA 成功侧也 dump，做 good/bad 对拍；内核 e3c5e9fea）
-vk75-q28ab	num_ne_tag	同 vk72（UTS 刻意复用 vk64 串，为零写盘加载在机模块）
-vk75-q28ab	uts_dup	同 vk72（同上，清理条件见本表头）
-vk76-freezetrace	tree_drift	同 vk75（内核未重编，仅 cmdline 加 softlockup_panic/panic=20 取弹）
-vk76-freezetrace	num_ne_tag	同 vk72（UTS 刻意复用 vk64 串）
-vk76-freezetrace	uts_dup	同 vk72（同上，清理条件见本表头）
-vk77-modkdump	num_ne_tag(elden/vk53-hw)	VERSION override (vk77-modkdump); 内核未重新打 tag，同 vk75/vk76 模式
-vk77-modular	num_ne_tag(elden/vk53-hw)	VERSION override; 同 vk77-modkdump 同内核
-vk78-modular	num_ne_tag(elden/vk53-hw)	VERSION 覆盖 vk78-modular；内核未重编（与 vk77-modular 同 kbin d41fadecf965），仅重做载荷 ramdisk（loader 入包 + 钩子无条件）
-vk71-mxc	num_ne_tag(vk47)	Q24 DTB-only 变体刻意复用 vk47clean 内核（实验纯度），实验已按用户裁决收口（2026-10-10 整理轮），存档留档口径
-vk71-mxc	uts_dup2	同 vk71-mxc num_ne_tag：UTS 恒为 vk47clean 是刻意设计，见 vk-identity-inflight.txt 收口注记
-vk71-mxnom	num_ne_tag(vk47)	同 vk71-mxc（A/B 仅 DTB power-domains/required-opps 不同）
-vk71-mxnom	uts_dup2	同 vk71-mxnom num_ne_tag
+vk64	uts_dup	本体=在机 boot_b 权威镜像（DEVICE.md §2.2，2026-10-08 烧录 + mark successful）；uts_dup 由下面 Q28 测试内核刻意复用其 UTS 串造成，非 vk64 自身问题	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=1483a9c6c542 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|d02658e63cf6|clean|ok|uts_dup7
+vk72	tree_drift	Q28 测试内核（DSI cmd 闩锁恢复补丁）：UTS 刻意=vk64 以匹配在机模块，构建时树 HEAD=0d4bedf55383	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8efb2731efb6 tree_head=0d4bedf55383 config=yes
+vk72	num_ne_tag	同上：一次性诊断内核，源提交不打 vk72 tag	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8efb2731efb6 tree_head=0d4bedf55383 config=yes
+vk72	uts_dup	同上：刻意复用 vk64 的 UTS 串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8efb2731efb6 tree_head=0d4bedf55383 config=yes
+vk72-q28dsi	tree_drift	同 vk72（变体 1，含 G1-34 fastrpc DTB）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6-dirty payload=c3e8ed3ca152 tree_head=d02658e63cf6 config=yes
+vk72-q28dsi	num_ne_tag	同 vk72	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6-dirty payload=c3e8ed3ca152 tree_head=d02658e63cf6 config=yes
+vk72-q28dsi	uts_dup	同 vk72	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6-dirty payload=c3e8ed3ca152 tree_head=d02658e63cf6 config=yes
+vk72-q28dsi2	tree_drift	同 vk72（变体 2，恢复路径实测在跑）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=6b4358587752 tree_head=d02658e63cf6 config=yes
+vk72-q28dsi2	num_ne_tag	同 vk72	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=6b4358587752 tree_head=d02658e63cf6 config=yes
+vk72-q28dsi2	uts_dup	同 vk72	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=6b4358587752 tree_head=d02658e63cf6 config=yes
+vk73-q28diag	tree_drift	同 vk72（Q28 诊断：cmd-DMA 超时点 DSI 寄存器 dump）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=0d5a29367291 tree_head=0d4bedf55383 config=yes
+vk73-q28diag	num_ne_tag	同 vk72	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=0d5a29367291 tree_head=0d4bedf55383 config=yes
+vk73-q28diag	uts_dup	同 vk72	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=0d5a29367291 tree_head=0d4bedf55383 config=yes
+vk74-q28power	tree_drift	同 vk72（Q28 诊断：power-on 路径 pm_runtime 返回值现形 + dsi_host power_on 传播）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5c35cf5fe0ff tree_head=ca81318f2efd config=yes
+vk74-q28power	num_ne_tag	同 vk72	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5c35cf5fe0ff tree_head=ca81318f2efd config=yes
+vk74-q28power	uts_dup	同 vk72	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5c35cf5fe0ff tree_head=ca81318f2efd config=yes
+vk75-q28ab	tree_drift	同 vk73（Q28 诊断：cmd-DMA 成功侧也 dump，做 good/bad 对拍；内核 e3c5e9fea）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7105979d94a6 tree_head=ca81318f2efd config=yes
+vk75-q28ab	num_ne_tag	同 vk72（UTS 刻意复用 vk64 串，为零写盘加载在机模块）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7105979d94a6 tree_head=ca81318f2efd config=yes
+vk75-q28ab	uts_dup	同 vk72（同上，清理条件见本表头）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7105979d94a6 tree_head=ca81318f2efd config=yes
+vk76-freezetrace	tree_drift	同 vk75（内核未重编，仅 cmdline 加 softlockup_panic/panic=20 取弹）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7105979d94a6 tree_head=e3c5e9fea66e config=yes
+vk76-freezetrace	num_ne_tag	同 vk72（UTS 刻意复用 vk64 串）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7105979d94a6 tree_head=e3c5e9fea66e config=yes
+vk76-freezetrace	uts_dup	同 vk72（同上，清理条件见本表头）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7105979d94a6 tree_head=e3c5e9fea66e config=yes
+vk77-modkdump	num_ne_tag(elden/vk53-hw)	VERSION override (vk77-modkdump); 内核未重新打 tag，同 vk75/vk76 模式	manifest-out 留档：uts=7.2.0-debug-ge3c5e9fea66e payload=d41fadecf965 tree_head=e3c5e9fea66e config=yes
+vk77-modular	num_ne_tag(elden/vk53-hw)	VERSION override; 同 vk77-modkdump 同内核	manifest-out 留档：uts=7.2.0-debug-ge3c5e9fea66e payload=d41fadecf965 tree_head=e3c5e9fea66e config=yes
+vk78-modular	num_ne_tag(elden/vk53-hw)	VERSION 覆盖 vk78-modular；内核未重编（与 vk77-modular 同 kbin d41fadecf965），仅重做载荷 ramdisk（loader 入包 + 钩子无条件）	manifest-out 留档：uts=7.2.0-debug-ge3c5e9fea66e payload=d41fadecf965 tree_head=e3c5e9fea66e config=yes
+vk71-mxc	num_ne_tag(vk47)	Q24 DTB-only 变体刻意复用 vk47clean 内核（实验纯度），实验已按用户裁决收口（2026-10-10 整理轮），存档留档口径	manifest-out 留档：uts=7.2.0-debug-vk47clean-gbd114ca335e1 payload=55883e0cdfb2 tree_head=0d4bedf55383 config=yes
+vk71-mxc	uts_dup2	同 vk71-mxc num_ne_tag：UTS 恒为 vk47clean 是刻意设计，见 vk-identity-inflight.txt 收口注记	manifest-out 留档：uts=7.2.0-debug-vk47clean-gbd114ca335e1 payload=55883e0cdfb2 tree_head=0d4bedf55383 config=yes
+vk71-mxnom	num_ne_tag(vk47)	同 vk71-mxc（A/B 仅 DTB power-domains/required-opps 不同）	manifest-out 留档：uts=7.2.0-debug-vk47clean-gbd114ca335e1 payload=55883e0cdfb2 tree_head=0d4bedf55383 config=yes
+vk71-mxnom	uts_dup2	同 vk71-mxnom num_ne_tag	manifest-out 留档：uts=7.2.0-debug-vk47clean-gbd114ca335e1 payload=55883e0cdfb2 tree_head=0d4bedf55383 config=yes
 # Q28 STORM 台架重打（vk87/vk88，2026-10-10）：Image.gz 未随 HEAD 重编 ⇒ 载荷为更早的 vk86 内核，
 #   而 manifest kernel_release 记录构建时树 HEAD(a8c09a723) ⇒ tree_drift。**陈旧载荷，非死内核**
 #   （System.map 有 QCOM 符号）。属在途（见 vk-identity-inflight.txt），收口后退场。
-vk87-round2-v64	tree_drift	Q28 STORM 台架 round2 重打；载荷=vk86r2 71bc6846247c-dirty（Image.gz 陈旧），在途见 vk-identity-inflight.txt
-vk88-base-v64	tree_drift	Q28 STORM 台架 base 重打；载荷=vk64 d02658e63（Image.gz 陈旧），在途见 vk-identity-inflight.txt
+vk87-round2-v64	tree_drift	Q28 STORM 台架 round2 重打；载荷=vk86r2 71bc6846247c-dirty（Image.gz 陈旧），在途见 vk-identity-inflight.txt	manifest-out 留档：uts=7.2.0-debug-vk86r2-g71bc6846247c-dirty payload=0af7b3fd8529 tree_head=a8c09a723254 config=yes
+vk88-base-v64	tree_drift	Q28 STORM 台架 base 重打；载荷=vk64 d02658e63（Image.gz 陈旧），在途见 vk-identity-inflight.txt	manifest-out 留档：uts=7.2.0-debug-vk86-base-gd02658e63cf6 payload=1b3953393453 tree_head=a8c09a723254 config=yes
 # 2026-10-11 传感器恢复版 vk94：**DTB-only**（ADSP fastrpc 补 qcom,non-secure-domain，内核提交 5d01d3324），
 #   刻意复用 vk64 内核 out/Image-vk64.gz（d02658e63）以保持在机模块 vermagic 单变量（同 vk62/vk63/vk71/vk72 模式）。
 #   设备已验证：/dev/fastrpc-adsp 出现、HasAccelerometer/AmbientLight/Proximity=true、monitor-sensor 实时出数（PITFALLS #186）。
-vk94	tree_drift	DTB-only 传感器恢复版：打包内核=out/Image-vk64.gz（d02658e63）；构建时树 HEAD=5d01d3324（ADSP non-secure DT 提交）
-vk94	uts_dup	刻意复用 vk64 的 UTS 串（同 vk62/vk63/vk71/vk72 模式）；非 vk94 自身问题（kind 写前缀以容忍 uts_dupN 计数后缀）
+vk94	tree_drift	DTB-only 传感器恢复版：打包内核=out/Image-vk64.gz（d02658e63）；构建时树 HEAD=5d01d3324（ADSP non-secure DT 提交）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8efb2731efb6 tree_head=5d01d3324d5a config=yes
+vk94	uts_dup	刻意复用 vk64 的 UTS 串（同 vk62/vk63/vk71/vk72 模式）；非 vk94 自身问题（kind 写前缀以容忍 uts_dupN 计数后缀）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8efb2731efb6 tree_head=5d01d3324d5a config=yes
 # 2026-10-11 Q28 构建身份法则实验臂（结论见 reports/q28-DOSSIER.md §o、PITFALLS #192）：
 #   均刻意使用 -vk64 版本串（单变量=构建身份），源提交在 q28/* 分支未打 vk tag ⇒ num_ne_tag；
 #   其中 base/base2 与 vk64 同 UTS 串 ⇒ uts_dup。镜像留作台架/证据，臂可经 scripts/q28-build-arm-lv64.sh 重建。
-vk96-round-lv64	num_ne_tag	Q28 构建身份实验臂 round（clean/base d02658e63 + byte-clk 取整补丁 66b5604d1898）；冷起 NOCARD 3/3
-vk97-base-lv64	num_ne_tag	Q28 GOOD 台架 = clean/base d02658e63 未改源码 + LOCALVERSION=-vk64（UTS 逐字 7.2.0-debug-vk64-gd02658e63cf6）；冷起 GOOD 3/3
-vk97-base-lv64	uts_dup	刻意复用 vk64 的 UTS 串（与 vk64 同串不同二进制）
-vk98-sham-lv64	num_ne_tag	Q28 构建身份实验臂 sham（base + clk_round_rate 查询 + pr_info 无赋值，零逻辑改动，提交 31e652c57d2d）；冷起 NOCARD 1/1
-vk99-sham2-lv64	num_ne_tag	Q28 构建身份实验臂 sham2（base + 一行常量 pr_info，提交 94e9232e1eb4）；冷起 NOCARD 2/2
-vk100-base2-lv64	num_ne_tag	Q28 构建身份实验臂 base2（与 vk97 同源码重编，仅 build counter 不同）；冷起 GOOD 2/2 ⇒ 决定因素是版本串内容、非重编随机性
-vk100-base2-lv64	uts_dup	刻意复用 vk64 的 UTS 串
-vk101-empty-lv64	num_ne_tag	Q28 构建身份实验臂 empty（base + 空提交零代码 8d5bdc16705f）；冷起 NOCARD 1/1 ⇒ 空提交亦翻
+vk96-round-lv64	num_ne_tag	Q28 构建身份实验臂 round（clean/base d02658e63 + byte-clk 取整补丁 66b5604d1898）；冷起 NOCARD 3/3	manifest-out 留档：uts=7.2.0-debug-vk64-g66b5604d1898 payload=5ec152a8a20b tree_head=66b5604d1898 config=yes
+vk97-base-lv64	num_ne_tag	Q28 GOOD 台架 = clean/base d02658e63 未改源码 + LOCALVERSION=-vk64（UTS 逐字 7.2.0-debug-vk64-gd02658e63cf6）；冷起 GOOD 3/3	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=e832da24d78e tree_head=d02658e63cf6 config=yes
+vk97-base-lv64	uts_dup	刻意复用 vk64 的 UTS 串（与 vk64 同串不同二进制）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=e832da24d78e tree_head=d02658e63cf6 config=yes
+vk98-sham-lv64	num_ne_tag	Q28 构建身份实验臂 sham（base + clk_round_rate 查询 + pr_info 无赋值，零逻辑改动，提交 31e652c57d2d）；冷起 NOCARD 1/1	manifest-out 留档：uts=7.2.0-debug-vk64-g31e652c57d2d payload=7fb1031c7a37 tree_head=31e652c57d2d config=yes
+vk99-sham2-lv64	num_ne_tag	Q28 构建身份实验臂 sham2（base + 一行常量 pr_info，提交 94e9232e1eb4）；冷起 NOCARD 2/2	manifest-out 留档：uts=7.2.0-debug-vk64-g94e9232e1eb4 payload=b2ddf1405b9d tree_head=94e9232e1eb4 config=yes
+vk100-base2-lv64	num_ne_tag	Q28 构建身份实验臂 base2（与 vk97 同源码重编，仅 build counter 不同）；冷起 GOOD 2/2 ⇒ 决定因素是版本串内容、非重编随机性	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7d5321bb45ad tree_head=d02658e63cf6 config=yes
+vk100-base2-lv64	uts_dup	刻意复用 vk64 的 UTS 串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7d5321bb45ad tree_head=d02658e63cf6 config=yes
+vk101-empty-lv64	num_ne_tag	Q28 构建身份实验臂 empty（base + 空提交零代码 8d5bdc16705f）；冷起 NOCARD 1/1 ⇒ 空提交亦翻	manifest-out 留档：uts=7.2.0-debug-vk64-g8d5bdc16705f payload=7f50889cb91a tree_head=8d5bdc16705f config=yes
 # 2026-10-11 vk102-c1pin：C1 路由内核，刻意钉死 UTS=vk64 串（AUTO=n + LOCALVERSION=-vk64-gd02658e63cf6）
 #   以验证「改内核/改 config 只要版本串一致仍冷起 GOOD」（PITFALLS #192）。源提交不打 vk102 tag ⇒ num_ne_tag。
-vk102-c1pin	num_ne_tag	钉死 UTS 的 C1 路由内核（源 5d01d3324 含 ADSP DT），刻意复用 vk64 串
-vk102-c1pin	uts_dup	同上：刻意复用 vk64 的 UTS 串（验证版本串身份法则可控）
-vk103-c1r6	num_ne_tag	C1 路由内核(IPv4+IPv6)，刻意钉死 UTS=vk64 串（PINUTS）；源提交不打 vk103 tag
-vk103-c1r6	uts_dup	同上：刻意复用 vk64 的 UTS 串
-vk104-base-pin	num_ne_tag	Q28 PINUTS 对照臂（刻意钉死 UTS）；源提交不打 vk104 tag
-vk104-base-pin	uts_dup	同上：刻意复用 vk64 的 UTS 串
-vk105-round-pin	num_ne_tag	Q28 PINUTS round 臂（刻意钉死 UTS）；源提交不打 vk105 tag
-vk105-round-pin	uts_dup	同上：刻意复用 vk64 的 UTS 串
-vk96-round-lv64	src_unreachable	Q28 未钉 UTS 的 round 臂；其源提交在 q28/round-lv64 分支上被后续 PINUTS 重建覆盖而不可达；结论已由 vk105-round-pin 取代（reports/q28-retro-audit-20261011.md）
-vk106-newK-oldR	num_ne_tag	Q28 STORM 2×2 repack 臂（刻意复用 vk64 UTS）；无独立内核提交
-vk106-newK-oldR	uts_dup	同上：内核复用 vk104，UTS 与 vk64 同串
-vk107-oldK-newR	num_ne_tag	Q28 STORM 2×2 repack 臂（内核复用 vk94）；无独立内核提交
-vk107-oldK-newR	uts_dup	同上：UTS 与 vk64 同串
-vk108-oldrep-pin	num_ne_tag	STORM E1 臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交
-vk108-oldrep-pin	uts_dup	同上：PINUTS 刻意钉回 vk64 UTS 串
-vk109-newK-oldDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk104）；无独立提交
-vk109-newK-oldDTB	uts_dup	同上：UTS 与 vk64 同串
-vk110-oldK-newDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk94）；无独立提交
-vk110-oldK-newDTB	uts_dup	同上：UTS 与 vk64 同串
-vk111-oldrep-v60	num_ne_tag	STORM E1' 臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag）
-vk111-oldrep-v60	uts_dup	同上：刻意复刻 vk64/vk94 的 UTS（含 #60/日期）
+vk102-c1pin	num_ne_tag	钉死 UTS 的 C1 路由内核（源 5d01d3324 含 ADSP DT），刻意复用 vk64 串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=353ba81b537e tree_head=5d01d3324d5a config=yes
+vk102-c1pin	uts_dup	同上：刻意复用 vk64 的 UTS 串（验证版本串身份法则可控）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=353ba81b537e tree_head=5d01d3324d5a config=yes
+vk103-c1r6	num_ne_tag	C1 路由内核(IPv4+IPv6)，刻意钉死 UTS=vk64 串（PINUTS）；源提交不打 vk103 tag	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=1df09d634517 tree_head=5d01d3324d5a config=yes
+vk103-c1r6	uts_dup	同上：刻意复用 vk64 的 UTS 串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=1df09d634517 tree_head=5d01d3324d5a config=yes
+vk104-base-pin	num_ne_tag	Q28 PINUTS 对照臂（刻意钉死 UTS）；源提交不打 vk104 tag	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=553c315c608e tree_head=d02658e63cf6 config=yes
+vk104-base-pin	uts_dup	同上：刻意复用 vk64 的 UTS 串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=553c315c608e tree_head=d02658e63cf6 config=yes
+vk105-round-pin	num_ne_tag	Q28 PINUTS round 臂（刻意钉死 UTS）；源提交不打 vk105 tag	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5ea14a1346dc tree_head=e365ac75fb0c config=yes
+vk105-round-pin	uts_dup	同上：刻意复用 vk64 的 UTS 串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5ea14a1346dc tree_head=e365ac75fb0c config=yes
+vk96-round-lv64	src_unreachable	Q28 未钉 UTS 的 round 臂；其源提交在 q28/round-lv64 分支上被后续 PINUTS 重建覆盖而不可达；结论已由 vk105-round-pin 取代（reports/q28-retro-audit-20261011.md）	manifest-out 留档：uts=7.2.0-debug-vk64-g66b5604d1898 payload=5ec152a8a20b tree_head=66b5604d1898 config=yes
+vk106-newK-oldR	num_ne_tag	Q28 STORM 2×2 repack 臂（刻意复用 vk64 UTS）；无独立内核提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=553c315c608e tree_head=(absent) config=yes
+vk106-newK-oldR	uts_dup	同上：内核复用 vk104，UTS 与 vk64 同串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=553c315c608e tree_head=(absent) config=yes
+vk107-oldK-newR	num_ne_tag	Q28 STORM 2×2 repack 臂（内核复用 vk94）；无独立内核提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8efb2731efb6 tree_head=(absent) config=yes
+vk107-oldK-newR	uts_dup	同上：UTS 与 vk64 同串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8efb2731efb6 tree_head=(absent) config=yes
+vk108-oldrep-pin	num_ne_tag	STORM E1 臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=71eeebb3a792 tree_head=d02658e63cf6 config=yes
+vk108-oldrep-pin	uts_dup	同上：PINUTS 刻意钉回 vk64 UTS 串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=71eeebb3a792 tree_head=d02658e63cf6 config=yes
+vk109-newK-oldDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk104）；无独立提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=(absent) tree_head=(absent) config=yes
+vk109-newK-oldDTB	uts_dup	同上：UTS 与 vk64 同串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=(absent) tree_head=(absent) config=yes
+vk110-oldK-newDTB	num_ne_tag	STORM E2 repack 臂（内核复用 vk94）；无独立提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=(absent) tree_head=(absent) config=yes
+vk110-oldK-newDTB	uts_dup	同上：UTS 与 vk64 同串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=(absent) tree_head=(absent) config=yes
+vk111-oldrep-v60	num_ne_tag	STORM E1' 臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=55f4992a262d tree_head=d02658e63cf6 config=yes
+vk111-oldrep-v60	uts_dup	同上：刻意复刻 vk64/vk94 的 UTS（含 #60/日期）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=55f4992a262d tree_head=d02658e63cf6 config=yes
 # ---- 2026-10-12 Q28 定案收口（原 vk-identity-inflight.txt 成员）----
 # 背景：这批台架/对照臂的硬错均为**刻意设计后果**（为让零写盘 fastboot boot 能加载在机模块
 #   而刻意复用 vk64 UTS 串 ⇒ uts_dup；源提交不打 vk tag ⇒ num_ne_tag；刻意复用旧内核 ⇒ uts_lvs），
 #   非事故。Q28 已定案（PITFALLS #195、reports/q28-handoff-20261012.md）、Q24 已用户裁决
 #   （DT 变体不再排期）、C1/C2/C6 已闭环 ⇒ 从 inflight 白名单转入本永久登记；镜像留作证据/台架
 #   （臂可经 scripts/q28-build-arm-lv64.sh 重建）。kind 前缀匹配：uts_dup 涵盖 uts_dupN 计数后缀。
-e4a-lv64	uts_dup	Q24 E4a 臂在 -vk64 台架：刻意复用 vk64 UTS 串；Q24 已用户裁决（DT 变体不再排期）
-lv64-nopd	uts_dup	Q24 单变量#1（去 pd_ignore_unused）：刻意复用 vk64 UTS 串；Q24 已裁决
-vk84-q28delay-base	num_ne_tag	Q28 delay A/B 基线：构建号 vk84、源提交 tag=vk83（无 vk84 tag）；实验已被 PINUTS 方法取代（DOSSIER §p）
-vk84-q28delay-base	uts_lvs	同上：镜像 uname 为 -vk84- 而源 tag=vk83 ⇒ 号不一致（实验载具号，刻意）
-vk84-q28delay-exp	num_ne_tag	同 vk84-q28delay-base（delay=1000 臂，载荷逐字节同）
-vk84-q28delay-exp	uts_lvs	同 vk84-q28delay-base
-vk86-base	num_ne_tag	Q28 STORM 台架基线：源提交 d02658e63（tag=vk64/vk89/vk94），构建号 vk86 无对应 tag；结论已入 #195
-vk93-cleanctl	num_ne_tag	Q28 版本串对照臂（-vk93-cleanctl）：源提交 tag 为 vk64/vk89，无 vk93 tag
-vk93-lv64	num_ne_tag	Q28 GOOD 台架对照臂：源提交 tag 为 vk64/vk89，无 vk93 tag
-vk93-lv64	uts_dup	刻意复用 vk64 UTS 串
-vk93-nocam	num_ne_tag	Q28 对照臂（无相机 auto-load）：源提交 tag 为 vk64/vk89，无 vk93 tag
-lv64-nocam	uts_dup	Q24 干净无相机台架：由 vk93-lv64 仅改 cmdline（+elden_nocamera=1）repack，刻意复用 -vk64 UTS 串以保构建身份 GOOD
+e4a-lv64	uts_dup	Q24 E4a 臂在 -vk64 台架：刻意复用 vk64 UTS 串；Q24 已用户裁决（DT 变体不再排期）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=cb4d7fc57c54 tree_head=72c2517bfba3 config=yes
+lv64-nopd	uts_dup	Q24 单变量#1（去 pd_ignore_unused）：刻意复用 vk64 UTS 串；Q24 已裁决	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=71b7ac9b378f tree_head=d02658e63cf6 config=yes
+vk84-q28delay-base	num_ne_tag	Q28 delay A/B 基线：构建号 vk84、源提交 tag=vk83（无 vk84 tag）；实验已被 PINUTS 方法取代（DOSSIER §p）	manifest-out 留档：uts=7.2.0-debug-vk84-g86193a58a095-dirty payload=c6a9e52325a9 tree_head=86193a58a095 config=yes
+vk84-q28delay-base	uts_lvs	同上：镜像 uname 为 -vk84- 而源 tag=vk83 ⇒ 号不一致（实验载具号，刻意）	manifest-out 留档：uts=7.2.0-debug-vk84-g86193a58a095-dirty payload=c6a9e52325a9 tree_head=86193a58a095 config=yes
+vk84-q28delay-exp	num_ne_tag	同 vk84-q28delay-base（delay=1000 臂，载荷逐字节同）	manifest-out 留档：uts=7.2.0-debug-vk84-g86193a58a095-dirty payload=c6a9e52325a9 tree_head=86193a58a095 config=yes
+vk84-q28delay-exp	uts_lvs	同 vk84-q28delay-base	manifest-out 留档：uts=7.2.0-debug-vk84-g86193a58a095-dirty payload=c6a9e52325a9 tree_head=86193a58a095 config=yes
+vk86-base	num_ne_tag	Q28 STORM 台架基线：源提交 d02658e63（tag=vk64/vk89/vk94），构建号 vk86 无对应 tag；结论已入 #195	manifest-out 留档：uts=7.2.0-debug-vk86-base-gd02658e63cf6 payload=1b3953393453 tree_head=d02658e63cf6 config=yes
+vk93-cleanctl	num_ne_tag	Q28 版本串对照臂（-vk93-cleanctl）：源提交 tag 为 vk64/vk89，无 vk93 tag	manifest-out 留档：uts=7.2.0-debug-vk93-cleanctl-gd02658e63cf6 payload=11a0c72de905 tree_head=d02658e63cf6 config=yes
+vk93-lv64	num_ne_tag	Q28 GOOD 台架对照臂：源提交 tag 为 vk64/vk89，无 vk93 tag	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=ba7eca35eea0 tree_head=d02658e63cf6 config=yes
+vk93-lv64	uts_dup	刻意复用 vk64 UTS 串	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=ba7eca35eea0 tree_head=d02658e63cf6 config=yes
+vk93-nocam	num_ne_tag	Q28 对照臂（无相机 auto-load）：源提交 tag 为 vk64/vk89，无 vk93 tag	manifest-out 留档：uts=7.2.0-debug-vk93-cleanctl-gd02658e63cf6 payload=11a0c72de905 tree_head=d02658e63cf6 config=yes
+lv64-nocam	uts_dup	Q24 干净无相机台架：由 vk93-lv64 仅改 cmdline（+elden_nocamera=1）repack，刻意复用 -vk64 UTS 串以保构建身份 GOOD	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=ba7eca35eea0 tree_head=d02658e63cf6 config=yes
 # 2026-10-12 Q24 H1 DT 臂 vk112：DTB-only repack（唯一变量 = cambist 节点的 power-domains/required-opps），
 #   内核载荷/ramdisk/cmdline 与 lv64-nocam 逐字节相同以保 Q28 GOOD 身份与模块 vermagic（同 vk94 模式）。
-vk112-h1-dtbmmcxmx	tree_head_diff	DTB-only Q24 H1 臂：内核载荷复用 d02658e63（kbin ba7eca35），DTB 由 d02658e63 worktree 单变量重建（c4e063dc）；tree HEAD=5d01d3324 属既定 DTB-only 模式（同 vk94）
-vk112-h1-dtbmmcxmx	num_ne_tag	DTB-only 臂，源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交
-vk112-h1-dtbmmcxmx	uts_dup	刻意复用 vk64 UTS 串（同 vk94/vk109-111 模式）
-vk113-dailyid	num_ne_tag	Q28 收尾：日常镜像重建，源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交
-vk113-dailyid	uts_dup	判据需要恒定 UTS release 串（模块 vermagic）⇒ PINUTS 刻意钉回 -vk64-gd02658e63cf6
-vk114-dailyid-round	num_ne_tag	Q28 机制修复臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag），补丁未形成新提交
-vk114-dailyid-round	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + #121）
+vk112-h1-dtbmmcxmx	tree_head_diff	DTB-only Q24 H1 臂：内核载荷复用 d02658e63（kbin ba7eca35），DTB 由 d02658e63 worktree 单变量重建（c4e063dc）；tree HEAD=5d01d3324 属既定 DTB-only 模式（同 vk94）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=ba7eca35eea0 tree_head=5d01d3324d5a config=yes
+vk112-h1-dtbmmcxmx	num_ne_tag	DTB-only 臂，源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=ba7eca35eea0 tree_head=5d01d3324d5a config=yes
+vk112-h1-dtbmmcxmx	uts_dup	刻意复用 vk64 UTS 串（同 vk94/vk109-111 模式）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=ba7eca35eea0 tree_head=5d01d3324d5a config=yes
+vk113-dailyid	num_ne_tag	Q28 收尾：日常镜像重建，源码复用 d02658e63（已打 vk64/vk89/vk94 tag），无新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=834258c90aed tree_head=d02658e63cf6 config=yes
+vk113-dailyid	uts_dup	判据需要恒定 UTS release 串（模块 vermagic）⇒ PINUTS 刻意钉回 -vk64-gd02658e63cf6	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=834258c90aed tree_head=d02658e63cf6 config=yes
+vk114-dailyid-round	num_ne_tag	Q28 机制修复臂：源码复用 d02658e63（已打 vk64/vk89/vk94 tag），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=0857f458bf88 tree_head=d02658e63cf6 config=yes
+vk114-dailyid-round	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + #121）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=0857f458bf88 tree_head=d02658e63cf6 config=yes
 # 2026-10-12 深夜 Q28 七臂 vk116–vk123 + 上游回移 vk124：均为**单变量臂**，源码复用 `d02658e63`
 #   （vk124 = `clean/base@5b169d541`），UTS/构建身份刻意保持与 vk113 一致（PINUTS + `#121`）以保模块 vermagic；
 #   证据：reports/q28-dsi-recover-20261012.md、reports/upstream-lane-merge-20261012.md、PITFALLS #226。
-vk116-dsirec	num_ne_tag	Q28 驱动内自恢复臂（面板 prepare 期首条 DCS 超时 → DSI ctrl+PHY 复位 → 重试）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk116-dsirec	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）
-vk117-q28rec2	num_ne_tag	Q28 恢复序列修正臂（对齐 post_disable + 复位前后寄存器转储）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk117-q28rec2	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）
-vk118-q28probe	num_ne_tag	Q28 首命令探针臂（before-first-cmd dump + set_rate 返回值）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk118-q28probe	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）
-vk119-q28probe2	num_ne_tag	Q28 首命令探针 v2（成功路径同点 dump）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk119-q28probe2	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）
-vk120-q28probe3	num_ne_tag	Q28 时钟域生命周期探针（按 DCS opcode 记录 CLK_STATUS/CLK_CTRL）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk120-q28probe3	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）
-vk121-stdcmd	num_ne_tag	Q28 候选修复臂：停用自定义 bonded 写路径，走原厂标准广播路径：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk121-stdcmd	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）
-vk122-forceon	num_ne_tag	Q28 候选修复臂：DSI_EN 使能期 dynamic force-on 保护（取自原厂 display 源码）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk122-forceon	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）
-vk123-dynhold	num_ne_tag	Q28 候选修复臂：force-on 保持（vk122 去掉还原）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk123-dynhold	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）
-vk124-merged	num_ne_tag	上游回移 lane 清洗版日常镜像：源码 = clean/base@5b169d541（14 文件回移），无 vk124 tag
-vk124-merged	uts_dup	沿用 vk113 的 UTS release/构建身份（`#121`）以保模块 vermagic 与显示身份不变量
-vk125-resetterm	num_ne_tag	Q28 复位终态对齐臂：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交
-vk125-resetterm	uts_dup	单变量对照需要与 vk113/vk117 同一 UTS release/构建身份（PINUTS + #121）
-vk126-c1	num_ne_tag	C1 端到端验收镜像：源码 = clean/base@5b169d541（与 vk124-merged 同源），文件名带 vk126 但源提交无 vk126 tag
-vk126-c1	uts_dup	单变量要求与 vk124-merged 同一 UTS release/构建身份（PINUTS #121）以隔离「唯一变量 = C1 config」
-m1-73	tree_drift	故意的单变量对照：内核固定为 ed6f232d10 构建（7.3-rc7 重基树），后续提交只改 DTS/config，为隔离变量刻意不重编内核
-m1-73b	tree_drift	同 m1-73（只换 ramdisk：纯 vk126，无模块）
-m1-73c	tree_drift	同 m1-73（只换 DTB：现役 dtbold）
-m1-73d	tree_drift	同 m1-73（只换 DTB：去 simple-framebuffer）
-m1-73e	tree_drift	同 m1-73（只换 DTB：&i2c0 disabled）
-m1-73f	tree_drift	同 m1-73（只换 DTB：splash_region 改名 + 去 simple-framebuffer + sdhc no-1-8-v）
-m1-73h	tree_drift	同 m1-73f（只加 ramdisk 日志黑匣子层，取证用）
-m1-73i	tree_drift	同 m1-73h（只换 DTB：&mdss_dp0 disabled 单变量，证「DP 阻塞 DRM」）
-m1-73j	tree_drift	同 m1-73h 的 DTB + ramdisk 内置 fsa4480/fastrpc 与 /init 加载钩子（零写盘功能镜像）
-p2c-uplink-dsi	uts_dup3	P 系列显示对照臂：P2c/P4a/P4d 刻意钉同一构建身份（UTS 7.3.0-rc7-debug-g2851bcaff64f）以保模块 vermagic，只换内核代码
-p4a-dsc12	uts_dup3	同 p2c-uplink-dsi（P2c + vendor DSC1.2 单变量臂，已否证）
-p4d-diag	uts_dup3	同 p2c-uplink-dsi（P2c + DIAG 探针，临时诊断臂）
+vk116-dsirec	num_ne_tag	Q28 驱动内自恢复臂（面板 prepare 期首条 DCS 超时 → DSI ctrl+PHY 复位 → 重试）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=c44817ad5215 tree_head=d02658e63cf6 config=yes
+vk116-dsirec	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=c44817ad5215 tree_head=d02658e63cf6 config=yes
+vk117-q28rec2	num_ne_tag	Q28 恢复序列修正臂（对齐 post_disable + 复位前后寄存器转储）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=fd4f6729b206 tree_head=d02658e63cf6 config=yes
+vk117-q28rec2	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=fd4f6729b206 tree_head=d02658e63cf6 config=yes
+vk118-q28probe	num_ne_tag	Q28 首命令探针臂（before-first-cmd dump + set_rate 返回值）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=847632b75bdd tree_head=d02658e63cf6 config=yes
+vk118-q28probe	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=847632b75bdd tree_head=d02658e63cf6 config=yes
+vk119-q28probe2	num_ne_tag	Q28 首命令探针 v2（成功路径同点 dump）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5f2ace92fee9 tree_head=d02658e63cf6 config=yes
+vk119-q28probe2	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5f2ace92fee9 tree_head=d02658e63cf6 config=yes
+vk120-q28probe3	num_ne_tag	Q28 时钟域生命周期探针（按 DCS opcode 记录 CLK_STATUS/CLK_CTRL）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5c1dd861e882 tree_head=d02658e63cf6 config=yes
+vk120-q28probe3	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=5c1dd861e882 tree_head=d02658e63cf6 config=yes
+vk121-stdcmd	num_ne_tag	Q28 候选修复臂：停用自定义 bonded 写路径，走原厂标准广播路径：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=ea370fec4552 tree_head=d02658e63cf6 config=yes
+vk121-stdcmd	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=ea370fec4552 tree_head=d02658e63cf6 config=yes
+vk122-forceon	num_ne_tag	Q28 候选修复臂：DSI_EN 使能期 dynamic force-on 保护（取自原厂 display 源码）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7965d616743b tree_head=d02658e63cf6 config=yes
+vk122-forceon	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=7965d616743b tree_head=d02658e63cf6 config=yes
+vk123-dynhold	num_ne_tag	Q28 候选修复臂：force-on 保持（vk122 去掉还原）：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=908ff47eff6e tree_head=d02658e63cf6 config=yes
+vk123-dynhold	uts_dup	单变量对照需要与 vk113 同一 UTS release/构建身份（PINUTS + `#121`）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=908ff47eff6e tree_head=d02658e63cf6 config=yes
+vk124-merged	num_ne_tag	上游回移 lane 清洗版日常镜像：源码 = clean/base@5b169d541（14 文件回移），无 vk124 tag	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=059a83f57f28 tree_head=5b169d541880 config=yes
+vk124-merged	uts_dup	沿用 vk113 的 UTS release/构建身份（`#121`）以保模块 vermagic 与显示身份不变量	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=059a83f57f28 tree_head=5b169d541880 config=yes
+vk125-resetterm	num_ne_tag	Q28 复位终态对齐臂：源码复用 d02658e63（tag=vk64/vk89/vk94），补丁未形成新提交	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=06f1b538186e tree_head=d02658e63cf6 config=yes
+vk125-resetterm	uts_dup	单变量对照需要与 vk113/vk117 同一 UTS release/构建身份（PINUTS + #121）	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=06f1b538186e tree_head=d02658e63cf6 config=yes
+vk126-c1	num_ne_tag	C1 端到端验收镜像：源码 = clean/base@5b169d541（与 vk124-merged 同源），文件名带 vk126 但源提交无 vk126 tag	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=6c20f38fa355 tree_head=5b169d541880 config=yes
+vk126-c1	uts_dup	单变量要求与 vk124-merged 同一 UTS release/构建身份（PINUTS #121）以隔离「唯一变量 = C1 config」	manifest-out 留档：uts=7.2.0-debug-vk64-gd02658e63cf6 payload=6c20f38fa355 tree_head=5b169d541880 config=yes
+m1-73	tree_drift	故意的单变量对照：内核固定为 ed6f232d10 构建（7.3-rc7 重基树），后续提交只改 DTS/config，为隔离变量刻意不重编内核	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73b	tree_drift	同 m1-73（只换 ramdisk：纯 vk126，无模块）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73c	tree_drift	同 m1-73（只换 DTB：现役 dtbold）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73d	tree_drift	同 m1-73（只换 DTB：去 simple-framebuffer）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73e	tree_drift	同 m1-73（只换 DTB：&i2c0 disabled）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73f	tree_drift	同 m1-73（只换 DTB：splash_region 改名 + 去 simple-framebuffer + sdhc no-1-8-v）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73h	tree_drift	同 m1-73f（只加 ramdisk 日志黑匣子层，取证用）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73i	tree_drift	同 m1-73h（只换 DTB：&mdss_dp0 disabled 单变量，证「DP 阻塞 DRM」）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73j	tree_drift	同 m1-73h 的 DTB + ramdisk 内置 fsa4480/fastrpc 与 /init 加载钩子（零写盘功能镜像）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+p2c-uplink-dsi	uts_dup3	P 系列显示对照臂：P2c/P4a/P4d 刻意钉同一构建身份（UTS 7.3.0-rc7-debug-g2851bcaff64f）以保模块 vermagic，只换内核代码	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+p4a-dsc12	uts_dup3	同 p2c-uplink-dsi（P2c + vendor DSC1.2 单变量臂，已否证）	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+p4d-diag	uts_dup3	同 p2c-uplink-dsi（P2c + DIAG 探针，临时诊断臂）	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
 # --- 2026-10-14：M1-7.3 零写盘臂族（m1-73* / e1*）----
 # 理由（对应脚本里的「刻意复用 UTS 串」情形）：这些臂用 fastboot boot 零写盘启动，
 # 系统盘 /lib/modules 是 7.2 的 ⇒ 必须把 7.3 的 =m 模块打进 ramdisk、并让内核 UTS 与
 # ramdisk 内模块 vermagic 逐字相同（否则模块不加载）。于是同一 UTS 串在载荷里出现多次
 # （内核 + 若干 .ko 的 vermagic），被 §5d 判成 uts_dupN。内核身份本身由 kernel_payload_sha256
 # 与源提交共同锚定（非 vk87/88 那类「名实不符」），经审查登记降 WARN。
-m1-73	uts_dup	M1 零写盘臂：ramdisk 内嵌 7.3 =m 模块 ⇒ UTS 串多重出现
-m1-73b	uts_dup	同上
-m1-73c	uts_dup	同上
-m1-73d	uts_dup	同上
-m1-73e	uts_dup	同上
-m1-73f	uts_dup	同上
-m1-73h	uts_dup	同上
-m1-73i	uts_dup	同上
-m1-73j	uts_dup	同上
-e1-pllfix	uts_dup	M1 E1：ramdisk 内嵌模块 ⇒ UTS 多串（显示修复臂）
-e1b-pllfix	uts_dup	M1 E1b：采用的自显示修复形态
-e1c-fsa4480y	uts_dup	M1 E1c：fsa4480=y 臂
-e1d-fastinit	uts_dup	M1 E1d：hooks 改名臂
-e1e-fastinit2	uts_dup	M1 E1e：init 计时臂
-e1g-athm	uts_dup	M1 E1g：ATH12K=m 臂（init 4.49 s）
-e1h-athm	uts_dup	M1 E1h：+ath12k_wifi7 模块臂
-e2-wcn	uts_dup	M1 E2：补丁 0001(ath12k MHI 3s) + ATH12K=y（daily 口径）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现（WCN/启动停滞臂，WiFi 已打通）
-e4-paneldelay30	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证
-e5-paneldelay90	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证
-e3-dailycfg	uts_dup	M1 daily-config 功能基线臂（= E1b config + 补丁 0001）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现
-m1-baseline	uts_dup	M1-7.3 功能基线（E1b 显示修复 + 补丁 0001）机上验收镜像；ramdisk/DTB 复用 73j ⇒ 同一 UTS 串多重出现；2026-10-14 一发通过（Run/init 7.67s + 面板实测 + WiFi）
+m1-73	uts_dup	M1 零写盘臂：ramdisk 内嵌 7.3 =m 模块 ⇒ UTS 串多重出现	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73b	uts_dup	同上	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73c	uts_dup	同上	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73d	uts_dup	同上	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73e	uts_dup	同上	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73f	uts_dup	同上	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73h	uts_dup	同上	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73i	uts_dup	同上	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+m1-73j	uts_dup	同上	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=ea2b77752336 tree_head=b3815fb15080 config=yes
+e1-pllfix	uts_dup	M1 E1：ramdisk 内嵌模块 ⇒ UTS 多串（显示修复臂）	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e1b-pllfix	uts_dup	M1 E1b：采用的自显示修复形态	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e1c-fsa4480y	uts_dup	M1 E1c：fsa4480=y 臂	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e1d-fastinit	uts_dup	M1 E1d：hooks 改名臂	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e1e-fastinit2	uts_dup	M1 E1e：init 计时臂	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e1g-athm	uts_dup	M1 E1g：ATH12K=m 臂（init 4.49 s）	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e1h-athm	uts_dup	M1 E1h：+ath12k_wifi7 模块臂	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e2-wcn	uts_dup	M1 E2：补丁 0001(ath12k MHI 3s) + ATH12K=y（daily 口径）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现（WCN/启动停滞臂，WiFi 已打通）	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e4-paneldelay30	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e5-paneldelay90	uts_dup	M1 面板 bring-up 时点实验臂（唯一变量=fsa4480 hold 秒数）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现；已否证	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e3-dailycfg	uts_dup	M1 daily-config 功能基线臂（= E1b config + 补丁 0001）；ramdisk 内嵌模块 ⇒ 同一 UTS 串多重出现	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+m1-baseline	uts_dup	M1-7.3 功能基线（E1b 显示修复 + 补丁 0001）机上验收镜像；ramdisk/DTB 复用 73j ⇒ 同一 UTS 串多重出现；2026-10-14 一发通过（Run/init 7.67s + 面板实测 + WiFi）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=46edeb16f3db tree_head=c7da05b1d842 config=yes
 # ---- 2026-10-14 WCN 首探诊断族（E3/E3a/E4）：刻意复用 m1-baseline 的 UTS 串（等价 73j），
 #      为能在零写盘 fastboot boot 下加载持久盘模块；单变量分别 = cmdline dyndbg / MHI 超时 30s / 首探 msleep(8000)。
-e3-dyndbg	uts_dup	WCN 首探 dyndbg 诊断内核：UTS 刻意复用 73j（-debug-ged6f232d10e3），单变量=cmdline dyndbg 探针；证据 reports/e3-wcn-dyndbg-20261014.md
-e3a-mhi30	uts_dup	同族 E3a：单变量=ath12k MHI_TIMEOUT_DEFAULT_MS 3s→30s（H1 否证）
-e4-probedelay	uts_dup	同族 E4：单变量=ath12k_pci_probe 首探前 msleep(8000)（否证「延后/晚加载」）
+e3-dyndbg	uts_dup	WCN 首探 dyndbg 诊断内核：UTS 刻意复用 73j（-debug-ged6f232d10e3），单变量=cmdline dyndbg 探针；证据 reports/e3-wcn-dyndbg-20261014.md	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e3a-mhi30	uts_dup	同族 E3a：单变量=ath12k MHI_TIMEOUT_DEFAULT_MS 3s→30s（H1 否证）	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+e4-probedelay	uts_dup	同族 E4：单变量=ath12k_pci_probe 首探前 msleep(8000)（否证「延后/晚加载」）	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
 
 # ---- 2026-10-15 WCN 首探修法族（F1/F2/F3）：刻意复用 m1-baseline 的 UTS 串（-debug-ged6f232d10e3），
 #      为在零写盘 fastboot boot 下加载 ramdisk 内 7.3 模块；单变量分别 = MHI 层重发 / 每轮 SoC 复位重发 / probe 返 -EPROBE_DEFER。
-f1-mhiretry	uts_dup	WCN 修法 F1：ath12k_mhi_start 内 6 次重发（否证）；UTS 刻意复用 m1-baseline（ramdisk 模块 vermagic）
-f2-socreset	uts_dup	WCN 修法 F2：每轮先 ath12k_pci_sw_reset(true) 再重发（否证，6/6 -110）；UTS 同 m1-baseline
-f3-defer	uts_dup	WCN 修法 F3：ath12k_core_init 失败返 -EPROBE_DEFER 让驱动 core 重跑整轮 probe（**通过**：11.78 s chip_id、Run/init 7.670 s）；UTS 同 m1-baseline
-m1-baseline-f3	uts_dup	M1-7.3 功能基线 + F3（ath12k -EPROBE_DEFER 自愈）镜像；ramdisk/DTB 复用 73j ⇒ 同一 UTS 串多重出现；2026-10-15 已刷 boot_b，冷起 GOOD（Run/init 7.667s + 面板 L1=0/L2=0 + WCN 重探 11.77s + wlan0 17.52s）
-armA-nobonded	uts_dup	Q28 方案A 实验臂：禁用 vendor bonded 命令协议、走标准 need_sync 路径；内核仅改 dsi_manager.c 3 处，ramdisk/DTB/cmdline 复用 m1-baseline-f3 ⇒ 同一 UTS 串多重出现
-b1-recoverable	uts_dup	Q28 方案B 实验臂：把 bonded 命令「失败即永久放弃」改成有界重试(3)+ 删掉 power_off/pre_enable/post_disable 的 cmd_failed() early-return；单文件 dsi_manager.c ×1（内核提交 cf2328ce3a），config/DTB/ramdisk/cmdline 全部逐字节复用 m1-baseline-f3 ⇒ 同一 UTS 串多重出现
+f1-mhiretry	uts_dup	WCN 修法 F1：ath12k_mhi_start 内 6 次重发（否证）；UTS 刻意复用 m1-baseline（ramdisk 模块 vermagic）	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+f2-socreset	uts_dup	WCN 修法 F2：每轮先 ath12k_pci_sw_reset(true) 再重发（否证，6/6 -110）；UTS 同 m1-baseline	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=b5601b1f9e84 tree_head=c7da05b1d842 config=yes
+f3-defer	uts_dup	WCN 修法 F3：ath12k_core_init 失败返 -EPROBE_DEFER 让驱动 core 重跑整轮 probe（**通过**：11.78 s chip_id、Run/init 7.670 s）；UTS 同 m1-baseline	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=b5ee54adbbe7 tree_head=c7da05b1d842 config=yes
+m1-baseline-f3	uts_dup	M1-7.3 功能基线 + F3（ath12k -EPROBE_DEFER 自愈）镜像；ramdisk/DTB 复用 73j ⇒ 同一 UTS 串多重出现；2026-10-15 已刷 boot_b，冷起 GOOD（Run/init 7.667s + 面板 L1=0/L2=0 + WCN 重探 11.77s + wlan0 17.52s）	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=32e93db7a0c2 tree_head=ad5f03c43cb4 config=yes
+armA-nobonded	uts_dup	Q28 方案A 实验臂：禁用 vendor bonded 命令协议、走标准 need_sync 路径；内核仅改 dsi_manager.c 3 处，ramdisk/DTB/cmdline 复用 m1-baseline-f3 ⇒ 同一 UTS 串多重出现	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=1fe8d416a560 tree_head=95c899a885dc config=yes
+b1-recoverable	uts_dup	Q28 方案B 实验臂：把 bonded 命令「失败即永久放弃」改成有界重试(3)+ 删掉 power_off/pre_enable/post_disable 的 cmd_failed() early-return；单文件 dsi_manager.c ×1（内核提交 cf2328ce3a），config/DTB/ramdisk/cmdline 全部逐字节复用 m1-baseline-f3 ⇒ 同一 UTS 串多重出现	manifest-out 留档：uts=7.3.0-rc7-debug-ged6f232d10e3 payload=c187280fc401 tree_head=cf2328ce3a92 config=yes
 # ---- 2026-10-21 vk130（T9 上机：PCIe skip_l23_ready，RAM 启动零写盘）：
 #      刻意复用 boot_b 的 UTS 串（-debug-vk127）以便 fastboot boot 后加载设备上已部署的
 #      /lib/modules/<UTS>-abi-suspend 模块树（ABI 未变：config 未动，只加 pcie-qcom 补丁）。
 #      源提交 = m1-73 replay 基（分支 replay/m1-73-vk127，只带 vk127 tag）。
-vk130	num_ne_tag	T9 上机镜像：源提交只属 vk127 tag（m1-73 replay 基 + pcie skip_l23_ready 工作树改动），刻意不带新 tag
-vk130	uts_dup2	刻意复用 boot_b UTS（-debug-vk127）以在零写盘 fastboot boot 下加载在机 -abi-suspend 模块树
-vk127	uts_dup2	vk130（T9 上机镜像）刻意复用其 UTS ⇒ 该镜像被牵连计入重复；本身口径未变
+vk130	num_ne_tag	T9 上机镜像：源提交只属 vk127 tag（m1-73 replay 基 + pcie skip_l23_ready 工作树改动），刻意不带新 tag	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=08acad7df6e8 tree_head=24223e44ad80 config=yes
+vk130	uts_dup2	刻意复用 boot_b UTS（-debug-vk127）以在零写盘 fastboot boot 下加载在机 -abi-suspend 模块树	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=08acad7df6e8 tree_head=24223e44ad80 config=yes
+vk127	uts_dup2	vk130（T9 上机镜像）刻意复用其 UTS ⇒ 该镜像被牵连计入重复；本身口径未变	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=2e0fc063e176 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|uts_dup14
 # ---- 2026-10-21 T9 后续三发（vk131/vk132/vk133：hci_qca 固件下载窗口补丁演化）。
 #      与 vk130 同理：刻意复用 boot_b 的 UTS（-debug-vk127）以便零写盘 fastboot boot 后
 #      加载设备上已部署的 /lib/modules/<UTS>-abi-suspend（config 未改，ABI 未变）。
-vk131	num_ne_tag	T9 后续臂：源提交只属 vk127 tag（m1-73 replay 基 + 工作树改动），刻意不带新 tag
-vk131	uts_dup2	刻意复用 boot_b UTS（-debug-vk127）以零写盘加载在机 -abi-suspend 模块树
-vk132	num_ne_tag	T9 后续臂：同上（+resume hci_reset_dev）
-vk132	uts_dup2	刻意复用 boot_b UTS（同 vk130 口径）
-vk133	num_ne_tag	T9 后续臂：同上（+resume serdev re-probe，实测挂死，已回退源码）
-vk133	uts_dup2	刻意复用 boot_b UTS（同 vk130 口径）
-vk127	uts_dup2	vk131/vk132/vk133（T9 后续臂）刻意复用其 UTS ⇒ 该镜像被牵连计入重复
+vk131	num_ne_tag	T9 后续臂：源提交只属 vk127 tag（m1-73 replay 基 + 工作树改动），刻意不带新 tag	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=40dda0291023 tree_head=24223e44ad80 config=yes
+vk131	uts_dup2	刻意复用 boot_b UTS（-debug-vk127）以零写盘加载在机 -abi-suspend 模块树	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=40dda0291023 tree_head=24223e44ad80 config=yes
+vk132	num_ne_tag	T9 后续臂：同上（+resume hci_reset_dev）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=0c70df5fc752 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk132	uts_dup2	刻意复用 boot_b UTS（同 vk130 口径）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=0c70df5fc752 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk133	num_ne_tag	T9 后续臂：同上（+resume serdev re-probe，实测挂死，已回退源码）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=68181c58d607 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk133	uts_dup2	刻意复用 boot_b UTS（同 vk130 口径）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=68181c58d607 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk127	uts_dup2	vk131/vk132/vk133（T9 后续臂）刻意复用其 UTS ⇒ 该镜像被牵连计入重复	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=2e0fc063e176 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|uts_dup14
 # ---- 2026-10-21：T9 同 UTS 族共 5 个（vk127 + vk130~vk133）。原因统一 = 为在零写盘
 #      fastboot boot 下加载设备上已部署的 /lib/modules/<UTS>-abi-suspend（ABI 未变：
 #      config 未动，仅内核源码补丁）。收口条件 = 其中任一臂写入 boot_b 或重出带独立 UTS 的正式镜像。
-vk127	uts_dup6	T9 同 UTS 族（vk130~vk133 刻意复用其串）⇒ 族内计数触发
-vk130	uts_dup6	T9 同 UTS 族成员（零写盘 fastboot boot 需加载在机 -abi-suspend 模块树）
-vk131	uts_dup6	T9 同 UTS 族成员（hci_qca 40s 预算，实测 suspend 成功）
-vk132	uts_dup6	T9 同 UTS 族成员（+resume hci_reset_dev，实测 suspend 成功）
-vk133	uts_dup6	T9 同 UTS 族成员（+resume serdev re-probe，实测挂死，源码已回退）
-vk134	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127 复用 1497 .ko；判据用 /sys/kernel/kexec_diag）
-vk134	num_ne_tag	源提交上无同名 vkNN ref（kexec 诊断镜像，UTS 刻意同 vk127 以复用 1497 .ko；判据 = /sys/kernel/kexec_diag + [KD] 标记）
-vk135	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127 复用 1497 .ko；判据 = ramoops 8MiB + deflate）
-vk135	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像，UTS 刻意同 vk127）
-vk136	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127；panic=0 实验已废弃，仅留 manifest 档）
-vk136	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像，UTS 刻意同 vk127）
+vk127	uts_dup6	T9 同 UTS 族（vk130~vk133 刻意复用其串）⇒ 族内计数触发	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=2e0fc063e176 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|uts_dup14
+vk130	uts_dup6	T9 同 UTS 族成员（零写盘 fastboot boot 需加载在机 -abi-suspend 模块树）	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=08acad7df6e8 tree_head=24223e44ad80 config=yes
+vk131	uts_dup6	T9 同 UTS 族成员（hci_qca 40s 预算，实测 suspend 成功）	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=40dda0291023 tree_head=24223e44ad80 config=yes
+vk132	uts_dup6	T9 同 UTS 族成员（+resume hci_reset_dev，实测 suspend 成功）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=0c70df5fc752 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk133	uts_dup6	T9 同 UTS 族成员（+resume serdev re-probe，实测挂死，源码已回退）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=68181c58d607 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk134	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127 复用 1497 .ko；判据用 /sys/kernel/kexec_diag）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
+vk134	num_ne_tag	源提交上无同名 vkNN ref（kexec 诊断镜像，UTS 刻意同 vk127 以复用 1497 .ko；判据 = /sys/kernel/kexec_diag + [KD] 标记）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
+vk135	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127 复用 1497 .ko；判据 = ramoops 8MiB + deflate）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
+vk135	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像，UTS 刻意同 vk127）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
+vk136	uts_dup6	kexec 同 UTS 族成员（刻意 LOCALVERSION=-vk127；panic=0 实验已废弃，仅留 manifest 档）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
+vk136	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像，UTS 刻意同 vk127）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
 #
 # ---------------------------------------------------------------------------
 # §5d PINUTS 例外（2026-10-23 登记）
@@ -260,126 +279,126 @@ vk136	num_ne_tag	源提交上无同名 vkNN ref（ramoops 可见性实验镜像�
 # 触发 uts_dup，且源提交上无同名 vkNN ref 触发 num_ne_tag —— 两者都是**设计意图**，
 # 不是事故。此处逐条登记以让 §5d 回归可读；新增 PINUTS 镜像照此加一行。
 # ---------------------------------------------------------------------------
-vk127	uts_dup	PINUTS 钉 vk64/vk127 同族 UTS，复用机内模块树（日常线起点）
-vk130	uts_dup	PINUTS（T9 PCIe skip_l23_ready）
-vk131	uts_dup	PINUTS（vk130 + hci_qca FW 窗口）
-vk132	uts_dup	PINUTS（vk131 + qca_resume 重试）
-vk133	uts_dup	PINUTS（vk132 + resume serdev re-probe）
-vk134	uts_dup	PINUTS（kexec mask=1 载具）
-vk135	uts_dup	PINUTS（vk134 + DTS ramoops record-size）
-vk136	uts_dup	PINUTS（vk135 + panic=0，已废弃留档）
-vk137-q28base	num_ne_tag	PINUTS 到 7.2 线 vk64 UTS（Q28 A/B base 臂，源在 bundle/vk64）
-vk137-q28base	uts_dup	PINUTS 到 vk64 UTS
-vk138-q28disp	num_ne_tag	PINUTS 到 vk64 UTS（Q28 A/B exp 臂）
-vk138-q28disp	uts_dup	PINUTS 到 vk64 UTS
-vk139-q28only0155	num_ne_tag	PINUTS 到 vk64 UTS（only0155 拆贡献臂）
-vk139-q28only0155	uts_dup	PINUTS 到 vk64 UTS
-vk140-q28disp73	num_ne_tag	PINUTS 到 vk127 UTS（后作废：UTS 少了 -vk127 前缀）
-vk141-q28disp73	num_ne_tag	PINUTS 到 vk127 UTS（vk140 修正版）
-vk141-q28disp73	uts_dup	PINUTS 到 vk127 UTS
-vk142-q28disp73dt	num_ne_tag	PINUTS 到 vk127 UTS（7.3 线 + ADSP fastrpc DT）
-vk142-q28disp73dt	uts_dup	PINUTS 到 vk127 UTS
-vk143-q28-73-0155only	num_ne_tag	PINUTS 到 vk127 UTS
-vk143-q28-73-0155only	uts_dup	PINUTS 到 vk127 UTS
-vk144-q28only0154	num_ne_tag	PINUTS 到 vk64 UTS（only0154 臂）
-vk144-q28only0154	uts_dup	PINUTS 到 vk64 UTS
-vk145-q28daily	num_ne_tag	PINUTS 到 vk127 UTS（日常候选，已写 boot_b）
-vk145-q28daily	uts_dup	PINUTS 到 vk127 UTS
-vk146-BADSUSPEND	num_ne_tag	PINUTS 到 vk127 UTS（config 漂移作废，留证）
-vk146-BADSUSPEND	uts_dup	PINUTS 到 vk127 UTS
-vk147	num_ne_tag	PINUTS 到 vk127 UTS（在机 boot_b：kexec 旋钮 + 0154，SSOT config）
-vk147	uts_dup	PINUTS 到 vk127 UTS
-vk148	num_ne_tag	单变量臂：内核源仍为 vk64 提交（d02658e63），只改 rpmhpd sync_state，故源提交上只有 vk64 ref
-vk148	uts_dup	PINUTS 到 vk64 UTS，刻意复用机上 1497 个 vk64 模块（PITFALLS #367）
-vk149	num_ne_tag	单变量臂：内核源仍为 vk64 提交（d02658e63），只改 rpmhpd retention 语义，故源提交上只有 vk64 ref
-vk149	uts_dup	PINUTS 到 vk64 UTS，刻意复用机上 1497 个 vk64 模块（PITFALLS #367）
-vk150-q28v2	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只改显示复位归属，故源提交上只有 replay/m1-73-vk127 ref
-vk150-q28v2	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）
-vk151	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只改显示复位归属与软件修，故源提交上只有 replay/m1-73-vk127 ref
-vk151	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）
-vk152	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只加 Q11 kexec 诊断旋钮（0019/0020），故源提交上只有 replay/m1-73-vk127 ref
-vk152	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）；新增旋钮不改变 config/ABI（check-abi-config 27 项一致、of_node@624）
-vk153	num_ne_tag	内核源仍为 m1-73 提交（24223e44）：在 build/vk151 上加 Q11/K6 ITS quiesce 钩子（导出 gic_its_quiesce_for_kexec + 诊断打印），源提交上只有 replay/m1-73-vk127 ref；config/ABI 未变
-vk153	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
-vk154	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
-vk154	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
-vk155	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
-vk155	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
-vk156	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
-vk156	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
-vk157	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
-vk157	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
-vk158	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref
-vk158	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI
-vk159	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树
-vk159	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI
-vk160	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树
-vk160	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI
-vk161	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；与上游补丁文本对齐
-vk161	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI
-gunyah1	uts_dup	PINUTS 到 vk127 UTS（LOCALVERSION= 置空），刻意让 gunyah 模块能直接 insmod 到在机模块树；config 仅多 CONFIG_VIRT_DRIVERS=y/CONFIG_GUNYAH=m 等 gunyah 行（PITFALLS #383）
-gunyah1	num_ne_tag	内核源码未提交（gunyah-port worktree 未 commit/tag），基线 = 24223e44ad80 + 未提交改动；用途是零写盘试验，非日常线
-dtbo1	uts_dup	同 gunyah1 内核（PINUTS 到 vk127 UTS），唯一差别 = 板 DTB 用 -@ 重编（带 __symbols__，201 582 B）；用途 = 厂商 Gunyah hyp DTBO 的 of_overlay_fdt_apply 零写盘验证
-dtbo1	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动
-dtbo2	uts_dup	同 dtbo1 内核（PINUTS 到 vk127 UTS）；相对 dtbo1 只换了 ramdisk → 日用全量 rootfs。起因=dtbo1 用 initramfs-slim 导致 ADSP/CDSP 拿不到固件（PITFALLS #390）
-dtbo2	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动
-dtbo3	uts_dup	同 dtbo2，另加 PMIC RTC offset DT 修复（nvmem cell in pmk8550_sdam_2，PITFALLS #392、patches/dt/0002）
-dtbo3	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动；2026-10-25 起为 boot_b 在役日用镜像
-gh612a	uts_dup	同 dtbo3 的 PINUTS 思路（LOCALVERSION= 置空 ⇒ 复用 vk127 UTS），目的 = 让 6.12 Gunyah 驱动集按在机 /lib/modules/<uname -r> 加载；反例镜像：DTB 因 7.3 DTC_FLAGS 命名变更未带 __symbols__（PITFALLS #395）
-gh612a	num_ne_tag	内核源码未提交（gunyah-port worktree，24223e44ad80 + 未提交改动）
-gh612b	uts_dup	同 gh612a，唯一差别 = 修好 DTC_FLAGS_sm8750-lenovo-elden（无 .dtb 后缀）后重编板 DTB（带 __symbols__）；2026-10-25 6.12 栈有效件
-gh612b	num_ne_tag	同上（gunyah-port worktree 未提交）
-vk162-fstype	num_ne_tag	内核未改动 = vk152 那份（本镜像只换 ramdisk，不编译内核）
-vk162-fstype	uts_dup	刻意 PIN 到 vk152 的 UTS/LOCALVERSION，以便复用机上 1497 个 .ko（单变量实验的硬要求）
-vk162-rescue	num_ne_tag	内核未改动 = vk152 那份（救援镜像只改 cmdline/ramdisk 选择）
-vk162-rescue	uts_dup	刻意复用 vk152 的 UTS 以共用模块树
-f2fs-root	num_ne_tag	内核未改动 = vk152 那份（本镜像只改 cmdline/ramdisk）
-f2fs-root	uts_dup	刻意复用 vk152 的 UTS 以共用模块树
-vk164-debianroot	num_ne_tag	M6 迁移候选：**故意复用 vk163 的内核载荷**（同一 build/vk151 Image.gz，只改 cmdline elden_root=LABEL=linux17），源提交上没有 vk164 ref 是设计使然；镜像身份由 manifest kernel_payload_sha256 区分
-vk165-earlygadget	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
-vk166-dbg	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
-vk167-trace	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
-vk168-ramprobe	num_ne_tag	RAM-only 探针：无 elden_root，用来在设备卡死时读 linux17 上的 trace（复用 vk163 载荷）
-vk169-trace2	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
-vk170-trace3	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
-vk171-swrerr	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）
-vk174	num_ne_tag	M6 迁移候选（2026-10-26）：内核/DTB 逐字节复用 vk173(=vk172 载荷)，只换 ramdisk 的 /init（阶段化 preflight）+ cmdline elden_root=LABEL=linux17；无内核改动故无新 tag
-vk175	num_ne_tag	M6 可见性件（2026-10-26）：内核/DTB/ramdisk 与 vk174 逐字节相同，只加 cmdline elden_early_gadget=1 + elden_q28_nowd
-vk176	num_ne_tag	M6 电源/USB 件（2026-10-26）：内核/DTB 复用 vk172 载荷，ramdisk 换新 /init（usb0_dhcp applet 回退）
-vk177	num_ne_tag	M6 传感器件（2026-10-26）：内核/ramdisk 同 vk176，板 DTB 加 ADSP fastrpc qcom,non-secure-domain
-vk178-b5verify	num_ne_tag	B5 第1-3步验证件（2026-10-27）：LOCALVERSION 钉 -debug-vk172 以复用设备模块树，源提交上无 vk178 ref 为设计使然
-vk178-b5verify	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树（B5 改动全在 vmlinux）
-vk179-b5step4a	num_ne_tag	B5 第4步同值臂（2026-10-27）：同上，UTS 钉住
-vk179-b5step4a	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树
-vk180-b5step4b	num_ne_tag	B5 第4步判别臂（2026-10-27）：同上，UTS 钉住
-vk180-b5step4b	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树
-vk181-daily	num_ne_tag	日常线复原件（2026-10-27）：B5 实验后从还原的树重打，UTS 钉住
-vk181-daily	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树
-vk172	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
-vk173	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
-vk174	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
-vk175	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
-vk176	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
-vk177	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变
-vk182-camssv3	uts_dup	M4 camss v3 上机复验镜像：UTS **刻意**与 vk172 相同（dwc3=m，必须匹配 /lib/modules/<UTS> 才能拉起 USB gadget，见 PITFALLS #468）；二进制不同属预期
-vk182-camssv3	num_ne_tag	上机复验镜像按惯例用 vk 号（不走 tag）；分支标签集合沿用日常线 replay/m1-73-vk127 系属预期
-m8ab-base	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 1bcbe17a16a0）
-m8ab-v2	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 2691215d2e0e）
-m3v5-daily	uts_dup	M3-1 双口 role mux 上机镜像：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；二进制不同属预期，身份由 kernel_payload_sha256 锚定
-m3v5-f2	uts_dup	M3-1 v5 + F2 上机镜像（defer 上抛）：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；本轮同时替换了 dwc3/ucsi/typec 的 4 个 .ko，二进制不同属预期，身份由 kernel_payload_sha256 锚定 685ad1d9409b
-vk183-fastrpc	num_ne_tag	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref
-vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）
-m3v5-onboard	uts_dup12	M3-1 v5 pristine 候选（实验内核，未入日常线）：刻意钉 vk172 UTS 以复用 /lib/modules；pristine 缺下游 DSI、initramfs 未含 dwc3/ucsi 模块 ⇒ A1 启动期失联（根因未证实，见 reports/m3v5-onboard-plan-20261030.md §6）；身份由 kernel_payload_sha256 锚定 c4e884ad
-vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）
-m3v5-onboard-b	uts_dup12	M3-1 v5 复测件（实验内核，未入日常线）：复用 pinned vk172 UTS；initramfs 补 gadget 14 模块后仍 USB 零枚举 ⇒ pristine 平台启动假设；不做上机载体；身份由 kernel_payload_sha256 锚定
-posctrl-20261103	uts_dup8	正控载荷（2026-11-03）：刻意复用 pinned vk172 UTS 以匹配设备 /lib/modules；身份由 kernel_payload_sha256 锚定；用途只在「内核最早入口写 DRAM 标记」取证，不作日常启动
-vk184	uts_dup2	C12/droidloom L1：vk187b 刻意复用 vk184 的 LOCALVERSION 以匹配设备现成 87 M 模块树（否则全部 =m 驱动不加载 ⇒ 无 /dev/dri，vk187 首版即栽在这）；两镜像内核二进制不同（c76bc2e8 vs 1d11e815），身份由 kernel_payload_sha256 锚定。**收口后应移除本行**（2026-11-10）
-vk188	num_ne_tag	vk188 = vk184 源树 + 仅 SYSFB_SIMPLEFB 一档 config（config 不入 git ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 是预期噪声，不是溯源错误）；UTS 已用 -vk188-sysfbfb 与旧模块树显式区分；身份由 kernel_payload_sha256 锚定（2026-11-12）
-vk188b	num_ne_tag	vk188b = vk188 内核 + 仅换 ramdisk（config 不入 git ⇒ 源提交与 vk184/vk188 相同，num_ne_tag(vk184) 是预期噪声）；身份由 kernel_payload_sha256 锚定（2026-11-12）
-vk189	num_ne_tag	vk189 = vk184 源树 + 上游合并批 1（6 枚补丁，**patch 在树里但未 commit，config 亦不入 git** ⇒ 源提交与 vk184 相同，`num_ne_tag(vk184)` 属预期噪声，不是溯源错误）；UTS 用 `-debug-vk189-suspend` 与在机两套模块树显式区分；身份由 `kernel_payload_sha256` 锚定（2026-11-12）
-vk190	num_ne_tag	vk190 = vk184 源树 + 上游合并批 1（6 枚补丁，**patch 在树里但未 commit，config 亦不入 git** ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 属预期噪声）+ 一行 ADSP DT（同属未 commit 的工作区改动）；UTS 用 `-debug-vk189-suspend` 与 vk189 逐字相同（DT-only 修复刻意复用机上 1499 .ko 模块树，避免为一行 DT 重编 85 MiB 模块）；身份由 `kernel_payload_sha256` 锚定（2026-11-13）
-vk189	uts_dup2	vk190 刻意复用 vk189 的 LOCALVERSION（ADSP fastrpc non-secure 一行 DT 修复，模块 vermagic/布局不变 ⇒ 直接沿用机上模块树）；两镜像内核二进制不同（cab6a5c3 vs 511e16a1），身份由 kernel_payload_sha256 锚定（2026-11-13）
-vk190	uts_dup2	同上：与 vk189 同 UTS 串、不同二进制（DT 修复 + `make` 重链）；这是「一行 DT 不重编模块树」的既定做法，不是溯源错误（2026-11-13）
-vk187	num_ne_tag	vk187 = vk184 源树 + 仅 nftables 一档 config（config 不入 git ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 是预期噪声）；**该镜像已作废、不上机**，C12 L1 门槛由 vk187b 承担（2026-11-13 收口）
-vk187b	num_ne_tag	vk187b = vk187 内核 + 可上机模块树（LOCALVERSION=-vk184 复用机上模块树 ⇒ num_ne_tag(vk184) 属预期）；2026-11-10 上机全绿，inflight 条目已删（2026-11-13）
-vk187b	uts_dup2	vk187b 刻意复用 vk184 的 LOCALVERSION（同一套模块树）；与 vk187 二进制不同，身份由 kernel_payload_sha256 锚定（2026-11-10）
+vk127	uts_dup	PINUTS 钉 vk64/vk127 同族 UTS，复用机内模块树（日常线起点）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=2e0fc063e176 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|uts_dup14
+vk130	uts_dup	PINUTS（T9 PCIe skip_l23_ready）	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=08acad7df6e8 tree_head=24223e44ad80 config=yes
+vk131	uts_dup	PINUTS（vk130 + hci_qca FW 窗口）	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=40dda0291023 tree_head=24223e44ad80 config=yes
+vk132	uts_dup	PINUTS（vk131 + qca_resume 重试）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=0c70df5fc752 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk133	uts_dup	PINUTS（vk132 + resume serdev re-probe）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=68181c58d607 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk134	uts_dup	PINUTS（kexec mask=1 载具）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
+vk135	uts_dup	PINUTS（vk134 + DTS ramoops record-size）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
+vk136	uts_dup	PINUTS（vk135 + panic=0，已废弃留档）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=8a0a0aee9f6f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared3|uts_dup14
+vk137-q28base	num_ne_tag	PINUTS 到 7.2 线 vk64 UTS（Q28 A/B base 臂，源在 bundle/vk64）	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=1ed94826aecb src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|378459aff2d8|dirty|tree_head_diff|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk137-q28base	uts_dup	PINUTS 到 vk64 UTS	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=1ed94826aecb src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|378459aff2d8|dirty|tree_head_diff|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk138-q28disp	num_ne_tag	PINUTS 到 vk64 UTS（Q28 A/B exp 臂）	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=85dc56e071a4 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|378459aff2d8|dirty|tree_head_diff|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk138-q28disp	uts_dup	PINUTS 到 vk64 UTS	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=85dc56e071a4 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|378459aff2d8|dirty|tree_head_diff|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk139-q28only0155	num_ne_tag	PINUTS 到 vk64 UTS（only0155 拆贡献臂）	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=f516862ce883 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|378459aff2d8|dirty|tree_head_diff|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk139-q28only0155	uts_dup	PINUTS 到 vk64 UTS	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=f516862ce883 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|378459aff2d8|dirty|tree_head_diff|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk140-q28disp73	num_ne_tag	PINUTS 到 vk127 UTS（后作废：UTS 少了 -vk127 前缀）	uts=7.3.0-rc7-debug-00002-g24223e44ad80-dirty payload=8ff0efc1c132 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)
+vk141-q28disp73	num_ne_tag	PINUTS 到 vk127 UTS（vk140 修正版）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=9a2948f9fa2a src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared2|uts_dup14
+vk141-q28disp73	uts_dup	PINUTS 到 vk127 UTS	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=9a2948f9fa2a src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared2|uts_dup14
+vk142-q28disp73dt	num_ne_tag	PINUTS 到 vk127 UTS（7.3 线 + ADSP fastrpc DT）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=9a2948f9fa2a src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared2|uts_dup14
+vk142-q28disp73dt	uts_dup	PINUTS 到 vk127 UTS	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=9a2948f9fa2a src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared2|uts_dup14
+vk143-q28-73-0155only	num_ne_tag	PINUTS 到 vk127 UTS	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=0407621c5b4f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk143-q28-73-0155only	uts_dup	PINUTS 到 vk127 UTS	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=0407621c5b4f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk144-q28only0154	num_ne_tag	PINUTS 到 vk64 UTS（only0154 臂）	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=6e1d945497be src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|378459aff2d8|dirty|tree_head_diff|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk144-q28only0154	uts_dup	PINUTS 到 vk64 UTS	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=6e1d945497be src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|378459aff2d8|dirty|tree_head_diff|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk145-q28daily	num_ne_tag	PINUTS 到 vk127 UTS（日常候选，已写 boot_b）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=e24c7d5086f1 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk145-q28daily	uts_dup	PINUTS 到 vk127 UTS	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=e24c7d5086f1 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk146-BADSUSPEND	num_ne_tag	PINUTS 到 vk127 UTS（config 漂移作废，留证）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=20b368f3a34b src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk146-BADSUSPEND	uts_dup	PINUTS 到 vk127 UTS	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=20b368f3a34b src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk147	num_ne_tag	PINUTS 到 vk127 UTS（在机 boot_b：kexec 旋钮 + 0154，SSOT config）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=2b8dd84e36e2 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk147	uts_dup	PINUTS 到 vk127 UTS	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=2b8dd84e36e2 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk148	num_ne_tag	单变量臂：内核源仍为 vk64 提交（d02658e63），只改 rpmhpd sync_state，故源提交上只有 vk64 ref	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=2696543452a7 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|d02658e63cf6|dirty|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk148	uts_dup	PINUTS 到 vk64 UTS，刻意复用机上 1497 个 vk64 模块（PITFALLS #367）	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=2696543452a7 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|d02658e63cf6|dirty|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk149	num_ne_tag	单变量臂：内核源仍为 vk64 提交（d02658e63），只改 rpmhpd retention 语义，故源提交上只有 vk64 ref	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8f95a729be69 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|d02658e63cf6|dirty|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk149	uts_dup	PINUTS 到 vk64 UTS，刻意复用机上 1497 个 vk64 模块（PITFALLS #367）	uts=7.2.0-debug-vk64-gd02658e63cf6 payload=8f95a729be69 src=d02658e63cf6 refs=branch:bundle/vk64,bundle/vk70,bundle/vk79,bundle/vk81,bundle/vk82,bundle/vk83,elden-archive/elden/vk53-hw,elden-archive/q28/vk86,vk64,vk70, flags=bundle/vk64,vk64|d02658e63cf6|dirty|num_ne_tag(bundle/vk64,vk64)|uts_dup7
+vk150-q28v2	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只改显示复位归属，故源提交上只有 replay/m1-73-vk127 ref	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=57a73b864986 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk150-q28v2	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=57a73b864986 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk151	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只改显示复位归属与软件修，故源提交上只有 replay/m1-73-vk127 ref	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=64510749697f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk151	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=64510749697f src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup14
+vk152	num_ne_tag	内核源仍为 m1-73 提交（24223e44），只加 Q11 kexec 诊断旋钮（0019/0020），故源提交上只有 replay/m1-73-vk127 ref	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=c0b39ccb24b3 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared4|uts_dup14
+vk152	uts_dup	PINUTS 到 vk127 UTS，刻意复用机上 1497 个 7.3 模块（PITFALLS #367）；新增旋钮不改变 config/ABI（check-abi-config 27 项一致、of_node@624）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=c0b39ccb24b3 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared4|uts_dup14
+vk153	num_ne_tag	内核源仍为 m1-73 提交（24223e44）：在 build/vk151 上加 Q11/K6 ITS quiesce 钩子（导出 gic_its_quiesce_for_kexec + 诊断打印），源提交上只有 replay/m1-73-vk127 ref；config/ABI 未变	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=7e3ed69a27de src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk153	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=7e3ed69a27de src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk154	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=0b6cdfb32dab src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk154	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=0b6cdfb32dab src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk155	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=82e5c4b2cc43 tree_head=24223e44ad80 config=yes
+vk155	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI	manifest-out 留档：uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=82e5c4b2cc43 tree_head=24223e44ad80 config=yes
+vk156	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=00dbdabc4383 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk156	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=00dbdabc4383 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk157	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=993187affa5c src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk157	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=993187affa5c src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk158	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；源提交上只有 replay/m1-73-vk127 ref	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=46b044d463c7 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk158	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），刻意复用机上 7.3 模块；新增钩子不改 config/ABI	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=46b044d463c7 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk159	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=0dd79a94657c src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk159	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=0dd79a94657c src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk160	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+vk160	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+vk161	num_ne_tag	内核源仍为 m1-73 提交（24223e44），实验改动只在本树；与上游补丁文本对齐	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=03dceb945c46 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+vk161	uts_dup	PINUTS 到 vk127 UTS（PITFALLS #367），复用机上 7.3 模块；不改 config/ABI	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty+ payload=03dceb945c46 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup7
+gunyah1	uts_dup	PINUTS 到 vk127 UTS（LOCALVERSION= 置空），刻意让 gunyah 模块能直接 insmod 到在机模块树；config 仅多 CONFIG_VIRT_DRIVERS=y/CONFIG_GUNYAH=m 等 gunyah 行（PITFALLS #383）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=4d7f9046a2af src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+gunyah1	num_ne_tag	内核源码未提交（gunyah-port worktree 未 commit/tag），基线 = 24223e44ad80 + 未提交改动；用途是零写盘试验，非日常线	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=4d7f9046a2af src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+dtbo1	uts_dup	同 gunyah1 内核（PINUTS 到 vk127 UTS），唯一差别 = 板 DTB 用 -@ 重编（带 __symbols__，201 582 B）；用途 = 厂商 Gunyah hyp DTBO 的 of_overlay_fdt_apply 零写盘验证	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=4d7f9046a2af src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+dtbo1	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=4d7f9046a2af src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+dtbo2	uts_dup	同 dtbo1 内核（PINUTS 到 vk127 UTS）；相对 dtbo1 只换了 ramdisk → 日用全量 rootfs。起因=dtbo1 用 initramfs-slim 导致 ADSP/CDSP 拿不到固件（PITFALLS #390）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=4d7f9046a2af src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+dtbo2	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=4d7f9046a2af src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+dtbo3	uts_dup	同 dtbo2，另加 PMIC RTC offset DT 修复（nvmem cell in pmk8550_sdam_2，PITFALLS #392、patches/dt/0002）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=4d7f9046a2af src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+dtbo3	num_ne_tag	内核源码未提交（gunyah-port worktree），基线 = 24223e44ad80 + 未提交改动；2026-10-25 起为 boot_b 在役日用镜像	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=4d7f9046a2af src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+gh612a	uts_dup	同 dtbo3 的 PINUTS 思路（LOCALVERSION= 置空 ⇒ 复用 vk127 UTS），目的 = 让 6.12 Gunyah 驱动集按在机 /lib/modules/<uname -r> 加载；反例镜像：DTB 因 7.3 DTC_FLAGS 命名变更未带 __symbols__（PITFALLS #395）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=bace17fb1af8 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared2|uts_dup14
+gh612a	num_ne_tag	内核源码未提交（gunyah-port worktree，24223e44ad80 + 未提交改动）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=bace17fb1af8 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared2|uts_dup14
+gh612b	uts_dup	同 gh612a，唯一差别 = 修好 DTC_FLAGS_sm8750-lenovo-elden（无 .dtb 后缀）后重编板 DTB（带 __symbols__）；2026-10-25 6.12 栈有效件	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=bace17fb1af8 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared2|uts_dup14
+gh612b	num_ne_tag	同上（gunyah-port worktree 未提交）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=bace17fb1af8 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared2|uts_dup14
+vk162-fstype	num_ne_tag	内核未改动 = vk152 那份（本镜像只换 ramdisk，不编译内核）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=c0b39ccb24b3 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared4|uts_dup14
+vk162-fstype	uts_dup	刻意 PIN 到 vk152 的 UTS/LOCALVERSION，以便复用机上 1497 个 .ko（单变量实验的硬要求）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=c0b39ccb24b3 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared4|uts_dup14
+vk162-rescue	num_ne_tag	内核未改动 = vk152 那份（救援镜像只改 cmdline/ramdisk 选择）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=c0b39ccb24b3 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared4|uts_dup14
+vk162-rescue	uts_dup	刻意复用 vk152 的 UTS 以共用模块树	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=c0b39ccb24b3 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared4|uts_dup14
+f2fs-root	num_ne_tag	内核未改动 = vk152 那份（本镜像只改 cmdline/ramdisk）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=c0b39ccb24b3 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+f2fs-root	uts_dup	刻意复用 vk152 的 UTS 以共用模块树	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty payload=c0b39ccb24b3 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared4|uts_dup14
+vk164-debianroot	num_ne_tag	M6 迁移候选：**故意复用 vk163 的内核载荷**（同一 build/vk151 Image.gz，只改 cmdline elden_root=LABEL=linux17），源提交上没有 vk164 ref 是设计使然；镜像身份由 manifest kernel_payload_sha256 区分	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163 payload=27c718ec65c6 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared9
+vk165-earlygadget	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163 payload=27c718ec65c6 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared9
+vk166-dbg	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163 payload=27c718ec65c6 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared9
+vk167-trace	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163 payload=27c718ec65c6 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared9
+vk168-ramprobe	num_ne_tag	RAM-only 探针：无 elden_root，用来在设备卡死时读 linux17 上的 trace（复用 vk163 载荷）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163 payload=27c718ec65c6 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared9
+vk169-trace2	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163 payload=27c718ec65c6 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared9
+vk170-trace3	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163 payload=27c718ec65c6 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared9
+vk171-swrerr	num_ne_tag	M6 迁移诊断件：复用 vk163 内核载荷，只改 cmdline/ramdisk（switch_root 取证链）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk163 payload=27c718ec65c6 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared9
+vk174	num_ne_tag	M6 迁移候选（2026-10-26）：内核/DTB 逐字节复用 vk173(=vk172 载荷)，只换 ramdisk 的 /init（阶段化 preflight）+ cmdline elden_root=LABEL=linux17；无内核改动故无新 tag	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared6|uts_dup12
+vk175	num_ne_tag	M6 可见性件（2026-10-26）：内核/DTB/ramdisk 与 vk174 逐字节相同，只加 cmdline elden_early_gadget=1 + elden_q28_nowd	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared6|uts_dup12
+vk176	num_ne_tag	M6 电源/USB 件（2026-10-26）：内核/DTB 复用 vk172 载荷，ramdisk 换新 /init（usb0_dhcp applet 回退）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared6|uts_dup12
+vk177	num_ne_tag	M6 传感器件（2026-10-26）：内核/ramdisk 同 vk176，板 DTB 加 ADSP fastrpc qcom,non-secure-domain	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared6|uts_dup12
+vk178-b5verify	num_ne_tag	B5 第1-3步验证件（2026-10-27）：LOCALVERSION 钉 -debug-vk172 以复用设备模块树，源提交上无 vk178 ref 为设计使然	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=b8a1d489ed3e src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk178-b5verify	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树（B5 改动全在 vmlinux）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=b8a1d489ed3e src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk179-b5step4a	num_ne_tag	B5 第4步同值臂（2026-10-27）：同上，UTS 钉住	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=558bd41acc9b src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk179-b5step4a	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=558bd41acc9b src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk180-b5step4b	num_ne_tag	B5 第4步判别臂（2026-10-27）：同上，UTS 钉住	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=dc6c38769593 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk180-b5step4b	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=dc6c38769593 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk181-daily	num_ne_tag	日常线复原件（2026-10-27）：B5 实验后从还原的树重打，UTS 钉住	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=defd676a0d81 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk181-daily	uts_dup	刻意钉住 vk172 的 UTS 以共用模块树	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=defd676a0d81 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk172	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared6|uts_dup12
+vk173	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|kbin_shared6|uts_dup12
+vk174	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared6|uts_dup12
+vk175	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared6|uts_dup12
+vk176	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared6|uts_dup12
+vk177	uts_dup	B5 验证件的连带：2026-10-27 为复用设备模块树，vk178/179/180/181 刻意钉同一 UTS 串（不同二进制）⇒ 该串不再唯一标识二进制；本镜像自身内核载荷未变	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=a7fa00c481bf src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|kbin_shared6|uts_dup12
+vk182-camssv3	uts_dup	M4 camss v3 上机复验镜像：UTS **刻意**与 vk172 相同（dwc3=m，必须匹配 /lib/modules/<UTS> 才能拉起 USB gadget，见 PITFALLS #468）；二进制不同属预期	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=80584d1c2131 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk182-camssv3	num_ne_tag	上机复验镜像按惯例用 vk 号（不走 tag）；分支标签集合沿用日常线 replay/m1-73-vk127 系属预期	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=80584d1c2131 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+m8ab-base	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 1bcbe17a16a0）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=1bcbe17a16a0 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|uts_dup12
+m8ab-v2	uts_dup	刻意钉 UTS 以复用 /lib/modules（PITFALLS #468/#367；与 vk172 同串不同二进制属预期，身份由 kernel_payload_sha256 锚定 2691215d2e0e）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=2691215d2e0e src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|uts_dup12
+m3v5-daily	uts_dup	M3-1 双口 role mux 上机镜像：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；二进制不同属预期，身份由 kernel_payload_sha256 锚定	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=712d9872bded src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|24223e44ad80|dirty|ok|uts_dup12
+m3v5-f2	uts_dup	M3-1 v5 + F2 上机镜像（defer 上抛）：刻意钉 vk172 UTS 以复用 /lib/modules（PITFALLS #468/#367）；本轮同时替换了 dwc3/ucsi/typec 的 4 个 .ko，二进制不同属预期，身份由 kernel_payload_sha256 锚定 685ad1d9409b	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=685ad1d9409b src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|7abd1781e917|dirty|tree_head_diff|uts_dup12
+vk183-fastrpc	num_ne_tag	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=5543b181e162 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|(absent)|(absent)|tree_head_diff|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=5543b181e162 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|(absent)|(absent)|tree_head_diff|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+m3v5-onboard	uts_dup12	M3-1 v5 pristine 候选（实验内核，未入日常线）：刻意钉 vk172 UTS 以复用 /lib/modules；pristine 缺下游 DSI、initramfs 未含 dwc3/ucsi 模块 ⇒ A1 启动期失联（根因未证实，见 reports/m3v5-onboard-plan-20261030.md §6）；身份由 kernel_payload_sha256 锚定 c4e884ad	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=c4e884ada929 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|34865c8915bf|clean|tree_head_diff|kbin_shared2|uts_dup12
+vk183-fastrpc	uts_dup12	传感器修复上机件（2026-10-30）：UTS 刻意钉 -debug-vk172 以复用设备 /lib/modules；源提交 509f271d52 在 build/vk151 无 vkNNN ref（与 vk172 同 UTS 属设计使然）	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=5543b181e162 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|(absent)|(absent)|tree_head_diff|num_ne_tag(replay/m1-73-vk127,vk127,vk163-modular,vk172,vk173)|uts_dup12
+m3v5-onboard-b	uts_dup12	M3-1 v5 复测件（实验内核，未入日常线）：复用 pinned vk172 UTS；initramfs 补 gadget 14 模块后仍 USB 零枚举 ⇒ pristine 平台启动假设；不做上机载体；身份由 kernel_payload_sha256 锚定	uts=7.3.0-rc7-debug-vk127-00002-g24223e44ad80-dirty-debug-vk172 payload=c4e884ada929 src=24223e44ad80-dirty refs=branch:reb731/b5-prev-20261028,reb731/b5/send-20261028,reb731/elden/b5-send,reb731/replay-m1-73-vk127,reb731/tidy-20261105/aw-chip,reb731/ti flags=vk127,vk163-modular,vk172,vk173|34865c8915bf|clean|tree_head_diff|kbin_shared2|uts_dup12
+posctrl-20261103	uts_dup8	正控载荷（2026-11-03）：刻意复用 pinned vk172 UTS 以匹配设备 /lib/modules；身份由 kernel_payload_sha256 锚定；用途只在「内核最早入口写 DRAM 标记」取证，不作日常启动	无镜像、无 manifest：仅 versions/vk-registry.tsv + archive/topics/VK-LEDGER-AUDIT-2026-10-06.md 留档（不可再生身份项；不得据此做构建判断）
+vk184	uts_dup2	C12/droidloom L1：vk187b 刻意复用 vk184 的 LOCALVERSION 以匹配设备现成 87 M 模块树（否则全部 =m 驱动不加载 ⇒ 无 /dev/dri，vk187 首版即栽在这）；两镜像内核二进制不同（c76bc2e8 vs 1d11e815），身份由 kernel_payload_sha256 锚定。**收口后应移除本行**（2026-11-10）	uts=7.3.1-debug-vk184-00002-g4da9a8b69fc8 payload=c76bc2e8e75a src=4da9a8b69fc8 refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|clean|ok|uts_dup2
+vk188	num_ne_tag	vk188 = vk184 源树 + 仅 SYSFB_SIMPLEFB 一档 config（config 不入 git ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 是预期噪声，不是溯源错误）；UTS 已用 -vk188-sysfbfb 与旧模块树显式区分；身份由 kernel_payload_sha256 锚定（2026-11-12）	uts=7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty payload=0cdb7a45f8f0 src=4da9a8b69fc8-dirty refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|dirty|num_ne_tag(vk184)|kbin_shared2
+vk188b	num_ne_tag	vk188b = vk188 内核 + 仅换 ramdisk（config 不入 git ⇒ 源提交与 vk184/vk188 相同，num_ne_tag(vk184) 是预期噪声）；身份由 kernel_payload_sha256 锚定（2026-11-12）	uts=7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty payload=0cdb7a45f8f0 src=4da9a8b69fc8-dirty refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|dirty|num_ne_tag(vk184)|kbin_shared2
+vk189	num_ne_tag	vk189 = vk184 源树 + 上游合并批 1（6 枚补丁，**patch 在树里但未 commit，config 亦不入 git** ⇒ 源提交与 vk184 相同，`num_ne_tag(vk184)` 属预期噪声，不是溯源错误）；UTS 用 `-debug-vk189-suspend` 与在机两套模块树显式区分；身份由 `kernel_payload_sha256` 锚定（2026-11-12）	uts=7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty payload=cab6a5c35667 src=4da9a8b69fc8-dirty refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|dirty|num_ne_tag(vk184)|uts_dup2
+vk190	num_ne_tag	vk190 = vk184 源树 + 上游合并批 1（6 枚补丁，**patch 在树里但未 commit，config 亦不入 git** ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 属预期噪声）+ 一行 ADSP DT（同属未 commit 的工作区改动）；UTS 用 `-debug-vk189-suspend` 与 vk189 逐字相同（DT-only 修复刻意复用机上 1499 .ko 模块树，避免为一行 DT 重编 85 MiB 模块）；身份由 `kernel_payload_sha256` 锚定（2026-11-13）	uts=7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty payload=511e16a14300 src=4da9a8b69fc8-dirty refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|dirty|num_ne_tag(vk184)|uts_dup2
+vk189	uts_dup2	vk190 刻意复用 vk189 的 LOCALVERSION（ADSP fastrpc non-secure 一行 DT 修复，模块 vermagic/布局不变 ⇒ 直接沿用机上模块树）；两镜像内核二进制不同（cab6a5c3 vs 511e16a1），身份由 kernel_payload_sha256 锚定（2026-11-13）	uts=7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty payload=cab6a5c35667 src=4da9a8b69fc8-dirty refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|dirty|num_ne_tag(vk184)|uts_dup2
+vk190	uts_dup2	同上：与 vk189 同 UTS 串、不同二进制（DT 修复 + `make` 重链）；这是「一行 DT 不重编模块树」的既定做法，不是溯源错误（2026-11-13）	uts=7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty payload=511e16a14300 src=4da9a8b69fc8-dirty refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|dirty|num_ne_tag(vk184)|uts_dup2
+vk187	num_ne_tag	vk187 = vk184 源树 + 仅 nftables 一档 config（config 不入 git ⇒ 源提交与 vk184 相同，num_ne_tag(vk184) 是预期噪声）；**该镜像已作废、不上机**，C12 L1 门槛由 vk187b 承担（2026-11-13 收口）	uts=7.3.1-debug-vk187-00002-g4da9a8b69fc8 payload=d2a8bbc7f8c4 src=4da9a8b69fc8 refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|clean|num_ne_tag(vk184)
+vk187b	num_ne_tag	vk187b = vk187 内核 + 可上机模块树（LOCALVERSION=-vk184 复用机上模块树 ⇒ num_ne_tag(vk184) 属预期）；2026-11-10 上机全绿，inflight 条目已删（2026-11-13）	uts=7.3.1-debug-vk184-00002-g4da9a8b69fc8 payload=1d11e81557b4 src=4da9a8b69fc8 refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|clean|num_ne_tag(vk184)|uts_dup2
+vk187b	uts_dup2	vk187b 刻意复用 vk184 的 LOCALVERSION（同一套模块树）；与 vk187 二进制不同，身份由 kernel_payload_sha256 锚定（2026-11-10）	uts=7.3.1-debug-vk184-00002-g4da9a8b69fc8 payload=1d11e81557b4 src=4da9a8b69fc8 refs=branch:vk184,vk185 flags=vk184|4da9a8b69fc8|clean|num_ne_tag(vk184)|uts_dup2
