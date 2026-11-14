@@ -111,6 +111,9 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 5 | `DEVICE` §1.1（在机）/ `RESOURCES` §3（资产）/ `RUNBOOK-BRINGUP`（步骤） | 按需展开 |
 | 6 | `reports/*.md`（按日期）→ `archive/` · `SESSIONS/` · `PROGRESS.md` · `HISTORY/` | **只作沿革与证据，不得当「当前结论」引用** |
 
+> `reports/` 内部查全用 **`reports/README.md`**（509 篇的机器生成目录，`scripts/reports-index.py` 产；`--check` 过期即 rc=1）。
+> 它**不是入口**，不承载结论，只解决「reports 里到底有什么、哪篇没人引用」——2026-11-15 实测有 135 个报告/台账文件名全仓只出现 1 次。
+
 > **权重规则（硬）**：第 1 行（最近会话）与第 4–6 行冲突时，**先按会话读**，并在**同一提交**内把下行文档改成一致；
 > 不允许「两边都写着，读者自己判」。`README.md` / `PROGRESS.md` 是**公开门面**，agent 默认不读（不占入口位）。
 
