@@ -6,7 +6,7 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-14）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-15）
 
 > 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
@@ -24,9 +24,9 @@
    **2026-11-14 夜第 2 轮：U2 间接形态通过**（`fastboot boot` pc1 → ABL→Mu UEFI→ESP **Loader-r73**→`\menu.cfg`→ESP `\boot\boot.img` vk190→Linux，**14 s 到 SSH**，零写盘）；
    新判据 = cmdline 里 `androidboot.serialno=51318dc0`（CRC32）且无 ABL 追加 token（旧的 `elden_bootloader=esp` 已失效）。
    **GRUB 那条新路径卡在 initrd 交接**：设备上 36 ms `broken padding`，同件在 QEMU 直接启动 6.45 s 解包成功 ⇒ 断点在 GRUB 而非 initrd/内核。→ `PITFALLS #659`、`TASKS/sessions/2026-11-14-UEFI复测2-间接形态通过与GRUB-initrd断点.md`
-6. **桌面层两回归已闭环（2026-11-14 晚）**：**T20 电源键短按不熄屏**根因 = `zwlr_output_power_v1` 每屏只许一个请求者，phosh 的第二个请求被 `send_failed` 且资源被销毁 ⇒ `power_mode` 停在 `OFF` ⇒ 屏保管理器 `active` 恒 TRUE、press/release 双短路；修 = phoc（wlroots 放行多请求者）+ phosh（failed 回退为 ON）两枚自编件，已上机验收（短按熄屏/再按亮屏、长按菜单正常）。**T19 撕裂**仍停在「根因层 = 带 modifier 的 dmabuf 导入已锁定、缺 mesa 26.2.5 A/B」。
+5. **桌面层两回归已闭环（2026-11-14 晚）**：**T20 电源键短按不熄屏**根因 = `zwlr_output_power_v1` 每屏只许一个请求者，phosh 的第二个请求被 `send_failed` 且资源被销毁 ⇒ `power_mode` 停在 `OFF` ⇒ 屏保管理器 `active` 恒 TRUE、press/release 双短路；修 = phoc（wlroots 放行多请求者）+ phosh（failed 回退为 ON）两枚自编件，已上机验收（短按熄屏/再按亮屏、长按菜单正常）。**T19 撕裂**仍停在「根因层 = 带 modifier 的 dmabuf 导入已锁定、缺 mesa 26.2.5 A/B」。
    → `TASKS/sessions/2026-11-14-T20-电源键不熄屏.md` §7、`PITFALLS` #371、`scripts/{phoc,phosh}-install.sh`
-5. **上游**（2026-11-14）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**；dwc3 v9 / dsi-phy v2 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**。→ `reports/upstream-status-20261113.md`、`TASKS` §7。
+6. **上游**（2026-11-14）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**；dwc3 v9 / dsi-phy v2 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**。→ `reports/upstream-status-20261113.md`、`TASKS` §7。
 
 **卡什么**
 
@@ -41,7 +41,8 @@
 1. **camss CSIPHY 对账**（主机侧，无需设备）：拉 7.4-rc3+ 的 phy 表与 vendor 2.4.0 逐字节比 → 决定是否给上游 2.4.0 delta。
 2. **上游待批准批次**：dwc3 v9 四枚（`git apply --check` 4/4 OK）、dsi-phy v2 九行、gamma v2、haptics v2、board DTS 单提交 —— 逐系列等用户放行。
 3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
-4. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
+4. **中文输入法候选窗（2026-11-15 现查，新增判据）**：`scripts/ime-candidates-check.sh` 首轮 = **PASS=6 / FAIL=4 / WARN=2** ⇒ **当前版本出不了候选词**（D-Bus 激活 `Exec` 无 `--disable waylandim`、`profile` 的 `Items/0=keyboard-us`、`~/.config/fcitx5/config` 不存在⇒走 classicui、phosh 环境仍带 `GTK_IM_MODULE=fcitx`）。判据与待上机清单（T1–T5，需批准）= `TASKS/sessions/2026-11-15-IME候选回归台账.md`；重跑同一条脚本即可对比。→ `PITFALLS` #618/#619/#653/#660
+5. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
 
 **怎么核实本节没漂**（开工前先跑，见 `.pi/AGENT-OPS.md` §0）
 
