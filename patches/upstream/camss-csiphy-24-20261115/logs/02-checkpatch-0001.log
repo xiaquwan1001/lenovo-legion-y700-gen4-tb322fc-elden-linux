@@ -1,0 +1,5 @@
+$ git apply $D/0001-*.patch && ./scripts/checkpatch.pl --strict --no-signoff $D/0001-*.patch
+total: 0 errors, 0 warnings, 0 checks, 10 lines checked
+
+/home/xuqianhui/y700-elden/patches/upstream/camss-csiphy-24-20261115/0001-dt-bindings-phy-qcom-x1e80100-csi2-phy-add-SM8750-CS.patch has no obvious style problems and is ready for submission.
+rc=0

@@ -1,0 +1,5 @@
+$ make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j26 W=1 drivers/phy/qualcomm/
+  CC [M]  drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.o
+  LD [M]  drivers/phy/qualcomm/phy-qcom-mipi-csi2.o
+rc=0

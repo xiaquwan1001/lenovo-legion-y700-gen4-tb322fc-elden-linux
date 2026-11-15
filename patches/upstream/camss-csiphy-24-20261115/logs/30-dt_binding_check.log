@@ -1,0 +1,8 @@
+$ make ARCH=arm64 dt_binding_check DT_SCHEMA_FILES=Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  CHKDT   ./Documentation/devicetree/bindings
+  LINT    ./Documentation/devicetree/bindings
+  STYLE   ./Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.example.dts
+  DTC [C] Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.example.dtb
+rc=0

@@ -1,0 +1,30 @@
+From 2eab54b9be37b8079e897d4174b420b7f8fe2a11 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sun, 15 Nov 2026 10:38:17 +0800
+Subject: [PATCH 1/2] dt-bindings: phy: qcom,x1e80100-csi2-phy: add SM8750 CSI2
+ PHY
+
+SM8750 uses the same CSI2 PHY block as the other 3nm parts but needs its
+own lane programming values, so it gets its own compatible string instead
+of falling back to qcom,x1e80100-csi2-phy.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml       | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+index 1f1e2a4..67b060a 100644
+--- a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
++++ b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+@@ -17,7 +17,9 @@ description:
+ properties:
+   compatible:
+     oneOf:
+-      - const: qcom,x1e80100-csi2-phy
++      - enum:
++          - qcom,sm8750-csi2-phy
++          - qcom,x1e80100-csi2-phy
+       - items:
+           - const: qcom,glymur-csi2-phy
+           - const: qcom,x1e80100-csi2-phy

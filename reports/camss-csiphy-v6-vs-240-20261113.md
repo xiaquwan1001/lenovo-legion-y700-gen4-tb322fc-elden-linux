@@ -36,6 +36,10 @@ git -C build/m3v2-7.3rc7 show gh/master:drivers/phy/qualcomm/phy-qcom-mipi-csi2-
 
 ### §2.1 上游 `lane_regs_x1e80100`（= kaanapali 实际使用的表）vs vendor `csiphy_2ph_v2_4_0_reg`
 
+> **勘误（2026-11-15，`reports/camss-csiphy-24-delta-20261115.md` 复核）**：下表**漏了 SETTLE 组的 `0x0c08`** ——
+> 13 条实际是 A `0x8e→0x8c` **4** 条 + B `0x10→0x19` **5** 条（`0x0008/0x0408/0x0808/0x0c08/0x0e08`）+ C `0xbd→0xfd` **4** 条。
+> 另：这 13 条里**只有 A 组 4 条**在当前上游驱动下真正写入（B 组被运行时 `settle_cnt` 覆盖、C 组被 `continue` 跳过）。
+
 | 偏移 | 上游（2.1.2 值） | vendor 2.4.0 | 出现次数 |
 |---|---|---|---|
 | `0x0000 / 0x0400 / 0x0800 / 0x0c00` | `0x8e` | `0x8c` | 4 |
