@@ -239,3 +239,6 @@ y700-elden 用自编件替换**发行版同名包**提供的可执行文件（ph
 
 ---
 **电源键短按不熄屏 / 空闲不熄屏 = `zwlr_output_power_v1` 每屏只许一个请求者**（2026-11-14 定案）：第二个请求者（本例 phosh，先到的是 droidloom-wayland）会被 wlroots `send_failed` **且服务端资源被销毁** ⇒ phosh 手里是死 proxy：`PhoshMonitor.power_mode` 停在初始 `POWER_SAVE_MODE_OFF`（= 屏已关）⇒ 屏保管理器 `active` 恒 TRUE、`on_power_button_pressed()` press/release 双短路。判据：`GetActive` 恒 true + `GetActiveTime` 恒 0 + `wlopm --off` 报 failed，而按电源键时 phosh 有 `Entering power save mode: 1` 但 phoc 零行 `Request to set output power mode`、strace 无 atomic commit ⇒ 请求从未到合成器。修 = phoc 放行多请求者（`patches/phoc-output-power-20261114/`）+ phosh failed 回退（`patches-userland/upstream/0001-monitor-*`），件与安装见 `scripts/{phoc,phosh}-install.sh`。取证要点：greetd 单元的 `Environment=` **不传给会话**，要让 phosh/phoc 吐 `g_debug` 得写进 `config.toml` 的 `command`（`env G_MESSAGES_DEBUG=all …`）。细则 `PITFALLS #371`、`TASKS/sessions/2026-11-14-T20-电源键不熄屏.md` §7。
+
+---
+**编号命名空间**：本仓 `TASKS/README.md §7` 的 `M1–M10` = 上游化 kernel 系列（2026-10-04 立项，各有权威行与投递历史：M7=Q24 已结项不需要补丁、M8=Q28 dispcc v5 已投等 review、M6=Q28 B5 DSI、M10=ADSP fastrpc）。boot 早间批处理的派单编号（2026-11-14 曾用 M1–M8）**与本仓 M 系列无关**，2026-11-15 起派单改用 `B<n>`。跨源引用一律带章节（`§7 M8`）。（判据：`must-do/2026-11-14.md` 顶部命名空间声明 + `rules/cross-project.md`）
