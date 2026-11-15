@@ -27,14 +27,32 @@ while [ $# -gt 0 ]; do
 done
 
 remote=$(cat <<'EOF'
+# ★ 必须读「会话用户」的 home，不能读 root 的 $HOME：
+#   2026-11-15 实测 /root/.config/fcitx5/{profile,config} 存在（#660 的第二实例曾在 root 下跑过），
+#   脚本按 $HOME 读会拿到 root 的陈旧 profile（Items/0=keyboard-us、无 config）⇒ G3/G4 恒 FAIL 假阳性。
+UH=$(getent passwd "${1:-1001}" 2>/dev/null | cut -d: -f6)
+[ -n "${UH:-}" ] || UH=/home/xuqianhui1001
+export HOME="$UH"
+echo "### session-home"
+echo "$HOME"
 echo "### fcitx5-procs"
 ps -eo comm,args | grep -E '^fcitx5' | grep -v grep
+# ★ 同理：`systemctl --user` / `busctl --user` 必须落到**会话用户**的总线上。
+#   以 root 身份直跑会读到 root 的 user bus（空）⇒ "unit fcitx5 非 active" 与 "org.kde.impanel 无 owner" 两条恒假。
+UID_=${1:-1001}
+# ★ 不能继承调用者的 XDG_RUNTIME_DIR / DBUS_SESSION_BUS_ADDRESS：ssh 以 root 登录时
+#   pam_systemd 会把它们设成 root 的（/run/user/0），asuser 那条就静默连不上会话总线（本轮实测）。
+UR=/run/user/$UID_
+UB=unix:path=$UR/bus
+asuser() { setpriv --reuid="$UID_" --regid="$UID_" --init-groups \
+  env HOME="$UH" XDG_RUNTIME_DIR="$UR" WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0} \
+  DBUS_SESSION_BUS_ADDRESS="$UB" "$@"; }
 echo "### unit-active"
-systemctl --user is-active fcitx5 2>/dev/null
+asuser systemctl --user is-active fcitx5 2>/dev/null
 echo "### unit-enabled"
-systemctl --user is-enabled fcitx5 2>/dev/null
+asuser systemctl --user is-enabled fcitx5 2>/dev/null
 echo "### unit-exec"
-systemctl --user show -p ExecStart fcitx5 2>/dev/null
+asuser systemctl --user show -p ExecStart fcitx5 2>/dev/null
 echo "### dbus-exec"
 grep -h '^Exec=' /usr/share/dbus-1/services/org.fcitx.Fcitx5.service 2>/dev/null \
   || grep -h 'Exec=' /usr/share/dbus-1/services/*fcitx* 2>/dev/null
@@ -51,7 +69,7 @@ cat "$HOME/.config/fcitx5/conf/kimpanel.conf" 2>/dev/null
 echo "### focusd-proc"
 ps -eo comm,args | grep -E 'elden-ime-focusd' | grep -v grep
 echo "### kimpanel-owner"
-command -v busctl >/dev/null && busctl --user --no-pager list 2>/dev/null | grep 'org\.kde\.impanel'
+command -v busctl >/dev/null && asuser busctl --user --no-pager list 2>/dev/null | grep 'org\.kde\.impanel'
 echo "### phosh-env"
 pid=$(pgrep -x phosh | head -1)
 [ -n "$pid" ] && tr '\0' '\n' < "/proc/$pid/environ" | grep -E '^(GTK|QT)_IM_MODULE=|^XMODIFIERS='
