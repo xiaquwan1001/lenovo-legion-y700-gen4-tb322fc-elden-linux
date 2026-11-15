@@ -1,0 +1,3 @@
+d153abc93b383cbafcdaefba5f5fec07a86a34b142d1ca9ebcba29d7186d7dbc  /tmp/shotA-dev/grub/grubaa64.efi
+52f9dbd17f9ee79177824174f2d4069794150a0b93a308b92f8ec7e510c0ae3d  /tmp/shotA-dev/grub2/grubaa64.efi
+b089479c078526992f130bf577eaaa05f20347543e42efcc9f01df110dd0acc3  /tmp/shotA-dev/grub3/grubaa64.efi

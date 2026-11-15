@@ -29,3 +29,10 @@
 - **GRUB 根本不分配 initrd**：我们的 `/boot/Image` PE `MajorImageVersion = 3`（实查，>=1 即可），GRUB 2.14 在 `grub-core/loader/efi/linux.c:135` 判定后走 **LoadFile2 分支**（`:420-451` 只装 `EFI_LOAD_FILE2_PROTOCOL`），64 MB 的 `AllocatePages` 是**内核 EFI stub 调固件（Mu）分配器**做的。
 - **`broken padding` 的正确指纹**（QEMU 标定）：它来自 `init/initramfs.c` 的 cpio `do_reset()`，含义 = 「gzip 成员**内部**提前结束 + 1–3 NUL + 非零垃圾」；真截断打 `read error`，短 gzip + 全 0 什么都不打，短 gzip + 垃圾打 `invalid magic at start of compressed archive`。设备只花 37 ms ⇒ **只解出几 MB 就错位**，不是「末尾被截」也不是「尺寸不对」。
 - **判决用一发单比特**：GRUB 侧 `hashsum --hash sha256`（同一读路径）与主机 sha 比；不匹配 ⇒ Mu 大块 `BlockIo` 读回错字节；匹配仍坏 ⇒ Mu `AllocatePages` 的页被别处复用。
+
+**2026-11-15 上机判决（三发，零写盘；权威 `TASKS/sessions/2026-11-15-UEFI-ShotAB-读路径清白分配页存活.md`）**：
+
+- **Shot A**：让 GRUB 自己 `hashsum --hash sha256` 读同一份 64 MB initrd 与 63 MB Image，判决写进 ext4 的 grubenv（宿主机可读）⇒ **sha 与主机逐字相同** ⇒ 「Mu BlockIo 读回错字节」**否证**。
+- **Shot B / B2**：改用内核 EFI stub 的 `initrd=/boot/initrd.img`（EFI SimpleFileSystem，仍由 Mu 分配页），并加中间标记证明 dtb/Image 都装载成功、内核确实被启动 ⇒ **仍起不来**。
+- ⇒ **唯一存活候选 = Mu UEFI 的 `AllocatePages` 页不独占/被并发写**（配合 Mu 侧 `Conv` 只有 469 MiB、`0xD65C0000–0xFC800000` 612 MiB 无条目）。下一步是 Mu 件插桩/改内存图，不是 GRUB 侧。
+- 副产品：判决不再依赖屏拍照 —— `hashsum` 结果经 `save_env -f <ext4>/boot/grub/grubenv` 持久化（`save_env` 属 `loadenv` 模块；grubenv 必须预先 `grub-editenv create`）。
