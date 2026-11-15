@@ -24,6 +24,8 @@
 - **存储**：Linux 容量按项目体量一次给足（`DEVICE/README.md` §3），扩容首选回收 Android 专属分区；不写死配置。
 - **文档 SSOT**：唯一入口 `INDEX.md`（其 §0 = 状态摘要，§2「入口阶梯」= 阅读顺序 + 时间序权重）；分层与清单见 `INDEX.md` §2。
 - **构建限并发**：主机 28 线程，但**编译一律保留 2 个 P 核给交互** ⇒ `make -j26` 起步（内核/模块/大型构建都一样，别用裸 `-j`）。
+- **上机先过 QEMU**：凡是要烧设备/人肉看屏/`fastboot` 的验证，先写一条 QEMU 对照（`scripts/qemu-full-chain-smoke.sh`，单轮 ~35 s），
+  QEMU 判不了的面（真外设、EFI-stub 差异、电源域）显式写「需上机」。调研结论 = `reports/qemu-usage-survey-20261112.md`（`-M virt,acpi=off`、`ramfb` 能出字、`virtio-gpu` 不能）。
 - **上游发信（2026-10-31 用户授权，已实测一次）**：**允许 agent 代写回信/cover**（含回应维护者「not with LLM」那类线程），**前提三件**：
   ① 开头如实披露 AI 辅助（作者本人校对；内容/测量/决定归作者）；② 每条论断附可复现证据（引用 + 命令/数据）；③ 逐条回应 reviewer 意见，不遗漏、不说套话。
   投递仍按 `TASKS/README.md` §7「按系列逐次批准」；范例 = `out/mail-20261031/{re-krzysztof-wl2868c.txt,claims.tsv,self-review.md}`（Sent[207]）。
