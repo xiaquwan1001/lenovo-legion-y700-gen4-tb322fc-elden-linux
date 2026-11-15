@@ -15,7 +15,7 @@
 **做到哪**
 
 1. **G1 = 36/37**（2026-11-14 现查；`❌` 仅 `G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线）。在机 = **RAM 启动的 `vk191`**（= `vk190` 的 kernel/dtb 逐字节原样 + 新 ramdisk），`boot_b` = vk190（**重启即回 vk190**）；判据全绿 = DSI/WiFi/`/dev/fastrpc-adsp`/传感器/Waydroid/zram + **s2idle 3/3**。→ `DEVICE/README.md` §1.1 首条、`reports/device-session-20261113-vk191.md`。
-2. **G2 = 9/13**（Waydroid 主链 + 传感器/音频/GMS/马达/输入法/相机 STREAMING 都通）；**C3 Play Integrity 已书面收口三档**（无 TEE、keymaster 软实现 ⇒ STRONG 结构性不可能），剩唯一动作 = 一次 SPIC 回包。→ `reports/c3-pi-tiers-closeout-20261110.md`。
+2. **G2 = 10/13**（Waydroid 主链 + 传感器/音频/GMS/马达/输入法/相机 STREAMING 都通）；**C3 Play Integrity 已实测收口（2026-11-15，SPIC v1.4.0 一次回包）**：`deviceRecognitionVerdict = []` ⇒ **BASIC/DEVICE/STRONG 三档全部不满足**，与书面判读（无 TEE、keymaster 软实现 ⇒ STRONG 结构性不可能）一致、未被推翻；PIF 伪装未做。剩 **C5 App 实开预览 / C8 立项 / C9 打分表**。→ `reports/c3-spic-verdict-20261115.md`、`reports/c3-pi-tiers-closeout-20261110.md`。
 3. **G3 = Steam 登录界面 ✅**（2026-10-28 设备实测 3/3，截图判据 10-29 闭环），游戏端到端未做。→ `reports/g3-steam-20261028.md`。
 4. **拓展：UEFI 两种形态都通**（2026-11-10 深夜定案：flashed 失败真根因 = 原厂 `dtbo_a` 的 Android DTBO 被 ABL 合进我们的 DTB，清 `dtbo_a` 即通）；Gunyah = 有条件重启、非主线。→ `reports/uefi-dtbo-a-rootcause-20261110.md`、`TASKS` §5「2026-11-10（深夜…）」块。
    **2026-11-14 复测被阻塞（不是固件问题）**：三次崩溃全是**主机侧 USB 命令通道被隔壁项目 13 个孤儿 `fastboot` 进程抢走**（`PITFALLS #658`）；设备每次安全回落 b 槽、`boot_a` 未动。
