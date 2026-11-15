@@ -1,0 +1,132 @@
+Subject: [PATCH] DxeCore Page.c: AllocatePages 大块分配取证 + ExitBootServices 内存图 Conv 统计
+
+2026-11-15R75 y700-elden —— 针对 `TASKS/sessions/2026-11-15-UEFI-ShotAB-读路径清白分配页存活.md` 的
+唯一存活假设（Mu 的 `AllocatePages` 交付的页被复用/不独占；或内存图把可用区描述错）。
+
+## 判据设计
+
+* `[A] t=<2 位十六进制内存类型> b=<16 位十六进制起始> p=<6 位十六进制页数>` —— 每次 **>= 1 MiB** 的
+  `AllocatePages` 成功就打一行。GRUB 读 64 MB initrd = 0x4000 页、`/boot/Image` 63 MB 同级 ⇒ 必定命中；
+  池分配与小缓冲不打（判据点：日志量 = 个位数行，不影响启动耗时）。
+  判读：如果 GRUB 的 initrd 申请拿到的 `b=` 落进我们新标 Conv 的窗口 `0xD65C0000`–`0xFC800000`，
+  而内核仍然起不来 ⇒ 「交付页被复用」假设需要新证据（地址独占性）；如果 `AllocatePages` 直接失败（无 `[A]` 行）
+  ⇒ 内存图太小这条成立。
+* `[M] ebs desc=<3 位> convMB=<6 位> allMB=<6 位>` —— `ExitBootServices` 那一关（`CoreTerminateMemoryMap`）
+  遍历 `gMemoryMap` 时顺手统计：描述符条数 / Conventional 总量 / 全图总量（单位 MiB）。
+  判读：与同一遍历口径的 pc1（无 R74）对比，`convMB` 多约 610、`desc` 多 1 ⇒ R74 真的进了固件；
+  若 `convMB` 不变 ⇒ R74 没进固件，或 GCD 拒绝把这块并进可用内存。
+
+## 实现要点（为什么是这两个位置）
+
+* `DEBUG()` 在 RELEASE 构建里整段被编译掉（`patches/uefi/20261104-dxe/0001` 头部注释同款教训），
+  所以直接 `SerialPortWrite`；`DxeMain.inf` 的 `[LibraryClasses]` 里 `SerialPortLib` 已由该补丁加过，
+  本补丁只需在 `Page.c` 里 `#include <Library/SerialPortLib.h>`。平台 dsc 已把 `SerialPortLib` 映射到
+  `AndromedaPkg/Library/FrameBufferSerialPortLib`（屏上输出）。
+* `AllocatePages` 的真身在 `CoreAllocatePages()`，插桩挂在它 `!EFI_ERROR(Status)` 的成功分支入口。
+* 内存图统计挂在 `CoreTerminateMemoryMap()` 的 `MapKey == mMemoryMapKey` 分支（唯一会真正放行 EBS 的那次）。
+* 打印只用 `SbApmHex()` 本文件的 16 进制小工具，不引入 `PrintLib`/`AsciiSPrint`（`DxeMain.inf` 没链它）。
+
+## 风险与回退
+
+只加打印，不改任何分配/映射语义；目标文件是 CRLF（`* -text`，`PITFALLS #592`），补丁由 `git diff` 原样生成。
+回退 = 不把本补丁放进配方（或删掉 `pc1m-recipe.txt` 里那一行）。
+
+diff --git a/MdeModulePkg/Core/Dxe/Mem/Page.c b/MdeModulePkg/Core/Dxe/Mem/Page.c
+index 407daa3..ae43d5e 100644
+--- a/MdeModulePkg/Core/Dxe/Mem/Page.c
++++ b/MdeModulePkg/Core/Dxe/Mem/Page.c
+@@ -10,6 +10,37 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ #include "Imem.h"
+ #include "HeapGuard.h"
+ #include <Pi/PiDxeCis.h>
++#include <Library/SerialPortLib.h>   // 2026-11-15R75 y700-elden: AllocatePages / 内存图插桩
++
++//
++// 2026-11-15R75 y700-elden —— Mu 侧分配取证插桩。
++// 背景：GRUB 经 Mu BlockIo 读 64 MB initrd 的 sha 与主机逐字相同（读路径清白），但两条「读文件 -> 填 buffer」
++//       路径都起不来 => 唯一存活假设 = AllocatePages 交付的页被复用/不独占，或内存图把可用区描述错了。
++// 纪律：只用 SerialPortWrite（RELEASE 下 DEBUG() 整段被编译掉），且只打大块，避免刷屏。
++//
++#define SB_APM_MIN_PAGES  0x100u   // 1 MiB：小于它的分配（池/小缓冲）一律不打
++
++STATIC
++VOID
++SbApmHex (
++  IN UINT64  Value,
++  IN UINTN   Digits
++  )
++{
++  CHAR8  Buf[16];
++  UINTN  Index;
++
++  if (Digits > 16) {
++    Digits = 16;
++  }
++
++  for (Index = 0; Index < Digits; Index++) {
++    Buf[Index] = "0123456789abcdef"[(Value >> ((Digits - 1 - Index) * 4)) & 0xFU];
++  }
++
++  SerialPortWrite ((UINT8 *)Buf, Digits);
++}
++
+ 
+ //
+ // Entry for tracking the memory regions for each memory type to coalesce similar memory types
+@@ -1851,6 +1882,18 @@ CoreAllocatePages (
+                 NeedGuard
+                 );
+   if (!EFI_ERROR (Status)) {
++    // 2026-11-15R75 y700-elden: 大块分配取证 —— 类型 / 起始 / 页数。
++    // 只打 >= SB_APM_MIN_PAGES（1 MiB）的分配：initrd(64 MiB=0x4000 页) 与 Image(63 MB) 必定命中，
++    // 池分配与小缓冲不打，日志量与启动耗时都不变。
++    if (NumberOfPages >= SB_APM_MIN_PAGES) {
++      SerialPortWrite ((UINT8 *)"[A] t=", 6);
++      SbApmHex ((UINT64)MemoryType, 2);
++      SerialPortWrite ((UINT8 *)" b=", 3);
++      SbApmHex ((UINT64)*Memory, 16);
++      SerialPortWrite ((UINT8 *)" p=", 3);
++      SbApmHex ((UINT64)NumberOfPages, 6);
++      SerialPortWrite ((UINT8 *)"\n\r", 2);
++    }
+     CoreUpdateProfile (
+       (EFI_PHYSICAL_ADDRESS)(UINTN)RETURN_ADDRESS (0),
+       MemoryProfileActionAllocatePages,
+@@ -2537,6 +2580,37 @@ CoreTerminateMemoryMap (
+   CoreAcquireMemoryLock ();
+ 
+   if (MapKey == mMemoryMapKey) {
++    {
++      // 2026-11-15R75 y700-elden: 内存图插桩 —— ExitBootServices 这一关的内存图 = 内核即将看到的那张。
++      // 判据：convMB 比 pc1（同一遍历口径，无 R74）多出约 610 MiB，且 desc 多 1 条，说明 0xD65C0000-0xFC800000
++      //       真的以 Conventional 进了图；若 convMB 不变，则是 R74 没进固件或 GCD 拒绝合并。
++      LIST_ENTRY  *SbLink;
++      MEMORY_MAP  *SbEntry;
++      UINTN       SbDesc;
++      UINT64      SbConv;
++      UINT64      SbTotal;
++
++      SbDesc  = 0;
++      SbConv  = 0;
++      SbTotal = 0;
++      for (SbLink = gMemoryMap.ForwardLink; SbLink != &gMemoryMap; SbLink = SbLink->ForwardLink) {
++        SbEntry = CR (SbLink, MEMORY_MAP, Link, MEMORY_MAP_SIGNATURE);
++        SbDesc++;
++        SbTotal += SbEntry->End - SbEntry->Start + 1;
++        if (SbEntry->Type == EfiConventionalMemory) {
++          SbConv += SbEntry->End - SbEntry->Start + 1;
++        }
++      }
++
++      SerialPortWrite ((UINT8 *)"[M] ebs desc=", 13);
++      SbApmHex (SbDesc, 3);
++      SerialPortWrite ((UINT8 *)" convMB=", 8);
++      SbApmHex (SbConv >> 20, 6);
++      SerialPortWrite ((UINT8 *)" allMB=", 7);
++      SbApmHex (SbTotal >> 20, 6);
++      SerialPortWrite ((UINT8 *)"\n\r", 2);
++    }
++
+     //
+     // Make sure the memory map is following all the construction rules
+     // This is the last chance we will be able to display any messages on
