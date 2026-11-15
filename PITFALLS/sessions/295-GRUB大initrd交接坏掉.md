@@ -23,3 +23,9 @@
 - **pstore 不保 UEFI 失败现场**：连续几发失败后 `/var/lib/systemd/pstore/console-ramoops-0` 会被后续启动覆盖（实测 2 MB → 503 KB），panic 文本全丢 ⇒ **屏拍照仍是失败细节的唯一通道**。
 
 证据指针: `reports/artifacts/uefi-retest2-20261114-220325/`（`10/13` 两发屏上照片、`21-u2b-loader.txt` 通过判据、`12-dtb-padded-install.txt` 否证记录）
+
+**2026-11-15 增量（主机侧 lane，权威 `reports/uefi-grub-initrd-memmap-20261115.md`）—— 上一段「查 GRUB 的 `grub_efi_allocate_pages`」这条处置作废**：
+
+- **GRUB 根本不分配 initrd**：我们的 `/boot/Image` PE `MajorImageVersion = 3`（实查，>=1 即可），GRUB 2.14 在 `grub-core/loader/efi/linux.c:135` 判定后走 **LoadFile2 分支**（`:420-451` 只装 `EFI_LOAD_FILE2_PROTOCOL`），64 MB 的 `AllocatePages` 是**内核 EFI stub 调固件（Mu）分配器**做的。
+- **`broken padding` 的正确指纹**（QEMU 标定）：它来自 `init/initramfs.c` 的 cpio `do_reset()`，含义 = 「gzip 成员**内部**提前结束 + 1–3 NUL + 非零垃圾」；真截断打 `read error`，短 gzip + 全 0 什么都不打，短 gzip + 垃圾打 `invalid magic at start of compressed archive`。设备只花 37 ms ⇒ **只解出几 MB 就错位**，不是「末尾被截」也不是「尺寸不对」。
+- **判决用一发单比特**：GRUB 侧 `hashsum --hash sha256`（同一读路径）与主机 sha 比；不匹配 ⇒ Mu 大块 `BlockIo` 读回错字节；匹配仍坏 ⇒ Mu `AllocatePages` 的页被别处复用。

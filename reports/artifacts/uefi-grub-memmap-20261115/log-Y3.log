@@ -1,0 +1,484 @@
+UEFI firmware (version 2025.11-3ubuntu7.3 built at 15:40:26 on Sep 23 2026)
+[2J[001;001H[=3h[2J[001;001H[2J[001;001H[8;031;100t[2J[001;001HBdsDxe: loading Boot0002 "UEFI Misc Device" from PciRoot(0x0)/Pci(0x2,0x0)
+BdsDxe: starting Boot0002 "UEFI Misc Device" from PciRoot(0x0)/Pci(0x2,0x0)
+[0m[30m[40m[2J[001;001H[0m[37m[40m[002;040HGNU GRUB  version 2.14
+
+[004;002H/------------------------------------------------------------------------------------------------\[005;002H|[005;099H|[006;002H|[006;099H|[007;002H|[007;099H|[008;002H|[008;099H|[009;002H|[009;099H|[010;002H|[010;099H|[011;002H|[011;099H|[012;002H|[012;099H|[013;002H|[013;099H|[014;002H|[014;099H|[015;002H|[015;099H|[016;002H|[016;099H|[017;002H|[017;099H|[018;002H|[018;099H|[019;002H|[019;099H|[020;002H|[020;099H|[021;002H|[021;099H|[022;002H|[022;099H|[023;002H|[023;099H|[024;002H\------------------------------------------------------------------------------------------------/[025;002H[026;002H     Use the ^ and v keys to select which entry is highlighted.                              
+      Press enter to boot the selected OS, `e' to edit the commands before booting or `c' for 
+      a command-line.                                                                         [005;100H [0m[30m[47m[005;003H*qsay2 Y3                                                                                       [0m[37m[40m[005;098H[006;003H                                                                                                [006;098H[007;003H                                                                                                [007;098H[008;003H                                                                                                [008;098H[009;003H                                                                                                [009;098H[010;003H                                                                                                [010;098H[011;003H                                                                                                [011;098H[012;003H                                                                                                [012;098H[013;003H                                                                                                [013;098H[014;003H                                                                                                [014;098H[015;003H                                                                                                [015;098H[016;003H                                                                                                [016;098H[017;003H                                                                                                [017;098H[018;003H                                                                                                [018;098H[019;003H                                                                                                [019;098H[020;003H                                                                                                [020;098H[021;003H                                                                                                [021;098H[022;003H                                                                                                [022;098H[023;003H                                                                                                [023;098H[023;100H [005;098H[029;001H   The highlighted entry will be executed automatically in 2s.                                     [005;098H[029;001H   The highlighted entry will be executed automatically in 1s.                                     [005;098H[029;001H   The highlighted entry will be executed automatically in 0s.                                     [005;098H[0m[30m[40m[2J[001;001H[0m[37m[40mEFI stub: Booting Linux Kernel...
+EFI stub: EFI_RNG_PROTOCOL unavailable
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+EFI stub: Using DTB from configuration table
+EFI stub: Exiting boot services...
+[    0.000000][    T0] Booting Linux on physical CPU 0x0000000000 [0x410fd083]
+[    0.000000][    T0] Linux version 7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty (elden@y700) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #5 SMP PREEMPT Thu Nov 12 08:38:36 CST 2026
+[    0.000000][    T0] KASLR enabled
+[    0.000000][    T0] random: crng init done
+[    0.000000][    T0] Machine model: linux,dummy-virt
+[    0.000000][    T0] printk: debug: ignoring loglevel setting.
+[    0.000000][    T0] efi: Getting UEFI parameters from /chosen in DT:
+[    0.000000][    T0] efi:   System Table         : 0x000000013ffd0018
+[    0.000000][    T0] efi:   MemMap Address       : 0x000000013e6c3040
+[    0.000000][    T0] efi:   MemMap Size          : 0x0000000000001080
+[    0.000000][    T0] efi:   MemMap Desc. Size    : 0x0000000000000030
+[    0.000000][    T0] efi:   MemMap Desc. Version : 0x0000000000000001
+[    0.000000][    T0] efi: EFI v2.7 by Ubuntu distribution of EDK II
+[    0.000000][    T0] efi: SMBIOS 3.0=0x13fed0000 MEMATTR=0x13e730018 INITRD=0x13e71aa98 MEMRESERVE=0x13e71a818 
+[    0.000000][    T0] efi: Processing EFI memory map:
+[    0.000000][    T0] efi:   0x000040000000-0x000043ffffff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000044000000-0x00004401ffff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000044020000-0x0000477bafff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x0000477bb000-0x0000477dbfff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x0000477dc000-0x000047813fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000047814000-0x000047ee4fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000047ee5000-0x000047ef4fff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000047ef5000-0x000047ef8fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000047ef9000-0x000047ffffff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000048000000-0x00012d3fffff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00012d400000-0x00012f3fffff [Loader Data |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00012f400000-0x00013338ffff [Loader Code |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000133390000-0x00013352efff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013352f000-0x000137ccefff [Loader Code |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000137ccf000-0x00013b9a1fff [Loader Data |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013b9a2000-0x00013e060fff [Loader Code |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e061000-0x00013e4bffff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e4c0000-0x00013e6bffff [Loader Data |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e6c0000-0x00013e6c2fff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e6c3000-0x00013e6c4fff [ACPI Reclaim|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e6c5000-0x00013e6c9fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e6ca000-0x00013e6cafff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e6cb000-0x00013e6ccfff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e6cd000-0x00013e6cdfff [Loader Data |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e6ce000-0x00013e719fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e71a000-0x00013e71afff [Loader Data |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013e71b000-0x00013ed05fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ed06000-0x00013ed24fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ed25000-0x00013ed2ffff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ed30000-0x00013ed4bfff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ed4c000-0x00013ed4cfff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ed4d000-0x00013ed6ffff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ed70000-0x00013ed74fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ed75000-0x00013edadfff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013edae000-0x00013edb0fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013edb1000-0x00013edbefff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013edbf000-0x00013edc6fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013edc7000-0x00013eddffff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ede0000-0x00013ee5ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ee60000-0x00013ee66fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ee67000-0x00013ee6efff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ee6f000-0x00013ee8bfff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ee8c000-0x00013ee8dfff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ee8e000-0x00013ee92fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ee93000-0x00013ee9bfff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ee9c000-0x00013ee9ffff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013eea0000-0x00013f00ffff [Runtime Data|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f010000-0x00013f05ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f060000-0x00013f069fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f06a000-0x00013f072fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f073000-0x00013f0a2fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f0a3000-0x00013f0aafff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f0ab000-0x00013f0aefff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f0af000-0x00013f0effff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f0f0000-0x00013f3effff [Reserved    |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f3f0000-0x00013f40ffff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f410000-0x00013f45ffff [Runtime Data|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f460000-0x00013f4affff [Runtime Code|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f4b0000-0x00013f4fffff [Runtime Data|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f500000-0x00013f59ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5a0000-0x00013f5a7fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5a8000-0x00013f5acfff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5ad000-0x00013f5b2fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5b3000-0x00013f5cffff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5d0000-0x00013f5d0fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5d1000-0x00013f5d4fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5d5000-0x00013f5dafff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5db000-0x00013f5dffff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5e0000-0x00013f5e6fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f5e7000-0x00013f600fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f601000-0x00013f607fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f608000-0x00013f613fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f614000-0x00013f618fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f619000-0x00013f61cfff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f61d000-0x00013f61dfff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f61e000-0x00013f62bfff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f62c000-0x00013f632fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f633000-0x00013f637fff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f638000-0x00013f638fff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f639000-0x00013f64bfff [Boot Code   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013f64c000-0x00013fe1ffff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013fe20000-0x00013feaffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013feb0000-0x00013febffff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013fec0000-0x00013ffdffff [Runtime Data|RUN|  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ffe0000-0x00013fffefff [Conventional|   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x00013ffff000-0x00013fffffff [Boot Data   |   |  |  |  |  |  |  |  |  |  |   |WB|  |  |  ]
+[    0.000000][    T0] efi:   0x000004000000-0x000007ffffff [MMIO        |RUN|  |  |  |  |  |  |  |  |  |   |  |  |  |UC]
+[    0.000000][    T0] efi:   0x000009010000-0x000009010fff [MMIO        |RUN|  |  |  |  |  |  |  |  |  |   |  |  |  |UC]
+[    0.000000][    T0] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000][    T0] NUMA: Faking a node at [mem 0x0000000040000000-0x000000013fffffff]
+[    0.000000][    T0] NODE_DATA(0) allocated [mem 0x13f63c540-0x13f63ed3f]
+[    0.000000][    T0] cma: Reserved 32 MiB at 0x00000000fe000000
+[    0.000000][    T0] psci: probing for conduit method from DT.
+[    0.000000][    T0] psci: PSCIv1.1 detected in firmware.
+[    0.000000][    T0] psci: Using standard PSCI v0.2 function IDs
+[    0.000000][    T0] psci: Trusted OS migration not required
+[    0.000000][    T0] psci: SMC Calling Convention v1.0
+[    0.000000][    T0] Zone ranges:
+[    0.000000][    T0]   DMA      [mem 0x0000000040000000-0x00000000ffffffff]
+[    0.000000][    T0]   DMA32    empty
+[    0.000000][    T0]   Normal   [mem 0x0000000100000000-0x000000013fffffff]
+[    0.000000][    T0] Movable zone start for each node
+[    0.000000][    T0] Early memory node ranges
+[    0.000000][    T0]   node   0: [mem 0x0000000040000000-0x000000013eddffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013ede0000-0x000000013ee5ffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013ee60000-0x000000013ee9ffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013eea0000-0x000000013f05ffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013f060000-0x000000013f0effff]
+[    0.000000][    T0]   node   0: [mem 0x000000013f0f0000-0x000000013f3effff]
+[    0.000000][    T0]   node   0: [mem 0x000000013f3f0000-0x000000013f40ffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013f410000-0x000000013f59ffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013f5a0000-0x000000013fe1ffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013fe20000-0x000000013feaffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013feb0000-0x000000013febffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013fec0000-0x000000013ffdffff]
+[    0.000000][    T0]   node   0: [mem 0x000000013ffe0000-0x000000013fffffff]
+[    0.000000][    T0] Initmem setup node 0 [mem 0x0000000040000000-0x000000013fffffff]
+[    0.000000][    T0] percpu: Embedded 33 pages/cpu s94488 r8192 d32488 u135168
+[    0.000000][    T0] pcpu-alloc: s94488 r8192 d32488 u135168 alloc=33*4096
+[    0.000000][    T0] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 
+[    0.000000][    T0] Detected PIPT I-cache on CPU0
+[    0.000000][    T0] CPU features: detected: Spectre-v2
+[    0.000000][    T0] CPU features: detected: Spectre-v3a
+[    0.000000][    T0] CPU features: detected: Spectre-v4
+[    0.000000][    T0] CPU features: detected: Spectre-BHB
+[    0.000000][    T0] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000][    T0] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000][    T0] CPU features: detected: ARM erratum 1742098
+[    0.000000][    T0] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000][    T0] alternatives: applying boot alternatives
+[    0.000000][    T0] Kernel command line: BOOT_IMAGE=(hd0,1)/boot/Image console=ttyAMA0,115200 loglevel=8 ignore_loglevel efi=debug panic=0 rdinit=/nonexistent
+[    0.000000][    T0] printk: log buffer data + meta data: 1048576 + 3670016 = 4718592 bytes
+[    0.000000][    T0] Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.000000][    T0] Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.000000][    T0] software IO TLB: area num 4.
+[    0.000000][    T0] software IO TLB: mapped [mem 0x00000000fa000000-0x00000000fe000000] (64MB)
+[    0.000000][    T0] Fallback order for Node 0: 0 
+[    0.000000][    T0] Built 1 zonelists, mobility grouping on.  Total pages: 1048576
+[    0.000000][    T0] Policy zone: Normal
+[    0.000000][    T0] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000][    T0] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000][    T0] ftrace: allocating 81285 entries in 318 pages
+[    0.000000][    T0] ftrace: allocated 318 pages with 6 groups
+[    0.000000][    T0] rcu: Preemptible hierarchical RCU implementation.
+[    0.000000][    T0] rcu: 	RCU event tracing is enabled.
+[    0.000000][    T0] rcu: 	RCU restricting CPUs from NR_CPUS=512 to nr_cpu_ids=4.
+[    0.000000][    T0] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000][    T0] 	Rude variant of Tasks RCU enabled.
+[    0.000000][    T0] 	Tracing variant of Tasks RCU enabled.
+[    0.000000][    T0] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000][    T0] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+[    0.000000][    T0] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000][    T0] RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000][    T0] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000][    T0] Root IRQ handler: gic_handle_irq
+[    0.000000][    T0] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[    0.000000][    T0] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000][    T0] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000][    T0] arch_timer: cp15 timer running at 62.50MHz (virt).
+[    0.000000][    T0] clocksource: arch_sys_counter: mask: 0x1ffffffffffffff max_cycles: 0x1cd42e208c, max_idle_ns: 881590405314 ns
+[    0.000046][    T0] sched_clock: 57 bits at 63MHz, resolution 16ns, wraps every 4398046511096ns
+[    0.008462][    T0] Console: colour dummy device 80x25
+[    0.011170][    T0] Calibrating delay loop (skipped), value calculated using timer frequency.. 125.00 BogoMIPS (lpj=250000)
+[    0.011278][    T0] pid_max: default: 32768 minimum: 301
+[    0.015919][    T0] Mount-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.015972][    T0] Mountpoint-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.022106][    T0] VFS: Finished mounting rootfs on nullfs
+[    0.049998][    T1] rcu: Hierarchical SRCU implementation.
+[    0.050030][    T1] rcu: 	Max phase no-delay instances is 1000.
+[    0.051021][    T1] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.055911][    T1] Remapping and enabling EFI services.
+[    0.056944][    T1] efi: memattr: Processing EFI Memory Attributes table:
+[    0.057056][    T1] efi: memattr:  0x00013ede0000-0x00013edeffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057620][    T1] efi: memattr:  0x00013edf0000-0x00013edfffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |RO|   |  |  |  |  ]
+[    0.057645][    T1] efi: memattr:  0x00013ee00000-0x00013ee0ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057654][    T1] efi: memattr:  0x00013ee10000-0x00013ee1ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |RO|   |  |  |  |  ]
+[    0.057662][    T1] efi: memattr:  0x00013ee20000-0x00013ee2ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057670][    T1] efi: memattr:  0x00013ee30000-0x00013ee3ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |RO|   |  |  |  |  ]
+[    0.057677][    T1] efi: memattr:  0x00013ee40000-0x00013ee4ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057685][    T1] efi: memattr:  0x00013ee50000-0x00013ee5ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |RO|   |  |  |  |  ]
+[    0.057693][    T1] efi: memattr:  0x00013eea0000-0x00013f00ffff [Runtime Data|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057726][    T1] efi: memattr:  0x00013f010000-0x00013f01ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057734][    T1] efi: memattr:  0x00013f020000-0x00013f02ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |RO|   |  |  |  |  ]
+[    0.057742][    T1] efi: memattr:  0x00013f030000-0x00013f04ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057750][    T1] efi: memattr:  0x00013f050000-0x00013f05ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |RO|   |  |  |  |  ]
+[    0.057757][    T1] efi: memattr:  0x00013f410000-0x00013f45ffff [Runtime Data|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057767][    T1] efi: memattr:  0x00013f460000-0x00013f46ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057775][    T1] efi: memattr:  0x00013f470000-0x00013f47ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |RO|   |  |  |  |  ]
+[    0.057782][    T1] efi: memattr:  0x00013f480000-0x00013f49ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057791][    T1] efi: memattr:  0x00013f4a0000-0x00013f4affff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |RO|   |  |  |  |  ]
+[    0.057798][    T1] efi: memattr:  0x00013f4b0000-0x00013f4fffff [Runtime Data|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057808][    T1] efi: memattr:  0x00013f500000-0x00013f50ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057815][    T1] efi: memattr:  0x00013f510000-0x00013f51ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |RO|   |  |  |  |  ]
+[    0.057823][    T1] efi: memattr:  0x00013f520000-0x00013f53ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057831][    T1] efi: memattr:  0x00013f540000-0x00013f54ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |RO|   |  |  |  |  ]
+[    0.057857][    T1] efi: memattr:  0x00013f550000-0x00013f55ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057869][    T1] efi: memattr:  0x00013f560000-0x00013f56ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |RO|   |  |  |  |  ]
+[    0.057877][    T1] efi: memattr:  0x00013f570000-0x00013f58ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057886][    T1] efi: memattr:  0x00013f590000-0x00013f59ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |RO|   |  |  |  |  ]
+[    0.057894][    T1] efi: memattr:  0x00013fe20000-0x00013fe2ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057902][    T1] efi: memattr:  0x00013fe30000-0x00013fe3ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |RO|   |  |  |  |  ]
+[    0.057910][    T1] efi: memattr:  0x00013fe40000-0x00013fe4ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057918][    T1] efi: memattr:  0x00013fe50000-0x00013fe5ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |RO|   |  |  |  |  ]
+[    0.057927][    T1] efi: memattr:  0x00013fe60000-0x00013fe6ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057934][    T1] efi: memattr:  0x00013fe70000-0x00013fe7ffff [Runtime Code|RUN|  |  |  |  |  |  |  |  |RO|   |  |  |  |  ]
+[    0.057942][    T1] efi: memattr:  0x00013fe80000-0x00013fe9ffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.057950][    T1] efi: memattr:  0x00013fea0000-0x00013feaffff [Runtime Code|RUN|  |  |  |  |  |XP|  |  |RO|   |  |  |  |  ]
+[    0.057958][    T1] efi: memattr:  0x00013fec0000-0x00013ffdffff [Runtime Data|RUN|  |  |  |  |  |XP|  |  |  |   |  |  |  |  ]
+[    0.059198][    T1] smp: Bringing up secondary CPUs ...
+[    0.063164][    T0] Detected PIPT I-cache on CPU1
+[    0.063793][    T0] CPU1: Booted secondary processor 0x0000000001 [0x410fd083]
+[    0.067592][    T0] Detected PIPT I-cache on CPU2
+[    0.067963][    T0] CPU2: Booted secondary processor 0x0000000002 [0x410fd083]
+[    0.069135][    T0] Detected PIPT I-cache on CPU3
+[    0.069297][    T0] CPU3: Booted secondary processor 0x0000000003 [0x410fd083]
+[    0.069696][    T1] smp: Brought up 1 node, 4 CPUs
+[    0.069716][    T1] SMP: Total of 4 processors activated.
+[    0.069733][    T1] CPU: All CPU(s) started at EL1
+[    0.069781][    T1] CPU features: detected: 32-bit EL0 Support
+[    0.069829][    T1] CPU features: detected: CRC32 instructions
+[    0.069928][    T1] CPU features: detected: PMUv3
+[    0.077744][    T1] alternatives: applying system-wide alternatives
+[    0.096634][    T1] Memory: 3900980K/4194304K available (27392K kernel code, 10952K rwdata, 19188K rodata, 4608K init, 2707K bss, 253456K reserved, 32768K cma-reserved)
+[    0.118407][    T1] devtmpfs: initialized
+[    0.134470][    T1] posixtimers hash table entries: 2048 (order: 3, 32768 bytes, linear)
+[    0.135064][    T1] futex hash table entries: 1024 (65536 bytes on 1 NUMA nodes, total 64 KiB, linear).
+[    0.137163][    T1] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.137207][    T1] 0 pages in range for non-PLT usage
+[    0.137239][    T1] 508016 pages in range for PLT usage
+[    0.150822][    T1] DMI: SMBIOS 3.0.0 present.
+[    0.150965][    T1] DMI: QEMU QEMU Virtual Machine, BIOS 2025.11-3ubuntu7.3 09/23/2026
+[    0.151094][    T1] DMI: Memory slots populated: 1/1
+[    0.165426][    T1] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.174559][    T1] DMA: preallocated 512 KiB GFP_KERNEL pool for atomic allocations
+[    0.174987][    T1] DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.175174][    T1] audit: initializing netlink subsys (disabled)
+[    0.176340][   T39] audit: type=2000 audit(0.164:1): state=initialized audit_enabled=0 res=1
+[    0.180937][    T1] thermal_sys: Registered thermal governor 'step_wise'
+[    0.180960][    T1] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.181275][    T1] cpuidle: using governor menu
+[    0.181973][    T1] NET: Registered PF_QIPCRTR protocol family
+[    0.183228][    T1] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.183991][    T1] ASID allocator initialised with 32768 entries
+[    0.190944][    T1] Serial: AMBA PL011 UART driver
+[    0.224561][    T1] 9000000.pl011: ttyAMA0 MMIO:0x0000000009000000 (irq = 13, base_baud = 0) is a PL011 rev1
+[    0.226184][    T1] printk: console [ttyAMA0] enabled
+[    0.258513][    T1] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.258661][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.258676][    T1] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.258680][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.258685][    T1] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.258688][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.258692][    T1] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.258694][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.265212][    T1] raid6: using neon recovery algorithm
+[    0.272619][    T1] iommu: Default domain type: Translated
+[    0.272645][    T1] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.274334][    T1] SCSI subsystem initialized
+[    0.274849][    T1] libata version 3.00 loaded.
+[    0.275932][    T1] usbcore: registered new interface driver usbfs
+[    0.276115][    T1] usbcore: registered new interface driver hub
+[    0.276241][    T1] usbcore: registered new device driver usb
+[    0.277846][    T1] pps_core: LinuxPPS API ver. 1 registered
+[    0.277858][    T1] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.277909][    T1] PTP clock support registered
+[    0.278323][    T1] EDAC MC: Ver: 3.0.0
+[    0.279534][    T1] scmi_core: SCMI protocol bus registered
+[    0.281928][    T1] efivars: Registered efivars operations
+[    0.284154][    T1] FPGA manager framework
+[    0.284612][    T1] Advanced Linux Sound Architecture Driver Initialized.
+[    0.290870][    T1] Bluetooth: Core ver 2.22
+[    0.291110][    T1] NET: Registered PF_BLUETOOTH protocol family
+[    0.291121][    T1] Bluetooth: HCI device and connection manager initialized
+[    0.291237][    T1] Bluetooth: HCI socket layer initialized
+[    0.291279][    T1] Bluetooth: L2CAP socket layer initialized
+[    0.291404][    T1] Bluetooth: SCO socket layer initialized
+[    0.293068][    T1] vgaarb: loaded
+[    0.294910][    T1] clocksource: Switched to clocksource arch_sys_counter
+[    0.297983][    T1] VFS: Disk quotas dquot_6.6.0
+[    0.299688][    T1] VFS: Dquot-cache hash table entries: 512 (4096 bytes)
+[    0.317858][    T1] NET: Registered PF_INET protocol family
+[    0.319276][    T1] IP idents hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.324486][    T1] tcp_listen_portaddr_hash hash table entries: 2048 (order: 3, 32768 bytes, linear)
+[    0.324626][    T1] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.324673][    T1] TCP established hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.325056][    T1] TCP bind hash table entries: 32768 (order: 8, 1048576 bytes, linear)
+[    0.325359][    T1] TCP: Hash tables configured (established 32768 bind 32768)
+[    0.326020][    T1] UDP hash table entries: 2048 (order: 5, 131072 bytes, linear)
+[    0.327020][    T1] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.329326][    T1] RPC: Registered named UNIX socket transport module.
+[    0.329363][    T1] RPC: Registered udp transport module.
+[    0.329370][    T1] RPC: Registered tcp transport module.
+[    0.329374][    T1] RPC: Registered tcp-with-tls transport module.
+[    0.329379][    T1] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.330606][    T1] PCI: CLS 0 bytes, default 64
+[    0.333827][   T55] Unpacking initramfs...
+[    0.347686][    T1] Initialise system trusted keyrings
+[    0.351382][    T1] workingset: timestamp_bits=42 (anon: 37) max_order=20 bucket_order=0 (anon: 0)
+[    0.353033][    T1] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.354414][    T1] NFS: Registering the id_resolver key type
+[    0.354625][    T1] Key type id_resolver registered
+[    0.354649][    T1] Key type id_legacy registered
+[    0.355419][    T1] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[    0.355494][    T1] nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+[    0.361633][    T1] Key type asymmetric registered
+[    0.361748][    T1] Asymmetric key parser 'x509' registered
+[    0.362010][    T1] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 241)
+[    0.362179][    T1] io scheduler mq-deadline registered
+[    0.362264][    T1] io scheduler kyber registered
+[    0.362652][    T1] io scheduler bfq registered
+[    0.363273][    T1] xor: measuring software checksum speed
+[    0.364661][    T1]    neon            :  9831 MB/sec
+[    0.366152][    T1]    32regs          :  9157 MB/sec
+[    0.367493][    T1]    8regs           :  9895 MB/sec
+[    0.367514][    T1] xor: using function: 8regs (9895 MB/sec)
+[    0.376516][    T1] raid6: int64x1  gen()  2961 MB/s
+[    0.383195][    T1] raid6: int64x2  gen()  3939 MB/s
+[    0.388690][    T1] raid6: int64x4  gen()  4786 MB/s
+[    0.397160][    T1] raid6: int64x8  gen()  3102 MB/s
+[    0.409028][    T1] raid6: neonx1   gen()  2212 MB/s
+[    0.416143][    T1] raid6: neonx2   gen()  3692 MB/s
+[    0.421216][    T1] raid6: neonx4   gen()  5176 MB/s
+[    0.424964][    T1] raid6: neonx8   gen()  7007 MB/s
+[    0.424992][    T1] raid6: using algorithm neonx8 gen() 7007 MB/s
+[    0.430437][    T1] raid6: .... xor() 2420 MB/s, rmw enabled
+[    0.453043][    T1] pl061_gpio 9030000.pl061: PL061 GPIO chip registered
+[    0.456760][    T1] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.461885][    T1] pci-host-generic 4010000000.pcie: host bridge /pcie@10000000 ranges:
+[    0.462585][    T1] pci-host-generic 4010000000.pcie:       IO 0x003eff0000..0x003effffff -> 0x0000000000
+[    0.463180][    T1] pci-host-generic 4010000000.pcie:      MEM 0x0010000000..0x003efeffff -> 0x0010000000
+[    0.463269][    T1] pci-host-generic 4010000000.pcie:      MEM 0x8000000000..0xffffffffff -> 0x8000000000
+[    0.463849][    T1] pci-host-generic 4010000000.pcie: Memory resource size exceeds max for 32 bits
+[    0.464300][    T1] pci-host-generic 4010000000.pcie: ECAM at [mem 0x4010000000-0x401fffffff] for [bus 00-ff]
+[    0.465313][    T1] pci-host-generic 4010000000.pcie: PCI host bridge to bus 0000:00
+[    0.465498][    T1] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    0.465545][    T1] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    0.465577][    T1] pci_bus 0000:00: root bus resource [mem 0x10000000-0x3efeffff]
+[    0.465583][    T1] pci_bus 0000:00: root bus resource [mem 0x8000000000-0xffffffffff]
+[    0.466565][    T1] pci 0000:00:00.0: [1b36:0008] type 00 class 0x060000 conventional PCI endpoint
+[    0.469984][    T1] pci 0000:00:01.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+[    0.470461][    T1] pci 0000:00:01.0: BAR 0 [io  0x0080-0x009f]
+[    0.470508][    T1] pci 0000:00:01.0: BAR 1 [mem 0x10081000-0x10081fff]
+[    0.470534][    T1] pci 0000:00:01.0: BAR 4 [mem 0x8000000000-0x8000003fff 64bit pref]
+[    0.470609][    T1] pci 0000:00:01.0: ROM [mem 0xfff80000-0xffffffff pref]
+[    0.471287][    T1] pci 0000:00:02.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[    0.471615][    T1] pci 0000:00:02.0: BAR 0 [io  0x0000-0x007f]
+[    0.471639][    T1] pci 0000:00:02.0: BAR 1 [mem 0x10080000-0x10080fff]
+[    0.471657][    T1] pci 0000:00:02.0: BAR 4 [mem 0x8000004000-0x8000007fff 64bit pref]
+[    0.473669][    T1] pci 0000:00:01.0: ROM [mem 0x10000000-0x1007ffff pref]: assigned
+[    0.473890][    T1] pci 0000:00:01.0: BAR 4 [mem 0x8000000000-0x8000003fff 64bit pref]: assigned
+[    0.474054][    T1] pci 0000:00:02.0: BAR 4 [mem 0x8000004000-0x8000007fff 64bit pref]: assigned
+[    0.474071][    T1] pci 0000:00:01.0: BAR 1 [mem 0x10080000-0x10080fff]: assigned
+[    0.474103][    T1] pci 0000:00:02.0: BAR 1 [mem 0x10081000-0x10081fff]: assigned
+[    0.474116][    T1] pci 0000:00:02.0: BAR 0 [io  0x1000-0x107f]: assigned
+[    0.474374][    T1] pci 0000:00:01.0: BAR 0 [io  0x1080-0x109f]: assigned
+[    0.475034][    T1] pci_bus 0000:00: resource 4 [io  0x0000-0xffff]
+[    0.475071][    T1] pci_bus 0000:00: resource 5 [mem 0x10000000-0x3efeffff]
+[    0.475081][    T1] pci_bus 0000:00: resource 6 [mem 0x8000000000-0xffffffffff]
+[    0.526494][    T1] virtio-pci 0000:00:01.0: enabling device (0005 -> 0007)
+[    0.528988][    T1] virtio-pci 0000:00:02.0: enabling device (0005 -> 0007)
+[    0.544230][    T1] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.555678][    T1] msm_serial: driver initialized
+[    0.557082][    T1] SuperH (H)SCI(F) driver initialized
+[    0.557419][    T1] STM32 USART driver initialized
+[    0.584449][    T1] loop: module loaded
+[    0.585389][    T1] virtio_blk virtio1: 4/0/0 default/read/poll queues
+[    0.593043][    T1] virtio_blk virtio1: [vda] 1032192 512-byte logical blocks (528 MB/504 MiB)
+[    0.601351][    T1]  vda: vda1
+[    0.604688][    T1] megasas: 07.734.00.00-rc1
+[    0.615539][    T1] tun: Universal TUN/TAP device driver, 1.6
+[    0.623506][    T1] VFIO - User Level meta-driver version: 0.3
+[    0.630442][    T1] usbcore: registered new interface driver usb-storage
+[    0.634569][    T1] mousedev: PS/2 mouse device common for all mice
+[    0.638529][    T1] rtc-efi rtc-efi.0: registered as rtc0
+[    0.639244][    T1] rtc-efi rtc-efi.0: setting system clock to 2026-11-15T02:59:39 UTC (1794711579)
+[    0.641174][    T1] i2c_dev: i2c /dev entries driver
+[    0.651605][    T1] Bluetooth: HCI UART driver ver 2.3
+[    0.651752][    T1] Bluetooth: HCI UART protocol H4 registered
+[    0.651823][    T1] Bluetooth: HCI UART protocol LL registered
+[    0.651987][    T1] Bluetooth: HCI UART protocol Broadcom registered
+[    0.652023][    T1] Bluetooth: HCI UART protocol QCA registered
+[    0.652055][    T1] Bluetooth: HCI UART protocol Marvell registered
+[    0.670463][    T1] [drm] Initialized simpledrm 1.0.0 for simple-framebuffer.0 on minor 0
+[    0.696157][    T1] Console: switching to colour frame buffer device 100x37
+[    0.698035][    T1] simple-framebuffer simple-framebuffer.0: [drm] fb0: simpledrmdrmfb frame buffer device
+[    0.701259][    T1] pstore: Using crash dump compression: deflate
+[    0.701391][    T1] pstore: Registered efi_pstore as persistent store backend
+[    0.703572][    T1] hid: raw HID events driver (C) Jiri Kosina
+[    0.704230][    T1] usbcore: registered new interface driver usbhid
+[    0.704243][    T1] usbhid: USB HID core driver
+[    0.713323][    T1] hw perfevents: enabled with armv8_pmuv3 PMU driver, 7 (0,8000003f) counters available
+[    0.716230][   T50] watchdog: NMI not fully supported
+[    0.716241][   T50] watchdog: Hard watchdog permanently disabled
+[    0.732828][    T1] Initializing XFRM netlink socket
+[    0.733116][    T1] NET: Registered PF_INET6 protocol family
+[    0.739820][    T1] Segment Routing with IPv6
+[    0.739982][    T1] In-situ OAM (IOAM) with IPv6
+[    0.741030][    T1] NET: Registered PF_PACKET protocol family
+[    0.741052][    T1] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    0.741091][    T1] Bluetooth: HIDP socket layer initialized
+[    0.742028][    T1] Key type dns_resolver registered
+[    0.769450][    T1] registered taskstats version 1
+[    0.772005][    T1] Loading compiled-in X.509 certificates
+[    0.784292][    T1] Demotion targets for Node 0: null
+[    0.787104][    T1] Btrfs loaded, zoned=no, fsverity=no
+[    0.793820][    T1] input: gpio-keys as /devices/platform/gpio-keys/input/input0
+[    0.798248][    T1] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    0.929735][   T55] Initramfs unpacking failed: read error
+[    0.944156][   T55] Freeing initrd memory: 32768K
+[    0.996488][    T1] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    0.996886][    T1] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    0.998219][   T10] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[    0.998461][   T10] cfg80211: failed to load regulatory.db
+[    0.999715][    T1] clk: Disabling unused clocks
+[    0.999872][    T1] PM: genpd: Disabling unused power domains
+[    0.999947][    T1] ALSA device list:
+[    1.000099][    T1]   No soundcards found.
+[    1.003533][    T1] check access for rdinit=/nonexistent failed: -2, ignoring
+[    1.004309][    T1] /dev/root: Can't lookup blockdev
+[    1.004486][    T1] VFS: Cannot open root device "" or unknown-block(0,0): error -19
+[    1.004496][    T1] Please append a correct "root=" boot option; here are the available partitions:
+[    1.004609][    T1] fe00          516096 vda 
+[    1.004659][    T1]  driver: virtio_blk
+[    1.004676][    T1]   fe01          516064 vda1 be1afdfa-01
+[    1.004703][    T1] 
+[    1.004745][    T1] List of all bdev filesystems:
+[    1.004755][    T1]  ext3
+[    1.004762][    T1]  ext2
+[    1.004765][    T1]  ext4
+[    1.004767][    T1]  squashfs
+[    1.004769][    T1]  vfat
+[    1.004771][    T1]  exfat
+[    1.004773][    T1]  f2fs
+[    1.004775][    T1]  erofs
+[    1.004777][    T1]  btrfs
+[    1.004781][    T1] 
+[    1.004919][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    1.006152][    T1] CPU: 2 UID: 0 PID: 1 Comm: swapper/0 Not tainted 7.3.1-debug-vk188-sysfbfb-00002-g4da9a8b69fc8-dirty #5 PREEMPT 
+[    1.006307][    T1] Hardware name: QEMU QEMU Virtual Machine, BIOS 2025.11-3ubuntu7.3 09/23/2026
+[    1.006503][    T1] Call trace:
+[    1.006666][    T1]  show_stack+0x20/0x40 (C)
+[    1.007105][    T1]  dump_stack_lvl+0x60/0x80
+[    1.007173][    T1]  dump_stack+0x18/0x24
+[    1.007221][    T1]  vpanic+0x298/0x498
+[    1.007265][    T1]  panic+0x68/0x70
+[    1.007307][    T1]  mount_root_generic+0x1f8/0x2b8
+[    1.007371][    T1]  mount_root+0x214/0x260
+[    1.007418][    T1]  prepare_namespace+0x1cc/0x260
+[    1.007471][    T1]  kernel_init_freeable+0x298/0x2c8
+[    1.007525][    T1]  kernel_init+0x34/0x158
+[    1.007575][    T1]  ret_from_fork+0x10/0x20
+[    1.007891][    T1] SMP: stopping secondary CPUs
+[    1.008571][    T1] Kernel Offset: 0x21fa62a00000 from 0xffff800080000000
+[    1.008654][    T1] PHYS_OFFSET: 0xfff1000040000000
+[    1.008713][    T1] CPU features: 0x0,20000002,013c0020,00100000,0800820b
+[    1.008798][    T1] Memory Limit: none
+[    1.317102][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---

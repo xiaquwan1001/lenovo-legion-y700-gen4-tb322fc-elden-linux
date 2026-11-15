@@ -1,0 +1,53 @@
+# X1b/X2b/X3b/Y1..Y5 关键输出（sed 抽行，原日志见同名 log-*.log）
+=== X1b
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+[    0.343394][   T63] Unpacking initramfs...
+[    1.940575][   T63] Freeing initrd memory: 63080K
+[    2.003344][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    2.278759][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---
+=== X2b
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+[    0.405144][   T63] Unpacking initramfs...
+[    0.490907][   T63] Freeing initrd memory: 14336K
+[    0.923956][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    1.254603][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---
+=== X3b
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+[    0.372167][   T55] Unpacking initramfs...
+[    2.034284][   T55] Freeing initrd memory: 63080K
+[    2.095767][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    2.409868][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---
+=== Y1
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+[    0.347038][   T62] Unpacking initramfs...
+[    0.708223][   T62] Freeing initrd memory: 65552K
+[    0.839932][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    1.145942][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---
+=== Y2
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+[    0.351809][   T59] Unpacking initramfs...
+[    0.418030][   T59] Initramfs unpacking failed: invalid magic at start of compressed archive
+[    0.449599][   T59] Freeing initrd memory: 65552K
+[    0.854865][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    1.169763][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---
+=== Y3
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+[    0.333827][   T55] Unpacking initramfs...
+[    0.929735][   T55] Initramfs unpacking failed: read error
+[    0.944156][   T55] Freeing initrd memory: 32768K
+[    1.004919][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    1.317102][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---
+=== Y4
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+[    0.350701][   T55] Unpacking initramfs...
+[    0.412846][   T55] Initramfs unpacking failed: broken padding
+[    0.414352][   T55] Freeing initrd memory: 1432K
+[    0.854212][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    1.202507][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---
+=== Y5
+EFI stub: Loaded initrd from LINUX_EFI_INITRD_MEDIA_GUID device path
+[    0.372149][   T55] Unpacking initramfs...
+[    0.432601][   T55] Initramfs unpacking failed: junk within compressed archive
+[    0.433631][   T55] Freeing initrd memory: 1432K
+[    0.865948][    T1] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+[    1.183582][    T1] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---

@@ -135,3 +135,17 @@ ssh elden-root 'sha256sum /efi/EFI/BOOT/BOOTAA64.EFI'   # 期望 6e51fc60…（L
 | ESP 备份 | `BOOTAA64.EFI.arming-v6.bak`=`244c5f65…`(原 v3b GRUB)、`BOOTAA64.EFI.grub-arming-v7.bak`=`a63d2ab4…` |
 | `out/initramfs-slim.cpio.gz`（1 MB） | D2 的小 initrd 单变量 |
 | `/tmp/qsay/`（QEMU 工作目录） | 配方已跑通，重启后按 §1 重建 |
+
+---
+
+## ★2026-11-15 勘误与增量（主机侧 lane 收口，权威 = `reports/uefi-grub-initrd-memmap-20261115.md`）
+
+> 本节覆盖上文 §0/§1 里**已作废**的两条假设，其余保留。
+
+| 上文说法 | 现口径（2026-11-15，源码 + QEMU 八发实测） |
+|---|---|
+| ~~GRUB 分配 initrd 内存并把 initrd 放错地方~~ | **作废**：`/boot/Image` 的 PE `MajorImageVersion=3`(实查) ≥1 ⇒ GRUB 走 **LoadFile2**，只装 `EFI_LOAD_FILE2_PROTOCOL`（`grub-core/loader/efi/linux.c:135` 判定、`:420-451` 安装），**不分配不搬运**；64 MB `AllocatePages` 由**内核 EFI stub 经 Mu 分配器**做 |
+| ~~GRUB 在 ExitBootServices 前后搬移 initrd / 受限 4 GiB 地址~~ | **作废**：QEMU 里 64 MB 被放到 `0x12b660000`（**4.68 GiB**）仍 1.60 s 成功；`-m 2048`（4 GiB 以下）与 16 MB 也都成功 |
+| —— | **新增判读**：`broken padding` 来自 `init/initramfs.c:338`（`build/daily`）的 cpio `do_reset()`，指纹 = 「成员**内部**提前结束 + 1–3 NUL + 垃圾」；真截断是 `read error`，短 gzip+全 0 什么都不打 ⇒ 设备 37 ms 意味着**只解出几 MB 就错位** |
+| —— | **下一发 = 单比特判决（未执行）**：GRUB 侧 `hashsum --hash sha256` 算同一读路径的 initrd sha；不匹配 ⇒ Mu 大块 BlockIo 读错；匹配仍坏 ⇒ Mu 分配页被复用（再上 Shot B 走 SFS 路径） |
+

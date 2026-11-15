@@ -1,0 +1,87 @@
+UEFI firmware (version 2025.11-3ubuntu7.3 built at 15:40:26 on Sep 23 2026)
+[2J[001;001H[=3h[2J[001;001H[2J[001;001H[8;031;100t[2J[001;001HBdsDxe: loading Boot0002 "UEFI Misc Device" from PciRoot(0x0)/Pci(0x2,0x0)
+BdsDxe: starting Boot0002 "UEFI Misc Device" from PciRoot(0x0)/Pci(0x2,0x0)
+[0m[30m[40m[2J[001;001H[0m[37m[40m[002;040HGNU GRUB  version 2.14
+
+[004;002H/------------------------------------------------------------------------------------------------\[005;002H|[005;099H|[006;002H|[006;099H|[007;002H|[007;099H|[008;002H|[008;099H|[009;002H|[009;099H|[010;002H|[010;099H|[011;002H|[011;099H|[012;002H|[012;099H|[013;002H|[013;099H|[014;002H|[014;099H|[015;002H|[015;099H|[016;002H|[016;099H|[017;002H|[017;099H|[018;002H|[018;099H|[019;002H|[019;099H|[020;002H|[020;099H|[021;002H|[021;099H|[022;002H|[022;099H|[023;002H|[023;099H|[024;002H\------------------------------------------------------------------------------------------------/[025;002H[026;002H     Use the ^ and v keys to select which entry is highlighted.                              
+      Press enter to boot the selected OS, `e' to edit the commands before booting or `c' for 
+      a command-line.                                                                         [005;100H [0m[30m[47m[005;003H*Z2 lsefi                                                                                       [0m[37m[40m[005;098H[006;003H                                                                                                [006;098H[007;003H                                                                                                [007;098H[008;003H                                                                                                [008;098H[009;003H                                                                                                [009;098H[010;003H                                                                                                [010;098H[011;003H                                                                                                [011;098H[012;003H                                                                                                [012;098H[013;003H                                                                                                [013;098H[014;003H                                                                                                [014;098H[015;003H                                                                                                [015;098H[016;003H                                                                                                [016;098H[017;003H                                                                                                [017;098H[018;003H                                                                                                [018;098H[019;003H                                                                                                [019;098H[020;003H                                                                                                [020;098H[021;003H                                                                                                [021;098H[022;003H                                                                                                [022;098H[023;003H                                                                                                [023;098H[023;100H [005;098H[029;001H   The highlighted entry will be executed automatically in 3s.                                     [005;098H[029;001H   The highlighted entry will be executed automatically in 2s.                                     [005;098H[029;001H   The highlighted entry will be executed automatically in 1s.                                     [005;098H[029;001H   The highlighted entry will be executed automatically in 0s.                                     [005;098H[0m[30m[40m[2J[001;001H[0m[37m[40m== BEFORE ==
+Type      Physical start  - end             #Pages        Size Attributes
+conv-mem  0000000040000000-0000000043ffffff 00004000     64MiB WB
+BS-data   0000000044000000-000000004401ffff 00000020    128KiB WB
+conv-mem  0000000044020000-00000000477bafff 0000379b  56940KiB WB
+BS-data   00000000477bb000-00000000477dbfff 00000021    132KiB WB
+BS-code   00000000477dc000-0000000047813fff 00000038    224KiB WB
+BS-data   0000000047814000-0000000047ee4fff 000006d1   6980KiB WB
+conv-mem  0000000047ee5000-0000000047ef4fff 00000010     64KiB WB
+BS-code   0000000047ef5000-0000000047ef8fff 00000004     16KiB WB
+BS-data   0000000047ef9000-0000000047ffffff 00000107   1052KiB WB
+conv-mem  0000000048000000-000000013ba3dfff 000f3a3e 3991800KiB WB
+ldr-code  000000013ba3e000-000000013e0aefff 00002671  39364KiB WB
+conv-mem  000000013e0af000-000000013e6cffff 00000621   6276KiB WB
+BS-data   000000013e6d0000-000000013e719fff 0000004a    296KiB WB
+ldr-data  000000013e71a000-000000013e71afff 00000001      4KiB WB
+BS-data   000000013e71b000-000000013ed05fff 000005eb   6060KiB WB
+BS-code   000000013ed06000-000000013ed24fff 0000001f    124KiB WB
+BS-data   000000013ed25000-000000013ed2ffff 0000000b     44KiB WB
+BS-code   000000013ed30000-000000013ed4bfff 0000001c    112KiB WB
+BS-data   000000013ed4c000-000000013ed4cfff 00000001      4KiB WB
+BS-code   000000013ed4d000-000000013ed6ffff 00000023    140KiB WB
+BS-data   000000013ed70000-000000013ed74fff 00000005     20KiB WB
+BS-code   000000013ed75000-000000013edadfff 00000039    228KiB WB
+BS-data   000000013edae000-000000013edb0fff 00000003     12KiB WB
+BS-code   000000013edb1000-000000013edbefff 0000000e     56KiB WB
+BS-data   000000013edbf000-000000013edc6fff 00000008     32KiB WB
+BS-code   000000013edc7000-000000013eddffff 00000019    100KiB WB
+RT-code   000000013ede0000-000000013ee5ffff 00000080    512KiB RT WB
+BS-code   000000013ee60000-000000013ee66fff 00000007     28KiB WB
+BS-data   000000013ee67000-000000013ee6efff 00000008     32KiB WB
+BS-code   000000013ee6f000-000000013ee8bfff 0000001d    116KiB WB
+BS-data   000000013ee8c000-000000013ee8dfff 00000002      8KiB WB
+BS-code   000000013ee8e000-000000013ee92fff 00000005     20KiB WB
+BS-data   000000013ee93000-000000013ee9bfff 00000009     36KiB WB
+BS-code   000000013ee9c000-000000013ee9ffff 00000004     16KiB WB
+RT-data   000000013eea0000-000000013f00ffff 00000170   1472KiB RT WB
+RT-code   000000013f010000-000000013f05ffff 00000050    320KiB RT WB
+BS-code   000000013f060000-000000013f069fff 0000000a     40KiB WB
+BS-data   000000013f06a000-000000013f072fff 00000009     36KiB WB
+BS-code   000000013f073000-000000013f0a2fff 00000030    192KiB WB
+BS-data   000000013f0a3000-000000013f0aafff 00000008     32KiB WB
+BS-code   000000013f0ab000-000000013f0aefff 00000004     16KiB WB
+BS-data   000000013f0af000-000000013f0effff 00000041    260KiB WB
+reserved  000000013f0f0000-000000013f3effff 00000300      3MiB WB
+BS-code   000000013f3f0000-000000013f40ffff 00000020    128KiB WB
+RT-data   000000013f410000-000000013f45ffff 00000050    320KiB RT WB
+RT-code   000000013f460000-000000013f4affff 00000050    320KiB RT WB
+RT-data   000000013f4b0000-000000013f4fffff 00000050    320KiB RT WB
+RT-code   000000013f500000-000000013f59ffff 000000a0    640KiB RT WB
+BS-data   000000013f5a0000-000000013f5a7fff 00000008     32KiB WB
+BS-code   000000013f5a8000-000000013f5acfff 00000005     20KiB WB
+BS-data   000000013f5ad000-000000013f5b2fff 00000006     24KiB WB
+BS-code   000000013f5b3000-000000013f5cffff 0000001d    116KiB WB
+BS-data   000000013f5d0000-000000013f5d0fff 00000001      4KiB WB
+BS-code   000000013f5d1000-000000013f5d4fff 00000004     16KiB WB
+BS-data   000000013f5d5000-000000013f5dafff 00000006     24KiB WB
+BS-code   000000013f5db000-000000013f5dffff 00000005     20KiB WB
+BS-data   000000013f5e0000-000000013f5e6fff 00000007     28KiB WB
+BS-code   000000013f5e7000-000000013f600fff 0000001a    104KiB WB
+BS-data   000000013f601000-000000013f607fff 00000007     28KiB WB
+BS-code   000000013f608000-000000013f613fff 0000000c     48KiB WB
+BS-data   000000013f614000-000000013f618fff 00000005     20KiB WB
+BS-code   000000013f619000-000000013f61cfff 00000004     16KiB WB
+BS-data   000000013f61d000-000000013f61dfff 00000001      4KiB WB
+BS-code   000000013f61e000-000000013f62bfff 0000000e     56KiB WB
+BS-data   000000013f62c000-000000013f632fff 00000007     28KiB WB
+BS-code   000000013f633000-000000013f637fff 00000005     20KiB WB
+BS-data   000000013f638000-000000013f638fff 00000001      4KiB WB
+BS-code   000000013f639000-000000013f64bfff 00000013     76KiB WB
+BS-data   000000013f64c000-000000013fe1ffff 000007d4   8016KiB WB
+RT-code   000000013fe20000-000000013feaffff 00000090    576KiB RT WB
+conv-mem  000000013feb0000-000000013febffff 00000010     64KiB WB
+RT-data   000000013fec0000-000000013ffdffff 00000120   1152KiB RT WB
+conv-mem  000000013ffe0000-000000013fffefff 0000001f    124KiB WB
+BS-data   000000013ffff000-000000013fffffff 00000001      4KiB WB
+MMIO      0000000004000000-0000000007ffffff 00004000     64MiB RT UC
+MMIO      0000000009010000-0000000009010fff 00000001      4KiB RT UC
+== AFTER ==
+
