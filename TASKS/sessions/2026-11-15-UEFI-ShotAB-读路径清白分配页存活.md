@@ -96,3 +96,30 @@ GRUB 读 ext4 后：`hashsum --hash sha256 -p ($root) -c ($root)/boot/shotA.sha`
 buffer 内容对 ⇒ 破坏在 EBS 之后/内核读取时（= 候选 1/3，转属性侧）；不对 ⇒ 候选 2。
 产物要求：`out/grub-rehash-20261115/` + `reports/grub-rehash-20261115.md`（含上机单与回滚）。
 
+
+## 7. 2026-11-15 19:32：v1 采样器上机 —— GRUB 报 **堆被破坏**（这是目前最硬的证据）
+
+屏上（用户拍摄，`reports/artifacts/uefi-pc1m-20261115/Screenshot_20261115_1932{12,20}.jpg`）：
+
+```
+Booting 'PLAIN: linux + initrd (LoadFile2, 64MB) panic=15'
+alloc magic is broken at 0xbffa227a0:0
+Aborted. Press any key to exit.
+```
+底部同时可见 Mu 的分配行：`[A] t=02 b=0ca124000 p=003cd3`（63.8 MiB，type 2）与
+`[A] t=01 b=0bfd900000…0bfdf00000 p=000100`（1 MiB × 多笔，自顶向下）。
+
+**判读（重要）**：`alloc magic is broken` 是 **GRUB 自己的 malloc 头**被清零（原本应是 magic，读到 0）。
+时点 = `grub_initrd_load()` 把 64 MB 写进**内核 stub 的 buffer** 之后、GRUB 下一次分配时。
+⇒ **那片「分配给 kernel stub」的页与 GRUB 自己的堆重叠**（同一物理页被两个所有者同时使用），
+这与「读路径清白（GRUB 自己 buffer 的 sha 完全正确）+ 两条交接路径都坏 + 内核只解出几 MB」完全自洽：
+写进去的数据被 GRUB/固件后续的堆写入覆盖，反过来 GRUB 的堆头也被 64 MB 数据覆盖。
+
+⇒ **C2 从「唯一存活候选」升级为「有直接证据的结论」**：Mu 的 `AllocatePages` 存在**重复分配/重叠**，
+而不是「图太小」或「地址越界」（那两条已在 §5/§6 否证）。
+
+**注意**：v1 采样器在回调里做 grubenv 回写，堆已坏的条件下会 abort 并卡住（本轮即如此，设备需要强制断电）。
+v2 改为**只打印不写盘**（`[LF2] addr=/size=/fnv=/tail=`）+ 大字体，判据 = 屏上 fnv 与
+`scripts/lf2-expected.py` 的期望值对比（`0x5c53688e` 原始文件 / `0xbe44535d` 解压后），
+并且 `addr` 一旦拿到就能与 GRUB 堆区间对照，直接把「重叠」钉死。
+
