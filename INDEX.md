@@ -6,7 +6,7 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-15）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-15（夜））
 
 > 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
@@ -28,7 +28,10 @@
    - **fill 也清白**：LoadFile2 填完内核 buffer 后抽样 FNV/tail = 主机期望值（\`len=64595425 / addr=0xc23e0000 / sum=0x5c53688e\`）；
    - **位置类解释全部否证**：pc1m（610 MiB 标 Conv）上机仍 panic；\`mem=4096M\` 仍 panic；屏上 \`[A]\` 分配地址全在真 RAM 内；
    - **同期 GRUB 堆头在另一高地址 \`0xbffa227a0\` 被清零**（\`alloc magic is broken\`）⇒ 破坏由**第三方按错误所有权写已分配页**造成，责任方待分：**Mu 的 AllocatePages 重叠** vs **内核自身早期分配**；
-   - 下一步 = 内核 \`init/initramfs.c:unpack_to_rootfs()\` 入口打印 initrd (addr,size)+同规则 FNV 的小 debug 内核一发（唯一能把两者分开的实验）；ESP 已回滚 Loader-r73（\`6e51fc60…\`）、\`boot_a\` 未动。
+   - **★2026-11-15 夜根因定案**：**Mu UEFI 把 initrd buffer 分配进 Linux DTB 的 \`ramoops@c2000000\`（8 MB \`no-map\`）保留区**（旧 6 发 base \`0xc23e0000\` ⇒ 盖住 buffer 前 4.3 MB；本轮 base \`0xc18b0000\` ⇒ 盖住 +7.67 MB 处 8 MB），而内核 **t=0.0269 s** 就把 ramoops 注册成 printk 控制台 ⇒ **每行 console 输出都写进那 8 MB** ⇒ initrd 中间几 MB 被内核自己覆盖 ⇒ 解包 ~120 ms 即 \`broken padding\`。
+     判据（一发 A/B）：**同一颗内核、同一份 64 MB initrd、同一菜单，只把 DTB 里的 ramoops 节点删掉** ⇒ **起进 SSH 32 s**，\`ELDEN[unpack-in]/[unpack-out] sum=0x5c53688e\`（= 主机期望值）、解包 **2.31 s**；换回带 ramoops 的 \`elden.dtb\` ⇒ 立刻失败回落 b 槽。
+     ⇒ 修法优先级：**内核 \`pstore/ram\` 拒绝与 initrd 重叠的 zone（可上游）** > GRUB 对 \`/reserved-memory/*\` 先 \`AllocatePages\` 占位 > 挪 DTB 的 ramoops（只是把冲突挪走，46 段保留区同病）。
+     → \`reports/uefi-grub-initrd-rootcause-20261115.md\`、\`PITFALLS\` #665、\`TASKS/sessions/2026-11-15-UEFI-ramoops-clobber-根因定案.md\`；复现件 \`patches/local/uefi-initrd-probe-20261115/\`；ESP 已回滚 Loader-r73（\`6e51fc60…\`）、\`/boot/Image\` 已还原 vk190（\`0cdb7a45…\`）、\`boot_a\` 未动。
 5. **桌面层两回归已闭环（2026-11-14 晚）**：**T20 电源键短按不熄屏**根因 = `zwlr_output_power_v1` 每屏只许一个请求者，phosh 的第二个请求被 `send_failed` 且资源被销毁 ⇒ `power_mode` 停在 `OFF` ⇒ 屏保管理器 `active` 恒 TRUE、press/release 双短路；修 = phoc（wlroots 放行多请求者）+ phosh（failed 回退为 ON）两枚自编件，已上机验收（短按熄屏/再按亮屏、长按菜单正常）。**T19 撕裂**仍停在「根因层 = 带 modifier 的 dmabuf 导入已锁定、缺 mesa 26.2.5 A/B」。
    → `TASKS/sessions/2026-11-14-T20-电源键不熄屏.md` §7、`PITFALLS` #371、`scripts/{phoc,phosh}-install.sh`
 6. **上游**（2026-11-14）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**；dwc3 v9 / dsi-phy v2 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**。→ `reports/upstream-status-20261113.md`、`TASKS` §7。
@@ -47,7 +50,7 @@
 2. **上游待批准批次**：dwc3 v9 四枚（`git apply --check` 4/4 OK）、dsi-phy v2 九行、gamma v2、haptics v2、board DTS 单提交 —— 逐系列等用户放行。
 3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
 4. **中文输入法候选窗：配置层已全绿（2026-11-15 T1–T5 全做，`scripts/ime-candidates-check.sh` = 11 PASS / 0 FAIL）**；**行为层未验** —— 画候选的那一半（`elden-ime-candidates.py`）仍按 #646 撤下，重做要求见 `PITFALLS #646` + 前置条件 `LD_PRELOAD=libgtk4-layer-shell.so.0`。→ `TASKS/sessions/2026-11-15-IME候选回归台账.md` §3b/§3c
-5. **★UEFI GRUB 路径：内核侧取证一发（唯一待上机项）**：改 `init/initramfs.c` 的 `unpack_to_rootfs()` 入口，打印 initrd 的 `(phys addr, size)` 与同规则 FNV 抽样（脚本 `scripts/lf2-expected.py`），出一个小 debug 内核 → `fastboot boot pc1m` 一发，回答「内核读的地址是否 = 0xc23e0000」+「那时内容是否已被改」，从而把责任分到 Mu 或内核。
+5. **UEFI GRUB 路径：取证已完成（2026-11-15 夜），剩下是修法**：① 内核 `pstore/ram`：zone 与 `initrd_start/initrd_end` 重叠时拒绝注册（尤其 console）并 `pr_err`（可上游，建议先做）；② GRUB：`devicetree` 后遍历 `/reserved-memory/*` 对每个 range `AllocatePages` 占位（不改 Mu 的临时修法）；③ 可选验证发：把 ramoops 搬到 initrd span 之外再跑一发。→ `reports/uefi-grub-initrd-rootcause-20261115.md` §5
 6. **★待补：LastFile2 打印版（v2）缺屏上取证**：`/tmp/lf2-v2/grubaa64.efi`（sha `b9fb14cb…`，只打印不写盘 + 大字体）那发**用户没拍屏**，所以「打印通道本身工作正常」这一点只有 v1 的 grubenv 侧证；下次起它时补一张 `[LF2] addr=/size=/fnv=/tail=` 的屏照（`out/` 之外请留档到 `reports/artifacts/uefi-pc1m-20261115/`）。
 7. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
 

@@ -1,0 +1,31 @@
+#!/busybox sh
+# ELDEN 诊断 init（内建 initramfs）：外部 64MB initrd 解包失败后由本脚本接管，
+# 把内核 dmesg（含 ELDEN[...] 取证行）写到 linux17 的 /var/log/elden-uefi-probe.log，然后关机。
+BB=/busybox
+$BB mount -t proc proc /proc
+$BB mount -t sysfs sysfs /sys
+$BB mount -t devtmpfs devtmpfs /dev 2>/dev/null
+$BB echo "ELDENPROBE: init running, waiting for /dev/sda17" > /dev/kmsg
+n=0
+while [ $n -lt 60 ]; do
+    if [ -b /dev/sda17 ]; then
+        $BB echo "ELDENPROBE: /dev/sda17 appeared after $n ticks" > /dev/kmsg
+        break
+    fi
+    $BB sleep 0.5
+    n=$((n + 1))
+done
+$BB mkdir -p /mnt
+if $BB mount -t ext4 -o rw /dev/sda17 /mnt; then
+    $BB echo "ELDENPROBE: ext4 mounted, dumping dmesg" > /dev/kmsg
+    $BB mkdir -p /mnt/var/log
+    $BB dmesg > /mnt/var/log/elden-uefi-probe.log
+    $BB echo "ELDENPROBE-OK" >> /mnt/var/log/elden-uefi-probe.log
+    $BB sync
+    $BB umount /mnt
+else
+    $BB echo "ELDENPROBE: mount /dev/sda17 FAILED" > /dev/kmsg
+    $BB dmesg > /dev/kmsg
+fi
+$BB poweroff -f
+$BB sh

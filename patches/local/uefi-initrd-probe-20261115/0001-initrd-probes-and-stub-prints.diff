@@ -1,0 +1,250 @@
+diff --git a/arch/arm64/mm/init.c b/arch/arm64/mm/init.c
+index fbf215ecc7..a1f0379f5e 100644
+--- a/arch/arm64/mm/init.c
++++ b/arch/arm64/mm/init.c
+@@ -280,9 +280,33 @@ void __init arm64_memblock_init(void)
+ 			"initrd not fully accessible via the linear mapping -- please check your bootloader ...\n")) {
+ 			phys_initrd_size = 0;
+ 		} else {
++			struct memblock_region *r;
++
+ 			memblock_add(base, size);
+ 			memblock_clear_nomap(base, size);
+ 			memblock_reserve(base, size);
++
++			/* ELDEN-DBG: earliest point where the kernel owns the initrd */
++			pr_err("ELDEN[resv] phys=0x%llx size=%lu dram=[0x%llx,0x%llx] lin=0x%lx\n",
++				(u64)phys_initrd_start,
++				(unsigned long)phys_initrd_size,
++				(u64)memblock_start_of_DRAM(),
++				(u64)memblock_end_of_DRAM(),
++				(unsigned long)linear_region_size);
++			for_each_reserved_mem_region(r) {
++				phys_addr_t rb = r->base, re = r->base + r->size;
++
++				if (rb >= base + size || re <= base)
++					continue;
++				pr_err("ELDEN[resv] overlap reserved 0x%llx+0x%llx flags=0x%x\n",
++					(u64)rb, (u64)r->size, r->flags);
++			}
++			/*
++			 * NOTE: no content probe here — at this point (before
++			 * paging_init) __va() of the initrd is not mapped yet,
++			 * reading it hangs the boot.  Content probes live in
++			 * init/initramfs.c, which runs after the linear map is up.
++			 */
+ 		}
+ 	}
+ 
+diff --git a/drivers/firmware/efi/libstub/efi-stub-helper.c b/drivers/firmware/efi/libstub/efi-stub-helper.c
+index f27f2e1f00..2cd359f9ab 100644
+--- a/drivers/firmware/efi/libstub/efi-stub-helper.c
++++ b/drivers/firmware/efi/libstub/efi-stub-helper.c
+@@ -636,6 +636,10 @@ efi_status_t efi_load_initrd(efi_loaded_image_t *image,
+ 	if (status != EFI_SUCCESS)
+ 		goto failed;
+ 
++	/* ELDEN-DBG: the buffer the kernel stub itself allocated for the initrd */
++	efi_info("ELDEN[initrd] base=0x%lx size=0x%lx (%lu)\n",
++		 initrd.base, initrd.size, initrd.size);
++
+ 	if (initrd.size > 0 &&
+ 	    efi_measure_tagged_event(initrd.base, initrd.size,
+ 				     EFISTUB_EVT_INITRD) == EFI_SUCCESS)
+diff --git a/drivers/firmware/efi/libstub/kaslr.c b/drivers/firmware/efi/libstub/kaslr.c
+index 4bc963e999..bf3b36165f 100644
+--- a/drivers/firmware/efi/libstub/kaslr.c
++++ b/drivers/firmware/efi/libstub/kaslr.c
+@@ -134,9 +134,13 @@ efi_status_t efi_kaslr_relocate_kernel(unsigned long *image_addr,
+ 			 * UEFI PE/COFF loader if the placement is suitable.
+ 			 */
+ 			*reserve_size = 0;
++			efi_info("ELDEN[krel] no-relocate: in-place image=0x%lx seed=%08x\n",
++				 *image_addr, phys_seed);
+ 			return EFI_SUCCESS;
+ 		}
+ 
++		efi_info("ELDEN[krel] random alloc failed (status=0x%lx), trying aligned alloc\n",
++			 status);
+ 		status = efi_allocate_pages_aligned(*reserve_size, reserve_addr,
+ 						    ULONG_MAX, min_kimg_align,
+ 						    EFI_LOADER_CODE);
+@@ -148,6 +152,11 @@ efi_status_t efi_kaslr_relocate_kernel(unsigned long *image_addr,
+ 		}
+ 	}
+ 
++	/* ELDEN-DBG: who got placed where (compare with GRUB heap / initrd base) */
++	efi_info("ELDEN[krel] seed=%08x src=0x%lx dst=0x%lx rsv_size=0x%lx ksize=0x%lx align=0x%llx\n",
++		 phys_seed, *image_addr, *reserve_addr, *reserve_size,
++		 kernel_size, min_kimg_align);
++
+ 	memcpy((void *)*reserve_addr, (void *)*image_addr, kernel_size);
+ 	*image_addr = *reserve_addr;
+ 	efi_icache_sync(*image_addr, *image_addr + kernel_codesize);
+diff --git a/include/linux/initrd.h b/include/linux/initrd.h
+index 7e5d26c813..10c28beafb 100644
+--- a/include/linux/initrd.h
++++ b/include/linux/initrd.h
+@@ -18,6 +18,9 @@ extern void free_initrd_mem(unsigned long, unsigned long);
+ 
+ #ifdef CONFIG_BLK_DEV_INITRD
+ extern void __init reserve_initrd_mem(void);
++
++/* ELDEN-DBG: initrd content probe (see init/initramfs.c) */
++void __init elden_probe(const char *tag, phys_addr_t phys, unsigned long len);
+ extern void wait_for_initramfs(void);
+ #else
+ static inline void __init reserve_initrd_mem(void) {}
+diff --git a/init/initramfs.c b/init/initramfs.c
+index 3cee8b50ad..b5435ad52e 100644
+--- a/init/initramfs.c
++++ b/init/initramfs.c
+@@ -507,6 +507,98 @@ static long __init flush_buffer(void *bufv, unsigned long len)
+ static unsigned long my_inptr __initdata; /* index of next byte to be processed in inbuf */
+ 
+ #include <linux/decompress/generic.h>
++#include <linux/initrd.h>
++#include <linux/panic_notifier.h>
++
++/*
++ * ELDEN-DBG: initrd content probe.  Sampling rule must match
++ * scripts/lf2-expected.py (SAMPLES=8, BLOCK=4096, FNV-1a 32, "
++ * off_i = i*(len-blk)/(SAMPLES-1)"), so that the console values can be
++ * compared with the host-side expectation for the same file
++ * (raw 64 MiB initrd: len=64595425, sum=0x5c53688e,
++ *  tail=8eff7f5eb9feff01db29f8bf008ad60a).
++ */
++#define ELDEN_SAMPLES 8
++#define ELDEN_BLOCK   4096
++
++/* Lines we re-print at panic time (bottom of screen => photographable). */
++#define ELDEN_SUM_MAX 6
++static char elden_summary[ELDEN_SUM_MAX][192];
++static int elden_summary_n;
++
++static int elden_panic_notify(struct notifier_block *nb, unsigned long val, void *v)
++{
++	int i;
++
++	printk(KERN_EMERG "ELDEN[pn] ===== initrd probe summary (re-print) =====\n");
++	mdelay(1200);
++	for (i = 0; i < elden_summary_n; i++) {
++		printk(KERN_EMERG "%s\n", elden_summary[i]);
++		mdelay(1800);
++	}
++	printk(KERN_EMERG "ELDEN[pn] ===== end =====\n");
++	return NOTIFY_DONE;
++}
++
++static struct notifier_block elden_panic_nb = {
++	.notifier_call = elden_panic_notify,
++};
++
++static void __init elden_summary_add(const char *line)
++{
++	if (elden_summary_n < ELDEN_SUM_MAX)
++		strscpy(elden_summary[elden_summary_n++], line, 192);
++}
++
++static bool __initdata elden_panic_registered;
++
++static u32 __init elden_fnv1a(u32 h, const u8 *p, unsigned long n)
++{
++	unsigned long i;
++
++	for (i = 0; i < n; i++)
++		h = (h ^ p[i]) * 0x01000193u;
++	return h;
++}
++
++void __init elden_probe(const char *tag, phys_addr_t phys, unsigned long len)
++{
++	const u8 *p = __va(phys);
++	unsigned long blk, off, i;
++	u32 h = 0x811c9dc5u;
++	char tail[34];
++
++	if (!len) {
++		pr_err("ELDEN[%s] no buffer (len=%lu)\n", tag, len);
++		return;
++	}
++	blk = min_t(unsigned long, ELDEN_BLOCK, len);
++	for (i = 0; i < ELDEN_SAMPLES; i++) {
++		off = (i * (len - blk)) / (ELDEN_SAMPLES - 1);
++		h = elden_fnv1a(h, p + off, blk);
++	}
++	tail[0] = '\0';
++	if (len >= 16) {
++		for (i = 0; i < 16; i++)
++			sprintf(&tail[i * 2], "%02x", p[len - 16 + i]);
++	}
++	{
++		char line[192];
++
++		scnprintf(line, sizeof(line),
++			  "ELDEN[%s] len=%lu phys=0x%llx sum=0x%08x tail=%s",
++			  tag, len, (u64)phys, h, tail);
++		pr_err("%s\n", line);
++		/* keep the line on screen long enough for a photo */
++		mdelay(1200);
++		elden_summary_add(line);
++		if (!elden_panic_registered) {
++			elden_panic_registered = 1;
++			atomic_notifier_chain_register(&panic_notifier_list,
++						       &elden_panic_nb);
++		}
++	}
++}
+ 
+ /**
+  * unpack_to_rootfs - decompress and extract an initramfs archive
+@@ -647,6 +739,26 @@ void __init reserve_initrd_mem(void)
+ 	}
+ 
+ 	memblock_reserve(start, size);
++	/* ELDEN-DBG: what the kernel was handed, and who else claims these pages */
++	pr_info("ELDEN[resv] phys=0x%llx size=%lu (raw 0x%llx+%lu) dram=[0x%llx,0x%llx]\n",
++		(u64)phys_initrd_start, (unsigned long)phys_initrd_size,
++		(u64)start, size,
++		(u64)memblock_start_of_DRAM(), (u64)memblock_end_of_DRAM());
++	{
++		struct memblock_region *r;
++
++		for_each_reserved_mem_region(r) {
++			phys_addr_t r_base = r->base;
++			phys_addr_t r_end = r->base + r->size;
++
++			if (r_base >= start + size || r_end <= start)
++				continue;
++			pr_info("ELDEN[resv] overlap memblock.reserved 0x%llx+0x%llx flags=0x%x\n",
++				(u64)r_base, (u64)r->size, r->flags);
++		}
++	}
++	elden_probe("resv", phys_initrd_start, phys_initrd_size);
++
+ 	/* Now convert initrd to virtual addresses */
+ 	initrd_start = (unsigned long)__va(phys_initrd_start);
+ 	initrd_end = initrd_start + phys_initrd_size;
+@@ -732,7 +844,22 @@ static void __init unpack_initramfs(async_cookie_t cookie)
+ 	else
+ 		printk(KERN_INFO "Unpacking initramfs...\n");
+ 
++	elden_probe("unpack-in", phys_initrd_start, initrd_end - initrd_start);
++
+ 	err = unpack_to_rootfs((char *)initrd_start, initrd_end - initrd_start);
++
++	elden_probe("unpack-out", phys_initrd_start, initrd_end - initrd_start);
++	if (err) {
++		pr_err("ELDEN[diag] err=%s this_header=%lld inptr=%lu state=%d ir_sz=%lu ir_lib=%d\n",
++		       err, (long long)this_header, my_inptr, state,
++		       initrd_end - initrd_start, initrd_below_start_ok);
++		if (my_inptr && my_inptr + 32 <= initrd_end - initrd_start)
++			pr_err("ELDEN[diag] bytes@inptr: %*phN\n", 32,
++			       (u8 *)initrd_start + my_inptr);
++		if (this_header && this_header + 32 <= initrd_end - initrd_start)
++			pr_err("ELDEN[diag] bytes@this_header: %*phN\n", 32,
++			       (u8 *)initrd_start + this_header);
++	}
+ 	if (err) {
+ #ifdef CONFIG_BLK_DEV_RAM
+ 		populate_initrd_image(err);
