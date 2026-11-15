@@ -58,3 +58,41 @@ GRUB 读 ext4 后：`hashsum --hash sha256 -p ($root) -c ($root)/boot/shotA.sha`
 
 主机侧**无法**替代这一步（屏显是这代唯一通道；`pstore` 会被后续启动覆盖，PITFALLS #659）。
 
+
+## 6. 2026-11-15 17:10 屏上取证（用户拍摄 4 张，已入档）
+
+**产物**：`reports/artifacts/uefi-pc1m-20261115/Screenshot_20261115_1710{35,43,51}.jpg` + `_171122.jpg`
+
+### 6.1 Mu 侧分配（pc1m 插桩，`[A] t=<type> b=<base> p=<pages>`）
+
+| 行 | 地址 | 页数 = 大小 | 备注 |
+|---|---|---|---|
+| `[A] t=01 b=0CD965000 p=0006C7` | 0x0CD965000 | 1735 p = 6.94 MiB | 紧跟 `[K] esp ld` ⇒ EFI 应用（GRUB）装载 |
+| `[A] t=01 b=0BFE000000 p=002000` | 0x0BFE000000 | 8192 p = 32 MiB | 同上路径的连续分配 |
+| `[A] t=02 b=0C9C92000 p=003CD3` | 0x0C9C92000 | 15571 p = 63.8 MiB | **最接近 64 MB initrd 尺寸的那笔**（initrd=64 595 425 B = 15 770 p） |
+| `[A] t=01 b=0BFD700000…0BFDF00000 p=000100` ×10 | 0x0BFD700000 起每 1 MiB 递减 | 各 1 MiB | 1 MiB 粒度的连续读/缓冲（与 GRUB `max_agglomerate` 量级一致） |
+
+**RAM 侧对照（同一天、b 槽正常启动时现查）**：`/proc/iomem` 最高段 = `0x8c0000000–0xbffffffff`，`MemTotal = 15 220 752 kB`。
+⇒ **上述地址全部落在真 RAM 内**，没有「分配到不存在内存」这种事 ⇒ 「Mu 交了幻影页」这条**不支持**（至少不是靠地址越界体现）。
+
+### 6.2 内核实测（第 4 张照片，内核日志）
+
+```
+[0.466329] T1  Unpacking initramfs...
+[0.589358] T1  Initramfs unpacking failed: broken padding
+[0.591880] T1  Freeing initrd memory: 63080K
+```
+⇒ 解包只花了 **123 ms**（真件在 QEMU 要 1.6 s / 181 MB）⇒ 解压流在中途就"结束/错位"；
+`Freeing … 63080K` 说明 stub **确实报告了完整 64 MB**（只是内容不对）。
+屏上还有 `HugeTLB: registered 1.00 GiB / 32.0 MiB / 2.00 MiB / 64 KiB page size, pre-allocated 0 pages` 等常规行，无 arm-smmu fault。
+
+### 6.3 现在的候选（三条，按可测性排序）
+
+1. **缓存属性/一致性**：firmware 写这块 buffer 时的属性（WB/UC）与内核随后映射的属性不一致 ⇒ 内核读到的是"半旧"数据。**这条能同时解释两条路径都坏、而 GRUB 自读（自己 buffer、同属性写读）是好的**。
+2. GRUB 的 fill 本身错（指针/长度/跨 4 GiB 搬运），但与 6.1 的各笔大小对不上（63.8 MiB ≠ 64.6 MiB）⇒ 需要直接验 buffer。
+3. Mu 在 `ExitBootServices` 时改/收回了该区域的属性。
+
+⇒ **下一步（已派 lane）**：给 GRUB 的 `grub_efi_initrd_load_file2()` 加「**填完 buffer 后回读抽样校验**」，结论写进 ext4 的 `/boot/grub/grubenv`（宿主机直读，不再依赖拍照）：
+buffer 内容对 ⇒ 破坏在 EBS 之后/内核读取时（= 候选 1/3，转属性侧）；不对 ⇒ 候选 2。
+产物要求：`out/grub-rehash-20261115/` + `reports/grub-rehash-20261115.md`（含上机单与回滚）。
+
