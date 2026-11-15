@@ -123,3 +123,38 @@ v2 改为**只打印不写盘**（`[LF2] addr=/size=/fnv=/tail=`）+ 大字体�
 `scripts/lf2-expected.py` 的期望值对比（`0x5c53688e` 原始文件 / `0xbe44535d` 解压后），
 并且 `addr` 一旦拿到就能与 GRUB 堆区间对照，直接把「重叠」钉死。
 
+
+## 8. 2026-11-15 19:43：**buffer 填完瞬间内容是正确的**（结论钉死）
+
+v2（只打印、不写盘）上机一发；同时在设备 `/boot/grub/grubenv` 里读到 v1 那发（19:32）**step-1 采样**留下的值：
+
+```
+elden_lf2_len=64595425          # = 原始 initrd 文件大小（不是解压后的 181 832 192）
+elden_lf2_addr=0xc23e0000      # kernel stub 拿到的 buffer 起始（3.04 GiB，普通 RAM）
+elden_lf2_calls=1
+elden_lf2_sum=0x5c53688e       # ⇔ scripts/lf2-expected.py 对原始文件的期望值 **完全相等**
+elden_lf2_tail=8eff7f5eb9feff01db29f8bf008ad60a   # ⇔ 期望 tail 完全相等
+```
+
+⇒ **GRUB 把 64 MB 填进内核 buffer 之后，那 64 MB 的抽样校验与主机逐字相同**。
+⇒ 「GRUB fill 写错/写丢」**否证**；结合 §7 的 `alloc magic is broken`（GRUB 堆在 **0xbffa227a0** 被清零，与 buffer 的 0xc23e0000 不同区），
+现在的事实链是：
+
+| 时点 | 事实 | 来源 |
+|---|---|---|
+| 读文件 | 正确 | `hashsum` = 主机 sha（§前） |
+| 填 buffer 后 | **正确** | 本节 FNV+tail |
+| 内核解包时 | 只解出几 MB 即 `broken padding` | 内核屏显（§6） |
+| 同期 | GRUB 自己的堆头在 0xbffa227a0 被清零 | §7 |
+
+⇒ **破坏发生在「fill 之后 → 内核解包之前/之中」**，且**同时**发生在两个互不相同的高地址区（0xc23e0000 的 initrd、0xbffa227a0 的 GRUB 堆）
+⇒ 指向「有第三方按错误地址/错误所有权往这些已分配页里写」：候选 = 内核自身早期分配（若 EFI 图未把该区标 Reserved）、
+或 Mu/固件在 EBS 之后的写入。**与 `AllocatePages` 重叠（C2）一致，但还需要一次「内核侧看地址+看内容」的取证才能把责任落到具体一方。**
+
+### 下一步（已列，未做）
+
+1. **内核侧取一次证**（最直接）：在 `init/initramfs.c` 的 `unpack_to_rootfs()` 入口打印 initrd 的 `(phys addr, size)` 与同规则 FNV 抽样，
+   用现有 `vk189` 树出一个小 debug 内核（本项目常规操作）⇒ 一次上机就能回答「内核读到的地址是不是 0xc23e0000」和「那时内容是否已被改」。
+2. 或在 Mu 侧：把 `[A]` 行扩展到「分配后立即再打印一次同一地址的抽样」——成本高（要再重打 Mu）。
+3. 旁证：`memmap=1M$0xC2500000` 只是历史诊断标记（2026-11-01 stage1 探针），**与 framebuffer 无关**，不要误当保留区。
+
