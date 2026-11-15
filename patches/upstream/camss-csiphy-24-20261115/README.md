@@ -81,3 +81,11 @@ make ARCH=arm64 dt_binding_check DT_SCHEMA_FILES=Documentation/devicetree/bindin
 ## 门禁
 
 见 `GATES.md`（四条门禁的原始输出 + 基线限制 + `logs/` 目录）。
+
+## 问询信（2026-11-15 起草，**未发**）
+
+按「先问形状再发补丁」的口径，本轮已起草一封不带补丁的 RFC 问询信给
+**Bryan O'Donoghue <bod@kernel.org>**（该 phy 驱动/binding 的 maintainer），CC `linux-phy` / `linux-arm-msm` / `devicetree`。
+草稿 = `out/mail-20261115/draft-rfc-csiphy-24.txt`（`out/` 在 .gitignore 内，故此处留指针）。
+三个问题：① 形状用 per-SoC `lane_regs_sm8750[]` 还是 per-generation `lane_regs_2_4_0[]`；② 只有一台 SM8750、只能做 30 fps 出流回归，这个证据级别是否够，或要不要把当前驱动**并不生效**的 SETTLE/SKEW 条目剔掉；③ binding 用独立 const 还是 items+kaanapali 回退（与在飞的 kaanapali v25 撞同一段 `oneOf`）。
+发信需用户逐封批准（`TASKS/README.md` §7 口径）。
