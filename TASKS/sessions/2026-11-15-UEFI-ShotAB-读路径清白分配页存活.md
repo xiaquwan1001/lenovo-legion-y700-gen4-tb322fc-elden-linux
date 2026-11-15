@@ -37,3 +37,24 @@ GRUB 读 ext4 后：`hashsum --hash sha256 -p ($root) -c ($root)/boot/shotA.sha`
    ⇒ 装件前后都要 df + 核对 sha256sum BOOTAA64.EFI 与预期一致。
 2. **他项目遗留的孤儿 fastboot oem dump-emmc（kirin-tool，2 h 36 min 无进展）会抢通道**（PITFALLS #658 同源）：
    本轮清掉两条后才 fastboot boot，三发 getvar product 均 4 ms 返回。
+
+## 5. 2026-11-15 14:0x：pc1m 载荷上机验证 —— **两个假设都否证**
+
+新件 = `out/mu-memmap-20261115/uefi-preamblec1m-r1.img`（sha `300795736c3f…2fb0`，67 194 880 B；相对 pc1 `40d43397…` 只变 Mu 载荷：610 MiB 无主 DDR 标 Conv + `AllocatePages`/`EBS` 插桩）。
+
+| 发 | 变量 | grubenv 标记 | 设备结局 | 判读 |
+|---|---|---|---|---|
+| 4 | pc1m + **原失败臂**（GRUB `initrd` 交 64 MB，LoadFile2） | `elden_pc1m=3-initrd-ok-booting` | panic=15 自重启回 b 槽（serialno=`HA2EXB0E`，无 `elden_bootmenu`） | **扩 Conv 不解决** |
+| 5 | pc1m + 同上 + `mem=4096M`（把分配压到 4 GiB 以下，排除高地址 DDR） | `elden_pc1m=3-initrd-ok-booting` | 同上，仍失败 | **不是 >4 GiB / 高地址区的问题** |
+
+⇒ 两条「位置类」解释都关掉：
+- ~~内存图太小（Conv 只有 469 MiB）~~ **作废**：补到 ~1069 MiB 仍失败；
+- ~~分配落到 4 GiB 以上的 DDR~~ **作废**：`mem=4096M` 强制压到 4 GiB 以下仍失败。
+
+**下一步必须靠屏上判据**（pc1m 的插桩通道就是帧缓冲：`[M] ebs desc=/convMB=/allMB=` 一行 + 每次 ≥1 MiB 分配的 `[A] t=/b=/p=` 行）：
+一次 `fastboot boot pc1m` 后**读/拍屏**上这两类行即可判定：
+① `convMB` 是否真的从 469 涨到 ~1069（改动有没有进图）；
+② 64 MB 那次 `[A]` 的 `b=`（起始地址）与页数 —— 有了地址就能对照 DTB `/reserved-memory` 与 SMEM/Gunyah 保留区，直接看出是否落在别人手里。
+
+主机侧**无法**替代这一步（屏显是这代唯一通道；`pstore` 会被后续启动覆盖，PITFALLS #659）。
+
