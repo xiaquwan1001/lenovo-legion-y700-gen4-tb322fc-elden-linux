@@ -23,8 +23,12 @@
    且旧件默认臂**无 `earlycon=efifb keep_bootcon`**（直接 `set_active a` 必黑屏）。→ `TASKS/sessions/2026-11-14-UEFI复测-主机侧备料与USB抢占.md`、`DEVICE/README.md` §1.1
    **2026-11-14 夜第 2 轮：U2 间接形态通过**（`fastboot boot` pc1 → ABL→Mu UEFI→ESP **Loader-r73**→`\menu.cfg`→ESP `\boot\boot.img` vk190→Linux，**14 s 到 SSH**，零写盘）；
    新判据 = cmdline 里 `androidboot.serialno=51318dc0`（CRC32）且无 ABL 追加 token（旧的 `elden_bootloader=esp` 已失效）。
-   ~~GRUB 那条新路径卡在 initrd 交接（断点在 GRUB）~~ **2026-11-15 上机三发已收敛（不是 GRUB 侧）**：Shot A GRUB 自读 64 MB initrd 的 sha 与主机逐字相同（判决经 `save_env` 写进 ext4 grubenv，宿主机直读）⇒ 「Mu BlockIo 读错」否证；Shot B/B2 改走内核 EFI SFS `initrd=` 仍起不来 ⇒ **唯一存活候选 = Mu `AllocatePages` 页不独占/被并发写**；下一步是 Mu 件插桩/改内存图（另一件、另一发），ESP 已回滚 Loader-r73、`boot_a` 未动。
-   **2026-11-15 主机侧已备料（未上机）**：`out/mu-memmap-20261115/uefi-preamblec1m-r1.img`（67 194 880 B，`30079573…`）= pc1 −R71(开屏) **+R74**（`0xD65C0000`+0x26240000 标 Conv，pc2 原件）**+R75**（DxeCore `AllocatePages≥1 MiB` 打 `[A]`、EBS 打 `[M] ebs convMB=`）；构建 Success、改动已验进 FD；上机单/判读/回退在报告 §5。→ `reports/mu-memmap-20261115.md`→ `TASKS/sessions/2026-11-15-UEFI-ShotAB-读路径清白分配页存活.md`、`PITFALLS #659`、`TASKS/sessions/2026-11-14-UEFI复测2-间接形态通过与GRUB-initrd断点.md`
+   **GRUB 路径的断点已夹到「fill 之后 → 内核解包之中」（2026-11-15，六发上机；全账 = \`TASKS/sessions/2026-11-15-UEFI-ShotAB-读路径清白分配页存活.md\`）**：
+   - **读路径清白**：Shot A —— GRUB 自己读 64 MB initrd 的 sha 与主机逐字相同；
+   - **fill 也清白**：LoadFile2 填完内核 buffer 后抽样 FNV/tail = 主机期望值（\`len=64595425 / addr=0xc23e0000 / sum=0x5c53688e\`）；
+   - **位置类解释全部否证**：pc1m（610 MiB 标 Conv）上机仍 panic；\`mem=4096M\` 仍 panic；屏上 \`[A]\` 分配地址全在真 RAM 内；
+   - **同期 GRUB 堆头在另一高地址 \`0xbffa227a0\` 被清零**（\`alloc magic is broken\`）⇒ 破坏由**第三方按错误所有权写已分配页**造成，责任方待分：**Mu 的 AllocatePages 重叠** vs **内核自身早期分配**；
+   - 下一步 = 内核 \`init/initramfs.c:unpack_to_rootfs()\` 入口打印 initrd (addr,size)+同规则 FNV 的小 debug 内核一发（唯一能把两者分开的实验）；ESP 已回滚 Loader-r73（\`6e51fc60…\`）、\`boot_a\` 未动。
 5. **桌面层两回归已闭环（2026-11-14 晚）**：**T20 电源键短按不熄屏**根因 = `zwlr_output_power_v1` 每屏只许一个请求者，phosh 的第二个请求被 `send_failed` 且资源被销毁 ⇒ `power_mode` 停在 `OFF` ⇒ 屏保管理器 `active` 恒 TRUE、press/release 双短路；修 = phoc（wlroots 放行多请求者）+ phosh（failed 回退为 ON）两枚自编件，已上机验收（短按熄屏/再按亮屏、长按菜单正常）。**T19 撕裂**仍停在「根因层 = 带 modifier 的 dmabuf 导入已锁定、缺 mesa 26.2.5 A/B」。
    → `TASKS/sessions/2026-11-14-T20-电源键不熄屏.md` §7、`PITFALLS` #371、`scripts/{phoc,phosh}-install.sh`
 6. **上游**（2026-11-14）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**；dwc3 v9 / dsi-phy v2 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**。→ `reports/upstream-status-20261113.md`、`TASKS` §7。
@@ -42,8 +46,10 @@
 1. **camss CSIPHY 对账**（主机侧，无需设备）：拉 7.4-rc3+ 的 phy 表与 vendor 2.4.0 逐字节比 → 决定是否给上游 2.4.0 delta。
 2. **上游待批准批次**：dwc3 v9 四枚（`git apply --check` 4/4 OK）、dsi-phy v2 九行、gamma v2、haptics v2、board DTS 单提交 —— 逐系列等用户放行。
 3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
-4. **中文输入法候选窗（2026-11-15 现查，新增判据）**：`scripts/ime-candidates-check.sh` 首轮 = **PASS=6 / FAIL=4 / WARN=2** ⇒ **当前版本出不了候选词**（D-Bus 激活 `Exec` 无 `--disable waylandim`、`profile` 的 `Items/0=keyboard-us`、`~/.config/fcitx5/config` 不存在⇒走 classicui、phosh 环境仍带 `GTK_IM_MODULE=fcitx`）。判据与待上机清单（T1–T5，需批准）= `TASKS/sessions/2026-11-15-IME候选回归台账.md`；重跑同一条脚本即可对比。→ `PITFALLS` #618/#619/#653/#660
-5. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
+4. **中文输入法候选窗：配置层已全绿（2026-11-15 T1–T5 全做，`scripts/ime-candidates-check.sh` = 11 PASS / 0 FAIL）**；**行为层未验** —— 画候选的那一半（`elden-ime-candidates.py`）仍按 #646 撤下，重做要求见 `PITFALLS #646` + 前置条件 `LD_PRELOAD=libgtk4-layer-shell.so.0`。→ `TASKS/sessions/2026-11-15-IME候选回归台账.md` §3b/§3c
+5. **★UEFI GRUB 路径：内核侧取证一发（唯一待上机项）**：改 `init/initramfs.c` 的 `unpack_to_rootfs()` 入口，打印 initrd 的 `(phys addr, size)` 与同规则 FNV 抽样（脚本 `scripts/lf2-expected.py`），出一个小 debug 内核 → `fastboot boot pc1m` 一发，回答「内核读的地址是否 = 0xc23e0000」+「那时内容是否已被改」，从而把责任分到 Mu 或内核。
+6. **★待补：LastFile2 打印版（v2）缺屏上取证**：`/tmp/lf2-v2/grubaa64.efi`（sha `b9fb14cb…`，只打印不写盘 + 大字体）那发**用户没拍屏**，所以「打印通道本身工作正常」这一点只有 v1 的 grubenv 侧证；下次起它时补一张 `[LF2] addr=/size=/fnv=/tail=` 的屏照（`out/` 之外请留档到 `reports/artifacts/uefi-pc1m-20261115/`）。
+7. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
 
 **怎么核实本节没漂**（开工前先跑，见 `.pi/AGENT-OPS.md` §0）
 
