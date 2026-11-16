@@ -1,10 +1,5 @@
 To: linux-arm-msm@vger.kernel.org, dri-devel@lists.freedesktop.org
-Cc: devicetree@vger.kernel.org, linux-kernel@vger.kernel.org,
- Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
- Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
- Abel Vesa <abel.vesa@oss.qualcomm.com>,
- Bjorn Andersson <andersson@kernel.org>,
- Rob Herring <robh@kernel.org>
+Cc: devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>, Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>, Abel Vesa <abel.vesa@oss.qualcomm.com>, Bjorn Andersson <andersson@kernel.org>, Rob Herring <robh@kernel.org>
 Subject: Re: [PATCH v5 0/3] drm/msm/mdss: reset all block resets described in DT
 In-Reply-To: <20261113155635.1677541-1-xiaqinghuan@mail.ustc.edu.cn>
 References: <20261113155635.1677541-1-xiaqinghuan@mail.ustc.edu.cn>

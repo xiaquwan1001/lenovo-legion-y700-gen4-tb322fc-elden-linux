@@ -44,6 +44,12 @@
      `含块复位两臂 15/15`，Fisher 双侧 **p=0.003**；`DIGTOP` 单独 p=1.0 ⇒ 无效；并写明边界
      **15/15 是三枚形状、两枚形状未采样**）。`send-mail-ustc.py` dry-run 已过（95 行、纯 ASCII、
      `In-Reply-To` = v5 cover MID `20261113155635.1677541-1-…`）。
+     **★2026-11-17 修复一处真缺陷**：该草稿的 `Cc:` 原本写成 RFC 822 **折行**，而 `send-mail-ustc.py`
+     的首部解析是逐行的 ⇒ dry-run 只报「收件人合计: 4 个」（真正该发 9 个），会**静默漏发**
+     Konrad / Dmitry / Abel / Bjorn / Rob 五人（正好是这封信最该送到的人）。已把 `Cc:` 压成单行，
+     修后 dry-run = 9 个；并新增门禁脚本 `scripts/mail-draft-check.py`（离线，A=RFC 解析 vs
+     B=逐行解析，差集非空即 FAIL）。全载 = `reports/mail-draft-check-20261117.md`。
+     投递前必跑：`scripts/mail-draft-check.py <draft>`。
 - **邮件账缺口**（`q28-DOSSIER-B` §⑤-3）：`send-mail-ustc.py` 走 `smtplib`、发送后**不做 IMAP `APPEND`**
   ⇒ 该通道发出的件在 Sent Items 查不到（v5 那批就是典型）。**2026-11-17 已落地 `scripts/mail-append-sent.py`**
   （默认 dry-run，`--check` 只列缺，`--apply` 才 APPEND 且已存在的 MID 自动跳过；自测 `--self-test` 无需网络）；

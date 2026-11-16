@@ -275,6 +275,7 @@ scripts/lib-ssh.sh	.sh	62	2757	2	3	LIVE
 scripts/lib-wait.sh	.sh	161	7449	7	4	LIVE
 scripts/lore-fetch-raw.py	.py	64	2648	5	12	LIVE
 scripts/m1-73-modules-overlay.sh	.sh	57	3238	1	5	LIVE
+scripts/mail-append-sent.py	.py	293	12999	2	3	LIVE
 scripts/mailbox-cleanup-20261102.py	.py	326	12208	1	3	LIVE
 scripts/manifest-from-image.py	.py	132	5417	2	2	LIVE
 scripts/mesa-build.sh	.sh	70	2498	4	5	LIVE
