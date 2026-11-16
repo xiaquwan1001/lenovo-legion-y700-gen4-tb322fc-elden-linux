@@ -1,0 +1,4 @@
+7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0
+Active slot: _b
+elden_root=LABEL=linux17
+msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid:

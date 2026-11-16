@@ -62,11 +62,12 @@
    **★2026-11-16 真机已验（UEFI/GRUB 路径）**：`set_active a` → Mu UEFI → 自打嵌入菜单 GRUB(`cc6391b3…`) → `elden.dtb`（含 ramoops@c2000000）→ `/boot/Image`（本轮核）+ 64 MB initrd ⇒
    initrd `0xc1ab0000-0xc584a5e0` **整段盖住** ramoops；dmesg 三段 zone 逐条 `ignoring … overlaps the initrd` + `ramoops disabled for this boot`，随后 `Unpacking initramfs…` → `Run /init` → **60 s 起进 SSH**。
    同日先跑过的无守卫内核（11-15 那份 GRUB + 同 DTB/initrd）= 菜单后黑屏 → 20 s 关机 → 回落 b 槽 ⇒ **真机有/无守卫对照成立**。
+   **★2026-11-16 14:03 ESP 归位 + a 槽暖启复验**：`\EFI\BOOT\BOOTAA64.EFI` 从验证用件（`cc6391b3…`）换成**日常用嵌入菜单**（`f5dcf599…`，默认臂 = 直载 vk192 守卫核 + `elden.dtb` + 64 MB initrd + `earlycon=efifb keep_bootcon`，备臂 = noramoops DTB / chainload r73）；`set_active a` → **44 s 到 SSH**（cmdline `elden_bootmenu=grub-daily`、grubenv `51-daily-vk192-initrd-ok-booting`、ramoops 三段 ignored），`mark-successful a` 后回 `_b`（16 s）。证据 `reports/artifacts/uefi-daily-v8-20261116/`。**仍未做**：冷启动（POR）回归 + 菜单屏照。
    **已发（2026-11-16 12:00:49，USTC 通道）**：To Kees/Tony/Guilherme，Cc lkml + linux-arm-msm，3 × 250；lore `/lkml/`+`/linux-arm-msm/` 命中 0/2（归档 04:01:14Z）；
    线程根 `20261116040049.434247-1-xiaqinghuan@mail.ustc.edu.cn`，账 `patches/upstream/pstore-ram-initrd-overlap-20261116/logs/40-sent.txt`。**等回复**（`read-mail-ustc.py --days 3 --replies-only`）。
    树 = `build/daily` `v7.3.1-5-g4bdf1711b5`（**未打 vk 号、未进版本账**；真机已由 a 槽 UEFI 路径验证，见上）。
    → `patches/upstream/pstore-ram-initrd-overlap-20261116/`（README + 0000 cover + 2 枚 + logs）、`reports/pstore-ram-initrd-guard-20261116.md` §5、评审 `reports/pstore-ram-initrd-review-20261116.md`、`scripts/qemu-ramoops-initrd-ab.sh`、真机件 `reports/artifacts/uefi-pstoreguard-20261116/`、`PITFALLS #666`；根因与另两条修法 → `reports/uefi-grub-initrd-rootcause-20261115.md` §5
-6. **★待补：LastFile2 打印版（v2）缺屏上取证**：`/tmp/lf2-v2/grubaa64.efi`（sha `b9fb14cb…`，只打印不写盘 + 大字体）那发**用户没拍屏**，所以「打印通道本身工作正常」这一点只有 v1 的 grubenv 侧证；下次起它时补一张 `[LF2] addr=/size=/fnv=/tail=` 的屏照（`out/` 之外请留档到 `reports/artifacts/uefi-pc1m-20261115/`）。
+6. ~~**LastFile2 打印版（v2）缺屏上取证**~~ **→ 已撤销（2026-11-16，不需再拍）**：v2（`b9fb14cb…`）只是把**同一测量**改成「只打印不写盘」的输出通道变体，不产生新判据；它所证的「LoadFile2 fill 后 64 MB 内容正确」已由 **v1 的 grubenv 侧证**（`elden_lf2_addr=0xc23e0000 / len=64595425 / sum=0x5c53688e / tail=8eff7f5e…` = `scripts/lf2-expected.py` 主机期望值，宿主机直读）与 **11-16 真机守卫臂**（initrd `0xc1ab0000-0xc584a5e0` 区间 + 完整解包到 `Run /init`）双重覆盖；v2 之后也从未再上机 ⇒ 屏照信息增量为 0。件与备份仍留在 ESP（`.lf2v2.bak`）与 `out/`，不再列入待办。
 7. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
 8. **磁盘 A 类清理已执行完（2026-11-16）**：实际释放 **8.85 GiB**（项目 91 G → 82 G，`/` 620 G/70%），A1–A14 无失败项；
    **第二轮（2026-11-16，用户批准）已再释放 6.40 GiB**（`stock-src`、`dl-cam/ndk`、`out/r21-sbstop-{p69,pc2}`、`out/mu-memmap-20261115`、`out/{espboot-20261108,espboot-20261110,fbdiag-20261108,dbg-uefi-initrd-20261115}`、`y700四代工具`）⇒ 项目 76 G；

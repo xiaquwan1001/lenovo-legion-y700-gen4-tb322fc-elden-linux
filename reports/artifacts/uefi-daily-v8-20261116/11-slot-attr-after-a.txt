@@ -1,0 +1,20 @@
+/dev/sde: sector=4096 nent=96 esz=128 prim_entries_lba=2 backup_entries_lba=1048571
+  uefi_a             byte6=0x7f retry=7 active=1 succ=1 unbootable=0
+  aop_a              byte6=0xcf retry=1 active=1 succ=1 unbootable=1
+  aop_config_a       byte6=0x7f retry=7 active=1 succ=1 unbootable=0
+  tz_a               byte6=0x4f retry=1 active=1 succ=1 unbootable=0
+  hyp_a              byte6=0xcf retry=1 active=1 succ=1 unbootable=1
+  modem_a            byte6=0x4f retry=1 active=1 succ=1 unbootable=0
+  bluetooth_a        byte6=0x7f retry=7 active=1 succ=1 unbootable=0
+  abl_a              byte6=0xcf retry=1 active=1 succ=1 unbootable=1
+  dsp_a              byte6=0x7f retry=7 active=1 succ=1 unbootable=0
+  keymaster_a        byte6=0xcf retry=1 active=1 succ=1 unbootable=1
+  spuservice_a       byte6=0x7f retry=7 active=1 succ=1 unbootable=0
+  boot_a             byte6=0x37 retry=6 active=1 succ=0 unbootable=0
+  devcfg_a           byte6=0xcf retry=1 active=1 succ=1 unbootable=1
+  qupfw_a            byte6=0xcf retry=1 active=1 succ=1 unbootable=1
+  vbmeta_a           byte6=0xcf retry=1 active=1 succ=1 unbootable=1
+  dtbo_a             byte6=0xcf retry=1 active=1 succ=1 unbootable=1
+  uefisecapp_a       byte6=0x7f retry=7 active=1 succ=1 unbootable=0
+  imagefv_a          byte6=0x7f retry=7 active=1 succ=1 unbootable=0
+  shrm_a             byte6=0x7f retry=7 active=1 succ=1 unbootable=0

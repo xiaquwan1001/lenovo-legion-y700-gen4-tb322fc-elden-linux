@@ -38,6 +38,7 @@
     其判据与证据见 `reports/device-session-20261113-vk191.md`（现役已换成 vk192，那条仅供沿革）。
   - `boot_a` **未动** = UEFI 干净世代 `pc1`（分区 sha `1ca2b8e69167…`，件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；
     要用 UEFI 路先显式 `fastboot set_active a`（该槽 `unbootable=yes` 的历史口径见下方 11-09/11-10 块）。
+    **槽属性现态（2026-11-16 14:06 现查，`slot-attr.py show`）**：`boot_a` retry=7 succ=1 active=1 unbootable=0（本轮 a 槽暖启成功 7↓6 → **`mark-successful a` 回 7/1**，不会再递减）；`boot_b` retry=6 succ=1 active=0 ⇒ 已回 `_b`（14:07:48 = 16 s 到 SSH）。
   - **ESP `\EFI\BOOT\BOOTAA64.EFI` 已从 v5（A2 + `panic=0`，会挂住像死机）切回 `v3b-bigfont`**
     （sha `244c5f65…`，`--tag v3b-restore`）⇒ 从 a 槽起不再「挂住不重启」；旧值备份仍在 `\EFI\BOOT\BOOTAA64.EFI.v5.bak`。
     **★2026-11-14 只读复核（定案，取代本条以前的含糊口径）**：它是 **GRUB 嵌入菜单件**（二进制含 6 个 `menuentry`、
@@ -46,8 +47,12 @@
     当时它嵌的菜单 = 11-11 的 A/B/C 实验组，`default=0` = **无 `earlycon=efifb keep_bootcon` 的 A 臂**
     ⇒ 直接 `set_active a` 起来会黑屏无字（`PITFALLS #622`），复测前必须先换 arming 件（`out/grub-20261114/grubaa64-arming-v6.efi`）。
   - **ESP（`/dev/sda18`）实测身份（2026-11-16 现查，取代 11-14 夜“= Loader-r73”那段）**：
-    **现役** `\EFI\BOOT\BOOTAA64.EFI` = **本轮自打嵌入菜单 GRUB**（`cc6391b3…`；菜单 = `out/grub-arm64-arming-20261116/arming-pstoreguard.cfg`，
-    两臂 G1（`elden.dtb`，含 ramoops）/ G2（`elden-noramoops.dtb`）+ D（chainload r73）+ reboot/poweroff）——**只为 pstore 守卫真机验证而装**。
+    **现役（2026-11-16 14:03 归位）** `\EFI\BOOT\BOOTAA64.EFI` = **日常用嵌入菜单 GRUB**（`f5dcf599…`，9 527 296 B；菜单 = `out/grub-arm64-arming-20261116/arming-daily-v8.cfg`）——
+    臂 0（默认，`timeout=10`）= 直载 `/boot/Image`（vk192 守卫核）+ `elden.dtb` + 64 MB initrd + 全量 `earlycon=efifb keep_bootcon` cmdline；
+    臂 1 = 同一内核 + `elden-noramoops.dtb`（诊断）；臂 2 = chainload `\EFI\elden\Loader.efi`（r73 → `\boot\boot.img`）；reboot/poweroff。
+    **a 槽暖启实测已过**（`fastboot set_active a` → 14:04:35 → 14:05:53 = **44 s 到 SSH**；cmdline `elden_bootmenu=grub-daily`、grubenv `51-daily-vk192-initrd-ok-booting`、ramoops 三段 `ignoring … overlaps the initrd`），
+    证据 `reports/artifacts/uefi-daily-v8-20261116/`；**冷启动（POR）与菜单屏照仍未做**。
+    **换下件 = 验证用嵌入菜单 GRUB `cc6391b3…`**（11-16 11:45 装，两臂 G1/G2 对照 + D + reboot/poweroff），已备份 `BOOTAA64.EFI.daily-v8-20261116.bak`（注意：备份名取的是**新件** tag，内容 = cc6391b3）。
     **换件前实际在役件 = `92a4d8b2…`**（9.5 MB GRUB，11-15 23:01 装、此前 `DEVICE` 未记录 → 本轮补登），已备份 `BOOTAA64.EFI.grub-fixr2-20261116.bak`；
     `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动；拷回当 BOOTAA64.EFI 即走 `\menu.cfg` → `\boot\boot.img` 那条 14 s 链）。
     历史件全在 ESP 上可回滚：`.arming-v6.bak`（`244c5f65…` v3b-bigfont 嵌入菜单，不读 linux17 的 grub.cfg）、

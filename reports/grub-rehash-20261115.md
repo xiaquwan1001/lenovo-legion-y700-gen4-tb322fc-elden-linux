@@ -45,4 +45,4 @@
   `len=64595425 / addr=0xc23e0000 / calls=1 / sum=0x5c53688e / tail=8eff7f5eb9feff01db29f8bf008ad60a`，
   与 `scripts/lf2-expected.py` 对**原始 initrd 文件**算出的期望值**完全相等** ⇒ **填完瞬间内容正确**，GRUB fill 清白。
 - 期望值脚本：`scripts/lf2-expected.py`（抽样规则与补丁逐字一致：8×4 KiB、`off_i = i*(size-blk)/7`、FNV-1a-32、末 16 字节 hex）。
-- **未完成**：v2 的**屏上取证**（用户拍 `[LF2]` 三行）—— v2 不写盘，所以不经拍照拿不到打印内容；已记入 `INDEX.md` §0 下一步第 6 条与 `TASKS` §4 N1 的待补项。
+- ~~**未完成**：v2 的**屏上取证**（用户拍 `[LF2]` 三行）—— v2 不写盘，所以不经拍照拿不到打印内容；已记入 `INDEX.md` §0 下一步第 6 条与 `TASKS` §4 N1 的待补项。  → **2026-11-16 撤销该项**：v2 只是同一测量的「只打印」通道变体，判据已由 v1 grubenv 值与 11-16 守卫臂覆盖，见 `reports/pstore-ram-initrd-guard-20261116.md` §7 第 3 条。

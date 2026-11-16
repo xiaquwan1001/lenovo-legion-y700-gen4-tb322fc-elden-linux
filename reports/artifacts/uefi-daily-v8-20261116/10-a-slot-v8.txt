@@ -1,0 +1,16 @@
+7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0
+--slot
+Active slot: _a
+--cmdline
+BOOT_IMAGE=(hd5,gpt17)/boot/Image console=ttyGS0,115200 console=tty0 earlycon=efifb keep_bootcon loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 root=LABEL=linux17 elden_bootmenu=grub-daily
+--grubenv
+elden_grub_log=51-daily-vk192-initrd-ok-booting
+--ramoops
+[    0.000000] [      T0] OF: reserved mem: Reserved memory: failed to reserve memory for node 'ramoops@c2000000': base 0x00000000c2000000, size 8 MiB
+[    0.000000] [      T0] OF: reserved mem: 0x00000000c2000000..0x00000000c27fffff (8192 KiB) nomap non-reusable ramoops@c2000000
+[    4.623906] [      T1] ramoops c2000000.ramoops: ignoring dmesg zone 0xc2000000-0xc21fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.715955] [      T1] ramoops c2000000.ramoops: ignoring console zone 0xc2200000-0xc23fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.807727] [      T1] ramoops c2000000.ramoops: ignoring pmsg zone 0xc2400000-0xc27fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.899748] [      T1] ramoops c2000000.ramoops: every zone overlaps the initrd; ramoops disabled for this boot
+[   15.574169] [     T56] Unpacking initramfs...
+[   29.920525] [      T1] Run /init as init process

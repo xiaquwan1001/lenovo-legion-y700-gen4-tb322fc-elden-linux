@@ -90,9 +90,21 @@ QEMU 配方与两个装法陷阱（`-dtb` 与 `-device loader` 抢 `0x48000000`�
 b 槽自签件 `06c081ca…`；1510 `.ko` 按新 UTS 重编部署；零写盘 1 发 + `flash-b` 持久 + 整机重启复验全绿（s2idle 3/3、fail=0）。
 全账 = `reports/device-session-20261116-vk192.md`。
 
-## §7 剩余动作
+## §7 剩余动作与裁决（2026-11-16 晚更新）
 
-1. ~~真机一发~~ **已于 §5 完成（守卫在真机生效）**。注意 ESP 现役件本轮换成了自打嵌入菜单 GRUB（`cc6391b3…`），
-   ESP `\EFI\BOOT\BOOTAA64.EFI` 的历史件全在（`.grub-fixr2-20261116.bak` 等），r73 = `\EFI\elden\Loader.efi`。
-2. 用户批准后按 `TASKS/README.md` §7 逐系列发信（pstore 维护者 Kees Cook + linux-kernel；cover letter 骨架已填正文）。
-3. 若上机验证通过，再决定是否把该内核作为 vk192 入账（涉及 `versions/vk-kernel-identity.tsv`，**禁重跑** `vk-identity.py`）。
+1. ~~真机一发~~ **已于 §5 完成**；~~上游发信~~ **已于 §5 发出**（3×250，等回复）；~~vk192 入账~~ **已做**（b 槽自签持久件，§6）。
+2. ~~ESP 验证件留在现役位~~ **已归位**：`\EFI\BOOT\BOOTAA64.EFI` = 日常用嵌入菜单 GRUB `f5dcf599…`
+   （菜单 `out/grub-arm64-arming-20261116/arming-daily-v8.cfg`；默认臂 = 直载 vk192 守卫核 + `elden.dtb` + 64 MB initrd + `earlycon=efifb keep_bootcon`，
+   备臂 = `elden-noramoops.dtb` / chainload r73 / reboot / poweroff）。验证件 `cc6391b3…` 备份为 `BOOTAA64.EFI.daily-v8-20261116.bak`。
+   真机 a 槽暖启 **44 s 到 SSH**（cmdline `elden_bootmenu=grub-daily`、grubenv `51-daily-vk192-initrd-ok-booting`、ramoops 三段 `ignoring … overlaps the initrd`），
+   `slot-attr.py mark-successful a` 后回 `_b`（16 s），槽属性 `boot_a` 7/1、`boot_b` retry=6 succ=1 active=0。
+   证据 `reports/artifacts/uefi-daily-v8-20261116/{00-pre-state.txt,10-a-slot-v8.txt,11-slot-attr-after-a.txt,20-back-to-b.txt}`。
+3. **LastFile2 v2 屏照：撤销，不需再拍**。理由 = 它只是把**同一测量**（`grub_initrd_load()` 返回后抽样 FNV/tail）从「写 grubenv」改成「只打印」的输出通道变体，
+   不产生新判据；而该测量已由 v1 的 grubenv 值（`addr=0xc23e0000 / len=64595425 / sum=0x5c53688e / tail=8eff7f5e…` = `scripts/lf2-expected.py` 期望值）
+   与随后 11-15 夜根因定案、11-16 守卫真机臂（initrd 区间完整 + 解包到 `Run /init`）双重确认。件仍在 ESP `.lf2v2.bak` 与 `out/`，不列入待办。
+4. **修法 ②（GRUB 对 `/reserved-memory/*` 先 `AllocatePages` 占位）：不做，登记触发条件。**
+   守卫 ① 已对所有 loader（Mu / GRUB / kexec / EFI stub）生效并覆盖本类冲突；修法 ② 只治 GRUB 一条路、要引 GRUB 源码树重打 EFI（成本约半日）。
+   触发条件 = ① 要在 a 槽 UEFI 路径上跑**未含守卫**的内核；② 出现 **ramoops 之外**的保留区（splash_region / adsp heap / trust-ui-vm …）被固件分配覆盖的实际样本。
+5. **GRUB 堆头 `0xbffa227a0` 被清零（≈47.9 GB）：登记为已知未决点，不追。**
+   守卫后链路可用；追它要 Mu 侧插桩（1–2 发上机）且收益仅在于把所有权冲突再钉一例（与 ramoops 同源、不同对象）。
+   若将来需要，最小取证 = Mu `[A]` 行扩展为「分配后立即回读抽样」，或 GRUB「分配后立刻回读校验」。
