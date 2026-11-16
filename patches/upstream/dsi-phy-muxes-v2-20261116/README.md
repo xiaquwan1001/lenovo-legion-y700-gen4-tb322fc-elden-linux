@@ -33,7 +33,30 @@
    见 `reports/code-style-and-duty-overlap-audit-20261030.md` A1-01）。
    v2 指 **`cb55f39bf7b1`**（引入计数器 + 预置的那枚）；revert 只在正文里叙述（用 checkpatch 要求的 `commit <sha> ("<title>")` 格式）。
 
-## 4. 发送（等用户放行；本项目规矩 = 按系列逐次批准）
+## 4. 发送 —— ✅ 已投（2026-11-16 22:50 / 23:03 两发，均 `Result: 250`）
+
+| 时刻 | 件 | Subject | Message-ID | 说明 |
+|---|---|---|---|---|
+| 22:50:20 | `0001-drm-msm-dsi-phy-…firs.patch` | `[PATCH]`（**前缀漏 v2**） | `20261116145020.54586-1-…` | 13 RCPT 全 250，账 = `40-sent.txt` / `logs-v2-send.log` |
+| 23:03:34 | `0001-v2-sent.patch` | `[PATCH v2]`（正确） | `20261116150334.78710-1-…` | 正文多 4 行自述「上一封前缀错了、内容相同」；账 = `logs-v2-resent.log` |
+
+两封 `In-Reply-To` 都是 Dmitry 的 `<e4ul4zxjta4oyo5fpjjzwkykb4gicztcn7yrgjw7aer6bqowkw@6nx2arhvmyca>`。
+
+**归档复核（2026-11-17 早，`scripts/lore-fetch-raw.py` 逐列表取 raw）**：
+`linux-arm-msm` 8729 B / `linux-kernel` 8722 B / `dri-devel` 8016 B **三处均命中** `20261116150334.78710-1-…`，
+`Subject` 均为 `[PATCH v2] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY`。
+逐字节：lore raw 从 `diff --git` 起整段与本地 `0001-v2-sent.patch` **完全相同**（624 B = 624 B）；
+头部差异仅归档追加的 `Received:`/`X-Mailing-List:` 等，属正常。错前缀那封同在 `/linux-arm-msm/` 归档（8555 B）。
+
+```bash
+scripts/lore-fetch-raw.py all 20261116150334.78710-1-xiaqinghuan@mail.ustc.edu.cn -o /tmp/lore-dsi-phy
+scripts/lore-fetch-raw.py lkml 20261116150334.78710-1-xiaqinghuan@mail.ustc.edu.cn -o /tmp/lore-lkml
+scripts/lore-fetch-raw.py dri-devel 20261116150334.78710-1-xiaqinghuan@mail.ustc.edu.cn -o /tmp/lore-dri
+```
+
+**待办 = 等 Dmitry 回 v2**（他会看到同内容两份，第二封自述）。
+
+原始发送命令（备查）：
 
 ```bash
 cd /tmp/muxes-v2   # 或任意 worktree；只要件在
@@ -47,25 +70,18 @@ git send-email --confirm=never --no-annotate --suppress-from \
   ~/y700-elden/patches/upstream/dsi-phy-muxes-v2-20261116/0001-*.patch
 ```
 
-发完必做（技能 `upstream-mail-ustc` §5）：`lore-query.py "https://lore.kernel.org/linux-arm-msm/?q=f:xiaqinghuan@mail.ustc.edu.cn"`
-+ 按 Message-ID 取 raw 比正文 sha256；`/lkml/`、`/dri-devel/` 各自单独核。
+发完必做（技能 `upstream-mail-ustc` §5）= 上面「归档复核」已做完（三列表 + 正文逐字节）。
+注意：lore 直连 `curl` 现在回 **403**（Anubis），只能走 `scripts/lore-fetch-raw.py`。
 
 **AI 披露**：补丁正文里的测量与判断由作者本人复核；本目录的备料由 LLM 助手起草，
 作者在发出前逐条对树/对日志核过（项目规矩 = 全局 `AGENTS.md` 上游发信三条前提）。
 
 ## 5. 顺带修正的邮件账（`q28-DOSSIER-B` §⑤-3）
 
-- v5 四封在 **Sent Items 查不到**（`send-mail-ustc.py` 用 `smtplib` 发，不做 IMAP `APPEND`）。
-  补法（只写自己的 Sent Items，零风险）：
+- v5 四封在 **Sent Items 查不到**（`send-mail-ustc.py` 走 `smtplib`，不做 IMAP `APPEND`）。
+  **根治已落地（2026-11-17）= `scripts/mail-append-sent.py`**（默认 dry-run，`--check` 只查缺，`--apply` 才写）：
 
   ```bash
-  python3 - <<'PY'
-  import imaplib, keyring, glob
-  U="xiaqinghuan@mail.ustc.edu.cn"; M=imaplib.IMAP4_SSL("mail.ustc.edu.cn",993)
-  M.login(U, keyring.get_password("smtp",U)); M.select('"Sent Items"')
-  for f in sorted(glob.glob("/home/xuqianhui/y700-elden/out/mail-20261114/*.patch")):
-      M.append('"Sent Items"', None, None, open(f,'rb').read())   # 需换成实际存档的 mbox/patch 原件
-  M.logout()
-  PY
+  scripts/mail-append-sent.py --check out/mail-20261114/*.mbox   # 列出 Sent Items 缺哪些 Message-ID
+  scripts/mail-append-sent.py --apply out/mail-20261114/*.mbox   # 只补缺的，已存在的跳过
   ```
-  根治 = `send-mail-ustc.py` 在 `--send` 成功后自动 `APPEND`（未做，登记为待办）。

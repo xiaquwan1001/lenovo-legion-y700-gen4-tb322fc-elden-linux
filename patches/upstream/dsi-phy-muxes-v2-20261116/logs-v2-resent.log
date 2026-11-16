@@ -1,0 +1,41 @@
+0001-v2-sent.patch
+(mbox) Adding cc: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn> from line 'From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>'
+(body) Adding cc: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn> from line 'Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>'
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<freedreno@lists.freedesktop.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+RCPT TO:<robin.clark@oss.qualcomm.com>
+RCPT TO:<lumag@kernel.org>
+RCPT TO:<abhinav.kumar@linux.dev>
+RCPT TO:<jesszhan0024@gmail.com>
+RCPT TO:<sean@poorly.run>
+RCPT TO:<marijn.suijten@somainline.org>
+RCPT TO:<dmitry.baryshkov@oss.qualcomm.com>
+RCPT TO:<xiaqinghuan@mail.ustc.edu.cn>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: linux-arm-msm@vger.kernel.org,
+	dri-devel@lists.freedesktop.org
+Cc: freedreno@lists.freedesktop.org,
+	linux-kernel@vger.kernel.org,
+	robin.clark@oss.qualcomm.com,
+	lumag@kernel.org,
+	abhinav.kumar@linux.dev,
+	jesszhan0024@gmail.com,
+	sean@poorly.run,
+	marijn.suijten@somainline.org,
+	dmitry.baryshkov@oss.qualcomm.com,
+	Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH v2] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable
+Date: Mon, 16 Nov 2026 23:03:34 +0800
+Message-ID: <20261116150334.78710-1-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <e4ul4zxjta4oyo5fpjjzwkykb4gicztcn7yrgjw7aer6bqowkw@6nx2arhvmyca>
+References: <e4ul4zxjta4oyo5fpjjzwkykb4gicztcn7yrgjw7aer6bqowkw@6nx2arhvmyca>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
