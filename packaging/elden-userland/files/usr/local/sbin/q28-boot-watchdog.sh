@@ -41,7 +41,7 @@ have_session() {
 # 列出存在的 DRM 主卡（cardN）：b 槽直启 = card0；UEFI/GRUB 路径 = card1（见头部注释）。
 drm_cards() {
 	for d in /sys/class/drm/card[0-9] /sys/class/drm/card[0-9][0-9]; do
-		[ -e "$d" ] && printf '%s ' "${d##*/}"
+		if [ -e "$d" ]; then printf '%s ' "${d##*/}"; fi
 	done
 }
 have_card() {
