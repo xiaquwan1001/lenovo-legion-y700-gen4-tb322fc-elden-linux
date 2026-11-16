@@ -1,0 +1,191 @@
+From 4bdf1711b5c0dd10df262bb6f35c9daba69e4330 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 16 Nov 2026 10:54:59 +0800
+Subject: [PATCH 2/2] pstore/ram: skip zones overlapping the initrd
+
+The areas described in the device tree only exist in the kernel, so the
+firmware placing the initrd cannot avoid them and the initrd may end up
+inside one of them.  When that happens, registering the overlapping zone
+silently corrupts the initrd: the console zone in particular is written
+continuously once it is registered as a printk console, so the initrd is
+destroyed within milliseconds of the zone being set up, and the boot
+fails with "Initramfs unpacking failed: invalid magic at start of
+compressed archive".
+
+Refuse to register any zone that overlaps the initrd and log which one
+was dropped.  The dropped zone is not used for this boot only; the initrd
+is freed later, and nothing stops the memory from being used afterwards.
+
+This can only detect the overlap while the initrd still exists.  The
+built-in driver probes at postcore_initcall(), well before the initramfs
+is unpacked, so the check covers the normal case; a module loaded later
+cannot see the initrd and gets no protection.
+
+Report the zone sizes from the effective context, not from the parsed
+data, so /sys/module/ramoops/parameters/ describes what was registered.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ fs/pstore/ram.c | 114 ++++++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 90 insertions(+), 24 deletions(-)
+
+diff --git a/fs/pstore/ram.c b/fs/pstore/ram.c
+index 2eb0d4fa21..9b8a05eebe 100644
+--- a/fs/pstore/ram.c
++++ b/fs/pstore/ram.c
+@@ -21,6 +21,7 @@
+ #include <linux/of.h>
+ #include <linux/of_address.h>
+ #include <linux/mm.h>
++#include <linux/initrd.h>
+ 
+ #include "internal.h"
+ #include "ram_internal.h"
+@@ -719,6 +720,41 @@ static int ramoops_parse_dt(struct platform_device *pdev,
+ 	return 0;
+ }
+ 
++/*
++ * The area described in the device tree (or in the module parameters) can be
++ * occupied by the initrd: the firmware that placed the initrd there cannot
++ * know about a reservation that only exists in the device tree, so it is free
++ * to hand out those pages to the boot loader for the initrd buffer.
++ *
++ * Writing to such a zone silently corrupts the initrd (the console zone in
++ * particular is written continuously once it is registered as a printk
++ * console), so refuse to use any zone that overlaps it.  The initrd is freed
++ * later during boot, so a zone skipped here stays unused for this boot only.
++ *
++ * This can only see an overlap while the initrd is still around, because the
++ * ranges are forgotten once it is freed.  The built-in driver probes at
++ * postcore_initcall(), long before the initramfs is unpacked, so the check is
++ * reliable there.  A module (or a probe deferred past the unpack) cannot tell
++ * and gets no protection.
++ */
++static bool ramoops_skip_zone(struct device *dev, const char *name,
++			      phys_addr_t start, size_t size)
++{
++	phys_addr_t istart, iend;
++
++	if (!size || !initrd_phys_range(&istart, &iend))
++		return false;
++
++	if (start >= iend || istart >= start + size)
++		return false;
++
++	dev_warn(dev, "ignoring %s zone 0x%llx-0x%llx: it overlaps the initrd (0x%llx-0x%llx)\n",
++		 name, (unsigned long long)start,
++		 (unsigned long long)(start + size - 1),
++		 (unsigned long long)istart, (unsigned long long)(iend - 1));
++	return true;
++}
++
+ static int ramoops_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+@@ -785,32 +821,60 @@ static int ramoops_probe(struct platform_device *pdev)
+ 
+ 	dump_mem_sz = cxt->size - cxt->console_size - cxt->ftrace_size
+ 			- cxt->pmsg_size;
+-	err = ramoops_init_przs("dmesg", dev, cxt, &cxt->dprzs, &paddr,
+-				dump_mem_sz, cxt->record_size,
+-				&cxt->max_dump_cnt, 0, 0);
+-	if (err)
+-		goto fail_init;
++	if (ramoops_skip_zone(dev, "dmesg", paddr, dump_mem_sz)) {
++		cxt->record_size = 0;
++		paddr += dump_mem_sz;
++	} else {
++		err = ramoops_init_przs("dmesg", dev, cxt, &cxt->dprzs, &paddr,
++					dump_mem_sz, cxt->record_size,
++					&cxt->max_dump_cnt, 0, 0);
++		if (err)
++			goto fail_init;
++	}
+ 
+-	err = ramoops_init_prz("console", dev, cxt, &cxt->cprz, &paddr,
+-			       cxt->console_size, 0);
+-	if (err)
+-		goto fail_init;
++	if (ramoops_skip_zone(dev, "console", paddr, cxt->console_size)) {
++		paddr += cxt->console_size;
++		cxt->console_size = 0;
++	} else {
++		err = ramoops_init_prz("console", dev, cxt, &cxt->cprz, &paddr,
++				       cxt->console_size, 0);
++		if (err)
++			goto fail_init;
++	}
+ 
+-	err = ramoops_init_prz("pmsg", dev, cxt, &cxt->mprz, &paddr,
+-				cxt->pmsg_size, 0);
+-	if (err)
+-		goto fail_init;
++	if (ramoops_skip_zone(dev, "pmsg", paddr, cxt->pmsg_size)) {
++		paddr += cxt->pmsg_size;
++		cxt->pmsg_size = 0;
++	} else {
++		err = ramoops_init_prz("pmsg", dev, cxt, &cxt->mprz, &paddr,
++					cxt->pmsg_size, 0);
++		if (err)
++			goto fail_init;
++	}
+ 
+ 	cxt->max_ftrace_cnt = (cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU)
+ 				? nr_cpu_ids
+ 				: 1;
+-	err = ramoops_init_przs("ftrace", dev, cxt, &cxt->fprzs, &paddr,
+-				cxt->ftrace_size, -1,
+-				&cxt->max_ftrace_cnt, LINUX_VERSION_CODE,
+-				(cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU)
+-					? PRZ_FLAG_NO_LOCK : 0);
+-	if (err)
++	if (ramoops_skip_zone(dev, "ftrace", paddr, cxt->ftrace_size)) {
++		paddr += cxt->ftrace_size;
++		cxt->ftrace_size = 0;
++		cxt->max_ftrace_cnt = 0;
++	} else {
++		err = ramoops_init_przs("ftrace", dev, cxt, &cxt->fprzs, &paddr,
++					cxt->ftrace_size, -1,
++					&cxt->max_ftrace_cnt, LINUX_VERSION_CODE,
++					(cxt->flags & RAMOOPS_FLAG_FTRACE_PER_CPU)
++						? PRZ_FLAG_NO_LOCK : 0);
++		if (err)
++			goto fail_init;
++	}
++
++	if (!cxt->record_size && !cxt->console_size &&
++	    !cxt->pmsg_size && !cxt->ftrace_size) {
++		dev_err(dev, "every zone overlaps the initrd; ramoops disabled for this boot\n");
++		err = -ENODEV;
+ 		goto fail_init;
++	}
+ 
+ 	cxt->pstore.data = cxt;
+ 	/*
+@@ -854,15 +918,17 @@ static int ramoops_probe(struct platform_device *pdev)
+ 
+ 	/*
+ 	 * Update the module parameter variables as well so they are visible
+-	 * through /sys/module/ramoops/parameters/
++	 * through /sys/module/ramoops/parameters/.  The zone sizes come from
++	 * cxt, not pdata: a zone that was dropped above is reported as 0, so
++	 * the parameters describe what is actually registered.
+ 	 */
+ 	mem_size = pdata->mem_size;
+ 	mem_address = pdata->mem_address;
+-	record_size = pdata->record_size;
++	record_size = cxt->record_size;
+ 	ramoops_max_reason = pdata->max_reason;
+-	ramoops_console_size = pdata->console_size;
+-	ramoops_pmsg_size = pdata->pmsg_size;
+-	ramoops_ftrace_size = pdata->ftrace_size;
++	ramoops_console_size = cxt->console_size;
++	ramoops_pmsg_size = cxt->pmsg_size;
++	ramoops_ftrace_size = cxt->ftrace_size;
+ 	mem_type = pdata->mem_type;
+ 	ramoops_ecc = pdata->ecc_info.ecc_size;
+ 
+-- 
+2.53.0
+

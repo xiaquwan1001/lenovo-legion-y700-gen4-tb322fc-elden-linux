@@ -6,7 +6,7 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-15（夜））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-16）
 
 > 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
@@ -50,9 +50,18 @@
 2. **上游待批准批次**：dwc3 v9 四枚（`git apply --check` 4/4 OK）、dsi-phy v2 九行、gamma v2、haptics v2、board DTS 单提交 —— 逐系列等用户放行。
 3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
 4. **中文输入法候选窗：配置层已全绿（2026-11-15 T1–T5 全做，`scripts/ime-candidates-check.sh` = 11 PASS / 0 FAIL）**；**行为层未验** —— 画候选的那一半（`elden-ime-candidates.py`）仍按 #646 撤下，重做要求见 `PITFALLS #646` + 前置条件 `LD_PRELOAD=libgtk4-layer-shell.so.0`。→ `TASKS/sessions/2026-11-15-IME候选回归台账.md` §3b/§3c
-5. **UEFI GRUB 路径：取证已完成（2026-11-15 夜），剩下是修法**：① 内核 `pstore/ram`：zone 与 `initrd_start/initrd_end` 重叠时拒绝注册（尤其 console）并 `pr_err`（可上游，建议先做）；② GRUB：`devicetree` 后遍历 `/reserved-memory/*` 对每个 range `AllocatePages` 占位（不改 Mu 的临时修法）；③ 可选验证发：把 ramoops 搬到 initrd span 之外再跑一发。→ `reports/uefi-grub-initrd-rootcause-20261115.md` §5
+5. **UEFI GRUB 路径：取证已完成（2026-11-15 夜）；修法 ① 已于 2026-11-16 做成可上游 2 枚系列并全绿备料**：
+   `initrd_phys_range()` + `ramoops_probe()` 逐 zone 判重叠（重叠段 `dev_warn` 跳过，四段全跳 → `-ENODEV` 干净退出），
+   门禁 = 对 `gh/master` apply-check 2/2 + checkpatch 0 error + 构建 0 error/0 warning + **QEMU 两发 A/B**
+   （无守卫 ⇒ `Initramfs unpacking failed`；有守卫 ⇒ 跳过 console 段并起进 `/init`）。
+   **剩余 = ① 真机一发（设备窗口：`set_active a` 或物理 POR，判据 `ignoring console zone … overlaps the initrd`）；② 用户批准后发信。**
+   树 = `build/daily` `v7.3.1-5-g4bdf1711b5`（**未打 vk 号、未进版本账、未上机**）。
+   → `patches/upstream/pstore-ram-initrd-overlap-20261116/`（README + 0000 cover + 2 枚 + logs）、`reports/pstore-ram-initrd-guard-20261116.md`、评审 `reports/pstore-ram-initrd-review-20261116.md`、`scripts/qemu-ramoops-initrd-ab.sh`、`PITFALLS #666`；根因与另两条修法 → `reports/uefi-grub-initrd-rootcause-20261115.md` §5
 6. **★待补：LastFile2 打印版（v2）缺屏上取证**：`/tmp/lf2-v2/grubaa64.efi`（sha `b9fb14cb…`，只打印不写盘 + 大字体）那发**用户没拍屏**，所以「打印通道本身工作正常」这一点只有 v1 的 grubenv 侧证；下次起它时补一张 `[LF2] addr=/size=/fnv=/tail=` 的屏照（`out/` 之外请留档到 `reports/artifacts/uefi-pc1m-20261115/`）。
 7. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
+8. **磁盘 A 类清理已执行完（2026-11-16）**：实际释放 **8.85 GiB**（项目 91 G → 82 G，`/` 620 G/70%），A1–A14 无失败项；
+   **B 类（`backup/official-rom` 15 G super 镜像、`backup/out-history` 7.6 G）与「待第二轮需用户拍板」清单仍待用户裁决**（后者含 `stock-src` 2 G、`dl-cam/ndk` 1.6 G、`out/r21-sbstop-{p69,pc1,pc2}`+`mu-memmap` 2.59 G、`.pi/sessions` 835 M、`reports/artifacts` 1.8 G）。
+   → `reports/disk-cleanup-20261115.md` §2（执行记录 + 复核命令）
 
 **怎么核实本节没漂**（开工前先跑，见 `.pi/AGENT-OPS.md` §0）
 

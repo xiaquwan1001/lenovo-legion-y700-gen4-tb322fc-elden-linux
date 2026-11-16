@@ -1,0 +1,3 @@
+log: /tmp/qemu-ramoops-ab/Image.unpatched.fail.log
+  ignoring console zone = 0   Run /init = 0   unpack failed = 98   panic/oops = 294
+PASS(expect-fail): 无守卫内核被自己的 ramoops console 写坏 initrd（复现真机现象）

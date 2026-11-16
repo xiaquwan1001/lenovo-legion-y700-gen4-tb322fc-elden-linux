@@ -1,0 +1,50 @@
+[build] CROSS_COMPILE=ccache aarch64-linux-gnu-
+[build] targets: Image.gz dtbs
+make: 进入目录“/home/xuqianhui/y700-elden/build/daily”
+  UPD     include/config/kernel.release
+  UPD     include/generated/utsrelease.h
+  CC      init/version.o
+  CC      kernel/sys.o
+  CC      drivers/base/firmware_loader/main.o
+  CC      kernel/module/main.o
+  AR      init/built-in.a
+  AR      drivers/base/firmware_loader/built-in.a
+  AR      drivers/base/built-in.a
+  AR      drivers/built-in.a
+  AR      kernel/module/built-in.a
+  AR      kernel/built-in.a
+  AR      built-in.a
+  AR      built-in-fixup.a
+  COPY    vmlinux.a
+  LD      vmlinux.o
+  MODPOST vmlinux.symvers
+  UPD     include/generated/utsversion.h
+  CC      init/version-timestamp.o
+  KSYMS   .tmp_vmlinux0.kallsyms.S
+  AS      .tmp_vmlinux0.kallsyms.o
+  LD      .tmp_vmlinux1
+  NM      .tmp_vmlinux1.syms
+  KSYMS   .tmp_vmlinux1.kallsyms.S
+  AS      .tmp_vmlinux1.kallsyms.o
+  LD      .tmp_vmlinux2
+  NM      .tmp_vmlinux2.syms
+  KSYMS   .tmp_vmlinux2.kallsyms.S
+  AS      .tmp_vmlinux2.kallsyms.o
+  LD      vmlinux.unstripped
+  NM      System.map
+  SORTTAB vmlinux.unstripped
+  OBJCOPY vmlinux
+  GEN     modules.builtin.modinfo
+  GEN     modules.builtin
+  OBJCOPY arch/arm64/boot/Image
+  GZIP    arch/arm64/boot/Image.gz
+make: 离开目录“/home/xuqianhui/y700-elden/build/daily”
+-rw-rw-r-- 1 xuqianhui xuqianhui 21053516 Nov 16 10:55 /home/xuqianhui/y700-elden/build/daily/arch/arm64/boot/Image.gz
+-rw-rw-r-- 1 xuqianhui xuqianhui   153129 Nov 16 10:27 /home/xuqianhui/y700-elden/build/daily/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+[build] symbol guard OK: gcc_sm8750 / DSI bonded（旧名或 B5 重构后名） / rpmh present in System.map
+Cacheable calls:   192721 / 252440 (76.34%)
+  Hits:             41208 / 192721 (21.38%)
+    Direct:         29739 /  41208 (72.17%)
+    Preprocessed:   11469 /  41208 (27.83%)
+  Misses:          151513 / 192721 (78.62%)
+Uncacheable calls:  59719 / 252440 (23.66%)

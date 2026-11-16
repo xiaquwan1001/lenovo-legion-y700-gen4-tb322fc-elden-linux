@@ -1,0 +1,3 @@
+log: /tmp/qemu-ramoops-ab/Image.guard.log
+  ignoring console zone = 2   Run /init = 2   unpack failed = 0   panic/oops = 0
+PASS(guard): 守卫跳过与 initrd 重叠的 console 段，initrd 完整解包并起进 /init

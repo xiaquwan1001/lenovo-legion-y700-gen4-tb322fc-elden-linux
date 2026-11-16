@@ -36,7 +36,38 @@
 
 ## 2. 执行记录
 
-（执行后逐条回填：释放量 / 复核命令 / 结果）
+基线（执行前）：`df -B1 /` = 674690023424 used；`du -sh` 项目 = 91G。bundle 门禁（A1/A3 前置）：`git bundle verify` 对 backup/git-slim-20261113/{geekidos,m3v2,main}-all-20261113.bundle、backup/git-history-rewrite-20261112/pre-rewrite-main{,-2}.bundle 全部 rc=0。
+
+| 项 | 路径 | 删除前 du -sb | 删除后核对 | 备注（门禁命令 rc） |
+|---|---|---|---|---|
+| A1 | backup/git-history-rewrite-20261103/pre-rewrite-all.bundle | 292892076 | 已消失（目录剩空壳） | verify 6 bundle 全 rc=0 |
+| A2 | backup/git-repair-20261105/{git-before-repair-20261105.tar.zst,quarantine/} | 714883882 + 209558102 | 已消失（目录剩空壳） | — |
+| A3 | backup/build-bundles/m3v2-7.3rc7-git-20261105.tar.zst | 1334423039 | 已消失（MANIFEST.tsv + dirty-20261105/ 保留） | verify rc=0（m3v2-all-20261113） |
+
+A1–A3 后 `df -B1 /` = 672004550656 used（释放 2 685 472 768 B）。
+
+| 项 | 路径 | 删除前 du -sb | 删除后核对 | 备注 |
+|---|---|---|---|---|
+| A4 | build/uefi-woa-prep/repos/{1-edk2-aarch64-gunyah,2-Droid-VM-edk2-gunyah,3-edk2-gunyah-qemu,4-qemu-for-gunyah,6-DroidVM-Prebuilts} | 1294688009 / 1230801 / 140054601 / 181624137 / 154032441 | 已消失；`repos/` 剩 5-mu_wide_platforms、7-mu-lenovo、clone{,2}.{sh,log} | — |
+| A5 | build/base-7.2 | 2232918734 | 已消失 | — |
+| A6 | backup/m3v5-onboard-20261031/m3mods-daily-20261031.tar | 109199360 | 已消失（目录剩空壳） | — |
+| A7 | logs/ | 39009768 | 已消失 | — |
+| A8 | backup/f2fs-migrate-20261025-205{702,914} | 24576 + 90112 | 已消失；保留 210049/210242/210451 | 表内 210104/211242 实际不存在（实际名 2100{49,242}），按表外不动处理，记跳过 |
+| A9 | out/.migrate-vk152 | 85581715 | 已消失 | — |
+| A10 | out/debian/{elden-rootfs-20261026.tar.zst,firmware-root/,elden-firmware_1.0~2026102{5,6}_all.deb} | 604953927 / 46271692 / 21120132 / 21146096 | 已消失；仅剩现行 deb 20261028 | — |
+| A11 | dl-cam/vendor-orig.img | 268435456 | 已消失；vendor-cam-l1d.img 保留 | — |
+| A12 | external/ext-repos/{af,dl,mu,vk64rd} | 414557113 / 256710033 / 230297898 / 181392245 | 已消失；sunuefi、mu-dodge 保留 | — |
+| A13 | out/r21-sbstop-p62 | 67194880 | 已消失 | — |
+| A14 | out/{uefi-1005-recover,uefi-v0,gunyah-73} | 23002099 / 9773056 / 4567720 | 已消失 | 表内 uefi-ddrmarks-{sysram,clean} 实际已不存在，记跳过 |
+
+### 汇总
+
+- 各项 du 求和 ≈ 10 133 306 315 B（8.94 GiB，含「已不存在」为 0）。
+- `df -B1 /`：674690023424 → 665189650432 used，实际释放 **9 500 372 992 B（8.85 GiB）**（差额来自 du/df 统计口径 + 并行写入）。
+- 项目本体：91 G → 82 G；最终 `df -h /`：937G 总量 / 620G 已用 / 270G 可用（70%）。
+- 跳过项（均已不存在，非失败）：A8 的 f2fs-migrate-20261025-210104 / -211242（实际名为 210049/210242，表外未动）；A14 的 out/uefi-ddrmarks-sysram / out/uefi-ddrmarks-clean。
+- 门禁：A1/A3 前置 `git bundle verify` 共 6 份（git-slim-20261113 ×3、git-history-rewrite-20261112 ×2、m3v2-all-20261113）全部 rc=0。
+- 未 git commit；§3 禁止项与 build/daily、patches/、scripts/、reports/、.git/ 均未触碰。
 
 ## 3. 禁止项（本轮与以后）
 

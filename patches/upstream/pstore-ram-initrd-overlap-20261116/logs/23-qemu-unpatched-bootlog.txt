@@ -1,0 +1,501 @@
+[    0.000000][    T0] Booting Linux on physical CPU 0x0000000000 [0x410fd083]
+[    0.000000][    T0] Linux version 7.3.1-debug-vk189-suspend-00003-gbf0adba8ff9a (elden@y700) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #28 SMP PREEMPT Mon Nov 16 10:33:46 CST 2026
+[    0.000000][    T0] KASLR enabled
+[    0.000000][    T0] random: crng init done
+[    0.000000][    T0] Machine model: linux,dummy-virt
+[    0.000000][    T0] earlycon: pl11 MMIO:0x0000000009000000 (options '')
+[    0.000000][    T0] printk: legacy bootconsole [pl11] enabled
+[    0.000000][    T0] printk: debug: skip boot console de-registration.
+[    0.000000][    T0] printk: debug: ignoring loglevel setting.
+[    0.000000][    T0] efi: UEFI not found.
+[    0.000000][    T0] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000][    T0] NUMA: Faking a node at [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000][    T0] NODE_DATA(0) allocated [mem 0xbfbee640-0xbfbf0e3f]
+[    0.000000][    T0] cma: Reserved 32 MiB at 0x00000000bda00000
+[    0.000000][    T0] psci: probing for conduit method from DT.
+[    0.000000][    T0] psci: PSCIv1.1 detected in firmware.
+[    0.000000][    T0] psci: Using standard PSCI v0.2 function IDs
+[    0.000000][    T0] psci: Trusted OS migration not required
+[    0.000000][    T0] psci: SMC Calling Convention v1.0
+[    0.000000][    T0] Zone ranges:
+[    0.000000][    T0]   DMA      [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000][    T0]   DMA32    empty
+[    0.000000][    T0]   Normal   empty
+[    0.000000][    T0] Movable zone start for each node
+[    0.000000][    T0] Early memory node ranges
+[    0.000000][    T0]   node   0: [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000][    T0] Initmem setup node 0 [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000][    T0] percpu: Embedded 33 pages/cpu s95256 r8192 d31720 u135168
+[    0.000000][    T0] pcpu-alloc: s95256 r8192 d31720 u135168 alloc=33*4096
+[    0.000000][    T0] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 
+[    0.000000][    T0] Detected PIPT I-cache on CPU0
+[    0.000000][    T0] CPU features: detected: Spectre-v2
+[    0.000000][    T0] CPU features: detected: Spectre-v3a
+[    0.000000][    T0] CPU features: detected: Spectre-v4
+[    0.000000][    T0] CPU features: detected: Spectre-BHB
+[    0.000000][    T0] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000][    T0] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000][    T0] CPU features: detected: ARM erratum 1742098
+[    0.000000][    T0] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000][    T0] alternatives: applying boot alternatives
+[    0.000000][    T0] Kernel command line: console=ttyAMA0,115200 earlycon=pl011,0x09000000 keep_bootcon loglevel=8 ignore_loglevel panic=-1 initrd=0x50000000,1067167
+[    0.000000][    T0] printk: log buffer data + meta data: 1048576 + 3670016 = 4718592 bytes
+[    0.000000][    T0] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.000000][    T0] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.000000][    T0] software IO TLB: SWIOTLB bounce buffer size adjusted to 2MB
+[    0.000000][    T0] software IO TLB: area num 4.
+[    0.000000][    T0] software IO TLB: mapped [mem 0x00000000bb600000-0x00000000bb800000] (2MB)
+[    0.000000][    T0] Fallback order for Node 0: 0 
+[    0.000000][    T0] Built 1 zonelists, mobility grouping on.  Total pages: 524288
+[    0.000000][    T0] Policy zone: DMA
+[    0.000000][    T0] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000][    T0] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000][    T0] ftrace: allocating 82371 entries in 324 pages
+[    0.000000][    T0] ftrace: allocated 324 pages with 3 groups
+[    0.000000][    T0] rcu: Preemptible hierarchical RCU implementation.
+[    0.000000][    T0] rcu: 	RCU event tracing is enabled.
+[    0.000000][    T0] rcu: 	RCU restricting CPUs from NR_CPUS=512 to nr_cpu_ids=4.
+[    0.000000][    T0] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000][    T0] 	Rude variant of Tasks RCU enabled.
+[    0.000000][    T0] 	Tracing variant of Tasks RCU enabled.
+[    0.000000][    T0] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000][    T0] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+[    0.000000][    T0] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000][    T0] RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000][    T0] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000][    T0] Root IRQ handler: gic_handle_irq
+[    0.000000][    T0] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[    0.000000][    T0] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000][    T0] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000][    T0] arch_timer: cp15 timer running at 62.50MHz (virt).
+[    0.000000][    T0] clocksource: arch_sys_counter: mask: 0x1ffffffffffffff max_cycles: 0x1cd42e208c, max_idle_ns: 881590405314 ns
+[    0.000048][    T0] sched_clock: 57 bits at 63MHz, resolution 16ns, wraps every 4398046511096ns
+[    0.009403][    T0] Console: colour dummy device 80x25
+[    0.012019][    T0] Calibrating delay loop (skipped), value calculated using timer frequency.. 125.00 BogoMIPS (lpj=250000)
+[    0.012277][    T0] pid_max: default: 32768 minimum: 301
+[    0.017021][    T0] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.017169][    T0] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.024350][    T0] VFS: Finished mounting rootfs on nullfs
+[    0.053822][    T1] rcu: Hierarchical SRCU implementation.
+[    0.053963][    T1] rcu: 	Max phase no-delay instances is 1000.
+[    0.054852][    T1] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.061731][    T1] EFI services will not be available.
+[    0.064010][    T1] smp: Bringing up secondary CPUs ...
+[    0.069265][    T0] Detected PIPT I-cache on CPU1
+[    0.070340][    T0] CPU1: Booted secondary processor 0x0000000001 [0x410fd083]
+[    0.074739][    T0] Detected PIPT I-cache on CPU2
+[    0.075212][    T0] CPU2: Booted secondary processor 0x0000000002 [0x410fd083]
+[    0.076952][    T0] Detected PIPT I-cache on CPU3
+[    0.077196][    T0] CPU3: Booted secondary processor 0x0000000003 [0x410fd083]
+[    0.078063][    T1] smp: Brought up 1 node, 4 CPUs
+[    0.078628][    T1] SMP: Total of 4 processors activated.
+[    0.078710][    T1] CPU: All CPU(s) started at EL1
+[    0.078816][    T1] CPU features: detected: 32-bit EL0 Support
+[    0.078932][    T1] CPU features: detected: CRC32 instructions
+[    0.079106][    T1] CPU features: detected: PMUv3
+[    0.087819][    T1] alternatives: applying system-wide alternatives
+[    0.110584][    T1] Memory: 1948144K/2097152K available (27584K kernel code, 10986K rwdata, 19264K rodata, 4608K init, 2705K bss, 109180K reserved, 32768K cma-reserved)
+[    0.132373][    T1] devtmpfs: initialized
+[    0.148772][    T1] posixtimers hash table entries: 2048 (order: 3, 32768 bytes, linear)
+[    0.149582][    T1] futex hash table entries: 1024 (65536 bytes on 1 NUMA nodes, total 64 KiB, linear).
+[    0.152096][    T1] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.152237][    T1] 0 pages in range for non-PLT usage
+[    0.152281][    T1] 507936 pages in range for PLT usage
+[    0.165363][    T1] DMI: not present or invalid.
+[    0.182758][    T1] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.194871][    T1] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.195763][    T1] audit: initializing netlink subsys (disabled)
+[    0.197560][   T39] audit: type=2000 audit(0.184:1): state=initialized audit_enabled=0 res=1
+[    0.203854][    T1] thermal_sys: Registered thermal governor 'step_wise'
+[    0.203883][    T1] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.204322][    T1] cpuidle: using governor menu
+[    0.205168][    T1] NET: Registered PF_QIPCRTR protocol family
+[    0.206678][    T1] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.207374][    T1] ASID allocator initialised with 32768 entries
+[    0.214018][    T1] Serial: AMBA PL011 UART driver
+[    0.250088][    T1] 9000000.pl011: ttyAMA0 MMIO:0x0000000009000000 (irq = 13, base_baud = 0) is a PL011 rev1
+[    0.251934][    T1] printk: console [ttyAMA0] enabled
+[    0.251934][    T1] printk: console [ttyAMA0] enabled
+[    0.261385][    T1] pstore: Using crash dump compression: deflate
+[    0.261385][    T1] pstore: Using crash dump compression: deflate
+[    0.261837][    T1] printk: legacy console [ramoops-1] enabled
+[    0.261837][    T1] printk: legacy console [ramoops-1] enabled
+[    0.262863][    T1] pstore: Registered ramoops as persistent store backend
+[    0.262863][    T1] pstore: Registered ramoops as persistent store backend
+[    0.263057][    T1] ramoops: using 0x200000@0x4ff00000, ecc: 0
+[    0.263057][    T1] ramoops: using 0x200000@0x4ff00000, ecc: 0
+[    0.266843][    T1] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.266843][    T1] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.267054][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.267054][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.267223][    T1] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.267223][    T1] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.267390][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.267390][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.267550][    T1] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.267550][    T1] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.267714][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.267714][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.267867][    T1] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.267867][    T1] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.268030][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.268030][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.274837][    T1] raid6: using neon recovery algorithm
+[    0.274837][    T1] raid6: using neon recovery algorithm
+[    0.281859][    T1] iommu: Default domain type: Translated
+[    0.281859][    T1] iommu: Default domain type: Translated
+[    0.282091][    T1] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.282091][    T1] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.287067][    T1] SCSI subsystem initialized
+[    0.287067][    T1] SCSI subsystem initialized
+[    0.287760][    T1] libata version 3.00 loaded.
+[    0.287760][    T1] libata version 3.00 loaded.
+[    0.288956][    T1] usbcore: registered new interface driver usbfs
+[    0.288956][    T1] usbcore: registered new interface driver usbfs
+[    0.289339][    T1] usbcore: registered new interface driver hub
+[    0.289339][    T1] usbcore: registered new interface driver hub
+[    0.289973][    T1] usbcore: registered new device driver usb
+[    0.289973][    T1] usbcore: registered new device driver usb
+[    0.292885][    T1] pps_core: LinuxPPS API ver. 1 registered
+[    0.292885][    T1] pps_core: LinuxPPS API ver. 1 registered
+[    0.293057][    T1] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.293057][    T1] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.293313][    T1] PTP clock support registered
+[    0.293313][    T1] PTP clock support registered
+[    0.293786][    T1] EDAC MC: Ver: 3.0.0
+[    0.293786][    T1] EDAC MC: Ver: 3.0.0
+[    0.295203][    T1] scmi_core: SCMI protocol bus registered
+[    0.295203][    T1] scmi_core: SCMI protocol bus registered
+[    0.297322][    T1] FPGA manager framework
+[    0.297322][    T1] FPGA manager framework
+[    0.297913][    T1] Advanced Linux Sound Architecture Driver Initialized.
+[    0.297913][    T1] Advanced Linux Sound Architecture Driver Initialized.
+[    0.304917][    T1] Bluetooth: Core ver 2.22
+[    0.304917][    T1] Bluetooth: Core ver 2.22
+[    0.305335][    T1] NET: Registered PF_BLUETOOTH protocol family
+[    0.305335][    T1] NET: Registered PF_BLUETOOTH protocol family
+[    0.305501][    T1] Bluetooth: HCI device and connection manager initialized
+[    0.305501][    T1] Bluetooth: HCI device and connection manager initialized
+[    0.305783][    T1] Bluetooth: HCI socket layer initialized
+[    0.305783][    T1] Bluetooth: HCI socket layer initialized
+[    0.305978][    T1] Bluetooth: L2CAP socket layer initialized
+[    0.305978][    T1] Bluetooth: L2CAP socket layer initialized
+[    0.306907][    T1] Bluetooth: SCO socket layer initialized
+[    0.306907][    T1] Bluetooth: SCO socket layer initialized
+[    0.310750][    T1] vgaarb: loaded
+[    0.310750][    T1] vgaarb: loaded
+[    0.313296][    T1] clocksource: Switched to clocksource arch_sys_counter
+[    0.313296][    T1] clocksource: Switched to clocksource arch_sys_counter
+[    0.317989][    T1] VFS: Disk quotas dquot_6.6.0
+[    0.317989][    T1] VFS: Disk quotas dquot_6.6.0
+[    0.318437][    T1] VFS: Dquot-cache hash table entries: 512 (4096 bytes)
+[    0.318437][    T1] VFS: Dquot-cache hash table entries: 512 (4096 bytes)
+[    0.342274][    T1] NET: Registered PF_INET protocol family
+[    0.342274][    T1] NET: Registered PF_INET protocol family
+[    0.344595][    T1] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.344595][    T1] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.352072][    T1] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    0.352072][    T1] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    0.352649][    T1] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.352649][    T1] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.353251][    T1] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.353251][    T1] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.354029][    T1] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)
+[    0.354029][    T1] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)
+[    0.354681][    T1] TCP: Hash tables configured (established 16384 bind 16384)
+[    0.354681][    T1] TCP: Hash tables configured (established 16384 bind 16384)
+[    0.356071][    T1] UDP hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[    0.356071][    T1] UDP hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[    0.358487][    T1] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.358487][    T1] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.363131][    T1] RPC: Registered named UNIX socket transport module.
+[    0.363131][    T1] RPC: Registered named UNIX socket transport module.
+[    0.363551][    T1] RPC: Registered udp transport module.
+[    0.363551][    T1] RPC: Registered udp transport module.
+[    0.363809][    T1] RPC: Registered tcp transport module.
+[    0.363809][    T1] RPC: Registered tcp transport module.
+[    0.364055][    T1] RPC: Registered tcp-with-tls transport module.
+[    0.364055][    T1] RPC: Registered tcp-with-tls transport module.
+[    0.364327][    T1] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.364327][    T1] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.367117][    T1] PCI: CLS 0 bytes, default 64
+[    0.367117][    T1] PCI: CLS 0 bytes, default 64
+[    0.372228][    T1] Initialise system trusted keyrings
+[    0.372228][    T1] Initialise system trusted keyrings
+[    0.373639][   T56] Unpacking initramfs...
+[    0.373639][   T56] Unpacking initramfs...
+[    0.374252][   T56] Initramfs unpacking failed: invalid magic at start of compressed archive
+[    0.374252][   T56] Initramfs unpacking failed: invalid magic at start of compressed archive
+[    0.375743][   T56] Freeing initrd memory: 1040K
+[    0.377003][   T56] Unable to handle kernel paging request at virtual address ffff80014d2cccd8
+[    0.375743][   T56] Freeing initrd memory: 1040K
+[    0.377109][   T56] Mem abort info:
+[    0.377003][   T56] Unable to handle kernel paging request at virtual address ffff80014d2cccd8
+[    0.377121][   T56]   ESR = 0x0000000096000045
+[    0.377109][   T56] Mem abort info:
+[    0.377195][   T56]   EC = 0x25: DABT (current EL), IL = 32 bits
+[    0.377121][   T56]   ESR = 0x0000000096000045
+[    0.377213][   T56]   SET = 0, FnV = 0
+[    0.377195][   T56]   EC = 0x25: DABT (current EL), IL = 32 bits
+[    0.377226][   T56]   EA = 0, S1PTW = 0
+[    0.377213][   T56]   SET = 0, FnV = 0
+[    0.377241][   T56]   FSC = 0x05: level 1 translation fault
+[    0.377226][   T56]   EA = 0, S1PTW = 0
+[    0.377261][   T56] Data abort info:
+[    0.377241][   T56]   FSC = 0x05: level 1 translation fault
+[    0.377275][   T56]   ISV = 0, ISS = 0x00000045, ISS2 = 0x00000000
+[    0.377261][   T56] Data abort info:
+[    0.377290][   T56]   CM = 0, WnR = 1, TnD = 0, TagAccess = 0
+[    0.377275][   T56]   ISV = 0, ISS = 0x00000045, ISS2 = 0x00000000
+[    0.377304][   T56]   GCS = 0, Overlay = 0, DirtyBit = 0
+[    0.377290][   T56]   CM = 0, WnR = 1, TnD = 0, TagAccess = 0
+[    0.377369][   T56] swapper pgtable: 4k pages, 48-bit VAs, pgdp=0000000042fd9000
+[    0.377304][   T56]   GCS = 0, Overlay = 0, DirtyBit = 0
+[    0.377396][   T56] [ffff80014d2cccd8] pgd=0000000000000000, p4d=10000000446ab403, pud=0000000000000000
+[    0.377369][   T56] swapper pgtable: 4k pages, 48-bit VAs, pgdp=0000000042fd9000
+[    0.378165][   T56] Internal error: Oops: 0000000096000045 [#1]  SMP
+[    0.377396][   T56] [ffff80014d2cccd8] pgd=0000000000000000, p4d=10000000446ab403, pud=0000000000000000
+[    0.378359][   T56] Modules linked in:
+[    0.378165][   T56] Internal error: Oops: 0000000096000045 [#1]  SMP
+[    0.378751][   T56] CPU: 0 UID: 0 PID: 56 Comm: kworker/u16:2 Not tainted 7.3.1-debug-vk189-suspend-00003-gbf0adba8ff9a #28 PREEMPT 
+[    0.378359][   T56] Modules linked in:
+[    0.378904][   T56] Hardware name: linux,dummy-virt (DT)
+[    0.378751][   T56] CPU: 0 UID: 0 PID: 56 Comm: kworker/u16:2 Not tainted 7.3.1-debug-vk189-suspend-00003-gbf0adba8ff9a #28 PREEMPT 
+[    0.379131][   T56] Workqueue: async async_run_entry_fn
+[    0.378904][   T56] Hardware name: linux,dummy-virt (DT)
+[    0.379692][   T56] pstate: 200000c5 (nzCv daIF -PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+[    0.379131][   T56] Workqueue: async async_run_entry_fn
+[    0.379736][   T56] pc : memcpy_toio+0x44/0xc0
+[    0.379692][   T56] pstate: 200000c5 (nzCv daIF -PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+[    0.379800][   T56] lr : persistent_ram_write+0x8c/0x118
+[    0.379736][   T56] pc : memcpy_toio+0x44/0xc0
+[    0.379825][   T56] sp : ffff80008056b8d0
+[    0.379800][   T56] lr : persistent_ram_write+0x8c/0x118
+[    0.379838][   T56] x29: ffff80008056b8d0 x28: 0000000000000001 x27: 0000000000000001
+[    0.379825][   T56] sp : ffff80008056b8d0
+[    0.379910][   T56] x26: 0000000000000000 x25: ffffb114c21043a8 x24: 00000000cccccccc
+[    0.379838][   T56] x29: ffff80008056b8d0 x28: 0000000000000001 x27: 0000000000000001
+[    0.379929][   T56] x23: 0000000000000034 x22: 0000000000000034 x21: ffffb114c2722678
+[    0.379910][   T56] x26: 0000000000000000 x25: ffffb114c21043a8 x24: 00000000cccccccc
+[    0.379947][   T56] x20: ffffffffcccccccc x19: ffff000004f12000 x18: 000000000000000a
+[    0.379929][   T56] x23: 0000000000000034 x22: 0000000000000034 x21: ffffb114c2722678
+[    0.379965][   T56] x17: 646573736572706d x16: 6f6320666f207472 x15: 0000000000000000
+[    0.379947][   T56] x20: ffffffffcccccccc x19: ffff000004f12000 x18: 000000000000000a
+[    0.379982][   T56] x14: 0000000000000000 x13: 205d363554202020 x12: 5b5d333437353733
+[    0.379965][   T56] x17: 646573736572706d x16: 6f6320666f207472 x15: 0000000000000000
+[    0.380000][   T56] x11: ffff80008056b84d x10: 000000000000005d x9 : ffffb114bf24e7e8
+[    0.379982][   T56] x14: 0000000000000000 x13: 205d363554202020 x12: 5b5d333437353733
+[    0.380045][   T56] x8 : ffff80008056ba08 x7 : 0000000000000006 x6 : ffff80014d2ccd08
+[    0.380000][   T56] x11: ffff80008056b84d x10: 000000000000005d x9 : ffffb114bf24e7e8
+[    0.380063][   T56] x5 : 332e30202020205b x4 : ffffb114c2722680 x3 : ffff80014d2cccd8
+[    0.380045][   T56] x8 : ffff80008056ba08 x7 : 0000000000000006 x6 : ffff80014d2ccd08
+[    0.380080][   T56] x2 : 0000000000000034 x1 : ffffb114c2722678 x0 : ffff80014d2cccd8
+[    0.380063][   T56] x5 : 332e30202020205b x4 : ffffb114c2722680 x3 : ffff80014d2cccd8
+[    0.380186][   T56] Call trace:
+[    0.380080][   T56] x2 : 0000000000000034 x1 : ffffb114c2722678 x0 : ffff80014d2cccd8
+[    0.380371][   T56]  memcpy_toio+0x44/0xc0 (P)
+[    0.380186][   T56] Call trace:
+[    0.380502][   T56]  ramoops_pstore_write+0x198/0x200
+[    0.380371][   T56]  memcpy_toio+0x44/0xc0 (P)
+[    0.380519][   T56]  pstore_console_write+0x98/0xd0
+[    0.380502][   T56]  ramoops_pstore_write+0x198/0x200
+[    0.380532][   T56]  console_flush_one_record+0x244/0x400
+[    0.380519][   T56]  pstore_console_write+0x98/0xd0
+[    0.380548][   T56]  console_unlock+0x88/0x158
+[    0.380532][   T56]  console_flush_one_record+0x244/0x400
+[    0.380560][   T56]  vprintk_emit+0x1c0/0x2b0
+[    0.380548][   T56]  console_unlock+0x88/0x158
+[    0.380572][   T56]  vprintk_default+0x3c/0x50
+[    0.380560][   T56]  vprintk_emit+0x1c0/0x2b0
+[    0.380584][   T56]  vprintk+0x38/0x80
+[    0.380572][   T56]  vprintk_default+0x3c/0x50
+[    0.380596][   T56]  _printk+0x68/0xa0
+[    0.380584][   T56]  vprintk+0x38/0x80
+[    0.380610][   T56]  free_reserved_area+0x17c/0x190
+[    0.380596][   T56]  _printk+0x68/0xa0
+[    0.380624][   T56]  free_initrd_mem+0x24/0x38
+[    0.380610][   T56]  free_reserved_area+0x17c/0x190
+[    0.380640][   T56]  do_populate_rootfs+0x1b4/0x1c0
+[    0.380624][   T56]  free_initrd_mem+0x24/0x38
+[    0.380653][   T56]  async_run_entry_fn+0x40/0x1a0
+[    0.380640][   T56]  do_populate_rootfs+0x1b4/0x1c0
+[    0.380664][   T56]  process_one_work+0x1a0/0x530
+[    0.380653][   T56]  async_run_entry_fn+0x40/0x1a0
+[    0.380677][   T56]  worker_thread+0x18c/0x310
+[    0.380664][   T56]  process_one_work+0x1a0/0x530
+[    0.380688][   T56]  kthread+0x134/0x148
+[    0.380677][   T56]  worker_thread+0x18c/0x310
+[    0.380699][   T56]  ret_from_fork+0x10/0x20
+[    0.380688][   T56]  kthread+0x134/0x148
+[    0.381028][   T56] Code: 8b060006 aa0103e4 aa0003e3 f8408485 (f9000065) 
+[    0.380699][   T56]  ret_from_fork+0x10/0x20
+[    0.381867][   T56] ---[ end trace 0000000000000000 ]---
+[    0.381028][   T56] Code: 8b060006 aa0103e4 aa0003e3 f8408485 (f9000065) 
+[    0.387483][   T56] Kernel panic - not syncing: Oops: Fatal exception
+[    0.381867][   T56] ---[ end trace 0000000000000000 ]---
+[    0.387675][   T56] SMP: stopping secondary CPUs
+[    0.387483][   T56] Kernel panic - not syncing: Oops: Fatal exception
+[    0.388052][   T56] Kernel Offset: 0x31143ea00000 from 0xffff800080000000
+[    0.387675][   T56] SMP: stopping secondary CPUs
+[    0.388068][   T56] PHYS_OFFSET: 0xfff1000040000000
+[    0.388052][   T56] Kernel Offset: 0x31143ea00000 from 0xffff800080000000
+[    0.388080][   T56] CPU features: 0x0,20000002,013c0020,00100000,0800820b
+[    0.388068][   T56] PHYS_OFFSET: 0xfff1000040000000
+[    0.388218][   T56] Memory Limit: none
+[    0.388080][   T56] CPU features: 0x0,20000002,013c0020,00100000,0800820b
+[    0.388218][   T56] Memory Limit: none
+[    0.000000][    T0] Booting Linux on physical CPU 0x0000000000 [0x410fd083]
+[    0.000000][    T0] Linux version 7.3.1-debug-vk189-suspend-00003-gbf0adba8ff9a (elden@y700) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #28 SMP PREEMPT Mon Nov 16 10:33:46 CST 2026
+[    0.000000][    T0] KASLR enabled
+[    0.000000][    T0] random: crng init done
+[    0.000000][    T0] Machine model: linux,dummy-virt
+[    0.000000][    T0] earlycon: pl11 MMIO:0x0000000009000000 (options '')
+[    0.000000][    T0] printk: legacy bootconsole [pl11] enabled
+[    0.000000][    T0] printk: debug: skip boot console de-registration.
+[    0.000000][    T0] printk: debug: ignoring loglevel setting.
+[    0.000000][    T0] efi: UEFI not found.
+[    0.000000][    T0] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000][    T0] NUMA: Faking a node at [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000][    T0] NODE_DATA(0) allocated [mem 0xbfbee640-0xbfbf0e3f]
+[    0.000000][    T0] cma: Reserved 32 MiB at 0x00000000bda00000
+[    0.000000][    T0] psci: probing for conduit method from DT.
+[    0.000000][    T0] psci: PSCIv1.1 detected in firmware.
+[    0.000000][    T0] psci: Using standard PSCI v0.2 function IDs
+[    0.000000][    T0] psci: Trusted OS migration not required
+[    0.000000][    T0] psci: SMC Calling Convention v1.0
+[    0.000000][    T0] Zone ranges:
+[    0.000000][    T0]   DMA      [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000][    T0]   DMA32    empty
+[    0.000000][    T0]   Normal   empty
+[    0.000000][    T0] Movable zone start for each node
+[    0.000000][    T0] Early memory node ranges
+[    0.000000][    T0]   node   0: [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000][    T0] Initmem setup node 0 [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000][    T0] percpu: Embedded 33 pages/cpu s95256 r8192 d31720 u135168
+[    0.000000][    T0] pcpu-alloc: s95256 r8192 d31720 u135168 alloc=33*4096
+[    0.000000][    T0] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 
+[    0.000000][    T0] Detected PIPT I-cache on CPU0
+[    0.000000][    T0] CPU features: detected: Spectre-v2
+[    0.000000][    T0] CPU features: detected: Spectre-v3a
+[    0.000000][    T0] CPU features: detected: Spectre-v4
+[    0.000000][    T0] CPU features: detected: Spectre-BHB
+[    0.000000][    T0] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000][    T0] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000][    T0] CPU features: detected: ARM erratum 1742098
+[    0.000000][    T0] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000][    T0] alternatives: applying boot alternatives
+[    0.000000][    T0] Kernel command line: console=ttyAMA0,115200 earlycon=pl011,0x09000000 keep_bootcon loglevel=8 ignore_loglevel panic=-1 initrd=0x50000000,1067167
+[    0.000000][    T0] printk: log buffer data + meta data: 1048576 + 3670016 = 4718592 bytes
+[    0.000000][    T0] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.000000][    T0] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.000000][    T0] software IO TLB: SWIOTLB bounce buffer size adjusted to 2MB
+[    0.000000][    T0] software IO TLB: area num 4.
+[    0.000000][    T0] software IO TLB: mapped [mem 0x00000000bb600000-0x00000000bb800000] (2MB)
+[    0.000000][    T0] Fallback order for Node 0: 0 
+[    0.000000][    T0] Built 1 zonelists, mobility grouping on.  Total pages: 524288
+[    0.000000][    T0] Policy zone: DMA
+[    0.000000][    T0] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000][    T0] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000][    T0] ftrace: allocating 82371 entries in 324 pages
+[    0.000000][    T0] ftrace: allocated 324 pages with 3 groups
+[    0.000000][    T0] rcu: Preemptible hierarchical RCU implementation.
+[    0.000000][    T0] rcu: 	RCU event tracing is enabled.
+[    0.000000][    T0] rcu: 	RCU restricting CPUs from NR_CPUS=512 to nr_cpu_ids=4.
+[    0.000000][    T0] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000][    T0] 	Rude variant of Tasks RCU enabled.
+[    0.000000][    T0] 	Tracing variant of Tasks RCU enabled.
+[    0.000000][    T0] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000][    T0] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+[    0.000000][    T0] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000][    T0] RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000][    T0] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000][    T0] Root IRQ handler: gic_handle_irq
+[    0.000000][    T0] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[    0.000000][    T0] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000][    T0] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000][    T0] arch_timer: cp15 timer running at 62.50MHz (virt).
+[    0.000000][    T0] clocksource: arch_sys_counter: mask: 0x1ffffffffffffff max_cycles: 0x1cd42e208c, max_idle_ns: 881590405314 ns
+[    0.000047][    T0] sched_clock: 57 bits at 63MHz, resolution 16ns, wraps every 4398046511096ns
+[    0.008976][    T0] Console: colour dummy device 80x25
+[    0.011733][    T0] Calibrating delay loop (skipped), value calculated using timer frequency.. 125.00 BogoMIPS (lpj=250000)
+[    0.012024][    T0] pid_max: default: 32768 minimum: 301
+[    0.017846][    T0] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.018026][    T0] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.025455][    T0] VFS: Finished mounting rootfs on nullfs
+[    0.056511][    T1] rcu: Hierarchical SRCU implementation.
+[    0.056680][    T1] rcu: 	Max phase no-delay instances is 1000.
+[    0.058291][    T1] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.063993][    T1] EFI services will not be available.
+[    0.066066][    T1] smp: Bringing up secondary CPUs ...
+[    0.069358][    T0] Detected PIPT I-cache on CPU1
+[    0.070233][    T0] CPU1: Booted secondary processor 0x0000000001 [0x410fd083]
+[    0.074785][    T0] Detected PIPT I-cache on CPU2
+[    0.075209][    T0] CPU2: Booted secondary processor 0x0000000002 [0x410fd083]
+[    0.076616][    T0] Detected PIPT I-cache on CPU3
+[    0.076907][    T0] CPU3: Booted secondary processor 0x0000000003 [0x410fd083]
+[    0.077347][    T1] smp: Brought up 1 node, 4 CPUs
+[    0.077963][    T1] SMP: Total of 4 processors activated.
+[    0.078047][    T1] CPU: All CPU(s) started at EL1
+[    0.078171][    T1] CPU features: detected: 32-bit EL0 Support
+[    0.078290][    T1] CPU features: detected: CRC32 instructions
+[    0.078501][    T1] CPU features: detected: PMUv3
+[    0.085491][    T1] alternatives: applying system-wide alternatives
+[    0.108349][    T1] Memory: 1948144K/2097152K available (27584K kernel code, 10986K rwdata, 19264K rodata, 4608K init, 2705K bss, 109180K reserved, 32768K cma-reserved)
+[    0.131285][    T1] devtmpfs: initialized
+[    0.150734][    T1] posixtimers hash table entries: 2048 (order: 3, 32768 bytes, linear)
+[    0.151574][    T1] futex hash table entries: 1024 (65536 bytes on 1 NUMA nodes, total 64 KiB, linear).
+[    0.154163][    T1] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.154313][    T1] 0 pages in range for non-PLT usage
+[    0.154356][    T1] 507936 pages in range for PLT usage
+[    0.166903][    T1] DMI: not present or invalid.
+[    0.182460][    T1] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.192397][    T1] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.192790][    T1] audit: initializing netlink subsys (disabled)
+[    0.194411][   T39] audit: type=2000 audit(0.184:1): state=initialized audit_enabled=0 res=1
+[    0.199214][    T1] thermal_sys: Registered thermal governor 'step_wise'
+[    0.199248][    T1] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.199716][    T1] cpuidle: using governor menu
+[    0.200578][    T1] NET: Registered PF_QIPCRTR protocol family
+[    0.202812][    T1] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.203929][    T1] ASID allocator initialised with 32768 entries
+[    0.212338][    T1] Serial: AMBA PL011 UART driver
+[    0.252863][    T1] 9000000.pl011: ttyAMA0 MMIO:0x0000000009000000 (irq = 13, base_baud = 0) is a PL011 rev1
+[    0.255018][    T1] printk: console [ttyAMA0] enabled
+[    0.255018][    T1] printk: console [ttyAMA0] enabled
+[    0.265167][    T1] pstore: Using crash dump compression: deflate
+[    0.265167][    T1] pstore: Using crash dump compression: deflate
+[    0.265530][    T1] printk: legacy console [ramoops-1] enabled
+[    0.265530][    T1] printk: legacy console [ramoops-1] enabled
+[    0.266553][    T1] pstore: Registered ramoops as persistent store backend
+[    0.266553][    T1] pstore: Registered ramoops as persistent store backend
+[    0.266743][    T1] ramoops: using 0x200000@0x4ff00000, ecc: 0
+[    0.266743][    T1] ramoops: using 0x200000@0x4ff00000, ecc: 0
+[    0.271884][    T1] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.271884][    T1] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.272547][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.272547][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.272909][    T1] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.272909][    T1] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.273252][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.273252][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.273596][    T1] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.273596][    T1] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.273994][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.273994][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.274307][    T1] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.274307][    T1] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.274549][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.274549][    T1] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.288702][    T1] raid6: using neon recovery algorithm
+[    0.288702][    T1] raid6: using neon recovery algorithm
+[    0.297876][    T1] iommu: Default domain type: Translated
+[    0.297876][    T1] iommu: Default domain type: Translated
+[    0.298158][    T1] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.298158][    T1] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.300750][    T1] SCSI subsystem initialized
+[    0.300750][    T1] SCSI subsystem initialized
+[    0.301956][    T1] libata version 3.00 loaded.
+[    0.301956][    T1] libata version 3.00 loaded.
+[    0.303762][    T1] usbcore: registered new interface driver usbfs
+[    0.303762][    T1] usbcore: registered new interface driver usbfs
+(截断到前 500 行；原始 1.2 MB 为 ramoops console 递归 oops)

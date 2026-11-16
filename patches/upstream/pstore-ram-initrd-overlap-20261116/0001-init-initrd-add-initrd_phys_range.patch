@@ -1,0 +1,92 @@
+From 5c72e9e838844eb67a22b68b6c6021625196c409 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 16 Nov 2026 10:54:58 +0800
+Subject: [PATCH 1/2] init: initrd: add initrd_phys_range()
+
+Memory handed to the kernel by the device tree (or by module parameters)
+is invisible to the firmware that placed the initrd, so nothing prevents
+the two from overlapping.  Add a helper that reports the physical range
+the initrd occupies, so that a driver owning such an area can refuse to
+use memory that currently holds it.
+
+The range is only reported while the initrd exists; after it is freed the
+helper returns false, which matches the fact that the memory is free to
+reuse at that point.  It must not be marked __init, since a modular
+caller may ask long after initmem has been discarded.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ include/linux/initrd.h |  7 +++++++
+ init/initramfs.c       | 28 ++++++++++++++++++++++++++++
+ 2 files changed, 35 insertions(+)
+
+diff --git a/include/linux/initrd.h b/include/linux/initrd.h
+index 7e5d26c813..4acc886607 100644
+--- a/include/linux/initrd.h
++++ b/include/linux/initrd.h
+@@ -3,6 +3,8 @@
+ #ifndef __LINUX_INITRD_H
+ #define __LINUX_INITRD_H
+ 
++#include <linux/types.h>
++
+ /* starting block # of image */
+ extern int rd_image_start;
+ 
+@@ -19,9 +21,14 @@ extern void free_initrd_mem(unsigned long, unsigned long);
+ #ifdef CONFIG_BLK_DEV_INITRD
+ extern void __init reserve_initrd_mem(void);
+ extern void wait_for_initramfs(void);
++extern bool initrd_phys_range(phys_addr_t *start, phys_addr_t *end);
+ #else
+ static inline void __init reserve_initrd_mem(void) {}
+ static inline void wait_for_initramfs(void) {}
++static inline bool initrd_phys_range(phys_addr_t *start, phys_addr_t *end)
++{
++	return false;
++}
+ #endif
+ 
+ extern phys_addr_t phys_initrd_start;
+diff --git a/init/initramfs.c b/init/initramfs.c
+index 3cee8b50ad..10afb76652 100644
+--- a/init/initramfs.c
++++ b/init/initramfs.c
+@@ -767,6 +767,34 @@ static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
+ 	init_flush_fput();
+ }
+ 
++/**
++ * initrd_phys_range() - physical address range occupied by the initrd
++ * @start: output, first byte of the initrd
++ * @end: output, one past the last byte of the initrd
++ *
++ * Return: %false if there is no initrd (never had one, or it has already
++ * been freed), %true otherwise.
++ *
++ * Used by drivers whose memory is described elsewhere (e.g. a ramoops area
++ * coming from the device tree): such a description only exists in the kernel,
++ * so the boot loader that placed the initrd could not have avoided it, and
++ * the initrd may end up inside that memory.
++ *
++ * The range is only reported for as long as the initrd exists.  This function
++ * must not be marked __init: a modular caller may still ask long after the
++ * initmem has been freed.
++ */
++bool initrd_phys_range(phys_addr_t *start, phys_addr_t *end)
++{
++	if (!initrd_start || initrd_end <= initrd_start)
++		return false;
++
++	*start = __pa(initrd_start);
++	*end = __pa(initrd_end);
++	return true;
++}
++EXPORT_SYMBOL_GPL(initrd_phys_range);
++
+ static ASYNC_DOMAIN_EXCLUSIVE(initramfs_domain);
+ static async_cookie_t initramfs_cookie;
+ 
+-- 
+2.53.0
+

@@ -1,0 +1,33 @@
+=== 0001-init-initrd-add-initrd_phys_range.patch
+CHECK: extern prototypes should be avoided in .h files
+#40: FILE: include/linux/initrd.h:24:
++extern bool initrd_phys_range(phys_addr_t *start, phys_addr_t *end);
+
+total: 0 errors, 0 warnings, 1 checks, 56 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/home/xuqianhui/y700-elden/patches/upstream/pstore-ram-initrd-overlap-20261116/0001-init-initrd-add-initrd_phys_range.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+=== 0002-pstore-ram-skip-zones-overlapping-the-initrd.patch
+CHECK: Alignment should match open parenthesis
+#129: FILE: fs/pstore/ram.c:850:
++		err = ramoops_init_prz("pmsg", dev, cxt, &cxt->mprz, &paddr,
++					cxt->pmsg_size, 0);
+
+WARNING: LINUX_VERSION_CODE should be avoided, code should be for the version to which it is merged
+#150: FILE: fs/pstore/ram.c:865:
++					&cxt->max_ftrace_cnt, LINUX_VERSION_CODE,
+
+total: 0 errors, 1 warnings, 1 checks, 149 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/home/xuqianhui/y700-elden/patches/upstream/pstore-ram-initrd-overlap-20261116/0002-pstore-ram-skip-zones-overlapping-the-initrd.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
