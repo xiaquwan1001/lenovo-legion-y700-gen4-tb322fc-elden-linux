@@ -1,0 +1,106 @@
+To: linux-arm-msm@vger.kernel.org, dri-devel@lists.freedesktop.org
+Cc: devicetree@vger.kernel.org, linux-kernel@vger.kernel.org,
+ Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+ Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>,
+ Abel Vesa <abel.vesa@oss.qualcomm.com>,
+ Bjorn Andersson <andersson@kernel.org>,
+ Rob Herring <robh@kernel.org>
+Subject: Re: [PATCH v5 0/3] drm/msm/mdss: reset all block resets described in DT
+In-Reply-To: <20261113155635.1677541-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261113155635.1677541-1-xiaqinghuan@mail.ustc.edu.cn>
+
+Hi all,
+
+3/3 says "5 of 9 cold PORs became 15 out of 15" and leaves it at that.  That
+is the only place the Q28 evidence has ever appeared upstream, and it does not
+let anyone judge it.  Here is the underlying data and, more importantly, the
+boundary of what it does and does not show.  No code change in this message;
+take it as material for the commit message if you think it belongs there.
+
+Board: Lenovo Y700 Gen4 (TB322FC), SM8750P, bonded dual-DSI panel
+"csot,pp8807hb1-1" (driver novatek,nt36536), 1904x3040, DSC, two DSI hosts.
+
+1. What actually fails, and how it is classified
+
+The failure is a cold boot (real power-on reset) that brings up no image.  It
+is ~50% of cold PORs, it is random per boot, and it clusters in time; it is
+independent of the kernel image - the same binary is good and then bad in
+neighbouring boots, and seven different kernel variants were tested against
+this.  Three distinguishable forms:
+
+  A. cardN exists, panel init fails.  Five dmesg lines, in order:
+       command DMA timeout: status=0x2200200
+       peer command DMA timeout: status=0x2200200
+       bonded command DMA failed: master=-110 peer=-110
+       sending dcs data ff 20 failed: -110
+       Failed to initialize panel: -5
+     followed by intf1/ctl 1 reset failure -22 and a vblank/frame-done storm.
+  B. no DRM card at all, with "DSI PLL(0) lock failed, status=0x00000000" at
+     about 0.86 s and a failed device link for panel@0.
+  C. dark panel with everything in the DRM state looking healthy: connector
+     connected, DPMS On, frame counter advancing, backlight non-zero, and the
+     DSI pclk held.  This one is the reason "no DMA timeout in dmesg" must not
+     be read as "display works".
+
+The only physical discriminator we found for C is the DSI interrupt counter:
+41 on a lit panel, 0 on a dark one, with identical DRM state.
+
+2. Why "reset the MDSS blocks" was picked
+
+Because in a bad boot the failure is not inside the DSI controller and a DSI
+host reset does not clear it.  Registers read from a live bad boot:
+STATUS0 = 0x20003 (engine and DMA busy), DSI interrupt count 0, PLL unlocked
+bit not set (the PLL is locked), and CLK_STATUS sitting at 0x1743/0x3743 with
+DYN_PCLK_ACTIVE never released, where a healthy boot shows 0x343 -> 0x743 ->
+0x343 around each command.  Repeated retries after that point fail with
+identical values, which is why a single bad boot costs the whole session.
+
+Against that, the change under review makes the display driver de-assert the
+MDSS block resets described in DT before anything is programmed, which puts
+the whole MDSS block into a known state before the first DCS command.
+
+3. The measurements
+
+Campaign of 23 real power-on resets, arms sampled alternately in the same
+session, identical kernel/config/ramdisk/dtb/cmdline except for the change:
+
+  base (no reset)                 9 boots: 4 good, 5 storm
+  base + MDSS block reset         5 boots: 5 good
+  base + block reset + DIGTOP    10 boots: 10 good
+  base + DIGTOP only              4 boots: 1 good, 3 storm
+
+Fisher exact, two-sided: block-reset+DIGTOP vs base p = 0.011; DIGTOP alone
+vs base p = 1.0 (no effect); the two arms containing the block reset merged,
+15/15 vs 4/9, p = 0.003.  So the block reset is the thing that does something;
+the DIGTOP/PLL-lock tweak does not, on its own, at all.
+
+Moving the same reset out of the clock driver's probe into the display driver
+(the shape of this series) then measured 5/5 good cold PORs.
+
+4. Two boundaries I do not want to paper over
+
+- The 15/15 figure is a merged group and it predates this series' shape.  It
+  measures "MDSS block resets are de-asserted by the display side early", not
+  literally patch 2/3 of v5.
+- The reset set that was measured on hardware is the three-entry set (core,
+  core_int2, rscc).  After sashiko's remark about 0xa000 v4/v5 dropped to two
+  entries, and the two-entry set has not been through a cold-boot sample yet,
+  nor has 0xa000 been varied on its own.  A paired cold-boot run of two-entry
+  vs three-entry is queued; until it completes, 3/3 stays worded as "not
+  repeated with this exact set" rather than as equivalent.
+
+5. What I would like to know
+
+Is this evidence useful for merging the series, or would you rather see it
+condensed into 2/3's commit message?  And separately: given that the failure
+is a cold-boot race that upstream cannot reproduce on any other board we know
+of, is a quirk-style "reset everything described in DT" acceptable here on its
+own merits, or does it need to be tied to a named hardware erratum to be
+mergeable?
+
+AI-assistance disclosure: this message was drafted with an LLM coding
+assistant; the author verified every number and register value above against
+his own logs and test records and takes responsibility for it.
+
+Thanks,
+Qianhui

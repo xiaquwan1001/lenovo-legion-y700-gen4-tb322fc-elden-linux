@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | `regulator: willsemi,wl2868c` | **v11** | 3 | 3×250，lore 归档逐字节通过 | `patches/upstream/wl2868c-v11-20261113/`；回 Mark 的 LDOx_SEQ 问题（datasheet Rev1.4 p.35 + 板上读数 `0x0a..0x0d=00`） |
 | `drm/msm/mdss` 块复位 | **v4 → v5** | 4 + 4 | v4 4×250（11-13）；**v5 4×250（2026-11-14）** | v4 = `patches/upstream/m8-mdss-v4-20261113/`（只重写 3/3 message，带 Abel+Dmitry R-b）；**v5 = `patches/upstream/m8-mdss-v5-20261114/`**（答 sashiko 的「0xa000 是未 attach 的独立域」Medium：1/3、2/3 未变，3/3 diff 逐字节相同、只收窄 message，三个 R-b 含 Konrad；全账 `reports/mail-send-20261114-mdss-v5.md`） |
-| `drm/msm/dsi/phy` PLL_SYSTEM_MUXES | v1 | 1 | 11-11 已投 | Dmitry 要求把解释性注释搬进 commit message ⇒ 待 v2 |
+| `drm/msm/dsi/phy` PLL_SYSTEM_MUXES | v1 → **v2 备料完成（2026-11-16，未发）** | 1 | v1 = **2026-10-19** 投出（MID `20261019130041.305805-1-…`）；Dmitry 2026-11-11 回一句「注释该进 commit message」⇒ v2 = `patches/upstream/dsi-phy-muxes-v2-20261116/`（对 **7.4-rc3 `aebb727447`** `git am` rc=0、`checkpatch --strict` **0 error**、代码与在机 vk192 第 1155 行逐字相同）；v2 另把 `Fixes:` 从 `44784327815b`（且 v1 把它标题写错）改指 `cb55f39bf7b1` |
 | `arm64: dts: sm8750 ADSP fastrpc non-secure` | v3 | 1 | 11-11 已投 | 等 Konrad 拉的四位定性；`accel/qda` v4 与 `nsessions` 废弃在动 |
 | `pstore/ram` 拒绝与 initrd 重叠的 zone | v1 | 2 | **2 枚 + cover 全部 250（2026-11-16 12:00:49）**；lore `/lkml/`、`/linux-arm-msm/` 命中 0/2（归档 04:01:14Z） | 备料与门禁 = `patches/upstream/pstore-ram-initrd-overlap-20261116/`（apply-check 对 `gh/master` 2/2、checkpatch 0 error、构建 0E/0W、QEMU A/B、**真机 UEFI/GRUB 守卫生效**）；账 `logs/40-sent.txt`；正文 `reports/pstore-ram-initrd-guard-20261116.md` |
 | UEFI `mu_wide_platforms#12` | — | 1 评论 | 11-13 闭环已发（comment 6847932534） | UFS 枚举通、两形态都通、flashed 真阻塞 = `dtbo_a` |
@@ -21,7 +21,7 @@
 |---|---|---|
 | **wl2868c**（M4） | v11 等 Mark 复审；binding 侧 Rob 已 R-b | 若被要求「非零 SEQ 时隐藏 ops」的替代方案，需给出为何不选（cover 已答）；否则等 |
 | **mdss**（M8） | **v5 已发（11-14）**：sashiko 的「0xa000 是 dispcc 单独描述的域、mdss 没 attach」质疑成立 ⇒ 保留 3/3、只收窄 message（不再称 interrupt controller / same block）+ 声明两条测量边界（15/15 是三枚形状、0xa000 未做单变量）；3 R-b 全保留 | 等回复；若被判不可接受则发 v6 删 3/3（并发回 1/3 应有的 Rob Acked-by）。**仍未证**：两枚形状的上机验证、0xa000 单变量（`reports/mdss-int2-evidence-20261113.md` §2.3） |
-| **dsi/phy** | v1 收到 Dmitry 一条（注释位置） | **v2：注释搬进 commit message**，代码只留 `writel(0xc0, …)` + 一行理由 |
+| **dsi/phy** | v1 收到 Dmitry 一条（注释位置）⇒ **v2 已备料待发**（`patches/upstream/dsi-phy-muxes-v2-20261116/` 含 `git send-email --in-reply-to=<Dmitry MID>` 命令与 v1↔v2 range-diff） | 只差「按系列批准」那一步；发出后按 lore 逐 inbox 复核 |
 | **haptics aw86937** | v1；bindings 有 Krzysztof Acked-by；同串其余只收 bot 意见 | **v2 顺手采纳** `GENMASK(6,5)` 与 `devm_add_action_or_reset` 两点 |
 | **counter/dispcc reset RFC** | 两轮追问无维护者回信 | 按自己承诺：v2 挪到 display 侧、`reset_control_*`、补 simple-framebuffer 在场对照；否则撤 |
 | **相机 camss** | **改接 Qualcomm v6**（7 补丁，2026-07-21）；自建 9 补丁串停止后续版本 | 拿 7.4-rc2+ 树比对 `csiphy_res_kaanapali` 与本机 vendor 2.4.0 表；SOF 等 Bryan 的 `V4L2_EVENT_FRAME_SYNC`；板级 dts 等 v6 合入后 rebase。详见 `reports/camss-v6-rebase-plan-20261113.md` |
@@ -30,6 +30,23 @@
 | **gie-v3-its 认领继承 LPI 表**（M9） | 已投并归档 | 无 |
 | **fastrpc** | 等 Konrad 线程定性 | 准备「为什么不能简单写 non-secure」的寄存器/固件证据；跟踪 `accel/qda` v4 与 `deprecate qcom,nsessions` |
 | **Gunyah** | 主线仍 0 进展（停在 2023-03 v11） | 拓展项维持「无上游可依赖」 |
+
+## 2b. 2026-11-16 复查与新增欠账
+
+- IMAP `read-mail-ustc.py --days 4 --replies-only` = **INBOX / Junk / Sent Items 各 0 封**
+  ⇒ `pstore/ram`（11-16 12:00）、**M8 mdss v5**（11-13）、**M6 bonded**（10-31）、**Q28 REPORT v2**（10-15）
+  **全部零回复**；四条线程维持「等维护者」。取证 = `reports/q28-dossier-B-mail-external.md` §①②。
+- **我方新欠两件（备料已在档，只差放行）**：
+  1. **dsi/phy v2**（上表；`checkpatch --strict` 0 error，剩 3 条 `Unknown commit id` = 本地浅树假阴性，
+     已用 GitHub API 对 mainline 核实两个 sha）；
+  2. **Q28 证据回帖到 v5 线程** = `patches/upstream/mdss-v5-q28-evidence-20261116/mail-body.txt`
+     （症状族 A/B/C + 硬判据「DSI 中断计数亮 41 / 暗 0」+ 23 发真实 POR 四臂：`base 4/9` vs
+     `含块复位两臂 15/15`，Fisher 双侧 **p=0.003**；`DIGTOP` 单独 p=1.0 ⇒ 无效；并写明边界
+     **15/15 是三枚形状、两枚形状未采样**）。`send-mail-ustc.py` dry-run 已过（95 行、纯 ASCII、
+     `In-Reply-To` = v5 cover MID `20261113155635.1677541-1-…`）。
+- **邮件账缺口**（`q28-DOSSIER-B` §⑤-3）：`send-mail-ustc.py` 走 `smtplib`、发送后**不做 IMAP `APPEND`**
+  ⇒ 该通道发出的件在 Sent Items 查不到（v5 那批就是典型）。处置 = 脚本在 `--send` 成功后 `APPEND`
+  到 `"Sent Items"`（**未做，登记待办**）；临时补法 = `patches/upstream/dsi-phy-muxes-v2-20261116/README.md` §5。
 
 ## 3. 复启/纪律
 
