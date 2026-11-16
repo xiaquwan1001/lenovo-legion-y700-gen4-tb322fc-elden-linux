@@ -52,7 +52,7 @@
     `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动；拷回当 BOOTAA64.EFI 即走 `\menu.cfg` → `\boot\boot.img` 那条 14 s 链）。
     历史件全在 ESP 上可回滚：`.arming-v6.bak`（`244c5f65…` v3b-bigfont 嵌入菜单，不读 linux17 的 grub.cfg）、
     `.grub-arming-v7.bak`（`a63d2ab4…`，卡 GRUB→initrd 交接，`PITFALLS #659`）、`.lf2v2.bak`（`b9fb14cb…`，LF2 只打印版）、`.v3b-restore.bak`/`.v5.bak` 等。
-    `\boot\boot.img` **本轮临时换成 pstore 守卫件**（`bdf47f5f…`，= 本轮内核 + vk190 的 64 MB ramdisk/dtb），旧件备份 `out/boot-elden-vk190.img`（`54e84588…`）。
+    `\boot\boot.img` = **`bdf47f5f…`**，与 `out/boot-elden-vk192.img`（空载件）**逐字节相同** ⇒ ESP 侧的 a 槽链路已指向 vk192（旧件备份 `out/boot-elden-vk190.img` `54e84588…`）。
     **判据（新，旧的 `elden_bootloader=esp` 已失效）**：ESP 路径 = cmdline 里 `androidboot.serialno=51318dc0`（CRC32，**不是**真 SN）
     且**无** ABL 追加的 `verifiedbootstate/hqsysfs/ufsffu`；b 槽路径反之。
   - **`/boot` 下 DTB 现为「预置 initrd 属性」版（2026-11-14 22:41）**：`elden.dtb` = `84c2e0bf…`（153 193 B）、
