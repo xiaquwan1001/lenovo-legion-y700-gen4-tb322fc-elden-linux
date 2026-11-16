@@ -55,3 +55,5 @@
 - 81 条设备侧细粒度坑（Alpine/busybox、Waydroid 容器状态机、codec/audio/camera、SSH 部署）：`.pi/memory/failures-device.md`（条目数现查：`grep -c '^---$'`）。
 - 346 条刷机/AVB/kexec/EDK2-Mu/UEFI/内核打包证据与寄存器级细节：`.pi/memory/failures-kernel.md`（同上现查）。
 - 协作口径（物理 POR、目视纠正、按字母顺序执行、电话/观测节奏）：`.pi/memory/USER.md`。
+
+- 硬件稳定性（随机 SEGV/ICE、编译产物损坏、页缓存/位翻转）：工具与判据全在 `~/hw-stability`（入口 `~/hw-stability/AGENTS.md`，技能 `hw-stability-tools`）；本项目只按全局 AGENTS 硬性规则 12 上交证据到 `~/hw-stability/evidence/inbox/`，不在此复述。
