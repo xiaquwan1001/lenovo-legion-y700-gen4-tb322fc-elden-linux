@@ -9,6 +9,8 @@
 # 用法：
 #   scripts/grub-arm64-arming-build.sh                 # 用 out/grub-20261114/arming-menu.cfg
 #   scripts/grub-arm64-arming-build.sh --cfg FILE --out FILE
+#   scripts/grub-arm64-arming-build.sh --cfg FILE --bigfont build/grub-arm64/fonts/big-cjk72.pf2 --out FILE
+#       ↑ 主字体换成含中文字形的 pf2（造字脚本 scripts/grub-arm64-cjk-font.sh；默认仍是 big.pf2）
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WORK=$ROOT/build/grub-arm64
@@ -16,6 +18,7 @@ MODDIR=$WORK/usr/lib/grub/arm64-efi
 FONTDIR=$WORK/fonts
 CFG=$ROOT/out/grub-20261114/arming-menu.cfg
 OUT=$ROOT/out/grub-20261114/grubaa64-arming-v6.efi
+BIGFONT=$WORK/fonts/big.pf2
 MODULES="normal linux fdt ext2 fat disk part_gpt part_msdos search search_label search_fs_uuid echo test sleep reboot halt minicmd cat ls configfile loadenv font gfxterm gfxmenu all_video video"
 
 die() { echo "[grub-build] ERROR: $*" >&2; exit 1; }
@@ -25,6 +28,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 		--cfg) CFG=$2; shift 2;;
 		--out) OUT=$2; shift 2;;
+		--bigfont) BIGFONT=$2; shift 2;;
 		-h|--help) sed -n '2,18p' "$0"; exit 0;;
 		*) die "unknown arg: $1";;
 	esac
@@ -33,12 +37,13 @@ done
 [ -d "$MODDIR" ] || die "缺 arm64 模块目录 $MODDIR（先跑 scripts/grub-arm64-standalone.sh 取 deb）"
 for f in big med small; do [ -f "$FONTDIR/$f.pf2" ] || die "缺字体 $FONTDIR/$f.pf2"; done
 [ -f "$CFG" ] || die "缺菜单 $CFG"
+[ -f "$BIGFONT" ] || die "缺主字体 $BIGFONT"
 mkdir -p "$(dirname "$OUT")"
 
-say "grub-mkstandalone（菜单 $(wc -l <"$CFG") 行，字体 96/72/40 px）"
+say "grub-mkstandalone（菜单 $(wc -l <"$CFG") 行，主字体 $(basename "$BIGFONT")，med/small 72/40 px）"
 grub-mkstandalone -O arm64-efi -d "$MODDIR" --modules="$MODULES" -o "$OUT" \
 	"boot/grub/grub.cfg=$CFG" \
-	"boot/grub/fonts/big.pf2=$FONTDIR/big.pf2" \
+	"boot/grub/fonts/big.pf2=$BIGFONT" \
 	"boot/grub/fonts/med.pf2=$FONTDIR/med.pf2" \
 	"boot/grub/fonts/small.pf2=$FONTDIR/small.pf2" || die "grub-mkstandalone 失败"
 [ -s "$OUT" ] || die "产物为空"

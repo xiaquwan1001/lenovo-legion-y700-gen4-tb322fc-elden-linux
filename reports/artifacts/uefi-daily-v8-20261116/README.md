@@ -59,3 +59,32 @@
 ## 回滚口径
 
 `scripts/esp-install-grub.sh --rollback`，或手工把 `EFI/BOOT/BOOTAA64.EFI.daily-v8-20261116.bak`（= 验证件 `cc6391b3…`）拷回。
+
+## v9 / v10：菜单中文标题（2026-11-16 15:20-15:36）
+
+用户要求「改标题以便加载中文」。**v8 的标题含中文/全角括号，而原 `big.pf2`（DejaVu 系）没有 CJK 字形** ⇒ 屏上全是「点」
+（见 `30-cold-por-grub-menu.jpg`）。两条一起改：
+
+1. **字体**：`scripts/grub-arm64-cjk-font.sh`（本轮新增）—— 从 `/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc`
+   用 `pyftsubset` **只抽菜单用到的字形**（130–134 个），`grub-mkfont` 造 pf2（72 px ≈ **29.6 KB**；整份 Noto CJK 96 px 会到十几 MB，
+   而 ESP 只剩 ~64 MB 余量，PITFALLS #664）。带自校验：每个标题里的非 ASCII 码位必须真的出现在 pf2 里。
+   构建侧给 `scripts/grub-arm64-arming-build.sh` 加了 `--bigfont FILE`（默认仍是原 `big.pf2`）。
+2. **标题变短**：GRUB 菜单项**不折行**，v9 用长标题（~1900-2400 px @96）⇒ 尾巴被截掉（用户：「条目不分行导致选项字不全」）。
+
+| 版本 | 主字体 | 标题 | 结果 |
+|---|---|---|---|
+| v8 | DejaVu `big.pf2` 96 px | 中文长标题 | 中文渲染成「点」 |
+| v9 | Noto CJK 子集 96 px（`big-cjk.pf2`，54 KB） | 中文长标题 | **中文出来了**，但间距过大 + 条目被截断 |
+| **v10（现役）** | Noto CJK 子集 **72 px**（`big-cjk72.pf2`，29.6 KB） | 短标题（≤1098 px @72，屏宽 1904） | `启动 vk192（直载 initrd）` / `启动 vk192（无 ramoops 诊断）` / `加载 ESP Loader.efi（r73）` / `重启` / `关机` |
+
+**v10 真机验证（同日）**：
+
+| 项 | 值 |
+|---|---|
+| 件 | `out/grub-arm64-arming-20261116/grubaa64-daily-v10-cjk.efi`，sha256 `15a8ddf8…`，8 204 288 B，`menuentry=5` |
+| 装 | `scripts/esp-install-grub.sh --efi … --tag daily-v10-cjk-20261116 --activate`（ESP 读回 sha 一致；ESP 用量 448M/511M） |
+| a 槽暖启 | `reboot` 15:32:32 → SSH 15:34:12（**68 s**，含 GRUB `timeout=10`）；`grubenv=51-daily-vk192-initrd-ok-booting`、`Active slot: _a`、DRM `card1` |
+| **q28 看门狗修复验证** | 该发在 a 槽上活过 **160 s+** 且 `/var/log/q28-watchdog.log` 无新行（修前 100 s 必触发）⇒ `PITFALLS #667` 的修法在真机成立 |
+| 回 b | `set_active b` → **20 s** 到 SSH，`Active slot: _b`，vk192 |
+
+ESP 现役件链：v8 `f5dcf599…` → v9 `82fb1f8f…` → **v10 `15a8ddf8…`**（前两版都在 `EFI/grub/grub-*.efi` 与 `*.bak` 里可回滚）。

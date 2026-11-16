@@ -47,7 +47,9 @@
     当时它嵌的菜单 = 11-11 的 A/B/C 实验组，`default=0` = **无 `earlycon=efifb keep_bootcon` 的 A 臂**
     ⇒ 直接 `set_active a` 起来会黑屏无字（`PITFALLS #622`），复测前必须先换 arming 件（`out/grub-20261114/grubaa64-arming-v6.efi`）。
   - **ESP（`/dev/sda18`）实测身份（2026-11-16 现查，取代 11-14 夜“= Loader-r73”那段）**：
-    **现役（2026-11-16 14:03 归位）** `\EFI\BOOT\BOOTAA64.EFI` = **日常用嵌入菜单 GRUB**（`f5dcf599…`，9 527 296 B；菜单 = `out/grub-arm64-arming-20261116/arming-daily-v8.cfg`）——
+    **现役（2026-11-16 15:33 起）** `\EFI\BOOT\BOOTAA64.EFI` = **日常用嵌入菜单 GRUB v10 + 中文标题**（sha `15a8ddf8…`，8 204 288 B；菜单 = `out/grub-arm64-arming-20261116/arming-daily-v10-cjk.cfg`，主字体 = Noto Sans CJK 子集 72 px `build/grub-arm64/fonts/big-cjk72.pf2`，生成器 = `scripts/grub-arm64-cjk-font.sh`）——标题：`启动 vk192（直载 initrd）` / `启动 vk192（无 ramoops 诊断）` / `加载 ESP Loader.efi（r73）` / `重启` / `关机`。
+    **v8/v9 沿革**：v8 = `f5dcf599…`（DejaVu 字体、中文标题渲染成点）；v9 = `82fb1f8f…`（CJK 子集 96 px，中文可读但间距大 + 标题被截断，GRUB 菜单项不折行）；两版都在 `EFI/grub/grub-*.efi` 与 `*.bak` 里。
+    **v8 及以前的口径**：菜单原型 = `arming-daily-v8.cfg`（同一套 5 臂结构，仅标题/字体不同）——
     臂 0（默认，`timeout=10`）= 直载 `/boot/Image`（vk192 守卫核）+ `elden.dtb` + 64 MB initrd + 全量 `earlycon=efifb keep_bootcon` cmdline；
     臂 1 = 同一内核 + `elden-noramoops.dtb`（诊断）；臂 2 = chainload `\EFI\elden\Loader.efi`（r73 → `\boot\boot.img`）；reboot/poweroff。
     **a 槽暖启实测已过**（`fastboot set_active a` → 14:04:35 → 14:05:53 = **44 s 到 SSH**；cmdline `elden_bootmenu=grub-daily`、grubenv `51-daily-vk192-initrd-ok-booting`、ramoops 三段 `ignoring … overlaps the initrd`）；
