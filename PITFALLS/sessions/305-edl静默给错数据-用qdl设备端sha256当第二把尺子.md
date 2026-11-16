@@ -21,8 +21,8 @@
   同时 `edl.py r boot_b` 三次独立读 sha 全同 ⇒ 读路径本身也没坏。
 - **默认改用 `~/edl/qdl/build/qdl`（tag v2.9）**做读/校验（`read` / `sha256` / `-u` 分块 / `--dry-run`）；
   `edl.py` 只留 loader/Sahara 与 GPT 小写 ⇒ 这是 `reports/edl-toolchain-survey-20261101.md` §4.5
-  早已写下的结论（「bkerler 仅保留 loader/Diag 用途，避免其 qfil 已知返回码 bug #808/#809/#810」），本轮再次撞到。
-- **写路径永不信任退出码**：`cmd_program()` 在设备拒绝 `<program>` 时仍返回 True（#808）、
+  早已写下的结论（「bkerler 仅保留 loader/Diag 用途，避免其 qfil 已知返回码 bug bkerler issue 808/809/810」），本轮再次撞到。
+- **写路径永不信任退出码**：`cmd_program()` 在设备拒绝 `<program>` 时仍返回 True（bkerler issue 808）、
   `qfil` 会**静默只写一部分分区**却退出 0、`gpt <dir>` 会打印成功但**一字节都不写**（技能 `qualcomm-edl-flashing` §Pitfalls）
   ⇒ 写完一律 `qdl sha256` 或读回比 sha；本轮 `fastboot flash misc` 就是用 EDL 读回比 sha 才确认落盘（`8da2a417…`）。
 - **LBA 单位 = 4096 B**（不是 512）：算偏移一律 `byte_offset // 4096`；`sgdisk/gdisk` 按 512 读会整表错位。
