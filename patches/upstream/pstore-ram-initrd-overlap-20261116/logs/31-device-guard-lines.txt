@@ -1,0 +1,6 @@
+8:[    0.000000] [      T0] printk: debug: ignoring loglevel setting.
+267:[    4.623508] [      T1] ramoops c2000000.ramoops: ignoring dmesg zone 0xc2000000-0xc21fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+268:[    4.715498] [      T1] ramoops c2000000.ramoops: ignoring console zone 0xc2200000-0xc23fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+269:[    4.807561] [      T1] ramoops c2000000.ramoops: ignoring pmsg zone 0xc2400000-0xc27fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+270:[    4.899447] [      T1] ramoops c2000000.ramoops: every zone overlaps the initrd; ramoops disabled for this boot
+462:[   15.575674] [     T74] Unpacking initramfs...

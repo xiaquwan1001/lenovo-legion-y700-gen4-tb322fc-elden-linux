@@ -47,7 +47,5 @@ work	wt/	ignore	lane git worktree（scripts/lane.sh WT_ROOT）
 work	external/	ignore	外部构建工作区（$HOME 同名软链指回此处）
 work	geekidos-linux/	ignore	上游内核 clone（GEEKiDoS/linux v7.2-elden）
 work	Y700-elden-linux/	ignore	旧迭代上游 clone
-work	stock-src/	ignore	联想 GPL 源码 clone
-work	y700四代工具/	ignore	厂商工具与解锁工具包
 work	linux	track	目录约定软链 -> geekidos-linux
 ai	.pi/	track	AI 大脑：行为规范/并发/编排/技能/记忆/会话（分工见 .pi/README.md）

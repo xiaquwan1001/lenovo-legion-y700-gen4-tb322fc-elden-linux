@@ -1,14 +1,16 @@
 # pstore/ram 拒绝与 initrd 重叠的 zone —— 落地与门禁（2026-11-16）
 
 > 承接 `reports/uefi-grub-initrd-rootcause-20261115.md`（真机根因定案）与 INDEX §0「下一步 5」的修法 ①。
-> 本轮完成：**补丁落地（2 枚系列）+ 独立评审 + 构建 + QEMU A/B 复现与拦截**；**未上机**（需设备窗口）。
+> 本轮完成：**补丁落地（2 枚系列）+ 独立评审 + 构建 + QEMU A/B + 真机一发**（UEFI/GRUB 路径，守卫生效，见 §5）。
 > 备料件 = `patches/upstream/pstore-ram-initrd-overlap-20261116/`（`0000` cover + `0001`/`0002` + `README.md` + `logs/`）。
 
 ## §0 一句话结论
 
 内核侧守卫**已成形并全绿**：`initrd_phys_range()` + `ramoops_probe()` 逐 zone 判重叠 ⇒ 重叠段 `dev_warn` 跳过、
 其余照常注册；QEMU 同一因果链两发 A/B 分别给出「无守卫：`Initramfs unpacking failed`」「有守卫：跳过 console 段并起进 `/init`」。
-**剩余 = 用户批准 + 真机一发（GRUB/UEFI 路径）**。
+**真机已验**：同一颗内核、同一份 64 MB initrd、保留 `ramoops@c2000000`（11-15 夜必失败的那份 DTB）⇒ 三段 zone 全部
+`ignoring … overlaps the initrd`、ramoops 本 boot 关闭、initrd 完整解包、60 s 起进 SSH（§5）。
+**剩余 = 用户批准后发信。**
 
 ## §1 落地内容
 
@@ -45,10 +47,44 @@ QEMU 配方与两个装法陷阱（`-dtb` 与 `-device loader` 抢 `0x48000000`�
 落点只由 Image 尺寸决定），而 GRUB 侧「对 `/reserved-memory/*` 先 `AllocatePages` 占位」只能治 GRUB 一条路、
 且要重打 EFI；内核守卫对所有 loader（Mu/GRUB/kexec/UEFI stub）同时生效，且是**可上游**的通用行为。
 
-## §5 剩余动作
+## §5 真机一发（2026-11-16 11:46–11:48，UEFI/GRUB 路径，**守卫在真机生效**）
 
-1. **真机一发**（设备窗口 + 用户在场）：`fastboot set_active a` 或物理 POR 走 UEFI/GRUB 路径，判据 = 串口/屏上出现
-   `ignoring console zone … overlaps the initrd` + initrd 完整解包（对照 `PITFALLS #665` 的失败签名）。
-   注意 ESP 现役件 = Loader-r73，菜单指向 ESP `\boot\boot.img`；**不是** GRUB 嵌入菜单件（见 `DEVICE/README.md` §1.1）。
+链路：`fastboot set_active a` → ABL → `boot_a`(Mu UEFI pc1) → ESP `\EFI\BOOT\BOOTAA64.EFI`（本轮自打嵌入菜单 GRUB
+`cc6391b3…`）→ `\boot\grub\grubenv` 逐步打点 → `devicetree /boot/elden.dtb`（**含** `ramoops@c2000000`）→
+`linux /boot/Image`（= 本轮 `build/daily` `v7.3.1-5-g4bdf1711b5`，`0a55e52c…`）→ `initrd /boot/initrd.img`（64 595 425 B，`3282ae6c…`）。
+
+**60 s 起进 SSH**、`uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`，串口（dmesg）原文：
+
+```
+[    4.623508] ramoops c2000000.ramoops: ignoring dmesg zone 0xc2000000-0xc21fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.715498] ramoops c2000000.ramoops: ignoring console zone 0xc2200000-0xc23fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.807561] ramoops c2000000.ramoops: ignoring pmsg zone 0xc2400000-0xc27fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.899447] ramoops c2000000.ramoops: every zone overlaps the initrd; ramoops disabled for this boot
+[   15.575674] Unpacking initramfs...
+[   29.574689] Run /init as init process
+```
+
+判读（逐条）：
+
+| 观测 | 含义 |
+|---|---|
+| initrd 物理区间 `0xc1ab0000-0xc584a5e0`（63 MB）**整段盖住** `ramoops@c2000000` 的 8 MB（`0xc2000000-0xc27fffff`） | 与 11-15 夜失败的落点同类（那两发是 `0xc23e0000` / `0xc18b0000`），**这次是真的重叠**，不是"没撞上" |
+| 三段 zone 逐条 `ignoring …: it overlaps the initrd` + 四段全跳 `ramoops disabled for this boot` | 守卫按设计触发：**console 段没有被注册**（根因面直接关掉），而非"注册后侥幸没写坏" |
+| `Unpacking initramfs...` → `Run /init` → 起进 systemd → 60 s SSH | initrd 完好；对照 11-15 同配置（无守卫内核）= `broken padding` 后回落 b 槽 |
+| `OF: reserved mem: failed to reserve memory for node 'ramoops@c2000000'`（t=0） | 正常：initrd 已先占住那段，memblock 拒绝再 reserve；随后 nomap 标记照做，与本补丁无关 |
+| `/sys/fs/pstore` 空、`pstore: Registered efi_pstore` | 本 boot 的 ramoops 全线关闭（预期副作用）；efi_pstore 后备仍在 |
+
+**同轮旁证**：换回 11-15 夜那份 GRUB（`92a4d8b2…`，嵌入菜单，默认臂带 `devicetree elden.dtb`）在同一天先跑过一发，
+结果是「菜单后滚三四行 → 黑屏仅背光 → 20 s 关机 → ABL 回落 b 槽」——与本轮同 DTB、同 initrd、只差内核有无守卫，
+**构成真机上的有/无守卫对照**（11-15 夜那发是"删 DTB ramoops 节点才起"，本轮是"保留节点、守卫挡住即起"）。
+
+产物：`reports/artifacts/uefi-pstoreguard-20261116/`（`dmesg-guard.txt` 全文、`guard-summary.txt`、自打菜单与 EFI）。
+断点：设备现处 a 槽（`set_active a`）；回滚 = `fastboot set_active b`（b 槽 `boot_b` vk190 未动）。
+
+
+## §6 剩余动作
+
+1. ~~真机一发~~ **已于 §5 完成（守卫在真机生效）**。注意 ESP 现役件本轮换成了自打嵌入菜单 GRUB（`cc6391b3…`），
+   ESP `\EFI\BOOT\BOOTAA64.EFI` 的历史件全在（`.grub-fixr2-20261116.bak` 等），r73 = `\EFI\elden\Loader.efi`。
 2. 用户批准后按 `TASKS/README.md` §7 逐系列发信（pstore 维护者 Kees Cook + linux-kernel；cover letter 骨架已填正文）。
 3. 若上机验证通过，再决定是否把该内核作为 vk192 入账（涉及 `versions/vk-kernel-identity.tsv`，**禁重跑** `vk-identity.py`）。

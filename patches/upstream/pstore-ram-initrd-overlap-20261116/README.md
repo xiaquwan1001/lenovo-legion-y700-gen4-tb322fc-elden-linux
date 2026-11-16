@@ -2,8 +2,8 @@
 
 - 基线（真源）：上游 `gh/master` = **`9d66f26fef`（7.4-rc3）**；本地论证树 = `build/daily`（7.3.1 + elden payload v2）。
 - 规模：2 枚 / 3 文件 / `125 insertions(+), 24 deletions(-)`（`0001` = init + 头文件 35+；`0002` = `fs/pstore/ram.c` 114±）。
-- 状态（2026-11-16）：**门禁全绿**（apply-check 2/2、checkpatch 0 error、构建 0 error/0 warning、QEMU A/B 两发各自符合预期）；**等用户批准才发**（发信口径 = `TASKS/README.md` §7）。
-- 未做：**真机上机一发**（需要 `set_active a` 或物理 POR，走 UEFI/GRUB 路径；QEMU 已按同一因果链复现并验证守卫）。
+- 状态（2026-11-16）：**门禁全绿 + 真机已验证**（apply-check 2/2、checkpatch 0 error、构建 0 error/0 warning、
+  QEMU A/B 两发、**真机 UEFI/GRUB 一发守卫生效**）；**等用户批准才发**（发信口径 = `TASKS/README.md` §7）。
 
 ## 为什么
 
@@ -40,14 +40,15 @@ DT 里的保留区只存在于内核（固件读不到），所以「谁是受�
 | 构建（本地线） | `JOBS=26 scripts/build-kernel.sh Image.gz dtbs` | **0 error / 0 warning**，符号守卫 OK（`gcc_sm8750` / DSI bonded / `rpmh`）→ `logs/10-build.log` |
 | QEMU A/B（守卫版） | `scripts/qemu-ramoops-initrd-ab.sh` | `ignoring console zone = 2`、`Run /init = 2`、`unpack failed = 0`、`panic/oops = 0` ⇒ **PASS(guard)** → `logs/{20,21}` |
 | QEMU A/B（无守卫版） | `scripts/qemu-ramoops-initrd-ab.sh --expect-fail <旧 Image>` | `unpack failed = 98`、`panic/oops = 294`（`ramoops-1` console 注册后立刻写坏）⇒ **PASS(expect-fail)** → `logs/{22,23}` |
+| **真机（UEFI/GRUB 路径）** | `set_active a` → Mu UEFI → 自打嵌入菜单 GRUB(`cc6391b3…`) → `elden.dtb`（含 ramoops）→ `/boot/Image`(本轮核) + 64 MB initrd | initrd `0xc1ab0000-0xc584a5e0` **整段盖住** ramoops 8 MB；三段 zone 逐条 `ignoring … overlaps the initrd`、`ramoops disabled for this boot`；`Unpacking initramfs…` → `Run /init` → **60 s 起进 SSH** ⇒ **PASS** → `logs/{30,31}`、全文 `reports/artifacts/uefi-pstoreguard-20261116/` |
 
 QEMU 复刻方式（单轮 ≈ 35 s，TCG）：`-M virt,acpi=off` + QEMU 自 dump 的 virt dtb 里插一个
 `ramoops@4ff00000`（`record-size=0x20000`、`console-size=0x100000`，console 段正好压住 initrd 起点），
 initrd 用 `initrd=0x50000000,<size>` + `-device loader,…` 钉在物理地址上。
 `-dtb` 在 `-m 2048` 下默认装到 `0x48000000`，与 initrd 同址会被 QEMU 判 overlap 拒启动 ⇒ 一律放 `0x50000000`。
 
-## 发信前还要做的两件事
+## 发信前还要做的事
 
-1. 在 `build/daily` 上跑一次**真机 UEFI/GRUB 路径**验证（`set_active a` 或物理 POR；设备窗口 + 用户在场）。
-2. 按 `scripts/upstream-*` 的既有流程准备 cover letter 正文（骨架已生成在 `0000-cover-letter.patch`，`*** SUBJECT/BLURB ***` 待填）、
-   以及 `TASKS/README.md` §7 的逐系列批准。
+1. ~~真机 UEFI/GRUB 路径验证~~ **已完成（2026-11-16，见上门禁表最后一行与 `reports/pstore-ram-initrd-guard-20261116.md` §5）**。
+2. **等用户逐系列批准**（`TASKS/README.md` §7）；cover letter 正文已填在 `0000-cover-letter.patch`。
+3. 发信前对 mainline 当前 tip 再跑一次 apply-check（本轮基线 = `gh/master` `9d66f26fef`）。

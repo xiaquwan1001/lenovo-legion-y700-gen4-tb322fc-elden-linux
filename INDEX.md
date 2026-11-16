@@ -54,13 +54,17 @@
    `initrd_phys_range()` + `ramoops_probe()` 逐 zone 判重叠（重叠段 `dev_warn` 跳过，四段全跳 → `-ENODEV` 干净退出），
    门禁 = 对 `gh/master` apply-check 2/2 + checkpatch 0 error + 构建 0 error/0 warning + **QEMU 两发 A/B**
    （无守卫 ⇒ `Initramfs unpacking failed`；有守卫 ⇒ 跳过 console 段并起进 `/init`）。
-   **剩余 = ① 真机一发（设备窗口：`set_active a` 或物理 POR，判据 `ignoring console zone … overlaps the initrd`）；② 用户批准后发信。**
-   树 = `build/daily` `v7.3.1-5-g4bdf1711b5`（**未打 vk 号、未进版本账、未上机**）。
-   → `patches/upstream/pstore-ram-initrd-overlap-20261116/`（README + 0000 cover + 2 枚 + logs）、`reports/pstore-ram-initrd-guard-20261116.md`、评审 `reports/pstore-ram-initrd-review-20261116.md`、`scripts/qemu-ramoops-initrd-ab.sh`、`PITFALLS #666`；根因与另两条修法 → `reports/uefi-grub-initrd-rootcause-20261115.md` §5
+   **★2026-11-16 真机已验（UEFI/GRUB 路径）**：`set_active a` → Mu UEFI → 自打嵌入菜单 GRUB(`cc6391b3…`) → `elden.dtb`（含 ramoops@c2000000）→ `/boot/Image`（本轮核）+ 64 MB initrd ⇒
+   initrd `0xc1ab0000-0xc584a5e0` **整段盖住** ramoops；dmesg 三段 zone 逐条 `ignoring … overlaps the initrd` + `ramoops disabled for this boot`，随后 `Unpacking initramfs…` → `Run /init` → **60 s 起进 SSH**。
+   同日先跑过的无守卫内核（11-15 那份 GRUB + 同 DTB/initrd）= 菜单后黑屏 → 20 s 关机 → 回落 b 槽 ⇒ **真机有/无守卫对照成立**。
+   **剩余 = 用户批准后发信。**
+   树 = `build/daily` `v7.3.1-5-g4bdf1711b5`（**未打 vk 号、未进版本账**；真机已由 a 槽 UEFI 路径验证，见上）。
+   → `patches/upstream/pstore-ram-initrd-overlap-20261116/`（README + 0000 cover + 2 枚 + logs）、`reports/pstore-ram-initrd-guard-20261116.md` §5、评审 `reports/pstore-ram-initrd-review-20261116.md`、`scripts/qemu-ramoops-initrd-ab.sh`、真机件 `reports/artifacts/uefi-pstoreguard-20261116/`、`PITFALLS #666`；根因与另两条修法 → `reports/uefi-grub-initrd-rootcause-20261115.md` §5
 6. **★待补：LastFile2 打印版（v2）缺屏上取证**：`/tmp/lf2-v2/grubaa64.efi`（sha `b9fb14cb…`，只打印不写盘 + 大字体）那发**用户没拍屏**，所以「打印通道本身工作正常」这一点只有 v1 的 grubenv 侧证；下次起它时补一张 `[LF2] addr=/size=/fnv=/tail=` 的屏照（`out/` 之外请留档到 `reports/artifacts/uefi-pc1m-20261115/`）。
 7. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
 8. **磁盘 A 类清理已执行完（2026-11-16）**：实际释放 **8.85 GiB**（项目 91 G → 82 G，`/` 620 G/70%），A1–A14 无失败项；
-   **B 类（`backup/official-rom` 15 G super 镜像、`backup/out-history` 7.6 G）与「待第二轮需用户拍板」清单仍待用户裁决**（后者含 `stock-src` 2 G、`dl-cam/ndk` 1.6 G、`out/r21-sbstop-{p69,pc1,pc2}`+`mu-memmap` 2.59 G、`.pi/sessions` 835 M、`reports/artifacts` 1.8 G）。
+   **第二轮（2026-11-16，用户批准）已再释放 6.40 GiB**（`stock-src`、`dl-cam/ndk`、`out/r21-sbstop-{p69,pc2}`、`out/mu-memmap-20261115`、`out/{espboot-20261108,espboot-20261110,fbdiag-20261108,dbg-uefi-initrd-20261115}`、`y700四代工具`）⇒ 项目 76 G；
+   三项评估结论：`backup/official-rom` super 15 G **可压不可删**（脚本零引用、净省 ~6 G，需同轮改引用行）、`backup/out-history` 8.13 G **无可删**（114 个 .img 全被 `versions/*.tsv` 引用）、`.pi/sessions`+`reports/artifacts` **建议保留**（sessfind 证据面 / 脚本活跃工件根）。
    → `reports/disk-cleanup-20261115.md` §2（执行记录 + 复核命令）
 
 **怎么核实本节没漂**（开工前先跑，见 `.pi/AGENT-OPS.md` §0）
@@ -185,7 +189,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 角度文档 | `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/` `archive/` | track |
 | 源码/补丁/工具 | `scripts/` `tools/` `patches/` `patches-userland/` `reference/` `versions/` `packaging/` `initramfs/` `rootfs/` `probes/` `net/` `waydroid-ota/` `restore-259/` `cycle.sh` `elden-net.sh` `.githooks/` `.gitignore` | track |
 | 证据/备份 | `reports/`（md 入库，大件 ignore）· `backup/`（**不可再生**：删前必须云盘或 bundle 兜底） | track / ignore |
-| 工作区（**可再生成**） | `build/` `out/` `logs/` `bootslot-b/` `env-pass/` `dl-cam/` `wt/` `external/` `geekidos-linux/` `Y700-elden-linux/` `stock-src/` `y700四代工具/` + 软链 `linux` | ignore（`build/` 删前先 bundle + 导 diff） |
+| 工作区（**可再生成**） | `build/` `out/` `logs/` `bootslot-b/` `env-pass/` `dl-cam/` `wt/` `external/` `geekidos-linux/` `Y700-elden-linux/` + 软链 `linux` | ignore（`build/` 删前先 bundle + 导 diff） |
 | AI 大脑 | `.pi/`（规范/并发/编排/技能/记忆/会话；分工见 `.pi/README.md`） | track |
 
 

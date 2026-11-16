@@ -1,0 +1,29 @@
+== cmdline
+BOOT_IMAGE=(hd5,gpt17)/boot/Image console=ttyGS0,115200 console=tty0 earlycon=efifb keep_bootcon loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17 androidboot.slot_suffix=_b elden_nocamera=1 root=LABEL=linux17 elden_bootmenu=grub-G1
+
+== uname
+Linux elden 7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0 #32 SMP PREEMPT Mon Nov 16 10:55:25 CST 2026 aarch64 GNU/Linux
+== uptime
+77.00 496.77
+== ramoops guard lines
+[    4.623508] [      T1] ramoops c2000000.ramoops: ignoring dmesg zone 0xc2000000-0xc21fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.715498] [      T1] ramoops c2000000.ramoops: ignoring console zone 0xc2200000-0xc23fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.807561] [      T1] ramoops c2000000.ramoops: ignoring pmsg zone 0xc2400000-0xc27fffff: it overlaps the initrd (0xc1ab0000-0xc584a5e0)
+[    4.899447] [      T1] ramoops c2000000.ramoops: every zone overlaps the initrd; ramoops disabled for this boot
+[   16.447780] [     T74] Freeing initrd memory: 63080K
+== pstore
+总计 0
+== sha
+0a55e52caa1da81f6ef7e37968fda659e33d956d3906276a237b7083538024d8  /boot/Image
+84c2e0bf938d8b6a2581db31f4545d604a513707430870cd69a7ba426606e348  /boot/elden.dtb
+818f4d85d7c0fbbfcbcd2e7a52e562d5bd6de1eed6a252dbea1ea47ebcf133ab  /boot/elden-noramoops.dtb
+3282ae6c0c4dbf2de55ad1be3b04f9a4ec1db9478ce2b8c6b1c5b38cf9b0706e  /boot/initrd.img
+== grubenv
+# GRUB Environment Block
+elden_grub_log=41-G1-initrd-ok-booting
+elden_shotA=B-linux-ok-booting
+elden_shotA_sha=OK
+elden_pc1m=3-initrd-ok-booting
+elden_lf2_len=64595425
+elden_lf2_addr=0xc23e0000
+elden_lf2_calls=1

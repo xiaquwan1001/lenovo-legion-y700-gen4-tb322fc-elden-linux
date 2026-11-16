@@ -43,17 +43,23 @@
     改菜单只能重打 EFI（`scripts/grub-arm64-arming-build.sh` → `scripts/esp-install-grub.sh --activate`）。
     当时它嵌的菜单 = 11-11 的 A/B/C 实验组，`default=0` = **无 `earlycon=efifb keep_bootcon` 的 A 臂**
     ⇒ 直接 `set_active a` 起来会黑屏无字（`PITFALLS #622`），复测前必须先换 arming 件（`out/grub-20261114/grubaa64-arming-v6.efi`）。
-  - **ESP（`/dev/sda18`）实测身份（2026-11-14 夜定案，取代先前“= Loader-r73 / = v3b GRUB”两种说法）**：
-    **现役** `\EFI\BOOT\BOOTAA64.EFI` = **Loader-r73**（`6e51fc60…`）—— 2026-11-14 22:29 从 `\EFI\elden\Loader.efi` 复制回来，
-    恢复文档验证过的那条链（`\menu.cfg` → `\boot\boot.img` vk190），当晚实测 **14 s 到 SSH 通过**。
-    历史件全在 ESP 上可回滚：`BOOTAA64.EFI.arming-v6.bak` = `244c5f65…`（v3b-bigfont **GRUB 嵌入菜单版**，不读 linux17 的 grub.cfg）、
-    `BOOTAA64.EFI.grub-arming-v7.bak` = `a63d2ab4…`（自造 arming GRUB，默认臂带 `earlycon=efifb keep_bootcon`，但卡 GRUB→initrd 交接，`PITFALLS #659`）、
-    `BOOTAA64.EFI.v3b-restore.bak` / `.v5.bak` 等更早备份。
+  - **ESP（`/dev/sda18`）实测身份（2026-11-16 现查，取代 11-14 夜“= Loader-r73”那段）**：
+    **现役** `\EFI\BOOT\BOOTAA64.EFI` = **本轮自打嵌入菜单 GRUB**（`cc6391b3…`；菜单 = `out/grub-arm64-arming-20261116/arming-pstoreguard.cfg`，
+    两臂 G1（`elden.dtb`，含 ramoops）/ G2（`elden-noramoops.dtb`）+ D（chainload r73）+ reboot/poweroff）——**只为 pstore 守卫真机验证而装**。
+    **换件前实际在役件 = `92a4d8b2…`**（9.5 MB GRUB，11-15 23:01 装、此前 `DEVICE` 未记录 → 本轮补登），已备份 `BOOTAA64.EFI.grub-fixr2-20261116.bak`；
+    `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动；拷回当 BOOTAA64.EFI 即走 `\menu.cfg` → `\boot\boot.img` 那条 14 s 链）。
+    历史件全在 ESP 上可回滚：`.arming-v6.bak`（`244c5f65…` v3b-bigfont 嵌入菜单，不读 linux17 的 grub.cfg）、
+    `.grub-arming-v7.bak`（`a63d2ab4…`，卡 GRUB→initrd 交接，`PITFALLS #659`）、`.lf2v2.bak`（`b9fb14cb…`，LF2 只打印版）、`.v3b-restore.bak`/`.v5.bak` 等。
+    `\boot\boot.img` **本轮临时换成 pstore 守卫件**（`bdf47f5f…`，= 本轮内核 + vk190 的 64 MB ramdisk/dtb），旧件备份 `out/boot-elden-vk190.img`（`54e84588…`）。
     **判据（新，旧的 `elden_bootloader=esp` 已失效）**：ESP 路径 = cmdline 里 `androidboot.serialno=51318dc0`（CRC32，**不是**真 SN）
     且**无** ABL 追加的 `verifiedbootstate/hqsysfs/ufsffu`；b 槽路径反之。
   - **`/boot` 下 DTB 现为「预置 initrd 属性」版（2026-11-14 22:41）**：`elden.dtb` = `84c2e0bf…`（153 193 B）、
     `elden-nopstorecons.dtb` = `ac562717…`（153 164 B），均在 `/chosen` 预置了 `linux,initrd-start/end`（值 0）。
     原件备份 `*.bak-20261114-224158`。**预置不是修法**（`PITFALLS #659` 已证否），仅保留无害。
+  - **`/boot/Image`（linux17）**：**本轮（2026-11-16）换成守卫内核** `0a55e52c…`（`build/daily` `v7.3.1-5-g4bdf1711b5`，64 072 192 B）；
+    换件前实际值 = `de659cf0…`（65 120 768 B，11-15 23:06，**文件身份未记录**，已备份 `/boot/Image.bak-20261116`）。
+    11-15 根因报告里写的「已还原 vk190（`0cdb7a45…`）」已被 11-15 深夜那轮覆盖 ⇒ 以本条为准。
+    `/boot/initrd.img` = `3282ae6c…`（64 595 425 B，11-12 起未动）、`/boot/elden.dtb` = `84c2e0bf…`（含 ramoops）、`/boot/elden-noramoops.dtb` = `818f4d85…`。
   - **上机通道口径（新，`PITFALLS #650`）**：进 fastboot 用 `ssh elden-root 'sync; reboot bootloader'`，
     **不要**用 `scripts/to-fastboot.sh --boot`（暖复位后立刻 `fastboot boot` 实测黑屏+崩坏，同镜像 systemd 路径一次过）。
   - **★2026-11-13 夜已部署的资源采样器**：`/usr/local/sbin/suspend-resource-sample.sh`（sha256 前 16 = 现查 `sha256sum`）+
