@@ -1,0 +1,16 @@
+== state 2026-11-16T18:50:26+08:00
+7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0
+Active slot: _b
+== grubenv
+elden_arm=0
+== q28
+0
+watchdog ON (no disable marker)
+== ab rig files
+-rw-r--r-- 1 root root   153137 11月16日 17:59 /boot/elden-m8v5.dtb
+-rw-r--r-- 1 root root 64072192 11月16日 17:59 /boot/Image-m8v5
+/lib/modules/7.3.1-debug-vk189-suspend-00008-g6a2f074cfaf2
+43
+== slot attrs
+  boot_a             byte6=0x22 retry=4 active=0 succ=0 unbootable=0
+  boot_b             byte6=0x77 retry=6 active=1 succ=1 unbootable=0
