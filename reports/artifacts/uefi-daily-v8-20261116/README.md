@@ -36,9 +36,26 @@
 | 14:07:18 | 再次 `set_active b` + reboot |
 | 14:07:48 | SSH 回（**16 s**，vk192 / `_b`） |
 
-## 仍未做（需用户物理动作）
+## 冷启动（POR）回归 —— 2026-11-16 14:46，通过（含两处异常）
 
-1. **`boot_a` 冷启动（POR）回归**：断电 → 长按电源开机 → 应仍在 `_a`，44 s 级进系统（暖启已过，冷启未验）。
-2. **菜单屏照**：`timeout=10` 停在菜单时拍一张（5 个条目 + 大字体），留档本目录，作「菜单交互/显式可选臂」的取证。
-   判据：能看见 5 条；不选则默认臂自走；`grubenv` 的 `50/51` 打点与屏上条目一致。
-3. 回滚口径：`scripts/esp-install-grub.sh --rollback`，或手工把 `EFI/BOOT/BOOTAA64.EFI.daily-v8-20261116.bak` 拷回。
+用户物理断电冷启（`set_active a` 后停在 fastboot），结果：
+
+1. **GRUB 菜单正常显示** —— 屏照 `30-cold-por-grub-menu.jpg`（GNU GRUB 2.14，5 条：`Linux vk192（UEFI 直载…）` / `Linux vk192（诊断：无 ramoops 的 DTB）` /
+   `ESP Loader.efi 链（r73 → ESP \boot\boot.img）` / reboot / poweroff；默认高亮第 1 条）。**菜单交互取证到此完成**。
+2. **进了 Linux**（默认臂）；`grubenv` = `elden_grub_log=51-daily-vk192-initrd-ok-booting`、cmdline 含 `elden_bootmenu=grub-daily`、`Active slot: _a`。
+3. **异常 A（已定因并修复）**：约 100 s 后「自己关机」= **我们自己的 `q28-boot-watchdog` 误判**。走 UEFI/GRUB 路径时 efifb 先注册成 DRM `card0`
+   再注销，msm 拿到 **`card1`**，而看门狗只认 `card0` ⇒ `sess=yes card=no` ⇒ 命中 Q28 坏发判据 ⇒ `reboot`（两次后预算耗尽才停下）。
+   全账 = `41-q28-wd-unit.txt`、`42-q28-watchdog-log.txt`（`attempt 1/2`、`attempt 2/2`、`budget exhausted` 三行）、`PITFALLS #667`；
+   修 = `have_card()` 认任一 `cardN`（源 `packaging/elden-userland/files/usr/local/sbin/q28-boot-watchdog.sh`，已部署 sha `d694c147…`）。
+4. **异常 B（真 Q28 坏发，未修）**：其中一次启动走到 `Unpacking initramfs…` → `Freeing initrd memory` 后**屏全白 → 只剩背光**、
+   msm 根本没 bind（一个 `cardN` 都没有）。那就是 #228 记的 Q28（DYN pclk 域闩住），与本次 EFI 无关；看门狗对这一发的重启判定是对的。
+5. **第三次启动成功**（14:57，`Active slot: _a`、`card1`、phoc+phosh 在）；随后 `15:02:49 set_active b` → **12 s 回 SSH**，
+   `Active slot: _b`、`card0`、vk192 ⇒ 日常线已恢复。
+
+**串口通道（本轮打通）**：`scripts/serial-tap.py` 常驻可抓 `ttyACM0`（host 侧加了 `/etc/udev/rules.d/99-elden-ttyacm.rules` 给 `MODE=0666`，
+并临时停 `ModemManager`）；本次抓到的是 b 槽那次启动的前段（`logs/serial-a-slot-loop-20261116-145745.log`，含 `--- tap open` 与丢字节提示）。
+**下次要抓失败现场，必须在按电源前就把 tap 起起来**（本轮起晚了，loop 的现场只留在屏照 + journal 里）。
+
+## 回滚口径
+
+`scripts/esp-install-grub.sh --rollback`，或手工把 `EFI/BOOT/BOOTAA64.EFI.daily-v8-20261116.bak`（= 验证件 `cc6391b3…`）拷回。

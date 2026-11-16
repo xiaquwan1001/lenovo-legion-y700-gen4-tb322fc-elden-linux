@@ -50,8 +50,10 @@
     **现役（2026-11-16 14:03 归位）** `\EFI\BOOT\BOOTAA64.EFI` = **日常用嵌入菜单 GRUB**（`f5dcf599…`，9 527 296 B；菜单 = `out/grub-arm64-arming-20261116/arming-daily-v8.cfg`）——
     臂 0（默认，`timeout=10`）= 直载 `/boot/Image`（vk192 守卫核）+ `elden.dtb` + 64 MB initrd + 全量 `earlycon=efifb keep_bootcon` cmdline；
     臂 1 = 同一内核 + `elden-noramoops.dtb`（诊断）；臂 2 = chainload `\EFI\elden\Loader.efi`（r73 → `\boot\boot.img`）；reboot/poweroff。
-    **a 槽暖启实测已过**（`fastboot set_active a` → 14:04:35 → 14:05:53 = **44 s 到 SSH**；cmdline `elden_bootmenu=grub-daily`、grubenv `51-daily-vk192-initrd-ok-booting`、ramoops 三段 `ignoring … overlaps the initrd`），
-    证据 `reports/artifacts/uefi-daily-v8-20261116/`；**冷启动（POR）与菜单屏照仍未做**。
+    **a 槽暖启实测已过**（`fastboot set_active a` → 14:04:35 → 14:05:53 = **44 s 到 SSH**；cmdline `elden_bootmenu=grub-daily`、grubenv `51-daily-vk192-initrd-ok-booting`、ramoops 三段 `ignoring … overlaps the initrd`）；
+    **冷启（POR）也已验（2026-11-16 14:46，用户断电冷起）**：菜单正常屏显（5 条，屏照 `30-cold-por-grub-menu.jpg`）→ 默认臂起进 Linux；`Active slot: _a`、DRM = **`card1`**。**注意两件事**：① 走 UEFI/GRUB 路径时 msm 是 `card1`（efifb 先占 card0 再注销），旧版 `q28-boot-watchdog` 只认 `card0` ⇒ 约 100 s 误判「Q28 坏发」自动重启（**已修**，`PITFALLS #667`，设备件 sha `d694c147…`）；② 该轮其中一发是真 Q28 坏发（屏白→仅背光、msm 未 bind），属 #228 存量问题、与本次 EFI 无关。
+    证据 `reports/artifacts/uefi-daily-v8-20261116/`；15:02:49 已 `set_active b` 回日常（**12 s** 到 SSH、`_b`、`card0`）。
+
     **换下件 = 验证用嵌入菜单 GRUB `cc6391b3…`**（11-16 11:45 装，两臂 G1/G2 对照 + D + reboot/poweroff），已备份 `BOOTAA64.EFI.daily-v8-20261116.bak`（注意：备份名取的是**新件** tag，内容 = cc6391b3）。
     **换件前实际在役件 = `92a4d8b2…`**（9.5 MB GRUB，11-15 23:01 装、此前 `DEVICE` 未记录 → 本轮补登），已备份 `BOOTAA64.EFI.grub-fixr2-20261116.bak`；
     `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动；拷回当 BOOTAA64.EFI 即走 `\menu.cfg` → `\boot\boot.img` 那条 14 s 链）。

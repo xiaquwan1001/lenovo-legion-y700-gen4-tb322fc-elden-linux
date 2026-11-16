@@ -58,7 +58,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/net-up-manual.sh	script	b5564801e6bdd3e5dc5ce4f2d452c0a8fc512af2788fcdb2bf897478c8ad9a0c	2492	755	files/usr/local/sbin/net-up-manual.sh
 /usr/local/sbin/net-up.sh	script	c5d4dc3500564d1540e658442b1af43fad7b9075a2676cd20ffbf00908c7dc7d	4109	755	files/usr/local/sbin/net-up.sh
 /usr/local/sbin/openrc-enable.sh	script	c89433b3aa7e1461234e4ad734ce4879486c12c68a68b8b194e604be5143aacd	4903	755	files/usr/local/sbin/openrc-enable.sh
-/usr/local/sbin/q28-boot-watchdog.sh	script	709e9eb86c65f45ed21fe97046382559b83b7b8696bc598eef02a1030011accc	4116	755	files/usr/local/sbin/q28-boot-watchdog.sh
+/usr/local/sbin/q28-boot-watchdog.sh	script	d694c147b3bb7b26932203be7eca2bf1f18ccf47d5c1a1119c77b88093f06b22	4791	755	files/usr/local/sbin/q28-boot-watchdog.sh
 /usr/local/sbin/q28-watchdog.sh	script	f9cba76ed87be4450759384e36d076f73c14036bc7ae33ff8dfec2c835cecb5a	600	755	files/usr/local/sbin/q28-watchdog.sh
 /usr/local/sbin/reboot2	elf	0c68ee5fb3720caa849c7e3fa52d3615da2d4f29bce3b6f91f5f03c8f1294d05	709368	755	-
 /usr/local/sbin/setup-session-greetd.sh	script	80f3366e83a6d95ca21f181fbba32780880285e7c050d4c0c2acd90eb6d13ec1	2983	755	files/usr/local/sbin/setup-session-greetd.sh

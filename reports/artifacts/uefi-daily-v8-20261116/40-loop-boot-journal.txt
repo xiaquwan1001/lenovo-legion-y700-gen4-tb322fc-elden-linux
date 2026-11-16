@@ -1,0 +1,35 @@
+== uptime
+2026-11-16 14:57:04
+72.44 420.76
+== boots
+ -4 ef080e3cc36e4071ac828bc83da3580f Thu 2026-11-05 23:40:21 CST Mon 2026-11-16 14:29:58 CST
+ -3 924a25caae6b42acbf5b05b85fa29e19 Thu 2026-11-05 23:40:21 CST Mon 2026-11-16 14:43:47 CST
+ -2 3f7486d34f0e4b3798e42281e4c7a41f Thu 2026-11-05 23:40:22 CST Mon 2026-11-16 14:48:22 CST
+ -1 ff2bd09007974f079fd4ee50118ccb1c Thu 2026-11-05 23:40:22 CST Mon 2026-11-16 14:56:10 CST
+  0 bcd8467bc6bb4ee3b4fcf5d335c9a2f2 Thu 2026-11-05 23:40:22 CST Mon 2026-11-16 14:58:27 CST
+== prev boot tail
+11月 16 14:56:10 elden unknown: [com.android.neuralnetworks] Success
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 1296,                insn offset 162 , insn 118
+11月 16 14:56:10 elden unknown: [com.android.calllogbackup] Success
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden q28-wd[6275]: Q28 bad boot detected (attempt 2/2 sess=yes card=no sig=no selftest=none) -> normal reboot
+11月 16 14:56:10 elden unknown: [com.android.cameraextensions] Success
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 1376,                insn offset 172 , insn 118
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 1504,                insn offset 188 , insn 118
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 1608,                insn offset 201 , insn 118
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 1648,                insn offset 206 , insn 118
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 2008,                insn offset 251 , insn 118
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 2112,                insn offset 264 , insn 118
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 2152,                insn offset 269 , insn 118
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 2424,                insn offset 303 , insn 118
+11月 16 14:56:10 elden unknown: [com.android.localtransport] Success
+11月 16 14:56:10 elden LibBpfLoader: 
+11月 16 14:56:10 elden unknown: [com.android.packageinstaller] Success
+11月 16 14:56:10 elden LibBpfLoader: applying relo to instruction at byte offset: 2528,                insn offset 316 , insn 118
