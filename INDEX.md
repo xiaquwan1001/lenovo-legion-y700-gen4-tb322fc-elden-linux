@@ -57,7 +57,8 @@
    **★2026-11-16 真机已验（UEFI/GRUB 路径）**：`set_active a` → Mu UEFI → 自打嵌入菜单 GRUB(`cc6391b3…`) → `elden.dtb`（含 ramoops@c2000000）→ `/boot/Image`（本轮核）+ 64 MB initrd ⇒
    initrd `0xc1ab0000-0xc584a5e0` **整段盖住** ramoops；dmesg 三段 zone 逐条 `ignoring … overlaps the initrd` + `ramoops disabled for this boot`，随后 `Unpacking initramfs…` → `Run /init` → **60 s 起进 SSH**。
    同日先跑过的无守卫内核（11-15 那份 GRUB + 同 DTB/initrd）= 菜单后黑屏 → 20 s 关机 → 回落 b 槽 ⇒ **真机有/无守卫对照成立**。
-   **剩余 = 用户批准后发信。**
+   **已发（2026-11-16 12:00:49，USTC 通道）**：To Kees/Tony/Guilherme，Cc lkml + linux-arm-msm，3 × 250；lore `/lkml/`+`/linux-arm-msm/` 命中 0/2（归档 04:01:14Z）；
+   线程根 `20261116040049.434247-1-xiaqinghuan@mail.ustc.edu.cn`，账 `patches/upstream/pstore-ram-initrd-overlap-20261116/logs/40-sent.txt`。**等回复**（`read-mail-ustc.py --days 3 --replies-only`）。
    树 = `build/daily` `v7.3.1-5-g4bdf1711b5`（**未打 vk 号、未进版本账**；真机已由 a 槽 UEFI 路径验证，见上）。
    → `patches/upstream/pstore-ram-initrd-overlap-20261116/`（README + 0000 cover + 2 枚 + logs）、`reports/pstore-ram-initrd-guard-20261116.md` §5、评审 `reports/pstore-ram-initrd-review-20261116.md`、`scripts/qemu-ramoops-initrd-ab.sh`、真机件 `reports/artifacts/uefi-pstoreguard-20261116/`、`PITFALLS #666`；根因与另两条修法 → `reports/uefi-grub-initrd-rootcause-20261115.md` §5
 6. **★待补：LastFile2 打印版（v2）缺屏上取证**：`/tmp/lf2-v2/grubaa64.efi`（sha `b9fb14cb…`，只打印不写盘 + 大字体）那发**用户没拍屏**，所以「打印通道本身工作正常」这一点只有 v1 的 grubenv 侧证；下次起它时补一张 `[LF2] addr=/size=/fnv=/tail=` 的屏照（`out/` 之外请留档到 `reports/artifacts/uefi-pc1m-20261115/`）。

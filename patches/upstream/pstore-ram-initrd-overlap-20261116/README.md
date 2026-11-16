@@ -2,8 +2,10 @@
 
 - 基线（真源）：上游 `gh/master` = **`9d66f26fef`（7.4-rc3）**；本地论证树 = `build/daily`（7.3.1 + elden payload v2）。
 - 规模：2 枚 / 3 文件 / `125 insertions(+), 24 deletions(-)`（`0001` = init + 头文件 35+；`0002` = `fs/pstore/ram.c` 114±）。
-- 状态（2026-11-16）：**门禁全绿 + 真机已验证**（apply-check 2/2、checkpatch 0 error、构建 0 error/0 warning、
-  QEMU A/B 两发、**真机 UEFI/GRUB 一发守卫生效**）；**等用户批准才发**（发信口径 = `TASKS/README.md` §7）。
+- 状态（2026-11-16）：**门禁全绿 + 真机已验证 + 已发（用户批准后 12:00:49 投出）**——apply-check 2/2、checkpatch 0 error、
+  构建 0 error/0 warning、QEMU A/B 两发、真机 UEFI/GRUB 一发守卫生效；**3 × 250，lore 三处归档已核**
+  （`Message-ID` 线程根 `20261116040049.434247-1-xiaqinghuan@mail.ustc.edu.cn`，账 = `logs/40-sent.txt`）。
+  **等回复**：`read-mail-ustc.py --days 3 --replies-only`。
 
 ## 为什么
 
@@ -40,6 +42,7 @@ DT 里的保留区只存在于内核（固件读不到），所以「谁是受�
 | 构建（本地线） | `JOBS=26 scripts/build-kernel.sh Image.gz dtbs` | **0 error / 0 warning**，符号守卫 OK（`gcc_sm8750` / DSI bonded / `rpmh`）→ `logs/10-build.log` |
 | QEMU A/B（守卫版） | `scripts/qemu-ramoops-initrd-ab.sh` | `ignoring console zone = 2`、`Run /init = 2`、`unpack failed = 0`、`panic/oops = 0` ⇒ **PASS(guard)** → `logs/{20,21}` |
 | QEMU A/B（无守卫版） | `scripts/qemu-ramoops-initrd-ab.sh --expect-fail <旧 Image>` | `unpack failed = 98`、`panic/oops = 294`（`ramoops-1` console 注册后立刻写坏）⇒ **PASS(expect-fail)** → `logs/{22,23}` |
+| **投递** | `git send-email`（USTC，To Kees/Tony/Guilherme，Cc lkml + linux-arm-msm） | 3 × `Result: 250`；lore `/lkml/` 与 `/linux-arm-msm/` 均命中 0/2（归档时刻 2026-11-16T04:01:14Z）→ `logs/40-sent.txt` |
 | **真机（UEFI/GRUB 路径）** | `set_active a` → Mu UEFI → 自打嵌入菜单 GRUB(`cc6391b3…`) → `elden.dtb`（含 ramoops）→ `/boot/Image`(本轮核) + 64 MB initrd | initrd `0xc1ab0000-0xc584a5e0` **整段盖住** ramoops 8 MB；三段 zone 逐条 `ignoring … overlaps the initrd`、`ramoops disabled for this boot`；`Unpacking initramfs…` → `Run /init` → **60 s 起进 SSH** ⇒ **PASS** → `logs/{30,31}`、全文 `reports/artifacts/uefi-pstoreguard-20261116/` |
 
 QEMU 复刻方式（单轮 ≈ 35 s，TCG）：`-M virt,acpi=off` + QEMU 自 dump 的 virt dtb 里插一个

@@ -1,4 +1,4 @@
-From 4bdf1711b5c0dd10df262bb6f35c9daba69e4330 Mon Sep 17 00:00:00 2001
+From 49ef145e6c89b10e02d13318013dbebe1ef63e85 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Mon, 16 Nov 2026 10:54:59 +0800
 Subject: [PATCH 2/2] pstore/ram: skip zones overlapping the initrd
@@ -30,7 +30,7 @@ Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
  1 file changed, 90 insertions(+), 24 deletions(-)
 
 diff --git a/fs/pstore/ram.c b/fs/pstore/ram.c
-index 2eb0d4fa21..9b8a05eebe 100644
+index aa056d0395..250d7d02ba 100644
 --- a/fs/pstore/ram.c
 +++ b/fs/pstore/ram.c
 @@ -21,6 +21,7 @@
@@ -41,7 +41,7 @@ index 2eb0d4fa21..9b8a05eebe 100644
  
  #include "internal.h"
  #include "ram_internal.h"
-@@ -719,6 +720,41 @@ static int ramoops_parse_dt(struct platform_device *pdev,
+@@ -720,6 +721,41 @@ static int ramoops_parse_dt(struct platform_device *pdev,
  	return 0;
  }
  
@@ -83,7 +83,7 @@ index 2eb0d4fa21..9b8a05eebe 100644
  static int ramoops_probe(struct platform_device *pdev)
  {
  	struct device *dev = &pdev->dev;
-@@ -785,32 +821,60 @@ static int ramoops_probe(struct platform_device *pdev)
+@@ -786,32 +822,60 @@ static int ramoops_probe(struct platform_device *pdev)
  
  	dump_mem_sz = cxt->size - cxt->console_size - cxt->ftrace_size
  			- cxt->pmsg_size;
@@ -163,7 +163,7 @@ index 2eb0d4fa21..9b8a05eebe 100644
  
  	cxt->pstore.data = cxt;
  	/*
-@@ -854,15 +918,17 @@ static int ramoops_probe(struct platform_device *pdev)
+@@ -855,15 +919,17 @@ static int ramoops_probe(struct platform_device *pdev)
  
  	/*
  	 * Update the module parameter variables as well so they are visible

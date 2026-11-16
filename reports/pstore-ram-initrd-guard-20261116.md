@@ -10,7 +10,9 @@
 其余照常注册；QEMU 同一因果链两发 A/B 分别给出「无守卫：`Initramfs unpacking failed`」「有守卫：跳过 console 段并起进 `/init`」。
 **真机已验**：同一颗内核、同一份 64 MB initrd、保留 `ramoops@c2000000`（11-15 夜必失败的那份 DTB）⇒ 三段 zone 全部
 `ignoring … overlaps the initrd`、ramoops 本 boot 关闭、initrd 完整解包、60 s 起进 SSH（§5）。
-**剩余 = 用户批准后发信。**
+**已发**：2026-11-16 12:00:49（USTC 通道）→ To Kees Cook / Tony Luck / Guilherme G. Piccoli，Cc `linux-kernel` + `linux-arm-msm`；
+3 × `Result: 250`，lore `/lkml/` 与 `/linux-arm-msm/` 均命中 0/2（归档 2026-11-16T04:01:14Z）。
+线程根 `Message-ID` = `20261116040049.434247-1-xiaqinghuan@mail.ustc.edu.cn`，账 = `patches/upstream/…/logs/40-sent.txt`。**等回复**。
 
 ## §1 落地内容
 

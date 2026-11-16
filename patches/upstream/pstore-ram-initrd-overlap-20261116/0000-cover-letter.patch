@@ -1,6 +1,6 @@
-From 4bdf1711b5c0dd10df262bb6f35c9daba69e4330 Mon Sep 17 00:00:00 2001
+From 49ef145e6c89b10e02d13318013dbebe1ef63e85 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Mon, 16 Nov 2026 10:55:13 +0800
+Date: Mon, 16 Nov 2026 11:59:49 +0800
 Subject: [PATCH 0/2] pstore/ram: refuse zones overlapping the initrd
 
 On this board the bootloader hands the kernel the initrd buffer at a
@@ -28,10 +28,22 @@ built-in driver probes at postcore_initcall(), well before the initramfs
 is unpacked, so the normal case is covered; a module loaded later cannot
 tell, and gets no protection.  This is documented in the code.
 
-Testing: reproduced under QEMU with a ramoops zone placed over the initrd.
-Without the change the unpack fails with the message above; with it, the
-console zone is dropped, the initrd unpacks and the machine boots.  Both
-boots are scripted locally as a regression test.
+Testing: reproduced on an arm64 device and under QEMU, in both cases by
+placing a ramoops zone over the initrd buffer:
+
+  - QEMU (-M virt, initrd=... pinned by phys address): without the change
+    the unpack fails with the message above; with it, the console zone is
+    dropped, the initrd unpacks and the machine boots into init.
+  - arm64 device (UEFI -> GRUB -> 64 MB initrd landing at
+    0xc1ab0000-0xc584a5e0, i.e. covering an 8 MB ramoops at 0xc2000000):
+    without the change the boot dies before unpacking; with it, dmesg
+    shows the three zones being skipped, the initrd unpacks and userspace
+    starts.
+
+Kees, Tony, Guilherme: I did not Cc stable, since this needs a bootloader
+and a device tree that actually disagree about the memory, which is
+unusual outside of Qualcomm boards; happy to add a Cc: stable if you
+think it belongs there.
 
 Qianhui Xu (2):
   init: initrd: add initrd_phys_range()
@@ -43,7 +55,7 @@ Qianhui Xu (2):
  3 files changed, 125 insertions(+), 24 deletions(-)
 
 
-base-commit: bf0adba8ff9a98ff0c73c1d74eeddac650464496
+base-commit: 9d66f26fefacebfeed15de31c1123451a17ff119
 -- 
 2.53.0
 

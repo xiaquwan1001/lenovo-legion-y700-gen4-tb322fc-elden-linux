@@ -1,0 +1,20 @@
+# 投递记录（2026-11-16 12:00:49 +0800，USTC 通道 git send-email）
+To:  Kees Cook <kees@kernel.org>, Tony Luck <tony.luck@intel.com>, Guilherme G. Piccoli <gpiccoli@igalia.com>
+Cc:  linux-kernel@vger.kernel.org, linux-arm-msm@vger.kernel.org
+SMTP: smtp.ustc.edu.cn:465 (ssl)  结果: 3 × "Result: 250"
+
+Message-ID（线程根 = -1）:
+  0/2  20261116040049.434247-1-xiaqinghuan@mail.ustc.edu.cn
+  1/2  20261116040049.434247-2-xiaqinghuan@mail.ustc.edu.cn
+  2/2  20261116040049.434247-3-xiaqinghuan@mail.ustc.edu.cn
+
+lore 归档复核（2026-11-16 12:0x，归档时间戳 2026-11-16T04:01:14Z）：
+  https://lore.kernel.org/lkml/?q=s:%22refuse+zones+overlapping+the+initrd%22       → 命中 0/2
+  https://lore.kernel.org/linux-arm-msm/?q=s:%22refuse+zones+overlapping+the+initrd%22 → 命中 0/2
+  按发件人查 f:xiaqinghuan@mail.ustc.edu.cn 同时列出 0/2、1/2、2/2 三个 subject
+  raw 取回（https://lore.kernel.org/all/<mid>/raw）可见 subspace ARC-Seal 头 ⇒ 真进了归档
+
+基线：base-commit = 9d66f26fef（gh/master = 7.4-rc3）；补丁在临时 worktree 里从 gh/master cherry-pick 后重生成
+（`git format-patch --base=9d66f26fef`），因此 0001/0002 偏移与本地树版本差一行、内容相同。
+
+同轮回复入口：read-mail-ustc.py --days 3 --replies-only（In-Reply-To 匹配上面 -1 的 Message-ID）。

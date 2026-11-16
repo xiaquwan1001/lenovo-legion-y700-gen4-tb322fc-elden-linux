@@ -12,6 +12,7 @@
 | `drm/msm/mdss` 块复位 | **v4 → v5** | 4 + 4 | v4 4×250（11-13）；**v5 4×250（2026-11-14）** | v4 = `patches/upstream/m8-mdss-v4-20261113/`（只重写 3/3 message，带 Abel+Dmitry R-b）；**v5 = `patches/upstream/m8-mdss-v5-20261114/`**（答 sashiko 的「0xa000 是未 attach 的独立域」Medium：1/3、2/3 未变，3/3 diff 逐字节相同、只收窄 message，三个 R-b 含 Konrad；全账 `reports/mail-send-20261114-mdss-v5.md`） |
 | `drm/msm/dsi/phy` PLL_SYSTEM_MUXES | v1 | 1 | 11-11 已投 | Dmitry 要求把解释性注释搬进 commit message ⇒ 待 v2 |
 | `arm64: dts: sm8750 ADSP fastrpc non-secure` | v3 | 1 | 11-11 已投 | 等 Konrad 拉的四位定性；`accel/qda` v4 与 `nsessions` 废弃在动 |
+| `pstore/ram` 拒绝与 initrd 重叠的 zone | v1 | 2 | **2 枚 + cover 全部 250（2026-11-16 12:00:49）**；lore `/lkml/`、`/linux-arm-msm/` 命中 0/2（归档 04:01:14Z） | 备料与门禁 = `patches/upstream/pstore-ram-initrd-overlap-20261116/`（apply-check 对 `gh/master` 2/2、checkpatch 0 error、构建 0E/0W、QEMU A/B、**真机 UEFI/GRUB 守卫生效**）；账 `logs/40-sent.txt`；正文 `reports/pstore-ram-initrd-guard-20261116.md` |
 | UEFI `mu_wide_platforms#12` | — | 1 评论 | 11-13 闭环已发（comment 6847932534） | UFS 枚举通、两形态都通、flashed 真阻塞 = `dtbo_a` |
 
 ## 2. 逐系列状态与「我方欠什么」
