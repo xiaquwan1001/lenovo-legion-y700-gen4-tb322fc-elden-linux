@@ -14,7 +14,12 @@
 
 **做到哪**
 
-1. **G1 = 36/37**（2026-11-14 现查；`❌` 仅 `G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线）。在机 = **RAM 启动的 `vk191`**（= `vk190` 的 kernel/dtb 逐字节原样 + 新 ramdisk），`boot_b` = vk190（**重启即回 vk190**）；判据全绿 = DSI/WiFi/`/dev/fastrpc-adsp`/传感器/Waydroid/zram + **s2idle 3/3**。→ `DEVICE/README.md` §1.1 首条、`reports/device-session-20261113-vk191.md`。
+1. **G1 = 36/37**（2026-11-14 现查；`❌` 仅 `G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线）。**在机 = 持久化的 `vk192`（2026-11-16）**：
+   `uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`，持久件 = `boot_b` 自签（`06c081ca…`，空载件 `out/boot-elden-vk192.img` `bdf47f5f…`），
+   slot `_b` Active/Successful/Bootable 全 1、重启实测回 vk192；模块树 1510 `.ko` 已按新 UTS 部署。
+   判据全绿 = DSI `bound ae94000.dsi`+fb0 / WiFi `wlp1s0` UP / `/dev/fastrpc-adsp`+qrtr 400 / SensorProxy 三项 true / Waydroid+zramswap / **s2idle 3/3（fail=0）**。
+   本版内容 = **pstore/ram 守卫**（拒绝与 initrd 重叠的 ramoops zone，上游已投 3×250）。→ `DEVICE/README.md` §1.1 首条、`reports/device-session-20261116-vk192.md`；
+   前代 vk191（RAM 启动，kernel/dtb 同 vk190）沿革 → `reports/device-session-20261113-vk191.md`。
 2. **G2 = 10/13**（Waydroid 主链 + 传感器/音频/GMS/马达/输入法/相机 STREAMING 都通）；**C3 Play Integrity 已实测收口（2026-11-15，SPIC v1.4.0 一次回包）**：`deviceRecognitionVerdict = []` ⇒ **BASIC/DEVICE/STRONG 三档全部不满足**，与书面判读（无 TEE、keymaster 软实现 ⇒ STRONG 结构性不可能）一致、未被推翻；PIF 伪装未做。剩 **C5 App 实开预览 / C8 立项 / C9 打分表**。→ `reports/c3-spic-verdict-20261115.md`、`reports/c3-pi-tiers-closeout-20261110.md`。
 3. **G3 = Steam 登录界面 ✅**（2026-10-28 设备实测 3/3，截图判据 10-29 闭环），游戏端到端未做。→ `reports/g3-steam-20261028.md`。
 4. **拓展：UEFI 两种形态都通**（2026-11-10 深夜定案：flashed 失败真根因 = 原厂 `dtbo_a` 的 Android DTBO 被 ABL 合进我们的 DTB，清 `dtbo_a` 即通）；Gunyah = 有条件重启、非主线。→ `reports/uefi-dtbo-a-rootcause-20261110.md`、`TASKS` §5「2026-11-10（深夜…）」块。

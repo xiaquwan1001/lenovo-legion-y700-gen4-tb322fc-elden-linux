@@ -25,15 +25,17 @@
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
 ### 1.1 内核与软件基线
-- ★★**在机 = RAM 启动的 `vk191`（2026-11-13 夜；本节**唯一**权威状态行）**：`uname -r` = `7.3.1-debug-vk189-suspend-00002-g4da9a8b69fc8-dirty`
-  （vk191 / vk190 / vk189 **刻意同 UTS**，为一行 DT 修复不重编 85 MiB 模块树；身份看 `kernel_payload_sha256` 与 ramdisk —
-  vk191 与 vk190 的 `kernel`/`dtb` **逐字节相同**，仅 `ramdisk` = `17cbcab1…`（含动态 SN 的 `usb-gadget`））。
-  **持久件 = `boot_b` 的自签 `vk190`**（`bootslot-b/boot_b.img`，分区读回 sha `4f020cb3…`，payload `511e16a1…`）⇒ **重启即回 vk190**；ABL 现用槽 = `b`。
-  **判据（vk191 全绿）**：`Unpacking initramfs...` 无 `no cpio magic` / `Run /init` / gadget `iSerial=HA2EXB0E` /
-  DSI `bound ae94000.dsi` / WiFi `wlp1s0` UP / `/dev/fastrpc-adsp` + `qrtr-lookup` 的 `400 Snapdragon Sensor Core service` +
-  `iio-sensor-proxy` active（`HasAccelerometer/HasProximity = true`）/ Waydroid+zramswap active / s2idle `rtcwake -m mem -s 45` 3/3 `success` 且 `fail=0`。
-  `/lib/modules/<该 UTS>` = 1499 个 `.ko`；`/sys/power/state` = `freeze mem`、`mem_sleep` 默认 `[s2idle]`（待机功耗线已重启）。
-  **重启实测**（2026-11-13）：`boot_id` 换新、`/proc/cmdline` **无** `elden_bootloader=esp` ⇒ 走 `boot_b` 槽，不是 UEFI/ESP 路径。证据 `reports/device-session-20261113-vk191.md`。
+- ★★**在机 = 持久化的 `vk192`（2026-11-16；本条**唯一**权威状态行）**：`uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`
+  （= `build/daily` HEAD `4bdf1711b5` + tag `vk192`；内核 payload `0a55e52c…`，dtb `89c9336d…`，ramdisk `3282ae6c…`）。
+  **持久件 = `boot_b` 自签 `vk192`**（`bootslot-b/boot_b.img` = 96 MiB，分区读回 sha `06c081ca…`，空载件 `out/boot-elden-vk192.img` = `bdf47f5f…`）；
+  ABL 现用槽 = `b`，`qbootctl` = Active/Successful/Bootable 全 1，**重启实测回 vk192（32 s 到 SSH）**。
+  **模块树 = 1510 个 `.ko` 已部署 `/lib/modules/7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`**（新 UTS ⇒ 整套重编，不能沿用 vk190 那套）。
+  **判据（本轮全绿，2026-11-16）**：`bound ae94000.dsi` + `[drm] fb0` / `wlp1s0` UP（ustcnet）/ `/dev/fastrpc-adsp` + `qrtr-lookup` 的 `400 Snapdragon Sensor Core service` /
+  SensorProxy `HasAccelerometer/HasProximity/HasAmbientLight = true` / Waydroid + zramswap active / s2idle `rtcwake -m mem -s 45` **3/3 rc=0（`suspend_stats` fail=0）**。
+  **本版内容 = pstore/ram 守卫**（拒绝与 initrd 重叠的 ramoops zone，两枚提交 `5c72e9e838`+`4bdf1711b5`，上游已投 3×250）。
+  证据 `reports/device-session-20261116-vk192.md`、`reports/pstore-ram-initrd-guard-20261116.md`。
+  - 历史：`vk191` 曾以 **RAM 启动**（`fastboot boot`，kernel/dtb 同 vk190、仅 ramdisk 换成立即 SN 版）在机 2026-11-13→11-16；
+    其判据与证据见 `reports/device-session-20261113-vk191.md`（现役已换成 vk192，那条仅供沿革）。
   - `boot_a` **未动** = UEFI 干净世代 `pc1`（分区 sha `1ca2b8e69167…`，件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；
     要用 UEFI 路先显式 `fastboot set_active a`（该槽 `unbootable=yes` 的历史口径见下方 11-09/11-10 块）。
   - **ESP `\EFI\BOOT\BOOTAA64.EFI` 已从 v5（A2 + `panic=0`，会挂住像死机）切回 `v3b-bigfont`**

@@ -84,7 +84,13 @@ QEMU 配方与两个装法陷阱（`-dtb` 与 `-device loader` 抢 `0x48000000`�
 断点：设备现处 a 槽（`set_active a`）；回滚 = `fastboot set_active b`（b 槽 `boot_b` vk190 未动）。
 
 
-## §6 剩余动作
+## §6 持久化（2026-11-16 下午，vk192）
+
+补丁本身就是设备日常内核的内容：`vk192` = `build/daily` `4bdf1711b5` + tag `vk192`，空载件 `out/boot-elden-vk192.img`（`bdf47f5f…`）、
+b 槽自签件 `06c081ca…`；1510 `.ko` 按新 UTS 重编部署；零写盘 1 发 + `flash-b` 持久 + 整机重启复验全绿（s2idle 3/3、fail=0）。
+全账 = `reports/device-session-20261116-vk192.md`。
+
+## §7 剩余动作
 
 1. ~~真机一发~~ **已于 §5 完成（守卫在真机生效）**。注意 ESP 现役件本轮换成了自打嵌入菜单 GRUB（`cc6391b3…`），
    ESP `\EFI\BOOT\BOOTAA64.EFI` 的历史件全在（`.grub-fixr2-20261116.bak` 等），r73 = `\EFI\elden\Loader.efi`。
