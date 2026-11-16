@@ -73,6 +73,7 @@
     `/boot/initrd.img` = `3282ae6c…`（64 595 425 B，11-12 起未动）、`/boot/elden.dtb` = `84c2e0bf…`（含 ramoops）、`/boot/elden-noramoops.dtb` = `818f4d85…`。
   - **上机通道口径（新，`PITFALLS #650`）**：进 fastboot 用 `ssh elden-root 'sync; reboot bootloader'`，
     **不要**用 `scripts/to-fastboot.sh --boot`（暖复位后立刻 `fastboot boot` 实测黑屏+崩坏，同镜像 systemd 路径一次过）。
+  - **★2026-11-16 新增 `fake-hwclock`（时间基线）**：硬件 RTC **不可写**（`hwclock -w` ⇒ `ioctl(RTC_SET_TIME) … 没有那个设备`，`/sys/class/rtc/rtc0` 恒停在 1970-01-08 起算），此前每 boot 的早期 journal/日志全落在假钟上（watchdog 日志 162/170 行时间戳不可信）。现装 `fake-hwclock`：`fake-hwclock-load.service` + `fake-hwclock-save.timer` 均 enabled，`/etc/fake-hwclock.data` 定时落盘，开机即恢复系统时间。**取证口径**：仍以 `boot id + short-monotonic` 为主，时间戳只作旁证。→ `reports/q28-DOSSIER.md` §t-2 的 T1
   - **★2026-11-13 夜已部署的资源采样器**：`/usr/local/sbin/suspend-resource-sample.sh`（sha256 前 16 = 现查 `sha256sum`）+
     `elden-resource-sample.timer`（30 min，`OnBootSec=5min`）⇒ 追加写 `/var/lib/elden/suspend-resource.tsv`（TSV 表头 20 列）。
     **判据**：`systemctl is-active elden-resource-sample.service` 应很快回 `inactive`（oneshot）；TSV 行数随时间增长。

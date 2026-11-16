@@ -513,3 +513,52 @@ dsi[1] 同型
 
 探针模块 `taint` 内核（`O`）且**改变可达路径** ⇒ 只作取证，不得进上游包/日常镜像。
 本轮**未写盘、未重启**；`boot_b` 仍 = `vk127`；闩锁已被清（RAM 静态变量），设备**仍在坏发态**，恢复靠用户物理 POR。
+
+---
+
+## t) ★2026-11-16 三卷底账（子代理分路取证 + 编排者独立复核）
+
+> 入口：`reports/q28-dossier-A-project-history.md`（项目史）、`-B-mail-external.md`（邮件/外部）、`-C-device-evidence.md`（设备实测）。
+> 分路方式 = 三个只读子代理并行（项目史 / 邮件与外部 / 设备日志），**数字由编排者重跑核对**（worker 自报不可信）。
+> 本节只放「合并后的结论 + 待决定动作」；明细在各卷。
+
+### t-0 复核过的硬数字（编排者实跑，2026-11-16 16:2x）
+
+| 项 | 值 | 命令 |
+|---|---|---|
+| journal boot 总数 | **68** | `journalctl --list-boots \| wc -l` |
+| panic / Oops / end trace | **0**（全 journal） | `journalctl -o cat \| grep -cE "Kernel panic\|Oops\|end trace"` |
+| RTC | **1970-01-08 22:46**（断电归零，靠 NTP 步进） | `cat /sys/class/rtc/rtc0/date` |
+| watchdog 日志行数 / `disabled by` / `bad boot` | **170 / 162 / 7** | `grep -c`（注意该文件有 NUL 填充，`grep -v` 会当成二进制提前收工 ⇒ 只能用正向计数） |
+| `#228` 正文位置 | `PITFALLS/sessions/28-上游邮件通道.md:66`（README 的 `\|228\|` 是会话序号，非坑号） | `sed -n 66p` |
+
+### t-1 合并结论（三卷一致的部分）
+
+1. **Q28 从未被根因解释**；2026-10-24 的「已规避·结项」是**运营判断**（三条：日常线不再产出坏发 + 自动兜底 + 逐启动可观测），
+   文件自己写着「0/5 坏发 ⇒ 95% 单侧上界仍 ≈45%，不得写成『已解决』」。
+2. **真正把 STORM 压下去的实测修法只有一条**：`0154`（dispcc probe 里复位 MDSS 三枚 BCR）+ `0155`（DIGTOP 上电），
+   **含 0154 两臂合并 15/15 vs base 4/9，Fisher 双侧 p=0.003**（`reports/q28-disp-init-ab-20261022.md:106,124,163,176`）。
+   其**上游形态 = M8 系列**（`drivers/gpu/drm/msm/mdss: reset all MDSS block resets described in DT`，已投到 v4）。
+   **M8 至今未合入、也从未有人正面评估过它的 Q28 证据链**；Taniya Das 反对「在 dispcc probe 里整块复位」的架构
+   （会闪屏），Dmitry 要求解释 interrupt controller / 副作用 / 如何测试。
+3. **上游没有 Q28 类现象的对应修复**（B 卷）：上游 master **根本没有 bonded 命令路径**（`BROADCAST_EN` 从不置位）
+   ⇒ 我们那条 `bonded command DMA failed` 签名在上游不可能出现；REPORT v1 只有 Pengyu Luo 一句「DPU 可能不支持」，**v2 三个月零回复**。
+4. **设备侧没有新增 panic 证据**（C 卷 + 上表）：68 个 boot 零 panic/Oops；watchdog 的 7 条 `bad boot` 里，
+   11 月的 4 条 `card=no` 都是「UEFI/GRUB 路径 msm=card1 而脚本只认 card0」的误判（`#667`，已修），
+   真正「msm 从未 bind」的形态今日只有 1 发（`378fb95f`，11-16 11:30→11:36），其指纹是 phoc `Waiting for a KMS device`，
+   **不是内核错误行**。
+5. **取证基础设施本身不可靠（C 卷最实用的一条）**：RTC 断电归零 + journal 每个 boot 的 FIRST ENTRY 冻结在
+   `2026-11-05 23:40:2x` ⇒ watchdog 日志 170 行里 **162 行时间戳是假钟**（含 64 行逐字符相同的 `2026-10-17T05:54:20`），
+   且 **3 条带真实时间的 watchdog 事件对不上任何 journal boot**。⇒ 任何 Q28 取证都不能只靠时间戳，必须
+   「boot id + monotonic + 事件内容」三元对齐。
+
+### t-2 待决定动作（按「价值/成本」排序，均未执行）
+
+| # | 动作 | 价值 | 成本 | 判据 |
+|---|---|---|---|---|
+| ~~T1~~ **已做（2026-11-16 16:31）** | **修时间基线**：设备装 `fake-hwclock`（`fake-hwclock-load.service` + `-save.timer` 均 enabled，`/etc/fake-hwclock.data` 每 60 s/关机落盘），开机即从文件恢复系统时间 ⇒ 早期 journal 不再落在 1970。**硬件 RTC 不可写**：`hwclock -w` 报 `ioctl(RTC_SET_TIME) … 没有那个设备`（`/dev/rtc0` 在但拒绝设置）⇒ 只能靠 fake-hwclock 兜。取证口径不变：**仍以 boot id + monotonic 为准**，时间戳只作旁证。 | 已解决「95% 时间戳不可信」的主因 | 已执行 | 断电冷起后 `date` 与真实时间差 < 5 min；`journalctl --list-boots` 首末不再全等 |
+| T2 | **给 M8 系列补 Q28 证据并重投 v5**（把 15/15 vs 4/9、Fisher p=0.003、以及「反 Taniya 的闪屏担忧」的实测——复位在 mdss probe 而非 dispcc、且不重配 PLL——写进 cover） | 高（Q28 唯一实测有效修法的上游形态，卡在证据没摆出来） | 中（重切 + 重跑门禁 + 等批准发信） | 门禁绿 + 维护者给出定性回复；若仍无人评估 ⇒ 归档「上游不感兴趣」 |
+| T3 | **在 a 槽 UEFI/GRUB 路径上抓一次真坏发的完整现场**（按 C 卷：先起 serial-tap、关看门狗、`card` 用 `card[0-9]*` 判、事件按 boot id 对齐） | 中高（11-16 那发只剩屏照；复启条件①「需现场取证」至今没走） | 中（要若干发冷起 + 用户在场） | 抓到 `PHOC_NO_CARD` 那一发且带 dmesg/中断计数/DSI 寄存器 |
+| T4 | 量化「日常线」是否包含 a 槽 UEFI 路径（决定 11-16 是否算触发复启条件①） | 中（影响 Q28 状态词） | 低（改一段文档 + 裁定） | `TASKS`/`DEVICE` 里出现唯一权威句 |
+| T5 | `q28-race-hunt.sh` 的 `DMBASE_VB` 覆盖 bug（汇总恒 0） | 中（唯一的复现/取证脚本） | 极低 | 已修（2026-11-16）：基线不再被覆盖、`vb_now` 兜底 |
+| T6 | `q28-watchdog.sh status` 只认 `card0`、unit 描述「never fired」过期 | 低 | 极低 | 已修（`#667` 收尾） |

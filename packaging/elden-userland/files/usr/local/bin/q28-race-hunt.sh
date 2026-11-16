@@ -175,7 +175,9 @@ echo
 disarm
 wake 2>/dev/null || true   # 不要把设备留在熄屏态
 
-DMBASE_VB=$vb_now
+# 2026-11-16 修：这里曾在算 NEW_SINCE_ARM 之前把 DMBASE_VB 覆盖成 vb_now ⇒ 汇总恒为 0；
+# 基线就该保持 arm 时的值（第 78 行），并在 CYCLES=0 下 vb_now 可能未定义 ⇒ 兜底重读。
+: "${vb_now:=0}"
 dmesg >"$OUT/dmesg-after.txt"
 {
 	echo "CYCLES=$CYCLES EFFECTIVE=$EFFECTIVE HITS=$HITS FIRST_HIT=$FIRST_HIT"
