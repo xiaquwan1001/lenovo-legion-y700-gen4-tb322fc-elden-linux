@@ -43,7 +43,7 @@
 
 **卡什么**
 
-- **camss 唯一硬分歧 = CSIPHY 2.3.0 vs 2.4.0**：上游 7.4-rc3 已把表迁到 `phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c` 的 `lane_regs_x1e80100[]`（= vendor **v2.1.2**），本机 vendor `camera.ko` 是 **2.4.0**（地址 103/103 相同、13 个 data 字节不同，逐版本扫证明是版本特征）⇒ 要 2.4.0 delta，形状须改成 phy 驱动里新增 `lane_regs_sm8750[]`。**没拿到对照表就不发信提问**。→ `reports/camss-csiphy-v6-vs-240-20261113.md`、`PITFALLS #648`。
+- **camss 唯一硬分歧 = CSIPHY 2.3.0 vs 2.4.0**：上游 7.4-rc3 已把表迁到 `phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c` 的 `lane_regs_x1e80100[]`（= vendor **v2.1.2**），本机 vendor `camera.ko` 是 **2.4.0**（地址 103/103 相同、13 个 data 字节不同，逐版本扫证明是版本特征）⇒ 要 2.4.0 delta，形状须改成 phy 驱动里新增 `lane_regs_sm8750[]`。**没拿到对照表就不发信提问**。**2026-11-16 复查 7.4-rc3 final `aebb727447`**：`sm8750-csi2-phy` 仍无、camss 里仍无 `kaanapali` ⇒ v6 未合入，delta 备料（`patches/upstream/camss-csiphy-24-20261115/`，2 枚、`(addr,data,type)` 103/103 与 vendor 2.4.0 全等）在 rc3 final 上 **apply 2/2 rc=0**，但仍受 §4 三条约束（binding 与在飞 v6 撞段 / 需一次上机出流 / 先在 v6 线程问口径）→ `reports/camss-csiphy-v6-vs-240-20261113.md`、`PITFALLS #648`。
 - **fastrpc**：等上游 `accel/qda` v4 与 `nsessions` 废弃定调（不等我们动作）。→ `reports/fastrpc-nonsecure-evidence-20261113.md`。
 - **T14/T17 用户态固化**：S3+S4+S6 离线复核已过，**唯一缺口 = `hapticd` 二进制不可重建**（自家 ELF，chroot 步骤已闭合）。→ `reports/t14-s3s4s6-offline-verify-20261114.md`。
 - **T9 待机**：改成间接采样（设备 timer 30 min 追加 `/var/lib/elden/suspend-resource.tsv`），**要 1–2 天数据才能判**，取数是人的动作。→ `TASKS` §4 T9、`PITFALLS #651`。
@@ -52,7 +52,9 @@
 **下一步（按顺序）**
 
 1. **camss CSIPHY 对账**（主机侧，无需设备）：拉 7.4-rc3+ 的 phy 表与 vendor 2.4.0 逐字节比 → 决定是否给上游 2.4.0 delta。
-2. **上游待批准批次**：dwc3 v9 四枚（`git apply --check` 4/4 OK）、dsi-phy v2 九行、gamma v2、haptics v2、board DTS 单提交 —— 逐系列等用户放行。
+2. **上游待批准批次**（**2026-11-16 已对 mainline **7.4-rc3 final `aebb727447` 全部重跑顺序 apply**，详见 `reports/artifacts/apply-check-7.4rc3-20261116/`）：
+   `board DTS` 单枚 / `dwc3 v9` 4 枚 / `m8-mdss v4` 3 枚 / `dpu-gamma v2` 1 枚 / `m6-dsi-pll v2` 1 枚 / `haptics v2` 6 枚（**本轮已 rebase 0006** —— 去掉只存在于 linux-next 的 `interrupt.h` 上下文行，6/6 rc=0）—— **均 rc=0，逐系列等用户放行**；
+   `dispcc-reset-v2` 与 `m8-mdss v4` 内容重复（发 v4）；`camss 2.4.0 delta` 2 枚也 rc=0，但受其 §4 三条约束（见上条「卡什么」）。
 3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
 4. **中文输入法候选窗：配置层已全绿（2026-11-15 T1–T5 全做，`scripts/ime-candidates-check.sh` = 11 PASS / 0 FAIL）**；**行为层未验** —— 画候选的那一半（`elden-ime-candidates.py`）仍按 #646 撤下，重做要求见 `PITFALLS #646` + 前置条件 `LD_PRELOAD=libgtk4-layer-shell.so.0`。→ `TASKS/sessions/2026-11-15-IME候选回归台账.md` §3b/§3c
 5. **UEFI GRUB 路径：取证已完成（2026-11-15 夜）；修法 ① 已于 2026-11-16 做成可上游 2 枚系列并全绿备料**：

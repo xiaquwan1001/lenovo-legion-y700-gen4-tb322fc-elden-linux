@@ -16,7 +16,7 @@
 | 门 | 结果 |
 |---|---|
 | `checkpatch --strict --no-signoff`（逐枚） | 0001/0002：**0E/1W**（W = “Unknown commit id 'df53055c540f'”，本机两棵树都没有该 commit，属树历史不全的假阳性；上游全树不会有）；0003–0006：**0E/0W/0C** |
-| `git apply` 6 枚顺序（7.4-rc2 + 本机 payload 树副本 `/tmp/b9/tree`） | 5/6 直接 OK；**0006 需要先有 `#include <linux/interrupt.h>`**——该行是 linux-next 侧漂移（7.4-rc2 里没有），补上后 rc=0。**系列基线 = linux-next，不是 7.4-rc2**，投前要么等该 include 进主线，要么把它作为系列前置说明 |
+| `git apply` 6 枚顺序（**2026-11-16 重跑：mainline 7.4-rc3 final `aebb727447`**，工作区 `/tmp/gm-7.4rc3-final`） | **6/6 rc=0**。0006 已按 mainline 重切 hunk#1：去掉 `#include <linux/interrupt.h>` 那行上下文（该 include 只在 linux-next 侧存在，mainline 无）、`@@ -15,6 +15,7 @@` → `@@ -15,5 +15,6 @@`；其余 9 个 hunk 原本就以 `-2` 偏移干净应用。旧件留档 `/tmp/0006-orig-lnx.patch`（linux-next 基线版）。checkpatch 复跑：0 error（2 个 W 仍是 `Fixes: df53055c540f` 未知 commit 的假阳性）。证据 `reports/artifacts/apply-check-7.4rc3-20261116/` |
 | 编译（最终树，`W=1`，`make -j26 ... drivers/input/misc/aw86927.o`） | **rc=0，无 warning**（`CC [M] drivers/input/misc/aw86927.o`） |
 | 逐提交编译 | **未重跑**（v2 时 5/5 rc=0；本轮只编终态，新增 0002 是 1 行宏、0006 是同一文件的重排，风险低） |
 | `dt-doc-validate` binding | **未重跑**（0003 binding 相对 v2 逐字未变，v2 时 rc=0；本机 `dt-doc-validate` 在 `~/.local/bin`，今晚可一行复跑） |

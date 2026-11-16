@@ -28,8 +28,7 @@ diff --git a/drivers/input/misc/aw86927.c b/drivers/input/misc/aw86927.c
 index aa69994..793bb88 100644
 --- a/drivers/input/misc/aw86927.c
 +++ b/drivers/input/misc/aw86927.c
-@@ -15,6 +15,7 @@
- #include <linux/interrupt.h>
+@@ -15,5 +15,6 @@
  #include <linux/input.h>
  #include <linux/module.h>
 +#include <linux/pm.h>

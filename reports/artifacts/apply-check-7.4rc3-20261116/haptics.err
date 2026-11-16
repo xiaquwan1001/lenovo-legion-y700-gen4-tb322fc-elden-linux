@@ -1,0 +1,2 @@
+error: 打补丁失败：drivers/input/misc/aw86927.c:15
+error: drivers/input/misc/aw86927.c：补丁未应用
