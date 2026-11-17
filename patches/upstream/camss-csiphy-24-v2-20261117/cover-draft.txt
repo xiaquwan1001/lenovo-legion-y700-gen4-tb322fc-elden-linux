@@ -24,9 +24,12 @@ Question: if Kaanapali also has the 2.3.0/2.4.0 values, this can collapse
 into a single patch that just changes the 3nm config's init_seq. I have no
 Kaanapali unit to measure, so I kept it SM8750-specific.
 
-Not tested on hardware yet: on SM8750 (TB322FC) the downstream driver uses
-this table and s5kjns/gc08a8 stream at 30 fps, but I have not run an A/B
-against the 2.1.2 values on this driver.
+No hardware testing: this series has not been run on a device. All gate
+results are static or fixture-only (git apply/am in a fixture tree,
+checkpatch --strict, W=1 single-directory build, dt_binding_check, and a
+register-table diff between the vendor camera.ko table and the driver
+table). I have not measured 30 fps or any stream with this patch, and the
+SM8750 unit I have cannot boot at the moment.
 
 AI assistance disclosure: the patch preparation, the register-table diff
 and this text were drafted with an AI assistant; every measurement above

@@ -83,4 +83,4 @@ address set equal (sm8750 vs vendor): True
 | ④ | `dt_binding_check` | **rc=0** |
 | ⑤ | 表对账 | **13/13**，与 vendor 2.4.0 表 **103/103** 全等 |
 | ⑥ | `git am` 实跑 | **2/2 干净** |
-| ⑦ | **上机出流回归** | ❌ **未做**（本 lane 只做静态门禁；投标前必须补或显式声明无实测） |
+| ⑦ | **上机出流回归** | ❌ **未做，也不冒充做过**：本目录 6 道门全部是**静态/夹具**（夹具仓 `git am`、`checkpatch`、`W=1` 单目录编译、`dt_binding_check`、主机侧二进制表 diff）。**没有任何一项来自真机运行**；投放时 cover 必须明写无实测（`cover-draft.txt` 末段），且不得带 `Tested-by`/“已验证修复”类措辞。 |
