@@ -1,4 +1,6 @@
 # y700-elden — 项目说明
+**Canonical open work: `TASKS/README.md`**（§7 = M 系列上游化，循环里引用必须带章节；其余按未关闭小节的优先级排）
+（grow-loop 工作面声明，2026-11-17 加：说 `grow loop` 时按此文件排优先级与续轮；口径见技能 `pi-autonomous-loop`）
 
 > **项目描述只在本文件。** 做事规范见 **`.pi/AGENT-OPS.md`**（agent 行为/授权唯一入口）；
 > 踩坑经验见 **`PITFALLS/README.md`**（开发经验唯一入口）；文档地图与状态见 **`INDEX.md`**（唯一入口）。
