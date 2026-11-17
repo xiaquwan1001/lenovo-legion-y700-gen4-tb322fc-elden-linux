@@ -1,0 +1,85 @@
+From 177bdf0e41e393d25ca5a6de99b7423a696e4b09 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 18 Nov 2026 07:12:53 +0800
+Subject: [PATCH v10 0/3] usb: dwc3: support two connectors sharing one HS data
+ bus
+
+Changes since v9 (sashiko review of 2026-11-17, 2x High / 1x Medium / 2x
+Low).  Every item was checked against the code and the binding; the two
+High findings were real and are fixed, not argued away.
+
+  [High] unbalanced mux_control_deselect() in __dwc3_set_mode()
+    v9 called mux_control_deselect() unconditionally before selecting the
+    new port.  On the initial mode request active_port is -1 and the mux
+    has never been selected, so the deselect released a semaphore that
+    was never taken.  Now only a mux that is actually selected is
+    deselected, and a failed mux_control_select() records active_port =
+    -1 instead of keeping the old index (which made the next request
+    skip the select).  core.c in 3/3.
+
+  [High] missing mux_control_deselect() on teardown in dwc3_drd_exit()
+    devm_mux_control_get() only calls mux_control_put() on release; it
+    does not restore the mux idle state.  v10 deselects the mux from
+    dwc3_drd_exit() after cancel_work_sync(&dwc->drd_work), i.e. once no
+    mode switch can select it again.  drd.c in 3/3.
+
+  [Medium] unconditional hs-port on port@0 breaks non-mux DTs
+    v9 required two endpoints and the address/size cells from every user
+    of port@0, which rejected existing single-endpoint controllers.  The
+    two endpoints and the opposite-mux-state rule are now required only
+    when "mux-controls" is present; a single-connector controller keeps
+    describing one plain "endpoint".  Verified with CHECK_DTBS=y on
+    qcom/sm8250-mtp.dtb and qcom/sm8750-mtp.dtb (both rc=0, no
+    diagnostics) and with the positive/negative dt-validate samples (see
+    gates below).  binding in 1/3.
+
+  [Low] hs-port allows omitting mux-state on one endpoint
+    Both endpoints of the High Speed port now require "usb-role-switch"
+    and "mux-state"; a tree that sets them on endpoint@0 only is
+    rejected ('mux-state' is a required property on endpoint@1).
+    binding in 1/3.
+
+  [Low] commit message written as a v8-to-v9 changelog
+    The binding commit now describes the new dual-connector description
+    relative to the baseline tree; the inter-version changelog moved
+    below the "---" separator.  binding in 1/3.
+
+Note on 2/3: sashiko found no issues in the role-switch lookup patch; it
+is unchanged from v9 apart from the series numbering.
+
+The board-level DT change is still not part of this posting: port@0 gets
+two endpoints and the Lenovo Legion Y700 Gen 4 describes the mux on GPIO
+29 in the separate board DTS series, because that file is not upstream
+yet.  No runtime testing is claimed for this version: the mux path has
+not been exercised on hardware (this series was reviewed statically
+only).
+
+Gate results (base aebb727447 = v7.4-rc3, pristine worktree):
+- git am: 3/3 applied cleanly.
+- checkpatch --strict: 0 errors / 0 warnings / 0 checks on all three.
+- make W=1 drivers/usb/dwc3/ drivers/usb/roles/ (arm64,
+  CONFIG_MULTIPLEXER=y): rc=0, no warnings.
+- make dt_binding_check DT_SCHEMA_FILES=.../snps,dwc3-common.yaml: rc=0.
+- CHECK_DTBS=y qcom/sm8250-mtp.dtb qcom/sm8650-mtp.dtb qcom/sm8750-mtp.dtb
+  (non-mux controllers): rc=0, no diagnostics.
+- dt-validate positive sample (dual connector, mux-controls): PASS.
+  Negative samples rejected: same mux state on both endpoints (oneOf),
+  missing endpoint@1 (required), usb-role-switch/mux-state omitted on
+  endpoint@1 (required), legacy v8 shape (unevaluated properties).
+
+Qianhui Xu (3):
+  dt-bindings: usb: snps,dwc3: describe two connectors on one HS data
+    bus
+  usb: roles: look up role switches attached to a graph endpoint
+  usb: dwc3: select the shared HS data bus with a mux controller
+
+ .../bindings/usb/snps,dwc3-common.yaml        | 124 ++++++-
+ drivers/usb/dwc3/core.c                       | 116 ++++++-
+ drivers/usb/dwc3/core.h                       |  43 +++
+ drivers/usb/dwc3/debugfs.c                    |   4 +
+ drivers/usb/dwc3/drd.c                        | 323 +++++++++++++++++-
+ drivers/usb/roles/class.c                     |  45 +++
+ 6 files changed, 650 insertions(+), 5 deletions(-)
+
+-- 
+2.53.0
