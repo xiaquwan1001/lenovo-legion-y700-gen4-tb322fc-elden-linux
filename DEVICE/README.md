@@ -64,8 +64,21 @@
     ⇒ 剩下 ABL 载入/认证通路 或 DDR 侧（**疑似硬件**；本轮新信号 = EDL `poke 32 MiB → 0x90000000` 5 min 不返回）。
     全账 = `reports/bl-stuck-20261116.md` §9；按全局规则 12 已上交 `~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/`，**项目内不深挖**。
     恢复动作（代价升序，下次设备窗口）：① 长按 10 s 全断电→只按电源；② 充到 >3.7 V 再试；③ EDL 分块同值重刷 `xbl`/`abl`/`boot_b`；④ EDL 全量刷 stock（`backup/stock-259`）。
-    **2026-11-17 15:22 复测（零写盘，只 `getvar`）**：`battery-voltage:3425`、**`battery-soc-ok:no`**、`factory-mode:1`、`off-mode-charge:1`、`unlocked:yes`、`variant:SM8 UFS`
-    ⇒ 电量**仍低且 SOC 标记不可信**（上午 3406–3408 → 现在 3425 mV，即电池已在 fastboot 挂了数小时几乎没充上）⇒ **「`Load Error` 与低电量无法解耦」是当前证据边界**：恢复动作 ② **优先且需人**（关机充电，fastboot 下充不进），做完再复测一次 `continue`；不要在低电量下重复发 `continue`/`boot`。
+    **2026-11-17 15:22 复测（零写盘，只 `getvar`）**：`battery-voltage:3425`、`battery-soc-ok:no`、`factory-mode:1`、`off-mode-charge:1`、`unlocked:yes`、`variant:SM8 UFS`。
+    **★但电量已不作为判据（用户 16:0x 定：fastboot 下 UI 看不到电量、也测不到协商充电速率 ⇒ 不读/不推/不作阻塞理由）**；
+    同一窗口 `logfs` 里 ABL 自报 **`VBAT: 3899mV`** ⇒ 实际已充到可用区间。
+    **★2026-11-17 16:02–16:50 第二次设备窗口（全账 = `reports/bl-stuck-20261117-device-window.md`）：仍未恢复，已按 AGENT-OPS 停手保留现场。**
+    本轮 **11 次启动尝试**（`continue` ×4 / `boot` ×5 / EDL `reset` 冷起 ×3）全败，且**失败串自变**：
+    `Failed to load image from partition: Device Error` ↔ `Failed to load/authenticate boot image: Load Error` ↔ `… Device Error`
+    ⇒ 「同错逐字相同」的旧口径被推翻。**新增排除 10 条**：镜像内容（qdl `06c081ca…`）与写路径、GPT（5 LUN 全解析）、
+    槽属性（复位 `unbootable=no/retry=7`，冷起 retry 7→6 证明 ABL 真尝试）、lock/verity（unlocked / `Verity mode:false`）、
+    vbmeta_b 未变（= 11-16 备份 `e974ebab…`，`Flags:3` 验证关）+ dtbo_b 与其描述符一致、ABL 本体（两槽均 stock，与 11-16 取证件逐字节同）、
+    存储读路径（12 分区 Firehose 读回 + 96 MiB 设备端 sha256 稳定）、**镜像大小/落点**（**2.4 MB** 件同样 `Device Error`）、槽相关 dtbo 处理。
+    ⇒ 剩下强候选 = **运行期加载/内存通路（疑似硬件）**，与 11-16 夜 `poke` 32 MiB 不返回同族；已按规则 12 追加证据到
+    `~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/MANIFEST.md`，**项目内不深挖**。
+    本轮写操作只有两类且已复原：`--set-active` 来回（终态 `b`）、`flash boot_b` 同一内容件（读回 `06c081ca…` 不变）。
+    下一步（需人）：① 长按 15–20 s 完全断电→等 10 s→只按电源（不插 USB）；② 若仍落 fastboot ⇒ 用户拍板是否 EDL 只刷
+    `xbl/xbl_config/abl/uefi/boot/dtbo/vbmeta`（stock 259，回退件齐）；③ 或改「Android 优先」恢复可用系统。
 
     **换下件 = 验证用嵌入菜单 GRUB `cc6391b3…`**（11-16 11:45 装，两臂 G1/G2 对照 + D + reboot/poweroff），已备份 `BOOTAA64.EFI.daily-v8-20261116.bak`（注意：备份名取的是**新件** tag，内容 = cc6391b3）。
     **换件前实际在役件 = `92a4d8b2…`**（9.5 MB GRUB，11-15 23:01 装、此前 `DEVICE` 未记录 → 本轮补登），已备份 `BOOTAA64.EFI.grub-fixr2-20261116.bak`；

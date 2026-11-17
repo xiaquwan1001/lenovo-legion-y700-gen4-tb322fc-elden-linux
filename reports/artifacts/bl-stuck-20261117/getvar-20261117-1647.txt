@@ -1,0 +1,8 @@
+current-slot: b
+slot-successful:a: no
+slot-successful:b: no
+slot-unbootable:a: no
+slot-unbootable:b: no
+slot-retry-count:a: 6
+slot-retry-count:b: 7
+unlocked: yes
