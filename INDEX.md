@@ -14,8 +14,12 @@
 
 **做到哪**
 
-1. **G1 = 36/37**（2026-11-14 现查；`❌` 仅 `G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线）。**在机 = 持久化的 `vk192`（2026-11-16）**：
-   `uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`，持久件 = `boot_b` 自签（`06c081ca…`，空载件 `out/boot-elden-vk192.img` `bdf47f5f…`），
+0. **✅ 2026-11-17 20:0x 设备已恢复正常（U2 HA2EXB0E）：原厂 Android 16 完整启动**（`TB322FC_CN_OPEN_USER_Q00041.1_W_ZUXOS_1.5.10.259_ST_260611`，`sys.boot_completed=1`，slot `_a`，`verifiedbootstate=orange`）。
+   **真因 = 非原厂 GPT**（LUN0 改名/多出 `linux17`+`eldenesp`、LUN4 槽属性非 stock）—— 只写 88 KiB 的 GPT 就把「全镜像 `Device Error`」变成「ABL 真的去启动」；硬硬件判读**全部作废**（送修单已作废）。
+   ⇒ **Linux 侧现状**：`linux17`/`eldenesp` 条目与槽镜像/ESP 已被原厂件覆盖/丢弃，但 `linux17` 的 ext4 数据物理保留在 LBA `73277435`（192 GiB）。重建路径 = **`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §3 S3a**。
+   取证/时间线 = `reports/bl-stuck-20261118-forensics.md` §7；自检 = `bash scripts/linux-state-audit.sh --host`。
+
+1. **G1 = 36/37**（2026-11-14 现查；`❌` 仅 `G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线）。**在机 = 持久化的 `vk192`（2026-11-16）**：   `uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`，持久件 = `boot_b` 自签（`06c081ca…`，空载件 `out/boot-elden-vk192.img` `bdf47f5f…`），
    slot `_b` Active/Successful/Bootable 全 1、重启实测回 vk192；模块树 1510 `.ko` 已按新 UTS 部署。
    判据全绿 = DSI `bound ae94000.dsi`+fb0 / WiFi `wlp1s0` UP / `/dev/fastrpc-adsp`+qrtr 400 / SensorProxy 三项 true / Waydroid+zramswap / **s2idle 3/3（fail=0）**。
    本版内容 = **pstore/ram 守卫**（拒绝与 initrd 重叠的 ramoops zone，上游已投 3×250）。→ `DEVICE/README.md` §1.1 首条、`reports/device-session-20261116-vk192.md`；
@@ -153,6 +157,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 3 | **`PITFALLS/README.md` §0**（零号纪律）+ 索引 | 动手前必查的既有结论 |
 | 4 | **`TASKS/README.md`** §0 / §4 / §5 / §7 | 状态数字与台账的唯一出处 |
 | 5 | `DEVICE` §1.1（在机）/ `RESOURCES` §3（资产）/ `RUNBOOK-BRINGUP`（步骤） | 按需展开 |
+| 5b | **`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md`**（＋`scripts/linux-state-audit.sh`） | **设备状态被改后重建 Linux 的唯一入口**：8 项清单 / S0–S9 步骤 / 卡 BL 误判防护 / 反向回 Android |
 | 6 | `reports/*.md`（按日期）→ `archive/` · `SESSIONS/` · `PROGRESS.md` · `HISTORY/` | **只作沿革与证据，不得当「当前结论」引用** |
 
 > `reports/` 内部查全用 **`reports/README.md`**（509 篇的机器生成目录，`scripts/reports-index.py` 产；`--check` 过期即 rc=1）。

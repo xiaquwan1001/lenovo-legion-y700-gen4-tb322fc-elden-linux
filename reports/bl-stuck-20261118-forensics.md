@@ -183,3 +183,41 @@ timeout -k 10 90 ~/edl/qdl/build/qdl -s ufs "$L" reset
 ```sh
 python3 scripts/gpt-audit-tb322fc.py --dev reports/artifacts/bl-stuck-20261118/edl-read --stock ~/文档/TB322FC_15.10.259
 ```
+
+---
+
+## 7. 结果：**已修复**（2026-11-17 20:0x，设备已进 ZUXOS；硬件判读彻底作废）
+
+### 7.1 时间线（全部有 USB/adb 证据）
+
+| 时刻 | 动作 | 结果 |
+|---|---|---|
+| 19:2x | **T1**：只写 GPT（LUN0+LUN4 主备表 + patch）—— **4 分区 / 88 KiB / 26 patch**，零镜像改动 | 现象从「直接落 fastboot」变成「解锁警告 → 联想 logo → 黑屏」；`slot-successful:a` 由 `no` 变 **`yes`**、`slot-unbootable:b` 变 **`yes`**（= 原厂出厂态）；`logfs`/`misc` sha 未变 ⇒ ABL 仍未交接 |
+| 19:36–19:37 | **T2 step1**：`rawprogram4 + patch4`（LUN4，37 分区 / 793.6 MiB / 13 patch） | 成功。boot_a/boot_b/dtbo/vbmeta = 原厂 Android 件 |
+| 19:37 | T2 step2 首次尝试（未加 `-R`） | **失败**：上一发 qdl 结束即发 reset，设备已离开 EDL ⇒ `SAHARA: failed to read request`。教训：多次 qdl 调用必须 `-R` 且显式 reset |
+| 19:44–19:50 | **T2 step2 重跑**（`-R -f`）：`rawprogram_save_persist_unsparse0 + patch0` ⇒ **21 分区 / 14.9 GiB / 13 patch**，6 min 6 s @41.5 MiB/s | 成功。`userdata_*.img` 11 件在包内已缺失（`-f` 跳过 ⇒ userdata 内容仍是旧的 Linux `elden-data`） |
+| 19:52 | reset → 60 s 后枚举 `18d1:d001`，`fastboot devices` = `HA2EXB0E recovery` | **Android 内核起来了**（此前所有镜像都 `Device Error`） |
+| 19:57 | `adb reboot` | 仍回 recovery（= userdata/metadata 不兼容） |
+| 19:59 | `adb reboot fastboot` → `fastboot -w`（erase userdata + metadata）→ `fastboot reboot` | — |
+| 20:02 | 屏幕出现 **ZUXOS 开机 logo**；`adb devices` = `HA2EXB0E device` | 系统起 |
+| 20:04 | `getprop`：`TB322FC_CN_OPEN_USER_Q00041.1_W_ZUXOS_1.5.10.259_ST_260611`、`Android 16`（`BQ2A.250610.001`）、slot `_a`、`verifiedbootstate=orange`、**`sys.boot_completed=1`** | **完全启动** |
+
+证据：`reports/artifacts/bl-stuck-20261118/{recovered-getprop.txt, recovered-screen.png}`（3040×1904 截图）、`flash/T1-*`、`flash/T2*`。
+
+### 7.2 真因（按判据，不按推测）
+
+**真因 = 非原厂 GPT（LUN0 条目/命名 + LUN4 槽属性字节）导致 ABL 在 boot-image load/authenticate 阶段失败。**
+
+判据（单变量）：T1 **只写了 88 KiB 的 GPT**（未动任何 boot/vbmeta/dtbo/固件，39/39 件与 18:53 完全相同），现象即从「`continue`/`boot` 全部 `Device Error`」变成「ABL 真的去启动、走到 logo」；同一时刻 `slot-successful:a` / `slot-unbootable:b` 回到出厂态。⇒ 失败变量在**分区表状态**，不在镜像、不在内存。
+
+由此可解释此前所有「互相矛盾」的观察：
+- 「原厂 `boot.img` 与 1 MiB 合法件都 `Device Error`」⇒ ABL 根本没进到校验镜像内容那一步（GPT 解析/槽判定先失败）。
+- 「错误串自变」⇒ 加载路径在不同槽属性下走不同分支（`#482` 同类非确定性）。
+- 「`poke` 不返回」⇒ 与故障无关（`#486` 门控）。
+
+### 7.3 对既有结论的裁决（时间序，本条压过 11-17 18:05 与更早）
+
+1. ~~「运行期大块内存访问不稳 = 唯一存活解释（硬件类）」~~ **删除**；`DEVICE/service-repair-note-20261117.md` **作废**（不需要送修）。
+2. 「GPT 已排除」的旧口径错在**只验可解析、没验逐字节对账**——真因恰在 GPT。
+3. 教训：`qdl` 多次调用必须 `-R`（否则第二发打在已被 reset 的设备上）；`userdata_*.img` 缺失要靠 `fastboot -w` 补格式化。
+4. 设备现态 = **原厂 Android 16 / ZUXOS 1.5.10.259 已完全启动**，`slot _a`、`verifiedbootstate=orange`（解锁态）、`linux17`/`eldenesp` 条目已随原厂 GPT 消失（数据物理保留）。回 Linux = 重新加回两个 GPT 条目 + 刷 `bootslot-b/boot_b.img` 那条链（件齐全）。

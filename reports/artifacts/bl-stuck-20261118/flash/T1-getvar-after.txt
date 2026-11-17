@@ -1,0 +1,10 @@
+== getvar after T1 @ 19:33
+current-slot: a
+slot-retry-count:a: 6
+slot-retry-count:b: 6
+slot-successful:a: yes
+slot-successful:b: yes
+slot-unbootable:a: no
+slot-unbootable:b: yes
+battery-voltage: 3582
+battery-soc-ok: no

@@ -1,0 +1,10 @@
+2026年 11月 17日 星期二 20:04:56 CST
+TB322FC_CN_OPEN_USER_Q00041.1_W_ZUXOS_1.5.10.259_ST_260611
+Lenovo/TB322FC_PRC/TB322FC:16/BQ2A.250610.001-BP2A.250605.031.A3/ZUXOS_1.5.10.259_260611_PRC:user/release-keys
+_a
+orange
+1
+2026-05-05
+Currently running services:
+  AppIconThemeServices
+  DockObserver

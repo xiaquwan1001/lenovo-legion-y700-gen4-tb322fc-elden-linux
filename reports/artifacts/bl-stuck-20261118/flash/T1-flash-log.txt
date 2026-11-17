@@ -1,0 +1,8 @@
+sending /home/xuqianhui/下载/tb322fc/xbl_s_devprg_ns.melf (1697740 bytes)
+waiting for Firehose programmer...
+flashed "PrimaryGPT" successfully (24.0 KiB)
+flashed "BackupGPT" successfully (20.0 KiB)
+flashed "PrimaryGPT" successfully (24.0 KiB)
+flashed "BackupGPT" successfully (20.0 KiB)
+26 patches applied
+flashed 4 partitions (88.0 KiB written in 5.6 s, 15.8 KiB/s), applied 26 patches

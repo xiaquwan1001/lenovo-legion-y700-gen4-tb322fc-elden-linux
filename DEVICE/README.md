@@ -56,6 +56,12 @@
     **冷启（POR）也已验（2026-11-16 14:46，用户断电冷起）**：菜单正常屏显（5 条，屏照 `30-cold-por-grub-menu.jpg`）→ 默认臂起进 Linux；`Active slot: _a`、DRM = **`card1`**。**注意两件事**：① 走 UEFI/GRUB 路径时 msm 是 `card1`（efifb 先占 card0 再注销），旧版 `q28-boot-watchdog` 只认 `card0` ⇒ 约 100 s 误判「Q28 坏发」自动重启（**已修**，`PITFALLS #667`，设备件 sha `d694c147…`）；② 该轮其中一发是真 Q28 坏发（屏白→仅背光、msm 未 bind），属 #228 存量问题、与本次 EFI 无关。
     证据 `reports/artifacts/uefi-daily-v8-20261116/`；15:02:49 已 `set_active b` 回日常（**12 s** 到 SSH、`_b`、`card0`）。
 
+    **★★★2026-11-17 20:0x 现态（压过下面全部「卡 BL / 在机 vk192」说法）：原厂 Android 16 已完整启动**
+    （`TB322FC_CN_OPEN_USER_Q00041.1_W_ZUXOS_1.5.10.259_ST_260611`、`sys.boot_completed=1`、slot `_a`、`verifiedbootstate=orange`）。
+    真因 = **非原厂 GPT**（LUN0 改名/多出 `linux17`+`eldenesp`、LUN4 槽属性非 stock）；只写 88 KiB GPT 就把「全镜像 `Device Error`」变成「ABL 真的去启动」⇒ **硬件判读全部作废，送修单作废**。
+    Linux 侧：`linux17` 条目/槽镜像/ESP 已被原厂件覆盖，但 `linux17` 的 ext4 数据物理上保留在 LBA `73277435`（192 GiB）⇒ 重建走 `RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §3 S3a（先重建条目、不格式化）。
+    本节下面「在机 vk192」的描述 = **历史时点**（2026-11-16），不是现态；取证 = `reports/bl-stuck-20261118-forensics.md` §7。
+
     **★★2026-11-17 现态：设备卡 BL，进不了系统（本条压过上面「在机 vk192」的运行态，但**镜像/分区仍然清白**）**：
     **至今（2026-11-17 18:05）已把“软件层”排到底：全量刷回原厂引导固件 39 分区（设备端 sha256 39/39 == 官方 259 件）+ A/B 双槽原厂 `boot/vbmeta/dtbo`，冷起仍落 fastboot；
     连原厂 `boot_b.img` 与 1 MiB 自制合法 boot.img 的 `fastboot boot` 也都是 `Device Error` ⇒ 失败点固定在 ABL 的 load/authenticate，与 flash 内容无关。
