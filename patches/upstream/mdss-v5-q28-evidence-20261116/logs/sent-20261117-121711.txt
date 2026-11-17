@@ -1,0 +1,12 @@
+From   : Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To     : linux-arm-msm@vger.kernel.org, dri-devel@lists.freedesktop.org
+Cc     : devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>, Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>, Abel Vesa <abel.vesa@oss.qualcomm.com>, Bjorn Andersson <andersson@kernel.org>, Rob Herring <robh@kernel.org>
+Subject: Re: [PATCH v5 0/3] drm/msm/mdss: reset all block resets described in DT
+Message-ID: <179488903160.260870.8168848839719897744@mail.ustc.edu.cn>
+In-Reply-To: <20261113155635.1677541-1-xiaqinghuan@mail.ustc.edu.cn>
+References : <20261113155635.1677541-1-xiaqinghuan@mail.ustc.edu.cn>
+正文行数: 95 | 字节: 4780
+非 ASCII 字符: 无（纯 ASCII ✅）
+收件人合计: 9 个
+
+已发送 OK

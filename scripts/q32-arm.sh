@@ -30,7 +30,7 @@ IMAGE=${IMAGE:-$ROOT/bootslot-b/boot_b-vk152.img}
 # 该文件由 root 常驻服务（scripts/install-serial-logger.sh + serial-fanout.sh）以 0644 写入。
 SERIAL_LOG=${SERIAL_LOG:-/var/log/elden-serial/ttyACM0.log}
 SERIAL_OFF=0
-SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 root@192.168.7.1"
+SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 ${TAB:-root@192.168.7.1}"
 TDIR="$ROOT/reports/trials"
 ARTS="$ROOT/reports/artifacts"
 mkdir -p "$ARTS" "$TDIR"
@@ -38,7 +38,7 @@ S() { timeout "${2:-20}" $SSH "$1" 2>/dev/null; }   # lib-boot-ready.sh 需要
 boot_id() { S 'cat /proc/sys/kernel/random/boot_id' 12 | tr -d '\r'; }
 uptime_s() { S 'cut -d" " -f1 /proc/uptime' 12 | tr -d '\r'; }
 
-pick_target() { $SSH true 2>/dev/null && { echo root@192.168.7.1; return 0; }; return 1; }
+pick_target() { $SSH true 2>/dev/null && { echo "${TAB:-root@192.168.7.1}"; return 0; }; return 1; }
 
 fastboot_wait() {  # 等 fastboot 出现（单条命令，不接管道，PITFALLS #199）
 	local i
@@ -97,7 +97,7 @@ collect() {  # collect <arm> <round> <boot_id> <reset_kind>
 	printf 'boot_id=%s\nimage=%s\narm=%s\nreset=%s\nverdict=%s\nfw_live_fb=%s\nreset_depth=%s\nvendor_path_proof=%s\nserial_vendor_reset=%s\nserial_delta_bytes=%s\n' \
 		"$BID" "$(basename "$IMAGE")" "$arm" "$reset" "$VERDICT" "$FW" "$RESET_D" "$VPROOF" "$SER_TOK" "$SER_BYTES" > "$logdir/README.txt"
 
-	TAB=root@192.168.7.1 bash "$ROOT/scripts/trial.sh" record --label "q32${arm}-r$r" --image "$IMAGE" \
+	TAB="${TAB:-root@192.168.7.1}" bash "$ROOT/scripts/trial.sh" record --label "q32${arm}-r$r" --image "$IMAGE" \
 		--reset "$reset" --deploy none --probe q28 --verdict "$VERDICT" --logdir "$logdir" \
 		--note "Q32 arm=$arm 复位深度=$RESET_D FW_LIVE_FB=$FW serial_vendor_reset=$SER_TOK（boot_id=$B8）" >/dev/null 2>&1 \
 		|| echo "  ⚠ trial 记录失败（继续）" >&2

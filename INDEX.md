@@ -42,6 +42,7 @@
 6. **上游**（2026-11-17 更新）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**、**dsi/phy v2 已发**（11-16 22:50/23:03 两发 `250`；`/linux-arm-msm/`+`/linux-kernel/`+`/dri-devel/` 三处归档、正文字节一致；错前缀那封由第二封自述）；dwc3 v9 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**；**唯一在档未发 = Q28 证据回帖**（已修「折行 Cc 会漏发 5 人」）。→ `reports/upstream-status-20261113.md`、`TASKS` §7。
    **★2026-11-17 联网核查（子代理，全账 `reports/upstream-replies-20261117.md`）**：在飞 4 系列**只有 1 个收到人回** = wl2868c v11（Rob 11-16 15:10 UTC：**v11 漏带他的 R-b** ⇒ 下一版补 tag）；pstore v1 / dsi-phy v2 / mdss v5 **零人回**。
    另有两封改变前提的信：① **Bryan 对我方 camss CSIPHY RFC 回信（11-15 17:44 UTC）** —— 先基于 on-list 的 Hangxiang **v25**/Qualcomm **v7** 工作，并直言我方邮件「LLM output…干难懂」；② **`qcom,nsessions` 已于 11-16 被上游合入废弃**（`641dd7dd0f68`）。我方相关主线合入 = 0；同家族上一代 Kaanapali PHY 3 枚已进 phy-next。
+   **★2026-11-17 12:17 Q28 证据回帖已发（用户放行）**：`Message-ID <179488903160.260870.8168848839719897744@mail.ustc.edu.cn>`，`/linux-arm-msm/`+`/dri-devel/`+`/lkml/` 三处归档、正文逐字节相同（`sha256 4fe84148…`）⇒ **在档未发件已清零**；下一批 = 6 个待发系列（含新增 `wl2868c v12`）。
 
 **卡什么**
 
@@ -57,8 +58,10 @@
 2. **上游待批准批次**（**2026-11-16 已对 mainline **7.4-rc3 final `aebb727447` 全部重跑顺序 apply**，详见 `reports/artifacts/apply-check-7.4rc3-20261116/`）：
    `board DTS` 单枚 / `dwc3 v9` 4 枚 / ~~`m8-mdss v4` 3 枚~~（**v5 已于 11-14 投出** ⇒ 剩「等回复」，见上第 6 条与本文件 §0-6；v5 与 v4 diff 只差 3/3 message，apply 结论沿用） / `dpu-gamma v2` 1 枚 / `m6-dsi-pll v2` 1 枚 / `haptics v2` 6 枚（**本轮已 rebase 0006** —— 去掉只存在于 linux-next 的 `interrupt.h` 上下文行，6/6 rc=0）—— **均 rc=0，逐系列等用户放行**；
    **新增待放行（2026-11-17）**：`wl2868c v12` = v11 原样 + 在 1/2 trailer 补回 Rob 的 `Reviewed-by`（他已重给）；
-   **已投的不再在列**：`dsi-phy v2`（11-16 两发 250）、`wl2868c v11`、`mdss v5`；
-   `dispcc-reset-v2` 与 `m8-mdss v4` 内容重复（发 v4）；`camss 2.4.0 delta` 2 枚也 rc=0，但前置条件已被 Bryan 回信改写（见上条）。
+   **★2026-11-17 13:20 整批已发（用户放行）**：板 DTS **v7**（单提交）/ dpu-gamma **v2** / dsi-phy muxes **v2（m6 件）** / haptics **v2**（6+cover）/ dwc3 **v9 3 枚**（`0004` 板 DTS 暂 hold，因改尚未上游的板文件）/ wl2868c **v12**（补回 Rob 的 R-b）= **17 封全 `Result: 250`**，
+   逐 MID 在 `linux-arm-msm` / `linux-devicetree` / `dri-devel` / `linux-input` / `linux-usb` / `lkml` 全部命中（每系列 `SENT.md` 有 MID 清单）。
+   **已投的不再在列**：`dsi-phy v2`（11-16 两发 250）、`wl2868c v11`、`mdss v5`、Q28 证据回帖（11-17 12:17）；
+   **卡源**：`dispcc-reset-v2` 与 `m8-mdss v4` 内容重复（发 v4）；`camss 2.4.0 delta` 2 枚的前置条件已被 Bryan 回信改写（见上条）。
 3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
 4. **中文输入法候选窗：配置层已全绿（2026-11-15 T1–T5 全做，`scripts/ime-candidates-check.sh` = 11 PASS / 0 FAIL）**；**行为层未验** —— 画候选的那一半（`elden-ime-candidates.py`）仍按 #646 撤下，重做要求见 `PITFALLS #646` + 前置条件 `LD_PRELOAD=libgtk4-layer-shell.so.0`。→ `TASKS/sessions/2026-11-15-IME候选回归台账.md` §3b/§3c
 5. **UEFI GRUB 路径：取证已完成（2026-11-15 夜）；修法 ① 已于 2026-11-16 做成可上游 2 枚系列并全绿备料**：

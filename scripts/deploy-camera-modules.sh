@@ -1,6 +1,6 @@
 #!/bin/bash
-# 收口指针（script-redundancy-audit S15，2026-11-13）：设备侧整目录部署的统一实现 = scripts/deploy-modules.sh
-#       （带备份 + 读回校验）；本脚本是历史/专用形态（相机模块 tar + 依赖序加载），新代码勿复制其传输逻辑。
+# 收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验**
+#       = scripts/deploy-modules.sh --bundle（唯一实现）；本脚本只剩「ABI 门 + loader 安装 + 依赖序加载 + 取证」。
 
 # deploy-camera-modules.sh — deploy the mainline camera stack to a RUNNING
 # device WITHOUT flashing boot and WITHOUT rebooting (fallback path).
@@ -59,9 +59,8 @@ else
 	echo "WARN: 找不到 $CAMD_TREE/.config，跳过 ABI 门禁（用 CAMD_TREE=<树目录> 指定）" >&2
 fi
 
-echo "== 1) transfer =="
-$SSH "cat > /tmp/camera-modules.tar.gz" < "$BUNDLE"
-$SSH "mkdir -p /lib/modules/$KV && tar xzf /tmp/camera-modules.tar.gz -C /lib/modules/$KV && depmod -a $KV && echo extracted"
+echo "== 1) transfer（thin wrapper：实现全在 scripts/deploy-modules.sh --bundle）=="
+bash "$ROOT/scripts/deploy-modules.sh" --bundle "$BUNDLE" --uts "$KV" --target "$DEV"
 
 echo "== 2) install loader =="
 $SCP "$ROOT/scripts/camera-modules-load.sh" "$DEV:/usr/local/sbin/camera-modules-load.sh"

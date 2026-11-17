@@ -8,12 +8,12 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 R=${1:?usage: $0 <round> [timeout_s]}
 WAIT=${2:-600}
-SER=HA2EXB0E
+SER=${SER:-HA2EXB0E}    # 设备 SN 过滤器（SER=<SN> 可覆盖；默认不变）
 SSH="ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=4"
 PREV=$(cat /tmp/prev_boot_id.txt 2>/dev/null | tr -d '\n')
 
 pick_target() {
-	for t in root@192.168.7.1 ; do
+	for t in ${TAB:-root@192.168.7.1} ; do
 		$SSH "$t" true 2>/dev/null && { echo "$t"; return 0; }
 	done
 	# 回落：gadget 的 IPv6 链路本地（MAC 02:1e:5e:ed:e1:01 ⇒ …:1e:5eff:feed:e101）

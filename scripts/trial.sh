@@ -16,7 +16,9 @@
 #          [--note ...] [--force] [--a-slot]
 #                                 门 → 部署 → 探针 → 落 record（完整编排）
 #                                 --a-slot：目标 = a 槽（UEFI/flashed 形态）⇒ 前置「a 槽 dtbo 清零」门：
-#                                 先跑 scripts/uefi-a-slot-prepare.sh --check（只读），非 READY 即中止
+#                                 先跑 scripts/uefi-a-slot-prepare.sh --check（只读）；非 READY 则**幂等调用**
+#                                 uefi-a-slot-prepare.sh（备份 + 写 32 MiB 全 0 + 读回校验）再复检；
+#                                 --no-a-slot-prep 关掉自动修复（回到旧行为：非 READY 即中止）
 #                                 （真 dtbo_a 合 overlay 会卡 logo，reports/uefi-dtbo-a-rootcause-20261110.md）
 #   selftest                      离线自测（不碰设备）
 #
@@ -161,7 +163,7 @@ case "$cmd" in
 		write_record ;;
 
 	run)
-		LABEL=""; IMAGE=""; RESET=""; DEPLOY="none"; PROBE="none"; NOTE=""; FORCE=0; ASLOT=0
+		LABEL=""; IMAGE=""; RESET=""; DEPLOY="none"; PROBE="none"; NOTE=""; FORCE=0; ASLOT=0; ASLOT_PREP=1
 		while [ $# -gt 0 ]; do
 			case "$1" in
 				--label) LABEL=$2; shift ;;
@@ -172,6 +174,7 @@ case "$cmd" in
 				--note) NOTE=$2; shift ;;
 				--force) FORCE=1 ;;
 				--a-slot) ASLOT=1 ;;
+				--no-a-slot-prep) ASLOT_PREP=0 ;;
 			esac
 			shift
 		done
@@ -179,8 +182,16 @@ case "$cmd" in
 		require_reset "$RESET"
 		if [ "$ASLOT" = 1 ]; then
 			st=$(bash "$ROOT/scripts/uefi-a-slot-prepare.sh" --check 2>/dev/null | grep -oE 'STATUS=[A-Z_]+' | head -1)
+			if [ "$st" != "STATUS=READY" ] && [ "$ASLOT_PREP" = 1 ]; then
+				# B13 §3：分派入口幂等修复（脚本自带备份 + 写后读回；需要 SER 锁定目标）
+				echo "[trial] a 槽 dtbo 非 READY（${st:-?}）⇒ 调 uefi-a-slot-prepare.sh（备份+写后读回）"
+				SER=${SER:-} bash "$ROOT/scripts/uefi-a-slot-prepare.sh" || {
+					echo "[trial] ❌ a 槽前置脚本失败：先 SER=<SN> scripts/uefi-a-slot-prepare.sh 人工过一遍，或改 --deploy fastboot-boot 零写盘路径" >&2
+					exit 1; }
+				st=$(bash "$ROOT/scripts/uefi-a-slot-prepare.sh" --check 2>/dev/null | grep -oE 'STATUS=[A-Z_]+' | head -1)
+			fi
 			if [ "$st" != "STATUS=READY" ]; then
-				echo "[trial] ❌ a 槽前置不满足（$st）：先跑 scripts/uefi-a-slot-prepare.sh（幂等，带备份+读回），或改 --deploy fastboot-boot 零写盘路径" >&2
+				echo "[trial] ❌ a 槽前置不满足（${st:-?}）：先跑 scripts/uefi-a-slot-prepare.sh（幂等，带备份+读回），或改 --deploy fastboot-boot 零写盘路径" >&2
 				exit 1
 			fi
 			echo "[trial] a 槽前置 OK（dtbo_a 已清零）"

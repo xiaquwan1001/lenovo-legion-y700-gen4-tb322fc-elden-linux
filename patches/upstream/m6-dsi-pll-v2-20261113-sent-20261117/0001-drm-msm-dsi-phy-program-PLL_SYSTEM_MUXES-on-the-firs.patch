@@ -1,0 +1,74 @@
+From bf3d11a7a56339d54928d9144a0532116898166b Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Mon, 16 Nov 2026 22:34:04 +0800
+Subject: [PATCH v2] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY
+ enable
+
+dsi_7nm_phy_enable() pre-seeds pll_enable_cnt to 1 while de-asserting
+DIGTOP_PWRDN_B and PLL_SHUTDOWNB, and dsi_pll_enable_pll_bias() returns
+early whenever the counter is already non-zero.  On the first PHY
+bring-up the bias helper therefore never reaches its
+PLL_SYSTEM_MUXES = 0xc0 write, and nothing else programs that register
+before the panel is powered up: PLL_SYSTEM_MUXES keeps 0x0, the locked
+PLL outputs are not routed to the lanes, and a panel wired for bonded
+DSI comes up with the backlight on and no image.
+
+The combination is old.  commit cb55f39bf7b1 ("drm/msm/dsi/phy: Fix
+reading zero as PLL rates when unprepared") introduced both the counter
+and the pre-seed.  commit 93c97bc8d85d ("drm/msm: dsi: fix PLL init in
+bonded mode") briefly dropped the pre-seed, which made the write
+reachable again.  Its revert,
+
+commit 44784327815b ("Revert "drm/msm: dsi: fix PLL init in bonded mode"")
+
+restored both sides, so on current master the muxes are once more never
+programmed during the first bring-up.
+
+Program PLL_SYSTEM_MUXES in dsi_7nm_phy_enable() next to the CTRL_0
+write that powers the PHY up, while the same lock is held.  This only
+adds a register write to a path that already programs CTRL_0: no
+existing write moves, and the counter, the locking and the order of the
+rest of the PHY programming are untouched, so the byte-clock regression
+that led to the revert cannot come back through this path.  The bias
+helper keeps its own write for the paths that raise the counter from
+zero.
+
+Measured on a Lenovo Y700 Gen4 tablet (SM8750P, bonded dual-DSI CSOT
+PP8807HB1-1 panel, "novatek,nt36536"): without this change
+PLL_SYSTEM_MUXES reads 0x0 at panel bring-up and the panel stays dark;
+with it the register reads back 0xc0, the panel initialises and the DSI
+host starts receiving interrupts (41 in /proc/interrupts, 0 before).
+
+Fixes: cb55f39bf7b1 ("drm/msm/dsi/phy: Fix reading zero as PLL rates when unprepared")
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+
+Note: an earlier copy of this mail went out a few minutes earlier with a
+wrong subject prefix ([PATCH] instead of [PATCH v2]); content is identical,
+ignore that one.
+
+Changes in v2: move the explanation out of the source comment and into the
+commit message, as requested; the code delta is the same single writel().
+Fixes: is re-pointed at cb55f39bf7b1, which introduced both the counter and
+the pre-seed, instead of at the revert that restored them.
+
+Link: https://lore.kernel.org/all/20261019130041.305805-1-xiaqinghuan@mail.ustc.edu.cn/
+Link: https://lore.kernel.org/all/e4ul4zxjta4oyo5fpjjzwkykb4gicztcn7yrgjw7aer6bqowkw@6nx2arhvmyca/
+ drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+index ce86dbf618..98df2d994a 100644
+--- a/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
++++ b/drivers/gpu/drm/msm/dsi/phy/dsi_phy_7nm.c
+@@ -1096,6 +1096,7 @@ static int dsi_7nm_phy_enable(struct msm_dsi_phy *phy,
+ 	data = DSI_7nm_PHY_CMN_CTRL_0_DIGTOP_PWRDN_B |
+ 	       DSI_7nm_PHY_CMN_CTRL_0_PLL_SHUTDOWNB;
+ 	writel(data, base + REG_DSI_7nm_PHY_CMN_CTRL_0);
++	writel(0xc0, pll->phy->pll_base + REG_DSI_7nm_PHY_PLL_SYSTEM_MUXES);
+ 	spin_unlock_irqrestore(&pll->pll_enable_lock, flags);
+ 
+ 	/* Assert PLL core reset */
+-- 
+2.53.0
+

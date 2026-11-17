@@ -15,6 +15,23 @@
 | `pstore/ram` 拒绝与 initrd 重叠的 zone | v1 | 2 | **2 枚 + cover 全部 250（2026-11-16 12:00:49）**；lore `/lkml/`、`/linux-arm-msm/` 命中 0/2（归档 04:01:14Z） | 备料与门禁 = `patches/upstream/pstore-ram-initrd-overlap-20261116/`（apply-check 对 `gh/master` 2/2、checkpatch 0 error、构建 0E/0W、QEMU A/B、**真机 UEFI/GRUB 守卫生效**）；账 `logs/40-sent.txt`；正文 `reports/pstore-ram-initrd-guard-20261116.md` |
 | UEFI `mu_wide_platforms#12` | — | 1 评论 | 11-13 闭环已发（comment 6847932534） | UFS 枚举通、两形态都通、flashed 真阻塞 = `dtbo_a` |
 
+### 1b. 2026-11-17 13:20 实投（用户整批放行；6 系列全 `Result: 250` + lore 逐 MID 复查）
+
+| 系列 | 版本 | 封数 | 归档 | 账 |
+|---|---|---|---|---|
+| `arm64: dts: qcom: sm8750-lenovo-elden` 板 DTS | **v7（单提交）** | 1 | `linux-arm-msm/`+`linux-devicetree/`+`lkml/` | `patches/upstream/board-dts-single-20261113-sent-20261117/SENT.md` |
+| `drm/msm/dpu` gamma LUT | **v2** | 1 | `linux-arm-msm/`+`dri-devel/` | `…/dpu-gamma-lut-v2-20261113-sent-20261117/SENT.md` |
+| `drm/msm/dsi/phy` PLL_SYSTEM_MUXES | **v2** | 1 | 同上 | `…/m6-dsi-pll-v2-20261113-sent-20261117/SENT.md` |
+| `Input: aw86927` AW86937 | **v2** | 6+cover | `linux-input/`+`linux-devicetree/`（7/7） | `patches/upstream/haptics-v2-20261117/SENT.md` |
+| `usb: dwc3` 双 connector | **v9（3 枚，不含板 DTS）** | 3+cover | `linux-usb/`+`linux-devicetree/`（4/4） | `patches/upstream/dwc3-v9-20261117/SENT.md` |
+| `regulator: wl2868c` | **v12** | 2+cover | `linux-arm-msm/`+`linux-devicetree/`+`lkml/`（3/3） | `…/wl2868c-v12-20261117/SENT.md` |
+
+三处需要记住的决定：
+1. **dwc3 v9 只发 3 枚**：`0004`（板级 DTS）改的是尚未上游的 `sm8750-lenovo-elden.dts` ⇒ 放在 `hold-0004-board-dts/`，
+   等板 DTS 串落地后再发（cover 已写明这个依赖）。
+2. **wl2868c v12 重发过**：第一次误用 v11 的 `Message-ID`（归档侧当重复丢弃），strip 三个头后 13:22:57 重发，`PITFALLS #671`。
+3. 所有件的门禁 = `git am --3way` 对 master tip `666539eecdf4` **rc=0** + `checkpatch --strict` **0 error**（warn 仅为 `Fixes:` 未知 commit 的本地假阳性）。
+
 ## 2. 逐系列状态与「我方欠什么」
 
 | 系列 | 状态 | 我方欠 |
@@ -36,11 +53,13 @@
 - IMAP `read-mail-ustc.py --days 4 --replies-only` = **INBOX / Junk / Sent Items 各 0 封**
   ⇒ `pstore/ram`（11-16 12:00）、**M8 mdss v5**（11-13）、**M6 bonded**（10-31）、**Q28 REPORT v2**（10-15）
   **全部零回复**；四条线程维持「等维护者」。取证 = `reports/q28-dossier-B-mail-external.md` §①②。
-- **我方欠账（2026-11-17 早复核，两件 → 一件）**：
+- **我方欠账（2026-11-17：**全部清空**）**：
   1. ~~**dsi/phy v2**~~ **已投 2026-11-16 22:50/23:03**（两发均 250；错前缀一封由第二封自述；
      `/linux-arm-msm/`+`/linux-kernel/`+`/dri-devel/` 三处归档，正文逐字节相同）⇒ 现在只欠「等回复」；
-  2. **Q28 证据回帖到 v5 线程（仍未发，只差放行）** = `patches/upstream/mdss-v5-q28-evidence-20261116/mail-body.txt`
-     （症状族 A/B/C + 硬判据「DSI 中断计数亮 41 / 暗 0」+ 23 发真实 POR 四臂：`base 4/9` vs
+  2. **Q28 证据回帖 —— ★已投（2026-11-17 12:17 CST，用户放行）**：`Message-ID <179488903160.260870.8168848839719897744@mail.ustc.edu.cn>`、
+     `In-Reply-To` = v5 cover `20261113155635.1677541-1-…`；发后 ~60 s 按 MID 取 raw：`/linux-arm-msm/`(10067 B) + `/dri-devel/`(9326 B) + `/lkml/`(10060 B) **三处均归档**，正文与本地件**逐字节相同**（`sha256 4fe84148…` = 4780 B）。
+     全账 = `patches/upstream/mdss-v5-q28-evidence-20261116/README.md`「投递实账」+ `logs/sent-20261117-121711.txt`。
+     投前草稿内容（症状族 A/B/C + 硬判据「DSI 中断计数亮 41 / 暗 0」+ 23 发真实 POR 四臂：`base 4/9` vs
      `含块复位两臂 15/15`，Fisher 双侧 **p=0.003**；`DIGTOP` 单独 p=1.0 ⇒ 无效；并写明边界
      **15/15 是三枚形状、两枚形状未采样**）。`send-mail-ustc.py` dry-run 已过（95 行、纯 ASCII、
      `In-Reply-To` = v5 cover MID `20261113155635.1677541-1-…`）。

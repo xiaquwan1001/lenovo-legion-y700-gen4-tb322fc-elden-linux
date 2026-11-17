@@ -28,7 +28,7 @@ IMAGE=${IMAGE:?需 IMAGE=<boot.img>（旧默认 vk152 已随 out 清理删除）
 TDIR="$ROOT/reports/trials"
 
 pick_target() {
-	$SSH root@192.168.7.1 true 2>/dev/null && { echo root@192.168.7.1; return 0; }
+	$SSH ${TAB:-root@192.168.7.1} true 2>/dev/null && { echo ${TAB:-root@192.168.7.1}; return 0; }
 	local ifc
 	ifc=$(ip -br link 2>/dev/null | awk '/enx/{print $1}' | while read -r i; do
 		[ "$(cat /sys/class/net/$i/address 2>/dev/null)" = "02:1e:5e:ed:e1:01" ] && { echo "$i"; break; }

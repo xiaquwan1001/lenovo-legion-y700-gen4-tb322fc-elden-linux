@@ -1,0 +1,62 @@
+From b7c3f1a2d4e5f60718293a4b5c6d7e8f90123456 Mon Sep 17 00:00:00 2001
+From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 13 Oct 2026 10:04:25 +0800
+Subject: [PATCH v2] drm/msm/dpu: reject undersized gamma LUT blobs
+
+_dpu_crtc_get_gc_lut() packs DPU_GAMMA_LUT_SIZE entries of the
+user-provided LUT unconditionally:
+
+	for (i = 0; i < PGC_TBL_LEN; i++) {
+		val_even = drm_color_lut_extract(lut[i * 2].green, 10);
+		...
+
+The DRM core validates the blob against the maximum size and the element
+size (drm_property_replace_blob_from_id() with max_size and
+expected_elem_size), but not against the exact size, so a blob that is
+shorter than DPU_GAMMA_LUT_SIZE * sizeof(struct drm_color_lut) is accepted
+and the loop reads past the end of the blob.
+
+Reject such blobs in dpu_crtc_atomic_check().  This is reachable from
+userspace on any DPU platform that exposes the GC block (SDM845, SM8650,
+SM8750, ...).
+
+Fixes: 39a750ff5fc9 ("drm/msm/dpu: Add DSPP GC driver to provide GAMMA_LUT DRM property")
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+---
+v2: only the commit message changed (added the Fixes: tag asked for in
+    <h346otfneexdgpndvmydknzuxuljywvflaoss3xppblp4k2svo@wcanozcwnysb>);
+    the diff is byte-identical to v1.
+
+ drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 42d0a529b4..7a2ed9ad64 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -1534,6 +1534,21 @@ static int dpu_crtc_atomic_check(struct drm_crtc *crtc,
+ 
+ 	bool needs_dirtyfb = dpu_crtc_needs_dirtyfb(crtc_state);
+ 
++	/*
++	 * The DRM core only checks the blob against the maximum LUT size and
++	 * the element size, so a shorter blob is accepted.  The GC path packs
++	 * DPU_GAMMA_LUT_SIZE entries unconditionally, so validate the size
++	 * here to avoid reading past the end of the blob.
++	 */
++	if (crtc_state->gamma_lut &&
++	    crtc_state->gamma_lut->length !=
++			DPU_GAMMA_LUT_SIZE * sizeof(struct drm_color_lut)) {
++		DRM_DEBUG_ATOMIC("%s: invalid gamma LUT size %zu, expected %zu\n",
++				 dpu_crtc->name, crtc_state->gamma_lut->length,
++				 DPU_GAMMA_LUT_SIZE * sizeof(struct drm_color_lut));
++		return -EINVAL;
++	}
++
+ 	/* don't reallocate resources if only ACTIVE has beeen changed */
+ 	if (crtc_state->mode_changed || crtc_state->connectors_changed ||
+ 	    crtc_state->color_mgmt_changed) {
+-- 
+2.53.0
+

@@ -14,7 +14,7 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 EFI=$ROOT/build/grub-arm64/grubaa64.efi
 TAG=
-DEVICE=root@192.168.7.1
+DEVICE=${DEVICE:-${TAB:-root@192.168.7.1}}
 ESP=/dev/sda18
 ACT=stage
 SSHOPT=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes)

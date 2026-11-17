@@ -26,7 +26,7 @@ N=${1:-5}
 IMG=${2:-$ROOT/out/boot-elden-vk64.img}
 # --check：零副作用预检（不 boot/不刷），放在参数位置解释，避免被当成轮数
 if [ "$N" = "--check" ]; then CHECK_ONLY=1; N=0; IMG=${2:-$ROOT/out/boot-elden-vk64.img}; fi
-DEV=root@192.168.7.1
+DEV=${DEV:-${TAB:-root@192.168.7.1}}
 LOG=${LOG:-$ROOT/logs/n5b-vk64-$(date +%Y%m%d-%H%M%S).log}
 SLOG=$LOG.serial
 mkdir -p "$(dirname "$LOG")"
@@ -55,7 +55,7 @@ stop_serial() { serial_stop; }
 trap stop_serial EXIT
 
 SSH() { timeout 25 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -o BatchMode=yes "$DEV" "$@" 2>/dev/null; }
-FB()  { timeout 20 fastboot devices > /tmp/n5b-fbdev.txt 2>/dev/null; grep -q HA2EXB0E /tmp/n5b-fbdev.txt; }
+FB()  { timeout 20 fastboot devices > /tmp/n5b-fbdev.txt 2>/dev/null; grep -q "${SER:-HA2EXB0E}" /tmp/n5b-fbdev.txt; }
 
 echo "### N5b start $(date '+%F %T')  rounds=$N  img=$IMG"
 [ -f "$IMG" ] || {

@@ -1,0 +1,91 @@
+patches/upstream/wl2868c-v12-20261117/v12-0000-cover-letter.patch
+patches/upstream/wl2868c-v12-20261117/v12-0001-regulator-dt-bindings-willsemi-wl2868c-add-the-W.patch
+patches/upstream/wl2868c-v12-20261117/v12-0002-regulator-willsemi-wl2868c-add-the-WL2868C-camer.patch
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<lgirdwood@gmail.com>
+RCPT TO:<broonie@kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Liam Girdwood <lgirdwood@gmail.com>,
+	Mark Brown <broonie@kernel.org>
+Cc: Rob Herring <robh@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	linux-kernel@vger.kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org
+Subject: [PATCH v12 0/2] regulator: add the Will Semiconductor WL2868C camera PMIC
+Date: Tue, 17 Nov 2026 13:21:25 +0800
+Message-ID: <cover.1794557667.git.xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<lgirdwood@gmail.com>
+RCPT TO:<broonie@kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Liam Girdwood <lgirdwood@gmail.com>,
+	Mark Brown <broonie@kernel.org>
+Cc: Rob Herring <robh@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	linux-kernel@vger.kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org
+Subject: [PATCH v12 1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+Date: Tue, 17 Nov 2026 13:21:26 +0800
+Message-ID: <9ab5e5937264bb408be43986acb8553464e44a49.1794557667.git.xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <cover.1794557667.git.xiaqinghuan@mail.ustc.edu.cn>
+References: <cover.1794557667.git.xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<lgirdwood@gmail.com>
+RCPT TO:<broonie@kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Liam Girdwood <lgirdwood@gmail.com>,
+	Mark Brown <broonie@kernel.org>
+Cc: Rob Herring <robh@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	linux-kernel@vger.kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org
+Subject: [PATCH v12 2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver
+Date: Tue, 17 Nov 2026 13:21:27 +0800
+Message-ID: <4ad69e8cfdef799d2f33ce1fdd43e539a2f515f5.1794557667.git.xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <cover.1794557667.git.xiaqinghuan@mail.ustc.edu.cn>
+References: <cover.1794557667.git.xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 

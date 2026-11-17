@@ -25,7 +25,7 @@ ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 MODE=${1:-all}
 N=${2:-6}
 IDLE=${3:-600}
-DEV=root@192.168.7.1
+DEV=${DEV:-${TAB:-root@192.168.7.1}}
 LOG=${LOG:-$ROOT/logs/n7-vk127-$(date +%Y%m%d-%H%M%S).log}
 mkdir -p "$(dirname "$LOG")"
 exec > >(tee -a "$LOG") 2>&1

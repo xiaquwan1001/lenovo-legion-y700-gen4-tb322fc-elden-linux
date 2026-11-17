@@ -13,7 +13,7 @@
 # Every network/step has a timeout; a hard deadline bounds the whole run.
 set -u
 ROOT=${ROOT:-/home/xuqianhui1001/y700-elden}
-DEV=192.168.7.1
+DEV=${DEV:-${TABIP:-192.168.7.1}}    # 设备 IP（TABIP/DEV 可覆盖；默认不变）
 VAR=${1:?usage: sd-run-variant.sh <variant> [cycles]}
 CYCLES=${2:-5}
 IMG=$ROOT/out/boot-elden-$VAR.img

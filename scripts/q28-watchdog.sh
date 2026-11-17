@@ -11,7 +11,7 @@
 set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 PAY="$ROOT/rootfs/persistent-overlay/q28-boot-watchdog.sh"
-TAB=root@192.168.7.1
+TAB=${TAB:-root@192.168.7.1}
 SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -b 0"
 S() { timeout "${S_TMO:-40}" $SSH "$TAB" "$@"; }
 

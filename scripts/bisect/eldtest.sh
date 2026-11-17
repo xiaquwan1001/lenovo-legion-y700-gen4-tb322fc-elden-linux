@@ -20,7 +20,7 @@
 set -u
 ROOT=${ROOT:-$HOME/y700-elden}
 cd "$ROOT" || exit 1
-SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 -o BatchMode=yes root@192.168.7.1"
+SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 -o BatchMode=yes ${TAB:-root@192.168.7.1}"
 SER=${SER:-/dev/ttyACM0}
 RUN=$(date +%Y%m%d-%H%M%S)
 OUTDIR=${OUTDIR:-$ROOT/logs/bisect/$RUN}

@@ -1,0 +1,82 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 13 Nov 2026 12:00:00 +0800
+Subject: [PATCH v9 4/4] arm64: dts: qcom: sm8750: describe the two-connector
+ shared HS data bus
+
+Respond to Rob's review of v8: the two connectors are two mux'ed data
+streams of the same High Speed bus, so port@0 carries two endpoints and
+there is no second High Speed port.
+
+Split the High Speed endpoint of the DWC3 node in sm8750.dtsi into
+endpoint@0/endpoint@1 (the "usb_dwc3_hs" label keeps pointing at the
+first one, so the existing sm8750 boards are unaffected), and describe
+the mux and the per-connector role switches on the Lenovo Legion Y700
+Gen 4, whose two receptacles share the High Speed data lines through an
+analog mux on GPIO 29.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 73f4452..d19a248 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -55,6 +55,17 @@
+ 		regulator-name = "wl2868c_vsys";
+ 		regulator-always-on;
+ 	};
++
++	/*
++	 * The two Type-C receptacles share the controller's High Speed data
++	 * lines through an analog mux on GPIO 29; the Super Speed pairs go to
++	 * separate PHYs.
++	 */
++	usb_hs_mux: mux-controller {
++		compatible = "gpio-mux";
++		#mux-control-cells = <0>;
++		mux-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
++	};
+ };
+ 
+ &gpi_dma2 {
+@@ -127,3 +138,18 @@
+ 		bias-disable;
+ 	};
+ };
++
++&usb {
++	dr_mode = "otg";
++	mux-controls = <&usb_hs_mux>;
++};
++
++&usb_dwc3_hs {
++	usb-role-switch;
++	mux-state = <0>;
++};
++
++&usb_dwc3_hs2 {
++	usb-role-switch;
++	mux-state = <1>;
++};
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index cf947ac..c45c737 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -3212,9 +3212,16 @@
+ 				#size-cells = <0>;
+ 
+ 				port@0 {
++					#address-cells = <1>;
++					#size-cells = <0>;
+ 					reg = <0>;
+ 
+-					usb_dwc3_hs: endpoint {
++					usb_dwc3_hs: endpoint@0 {
++						reg = <0>;
++					};
++
++					usb_dwc3_hs2: endpoint@1 {
++						reg = <1>;
+ 					};
+ 				};
+ 

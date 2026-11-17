@@ -30,7 +30,7 @@ ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 ARM=vk129
 WAIT=${WAIT:-240}
 ROLLBACK=1
-DEV=root@192.168.7.1
+DEV=${DEV:-${TAB:-root@192.168.7.1}}
 TS=$(date +%Y%m%d-%H%M%S)
 LOG=$ROOT/logs/suspend-capture-$TS.log
 SLOG=$ROOT/logs/suspend-capture-$TS.serial.log
@@ -62,7 +62,7 @@ echo "### suspend boot panic capture $(date '+%F %T')  arm=$ARM  log=$LOG"
 FB() { timeout 30 fastboot "$@" >"$RUNDIR/fb.txt" 2>&1; local rc=$?; sed 's/^/    fastboot> /' "$RUNDIR/fb.txt"; return $rc; }
 SSH() { timeout 25 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -o BatchMode=yes "$DEV" "$@" 2>/dev/null; }
 
-fb_present() { timeout 15 fastboot devices >"$RUNDIR/dev.txt" 2>&1; grep -q HA2EXB0E "$RUNDIR/dev.txt"; }
+fb_present() { timeout 15 fastboot devices >"$RUNDIR/dev.txt" 2>&1; grep -q "${SER:-HA2EXB0E}" "$RUNDIR/dev.txt"; }
 ssh_alive()  { SSH true; }
 
 wait_ssh() { local t=0; while [ "$t" -lt "${1:-$WAIT}" ]; do ssh_alive && return 0; sleep 5; t=$((t+5)); done; return 1; }

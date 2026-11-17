@@ -3,10 +3,10 @@
 # 依赖：boot_b = 可启动的 camdp-nocam；掉电后落在 fastboot 时用 `fastboot reboot` 兜底。
 # 用法：bash scripts/sleep-sweep.sh "<模块名，空格分隔>" [轮数]
 set -u
-DEV=root@192.168.7.1
+DEV=${DEV:-${TAB:-root@192.168.7.1}}
 S() { timeout 20 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 -o BatchMode=yes "$DEV" "$@" 2>/dev/null; }
 # 2026-11-09 PITFALLS #584：不要把 fastboot 接在 `| grep -q` 里（SIGPIPE 会打断 fastboot 通道）
-FB() { local d; d=$(timeout 20 fastboot devices 2>/dev/null) || return 1; case "$d" in *HA2EXB0E*) return 0;; *) return 1;; esac; }
+FB() { local d; d=$(timeout 20 fastboot devices 2>/dev/null) || return 1; case "$d" in *"${SER:-HA2EXB0E}"*) return 0;; *) return 1;; esac; }
 CONF="${1:?conf}"
 [ "$CONF" = NONE ] && CONF=""
 N="${2:-3}"

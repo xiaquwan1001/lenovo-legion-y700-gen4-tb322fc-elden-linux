@@ -16,6 +16,7 @@ D8="$TREE/prebuilts/sdk/tools/lib/d8.jar"
 
 OUT=${OUT:-/tmp/wd-audio-test}
 mkdir -p "$OUT"
+DEV=${DEV:-${TAB:-root@192.168.7.1}}   # ssh 目标（DEV/TAB 可覆盖；默认不变）
 cd "$HERE"
 for M in TestAudio TestCodec TestRecord ListCodecs; do
     javac -source 8 -target 8 -bootclasspath "$AJ" -classpath "$AJ" -d "$OUT" "$M.java"
@@ -29,7 +30,7 @@ done
 cat <<EOF
 
 Push & run inside the Android container (device host, root):
-  scp $OUT/*.jar root@192.168.7.1:/tmp/
-  ssh root@192.168.7.1 'cp /tmp/*.jar /home/xuqianhui1001/.local/share/waydroid/data/local/tmp/'
-  ssh root@192.168.7.1 'waydroid shell -- sh -c "CLASSPATH=/data/local/tmp/ListCodecs.jar app_process /data/local/tmp ListCodecs"'
+  scp $OUT/*.jar "$DEV":/tmp/
+  ssh "$DEV" 'cp /tmp/*.jar /home/xuqianhui1001/.local/share/waydroid/data/local/tmp/'
+  ssh "$DEV" 'waydroid shell -- sh -c "CLASSPATH=/data/local/tmp/ListCodecs.jar app_process /data/local/tmp ListCodecs"'
 EOF

@@ -69,15 +69,10 @@ bootstrap_kernel() {
 	local i=0
 	while [ $i -lt 30 ]; do $SSH 'echo up' 2>/dev/null | grep -q up && break; sleep 5; i=$((i+1)); done
 	$SSH 'echo up' 2>/dev/null | grep -q up || { echo "[mod] 引导后 SSH 未起（150s）——试 --deploy none 已 boot 的内核，或查 PITFALLS #170" >&2; exit 1; }
-	# dev KV 的模块在设备盘上通常不存在 → 一次性推全量（后续本函数不再做，只热载单模块）
-	local STAGE; STAGE=$(mktemp -d)
-	local TAR; TAR=$(mktemp --suffix=.tar.gz)
-	kbuild INSTALL_MOD_PATH="$STAGE" modules_install >/dev/null
-	( cd "$STAGE/lib/modules/$KV" && find . -name '*.ko*' -print0 | tar czf "$TAR" --null -T - ) || true
-	$SSH "mkdir -p /lib/modules/$KV"
-	$SSH "cat > /var/tmp/modloop-all.tar.gz" < "$TAR"
-	$SSH "tar xzf /var/tmp/modloop-all.tar.gz -C /lib/modules/$KV && depmod -a '$KV' && rm -f /var/tmp/modloop-all.tar.gz && echo '[mod] all modules installed'"
-	rm -rf "$STAGE" "$TAR"
+	# B13 §2（2026-11-17）：整套模块的传输不再自带一份实现 —— 交给 deploy-modules.sh
+	# （--from 模式 = modules_install + 备份 + 解包 + depmod + 读回校验）。
+	# 不传 --lock：本脚本已持 device_lock，再取会自锁死。
+	bash "$ROOT/scripts/deploy-modules.sh" --from "$KDIR" --uts "$KV" --target "$TAB"
 	RUNKV=$($SSH 'uname -r' 2>/dev/null || true)
 	echo "[mod] bootstrap 完成，device KV=${RUNKV:-?}"
 }
@@ -143,10 +138,9 @@ TAR=$(mktemp --suffix=.tar.gz); trap 'rm -rf "$STAGE" "$TAR"' EXIT
 ( cd "$STAGE" && tar czf "$TAR" updates )
 [ -s "$TAR" ] || { echo "[mod] staging tarball empty ($tar_names)" >&2; exit 1; }
 
-echo "[mod] uploading to /lib/modules/$KV ..."
-$SSH "mkdir -p /lib/modules/$KV"
-$SSH "cat > /var/tmp/modloop.tar.gz" < "$TAR"
-$SSH "tar xzf /var/tmp/modloop.tar.gz -C /lib/modules/$KV && depmod -a '$KV' && rm -f /var/tmp/modloop.tar.gz && echo '[mod] extracted + depmod'"
+echo "[mod] uploading to /lib/modules/$KV (via deploy-modules.sh --bundle) ..."
+# B13 §2：传输/备份/depmod/读回只存在于 deploy-modules.sh 一份（本脚本只管 staging 形态 = updates/）
+bash "$ROOT/scripts/deploy-modules.sh" --bundle "$TAR" --uts "$KV" --target "$TAB"
 
 [ "$DO_RELOAD" = 1 ] || { echo "[mod] --no-reload → staged only"; exit 0; }
 

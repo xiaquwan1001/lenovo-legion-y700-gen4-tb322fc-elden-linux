@@ -15,6 +15,7 @@
 #   scripts/uefi-flashed-trial.sh --image out/r21-sbstop-p69/uefi-preamble69-r1.img --label p69-r70-timing
 #   scripts/uefi-flashed-trial.sh --image ... --label ... --expect-kernel 'vk184-0000'   # 落地内核断言（可选）
 #   scripts/uefi-flashed-trial.sh --image ... --label ... --no-reboot   # 只刷不重启（备料核对用）
+#   scripts/uefi-flashed-trial.sh --image ... --label ... --skip-a-slot-prep  # 跳过 a 槽 dtbo 前置（默认自动做，幂等）
 #   scripts/uefi-flashed-trial.sh --part vbmeta_a --image out/vbmeta-a-flags3/….img --label vbmeta-a-flags3
 #                                                            # 2026-11-10 新增：不只 boot_a，任意 a 槽分区（默认 boot_a）
 #
@@ -28,6 +29,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 SER=${SER:-}
 PRODUCT_MATCH=${PRODUCT_MATCH:-elden}
 IMG=""; LABEL=""; OUTDIR=""; MAXWAIT=${MAXWAIT:-300}; DO_REBOOT=1; EXPECT_KERNEL=""; PART=${PART:-boot_a}
+SKIP_ASLOT_PREP=${SKIP_ASLOT_PREP:-0}
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -38,6 +40,7 @@ while [ $# -gt 0 ]; do
 		--max-wait) MAXWAIT=$2; shift 2;;
 		--expect-kernel) EXPECT_KERNEL=$2; shift 2;;
 		--no-reboot) DO_REBOOT=0; shift;;
+		--skip-a-slot-prep) SKIP_ASLOT_PREP=1; shift;;
 		-h|--help) sed -n '2,30p' "$0"; exit 0;;
 		*) echo "unknown arg: $1" >&2; exit 2;;
 	esac
@@ -146,6 +149,35 @@ logfs_snap() { # logfs_snap <tag>
 say "== 目标 $LABEL ; 件 $IMG"
 say "   件 sha256=$IMGSHA size=$IMGSZ B"
 say "   取证目录 $OUTDIR"
+
+# ---- B13 §3（2026-11-17）：a 槽目标的 dtbo 前置 ----
+# 原厂 dtbo_a 是合法 Android DTBO（23.3 MB）；ABL 在 BootLinux 后会把它合进我们的 DTB ⇒ 卡联想 logo。
+# 所以凡写 `*_a` 的分派入口必须先保证 dtbo_a = 32 MiB 全 0；脚本自带**备份 + 写后读回**，且幂等。
+# 判据来源：reports/uefi-dtbo-a-rootcause-20261110.md、PITFALLS sessions/01-02。
+a_slot_prep() {
+	local st
+	st=$(bash "$ROOT/scripts/uefi-a-slot-prepare.sh" --check 2>/dev/null | grep -oE 'STATUS=[A-Z_]+' | head -1)
+	say "   a 槽 dtbo 前置检查：${st:-读不到状态（设备不在 Linux？）}"
+	if [ "$st" = "STATUS=READY" ]; then say "   dtbo_a 已是假 dtbo ⇒ 幂等跳过"; return 0; fi
+	[ -n "$SER" ] || {
+		say "FATAL: dtbo_a 需要清零（否则卡 logo），但目标未锁定。先跑 SER=<SN> scripts/uefi-a-slot-prepare.sh，"
+		say "       或显式 --skip-a-slot-prep 自行承担风险。"
+		return 1; }
+	say "   调 scripts/uefi-a-slot-prepare.sh（备份 → 写 32 MiB 全 0 → 读回校验）"
+	SER="$SER" bash "$ROOT/scripts/uefi-a-slot-prepare.sh" || { say "FATAL: a 槽 dtbo 前置失败"; return 1; }
+	st=$(bash "$ROOT/scripts/uefi-a-slot-prepare.sh" --check 2>/dev/null | grep -oE 'STATUS=[A-Z_]+' | head -1)
+	[ "$st" = "STATUS=READY" ] || { say "FATAL: 写后复检仍非 READY（${st:-?}）"; return 1; }
+	say "   a 槽 dtbo 前置 OK（读回 = 全 0）"
+}
+
+case "$PART" in
+	*_a)
+		if [ "$SKIP_ASLOT_PREP" = 1 ]; then
+			say "⚠ --skip-a-slot-prep：跳过 dtbo_a 清零（真 dtbo_a 会卡 logo，仅在你已确认时使用）"
+		else
+			a_slot_prep || { echo "VERDICT=ASLOT_PREP_FAIL" > "$OUTDIR/verdict.txt"; exit 5; }
+		fi ;;
+	esac
 
 say "== [1/6] 前置态（Linux 侧只读）"
 ensure_slot_attr
