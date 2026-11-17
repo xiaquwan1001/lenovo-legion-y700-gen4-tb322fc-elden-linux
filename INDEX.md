@@ -40,22 +40,25 @@
 5. **桌面层两回归已闭环（2026-11-14 晚）**：**T20 电源键短按不熄屏**根因 = `zwlr_output_power_v1` 每屏只许一个请求者，phosh 的第二个请求被 `send_failed` 且资源被销毁 ⇒ `power_mode` 停在 `OFF` ⇒ 屏保管理器 `active` 恒 TRUE、press/release 双短路；修 = phoc（wlroots 放行多请求者）+ phosh（failed 回退为 ON）两枚自编件，已上机验收（短按熄屏/再按亮屏、长按菜单正常）。**T19 撕裂**仍停在「根因层 = 带 modifier 的 dmabuf 导入已锁定、缺 mesa 26.2.5 A/B」。
    → `TASKS/sessions/2026-11-14-T20-电源键不熄屏.md` §7、`PITFALLS` #371、`scripts/{phoc,phosh}-install.sh`
 6. **上游**（2026-11-17 更新）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**、**dsi/phy v2 已发**（11-16 22:50/23:03 两发 `250`；`/linux-arm-msm/`+`/linux-kernel/`+`/dri-devel/` 三处归档、正文字节一致；错前缀那封由第二封自述）；dwc3 v9 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**；**唯一在档未发 = Q28 证据回帖**（已修「折行 Cc 会漏发 5 人」）。→ `reports/upstream-status-20261113.md`、`TASKS` §7。
+   **★2026-11-17 联网核查（子代理，全账 `reports/upstream-replies-20261117.md`）**：在飞 4 系列**只有 1 个收到人回** = wl2868c v11（Rob 11-16 15:10 UTC：**v11 漏带他的 R-b** ⇒ 下一版补 tag）；pstore v1 / dsi-phy v2 / mdss v5 **零人回**。
+   另有两封改变前提的信：① **Bryan 对我方 camss CSIPHY RFC 回信（11-15 17:44 UTC）** —— 先基于 on-list 的 Hangxiang **v25**/Qualcomm **v7** 工作，并直言我方邮件「LLM output…干难懂」；② **`qcom,nsessions` 已于 11-16 被上游合入废弃**（`641dd7dd0f68`）。我方相关主线合入 = 0；同家族上一代 Kaanapali PHY 3 枚已进 phy-next。
 
 **卡什么**
 
-- **camss 唯一硬分歧 = CSIPHY 2.3.0 vs 2.4.0**：上游 7.4-rc3 已把表迁到 `phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c` 的 `lane_regs_x1e80100[]`（= vendor **v2.1.2**），本机 vendor `camera.ko` 是 **2.4.0**（地址 103/103 相同、13 个 data 字节不同，逐版本扫证明是版本特征）⇒ 要 2.4.0 delta，形状须改成 phy 驱动里新增 `lane_regs_sm8750[]`。**没拿到对照表就不发信提问**。**2026-11-16 复查 7.4-rc3 final `aebb727447`**：`sm8750-csi2-phy` 仍无、camss 里仍无 `kaanapali` ⇒ v6 未合入，delta 备料（`patches/upstream/camss-csiphy-24-20261115/`，2 枚、`(addr,data,type)` 103/103 与 vendor 2.4.0 全等）在 rc3 final 上 **apply 2/2 rc=0**，但仍受 §4 三条约束（binding 与在飞 v6 撞段 / 需一次上机出流 / 先在 v6 线程问口径）→ `reports/camss-csiphy-v6-vs-240-20261113.md`、`PITFALLS #648`。
-- **fastrpc**：等上游 `accel/qda` v4 与 `nsessions` 废弃定调（不等我们动作）。→ `reports/fastrpc-nonsecure-evidence-20261113.md`。
+- **camss：对账已完、且上游回信把门改了**：本机 vendor `camera.ko` CSIPHY = **2.4.0**（地址 103/103 同、13 个 data 字节不同），delta 备料 `patches/upstream/camss-csiphy-24-20261115/`（2 枚）**2026-11-17 复核仍可原样 apply**（所涉 4 文件 blob 在 `9d66f26fef` 与 master tip `666539eecdf4` 逐字相同 ⇒ rc=0，`reports/misc-20261117.md`）。但 **Bryan 11-15 回信把前置条件改成「先基于 on-list 的 v25/v7」**，而 **per-SoC lane 表这个形状已被上游采纳**（v25 `[03/15]`）⇒ 原来的「形状分歧」不再是分歧；剩下两件 = ① 基于 on-list 分支重排 delta（贴 v25/v7 已合部件）；② 一次上机出流回归。**没做到这两件就不发**，且给 phy 侧的信只留最小事实（去 AI 味）。→ `reports/camss-csiphy-v6-vs-240-20261113.md`、`reports/upstream-replies-20261117.md` §3.1、`PITFALLS #648`。
+- **fastrpc**：`qcom,nsessions` **上游已废弃并合入**（`641dd7dd0f68`）⇒ 倒过来变成我们的欠账：板级 DTS 里若还写该属性就要按驱动侧策略删除/改写；`accel/qda` 仍 v4（未合、无 v5）。
 - **T14/T17 用户态固化**：S3+S4+S6 离线复核已过，**唯一缺口 = `hapticd` 二进制不可重建**（自家 ELF，chroot 步骤已闭合）。→ `reports/t14-s3s4s6-offline-verify-20261114.md`。
 - **T9 待机**：改成间接采样（设备 timer 30 min 追加 `/var/lib/elden/suspend-resource.tsv`），**要 1–2 天数据才能判**，取数是人的动作。→ `TASKS` §4 T9、`PITFALLS #651`。
 - **已结项、勿重推**：Q28/Q32 =「已规避」（运营线 8/8 无坏发）、Q24 = 根因指名（7.2 缺 `skip retention by default`）、Gunyah = 非主线、`#106` = 历史记录（2026-10 之后无复现样本，未取证）。
 
 **下一步（按顺序）**
 
-1. **camss CSIPHY 对账**（主机侧，无需设备）：拉 7.4-rc3+ 的 phy 表与 vendor 2.4.0 逐字节比 → 决定是否给上游 2.4.0 delta。
+1. **camss CSIPHY（主机侧，对账部分已完成 2026-11-17）**：剩下两件 = ① 基于 on-list 分支（Hangxiang v25 / Qualcomm v7）重排 2.4.0 delta；② 补一次上机出流回归。**没做完 ① 不发信、不发补丁**。
 2. **上游待批准批次**（**2026-11-16 已对 mainline **7.4-rc3 final `aebb727447` 全部重跑顺序 apply**，详见 `reports/artifacts/apply-check-7.4rc3-20261116/`）：
-   `board DTS` 单枚 / `dwc3 v9` 4 枚 / `m8-mdss v4` 3 枚 / `dpu-gamma v2` 1 枚 / `m6-dsi-pll v2` 1 枚 / `haptics v2` 6 枚（**本轮已 rebase 0006** —— 去掉只存在于 linux-next 的 `interrupt.h` 上下文行，6/6 rc=0）—— **均 rc=0，逐系列等用户放行**；
+   `board DTS` 单枚 / `dwc3 v9` 4 枚 / ~~`m8-mdss v4` 3 枚~~（**v5 已于 11-14 投出** ⇒ 剩「等回复」，见上第 6 条与本文件 §0-6；v5 与 v4 diff 只差 3/3 message，apply 结论沿用） / `dpu-gamma v2` 1 枚 / `m6-dsi-pll v2` 1 枚 / `haptics v2` 6 枚（**本轮已 rebase 0006** —— 去掉只存在于 linux-next 的 `interrupt.h` 上下文行，6/6 rc=0）—— **均 rc=0，逐系列等用户放行**；
+   **新增待放行（2026-11-17）**：`wl2868c v12` = v11 原样 + 在 1/2 trailer 补回 Rob 的 `Reviewed-by`（他已重给）；
    **已投的不再在列**：`dsi-phy v2`（11-16 两发 250）、`wl2868c v11`、`mdss v5`；
-   `dispcc-reset-v2` 与 `m8-mdss v4` 内容重复（发 v4）；`camss 2.4.0 delta` 2 枚也 rc=0，但受其 §4 三条约束（见上条「卡什么」）。
+   `dispcc-reset-v2` 与 `m8-mdss v4` 内容重复（发 v4）；`camss 2.4.0 delta` 2 枚也 rc=0，但前置条件已被 Bryan 回信改写（见上条）。
 3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
 4. **中文输入法候选窗：配置层已全绿（2026-11-15 T1–T5 全做，`scripts/ime-candidates-check.sh` = 11 PASS / 0 FAIL）**；**行为层未验** —— 画候选的那一半（`elden-ime-candidates.py`）仍按 #646 撤下，重做要求见 `PITFALLS #646` + 前置条件 `LD_PRELOAD=libgtk4-layer-shell.so.0`。→ `TASKS/sessions/2026-11-15-IME候选回归台账.md` §3b/§3c
 5. **UEFI GRUB 路径：取证已完成（2026-11-15 夜）；修法 ① 已于 2026-11-16 做成可上游 2 枚系列并全绿备料**：
@@ -76,6 +79,7 @@
    **第二轮（2026-11-16，用户批准）已再释放 6.40 GiB**（`stock-src`、`dl-cam/ndk`、`out/r21-sbstop-{p69,pc2}`、`out/mu-memmap-20261115`、`out/{espboot-20261108,espboot-20261110,fbdiag-20261108,dbg-uefi-initrd-20261115}`、`y700四代工具`）⇒ 项目 76 G；
    三项评估结论：`backup/official-rom` super 15 G **可压不可删**（脚本零引用、净省 ~6 G，需同轮改引用行）、`backup/out-history` 8.13 G **无可删**（114 个 .img 全被 `versions/*.tsv` 引用）、`.pi/sessions`+`reports/artifacts` **建议保留**（sessfind 证据面 / 脚本活跃工件根）。
    → `reports/disk-cleanup-20261115.md` §2（执行记录 + 复核命令）
+9. **主机侧待办已对账到 2026-11-17（子代理）**：`reports/todo-inventory-20261113.md` 的 72 条 → `reports/todo-reconcile-20261117.md`（17 已闭环 / 9 已作废 / **6 条主机侧可做** / 25 需设备窗口 / 15 需用户批准）。主机侧 6 条按价值 = B14 T14 重建 recipe、B15 Gunyah 两空、B13 脚本欠账、B18 libcamera 闪光灯、C-I12、B17 分诊盲区（合计 ~10–13 h）。文档/工件卫生 = `reports/doc-hygiene-20261117.md`。
 
 **怎么核实本节没漂**（开工前先跑，见 `.pi/AGENT-OPS.md` §0）
 
