@@ -242,3 +242,6 @@ y700-elden 用自编件替换**发行版同名包**提供的可执行文件（ph
 
 ---
 **编号命名空间**：本仓 `TASKS/README.md §7` 的 `M1–M10` = 上游化 kernel 系列（2026-10-04 立项，各有权威行与投递历史：M7=Q24 已结项不需要补丁、M8=Q28 dispcc v5 已投等 review、M6=Q28 B5 DSI、M10=ADSP fastrpc）。boot 早间批处理的派单编号（2026-11-14 曾用 M1–M8）**与本仓 M 系列无关**，2026-11-15 起派单改用 `B<n>`。跨源引用一律带章节（`§7 M8`）。（判据：`must-do/2026-11-14.md` 顶部命名空间声明 + `rules/cross-project.md`）
+
+---
+**用户裁决（2026-11-17，只记录不执行）**：①**Q28 证据回帖获准放行**（`patches/upstream/mdss-v5-q28-evidence-20261116/mail-body.txt`，dry-run 已过、折行 `Cc` 漏发已修 4→9、门禁 `scripts/mail-draft-check.py` FAIL 0）；②仓外 `~/.local/bin/send-mail-ustc.py` 的 `parse()` 改用 `email` 库（折行 `Cc` 漏发根源在那份，仓内工具已正确），并在 `--send` 成功后调 `scripts/mail-append-sent.py --apply`。
