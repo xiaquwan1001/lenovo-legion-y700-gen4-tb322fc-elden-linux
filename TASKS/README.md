@@ -20,7 +20,7 @@
 
 > **注（口径 2026-11-03 机器化；手算推导已删，改为脚本现出）**：本表数字**一律由 §1 / §2 的行内状态标记导出**，不另设分母。
 > **公式**：`完成 / 在范围`，其中 `在范围 = ID 总数 − ❌/⛔`，`完成 = ✅ + 🟢 + 🎯`；合并行（`| ✅ G1-12…21 |`）按区间展开计 10 项。
-> **现查（唯一出口）**：`scripts/check-progress-counts.sh`（`--tsv` 机读 / `--selftest` 断言 36/37 与 9/13，漂了就 rc=1）。
+> **现查（唯一出口）**：`scripts/check-progress-counts.sh`（`--tsv` 机读 / `--selftest` 断言 36/37 与 10/13，漂了就 rc=1）。
 > 现状：**G1 36/37**（39 ID − ❌2：`G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线；不含上游化 M 系列，以 §7 为准）、**G2 10/13**（`C-历史` 是 5 项聚合行、不进分母；2026-11-10 新增 **C12 droidloom 隔离试验** 入分母 ⇒ 12→13；**2026-11-11 C12 结项 ⇒ 8→9**；**2026-11-15 C3 实测收口（SPIC 回包三档全红）⇒ 9→10**）。
 > **词表（8 类）**：`✅` 完成 / `🟢` 已结项（已规避·已出分·已随根因结项）/ `🟡` 部分·进行中 / `🎯` 治本完成 / `🆕` 取证已做未收口 / `⛔` 搁置 / `❌` 取消 / `⬜` 未开始；`🟢`/`🎯` 计入完成，`🟡`/`🆕`/`⬜` 计入未完成。
 > **改数字只改 §1/§2 的行内标记**：§0 上下表由脚本导出，勿手改（历史手算推导见 `sessions/2026-11-03-TASKS-§4-待办沿革.md` 前后版本）。
@@ -617,6 +617,7 @@
 
 > **★投递批次沿革（2026-10-31 / 11-02 / 11-04 三批）已下沉**：原文逐字在 `TASKS/sessions/2026-11-05-§7投递批次沿革-20261031至20261104.md`；逐封实发件在 `patches/upstream/*/sent/`，投递报告在 `reports/mail-send-*`。
 > **★当前一页 = `reports/upstream-status-20261113.md`（2026-11-13，取代 `-20261105`/`-20261029`）**：逐系列状态 / 归档复核（patchwork，非 cover 计数）/ **我方欠什么** / 复启条件。
+> **★「是否已合并」的三条限定（2026-11-18 定；数据 = `reports/主机侧-B17-20261117.md` §3/§4、`reports/mail-inbox-20261118.md`）**：① 可证的只有 `patchwork: 0 accepted / 0 commit_ref` 这一种形式（305/305 `commit_ref` 空），**不能**外推成「mainline/next 未合并」——维护者直接取件合入而不回信是盲区（本期已用 mainline+next 内容级判定补上，结论仍 0）；② `state`/`tags` 字段不可靠（`state` 会把在审件标 `handled-elsewhere`、`tags` 恒空，R-b 只在 patch 正文里）；③ 判 next 必须取 `next-20261117` 及其后（今日 6 系列 05:20Z 发送晚于 `next-20261116` 快照）。
 > **外部动向快照 = `reports/upstream-watch-20261113.md`**（2026-11-13：patchwork 线程 12 条 + 待观察 8 条 + 外部仓库 9 条，每条带 URL；lore 全站被 Anubis 反爬拦截，故改用 patchwork REST 取同源数据）。
 > **★2026-11-08 增量（`reports/mail-triage-20261108.md`，窗口 11-05 02:40Z → 11-08 05:21Z）**：新信 2481 头、外部回信 10 封唯一 MID、退信 0、我方外发 18 封（v7/v8/v9 + M10）；**行动 = 4 组 10 条技术待办，全部来自 sashiko 机器评审，且逐条在本地源码上确认「仍在」**：A dwc3 binding 3 Medium + 1 Low、B wl2868c driver 3 Medium、C wl2868c binding 2 Low、D M10 1 Low（`Fixes: be9d54c35312`）；人类 2 封（Rob Herring / Conor Dooley）已被 v9 覆盖（Conor 的 `changes-requested` 属时序竞态，v9 cover 已单节说明）；patchwork 上 v8/v9/M10 **tags 全空**（无 Acked/Reviewed/Tested）⇒ **本轮只起草、零投递**；阻塞 1 条 = M10 的 `Fixes:` 提交在本机 4 棵树都 `cat-file -t` = none。
 > **★2026-11-14 增量（mdss v5 + 回 sashiko）**：v4 投后收到 **Konrad Dybcio R-b** 与 **sashiko Medium**（0xa000 是 dispcc 单独描述的域、mdss 没 attach 它却 assert 它的 BCR）。质疑**成立**（`sm8750.dtsi:3335` power-domains 只有 `MDSS_GDSC`、`:3322` clocks 无 `mdp1` 族）⇒ 已回信（承认 + 给出可观测事实 + 标注两条测量边界 + 声明无 datasheet 直证 + 附收窄后的 message，`Result: 250`）并发 **v5**（`patches/upstream/m8-mdss-v5-20261114/`：1/3、2/3 未变，3/3 diff 逐字节相同只收窄 message，三个 R-b 含 Konrad，4×`Result: 250`）。全账 `reports/mail-send-20261114-mdss-v5.md`。**重要自证缺陷已写进信里**：15/15 实测是三枚形状（含 RSCC），v4/v5 的两枚形状**从未上机**、`0xa000` **无单变量**。**遗留**：1/3 丢了 v3 上 Rob Herring 的 `Acked-by`（v4/v5 均未带，发 v6 时补回）。

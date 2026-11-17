@@ -19,8 +19,8 @@
    ⇒ **Linux 侧现状**：`linux17`/`eldenesp` 条目与槽镜像/ESP 已被原厂件覆盖/丢弃，但 `linux17` 的 ext4 数据物理保留在 LBA `73277435`（192 GiB）。重建路径 = **`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §3 S3a**。
    取证/时间线 = `reports/bl-stuck-20261118-forensics.md` §7；自检 = `bash scripts/linux-state-audit.sh --host`。
 
-1. **G1 = 36/37**（2026-11-14 现查；`❌` 仅 `G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线）。**在机 = 持久化的 `vk192`（2026-11-16）**：   `uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`，持久件 = `boot_b` 自签（`06c081ca…`，空载件 `out/boot-elden-vk192.img` `bdf47f5f…`），
-   slot `_b` Active/Successful/Bootable 全 1、重启实测回 vk192；模块树 1510 `.ko` 已按新 UTS 部署。
+1. **G1 = 36/37**（2026-11-17 脚本现查；`❌` 仅 `G1-10` 无 NFC 硬件、`G1-30` 与 G1-29 同路线）。**在机 ≠ vk192（2026-11-17 20:0x 起跑原厂 Android，见本节 0 条）**；`vk192` 现为**回退件**（`bootslot-b/boot_b.img` 自签 `06c081ca…`、空载件 `out/boot-elden-vk192.img` `bdf47f5f…`，UTS `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`）。
+   以下为该版（2026-11-16）**历史判据**：slot `_b` Active/Successful/Bootable 全 1、重启实测回 vk192；模块树 1510 `.ko` 已按新 UTS 部署。
    判据全绿 = DSI `bound ae94000.dsi`+fb0 / WiFi `wlp1s0` UP / `/dev/fastrpc-adsp`+qrtr 400 / SensorProxy 三项 true / Waydroid+zramswap / **s2idle 3/3（fail=0）**。
    本版内容 = **pstore/ram 守卫**（拒绝与 initrd 重叠的 ramoops zone，上游已投 3×250）。→ `DEVICE/README.md` §1.1 首条、`reports/device-session-20261116-vk192.md`；
    前代 vk191（RAM 启动，kernel/dtb 同 vk190）沿革 → `reports/device-session-20261113-vk191.md`。
@@ -50,9 +50,10 @@
 
 **卡什么**
 
-- **⛔ 设备（U2 HA2EXB0E）：卡 BL，软件层已排到底（2026-11-17 18:05）**：全量刷回原厂引导固件 **39 分区**（设备端 sha256 **39/39** == 官方 259）+ A/B 双槽原厂 `boot/vbmeta/dtbo`，冷起仍落 fastboot；连原厂 `boot_b.img` 与 **1 MiB** 自制合法 boot.img 的 `fastboot boot` 也报 `Device Error` ⇒ 失败点固定在 **ABL 的 boot-image load/authenticate**。
-  **★18:5x 定性降级 = 未定因（「硬件类唯一存活解释」已撤回）**：错误串自变是本机已知特性 `#482`、`poke` 单发无正控且 loader 对 peek/poke 有 secboot 门控 `#486`，而 DRAM 敏感操作全绿（96 MiB 设备端 sha256 / 12 分区读回 / 61.5 MiB 写 + 39/39 / ABL 自身跑在 DDR）⇒ 不给硬件结论；**唯一未做的原厂对照 = 整包 `rawprogram1..5 + rawprogram_save_persist_unsparse0 + patch0..5` 线刷（6 LUN GPT 至今未回原厂）**。现况取证 + 分级刷机预案（用户亲自刷）= `reports/bl-stuck-20261118-forensics.md`。
-  历史案例 10 例 / 决策树 = **`reports/bl-history-and-playbook.md`**；本次全账 = `reports/bl-stuck-20261117-device-window.md` §7/§8；现态与回退件 = `DEVICE/README.md` §1.1 首条。
+- **⛔ 卡什么 = Linux 侧归零，不是设备坏（2026-11-17 20:0x 起设备已回原厂 Android 16；21:4x adb 在线复核见下）**：`linux17`/`eldenesp` GPT 条目与槽镜像都已被原厂件覆盖，**只有 `linux17` 的 ext4 数据物理保留在 LBA `73277435`（192 GiB，位于现 `userdata` 区间内，未被 mkfs 覆盖前可救）** ⇒ 下一步 = `RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §3 S3a（先重建条目、**不格式化**）→ S4/S5/S6；**需 C1 放行（S3a 保数据 vs GPT-minimal 重装）**。
+  **2026-11-17 21:4x 只读复核（`SN=HA2EXB0E bash scripts/linux-state-audit.sh --device`，未写盘；快照 `reports/artifacts/linux-state-20261118/audit.tsv`）**：`DRIFT = 设备上无 linux17/eldenesp`、`F.rootfs 缺失（库里无全量 rootfs 归档）`、`/lib/modules 目录数 = 0`；adb `HA2EXB0E` 在线、`sys.boot_completed=1`、slot `_a`、`uname -r 6.6.118-android15`、`/data` 450 G（用 6.3 G）。
+  **★2026-11-17 22:0x 路线已定（用户放行：走重装最小化 + 可进 EDL）=「GPT-minimal 重装 + EDL 直写」**（不再走 S3a 保数据）：① **P0 已做**（EDL 只读 dump 六 LUN 主备表 → `backup/HA2EXB0E-16+512/edl-20261118/`，12 文件 + `SHA256SUMS.txt`；主备表条目逐字节相等、头/条目 CRC 全 OK）；② **两张最小表已生成且自检通过**（`out/gpt-minimal-20261118/lun0_{main0,backup0}.bin` = 10 项 / `linux` LBA 90504..123871226 = 472.19 GiB；`lun4_{main4,backup4}.bin` = 74 项，删 `init_boot_a/b`+`vendor_boot_a/b`）；③ 剩 = 最小 Debian rootfs 的 **ext4 直写镜像**（**中断态**：`out/.work-rootfs-20261118/` 269 MB 半成品 + `out/stage-modules-20261118/` 2.3 G 模块已 staged，`out/rootfs-minbase-20261118.ext4.img` **不存在**；23:25 断电打断，需从 debootstrap 续跑）+ P1（写 LUN0 表）→ P2（`qdl write 0/90504 <ext4.img>` → 上台 `resize2fs` → 刷 `boot_b`/`dtbo_dummy`/`vbmeta_b` → 冷起验 `findmnt /` = `PARTLABEL=linux` + ssh 通）→ P3（LUN4 表）→ P4（`mark-successful b`）。回退 = 写回 `edl-20261118/` 里那两套旧表（“删条目 ≠ 删数据”）。→ `RUNBOOK-BRINGUP/GPT-MINIMAL-DESIGN.md` §4。
+  **★历史（18:5x 定性降级，已被 20:0x T1/T2 推翻，留档防回流）**：真因 = **非原厂 GPT**（LUN0 条目名 + LUN4 槽属性），只写 88 KiB GPT 即恢复；「硬件类唯一存活解释」与送修单均作废（佐证 `#482`/`#486` 的判读错误）。全账 = `reports/bl-stuck-20261118-forensics.md` §7；历史案例 10 例 / 决策树 = `reports/bl-history-and-playbook.md`；回退件清单 = `DEVICE/README.md` §1.1 首条。
 - **camss：delta 已按 Bryan 要求重基完成（2026-11-17 下午），只差一次上机出流回归**：本机 vendor `camera.ko` CSIPHY = **2.4.0**（地址 103/103 同、13 个 data 字节不同）。**v2 = `patches/upstream/camss-csiphy-24-v2-20261117/`（2 枚，基线 = 7.4-rc3 + kaanapali v25 `[01..03]` 前缀），6 道门全绿**（apply / checkpatch **0E0W0C** / `W=1` / `dt_binding_check` / 表 **13-13** 且与 vendor **103-103** 全等 / `git am` 2-2）。关键新事实：v25 `[03/15]` 的 `mipi_csi2_dphy_3nm_kaanapali` **复用 `lane_regs_x1e80100[]`（4nm v2.1.2 表）**，而 Qualcomm 自己的 SM8750 CAMSS v6 `[4/7]` 指向 `csiphy_res_kaanapali`（subject 写 **v2.3.0**），v2.3.0 与 2.4.0 的 18 张 2ph 表逐字节同值 ⇒ 上游现用值与 Qualcomm 两处口径都不一致（只写 cover 提问段，不替 Kaanapali 下结论）。**剩 = ① 一次上机出流回归（或 cover 声明无实测，需用户裁决）；② 投前再看 `SM8750 CAMSS v6 1/7` 是否已进 tree（进则删本系列 binding 那枚）**。→ `reports/camss-v25-rebase-20261117.md`、`reports/camss-csiphy-v6-vs-240-20261113.md`、`reports/upstream-replies-20261117.md` §3.1、`PITFALLS #648`。
 - **fastrpc**：`qcom,nsessions` **上游已废弃并合入**（`641dd7dd0f68`）⇒ 倒过来变成我们的欠账：板级 DTS 里若还写该属性就要按驱动侧策略删除/改写；`accel/qda` 仍 v4（未合、无 v5）。
 - **T14/T17 用户态固化**：S3+S4+S6 离线复核已过，**唯一缺口 = `hapticd` 二进制不可重建**（自家 ELF，chroot 步骤已闭合）。→ `reports/t14-s3s4s6-offline-verify-20261114.md`。
@@ -61,7 +62,7 @@
 
 **下一步（按顺序）**
 
-1. **camss CSIPHY**：① 重基 **已完成（2026-11-17 下午，v2 = `patches/upstream/camss-csiphy-24-v2-20261117/`，基线 = v25 `[01..03]` 前缀，6 道门全绿）**；② **剩**一次上机出流回归（`s5kjns`/`gc08a8` 30 fps）——未做前不发信/不发补丁。→ `reports/camss-v25-rebase-20261117.md`。
+1. **camss CSIPHY**：① 重基 **已完成（2026-11-17 下午，v2 = `patches/upstream/camss-csiphy-24-v2-20261117/`，基线 = v25 `[01..03]` 前缀，6 道门全绿）**；② **剩**一次上机出流回归（`s5kjns`/`gc08a8` 30 fps）——未做前不发信/不发补丁；③ **★2026-11-18 复核：暂不投** —— Qualcomm 11-14 发 `Add CAMSS support for SM8750 and Eliza` **v7（23 枚）**，把我方 `0001` binding 与 `0002` cfg 都做掉了（Krzysztof 已判「应 squash 依赖」）⇒ 等 v8 落地再定形状（预期：`0001` 删、`0002` 收敛为 `.data` 指向 2.4.0 表的一处改动）。→ `reports/camss-v25-rebase-20261117.md`、`reports/upstream-delta-20261118.md` §2.1。
 2. **上游待批准批次**（**2026-11-16 已对 mainline **7.4-rc3 final `aebb727447` 全部重跑顺序 apply**，详见 `reports/artifacts/apply-check-7.4rc3-20261116/`）：
    `board DTS` 单枚 / `dwc3 v9` 4 枚 / ~~`m8-mdss v4` 3 枚~~（**v5 已于 11-14 投出** ⇒ 剩「等回复」，见上第 6 条与本文件 §0-6；v5 与 v4 diff 只差 3/3 message，apply 结论沿用） / `dpu-gamma v2` 1 枚 / `m6-dsi-pll v2` 1 枚 / `haptics v2` 6 枚（**本轮已 rebase 0006** —— 去掉只存在于 linux-next 的 `interrupt.h` 上下文行，6/6 rc=0）—— **均 rc=0，逐系列等用户放行**；
    **新增待放行（2026-11-17）**：`wl2868c v12` = v11 原样 + 在 1/2 trailer 补回 Rob 的 `Reviewed-by`（他已重给）；
@@ -90,6 +91,7 @@
    三项评估结论：`backup/official-rom` super 15 G **可压不可删**（脚本零引用、净省 ~6 G，需同轮改引用行）、`backup/out-history` 8.13 G **无可删**（114 个 .img 全被 `versions/*.tsv` 引用）、`.pi/sessions`+`reports/artifacts` **建议保留**（sessfind 证据面 / 脚本活跃工件根）。
    → `reports/disk-cleanup-20261115.md` §2（执行记录 + 复核命令）
 9. **主机侧待办已对账到 2026-11-17（子代理）**：`reports/todo-inventory-20261113.md` 的 72 条 → `reports/todo-reconcile-20261117.md`（17 已闭环 / 9 已作废 / **6 条主机侧可做** / 25 需设备窗口 / 15 需用户批准）。主机侧 6 条按价值 = B14 T14 重建 recipe、B15 Gunyah 两空、B13 脚本欠账、B18 libcamera 闪光灯、C-I12、B17 分诊盲区（合计 ~10–13 h）。文档/工件卫生 = `reports/doc-hygiene-20261117.md`。
+10. **2026-11-18 主机侧 lane（只读，未改 SSOT 的 5 份报告已入库；本轮结论已并进本节）**：**单一可执行清单 = `reports/todo-next-20261118.md`**（A 主机 11 条 / B 设备 12 条 / C 待批准 11 条 / D 已作废 15 条；价值序首位 = dwc3 v10 + haptics v3 答 sashiko 的 2×High+1×High）。其余 = `reports/progress-audit-20261118.md`（数字三方一致 36/37·10/13；9 处文档滞后已同轮改完）、`reports/mail-inbox-20261118.md`（11-14 后人类回帖 2 封、bot 8 封；`read-mail-ustc.py --replies-only` 判据失效待修）、`reports/upstream-delta-20261118.md`（**camss v2 暂不投**：Qualcomm 11-14 v7 23 枚已做掉我方 0001/0002 形状，等 v8；dwc3/haptics 重基目标换 `refs/heads/master`）、`reports/doc-slim-plan-20261118.md`（可净减 ~44 KB，第一刀 C1–C9 待执行）。
 
 **怎么核实本节没漂**（开工前先跑，见 `.pi/AGENT-OPS.md` §0）
 

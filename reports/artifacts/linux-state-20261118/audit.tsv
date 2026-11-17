@@ -1,0 +1,20 @@
+loader	OK	/home/xuqianhui/下载/tb322fc/xbl_s_devprg_ns.melf  sha=6e920a094ea6b7a2
+loader-alt	OK	backup/fw/tb322fc-edl/xbl_s_devprg_ns.melf sha=6e920a094ea6b7a2
+qdl	OK	/home/xuqianhui/edl/qdl/build/qdl
+官方包:super_1..8	OK	合计 15G
+官方包:userdata_*	WARN	缺（包内被瘦身）⇒ 基线步骤必须 fastboot -w 显式擦 userdata/metadata
+boot_b	OK	bootslot-b/boot_b.img  sha=06c081ca4af94915（=台账 06c081ca…）
+boot-elden-vk192	OK	out/boot-elden-vk192.img  sha=bdf47f5f3f8a49e8（=台账 bdf47f5f…）
+vbmeta_b	OK	backup/vbmeta_b-20261110.img  sha=e974ebab2e591b5b（=台账 e974ebab…）
+dtbo-dummy	OK	out/dtbo-dummy.img  sha=ad7facb2586fc6e9（=台账 ad7facb2…）
+gpt_main0基线	OK	backup/HA2EXB0E-16+512/gpt_main0.bin  sha=72a617398361b43f
+gpt_backup0基线	OK	backup/HA2EXB0E-16+512/gpt_backup0.bin  sha=ea700c0ce7ff38ef
+gpt_new_main0	OK	backup/HA2EXB0E-16+512/gpt_new_main0.bin  sha=80ab46e58fd8c2aa
+stock-259	OK	14 件 / 343M
+官方全量包	OK	backup/official-rom-15.10.259 (16G)
+独有分区 dump	OK	unique/ 125M
+grub-efi	OK	out/grub-arm64-arming-20261116/grubaa64-ab-arm1.efi sha=60037bc7b5e3cdd6
+ESP 件台账	OK	bootslot-b/README.md + DEVICE/README.md §1.1
+rootfs-overlay	OK	rootfs/（952K，仅 overlay 骨架，≠ 全量 rootfs）
+rootfs-全量	WARN	库里无全量 rootfs 归档 ⇒ 依赖设备 linux17 本体 + LBA 台账（§3 S3a）
+modules	OK	out/modules-vk188.tar.gz (23M)

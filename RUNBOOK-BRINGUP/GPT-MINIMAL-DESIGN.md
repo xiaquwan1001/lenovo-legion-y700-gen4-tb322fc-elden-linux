@@ -216,10 +216,10 @@ chroot /mnt/rootfs apt install -y iwd systemd-resolved rfkill
 
 | 阶段 | 动作 | 判据（全绿才进下一步） | 回退 |
 |---|---|---|---|
-| **P0** | 现状（原厂 Android 可用，2026-11-17 已实测 `sys.boot_completed=1`） | `getvar` 基线存档 | — |
-| **P1** | 写 LUN0 最小表（`--lun 0`） | 仍能进 fastboot；EDL 读回 `gpt-audit` 显示「9 项 + linux」 | 写回旧 `gpt_main0/gpt_backup0`（`backup/<SN>/`） |
-| **P2** | `mkfs.ext4` + 解 rootfs + 刷 `boot_b`/`dtbo_b`/`vbmeta_b` | **冷起进 Debian + `ssh` 通 + `findmnt /` = `PARTLABEL=linux`** | `fastboot --set-active=a`（a 槽 Android 未动） |
-| **P3** | 写 LUN4 最小表（`--lun 4`，删 4 项） | 冷起仍进 Debian；`fastboot continue` 无 `Device Error` | 写回旧 LUN4 表 |
+| **P0** | ✅ **已完成（2026-11-17 22:0x）**：原厂 Android 16 在线复核 + EDL 只读 dump 六 LUN 主备表（`backup/HA2EXB0E-16+512/edl-20261118/`，12 件 + `SHA256SUMS.txt`；主备条目逐字节相等、头/条目 CRC 全 OK） | `linux-state-audit.sh --device` = 1 DRIFT / 2 WARN；`gpt-audit` 退出码 1（仅 LUN0 17 字节差异：`userdata` 延到 LBA 123871226） | — |
+| **P1** | 写 LUN0 最小表（`--lun 0`）：**表已生成** `out/gpt-minimal-20261118/lun0_{main0,backup0}.bin`（10 项、`linux` = LBA 90504..123871226 = 472.19 GiB，双表 CRC 自检通过） | 仍能进 fastboot；EDL 读回 `gpt-audit` 显示「9 项 + linux」 | 写回 `backup/HA2EXB0E-16+512/edl-20261118/gpt0-{primary,backup}.bin`（4 KiB 扇区：主表 LBA0..5、备表 LBA 123871227+5） |
+| **P2** | 口径已改（**EDL 直写，不走 RAM+ssh 解包**）：`qdl -s ufs $L write 0/90504 out/rootfs-minbase-20261118.ext4.img` → 上台 `resize2fs /dev/disk/by-partlabel/linux` → 刷 `boot_b`/`dtbo_dummy`/`vbmeta_b`。**现阻塞 = 镜像不存在**：`out/.work-rootfs-20261118/` 269 MB debootstrap 半成品 + `out/stage-modules-20261118/` 2.3 G 已 staged，23:25 断电打断，需续跑 `mke2fs -d` 出图 | **冷起进 Debian + `ssh` 通 + `findmnt /` = `PARTLABEL=linux`** | `fastboot --set-active=a`（a 槽 Android 未动） |
+| **P3** | 写 LUN4 最小表（`--lun 4`，删 4 项）：**表已生成** `out/gpt-minimal-20261118/lun4_{main4,backup4}.bin`（74 项） | 冷起仍进 Debian；`fastboot continue` 无 `Device Error` | 写回 `edl-20261118/gpt4-{primary,backup}.bin` |
 | **P4** | `slot-attr.py mark-successful b`（+`--set-active=b`） | 连起 8 次仍在 `_b`（`#181` 的 7 次耗尽线） | `--set-active=a` |
 | **P5**（可选） | 单槽化（腾 a 槽固件） | — **不做**：1.6 GiB 换一整条退路 | — |
 | **P6**（低优先） | `minimal-v2` 逐批删（每批 ≤3 项，含 1 项"设备唯一"时单独成批） | 每批都跑 P2 判据 + 复查 `dmesg` 无 `-EPROBE_DEFER`/固件加载失败 | 写回旧 LUN4 表（数据仍在盘上） |
@@ -253,5 +253,5 @@ chroot /mnt/rootfs apt install -y iwd systemd-resolved rfkill
 
 1. **`linux-gpt-apply.sh`**：EDL 直写双表（自动算 `backup_lba`）+ 写后读回对账（现在分两步手工）。
 2. **rootfs 归档缺失**（唯一硬缺口）：最小系统定型后产出 `out/rootfs-debian-minbase-<date>.tar.zst` 并入账。
-3. **LUN4 备表 dump** 未入库（现只能 `--synth-backup`）：下次设备窗口读一次 LUN4 备表（5 扇区）存档，之后所有 LUN4 变更都用它。
+3. ~~**LUN4 备表 dump** 未入库~~ → **已完成（2026-11-17 22:0x）**：`backup/HA2EXB0E-16+512/edl-20261118/gpt4-backup.bin`（LBA 1048571+5，条目与主表逐字节相等）。
 4. **`minimal-v2` 的逐项判据表**（每项：预期影响 / 观测命令 / 通过标准）——等 v1 稳定后再写。

@@ -25,7 +25,8 @@
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
 ### 1.1 内核与软件基线
-- ★★**在机 = 持久化的 `vk192`（2026-11-16；本条**唯一**权威状态行）**：`uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`
+- ★★**现态（2026-11-17 20:0x 起，2026-11-17 21:4x adb 复核）= 原厂 Android 16**（`ZUXOS_1.5.10.259` / slot `_a` / `sys.boot_completed=1` / `verifiedbootstate=orange` / `uname 6.6.118-android15` / 无 sshd、无 `/lib/modules` 目录）。**本条以下 vk192 段落全是历史时点 + 回退件清单，不在机**。
+- **历史：在机 = 持久化的 `vk192`（2026-11-16）**：`uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`
   （= `build/daily` HEAD `4bdf1711b5` + tag `vk192`；内核 payload `0a55e52c…`，dtb `89c9336d…`，ramdisk `3282ae6c…`）。
   **持久件 = `boot_b` 自签 `vk192`**（`bootslot-b/boot_b.img` = 96 MiB，分区读回 sha `06c081ca…`，空载件 `out/boot-elden-vk192.img` = `bdf47f5f…`）；
   ABL 现用槽 = `b`，`qbootctl` = Active/Successful/Bootable 全 1，**重启实测回 vk192（32 s 到 SSH）**。
@@ -62,11 +63,11 @@
     Linux 侧：`linux17` 条目/槽镜像/ESP 已被原厂件覆盖，但 `linux17` 的 ext4 数据物理上保留在 LBA `73277435`（192 GiB）⇒ 重建走 `RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §3 S3a（先重建条目、不格式化）。
     本节下面「在机 vk192」的描述 = **历史时点**（2026-11-16），不是现态；取证 = `reports/bl-stuck-20261118-forensics.md` §7。
 
-    **★★2026-11-17 现态：设备卡 BL，进不了系统（本条压过上面「在机 vk192」的运行态，但**镜像/分区仍然清白**）**：
+    **★★历史（19:36 T2 之前）：设备卡 BL，进不了系统（镜像/分区当时是清白的）**：
     **至今（2026-11-17 18:05）已把“软件层”排到底：全量刷回原厂引导固件 39 分区（设备端 sha256 39/39 == 官方 259 件）+ A/B 双槽原厂 `boot/vbmeta/dtbo`，冷起仍落 fastboot；
     连原厂 `boot_b.img` 与 1 MiB 自制合法 boot.img 的 `fastboot boot` 也都是 `Device Error` ⇒ 失败点固定在 ABL 的 load/authenticate，与 flash 内容无关。
     全账 = `reports/bl-stuck-20261117-device-window.md` §7/§8；历史案例与决策树 = `reports/bl-history-and-playbook.md`。
-    现态 = `current-slot=a`、`unbootable:a/b=no/no`、`retry=a7/b6`；非原厂物只剩 GPT 里的 `linux17`/`eldenesp` 及其数据。
+    18:53 时点态 = `current-slot=a`、`unbootable:a/b=no/no`、`retry=a7/b6`；那一时点“非原厂物只剩 GPT 里的 `linux17`/`eldenesp`”一句 **自 19:2x T1 写回原厂 GPT 后已失效**（条目消失、ext4 数据仍留在 LBA `73277435`）。
     回退到 Linux 件：`bootslot-b/boot_b.img`（`06c081ca…`）+ `backup/vbmeta_b-20261110.img`（`e974ebab…`）+ `out/dtbo-dummy.img`；引导固件旧值 dump = `backup/HA2EXB0E-16+512/dev-dump-20261117/`。
     原 11-17 上午现态（活沿革，留作对照）：
     `current-slot=b`、`slot-successful:a/b` **均 no**、`retry-count a=3 / b=0`、`unbootable` 均 no、电池 3406–3408 mV。
@@ -313,7 +314,7 @@
 | ID | SN | hwboardid | 内存/UFS | a 槽 | b 槽 | LUN0 GPT | 可派任务（由状态决定） |
 |---|---|---|---|---|---|---|---|
 | **U1** | `HA2ABH62`（主线 gadget 已改为锚定原厂 SN，见 `PITFALLS #549`/`#626`） | `TB322FC_SM8750P_12+256` | 12 G / 234 GiB | stock 259 **已 root**（SUSFS 6.6.118+KSU+ZN/Shamiko/PIF） | 原厂已刷回 | **已逆手术**：`linux17` 删、`/data` 回 211 GiB | Android 侧一切（AVF 勘察、固件对照、过环境）；mainline 需重做手术 |
-| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259**（Android 16；Widevine **L1**）。**进 Android = `fastboot --set-active=a` + `fastboot reboot`（无需刷 dtbo，实测 2026-10-11，HANDOFF §20 再次成立）**；未 root、无 Google 账号。C0 基线已采：`backup/HA2EXB0E-16+512/c0-baseline/` | **mainline 持久直启**（当前运行根与 boot_b 形态**只读本节 §1.1 首条**，本行不维护这些数字）；`recovery_b` 已刷 TWRP。**外设/驱动功能状态不在本表维护**，一律看 `../TASKS/README.md` §0/§1「未解项只读 §5」 | **已手术（2026-10-25 二次手术 = f2fs 并存；2026-10-31 `linux18` 已删除并入 `linux17`）**：`linux17` ext4 **192.0 GiB**（idx16，`/` 可用 163 G；分区参数与扇区见 §3.3）+ `userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/`（手术前基线另存 `gpt-20261025/`，合并/扩容日志 `backup/gpt-20261031/`） | 当前在 **Linux**（b 槽持久直启，环境可 SSH）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
+| **U2** | `HA2EXB0E` | `SM8750P_16+512_13` | 16 G / ~476 GiB | **BL 已解锁** · stock **259**（Android 16；Widevine **L1**）。**进 Android = `fastboot --set-active=a` + `fastboot reboot`（无需刷 dtbo，实测 2026-10-11，HANDOFF §20 再次成立）**；未 root、无 Google 账号。C0 基线已采：`backup/HA2EXB0E-16+512/c0-baseline/` | **mainline 持久直启**（当前运行根与 boot_b 形态**只读本节 §1.1 首条**，本行不维护这些数字）；`recovery_b` 已刷 TWRP。**外设/驱动功能状态不在本表维护**，一律看 `../TASKS/README.md` §0/§1「未解项只读 §5」 | **已手术（2026-10-25 二次手术 = f2fs 并存；2026-10-31 `linux18` 已删除并入 `linux17`）**：`linux17` ext4 **192.0 GiB**（idx16，`/` 可用 163 G；分区参数与扇区见 §3.3）+ `userdata`=256.7 GiB；双表 dump 在 `backup/HA2EXB0E-16+512/`（手术前基线另存 `gpt-20261025/`，合并/扩容日志 `backup/gpt-20261031/`） | 当前在 **原厂 Android 16**（slot `_a`，无 sshd、无 `/lib/modules`；`2026-11-17` 21:4x adb 复核）。回 Linux = 重建 GPT 条目 + 刷 `bootslot-b/boot_b.img`（vk192）→ `RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §3 S3a（**需 C1 放行**）。基线回退：`out/boot_b-before-cdsp-20261007.img`、`bootslot-b/boot_b-clean.img` |
 
 > **★ 熄屏→整机硬复位：已结项（2026-10-24，本注 2026-11-13 更正）** —— 根因 = **RPMh rail retention 档**，上游自 7.3 起「skip retention by default」自带该修复 ⇒ **7.3 血统日常线免疫**（41 发 0 死亡 vs 7.2 的 6/8 死）；用户裁决「不值得继续取证」⇒ 关闭。
 > **不作待办**；状态与复启条件只读 `../TASKS/README.md` §5 Q24、`../TASKS/README.md` §1 G1-22/G1-33 行；历史二分过程见 `archive/topics/G1-22-2026-10-05.md`、`REBOOT-5MIN-2026-10-05.md` §7.9。
@@ -324,7 +325,7 @@
 
 | 前置状态 | 满足单元 | 可做 |
 |---|---|---|
-| mainline（b 槽直启 + 持久根） | **U2**（b 槽持久直启在跑；当前镜像版本看 §1.1） | U1 已逆手术，mainline 需重做手术 |
+| mainline（b 槽直启 + 持久根） | **U2：需重建**（现为原厂 Android；走 `LINUX-STATE-REPRO` §3，版本仍按 §1.1 首条） | U1 已逆手术，mainline 需重做手术 |
 | stock Android + root | **U1** | 固件对照提取、过环境、AVF 资产复采（可选路线） |
 | 原厂未动 + **BL locked** | （暂无） | 路 C（EDL 直写）不依赖解锁——管线 `scripts/build-locked-chain.sh` 保留作资产；**U2 已走完解锁，不再命中此行** |
 | 原厂未动（**已解锁**，首次手术） | **U2** | GPT dump + 手术 + **RAM 零写盘验收**（`fastboot boot` 可用）；b 槽链已就绪 `bootslot-b-u2/` |
