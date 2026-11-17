@@ -21,7 +21,7 @@
 | `missions/` | **子代理任务卡**（作为 `fabric_exec` 里 `agents.run({task})` 的派工背景，输入） | ✅ track | 文件名与 `agents/` 部分同名，语义不同（见下） |
 | `agents/` | **子代理角色卡（提示词源）**：一级 Lead（`physical-exec`/`doc-audit-lead`/`mail-io`/`code-boundary`）+ 二级叶级（`impl-worker`/`verify-worker`）+ 既有专题卡 | ✅ track | pi-fabric **会按 `name` 直接读取**本目录 `*.md`（正文作 systemPrompt，`tools`/`model` 可被调用覆盖）；派工时也可只传 `agent` 名 |
 | ~~`workflows/`~~ | ✅ **已清空移除（2026-10-12）**：pi-subagents workflow 脚本（5 个）+ `plans/*-workflow.js`（5 个）已移入 `archive/2026-10-12-retired-pi-subagents-workflows/` | — | 旧方言已废弃、仅供追溯；复用须按 fabric 重写（`agents.run`/`Promise.allSettled`），**不要原地改语法** |
-| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | **逐会话快照档案见 `../SESSIONS/`**（检索仍用 `session_search`/`/resume`）；归档策略见 `../RESOURCES/README.md` §3。2026-11-02 已把 `~/.pi/agent/sessions/` 下残余的本项目会话（含旧 home 路径 `/home/xuqianhui1001/y700-elden` 起步的）并回本目录，全局不再留副本 |
+| `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | **逐会话快照档案见 `../SESSIONS/`**（检索用 `sessfind <关键词>` / `sessidx` / `/resume`，`session_search` 工具已不存在）；归档策略见 `../RESOURCES/README.md` §3。2026-11-02 已把 `~/.pi/agent/sessions/` 下残余的本项目会话（含旧 home 路径 `/home/xuqianhui1001/y700-elden` 起步的）并回本目录，全局不再留副本 |
 
 ## `missions/` vs `agents/`（易混）
 
@@ -41,4 +41,4 @@
 - `sessions/` 不入 git；`sn.img`、`bootslot-b/avb.key` 等敏感物禁止入库。已退场的插件入口（`pi-messenger.json`、`messenger/`、`swarm*.sh`）不再放回本目录 → `archive/2026-10-04-retired-entrypoints/`。
 - 记忆只存**跨会话有用**的偏好/教训/决策，不存可随时重推的临时细节。**项目记忆 = `.pi/memory/`（本仓库内，入库）**：
   `~/.pi/agent/projects-memory/y700-elden` 只是指向它的软链（2026-11-02 变更，此前是仓库外活文件 + `.pi/hermes-memory-mirror/` 镜像，镜像已废弃）。
-  全局 `~/.pi/agent/pi-hermes-memory/` 只放跨项目事实（环境/引擎/网络/工具通用坑）；项目机制/契约/测试坑写在 `.pi/memory/` 或角度层 `README.md`。
+  全局跨项目事实在 `~/.pi/agent/memory/`（`MEMORY.md` + `topics-*`/`failures-*`，旧目录 `pi-hermes-memory/` 已随插件卸载迁走）；项目机制/契约/测试坑写在 `.pi/memory/` 或角度层 `README.md`。

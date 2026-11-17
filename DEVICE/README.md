@@ -56,6 +56,15 @@
     **冷启（POR）也已验（2026-11-16 14:46，用户断电冷起）**：菜单正常屏显（5 条，屏照 `30-cold-por-grub-menu.jpg`）→ 默认臂起进 Linux；`Active slot: _a`、DRM = **`card1`**。**注意两件事**：① 走 UEFI/GRUB 路径时 msm 是 `card1`（efifb 先占 card0 再注销），旧版 `q28-boot-watchdog` 只认 `card0` ⇒ 约 100 s 误判「Q28 坏发」自动重启（**已修**，`PITFALLS #667`，设备件 sha `d694c147…`）；② 该轮其中一发是真 Q28 坏发（屏白→仅背光、msm 未 bind），属 #228 存量问题、与本次 EFI 无关。
     证据 `reports/artifacts/uefi-daily-v8-20261116/`；15:02:49 已 `set_active b` 回日常（**12 s** 到 SSH、`_b`、`card0`）。
 
+    **★★2026-11-17 现态：设备卡 BL，进不了系统（本条压过上面「在机 vk192」的运行态，但**镜像/分区仍然清白**）**：
+    `current-slot=b`、`slot-successful:a/b` **均 no**、`retry-count a=3 / b=0`、`unbootable` 均 no、电池 3406–3408 mV。
+    `fastboot continue` → `Failed to load image from partition: Load Error`；`fastboot boot` 对**两份不同镜像**
+    （自研 `out/boot-elden-vk192.img` 与 11-14/15 实测能起的 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）**3/3 同错**（`Load Error`）；
+    `fastboot reboot` 与 EDL `reset` 都 20 s 内落回 fastboot。⇒ **镜像/分区/固件已由 11-16 夜 EDL+`qdl` 双工具逐项对账为台账值**
+    ⇒ 剩下 ABL 载入/认证通路 或 DDR 侧（**疑似硬件**；本轮新信号 = EDL `poke 32 MiB → 0x90000000` 5 min 不返回）。
+    全账 = `reports/bl-stuck-20261116.md` §9；按全局规则 12 已上交 `~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/`，**项目内不深挖**。
+    恢复动作（代价升序，下次设备窗口）：① 长按 10 s 全断电→只按电源；② 充到 >3.7 V 再试；③ EDL 分块同值重刷 `xbl`/`abl`/`boot_b`；④ EDL 全量刷 stock（`backup/stock-259`）。
+
     **换下件 = 验证用嵌入菜单 GRUB `cc6391b3…`**（11-16 11:45 装，两臂 G1/G2 对照 + D + reboot/poweroff），已备份 `BOOTAA64.EFI.daily-v8-20261116.bak`（注意：备份名取的是**新件** tag，内容 = cc6391b3）。
     **换件前实际在役件 = `92a4d8b2…`**（9.5 MB GRUB，11-15 23:01 装、此前 `DEVICE` 未记录 → 本轮补登），已备份 `BOOTAA64.EFI.grub-fixr2-20261116.bak`；
     `\EFI\elden\Loader.efi` = Loader-r73（`6e51fc60…`，未动；拷回当 BOOTAA64.EFI 即走 `\menu.cfg` → `\boot\boot.img` 那条 14 s 链）。

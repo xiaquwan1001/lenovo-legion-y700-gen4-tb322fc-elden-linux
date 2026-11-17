@@ -78,7 +78,7 @@ C0 真 Android 对照取证已于 2026-10-11 完成（Android 16 / build ZUXOS_1
 ---
 文档/脚本整理偏好（2026-10-14）：要求「去掉脚本的过度检查，用记录时候的区分度代替」——即精简 check-doctor 之类的过度校验，靠文件夹 + 文件名 + pi 会话 id 等记录本身的区分度来定位，而不是维护计数/死链/口径字样检查。
 ---
-文档 v2 标准（2026-10-14 用户定）：根维护文档改为角度文件夹（DEVICE/ TASKS/ PITFALLS/ RESOURCES/ RUNBOOK-BRINGUP/），每个内 README.md = 策展 SSOT 正文，sessions/ = 以会话为单位的进度（YYYY-MM-DD-<主题>.md）。要求利用 pi agent 本身的项目级 session 管理工具（.pi/sessions/*.jsonl、session_search/resume）做会话身份/检索，不再手抄会话索引表；根 sessions/ 废弃。
+文档 v2 标准（2026-10-14 用户定）：根维护文档改为角度文件夹（DEVICE/ TASKS/ PITFALLS/ RESOURCES/ RUNBOOK-BRINGUP/），每个内 README.md = 策展 SSOT 正文，sessions/ = 以会话为单位的进度（YYYY-MM-DD-<主题>.md）。要求利用 pi agent 本身的项目级 session 管理工具（.pi/sessions/*.jsonl、`sessfind`/`sessidx`/`/resume`；旧 `session_search` 工具已不存在）做会话身份/检索，不再手抄会话索引表；根 sessions/ 废弃。
 ---
 GPU 基准（G1-8 vkmark/es2gears/fio/sysbench 等）用户已于 2026-10-14 前自行测过，相关文档部分过时——遇到需要更新时一并修文档，不要再重跑。
 ---
