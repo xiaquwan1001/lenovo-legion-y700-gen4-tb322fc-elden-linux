@@ -26,7 +26,9 @@
 6. **主机侧孤儿 `fastboot` 进程抢 USB 命令通道 → 命令发出后设备黑屏崩溃**（BL-08，「能枚举」≠「通道可用」）。
 7. **A/B 属性只能在正确的 LUN/会话下改；改完要读回双表**（贯穿 BL-01/03/04，见 §3 第 1 步）。
 
-两个未定因案例的共同形状：**镜像/分区/固件/GPT/槽属性/AVB/解锁态全部逐字节清白，失败点固定在 ABL 的 load/authenticate 步骤；新增偏硬件信号 = 大块内存访问不稳（512 MiB EDL 读失联、`edl.py poke 32 MiB→0x90000000` 5 min 不返回）**（`reports/bl-stuck-20261116.md` §5、`reports/bl-stuck-20261117-device-window.md` §0）。
+两个未定因案例的共同形状：**镜像/分区/固件/槽属性/AVB/解锁态全部逐字节清白，失败点固定在 ABL 的 load/authenticate 步骤**（`reports/bl-stuck-20261116.md` §5、`reports/bl-stuck-20261117-device-window.md` §0）。
+
+> **★2026-11-17 18:5x 定性修正（本文件原「偏硬件」判读作废）**：① 两条「偏硬件信号」都不成立 —— 错误串自变是本机已知平台特性（`#482`：同一份未改镜像连发出现 HANDOFF / `Booting OKAY` / `Invalid Parameter`），`poke 32 MiB` 则是**单发、无正控、地址未验证**，且本机 loader 对 peek/poke 族有 secboot 门控（`#486`）；② 所有对 DRAM 敏感的操作**全绿**：96 MiB 分区设备端 `sha256`、12 分区 Firehose 读回、61.5 MiB 写 + 39/39 校验、96 MiB USB 传输，且 ABL/UEFI/fastboot 自身就跑在 DDR 里 ⇒「运行期大块内存访问不稳」被自身证据反驳；③ `logfs` 里 `Failed to add memory space 0x8088F000` / `ERROR:NACK: SA:0x1C` / `mbox_os_init …` 在**成功交接段里也全都有**，不能当故障证据；`VBAT: 3899mV` 属过去成功启动段（logfs 只存成功段，`#485`/`#594`），不是现测。⇒ 结论降级为 **未定因**；**唯一未做的原厂对照 = 整包 `rawprogram1..5 + rawprogram_save_persist_unsparse0 + patch0..5` 全量线刷（6 LUN GPT 至今未回原厂）**。复核全账 = `reports/bl-stuck-20261118-forensics.md`。
 
 ---
 
@@ -44,7 +46,7 @@
 | **BL-06** | 2026-11-04 | `fastboot continue` 与 `fastboot boot` **都报 `Load Error`**（当时用的是我们自己的 UEFI 件） | 我们 UEFI 的 **noauth 路径把整个 `dtbo_<slot>` 分区当 dtbo 镜像**：本机 `dtbo_b` 是 32 MiB 且内容全 0 ⇒ `EFI_OUT_OF_RESOURCES` 被 `LoadImageNoAuth()` 改写成 `EFI_LOAD_ERROR` | 补丁 `patches/uefi/20261104R16-dtboclamp`（+`R17-bootmarkers`）：先读一页表头，magic 不合法 ⇒ `EFI_NO_MEDIA`（当无 overlay）；合法 ⇒ 按 `total_size` 装载、缓冲区按 4 KiB 取整 | `PITFALLS/sessions/162-UEFI进DXE之后的取证纪律.md:49-56`（#508）；`PITFALLS/README.md:215` |
 | **BL-07** | 2026-11-09 → 11-10 | 「同一份镜像 `_a` 起不来、`_b` 起得来」；`_a` 卡联想 logo 后**回 fastboot 或回落 `_b`**（p60–p69 每发如此） | **`dtbo_a` 仍是原厂合法 Android DTBO**（magic `D7B7AB1E`、`total_size` 23 348 092 B）：`_a` 上 `Apply Overlay` **真的合并成功**（logfs `Apply Overlay total time: 175 ms`）⇒ 卡 logo；`_b` 因 dtbo 全 0 合并不上而被容忍 | 把 `dtbo_a` 也清成 32 MiB 全 0：`scripts/uefi-a-slot-prepare.sh`（备份原厂件 → 写全 0 → 读回校验）。同件随后 34 s（RAM）/27 s（flashed）起 | `reports/uefi-dtbo-a-rootcause-20261110.md` §0 判据表/§1 机理/§3 配方；`PITFALLS/README.md:297-299`（#600/#601/#602）；`HISTORY/days/2026-11-10.md:23` |
 | **BL-08** | 2026-11-14 | 设备**能枚举**（`fastboot devices` 有），但我们的命令（**甚至只发 `getvar`**）发出后设备黑屏崩溃并回落 | 多项目共用一台 USB 调试主机：隔壁项目的**孤儿 `fastboot` 进程**（本例 13 个 `fastboot oem dump-emmc ptable`、`PPID=systemd --user`、存活 10 h）周期性重开同一设备抢通道 | `pgrep -af "[f]astboot"` 数孤儿 → 杀掉 → 之后 `getvar product` 5 s 内返回即恢复；脚本里判活一律带 `-s <SN>` | `PITFALLS/sessions/294-多项目共用USB主机-fastboot通道被抢.md`（#658）；`PITFALLS/README.md:338` |
-| **BL-09** | 2026-11-16 夜 → 11-17 上午 | U2（`HA2EXB0E`）停 fastboot（`18d1:d00d`）；`continue`/`boot <已知好件>` 均 `Device Error`；`--set-active a|b` + 完整重启**两个方向都 8 s 落回**；11-17 上午 `continue` 变成 **`Load Error`**，`boot` 回 `Failed to load/authenticate boot image: Load Error`，**已知好件 3/3 同败** | **未定因**。已逐条排除：镜像内容（`qdl` 设备端 sha `06c081ca…`）、引导固件（xbl/abl/uefi 全在台账值）、GPT、槽属性、AVB/vbmeta（orange 常态）、ESP 默认 EFI、命令通道抢占。剩两个候选：**ABL/UEFI 加载通路本身** 或 **DDR/内存侧硬件退化**（新信号：EDL 一次读 512 MiB 两次失联、`poke 32 MiB` 不返回） | 本轮**未解决**；恢复动作按代价升序见右列 §6；已按全局规则 12 上交 hw-stability | `reports/bl-stuck-20261116.md` §1（排除表）/§3（已否证假设）/§5（剩余候选）/§8.3（qdl 第二把尺子）/§9（11-17 复测表）；件 `reports/artifacts/bl-stuck-20261116/SHA256SUMS.txt`；`DEVICE/README.md:59-80`；`~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/MANIFEST.md` |
+| **BL-09** | 2026-11-16 夜 → 11-17 上午 | U2（`HA2EXB0E`）停 fastboot（`18d1:d00d`）；`continue`/`boot <已知好件>` 均 `Device Error`；`--set-active a|b` + 完整重启**两个方向都 8 s 落回**；11-17 上午 `continue` 变成 **`Load Error`**，`boot` 回 `Failed to load/authenticate boot image: Load Error`，**已知好件 3/3 同败** | **未定因**。已逐条排除：镜像内容（`qdl` 设备端 sha `06c081ca…`）、引导固件（xbl/abl/uefi 全在台账值）、GPT、槽属性、AVB/vbmeta（orange 常态）、ESP 默认 EFI、命令通道抢占。剩候选中「DDR/内存侧硬件退化」**已于 11-17 18:5x 撤回**（见 §1 修正框）⇒ 存活候选 = **ABL/UEFI 加载通路本身** + **未回原厂的三处状态（6 LUN GPT 属性/条目、`misc`、充电通路）** | 本轮**未解决**；恢复动作按代价升序见右列 §6；已按全局规则 12 上交 hw-stability | `reports/bl-stuck-20261116.md` §1（排除表）/§3（已否证假设）/§5（剩余候选）/§8.3（qdl 第二把尺子）/§9（11-17 复测表）；件 `reports/artifacts/bl-stuck-20261116/SHA256SUMS.txt`；`DEVICE/README.md:59-80`；`~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/MANIFEST.md` |
 | **BL-10** | 2026-11-17 16:02–16:50 | 同一台机第二次窗口：**11 次启动尝试全败**（`continue`×4 / `boot`×5 / EDL `reset` 冷起×3）；失败串**在同一设备内自变**：`Failed to load image from partition: Device Error` ↔ `Failed to load/authenticate boot image: Load Error` ↔ `… Device Error` | **未定因**（同 BL-09）。本轮新增 10 条独立排除：写路径、GPT（5 LUN）、槽属性（复位后冷起 retry 7→6 证明 ABL 真尝试）、lock/verity、vbmeta_b 未变 + `Flags:3`、dtbo_b 与 vbmeta 描述符一致、ABL 本体 stock、存储读路径（12 分区 + 96 MiB 设备端 sha）、**镜像大小**（2.4 MB 件同样 `Device Error`）、槽相关 dtbo 处理 | **未解决，已停手保留现场**；下一步需人：① 长按 15–20 s 全断电→等 10 s→只按电源（不插 USB）；② 用户拍板是否 EDL 只刷 stock 259 引导链；③ 或改「Android 优先」先恢复可用系统 | `reports/bl-stuck-20261117-device-window.md` §0/§2（10 条排除）/§3（判据边界）/§4（与已知 PITFALLS 关系）/§5（恢复动作）/§6（写操作清单）；`reports/artifacts/bl-stuck-20261117/getvar-20261117-1647.txt`；`DEVICE/README.md:66-80` |
 
 ### 表注（易误判点，逐条都有代价）
@@ -130,8 +132,8 @@
 
 | 检查 | 判据 | 命中后动作 |
 |---|---|---|
-| 大块传输稳定性 | EDL 单发 512 MiB 读**两次失联**、分块 16×32 MiB 才成功；ABL 每段都打 `Failed to add memory space :0x8088F000 0x1000` 与 `ERROR:NACK: SA:0x1C`（i2c） | 记一笔（硬件侧嫌疑），继续只读取证 |
-| `edl.py poke 0x90000000 <32 MiB>` 写 DDR 再读回 | **5 min 无输出**（`edl.py` 侧无 `program` 完成行）⇒ DDR 侧可疑 | 已实测=一轮一次即止，别重试 |
+| 大块传输稳定性 | EDL 单发 512 MiB 读**两次失联**、分块 16×32 MiB 才成功；但 96 MiB `qdl sha256`（设备端算）、12 分区读回、61.5 MiB 写+39/39 全绿 | **不是硬件证据**：单发大块读失联是 Firehose/工具分块限度的已知形状（`#669`），分块后稳定 ⇒ 继续只读取证 |
+| `edl.py poke 0x90000000 <32 MiB>` 写 DDR 再读回 | **5 min 无输出**（`edl.py` 侧无 `program` 完成行） | **⛔ 不可作判据**（18:5x 修正）：单发无正控 + 地址未验证 + loader 对 peek/poke 有 secboot 门控（`#486`）⇒ 一轮一次即止，别再重试，也别拿它推 DDR |
 | EDL 是否支持 `peek`（直读 DDR） | **本机 loader 不支持**：`Supported Functions` 无 `peek`，`rawxml` 手发也空回包 ⇒ **「EDL 直读 DDR」这条路不存在**（`#486`），不要为它设计实验 | 改用「冷断电 + 屏上判读 + 换机对照」三条间接判据 |
 | 冷断电 | 长按电源 15–20 s 至全黑 → 等 10 s → **只按电源**（不插 USB） | 进系统 ⇒ 问题自愈（上电残留态）；仍落 fastboot ⇒ 排除 DDR 训练/上电残留，进「恢复动作」 |
 | 收口 | 若上面全部清白且仍失败 ⇒ 按全局规则 12 上交 `~/hw-stability/evidence/inbox/<日期>-y700-elden-<现象>/` + `MANIFEST.md`，**项目内不再深挖** | 恢复动作按 §2 BL-09/BL-10 的代价升序执行（全断电 → 同值重刷 xbl/abl/boot_b → stock 259 引导链 → 全量 stock） |
@@ -177,7 +179,7 @@
 | 2 | **屏上判读**（冷起 10 s 看是「GRUB 5 条菜单」/「Lenovo logo 后转 fastboot」/「只有背光」） | 11-16 §6.2；BL-05 的纠正就来自屏上判读 | **未做**（需人） |
 | 3 | **EDL 正控**：`boot_b` 读回 → 原样写回 → 再读回，三轮 sha（再对 `linux17` 前 512 MiB 同做） | 11-16 §6.3 | **未做**（只做了读，没做「写回-再读回」） |
 | 4 | **EDL 分块同值重刷** `xbl`/`abl`/`boot_b`（验证写路径 + 分区归属） | 11-16 §9 恢复动作③ | **未做** |
-| 5 | **stock 259 引导链重刷**（`~/文档/TB322FC_15.10.259/rawprogram{0..5}.xml`，只碰 `xbl/xbl_config/abl/uefi/boot/dtbo/vbmeta` 与各 LUN GPT，不碰 `elden-*`/`linux17`/`super`） | 11-16 §6.4、11-17 §5.2 | **未做**（需用户拍板） |
+| 5 | **stock 259 引导链重刷**：`rawprogram1..5.xml`（LUN1/2/3/4/5，含 xbl/xbl_config/abl/uefi/boot/dtbo/vbmeta 与各 LUN GPT）—— 11-17 §7 已按分区手工刷到 **39/39 校验通过**（等价完成）；`rawprogram_save_persist_unsparse0.xml`（**LUN0：GPT + super/userdata/metadata**）**未做** | 11-16 §6.4、11-17 §5.2/§7 | **部分已做**：引导固件已全量回原厂；**整包线刷（尤其 LUN0 GPT）未做** ⇒ 分级预案 A/B/C 见 `reports/bl-stuck-20261118-forensics.md` §4（用户将亲自刷） |
 | 6 | **「Android 优先」回滚**（stock `boot.img`+`vbmeta` 刷 a/b 槽先拿到能进系统） | 11-17 §5.3 | **未做**（需用户拍板） |
 | 7 | **同型第二台机（U1）做对照**（判「是否本单元硬件特有」） | `#549`/`#572` 的「判据必须归属到具体设备」 | 未做；U1 已逆手术，不能直接当对照，只能做「同固件下另件是否也失败」的形态对照 |
 | 8 | **`logfs` 以外的 ABL 侧通道**（`oem sbread` 只在**我们自己的** UEFI 里有，stock 上没有） | `PITFALLS/README.md:292`（#595） | 不可用（已定案）；`xbl_sc_logs` 128 KiB 全 0（未启用） |
@@ -195,4 +197,4 @@
 7. **`dtbo_<slot>` 必须两槽都清成「假 dtbo」**：合法原厂 DTBO 会被 ABL `Apply Overlay` 合进我们的 DTB ⇒ 卡 logo 后回 fastboot（BL-02/BL-07，项目第一天的坑）。
 8. **自建/自编系统的槽必须显式 `mark-successful`**，否则 ~7 次重启后槽被标 `unbootable` 永久停 fastboot（`#181`）；新 rootfs 之后必跑 `scripts/fix-ab-mark-successful.sh`。
 9. **9008 取证的每条「读回」至少要有两件**：① LUN 归属（`printgpt` 行）② 4096 B 扇区单位 ③ 第二个工具或第二次独立读；摘要优先用 `qdl … sha256`（设备端算，不经 USB），别信退出码（`#669`）。
-10. **「不可恢复」要留余地**（`#483` 被一条 `--set-active` 推翻）；但「软件层全部逐字节清白 + 失败点固定在 ABL load/authenticate + 大块内存访问不稳」时，就该按规则 12 交 hw-stability，**不在项目里深挖**（BL-09/BL-10）。
+10. **「不可恢复」要留余地**（`#483` 被一条 `--set-active` 推翻）；同理 **「硬件坏了」也要留余地** —— 18:5x 复核把 BL-09/BL-10 的「DDR 侧唯一存活解释」撤回：**没做过整包原厂全量线刷（GPT 回原厂）之前，不许把失败归到硬件**；能给 hw-stability 的只有「现象 + 已排除表」，不是硬件结论（`#482` 非确定性、`#486` poke 门控都不构成内存证据）。

@@ -67,12 +67,12 @@
     `fastboot continue` → `Failed to load image from partition: Load Error`；`fastboot boot` 对**两份不同镜像**
     （自研 `out/boot-elden-vk192.img` 与 11-14/15 实测能起的 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）**3/3 同错**（`Load Error`）；
     `fastboot reboot` 与 EDL `reset` 都 20 s 内落回 fastboot。⇒ **镜像/分区/固件已由 11-16 夜 EDL+`qdl` 双工具逐项对账为台账值**
-    ⇒ 剩下 ABL 载入/认证通路 或 DDR 侧（**疑似硬件**；本轮新信号 = EDL `poke 32 MiB → 0x90000000` 5 min 不返回）。
+    ⇒ 剩下 ABL 载入/认证通路（**未定因**；18:5x 复核后不再定为硬件，`poke` 那条证据已撤回）。
     全账 = `reports/bl-stuck-20261116.md` §9；按全局规则 12 已上交 `~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/`，**项目内不深挖**。
     恢复动作（代价升序，下次设备窗口）：① 长按 10 s 全断电→只按电源；② 充到 >3.7 V 再试；③ EDL 分块同值重刷 `xbl`/`abl`/`boot_b`；④ EDL 全量刷 stock（`backup/stock-259`）。
     **2026-11-17 15:22 复测（零写盘，只 `getvar`）**：`battery-voltage:3425`、`battery-soc-ok:no`、`factory-mode:1`、`off-mode-charge:1`、`unlocked:yes`、`variant:SM8 UFS`。
     **★但电量已不作为判据（用户 16:0x 定：fastboot 下 UI 看不到电量、也测不到协商充电速率 ⇒ 不读/不推/不作阻塞理由）**；
-    同一窗口 `logfs` 里 ABL 自报 **`VBAT: 3899mV`** ⇒ 实际已充到可用区间。
+    同一窗口 `logfs` 里 ABL 自报 `VBAT: 3899mV`——**★18:5x 复核：这条不能用**（logfs 只存成功交接段 `#485`/`#594`，该读数属过去某次成功启动；活值 `battery-voltage` 3425 mV@15:22 → **3571 mV@18:53**、`battery-soc-ok:no` 未变）⇒ 充电通路未排除但不得当阻塞理由。
     **★2026-11-17 16:02–16:50 第二次设备窗口（全账 = `reports/bl-stuck-20261117-device-window.md`）：仍未恢复，已按 AGENT-OPS 停手保留现场。**
     本轮 **11 次启动尝试**（`continue` ×4 / `boot` ×5 / EDL `reset` 冷起 ×3）全败，且**失败串自变**：
     `Failed to load image from partition: Device Error` ↔ `Failed to load/authenticate boot image: Load Error` ↔ `… Device Error`
@@ -80,11 +80,10 @@
     槽属性（复位 `unbootable=no/retry=7`，冷起 retry 7→6 证明 ABL 真尝试）、lock/verity（unlocked / `Verity mode:false`）、
     vbmeta_b 未变（= 11-16 备份 `e974ebab…`，`Flags:3` 验证关）+ dtbo_b 与其描述符一致、ABL 本体（两槽均 stock，与 11-16 取证件逐字节同）、
     存储读路径（12 分区 Firehose 读回 + 96 MiB 设备端 sha256 稳定）、**镜像大小/落点**（**2.4 MB** 件同样 `Device Error`）、槽相关 dtbo 处理。
-    ⇒ 剩下强候选 = **运行期加载/内存通路（疑似硬件）**，与 11-16 夜 `poke` 32 MiB 不返回同族；已按规则 12 追加证据到
+    ⇒ 11-17 18:5x 复核：**「剩下强候选 = 运行期加载/内存通路（疑似硬件）」这条判读撤回**（DRAM 侧被自证反驳、错误串自变 = `#482` 已知特性、`poke` 无正控 + `#486` 门控），结论改 **未定因**；已按规则 12 追加证据到
     `~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/MANIFEST.md`，**项目内不深挖**。
     本轮写操作只有两类且已复原：`--set-active` 来回（终态 `b`）、`flash boot_b` 同一内容件（读回 `06c081ca…` 不变）。
-    下一步（需人）：① 长按 15–20 s 完全断电→等 10 s→只按电源（不插 USB）；② 若仍落 fastboot ⇒ 用户拍板是否 EDL 只刷
-    `xbl/xbl_config/abl/uefi/boot/dtbo/vbmeta`（stock 259，回退件齐）；③ 或改「Android 优先」恢复可用系统。
+    下一步（需人）：① 长按 15–20 s 完全断电→等 10 s→只按电源（不插 USB）；② 分级刷机预案 **A/B/C**（用户亲自刷，全量 dry-run 已验：73 分区 / 15.6 GiB / 78 patch）见 `reports/bl-stuck-20261118-forensics.md` §4；③ 或改「Android 优先」恢复可用系统。
 
     **换下件 = 验证用嵌入菜单 GRUB `cc6391b3…`**（11-16 11:45 装，两臂 G1/G2 对照 + D + reboot/poweroff），已备份 `BOOTAA64.EFI.daily-v8-20261116.bak`（注意：备份名取的是**新件** tag，内容 = cc6391b3）。
     **换件前实际在役件 = `92a4d8b2…`**（9.5 MB GRUB，11-15 23:01 装、此前 `DEVICE` 未记录 → 本轮补登），已备份 `BOOTAA64.EFI.grub-fixr2-20261116.bak`；

@@ -10,6 +10,7 @@
    `Failed to load image from partition: Device Error` / `Failed to load/authenticate boot image: Load Error` / `… Device Error`。
 2. **软件侧已排除 7 类**（逐条有独立判据，见 §2）：镜像内容、GPT、槽属性、lock/verity 状态、vbmeta 链与 dtbo 一致性、ABL 本体、存储读路径。
    ⇒ **剩下的强候选 = 运行期内存/加载通路（疑似硬件），与 11-16 夜「EDL `poke` 32 MiB 不返回」同族**；已按全局规则 12 上交 hw-stability（不在本项目深挖）。
+   **★18:5x 复核：上面这条判读验退，见 §10。**
 3. **本轮对设备只产生两类写**：① `fastboot --set-active`（槽元数据，可逆，已复原为 `b`）；② `fastboot flash boot_b bootslot-b/boot_b.img`
    —— 写入后 **qdl 设备端 sha256 = `06c081ca…` = 主机件逐字节相同**，即**没有改变内容**（等价于无效写，也已证明写路径正确）。
 
@@ -65,7 +66,8 @@
    代价：若变砖风险窗口 = 写 `xbl` 期间断电（可 EDL 重入）。
 3. **【需人拍板】换 Android 优先**：把 stock `boot.img`+`vbmeta` 刷到 a/b 槽 ⇒ 先拿到「能进系统」，
    Linux 侧再用我们的产物重建（`boot_b`/ESP 件都在库）。
-4. **【用户外部】硬件判定**：若 1 无效且 2 也无效，则按规则 12 的证据走 hw-stability / 保修线，不在项目内继续深挖。
+4. **【需人拍板】分级全量线刷（唯一未做的原厂对照）**：A = `rawprogram4+patch4`（LUN4：GPT 属性 + boot/dtbo/vbmeta/固件）→ B = A + `rawprogram_save_persist_unsparse0+patch0`（LUN0：GPT + super/userdata，**丢 `linux17`/`eldenesp` 条目**）→ C = 整包全量。命令与预期数字 = `reports/bl-stuck-20261118-forensics.md` §4（用户亲自刷）。
+5. **【用户外部】硬件判定**：仅当整包原厂全量线刷（**GPT 回原厂**）后仍失败，才谈 hw-stability / 保修线。
 
 ## 6. 本轮写操作清单（全部可逆，已复原）
 
@@ -98,8 +100,8 @@
 2. **原厂固件也不行**：39 个引导固件分区已被刷成官方 259 包内容并 **设备端 sha256 39/39 校验通过**，冷起仍落 fastboot
    ⇒ 排除「引导固件被改坏/代次错配」。`abl_a/abl_b` 在刷前后都是官方件（`e7062378…` / `811489f0…`）。
 3. **BCB / DDR 训练数据也不行**：清 `misc.command`（原 `ffbm-00`）+ 把 `ddr` 按官方配方清零，均无变化。
-4. ⇒ **失败点固定落在 ABL 的 boot-image load/authenticate 步骤，且与 flash 内容无关**。与 11-16 夜 `edl.py poke 32 MiB → 0x90000000` 5 min 不返回合并看，
-   **运行期大块内存访问不稳 = 唯一存活解释（硬件类）**；已按规则 12 记入 hw-stability inbox，项目内继续深挖违反规则 12。
+4. ⇒ **失败点固定落在 ABL 的 boot-image load/authenticate 步骤，且与 flash 内容无关**。~~与 11-16 夜 `edl.py poke 32 MiB → 0x90000000` 5 min 不返回合并看，运行期大块内存访问不稳 = 唯一存活解释（硬件类）~~
+   **★18:5x 复核撤回此判读**（见 §10）：`poke` 无正控/地址未验证且 loader 有 secboot 门控（`#486`），而 DRAM 敏感操作全绿（96 MiB 设备端 sha256、12 分区读回、61.5 MiB 写+39/39、ABL 自身跑在 DDR）；结论改 **未定因**。
 
 ## 9. 设备现在的状态（对用户/售后友好）
 
@@ -108,3 +110,22 @@
 - **回退到 Linux b 槽所需的件全在库**：`bootslot-b/boot_b.img`（`06c081ca…`，自签 vk192）、`backup/vbmeta_b-20261110.img`（`e974ebab…`）、`out/dtbo-dummy.img`（4 KiB 零）；
   引导固件若需回到 11-16 的 `_b` 版本，dump 在 `backup/HA2EXB0E-16+512/dev-dump-20261117/`（39 件 + `SHA256SUMS.txt`）。
 - 历史卡 BL 案例与决策树 = `reports/bl-history-and-playbook.md`（子代理产出，主代理已抽检其引用与数值）。
+
+---
+
+## 10. 2026-11-17 18:5x 复核：定性修正（本条压过 §0/§8 的硬件判读）
+
+用户质疑「没做过原厂全量线刷就不能定性硬件」→ 逐条复核后 **确认质疑成立，撤回硬件判读**。五条硬理由：
+
+1. **错误串自变不是新证据**（而本就是本机已知平台特性）：同一份未改镜像连发出现过 HANDOFF / `Booting OKAY` / `Invalid Parameter`（`#482`）。
+2. **`poke 32 MiB → 0x90000000` 不返回不构成 DDR 证据**：单发、无正控、地址未验证；本机 loader 对 peek/poke 族有 secboot 门控（`#486`），当年 `reports/uefi-ddr-fallback-plan-20261101.md` 自己就写着「本轮禁止任何 poke」。
+3. **DRAM 侧被自身证据反驳**：96 MiB 分区设备端 `sha256`、12 分区 Firehose 读回、61.5 MiB 写 + 39/39、96 MiB USB 传输全绿，且 ABL/fastboot 自身就跑在 DDR —— 「运行期大块内存访问不稳」不成立。
+4. **`logfs` 的异常行与 `VBAT` 读数都被误用**：`Failed to add memory space 0x8088F000` / `ERROR:NACK: SA:0x1C` / `mbox_os_init ...` 在**成功交接段里也全都有**；`VBAT: 3899mV` 属过去成功启动段（`#485`/`#594`），不是现测。
+5. **真正的缺口是没做整包原厂线刷**：本报告 §7 做的是「按分区刷 39 个引导固件」（已 39/39 校验），而 `rawprogram_save_persist_unsparse0.xml`（LUN0：**GPT** + super/userdata/metadata）**从未跑过** ⇒ 6 LUN 的 GPT 至今未回原厂。
+
+18:53 现况取证（`reports/bl-stuck-20261118-forensics.md`，只读，零写盘）新增两条未入旧排除表的事实：
+
+- **LUN1/2/3/5 的 GPT 与官方 `gpt_main*.bin` 逐字节相同；LUN0 与 LUN4 不是**：LUN0 缺 `super`/`userdata` 名（已改为 `elden-super`/`elden-data`）+ 多 `linux17`/`eldenesp`；**LUN4 的 22 个分区属性字节与 stock 系统性差 `0xb0`**（`boot_a` `0x77→0x37` = successful 被清、`boot_b` `0xf3→0x32`）。旧的「GPT 已排除」只验了**可解析**，没验**逐字节回原厂**。
+- **`logfs`/`xbl_sc_logs` 与 16:26 的 dump 逐字节相同**，`misc` 只差前 7 字节（`ffbm-00` → 全 0，即我方 17:xx 清 BCB 的结果仍在）⇒ 失败那一发确实不留段级日志，但也没新增任何异常痕迹。
+
+恢复路径（已写入 §5 第 4 条）：分级刷机 **A/B/C**，详见 `reports/bl-stuck-20261118-forensics.md` §4。
