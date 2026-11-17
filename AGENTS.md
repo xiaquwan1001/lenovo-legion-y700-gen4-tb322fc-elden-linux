@@ -53,7 +53,8 @@
 
 ## 细节
 
-- vk127 baseline / 相机 AE / Waydroid 固化 / EDL / layout / git 修复的成对事实与脚本指针：`.pi/memory/MEMORY.md`。
+- vk127 baseline / EDL / layout / git 修复 / 门禁的成对事实与脚本指针：`.pi/memory/MEMORY.md`（2026-11-17 拆后约 47 KB）。
+- 相机 / C5 / Waydroid 容器（HAL、IPA、AE、vendor.img）：`.pi/memory/notes-camera-waydroid.md`；2026-10-17 换机/迁移/重建：`.pi/memory/notes-migration.md`。
 - 81 条设备侧细粒度坑（Alpine/busybox、Waydroid 容器状态机、codec/audio/camera、SSH 部署）：`.pi/memory/failures-device.md`（条目数现查：`grep -c '^---$'`）。
 - 346 条刷机/AVB/kexec/EDK2-Mu/UEFI/内核打包证据与寄存器级细节：`.pi/memory/failures-kernel.md`（同上现查）。
 - 协作口径（物理 POR、目视纠正、按字母顺序执行、电话/观测节奏）：`.pi/memory/USER.md`。
