@@ -46,6 +46,8 @@
 
 **卡什么**
 
+- **⛔ 设备（U2 HA2EXB0E）：卡 BL，软件层已排到底（2026-11-17 18:05）**：全量刷回原厂引导固件 **39 分区**（设备端 sha256 **39/39** == 官方 259）+ A/B 双槽原厂 `boot/vbmeta/dtbo`，冷起仍落 fastboot；连原厂 `boot_b.img` 与 **1 MiB** 自制合法 boot.img 的 `fastboot boot` 也报 `Device Error` ⇒ 失败点固定在 **ABL 的 boot-image load/authenticate**，与 flash 内容无关，**运行期大块内存访问不稳 = 唯一存活解释（硬件类）**，已按规则 12 上交 hw-stability。
+  历史案例 10 例 / 决策树 = **`reports/bl-history-and-playbook.md`**；本次全账 = `reports/bl-stuck-20261117-device-window.md` §7/§8；现态与回退件 = `DEVICE/README.md` §1.1 首条。
 - **camss：delta 已按 Bryan 要求重基完成（2026-11-17 下午），只差一次上机出流回归**：本机 vendor `camera.ko` CSIPHY = **2.4.0**（地址 103/103 同、13 个 data 字节不同）。**v2 = `patches/upstream/camss-csiphy-24-v2-20261117/`（2 枚，基线 = 7.4-rc3 + kaanapali v25 `[01..03]` 前缀），6 道门全绿**（apply / checkpatch **0E0W0C** / `W=1` / `dt_binding_check` / 表 **13-13** 且与 vendor **103-103** 全等 / `git am` 2-2）。关键新事实：v25 `[03/15]` 的 `mipi_csi2_dphy_3nm_kaanapali` **复用 `lane_regs_x1e80100[]`（4nm v2.1.2 表）**，而 Qualcomm 自己的 SM8750 CAMSS v6 `[4/7]` 指向 `csiphy_res_kaanapali`（subject 写 **v2.3.0**），v2.3.0 与 2.4.0 的 18 张 2ph 表逐字节同值 ⇒ 上游现用值与 Qualcomm 两处口径都不一致（只写 cover 提问段，不替 Kaanapali 下结论）。**剩 = ① 一次上机出流回归（或 cover 声明无实测，需用户裁决）；② 投前再看 `SM8750 CAMSS v6 1/7` 是否已进 tree（进则删本系列 binding 那枚）**。→ `reports/camss-v25-rebase-20261117.md`、`reports/camss-csiphy-v6-vs-240-20261113.md`、`reports/upstream-replies-20261117.md` §3.1、`PITFALLS #648`。
 - **fastrpc**：`qcom,nsessions` **上游已废弃并合入**（`641dd7dd0f68`）⇒ 倒过来变成我们的欠账：板级 DTS 里若还写该属性就要按驱动侧策略删除/改写；`accel/qda` 仍 v4（未合、无 v5）。
 - **T14/T17 用户态固化**：S3+S4+S6 离线复核已过，**唯一缺口 = `hapticd` 二进制不可重建**（自家 ELF，chroot 步骤已闭合）。→ `reports/t14-s3s4s6-offline-verify-20261114.md`。

@@ -73,3 +73,38 @@
 2. `fastboot flash boot_b bootslot-b/boot_b.img`（内容 = 设备现值，qdl 读回 `06c081ca…` 一致）。
 3. `fastboot oem edl` ×3、`qdl reset` ×3（只进出 9008，不写 flash）。
 4. **未**写：GPT、xbl、xbl_config、abl、uefi、vbmeta、dtbo、linux17、eldenesp。
+
+---
+
+# 第二轮（17:10–18:05，用户授权「EDL 刷机恢复任何系统」后）：**全量刷回原厂，仍起不来**
+
+## 7. 做了什么（按时间序，全部有读回校验）
+
+| # | 动作 | 结果 / 校验 |
+|---|---|---|
+| 1 | 物理冷起 ×2（用户执行，17:07 现查） | 仍落 fastboot ⇒ **排除上电/DDR 训练残留** |
+| 2 | 备份 39 个将被覆盖分区的现值（EDL 读回），并转为「设备值 vs 官方件」逐字节比对 | 21 个 `_a` 分区 **== 官方件**；`_b` 分区仅差 ~1.5 KB（per-slot 签名）；**`ddr` 与官方（全 0）差 10116 B** |
+| 3 | b 槽刷 **原厂 Android 链**：`dtbo_b`=官方 `dtbo.img`(32 MiB)、`vbmeta_b`=`stock-259/vbmeta_b.img`、`boot_b`=`stock-259/boot_b.img` | 读回 sha 与源件**逐字节相同**（`062fcad8…`/`9b8bd348…`/`45f51790…`） |
+| 4 | a 槽同样刷原厂 `dtbo_a`/`vbmeta_a`/`boot_a` | OK |
+| 5 | 清 `misc` 的 BCB `command`（原值 `ffbm-00`，保留 0x8000 槽元数据区） | `misc` 写后未复现变化，仍落 fastboot ⇒ BCB 不是死因 |
+| 6 | 把 `ddr` 分区按官方配方**写全 0**（1 MiB，设备端 sha `30e14955…` = 1 MiB 零） | 仍落 fastboot |
+| 7 | **全量刷原厂引导固件 39 个分区**（xbl/xbl_config/uefi/abl/aop/aop_config/tz/hyp/keymaster/devcfg/qupfw/uefisecapp/imagefv/shrm/cpucp/featenabler × A/B + apdp/apdpb/multiimg* + cdt/ddr/ALIGN），61.5 MiB | **设备端 sha256 39/39 == 官方件**（`qdl sha256` 逐个比，见 `/tmp/dev-sha-after.txt` 流程） |
+| 8 | 冷起（EDL reset）、`set_active a` + `continue`、`boot` 原厂 `boot.img`、`boot` 1 MiB 自制合法 boot.img | **全部同错**：`Device Error`（partition）/`Device Error`（RAM） |
+
+## 8. 第二轮的结论（比第一轮更强）
+
+1. **原厂镜像也不行**：`fastboot boot` 刷 **原厂 `boot_b.img`（ANDROID!，AVB 由 OEM key `8fcb864f…` 签）** 与 **1 MiB 自制合法 boot.img** 都报 `Device Error`
+   ⇒ 排除「我们的自签 AVB 链被 ABL 拒」「镜像太大/太小」「镜像内容」。
+2. **原厂固件也不行**：39 个引导固件分区已被刷成官方 259 包内容并 **设备端 sha256 39/39 校验通过**，冷起仍落 fastboot
+   ⇒ 排除「引导固件被改坏/代次错配」。`abl_a/abl_b` 在刷前后都是官方件（`e7062378…` / `811489f0…`）。
+3. **BCB / DDR 训练数据也不行**：清 `misc.command`（原 `ffbm-00`）+ 把 `ddr` 按官方配方清零，均无变化。
+4. ⇒ **失败点固定落在 ABL 的 boot-image load/authenticate 步骤，且与 flash 内容无关**。与 11-16 夜 `edl.py poke 32 MiB → 0x90000000` 5 min 不返回合并看，
+   **运行期大块内存访问不稳 = 唯一存活解释（硬件类）**；已按规则 12 记入 hw-stability inbox，项目内继续深挖违反规则 12。
+
+## 9. 设备现在的状态（对用户/售后友好）
+
+- **全量原厂固件 + 原厂 `boot/vbmeta/dtbo`（A/B 双槽）**，`current-slot=a`、`unbootable:a/b=no/no`、`retry=a7/b6`。
+- 仅存的非原厂物：**GPT 里多出的 `linux17`（193 GiB，ext4，我们的 Linux 根）与 `eldenesp`（512 MiB，ESP）分区及其数据**（本次未动）。
+- **回退到 Linux b 槽所需的件全在库**：`bootslot-b/boot_b.img`（`06c081ca…`，自签 vk192）、`backup/vbmeta_b-20261110.img`（`e974ebab…`）、`out/dtbo-dummy.img`（4 KiB 零）；
+  引导固件若需回到 11-16 的 `_b` 版本，dump 在 `backup/HA2EXB0E-16+512/dev-dump-20261117/`（39 件 + `SHA256SUMS.txt`）。
+- 历史卡 BL 案例与决策树 = `reports/bl-history-and-playbook.md`（子代理产出，主代理已抽检其引用与数值）。

@@ -57,6 +57,12 @@
     证据 `reports/artifacts/uefi-daily-v8-20261116/`；15:02:49 已 `set_active b` 回日常（**12 s** 到 SSH、`_b`、`card0`）。
 
     **★★2026-11-17 现态：设备卡 BL，进不了系统（本条压过上面「在机 vk192」的运行态，但**镜像/分区仍然清白**）**：
+    **至今（2026-11-17 18:05）已把“软件层”排到底：全量刷回原厂引导固件 39 分区（设备端 sha256 39/39 == 官方 259 件）+ A/B 双槽原厂 `boot/vbmeta/dtbo`，冷起仍落 fastboot；
+    连原厂 `boot_b.img` 与 1 MiB 自制合法 boot.img 的 `fastboot boot` 也都是 `Device Error` ⇒ 失败点固定在 ABL 的 load/authenticate，与 flash 内容无关。
+    全账 = `reports/bl-stuck-20261117-device-window.md` §7/§8；历史案例与决策树 = `reports/bl-history-and-playbook.md`。
+    现态 = `current-slot=a`、`unbootable:a/b=no/no`、`retry=a7/b6`；非原厂物只剩 GPT 里的 `linux17`/`eldenesp` 及其数据。
+    回退到 Linux 件：`bootslot-b/boot_b.img`（`06c081ca…`）+ `backup/vbmeta_b-20261110.img`（`e974ebab…`）+ `out/dtbo-dummy.img`；引导固件旧值 dump = `backup/HA2EXB0E-16+512/dev-dump-20261117/`。
+    原 11-17 上午现态（活沿革，留作对照）：
     `current-slot=b`、`slot-successful:a/b` **均 no**、`retry-count a=3 / b=0`、`unbootable` 均 no、电池 3406–3408 mV。
     `fastboot continue` → `Failed to load image from partition: Load Error`；`fastboot boot` 对**两份不同镜像**
     （自研 `out/boot-elden-vk192.img` 与 11-14/15 实测能起的 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）**3/3 同错**（`Load Error`）；
