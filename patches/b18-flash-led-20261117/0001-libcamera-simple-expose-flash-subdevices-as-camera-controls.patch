@@ -1,48 +1,62 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Fri, 13 Nov 2026 12:00:00 +0800
-Subject: [PATCH 1/2] libcamera: simple: expose flash subdevices as camera
- controls
+Date: Tue, 17 Nov 2026 13:50:00 +0800
+Subject: [PATCH] libcamera: simple: expose flash subdevices as camera controls
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-The simple pipeline handler only traverses the media graph from the
-camera sensor to the video node, so flash (MEDIA_ENT_F_FLASH) and torch
-entities are never opened and their V4L2 flash controls are unreachable
-from applications: `cam` has no flash control to set, even when the
-board describes its flash LED as a proper media entity (the Lenovo
-Legion Y700 Gen 4 has one such LED, /dev/v4l-subdev*, driven by
-leds-qcom-flash).
+The simple pipeline handler only traverses the media graph from the camera
+sensor to the video node, so flash (MEDIA_ENT_F_FLASH) and torch entities are
+never opened and their V4L2 flash controls are unreachable from applications:
+`cam` has no flash control to set, even when the board describes its flash LED
+as a proper media entity (the Lenovo Legion Y700 Gen 4 / SM8750 has one such
+LED, exposed as a v4l-subdev by leds-qcom-flash).
 
 libcamera has no dedicated flash control ids yet, so expose the flash
-subdevices' V4L2 controls directly:
+subdevices' V4L2 controls directly.  This is a local development patch, not an
+upstream candidate (upstream wants controls::Flash* plus an IPA-facing flash
+API); it is kept as small as possible to unblock on-device testing:
 
-- bind every MEDIA_ENT_F_FLASH entity to each camera (the media graph
-  carries no flash-to-sensor association; boards with a flash have one
-  rear camera), keeping the already-opened V4L2Subdevice;
-- merge the subdevices' V4L2 control info into the camera's control set
-  in init(), with a merged control id map (the ControlId instances are
-  owned by the flash subdevices, which live as long as the pipeline
-  handler);
+- bind every MEDIA_ENT_F_FLASH entity to each camera (the media graph carries
+  no flash-to-sensor association, and boards with a flash have a single rear
+  camera), keeping the already-opened V4L2Subdevice;
+- merge the subdevices' V4L2 control info into the camera's control set in
+  init(), with a merged control id map (the ControlId instances are owned by
+  the flash subdevices, which live as long as the pipeline handler);
 - in queueRequestDevice(), apply request controls that belong to a flash
-  subdevice directly to it; they are not passed to the IPA (which only
-  looks up the controls it knows).
+  subdevice directly to it, and filter them out of the control list handed to
+  the software ISP / IPA, which knows nothing about them.
 
-Applications (cam --list-controls, cam --controls=...) can now set
-V4L2_CID_FLASH_LED_MODE / _STROBE / _TORCH_INTENSITY etc. like any other
-camera control.  A real libcamera flash API (controls::Flash + IPA
-integration) remains future work; this is the minimal path to make the
+Applications (`cam --list-controls`, `cam --controls=...`) can then set
+V4L2_CID_FLASH_LED_MODE / _STROBE / _TORCH_INTENSITY like any other camera
+control.
+
+Gate: libcamera v0.7.1 pristine tree + this patch, single-TU build with the
+project's own flags (-Wall -Wextra -Werror, C++20):
+  ninja -C build src/libcamera/libcamera.so.0.7.1.p/pipeline_simple_simple.cpp.o
+  -> rc=0, 0 warnings
+On-device verification pending (no `cam` run against the flash subdev yet).
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ src/libcamera/pipeline/simple/simple.cpp | 144 ++++++++++++++++++++++++++++-
+ 1 file changed, 142 insertions(+), 2 deletions(-)
+
 diff --git a/src/libcamera/pipeline/simple/simple.cpp b/src/libcamera/pipeline/simple/simple.cpp
+index c6fe12d..b042eeb 100644
 --- a/src/libcamera/pipeline/simple/simple.cpp
 +++ b/src/libcamera/pipeline/simple/simple.cpp
-@@ -292,6 +292,8 @@
+@@ -292,6 +292,8 @@ public:
  			 Transform transform = Transform::Identity);
  	void imageBufferReady(FrameBuffer *buffer);
  	void clearIncompleteRequests();
 +	void addFlashDevice(V4L2Subdevice *sd);
-+	unsigned int applyFlashControls(const ControlList &controls);
++	std::vector<unsigned int> applyFlashControls(const ControlList &controls);
  
  	unsigned int streamIndex(const Stream *stream) const
  	{
-@@ -341,6 +343,14 @@
+@@ -341,6 +343,14 @@ public:
  	 */
  	std::list<Entity> entities_;
  	std::unique_ptr<CameraSensor> sensor_;
@@ -57,7 +71,7 @@ diff --git a/src/libcamera/pipeline/simple/simple.cpp b/src/libcamera/pipeline/s
  	V4L2VideoDevice *video_;
  	V4L2Subdevice *frameStartEmitter_;
  
-@@ -629,6 +639,28 @@
+@@ -629,6 +639,28 @@ int SimpleCameraData::init()
  		}
  	}
  
@@ -86,7 +100,7 @@ diff --git a/src/libcamera/pipeline/simple/simple.cpp b/src/libcamera/pipeline/s
  	video_ = pipe->video(entities_.back().entity);
  	ASSERT(video_);
  
-@@ -758,6 +790,57 @@
+@@ -758,6 +790,59 @@ void SimpleCameraData::tryPipeline(unsigned int code, const Size &size)
  	}
  }
  
@@ -109,12 +123,14 @@ diff --git a/src/libcamera/pipeline/simple/simple.cpp b/src/libcamera/pipeline/s
 + * \brief Apply request controls that belong to the flash subdevices
 + * \param[in] controls The request's control list
 + *
-+ * Returns the number of flash controls found, so the caller can filter them
-+ * out before handing the remaining controls to the IPA.
++ * Returns the numerical ids of the controls that were applied to a flash
++ * subdevice, so the caller can keep them away from the IPA, which doesn't know
++ * about them.
 + */
-+unsigned int SimpleCameraData::applyFlashControls(const ControlList &controls)
++std::vector<unsigned int>
++SimpleCameraData::applyFlashControls(const ControlList &controls)
 +{
-+	unsigned int applied = 0;
++	std::vector<unsigned int> applied;
 +
 +	for (const auto &[ctrlId, value] : controls) {
 +		const auto itId = controlInfoIdMap_.find(ctrlId);
@@ -133,7 +149,7 @@ diff --git a/src/libcamera/pipeline/simple/simple.cpp b/src/libcamera/pipeline/s
 +				LOG(SimplePipeline, Warning)
 +					<< "Failed to set flash control "
 +					<< cid->name() << ": " << strerror(-ret);
-+			applied++;
++			applied.push_back(cid->id());
 +			break;
 +		}
 +	}
@@ -144,34 +160,51 @@ diff --git a/src/libcamera/pipeline/simple/simple.cpp b/src/libcamera/pipeline/s
  int SimpleCameraData::setupLinks()
  {
  	int ret;
-@@ -1746,11 +1829,22 @@
+@@ -1746,11 +1831,37 @@ int SimplePipelineHandler::queueRequestDevice(Camera *camera, Request *request)
  		}
  	}
  
 +	/*
-+	 * Flash controls are applied to the flash subdevices directly and are
-+	 * not passed to the IPA.
++	 * Flash controls are applied to the flash subdevices directly and must
++	 * not be passed to the IPA, which has no knowledge of them: filter them
++	 * out of the control list handed to the software ISP.
 +	 */
-+	unsigned int flashControls = data->applyFlashControls(request->controls());
++	std::vector<unsigned int> flashControls =
++		data->applyFlashControls(request->controls());
++
++	const ControlList *ipaControls = &request->controls();
++	ControlList filteredControls;
++
++	if (!flashControls.empty()) {
++		filteredControls = ControlList(*request->controls().idMap());
++		for (const auto &[id, value] : request->controls()) {
++			if (std::find(flashControls.begin(), flashControls.end(), id) ==
++			    flashControls.end())
++				filteredControls.set(id, value);
++		}
++		ipaControls = &filteredControls;
++	}
 +
  	data->frameInfo_.create(request, metadataRequired);
  	if (data->useConversion_) {
  		data->conversionQueue_.push({ request, std::move(buffers) });
 -		if (data->swIsp_)
+-			data->swIsp_->queueRequest(request->sequence(), request->controls());
 +		if (data->swIsp_) {
-+			if (flashControls)
++			if (!flashControls.empty())
 +				LOG(SimplePipeline, Debug)
-+					<< "Request carries " << flashControls
-+					<< " flash control(s), not passed to the IPA";
- 			data->swIsp_->queueRequest(request->sequence(), request->controls());
++					<< "Applied " << flashControls.size()
++					<< " flash control(s) directly, not passed to the IPA";
++			data->swIsp_->queueRequest(request->sequence(), *ipaControls);
 +		}
  	}
  
  	return 0;
-@@ -1931,6 +2025,20 @@
+@@ -1930,6 +2041,20 @@ bool SimplePipelineHandler::matchDevice(std::shared_ptr<MediaDevice> media,
+ 	if (entities.empty())
  		return false;
  
- 	/*
++	/*
 +	 * Flash/torch entities are not part of the sensor-to-video pipeline, so
 +	 * they are not collected above; add every MEDIA_ENT_F_FLASH subdevice of
 +	 * the media device to the global entity list so that it gets opened and
@@ -185,11 +218,10 @@ diff --git a/src/libcamera/pipeline/simple/simple.cpp b/src/libcamera/pipeline/s
 +		entities.insert(entity);
 +	}
 +
-+	/*
+ 	/*
  	 * Insert all entities in the global entities list. Create and open
  	 * V4L2VideoDevice and V4L2Subdevice instances for the corresponding
- 	 * entities.
-@@ -1987,6 +2095,21 @@
+@@ -1987,6 +2112,21 @@ bool SimplePipelineHandler::matchDevice(std::shared_ptr<MediaDevice> media,
  		entities_[entity] = { std::move(video), std::move(subdev), {} };
  	}
  

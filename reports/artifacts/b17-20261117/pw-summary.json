@@ -1,0 +1,4006 @@
+[
+ {
+  "name": "regulator: add the Will Semiconductor WL2868C camera PMIC",
+  "latest_version": 12,
+  "latest_date": "2026-11-17T05:22:56",
+  "latest_projects": [
+   "devicetree",
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   1,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12
+  ],
+  "instances": 16,
+  "latest_patch_states": {
+   "new": 2
+  },
+  "all_patch_states": {
+   "superseded": 36,
+   "handled-elsewhere": 3,
+   "not-applicable": 1,
+   "new": 4
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [
+   "Reviewed-by: Rob Herring (Arm) <robh@kernel.org>"
+  ],
+  "n_comments": 30,
+  "n_mine": 1,
+  "n_after_last_mine": 7,
+  "n_after_last_mine_human": 7,
+  "last_other": {
+   "date": "2026-11-16T15:10:52",
+   "who": "Rob Herring",
+   "email": "robh@kernel.org",
+   "bot": false,
+   "subject": "Re: [PATCH v11 1/2] regulator: dt-bindings: willsemi,wl2868c: add\n the WL2868C camera PMIC",
+   "snippet": "On Fri, Nov 13, 2026 at 04:19:13PM +0800, Qianhui Xu wrote: > The WL2868C is an I2C-controlled camera power management IC from Will > Semiconductor. It provides seven programmable LDOs: LDO1 and LDO2 are fed > from a shared VIN12 input and cover 0.496 V to 1.512 V, LDO3 and LDO4 share > VIN34, and L"
+  },
+  "other_speakers": [
+   "Conor Dooley",
+   "Konrad Dybcio",
+   "Krzysztof Kozlowski",
+   "Mark Brown",
+   "Rob Herring",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,1/4] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-10-31T06:55:31"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,2/4] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-10-31T06:55:32"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,3/4] arm64: dts: qcom: sm8750: describe two of the three CCI I2C controllers",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-10-31T06:55:33"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,4/4] arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-10-31T06:55:34"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v5,1/4] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-02T06:04:55"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v5,2/4] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-02T06:04:56"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v5,3/4] arm64: dts: qcom: sm8750: describe two of the three CCI I2C controllers",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-02T06:04:57"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v5,4/4] arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-02T06:04:58"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v5,1/4] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-02T06:04:55"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v5,2/4] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-02T06:04:56"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v5,3/4] arm64: dts: qcom: sm8750: describe two of the three CCI I2C controllers",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-02T06:04:57"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v5,4/4] arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-02T06:04:58"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,1/5] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:44"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,2/5] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:45"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,3/5] dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:46"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,4/5] arm64: dts: qcom: sm8750-lenovo-elden: add the Lenovo Legion Y700 Gen4",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:47"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,5/5] arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:48"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,1/5] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:44"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,2/5] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:45"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,3/5] dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:46"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,4/5] arm64: dts: qcom: sm8750-lenovo-elden: add the Lenovo Legion Y700 Gen4",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:47"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v6,5/5] arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 6,
+    "date": "2026-11-04T03:26:48"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-06T11:30:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-06T11:30:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 7,
+    "date": "2026-11-06T11:30:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 7,
+    "date": "2026-11-06T11:30:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v8,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:51"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v8,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:52"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v8,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:51"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v8,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:52"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v9,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 9,
+    "date": "2026-11-07T01:50:13"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v9,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 9,
+    "date": "2026-11-07T01:50:14"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v10,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 10,
+    "date": "2026-11-11T11:11:31"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v10,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 10,
+    "date": "2026-11-11T11:11:32"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v10,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 10,
+    "date": "2026-11-11T11:11:31"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v10,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 10,
+    "date": "2026-11-11T11:11:32"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v11,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 11,
+    "date": "2026-11-13T08:19:13"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v11,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 11,
+    "date": "2026-11-13T08:19:14"
+   },
+   {
+    "trailers": [],
+    "state": "not-applicable",
+    "name": "[v11,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 11,
+    "date": "2026-11-13T08:19:13"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v11,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 11,
+    "date": "2026-11-13T08:19:14"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Rob Herring (Arm) <robh@kernel.org>"
+    ],
+    "state": "new",
+    "name": "[v12,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 12,
+    "date": "2026-11-17T05:22:56"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v12,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 12,
+    "date": "2026-11-17T05:22:57"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Rob Herring (Arm) <robh@kernel.org>"
+    ],
+    "state": "new",
+    "name": "[v12,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 12,
+    "date": "2026-11-17T05:22:56"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v12,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 12,
+    "date": "2026-11-17T05:22:57"
+   }
+  ]
+ },
+ {
+  "name": "usb: dwc3: support two connectors sharing one HS data bus",
+  "latest_version": 9,
+  "latest_date": "2026-11-17T05:21:36",
+  "latest_projects": [
+   "devicetree",
+   "linux-arm-msm",
+   "linux-usb"
+  ],
+  "all_versions": [
+   1,
+   2,
+   4,
+   9
+  ],
+  "instances": 12,
+  "latest_patch_states": {
+   "new": 3
+  },
+  "all_patch_states": {
+   "superseded": 15,
+   "handled-elsewhere": 5,
+   "new": 12,
+   "changes-requested": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 37,
+  "n_mine": 2,
+  "n_after_last_mine": 13,
+  "n_after_last_mine_human": 2,
+  "last_other": {
+   "date": "2026-11-17T05:40:08",
+   "who": "sashiko-bot@kernel.org",
+   "email": "sashiko-bot@kernel.org",
+   "bot": true,
+   "subject": "Re: [PATCH v9 1/3] dt-bindings: usb: snps,dwc3: two connectors are\n two endpoints of one port",
+   "snippet": "Thank you for your contribution! Sashiko AI review found 3 potential issues to consider: - [Medium] dt-bindings: usb: snps,dwc3: unconditional hs-port on port@0 breaks non-mux DTs - [Low] dt-bindings: usb: snps,dwc3: hs-port allows omitting mux-state on one endpoint - [Low] dt-bindings: usb: snps,dw"
+  },
+  "other_speakers": [
+   "Konrad Dybcio",
+   "Krzysztof Kozlowski",
+   "kernel test robot",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: document usb-psy-name",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:25"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] dt-bindings: usb: snps,dwc3: describe the two-connector HS data path",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:26"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:27"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: document usb-psy-name",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:25"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] dt-bindings: usb: snps,dwc3: describe the two-connector HS data path",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:26"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:27"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: document usb-psy-name",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:25"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] dt-bindings: usb: snps,dwc3: describe the two-connector HS data path",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:26"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-13T10:29:27"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,1/2] dt-bindings: usb: snps,dwc3: describe the two-connector HS data path",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 2,
+    "date": "2026-10-17T08:13:19"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,2/2] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 2,
+    "date": "2026-10-17T08:13:20"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,1/2] dt-bindings: usb: snps,dwc3: describe the two-connector HS data path",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-17T08:13:19"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,2/2] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-17T08:13:20"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,1/2] dt-bindings: usb: snps,dwc3: describe the two-connector HS data path",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-17T08:13:19"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,2/2] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-17T08:13:20"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v4,1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:09"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v4,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:10"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v4,3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:11"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v4,1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:09"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v4,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:10"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v4,3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:11"
+   },
+   {
+    "trailers": [],
+    "state": "changes-requested",
+    "name": "[v4,1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:09"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v4,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:10"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v4,3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-10-26T12:32:11"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,1/3] dt-bindings: usb: snps,dwc3: two connectors are two endpoints of one port",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:35"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:36"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,3/3] usb: dwc3: select the shared HS data bus with a mux controller",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:37"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,1/3] dt-bindings: usb: snps,dwc3: two connectors are two endpoints of one port",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:35"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:36"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,3/3] usb: dwc3: select the shared HS data bus with a mux controller",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:37"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,1/3] dt-bindings: usb: snps,dwc3: two connectors are two endpoints of one port",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:35"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:36"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v9,3/3] usb: dwc3: select the shared HS data bus with a mux controller",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 9,
+    "date": "2026-11-17T05:21:37"
+   }
+  ]
+ },
+ {
+  "name": "Input: aw86927 - add AW86937 support and fix the AW8693X layout",
+  "latest_version": 2,
+  "latest_date": "2026-11-17T05:21:10",
+  "latest_projects": [
+   "devicetree",
+   "linux-input"
+  ],
+  "all_versions": [
+   1,
+   2
+  ],
+  "instances": 4,
+  "latest_patch_states": {
+   "new": 6
+  },
+  "all_patch_states": {
+   "new": 17,
+   "handled-elsewhere": 4,
+   "not-applicable": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [
+   "Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>",
+   "Fixes: df53055c540f (\"Input: aw86927 - add support for Awinic AW86938\")"
+  ],
+  "n_comments": 8,
+  "n_mine": 0,
+  "n_after_last_mine": 8,
+  "n_after_last_mine_human": 2,
+  "last_other": {
+   "date": "2026-11-17T05:46:20",
+   "who": "sashiko-bot@kernel.org",
+   "email": "sashiko-bot@kernel.org",
+   "bot": true,
+   "subject": "Re: [PATCH v2 6/6] Input: aw86927 - stop playback over suspend and\n on shutdown",
+   "snippet": "Thank you for your contribution! Sashiko AI review found 2 potential issues to consider: - [High] Input: aw86927: race in aw86927_close() and unbind queues play_work after stop - [Low] Input: aw86927: commit message and comment mismatch on suspend/shutdown -- commit 10d522b2154a0fe403051ae8e5379871f"
+  },
+  "other_speakers": [
+   "Krzysztof Kozlowski",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [
+     "Fixes: df53055c540f (\"Input: aw86927 - add support for Awinic AW86938\")"
+    ],
+    "state": "new",
+    "name": "[1/5] Input: aw86927 - fix the 7 V boost reference for AW86938",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:25"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[2/5] dt-bindings: input: awinic,aw86927: document the AW86937 variant",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:26"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[3/5] Input: aw86927 - add support for Awinic AW86937",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:27"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[4/5] Input: aw86927 - handle the AW8693X play and boost register layout",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:28"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[5/5] Input: aw86927 - stop playback over suspend and on shutdown",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:29"
+   },
+   {
+    "trailers": [
+     "Fixes: df53055c540f (\"Input: aw86927 - add support for Awinic AW86938\")"
+    ],
+    "state": "handled-elsewhere",
+    "name": "[1/5] Input: aw86927 - fix the 7 V boost reference for AW86938",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:25"
+   },
+   {
+    "trailers": [],
+    "state": "not-applicable",
+    "name": "[2/5] dt-bindings: input: awinic,aw86927: document the AW86937 variant",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:26"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[3/5] Input: aw86927 - add support for Awinic AW86937",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:27"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[4/5] Input: aw86927 - handle the AW8693X play and boost register layout",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:28"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[5/5] Input: aw86927 - stop playback over suspend and on shutdown",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:29"
+   },
+   {
+    "trailers": [
+     "Fixes: df53055c540f (\"Input: aw86927 - add support for Awinic AW86938\")"
+    ],
+    "state": "new",
+    "name": "[v2,1/6] Input: aw86927 - fix the 7 V boost reference for AW86938",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:07"
+   },
+   {
+    "trailers": [
+     "Fixes: df53055c540f (\"Input: aw86927 - add support for Awinic AW86938\")"
+    ],
+    "state": "new",
+    "name": "[v2,2/6] Input: aw86927 - widen the AW86938 boost mode mask",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:08"
+   },
+   {
+    "trailers": [
+     "Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>"
+    ],
+    "state": "new",
+    "name": "[v2,3/6] dt-bindings: input: awinic,aw86927: document the AW86937 variant",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:09"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,4/6] Input: aw86927 - add support for Awinic AW86937",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:10"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,5/6] Input: aw86927 - handle the AW8693X play and boost register layout",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:11"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,6/6] Input: aw86927 - stop playback over suspend and on shutdown",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:12"
+   },
+   {
+    "trailers": [
+     "Fixes: df53055c540f (\"Input: aw86927 - add support for Awinic AW86938\")"
+    ],
+    "state": "new",
+    "name": "[v2,1/6] Input: aw86927 - fix the 7 V boost reference for AW86938",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:07"
+   },
+   {
+    "trailers": [
+     "Fixes: df53055c540f (\"Input: aw86927 - add support for Awinic AW86938\")"
+    ],
+    "state": "new",
+    "name": "[v2,2/6] Input: aw86927 - widen the AW86938 boost mode mask",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:08"
+   },
+   {
+    "trailers": [
+     "Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>"
+    ],
+    "state": "new",
+    "name": "[v2,3/6] dt-bindings: input: awinic,aw86927: document the AW86937 variant",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:09"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,4/6] Input: aw86927 - add support for Awinic AW86937",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:10"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,5/6] Input: aw86927 - handle the AW8693X play and boost register layout",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:11"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,6/6] Input: aw86927 - stop playback over suspend and on shutdown",
+    "commit_ref": null,
+    "project": "linux-input",
+    "series_version": 2,
+    "date": "2026-11-17T05:21:12"
+   }
+  ]
+ },
+ {
+  "name": "drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+  "latest_version": 2,
+  "latest_date": "2026-11-17T05:20:47",
+  "latest_projects": [
+   "dri-devel",
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   1,
+   2
+  ],
+  "instances": 8,
+  "latest_patch_states": {
+   "new": 1
+  },
+  "all_patch_states": {
+   "superseded": 2,
+   "new": 5,
+   "handled-elsewhere": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [
+   "Fixes: cb55f39bf7b1 (\"drm/msm/dsi/phy: Fix reading zero as PLL rates when unprepared\")",
+   "Fixes: is re-pointed at cb55f39bf7b1, which introduced both the counter and"
+  ],
+  "n_comments": 2,
+  "n_mine": 0,
+  "n_after_last_mine": 2,
+  "n_after_last_mine_human": 2,
+  "last_other": {
+   "date": "2026-11-11T17:09:07",
+   "who": "Dmitry Baryshkov",
+   "email": "dmitry.baryshkov@oss.qualcomm.com",
+   "bot": false,
+   "subject": "Re: [PATCH] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first\n PHY enable",
+   "snippet": "On Mon, Oct 19, 2026 at 09:00:41PM +0800, Qianhui Xu wrote: > From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn> > > dsi_7nm_phy_enable() pre-seeds pll_enable_cnt = 1 before calling > dsi_pll_enable_pll_bias(). That makes the bias helper take its > early-return path, so its PLL_SYSTEM_MUXES = 0xc0 writ"
+  },
+  "other_speakers": [
+   "Dmitry Baryshkov"
+  ],
+  "patches": [
+   {
+    "trailers": [
+     "Fixes: 44784327815b (\"drm/msm/dsi: phy: rework PLL bias enable/disable\")"
+    ],
+    "state": "superseded",
+    "name": "drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-19T13:00:41"
+   },
+   {
+    "trailers": [
+     "Fixes: 44784327815b (\"drm/msm/dsi: phy: rework PLL bias enable/disable\")"
+    ],
+    "state": "new",
+    "name": "drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-19T13:00:41"
+   },
+   {
+    "trailers": [
+     "Fixes: cb55f39bf7b1 (\"drm/msm/dsi/phy: Fix reading zero as PLL rates when unprepared\")",
+     "Fixes: is re-pointed at cb55f39bf7b1, which introduced both the counter and"
+    ],
+    "state": "new",
+    "name": "drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-11-16T14:50:20"
+   },
+   {
+    "trailers": [
+     "Fixes: cb55f39bf7b1 (\"drm/msm/dsi/phy: Fix reading zero as PLL rates when unprepared\")",
+     "Fixes: is re-pointed at cb55f39bf7b1, which introduced both the counter and"
+    ],
+    "state": "superseded",
+    "name": "drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-16T14:50:20"
+   },
+   {
+    "trailers": [
+     "Fixes: cb55f39bf7b1 (\"drm/msm/dsi/phy: Fix reading zero as PLL rates when unprepared\")",
+     "Fixes: is re-pointed at cb55f39bf7b1, which introduced both the counter and"
+    ],
+    "state": "new",
+    "name": "[v2] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 2,
+    "date": "2026-11-16T15:03:34"
+   },
+   {
+    "trailers": [
+     "Fixes: cb55f39bf7b1 (\"drm/msm/dsi/phy: Fix reading zero as PLL rates when unprepared\")",
+     "Fixes: is re-pointed at cb55f39bf7b1, which introduced both the counter and"
+    ],
+    "state": "handled-elsewhere",
+    "name": "[v2] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-11-16T15:03:34"
+   },
+   {
+    "trailers": [
+     "Fixes: cb55f39bf7b1 (\"drm/msm/dsi/phy: Fix reading zero as PLL rates when unprepared\")",
+     "Fixes: is re-pointed at cb55f39bf7b1, which introduced both the counter and"
+    ],
+    "state": "new",
+    "name": "[v2] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 2,
+    "date": "2026-11-17T05:20:47"
+   },
+   {
+    "trailers": [
+     "Fixes: cb55f39bf7b1 (\"drm/msm/dsi/phy: Fix reading zero as PLL rates when unprepared\")",
+     "Fixes: is re-pointed at cb55f39bf7b1, which introduced both the counter and"
+    ],
+    "state": "new",
+    "name": "[v2] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-11-17T05:20:47"
+   }
+  ]
+ },
+ {
+  "name": "drm/msm/dpu: reject undersized gamma LUT blobs",
+  "latest_version": 2,
+  "latest_date": "2026-11-17T05:20:46",
+  "latest_projects": [
+   "dri-devel",
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   1,
+   2
+  ],
+  "instances": 4,
+  "latest_patch_states": {
+   "new": 1
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 1,
+   "new": 3
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [
+   "Fixes: 39a750ff5fc9 (\"drm/msm/dpu: Add DSPP GC driver to provide GAMMA_LUT DRM property\")",
+   "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>"
+  ],
+  "n_comments": 2,
+  "n_mine": 0,
+  "n_after_last_mine": 2,
+  "n_after_last_mine_human": 2,
+  "last_other": {
+   "date": "2026-11-11T16:58:23",
+   "who": "Dmitry Baryshkov",
+   "email": "dmitry.baryshkov@oss.qualcomm.com",
+   "bot": false,
+   "subject": "Re: [PATCH] drm/msm/dpu: reject undersized gamma LUT blobs",
+   "snippet": "On Tue, Oct 13, 2026 at 10:04:25AM +0800, Qianhui Xu wrote: > From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn> > > _dpu_crtc_get_gc_lut() packs DPU_GAMMA_LUT_SIZE entries of the > user-provided LUT unconditionally: > > for (i = 0; i < PGC_TBL_LEN; i++) { > val_even = drm_color_lut_extract(lut[i * 2]."
+  },
+  "other_speakers": [
+   "Dmitry Baryshkov"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "drm/msm/dpu: reject undersized gamma LUT blobs",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-13T02:04:25"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "drm/msm/dpu: reject undersized gamma LUT blobs",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-13T02:04:25"
+   },
+   {
+    "trailers": [
+     "Fixes: 39a750ff5fc9 (\"drm/msm/dpu: Add DSPP GC driver to provide GAMMA_LUT DRM property\")",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>"
+    ],
+    "state": "new",
+    "name": "[v2] drm/msm/dpu: reject undersized gamma LUT blobs",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 2,
+    "date": "2026-11-17T05:20:46"
+   },
+   {
+    "trailers": [
+     "Fixes: 39a750ff5fc9 (\"drm/msm/dpu: Add DSPP GC driver to provide GAMMA_LUT DRM property\")",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>"
+    ],
+    "state": "new",
+    "name": "[v2] drm/msm/dpu: reject undersized gamma LUT blobs",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-11-17T05:20:46"
+   }
+  ]
+ },
+ {
+  "name": "[v7] arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700 Gen4, a Qualcomm SM8750-based tablet",
+  "latest_version": 7,
+  "latest_date": "2026-11-17T05:20:28",
+  "latest_projects": [
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   7
+  ],
+  "instances": 1,
+  "latest_patch_states": {
+   "new": 1
+  },
+  "all_patch_states": {
+   "new": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 0,
+  "n_mine": 0,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v7] arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700 Gen4, a Qualcomm SM8750-based tablet",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 7,
+    "date": "2026-11-17T05:20:28"
+   }
+  ]
+ },
+ {
+  "name": "pstore/ram: refuse zones overlapping the initrd",
+  "latest_version": 1,
+  "latest_date": "2026-11-16T04:00:48",
+  "latest_projects": [
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 1,
+  "latest_patch_states": {
+   "handled-elsewhere": 2
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 2
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 0,
+  "n_mine": 0,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[1/2] init: initrd: add initrd_phys_range()",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-16T04:00:48"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[2/2] pstore/ram: skip zones overlapping the initrd",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-16T04:00:49"
+   }
+  ]
+ },
+ {
+  "name": "drm/msm/mdss: reset all block resets described in DT",
+  "latest_version": 5,
+  "latest_date": "2026-11-13T15:56:32",
+  "latest_projects": [
+   "devicetree",
+   "dri-devel",
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   3,
+   4,
+   5
+  ],
+  "instances": 11,
+  "latest_patch_states": {
+   "not-applicable": 1,
+   "handled-elsewhere": 2
+  },
+  "all_patch_states": {
+   "new": 13,
+   "superseded": 15,
+   "not-applicable": 1,
+   "handled-elsewhere": 4
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [
+   "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+   "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>",
+   "Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>"
+  ],
+  "n_comments": 34,
+  "n_mine": 7,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [
+   "Abel Vesa",
+   "Dmitry Baryshkov",
+   "Konrad Dybcio",
+   "Rob Herring",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v3,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 3,
+    "date": "2026-11-02T05:50:24"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v3,2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 3,
+    "date": "2026-11-02T05:50:25"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v3,3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 3,
+    "date": "2026-11-02T05:50:26"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v3,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-11-02T05:50:24"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v3,2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-11-02T05:50:25"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v3,3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-11-02T05:50:26"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:13"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:14"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>"
+    ],
+    "state": "superseded",
+    "name": "[v4,3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:15"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v4,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:13"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v4,2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:14"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>"
+    ],
+    "state": "new",
+    "name": "[v4,3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:15"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:13"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:14"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>"
+    ],
+    "state": "superseded",
+    "name": "[v4,3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-11-13T08:36:15"
+   },
+   {
+    "trailers": [],
+    "state": "not-applicable",
+    "name": "[1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:33"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:34"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>",
+     "Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>"
+    ],
+    "state": "handled-elsewhere",
+    "name": "[3/3] arm64: dts: qcom: sm8750: describe the second MDSS block reset",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:35"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:05"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>",
+     "Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>"
+    ],
+    "state": "superseded",
+    "name": "[3/3] arm64: dts: qcom: sm8750: describe the second MDSS block reset",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:06"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:05"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>",
+     "Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>"
+    ],
+    "state": "superseded",
+    "name": "[3/3] arm64: dts: qcom: sm8750: describe the second MDSS block reset",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:06"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:33"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:34"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>",
+     "Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>"
+    ],
+    "state": "new",
+    "name": "[3/3] arm64: dts: qcom: sm8750: describe the second MDSS block reset",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:35"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:04"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:05"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>",
+     "Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>"
+    ],
+    "state": "new",
+    "name": "[3/3] arm64: dts: qcom: sm8750: describe the second MDSS block reset",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:06"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:33"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:34"
+   },
+   {
+    "trailers": [
+     "Reviewed-by: Abel Vesa <abel.vesa@oss.qualcomm.com>",
+     "Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>",
+     "Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>"
+    ],
+    "state": "new",
+    "name": "[3/3] arm64: dts: qcom: sm8750: describe the second MDSS block reset",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 5,
+    "date": "2026-11-13T15:56:35"
+   }
+  ]
+ },
+ {
+  "name": "arm64: dts: qcom: sm8750: mark the ADSP fastrpc node as non-secure domain",
+  "latest_version": 3,
+  "latest_date": "2026-11-11T03:57:31",
+  "latest_projects": [
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   1,
+   2,
+   3
+  ],
+  "instances": 3,
+  "latest_patch_states": {
+   "new": 1
+  },
+  "all_patch_states": {
+   "superseded": 2,
+   "new": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [
+   "Fixes: be9d54c35312 (\"arm64: dts: qcom: sm8750: add ADSP fastrpc-compute-cb nodes\")"
+  ],
+  "n_comments": 1,
+  "n_mine": 0,
+  "n_after_last_mine": 1,
+  "n_after_last_mine_human": 1,
+  "last_other": {
+   "date": "2026-11-09T14:16:40",
+   "who": "Konrad Dybcio",
+   "email": "konrad.dybcio@oss.qualcomm.com",
+   "bot": false,
+   "subject": "Re: [PATCH] arm64: dts: qcom: sm8750: mark the ADSP fastrpc node as\n non-secure domain",
+   "snippet": "On 11/7/26 4:26 AM, Qianhui Xu wrote: > On SM8750 the ADSP fastrpc instance used by the sensor core (and by the > other non-secure ADSP users) is the one the firmware exposes as > non-secure; the CDSP fastrpc node already carries > \"qcom,non-secure-domain\", the ADSP one does not. With the fastrpc dr"
+  },
+  "other_speakers": [
+   "Konrad Dybcio"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "arm64: dts: qcom: sm8750: mark the ADSP fastrpc node as non-secure domain",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-07T03:26:46"
+   },
+   {
+    "trailers": [
+     "Fixes: be9d54c35312479ed92c85aec3cd43153513210d (\"arm64: dts: qcom: sm8750: add ADSP fastrpc-compute-cb nodes\")"
+    ],
+    "state": "superseded",
+    "name": "[v2] arm64: dts: qcom: sm8750: mark the ADSP fastrpc node as non-secure domain",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-11-10T02:31:53"
+   },
+   {
+    "trailers": [
+     "Fixes: be9d54c35312 (\"arm64: dts: qcom: sm8750: add ADSP fastrpc-compute-cb nodes\")"
+    ],
+    "state": "new",
+    "name": "[v3] arm64: dts: qcom: sm8750: mark the ADSP fastrpc node as non-secure domain",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-11-11T03:57:31"
+   }
+  ]
+ },
+ {
+  "name": "[v2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+  "latest_version": 9,
+  "latest_date": "2026-11-07T01:50:14",
+  "latest_projects": [
+   "devicetree"
+  ],
+  "all_versions": [
+   2,
+   3,
+   4,
+   9
+  ],
+  "instances": 4,
+  "latest_patch_states": {
+   "not-applicable": 1,
+   "handled-elsewhere": 1
+  },
+  "all_patch_states": {
+   "superseded": 8,
+   "not-applicable": 1,
+   "handled-elsewhere": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 11,
+  "n_mine": 5,
+  "n_after_last_mine": 4,
+  "n_after_last_mine_human": 1,
+  "last_other": {
+   "date": "2026-11-01T22:40:13",
+   "who": "Mark Brown",
+   "email": "broonie@kernel.org",
+   "bot": false,
+   "subject": "Re: [PATCH v3 0/3] regulator: add the WL2868C camera PMIC and its\n users",
+   "snippet": "On Sat, Oct 31, 2026 at 11:42:57AM +0800, Qianhui Xu wrote: > regulator: add the WL2868C camera PMIC and its users > > Hi all, > > this series adds a driver for the WL2868C camera PMIC found on the Lenovo > Legion Tab (TB322FC / \"elden\", SM8750). The chip is an I2C regulator with > seven LDOs; on th"
+  },
+  "other_speakers": [
+   "Krzysztof Kozlowski",
+   "Mark Brown",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T12:04:42"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v3,1/3] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 3,
+    "date": "2026-10-31T03:42:58"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v3,2/3] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 3,
+    "date": "2026-10-31T03:42:59"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v3,3/3] arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 3,
+    "date": "2026-10-31T03:43:00"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,1/4] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-10-31T06:55:31"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,2/4] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-10-31T06:55:32"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,3/4] arm64: dts: qcom: sm8750: describe two of the three CCI I2C controllers",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-10-31T06:55:33"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v4,4/4] arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 4,
+    "date": "2026-10-31T06:55:34"
+   },
+   {
+    "trailers": [],
+    "state": "not-applicable",
+    "name": "[v9,1/2] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 9,
+    "date": "2026-11-07T01:50:13"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v9,2/2] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 9,
+    "date": "2026-11-07T01:50:14"
+   }
+  ]
+ },
+ {
+  "name": "usb: dwc3: two Type-C connectors sharing one HS data bus",
+  "latest_version": 8,
+  "latest_date": "2026-11-06T11:42:08",
+  "latest_projects": [
+   "devicetree",
+   "linux-arm-msm",
+   "linux-usb"
+  ],
+  "all_versions": [
+   1,
+   8
+  ],
+  "instances": 9,
+  "latest_patch_states": {
+   "changes-requested": 1,
+   "handled-elsewhere": 2
+  },
+  "all_patch_states": {
+   "superseded": 18,
+   "new": 3,
+   "handled-elsewhere": 5,
+   "changes-requested": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 13,
+  "n_mine": 0,
+  "n_after_last_mine": 13,
+  "n_after_last_mine_human": 2,
+  "last_other": {
+   "date": "2026-11-10T16:36:40",
+   "who": "Rob Herring",
+   "email": "robh@kernel.org",
+   "bot": false,
+   "subject": "Re: [PATCH v8 0/3] usb: dwc3: two Type-C connectors sharing one HS\n data bus",
+   "snippet": "On Fri, Nov 06, 2026 at 07:42:05PM +0800, Qianhui Xu wrote: > *** AI-assistance disclosure *** > This cover letter and the patches below were prepared with the help of an > LLM coding assistant. The author reviewed every line, ran every gate > quoted in this letter himself, and takes full responsibi"
+  },
+  "other_speakers": [
+   "Rob Herring",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:06"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:06"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-11-04T03:27:06"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:09"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:10"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:11"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:09"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:10"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:11"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:09"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:10"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-11-06T11:28:11"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v8,1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:06"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v8,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:07"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v8,3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:08"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v8,1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:06"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v8,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:07"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v8,3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:08"
+   },
+   {
+    "trailers": [],
+    "state": "changes-requested",
+    "name": "[v8,1/3] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:06"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v8,2/3] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:07"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v8,3/3] usb: dwc3: support two connectors sharing one HS data bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 8,
+    "date": "2026-11-06T11:42:08"
+   }
+  ]
+ },
+ {
+  "name": "[v3,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+  "latest_version": 3,
+  "latest_date": "2026-11-02T05:50:24",
+  "latest_projects": [
+   "devicetree"
+  ],
+  "all_versions": [
+   3
+  ],
+  "instances": 1,
+  "latest_patch_states": {
+   "not-applicable": 1
+  },
+  "all_patch_states": {
+   "not-applicable": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 0,
+  "n_mine": 0,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "not-applicable",
+    "name": "[v3,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 3,
+    "date": "2026-11-02T05:50:24"
+   }
+  ]
+ },
+ {
+  "name": "[v5,1/2] dt-bindings: usb: snps,dwc3: tighten the two-connector shared HS bus",
+  "latest_version": 5,
+  "latest_date": "2026-11-02T05:41:09",
+  "latest_projects": [
+   "devicetree",
+   "linux-arm-msm",
+   "linux-usb"
+  ],
+  "all_versions": [
+   5
+  ],
+  "instances": 3,
+  "latest_patch_states": {
+   "new": 1
+  },
+  "all_patch_states": {
+   "new": 1,
+   "handled-elsewhere": 1,
+   "changes-requested": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 3,
+  "n_mine": 0,
+  "n_after_last_mine": 3,
+  "n_after_last_mine_human": 3,
+  "last_other": {
+   "date": "2026-11-02T08:07:28",
+   "who": "Krzysztof Kozlowski",
+   "email": "krzk@kernel.org",
+   "bot": false,
+   "subject": "Re: [PATCH v5 1/2] dt-bindings: usb: snps,dwc3: tighten the\n two-connector shared HS bus",
+   "snippet": "On Mon, Nov 02, 2026 at 01:41:09PM +0800, Qianhui Xu wrote: > Resending only 1/2 of this series. > > The earlier post of this patch (Message-ID > <20261031150154.1106455-2-xiaqinghuan@mail.ustc.edu.cn>, 0/2 cover > <20261031150154.1106455-1-xiaqinghuan@mail.ustc.edu.cn>, 2026-10-31) used the > wrong"
+  },
+  "other_speakers": [
+   "Krzysztof Kozlowski"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v5,1/2] dt-bindings: usb: snps,dwc3: tighten the two-connector shared HS bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 5,
+    "date": "2026-11-02T05:41:09"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v5,1/2] dt-bindings: usb: snps,dwc3: tighten the two-connector shared HS bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-11-02T05:41:09"
+   },
+   {
+    "trailers": [],
+    "state": "changes-requested",
+    "name": "[v5,1/2] dt-bindings: usb: snps,dwc3: tighten the two-connector shared HS bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 5,
+    "date": "2026-11-02T05:41:09"
+   }
+  ]
+ },
+ {
+  "name": "drm/msm/dsi: collect bonded command-path data into per-SoC config",
+  "latest_version": 1,
+  "latest_date": "2026-10-31T15:03:01",
+  "latest_projects": [
+   "dri-devel",
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 2,
+  "latest_patch_states": {
+   "handled-elsewhere": 5
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 5,
+   "new": 5
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 6,
+  "n_mine": 2,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [
+   "Dmitry Baryshkov"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[1/5] drm/msm/dsi: move bonded command failure flag into dsi manager state",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:01"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[2/5] drm/msm/dsi: add per-SoC bonded command-path config",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:02"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[3/5] drm/msm/dsi: route the bonded command path through host ops",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:03"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[4/5] drm/msm/dsi: take bonded DSI master cfg from per-SoC config",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:04"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[5/5] drm/msm/dsi: name the FIFO error bits of the bonded command path",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:05"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[1/5] drm/msm/dsi: move bonded command failure flag into dsi manager state",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:01"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[2/5] drm/msm/dsi: add per-SoC bonded command-path config",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:02"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[3/5] drm/msm/dsi: route the bonded command path through host ops",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:03"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[4/5] drm/msm/dsi: take bonded DSI master cfg from per-SoC config",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:04"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[5/5] drm/msm/dsi: name the FIFO error bits of the bonded command path",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-31T15:03:05"
+   }
+  ]
+ },
+ {
+  "name": "usb: dwc3: fixes for two connectors sharing one HS bus",
+  "latest_version": 5,
+  "latest_date": "2026-10-31T15:01:53",
+  "latest_projects": [
+   "linux-arm-msm",
+   "linux-usb"
+  ],
+  "all_versions": [
+   5
+  ],
+  "instances": 2,
+  "latest_patch_states": {
+   "handled-elsewhere": 2
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 2,
+   "new": 2
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 2,
+  "n_mine": 0,
+  "n_after_last_mine": 2,
+  "n_after_last_mine_human": 2,
+  "last_other": {
+   "date": "2026-11-02T04:49:40",
+   "who": "Krishna Kurapati",
+   "email": "krishna.kurapati@oss.qualcomm.com",
+   "bot": false,
+   "subject": "Re: [PATCH v5 0/2] usb: dwc3: fixes for two connectors sharing one HS\n bus",
+   "snippet": "On 10/31/2026 8:31 PM, Qianhui Xu wrote: > *** AI-assistance disclosure *** > This cover letter and the accompanying patches were prepared with the help > of an LLM coding assistant; the author reviewed, tested and takes full > responsibility for the content. All measurements cited below come from r"
+  },
+  "other_speakers": [
+   "Krishna Kurapati"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v5,1/2] dt-bindings: usb: snps,dwc3: tighten the two-connector shared HS bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-10-31T15:01:53"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v5,2/2] usb: dwc3: fix the two-connector shared HS bus role handling",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 5,
+    "date": "2026-10-31T15:01:54"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v5,1/2] dt-bindings: usb: snps,dwc3: tighten the two-connector shared HS bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 5,
+    "date": "2026-10-31T15:01:53"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v5,2/2] usb: dwc3: fix the two-connector shared HS bus role handling",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 5,
+    "date": "2026-10-31T15:01:54"
+   }
+  ]
+ },
+ {
+  "name": "media: camss: CSID power-on unwind and VFE stream handling",
+  "latest_version": 2,
+  "latest_date": "2026-10-31T04:11:54",
+  "latest_projects": [
+   "linux-media"
+  ],
+  "all_versions": [
+   2
+  ],
+  "instances": 1,
+  "latest_patch_states": {
+   "new": 2
+  },
+  "all_patch_states": {
+   "new": 2
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 1,
+  "n_mine": 0,
+  "n_after_last_mine": 1,
+  "n_after_last_mine_human": 1,
+  "last_other": {
+   "date": "2026-11-02T09:22:10",
+   "who": "Loic Poulain",
+   "email": "loic.poulain@oss.qualcomm.com",
+   "bot": false,
+   "subject": "Re: [PATCH v2 2/2] media: camss: video: factor pipeline stream on/off\n into a helper",
+   "snippet": "On Sat, Oct 31, 2026 at 5:11 AM Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn> wrote: > > When one subdevice fails to start, the ones already started further up the > pipeline were left streaming, and the next start would try to start them > again. video_stop_streaming() returned early on the first subde"
+  },
+  "other_speakers": [
+   "Loic Poulain"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,1/2] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-31T04:11:53"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,2/2] media: camss: video: factor pipeline stream on/off into a helper",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-31T04:11:54"
+   }
+  ]
+ },
+ {
+  "name": "[v2,1/2] media: camss: csid: unwind the power-on path through a single error label",
+  "latest_version": 2,
+  "latest_date": "2026-10-31T04:11:54",
+  "latest_projects": [
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   2
+  ],
+  "instances": 1,
+  "latest_patch_states": {
+   "handled-elsewhere": 2
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 2
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 1,
+  "n_mine": 0,
+  "n_after_last_mine": 1,
+  "n_after_last_mine_human": 1,
+  "last_other": {
+   "date": "2026-11-02T09:22:10",
+   "who": "Loic Poulain",
+   "email": "loic.poulain@oss.qualcomm.com",
+   "bot": false,
+   "subject": "Re: [PATCH v2 2/2] media: camss: video: factor pipeline stream on/off\n into a helper",
+   "snippet": "On Sat, Oct 31, 2026 at 5:11 AM Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn> wrote: > > When one subdevice fails to start, the ones already started further up the > pipeline were left streaming, and the next start would try to start them > again. video_stop_streaming() returned early on the first subde"
+  },
+  "other_speakers": [
+   "Loic Poulain"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,1/2] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-31T04:11:53"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,2/2] media: camss: video: factor pipeline stream on/off into a helper",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-31T04:11:54"
+   }
+  ]
+ },
+ {
+  "name": "regulator: add the WL2868C camera PMIC and its users",
+  "latest_version": 3,
+  "latest_date": "2026-10-31T03:42:57",
+  "latest_projects": [
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   3
+  ],
+  "instances": 1,
+  "latest_patch_states": {
+   "new": 3
+  },
+  "all_patch_states": {
+   "new": 3
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 3,
+  "n_mine": 2,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [
+   "Mark Brown"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v3,1/3] regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-10-31T03:42:58"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v3,2/3] regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-10-31T03:42:59"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v3,3/3] arm64: dts: qcom: sm8750-lenovo-elden: describe the WL2868C regulators",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-10-31T03:43:00"
+   }
+  ]
+ },
+ {
+  "name": "drm/msm/mdss: reset all MDSS block resets described in DT",
+  "latest_version": 2,
+  "latest_date": "2026-10-29T12:32:36",
+  "latest_projects": [
+   "devicetree",
+   "dri-devel",
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   2
+  ],
+  "instances": 3,
+  "latest_patch_states": {
+   "changes-requested": 1,
+   "handled-elsewhere": 2
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 4,
+   "new": 4,
+   "changes-requested": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 14,
+  "n_mine": 7,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [
+   "Dmitry Baryshkov",
+   "Konrad Dybcio"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:36"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:37"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:38"
+   },
+   {
+    "trailers": [],
+    "state": "changes-requested",
+    "name": "[v2,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:36"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:37"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:38"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,1/3] dt-bindings: display: msm: mdss-common: describe additional block resets",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:36"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,2/3] drm/msm/mdss: reset all block resets described in DT",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:37"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[v2,3/3] arm64: dts: qcom: sm8750: describe all MDSS block resets",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 2,
+    "date": "2026-10-29T12:32:38"
+   }
+  ]
+ },
+ {
+  "name": "media: camss: three fixes for the CSID power and VFE streaming paths",
+  "latest_version": 1,
+  "latest_date": "2026-10-29T12:31:05",
+  "latest_projects": [
+   "linux-arm-msm",
+   "linux-media"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 2,
+  "latest_patch_states": {
+   "superseded": 3
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 3,
+   "superseded": 3
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 7,
+  "n_mine": 1,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [
+   "Bryan O'Donoghue",
+   "Loic Poulain"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[1/3] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-29T12:31:05"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[2/3] media: camss: video: check that a buffer is DMA contiguous and add a prepare hook",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-29T12:31:06"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[3/3] media: camss: video: stop the subdevices already started when a start fails",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-29T12:31:07"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/3] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-29T12:31:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/3] media: camss: video: check that a buffer is DMA contiguous and add a prepare hook",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-29T12:31:06"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/3] media: camss: video: stop the subdevices already started when a start fails",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-29T12:31:07"
+   }
+  ]
+ },
+ {
+  "name": "media: camss: add SM8750 support",
+  "latest_version": 2,
+  "latest_date": "2026-10-28T09:29:58",
+  "latest_projects": [
+   "devicetree",
+   "linux-arm-msm",
+   "linux-media"
+  ],
+  "all_versions": [
+   1,
+   2
+  ],
+  "instances": 6,
+  "latest_patch_states": {
+   "superseded": 9
+  },
+  "all_patch_states": {
+   "superseded": 38,
+   "handled-elsewhere": 16
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 55,
+  "n_mine": 11,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [
+   "Bryan O'Donoghue",
+   "Hangxiang Ma",
+   "Krzysztof Kozlowski",
+   "Shuai Liu",
+   "Vladimir Zapolskiy",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/9] dt-bindings: media: add the Qualcomm SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:57"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/9] media: camss: csiphy: add CSIPHY 2.4.0 lane settings for SM8750",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:58"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/9] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:59"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[4/9] media: camss: csid: add the 980 generation",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:00"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[5/9] media: camss: csid: report frame starts from CSID",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:01"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[6/9] media: camss: video: check that a buffer is DMA contiguous and add a prepare hook",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:02"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[7/9] media: camss: video: stop the subdevices already started when a start fails",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:03"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[8/9] media: camss: vfe: add the gen4 block and SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[9/9] arm64: dts: qcom: sm8750: add the camera subsystem",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/9] dt-bindings: media: add the Qualcomm SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:57"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/9] media: camss: csiphy: add CSIPHY 2.4.0 lane settings for SM8750",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:58"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/9] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:59"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[4/9] media: camss: csid: add the 980 generation",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:00"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[5/9] media: camss: csid: report frame starts from CSID",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:01"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[6/9] media: camss: video: check that a buffer is DMA contiguous and add a prepare hook",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:02"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[7/9] media: camss: video: stop the subdevices already started when a start fails",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:03"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[8/9] media: camss: vfe: add the gen4 block and SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[9/9] arm64: dts: qcom: sm8750: add the camera subsystem",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[1/9] dt-bindings: media: add the Qualcomm SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:57"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[2/9] media: camss: csiphy: add CSIPHY 2.4.0 lane settings for SM8750",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:58"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[3/9] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:40:59"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[4/9] media: camss: csid: add the 980 generation",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:00"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[5/9] media: camss: csid: report frame starts from CSID",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:01"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[6/9] media: camss: video: check that a buffer is DMA contiguous and add a prepare hook",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:02"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[7/9] media: camss: video: stop the subdevices already started when a start fails",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:03"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[8/9] media: camss: vfe: add the gen4 block and SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:04"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[9/9] arm64: dts: qcom: sm8750: add the camera subsystem",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-28T03:41:05"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,1/9] dt-bindings: media: add the Qualcomm SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:55"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,2/9] media: camss: csiphy: add CSIPHY 2.4.0 lane settings for SM8750",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:56"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,3/9] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:57"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,4/9] media: camss: csid: add the 980 generation",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:58"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,5/9] media: camss: csid: report frame starts from CSID",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:59"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,6/9] media: camss: video: check that a buffer is DMA contiguous and add a prepare hook",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:00"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,7/9] media: camss: video: stop the subdevices already started when a start fails",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:01"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,8/9] media: camss: vfe: add the gen4 block and SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:02"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,9/9] arm64: dts: qcom: sm8750: add the camera subsystem",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:03"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,1/9] dt-bindings: media: add the Qualcomm SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:55"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,2/9] media: camss: csiphy: add CSIPHY 2.4.0 lane settings for SM8750",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:56"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,3/9] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:57"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,4/9] media: camss: csid: add the 980 generation",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:58"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,5/9] media: camss: csid: report frame starts from CSID",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:59"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,6/9] media: camss: video: check that a buffer is DMA contiguous and add a prepare hook",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:00"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,7/9] media: camss: video: stop the subdevices already started when a start fails",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:01"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,8/9] media: camss: vfe: add the gen4 block and SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:02"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,9/9] arm64: dts: qcom: sm8750: add the camera subsystem",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:03"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[v2,1/9] dt-bindings: media: add the Qualcomm SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:55"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,2/9] media: camss: csiphy: add CSIPHY 2.4.0 lane settings for SM8750",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:56"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,3/9] media: camss: csid: unwind the power-on path through a single error label",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:57"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,4/9] media: camss: csid: add the 980 generation",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:58"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,5/9] media: camss: csid: report frame starts from CSID",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:29:59"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,6/9] media: camss: video: check that a buffer is DMA contiguous and add a prepare hook",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:00"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,7/9] media: camss: video: stop the subdevices already started when a start fails",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:01"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,8/9] media: camss: vfe: add the gen4 block and SM8750 camera subsystem",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:02"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[v2,9/9] arm64: dts: qcom: sm8750: add the camera subsystem",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 2,
+    "date": "2026-10-28T09:30:03"
+   }
+  ]
+ },
+ {
+  "name": "power: supply: qcom_battmgr: do not report power_now on SM8750",
+  "latest_version": 1,
+  "latest_date": "2026-10-27T13:29:49",
+  "latest_projects": [
+   "linux-arm-msm",
+   "linux-pm"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 4,
+  "latest_patch_states": {
+   "handled-elsewhere": 1
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 3,
+   "superseded": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 29,
+  "n_mine": 12,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [
+   "Fenglin Wu",
+   "Konrad Dybcio"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "power: supply: qcom_battmgr: do not report power_now on SM8750",
+    "commit_ref": null,
+    "project": "linux-pm",
+    "series_version": 1,
+    "date": "2026-10-13T00:21:24"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "power: supply: qcom_battmgr: do not report power_now on SM8750",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-13T00:21:24"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "power: supply: qcom_battmgr: do not report power_now on SM8750",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:49"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "power: supply: qcom_battmgr: do not report power_now on SM8750",
+    "commit_ref": null,
+    "project": "linux-pm",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:49"
+   }
+  ]
+ },
+ {
+  "name": "remoteproc: qcom_q6v5_pas: release the DTB firmware after loading it",
+  "latest_version": 1,
+  "latest_date": "2026-10-27T13:29:44",
+  "latest_projects": [
+   "linux-arm-msm",
+   "linux-remoteproc"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 2,
+  "latest_patch_states": {
+   "new": 1
+  },
+  "all_patch_states": {
+   "new": 1,
+   "handled-elsewhere": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 0,
+  "n_mine": 0,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "remoteproc: qcom_q6v5_pas: release the DTB firmware after loading it",
+    "commit_ref": null,
+    "project": "linux-remoteproc",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:44"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "remoteproc: qcom_q6v5_pas: release the DTB firmware after loading it",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-27T13:29:44"
+   }
+  ]
+ },
+ {
+  "name": "dt-bindings: regulator: add Will Semiconductor WL2868C PMIC",
+  "latest_version": 1,
+  "latest_date": "2026-10-27T05:10:55",
+  "latest_projects": [
+   "devicetree",
+   "linux-media"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 2,
+  "latest_patch_states": {
+   "superseded": 1
+  },
+  "all_patch_states": {
+   "superseded": 2
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 8,
+  "n_mine": 2,
+  "n_after_last_mine": 2,
+  "n_after_last_mine_human": 2,
+  "last_other": {
+   "date": "2026-10-28T12:12:29",
+   "who": "Krzysztof Kozlowski",
+   "email": "krzk@kernel.org",
+   "bot": false,
+   "subject": "Re: [PATCH] dt-bindings: regulator: add Will Semiconductor WL2868C\n PMIC",
+   "snippet": "On 28/10/2026 13:04, Qianhui Xu wrote: > On Tue, Oct 27, 2026 at 05:58:24PM +0000, Mark Brown wrote: >> Please submit patches using subject lines reflecting the style for the >> subsystem, this makes it easier for people to identify relevant patches. > > Changed in v2 to: > > regulator: dt-bindings:"
+  },
+  "other_speakers": [
+   "Krzysztof Kozlowski",
+   "Mark Brown"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "dt-bindings: regulator: add Will Semiconductor WL2868C PMIC",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-27T05:10:55"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "dt-bindings: regulator: add Will Semiconductor WL2868C PMIC",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-27T05:10:55"
+   }
+  ]
+ },
+ {
+  "name": "dt-bindings: media: i2c: add GT9764 VCM and S5KJNS sensor",
+  "latest_version": 1,
+  "latest_date": "2026-10-27T05:10:48",
+  "latest_projects": [
+   "devicetree",
+   "linux-media"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 2,
+  "latest_patch_states": {
+   "changes-requested": 2
+  },
+  "all_patch_states": {
+   "changes-requested": 2,
+   "new": 2
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 5,
+  "n_mine": 0,
+  "n_after_last_mine": 5,
+  "n_after_last_mine_human": 4,
+  "last_other": {
+   "date": "2026-10-28T13:31:24",
+   "who": "Krzysztof Kozlowski",
+   "email": "krzk@kernel.org",
+   "bot": false,
+   "subject": "Re: [PATCH 2/2] dt-bindings: media: i2c: add Samsung S5KJNS image\n sensor",
+   "snippet": "On Tue, Oct 27, 2026 at 01:10:48PM +0800, Qianhui Xu wrote: > Add DT binding for the Samsung S5KJNS MIPI CSI-2 image sensor. > > Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn> You still send LLM-generated slop. Please start using Git. If you cannot instruct your agent to use standard tools"
+  },
+  "other_speakers": [
+   "Krzysztof Kozlowski",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "changes-requested",
+    "name": "[1/2] dt-bindings: media: i2c: add Giantec GT9764 camera lens actuator",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-27T05:10:47"
+   },
+   {
+    "trailers": [],
+    "state": "changes-requested",
+    "name": "[2/2] dt-bindings: media: i2c: add Samsung S5KJNS image sensor",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 1,
+    "date": "2026-10-27T05:10:48"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[1/2] dt-bindings: media: i2c: add Giantec GT9764 camera lens actuator",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-27T05:10:47"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[2/2] dt-bindings: media: i2c: add Samsung S5KJNS image sensor",
+    "commit_ref": null,
+    "project": "linux-media",
+    "series_version": 1,
+    "date": "2026-10-27T05:10:48"
+   }
+  ]
+ },
+ {
+  "name": "irqchip/gic-v3-its: Claim LPI tables inherited across kexec on DT",
+  "latest_version": 1,
+  "latest_date": "2026-10-24T07:58:56",
+  "latest_projects": [
+   "linux-arm-kernel"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 1,
+  "latest_patch_states": {
+   "new": 1
+  },
+  "all_patch_states": {
+   "new": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 3,
+  "n_mine": 1,
+  "n_after_last_mine": 1,
+  "n_after_last_mine_human": 1,
+  "last_other": {
+   "date": "2026-10-26T13:53:06",
+   "who": "Marc Zyngier",
+   "email": "maz@kernel.org",
+   "bot": false,
+   "subject": "Re: [PATCH] irqchip/gic-v3-its: Claim LPI tables inherited across\n kexec on DT",
+   "snippet": "On Mon, 26 Oct 2026 11:41:29 +0000, Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn> wrote: > > Hi Marc, > > Understood on all three points, and the series is withdrawn -- I am not > going to resend it in any form. Thanks. > > Just so it is on record that I got the reasoning right this time: > > - Inheriti"
+  },
+  "other_speakers": [
+   "Marc Zyngier"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "irqchip/gic-v3-its: Claim LPI tables inherited across kexec on DT",
+    "commit_ref": null,
+    "project": "linux-arm-kernel",
+    "series_version": 1,
+    "date": "2026-10-24T07:58:56"
+   }
+  ]
+ },
+ {
+  "name": "[RFC] clk: qcom: dispcc-sm8750: reset the MDSS blocks at probe when the bootloader left them running",
+  "latest_version": 1,
+  "latest_date": "2026-10-22T14:08:10",
+  "latest_projects": [
+   "dri-devel",
+   "linux-arm-msm",
+   "linux-clk"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 3,
+  "latest_patch_states": {
+   "new": 1
+  },
+  "all_patch_states": {
+   "new": 2,
+   "awaiting-upstream": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 9,
+  "n_mine": 6,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [
+   "Taniya Das",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[RFC] clk: qcom: dispcc-sm8750: reset the MDSS blocks at probe when the bootloader left them running",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-22T14:08:10"
+   },
+   {
+    "trailers": [],
+    "state": "awaiting-upstream",
+    "name": "[RFC] clk: qcom: dispcc-sm8750: reset the MDSS blocks at probe when the bootloader left them running",
+    "commit_ref": null,
+    "project": "linux-clk",
+    "series_version": 1,
+    "date": "2026-10-22T14:08:10"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "[RFC] clk: qcom: dispcc-sm8750: reset the MDSS blocks at probe when the bootloader left them running",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-22T14:08:10"
+   }
+  ]
+ },
+ {
+  "name": "[RFC,v3,1/2] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+  "latest_version": 3,
+  "latest_date": "2026-10-19T13:18:47",
+  "latest_projects": [
+   "devicetree",
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   3
+  ],
+  "instances": 2,
+  "latest_patch_states": {
+   "handled-elsewhere": 2
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 2,
+   "superseded": 2
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 3,
+  "n_mine": 0,
+  "n_after_last_mine": 3,
+  "n_after_last_mine_human": 1,
+  "last_other": {
+   "date": "2026-10-23T07:49:43",
+   "who": "Krzysztof Kozlowski",
+   "email": "krzk@kernel.org",
+   "bot": false,
+   "subject": "Re: [RFC PATCH v3 1/2] dt-bindings: usb: snps,dwc3: describe two\n connectors sharing one HS bus",
+   "snippet": "On Mon, Oct 19, 2026 at 09:18:47PM +0800, Qianhui Xu wrote: > Two connectors can share the High Speed D+/D- pair of a single DWC3 > controller, with a GPIO selecting which one is connected. Super Speed > lanes stay per connector. > > Describe that in snps,dwc3-common.yaml: > > - port-select-gpios se"
+  },
+  "other_speakers": [
+   "Krzysztof Kozlowski",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[RFC,v3,1/2] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-10-19T13:18:47"
+   },
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "[RFC,v3,2/2] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 3,
+    "date": "2026-10-19T13:18:48"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[RFC,v3,1/2] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 3,
+    "date": "2026-10-19T13:18:47"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[RFC,v3,2/2] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "devicetree",
+    "series_version": 3,
+    "date": "2026-10-19T13:18:48"
+   }
+  ]
+ },
+ {
+  "name": "USB: describe two connectors sharing one DWC3 HS data bus",
+  "latest_version": 3,
+  "latest_date": "2026-10-19T13:18:46",
+  "latest_projects": [
+   "linux-usb"
+  ],
+  "all_versions": [
+   3
+  ],
+  "instances": 1,
+  "latest_patch_states": {
+   "superseded": 2
+  },
+  "all_patch_states": {
+   "superseded": 2
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 3,
+  "n_mine": 0,
+  "n_after_last_mine": 3,
+  "n_after_last_mine_human": 1,
+  "last_other": {
+   "date": "2026-10-23T07:49:43",
+   "who": "Krzysztof Kozlowski",
+   "email": "krzk@kernel.org",
+   "bot": false,
+   "subject": "Re: [RFC PATCH v3 1/2] dt-bindings: usb: snps,dwc3: describe two\n connectors sharing one HS bus",
+   "snippet": "On Mon, Oct 19, 2026 at 09:18:47PM +0800, Qianhui Xu wrote: > Two connectors can share the High Speed D+/D- pair of a single DWC3 > controller, with a GPIO selecting which one is connected. Super Speed > lanes stay per connector. > > Describe that in snps,dwc3-common.yaml: > > - port-select-gpios se"
+  },
+  "other_speakers": [
+   "Krzysztof Kozlowski",
+   "sashiko-bot@kernel.org"
+  ],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[RFC,v3,1/2] dt-bindings: usb: snps,dwc3: describe two connectors sharing one HS bus",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 3,
+    "date": "2026-10-19T13:18:47"
+   },
+   {
+    "trailers": [],
+    "state": "superseded",
+    "name": "[RFC,v3,2/2] usb: roles: look up role switches attached to a graph endpoint",
+    "commit_ref": null,
+    "project": "linux-usb",
+    "series_version": 3,
+    "date": "2026-10-19T13:18:48"
+   }
+  ]
+ },
+ {
+  "name": "drm/msm/dpu: add the missing GC block to the SM8750 DSPP catalog",
+  "latest_version": 1,
+  "latest_date": "2026-10-13T00:21:23",
+  "latest_projects": [
+   "dri-devel",
+   "linux-arm-msm"
+  ],
+  "all_versions": [
+   1
+  ],
+  "instances": 2,
+  "latest_patch_states": {
+   "handled-elsewhere": 1
+  },
+  "all_patch_states": {
+   "handled-elsewhere": 1,
+   "new": 1
+  },
+  "commit_refs": [],
+  "tags": {},
+  "latest_trailers": [],
+  "n_comments": 1,
+  "n_mine": 1,
+  "n_after_last_mine": 0,
+  "n_after_last_mine_human": 0,
+  "last_other": null,
+  "other_speakers": [],
+  "patches": [
+   {
+    "trailers": [],
+    "state": "handled-elsewhere",
+    "name": "drm/msm/dpu: add the missing GC block to the SM8750 DSPP catalog",
+    "commit_ref": null,
+    "project": "linux-arm-msm",
+    "series_version": 1,
+    "date": "2026-10-13T00:21:23"
+   },
+   {
+    "trailers": [],
+    "state": "new",
+    "name": "drm/msm/dpu: add the missing GC block to the SM8750 DSPP catalog",
+    "commit_ref": null,
+    "project": "dri-devel",
+    "series_version": 1,
+    "date": "2026-10-13T00:21:23"
+   }
+  ]
+ }
+]
