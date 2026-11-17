@@ -158,6 +158,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 4 | **`TASKS/README.md`** §0 / §4 / §5 / §7 | 状态数字与台账的唯一出处 |
 | 5 | `DEVICE` §1.1（在机）/ `RESOURCES` §3（资产）/ `RUNBOOK-BRINGUP`（步骤） | 按需展开 |
 | 5b | **`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md`**（＋`scripts/linux-state-audit.sh`） | **设备状态被改后重建 Linux 的唯一入口**：8 项清单 / S0–S9 步骤 / 卡 BL 误判防护 / 反向回 Android |
+| 5c | **`RUNBOOK-BRINGUP/GPT-MINIMAL-DESIGN.md`**（＋`scripts/gpt-minimal-build.py`） | **分区表如何简化 + 最小 Debian 刷机件清单**（LUN0 18→10 项、单 `linux` 472 GiB）；与 5b 是同一目标的两层 |
 | 6 | `reports/*.md`（按日期）→ `archive/` · `SESSIONS/` · `PROGRESS.md` · `HISTORY/` | **只作沿革与证据，不得当「当前结论」引用** |
 
 > `reports/` 内部查全用 **`reports/README.md`**（509 篇的机器生成目录，`scripts/reports-index.py` 产；`--check` 过期即 rc=1）。

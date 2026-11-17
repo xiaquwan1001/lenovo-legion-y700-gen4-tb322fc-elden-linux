@@ -91,6 +91,7 @@ adb devices | grep HA2EXB0E && adb -s HA2EXB0E reboot fastboot
 fastboot -s HA2EXB0E -w && fastboot -s HA2EXB0E reboot
 ```
 - **`-R` 是必须的**：同一台机的第二次 `qdl` 调用前，上一发默认会发 reset 把设备踢出 EDL ⇒ `SAHARA: failed to read request`（2026-11-17 踩过）。
+- **一条命令版**：`bash scripts/t2-stock-lun45.sh`（已把上述 ①②③ + reset + 120 s 轮询封好，日志落 `reports/artifacts/bl-stuck-20261118/flash/T2.log`；2026-11-17 用它的变体实际恢复成功）。
 - 期望：约 3 min 后 `adb devices` 出现 `HA2EXB0E device`，`getprop sys.boot_completed` = 1。
 - 失败分支：仍回 recovery ⇒ `fastboot -w` 再 reboot；仍落 fastboot ⇒ 回 S1，别猜硬件。
 - **这一步的意义**：把「未知状态」变成「逐字节原厂」，之后所有实验都有基线可退。

@@ -342,8 +342,9 @@
   回退保险 = EDL 全量包（~/下载/tb322fc/）+ qdl + backup/stock-259/（不再依赖槽位常驻）
 ```
 - Phase A（现在）：只动 **b 槽 + GPT**，a 槽不动 → 零风险拿数据。
-- Phase B（G1 稳定后）：回收 Android 专属分区（`super_a/b`、`boot_a`、`dtbo_a`、`recovery_a`、`metadata`、`misc`…）
-  → 直接腾出**数十至上百 GiB** 给 Linux，这同时回答"容量不够"的问题。回收前必备 EDL 包与 stock 备份。
+- Phase B（G1 稳定后）：回收 Android 专属分区（`super`、`userdata`、`metadata`、`vbmeta_system_*`、`rawdump`、`pstoredump`、LUN4 的 `vendor_boot_*`/`init_boot_*`）
+  → 直接腾出**数百 GiB** 给 Linux。**准确口径（2026-11-17 定，取代本行旧名单）：`misc`/`devinfo`/`persist`/`proinfo` 必留；`boot_a`/`dtbo_a`/`recovery_a` 属 A/B 回退槽也留**（回退价值 > 1 GiB）。
+  设计、件清单、实验计划与脚本 = **`RUNBOOK-BRINGUP/GPT-MINIMAL-DESIGN.md`**（`scripts/gpt-minimal-build.py`：LUN0 18→10 项、单 `linux` 472 GiB）。
 
 ### 2.5 GPT 参数（容量档唯一体现；**禁止跨档复用 GPT 二进制**）
 
