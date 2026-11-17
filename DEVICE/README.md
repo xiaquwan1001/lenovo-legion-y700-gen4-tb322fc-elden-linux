@@ -64,6 +64,8 @@
     ⇒ 剩下 ABL 载入/认证通路 或 DDR 侧（**疑似硬件**；本轮新信号 = EDL `poke 32 MiB → 0x90000000` 5 min 不返回）。
     全账 = `reports/bl-stuck-20261116.md` §9；按全局规则 12 已上交 `~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/`，**项目内不深挖**。
     恢复动作（代价升序，下次设备窗口）：① 长按 10 s 全断电→只按电源；② 充到 >3.7 V 再试；③ EDL 分块同值重刷 `xbl`/`abl`/`boot_b`；④ EDL 全量刷 stock（`backup/stock-259`）。
+    **2026-11-17 15:22 复测（零写盘，只 `getvar`）**：`battery-voltage:3425`、**`battery-soc-ok:no`**、`factory-mode:1`、`off-mode-charge:1`、`unlocked:yes`、`variant:SM8 UFS`
+    ⇒ 电量**仍低且 SOC 标记不可信**（上午 3406–3408 → 现在 3425 mV，即电池已在 fastboot 挂了数小时几乎没充上）⇒ **「`Load Error` 与低电量无法解耦」是当前证据边界**：恢复动作 ② **优先且需人**（关机充电，fastboot 下充不进），做完再复测一次 `continue`；不要在低电量下重复发 `continue`/`boot`。
 
     **换下件 = 验证用嵌入菜单 GRUB `cc6391b3…`**（11-16 11:45 装，两臂 G1/G2 对照 + D + reboot/poweroff），已备份 `BOOTAA64.EFI.daily-v8-20261116.bak`（注意：备份名取的是**新件** tag，内容 = cc6391b3）。
     **换件前实际在役件 = `92a4d8b2…`**（9.5 MB GRUB，11-15 23:01 装、此前 `DEVICE` 未记录 → 本轮补登），已备份 `BOOTAA64.EFI.grub-fixr2-20261116.bak`；

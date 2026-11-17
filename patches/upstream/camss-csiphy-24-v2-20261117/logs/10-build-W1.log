@@ -1,0 +1,46 @@
+  SYNC    include/config/auto.conf
+  UPD     include/config/kernel.release
+  UPD     include/generated/compile.h
+  UPD     include/generated/utsrelease.h
+  CC      scripts/mod/empty.o
+  CC      scripts/mod/devicetable-offsets.s
+  MKELF   scripts/mod/elfconfig.h
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/mod/symsearch.o
+  HOSTLD  scripts/mod/modpost
+  CC      kernel/bounds.s
+  CC      arch/arm64/kernel/asm-offsets.s
+  CC      kernel/sched/rq-offsets.s
+  CALL    scripts/checksyscalls.sh 
+  LDS     arch/arm64/kernel/vdso/vdso.lds
+  CC      arch/arm64/kernel/vdso/vgettimeofday.o
+  AS      arch/arm64/kernel/vdso/note.o
+  AS      arch/arm64/kernel/vdso/sigreturn.o
+  CC      arch/arm64/kernel/vdso/vgetrandom.o
+  AS      arch/arm64/kernel/vdso/vgetrandom-chacha.o
+  LD      arch/arm64/kernel/vdso/vdso.so.dbg
+  VDSOSYM include/generated/vdso-offsets.h
+  OBJCOPY arch/arm64/kernel/vdso/vdso.so
+  CC      drivers/phy/qualcomm/phy-qcom-qmp-pcie.o
+  CC      drivers/phy/qualcomm/phy-qcom-qmp-ufs.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-edp.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-m31.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-m31-eusb2.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-pcie2.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-qmp-combo.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-qmp-usbc.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-qmp-pcie-msm8996.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-qmp-usb.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-qusb2.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-eusb2-repeater.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-usb-hs.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-usb-hs-28nm.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-usb-ss.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-snps-femto-v2.o
+  CC [M]  drivers/phy/qualcomm/phy-qcom-sgmii-eth.o
+  AR      drivers/phy/qualcomm/built-in.a
+  LD [M]  drivers/phy/qualcomm/phy-qcom-mipi-csi2.o

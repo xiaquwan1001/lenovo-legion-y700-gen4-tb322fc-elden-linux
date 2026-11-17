@@ -22,6 +22,8 @@
    要么直接发 **v12 只补 tag**（3 枚，成本低、最省事）。依据见 §1.1。
 2. **camss CSIPHY 2.4.0 两枚暂缓单发**：Bryan 明确要求基于 on-list 8750/Kaanapali 工作；
    先与 Hangxiang v25（PHY 已合 3 枚）+ Wenmeng v7（23 封）对账，找出真空缺再发。依据 §3.1。
+   **★2026-11-17 下午已重基完成 = v2**（`patches/upstream/camss-csiphy-24-v2-20261117/`，基线 = 7.4-rc3 + v25 `[01..03]` 前缀，6 道门全绿）
+   ⇒ 真空缺已定位：**v25 `[03/15]` 的 3nm cfg 复用 4nm v2.1.2 表**；剩一次上机出流回归 → `reports/camss-v25-rebase-20261117.md`。
 3. **板级 DTS 去掉 `qcom,nsessions`**（上游已废弃该属性）：与 fastrpc driver 侧策略一起改。依据 §4.2。
 
 ## 0. 查询工具与可用性（可复现）

@@ -46,7 +46,7 @@
 
 **卡什么**
 
-- **camss：对账已完、且上游回信把门改了**：本机 vendor `camera.ko` CSIPHY = **2.4.0**（地址 103/103 同、13 个 data 字节不同），delta 备料 `patches/upstream/camss-csiphy-24-20261115/`（2 枚）**2026-11-17 复核仍可原样 apply**（所涉 4 文件 blob 在 `9d66f26fef` 与 master tip `666539eecdf4` 逐字相同 ⇒ rc=0，`reports/misc-20261117.md`）。但 **Bryan 11-15 回信把前置条件改成「先基于 on-list 的 v25/v7」**，而 **per-SoC lane 表这个形状已被上游采纳**（v25 `[03/15]`）⇒ 原来的「形状分歧」不再是分歧；剩下两件 = ① 基于 on-list 分支重排 delta（贴 v25/v7 已合部件）；② 一次上机出流回归。**没做到这两件就不发**，且给 phy 侧的信只留最小事实（去 AI 味）。→ `reports/camss-csiphy-v6-vs-240-20261113.md`、`reports/upstream-replies-20261117.md` §3.1、`PITFALLS #648`。
+- **camss：delta 已按 Bryan 要求重基完成（2026-11-17 下午），只差一次上机出流回归**：本机 vendor `camera.ko` CSIPHY = **2.4.0**（地址 103/103 同、13 个 data 字节不同）。**v2 = `patches/upstream/camss-csiphy-24-v2-20261117/`（2 枚，基线 = 7.4-rc3 + kaanapali v25 `[01..03]` 前缀），6 道门全绿**（apply / checkpatch **0E0W0C** / `W=1` / `dt_binding_check` / 表 **13-13** 且与 vendor **103-103** 全等 / `git am` 2-2）。关键新事实：v25 `[03/15]` 的 `mipi_csi2_dphy_3nm_kaanapali` **复用 `lane_regs_x1e80100[]`（4nm v2.1.2 表）**，而 Qualcomm 自己的 SM8750 CAMSS v6 `[4/7]` 指向 `csiphy_res_kaanapali`（subject 写 **v2.3.0**），v2.3.0 与 2.4.0 的 18 张 2ph 表逐字节同值 ⇒ 上游现用值与 Qualcomm 两处口径都不一致（只写 cover 提问段，不替 Kaanapali 下结论）。**剩 = ① 一次上机出流回归（或 cover 声明无实测，需用户裁决）；② 投前再看 `SM8750 CAMSS v6 1/7` 是否已进 tree（进则删本系列 binding 那枚）**。→ `reports/camss-v25-rebase-20261117.md`、`reports/camss-csiphy-v6-vs-240-20261113.md`、`reports/upstream-replies-20261117.md` §3.1、`PITFALLS #648`。
 - **fastrpc**：`qcom,nsessions` **上游已废弃并合入**（`641dd7dd0f68`）⇒ 倒过来变成我们的欠账：板级 DTS 里若还写该属性就要按驱动侧策略删除/改写；`accel/qda` 仍 v4（未合、无 v5）。
 - **T14/T17 用户态固化**：S3+S4+S6 离线复核已过，**唯一缺口 = `hapticd` 二进制不可重建**（自家 ELF，chroot 步骤已闭合）。→ `reports/t14-s3s4s6-offline-verify-20261114.md`。
 - **T9 待机**：改成间接采样（设备 timer 30 min 追加 `/var/lib/elden/suspend-resource.tsv`），**要 1–2 天数据才能判**，取数是人的动作。→ `TASKS` §4 T9、`PITFALLS #651`。
@@ -54,14 +54,14 @@
 
 **下一步（按顺序）**
 
-1. **camss CSIPHY（主机侧，对账部分已完成 2026-11-17）**：剩下两件 = ① 基于 on-list 分支（Hangxiang v25 / Qualcomm v7）重排 2.4.0 delta；② 补一次上机出流回归。**没做完 ① 不发信、不发补丁**。
+1. **camss CSIPHY**：① 重基 **已完成（2026-11-17 下午，v2 = `patches/upstream/camss-csiphy-24-v2-20261117/`，基线 = v25 `[01..03]` 前缀，6 道门全绿）**；② **剩**一次上机出流回归（`s5kjns`/`gc08a8` 30 fps）——未做前不发信/不发补丁。→ `reports/camss-v25-rebase-20261117.md`。
 2. **上游待批准批次**（**2026-11-16 已对 mainline **7.4-rc3 final `aebb727447` 全部重跑顺序 apply**，详见 `reports/artifacts/apply-check-7.4rc3-20261116/`）：
    `board DTS` 单枚 / `dwc3 v9` 4 枚 / ~~`m8-mdss v4` 3 枚~~（**v5 已于 11-14 投出** ⇒ 剩「等回复」，见上第 6 条与本文件 §0-6；v5 与 v4 diff 只差 3/3 message，apply 结论沿用） / `dpu-gamma v2` 1 枚 / `m6-dsi-pll v2` 1 枚 / `haptics v2` 6 枚（**本轮已 rebase 0006** —— 去掉只存在于 linux-next 的 `interrupt.h` 上下文行，6/6 rc=0）—— **均 rc=0，逐系列等用户放行**；
    **新增待放行（2026-11-17）**：`wl2868c v12` = v11 原样 + 在 1/2 trailer 补回 Rob 的 `Reviewed-by`（他已重给）；
    **★2026-11-17 13:20 整批已发（用户放行）**：板 DTS **v7**（单提交）/ dpu-gamma **v2** / dsi-phy muxes **v2（m6 件）** / haptics **v2**（6+cover）/ dwc3 **v9 3 枚**（`0004` 板 DTS 暂 hold，因改尚未上游的板文件）/ wl2868c **v12**（补回 Rob 的 R-b）= **17 封全 `Result: 250`**，
    逐 MID 在 `linux-arm-msm` / `linux-devicetree` / `dri-devel` / `linux-input` / `linux-usb` / `lkml` 全部命中（每系列 `SENT.md` 有 MID 清单）。
    **已投的不再在列**：`dsi-phy v2`（11-16 两发 250）、`wl2868c v11`、`mdss v5`、Q28 证据回帖（11-17 12:17）；
-   **卡源**：`dispcc-reset-v2` 与 `m8-mdss v4` 内容重复（发 v4）；`camss 2.4.0 delta` 2 枚的前置条件已被 Bryan 回信改写（见上条）。
+   **卡源**：`dispcc-reset-v2` 与 `m8-mdss v4` 内容重复（发 v4）；`camss 2.4.0 delta` **已重基为 v2（`patches/upstream/camss-csiphy-24-v2-20261117/`，6 门全绿）**，停在「缺一次上机出流回归」（见上条）。
 3. **设备窗口才做**：A10 两发（`set_active a` 或物理 POR）、B6/B18 需先建树出镜像。
 4. **中文输入法候选窗：配置层已全绿（2026-11-15 T1–T5 全做，`scripts/ime-candidates-check.sh` = 11 PASS / 0 FAIL）**；**行为层未验** —— 画候选的那一半（`elden-ime-candidates.py`）仍按 #646 撤下，重做要求见 `PITFALLS #646` + 前置条件 `LD_PRELOAD=libgtk4-layer-shell.so.0`。→ `TASKS/sessions/2026-11-15-IME候选回归台账.md` §3b/§3c
 5. **UEFI GRUB 路径：取证已完成（2026-11-15 夜）；修法 ① 已于 2026-11-16 做成可上游 2 枚系列并全绿备料**：

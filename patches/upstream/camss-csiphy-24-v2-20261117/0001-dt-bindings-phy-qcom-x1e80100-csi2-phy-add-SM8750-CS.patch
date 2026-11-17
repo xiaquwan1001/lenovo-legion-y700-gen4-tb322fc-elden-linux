@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 17 Nov 2026 15:44:31 +0800
+Subject: [PATCH] dt-bindings: phy: qcom,x1e80100-csi2-phy: add SM8750 CSI2 PHY
+
+SM8750 uses the same 3nm two-phase CSI2 PHY block as Kaanapali but is
+programmed with its own lane settings, so describe it as
+"qcom,sm8750-csi2-phy" with a "qcom,kaanapali-csi2-phy" fallback.
+
+Same compatible pair as the one used by the SM8750 CAMSS series.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml        | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+index 6e9eb8e..4b531a6 100644
+--- a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
++++ b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+@@ -20,6 +20,9 @@ properties:
+       - enum:
+           - qcom,kaanapali-csi2-phy
+           - qcom,x1e80100-csi2-phy
++      - items:
++          - const: qcom,sm8750-csi2-phy
++          - const: qcom,kaanapali-csi2-phy
+       - items:
+           - const: qcom,glymur-csi2-phy
+           - const: qcom,x1e80100-csi2-phy
+-- 
+2.53.0
+

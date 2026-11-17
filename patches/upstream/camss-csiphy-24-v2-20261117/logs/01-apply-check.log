@@ -1,0 +1,17 @@
+$ git checkout 86e8cec   # = 7.4-rc3 blob + v25 01-03 前缀
+正在检查补丁 Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml...
+正在检查补丁 drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c...
+正在检查补丁 drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c...
+正在检查补丁 drivers/phy/qualcomm/phy-qcom-mipi-csi2.h...
+rc=0
+
+$ git am 0001-*.patch 0002-*.patch
+应用：dt-bindings: phy: qcom,x1e80100-csi2-phy: add SM8750 CSI2 PHY
+应用：phy: qcom: mipi-csi2: add SM8750 2.4.0 lane settings
+rc=0
+
+ .../bindings/phy/qcom,x1e80100-csi2-phy.yaml       |   3 +
+ drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c | 137 +++++++++++++++++++++
+ drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c     |   1 +
+ drivers/phy/qualcomm/phy-qcom-mipi-csi2.h          |   1 +
+ 4 files changed, 142 insertions(+)

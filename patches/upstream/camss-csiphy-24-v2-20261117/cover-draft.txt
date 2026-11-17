@@ -1,0 +1,35 @@
+[PATCH v2 0/2] phy: qcom: mipi-csi2: SM8750 2.4.0 lane table
+
+Rebased on top of the Kaanapali series (v25, [01/15]-[03/15]) as asked.
+
+mipi_csi2_dphy_3nm_kaanapali uses lane_regs_x1e80100[], which is the 4nm
+2.1.2 table. For SM8750 the vendor camera driver ships csiphy_2ph_v2_4_0;
+same 103 addresses, 13 data bytes differ:
+
+  0x0000/0x0400/0x0800/0x0c00        0x8e -> 0x8c
+  0x0008/0x0408/0x0808/0x0c08/0x0e08 0x10 -> 0x19
+  0x0060/0x0460/0x0860/0x0c60        0xbd -> 0xfd
+
+Only the four DEFAULT writes are used at runtime; the driver overwrites
+SETTLE_CNT_LOWER_BYTE with the computed settle_cnt and skips SKEW_CAL.
+
+The v2.3.0 table in the SM8750 CAMSS series carries the same values as
+v2.4.0 (18 two-phase tables compared across v2.1.x-v2.4.1).
+
+Patch 2 only adds lane_regs_sm8750[] plus a SoC config reusing everything
+else from the 3nm config (common_status_offset 0x138). Patch 1 adds the
+compatible pair already used by the SM8750 CAMSS series ([v6 1/7]).
+
+Question: if Kaanapali also has the 2.3.0/2.4.0 values, this can collapse
+into a single patch that just changes the 3nm config's init_seq. I have no
+Kaanapali unit to measure, so I kept it SM8750-specific.
+
+Not tested on hardware yet: on SM8750 (TB322FC) the downstream driver uses
+this table and s5kjns/gc08a8 stream at 30 fps, but I have not run an A/B
+against the 2.1.2 values on this driver.
+
+AI assistance disclosure: the patch preparation, the register-table diff
+and this text were drafted with an AI assistant; every measurement above
+was run and checked by me, and I am responsible for the content.
+
+Qianhui Xu

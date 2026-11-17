@@ -1,4 +1,8 @@
-# phy: qcom: mipi-csi2: SM8750 CSIPHY 2.4.0 lane 表 —— 2 枚系列，**备料，不发**
+# phy: qcom: mipi-csi2: SM8750 CSIPHY 2.4.0 lane 表 —— 2 枚系列，**已被 v2 取代（备料，不发）**
+
+> ⛔ **本目录为 v1（2026-11-15），已由 `../camss-csiphy-24-v2-20261117/` 取代**：v1 基线只有 7.4-rc3，未含
+> kaanapali v25 `[01..03]` 前缀（缺 `common_status_offset`、且与 v25 `[01/15]` 的 binding 段相撞）。
+> 新口径与差异表见 v2 目录 `README.md` / `GATES.md`；本目录只留作沿革与 `logs/verify-table.py`。
 
 - 基线：上游 `gh/master` = **`9d66f26fef`（Linux 7.4-rc3）**，`drivers/phy/qualcomm/` 下 CSIPHY 已是
   独立 phy 驱动（`phy-qcom-mipi-csi2-3ph-dphy.c` / `-core.c` / `.h`，v18 已 mainline）。
