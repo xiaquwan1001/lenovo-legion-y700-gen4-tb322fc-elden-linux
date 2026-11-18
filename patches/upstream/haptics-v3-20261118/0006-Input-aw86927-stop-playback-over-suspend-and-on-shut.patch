@@ -1,0 +1,252 @@
+From add28807fa637f6a385f3f5cf4f871c85ae34a41 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 27 Oct 2026 21:21:13 +0800
+Subject: [PATCH v3 6/6] Input: aw86927 - stop playback over suspend and on
+ shutdown
+
+The chip keeps playing whatever was programmed into it when the system
+suspends or reboots, so the actuator can still be buzzing after the screen
+is off.
+
+On suspend, mark the device suspended under the input event lock so the
+memless effect timer cannot queue new work, drain play_work and put the
+chip into standby.  On resume the flag is cleared and the next effect is
+programmed again.
+
+On shutdown, drain play_work and assert the reset GPIO; the part is
+powered off right afterwards, so no explicit standby is needed.
+
+The reset action is also registered with the device, so unbind and a probe
+failure after the reset GPIO has been acquired park the part in reset.  It
+drains play_work first: input_flush_device() can queue a stop while the
+input device is being unregistered, and the devm actions run after that,
+so draining only in close() would leave a work item using the registers
+and the regmap after they are gone.
+
+The suspend and resume sequences take the input mutex, so open()/close()
+cannot race the drain.  The magnitude is read once per work run, so a
+concurrent event cannot change it between the check and the register
+write.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+v2 -> v3:
+ - drain and keep play_work disabled in the devm reset action; unbind
+   could otherwise run a queued stop after the regmap was released.
+ - initialise play_work before the devm action is registered, so the
+   action can be released on every early error path.
+ - correct the commit message and the frame-callback comment: suspend
+   stops playback and leaves the part in standby, shutdown and unbind
+   assert reset, and only the latter two prevent further I2C access.
+---
+ drivers/input/misc/aw86927.c | 100 ++++++++++++++++++++++++++++++++---
+ 1 file changed, 92 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/input/misc/aw86927.c b/drivers/input/misc/aw86927.c
+index 1dbcba7988..195c810d8b 100644
+--- a/drivers/input/misc/aw86927.c
++++ b/drivers/input/misc/aw86927.c
+@@ -14,6 +14,7 @@
+ #include <linux/i2c.h>
+ #include <linux/input.h>
+ #include <linux/module.h>
++#include <linux/pm.h>
+ #include <linux/regmap.h>
+ #include <linux/regulator/consumer.h>
+ #include <linux/types.h>
+@@ -203,6 +204,7 @@ struct aw86927_data {
+ 	struct i2c_client *client;
+ 	struct regmap *regmap;
+ 	struct gpio_desc *reset_gpio;
++	bool suspended;
+ 	u16 level;
+ };
+ 
+@@ -365,22 +367,31 @@ static int aw86927_haptics_play(struct input_dev *dev, void *data, struct ff_eff
+ 	struct aw86927_data *haptics = input_get_drvdata(dev);
+ 	int level;
+ 
++	/*
++	 * While suspended the chip is in standby, so a queued event would
++	 * re-arm playback over I2C instead of being ignored.  Events queued
++	 * during teardown are discarded by aw86927_reset(), which disables the
++	 * work item.
++	 */
++	if (haptics->suspended)
++		return 0;
++
+ 	level = effect->u.rumble.strong_magnitude;
+ 	if (!level)
+ 		level = effect->u.rumble.weak_magnitude;
+ 
+ 	/* If level does not change, don't restart playback */
+-	if (haptics->level == level)
++	if (READ_ONCE(haptics->level) == level)
+ 		return 0;
+ 
+-	haptics->level = level;
++	WRITE_ONCE(haptics->level, level);
+ 
+ 	schedule_work(&haptics->play_work);
+ 
+ 	return 0;
+ }
+ 
+-static int aw86927_play_sine(struct aw86927_data *haptics)
++static int aw86927_play_sine(struct aw86927_data *haptics, u16 level)
+ {
+ 	int err;
+ 
+@@ -425,7 +436,8 @@ static int aw86927_play_sine(struct aw86927_data *haptics)
+ 	if (err)
+ 		return err;
+ 
+-	err = regmap_write(haptics->regmap, AW86927_PLAYCFG2_REG, haptics->level * 0x80 / 0xffff);
++	err = regmap_write(haptics->regmap, AW86927_PLAYCFG2_REG,
++			   level * 0x80 / 0xffff);
+ 	if (err)
+ 		return err;
+ 
+@@ -444,6 +456,7 @@ static void aw86927_close(struct input_dev *input)
+ 	int err;
+ 
+ 	cancel_work_sync(&haptics->play_work);
++	WRITE_ONCE(haptics->level, 0);
+ 
+ 	err = aw86927_stop(haptics);
+ 	if (err)
+@@ -455,10 +468,11 @@ static void aw86927_haptics_play_work(struct work_struct *work)
+ 	struct aw86927_data *haptics =
+ 		container_of(work, struct aw86927_data, play_work);
+ 	struct device *dev = &haptics->client->dev;
++	u16 level = READ_ONCE(haptics->level);
+ 	int err;
+ 
+-	if (haptics->level)
+-		err = aw86927_play_sine(haptics);
++	if (level)
++		err = aw86927_play_sine(haptics, level);
+ 	else
+ 		err = aw86927_stop(haptics);
+ 
+@@ -800,6 +814,21 @@ static int aw86927_detect(struct aw86927_data *haptics)
+ 	return 0;
+ }
+ 
++static void aw86927_reset(void *data)
++{
++	struct aw86927_data *haptics = data;
++
++	/*
++	 * input_flush_device() can queue play_work while the input device is
++	 * unregistered (it runs without calling close()), and the devm actions
++	 * are released after that.  Drain the work item here and keep it
++	 * disabled, so a late event cannot reach the registers after they are
++	 * gone.
++	 */
++	disable_work_sync(&haptics->play_work);
++	gpiod_set_value_cansleep(haptics->reset_gpio, 1);
++}
++
+ static int aw86927_probe(struct i2c_client *client)
+ {
+ 	struct aw86927_data *haptics;
+@@ -814,6 +843,12 @@ static int aw86927_probe(struct i2c_client *client)
+ 
+ 	i2c_set_clientdata(client, haptics);
+ 
++	/*
++	 * Initialise the work item before anything that can be released by devm:
++	 * aw86927_reset() is a devm action and drains it on every error path.
++	 */
++	INIT_WORK(&haptics->play_work, aw86927_haptics_play_work);
++
+ 	haptics->regmap = devm_regmap_init_i2c(client, &aw86927_regmap_config);
+ 	if (IS_ERR(haptics->regmap))
+ 		return dev_err_probe(haptics->dev, PTR_ERR(haptics->regmap),
+@@ -828,6 +863,10 @@ static int aw86927_probe(struct i2c_client *client)
+ 		return dev_err_probe(haptics->dev, PTR_ERR(haptics->reset_gpio),
+ 				     "Failed to get reset gpio\n");
+ 
++	err = devm_add_action_or_reset(haptics->dev, aw86927_reset, haptics);
++	if (err)
++		return err;
++
+ 	/* Hardware reset */
+ 	aw86927_hw_reset(haptics);
+ 
+@@ -865,8 +904,6 @@ static int aw86927_probe(struct i2c_client *client)
+ 	if (err)
+ 		return dev_err_probe(haptics->dev, err, "Failed to request threaded irq\n");
+ 
+-	INIT_WORK(&haptics->play_work, aw86927_haptics_play_work);
+-
+ 	haptics->input_dev->name = "aw86927-haptics";
+ 	haptics->input_dev->close = aw86927_close;
+ 
+@@ -899,6 +936,51 @@ static int aw86927_probe(struct i2c_client *client)
+ 	return 0;
+ }
+ 
++static void aw86927_shutdown(struct i2c_client *client)
++{
++	struct aw86927_data *haptics = i2c_get_clientdata(client);
++
++	disable_work_sync(&haptics->play_work);
++	aw86927_reset(haptics);
++}
++
++static int aw86927_suspend(struct device *dev)
++{
++	struct aw86927_data *haptics = dev_get_drvdata(dev);
++	int err;
++
++	guard(mutex)(&haptics->input_dev->mutex);
++
++	/* Block events from the memless effect timer before draining the work. */
++	scoped_guard(spinlock_irq, &haptics->input_dev->event_lock)
++		haptics->suspended = true;
++
++	cancel_work_sync(&haptics->play_work);
++	err = aw86927_stop(haptics);
++
++	scoped_guard(spinlock_irq, &haptics->input_dev->event_lock) {
++		if (err)
++			haptics->suspended = false;
++		else
++			WRITE_ONCE(haptics->level, 0);
++	}
++
++	return err;
++}
++
++static int aw86927_resume(struct device *dev)
++{
++	struct aw86927_data *haptics = dev_get_drvdata(dev);
++
++	guard(mutex)(&haptics->input_dev->mutex);
++	guard(spinlock_irq)(&haptics->input_dev->event_lock);
++	haptics->suspended = false;
++
++	return 0;
++}
++
++static DEFINE_SIMPLE_DEV_PM_OPS(aw86927_pm_ops, aw86927_suspend, aw86927_resume);
++
+ static const struct of_device_id aw86927_of_id[] = {
+ 	{ .compatible = "awinic,aw86927" },
+ 	{ /* sentinel */ }
+@@ -910,8 +992,10 @@ static struct i2c_driver aw86927_driver = {
+ 	.driver = {
+ 		.name = "aw86927-haptics",
+ 		.of_match_table = aw86927_of_id,
++		.pm = pm_sleep_ptr(&aw86927_pm_ops),
+ 	},
+ 	.probe = aw86927_probe,
++	.shutdown = aw86927_shutdown,
+ };
+ 
+ module_i2c_driver(aw86927_driver);
+-- 
+2.53.0
+

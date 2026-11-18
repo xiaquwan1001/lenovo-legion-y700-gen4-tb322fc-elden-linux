@@ -1,0 +1,74 @@
+From 00a727a6c8f7f3d7b0e6eac2f1d8c8a8f9b6d0a1 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 18 Nov 2026 07:30:00 +0800
+Subject: [PATCH v3 0/6] Input: aw86927 - add AW86937 support and fix the AW8693X
+ layout
+
+*** AI-assistance disclosure ***
+This cover letter and the six patches below were prepared with the help
+of an LLM coding assistant.  The author reviewed every line, ran every
+gate quoted in this letter himself, and takes full responsibility for
+the content.
+
+This series adds support for the Awinic AW86937 LRA haptic IC on top of
+the existing AW86927/AW86938 driver, fixes two register definitions that
+are wrong on the AW8693x parts, and stops playback over suspend/shutdown.
+
+Patch 1 fixes the 7 V boost reference value that the AW86938 support
+introduced (0x11 programs 9 V, not 7 V).  Patch 2 widens the AW86938
+boost mode mask: the field is two bits wide at 6:5, so the existing
+one-bit mask leaves bit 6 untouched when the driver selects bypass.
+Patch 3 documents the awinic,aw86937 compatible as another member of the
+AW86927 fallback group; detection stays on the chip ID, so no new
+of_device_id entry is added.  Patch 4 adds the chip ID and init path.
+Patch 5 handles the AW8693x register layout differences (auto-boost bit,
+two-bit boost mode, VBAT mode and the two-step stop handshake).  Patch 6
+stops playback over suspend and shutdown, and drains the work item on
+unbind.
+
+What changed in v3
+==================
+
+Both findings of the 2026-11-17 sashiko review are addressed in patch 6;
+patches 1-5 only differ from v2 in the series numbering and the resulting
+hunk line offsets, their content is unchanged.
+
+  - [High] unbind could queue play_work after the drain.  The devm reset
+    action now calls disable_work_sync() before asserting reset, which
+    both drains a work item queued by input_flush_device() while the
+    input device is unregistered and keeps further events from queueing
+    it.  play_work is initialised earlier, before the devm action is
+    registered, so the action can be released on every error path.
+  - [Low] the commit message and the frame-callback comment described
+    both paths as "stop playback, drain and park in reset".  They now
+    state what each path does: suspend marks the device suspended,
+    drains the work and puts the chip into standby; shutdown drains the
+    work and asserts reset; unbind and probe failure do the same through
+    the devm action before the registers are released.
+
+The AW86937 has no hardware in hand: the register data comes from the
+vendor driver and the part datasheet, and the commit message does not
+claim otherwise.  No runtime testing is claimed for v3 either; the race
+described above is reasoned from the input core and devres ordering.
+
+Gate results (base aebb727447 = v7.4-rc3, pristine worktree):
+- git am: 6/6 applied cleanly.
+- checkpatch --strict: 0 errors / 0 warnings / 0 checks on all six.
+- make W=1 drivers/input/misc/ (arm64, CONFIG_INPUT_AW86927=m): rc=0, no
+  warnings.
+- make dt_binding_check DT_SCHEMA_FILES=.../awinic,aw86927.yaml: rc=0.
+
+Qianhui Xu (6):
+  Input: aw86927 - fix the 7 V boost reference for AW86938
+  Input: aw86927 - widen the AW86938 boost mode mask
+  dt-bindings: input: awinic,aw86927: document the AW86937 variant
+  Input: aw86927 - add support for Awinic AW86937
+  Input: aw86927 - handle the AW8693X play and boost register layout
+  Input: aw86927 - stop playback over suspend and on shutdown
+
+ .../devicetree/bindings/input/awinic,aw86927.yaml  |   1 +
+ drivers/input/misc/aw86927.c                       | 175 ++++++++++++++++++---
+ 2 files changed, 150 insertions(+), 26 deletions(-)
+
+-- 
+2.53.0
