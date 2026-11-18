@@ -28,22 +28,30 @@ SIZE=$(stat -c%s "$IN")
 echo "[flash-recovery] img=$IN size=$SIZE sha256=$SHA"
 echo "[flash-recovery] target=$PART (device /dev/disk/by-partlabel/$PART)"
 
-PSIZE=$(ssh -o StrictHostKeyChecking=no "$TAB" "blockdev --getsize64 /dev/disk/by-partlabel/$PART")
-echo "[flash-recovery] partition size=$PSIZE"
-[ "$PSIZE" -eq "$SIZE" ] || { echo "[flash-recovery] 尺寸不符（分区 $PSIZE != 镜像 $SIZE）；" >&2
-	echo "  若镜像更小可 pad 到分区大小再写；若更大则不能写。" >&2; exit 1; }
+# 2026-11-18 审计 R2 P1-14：旧版要求 PSIZE == SIZE 精确相等（小件被误拒），且 scp 无超时、
+# 回读用 count=$((SIZE/1048576)) 向下取整（非 MiB 对齐件必报假 MISMATCH）、无设备锁。
+: "${SSHO:=timeout -k 2 20 ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=6}"
+. "$(dirname "$0")/lib-device-lock.sh"; device_lock_acquire
+PSIZE=$($SSHO "$TAB" "blockdev --getsize64 /dev/disk/by-partlabel/$PART" 2>/dev/null | tr -dc '0-9')
+echo "[flash-recovery] partition size=${PSIZE:-读不到}"
+[ -n "${PSIZE:-}" ] || { echo "[flash-recovery] 读不到 /dev/disk/by-partlabel/$PART（分区名/设备不对）" >&2; exit 1; }
+[ "$SIZE" -le "$PSIZE" ] || { echo "[flash-recovery] 镜像 $SIZE B > 分区 $PSIZE B，拒绝写（会截断）" >&2; exit 1; }
+[ "$SIZE" = "$PSIZE" ] || echo "[flash-recovery] 镜像小于分区（保留尾部原值），按 $SIZE B 写"
 
 echo "[flash-recovery] uploading..."
-scp -q -o StrictHostKeyChecking=no "$IN" "$TAB:/tmp/recovery.img"
+RIMG=/tmp/recovery-$$.img
+trap 'rm -f "$RIMG"' EXIT
+timeout -k 5 600 scp -q -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$IN" "$TAB:$RIMG"
 
 echo "[flash-recovery] writing $PART ..."
-ssh -o StrictHostKeyChecking=no "$TAB" "
+$SSHO "$TAB" "
 set -e
 D=/dev/disk/by-partlabel/$PART
-dd if=/tmp/recovery.img of=\$D bs=1M conv=fsync 2>&1 | tail -1
+dd if=$RIMG of=\$D bs=1M conv=fsync 2>&1 | tail -1
 sync
-rm -f /tmp/recovery.img
-dd if=\$D bs=1M count=$((SIZE/1048576)) 2>/dev/null | sha256sum | cut -d' ' -f1
+rm -f $RIMG
+# 回读按**字节**取，不能按 MiB 向下取整（否则非对齐件必报假 MISMATCH）
+head -c $SIZE \$D | sha256sum | cut -d' ' -f1
 " > /tmp/flash-recovery-readback.txt
 RB=$(tail -1 /tmp/flash-recovery-readback.txt)
 echo "[flash-recovery] readback sha256=$RB"
@@ -52,5 +60,5 @@ echo "[flash-recovery] OK"
 
 if [ "$REBOOT" = 1 ]; then
 	echo "[flash-recovery] reboot recovery ..."
-	ssh -o StrictHostKeyChecking=no "$TAB" 'eldroid-bootctl reboot recovery' || true
+	$SSHO "$TAB" 'eldroid-bootctl reboot recovery' || true
 fi

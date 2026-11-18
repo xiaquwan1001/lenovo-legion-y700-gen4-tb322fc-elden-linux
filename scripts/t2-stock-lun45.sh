@@ -97,7 +97,11 @@ done
 
 # 3) reset 回正常启动（唯一一条不带 -R 的 qdl）
 say "--- reset"
-timeout -k 10 120 "$Q" -s ufs "$L" reset 2>&1 | tail -2 | tee -a "$LOG"
+# rc 必须单独取（pipeline 的 $? 是 tee 的 0，PITFALLS #669 同族）；reset 失败不致命，
+# 但必须留痕，因为「设备还在不在 9008」由下面的 poll 判，不靠这句话。
+timeout -k 10 120 "$Q" -s ufs "$L" reset > /tmp/t2-reset-$$.log 2>&1; rrc=$?
+tail -2 /tmp/t2-reset-$$.log | tee -a "$LOG"; rm -f /tmp/t2-reset-$$.log
+say "reset rc=$rrc"; [ "$rrc" -eq 0 ] || say "!! reset 返回 $rrc（会话可能已断，继续按 poll 判落点）"
 
 # 4) 观察 120 s：判据 = 本机 SN 重新以 adb 枚举（不是「任何 adb 设备在」，也不是「fastboot 消失」）
 AD=

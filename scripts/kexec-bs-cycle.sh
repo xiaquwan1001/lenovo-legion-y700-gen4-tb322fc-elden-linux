@@ -7,16 +7,25 @@ set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 K="${1:?usage: kexec-bs-cycle.sh <stop_after K>}"
 export PATH="$HOME/bin:$PATH"
-SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 ${TAB:-root@192.168.7.1}"
+# 2026-11-18 审计 R2 P1-5：裸 fastboot（无 -s/-k/无锁/无槽属性回读）⇒ 多发到别的设备、
+# 或把失败发记成「kexec 不可用」。统一走 lib-fastboot（SER 必填 + timeout -k + 禁管道）。
+. "$ROOT/scripts/lib-device-lock.sh" 2>/dev/null || true
+device_lock_acquire 2>/dev/null || true
+. "$ROOT/scripts/lib-fastboot.sh"
+[ -n "${SER:-}" ] || { echo "需显式 SER=<SN>（禁止裸 fastboot，PITFALLS #371）" >&2; exit 2; }
+SSH="timeout -k 2 20 ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=6 \
+-o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ${TAB:-root@192.168.7.1}"
 BOOT=${BOOT:?需 BOOT=<boot.img>（旧默认 vk69 已随 out 清理删除）}
 LOG="/root/kmsg-bs$K.log"
 
 echo "== [K=$K] 设备须在 vk64/Linux；写 bootloader magic + SysRq b → fastboot =="
 timeout 12 $SSH 'sync; eldroid-bootctl reboot bootloader' >/dev/null 2>&1 || true
 FB=""
-for i in $(seq 1 24); do FB=$(timeout 4 fastboot devices 2>/dev/null); [ -n "$FB" ] && { echo "fastboot: $FB"; break; }; sleep 3; done
+for i in $(seq 1 24); do fbdevices "$SER" && { FB=$_FB_OUT; echo "fastboot: $FB"; break; }; sleep 3; done
 [ -z "$FB" ] && { echo "BOOT-FAIL: 没进 fastboot（可能需物理断电复位）"; exit 2; }
-timeout 120 fastboot boot "$BOOT" >/dev/null 2>&1 || { echo "FASTBOOT-BOOT-FAIL"; exit 2; }
+# 槽属性回读（每次 fastboot boot 都可能被 ABL 记一次失败）
+echo "--- boot_b 槽属性（boot 前）"; $SSH 'python3 /usr/local/sbin/slot-attr.py show 2>/dev/null | grep -E "^  boot_[ab] "' 2>&1 || true
+FBTO=120 fbx boot "$BOOT" >/dev/null 2>&1 || { echo "FASTBOOT-BOOT-FAIL: $_FB_OUT"; exit 2; }
 for i in $(seq 1 30); do timeout 8 $SSH 'echo OK' >/dev/null 2>&1 && break; sleep 5; done
 $SSH "uname -r; sha1sum /root/Image.kd|cut -c1-8; [ -f /root/kd-dump.py ] && echo dumper-ok" 2>&1
 
