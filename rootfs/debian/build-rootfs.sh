@@ -18,6 +18,13 @@
 # 产物：
 #   $ROOTDIR（默认 /opt/elden/mobian-rootfs）              完整根（可直接 rsync / 挂载）
 #   out/debian/elden-rootfs-<日期>.tar.zst                 归档（给设备侧解包用）
+#   $OUT/rootfs-minbase-<日期>.ext4.img（IMG_MIB 非空时）  最小档：直接可写的 ext4 镜像
+#
+# 最小档（GPT-minimal 路线，`RUNBOOK-BRINGUP/GPT-MINIMAL-DESIGN.md` §3.2；2026-11-18 加）：
+#   APTLIST=rootfs/debian/apt-list-min.txt SUITE=trixie SKIP_DESKTOP=1 GATE_MIN=1 \
+#   ROOTDIR=/opt/elden/minbase-rootfs ROOTSPEC=LABEL=linux STAGE=out/stage-min-<日期> \
+#   IMG_MIB=6144 OUT=out bash rootfs/debian/build-rootfs.sh
+#   ⇒ 产物是 **ext4 镜像**（`mke2fs -d`，可被 `qdl write 0/90504` 直写）；不装桌面/不建桌面用户。
 #
 # 硬约束（写死在这里，别在命令行覆盖）：
 #   * 目标根 = `linux17` ext4（LABEL=linux17），Alpine 现役根 `linux18` fstab 里**不出现**
@@ -30,8 +37,14 @@ ROOTDIR=${ROOTDIR:-/opt/elden/mobian-rootfs}
 SUITE=${SUITE:-sid}
 MIRROR=${MIRROR:-https://mirrors.ustc.edu.cn/debian}
 STAGE=${STAGE:-$ROOT/out/stage-debian}
-APTLIST=$ROOT/rootfs/debian/apt-list.txt
-OUT=$ROOT/out/debian
+APTLIST=${APTLIST:-$ROOT/rootfs/debian/apt-list.txt}
+OUT=${OUT:-$ROOT/out/debian}
+# 最小档旋钮（空/0 = 老行为，桌面根）
+ROOTSPEC=${ROOTSPEC:-LABEL=linux17}          # /etc/fstab 的根设备写法（最小档用 LABEL=linux）
+SKIP_DESKTOP=${SKIP_DESKTOP:-0}              # 1 = 不建桌面用户、不跑 daily-baseline
+GATE_MIN=${GATE_MIN:-0}                      # 1 = 最小档门禁（不要求桌面件）
+IMG_MIB=${IMG_MIB:-}                         # 非空 = 出 ext4 镜像（MiB），不出 tar
+SSH_PUB=${SSH_PUB:-$HOME/.ssh/id_rsa.pub}    # 注意 sudo 下 $HOME=/root
 MODE=run; FROM=0; BACKGROUND=0
 for a in "$@"; do case "$a" in
 	--dry-run) MODE=dry ;;
@@ -79,12 +92,12 @@ if [ "$MODE" = dry ]; then
   2 bind-mount /proc /sys /dev /dev/pts 进 chroot；拷主机 resolv.conf
   3 chroot: apt-get update && apt-get install -y --no-install-recommends \$(apt-list)  （$n_pkgs 包）
   4 rsync -a $STAGE/ → $ROOTDIR/   （固件 + 模块树 + 用户态 + 单元 + /init）
-  5 基线配置：/etc/fstab（LABEL=linux17 / ext4）· hostname=elden · hosts · ssh-keygen -A
+  5 基线配置：/etc/fstab（$ROOTSPEC / ext4）· hostname=elden · hosts · ssh-keygen -A · authorized_keys($SSH_PUB)
   6 depmod -b $ROOTDIR $UTS
   7 瘦身：apt-get clean · 清 /var/lib/apt/lists · /tmp
-  8 门禁：dpkg arch=arm64 · /sbin/init → systemd · vermagic 逐字 · fstab 只指 linux17 · systemctl --version
-  9 umount；tar -I 'zstd -3 -T0' → $OUT/elden-rootfs-<日期>.tar.zst
-  设备侧（M6，零写盘）：候选镜像 ROOTARGS=elden_root=LABEL=linux17 + fastboot boot
+  8 门禁：$([ "$GATE_MIN" = 1 ] && echo '最小档（arch/usr-merge/systemd/模块树/vermagic/tplg/sshd/fstab/无内核包）' || echo '桌面档（含桌面件与 fstab=linux17）')
+  9 umount；$(if [ -n "$IMG_MIB" ]; then echo "mke2fs -d -L ${ROOTSPEC#LABEL=} → $OUT/rootfs-minbase-<日期>.ext4.img (${IMG_MIB} MiB)"; else echo "tar -I 'zstd -3 -T0' → $OUT/elden-rootfs-<日期>.tar.zst"; fi)
+  设备侧（GPT-minimal P2）：qdl write 0/90504 <img> → 上台 resize2fs → 刷 boot_b（cmdline elden_root=$ROOTSPEC）
 EOF
 	exit 0
 fi
@@ -160,10 +173,10 @@ step ok "overlay 已铺（$(du -sh "$STAGE" | cut -f1)）"
 
 # ---------------------------------------------------------------- 5 基线配置
 say "5 基线配置"
-cat > "$ROOTDIR/etc/fstab" <<'EOF'
-# /etc/fstab — TB322FC mainline（Debian/Mobian 目标根 = linux17 ext4）
-# Alpine 现役根（linux18 f2fs）**故意不出现**：它是回退根，不该被 systemd 自动挂载/fsck。
-LABEL=linux17  /          ext4   rw,noatime            0 1
+cat > "$ROOTDIR/etc/fstab" <<EOF
+# /etc/fstab — TB322FC mainline（根 = $ROOTSPEC ext4）
+# 回退根（Android a 槽 / 旧 linux18）**故意不出现**：不该被 systemd 自动挂载/fsck。
+$ROOTSPEC  /          ext4   rw,noatime            0 1
 proc           /proc      proc   defaults              0 0
 sysfs          /sys       sysfs  defaults              0 0
 devpts         /dev/pts   devpts gid=5,mode=620        0 0
@@ -187,9 +200,9 @@ cat > "$ROOTDIR/etc/hosts" <<'EOF'
 EOF
 # SSH 主机密钥 + root 授权（复用主机 ~/.ssh/id_rsa.pub：与设备现有恢复通道同一把）
 chroot "$ROOTDIR" /bin/sh -c 'ssh-keygen -A >/dev/null 2>&1 || true'
-if [ -f "$HOME/.ssh/id_rsa.pub" ]; then
+if [ -f "$SSH_PUB" ]; then
 	mkdir -p "$ROOTDIR/root/.ssh"; chmod 700 "$ROOTDIR/root/.ssh"
-	cat "$HOME/.ssh/id_rsa.pub" > "$ROOTDIR/root/.ssh/authorized_keys"
+	cat "$SSH_PUB" > "$ROOTDIR/root/.ssh/authorized_keys"
 	chmod 600 "$ROOTDIR/root/.ssh/authorized_keys"
 fi
 step ok "fstab / hostname / hosts / sshd 主机密钥 / authorized_keys"
@@ -199,7 +212,10 @@ step ok "fstab / hostname / hosts / sshd 主机密钥 / authorized_keys"
 # 现象是「systemd 起来了、DSI 也 connected，但没有 phoc/phosh」（2026-10-26 实测）。
 # 用同一把脚本，保证「重建根」和「修现场」走同一份逻辑（uid 1001，与 Alpine 侧一致）。
 HERE_D=$(cd "$(dirname "$0")" && pwd)
-if [ -x "$HERE_D/ensure-desktop-user.sh" ]; then
+if [ "$SKIP_DESKTOP" = 1 ]; then
+	step skip "SKIP_DESKTOP=1 → 不建桌面用户、不跑 daily-baseline"
+fi
+if [ "$SKIP_DESKTOP" != 1 ] && [ -x "$HERE_D/ensure-desktop-user.sh" ]; then
 	bash "$HERE_D/ensure-desktop-user.sh" --root "$ROOTDIR" 2>/dev/null \
 		|| chroot "$ROOTDIR" /usr/sbin/useradd -u 1001 -m -s /bin/bash -U \
 			-G video,render,audio,input,plugdev,netdev,bluetooth xuqianhui1001 \
@@ -210,7 +226,7 @@ fi
 # 日用基线配置（与设备侧 scripts/mobian-daily-baseline.sh 同一份逻辑，见 rootfs/debian/daily-baseline.tsv 头注释）：
 # sudo 组 + 无口令账户的 NOPASSWD、locale-gen + 中文 LANG、fcitx5 user unit、zram 内核门。
 # 只在目标根里写 /etc 下的小文件；包本身由 apt-list.txt（= pkgmap + daily-baseline P0/P1）装上。
-if [ -x "$HERE_D/daily-baseline.sh" ]; then
+if [ "$SKIP_DESKTOP" != 1 ] && [ -x "$HERE_D/daily-baseline.sh" ]; then
 	bash "$HERE_D/daily-baseline.sh" --root "$ROOTDIR" 2>&1 | sed 's/^/    /' || say "warn: daily-baseline.sh 有 MISS（见上），不阻塞构建"
 	step ok "日用基线配置已应用"
 fi
@@ -230,6 +246,28 @@ say "8 门禁"
 f=0
 b() { printf '  FAIL  %s\n' "$*"; f=$((f+1)); }
 o() { printf '  ok    %s\n' "$*"; }
+if [ "$GATE_MIN" = 1 ]; then
+	# 最小档门禁：只要求「能起 + 能 ssh + 模块/固件同源」
+	[ "$(chroot "$ROOTDIR" dpkg --print-architecture 2>/dev/null)" = arm64 ] && o "dpkg arch = arm64" || b "dpkg arch 不是 arm64"
+	[ -L "$ROOTDIR/lib" ] && [ -e "$ROOTDIR/lib/ld-linux-aarch64.so.1" ] && o "/lib 是 usr-merge 符号链接" || b "/lib 不是符号链接或缺 loader"
+	{ [ -x "$ROOTDIR/sbin/init" ] || [ -L "$ROOTDIR/sbin/init" ]; } && o "/sbin/init 存在" || b "缺 /sbin/init"
+	chroot "$ROOTDIR" systemctl --version >/dev/null 2>&1 && o "systemd 可执行" || b "systemctl 跑不起来"
+	[ -f "$ROOTDIR/lib/modules/$UTS/modules.dep" ] && o "模块树在（$UTS）" || b "模块树缺失"
+	[ -L "$ROOTDIR/lib/modules/$UTS/build" ] && b "模块树里有 build 链接（指到主机路径）" || o "模块树无 build 链接"
+	# 取样模块要动态选：ath12k 在 vk189/vk192 里是 =y（built-in），硬编码会在最小档误报
+	mko=$(find "$ROOTDIR/lib/modules/$UTS/kernel/drivers/net/wireless" -name '*.ko' -print -quit 2>/dev/null)
+	[ -n "$mko" ] || mko=$(find "$ROOTDIR/lib/modules/$UTS/kernel" -name '*.ko' -print -quit 2>/dev/null)
+	vm=$(modinfo -F vermagic "$mko" 2>/dev/null | awk '{print $1}')
+	[ "$vm" = "$UTS" ] && o "vermagic 逐字匹配（$([ -n "$mko" ] && echo "${mko#$ROOTDIR/lib/modules/$UTS/kernel/}" || echo 'no .ko')）" || b "vermagic 不符（'$vm' ≠ '$UTS'，取样 '${mko:-none}'）"
+	[ -f "$ROOTDIR/lib/firmware/qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin" ] && o "tplg 在" || b "缺 tplg（音频必死）"
+	[ -x "$ROOTDIR/usr/sbin/sshd" ] && o "sshd 在" || b "缺 openssh-server"
+	{ [ -L "$ROOTDIR/etc/systemd/system/ssh.service" ] || [ -L "$ROOTDIR/etc/systemd/system/multi-user.target.wants/ssh.service" ]; } && o "sshd 已 enable" || b "sshd 未 enable"
+	[ -f "$ROOTDIR/root/.ssh/authorized_keys" ] && o "root authorized_keys 在" || b "缺 authorized_keys（重建后只能靠 console）"
+	grep -vE '^[[:space:]]*#' "$ROOTDIR/etc/fstab" | grep -qF "$ROOTSPEC" && o "fstab 根 = $ROOTSPEC" || b "fstab 根不是 $ROOTSPEC"
+	dpkg-query --admindir="$ROOTDIR/var/lib/dpkg" -W linux-image-'*' 2>/dev/null | grep -q . && b "装进了 Debian 内核包" || o "未装任何 Debian 内核包"
+	o "已装包数 $(chroot "$ROOTDIR" dpkg-query -f '${Package}\n' -W 2>/dev/null | wc -l)"
+	o "根体积 $(du -sh --exclude=proc --exclude=sys --exclude=dev "$ROOTDIR" 2>/dev/null | cut -f1)"
+else
 [ "$(chroot "$ROOTDIR" dpkg --print-architecture 2>/dev/null)" = arm64 ] && o "dpkg arch = arm64" || b "dpkg arch 不是 arm64"
 # usr-merge 完整性：/lib 必须是 → usr/lib 的符号链接，否则 arm64 程序全跑不了
 [ -L "$ROOTDIR/lib" ] && [ -e "$ROOTDIR/lib/ld-linux-aarch64.so.1" ] \
@@ -258,13 +296,34 @@ grep -vE '^[[:space:]]*#' "$ROOTDIR/etc/fstab" | grep -q 'LABEL=linux17' \
 dpkg-query --admindir="$ROOTDIR/var/lib/dpkg" -W linux-image-'*' 2>/dev/null | grep -q . && b "装进了 Debian 内核包" || o "未装任何 Debian 内核包"
 o "已装包数 $(chroot "$ROOTDIR" dpkg-query -f '${Package}\n' -W 2>/dev/null | wc -l)"
 o "根体积 $(du -sh --exclude=proc --exclude=sys --exclude=dev "$ROOTDIR" 2>/dev/null | cut -f1)"
+fi
 [ "$f" = 0 ] || die "门禁 FAIL=$f"
 
 # ---------------------------------------------------------------- 9 归档
 say "9 归档"
 cleanup; trap - EXIT
 mkdir -p "$OUT"
+if [ -n "$IMG_MIB" ]; then
+	# 最小档：直接 `qdl write <lun>/<lba>` 可写的 ext4 镜像（mke2fs -d 从目录树生成）
+	# ⚠️ 落在子目录：check-doctor §5/§5d 扫的是 `out/*.img`（顶级），顶级出现未登记的 `*.img`
+	#    会报「registry 号无 manifest」与「内核身份表已过期」（2026-11-18 实测）
+	IMGDIR="$OUT/p2-minbase-$(date -u +%Y%m%d)"
+	mkdir -p "$IMGDIR"
+	IMG="$IMGDIR/rootfs-minbase-$(date -u +%Y%m%d).ext4.img"
+	command -v mke2fs >/dev/null || die "缺 mke2fs（e2fsprogs）"
+	# 文件系统 label 取 ROOTSPEC 的 LABEL 值：busybox findfs 支持 LABEL=，不支持 PARTLABEL=
+	fslabel=${ROOTSPEC#LABEL=}
+	[ "$fslabel" != "$ROOTSPEC" ] || die "IMG_MIB 需要 ROOTSPEC=LABEL=<name>（当前 '$ROOTSPEC'）"
+	rm -f "$IMG"
+	mke2fs -q -t ext4 -b 4096 -L "$fslabel" -d "$ROOTDIR" "$IMG" "${IMG_MIB}M" || die "mke2fs -d 失败（IMG_MIB=$IMG_MIB 可能太小）"
+	e2fsck -fy "$IMG" 2>&1 | tail -3
+	step ok "镜像 $IMG  $(du -h "$IMG" | cut -f1)  sha256=$(sha256sum "$IMG" | cut -c1-16)…"
+	debugfs -R 'ls -l /' "$IMG" 2>/dev/null | head -20 | sed 's/^/    /'
+	sha256sum "$IMG" > "$IMG.sha256"
+	say "完成：目标根 $ROOTDIR；ext4 镜像 ${IMG#$ROOT/}（fs label = $fslabel）"
+else
 ARC="$OUT/elden-rootfs-$(date -u +%Y%m%d).tar.zst"
 tar -C "$ROOTDIR" --numeric-owner -I 'zstd -3 -T0' -cf "$ARC" . || die "tar 失败"
 printf '  %s  %s  sha256=%s…\n' "$(du -h "$ARC" | cut -f1)" "${ARC#$ROOT/}" "$(sha256sum "$ARC" | cut -c1-16)"
 say "完成：目标根 $ROOTDIR；归档 ${ARC#$ROOT/}"
+fi

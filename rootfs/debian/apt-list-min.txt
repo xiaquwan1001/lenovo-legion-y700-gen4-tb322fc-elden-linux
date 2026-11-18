@@ -1,0 +1,26 @@
+# apt-list-min.txt — GPT-minimal 路线的最小用户态（无桌面，只到「能起、能 ssh、能联网」）
+# 口径来源：RUNBOOK-BRINGUP/GPT-MINIMAL-DESIGN.md §3.2（2026-11-18 落成清单）
+# 用法：APTLIST=rootfs/debian/apt-list-min.txt ROOTSPEC=LABEL=linux GATE_MIN=1 SKIP_DESKTOP=1 \
+#       IMG_MIB=6144 SUITE=trixie STAGE=out/stage-min-<日期> bash rootfs/debian/build-rootfs.sh
+# 硬约束（与 desktop 版一致）：不装 linux-image-*（自编内核）、不装 firmware-qcom-soc（无 sm8750 目录）
+systemd
+systemd-sysv
+systemd-resolved
+kmod
+iproute2
+openssh-server
+ca-certificates
+iwd
+rfkill
+sudo
+chrony
+less
+vim-tiny
+htop
+strace
+curl
+zstd
+e2fsprogs
+util-linux
+procps
+iputils-ping

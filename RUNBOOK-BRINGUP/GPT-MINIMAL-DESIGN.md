@@ -178,13 +178,18 @@ Linux 分区 | `linux17` 192 GiB | **`linux` = LBA 90504..123871226 = 472.19 GiB
 | 4 | `boot.img`（kernel+DTB+initramfs） | ~86 MiB | `scripts/build-boot.sh`（`build-kernel.sh` 编译） | `boot_b`（回退槽 `boot_a` 可选） |
 | 5 | `vbmeta_b`（`Flags=3` 关校验） | 4 KiB | `backup/vbmeta_b-20261110.img`（或用 `tools/avbtool.py make_vbmeta_image` 重签） | `vbmeta_b` |
 | 6 | `dtbo` 假件（4 KiB 全零） | 4 KiB | `out/dtbo-dummy.img`（`ad7facb2…`） | `dtbo_b`（a 槽同理） |
-| 7 | rootfs 归档（Debian minbase） | 250–400 MB | §3.2 | `linux`（ext4） |
-| 8 | 模块包（**同 UTS**） | ~23 MB | `out/modules-<UTS>.tar.gz` | rootfs `/lib/modules/<UTS>` |
-| 9 | 固件 blob（`/lib/firmware`） | ~120 MB | 原厂 `vendor.img` 提取 + `linux-firmware` | rootfs `/lib/firmware` |
+| 7 | rootfs ext4 镜像（最小档，**模块+固件已含在内**） | 6 GiB（实占 2.1 G） | ✅ `scripts/rootfs-minbase-build.sh`（debootstrap trixie minbase + 21 包 + `stage-min-*` + `mke2fs -d`）→ `out/p2-minbase-20261118/rootfs-minbase-20261118.ext4.img`（label=`linux`，sha256 `d22c6a00…`） | `linux`（ext4，`LABEL=linux`） |
+| 8 | 模块包（**同 UTS**） | ✅ 已在 7 内（1510 个 `.ko`，UTS `7.3.1-debug-vk189-…-g4bdf1711b5c0`） | `out/stage-min-20261118/lib/modules/` | 同上 |
+| 9 | 固件 blob（`/lib/firmware`） | ✅ 已在 7 内（44 MB，含 `Lenovo-Y700-Gen4-tplg.bin`） | `out/stage-debian/lib/firmware`（原厂 vendor 提取） | 同上 |
 
 **不需要**：原厂全量包（除回 Android）、`bootslot-b/` 历史镜像（只留台账那一件）、ESP/GRUB 四件（§3.3）。
 
 ### 3.2 最小 Debian 用户态（无桌面）——细化到命令
+
+> **✅ 2026-11-18：下面这套已落成脚本，不要手跑** —— `scripts/rootfs-minbase-build.sh`（需 root；`--dry-run` 可先看计划，`--background` 自分离 + `/tmp/elden-minbase-build.log`）。
+> 内部 = `rootfs/debian/build-rootfs.sh` 的最小档（`APTLIST=apt-list-min.txt` `SUITE=trixie` `SKIP_DESKTOP=1` `GATE_MIN=1` `ROOTSPEC=LABEL=linux` `IMG_MIB=6144`）。
+> 实测：debootstrap+qemu 约 15 min、160 包、根 2.0 G、1510 个 `.ko`、15 项门禁全绿、`mke2fs -d` 出 6 GiB 镜像。
+> 两个坑：① 门禁取样模块不能写死 `ath12k.ko`（vk189/vk192 里是 built-in ⇒ 已改动态取 .ko）；② 必须真 root（`sudo`）——`proot`+`fakeroot` 路线已实测失败（`base-passwd` 处 signal 11 + `libfakeroot payload not recognized`）。
 
 ```sh
 # 主机侧（arm64 目标，用 debootstrap 的 foreign/second stage 或 chroot+qemu）
@@ -198,8 +203,8 @@ chroot /mnt/rootfs apt install -y iwd systemd-resolved rfkill
 
 | 项 | 内容 | 为什么 |
 |---|---|---|
-| `/etc/fstab` | `PARTLABEL=linux / ext4 defaults,noatime 0 1` | PARTLABEL 比 `/dev/sdaN` 稳（GPT 变过多次） |
-| cmdline | `root=PARTLABEL=linux rootwait rw console=tty0`（+ 需要时 `earlycon=efifb keep_bootcon`） | 见 `out/*.manifest` 里 `mkbootimg` argv |
+| `/etc/fstab` | `LABEL=linux / ext4 defaults,noatime 0 1`（**用 LABEL 不用 PARTLABEL**） | `init` 解析 `elden_root=` 走 busybox `findfs`：支持 `LABEL=`/`UUID=`，**不支持 `PARTLABEL=`**（那里只回退到 `blkid -t`，RAM 阶段未必有）；GPT 变过多次 ⇒ 名字比 `/dev/sdaN` 稳 |
+| cmdline | `elden_root=LABEL=linux`（initramfs 用；`root=` 是给无 initramfs 的内核用） | 见 `out/p2-minbase-20261118/boot-minbase-labellinux.img`；`scripts/build-boot.sh` 的 `ROOTARGS=` 可覆盖
 | 模块 | `/lib/modules/<UTS>` 整套 + `depmod -b` | 与内核 UTS 严格同源（`PITFALLS` 内核条） |
 | 网络 | `systemd-networkd` + `iwd`（或 `wpa_supplicant`），hostname/ssh key | S8 验收要 `ssh` 通 |
 | 自编件 | 若装自编 `phoc` 等：`dpkg-divert` + `apt-mark hold` | `PITFALLS #654`：只 `install` 会被 apt 静默冲回 |
@@ -218,7 +223,7 @@ chroot /mnt/rootfs apt install -y iwd systemd-resolved rfkill
 |---|---|---|---|
 | **P0** | ✅ **已完成（2026-11-17 22:0x）**：原厂 Android 16 在线复核 + EDL 只读 dump 六 LUN 主备表（`backup/HA2EXB0E-16+512/edl-20261118/`，12 件 + `SHA256SUMS.txt`；主备条目逐字节相等、头/条目 CRC 全 OK） | `linux-state-audit.sh --device` = 1 DRIFT / 2 WARN；`gpt-audit` 退出码 1（仅 LUN0 17 字节差异：`userdata` 延到 LBA 123871226） | — |
 | **P1** | 写 LUN0 最小表（`--lun 0`）：**表已生成** `out/gpt-minimal-20261118/lun0_{main0,backup0}.bin`（10 项、`linux` = LBA 90504..123871226 = 472.19 GiB，双表 CRC 自检通过） | 仍能进 fastboot；EDL 读回 `gpt-audit` 显示「9 项 + linux」 | 写回 `backup/HA2EXB0E-16+512/edl-20261118/gpt0-{primary,backup}.bin`（4 KiB 扇区：主表 LBA0..5、备表 LBA 123871227+5） |
-| **P2** | 口径已改（**EDL 直写，不走 RAM+ssh 解包**）：`qdl -s ufs $L write 0/90504 out/rootfs-minbase-20261118.ext4.img` → 上台 `resize2fs /dev/disk/by-partlabel/linux` → 刷 `boot_b`/`dtbo_dummy`/`vbmeta_b`。**现阻塞 = 镜像不存在**：`out/.work-rootfs-20261118/` 269 MB debootstrap 半成品 + `out/stage-modules-20261118/` 2.3 G 已 staged，23:25 断电打断，需续跑 `mke2fs -d` 出图 | **冷起进 Debian + `ssh` 通 + `findmnt /` = `PARTLABEL=linux`** | `fastboot --set-active=a`（a 槽 Android 未动） |
+| **P2** | ✅ **前置件已齐（2026-11-18 11:29）**：① 镜像 `out/p2-minbase-20261118/rootfs-minbase-20261118.ext4.img`（6 GiB 稀疏、实占 2.1 G、label=`linux`、sha256 `d22c6a00d5c27c71…`）② `out/p2-minbase-20261118/boot-minbase-labellinux.img`（同 vk192 核/DTB/initrd，唯一差异 = cmdline `elden_root=LABEL=linux`，sha `7ea9370b…`）③ `out/dtbo-dummy.img` ④ `backup/vbmeta_b-20261110.img` ⑤ 两张最小表。动作 = `qdl -s ufs $L write 0/90504 <img>` → 上台 `resize2fs /dev/disk/by-label/linux` → 刷 `boot_b`/`dtbo_b`/`vbmeta_b` | **冷起进 Debian + `ssh` 通 + `findmnt /` = `LABEL=linux`** | ⚠️ **不是** `fastboot --set-active=a`（本行旧口径作废）：`linux` 起点 LBA 90504 = 原 `super` 起点，P2 写入的头 6 GiB 会覆盖 `super` ⇒ **P2 之后 Android a 槽不再可起**。真回退 = 写回 `edl-20261118/gpt0-*` 旧表 **+ 重刷官方 `super`**（`backup/official-rom-15.10.259`；2026-11-17 已实测走通一次，~20 min）。「删条目 ≠ 删数据」在这里**不成立**（数据已被 P2 覆盖） |
 | **P3** | 写 LUN4 最小表（`--lun 4`，删 4 项）：**表已生成** `out/gpt-minimal-20261118/lun4_{main4,backup4}.bin`（74 项） | 冷起仍进 Debian；`fastboot continue` 无 `Device Error` | 写回 `edl-20261118/gpt4-{primary,backup}.bin` |
 | **P4** | `slot-attr.py mark-successful b`（+`--set-active=b`） | 连起 8 次仍在 `_b`（`#181` 的 7 次耗尽线） | `--set-active=a` |
 | **P5**（可选） | 单槽化（腾 a 槽固件） | — **不做**：1.6 GiB 换一整条退路 | — |
@@ -236,6 +241,7 @@ chroot /mnt/rootfs apt install -y iwd systemd-resolved rfkill
 3. **任何 GPT 变更三步**：`gpt-minimal-build.py`（或 `gpt-surgery`）→ 写入 → **读回 + `gpt-audit`**；三步缺一不算完成。
 4. **保留域不许改**：`proinfo/lenovolock/lenovoraw/ssd/persist/misc/keystore/frp` + LUN4 的 `devinfo/uefivarstore/logfs`；改动前先 `backup/` dump。
 5. **A/B 双份固件保留**：`--set-active` 是唯一零成本回退手段（`#484` 槽↔LUN 绑定，两槽代次必须一致）。
+   ⚠️ 例外 = **P2 之后**：`linux` 覆盖了原 `super` 区间 ⇒ Android a 槽不再是零成本退路，回退要重刷 `super`（见 §4 P2 回退列）。
 6. **实验可逆性的前提**：每次写表前，把**当前**主备表 dump 进 `backup/<SN>-16+512/` 并更新 `SHA256SUMS`。
 
 ---

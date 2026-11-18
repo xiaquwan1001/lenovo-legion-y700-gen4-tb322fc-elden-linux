@@ -109,13 +109,13 @@ if [ "$MODE" = device ]; then
   AD=$(timeout -k 5 6 adb devices 2>/dev/null | awk -v s="$SN" '$1==s {print $2}')
   FB=$(timeout -k 5 8 fastboot devices 2>/dev/null | awk -v s="$SN" '$1==s {print $2}')
   EDL=$(lsusb 2>/dev/null | grep -q '05c6:9008' && echo yes || echo no)
-  orphan=$(pgrep -fc '[f]astboot' 2>/dev/null || echo 0)
+  orphan=$(pgrep -fc '[f]astboot' 2>/dev/null); [ -n "${orphan:-}" ] || orphan=0  # pgrep -c 为 0 时 rc≠0，别用 `|| echo 0`（会产出两行）
   emit channel OK "adb='${AD:-none}' fastboot='${FB:-none}' edl=$EDL 孤儿fastboot=$orphan"
   [ "$orphan" -gt 0 ] && { emit "通道风险" WARN "有 $orphan 个 fastboot 进程（#658：先清孤儿）"; cnt WARN; }
   if [ -n "$AD" ] && [ "$AD" = device ]; then
     g() { timeout -k 5 10 adb -s "$SN" shell getprop "$1" 2>/dev/null | tr -d '\r' | head -1; }
     emit "状态机" OK "Android: $(g ro.build.display.id) / boot_completed=$(g sys.boot_completed) / slot=$(g ro.boot.slot_suffix)"
-    ROOTMNT=$(timeout -k 5 10 adb -s "$SN" shell "findmnt -n -o SOURCE,FSTYPE / 2>/dev/null" 2>/dev/null | tr -d '\r')
+    ROOTMNT=$(timeout -k 5 10 adb -s "$SN" shell "findmnt -n -o SOURCE,FSTYPE / 2>/dev/null || awk '\$2==\"/\"{print \$1,\$3; exit}' /proc/mounts" 2>/dev/null | tr -d '\r')
     emit "F.rootfs" OK "findmnt / = ${ROOTMNT:-未知}"
     UTS=$(timeout -k 5 10 adb -s "$SN" shell uname -r 2>/dev/null | tr -d '\r')
     MODS=$(timeout -k 5 10 adb -s "$SN" shell "ls /lib/modules 2>/dev/null | wc -l" 2>/dev/null | tr -d '\r')
