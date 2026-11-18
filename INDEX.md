@@ -15,6 +15,9 @@
 **做到哪**
 
 0. **✅ 2026-11-17 20:0x 设备已恢复正常（U2 HA2EXB0E）：原厂 Android 16 完整启动**（`TB322FC_CN_OPEN_USER_Q00041.1_W_ZUXOS_1.5.10.259_ST_260611`，`sys.boot_completed=1`，slot `_a`，`verifiedbootstate=orange`）。
+   **⚠️ 2026-11-18 16:xx 状态变更（本轮实测）**：设备现在停在 **fastboot**。起因 = 试装「安卓最小线刷包」时的连续失败启动把 **`boot_a` 标记成了 UNBOOTABLE**（LUN4 GPT `boot_a` byte6 = `0xf7` = bit7 UNBOOTABLE + retry=6；口径见 `scripts/slot-attr.py` 头注释、技能 `qbootctl-slot-management`）⇒ ABL 直接在 fastboot 拒绝尝试，**后续所有实验（含全量回滚原厂 super+vbmeta）都被这一因素挡住，不是镜像判据**。
+   **回滚已做完并逐字节核验**：`super_1..8` + `vbmeta.img`(LUN4 `137946`) + `vbmeta_system.img`(LUN0 `5857672`) 均已写回官方包，读回 sha 与包内文件一致（`super_1 d30085c8…` / `vbmeta 55929c15…` / `vbmeta_system 910e013b…`）。
+   **恢复只剩一步**：把 LUN4 GPT 主表(LBA0..5)与备表(LBA 1048575..1048580) 的 `boot_a` byte6 由 `0xf7` 改回 `0x77`（清 bit7=UNBOOTABLE，succ/retry 不动），复位即应正常起 Android。全账 = `TASKS/sessions/2026-11-18-安卓最小线刷包-主机侧造件与EDL试装失败.md`。
    **真因 = 非原厂 GPT**（LUN0 改名/多出 `linux17`+`eldenesp`、LUN4 槽属性非 stock）—— 只写 88 KiB 的 GPT 就把「全镜像 `Device Error`」变成「ABL 真的去启动」；硬硬件判读**全部作废**（送修单已作废）。
    ⇒ **Linux 侧现状**：`linux17`/`eldenesp` 条目与槽镜像/ESP 已被原厂件覆盖/丢弃，但 `linux17` 的 ext4 数据物理保留在 LBA `73277435`（192 GiB）。重建路径 = **`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §3 S3a**。
    取证/时间线 = `reports/bl-stuck-20261118-forensics.md` §7；自检 = `bash scripts/linux-state-audit.sh --host`。

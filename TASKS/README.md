@@ -135,6 +135,7 @@
 - **boot_b 形态 / 上机纪律 / 归因分层**：只在 `DEVICE/README.md` §1.1、`PITFALLS` #3/#115 维护，本文件不复述。
 
 ### 开放待办（按顺序；需要物理 POR 的排最后）
+- **🆕 2026-11-18：安卓「最小化线刷包」lane —— 主机侧造件成功，EDL 试装 3 败后定因 = `boot_a` UNBOOTABLE（不是镜像）** —— 现状三句：① 已产出 `new/system_a.img`（5.17 GiB，去预装 6.53 GiB 后重建，e2fsck clean）与 `pkg/super_min.img`（8.28 GiB，lpmake 重打，7×`_a`）；② 设备**停在 fastboot**，`super`+两个 `vbmeta` 已回滚原厂并逐字节核验，**恢复只需把 LUN4 `boot_a` byte6 `0xf7`→`0x77`**；③ **最小包尚无任何成功上机样本**（“8.28 GiB 能起”仍是假设）。全账 = `TASKS/sessions/2026-11-18-安卓最小线刷包-主机侧造件与EDL试装失败.md`；子代理报告 `reports/android-super-format-20261118.md`、`reports/android-min-avb-facts-20261118.md`；脚本 `scripts/android-min-build.sh`。
 - **2026-11-13 夜：上机一轮（零写盘）—— ramdisk 修复件 `vk191` 一次通过 + s2idle 3/3** —— 全账 `reports/device-session-20261113-vk191.md`，在机状态只读 `DEVICE/README.md` §1.1 首条。
   > 沿革与逐轮明细（零删改）→ `TASKS/sessions/2026-11-14-TASKS-4-沿革下沉.md` §4-1；证据/件：`scripts/to-fastboot.sh`
 - **2026-11-13 夜：主机侧 B 组 18 条全部收口（派 3 个 L1，产物全落盘，零发信/零写盘）** —— 逐条正文只读各自报告，这里只给结论与今晚可用性：
