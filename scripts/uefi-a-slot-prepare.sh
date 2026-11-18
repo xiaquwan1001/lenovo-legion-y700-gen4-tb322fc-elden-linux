@@ -39,6 +39,7 @@ esac
 . "$ROOT/scripts/lib-fastboot.sh"
 device_lock_acquire
 say() { echo "[$(date +%H:%M:%S)] $*"; }
+BK=""   # 原厂 dtbo_a 备份路径（已是全 0 时不产生，回滚提示会显式说明）
 
 # ---- 目标锁定：优先用 SER；未给则从 ssh 侧那一台拿不到，明确要求 ----
 [ -n "$SER" ] || { say "需要显式 SER=<serial>（本机总线上可能有多台设备，禁止猜）"; exit 2; }
@@ -56,6 +57,8 @@ if [ "$CUR" = "$BLANK_SHA" ]; then
 	[ "$MODE" = check ] && { echo "STATUS=READY"; exit 0; }
 else
 	[ "$MODE" = check ] && { echo "STATUS=NEEDS_PREP（a 槽会被 Android DTBO overlay 卡 logo）"; exit 1; }
+	# 2026-11-18 审计 R2 P1-11：回滚提示原来用通配 `dtbo_a-pre-uefi-*.img`，多份备份时会选错件。
+	# 现在把**确切**路径写进 ROLLBACK.txt（含 sha），回滚只认它。
 	BK="$ROOT/backup/dtbo_a-pre-uefi-$(date +%Y%m%d).img"
 	if [ -f "$BK" ] && [ "$(sha256sum "$BK" | awk '{print $1}')" = "$CUR" ]; then
 		say "备份已在：$BK（sha 一致，跳过备份）"
@@ -97,17 +100,34 @@ up=0; for i in $(seq 1 60); do
 		-o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "${TAB:-root@192.168.7.1}" true 2>/dev/null; then up=1; break; fi
 	sleep 3
 done
-[ "$up" = 1 ] || { say "重启后 SSH 未起（设备可能停在 fastboot 或卡 logo）——手工核对"; exit 8; }
+[ "$up" = 1 ] || {
+	say "重启后 SSH 未起（设备可能停在 fastboot 或卡 logo）"
+	say "回滚（可直接复制执行）：fastboot -s $SER flash dtbo_a ${BK:-<本次未改 dtbo_a，无需回滚>} && fastboot -s $SER set_active b"
+	say "  备份件：$BK（sha $(sha256sum "$BK" 2>/dev/null | awk '{print $1}')）"
+	echo "STATUS=ROLLBACK_NEEDED"; exit 8; }
 NEW=$(ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
 	"${TAB:-root@192.168.7.1}" 'sha256sum /dev/disk/by-partlabel/dtbo_a' 2>/dev/null | awk '{print $1}')
 say "dtbo_a 读回 = $NEW"
 if [ "$NEW" = "$BLANK_SHA" ]; then say "✅ a 槽已就绪（假 dtbo 在机）"; echo "STATUS=READY"; else
 	say "✗ 读回不一致（期望 $BLANK_SHA）"; echo "STATUS=VERIFY_FAIL"; exit 9; fi
 
+RB="$ROOT/backup/uefi-a-slot-ROLLBACK-$SER.txt"
+{
+  echo "# $SER 的 a 槽回滚配方（由 scripts/uefi-a-slot-prepare.sh 于 $(date -Is) 生成）"
+  echo "# 回滚只认下面这些**确切**路径；不要用通配符（多份备份会选错件）"
+  echo "DTBO_A_BACKUP=$BK"
+  echo "DTBO_A_BACKUP_SHA=$(sha256sum "$BK" 2>/dev/null | awk '{print $1}')"
+  echo "BOOT_A_BACKUP=$ROOT/backup/boot_a-pre-uefi-20261108.img"
+  echo "BOOT_A_BACKUP_SHA=$(sha256sum "$ROOT/backup/boot_a-pre-uefi-20261108.img" 2>/dev/null | awk '{print $1}')"
+  echo "# 执行："
+  echo "fastboot -s $SER flash dtbo_a ${BK:-<本次未改 dtbo_a，无需回滚>}"
+  echo "fastboot -s $SER flash boot_a $ROOT/backup/boot_a-pre-uefi-20261108.img"
+  echo "fastboot -s $SER set_active b"
+} > "$RB"
 cat <<EOF
 
-回滚（恢复 a 槽 Android / b 槽日常）：
-  fastboot -s $SER flash dtbo_a $ROOT/backup/dtbo_a-pre-uefi-*.img
+回滚（恢复 a 槽 Android / b 槽日常）；配方已写 $RB：
+  fastboot -s $SER flash dtbo_a ${BK:-<本次未改 dtbo_a，无需回滚>}
   fastboot -s $SER flash boot_a $ROOT/backup/boot_a-pre-uefi-20261108.img
   fastboot -s $SER set_active b
 EOF
