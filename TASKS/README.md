@@ -265,168 +265,25 @@
 > ⇒ 这些路径一律以「`out/<件名>.manifest` + `versions/vk-kernel-identity.tsv` + 对应会话记录」为证据，
 > 配方/补丁在 `patches/`（UEFI 系在 `patches/uefi/`）。别再按块内原路径找件。
 
-### 2026-11-09（傍晚，p62）：**R63 分区普查 + 按 GPT 名定位 ESP** 已构建并零写盘过一发；同时把 `logfs` 的写入语义查清
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-01.md`⟫
+### 沿革索引（2026-10-30 → 2026-11-10；49 个历史块，原文已全部下沉）
 
-### 2026-11-10（晚，p69/R70 + 金标准对照）：**计时判据被硬复位剪断；金标准件同样起不来 ⇒ 矛头指向 `vbmeta_a`**
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-02.md`⟫
+> **块号约定**：`NN` ⇔ `sessions/2026-11-13-TASKS5沿革-NN.md`（37 块，一块一文件）；其余块在表内直写路径。
+> **2026-11-19 搬家**（`reports/doc-slim-plan-20261118.md` §3 C3）：最后 12 个仍带**内联正文**的块逐字搬到 `sessions/2026-11-19-TASKS5内联块下沉.md`；下方表只留「日期 → 要点 → 全文」。
+> 每块里的作废/更正标记**随正文一起搬**，不在本表复述；状态数字口径仍只看 §0。
 
-### 2026-11-10（深夜，`dtbo_a` 真根因）：**flashed 形态打通 —— 卡 logo 是 `dtbo_a` 的 Android DTBO overlay，不是 `vbmeta_a`**
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-03.md`⟫
-
-### 2026-11-10（p67/R68 信标 v3）：**flashed 形态连 BdsDxe 都没跑到** —— 旧口径「ESP 枚举 `fs=1`」被持久证据推翻
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-04.md`⟫
-
-### 2026-11-09（晚，p63→p66）：**flashed 形态 4 发全败 + `p60` 对照同败**；落盘信标 v1 废、v2 可用但判不了「哪一发」
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-05.md`⟫
-
-### 2026-11-07（深夜·三，p58）：**UEFI 间接引导打通** —— 真因 = `SdccDxe` 抢初始化 SD 主控
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-06.md`⟫
-
-### 2026-11-08（晚间）：G1-29 路线 B **打通** —— ESP 上的 `boot.img` 被 Mu `LinuxLoader` 变体直接读起（零写盘）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-07.md`⟫
-
-### 2026-11-08（深夜）：崩溃定因两处修 + **启动菜单闭环** + 落地第一发（写 `boot_a`）定位到缺口
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-08.md`⟫
-
-### 2026-11-08（下午）：路线定案 B + **首试判 indeterminate**（RELEASE 剥 DEBUG + 菜单歧义 = 无法归因）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-09.md`⟫
-
-### 2026-11-08（上午）：ESP + GRUB **菜单出来了**，但 EFI-stub 交接撞平台墙 —— 已按判据收窄
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-10.md`⟫
-
-### 2026-11-08（清晨）：G1-29 后半**主机侧备料**—— arm64 GRUB 造得出来，且 QEMU 端到端跑通「FAT 起 loader → 读 ext4 起内核」
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-11.md`⟫
-
-### 2026-11-07（深夜·二，p54→p57）：**「关硬件看门狗」三路全证伪** + 复位「不是独立定时器」的反证
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-12.md`⟫
-
-### 2026-11-07（夜·二，p51→p53）：**UEFI 交棒成立**（内核侧实锤）；卡点 = 那个内核 4–10 s 后整机硬复位
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-13.md`⟫
-
-### 2026-11-07（夜，p49→p50）：**令牌已进 UEFI 的 cmdline（`tag=1`），但内核拿不到 ⇒ 交棒仍未成立**
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-14.md`⟫
-
-### 2026-11-07（深夜，p45→p46）：**UEFI 间接引导打通** —— 删掉「EB 后落盘」的自家探针后，内核真正起来
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-15.md`⟫
-
-### 2026-11-07（夜，p45）：**备料完成、已构建、静态复核 PASS、未上机** —— `p43` + EB 段逐步屏显 + 异常 dump 不清屏
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-16.md`⟫
-
-### 2026-11-07（p39–p43）：**漏了 `fastboot continue`** 白打 4 发；补发后第一次真进 `BootLinux`，崩点回到 EB 段
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-17.md`⟫
-
-### 2026-11-07（p38）：p37 的「EB 后立刻死」= **自家探针调 boot service**（静态定案，已构建上机件，未上机）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-18.md`⟫
-
-### 2026-11-06（夜·五）：取证通道从「屏」搬到 **`logfs` 持久化窗口**（p34–p36，上机 4 发零写盘）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-19.md`⟫
-
-### 2026-11-06（夜·四）：**已调用到 `LinuxKernel()`**（DDR 读回）⇒ 卡点搬到交接参数；并暴露「满屏不刷新」取证 bug（p30–p33）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-20.md`⟫
-
-### 2026-11-06（夜·三）：屏显 NULL 崩修好 → **EB 正常返回** → 面板被熄 ⇒ 转 DDR 黑匣子（p27–p30 四发）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-21.md`⟫
-
-### 2026-11-06（夜·二）：崩溃 PC 归因成功 = **`LinuxLoader` 自己的 `SerialPortWrite`**（p25/p26 两发）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-22.md`⟫
-
-### 2026-11-06（深夜）：**真启动崩溃真因 = 我们自己的探针写屏**（修好后真路径首次到 EB）— p13→p24 十一代件
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-23.md`⟫
-
-### 2026-11-06（傍晚）：**首次上机全场走通到跳内核** + 三条判据更正（EB 后宿主失联 / 会话污染 / 跳进堆）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-24.md`⟫
-
-### 2026-11-06（下午）：34→27 窗口里还有一条**未门控**的屏显写 + 探针 35..38 / p8·p9 世代就绪（**未上机**）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-25.md`⟫
-
-### 2026-11-06：**上一轮 10 发作废（探针从未命中）+ 崩溃真因 = 屏显写穿帧缓冲 + 新通道 `sbprobe=3`**
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-26.md`⟫
-
-### 2026-11-05（上午）：R21 **取证通道改走 fastboot 响应**（断电收尾，重建完成、未上机）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-27.md`⟫
-
-### 2026-11-05（夜）：判据彻底改为**宿主可读**，崩溃点从「DXE 里某处」收敛到 `LoadImageAndAuth` 前导 3 步
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-28.md`⟫
-
-### 2026-11-04（更深夜）：路线重排 —— **loader 早就在 FV 里（`LinuxLoader`），只是没人启动它** ⇒ 首选改成路线 D
-
-- **下轮入口**：`archive/plans-20261110/2026-11-04_late-uefi-routeD-linuxloader.md`（复核 + 7 条新增主机侧事实 + R13 实施单 + 风险表）。
-- **更正上块**：`QcomModulePkg` **在树里也编了**（`build.log:4354`），`LinuxLoader` 的 FFS（GUID `F536D559-459F-48FA-8BBC-43B554ECAE8D`）就在 `FVMAIN.Fv.txt` 末行 `0xC126B0`；它没跑的唯一原因是 `MODULE_TYPE = UEFI_APPLICATION`，而 `Dispatcher.c:73 mDxeFileTypes[]` 不含 `APPLICATION`（`PITFALLS #503`）。
-- **路线重排 D > A > B**：D = BdsDxe 里 `LoadImage`+`StartImage` 这个 FV 内应用 → 它写死 `BootIntoFastboot=TRUE` ⇒ 进 UEFI 侧 fastboot → 宿主 `fastboot continue` 启 `boot_b`（`FastbootCmds.c:2685/2854` → `LoadImageAndAuth` → `BootLinux`）；**新增字节 0、不动盘、启的就是今天 ABL 启的同一份 boot.img**。解锁态 AVB 走 `ALLOW_VERIFICATION_ERROR`（`VerifiedBoot.c:1105`）、`EnableMdtpSupport=FALSE` ⇒ 自签镜像不被拦。
-- **A（GRUB 进 FD）降为退路且已验尺寸**：FD 尾部空 `1 727 675 B`；`grub-mkstandalone -O arm64-efi` 最小集 = `2 093 056 B`、`xz -9` = `1 174 968 B` ⇒ 压得进。arm64 模块可从 USTC 镜像 `grub-efi-arm64-bin_2.14-2ubuntu1_arm64.deb` 现取（本机已解包实测）。
-
-### 2026-11-04（深夜）：UEFI **DXE 全走完、UFS 枚举成功（BlockIo=119）、整机无 ESP** ⇒ 只差一个 loader
-
-- **下轮入口**：`archive/plans-20261110/2026-11-04_handoff-uefi-dxe-to-linux.md`（现状/12 发清单/方案 A（零写盘 GRUB 进 FD）/判据/复现步骤/新坑）。
-- **一句话**：`0xD2B9B224` 已定案 = `QRKSDxe`（剔除后零异常）；`BlockIo=119` 证明 UFS 枚举通了；唯一的 `SimpleFileSystem` 是 **LUN4 `modem_b`**（FAT，绝不能写）⇒ BDS 无交接目标 ⇒ 复位 ⇒ 原厂 recovery。
-- **下一步**：方案 A = standalone GRUB arm64（或自写最小 loader）打进 FD，由 BdsDxe `LoadImage` 启动，GRUB 用 ext2 读 `linux17`(ext4) 的 `/boot`；退路 = GPT 手术建 ESP。
-- **正文**：`reports/uefi-ramoops-channel-20261104R.md` §9–§11；会话记录 `sessions/2026-11-04-UEFI-DXE走完到BDS之后的handoff.md`。
-
-### 2026-11-04（傍晚）：UEFI **DxeCore 真进场、QCOM DXE 驱动在跑**，卡点 = 某驱动同步异常 0xD2B9B224
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-29.md`⟫
-
-### 2026-11-04R（下午）：UEFI 判据换成 **ramoops 主机可读**（零写盘件已构建，未上机）
-
-- **一句话**：上一发 `fixcopylen` 的 verdict=indeterminate 是因为唯一判据是「人眼看屏」而屏在刷；本轮把同一条轨迹（`[F01]/[P01]…[P11]`、64 块 FNV 表、`[D00]…`）**同时写进 Linux 的 pstore record 区**（`dprzs[0]=0xC2000000` PrePi、`dprzs[1]=0xC2200000` DxeCore，格式照 `persistent_ram_buffer` + `"====<sec>.<usec>-D\n"` 头），回到 Linux `cat /sys/fs/pstore/dmesg-ramoops-{0,1}` 即可判；**刻意去掉 Dispatcher 进度点**（那是无限滚屏的元凶）。
-- **件**：`out/uefi-20261104R-r1.img`（sha `e7f8b544…`）；断言=shim 字面量池 `0xff300000/0x00400000/0xff700000` + header v2 + `text_offset=0` + `flags=0xa`；期望块表 `.pi/plans/next2/expected-blocktable-uefi-20261104R-r1.txt`。
-- **机制化**：`scripts/uefi-repack-v2aligned.py` 末尾新增 `verify_built_image()` 硬断言（旧 shim 件一律拒，实测拒掉 `nocivac`）；`out/SUPERSEDED.md` 登记 7 类旧变体。
-- **正文/证据**：`reports/uefi-ramoops-channel-20261104R.md`（§1 内核侧 pstore 事实与 ECC=0、§3 上机与三态判读、§4 DDR 冷清风险）；补丁 `patches/uefi/20261104R-pstore/000{1,2}`。
-
-### 2026-11-04（晚）：UEFI **DxeCore 从未被启动** —— 真卡点 = 内层 FV 解压失败（11 发零写盘）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-30.md`⟫
-
-### 2026-11-04：UEFI **载荷被执行 → Mu PrePi 走完 → 交给 DXE**（7 发零写盘）
-
-- **一句话**：打包头换成 **v2 base 0 + Image 头对齐**后载荷第一次真被执行；屏上色带证明 shim 跑完 4 MiB 拷贝并 `br` 进 UEFI，屏上串口打出 Mu 自己的版本行与 `[P01]`–`[P11]` ⇒ **PrePi 全流程走通、已交 DXE Core**。
-- **推翻/收紧的判据**：`Booting OKAY ~10.1 s` 只到「ABL 接受并跳」这一层；**DDR 标记通道在本类场景失效**（自家载荷在 PrePi 侧写了 ~1.9 GB `0xFF`，两次对照定性：纯重启 / 同路径启动真内核 ⇒ 窗内仍 `0x00`）。
-- **硬约束**：`splash_region` DT 声明 43 MiB 但**只有前 ~448 KiB 可写**（整块填充挂死 SoC）；ABL 下次启动清屏 ⇒ 屏上标记只能实时看。
-- **正文**：`reports/uefi-payload-execution-20261104.md` §0/§2/§3/§7；session `TASKS/sessions/2026-11-04-UEFI载荷首次被执行.md`；坑 `PITFALLS #490/#491/#492`；镜像 `out/uefi-20261104-{fbfill,fbband,dual,m3block,prog,nocivac,prepi}.img`、补丁 `patches/uefi/20261104-*/`。
-
-### 2026-11-01：UEFI 线**判据纠正 + 恢复推进**（10 发上机，零写盘）
-- **一句话（当时）**：10-30/31 的「交棒条件」= boot image v0 **header** 的产物、那 7 发载荷**从未被执行**；header 逐字段差分路线整体放弃 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §1 ｜ **报告**：`reports/uefi-cleanheader-reframe-20261101.md`；坑 `PITFALLS #479/#480/#481/#482`
-
-### 2026-11-01 16:39：UEFI 走「槽位正常启动」路径（P2 最小形态）→ **载荷未被执行，且设备进入「只能进 fastboot」状态**
-- **一句话（当时）**：`boot_b`←载荷 + `reboot` 后 14 s 进 fastboot、两槽皆不启；**闭环 = 引导固件代次与 A/B 槽脱钩（`PITFALLS #484`）**，`--set-active` 双向修复 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §2 ｜ **报告**：`reports/uefi-slotboot-stuck-fastboot-20261101.md`、取证 `reports/artifacts/uefi-edl-read-20261101/`；坑 `PITFALLS #484/#485`
-
-### 2026-11-01 23:0x：UEFI 线按推荐顺序开工（4 lane）——**① 通道定案：EDL `peek` 本机不可用**，改「切断回落 + 回读」
-- **一句话（当时）**：**EDL `peek` 本机不可用**（loader Supported Functions 无 `peek`）⇒ 改「切断回落 + 回读」；「回落清 marker」假设被否证；EUD lane 收口（DT 无 `eud` 节点） ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §3 ｜ **报告**：`reports/uefi-ddr-fallback-plan-20261101.md`、`reports/uefi-ddrcut-fallback-20261101.md`、`reports/uefi-eud-feasibility-20261101.md`；坑 `PITFALLS #486/#487`
-
-### 2026-11-02 上午：UEFI ①「载荷到底有没有被执行」四臂判别 —— **全部为 0**，并更正一条错判
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-31.md`⟫
-
-### 2026-10-31 晚：UEFI 线**暂停深入**（用户裁决；2026-11-01 已按上方纠正块恢复推进）—— 两项主机侧待办挂起
-- **一句话（当时）**：用户裁决「更新文档并提交，暂不深入」；两项主机侧待办挂起，其前提后被 11-01 否证（见上方纠正块） ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §4 ｜ **报告**：判定纪律 = `PITFALLS #477`；两项待办的后续见 `reports/uefi-cleanheader-reframe-20261101.md`
-
-### 2026-10-31 晚：UEFI 控制组 + R2 —— **A2 原件今天仍交棒**，而三发重建全不交棒
-- **一句话（当时）**：⚠ 已被 `PITFALLS #481/#482` 作废（那批发射因脏 header 从未被 ABL 执行）；当时记录「A2 原件仍交棒、三发重建全不交棒」 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §5 ｜ **报告**：`reports/uefi-vis-control-20261031.md`，证据 `reports/artifacts/`
-
-### 2026-10-31 晚：UEFI R1 上机 —— 里程碑 shim **不交棒**，色条方案作废
-- **一句话（当时）**：⚠ 同上作废（载荷未被执行，「不交棒」不构成对 shim 的否证）；当时记录「里程碑 shim 不交棒、色条方案作废」 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §6 ｜ **报告**：`reports/uefi-vis-r1-20261031.md`
-
-### 2026-10-31 晚（并行 lane）：UEFI 早期可见性四通道调查 —— 结论「改 0 行代码就有观测面」
-- **一句话（当时）**：四通道结论（屏上出字 0 行新代码 / 内存落盘 / USB ACM / 硬件 UART）**仍成立**；但「1–2 s 掉电属载荷」已被 `PITFALLS #480/#481` 重归因 ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §7 ｜ **报告**：`reports/uefi-visibility-channels-20261031.md`、备料 `patches/uefi/20261031-vis/`
-
-### 2026-10-31 晚（并行 lane）：UEFI 2×2 补全 —— 交棒需「厂商 UFSDxe × cachefix shim 基座」
-- **一句话（当时）**：⚠ 整块作废（「交棒需厂商 UFSDxe × cachefix shim 基座」是 header 产物，不是载荷属性） ｜ **正文**已原样下沉 `sessions/2026-11-02-UEFI历史块归档.md` §8 ｜ **报告**：`reports/uefi-swap-x1x2-20261031.md`
-
-### 2026-10-31 晚：启动提速（net-selfheal 白等 120 s 修掉）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-32.md`⟫
-
-### 2026-10-31 下午（续）：「全部继续」四项落地
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-33.md`⟫
-
-### 2026-10-31 下午：三封回信已发 + wl2868c v4 出件（用户「全部允许」批）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-34.md`⟫
-
-### 2026-10-31 四 lane 轮（设备在线，vk183）
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-35.md`⟫
-
-### 2026-10-31 晚（续）：阻塞项调查 A 类三 lane + B 类窗口单
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-36.md`⟫
-
-### 2026-10-30 新增待办与并行安排
-> ⟪全文见 `sessions/2026-11-13-TASKS5沿革-37.md`⟫
+| 日期 | 块 | 要点（原文标题关键词） | 全文 |
+|---|---|---|---|
+| 2026-11-10 | 02–04 | p69/R70 计时判据被硬复位剪断（矛头指向 `vbmeta_a`）；**`dtbo_a` 真根因 = Android DTBO overlay（flashed 形态打通）**；p67/R68 信标 v3（连 BdsDxe 都没跑到） | `sessions/2026-11-13-TASKS5沿革-{02,03,04}.md` |
+| 2026-11-09 | 01、05 | R63 分区普查 + 按 GPT 名定位 ESP（零写盘一发）；flashed 形态 4 发全败 + `p60` 对照同败（落盘信标 v1 废 / v2 判不了哪一发） | `sessions/2026-11-13-TASKS5沿革-{01,05}.md` |
+| 2026-11-08 | 07–11 | 路线 B 打通（ESP `boot.img` 被 Mu `LinuxLoader` 直接读起）；启动菜单闭环 + 落地第一发；首试 indeterminate；ESP+GRUB 菜单出来但 EFI-stub 撞墙；arm64 GRUB 备料 + QEMU 端到端 | `sessions/2026-11-13-TASKS5沿革-{07..11}.md` |
+| 2026-11-07 | 06、12–18 | 间接引导打通（真因 = `SdccDxe` 抢初始化 SD 主控）；「关硬件看门狗」三路全证伪；交棒成立 / 令牌进 cmdline；漏 `fastboot continue`；探针调 boot service | `sessions/2026-11-13-TASKS5沿革-{06,12..18}.md` |
+| 2026-11-06 | 19–26 | `logfs` 持久化窗口；已调用到 `LinuxKernel()`；真崩溃真因 = 自家探针写屏；屏显 NULL 崩；`LinuxLoader` 的 `SerialPortWrite`；首次全场走通到跳内核 | `sessions/2026-11-13-TASKS5沿革-{19..26}.md` |
+| 2026-11-05 | 27、28 | R21 取证通道改走 fastboot 响应；判据彻底改为「宿主可读」（崩溃点收敛到 `LoadImageAndAuth` 前导 3 步） | `sessions/2026-11-13-TASKS5沿革-{27,28}.md` |
+| 2026-11-04 | 29、30 + 4 块 | 路线 D（FV 内 `LinuxLoader` 没人启动）；DXE 全走完/UFS 枚举成功但无 ESP；ramoops 主机可读判据；DxeCore 真进场 / 从未被启动；载荷被执行 → PrePi → DXE | `sessions/2026-11-13-TASKS5沿革-{29,30}.md` + `sessions/2026-11-04-UEFI-DXE走完到BDS之后的handoff.md` + `sessions/2026-11-04-UEFI载荷首次被执行.md` + `sessions/2026-11-19-TASKS5内联块下沉.md` |
+| 2026-11-02 | 31 | UEFI「载荷到底有没有被执行」四臂判别，全部为 0 + 更正一条错判 | `sessions/2026-11-13-TASKS5沿革-31.md` |
+| 2026-11-01 | 归档 §1–§3 | 判据纠正（「交棒条件」是 header 产物、7 发载荷从未执行）；槽位正常启动 → 只进 fastboot；EDL `peek` 本机不可用（改切断回落+回读） | `sessions/2026-11-02-UEFI历史块归档.md` §1–§3 |
+| 2026-10-31 | 归档 §4–§8、32–36 | 暂停深入（用户裁决）；控制组+R2 / R1 / 四通道 / 2×2 补全（多数已按 `PITFALLS #480–#482` 作废）；启动提速 net-selfheal；三封回信 + wl2868c v4；四 lane 轮（vk183）；阻塞项 lane | `sessions/2026-11-02-UEFI历史块归档.md` §4–§8 + `sessions/2026-11-13-TASKS5沿革-{32..36}.md` + `sessions/2026-11-19-TASKS5内联块下沉.md` |
+| 2026-10-30 | 37 | 新增待办与并行安排 | `sessions/2026-11-13-TASKS5沿革-37.md` |
 
 ### 1. 待调查（Open questions，按优先级）
 
@@ -673,11 +530,7 @@
 > **★当前一页 = `reports/upstream-status-20261113.md`（2026-11-13，取代 `-20261105`/`-20261029`）**：逐系列状态 / 归档复核（patchwork，非 cover 计数）/ **我方欠什么** / 复启条件。
 > **★「是否已合并」的三条限定（2026-11-18 定；数据 = `reports/主机侧-B17-20261117.md` §3/§4、`reports/mail-inbox-20261118.md`）**：① 可证的只有 `patchwork: 0 accepted / 0 commit_ref` 这一种形式（305/305 `commit_ref` 空），**不能**外推成「mainline/next 未合并」——维护者直接取件合入而不回信是盲区（本期已用 mainline+next 内容级判定补上，结论仍 0）；② `state`/`tags` 字段不可靠（`state` 会把在审件标 `handled-elsewhere`、`tags` 恒空，R-b 只在 patch 正文里）；③ 判 next 必须取 `next-20261117` 及其后（今日 6 系列 05:20Z 发送晚于 `next-20261116` 快照）。
 > **外部动向快照 = `reports/upstream-watch-20261113.md`**（2026-11-13：patchwork 线程 12 条 + 待观察 8 条 + 外部仓库 9 条，每条带 URL；lore 全站被 Anubis 反爬拦截，故改用 patchwork REST 取同源数据）。
-> **★2026-11-08 增量（`reports/mail-triage-20261108.md`，窗口 11-05 02:40Z → 11-08 05:21Z）**：新信 2481 头、外部回信 10 封唯一 MID、退信 0、我方外发 18 封（v7/v8/v9 + M10）；**行动 = 4 组 10 条技术待办，全部来自 sashiko 机器评审，且逐条在本地源码上确认「仍在」**：A dwc3 binding 3 Medium + 1 Low、B wl2868c driver 3 Medium、C wl2868c binding 2 Low、D M10 1 Low（`Fixes: be9d54c35312`）；人类 2 封（Rob Herring / Conor Dooley）已被 v9 覆盖（Conor 的 `changes-requested` 属时序竞态，v9 cover 已单节说明）；patchwork 上 v8/v9/M10 **tags 全空**（无 Acked/Reviewed/Tested）⇒ **本轮只起草、零投递**；阻塞 1 条 = M10 的 `Fixes:` 提交在本机 4 棵树都 `cat-file -t` = none。
-> **★2026-11-14 增量（mdss v5 + 回 sashiko）**：v4 投后收到 **Konrad Dybcio R-b** 与 **sashiko Medium**（0xa000 是 dispcc 单独描述的域、mdss 没 attach 它却 assert 它的 BCR）。质疑**成立**（`sm8750.dtsi:3335` power-domains 只有 `MDSS_GDSC`、`:3322` clocks 无 `mdp1` 族）⇒ 已回信（承认 + 给出可观测事实 + 标注两条测量边界 + 声明无 datasheet 直证 + 附收窄后的 message，`Result: 250`）并发 **v5**（`patches/upstream/m8-mdss-v5-20261114/`：1/3、2/3 未变，3/3 diff 逐字节相同只收窄 message，三个 R-b 含 Konrad，4×`Result: 250`）。全账 `reports/mail-send-20261114-mdss-v5.md`。**重要自证缺陷已写进信里**：15/15 实测是三枚形状（含 RSCC），v4/v5 的两枚形状**从未上机**、`0xa000` **无单变量**。**遗留**：1/3 丢了 v3 上 Rob Herring 的 `Acked-by`（v4/v5 均未带，发 v6 时补回）。
-> **★2026-11-12 增量（`reports/mail-triage-20261112.md`，窗口 11-11T08:08Z → 11-12T13:3xZ）**：新 reviewer tag 3 个（Rob→wl2868c v10 1/2 RV；Dmitry→mdss v3 3/3 RV；Dmitry→dpu gamma LUT RV + 要求补 `Fixes: 39a750ff5fc9`）；**已合并 0 条**（238 patch `accepted`=0、`commit_ref` 全空）；**我方欠 5 项，全部需用户批准**（报告 §5 W1–W5）：W1 wl2868c v10 2/2 答 Mark Brown 的 `LDOx_SEQ`（先量设备侧 SEQ 寄存器再定 v11）、W2 mdss v3 2/3 答 Dmitry 的 INT2 措辞/副作用/测试方法（⇒ v4）、W3 dpu gamma LUT 出 v2 补 `Fixes:`、W4 dsi/phy 出 v2 把 9 行注释搬进 commit message、W5 dwc3 v9（Rob changes-requested 的驱动/DTS 改造**尚未做**，当前不具备投递条件）。本轮**零发信**。
-> **★2026-11-11 v10 已投（用户放行「三个按推荐决定发/不发」⇒ 只发这一版）**：`[PATCH v10 0/2]` cover MID `<20261111111132.1296892-xiaqinghuan@mail.ustc.edu.cn>`（1/2 `-2-`、2/2 `-3-`），3 封 SMTP 250、lore 3 封 raw 可取；**patchwork 已摄取**（`14972055/14972059` = 1/2，`14972056/14972060` = 2/2，state 全 `new`，`commit_ref=None`）。改法 = 答 sashiko 三条 Medium（SYS_EN 未置位不播种 / reset 与供电顺序 + devres 逆序 / vin7-only 板回退仅认 `-ENODEV`）+ 两条 Low（binding example 加 `vin12-supply`、MAINTAINERS `F:` 移到 2/2）；binding 本体未改。**门禁由我独立复跑**：pristine `25f7927e6ccb` 上 `git am` 2/2 干净、`checkpatch --strict` 两枚 **0E/0W/0C**、`W=1` 单目标编译 **rc=0 无 warning**。产物 `patches/upstream/wl2868c-v10-20261111/`（+`GATES.md`）、报告 `reports/wl2868c-v10-landed-20261111.md`、投递记录 `out/mail-20261111/`。
-> **未答项（2026-11-07 现查，patchwork API 实拉）**：**11-04 批的两条欠账已全部还完** —— dwc3 两条 High 由 v8 修掉（sashiko 对 `2/3`/`3/3` 各回「found no issues」）、Krzysztof 两条由「板 DTS 整段拆出」+ v8 commit message 覆盖；wl2868c binding 的 Rob Herring 两点已由 **v9（2026-11-07T01:50Z 已投）** 落地。**当前我方无未答项**，只等 review：dwc3 v8 = `linux-usb 3/3 new`（devicetree 1/3 needs-ack）、wl2868c v9 = `arm-msm 2/2 new`（devicetree 1/2 needs-ack）、M10 `new`。
+> **★历次邮件增量（2026-11-07 → 11-14，5 块：11-08 sashiko 10 条 / mdss v5 回信 / 11-12 reviewer tag 3 个 / 11-11 wl2868c v10 已投 / 11-07 未答项现查）已下沉**：逐字原文在 `TASKS/sessions/2026-11-19-§7头增量块下沉.md`；当时结论均由 `reports/mail-triage-*.md`、`reports/upstream-status-20261113.md`、`patches/upstream/*/SENT.md` 覆盖。
 > **归档复核口径（2026-11-04 起）**：lore `/<list>/<mid>/raw` 返 Anubis 挑战页（HTTP 200 但非原文）⇒ **不得**用 `/raw 200` 当作档证据；一律 **patchwork API** + 按 MID 取 lore `/T/` 线程页，且「N/N 命中」口径 = 「非 cover N/N」。
 
 > 审查已完成（2026-10-04，只审不改）：payload=相对主线 v7.2 的 **125 改 + 11 新文件（≈12.4k 行）**，
