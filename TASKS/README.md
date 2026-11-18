@@ -135,6 +135,7 @@
 - **boot_b 形态 / 上机纪律 / 归因分层**：只在 `DEVICE/README.md` §1.1、`PITFALLS` #3/#115 维护，本文件不复述。
 
 ### 开放待办（按顺序；需要物理 POR 的排最后）
+- **🆕 2026-11-18：LTBox（Rust GUI 刷写工具）评估已出 —— 推荐「抽 crate 做离线校验 CLI」（1.5–2.5 人日），**不接 MCP** —— 它有、我们 bash 主路径没有的校验 = **P0 6 / P1 7 / P2 5**，P0 全在「写之前」：rawprogram 全节点预检、destructive 节点缺 LUN/sector 直接拒、`start+count` 落 LUN 容量内、**镜像 sector 数 vs 分区 span 写前核对（批量全有或全无）**、写前重读 GPT 复验快照、dump 只认 `PartitionNotFound`。**它也不清 UNBOOTABLE / 不补 retry**（`grep` 0 命中）⇒ 和我们同一颗雷。MCP 不可行的 6 条结构冲突（无 headless / 编排绑 GUI crate / 裸 USB 绕过 device-lock / `EdlSession` 一开一 reset 等）见报告 §3。全账 = `reports/ltbox-evaluation-20261118.md`；仓 = `external/ext-repos/LTBox`（`~/LTBox` 软链）。
 - **🆕 2026-11-18：安卓「最小化线刷包」lane —— 主机侧造件成功，EDL 试装 3 败后定因 = `boot_a` UNBOOTABLE（不是镜像）** —— 现状三句：① 已产出 `new/system_a.img`（5.17 GiB，去预装 6.53 GiB 后重建，e2fsck clean）与 `pkg/super_min.img`（8.28 GiB，lpmake 重打，7×`_a`）；② 设备**停在 fastboot**，`super`+两个 `vbmeta` 已回滚原厂并逐字节核验，**恢复只需把 LUN4 `boot_a` byte6 `0xf7`→`0x77`**；③ **最小包尚无任何成功上机样本**（“8.28 GiB 能起”仍是假设）。全账 = `TASKS/sessions/2026-11-18-安卓最小线刷包-主机侧造件与EDL试装失败.md`；子代理报告 `reports/android-super-format-20261118.md`、`reports/android-min-avb-facts-20261118.md`；脚本 `scripts/android-min-build.sh`。
 - **2026-11-13 夜：上机一轮（零写盘）—— ramdisk 修复件 `vk191` 一次通过 + s2idle 3/3** —— 全账 `reports/device-session-20261113-vk191.md`，在机状态只读 `DEVICE/README.md` §1.1 首条。
   > 沿革与逐轮明细（零删改）→ `TASKS/sessions/2026-11-14-TASKS-4-沿革下沉.md` §4-1；证据/件：`scripts/to-fastboot.sh`
