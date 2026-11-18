@@ -4,6 +4,13 @@
 > 本目录只放**与 build `ZUXOS_1.5.10.259_260611_PRC` 配套**的镜像；原 zip 在 `_zips/`。
 > 核对：三个 vbmeta 的 build fingerprint 均为 `Lenovo/TB322FC[_PRC]/TB322FC:16/.../ZUXOS_1.5.10.259_260611_PRC:user/release-keys`。
 
+> ⚠ **2026-11-18 实测：本目录已只剩两份 md，下文「目录」里列的 `重签包/`、`KSU/`、`_zips/`、
+> `xbl_s_devprg_ns.melf` 全部不在盘上**（`ls -la restore-259/` 只有 `README.md` + `AVB-KSU-2026-09-29.md`）。
+> 下面的步骤只在拿回那些件后才可执行；缺件时的等价替代已走通：
+> KSU init_boot + vbmeta 从**官方 259 包**自建（`out/android-root-20261119/` + `scripts/android-ksu-avb-build.py`），
+> 不依赖社区包。历史数字（社区 `KSU/init_boot.img` 2 850 816 B / 描述符 digest `900054a4…`）**无文件可复验**。
+> EDL 引导件改用 `backup/official-rom-15.10.259/xbl_s_devprg_ns.melf`（同 sha 的 `backup/fw/tb322fc-edl/` 亦有）。
+
 ## 目录
 
 ```

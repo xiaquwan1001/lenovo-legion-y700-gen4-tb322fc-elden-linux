@@ -6,13 +6,27 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-18）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-19）
 
 > 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
 > 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
 
 **做到哪**
+
+0. **🆕 2026-11-19 深夜（U2 HA2EXB0E，压过下面 11-18 条）—— 主线 Linux 已重建到「能登入」；显示仍缺；安卓面零改动**
+   - **旧 `linux17` 数据确认丢失**：EDL 只读采样 6 点（起点 73277435 及 +10/+50/+134/+275/+359 GiB）非零字节 **全 0**；
+     成因 = 11-17/18 恢复原厂时 stock `userdata`(449.7 GiB) 覆盖该区间（`fastboot -w` 再把它 discard 成零）。
+   - **已重建（都过读回校验）**：LUN0 GPT 写回手术表（`linux17` 193 GiB + `userdata` 256.7 GiB，主备 `80ab46e5…`/`e5f79c0e…`；
+     **`super`/`vbmeta_system`/`boot_a`/`dtbo_a` 未动 ⇒ 安卓装机测试面保留**）；LUN0 `73277435` 写 6 GiB 最小 Debian 根（设备端 sha `abf96ec4…`）；
+     `boot_b` = 同 vk192 核/DTB/initrd、仅 cmdline 改 `elden_root=LABEL=linux` 的自签件（读回 `740d431b…`）。
+   - **现态**：`ssh root@192.168.7.1`（需先 `sudo scripts/ncm-host-up.sh`）/ systemd PID1 / 内核 `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0` / 165 包 / `/` 2.0 of 5.9 GiB。
+   - **显示仍缺，根因已定界**：`device_component/ae01000.display-controller` = `aggregate not bound`，`ae94000/ae96000.dsi` not bound，
+     `(unknown)×2` not registered；`af54000.displayport-controller` 在 `devices_deferred`（`aux_bridge: failed to acquire drm_bridge`）
+     ⇒ **DP 组件拖死 DPU master**。同批失败：`ath12k` MHI `-110`、无 `/dev/fastrpc-adsp`、音频卡 deferred。
+   - **明早接续**：① 上电 → `scripts/ncm-host-up.sh` → ssh 验活 + `slot-attr.py mark-successful b`；② 显示实验（`out/min-restore-20261119/dp-port2-experiment.patch`）；
+     ③ 桌面 = `resize2fs` + `daily-baseline`。全账 / 待办 = `TASKS/README.md` §4 首条 + `TASKS/sessions/2026-11-19-主线恢复最小Linux与显示定位.md`。
+   - 历史（11-18）：`super_min` 上机成功（8.28 GiB、`/system` 5.0 GiB）但 wipe 后卡 ZUXOS 动画（未取证）。
 
 0. **🆕 2026-11-18 小时级状态（U2 HA2EXB0E）—— 精简安卓包已上机成功；当前在 fastboot，未结「卡 ZUXOS 动画」**
    - **已做成（有判据）**：清 `boot_a` UNBOOTABLE（`fastboot --set-active=a`：`yes→no`、retry `6→7`，实测坐实 #677）→ 刷回原厂 `boot_a` 起 Android；
@@ -228,7 +242,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 入口 | `AGENTS.md` `INDEX.md` `README.md` `PROGRESS.md` `LICENSE` | track |
 | 角度文档 | `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/` `archive/` | track |
 | 源码/补丁/工具 | `scripts/` `tools/` `patches/` `patches-userland/` `reference/` `versions/` `packaging/` `initramfs/` `rootfs/` `probes/` `net/` `waydroid-ota/` `restore-259/` `cycle.sh` `elden-net.sh` `.githooks/` `.gitignore` | track |
-| 证据/备份 | `reports/`（md 入库，大件 ignore）· `backup/`（**不可再生**：删前必须云盘或 bundle 兜底） | track / ignore |
+| 证据/备份 | `reports/`（md 入库，大件 ignore）· `backup/`（**不可再生**：删前必须云盘或 bundle 兜底）· `assets/`（原厂安卓资产提取树，2026-11-19 起；专有、仅本机用、不入库，脚本可重建） | track / ignore |
 | 工作区（**可再生成**） | `build/` `out/` `logs/` `bootslot-b/` `env-pass/` `dl-cam/` `wt/` `external/` `geekidos-linux/` `Y700-elden-linux/` + 软链 `linux` | ignore（`build/` 删前先 bundle + 导 diff） |
 | AI 大脑 | `.pi/`（规范/并发/编排/技能/记忆/会话；分工见 `.pi/README.md`） | track |
 

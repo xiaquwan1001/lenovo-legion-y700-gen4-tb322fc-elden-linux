@@ -135,6 +135,27 @@
 - **boot_b 形态 / 上机纪律 / 归因分层**：只在 `DEVICE/README.md` §1.1、`PITFALLS` #3/#115 维护，本文件不复述。
 
 ### 开放待办（按顺序；需要物理 POR 的排最后）
+- **🆕 2026-11-19 → 明早接续：主线 Linux 已重建到「能登入」，显示仍缺；四条 lane 待落**
+  · **今晚已闭环（有判据）**：① 旧 `linux17` 数据**确认丢失**（EDL 6 点采样全零，成因 = 11-17/18 原厂 `userdata` 449.7 GiB 覆盖）；
+    ② GPT 写回手术表（`linux17` 193 GiB + `userdata` 256.7 GiB，**安卓 `super`/`vbmeta_a`/`boot_a`/`dtbo_a` 零改动**，主备读回逐字节一致 `80ab46e5…`/`e5f79c0e…`）；
+    ③ 最小根 6 GiB EDL 写入，设备端 sha = `abf96ec4…`；④ **`ssh root@192.168.7.1` 可用**（systemd PID1、内核 vk192 UTS、165 包）。
+  · **「只有背光」真因**：该 minbase 镜像没有 `/init`、`/usr/local/sbin` 空 ⇒ systemd 起来了但没有 respawn/usb-gadget/udhcpd
+    ⇒ 症状与内核坏一致。已注入 `/init`+`usb-gadget`+`udhcpd.conf` 修复（`out/min-restore-20261119/`）。**以后所有 minbase 档必须在 stage 装 `/init`**。
+  · **明早第一件事（5 分钟）**：设备上电 → `sudo scripts/ncm-host-up.sh` → `ssh root@192.168.7.1`；
+    先 `sudo python3 scripts/slot-attr.py show | grep boot_b`（retry 是否被扣），再 `python3 scripts/slot-attr.py mark-successful b`。
+  · **显示（本轮只做到定界）**：`/sys/kernel/debug/device_component/ae01000.display-controller` = `aggregate not bound`，
+    `ae94000.dsi`/`ae96000.dsi` = not bound，**(unknown)×2 = not registered**；`af54000.displayport-controller` 在 `devices_deferred`
+    （`aux_bridge: failed to acquire drm_bridge`，上游 `pmic_glink altmode` / `ucsi_glink PPM init failed`）⇒ 学名 = DP 组件把 DPU master 拖死。
+    同时失败：`ath12k` MHI `-110`、`fastrpc` 模块未加载（无 `/dev/fastrpc-adsp`）、`snd-sc8280xp` 卡 deferred（都指向 ADSP/GPR 未就绪）。
+  · **明早显示验证方案（零写盘）**：`out/min-restore-20261119/dp-port2-experiment.patch`（摘掉 `&dpu_intf0_out` 的 `remote-endpoint`
+    ⇒ DP 不进组件匹配表）→ `make dtbs` → `build-boot.sh` 重打 → `fastboot boot`。**两条已定的控制事实**：
+    ① `build-boot.sh` + 原 DTB/原 ramdisk/原 kernel 重打 = **与 `out/boot-elden-vk192.img` 逐字节相同**（sha `bdf47f5f…`）⇒ 重打路径可信；
+    ② 今晚两次 RAM 启动（手工改尾部 DTB 的 `boot-nodp-test.img`、正规重打的 `boot-elden-test-nodp2.img`）**都没有枚举 USB**
+    ⇒ **不能当否证**；下次先跑一遍 `test-ctrl`（= vk192 原件）确认 RAM 启动本身仍可用，并用「背光是否 15 s 闪」+ pstore/串口判。
+  · **其余待办**：③ 桌面 = `resize2fs` 扩到 193 GiB + `daily-baseline`（Phosh/IME/音频），恢复 G1-37 日用面；
+    ④ 安卓侧（等 Android 能起）：KSU 件已备 `out/android-root-20261119/`（自洽未上机）、瘦身 v2 `scripts/android-slim-v2-plan.sh --variant A`；
+    ⑤ 上机跑 `scripts/hide-android-partitions.sh --apply`、`scripts/asset-install-linux.sh --apply`（需桌面/root，均已自测）。
+  · 全账 = `TASKS/sessions/2026-11-19-主线恢复最小Linux与显示定位.md`；产物 `out/min-restore-20261119/`、`scripts/ncm-host-up.sh`、`scripts/acm-sh.py`。
 - **🆕 2026-11-18：四板块脚本功能性审查 —— **四份报告全部落地，P0 全部修完（28 条），P1/P2 按 BACKLOG 续推；新增两道静态门**
   · **已落地**：fastboot/槽位 10 文件、EDL/GPT 11 文件 + `slot-attr` 合并、adb 10 文件、ssh 7 文件；
     外加 `deploy-modules` 原子化、`sign-boot-b` 半件污染、`eldroid-bootctl` 无 active 槽静默回落 b、`trial.sh` `--max-wait`/NOROUTE 现场。
@@ -154,6 +175,14 @@
     ③ 卡动画取证（recovery logcat / ttyGS0）④ 设备恢复可用。
   · 全账 = `TASKS/sessions/2026-11-18-安卓最小包上机成功与卡动画.md`；报告 `reports/android-super-format-20261118.md`、`reports/android-min-avb-facts-20261118.md`；
     脚本 `scripts/android-min-build.sh`；写前 GPT dump 与日志 `out/edl-supermin-20261118/`。
+- **🆕 2026-11-18（对应上面待办 ②）：KSU(init_boot)+自洽 vbmeta_a 主机侧造件完成、未上机** ——
+  产出 `out/android-root-20261119/`：`init_boot_ksu.img`（`e30ce75d…`，官方 259 init_boot + KernelSU-Next v3.4.2 `aarch64_android15-6.6_kernelsu.ko`，
+  footer 描述符 `2 945 024 / ce2a4442…`）+ `vbmeta_a_root.img`（`5d93ba43…`，AVB testkey `2597c218`、`Flags=1`、rollback 0、
+  24 条描述符**只换 init_boot 一条**，其余含 3 条 chain 逐字节同原厂）+ `SHA256SUMS`(8/8 OK) + `MANIFEST.md` + `revert/`(3 件)。
+  生成器 `scripts/android-ksu-avb-build.py`；刷写/回退 `scripts/android-ksu-flash.sh`（**默认 dry-run**，`--apply`/`--revert`/`--revert-preksu`/`--backup-only`）。
+  **两条硬事实**：① 任务给的社区件 `restore-259/KSU/{init_boot.img,vbmeta.img}` **本机不存在**（该目录只剩 2 个 md）⇒ 改为从官方件自建；
+  ② 原厂 259 的 `vbmeta`/`boot`/`recovery` 顶层公钥实测是 **`8fcb864f…`（OEM，无私钥）**，`2597c218` 只是 AOSP testkey（私钥在手）⇒
+  自签件只能用它，且 **boot 链必须保持 `8fcb864f`**（`boot_a` 是原厂件，链 key 一改即致命）。全账 = `reports/android-ksu-avb-20261119.md`。
 - **🆕 2026-11-18：LTBox（Rust GUI 刷写工具）评估已出 —— 推荐「抽 crate 做离线校验 CLI」（1.5–2.5 人日），**不接 MCP** —— 它有、我们 bash 主路径没有的校验 = **P0 6 / P1 7 / P2 5**，P0 全在「写之前」：rawprogram 全节点预检、destructive 节点缺 LUN/sector 直接拒、`start+count` 落 LUN 容量内、**镜像 sector 数 vs 分区 span 写前核对（批量全有或全无）**、写前重读 GPT 复验快照、dump 只认 `PartitionNotFound`。**它也不清 UNBOOTABLE / 不补 retry**（`grep` 0 命中）⇒ 和我们同一颗雷。MCP 不可行的 6 条结构冲突（无 headless / 编排绑 GUI crate / 裸 USB 绕过 device-lock / `EdlSession` 一开一 reset 等）见报告 §3。全账 = `reports/ltbox-evaluation-20261118.md`；仓 = `external/ext-repos/LTBox`（`~/LTBox` 软链）。
 - **🆕 2026-11-18：安卓「最小化线刷包」lane —— 主机侧造件成功，EDL 试装 3 败后定因 = `boot_a` UNBOOTABLE（不是镜像）** —— 现状三句：① 已产出 `new/system_a.img`（5.17 GiB，去预装 6.53 GiB 后重建，e2fsck clean）与 `pkg/super_min.img`（8.28 GiB，lpmake 重打，7×`_a`）；② 设备**停在 fastboot**，`super`+两个 `vbmeta` 已回滚原厂并逐字节核验，**恢复只需把 LUN4 `boot_a` byte6 `0xf7`→`0x77`**；③ **最小包尚无任何成功上机样本**（“8.28 GiB 能起”仍是假设）。全账 = `TASKS/sessions/2026-11-18-安卓最小线刷包-主机侧造件与EDL试装失败.md`；子代理报告 `reports/android-super-format-20261118.md`、`reports/android-min-avb-facts-20261118.md`；脚本 `scripts/android-min-build.sh`。
 - **2026-11-13 夜：上机一轮（零写盘）—— ramdisk 修复件 `vk191` 一次通过 + s2idle 3/3** —— 全账 `reports/device-session-20261113-vk191.md`，在机状态只读 `DEVICE/README.md` §1.1 首条。
