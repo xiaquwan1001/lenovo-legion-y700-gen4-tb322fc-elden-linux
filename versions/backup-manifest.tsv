@@ -1,0 +1,36 @@
+# versions/backup-manifest.tsv — backup/ 逐项台账（2026-11-18 triage，报告 = reports/backup-triage-20261118.md）
+# 列: path	bytes	sha_or_dirhash	class	keep_reason	alt_source	refs_in_repo
+backup/HA2EXB0E-16+512	1245571766	dir	KEEP-CRITICAL	U2独有分区dump(part-*)/pre-unlock基线/gpt-20261025手术档/boot_b各时点快照; EDL不刷这些分区=唯一副本	无; 云备份20261016覆盖旧75件(dev-dump-20261117/edl-20261118未覆盖)	243
+backup/artifacts-bundle-20261105	45878146	(包内SHA256SUMS.all)	KEEP-CRITICAL	uefi-dxe二进制载荷tar.zst为唯一保存(源reports/artifacts二进制A8已删)	无	5
+backup/avf	260209658	(包内SHA256SUMS)	KEEP-REF	AVF资产; 可由scripts/extract-avf-assets.sh从原厂259镜像再提取	scripts/extract-avf-assets.sh+official-rom; 云备份20261016	14
+backup/boot_a-pre-uefi-20261108.img	100663296	d4772c1189b5d4385718ef0db84ce4f32a6ef2629a32497554b65fba91705886	DELETE	逐字节==backup/stock-259/boot_a.img(sha同)	backup/stock-259/boot_a.img; fw/tb322fc-edl/boot.img	0
+backup/boot_b-live-vk184-20261110.img	100663296	4e38bc2cd46a45b9(uniquE)	KEEP-CRITICAL	U2 boot_b 2026-11-10在机状态dump; 唯一	无	0
+backup/build-bundles	606171	dir(MANIFEST+dirty diffs)	KEEP-CRITICAL	B1脏树diff/untracked存档; 注意RESOURCES引用的m3v2-7.3rc7-git-20261105.tar.zst(1.33G)已不在=引用漂移	无	10
+backup/corrupt-20261103	84529152	4d7e2ea9a10ca0f4(inode 33991975)	KEEP	取证标记; 与out/boot-elden-m3v5-daily.img同inode硬链接(0额外占盘)	out/boot-elden-m3v5-daily.img	4
+backup/device-test-20261113	171640939	c14dc3e54cb7ec42(vk191)	KEEP-REF	vk191镜像+manifest(可由build/daily+manifest参数复现, 但dirty内核精确字节难再生)	manifest+build/daily	3
+backup/doctor-scripts-wt-20261015	7736	dir	KEEP-REF	doctor脚本时点快照(本体已回scripts/); 云备份20261016有	scripts/check-doctor-*; 云备份20261016	3
+backup/dtbo_a.img	33554432	45f517902d2271ab	KEEP-CRITICAL	U2 dtbo_a原始件(与official-rom/dtbo.img同sha=双副本)	official-rom-15.10.259/dtbo.img	0
+backup/dtbo_a-pre-uefi-20261110.img	33554432	45f517902d2271ab	KEEP	与dtbo_a.img同inode硬链接(0成本); 保留双名作时点语义	dup-of:dtbo_a.img	0
+backup/elden-dump.txt	116533	(text)	KEEP	2026-10-17设备文本取证	无	2
+backup/f2fs-migrate-20261025-*	322304	dir	x3	KEEP(硬链接合并)	三目录各有唯一after状态(写盘往返证据); gpt_before_*三份相同→hardlink去重(~90K)	gpt-20261031同sha	17
+backup/fw	716960252	dir	KEEP-REF	主线驱动所需固件子集(vendor/modem/bluetooth/dspso/gen80000_*)+tb322fc-edl EDL包; 可由official-rom再提取但成本高	official-rom-15.10.259	17(+tb322fc-edl 9)
+backup/git-history-rewrite-20261112	827029669	413842628+413187041	MERGE-DELETE	两份pre-rewrite bundle被git-slim-20261113/main-all覆盖(refs/original=18e6b78cab; 老tip 264073bf已验为祖先)	backup/git-slim-20261113/main-all-20261113.bundle	3
+backup/git-history-rewrite-20261103	0	(empty)	DELETE	空目录(内容已并移)	-	0
+backup/git-repair-20261105	0	(empty)	DELETE	空目录	-	0
+backup/git-slim-20261113	1267191421	315057033+412619998+539514390	KEEP-CRITICAL	全项目git bundle(main/geekidos/m3v2全refs)=现役git备份唯一真源(旧kernel-git-repair-2026-10-23 bundle已不在盘)	无(建议尽快上云)	2
+backup/gpt	110592	gpt_main0_device=6cf48fe0…(234GiB档)	KEEP-CRITICAL	234GiB档GPT主备表(禁用于512档); 云备份20261016有	云备份20261016	14
+backup/gpt-20261031	296129	gpt-primary=6afbaa75…	KEEP-CRITICAL	512档GPT手术前双表(=f2fs-migrate gpt_before同sha互证)	f2fs-migrate-*/gpt_before_*	1
+backup/lun4-gpt-20261101	274432	primary=84efc47d… backup=7d4e7feb…	KEEP-CRITICAL	LUN4 GPT主备表(槽位属性/A-B所在LUN)	无(有SHA256SUMS自校验)	14
+backup/m1-73-config-vk127-20261018.config	324699	(config)	KEEP-REF	vk127内核config快照(patches/或有同期)	patches/	1
+backup/misc	1581056	dir	KEEP-CRITICAL	devinfo/misc/uefivarstore原厂态(a槽读出); 云备份20261016有	云备份20261016	8
+backup/official-rom-15.10.259	16786113334	dir	KEEP-REF	官方全量线刷包(super_4=12G独占/logfs/lenovoraw); 联想官网可重下但~16G+检索成本高; 同时是tb322fc-edl的hardlink去重源	联想官网重下(版本页)	22
+backup/out-history-20261105	8134336119	dir(141 img+ARCHIVE.tsv+ROLLBACK.sh)	KEEP-CRITICAL	vk账闸: 114件均在versions/vk-kernel-identity.tsv有行; 台架不可复跑; 仅vk141==vk142硬链接重复(双名0成本)	无	17
+backup/rawdump.img	268435456	(云manifest有sha)	KEEP-CRITICAL	EDL raw dump; 不可再生成	云备份20261016	16
+backup/sde-gpt-head.bin	139264	a83d2e62e12ee9f0	KEEP-CRITICAL	sde(LUN0) GPT头段	云备份20261016	6
+backup/sde-gpt-tail.bin	139264	b7a279e435873018	KEEP-CRITICAL	sde(LUN0) GPT尾段	云备份20261016	6
+backup/slot-probe	6959104	dir	KEEP-CRITICAL	devinfo/uefivarstore/misc的linux-b槽读取态+retry目录	云备份20261016	8
+backup/stock-259	258213100	dir(SHA256SUMS)	KEEP-CRITICAL	U2原厂259双槽13分区件(boot_a==tb322fc-edl boot.img; device态与ROM包内boot.img不同sha=不能纯靠重下复原)	official-rom(部分); 云待核(P2-d)	43
+backup/stock-elden	269807848	dir	KEEP-REF	原厂boot/dtbo反编译产物(dts/dtb/kernel/文件清单); 可由official-rom重新提取	scripts再提取自official-rom	52
+backup/uefi-builds-20261106	90779087	dir(5个R2..R6)	KEEP-REF	UEFI构建产物; 源码在仓可重建	仓源码重建	1
+backup/vbmeta_a-orig-20261110.img	65536	(未hash,64K原厂件)	KEEP-CRITICAL	原厂vbmeta_a(恢复AVB用)	stock-259/vbmeta_a.img(待sha核对)	0
+backup/vbmeta_b-20261110.img	65536	(未hash)	KEEP-CRITICAL	vbmeta_b时点件	stock-259/vbmeta_b.img(待sha核对)	0
