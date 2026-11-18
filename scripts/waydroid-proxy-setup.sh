@@ -37,7 +37,7 @@ except Exception as e:
 EOF"
 
 say "2. 注入默认路由 init.rc（bind-mount 覆盖 blank_screen.rc）"
-scp $SSH_OPTS net/waydroid-proxy/blank_screen.rc "root@$DEVICE:/root/wd/blank_screen.rc"
+timeout -k 5 120 scp $SSH_OPTS net/waydroid-proxy/blank_screen.rc "root@$DEVICE:/root/wd/blank_screen.rc"
 rsh "cd /var/lib/waydroid/lxc/waydroid && \
   cp -a config_nodes config_nodes.bak-\$(date +%s) && \
   (grep -q 'blank_screen.rc' config_nodes || \

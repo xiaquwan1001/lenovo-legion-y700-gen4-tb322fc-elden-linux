@@ -94,7 +94,7 @@ $SSH "
 " || die "ESP 挂载/空间检查失败"
 
 # ---- 2. 传文件（先落到 /tmp 再 cp，避免 scp 直接写 FAT 中断留脏）-----------
-scp -q -o BatchMode=yes -o StrictHostKeyChecking=no "$LOADER" "$TAB:/tmp/esp-loader.efi" || die "scp loader 失败"
+timeout -k 5 300 scp -q -o BatchMode=yes -o StrictHostKeyChecking=no "$LOADER" "$TAB:/tmp/esp-loader.efi" || die "scp loader 失败"
 if [ -n "$BOOTIMG" ]; then
 	scp -q -o BatchMode=yes -o StrictHostKeyChecking=no "$BOOTIMG" "$TAB:/tmp/esp-boot.img" || die "scp boot.img 失败"
 fi

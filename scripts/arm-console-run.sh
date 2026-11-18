@@ -14,7 +14,7 @@ LOG=$OUT/console.log; : > "$LOG"
 if ! fastboot devices 2>/dev/null | grep -q .; then
 	echo "[arm] ❌ 设备不在 fastboot（需要物理 POR / Vol-+Power）" >&2; exit 2
 fi
-fastboot devices | tee "$OUT/fastboot-before.txt"
+timeout -k 2 10 fastboot devices | tee "$OUT/fastboot-before.txt"
 
 # 先清掉遗留的串口读进程（tty 只能被一个读者持有，否则 boot 日志抓不到）
 for p in $(pgrep -f 'cat /dev/tty[A]CM0' 2>/dev/null); do kill "$p" 2>/dev/null; done

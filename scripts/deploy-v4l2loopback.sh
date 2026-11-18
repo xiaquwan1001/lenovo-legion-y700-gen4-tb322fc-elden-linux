@@ -75,7 +75,7 @@ fi
 say "部署 → /lib/modules/$UTS/extra/ 并加载（max_buffers=8）"
 rsh "mkdir -p /lib/modules/$UTS/extra"
 # shellcheck disable=SC2086
-scp -q $SSH_OPTS "$OUT/v4l2loopback.ko" "$TARGET:/lib/modules/$UTS/extra/"
+timeout -k 5 300 scp -q $SSH_OPTS "$OUT/v4l2loopback.ko" "$TARGET:/lib/modules/$UTS/extra/"
 rsh 'depmod -a
 	# ⚠ 若模块仍被占用（生产者 gst / 容器 camera HAL 开着设备），`modprobe -r` 会失败，
 	# 而 `modprobe` 随后是 no-op ⇒ 你以为换了新模块，实际还在跑旧代码（2026-10-27 实测踩过）。

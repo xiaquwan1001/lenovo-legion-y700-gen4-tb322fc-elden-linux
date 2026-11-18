@@ -6,7 +6,7 @@
 set -uo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 TAB=${TAB:-root@192.168.7.1}
-SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 $TAB"
+SSH="timeout -k 3 ${SSHTO:-120} ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=8 $TAB"
 UP=/home/xuqianhui/y700-elden/scripts/camera-stream-up.sh
 DEVS=/tmp/skewcal-dev-measure.sh
 
@@ -39,7 +39,7 @@ dmesg | grep -iE "csiphy|camss|vfe|csid" | tail -6
 DEVEOF
 
 out=$("$ROOT/scripts/device-lock.sh" -w 900 bash -c "
-  $SSH 'test -s /tmp/camera-stream-up.sh' || scp -q -o StrictHostKeyChecking=no '$UP' $TAB:/tmp/camera-stream-up.sh
+  $SSH 'test -s /tmp/camera-stream-up.sh' || timeout -k 3 120 scp -q -o StrictHostKeyChecking=no '$UP' $TAB:/tmp/camera-stream-up.sh
   scp -q -o StrictHostKeyChecking=no '$DEVS' $TAB:$DEVS
   $SSH 'sh $DEVS $FRAMES'
 " 2>&1)

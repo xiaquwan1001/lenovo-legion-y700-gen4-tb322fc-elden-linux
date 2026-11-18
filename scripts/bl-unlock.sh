@@ -22,7 +22,7 @@ echo "   序列号 = $fb"
 fbx() { timeout "${FBTO:-30}" fastboot -s "$fb" "$@"; }
 
 echo "== 2/4 解锁前 getvar（存档）=="
-fastboot -s "$fb" getvar all 2>&1 | tee "backup/${fb}-preunlock-getvar.txt" | grep -iE "unlocked|secure|product|variant|slot" 
+timeout -k 2 20 fastboot -s "$fb" getvar all 2>&1 | tee "backup/${fb}-preunlock-getvar.txt" | grep -iE "unlocked|secure|product|variant|slot" 
 
 read -rp "== 3/4 确认解锁？将永久失去保修/FOTA/Widevine L1 并擦除全部用户数据 [y/N] " ans
 [ "${ans:-n}" = y ] || { echo "已取消"; exit 1; }
@@ -32,7 +32,7 @@ echo "== 4/4 flash unlock =="
 fastboot -s "$fb" flash unlock "$IMG" || { echo "flash unlock 失败（若 Write to device failed：单条 fastboot reboot bootloader 后重试）"; exit 1; }
 sleep 2
 echo "== oem unlock-go（屏上出现选择界面时：音量键选 UNLOCK，电源键确认）=="
-fastboot -s "$fb" oem unlock-go
+timeout -k 2 180 fastboot -s "$fb" oem unlock-go
 echo "设备将自动重启并擦数据，约 3-5 分钟，勿拔线。"
 echo "开机后校验: adb shell getprop ro.boot.verifiedbootstate   # 期望 orange"
 echo "           adb shell getprop ro.boot.flash.locked      # 期望 0"

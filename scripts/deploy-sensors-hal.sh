@@ -44,9 +44,9 @@ fi
 echo "[deploy-sensors-hal] binary: $BIN ($(du -h "$BIN" | cut -f1))"
 
 echo "[deploy-sensors-hal] 上传到 $TAB"
-scp -q -o StrictHostKeyChecking=no "$BIN" "$TAB:/tmp/elden-sensors-service"
+timeout -k 5 300 scp -q -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$BIN" "$TAB:/tmp/elden-sensors-service"
 
-ssh -o StrictHostKeyChecking=no "$TAB" '
+timeout -k 5 120 ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$TAB" '
 set -eu
 [ -d /var/lib/waydroid ] || { echo "waydroid 未初始化（/var/lib/waydroid 不存在）"; exit 1; }
 mkdir -p /var/lib/waydroid/overlay/vendor/bin/hw

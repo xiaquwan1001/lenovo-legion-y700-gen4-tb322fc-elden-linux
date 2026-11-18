@@ -33,7 +33,7 @@ mkdir -p "$OUT"
 LOG=$OUT/run.log
 exec > >(tee -a "$LOG") 2>&1
 
-SSH="ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=8 $DEV"
+SSH="timeout -k 3 ${SSHTO:-120} ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=8 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 $DEV"
 say() { echo "[$(date '+%H:%M:%S')] $*"; }
 ssh_ok() { $SSH true 2>/dev/null; }
 r() { $SSH "$@"; }

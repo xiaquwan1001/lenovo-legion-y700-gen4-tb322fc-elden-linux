@@ -16,31 +16,31 @@ fi
 # wait-for-device 无 -s 会等**任何**设备；这里既带 -s 又有超时上限
 timeout 60 adb -s "$SER" wait-for-device 9>&- || { echo "adb $SER 60 s 内未就绪" >&2; exit 1; }
 # shell -n + </dev/null：下面 for 循环里的 adb shell 不许吃脚本 stdin（PITFALLS #397 同族）
-adb_s() { timeout "${ADBTO:-20}" adb -s "$SER" shell -n "$@" </dev/null; }
+adb_s() { timeout -k 3 "${ADBTO:-20}" adb -s "$SER" shell -n "$@" </dev/null 9>&-; }
 
-CAP="$(adb -s "$SER" shell getprop ro.boot.hwboardid | tr -d '\r' | sed 's/^SM8750P_//;s/_[0-9]*$//')"
-BOOTLOAD_SN="$(adb -s "$SER" shell getprop ro.boot.bootload_sn | tr -d '\r')"
-LOCKED="$(adb -s "$SER" shell getprop ro.boot.flash.locked | tr -d '\r')"
-DISP="$(adb -s "$SER" shell getprop ro.build.display.id | tr -d '\r')"
-WV="$(adb -s "$SER" shell getprop sys.lenovo.widevine_security_level | tr -d '\r')"
+CAP="$(adb_s getprop ro.boot.hwboardid | tr -d '\r' | sed 's/^SM8750P_//;s/_[0-9]*$//')"
+BOOTLOAD_SN="$(adb_s getprop ro.boot.bootload_sn | tr -d '\r')"
+LOCKED="$(adb_s getprop ro.boot.flash.locked | tr -d '\r')"
+DISP="$(adb_s getprop ro.build.display.id | tr -d '\r')"
+WV="$(adb_s getprop sys.lenovo.widevine_security_level | tr -d '\r')"
 
 DIR="backup/${SER}-${CAP}/pre-unlock"; mkdir -p "$DIR"
 
 # --- 纯读采集（不写设备一个字）---
-adb -s "$SER" shell getprop                                   > "$DIR/getprop-locked.txt"
-adb -s "$SER" shell 'ls -l /dev/block/by-name'                > "$DIR/by-name.txt"
-adb -s "$SER" shell 'cat /proc/partitions'                    > "$DIR/proc-partitions.txt"
-adb -s "$SER" shell 'dumpsys sensorservice'                   > "$DIR/sensorservice-locked.txt"
-adb -s "$SER" shell 'pm list packages -f'                     > "$DIR/packages.txt"
-adb -s "$SER" shell 'settings list global'                    > "$DIR/settings-global.txt"
-adb -s "$SER" shell 'settings list secure'                    > "$DIR/settings-secure.txt"
-adb -s "$SER" shell 'dumpsys -l'                              > "$DIR/dumpsys-services.txt"
+adb_s getprop                                   > "$DIR/getprop-locked.txt"
+adb_s 'ls -l /dev/block/by-name'                > "$DIR/by-name.txt"
+adb_s 'cat /proc/partitions'                    > "$DIR/proc-partitions.txt"
+adb_s 'dumpsys sensorservice'                   > "$DIR/sensorservice-locked.txt"
+adb_s 'pm list packages -f'                     > "$DIR/packages.txt"
+adb_s 'settings list global'                    > "$DIR/settings-global.txt"
+adb_s 'settings list secure'                    > "$DIR/settings-secure.txt"
+adb_s 'dumpsys -l'                              > "$DIR/dumpsys-services.txt"
 for p in ro.serialno ro.boot.serialno ro.boot.hwboardid ro.boot.bootload_sn \
          ro.build.display.id ro.build.version.security_patch ro.product.model \
          ro.boot.flash.locked ro.boot.vbmeta.device_state ro.boot.verifiedbootstate \
          ro.boot.slot_suffix sys.lenovo.widevine_security_level \
          ro.odm.lenovo.supported_csr_type ro.boot.bootloader; do
-  printf '%s=%s\n' "$p" "$(adb -s "$SER" shell getprop $p | tr -d '\r')"
+  printf '%s=%s\n' "$p" "$(adb_s getprop "$p" | tr -d '\r')"
 done > "$DIR/key-props.txt"
 sha256sum "$DIR"/* > "$DIR/SHA256SUMS"
 

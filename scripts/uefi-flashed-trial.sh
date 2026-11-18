@@ -66,7 +66,7 @@ T0_ABS=""
 # 槽位属性读数靠 device 侧 slot-attr.py（GPT 属性字节，不是分区内容）；不在就先送过去
 ensure_slot_attr() {
 	sshc 'test -f /tmp/slot-attr.py' 10 && return 0
-	cat "$ROOT/scripts/slot-attr.py" | ssh -o BatchMode=yes -o ConnectTimeout=8 \
+	cat "$ROOT/scripts/slot-attr.py" | timeout -k 3 60 ssh -o BatchMode=yes -o ConnectTimeout=8 \
 		-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$TAB" \
 		'cat > /tmp/slot-attr.py && chmod +x /tmp/slot-attr.py' 2>/dev/null
 }

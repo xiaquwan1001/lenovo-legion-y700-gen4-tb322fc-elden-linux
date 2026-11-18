@@ -35,7 +35,7 @@ done
 TMP=$(mktemp /tmp/logfs.XXXXXX.img)
 trap 'rm -f "$TMP"' EXIT
 
-ssh -o BatchMode=yes -o ConnectTimeout=8 "$RDEV" "dd if=$PART bs=1M count=8 2>/dev/null" > "$TMP"
+timeout -k 3 60 ssh -o BatchMode=yes -o ConnectTimeout=8 "$RDEV" "dd if=$PART bs=1M count=8 2>/dev/null" > "$TMP"
 [ -s "$TMP" ] || { echo "empty read from $RDEV:$PART" >&2; exit 1; }
 
 TXT=$(mktemp /tmp/abl.XXXXXX.txt)

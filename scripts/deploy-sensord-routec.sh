@@ -48,8 +48,8 @@ $SSH "${SSHOPTS[@]}" "$TAB" 'apk del waydroid-sensors >/dev/null 2>&1 || true'
 # protocol. It must NOT be an OpenRC service for the *daemon* (Waydroid spawns
 # that itself), but it does need one for the relay process.
 echo "[sensord-routec] install SSC->UDP relay + OpenRC service"
-scp -q -o StrictHostKeyChecking=no "$SRC/ssc-udp-relay.py" "$TAB:/usr/local/bin/ssc-udp-relay.py"
-scp -q -o StrictHostKeyChecking=no "$SRC/ssc-udp-relay.openrc" "$TAB:/etc/init.d/ssc-udp-relay"
+scpq "$SRC/ssc-udp-relay.py" "$TAB:/usr/local/bin/ssc-udp-relay.py"
+scpq "$SRC/ssc-udp-relay.openrc" "$TAB:/etc/init.d/ssc-udp-relay"
 $SSH 'chmod 0755 /usr/local/bin/ssc-udp-relay.py /etc/init.d/ssc-udp-relay; rc-update add ssc-udp-relay default >/dev/null 2>&1 || true; rc-service ssc-udp-relay restart 2>&1 | tail -1'
 
 cat <<'EOF'
