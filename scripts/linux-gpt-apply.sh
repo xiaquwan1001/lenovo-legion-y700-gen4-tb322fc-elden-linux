@@ -17,6 +17,9 @@
 #   --reset       写后显式 `qdl reset` 把设备踢出 9008（默认**不**踢：留在 EDL 便于连续操作）
 #
 # 硬约束：
+#   * 写前 **live-GPT 交叉核对**（2026-11-18）：从设备现表与新表逐分区比几何；新表会删掉
+#     「现表里还存在的分区」时默认**拒绝写**（拿错表/覆盖冲突），确属删分区请 `ALLOW_DROP=1`。
+#     打印 `~ 名字: (first,last) -> (first,last)` 即为几何变化，逐条看过再动手。
 #   * 扇区大小 = **4096 B**（本机 TB322FC 实测）；主表 = LUN 的 LBA0..5（6 扇区 = 24576 B），
 #     备表 = LBA `alt_lba-4 .. alt_lba`（5 扇区 = 20480 B，末尾 4096 B 是备份头）。
 #   * 写前必须已有当前表 dump：本脚本在**同一条 qdl 命令里**先读一次 LBA0..5 落盘
@@ -137,6 +140,40 @@ echo "[write] 主备双表（单次 qdl 会话：读旧表留回退 → 写备�
 timeout -k 10 120 "$QDL" -s ufs -R "$LOADER" \
 	read "$LUN/0+6" "$READDIR/pre-write-primary.bin" \
 	2>&1 | tee "$READDIR/qdl-pre.log" | tail -3
+# ── live-GPT 交叉核对（2026-11-18 审计 R1 P0-③）：写目标 LBA 只来自主机件时，
+#    dump 一过期就会把新数据写进「在用分区的中段」，而脚本仍会打印读回一致。
+#    这里拿刚读到的设备现表逐分区比对；新表**少掉**一个现表还存在的分区 = 需要显式 --allow-drop。
+python3 - "$READDIR/pre-write-primary.bin" "$MAIN" <<'PY2' || { echo "!! live-GPT 交叉核对失败/被拒；未写任何东西" >&2; exit 1; }
+import sys, struct
+def ents(path):
+    b=open(path,'rb').read()
+    if b[4096:4104] != b'EFI PART':
+        raise SystemExit(f"{path}: 不是主表件（LBA1 无 EFI PART）")
+    lba=struct.unpack_from('<Q', b, 4096+72)[0]
+    off=lba*4096
+    out={}
+    for i in range(128):
+        e=b[off+i*128: off+(i+1)*128]
+        if len(e) < 128: break
+        n=e[56:128].decode('utf-16-le','replace').strip('\x00')
+        if not n: continue
+        first,last=struct.unpack_from('<QQ', e, 32)
+        out[n]=(first,last)
+    return out
+live=ents(sys.argv[1]); new=ents(sys.argv[2])
+gone=[n for n in live if n not in new]
+moved=[(n, live[n], new[n]) for n in live if n in new and live[n]!=new[n]]
+added=[n for n in new if n not in live]
+print(f"[live-check] 现表 {len(live)} 分区 / 新表 {len(new)}；新增 {len(added)}，几何变化 {len(moved)}，将消失 {len(gone)}")
+for n,a,b in moved[:8]: print(f"  ~ {n}: {a} -> {b}")
+if added[:6]: print(f"  + 新增: {', '.join(added[:6])}")
+if gone:
+    print(f"  - 将消失: {', '.join(gone[:8])}{' …' if len(gone)>8 else ''}")
+    if not __import__('os').environ.get('ALLOW_DROP'):
+        raise SystemExit("拒绝：新表会删掉现表里仍存在的分区（覆盖冲突/拿错表？）"
+                         " —— 确认要删请 ALLOW_DROP=1 重跑")
+PY2
+
 OLD_ALT=$(python3 - "$READDIR/pre-write-primary.bin" <<'PY' 2>/dev/null || true
 import struct,sys
 b=open(sys.argv[1],'rb').read()
