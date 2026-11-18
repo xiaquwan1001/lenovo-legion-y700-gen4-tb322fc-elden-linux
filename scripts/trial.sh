@@ -14,13 +14,16 @@
 #          [--deploy D] [--probe P] [--logdir DIR] [--note ...]
 #                                 写一条机器可读 record（JSON + index.tsv），不碰设备
 #   run --label L --image IMG --reset T [--deploy none|fastboot-boot] [--probe q28|raw]
-#          [--note ...] [--force] [--a-slot]
+#          [--note ...] [--force] [--a-slot] [--max-wait SEC]
 #                                 门 → 部署 → 探针 → 落 record（完整编排）
 #                                 --a-slot：目标 = a 槽（UEFI/flashed 形态）⇒ 前置「a 槽 dtbo 清零」门：
 #                                 先跑 scripts/uefi-a-slot-prepare.sh --check（只读）；非 READY 则**幂等调用**
 #                                 uefi-a-slot-prepare.sh（备份 + 写 32 MiB 全 0 + 读回校验）再复检；
 #                                 --no-a-slot-prep 关掉自动修复（回到旧行为：非 READY 即中止）
 #                                 （真 dtbo_a 合 overlay 会卡 logo，reports/uefi-dtbo-a-rootcause-20261110.md）
+#                                  --max-wait：部署后等 SSH 回来的预算（秒，默认 300）；
+#                                  超时判 NOROUTE 时会把 fastboot 侧槽属性/getvar/lsusb 落成
+#                                  LOGDIR/fastboot-site.txt（判读现场，不再只有一句 README）
 #   selftest                      离线自测（不碰设备）
 #
 # 约定：reset 必须显式声明；verdict 只允许在 record 里出现。
@@ -169,6 +172,7 @@ case "$cmd" in
 
 	run)
 		LABEL=""; IMAGE=""; RESET=""; DEPLOY="none"; PROBE="none"; NOTE=""; FORCE=0; ASLOT=0; ASLOT_PREP=1
+		MAXWAIT=${MAXWAIT:-300}   # 等 SSH 回来的预算（秒）；--max-wait 覆盖
 		while [ $# -gt 0 ]; do
 			case "$1" in
 				--label) LABEL=$2; shift ;;
@@ -180,6 +184,8 @@ case "$cmd" in
 				--force) FORCE=1 ;;
 				--a-slot) ASLOT=1 ;;
 				--no-a-slot-prep) ASLOT_PREP=0 ;;
+				--max-wait) MAXWAIT=$2; shift ;;
+				--max-wait=*) MAXWAIT=${1#--max-wait=} ;;
 			esac
 			shift
 		done
@@ -231,10 +237,24 @@ case "$cmd" in
 		esac
 
 		# 等 SSH 回来（部署后）
-		ok=0; for _ in $(seq 1 30); do [ "$(S 'echo up' 6)" = up ] && { ok=1; break; }; sleep 5; done
+		# 2026-11-18 审计 R2 P2-9：旧版写死 30×5 s，忽略 --max-wait；冷起/RAM 变体常被判 NOROUTE。
+		# P2-10：NOROUTE 分支只写 README，不留槽属性/getvar 现场 ⇒ 判读缺一半。
+		_wait=${MAXWAIT:-300}; _it=$(( _wait / 5 )); [ "$_it" -lt 1 ] && _it=1
+		ok=0; for _ in $(seq 1 "$_it"); do [ "$(S 'echo up' 6)" = up ] && { ok=1; break; }; sleep 5; done
 		if [ "$ok" != 1 ]; then
 			VERDICT="NOROUTE"; LOGDIR="$TDIR/$(date -u +%Y%m%dT%H%M%SZ)-$LABEL"; mkdir -p "$LOGDIR"
-			echo "[trial] 设备未起 SSH（150s）" > "$LOGDIR/README.txt"
+			echo "[trial] 设备未起 SSH（预算 ${_wait}s，--max-wait 可调）" > "$LOGDIR/README.txt"
+			# 现场：fastboot 侧槽属性 + getvar（有 SER 才发，避免猜设备）
+			{
+				echo "## fastboot devices"; timeout -k 2 10 fastboot devices 2>&1
+				if [ -n "${SER:-}" ]; then
+					for k in current-slot slot-unbootable:a slot-unbootable:b slot-retry-count:a slot-retry-count:b slot-successful:a slot-successful:b; do
+						printf '%s: ' "$k"; timeout -k 2 10 fastboot -s "$SER" getvar "$k" 2>&1 | head -1
+					done
+				fi
+				echo "## lsusb"; lsusb 2>/dev/null | grep -E '18d1:|17ef:|05c6:' || true
+			} > "$LOGDIR/fastboot-site.txt" 2>&1
+			echo "[trial] 现场见 $LOGDIR/fastboot-site.txt（槽属性/getvar/lsusb）" >&2
 			write_record; exit 1
 		fi
 
