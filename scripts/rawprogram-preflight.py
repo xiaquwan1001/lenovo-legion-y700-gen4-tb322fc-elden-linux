@@ -74,9 +74,41 @@ def image_sectors(path, sector_size):
     return (st.st_size + sector_size - 1) // sector_size
 
 
-def main():
+def selftest():
+    """内置坏包：4 类缺陷各一例，全部必须被检出；正确包必须 0 FAIL。"""
+    import tempfile
+    fails = []
+    with tempfile.TemporaryDirectory() as d:
+        open(os.path.join(d, "ok.img"), "wb").write(b"\0" * (4096 * 2))
+        open(os.path.join(d, "big.img"), "wb").write(b"\0" * (4096 * 100))
+        good = os.path.join(d, "good.xml")
+        open(good, "w").write(
+            '<data><program start_sector="100" num_partition_sectors="8"'
+            ' physical_partition_number="0" filename="ok.img" label="a"/></data>')
+        bad = os.path.join(d, "bad.xml")
+        open(bad, "w").write(
+            '<data>'
+            '<program start_sector="100" num_partition_sectors="8" physical_partition_number="0" filename="ok.img" label="a"/>'
+            '<program start_sector="104" num_partition_sectors="8" physical_partition_number="0" filename="ok.img" label="overlap"/>'
+            '<program start_sector="200" num_partition_sectors="4" physical_partition_number="0" filename="big.img" label="toobig"/>'
+            '<program start_sector="999999" num_partition_sectors="4" physical_partition_number="0" filename="ok.img" label="oob"/>'
+            '<program start_sector="300" num_partition_sectors="4" filename="ok.img" label="nolun"/>'
+            '</data>')
+        rc_good = main([good, "--lun-sectors", "1000"])
+        rc_bad = main([bad, "--lun-sectors", "1000"])
+        if rc_good != 0:
+            fails.append("正确包装被判 FAIL（假阳性）")
+        if rc_bad == 0:
+            fails.append("坏包未被检出（假阴性）—— 检查器是空转的")
+    for f in fails:
+        print(f"  SELFTEST FAIL {f}")
+    print(f"== selftest {'OK' if not fails else 'FAIL=' + str(len(fails))}（正确包 rc=0 / 坏包 rc=1）")
+    return 1 if fails else 0
+
+
+def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("xmls", nargs="+")
+    ap.add_argument("xmls", nargs="*")
     ap.add_argument("--package-dir", help="镜像所在目录（默认 = 第一个 XML 所在目录）")
     ap.add_argument("--gpt", help="默认主表件（gpt_mainN.bin），用它的 last_usable_lba 判越界")
     ap.add_argument("--gpt-for", action="append", default=[], metavar="LUN=PATH",
@@ -85,7 +117,14 @@ def main():
     ap.add_argument("--sector-size", type=int, default=4096)
     ap.add_argument("--allow-missing", action="store_true", help="缺件只 warn（默认 FAIL）")
     ap.add_argument("--json", action="store_true")
-    a = ap.parse_args()
+    ap.add_argument("--selftest", action="store_true",
+                    help="用内置坏包自检（4 类缺陷必须全被抓）；不读外部文件")
+    a = ap.parse_args(argv)
+
+    if a.selftest:
+        return selftest()
+    if not a.xmls:
+        ap.error("需要至少一个 rawprogram XML（或 --selftest）")
 
     pkg = a.package_dir or os.path.dirname(os.path.abspath(a.xmls[0]))
     limits = {}
@@ -193,4 +232,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
