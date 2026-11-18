@@ -246,6 +246,20 @@ say "8 门禁"
 f=0
 b() { printf '  FAIL  %s\n' "$*"; f=$((f+1)); }
 o() { printf '  ok    %s\n' "$*"; }
+# 两个档都要的「交接件」（PITFALLS #680）：/init 与 usb-gadget 由 stage rsync 带进来，
+# 少一件时 rsync 退出码照样 0、systemd 也能从 /sbin/init 起来 ⇒ 设备上表现为
+# 「只有背光 + USB 完全不枚举」，与内核坏无法区分。所以在这里 fail-closed。
+SRC_INIT=$(cd "$(dirname "$0")/../../initramfs" 2>/dev/null && pwd)/init
+if [ -f "$ROOTDIR/init" ] && [ -x "$ROOTDIR/init" ]; then
+	o "/init 在且可执行（$(stat -c%s "$ROOTDIR/init") B）"
+	if [ -f "$SRC_INIT" ]; then
+		cmp -s "$SRC_INIT" "$ROOTDIR/init" \
+			&& o "/init == initramfs/init（同字节）" \
+			|| b "/init 与真源 initramfs/init 不同（磁盘 init 分叉，改完真源要重跑构建）"
+	fi
+else
+	b "缺 /init 或不可执行（stage 少件；设备上 systemd 会起但无 respawn/usb-gadget/udhcpd，见 PITFALLS #680）"
+fi
 if [ "$GATE_MIN" = 1 ]; then
 	# 最小档门禁：只要求「能起 + 能 ssh + 模块/固件同源」
 	[ "$(chroot "$ROOTDIR" dpkg --print-architecture 2>/dev/null)" = arm64 ] && o "dpkg arch = arm64" || b "dpkg arch 不是 arm64"
@@ -260,6 +274,8 @@ if [ "$GATE_MIN" = 1 ]; then
 	vm=$(modinfo -F vermagic "$mko" 2>/dev/null | awk '{print $1}')
 	[ "$vm" = "$UTS" ] && o "vermagic 逐字匹配（$([ -n "$mko" ] && echo "${mko#$ROOTDIR/lib/modules/$UTS/kernel/}" || echo 'no .ko')）" || b "vermagic 不符（'$vm' ≠ '$UTS'，取样 '${mko:-none}'）"
 	[ -f "$ROOTDIR/lib/firmware/qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin" ] && o "tplg 在" || b "缺 tplg（音频必死）"
+	[ -x "$ROOTDIR/usr/local/sbin/usb-gadget" ] && o "usb-gadget 在（USB-NCM 登入路径）" || b "缺 /usr/local/sbin/usb-gadget（无串口时唯一远程入口）"
+	[ -f "$ROOTDIR/etc/udhcpd.conf" ] && o "udhcpd.conf 在" || b "缺 /etc/udhcpd.conf（usb0_dhcp 只能退化成 /run 内联版）"
 	[ -x "$ROOTDIR/usr/sbin/sshd" ] && o "sshd 在" || b "缺 openssh-server"
 	{ [ -L "$ROOTDIR/etc/systemd/system/ssh.service" ] || [ -L "$ROOTDIR/etc/systemd/system/multi-user.target.wants/ssh.service" ]; } && o "sshd 已 enable" || b "sshd 未 enable"
 	[ -f "$ROOTDIR/root/.ssh/authorized_keys" ] && o "root authorized_keys 在" || b "缺 authorized_keys（重建后只能靠 console）"

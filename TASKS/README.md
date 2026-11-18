@@ -156,6 +156,10 @@
     ④ 安卓侧（等 Android 能起）：KSU 件已备 `out/android-root-20261119/`（自洽未上机）、瘦身 v2 `scripts/android-slim-v2-plan.sh --variant A`；
     ⑤ 上机跑 `scripts/hide-android-partitions.sh --apply`、`scripts/asset-install-linux.sh --apply`（需桌面/root，均已自测）。
   · 全账 = `TASKS/sessions/2026-11-19-主线恢复最小Linux与显示定位.md`；产物 `out/min-restore-20261119/`、`scripts/ncm-host-up.sh`、`scripts/acm-sh.py`。
+  · **静态门已接住（2026-11-19 落地，主机侧可验）**：`/init` 缺失这类「镜像起不来但构建全绿」不再靠人记 ——
+    ① build 侧 `rootfs/debian/build-rootfs.sh` §8 增 `/init` 存在+可执行+与 `initramfs/init` 同字节（两档共用）、
+    最小档加 `usb-gadget` + `/etc/udhcpd.conf`；② 镜像侧 `scripts/rootfs-image-check.py`（debugfs 只读，`--selftest`）
+    + `check-doctor` **§20**（自检 + 已知坏件 `out/p2-minbase-20261118/*` 必须被拒 + 已知好件必须过）。PITFALLS #680。
 - **🆕 2026-11-18：四板块脚本功能性审查 —— **四份报告全部落地，P0 全部修完（28 条），P1/P2 按 BACKLOG 续推；新增两道静态门**
   · **已落地**：fastboot/槽位 10 文件、EDL/GPT 11 文件 + `slot-attr` 合并、adb 10 文件、ssh 7 文件；
     外加 `deploy-modules` 原子化、`sign-boot-b` 半件污染、`eldroid-bootctl` 无 active 槽静默回落 b、`trial.sh` `--max-wait`/NOROUTE 现场。

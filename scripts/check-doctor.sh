@@ -34,6 +34,7 @@
 #   17-shell-hygiene.sh 设备命令静态卫生（timeout/BatchMode/管道）      [全量+fast]
 #   18-flashpkg-geometry.sh 线刷包几何（rawprogram 预检 + 检查器自检）    [全量+fast]
 #   19-slotattr-selftest.sh 槽位属性工具自检（合成 GPT）                  [全量+fast]
+#   20-rootfs-image.sh 磁盘根镜像门（/init + 网络登入件，坏件必拒）       [全量]
 #
 # 验收用环境变量（正常使用无需设置）：
 #   ELF_ROOT=<dir>        被检查的树（默认 = 本脚本上一级）—— A/B 时指向主仓
@@ -50,7 +51,7 @@ SEC_TIMEOUT="${ELF_SEC_TIMEOUT:-600}"
 export ROOT HELPERS
 
 # 子门清单：按输出顺序排列（数字 = 与旧版 §N 对齐）。
-ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh"
+ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 20-rootfs-image.sh"
 # fast 档 = 旧版 --staged-fast 的语义（§7/§8/§9 + 其后的廉价段）**减去 §12**：
 # 文档/索引提交与内核 .config 无关，那 3.2 s 是纯浪费；手改 .config 的拦截交给收尾轮全量 doctor。
 # 2026-11-07 加 s16（PITFALLS #548）：TASKS §0 手写数字漂移门，只读两个文件 ~0.04 s，纳入 fast。
