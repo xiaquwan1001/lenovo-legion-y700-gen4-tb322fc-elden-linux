@@ -6,9 +6,10 @@
 #   2026-11-17 的教训是「printgpt 能解析 ≠ 逐字节对」。
 #
 # 用法：
-#   scripts/linux-gpt-apply.sh --lun 0 --main out/gpt-minimal-20261118/lun0_main0.bin \
+#   scripts/linux-gpt-apply.sh --lun 0 --gpt out/gpt-minimal-20261118/lun0_main0.bin \
 #                                      --backup out/gpt-minimal-20261118/lun0_backup0.bin
-#        ↑ 默认只打印计划（dry-run）：写哪个 LUN、哪些 LBA、sha256、读回校验计划
+#        ↑ `--gpt` = `--main`（2026-11-18 按 A5 口径加别名）；默认只打印计划（dry-run）
+#   scripts/linux-gpt-apply.sh ... --dry-run  # 显式 dry-run（与默认行为相同，便于脚本统一）
 #   scripts/linux-gpt-apply.sh ... --apply     # 真正写（需设备已在 EDL 9008 或本脚本 --enter-edl）
 #
 #   --enter-edl   先 `adb reboot edl`（设备在 Android 时）或 `fastboot oem edl`（fastboot 时）再写
@@ -31,36 +32,57 @@ READDIR=${READDIR:-$ROOT/backup/$SN-16+512/edl-apply-readback-$(date +%Y%m%d-%H%
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--lun) LUN=$2; shift 2 ;;
-		--main) MAIN=$2; shift 2 ;;
+		--main|--gpt) MAIN=$2; shift 2 ;;
 		--backup) BACKUP=$2; shift 2 ;;
 		--apply) APPLY=1; shift ;;
+		--dry-run) APPLY=0; shift ;;
 		--enter-edl) ENTER_EDL=1; shift ;;
-		-h|--help) sed -n '2,25p' "$0"; exit 0 ;;
+		-h|--help) sed -n '2,29p' "$0"; exit 0 ;;
 		*) echo "未知参数 $1（--help 看用法）" >&2; exit 2 ;;
 	esac
 done
-[ -n "$LUN" ] && [ -n "$MAIN" ] && [ -n "$BACKUP" ] || { echo "缺 --lun/--main/--backup" >&2; exit 2; }
+[ -n "$LUN" ] && [ -n "$MAIN" ] && [ -n "$BACKUP" ] || { echo "缺 --lun/--gpt(--main)/--backup" >&2; exit 2; }
 for f in "$MAIN" "$BACKUP" "$LOADER" "$QDL"; do [ -e "$f" ] || { echo "缺文件: $f" >&2; exit 2; }; done
 msz=$(stat -c%s "$MAIN"); bsz=$(stat -c%s "$BACKUP")
 [ "$msz" -eq 24576 ] || { echo "--main 必须是 24576 B（6×4096），实际 $msz" >&2; exit 2; }
 [ "$bsz" -eq 20480 ] || { echo "--backup 必须是 20480 B（5×4096），实际 $bsz" >&2; exit 2; }
 
-# 从主表头取 alt_lba（备表头所在 LBA）与分区数（仅用于打印/校验）
-read -r ALT_LBA NPARTS < <(python3 - "$MAIN" <<'PY'
-import struct,sys
-b=open(sys.argv[1],'rb').read()
-h=b[4096:4096+92]
-if h[:8]!=b'EFI PART': sys.exit("main 表 LBA1 不是 EFI PART")
-(alt,)=struct.unpack_from('<Q',h,32)
-(entlba,)=struct.unpack_from('<Q',h,72)
-nent,esize=struct.unpack_from('<II',h,80)
-# 数有效条目（type GUID 非零）
-cnt=0
-import re
-for i in range(nent):
-    e=b[8192+i*esize:8192+(i+1)*esize]
-    if e[:16]!=b'\0'*16: cnt+=1
-print(alt,cnt)
+# 从主表头取 alt_lba（备表头所在 LBA）与分区数；同时校验两张表**互相指向**、
+# 两张表的 header CRC / entries CRC 与 entries 区逐字节相等（2026-11-18 加，
+# 判据：写错一半的表比不写更贵 —— printgpt 能解析 ≠ 双表一致）
+read -r ALT_LBA NPARTS TBLCHK < <(python3 - "$MAIN" "$BACKUP" <<'PY'
+import struct,sys,zlib
+main=open(sys.argv[1],'rb').read(); bak=open(sys.argv[2],'rb').read()
+
+def table(b,off,label):
+    if len(b) < off+92: sys.exit("%s: 文件长度不足表头"%label)
+    h=b[off:off+92]
+    if h[:8]!=b'EFI PART': sys.exit("%s: 表头不是 EFI PART (offset %d)"%(label,off))
+    my,alt=struct.unpack_from('<QQ',h,24)
+    entlba,=struct.unpack_from('<Q',h,72)
+    nent,esize=struct.unpack_from('<II',h,80)
+    ecrc,=struct.unpack_from('<I',h,88)
+    hcrc,=struct.unpack_from('<I',h,16)
+    tmp=bytearray(h); tmp[16:20]=b'\0'*4
+    if zlib.crc32(bytes(tmp))&0xffffffff != hcrc:
+        sys.exit("%s: header CRC 不符"%label)
+    eoff=off+(entlba-my)*4096
+    if eoff<0 or eoff+nent*esize>len(b):
+        sys.exit("%s: entries 区越界（entlba=%d my=%d）"%(label,entlba,my))
+    ent=b[eoff:eoff+nent*esize]
+    if zlib.crc32(ent)&0xffffffff != ecrc:
+        sys.exit("%s: entries CRC 不符"%label)
+    return dict(my=my,alt=alt,ent=ent,nent=nent,esize=esize)
+
+pm=table(main,4096,'primary')
+bm=table(bak,len(bak)-4096,'backup')
+if pm['alt']!=bm['my'] or bm['alt']!=pm['my']:
+    sys.exit("两表互指不成立: primary.alt=%d backup.my=%d / backup.alt=%d primary.my=%d"
+             %(pm['alt'],bm['my'],bm['alt'],pm['my']))
+if pm['ent']!=bm['ent']:
+    sys.exit("两表 entries 区不一致（备份表不是这张主表的备份）")
+cnt=sum(1 for i in range(pm['nent']) if pm['ent'][i*pm['esize']:i*pm['esize']+16]!=b'\0'*16)
+print(pm['alt'],cnt,"OK(双表 CRC+互指+entries 一致)")
 PY
 )
 BKP_START=$((ALT_LBA-4))
@@ -69,6 +91,7 @@ echo "== 计划（LUN${LUN}）=="
 echo "  主表   写入 LBA 0..5              $(basename "$MAIN")  ${msz} B  sha=$(sha256sum "$MAIN" | cut -c1-16)"
 echo "  备表   写入 LBA ${BKP_START}..${ALT_LBA}   $(basename "$BACKUP")  ${bsz} B  sha=$(sha256sum "$BACKUP" | cut -c1-16)"
 echo "  分区数（新表有效条目）= ${NPARTS}   扇区 = 4096 B"
+echo "  表校验 = ${TBLCHK}"
 if [ "$APPLY" -eq 0 ]; then
 	echo "（dry-run：未写盘。加 --apply 执行；--enter-edl 可自动切 9008）"
 	exit 0

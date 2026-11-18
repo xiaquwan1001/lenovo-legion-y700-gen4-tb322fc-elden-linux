@@ -241,7 +241,10 @@ bash scripts/linux-state-audit.sh --snapshot versions/state-$(date +%Y%m%d-%H%M)
 
 - **rootfs 无全量归档**（唯一硬缺口）：`F` 项的恢复依赖设备上 `linux17` 分区本体；一旦该分区的数据被真正覆盖（写 super/userdata 落到该 LBA 区间），只能重装。
   ⇒ 两次铁律：① **任何会落刀到 `linux17` 的写操作前，先确认它的 start/size 台账**；② 每次改 GPT 后立刻把新的 LUN0 dump 归入 `backup/<SN>-16+512/` 并更新 `SHA256SUMS`。
-- S3 的「EDL 直写 GPT」目前分两步（Linux 内 `dd` / 主机 `qdl`），尚未做成一条脚本；
-  目标：`scripts/linux-gpt-apply.sh --gpt <main> --backup <backup>`（输入 = `gpt-surgery` 产物，自动算 backup_lba、写双表、读回对账）。
-- S5 ESP 组装仍手工（`mcopy`），目标：`scripts/esp-apply.sh --esp-dir out/esp-20261116/`。
+- S3 的「EDL 直写 GPT」已完成主机侧自动化（2026-11-18）：`scripts/linux-gpt-apply.sh --gpt <main> --backup <backup>`
+  从主表头取 `alt_lba` 算 `backup_lba`，**写前校验双表 header/entries CRC、互指、entries 一致**，写主备双表后读回逐字节对账；
+  默认即 dry-run，`--dry-run` 可显式写。**未上机**（设备不在线）；判据 = 真机一次写表读回 sha 相等。
+- S5 ESP 组装已自动化（2026-11-18）：`scripts/esp-apply.sh --esp-dir <dir> --gpt <LUN0 主表 dump>`
+  = 查分区 LBA → 必需件校验 → mkfs.fat + mtools 组 FAT32 → `mtype` 逐文件 sha 自查 → qdl 写 + 读回对账；
+  默认 dry-run，`--build-only` 离线自测，`--apply` 才写。**未上机**。细节/自测证据：`reports/esp-gpt-apply-automation-20261118.md`。
 - 这两条落地的判据：**在 U2 上从「原厂 Android」一口气跑到「Linux 登入」全程无手工步骤**（当前需 2 次人工）。
