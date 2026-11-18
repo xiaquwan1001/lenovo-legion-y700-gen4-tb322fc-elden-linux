@@ -270,7 +270,13 @@ def main() -> int:
             [sys.executable, SLOT_ATTR, "--device", args.device, "show"]).decode()
         act = [l.split()[0].split("_")[-1] for l in out.splitlines()
                if l.strip().startswith("boot_") and "active=1" in l]
-        args.slot = act[0] if act else "b"
+        if not act:
+            # 2026-11-18 审计 R2 P2-5：旧版在「没有 active=1 的槽」时静默回落 b 并写盘 ——
+            # 主备表不一致/表异常时这就是**无提示地改错槽**。改为拒绝并要求显式槽位。
+            print("[slot] ❌ 表里没有 active=1 的槽（GPT 异常或 --device 指错 LUN）："
+                  "请显式给 a|b，不要靠默认值", file=sys.stderr)
+            return 2
+        args.slot = act[0]
         print(f"[slot] 未指定槽位，使用当前活动槽 {args.slot!r}")
     return args.func(args)
 

@@ -119,14 +119,35 @@ class Gpt:
             view = view[n:]
 
     def _hdr_off(self, which):
-        return self.sector if which == "primary" else self.size - self.sector
+        # 备表头位置 = 主表头自述的 alt_lba（不是 size-sector）：整盘镜像/设备两者都对，
+        # 且主备不一致时能暴露出来而不是「读了个别处的 4096 B」。
+        return self.sector if which == "primary" else self.alt_lba * self.sector
 
     def _read_headers(self):
         self.hdr = {}
+        # 先读主表头拿到 alt_lba，才能定位备表（2026-11-18 审计 R1 P0-④）
+        raw = self._pread(self.sector, 92)
+        if raw[:8] != b"EFI PART":
+            raise SystemExit(f"{self.src}: no GPT signature at primary header (LBA1)")
+        self.alt_lba = struct.unpack_from("<Q", raw, 32)[0]
+        if self.alt_lba * self.sector + self.sector > self.size:
+            raise SystemExit(
+                f"{self.src}: 主表自述 alt_lba={self.alt_lba} 超出末尾 (size={self.size} B)\n"
+                "  这份 dump 不是整盘视图：只给「主表+备表拼件」会让备表条目落在 EOF 之外，\n"
+                "  旧版本于是静默只改主表。请用整盘镜像，或走 linux-gpt-apply.sh --gpt/--backup。")
+        if self.image_mode:
+            # 绝对 LBA 定位要求镜像就是整盘视图，否则一律拒绘（避免主备不一致）。
+            need = (self.alt_lba + 1) * self.sector
+            if self.size != need:
+                raise SystemExit(
+                    f"{self.src}: 镜像尺寸 {self.size} B != (alt_lba+1)*{self.sector} = {need} B。\n"
+                    "  --image 只接受整盘镜像；只有主备表拼件时请走设备路径（/dev/sde）\n"
+                    "  或 linux-gpt-apply.sh --lun 4 --gpt <main> --backup <backup> --apply。")
         for which in ("primary", "backup"):
             raw = self._pread(self._hdr_off(which), 92)
             if raw[:8] != b"EFI PART":
-                raise SystemExit(f"{self.src}: no GPT signature at {which} header")
+                raise SystemExit(f"{self.src}: no GPT signature at {which} header "
+                                 f"(offset {self._hdr_off(which)})")
             self.hdr[which] = bytearray(raw)
         h = self.hdr["primary"]
         hdr_size = struct.unpack("<I", h[12:16])[0]
@@ -252,6 +273,10 @@ class Gpt:
                 raise SystemExit(f"{self.src}: {which} header 读回无 GPT 签名")
             if struct.unpack("<I", h[88:92])[0] != binascii.crc32(bytes(block)) & 0xFFFFFFFF:
                 raise SystemExit(f"{self.src}: {which} header 的 entries CRC 读回不符")
+            # header CRC 自验（R1）：crc 域自身置 0 后整体算。
+            hdr_crc = binascii.crc32(bytes(h[:16]) + b"\0\0\0\0" + bytes(h[20:])) & 0xFFFFFFFF
+            if struct.unpack_from("<I", h, 16)[0] != hdr_crc:
+                raise SystemExit(f"{self.src}: {which} header CRC 读回不符（表头被写坏）")
 
 
 def main():
