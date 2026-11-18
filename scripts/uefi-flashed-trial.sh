@@ -145,6 +145,22 @@ logfs_snap() { # logfs_snap <tag>
 		sleep 5
 	done
 	if [ "$n" = "8388608" ]; then say "logfs 快照 $tag = $n B ✔"; else say "⚠ logfs 快照 $tag = $n B（期望 8388608，已重试 3 次）"; fi
+	# 2026-11-18 审计 R2 P2-4：光有「8 MiB」只证明读全了，**不证明是本发的记录**。
+	# logfs 会逐字节不变（sha 相同）而设备照样失败（reports/bl-stuck-20261118-forensics.md §2.3）
+	# ⇒ 必须记 sha，并在 post 时与 pre 比对；相同就标 no-new-record，禁止拿它当本发判据。
+	sha256sum "$OUTDIR/logfs-$tag.bin" 2>/dev/null | awk '{print $1}' > "$OUTDIR/logfs-$tag.sha"
+	say "   logfs $tag sha=$(cat "$OUTDIR/logfs-$tag.sha" 2>/dev/null | cut -c1-16)"
+}
+
+logfs_verdict() { # pre/post sha 对比 → 打印 logfs=new-record | no-new-record
+	local a b
+	a=$(cat "$OUTDIR/logfs-pre.sha" 2>/dev/null); b=$(cat "$OUTDIR/logfs-post.sha" 2>/dev/null)
+	if [ -z "${a:-}" ] || [ -z "${b:-}" ]; then echo "logfs=unknown（缺 pre 或 post 快照）"; return; fi
+	if [ "$a" = "$b" ]; then
+		echo "logfs=no-new-record（前后 sha 相同：这份 logfs **不是本发**的记录，不得据此判 ABL 行为）"
+	else
+		echo "logfs=new-record(sha ${a:0:8}->${b:0:8})"
+	fi
 }
 
 say "== 目标 $LABEL ; 件 $IMG"
@@ -275,6 +291,9 @@ say "== [6/6] 后置态 + 判据"
 if [ "$up" = 1 ]; then
 	snap post
 	logfs_snap post
+	LOGFS_VERDICT=$(logfs_verdict)
+	say "   $LOGFS_VERDICT"
+	printf '%s\n' "$LOGFS_VERDICT" > "$OUTDIR/logfs-verdict.txt"
 	K=$(sshc 'uname -r' 10 2>/dev/null | tail -1)
 	SLOT=$(sshc 'cat /proc/cmdline' 10 2>/dev/null | tr ' ' '\n' | grep -m1 '^androidboot.slot_suffix=')
 	{
