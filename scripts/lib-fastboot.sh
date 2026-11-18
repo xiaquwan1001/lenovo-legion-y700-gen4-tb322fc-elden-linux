@@ -74,6 +74,25 @@ sshc() {
 		-o LogLevel=ERROR "$TAB" "$@"
 }
 
+# fborphans
+#   本机「孤儿 fastboot 进程」计数（PITFALLS #658：隔壁项目的孤儿 fastboot 会抢走
+#   同一条 USB 调试通道，表现为我们的命令发出后设备黑屏崩溃）。
+#   模式写字符组 [f]astboot，避免 pgrep 匹配到自己所在的 shell（技能 pkill-self-match）。
+fborphans() {
+	local n
+	n=$(pgrep -fc '[f]astboot' 2>/dev/null || true)
+	printf '%s' "${n:-0}"
+}
+
+# fbprobe
+#   通道可用门（PITFALLS #658）：`fastboot devices` 只证明 USB 枚举正常，不证明命令通道。
+#   判据 = 5 s 内 `getvar product` 有回显；挂住即通道被抢/固件未就绪，必须停下处理。
+#   要求 SER 已设（fbx 自会拒绝裸 fastboot）。rc: 0 可用，1 不可用。
+fbprobe() {
+	FBTO=5 fbx getvar product >/dev/null 2>&1 || return 1
+	case "$_FB_OUT" in *product:*) return 0 ;; *) return 1 ;; esac
+}
+
 # wait_ssh_up [max_s] [interval_s]
 #   **一有响应就返回**（用户 2026-11-10 要求：别按固定时长空等）。
 #   每次探测都是一条独立的短 ssh（ConnectTimeout=2），因此板子重启中途不会像

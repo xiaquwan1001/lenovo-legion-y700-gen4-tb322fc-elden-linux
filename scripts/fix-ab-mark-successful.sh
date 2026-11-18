@@ -33,7 +33,11 @@ description="Mark current boot as successful in Android A/B interface"
 
 start() {
 	ebegin "Marking current A/B slot successful"
-	/usr/bin/qbootctl -m
+	# qbootctl 在 cmdline 没有 androidboot.slot_suffix 时**回退到 slot a**（末尾更少见的
+	# RAM-only / SLOT_SUFFIX= 件就是这种）⇒ 不写槽位等于给错的槽置成功、真槽继续扣 retry。
+	_s=$(sed -n 's/.*androidboot\.slot_suffix=_\([ab]\).*/\1/p' /proc/cmdline | head -1)
+	[ -n "$_s" ] || _s=b
+	/usr/bin/qbootctl -m "$_s"
 	eend $?
 }
 EOF
@@ -47,6 +51,7 @@ rc-service qbootctl status 2>&1 | head -1
 if [ -x /usr/local/sbin/slot-attr.py ]; then
 	python3 /usr/local/sbin/slot-attr.py show 2>/dev/null | grep -E "  boot_[ab] "
 else
-	qbootctl -m
+	_s=$(sed -n 's/.*androidboot\.slot_suffix=_\([ab]\).*/\1/p' /proc/cmdline | head -1)
+	qbootctl -m "${_s:-b}"
 fi
 echo "runlevel: $(ls -l /etc/runlevels/default/qbootctl 2>/dev/null || echo '未启用！')"

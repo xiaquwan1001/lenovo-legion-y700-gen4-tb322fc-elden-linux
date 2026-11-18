@@ -60,7 +60,25 @@ wait_until "fastboot 上线" 90 wa_fastboot_alive || { echo "[to-fastboot] fastb
 echo "[to-fastboot] fastboot ok"
 
 if [ -n "$BOOT" ]; then
+	# PITFALLS #569/#371：裸 fastboot 会把载荷发给总线上别的设备（或抢不通的通道）。
+	[ -n "${SER:-}" ] || { echo "[to-fastboot] ❌ --boot 需显式 SER=<SN>（多设备总线禁止猜，#569）" >&2; exit 2; }
+	. "$(dirname "$0")/lib-fastboot.sh"
+	# PITFALLS #658：先证通道独占，再发启动命令。
+	orph=$(fborphans)
+	[ "$orph" = 0 ] || { echo "[to-fastboot] ❌ 本机有 $orph 个 fastboot 进程（#658：先清孤儿再上机）" >&2; exit 2; }
+	fbprobe || { echo "[to-fastboot] ❌ 通道不可用（5 s 内 getvar product 无回显，#658）" >&2; exit 2; }
+	# PITFALLS #650：本脚本走 PSCI 暖复位，ABL 未重新初始化时直接 boot 出现过黑屏+崩坏。
+	# 原注释写了「先 reboot-bootloader」，但代码没做 —— 这里补上，并把 boot 收敛到 fbx。
+	echo "[to-fastboot] ABL re-init: fastboot reboot-bootloader（#650）"
+	fbx reboot-bootloader || { echo "[to-fastboot] ❌ reboot-bootloader 失败 rc=$?" >&2; exit 3; }
+	wait_until "fastboot 重新上线" 60 wa_fastboot_alive || { echo "[to-fastboot] reboot-bootloader 后 fastboot 未回" >&2; exit 3; }
+	fbprobe || { echo "[to-fastboot] ❌ 重初始化后通道仍不可用（#658）" >&2; exit 3; }
 	echo "[to-fastboot] fastboot boot $BOOT"
-	fastboot boot "$BOOT"
-	echo "[to-fastboot] booting; use --wait helper (cycle.sh --wait) or ping 192.168.7.1"
+	fbx boot "$BOOT"; rc=$?
+	printf '%s\n' "$_FB_OUT"
+	echo "[to-fastboot] booting rc=$rc; 用 scripts/slot-switch.sh status 或 ping 192.168.7.1 跟进"
+	[ "$rc" = 0 ] || exit "$rc"
+	# 失败标志兜底：节奏型实验（反复 fastboot boot / 反复重启）结束必须回读槽属性，
+	# 否则 boot_* 的 retry 递减到 0 就留下「下一次注定失败」的 UNBOOTABLE。
+	echo "[to-fastboot] 提示：拿到 shell 后立刻 scripts/slot-switch.sh status（槽属性留档）"
 fi

@@ -111,7 +111,12 @@ class Gpt:
 
     def _pwrite(self, off, data):
         os.lseek(self.fd, off, os.SEEK_SET)
-        os.write(self.fd, data)
+        view = memoryview(data)
+        while len(view):          # 块设备 write 可能短写，不循环就会静默丢尾部
+            n = os.write(self.fd, view)
+            if n <= 0:
+                raise OSError(f"{self.src}: short write at {off}")
+            view = view[n:]
 
     def _hdr_off(self, which):
         return self.sector if which == "primary" else self.size - self.sector
@@ -219,13 +224,34 @@ class Gpt:
             block[off] = new
             changed[which] = (block, old, new)
             print(f"  {which:7s} {name} byte6: 0x{old:02x} -> 0x{new:02x}")
+        if not changed:
+            # 旧行为：静默 rc=0 并打印「written」——分区名/LUN 选错时等于什么都没做。
+            raise SystemExit(f"{name}: 主备两表都没有该条目 —— 拒绝静默成功"
+                             f"（默认 --device /dev/sde = LUN4；用 show 核对）")
+        if len(changed) != 2:
+            raise SystemExit(f"{name}: 只有 {'/'.join(sorted(changed))} 表有该条目 —— "
+                             f"主备表不成对，拒绝写入")
         if dry_run:
             print("  (dry-run: nothing written)")
             return
-        for which, (block, old, new) in changed.items():
-            self.write_entries(which, block)
+        # 写序：先备表后主表。断电窗口里至少还剩一张自洽的表可被 ABL 使用。
+        for which in ("backup", "primary"):
+            self.write_entries(which, changed[which][0])
         self.fsync()
-        print("  written + CRCs fixed (primary & backup)")
+        self._verify(changed)
+        print("  written + CRCs fixed + read-back verified (primary & backup)")
+
+    def _verify(self, changed):
+        """写后读回（P0）：entries 逐字节 + header 里的 entries CRC。"""
+        for which, (block, _old, _new) in changed.items():
+            cur = self._pread(self._entries_off(which), self.nent * self.entsz)
+            if cur != bytes(block):
+                raise SystemExit(f"{self.src}: {which} entries 读回不一致（写丢/被内核改？）")
+            h = self._pread(self._hdr_off(which), self.hdr_size)
+            if h[:8] != b"EFI PART":
+                raise SystemExit(f"{self.src}: {which} header 读回无 GPT 签名")
+            if struct.unpack("<I", h[88:92])[0] != binascii.crc32(bytes(block)) & 0xFFFFFFFF:
+                raise SystemExit(f"{self.src}: {which} header 的 entries CRC 读回不符")
 
 
 def main():

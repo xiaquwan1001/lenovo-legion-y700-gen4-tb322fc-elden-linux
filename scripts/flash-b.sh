@@ -38,6 +38,19 @@ echo "[flash-b] image sha256=$SHA  (96 MiB, signed with bootslot-b/avb.key)"
 # supported"; an IPv6 link-local target (root@fe80::1e:5eff:feed:e101%<iface>) still
 # works without the flag, since ssh picks the family from the address itself.
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=8 -o ServerAliveInterval=15"
+
+# P0（B 类）：写之前核对分区存在 + 装得下（dd 不检查，短写照样 rc=0）。
+PSZ=$(timeout 20 ssh $SSH_OPTS "$TAB" "blockdev --getsize64 /dev/disk/by-partlabel/boot_b" 2>/dev/null | tr -dc '0-9')
+ISZ=$(stat -c%s bootslot-b/boot_b.img)
+echo "[flash-b] partition boot_b=${PSZ:-读不到} B ; 镜像 $ISZ B"
+[ -n "${PSZ:-}" ] || { echo "[flash-b] 读不到 /dev/disk/by-partlabel/boot_b（分区名/设备不对）" >&2; exit 1; }
+[ "$ISZ" -le "$PSZ" ] || { echo "[flash-b] 镜像 $ISZ B > 分区 $PSZ B，拒绝写" >&2; exit 1; }
+
+# P0（A 类）：写 boot_b 之后如果不置 succ，重启就是扣 retry 的一发；--reboot 前先看门。
+echo "[flash-b] boot_b 槽属性（写前基线）："
+timeout 20 ssh $SSH_OPTS "$TAB" 'python3 /usr/local/sbin/slot-attr.py show 2>/dev/null | grep -E "^  boot_b "' || \
+	echo "[flash-b] （读不到 slot-attr.py，槽属性未留档）"
+
 echo "[flash-b] writing boot_b (streamed over ssh)..."
 cat bootslot-b/boot_b.img | timeout 900 ssh $SSH_OPTS "$TAB" '
 set -e
@@ -52,6 +65,9 @@ echo "[flash-b] readback sha256=$RB"
 echo "[flash-b] OK"
 
 if [ "$REBOOT" = 1 ]; then
+	# A 类兜底：重启前把 succ 置上，避免「写+重启」把 retry 一路减到 0（#181）。
+	timeout 40 ssh $SSH_OPTS "$TAB" 'python3 /usr/local/sbin/slot-attr.py mark-successful b' >/dev/null 2>&1 || \
+		echo "[flash-b] ⚠ 置 boot_b succ 失败（若该槽 succ=0，每次重启都在扣 retry）"
 	echo "[flash-b] rebooting..."
 	# ★ 2026-10-15 修（PITFALLS #288）：原用 `(sleep 1; reboot -f) &`，
 	# 实测在本机当前状态下【会挂起、根本不重启】——`/sbin/reboot` 是 elden-powerwrap，

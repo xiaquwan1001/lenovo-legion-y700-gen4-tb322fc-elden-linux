@@ -21,10 +21,14 @@ while [ $# -gt 0 ]; do case "$1" in
   --image) IMG=$2; shift 2;; --label) LABEL=$2; shift 2;; --shots) SHOTS=$2; shift 2;;
   --windows) WINDOWS=$2; shift 2;; --out) OUT=$2; shift 2;; *) echo "bad arg $1" >&2; exit 2;; esac; done
 [ -f "$IMG" ] || { echo "no image: $IMG" >&2; exit 2; }
+# PITFALLS #371/#569：本脚本原来全是裸 fastboot —— 总线上别的设备也会收到 boot 命令。
+[ -n "${SER:-}" ] || { echo "需显式 SER=<SN>（禁止裸 fastboot）" >&2; exit 2; }
+. "$ROOT/scripts/lib-device-lock.sh"; device_lock_acquire   # 与其它设备脚本串行
+. "$ROOT/scripts/lib-fastboot.sh"
 mkdir -p "$OUT"; echo "label=$LABEL image=$IMG sha=$(sha256sum "$IMG" | cut -c1-16) out=$OUT" | tee "$OUT/summary.txt"
 
 # PITFALLS #584：不要 `fastboot devices | grep -q`（SIGPIPE 打断 bulk 通道）。
-wait_fb() { for i in $(seq 1 40); do d=$(timeout 5 fastboot devices 2>/dev/null); case "$d" in *fastboot*) return 0 ;; esac; sleep 3; done; return 1; }
+wait_fb() { local i; for i in $(seq 1 40); do fbdevices "$SER" && return 0; sleep 3; done; return 1; }
 wait_ssh() { for i in $(seq 1 30); do timeout 6 $SSH true 2>/dev/null && return 0; sleep 5; done; return 1; }
 
 handoff=0
@@ -34,15 +38,16 @@ for n in $(seq 1 "$SHOTS"); do
   for pa in $WINDOWS; do python3 scripts/blackbox.py prep --pa "$pa" >/dev/null 2>&1; done
   timeout 30 $SSH 'nohup eldroid-bootctl reboot bootloader >/dev/null 2>&1 & true' >/dev/null 2>&1
   sleep 12; wait_fb || { echo "  [fail] fastboot 没起来（PITFALLS #368，需要物理断电）" | tee -a "$OUT/summary.txt"; break; }
-  bt=$(timeout 120 fastboot boot "$IMG" 2>&1 | tr '\n' ' ')
+  # #584：输出不进管道（SIGPIPE 会打断设备侧 bulk 通道）
+  FBTO=120 fbx boot "$IMG"; bt=$(printf '%s ' "$_FB_OUT" | tr '\n' ' ')
   case "$bt" in
     *usb_read*|*"FAILED (usb_read failed"*) v=HANDOFF;; *"Booting "OKAY*) v=NOJUMP;; *) v=REJECT;; esac
   echo "  verdict=$v  abl='$(echo "$bt" | cut -c1-120)'" | tee -a "$OUT/summary.txt"
   if [ "$v" = HANDOFF ]; then
     handoff=$((handoff+1))
     if wait_fb; then
-      timeout 20 fastboot --set-active=b >/dev/null 2>&1
-      timeout 20 fastboot reboot >/dev/null 2>&1
+      fbx --set-active=b >/dev/null 2>&1
+      fbx reboot >/dev/null 2>&1
       if wait_ssh; then
         for pa in $WINDOWS; do
           echo "  read $pa:" | tee -a "$OUT/summary.txt"
@@ -52,9 +57,20 @@ for n in $(seq 1 "$SHOTS"); do
     else echo "  [warn] 崩后没等到 fastboot" | tee -a "$OUT/summary.txt"; fi
   else
     # 未交棒：设备还在 fastboot，直接恢复
-    timeout 20 fastboot --set-active=b >/dev/null 2>&1; timeout 20 fastboot reboot >/dev/null 2>&1
+    fbx --set-active=b >/dev/null 2>&1; fbx reboot >/dev/null 2>&1
     wait_ssh || echo "  [fail] 回 Linux 超时" | tee -a "$OUT/summary.txt"
   fi
   sleep 12      # 拉开与下一次 reboot2 的间隔，避开 #368
 done
 echo "== 真正交棒 $handoff/$SHOTS 发 ==" | tee -a "$OUT/summary.txt"
+
+# P0（A 类）：本脚本的前置是「把 slot a 标 unbootable」。脚本自己必须负责复位，
+# 否则下一轮任何「起 Android」的实验都会被这一位挡住（2026-11-18 就是这么废掉 3 发的）。
+if wait_ssh; then
+  timeout 40 $SSH 'python3 /usr/local/sbin/slot-attr.py mark-successful b >/dev/null 2>&1; \
+    qbootctl -m b >/dev/null 2>&1; python3 /usr/local/sbin/slot-attr.py show 2>/dev/null | grep -E "^  boot_[ab] "' \
+    | tee -a "$OUT/summary.txt"
+else
+  echo "!! 结束时设备不在 Linux：slot a 的 UNBOOTABLE 可能仍留着 —— 进 fastboot 后跑：fastboot --set-active=b（或清 bit7）" \
+    | tee -a "$OUT/summary.txt"
+fi

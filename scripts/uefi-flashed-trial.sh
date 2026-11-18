@@ -30,6 +30,7 @@ SER=${SER:-}
 PRODUCT_MATCH=${PRODUCT_MATCH:-elden}
 IMG=""; LABEL=""; OUTDIR=""; MAXWAIT=${MAXWAIT:-300}; DO_REBOOT=1; EXPECT_KERNEL=""; PART=${PART:-boot_a}
 SKIP_ASLOT_PREP=${SKIP_ASLOT_PREP:-0}
+MARK_OK=${MARK_OK:-1}     # 落地后自动 mark-successful <a 槽>；MARK_OK=0 关闭（纯取证时）
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -179,6 +180,9 @@ case "$PART" in
 		fi ;;
 	esac
 
+say "== [0/6] 设备健康门（slot 属性留档；失败路径也进日志）"
+bash "$ROOT/scripts/trial.sh" gate --slot "${PART#boot_}" 2>&1 | tee "$OUTDIR/gate-pre.txt" | tail -3
+
 say "== [1/6] 前置态（Linux 侧只读）"
 ensure_slot_attr
 snap pre
@@ -214,6 +218,18 @@ done
 resolve_target || exit 3
 say "fastboot 在线: $(echo "$_FB_OUT")"
 
+# GPT 核对（P0 类：写之前确认分区存在且装得下镜像；dd/fastboot 都不会替你查）
+PSZ=$(sshc "blockdev --getsize64 /dev/disk/by-partlabel/$PART" 20 2>/dev/null | tr -dc '0-9')
+say "目标分区 $PART 尺寸=${PSZ:-读不到} B ; 镜像 $IMGSZ B"
+if [ -z "${PSZ:-}" ]; then
+	say "FATAL: 读不到 /dev/disk/by-partlabel/$PART（分区名错？设备不在 Linux？）"
+	echo "VERDICT=PART_MISSING" > "$OUTDIR/verdict.txt"; exit 6
+fi
+if [ "$IMGSZ" -gt "$PSZ" ]; then
+	say "FATAL: 镜像 $IMGSZ B 大于分区 $PSZ B —— 写下去必然截断"
+	echo "VERDICT=PART_TOO_SMALL" > "$OUTDIR/verdict.txt"; exit 6
+fi
+
 say "== [3/6] flash $PART"
 t_flash0=$(date +%s.%N)
 fbx flash "$PART" "$IMG"; rc=$?; t_flash1=$(date +%s.%N)
@@ -222,7 +238,20 @@ say "$_FB_OUT"
 [ "$rc" = 0 ] || { say "FATAL: flash 失败 rc=$rc"; echo "VERDICT=FLASHFAIL" > "$OUTDIR/verdict.txt"; exit 4; }
 
 say "== [4/6] set_active a（重置 _a 的 retry/unbootable）"
-fbx set_active a; printf '%s\n' "$_FB_OUT" > "$OUTDIR/setactive.txt"; say "$_FB_OUT"
+fbx set_active a; rc=$?
+{ printf 'rc=%s\n%s\n' "$rc" "$_FB_OUT"
+  # 写后必读回：`set_active` 是否真的清了 UNBOOTABLE / 补了 retry，只能靠 getvar 证明。
+  for k in current-slot slot-successful:a slot-unbootable:a slot-retry-count:a; do
+	fbx getvar "$k"; printf '%s -> %s\n' "$k" "$_FB_OUT"
+  done
+} > "$OUTDIR/setactive.txt" 2>&1
+say "$(cat "$OUTDIR/setactive.txt")"
+SLOT_STATE=$(cat "$OUTDIR/setactive.txt")
+case "$SLOT_STATE" in
+	*"slot-unbootable:a: yes"*)
+		say "FATAL: set_active a 之后 boot_a 仍 UNBOOTABLE —— ABL 会直接拒绝启动，本发必然无判据"
+		echo "VERDICT=ASLOT_UNBOOTABLE" > "$OUTDIR/verdict.txt"; exit 7 ;;
+esac
 
 if [ "$DO_REBOOT" = 0 ]; then
 	say "--no-reboot：停在 fastboot，未重启"
@@ -260,6 +289,15 @@ if [ "$up" = 1 ]; then
 		say "⚠ 落地内核 $K 不含期望串 $EXPECT_KERNEL"
 	fi
 	say "T_total = ${T}s   landed kernel = $K   $SLOT"
+	# 失败标志兜底（P0）：写/切槽之后若不置 BOOT_SUCCESSFUL，ABL 每次启动扣 retry，
+	# 7 次后把该槽标 UNBOOTABLE —— 本轮 3 发实验全废就是这个状态造成的。
+	if [ "$MARK_OK" = 1 ]; then
+		sshc 'python3 /tmp/slot-attr.py mark-successful a' 40 > "$OUTDIR/mark-successful.txt" 2>&1 \
+			&& say "已置 boot_a succ（$(tail -1 "$OUTDIR/mark-successful.txt"))" \
+			|| say "⚠ 置 boot_a succ 失败（见 mark-successful.txt；下一发仍会扣 retry）"
+		sshc 'python3 /tmp/slot-attr.py show | grep -E "^  boot_[ab] "' 40 > "$OUTDIR/slot-attrs-post.txt" 2>&1
+		say "后置槽属性：$(tr '\n' ';' < "$OUTDIR/slot-attrs-post.txt")"
+	fi
 	echo "VERDICT=RECOVERED T_total_s=$T" > "$OUTDIR/verdict.txt"
 else
 	say "T_total >= ${MAXWAIT}s：SSH 未起（可能停在 payload 或没回落）"

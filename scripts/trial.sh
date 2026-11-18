@@ -7,8 +7,9 @@
 #   - 结论不落盘 → 样本无原始证据、事后不可复核（DOSSIER §g-3）
 #
 # 子命令：
-#   gate                          设备健康门（只读）：读 boot_b succ/retry/unbootable
-#                                 退码 0=OK，3=WARN，1=FAIL；--fix 则先 mark-successful b
+#   gate [--slot a|b]             设备健康门（只读）：读 boot_<slot> succ/retry/unbootable
+#                                 （默认 b；--a-slot 线必须用 --slot a，否则门形同虚设）
+#                                 退码 0=OK，3=WARN，1=FAIL；--fix 则先 mark-successful <slot>
 #   record --label L --image IMG --reset por|cold|warm --verdict V
 #          [--deploy D] [--probe P] [--logdir DIR] [--note ...]
 #                                 写一条机器可读 record（JSON + index.tsv），不碰设备
@@ -48,7 +49,7 @@ mfval() { awk -F= -v k="$1" '$1==k{sub(/^[^=]*=/,""); print; exit}' "$2" 2>/dev/
 
 # 设备健康门；回显一行 GATE=...，退码 0/3/1
 device_gate() {
-	local fix=${1:-0}
+	local fix=${1:-0} slot=${2:-b}
 	local reach
 	reach=$(S 'echo up' 12)
 	if [ "$reach" != "up" ]; then
@@ -56,23 +57,23 @@ device_gate() {
 		return 1
 	fi
 	if [ "$fix" = 1 ]; then
-		echo "[trial] --fix：mark-successful b（写槽属性）"
-		S 'python3 /usr/local/sbin/slot-attr.py mark-successful b' 40 || true
+		echo "[trial] --fix：mark-successful $slot（写槽属性）"
+		S "python3 /usr/local/sbin/slot-attr.py mark-successful $slot" 40 || true
 	fi
 	local show
 	show=$(S 'python3 /usr/local/sbin/slot-attr.py show' 25)
 	local line succ retry unboot
-	line=$(printf '%s\n' "$show" | grep -E 'boot_b ' | head -1)
+	line=$(printf '%s\n' "$show" | grep -E "boot_$slot " | head -1)
 	succ=$(printf '%s' "$line" | grep -oE 'succ=[0-9]+' | head -1 | cut -d= -f2)
 	retry=$(printf '%s' "$line" | grep -oE 'retry=[0-9]+' | head -1 | cut -d= -f2)
 	unboot=$(printf '%s' "$line" | grep -oE 'unbootable=[0-9]+' | head -1 | cut -d= -f2)
 	if [ -z "$retry" ]; then
-		echo "[trial] GATE=WARN 读不到 boot_b 槽属性（slot-attr.py 缺失？）line='$line'" >&2
+		echo "[trial] GATE=WARN 读不到 boot_$slot 槽属性（slot-attr.py 缺失？）line='$line'" >&2
 		return 3
 	fi
-	echo "[trial] boot_b: succ=${succ:-?} retry=${retry} unbootable=${unboot:-?}"
+	echo "[trial] boot_$slot: succ=${succ:-?} retry=${retry} unbootable=${unboot:-?}"
 	if [ "${unboot:-0}" = 1 ]; then
-		echo "[trial] GATE=FAIL boot_b 已 UNBOOTABLE——先用 fastboot boot 救援并 mark-successful b" >&2
+		echo "[trial] GATE=FAIL boot_$slot 已 UNBOOTABLE——先救援（fastboot --set-active=<另一槽>，或清 bit7）并 mark-successful $slot" >&2
 		return 1
 	fi
 	if [ "${succ:-0}" = 1 ]; then
@@ -138,9 +139,13 @@ _vk() { basename "${1:-}" .img | grep -oE 'vk[0-9]+[A-Za-z0-9._-]*' | head -1; }
 cmd=${1:-}; shift || true
 case "$cmd" in
 	gate)
-		fix=0
-		while [ $# -gt 0 ]; do case "$1" in --fix) fix=1 ;; esac; shift; done
-		device_gate "$fix"; exit $? ;;
+		fix=0; gslot=b
+		while [ $# -gt 0 ]; do case "$1" in
+			--fix) fix=1 ;;
+			--slot) gslot=${2:-b}; shift ;;
+			--slot=*) gslot=${1#--slot=} ;;
+		esac; shift; done
+		device_gate "$fix" "$gslot"; exit $? ;;
 
 	record)
 		LABEL=""; IMAGE=""; RESET=""; VERDICT=""; DEPLOY="none"; PROBE="none"; LOGDIR=""; NOTE=""
@@ -198,7 +203,8 @@ case "$cmd" in
 		fi
 		. "$ROOT/scripts/lib-device-lock.sh"; device_lock_acquire
 
-		device_gate 0; gate_rc=$?
+		gslot=b; [ "$ASLOT" = 1 ] && gslot=a
+		device_gate 0 "$gslot"; gate_rc=$?
 		if [ "$gate_rc" = 1 ] && [ "$FORCE" != 1 ]; then
 			echo "[trial] gate FAIL —— 中止（--force 可越权，但请先处理槽位）" >&2; exit 1
 		fi
@@ -206,11 +212,20 @@ case "$cmd" in
 		case "$DEPLOY" in
 			none) : ;;
 			fastboot-boot)
-				fastboot devices 2>/dev/null | grep -q . || {
-					echo "[trial] ❌ 不在 fastboot。冷起需物理 POR + 按键进 fastboot（用户动作）。" >&2
+				# PITFALLS #569/#371：必须是显式目标；#584：输出不进管道（SIGPIPE 会打断 bulk 通道）；
+				# #658：先证通道独占（孤儿 fastboot + 5 s getvar）。
+				[ -n "${SER:-}" ] || { echo "[trial] ❌ --deploy fastboot-boot 需显式 SER=<SN>（禁止裸 fastboot）" >&2; exit 1; }
+				. "$ROOT/scripts/lib-fastboot.sh"
+				orph=$(fborphans)
+				[ "$orph" = 0 ] || { echo "[trial] ❌ 本机有 $orph 个 fastboot 进程（#658）" >&2; exit 1; }
+				fbprobe || {
+					echo "[trial] ❌ 不在可用 fastboot（5 s getvar 无回显）。冷起需物理 POR + 按键（用户动作）。" >&2
 					echo "        若只是想在已启动设备上取证，用 --deploy none。" >&2; exit 1; }
-				echo "[trial] fastboot boot $IMAGE"
-				timeout 180 fastboot boot "$IMAGE" 2>&1 | tail -3 || true
+				IMGSZ=$(stat -c%s "$IMAGE" 2>/dev/null || echo 0)
+				echo "[trial] fastboot boot $IMAGE (${IMGSZ} B)"
+				fbx boot "$IMAGE"; rc=$?
+				printf '%s\n' "$_FB_OUT" | tail -3
+				[ "$rc" = 0 ] || echo "[trial] ⚠ fastboot boot rc=$rc（继续判 SSH 是否回来，不据此下结论）"
 				;;
 			*) echo "[trial] ❌ 未知 --deploy $DEPLOY" >&2; exit 2 ;;
 		esac

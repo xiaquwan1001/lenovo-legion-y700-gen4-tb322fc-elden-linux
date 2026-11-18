@@ -19,7 +19,10 @@ ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 . "$ROOT/scripts/env-build.sh"   # 树默认取 patches/current-tree（日常线），KDIR= 可覆盖
 KDIR=${KDIR:-$ROOT/linux}
 TAB=${TAB:-root@192.168.7.1}
-SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 $TAB"
+# PITFALLS #584/#628：kexec -e 之后旧 TCP 连接半开，缺 ServerAlive* 会挂到
+# tcp_retries2（~15 min），期间脚本看起来「没动」。下面每条调用再各自套 timeout。
+SSH="timeout -k 2 120 ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=8 \
+-o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR $TAB"
 
 # --- device lock (serialize across concurrent agents; see scripts/device-lock.sh) ---
 . "$(dirname "$0")/lib-device-lock.sh"
@@ -96,7 +99,7 @@ fi
 
 echo "[kexec] executing (device will switch kernel; SSH will drop)..."
 # -e does not return; subshell so the SSH error is expected.
-$SSH "sync; kexec -e" || true
+timeout -k 2 30 $SSH "sync; kexec -e" || true
 echo "[kexec] waiting for the device to come back..."
 # 2026-11-05：lib-wait 的换代判据（boot_id 变）= 「新内核真的起来了」；旧实现只要 ssh 一答
 # 就退出，而 kexec -e 生效前那一瞬旧内核还在答（假成功）。180 s 预算与旧版相当。

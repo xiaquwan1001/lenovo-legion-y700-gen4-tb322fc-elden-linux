@@ -168,12 +168,40 @@ def _slot_attr(argv: list[str], backup: bool = False) -> int:
     return subprocess.call([sys.executable, SLOT_ATTR, *argv])
 
 
+def _slot_verify(device: str, slot: str, rc: int) -> int:
+    """写后读回（P0）：把 boot_<slot> 的 byte6 打出来，写失败/没生效必须非零退出。
+
+    历史事故：脚本「写完就走人」，没人回读，于是 UNBOOTABLE/succ=0 一路带到下一次上机。
+    """
+    if rc != 0:
+        print(f"[slot] ❌ 写槽属性失败 rc={rc}（GPT 未改或 CRC 未落）", file=sys.stderr)
+        return rc
+    out = subprocess.run([sys.executable, SLOT_ATTR, "--device", device, "show"],
+                         capture_output=True, text=True)
+    line = [l for l in out.stdout.splitlines() if l.strip().startswith(f"boot_{slot} ")]
+    if not line:
+        print(f"[slot] ❌ 读回不到 boot_{slot}（属性可能没落）", file=sys.stderr)
+        return 1
+    print(f"[slot] 读回 {line[0].strip()}")
+    if "unbootable=1" in line[0]:
+        print(f"[slot] ❌ boot_{slot} 仍是 UNBOOTABLE", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _backup_gpt() -> None:
+    """备份**主备两张表**：只 dump 前 34 扇区时回滚只能恢复主表，
+    与备表 entries/CRC 不一致（内核会报 GPT mismatch 并退回备表解释）。"""
     dev = os.environ.get("ELDROID_GPT_DEV", DEFAULT_DEV)
     ts = subprocess.check_output(["date", "+%Y%m%d-%H%M%S"]).decode().strip()
-    out = f"/root/gpt-{os.path.basename(dev)}-{ts}.bin"
-    print(f"[slot] 备份 GPT 前 34 扇区 -> {out}")
+    out = f"/root/gpt-{os.path.basename(dev)}-{ts}-head.bin"
+    outb = f"/root/gpt-{os.path.basename(dev)}-{ts}-tail.bin"
+    print(f"[slot] 备份 GPT 前 34 扇区 -> {out} ; 末 34 扇区 -> {outb}")
     subprocess.check_call(["dd", "if=" + dev, "of=" + out, "bs=4096", "count=34"],
+                          stderr=subprocess.DEVNULL)
+    subprocess.check_call(["sh", "-c",
+                           'sz=$(( $(blockdev --getsize64 %s) / 4096 - 34 )); '
+                           'dd if=%s of=%s bs=4096 skip=$sz count=34' % (dev, dev, outb)],
                           stderr=subprocess.DEVNULL)
 
 
@@ -189,12 +217,17 @@ def cmd_slot(args) -> int:
         return 0
     if args.action == "set-active":
         _require_root("slot set-active")
-        return _slot_attr(["--device", args.device, "set", args.slot,
-                           "--active", "--retry", "7"], backup=True)
+        # ★ 必须同时清 bit7(UNBOOTABLE)：只写 active+retry 会让「切槽」看起来成功，
+        #   而 ABL 仍拒绝尝试（2026-11-18 boot_a=0xf7 即此形态；fastboot --set-active
+        #   走的是 ABL 自己的实现、会清 bit7，两者行为不一致是历史事故源）。
+        rc = _slot_attr(["--device", args.device, "set", args.slot,
+                         "--active", "--retry", "7", "--no-unbootable"], backup=True)
+        return _slot_verify(args.device, args.slot, rc)
     if args.action == "mark-successful":
         _require_root("slot mark-successful")
-        return _slot_attr(["--device", args.device, "mark-successful", args.slot],
-                          backup=True)
+        rc = _slot_attr(["--device", args.device, "mark-successful", args.slot],
+                        backup=True)
+        return _slot_verify(args.device, args.slot, rc)
     if args.action == "set-retry":
         _require_root("slot set-retry")
         return _slot_attr(["--device", args.device, "set", args.slot,
