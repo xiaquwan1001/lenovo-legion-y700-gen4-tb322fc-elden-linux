@@ -144,6 +144,17 @@
   · **纪律**：所有脚本改动**未上机**；首次上机按 `slot-attr.py show` → 写 → 读回 → `mark-successful` 四步走。
   · 报告：`reports/script-audit-fastboot-gpt-20261118.md`、`reports/script-audit-edl-20261118.md`、`reports/script-audit-adb-20261118.md`、`reports/script-audit-ssh-20261118.md`。
 - **🆕 2026-11-18：LTBox（Rust GUI 刷写工具）评估已出 —— 推荐「抽 crate 做离线校验 CLI」（1.5–2.5 人日），**不接 MCP** —— 它有、我们 bash 主路径没有的校验 = **P0 6 / P1 7 / P2 5**，P0 全在「写之前」：rawprogram 全节点预检、destructive 节点缺 LUN/sector 直接拒、`start+count` 落 LUN 容量内、**镜像 sector 数 vs 分区 span 写前核对（批量全有或全无）**、写前重读 GPT 复验快照、dump 只认 `PartitionNotFound`。**它也不清 UNBOOTABLE / 不补 retry**（`grep` 0 命中）⇒ 和我们同一颗雷。MCP 不可行的 6 条结构冲突（无 headless / 编排绑 GUI crate / 裸 USB 绕过 device-lock / `EdlSession` 一开一 reset 等）见报告 §3。全账 = `reports/ltbox-evaluation-20261118.md`；仓 = `external/ext-repos/LTBox`（`~/LTBox` 软链）。
+- **🆕 2026-11-18：安卓「最小化线刷包」lane —— ✅ **上机成功（19:0x，一次通过）**；未结 = wipe 后卡 ZUXOS 动画** ——
+  · **判据**：清 `boot_a` UNBOOTABLE（`--set-active=a`，`yes→no`/retry `6→7`）→ 原厂 `boot_a` 起来 → 自签 `vbmeta_a_flags1` → `veritymode=disabled`
+    → EDL 写 `super_min.img` **8.28 GiB @42.2 MiB/s，设备端 sha256 = 主机**（`e3d0d26f…`）→ **连续两发 `boot_completed=1`**；
+    `/system` **11.43 → 5.0 GiB**，`/system/preinstall`、`/system/etc/AI` 已不存在。
+  · **未结**：`fastboot -w` 后 adbd `Could not set SELinux context` 崩 → recovery factory reset → logo ~72 s（正常，#679）→ **卡 ZUXOS 动画 >10 min**；
+    当前 fastboot，槽属性 `a: unbootable=no/succ=yes/retry=6`。候选 = `/data` 与删掉预装池的精简 system 不一致 / factory reset 触发 ZUI 重新格式化（**未取证**）。
+  · **待办（本次只登记）**：① 干净瘦身镜像（连桌面「预装占位」来源一起处理）② **KernelSU 修补版 boot**（GKI LKM：magiskboot + `kernelsu.ko` + avbtool 重签）
+    ③ 卡动画取证（recovery logcat / ttyGS0）④ 设备恢复可用。
+  · 全账 = `TASKS/sessions/2026-11-18-安卓最小包上机成功与卡动画.md`；报告 `reports/android-super-format-20261118.md`、`reports/android-min-avb-facts-20261118.md`；
+    脚本 `scripts/android-min-build.sh`；写前 GPT dump 与日志 `out/edl-supermin-20261118/`。
+- **🆕 2026-11-18：LTBox（Rust GUI 刷写工具）评估已出 —— 推荐「抽 crate 做离线校验 CLI」（1.5–2.5 人日），**不接 MCP** —— 它有、我们 bash 主路径没有的校验 = **P0 6 / P1 7 / P2 5**，P0 全在「写之前」：rawprogram 全节点预检、destructive 节点缺 LUN/sector 直接拒、`start+count` 落 LUN 容量内、**镜像 sector 数 vs 分区 span 写前核对（批量全有或全无）**、写前重读 GPT 复验快照、dump 只认 `PartitionNotFound`。**它也不清 UNBOOTABLE / 不补 retry**（`grep` 0 命中）⇒ 和我们同一颗雷。MCP 不可行的 6 条结构冲突（无 headless / 编排绑 GUI crate / 裸 USB 绕过 device-lock / `EdlSession` 一开一 reset 等）见报告 §3。全账 = `reports/ltbox-evaluation-20261118.md`；仓 = `external/ext-repos/LTBox`（`~/LTBox` 软链）。
 - **🆕 2026-11-18：安卓「最小化线刷包」lane —— 主机侧造件成功，EDL 试装 3 败后定因 = `boot_a` UNBOOTABLE（不是镜像）** —— 现状三句：① 已产出 `new/system_a.img`（5.17 GiB，去预装 6.53 GiB 后重建，e2fsck clean）与 `pkg/super_min.img`（8.28 GiB，lpmake 重打，7×`_a`）；② 设备**停在 fastboot**，`super`+两个 `vbmeta` 已回滚原厂并逐字节核验，**恢复只需把 LUN4 `boot_a` byte6 `0xf7`→`0x77`**；③ **最小包尚无任何成功上机样本**（“8.28 GiB 能起”仍是假设）。全账 = `TASKS/sessions/2026-11-18-安卓最小线刷包-主机侧造件与EDL试装失败.md`；子代理报告 `reports/android-super-format-20261118.md`、`reports/android-min-avb-facts-20261118.md`；脚本 `scripts/android-min-build.sh`。
 - **2026-11-13 夜：上机一轮（零写盘）—— ramdisk 修复件 `vk191` 一次通过 + s2idle 3/3** —— 全账 `reports/device-session-20261113-vk191.md`，在机状态只读 `DEVICE/README.md` §1.1 首条。
   > 沿革与逐轮明细（零删改）→ `TASKS/sessions/2026-11-14-TASKS-4-沿革下沉.md` §4-1；证据/件：`scripts/to-fastboot.sh`
