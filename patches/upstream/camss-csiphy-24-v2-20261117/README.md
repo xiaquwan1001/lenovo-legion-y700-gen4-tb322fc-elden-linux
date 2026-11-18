@@ -8,6 +8,10 @@
 
 - 日期：2026-11-17（v1 = `../camss-csiphy-24-20261115/`，**已由本目录取代**）
 - 状态：**备料，未投**（投放仍需用户逐系列批准）
+- **2026-11-18 投放前复核**：tree 里既无 `sm8750-csi2-phy` 也无 `kaanapali-csi2-phy`
+  （binding + 驱动都 0 命中），v6 `1/7` `state=new`/`commit_ref=None` ⇒ **`0001` 保留**、
+  `0002` 必须注明依赖 Kaanapali v25 前缀。cover 已定稿为 `0000-cover-letter.patch`，
+  收件人/`--in-reply-to`/门复跑/相对路径陷阱见 **`SENT-PREP.md`**（唯一入口，本节不重复）。
 - 基线：上游 **7.4-rc3 `aebb727447`** + **kaanapali v25 `[01/15]`–`[03/15]`** 三枚前缀
   （`logs/v25-0{1,2,3}-*.patch`，取自 lore `20261112-kaanapali-camss-v25-{1,2,3}-1d709f57f370@oss.qualcomm.com`；
   series 见 <https://patchwork.linuxtv.org/api/1.2/series/33877/>）

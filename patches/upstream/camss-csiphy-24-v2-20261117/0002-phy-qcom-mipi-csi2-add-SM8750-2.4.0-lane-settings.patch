@@ -1,7 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 Date: Tue, 17 Nov 2026 15:44:31 +0800
-Subject: [PATCH] phy: qcom: mipi-csi2: add SM8750 2.4.0 lane settings
+Subject: [PATCH v2 2/2] phy: qcom: mipi-csi2: add SM8750 2.4.0 lane
+ settings
 
 The 3nm two-phase CSI2 PHY found on SM8750 ships the v2.4.0 lane table,
 while kaanapali-csi2-phy currently reuses lane_regs_x1e80100[], i.e. the

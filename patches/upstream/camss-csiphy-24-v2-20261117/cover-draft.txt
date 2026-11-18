@@ -1,3 +1,5 @@
+> **已被 `0000-cover-letter.patch` 取代（2026-11-18）**：定稿版加了依赖声明（Kaanapali v25 / v6 `1/7` 都未进 tree）与短统计，本文件只作草稿留档。
+
 [PATCH v2 0/2] phy: qcom: mipi-csi2: SM8750 2.4.0 lane table
 
 Rebased on top of the Kaanapali series (v25, [01/15]-[03/15]) as asked.
