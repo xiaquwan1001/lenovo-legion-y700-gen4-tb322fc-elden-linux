@@ -17,23 +17,31 @@
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 TAB=${TAB:-root@192.168.7.1}
-SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 $TAB"
+# 2026-11-18 审计 R4 P1-4：① 无 BatchMode/超时 ⇒ 首次连接可挂死 ② `apk add … || true`
+# 吞掉失败后照样 `apk del waydroid-sensors` ⇒ 设备既没我们的 HAL 也没原厂包（半部署）。
+# 现：先装依赖（失败即停）→ 构建 → 安装成功后才删原厂包。
+SSHOPTS=(-o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+         -o ConnectTimeout=6 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o LogLevel=ERROR)
+STMO=${STMO:-300}
+SSH="timeout -k 5 $STMO ssh"
+scpq() { timeout -k 5 "$STMO" scp -q "${SSHOPTS[@]}" "$@"; }
 SRC=$ROOT/patches-userland/waydroid-sensord-udp
 
 echo "[sensord-routec] ensure build deps on $TAB"
-$SSH 'apk add --no-cache libgbinder-dev libglibutil-dev g++ pkgconf >/dev/null 2>&1 || true'
-# Remove the upstream package: it ships a different waydroid-sensord (sensorfw)
-# that cannot work here, and would shadow/wedge our binary at /usr/bin.
-$SSH 'apk del waydroid-sensors >/dev/null 2>&1 || true'
+$SSH "${SSHOPTS[@]}" "$TAB" 'apk add --no-cache libgbinder-dev libglibutil-dev g++ pkgconf' \
+	|| { echo "[sensord-routec] 依赖安装失败（设备网络/源），未删原厂包，可安全重跑" >&2; exit 1; }
+# 原厂包要等**我们的件装好之后**才删（下面 install 成功后再删）
 
 echo "[sensord-routec] copy source + build"
-$SSH 'mkdir -p /root/sensord-routeC'
-scp -q -o StrictHostKeyChecking=no "$SRC"/* "$TAB:/root/sensord-routeC/"
-$SSH 'cd /root/sensord-routeC && make clean >/dev/null 2>&1; cd /root/sensord-routeC && make'
+$SSH "${SSHOPTS[@]}" "$TAB" 'mkdir -p /root/sensord-routeC'
+scpq "$SRC"/* "$TAB:/root/sensord-routeC/"
+$SSH "${SSHOPTS[@]}" "$TAB" 'cd /root/sensord-routeC && make clean >/dev/null 2>&1; make'
 
 echo "[sensord-routec] install -> /usr/local/bin/waydroid-sensord"
-$SSH 'install -m 0755 /root/sensord-routeC/waydroid-sensord-udp /usr/local/bin/waydroid-sensord'
-$SSH 'which waydroid-sensord'
+$SSH "${SSHOPTS[@]}" "$TAB" 'install -m 0755 /root/sensord-routeC/waydroid-sensord-udp /usr/local/bin/waydroid-sensord'
+$SSH "${SSHOPTS[@]}" "$TAB" 'which waydroid-sensord'
+# 我们的件已就位 ⇒ 才可以删原厂包（它 ship 的 sensorfw 版会在 /usr/bin 抢名）
+$SSH "${SSHOPTS[@]}" "$TAB" 'apk del waydroid-sensors >/dev/null 2>&1 || true'
 
 # ---- real data source: SSC -> UDP relay (OpenRC service) --------------------
 # The relay runs on the host and converts `ssccli` output into the UDP text

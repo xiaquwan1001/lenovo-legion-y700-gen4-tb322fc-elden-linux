@@ -25,8 +25,13 @@ set -euo pipefail
 export PATH="$HOME/bin:$PATH"
 ROOT=${ROOT:-$HOME/y700-elden}
 DEV=${DEV:-root@192.168.7.1}
-SSH="ssh -o ConnectTimeout=8 -o StrictHostKeyChecking=no $DEV"
-SCP="scp -o ConnectTimeout=8 -o StrictHostKeyChecking=no"
+# 2026-11-18 审计 R4 P1-11：无 BatchMode ⇒ 首次连接会停在 host-key/密码提示把脚本挂死；
+# 无超时 ⇒ 设备没网时永久等。统一到带 BatchMode + timeout -k 的封装。
+SSHOPTS=(-o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+         -o ConnectTimeout=6 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o LogLevel=ERROR)
+STMO=${STMO:-300}
+SSH="timeout -k 5 $STMO ssh"
+SCP="timeout -k 5 $STMO scp"
 
 # KV: prefer the on-disk marker, else ask the tree.  Must equal `uname -r`.
 KV=$(grep -m1 '' "$ROOT/patches/camera-kver" 2>/dev/null || true)
@@ -38,7 +43,7 @@ echo "KV=$KV"
 echo "bundle=$BUNDLE ($(du -h "$BUNDLE" | cut -f1))"
 
 # Guard: the module vermagic must match the *running* kernel, not just the tree.
-RUNKV=$($SSH 'uname -r' 2>/dev/null || true)
+RUNKV=$($SSH "${SSHOPTS[@]}" "$DEV" 'uname -r' 2>/dev/null || true)
 if [ -n "$RUNKV" ] && [ "$RUNKV" != "$KV" ]; then
 	echo "REFUSING: device runs $RUNKV but bundle is for $KV (rebuild the bundle for the running kernel)" >&2
 	exit 1
@@ -49,6 +54,16 @@ fi
 # rpmsg 死循环 + `/dev/fastrpc-*` 全缺 + SSC 传感器全废）。这里比对模块构建树的
 # .config 与现役 SSOT 参考 config 的 27 项 ABI 敏感项，不一致就拒绝部署。
 CAMD_TREE=${CAMD_TREE:-$ROOT/$(sed -n 's/^\(build\/[^ #]*\).*/\1/p' "$ROOT/patches/current-tree" 2>/dev/null | head -1)}
+# fail-closed：找不到构建树的 .config 时**不能**静默跳过 ABI 门（PITFALLS #367 就是这么漏的）
+if [ ! -f "$CAMD_TREE/.config" ]; then
+	if [ "${SKIP_ABI_ASSERT:-0}" = 1 ]; then
+		echo "WARN ABI gate 跳过（SKIP_ABI_ASSERT=1）：找不到 $CAMD_TREE/.config" >&2
+	else
+		echo "REFUSING: 找不到模块构建树 config（$CAMD_TREE/.config）；" >&2
+		echo "  设 CAMD_TREE=<tree> 指到含 .config 的树，或显式 SKIP_ABI_ASSERT=1 跳过（PITFALLS #367）" >&2
+		exit 1
+	fi
+fi
 if [ -f "$CAMD_TREE/.config" ]; then
 	echo "== 0) ABI gate (tree=$CAMD_TREE) =="
 	bash "$ROOT/scripts/check-abi-config.sh" "$CAMD_TREE/.config" || {
@@ -63,16 +78,16 @@ echo "== 1) transfer（thin wrapper：实现全在 scripts/deploy-modules.sh --b
 bash "$ROOT/scripts/deploy-modules.sh" --bundle "$BUNDLE" --uts "$KV" --target "$DEV"
 
 echo "== 2) install loader =="
-$SCP "$ROOT/scripts/camera-modules-load.sh" "$DEV:/usr/local/sbin/camera-modules-load.sh"
-$SSH "chmod 755 /usr/local/sbin/camera-modules-load.sh"
+$SCP "${SSHOPTS[@]}" "$ROOT/scripts/camera-modules-load.sh" "$DEV:/usr/local/sbin/camera-modules-load.sh"
+$SSH "${SSHOPTS[@]}" "$DEV" "chmod 755 /usr/local/sbin/camera-modules-load.sh"
 
 [ "${ONLY_COPY:-0}" = "1" ] && { echo "ONLY_COPY=1 → not loading"; exit 0; }
 
 echo "== 3) load (depmod + modprobe dependency order) =="
-$SSH "/usr/local/sbin/camera-modules-load.sh"
+$SSH "${SSHOPTS[@]}" "$DEV" "/usr/local/sbin/camera-modules-load.sh"
 
 echo "== 4) evidence =="
-$SSH 'echo "### i2c devices"; ls /sys/bus/i2c/devices/ | sort;
+$SSH "${SSHOPTS[@]}" "$DEV" 'echo "### i2c devices"; ls /sys/bus/i2c/devices/ | sort;
 echo "### v4l/media"; ls -l /dev/video* /dev/media* /dev/v4l-subdev* 2>/dev/null;
 echo "### media-ctl"; media-ctl -p 2>&1 | head -80;
 echo "### v4l2-ctl"; v4l2-ctl --list-devices 2>&1 | head -30;

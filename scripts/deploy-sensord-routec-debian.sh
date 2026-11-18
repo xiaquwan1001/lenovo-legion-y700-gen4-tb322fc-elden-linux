@@ -35,7 +35,11 @@ HOST_ART=${HOST_ART:-$ROOT/out/sensord-host/waydroid-sensord-udp}
 
 say() { printf '[sensord-debian] %s\n' "$*"; }
 # shellcheck disable=SC2086
-rsh() { ssh $SSH_OPTS "$TARGET" "$@"; }
+# 2026-11-18 审计 R4 P1-6：rsh 无 timeout ⇒ apt 遇 dpkg lock/网络黑洞会永久挂（全局硬规则 3）
+rsh() { timeout -k 5 "${STMO:-300}" ssh $SSH_OPTS "$TARGET" "$@"; }
+# 会话 uid 现读，别写死 1001（PITFALLS：设备改过 uid 1000 与 1001 两代）
+SUID=$(rsh 'id -u xuqianhui1001' 2>/dev/null | tr -dc '0-9')
+[ -n "$SUID" ] || SUID=1000
 
 say "1/4 装运行时/构建依赖（幂等；已在则秒过）"
 rsh 'DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
@@ -76,8 +80,8 @@ say "4/4 重启 relay + 容器/session（HAL 由 Waydroid 自己拉起）"
 rsh 'systemctl restart ssc-udp-relay.service
 	systemctl restart waydroid-container.service
 	sleep 10
-	su xuqianhui1001 -c "XDG_RUNTIME_DIR=/run/user/1001 WAYLAND_DISPLAY=wayland-0 \
-		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus HOME=/home/xuqianhui1001 \
+	su xuqianhui1001 -c "XDG_RUNTIME_DIR=/run/user/$SUID WAYLAND_DISPLAY=wayland-0 \
+		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SUID/bus HOME=/home/xuqianhui1001 \
 		setsid waydroid session start >/home/xuqianhui1001/wd-session.log 2>&1 </dev/null &"
 	sleep 20
 	echo "--- 判据 ---"

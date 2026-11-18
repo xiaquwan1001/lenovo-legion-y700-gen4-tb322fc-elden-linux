@@ -17,13 +17,18 @@
 set -u
 cd "$(dirname "$0")/.."
 TAB="${TAB:-root@192.168.7.1}"
-SSH=(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no "$TAB")
+# 2026-11-18 审计 R4 P1-12：无 BatchMode（首次连接会等密码提示 ⇒ 挂死）；`pull` 把
+# dmesg + /var/log/*.log **全量**拉回来且无超时 ⇒ 弱链路/大日志时能挂十几分钟。
+# 现：BatchMode + ServerAlive + 超时；快照按行数截断（每段尾部 REMOTE_TAIL 行）。
+SSH=(timeout -k 5 "${DTO:-120}" ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no \
+     -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -o LogLevel=ERROR "$TAB")
+REMOTE_TAIL=${REMOTE_TAIL:-2000}
 mkdir -p logs
 
 # One remote invocation that prints an annotated snapshot.  Kept as a single
 # SSH call so the whole snapshot is consistent (and to avoid SSH churn).
 _remote_snapshot() {
-	"${SSH[@]}" 'sh -s' <<'EOS'
+	"${SSH[@]}" "REMOTE_TAIL=$REMOTE_TAIL sh -s" <<'EOS'
 echo "### date"; date
 echo "### uname"; uname -a
 echo "### uptime"; uptime
@@ -31,9 +36,9 @@ echo "### boot_id"; cat /proc/sys/kernel/random/boot_id
 echo "### cmdline"; cat /proc/cmdline
 echo "### power/state"; cat /sys/power/state 2>/dev/null; echo
  echo "### power/mem_sleep"; cat /sys/power/mem_sleep 2>/dev/null; echo
-echo "### dmesg"; dmesg
-for f in /run/*.log; do [ -f "$f" ] || continue; echo "### $f"; cat "$f"; done
-for f in /var/log/kmsg-*.log /var/log/*.log; do [ -f "$f" ] || continue; echo "### $f"; cat "$f"; done
+echo "### dmesg"; dmesg | tail -n "${REMOTE_TAIL:-2000}"
+for f in /run/*.log; do [ -f "$f" ] || continue; echo "### $f"; tail -n "${REMOTE_TAIL:-2000}" "$f"; done
+for f in /var/log/kmsg-*.log /var/log/*.log; do [ -f "$f" ] || continue; echo "### $f"; tail -n "${REMOTE_TAIL:-2000}" "$f"; done
 echo "### pstore"; ls -la /sys/fs/pstore 2>/dev/null
 for f in /sys/fs/pstore/*; do [ -f "$f" ] || continue; echo "### pstore:$f"; cat "$f"; done
 EOS
