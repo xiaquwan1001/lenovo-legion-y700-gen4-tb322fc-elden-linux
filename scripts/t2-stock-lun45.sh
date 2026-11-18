@@ -65,11 +65,25 @@ for spec in 0:gpt0 4:gpt4; do
   say "pre-gpt $tag size=$sz (sector_unit=$unit) sha256=$(sha256sum "$SNAP/$tag-lba0-33.bin" 2>/dev/null | cut -d' ' -f1)"
 done
 
+# 0b) 写前几何预检（LTBox 评估 P0-1..4 的等价物，2026-11-18）：
+#     缺字段/区间重叠/越界/镜像大于分区跨度/缺件 → 一律拒绝。`-f`(--allow-missing) 只在
+#     显式 ALLOW_MISSING=1 时才加，否则它会把你「少带了 11 个 userdata_*.img」变成静默跳过。
+say "--- pre: rawprogram 几何预检"
+PRE=scripts/rawprogram-preflight.py
+[ -f "$HOME/y700-elden/$PRE" ] && PRE=$HOME/y700-elden/$PRE
+PF_EXTRA=""; [ "${ALLOW_MISSING:-0}" = 1 ] && PF_EXTRA="--allow-missing"
+timeout -k 5 300 python3 "$PRE" rawprogram4.xml rawprogram_save_persist_unsparse0.xml \
+  --gpt-for 0=gpt_main0.bin --gpt-for 4=gpt_main4.bin $PF_EXTRA 2>&1 | tee -a "$LOG"
+pf_rc=${PIPESTATUS[0]}
+say "preflight rc=$pf_rc"
+[ "$pf_rc" -eq 0 ] || { say "!! 几何预检失败 ⇒ 一个字节都不写（改包或显式 ALLOW_MISSING=1）"; exit 5; }
+QF=""; [ "${ALLOW_MISSING:-0}" = 1 ] && { QF="-f"; say "（ALLOW_MISSING=1：qdl 允许缺件跳过，缺的件不会写）"; }
+
 # 1) LUN4（37 分区 / ~794 MiB）：boot/dtbo/vbmeta/固件 + GPT
 #    -R = 跳过会话末 reset ⇒ 设备留在 9008，下一发才能接上（#674）
 say "--- step1: rawprogram4 + patch4"
 : > "$O/step1.raw.log"
-timeout -k 10 1800 "$Q" -R -f -s ufs "$L" rawprogram4.xml patch4.xml >"$O/step1.raw.log" 2>&1
+timeout -k 10 1800 "$Q" -R $QF -s ufs "$L" rawprogram4.xml patch4.xml >"$O/step1.raw.log" 2>&1
 rc1=$?
 tail -6 "$O/step1.raw.log" | tee -a "$LOG"
 say "step1 rc=$rc1"
@@ -78,7 +92,7 @@ say "step1 rc=$rc1"
 # 2) LUN0（super/userdata/metadata/lenovoraw/lenovocust + GPT）：~15 GiB
 say "--- step2: rawprogram_save_persist_unsparse0 + patch0"
 : > "$O/step2.raw.log"
-timeout -k 10 3000 "$Q" -R -f -s ufs "$L" rawprogram_save_persist_unsparse0.xml patch0.xml >"$O/step2.raw.log" 2>&1
+timeout -k 10 3000 "$Q" -R $QF -s ufs "$L" rawprogram_save_persist_unsparse0.xml patch0.xml >"$O/step2.raw.log" 2>&1
 rc2=$?
 tail -6 "$O/step2.raw.log" | tee -a "$LOG"
 say "step2 rc=$rc2"
