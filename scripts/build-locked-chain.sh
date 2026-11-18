@@ -19,7 +19,10 @@
 #
 # 用法：
 #   scripts/build-locked-chain.sh <kernel.img> <stock_boot_dump> <stock_vbmeta_dump> \
-#       [stock_vbmeta_system_dump] [stock_recovery_dump] [--out bootslot-b-locked]
+#       [stock_vbmeta_system_dump] [stock_recovery_dump] [--out DIR] [--partition-size BYTES]
+#
+# 参数个数不定时请用位置占位（缺的可写 ""）：
+#   scripts/build-locked-chain.sh k.img boot.bin vbmeta.bin "" "" --out bootslot-b-locked
 #   kernel.img      = 未签名的 mainline boot 镜像（out/boot-elden-vk40.img，无 AVB footer）
 #   stock_*_dump    = 本单元的原厂 dump（EDL read 或官方线刷包解出；本 ABL 无 fastboot fetch），参数自动读出
 #
@@ -27,6 +30,8 @@
 #   boot_b.img / vbmeta_b.img / dtbo_b.img   ← EDL/fastboot 写入 b 槽三件套
 set -eu
 cd "$(dirname "$0")/.."
+# 注意：旧代码用 `[ "$6" = "--out" ]` 判断，参数不足 6 个时 set -u 会直接
+# 「$6: 未绑定的变量」退出（文档只要求 3 个必填）⇒ 一律用 ${n:-} 形式取值。
 
 KERNEL=${1:?usage: build-locked-chain.sh <kernel.img> <stock_boot_dump> <stock_vbmeta_dump> [vbmeta_system_dump] [recovery_dump]}
 STOCK_BOOT=${2:?缺 stock boot dump}
@@ -34,7 +39,18 @@ STOCK_VBMETA=${3:?缺 stock vbmeta dump}
 STOCK_VBMETA_SYSTEM=${4:-}
 STOCK_RECOVERY=${5:-}
 OUT=bootslot-b-locked
-[ "$6" = "--out" ] && OUT=$7
+# boot 分区大小：默认 96 MiB（本机 LUN4 boot_b 实测）；换机型/换分区布局必须显式给，
+# 或先在设备上 `blockdev --getsize64 /dev/sde12` 核对（GPT 条目给的是 100663296 B）
+BOOT_PART_SIZE=100663296
+_n=0
+while [ "$_n" -lt 5 ] && [ $# -gt 0 ]; do shift; _n=$((_n + 1)); done
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --out) OUT=${2:?--out 需要目录}; shift 2 ;;
+    --partition-size) BOOT_PART_SIZE=${2:?--partition-size 需要字节数}; shift 2 ;;
+    *) echo "未知参数 $1（--out DIR / --partition-size BYTES）" >&2; exit 2 ;;
+  esac
+done
 
 KEY=env-pass/keys/testkey_rsa4096.pem
 AVB=tools/avbtool.py
@@ -71,7 +87,7 @@ echo "   vbmeta flags=$VBMETA_FLAGS rollback=$VBMETA_RB"
 echo "== 2/5 签 boot_b（testkey + rollback $BOOT_RB + 原厂 props） =="
 cp -f "$KERNEL" "$OUT/boot_b.img"
 python3 $AVB add_hash_footer --image "$OUT/boot_b.img" --partition_name boot \
-  --partition_size 100663296 --key "$KEY" --algorithm SHA256_RSA4096 \
+  --partition_size "$BOOT_PART_SIZE" --key "$KEY" --algorithm SHA256_RSA4096 \
   --rollback_index "$BOOT_RB" "${BOOT_PROPS[@]}" >/dev/null
 
 echo "== 3/5 造 fake dtbo_b（4KB 全零 → 32MiB，无 descriptor） =="
@@ -120,5 +136,15 @@ python3 $AVB info_image --image "$OUT/vbmeta_b.img" | grep -E 'Public key|Rollba
 python3 $AVB info_image --image "$OUT/boot_b.img" | grep -E 'Public key|Rollback Index' | head -3
 echo ""
 echo "ready: EDL 写入 b 槽三件套 →"
-echo "  qdl/build/qdl -s ufs ~/下载/tb322fc/xbl_s_devprg_ns.melf write boot_b $OUT/boot_b.img"
-echo "  （dtbo_b / vbmeta_b 同理；只写 b 槽！写后 EDL read 回校验）"
+echo "  qdl/build/qdl -R -s ufs ~/下载/tb322fc/xbl_s_devprg_ns.melf \\"
+echo "    write 4/<boot_b 起始 LBA> $OUT/boot_b.img write 4/<dtbo_b LBA> $OUT/dtbo_b.img \\"
+echo "    write 4/<vbmeta_b LBA> $OUT/vbmeta_b.img sha256 4/<boot_b LBA>+<n>"
+echo "  （-R = --skip-reset；三件必须写在**同一条** qdl 命令里，PITFALLS #674；"
+echo "    LBA 从 scripts/gpt-audit-tb322fc.py 的 LUN4 输出里取，不要手抄）"
+echo ""
+echo "!! 写盘前后各一次槽属性取证（PITFALLS #672/#308：boot_b 条目 byte6 的 bit7=UNBOOTABLE 会让"
+echo "   ABL 直接回 fastboot，镜像根本没被执行 —— 这一步漏了，本轮实验注定无效）："
+echo "   写前: python3 scripts/slot-attr.py --device /dev/sde show"
+echo "   写后: python3 scripts/slot-attr.py --device /dev/sde set b --no-unbootable --retry 7 --successful"
+echo "   复核: python3 scripts/slot-attr.py --device /dev/sde show   # boot_b byte6 期望 0x4f 一类（succ=1,unbootable=0）"
+echo "   TODO(自动)：本脚本只有主机侧产物，无法在设备不在线时完成上面两步；接线位置 = flash-b.sh。"

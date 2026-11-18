@@ -21,6 +21,14 @@ SECT=4096
 
 [ -b "$DEV" ] || { echo "not a block device: $DEV" >&2; exit 1; }
 
+# 逻辑扇区必须是 4096（本机型 UFS 4Kn）。写死 4096 而不核对，一旦换了内核/换了盘
+# （512B 逻辑扇区）就会把整张表按 8 倍错位读出来，且 dd 不会报错。
+SSZ=$(blockdev --getss "$DEV" 2>/dev/null || echo 0)
+[ "$SSZ" = "$SECT" ] || { echo "!! $DEV 逻辑扇区 = ${SSZ:-?} B != $SECT B；拒绝 dump（先 blockdev --getss 核对）" >&2; exit 1; }
+# 先确认这是 GPT 盘（防止 DEV 指到别处：U 盘/别的 LUN 时 dd 一样「成功」）
+od -An -c -j$((SECT + 0)) -N8 "$DEV" | tr -d ' \n' | grep -q 'EFI.*P.*A.*R.*T' \
+  || { echo "!! $DEV LBA1 不是 'EFI PART'；这不是 GPT 盘（或 DEV 指错了）" >&2; exit 1; }
+
 echo "[gpt-dump] primary (LBA0..5)"
 dd if="$DEV" bs=$SECT count=6 of="$PREFIX-primary.bin" 2>/dev/null
 

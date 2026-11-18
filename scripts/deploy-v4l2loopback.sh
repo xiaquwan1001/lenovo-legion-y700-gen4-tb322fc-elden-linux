@@ -50,13 +50,20 @@ if [ "$SKIP_BUILD" = 0 ]; then
 	# vermagic 逐字匹配：临时把生成文件改成目标 UTS，编完立刻恢复（见 reports/v4l2loopback-build-20261026.md）
 	RELF=$KSRC/include/config/kernel.release
 	UTSH=$KSRC/include/generated/utsrelease.h
-	cp "$RELF" /tmp/.v4l2-rel.bak && cp "$UTSH" /tmp/.v4l2-uts.bak
+	# 2026-11-18 审计 R4：① 备份名带 $$（旧版固定 /tmp/.v4l2-*.bak：并发两次或上次
+	# 被中断后再跑，会把「已改成设备 UTS 的副本」当原件备份 ⇒ 构建树 UTS 永久写错）；
+	# ② 加 EXIT/INT/TERM trap（旧版只在 make 返回时恢复，Ctrl-C/kill 就永久留下错的
+	# utsrelease.h，之后每次内核构建都产错 vermagic，且看不出来）。
+	RELBK=/tmp/.v4l2-rel.bak.$$
+	UTSBK=/tmp/.v4l2-uts.bak.$$
+	cp "$RELF" "$RELBK" && cp "$UTSH" "$UTSBK"
+	trap 'cp -f "$RELBK" "$RELF" 2>/dev/null; cp -f "$UTSBK" "$UTSH" 2>/dev/null; rm -f "$RELBK" "$UTSBK"' EXIT INT TERM
 	printf '%s\n' "$UTS" > "$RELF"
 	printf '#define UTS_RELEASE "%s"\n' "$UTS" > "$UTSH"
 	say "编译（KDIR=$KSRC）"
 	make -C "$KSRC" M="$SRC" ARCH=arm64 CROSS_COMPILE="$CROSS" LD=ld.lld modules -j26 \
-		> /tmp/v4l2-build.log 2>&1 || { say "编译失败，见 /tmp/v4l2-build.log"; cp /tmp/.v4l2-rel.bak "$RELF"; cp /tmp/.v4l2-uts.bak "$UTSH"; exit 1; }
-	cp /tmp/.v4l2-rel.bak "$RELF"; cp /tmp/.v4l2-uts.bak "$UTSH"
+		> /tmp/v4l2-build.log 2>&1 || { say "编译失败，见 /tmp/v4l2-build.log"; exit 1; }
+	cp -f "$RELBK" "$RELF"; cp -f "$UTSBK" "$UTSH"
 	cp "$SRC/v4l2loopback.ko" "$OUT/v4l2loopback.ko"
 	got=$(modinfo "$OUT/v4l2loopback.ko" | awk '/^vermagic/{print $2}')
 	[ "$got" = "$UTS" ] || { say "vermagic 不匹配：$got ≠ $UTS"; exit 1; }
@@ -80,5 +87,6 @@ rsh 'depmod -a
 		}
 	fi
 	modprobe v4l2loopback exclusive_caps=1 video_nr=100 max_buffers=8 && \
-	ls -l /dev/video100 && cat /sys/module/v4l2loopback/parameters/max_buffers'
+	ls -l /dev/video100 && cat /sys/module/v4l2loopback/parameters/max_buffers' \
+	|| { say "部署/加载失败（换模块或 modprobe 失败，见上面设备侧输出）；未回退" ; exit 3; }
 say "done（相机生产者：bash scripts/cam-loopback.sh start front 1280x720 30）"

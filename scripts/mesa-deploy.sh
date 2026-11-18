@@ -12,12 +12,21 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REMOTE_TMP=/root/wd
 REMOTE_NEW=/root/wd/mesa-new
 
+# 2026-11-18 审计 R4：原先 scp/ssh 全无选项、无超时；且 /root/wd 不存在时首跑即失败
+# （scp 目标目录缺失）。统一选项 + timeout + 先建目录。
+SSHOPTS=(-o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+         -o ConnectTimeout=8 -o ServerAliveInterval=15 -o ServerAliveCountMax=3)
+STMO=${STMO:-600}
+sshc() { timeout "$STMO" ssh "${SSHOPTS[@]}" "$DEVICE" "$@"; }
+scpc() { timeout "$STMO" scp -q "${SSHOPTS[@]}" "$@"; }
+
 log() { echo -e "\033[1;36m[deploy]\033[0m $*"; }
 
 if [ "${1:-}" = "--rollback" ]; then
   log "在设备上回退…"
-  scp "$HERE/waydroid-mesa-swap.sh" "$DEVICE:$REMOTE_TMP/"
-  ssh "$DEVICE" "bash $REMOTE_TMP/waydroid-mesa-swap.sh rollback"
+  sshc "mkdir -p $REMOTE_TMP"
+  scpc "$HERE/waydroid-mesa-swap.sh" "$DEVICE:$REMOTE_TMP/"
+  sshc "bash $REMOTE_TMP/waydroid-mesa-swap.sh rollback"
   exit 0
 fi
 
@@ -26,10 +35,11 @@ TARBALL="$(ls -t "$SRC"/mesa-vendor-*.tar.gz 2>/dev/null | head -1 || true)"
 log "包: $TARBALL"
 
 log "推送到 $DEVICE:$REMOTE_TMP/"
-scp "$HERE/waydroid-mesa-swap.sh" "$TARBALL" "$DEVICE:$REMOTE_TMP/"
+sshc "mkdir -p $REMOTE_TMP"
+scpc "$HERE/waydroid-mesa-swap.sh" "$TARBALL" "$DEVICE:$REMOTE_TMP/"
 
 log "在设备上解包并安装"
-ssh "$DEVICE" "
+sshc "
   set -e
   cd $REMOTE_TMP
   rm -rf $REMOTE_NEW && mkdir -p $REMOTE_NEW

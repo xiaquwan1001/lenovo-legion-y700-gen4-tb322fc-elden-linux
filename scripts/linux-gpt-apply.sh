@@ -13,17 +13,22 @@
 #   scripts/linux-gpt-apply.sh ... --apply     # 真正写（需设备已在 EDL 9008 或本脚本 --enter-edl）
 #
 #   --enter-edl   先 `adb reboot edl`（设备在 Android 时）或 `fastboot oem edl`（fastboot 时）再写
-#   --restore     用同一个 --lun 的 backup 目录件回滚（等价于换一对输入）
+#   --restore DIR 用 DIR 里的 gpt<LUN>-primary.bin / gpt<LUN>-backup.bin 回滚（等价于换一对输入）
+#   --reset       写后显式 `qdl reset` 把设备踢出 9008（默认**不**踢：留在 EDL 便于连续操作）
 #
 # 硬约束：
 #   * 扇区大小 = **4096 B**（本机 TB322FC 实测）；主表 = LUN 的 LBA0..5（6 扇区 = 24576 B），
 #     备表 = LBA `alt_lba-4 .. alt_lba`（5 扇区 = 20480 B，末尾 4096 B 是备份头）。
-#   * 写前必须已有当前表 dump（本脚本**不**替你备份；`scripts/linux-gpt-dump.sh` 负责）。
-#   * `qdl` 多次调用必须显式 reset；本脚本一次调用写完主备 + 一次读回，最后 reset。
-#   * 写后读回逐字节比对 sha256，不一致 ⇒ rc=1。
+#   * 写前必须已有当前表 dump：本脚本在**同一条 qdl 命令里**先读一次 LBA0..5 落盘
+#     （`$READDIR/pre-write-primary.bin`，失败路径也留），这就是本次的回退基线。
+#   * `qdl -R` = `--skip-reset`（**跳过**会话末尾的 reset），作用只是「让设备留在 9008」；
+#     要真把设备踢出 9008 必须另发 `qdl <loader> reset`（`--reset`）。旧注释把它写成
+#     「末发 -R reset」是反的（PITFALLS #674/#675 的成因之一）。
+#   * 写后读回逐字节比对 sha256，加 `qdl sha256` 设备端摘要当第二把尺子（#669），不一致 ⇒ rc=1。
+#   * 写顺序 = **先备表后主表**：中途掉电只会留下「新备表 + 旧主表」，主表仍自洽可比。
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-LUN=""; MAIN=""; BACKUP=""; APPLY=0; ENTER_EDL=0
+LUN=""; MAIN=""; BACKUP=""; APPLY=0; ENTER_EDL=0; RESTORE=""; DO_RESET=0
 SN=${SN:-HA2EXB0E}
 LOADER=${LOADER:-$HOME/下载/tb322fc/xbl_s_devprg_ns.melf}
 QDL=${QDL:-$HOME/edl/qdl/build/qdl}
@@ -37,11 +42,19 @@ while [ $# -gt 0 ]; do
 		--apply) APPLY=1; shift ;;
 		--dry-run) APPLY=0; shift ;;
 		--enter-edl) ENTER_EDL=1; shift ;;
-		-h|--help) sed -n '2,29p' "$0"; exit 0 ;;
+		--reset) DO_RESET=1; shift ;;
+		--restore) RESTORE=$2; shift 2 ;;
+		-h|--help) sed -n '2,31p' "$0"; exit 0 ;;
 		*) echo "未知参数 $1（--help 看用法）" >&2; exit 2 ;;
 	esac
 done
-[ -n "$LUN" ] && [ -n "$MAIN" ] && [ -n "$BACKUP" ] || { echo "缺 --lun/--gpt(--main)/--backup" >&2; exit 2; }
+[ -n "$LUN" ] || { echo "缺 --lun" >&2; exit 2; }
+if [ -n "$RESTORE" ]; then
+	[ -d "$RESTORE" ] || { echo "--restore 目录不存在: $RESTORE" >&2; exit 2; }
+	[ -n "$MAIN" ] || MAIN=$RESTORE/gpt$LUN-primary.bin
+	[ -n "$BACKUP" ] || BACKUP=$RESTORE/gpt$LUN-backup.bin
+fi
+[ -n "$MAIN" ] && [ -n "$BACKUP" ] || { echo "缺 --lun/--gpt(--main)/--backup（或 --restore DIR）" >&2; exit 2; }
 for f in "$MAIN" "$BACKUP" "$LOADER" "$QDL"; do [ -e "$f" ] || { echo "缺文件: $f" >&2; exit 2; }; done
 msz=$(stat -c%s "$MAIN"); bsz=$(stat -c%s "$BACKUP")
 [ "$msz" -eq 24576 ] || { echo "--main 必须是 24576 B（6×4096），实际 $msz" >&2; exit 2; }
@@ -97,6 +110,10 @@ if [ "$APPLY" -eq 0 ]; then
 	exit 0
 fi
 
+# 串行化：写 GPT 期间不允许别的 agent 碰设备（PITFALLS 与 scripts/lib-device-lock.sh）
+. "$ROOT/scripts/lib-device-lock.sh"
+device_lock_acquire
+
 if [ "$ENTER_EDL" -eq 1 ]; then
 	if timeout -k 5 6 adb devices | awk '{print $1}' | grep -qx "$SN"; then
 		echo "[edl] adb reboot edl ($SN)"; timeout -k 5 20 adb -s "$SN" reboot edl || true
@@ -110,14 +127,46 @@ fi
 timeout -k 5 10 lsusb | grep -q '05c6:9008' || { echo "!! 未枚举到 05c6:9008（EDL）；中止，未写任何东西" >&2; exit 1; }
 
 mkdir -p "$READDIR"
-echo "[write] 主备双表（单次 qdl 会话，末发 -R reset）"
-# 写 + 读回：同一会话里先写两段再读两段（qdl 一次调用内顺序执行）
+echo "[write] 主备双表（单次 qdl 会话：读旧表留回退 → 写备表 → 写主表 → 读回 → 设备端 sha256）"
+# 顺序理由：① 先读设备当前 LBA0..5（回退基线，失败也留）；② 写备表再写主表（中途掉电主表仍自洽）；
+# ③ 读回两段做逐字节比对；④ 同一条命令里让设备端算 sha256 当第二把尺子（PITFALLS #669）。
+# `-R` = --skip-reset ⇒ 会话结束后设备**留在 9008**（不是「执行 reset」）；要踢出用 --reset。
+# 分两条 qdl 命令是**有意**的：旧备表位置要先解析旧主表才知道，而解析必须发生在写之前。
+# 两条命令都带 -R（跳过会话末尾 reset）⇒ 设备在两条之间留在 9008，不会再触发 #674 的
+# 「上一发结束即 reset、下一发 SAHARA failed to read request」。
+timeout -k 10 120 "$QDL" -s ufs -R "$LOADER" \
+	read "$LUN/0+6" "$READDIR/pre-write-primary.bin" \
+	2>&1 | tee "$READDIR/qdl-pre.log" | tail -3
+OLD_ALT=$(python3 - "$READDIR/pre-write-primary.bin" <<'PY' 2>/dev/null || true
+import struct,sys
+b=open(sys.argv[1],'rb').read()
+h=b[4096:4096+92]
+if len(b) < 4096+92 or h[:8]!=b'EFI PART': sys.exit(1)
+print(struct.unpack_from('<Q',h,32)[0])
+PY
+)
+if [ -n "$OLD_ALT" ] && [ "$OLD_ALT" -gt 5 ]; then
+	echo "写前旧表备表 LBA $((OLD_ALT-4))..$OLD_ALT（存 $READDIR/pre-write-backup.bin）"
+	OLD_BKP=$((OLD_ALT-4))
+	timeout -k 10 120 "$QDL" -s ufs -R "$LOADER" \
+		read "$LUN/$OLD_BKP+5" "$READDIR/pre-write-backup.bin" \
+		2>&1 | tee -a "$READDIR/qdl-pre.log" | tail -2
+else
+	echo "!! 拿不到写前主表（回退基线缺失）⇒ 即使写成功也 rc=1；先跑 scripts/linux-gpt-dump.sh" >&2
+	OLD_BKP=""
+fi
+
 timeout -k 10 420 "$QDL" -s ufs -R "$LOADER" \
-	write "$LUN/0" "$MAIN" \
 	write "$LUN/$BKP_START" "$BACKUP" \
+	write "$LUN/0" "$MAIN" \
 	read "$LUN/0+6" "$READDIR/gpt$LUN-primary.bin" \
 	read "$LUN/$BKP_START+5" "$READDIR/gpt$LUN-backup.bin" \
-	2>&1 | tail -12
+	sha256 "$LUN/0+6" \
+	sha256 "$LUN/$BKP_START+5" \
+	2>&1 | tee "$READDIR/qdl.log" | tail -14
+if [ -s "$READDIR/pre-write-primary.bin" ]; then
+	echo "回退基线: $READDIR/pre-write-primary.bin sha=$(sha256sum "$READDIR/pre-write-primary.bin" | cut -c1-16)$([ -s "$READDIR/pre-write-backup.bin" ] && echo " + pre-write-backup.bin")"
+fi
 
 ok=1
 for pair in "main:$MAIN:$READDIR/gpt$LUN-primary.bin" "backup:$BACKUP:$READDIR/gpt$LUN-backup.bin"; do
@@ -127,5 +176,39 @@ for pair in "main:$MAIN:$READDIR/gpt$LUN-primary.bin" "backup:$BACKUP:$READDIR/g
 	if [ "$a" = "$b" ]; then echo "OK   $kind 读回逐字节一致 sha=${a:0:16}"; else echo "FAIL $kind 读回不一致 want=${a:0:16} got=${b:0:16}"; ok=0; fi
 done
 echo "读回件目录: $READDIR（命名 = gpt${LUN}-{primary,backup}.bin，可直接给 gpt-audit 的 --dev）"
-[ "$ok" -eq 1 ] || { echo "!! 读回校验失败 ⇒ 用旧表回滚（同名目录里的 gpt${LUN}-{primary,backup}.bin）" >&2; exit 1; }
+
+# 第二把尺子：设备端 sha256（不经 USB 传数据，见 PITFALLS #669）。qdl 每行一个 64 位 hex。
+mapfile -t devsha < <(grep -E '^[0-9a-f]{64}$' "$READDIR/qdl.log" || true)
+if [ "${#devsha[@]}" -eq 2 ]; then
+	i=0
+	for pair in "main:$MAIN" "backup:$BACKUP"; do
+		kind=${pair%%:*}; want=${pair#*:}
+		h=$(sha256sum "$want" | cut -d' ' -f1)
+		if [ "$h" = "${devsha[$i]}" ]; then echo "OK   $kind 设备端 sha256 一致 sha=${h:0:16}"
+		else echo "FAIL $kind 设备端 sha256 不符 host=${h:0:16} dev=${devsha[$i]:0:16}"; ok=0; fi
+		i=$((i+1))
+	done
+else
+	echo "WARN 设备端 sha256 未取到（loader 不支持 getsha256digest 时会跳过）⇒ 只用读回件做判据" >&2
+fi
+
+if [ -s "$READDIR/pre-write-primary.bin" ] && [ -s "$READDIR/pre-write-backup.bin" ]; then
+	echo "回滚（若新表起不来）:"
+	echo "  mkdir -p $READDIR/rollback && cp $READDIR/pre-write-primary.bin $READDIR/rollback/gpt$LUN-primary.bin"
+	echo "  cp $READDIR/pre-write-backup.bin $READDIR/rollback/gpt$LUN-backup.bin"
+	echo "  $0 --lun $LUN --restore $READDIR/rollback --apply --reset"
+	echo "  ↑ #675 口径：新表若改动了在用分区的 LBA 区间，回滚表只让 GPT 回到旧样子，被覆盖的数据回不来"
+else
+	echo "!! 回退基线不齐（写前主/备表没取全）⇒ rc=1；以后先跑 scripts/linux-gpt-dump.sh" >&2
+	ok=0
+fi
+
+if [ "$DO_RESET" -eq 1 ]; then
+	echo "[reset] 显式踢出 9008（qdl 的 -R 只跳过 reset，这一步才是真 reset）"
+	timeout -k 10 120 "$QDL" -s ufs "$LOADER" reset 2>&1 | tail -2 \
+		|| { echo "!! qdl reset 失败（#675：设备可能已自行离开 9008）⇒ 手工确认设备状态" >&2; ok=0; }
+else
+	echo "设备仍在 EDL(9008)（-R 跳过 reset）。要回正常启动：scripts/… 或 \"$QDL -s ufs $LOADER reset\""
+fi
+[ "$ok" -eq 1 ] || exit 1
 echo "下一步（P1 判据）：读回目录跑 python3 scripts/gpt-audit-tb322fc.py --dev <dir> --stock ~/文档/TB322FC_15.10.259"

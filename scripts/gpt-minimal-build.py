@@ -92,6 +92,8 @@ def main():
     ap.add_argument("--keep-esp-gib", type=float, default=0.0, help=">0 时在尾部再留一个 ESP（FAT32）")
     ap.add_argument("--drop-extra", default="", help="额外要删的 label（逗号分隔）")
     ap.add_argument("--keep-extra", default="", help="额外要保的 label（逗号分隔，优先于 drop）")
+    ap.add_argument("--allow-drop-live", action="store_true",
+                    help="允许删掉本机正在用的分区（elden-*/linux17/eldenesp）；默认拒绝")
     a = ap.parse_args()
 
     g = load_gpt_surgery()
@@ -128,6 +130,15 @@ def main():
         cand = [n for n in LUN4_LV2_CANDIDATES if n in names]
         if cand:
             print(f"  note     LUN4 激进候选（默认保留，需 --drop-extra 才删）：{', '.join(cand)}")
+
+    # 防「对本机现表误跑」：现表里有我们的活分区时，默认拒绝 —— 旧行为会静默把
+    # elden-super/elden-data/linux17/eldenesp 四条删掉（数据留在盘上，但系统立刻失联），
+    # 且新 linux 区间会盖住这些分区的数据（#675 同类）。
+    LIVE_OURS = ("elden-super", "elden-data", "linux17", "eldenesp", "elden-su")
+    live = [n for n in LIVE_OURS if n in names]
+    if live and not a.allow_drop_live:
+        sys.exit(f"✗ 输入表里有本机在用分区 {live} ⇒ 默认拒绝（这是「现表」不是「原厂表」）。\n"
+                 f"  只想要计划看效果：加 --allow-drop-live 并先确认这次不用回退。")
 
     keep = set(keep_critical) | {x for x in a.keep_extra.split(",") if x}
     drop = (set(base_drop) | {x for x in a.drop_extra.split(",") if x}) - keep
@@ -166,6 +177,13 @@ def main():
     if lin_first:
         print(f"  {a.linux_name:>10s}: {lin_first}..{lin_last}  ({(lin_last-lin_first+1)*SECTOR/2**30:.2f} GiB)"
               + (f"   [ESP {esp[0]}..{esp[1]} {a.keep_esp_gib} GiB]" if esp else ""))
+        # 覆盖冲突报告：新分区区间会物理盖掉哪些**被删条目**指向的数据（删条目 ≠ 删数据，
+        # 但新分区的数据一旦写进去就真没了 —— 这是 #675 的原始事故形态）
+        clob = [e["name"] for e in dropped
+                if e["first"] <= lin_last and lin_first <= e["last"]]
+        if clob:
+            print(f"  ⚠ 新 {a.linux_name} 区间覆盖以下被删分区**原有的数据区**"
+                  f"（写这个分区就会毁掉它们，回退表也救不回来）：{clob}")
         print(f"  last_usable={last_usable}（未用尾部 {(last_usable-lin_last)*SECTOR/2**20:.2f} MiB）")
     else:
         print(f"  （LUN{a.lun} 不新建分区：firmware-only LUN，腾出的空间留作空洞）")

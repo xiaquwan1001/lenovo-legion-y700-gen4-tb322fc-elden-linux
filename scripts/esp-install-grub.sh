@@ -17,7 +17,10 @@ TAG=
 DEVICE=${DEVICE:-${TAB:-root@192.168.7.1}}
 ESP=/dev/sda18
 ACT=stage
-SSHOPT=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes)
+SSHOPT=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes
+         -o ConnectTimeout=8 -o ServerAliveInterval=15 -o ServerAliveCountMax=3)
+# 2026-11-18 审计 R4：设备侧 mount/cp/sha 都可能长时间不返回，一律套 timeout。
+STMO=${STMO:-180}
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -37,13 +40,23 @@ if [ "$ACT" != rollback ]; then
 	sha=$(sha256sum "$EFI" | cut -d' ' -f1)
 	[ -n "$TAG" ] || TAG=${sha:0:8}
 	echo "[esp] 件 $EFI  sha256=$sha  tag=$TAG"
-	scp -q "${SSHOPT[@]}" "$EFI" "$DEVICE:/tmp/grub-$TAG.efi" || exit 1
+	timeout "$STMO" scp -q "${SSHOPT[@]}" "$EFI" "$DEVICE:/tmp/grub-$TAG.efi" || exit 1
 fi
 
-ssh "${SSHOPT[@]}" "$DEVICE" "set -e
+# 2026-11-18 审计 R4：写引导件前先核对 ESP 真的是那个 vfat 分区（GPT 重排后
+# /dev/sda18 可能已是别的分区），并留够 8 MiB；否则 cp 半途 ENOSPC 把
+# BOOTAA64.EFI 写残 —— ESP-first 路径同时失去旧件与完整新件 = 设备无引导。
+timeout "$STMO" ssh "${SSHOPT[@]}" "$DEVICE" "set -e
+[ -b $ESP ] || { echo '[esp] ERROR: $ESP 不是块设备（GPT 变了？）' >&2; exit 1; }
+blkid -s TYPE -o value $ESP | grep -qx vfat || { echo '[esp] ERROR: $ESP 不是 vfat，拒绝写引导' >&2; exit 1; }
+" || exit 1
+
+timeout "$STMO" ssh "${SSHOPT[@]}" "$DEVICE" "set -e
 mkdir -p /mnt/esp
 mountpoint -q /mnt/esp || mount $ESP /mnt/esp
 cd /mnt/esp
+avail=\$(df -k . | awk 'NR==2{print \$4}')
+[ \"\$avail\" -ge 8192 ] || { echo \"[esp] ERROR: ESP 剩余 \${avail}KiB < 8MiB\" >&2; umount /mnt/esp; exit 1; }
 
 if [ '$ACT' = rollback ]; then
 	bak=\$(ls -t EFI/BOOT/BOOTAA64.EFI.*.bak 2>/dev/null | head -1)
@@ -58,7 +71,10 @@ cp /tmp/grub-$TAG.efi EFI/grub/grub-$TAG.efi
 sha256sum EFI/grub/grub-$TAG.efi
 if [ '$ACT' = activate ]; then
 	[ -f EFI/BOOT/BOOTAA64.EFI ] && cp -a EFI/BOOT/BOOTAA64.EFI EFI/BOOT/BOOTAA64.EFI.$TAG.bak
-	cp EFI/grub/grub-$TAG.efi EFI/BOOT/BOOTAA64.EFI
+	# 先落 .new 再 rename：直接 cp 覆盖 BOOTAA64.EFI，掉电/ENOSPC 会留下半个引导件。
+	cp EFI/grub/grub-$TAG.efi EFI/BOOT/BOOTAA64.EFI.new
+	sync
+	mv -f EFI/BOOT/BOOTAA64.EFI.new EFI/BOOT/BOOTAA64.EFI
 	echo '[esp] 已切换 BOOTAA64.EFI'
 	sha256sum EFI/BOOT/BOOTAA64.EFI
 else
@@ -67,3 +83,15 @@ fi
 sync
 umount /mnt/esp
 " || exit 1
+
+# 写后校验（PITFALLS #669 同族：退出码 0 ≠ 内容对）：设备侧 sha 必须等于主机件 sha。
+# 旧版只把 sha256sum 打在屏幕上，从不与主机 $sha 比对。
+if [ "$ACT" = activate ]; then
+	got=$(timeout "$STMO" ssh "${SSHOPT[@]}" "$DEVICE" "set -e
+	  mountpoint -q /mnt/esp || mount $ESP /mnt/esp
+	  sha256sum /mnt/esp/EFI/BOOT/BOOTAA64.EFI | awk '{print \$1}'
+	  sync; umount /mnt/esp" 2>/dev/null | tr -d '\r')
+	[ "$got" = "$sha" ] || { echo "[esp] FAIL: BOOTAA64.EFI 读回 sha=$got ≠ 主机 $sha" >&2
+		echo "      回退：scripts/esp-install-grub.sh --rollback" >&2; exit 1; }
+	echo "[esp] 读回 sha 一致（$got）"
+fi

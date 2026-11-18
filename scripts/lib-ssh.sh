@@ -25,7 +25,7 @@
 #
 # 可覆盖环境变量：TAB / TABLET（默认 root@192.168.7.1）、SSH_OPTS、S_TIMEOUT（默认 10）
 : "${TAB:=${TABLET:-root@192.168.7.1}}"
-: "${SSH_OPTS:=-o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -o LogLevel=ERROR}"
+: "${SSH_OPTS:=-o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o LogLevel=ERROR}"
 : "${S_TIMEOUT:=10}"
 
 # S <cmd> [timeout]     或     S --stdin [timeout]
@@ -38,7 +38,8 @@ S() {
 	fi
 	local cmd=$1
 	[ $# -ge 2 ] && tmo=$2
-	timeout "$tmo" ssh $SSH_OPTS "$TAB" "$cmd" 2>/dev/null
+	# -n：单条命令不吃调用方的 stdin（否则放进 `while read` 里会把输入循环吃掉）。
+	timeout "$tmo" ssh -n $SSH_OPTS "$TAB" "$cmd" 2>/dev/null
 }
 
 S_alive() { [ "$(S 'echo up' 8)" = up ]; }

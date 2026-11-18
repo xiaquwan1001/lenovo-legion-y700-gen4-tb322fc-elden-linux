@@ -175,9 +175,23 @@ def cmd_build(a):
     free_slot = next(i for i, e in enumerate(ents) if e is None)  # pick BEFORE edits
 
     # -- shrink userdata --
-    ud = next(e for e in ents if e["name"] == "userdata")
+    # 注意：ents 里有 None（空槽），旧写法 `next(e for e in ents if e["name"]==...)` 在
+    # 「没有 userdata 但有空槽」的表上会抛 TypeError('NoneType' is not subscriptable)，
+    # 报错完全看不出根因（实测：拿设备现表 dump 跑 build 就崩）。
+    ud = next((e for e in ents if e is not None and e["name"] == "userdata"), None)
+    if ud is None:
+        names = sorted(e["name"] for e in ents if e is not None)
+        sys.exit(f"表里没有 'userdata'（现表可能是 elden-data 一类改名表）：{names}\n"
+                 f"  ⇒ 先确认这是不是原厂表；改过名的表请用 shrink-append / append-free 子命令")
+    # 覆盖冲突门（#675 同类）：新 linux 区间 [new_ud_last+1 .. last_usable] 必须与
+    # 所有**保留**分区的区间不相交；旧代码只断言 userdata 变大，不管中间还夹着什么。
     new_ud_last = last_usable - a.linux_gib * (2**30) // SECTOR
     assert new_ud_last > ud["first"], "shrink target smaller than existing data"
+    conflict = [e["name"] for e in ents
+                if e is not None and e is not ud
+                and e["first"] <= last_usable and new_ud_last + 1 <= e["last"]]
+    assert not conflict, (f"新 linux 区间 {new_ud_last+1}..{last_usable} 会压到这些在用分区：{conflict}"
+                          f" ⇒ 这是「写 GPT 顺手盖掉别人数据」的场景，拒绝生成（#675）")
     print(f"userdata: {ud['first']}..{ud['last']} -> {ud['first']}..{new_ud_last} "
           f"({(new_ud_last-ud['first']+1)*SECTOR/2**30:.1f} GiB)")
     new_ud = make_entry(ud["idx"], ud["type"], ud["part_guid"], ud["first"], new_ud_last,

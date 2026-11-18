@@ -22,6 +22,7 @@
 #   --apply           真正写盘（默认 dry-run）
 #   --build-only      只组装镜像 + 自查，不写盘（离线自测用）
 #   --enter-edl       先 adb/fastboot 切 9008 再写
+#   --reset-after     写后显式 `qdl reset` 把设备踢出 9008（默认留在 EDL）
 #   --dry-run         显式 dry-run（与默认相同）
 #   --mtools-dir DIR  mcopy/mtype/mdir 所在目录（默认查 PATH，其次 ~/.local/opt/mtools/usr/bin）
 #   -h|--help
@@ -36,7 +37,7 @@
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 ESP_DIR=""; GPT=""; PART=eldenesp; LUN=0; IMG=""; MIN_MIB=64
-APPLY=0; ENTER_EDL=0; BUILD_ONLY=0
+APPLY=0; ENTER_EDL=0; BUILD_ONLY=0; RESET_AFTER=0
 SN=${SN:-HA2EXB0E}
 LOADER=${LOADER:-$HOME/下载/tb322fc/xbl_s_devprg_ns.melf}
 QDL=${QDL:-$HOME/edl/qdl/build/qdl}
@@ -58,8 +59,9 @@ while [ $# -gt 0 ]; do
 		--build-only) APPLY=1; BUILD_ONLY=1; shift ;;
 		--dry-run) APPLY=0; shift ;;
 		--enter-edl) ENTER_EDL=1; shift ;;
+		--reset-after) RESET_AFTER=1; shift ;;
 		--mtools-dir) MTOOLS_DIR=$2; shift 2 ;;
-		-h|--help) sed -n '2,40p' "$0"; exit 0 ;;
+		-h|--help) sed -n '2,41p' "$0"; exit 0 ;;
 		*) echo "未知参数 $1（--help 看用法）" >&2; exit 2 ;;
 	esac
 done
@@ -104,7 +106,7 @@ PY
 )
 
 # 清单与必需件
-MANIFEST=$(mktemp); trap 'rm -f "$MANIFEST"' EXIT
+MANIFEST=$(mktemp); trap 'rm -f "$MANIFEST" "$MANIFEST.paths" "$MANIFEST.tmp" "$MANIFEST.mf"' EXIT
 missing=0
 ( cd "$ESP_DIR" && find . -type f ! -name '.*' -printf '%P\n' | LC_ALL=C sort ) > "$MANIFEST.paths"
 while IFS= read -r rel; do
@@ -141,6 +143,10 @@ if [ "$APPLY" -eq 0 ]; then
 fi
 
 for f in "$LOADER" "$QDL"; do [ -e "$f" ] || { echo "缺文件: $f" >&2; exit 2; }; done
+
+# 串行化：写盘期间不允许别的 agent 碰设备（scripts/lib-device-lock.sh 单一真源）
+. "$ROOT/scripts/lib-device-lock.sh"
+device_lock_acquire
 
 # 组装 FAT32（-i 固定卷 ID，便于重复组装出同一镜像）
 mkdir -p "$(dirname "$IMG")"
@@ -192,18 +198,66 @@ fi
 timeout -k 5 10 lsusb | grep -q '05c6:9008' || { echo "!! 未枚举到 05c6:9008（EDL）；中止，未写任何东西" >&2; exit 1; }
 
 mkdir -p "$READDIR"
-echo "[write] 写 ${PART}（LBA ${P_START}，${NSECT} 扇区）+ 读回，同一 qdl 会话"
+
+# ---- 写前门：现场读一次设备当前 GPT，核对「这个分区在设备上真的存在、起点一致、装得下」----
+# 为什么必须有这一步：P_START/P_SECT 来自**主机侧 dump**，若 dump 与设备现状不一致
+# （例：dump 里 eldenesp 在 LBA 123609088，设备上已没有这个分区 / 那段现在属 `linux`），
+# 本脚本就会把 64 MiB 镜像写进另一个在用分区的中间（PITFALLS #675 同类事故）。
+# `-R` = --skip-reset ⇒ 两条 qdl 命令之间设备留在 9008（#674：不加就第二发必失败）。
+echo "[gate] 现场读 LUN${LUN} LBA0..5 核对分区位置"
+timeout -k 10 120 "$QDL" -s ufs -R "$LOADER" \
+	read "$LUN/0+6" "$READDIR/live-gpt$LUN-primary.bin" \
+	2>&1 | tail -3
+python3 - "$READDIR/live-gpt$LUN-primary.bin" "$PART" "$P_START" "$P_SECT" <<'PY' || exit 1
+import struct,sys
+live,part,want_start,want_sect=sys.argv[1],sys.argv[2],int(sys.argv[3]),int(sys.argv[4])
+b=open(live,'rb').read(); h=b[4096:4096+92]
+if h[:8]!=b'EFI PART': sys.exit("live GPT: LBA1 不是 EFI PART（读回件不可信）⇒ 不写")
+ent_lba,=struct.unpack_from('<Q',h,72); nent,esz=struct.unpack_from('<II',h,80)
+for i in range(nent):
+    e=b[ent_lba*4096+i*esz:ent_lba*4096+(i+1)*esz]
+    if e[:16]==b'\0'*16: continue
+    name=e[56:128].decode('utf-16-le').rstrip('\0')
+    if name!=part: continue
+    start,last=struct.unpack_from('<QQ',e,32)
+    if start!=want_start:
+        sys.exit(f"live {part}.first={start} != dump {want_start} ⇒ 表已变，拒绝写（先重取 dump）")
+    if last-start+1 < want_sect:
+        sys.exit(f"live {part} 只有 {last-start+1} 扇区 < 要写 {want_sect} ⇒ 拒绝写")
+    print(f"gate OK: live {part} {start}..{last}")
+    break
+else:
+    sys.exit(f"live GPT 里没有分区 {part}（表已变）⇒ 拒绝写；先重取 dump 或改用正确分区名")
+PY
+
+echo "[write] 写 ${PART}（LBA ${P_START}，${NSECT} 扇区）+ 读回 + 设备端 sha256，同一 qdl 会话"
 timeout -k 10 600 "$QDL" -s ufs -R "$LOADER" \
 	write "$LUN/$P_START" "$IMG" \
 	read "$LUN/$P_START+$NSECT" "$READDIR/eldenesp-readback.img" \
-	2>&1 | tail -8
+	sha256 "$LUN/$P_START+$NSECT" \
+	2>&1 | tee "$READDIR/qdl.log" | tail -8
 
+ok=1
 want=$(sha256sum "$IMG" | cut -d' ' -f1)
 got=$(sha256sum "$READDIR/eldenesp-readback.img" 2>/dev/null | cut -d' ' -f1 || true)
 if [ "$want" = "$got" ]; then
 	echo "OK   读回逐字节一致 sha=${want:0:16}"
 	echo "读回件: $READDIR/eldenesp-readback.img（可直接 mdir/mtype 复核）"
 else
-	echo "FAIL 读回不一致 want=${want:0:16} got=${got:0:16} ⇒ 用旧 ESP 镜像回滚" >&2
-	exit 1
+	echo "FAIL 读回不一致 want=${want:0:16} got=${got:0:16} ⇒ 回滚：把旧 ESP 镜像按同一条 qdl 命令写回 LBA ${P_START}" >&2
+	ok=0
 fi
+devsha=$(grep -E '^[0-9a-f]{64}$' "$READDIR/qdl.log" | tail -1 || true)
+if [ -n "$devsha" ]; then
+	if [ "$devsha" = "$want" ]; then echo "OK   设备端 sha256 一致 sha=${want:0:16}"
+	else echo "FAIL 设备端 sha256 不符 host=${want:0:16} dev=${devsha:0:16}" >&2; ok=0; fi
+else
+	echo "WARN 未取到设备端 sha256（loader 无 getsha256digest 时会跳过）⇒ 只用读回件判据" >&2
+fi
+if [ "$RESET_AFTER" -eq 1 ]; then
+	echo "[reset] 显式踢出 9008"
+	timeout -k 10 120 "$QDL" -s ufs "$LOADER" reset 2>&1 | tail -2 || { echo "WARN qdl reset 失败" >&2; }
+else
+	echo "设备仍在 EDL(9008)（-R 跳过 reset）；要回正常启动加 --reset-after"
+fi
+[ "$ok" -eq 1 ] || exit 1

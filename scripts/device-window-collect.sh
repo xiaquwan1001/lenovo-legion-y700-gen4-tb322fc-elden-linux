@@ -23,17 +23,21 @@ mkdir -p "$OUT"
 SSH_CMD="ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 $TAB"
 
 # gate <name> <remote-command...> — 经 device-lock 跑一条只读命令并 tee 落盘
+GATE_FAIL=0
 gate() {
 	local name=$1; shift
 	local log="$OUT/$name.log"
 	if [ "$DRY" = 1 ]; then
-		echo "DRY: scripts/device-lock.sh $SSH_CMD \"$*\" > $log"
+		echo "DRY: '$ROOT/scripts/device-lock.sh' $SSH_CMD \"$*\" > $log"
 		return 0
 	fi
 	echo "[gate] $name"
-	scripts/device-lock.sh $SSH_CMD "$*" >"$log" 2>&1
+	# 2026-11-18 审计 R4：① 旧版用相对路径 scripts/device-lock.sh，只在仓根 CWD 下成立；
+	# ② 旧版无条件 return 0 —— 采集失败的包与成功包长得一样（只看退出码 = 假绿）。
+	timeout "${GATE_TO:-90}" "$ROOT/scripts/device-lock.sh" $SSH_CMD "$*" >"$log" 2>&1
 	local rc=$?
 	echo "  rc=$rc log=$log ($(wc -l <"$log") lines)"
+	[ "$rc" = 0 ] || { echo "  [warn] gate $name rc=$rc（判据未采到，报告里必须注明）"; GATE_FAIL=$((GATE_FAIL + 1)); }
 	return 0
 }
 
@@ -46,7 +50,9 @@ fi
 if [ "$MODE" = baseline ]; then
 	# ---- T1 开机基线（W1 复核 / W5 vk183 侧 / 通用） ----
 	gate 01-identity "uname -r; uname -v; cat /proc/sys/kernel/random/boot_id; cat /proc/cmdline; findmnt -no SOURCE,FSTYPE,OPTIONS /"
-	gate 02-bootb-sha "dd if=/dev/disk/by-partlabel/boot_b bs=4M 2>/dev/null | sha256sum | cut -c1-16"
+	# boot_b 在 LUN4（/dev/sde45），不在 LUN0。先记录解析结果与分区容量：udev 还没建
+	# by-partlabel、或 GPT 变了的时候，空流 sha 是 e3b0c442…（会被当成本尊读数）。
+	gate 02-bootb-sha "readlink -f /dev/disk/by-partlabel/boot_b; blockdev --getsize64 /dev/disk/by-partlabel/boot_b 2>/dev/null; dd if=/dev/disk/by-partlabel/boot_b bs=4M 2>/dev/null | sha256sum | cut -c1-16"
 	gate 03-q28-signature "dmesg | grep -cE 'command DMA timeout|peer command DMA timeout|reset failure|STORM|recovery is not complete|dsi_bonded_cmd_failed|vblank timeout|drm_crtc_wait_one_vblank|PPM init failed' ; dmesg | grep -E 'DSI PLL lock|Failed to initialize panel' | wc -l"
 	gate 04-panel-dpms "cat /sys/class/drm/card0-DSI-1/status 2>/dev/null; cat /sys/class/drm/card0-DSI-1/enabled 2>/dev/null; cat /sys/class/drm/card0-DSI-1/dpms 2>/dev/null"
 	gate 05-failed-units "systemctl --failed --no-legend | wc -l; systemctl is-system-running"
@@ -69,6 +75,7 @@ fi
 if [ "$DRY" = 1 ]; then
 	echo "== dry-run 完成（未连设备） rc=0 =="
 else
-	echo "== 完成；逐条核对判据见 reports/device-window-checklist-20261031.md =="
+	echo "== 完成（失败 gate 数=$GATE_FAIL）；逐条核对判据见 reports/device-window-checklist-20261031.md =="
+	[ "$GATE_FAIL" = 0 ] || { echo "== 注意：有 $GATE_FAIL 条判据未采到，勿当作「设备正常」 ==" >&2; exit 1; }
 fi
 exit 0

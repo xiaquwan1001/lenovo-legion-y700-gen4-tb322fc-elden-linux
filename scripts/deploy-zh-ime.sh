@@ -19,21 +19,30 @@ TAB=${TAB:-root@192.168.7.1}
 VERIFY=1
 [ "${1:-}" = "--no-verify" ] && VERIFY=0
 
+# 2026-11-18 脚本审计 R4：原先 11 处 `ssh "$TAB"` / `scp -q` **一个选项都没有**
+# ⇒ 首次连接会停在 host-key / 密码提示把脚本挂死，且远端命令无任何超时。
+# 统一到 lib-ssh.sh 的同一套选项 + timeout。
+SSHOPTS=(-o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+         -o ConnectTimeout=5 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o LogLevel=ERROR)
+STMO=${STMO:-90}
+sshq() { timeout "$STMO" ssh "${SSHOPTS[@]}" "$TAB" "$@" 2>/dev/null; }
+scpq() { timeout "$STMO" scp -q "${SSHOPTS[@]}" "$@"; }
+
 echo "== 0) 依赖预检（缺包不自动装：设备网络不稳，装包失败会静默退回旧栈）"
-ssh "$TAB" 'for p in squeekboard fcitx5 fcitx5-rime fcitx5-gtk3 fcitx5-gtk4; do
+sshq 'for p in squeekboard fcitx5 fcitx5-rime fcitx5-gtk3 fcitx5-gtk4; do
   if apk list -I 2>/dev/null | grep -q "^$p-"; then echo "  OK   $p"; else echo "  MISS $p   <-- apk add $p"; fi
 done' || true
 
 echo "== 1) 拷脚本/源码到设备"
-scp -q "$SRC/elden-ime-toggle" "$TAB:/usr/local/bin/elden-ime-toggle"
-ssh "$TAB" "chmod 755 /usr/local/bin/elden-ime-toggle"
-scp -q "$SRC/elden-ime-toggle.desktop" "$TAB:/usr/share/applications/elden-ime-toggle.desktop"
-scp -q "$SRC/org.fcitx.Fcitx5.desktop" "$TAB:/etc/xdg/autostart/org.fcitx.Fcitx5.desktop"
-scp -q "$SRC/elden-ime-focusd.c" "$SRC/build-elden-ime.sh" "$TAB:/root/"
-scp -q "$SRC/elden-ime-focusd.desktop" "$TAB:/etc/xdg/autostart/elden-ime-focusd.desktop"
+scpq "$SRC/elden-ime-toggle" "$TAB:/usr/local/bin/elden-ime-toggle"
+sshq "chmod 755 /usr/local/bin/elden-ime-toggle"
+scpq "$SRC/elden-ime-toggle.desktop" "$TAB:/usr/share/applications/elden-ime-toggle.desktop"
+scpq "$SRC/org.fcitx.Fcitx5.desktop" "$TAB:/etc/xdg/autostart/org.fcitx.Fcitx5.desktop"
+scpq "$SRC/elden-ime-focusd.c" "$SRC/build-elden-ime.sh" "$TAB:/root/"
+scpq "$SRC/elden-ime-focusd.desktop" "$TAB:/etc/xdg/autostart/elden-ime-focusd.desktop"
 
 echo "== 1b) 构建并安装 elden-ime-focusd（设备原生编译，~2 s）"
-ssh "$TAB" 'bash -s' <<'REMOTE'
+sshq 'bash -s' <<'REMOTE'
 set -eu
 if ! command -v gcc >/dev/null 2>&1 || ! pkg-config --exists gio-2.0 2>/dev/null; then
 	echo "  ⚠️ 设备缺 gcc/gio 开发文件，跳过 focusd 构建（自动唤起不可用）"
@@ -46,7 +55,7 @@ echo "  installed /usr/local/bin/elden-ime-focusd"
 REMOTE
 
 echo "== 2) 禁用旧方案（wvkbd + 自编候选条 + zh-osk 自启）"
-ssh "$TAB" 'bash -s' <<'REMOTE'
+sshq 'bash -s' <<'REMOTE'
 set -u
 U=xuqianhui1001
 H=/home/$U
@@ -70,7 +79,7 @@ echo "  old stack cleaned"
 REMOTE
 
 echo "== 3) 重启 squeekboard + fcitx5（当前会话内生效，无需重登）"
-ssh "$TAB" 'bash -s' <<'REMOTE'
+sshq 'bash -s' <<'REMOTE'
 set -u
 U=xuqianhui1001
 BUS=$(tr '\0' '\n' < /proc/$(pgrep -x phosh | head -1)/environ | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p')
@@ -94,7 +103,7 @@ REMOTE
 [ "$VERIFY" = 1 ] || { echo "跳过验证"; exit 0; }
 
 echo "== 4) 验证"
-ssh "$TAB" 'bash -s' <<'REMOTE'
+sshq 'bash -s' <<'REMOTE'
 set -u
 U=xuqianhui1001
 BUS=$(tr '\0' '\n' < /proc/$(pgrep -x phosh | head -1)/environ | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p')

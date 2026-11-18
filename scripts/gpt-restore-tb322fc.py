@@ -88,8 +88,15 @@ def cmd_build(a):
     backup = bytearray(open(a.backup, "rb").read())
     hdr = parse_header(main, SECTOR)
     # backup image = 34 sectors starting at backup_start_lba; header at offset (backup_lba - start)
-    b_start = a.backup_start_lba
+    # 备表起点默认**从主表头现算**（alt_lba-4），不再写死 61390814 ——
+    # 那个常数属旧 234 GiB 布局，现表 alt_lba=123871231，写死会让 b_off 跑到镜像外，
+    # 报「no GPT header at 501...」（用户完全看不出是常数过期）。
+    b_start = (a.backup_start_lba if a.backup_start_lba is not None
+               else hdr["backup_lba"] - 4)
     b_off = (hdr["backup_lba"] - b_start) * SECTOR
+    if b_off < 0 or b_off + 92 > len(backup):
+        sys.exit(f"备表镜像里找不到备表头：backup_lba={hdr['backup_lba']} b_start={b_start} "
+                 f"b_off={b_off} len={len(backup)}（--backup-start-lba 给错了？）")
     b_hdr = parse_header(backup, b_off)
     assert check_header_crc(hdr), "primary header CRC invalid"
     assert check_header_crc(b_hdr), "backup header CRC invalid"
@@ -107,6 +114,13 @@ def cmd_build(a):
     assert lin is not None, "linux partition not found"
     assert lin["last"] == last_usable, f"linux not last partition ({lin['last']} != {last_usable})"
 
+    # 覆盖检查：userdata 拉长到 last_usable 会盖掉它和末尾之间的所有分区条目指向的数据。
+    # 只允许「中间只有要被删的 linux」这一种情况（其它情况 = 真盖别人）。
+    between = [e["name"] for e in ents
+               if e is not None and e is not ud and e is not lin
+               and e["first"] <= last_usable and ud["last"] + 1 <= e["last"]]
+    if between:
+        sys.exit(f"userdata 拉长到 {last_usable} 会压到这些在用分区：{between} ⇒ 拒绝生成")
     print(f"userdata: {ud['first']}..{ud['last']} ({(ud['last']-ud['first']+1)*SECTOR/2**30:.1f} GiB)")
     print(f"linux   : idx {lin['idx']} {lin['first']}..{lin['last']} -> REMOVED")
     print(f"new userdata last = {last_usable} ({(last_usable-ud['first']+1)*SECTOR/2**30:.1f} GiB)")
@@ -159,7 +173,8 @@ def main():
     b.add_argument("--main", required=True); b.add_argument("--backup", required=True)
     b.add_argument("--out-prefix", required=True)
     b.add_argument("--linux-name", default="linux")
-    b.add_argument("--backup-start-lba", type=int, default=61390814)
+    b.add_argument("--backup-start-lba", type=int, default=None,
+                   help="备表镜像首扇区 LBA（默认由主表 alt_lba 现算 = backup_lba-4）")
     b.set_defaults(f=cmd_build)
     l = sub.add_parser("list"); l.add_argument("--main", required=True); l.set_defaults(f=cmd_list)
     a = p.parse_args(); a.f(a)
