@@ -224,12 +224,34 @@ class Gpt:
     def cmd_show(self):
         print(f"{self.src}: sector={self.sector} nent={self.nent} esz={self.entsz} "
               f"prim_entries_lba={self.p_lba} backup_entries_lba={self.b_lba}")
+        # 2026-11-18 审计 R2 P2-8：旧版只遍历主表 ⇒「show 正常」不等于「两表都对」。
+        # 现在两张表都读，逐条打印，并在末尾给主备一致性判据（PITFALLS #678）。
+        prim = {n: ab for _k, n, _b, _e, ab in self.iter_entries("primary")}
+        try:
+            back = {n: ab for _k, n, _b, _e, ab in self.iter_entries("backup")}
+        except SystemExit:
+            back = {}
         for k, name, block, ent, ab in self.iter_entries():
             if name.endswith("_a") or name.endswith("_b"):
                 d = decode(ab)
+                b_ab = back.get(name)
+                tail = ""
+                if b_ab is None:
+                    tail = "  backup=MISSING"
+                elif b_ab != ab:
+                    db = decode(b_ab)
+                    tail = (f"  backup=MISMATCH(0x{db['raw']}={db['raw']} retry={db['retry']} "
+                            f"succ={int(db['successful'])} unbootable={int(db['unbootable'])})")
                 print(f"  {name:18s} byte6={d['raw']:>4s} retry={d['retry']} "
                       f"active={int(d['active'])} succ={int(d['successful'])} "
-                      f"unbootable={int(d['unbootable'])}")
+                      f"unbootable={int(d['unbootable'])}{tail}")
+        only_back = sorted(set(back) - set(prim))
+        diff = sorted(n for n in set(prim) & set(back) if prim[n] != back[n])
+        if only_back or diff:
+            print(f"  ⚠ 主备不一致：仅备表有 {only_back[:5] or '无'}；属性/几何不同 {diff[:8] or '无'}"
+                  f"  ⇒ 判据必须两表一起看（#678）；修表请让本工具写（它写两表并读回校验）")
+        else:
+            print("  主备两表一致（entries byte6 与分区名集合相同）")
 
     def patch_slot(self, slot, retry, active, successful, unbootable, dry_run):
         name = "boot_" + slot

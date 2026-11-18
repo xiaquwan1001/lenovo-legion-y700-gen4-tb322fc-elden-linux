@@ -20,7 +20,7 @@
 #   sshc 'uptime'                      # 带全套超时的 ssh
 #
 # 环境变量：SER（目标序列号，fbx 必填）、FBTO（默认 30s）、TAB（ssh 目标，默认
-#   root@192.168.7.1）。多设备总线必须显式 SER（PITFALLS #569）。
+#   root@192.168.7.1）。多设备总线必须显式 SER（PITFALLS #371）。
 
 : "${TAB:=${TABLET:-root@192.168.7.1}}"
 : "${FBTO:=30}"
@@ -31,7 +31,7 @@ _FB_OUT=""   # 最近一次 fbx 的 stdout（先落文件再读，绝不进管�
 #   等价 `timeout -k 2 $FBTO fastboot -s "$SER" "$@"`；stdout 存 $_FB_OUT。
 #   rc: 0 成功；124/137 超时被杀；其余为 fastboot 自身错误码。
 fbx() {
-	[ -n "${SER:-}" ] || { echo "[fbx] SER 为空 — 拒绝裸 fastboot（#569）" >&2; return 64; }
+	[ -n "${SER:-}" ] || { echo "[fbx] SER 为空 — 拒绝裸 fastboot（#371）" >&2; return 64; }
 	local f; f=$(mktemp "$_FB_TMPDIR/fbx.XXXXXX") || return 70
 	timeout -k 2 "$FBTO" fastboot -s "$SER" "$@" >"$f" 2>&1
 	local rc=$?

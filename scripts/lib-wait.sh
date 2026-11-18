@@ -3,7 +3,7 @@
 #
 # 为什么有这个库（2026-11-05 脚本审计 P2）：
 #   全仓有 6 处各写一遍的等待循环，模式都是 `for i in $(seq 1 N); do sleep 2; 探测; done`：
-#     cycle.sh wait_fastboot/wait_linux、to-fastboot.sh(45×2 s)、kexec-boot.sh(60×3 s)、
+#     （已删除的 cycle.sh wait_*）、to-fastboot.sh(45×2 s)、kexec-boot.sh(60×3 s)、
 #     flash-b.sh(90×2 s)、slot-switch.sh wait_fastboot/wait_adb/wait_linux(60×5 s)。
 #   三个共同缺陷：
 #     ① **先睡再判**：设备 3 s 就绪也要白等一整拍（每次实验都付）；

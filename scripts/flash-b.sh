@@ -2,7 +2,7 @@
 # Flash a mainline boot image into slot b *from inside Linux* — no fastboot needed.
 #
 # Why: after the b-slot bring-up (HANDOFF §24) the tablet boots Linux on its own,
-# and `reboot -f` returns to Linux, so the old `cycle.sh --soft` -> fastboot loop
+# and `reboot -f` returns to Linux, so the old soft-reset loop (`cycle.sh --soft`, 已删除)
 # no longer exists. boot_b is a plain block device we own: sign the image with
 # our AVB key (scripts/sign-boot-b.sh) and dd it.
 #

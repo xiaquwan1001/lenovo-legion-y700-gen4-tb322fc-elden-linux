@@ -1,5 +1,5 @@
 #!/bin/bash
-# iterate.sh — 统一迭代入口（日常用它，取代根目录 build.sh/pack.sh/cycle.sh 集群）。
+# iterate.sh — 统一迭代入口（日常用它；已于 2026-11 取代并删除根目录 build.sh/pack.sh/cycle.sh）。
 #
 # 四档速度，从快到慢：
 #   mod <dir>   模块快环：编该目录模块 → 推设备 → rmmod/modprobe。**不重启**（~30s）

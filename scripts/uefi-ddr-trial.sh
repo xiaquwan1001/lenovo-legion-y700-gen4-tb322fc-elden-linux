@@ -21,7 +21,7 @@ while [ $# -gt 0 ]; do case "$1" in
   --image) IMG=$2; shift 2;; --label) LABEL=$2; shift 2;; --shots) SHOTS=$2; shift 2;;
   --windows) WINDOWS=$2; shift 2;; --out) OUT=$2; shift 2;; *) echo "bad arg $1" >&2; exit 2;; esac; done
 [ -f "$IMG" ] || { echo "no image: $IMG" >&2; exit 2; }
-# PITFALLS #371/#569：本脚本原来全是裸 fastboot —— 总线上别的设备也会收到 boot 命令。
+# PITFALLS #371：本脚本原来全是裸 fastboot —— 总线上别的设备也会收到 boot 命令。
 [ -n "${SER:-}" ] || { echo "需显式 SER=<SN>（禁止裸 fastboot）" >&2; exit 2; }
 . "$ROOT/scripts/lib-device-lock.sh"; device_lock_acquire   # 与其它设备脚本串行
 . "$ROOT/scripts/lib-fastboot.sh"

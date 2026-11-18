@@ -19,7 +19,7 @@
 #   scripts/uefi-flashed-trial.sh --part vbmeta_a --image out/vbmeta-a-flags3/….img --label vbmeta-a-flags3
 #                                                            # 2026-11-10 新增：不只 boot_a，任意 a 槽分区（默认 boot_a）
 #
-# 铁律（PITFALLS #569/#584/#585/#590）：
+# 铁律（PITFALLS #371/#584/#585/#590）：
 #   · 目标必须显式锁定：SER 或 product 唯一匹配 `elden`，0 个/多个一律 FATAL；
 #   · fastboot 一律单发 + `timeout -k`，输出**不进管道**；
 #   · 一条 shell 命令里不同时出现 ssh 与 fastboot（先 ssh 取结果，再单发 fastboot）；

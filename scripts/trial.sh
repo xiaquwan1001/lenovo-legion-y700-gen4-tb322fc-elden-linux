@@ -218,7 +218,7 @@ case "$cmd" in
 		case "$DEPLOY" in
 			none) : ;;
 			fastboot-boot)
-				# PITFALLS #569/#371：必须是显式目标；#584：输出不进管道（SIGPIPE 会打断 bulk 通道）；
+				# PITFALLS #371：必须是显式目标；#584：输出不进管道（SIGPIPE 会打断 bulk 通道）；
 				# #658：先证通道独占（孤儿 fastboot + 5 s getvar）。
 				[ -n "${SER:-}" ] || { echo "[trial] ❌ --deploy fastboot-boot 需显式 SER=<SN>（禁止裸 fastboot）" >&2; exit 1; }
 				. "$ROOT/scripts/lib-fastboot.sh"

@@ -31,7 +31,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/bin/ffrumble	elf	cdff41ab8ab00c4fd6189495827d6ed5d3e6f08970febaa14f12595e05bc13fd	775544	755	-
 /usr/local/bin/q28-race-hunt.sh	script	036a6279e9afa1e2a9e5397e511beb8b3d6983a49aac976e3b0f9559bd3fc73f	8122	755	files/usr/local/bin/q28-race-hunt.sh
 /usr/local/bin/scale.sh	script	56fce0854641ee498e541403d98a614ed7e4317b15398d9fbef71762c3d570e4	371	755	files/usr/local/bin/scale.sh
-/usr/local/bin/slot-attr.py	python	4fe205f2c0ad635d715462f60dca94bfeb48fa7b25c871f033e1ce97511de496	14679	755	files/usr/local/bin/slot-attr.py
+/usr/local/bin/slot-attr.py	python	e7fbd63d1e1da909a80e2d74bcd368776a342fa4d1699e2597fe7a15d6ef64af	16039	755	files/usr/local/bin/slot-attr.py
 /usr/local/bin/ssc-udp-relay.py	python	01d20f2454909adb1da97d5ccde30cc2cec0b70722f7e16e12dfbb311d75d074	3935	755	files/usr/local/bin/ssc-udp-relay.py
 /usr/local/bin/vibrate	script	bfd16e58926223a4d6b51400e6c908a97aa7569194380a98ee9a833441b9dd9b	466	755	files/usr/local/bin/vibrate
 /usr/local/bin/waydroid-sensord	elf	22028ffd9a53d2fc48b8227e05a95eb2b0d7245d8db10fb80e052d38257849a5	266200	755	-
@@ -64,7 +64,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/setup-session-greetd.sh	script	80f3366e83a6d95ca21f181fbba32780880285e7c050d4c0c2acd90eb6d13ec1	2983	755	files/usr/local/sbin/setup-session-greetd.sh
 /usr/local/sbin/sleep-bisect.sh	script	0f60886060a42b7419aa7d6891caf715247d44834b8788d2871314ec26c6c377	2555	644	files/usr/local/sbin/sleep-bisect.sh
 /usr/local/sbin/sleep-cumulative.sh	script	e1cebe181b441de4cb9ae9fc6d66877393fd2d0175aefc99ad33de3c7bb26625	2142	644	files/usr/local/sbin/sleep-cumulative.sh
-/usr/local/sbin/slot-attr.py	python	4fe205f2c0ad635d715462f60dca94bfeb48fa7b25c871f033e1ce97511de496	14679	755	files/usr/local/sbin/slot-attr.py
+/usr/local/sbin/slot-attr.py	python	e7fbd63d1e1da909a80e2d74bcd368776a342fa4d1699e2597fe7a15d6ef64af	16039	755	files/usr/local/sbin/slot-attr.py
 /usr/local/sbin/start-desktop.sh	script	0986a8bb942ca9956ab8060bfc118b3ca7e451c14e77f4f4e6891b4d1e9fd74f	5381	755	files/usr/local/sbin/start-desktop.sh
 /usr/local/sbin/time-sync.sh	script	c5736ac00a30fe7357229166bcf416dd36d96aaefb8c36d3af27fce2ca1fcaa1	1252	755	files/usr/local/sbin/time-sync.sh
 /usr/local/sbin/usb-gadget	script	ce045a9555132ab8e83c9b13c7c2a0ae2aeda014c9662cc82ceddc8b9ec0b839	2784	755	files/usr/local/sbin/usb-gadget

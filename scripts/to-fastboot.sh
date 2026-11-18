@@ -1,8 +1,8 @@
 #!/bin/bash
 # to-fastboot.sh — reliable Linux → fastboot, using the PSCI vendor-reset hook.
 #
-# `cycle.sh --soft` (plain `reboot -f`) no longer reaches fastboot after the
-# b-slot bring-up, and `cycle.sh --fastboot` (misc BCB) was NOT honoured by ABL.
+# （历史入口 `cycle.sh --soft` 已删除；现在软重启走 `scripts/iterate.sh`）plain `reboot -f` no longer reaches fastboot after the
+# b-slot bring-up, and the old misc-BCB path (`cycle.sh --fastboot`) was NOT honoured by ABL.
 # The working path is the PSCI SYSTEM_RESET2 vendor reset added in vk41:
 #     eldroid-bootctl reboot bootloader
 #
@@ -60,8 +60,8 @@ wait_until "fastboot 上线" 90 wa_fastboot_alive || { echo "[to-fastboot] fastb
 echo "[to-fastboot] fastboot ok"
 
 if [ -n "$BOOT" ]; then
-	# PITFALLS #569/#371：裸 fastboot 会把载荷发给总线上别的设备（或抢不通的通道）。
-	[ -n "${SER:-}" ] || { echo "[to-fastboot] ❌ --boot 需显式 SER=<SN>（多设备总线禁止猜，#569）" >&2; exit 2; }
+	# PITFALLS #371：裸 fastboot 会把载荷发给总线上别的设备（或抢不通的通道）。
+	[ -n "${SER:-}" ] || { echo "[to-fastboot] ❌ --boot 需显式 SER=<SN>（多设备总线禁止猜，#371）" >&2; exit 2; }
 	. "$(dirname "$0")/lib-fastboot.sh"
 	# PITFALLS #658：先证通道独占，再发启动命令。
 	orph=$(fborphans)

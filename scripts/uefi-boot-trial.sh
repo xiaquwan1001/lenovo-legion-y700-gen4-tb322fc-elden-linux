@@ -17,7 +17,7 @@
 #
 # 纪律：fastboot 一律单条；设备锁串行；--reset warm（Linux→fastboot 是暖复位，本判据不依赖复位深度）。
 #
-# ★目标设备锁定（2026-11-08，PITFALLS #569）：总线上可能同时挂着**别的手机**的 fastboot。
+# ★目标设备锁定（2026-11-08，PITFALLS #371）：总线上可能同时挂着**别的手机**的 fastboot。
 #   旧版直接取 `fastboot devices` 的第一行当目标 —— 2026-11-08 21:42 的一发把 65 MB 的 UEFI
 #   载荷 `fastboot boot` 发给了华为裸机（`product: kirin990`，被对方 `invalid command` 拒），
 #   我们的板子（product=elden_prc_wifi）在总线上排第二 ⇒ 这一发根本没打到目标。
@@ -60,7 +60,7 @@ S() { timeout "${2:-20}" $SSH "$1" 2>/dev/null; }
 fb_devices() { timeout 8 fastboot devices 2>/dev/null | awk 'NF{print $1}'; }
 fb() {
 	if [ -z "$SER" ]; then
-		echo "[trial] ❌ 拒绝执行 \`fastboot $*\`：目标设备未锁定（PITFALLS #569）" >&2
+		echo "[trial] ❌ 拒绝执行 \`fastboot $*\`：目标设备未锁定（PITFALLS #371）" >&2
 		return 2
 	fi
 	timeout "${FBTO:-30}" fastboot -s "$SER" "$@" 2>&1
@@ -125,7 +125,7 @@ else
 	done
 	fb_ok || { say "FATAL: fastboot did not come up (PITFALLS #368: 复位后 ~11 s 内再 reboot2 需物理断电)"; exit 1; }
 fi
-resolve_target || { say "FATAL: 目标设备未锁定，拒绝发 fastboot 命令（PITFALLS #569）"; exit 1; }
+resolve_target || { say "FATAL: 目标设备未锁定，拒绝发 fastboot 命令（PITFALLS #371）"; exit 1; }
 say "SER=$SER"
 {
 	echo "# devices $(date -Is)"
@@ -144,7 +144,7 @@ sed -n '1,40p' "$OUTDIR/fastboot-pre.txt"
 PROD=$(awk -F': ' '/^product:/{print $2; exit}' "$OUTDIR/fastboot-pre.txt")
 case "$PROD" in
 	*"$PRODUCT_MATCH"*) say "product gate OK ($PROD)";;
-	*) say "FATAL: product='$PROD' 不含 '$PRODUCT_MATCH' —— 目标设备不对，拒绝继续（PITFALLS #569）"; exit 1;;
+	*) say "FATAL: product='$PROD' 不含 '$PRODUCT_MATCH' —— 目标设备不对，拒绝继续（PITFALLS #371）"; exit 1;;
 esac
 
 # ---------- 采样器 ----------
