@@ -5,6 +5,13 @@
 - **量体口径**：`wc -c -l`（字节 = `wc -c`），行号 = `sed -n`/`awk` 现查（2026-11-18 本会话实测，**针对磁盘上的工作树版本**）。
 - **工作树状态（重要）**：开始时 `git status --porcelain` 已有**别的 lane 留下的未提交改动**（`INDEX.md`/`TASKS/README.md`/`DEVICE/README.md`，mtime 2026-11-17 21:45–21:48，本审计只读、`git diff | grep doc-slim-plan` = 0 命中）⇒ 本文行号对应**该工作树快照**；动手前先 `git diff <file>` 复核锚点仍在。
 
+## 执行状态（2026-11-19 更新，第一刀已落地）
+
+- **C1–C8 已执行**（提交 `12731b70` + `c79b2996`，已推 github/ustc 的 `main`）：`DEVICE §1.1` 两段历史快照 → `DEVICE/sessions/2026-11-19-§1.1历史快照三轮下沉.md`；`TASKS §5` 49 个历史块 → 11 行索引表（12 个内联块 → `TASKS/sessions/2026-11-19-TASKS5内联块下沉.md`）；`TASKS §7` 头 5 个增量块 → `TASKS/sessions/2026-11-19-§7头增量块下沉.md`；`INDEX §0` 下一步 4/5/6/8 压成指针行。
+- **C9（PITFALLS 索引行合并）未做**：§2④ 已判「≈1.2 KB 收益 / 3 行 vs 每条都是独立判据」⇒ 收益 < 风险，`PITFALLS` 保持原样。
+- **行数账**：`INDEX.md` 341→315、`TASKS/README.md` 706→559、`DEVICE/README.md` 407→323、`PITFALLS/README.md` 359（未动）。门禁 = `scripts/check-doctor.sh` FAIL=0 / WARN=2（均为既有 C 类登记项）。
+- **注意**：下文 §1/§2/§3 的行号仍是 **2026-11-18 快照**的行号（执行时已按锚点文本重新定位，非按行号）。
+
 ## 0. 结论先行（数字）
 
 | 项 | 数 |
