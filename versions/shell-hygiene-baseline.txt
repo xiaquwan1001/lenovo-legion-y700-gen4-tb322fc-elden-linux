@@ -2,12 +2,12 @@
 # 格式: <path>:<规则号>   # 理由。加新行前必须写清「为什么这里不会出事」，别只写"已知"。
 
 packaging/elden-userland/files/usr/local/sbin/net-up-manual.sh:H4  # 设备侧脚本：pkill 模式含 $IF，主机 shell 不参与，自匹配无风险
-packaging/elden-userland/files/usr/local/sbin/wd-ctl.sh:H4  # 设备侧脚本（同上）
+packaging/elden-userland/files/usr/local/sbin/wd-ctl.sh:H4  # 设备侧脚本：pkill 模式是容器/服务名，主机 shell 命令行不含这些串
 packaging/elden-userland/tools/verify.sh:H1  # 主机侧一次性连通探测（BatchMode + ConnectTimeout 已给），非长时传输
 rootfs/debian/elden-firmware/build.sh:H1  # rootfs 构建侧 rsync/ssh（一次性、目标可重试），不属于上机写盘路径
-rootfs/debian/elden-firmware/build.sh:H3  # 同上
+rootfs/debian/elden-firmware/build.sh:H3  # 同 H1：rootfs 构建侧一次性调用，目标可重试，不进上机写盘路径
 rootfs/debian/import-waydroid.sh:H1  # rootfs 构建侧，脚本本身自带 SSH_OPTS 与失败即停
-rootfs/debian/import-waydroid.sh:H3  # 同上
+rootfs/debian/import-waydroid.sh:H3  # 同 H1：脚本自带 SSH_OPTS 与失败即停，构建期一次性调用
 scripts/cam-loopback.sh:H4  # pkill 模式在单引号里（$LOOP 不展开）⇒ 实际匹配的字面量不会命中本 shell 命令行
 scripts/deploy-zh-ime.sh:H4  # 设备侧执行（as <user> pkill）或 pgrep 只数进程，主机 shell 不匹配
 scripts/gui-stress.sh:H4  # pkill -f -U <user> 带用户过滤，且模式含 |，不会匹配本 shell
@@ -19,5 +19,5 @@ scripts/t5-q24-capture.sh:H3  # 同上（$SSH 已含 BatchMode）
 scripts/waydroid-headless-restart.sh:H4  # 容器/设备侧 pkill，主机无关
 scripts/waydroid-proxy-setup.sh:H1  # 命中行在设备侧 heredoc 内（adb connect 等），由远端执行
 scripts/wd-c1-noworkaround.dev.sh:H4  # 实验用一次性脚本（.dev.sh），设备侧模式
-scripts/wd-ctl.sh:H4  # 设备侧脚本同源
-scripts/wd.sh:H4  # 设备侧脚本同源
+scripts/wd-ctl.sh:H4  # 设备侧脚本（与 packaging 同源）：pkill 模式是容器/服务名，主机 shell 不匹配
+scripts/wd.sh:H4  # 设备侧脚本（与 packaging 同源）：同上，模式不含本脚本名，无自匹配风险

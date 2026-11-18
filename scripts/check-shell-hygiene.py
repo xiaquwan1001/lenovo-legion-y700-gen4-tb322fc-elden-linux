@@ -57,20 +57,29 @@ def logical_lines(path):
         yield start, buf
 
 def load_baseline():
-    out = set()
+    """读豁免表；同时校验每条豁免都写了理由（防「删理由保平安」与「空表关掉门」）。"""
+    out, bad = set(), []
     if os.path.exists(BASE):
-        for line in open(BASE, encoding="utf-8"):
-            line = line.strip()
-            if not line or line.startswith("#"):
+        for n, line in enumerate(open(BASE, encoding="utf-8"), 1):
+            raw = line.rstrip("\n")
+            if not raw.strip() or raw.lstrip().startswith("#"):
                 continue
-            out.add(line.split()[0])
-    return out
+            token, _, rest = raw.partition("#")
+            token = token.strip()
+            if not token:
+                continue
+            out.add(token)
+            reason = rest.strip()
+            if len(reason) < 10:
+                bad.append(f"{os.path.basename(BASE)}:{n} 豁免 {token} 没写理由（≥10 字）")
+    return out, bad
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--strict", action="store_true")
     ap.add_argument("--file")
     ap.add_argument("--verbose", action="store_true")
+    ap.add_argument("--baseline", help="豁免表路径（默认 versions/shell-hygiene-baseline.txt）")
     a = ap.parse_args()
 
     if a.file:
@@ -109,7 +118,12 @@ def main():
                 if DOLLARQ.search(nxt) and "PIPESTATUS" not in nxt:
                     hits["H5"].append((rel, ln, f"{body.strip()[:70]} … 下一行取 $?"))
 
-    base = load_baseline()
+    global BASE
+    if a.baseline:
+        BASE = os.path.abspath(a.baseline)
+    base, base_bad = load_baseline()
+    for b in base_bad:
+        print(f"  BASELINE FAIL {b}")
     total = unwaived = 0
     print(f"== 设备命令静态卫生：{len(files)} 个 .sh/.bash ==")
     for k in ("H1", "H2", "H3", "H4", "H5"):
@@ -119,7 +133,10 @@ def main():
         print(f"  {k}: {len(live)}（已豁免 {len(hits[k]) - len(live)}）")
         for rel, ln, body in (live if a.verbose else live[:8]):
             print(f"    {rel}:{ln}: {body}")
-    print(f"== 未豁免合计 {unwaived} 处 ==")
+    print(f"== 未豁免合计 {unwaived} 处；豁免 {len(base)} 条 ==")
+    if base_bad:
+        print(f"== 豁免表有 {len(base_bad)} 条不合规（每条必须有 ≥10 字理由）==")
+        unwaived += len(base_bad)
     if a.strict and unwaived:
         return 1
     return 0

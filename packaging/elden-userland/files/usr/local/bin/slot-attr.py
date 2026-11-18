@@ -41,6 +41,7 @@ import binascii
 import os
 import struct
 import sys
+import uuid
 
 SECTOR_DEFAULT = 4096
 AB_OFF = 6          # attribute byte index
@@ -276,13 +277,14 @@ class Gpt:
                              f"主备表不成对，拒绝写入")
         if dry_run:
             print("  (dry-run: nothing written)")
-            return
+            return 0
         # 写序：先备表后主表。断电窗口里至少还剩一张自洽的表可被 ABL 使用。
         for which in ("backup", "primary"):
             self.write_entries(which, changed[which][0])
         self.fsync()
         self._verify(changed)
         print("  written + CRCs fixed + read-back verified (primary & backup)")
+        return 0
 
     def _verify(self, changed):
         """写后读回（P0）：entries 逐字节 + header 里的 entries CRC。"""
@@ -301,7 +303,96 @@ class Gpt:
                 raise SystemExit(f"{self.src}: {which} header CRC 读回不符（表头被写坏）")
 
 
+def selftest():
+    """合成 64 MiB 整盘 GPT（boot_a=0xf7 / boot_b=0xf3），断言三件事：
+       ① show 读得出两槽；② mark-successful a 把 0xf7→0x7f 且主备都改；③ 条目缺失必须 rc≠0。"""
+    import tempfile
+    ok = True
+    def bad(msg):
+        nonlocal ok
+        ok = False
+        print(f"  SELFTEST FAIL {msg}")
+
+    def build(path):
+        SEC, NENT, ESZ, total = 4096, 128, 128, 64 * 1024 * 1024
+        data = bytearray(total)
+        def ent(name, first, last, attr):
+            e = bytearray(ESZ)
+            e[0:16] = uuid.UUID("0fc63daf-8483-4772-8e79-3d69d8477de4").bytes_le
+            e[16:32] = uuid.uuid4().bytes_le
+            struct.pack_into("<QQ", e, 32, first, last)
+            e[54] = attr
+            e[56:128] = name.encode("utf-16-le")[:72]
+            return e
+        ents = [ent("boot_a", 6, 9, 0xF7), ent("boot_b", 10, 13, 0xF3), ent("misc", 14, 15, 0)]
+        block = bytearray(NENT * ESZ)
+        for i, e in enumerate(ents):
+            block[i * ESZ:(i + 1) * ESZ] = e
+        def hdr(my, alt, entlba):
+            h = bytearray(92)
+            h[0:8] = b"EFI PART"
+            struct.pack_into("<I", h, 8, 0x00010000)
+            struct.pack_into("<III", h, 12, 92, 0, 0)
+            struct.pack_into("<QQ", h, 24, my, alt)
+            struct.pack_into("<QQ", h, 40, 34, total // SEC - 34)
+            h[56:72] = uuid.UUID("11111111-2222-3333-4444-555555555555").bytes_le
+            struct.pack_into("<QIII", h, 72, entlba, NENT, ESZ, 0)
+            struct.pack_into("<I", h, 88, binascii.crc32(bytes(block)) & 0xFFFFFFFF)
+            struct.pack_into("<I", h, 16, binascii.crc32(bytes(h)) & 0xFFFFFFFF)
+            return h
+        last = total // SEC - 1
+        data[SEC:SEC + 92] = hdr(1, last, 2)
+        data[2 * SEC:2 * SEC + len(block)] = block
+        data[(last - 32) * SEC:(last - 32) * SEC + len(block)] = block
+        data[last * SEC:last * SEC + 92] = hdr(last, 1, last - 32)
+        open(path, "wb").write(data)
+
+    with tempfile.TemporaryDirectory() as d:
+        img = os.path.join(d, "fake-gpt.img")
+        build(img)
+        g = Gpt(img, writable=False)
+        vals = {n: ab for _k, n, _b, _e, ab in g.iter_entries("primary")}
+        g.close()
+        if decode(vals.get("boot_a", 0))["raw"] != "0xf7":
+            bad("合成盘 boot_a 不是 0xf7（构造错了）")
+        # ② mark-successful a
+        rc = patch_and_close(img, slot="a", retry=7, active=True, successful=True, unbootable=False)
+        if rc != 0:
+            bad(f"mark-successful a 返回 {rc}")
+        g = Gpt(img, writable=False)
+        prim = {n: ab for _k, n, _b, _e, ab in g.iter_entries("primary")}
+        back = {n: ab for _k, n, _b, _e, ab in g.iter_entries("backup")}
+        g.close()
+        if decode(prim["boot_a"])["raw"] != "0x7f" or prim["boot_a"] != back["boot_a"]:
+            bad(f"mark-successful a 没把主备都改成 0x7f（prim={decode(prim['boot_a'])['raw']}）")
+        # ③ 条目缺失必须拒绝
+        with open(img, "r+b") as f:
+            for base in (2 * SECTOR_DEFAULT, (os.path.getsize(img) // 4096 - 1 - 32) * 4096):
+                for i in range(128):
+                    o = base + i * 128
+                    f.seek(o + 56)
+                    if f.read(12) == "boot_a".encode("utf-16-le"):
+                        f.seek(o + 56); f.write(b"\0" * 12)
+        try:
+            patch_and_close(img, slot="a", retry=7, active=None, successful=None, unbootable=None)
+            bad("条目缺失时没有拒绝（旧版本会静默 rc=0）")
+        except SystemExit:
+            pass
+    print(f"== selftest {'OK' if ok else 'FAIL'}（show / mark-successful 主备同改 / 缺条目必拒）")
+    return 0 if ok else 1
+
+
+def patch_and_close(path, **kw):
+    from contextlib import closing
+    with closing(Gpt(path, writable=True)) as g:
+        return g.patch_slot(kw["slot"], kw["retry"], kw["active"], kw["successful"],
+                            kw["unbootable"], False)
+
+
 def main():
+    # --selftest 必须在 subparser 的 required cmd 之前处理（它不需要 cmd）
+    if "--selftest" in sys.argv[1:]:
+        return selftest()
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--image", help="full GPT image file (LBA0-based) instead of a device")
@@ -346,4 +437,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
