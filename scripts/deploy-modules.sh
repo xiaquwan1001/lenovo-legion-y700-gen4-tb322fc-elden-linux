@@ -109,7 +109,42 @@ else
 fi"
 
 # 3) 解包 + depmod
-$SSH "tar xzf /var/tmp/modules-deploy.tar.gz -C /lib/modules/$UTS && depmod -a '$UTS' && rm -f /var/tmp/modules-deploy.tar.gz && echo '[deploy-modules] installed'"
+#   2026-11-18 审计 R4 P0-3：旧版 `tar xzf -C /lib/modules/$UTS` **直接解包进在用目录**，
+#   中断即半部署（缺模块/ABI 不齐），而项目铁律是「RAM 起新核前先部署整套 /lib/modules/<UTS>」。
+#   改：先解到同盘 staging → 校验 UTS/vermagic → 原子 rename 顶替（旧目录已备份成 tar）。
+#   另加 UTS 门：设备 `uname -r` 与要部署的 UTS 不同时默认拒绝（DEPLOY_ANY_UTS=1 才放行）。
+dev_uts=$($SSH 'uname -r' 2>/dev/null | tr -d '\r')
+if [ -n "$dev_uts" ] && [ "$dev_uts" != "$UTS" ]; then
+	if [ "${DEPLOY_ANY_UTS:-0}" = 1 ]; then
+		echo "[deploy-modules] WARN 设备在跑 $dev_uts，部署的是 $UTS（DEPLOY_ANY_UTS=1 放行）"
+	else
+		echo "[deploy-modules] REFUSE 设备在跑 $dev_uts != 目标 UTS $UTS（要预部署下一版内核请显式 DEPLOY_ANY_UTS=1）" >&2
+		exit 2
+	fi
+fi
+
+# vermagic 门（抽样 2 个 .ko，避免把错 ABI 的树装上设备）
+vm_local=$(tar xzOf "$TAR" "$(tar tzf "$TAR" | grep '\.ko$' | head -1)" 2>/dev/null | strings -a | grep -m1 '^vermagic=' || true)
+if [ -n "$vm_local" ]; then
+	case "$vm_local" in
+		*"$UTS"*) : ;;
+		*) echo "[deploy-modules] REFUSE tar 里的 $vm_local 与目标 UTS $UTS 不符" >&2; exit 2 ;;
+	esac
+	echo "[deploy-modules] $vm_local"
+fi
+
+$SSH "set -e
+rm -rf /lib/modules/.new-$UTS && mkdir -p /lib/modules/.new-$UTS
+tar xzf /var/tmp/modules-deploy.tar.gz -C /lib/modules/.new-$UTS
+n=\$(find /lib/modules/.new-$UTS -name '*.ko*' | wc -l)
+[ \"\$n\" -gt 0 ] || { echo '[deploy-modules] staging 解包后 0 个 .ko，中止（原目录未动）' >&2; exit 1; }
+# 原子顶替：同一文件系统内两次 rename，中间不存在「半棵树」
+if [ -d /lib/modules/$UTS ]; then mv /lib/modules/$UTS /lib/modules/.old-$UTS.tmp; fi
+mv /lib/modules/.new-$UTS /lib/modules/$UTS
+rm -rf /lib/modules/.old-$UTS.tmp
+depmod -a '$UTS'
+rm -f /var/tmp/modules-deploy.tar.gz
+echo '[deploy-modules] installed (atomic swap)'"
 
 # 4) 读回校验
 if [ "$VERIFY" = 1 ]; then
