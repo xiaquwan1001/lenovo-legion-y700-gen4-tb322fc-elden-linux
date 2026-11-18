@@ -5,9 +5,18 @@
 #   scripts/bl-preunlock-evidence.sh <SERIAL>   # 指定设备
 set -uo pipefail
 
-SER="${1:-$(adb devices | awk 'NR>1 && $2=="device"{print $1}' | head -1)}"
+# 永不猜设备（PITFALLS #371）：显式 SN，或总线上恰好一台。
+SER=${1:-}
+if [ -z "$SER" ]; then
+  ND=$(timeout 8 adb devices 9>&- 2>/dev/null | awk 'NR>1 && $2=="device"' | wc -l)
+  [ "$ND" = 1 ] || { echo "总线有 $ND 台 adb 设备：请显式给序列号" >&2; exit 1; }
+  SER=$(timeout 8 adb devices 9>&- 2>/dev/null | awk 'NR>1 && $2=="device"{print $1; exit}')
+fi
 [ -n "$SER" ] || { echo "no adb device"; exit 1; }
-adb -s "$SER" wait-for-device
+# wait-for-device 无 -s 会等**任何**设备；这里既带 -s 又有超时上限
+timeout 60 adb -s "$SER" wait-for-device 9>&- || { echo "adb $SER 60 s 内未就绪" >&2; exit 1; }
+# shell -n + </dev/null：下面 for 循环里的 adb shell 不许吃脚本 stdin（PITFALLS #397 同族）
+adb_s() { timeout "${ADBTO:-20}" adb -s "$SER" shell -n "$@" </dev/null; }
 
 CAP="$(adb -s "$SER" shell getprop ro.boot.hwboardid | tr -d '\r' | sed 's/^SM8750P_//;s/_[0-9]*$//')"
 BOOTLOAD_SN="$(adb -s "$SER" shell getprop ro.boot.bootload_sn | tr -d '\r')"

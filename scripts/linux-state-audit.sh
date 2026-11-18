@@ -114,14 +114,22 @@ if [ "$MODE" = device ]; then
   [ "$orphan" -gt 0 ] && { emit "通道风险" WARN "有 $orphan 个 fastboot 进程（#658：先清孤儿）"; cnt WARN; }
   if [ -n "$AD" ] && [ "$AD" = device ]; then
     g() { timeout -k 5 10 adb -s "$SN" shell getprop "$1" 2>/dev/null | tr -d '\r' | head -1; }
-    emit "状态机" OK "Android: $(g ro.build.display.id) / boot_completed=$(g sys.boot_completed) / slot=$(g ro.boot.slot_suffix)"
+    BC=$(g sys.boot_completed)
+    if [ "$BC" = 1 ]; then
+      emit "状态机" OK "Android: $(g ro.build.display.id) / boot_completed=1 / slot=$(g ro.boot.slot_suffix)"
+    else
+      emit "状态机" DRIFT "adb 在线但 boot_completed='${BC:-空}' ⇒ 只能证明 adbd 起来，不能证明系统起全"; cnt DRIFT
+    fi
     ROOTMNT=$(timeout -k 5 10 adb -s "$SN" shell "findmnt -n -o SOURCE,FSTYPE / 2>/dev/null || awk '\$2==\"/\"{print \$1,\$3; exit}' /proc/mounts" 2>/dev/null | tr -d '\r')
     emit "F.rootfs" OK "findmnt / = ${ROOTMNT:-未知}"
     UTS=$(timeout -k 5 10 adb -s "$SN" shell uname -r 2>/dev/null | tr -d '\r')
     MODS=$(timeout -k 5 10 adb -s "$SN" shell "ls /lib/modules 2>/dev/null | wc -l" 2>/dev/null | tr -d '\r')
     emit "F.内核/模块" OK "uname=$(echo "$UTS" | head -c 60) /lib/modules 目录数=${MODS:-?}"
-    esp=$(timeout -k 5 10 adb -s "$SN" shell "ls /dev/disk/by-partlabel 2>/dev/null | tr '\n' ' '" 2>/dev/null | tr -d '\r')
+    # Android 的 by-partlabel 是跨 LUN 合并视图（命名也不一定等于 Linux 侧）⇒ 同时记 LUN 归属
+    esp=$(timeout -k 5 10 adb -s "$SN" shell "ls -l /dev/disk/by-partlabel 2>/dev/null | tr '\n' ' '" 2>/dev/null | tr -d '\r')
     case "$esp" in *linux17*) emit "A.GPT条目" OK "分区标签含 linux17/eldenesp" ;; *) emit "A.GPT条目" DRIFT "设备上无 linux17/eldenesp（= 原厂 GPT，Linux 条目已丢）"; cnt DRIFT ;; esac
+    blk=$(timeout -k 5 10 adb -s "$SN" shell 'for p in /dev/block/sd*; do printf "%s->%s " "$p" "$(readlink -f "$p")"; done' 2>/dev/null | tr -d '\r')
+    emit "A.LUN映射" OK "Android 块设备→LUN：$(printf '%s' "$blk" | cut -c1-200)"
     pre=$(g ro.boot.verifiedbootstate); emit "D.verity" OK "verifiedbootstate=${pre:-?}"
   elif [ -n "$FB" ]; then
     v() { timeout -k 5 8 fastboot -s "$SN" getvar "$1" 2>&1 | head -1 | sed 's/^(bootloader) //'; }
@@ -140,15 +148,32 @@ if [ "$MODE" = device ]; then
   elif [ "$DO_EDL" = 1 ]; then
     sec "EDL 只读取证（GPT 对账）"
     D=$(mktemp -d)
-    timeout -k 5 20 fastboot -s "$SN" oem edl >/dev/null 2>&1; sleep 6
+    timeout -k 5 20 fastboot -s "$SN" oem edl >/dev/null 2>&1
+    # 有上限地等 9008（不是固定 sleep 6）；9008 归属仍靠「刚从 $SN 切过去」这条链路
+    for i in 1 2 3 4 5 6 7 8 9 10; do lsusb -d 05c6:9008 >/dev/null 2>&1 && break; sleep 2; done
     if lsusb | grep -q 05c6:9008; then
-      timeout -k 10 300 "$QDL" -s ufs "$LOADER" read 0/0+6 "$D/gpt0-primary.bin" read 4/0+6 "$D/gpt4-primary.bin" >/dev/null 2>&1
+      # 主表 34 扇区（header + 完整 entry array）。扇区单位由 qdl 探测 ⇒ 读回长度必须落在
+      # 512/4096 两档之一，否则 gpt-audit 吃的是一份截断/错位的表（B 项）。
+      timeout -k 10 300 "$QDL" -s ufs "$LOADER" \
+        read 0/0+34 "$D/gpt0-lba0-33.bin" read 4/0+34 "$D/gpt4-lba0-33.bin" >/dev/null 2>&1
       timeout -k 10 90 "$QDL" -s ufs "$LOADER" reset >/dev/null 2>&1
-      if [ -f "$D/gpt0-primary.bin" ]; then
+      rc=0
+      for f in "$D/gpt0-lba0-33.bin" "$D/gpt4-lba0-33.bin"; do
+        sz=$(stat -c%s "$f" 2>/dev/null || echo 0)
+        case $sz in
+          17408|139264) emit "EDL读:$(basename "$f")" OK "size=$sz sha256=$(sha256sum "$f" | cut -c1-16)" ;;
+          *) emit "EDL读:$(basename "$f")" UNKNOWN "size=$sz（既非 34*512 也非 34*4096 ⇒ 表不完整/单位错）"; cnt UNKNOWN; rc=1 ;;
+        esac
+      done
+      # reset 落点校验：必须离开 9008，否则设备被留在 EDL 而本脚本 return 0（A 项）
+      out_edl=no
+      for i in 1 2 3 4 5 6 7 8 9 10; do lsusb -d 05c6:9008 >/dev/null 2>&1 || { out_edl=yes; break; }; sleep 3; done
+      [ "$out_edl" = yes ] || { emit "EDL出" DRIFT "reset 后 60 s 仍在 9008（设备停在 EDL）"; cnt DRIFT; }
+      if [ "$rc" = 0 ] && [ -f "$D/gpt0-lba0-33.bin" ]; then
         echo "  （EDL GPT 已取到 $D；运行：python3 scripts/gpt-audit-tb322fc.py --dev $D --stock $PKG）"
         python3 scripts/gpt-audit-tb322fc.py --dev "$D" --stock "$PKG" --luns 0,4 2>&1 | sed -n '1,12p'
       else
-        emit "EDL读" UNKNOWN "读 GPT 失败（loader/通道）"; cnt UNKNOWN
+        emit "EDL读" UNKNOWN "读 GPT 失败/不完整（loader/通道/单位）⇒ 不得据此判『GPT 无漂移』"; cnt UNKNOWN
       fi
     else
       emit "EDL进" UNKNOWN "未进 9008"; cnt UNKNOWN

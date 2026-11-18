@@ -81,17 +81,29 @@ wait_until() {
 }
 
 # ------------------------------------------------------------------ 探测原语
-wa_ssh_alive() { [ "$(timeout 8 ssh $SSH_OPTS "$TAB" 'echo up' 2>/dev/null)" = up ]; }
+wa_ssh_alive() { [ "$(timeout 8 ssh $SSH_OPTS "$TAB" 'echo up' 2>/dev/null 9>&-)" = up ]; }
 # 2026-11-09 PITFALLS #584：`fastboot … | grep -q` 会因 grep 提前退出把 SIGPIPE 送回 fastboot
 # 客户端，打断设备侧 fastboot bulk 通道（之后 devices 空、getvar 超时，只能物理 POR）。
 # 一律「先落变量/文件，再判断」，别把 fastboot 接在管道里。
-wa_fastboot_alive() { local d; d=$(timeout 6 fastboot devices 2>/dev/null) || return 1; [ -n "$d" ]; }
+wa_fastboot_alive() { local d; d=$(timeout 6 fastboot devices 2>/dev/null 9>&-) || return 1; [ -n "$d" ]; }
+# 带序列号的 fastboot 探测：总线上有第二台 fastboot 设备时，wa_fastboot_alive 会假通过。
+wa_fastboot_alive_ser() {
+	local d; d=$(timeout 6 fastboot devices 2>/dev/null 9>&-) || return 1
+	printf '%s\n' "$d" | awk -v s="$1" '$1==s{found=1} END{exit !found}'
+}
 wa_adb_alive() { # $1 = 序列号（必填：PITFALLS #371，裸 get-state 会把别的手机当成本机）
-	[ -n "${1:-}" ] && [ "$(timeout 8 adb -s "$1" get-state 2>/dev/null | tr -d '\r')" = device ]
+	# 9>&- 必需：adb fork-server 会继承 device-lock 的 fd 9 ⇒ 之后所有脚本 flock 阻塞（#371 后半）
+	[ -n "${1:-}" ] && [ "$(timeout 8 adb -s "$1" get-state 2>/dev/null 9>&- | tr -d '\r')" = device ]
 }
 
 wait_ssh() { wait_until "ssh $TAB 可达" "${1:-120}" wa_ssh_alive; }
-wait_fastboot() { wait_until "fastboot 上线" "${1:-120}" wa_fastboot_alive; }
+wait_fastboot() { # wait_fastboot [timeout] [serial]
+	if [ -n "${2:-}" ]; then
+		wait_until "fastboot($2) 上线" "${1:-120}" wa_fastboot_alive_ser "$2"
+	else
+		wait_until "fastboot 上线" "${1:-120}" wa_fastboot_alive
+	fi
+}
 wait_adb() { # wait_adb <serial> [timeout]
 	local ser=$1
 	wait_until "adb $ser 上线" "${2:-300}" wa_adb_alive "$ser"

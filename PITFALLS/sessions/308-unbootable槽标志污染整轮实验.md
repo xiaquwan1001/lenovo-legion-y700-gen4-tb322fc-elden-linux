@@ -27,10 +27,12 @@ python3 scripts/slot-attr.py --image backup/.../lun4-gpt-main.bin show
 
 ### 处置
 
-- 清 UNBOOTABLE：`scripts/slot-attr.py set a --successful --retry 7 --unbootable off`，
+- 清 UNBOOTABLE：`scripts/slot-attr.py set a --successful --retry 7 --no-unbootable`，
   **主表与备表必须一起改**（`--image` 路径要同时给主/备两份 dump，或直接用 `linux-gpt-apply.sh --lun 4 --gpt … --backup … --apply`）。
 - 每次实验收尾：写完整链后 `mark-successful <slot>` + `--retry 7`，并在报告里贴一次 `show` 的原始行。
 - 跑实验的脚本必须**开头 show 一次、失败路径也留日志**（见同轮脚本审查 R2）。
+
+**注意槽基线**：bit7 只在 **a 槽**等于 UNBOOTABLE；`boot_b` 出厂就是 `0xf3`（bit7=1），b 槽不能按 bit7 判（#678）。
 
 **推广**：这是「失败标志未清理 ⇒ 后续实验全部无效」的第二个实例（第一个是 `#181` b 槽不置 succ 每次扣 retry）。
 凡是有持久失败状态的地方（AVB rollback index、misc BCB、watchdog 计数、Q28 看门狗 2 次预算），**实验前都要先读一次现值**。

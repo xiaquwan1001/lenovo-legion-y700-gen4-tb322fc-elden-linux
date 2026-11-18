@@ -1,5 +1,14 @@
 # 脚本功能审查 R1：EDL / qdl / GPT 板块（只读静态审查）
 
+> **2026-11-18 主代理复核批注（两处更正，正文其余不变）**
+> ① **P0-④ 的「备表 boot_b=0xf3 是 UNBOOTABLE」作废**：对照原厂 `backup/official-rom-15.10.259/gpt_main4.bin` 与 `gpt_backup4.bin`，
+>   `boot_b` 出厂就是 **0xf3**、`uefi_b` 是 **0xfb**（a 槽 0x77/0x7f）⇒ b 槽 bit7=1 是 OEM 编码，不是失败标志（PITFALLS #678）。
+>   P0-④ 关于 `--image` 只写主表的**工具缺陷本身成立**，已按整盘闸修（见下）。
+> ② **`slot-attr.py` 的合并没有整体采用本补丁**：保留 2026-11-18 早先修法（短写循环 / 先备后主 / 主备不成对拒绝 / 读回校验），
+>   只吸收本补丁的 **`--image` 整盘尺寸闸 + `alt_lba` 定位备表 + header CRC 自验**（实测：40 KB 拼件被拒、64 MiB 合成整盘 mark-successful 通过）。
+> ③ 本补丁其余 11 个文件已整体应用（`-R` 语义、pipeline rc、写前 live-GPT 核对、build-locked-chain 槽属性卫生等）。
+
+
 日期：2026-11-18 · 范围：`scripts/{linux-gpt-apply,linux-gpt-dump,esp-apply,gpt-dump,edl-peek,t2-stock-lun45,build-locked-chain}.sh`、
 `scripts/{gpt-audit-tb322fc,gpt-restore-tb322fc,gpt-surgery-tb322fc,gpt-minimal-build,make-gpt-only-xml,android-rom-segassemble,android-super,android-lpdump}.py`、
 外挂核对 `scripts/slot-attr.py`（用户点名 A/B 类，属 R2 主件，本轮因 `--image` 路径与本板块直接耦合而一并审）。

@@ -11,12 +11,15 @@ IMG="${1:?用法: scripts/bl-unlock.sh /path/to/sn.img}"
 [ -f "$IMG" ] || { echo "sn.img 不存在: $IMG"; exit 1; }
 
 echo "== 1/4 fastboot 设备 =="
-fb=$(fastboot devices | awk '{print $1}' | head -1)
+# `fastboot devices | head -1` 会把 SIGPIPE 送回 fastboot（PITFALLS #584）：先落变量再取首行。
+# sn.img 一机一码：不做「取总线上第一台」的猜测，SN_EXPECT 强制必填。
+: "${SN_EXPECT:?必须先设 SN_EXPECT=<本机序列号>（总线可能有别的设备，flash unlock 不可逆）}"
+devs=$(timeout "${FBTO:-15}" fastboot devices 2>/dev/null) || { echo "fastboot devices 超时/不可用（PITFALLS #658：先清孤儿 fastboot）"; exit 1; }
+fb=$(printf '%s\n' "$devs" | awk 'NF{print $1; exit}')
 [ -n "$fb" ] || { echo "未见 fastboot 设备（先 adb reboot bootloader 或 音量下+电源）"; exit 1; }
 echo "   序列号 = $fb"
-if [ -n "${SN_EXPECT:-}" ] && [ "$fb" != "$SN_EXPECT" ]; then
-  echo "   ⛔ 序列号与期望 $SN_EXPECT 不符 —— sn.img 一机一码，拒绝继续"; exit 1
-fi
+[ "$fb" = "$SN_EXPECT" ] || { echo "   ⛔ 序列号 $fb ≠ 期望 $SN_EXPECT —— sn.img 一机一码，拒绝继续"; exit 1; }
+fbx() { timeout "${FBTO:-30}" fastboot -s "$fb" "$@"; }
 
 echo "== 2/4 解锁前 getvar（存档）=="
 fastboot -s "$fb" getvar all 2>&1 | tee "backup/${fb}-preunlock-getvar.txt" | grep -iE "unlocked|secure|product|variant|slot" 

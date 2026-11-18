@@ -19,12 +19,17 @@ ROOT=$PWD
 
 SER=${1:-}
 if [ -z "$SER" ]; then
-  SER=$(adb devices | awk 'NR>1 && $2=="device"{print $1; exit}')
+  # PITFALLS #371：永不猜设备。总线上多于一台就必须显式给 SN。
+  ND=$(timeout 8 adb devices 9>&- 2>/dev/null | awk 'NR>1 && $2=="device"' | wc -l)
+  [ "$ND" = 1 ] || { echo "!! 总线有 $ND 台 adb 设备：请显式给序列号（$0 <SN>），别把无关设备当本机基线" >&2; exit 1; }
+  SER=$(timeout 8 adb devices 9>&- 2>/dev/null | awk 'NR>1 && $2=="device"{print $1; exit}')
 fi
 [ -n "$SER" ] || { echo "!! 未找到在线 adb 设备（U1 是否连接并授权？）" >&2; exit 1; }
 
-ADB="adb -s $SER"
-HB=$($ADB shell getprop ro.boot.hwboardid 2>/dev/null | tr -d '\r')
+# 每条 adb 都包 timeout；9>&- 防止 fork-server 继承 device-lock；shell -n + </dev/null
+# 防止 adb shell 吃掉脚本 stdin（与 PITFALLS #397 同族）。
+ADB="timeout ${ADBTO:-30} adb -s $SER"
+HB=$($ADB shell -n getprop ro.boot.hwboardid </dev/null 2>/dev/null | tr -d '\r')
 echo "设备 serial=$SER  hwboardid=${HB:-未知}"
 
 # 容量档 → 目录名（与 backup/<SN>-<容量档> 规范一致）
@@ -38,7 +43,7 @@ echo "输出 → $OUT"
 cap() { # cap <文件名> <shell 命令>
   local f=$1; shift
   echo "  · $f"
-  $ADB shell "$@" > "$OUT/$f" 2>&1 || echo "    (命令非零退出，已记录)"
+  $ADB shell -n "$@" </dev/null > "$OUT/$f" 2>&1 || echo "    (命令非零退出，已记录)"
 }
 
 echo "== 1/6 身份属性 =="

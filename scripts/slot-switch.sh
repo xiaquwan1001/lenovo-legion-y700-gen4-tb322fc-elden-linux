@@ -103,6 +103,42 @@ ensure_fastboot() {
 	wait_fastboot
 }
 
+# --- 目标槽体检（A 项：忘记清理失败标志 = 下一次实验注定失败）-------------
+# ABL 的权威状态在 GPT 的 boot_* 条目 byte6（见 scripts/slot-attr.py 头注释）；
+# fastboot getvar slot-* 是 ABL 的内存视图，用作「切之前」的快速判据。
+slot_attr_get() { fb getvar "$2:$1" 2>&1 | awk -F': ' -v k="$2" '$1==k{print $2}'; }
+preflight_slot() {
+	local s=$1 unb ret
+	unb=$(slot_attr_get "$s" slot-unbootable)
+	ret=$(slot_attr_get "$s" slot-retry-count)
+	printf '[slot] 目标槽 %s: unbootable=%s retry=%s\n' "$s" "${unb:-?}" "${ret:-?}"
+	case "$unb" in
+		yes|true|1)
+			if [ "${FORCE:-0}" = 1 ]; then
+				echo "[slot] ⚠ $s 已 UNBOOTABLE，FORCE=1 继续（切过去大概率停在 fastboot）" >&2
+				return 0
+			fi
+			echo "[slot] ❌ 目标槽 $s 已 UNBOOTABLE（retry=$ret）：切过去 = 停在 fastboot。" >&2
+			echo "[slot]    先修表：设备上 python3 slot-attr.py set $s --retry 7 --no-unbootable" >&2
+			echo "[slot]    （确实要用坏槽：FORCE=1）" >&2
+			return 1 ;;
+	esac
+	case "$ret" in 0) echo "[slot] ⚠ 目标槽 $s retry=0（下次启动即 UNBOOTABLE）" >&2 ;; esac
+	return 0
+}
+
+# 置 succ 并**读回核对**：静默失败时每次启动都扣 retry，PITFALLS #181 会原地复活。
+mark_successful() {
+	local s=$1 out
+	out=$(timeout 40 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 "$TAB" \
+		"qbootctl -m $s 2>&1; sleep 1; python3 /usr/local/sbin/slot-attr.py show 2>/dev/null | grep -E '  boot_[ab] ' || qbootctl -x 2>&1" 2>&1)
+	printf '%s\n' "$out"
+	printf '%s' "$out" | grep -Eq "boot_$s .*succ=1" || {
+		echo "[slot] ❌ boot_$s 未确认 BOOT_SUCCESSFUL（每次启动都会扣 retry，PITFALLS #181）" >&2
+		return 1; }
+	echo "[slot] boot_$s succ=1 已确认"
+}
+
 cmd=${1:-}; shift || true
 want_reboot=0
 _rest=()
@@ -125,6 +161,7 @@ status)
 	;;
 a|b)
 	ensure_fastboot || exit 1
+	preflight_slot "$cmd" || exit 1
 	before=$(fb getvar current-slot 2>&1 | awk -F': ' '/current-slot/{print $2}')
 	echo "[slot] 切换前 current-slot=$before → 目标 $cmd"
 	fb --set-active=$cmd
@@ -136,7 +173,7 @@ a|b)
 		echo "[slot] reboot → 等待目标系统"
 		fb reboot
 		if [ "$cmd" = a ]; then wait_adb
-		else wait_linux && { echo "[slot] 置 boot_b succ（qbootctl -m b）"; timeout 30 ssh -o StrictHostKeyChecking=no "$TAB" 'qbootctl -m b 2>/dev/null || true; sleep 1; qbootctl -n b 2>/dev/null' || true; }; fi
+		else wait_linux && mark_successful b; fi
 	fi
 	;;
 "")

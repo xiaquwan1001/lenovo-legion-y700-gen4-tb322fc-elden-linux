@@ -10,6 +10,15 @@ LABEL=elden-super
 APPLY=0
 [ "$1" = "--apply" ] && APPLY=1
 
+# 前置门禁（B 项：写 GPT 前必须核对分区身份与扇区单位）
+DISK=${PART%[0-9]*}
+SSZ=$(blockdev --getss "$DISK")
+[ "$SSZ" = 4096 ] || { echo "FAIL: $DISK 逻辑扇区=$SSZ ≠ 4096（本机 4096；按 512 假设改表会整表错位）" >&2; exit 1; }
+sgdisk -p "$DISK" | grep -q 'Sector size (logical): 4096' || {
+	echo "FAIL: sgdisk 报的不是 4096 逻辑扇区 ⇒ 它此刻按 512 读表，禁止 --typecode/--change-name（见 scripts/slot-attr.py 头注释）" >&2; exit 1; }
+PNAME=$(sgdisk -i 10 "$DISK" | sed -n 's/^Partition name: .\(.*\).$/\1/p')
+[ "$PNAME" = "super" ] || { echo "FAIL: $DISK 分区 10 name='$PNAME' ≠ 'super'（分区号已变？按 GPT 名定位，别盲改号）" >&2; exit 1; }
+
 echo "=== 1) super 现状"
 sgdisk -i 10 /dev/sda | sed -n '1,8p'
 ORIG_TYPE=$(sgdisk -i 10 /dev/sda | sed -n 's/^Partition GUID code: \([0-9A-F-]*\).*/\1/p')
@@ -37,7 +46,17 @@ fi
 
 echo "=== 4) 建 ext4（丢弃 Android super 内容，按用户 2026-11-11 授权）"
 if [ $APPLY = 1 ]; then
-	mkfs.ext4 -q -F -L "$LABEL" -m 1 "$PART"
+	# 幂等（F 项）：已是本项目 ext4 就跳过；其它文件系统要人显式 RECREATE=1，别 -F 盲抹
+	cur=$(blkid -o value -s TYPE "$PART" 2>/dev/null || true)
+	curlab=$(blkid -o value -s LABEL "$PART" 2>/dev/null || true)
+	if [ "$cur" = ext4 ] && [ "$curlab" = "$LABEL" ]; then
+		echo "  (已是 ext4 label=$LABEL，跳过 mkfs)"
+	elif [ "${RECREATE:-0}" = 1 ]; then
+		mkfs.ext4 -q -F -L "$LABEL" -m 1 "$PART"
+	else
+		echo "FAIL: $PART 现有 fs='${cur:-空}' label='${curlab:-}' —— 格式化会丢数据；确认后 RECREATE=1 重跑" >&2
+		exit 1
+	fi
 	blkid "$PART"
 else
 	echo "  (dry-run) mkfs.ext4 -q -F -L $LABEL -m 1 $PART"

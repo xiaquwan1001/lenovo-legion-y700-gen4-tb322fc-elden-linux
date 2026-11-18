@@ -9,6 +9,8 @@
 #     改成先落日志文件再取 `${PIPESTATUS[0]}`，非 0 立刻停止（失败即停，不再往下刷 LUN0 15 GiB）。
 #   * 写前先 `slot-attr.py show` 一次并把结果打进日志（#672：UNBOOTABLE 未清 ⇒ 任何实验都无效）。
 set -u
+# 目标设备：不再写死序列号（U1/U2 任一台都能跑）；adb/fastboot 侧永不猜设备（PITFALLS #371）
+SER=${SER:-HA2EXB0E}
 PKG=$HOME/文档/TB322FC_15.10.259
 L=$HOME/下载/tb322fc/xbl_s_devprg_ns.melf
 Q=$HOME/edl/qdl/build/qdl
@@ -28,18 +30,40 @@ else
   say "（主机侧无法读槽属性；刷完必须复核）"
 fi
 
-# 0) 进 EDL（若已在 9008 则跳过）
-if lsusb | grep -q '05c6:9008'; then
-  say "already in EDL"
+# 0) 进 EDL。9008 归属必须先定：qdl 不认 serial（`-s ufs` 只选存储类型），会打到总线上
+#    第一台 9008（PITFALLS #669 第一缺陷）。只接受「本脚本刚对 $SER 发过 oem edl」这条路径；
+#    「已在 9008」必须由人显式确认 ALREADY_EDL=1。
+edl_present() { timeout -k 5 5 lsusb -d 05c6:9008 >/dev/null 2>&1; }
+if edl_present; then
+  [ "${ALREADY_EDL:-0}" = 1 ] || {
+    say "!! 总线已有 9008 设备：若它不是本机 $SER，qdl 会刷到那台上。确认后 ALREADY_EDL=1 重跑"
+    say "   拓扑: $(timeout -k 5 5 lsusb -d 05c6:9008)"
+    exit 2; }
+  say "already in EDL (ALREADY_EDL=1)"
 else
-  say "fastboot oem edl"
-  timeout -k 5 20 fastboot -s HA2EXB0E oem edl 2>&1 | tee -a "$LOG"
-  sleep 6
+  say "fastboot oem edl ($SER)"
+  timeout -k 5 20 fastboot -s "$SER" oem edl 2>&1 | tee -a "$LOG" || { say "!! oem edl 失败，退出"; exit 2; }
+  for i in 1 2 3 4 5 6 7 8 9 10; do edl_present && break; sleep 2; done
 fi
-if ! lsusb | grep -q '05c6:9008'; then
+if ! edl_present; then
   say "!! EDL 未出现，退出（不改任何东西）"
   exit 2
 fi
+
+# 0.5) 写前存证：现存主 GPT（LBA0..33）——全量刷会重写 gpt_main0/gpt_main4，不先落一份就没有回退件。
+#      qdl 自动探测 512/4096 扇区，读回长度据此判定单位（34*512=17408 / 34*4096=139264）。
+TS=$(date +%Y%m%d-%H%M%S); SNAP=$O/pre-gpt-$TS; mkdir -p "$SNAP"
+for spec in 0:gpt0 4:gpt4; do
+  lun=${spec%%:*}; tag=${spec##*:}
+  timeout -k 10 300 "$Q" -R -s ufs "$L" read "$lun/0+34" "$SNAP/$tag-lba0-33.bin" >>"$LOG" 2>&1 || true
+  sz=$(stat -c%s "$SNAP/$tag-lba0-33.bin" 2>/dev/null || echo 0)
+  case $sz in
+    17408) unit=512 ;;
+    139264) unit=4096 ;;
+    *) unit=? ;;
+  esac
+  say "pre-gpt $tag size=$sz (sector_unit=$unit) sha256=$(sha256sum "$SNAP/$tag-lba0-33.bin" 2>/dev/null | cut -d' ' -f1)"
+done
 
 # 1) LUN4（37 分区 / ~794 MiB）：boot/dtbo/vbmeta/固件 + GPT
 #    -R = 跳过会话末 reset ⇒ 设备留在 9008，下一发才能接上（#674）
@@ -75,13 +99,20 @@ done
 say "--- reset"
 timeout -k 10 120 "$Q" -s ufs "$L" reset 2>&1 | tail -2 | tee -a "$LOG"
 
-# 4) 观察 120 s：fastboot 消失 ⇒ 可能在起 Android
+# 4) 观察 120 s：判据 = 本机 SN 重新以 adb 枚举（不是「任何 adb 设备在」，也不是「fastboot 消失」）
+AD=
 for i in 1 2 3 4 5 6; do
   sleep 20
-  FB=$(timeout -k 5 8 fastboot devices 2>/dev/null | head -1)
-  AD=$(timeout -k 5 6 adb devices 2>/dev/null | grep -v '^List' | grep -c 'device$')
-  LU=$(lsusb | grep -Ec '18d1:d00d|05c6:9008')
-  say "poll $i (t=$((i*20))s): fastboot='${FB:-none}' adb_dev=$AD usb_fb_edl=$LU"
-  [ -n "$FB" ] || { say "fastboot 已消失 ⇒ 可能进系统"; break; }
+  # PITFALLS #584：不要把 fastboot 接进 `| head -1`（SIGPIPE 打断设备侧 bulk 通道）
+  FBRAW=$(timeout -k 5 8 fastboot devices 2>/dev/null)
+  FB=$(printf '%s\n' "$FBRAW" | awk -v s="$SER" '$1==s{print $1; exit}')
+  AD=$(timeout -k 5 6 adb devices 2>/dev/null | awk -v s="$SER" '$1==s && $2=="device"{print $1; exit}')
+  LU=$(edl_present && echo edl || echo -)
+  say "poll $i (t=$((i*20))s): fb($SER)='${FB:-none}' adb($SER)='${AD:-none}' edl=$LU"
+  [ -n "$AD" ] && { say "本机已重新以 adb 枚举"; break; }
 done
 say "=== T2 end ==="
+# 退出码必须反映「本机到底在哪」，否则「设备留在 9008/fastboot」也报成功（A 项）
+edl_present && { say "!! 收尾时仍在 9008（reset 未生效）"; exit 4; }
+[ -n "$AD" ] || { say "!! 收尾时本机 $SER 未以 adb 枚举（可能在 fastboot/黑屏），不得判 T2 成功"; exit 4; }
+say "T2 OK: $SER 已重新枚举"

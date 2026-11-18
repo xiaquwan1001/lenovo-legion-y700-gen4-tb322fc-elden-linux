@@ -39,13 +39,23 @@ mkdir -p "$LOGDIR"
 { echo "image=$IMG"; sha256sum "$IMG"; } > "$LOGDIR/image.txt"
 echo "[q26] logdir=$LOGDIR  img=$IMG"
 
-# 0) 探测 fastboot 设备（不写死序列号）
-FB=$(timeout 8 fastboot devices 2>/dev/null | awk 'NR==1{print $1}')
+# 0) 探测 fastboot 设备：允许显式 SER；否则取唯一设备并用 product 复核，
+#    绝不把我们的内核 boot 到总线上另一台设备（PITFALLS #371 同族）。
+TABLET_PRODUCT_MATCH=${TABLET_PRODUCT_MATCH:-elden}
+FB=${SER:-}
+if [ -z "$FB" ]; then
+	FB=$(timeout 8 fastboot devices 2>/dev/null 9>&- | awk 'NF{print $1; exit}')
+fi
 if [ -z "$FB" ]; then
 	echo "[q26] 未见 fastboot 设备。若设备在 Linux：ssh $TAB 'sync; setsid /usr/local/sbin/reboot2 bootloader'"
 	echo "[q26]   或物理 音量下+电源 进 fastboot；再重跑本脚本。"
 	exit 1
 fi
+prod=$(timeout 8 fastboot -s "$FB" getvar product 2>&1 | awk -F': ' '/^product:/{print $2}')
+case "$prod" in
+	*"$TABLET_PRODUCT_MATCH"*) : ;;
+	*) echo "[q26] ❌ $FB product='$prod' 不像本机平板，拒绝 boot 我们的镜像（可 SER=<SN> 显式覆盖）" >&2; exit 1 ;;
+esac
 echo "[q26] fastboot serial=$FB"
 timeout 8 fastboot devices > "$LOGDIR/fastboot-devices.txt" 2>&1
 
@@ -62,7 +72,11 @@ for i in $(seq 1 60); do
 	if S true; then echo "[q26] SSH 可达 (~$((i*3))s)"; up=1; break; fi
 done
 [ "$up" = 1 ] || { echo "[q26] 起机超时——若面板失败(Q28)请冷启后再试；见 $LOGDIR"; exit 1; }
-S 'uname -a; cat /proc/cmdline; uptime' > "$LOGDIR/boot-info.txt" 2>&1
+S 'uname -a; cat /proc/cmdline; uptime; cat /proc/sys/kernel/random/boot_id' > "$LOGDIR/boot-info.txt" 2>&1
+# 落点校验：起起来的必须是这次 fastboot boot 的镜像（否则「零写盘 boot 成功」可能只是 ssh 撞上旧系统）
+if ! grep -q "$(basename "$IMG" .img)" "$LOGDIR/boot-info.txt" 2>/dev/null; then
+	echo "[q26] ⚠ 无法从 boot-info 证明起的是 $IMG；请人工核对 $LOGDIR/boot-info.txt（勿只看 ssh 可达）"
+fi
 
 # 3) 等待 wlan0 出现并记录 t0（ath12k 由 ath12k-retry.sh 异步加载）
 echo "[q26] 等待 wlan0…"

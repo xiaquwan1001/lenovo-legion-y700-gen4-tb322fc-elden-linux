@@ -84,6 +84,7 @@ class SegReader:
     def __init__(self, segs, rom=ROM):
         # 段的 start_sector 是 super 的**绝对 LBA**（super 自己的起始 LBA = 最小 start_sector，
         # 本包 = 90504 = GPT 里 super 分区的 first_lba），换算成 super 内的字节偏移要减掉它。
+        self.holes = []
         segs = sorted(segs, key=lambda s: s[1])
         base = segs[0][1] * SECTOR
         self.segs = []
@@ -102,6 +103,7 @@ class SegReader:
 
     def read(self, off, n):
         out = bytearray(n)
+        hit = bytearray(n)
         for s, e, path in self.segs:
             if off >= e or off + n <= s:
                 continue
@@ -110,6 +112,11 @@ class SegReader:
             f = self._file(path)
             f.seek(lo - s)
             out[lo - off:hi - off] = f.read(hi - lo)
+            hit[lo - off:hi - off] = b"\x01" * (hi - lo)
+        if n and hit.count(0):
+            # 段间空洞 = 包里根本没有这段数据。静默返回 0 ⇒ --extract 产出「掺零镜像」，
+            # 而算出来的 sha 看起来完全正常（C 项：导出后必须有第二把尺子）。
+            self.holes.append((off, n, hit.count(0)))
         return bytes(out)
 
     def total_span(self):
@@ -276,6 +283,10 @@ def main():
             print("  %-18s abs=0x%x  %s" % (name, absb, probe_fs(r, absb)))
 
     if a.extract:
+        if r.holes:
+            sys.exit("refuse --extract: %d 次读取跨越段间空洞（最近 off=%d n=%d 中 %d B 无数据）"
+                     "——先跑 scripts/android-super-scan.py 看缺口，别产出掺零镜像"
+                     % (len(r.holes), r.holes[-1][0], r.holes[-1][1], r.holes[-1][2]))
         os.makedirs(a.outdir, exist_ok=True)
         want = set(a.extract) if a.extract else {p["name"] for p in md["partitions"]}
         for name, exts, ns in layout:
