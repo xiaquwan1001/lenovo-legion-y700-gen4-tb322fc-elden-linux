@@ -190,7 +190,7 @@
 | `external/aosp-vndk33`（`~/aosp-vndk33` 软链） | VNDK33/AIDL 头与接口源（相机 HAL 交叉编译的依赖面） | ~74 M |
 | `backup/fw/tb322fc-edl/`（`~/下载/tb322fc` 软链） | EDL 全量包 65 件（rawprogram/patch/firehose）；**2026-11-03 从 `~/下载` 收归项目**，原路径留同名软链 | 599 M |
 | `backup/official-rom-15.10.259/`（`~/文档/TB322FC_15.10.259` 软链） | 官方全量线刷包（`super_1..8.img` 合计约 15 G 为 `super_4.img` 独占；含 `uefi.elf` 5.0 M / `abl.elf` / `xbl_s.melf` / `NON-HLOS.bin` / `dspso.bin` / GPT 双表 / `rawprogram*.xml`）。**2026-11-03 从 `~/文档` 收归项目**，原路径留同名软链；`backup/stock-259/` 只是其中 13 个分区的子集 | 16 G |
-| `external/ext-repos/`（`~/ext-repos` 软链） | **Y700/UEFI 专用上游 clone**：`mu`（Mu-Silicium 主仓，403 M）、`dl`（245 M）、`mu-dodge`（dodge 的 4 个 UFSDxe 文件）、`sunuefi`（20 M）、`af`、`vk64rd`。**2026-11-03 从 `~/` 收归项目**（原判为「机器级」有误：内容 100% 本机型专用） | 1.1 G |
+| `external/ext-repos/`（`~/ext-repos` 软链） | **Y700/UEFI 专用上游 clone**：`mu`（Mu-Silicium 主仓，403 M）、`dl`（245 M）、`mu-dodge`（dodge 的 4 个 UFSDxe 文件）、`sunuefi`（20 M）、`af`、`vk64rd`、**`LTBox`（2026-11-18 新收：`miner7222/LTBox` 3.3.5，Rust GUI 刷写工具，原生支持 TB322FC；`~/LTBox` 留同名软链；定位 = 刷写校验 / AVB / EDL 逻辑的参考实现，评估见 `reports/ltbox-evaluation-20261118.md`）**。**2026-11-03 从 `~/` 收归项目**（原判为「机器级」有误：内容 100% 本机型专用） | 1.1 G |
 | `stock-src/` | 联想 GPL 源码 | 2.0 G |
 | `~/.cache/ccache-elden`（**仓库外**，机器级构建缓存） | 内核构建 ccache；不入库、不属项目资产，但是本机最大项目相关占盘项之一（清理前须确认无构建在跑） | 13 G |
 
