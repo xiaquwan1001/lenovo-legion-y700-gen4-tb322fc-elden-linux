@@ -402,3 +402,6 @@ reports/artifacts/**/logfs.img
 
 # B17 分诊取证：patchwork/cgit 原始响应用缓存目录（9 MB，可用 artifacts/b17-20261117/fetch_pw.py 重下）
 /reports/artifacts/b17-20261117/cache/
+
+# 原厂安卓资产提取树（319 MB 专有固件资产，仅本机个人使用，不再分发；scripts/android-assets-extract-20261119.py 可完全重建）
+/assets/android-20261119/
