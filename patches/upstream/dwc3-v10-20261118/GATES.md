@@ -17,6 +17,17 @@ cd /tmp/dwc3-amtest && git am patches/upstream/dwc3-v10-20261118/v10-000{1,2,3}-
 | G5 dtbs_check（非 mux 回归） | `make -j14 O=/tmp/kbuild-dwc3 CHECK_DTBS=y DT_SCHEMA_FILES=.../snps,dwc3-common.yaml qcom/sm8250-mtp.dtb qcom/sm8650-mtp.dtb qcom/sm8750-mtp.dtb` | **rc=0，无 dwc3 相关诊断**（旧版单 endpoint 板未被误伤） |
 | G6 正/负样例（dt-validate） | 用 G4 产出的 `processed-schema.json` 校验 `patches/upstream/dwc3-v9-draft-20261111/gates/*.dtb` | **正样例 PASS**；负样例 4 类全被拒：同 state（`oneOf`）、缺 `endpoint@1`（required）、`endpoint@1` 缺 `usb-role-switch`/`mux-state`（required，本轮新增）、legacy v8 形状（unevaluated properties） |
 
+## 2026-11-18 10:1x 重启后独立复跑（编排者要求，同基线 `aebb727447`）
+
+| 门 | 复跑命令 | 结果 |
+|---|---|---|
+| G1 | 新 worktree `/tmp/dwc3-v10-verify` + `git am` 3 枚 | **3/3 干净**，树哈希 `26f56ef5f5` = 与 `ef4a47d6ea` 那次**逐字节同树** |
+| G2 | `checkpatch --strict --no-signoff --no-tree` ×3 | 0001 = **0E/0W/0C（146 行）** · 0002 = **0E/0W/0C（63 行）** · 0003 = **0E/0W/0C（618 行）** |
+| G3 | 全新 `O=/tmp/kbuild-dwc3-v10`，`W=1 -j14 drivers/usb/dwc3/ drivers/usb/roles/` | **rc=0，0 warning / 0 error** |
+| G4 | `dt_binding_check DT_SCHEMA_FILES=.../snps,dwc3-common.yaml`（新 O 目录） | **rc=0**（无诊断） |
+
+G5/G6 本轮未复跑（判据不变，产物与上表同源树哈希）；四项要求门**全部通过，无 follow-up 缺口**。
+
 复现要点：
 
 - `CONFIG_MULTIPLEXER` / `CONFIG_USB_ROLE_SWITCH` 必须 `=y`，否则 `drd.c` 的 mux 代码被 `#if` 掉、编译门等于没跑。
