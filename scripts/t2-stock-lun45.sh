@@ -53,9 +53,22 @@ fi
 # 0.5) 写前存证：现存主 GPT（LBA0..33）——全量刷会重写 gpt_main0/gpt_main4，不先落一份就没有回退件。
 #      qdl 自动探测 512/4096 扇区，读回长度据此判定单位（34*512=17408 / 34*4096=139264）。
 TS=$(date +%Y%m%d-%H%M%S); SNAP=$O/pre-gpt-$TS; mkdir -p "$SNAP"
+# P0-6（2026-11-19，LTBox 判据）：基线 dump 不允许 `|| true` 吞掉失败。三值判定
+# present/absent/error 见 scripts/dump-verdict.py；只有 present 才能往下写盘 ——
+# 没有回退基线就开刷，等于把「刷坏了没法回滚」当成默认。
+DV=$HOME/y700-elden/scripts/dump-verdict.py
 for spec in 0:gpt0 4:gpt4; do
   lun=${spec%%:*}; tag=${spec##*:}
-  timeout -k 10 300 "$Q" -R -s ufs "$L" read "$lun/0+34" "$SNAP/$tag-lba0-33.bin" >>"$LOG" 2>&1 || true
+  rlog=$SNAP/$tag-read.log
+  timeout -k 10 300 "$Q" -R -s ufs "$L" read "$lun/0+34" "$SNAP/$tag-lba0-33.bin" >"$rlog" 2>&1
+  rc=$?
+  cat "$rlog" >>"$LOG"
+  vd=$(timeout -k 5 30 python3 "$DV" --part "$tag-lba0-33" --rc "$rc" --log "$rlog" \
+         --file "$SNAP/$tag-lba0-33.bin" --expect-bytes-oneof 17408,139264 2>&1)
+  vrc=$?
+  say "pre-gpt $tag $vd"
+  [ "$rc" -eq 0 ] || say "!! pre-gpt $tag qdl rc=$rc（日志 $rlog）"
+  [ "$vrc" -eq 0 ] || { say "!! 写前基线 dump 不可信（verdict rc=$vrc，不是 present）⇒ 一个字节都不写；先查 EDL/USB 再重跑"; exit 6; }
   sz=$(stat -c%s "$SNAP/$tag-lba0-33.bin" 2>/dev/null || echo 0)
   case $sz in
     17408) unit=512 ;;
@@ -103,7 +116,16 @@ say "--- step2b: 读回六 LUN 主表并比 sha"
 : > "$O/readback.log"
 timeout -k 10 300 "$Q" -R -s ufs "$L" \
   read 0/0+6 "$O/rb-gpt0.bin" read 4/0+6 "$O/rb-gpt4.bin" >"$O/readback.log" 2>&1
-say "readback rc=$? （文件在 $O/rb-gpt*.bin；与 $PKG/gpt_main0.bin,gpt_main4.bin 逐字节比）"
+rb_rc=$?
+say "readback rc=$rb_rc （文件在 $O/rb-gpt*.bin；与 $PKG/gpt_main0.bin,gpt_main4.bin 逐字节比）"
+# 写后读回同样是 dump：rc 与产物长度都要过硬，否则「读回失败」会被下面的 cmp 当成「表不对」。
+for lun in 0 4; do
+  vd=$(timeout -k 5 30 python3 "$DV" --part "rb-gpt$lun" --rc "$rb_rc" --log "$O/readback.log" \
+         --file "$O/rb-gpt$lun.bin" --expect-bytes 24576 2>&1)
+  vrc=$?
+  say "readback $lun $vd"
+  [ "$vrc" -eq 0 ] || { say "!! 写后读回不可信（verdict rc=$vrc）⇒ 本次刷写结果未知，不要发 reset、不要改槽属性"; exit 7; }
+done
 for p in 0 4; do
   if cmp -s "$O/rb-gpt$p.bin" "$PKG/gpt_main$p.bin"; then say "GPT LUN$p 读回 = 原厂件 OK"
   else say "WARN GPT LUN$p 读回 != 原厂件（属性字节差异属正常，几何差异要查）"; fi
