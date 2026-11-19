@@ -30,7 +30,12 @@
   根 = `out/min-restore-20261119/rootfs-minbase-gadget-20261119.ext4.img`（6 GiB，设备端 sha `abf96ec4…`，
   = 11-18 的 160 包 minbase + 本次注入的 `/init`、`/usr/local/sbin/usb-gadget`、`/etc/udhcpd.conf`、`/etc/elden-init-mode=systemd`）；
   `boot_b` = 自签 `bootslot-b/boot_b-minbase-labellinux-20261119.img`（同 vk192 核/DTB/initrd，cmdline `elden_root=LABEL=linux`，读回 `740d431b…`）。
-  **登入方式 = USB-NCM**：`sudo scripts/ncm-host-up.sh` → `ssh root@192.168.7.1`（或 `scripts/acm-sh.py` 走 `ttyACM1` 免网络 root shell）。
+  **登入方式 = USB-NCM**：`sudo scripts/ncm-host-up.sh` → `ssh root@192.168.7.1` / `ssh elden-root` / `ssh elden`（两别名均可，2026-11-19 实测；或 `scripts/acm-sh.py` 走 `ttyACM1` 免网络 root shell）。
+  **★2026-11-19 晚补充（非包状态）**：重建根时只把公钥装给了 `root` ⇒ `ssh elden`（用户 `xuqianhui1001`）曾 `Permission denied`、该用户也不在 `sudo` 组；
+  已补 `authorized_keys` + `/etc/sudoers.d/010-xuqianhui1001`（NOPASSWD）+ `usermod -aG sudo`，判据已机械化进 `deploy-desktop-shell.sh` **§3b**（`--check` MISS=0）。
+  **WiFi 现态（同日实测）**：`ath12k` 已由 `ath12k-rescan.service` 救活（`iw dev` 有 `phy0`/`wlan0`、`nmcli dev wifi list` 能扫到 `ustcnet`/`eduroam`、`rfkill` 未封），
+  但 `nmcli connection show` 只有 `lo`、`/etc/NetworkManager/system-connections/` **为空** ⇒ 状态栏无 WiFi 图标 = **没连过任何网**（不是驱动/硬件问题）；凭据属人项。
+  PITFALLS `#689`；控制面矩阵与沿革 = `RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §2.5/§2.6。
   ~~**已知未愈**：显示无 DRM（`/sys/class/drm` 只有 `version`）——根因 = `af54000.displayport-controller` deferred 拖死 DPU 组件聚合~~ **已愈（2026-11-19 13:20）**：
   真因 = 根里**没装 `udev`** ⇒ 模块零自动加载 ⇒ DP 组件 defer；装 `udev` 后 DPU aggregate + DSI×2 + DP + GPU 全 bound、`/dev/dri/card0` + fb0。
   **同日再进两步**：`resize2fs` 6.25 GB→**190 GiB**；桌面壳 = greetd+phoc+phosh（`phosh-osk-stub`）+ seatd，

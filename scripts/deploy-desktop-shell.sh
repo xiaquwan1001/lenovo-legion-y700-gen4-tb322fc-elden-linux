@@ -111,6 +111,33 @@ else
 		fix "已建 xuqianhui1001（/tmp/ensure-user.log）" || no "建用户失败"
 fi
 
+echo "== 3b) 账户接入面（authorized_keys + sudo 免密）=="
+# 为什么单列一节（PITFALLS #689）：重建最小根只恢复「包 + 桌面」，**账户接入面不属包**，
+# 于是 root 有公钥、`xuqianhui1001` 没有 ⇒ 文档默认入口 `ssh elden` 直接 Permission denied，
+# 表现为「ssh 不通 / 设备丢了」，而 root@ 一直好用。
+PUBF=${PUBKEY:-$HOME/.ssh/id_rsa.pub}
+if [ ! -f "$PUBF" ]; then
+	ok "无 $PUBF（跳过接入面检查）"
+else
+	PUBH=$(sha256sum < "$PUBF" | cut -d' ' -f1)
+	DEVH=$("${SSH[@]}" 'sha256sum /home/xuqianhui1001/.ssh/authorized_keys 2>/dev/null | cut -d" " -f1')
+	if [ "$DEVH" = "$PUBH" ]; then ok "xuqianhui1001 authorized_keys == 主机公钥（ssh elden 可用）"
+	elif [ "$MODE" = check ]; then no "xuqianhui1001 无主机公钥 ⇒ 文档默认入口 ssh elden 会被拒（只有 root@ 可登）"
+	else
+		"${SSH[@]}" 'install -d -m700 -o xuqianhui1001 -g xuqianhui1001 /home/xuqianhui1001/.ssh' &&
+			"${SCP[@]}" "$PUBF" "$TAB:/tmp/elden-pub" &&
+			"${SSH[@]}" 'install -m600 -o xuqianhui1001 -g xuqianhui1001 /tmp/elden-pub /home/xuqianhui1001/.ssh/authorized_keys && rm -f /tmp/elden-pub' &&
+			fix "已把主机公钥装给 xuqianhui1001" || no "装公钥失败"
+	fi
+	if [ "$("${SSH[@]}" 'su -s /bin/sh xuqianhui1001 -c "sudo -n true" >/dev/null 2>&1 && echo ok')" = ok ]; then
+		ok "xuqianhui1001 sudo -n 免密可用"
+	elif [ "$MODE" = check ]; then no "xuqianhui1001 sudo -n 不可用（桌面/维护脚本全靠它，会伴提密码卡住）"
+	else
+		"${SSH[@]}" 'printf "%s\n" "xuqianhui1001 ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010-xuqianhui1001 && chmod 440 /etc/sudoers.d/010-xuqianhui1001 && visudo -c >/dev/null && usermod -aG sudo xuqianhui1001' &&
+			fix "已加 sudo 免密 + sudo 组" || no "加 sudoers 失败"
+	fi
+fi
+
 echo "== 4) 会话包装脚本 =="
 if [ "$("${SSH[@]}" 'sha256sum /usr/local/sbin/elden-session-user 2>/dev/null | cut -d" " -f1')" = "$(sha256sum "$SESS_USER" | cut -d' ' -f1)" ]; then
 	ok "elden-session-user 与仓内一致"

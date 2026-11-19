@@ -40,6 +40,58 @@
 | **H** | **回退资产**：原厂 259 全量包、本单元 GPT/独有分区 dump、`bootslot-b/*`、`out/*.img`+`*.manifest` | 主机 | `scripts/linux-state-audit.sh --host` | `RESOURCES/README.md` §2 |
 
 > 判读口诀：**A/B/C/D/E/F 是「内容」，G 是「计数器」，H 是「后悔药」**。任何一项没读到，就不算「已核对」。
+>
+> **⚠ 第 9 项（2026-11-19 补）：「包 + 桌面」≠ 「能用的设备」——rootfs 重建会静默丢「非包状态」**：
+> 最小根的 165 包与桌面壳可以全绿（`deploy-desktop-shell.sh --check` MISS=0），而下面三类**不属于包**的状态全空，
+> 表现却是「设备丢了 / ssh 不通 / 没有 WiFi」：
+> | 丢的东西 | 成因 | 症状 | 判据 / 修法 |
+> |---|---|---|---|
+> | `xuqianhui1001` 的 `~/.ssh/authorized_keys` + sudo 免密 | 只把公钥装给 root | **`ssh elden` 被拒**（Permission denied），而 `root@192.168.7.1`/`ssh elden-root` 一直好用 ⇒ 误判「ssh 不通」 | `deploy-desktop-shell.sh` §3b（已机械化，`--check` 会 MISS）；`PITFALLS #689` |
+> | NetworkManager 连接档（`/etc/NetworkManager/system-connections/*`） | 凭据文件不属包，且**不得**进仓 | 驱动/扫描都正常（`nmcli dev wifi list` 有 AP）、状态栏却没有 WiFi 图标（`nmcli connection show` 只有 `lo`） | 判据 = `ls /etc/NetworkManager/system-connections/ \| wc -l`（=0 即「没连过」）；修 = 用户自己输凭据 |
+> | 桌面用户 dconf（深浅色/输入法/字体） | 在 `/home` 里，不在包 | UI 回默认值 | `TASKS` G1-26/27 的 dconf 项；重跑 `daily-baseline` 对应段 |
+>
+---
+
+## 2.5 控制面矩阵（「现在怎么和设备说话」——五条通道，逐条带判据）
+
+> 2026-11-19 实测现态：**USB-NCM SSH 通**（`root@192.168.7.1`，`uptime 1:56`、`systemd is-system-running=running`、`systemctl --failed` 空）。
+> 判据顺序固定：**先只读验活，再动手**；任何写操作走 `scripts/device-lock.sh` 串行。
+
+| # | 通道 | 用在什么时候 | 主机侧命令 | 判据 |
+|---|---|---|---|---|
+| 1 | **USB-NCM SSH**（主通道） | 系统已起到用户态 | `sudo scripts/ncm-host-up.sh`（或 `ip addr add 192.168.7.3/24 dev enx021e5eede102`）→ `ssh elden-root` / `ssh elden` | `ping -c1 192.168.7.1` + `ssh … 'ps -p1 -o comm='` = `systemd` |
+| 2 | **USB ACM 串口**（零网络兜底） | 没网、没 ssh、要看 console | `scripts/acm-sh.py`（`/dev/ttyACM1`，`console=ttyGS0`） | 能拿到 shell / 能看到 `dmesg` |
+| 3 | **fastboot**（引导/槽/分区） | 换 boot 件、看槽属性、进 EDL | `timeout -k 5 20 fastboot -s $SN getvar product`（**< 5 s**） | 槽四项：`current-slot`/`slot-successful:X`/`slot-unbootable:X`/`slot-retry-count:X` |
+| 4 | **EDL 9008**（写盘/救砖/GPT） | 分区表、根镜像、读回校验 | `fastboot -s $SN oem edl` → `lsusb \| grep 05c6:9008` → `~/edl/qdl/build/qdl …` | **一次会话一件事**（`#675`）；写后**设备端** `qdl sha256` 对主机 `sha256sum`（`#669`） |
+| 5 | **adb**（仅 Android 槽） | 安卓面取证/装包 | `timeout 20 adb devices` | 必须见 `HA2EXB0E`；`MDX5T20730009849`（P40pro）/`emulator-5554` **不是本机，禁写** |
+
+**通道之间怎么切换**（Linux → fastboot/EDL 是「单向门」，进了就回不来，除非重启）：
+
+| 从 | 到 | 动作 | 注意 |
+|---|---|---|---|
+| Linux | 重启回 Linux | `ssh … 'systemctl reboot'` 或物理长按 | 主机的 `192.168.7.3/24` 地址**随 gadget 重建消失**，每次都要重加（S5） |
+| Linux | fastboot | `ssh … 'systemctl reboot bootloader'`（内核 `psci-reboot` 钩子，G1-24；历史上 `reboot2 bootloader` 22 s 进 fastboot） | **minbase 根没有 `reboot2`/`eldroid-bootctl`**（那两个是 Alpine 期件）⇒ 用 systemd 的 reboot arg；若不吃参数，退 `fastboot oem edl` 已不可用 ⇒ 走 ACM 串口 `reboot -f bootloader` |
+| fastboot | EDL | `fastboot -s $SN oem edl` | 会话一次性（`#675`） |
+| Android | fastboot/EDL | `adb reboot bootloader` / `adb reboot edl` | 先 `adb devices` 确认是本机 |
+| 任意 | Linux（持久） | `fastboot -s $SN reboot`（走 `_b`，`slot-successful:b=yes`） | 回 Linux 后 45 s 内 gadget 必枚举（`lsusb \| grep 1d6b:0104`） |
+
+**设备侧「自检一条命令」**（只读，不连外网）：`bash scripts/zero-to-desktop-check.sh`（S5–S12 共 8 步，`--list` 机读）；
+**主机侧「资产自检」**：`bash scripts/linux-state-audit.sh --host`。
+
+---
+
+## 2.6 发展路径（这条路怎么走到今天的；每段只留「裁决 + 指针」）
+
+| 阶段 | 做了什么 | 关键裁决/产物 |
+|---|---|---|
+| 2026-10-03 起 | BL 解锁 → b 槽 RAM 起 mainline → GPT 手术建 `linux17`(193 GiB) → 持久 rootfs → Phosh 自启 | 首次上机全流程 = `RUNBOOK-BRINGUP/README.md`（Phase −1…6）；`linux17` 起点 LBA **73277435** |
+| 2026-10-04 ～ 10-19 | 外设/用户态逐项收口：音频 tplg SD 线、CDSP split 固件入 initrd、DP（`dr_mode=otg`）、相机 30 fps、TF 卡、WiFi 候选榜、日用基线 | 状态与证据只在 `TASKS/README.md` §1（G1-0…G1-38） |
+| 2026-10-22 ～ 11-16 | 内核线 vk127 → vk192（suspend/pstore-ram 守卫），Waydroid/传感器/触觉；UEFI 间接引导两形态打通 | 版本账 `versions/vk-registry.tsv`；现役 vk192 UTS `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0` |
+| **2026-11-17 20:0x** | 事故：全量回原厂 Android 16（真因 = **非原厂 GPT**，不是硬件） | ⇒ `linux17` 条目/ESP 被覆盖；**GPT 恢复到双轨** |
+| **2026-11-18** | 安卓「最小化线刷包」上机成功（`super_min` 8.28 GiB、`/system` 5.0 GiB）；随后 `fastboot -w` + recovery factory reset ⇒ **`userdata`(449.7 GiB) 覆盖 `linux17` 区间 + discard 成零** | 判定 = `TASKS/sessions/2026-11-18-安卓最小包上机成功与卡动画.md`；安卓侧仍卡 ZUXOS 动画（未取证） |
+| **2026-11-19** | **重建**（不是恢复）：GPT 手术表重写（主备读回一致）→ EDL 写 6 GiB 最小根（`/init`+`usb-gadget`+`udhcpd`）→ 刷 `boot_b`（`elden_root=LABEL=linux`）→ 显示真因 = 缺 `udev` → `resize2fs` 到 190 GiB → 日用基线 → greetd+phoc+phosh（GPU 渲染 Mesa 26.1.6） | 全链 = `RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md` S1–S12；账 = `TASKS/sessions/2026-11-19-{主线恢复最小Linux与显示定位,显示修复=minbase缺udev,EDL到桌面端到端重建}.md` |
+
+**丢东西的三个闸**（这正是「重建 ≠ 恢复」的地方）：① GPT 条目 —— 有备份可写回；② `linux17` 数据 —— **原厂 `userdata` 覆盖 + `fastboot -w` discard 后物理归零，无法恢复**（EDL 6 点采样全 0 已证）；③ **非包状态**（公钥/sudo/WiFi 凭据/dconf）—— 不属任何镜像，只能脚本重建或人工重输（见 §2 第 9 项）。
 
 ---
 
