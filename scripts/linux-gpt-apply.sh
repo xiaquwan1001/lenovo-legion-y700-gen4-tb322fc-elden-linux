@@ -140,39 +140,24 @@ echo "[write] 主备双表（单次 qdl 会话：读旧表留回退 → 写备�
 timeout -k 10 120 "$QDL" -s ufs -R "$LOADER" \
 	read "$LUN/0+6" "$READDIR/pre-write-primary.bin" \
 	2>&1 | tee "$READDIR/qdl-pre.log" | tail -3
-# ── live-GPT 交叉核对（2026-11-18 审计 R1 P0-③）：写目标 LBA 只来自主机件时，
-#    dump 一过期就会把新数据写进「在用分区的中段」，而脚本仍会打印读回一致。
-#    这里拿刚读到的设备现表逐分区比对；新表**少掉**一个现表还存在的分区 = 需要显式 --allow-drop。
-python3 - "$READDIR/pre-write-primary.bin" "$MAIN" <<'PY2' || { echo "!! live-GPT 交叉核对失败/被拒；未写任何东西" >&2; exit 1; }
-import sys, struct
-def ents(path):
-    b=open(path,'rb').read()
-    if b[4096:4104] != b'EFI PART':
-        raise SystemExit(f"{path}: 不是主表件（LBA1 无 EFI PART）")
-    lba=struct.unpack_from('<Q', b, 4096+72)[0]
-    off=lba*4096
-    out={}
-    for i in range(128):
-        e=b[off+i*128: off+(i+1)*128]
-        if len(e) < 128: break
-        n=e[56:128].decode('utf-16-le','replace').strip('\x00')
-        if not n: continue
-        first,last=struct.unpack_from('<QQ', e, 32)
-        out[n]=(first,last)
-    return out
-live=ents(sys.argv[1]); new=ents(sys.argv[2])
-gone=[n for n in live if n not in new]
-moved=[(n, live[n], new[n]) for n in live if n in new and live[n]!=new[n]]
-added=[n for n in new if n not in live]
-print(f"[live-check] 现表 {len(live)} 分区 / 新表 {len(new)}；新增 {len(added)}，几何变化 {len(moved)}，将消失 {len(gone)}")
-for n,a,b in moved[:8]: print(f"  ~ {n}: {a} -> {b}")
-if added[:6]: print(f"  + 新增: {', '.join(added[:6])}")
-if gone:
-    print(f"  - 将消失: {', '.join(gone[:8])}{' …' if len(gone)>8 else ''}")
-    if not __import__('os').environ.get('ALLOW_DROP'):
-        raise SystemExit("拒绝：新表会删掉现表里仍存在的分区（覆盖冲突/拿错表？）"
-                         " —— 确认要删请 ALLOW_DROP=1 重跑")
-PY2
+# ── live-GPT 交叉核对（2026-11-18 审计 R1 P0-③；2026-11-19 抽成 scripts/gpt-preflight.py = LTBox P0-5）
+#    写目标 LBA 只来自主机件时，dump 一过期就会把新数据写进「在用分区的中段」，而脚本仍会打印读回一致。
+#    判据（工具侧，`compare` 子命令）：新表**少掉**一个现表还存在的分区 ⇒ 默认拒绝（ALLOW_DROP=1 放过）；
+#    同时报「起点/跨度变化」与重名分区（按 label 定位的歧义源），并在读表时就校验头/条目 CRC。
+#    工具的离线自检：`python3 scripts/gpt-preflight.py --selftest`（doctor §21 每轮跑）。
+GPTPRE=$ROOT/scripts/gpt-preflight.py
+[ -f "$GPTPRE" ] || GPTPRE=$(dirname "$0")/gpt-preflight.py
+DROP_FLAG=""; [ -n "${ALLOW_DROP:-}" ] && DROP_FLAG="--allow-drop"
+if ! python3 "$GPTPRE" compare --base-main "$READDIR/pre-write-primary.bin" \
+     --main "$MAIN" $DROP_FLAG; then
+	echo "!! live-GPT 交叉核对失败/被拒；未写任何东西（确认要删分区请 ALLOW_DROP=1 重跑）" >&2
+	exit 1
+fi
+# 写前复验快照（P0-5 的另一半）：把现表落成快照，写后在同样口径下可 `verify` 回来。
+# 快照落不下不阻塞本次写（读表本身已过 compare），但下一次实验必须能拿它复核。
+python3 "$GPTPRE" snapshot --main "$READDIR/pre-write-primary.bin" \
+	-o "$READDIR/pre-write-snapshot.json" >/dev/null \
+	|| echo "WARN 写前快照落盘失败（$READDIR/pre-write-snapshot.json）；本次仍继续，但事后无法复验" >&2
 
 OLD_ALT=$(python3 - "$READDIR/pre-write-primary.bin" <<'PY' 2>/dev/null || true
 import struct,sys
