@@ -398,6 +398,10 @@ def main():
     ap.add_argument("--image", help="full GPT image file (LBA0-based) instead of a device")
     ap.add_argument("--device", default="/dev/sde", help="device node (default /dev/sde = LUN4 boot LUN)")
     ap.add_argument("--sector", type=int, default=SECTOR_DEFAULT)
+    ap.add_argument("--expect-lun", type=int, default=4,
+                    help="设备模式下该分区所在的 LUN（默认 4 = boot/vbmeta/dtbo/uefi 槽）")
+    ap.add_argument("--allow-wrong-lun", action="store_true",
+                    help="跳过 LUN 归属闸（只在明确知道自己在做什么时用）")
     common = argparse.ArgumentParser(add_help=False)
     # default=SUPPRESS so the subparser copy does not override the global flag
     common.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
@@ -423,6 +427,25 @@ def main():
 
     a = ap.parse_args()
     src = a.image or a.device
+    # LUN 归属闸（2026-11-19，脚本审查 P1-3）：A/B 槽属性只存在于 **LUN4**。
+    # 历史坑 = 默认 `/dev/sde` 不校验、或调用方把 LUN0 的 /dev/sda 传进来 ⇒ `find()` 找不到条目
+    # 却打印 "written + CRCs fixed"、rc=0（报告 P0-4 的第二个洞）。现在：设备模式下先用
+    # `scripts/partlun.py` 的 sysfs 解析核对 LUN，不一致直接拒（--allow-wrong-lun 可强制）。
+    if not a.image and not a.allow_wrong_lun:
+        import importlib.util as _ilu
+        _p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "partlun.py")
+        _spec = _ilu.spec_from_file_location("partlun", _p)
+        partlun = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(partlun)
+        got = partlun.lun_from_sysfs(a.device)
+        if got is None:
+            print("slot-attr: 无法从 sysfs 判定 %s 的 LUN（不在 UFS 布局里）；"
+                  "确信是 LUN4 时加 --allow-wrong-lun" % a.device, file=sys.stderr)
+            return 4
+        if got != a.expect_lun:
+            print("slot-attr: 拒绝：%s 是 LUN%d，但槽属性表在 LUN%d（--allow-wrong-lun 可强制）"
+                  % (a.device, got, a.expect_lun), file=sys.stderr)
+            return 4
     g = Gpt(src, sector=a.sector, writable=(a.cmd != "show" and not a.dry_run))
     try:
         if a.cmd == "show":

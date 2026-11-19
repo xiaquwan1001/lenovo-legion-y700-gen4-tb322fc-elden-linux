@@ -66,6 +66,8 @@ for v in current-slot slot-successful:b slot-unbootable:b slot-retry-count:b; do
 timeout -k 5 20 fastboot -s $SN oem edl; sleep 6; lsusb | grep 05c6:9008   # 进 EDL
 ```
 - EDL 一次会话只能做一件事：**多条 `qdl` 命令不能跨会话**（`#675`，会话结束设备即离开 9008）。
+- 判据：`getvar product` **< 5 s 返回真值**（挂住 = 通道不可用，`#658`）；`pgrep -af "[f]astboot"` 为空；
+  四种 `getvar` 各有一行回显（槽位状态先记下，后面每次写盘都要与它比）。
 - 失败形态：`getvar` 卡 > 5 s ⇒ 先查孤儿 fastboot，别怀疑设备。
 
 ### S2 GPT（Linux 的空间从哪来）
@@ -81,6 +83,8 @@ python3 scripts/gpt-preflight.py compare  --snapshot /tmp/pre-write-snapshot.jso
 - 今天用的手术表：`linux17` **193 GiB @LBA 73277435**、`userdata` 256.7 GiB；**安卓侧分区一个不动**
   （`super`/`vbmeta_system`/`metadata`/`rawdump`/`pstoredump` 保留）⇒ 安卓实验面随时可回。
 - 写后用 `qdl read` **回读主备两表逐字节比**（本次 `80ab46e5…` / `e5f79c0e…`）。
+- 判据：主表 == 备表（逐字节）；`slot-attr.py show` 主备两段输出同值；写后**设备端** `qdl sha256`
+  与主机 `sha256sum` 一致（不看 `qdl` 退出码，`#669`）。
 - 失败形态：只写主表不写备表 ⇒ ABL/TZ 读到旧表，现象是「分区大小没变」。`slot-attr.py` 双表报警就是防这个。
 - 槽属性：`mark-successful b` 之后必须回读 `slot-successful:b = yes`（`#677`/`#678`：a 槽和 b 槽的 bit 语义不同，
   只能用同槽原厂基线比）。
@@ -194,7 +198,8 @@ bash scripts/deploy-desktop-shell.sh           # 收敛到「有桌面」
 
 | # | 保证 | 关键事实 |
 |---|---|---|
-| 1 | 包集：`phosh phoc greetd seatd gnome-session-bin phosh-osk-stub libglib2.0-bin gnome-settings-daemon upower dbus-x11` | `phosh-osk-stub` 必装：phosh 会话 `RequiredComponents` 含 `sm.puri.OSK0`，缺它 = `gnome-session-failed` + 黑底转圈（`#682`） |
+| 1 | 包集：`udev phosh phoc greetd seatd gnome-session-bin phosh-osk-stub libglib2.0-bin gnome-settings-daemon upower dbus-x11` | `phosh-osk-stub` 必装：phosh 会话 `RequiredComponents` 含 `sm.puri.OSK0`，缺它 = `gnome-session-failed` + 黑底转圈（`#682`）；`udev` 必装且服务必起（`#681`） |
+| 1b | `systemd-udevd` active + `/dev/dri/card0` + `/dev/fb0` + DPU 聚合 bound | 装了 udev 但服务没起来 = **零模块加载**，症状与「显示链坏」无法区分（`#681`）；聚合判据读 `device_component/ae01000.display-controller` |
 | 2 | 桌面用户 `xuqianhui1001`（uid 1001，组 video/render/…） | `rootfs/debian/ensure-desktop-user.sh`；greetd `initial_session` 没有这个用户就只打一行 error |
 | 3 | `/usr/local/sbin/elden-session-user`（与仓内逐字节同） | 必须 `LIBSEAT_BACKEND=seatd`（logind 后端 ⇒ 会话被 deactivate ⇒ phoc 释放 DRM ⇒ 面板挂死） |
 | 4 | `time-sync.sh` 同源 | 见 S8 |

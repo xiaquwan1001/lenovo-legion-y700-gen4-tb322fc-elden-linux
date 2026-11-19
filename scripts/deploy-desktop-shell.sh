@@ -3,7 +3,7 @@
 #
 # 为什么有这个脚本（2026-11-19）：11-19 下午的 root = 6 GiB minbase（Debian 13 trixie，165 包，
 # 没有 udev/桌面包）。手工把桌面拉起来时踩到四个点，全部在此固化：
-#   ① 缺 `udev` → 模块零加载（该坑已在 11-19 另一条 session 落账）；
+#   ① 缺 `udev` → 模块零加载（该坑已在 11-19 另一条 session 落账；本脚本 2b) 已机械化）
 #   ② `phosh` 0.46 的 gnome-session 会话**必须**有 `sm.puri.OSK0`（Debian 包名
 #      `phosh-osk-stub`），缺它 = `Unable to find required component 'sm.puri.OSK0'`
 #      → `gnome-session-failed` → 屏上只有黑底转圈；
@@ -19,12 +19,17 @@
 #   TAB=root@192.168.7.1 scripts/deploy-desktop-shell.sh
 #
 # 判据（--check 退出码 0 = 已达标）：
-#   a) 包齐：phosh phoc greetd seatd gnome-session-bin phosh-osk-stub libglib2.0-bin
+#   a) 包齐：udev phosh phoc greetd seatd gnome-session-bin phosh-osk-stub libglib2.0-bin
 #      gnome-settings-daemon upower dbus-x11
+#   a2) systemd-udevd = active + /dev/dri/card0 + /dev/fb0 + DPU 聚合 bound（PITFALLS #681：
+#      装有 udev 但服务没起来 = 零模块加载，症状与「显示链坏」无法区分）
 #   b) 桌面用户 xuqianhui1001 存在；/usr/local/sbin/elden-session-user 与仓内逐字节相同
 #   c) `systemctl is-active greetd` = active；`phoc`+`phosh`+`phosh-osk-stub` 三进程在
 #   d) `grim` 截图 > 20 KB（黑底转圈那种只有 ~33 KB 且**没有顶栏**，靠人眼/字节双门，
 #      脚本只判字节；顶栏判据见 PITFALLS 新增条）
+#
+# 回归门：scripts/doctor/22-desktop-chain.py（check-doctor §22）静态校验「包集/服务/坑号/手册步」
+#   四者不漂移——例如有人从 PKGS 里删掉 udev 或 phosh-osk-stub，§22 立刻 FAIL。
 #
 # 纪律：设备写入走 scripts/device-lock.sh 串行；apt 只装不升级；不动机器人内核/引导。
 set -uo pipefail
@@ -36,7 +41,7 @@ SSH=(ssh -o StrictHostKeyChecking=no -o ConnectTimeout="$T" -o ConnectionAttempt
 SCP=(scp -o StrictHostKeyChecking=no -o ConnectTimeout="$T" -o BatchMode=yes -q)
 SESS_USER=$ROOT/packaging/elden-userland/files/usr/local/sbin/elden-session-user
 ENSURE_USER=$ROOT/rootfs/debian/ensure-desktop-user.sh
-PKGS="phosh phoc greetd seatd gnome-session-bin phosh-osk-stub libglib2.0-bin gnome-settings-daemon upower dbus-x11"
+PKGS="udev phosh phoc greetd seatd gnome-session-bin phosh-osk-stub libglib2.0-bin gnome-settings-daemon upower dbus-x11"
 MODE=run
 case "${1:-}" in
 	--check) MODE=check ;;
@@ -67,6 +72,35 @@ for p in $PKGS; do
 			fi ;;
 	esac
 done
+
+# 2b) udev —— minbase 根的头号坑（PITFALLS #681）：没有 systemd-udevd 时**任何**模块都不会
+# 被 modalias 自动加载（fastrpc/ath12k/音频/DP bridge 全缺），DP 组件一直 defer 拖死 DPU
+# 聚合 ⇒ 症状是「只有背光 + /sys/class/drm 里只有 version」，看起来像 DTB/DP 布线坏。
+# 判据 = 服务 active + card0/fb0 在；不是「包装了」就算过（装了没启用照样零加载）。
+echo "== 2b) udev / 模块自动加载（#681）=="
+udev_st=$("${SSH[@]}" 'systemctl is-active systemd-udevd 2>/dev/null')
+if [ "$udev_st" = active ]; then
+	ok "systemd-udevd active"
+elif [ "$MODE" = check ]; then
+	no "systemd-udevd 非 active（模块不会自动加载 ⇒ 无 /dev/dri）"
+else
+	"${SSH[@]}" 'systemctl enable --now systemd-udevd >/dev/null 2>&1; systemctl is-active systemd-udevd' >/dev/null \
+		&& fix "已 enable --now systemd-udevd" || no "起 systemd-udevd 失败"
+fi
+ndri=$("${SSH[@]}" 'ls /dev/dri/card0 /dev/fb0 2>/dev/null | wc -l' 2>/dev/null)
+if [ "${ndri:-0}" -ge 2 ] 2>/dev/null; then
+	ok "/dev/dri/card0 + /dev/fb0 在（GPU/显示已 bind）"
+else
+	no "缺 /dev/dri/card0 或 /dev/fb0（显示链没起来；查 dmesg 与 device_component）"
+fi
+# DPU 聚合 = 「显示到底通没通」的唯一结构性判据（#681 就是靠它定位的）。
+dpu=$("${SSH[@]}" 'test -d /sys/kernel/debug/device_component || { echo NODEBUGFS; exit 0; }; \
+	if grep -qs "aggregate not bound" /sys/kernel/debug/device_component/*display-controller; then echo NOTBOUND; else echo BOUND; fi')
+case "$dpu" in
+	BOUND)    ok "DPU 组件聚合已 bound（ae01000.display-controller）" ;;
+	NOTBOUND) no "DPU 聚合 aggregate not bound（某组件在 defer；先看 dmesg | grep -c bound）" ;;
+	*)        no "device_component debugfs 不可读，无法判定 DPU 聚合（挂 debugfs 后重跑）" ;;
+esac
 
 echo "== 3) 桌面用户 =="
 if "${SSH[@]}" 'getent passwd xuqianhui1001 >/dev/null'; then ok "xuqianhui1001 存在"
