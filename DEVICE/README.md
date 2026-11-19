@@ -41,7 +41,7 @@
   **同日再进两步**：`resize2fs` 6.25 GB→**190 GiB**；桌面壳 = greetd+phoc+phosh（`phosh-osk-stub`）+ seatd，
   **GPU 渲染 = Mesa 26.1.6（trixie-backports）`Adreno (TM) 830`**（`glmark2-es2` Score 2594）—— 冷起自检 `bash scripts/deploy-desktop-shell.sh --check` → MISS=0。
   **锁屏需人手滑开**（内核未开 `CONFIG_INPUT_UINPUT`，无 `/dev/uinput`）。链路手册 = `RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md`。
-  `ath12k` MHI `-110`、无 `/dev/fastrpc-adsp`、`snd-sc8280xp` deferred（均 ADSP/GPR 未就绪）。
+  ⟪历史定界（2026-11-19 13:20 之前）⟫ ~~`ath12k` MHI `-110`、无 `/dev/fastrpc-adsp`、`snd-sc8280xp` deferred（均 ADSP/GPR 未就绪）~~ —— 该三项已随 `apt install udev` 全部消失（见本条上文），此处仅作定界前记录。
   **旧 `linux17` 根 fs 已确认丢失**（EDL 6 点采样全零，成因 = 原厂 `userdata` 覆盖 + `fastboot -w`），故本次为重建而非恢复。
   安卓面：`super`/`vbmeta_a`/`boot_a`/`dtbo_a` **均未动**（a 槽仍是 11-18 的瘦身 Android，卡 ZUXOS 动画未取证）。
   **设备不需要送修**（「ABL 内存类硬件故障 / 全原厂态等送修」= 已作废口径，2026-11-19 标废）：真因 = 非原厂 GPT（11-17 19:2x 单变量定因），
@@ -164,7 +164,7 @@
 - **主机串口 logger** = `scripts/serial-logger.sh`（pid 文件 `/tmp/q28_serial_logger.pid`，常驻；主机重启需重跑）。**判 Q28 显示不能只靠串口 logger**（重连会漏 0–20 s，盖住 NOCARD 的 0.86 s 现场），须 SSH 读全 dmesg + 查 `card0`。
 - ★**2026-10-17 晚：相机 AE 正解 = libcamera 侧 sensor helper（用户态，与内核 UTS 无关）**：设备 `/usr/lib/libcamera/ipa/ipa_soft_simple.so` 已换成自编版（含 `s5kjns`/`gc08a8` 的增益模型 + 黑电平 4096；主机交叉编译，配方 `reports/camera-ae-helper-20261017.md` §2），原包备份 `/root/ipa-bak-20261017/`。**相机驱动 `.ko` 保持原版**（增益码语义未改，`/root/cam-ko-bak-20261017/` 里的补丁版只属 vk127 目录、未使用）。相机栈仍需 `CAM_FORCE=1 camera-modules-load.sh` 手动加载（cmdline `elden_nocamera=1`）。
 - `CONFIG_LOCALVERSION` 一变，相机 20 个 `.ko` 必须整套重编（vermagic 耦合）；vk50 起模块化后驱动可单独重编。
-- **容器（Waydroid）侧在机资产（2026-10-13，TASKS C10 三期）**：`/var/lib/waydroid/images/vendor.img` 已**固化**自编 AIDL V2 vibrator HAL（`/vendor/bin/hw/android.hardware.vibrator-service.elden` + rc + vintf fragment）与静态 RRO `EldenVibrationOverlay`（`/vendor/overlay`，把 Settings 振动强度档位 1→3）；运行期只剩宿主 daemon `elden-hapticd`（OpenRC + `/etc/conf.d`）与一条 `sys/class/leds` 桥挂载。**回退镜像** `/var/lib/waydroid/images/vendor.img.bak-elden-haptics-20261013-115055`；复现 `scripts/waydroid-haptics-bake-patch.py` + `bake-vendor.sh`；细节 `reports/waydroid-haptics-20261013.md`、踩坑 `PITFALLS #232–#246`。 **★2026-10-29**：当前在机 `vendor.img` = **打过 camera gralloc 布局修复补丁**的版本（`/lib64/hw/camera.device@3.{4,5,6}-external-impl.so` + `provider@2.{4,5}-external.so` 五个文件替换，镜像 sha256 `82769ed6…`，其余字节与 10-19 镜像相同）；该次推送前的回退件 = `/var/lib/waydroid/images/vendor.img.bak-l1d-20261029-103701`。
+- **容器（Waydroid）侧在机资产（2026-10-13，TASKS C10 三期）**：`/var/lib/waydroid/images/vendor.img` 已**固化**自编 AIDL V2 vibrator HAL（`/vendor/bin/hw/android.hardware.vibrator-service.elden` + rc + vintf fragment）与静态 RRO `EldenVibrationOverlay`（`/vendor/overlay`，把 Settings 振动强度档位 1→3）；运行期只剩宿主 daemon `elden-hapticd`（systemd 单元 `elden-hapticd.service`，源 `packaging/elden-userland/out/units/systemd/`；Alpine 期为 OpenRC + `/etc/conf.d`）与一条 `sys/class/leds` 桥挂载。**回退镜像** `/var/lib/waydroid/images/vendor.img.bak-elden-haptics-20261013-115055`；复现 `scripts/waydroid-haptics-bake-patch.py` + `bake-vendor.sh`；细节 `reports/waydroid-haptics-20261013.md`、踩坑 `PITFALLS #232–#246`。 **★2026-10-29**：当前在机 `vendor.img` = **打过 camera gralloc 布局修复补丁**的版本（`/lib64/hw/camera.device@3.{4,5,6}-external-impl.so` + `provider@2.{4,5}-external.so` 五个文件替换，镜像 sha256 `82769ed6…`，其余字节与 10-19 镜像相同）；该次推送前的回退件 = `/var/lib/waydroid/images/vendor.img.bak-l1d-20261029-103701`。
 
 ### 1.2 固件清单与通路（"正常驱动原厂全部固件"的分解）
 
@@ -303,7 +303,7 @@ timeout 10 ssh -o BatchMode=yes -o ConnectTimeout=5 root@192.168.7.1 'uname -r' 
 | stock Android + root | **U1** | 固件对照提取、过环境、AVF 资产复采（可选路线） |
 | 原厂未动 + **BL locked** | （暂无） | 路 C（EDL 直写）不依赖解锁——管线 `scripts/build-locked-chain.sh` 保留作资产；**U2 已走完解锁，不再命中此行** |
 | 原厂未动（**已解锁**，首次手术） | **U2** | GPT dump + 手术 + **RAM 零写盘验收**（`fastboot boot` 可用）；b 槽链已就绪 `bootslot-b-u2/` |
-| 纯 RAM（不落盘） | 任一（刷 `bootslot-b/boot_b_vk40-ram.img`） | 采集/dump/验收，失败即回退 |
+| 纯 RAM（不落盘） | 任一（`fastboot boot bootslot-b/boot_b-minbase-labellinux-20261119.img`；旧 `boot_b_vk40-ram.img` 已不在盘） | 采集/dump/验收，失败即回退 |
 
 ### 2.4 目标形态（★v3：不再要求两槽对称）
 
@@ -343,7 +343,7 @@ timeout 10 ssh -o BatchMode=yes -o ConnectTimeout=5 root@192.168.7.1 'uname -r' 
 
 | 组成 | 实测/估算 | 依据 |
 |---|---|---|
-| Linux rootfs（Alpine + 桌面 + Mesa + 工具） | 装开后 **15–20 GB**（归档规格见 `../RESOURCES/README.md` §2.2） | `env-pass/backup-20261002/linux17-rootfs-…tar.gz` |
+| Linux rootfs（Debian 13 最小根 + 桌面 + Mesa + 工具） | 装开后 **15–20 GB**（为 Alpine 期实测口径；Debian 档待按 `df /` 现测回填） | 现测：`/` 已扩到 190 GiB（`resize2fs`，2026-11-19） |
 | Waydroid（system+vendor+data+ART 缓存） | **30–50 GB**（压缩镜像 1.25 GB 在手） | `~/下载/` GAPPS `system.zip` 1.17 G + `vendor.zip` 77 M |
 | x86 转译 chroot（Ubuntu base + Wine prefix） | **10–15 GB** | `pkgs-x86/`，PoC 已跑通 |
 | guest VM 镜像（Debian / Android / Windows ARM） | **每镜像 20–60 GB** | AOSP AVF `custom_vm.md` 建议 ≥10 GB；Windows 更大 |

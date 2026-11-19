@@ -44,7 +44,7 @@
    - **已重建（都过读回校验）**：LUN0 GPT 写回手术表（`linux17` 193 GiB + `userdata` 256.7 GiB，主备 `80ab46e5…`/`e5f79c0e…`；
      **`super`/`vbmeta_system`/`boot_a`/`dtbo_a` 未动 ⇒ 安卓装机测试面保留**）；LUN0 `73277435` 写 6 GiB 最小 Debian 根（设备端 sha `abf96ec4…`）；
      `boot_b` = 同 vk192 核/DTB/initrd、仅 cmdline 改 `elden_root=LABEL=linux` 的自签件（读回 `740d431b…`）。
-   - **现态**：`ssh root@192.168.7.1`（需先 `sudo scripts/ncm-host-up.sh`）/ systemd PID1 / 内核 `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0` / 165 包 / `/` 2.0 of 5.9 GiB。
+   - **现态**：`ssh root@192.168.7.1`（需先 `sudo scripts/ncm-host-up.sh`）/ systemd PID1 / 内核 `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0` / **当时 165 包** / **当时 `/` 2.0 of 5.9 GiB**（数字均为当晚快照；今日现态 = 1253 包 / `/` 190 GiB 且桌面已起，见上条）。
    - **显示仍缺，根因已定界**：`device_component/ae01000.display-controller` = `aggregate not bound`，`ae94000/ae96000.dsi` not bound，
      `(unknown)×2` not registered；`af54000.displayport-controller` 在 `devices_deferred`（`aux_bridge: failed to acquire drm_bridge`）
      ⇒ **DP 组件拖死 DPU master**。同批失败：`ath12k` MHI `-110`、无 `/dev/fastrpc-adsp`、音频卡 deferred。
@@ -332,8 +332,10 @@ scripts/iterate.sh kernel VERSION=vkNN           # 全量重编（零写盘快�
 scripts/iterate.sh kernel --flash VERSION=vkNN   # 写回 boot_b（设备写：按 .pi/AGENT-OPS.md 先备份后执行）
 scripts/device-lock.sh --status                  # 谁占着设备；并发子代理写操作前必查
 # ★ 绝不跑 olddefconfig（会删 CONFIG_ARCH_QCOM → 死内核，PITFALLS #162）
-./cycle.sh --soft                          # 软回 fastboot（免按电源键）
-fastboot boot bootslot-b/boot_b-f2fs-root.img  # 零写盘·持久变体（RAM 内核+磁盘根，有桌面/服务），功能测试用（PITFALLS #93；原 boot_b-clean.img ⚠️MIGRATION-LOST(2026-10-17)，见 RESOURCES §3.5）
+ssh elden-root 'sync; reboot bootloader'   # 唯一软路径进 fastboot（PITFALLS #650）
+#   ⛔ 作废（2026-11-19）：`./cycle.sh --soft`（sysrq-b 暖复位，到不了 ABL）与 `eldroid-bootctl` 均不可用（PITFALLS #690）
+fastboot boot bootslot-b/boot_b-minbase-labellinux-20261119.img  # 零写盘·持久变体（vk192 核/DTB/initrd + 磁盘根，cmdline LABEL=linux），功能测试用（PITFALLS #93）
+#   历史：boot_b-f2fs-root.img 的 cmdline = LABEL=linux18，而 linux18 已于 2026-10-31 删除 ⇒ 该件永久起不来，勿用
 fastboot boot <img>                        # 零写盘·纯RAM变体（无桌面/服务）仅内核/引导级验证；先 blank 活跃槽 dtbo 否则卡 logo（PITFALLS #1/#10）
 # 新单元开工三件套（先写台账，再备份，再手术）
 fastboot getvar serialno; adb shell getprop ro.boot.hwboardid   # → 写进 DEVICE/README.md §2.2

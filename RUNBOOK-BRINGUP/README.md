@@ -41,14 +41,19 @@ export BAK="backup/${SN}-${CAP}"; mkdir -p "$BAK"
 
 ## 0. 主机侧资产（设备无关，对任一单元都成立）
 
+> ⛔ **本表 2026-11-19 重核：三行「历史件」已不在盘，勿按路径使用**（`ls` 实测）：`out/boot-elden-vk40*.img`、
+> `bootslot-b/boot_b_vk40*.img`、`out/modules-7.2.0-*.tar.gz`、`env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` **均不存在**；
+> 且它们是 2026-10 的 **Alpine(musl/OpenRC) + label `linux17`** 世代，与现役根（Debian 13，cmdline `elden_root=LABEL=linux`）不同源。
+> **现行路径 = `LINUX-STATE-REPRO.md`（S3 写 minbase、S6 模块、S9 `resize2fs`）+ `ZERO-TO-DESKTOP.md`。**
+
 | 资产 | 路径 | 说明 |
 |---|---|---|
-| **RAM 版内核**（首次 bring-up / 手术用） | `out/boot-elden-vk40-ram.img` | 纯 RAM 根，不依赖磁盘分区 |
-| **持久版内核**（手术后用） | `out/boot-elden-vk40.img` | `elden_root=LABEL=linux17` |
-| **b 槽直启包** | `bootslot-b/{boot_b_vk40-ram.img, boot_b_vk40.img, dtbo_b.img, vbmeta_b_flags3.img}` | 自签 AVB，`avb.key` 仅主机 |
-| **全模块包** | `out/modules-7.2.0-debug-gba28ec16f01f-dirty.tar.gz` | strip 后 20M，1484 个 `.ko` |
-| **相机模块包** | `out/camera-modules-*.tar.gz` | 20 个（外科部署用） |
-| **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | 规格（大小/项数）见 `../RESOURCES/README.md` §2.2 |
+| **RAM 版内核**（首次 bring-up / 手术用） | `out/boot-elden-vk40-ram.img` | ⛔ 作废（Alpine 期件，已不在盘）；现役可取 `out/boot-elden-vk192.img` |
+| **持久版内核**（手术后用） | `out/boot-elden-vk40.img` | ⛔ 作废（同上，且 cmdline 为 `LABEL=linux17`）；现役 `bootslot-b/boot_b-minbase-labellinux-20261119.img` |
+| **b 槽直启包** | `bootslot-b/{boot_b_vk40-ram.img, boot_b_vk40.img, dtbo_b.img, vbmeta_b_flags3.img}` | ⛔ `boot_b_vk40*` 作废；`dtbo_b.img`/`vbmeta_b_flags3.img` 仍在盘可用 |
+| **全模块包** | `out/modules-7.2.0-debug-gba28ec16f01f-dirty.tar.gz` | ⛔ 作废（不在盘，且 7.2.0 vermagic ≠ 现役 UTS）；改用 `scripts/deploy-modules.sh` |
+| **相机模块包** | `out/camera-modules-*.tar.gz` | 20 个（外科部署用；2026-11-05 实测目录不在盘，可用时以 `ls` 为准） |
+| **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | ⛔ 作废（Alpine 期件，已不在盘；恢复链 = minbase + `resize2fs`，见 `LINUX-STATE-REPRO.md`） |
 | **Waydroid Mesa** | `~/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz` | 已校验 |
 | **EDL 救砖** | `~/edl/qdl/build/qdl` + `~/下载/tb322fc/xbl_s_devprg_ns.melf` | 仅备用 |
 
@@ -254,8 +259,13 @@ scp root@192.168.7.1:/tmp/gpt-new-backup.bin  "$BAK"/gpt_backup0.bin
 
 ---
 
-## 3. Phase 2 — b 槽直启「RAM 版 vk40」（首次上机，零写盘）
+## 3. Phase 2 — b 槽直启（首次上机，零写盘）
 
+> ⛔ **作废（2026-11-19）：本节件已不在盘、且属 Alpine/label `linux17` 世代。** 下方 `bootslot-b/boot_b_vk40-ram.img`、
+> `bootslot-b/boot_b_vk40.img` 与 `out/modules-7.2.0-*.tar.gz` 全部 `ls` 不到 ⇒ 照跑必失败。
+> **替代件（现役现盘）= `bootslot-b/boot_b-minbase-labellinux-20261119.img`（vk192 核/DTB/initrd，cmdline `elden_root=LABEL=linux`）**；
+> 手册改读 `LINUX-STATE-REPRO.md`（S1–S9 现链）与 `ZERO-TO-DESKTOP.md`。以下原文仅存档。
+>
 > ⚠️ **两种「RAM 启动」不得混（详见 `PITFALLS` #92/#93）**：本 Phase 的「RAM 版」= 纯 RAM 变体（无桌面/会话服务，`findmnt /`=`rootfs`），只做硬件/引导首验；**功能/服务级验收（桌面、PipeWire、蓝牙音频、Waydroid）必须用持久根**（Phase 4/5）。
 
 只覆盖 **b 槽**（原厂已备份）：
@@ -334,28 +344,25 @@ ssh root@192.168.7.1 "dd if=/tmp/gpt_new_main0.bin   of=$BLK bs=4096 seek=0     
 
 ---
 
-## 5. Phase 4 — 建 `linux17` 并恢复持久 rootfs
+## 5. Phase 4 — 建根分区（fs label 必须 `linux`）并部署系统
+
+> ⛔ **2026-11-19 改写口径**：`linux17` 只是 **GPT 分区名**；现役 boot cmdline = `elden_root=LABEL=linux`、fstab 也用 `LABEL=linux`
+> ⇒ **fs label 必须是 `linux`**，写成 `linux17` 装完起不来（同源事故见 `DEVICE/README.md` §1.1）。
+> ⛔ 本节旧版「解 `linux17-rootfs-20261002.tar.gz` + `out/modules-7.2.0-*.tar.gz`」的**两个归档都不在盘**（Alpine/musl 世代），
+> 已删；现行步骤 = `LINUX-STATE-REPRO.md` S3（EDL 写 minbase ext4）→ S6（模块 = `scripts/deploy-modules.sh`）→ S9（`resize2fs` 扩到目标容量）。
 
 在 RAM 版 mainline 里：
 
 ```bash
 ssh root@192.168.7.1
-# 1) 格式化新分区（用 PARTLABEL 更稳；名字=linux17）
-mkfs.ext4 -L linux17 /dev/disk/by-partlabel/linux17
+# 1) 格式化新分区（PARTLABEL 只是 GPT 名；**fs label 必须 = linux**）
+mkfs.ext4 -L linux /dev/disk/by-partlabel/linux17
 mkdir -p /mnt/new && mount /dev/disk/by-partlabel/linux17 /mnt/new
 ```
-主机推 rootfs 归档并解包：
 
-```bash
-scp env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz root@192.168.7.1:/tmp/
-ssh root@192.168.7.1 'tar xzf /tmp/linux17-rootfs-20261002.tar.gz -C /mnt/new && sync && df -h /mnt/new'
-```
-再把**本轮的模块包**叠加进去（与 vk40 同 vermagic）：
-
-```bash
-scp out/modules-7.2.0-debug-gba28ec16f01f-dirty.tar.gz root@192.168.7.1:/tmp/
-ssh root@192.168.7.1 'tar xzf /tmp/modules-7.2.0-debug-*.tar.gz -C /mnt/new && depmod -b /mnt/new 7.2.0-debug-gba28ec16f01f-dirty'
-```
+> ⛔ **历史（Alpine 期，已不可执行）**：旧版此处先 `scp env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz`
+> 再 `tar xzf … -C /mnt/new`，以及 `scp out/modules-7.2.0-debug-gba28ec16f01f-dirty.tar.gz` + `depmod -b /mnt/new 7.2.0-…`。
+> 两个件均不在盘，且 7.2.0 vermagic ≠ 现役 UTS ⇒ **改用 `bash scripts/deploy-modules.sh`（自动取当前 KV）**。
 
 ---
 
@@ -364,10 +371,11 @@ ssh root@192.168.7.1 'tar xzf /tmp/modules-7.2.0-debug-*.tar.gz -C /mnt/new && d
 ```bash
 cd ~/y700-elden
 fastboot --set-active=a
-fastboot flash boot_b bootslot-b/boot_b_vk40.img     # 已签名的持久版
+fastboot flash boot_b bootslot-b/boot_b-minbase-labellinux-20261119.img   # 现役持久件（vk192 核，cmdline LABEL=linux）
 fastboot --set-active=b
 fastboot reboot
 ```
+> ⛔ `bootslot-b/boot_b_vk40.img`（旧版此处引用的名字）已不在盘，勿再引用。
 **期望**：自己进 Linux，`findmnt /` = `/dev/sda17`（或新分区号），Phosh 桌面自启。
 之后改内核不再需要 fastboot：`scripts/flash-b.sh out/boot-elden-vkNN.img --reboot`。
 
@@ -421,13 +429,16 @@ bash scripts/iterate.sh kernel --boot       # 全量重编一次；此后驱动�
 - 前置已就绪：内核 `CONFIG_KEXEC_FILE=y`（`KEXEC_SIG` 关）、设备 `kexec-tools 2.0.32`。
 - 关键约束：**只能喂未压缩 `Image`**（`Image.gz` 不行）；`scripts/kexec-boot.sh` 已处理。
 - 先验安全：`scripts/kexec-boot.sh --load-only`（只加载不切换）；失败时当前内核照常运行。
-- 首测务必用**与运行内核同源（同 config、同 `LOCALVERSION`）且已知可启**的内核，并保留 `to-fastboot.sh` + `fastboot boot` 作为带外回退。
+- 首测务必用**与运行内核同源（同 config、同 `LOCALVERSION`）且已知可启**的内核，并保留 `fastboot boot` 作为带外回退。
 - 取证与根因分析：`archive/topics/KEXEC-2026-10-05.md`。
 
-**Linux → fastboot**（必要时）：`scripts/to-fastboot.sh [--flash out/x.img] [--boot out/x.img]`
-- 走 PSCI vendor reset（`eldroid-bootctl reboot bootloader`，vk41+）——这是唯一可靠路径；
-  `cycle.sh --soft` 不再落 fastboot，`cycle.sh --fastboot`（misc BCB）ABL 不认（PITFALLS #65/#66）。
-- `--flash` 先在 Linux 内 `dd` 写 boot_b 再重启（无需主机 fastboot 参与写盘）。
+**Linux → fastboot**（必要时）：
+- **主路径 = `ssh elden-root 'sync; reboot bootloader'`**（systemd 正常关机 + PSCI，`PITFALLS` #650）——目前唯一可用软路径。
+- ⛔ **作废（2026-11-19，`PITFALLS` #690）**：旧版写「`scripts/to-fastboot.sh` 走 PSCI vendor reset（`eldroid-bootctl reboot bootloader`，vk41+）= 唯一可靠路径」。
+  现役 vk192 主线核**无 vendor RESTART2 钩子**，且 `eldroid-bootctl`（python3 件）与 `python3` 在 Debian 根上**都不存在** ⇒ 该命令静默失败、白等 90 s。
+  `cycle.sh --soft`（sysrq-b 暖复位）不落 fastboot，`cycle.sh --fastboot`（misc BCB）ABL 不认（PITFALLS #65/#66）。
+- **软路径失败 ⇒ 手工**：长按电源 10 s 断电 → 音量上 + 电源进 fastboot。
+- `scripts/to-fastboot.sh --flash <img>` 仍可用（先在 Linux 内 `dd` 写 boot_b 再重启，无需主机 fastboot 参与写盘）；`--boot` 不推荐。
 
 **每条 boot 镜像都有 manifest**：`out/boot-elden-<ver>.manifest`（内核/DTB/config/ramdisk 哈希 + cmdline +
 `mkbootimg` argv + 两个 git HEAD），解决「vk49 打包命令丢失」。构建即生成，应随提交进 git。

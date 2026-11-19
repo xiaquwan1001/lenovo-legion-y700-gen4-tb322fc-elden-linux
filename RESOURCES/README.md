@@ -26,7 +26,7 @@
 | 资源 | 关键点 | 我们用它的哪一块 |
 |---|---|---|
 | linux-piano（AudioReach 上游 PR/系列） | 43+ 个 AGL/APM 修复 commit | 音频 `patches/0011` 的上游对照 |
-| freedreno / Mesa 上游 | A830 (`gen80000`) 支持、turnip | **宿主**：Alpine apk 预制（`mesa-dri-gallium` + `mesa-vulkan-freedreno`），**零编译**、**不打 chip-id 补丁**（原版才对）；**Android/bionic**：自编 Mesa 26.1.8 解 Waydroid chip-id（清单见 §2.2） |
+| freedreno / Mesa 上游 | A830 (`gen80000`) 支持、turnip | **宿主**：Debian 13 `apt` 预制（`libgl1-mesa-dri` + `mesa-vulkan-drivers`；Alpine 期为 `mesa-dri-gallium` + `mesa-vulkan-freedreno`），**零编译**、**不打 chip-id 补丁**（原版才对）；**Android/bionic**：自编 Mesa 26.1.8 解 Waydroid chip-id（清单见 §2.2） |
 | `ath12k`（WCN7850/Peach 通路） | MHI 超时需本地重试补丁 | WiFi 稳定性补丁 |
 | `qcom_battmgr` / PMIC-GLINK | 充电与**旁路供电**两个旋钮 | `scripts/charge-ctl.sh` |
 | mainline `camss` + `s5kjns`/`gc08a8`/`gt9764`/`wl2868c` | SM8750 camss 已在树 | 相机 20 个 `.ko` |
@@ -89,7 +89,7 @@
 
 | 工具 | 用途 | 结论 |
 |---|---|---|
-| **`qbootctl`**（Alpine community） | Qualcomm A/B slot 的 boot_control HAL（读状态 / mark-successful） | ✅ **已采纳**（取代 `slot-attr.py` 常用操作，`PITFALLS` #126） |
+| **`qbootctl`**（原 Alpine community，现由 `rootfs/debian/pkgmap.tsv` 进包） | Qualcomm A/B slot 的 boot_control HAL（设备侧只读状态 / 读 retry） | ◐ **仅作设备侧状态读取**；**改属性/切槽以主机侧 `python3 scripts/slot-attr.py`（`--image`）+ `fastboot --set-active` 为准**（`PITFALLS` #677）——设备无 `python3`/`eldroid-bootctl`，旧「取代 `slot-attr.py`」口径（#126）已改判 |
 | `casualsnek/waydroid_script` | Waydroid 后装注入：GApps / Magisk / MicroG | ◐ G2 候选（A13 arm64 GApps 走 GitHub 源） |
 | `mkinitfs` · `pmbootstrap` · `alpine-make-rootfs` · `msm-firmware-loader` · `pil-squasher` | initramfs / 构建 / 固件 | ❌ 不采用（理由见 `PITFALLS` §15.6） |
 | `FEX-Emu` | x86 转译（G3） | ◐ 仅作 Box64 对照 |
@@ -104,7 +104,7 @@
 | **`0154` dispcc probe 复位活显示 + `0155` DSI PHY `DIGTOP_PWRDN_B` 随 PLL bias 置/清**（均只对 `lenovo,elden` 生效，+32 行） | ❌ **本仓缺**（可干净 apply）⇒ **Q28「冷起 NOCARD」候选 A/B**：`0155` 的机理解释的正是本仓记录过的 `DSI PLL(0) lock failed status=0x00000000` |
 | `0146` SMMU boot handoff 的**另一半**（`arm_smmu_boot_fb_range()` 把 `/chosen/simple-framebuffer` 范围从 DMA allocator 预留） | 🟡 本仓只有 `arm_smmu_map_boot_framebuffer()`；出现「splash 区被覆盖/花屏」时对照 |
 | `0148` clk orphan reparent 保留迁移引用（`orphan_reparent_failed` 字段） | 🟡 同问题另一种写法，按需比 |
-| **Steam ARM64 客户端 + Steam Runtime 的 pin**（`steam_client_steamdeck_stable_linuxarm64`、runtime `3c.0.20260729.253765`）+ `packages/{fex,gamescope,steam-bootstrap}` | ⚪ **G3 新选项**：官方 arm64 Steam + FEX，对比本仓 Box64+Wine 路线（需 Alpine 侧自建 FEX/gamescope） |
+| **Steam ARM64 客户端 + Steam Runtime 的 pin**（`steam_client_steamdeck_stable_linuxarm64`、runtime `3c.0.20260729.253765`）+ `packages/{fex,gamescope,steam-bootstrap}` | ⚪ **G3 新选项**：官方 arm64 Steam + FEX，对比本仓 Box64+Wine 路线（需在现根 Debian 13 自建 FEX/gamescope，或改用发行版包；Alpine 期口径已不适用） |
 | 设备配置事实：触屏名 `NVTCapacitiveTouchScreen`、`ARMADA_GAMESCOPE_USE_ROTATION_SHADER=1`、无内置手柄 | ✅ 可直接引用的事实 |
 | kShimC 启动菜单（5.4 MB 源码，**GPL-3.0**）+ `kshim-tools`（MultiBootKernelPatcher/UnpackTool） | ⛔ 不 vendor（许可与启动架构都要立项另议）；仅作外部依赖 |
 | 显示/电池/SM8750 基础设施（`0142/0143/0144/0145/0149/0150/0033/0038/0066/0521`…） | ✅ 本仓已有或更全（逐条对照见该 README §4） |
@@ -156,7 +156,7 @@
 | 全模块包（1484 个 `.ko`） | `out/modules-7.2.0-debug-gba28ec16f01f-dirty.tar.gz`（20 M strip） | vermagic 必须与内核一致；⚠️MIGRATION-LOST（2026-11-05 实测不在盘，可由 build/ 树重编） |
 | 相机模块包（20 个） | `out/camera-modules/` + tar | ✅ 冷启自加载已在机验证；⚠️MIGRATION-LOST（目录 2026-11-05 实测不在盘） |
 | **运行内核对齐模块包**（25 个，g4c68eb5ed4e3） | `out/camera-modules-7.2.0-debug-g4c68eb5ed4e3-dirty.tar.gz` | ✅ sha256 `4146dfd0…`；持久根相机/音频已复现（`archive/topics/KMOD-ALIGN-2026-10-05.md`）；⚠️MIGRATION-LOST（2026-11-05 实测不在盘） |
-| **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | 3.44 GB / 30852 项，tar/gzip 完好 |
+| **持久 rootfs 归档** | `env-pass/backup-20261002/linux17-rootfs-20261002.tar.gz` | ⛔ **已不在盘（2026-11-19 核，`env-pass/` 只剩 `scripts/ tools/`）**；Alpine 期件（musl/OpenRC、label `linux17`），恢复链已改 minbase ext4 + `resize2fs`（`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` S3/S9） |
 | **Waydroid Mesa 26.1.8（bionic，自编）** | `external/mesa-out/mesa-vendor-26.1.8_waydroid_arm64_only.tar.gz`（`~/mesa-out` 是指向它的软链；6.9 M，**11 个 .so**：`libgallium_dri` / `libgbm_mesa` / `dri_gbm` / `libgbm_mesa_wrapper` / `egl/{libEGL,libGLESv1_CM,libGLESv2,libGLES}_mesa` / `hw/{vulkan.freedreno,gralloc.minigbm_gbm_mesa,gralloc.gbm}` + `manifest.txt`） | sha256 全 OK，含 DRM chip-id 魔数 `0xffff44050000`；**重建** = `scripts/mesa-build.sh`（freedreno-only 定向 make，5.5 min；ccache 热 ~10 min）；部署 = `extract-mesa-libs.sh`+`waydroid-mesa-swap.sh`（bind-mount，可回退） |
 | Waydroid 镜像 | `~/下载/` GAPPS `system.zip`(1.17 G) + MAINLINE `vendor.zip`(77 M) | ✅ |
 | x86 chroot 资产 | `pkgs-x86/`（ubuntu-base-arm64、box64 0.4.5、Strings64） | ✅ PoC 已通 |
@@ -194,7 +194,7 @@
 | `stock-src/` | 联想 GPL 源码 | 2.0 G |
 | `~/.cache/ccache-elden`（**仓库外**，机器级构建缓存） | 内核构建 ccache；不入库、不属项目资产，但是本机最大项目相关占盘项之一（清理前须确认无构建在跑） | 13 G |
 
-> **GPU 栈编译账（2026-10-06）**：宿主用户态 **0 编译**（Alpine apk），内核属 G1 主线；
+> **GPU 栈编译账（2026-10-06；渠道 2026-11-19 更新）**：宿主用户态 **0 编译**（现根 Debian 13 `apt` 预制，原 Alpine 期为 apk），内核属 G1 主线；
 > Android 用户态 = **1 组 11 库（已交付）**；剩余仅偶发 Mesa 重编（~10 min）与可选 `make vendorimage`（1–3h）。
 > 逐层表见 `../TASKS/README.md` §6 §6-C。
 

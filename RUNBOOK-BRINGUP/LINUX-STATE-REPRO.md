@@ -200,14 +200,19 @@ FAT32 + 现役件（台账 = `DEVICE/README.md` §1.1）：`/EFI/BOOT/BOOTAA64.E
 用 `mcopy`/`mtools`（主机侧组装后整分区写入）；保留 `.bak` 件（`.arming-v6.bak` 等）便于回滚。
 判据：`mmd -i`/`mdir -i` 列表与台账逐项 sha 一致；ESP 路径的 cmdline = `androidboot.serialno=51318dc0` 且**无** ABL token。
 
-### S6 rootfs（`linux17`）
+### S6 rootfs（分区名 `linux17`，fs label = `linux`）
+
+> **2026-11-19 纠错**：旧版这里写 `tar xzf env-pass/backup-*/linux17-rootfs-*.tar.gz -C /mnt/new` ——
+> 该归档**不在盘**（`env-pass/` 只剩 `scripts/ tools/`），且属 Alpine(musl/OpenRC) + label `linux17` 世代。
+> 与本文 `:306`「rootfs 无全量归档」自相矛盾，已按后者收口 ⇒ **无归档可解，走 ZERO-TO-DESKTOP S3 + S10/S11 收敛**。
 
 ```sh
-# 设备在 Linux 侧或 RAM 启动时：解 tar → 叠加模块 → depmod → 放 /boot 件
-tar xzf env-pass/backup-*/linux17-rootfs-*.tar.gz -C /mnt/new
-tar xzf out/modules-<UTS>.tar.gz -C /mnt/new && depmod -b /mnt/new <UTS>
+# 建根 = EDL 写 minbase ext4（ZERO-TO-DESKTOP S3）；无 tar 解包步骤
+# 模块：整套同 UTS 部署（脚本自动取当前 KV）
+bash scripts/deploy-modules.sh                      # 代替旧 `tar xzf out/modules-<UTS>.tar.gz` + depmod
+# /boot 件 + 自编件 divert/hold
 cp out/boot-elden-vk192.img /mnt/new/boot/Image.tmp   # 实际按 manifest 的 kernel/dtb/initrd 组合
-scp /mnt/new/... ; scripts/phoc-install.sh            # 自编件必须 divert + apt-mark hold（#654）
+scripts/phoc-install.sh                               # 自编件必须 divert + apt-mark hold（#654）
 ```
 **模块必须整套同 UTS 部署**（RAM 起新核前尤其，`PITFALLS` 内核条）。
 
@@ -234,7 +239,7 @@ python3 scripts/slot-attr.py --image back4.bin mark-successful b     # 改两份
 ssh root@... 'sync; reboot'          # 或长按电源 15–20 s 冷起
 ```
 验收 20 项（照 `RUNBOOK-BRINGUP/README.md` §7 Phase 6 表逐条；最短集）：
-`uname -r` = 台账 UTS → `/` = `linux17` → `lsmod | wc -l` ≈ 台账 → DSI `bound` → WiFi `wlp1s0` UP →
+`uname -r` = 台账 UTS → `/` = `LABEL=linux`（`/dev/sda17` ext4；`linux17` 仅是 GPT 条目名）→ `lsmod | wc -l` ≈ 台账 → DSI `bound` → WiFi `wlp1s0` UP →
 `/dev/fastrpc-adsp` → SensorProxy ×3 → Waydroid session → s2idle fail=0。
 
 ### S9 反向（回 Android，本次实测 8 min）
@@ -327,3 +332,17 @@ bash scripts/linux-state-audit.sh --snapshot versions/state-$(date +%Y%m%d-%H%M)
 **剩余 C 类**（`n5b-vk64-death-rate` / `kexec-bs-cycle` / `arm-window-hunt` / `uefi-*` 六件的 `reboot2` 调用、
 `openrc-enable.sh` / `fix-logind-poweroff.sh` / `persistent-overlay/restore.sh` / `deploy-zh-ime.sh`（squeekboard 栈））
 按「一次一个 cohort」推进，未改前**不要照跑**。
+
+## 9. 2026-11-19 晚的上机教训（#693，镜像侧待执行）
+
+重装根后多次复现：**开机后 `droid-juicer.service` + `plymouth-quit-wait.service` 是死循环**
+（不是慢），`graphical.target` 永远 waiting；kill -9 无效（systemd 重拉）；一次 mask+kill 组合
+之后**整机掉电**（无 Oops、无 pstore、journal 截断 ⇒ `Hard watchdog permanently disabled`）。
+判据与安全约束全文 = `PITFALLS sessions/325-*.md`；`deploy-desktop-shell.sh` §8b 已机械化"未 mask 即 MISS"。
+
+**下一步（镜像侧根治，待用户点头执行）**：在 `out/min-restore-20261119/rootfs-minbase-gadget-20261119.ext4.img`
+上 debugfs 删 `droid-juicer` / `plymouth-*` / `qcom-modem-setup` / `bootmac-bluetooth` 的 enable 链接
+→ 重算 sha256 → 按 §3 S3 重写根 → 验证「开机即桌面」。
+
+**资源重审** = `reports/resource-revue-20261119.md`（~16 条在用 / 12 条过时 / 4 类缺口，含
+`apt-list.txt` 的 `libssc2`/`libssc-bin` 在 Debian 13 不存在 ⇒ 传感器必须源码编译路线）。
