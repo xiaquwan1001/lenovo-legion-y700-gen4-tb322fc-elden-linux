@@ -1,0 +1,112 @@
+# versions/kernel-src-archive.tsv — 内核源树「已档/已删」逐行登记表（reader: scripts/vk-identity.py）
+#
+# 为什么需要这张表（2026-11-19）：
+#   2026-11-19 09:36 清理磁盘第一档时删除了 `build/`（37 G，含全部内核构建树/worktree）与
+#   `geekidos-linux/`（2.1 G，上游 GEEKiDoS/linux 浅克隆）。删前只保留了 m3v2-7.3rc7 工作树的
+#   脏改动（`reports/build-m3v2-7.3rc7-dirty-20261119.patch`，提交 0c98d793）。
+#   后果：`versions/vk-kernel-identity.tsv` 里 76 行的 `src_ref`/`src_tag` 是**从源树 git refs
+#   算出来的**，源树一没，`git -C geekidos-linux` 全部失败 ⇒ 每行都变 `src_missing`（硬错）。
+#   但这批行的事实（build / image / 镜像内 UTS 里的 src_sha）**全部来自镜像本身**，仍然成立；
+#   缺的只是「该 sha 在源树里是否可达、该提交上有哪些 vk tag」这两个**需要源树**的判断。
+#   ⇒ 真实状态是「暂不可核」，不是「核对失败」，也不是「核过没问题」。本表把这句话写死成数据。
+#
+# 判定契约（防静默白名单，改这里之前先读 scripts/vk-identity.py 的 src_archive()）：
+#   · 源树在盘（geekidos-linux/ 或 linux/ 软链是 git 仓）⇒ 本表**不生效**，照常全列核对；
+#     此时本表应保持为空（非空 = 陈旧登记，恢复后必须复核并清掉）。
+#   · 源树不在盘 ⇒ 只有本表登记、且 build / image / src_sha **三列与现扫描逐字一致**的行，
+#     `src_*` 这一项降级为 WARN（§5d）+ 新鲜度门降级为 C=2（只比不依赖源树的列）。
+#   · 表外的新行、或 sha 对不上的行 ⇒ 仍判 `src_missing` FAIL。**新镜像不能借这张表蒙过。**
+#   · 其它硬错（payload_mismatch / tree_drift / dirty_drift …）不受影响，照旧判定（它们只读 manifest）。
+#
+# 证据（都可现查，无一步依赖记忆）：
+#   git show --stat 0c98d793                     # 清理前导出的唯一产物（patch 250 行）
+#   git log --oneline -5 -- versions/vk-kernel-identity.tsv   # 表最后一次重生成在清理之前
+#   ls -d build geekidos-linux linux              # 现状：build 只剩 phoc/phosh 源码；另两者不存在
+#   git bundle list-heads backup/git-slim-20261113/geekidos-all-20261113.bundle | wc -l   # 140 refs
+#
+# 恢复命令（2026-11-19 实测口径：bundle 在盘，离线可重建，不依赖网络）：
+#   git clone --filter=blob:none backup/git-slim-20261113/geekidos-all-20261113.bundle geekidos-linux
+#   git -C geekidos-linux remote add torvalds https://github.com/GEEKiDoS/linux   # 取 pristine 用
+#   ln -sfn geekidos-linux linux                                                  # 目录约定软链
+#   然后：python3 scripts/vk-identity.py --gate   # 必须 0 FAIL；再跑 --check 确认全列一致
+#        并清空本表（源树在盘时它不该有行）、把 versions/layout.tsv 的两行登记加回去。
+#   （bundle 只含 refs/heads/elden-archive/* 等本地线 140 个 ref；上游 pristine 历史仍需 torvalds remote。）
+#
+# 影响面与处理记录：reports/disk-cleanup-20261119-validation-impact.md
+#
+build	image	src_sha
+dtbo1	boot-elden-dtbo1.img	24223e44ad80-dirty
+dtbo2	boot-elden-dtbo2.img	24223e44ad80-dirty
+dtbo3	boot-elden-dtbo3.img	24223e44ad80-dirty
+f2fs-root	boot-elden-f2fs-root.img	24223e44ad80-dirty
+gh612a	boot-elden-gh612a.img	24223e44ad80-dirty
+gh612b	boot-elden-gh612b.img	24223e44ad80-dirty
+gunyah1	boot-elden-gunyah1.img	24223e44ad80-dirty
+m3v5-daily	boot-elden-m3v5-daily.img	24223e44ad80-dirty
+m3v5-f2	boot-elden-m3v5-f2.img	24223e44ad80-dirty
+m3v5-onboard-b	boot-elden-m3v5-onboard-b.img	24223e44ad80-dirty
+m3v5-onboard	boot-elden-m3v5-onboard.img	24223e44ad80-dirty
+m8ab-base	boot-elden-m8ab-base.img	24223e44ad80-dirty
+m8ab-v2	boot-elden-m8ab-v2.img	24223e44ad80-dirty
+vk127	boot-elden-vk127.img	24223e44ad80-dirty
+vk132	boot-elden-vk132.img	24223e44ad80-dirty
+vk133	boot-elden-vk133.img	24223e44ad80-dirty
+vk134	boot-elden-vk134.img	24223e44ad80-dirty
+vk135	boot-elden-vk135.img	24223e44ad80-dirty
+vk136	boot-elden-vk136.img	24223e44ad80-dirty
+vk137-q28base	boot-elden-vk137-q28base.img	d02658e63cf6
+vk138-q28disp	boot-elden-vk138-q28disp.img	d02658e63cf6
+vk139-q28only0155	boot-elden-vk139-q28only0155.img	d02658e63cf6
+vk140-q28disp73	boot-elden-vk140-q28disp73.img	24223e44ad80-dirty
+vk141-q28disp73	boot-elden-vk141-q28disp73.img	24223e44ad80-dirty
+vk142-q28disp73dt	boot-elden-vk142-q28disp73dt.img	24223e44ad80-dirty
+vk143-q28-73-0155only	boot-elden-vk143-q28-73-0155only.img	24223e44ad80-dirty
+vk144-q28only0154	boot-elden-vk144-q28only0154.img	d02658e63cf6
+vk145-q28daily	boot-elden-vk145-q28daily.img	24223e44ad80-dirty
+vk146-BADSUSPEND	boot-elden-vk146-BADSUSPEND.img	24223e44ad80-dirty
+vk147	boot-elden-vk147.img	24223e44ad80-dirty
+vk148	boot-elden-vk148.img	d02658e63cf6
+vk149	boot-elden-vk149.img	d02658e63cf6
+vk150-q28v2	boot-elden-vk150-q28v2.img	24223e44ad80-dirty
+vk151	boot-elden-vk151.img	24223e44ad80-dirty
+vk152	boot-elden-vk152.img	24223e44ad80-dirty
+vk153	boot-elden-vk153.img	24223e44ad80-dirty
+vk154	boot-elden-vk154.img	24223e44ad80-dirty
+vk156	boot-elden-vk156.img	24223e44ad80-dirty
+vk157	boot-elden-vk157.img	24223e44ad80-dirty
+vk158	boot-elden-vk158.img	24223e44ad80-dirty
+vk159	boot-elden-vk159.img	24223e44ad80-dirty
+vk161	boot-elden-vk161.img	24223e44ad80-dirty
+vk162-fstype	boot-elden-vk162-fstype.img	24223e44ad80-dirty
+vk162-rescue	boot-elden-vk162-rescue.img	24223e44ad80-dirty
+vk163	boot-elden-vk163.img	24223e44ad80-dirty
+vk164-debianroot	boot-elden-vk164-debianroot.img	24223e44ad80-dirty
+vk165-earlygadget	boot-elden-vk165-earlygadget.img	24223e44ad80-dirty
+vk166-dbg	boot-elden-vk166-dbg.img	24223e44ad80-dirty
+vk167-trace	boot-elden-vk167-trace.img	24223e44ad80-dirty
+vk168-ramprobe	boot-elden-vk168-ramprobe.img	24223e44ad80-dirty
+vk169-trace2	boot-elden-vk169-trace2.img	24223e44ad80-dirty
+vk170-trace3	boot-elden-vk170-trace3.img	24223e44ad80-dirty
+vk171-swrerr	boot-elden-vk171-swrerr.img	24223e44ad80-dirty
+vk172	boot-elden-vk172.img	24223e44ad80-dirty
+vk173	boot-elden-vk173.img	24223e44ad80-dirty
+vk174	boot-elden-vk174.img	24223e44ad80-dirty
+vk175	boot-elden-vk175.img	24223e44ad80-dirty
+vk176	boot-elden-vk176.img	24223e44ad80-dirty
+vk177	boot-elden-vk177.img	24223e44ad80-dirty
+vk178-b5verify	boot-elden-vk178-b5verify.img	24223e44ad80-dirty
+vk179-b5step4a	boot-elden-vk179-b5step4a.img	24223e44ad80-dirty
+vk180-b5step4b	boot-elden-vk180-b5step4b.img	24223e44ad80-dirty
+vk181-daily	boot-elden-vk181-daily.img	24223e44ad80-dirty
+vk182-camssv3	boot-elden-vk182-camssv3.img	24223e44ad80-dirty
+vk183-fastrpc	boot-elden-vk183-fastrpc.img	24223e44ad80-dirty
+vk184	boot-elden-vk184.img	4da9a8b69fc8
+vk185-adsp	boot-elden-vk185-adsp.img	ec74c4795a43
+vk187	boot-elden-vk187.img	4da9a8b69fc8
+vk187b	boot-elden-vk187b.img	4da9a8b69fc8
+vk188	boot-elden-vk188.img	4da9a8b69fc8-dirty
+vk188b	boot-elden-vk188b.img	4da9a8b69fc8-dirty
+vk189	boot-elden-vk189.img	4da9a8b69fc8-dirty
+vk190	boot-elden-vk190.img	4da9a8b69fc8-dirty
+vk192	boot-elden-vk192.img	4bdf1711b5c0
+vk64	boot-elden-vk64.img	d02658e63cf6

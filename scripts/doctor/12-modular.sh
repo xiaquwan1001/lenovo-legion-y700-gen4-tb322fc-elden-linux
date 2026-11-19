@@ -17,7 +17,9 @@ section '12. 驱动模块化门禁（锚点不回退 / olddefconfig 幂等 / tri
 _mcfg_tree=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' patches/current-tree 2>/dev/null | grep -v '^$' | head -1)
 [ -z "${_mcfg_tree:-}" ] && _mcfg_tree=$(for _c in build/*/.config; do [ -f "$_c" ] && { echo "${_c%/.config}"; break; }; done)
 if [ -z "${_mcfg_tree:-}" ] || [ ! -f "$_mcfg_tree/.config" ]; then
-  warnf "无构建树可用（patches/current-tree = ${_mcfg_tree:-空}）→ 跳过模块化门禁（重建树后自动恢复；不影响入库）"
+  # 2026-11-19 起点名「不可核」+ 恢复/影响入口（build/ 被清理后这句话每轮都会出现，
+  # 不能让它退化成「大家已习惯的噪声」）。
+  warnf "无构建树可用（patches/current-tree = ${_mcfg_tree:-空}）→ 模块化门禁本轮跳过（不可核，不是核过没问题；重建入口见 versions/layout.tsv 注释，影响记录 reports/disk-cleanup-20261119-validation-impact.md）"
 elif [ ! -f "$MODCFG" ]; then
   bad "scripts/check-modular-config.sh 缺失"
 else

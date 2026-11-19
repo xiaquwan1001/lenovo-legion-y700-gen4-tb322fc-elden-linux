@@ -59,9 +59,13 @@ fi
 # MIGRATION-LOST 例外（2026-10-17）：换机后 out/*.img 全部未随迁，身份表重生成只能产出
 # (slot-dump)/(no-payload) 两行 ⇒ 新鲜度比对失去物理含义（比的是「镜像在不在」而非「表过期」）。
 # 此时降级为 warn：表保留为历史账（它记录的镜像 sha 已不可再生成，删掉即永久失账）。
+# SRC-ARCHIVED 例外（2026-11-19）：源树 geekidos-linux/ 被清理 ⇒ src_ref/src_tag 这类树派生
+# 列不可核，C=2 = **降级一致**（只比了可离线核对的列），不得报成 0（全列一致）。
 _img_n=$(ls out/boot-elden-*.img 2>/dev/null | wc -l)
 if [ "$_cst" = "0" ]; then
   ok "versions/vk-kernel-identity.tsv 与当前镜像/registry/内核 ref 一致"
+elif [ "$_cst" = "2" ]; then
+  warnf "内核身份表降级一致（C=2）：源树 geekidos-linux/ 不在盘，只比了可离线核对的列（build/image/UTS/kbin/src_sha/tree_head）；src_ref、src_tag、号标签等树派生列**不可核** → 逐行登记 versions/kernel-src-archive.tsv（含删除日期/证据/恢复命令），恢复树后重跑 vk-identity.py 并清空该表"
 elif [ "$_img_n" -eq 0 ]; then
   warnf "内核身份表无法新鲜度比对：out/*.img 为 0（MIGRATION-LOST，见 reports/migration-rebuild-audit-20261017.md P4）——表按历史账保留、不重生成"
 else

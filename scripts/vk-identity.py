@@ -13,7 +13,8 @@ registry 号、manifest 记录、内核仓 ref 状态四列对齐，输出 TSV�
         scripts/vk-identity.py --check    # 与已提交 TSV 比对，不一致退出 1（新鲜度门）
         scripts/vk-identity.py --gate     # check-doctor §5d 用：输出 OK/WARN/FAIL<TAB>消息
         scripts/vk-identity.py --all      # check-doctor 用：单次全量扫描同时产出
-                                          # §5 版本账(L\t…)、§5d 门禁(G\t…)、新鲜度(C\t0|1)
+                                          # §5 版本账(L\t…)、§5d 门禁(G\t…)、新鲜度(C\t0|1|2)
+        scripts/vk-identity.py --src-archive-write   # 源树不在盘时重生成「已档」登记表
 
 命名/溯源规则（2026-10-08 生效，只约束生效时刻之后新打的镜像）：
   硬错（FAIL，除非登记不可）：tree_drift dirty_drift src_missing src_unreachable
@@ -24,6 +25,15 @@ registry 号、manifest 记录、内核仓 ref 状态四列对齐，输出 TSV�
                                   slot_dump（A/B 槽转储，见下）
   生效时刻之前的存量一律汇总为 WARN（欠账清单就在表里，逐镜像登记在
   versions/vk-ledger-known-issues.tsv）。可用 VK_RULE_EPOCH 覆盖生效时刻。
+
+源树不在盘（2026-11-19 起，见下）时的第三种状态 —— **暂不可核 ≠ 核过没问题**：
+  `src_*` 类硬错的判定前提是「本机有源树 geekidos-linux/」。树被删/归档后，每一行都会
+  变成 src_missing —— 但那是**不可核**，不是**核对失败**。直接白名单跳过等于把
+  「读不出」当成「没问题」。故：只有 `versions/kernel-src-archive.tsv` 里**逐行登记、
+  且 build / image / src_sha 三列与现扫描逐字一致**的行才降级为 WARN；表外的新行、
+  或 sha 对不上的行一律仍按 src_missing 判 FAIL（防静默白名单）。新鲜度门同步降级：
+  只比对**不依赖源树的列**（C=2），src_ref/src_tag/号标签这类树派生列不参与比对。
+  恢复源树后，登记表不会被自动忽略 —— 树在盘时它必须为空（否则 imply 陈旧登记）。
 
 两类补充口径（2026-10-08 二次对账，见 vk-registry.tsv 注记）：
   * **uts_lvs**：`uname -r` 里写着 `-vkNN-` 而该内核源提交的 vk tag 集合里没有 NN，就是
@@ -55,6 +65,8 @@ ARCHIVE_GLOB = os.path.join(ROOT, 'backup', 'out-history-*')
 REG = os.path.join(ROOT, 'versions', 'vk-registry.tsv')
 KERNEL = os.path.join(ROOT, 'geekidos-linux')
 TSV = os.path.join(ROOT, 'versions', 'vk-kernel-identity.tsv')
+# 源树「已档/已删」登记表（companion of TSV）：见 src_archive() 与文件头注释。
+SRC_ARCHIVE = os.path.join(ROOT, 'versions', 'kernel-src-archive.tsv')
 INFLIGHT = os.path.join(ROOT, 'versions', 'vk-identity-inflight.txt')
 
 COLS = ['build', 'image', 'reg', 'img_uts', 'kbin_sha', 'src_sha', 'src_ref',
@@ -405,12 +417,88 @@ def is_hard(flag):
     return any(flag.startswith(h) for h in HARD) and not flag.startswith(NOTE)
 
 
+def src_tree_present():
+    """本机是否有可用于核对的内核源树（geekidos-linux/ 或 linux/ 软链指向的树）。
+
+    只看「目录在不在 + 是不是个 git 仓」，不看 refs：树在但 refs 坏了是另一类错
+    （src_unreachable，仍然该 FAIL），与「树被删」不能混。
+    """
+    for p in (KERNEL, os.path.join(ROOT, 'linux')):
+        if not os.path.isdir(p):
+            continue
+        r = subprocess.run(('git', '-C', p, 'rev-parse', '--git-dir'),
+                           capture_output=True, text=True)
+        if r.returncode == 0 and r.stdout.strip():
+            return True
+    return False
+
+
+def src_archive():
+    """versions/kernel-src-archive.tsv → {build: {'image':…, 'src_sha':…}}。
+
+    这张表回答的问题是「这些行的源提交**当下不可核**」而不是「核过没问题」：
+    每行都是镜像内 UTS 自带的事实（build / image / src_sha 均可离线从镜像重算），
+    缺的只是「该 sha 在源树里是否可达 / 该提交上有哪些 vk tag」这两个需要源树的判断。
+    表头注释带删除日期、仓库证据与恢复命令 —— 复核口径见该文件。
+    """
+    d = {}
+    try:
+        with open(SRC_ARCHIVE, errors='replace') as fh:
+            for line in fh:
+                if line.startswith('#') or not line.strip():
+                    continue
+                cols = line.rstrip('\n').split('\t')
+                if len(cols) < 3 or cols[0] == 'build':
+                    continue
+                d[cols[0].strip()] = {'image': cols[1].strip(), 'src_sha': cols[2].strip()}
+    except OSError:
+        pass
+    return d
+
+
+# 不依赖源树的列（可离线从镜像/manifest 重算）：build image reg img_uts kbin_sha src_sha
+# tree_head tree_state。src_ref / src_tag 需要 git refs；flag 里的 src_* / num_ne_tag /
+# uts_lvs 也由 refs 派生 ⇒ 降级比对时一律剔除。
+_OFFLINE_COLS = (0, 1, 2, 3, 4, 5, 8, 9)
+_TREE_FLAGS = ('src_', 'num_ne_tag', 'uts_lvs')
+
+
+def _offline_line(line):
+    p = line.split('\t')
+    if len(p) < 11:
+        return line
+    # 'ok' 只是「本行没有逐行标记」的占位（有标记时不写），归一下再比，否则降级比对
+    # 会因为一个占位符而永远报不一致（实测：dtbo1 旧行 'ok|kbin_shared4' vs 新行 'kbin_shared4'）。
+    flags = [f for f in p[10].split('|') if f and f != 'ok' and not f.startswith(_TREE_FLAGS)]
+    return '\t'.join([p[i] for i in _OFFLINE_COLS] + ['|'.join(flags)])
+
+
+def src_archive_complete(rows):
+    """登记表是否覆盖了现扫描里每一个「有源提交」的行（三列逐字相等）。
+
+    不完整 ⇒ 降级无效（新鲜度门只能报 C=1），因为「没登记」与「不可核」在表里无法区分。
+    """
+    arch = src_archive()
+    for r in rows:
+        if len(r) < 11 or not r[5] or r[5] == '-':
+            continue
+        if any(f in r[10] for f in ('slot_dump', 'skip', 'no-payload')):
+            continue
+        rec = arch.get(r[0])
+        if not rec or rec.get('image') != r[1] or rec.get('src_sha') != r[5]:
+            return False
+    return True
+
+
 def gate_lines(rows, skip_names):
     """只拦住新构建；存量欠账汇总成 WARN。返回 [(status, msg), ...]，契约同 check-doctor §5。"""
     out = []
     new_hard, legacy, held, noted, exempt = [], 0, [], [], []
     unreadable = []
     known = known_issues()
+    # 源树不在盘 ⇒ src_* 是「不可核」而不是「核不上」。只有逐行登记且三列逐字一致的行降级。
+    arch = {} if src_tree_present() else src_archive()
+    archived, unregistered = [], []
     # 归档件不在 out/：按 basename 建立“账表 image 列 → 实际路径”的索引，
     # 否则 §5d 的“新构建 vs 存量欠账”归类会把归档件误当存量而放宽。
     img_index = {os.path.basename(p): p for p in out_images()}
@@ -428,6 +516,19 @@ def gate_lines(rows, skip_names):
             # 拦它等于拦构建本身（同一构建的带号镜像已被校）。“号必须入名”靠命名规则约束人。
             continue
         hard = [f for f in flags if is_hard(f)]
+        # 源树已档/已删（2026-11-19，见 versions/kernel-src-archive.tsv）：
+        # 只把 src_* 这一项从硬错里摘出来，**其它硬错（如 payload_mismatch）照旧 FAIL**；
+        # 表外的新行 / sha 对不上的行不降级（强约束：登记表是第一手证据，不是通配符）。
+        if arch and any(f.startswith('src_') for f in hard):
+            rec = arch.get(name)
+            if rec and rec.get('image') == r[1] and rec.get('src_sha') == r[5]:
+                hard = [f for f in hard if not f.startswith('src_')]
+                archived.append('%s(%s)' % (name, r[5] or '-'))
+            else:
+                # 已由下面那条 FAIL 点名，这里不再把 src_* 塞回硬错列表（同因两报会把 FAIL 数翻倍，
+                # 让人误以为出了两类问题）。其它硬错（payload_mismatch 等）不受影响。
+                unregistered.append('%s(%s)' % (name, r[5] or '-'))
+                hard = [f for f in hard if not f.startswith('src_')]
         # 版本账本已登记的例外（kind 前缀匹配）→ 降 WARN，不拦构建也不静默吞掉
         kinds = known.get(name, ())
         reg = [f for f in hard if any(f.startswith(k) for k in kinds)]
@@ -447,6 +548,14 @@ def gate_lines(rows, skip_names):
             out.append(('FAIL', '新构建踩到硬错（命名/溯源规则 2026-10-08）→ %s' % s))
     else:
         out.append(('OK', '生效时刻之后的镜像无硬错（在途豁免 %d 个）' % len(held)))
+    if archived:
+        out.append(('WARN', '源树已档（geekidos-linux/ 不在盘，2026-11-19 清理）：%d 行身份**暂不可核**、'
+                            '不是核过没问题 —— 逐行登记见 versions/kernel-src-archive.tsv'
+                            '（build/image/src_sha 三列与现扫描逐字一致才降级；恢复命令见该文件头）：%s'
+                    % (len(archived), ' '.join(archived))))
+    if unregistered:
+        out.append(('FAIL', '源树缺失且未在 versions/kernel-src-archive.tsv 逐行登记'
+                            '（无法证明是「暂不可核」）→ %s' % ' '.join(unregistered)))
     if held:
         out.append(('WARN', '在途豁免（收口后从 vk-identity-inflight.txt 删掉）：%s' % ' '.join(held)))
     if exempt:
@@ -482,8 +591,13 @@ def gate_lines(rows, skip_names):
     return out
 
 
-def fresh(text, skip_names, tsv=TSV):
-    """text 与已提交 vs TSV 的逐行比对（过滤在途与无版本号当前拷贝）。"""
+def fresh(text, skip_names, tsv=TSV, degraded=False):
+    """text 与已提交 vs TSV 的逐行比对（过滤在途与无版本号当前拷贝）。
+
+    degraded=True = 源树不在盘时的**降级比对**：只比不依赖源树的列（见 _offline_line）。
+    这不是「比对通过」，而是「可离线核对的部分没漂」；调用方（--all 的 C=2 与 check-doctor）
+    有义务把它报告成「降级」而不是「一致」。
+    """
     old = open(tsv).read() if os.path.exists(tsv) else ''
 
     def keep(line):
@@ -499,6 +613,9 @@ def fresh(text, skip_names, tsv=TSV):
     # 2026-10-08 二次对账发现并改为真过滤；负向验证：往表里注入一个假 kbin 必须 rc=1。
     a = [l for l in old.split('\n', 1)[1].splitlines() if l and keep(l)]
     b = [l for l in text.split('\n', 1)[1].splitlines() if l and keep(l)]
+    if degraded:
+        a = [_offline_line(l) for l in a]
+        b = [_offline_line(l) for l in b]
     return a == b
 
 
@@ -604,6 +721,20 @@ def ledger_lines():
 
 def main():
     args = sys.argv[1:]
+    if args == ['--src-archive-write']:
+        # 从**已提交的 TSV**（不是本次扫描）生成登记表：这是「清理前就已在账上」的证据，
+        # 不能用当前扫描结果（它会把 missing 写进去，等于自己给自己发豁免）。
+        print('build\timage\tsrc_sha')
+        for line in open(TSV, errors='replace').read().splitlines()[1:]:
+            r = line.split('\t')
+            if len(r) < 11 or not r[5] or r[5] == '-':
+                continue
+            # 槽位转储 / 无载荷行不参与构建号规则（§5d 的 slot_dump 永不 FAIL），
+            # 把它们写进登记表只会让「完整性」判据失去意义（多行同名 (slot-dump)）。
+            if any(f in r[10] for f in ('slot_dump', 'skip', 'no-payload')):
+                continue
+            print('%s\t%s\t%s' % (r[0], r[1], r[5]))
+        return 0
     if '--no-cache' in args:
         global _CACHE_PATH
         _CACHE_PATH = 'off'
@@ -624,8 +755,10 @@ def main():
         if src in all12:
             full = next(x for x in allrefs if x.startswith(src))
             return 'branch:' + ','.join(sorted(containing_refs(full))), full
-        exists = subprocess.run(('git', '-C', KERNEL, 'cat-file', '-e',
-                                 src + '^{commit}')).returncode == 0
+        # stderr 必须一起吞掉：源树不在盘时每行都会打一句 `fatal: cannot change to …`，
+        # 76 行就是 76 行噪声（2026-11-19 实测），会把真错误挤出报告视野。
+        exists = subprocess.run(('git', '-C', KERNEL, 'cat-file', '-e', src + '^{commit}'),
+                                capture_output=True).returncode == 0
         return ('unreachable', src) if exists else ('missing', '')
 
     # 一次并行抽取全部 out/*.img 的内核载荷：§5 版本账与 §5d 身份表共用同一缓存，
@@ -751,13 +884,30 @@ def main():
             print('L\t%s\t%s' % (st, msg))
         for st, msg in gate_lines(rows, skip_names):
             print('G\t%s\t%s' % (st, msg))
-        print('C\t%d' % (0 if fresh(text, skip_names) else 1))
+        # 新鲜度三档：0=全列一致；2=源树不在盘下的降级一致（只比离线列，且登记表覆盖完整）；
+        # 1=真过期。不许把 2 说成 0：doctor 对 2 报 WARN 并点名不可核的列。
+        if fresh(text, skip_names):
+            cst = 0
+        elif (not src_tree_present()) and src_archive_complete(rows) \
+                and fresh(text, skip_names, degraded=True):
+            cst = 2
+        else:
+            cst = 1
+        print('C\t%d' % cst)
         return 0
     if check:
-        if not fresh(text, skip_names):
-            print('vk-kernel-identity.tsv 过期：镜像/registry 变了但表未重生成', file=sys.stderr)
-            return 1
-        return 0
+        if fresh(text, skip_names):
+            return 0
+        if (not src_tree_present()) and src_archive_complete(rows) \
+                and fresh(text, skip_names, degraded=True):
+            print('vk-kernel-identity.tsv 降级一致：只在离线列上比过（源树 geekidos-linux/ 不在盘；'
+                  'src_ref/src_tag 等树派生列不可核）——恢复命令见 versions/kernel-src-archive.tsv',
+                  file=sys.stderr)
+            return 0
+        print('vk-kernel-identity.tsv 过期：镜像/registry 变了但表未重生成', file=sys.stderr)
+        return 1
+    sys.stdout.write(text)
+    return 0
     sys.stdout.write(text)
     return 0
 

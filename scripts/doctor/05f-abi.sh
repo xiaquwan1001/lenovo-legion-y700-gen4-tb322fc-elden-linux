@@ -16,7 +16,9 @@ for _c in build/*/.config linux/.config; do
   [ -f "$_c" ] && _abi_trees="$_abi_trees ${_c%/.config}"
 done
 if [ -z "$_abi_trees" ]; then
-  warnf "未找到任何内核树的 .config（build/*/ 或 linux/）→ 跳过（重建树后自动恢复核对）"
+  # 2026-11-19 起 /warn 的措词要点名「不可核 ≠ 核过没问题」与恢复入口：用户的清理把 build/ 删了，
+  # 后续 agent 看到这行 WARN 不能当成「已检查过」或「环境噪声」而忽略。
+  warnf "未找到任何内核树的 .config（build/*/ 或 linux/）→ 本轮 ABI 核对跳过（不可核，不是核过没问题）；重建入口见 versions/layout.tsv 注释，影响记录 reports/disk-cleanup-20261119-validation-impact.md"
 else
   for _t in $_abi_trees; do
     _abi_out=$(bash "$HELPERS/check-abi-config.sh" "$_t/.config" 2>&1)

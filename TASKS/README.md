@@ -16,7 +16,7 @@
 | **G2** 安卓容器（可用性 + 风控/完整性等级） | **10**（分母 13 项；`C-历史` 聚合行不进分母，2026-11-10 新增 C12） | 2（C5 剩 App 实开预览、C8 书面结论未立项） | 1（C9 打分表出数） | **10/13**（口径见下表注） |
 | **G3** x86 模拟（Steam 载体） | 2（Box64+Wine PoC；官方 ARM64 Steam 客户端起到登录界面，2026-10-28 设备实测 3/3，证据 `reports/g3-steam-20261028.md`） | 1（x86 游戏端到端：FEX/box64 层待接，与「起客户端」已解耦） | Steam 游戏端到端（图形/音频/性能） | PoC ✅ / **Steam 登录界面 ✅** |
 | **拓展** UEFI 间接引导 · Gunyah VM | 1（UEFI **两种形态都通**（2026-11-10 深夜，真根因 = `dtbo_a`，`reports/uefi-dtbo-a-rootcause-20261110.md`）；Gunyah =「有条件重启」不等已结项，`reports/gunyah-restart-assessment-20261111.md`） | 0（UEFI 剩余仅菜单交互目视 + `boot_a` 冷起回归，非阻塞） | 0 | ⬜ 非主线 |
-| 运维/资产 | **在机状态与资产快照一律只读 `DEVICE/README.md` §1.1 / `RESOURCES/README.md` §3（本行不再记快照与 sha）** | — | — | — |
+| 运维/资产 | **在机状态与资产快照一律只读 `DEVICE/README.md` §1.1 / `RESOURCES/README.md` §3（本行不再记快照与 sha）**；**验证面口径（2026-11-19）**：`build/` 内核树与 `geekidos-linux/` 已被清理 ⇒ §5d 内核身份表 75 行「暂不可核」（登记 `versions/kernel-src-archive.tsv`、恢复命令见 `versions/layout.tsv` 注释），影响与处置 = `reports/disk-cleanup-20261119-validation-impact.md` | — | — | — |
 
 > **注（口径 2026-11-03 机器化；手算推导已删，改为脚本现出）**：本表数字**一律由 §1 / §2 的行内状态标记导出**，不另设分母。
 > **公式**：`完成 / 在范围`，其中 `在范围 = ID 总数 − ❌/⛔`，`完成 = ✅ + 🟢 + 🎯`；合并行（`| ✅ G1-12…21 |`）按区间展开计 10 项。
