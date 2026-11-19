@@ -147,3 +147,6 @@ y700-elden 用自编件替换**发行版同名包**提供的可执行文件（ph
 
 ---
 **用户裁决（2026-11-17，只记录不执行）**：①**Q28 证据回帖获准放行**（`patches/upstream/mdss-v5-q28-evidence-20261116/mail-body.txt`，dry-run 已过、折行 `Cc` 漏发已修 4→9、门禁 `scripts/mail-draft-check.py` FAIL 0）；②仓外 `~/.local/bin/send-mail-ustc.py` 的 `parse()` 改用 `email` 库（折行 `Cc` 漏发根源在那份，仓内工具已正确），并在 `--send` 成功后调 `scripts/mail-append-sent.py --apply`。
+
+---
+**2026-11-19 15:15:58 本会话曾因主机侧故障整体崩掉（pi SIGILL，exit 132）**：不是项目问题——V8_Fatal 在 V8 查 String forwarding table 时 CHECK 失败；会话 jsonl 与 node 二进制两读一致 ⇒ 坏在进程堆。同族证据（11-16 两次 glibc 堆损坏 abort、11-19 14:13 GC 扫堆 SIGSEGV）见 `~/hw-stability/evidence/inbox/20261119-y700-elden-pi-v8fatal/MANIFEST.md`。会话文件完整、已续写，无需修复；只是崩时在飞的两个 fabric 子代理产出丢了。项目侧不再深挖（全局规则 12）。
