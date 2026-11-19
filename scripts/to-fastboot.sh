@@ -47,11 +47,25 @@ if [ -n "$FLASH" ]; then
 fi
 
 echo "[to-fastboot] device -> fastboot (PSCI vendor reset)..."
-# 必须给 ssh 套 timeout（2026-11-13 实受，PITFALLS #628）：设备做的是 PSCI SYSTEM_RESET2
-# 暖复位，TCP 不会收到 FIN ⇒ 已建立的 ssh 连接会半开，默认要等内核重传超时（~15 min）才返回，
-# 期间脚本停在「device -> fastboot」不动、后面的 wait_until 根本轮不到。
-# 口径与 kexec-bs-cycle.sh / sd-run-variant.sh 一致：超时就当成功（复位已经发出）。
-timeout -k 5 12 $SSH 'sync; eldroid-bootctl reboot bootloader' >/dev/null 2>&1 || true
+# ★★ 2026-11-19 实测修正（PITFALLS #690）：**现役 vk192 是上游主线核，不含 vendor RESTART2 钩子**。
+# 工具 = 只比 kallsyms：`psci_sys_reset` 在、`psci_system_reset2_supported` 在（主线只支持 architectural
+# reset_type），但 qcom/vendor reset 处理函数 = 0 命中；`grep -icE 'restart2|vendor_reset' /proc/kallsyms`
+# 只有无关符号。⇒ `reboot bootloader` / `systemctl reboot bootloader` 退化成**标准 SYSTEM_RESET**，
+# ABL 当普通重启处理、仍按 `_b` 起 Linux——这就是「发了命令设备没动」的真因。
+# 旧实现（`eldroid-bootctl reboot bootloader … || true`）会把这种情形变成静默空等 90 s 后报 timeout，
+# 于是人以为是 USB/按键问题。现在默认**拒绝走软路径**，把手动作业说清楚；确实换回带钩子的核
+# （`elden/vk41-psci-reboot` 一类）时才用 ALLOW_SOFT_RESET=1 打开。
+if [ "${ALLOW_SOFT_RESET:-0}" = 1 ]; then
+	# PITFALLS #628：PSCI 暖复位不发 FIN，已建的 ssh 半开 ⇒ timeout 当成功（复位已经发出）。
+	timeout -k 5 12 $SSH 'sync; systemctl reboot bootloader' >/dev/null 2>&1
+	rc=$?
+	[ "$rc" = 0 ] || [ "$rc" = 124 ] || { echo "[to-fastboot] ❌ 软复位失败 rc=$rc（设备可能仍在 Linux）" >&2; exit 1; }
+else
+	echo "[to-fastboot] ❌ 现役内核无 vendor RESTART2 钩子（#690）⇒ 软路径不可用，不盲发。" >&2
+	echo "[to-fastboot]    手动作业：长按电源 10 s 关机 → 按住【音量上 + 电源】至 fastboot 屏。" >&2
+	echo "[to-fastboot]    或换回带钩子的核后用 ALLOW_SOFT_RESET=1 重跑本脚本。" >&2
+	exit 2
+fi
 
 echo "[to-fastboot] waiting for fastboot..."
 # 2026-11-05：改走 lib-wait（先判后睡 + 退避；旧实现固定 45×2 s，且第一拍必睡满 2 s）。

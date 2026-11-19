@@ -213,10 +213,20 @@ scp /mnt/new/... ; scripts/phoc-install.sh            # 自编件必须 divert +
 
 ### S7 槽属性（持久性的关键，60 s）
 
+> **2026-11-19 纠错**：旧版本这里让**设备侧**跑 `python3 /tmp/slot-attr.py mark-successful b` ——
+> 但现役 minbase 根**没有 python3**（165→1253 包里也没装）⇒ 那道命令只会报 `python3: not found`，
+> 看起来像「写了」实际什么也没写。槽属性**一律在主机侧**改（工具也就在主机）。
+
 ```sh
-scp scripts/slot-attr.py root@192.168.7.1:/tmp/ ; ssh root@192.168.7.1 'python3 /tmp/slot-attr.py mark-successful b'
-# 或从主机侧直接改 LUN4 双表；写完必须 `show` 复核双表 byte[6] 都含 0x40
+# 只读先看（主备双表）：
+python3 scripts/slot-attr.py show --sn $SN
+# 设备无 python3 ⇒ 由主机 dd 出 LUN4 主备 GPT → 打补丁 → 写回（2026-11-19 实走路径，#677/#678）
+python3 scripts/slot-attr.py --image back4.bin mark-successful b     # 改两份表里的 byte[6]
+# 写完必须回读复核：主备 byte[6] 都含 0x40，且 `fastboot getvar slot-successful:b` = yes
 ```
+
+> 同一文件里的 **Linux→fastboot 软路径已不成立**（见 §2.5 切换表 + PITFALLS `#690`）：
+> 现役 vk192 主线核无 vendor RESTART2 钩子 ⇒ 进制 fastboot 只能手工按键。
 
 ### S8 冷起 + 验收
 

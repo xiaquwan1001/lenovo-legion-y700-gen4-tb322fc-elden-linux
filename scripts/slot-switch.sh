@@ -93,9 +93,12 @@ ensure_fastboot() {
 		echo "[slot] 在 Android(adb $SER) → adb -s $SER reboot bootloader"
 		adbx -s "$SER" reboot bootloader >/dev/null 2>&1 || true
 	elif have_linux; then
-		echo "[slot] 在 Linux(ssh) → eldroid-bootctl reboot bootloader"
-		timeout 25 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 "$TAB" \
-			'/usr/local/bin/eldroid-bootctl reboot bootloader 2>/dev/null || eldroid-bootctl reboot bootloader 2>/dev/null' >/dev/null 2>&1 || true
+		# ★ 2026-11-19（PITFALLS #690）：现役 vk192 主线核**无 vendor RESTART2 钩子** ⇒ 软路径不成立；
+		# `eldroid-bootctl` 也已随 Alpine 根退场（且它是 python3 脚本，设备无 python3）。
+		# 旧实现的两级兜底 = 同一个不存在的件 ⇒ 等效无兜底，只静默空等。现改为显式报错 + 手动作业。
+		echo "[slot] 在 Linux(ssh)，但现役内核无 vendor RESTART2 钩子（#690）⇒ 不能从 Linux 进制 fastboot" >&2
+		echo "[slot]    手动作业：长按电源 10 s 关机 → 按住【音量上 + 电源】至 fastboot 屏，再重跑本脚本" >&2
+		return 1
 	else
 		echo "[slot] 既非 fastboot/adb/ssh —— 请手动进 fastboot（电源键或 fastboot reboot bootloader）" >&2
 		return 1

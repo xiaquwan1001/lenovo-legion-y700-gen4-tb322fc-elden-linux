@@ -1,5 +1,13 @@
 # RUNBOOK：ext4 → f2fs 根（路线 A：缩 ext4 + 尾部新建 f2fs + 本地复制）
 
+> # ⛔⛔ 全文作废（2026-11-19）——**不要按本文件操作，会毁掉引导链**
+> 本文件描述的 `linux18` / `/dev/sda18` 已**不存在**：2026-11-18 的 wipe 后重建里，
+> **`/dev/sda18` 现为 ESP（`eldenesp`, FAT32，装 GRUB/Loader/boot.img）**，`linux17` 也换成了现役的 `linux`(label)。
+> 因此本文件里的任何 `mkfs.f2fs -l linux18 /dev/sda18` / `sgdisk` 步骤都会**直接格式化 ESP**。
+> 要换 fstype 前先 `python3 scripts/slot-attr.py show --sn $SN` + `cat /proc/partitions` 核实现表；
+> 现役重建路径只看 `RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §2/§3 与 `ZERO-TO-DESKTOP.md`。
+> 以下全文仅作历史留档（f2fs 线已不在主线）。
+
 > 状态：**已执行完成（2026-10-25 真机）** —— 根现为 `f2fs @linux18`，`boot_b` 已写槽，真 POR 冷起 + 读回 + 首启后 `fsck.f2fs` 全通过；
 > ext4 `linux17`（96 GiB）保留为回退根且 `fastboot boot` 实测可起。执行记录见 `TASKS/sessions/2026-10-25-f2fs路线A落地.md`。
 > ⚠ 执行中暴露的 5 个 ramdisk 工具级坑（busybox `tar/dd`、无 `python3`、dmesg 钩子 fd9 占超级块、tar 流 sha 非内容指纹）见 `PITFALLS #400–#405`，复跑前先读。

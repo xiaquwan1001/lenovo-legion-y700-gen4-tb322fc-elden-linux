@@ -60,8 +60,11 @@ echo "ramdisk: $RAMDISK ($(du -h "$RAMDISK" | cut -f1))"
 # ROOTARGS: use '-' (not ':-') so an explicit empty value means "RAM-only"
 # (no disk root); the Alpine ramdisk then runs entirely from RAM.
 #   VERSION=vk40-ram ROOTARGS= bash build-boot.sh   -> pure-RAM bring-up image
+# 根 label 默认值（2026-11-19 纠正）：现役根的 label 是 **linux**（GPT 手术表重建时 mkfs.ext4 -L linux），
+# 旧的 linux17 已随 11-18 wipe 消失。默认写成 linux17 ⇒ 打出的 boot.img 找不到根 ⇒ panic=15 回 fastboot，
+# 而重打路径“同输入逐字节相同”的自校验不会发现这个问题（它只证重打链可信，不证 label 对）。
 CONSOLES="${CONSOLES:-console=ttyGS0,115200 console=tty0}"
-ROOTARGS="${ROOTARGS-elden_root=LABEL=linux17}"
+ROOTARGS="${ROOTARGS-elden_root=LABEL=linux}"
 # Slot suffix for A/B tooling (qbootctl).  The mainline cmdline has no
 # `androidboot.slot_suffix`, so `qbootctl -m`/`-u` without an explicit SLOT
 # argument silently fall back to slot a.  This device boots from slot b.
