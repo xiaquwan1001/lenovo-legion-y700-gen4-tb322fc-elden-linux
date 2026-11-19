@@ -1,0 +1,250 @@
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index cf947acc57..de9d9bf3ca 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -6497,7 +6497,7 @@ compute-cb@12 {
+ 						compatible = "qcom,fastrpc-compute-cb";
+ 						reg = <12>;
+ 						iommus = <&apps_smmu 0x196c 0x0>,
+-							 <&apps_smmu 0x0c2c 0x20>,
++							 <&apps_smmu 0x0c2c 0x0>,
+ 							 <&apps_smmu 0x0c0c 0x40>,
+ 							 <&apps_smmu 0x19cc 0x0>;
+ 						dma-coherent;
+@@ -6518,7 +6518,7 @@ compute-cb@14 {
+ 						compatible = "qcom,fastrpc-compute-cb";
+ 						reg = <14>;
+ 						iommus = <&apps_smmu 0x196e 0x0>,
+-							 <&apps_smmu 0x0c0e 0x20>,
++							 <&apps_smmu 0x0c0e 0x40>,
+ 							 <&apps_smmu 0x19ce 0x0>;
+ 						dma-coherent;
+ 					};
+diff --git a/drivers/clk/qcom/gcc-sm8750.c b/drivers/clk/qcom/gcc-sm8750.c
+index 80b8ec119c..080f2fde53 100644
+--- a/drivers/clk/qcom/gcc-sm8750.c
++++ b/drivers/clk/qcom/gcc-sm8750.c
+@@ -2940,7 +2940,7 @@ static struct gdsc gcc_usb30_prim_gdsc = {
+ 	.pd = {
+ 		.name = "gcc_usb30_prim_gdsc",
+ 	},
+-	.pwrsts = PWRSTS_OFF_ON,
++	.pwrsts = PWRSTS_RET_ON,
+ 	.flags = POLL_CFG_GDSCR | RETAIN_FF_ENABLE,
+ };
+ 
+@@ -2952,7 +2952,7 @@ static struct gdsc gcc_usb3_phy_gdsc = {
+ 	.pd = {
+ 		.name = "gcc_usb3_phy_gdsc",
+ 	},
+-	.pwrsts = PWRSTS_OFF_ON,
++	.pwrsts = PWRSTS_RET_ON,
+ 	.flags = POLL_CFG_GDSCR | RETAIN_FF_ENABLE,
+ };
+ 
+diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+index 187f0cd11f..05d48ba817 100644
+--- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
++++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+@@ -27,6 +27,7 @@
+ #include <drm/bridge/aux-bridge.h>
+ 
+ #include <dt-bindings/phy/phy-qcom-qmp.h>
++#include <linux/phy/phy-qcom-qmp-usb-ss.h>
+ 
+ #include "phy-qcom-qmp-common.h"
+ 
+@@ -2630,6 +2631,7 @@ struct qmp_combo {
+ 
+ 	struct phy *usb_phy;
+ 	enum phy_mode phy_mode;
++	enum qcom_usb_ss_state  ss_state;
+ 	unsigned int usb_init_count;
+ 
+ 	struct phy *dp_phy;
+@@ -4503,6 +4505,16 @@ static int qmp_combo_usb_set_mode(struct phy *phy, enum phy_mode mode, int submo
+ 
+ 	qmp->phy_mode = mode;
+ 
++	switch (submode) {
++	case QCOM_USB_SS_PRESENT:
++	case QCOM_USB_SS_ABSENT:
++		qmp->ss_state = submode;
++		break;
++	default:
++		qmp->ss_state = QCOM_USB_SS_UNKNOWN;
++		break;
++	}
++
+ 	return 0;
+ }
+ 
+@@ -4657,11 +4669,20 @@ static void qmp_combo_enable_autonomous_mode(struct qmp_combo *qmp)
+ 	void __iomem *pcs_aon = qmp->pcs_aon;
+ 	u32 intr_mask;
+ 
+-	if (qmp->phy_mode == PHY_MODE_USB_HOST_SS ||
+-	    qmp->phy_mode == PHY_MODE_USB_DEVICE_SS)
++	/*
++	 * Use LFPS detection only when a SuperSpeed device is known to be
++	 * present. For absent or unknown state, use receiver detection.
++	 */
++	switch (qmp->ss_state) {
++	case QCOM_USB_SS_PRESENT:
+ 		intr_mask = ARCVR_DTCT_EN | ALFPS_DTCT_EN;
+-	else
++		break;
++	case QCOM_USB_SS_ABSENT:
++	case QCOM_USB_SS_UNKNOWN:
++	default:
+ 		intr_mask = ARCVR_DTCT_EN | ARCVR_DTCT_EVENT_SEL;
++		break;
++	}
+ 
+ 	/* Clear any pending interrupts status */
+ 	qphy_setbits(pcs_usb, cfg->regs[QPHY_PCS_LFPS_RXTERM_IRQ_CLEAR], IRQ_CLEAR);
+diff --git a/drivers/soc/qcom/llcc-qcom.c b/drivers/soc/qcom/llcc-qcom.c
+index d7a42a8040..007593d1e9 100644
+--- a/drivers/soc/qcom/llcc-qcom.c
++++ b/drivers/soc/qcom/llcc-qcom.c
+@@ -3923,7 +3923,7 @@ static const struct llcc_slice_config sm8750_data[] = {
+ 		.max_cap = 7936,
+ 		.priority = 7,
+ 		.fixed_size = true,
+-		.bonus_ways = 0x7fffffff,
++		.res_ways = 0x7fffffff,
+ 	}, {
+ 		.usecase_id = LLCC_DISP_WB,
+ 		.slice_id = 23,
+diff --git a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
+index 4d7013fc79..710c78aff8 100644
+--- a/drivers/thermal/qcom/tsens.c
++++ b/drivers/thermal/qcom/tsens.c
+@@ -929,7 +929,7 @@ static const struct regmap_config tsens_srot_config = {
+ 	.reg_stride	= 4,
+ };
+ 
+-int __init init_common(struct tsens_priv *priv)
++int init_common(struct tsens_priv *priv)
+ {
+ 	void __iomem *tm_base, *srot_base;
+ 	struct device *dev = priv->dev;
+diff --git a/drivers/usb/dwc3/core.c b/drivers/usb/dwc3/core.c
+index fd5c2cd36c..c4f0aa9627 100644
+--- a/drivers/usb/dwc3/core.c
++++ b/drivers/usb/dwc3/core.c
+@@ -2431,7 +2431,6 @@ int dwc3_core_probe(const struct dwc3_probe_data *data)
+ err_allow_rpm:
+ 	pm_runtime_allow(dev);
+ 	pm_runtime_disable(dev);
+-	pm_runtime_dont_use_autosuspend(dev);
+ 	pm_runtime_set_suspended(dev);
+ 	pm_runtime_put_noidle(dev);
+ err_disable_clks:
+@@ -2486,7 +2485,6 @@ void dwc3_core_remove(struct dwc3 *dwc)
+ 
+ 	pm_runtime_allow(dwc->dev);
+ 	pm_runtime_disable(dwc->dev);
+-	pm_runtime_dont_use_autosuspend(dwc->dev);
+ 	pm_runtime_put_noidle(dwc->dev);
+ 	/*
+ 	 * HACK: Clear the driver data, which is currently accessed by parent
+diff --git a/drivers/usb/dwc3/dwc3-am62.c b/drivers/usb/dwc3/dwc3-am62.c
+index d03b3950ce..0df7e436ae 100644
+--- a/drivers/usb/dwc3/dwc3-am62.c
++++ b/drivers/usb/dwc3/dwc3-am62.c
+@@ -322,7 +322,6 @@ static void dwc3_ti_remove(struct platform_device *pdev)
+ 
+ 	pm_runtime_put_sync(dev);
+ 	pm_runtime_disable(dev);
+-	pm_runtime_dont_use_autosuspend(dev);
+ 	pm_runtime_set_suspended(dev);
+ }
+ 
+diff --git a/drivers/usb/dwc3/dwc3-qcom.c b/drivers/usb/dwc3/dwc3-qcom.c
+index ac68b4218b..d4ba095e47 100644
+--- a/drivers/usb/dwc3/dwc3-qcom.c
++++ b/drivers/usb/dwc3/dwc3-qcom.c
+@@ -19,6 +19,7 @@
+ #include <linux/iopoll.h>
+ #include <linux/usb/hcd.h>
+ #include <linux/usb.h>
++#include <linux/phy/phy-qcom-qmp-usb-ss.h>
+ #include "core.h"
+ #include "glue.h"
+ 
+@@ -66,6 +67,7 @@ struct dwc3_qcom_port {
+ 	int			dm_hs_phy_irq;
+ 	int			ss_phy_irq;
+ 	enum usb_device_speed	usb2_speed;
++	enum qcom_usb_ss_state  ss_state;
+ };
+ 
+ struct dwc3_qcom {
+@@ -251,6 +253,34 @@ static enum usb_device_speed dwc3_qcom_read_usb2_speed(struct dwc3_qcom *qcom, i
+ 	return udev->speed;
+ }
+ 
++static enum qcom_usb_ss_state dwc3_qcom_read_ss_state(struct dwc3_qcom *qcom, int port_index)
++{
++	struct usb_device *udev;
++	struct usb_hcd __maybe_unused *hcd, *usb3_hcd;
++	struct dwc3 *dwc = &qcom->dwc;
++
++	/*
++	 * FIXME: Fix this layering violation.
++	 */
++	hcd = platform_get_drvdata(dwc->xhci);
++	if (!hcd)
++		return QCOM_USB_SS_ABSENT;
++
++#ifdef CONFIG_USB
++	usb3_hcd = hcd->shared_hcd ? hcd->shared_hcd : hcd;
++	if (!usb3_hcd->self.root_hub)
++		return QCOM_USB_SS_ABSENT;
++
++	udev = usb_hub_find_child(usb3_hcd->self.root_hub, port_index + 1);
++#else
++	udev = NULL;
++#endif
++	if (!udev)
++		return QCOM_USB_SS_ABSENT;
++
++	return udev->speed >= USB_SPEED_SUPER ? QCOM_USB_SS_PRESENT : QCOM_USB_SS_ABSENT;
++}
++
+ static void dwc3_qcom_enable_wakeup_irq(int irq, unsigned int polarity)
+ {
+ 	if (!irq)
+@@ -359,8 +389,12 @@ static int dwc3_qcom_suspend(struct dwc3_qcom *qcom, bool wakeup)
+ 	 * freezable workqueue.
+ 	 */
+ 	if (dwc3_qcom_is_host(qcom) && wakeup) {
+-		for (i = 0; i < qcom->num_ports; i++)
++		for (i = 0; i < qcom->num_ports; i++) {
+ 			qcom->ports[i].usb2_speed = dwc3_qcom_read_usb2_speed(qcom, i);
++			qcom->ports[i].ss_state = dwc3_qcom_read_ss_state(qcom, i);
++			phy_set_mode_ext(qcom->dwc.usb3_generic_phy[i], PHY_MODE_USB_HOST,
++					 qcom->ports[i].ss_state);
++		}
+ 		dwc3_qcom_enable_interrupts(qcom);
+ 	}
+ 
+--- NEW FILE: include/linux/phy/phy-qcom-qmp-usb-ss.h
+/* SPDX-License-Identifier: GPL-2.0 */
+/*
+ * Shared submode contract between dwc3-qcom glue and the Qualcomm QMP
+ * USB3/combo PHY driver for communicating live SuperSpeed link presence
+ * at suspend-entry, via phy_set_mode_ext()'s submode argument.
+ */
+
+#ifndef _PHY_QCOM_QMP_USB_SS_H_
+#define _PHY_QCOM_QMP_USB_SS_H_
+
+enum qcom_usb_ss_state {
+	QCOM_USB_SS_UNKNOWN = 0,
+	QCOM_USB_SS_PRESENT,
+	QCOM_USB_SS_ABSENT,
+};
+
+#endif /* _PHY_QCOM_QMP_USB_SS_H_ */
