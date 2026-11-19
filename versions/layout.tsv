@@ -38,6 +38,15 @@ src	.githooks/	track	提交钩子（core.hooksPath=.githooks）
 src	cycle.sh	track	软回 fastboot 快环脚本
 src	elden-net.sh	track	USB 网络（RNDIS/ssh 通道）
 src	.gitignore	track	版本控制边界
+# ---- 已移除条目（2026-11-19 磁盘清理；不在盘 ⇒ 不能留在表体，否则 check-layout 判「登记但磁盘不存在」）----
+# 删除：build/（37 G 内核树/worktree，删前导出脏改动 reports/build-m3v2-7.3rc7-dirty-20261119.patch，提交 0c98d793）
+#       geekidos-linux/（2.1 G 上游浅克隆）与软链 linux -> geekidos-linux（成死链，已 git rm）。
+# 影响：内核身份表 versions/vk-kernel-identity.tsv 的 src_ref/src_tag 不可核（逐行登记 versions/kernel-src-archive.tsv），
+#       §5d 降级为 WARN、新鲜度门 C=2；处置记录 reports/disk-cleanup-20261119-validation-impact.md。
+# 重新登记（恢复后把 geekidos-linux/ 与 linux 两行加回表体，并清空 kernel-src-archive.tsv）：
+#   git clone --filter=blob:none backup/git-slim-20261113/geekidos-all-20261113.bundle geekidos-linux
+#   git -C geekidos-linux remote add torvalds https://github.com/GEEKiDoS/linux   # pristine 历史按需取 blob
+#   ln -sfn geekidos-linux linux
 work	build/	ignore	内核构建树/独立仓/worktree（含未提交改动，删除前必须先 bundle + 导 diff，见 RESOURCES §3）
 work	out/	ignore	构建产物（*.manifest 入库）
 work	logs/	ignore	串口/构建/agent 日志
@@ -46,7 +55,5 @@ work	env-pass/	ignore	过环境里程碑件
 work	dl-cam/	ignore	相机 provider 交叉编译工作区（部分纳管）
 work	wt/	ignore	lane git worktree（scripts/lane.sh WT_ROOT）
 work	external/	ignore	外部构建工作区（$HOME 同名软链指回此处）
-work	geekidos-linux/	ignore	上游内核 clone（GEEKiDoS/linux v7.2-elden）
 work	Y700-elden-linux/	ignore	旧迭代上游 clone
-work	linux	track	目录约定软链 -> geekidos-linux
 ai	.pi/	track	AI 大脑：行为规范/并发/编排/技能/记忆/会话（分工见 .pi/README.md）

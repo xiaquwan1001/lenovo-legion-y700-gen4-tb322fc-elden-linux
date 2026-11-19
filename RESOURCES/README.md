@@ -12,7 +12,7 @@
 | 资源 | 用途 | 本地状态 |
 |---|---|---|
 | Lenovo GPL 源码 `lenovo-basements/*`（modules 仓 + 主内核） | 反查厂商 compatible/固件名/寄存器语义、tplg 参考 | ✅ `stock-src/`（modules 349 M 全量 + 主内核 sparse） |
-| GEEKiDoS/linux `v7.2-elden` | 本项目内核树（作者已真机验证） | ✅ `linux -> geekidos-linux` |
+| GEEKiDoS/linux `v7.2-elden` | 本项目内核树（作者已真机验证） | ⛔ **2026-11-19 清理已删**（原 2.1 G + 软链 `linux`）；重建 = `git clone --filter=blob:none backup/git-slim-20261113/geekidos-all-20261113.bundle geekidos-linux && ln -sfn geekidos-linux linux`（命令与影响见 `../versions/layout.tsv` 表头注释、`../reports/disk-cleanup-20261119-validation-impact.md`） |
 | xiaobai-Lethe/Y700-elden-linux | 作者 `.config`、`project/*.sh`、Mesa deb、165 Hz mode table 补丁 | ✅ `Y700-elden-linux/` |
 | EDL 全量包（63 文件 / ~599 MB） | 固件提取 + 救砖 | ✅ `~/下载/tb322fc/`，子集在 `backup/fw/`、`backup/stock-259/` |
 | 原厂 ROM `/mnt/Samsung/l2/system_a.pristine.img`（Android 16 / `…_259`） | 固件/AVF/属性基线 | ✅ 已用 `debugfs` 离线取证 |
