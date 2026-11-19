@@ -4,61 +4,65 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：509
+- 报告总数：559
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
 | 组 | 篇数 | 最近一篇 |
 |---|---|---|
-| `uefi` | 82 | `uefi-vk188-fbcon-20261112.md` |
-| `q28` | 29 | `q28-workaround-closeout-20261024.md` |
-| `mail` | 26 | `mail-send-20261114-mdss-v5.md` |
+| `uefi` | 84 | `uefi-grub-initrd-memmap-20261115.md` |
+| `q28` | 33 | `q28-ab-rig-20261116.md` |
+| `mail` | 28 | `mail-inbox-20261118.md` |
 | `q24` | 24 | `q24-n5b-20261023.md` |
 | `gunyah` | 18 | `gunyah-b15-iceland-rmdrv-20261113.md` |
+| `upstream` | 17 | `upstream-delta-20261118.md` |
+| `doc` | 16 | `doc-slim-plan-20261118.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
-| `upstream` | 15 | `upstream-74-replay-20261113.md` |
-| `doc` | 14 | `doc-dedup-audit-20261112.md` |
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
+| `camss` | 9 | `camss-v25-rebase-20261117.md` |
 | `m3v5` | 9 | `m3v5-repack-20261031.md` |
 | `asset` | 8 | `asset-slim-20261112.md` |
 | `b5` | 8 | `b5-preflight-20261029.md` |
 | `droidloom` | 8 | `droidloom-l2-phoc-syncobj-20261111.md` |
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
 | `m6` | 8 | `m6-v2-recut-plan-20261107.md` |
+| `script` | 8 | `script-audit-adb-20261118.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
-| `camss` | 7 | `camss-csiphy-v6-vs-240-20261113.md` |
+| `android` | 7 | `android-assets-20261119.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `camera` | 6 | `camera-snapshot-window-focus-20261019.md` |
 | `ime` | 6 | `ime-osk-firefox-rootcause-20261112.md` |
 | `userland` | 6 | `userland-dealpine-audit-20261026.md` |
+| `device` | 5 | `device-status-20261119.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
+| `bl` | 4 | `bl-stuck-20261118-forensics.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
 | `host` | 4 | `host-stability-20261023.md` |
 | `mobian` | 4 | `mobian-daily-baseline-20261107.md` |
+| `progress` | 4 | `progress-audit-20261118.md` |
 | `q32` | 4 | `q32-matrix-20261024.md` |
 | `research` | 4 | `research-next-20261102.md` |
-| `script` | 4 | `script-cleanup-audit-20261112.md` |
-| `device` | 3 | `device-session-20261113-vk191.md` |
+| `主机侧` | 4 | `主机侧-B13-20261117.md` |
+| `c3` | 3 | `c3-spic-verdict-20261115.md` |
+| `disk` | 3 | `disk-cleanup-20261119-validation-impact.md` |
 | `external` | 3 | `external-scan-20261112.md` |
+| `grub` | 3 | `grub-rehash-20261115.md` |
 | `kexec` | 3 | `kexec-target-boots-20261024.md` |
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
-| `progress` | 3 | `progress-review-20261107.md` |
 | `suspend` | 3 | `suspend-panic-rootcause-20261020.md` |
 | `tablet` | 3 | `tablet-night-runner-dryrun-20261031.md` |
-| `android` | 2 | `android-compat-20261026.md` |
+| `todo` | 3 | `todo-next-20261118.md` |
 | `aw86927` | 2 | `aw86927-series-20261027.md` |
 | `bootloader` | 2 | `bootloader-alternatives-20261111.md` |
 | `c1` | 2 | `c1-noworkaround-20261013.md` |
-| `c3` | 2 | `c3-pi-tiers-closeout-20261110.md` |
 | `code` | 2 | `code-boundary-preinject-20261031.md` |
 | `debian` | 2 | `debian-root-accounts-sensors-20261026.md` |
 | `docs` | 2 | `docs-slim-20261114.md` |
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
-| `grub` | 2 | `grub-project-scan-20261111.md` |
 | `integrity` | 2 | `integrity-h2-20261111.md` |
 | `kernel` | 2 | `kernel-rebase-cost-20261107.md` |
 | `lanes` | 2 | `lanes-consolidated-20261101.md` |
@@ -66,6 +70,7 @@
 | `m8` | 2 | `m8-rsc-ownership-20261031.md` |
 | `modular` | 2 | `modular-driver-audit-20261026.md` |
 | `out` | 2 | `out-uefi-trim-20261106.md` |
+| `pstore` | 2 | `pstore-ram-initrd-guard-20261116.md` |
 | `qemu` | 2 | `qemu-full-chain-20261113.md` |
 | `route` | 2 | `route-b-impl-20261108.md` |
 | `session` | 2 | `session-2026-10-13-evening.md` |
@@ -83,6 +88,7 @@
 | `assets` | 1 | `assets-inventory-20261023.md` |
 | `b1` | 1 | `b1-csiphy-recheck-20261113.md` |
 | `b2` | 1 | `b2-camss-0003-recheck-20261113.md` |
+| `backup` | 1 | `backup-triage-20261118.md` |
 | `beacon` | 1 | `beacon-recheck-20261110.md` |
 | `c0` | 1 | `c0-android-baseline-20261011.md` |
 | `c4` | 1 | `c4-route-c-20261011.md` |
@@ -92,26 +98,32 @@
 | `consolidation` | 1 | `consolidation-20261014.md` |
 | `container` | 1 | `container-audio-20261011.md` |
 | `counts` | 1 | `counts-gate-20261107.md` |
+| `desktop` | 1 | `desktop-chain-gate-20261119.md` |
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
 | `dispcc` | 1 | `dispcc-battmgr-20261028.md` |
 | `driver` | 1 | `driver-ab-charging-20261108.md` |
 | `dwc3` | 1 | `dwc3-v9-plan-20261111.md` |
 | `e3` | 1 | `e3-wcn-dyndbg-20261014.md` |
 | `edl` | 1 | `edl-toolchain-survey-20261101.md` |
+| `esp` | 1 | `esp-gpt-apply-automation-20261118.md` |
 | `f1` | 1 | `f1-f3-wcn-firstprobe-20261014.md` |
 | `front` | 1 | `front-camera-flash-20261019.md` |
 | `g0` | 1 | `g0-fstype-zero-write-20261025.md` |
 | `g1` | 1 | `g1-23-windows-20261026.md` |
 | `greetd` | 1 | `greetd-stop-verify-20261031.md` |
+| `hide` | 1 | `hide-android-partitions-20261119.md` |
 | `init` | 1 | `init-systemd-vs-openrc-20261011.md` |
 | `joonhoe` | 1 | `joonhoe-kim-contact-20261019.md` |
 | `lane` | 1 | `lane-reboot2-audit-20261014.md` |
 | `libc` | 1 | `libc-musl-vs-glibc-20261011.md` |
+| `ltbox` | 1 | `ltbox-evaluation-20261118.md` |
 | `m5` | 1 | `m5-dm-default-key-20261013.md` |
 | `mailbox` | 1 | `mailbox-cleanup-20261102.md` |
 | `mdss` | 1 | `mdss-int2-evidence-20261113.md` |
 | `migration` | 1 | `migration-rebuild-audit-20261017.md` |
+| `misc` | 1 | `misc-20261117.md` |
 | `motor` | 1 | `motor-haptics-vk127-20261017.md` |
+| `mu` | 1 | `mu-memmap-20261115.md` |
 | `net` | 1 | `net-https-mtu-rootcause-20261018.md` |
 | `optional` | 1 | `optional-9-applycheck-20261113.md` |
 | `p1` | 1 | `p1-upstream-dsi-20261013.md` |
@@ -133,7 +145,6 @@
 | `task` | 1 | `task-inventory-20261107.md` |
 | `tf` | 1 | `tf-g16-retest-20261026.md` |
 | `tidy` | 1 | `tidy-audit-20261110.md` |
-| `todo` | 1 | `todo-inventory-20261113.md` |
 | `tooling` | 1 | `tooling-hang-investigation-20261109.md` |
 | `twrp` | 1 | `twrp-parity-edl-dload-20261020.md` |
 | `u3` | 1 | `u3-rpmhpd-presync-floor-20261027.md` |
@@ -145,8 +156,10 @@
 | `woa` | 1 | `woa-gunyah-survey-20261024.md` |
 | `zh` | 1 | `zh-ime-touch-chinese-20261020.md` |
 
-## `uefi`（82）
+## `uefi`（84）
 
+- `uefi-grub-initrd-memmap-20261115.md` — UEFI(GRUB) 路径 64 MB initrd 交接失败 —— 内存图方向收窄报告
+- `uefi-grub-initrd-rootcause-20261115.md` — GRUB 路径 64 MB initrd 被毁：根因定案（2026-11-15 夜）
 - `uefi-vk188-fbcon-20261112.md` — UEFI 间接引导 · 2026-11-12 收口：GRUB 字号定案、内核可见性通道定案、initrd bug 定案
 - `uefi-efistub-stage-summary-20261111.md` — 阶段性总结：G1-29 EFI-stub 掉电这条线（2026-11-11 夜）
 - `uefi-clean-pc1-and-grub-menu-20261110.md` — pc1「干净世代」UEFI + R72 启动菜单修复 + GRUB 双层菜单定案（2026-11-10 晚）
@@ -230,8 +243,9 @@
 - `uefi-woa-prep-20261024.md` — UEFI WoaA / Gunyah 资源包与工具链准备报告
 - `uefi-restart-20261021.md` — UEFI 间接引导（G1-29）是否值得重启 — 2026-10-21
 
-## `q28`（29）
+## `q28`（33）
 
+- `q28-ab-rig-20261116.md` — Q28 A/B 台架（a 槽 UEFI/GRUB）：搭台过程与 2026-11-16 18:19 卡死事件排查
 - `q28-workaround-closeout-20261024.md` — Q28 收口（2026-10-24）：按「已规避」结项，不再补样本、不再挖根因
 - `q28-dpu-intf-next-20261023.md` — Q28 下一个变量：DPU/INTF 侧（含新拿到的 OEM 显示驱动源码对照）— 2026-10-23
 - `q28-por-samples-r1r2-20261023.md` — Q28 · vk152 真 POR 冷起样本 r1 / r2（2026-10-23 晚，收尾轮）
@@ -261,9 +275,14 @@
 - `q28-upstream-research-20261010.md` — Q28 上游调研：bonded cmd DMA 超时 (-110) / DYN_PCLK 假说
 - `q28-DOSSIER.md` — Q28 显示问题 — 单一事实源（SSOT 合订卷）
 - `q28-INDEX.md` — Q28 显示问题 — 文档地图（INDEX）
+- `q28-dossier-A-project-history.md` — Q28 内部史料档案（A 卷 · 项目史）
+- `q28-dossier-B-mail-external.md` — Q28 类现象 — 邮件与外部资料档（B 卷）
+- `q28-dossier-C-device-evidence.md` — Q28 dossier-C —— 设备实测证据（watchdog 日志 / journal 全 boot / dmesg / sysfs）
 
-## `mail`（26）
+## `mail`（28）
 
+- `mail-inbox-20261118.md` — 上游邮件收件核查（截止 2026-11-17 13:40 UTC / 11-17 21:40 CST）
+- `mail-draft-check-20261117.md` — 投递前静态核对工具 `scripts/mail-draft-check.py` + 一处真缺陷修复（2026-11-17 早）
 - `mail-send-20261114-mdss-v5.md` — M8 mdss v5 + 回 sashiko/Konrad（2026-11-14，**已发送**）
 - `mail-triage-20261112.md` — 上游邮件增量分诊 — 2026-11-12（窗口 2026-11-11T08:08Z → now）
 - `mail-status-20261111.md` — 上游邮件投递状态查询（2026-11-11）
@@ -339,6 +358,45 @@
 - `gunyah-vmm-first-attempt-20261024.md` — Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 - `gunyah-roadmap-20261021.md` — Gunyah 虚拟化线（拓展项）资产盘点 + 事实核查 + 分阶段规划
 
+## `upstream`（17）
+
+- `upstream-delta-20261118.md` — 上游变化侦察（窗口 2026-11-13 → 2026-11-17，写于 2026-11-17 UTC）
+- `upstream-replies-20261117.md` — 上游邮件 + 主线代码状态核查（2026-11-17）
+- `upstream-74-replay-20261113.md` — 上游 7.4 重放可行性实验 — 2026-11-13
+- `upstream-inreview-inventory-20261113.md` — 在审系列清单与分诊盲区（B17，2026-11-13）
+- `upstream-status-20261113.md` — 上游化当前一页（2026-11-13）
+- `upstream-watch-20261113.md` — 上游动向观察 2026-10-01 → 2026-11-13
+- `upstream-merge-candidates-20261112.md` — 上游可合并增量评估 — 2026-11-12（lane D）
+- `upstream-delta-20261107.md` — 上游回包增量复核 — 2026-11-07
+- `upstream-dedup-audit-20261027.md` — 全系列 linux-next 去重核对（2026-10-27 晚）
+- `upstream-mail-sm8750-refs-20261023.md` — 上游邮件核查 + 同 SoC 参考面（2026-10-23 晚）
+- `upstream-libcamera-20261017.md` — libcamera 上游提交记录（2026-10-17）
+- `upstream-q24-q28-standard-20261015.md` — Q24 / Q28 在上游化标准下的重新定义（2026-10-15）
+- `upstream-policy-20261013.md` — 上游化策略 — 三问审计与「mainline + 薄下游层」落地（2026-10-13）
+- `upstream-backport-lane-verdict-20261012.md` — 内核上游回移 lane 收尾 —— 裁决报告（elden/lane-upstream）
+- `upstream-hits-20261012.md` — 上游命中与回移审计（7.2.y 稳定 / 7.3 周期 / lore 在途）
+- `upstream-hits-review-20261012.md` — 上游命中审计复核 —— 对 `reports/upstream-hits-20261012.md`（lane/upstream 53fbe5a）的独立核对
+- `upstream-lane-merge-20261012.md` — 上游回移 lane 收尾：按裁决清洗 + 合入基线 + 出日常镜像 — 2026-10-12
+
+## `doc`（16）
+
+- `doc-slim-plan-20261118.md` — 文档精简方案（只出方案，未改任何 SSOT；2026-11-18）
+- `doc-hygiene-20261117.md` — 文档/工具/工件卫生清理报告 (2026-11-17)
+- `doc-dedup-audit-20261112.md` — 文档重复描述（SSOT 违例）审计 — 2026-11-12
+- `doc-ime-scope-audit-20261111.md` — 文档口径核实：IME / 中文输入 真实进度与剩余动作（2026-11-11）
+- `doc-todo-20261111.md` — 文档整理待办分析（任务 D，2026-11-11，只读）
+- `doc-audit-20261108.md` — 增量文档审计 2026-11-08
+- `doc-audit-20261106.md` — 文档账目审计 — 2026-11-06
+- `doc-audit-20261105.md` — 文档账目审计 2026-11-05（lane C，只读）
+- `doc-slim-20261102.md` — 文档精简 / 清理 / 修正审计（2026-11-02，只出报告，不改正文）
+- `doc-trim-20261102.md` — 文档精简执行报告（2026-11-02，搬家类 P2 + 剩余 P1 落地）
+- `doc-mail-audit-20261101.md` — 文档一致性审计 + 邮件分诊（2026-11-01，只读 lane）
+- `doc-audit-20261031-apply.md` — 应用清单复核 + 增量审计（2026-10-31）
+- `doc-audit-20261030-v2-applylist.md` — 应用清单（总管一次性机械应用）— 源自 `reports/doc-audit-20261030-v2.md`（P0 0 / P1 8 / P2 15）
+- `doc-audit-20261030-v2.md` — 文档审计（增量·v2）2026-10-27 → 2026-10-30 — 状态漂移 / 死链 / 孤儿报告 / SSOT 违例
+- `doc-audit-20261030.md` — 文档缺口/过时/矛盾审计（2026-10-30）
+- `doc-audit-20261026.md` — 文档与资料审计 — 2026-10-26（lane C，`.pi/agents/doc-audit.md` 清单 1–7）
+
 ## `m1`（15）
 
 - `m1-u6-pas-dtbfw-leak-20261027.md` — U6 终审：`qcom_q6v5_pas` 的 DTB 固件在成功路径泄漏（D6 丢弃依据被推翻）
@@ -357,41 +415,6 @@
 - `m1-rebase-7.3rc7-feasibility-20261013.md` — M1 资产树基线重基可行性评估（7.2.0 血统 → 7.3-rc7）
 - `m1-clean-tree-20261011.md` — M1 干净上游资产树：组装 + 构建验证（2026-10-11）
 
-## `upstream`（15）
-
-- `upstream-74-replay-20261113.md` — 上游 7.4 重放可行性实验 — 2026-11-13
-- `upstream-inreview-inventory-20261113.md` — 在审系列清单与分诊盲区（B17，2026-11-13）
-- `upstream-status-20261113.md` — 上游化当前一页（2026-11-13）
-- `upstream-watch-20261113.md` — 上游动向观察 2026-10-01 → 2026-11-13
-- `upstream-merge-candidates-20261112.md` — 上游可合并增量评估 — 2026-11-12（lane D）
-- `upstream-delta-20261107.md` — 上游回包增量复核 — 2026-11-07
-- `upstream-dedup-audit-20261027.md` — 全系列 linux-next 去重核对（2026-10-27 晚）
-- `upstream-mail-sm8750-refs-20261023.md` — 上游邮件核查 + 同 SoC 参考面（2026-10-23 晚）
-- `upstream-libcamera-20261017.md` — libcamera 上游提交记录（2026-10-17）
-- `upstream-q24-q28-standard-20261015.md` — Q24 / Q28 在上游化标准下的重新定义（2026-10-15）
-- `upstream-policy-20261013.md` — 上游化策略 — 三问审计与「mainline + 薄下游层」落地（2026-10-13）
-- `upstream-backport-lane-verdict-20261012.md` — 内核上游回移 lane 收尾 —— 裁决报告（elden/lane-upstream）
-- `upstream-hits-20261012.md` — 上游命中与回移审计（7.2.y 稳定 / 7.3 周期 / lore 在途）
-- `upstream-hits-review-20261012.md` — 上游命中审计复核 —— 对 `reports/upstream-hits-20261012.md`（lane/upstream 53fbe5a）的独立核对
-- `upstream-lane-merge-20261012.md` — 上游回移 lane 收尾：按裁决清洗 + 合入基线 + 出日常镜像 — 2026-10-12
-
-## `doc`（14）
-
-- `doc-dedup-audit-20261112.md` — 文档重复描述（SSOT 违例）审计 — 2026-11-12
-- `doc-ime-scope-audit-20261111.md` — 文档口径核实：IME / 中文输入 真实进度与剩余动作（2026-11-11）
-- `doc-todo-20261111.md` — 文档整理待办分析（任务 D，2026-11-11，只读）
-- `doc-audit-20261108.md` — 增量文档审计 2026-11-08
-- `doc-audit-20261106.md` — 文档账目审计 — 2026-11-06
-- `doc-audit-20261105.md` — 文档账目审计 2026-11-05（lane C，只读）
-- `doc-slim-20261102.md` — 文档精简 / 清理 / 修正审计（2026-11-02，只出报告，不改正文）
-- `doc-trim-20261102.md` — 文档精简执行报告（2026-11-02，搬家类 P2 + 剩余 P1 落地）
-- `doc-mail-audit-20261101.md` — 文档一致性审计 + 邮件分诊（2026-11-01，只读 lane）
-- `doc-audit-20261031-apply.md` — 应用清单复核 + 增量审计（2026-10-31）
-- `doc-audit-20261030-v2-applylist.md` — 应用清单（总管一次性机械应用）— 源自 `reports/doc-audit-20261030-v2.md`（P0 0 / P1 8 / P2 15）
-- `doc-audit-20261030-v2.md` — 文档审计（增量·v2）2026-10-27 → 2026-10-30 — 状态漂移 / 死链 / 孤儿报告 / SSOT 违例
-- `doc-audit-20261030.md` — 文档缺口/过时/矛盾审计（2026-10-30）
-- `doc-audit-20261026.md` — 文档与资料审计 — 2026-10-26（lane C，`.pi/agents/doc-audit.md` 清单 1–7）
-
 ## `m3`（12）
 
 - `m3-v5-selfcontained-20261031.md` — M3 v5 系列自足性门禁 + cover letter — 2026-10-31
@@ -406,6 +429,18 @@
 - `m3-6-wireless-slice-20261013.md` — M3-6 无线片：就绪化 + M4 无线立项建议（2026-10-13）
 - `m3-missing-support-matrix-20261013.md` — M3 缺口矩阵 — 板 DTS 依赖项的上游支持面（2026-10-13）
 - `m3-series-plan-20261013.md` — M3 板支持系列 — 拆分计划与验收口径（2026-10-13）
+
+## `camss`（9）
+
+- `camss-v25-rebase-20261117.md` — camss CSIPHY 2.4.0 delta：按 Bryan 要求重基到 on-list kaanapali v25（主机侧，2026-11-17 下午）
+- `camss-csiphy-24-delta-20261115.md` — camss CSIPHY SM8750 2.4.0 delta → 可投递补丁（本轮备料）
+- `camss-csiphy-v6-vs-240-20261113.md` — camss CSIPHY 对账：上游 kaanapali 表 vs vendor 2.4.0（B1）+ 0007 独立评估（B2）
+- `camss-v6-rebase-plan-20261113.md` — camss 路线改接 Qualcomm v6（2026-11-13）
+- `camss-delta-20261102.md` — M4 camss：我方 v2(9 发) 与上游在审系列的覆盖差集 + 裁决（2026-11-02）
+- `camss-icc-table-fix-20261031.md` — D6：camss interconnect 表不一致 —— 给 Hangxiang 的 fix 素材（2026-10-31）
+- `camss-v3-reply-draft-20261029.md` — camss 线程回信（2026-10-29，**已发送**）
+- `camss-v3-vs-upstream-v6-20261029.md` — camss v3 候选 × 上游高通 v6 逐枚对照 — 2026-10-29
+- `camss-upstream-response-20261028.md` — camss（M4）上游回信与元数据整改 — 2026-10-28
 
 ## `m3v5`（9）
 
@@ -474,6 +509,17 @@
 - `m6-debian-candidate-boot-nousb-20261026.md` — M6 首次上机：Debian 目标根候选镜像 `fastboot boot` 后设备**全程无 USB**（未收口）
 - `m6-switch-root-breakpoint-resolved-20261026.md` — M6 / T19 断点已解：不是 switch_root 内部，是 Debian 根缺 `switch_root` symlink
 
+## `script`（8）
+
+- `script-audit-adb-20261118.md` — adb / fastboot 板块静态审查（R3）
+- `script-audit-edl-20261118.md` — 脚本功能审查 R1：EDL / qdl / GPT 板块（只读静态审查）
+- `script-audit-fastboot-gpt-20261118.md` — R2 — fastboot / A/B 槽位 / GPT 槽属性 板块静态审查（2026-11-18）
+- `script-audit-ssh-20261118.md` — 脚本审查 R4 — ssh / 部署板块（只读静态审查）
+- `script-cleanup-audit-20261112.md` — 脚本清理审计（2026-11-12，只读）
+- `script-redundancy-audit-20261112.md` — 脚本冗余审计：reboot → fastboot 入口 + 其它脚本过时缺陷（lane E）
+- `script-tidy-20261106.md` — 脚本 / 工具整理（2026-11-06 第四轮）
+- `script-audit-20261105.md` — 脚本工具审计与提速（2026-11-05）
+
 ## `wl2868c`（8）
 
 - `wl2868c-v10-landed-20261111.md` — wl2868c v10 落地 + 投递报告（2026-11-11）
@@ -485,15 +531,15 @@
 - `wl2868c-20261028.md` — wl2868c binding（M4-1）重生成与 v2 投递 — 2026-10-28
 - `wl2868c-driver-20261028.md` — wl2868c 驱动本体：基线与上游可接受性 — 2026-10-28
 
-## `camss`（7）
+## `android`（7）
 
-- `camss-csiphy-v6-vs-240-20261113.md` — camss CSIPHY 对账：上游 kaanapali 表 vs vendor 2.4.0（B1）+ 0007 独立评估（B2）
-- `camss-v6-rebase-plan-20261113.md` — camss 路线改接 Qualcomm v6（2026-11-13）
-- `camss-delta-20261102.md` — M4 camss：我方 v2(9 发) 与上游在审系列的覆盖差集 + 裁决（2026-11-02）
-- `camss-icc-table-fix-20261031.md` — D6：camss interconnect 表不一致 —— 给 Hangxiang 的 fix 素材（2026-10-31）
-- `camss-v3-reply-draft-20261029.md` — camss 线程回信（2026-10-29，**已发送**）
-- `camss-v3-vs-upstream-v6-20261029.md` — camss v3 候选 × 上游高通 v6 逐枚对照 — 2026-10-29
-- `camss-upstream-response-20261028.md` — camss（M4）上游回信与元数据整改 — 2026-10-28
+- `android-assets-20261119.md` — 安卓原厂资产 → Linux 可用包（纯主机侧）
+- `android-ksu-avb-20261119.md` — KSU(init_boot) + AVB 自洽 —— 主机侧造件与对账（TB322FC / elden / ZUXOS 1.5.10.259）
+- `android-slim-v2-20261119.md` — 安卓「干净瘦身 v2」+ 卡 ZUXOS 动画静态定因
+- `android-min-avb-facts-20261118.md` — 精简安卓全量包的 AVB / 虚拟 A/B / 去预装 事实与风险（S2）
+- `android-super-format-20261118.md` — super 封装格式、工具链与精简额度（S1）
+- `android-compat-20261026.md` — G2 安卓兼容调查（lane F）— 2026-10-26
+- `android-required-resources-audit-20261011.md` — 安卓侧「必须提取资源」审计（U2 · 2026-10-11）
 
 ## `waydroid`（7）
 
@@ -532,6 +578,14 @@
 - `userland-dark-brightness-verify-20261011.md` — 桌面用户态收口：深色/主题（G1-26/27）与亮度滑块（G1-28）—— 上机复核（2026-10-11）
 - `userland-display-scale-refresh-20261011.md` — 用户态显示修正：刷新率固定 165 Hz + 非整数缩放显示 100%（2026-10-11）
 
+## `device`（5）
+
+- `device-status-20261119.md` — 设备可用性核查：U2 `HA2EXB0E` —— 「ABL 内存类硬件故障 / 全原厂态等送修 ⇒ 不再上机」作废（2026-11-19）
+- `device-session-20261116-vk192.md` — vk192 上机 + 持久化（2026-11-16）
+- `device-session-20261113-vk191.md` — 设备会话 — 2026-11-13 夜：vk191 ramdisk 零写盘验证 + s2idle 复测
+- `device-window-checklist-20261031.md` — 设备窗口执行单（B 类阻塞合并）— 2026-10-31
+- `device-rescue-and-q28-m1-badboot-20261017.md` — 换机后 P0 抢救 + M1-7.3 线首个 Q28 坏发现场（2026-10-17）
+
 ## `git`（5）
 
 - `git-slim-exec-20261113.md` — git 树整理执行账 — 2026-11-13（第二轮）
@@ -546,6 +600,13 @@
 - `audit-20261029-pending-consistency.md` — 审计报告：文档与事实一致性（Lane A，2026-10-29 待办口径）
 - `audit-overview-20261013.md` — 项目审计总览（2026-10-13）
 - `audit-early-reboot-20261012.md` — 审计报告：历史脚本「过早复位 / 进 fastboot」模式（early-reboot）
+
+## `bl`（4）
+
+- `bl-stuck-20261118-forensics.md` — 卡 BL 现况取证 + 原厂全量线刷预案（2026-11-17 18:53，只读；用户将亲自刷机）
+- `bl-stuck-20261117-device-window.md` — 设备窗口 2026-11-17 16:02–16:50：卡 BL 恢复尝试全账（**未恢复，已停手保留现场**）
+- `bl-stuck-20261116.md` — 2026-11-16 夜：设备卡 fastboot（两槽都不能起）—— 只读取证与排除表
+- `bl-history-and-playbook.md` — 卡 bootloader（卡 BL / 落 fastboot）历史案例与排查手册
 
 ## `c5`（4）
 
@@ -568,6 +629,13 @@
 - `mobian-rootfs-artifacts-20261026.md` — Mobian 迁移物料（第一步）：apt 包映射表 + 自建固件包
 - `mobian-migration-plan-20261021.md` — Mobian（Debian + Phosh）迁移可行性评估与方案 — 只读研究，2026-10-21
 
+## `progress`（4）
+
+- `progress-audit-20261118.md` — 进度审计（只读复核）：文档 vs 会话 vs 实测
+- `progress-review-20261107.md` — 项目进度整理 — 2026-11-07（第六轮：漂移 / 过时 / 上游对账）
+- `progress-review-20261106.md` — 项目进度整理 — 2026-11-06（第五轮）
+- `progress-refresh-20261102.md` — 进度整理：11-01/11-02 最新事实下的「数字与时间线」对齐（只产编辑清单）
+
 ## `q32`（4）
 
 - `q32-matrix-20261024.md` — Q32 判据表（5 发全量）：复位深度 × 显示结果 × 固件活显示
@@ -582,24 +650,36 @@
 - `research-vertical-y700-lineage-20261101.md` — 纵向同产品线调研：Lenovo Legion Y700 五代（TB-9707F → TB323FU）与 Legion Tab 命名 —— 2026-11-01
 - `research-waydroid-sensors-hal-20261011.md` — 调研：Waydroid 传感器 HAL 的社区/上游经验（2026-10-11）
 
-## `script`（4）
+## `主机侧`（4）
 
-- `script-cleanup-audit-20261112.md` — 脚本清理审计（2026-11-12，只读）
-- `script-redundancy-audit-20261112.md` — 脚本冗余审计：reboot → fastboot 入口 + 其它脚本过时缺陷（lane E）
-- `script-tidy-20261106.md` — 脚本 / 工具整理（2026-11-06 第四轮）
-- `script-audit-20261105.md` — 脚本工具审计与提速（2026-11-05）
+- `主机侧-B13-20261117.md` — 主机侧 B13 — 脚本欠账清理（2026-11-17）
+- `主机侧-B15-20261117.md` — 主机侧 B15 — Gunyah「两空」：`0xA(MEM_INVALID)` 是「RM 太老」还是状态机 bug（2026-11-17，零设备）
+- `主机侧-B17-20261117.md` — 主机侧 B17 — 分诊盲区（2026-11-17）
+- `主机侧-B18-20261117.md` — 主机侧 B18：libcamera 闪光灯通路 + 闪光灯 NTC 热区（2026-11-17）
 
-## `device`（3）
+## `c3`（3）
 
-- `device-session-20261113-vk191.md` — 设备会话 — 2026-11-13 夜：vk191 ramdisk 零写盘验证 + s2idle 复测
-- `device-window-checklist-20261031.md` — 设备窗口执行单（B 类阻塞合并）— 2026-10-31
-- `device-rescue-and-q28-m1-badboot-20261017.md` — 换机后 P0 抢救 + M1-7.3 线首个 Q28 坏发现场（2026-10-17）
+- `c3-spic-verdict-20261115.md` — C3 Play Integrity 实测回包（SPIC v1.4.0，2026-11-15）
+- `c3-pi-tiers-closeout-20261110.md` — C3 收口（2026-11-10）：Play Integrity 三档 × Widevine 等级的**书面结论**
+- `c3-identity-drm-20261013.md` — C3 身份/DRM 取证（Waydroid 容器 / lineage_waydroid_arm64_only A13）— 2026-10-13
+
+## `disk`（3）
+
+- `disk-cleanup-20261119-validation-impact.md` — 2026-11-19 磁盘清理对「验证面」的影响与处置
+- `disk-cleanup-20261116.md` — 磁盘清理第二轮执行账 — 2026-11-16（承接 `reports/disk-cleanup-20261115.md`）
+- `disk-cleanup-20261115.md` — 磁盘清理评估与执行账 — 2026-11-15（第二轮，承接 `.pi/reports/disk-audit-2026-11-15.md`）
 
 ## `external`（3）
 
 - `external-scan-20261112.md` — 外部动向扫描 2026-11-12（窗口：2026-11-09 → 2026-11-12 16:35 CST）
 - `external-scan-20261112b.md` — 外部动向扫描 2026-11-12b（窗口：2026-11-12 16:35 CST → 2026-11-12 17:35 CST）
 - `external-scan-20261109.md` — 外部动向扫描 2026-11-09（窗口：2026-11-08 → 2026-11-09 14:30 CST）
+
+## `grub`（3）
+
+- `grub-rehash-20261115.md` — arm64 standalone GRUB：LoadFile2 填 buffer 后回读校验（grub-rehash 一发）
+- `grub-project-scan-20261111.md` — GRUB 项目扫描（上游 2.14 线 + 同机型社区）——在「EFI-stub 直启 ~60–70 s 硬件掉电」这个新事实下
+- `grub-direct-vs-secondstage-20261110.md` — 直接 GRUB → EFI-stub 内核 为什么掉电，而「二级 Loader」没事
 
 ## `kexec`（3）
 
@@ -619,12 +699,6 @@
 - `m8ab-restart-20261030.md` — M8 A/B 续测（2026-10-30）：基线臂三发正常，坏发未复现
 - `m8ab-build-20261029.md` — M8 v2 真机 A/B 两镜像臂构建报告（lane G，2026-10-29）
 
-## `progress`（3）
-
-- `progress-review-20261107.md` — 项目进度整理 — 2026-11-07（第六轮：漂移 / 过时 / 上游对账）
-- `progress-review-20261106.md` — 项目进度整理 — 2026-11-06（第五轮）
-- `progress-refresh-20261102.md` — 进度整理：11-01/11-02 最新事实下的「数字与时间线」对齐（只产编辑清单）
-
 ## `suspend`（3）
 
 - `suspend-panic-rootcause-20261020.md` — vk129（CONFIG_SUSPEND=y）启动即死：根因 = 模块 ABI 与内核 ABI 不一致（非 suspend 代码 bug）
@@ -637,10 +711,11 @@
 - `tablet-dev-env-20261030.md` — 平板开发环境落地（tablet-offload，2026-10-30）
 - `tablet-offload-plan-20261030.md` — 平板断电续作与分担方案（容量 / 同步 / 离线包 / 夜间运行）
 
-## `android`（2）
+## `todo`（3）
 
-- `android-compat-20261026.md` — G2 安卓兼容调查（lane F）— 2026-10-26
-- `android-required-resources-audit-20261011.md` — 安卓侧「必须提取资源」审计（U2 · 2026-10-11）
+- `todo-next-20261118.md` — 下一步单一可执行清单（2026-11-18 版）
+- `todo-reconcile-20261117.md` — 待办对账 — `todo-inventory-20261113.md` → 2026-11-17 真实状态
+- `todo-inventory-20261113.md` — 当前待办 + 待测 全量清单（2026-11-13）
 
 ## `aw86927`（2）
 
@@ -656,11 +731,6 @@
 
 - `c1-noworkaround-20261013.md` — C1 端到端验收：去 workaround 后容器原生出网（vk126-c1）— 2026-10-13
 - `c1-iprule-vk95-20261011.md` — C1 内核侧根修：开启策略路由（`IP_ADVANCED_ROUTER` / `IP_MULTIPLE_TABLES`）— vk95（2026-10-11）
-
-## `c3`（2）
-
-- `c3-pi-tiers-closeout-20261110.md` — C3 收口（2026-11-10）：Play Integrity 三档 × Widevine 等级的**书面结论**
-- `c3-identity-drm-20261013.md` — C3 身份/DRM 取证（Waydroid 容器 / lineage_waydroid_arm64_only A13）— 2026-10-13
 
 ## `code`（2）
 
@@ -691,11 +761,6 @@
 
 - `g3-steam-screenshot-paths-20261029.md` — G3 Steam 判据②「截图」路径清单 + captive-portal 绕过草案（2026-10-29，纯主机）
 - `g3-steam-20261028.md` — G3 第一批：Steam 客户端起到登录界面（2026-10-28，持设备）
-
-## `grub`（2）
-
-- `grub-project-scan-20261111.md` — GRUB 项目扫描（上游 2.14 线 + 同机型社区）——在「EFI-stub 直启 ~60–70 s 硬件掉电」这个新事实下
-- `grub-direct-vs-secondstage-20261110.md` — 直接 GRUB → EFI-stub 内核 为什么掉电，而「二级 Loader」没事
 
 ## `integrity`（2）
 
@@ -731,6 +796,11 @@
 
 - `out-uefi-trim-20261106.md` — `out/r21-sbstop` 处置：先记指纹与可复现性缺口（2026-11-06）→ **同日已执行清仓**
 - `out-archive-20261105.md` — `out/` 历史镜像归档执行（2026-11-05）—— 114 件 / 7.66 GiB
+
+## `pstore`（2）
+
+- `pstore-ram-initrd-guard-20261116.md` — pstore/ram 拒绝与 initrd 重叠的 zone —— 落地与门禁（2026-11-16）
+- `pstore-ram-initrd-review-20261116.md` — pstore/ram initrd 重叠跳过补丁 — 独立评审（2026-11-16）
 
 ## `qemu`（2）
 
@@ -812,6 +882,10 @@
 
 - `b2-camss-0003-recheck-20261113.md` — B2 复核：camss `0003`（起流失败回退）独立评估 —— **结论：已由我们的 v2 系列自行收录，不再独立投递**
 
+## `backup`（1）
+
+- `backup-triage-20261118.md` — backup-triage-20261118 — backup/ 整理归类、去重、精简合并（dry-run，未删任何东西）
+
 ## `beacon`（1）
 
 - `beacon-recheck-20261110.md` — UEFI「落盘信标」线独立复核 — 2026-11-10
@@ -848,6 +922,10 @@
 
 - `counts-gate-20261107.md` — counts-gate-20261107 — 门禁新增「TASKS §0 手写数字 ↔ 计数脚本」子门（s16）
 
+## `desktop`（1）
+
+- `desktop-chain-gate-20261119.md` — 零到桌面链路静态门（check-doctor §22）— 2026-11-19
+
 ## `determinism`（1）
 
 - `determinism-gap-and-q28-plan-20261023.md` — 概率性测试意味着什么 —— 结构性诊断 + Q28 收敛方案（2026-10-23）
@@ -872,6 +950,10 @@
 
 - `edl-toolchain-survey-20261101.md` — EDL 工具链选型（TB322FC / SM8750P）—— 跟 `linux-msm/qdl`
 
+## `esp`（1）
+
+- `esp-gpt-apply-automation-20261118.md` — 设备恢复自动化两个缺口补齐（A5，2026-11-18，主机侧）
+
 ## `f1`（1）
 
 - `f1-f3-wcn-firstprobe-20261014.md` — WCN 首探修法：内核内自动重发（F1/F2/F3，2026-10-14/15）
@@ -892,6 +974,10 @@
 
 - `greetd-stop-verify-20261031.md` — greetd 关机卡死修复现状核对（2026-10-31）
 
+## `hide`（1）
+
+- `hide-android-partitions-20261119.md` — 在文件管理器侧栏隐藏只读 Android / 持久化分区 — 机制调研 + 脚本 + 上机判据
+
 ## `init`（1）
 
 - `init-systemd-vs-openrc-20261011.md` — init/systemd vs OpenRC 调查 — 只读，2026-10-11
@@ -907,6 +993,10 @@
 ## `libc`（1）
 
 - `libc-musl-vs-glibc-20261011.md` — 调查：宿主 rootfs 是否需要从 musl(Alpine) 切 glibc（2026-10-11）
+
+## `ltbox`（1）
+
+- `ltbox-evaluation-20261118.md` — LTBox 评估：校验逻辑能否抽成 CLI / 接 MCP（R5）
 
 ## `m5`（1）
 
@@ -924,9 +1014,17 @@
 
 - `migration-rebuild-audit-20261017.md` — 换机后「可重建进度」审计（2026-10-17）
 
+## `misc`（1）
+
+- `misc-20261117.md` — 零碎小任务 lane — 2026-11-17
+
 ## `motor`（1）
 
 - `motor-haptics-vk127-20261017.md` — 马达（aw86927/aw86937 haptics）为何不工作 — vk127 上机诊断（2026-10-17）
+
+## `mu`（1）
+
+- `mu-memmap-20261115.md` — 2026-11-15 Mu UEFI 重打：把 0xD65C0000–0xFC800000 纳入 EFI 可见内存图 + AllocatePages/内存图插桩
 
 ## `net`（1）
 
@@ -1011,10 +1109,6 @@
 ## `tidy`（1）
 
 - `tidy-audit-20261110.md` — 项目整理核对报告（2026-11-10，只读盘点）
-
-## `todo`（1）
-
-- `todo-inventory-20261113.md` — 当前待办 + 待测 全量清单（2026-11-13）
 
 ## `tooling`（1）
 

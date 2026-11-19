@@ -39,6 +39,7 @@ SELFTEST = '--selftest' in ARGV          # 只跑反作弊
 NO_SELFTEST = '--no-selftest' in ARGV    # 反作弊里的递归副本（防无限套娃）
 
 SCRIPT = 'scripts/deploy-desktop-shell.sh'
+CHECK = 'scripts/zero-to-desktop-check.sh'
 TSYNC = 'packaging/elden-userland/files/usr/local/sbin/time-sync.sh'
 RUNBOOK = 'RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md'
 PITFALLS = 'PITFALLS/README.md'
@@ -137,6 +138,29 @@ def check_static():
         if needle in body:
             continue
         bad('%s 判据锚点丢了：%s 里没有 `%s`（%s）' % (pid, rel, needle, why))
+
+    # B2 S5–S12 单命令自检脚本（手册判据的机器入口；它不在 = 判据又回到人脑）
+    ck = read(CHECK)
+    if ck is None:
+        bad('缺 %s（S5–S12 的自检入口）' % CHECK)
+    else:
+        r = subprocess.run([os.path.join(ROOT, CHECK), '--list'],
+                           capture_output=True, text=True, timeout=60)
+        ids = [l.split('\t')[0] for l in r.stdout.splitlines() if l.strip()]
+        want = ['S%d' % n for n in range(5, 13)]
+        if r.returncode != 0:
+            bad('%s --list 失败（rc=%d）' % (CHECK, r.returncode))
+        elif ids != want:
+            bad('%s 覆盖步不符：期望 %s 实得 %s'
+                % (CHECK, ','.join(want), ','.join(ids) or '空'))
+        else:
+            ok('%s 覆盖 S5–S12（%d 步，--list 可机器读）' % (CHECK, len(ids)))
+        d = subprocess.run([os.path.join(ROOT, CHECK), '--dry-run'],
+                           capture_output=True, text=True, timeout=60)
+        if d.returncode == 0 and all(('  %s ' % i) in d.stdout for i in want):
+            ok('%s --dry-run 全步可离线展开（不连设备）' % CHECK)
+        else:
+            bad('%s --dry-run 未能离线展开全部步（rc=%d）' % (CHECK, d.returncode))
 
     # C PITFALLS 索引 + RUNBOOK 步
     pit = read(PITFALLS) or ''

@@ -250,9 +250,9 @@ timeout -k 5 30 fastboot -s $SN reboot; sleep 45
 pi-sudo ip-addr add 192.168.7.3/24 dev enx021e5eede102
 # 3) 验活
 timeout -k 5 20 ssh -o StrictHostKeyChecking=no root@192.168.7.1 'uname -r; ps -p1 -o comm=; date -u'
-# 4) 链路自检（网络/时间/桌面/Gpu 全在一处）
-bash scripts/deploy-desktop-shell.sh --check
-# 5) 有缺就收敛
+# 4) 链路自检（S5–S12 一条命令：起机/显示/网络/时钟/扩容/基线/桌面/GPU，只读）
+bash scripts/zero-to-desktop-check.sh          # 加 --dry-run 可先看它要跑什么
+# 5) 有缺就收敛（先基线再桌面）
 bash scripts/mobian-daily-baseline.sh && bash scripts/deploy-desktop-shell.sh
 # 6) 截图目视（非黑底转圈 = 桌面壳活着）
 scp root@192.168.7.1:/tmp/desk-deploy.png /tmp/desk.png
