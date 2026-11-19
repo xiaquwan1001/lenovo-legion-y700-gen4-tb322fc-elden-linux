@@ -189,3 +189,13 @@ sudo bash scripts/android-slim-v3-build.sh --verify-only
 **下一轮候选（成本升序）**：S1 清 BCB 后 `qbootctl -a` + `reboot`（v1 在机，3 min）→ S2 回写原厂 `metadata.img`(29 MB) →
 S3 刷原厂 `super` 对照（~6 min）→ S4 二分 v2b / 只占位不删 → S5 造带 `console=ttyGS0` 的 boot 件拿日志。
 详见 `TASKS/sessions/2026-11-19-安卓共存契约与v3精简上机.md` §3。
+
+## 8. 收尾动作与新增差异（21:4x，Linux 侧）
+
+- **BCB 已清**：从 Linux 侧 `dd if=/dev/zero of=/dev/disk/by-partlabel/misc bs=4096 count=1 conv=fsync`（原 4 KiB 备份到设备 `/tmp/misc.bcb.bak`），
+  读回 32 B 全 0。理由：此前 `misc` 是 `boot-recovery`，带着它重启会直接进 recovery（而不是 b 槽 Linux）；清 0 后下一次重启回活动槽（现为 `_b` = Linux）。
+- **super 现态 = v1**（Linux 侧读回前 512 KiB 用 `scripts/android-super.py list` 解析）：`system_a 5296 MiB`、7 个 `_a` 分区、metadata 校验 OK。
+- **v1 vs v3 的一个真实差异（新发现，下次构建要拉平）**：
+  v1 的 liblp `blockdev size = 23622320128`（22 GiB 整分区），v3 用 `-d auto` ⇒ `blockdev size = 7454326784`（7109 MiB）。
+  文件长度两者都等于实占（v1 8893497344 / v3 7454326784）。⇒ **v3 复现构建应改回 `-d 23622320128` 再截断到实占**，
+  以把「元数据声明的设备尺寸」这个变量从 v1/v3 对比里去掉。
