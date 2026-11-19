@@ -37,11 +37,14 @@ SUPER_ALIGN=524288
 SUPER_ALIGN_OFF=491520
 
 # 整目录删除（相对镜像根）。空目录占位单独处理（preinstall / etc/AI）。
-DROP_DIRS=(
+# EXTRA_LEAF=1（默认）：连 18 个无用 leaf 包一起删；=0：只删池/AI/bgmusic/动画（= v2-B 变体，用于二分）。
+BASE_DROP=(
 	system/etc/AI
 	system/etc/bgmusic
 	system/media/bootanimation_mcdonalds.zip
 	system/media/shutdownanimation_mcdonalds.zip
+)
+LEAF_DROP=(
 	# —— 无用功能 leaf 包（不删任何启动链/桌面/设置/权限/Provider/相机）——
 	system/priv-app/ZUIEpos              # POS/销售点服务（373.7 MiB，单 apk）
 	system/priv-app/ZuiNewBrowser        # 联想浏览器
@@ -61,6 +64,7 @@ DROP_DIRS=(
 	system/priv-app/EngineeringCode      # 工程码
 	system/priv-app/UDSEngine            # UDS 引擎（推广/服务端下发）
 )
+if [ "${EXTRA_LEAF:-1}" = "1" ]; then DROP_DIRS=("${BASE_DROP[@]}" "${LEAF_DROP[@]}"); else DROP_DIRS=("${BASE_DROP[@]}"); fi
 # 只删子项、保留空目录（调用方 File#list() 返回空数组）
 DROP_CHILDREN=(system/preinstall system/etc/AI)
 

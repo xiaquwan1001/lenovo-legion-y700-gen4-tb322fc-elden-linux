@@ -117,6 +117,33 @@ sudo bash scripts/android-slim-v3-build.sh --verify-only
 | 20:0x | `qdl -s ufs -R <loader> write 0/90504 new/super_min_v3.img` | 6.9 GiB，**2 min 48 s @42.2 MiB/s** |
 | 20:0x | `qdl -s ufs -R <loader> read 0/90504+1819904 rb/super_rb.img` | 6.9 GiB；`sha256 = 51eae107…` **= 主机件** |
 | 20:0x | `qdl reset` | 设备离开 9008 后 **USB 上完全消失**（240 s 无 `05c6`/`18d1`/`adb`/`fastboot`） |
+| 20:2x | 用户观察 | 屏幕停在 **recovery**（未进 ZUXOS）；`adb devices` 出现 `HA2EXB0E recovery` |
+| 20:2x | `adb -s HA2EXB0E shell` | adbd 崩：`shell_service.cpp:380 Could not set SELinux context for subprocess`（与 11-18 同一条）；`adb pull /tmp/recovery.log` = Permission denied ⇒ **recovery 侧取证不可得** |
+| 20:2x | `adb reboot bootloader` → `fastboot getvar` | `current-slot:a`、`slot-retry-count:a` **5→4**（说明 reset 后确实做过一次 a 槽启动尝试且失败） |
+| 20:2x | EDL 读 `misc`（LUN0 89992，1 MiB） | BCB 命令 = **`bootonce-bootloader`**（不是 `boot-recovery`）⇒ 那次 reset 后 ABL 本来就被要求「一次性进 fastboot」；屏幕上的 recovery 很可能是随后人为/耗尽后的落点，**不是 Android 启动失败的直接证据** |
+| 20:3x | EDL 写 4 KiB 零到 `0/89992`（只清 BCB 头，读回全 0；1 MiB 原 `misc` 已落盘 `diag/misc-20261119-2030.bin`） | 清掉 `bootonce-bootloader`，下一次 reset 应走正常 `boot_a` |
+| 20:3x | 再 `qdl reset` | 与 20:0x 一样 **USB 无枚举**（120 s 无 adb/fastboot/05c6）⇒ `qdl reset` 之后需要人按电源键（本项目已知物理动作） |
+
+### v3 第二次上机（21:0x–21:3x）：wipe 后仍不进桌面
+
+| 时间 | 动作 | 结果 |
+|---|---|---|
+| 21:1x | `fastboot -w`（已清 BCB） | `Erasing 'userdata'/'metadata'` OK；`cache` 不存在（`wipe task partition not found`）→ **/data raw 未格式化，靠首启自建** |
+| 21:1x | 造 `new/super_dbg.img`（v3 + `ro.adb.secure=0` + `/system/adb_keys` 换成主机公钥；只为取 logcat） | `e2fsck` clean；lpmake 三次哈希一致 `8b42f20d…` |
+| 21:2x | EDL 写 `super_dbg.img` 6.9 GiB @42.6 MiB/s | 首 16 MiB 与末 16 MiB 设备侧 `qdl sha256` **= 主机**（`b28d9180…` / `9fb36f95…`）；中途一度误判不合，实为本代理 LBA 偏移算错（1816312 vs 1906312），复核后 `cmp` IDENTICAL |
+| 21:2x | `qdl reset` | **卡联想 logo → 自行掉电 → 落到 recovery**（用户现场）；**没有进到 ZUXOS 动画**（与 v3 第一次不同） |
+
+**判读（不下定因）**：这一次连 bootanimation 都没起，落在 ABL/kernel 段而不是 system_server 段；
+两个候选：① wipe 后首启要格式化/加密 /data，logo 段耗时长，掉电可能是**电量/电源**问题（未取证）；② 本镜像在这台机上的启动链存在更早的失败点。
+`adb`（recovery）`shell` 仍崩（`Could not set SELinux context for subprocess`）、`pull /tmp/recovery.log` Permission denied ⇒ 仍无日志。
+
+### 主机侧稳定性事件（同轮，见 `~/hw-stability/evidence/inbox/20261119-y700-elden-super-bitflip/`）
+
+`new/super_min_v3.img` 在 mtime 不变的情况下，先后测得 **3 个不同 sha256**（`51eae107` → `c9eef7f8` → `8f962bee`），
+与设备读回件 `cmp` 恰好 **11 字节**差（10 个集中在 23 KiB 窗口、单比特差）。
+**处置**：用当前 host 件重新 `lpmake` 出干净件（三次哈希一致 = `51eae107`，与设备读回件逐字节同）覆盖 `new/`；
+构建脚本 §7 已加「两次独立 `sha256sum` 必须一致」硬门。
+**判读**：设备侧内容无需重写；这是主机读/写路径不稳（规则 12 口径），不改变 Android 镜像本身的结构判据（两侧 `e2fsck -fn` 均 clean）。
 
 ### 未做（等下一步）
 
@@ -140,3 +167,25 @@ sudo bash scripts/android-slim-v3-build.sh --verify-only
 1. 首启判据未取得（设备需物理上电）。
 2. 删除 18 个 leaf 包是否触发 ZUI 首次开机向导依赖（`ZUISetupWizardExtPRC` 保留）——只有上机可判；回退件在手。
 3. `-d auto` 出的 super 元数据 `device_size` = 7454326784（< 分区 22 GiB），与 v1 同口径（v1 也是 8893497344 < 22 GiB 且两发成功）⇒ 沿用，不改。
+---
+
+## 7. 21:3x–21:5x 现场复核（用户切回 Linux 后，全部只读）
+
+**判据都取自设备本身**（Linux 侧 `sha256sum /dev/disk/by-partlabel/*`、`dd` 读 `misc`/`super`、`logfs`、`pstoredump`）。
+
+| 核查 | 结果 | 判读 |
+|---|---|---|
+| `misc` BCB（现态） | **`boot-recovery`** | ⚠ 上机记录里 EDL 之后看到的是 `bootonce-bootloader`。两次「logo 后掉电」期间的 BCB 未记录 ⇒ **不能排除那两次启动的是 recovery 而不是 Android**（confound，下轮必须先清 BCB 再 reset 并读回校验） |
+| `logfs` 全量（8 MiB，已落盘） | 9+ 条 `Booting from slot (_a)`，每条都到 `Shutting Down UEFI Boot Services`（≈13 302–13 311 ms）；另一条 4 085 ms（recovery/fastboot 类） | **ABL 每次都成功把内核交出去了** ⇒ 失败点在 Android 内核/init 之后，不是 ABL/槽位 |
+| `pstoredump` 128 MiB | grep `panic\|oops\|Unable to handle` = **0 命中** | 无内核崩溃证据 ⇒ 卡在 userspace |
+| 电池 | `qcom-battmgr-bat`: **82% / Charging / 4.243 V** | 「掉电」不是低电 |
+| a 槽启动链 | `boot_a=b428a31d…`(原厂 259，头 `ANDROID!`)、`init_boot_a=e8206b81…`(原厂)、`vendor_boot_a=326d5c32…`、`vbmeta_a=419e01ac…`(自签 Flags=1)、`dtbo_a=45f51790…` | 链路件与 11-18 成功上机时同源；**不是** 11-16 那套 UEFI `boot_a`（排除「ABL 起的是 UEFI」这条误判） |
+| 回刷 v1 | EDL `write 0/90504` 8.3 GiB 3 min 19 s @42.6 MiB/s → 读回 2171264 扇区 **sha256 = `e3d0d26f…`** = 主机 | v1 在机且逐字节可信 |
+| Linux 侧 | `uname -r` `7.3.1-debug-vk189-suspend-…`；`/` = `/dev/sda17`(= `linux17`)；SSH 通、桌面可用 | **共存形态达成**：刷安卓三次没有伤到 Linux（linux17/boot_b 全程未碰） |
+
+**结论修订（相对 §0-5）**：v3 的「卡 ZUXOS 动画」是唯一一发**确定在跑 Android** 的失败样本；
+之后两发「logo→掉电」与 BCB 状态混淆，**降级为无效样本**。下一轮实验纪律：**清 BCB（写 4 KiB 零）→ 读回校验全 0 → 才 `qdl reset`**。
+
+**下一轮候选（成本升序）**：S1 清 BCB 后 `qbootctl -a` + `reboot`（v1 在机，3 min）→ S2 回写原厂 `metadata.img`(29 MB) →
+S3 刷原厂 `super` 对照（~6 min）→ S4 二分 v2b / 只占位不删 → S5 造带 `console=ttyGS0` 的 boot 件拿日志。
+详见 `TASKS/sessions/2026-11-19-安卓共存契约与v3精简上机.md` §3。

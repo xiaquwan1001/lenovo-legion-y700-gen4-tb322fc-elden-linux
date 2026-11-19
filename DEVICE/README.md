@@ -43,7 +43,8 @@
   **锁屏需人手滑开**（内核未开 `CONFIG_INPUT_UINPUT`，无 `/dev/uinput`）。链路手册 = `RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md`。
   ⟪历史定界（2026-11-19 13:20 之前）⟫ ~~`ath12k` MHI `-110`、无 `/dev/fastrpc-adsp`、`snd-sc8280xp` deferred（均 ADSP/GPR 未就绪）~~ —— 该三项已随 `apt install udev` 全部消失（见本条上文），此处仅作定界前记录。
   **旧 `linux17` 根 fs 已确认丢失**（EDL 6 点采样全零，成因 = 原厂 `userdata` 覆盖 + `fastboot -w`），故本次为重建而非恢复。
-  安卓面：`super`/`vbmeta_a`/`boot_a`/`dtbo_a` **均未动**（a 槽仍是 11-18 的瘦身 Android，卡 ZUXOS 动画未取证）。
+  安卓面（2026-11-19 21:5x 更新）：a 槽 = **已回刷 v1 精简件**（`super_min.img`，读回 `e3d0d26f…` 逐字节一致；`boot_a`/`init_boot_a`/`vendor_boot_a` = 原厂，`vbmeta_a` = 自签 Flags=1）；
+  **上机 3 发均未进桌面**（v3 卡 ZUXOS 动画；另两发卡 logo 后掉电，但当时 `misc` BCB = `boot-recovery` ⇒ 很可能启的是 recovery，不作数）；Linux（b 槽 + `linux17`）全程未受影响，现居 Linux。详见 `reports/android-slim-v3-20261119.md` §7。
   **设备不需要送修**（「ABL 内存类硬件故障 / 全原厂态等送修」= 已作废口径，2026-11-19 标废）：真因 = 非原厂 GPT（11-17 19:2x 单变量定因），
   此后设备连续三次真实上机（11-17 20:0x 完整起 Android 16 / 11-18 19:0x 最小安卓包 / 11-19 深夜本最小根）⇒ 硬件无故障证据。
   旧送修单仅作历史存档：`DEVICE/service-repair-note-20261117.md` 顶部作废块；对照表 `reports/device-status-20261119.md`。
@@ -293,8 +294,8 @@ timeout 10 ssh -o BatchMode=yes -o ConnectTimeout=5 root@192.168.7.1 'uname -r' 
 - 动 GPT 前必须跑 `scripts/linux-gpt-dump.sh`（六 LUN 主/备表落盘）**并且**跑 `android-linux-coexist-check.py` 得 rc=0；两条缺一条不许写表。
 - 判据只认读回：EDL `read` + `sha256sum` 与主机件相等，不接受「传输完成」。
 
-**现态（2026-11-19 20:0x 现场读回）**：契约 rc=0（三段 LBA 逐字节一致、16 条目两两不重叠、无 `linux`/`elden-super`/`elden-data` 单分区）；
-`super` 已在机换成 v3 精简件（`51eae107…`，7109 MiB）并读回逐字节一致；`linux17`/`userdata`/`boot_b` 未动。
+**现态（2026-11-19 21:5x）**：契约 rc=0（三段 LBA 逐字节一致、16 条目两两不重叠、无 `linux`/`elden-super`/`elden-data` 单分区）；
+`super` 现为 **v1 精简件**（`e3d0d26f…`，8481.5 MiB；v3 件 `51eae107…` 已读回验证但卡 ZUXOS 动画，暂不采用）；`linux17`/`userdata`（已 erase，raw 未格式化）/`boot_b` 状态见 `reports/android-slim-v3-20261119.md` §7。
 
 ---
 

@@ -184,15 +184,18 @@
   **P0-6**（dump 只认 `PartitionNotFound`，其它一律 error）= `scripts/dump-verdict.py` + `scripts/lib-dump-verdict.sh`，并去掉 `t2-stock-lun45.sh` 里 `qdl read … || true` 的吞错写法（写前基线/写后读回都过三值判定，非 present 直接不写盘）；
   两道门统一进 `check-doctor` **§21**（自检 + 官方 259 LUN0/LUN4 主备实跑 + 官方快照 vs 设备现表跨来源复验 + 现场坏件必拒 + **反作弊：stub 检查器在坏件上判通过**）。
   全账 = `reports/ltbox-evaluation-20261118.md` §9；P1/P2 仍在 `.pi/plans/2026-11-18-脚本审查修复BACKLOG.md`。
-- **🆕 2026-11-19（对应 11-18 待办 ① + 用户新要求「安卓/Linux 先分开共存」）：安卓「彻底精简 v3」镜像已造件并写入 `super`，✅ EDL 读回逐字节一致；未结 = 首启判据** ——
+- **🆕 2026-11-19（对应 11-18 待办 ① + 用户新要求「安卓/Linux 先分开共存」）：安卓「彻底精简 v3」镜像已造件并写入 `super`，✅ 读回逐字节一致；** 未结 = 首启判据（3 发均未进桌面，其中 2 发被 BCB 污染） ——
   · **共存契约冻结（新）**：Android = `super 90504..5857671`(22 GiB) + `userdata 5972392..73277434`(256.75 GiB)；Linux = `linux17 73277435..123871226`(193 GiB) + `boot_b`；
     现场 EDL 读回主表 **16 条目两两不重叠**、无旧破坏设计的单 `linux`/`elden-super`/`elden-data` 分区；判据 = `python3 scripts/android-linux-coexist-check.py --gpt <dump> --super-img <img>` rc=0。正文 = `DEVICE/README.md` §1.7。
   · **v3 镜像**：`out/android-slim-v3-20261119/new/{system_a.img 3920 MiB, super_min_v3.img 7109 MiB}`（v1 = 5296/8481.5 ⇒ 再省 1.34 GiB）；
     相对原厂删 `/system/preinstall/*`（全部 41 个池目录）+`/system/etc/AI/*`+`bgmusic`+麦当劳动画+**18 个无用 leaf 包**；
     **三个 v1 卡动画相关面同时处理**：空目录占位（`File#list()` 得空数组）/ `launcher.db`+`launcher_2layer.db` **47→15 行** / 空目录带 `security.selinux`。
   · **写机**：`qdl write 0/90504 super_min_v3.img` 6.9 GiB **2 min 48 s @42.2 MiB/s** → `read 0/90504+1819904` **sha256 = 主机（`51eae107…`）**；`linux17`/`userdata`/`boot_b`/`vbmeta*`/`init_boot_a` **一律未碰**。
-  · **未结**：`qdl reset` 后设备从 USB 完全消失（240 s 无 `05c6`/`18d1`/`adb`/`fastboot`）⇒ 需人按电源键；`fastboot -w`（破坏性）与首启判据**尚未做**。KSU 按用户口径**不并入**，等 Android 进桌面后单独 `scripts/android-ksu-flash.sh --apply`。
-  · 全账 = `reports/android-slim-v3-20261119.md`；构建 = `scripts/android-slim-v3-build.sh`（stage 可重入、`--verify-only`）；
+  · **上机结果（3 发，均未进桌面）**：① v3 首启 → **卡 ZUXOS 动画**（system_server 已跑，唯一有效失败样本）② `fastboot -w` 后 + `super_dbg`(adb 免授权) → **卡联想 logo 后自动掉电** ③ 回刷 **v1**（读回 `e3d0d26f…` 逐字节一致）→ 同样 logo 后掉电。
+  · **现场复核（Linux 侧只读，21:4x）**：`logfs` 里 9+ 条 a 槽启动**每条都到** `Shutting Down UEFI Boot Services`（≈13.3 s）⇒ **ABL 侧清白**，失败在内核/init 之后；`pstoredump` 128 MiB 无 panic/oops ⇒ 卡 userspace；电池 **82%/Charging** ⇒ 不是低电；a 槽链 = 原厂 `boot_a`(`b428a31d…`)/`init_boot_a`/`vendor_boot_a` + 自签 `vbmeta_a`(`419e01ac…`, Flags=1)；**`misc` BCB = `boot-recovery`**，而 EDL 后是 `bootonce-bootloader` ⇒ 后两发「logo 后掉电」**很可能是启的 recovery，不算 Android 失败样本（confound）**。
+  · **纪律修订**：下轮必须「清 BCB(4 KiB 零) → 读回校验全 0 → 再 `qdl reset`」；顺序为 S1 清 BCB 后 `qbootctl -a`+`reboot`（v1 在机）→ S2 回写原厂 `metadata.img`(29 MB) → S3 刷原厂 `super` 对照 → S4 二分 v2b / 只占位不删 → S5 造带 `console=ttyGS0` 的 boot 件拿日志。
+  · **共存已达成**：全部安卓写操作未伤 Linux（`linux17`/`boot_b` 全程未碰；用户切回 b 槽即 SSH 通、桌面可用）。KSU 仍按用户口径**不并入**，等 Android 进桌面后单独 `scripts/android-ksu-flash.sh --apply`。
+  · 全账 = `reports/android-slim-v3-20261119.md` + `TASKS/sessions/2026-11-19-安卓共存契约与v3精简上机.md`；构建 = `scripts/android-slim-v3-build.sh`（`EXTRA_LEAF=0/1`、`--verify-only`、双哈希门）；
     新工具 = `scripts/android-apk-pkgname.py`（自解 AXML 读包名，本机无 aapt）、`scripts/android-launcher-db-check.py`、`scripts/android-linux-coexist-check.py`；证据 = `out/android-slim-v3-20261119/{edl/,rb/,new/MANIFEST.md}`。
 - **🆕 2026-11-18：LTBox（Rust GUI 刷写工具）评估已出 —— 推荐「抽 crate 做离线校验 CLI」（1.5–2.5 人日），**不接 MCP** —— 它有、我们 bash 主路径没有的校验 = **P0 6 / P1 7 / P2 5**，P0 全在「写之前」：rawprogram 全节点预检、destructive 节点缺 LUN/sector 直接拒、`start+count` 落 LUN 容量内、**镜像 sector 数 vs 分区 span 写前核对（批量全有或全无）**、写前重读 GPT 复验快照、dump 只认 `PartitionNotFound`。**它也不清 UNBOOTABLE / 不补 retry**（`grep` 0 命中）⇒ 和我们同一颗雷。MCP 不可行的 6 条结构冲突（无 headless / 编排绑 GUI crate / 裸 USB 绕过 device-lock / `EdlSession` 一开一 reset 等）见报告 §3。全账 = `reports/ltbox-evaluation-20261118.md`；仓 = `external/ext-repos/LTBox`（`~/LTBox` 软链）。
 - **🆕 2026-11-18：安卓「最小化线刷包」lane —— ✅ **上机成功（19:0x，一次通过）**；未结 = wipe 后卡 ZUXOS 动画** ——

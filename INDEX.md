@@ -14,14 +14,16 @@
 
 **做到哪**
 
-0. **🆕 2026-11-19 20:0x（U2 HA2EXB0E）—— 安卓/Linux 共存契约冻结 + 安卓精简 v3 已写入 super（读回逐字节一致）；卡点 = 首启需人按电源键**
+0. **🆕 2026-11-19 21:5x（U2 HA2EXB0E）—— 共存契约已冻结、安卓 v3 已造件并写入；**上机 3 发均未进桌面，其中 2 发被 BCB 污染；设备现居 Linux（可用）**
    - **共存契约（新，正文 `DEVICE/README.md` §1.7）**：Android = `super 90504..5857671` + `userdata 5972392..73277434`；Linux = `linux17 73277435..123871226` + `boot_b`。
-     现场 EDL 读回主表 16 条目**两两不重叠**、无旧破坏设计的单 `linux` 分区 ⇒ `scripts/android-linux-coexist-check.py` rc=0。
+     现场 EDL 读回主表 16 条目**两两不重叠**、无旧破坏设计的单 `linux` 分区 ⇒ `scripts/android-linux-coexist-check.py` rc=0。**实测共存：刷安卓 3 次，Linux 全程可登**（`/` = `/dev/sda17`）。
    - **v3 镜像**：`out/android-slim-v3-20261119/new/`（`system_a.img` **3920 MiB**、`super_min_v3.img` **7109 MiB**；v1 是 5296/8481.5）。
-     删全部 41 个预装池目录 + `etc/AI` + `bgmusic` + 18 个无用 leaf 包；**空目录占位 + launcher.db 47→15 行 + 空目录 selinux 标签**三件同办（v1 卡动画的三个面）。
-   - **写机**：`qdl write 0/90504` 6.9 GiB @42.2 MiB/s（2 min 48 s）→ 读回 1819904 扇区 sha256 **= 主机 `51eae107…`**；`linux17`/`userdata`/`boot_b` 未动。
-     `qdl reset` 后设备从 USB 完全消失（240 s 未重枚举）⇒ **首启判据未取得**，需人按电源键；`fastboot -w` 尚未做（破坏性，需确认）。KSU 按用户口径**不并入**，进桌面后单独补装。
-   - 全账 = `reports/android-slim-v3-20261119.md`；脚本 = `scripts/android-slim-v3-build.sh`；`TASKS/README.md` §4 首条。
+     删全部 41 个预装池目录 + `etc/AI` + `bgmusic` + 18 个无用 leaf 包；**空目录占位 + launcher.db 47→15 行 + 空目录 selinux 标签**三件同办。
+   - **上机**：① v3 首启 → 卡 ZUXOS 动画（唯一有效 Android 失败样本）② wipe 后 + adb 免授权件 → 卡 logo 后掉电 ③ 回刷 v1（读回 `e3d0d26f…`）= 同样。
+     **现场复核**：`logfs` 每条 a 槽启动都到 `Shutting Down UEFI Boot Services`（≈13.3 s）⇒ ABL 清白；`pstoredump` 无 panic；电池 82%/Charging；
+     **`misc` BCB = `boot-recovery`**（EDL 后是 `bootonce-bootloader`）⇒ 后两发很可能是启 recovery，**不算 Android 失败**。
+   - **下轮纪律**：清 BCB → 读回校验 → 再 reset；顺序 S1 清 BCB+`qbootctl -a` → S2 原厂 `metadata.img` → S3 原厂 `super` 对照 → S4 二分 v2b → S5 带 `console=ttyGS0` 的 boot 件拿日志。KSU 仍不并入。
+   - 全账 = `reports/android-slim-v3-20261119.md` + `TASKS/sessions/2026-11-19-安卓共存契约与v3精简上机.md`；脚本 = `scripts/android-slim-v3-build.sh`。
 0. **🆕 2026-11-19 13:20（U2 HA2EXB0E）—— 桌面起来了（Phosh 锁屏，GPU 渲染），全链固化成脚本 + 手册**
    - **链路（全部实测，逐环有判据）**：fastboot 起机 → `resize2fs` **6.25 GB → 190 GiB** → 设备上外网（主机 NAT + 自愈路由 + DNS 上游）→
      时钟冷起自愈（`chronyd -q` step 1.9e7 s）→ 日用基线 **49 包**（`MISS=21→1`）→ greetd+phoc+phosh **三进程**、锁屏截图有顶栏/中文 →
