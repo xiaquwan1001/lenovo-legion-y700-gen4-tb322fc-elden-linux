@@ -14,7 +14,21 @@
 
 **做到哪**
 
-0. **🆕 2026-11-19 深夜（U2 HA2EXB0E，压过下面 11-18 条）—— 主线 Linux 已重建到「能登入」；显示仍缺；安卓面零改动**
+0. **🆕 2026-11-19 下午（U2 HA2EXB0E，压过下面深夜条）—— 显示修复 = minbase 缺 udev；屏幕出字；槽位 successful 收口**
+   - **真因（单变量证据）**：minbase 根**没装 udev** ⇒ `systemd-udevd` 不存在 ⇒ 模块零自动加载 ⇒
+     fastrpc/ath12k/音频链全缺 ⇒ DP 组件 defer 拖死 DPU 聚合（11-19 上午/深夜的「显示挂死」全是下游症状）。
+   - **修复 + 判据**：主机 NAT（正确出口 = 手机热点 `enx027644563e50`，第一发误加 eno1 由 tcpdump 定位）+ 设备时钟修正
+     （2026-04-13 → 现时，TLS 才通）+ `apt install udev` + `enable --now systemd-udevd` ⇒ `modprobe fastrpc` 后
+     `/dev/fastrpc-adsp` 出现；ath12k 早启 `-110` = 时序问题，PCI rescan 即复活 ⇒ 固化 `ath12k-rescan.service`（已 enable）。
+   - **控制实验（决定性）**：`fastboot reboot` 走持久 `boot_b`（= 上午控制件 `740d431b…`，内核/DTB 零改动）⇒
+     **DPU aggregate + DSI×2 + DP + GPU 全 bound**、`/dev/dri/card0` + fb0 1904×3040 + fbcon、音频卡出、**屏幕有字（用户目视）**。
+     ⇒ 上午的 nodp DTB 实验**不需要**（DP 不用摘），件留档勿用。
+   - **槽位收口**：设备无 python3 ⇒ dd LUN4 主备 GPT → 主机 `slot-attr.py --image` 打补丁（`boot_b` 0x3f→0x7f）→ 写回读回一致
+     ⇒ **`fastboot getvar slot-successful:b` = yes**（unbootable=no、retry=7）；件 = `reports/artifacts/slotattr-20261119/`。
+   - **遗留小项**：设备 RTC 不保持（重启回 4-13，需 chrony/`/init` 恢复）；wlan0 DOWN 待连网；Phosh 桌面未起（下一 slice）。
+   - 全账 = `TASKS/sessions/2026-11-19-显示修复=minbase缺udev.md`（+ 上篇 `…-显示nodp实验与RAM路径复核.md`：
+     11-18 两次 RAM 启动失败真因 = cmdline 根标签 `linux17` vs 实际 `linux`，RAM 路径本身是好的）。
+0. **🆕 2026-11-19 深夜（U2 HA2EXB0E）—— 主线 Linux 已重建到「能登入」；~~显示仍缺~~（已于同日下午修复，见上条）；安卓面零改动**
    - **旧 `linux17` 数据确认丢失**：EDL 只读采样 6 点（起点 73277435 及 +10/+50/+134/+275/+359 GiB）非零字节 **全 0**；
      成因 = 11-17/18 恢复原厂时 stock `userdata`(449.7 GiB) 覆盖该区间（`fastboot -w` 再把它 discard 成零）。
    - **已重建（都过读回校验）**：LUN0 GPT 写回手术表（`linux17` 193 GiB + `userdata` 256.7 GiB，主备 `80ab46e5…`/`e5f79c0e…`；

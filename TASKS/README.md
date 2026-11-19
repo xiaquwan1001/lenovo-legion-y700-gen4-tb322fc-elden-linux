@@ -145,9 +145,14 @@
     上机判据 = ① `lsusb | grep -E '05c6:9008|18d1:d00d'` 或 `timeout 15 fastboot devices` 或 `timeout 15 adb devices` 任一见 `HA2EXB0E`（`adb` 里的 `MDX5T20730009849`/`emulator-5554` 不是本机，禁写）；
     或 ② `timeout 10 ssh -o BatchMode=yes root@192.168.7.1 'uname -r'` 能回（需先 `sudo scripts/ncm-host-up.sh`）。
     全不中 = **未连接/未上电**（人项：插线 + 上电），不是坏机。判读规则/在线命令/写操作清单 = `DEVICE/README.md` §1.6；对照表 = `reports/device-status-20261119.md`。
-  · **明早第一件事（5 分钟）**：设备上电 → `sudo scripts/ncm-host-up.sh` → `ssh root@192.168.7.1`；
-    先 `sudo python3 scripts/slot-attr.py show | grep boot_b`（retry 是否被扣），再 `python3 scripts/slot-attr.py mark-successful b`。
-  · **显示（本轮只做到定界）**：`/sys/kernel/debug/device_component/ae01000.display-controller` = `aggregate not bound`，
+  · **明早第一件事（5 分钟）→ ✅ 已做（2026-11-19 下午）**：设备上电 → `sudo scripts/ncm-host-up.sh` → `ssh root@192.168.7.1`；
+    `slot-successful:b` **= yes**（设备无 python3，改走 dd LUN4 主备 GPT → 主机 `slot-attr.py --image` 打补丁 → 写回读回一致；件 = `reports/artifacts/slotattr-20261119/`）。
+  · **显示（2026-11-19 下午已修复，真因 = minbase 缺 udev；下面为历史定界留档）**：
+    **✅ 现态**：`fastboot reboot` 走持久 `boot_b` 后 **DPU aggregate + DSI×2 + DP + GPU 全 bound、fb0 1904×3040、屏幕有字（用户目视）**；
+    同根因下游（ath12k `-110`、无 `/dev/fastrpc-adsp`、snd deferred）全部随 `apt install udev` + `enable --now systemd-udevd` 消失；
+    ath12k 早启 `-110` 是时序问题 ⇒ PCI remove+rescan 即复活，已固化 `ath12k-rescan.service`（enable）。nodp 补丁**不需要**（件留档勿用）。
+    全账 = `TASKS/sessions/2026-11-19-显示修复=minbase缺udev.md`。
+    ⟪历史定界⟫：`ae01000.display-controller` = `aggregate not bound`，
     `ae94000.dsi`/`ae96000.dsi` = not bound，**(unknown)×2 = not registered**；`af54000.displayport-controller` 在 `devices_deferred`
     （`aux_bridge: failed to acquire drm_bridge`，上游 `pmic_glink altmode` / `ucsi_glink PPM init failed`）⇒ 学名 = DP 组件把 DPU master 拖死。
     同时失败：`ath12k` MHI `-110`、`fastrpc` 模块未加载（无 `/dev/fastrpc-adsp`）、`snd-sc8280xp` 卡 deferred（都指向 ADSP/GPR 未就绪）。
@@ -155,7 +160,8 @@
     ⇒ DP 不进组件匹配表）→ `make dtbs` → `build-boot.sh` 重打 → `fastboot boot`。**两条已定的控制事实**：
     ① `build-boot.sh` + 原 DTB/原 ramdisk/原 kernel 重打 = **与 `out/boot-elden-vk192.img` 逐字节相同**（sha `bdf47f5f…`）⇒ 重打路径可信；
     ② 今晚两次 RAM 启动（手工改尾部 DTB 的 `boot-nodp-test.img`、正规重打的 `boot-elden-test-nodp2.img`）**都没有枚举 USB**
-    ⇒ **不能当否证**；下次先跑一遍 `test-ctrl`（= vk192 原件）确认 RAM 启动本身仍可用，并用「背光是否 15 s 闪」+ pstore/串口判。
+    ⇒ 后经复核：**真因 = 两件 cmdline 根标签 `LABEL=linux17` vs 实际根 label `linux`（找不到根 → `panic=15` 回 fastboot），
+    RAM 启动路径本身一直是好的**（11-19 下午控制臂 2/2 实证）；下次先跑一遍 `test-ctrl`（= vk192 原件）确认 RAM 启动本身仍可用，并用「背光是否 15 s 闪」+ pstore/串口判。
   · **其余待办**：③ 桌面 = `resize2fs` 扩到 193 GiB + `daily-baseline`（Phosh/IME/音频），恢复 G1-37 日用面；
     ④ 安卓侧（等 Android 能起）：KSU 件已备 `out/android-root-20261119/`（自洽未上机）、瘦身 v2 `scripts/android-slim-v2-plan.sh --variant A`；
     ⑤ 上机跑 `scripts/hide-android-partitions.sh --apply`、`scripts/asset-install-linux.sh --apply`（需桌面/root，均已自测）。
