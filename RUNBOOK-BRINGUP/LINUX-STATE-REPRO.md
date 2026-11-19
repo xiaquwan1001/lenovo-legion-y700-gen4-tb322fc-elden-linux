@@ -312,3 +312,18 @@ bash scripts/linux-state-audit.sh --snapshot versions/state-$(date +%Y%m%d-%H%M)
   = 查分区 LBA → 必需件校验 → mkfs.fat + mtools 组 FAT32 → `mtype` 逐文件 sha 自查 → qdl 写 + 读回对账；
   默认 dry-run，`--build-only` 离线自测，`--apply` 才写。**未上机**。细节/自测证据：`reports/esp-gpt-apply-automation-20261118.md`。
 - 这两条落地的判据：**在 U2 上从「原厂 Android」一口气跑到「Linux 登入」全程无手工步骤**（当前需 2 次人工）。
+
+---
+
+## 8. 过时条目审计（2026-11-19，Alpine 期遗留）
+
+换了根（Alpine → Debian trixie）之后，仓里大量「可执行步骤」仍按 Alpine 写；审计做了两轮（文档层/脚本层，子代理 + 父代理抽检）：
+
+- `reports/stale-alpine-audit-docs-20261119.md`（C 17 / B 12 / A 12）
+- `reports/stale-alpine-audit-scripts-20261119.md`（C 29 / B 10 / A 7）
+
+**已修的 6 条**（抽检成立后才改）：`build-boot.sh` 根 label、`to-fastboot.sh`/`slot-switch.sh` 的软复位静默空等（`PITFALLS #690`）、
+本文件 S7 的设备侧 `python3`、`f2fs-migration.md` 全文作废抬头（`/dev/sda18` 现为 ESP）。
+**剩余 C 类**（`n5b-vk64-death-rate` / `kexec-bs-cycle` / `arm-window-hunt` / `uefi-*` 六件的 `reboot2` 调用、
+`openrc-enable.sh` / `fix-logind-poweroff.sh` / `persistent-overlay/restore.sh` / `deploy-zh-ime.sh`（squeekboard 栈））
+按「一次一个 cohort」推进，未改前**不要照跑**。

@@ -36,3 +36,13 @@
 
 **结论**：重建后的收尾不能只跑 `deploy-desktop-shell.sh --check`（它只管「桌面壳」），
 需要一张**能力清单**（本文件）逐项过；今天的上机测试就按 §1 的 1→5 修。
+
+## 3. 同日后续（16:30–17:30 上机追加）
+
+| 发现 | 证据 | 处置 |
+|---|---|---|
+| **桌面没起 ≠ 桌面壳坏**：启动队列被 `droid-juicer.service`（扫 Android 分区抽固件）与 `plymouth-quit-wait.service`（plymouthd 不退）卡死 ⇒ `graphical.target` 永远 waiting、`greetd` 永远排队 | `is-system-running=starting`、`graphical.target=inactive`、`list-jobs` 里两项 running | `PITFALLS #691`；已进 `deploy-desktop-shell.sh` **§8b**（未 mask 即 MISS） |
+| **`hexagonrpcd` attach ADSP sensor PD 会硬崩整机**（无 Oops、无 pstore、journal 截断，~1 min 自动回） | 修好 `/dev/fastrpc-adsp` owner（需 re-trigger，因节点早于规则创建）后 `systemctl restart hexagonrpcd` ⇒ 整机掉线 | `PITFALLS #692`；复现前必须先建取证通道 |
+| **Debian 13 无 `libssc2`/`libssc-bin`**，且 Debian `iio-sensor-proxy` **未链 libssc**（`ldd` 只有 glib/gio） | `apt-cache search libssc` 只出 sigscheme | 传感器要真做 = 自建 libssc + `-Dssc=true`；`apt-list.txt:84-85` 属过时项 |
+| `bootmac-bluetooth.service` failed（仓内零命中 ⇒ 包带的，读 MAC 失败）、`qcom-modem-setup` failed | 只让系统 `degraded`，不阻塞桌面 | 不追 |
+| RTC 冷起回到 2026-04-14 ⇒ PAM 打 `password changed in future` | `date`、`timedatectl` | 冷起后先跑 `time-sync.sh` 再登桌面 |

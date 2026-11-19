@@ -305,6 +305,24 @@ systemctl daemon-reload; systemctl enable gpu-devfreq-tune.service >/dev/null 2>
 		&& fix "已装 gpu-devfreq-tune.service" || no "装 gpu-devfreq-tune 失败"
 fi
 
+echo "== 8b) 启动队列不卡（#691：卡住的 job 会让桌面永远起不来，屏上停在开机服务日志）=="
+# 2026-11-19 实测两次：重装后的最小根里，启动队列被两个「我们用不上的包」卡住时，
+#   `systemctl is-system-running` = starting，graphical.target 永远 inactive，
+#   greetd 卡在 `Job: … start waiting`，而屏幕就是 tty0 上那屏 systemd 输出。
+#   ① droid-juicer.service（Debian-on-phone 的 Android 固件抽取：扫分区/解 super，会卡很久）
+#   ② plymouth-quit-wait.service（plymouthd 退不掉 ⇒ boot 永不完结；我们没有 splash 需求）
+# 判据 = 两个都 masked + graphical.target active；真跑模式直接 mask。
+STUCK_UNITS='droid-juicer.service plymouth-start.service plymouth-quit.service plymouth-quit-wait.service plymouth-switch-root.service'
+BAD=$("${SSH[@]}" 'n=0; for u in '$STUCK_UNITS'; do [ "$(systemctl is-enabled $u 2>/dev/null)" = masked ] || n=$((n+1)); done; echo $n')
+if [ "${BAD:-9}" = 0 ]; then ok "启动队列阻塞件已全部 mask（$STUCK_UNITS）"
+elif [ "$MODE" = check ]; then no "启动队列仍有 $BAD 个未 mask 的阻塞件 ⇒ graphical.target 可能永远 waiting（#691）"
+else
+	"${SSH[@]}" 'for u in '$STUCK_UNITS'; do systemctl disable --now $u >/dev/null 2>&1; systemctl mask $u >/dev/null 2>&1; done' &&
+		fix "已 disable+mask droid-juicer / plymouth*（队列解锁，greetd 才能起）" || no "mask 阻塞件失败"
+fi
+if [ "$("${SSH[@]}" 'systemctl is-active graphical.target')" = active ]; then ok "graphical.target active（启动队列已走完）"
+else no "graphical.target 未激活（queue 有 job 在跑/等；先看 systemctl list-jobs）"; fi
+
 echo "== 9) 会话现态 =="
 
 if [ "$MODE" = check ]; then
