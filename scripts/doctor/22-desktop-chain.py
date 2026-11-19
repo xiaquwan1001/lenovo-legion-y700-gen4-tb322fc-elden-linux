@@ -239,22 +239,33 @@ def run_gate(root):
 
 def selftest():
     """合成副本：删掉 PKGS 里的 udev / phosh-osk-stub，本门必须 FAIL。"""
-    print('\n== 22-selftest 反作弊（删包必被抓） ==')
+    print('\n== 22-selftest 反作弊（删包 / 抽判据 / 断步号必被抓） ==')
     tmp = tempfile.mkdtemp(prefix='desk-chain-st.')
     try:
         # 合成副本：除链件本身外全部软链到真仓（RUNBOOK 的路径存在性判据也要能过）
         os.makedirs(os.path.join(tmp, 'scripts'))
         for name in os.listdir(ROOT):
-            if name in ('.git', 'scripts'):
+            if name in ('.git', 'scripts', 'RUNBOOK-BRINGUP'):
                 continue
             src = os.path.join(ROOT, name)
             if os.path.exists(src):
                 os.symlink(src, os.path.join(tmp, name))
+        # RUNBOOK 要可改（手册步/判据的反作弊用例），其余件仍软链
+        os.makedirs(os.path.join(tmp, 'RUNBOOK-BRINGUP'))
+        for name in os.listdir(os.path.join(ROOT, 'RUNBOOK-BRINGUP')):
+            if name == os.path.basename(RUNBOOK):
+                continue
+            os.symlink(os.path.join(ROOT, 'RUNBOOK-BRINGUP', name),
+                       os.path.join(tmp, 'RUNBOOK-BRINGUP', name))
         for name in os.listdir(os.path.join(ROOT, 'scripts')):
             if name == 'deploy-desktop-shell.sh':
                 continue
             os.symlink(os.path.join(ROOT, 'scripts', name),
                        os.path.join(tmp, 'scripts', name))
+        # RUNBOOK 副本先落一份干净版：A 段缺它就直接 return，下面的包检查根本跑不到
+        clean_rb = read(RUNBOOK) or ''
+        with open(os.path.join(tmp, 'RUNBOOK-BRINGUP', os.path.basename(RUNBOOK)), 'w') as f:
+            f.write(clean_rb)
         good = read(SCRIPT)
         if good is None:
             print('  SELFTEST FAIL 源脚本缺失，无法自检')
@@ -277,7 +288,31 @@ def selftest():
             else:
                 print('  SELFTEST FAIL %s ⇒ 副本漏过（FAIL=%d）' % (label, n))
                 bad_count += 1
+        # 手册用例：① 抽掉某步的「判据」字样 ② 删掉一个 ### SN 标题（步号断）
+        rb = clean_rb
+        if '### S3' in rb:
+            i = rb.index('### S3')
+            j = rb.index('### S4', i)
+            rb = rb[:i] + rb[i:j].replace('判据', '观察') + rb[j:]
+        for label, text, needle in (
+                ('手册某步抽掉判据', rb, '缺判据'),
+                ('手册删一个 ### SN 步', clean_rb.replace('### S4', '#### S4（降级）', 1), '不连续')):
+            if text == clean_rb:
+                print('  SELFTEST FAIL %s：没改到手册（格式变了）' % label)
+                bad_count += 1
+                continue
+            with open(os.path.join(tmp, 'RUNBOOK-BRINGUP', os.path.basename(RUNBOOK)), 'w') as f:
+                f.write(text)
+            n, out, _ = run_gate(tmp)
+            hit = [l for l in out.splitlines() if needle in l and '[FAIL]' in l]
+            if hit:
+                print('  SELFTEST ok   %s ⇒ 抓到了：%s' % (label, hit[0].strip()))
+            else:
+                print('  SELFTEST FAIL %s ⇒ 副本漏过（FAIL=%d）' % (label, n))
+                bad_count += 1
         # 干净副本必须过（否则门是「永远 FAIL」的死门）
+        with open(os.path.join(tmp, 'RUNBOOK-BRINGUP', os.path.basename(RUNBOOK)), 'w') as f:
+            f.write(clean_rb)
         with open(os.path.join(tmp, 'scripts', 'deploy-desktop-shell.sh'), 'w') as f:
             f.write(good)
         n, out, _ = run_gate(tmp)
@@ -290,7 +325,7 @@ def selftest():
         if bad_count:
             print('  SELFTEST FAIL %d 例' % bad_count)
             return 1
-        print('  SELFTEST OK 3/3')
+        print('  SELFTEST OK 5/5')
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
