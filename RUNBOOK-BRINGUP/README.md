@@ -4,6 +4,7 @@
 > **⚠ 设备状态被改过（刷回安卓 / 卡 BL / 半刷坏）要重建 Linux 时，先读** **`LINUX-STATE-REPRO.md`**（8 项状态清单 + S0–S9 + 卡 BL 误判防护 + 反向回 Android），再回本文件查细节。
 > 本文件 = **首次上机全流程**（Phase −1…6，假设未动过的新机）；两者不重复：本文件讲「怎么装」，那篇讲「怎么把装好的状态复现回来」。
 > **要精简分区表 / 只要最小 Debian（无桌面）时**，另读 **`GPT-MINIMAL-DESIGN.md`**（LUN0 18→10 项、单 `linux` 472 GiB、刷机件清单、P0–P5 实验计划）。
+> **要从 EDL/fastboot 一路到「可用桌面」并逐环溯源时，读 `ZERO-TO-DESKTOP.md`**（2026-11-19 实测版：S1–S12 每步命令/判据/失败形态/回退 + 一页速查；驱动脚本 `scripts/deploy-desktop-shell.sh`）。
 
 > 本角度文件夹的策展 SSOT（`README.md`）；`sessions/` 存以会话为单位的进度。标准见 `INDEX.md` §2。
 > **适用 = 任一 TB322FC / elden / SM8750(P) 单元**（台账 `../DEVICE/README.md` §2.2）。它们**物理等价**，

@@ -14,6 +14,16 @@
 
 **做到哪**
 
+0. **🆕 2026-11-19 13:20（U2 HA2EXB0E）—— 桌面起来了（Phosh 锁屏，GPU 渲染），全链固化成脚本 + 手册**
+   - **链路（全部实测，逐环有判据）**：fastboot 起机 → `resize2fs` **6.25 GB → 190 GiB** → 设备上外网（主机 NAT + 自愈路由 + DNS 上游）→
+     时钟冷起自愈（`chronyd -q` step 1.9e7 s）→ 日用基线 **49 包**（`MISS=21→1`）→ greetd+phoc+phosh **三进程**、锁屏截图有顶栏/中文 →
+     **Mesa 26.1.6（trixie-backports）= `Adreno (TM) 830` / GLES 3.2**，`glmark2-es2` **Score 2594**。
+   - **两个新铲子**：`scripts/deploy-desktop-shell.sh`（9 步幂等自检，`--check` → MISS=0；含包集/用户/greetd appliance/软合成开关/
+     usb0 自愈路由/GPU devfreq 固化/会话三进程+截图字节门）、`RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md`（S1–S12 + 速查 + 回退 + 溯源表）。
+   - **五个静默失败**（`PITFALLS` #681–#685）：根缺 `udev`（模块零加载）· phosh 必需 `sm.puri.OSK0` · 老 Mesa 不认 Adreno 830
+     （pixman 能起但**帧率低**，需 backports Mesa）· RTC 只读且冷起给「镜像构建日 2026-04-13」（日期阈值判据失效）· usb0 无默认网关且主机地址随 gadget 重建消失。
+   - **卡点（需人）**：内核未开 `CONFIG_INPUT_UINPUT`（无 `/dev/uinput`）⇒ 锁屏**必须人手滑开**，agent 无法注入触摸做桌面内验证。
+   - 全账 = `TASKS/sessions/2026-11-19-EDL到桌面端到端重建.md`。
 0. **🆕 2026-11-19 下午（U2 HA2EXB0E，压过下面深夜条）—— 显示修复 = minbase 缺 udev；屏幕出字；槽位 successful 收口**
    - **真因（单变量证据）**：minbase 根**没装 udev** ⇒ `systemd-udevd` 不存在 ⇒ 模块零自动加载 ⇒
      fastrpc/ath12k/音频链全缺 ⇒ DP 组件 defer 拖死 DPU 聚合（11-19 上午/深夜的「显示挂死」全是下游症状）。
@@ -25,7 +35,7 @@
      ⇒ 上午的 nodp DTB 实验**不需要**（DP 不用摘），件留档勿用。
    - **槽位收口**：设备无 python3 ⇒ dd LUN4 主备 GPT → 主机 `slot-attr.py --image` 打补丁（`boot_b` 0x3f→0x7f）→ 写回读回一致
      ⇒ **`fastboot getvar slot-successful:b` = yes**（unbootable=no、retry=7）；件 = `reports/artifacts/slotattr-20261119/`。
-   - **遗留小项**：设备 RTC 不保持（重启回 4-13，需 chrony/`/init` 恢复）；wlan0 DOWN 待连网；Phosh 桌面未起（下一 slice）。
+   - ~~**遗留小项**：设备 RTC 不保持（重启回 4-13）；wlan0 DOWN 待连网；Phosh 桌面未起~~ **三项均已处置（2026-11-19 13:20，见上条）**：时钟 = `time-sync.sh` 修 + 路由就位补跑；网络 = 自愈路由 + DNS 上游；桌面 = greetd/phoc/phosh 起来（GPU 渲染）。
    - 全账 = `TASKS/sessions/2026-11-19-显示修复=minbase缺udev.md`（+ 上篇 `…-显示nodp实验与RAM路径复核.md`：
      11-18 两次 RAM 启动失败真因 = cmdline 根标签 `linux17` vs 实际 `linux`，RAM 路径本身是好的）。
 0. **🆕 2026-11-19 深夜（U2 HA2EXB0E）—— 主线 Linux 已重建到「能登入」；~~显示仍缺~~（已于同日下午修复，见上条）；安卓面零改动**
@@ -180,6 +190,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 4 | **`TASKS/README.md`** §0 / §4 / §5 / §7 | 状态数字与台账的唯一出处 |
 | 5 | `DEVICE` §1.1（在机）/ `RESOURCES` §3（资产）/ `RUNBOOK-BRINGUP`（步骤） | 按需展开 |
 | 5b | **`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md`**（＋`scripts/linux-state-audit.sh`） | **设备状态被改后重建 Linux 的唯一入口**：8 项清单 / S0–S9 步骤 / 卡 BL 误判防护 / 反向回 Android |
+| 5b2 | **`RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md`**（＋`scripts/deploy-desktop-shell.sh`） | **EDL/fastboot → 可用桌面的端到端链路（2026-11-19 实测）**：S1–S12 每步命令/判据/失败形态/回退 + 一页速查 + 溯源表 |
 | 5c | **`RUNBOOK-BRINGUP/GPT-MINIMAL-DESIGN.md`**（＋`scripts/gpt-minimal-build.py`） | **分区表如何简化 + 最小 Debian 刷机件清单**（LUN0 18→10 项、单 `linux` 472 GiB）；与 5b 是同一目标的两层 |
 | 6 | `reports/*.md`（按日期）→ `archive/` · `SESSIONS/` · `PROGRESS.md` · `HISTORY/` | **只作沿革与证据，不得当「当前结论」引用** |
 

@@ -27,6 +27,23 @@ export MESA_EXTENSION_OVERRIDE="-EGL_EXT_image_dma_buf_import_modifiers${MESA_EX
 # 只有 `gl` 档 + 上面的 modifier 关闭才是实测干净组合（2026-11-14 用户目视，T19）。
 export GSK_RENDERER=gl
 
+# 软件合成档（2026-11-19 立）：开关 = /etc/elden-soft-render，缺省不开。
+# 为什么要有：Debian 13 trixie 自带 Mesa 25.0.7 的 freedreno 不认识 Adreno 830
+#   （`MESA: error: fd_pipe_new2: unsupported GPU id 0x0 / chip id 0xe844050000`）
+#   ⇒ phoc 的 GL 后端起不来、greetd 5 s 内连挂 5 次后 `start-limit-hit`
+#   （`check_children: greeter exited without creating a session`），屏上只有黑底转圈。
+# 处置：`touch /etc/elden-soft-render` ⇒ phoc 走 pixman 软合成 + GSK 走 cairo，桌面起得来
+#   （代价 = CPU 合成，动画/滚动不如 GPU）。**GPU 恢复条件** = 换上认识 a830 的 Mesa
+#   （`/opt/mesa-a830`，Mesa 26.x）后删掉该开关，再按 T19 那套 GL 组合做一次目视回归。
+# 判据：`touch` 后 `grim` 截图有顶栏/锁屏（不是黑底转圈），`journalctl -t phoc` 无
+#   `fd_pipe_new2` / `egl: failed to create dri2 screen`。
+if [ -e /etc/elden-soft-render ]; then
+	export WLR_RENDERER=pixman
+	export WLR_RENDERER_ALLOW_SOFTWARE=1
+	export LIBGL_ALWAYS_SOFTWARE=1
+	export GSK_RENDERER=cairo
+fi
+
 # elogind should provide XDG_RUNTIME_DIR; fallback if not
 [ -n "$XDG_RUNTIME_DIR" ] || export XDG_RUNTIME_DIR=/run/user/$(id -u)
 mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null || true

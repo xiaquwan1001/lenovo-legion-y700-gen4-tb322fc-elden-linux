@@ -25,13 +25,17 @@
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
 ### 1.1 内核与软件基线
-- ★★**现态（2026-11-19 23:xx 重写，压过下面全部旧口径）= 自建最小 Debian（主线 Linux）在 slot `_b`**：
+- ★★**现态（2026-11-19 13:20 更新，压过下面全部旧口径）= 自建最小 Debian（主线 Linux）+ Phosh 桌面在 slot `_b`**：
   GPT 已恢复双轨（`linux17` 193 GiB @LBA 73277435 + `userdata` 256.7 GiB，主备读回 `80ab46e5…`/`e5f79c0e…`）；
   根 = `out/min-restore-20261119/rootfs-minbase-gadget-20261119.ext4.img`（6 GiB，设备端 sha `abf96ec4…`，
   = 11-18 的 160 包 minbase + 本次注入的 `/init`、`/usr/local/sbin/usb-gadget`、`/etc/udhcpd.conf`、`/etc/elden-init-mode=systemd`）；
   `boot_b` = 自签 `bootslot-b/boot_b-minbase-labellinux-20261119.img`（同 vk192 核/DTB/initrd，cmdline `elden_root=LABEL=linux`，读回 `740d431b…`）。
   **登入方式 = USB-NCM**：`sudo scripts/ncm-host-up.sh` → `ssh root@192.168.7.1`（或 `scripts/acm-sh.py` 走 `ttyACM1` 免网络 root shell）。
-  **已知未愈**：显示无 DRM（`/sys/class/drm` 只有 `version`）——根因 = `af54000.displayport-controller` deferred 拖死 DPU 组件聚合；
+  ~~**已知未愈**：显示无 DRM（`/sys/class/drm` 只有 `version`）——根因 = `af54000.displayport-controller` deferred 拖死 DPU 组件聚合~~ **已愈（2026-11-19 13:20）**：
+  真因 = 根里**没装 `udev`** ⇒ 模块零自动加载 ⇒ DP 组件 defer；装 `udev` 后 DPU aggregate + DSI×2 + DP + GPU 全 bound、`/dev/dri/card0` + fb0。
+  **同日再进两步**：`resize2fs` 6.25 GB→**190 GiB**；桌面壳 = greetd+phoc+phosh（`phosh-osk-stub`）+ seatd，
+  **GPU 渲染 = Mesa 26.1.6（trixie-backports）`Adreno (TM) 830`**（`glmark2-es2` Score 2594）—— 冷起自检 `bash scripts/deploy-desktop-shell.sh --check` → MISS=0。
+  **锁屏需人手滑开**（内核未开 `CONFIG_INPUT_UINPUT`，无 `/dev/uinput`）。链路手册 = `RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md`。
   `ath12k` MHI `-110`、无 `/dev/fastrpc-adsp`、`snd-sc8280xp` deferred（均 ADSP/GPR 未就绪）。
   **旧 `linux17` 根 fs 已确认丢失**（EDL 6 点采样全零，成因 = 原厂 `userdata` 覆盖 + `fastboot -w`），故本次为重建而非恢复。
   安卓面：`super`/`vbmeta_a`/`boot_a`/`dtbo_a` **均未动**（a 槽仍是 11-18 的瘦身 Android，卡 ZUXOS 动画未取证）。
