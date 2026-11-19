@@ -27,6 +27,24 @@
 必需包表（删任一个 = 静默失败回来）：`udev`(#681) `phosh-osk-stub`(#682) `libglib2.0-bin`
 `phoc` `phosh` `greetd` `seatd`。
 
+## 2b. 配套：`scripts/zero-to-desktop-check.sh`（S5–S12 一条命令）
+
+静态门只能证「判据还在」，证不了「人会不会漏跑」。新增只读自检入口把手册 S5–S12 收成一条命令：
+
+```
+S5 起机      ps -p1 -o comm=            = systemd        (#680)
+S6 显示      udevd active + card0/fb0 + DPU 聚合 bound    (#681)
+S7 网络      default route + http 200                      (#685)
+S8 时钟      与主机时间差 < 86400 s                        (#684)
+S9 扩容      df -BG / ≥ 100 GiB
+S10 基线     → mobian-daily-baseline.sh --check（委托）
+S11 桌面壳   → deploy-desktop-shell.sh --check（委托）
+S12 GPU      /proc/$(pidof phoc)/fd 里 renderD128 计数 ≥1  (#683)
+```
+
+`--list` 供 §22 机器读、`--dry-run` 不连设备打印全部命令（本轮据此离线验证）；真跑只读、
+不改设备（收敛动作仍在 daily-baseline / deploy-desktop-shell 里）。设备离线时退出码 3 并打印原因。
+
 ## 3. 门抓出的两个真实缺陷（本提交修）
 
 1. **`udev` 不在 `PKGS` 里** —— `deploy-desktop-shell.sh` 的注释写着「① 缺 udev → 模块零加载」，
@@ -64,6 +82,7 @@ $ scripts/check-doctor.sh --staged-fast | tail -2
 | 件 | 变化 |
 |---|---|
 | `scripts/doctor/22-desktop-chain.py` | 新增（本门） |
+| `scripts/zero-to-desktop-check.sh` | 新增（S5–S12 只读自检入口；`--list`/`--dry-run`） |
 | `scripts/deploy-desktop-shell.sh` | `PKGS` 加 `udev`；新增 `2b)` 段；头注释判据表同步 |
 | `scripts/check-doctor.sh` | ALL/FAST 子门清单加 `22-desktop-chain.py`，头注释子门表加一行 |
 | `RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md` | S1/S2 补判据段；S11 表加 `udev` 与 `1b` 行 |
