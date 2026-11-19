@@ -1,0 +1,4 @@
+7908e3f17ef3a39420cca9511efc10684d88fe17363892d4cf700967f39e4fa9  out/min-restore-20261119/boot-nodp-linux.img
+6ce7daa1d16eaa2678c5e2ae3ea61c38bd5ab21f47b75e1277a0be56d8a386ec  reports/artifacts/display-nodp-20261119/before-control.txt
+973cc7b3f650fc0ffb1d13d1c78a0acb7e26d80fc96a33d1039db90e19f31086  reports/artifacts/display-nodp-20261119/dpu-intf0-nodp.dtb
+c7ad70231b9dcebbff89f6d03c63eea878eb5990b6977a43c58f657a7fdb7cf4  reports/artifacts/display-nodp-20261119/dpu-intf0-nodp.dts
