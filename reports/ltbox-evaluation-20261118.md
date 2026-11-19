@@ -210,3 +210,26 @@ grep -n "gptman" crates/ltbox-device/src/edl.rs                  # 5 处，全 r
 grep -rn "verify|readback|sha256" crates/ltbox-device crates/ltbox-patch   # 回读只存在于 country 路径
 grep -n "pub fn " crates/ltbox-device/src/edl.rs crates/ltbox-device/src/fastboot.rs   # fastboot 无 flash/erase
 ```
+
+---
+
+## 9. 落地账（P0 六条，主机侧、可离线验证）
+
+判据只搬**判据**，不引 LTBox 的 GPL 代码、不编它的 crate、不接 MCP（结论见 §0 C）。
+
+| P0 | 判据 | 落地位置 | 提交 | 门 |
+|---|---|---|---|---|
+| P0-1 | rawprogram 全节点预检（字段完备 + 引用件存在） | `scripts/rawprogram-preflight.py`（R1/R5） | `8d615a01`+`48b9652b` | doctor §18 |
+| P0-2 | destructive 节点缺 LUN/sector 直接拒 | 同上 R1 | 同上 | doctor §18 |
+| P0-3 | `start+count` 落 LUN 容量内 | 同上 R2（`--gpt-for` 多 LUN） | 同上 | doctor §18 |
+| P0-4 | 镜像 sector 数 vs 分区 span（全有或全无） | 同上 R4（sparse 头按 expanded size） | 同上 | doctor §18 |
+| P0-5 | 写前重读 GPT 复验快照（与备份/预期一致）+ 重名拒绝 | `scripts/gpt-preflight.py`（`check`/`snapshot`/`verify`/`compare`）；`linux-gpt-apply.sh` 内联 python 换成 `compare` + 落 `pre-write-snapshot.json` | 本轮 | doctor §21 |
+| P0-6 | dump 只认 `PartitionNotFound` | `scripts/dump-verdict.py`（三值 present/absent/error）+ `scripts/lib-dump-verdict.sh`；`t2-stock-lun45.sh` 去掉 `qdl read … \|\| true`，写前基线与写后读回都过判定 | 本轮 | doctor §21 |
+
+**P1/P2 未做**（P1-1..P1-7、P2-1..P2-5）：判据与代码位置见 §1 表，处置队列登记在
+`.pi/plans/2026-11-18-脚本审查修复BACKLOG.md`（LTBox 段）。其中 P1-1（短读即失败 + 原子发布）
+已由 `dump-verdict.py` 覆盖「短读即 error」这一半，**原子发布（临时件 + fsync + rename）仍未做**。
+
+**判据口径的两处有意收紧**（比 LTBox 更保守，写在这里以免以后被当成"抄错"）：
+- `verify`：`attr` 变化默认只是 WARN（槽属性基线本来就随实验变），`--strict-attr` 才升 FAIL；
+- `absent`：必须同时满足「rc≠0 + 只有 not-found 签名 + 没有传输签名 + 没留下非空半件」，任一不满足都落 `error`。

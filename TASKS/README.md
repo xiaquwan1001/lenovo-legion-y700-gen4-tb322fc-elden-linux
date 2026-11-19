@@ -168,6 +168,12 @@
   · **未做（下一批）**：R2 剩余 P2、R1 三条 TODO（需设备/编排）、R3 的 `reset` 落点判定余项；逐条见 `.pi/plans/2026-11-18-脚本审查修复BACKLOG.md`。
   · **纪律**：所有脚本改动**未上机**；首次上机按 `slot-attr.py show` → 写 → 读回 → `mark-successful` 四步走。
   · 报告：`reports/script-audit-fastboot-gpt-20261118.md`、`reports/script-audit-edl-20261118.md`、`reports/script-audit-adb-20261118.md`、`reports/script-audit-ssh-20261118.md`。
+- **🆕 2026-11-19：LTBox 评估的 P0 六条已全部落地（主机侧、可离线验，不碰设备）** ——
+  P0-1..4（rawprogram 全节点预检/缺 LUN-sector 即拒/`start+count` 落 LUN 容量/镜像 sector vs 分区 span）= `scripts/rawprogram-preflight.py` + doctor §18（`8d615a01`+`48b9652b`）；
+  **本轮补 P0-5**（写前重读 GPT 复验快照 + 主备一致 + 重名拒绝）= `scripts/gpt-preflight.py`（`check/snapshot/verify/compare`，`--selftest` 十类坏件）；
+  **P0-6**（dump 只认 `PartitionNotFound`，其它一律 error）= `scripts/dump-verdict.py` + `scripts/lib-dump-verdict.sh`，并去掉 `t2-stock-lun45.sh` 里 `qdl read … || true` 的吞错写法（写前基线/写后读回都过三值判定，非 present 直接不写盘）；
+  两道门统一进 `check-doctor` **§21**（自检 + 官方 259 LUN0/LUN4 主备实跑 + 官方快照 vs 设备现表跨来源复验 + 现场坏件必拒 + **反作弊：stub 检查器在坏件上判通过**）。
+  全账 = `reports/ltbox-evaluation-20261118.md` §9；P1/P2 仍在 `.pi/plans/2026-11-18-脚本审查修复BACKLOG.md`。
 - **🆕 2026-11-18：LTBox（Rust GUI 刷写工具）评估已出 —— 推荐「抽 crate 做离线校验 CLI」（1.5–2.5 人日），**不接 MCP** —— 它有、我们 bash 主路径没有的校验 = **P0 6 / P1 7 / P2 5**，P0 全在「写之前」：rawprogram 全节点预检、destructive 节点缺 LUN/sector 直接拒、`start+count` 落 LUN 容量内、**镜像 sector 数 vs 分区 span 写前核对（批量全有或全无）**、写前重读 GPT 复验快照、dump 只认 `PartitionNotFound`。**它也不清 UNBOOTABLE / 不补 retry**（`grep` 0 命中）⇒ 和我们同一颗雷。MCP 不可行的 6 条结构冲突（无 headless / 编排绑 GUI crate / 裸 USB 绕过 device-lock / `EdlSession` 一开一 reset 等）见报告 §3。全账 = `reports/ltbox-evaluation-20261118.md`；仓 = `external/ext-repos/LTBox`（`~/LTBox` 软链）。
 - **🆕 2026-11-18：安卓「最小化线刷包」lane —— ✅ **上机成功（19:0x，一次通过）**；未结 = wipe 后卡 ZUXOS 动画** ——
   · **判据**：清 `boot_a` UNBOOTABLE（`--set-active=a`，`yes→no`/retry `6→7`）→ 原厂 `boot_a` 起来 → 自签 `vbmeta_a_flags1` → `veritymode=disabled`
