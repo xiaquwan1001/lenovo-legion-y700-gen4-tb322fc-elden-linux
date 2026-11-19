@@ -275,6 +275,29 @@ timeout 10 ssh -o BatchMode=yes -o ConnectTimeout=5 root@192.168.7.1 'uname -r' 
 
 ---
 
+### 1.7 安卓 / Linux 共存分区契约（2026-11-19 立，★先读这条再动任何写操作）
+
+> 一句话：**Android 住前段（`super` + `userdata`），Linux 住后段（`linux17`），`boot_a` 归 Android、`boot_b` 归 Linux；
+> 谁都不许改对方那段的起点。** 判据与全账 = `reports/android-slim-v3-20261119.md` §1；脚本 = `scripts/android-linux-coexist-check.py`。
+
+| 分区 | LBA（4096 B/扇区） | 大小 | 归属 |
+|---|---|---|---|
+| `super` | 90504..5857671 | 22.00 GiB | Android（a 槽动态分区：system/vendor/product/odm/system_ext/*_dlkm） |
+| `vbmeta_system_a/b`、`metadata`、`rawdump`、`pstoredump` | 5857672..5972391 | ~0.5 GiB | Android |
+| `userdata` | 5972392..73277434 | 256.75 GiB | Android `/data`（`fastboot -w` 只擦它 + `metadata`） |
+| `linux17` | 73277435..123871226 | 193.00 GiB | Linux 根（`boot_b` cmdline `elden_root=LABEL=linux`） |
+
+**纪律**（每条都对应一次已发生的翻车）：
+- 写 Android 只允许 `qdl write 0/90504 …` 且镜像扇区数 ≤ 5767168（= `super` 跨度）；一次只写 `super`，不串 `vbmeta`。
+- 写 Linux 只允许在设备侧动 `linux17`（`dd`/`resize2fs`）或 `boot_b`；**禁止**再用「单 `linux` 从 LBA 90504 起」的 GPT-minimal 设计（2026-11-17 覆盖事故的形状）。
+- 动 GPT 前必须跑 `scripts/linux-gpt-dump.sh`（六 LUN 主/备表落盘）**并且**跑 `android-linux-coexist-check.py` 得 rc=0；两条缺一条不许写表。
+- 判据只认读回：EDL `read` + `sha256sum` 与主机件相等，不接受「传输完成」。
+
+**现态（2026-11-19 20:0x 现场读回）**：契约 rc=0（三段 LBA 逐字节一致、16 条目两两不重叠、无 `linux`/`elden-super`/`elden-data` 单分区）；
+`super` 已在机换成 v3 精简件（`51eae107…`，7109 MiB）并读回逐字节一致；`linux17`/`userdata`/`boot_b` 未动。
+
+---
+
 ## 2. 设备状态
 
 ### 2.1 设备等价原则（★）
