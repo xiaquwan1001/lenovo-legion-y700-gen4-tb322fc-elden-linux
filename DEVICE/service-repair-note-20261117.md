@@ -1,6 +1,18 @@
 # 送修说明（联想拯救者 Y700 四代 TB322FC · SN HA2EXB0E）
 
-> 给售后/维修工程师看的一页纸。本机现为**官方 259 固件 + 官方镜像**（我方已全量刷回），
+> ## ⛔ 作废（2026-11-19）：**本页整体作废，不要按它报修，也不要把「ABL 内存类硬件故障 / 全原厂态仍失败 ⇒ 等送修」当作设备现态**
+>
+> - **真因 = 非原厂 GPT**（LUN0 条目名 + LUN4 槽属性字节），**不是内存/ABL 硬件**：单变量 T1 只写 88 KiB GPT
+>   （boot/vbmeta/dtbo/39 个引导固件分区零改动）就使现象从「`continue`/`boot` 全 `Device Error`」变成「ABL 真的去启动」。
+> - **判据升级链（压过本页全部判读）**：11-17 18:5x 两条「偏硬件」观察证伪 → 19:2x T1 单变量定因 GPT →
+>   20:0x T2/T3 整包原厂线刷 + `fastboot -w` ⇒ **Android 16 完整启动**（`sys.boot_completed=1`）。
+> - **此后设备一直在真实使用**：11-17 21:4x adb 在线复核、11-18 19:0x 最小安卓包 EDL 写 8.28 GiB 设备端 sha 一致并两发 `boot_completed=1`、
+>   11-19 深夜主线 Linux 6 GiB 最小根写入 + `ssh root@192.168.7.1` 可登入 ⇒ **不需要送修、不需要换主板**。
+> - **本页保留的用途**：仅作「2026-11-17 上午的现象描述 + 9 类软件原因排除表」历史存档（反例教材）。
+>   现态与上机判据：`DEVICE/README.md` §1.1 首条 + §1.6；全账 `reports/device-status-20261119.md`、`reports/bl-stuck-20261118-forensics.md` §7。
+> - 下面的「当前状态 / 判定 / 期望维修动作」三段 = **作废时点（11-17 上午）的历史值**，与设备现态无关。
+
+> ~~给售后/维修工程师看的一页纸~~（**已作废**）。作废时点（2026-11-17 上午）本机为**官方 259 固件 + 官方镜像**（我方已全量刷回），
 > **⚠ 2026-11-17 18:5x 修正：本页目前只能当「现象与已排除表」用，不得作为「硬件故障」的维修依据** ——
 > 整包原厂全量线刷（`rawprogram1..5 + rawprogram_save_persist_unsparse0 + patch0..5`，含 6 LUN GPT 回原厂）**尚未执行**；
 > 原先两条「偏硬件」观察（错误串自变、EDL `poke` 不返回）已实测退（见文末「修正」段）。保修/换板请求应在整包线刷仍失败后再提。
@@ -15,7 +27,8 @@
 | 引导固件 | 官方 `TB322FC_15.10.259` 包内容（`xbl/xbl_config/abl/uefi/aop/tz/hyp/keymaster/devcfg/qupfw/uefisecapp/imagefv/shrm/cpucp/featenabler` × A/B 共 39 个分区），设备端 sha256 **39/39 == 官方件** |
 | 系统镜像 | 官方 `boot/vbmeta/dtbo`，A/B 双槽均已刷官方件并读回校验 |
 | 解锁状态 | `unlocked:yes`（`fastboot oem unlock`，2026-10-03 由本机完成；非本次故障原因，见自测 5） |
-| 当前状态 | 停在 **fastboot**（`fastboot devices` 可见 `HA2EXB0E`）；`current-slot=a`、`slot-unbootable:a/b=no/no`、`slot-retry-count=a7/b6` |
+| 当前状态（**作废时点 2026-11-17 上午的历史值**） | 停在 **fastboot**（`fastboot devices` 可见 `HA2EXB0E`）；`current-slot=a`、`slot-unbootable:a/b=no/no`、`slot-retry-count=a7/b6` |
+| 现态（2026-11-19） | **不是 fastboot、不是坏机**：`_b` = 自建最小 Debian（`ssh root@192.168.7.1` 可登入，显示未通）、`_a` = 11-18 瘦身 Android（卡 ZUXOS 动画，未取证）；详见 `DEVICE/README.md` §1.1 首条 + §1.6 |
 
 ## 现象（用户可复述）
 
@@ -60,10 +73,14 @@ fastboot boot <任意 boot.img>  → Sending 'boot.img' OKAY
 
 ⇒ **本页不给出硬件定案**。做完整包线刷（约 15.6 GiB / 73 分区 / 78 patch）仍起不来的话，再把本页作为硬件报修附件提交。
 
-**期望维修动作**（建议按序）：
-1. 主板级诊断：DRAM 完整性与存储控制器读写测试（厂商诊断模式或产线工具）；
-2. 若诊断不可用，**更换主板**后复测"能否正常开机进 Android"；
-3. 复测判据：`fastboot devices` 不再出现（进入系统）、或 `adb devices` 可见该机；开机无 fastboot 停留。
+> **⬛ 该前置条件已于 2026-11-17 20:0x 执行且「仍起不来」未成立**：整包线刷 + `fastboot -w` 后 Android 16 完整启动
+> （`sys.boot_completed=1`）⇒ **「硬件报修 / 换主板」这一段永久作废**，不要再执行。现态见本页顶部作废块。
+
+**期望维修动作**（~~建议按序~~ **已作废 2026-11-19，无需执行**）：
+1. ~~主板级诊断：DRAM 完整性与存储控制器读写测试（厂商诊断模式或产线工具）；~~
+2. ~~若诊断不可用，**更换主板**后复测"能否正常开机进 Android"；~~
+3. ~~复测判据：`fastboot devices` 不再出现（进入系统）、或 `adb devices` 可见该机；开机无 fastboot 停留。~~
+   **该判据实测已满足（2026-11-17 20:02 起）**：该机进系统、`adb devices` 可见 `HA2EXB0E`、无 fastboot 停留。
 
 ## 附：可复现命令（维修方复测用）
 

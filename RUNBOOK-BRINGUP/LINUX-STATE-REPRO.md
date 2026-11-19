@@ -214,6 +214,8 @@ bash scripts/linux-state-audit.sh --snapshot versions/state-$(date +%Y%m%d-%H%M)
 1. **现象**：`continue`/`boot` 全报 `Device Error` / `Load Error`；39 个引导固件分区已回原厂且 39/39 校验。
 2. **误判**：拿「错误串自变」+「单发 `poke` 不返回」推「运行期大块内存访问不稳 = 唯一存活解释（硬件类）」，
    写进 `DEVICE/service-repair-note-*.md` 准备送修。
+   **⬛ 该送修单已于 2026-11-19 整体标作废（顶部 `⛔ 作废` 抬头）**；设备不需要送修、不需要换主板。
+   新旧口径对照 / 在线判定 / 上机计划 = `reports/device-status-20261119.md`；上机判据 = `DEVICE/README.md` §1.6。
 3. **真因（单变量证据）**：**只写 88 KiB 的 GPT（LUN0+LUN4 主备表，零镜像改动）**，现象立刻从「直接落 fastboot」
    变成「解锁警告 → 联想 logo」；再把 LUN4/LUN0 全套原厂刷上 + `fastboot -w`，Android 16 完整启动
    （`sys.boot_completed=1`）。⇒ **非原厂 GPT** 才是 ABL `load/authenticate` 失败的原因。

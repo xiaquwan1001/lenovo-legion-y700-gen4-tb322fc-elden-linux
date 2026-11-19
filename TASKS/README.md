@@ -141,6 +141,10 @@
     ③ 最小根 6 GiB EDL 写入，设备端 sha = `abf96ec4…`；④ **`ssh root@192.168.7.1` 可用**（systemd PID1、内核 vk192 UTS、165 包）。
   · **「只有背光」真因**：该 minbase 镜像没有 `/init`、`/usr/local/sbin` 空 ⇒ systemd 起来了但没有 respawn/usb-gadget/udhcpd
     ⇒ 症状与内核坏一致。已注入 `/init`+`usb-gadget`+`udhcpd.conf` 修复（`out/min-restore-20261119/`）。**以后所有 minbase 档必须在 stage 装 `/init`**。
+  · **设备可上机（判据明确）**：本条目所有待办均假设设备可上机 —— **设备不需要送修、无硬件故障证据**（「ABL 内存类硬件故障 / 等送修」= 2026-11-19 作废口径，真因 = 非原厂 GPT）。
+    上机判据 = ① `lsusb | grep -E '05c6:9008|18d1:d00d'` 或 `timeout 15 fastboot devices` 或 `timeout 15 adb devices` 任一见 `HA2EXB0E`（`adb` 里的 `MDX5T20730009849`/`emulator-5554` 不是本机，禁写）；
+    或 ② `timeout 10 ssh -o BatchMode=yes root@192.168.7.1 'uname -r'` 能回（需先 `sudo scripts/ncm-host-up.sh`）。
+    全不中 = **未连接/未上电**（人项：插线 + 上电），不是坏机。判读规则/在线命令/写操作清单 = `DEVICE/README.md` §1.6；对照表 = `reports/device-status-20261119.md`。
   · **明早第一件事（5 分钟）**：设备上电 → `sudo scripts/ncm-host-up.sh` → `ssh root@192.168.7.1`；
     先 `sudo python3 scripts/slot-attr.py show | grep boot_b`（retry 是否被扣），再 `python3 scripts/slot-attr.py mark-successful b`。
   · **显示（本轮只做到定界）**：`/sys/kernel/debug/device_component/ae01000.display-controller` = `aggregate not bound`，
@@ -182,7 +186,8 @@
   · **未结**：`fastboot -w` 后 adbd `Could not set SELinux context` 崩 → recovery factory reset → logo ~72 s（正常，#679）→ **卡 ZUXOS 动画 >10 min**；
     当前 fastboot，槽属性 `a: unbootable=no/succ=yes/retry=6`。候选 = `/data` 与删掉预装池的精简 system 不一致 / factory reset 触发 ZUI 重新格式化（**未取证**）。
   · **待办（本次只登记）**：① 干净瘦身镜像（连桌面「预装占位」来源一起处理）② **KernelSU 修补版 boot**（GKI LKM：magiskboot + `kernelsu.ko` + avbtool 重签）
-    ③ 卡动画取证（recovery logcat / ttyGS0）④ 设备恢复可用。
+    ③ 卡动画取证（recovery logcat / ttyGS0）④ ~~设备恢复可用~~ **改读：设备已可用，遗留是软件面**（11-17 20:0x 起设备就完整起 Android；后续 11-18/11-19 两次真实上机进一步坐实）——
+    本条不等于「设备损坏/待送修」，判据 = `DEVICE/README.md` §1.6。
   · 全账 = `TASKS/sessions/2026-11-18-安卓最小包上机成功与卡动画.md`；报告 `reports/android-super-format-20261118.md`、`reports/android-min-avb-facts-20261118.md`；
     脚本 `scripts/android-min-build.sh`；写前 GPT dump 与日志 `out/edl-supermin-20261118/`。
 - **🆕 2026-11-18（对应上面待办 ②）：KSU(init_boot)+自洽 vbmeta_a 主机侧造件完成、未上机** ——

@@ -35,6 +35,9 @@
   `ath12k` MHI `-110`、无 `/dev/fastrpc-adsp`、`snd-sc8280xp` deferred（均 ADSP/GPR 未就绪）。
   **旧 `linux17` 根 fs 已确认丢失**（EDL 6 点采样全零，成因 = 原厂 `userdata` 覆盖 + `fastboot -w`），故本次为重建而非恢复。
   安卓面：`super`/`vbmeta_a`/`boot_a`/`dtbo_a` **均未动**（a 槽仍是 11-18 的瘦身 Android，卡 ZUXOS 动画未取证）。
+  **设备不需要送修**（「ABL 内存类硬件故障 / 全原厂态等送修」= 已作废口径，2026-11-19 标废）：真因 = 非原厂 GPT（11-17 19:2x 单变量定因），
+  此后设备连续三次真实上机（11-17 20:0x 完整起 Android 16 / 11-18 19:0x 最小安卓包 / 11-19 深夜本最小根）⇒ 硬件无故障证据。
+  旧送修单仅作历史存档：`DEVICE/service-repair-note-20261117.md` 顶部作废块；对照表 `reports/device-status-20261119.md`。
 - **历史：在机 = 持久化的 `vk192`（2026-11-16）**：`uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`
   （= `build/daily` HEAD `4bdf1711b5` + tag `vk192`；内核 payload `0a55e52c…`，dtb `89c9336d…`，ramdisk `3282ae6c…`）。
   **持久件 = `boot_b` 自签 `vk192`**（`bootslot-b/boot_b.img` = 96 MiB，分区读回 sha `06c081ca…`，空载件 `out/boot-elden-vk192.img` = `bdf47f5f…`）；
@@ -223,6 +226,43 @@
 | 超时 | `grub.cfg` 里 `set timeout=8` ⇒ 8 s 后自动选第一项 | 同上 |
 
 ⇒ 后续任何「启动菜单」方案（沿用 GRUB 或自写 loader）都以这组按键为输入契约：**不需要键盘，也不需要触摸**。
+
+---
+
+### 1.6 设备当前可用性与下一步上机判据（2026-11-19 立）
+
+> **结论：设备可用，不需要送修；离线≠坏机。** 判据与全账 = `reports/device-status-20261119.md`。
+> 这一节存在的理由：本仓曾有一轮（2026-11-17 上午）把「ABL load/authenticate 失败」读成硬件故障并起草送修单，
+> 18:5x 判读撤回、19:2x 单变量定因 = **非原厂 GPT**。为防止该口径回流，此处固化为「怎么判在线 / 下一步跑什么 / 哪几件是人的动作」。
+
+**① 在线与否怎么确认（只读，任一命中即在线）**
+
+```sh
+timeout 15 lsusb | grep -E '05c6:9008|18d1:d00d|05c6:90'   # EDL 9008 / fastboot
+timeout 15 fastboot devices                                # → HA2EXB0E  fastboot
+timeout 15 adb devices                                      # → HA2EXB0E  device
+timeout 10 ssh -o BatchMode=yes -o ConnectTimeout=5 root@192.168.7.1 'uname -r'   # 主线 Linux（先 sudo scripts/ncm-host-up.sh）
+```
+
+**② 判读规则（不要越级下结论）**
+- 三条 USB/adb/fastboot 全空 **且** `lsusb` 无任何 `05c6:*`/`18d1:*` ⇒ **「未连接/未上电」**，不是故障；先要人插线/上电。
+- `adb devices` 里有别的机器（如 `MDX5T20730009849` = P40pro、`emulator-5554`）**不是本机**；一律带 `-s HA2EXB0E` 或 `-s 51318dc0`，**禁止对它们做任何写操作**。
+- 只有「在线且同一现象可重复 + 硬件四道门全过」才允许写硬件结论（四道门：`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md` §1.2）。
+- 2026-11-19 19:xx 实测：`lsusb` 只有 root hub/自身 gadget/键鼠/`12d1:108a`(Huawei)、`fastboot devices` 空、`adb` 只有上面两台 ⇒ **未连接**。
+
+**③ 在线后下一步（按现态优先级，写操作见 ④）**
+1. **主线 Linux（主任务，显示未通）**：`python3 scripts/slot-attr.py show | grep boot_b` → `mark-successful b`；
+   再走显示实验（**零写盘**）`out/min-restore-20261119/dp-port2-experiment.patch` → `make dtbs -j26` → `scripts/build-boot.sh` → `fastboot boot`；
+   **先跑一发 `out/boot-elden-vk192.img` 原件做 `test-ctrl`**（RAM 启动本身是否仍可用），否则 nodp 件失败不可判。
+2. **安卓 a 槽（只读取证优先）**：卡 ZUXOS 动画取证 = `adb -s HA2EXB0E logcat` / recovery logcat / `ttyGS0`（`scripts/acm-sh.py`）。
+3. **桌面层**：`resize2fs` 扩到 193 GiB + `daily-baseline`（需先有显示/网络）。
+- 最小件在盘清单（2026-11-19 已核）：`out/min-restore-20261119/rootfs-minbase-gadget-20261119.ext4.img`（6.0 GiB，sha `abf96ec4…`）、
+  `out/android-min-20261118/pkg/super_min.img`（8.28 GiB）、`out/boot-elden-vk192.img`（`bdf47f5f…`）、`scripts/{ncm-host-up.sh,acm-sh.py,slot-attr.py,build-boot.sh}`。
+
+**④ 必须由人做的动作（agent 不自行动手）**
+- 物理：插 USB 数据线、按电源键上电、长按断电（POR）、在引导菜单上选条目。
+- 任何**写设备**操作（EDL `write`、`fastboot flash`、`fastboot -w`、`mark-successful`、`slot-attr` 写、`android-ksu-flash.sh --apply`、
+  `android-slim-v2-plan.sh --apply`、`hide-android-partitions.sh --apply`）⇒ 先列清单等用户确认（2026-11-19 这一次一件也没做）。
 
 ---
 

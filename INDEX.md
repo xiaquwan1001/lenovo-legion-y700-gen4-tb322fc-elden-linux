@@ -26,6 +26,10 @@
      ⇒ **DP 组件拖死 DPU master**。同批失败：`ath12k` MHI `-110`、无 `/dev/fastrpc-adsp`、音频卡 deferred。
    - **明早接续**：① 上电 → `scripts/ncm-host-up.sh` → ssh 验活 + `slot-attr.py mark-successful b`；② 显示实验（`out/min-restore-20261119/dp-port2-experiment.patch`）；
      ③ 桌面 = `resize2fs` + `daily-baseline`。全账 / 待办 = `TASKS/README.md` §4 首条 + `TASKS/sessions/2026-11-19-主线恢复最小Linux与显示定位.md`。
+   - **设备可用性（压过历史「等送修」口径）**：**不需要送修、无硬件故障证据** —— 「ABL 内存类硬件故障 / 全原厂态仍失败 ⇒ 等送修」已于 **2026-11-19 正式作废**
+     （真因 = 非原厂 GPT，11-17 19:2x 单变量定因；20:0x 完整起 Android 16、11-18 最小安卓包、11-19 本最小根 = 三次真实上机）。
+     2026-11-19 19:xx 实测设备**未连接**（`lsusb` 无 `05c6:*`/`18d1:*`、`fastboot devices` 空、`adb` 只有 P40pro `MDX5T20730009849` 与 `emulator-5554`）⇒ **离线 ≠ 坏机**。
+     在线确认 5 条命令 / 判读规则 / 人项动作 = `DEVICE/README.md` **§1.6**；新旧口径对照表 = `reports/device-status-20261119.md`。
    - 历史（11-18）：`super_min` 上机成功（8.28 GiB、`/system` 5.0 GiB）但 wipe 后卡 ZUXOS 动画（未取证）。
 
 0. **🆕 2026-11-18 小时级状态（U2 HA2EXB0E）—— 精简安卓包已上机成功；当前在 fastboot，未结「卡 ZUXOS 动画」**
@@ -67,6 +71,8 @@
   **★2026-11-17 22:0x 路线已定（用户放行：走重装最小化 + 可进 EDL）=「GPT-minimal 重装 + EDL 直写」**（不再走 S3a 保数据）：① **P0 已做**（EDL 只读 dump 六 LUN 主备表 → `backup/HA2EXB0E-16+512/edl-20261118/`，12 文件 + `SHA256SUMS.txt`；主备表条目逐字节相等、头/条目 CRC 全 OK）；② **两张最小表已生成且自检通过**（`out/gpt-minimal-20261118/lun0_{main0,backup0}.bin` = 10 项 / `linux` LBA 90504..123871226 = 472.19 GiB；`lun4_{main4,backup4}.bin` = 74 项，删 `init_boot_a/b`+`vendor_boot_a/b`）；③ ✅ **2026-11-18 11:29 最小 rootfs ext4 镜像已出**（`out/p2-minbase-20261118/rootfs-minbase-20261118.ext4.img`：6 GiB 稀疏/实占 2.1 G、label=`linux`、160 包、1510 个 `.ko`、44 M 固件、15 项门禁全绿、sha256 `d22c6a00…`；构建器 = `scripts/rootfs-minbase-build.sh`（`podman`/`proot` 路线实测不行，必须真 root））+ boot 件 `out/p2-minbase-20261118/boot-minbase-labellinux.img`（cmdline `elden_root=LABEL=linux`，sha `7ea9370b…`）；**⇒ P2 前置件已齐，卡在 C2（写盘批准）**，然后 P1（写 LUN0 表）→ P2（`qdl write 0/90504 <ext4.img>` → 上台 `resize2fs` → 刷 `boot_b`/`dtbo_dummy`/`vbmeta_b` → 冷起验 `findmnt /` = `LABEL=linux` + ssh 通）→ P3（LUN4 表）→ P4（`mark-successful b`）。
   ⚠️ **回退口径已改（2026-11-18）**：不再写「删条目 ≠ 删数据」——`linux` 起点 LBA 90504 = 原 `super` 起点，P2 的头 6 GiB 会覆盖 `super` ⇒ **P2 之后 Android a 槽不再可起**，真回退 = 写回旧表 **+ 重刷官方 `super`**（`backup/official-rom-15.10.259`，~20 min，11-17 已实测走通）。→ `RUNBOOK-BRINGUP/GPT-MINIMAL-DESIGN.md` §4 P2 行。
   **★历史（18:5x 定性降级，已被 20:0x T1/T2 推翻，留档防回流）**：真因 = **非原厂 GPT**（LUN0 条目名 + LUN4 槽属性），只写 88 KiB GPT 即恢复；「硬件类唯一存活解释」与送修单均作废（佐证 `#482`/`#486` 的判读错误）。全账 = `reports/bl-stuck-20261118-forensics.md` §7；历史案例 10 例 / 决策树 = `reports/bl-history-and-playbook.md`；回退件清单 = `DEVICE/README.md` §1.1 首条。
+  > **作废（2026-11-19）：上句的「送修单」已整体标作废，设备不需要送修也不需要换主板** —— `DEVICE/service-repair-note-20261117.md` 顶部已写 `⛔ 作废（2026-11-19）` 抬头；
+  > 新旧口径对照 + 在线判定 + 上机计划 = `reports/device-status-20261119.md`；上机判据 = `DEVICE/README.md` §1.6。
 - **camss：delta 已按 Bryan 要求重基完成（2026-11-17 下午），只差一次上机出流回归**：本机 vendor `camera.ko` CSIPHY = **2.4.0**（地址 103/103 同、13 个 data 字节不同）。**v2 = `patches/upstream/camss-csiphy-24-v2-20261117/`（2 枚，基线 = 7.4-rc3 + kaanapali v25 `[01..03]` 前缀），6 道门全绿**（apply / checkpatch **0E0W0C** / `W=1` / `dt_binding_check` / 表 **13-13** 且与 vendor **103-103** 全等 / `git am` 2-2）。关键新事实：v25 `[03/15]` 的 `mipi_csi2_dphy_3nm_kaanapali` **复用 `lane_regs_x1e80100[]`（4nm v2.1.2 表）**，而 Qualcomm 自己的 SM8750 CAMSS v6 `[4/7]` 指向 `csiphy_res_kaanapali`（subject 写 **v2.3.0**），v2.3.0 与 2.4.0 的 18 张 2ph 表逐字节同值 ⇒ 上游现用值与 Qualcomm 两处口径都不一致（只写 cover 提问段，不替 Kaanapali 下结论）。**剩 = ① 一次上机出流回归（或 cover 声明无实测，需用户裁决）；② 投前再看 `SM8750 CAMSS v6 1/7` 是否已进 tree（进则删本系列 binding 那枚）**。→ `reports/camss-v25-rebase-20261117.md`、`reports/camss-csiphy-v6-vs-240-20261113.md`、`reports/upstream-replies-20261117.md` §3.1、`PITFALLS #648`。
 - **fastrpc**：`qcom,nsessions` **上游已废弃并合入**（`641dd7dd0f68`）⇒ 倒过来变成我们的欠账：板级 DTS 里若还写该属性就要按驱动侧策略删除/改写；`accel/qda` 仍 v4（未合、无 v5）。
 - **T14/T17 用户态固化**：S3+S4+S6 离线复核已过，**唯一缺口 = `hapticd` 二进制不可重建**（自家 ELF，chroot 步骤已闭合）。→ `reports/t14-s3s4s6-offline-verify-20261114.md`。
