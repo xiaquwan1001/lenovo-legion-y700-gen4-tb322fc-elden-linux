@@ -27,7 +27,15 @@
 ### 1.1 内核与软件基线
 
 > **注（2026-11-20 批二，A4 判「三代口径叠写」）**：本节按时间**倒序**叠写，★/★★/★★★ 只是不同年代的标记层；**现态 = 日期最新的最顶条目**，其下所有旧条目（含旧「现态」字样）均为历史沿革，读现态不需要往下看。冲突时按 `INDEX.md` §2 时间序裁决。
-- ★★**现态（2026-11-19 13:20 更新，压过下面全部旧口径）= 自建最小 Debian（主线 Linux）+ Phosh 桌面在 slot `_b`**：
+- ★**现态（2026-11-20 23:10 更新，压过下面全部；在机 vk192）= b 槽主启 Linux（开关机可重复验证）+ PC 声音默认转发到平板**：
+  `qbootctl` = `_b` **Active/Successful/Bootable 全 1**（`qbootctl.service` enabled ⇒ 每发自动 mark-successful，
+  不再抽 retry）；内核 `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`；`/` = `/dev/sda17` 190 G / **1260 包** / Mesa **26.1.6**；
+  三进程 `greetd+phoc+phosh(+osk)`；`wlan0` 出网 + `usb0` 192.168.7.1 SSH；六件 mask 在位、`systemctl --failed` 空；**三次冷起均 ~25 s 直进 Linux**。
+  **音赖**：PC 侧 `audio-share-server.service`（`as-cmd --bind=0.0.0.0:65530`，user unit enabled）+ ufw 放行 192.168.7.0/24；
+  平板侧 `audio-share-client.service`（user 1001，目标 192.168.7.9:65530）⇒ 实测 384 KB/s = f32/2ch/48 kHz 满速、冷起自连。
+  装机/体检 = `scripts/as-client-deploy.sh [--check]`，客户端源码 = `rootfs/debian/audio-share/as-client.c`。
+  **fastboot 卡死的三层真因**（GUID 占位 / LUN 错配 / retry 抽干）= `PITFALLS` **#697**，处置路径同条。
+- ★★**（历史，2026-11-19 13:20）自建最小 Debian（主线 Linux）+ Phosh 桌面在 slot `_b`**：
   GPT 已恢复双轨（`linux17` 193 GiB @LBA 73277435 + `userdata` 256.7 GiB，主备读回 `80ab46e5…`/`e5f79c0e…`）；
   根 = `out/min-restore-20261119/rootfs-minbase-gadget-20261119.ext4.img`（6 GiB，设备端 sha `abf96ec4…`，
   = 11-18 的 160 包 minbase + 本次注入的 `/init`、`/usr/local/sbin/usb-gadget`、`/etc/udhcpd.conf`、`/etc/elden-init-mode=systemd`）；

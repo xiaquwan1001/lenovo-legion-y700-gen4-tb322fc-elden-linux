@@ -12,6 +12,14 @@
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
 > 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
 
+0. **🆕 2026-11-20 22:00–23:10（U2 HA2EXB0E，今晚目标「恢复到历史最佳」= 达成）— 设备曾卡 fastboot（三层真因已定因并修好）+ PC 声音默认转发到平板**
+   - **现态（三次冷起实测，均 ~25 s 直进 Linux，无回落）**：`boot_b` 主启、`qbootctl` = `_b` Active/Successful/**Bootable 全 1**；在机 **vk192**（UTS `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`）；`/` = `/dev/sda17` 190 G（1260 包）；`phoc+phosh` 在；Mesa **26.1.6**；`wlan0` 上网（默认路由）+ `usb0` 192.168.7.1 SSH；六件 mask 在位、`systemctl --failed` 空。
+   - **两种门全绿**：`scripts/deploy-desktop-shell.sh --check` = **MISS=0**；`scripts/zero-to-desktop-check.sh` = **S5–S12 全 ok**（S10 之前 MISS 的两项已修：`man-db` 装上、GPU devfreq 真生效 525 MHz/10 ms）。
+   - **fastboot 卡死的三层真因（PITFALLS #697，全文 `PITFALLS/sessions/329-…`）**：① `boot_b` SUCCESSFUL=0 ⇒ ABL 每发抽 retry，7→0 标 UNBOOTABLE 停 fastboot；② `ValidateSlotGuids … Boot GUID 77036CD4… / abl_b GUID 77036CD4…` = 该槽 `boot_*` 与 `abl_*` **type GUID 相同**（出厂 b 侧占位值）；③ `Boot lun: 1 and BootableSlot: _b do not match` = UFS 启动 LUN 未切（**a→LUN1 / b→LUN2**）。机制 = Qualcomm 切槽要**把 type GUID 在两槽间搬家 + 切 LUN**（`boot_control.cpp` `UPDATE_SLOT`）⇒ 「canonical GUID 在哪侧」必须与「哪侧 active」一致。**修法**：切槽只走 `fastboot set_active`；半完成态用 `scripts/gpt-slot-flip-active.py` + `scripts/linux-gpt-apply.sh --lun 4` 补 ACTIVE（写后逐字节/设备端 sha 读回），再 `set_active <同槽>` 触发 LUN 切换，起来后 `qbootctl -m`。
+   - **PC → 平板音频（新功能，默认常驻两端）**：上游 `mkckr0/audio-share` 只有 Android 客户端 ⇒ 自写 Linux 客户端 `rootfs/debian/audio-share/as-client.c`（协议逐字节取自上游 `NetClient.kt`：TCP 命令字 1/2/3 + protobuf AudioFormat + UDP PCM），musl 静态交叉编译，装机/体检 = **`scripts/as-client-deploy.sh [--check]`**。主机侧改成 user unit `audio-share-server.service`（`as-cmd --bind=0.0.0.0`，原来只绑手机网段 192.168.42.97 ⇒ 平板连不进）+ ufw 放行 192.168.7.0/24 的 65530/tcp,udp。设备侧 user unit `audio-share-client.service` → 192.168.7.9:65530，实测 **384 KB/s = f32/2ch/48 kHz 满速**，冷起自动连（`systemctl --user is-active` = active）。
+   - **顺带修掉两个静默坑**：`deploy-desktop-shell.sh` §8 原来只 `test -f` unit ⇒ 「unit 在、脚本被删、运行值还是 160 MHz/50 ms」也报 ok（现改四件同验：脚本 + unit enabled + min_freq≥525 MHz + polling=10）；设备 `/home/xuqianhui1001/.config/systemd/user` 属主是 root ⇒ 用户级 enable 失败（已 chown）。
+   - **证据**：`logs/forensics-20261120-2210/`（boot_b 96 MiB、logfs×3、misc、vbmeta_a/b）、`backup/HA2EXB0E-16+512/edl-20261120-22{08,35}/`（两次六 LUN GPT dump）、`…/edl-apply-readback-20261120-223802/`（写前回退基线）；工作账 = `.pi/plans/2026-11-20-恢复到历史最佳.md`。
+
 **做到哪**
 
 0. **🆕 2026-11-20（主机侧，单轮）—— dwc3 v10 的「两连接器」形状第一次进真 elden DTB 的 `dtbs_check` 门，零新增诊断**

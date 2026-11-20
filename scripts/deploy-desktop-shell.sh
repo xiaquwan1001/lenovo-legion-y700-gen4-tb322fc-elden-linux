@@ -270,10 +270,15 @@ echo "== 8) GPU devfreq 固化（T19 首绘卡顿）=="
 # daily-baseline.sh §5 只在跑的那一刻写 sysfs（重启即回默认 160 MHz / 50 ms）⇒
 # 桌面每次冷起都先吃一段爬频延迟。这里固化成开机 oneshot。
 GPU_UNIT=/etc/systemd/system/gpu-devfreq-tune.service
-if "${SSH[@]}" 'test -f $GPU_UNIT'; then
-	ok "gpu-devfreq-tune.service 已装（min_freq=$("${SSH[@]}" 'cat /sys/class/devfreq/3d00000.gpu/min_freq 2>/dev/null')）"
+GPU_SCRIPT=/usr/local/sbin/gpu-devfreq-tune.sh
+# 2026-11-20 实测坑（本脚本旧版）：只 `test -f $GPU_UNIT` 就报 ok ⇒ 出现「unit 在、
+# 脚本被删掉、运行值仍是默认 160 MHz / 50 ms」的三处不一致，门照样绿。
+# 现在四件一起验：脚本在 + unit enabled + min_freq>=525MHz + polling==10。
+GPU_OK=$("${SSH[@]}" 's=0; [ -f /usr/local/sbin/gpu-devfreq-tune.sh ] || s=$((s+1)); systemctl is-enabled gpu-devfreq-tune.service >/dev/null 2>&1 || s=$((s+1)); m=$(cat /sys/class/devfreq/3d00000.gpu/min_freq 2>/dev/null || echo 0); p=$(cat /sys/class/devfreq/3d00000.gpu/polling_interval 2>/dev/null || echo 0); [ "${m:-0}" -ge 525000000 ] 2>/dev/null || s=$((s+1)); [ "${p:-0}" = 10 ] || s=$((s+1)); echo $s')
+if [ "${GPU_OK:-9}" = 0 ]; then
+	ok "gpu-devfreq-tune 已生效（脚本+unit+min_freq>=525MHz+polling=10）"
 elif [ "$MODE" = check ]; then
-	no "缺 gpu-devfreq-tune.service（冷起首绘卡顿）"
+	no "gpu-devfreq-tune 未真正生效（$GPU_OK/4 项不满足：脚本缺 / unit 未 enabled / min_freq<525MHz / polling!=10）"
 else
 	"${SSH[@]}" 'cat > /usr/local/sbin/gpu-devfreq-tune.sh <<"EOS"
 #!/bin/sh
@@ -301,8 +306,13 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOS
-systemctl daemon-reload; systemctl enable gpu-devfreq-tune.service >/dev/null 2>&1; systemctl start gpu-devfreq-tune.service' \
-		&& fix "已装 gpu-devfreq-tune.service" || no "装 gpu-devfreq-tune 失败"
+systemctl daemon-reload; systemctl enable gpu-devfreq-tune.service >/dev/null 2>&1; systemctl restart gpu-devfreq-tune.service; systemctl is-active gpu-devfreq-tune.service; cat /sys/class/devfreq/3d00000.gpu/min_freq' \
+		| tail -2 | paste -sd' ' - | { read -r act mn
+		if [ "$act" = active ] && [ "${mn:-0}" -ge 525000000 ] 2>/dev/null; then
+			fix "已装+启用 gpu-devfreq-tune.service（min_freq=$mn）"
+		else
+			no "装 gpu-devfreq-tune 后仍不达标（active=$act min_freq=$mn）"
+		fi; }
 fi
 
 echo "== 8b) 启动队列不卡（#691：卡住的 job 会让桌面永远起不来，屏上停在开机服务日志）=="
