@@ -14,6 +14,13 @@
 
 **做到哪**
 
+0. **🆕 2026-11-19 22:5x（U2 HA2EXB0E）—— 掉电链定因 + 设备已回「最优 Linux 模式」；全仓 8 代理审计产出落 `reports/audit-20261119/`**
+   - **掉电链（新坑 #694）**：22:0x–22:36 连续 3 次「进 Phosh 锁屏即整机掉电」。取证 = 每次 boot 的持久日志只到启动后第 1 秒（≈928 行）就断 ⇒ **硬挂不是优雅关机**（无 `final.target`/`System is powering off`）。定因分层：① **已证实** live 系统上 `systemctl disable --now droid-juicer` ⇒ ~40 s 掉电（#693 同族，**禁止再在 live 上停这两件**）；② **高置信未单变量** = droid-juicer 落盘 mask 后顶上来的 `hexagonrpcd`（#692 attach ADSP 硬崩）。
+   - **新机制（可复用）**：`scripts/boot-img-cmdline.py --append "systemd.mask=…"` 造 **零写盘救援舱** → `fastboot boot` 进系统 → 只做 `systemctl mask` 落盘 → 正常 reboot。本次 45 s 到 SSH、`graphical.target` active、无 failed unit。全文 `PITFALLS/sessions/326-掉电链定因与systemd.mask救援舱.md`（索引行 #694）。
+   - **现态（22:37 起实测）**：`boot_b` 持久启动 / `elden_root=LABEL=linux` / `/dev/sda17` 190 G 用 6.2 G / **greetd+phoc+phosh+phosh-osk-stub 四进程** / Mesa **26.1.6** / **wlan0 = ustcnet 114.214.230.246，默认路由经 wlan0**（`usb0` 192.168.7.1 保留 SSH）/ 时钟正确 / `scripts/deploy-desktop-shell.sh --check` = **MISS=0**。
+   - **安卓分区零改动**：`super` 22 G、`userdata` 256.7 G、`metadata` 64 M、`boot_a` 原样（`lsblk PARTLABEL` 复核）；六件 mask = droid-juicer + plymouth×4 + hexagonrpcd（`/etc/systemd/system/*.service -> /dev/null`）。
+   - **审计产出（8 代理只读）**：总入口 `reports/audit-20261119/README.md`；`A1-phase-timeline.md`（阶段突破/卡点）、`A2-best-state.md`（最优进度+复现）、`A3-*`（344 脚本分类）、`A4-*`（29 条文档问题+三批顺序）、`A5-forks.md`（14 分叉点）、`A6-*`（152 G 资产批次）、`A7-hygiene.md`、`A8-device-state.md`。**已执行** = 删 2.44 G 构建 scratch（`out/stage-*`）+ 重生成 `reports/README.md`（564 篇/147 组），其余为清单。
+   - **遗留（需拍板）**：A6 批次 2/3（~34 G 归档 + ~20 G 中间物）、A4 批二/批三（文档合并/归档）、A3 的 9 项证据型脚本归档、PITFALLS 跳号 159 个人工判。
 0. **🆕 2026-11-19 21:5x（U2 HA2EXB0E）—— 共存契约已冻结、安卓 v3 已造件并写入；**上机 3 发均未进桌面，其中 2 发被 BCB 污染；设备现居 Linux（可用）**
    - **共存契约（新，正文 `DEVICE/README.md` §1.7）**：Android = `super 90504..5857671` + `userdata 5972392..73277434`；Linux = `linux17 73277435..123871226` + `boot_b`。
      现场 EDL 读回主表 16 条目**两两不重叠**、无旧破坏设计的单 `linux` 分区 ⇒ `scripts/android-linux-coexist-check.py` rc=0。**实测共存：刷安卓 3 次，Linux 全程可登**（`/` = `/dev/sda17`）。
@@ -131,7 +138,7 @@
 7. **T9 取数**：`scp elden-root:/var/lib/elden/suspend-resource.tsv .` 后按同一 boot ≥3 周期看趋势。
 8. **磁盘 A 类清理已执行完（2026-11-16）**：两轮共释放 **15.25 GiB**（项目 91 G → 76 G；A1–A14 无失败项，第二轮 = `stock-src`、`dl-cam/ndk`、`out/r21-sbstop-{p69,pc2}`、`out/mu-memmap-20261115`、`out/{espboot-20261108,espboot-20261110,fbdiag-20261108,dbg-uefi-initrd-20261115}`、`y700四代工具`）。三项评估 = `backup/official-rom` super 15 G **可压不可删**（脚本零引用、净省 ~6 G，需同轮改引用行）、`backup/out-history` 8.13 G **无可删**（114 个 .img 全被 `versions/*.tsv` 引用）、`.pi/sessions`+`reports/artifacts` **建议保留**。→ `reports/disk-cleanup-20261115.md` §2（执行记录 + 复核命令）。
 9. **主机侧待办已对账到 2026-11-17（子代理）**：`reports/todo-inventory-20261113.md` 的 72 条 → `reports/todo-reconcile-20261117.md`（17 已闭环 / 9 已作废 / **6 条主机侧可做** / 25 需设备窗口 / 15 需用户批准）。主机侧 6 条按价值 = B14 T14 重建 recipe、B15 Gunyah 两空、B13 脚本欠账、B18 libcamera 闪光灯、C-I12、B17 分诊盲区（合计 ~10–13 h）。文档/工件卫生 = `reports/doc-hygiene-20261117.md`。
-10. **2026-11-18 主机侧 lane（只读，未改 SSOT 的 5 份报告已入库；本轮结论已并进本节）**：**单一可执行清单 = `reports/todo-next-20261118.md`**（A 主机 11 条 / B 设备 12 条 / C 待批准 11 条 / D 已作废 15 条；价值序首位 = dwc3 v10 + haptics v3 答 sashiko 的 2×High+1×High）。其余 = `reports/progress-audit-20261118.md`（数字三方一致 36/37·10/13；9 处文档滞后已同轮改完）、`reports/mail-inbox-20261118.md`（11-14 后人类回帖 2 封、bot 8 封；`read-mail-ustc.py --replies-only` 判据失效待修）、`reports/upstream-delta-20261118.md`（**camss v2 暂不投**：Qualcomm 11-14 v7 23 枚已做掉我方 0001/0002 形状，等 v8；dwc3/haptics 重基目标换 `refs/heads/master`）、`reports/doc-slim-plan-20261118.md`（可净减 ~44 KB，**第一刀 C1–C8 已于 2026-11-19 执行完**（C9 = PITFALLS 索引行合并，判「收益 < 风险」不做））。
+10. **2026-11-18 主机侧 lane（只读，未改 SSOT 的 5 份报告已入库；本轮结论已并进本节）**：**单一可执行清单 = `reports/todo-next-20261118.md`**（A 主机 11 条 / B 设备 12 条 / C 待批准 11 条 / D 已作废 15 条；价值序首位 = dwc3 v10 + haptics v3 答 sashiko 的 2×High+1×High）。其余 = `reports/progress-audit-20261118.md`（数字三方一致 36/37·10/13；9 处文档滞后已同轮改完）、`reports/mail-inbox-20261118.md`（11-14 后人类回帖 2 封、bot 8 封；`read-mail-ustc.py --replies-only` 判据失效待修）、`reports/upstream-delta-20261118.md`（**camss v2 暂不投**：Qualcomm 11-14 v7 23 枚已做掉我方 0001/0002 形状，等 v8；dwc3/haptics 重基目标换 `refs/heads/master`）、`reports/doc-slim-plan-20261118.md`（可净减 ~44 KB，**第一刀 C1–C8 已于 2026-11-19 执行完**（C9 = PITFALLS 索引行合并，判「收益 < 风险」不做））。孤儿报告补指针：`reports/stale-cleanup-b-docs-20261119.md`（check-doctor §13 曾报无人引用）。
 
 **怎么核实本节没漂**（开工前先跑，见 `.pi/AGENT-OPS.md` §0）
 
@@ -205,7 +212,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 6 | `reports/*.md`（按日期）→ `archive/` · `SESSIONS/` · `PROGRESS.md` · `HISTORY/` | **只作沿革与证据，不得当「当前结论」引用** |
 
 > `reports/` 内部查全用 **`reports/README.md`**（509 篇的机器生成目录，`scripts/reports-index.py` 产；`--check` 过期即 rc=1）。
-> 它**不是入口**，不承载结论，只解决「reports 里到底有什么、哪篇没人引用」——2026-11-15 实测有 135 个报告/台账文件名全仓只出现 1 次。
+> 它**不是入口**，不承载结论，只解决「reports 里到底有什么、哪篇没人引用」——2026-11-15 实测有 135 个报告/台账文件名全仓只出现 1 次（**快照，已过时；现数以本文件顶部报告总数与 `scripts/reports-index.py` 重跑为准**）。
 
 > **权重规则（硬）**：第 1 行（最近会话）与第 4–6 行冲突时，**先按会话读**，并在**同一提交**内把下行文档改成一致；
 > 不允许「两边都写着，读者自己判」。`README.md` / `PROGRESS.md` 是**公开门面**，agent 默认不读（不占入口位）。

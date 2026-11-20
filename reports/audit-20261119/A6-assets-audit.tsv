@@ -1,0 +1,33 @@
+# A6 资产体积审计（只读）— 审计代理: A6-assets / 2026-11-19
+# 列: path	大小(约)	类别	引用者	建议动作	预计释放	复核命令	风险
+out/android-slim-v3-20261119	41G	NEEDS-USER(现役实验)	TASKS/sessions/2026-11-19-安卓共存契约与v3精简上机.md; reports/android-slim-v3-20261119.md §7/§8; 脚本 scripts/android-slim-v3-build.sh	本轮 S3–S5 计划(S3刷原厂super对照/S4二分v2b/S5造console件)还在用; 不动	0	sed -n '1,40p' TASKS/sessions/2026-11-19-安卓共存契约与v3精简上机.md	高: 活跃二分材料, 提前删会毁掉在机v3的回退路径
+out/android-slim-v3-20261119/new/super_dbg.img	7.0G	PURGE-CANDIDATE(确认后)	无脚本引用; sha 8b42f20dd8cc2205 ≠ super_min_v3 51eae1075fe159b0(非硬链重复,是debug变体)	S5 取完日志后删	7.0G	grep -rn super_dbg scripts/ reports/	低
+out/android-slim-v3-20261119/verify	3.9G	PURGE-CANDIDATE(确认后)	sha 与 new/system_a.img 是否一致未逐字节取证; 若一致为纯校验副本	校验sha后删	3.9G	sha256sum out/android-slim-v3-20261119/verify/system_a.img out/android-slim-v3-20261119/new/system_a.img	低: 删前必须核对sha一致
+out/android-slim-v3-20261119/work	3.4G	PURGE-CANDIDATE(可再生)	构建中间物(scripts/android-slim-v3-build.sh 可重建)	冻结期后删	3.4G	grep -n work scripts/android-slim-v3-build.sh	低
+out/android-slim-v2b-20261119	25G	ARCHIVE(冻结后)	S4 二分对照物(见上会话文件); 验证完 v2b/v3 取舍后整体归档到 backup/out-history	先留, S4 结束后移 archive	20G(verify 5.5G+work 4.8G+new 10G)	grep -n v2b reports/android-slim-v3-20261119.md	中: 与在机实验有对照关系
+out/android-min-20261118	14G	ARCHIVE(历史)	被 reports/android-slim-v3-20261119.md 叙述引用但无脚本引用; pkg/super_min.img 8.3G 为 v1 产物	移 backup/out-history 或删 pkg(可由脚本重建)	~13G	grep -rn "android-min-20261118" scripts/ | grep -v __pycache__	中: 建议先 archive 后删
+out/android-min-avb-20261118	15G	ARCHIVE(历史)	reports/android-min-avb-facts-20261118.md(证据报告); parts/ 15G 为拆分原件, 可由 official-rom super 重拆	核对 facts 报告引用项后 archive	~14G	grep -n "parts/" reports/android-min-avb-facts-20261118.md	中
+out/min-restore-20261119	6.4G	ARCHIVE(历史)	rootfs-minbase-gadget 镜像, 与 p2-minbase 重复一代(rootfs-minbase-build.sh 可重建)	确认设备已稳定运行后删	6.4G	sha256sum 两镜像对比 out/p2-minbase-20261118/rootfs-minbase-20261118.ext4.img	中: 是最近的可用恢复镜像, 建议保留最新一代
+out/p2-minbase-20261118	6.1G	MUST-KEEP(近期恢复镜像)	rootfs-minbase-build.sh 产物; 2026-11-19 会话确认设备在跑 Linux, 此为最近整代 rootfs	保留至 min-restore 判定后二选一	0	grep -rn minbase scripts/rootfs-minbase-build.sh	低
+out/stage-min-20261118	1.8G	PURGE-CANDIDATE(可再生)	构建中间物(lib/)	删	1.8G	du -sh out/stage-min-20261118/lib	低
+out/stage-modules-20261118	550M	PURGE-CANDIDATE(可再生)	modules tar.gz 可由内核树重建(build/ 已删, 但 scripts/build-kernel.sh 可重造)	删	550M	tar -tzf out/stage-modules-20261118/modules-*.tar.gz | head	低
+out/stage-debian	129M	PURGE-CANDIDATE(可再生)	无引用	删	129M	grep -rn stage-debian scripts/ reports/	低
+out/corrupt-20261102	106M	ARCHIVE(取证)	2026-11-02 损坏事件证据	并入 archive/ 或外部备份后删	106M	ls out/corrupt-20261102	低
+out/bootmark-a-test.img	96M	PURGE-CANDIDATE	无版本号测试件(同类 boot-elden.img 曾按 reports/asset-cleanup-20261109.md 删)	删	96M	grep -rn bootmark scripts/ reports/	低
+out/modstage-vk163 + vk172	173M	ARCHIVE(历史)	vk 账内(ledger 有行)	移 backup/out-history(scripts/out-archive.py)	173M	bash scripts/out-archive.py --dry-run	低
+out/boot-elden-*.img(18件,~1.5G)	1.5G	MUST-KEEP→ARCHIVE	全部在 versions/vk-kernel-identity.tsv 第2列有行(逐名 grep -c 已核=18/18); sha 基线见 versions/out-images-sha256-20261105.tsv	按既有管道 out-archive.py 归档(勿直接删)	1.5G(移出 out/ 后 out/ 减, backup/ 增)	awk -F'\t' '!/^#/{print $2}' versions/vk-kernel-identity.tsv | sort > /tmp/l; ls out/boot-elden-*.img | xargs -n1 basename | grep -Fxf /tmp/l | wc -l	低
+backup/official-rom-15.10.259	16G	MUST-KEEP	versions/backup-manifest.tsv 行 backup/official-rom-15.10.259 (KEEP-REF, 22 处引用); 且本轮 S3 计划要刷原厂 super 对照	保留	0	grep -n "official-rom" versions/backup-manifest.tsv	高: 唯一本地线刷包
+backup/out-history-20261105	7.6G	MUST-KEEP	versions/backup-manifest.tsv (KEEP-CRITICAL, 114件均在 vk 账有行, vk 账闸)	保留	0	sed -n '/out-history/p' versions/backup-manifest.tsv	高: vk 账回溯唯一物证
+backup/HA2EXB0E-16+512	1.2G	MUST-KEEP	backup-manifest.tsv (KEEP-CRITICAL, U2 独有分区 dump, 243 引用)	保留	0	—	高
+backup/stock-259 / stock-elden / rawdump / boot_b-live-vk184 / fw / avf	~2.5G	MUST-KEEP	backup-manifest.tsv 各行 KEEP-CRITICAL/KEEP-REF	保留(boot_a-pre-uefi 1 件标 DELETE 待用户点头)	~100M(仅 DELETE 项)	grep -E "DELETE|KEEP" versions/backup-manifest.tsv	高
+backup/git-history-rewrite-20261112 + git-slim-20261113	2.0G	NEEDS-USER	backup-manifest.tsv 未覆盖这两目录(现查无行)	问用户: .git 已在(364M), 这两个是历史重写快照	2.0G	grep -c "git-history-rewrite\|git-slim" versions/backup-manifest.tsv	中
+reports/artifacts/slotattr-20261119	4.1G	NEEDS-USER(设备读回)	full-image.bin 4.0G = 2026-11-19 slotattr 实验的分区整读回(sde 头尾 patch 对照同目录); EDL 可再读但需设备在线+重做实验	问用户: 设备态已变, 读回件是否留档	4.1G	ls -la reports/artifacts/slotattr-20261119/	中: 若属"设备时点物证"应移 backup/ 而非删
+reports/artifacts(其余)	1.8G	ARCHIVE(证据层)	reports/README.md 索引(559篇/145组, 2026-11-19 重生成); uefi-R* 目录 23-33M/件	按 reports/ 既有 A8 先例(二进制已删留档)逐目录核签后外移	~1.5G(小文件与 md 不动)	bash scripts/reports-index.py --check	低-中: reports/ 是证据层, 移动需登记
+bootslot-b/	2.0G(21件×96M)	ARCHIVE(历史槽位件)+MUST-KEEP(在机)	引用者: scripts/flash-b.sh, sign-boot-b.sh, build-locked-chain.sh, f2fs-migrate.sh, linux-state-audit.sh; 在机现役=boot_b-minbase-labellinux-20261119.img + vk192-linux17label(2026-11-19 会话)	保留最新2件, 其余19件移 archive/ 或 backup/	~1.8G	ls -t bootslot-b/ | head -2	中: 判错"现役件"会丢回退
+dl-cam/	609M	NEEDS-USER	vendor-cam-l1d.img(256M)=设备 vendor 分区读出件(C1 相机线供体); scripts/ 与 INDEX/TASKS 现查无直接引用; aosp 95M+sysroot 203M 可由 gen-headers.sh/gen-aidl.sh 重建	问用户: 相机线是否继续; vendor 件可由 backup/official-rom super 重拆	最多 ~500M(sysroot+aosp+hw-interfaces)	grep -rn "dl-cam" scripts/*.sh | head	中: vendor-cam-l1d.img 若唯一且相机线未完, 建议移 backup/
+external/	855M	PURGE-CANDIDATE(可再生)	lc-cross 440M(交叉工具链, 下载可得), ext-repos 221M(git 克隆可重克隆), alpine-sysroot 80M, aosp-vndk33 57M, mesa-out 40M, phoc-work 29M	注意: ~/toolchains 是musl链(在外); external/ 内全部可重下; 需用时再取	855M	grep -rn "external/lc-cross\|external/ext-repos" scripts/ | head	中: 重下载耗时, 一次性删省空间但下次实验要重新取
+.pi/sessions	876M	ARCHIVE	会话正文(sessfind 索引)	>90 天旧会话压缩归档(需 sessfind --build 后)	~600M(估)	du -sh .pi/sessions; sessfind --build	低: 归档后索引要重建
+assets/android-20261119	319M	MUST-KEEP	scripts/android-assets-extract-20261119.py 输出+meta/MANIFEST.tsv(成品, 非中间物)	保留	0	ls assets/android-20261119/meta/	低
+out/android-assets-20261119/staging	809M	PURGE-CANDIDATE	同脚本中间态; 成品已落 assets/android-20261119/	核对 MANIFEST 后删	809M	diff <(ls assets/android-20261119/meta) <(ls out/android-assets-20261119/staging)	低
+.git	364M	KEEP	仓库本体	保留	0	git count-objects -vH	—
+dl-cam 以外小目录(patches 9.3M, scripts 2.6M, probes 2.4M, archive 2.4M, tools 1.7M 等)	<30M	KEEP	索引齐备	不动	0	—	—

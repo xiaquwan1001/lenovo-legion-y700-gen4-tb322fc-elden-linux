@@ -16,7 +16,7 @@
 主线 Linux（当前日常线基于 **stable 7.3.1**；当前构建号与完成度**现查** [`TASKS/README.md`](TASKS/README.md) §0 与 [`DEVICE/README.md`](DEVICE/README.md) §1.1，本文件不维护具体号）
 在这块板子上**大多数子系统已经能工作**（显示/图形/触屏/网络/音频/温控/串口/相机出流+拍照、传感器、Waydroid 容器主链路…），日常已可日用。
 
-近期几件大事的**逐日时间线正文 = [`PROGRESS.md`](PROGRESS.md) §1**（本节不重复维护，避免两处漂移）。最近一轮（2026-11-12）要点：UEFI N1 判读再更正（菜单两版都能显，无屏显 = `CONFIG_SYSFB_SIMPLEFB` 未开）并出对应内核待上机验；Waydroid/输入法/马达/音频/传感器全链上机可用。
+近期几件大事的**逐日时间线正文 = [`PROGRESS.md`](PROGRESS.md) §1**（本节不重复维护，避免两处漂移）。**（本节为 2026-11-12 快照，已过时；状态现查 `INDEX.md` §0）** 最近一轮（2026-11-12）要点：UEFI N1 判读再更正（菜单两版都能显，无屏显 = `CONFIG_SYSFB_SIMPLEFB` 未开）并出对应内核待上机验；Waydroid/输入法/马达/音频/传感器全链上机可用。
 
 **这个仓库不是“刷机教程”，是研究记录。** 刷机有变砖风险，详见 §6。
 
@@ -57,7 +57,7 @@
 
 | 目标 | 状态（权威数字见 [`TASKS/README.md`](TASKS/README.md) §0） | 说明 |
 |---|---|---|
-| **G1** 驱动 bring-up | 多数驱动已工作；日常线基于 stable 7.3.1 | **在机内核/槽位只读** [`DEVICE/README.md`](DEVICE/README.md) §1.1 首条（2026-11-13 起 = `vk190` 持久 `boot_b`，RAM 试验件 `vk191`）；冷起显示竞态 `Q28` 已按「已规避」结项（2026-10-24；样本数与复启条件只读 `TASKS` §5）；上游化 M 系列进行中（camss SM8750、dwc3、wl2868c、aw86927 等，逐条只读 `TASKS` §7） |
+| **G1** 驱动 bring-up | 多数驱动已工作；日常线基于 stable 7.3.1 | **在机内核/槽位只读** [`DEVICE/README.md`](DEVICE/README.md) §1.1 首条（**现态只读 DEVICE §1.1 首条；`vk190`/`vk191` = 历史**，2026-11-19 起现态 = minbase Debian+Phosh @`boot_b`，`vk192` 为回退件）；冷起显示竞态 `Q28` 已按「已规避」结项（2026-10-24；样本数与复启条件只读 `TASKS` §5）；上游化 M 系列进行中（camss SM8750、dwc3、wl2868c、aw86927 等，逐条只读 `TASKS` §7） |
 | **G2** 安卓容器 | 主链路已通 | Waydroid 图形/内核/GAPPS/代理通路可用；**容器传感器 HAL**（真值 SSC→UDP）、**容器音频**（C6）、**C2 GMS 登录**（用户人工验证）、**C10 马达透传**（AIDL V2 + 固化进 vendor.img + Settings 强度档位）、**C11 触屏中文输入法**（squeekboard + fcitx5/Rime，2026-10-20 上机验收）、**容器相机到 App 预览 `STREAMING`**（2026-10-29）；Play Integrity / SafetyNet、Widevine 等级仍在收口 |
 | **G3** x86 模拟 | **PoC ✅ / Steam 登录界面 ✅** | Box64 + Wine PoC 成功；官方 ARM64 Steam 客户端 2026-10-28 起到登录界面（实测证据 `reports/g3-steam-20261028.md`），截图判据 10-29 闭环；Steam 游戏端到端（图形/音频/性能）未上机 |
 | **拓展** UEFI 间接引导 | 🟢 **两种形态都通（2026-11-10）** | 零写盘形态（`fastboot boot` 的 UEFI 件读起 ESP 上的 `boot.img`，2026-11-08）与 flashed 形态（写 `boot_a`，2026-11-10 打通，129.2 s 起 Linux）都已实测；flashed 曾失败三轮，真根因 = 原厂 `dtbo_a` 的 Android DTBO 被 ABL 合进我们的 DTB（清 `dtbo_a` 即通）。剩余仅「菜单交互目视」与「`boot_a` 冷起回归」两项非阻塞，详见 `TASKS` §5「2026-11-10（深夜）」块与 `reports/uefi-dtbo-a-rootcause-20261110.md`。Gunyah = 终局裁决非主线（2026-10-25） |
@@ -85,7 +85,7 @@ A/B 槽管理、**安卓容器传感器**（加速/陀螺/光/磁/接近，真�
 | **Q28** | **冷起显示间歇失败**：首条 DCS 命令 `ff 20` 的命令 DMA 引擎 hang → 面板未使能 → 只有背光无画面。两种表现：**NOCARD** 与 **STORM**。 | **🟢 已规避·结项（2026-10-24，用户裁决不补样本、不挖根因）**。修复口径、结项样本数、判据、已否证清单与在机镜像**只读** [`TASKS/README.md`](TASKS/README.md) §5 Q28 行 + [`DEVICE/README.md`](DEVICE/README.md) §1.1；历史报告 `reports/q28-v2-mdss-reset-20261023.md`、`reports/q28-por-samples-r1r2-20261023.md`。冷起 A/B 必须真实 POR（暖复位会粘坏态）。 |
 | **Q32** | **暖起（warm reset）与冷起（真 POR）的差异** —— 同一内核/DTB 为何会因复位深度不同而结果不同 | **已结项（并入 Q28，2026-10-24）：三臂实验跑完、入口无差异**。判据表、样本数与「变量是 ABL 有没有留活显示」的结论只读 `TASKS` §5 Q28/Q32 行与 `reports/q32-matrix-20261024.md`、`reports/q32-warm-vs-cold-preresearch-20261023.md`。 |
 | **#106** | **亮屏进桌面后整机卡死**（无 panic、SSH/USB 全失、只能物理断电）。2026-10-10 的对照实验记录到它与「干净的 GOOD 显示」强相关。 | **历史记录，当前不作开放项**：2026-10 之后无复现样本（Q28 运营线 8/8 无坏发、日线累计多轮无命中），也**没有栈**（硬看门狗禁用 + 只能冷断电）。谁再撞到就按「装弹已就位（`softlockup_panic`+ramoops）」取证，取证前不重新论证。 |
-| **N1** | **UEFI 间接引导（G1-29）** | 🟢 **已收口（2026-11-10 深夜）**：零写盘与 flashed（写 `boot_a`）两种形态都实测起 Linux；flashed 三年失败的真根因 = 原厂 `dtbo_a`（ABL 把 Android DTBO 合进我们的 DTB）⇒ 配方 = `dtbo_a` 全 0 + 刷 `boot_a`。剩余 = 菜单交互目视、`boot_a` 冷起回归（非阻塞）。**只读** `TASKS` §5「2026-11-10（深夜）」块与 `reports/uefi-dtbo-a-rootcause-20261110.md`。 |
+| **N1** | **UEFI 间接引导（G1-29）** | 🟢 **已收口（2026-11-10 深夜）**：零写盘与 flashed（写 `boot_a`）两种形态都实测起 Linux；flashed 三年失败的真根因 = 原厂 `dtbo_a`（ABL 把 Android DTBO 合进我们的 DTB）⇒ 配方 = `dtbo_a` 全 0 + 刷 `boot_a`。剩余 = 菜单交互目视、`boot_a` 冷起回归（**两项均已于 2026-11-15/16 收口**，见 `INDEX.md` §0-4；非阻塞）。**只读** `TASKS` §5「2026-11-10（深夜）」块与 `reports/uefi-dtbo-a-rootcause-20261110.md`。 |
 | **Q24** | 熄屏 × 相机 → 共存会常态掉电。 | **⛔ 已关闭（2026-10-24 用户裁决：不再取证）**；根因、样本数与运营互斥策略**只读** `TASKS` §5 Q24 行。 |
 | — | **结论纪律**：`vk81/82/83` 曾因构建事故成为“无 QCOM 驱动的死内核”，其上的结果**已作废**；`Q28` 一度被判定为“按内核二进制确定性”，经独立溯源审计后**已降级**（见 `PROGRESS.md`）。 | 已是流程的一部分：worker 结论必须由编排者独立复跑。 |
 

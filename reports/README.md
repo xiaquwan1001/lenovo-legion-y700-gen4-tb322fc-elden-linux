@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：559
+- 报告总数：564
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -21,6 +21,7 @@
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
 | `camss` | 9 | `camss-v25-rebase-20261117.md` |
 | `m3v5` | 9 | `m3v5-repack-20261031.md` |
+| `android` | 8 | `android-assets-20261119.md` |
 | `asset` | 8 | `asset-slim-20261112.md` |
 | `b5` | 8 | `b5-preflight-20261029.md` |
 | `droidloom` | 8 | `droidloom-l2-phoc-syncobj-20261111.md` |
@@ -28,7 +29,6 @@
 | `m6` | 8 | `m6-v2-recut-plan-20261107.md` |
 | `script` | 8 | `script-audit-adb-20261118.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
-| `android` | 7 | `android-assets-20261119.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `camera` | 6 | `camera-snapshot-window-focus-20261019.md` |
 | `ime` | 6 | `ime-osk-firefox-rootcause-20261112.md` |
@@ -51,6 +51,7 @@
 | `kexec` | 3 | `kexec-target-boots-20261024.md` |
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
+| `stale` | 3 | `stale-alpine-audit-docs-20261119.md` |
 | `suspend` | 3 | `suspend-panic-rootcause-20261020.md` |
 | `tablet` | 3 | `tablet-night-runner-dryrun-20261031.md` |
 | `todo` | 3 | `todo-next-20261118.md` |
@@ -138,6 +139,7 @@
 | `rebuild` | 1 | `rebuild-corrupt-img-20261102.md` |
 | `replay` | 1 | `replay-2026-10-17-m1-73-vk127.md` |
 | `repo` | 1 | `repo-slim-audit-20261113.md` |
+| `resource` | 1 | `resource-revue-20261119.md` |
 | `shutdown` | 1 | `shutdown-greetd-hang-plan-20261030.md` |
 | `sn` | 1 | `sn-anchoring-audit-20261113.md` |
 | `ssot` | 1 | `ssot-merge-20261105-round2.md` |
@@ -454,6 +456,17 @@
 - `m3v5-prefetch-regression-20261030.md` — M3-1 v5 投递前独立构建 + 边界回归（pristine 基线）— 2026-10-30（重派轮）
 - `m3v5-pristine-replay-20261030.md` — M3-1 v5 pristine 重放（投递前必修项）—— 2026-10-30
 
+## `android`（8）
+
+- `android-assets-20261119.md` — 安卓原厂资产 → Linux 可用包（纯主机侧）
+- `android-ksu-avb-20261119.md` — KSU(init_boot) + AVB 自洽 —— 主机侧造件与对账（TB322FC / elden / ZUXOS 1.5.10.259）
+- `android-slim-v2-20261119.md` — 安卓「干净瘦身 v2」+ 卡 ZUXOS 动画静态定因
+- `android-slim-v3-20261119.md` — 安卓「彻底精简 v3」+ 安卓/Linux 双轨共存契约（2026-11-19）
+- `android-min-avb-facts-20261118.md` — 精简安卓全量包的 AVB / 虚拟 A/B / 去预装 事实与风险（S2）
+- `android-super-format-20261118.md` — super 封装格式、工具链与精简额度（S1）
+- `android-compat-20261026.md` — G2 安卓兼容调查（lane F）— 2026-10-26
+- `android-required-resources-audit-20261011.md` — 安卓侧「必须提取资源」审计（U2 · 2026-10-11）
+
 ## `asset`（8）
 
 - `asset-slim-20261112.md` — 资产/体积精简执行账（2026-11-12，用户「尽可能精简项目体积」）
@@ -530,16 +543,6 @@
 - `wl2868c-v2-20261029.md` — wl2868c 驱动系列 v2 重生成（备料，不投递）— 2026-10-29
 - `wl2868c-20261028.md` — wl2868c binding（M4-1）重生成与 v2 投递 — 2026-10-28
 - `wl2868c-driver-20261028.md` — wl2868c 驱动本体：基线与上游可接受性 — 2026-10-28
-
-## `android`（7）
-
-- `android-assets-20261119.md` — 安卓原厂资产 → Linux 可用包（纯主机侧）
-- `android-ksu-avb-20261119.md` — KSU(init_boot) + AVB 自洽 —— 主机侧造件与对账（TB322FC / elden / ZUXOS 1.5.10.259）
-- `android-slim-v2-20261119.md` — 安卓「干净瘦身 v2」+ 卡 ZUXOS 动画静态定因
-- `android-min-avb-facts-20261118.md` — 精简安卓全量包的 AVB / 虚拟 A/B / 去预装 事实与风险（S2）
-- `android-super-format-20261118.md` — super 封装格式、工具链与精简额度（S1）
-- `android-compat-20261026.md` — G2 安卓兼容调查（lane F）— 2026-10-26
-- `android-required-resources-audit-20261011.md` — 安卓侧「必须提取资源」审计（U2 · 2026-10-11）
 
 ## `waydroid`（7）
 
@@ -698,6 +701,12 @@
 - `m8ab-readback-bootb-20261031.md` — M8 收尾：boot_b 完整读回备份（2026-10-31）
 - `m8ab-restart-20261030.md` — M8 A/B 续测（2026-10-30）：基线臂三发正常，坏发未复现
 - `m8ab-build-20261029.md` — M8 v2 真机 A/B 两镜像臂构建报告（lane G，2026-10-29）
+
+## `stale`（3）
+
+- `stale-alpine-audit-docs-20261119.md` — 文档层「过时 Alpine 件」审计（只读，2026-11-19）
+- `stale-alpine-audit-scripts-20261119.md` — 过时 Alpine 条目审计 — 脚本/可执行层（2026-11-19，只读）
+- `stale-cleanup-b-docs-20261119.md` — 文档层「过时 Alpine 件」清理（B/C 类落地，2026-11-19）
 
 ## `suspend`（3）
 
@@ -1081,6 +1090,10 @@
 ## `repo`（1）
 
 - `repo-slim-audit-20261113.md` — 仓库瘦身审计（文档 + 脚本）— 2026-11-13
+
+## `resource`（1）
+
+- `resource-revue-20261119.md` — 资源重审 — 按新口径「快速从原厂 Android → 能力完整 Linux」（2026-11-19）
 
 ## `shutdown`（1）
 

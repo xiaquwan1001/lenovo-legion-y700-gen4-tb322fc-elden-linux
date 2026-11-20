@@ -1,5 +1,7 @@
 # 安卓「干净瘦身 v2」+ 卡 ZUXOS 动画静态定因
 
+> **⛔ 不出件的中间方案，已被 v3 取代**（2026-11-20 批一标注，与 `reports/android-slim-v3-20261119.md` #6/#8 口径一致）；仅供溯源。
+
 - 日期：2026-11-19 ｜ **纯主机侧**（无 adb / fastboot / qdl / ssh / EDL；无 sudo；未碰 `out/android-min-20261118/new/*`）
 - 机型：TB322FC elden（U2 `HA2EXB0E`，原厂 Android 16 `ZUXOS_1.5.10.259_260611_PRC`）
 - 输入：`out/android-min-avb-20261118/parts/system_a.img`（原厂 system_a，11.43 GiB）、

@@ -1,0 +1,345 @@
+path	用途一句话	mtime	docs_refs	scripts_refs	分类	建议动作	风险/前置条件
+scripts/99-unmanaged.conf	Keep the USB-NCM gadget (SSH lifeline) and loopback out of NetworkManager. usb0 is configured static	2026-10-17	7	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/abl-log.sh	abl-log.sh — 从在机 Linux 读 ABL/PBL 启动日志（logfs 分区里的 UEFILOG1.TXT）  背景：Qualcomm ABL 把**本次启动**的完整日志写进 `lo	2026-11-18	14	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/acm-sh.py	acm-sh.py — 通过 USB ACM 的 OOB root shell（/dev/ttyACM1）在设备上跑命令。	2026-11-18	6	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-apk-pkgname.py	android-apk-pkgname.py — 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。	2026-11-19	3	1	KEEP	近期 G2/进行中工作，保留	
+scripts/android-assets-extract-20261119.py	从已上机的精简 system_a.img 提取安卓原厂资产 → assets/android-20261119/ + MANIFEST.tsv	2026-11-18	1	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/android-ext4-slim-test.py	android-ext4-slim-test.py — 在**副本**上删掉指定的 Android 分区子树，量出真实可回收块数。	2026-11-18	2	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-img-grepmap.py	android-img-grepmap.py — 在 ext4 镜像里按字面串定位「哪个文件含有它」，不需要 root/loop。	2026-11-18	1	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-img-inventory.py	android-img-inventory.py — 只读遍历 Android ext4 分区镜像，输出 TSV 清单（路径/类型/权限/大小）。	2026-11-18	3	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-img-lswalk.py	android-img-lswalk.py — 用 debugfs 只读递归列目录，输出 TSV（type/mode/uid/gid/size/path）。	2026-11-18	1	1	KEEP	近期 G2/进行中工作，保留	
+scripts/android-ksu-avb-build.py	android-ksu-avb-build.py — 造 KernelSU(LKM) 修补的 init_boot + 与之自洽的 vbmeta_a。	2026-11-18	2	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-ksu-flash.sh	android-ksu-flash.sh — 刷/回退「KernelSU(LKM) init_boot + 自洽 vbmeta_a」（TB322FC / elden / 259）  默认 = **dr	2026-11-18	5	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-launcher-db-check.py	android-launcher-db-check.py — 校验「桌面默认布局里不再引用已删包」。	2026-11-19	3	1	KEEP	近期 G2/进行中工作，保留	
+scripts/android-launcher-db-trim.py	android-launcher-db-trim.py — 裁剪 /system/etc/launcher.db 的默认桌面布局（纯主机侧、不用 root）。	2026-11-18	1	2	KEEP	近期 G2/进行中工作，保留	
+scripts/android-linux-coexist-check.py	android-linux-coexist-check.py — 安卓/Linux「共存分区契约」核对（纯主机侧，只读 GPT 主表 dump）。	2026-11-19	5	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-lpdump.py	android-lpdump.py — 只读解析 Qualcomm 线刷包里的「分段 super」（LP metadata + extents）。	2026-11-18	4	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-min-build.sh	android-min-build.sh — 「最小安卓全量线刷包」构建器（主机侧；stage 化，可重入）  为什么需要这个：现行 16 G 转包 259 包里的 super 只带非零 4 KiB 	2026-11-18	4	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-rom-segassemble.py	android-rom-segassemble.py — 把线刷包里「一个分区被拆成多段」的 img 按 XML 拼回整分区镜像。	2026-11-18	4	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-slim-v2-plan.sh	android-slim-v2-plan.sh — 「安卓干净瘦身 v2」计划器（主机侧；默认只打印，不写任何东西）  背景：v1（out/android-min-20261118/new/syste	2026-11-18	5	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-slim-v3-build.sh	android-slim-v3-build.sh — 安卓「彻底精简 + 无占位 + 可共存」system/super 构建器（主机侧，需 root）  v3 = v2-B（删全部 /system/p	2026-11-19	4	0	KEEP	近期 G2/进行中工作，保留	
+scripts/android-super-scan.py	android-super-scan.py -- forensic scan of a super partition that was shipped as	2026-11-18	2	1	KEEP	近期 G2/进行中工作，保留	
+scripts/android-super.py	"android-super.py -- read/inspect Android dynamic-partition (""super"") images."	2026-11-18	6	3	KEEP	近期 G2/进行中工作，保留	
+scripts/apply-kernel-fragment.sh	apply-kernel-fragment.sh — 把配置片段合并进内核树 .config，并导出新快照  用法： FRAG=patches/<fragment>.config bash apply	2026-10-27	31	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/arm-console-run.sh	arm-console-run.sh — 零写盘启动一个显示臂，用串口内核控制台取证（不依赖 SSH）。 usage: scripts/arm-console-run.sh <boot.img> <l	2026-11-18	8	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/arm-window-hunt.sh	"arm-window-hunt.sh — 在坏发成簇的窗口里交替试多个显示臂，直到出现""健康发""。 usage: scripts/arm-window-hunt.sh <wait_s> <label1"	2026-11-13	8	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/assert-kernel-sane.sh	assert-kernel-sane.sh — 打包前的「内核身份 / 存活」硬门（pack-time gate）。  为什么（PITFALLS #162）：`make olddefconfig` 会	2026-10-27	47	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/asset-install-linux.sh	asset-install-linux.sh — 把 assets/android-20261119/ 里的原厂安卓资产装到 Linux 桌面  用法: scripts/asset-install-l	2026-11-18	2	0	KEEP	近期 G2/进行中工作，保留	
+scripts/ath12k-load.sh	"Load the ath12k (WCN7861 ""Peach"") driver as a *module* after boot.  Why a module: As a built-in (CON"	2026-10-17	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/ath12k-retry.sh	"ath12k (WCN7861 ""Peach"") boot-time re-probe.  The built-in ath12k PCI probe runs in the kernel initc"	2026-10-17	19	3	KEEP	门禁/活集闭包引用，必须保留	
+scripts/audio-alsa-init.sh	audio-alsa-init.sh — put the Lenovo-Y700-Gen4 (TB322FC/elden) sound card into a usable default state	2026-10-17	58	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/audio-tplg/SM8750-Lenovo-Y700-Gen4.m4	TB322FC (elden/SM8750) — AudioReach topology: Lenovo-Y700-Gen4 SPDX-License-Identifier: BSD-3-Clause	2026-10-17	2	0	KEEP-ARCHIVE	仅文档/reports 引用，可移 archive/scripts/（先改文档指针）	
+scripts/audio-tplg/build.sh	构建 TB322FC 的 AudioReach topology (Lenovo-Y700-Gen4-tplg.bin) 依赖：m4, alsatplg（主机与设备 rootfs 均有） 用法：scr	2026-10-17	99	23	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/audio-tplg/out/Lenovo-Y700-Gen4-tplg.bin	(无注释)	2026-10-17	11	1	KEEP-ARCHIVE	仅文档/reports 引用，可移 archive/scripts/（先改文档指针）	
+scripts/audio-tplg/out/Lenovo-Y700-Gen4.conf	TB322FC (elden/SM8750) — AudioReach topology: Lenovo-Y700-Gen4 SPDX-License-Identifier: BSD-3-Clause	2026-10-17	0	1	KEEP-ARCHIVE	仅被 scripts 引用，评估后归档	
+scripts/audio-ucm/HiFi.conf	TB322FC (elden) — Secondary MI2S -> Awinic AW88461 x2 speakers + WCD939x analog mic (AMIC1) capture 	2026-10-17	0	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/audio-ucm/Lenovo-Y700-Gen4.conf	(无注释)	2026-10-17	0	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/audio-ucm/install.sh	install.sh — deploy the ALSA UCM2 config for Lenovo-Y700-Gen4 (TB322FC/elden).  Without it, ACP/Wire	2026-10-17	70	7	KEEP	门禁/活集闭包引用，必须保留	
+scripts/b3b-session-retry.sh	b3b-session-retry.sh — 零构建实验：在坏发台上重走一次 modeset，看面板是否点亮。  动机：B1 首样本证明「让失败非致命」不够，缺的是「谁发起重试」 （reports/q	2026-10-17	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/b5-u2-atomic-timeline.sh	b5-u2-atomic-timeline.sh — M6/B5 **U2** 取证门：原子回调时序（零写盘、可复跑）  背景：B5（bonded-DSI per-SoC cfg）把厂商非原子桥回调 	2026-10-28	7	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/backup-triage.sh	backup-triage.sh — backup/ 去重与分级处置（默认 dry-run） 依据: reports/backup-triage-20261118.md + versions/back	2026-11-18	1	0	KEEP	近期 G2/进行中工作，保留	
+scripts/bb-magic-scan.py	bb-magic-scan.py — DDR 窗口魔数扫描（0xA5A5A5A5 连续段）。	2026-11-03	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/bench-install.sh	bench-install.sh — 设备侧：安装可选基准工具（需要网络）  只装 Alpine 源里有的（已核实 USTC/aliyun latest-stable 均有 aarch64）： sys	2026-10-17	53	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/bench-run.sh	bench-run.sh — 设备侧 CPU/GPU/内存/磁盘 基准（task-7，工具自适应，缺少的自动跳过）  设计：只用设备上已有的工具（mesa-demos / vulkan-tools 已	2026-10-17	59	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/bisect/README.md	版本矩阵（已备，uname 唯一）	2026-10-17	696	17	KEEP	门禁/活集闭包引用，必须保留	
+scripts/bisect/eldtest.sh	eldtest.sh — vk34→vk40 回归的「渐进触发」自动化测试（2026-10-03）  设计目标（针对 AUDIT3 的教训）： 1. 尽量减少轮询：等待启动用「串口 console 里	2026-11-17	4	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/bl-preunlock-evidence.sh	解锁前（locked 状态）零风险取证 + 解锁申请表所需参数打印。 设备无关：SN/容量/路径全部运行时读实际设备。用法： scripts/bl-preunlock-evidence.sh     	2026-11-18	26	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/bl-unlock.sh	⚠ 适用前提（2026-10-03 定稿）：**只有 ROM ≤ 1.1.11.073/.076 才存在解锁命令**； 1.1.11.120 = trap（显成功但回滚）；1.5.x（229/259/	2026-11-18	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/blackbox.py	blackbox.py — UEFI 早期可见性「DDR 黑匣子」读写/解码工具（主机侧，经 ssh 走设备）。	2026-11-06	12	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/blackout-passive-scan.sh	黑屏期诊断：被动扫描（只听 beacon）能否听到该 AP	2026-10-17	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/blankspy.sh	"blankspy.sh — one-second forensic heartbeat around screen blank (G1-22/Q24).  The failure (""no-op id"	2026-10-17	7	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/boot-img-cmdline.py	boot-img-cmdline.py — 从一个已存在的 boot.img 里取出 kernel/ramdisk/dtb，	2026-11-11	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/bootimg-replace-kernel.py	bootimg-replace-kernel.py — 只替换 Android boot image 的内核段，其余逐字节保留。	2026-11-03	3	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/bt-link-test.sh	bt-link-test.sh — BR/EDR 数据链路只读诊断（y700-elden / WCN7861 Brahma v2）  目的：在不改内核、不刷机的前提下，把「l2ping 高延迟 + 突	2026-10-17	54	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/bt-up.sh	"bt-up.sh — bring up Bluetooth at boot on the TB322FC (elden).  The QCA ""brahma/peach"" BT block is at"	2026-10-17	7	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-athm-probe.sh	build-athm-probe.sh — Q26 Step A probe: CONFIG_ATH12K=m single-shot build.  Base = wt-athm worktree 	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-boot-slim.sh	build-boot-slim.sh — G1-30（= G1-29 路线 C）：最小 initramfs 版 boot.img  背景：瓶颈是 ramdisk（完整 Alpine rootfs ~8	2026-10-17	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-boot.sh	build-boot.sh — 打包 fastboot 可启动 boot.img（kernel + Alpine rootfs ramdisk + DTB）  用法： VERSION=vk28 bas	2026-11-19	81	12	KEEP	门禁/活集闭包引用，必须保留	
+scripts/build-ffrumble.sh	build-ffrumble.sh — 交叉编译 ffrumble（aw86927 FF_RUMBLE 宿主侧阳性对照工具） 产物：out/ffrumble/ffrumble（aarch64 stat	2026-10-25	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-hapticd.sh	build-hapticd.sh — 交叉编译 elden-hapticd（Waydroid 马达透传宿主 daemon） 产物：out/hapticd/elden-hapticd（aarch64 s	2026-10-17	2	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-initramfs.sh	build-initramfs.sh — 可复现地构建 initramfs 资产（唯一真源 = initramfs/init）  用法： scripts/build-initramfs.sh slim	2026-11-13	72	3	KEEP	门禁/活集闭包引用，必须保留	
+scripts/build-kernel.sh	build-kernel.sh — rebuild kernel/DTB for TB322FC (elden), with ccache.  usage: scripts/build-kernel.	2026-10-27	40	3	KEEP	门禁/活集闭包引用，必须保留	
+scripts/build-locked-chain.sh	build-locked-chain.sh — 为 **BL locked** 单元生成 b 槽 mainline 自洽链（AOSP testkey）  原理（2026-10-03 确认）： 联想原厂	2026-11-18	77	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-manifest.sh	build-manifest.sh — record everything needed to identify/rebuild a boot image.  usage: scripts/build	2026-11-14	31	3	KEEP	门禁/活集闭包引用，必须保留	
+scripts/build-modular-overlay.sh	build-modular-overlay.sh — layer the modularized payload driver bundle (ATH12K + QDSP6/WCD939X + hap	2026-10-17	5	3	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-payload-hook.sh	build-payload-hook.sh — 往已有 ramdisk 追加「payload 加载钩子」最小层  背景（2026-10-09 教训）：vk77-modular 的 /init 里已有 	2026-10-17	15	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-phoc-arm64.sh	build-phoc-arm64.sh — 产出「广告 wp_linux_drm_syncobj_manager_v1」的 aarch64 phoc（C12 L2）  背景：phoc（0.55.1 /	2026-11-13	11	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-phosh-arm64.sh	build-phosh-arm64.sh — 产出带「output power 失败即视为屏亮」修复的 aarch64 phosh  根因背景（2026-11-14 实证）：phosh 用 zwlr_	2026-11-14	3	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-phosh-upstream-fix.sh	build-phosh-upstream-fix.sh — 用「上游 main 源树 + 本地补丁」编 aarch64 phosh（验证上游补丁用）  与 build-phosh-arm64.sh 的	2026-11-14	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/build-sensord.sh	编译 eldroid-sensord（C4 数据源 daemon）： native（主机冒烟测试）+ aarch64 static（部署到设备 rootfs，Alpine musl 兼容）	2026-10-17	5	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/c0-android-evidence.sh	c0-android-evidence.sh — C0「真 Android 对照取证」采集器  目的：在**覆盖 a 槽之前**，从仍为 stock+root 的单元（当前=U1 `HA2ABH62`	2026-11-18	55	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/c1-iprule-build.sh	c1-iprule-build.sh — build the vk95 kernel that enables policy routing (CONFIG_IP_ADVANCED_ROUTER / 	2026-10-17	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/cam-load-verify.sh	在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。 有硬截止时间盒；只加载模块，不动燄屏设置（先跑 keep-awake.sh）。  NOTE（2026-10-10	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/cam-loopback.sh	cam-loopback.sh — 把 mainline 相机（libcamera 软 ISP）转发到一个 v4l2loopback 节点。  用途（C5 主机侧）：容器/任意消费者需要一个普通 V4	2026-10-27	50	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/cam-mode.sh	cam-mode.sh — elden 上「相机 ⇄ 熄屏」互斥的操作口径（在设备上当 root 跑）  为什么需要它（2026-10-09 深夜，用户实机确认）：**相机模块在位时熄屏掉电是常态**	2026-10-28	121	5	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/camera-modules-load.sh	camera-modules-load.sh — bring up the mainline camera stack on TB322FC.  Idempotent, quiet, safe to 	2026-10-17	50	10	KEEP	门禁/活集闭包引用，必须保留	
+scripts/camera-stream-up.sh	camera-stream-up.sh — 在设备上把 camss 采集链路配置到可出流（幂等）。  背景（2026-10-04/05）：相机模块加载后 csiphy/vfe 的默认格式是 UYVY8	2026-10-17	28	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/charge-ctl.sh	charge-ctl.sh — battery / charger control for TB322FC (elden), qcom-battmgr.  On mainline the charge	2026-10-17	17	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/charge-watch.sh	charge-watch.sh — keep the qcom-battmgr charger settings applied.  Two things must be (re)applied at	2026-11-11	13	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/check-abi-config.sh	check-abi-config.sh — 内核 .config 的 ABI 敏感项门禁（build/pack-time gate）。  为什么（2026-10-23 实受）：`CONFIG_SUSP	2026-11-13	33	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/check-doc-assets.sh	check-doc-assets.sh — 文档里用反引号写出的资产路径必须真实存在。  立此脚本的原因（2026-10-27）： 三条 lane（aw86927-series / b5-resoc 	2026-10-27	21	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/check-doctor.sh	elden 项目医生 — 机器账自检（只读，不改任何文件）  用法:  scripts/check-doctor.sh                 退出码: 0 = 全绿；1 = 有 FAIL s	2026-11-19	152	5	KEEP	门禁/活集闭包引用，必须保留	
+scripts/check-init.sh	check-init.sh — init 单一真源 / 可运行性自检（主机侧，只读）  用法:  scripts/check-init.sh        （退出码 0=全绿，1=有 FAIL）  背	2026-10-17	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/check-layout.sh	check-layout.sh — 顶层布局注册表门（versions/layout.tsv ↔ 磁盘 ↔ INDEX.md）  立此脚本的原因（2026-11-03 项目整理）： 根目录条目会随专题	2026-11-03	21	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/check-modular-config.sh	check-modular-config.sh — 模块化 config 门禁（第二层，2026-10-26）  用法： scripts/check-modular-config.sh        	2026-11-06	40	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/check-progress-counts.sh	check-progress-counts.sh — 从 TASKS/README.md §1/§2 的行内状态标记现算完成度  背景：TASKS §0 的 35/36、9/13 原先靠人手在注里推导	2026-11-15	51	0	KEEP	门禁/活集闭包引用，必须保留	
+scripts/check-project-memory.sh	check-project-memory.sh — 校验「项目记忆就在仓库里」这条链路没断  背景（2026-11-02 变更）：项目记忆曾放在仓库之外（hermes 的 ~/.pi/agent/pr	2026-11-02	11	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/check-series-selfcontained.sh	check-series-selfcontained.sh — 补丁系列自足性门禁（派工单 M3-v5 2026-10-31）  用法: scripts/check-series-selfcontai	2026-10-31	13	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/check-sessions.sh	check-sessions.sh -- 独立校验 SESSIONS/（不依赖 gen-sessions.py 的实现细节） ① ls SESSIONS/sessions/*.md | wc -l =	2026-10-17	11	0	KEEP	门禁/活集闭包引用，必须保留	
+scripts/check-shell-hygiene.py	check-shell-hygiene.py — 设备命令静态卫生门（2026-11-18，来自四板块脚本审查）	2026-11-18	2	0	KEEP	门禁/活集闭包引用，必须保留	
+scripts/deploy-bt-suspend-guard.sh	deploy-bt-suspend-guard.sh — 把 BT suspend 保护钩子部署到设备并验证。  背景（2026-10-21，T9 实测）：WCN7850 固件下载 ~23 s >> 	2026-10-21	15	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/deploy-camera-modules.sh	收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验** = scripts/	2026-11-18	7	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/deploy-desktop-shell.sh	deploy-desktop-shell.sh — 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等）  为什么有这个脚本（2026-11-19）：11-19	2026-11-19	13	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/deploy-modules.sh	deploy-modules.sh — 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` 的**唯一统一实现**（script-redund	2026-11-18	9	3	KEEP	门禁/活集闭包引用，必须保留	
+scripts/deploy-sensord-routec-debian.sh	deploy-sensord-routec-debian.sh — 在 **Debian/glibc 根**上安装路线 C 的 Waydroid sensor HAL （`patches-userla	2026-11-18	15	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/deploy-sensord-routec.sh	deploy-sensord-routec.sh — build & install the route-C Waydroid sensor HAL (../TASKS/README.md C4). 	2026-11-18	36	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/deploy-sensors-hal.sh	deploy-sensors-hal.sh — 部署 elden UDP 传感器 HAL 到 Waydroid 容器（C4）  原理：不改 vendor.img（整块重打 1–3h），用 Waydro	2026-11-18	56	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/deploy-v4l2loopback.sh	deploy-v4l2loopback.sh — 为**当前在机内核**（读设备 uname -r）构建并部署 v4l2loopback  为什么需要脚本（PITFALLS #440）：容器相机要 `	2026-11-18	20	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/deploy-zh-ime.sh	deploy-zh-ime.sh — 部署「触屏唤起的中文输入法」到设备（幂等）  目标栈（2026-10-20 实测通过）： squeekboard   触屏键盘 + 占 Wayland input	2026-11-18	38	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/deskstack-sample.sh	A 臂采样：屏幕保护状态机 + 背光/DPMS + 按键计数。POSIX sh，整文件 scp 到 /tmp 再跑。 用法：AIDLE_SECS=420 OUT=/tmp/a58-idle.tsv s	2026-11-14	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/deskstack-switch.sh	deskstack-switch.sh — 桌面栈整档切换（phoc + phosh 全套），用于 T20/T19 的 A/B 对照  背景（2026-11-14）：设备桌面栈是混装 —— phosh	2026-11-14	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/detect-memory-corruption.py	[canonical] 收编自 ~/y700-elden/scripts/detect-memory-corruption.py（2026-11-16）；项目侧该路径现在是指向本文件的软链。 改动请改	2026-11-16	11	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/dev-super-relabel.sh	dev-super-relabel.sh — 设备侧（POSIX sh）：把 Android `super`（sda10，22 GiB 动态分区容器）转成 Linux 分区 零数据搬移：只改 GPT 	2026-11-18	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/dev-userdata-relabel.sh	dev-userdata-relabel.sh — 设备侧（POSIX sh）：把 Android userdata（sda16）就地转成 Linux 数据分区 零数据搬移：类型码 1B81E7E6-	2026-11-11	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/device-lock.sh	device-lock.sh — serialize exclusive access to the tablet across concurrent agents.  The device is a	2026-11-12	113	27	KEEP	门禁/活集闭包引用，必须保留	
+scripts/device-window-collect.sh	device-window-collect.sh — 设备窗口只读采集包（2026-10-31 执行单配套）  一次采齐所有「读回型」判据，输出到 reports/artifacts/device-w	2026-11-18	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/devlogs.sh	devlogs.sh — runtime log capture for feature bring-up/verification.  Channels available on this devi	2026-11-18	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/display-drop-forensics.sh	display-drop-forensics.sh — 设备侧「桌面显示栈自发掉线」一次抓全  背景（2026-10-27）：Debian 根上两小时内两次出现同一形态 —— `card0-DSI-1	2026-10-27	15	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/doc-assets-allowlist.txt	每行 = <被引用的路径><TAB><理由> 只允许「已经在文档里写明是历史/丢失/不在仓库」的条目；新增条目必须在理由里写清出处。  2026-10-27 建表时的 7 条全部来自 2026-10-	2026-11-10	10	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/04-retired.sh	04-retired.sh — §4 已退场入口不得复辟（2026-10-04 清理）。 判据来源：archive/2026-10-04-retired-entrypoints/；机器层快捷入口从 ~	2026-11-06	2	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/05-vk.sh	05-vk.sh — §5 vk 版本账 + §5d 内核身份表（同一次全量扫描产出两节）。  背景：vk52-slim 曾被静默打进 vk42 内核（manifest kernel_release 	2026-11-19	2	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/05e-manifest.sh	05e-manifest.sh — §5e manifest 完整性（构建产物身份可对账）。 正常 build-manifest.sh 始终写 config_sha256；缺号 = 手写 manife	2026-11-06	1	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/05f-abi.sh	05f-abi.sh — §5f ABI 敏感项一致性（内核 ↔ 模块树）。  2026-10-23 实受：build/m1-73/.config 遗留 CONFIG_SUSPEND=y（vk128/	2026-11-19	3	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/06-hygiene.sh	06-hygiene.sh — §6 静态卫生（防造轮回退）：设备锁单一真源 + bashism + 死脚本。 依据：.pi/plans/2026-10-07-造轮子审计.md（P0 防回归门）  2	2026-11-06	3	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/09-sessions.sh	09-sessions.sh — §9 SESSIONS/ 快照一致性（委托 scripts/check-sessions.sh）。 check-sessions.sh 自 2026-10-14 落地	2026-11-06	1	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/10-history.sh	10-history.sh — §10 HISTORY 对账（<0.1 s）。 立此节的原因（2026-10-19 整理轮）：HISTORY/README.md 曾写死「总提交数 448 / 生成时 	2026-11-06	1	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/11-hooks.sh	11-hooks.sh — §11 提交钩子生效性（hooksPath 必须指向 .githooks）。 立此节的原因（2026-10-19 实测）：.githooks/{pre-commit,com	2026-11-06	1	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/12-modular.sh	12-modular.sh — §12 驱动模块化门禁（锚点不回退 / olddefconfig 幂等 / tristate 自洽）。 立此节的原因（2026-10-27 收尾轮）：scripts/c	2026-11-19	2	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/13-assets.sh	13-assets.sh — §13 文档引用的资产路径存在性（委托 scripts/check-doc-assets.sh）。 立此节的原因（2026-10-27）：三条 lane 的产物提交在各自	2026-11-06	1	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/14-layout.sh	14-layout.sh — §14 顶层布局注册表（委托 scripts/check-layout.sh）。 立此节的原因（2026-11-03 项目整理）：根目录条目会随专题自发增长（现 46 项	2026-11-06	1	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/15-timeline.sh	15-timeline.sh — §15 时间序健康：INDEX.md §0「现在一页」是否存在且没落后于最新会话证据。 立此节的原因（2026-11-14 M1）：入口文档曾长期与会话实测结论不一致	2026-11-14	4	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/17-shell-hygiene.sh	17-shell-hygiene.sh — §17 设备命令静态卫生（委托 scripts/check-shell-hygiene.py）。 立此节的原因（2026-11-18）：四板块脚本审查里同一	2026-11-18	0	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/18-flashpkg-geometry.sh	18-flashpkg-geometry.sh — §18 线刷包几何自检（委托 scripts/rawprogram-preflight.py） 立此节的原因（2026-11-18，LTBox 评估	2026-11-19	1	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/19-slotattr-selftest.sh	19-slotattr-selftest.sh — §19 槽位属性工具自检（委托 slot-attr.py --selftest） 立此节的原因（2026-11-18）：`slot-attr.py`	2026-11-19	0	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/20-rootfs-image.sh	20-rootfs-image.sh — §20 磁盘根镜像「起得来 / 登得入」写前门（委托 scripts/rootfs-image-check.py） 立此节的原因（2026-11-19，PIT	2026-11-19	1	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/21-write-precheck.sh	21-write-precheck.sh — §21 写前预检两道门（委托 scripts/gpt-preflight.py / dump-verdict.py） 立此节的原因（2026-11-19，	2026-11-19	0	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/22-desktop-chain.py	22-desktop-chain.py — check-doctor §22：「零到桌面」链路的静态一致性门。	2026-11-19	2	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/_lib.sh	_lib.sh — check-doctor 子门的公共外壳（被 scripts/doctor/*.sh source）。  契约（2026-11-05 脚本审计定的调度协议）： * 每个子门是一个可	2026-11-06	1	0	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/ab-bench.sh	bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置）  做什么： 在同一棵树（默认 = 主仓 /home/xuqianhui/y700-elden，	2026-11-06	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/doctor/s07-08-docs.py	s07-08-docs.py — check-doctor §7/§8 入口文档与索引对账（纯文本判据）。	2026-11-14	9	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/doctor/s16-tasks-counts.py	s16-tasks-counts.py — check-doctor §16：TASKS §0 手写数字 ↔ 计数脚本自动比对。	2026-11-07	2	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/dpms-watch.sh	Sample the panel / compositor state once a second into /root/dpms-watch.log. Used to catch what happ	2026-10-17	10	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/driver-snapshot-diff.sh	driver-snapshot-diff.sh — 比对两次 driver-snapshot.sh 的输出，按「变了什么」排序输出。  用法：scripts/driver-snapshot-diff.	2026-11-08	2	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/driver-snapshot.sh	driver-snapshot.sh — 一次上机采集「尽可能多驱动」的状态快照，供两次启动（A/B）之间做 diff。  为什么（2026-11-08）：UEFI(ESP) 启动 vs boot_b	2026-11-08	5	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/dump-verdict.py	dump-verdict.py — 「这次 dump 失败了吗？还是分区真的不存在？」的唯一判据。	2026-11-19	4	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/edl-peek.sh	edl-peek.sh — 经 bkerler python edl 的 Firehose peek 读物理内存（只读工具，无 poke） 用法: scripts/edl-peek.sh <hex-a	2026-11-18	7	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/elden-backlight-floor.sh	elden-backlight-floor.sh — 背光下限守护（防止「看起来像黑屏」）  为什么需要（实测事故，2026-10-23）： 驱动默认 `aw99706-backlight/brigh	2026-10-23	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/elden-hapticd.c	"elden-hapticd — Waydroid ""vibrator"" passthrough bridge (2026-10-13)  Problem The Waydroid vendor HAL"	2026-10-17	11	1	KEEP-ARCHIVE	仅文档/reports 引用，可移 archive/scripts/（先改文档指针）	
+scripts/elden-powerlog.initd	!/sbin/openrc-run elden-powerlog — write a durable marker when OpenRC enters the shutdown runlevel. 	2026-10-17	8	1	KEEP-ARCHIVE	仅文档/reports 引用，可移 archive/scripts/（先改文档指针）	
+scripts/eldroid-bootctl	eldroid-bootctl — Linux 侧刷机控制（reboot reason + A/B 槽位元数据）。	2026-11-18	123	12	KEEP	门禁/活集闭包引用，必须保留	
+scripts/eldroid-sensord.c	eldroid-sensord — 传感器数据源 daemon（C4，宿主侧）  背景：Waydroid 镜像里的 sensors HAL（android.hardware.sensors@1.0-s	2026-10-17	53	2	KEEP-ARCHIVE	仅文档/reports 引用，可移 archive/scripts/（先改文档指针）	
+scripts/env-build.sh	env-build.sh — shared host build environment for the elden kernel tree.  Source it (do not execute):	2026-10-27	36	10	KEEP	门禁/活集闭包引用，必须保留	
+scripts/esp-apply.sh	esp-apply.sh — 把主机侧目录树「一条命令」组装成 FAT32 镜像并写进 eldenesp 分区（S5 自动化）。  为什么需要它（RUNBOOK-BRINGUP/LINUX-STATE	2026-11-18	7	0	KEEP	近期 G2/进行中工作，保留	
+scripts/esp-install-grub.sh	esp-install-grub.sh — 把主机侧造好的 standalone GRUB（arm64-efi）装上 ESP 的 \EFI\BOOT\BOOTAA64.EFI  为什么单独一个脚本：这	2026-11-18	19	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/esp-put-loader.sh	esp-put-loader.sh — 把一份 Loader.efi（Mu LinuxLoader 变体）放到设备 ESP 的 /EFI/elden/， 并（可选）覆盖 ESP 上的 /boot/bo	2026-11-18	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/extract-avbpubkey.py	从带 AVB vbmeta header 的镜像提取 public key blob（.avbpubkey）。	2026-10-17	8	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/extract-avf-assets.sh	extract-avf-assets.sh — 从原厂 system 镜像离线提取 AVF（Android Virtualization Framework）资产：crosvm / vm / micr	2026-10-17	19	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/extract-mesa-libs.sh	extract-mesa-libs.sh — 从 Waydroid AOSP 构建产物里抽出 Mesa/gralloc 动态库（方案 B 用）  用法： bash extract-mesa-libs.	2026-11-02	4	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/f2fs-host-bench.sh	f2fs-host-bench.sh — f2fs vs ext4 的主机 loop 台架（G1，零设备写盘）  目的（`reports/f2fs-plan-20261021.md` §7 G1）：在	2026-10-25	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/f2fs-migrate.sh	f2fs-migrate.sh — 路线 A：**缩小 linux17(ext4) + 尾部新建 linux18(f2fs) + 本地复制**（零大文件传输）  为什么是 A 而不是 B（2026-1	2026-11-09	14	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/fb-survey.py	fb-survey.py — 事后从 DRAM 读回 splash_region，还原 shim 的「整屏纯色」执行轨迹。	2026-11-03	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/fetch-x86-assets.sh	fetch-x86-assets.sh — 主机侧下载 Win-x86 转译 PoC 所需离线资产到 pkgs-x86/ 用法: bash scripts/fetch-x86-assets.sh [r	2026-10-17	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/ffrumble.c	ffrumble — 直接向 evdev 节点注入 FF_RUMBLE，用于 aw86927 马达的宿主侧取证。  为什么存在：容器里的振动链路是「HAL → elden-hapticd → sysf	2026-10-25	13	1	KEEP-ARCHIVE	仅文档/reports 引用，可移 archive/scripts/（先改文档指针）	
+scripts/ffs-extract.py	ffs-extract.py — 解厂商 UEFI 固件（FV/FFS/section 递归 + LZMA/GUID 段）	2026-10-24	21	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/fix-ab-mark-successful.sh	fix-ab-mark-successful.sh — 让设备每次启动都把自己标记为 A/B 槽「启动成功」。  为什么（2026-10-11 实测，PITFALLS #181）： Alpine ro	2026-11-18	13	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/fix-fstab-samsung.sh	fix-fstab-samsung.sh — 给 /mnt/Samsung 的 fstab 条目补 nofail（掉盘不卡开机） 用法： sudo bash ~/y700-elden/scripts/	2026-10-17	41	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/fix-logind-poweroff.sh	fix-logind-poweroff.sh — make logind's Power Off / Restart helpers actually reach the kernel reboot(	2026-10-17	62	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/flash-b.sh	Flash a mainline boot image into slot b *from inside Linux* — no fastboot needed.  Why: after the b-	2026-11-18	56	6	KEEP	门禁/活集闭包引用，必须保留	
+scripts/flash-recovery.sh	flash-recovery.sh — 从 Linux 里把镜像写进 recovery 分区（默认 recovery_b），无需 fastboot。  背景（archive/topics/FLASHC	2026-11-18	61	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/g1-22-dpms-test.sh	g1-22-dpms-test.sh — 在设备上定量测试「熄屏（DPMS off）→ 回归」。  背景（G1-22 / GAPS Q21-Q22）：post-vk34 增量使 vk40+ 在显示 o	2026-10-17	5	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/gapps-mirror-setup.sh	gapps-mirror-setup.sh — 把 GAPPS system 镜像接入本地 OTA 源（生成 GAPPS.json + 软链） 用法（主机执行）：scripts/gapps-mirro	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/gen-history.sh	gen-history.sh — 从 git log 机械生成 HISTORY/days/*.md，并现查统计。  用法: scripts/gen-history.sh            # 生成	2026-10-19	82	0	KEEP	门禁/活集闭包引用，必须保留	
+scripts/gen-sessions.py	gen-sessions.py -- 从 git show <REV>:RESOURCES.md 的 §4 会话索引机械生成 SESSIONS/ 角度文件夹。  SESSIONS/README.md 	2026-10-19	12	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/glycin-bwrap-shim.sh	glycin-bwrap-shim.sh — let glycin run its image loaders without the bwrap sandbox.  Why: gdk-pixbuf 	2026-10-17	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/gpt-audit-tb322fc.py	gpt-audit-tb322fc.py — 把设备 GPT 主表 dump（EDL 只读得到）与官方 259 包逐字节对账。	2026-11-17	10	5	KEEP	门禁/活集闭包引用，必须保留	
+scripts/gpt-dump.sh	gpt-dump.sh — 在设备（mainline Linux）上 dump LUN0 GPT 主/备表  为什么不用 sgdisk/gdisk：本机 UFS 逻辑扇区 = 4096 B，sgdis	2026-11-18	59	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/gpt-minimal-build.py	gpt-minimal-build.py — 生成「最小可控」GPT（LUN0 减分区 + 单 Linux 大分区；LUN4 只删 Android GKI）。	2026-11-18	5	0	KEEP	近期 G2/进行中工作，保留	
+scripts/gpt-preflight.py	gpt-preflight.py — 写盘前的 GPT「快照复验」（纯主机、无 USB、不碰设备）。	2026-11-19	5	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/gpt-restore-tb322fc.py	gpt-restore-tb322fc.py — REVERSE the dual-boot GPT surgery on TB322FC LUN0:	2026-11-18	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/gpt-surgery-tb322fc.py	gpt-surgery-tb322fc.py — shrink `userdata` and append partition(s) on the	2026-11-18	23	3	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/greetd-initial-session.sh	"greetd-initial-session.sh — TB322FC session ""path A"": greetd [initial_session] auto-logins root and "	2026-10-17	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/grub-arm64-arming-build.sh	grub-arm64-arming-build.sh — 用「嵌入菜单」重打 arm64 GRUB（UEFI 复测用），带自校验  为什么不能只改设备上的 grub.cfg（2026-11-14 现查	2026-11-16	6	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/grub-arm64-cjk-font.sh	grub-arm64-cjk-font.sh — 给 GRUB 嵌入菜单造「中文可用」的主字体（pf2）  为什么需要（2026-11-16 实测）： ESP 的嵌入菜单 GRUB 原来用 DejaV	2026-11-16	2	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/grub-arm64-standalone.sh	grub-arm64-standalone.sh — 主机侧造 arm64-efi 的 standalone GRUB（G1-29「启动菜单」载荷）  用途：给 UEFI（Mu/p58 世代）一个可用	2026-11-10	10	3	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/grub-bootfiles.sh	grub-bootfiles.sh — 从 Android boot.img 取出「GRUB 直接启动」所需三件，并（可选）落到设备 /boot  背景（G1-29 后半）：UEFI 路线打通后，下一	2026-11-10	12	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/grubenv-set.sh	grubenv-set.sh — 在**设备**上直接改 GRUB 的 grubenv（不依赖设备装 grub-editenv）  为什么：ESP 的嵌入菜单 GRUB 每次开机 `load_env`	2026-11-18	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/grubfat-build-uefi-bootimg.sh	"grubfat-build-uefi-bootimg.sh — 把""可自举 UEFI 卷""包成 Android boot.img（间接引导层·路线 A 的打壳步骤）  目标: 产出一个 boot.im"	2026-10-17	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/grubfat-inspect.sh	grubfat-inspect.sh — 引导链取证（四代 TB322FC / 三代 TB321FU 通用，可参考 BOOTCHAIN-2026-10-05）  用法: scripts/grubfat	2026-10-17	7	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/gui-freeze-watch.sh	gui-freeze-watch.sh — 抓 PITFALLS #106「进 GUI 后整机卡死」的现行。  已知：无 panic、SSH/网络同时不通、APSS 硬看门狗被永久禁用 ⇒ 不会自复位	2026-10-17	16	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/gui-stress.sh	gui-stress.sh — 给 PITFALLS #106「进桌面后整机卡死」造**真实** GUI/GPU 负载。  依据：73 分钟 idle（`gfx` 电源域全程 off）不复现；用户是「	2026-10-17	15	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/gunyah-rm-bringup.sh	gunyah-rm-bringup.sh — 在机内核上把 Gunyah RM 栈拉起来并验证一次真实 RM RPC。  前置（都是本机的既有事实/产物）： * 内核必须带 CONFIG_OF_OVE	2026-10-24	9	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/hide-android-partitions-selftest.sh	hide-android-partitions-selftest.sh — 离线自测（全部在 /tmp 沙盒里跑，不碰 /etc、不碰设备）  覆盖：dry-run 输出 / apply 写入 / 幂	2026-11-18	1	0	KEEP	近期 G2/进行中工作，保留	
+scripts/hide-android-partitions.sh	hide-android-partitions.sh — 让 GNOME/GTK 文件管理器（Nautilus、GTK 文件选择器、Phosh 栈里的任何 GVolumeMonitor 使用者）侧栏只	2026-11-18	4	1	KEEP	近期 G2/进行中工作，保留	
+scripts/hk-save-decrypt.py	hk-save-decrypt.py — decrypt/encrypt Hollow Knight user*.dat saves.	2026-10-17	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/host-arm64-chroot.sh	host-arm64-chroot.sh — 在主机上建一个 **arm64 Debian(sid) 构建 chroot**，并可选在里面编 sensord  为什么需要（两个目的，同一份成本）： 1	2026-10-25	18	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/host-mem-build-stress.sh	host-mem-build-stress.sh — 用真实构建压测宿主内存（无 ECC 机器专用）  收编自 ~/y700-elden/scripts/host-mem-build-stress.s	2026-11-16	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/host-net-proxy.sh	host-net-proxy.sh — 把主机的本地代理暴露给设备（USB-NCM 侧），幂等  背景（2026-10-27 实测）：设备的 GMS / 容器出网依赖「宿主代理」，历史配方写的是 `1	2026-10-30	33	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/ime-candidates-check.sh	ime-candidates-check.sh — 中文候选窗「可出候选」判据的只读体检（2026-11-15 立）  用途：一条命令现查「这一版设备到底满不满足出候选词的三件套」。 判据来源 = P	2026-11-15	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/install-serial-logger.sh	install-serial-logger.sh — 一次性装一个常驻的串口日志服务（需 sudo）。  为什么不让 agent 自己去 cat /dev/ttyACM0： /dev/ttyACM0 	2026-10-20	13	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/iterate.sh	iterate.sh — 统一迭代入口（日常用它；已于 2026-11 取代并删除根目录 build.sh/pack.sh/cycle.sh）。  四档速度，从快到慢： mod <dir>   模块快	2026-11-18	44	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/kbuild-sanity.sh	build-sanity.sh — 构建前后 mandatory 健康门（内核/任意 git 树）。  收编自 ~/y700-elden/scripts/kbuild-sanity.sh（2026-1	2026-11-16	14	3	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/keep-awake.sh	临时：把会话的熄屏/挂起全部关掉（Q24：相机模块加载后熄屏有硬复位风险）。 在设备上当 root 跑。用法：sh scripts/keep-awake.sh  NOTE（2026-10-10 整理）	2026-10-17	16	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/kexec-boot.sh	kexec-boot.sh — hot-reload a new kernel WITHOUT fastboot/ABL/AVB.  Uses kexec_file_load (CONFIG_KEXE	2026-11-18	20	4	KEEP	门禁/活集闭包引用，必须保留	
+scripts/kexec-bs-cycle.sh	elden kexec 二分单轮。进 fastboot 只走一个入口：`eldroid-bootctl reboot bootloader` （脚本内部已挂 6 s sysrq-b 看门狗；**不要再	2026-11-18	15	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/kexec-diag-test.sh	kexec-diag-test.sh — 在设备上跑，用 vk65-m{0,1,2,3} 诊断内核定位 kexec 掉电阶段。  前提：当前运行的就是带 [KD] 诊断 hook 的内核（vk65-m	2026-10-17	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/kmsgspy.sh	capture kernel log to disk with line buffering + frequent sync, so the last messages before a power-	2026-10-17	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/lane.sh	lane.sh — baseline+fork workflow for concurrent agents (see .pi/CONCURRENCY.md).  The single-writer 	2026-11-02	38	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/lf2-expected.py	lf2-expected.py — 复算 GRUB LoadFile2 补丁（elden_lf2_*）对同一份 initrd 的期望值。	2026-11-15	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/lib-boot-ready.sh	lib-boot-ready.sh — 「复位/进 fastboot 前的系统就绪门」（host 侧，经 SSH 判定当前运行的系统）  动机（见 reports/audit-early-reboot	2026-11-06	15	3	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/lib-device-lock.sh	Source this and call device_lock_acquire() instead of copy-pasting the flock block into every device	2026-10-17	11	20	KEEP	门禁/活集闭包引用，必须保留	
+scripts/lib-dump-verdict.sh	lib-dump-verdict.sh — EDL/`dd` dump 的**三值判定**（present / absent / error）单一真源。  来源：2026-11-18 LTBox 评估	2026-11-19	3	0	KEEP	近期 G2/进行中工作，保留	
+scripts/lib-fastboot.sh	lib-fastboot.sh — fastboot / ssh 设备调用的安全封装（2026-11-09 工具挂死调查产物）  报告：reports/tooling-hang-investigati	2026-11-18	13	6	KEEP	门禁/活集闭包引用，必须保留	
+scripts/lib-serial-source.sh	lib-serial-source.sh — 串口日志的唯一采集实现（被 suspend/n5b 等采集脚本 source）。  背景（PITFALLS #359）： /dev/ttyACM0 = r	2026-10-20	5	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/lib-ssh.sh	lib-ssh.sh — 设备 SSH 调用的单一实现（选项统一 + 一次往返批量取状态）  为什么有这个库（2026-11-05 脚本审计 P2）： * 53 个脚本各自内联 `ssh -o Str	2026-11-18	5	3	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/lib-wait.sh	lib-wait.sh — 「等设备到某个状态」的单一实现（check-first + 指数退避 + 换代判据）  为什么有这个库（2026-11-05 脚本审计 P2）： 全仓有 6 处各写一遍的等	2026-11-18	9	5	KEEP	门禁/活集闭包引用，必须保留	
+scripts/linux-gpt-apply.sh	linux-gpt-apply.sh — 把一对 GPT 表（主表 6 扇区 + 备表 5 扇区）写进指定 LUN，**写后读回对账**。  为什么需要它（RUNBOOK-BRINGUP/GPT-MI	2026-11-19	12	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/linux-gpt-dump.sh	linux-gpt-dump.sh — EDL 只读 dump 六 LUN 的 GPT 主表 + 备表（零写盘），并更新 SHA256SUMS。  用法： scripts/linux-gpt-dump	2026-11-18	6	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/linux-state-audit.sh	linux-state-audit.sh — 「Linux 进度」8 项状态的只读体检（主机侧 + 设备侧），永不做写操作。  配套文档：RUNBOOK-BRINGUP/LINUX-STATE-REP	2026-11-18	11	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/logfs-decode.py	logfs-decode.py — 解析 `logfs` 分区（8 MiB = 10 × 64 KiB 环形 ABL 日志）。	2026-11-01	9	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/lore-fetch-raw.py	lore-fetch-raw.py — 按 Message-ID 直接从 lore 取 raw（自动过 Anubis PoW）。	2026-10-28	21	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/m1-73-modules-overlay.sh	收口指针（script-redundancy-audit S15，2026-11-13）：设备侧整目录部署的统一实现 = scripts/deploy-modules.sh （带备份 + 读回校验）；	2026-11-13	9	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/mail-append-sent.py	mail-append-sent.py — 把「已发出但 Sent Items 没有账」的邮件补写进 IMAP `Sent Items`。	2026-11-17	8	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/mail-draft-check.py	mail-draft-check.py — 投递前静态核对 `send-mail-ustc.py` 草稿（离线，零网络）。	2026-11-17	8	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/mailbox-cleanup-20261102.py	USTC mailbox cleanup 2026-11-02.	2026-11-02	3	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/mailbox-cleanup-weekly.sh	每周邮箱整理（2026-11-02 用户批准）：只删「非我方线程 + 非直接发我 + 早于 7 天」的列表流水。 备份策略：备份目录不存在或超过 30 天 ⇒ 先全量 mbox 备份（~/Mail/u	2026-11-02	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/make-gpt-only-xml.py	make-gpt-only-xml.py — 从官方 rawprogram*.xml 里**只保留 GPT 两行**，生成「只改分区表」的 xml。	2026-11-18	5	0	KEEP	近期 G2/进行中工作，保留	
+scripts/manifest-from-image.py	manifest-from-image.py — 从**镜像本身**重建 `.manifest`（源树已删/丢失时用）。	2026-11-14	2	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/mesa-build.sh	mesa-build.sh — 只构建 Waydroid vendor 需要的 Mesa/gralloc 模块（比 make vendorimage 快得多）  用法： bash mesa-build	2026-10-17	12	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/mesa-deploy.sh	mesa-deploy.sh — 把 extract-mesa-libs.sh 打好的 Mesa 包推到 Y700 设备并安装  用法： DEVICE=root@192.168.7.1 bash me	2026-11-18	4	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/mkbootimg.py	mkbootimg.py — minimal AOSP boot image v2 builder (elden project vendored copy).	2026-10-17	45	8	KEEP	门禁/活集闭包引用，必须保留	
+scripts/mobian-daily-baseline.sh	mobian-daily-baseline.sh — 把 Debian/Mobian 目标根补齐到「日用可用」（幂等；主机侧驱动）  三件套（别混）： rootfs/debian/daily-base	2026-11-07	24	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/mod-loop.sh	收口指针（script-redundancy-audit S15，2026-11-13）：设备侧整目录部署的统一实现 = scripts/deploy-modules.sh （带备份 + 读回校验）；	2026-11-17	51	3	KEEP	门禁/活集闭包引用，必须保留	
+scripts/n5b-vk64-death-rate.sh	n5b-vk64-death-rate.sh — N5b：在 vk64（7.2 血统）RAM 内核上重复 「完整相机栈 + 真实 dpms On->Off 熄屏」配方，测量致死率。  背景：repor	2026-11-17	68	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/n7-vk127-camera-blank.sh	n7-vk127-camera-blank.sh — N7：在 vk127（7.3-rc7 重放线）上跑 Q24 配方  背景：N5 在 vk64（7.2 血统）上第 2 发致死；M1-7.3 同配方	2026-11-17	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/ncm-host-up.sh	ncm-host-up.sh — 主机侧把「设备的 USB-NCM 网卡」配成 192.168.7.3/24（幂等，需 root）。  为什么需要：设备 gadget 固定 192.168.7.1/2	2026-11-18	7	0	KEEP	近期 G2/进行中工作，保留	
+scripts/net-egress.sh	net-egress.sh — 选择上网出口：教育网有线 enp6s0（快）vs wifi 热点 wlp5s0（慢）  背景（2026-10-01 实测，USTC 镜像同文件）： enp6s0（教育网	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/net-selfheal.sh	net-selfheal.sh — 设备侧网络自愈（HTTPS 信任链 + PMTU 黑洞缓解）  背景（2026-10-18 定位，见 reports/net-https-mtu-rootcause	2026-10-18	47	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/net-up-manual.sh	net-up-manual.sh — WiFi bring-up without NetworkManager (fallback path).  Wait for wlan0 (created by	2026-10-17	10	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/net-up.sh	net-up.sh (NM) — bring up WiFi at boot via NetworkManager, with the old manual wpa_supplicant+udhcpc	2026-10-17	30	3	KEEP	门禁/活集闭包引用，必须保留	
+scripts/oob-gs1-activate.sh	oob-gs1-activate.sh — 在设备上把 USB gadget 重新 bind，启用第二个 ACM(acm.GS1) 作为带外 root shell 通道，并自愈 NCM 网络（重启 g	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/openrc-enable.sh	"openrc-enable.sh — switch the TB322FC (elden) persistent root from the ad-hoc ""/init starts every se"	2026-10-19	63	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/out-archive.py	out/*.img 归档器 —— out/ 只留在用件与取证件，历史镜像 mv 到 backup/out-history-<date>/。	2026-11-05	15	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/pack-cloud-backup.sh	pack-cloud-backup.sh — 把「本机独有、不可重下」的二进制整理成一个可直接上传云盘的目录  做法：用【硬链接】把源文件挂进上传目录（同文件系统 ⇒ 几乎不额外占盘）。 源都是只读 	2026-11-02	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/package-camera-modules.sh	package-camera-modules.sh — build out/camera-modules-<KV>.tar.gz from a `make modules_install` stagi	2026-10-17	4	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/partlun.py	partlun.py — TB322FC 分区名 → UFS LUN 的**静态归属表** + 「同名歧义拒绝」。	2026-11-19	4	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/payload-modules-load.sh	payload-modules-load.sh — load the modularized payload drivers (ATH12K, QDSP6 audio, haptics, touch,	2026-10-25	38	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/phoc-build-launch.sh	phoc-build-launch.sh — 以 root 在**独立 session** 里启动 build-phoc-arm64.sh（脱离调用者的进程组， 避免 sudo_exec/tmux 退	2026-11-11	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/phoc-install.sh	phoc-install.sh — 把自编 phoc 装到设备并**钉住**，防 apt 覆盖（PITFALLS #654）  背景：我们给 phoc 打了两枚本地补丁（syncobj 广告 + 去 	2026-11-13	9	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/phosh-install.sh	phosh-install.sh — 把自编 phosh 装到设备并**钉住**，防 apt 覆盖（同 PITFALLS #654 的 phoc 做法）  背景：我们给 phosh 0.58.0 打了	2026-11-14	3	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/probe-camera-sensors.sh	probe-camera-sensors.sh — TB322FC (elden/SM8750) 相机 + 传感器 只读探测  用途：只读采集设备当前相机(CAMSS/CCI/CSI/V4L2)与惯性	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q26-recheck.sh	q26-recheck.sh — Q26 vk62 单变量复核（主机侧，零写盘 fastboot boot）。  目的（.pi/plans/2026-10-08-Q26-static-prep.md 	2026-11-18	8	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q28-clkdiag.sh	q28-clkdiag.sh — 设备侧**只读**取证：一次冷起后立刻跑，用来区分 「peer(第二路) pclk/INTF 没起来」与「DSI 侧问题」（Q28 下一个单变量）。  判据（见 re	2026-10-23	17	3	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q28-coldboot-collect.sh	q28-coldboot-collect.sh — 等一次**真实 POR 冷起**，起来后立刻跑 q28-clkdiag.sh 并归档。  用法： scripts/q28-coldboot-coll	2026-11-17	8	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q28-devprobe.sh	q28-devprobe.sh — 设备端三态判定 Q28 冷起显示结果。POSIX sh。 三态（务必三态：只数风暴签名会把“显示缺失”误判成 GOOD）： NOCARD = 无 /sys/clas	2026-10-17	48	4	KEEP	门禁/活集闭包引用，必须保留	
+scripts/q28-devprobe2.sh	q28-devprobe2.sh — device-side Q28 classification, L1/L2-separated (POSIX sh).  Why v2: the old q28-	2026-10-17	46	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q28-disp-ab-sample.sh	q28-disp-ab-sample.sh — 取「一发」Q28 显示初始化补丁 A/B 冷起样本。  背景：armadaos-freedom 的 0154（dispcc probe 复位活显示 BC	2026-11-09	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q28-por-rounds.sh	q28-por-rounds.sh — 取 N 发**真实 POR 冷起**的 Q28 同口径样本（每发 = 用户一次断电开机）。  与 q28-coldboot-collect.sh 的区别： · 	2026-11-17	17	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q28-reboot-until-good.sh	"Reboot the tablet until the panel actually inits (Q28 GOOD boot) — bounded. Checks: dmesg ""Failed to"	2026-10-18	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q28-watchdog.sh	q28-watchdog.sh — 主机侧管理：把 Q28 运营兜底看门狗装到设备/开关/查状态。  设备侧实现 = rootfs/persistent-overlay/q28-boot-watchd	2026-11-17	27	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q32-arm.sh	q32-arm.sh — Q32 三臂实验的单发执行器（暖起 vs 冷起）。  背景：reports/q32-warm-vs-cold-preresearch-20261023.md（§2 复位入口 	2026-11-17	18	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/q32-boot-evidence.sh	q32-boot-evidence.sh — Q32（暖起 vs 冷起）**只读取证**：把「本次启动的复位深度」与 「本次启动固件有没有留活显示」两个自变量固定成可复核的字符串。  设计依据：rep	2026-10-24	13	3	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/qemu-full-chain-smoke.sh	qemu-full-chain-smoke.sh — QEMU 复刻「AAVMF → GRUB → EFI-stub → vk188 内核 → 串口 dmesg」全链 （B16，2026-11-13；	2026-11-13	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/qemu-ramoops-initrd-ab.sh	qemu-ramoops-initrd-ab.sh — QEMU 复现「ramoops zone 盖住 initrd ⇒ 内核自己的 console 写坏 initrd」并用内核守卫（fs/pstor	2026-11-16	8	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/rambuild.sh	rambuild.sh — 内存盘构建区（RAM build scratch）辅助（见 .pi/plans/2026-10-15_081500-内存盘构建区规划.md）  设计：RAM 层（易失）= 	2026-10-17	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/rawprogram-preflight.py	rawprogram-preflight.py — 线刷包 rawprogram XML 的**写前**几何预检（纯主机、无 USB）。	2026-11-19	5	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/real-vs-ladder.sh	"real-vs-ladder.sh — 在**真内核载荷**上跑 VS_STOP 阶梯（p17 件，零写盘）  为什么要它：2026-11-06 之前所有 sbstop= 阶梯的""载荷""都是 UEFI"	2026-11-06	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/rebuild-vk64-image.sh	rebuild-vk64-image.sh — 重建 Q24/N5b 台架镜像 out/boot-elden-vk64.img  为什么需要它：换机后 out/*.img 未随迁（reports/mi	2026-10-20	8	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/recent-sessions.sh	recent-sessions.sh — 开工前核实「最近 N 轮会话进度 vs 文档」的一步入口。  为什么需要它（2026-11-14 M1）：项目文档曾多次与会话实测结论不一致（文档写 A、会话	2026-11-14	7	0	KEEP	门禁/活集闭包引用，必须保留	
+scripts/reports-index.py	reports-index.py — 由文件名 + 首个 `# ` 标题生成 `reports/README.md`（只读报告，只写这一个文件）。	2026-11-15	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/rootfs-image-check.py	rootfs-image-check.py — 磁盘根 ext4 镜像「能不能起 / 能不能登入」的写前门（主机侧，只读）	2026-11-19	3	0	KEEP	门禁/活集闭包引用，必须保留	
+scripts/rootfs-minbase-build.sh	rootfs-minbase-build.sh — 最小 Debian 根（GPT-minimal 路线的 A6 前置件）驱动脚本  为什么要这个驱动：`sudo` 在工具调用里是 argv 直执行、	2026-11-18	6	0	KEEP	近期 G2/进行中工作，保留	
+scripts/scale.sh	Live scale change for DSI-1 via wlr-randr (no phoc restart needed). Usage: scale.sh <value>   e.g. s	2026-10-17	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/sd-run-variant.sh	sd-run-variant.sh — boot one sleep-death (熄屏→关机) candidate zero-write and collect quantitative evide	2026-11-17	7	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/sd-variant-build.sh	sd-variant-build.sh — build one sleep-death (熄屏→关机) candidate kernel + boot.img.  Base = wt-sleepdea	2026-10-17	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/send-upstream-report.py	send-upstream-report.py — 发送 cambistmclkcc 上游报告 + patch 到 linux-arm-msm 凭据：环境变量 OUTLOOK_APP_PASSWORD	2026-10-17	0	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/serial-capture.sh	serial-capture.sh — 等 USB 串口节点出现后把内容落盘（给「设备 boot 起来但不知道卡在哪」用）  为什么需要：设备 reboot / fastboot boot 时 /de	2026-10-26	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/serial-fanout.sh	serial-fanout.sh — 读一个 tty 并把内容追加到文件（供 systemd 常驻运行）。  与 scripts/serial-logger.sh 的区别：这是**面向 systemd	2026-10-20	6	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/serial-log.sh	Capture the tablet's serial console (kernel printk goes to ttyGS0 -> host /dev/ttyACM0). The gadget 	2026-10-17	6	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/serial-logger.sh	serial-logger.sh — 跨重启自动重连抓取平板调试串口 (ttyACM)。 用法: scripts/serial-logger.sh [LOGPATH]  (默认 logs/serial	2026-10-17	36	5	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/serial-probe.sh	serial-probe.sh — 独占串口并「敲一下」：把当前 ttyACM0 的输出与回声抓下来  为什么需要：设备只有一条控制台（ttyGS0 → 主机 /dev/ttyACM0）。多个读者会*	2026-10-26	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/serial-run.sh	serial-run.sh — 通过设备 USB CDC-ACM 串口 (/dev/ttyACM0) 执行一条命令并打印回显 用法: bash serial-run.sh '命令'   或   bas	2026-10-17	8	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/serial-sysrq.py	serial-sysrq.py — 通过 USB 串口控制台发 SysRq（免物理断电复位/取栈）。	2026-10-26	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/serial-tap.py	serial-tap.py — 稳定的设备串口落盘（替代 serial-logger.sh 的 cat 循环）	2026-11-12	13	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/sess.sh	sess.sh — 本项目（y700-elden）的会话检索入口。  为什么需要它：pi 的项目级 sessionDir = .pi/sessions（.pi/settings.json）， 而全局 	2026-10-19	21	1	KEEP	门禁/活集闭包引用，必须保留	
+scripts/setup-session-greetd.sh	setup-session-greetd.sh — switch the TB322FC Alpine session between the legacy ad-hoc `phosh-session	2026-10-17	4	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/sign-boot-b.sh	Sign a mainline boot image for slot b (self-signed AVB, see bootslot-b/README.md).  usage: scripts/s	2026-11-18	26	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/skewcal-frame-stats.sh	skewcal-frame-stats.sh — 在锁内抓 N 帧存设备 /tmp，再用 python3 统计（distinct/stddev/非零占比）。 目的：fps/错误计数相同不代表像素正确；	2026-10-27	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/skewcal-measure.sh	skewcal-measure.sh — 一次 M4 SKEW_CAL A/B 出流测量（设备是唯一串行资源 → 单次测量整体包在 device-lock 内）。  usage: scripts/sk	2026-11-18	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/sleep-bisect.sh	"sleep-bisect.sh — 在设备上做「相机模块 ⇄ 熄屏掉电」最小模块集二分。  用法（设备上）：sleep-bisect.sh ""system_heap"" sleep-bisect.sh "	2026-10-17	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/sleep-cumulative.sh	sleep-cumulative.sh — 累积式加载相机模块组，每加一组就真实熄屏一次。 第一个致死的组 = 元凶（或最小致死集合）。配合 camdp-nocam 载具 （cmdline elden	2026-10-17	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/sleep-sweep.sh	sleep-sweep.sh — 主机侧自动扫掠：设 camera.conf → 反复重启 → 每次真实熄屏 → 记 存活/掉电。 依赖：boot_b = 可启动的 camdp-nocam；掉电后落在	2026-11-17	79	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/slot-attr.py	slot-attr.py — read/patch the A/B slot metadata stored in the GPT	2026-11-19	114	17	KEEP	门禁/活集闭包引用，必须保留	
+scripts/slot-switch.sh	slot-switch.sh — A/B 槽位「一键往返切换 + 槽属性自检」（../TASKS/README.md §2 C7）  背景：本机 a 槽 = stock Android，b 槽 = m	2026-11-19	78	3	KEEP	门禁/活集闭包引用，必须保留	
+scripts/slotboot-run.sh	slotboot-run.sh — P2「槽位正常启动路径」最小形态上机（2026-11-01） 1) 把 marks 载荷写进 boot_b（96 MiB，AVB testkey），读回校验 2) 	2026-11-18	8	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/start-desktop.sh	start-desktop.sh — Phosh (Wayland) desktop on the TB322FC panel.  Runs on the persistent (disk) root	2026-10-17	31	5	KEEP	门禁/活集闭包引用，必须保留	
+scripts/static-scan.py	static-scan.py — check-doctor §6 的静态卫生扫描（bashism / 死脚本）。	2026-11-06	18	0	KEEP	门禁/活集闭包引用，必须保留	
+scripts/suspend-boot-panic-capture.sh	suspend-boot-panic-capture.sh — 把「CONFIG_SUSPEND=y 后启动即死」(vk128/vk129) 变成可判定的 panic 栈  背景（reports/su	2026-11-17	9	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/suspend-drain-rate.sh	suspend-drain-rate.sh — 量化「相机栈在位 + 真 suspend」的掉电率（%/h）  背景：Q24 一直只说「掉电/不断电」，从没有过**可比较的速率**。 Q24（DPMS	2026-10-20	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/suspend-resource-sample.sh	suspend-resource-sample.sh — 待机/唤醒的「间接资源测量」采样器（设备侧，POSIX sh）  为什么不是电流表：本项目口径（用户 2026-11-13 定）= **不追精	2026-11-13	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/switch-kernel-abi.sh	switch-kernel-abi.sh — 在内核「ABI 变体」之间原子切换（内核镜像 + 模块树一起换）  为什么需要这个脚本（PITFALLS #360，2026-10-20 实受）： vk1	2026-11-13	18	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/systemd/host-net-proxy.service	host-net-proxy.service — 把宿主 Bettbox/mihomo 的 127.0.0.1:7890 中继到 192.168.7.9:7897  用途：Waydroid 容器全局代	2026-10-30	6	1	KEEP-ARCHIVE	仅文档/reports 引用，可移 archive/scripts/（先改文档指针）	
+scripts/t14-rebuild.sh	t14-rebuild.sh — T14「Mobian 换根重建 recipe」可执行化（2026-11-13，主机侧，零设备动作）  依据：reports/t14-userland-recipe-2	2026-11-13	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/t2-stock-lun45.sh	T2: 按 LUN 刷原厂（LUN4 全套 + LUN0 全套），日志到 artifacts/bl-stuck-20261118/flash/T2.log 由 agent 2026-11-17 19:	2026-11-19	8	0	KEEP	近期 G2/进行中工作，保留	
+scripts/t5-q24-capture.sh	t5-q24-capture.sh — T5：给 Taniya Das（Q24 语境）的三件套采集  交付物（对应她 2026-10-13 09:03 UTC 的原话请求）： ① 完整 dmesg /	2026-11-18	16	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/test-bt-guard.sh	test-bt-guard.sh — 对 50-elden-bt-guard 做注入式单元测试（不需要真机、不动本机 BT）  为什么不能用「跑一次真 suspend」当验证：命中 WCN7850 固	2026-10-21	13	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/test-init-preflight.sh	test-init-preflight.sh — `initramfs/init` 的 preflight 回归测试（免 root、离线）  为什么需要：2026-10-26 M6 事故里，Debia	2026-10-26	8	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/test-lib-wait.sh	test-lib-wait.sh — scripts/lib-wait.sh + lib-ssh.sh 的自检（不需要设备）  做法：在 $PATH 前面放一个**假的 ssh/fastboot/ad	2026-11-06	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/tf-stress.sh	tf-stress.sh -- TF 卡（SDHCI/SDC2）写稳定性压测（在设备上以 root 运行）  目的：区分「卡不良」与「SDHCI/DT 驱动问题」。幂等、可复现、低干扰： 只在目标挂载	2026-10-17	64	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/thermal-stress.sh	thermal-stress.sh — 温控压测驱动（在设备上运行）  同时加载 CPU (stress-ng) + GPU (es2gears_wayland)，期间由 thermal-watch.	2026-10-17	6	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/thermal-watch.sh	"thermal-watch.sh — 用户态温控监控守护 (SM8750 / TB322FC ""elden"")  周期采样所有 thermal_zone 温度 + CPU/GPU 当前频点与限频状态，"	2026-10-17	5	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/time-sync.sh	time-sync.sh — wait for network, step the clock from NTP, then keep chronyd disciplining it.  Why: t	2026-10-17	19	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/to-fastboot.sh	to-fastboot.sh — reliable Linux → fastboot, using the PSCI vendor-reset hook.  （历史入口 `cycle.sh --sof	2026-11-19	43	5	KEEP	门禁/活集闭包引用，必须保留	
+scripts/trial.sh	trial.sh — 统一的「一次设备实验」闸门与记录（无 record 不得写 verdict）。  解决的既有事故（PITFALLS #150–#168 一类）： - 设备健康前置门缺位 → bo	2026-11-18	89	11	KEEP	门禁/活集闭包引用，必须保留	
+scripts/uefi-a-slot-prepare.sh	uefi-a-slot-prepare.sh — 让 **a 槽**能跑自研件（G1-29 flashed 形态的前置；幂等）  为什么需要它（2026-11-10 深夜定案）： ABL 在 `Boo	2026-11-18	22	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/uefi-boot-trial.sh	uefi-boot-trial.sh — 一次「UEFI 异类载荷 fastboot boot」上机实验的全过程取证（G1-29 线）  做什么（全部零写盘，除恢复时的 set_active）： 门禁	2026-11-18	23	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-bootimg-dump-v0.py	uefi-bootimg-dump-v0.py — dump Android boot image v0 header fields (one line per field) + summary.	2026-11-01	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-build-variant.sh	uefi-build-variant.sh — 在 7-mu-lenovo 树上构建一个 **可追溯的 UEFI 变体**（G1-29 线）  用途：UEFI 实验的唯一构建入口。产出 = FD + 	2026-11-07	28	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-ddr-trial.sh	uefi-ddr-trial.sh — DDR 黑匣子专用上机循环（多条重复，只统计真正交棒的发次）  背景（2026-11-01 实测）：本机 ABL 对 `fastboot boot` 的接受/拒	2026-11-18	9	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-flashed-trial.sh	uefi-flashed-trial.sh — flashed 形态（写 boot_a）一发的**免屏计时判据**取证（G1-29 线）  为什么有它（2026-11-10）： `p67` 之后 fl	2026-11-18	21	2	KEEP	门禁/活集闭包引用，必须保留	
+scripts/uefi-fv-strings.py	uefi-fv-strings.py — 在 UEFI FD 的**内层（LZMA 压缩的）FVMAIN** 里搜 ASCII 字串。	2026-11-09	7	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-grubcfg-arming.sh	uefi-grubcfg-arming.sh — 把设备 /boot/grub/grub.cfg 的「默认臂」改成可诊断的 UEFI 复测臂  ⚠ 2026-11-14 定案：**当前 ESP 上的 	2026-11-14	1	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-logfs-read.py	uefi-logfs-read.py — 经 fastboot `oem sbread` 读回 UEFI 持久化诊断日志（logfs 尾部 16 KiB 窗口）。	2026-11-07	9	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-oneshot.sh	uefi-oneshot.sh — 真载荷单档一发：换新 UEFI 会话 → 载 preamble → 打一个 stage → 判读  为什么必须一档一会话：82 MB 真件连打第二发必退化 `dia	2026-11-13	9	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-r21-p7-ladder.sh	uefi-r21-p7-ladder.sh — UEFI R21「p7 / preamble7」一族镜像的**唯一重建入口**（G1-29 线，纯主机侧）  为什么有它（2026-11-06 整理轮）	2026-11-10	33	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-r21-sbstop-ladder.sh	uefi-r21-sbstop-ladder.sh — R21 诊断阶梯：**宿主侧**定位 DXE→BootLinux 的随机同步异常落点  为什么有它：屏上三条通道（ConOut / 帧缓冲串口 	2026-11-05	9	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-repack-v2aligned.py	为什么需要这个脚本（2026-11-03/04 定论）	2026-11-04	17	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-sbstop-patch.py	(无头部注释)	2026-11-06	10	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/uefi-usb-gap.py	uefi-usb-gap.py — 用 USB 出现/消失时刻给「fastboot boot 之后到底发生了什么」计时。	2026-11-01	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/verify-tree-integrity.py	[canonical] 收编自 ~/y700-elden/scripts/verify-tree-integrity.py（2026-11-16）；项目侧该路径现在是指向本文件的软链。 改动请改本文件	2026-11-16	7	2	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/vk-identity.py	vk-identity.py — 构建号(vkN/语义名) ↔ 内核二进制 ↔ 内核源提交 的对齐表生成器。	2026-11-19	58	4	KEEP	门禁/活集闭包引用，必须保留	
+scripts/waydroid-cam-restart.sh	waydroid-cam-restart.sh — restart the Waydroid stack after a vendor.img swap.  ★ 2026-10-19 重要更正：默认*	2026-10-29	22	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-camera-bake.sh	waydroid-camera-bake.sh — bake the self-built 64-bit external camera provider into Waydroid's vendor	2026-10-19	45	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-cmdline-fix.sh	waydroid-cmdline-fix.sh — 让 Waydroid 容器不受宿主 `androidboot.mode=charger` 影响  为什么（PITFALLS #465，2026-10	2026-10-29	3	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-haptics-aidl-deploy.sh	waydroid-haptics-aidl-deploy.sh — 部署 AIDL V2 vibrator HAL（TASKS C10 二期：幅度 + cancel）  零写盘： ① 把自编 AIDL	2026-10-17	29	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-haptics-bake-patch.py	waydroid-haptics-bake-patch.py — 幂等打「马达透传固化」的产品配置补丁（TASKS C10 三期）	2026-10-17	31	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-haptics-bake-vendor.sh	waydroid-haptics-bake-vendor.sh — 马达透传**固化**进容器 vendor 镜像（TASKS C10 三期）  背景（PITFALLS #244）：容器 vendor	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-haptics-setup.sh	waydroid-haptics-setup.sh — 部署「Waydroid 马达透传」桥（TASKS §6 ⑤）  原理 容器里的 waydroid vibrator HAL（android.ha	2026-10-17	34	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-headless-restart.sh	Clean restart of the headless Waydroid stack (Q28-bad boots, no compositor).	2026-10-18	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-headless-start.sh	Start Waydroid headless: headless weston + waydroid session + container. For Q28-bad boots where no 	2026-10-18	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-mesa-swap.sh	waydroid-mesa-swap.sh — 在 Y700 设备上把新编的 Mesa/gralloc 库 bind-mount 进 Waydroid 容器  用法（设备上 root 执行）： bas	2026-10-17	4	1	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-ota-serve.sh	Serve local Waydroid OTA (system+vendor) to the tablet over USB-Net. Fixes: sourceforge is unreachab	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/waydroid-proxy-setup.sh	waydroid-proxy-setup.sh — 让 Waydroid 容器可访问 Google（复用主机 Clash 代理）  背景：设备内核缺 CONFIG_IP_ADVANCED_ROUTER	2026-11-18	7	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/wd-audio-test/ListCodecs.java	(无注释)	2026-10-17	1	0	KEEP-ARCHIVE	仅文档/reports 引用，可移 archive/scripts/（先改文档指针）	
+scripts/wd-audio-test/TestAudio.java	(无注释)	2026-10-17	0	0	DELETE-CANDIDATE	零引用；删除前确认生成物已归档	
+scripts/wd-audio-test/TestCodec.java	(无注释)	2026-10-17	0	0	DELETE-CANDIDATE	零引用；删除前确认生成物已归档	
+scripts/wd-audio-test/TestRecord.java	(无注释)	2026-10-17	0	0	DELETE-CANDIDATE	零引用；删除前确认生成物已归档	
+scripts/wd-audio-test/build.sh	Build the Waydroid container-audio test dexes (TestAudio / TestCodec / ListCodecs). Needs: javac (ho	2026-11-17	99	23	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/wd-c1-noworkaround.dev.sh	wd-c1-noworkaround.dev.sh — C1 验收（**在设备上以 root 运行**）  目的：禁用「容器默认路由 workaround」（blank_screen.rc bind-	2026-10-17	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/wd-c1-verify.dev.sh	wd-c1-verify.dev.sh — RUN ON DEVICE (as root). 验证 vk103（IPv4+IPv6 多路由表）下 netd 是否自建 per-network 路由（= 	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/wd-ctl.sh	wd-ctl.sh — Waydroid 设备端控制/查询（**全部快速返回，绝不长等待**）  用法（设备上 root）： wd-ctl.sh state      # 一次性输出全部关键状态（<2	2026-10-17	39	4	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/wd-net-baseline.dev.sh	wd-net-baseline.dev.sh — RUN ON DEVICE (as root). 起 Waydroid 并取容器网络基线(A)。 会话必须以 user 1000 起（root 会 D	2026-10-17	3	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/wd.sh	wd.sh — 主机侧 Waydroid 快捷控制（**每次 <15s 返回，绝不长等待**）  用法： scripts/wd.sh state            # 设备/容器/网络 全景快照 	2026-10-17	5	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/wifi-scan-refresh.sh	wifi-scan-refresh.sh — 连通态周期扫描：让「可用 WiFi 候选榜」不掉成只剩已连接那一项  背景（2026-10-19 U2 实测，PITFALLS #354，报告 repor	2026-10-19	45	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/win-x86-rootfs.sh	win-x86-rootfs.sh — 构建/部署 glibc aarch64 rootfs（Win-x86 转译 PoC 阶段A）  主机侧（本机 x86_64，交叉构建）：下载 Ubuntu ba	2026-10-17	4	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/win-x86-run.sh	win-x86-run.sh — 在设备 glibc-rootfs chroot 内运行 Win-x86（Box64+Wine）命令 自带 fork 风暴防护（cgroup v2 pids 上限 + 	2026-10-17	2	0	KEEP	versions/*.tsv 账目引用（工件生成器/取证脚本），保留	
+scripts/zero-to-desktop-check.sh	zero-to-desktop-check.sh — 「起机 → 桌面」这一段（RUNBOOK S5–S12）的一条命令自检  为什么有这个脚本（2026-11-19）：`RUNBOOK-BRINGU	2026-11-19	5	0	KEEP	门禁/活集闭包引用，必须保留	
