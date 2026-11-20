@@ -18,6 +18,11 @@
    - **fastboot 卡死的三层真因（PITFALLS #697，全文 `PITFALLS/sessions/329-…`）**：① `boot_b` SUCCESSFUL=0 ⇒ ABL 每发抽 retry，7→0 标 UNBOOTABLE 停 fastboot；② `ValidateSlotGuids … Boot GUID 77036CD4… / abl_b GUID 77036CD4…` = 该槽 `boot_*` 与 `abl_*` **type GUID 相同**（出厂 b 侧占位值）；③ `Boot lun: 1 and BootableSlot: _b do not match` = UFS 启动 LUN 未切（**a→LUN1 / b→LUN2**）。机制 = Qualcomm 切槽要**把 type GUID 在两槽间搬家 + 切 LUN**（`boot_control.cpp` `UPDATE_SLOT`）⇒ 「canonical GUID 在哪侧」必须与「哪侧 active」一致。**修法**：切槽只走 `fastboot set_active`；半完成态用 `scripts/gpt-slot-flip-active.py` + `scripts/linux-gpt-apply.sh --lun 4` 补 ACTIVE（写后逐字节/设备端 sha 读回），再 `set_active <同槽>` 触发 LUN 切换，起来后 `qbootctl -m`。
    - **PC → 平板音频（新功能，默认常驻两端）**：上游 `mkckr0/audio-share` 只有 Android 客户端 ⇒ 自写 Linux 客户端 `rootfs/debian/audio-share/as-client.c`（协议逐字节取自上游 `NetClient.kt`：TCP 命令字 1/2/3 + protobuf AudioFormat + UDP PCM），musl 静态交叉编译，装机/体检 = **`scripts/as-client-deploy.sh [--check]`**。主机侧改成 user unit `audio-share-server.service`（`as-cmd --bind=0.0.0.0`，原来只绑手机网段 192.168.42.97 ⇒ 平板连不进）+ ufw 放行 192.168.7.0/24 的 65530/tcp,udp。设备侧 user unit `audio-share-client.service` → 192.168.7.9:65530，实测 **384 KB/s = f32/2ch/48 kHz 满速**，冷起自动连（`systemctl --user is-active` = active）。
    - **顺带修掉两个静默坑**：`deploy-desktop-shell.sh` §8 原来只 `test -f` unit ⇒ 「unit 在、脚本被删、运行值还是 160 MHz/50 ms」也报 ok（现改四件同验：脚本 + unit enabled + min_freq≥525 MHz + polling=10）；设备 `/home/xuqianhui1001/.config/systemd/user` 属主是 root ⇒ 用户级 enable 失败（已 chown）。
+   - **驱动/功能面补回（用户点出「恢复历史最佳还包括驱动」后）**：音频真因 = 重建根丢了**自研资产**而非驱动 ——
+     自编 tplg 不在 `/lib/firmware/qcom/sm8750/`、UCM2 两文件没装、`alsa-utils` 缺 ⇒ `amixer` 全 WARN、PipeWire 只有 `虚拟输出`；
+     补后 Sink = **`内置音频 Speaker playback`**、`audio-alsa-init.sh` 出 `mm1[on,off] L[400] R[400]`、`pw-play` rc=0。
+     触觉 = 驱动 `aw86927`+haptics-v3 在、两枚 FF 节点在，缺的是 `ffrumble` 基线工具（`ffrumble /dev/input/event{2,3} 400 0xffff` 阳性）。
+     两项已机械化进 `deploy-desktop-shell.sh` **§10/§11**（多件同验），冷起后仍绿（PITFALLS **#698**）。
    - **证据**：`logs/forensics-20261120-2210/`（boot_b 96 MiB、logfs×3、misc、vbmeta_a/b）、`backup/HA2EXB0E-16+512/edl-20261120-22{08,35}/`（两次六 LUN GPT dump）、`…/edl-apply-readback-20261120-223802/`（写前回退基线）；工作账 = `.pi/plans/2026-11-20-恢复到历史最佳.md`。
 
 **做到哪**

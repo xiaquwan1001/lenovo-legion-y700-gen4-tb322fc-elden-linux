@@ -37,6 +37,9 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
 TAB=${TAB:-root@192.168.7.1}
 T=${T:-8}
+# 桌面会话用户（耳机/音频/触觉的 user unit 都跑在它下面；重建根实测 uid=1001）
+DEV_USER=${DEV_USER:-xuqianhui1001}
+DEV_UID=${DEV_UID:-1001}
 SSH=(ssh -o StrictHostKeyChecking=no -o ConnectTimeout="$T" -o ConnectionAttempts=1 -o BatchMode=yes -b 0 "$TAB")
 SCP=(scp -o StrictHostKeyChecking=no -o ConnectTimeout="$T" -o BatchMode=yes -q)
 SESS_USER=$ROOT/packaging/elden-userland/files/usr/local/sbin/elden-session-user
@@ -350,6 +353,57 @@ else
 	"${SSH[@]}" 'runuser -u xuqianhui1001 -- env XDG_RUNTIME_DIR=/run/user/1001 WAYLAND_DISPLAY=wayland-0 grim /tmp/desk-deploy.png' &&
 		sz=$("${SSH[@]}" 'stat -c %s /tmp/desk-deploy.png 2>/dev/null') &&
 		[ "${sz:-0}" -gt 20000 ] && ok "grim 截图 ${sz}B（/tmp/desk-deploy.png）" || no "grim 截图失败/过小（$sz）"
+fi
+
+echo "== 10) 音频（tplg + UCM2 + 路由；重建根必丢，2026-11-20 实测） =="
+# 为什么要在本脚本里（2026-11-20）：重建的 minbase 根里 /lib/firmware/qcom/sm8750/
+# 没有自编 tplg、UCM2 下标也没装 ⇒ 卡片能注删但 PipeWire 只有「虚拟输出」(auto_null)，
+# dmesg 出 `MultiMedia1 Playback: no backend DAIs enabled … possibly missing … UCM profile`。
+# 判据四件：tplg 在 + UCM 两文件在 + `wpctl` 的 Sink 名含 Speaker（不是虚拟输出）+ amixer 可用。
+AUDIO_STATE=$("${SSH[@]}" 'set -e
+c=0
+[ -f /lib/firmware/qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin ] || c=$((c+1))
+[ -f /usr/share/alsa/ucm2/Qualcomm/sm8750/Lenovo-Y700-Gen4/HiFi.conf ] || c=$((c+1))
+[ -f /usr/share/alsa/ucm2/conf.d/sm8750/Lenovo-Y700-Gen4.conf ] || c=$((c+1))
+command -v amixer >/dev/null 2>&1 || c=$((c+1))
+echo $c')
+SINK=$("${SSH[@]}" 'runuser -u '"$DEV_USER"' -- env XDG_RUNTIME_DIR=/run/user/'"$DEV_UID"' wpctl status 2>/dev/null | sed -n "/Sinks:/,/Sources:/p" | grep -vE "Sinks:|Sources:" | head -3 | tr -s " "' 2>/dev/null || true)
+if [ "${AUDIO_STATE:-9}" = 0 ] && printf '%s' "$SINK" | grep -qi 'Speaker'; then
+	ok "音频就绪（tplg + UCM2 + amixer，Sink=$(printf '%s' "$SINK" | tr -d '\n'))"
+elif [ "$MODE" = check ]; then
+	no "音频未就绪（缺件数=$AUDIO_STATE，Sink=$(printf '%s' "$SINK" | tr -d '\n')）"
+else
+	timeout -k 3 60 scp -r "$ROOT/scripts/audio-ucm" "$TAB:/usr/local/sbin/audio-ucm" >/dev/null 2>&1 || true
+	timeout -k 3 60 scp "$ROOT/scripts/audio-tplg/out/Lenovo-Y700-Gen4-tplg.bin" "$TAB:/lib/firmware/qcom/sm8750/" >/dev/null 2>&1 || true
+	timeout -k 3 60 scp "$ROOT/scripts/audio-alsa-init.sh" "$TAB:/usr/local/sbin/audio-alsa-init.sh" >/dev/null 2>&1 || true
+	"${SSH[@]}" 'set -e
+chmod +x /usr/local/sbin/audio-ucm/install.sh /usr/local/sbin/audio-alsa-init.sh
+sh /usr/local/sbin/audio-ucm/install.sh >/dev/null
+command -v amixer >/dev/null 2>&1 || DEBIAN_FRONTEND=noninteractive apt-get install -y alsa-utils >/dev/null 2>&1 || true
+sh /usr/local/sbin/audio-alsa-init.sh >/dev/null 2>&1 || true
+runuser -u '"$DEV_USER"' -- env XDG_RUNTIME_DIR=/run/user/'"$DEV_UID"' systemctl --user restart wireplumber pipewire >/dev/null 2>&1 || true
+sleep 4' 
+	SINK=$("${SSH[@]}" 'runuser -u '"$DEV_USER"' -- env XDG_RUNTIME_DIR=/run/user/'"$DEV_UID"' wpctl status 2>/dev/null | sed -n "/Sinks:/,/Sources:/p" | grep -vE "Sinks:|Sources:" | head -3 | tr -s " "' 2>/dev/null || true)
+	printf '%s' "$SINK" | grep -qi 'Speaker' \
+		&& fix "音频已就绪（Sink=$(printf '%s' "$SINK" | tr -d '\n')）" \
+		|| no "装了 tplg/UCM 但 Sink 仍不是 Speaker（$(printf '%s' "$SINK" | tr -d '\n')）"
+fi
+
+echo "== 11) 触觉（aw86927 FF 两个马达 + ffrumble 取证工具） =="
+# 硬件 = AW86937（驱动为 aw86927 + 上游 haptics-v3 系列），内核注册两枚 input FF 设备。
+# 判据：≥ 2 个 aw86927-haptics 的 event 节点 + /usr/local/bin/ffrumble 在（宿主基线工具）。
+HAP=$("${SSH[@]}" 'n=0; for e in /sys/class/input/event*; do [ "$(cat $e/device/name 2>/dev/null)" = aw86927-haptics ] && n=$((n+1)); done; echo $n')
+HAPTOOL=$("${SSH[@]}" 'test -x /usr/local/bin/ffrumble && echo 1 || echo 0')
+if [ "${HAP:-0}" -ge 2 ] && [ "${HAPTOOL:-0}" = 1 ]; then
+	ok "触觉就绪（aw86927-haptics ×$HAP + ffrumble）"
+elif [ "$MODE" = check ]; then
+	no "触觉未就绪（haptics 节点=$HAP，ffrumble=$HAPTOOL）"
+else
+	[ -x "$ROOT/out/ffrumble/ffrumble" ] || bash "$ROOT/scripts/build-ffrumble.sh" >/dev/null 2>&1 || true
+	[ -x "$ROOT/out/ffrumble/ffrumble" ] && timeout -k 3 60 scp "$ROOT/out/ffrumble/ffrumble" "$TAB:/usr/local/bin/ffrumble" >/dev/null 2>&1 && "${SSH[@]}" 'chmod 755 /usr/local/bin/ffrumble' || true
+	HAPTOOL=$("${SSH[@]}" 'test -x /usr/local/bin/ffrumble && echo 1 || echo 0')
+	[ "${HAP:-0}" -ge 2 ] && [ "$HAPTOOL" = 1 ] && fix "触觉就绪（aw86927-haptics ×$HAP + ffrumble）" \
+		|| no "触觉仍缺（haptics=$HAP ffrumble=$HAPTOOL）"
 fi
 
 echo
