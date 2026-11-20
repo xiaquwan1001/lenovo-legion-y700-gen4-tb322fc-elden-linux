@@ -1,0 +1,27 @@
+--- a/sm8750-lenovo-elden.dts
++++ b/sm8750-lenovo-elden.dts
+@@ -61,14 +61,22 @@
+ 	 * the two Type-C receptacles through an analog mux whose select input
+ 	 * is GPIO 29 (the stock firmware drives the same line from its UCSI
+ 	 * port manager, so this is a select, not an enable).
+-	 * gpio-mux requests the line as output-low at probe time, i.e. state 0;
+-	 * no idle-state is given, so a released mux keeps the last state.
++	 *
++	 * The level left by the bootloader is not preserved: eusb_mux_state
++	 * programs the pad as a GPIO input with a pull-down, exactly like the
++	 * stock firmware does without an output level, which already releases
++	 * the bootloader's drive; gpio-mux then requests the line as
++	 * output-low at probe time.  Since the mux cannot be read back, that
++	 * level is state 0 and the first select moves the data path.
++	 * idle-state is the same state, so a released mux parks on receptacle
++	 * A instead of keeping whatever the last switch left behind.
+ 	 */
+ 	usb_hs_mux: mux-controller {
+ 		compatible = "gpio-mux";
+ 		#mux-control-cells = <0>;
+ 
+ 		mux-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
++		idle-state = <0>;
+ 
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&eusb_mux_state>;

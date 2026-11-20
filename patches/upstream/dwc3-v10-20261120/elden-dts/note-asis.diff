@@ -1,0 +1,23 @@
+--- a/sm8750-lenovo-elden.dts
++++ b/sm8750-lenovo-elden.dts
+@@ -61,8 +61,18 @@
+ 	 * the two Type-C receptacles through an analog mux whose select input
+ 	 * is GPIO 29 (the stock firmware drives the same line from its UCSI
+ 	 * port manager, so this is a select, not an enable).
+-	 * gpio-mux requests the line as output-low at probe time, i.e. state 0;
+-	 * no idle-state is given, so a released mux keeps the last state.
++	 *
++	 * The level left by the bootloader survives eusb_mux_state, which only
++	 * programs function and bias and never an output level, but it does not
++	 * survive gpio-mux: that driver requests the line as output-low at probe
++	 * time.  A mux controller cannot be read back, so the level it is put in
++	 * is taken as state 0 and the first select moves the data path.
++	 *
++	 * idle-state is deliberately left out, i.e. MUX_IDLE_AS_IS: the role
++	 * mux deselects the old port immediately before selecting the new one,
++	 * and any other idle state would be driven in between, glitching both
++	 * receptacles.  Keeping the last state on deselect also matches the
++	 * stock firmware, which never parks the line.
+ 	 */
+ 	usb_hs_mux: mux-controller {
+ 		compatible = "gpio-mux";

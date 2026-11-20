@@ -208,9 +208,9 @@ DTS 编译产物 `sm8750-lenovo-elden.dtb` md5 `2d2d92662785a7aa07edb6aba78a9341
 3. 真机两口用的是 `pmic-glink` + `ucsi`（vendor live FDT `connector@0/@1` 挂在 `pmic-glink` 下、`port@1` 是 SS + `fsa4480` SBU）；
    本轮骨架 DTS 用两个**根级** `usb-c-connector` 只表达「HS 两口各一个座」，不是最终拓扑。
 4. `mux-state 0/1 ↔ 长边/短边` 的对应关系仍无硬件证据（见 §7.1 未证项）。
-5. **`gpio-mux` 无法「保留厂商开机态」**：它在 probe 就把线驱低（§7.5 第 1 条）。若真机要求「开机时保持
-   厂商/ABL 选的那一口」，要么给驱动加 `idle-state = -1` 语义之外的能力，要么不经 mux 子系统（vendor 就是
-   在 `&ucsi` 上直接一个 GPIO）。这条会影响**驱动 3/3 的设计前提**，上机前必须想清楚。
+5. **`gpio-mux` 无法「保留厂商开机态」**：它在 probe 就把线驱低（§7.5 第 1 条）。→ **已在 §8 裁决**：
+   (a) 采用 + 故意省略 `idle-state`（`idle-state=<X>` 会在 deselect→select 之间打出错误口瞬态）；
+   (b) 改驱动登记为提案（§8.5，未落地）；(c) typec SBU mux 路线语义不匹配。**3/3 的设计前提不变**。
 
 ### 7.5 独立复核（子代理 `custom.ustc-pool/ustc-dsf`，42 turns，全程自跑）
 
@@ -227,3 +227,112 @@ DTS 编译产物 `sm8750-lenovo-elden.dtb` md5 `2d2d92662785a7aa07edb6aba78a9341
    ⇒ 语义/极性/0↔口对应全部降级为「未证」，DTS 注释不再写长/短边。
    副产品：本项还查实 `DEVICE/README.md` §1.4 的 SMB1501 地址（`@0x42/@0x43`）其实是 `fsa4480`，
    已在该节就地更正（vendor DT 是 `@0x68/@0x69`，live FDT 里 `smb1501` 0 命中）。
+
+## 8. 「gpio-mux probe 即驱低」与「保留厂商开机态」的裁决（2026-11-21 第二轮）
+
+### 8.1 数字结论
+
+| 项 | 结果 |
+|---|---|
+| 能让 `gpio-mux` **probe 时不驱线**的 DT 写法 | **0 种**（驱动硬编码 `GPIOD_OUT_LOW`，`idle-state` 与 probe 无关） |
+| 落地改动 | **注释-only**（`elden-dts/note-asis.diff`，+10/−2 行，全在注释里）⇒ 编译出的 DTB **md5 与改前逐字节相同** `2d2d92662785a7aa07edb6aba78a9341` |
+| `dtbs_check` 诊断 | 改前 **3** / `idle-state=<0>` 变体 **3** / 最终 **3**，四份日志 **sha256 全等** `4cd4ace3…`；USB/mux 相关 **0** |
+| 负样例 | 两 endpoint 同 `mux-state` ⇒ **5**（USB 相关 2）仍被拒；`idle-state = <2>`（1-pin mux 越界）⇒ **3**，**schema 抓不到** |
+| 结论 | 选 (a) 继续 `gpio-mux` + **故意省略 `idle-state`（= `MUX_IDLE_AS_IS`）**；不改驱动 |
+
+### 8.2 判据式选型
+
+| 方案 | 能否不改上游驱动就表达真实行为 | 上游可接受度 | 与 v10 binding 一致 | 裁决 |
+|---|---|---|---|---|
+| **(a) `gpio-mux` + 省略 `idle-state`** | **只能表达「已知的部分」**：probe=state 0 是确定的，首选即搬数据路；**不能**表达「保留 boot 电平」（pinctrl 确实保得住，但 `gpio-mux` probe 唯一改写者，见 8.3） | 高（零驱动改动、零新属性、用的就是 `mux-controls` 设计） | 完全一致（binding 的 then 分支只要求 `mux-controls`+`mux-state`） | **采用** |
+| (a′) `gpio-mux` + `idle-state = <X>` | 同上，但**引入新缺陷**：0003 的换口序列是 `deselect()` → `select(新口)`（`v10-0003:125-127`），非 AS_IS 的 idle 会在两次调用之间真的把线驱到 X（`core.c:491-493`）⇒ **每次 A→B 换口都先瞬态选错口** | 高 | 一致 | **否决**（本轮实测变体，诊断 3 但行为更差） |
+| (b) 改 `drivers/mux/gpio.c` 支持「初始不驱动」 | 唯一能真正「保留 boot 电平」的路：`GPIOD_ASIS` 只 request 不改方向/电平（`consumer.h:44-52`、`gpiolib.c:5092-5095`） | **中偏低**：全树 46 文件/≈70 节点用 `gpio-mux`，其中 21 节点带 `idle-state`；把默认 `OUT_LOW`→`ASIS` 会改 ≈49 节点在「首次 select 前」的窗口（逐板依赖**未证**）；新增属性要同时改 `gpio-mux.yaml`（`additionalProperties: false`，:50） | 一致但属**系列前置**（要排在 3/3 之前/一起） | **只写提案**（8.5），本轮不动树 |
+| (c) 改走 typec `mode-switch`/`orientation-switch`（`gpio-sbu-mux` 一类） | **不能**：`typec_switch` 只吃 `enum typec_orientation`、`typec_mux` 只吃 `TYPEC_STATE_*`（SBU/altmode 语义）；`gpio-sbu-mux` 的 compatible 必须命中真实型号且 probe 同样 `GPIOD_OUT_LOW`；`usb-switch.yaml`/`usb-switch-ports.yaml` 只是 fragment 无 `select` | 低（要新造 binding，比 (b) 更大的上游动作） | 与 v10 binding 目标相反 | **否决** |
+
+### 8.3 开机态到底被谁改写（本轮新增的硬事实：pinctrl 保、gpio-mux 改）
+
+1. **pinctrl 既不驱也不释放**：厂商自己的 pad 配置（live FDT `eusb-mux-state`，
+   `reports/artifacts/uefi-eud-20261101/live-fdt.dts:4441-4447`）= `pins="gpio29"; function="gpio";
+   drive-strength=<2>; bias-pull-down;`，**无 `output-high/low`**；本轮 DTS 与之逐字一致。而 qcom pinctrl 在把 pin
+   mux 到 gpio 功能时，若 OE 已被置位（ABL 留下的输出态）会**先把当前引脚电平回写 out 位再切 mux**
+   （`drivers/pinctrl/qcom/pinctrl-msm.c:213-232`，注释原文 “…not going to be glitching the pin”）；OE=0 时
+   pad 就是输入+下拉。⇒ **pinctrl 阶段电平原样保留**，ABL 的驱动不被 pinctrl 释放。
+2. **唯一改写者 = `gpio-mux` probe**：`devm_gpiod_get_array(dev, "mux", GPIOD_OUT_LOW)`（`drivers/mux/gpio.c:66`）
+   → `msm_gpio_direction_output(value=0)`（`pinctrl-msm.c:576-596`，先写 out 位再置 OE）⇒ 强低 = state 0。
+   ⇒ 在 (a) 下开机态确实丢失；且**当前树只有 binding、无 3/3 消费者**时没人再搬回去，于是这条线被强行
+   定到 A 口 —— 这是 (b) 唯一的**真实**收益窗口（见 8.5）。
+3. **`mux_chip_register` 默认不写线**：`if (mux->idle_state == mux->cached_state) continue;`
+   （`core.c:180-183`），而 `cached_state` 初值 `MUX_CACHE_UNKNOWN == MUX_IDLE_AS_IS == -1`（`core.c:29/140`）
+   ⇒ 省略 `idle-state` 时登记阶段零写；`select` 必写（`core.c:321-332`，首选自 -1 ⇒ 必写一次 0）；
+   `deselect` 只在非 AS_IS 时写（`core.c:487-493`）。
+4. **mux 不可读回** ⇒ 开机时哪一口在用软件不可知；3/3 的 commit message 与代码已把「首次 mode request
+   抢 state 0」写成设计前提（`v10-0003:14-17`、`:550-555`）。
+5. `MUX_IDLE_AS_IS` 在 probe 路径**一次都没被用到**（只出现在 `core.c:140/180/336-337/491-492`）。
+
+### 8.4 门（命令同 §7.3；`nice -n 15` + `flock /tmp/pi-heavy-build.lock` + `timeout -k 30 900`）
+
+| 轮 | 日志 | 诊断起始行 | USB/mux 相关 | dtb md5 |
+|---|---|---|---|---|
+| 改前（HEAD 版 DTS） | `elden-dts/gate-before-asis.log` | 3 | 0 | `2d2d9266…` |
+| 变体：`idle-state = <0>` | `elden-dts/gate-variant-idle-state.log` | 3 | 0 | `53b393fd…` |
+| **最终：注释-only（省略 idle-state）** | `elden-dts/gate-final-asis.log` | 3 | 0 | **`2d2d9266…`（= 改前）** |
+| 负样例 C：`idle-state = <2>`（1-pin mux 越界） | `elden-dts/gate-neg-idle-range.log` | 3 | 0（**未抓到**） | — |
+| 负样例 B 复跑：两 endpoint 同 `mux-state` | `elden-dts/gate-neg-samestate.log` | 5 | 2 | — |
+
+前四份日志 **sha256 完全相同**（`4cd4ace3…`）= 输出与 DTS 内容无关 ⇒ 对 `idle-state`，`dtbs_check` **完全看不见**：
+`gpio-mux.yaml:38-39` 的 `idle-state` 只有 `default: -1`，**无 `$ref`/无 type/无 minimum**（对照
+`mux-controller.yaml:78-101` 才是 `int32, minimum: -2`）⇒ 越界值只能靠运行时 `mux_gpio_probe` 的
+`invalid idle-state` 拒绝。负样例 B 复跑与上一轮逐行一致 ⇒ 门仍咬得住。
+
+### 8.5 (b) 提案草案（未落地，只备档）
+
+动机：让「controller 在用户插口之前不碰数据线」成立，并且不必在 probe 就把未知状态的 mux 定型。
+
+```diff
+--- a/drivers/mux/gpio.c
++++ b/drivers/mux/gpio.c
+@@ static int mux_gpio_probe(struct platform_device *pdev)
+-	mux_gpio->gpios = devm_gpiod_get_array(dev, "mux", GPIOD_OUT_LOW);
++	/* A mux state is unknowable until it is first set, so do not overwrite
++	 * the level the firmware left behind unless the idle state is given. */
++	mux_gpio->gpios = devm_gpiod_get_array(dev, "mux", GPIOD_ASIS);
+```
+（`idle-state` 已有登记期写入路径 `core.c:180-183`，因此显式写了 `idle-state` 的 21 个节点行为不变。）
+
+上游可接受性评估（要说服的三个人/三条线）：
+- **Peter Rosin（mux maintainer）**：必须说明「≈70 个节点里没有一个依赖 probe 即 0」——本轮只证到
+  「无 DTS/注释依赖证据」，**未逐个 consumer 证实**（缺的证据：i2c-mux/spi-mux/iio-mux/can 在首次
+  `select` 前是否要求确定电平）。这条不补，提案不该发。
+- **Rob Herring / DT**：若走「新属性」路线（如 `mux-gpios-init-as-is`）要同时改 `gpio-mux.yaml`
+  （`additionalProperties: false`），且必须回答「为什么不复用 `idle-state`」——答：`idle-state` 管的是
+  deselect/park，不是 probe，语义不同（本节 8.3 第 3 条）。
+- **与系列的关系**：属**系列前置**，要么塞进 3/3，要么先单独发 1 枚。当前 3/3 的行为（首选抢 state 0）
+  不依赖它，故**不阻塞 v10 投递**；收益集中在「消费者不存在/未就绪」的过渡窗口（8.3 第 2 条），
+  3/3 落地后首个 mode request 仍会选 0 ⇒ 长期收益≈ 0。
+- 另一条被否决的中间态：给 mux 节点 `status = "disabled"` 以保电平 —— `mux-controls` 会指到 disabled 节点，
+  3/3 落地后必须记得改回，属自埋雷。
+- 反向论点（本轮采信）：mux 不可读回时，「确定已知的 state 0」比「未知的继承电平」更可推理；
+  收益仅一个短暂的 boot 窗口 ⇒ 优先级低。
+
+### 8.6 上机清单（本轮不上机）
+
+1. `cat /sys/kernel/debug/gpio` 与 `gpiodetect/gpioinfo` 确认 GPIO29 被 `gpio-mux` 持有、方向 out、值 0。
+2. 两口各插一次 U 盘/键盘：确认 `mux_state` 切换与 `lsusb` 枚举落在对应口（binding 的 `mux-state` 0/1
+   ↔ 物理口对应关系仍**无硬件证据**，见 §7.1）。
+3. A→B 换口时用示波器/逻辑分析仪（或 `gpioinfo` 轮询）确认**没有**中间态电平翻转（本轮的 (a) 判据；
+   若出现翻转 ⇒ 说明有人给 mux 加了非 AS_IS 的 `idle-state`）。
+4. `gpioset` 手动翻转 GPIO29，看 HS 连接事件落在哪个口 ⇒ 定死「极性/0↔口」。
+
+### 8.7 子代理复核（`custom.ustc-pool/ustc-dsf`，20 turns/30 calls，全程只读）
+
+它独立给出五条与本节一致的判定，其中**两条直接改变本轮结论**：
+`mux_chip_register` 默认不写线（`core.c:180-183`）与 **`idle-state=<0>` 会在 deselect→select 之间造成
+错误口瞬态**（`v10-0003:125-127` + `core.c:491-493`）⇒ 我据此把已落地的 `idle-state = <0>` 撤掉、改成
+「故意省略 + 注释写清」。另两条我复跑确认：`GPIOD_ASIS` 语义（`gpiplib.c:5092-5095`）、
+`gpio-mux.yaml` 的 `idle-state` 无类型约束（负样例 C 实测不报）。
+
+**它还纠了两处既有记录**（以本轮为准）：① `/tmp/elden-gate` 实际只有 **1/3（binding）**，
+`drivers/usb/dwc3/drd.c` 无 mux、`drivers/usb/roles/class.c` 无 `usb_role_switch_at_endpoint`
+⇒ §7 开头「含 1–3/3」不成立；② §0/§1 记的 blob `5dd032c7…` 在本地树上**复现不出**：本地 pristine
+`snps,dwc3-common.yaml` 是 `6892703…`，打补丁后 `18e3424…`（补丁 `index` 左端 `6c0b8b6` 属另一基线
+`aebb7274` 的文件版本，语义差异与本轮无关，但「逐字节一致」这句话只对那个基线成立）。
