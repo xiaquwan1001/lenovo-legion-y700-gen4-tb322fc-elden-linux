@@ -34,6 +34,7 @@
   **音赖**：PC 侧 `audio-share-server.service`（`as-cmd --bind=0.0.0.0:65530`，user unit enabled）+ ufw 放行 192.168.7.0/24；
   平板侧 `audio-share-client.service`（user 1001，目标 192.168.7.9:65530）⇒ 实测 384 KB/s = f32/2ch/48 kHz 满速、冷起自连。
   装机/体检 = `scripts/as-client-deploy.sh [--check]`，客户端源码 = `rootfs/debian/audio-share/as-client.c`。
+  **音频/触觉已用户实测确认**（扬声器出声、两侧 AW86937 马达都震；tplg+UCM2+alsa-utils 与 ffrumble 由 `deploy-desktop-shell.sh` §10/§11 兜住）。
   **fastboot 卡死的三层真因**（GUID 占位 / LUN 错配 / retry 抽干）= `PITFALLS` **#697**，处置路径同条。
 - ★★**（历史，2026-11-19 13:20）自建最小 Debian（主线 Linux）+ Phosh 桌面在 slot `_b`**：
   GPT 已恢复双轨（`linux17` 193 GiB @LBA 73277435 + `userdata` 256.7 GiB，主备读回 `80ab46e5…`/`e5f79c0e…`）；

@@ -21,7 +21,7 @@
    - **驱动/功能面补回（用户点出「恢复历史最佳还包括驱动」后）**：音频真因 = 重建根丢了**自研资产**而非驱动 ——
      自编 tplg 不在 `/lib/firmware/qcom/sm8750/`、UCM2 两文件没装、`alsa-utils` 缺 ⇒ `amixer` 全 WARN、PipeWire 只有 `虚拟输出`；
      补后 Sink = **`内置音频 Speaker playback`**、`audio-alsa-init.sh` 出 `mm1[on,off] L[400] R[400]`、`pw-play` rc=0。
-     触觉 = 驱动 `aw86927`+haptics-v3 在、两枚 FF 节点在，缺的是 `ffrumble` 基线工具（`ffrumble /dev/input/event{2,3} 400 0xffff` 阳性）。
+     触觉 = 驱动 `aw86927`+haptics-v3 在、两枚 FF 节点在，缺的是 `ffrumble` 基线工具（`ffrumble /dev/input/event{2,3} 700 0xffff` 两轮阳性）。**两项均已用户实测确认**（扬声器出声 + 两侧马达都震）。
      两项已机械化进 `deploy-desktop-shell.sh` **§10/§11**（多件同验），冷起后仍绿（PITFALLS **#698**）。
    - **证据**：`logs/forensics-20261120-2210/`（boot_b 96 MiB、logfs×3、misc、vbmeta_a/b）、`backup/HA2EXB0E-16+512/edl-20261120-22{08,35}/`（两次六 LUN GPT dump）、`…/edl-apply-readback-20261120-223802/`（写前回退基线）；工作账 = `.pi/plans/2026-11-20-恢复到历史最佳.md`。
 
