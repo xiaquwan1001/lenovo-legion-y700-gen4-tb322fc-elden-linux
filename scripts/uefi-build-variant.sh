@@ -159,10 +159,11 @@ case "$SHIM" in
 	*) echo "bad --shim $SHIM" >&2; exit 2;;
 esac
 
-if [ "$SHIM" != custom:* ]; then
-	rm -f BootShim/BootShim.elf BootShim/BootShim.bin
-	./build_boot_shim.sh -b $UEFI_BASE -s $UEFI_SIZE >>"$OUT/build.log" 2>&1
-fi
+case "$SHIM" in
+	custom:*) ;;
+	*) rm -f BootShim/BootShim.elf BootShim/BootShim.bin
+	   ./build_boot_shim.sh -b $UEFI_BASE -s $UEFI_SIZE >>"$OUT/build.log" 2>&1;;
+esac
 
 # ---------- 构建 ----------
 if [ "$CLEAN" = 1 ]; then rm -rf Build/PakalaPkg/RELEASE_CLANGPDB; fi

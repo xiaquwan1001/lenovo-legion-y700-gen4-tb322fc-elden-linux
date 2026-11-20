@@ -93,7 +93,7 @@ echo "-- 编译 Image.gz + dtbs（LOCALVERSION=-vk64）"
 # verify-tree-integrity.py 已能区分 CACHE（页缓存，不算失败）与 CORRUPT（磁盘真坏）。
 # 更强的门 = kbuild-sanity.sh（树完整性 + 多轮页缓存污染率 + 工具链探针）。
 if ! python3 "$ROOT/scripts/verify-tree-integrity.py" "$KDIR" --allow-dirty -q; then
-	fail "工作树有**磁盘真损坏**文件（上面已列出）⇒ 先 `git -C $KDIR checkout -- <文件>` 修复再编。\n   注意：若报的是 CACHE 而非 CORRUPT，那是页缓存翻位，本项不判失败。"
+	fail "工作树有**磁盘真损坏**文件（上面已列出）⇒ 先 'git -C $KDIR checkout -- <文件>' 修复再编。\n   注意：若报的是 CACHE 而非 CORRUPT，那是页缓存翻位，本项不判失败。"
 fi
 if ! bash "$ROOT/scripts/kbuild-sanity.sh" "$KDIR" --before --rounds "${SANITY_ROUNDS:-2}" --allow-dirty; then
 	fail "构建前体检未过（内存位翻转 / 工具链异常）⇒ 本次构建不可信，先修环境"
