@@ -128,6 +128,14 @@
 > **2026-11-14 的第二轮压缩**（19 个长块 → 结论+指针）沉到 `sessions/2026-11-14-TASKS-4-沿革下沉.md`（逐块 `§4-N`）。
 > 功能状态只在 §1 任务行维护；未解/未收口只读 §0 与 §5；上游投递队列以 §7 为准。
 
+**🆕 2026-11-20 夜（恢复历史最佳）留下的开放项**
+
+- **需人**：平板扬声器是否真出声、两枚马达是否真有震感（本轮只证到 Sink=`内置音频 Speaker playback` + `pw-play` rc=0 + `ffrumble` 阳性）。
+  复核命令：`runuser -u xuqianhui1001 -- env XDG_RUNTIME_DIR=/run/user/1001 pw-play <wav>`、`ssh root@192.168.7.1 /usr/local/bin/ffrumble /dev/input/event2 400 0xffff`。
+- **音频口径**：`deploy-desktop-shell.sh` §10 只验「Sink 名含 Speaker」；`pactl` 未装（音量走 `wpctl set-volume`）。
+- **AVB 债**：`vbmeta_b` 的 chain 公钥是旧的 `fc1e3b33…`，而 `bootslot-b/avb.key` 公钥 = `1e54e86e…` ⇒ `fastboot boot` 必拒（槽位启动靠 Flags=3 绕过）。要恢复这条路需重签 `vbmeta_b`（单独排期）。
+- **安卓 a 槽**（G2 共存）仍起不来（11-20 11:35 实测），S2/S3 原厂 `metadata`/`super` 对照待设备窗口。
+
 **当前口径（2026-10-06 立，2026-11-03 复核）**
 
 - **本轮主线** = 尽可能覆盖硬件驱动；判据 =「命令 + 原始输出」可复现。
