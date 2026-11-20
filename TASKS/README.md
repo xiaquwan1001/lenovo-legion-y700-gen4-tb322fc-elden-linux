@@ -146,6 +146,11 @@
   · **P0-2 构建 stage 去危险件**：`reports/build-stage-no-danger-units-20261120.md`（6 个单元三层封死：pkgmap 禁装 + check-pkgmap/build-rootfs 两道 grep 门 + stage 无条件 mask 落盘 + 装后断言；`hexagonrpcd` 是唯一显式来源）。**需上机项** = 新根首启 `systemctl is-enabled` 三组应全 masked。
   · **dwc3 v10 方案**：`reports/dwc3-v10-plan-20261120.md` + `patches/upstream/dwc3-v10-20261120/`。**新事实**：v9 的 1/3 是**手写补丁（`grep -c '^diff --git'` = 0）**，且邮件正文 DRAFT 说「driver 3/3 仍在用 GPIO」而实际 3/3 `mux_control_*` 命中 5 次 ⇒ Rob 的「??」很可能是**自相矛盾**引起（H1 高置信），不是形状问题。
   · **a 槽首启实测（排掉一条旧 confound，露出一个新前置条件）**：`reports/android-a-slot-attempt-20261120.md` —— v1 super 在机、BCB 全 0、`boot_a` 属性修复后仍 **失败并回落 b 槽**（logfs 最后一条 EBS 13311 ms ⇒ 失败在 EBS 之后；pstoredump 前 64 MiB 无 panic 文本）。**新硬前置条件**：**每次上机前必须复位 `boot_a` GPT 属性**（ABL 失败后写成 `retry=0 / unbootable=1`，用 `slot-attr.py set a --retry 7 --no-unbootable --successful`）；单看 `qbootctl` 只知道 Bootable 0/1。设备已复原（`active=_b`、`boot_a=0x7a`、BCB 全 0、桌面 active）。
+- **🆕 2026-11-20 13:xx → 主机侧三道新门 + 两个账本（grow-loop #1–#4）**
+  · 门：`check-doctor` **§23** out/ 造件账本（大件必须有报告）· **§24** `scripts/README.md` 索引新鲜度（`scripts/gen-scripts-index.py --check`，336 入口）· **§25** out/ 生命周期账（`versions/out-artifacts.tsv`，词表 active/verified/superseded/pending；**pending 禁删**）。
+  · 账：`versions/out-artifacts.tsv` 现 6 条 = active 0 / verified 1（min-restore）/ **pending 3**（slim-v3 待首启、android-min=v1 对照件、slim-v2b=S4 二分件）/ superseded 2。
+  · 静态扫描：`reports/py-static-scan-20261120.md`（pyflakes 23→10、未用 import 15→0；venv `~/.venvs/static-scan`）· PITFALLS 正文回填 `reports/pitfalls-body-backfill-20261120.md`（0 孤儿索引行）· 大文件裁决 `reports/bigfile-verdict-20261120.md`。
+  · 回收累计（本日）：`/` 已用 733→725 GB 级；可回收余量集中在 pending 三件（禁删，等上机）。
 - **🆕 2026-11-19 22:5x → 掉电链已定因、设备已回最优 Linux 模式（可日用）**
   · **新坑 #694**（全文 `PITFALLS/sessions/326-掉电链定因与systemd.mask救援舱.md`）：进锁屏即整机掉电 = ① live 上停 `droid-juicer` 实测 ~40 s 掉电（#693）；② 其落盘 mask 后顶上来的是 `hexagonrpcd`（#692，高置信未单变量）。掉电样本持久日志只到启动后第 1 秒就断 = 硬挂。
   · **可复用手段**：`scripts/boot-img-cmdline.py --append "systemd.mask=…"` → `fastboot boot` = 零写盘救援舱；进去只做 `systemctl mask` 落盘再 reboot（本次 45 s 到 SSH）。
