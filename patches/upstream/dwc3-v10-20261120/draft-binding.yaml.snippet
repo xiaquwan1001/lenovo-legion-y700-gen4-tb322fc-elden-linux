@@ -1,161 +1,50 @@
-# dwc3 v10 binding 目标段落草稿（2026-11-20）
+# dwc3 v10 binding — 形状与门账（2026-11-20，本轮已出件）
 #
-# 状态：**草稿，不保证可编译**（本轮无内核树，未跑 dt_binding_check）。
-# 依据：已通过 4 道门禁的 v10-20261118 补丁体（`../../dwc3-v10-20261118/v10-0001-*.patch`），
-#       本节是它的「目标形状」摘要，供 v10-20261120 落盘时逐段照抄/微调。
+# 状态：**binding 已落盘为 `v10-0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-on.patch`**
+#       （对基线 `aebb7274` = Linux 7.4-rc3 出件，`index 6c0b8b6..5dd032c`，98+/1-）。
+#       本文件不再存「目标形状草稿」（旧版那样存会和补丁正文打架），只留三样：
+#       ① 门禁账（命令 + 原始结果）② 与 v9/v10-20261118 的形状差异 ③ 板级 DTS 目标形状。
+#       权威形状 = 补丁正文；两者不一致时以补丁为准。
+# 依据：Rob Herring 2026-11-18 15:34Z 对 v9 1/3 的四条意见（原文 `from-v9/robh-20261118T153457Z-comment-on-1of3.txt`）。
 # 目标文件：Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
-# Rob 11-10 两条要求的落点就在下面两处：$defs/hs-port（port@0 两个 endpoint、无 port@2）
-# 与 properties/mux-controls + $defs/hs-endpoint.mux-state（gpio-mux）。
 
-# ---- 片段 1：$defs 增加 hs-endpoint / hs-port（插在文件顶部 description 之后） ----
+# ---- 1. 门禁账（2026-11-20 16:1x–16:2x，主机侧，全部在 pristine 树上跑） ----
+#
+# 基线与取法：`git fetch --depth 1 --filter=blob:none origin aebb727447 并 sparse-checkout bindings`
+#             → 基线 blob `6c0b8b6538`（与 GATES.md 记的 v10-20261118 基线逐字节一致）。
+# 应用：`git am v10-0001-*.patch` → 3/3 干净（单枚），树 blob `5dd032c76a`。
+#
+# | 门 | 命令（全部 nice -n 10 + timeout -k） | 结果 |
+# |---|---|---|
+# | G-CHECKPATCH | `perl scripts/checkpatch.pl --strict --no-signoff --no-tree <patch>` | **0 error / 0 warning / 0 check（115 行）** |
+# | G-LINT | `yamllint -f parsable -c bindings/.yamllint <yaml>` | **rc=0** |
+# | G-CHKDT | `dt-doc-validate -u bindings <yaml>`（外加 bindings/usb/ 全目录） | **rc=0 / rc=0** |
+# | G-STYLE | `python3 scripts/dtc/dt-check-style <yaml>` | **rc=0** |
+# | G-SCHEMA | `dt-mk-schema -j -o … @<5889 枚 yaml 全量列表>`（33 s） | **rc=0，stderr 0 行** |
+# | G-POS | `dt-validate -s schema.json gates/pos.dtb`、`pos-single-endpoint.dtb`（非 mux 单 endpoint 回归样例） | **两者 PASS**（仅 root-node 的 compatible/model 两条既有噪声，与 v9 门日志同形） |
+# | G-NEG | `neg-same-state` / `neg-one-endpoint` / `neg-legacy-v8`（v9 门遗留 3 枚）+ `neg-no-props` / `neg-no-mux`（本轮新增 2 枚） | **5/5 全被拒**（依次 5 / 4 / 2 / 6 / 10 行诊断） |
+#
+# 样例件：`../dwc3-v9-draft-20261111/gates/*.{dts,dtb}`（3 枚旧）+ `/tmp/dwc3-v10-fx/{neg-no-props,neg-no-mux,pos-single-endpoint}.{dts,dtb}`
+# （后者是 /tmp 临时件：由 `gates/pos.dts` 删两行 / 删 `mux-controls` 一行 + 一份手写单 endpoint 板得到，形状记录在本文件第 3 节）。
+# **未跑**：`dtbs_check` 真板 DTB（本轮无 arch/arm64 源码、也不做内核构建）；结论只覆盖 schema 自身与 7 份样例 DTB。
 
-$defs:
-  hs-endpoint:
-    $ref: /schemas/graph.yaml#/$defs/endpoint-base
-    unevaluatedProperties: false
+# ---- 2. 与 v9 / v10-20261118 的形状差异（Rob 四条意见的落点） ----
+#
+# | Rob 意见 | v9 / v10-20261118 | v10-0001（本轮） |
+# |---|---|---|
+# |「You don't need to use $defs here.」| `$defs: hs-endpoint / hs-port` 两段（83 行） | **`$defs` 整段删除**；形状内联进 `properties/ports/properties/port@0` |
+# |「These can be: patternProperties: '^endpoint@[01]$'」| `endpoint@0:` / `endpoint@1:` 两个 static key | **`patternProperties: '^endpoint@[01]$'`** 一份定义（含 `$ref: /schemas/graph.yaml#/$defs/endpoint-base` + `unevaluatedProperties: false`） |
+# |「Don't put driver specifics in bindings.」| then 分支注释点 `dwc3_get_dr_mode()` / `dwc3_get_extcon()` / `dwc3_drd_init()`；`mux-state` 描述里写「the driver rejects…」；`usb-role-switch` 描述里写 `usb_role_switch_at_endpoint()` | **三处驱动函数名全删**（现 grep 三个模式 = 0）；then 分支只保留 DT 侧要求：`required: [dr_mode, ports, usb-role-switch]` + `dr_mode: const: otg`。`dr_mode: const: otg` **保留**（双连接器各带 role switch ⇒ 控制器必须双角色，这是 DT 语义，不是驱动实现细节） |
+# |「This $ref can be dropped. You already have the schema for 'port@0' below.」| then 分支里再 `$ref: '#/$defs/hs-port'` | then 分支只剩 `required:` + `patternProperties.^endpoint@[01]$: required: [usb-role-switch, mux-state]`，**不再引 schema** |
+#
+# 另外两处顺手收紧（v10-20261118 已有，本轮保留并适配到 patternProperties）：
+# ① `mux-controls` 的 else 分支用 `mux-controls: false` + endpoint 的 `usb-role-switch/mux-state: false`
+#    杜绝「无 mux 却写 mux-state」（诊断文案是 "False schema does not allow"，难看但拒得住，见 G-NEG 的 neg-no-mux）；
+# ② 互斥 `oneOf`（两 endpoint 的 mux-state 必相反）挂在 port@0 顶层 `if: required: [endpoint@0, endpoint@1]` 下，
+#    同样无 `$defs`。`mux-controls` 类型显式写 `$ref: /schemas/types.yaml#/definitions/phandle-array`
+#    （只写 `maxItems: 1` 会被 dt-doc-validate 判 "Scalar properties should not have array keywords"）。
 
-    properties:
-      usb-role-switch:
-        type: boolean
-        description:
-          This connector endpoint has its own USB role switch. The switch is
-          registered against this endpoint and looked up with
-          usb_role_switch_at_endpoint().
-
-      mux-state:
-        $ref: /schemas/types.yaml#/definitions/uint32
-        enum: [0, 1]
-        description:
-          State of the High Speed data bus multiplexer which connects this
-          connector to the controller.  The two connectors of one controller
-          must use different states; the driver rejects a device tree where
-          two connectors claim the same one.
-
-    dependentRequired:
-      usb-role-switch: [mux-state]
-      mux-state: [usb-role-switch]
-
-  hs-port:
-    $ref: /schemas/graph.yaml#/$defs/port-base
-    unevaluatedProperties: false
-
-    # 两个连接器是同一条 HS 总线上被 mux 的两条数据流 ⇒ 是**一个 port 的两个
-    # endpoint**，不是两个 port（Rob 11-10 原话：「ports are for separate data
-    # streams. Endpoints are for mux'ed data streams.」）。port@1 仍是 SS lane，
-    # v8 里的 port@2 **不再出现**。
-    properties:
-      '#address-cells':
-        const: 1
-
-      '#size-cells':
-        const: 0
-
-      endpoint@0:
-        $ref: '#/$defs/hs-endpoint'
-        required: [reg, usb-role-switch, mux-state]
-
-      endpoint@1:
-        $ref: '#/$defs/hs-endpoint'
-        required: [reg, usb-role-switch, mux-state]
-
-    # 只有两个 endpoint 都在时才求值：否则单 endpoint 的老板（qcom/sm8250.dtsi 等）
-    # 会被 oneOf 的空匹配判失败。
-    if:
-      required: [endpoint@0, endpoint@1]
-    then:
-      oneOf:
-        - properties:
-            endpoint@0:
-              properties:
-                mux-state:
-                  $ref: /schemas/types.yaml#/definitions/uint32
-                  const: 0
-            endpoint@1:
-              properties:
-                mux-state:
-                  $ref: /schemas/types.yaml#/definitions/uint32
-                  const: 1
-        - properties:
-            endpoint@0:
-              properties:
-                mux-state:
-                  $ref: /schemas/types.yaml#/definitions/uint32
-                  const: 1
-            endpoint@1:
-              properties:
-                mux-state:
-                  $ref: /schemas/types.yaml#/definitions/uint32
-                  const: 0
-
-# ---- 片段 2：allOf 增加「有 mux 才收紧」的分支（保留原有 usb-drd/usb/usb-xhci 两支） ----
-
-allOf:
-  - $ref: usb-drd.yaml#
-  - if:
-      properties:
-        dr_mode:
-          const: peripheral
-    then:
-      $ref: usb.yaml#
-    else:
-      $ref: usb-xhci.yaml#
-  - if:
-      required: [mux-controls]
-    then:
-      # mux 路径只在控制器自己带 usb-role-switch 时成立：否则 dwc3_get_dr_mode()
-      # 把 dr_mode 拉回 peripheral、dwc3_get_extcon() 跳过 role-switch 分支、
-      # dwc3_drd_init() 根本不会建 mux。
-      required: [dr_mode, ports, usb-role-switch]
-      properties:
-        dr_mode:
-          const: otg
-        ports:
-          required: [port@0]
-          properties:
-            port@0:
-              required: ['#address-cells', '#size-cells',
-                         endpoint@0, endpoint@1]
-    else:
-      # 没有 mux ⇒ High Speed port 保持通用 graph port binding，单 endpoint 板
-      # 描述方式不变。这里必须重新 $ref 一次，不能把 port@0 统一声明成 hs-port：
-      # graph 的 port 是 unevaluatedProperties: false，双 connector 的
-      # usb-role-switch/mux-state 会被它拒掉。
-      properties:
-        ports:
-          properties:
-            port@0:
-              $ref: /schemas/graph.yaml#/properties/port
-
-# ---- 片段 3：properties 顶层增加 mux-controls（gpio-mux 走通用 mux 框架） ----
-
-properties:
-  mux-controls:
-    maxItems: 1
-    description:
-      Phandle to the multiplexer that selects which of the two connectors
-      drives the controller's shared High Speed data bus, e.g. a
-      "gpio-mux" controller.  Each connector is described by the endpoint@0
-      or endpoint@1 of "port@0", and the endpoint of that connector carries
-      its own role-switch input and the "mux-state" it is reached in.
-
-  extcon:            # 已有属性，保持不变
-    maxItems: 1
-    deprecated: true
-
-# ---- 片段 4：properties/ports/port@0 改为引用 hs-port（port@1 不动） ----
-
-  ports:
-    $ref: /schemas/graph.yaml#/properties/ports
-    properties:
-      port@0:
-        $ref: '#/$defs/hs-port'          # 原 /schemas/graph.yaml#/properties/port
-        description: High Speed (HS) data bus.
-
-      port@1:
-        $ref: /schemas/graph.yaml#/properties/port
-        description: Super Speed (SS) data bus.
-
-# ---- 片段 5：板级 DTS 目标形状（elden 板，属 held-back，不进上游系列） ----
+# ---- 3. 板级 DTS 目标形状（elden 板，属 held-back，不进上游系列） ----
 #
 # &usb_1_dwc3 {
 #         dr_mode = "otg";
@@ -195,3 +84,11 @@ properties:
 #                 idle-state = <0>;
 #         };
 # };
+#
+# 非 mux 单连接器板（回归样例，`pos-single-endpoint.dts`）形状不变：
+#   ports/port@0 { reg; endpoint { remote-endpoint; }; } + ports/port@1 { reg; endpoint { … }; }
+
+# ---- 4. 本轮未做（下一轮入口） ----
+# - 0002（usb: roles）无需改；0003（dwc3）代码无需改，**只换 commit message**（草稿 = `v10-0003-commit-msg.txt`）。
+# - 系列合成后仍缺的硬门：`checkpatch --strict`、arm64 `W=1` 编译、`dtbs_check` 真板 DTB
+#   —— 三者都要内核树/编译，本机今日两次 panic 后按负载纪律不做。
