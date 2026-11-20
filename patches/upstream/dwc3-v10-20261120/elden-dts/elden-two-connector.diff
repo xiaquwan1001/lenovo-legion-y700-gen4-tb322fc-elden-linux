@@ -1,0 +1,126 @@
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -3211,7 +3211,7 @@
+ 				#address-cells = <1>;
+ 				#size-cells = <0>;
+ 
+-				port@0 {
++				usb_dwc3_hs_port: port@0 {
+ 					reg = <0>;
+ 
+ 					usb_dwc3_hs: endpoint {
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -55,6 +55,62 @@
+ 		regulator-name = "wl2868c_vsys";
+ 		regulator-always-on;
+ 	};
++
++	/*
++	 * The High Speed D+/D- pair of the USB controller is routed to one of
++	 * the two Type-C receptacles through an analog mux whose select input
++	 * is GPIO 29 (the stock firmware drives the same line from its UCSI
++	 * port manager, so this is a select, not an enable).
++	 * gpio-mux requests the line as output-low at probe time, i.e. state 0;
++	 * no idle-state is given, so a released mux keeps the last state.
++	 */
++	usb_hs_mux: mux-controller {
++		compatible = "gpio-mux";
++		#mux-control-cells = <0>;
++
++		mux-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&eusb_mux_state>;
++	};
++
++	usb_con_main: connector-main {
++		compatible = "usb-c-connector";
++		power-role = "dual";
++		data-role = "dual";
++
++		ports {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			port@0 {
++				reg = <0>;
++
++				usb_con_main_hs: endpoint {
++					remote-endpoint = <&usb_dwc3_hs>;
++				};
++			};
++		};
++	};
++
++	usb_con_second: connector-second {
++		compatible = "usb-c-connector";
++		power-role = "dual";
++		data-role = "dual";
++
++		ports {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			port@0 {
++				reg = <0>;
++
++				usb_con_second_hs: endpoint {
++					remote-endpoint = <&usb_dwc3_hs2>;
++				};
++			};
++		};
++	};
+ };
+ 
+ &gpi_dma2 {
+@@ -127,3 +183,49 @@
+ 		bias-disable;
+ 	};
+ };
++
++&tlmm {
++	/*
++	 * State of the 2:1 analog mux that selects which receptacle drives the
++	 * High Speed D+/D- pair of the USB controller.  The stock firmware
++	 * leaves the line as is, so no output level is forced here.
++	 */
++	eusb_mux_state: eusb-mux-state {
++		pins = "gpio29";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-down;
++	};
++};
++
++&usb {
++	dr_mode = "otg";
++	mux-controls = <&usb_hs_mux>;
++	status = "okay";
++};
++
++&usb_dwc3_hs_port {
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++	/delete-node/ endpoint;
++
++	/* Receptacle A: selected with mux state 0. */
++	usb_dwc3_hs: endpoint@0 {
++		reg = <0>;
++
++		usb-role-switch;
++		mux-state = <0>;
++		remote-endpoint = <&usb_con_main_hs>;
++	};
++
++	/* Receptacle B: selected with mux state 1. */
++	usb_dwc3_hs2: endpoint@1 {
++		reg = <1>;
++
++		usb-role-switch;
++		mux-state = <1>;
++		remote-endpoint = <&usb_con_second_hs>;
++	};
++};
++

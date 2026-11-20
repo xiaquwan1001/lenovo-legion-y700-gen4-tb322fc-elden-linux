@@ -6,7 +6,7 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-20）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-21）
 
 > 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
@@ -14,6 +14,11 @@
 
 **做到哪**
 
+0. **🆕 2026-11-21（主机侧，单轮）—— dwc3 v10 的「两连接器」形状第一次进真 elden DTB 的 `dtbs_check` 门，零新增诊断**
+   - elden 板 DTS 补齐 `mux-controls`（`gpio-mux` on `&tlmm 29`）+ `port@0` 两个 endpoint（`mux-state` 0/1）+ 两个 `usb-c-connector`；硬件依据 = 真机 live FDT（`reports/artifacts/uefi-eud-20261101/live-fdt.dts`：`port-select-gpios = <&tlmm 29 …>`、`connector@0/@1`、每口一颗 `fsa4480`）+ vendor overlay 的 `&ucsi` `gpios` 同一条线 + 2026-10-29 双口充电实测。件与门账 = `patches/upstream/dwc3-v10-20261120/elden-dts/` + 同目录 `README.md` §7。
+   - **门对照**（`CHECK_DTBS=1`、**不带** `DT_SCHEMA_FILES`）：加之前 3 诊断 / 加之后 3 诊断（**新增 0**，3 条都是板级既有噪声）；两个自造负样例分别 5/2 条 USB 诊断 ⇒ 门真咬得住。**关键修正**：v9 那版「在 `sm8750.dtsi` 里无条件把 `port@0` 拆两 endpoint」会让 mtp/qrd 各多 2 条诊断，已改为 dtsi 只加一个 label、板级 `/delete-node/` 重写。
+   - 新坑 **#696**（`PITFALLS/sessions/328-…`）：`DT_SCHEMA_FILES` 对**无 `select:` 的公共片段**恒空转；另修 `DEVICE` §1.4 SMB1501 地址错（`@0x42/@0x43` 是 `fsa4480`）。
+   - **未做**：上机（mux 实际切换/两口枚举）；GPIO 29 的语义/极性/0↔口对应仍无硬件证据（子代理复核降级）；`gpio-mux` probe 即驱低 ⇒ 「保留厂商开机态」需改驱动或换表达。
 0. **🆕 2026-11-20 全天（主机；grow-loop #1–#5）—— 三份账/三道门落地、累计回收 ~19 GB；a 槽首启实测得新前置条件（PITFALLS #695）；**设备现离线（需人项插线+上电）**
    - **全账** = `.pi/plans/2026-11-20-进度整理与待办规划.md`（现态实测 + 4 lane 产出 + 排好序的待办 + 4 条待拍板）。
    - **主机侧已落地**：① A 档回收 **8124 MB**（`out/` 87→75 G）；② `check-doctor` **§23 out/ 造件账本门**（`scripts/out-manifest-check.py` + `scripts/out-manifest-exempt.tsv`，含空理由豁免必 FAIL 的反作弊与 4 类 selftest）；③ 上游现查一页账 `reports/upstream-recheck-20261120.md`（**§7 台账落后 1–2 代**：wl2868c 已 v12、dwc3 已 v9 且 Rob Herring 11-18 回「??」、elden DTS v7、fastrpc v3、M8 现役 = mdss block-resets 3 枚），`TASKS §7` 头已加增量块；④ v3 上机执行包 `scripts/android-v3-bringup-walkthrough.sh`（`--dry-run` 默认，父代理复跑 `--verify` 7 件全过）+ `reports/android-v3-bringup-packet-20261120.md`；⑤ arch-audit P1#3 收尾：`scripts/README.md` 生成索引（334 入口）挂 `check-doctor` **§24 新鲜度门**（`gen-scripts-index.py --check` + 删行反作弊，只进全量档，设计/验证 = `reports/scripts-index-gate-20261120.md`）。

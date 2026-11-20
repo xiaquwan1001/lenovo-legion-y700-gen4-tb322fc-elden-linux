@@ -197,8 +197,10 @@
 ### 1.4 USB 双口与充电（2026-10-29 实测定案，本节为该事实唯一正文位置）
 
 长边口 = USB3（`usb@a600000` + QMP SS PHY、DP altmode）；短边口 = USB2（`usb_dwc3_hs2`）。
-两个 `usb-c-connector`（`connector@0`/`@1`）各绑一颗 SMB1501（`smb1501@0x43`/`@0x42`），
+两个 `usb-c-connector`（`connector@0`/`@1`）各绑一颗 SMB1501，
 充电由 **ADSP `battery_charger`** 经 PMIC-GLINK 决定用哪一口/哪颗。
+（**2026-11-21 地址更正**：旧文写 `smb1501@0x43`/`@0x42` 是错的——那两个 I²C 地址在真机 live FDT 里是 `fcs,fsa4480`（SBU/orientation mux，`reports/artifacts/uefi-eud-20261101/live-fdt.dts:1497/1513`），
+vendor 板上 SMB1501 是 `qcom,smb1501@68`/`@69`（`backup/stock-elden/elden.dts:2897/2903`）；同一份 live FDT 里 `smb1501` 命中 0 条 ⇒ 「两颗充电 IC 都在当前 DT」这句降级为**未证**，待真机 `/sys/class/power_supply` 现查。）
 
 | 观测 | 实测值（2 s 粒度采样，用户物理插拔） |
 |---|---|
@@ -210,7 +212,7 @@
 **结论（已证）**
 
 1. **不是硬件单口**：短边 PD 单独可跑 12.2 A。
-2. **不是「内核只认一口」**：内核逐口建模（两个 `typec/port*`、两个 `ucsi-source-psy-*`、两颗 SMB1501 都在 DT 与 `/sys` 里）。
+2. **不是「内核只认一口」**：内核逐口建模（两个 `typec/port*`、两个 `ucsi-source-psy-*`；两颗 SMB1501 **地址与是否存在按上一段更正后的口径**）。
 3. **是 ADSP 的选口策略**：两口同时在时只选长边；`qcom-battmgr-usb` 只是**只读跟随被选中的那一口**
    （插 PD 时报 PD 的 5.05 V，拔掉后报 PC SDP 的 4.71 V）。AP 侧**没有**改这个选择的控制面。
 4. **只留短边 PD 时 `qcom-battmgr-usb` 的 `voltage_now` 读到 1.0–1.2 V**（与电池吃 12 A 矛盾）——

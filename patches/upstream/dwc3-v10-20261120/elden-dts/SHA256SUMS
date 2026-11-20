@@ -1,0 +1,5 @@
+338aa4b77a138a72a8ec7ea1432eea9f7b72b6d0a0222136db67143bf190232e  patches/upstream/dwc3-v10-20261120/elden-dts/sm8750-lenovo-elden-before-mux.dts
+89baeaa760d54d22792400908a629324d2dee0ad1b053da1c35fafaca8e99bd3  patches/upstream/dwc3-v10-20261120/elden-dts/sm8750-lenovo-elden.dts
+a2f91daaca8157105d47a112ef74c0f1597d4b4b4cc4673e1e47cba023939c09  patches/upstream/dwc3-v10-20261120/elden-dts/before-vs-after.diff
+8e8a376b0a3173ac3986c65ab74075ebcf47f4f17cdd16c26affa001feb037bd  patches/upstream/dwc3-v10-20261120/elden-dts/elden-two-connector.diff
+88a2d7482e0be892c16d003a85c79e1b48fa67760db0408b5ecedefa30cf71c9  /tmp/elden-gate/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb

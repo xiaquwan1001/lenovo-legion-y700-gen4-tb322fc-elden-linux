@@ -45,6 +45,13 @@
 (b) 等 binding 合入后再单发。裸发会让 `dtbs_check`/checkpatch 直接指出两个未文档化 compatible，且 v6 线程里
 Krzysztof/sashiko/Konrad 已同向质疑「骨架板 DT 别单发」（`archive/topics/upstream/upstream-status-20261105.md` v7 条件行）。
 
+## 3b. USB 部分（held，不在本枚里）
+
+两 Type-C 座 + HS 共用 mux（TLMM GPIO 29）的板级形状已单独落地在
+`../dwc3-v10-20261120/elden-dts/`（`sm8750-lenovo-elden.dts` = 本目录板骨架 + USB 段），
+并跑过真 DTB 的 `dtbs_check` 门（`../dwc3-v10-20261120/README.md` §7）。
+**不要**把那一版直接并回本枚：它与 dwc3 系列（binding/driver）必须同批，且仍缺 `pmic-glink`/`ucsi` 拓扑。
+
 ## 4. 发送命令（**exact**，已 `--dry-run` 验证；实发需用户放行）
 
 ```bash
