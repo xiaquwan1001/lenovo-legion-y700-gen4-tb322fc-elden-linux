@@ -8,7 +8,7 @@
 用法：脚本自己执行 `fastboot boot <img>`，只做观测，不写盘。
     scripts/uefi-usb-gap.py --image X.img --label ctrl --timeout 90
 """
-import argparse, glob, os, subprocess, sys, time
+import argparse, glob, os, subprocess, time
 
 WATCH = {"18d1": "google", "05c6": "quallcomm-edl", "1d6b": "gadget-linux"}
 

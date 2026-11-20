@@ -31,7 +31,6 @@ import hashlib
 import os
 import struct
 import sys
-import tempfile
 
 MAGIC = b"ANDROID!"
 BOOT_NAME_SIZE = 16

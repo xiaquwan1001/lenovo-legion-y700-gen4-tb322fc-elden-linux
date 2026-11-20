@@ -82,3 +82,39 @@
   `git cat-file -p HEAD:<file> | diff - <file>` 逐文件比。
 - **同族**：`PITFALLS #512/#513`（磁盘/页缓存位翻转）。本条是**工作区**层面：不一定是位翻转，
   也可能是「编辑器/脚本半途写坏 + 长度未变」。**构建报的语法错误先怀疑源码被改坏，再怀疑编译器/版本。**
+
+## 索引回填（编号 197）：535 BlkIo 的 Lba 是块号不是字节偏移
+
+**#197** 把 `(LastBlock+1)*BlockSize-窗口` 当 LBA 传 ⇒ `Lba > LastBlock` ⇒ `EFI_INVALID_PARAMETER`（读侧 `oem sbread` 恒失败，写侧 logfs 记录一直没写进去而返回值没人看）。`BufferSize` 必须是 `BlockSize` 整数倍（否则 `EFI_BAD_BUFFER_SIZE`）。通则：「一次就够、失败静默」的动作，返回值必须回显到可读通道。
+
+## 索引回填（编号 198）：536 跨阶段调试状态放固定物理地址
+
+**#198** 环形日志放 `0xE3F80000`（32 KiB，头 `Magic/Size/Head/Total`，与 1 MiB 黑匣子窗同段、`R24` 已登记 Reserved+WRITE_BACK_XN）⇒ 任何模块 `SerialPortWrite` 写同一环。两前提：PrePi `MemoryPeim` 会填 `0xFF`（DXE 前记录丢，#491）；EB 后无 `gBS`，转储用缓存的 `BlkIo`（`SbWriteLogWindowNoBs`）。
+
+## 索引回填（编号 200）：543 「NoBs」转储链里仍在调 boot services
+
+**#200** `SbDumpLogNoBs()` 两次 `AllocatePool`/`FreePool`、`SbWriteLogWindowNoBs()` 又一次 ⇒ EB 后 `gBS+0x40` 取 0、`blr x8` 跳 0（`[K] FLT pc=00000000 esr=86000007`，`posteb` 永不可达）；NoBs 版 `Base` 仍按字节偏移当 LBA。纪律：写「某阶段不可用」前先机械 `grep` 该路径上的 `AllocatePool/FreePool/gBS->`，别凭函数名相信。
+
+## 索引回填（编号 201）：544 git index 挡住就地段损坏
+
+**#201** git index 用 `mtime+size` 判改动，长度与 mtime 都不变的就地损坏被直接跳过（`git fsck`/`cat-file` 正常，`checkout --` 也不重写）⇒ 构建报「语法错误」先 `rm -f <file> && git checkout -- <file>`，再怀疑编译器。同族 #512/#513（磁盘/页缓存），本条在工作区层。
+
+## 索引回填（编号 234）：580 logfs 记录只由 FV 内 LinuxLoader 写
+
+**#234** `LinuxLoader.c` 入口 `SbDumpLog("entry")` + `BootLinux()` 的 `"preeb"`（`patches/uefi/20261106R31`），BdsDxe 自己不写 ⇒ flashed 形态没走到 FV LinuxLoader 时 logfs 零记录，「logfs 没动静」≠「UEFI 没跑」，先分层确认走到了哪层。原文：reports/uefi-p62-r63-fastboot-trial-20261109.md
+
+## 索引回填（编号 240）：586 落盘信标必须带世代串+单调计数
+
+**#240** 「落盘信标读到 `st=8`」不能证明「这一发跑到 8」：R66 信标写**固定 LBA**（logfs 记录区第 2 块）且只含 `st`/`tag` ⇒ 上一发残留字节与这一发完全相同。纪律：任何「持久化自证」带世代串+单调计数（`R68STG st=<n> gen=p67 cnt=<读改写+1>`）。同族 #580/#582。原文：reports/uefi-p63-p66-beacon-20261109.md
+
+## 索引回填（编号 243）：589 无条件检查点不能当分支判据
+
+**#243** 检查点若在两条分支上都会执行（无条件路径），读到它只能证明「进入了函数」，不能区分走了哪条分支 ⇒ 判据检查点必须放在**分支独占**位置并带分支标识。原文：reports/beacon-recheck-20261110.md（独立子代理复核）。
+
+## 索引回填（编号 245）：591 诊断缓冲与分区识别共用静态缓冲互踩
+
+**#245** R66 `R66IsLogfs()` 用 `m_R66Buf` 读分区尾部做指纹自检，而 R66 又把同一数组当写入缓冲 ⇒ 每调用一次识别就清掉已累积轨迹（首测只剩最后一条 `s9:esp-ld-ok`、头部 `R68LOG` 整个消失，看着像「信标没工作」）。纪律：诊断缓冲按用途分开命名，凡「读-判-写」同一分区的辅助函数默认它会把你的缓冲踩掉。原文：reports/uefi-p67-flash-trial-20261110.md
+
+## 索引回填（编号 248）：594 失败发之后先拷 logfs 再恢复设备
+
+**#248** logfs 只在 slot0（前 64 KiB）变化，内容是成功 `_b` 的记录；失败 `_a` 尝试零记录（「没写」与「被覆盖」同象）。`set_active b`+`reboot` 之后才读 ⇒ slot0 已被恢复发覆盖、证据丢失。纪律顺序：失败发 → `dd` 拷 logfs → 再恢复。原文：reports/uefi-p69-flashed-and-vbmeta-20261110.md

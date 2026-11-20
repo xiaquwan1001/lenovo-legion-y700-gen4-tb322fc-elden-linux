@@ -25,3 +25,7 @@
   再靠「fault handler 自旋 15 min 不复位」排掉定时器假设，才把注意力转回内核现场。
 - 复位源字段（`Reset by PSHOLD` / `PON by SYSOK`）只说明「AP 侧拉低 PS_HOLD」这一条路径，
   **不能**据此指名某一枚看门狗。
+
+## 索引回填（编号 211）：554 交棒后 ~4 s 硬复位真因 = SdccDxe 抢 SD 主控
+
+**#211** `SdccDxe` 在 `fastboot boot` 路径上初始化了 `8804000.mmc` 却没在交棒前收尾 ⇒ 内核接手后 `mmc0: ADMA error`（`ADMA Ptr: 0x0000000ffffff224`）⇒ 硬复位；摘掉后 `mmcblk0 58.6 GiB` 正常一路到用户态。摘 DXE 件三处清单都要动（`APRIORI.inc`/`DXE.inc`/`DXE.dsc.inc`），只注 `DXE.inc` 会被 APRIORI 拉回 ⇒ 假阴性。

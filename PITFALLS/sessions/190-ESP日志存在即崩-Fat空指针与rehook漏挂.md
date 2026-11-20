@@ -69,3 +69,11 @@ the CPU state`；**同一件（r58b）有时能进、有时崩**，且 ESP 上�
   ⇒ 崩溃消失、ESP 启动器正常交棒。trial record `reports/trials/20261108T150553Z-uefi-p60-r63-both-fixed.json`。
 - 教训补充：**同一个错误写法在一棵树里通常不止一处**（本轮 `LLogOpen` 与 `EspMark` 各一处）；
   修完先 `grep -rn "Open (.*NULL"` 全树扫一遍，别等着下一发上机再撞第二次。
+
+## 索引回填（编号 223）：569 FatOpenEx 无 NewHandle==NULL 分支 ⇒ 写地址 0
+
+**#223** 本树 `EnhancedFatDxe` 的 `FatOpenEx()` 没有空分支，文件存在就打开成功 ⇒ `*NewHandle = &NewIFile->Handle` 写地址 0 ⇒ `Synchronous Exception at 0xD0B99E2C`（Fat 基址 `0xD0B95000`+RVA `0x4E2C`）。现象链：第一次成功、之后每发必崩、`\loader.log` 不再更新。改法 = 打开拿句柄再 `->Delete()`，永不靠 `NewHandle==NULL` 表达删除。
+
+## 索引回填（编号 224）：570 rehook 漏挂 ⇒ stock handler 放大异常成无限递归
+
+**#224** R18 的 `RegisterInterruptHandler` 写在 `R13StartLinuxLoader()` 体内，R54 把 R13 挪到 ESP 失败之后 ⇒ ESP 件崩溃时用预编译 `CpuDxe.efi` 的 stock handler（无 `[K] FLT`、无有界滚屏）⇒ 一次真异常变屏上无限递归。主机判据：FD 里 `DxeCore` 有 `FLT pc=`、`BdsDxe` 有 `esp ld=`，屏上两者都没出现 = 注册的那份没被用上。改法 = rehook 提成函数、进 `R54TryEspBoot()` 前调用（`patches/uefi/20261108R61-hoist-exchook/`）。

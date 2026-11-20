@@ -19,7 +19,6 @@ import argparse
 import collections
 import os
 import subprocess
-import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 COLORS = {

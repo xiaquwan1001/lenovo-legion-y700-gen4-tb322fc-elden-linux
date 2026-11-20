@@ -49,3 +49,11 @@
      `androidboot.*`）⇒ 用**自家探针**（DDR 共享环 `0xE3F80000` / `logfs` 里的 `[K]` 链）；
   3. `boot_b` 的内核身份可用 `uname -r` 对齐 `out/boot-elden-<vk>.manifest` 的 `kernel_release`
      （注意 vk 标签与 uname 里的 `vk1xx` 可能不同号：`vk185-adsp` 的 uname 是 `vk184-…`）。
+
+## 索引回填（编号 203）：546 EB 后缓存的 BlkIo 实例已失效
+
+**#203** `BlkIo->WriteBlocks` 读出 0 ⇒ `blr 0` ⇒ `pc=0` IABT（p45 实测）；删掉 EB 后落盘后同一路径一路走通起内核（p46）。机制 = EB 释放 boot-services 内存/卸载非 runtime 映像 ⇒ **EB 后落盘结构性不可用**，取证靠屏或共享环（`0xE3F80000`+`blackbox.ko`）。附：x86_64 宿主编 arm64 外部模块必须 `ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-`。
+
+## 索引回填（编号 204）：547 UEFI 路径内核 cmdline 来自 boot_b 头部
+
+**#204** 不是 `fastboot boot` 送进去的 UEFI 载荷的命令行 ⇒ `sbstop=N`/`sbprobe=N` 走 UEFI 时一律无效（改行为要改 `boot_b` 或 UEFI 代码）；`/proc/cmdline` 不足以区分「UEFI 起」与「ABL 起」，判路用自家探针（DDR 环 / logfs `[K]` 链）。另：`uname -r` vk 号与镜像标签可能不同，对齐用 `out/boot-elden-<vk>.manifest` 的 `kernel_release`。

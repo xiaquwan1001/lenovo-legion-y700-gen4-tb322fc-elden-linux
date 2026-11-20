@@ -37,7 +37,6 @@
 """
 import argparse
 import subprocess
-import sys
 
 PAGE = 4096
 STAGE_PAGES = 16

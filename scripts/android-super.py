@@ -414,7 +414,6 @@ def cmd_extract(image: str, outdir: str, args):
 # assemble from a Qualcomm rawprogram XML
 # --------------------------------------------------------------------------- #
 def cmd_assemble(args):
-    import re
     import xml.etree.ElementTree as ET
 
     tree = ET.parse(args.xml)

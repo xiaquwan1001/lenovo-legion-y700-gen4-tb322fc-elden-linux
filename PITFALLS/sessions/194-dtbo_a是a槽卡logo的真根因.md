@@ -40,3 +40,15 @@ fastboot -s HA2EXB0E flash dtbo_a /tmp/dtbo-blank.img
 - **纪律**：任何要在 `_a` 上做的启动试验，先 `dtbo_a` 清零；等价地说 —— **默认在 `_b` 上做试验**，动 `_a` 前先问 dtbo。
 - G1-29 的 flashed 形态已闭环：`boot_a`=p69 UEFI + `dtbo_a` 全 0 ⇒ 129.2 s 起 Linux（基线 + 74.3 s 停留）、
   信标全绿、`elden_bootloader=esp`（内核从 ESP 的 `\boot\boot.img` 起）。
+
+## 索引回填（编号 254）：600 _a 起不来先看 dtbo_a（原厂 overlay 被合进我们的 DTB）
+
+**#254** 清 `dtbo_a` 全 0 后同件 34 s（RAM）/ 27 s（flashed）就起；项目第一天的坑（`sessions/01`「假 dtbo 两个槽都要写」），p60–p69 全打在 `_a` 上故每发卡 logo。判据：`ls -l /dev/disk/by-partlabel/dtbo_a` + dd 出来非全 0 即有原厂 overlay。
+
+## 索引回填（编号 255）：601 判从哪个槽起的别用 androidboot.slot_suffix
+
+**#255** 我们的 boot.img 头里烤死 `_b`，ABL 对 Linux 件不追加自己的 suffix ⇒ 从 `boot_a` 起仍只显示 `_b`（害误判一次）。正解 = 镜像头 cmdline 埋唯一标记（`elden_bootmark=a`）再 grep `/proc/cmdline`；`uname -r` 也不可靠。
+
+## 索引回填（编号 256）：602 logfs 对最近的启动根本不再写
+
+**#256** 失败发与成功 `_b` 启动前后 sha 完全相同（`9e614b36…`）⇒ #594/#597 的「信标未变 ⇒ 没跑到」不成立。logfs 只能当「我们的 UEFI 跑没跑」的正控；ABL 层判据改用耗时分级（R70）+ 注入标记。

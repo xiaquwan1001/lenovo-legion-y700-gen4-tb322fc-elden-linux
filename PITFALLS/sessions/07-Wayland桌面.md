@@ -21,3 +21,10 @@
 
 ---
 
+## 索引回填（编号 259）：604 合成器缺 syncobj 全局时先查「谁没广告」
+
+**#259** 缺 `wp_linux_drm_syncobj_manager_v1` 时先分层：全局有没有被广告（`wayland-info | grep syncobj`）→ 广告了客户端能不能 bind；别先怪内核/驱动。原文：reports/droidloom-feasibility-20261110.md
+
+## 索引回填（编号 261）：606 判合成器支不支持 syncobj 别去编 phoc，先起 headless wlroots
+
+**#261** 起一个 headless wlroots（`WAYLAND_DISPLAY=` 独立套接字）用 `wayland-info` 看全局，秒级得到「该版本 wlroots 广不广告 syncobj」；编 phoc 是分钟级且引入构建变量。原文：reports/droidloom-feasibility-20261110.md

@@ -51,3 +51,15 @@
 - 纪律：**读写 ESP 一律「rw 挂载 → cp → `sync` → `umount`」**，并且**读回校验也要 rw 挂载**（ro 在脏盘上必失败）；
   已固化成 `scripts/esp-put-loader.sh`（写后 sha 对账 + `fsck.vfat -n` 干净门 + 空间预检）。
 - 2026-11-08 本轮踩了两次（14:20 与 14:28 两次 rw 挂载后各留一次脏位），每次都要 `fsck -a` 才恢复。
+
+## 索引回填（编号 217）：560 本机 GRUB set timeout 不自动推进
+
+**#217** 停在菜单直到按键，表现为「设备没反应」而非挂死；无人值守只能走 UEFI 侧直接加载 ESP 的 `Loader.efi`。同族 #557（先证「谁来推进」再谈功能）。
+
+## 索引回填（编号 218）：561 ESP-first 早退漏填 Pname ⇒ 无符号下溢 ASSERT
+
+**#218** 早退漏填 `Info->Pname` ⇒ `CheckMDTPStatus()` 里 `PartitionNameLen -= (MAX_SLOT_SUFFIX_SZ-1)` 无符号下溢（0−2=0xFFFF…FE），DEBUG 构建 ASSERT 直接炸、`StrnCmp(Pname,L"boot",4)` 恒不等致 FFBM 静默跳过。纪律同 #526：早退分支要复刻被跳过段的前置状态设置。
+
+## 索引回填（编号 219）：562 ESP dirty bit 会让 mount -o ro 直接失败
+
+**#219** 现象 `Can't mount, would change RO state` + `busy`（看着像分区坏），根因 = 上次 rw 挂载没干净 `sync`+`umount`。判据 `fsck.vfat -n` 首行 `Dirty bit is set`；修法 `fsck.vfat -a`。读写 ESP 一律 rw 挂 → cp → `sync` → `umount`，读回校验也要 rw（已固化 `scripts/esp-put-loader.sh`）。

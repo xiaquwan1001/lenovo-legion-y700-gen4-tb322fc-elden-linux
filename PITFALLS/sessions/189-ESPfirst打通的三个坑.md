@@ -26,3 +26,15 @@
   失败也会留在 FAT 上，重启回 Linux 后 `mount` 一下 `cat` 即可 —— 两发之内就把「哪一步没执行」定位了。
 - 连带坑：想「先删旧日志再建新的」时，`Root->Open(Root, NULL, path, READ|WRITE, 0)` **并不会删除**文件
   （要拿句柄再 `File->Delete()`）⇒ 日志可能残留上一发内容，误判成「这一发写过」。**每次上机前先从 Linux 侧 `rm` 掉**。
+
+## 索引回填（编号 220）：565 LinuxLoader 写死 BootIntoFastboot=TRUE
+
+**#220** 本树 `LinuxLoader.c:295` 裸赋值（`GetKeyPress` 段被注释后残留）⇒ `fastboot boot` 起的 UEFI 件永远跳过 `LoadImageAndAuth`/`BootLinux`；历史「漏发 fastboot continue」即它。判据：入口日志 `bootfastboot 1` → `to-fastboot` 而无 `pre-auth`。
+
+## 索引回填（编号 221）：566 extra_cmdline 偏移 608 且 Mu 不拼进内核 cmdline
+
+**#221** 本平台 `extra_cmdline` 在 boot.img 头 **608**（Mu 用 `UINT32 id[8]`，AOSP 是 584），但 Mu 不会拼进内核 cmdline ⇒ 判据令牌必须写主 cmdline（偏移 64，512 B 内），写完核对 `cat /proc/cmdline`。
+
+## 索引回填（编号 222）：567 Root->Open(Root,NULL,…) 不删旧文件
+
+**#222** 该调用不会删除旧文件，`\loader.log` 残留内容会让人误判「这一发写过」⇒ 每次上机前从 Linux 侧 `rm`。（后果更严重的一面见 #569/#223 小节。）

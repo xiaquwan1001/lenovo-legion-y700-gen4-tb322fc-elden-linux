@@ -10,7 +10,6 @@
 """
 import os
 import shutil
-import sys
 
 WB = os.environ.get('WB', '/mnt/Samsung/waydroid-build')
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

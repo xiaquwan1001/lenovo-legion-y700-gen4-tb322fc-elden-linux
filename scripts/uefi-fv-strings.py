@@ -12,7 +12,6 @@ GUIDed section 里（`grep -a`/`strings` 直接搜 FD 必然 0 命中 —— 202
 复算口径见 reports/uefi-espboot-recursive-dump-rootcause-20261108.md §3。
 """
 import lzma
-import struct
 import sys
 
 
@@ -31,7 +30,6 @@ def _try_alone(payload: bytes):
 
 def _try_raw(payload: bytes, props_off: int, probe: bytes):
     """EFI_LZMA 自定义头：每 0x10000 字节一个 (packed, unpacked) 对。"""
-    import io
     props = probe[props_off:props_off + 5]
     filters = [lzma._decode_filter_properties(lzma.FILTER_LZMA1, props)]
     d = lzma.LZMADecompressor(format=lzma.FORMAT_RAW, filters=filters)

@@ -35,3 +35,10 @@
 
 ---
 
+## 索引回填（编号 260）：605 olddefconfig 删 ARCH_QCOM 旧坑已不复现，验证方式要换
+
+**#260** 7.3 树上对 `build/daily` 实跑 `scripts/config --enable NF_TABLES…` + `make olddefconfig`，`CONFIG_ARCH_QCOM=y` 仍在（旧条目警告只对 7.2 血统成立）。另：`make O=/tmp/x olddefconfig` 在脏树里直接失败（`The source tree is not clean`），别用 out-of-tree 目录做配置验证——改前 `cp .config` 备份，验完回滚。原文：reports/droidloom-feasibility-20261110.md
+
+## 索引回填（编号 262）：607 内核 LOCALVERSION 一改，设备上整棵模块树就「消失」
+
+**#262** 症状伪装成「GPU/显示坏了」：模块目录按 `uname -r` 精确匹配，LOCALVERSION 变了 ⇒ `/lib/modules/<新UTS>` 为空 ⇒ DRM 组件集不齐。判据：`ls /lib/modules/$(uname -r)` 非空 + `dmesg | grep -E 'probe deferring'`。原文：reports/droidloom-feasibility-20261110.md

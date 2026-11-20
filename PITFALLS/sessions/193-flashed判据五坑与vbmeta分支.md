@@ -86,3 +86,27 @@ Linux 又起不来 ⇒ **bl 里读不到 logfs**，只有回 Linux 才能 `dd`�
   `getvar product` 空、`product` 匹配 0 个、脚本静默等 fastboot 等到超时。
 - 重启后 `/tmp`（tmpfs）里的 `slot-attr.py` 消失 ⇒ 每次快照前要重推。
 - ssh 不包 `timeout` + `ServerAlive*` 会卡到 `tcp_retries2`（`#585` 复发；本轮又踩一次，白等 ~9 min）。
+
+## 索引回填（编号 242）：588 flashed 失败先刷已知能跑的对照件
+
+**#242** flashed 形态失败时先刷「同形态下已验证可用」的对照件，再谈是哪个补丁的锅：2026-11-09 当天 7 次写 `boot_a` 全败，刷回 `p60` 才发现对照件同样失败 ⇒ 前面几发「换补丁」全部无效（白烧约 2 h）。判据纪律：A/B 的 B 必须同形态已验证；没有对照，失败只能归因到「形态」。原文：reports/uefi-p63-p66-beacon-20261109.md
+
+## 索引回填（编号 249）：595 oem sbread 只存在于我们自己的 UEFI fastboot
+
+**#249** stock ABL 上 `oem sbread:0:20` / `oem sbread 0 20` 都 `FAILED (remote: 'unknown command')`（该命令由 `20261104R21-hostdiag` 加给我们自己的 UEFI）。失败发结局若停在 ABL ⇒ bl 里读不到 logfs ⇒「写标记→尝试→bl 读回」类探针在本机不成立。原文：reports/uefi-p69-flashed-and-vbmeta-20261110.md
+
+## 索引回填（编号 250）：596 别拿振动当判据：FV 里没有 haptic 驱动
+
+**#250** `grep -ci haptic build.log`=0、FD strings 无匹配 ⇒「一短一长」两下来自 stock 固件（logfs 里 `I2CHapticDxe: aw ram play` 属原厂 UEFI），只能当「发生了几次启动尝试」的时钟。想用外设当判据，先 grep 自己的 FV 里有没有那个组件。原文：reports/uefi-p69-flashed-and-vbmeta-20261110.md
+
+## 索引回填（编号 251）：597 读 logfs 前先数条数+看固件版本
+
+**#251** 曾把 p67 的 8 MiB 数成「2 条记录、同一次启动、中间 9 s 空窗」写进报告；实为 **10 条**，blk1–9 是 `6.0.250606` 旧固件历史（当前 `6.0.260611`）⇒ 那段「回退 `_b`」其实是一发失败尝试的寿命（≈10 s，与 #593 吻合）。判据：`grep -c 'Booting from slot'` + 每条抽 `UEFI Ver`/`KeyPress`。原文：reports/uefi-p69-flashed-and-vbmeta-20261110.md
+
+## 索引回填（编号 252）：598 同镜像 _a/_b 差异先比 vbmeta Flags
+
+**#252** `tools/avbtool.py info_image`：`vbmeta_a` Flags **0**（校验开启、原厂签名哈希）、`vbmeta_b` Flags **3**（VERIFICATION_DISABLED|HASHTREE_DISABLED、我方 avb.key）；`_b` 每发都有 `Public key … rejected` 却照常 BootLinux 到 Start EBS，`_a` 走「哈希不匹配 ⇒ 校验失败」（屏上 5 s 警告）后不交棒 ⇒ 换过的 `boot_a` 在过这道墙之前问「固件跑到哪」是无效问题。
+
+## 索引回填（编号 253）：599 判责最省一发 = 把当前槽逐字节刷进另一槽
+
+**#253** `boot_a`=`boot_b`（`4e38bc2c…`）仍起不来，但死法从「logo 一闪→掉电（`unbootable=1`）」变成「解锁警告→无缝回 bl 不掉电（`unbootable=0`）」⇒ 两种失败形态 = 两条 ABL 分支，且与我们的 payload 无关。附带：`/sys/fs/pstore` 为空 ⇒ 无内核崩溃转储，偏「内核没起来」。

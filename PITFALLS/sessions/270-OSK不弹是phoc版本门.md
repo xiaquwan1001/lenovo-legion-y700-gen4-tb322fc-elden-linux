@@ -118,3 +118,11 @@ handle_text_input_enable (...)
   或更早的 `phoc.orig-0.58.0`；然后 `systemctl restart greetd`。两个备份都在 `/usr/bin/`。
 - **仍未做**：Rime「组词上屏」需**真手指**在 OSK 上敲（agent 只能合成键，10-20 那轮已证 `wtype` 合成键是字面量）；
   自动收起已随 `handle_deactivate` 验证（关窗即收），但「点空白处收」未验。
+
+## 索引回填（编号 271）：616 droidloom 通知紧循环别用热补丁二进制「降级」
+
+**#271** `Bridge::start`（`0xafc14`）唯一调用点 `0x7a6e0`，返回 `Result` 经 sret 落栈后由 `drop_in_place` 析构 ⇒ NOP 调用 = 垃圾 tag + UB；二进制无任何 `DROIDLOOM_*` 开关。现状已自愈（boot 内 0 次、doctor 13 PASS/1 WARN/0 BLOCK、ABI 两端均 =3）；正解 = 重编时给 `Bridge::start` 加 `DROIDLOOM_NOTIFICATIONS=0` 门。
+
+## 索引回填（编号 272）：617 GRUB→EFI-stub 直启本板 = EBS 后 60–70 s 硬件掉电，墙在我们的 UEFI 件
+
+**#272** pstore 空 + 无 `/dev/watchdog` + `uptime` 归零（冷上电）为判据；`initcall_debug` 那发跑过数百 device_initcall（共 1297）⇒ 死点在 60–70 s 后且无 panic。反证 = 同机型 Aloha(Mu)+GRUB→EFI-stub 可用（Project-Aloha PR 820）、同 SoC OnePlus13 亦可用；GRUB 2.14 master `linux.c` 逐字相同 ⇒ 换版本无收益。第一发实验 = `efi=noruntime` 单变量。

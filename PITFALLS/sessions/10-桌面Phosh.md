@@ -58,3 +58,7 @@
       `scripts/phosh-install.sh --install`（`/usr/libexec/phosh` 的 divert+hold）。
     - **不要**把 `sm.puri.phosh enable-suspend`（默认 false）当成电源键根因：它只决定电源菜单里「挂起」是否可点，
       与短按熄屏无关（2026-11-14 已单独修，值改为 true）。
+
+## 索引回填（编号 371）：371 电源键短按不熄屏 = zwlr_output_power_v1 每屏只许一个请求者
+
+**#371** phosh 拿死了 proxy，第二个请求者（自研 daemon/脚本）请求会被拒 ⇒ 短按电源键不熄屏。判据：`wayland-info | grep zwlr_output_power` + 停 phosh 的 power-key 处理后重试。处置：走 phosh 自身通道或改协议多请求者共存路径。

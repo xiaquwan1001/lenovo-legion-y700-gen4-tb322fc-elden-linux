@@ -7,7 +7,7 @@
 > 最后更新：现查 `git log -1 --format=%ad --date=short -- PITFALLS/`（勿写死日期）。**条目编号范围不写死**（写死必漂）：现查 `scripts/check-doctor.sh §8` 的正文编号对账。
 > 条目唯一性 = 每个 `#NNN` 在 `sessions/*.md` 里**只被定义一次**；新增条目取当前最大号 +1。
 >
-> **2026-11-12 去重审计**（`reports/pitfalls-dedup-audit-20261112.md` + `reports/script-cleanup-audit-20261112.md` + `reports/doc-dedup-audit-20261112.md`）：13 组重复已指针化、9 条被推翻条目已加 superseded 标记、`#53/#192/#282–#285` 撞号已让位；**28 个 `#NNN` 的正文只在专题报告**（索引行已压缩 ≤800 B 并标「结论与判据见正文」），补 sessions 正文属待办。
+> **2026-11-12 去重审计**（`reports/pitfalls-dedup-audit-20261112.md` + `reports/script-cleanup-audit-20261112.md` + `reports/doc-dedup-audit-20261112.md`）：13 组重复已指针化、9 条被推翻条目已加 superseded 标记、`#53/#192/#282–#285` 撞号已让位；**28 个 `#NNN` 的正文只在专题报告**——该欠账 2026-11-20 实测清零：全库 226 条索引、sessions 正文 226/226（机器清单与逐条处置见 `reports/pitfalls-body-backfill-20261120.md`）；原「只在专题报告」条目已在对应主题 sessions 文件补「结论+判据+指针」小节，报告原文仍是细节真源。
 
 ---
 

@@ -24,7 +24,6 @@ import shutil
 import subprocess
 import sys
 import zipfile
-from collections import Counter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMG = os.path.join(ROOT, "out/android-min-20261118/new/system_a.img")

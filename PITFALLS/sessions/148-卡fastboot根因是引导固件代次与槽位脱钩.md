@@ -114,3 +114,7 @@ seg1–9 的 ECID 是 `0x045AC096892B`（另一台 **12+256**，`UFS INQUIRY ID:
   比反复 `fastboot boot` 试错便宜两个数量级。
 - **别急着按第一直觉动手**：本轮原计划「清 `devinfo` 的 `u.1.1.1` 三字节」，核对布局后发现那正是
   `is_unlocked / is_unlock_critical / is_charger_screen_enabled` 三个正常标志位 —— 差点写坏。
+
+## 索引回填（编号 149）：149 logfs 八成为工厂模板（485）
+
+**#149** 本机 logfs 只有 **seg0** 是我们自己写的，seg1–9 的 ECID 属另一台 12+256 机且与官方包 `logfs_ufs_8mb.bin` 9/10 段逐字节相同 ⇒ 判「历史正常启动」只能看 seg0 并核对 ECID/容量（=11-01 事故报告 §4 误判来源）。判据：`cmp` seg0 与官方包对应段、抽段内 ECID 对比本机。

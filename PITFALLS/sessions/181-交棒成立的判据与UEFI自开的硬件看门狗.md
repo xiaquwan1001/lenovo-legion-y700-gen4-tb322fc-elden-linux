@@ -56,3 +56,7 @@ p49/p50 两发我判「内核连 printk 都没跑到」，依据是 `/sys/fs/pst
 不行再退到 SCM `TZ_SECURE_WDOG_DISABLE_ID`（`scm_sip_interface.h` 已有定义）。
 判据：内核越过 10 s ⇒ `journalctl --list-boots` 多出**第二条**记录（UEFI 起的那个内核进了用户态），
 且它的 `/proc/cmdline` 带 `elden_bootpath=uefi`。
+
+## 索引回填（编号 208）：551 交棒成立判据 = ramoops 归档里的 cmdline
+
+**#208** 失败发交棒成功的内核日志在 ramoops，下次 boot 由 `systemd-pstore` 归档到 `/var/lib/systemd/pstore/console-ramoops-0`（`/sys/fs/pstore` 空是假阴性）⇒ `Kernel command line:` 带 `elden_bootpath=uefi` 即排他成立。卡点 = 内核 4–10 s 后整机硬复位，最强元凶 = UEFI 自开 HW WDT（`HW Wdog Setting from PCD : Enabled`）+ 主线无 `qcom_wdt` ⇒ 跳转前必须关它。

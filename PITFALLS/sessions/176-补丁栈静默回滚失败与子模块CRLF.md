@@ -27,3 +27,11 @@
      子模块里含 CRLF 的补丁（`.gitattributes` 是 `* -text`，`git diff` 会归一化）就靠它。
   3. **怀疑工作区脏时逐子模块查**：`for sm in MU_BASECORE Common/MU Common/MU_TIANO Silicon/Arm/MU_TIANO; do git -C $sm status --porcelain; done`
      —— 主仓 `git status` 只报子模块指针，不报子模块里的改动。
+
+## 索引回填（编号 202）：545 回滚失败也返回成功 ⇒ 残留藏在子模块
+
+**#202** `revert_patch()` 原为 `git apply -R … || true`，失败仍返 0，`reset_tree()` 当已干净，下一变体在脏树上打补丁；主仓 `git status` 只报子模块指针，改动在 `git -C MU_BASECORE status` / `git -C Common/MU_TIANO status` 里。对策：回滚失败 WARN 不吞错；`apply_patch()` 每层 `--ignore-whitespace` 兜底；怀疑脏时逐子模块查 status。
+
+## 索引回填（编号 246）：592 给 LF 文件生成补丁别转 CRLF
+
+**#246** 本仓惯例（`BdsEntry.c` 是 CRLF）会让 diff 上下文行带 `\r`，套到 LF 文件（如 `PrePi.c`）上严格 apply 失败（`git apply --check` 行号对不上，`--ignore-whitespace` 才过）。生成前 `grep -c $'\r'` 看目标行尾并跟随；`--ignore-whitespace` 兜底会把「补丁没进配方」和「宽松匹配」混在一起（#520 同族）。原文：reports/uefi-p67-flash-trial-20261110.md

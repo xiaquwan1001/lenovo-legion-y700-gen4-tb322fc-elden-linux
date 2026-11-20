@@ -33,3 +33,7 @@ QEMU virt 上既没有 `ttyGS0` 也没有面板 ⇒ **内核起来了但一个�
 
 教训：换测试载体（真机→QEMU）时，**先证「判据通道本身在这载体上有效」**（这里是「console 是否落在存在的 UART」），
 再判「功能是否成立」；同族 = `#530`（屏显通道恒 NULL 却能藏很久）、`#551`（`/sys/fs/pstore` 空是假阴性）。
+
+## 索引回填（编号 213）：556 x86 发行版没有 arm64 GRUB 模块但模块只是数据
+
+**#213** 取 ubuntu-ports 的 `grub-efi-arm64-bin_*_arm64.deb` 解包 + `grub-mkstandalone -O arm64-efi -d <解包目录>` 即交叉可用。连带：`efidisk.mod` 不存在（先 `ls` 模块目录再写名单）；含中文嵌入 cfg 不能用 `strings|grep` 验（按字节搜 ASCII 令牌）；无 mtools 用 `qemu -drive file=fat:rw:<dir>` 当 ESP。

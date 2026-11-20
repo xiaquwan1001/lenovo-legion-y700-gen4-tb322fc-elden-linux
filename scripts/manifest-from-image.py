@@ -25,7 +25,6 @@ mkbootimg 地址栏），树侧字段一律写成 `(absent:…)` 并在文件头
 """
 import argparse
 import hashlib
-import os
 import re
 import sys
 import zlib

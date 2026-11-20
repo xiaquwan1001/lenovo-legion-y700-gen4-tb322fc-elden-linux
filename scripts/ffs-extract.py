@@ -12,7 +12,7 @@
 
 背景: `reports/uefi-gunyah-reassess-20261024.md` §1.3 —— 厂商 blob 里 UFS.c 0 命中，因为模块压缩存放。
 """
-import sys, os, struct, uuid, lzma, argparse
+import os, struct, uuid, lzma, argparse
 
 LZMA_GUID = uuid.UUID('EE4E5898-3914-4259-9D6E-DC7BD79403CF')
 TIANO_GUID = uuid.UUID('D42AE6BD-1352-4BFB-909A-CA72A6EAE889')

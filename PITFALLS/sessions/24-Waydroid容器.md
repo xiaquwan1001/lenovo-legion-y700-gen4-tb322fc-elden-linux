@@ -41,3 +41,10 @@
 
 ---
 
+## 索引回填（编号 258）：603 判容器有没有网唯一判据 = 容器内 HTTP 码
+
+**#258** 校园网 ICMP 出站被拦 ⇒ 宿主 `ping 8.8.8.8` 也 100% loss，容器跟着「假不通」；容器 `/etc/resolv.conf` 本来就是 No such file（DNS 由 netd/dnsmasq 下发）。判据：`waydroid shell -- curl -s -o /dev/null -w '%{http_code}\n' -m 8 https://www.baidu.com`（期望 200）。`github.com` 不通是上游被墙，不是容器坏。原文：reports/droidloom-feasibility-20261110.md
+
+## 索引回填（编号 263）：608 droidloom 过不了 rootfs 属主契约
+
+**#263** droidloom 在本 rootfs 上过不了「祖先目录必须 root:root 且不可组写」契约 ⇒ L3（droidloom cell）被挡；改属主前先列受影响路径并留回退。原文：reports/droidloom-feasibility-20261110.md

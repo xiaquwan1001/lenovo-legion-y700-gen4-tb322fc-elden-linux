@@ -25,3 +25,11 @@
 - 恢复口径：`fastboot flash boot_a backup/boot_a-pre-uefi-20261108.img`（sha `d4772c11…`，100 663 296 B）
   之后 `slot a` **故意**留 `unbootable=yes`，防误 `set_active a`；要用先显式 `--set-active=a`。
 - 纪律：走 boot 槽落地时**永远先 dd 备份该槽**（96 MiB，几十秒），并且 `uefi_a`/`imagefv_a`/`abl_a`/`xbl_a`/GPT 一律不动。
+
+## 索引回填（编号 225）：571 ESP/分区枚举结论不得跨启动形态横移
+
+**#225** 同一份 Mu 固件：`fastboot boot` 形态 `SimpleFileSystem=8`（`[K] esp fs=8`），`boot_a` flash 启动只有 1（`esp none` → 回退 FV loader 读 `boot_a` 当内核 → 必失败）。落地前要假设枚举会变；候选因素：枚举时机/顺序、ABL 传参（DTB/`dtbo_a`）。
+
+## 索引回填（编号 226）：572 ABL 槽回退自动兜底，但 7 次尝试 ≠ 7 次失败
+
+**#226** `slot-retry-count:a` 减到 6 即置 `slot-unbootable:a=yes` 并切 `_b`，无需人工救砖；计数含 `reboot` 与掉电。恢复 = `flash boot_a` 备份件，且故意保留 `unbootable:a=yes` 防误切槽。走 boot 槽落地前必须先 `dd` 备份该槽；`uefi_a/imagefv_a/abl_a/xbl_a/GPT` 一律不动。

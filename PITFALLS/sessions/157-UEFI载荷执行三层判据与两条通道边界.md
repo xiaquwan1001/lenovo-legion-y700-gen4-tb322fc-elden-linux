@@ -34,3 +34,19 @@
 - **坑在尺寸**：按声明整块填 43 MiB，屏上红到约 137 行后**整机无响应**（写/读更高偏移同样挂死）。可安全写的只有**前 ~448 KiB**（实测到 `0x70000`）。
 - ⇒ 屏上标记一律落在前 192–448 KiB；需要「整块变蓝」这类强判据时用 192 KiB 块。
 - 附带：`MU_BASECORE`、`Common/*` 等在 `build/uefi-woa-prep/repos/7-mu-lenovo` 里是 **submodule**，插桩后还原要在**子模块内** `git checkout --`（主仓 `git checkout -- <路径>` 会报「未匹配任何 Git 已知文件」）。
+
+## 索引回填（编号 154）：154 「Booting OKAY」≠ 载荷被执行（490）
+
+**#154** 拆三层判据：① ABL 层（`Sending` 1.4–1.9 s + `Booting OKAY 10.1 s`）= ABL 接受镜像并跳了；② shim 层（屏上色带）= 载荷第一条指令在跑；③ UEFI 层（屏上 `UEFI firmware (version …)` + `[Pnn]`）= Mu PrePi 在跑。决定「ABL 会不会跳」的是打包头（v2 base 0）+ Image 头三字段（`text_offset=0`/`image_size`=解压真实长/`flags=0xa`）：同一 FD 用 v0 base 0x10000000 恒 0.056 s 被拒，换 v2 base 0 即被执行。
+
+## 索引回填（编号 155）：155 早期可见性通道按「可否事后取证」选（491）
+
+**#155** DDR 标记在本类场景已失效：载荷跑过之后低 4 GiB 出现 ~1.9 GB `0xFF`（`0x82600000`–`0xf37fffff`，含三块 carveout 窗），把 shim 早写的 stage 页一起抹掉；两次对照确认填充来自我们自己的载荷（PrePi `MemoryPeim`/MMU 段）。⇒ 只剩屏上串口（实时、可判、ABL 下次启动清屏）。选通道前先用「同一路径启动真内核」做零成本对照。
+
+## 索引回填（编号 156）：156 splash_region DT 声明不可当真（492）
+
+**#156** `reserved-memory/splash_region` 写 `0xFC800000/0x02B00000`（43 MiB），但只有前 ~448 KiB 可安全写；按声明整块填充会中途挂死 SoC（屏上红到 ~137 行后无响应）。地址本身没问题（DT 原文 + `0xFC840000` 写读自检通过），坑在尺寸。屏上标记一律落前 192–448 KiB。另：`MU_BASECORE`/`Common/*` 是 submodule，插桩还原要 `git -C <sm> checkout --`（主仓不认这些路径）。
+
+## 索引回填（编号 233）：579 判 FD 里的补丁必须先解压内层 FV（579）
+
+**#233** 本树 `SM8750_EFI.fd` 只有 4 MiB，真正内层 FVMAIN（12.8 MiB）被 LZMA 包在外层 FV 的 GUIDed section 里 ⇒ `grep -a`/`strings` 对 FD 直接搜必然 0 命中（不是补丁没进）。做法：`python3 scripts/uefi-fv-strings.py <fd> <pattern…>`（解压内层再搜，`--dump` 可导出）；判分支可达再按 `.text`/`.data` RVA 反汇编对照。同族 #570（「FD 里有、屏上没有」≠ 没编进去）。原文：reports/uefi-p62-r63-fastboot-trial-20261109.md

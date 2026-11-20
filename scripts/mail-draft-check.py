@@ -23,7 +23,6 @@ A ≠ B ⇒ **FAIL**（会被静默漏发）。
 import argparse
 import email
 import email.utils
-import re
 import sys
 
 

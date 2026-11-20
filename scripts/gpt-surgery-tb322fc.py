@@ -31,7 +31,6 @@ VERIFY after writing: `list` the device dump again, and check `/dev/sdaN` sizes.
 """
 import argparse
 import binascii
-import os
 import struct
 import sys
 import uuid

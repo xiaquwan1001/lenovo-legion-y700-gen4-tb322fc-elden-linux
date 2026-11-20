@@ -49,3 +49,7 @@ LinuxLoader"的证据。
   2026-11-07 实测：正常路径 **4 s** 进 fastboot（未触发兜底）。
 - **共用纪律（仍有效）**：每轮崩后核 `eldroid-bootctl slot info`，必要时 `slot set-retry 7 b` 补余量
   （本日 p37 一发确实把 `boot_b` 从 `retry=7` 扣到 `6`，已补回）。
+
+## 索引回填（编号 187）：525 reboot bootloader 卡死与 ABL 自己写 retry
+
+**#187** Linux→ABL 的 `eldroid-bootctl reboot bootloader`（Alpine 期件，现根已无此件/无 `python3`）偶发卡死关机路径；UEFI 载荷失败后 **ABL 自己会写槽位 retry**（实测 `boot_b` 7→6）⇒「零写盘」只对 agent 动作成立，每轮崩后核槽位并补 retry。现执行：设备侧只读 `qbootctl`；改属性/补 retry 用主机侧 `python3 scripts/slot-attr.py --image … set-retry 7 b`（#677）。

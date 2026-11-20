@@ -15,7 +15,6 @@ metadata_1..8.img 写在递增 LBA 上；拼回来才能 dump.f2fs 看里面有�
 import argparse
 import os
 import re
-import shutil
 import subprocess
 import sys
 

@@ -6,9 +6,9 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**334**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 72 / 设备操作 103 / 造件 69 / 取证 45 / 一次性 2 / 公共库 6 / 其它 37
-- 引用数为 0 的孤立件：**0**（判定口径见下）
+- 入口总数：**336**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 73 / 设备操作 103 / 造件 69 / 取证 46 / 一次性 2 / 公共库 6 / 其它 37
+- 引用数为 0 的孤立件：**1**（判定口径见下）
 
 ## 判据（怎么读这张表）
 
@@ -23,7 +23,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（72）
+## 门禁（73）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -46,8 +46,9 @@
 | `scripts/doctor/21-write-precheck.sh` | §21 写前预检两道门（委托 scripts/gpt-preflight.py / dump-verdict.py） | 4 |
 | `scripts/doctor/22-desktop-chain.py` | check-doctor §22：「零到桌面」链路的静态一致性门。 | 10 |
 | `scripts/doctor/23-out-manifest.sh` | §23 out/ 造件「报告↔镜像」账本门（委托 scripts/out-manifest-check.py）。 | 5 |
-| `scripts/doctor/24-scripts-index.sh` | §24 scripts/README.md 索引新鲜度门（委托 scripts/gen-scripts-index.py --check）。 | 3 |
-| `scripts/doctor/_lib.sh` | shellcheck shell=bash | 21 |
+| `scripts/doctor/24-scripts-index.sh` | §24 scripts/README.md 索引新鲜度门（委托 scripts/gen-scripts-index.py --check）。 | 4 |
+| `scripts/doctor/25-out-status.sh` | §25 out/ 造件生命周期账本门（委托 scripts/out-status.py --check）。 | 2 |
+| `scripts/doctor/_lib.sh` | shellcheck shell=bash | 22 |
 | `scripts/doctor/ab-bench.sh` | bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置） | 6 |
 | `scripts/android-apk-pkgname.py` | 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。 | 4 |
 | `scripts/android-ksu-avb-build.py` | 造 KernelSU(LKM) 修补的 init_boot + 与之自洽的 vbmeta_a。 | 8 |
@@ -58,7 +59,7 @@
 | `scripts/cam-load-verify.sh` | 在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。 | 8 |
 | `scripts/check-abi-config.sh` | 内核 .config 的 ABI 敏感项门禁（build/pack-time gate）。 | 35 |
 | `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 45 |
-| `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 282 |
+| `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 285 |
 | `scripts/check-init.sh` | init 单一真源 / 可运行性自检（主机侧，只读） | 12 |
 | `scripts/check-layout.sh` | 顶层布局注册表门（versions/layout.tsv ↔ 磁盘 ↔ INDEX.md） | 24 |
 | `scripts/check-modular-config.sh` | 模块化 config 门禁（第二层，2026-10-26） | 28 |
@@ -70,7 +71,7 @@
 | `scripts/deploy-bt-suspend-guard.sh` | 把 BT suspend 保护钩子部署到设备并验证。 | 8 |
 | `scripts/driver-snapshot-diff.sh` | 比对两次 driver-snapshot.sh 的输出，按「变了什么」排序输出。 | 5 |
 | `scripts/dump-verdict.py` | 「这次 dump 失败了吗？还是分区真的不存在？」的唯一判据。 | 15 |
-| `scripts/gen-scripts-index.py` | 生成 scripts/ 索引（scripts/README.md + 机读 TSV），可重跑、可挂门。 | 17 |
+| `scripts/gen-scripts-index.py` | 生成 scripts/ 索引（scripts/README.md + 机读 TSV），可重跑、可挂门。 | 30 |
 | `scripts/gpt-audit-tb322fc.py` | 把设备 GPT 主表 dump（EDL 只读得到）与官方 259 包逐字节对账。 | 19 |
 | `scripts/gpt-preflight.py` | 写盘前的 GPT「快照复验」（纯主机、无 USB、不碰设备）。 | 15 |
 | `scripts/hide-android-partitions-selftest.sh` | 离线自测（全部在 /tmp 沙盒里跑，不碰 /etc、不碰设备） | 5 |
@@ -282,7 +283,7 @@
 | `scripts/uefi-r21-p7-ladder.sh` | UEFI R21「p7 / preamble7」一族镜像的**唯一重建入口**（G1-29 线，纯主机侧） | 149 |
 | `scripts/uefi-repack-v2aligned.py` | 把 UEFI payload（BootShim + FD）打成一个 **ABL 会真跳进去** 的 boot.img。 | 22 |
 
-## 取证（45）
+## 取证（46）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -308,6 +309,7 @@
 | `scripts/kmsgspy.sh` | capture kernel log to disk with line buffering + frequent sync, so the last | 8 |
 | `scripts/logfs-decode.py` | 解析 `logfs` 分区（8 MiB = 10 × 64 KiB 环形 ABL 日志）。 | 11 |
 | `scripts/n5b-vk64-death-rate.sh` | N5b：在 vk64（7.2 血统）RAM 内核上重复 | 24 |
+| `scripts/out-status.py` | out/ 造件生命周期账本门（2026-11-20，arch-audit P1#6） | 0 |
 | `scripts/q28-clkdiag.sh` | 设备侧**只读**取证：一次冷起后立刻跑，用来区分 | 18 |
 | `scripts/q28-coldboot-collect.sh` | 等一次**真实 POR 冷起**，起来后立刻跑 q28-clkdiag.sh 并归档。 | 9 |
 | `scripts/q28-devprobe.sh` | 设备端三态判定 Q28 冷起显示结果。POSIX sh。 | 57 |
@@ -391,3 +393,9 @@
 | `scripts/uefi-ddr-trial.sh` | DDR 黑匣子专用上机循环（多条重复，只统计真正交棒的发次） | 22 |
 | `scripts/uefi-oneshot.sh` | 真载荷单档一发：换新 UEFI 会话 → 载 preamble → 打一个 stage → 判读 | 17 |
 | `scripts/win-x86-run.sh` | 在设备 glibc-rootfs chroot 内运行 Win-x86（Box64+Wine）命令 | 11 |
+
+## 孤立件（引用数 = 0）
+
+没有脚本、也没有文档提到这些 basename。**不等于可删**：很多是人手跑的入口。处置建议 = 要么在 `TASKS/README.md` 或某报告里落一条指针（变活），要么标「一次性」并说明留档理由。
+
+- `scripts/out-status.py` — out/ 造件生命周期账本门（2026-11-20，arch-audit P1#6）

@@ -27,3 +27,7 @@
   ⇒ 本地 `STATIC CONST EFI_GUID` + `(EFI_GUID *)` 强转。
 - arch protocol 方法名 = `SetTimerPeriod`（`0` 即关），**不是** `SetTimer`。
 - 「交棒后 XX 秒复位」这类时间形态，必须有**自旋对照**才能推「定时器咬人」；本轮 fault handler 自旋 15 min 就是那个对照。
+
+## 索引回填（编号 209）：552 交棒后 ~4 s 硬复位三路证伪
+
+**#209** UEFI 标准 `SetTimerPeriod(0)` 关成功没用；TZ `TZ_SECURE_WDOG_DISABLE_ID` 被 TZ 拒（`TzStatus=0xFFFFFFFE`）；把 `QcomWDogDxe` 摘出 FV 也没变化。同轮反证：fault handler 自旋 15 min 未被复位 ⇒ 不存在「无人喂必咬」的独立定时器；`HW Wdog Setting from PCD : Enabled` 是 **ABL 自己**的 log，不能算到 Mu UEFI 头上。

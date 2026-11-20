@@ -24,3 +24,7 @@
   否则一次失败只能靠人眼回忆，白烧一轮设备。
 - 「BdsEntry 入口扫 SimpleFileSystem = 0」「入口 ConnectAll 会同步异常」「本平台 AfterConsole 不 ConnectAll」
   三条都已踩过，正确做法 = **对每个 BlockIo 句柄 `ConnectController(..., TRUE)` 再扫**（R54 现行实现）。
+
+## 索引回填（编号 257）：558 GRUB→EFI-stub 交接在本平台 EBS 后即死（四通道齐默）
+
+**#257** 内核 PE 被 `LoadImage` 了但 EBS 后立即死，四条取证通道同时静默（面板无输出：`CONFIG_SYSFB_SIMPLEFB` 未开；SSH 90 s 不起；ramoops 注册在 0.08 s；`ConOut` 是 no-op）。平台差异 = `PlatformMemoryMapLib.c` 只把 DXE Heap（≈469 MiB）标 Conv ⇒ EFI 路径内核只看见几百 MiB。纪律：菜单出来/内核被 LoadImage 都不能当交接成功。
