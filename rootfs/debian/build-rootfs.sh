@@ -76,6 +76,7 @@ say "0 前置检查"
 command -v debootstrap >/dev/null || die "缺 debootstrap（sudo apt install debootstrap）"
 grep -qE '^linux-image-' "$APTLIST" && die "apt-list 里有 linux-image-*（禁用项门被绕过）"
 grep -qE '^firmware-qcom-soc' "$APTLIST" && die "apt-list 里有 firmware-qcom-soc（无 sm8750 目录）"
+grep -qE '^hexagonrpcd$' "$APTLIST" && die "apt-list 里有 hexagonrpcd（永不安装：attach ADSP 硬崩整机，PITFALLS #692/#694）"
 n_pkgs=$(grep -c -v '^#' "$APTLIST")
 free_kb=$(df -Pk "$(dirname "$ROOTDIR")" 2>/dev/null | awk 'NR==2{print $4}')
 [ -n "${free_kb:-}" ] && [ "$free_kb" -lt 20971520 ] && die "磁盘可用 < 20 GiB（$((free_kb/1024/1024)) GiB）"
@@ -281,6 +282,12 @@ if [ "$GATE_MIN" = 1 ]; then
 	[ -f "$ROOTDIR/root/.ssh/authorized_keys" ] && o "root authorized_keys 在" || b "缺 authorized_keys（重建后只能靠 console）"
 	grep -vE '^[[:space:]]*#' "$ROOTDIR/etc/fstab" | grep -qF "$ROOTSPEC" && o "fstab 根 = $ROOTSPEC" || b "fstab 根不是 $ROOTSPEC"
 	dpkg-query --admindir="$ROOTDIR/var/lib/dpkg" -W linux-image-'*' 2>/dev/null | grep -q . && b "装进了 Debian 内核包" || o "未装任何 Debian 内核包"
+	# P0-2：危险单元构建期 mask 门禁（两个档都要，来源 = stage.sh 组装段）
+	for du in droid-juicer plymouth-start plymouth-quit plymouth-quit-wait plymouth-switch-root hexagonrpcd; do
+		[ "$(readlink "$ROOTDIR/etc/systemd/system/$du.service" 2>/dev/null)" = /dev/null ] \
+			&& o "mask 在: $du.service" || b "缺 mask: $du.service（PITFALLS #692/#693/#694）"
+	done
+	dpkg-query --admindir="$ROOTDIR/var/lib/dpkg" -W hexagonrpcd 2>/dev/null | grep -q "installed" && b "装了 hexagonrpcd（禁装）" || o "未装 hexagonrpcd"
 	o "已装包数 $(chroot "$ROOTDIR" dpkg-query -f '${Package}\n' -W 2>/dev/null | wc -l)"
 	o "根体积 $(du -sh --exclude=proc --exclude=sys --exclude=dev "$ROOTDIR" 2>/dev/null | cut -f1)"
 else
@@ -310,6 +317,12 @@ grep -vE '^[[:space:]]*#' "$ROOTDIR/etc/fstab" | grep -q 'LABEL=linux17' \
 [ -L "$ROOTDIR/etc/systemd/system/multi-user.target.wants/qbootctl.service" ] && o "qbootctl 已 enable" || b "qbootctl 未 enable"
 [ -L "$ROOTDIR/etc/systemd/system/display-manager.service" ] && o "display-manager → greetd" || b "display-manager 缺失"
 dpkg-query --admindir="$ROOTDIR/var/lib/dpkg" -W linux-image-'*' 2>/dev/null | grep -q . && b "装进了 Debian 内核包" || o "未装任何 Debian 内核包"
+# P0-2：危险单元构建期 mask 门禁（桌面档，与最小档同判据）
+for du in droid-juicer plymouth-start plymouth-quit plymouth-quit-wait plymouth-switch-root hexagonrpcd; do
+	[ "$(readlink "$ROOTDIR/etc/systemd/system/$du.service" 2>/dev/null)" = /dev/null ] \
+		&& o "mask 在: $du.service" || b "缺 mask: $du.service（PITFALLS #692/#693/#694）"
+done
+dpkg-query --admindir="$ROOTDIR/var/lib/dpkg" -W hexagonrpcd 2>/dev/null | grep -q "installed" && b "装了 hexagonrpcd（禁装）" || o "未装 hexagonrpcd"
 o "已装包数 $(chroot "$ROOTDIR" dpkg-query -f '${Package}\n' -W 2>/dev/null | wc -l)"
 o "根体积 $(du -sh --exclude=proc --exclude=sys --exclude=dev "$ROOTDIR" 2>/dev/null | cut -f1)"
 fi

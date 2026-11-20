@@ -178,7 +178,11 @@ camera-loopback	add	gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-pl
 ## route C 的 `waydroid-sensord` 必须 **glibc 重编**（Alpine 件是 musl 动态 ⇒ glibc 根上 exec ENOENT，
 ## PITFALLS #431）；构建依赖 = libgbinder-dev libglibutil-dev libglib2.0-dev g++ make pkg-config，
 ## 是**构建期**工具、不进 apt-list，由 `scripts/deploy-sensord-routec-debian.sh` 按需装。
-hexagonrpcd	add	hexagonrpcd	SSC 用户态守护（QRTR svc 400），服务名 hexagonrpcd-adsp-sensorspd
+
+## 永不安装 hexagonrpcd：`-s` attach ADSP sensorspd 会硬崩整机（无 Oops/pstore，journal 截断，
+## ~1 min 自动回 Linux，PITFALLS #692）；#694 掉电链顶上来的就是它（高置信）。
+## 传感器链在崩因定位前保持禁装；重建根靠 stage.sh 的 /dev/null mask 兜底（构建期防线，P0-2）。
+hexagonrpcd	drop		永不安装：attach ADSP 硬崩整机（PITFALLS #692/#694）
 squeekboard	add	squeekboard	OSK（C11 输入法栈）
 fcitx5	add	fcitx5 fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-rime	Debian 前端包名 = fcitx5-frontend-gtk3/4（Alpine 叫 fcitx5-gtk3/4）
 qbootctl	add	qbootctl	Debian 包自带 qbootctl.service（ExecStart=qbootctl -m），装完必须 enable

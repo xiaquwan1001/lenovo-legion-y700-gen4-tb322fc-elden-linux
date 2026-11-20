@@ -1,0 +1,197 @@
+# dwc3 v10 binding 目标段落草稿（2026-11-20）
+#
+# 状态：**草稿，不保证可编译**（本轮无内核树，未跑 dt_binding_check）。
+# 依据：已通过 4 道门禁的 v10-20261118 补丁体（`../../dwc3-v10-20261118/v10-0001-*.patch`），
+#       本节是它的「目标形状」摘要，供 v10-20261120 落盘时逐段照抄/微调。
+# 目标文件：Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+# Rob 11-10 两条要求的落点就在下面两处：$defs/hs-port（port@0 两个 endpoint、无 port@2）
+# 与 properties/mux-controls + $defs/hs-endpoint.mux-state（gpio-mux）。
+
+# ---- 片段 1：$defs 增加 hs-endpoint / hs-port（插在文件顶部 description 之后） ----
+
+$defs:
+  hs-endpoint:
+    $ref: /schemas/graph.yaml#/$defs/endpoint-base
+    unevaluatedProperties: false
+
+    properties:
+      usb-role-switch:
+        type: boolean
+        description:
+          This connector endpoint has its own USB role switch. The switch is
+          registered against this endpoint and looked up with
+          usb_role_switch_at_endpoint().
+
+      mux-state:
+        $ref: /schemas/types.yaml#/definitions/uint32
+        enum: [0, 1]
+        description:
+          State of the High Speed data bus multiplexer which connects this
+          connector to the controller.  The two connectors of one controller
+          must use different states; the driver rejects a device tree where
+          two connectors claim the same one.
+
+    dependentRequired:
+      usb-role-switch: [mux-state]
+      mux-state: [usb-role-switch]
+
+  hs-port:
+    $ref: /schemas/graph.yaml#/$defs/port-base
+    unevaluatedProperties: false
+
+    # 两个连接器是同一条 HS 总线上被 mux 的两条数据流 ⇒ 是**一个 port 的两个
+    # endpoint**，不是两个 port（Rob 11-10 原话：「ports are for separate data
+    # streams. Endpoints are for mux'ed data streams.」）。port@1 仍是 SS lane，
+    # v8 里的 port@2 **不再出现**。
+    properties:
+      '#address-cells':
+        const: 1
+
+      '#size-cells':
+        const: 0
+
+      endpoint@0:
+        $ref: '#/$defs/hs-endpoint'
+        required: [reg, usb-role-switch, mux-state]
+
+      endpoint@1:
+        $ref: '#/$defs/hs-endpoint'
+        required: [reg, usb-role-switch, mux-state]
+
+    # 只有两个 endpoint 都在时才求值：否则单 endpoint 的老板（qcom/sm8250.dtsi 等）
+    # 会被 oneOf 的空匹配判失败。
+    if:
+      required: [endpoint@0, endpoint@1]
+    then:
+      oneOf:
+        - properties:
+            endpoint@0:
+              properties:
+                mux-state:
+                  $ref: /schemas/types.yaml#/definitions/uint32
+                  const: 0
+            endpoint@1:
+              properties:
+                mux-state:
+                  $ref: /schemas/types.yaml#/definitions/uint32
+                  const: 1
+        - properties:
+            endpoint@0:
+              properties:
+                mux-state:
+                  $ref: /schemas/types.yaml#/definitions/uint32
+                  const: 1
+            endpoint@1:
+              properties:
+                mux-state:
+                  $ref: /schemas/types.yaml#/definitions/uint32
+                  const: 0
+
+# ---- 片段 2：allOf 增加「有 mux 才收紧」的分支（保留原有 usb-drd/usb/usb-xhci 两支） ----
+
+allOf:
+  - $ref: usb-drd.yaml#
+  - if:
+      properties:
+        dr_mode:
+          const: peripheral
+    then:
+      $ref: usb.yaml#
+    else:
+      $ref: usb-xhci.yaml#
+  - if:
+      required: [mux-controls]
+    then:
+      # mux 路径只在控制器自己带 usb-role-switch 时成立：否则 dwc3_get_dr_mode()
+      # 把 dr_mode 拉回 peripheral、dwc3_get_extcon() 跳过 role-switch 分支、
+      # dwc3_drd_init() 根本不会建 mux。
+      required: [dr_mode, ports, usb-role-switch]
+      properties:
+        dr_mode:
+          const: otg
+        ports:
+          required: [port@0]
+          properties:
+            port@0:
+              required: ['#address-cells', '#size-cells',
+                         endpoint@0, endpoint@1]
+    else:
+      # 没有 mux ⇒ High Speed port 保持通用 graph port binding，单 endpoint 板
+      # 描述方式不变。这里必须重新 $ref 一次，不能把 port@0 统一声明成 hs-port：
+      # graph 的 port 是 unevaluatedProperties: false，双 connector 的
+      # usb-role-switch/mux-state 会被它拒掉。
+      properties:
+        ports:
+          properties:
+            port@0:
+              $ref: /schemas/graph.yaml#/properties/port
+
+# ---- 片段 3：properties 顶层增加 mux-controls（gpio-mux 走通用 mux 框架） ----
+
+properties:
+  mux-controls:
+    maxItems: 1
+    description:
+      Phandle to the multiplexer that selects which of the two connectors
+      drives the controller's shared High Speed data bus, e.g. a
+      "gpio-mux" controller.  Each connector is described by the endpoint@0
+      or endpoint@1 of "port@0", and the endpoint of that connector carries
+      its own role-switch input and the "mux-state" it is reached in.
+
+  extcon:            # 已有属性，保持不变
+    maxItems: 1
+    deprecated: true
+
+# ---- 片段 4：properties/ports/port@0 改为引用 hs-port（port@1 不动） ----
+
+  ports:
+    $ref: /schemas/graph.yaml#/properties/ports
+    properties:
+      port@0:
+        $ref: '#/$defs/hs-port'          # 原 /schemas/graph.yaml#/properties/port
+        description: High Speed (HS) data bus.
+
+      port@1:
+        $ref: /schemas/graph.yaml#/properties/port
+        description: Super Speed (SS) data bus.
+
+# ---- 片段 5：板级 DTS 目标形状（elden 板，属 held-back，不进上游系列） ----
+#
+# &usb_1_dwc3 {
+#         dr_mode = "otg";
+#         usb-role-switch;
+#         mux-controls = <&usb_hs_mux>;
+#
+#         ports {
+#                 #address-cells = <1>;
+#                 #size-cells = <0>;
+#
+#                 port@0 {
+#                         reg = <0>;
+#                         #address-cells = <1>;
+#                         #size-cells = <0>;
+#
+#                         endpoint@0 {            /* SDP 口 */
+#                                 reg = <0>;
+#                                 usb-role-switch;
+#                                 mux-state = <0>;
+#                                 remote-endpoint = <&usb_dwc3_hs>;
+#                         };
+#                         endpoint@1 {            /* PD 口 */
+#                                 reg = <1>;
+#                                 usb-role-switch;
+#                                 mux-state = <1>;
+#                                 remote-endpoint = <&usb_dwc3_hs2>;
+#                         };
+#                 };
+#         };
+# };
+#
+# / {
+#         usb_hs_mux: mux-controller {
+#                 compatible = "gpio-mux";
+#                 mux-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
+#                 #mux-control-cells = <0>;
+#                 idle-state = <0>;
+#         };
+# };

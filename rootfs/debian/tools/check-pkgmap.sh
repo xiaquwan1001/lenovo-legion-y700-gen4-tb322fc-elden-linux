@@ -65,6 +65,7 @@ while IFS=$'\x1f' read -r apk action debian note; do
 	for p in $debian; do
 		case "$p" in
 			linux-image-*|firmware-qcom-soc*) bad "禁用包被映射进来: $apk -> $p"; continue ;;
+			hexagonrpcd) bad "永不安装的包被映射进来: hexagonrpcd（attach ADSP 硬崩整机，PITFALLS #692/#694）"; continue ;;
 		esac
 		printf '%s\n' "$p" >> "$tmp_apt"
 		v=$(apt_show "$p")

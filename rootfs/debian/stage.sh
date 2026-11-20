@@ -215,17 +215,16 @@ if [ "$MODE" != check ]; then
 	# 与本项目已踩过的 `Requires=localmount` 同一类（render.py 注释里的那段）。
 	ln -sfn /usr/lib/systemd/system/hexagonrpcd.service \
 		"$STAGE/etc/systemd/system/hexagonrpcd-adsp-sensorspd.service"
-	# hexagonrpcd.service 本体由 Debian 包提供（init=package），但它的**启用**我们预先落下：
-	# overlay 先于包安装展开，所以这里直接建 wants 符号链接（systemd 允许目标单元稍后出现）。
-	# ⚠️ 只能挂到 **default.target.wants**（= 包的 WantedBy=default.target 原意），
-	# 不能挂 multi-user.target.wants：`iio-sensor-proxy` 的 After=hexagonrpcd-adsp-sensorspd
-	# （= 本单元的别名）而它自己 WantedBy=multi-user.target ⇒ systemd 让 target 排在被拉起的
-	# 单元之后 ⇒ 若 hexagonrpcd 也挂在 multi-user.target.wants 就成**环**
-	# （2026-10-26 实测：`Found ordering cycle … hexagonrpcd after multi-user.target after
-	#  iio-sensor-proxy after hexagonrpcd`，两个服务都不启动）。
-	mkdir -p "$STAGE/etc/systemd/system/default.target.wants"
-	ln -sfn /usr/lib/systemd/system/hexagonrpcd.service \
-		"$STAGE/etc/systemd/system/default.target.wants/hexagonrpcd.service"
+	# ⚠️ P0-2（2026-11-20）：hexagonrpcd **不 enable，改 mask**。此前这里建
+	# default.target.wants 链接预启用；但 `-s` attach ADSP sensorspd 实测硬崩整机
+	# （无 Oops/pstore，journal 截断，~1 min 自动回 Linux，PITFALLS #692），#694 掉电链
+	# 顶上来的就是它（高置信）。设备侧已 `systemd.mask=` 救援 + mask 兜底
+	# （/etc/systemd/system/hexagonrpcd.service -> /dev/null）；构建期同义：
+	# 包也不再装（pkgmap.tsv drop 行 + apt-list 门禁），这里无条件落 mask，
+	# 即使依赖把它带进来也起不来。drop-in/别名保留：等崩因定位后恢复只差删一条 symlink。
+	mkdir -p "$STAGE/etc/systemd/system"
+	ln -sfn /dev/null "$STAGE/etc/systemd/system/hexagonrpcd.service"
+	ok "已 mask: hexagonrpcd.service（attach ADSP 硬崩，PITFALLS #692/#694）"
 	# upower：**电量显示的整条链**。驱动侧 `qcom-battmgr-bat` 一直有（sysfs capacity/status 正常），
 	# 但 phosh 顶栏的电量走 UPower over D-Bus ⇒ 包不在就完全没有电量 UI（2026-10-26 实测）。
 	# Debian 的 upower.service 是 D-Bus 激活型，postinst **不会** enable；这里显式挂进
@@ -290,6 +289,19 @@ if [ "$MODE" != check ]; then
 	mkdir -p "$STAGE/etc/systemd/system"
 	ln -sfn /dev/null "$STAGE/etc/systemd/system/lxc-net.service"
 	ok "已 mask: lxc-net.service（Waydroid 自带 waydroid0，无需 lxc-net）"
+
+	# P0-2（2026-11-20）危险单元构建期 mask（device 侧同义清单 = scripts/deploy-desktop-shell.sh STUCK_UNITS）：
+	#   droid-juicer      死循环 + kill -9 无效，live 停它 ~40 s 整机掉电（PITFALLS #693/#694）
+	#   plymouth-quit-wait plymouthd 退不掉 ⇒ boot 永不完结（#693）；我们没有 splash 需求
+	# 这批单元**不在任何基线清单里**（repo grep 零命中），是依赖/现场带入的 ⇒ 不装拦不住，
+	# 必须在 stage 里 mask 落盘（/dev/null 悬空 symlink 对不存在的单元也合法，幂等无害）。
+	# ⚠️ 只 mask、不 rm 包文件：masked 单元首启 `systemctl is-enabled` = masked，
+	# `is-active` = inactive，queue 不会被它们卡住。
+	_nu=0
+	for _u in droid-juicer plymouth-start plymouth-quit plymouth-quit-wait plymouth-switch-root; do
+		ln -sfn /dev/null "$STAGE/etc/systemd/system/$_u.service" && _nu=$((_nu+1))
+	done
+	ok "已 mask 危险单元 ${_nu}/5（droid-juicer + plymouth×4，PITFALLS #692/#693/#694）"
 fi
 
 # ---------------------------------------------------------------- 门禁
@@ -398,6 +410,12 @@ ok "D2 单元引用的可执行文件均已解析（overlay ∪ PKGROOT），hoo
 grep -q "hexagonrpcd_extra=-s" "$STAGE/etc/systemd/system/hexagonrpcd.service.d/elden.conf" \
 	&& ok "hexagonrpcd drop-in: -s + fw_dir 指向 $QCOM_ROOT" \
 	|| bad "hexagonrpcd drop-in 缺 -s/fw_dir"
+# P0-2 危险单元必须全部 mask（构建期防线；设备侧由 deploy-desktop-shell.sh 运行时兜底）
+for _du in hexagonrpcd droid-juicer plymouth-start plymouth-quit plymouth-quit-wait plymouth-switch-root; do
+	[ "$(readlink "$STAGE/etc/systemd/system/$_du.service" 2>/dev/null)" = /dev/null ] \
+		&& ok "mask 在: $_du.service -> /dev/null" \
+		|| bad "缺 mask: $_du.service（PITFALLS #692/#693/#694，构建器不得放行）"
+done
 
 sec "E. 语义红线"
 grep -q "WantedBy=multi-user.target" "$STAGE/usr/lib/systemd/system/qbootctl.service" \

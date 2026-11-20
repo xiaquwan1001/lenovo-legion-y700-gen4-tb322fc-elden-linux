@@ -17,7 +17,7 @@
 | 3 | **BCB 现态无法离线复核**：最后一次有记录的写入是 2026-11-19 21:4x Linux 侧 `dd` 清 0（报告 §8，commit `100cacb7`），但盘上只留下**更早**的两件：`diag/misc-bcb-after.bin` = 16384 B **全 0**（20:40）、`diag/misc-before-v1boot.bin` = `bootonce-bootloader`（21:37）⇒ **21:4x 那次清 0 没有落盘备份（备份在设备 `/tmp`，重启即失）**。⇒ S1 必须现场重读 + 重清 + 读回校验 | `bcb-and-qbootctl.txt`、`git show 100cacb7` |
 | 4 | **super 现态 = v1** 属「上一轮实测 + 之后无写」的推断（不是本轮实测）：11-19 21:3x 回刷 v1 后读回 `e3d0d26f…`，此后只发生 Linux 重启；本轮无法连设备 ⇒ **未复核**（S1 第一步即复核：读首 512 KiB → `android-super.py list` 应报 `system_a 5296 MiB`） | `reports/android-slim-v3-20261119.md` §8、本轮 S1 计划 |
 | 5 | **上机件全部在位**（7 件 + 原厂 16 分片），sha 全部与登记一致（**O_DIRECT 口径**）；本轮**新造 1 件**：`out/android-v3-bringup-20261120/metadata_stock.img` = 29 372 416 B（28.01 MiB，`a735fbc7…`） | `pieces-inventory.txt`、`scripts/…walkthrough.sh --verify` 全 OK |
-| 6 | **1 件缺件**：S5 的 `console=ttyGS0` boot 件**造不出来** —— 原厂 `boot.img` 是 **header v4**（96 MiB），`scripts/boot-img-cmdline.py` **只支持 v2**（实测报错 `只支持 header v2，实测 v4`） | `dryrun-full.log` S5 段 |
+| 6 | ~~**1 件缺件**：S5 的 `console=ttyGS0` boot 件造不出来（原厂 `boot.img` = header v4，脚本只支持 v2）~~ → **2026-11-20 已解锁**：`scripts/boot-img-cmdline.py` 支持 v3/v4（等长原改 cmdline 窗口），件已造 `out/android-v3-bringup-20261120/boot-ttygs0-boot.img`（100663296 B，O_DIRECT `0dad04f1…`），全文件只差 `[44,57]` 14 B；**`fastboot` 是否认 = 需上机项**（AVB hash 失配 + vendor_boot cmdline 优先级） | `reports/bootimg-v4-cmdline-20261120.md` |
 | 7 | **原厂 super/metadata 都是 8 分片**（`rawprogram_save_persist_unsparse0.xml`）：super 拼装后 15 607 586 816 B（**14.54 GiB**，3810446 扇区）；metadata 拼装后 **29 372 416 B**（7171 扇区）。已用 `scripts/android-super.py assemble` 复用现有封装，不新写刷写逻辑 | `gpt0-geometry.txt`、S2/S3 段 |
 | 8 | **两处旧计划的技术错误已修**：① `qbootctl -a` 是**只读查询**（`get the active slot`），不是「设为 active」（设置 = `-s SLOT`）；② `metadata` 分区起点是 **5857704**，不是 5857672（后者是 `vbmeta_system_a`） | `bcb-and-qbootctl.txt`（strings 原文）、`gpt0-geometry.txt` |
 | 9 | **新的硬门必须用 O_DIRECT**：本机页缓存污染使同一文件 buffered 连读 5 次**稳定但错**（v1 件读成 `637a9965…`，O_DIRECT = `e3d0d26f…` 正确）⇒ 旧「双 sha256 硬门」抓不到。已按硬规则 12 取证上交 `~/hw-stability/evidence/inbox/20261120-y700-elden-pagecache-sha-drift/` | `superdbg-sha-drift.txt` |
@@ -117,7 +117,7 @@ linux17      73277435..123871226  193.000 GiB
 |---|---|---|
 | `metadata_stock.img` | ✅ 本轮已造 | `python3 scripts/android-super.py assemble --xml backup/official-rom-15.10.259/rawprogram_save_persist_unsparse0.xml --label metadata -o out/android-v3-bringup-20261120/metadata_stock.img` |
 | `super_stock_contig.img`（14.54 GiB，稀疏落盘 ~12.2 GiB） | ⬜ 缺件（S3 时按需现造，工作区余 169 G） | `python3 scripts/android-super.py assemble --xml <同一 xml> --label super -o out/android-v3-bringup-20261120/super_stock_contig.img`（期望 15 607 586 816 B） |
-| `boot_a_stock_ttygs0.img`（S5） | ❌ **缺件（缺工具）** | 原厂 `boot.img` = header **v4**，`scripts/boot-img-cmdline.py` 只支持 v2。两条路：<br>**A** 扩该脚本支持 v4（`header_size=1584`，`cmdline` 在偏移 **44** 长 **1536**，**等长原地替换** ⇒ kernel/ramdisk 段 sha 可自证不变）后<br>`python3 scripts/boot-img-cmdline.py backup/official-rom-15.10.259/boot.img --append 'console=ttyGS0' -o out/android-v3-bringup-20261120/boot_a_stock_ttygs0.img`<br>**B** 若 `boot.img` 的 cmdline 字段为空（GKI 常把真 cmdline 放 `vendor_boot`），改 `vendor_boot.img` 侧（v4 的 cmdline/bootconfig 在 vendor ramdisk 头部） |
+| `boot-ttygs0-boot.img`（S5；旧名 `boot_a_stock_ttygs0.img` 未用） | ✅ **2026-11-20 已造**（100663296 B，O_DIRECT `0dad04f1d2f41fc2126eb2bda045adec8c8dce3ad95535442e53369dfc0280af`；**仅 `fastboot boot`**） | ~~原厂 `boot.img` = header v4，脚本只支持 v2；路 A 扩脚本 v4（`header_size=1584`，cmdline @44 长 1536，等长原地替换）/ 路 B 改 `vendor_boot.img` 侧~~ → **路 A 已实施**：<br>`python3 scripts/boot-img-cmdline.py backup/official-rom-15.10.259/boot.img --append 'console=ttyGS0' -o out/android-v3-bringup-20261120/boot-ttygs0-boot.img`<br>细节、v2 回归、AVB 断言前后对照见 `reports/bootimg-v4-cmdline-20261120.md` |
 
 ---
 
@@ -200,10 +200,12 @@ qdl -s ufs -R $LOADER write 0/90504 out/android-slim-v2b-20261119/new/super_min_
 - **失败判读**：同 S2/S3（BCB 先排除；`verdict.txt` 会写 `RECOVERY`/`EARLY_FAIL`/`FELL_BACK_LINUX`/`TIMEOUT`）。
 - 时长：8–10 min。
 
-### S5 日志通道（`console=ttyGS0`）——**当前缺件，只留计划**
+### S5 日志通道（`console=ttyGS0`）——件已造（2026-11-20），**能否被 bootloader 接受 = 需上机项**
 
-- 缺的是**件**，不是步骤：`scripts/boot-img-cmdline.py` 只吃 header v2，原厂 `boot.img` 是 v4（§3）。
-- 上机方式（造出件后）：`fastboot -s HA2EXB0E boot out/android-v3-bringup-20261120/boot_a_stock_ttygs0.img`（**零写盘**）；
+- 件在：`out/android-v3-bringup-20261120/boot-ttygs0-boot.img`（100663296 B，与原件同大小，全文件仅差 `[44,57]` 14 B；
+  `scripts/boot-img-cmdline.py` 现已支持 header v3/v4；验收/回归/AVB 证据见 `reports/bootimg-v4-cmdline-20261120.md`）。
+  缺件时 S5 会打印「S5 不可用（缺件）」并给造件命令（不再静默跳过）。
+- 上机方式：`fastboot -s HA2EXB0E boot out/android-v3-bringup-20261120/boot-ttygs0-boot.img`（**零写盘**）；
   抓取：主机 `timeout -k 5 900 cat /dev/ttyACM0 > serial.log`（或设备侧 `scripts/install-serial-logger.sh`）。
 - 判据：串口出现内核/init 输出；拿不到就退回 **pstoredump** 通道（本脚本 `pstore_triage`：`grep -acE "panic|oops|Unable to handle"`，命中 0 ⇒ userspace 卡死）。
 - 时长：造件 10 min（一次投资）+ 每发 3–5 min。
@@ -263,7 +265,7 @@ adb 从不出现（600 s）                      → 读 misc（同前）+ pstor
 | S1 的槽位前提 | 「清 BCB 后 `qbootctl -a` + `reboot`」 | **`qbootctl -a` 是只读查询**；要启 Android 必须先把 **active 槽置 a**（`fastboot --set-active=a`），否则 reset 只回 b 槽 Linux | `qbootctl` strings 原文 |
 | metadata 几何 | 报告 §1.1 把 `metadata` 归在 `5857672..5972391` | `metadata` 分区 = **5857704..5874087**（64 MiB）；**5857672 是 `vbmeta_system_a`**；原厂件从 5857704 起 7171 扇区 | `gpt0-geometry.txt` |
 | 原厂 super/metadata 的写法 | 「回写原厂 metadata.img（29 MB）」「刷原厂 super（8 段）」 | 都是**分片**，本仓现有封装 = `scripts/android-super.py assemble`；拼装后单发 `qdl write`（与上一轮 super 写法一致） | `rawprogram_save_persist_unsparse0.xml` |
-| S5 可行性 | 「造带 `console=ttyGS0` 的 boot 件」 | **当前造不出**：原厂 boot.img = header v4，`boot-img-cmdline.py` 只支持 v2 | 实测报错 |
+| S5 可行性 | 「造带 `console=ttyGS0` 的 boot 件」 | ~~造不出（原厂 boot.img = header v4，脚本只支持 v2）~~ → **已造出**（2026-11-20）；剩「fastboot 是否认」= 需上机项（AVB hash 失配 / vendor_boot cmdline 优先级） | `reports/bootimg-v4-cmdline-20261120.md` |
 | 主件校验口径 | 「两次独立 `sha256sum` 必须一致」 | 不够：**buffered 读会命中同一份被污染的页缓存**；必须 O_DIRECT/先 wash | `superdbg-sha-drift.txt` |
 | 设备在线判据 | （历史上有 `ping` 通就以为在线） | **ping 会假阳性**（经手机热点路由到别处）；判据 = `lsusb 05c6:9008/18d1`、gadget MAC、`fastboot/adb` 序列号、`ssh` | `device-online-check.txt` |
 

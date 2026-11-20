@@ -9,8 +9,9 @@
 #     S2 回写原厂 metadata（29 MB，8 分片拼装）
 #     S3 刷原厂 super 对照（14.54 GiB，8 分片拼装）
 #     S4 二分：v2b（删池/AI/bgmusic、保留 18 个 leaf 包）
-#     S5 日志通道：console=ttyGS0 的 boot 件（当前**缺件**：原厂 boot.img 是 header v4，
-#        `scripts/boot-img-cmdline.py` 只支持 v2 ⇒ 缺 v4 改写器，见 --help 与报告 §4）
+#     S5 日志通道：console=ttyGS0 的 boot 件（2026-11-20 解锁：原厂 boot.img = header v4，
+#        scripts/boot-img-cmdline.py 已支持 v3/v4（等长原地替换 cmdline 窗口），件由 S5 自己造/核；
+#        细节与「fastboot 是否认」的需上机项见 reports/bootimg-v4-cmdline-20261120.md）
 #
 # 权威文档：`reports/android-v3-bringup-packet-20261120.md`（本脚本 = 其机械化形态）
 #
@@ -51,8 +52,8 @@ SER=${SER:-${SERIAL:-HA2EXB0E}}
 TAB=${TAB:-root@192.168.7.1}
 QDL=${QDL:-$HOME/edl/qdl/build/qdl}
 LOADER=${LOADER:-$HOME/下载/tb322fc/xbl_s_devprg_ns.melf}
-ROM=$ROOT/backup/official-rom-15.10.259
-ART=$ROOT/out/android-v3-bringup-20261120
+ROM=${ROM:-$ROOT/backup/official-rom-15.10.259}
+ART=${ART:-$ROOT/out/android-v3-bringup-20261120}
 STAMP=$(date +%Y%m%d-%H%M%S)
 APPLY=0; VERIFY_ONLY=0; STEPS=""; READBACK=headtail; OBS_TO=600; DO_SHA=1; ALLOW_FOREIGN_EDL=0
 
@@ -137,12 +138,16 @@ hass() { grep -qx -- "$1"; }
 #   ⇒ 页缓存被污染时「连读两次一致」**抓不到**（两次都命中同一份坏缓存）。
 #   旧口径「双 sha256 硬门」（build 脚本 §7）在本机不可靠，必须用 O_DIRECT 或先 pcache-wash。
 #   （入口 ~/hw-stability/AGENTS.md；AGENTS 硬规则 12：硬件稳定性不在项目里深挖）
+# 2026-11-20 P0-5：sha_direct 改走 scripts/odirect-sha.py（O_DIRECT 硬门，见该文件头注释
+# 与 reports/odirect-sha-gate-20261120.md）。O_DIRECT 直读绕过页缓存，单次即可判定；
+# 工具内部 O_DIRECT 不可用时退回 buffered 并打 stderr WARN，shell 侧此时补 buffered 兜底。
 sha_direct() {
-	local f=$1 v
-	v=$(timeout -k 10 1800 dd if="$f" iflag=direct bs=16M 2>/dev/null | sha256sum | cut -d' ' -f1)
+	local f=$1 out v
+	out=$(timeout -k 10 1800 python3 "$ROOT/scripts/odirect-sha.py" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
 	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
 		v=$(sha256sum "$f" | cut -d' ' -f1)
-		warn "sha_direct: $f 不支持 O_DIRECT，退回 buffered（结果可能被页缓存污染）"
+		warn "sha_direct: $f 未能走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）"
 	fi
 	printf '%s\n' "$v"
 }
@@ -302,7 +307,7 @@ ensure_active_a() {
 	case "$st" in
 		linux)
 			run 30 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl -a 2>&1; qbootctl 2>&1 | head -20'
-			info "判据：`Active slot: a`（只读查询）；若为 b ⇒ 需先切 a（写 GPT 属性，可回退 --set-active=b）"
+			info "判据：Active slot: a（只读查询）；若为 b ⇒ 需先切 a（写 GPT 属性，可回退 --set-active=b）"
 			;;
 		fastboot)
 			run 20 fastboot -s "$SER" getvar current-slot
@@ -327,7 +332,10 @@ bcb_read() {
 	local out=$1 st; st=$(dev_state)
 	case "$st" in
 		linux)
-			run 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
+			# 抓字节不能走 run()：run 的 printf 也会进 stdout（历史 bug：$out 里混进一行命令文本，
+			# 让 bcb_judge 把「命令字符串长度 153」当 nonzero=153，见 2026-11-20 11:2x 实测）
+			logc "ssh $TAB \"dd if=/dev/disk/by-partlabel/misc bs=4096 count=4\" > $out  (只读)"
+			timeout -k 5 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
 				"dd if=/dev/disk/by-partlabel/misc bs=4096 count=4 2>/dev/null" > "$out" 2>/dev/null
 			;;
 		edl)
@@ -646,30 +654,52 @@ S4() {
 
 S5() {
 	step_begin S5
-	say "S5) 日志通道：console=ttyGS0 的 boot 件（当前【缺件】，需先造 v4 改写器）"
-	local want=$ART/boot_a_stock_ttygs0.img
-	info "驳回原因（实测）：原厂 boot.img = header v4（96 MiB），scripts/boot-img-cmdline.py 只支持 v2："
-	run 60 python3 "$ROOT/scripts/boot-img-cmdline.py" "$ROM/boot.img" --show
-	cat <<EOF
-   缺件：$want
-   重建（两条路，任选一；都要先备份原 boot.img 的 sha = b428a31d…）：
-     A) 扩 scripts/boot-img-cmdline.py 支持 v4（header_size=1584，cmdline 在偏移 44 长 1536，等长原地替换，
-        载荷逐字节不变 ⇒ kernel/ramdisk 段 sha 不变可自证）后：
-          python3 scripts/boot-img-cmdline.py $ROM/boot.img --append 'console=ttyGS0' -o $want
-     B) 走 vendor_boot 侧 cmdline（Android 13+ GKI 的真 cmdline 常常在 vendor_boot，boot.img 的
-        cmdline 可能被忽略；核对 head -c 1584 后 cmdline 字段是否为空再决定）
-   上机方式（零写盘优先）：fastboot -s $SER boot $want
-   抓日志：安装 scripts/install-serial-logger.sh（设备侧）或主机侧 timeout -k 5 900 cat /dev/ttyACM0 > $STEPLOG/serial.log
-   判据：串口出现内核 log 或 Android init 的输出；否则回退到 pstoredump 通道（本脚本 pstore_triage）
-EOF
-	if [ -e "$want" ]; then
-		info "件已在位：$want（$(stat -c%s "$want") B）"
-		ensure_edl >/dev/null 2>&1 || true
-		run 300 fastboot -s "$SER" boot "$want"
-		run 900 cat /dev/ttyACM0 > "$STEPLOG/serial.log"
-	else
-		warn "缺件 ⇒ S5 只留计划（不造件、不写盘）"
+	local want=$ART/boot-ttygs0-boot.img
+	local src=$ROM/boot.img
+	say "S5) 日志通道：console=ttyGS0 的 boot 件（header v4 改写器已就位）"
+	info "件：$want（源 = $src，header v4 / header_size=1584 / cmdline 原为空）"
+	info "造件与验收：reports/bootimg-v4-cmdline-20261120.md（v2 路径回归 = 逐字节不变）"
+
+	if [ ! -e "$want" ]; then
+		warn "S5 不可用（缺件）：$want 不在位"
+		info "解释：S5 需要「原厂 boot.img 的 cmdline 追加 console=ttyGS0」的零写盘件。"
+		info "      原厂件是 Android boot image **header v4**（96 MiB）；v4 的 cmdline 在 header 偏移 44、长 1536，"
+		info "      改写 = 整文件拷贝 + 只改这 1536 B 窗口（kernel/ramdisk/boot signature/VBmeta 尾区逐字节不变、总长不变）。"
+		info "造件（主机侧、不碰设备；造完 preflight/S5 都按 O_DIRECT sha 核）："
+		info "  timeout -k 5 300 python3 scripts/boot-img-cmdline.py $src --append 'console=ttyGS0' -o $want"
+		info "⇒ 不造件就把 S5 从本轮摘掉（不写盘、不 reset；S1–S4 照走）"
+		return 0
 	fi
+
+	local sz show
+	sz=$(stat -c%s "$want")
+	info "件已在位：$want（$sz B）"
+	info "sha256（O_DIRECT）= $(sha_direct "$want")"
+	if [ "$APPLY" = 1 ]; then
+		show=$(timeout -k 5 120 python3 "$ROOT/scripts/boot-img-cmdline.py" "$want" --show 2>&1) || {
+			warn "S5 核件失败：--show 退出非 0"; return 1; }
+		printf '%s\n' "$show" > "$STEPLOG/bootimg-show.txt"
+		printf '%s\n' "$show" | grep -qF 'console=ttyGS0' || {
+			warn "S5 核件失败：cmdline 里没有 console=ttyGS0（$STEPLOG/bootimg-show.txt）"; return 1; }
+		# 结构往返自检（v4：窗口外必须逐字节全等）
+		run 300 python3 "$ROOT/scripts/boot-img-cmdline.py" "$want" --verify
+		info "上机（零写盘；需人确认）。**fastboot 是否接受 v4 + AVB hash 失配件 = 需上机项**："
+		run 300 fastboot -s "$SER" boot "$want"
+		logc "cat /dev/ttyACM0 > $STEPLOG/serial.log  (900 s)"
+		timeout -k 5 900 cat /dev/ttyACM0 > "$STEPLOG/serial.log"
+	else
+		info "[dry] 核件（--apply 时才跑）：python3 scripts/boot-img-cmdline.py $want --show | grep console=ttyGS0 ; --verify"
+		info "[dry] 上机（零写盘）：timeout -k 5 300 fastboot -s $SER boot $want"
+		info "[dry] 抓日志：timeout -k 5 900 cat /dev/ttyACM0 > $STEPLOG/serial.log"
+	fi
+	info "判据（缺一不算成功）："
+	info "  ① fastboot boot 返回 OKAY（不认 ⇒ 记「需上机项未通过」，不改本仓代码去臆测）"
+	info "  ② 串口出现内核 log 或 Android init 输出（ttyGS0）"
+	info "  ③ 否则回退 pstoredump 通道（本脚本 pstore_triage）"
+	info "风险 1：cmdline 改动 ⇒ boot 的 AVB hash descriptor 失配（vbmeta 是 OEM 私钥签名，本仓不能重签；"
+	info "        generic_kernel 描述符仍 MATCH）⇒ 只有解锁 + verity logging 才可能接受。"
+	info "风险 2：v4 的真 cmdline 还在 vendor_boot.img（实测 'console=ttynull qcom_geni_serial.con_enabled=0'），"
+	info "        若 ABL 只取 vendor_boot 侧 cmdline，则 boot.img 侧追加无效 ⇒ 同样属需上机项。"
 	return 0
 }
 
@@ -682,7 +712,7 @@ if [ "$APPLY" = 1 ]; then
 fi
 
 say "计划：MODE=$MODE  steps=$STEPS  serial=$SER  readback=$READBACK  observe=${OBS_TO}s"
-printf '   S1 清 BCB+槽位+首启观察   S2 原厂 metadata   S3 原厂 super   S4 v2b 二分   S5 日志通道(缺件)\n'
+printf '   S1 清 BCB+槽位+首启观察   S2 原厂 metadata   S3 原厂 super   S4 v2b 二分   S5 日志通道(ttyGS0 件)\n'
 
 fail=0
 for s in S1 S2 S3 S4 S5; do

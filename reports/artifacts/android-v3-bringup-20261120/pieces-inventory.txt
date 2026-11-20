@@ -30,3 +30,9 @@ metadata_8.img 12288 f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f503
 
 ## 工作区 libre
 /dev/nvme0n1p2  937G  726G  164G   82% /
+
+## 2026-11-20 lane A（boot-img-cmdline.py v4）新增件（O_DIRECT 口径，详见 reports/bootimg-v4-cmdline-20261120.md）
+FILE                                                                    BYTES          MiB SHA256
+out/android-v3-bringup-20261120/boot-ttygs0-boot.img               100663296        96.00 0dad04f1d2f41fc2126eb2bda045adec8c8dce3ad95535442e53369dfc0280af
+  # 源 = backup/official-rom-15.10.259/boot.img (b428a31d…98f20, header v4)；产物与原件的唯一差异 = [44,57] 14 B（cmdline）
+  # 仅 `fastboot boot` 用（零写盘）；AVB boot hash descriptor 必然失配（vbmeta OEM 私钥签名），能否被接受 = 需上机

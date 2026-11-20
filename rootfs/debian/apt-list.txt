@@ -1,5 +1,5 @@
 # apt-list.txt — 由 rootfs/debian/tools/check-pkgmap.sh 从 pkgmap.tsv 生成，勿手改
-# 生成时间: 2026-11-07T01:04:03Z  索引: /opt/elden/arm64-sid
+# 生成时间: 2026-11-20T03:39:41Z  索引: /opt/elden/arm64-sid
 adb
 alsa-ucm-conf
 alsa-utils
@@ -25,6 +25,7 @@ evtest
 f2fs-tools
 fastboot
 fcitx5
+fcitx5-config-qt
 fcitx5-frontend-gtk3
 fcitx5-frontend-gtk4
 fcitx5-rime
@@ -38,6 +39,7 @@ fonts-noto-core
 foot
 gawk
 gdisk
+gir1.2-gtk4layershell-1.0
 gnome-bluetooth-sendto
 gnome-control-center
 gnome-keyring
@@ -52,7 +54,6 @@ gstreamer1.0-plugins-good
 gstreamer1.0-tools
 gvfs
 gvfs-backends
-hexagonrpcd
 htop
 i2c-tools
 iio-sensor-proxy
@@ -74,6 +75,7 @@ libgbm1
 libgl1-mesa-dri
 libgles2
 libglib2.0-bin
+libgtk4-layer-shell0
 libip4tc2
 libip6tc2
 libllvm22

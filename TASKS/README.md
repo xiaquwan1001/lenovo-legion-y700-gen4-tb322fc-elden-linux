@@ -140,6 +140,12 @@
   · **四个新硬阻塞**：① 原厂 `boot.img` = **header v4**，`scripts/boot-img-cmdline.py` 只支持 v2 ⇒ **S5（`console=ttyGS0` 取证）造不出来**；② `qbootctl -a` 是**只读查询**（设 active = `-s SLOT`）；③ `metadata` 起点 = **5857704**（旧计划 5857672 是 `vbmeta_system_a`）；④ **页缓存污染使 buffered sha256「稳定但错」**（v1 件 `637a9965…` vs O_DIRECT `e3d0d26f…`）⇒ 硬门必须 O_DIRECT。
   · **设备现态 = 离线**（无 `05c6/18d1` 枚举、`fastboot devices` 空、无 `/dev/ttyACM*`）⇒ 人项「插线+上电」+ `sudo scripts/ncm-host-up.sh`；**`ping 192.168.7.1` 是假阳性**（走手机热点网关）。
   · **主机稳定性（规则 12，不深挖）**：本机 10:17/10:27 两次 Pi 子进程 SIGSEGV + 页缓存 sha 漂移 + 盘上 super 位翻转；证据已交 `~/hw-stability/evidence/inbox/20261120-y700-elden-{pi-child-upstream-lane-segv,pagecache-sha-drift}/`。
+- **🆕 2026-11-20 11:35–11:50 → 第二轮 4 lane（P0）全部落地 + a 槽首启实测（设备已复原）**
+  · **P0-4 `boot-img-cmdline.py` 支持 header v4**：`reports/bootimg-v4-cmdline-20261120.md`（v4 解析/重打包，只改 cmdline，signature 与 bootconfig 段原样；产物 `out/android-v3-bringup-20261120/boot-ttygs0-*.img`）。
+  · **P0-5 O_DIRECT 硬门**：`scripts/odirect-sha.py`（`--compare/--tsv/--selftest`，16 MiB 对齐 mmap 分块）+ walkthrough `sha_direct()` 接入；`reports/odirect-sha-gate-20261120.md`（7/7 件本轮 buffered 与 O_DIRECT 一致；`super_dbg` 清单值改正为 `8b42f20d…`）；后续 13 个脚本接入清单见该报告。
+  · **P0-2 构建 stage 去危险件**：`reports/build-stage-no-danger-units-20261120.md`（6 个单元三层封死：pkgmap 禁装 + check-pkgmap/build-rootfs 两道 grep 门 + stage 无条件 mask 落盘 + 装后断言；`hexagonrpcd` 是唯一显式来源）。**需上机项** = 新根首启 `systemctl is-enabled` 三组应全 masked。
+  · **dwc3 v10 方案**：`reports/dwc3-v10-plan-20261120.md` + `patches/upstream/dwc3-v10-20261120/`。**新事实**：v9 的 1/3 是**手写补丁（`grep -c '^diff --git'` = 0）**，且邮件正文 DRAFT 说「driver 3/3 仍在用 GPIO」而实际 3/3 `mux_control_*` 命中 5 次 ⇒ Rob 的「??」很可能是**自相矛盾**引起（H1 高置信），不是形状问题。
+  · **a 槽首启实测（排掉一条旧 confound，露出一个新前置条件）**：`reports/android-a-slot-attempt-20261120.md` —— v1 super 在机、BCB 全 0、`boot_a` 属性修复后仍 **失败并回落 b 槽**（logfs 最后一条 EBS 13311 ms ⇒ 失败在 EBS 之后；pstoredump 前 64 MiB 无 panic 文本）。**新硬前置条件**：**每次上机前必须复位 `boot_a` GPT 属性**（ABL 失败后写成 `retry=0 / unbootable=1`，用 `slot-attr.py set a --retry 7 --no-unbootable --successful`）；单看 `qbootctl` 只知道 Bootable 0/1。设备已复原（`active=_b`、`boot_a=0x7a`、BCB 全 0、桌面 active）。
 - **🆕 2026-11-19 22:5x → 掉电链已定因、设备已回最优 Linux 模式（可日用）**
   · **新坑 #694**（全文 `PITFALLS/sessions/326-掉电链定因与systemd.mask救援舱.md`）：进锁屏即整机掉电 = ① live 上停 `droid-juicer` 实测 ~40 s 掉电（#693）；② 其落盘 mask 后顶上来的是 `hexagonrpcd`（#692，高置信未单变量）。掉电样本持久日志只到启动后第 1 秒就断 = 硬挂。
   · **可复用手段**：`scripts/boot-img-cmdline.py --append "systemd.mask=…"` → `fastboot boot` = 零写盘救援舱；进去只做 `systemctl mask` 落盘再 reboot（本次 45 s 到 SSH）。
