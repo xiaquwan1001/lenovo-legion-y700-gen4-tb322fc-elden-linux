@@ -336,3 +336,16 @@ DTS 编译产物 `sm8750-lenovo-elden.dtb` md5 `2d2d92662785a7aa07edb6aba78a9341
 ⇒ §7 开头「含 1–3/3」不成立；② §0/§1 记的 blob `5dd032c7…` 在本地树上**复现不出**：本地 pristine
 `snps,dwc3-common.yaml` 是 `6892703…`，打补丁后 `18e3424…`（补丁 `index` 左端 `6c0b8b6` 属另一基线
 `aebb7274` 的文件版本，语义差异与本轮无关，但「逐字节一致」这句话只对那个基线成立）。
+
+## 9. v10 cover letter 草稿（2026-11-21）
+
+`v10-0000-cover-letter.DRAFT.patch` = 按 Rob 11-18 两封（1/3 的 `??` + 4 条行内意见、3/3 的 commit message 意见）
+写成的 v10 cover。**未投递、未 `git send-email`**（本文件只到草稿这一步）。
+
+- 结构：AI 披露段 → `Changes since v9`（先逐条答复 Rob 六条，再列 v10 草案已带的 4 条 sashiko 修复）→
+  `Known gaps`（mux-state↔口未证、`gpio-mux` probe 即驱低、`idle-state` 门看不见、板 DTS 不在本系列）→
+  门禁表 **G1–G7 全为 `<占位>`**（每行带取数命令；`DT_SCHEMA_FILES` 明确声明不用，理由同 §4）→ diffstat。
+- 占位取数命令、发信前必做项、依据指针在本文件中文附录 §A/§B/§C —— **发信前整段删除**。
+- 待办：2/3 缺 AI 披露段（`grep -c 'AI-assistance' ../dwc3-v10-20261118/v10-0002-*.patch` = 0）；
+  3/3 目前只有 `v10-0003-commit-msg.txt`（代码仍用 `../dwc3-v10-20261118/v10-0003-*.patch`）；
+  G1–G6 未在最终三枚上重跑；G7 上机未做（cover 已写明不声称）。

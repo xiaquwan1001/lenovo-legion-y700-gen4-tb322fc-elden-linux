@@ -39,6 +39,23 @@ esac
 . "$ROOT/scripts/lib-fastboot.sh"
 device_lock_acquire
 say() { echo "[$(date +%H:%M:%S)] $*"; }
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 BK=""   # 原厂 dtbo_a 备份路径（已是全 0 时不产生，回滚提示会显式说明）
 
 # ---- 目标锁定：优先用 SER；未给则从 ssh 侧那一台拿不到，明确要求 ----
@@ -60,14 +77,14 @@ else
 	# 2026-11-18 审计 R2 P1-11：回滚提示原来用通配 `dtbo_a-pre-uefi-*.img`，多份备份时会选错件。
 	# 现在把**确切**路径写进 ROLLBACK.txt（含 sha），回滚只认它。
 	BK="$ROOT/backup/dtbo_a-pre-uefi-$(date +%Y%m%d).img"
-	if [ -f "$BK" ] && [ "$(sha256sum "$BK" | awk '{print $1}')" = "$CUR" ]; then
+	if [ -f "$BK" ] && [ "$(sha_direct "$BK")" = "$CUR" ]; then
 		say "备份已在：$BK（sha 一致，跳过备份）"
 	else
 		say "备份原厂 dtbo_a → $BK"
 		timeout -k 5 180 ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=no \
 			-o UserKnownHostsFile=/dev/null "${TAB:-root@192.168.7.1}" \
 			'dd if=/dev/disk/by-partlabel/dtbo_a bs=1M 2>/dev/null' > "$BK" || { say "备份失败"; exit 4; }
-		[ "$(sha256sum "$BK" | awk '{print $1}')" = "$CUR" ] || { say "备份 sha 不一致（短读？）⇒ 放弃"; rm -f "$BK"; exit 4; }
+		[ "$(sha_direct "$BK")" = "$CUR" ] || { say "备份 sha 不一致（短读？）⇒ 放弃"; rm -f "$BK"; exit 4; }
 		say "备份 OK（$DTBO_SIZE 字节）"
 	fi
 fi
@@ -86,7 +103,7 @@ fi
 
 # ---- 3) 写假 dtbo + 读回 ----
 BLANK=$(mktemp /tmp/dtbo-blank.XXXXXX); truncate -s "$DTBO_SIZE" "$BLANK"
-[ "$(sha256sum "$BLANK" | awk '{print $1}')" = "$BLANK_SHA" ] || { say "全 0 件 sha 异常"; exit 6; }
+[ "$(sha_direct "$BLANK")" = "$BLANK_SHA" ] || { say "全 0 件 sha 异常"; exit 6; }
 say "flash dtbo_a = 32 MiB 全 0"
 fbx flash dtbo_a "$BLANK"; rc=$?
 say "$_FB_OUT"
@@ -103,7 +120,7 @@ done
 [ "$up" = 1 ] || {
 	say "重启后 SSH 未起（设备可能停在 fastboot 或卡 logo）"
 	say "回滚（可直接复制执行）：fastboot -s $SER flash dtbo_a ${BK:-<本次未改 dtbo_a，无需回滚>} && fastboot -s $SER set_active b"
-	say "  备份件：$BK（sha $(sha256sum "$BK" 2>/dev/null | awk '{print $1}')）"
+	say "  备份件：$BK（sha $(sha_direct "$BK")）"
 	echo "STATUS=ROLLBACK_NEEDED"; exit 8; }
 NEW=$(ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
 	"${TAB:-root@192.168.7.1}" 'sha256sum /dev/disk/by-partlabel/dtbo_a' 2>/dev/null | awk '{print $1}')
@@ -116,9 +133,9 @@ RB="$ROOT/backup/uefi-a-slot-ROLLBACK-$SER.txt"
   echo "# $SER 的 a 槽回滚配方（由 scripts/uefi-a-slot-prepare.sh 于 $(date -Is) 生成）"
   echo "# 回滚只认下面这些**确切**路径；不要用通配符（多份备份会选错件）"
   echo "DTBO_A_BACKUP=$BK"
-  echo "DTBO_A_BACKUP_SHA=$(sha256sum "$BK" 2>/dev/null | awk '{print $1}')"
+  echo "DTBO_A_BACKUP_SHA=$(sha_direct "$BK")"
   echo "BOOT_A_BACKUP=$ROOT/backup/boot_a-pre-uefi-20261108.img"
-  echo "BOOT_A_BACKUP_SHA=$(sha256sum "$ROOT/backup/boot_a-pre-uefi-20261108.img" 2>/dev/null | awk '{print $1}')"
+  echo "BOOT_A_BACKUP_SHA=$(sha_direct "$ROOT/backup/boot_a-pre-uefi-20261108.img")"
   echo "# 执行："
   echo "fastboot -s $SER flash dtbo_a ${BK:-<本次未改 dtbo_a，无需回滚>}"
   echo "fastboot -s $SER flash boot_a $ROOT/backup/boot_a-pre-uefi-20261108.img"

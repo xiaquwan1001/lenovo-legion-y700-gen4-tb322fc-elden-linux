@@ -42,6 +42,23 @@ STAGE=${1:-preflight}
 say()  { printf '\n\033[1m=== %s\033[0m\n' "$*"; }
 warn() { printf 'WARN: %s\n' "$*" >&2; }
 die()  { printf 'FATAL: %s\n' "$*" >&2; exit 1; }
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 need_yes() { [ "$YES" = 1 ] || die "$1 会写盘/写槽；确认后加 --yes"; }
 
 # ---------------------------------------------------------------- preflight
@@ -103,7 +120,7 @@ archive() {
 	$SSH 'sync; tar -C / -c --one-file-system --acls --xattrs . 2>/tmp/tar.err' | zstd -3 -T0 -q -o "$out" \
 		|| die "归档失败（见设备 /tmp/tar.err）"
 	ls -lh "$out"
-	printf '%s  %s\n' "$(sha256sum "$out" | cut -d' ' -f1)" "$(basename "$out")" > "$out.sha256"
+	printf '%s  %s\n' "$(sha_direct "$out")" "$(basename "$out")" > "$out.sha256"
 	cat "$out.sha256"
 	$SSH 'cat /tmp/tar.err' 2>/dev/null | head -5
 	echo "（tar.err 里若有 'socket ignored' 属正常：运行时套接字不该归档）"
@@ -311,7 +328,7 @@ writeslot() {
 	[ -e "$img" ] || die "缺 $img（先跑 bootimg）"
 	say "1. 签名（add_hash_footer，partition_size 96 MiB）"
 	bash "$ROOT/scripts/sign-boot-b.sh" "$img" "$signed" || die "签名失败"
-	sha256sum "$signed"
+	echo "$(sha_direct "$signed")  $signed"
 
 	say "2. 前置：设备必须已在 fastboot；记录槽基线"
 	# 2026-11-09 PITFALLS #584：先落变量再判断（SIGPIPE 会打断 fastboot 通道）
@@ -332,7 +349,7 @@ readback() {
 	local signed=$ROOT/bootslot-b/boot_b-f2fs-root.img
 	[ -e "$signed" ] || die "缺 $signed"
 	local local_sha dev_sha
-	local_sha=$(sha256sum "$signed" | cut -d' ' -f1)
+	local_sha=$(sha_direct "$signed")
 	dev_sha=$($SSH 'dd if=/dev/disk/by-partlabel/boot_b bs=1M count=96 2>/dev/null' | sha256sum | cut -d' ' -f1)
 	echo "local=$local_sha"
 	echo "device=$dev_sha"

@@ -29,6 +29,7 @@ import glob
 import hashlib
 import os
 import shutil
+import subprocess
 import sys
 import datetime
 
@@ -57,13 +58,24 @@ KEEP = {
 }
 
 
-def sha256(path, bufsize=1 << 20):
+def odirect_sha(path):
+    """**O_DIRECT 直读** sha256（绕过页缓存）——见 scripts/odirect-sha.py 与
+    reports/odirect-sha-gate-20261120.md。页缓存污染时 buffered 连读多次会「稳定但错」，
+    所以主机侧文件身份一律走它。工具 O_DIRECT 不可用（tmpfs 等）时自己退回 buffered 并打
+    WARN；这里再留一层纯 python buffered 兜底。"""
+    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'odirect-sha.py')
+    try:
+        r = subprocess.run([sys.executable, tool, '--tsv', path],
+                           capture_output=True, text=True, timeout=1800, check=True)
+        cols = r.stdout.splitlines()[0].split('\t')
+        if len(cols) >= 3 and len(cols[2]) == 64:
+            return cols[2]
+        raise ValueError('unexpected tool output: %r' % r.stdout[:120])
+    except Exception as e:  # noqa: BLE001
+        sys.stderr.write('WARN odirect-sha: %s 未走 O_DIRECT（%s），退回 buffered\n' % (path, e))
     h = hashlib.sha256()
     with open(path, 'rb') as f:
-        while True:
-            b = f.read(bufsize)
-            if not b:
-                break
+        for b in iter(lambda: f.read(1 << 20), b''):
             h.update(b)
     return h.hexdigest()
 
@@ -121,7 +133,7 @@ def main():
             print('SKIP（目标已存在，不覆盖）: %s' % base, file=sys.stderr)
             continue
         size = os.path.getsize(p)
-        digest = sha256(p)                      # 先算后移：账本记的是迁移前的内容身份
+        digest = odirect_sha(p)                 # 先算后移（O_DIRECT 硬门，绕页缓存）
         shutil.move(p, tgt)
         rows.append((digest, size, base, 'Y' if base in led else 'N',
                      os.path.relpath(tgt, ROOT)))

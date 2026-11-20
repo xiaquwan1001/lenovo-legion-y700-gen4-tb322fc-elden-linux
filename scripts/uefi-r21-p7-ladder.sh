@@ -82,6 +82,23 @@ REBUILD=0
 GEN=${GEN:-}
 
 die() { echo "uefi-r21-p7-ladder: $*" >&2; exit 1; }
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 note() { echo "[p7] $*" >&2; }   # 一律 stderr：build_variant 用 stdout 回传路径
 
 # 件名：26 用历史名 s26-pb3（阶段基件），其余 m3-stopN
@@ -234,7 +251,7 @@ case "$MODE" in
 			while read -r want name; do
 				[ -n "${want:-}" ] || continue
 				p=${name#*/}
-				got=$(sha256sum "$WORK/$p" 2>/dev/null | cut -d' ' -f1)
+				got=$(sha_direct "$WORK/$p")
 				if [ -z "$got" ]; then
 					# 在盘指纹里的件本脚本未产出（不在 STAGES 里）⇒ 不算错，只提示
 					note "SKIP $p（不在本次 STAGES）"
@@ -247,13 +264,17 @@ case "$MODE" in
 			done < "$KEPT"
 		else
 			note "无在盘指纹文件（$KEPT），只列产物 sha："
-			sha256sum "$WORK"/"$PREAMBLE" "$WORK"/$PFX-*.img 2>/dev/null
+			for _p in "$WORK"/"$PREAMBLE" "$WORK"/$PFX-*.img; do
+				[ -e "$_p" ] && printf '%s  %s\n' "$(sha_direct "$_p")" "$_p"
+			done
 		fi
 		if [ "$MODE" = mkimg ]; then
 			mkdir -p "$OUTDIR"
 			cp -f "$WORK"/"$PREAMBLE" "$WORK"/$PFX-*.img "$OUTDIR"/ || die "拷贝到 $OUTDIR 失败"
 			note "已写入 $OUTDIR"
-			sha256sum "$OUTDIR"/"$PREAMBLE" "$OUTDIR"/$PFX-*.img | sed 's|.*/|  |'
+			for _p in "$OUTDIR"/"$PREAMBLE" "$OUTDIR"/$PFX-*.img; do
+				[ -e "$_p" ] && printf '%s  %s\n' "$(sha_direct "$_p")" "${_p##*/}"
+			done
 		fi
 		[ "$rc" = 0 ] && { [ -f "$KEPT" ] && note "PASS（镜像段可逐字节复现，与 $KEPT 逐件相同）" || note "PASS（未提供指纹，仅产出；可比对请给 KEPT=…）"; } || note "FAIL（见上）"
 		exit "$rc"

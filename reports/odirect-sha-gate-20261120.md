@@ -71,3 +71,49 @@
    `scripts/out-archive.py`（4）、`scripts/esp-apply.sh`（4）。
 4. 其余 1–3 处的脚本遇「登记 sha ↔ 实读比对」语义时逐个替换为 `odirect-sha.py --tsv`
    （输出第 3 列即 sha，可直接 `awk` 取）。
+
+## 6. 接入结果（2026-11-20 夜间执行；未提交 commit）
+
+### 6.1 接入形状
+
+每个脚本内嵌同名 `sha_direct()`（shell）/ `odirect_sha()`（python），单点封装
+`python3 scripts/odirect-sha.py --tsv <f>` 的**第 3 列**；工具回退 buffered 时 shell 侧再兜
+一次 `sha256sum` 并打 stderr `WARN`，读不存在的件返回空串（保持原「缺件 ⇒ 空」语义）。
+**设备侧** `sha256sum`（`$SSH`/`adb`/`qdl sha256`/mount 后的 ESP 件）**不动**——O_DIRECT 是主机
+页缓存的坑，设备端读不经主机缓存。python 侧同理：`odirect_sha(path)` 走子进程调工具，
+再留一层纯 python buffered 兜底。
+
+### 6.2 实接与未接（差异行）
+
+§5 清单点名 11 个，实接 **13 个**（§5.4「其余遇登记↔实读语义逐个替换」补齐）：
+
+| # | 脚本 | 处理 |
+|---|---|---|
+| 1 | uefi-a-slot-prepare.sh | 接（4 处主机件；备份/全 0 件/ROLLBACK 登记） |
+| 2 | esp-put-loader.sh | 接（2 处送件指纹；ESP 侧读回仍设备算） |
+| 3 | esp-install-grub.sh | 接（1 处，tag 取自该 sha） |
+| 4 | linux-gpt-apply.sh | 接（5 处：计划打印/回退基线/读回比对/设备端尺子主机侧） |
+| 5 | f2fs-migrate.sh | 接（3 处：归档 `.sha256`、签名件打印、readback 本地件） |
+| 6 | android-ksu-flash.sh | 接（1 处真执行：`--backup-only --apply` 写 SHA256SUMS；其余是 dry-run 打印文本） |
+| 7 | android-ksu-avb-build.py | 接（2 处：输入指纹、出品 SHA256SUMS） |
+| 8 | uefi-grubcfg-arming.sh | **未接（清单差异）**：4 处 sha 全在设备侧（`S 'sha256sum /efi/...'`、`/boot/grub/grub.cfg`），无主机大文件读路径 |
+| 9 | rebuild-vk64-image.sh | 接（4 处，含 config 配方漂移硬门） |
+| 10 | out-archive.py | 接（1 处 `sha256()` → `odirect_sha()`；落账用） |
+| 11 | esp-apply.sh | 接（3 处：清单逐件、组装镜像 vs EDL 读回件） |
+| 12 | build-manifest.sh | 接（`sha()` 单点 ⇒ 全部 manifest 身份字段） |
+| 13 | uefi-r21-p7-ladder.sh | 接（KEPT 指纹逐件比对 + 产物清单） |
+| 14 | build-initramfs.sh | 接（`verify` 可复现门前/后 sha，4 处） |
+
+口径：§5 点名 11 个 → 实接 10 个（#8 无主机读路径，未接）+ §5.4 补位 3 个
+（build-manifest.sh、uefi-r21-p7-ladder.sh、build-initramfs.sh）= **实接 13 个**（表 14 行含 1 行「未接」）。`android-super.py`、`manifest-from-image.py`、`boot-img-cmdline.py` 一类只在
+**内存内**算 sha（`hashlib.sha256(bytes)`），无主机大文件读路径，按 §2 结论**不需要改**。
+
+### 6.3 自测（每个接入件都跑）
+
+`bash -n` 11/11 OK；`py_compile` 2/2 OK；抽出各脚本的 `sha_direct()` 在 3 MiB 随机件上
+与 `odirect-sha.py --tsv` 和 `sha256sum` 三方一致、缺件返回空 —— **13/13 pass**
+（`python3 -m` 侧 `odirect_sha()` 与 `hashlib` 一致 2/2）。
+真路径小样本：`python3 scripts/out-archive.py`（dry-run，23 件 **985.4 MiB** 全走 O_DIRECT）
+rc=0；`python3 scripts/odirect-sha.py --compare` 抽 6 件 ⇒ **6/6 SAME**（84529152/88260608 B 等）。
+`bash scripts/check-doctor.sh` ⇒ `FAIL=0 WARN=7`（多出的一条 `HISTORY/days 落后` 来自 18:44 的
+docs 提交 f1113c4c，早于本轮且与本轮无关；报告 §4 的另 6 条 WARN 全部照旧）。

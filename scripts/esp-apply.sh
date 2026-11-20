@@ -36,6 +36,23 @@
 #   * 镜像里会多写一个 /esp-manifest.txt（逐文件 sha256 + 尺寸），便于设备侧或读回件对账。
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 ESP_DIR=""; GPT=""; PART=eldenesp; LUN=0; IMG=""; MIN_MIB=64
 APPLY=0; ENTER_EDL=0; BUILD_ONLY=0; RESET_AFTER=0
 SN=${SN:-HA2EXB0E}
@@ -110,7 +127,7 @@ MANIFEST=$(mktemp); trap 'rm -f "$MANIFEST" "$MANIFEST.paths" "$MANIFEST.tmp" "$
 missing=0
 ( cd "$ESP_DIR" && find . -type f ! -name '.*' -printf '%P\n' | LC_ALL=C sort ) > "$MANIFEST.paths"
 while IFS= read -r rel; do
-	printf '%s  %s  %s\n' "$(sha256sum "$ESP_DIR/$rel" | cut -d' ' -f1)" "$(stat -c%s "$ESP_DIR/$rel")" "$rel" >> "$MANIFEST"
+	printf '%s  %s  %s\n' "$(sha_direct "$ESP_DIR/$rel")" "$(stat -c%s "$ESP_DIR/$rel")" "$rel" >> "$MANIFEST"
 done < "$MANIFEST.paths"
 NFILES=$(wc -l < "$MANIFEST.paths")
 for r in "${REQUIRED[@]}"; do
@@ -238,8 +255,8 @@ timeout -k 10 600 "$QDL" -s ufs -R "$LOADER" \
 	2>&1 | tee "$READDIR/qdl.log" | tail -8
 
 ok=1
-want=$(sha256sum "$IMG" | cut -d' ' -f1)
-got=$(sha256sum "$READDIR/eldenesp-readback.img" 2>/dev/null | cut -d' ' -f1 || true)
+want=$(sha_direct "$IMG")
+got=$(sha_direct "$READDIR/eldenesp-readback.img" || true)
 if [ "$want" = "$got" ]; then
 	echo "OK   读回逐字节一致 sha=${want:0:16}"
 	echo "读回件: $READDIR/eldenesp-readback.img（可直接 mdir/mtype 复核）"

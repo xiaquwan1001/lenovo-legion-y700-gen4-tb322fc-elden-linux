@@ -31,6 +31,23 @@ DRY=0
 
 say() { echo "[esp-put] $*" >&2; }
 die() { echo "[esp-put] ERROR: $*" >&2; exit 1; }
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -65,12 +82,12 @@ fi
 
 [ -n "$LOADER" ] || die "缺 --loader（或用 --verify 只读检查）"
 [ -r "$LOADER" ] || die "读不到 $LOADER"
-L_SHA=$(sha256sum "$LOADER" | awk '{print $1}')
+L_SHA=$(sha_direct "$LOADER")
 L_SZ=$(stat -c %s "$LOADER")
 TOTAL=$L_SZ
 if [ -n "$BOOTIMG" ]; then
 	[ -r "$BOOTIMG" ] || die "读不到 $BOOTIMG"
-	B_SHA=$(sha256sum "$BOOTIMG" | awk '{print $1}')
+	B_SHA=$(sha_direct "$BOOTIMG")
 	B_SZ=$(stat -c %s "$BOOTIMG")
 	TOTAL=$((TOTAL + B_SZ))
 fi

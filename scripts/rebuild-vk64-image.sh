@@ -39,6 +39,23 @@ exec > >(tee -a "$LOG") 2>&1
 
 echo "### rebuild-vk64 $(date '+%F %T')  log=$LOG"
 fail() { echo "❌ $*" >&2; exit 1; }
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 
 # ---------- 1. 前置检查 ----------
 [ -d "$KDIR" ] || fail "缺内核树 $KDIR（换机后需重新准备 vk64 树：tag vk64 = d02658e63）"
@@ -51,7 +68,7 @@ DIRTY=$(git -C "$KDIR" status --porcelain | grep -v '^?? \.config$' | wc -l)
 	|| echo "⚠️  HEAD=$(git -C "$KDIR" rev-parse --short HEAD) ≠ vk64；构建将落在此 HEAD（若非 vk64 请检查）"
 
 [ -f "$CONFIG" ] || fail "缺 config $CONFIG"
-CSHA=$(sha256sum "$CONFIG" | cut -d' ' -f1)
+CSHA=$(sha_direct "$CONFIG")
 [ "$CSHA" = "$EXPECT_CONFIG_SHA" ] || fail "config sha256=$CSHA ≠ 期望 $EXPECT_CONFIG_SHA（配方已漂移）"
 grep -q '^CONFIG_ARCH_QCOM=y' "$CONFIG" || fail "config 缺 CONFIG_ARCH_QCOM=y（#162 死内核判据）"
 grep -q '^CONFIG_LOCALVERSION="-debug"' "$CONFIG" || fail "config 的 CONFIG_LOCALVERSION 不是 \"-debug\""
@@ -169,9 +186,9 @@ KDIR="$KDIR" VERSION="$VERSION" RAMDISK="$RAMDISK" LOCALVERSION="-vk64" \
 echo
 echo "### 产物"
 ls -la "$IMG" 2>/dev/null
-echo "  image_sha256   = $(sha256sum "$IMG" | cut -d' ' -f1)"
-echo "  kernel_sha256  = $(sha256sum "$KIMG" | cut -d' ' -f1)   （历史 vk64 = 60b683e1787598ff…，不要求相等：编译器/时间戳可变）"
-echo "  dtb_sha256     = $(sha256sum "$DTB" | cut -d' ' -f1)    （历史 vk64 = 386cc9bd5d243425…）"
+echo "  image_sha256   = $(sha_direct "$IMG")"
+echo "  kernel_sha256  = $(sha_direct "$KIMG")   （历史 vk64 = 60b683e1787598ff…，不要求相等：编译器/时间戳可变）"
+echo "  dtb_sha256     = $(sha_direct "$DTB")    （历史 vk64 = 386cc9bd5d243425…）"
 if [ "$KSTATE" -ne 0 ]; then
 	echo "❌ 身份不匹配 ⇒ 不要用于 N5b（模块会全部失配）"; exit 3
 fi

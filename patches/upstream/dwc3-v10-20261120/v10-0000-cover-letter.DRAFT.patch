@@ -1,0 +1,204 @@
+# DRAFT — 未投递（未 git send-email）。落盘 2026-11-21。
+# 门禁数字全部是占位 <Gx …>，每行末尾写明取自哪条命令；填数前不得发信。
+# 发信前必做：① 填 G1–G6 占位（用 v10 最终三枚 patch 重跑，见文末附录 §B）；② 2/3 补 AI 披露段（§A.1）；
+#            ③ 删掉 "-- " 之后的中文附录；④ 用 `git format-patch --cover-letter` 重生成，不要手改本文件的 From/Date。
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: <DRAFT 未定稿>
+Subject: [PATCH v10 0/3] usb: dwc3: support two connectors sharing one HS data
+ bus
+
+Two USB Type-C receptacles can share one High Speed D+/D- pair if a
+multiplexer selects which of them drives the controller.  This series
+describes that in the DWC3 binding, adds the endpoint-scoped role-switch
+lookup the connectors need, and drives the shared data path from the DWC3
+mode worker through the mux controller API.
+
+No runtime testing is claimed for this version: the mux path has not been
+exercised on hardware.  The series was reviewed statically and through the
+gates listed below.
+
+*** AI-assistance disclosure ***
+This series was prepared with the help of an LLM coding assistant.  The
+author reviewed every line, checked every quoted claim against the tree,
+and ran the gates quoted below; the design decisions and any errors are the
+author's.  Each patch repeats this disclosure in its own commit message.
+
+Changes since v9
+
+1) Your review of 2026-11-18 on 1/3 ("??" and the four inline comments):
+
+   - "??" was on the DRAFT note that v9 left in the mail body after the
+     '---' separator (it said the driver and the board DTS were still to be
+     ported, while 3/3 of the same posting already called
+     devm_mux_control_get() / mux_control_select()).  The note is gone; what
+     follows the separator is now only the per-version changelog.  v9's 1/3
+     patch body also carried no "diff --git" header (only ---/+++); the
+     series is produced with "git format-patch" again.
+
+   - "You don't need to use $defs here."  The High Speed endpoint schema is
+     inlined under "port@0"; there is no local "$defs" section any more.  The
+     only "$defs" left in the patch are dtschema's own
+     graph.yaml#/$defs/{port-base,endpoint-base} references.
+
+   - "These can be: patternProperties '^endpoint@[01]$'".  Done: both
+     endpoints are matched by patternProperties under "port@0", and the
+     opposite-mux-state rule sits in port@0's own if/then.
+
+   - "Don't put driver specifics in bindings."  The comment that explained
+     what dwc3_get_dr_mode(), dwc3_get_extcon() and dwc3_drd_init() do is
+     removed.  The "mux-controls" branch now states only what the device
+     tree must contain: dr_mode = "otg", "port@0" with '#address-cells',
+     '#size-cells', endpoint@0 and endpoint@1, and both "usb-role-switch"
+     and "mux-state" on each endpoint.
+
+   - "This $ref can be dropped. You already have the schema for 'port@0'
+     below."  Dropped: the then-branch only adds "required" to port@0, whose
+     schema is defined once, under "properties".
+
+2) Your review of 2026-11-18 on 3/3 (commit message):
+
+   - "What changed in this version isn't really applicable for the commit
+     message ... The commit msg should answer 'why' ... goes here after the
+     '---'."  3/3's message is rewritten: it now says why a mux controller is
+     needed (a board level GPIO cannot follow the USB mode, so the
+     controller can drive the data lines of the connector that is not in
+     use, and an instance cannot be torn down while its own lines are still
+     selected), why the first mode request claims state 0 (a mux cannot be
+     read back, so the connector in use at boot is unknowable), and why
+     mux_control_select()/mux_control_deselect() are only called from the
+     mode worker and from dwc3_drd_exit() after cancel_work_sync().  The
+     v9-to-v10 changelog moved below the separator.  1/3 got the same
+     treatment: it now describes the binding relative to the baseline tree,
+     and the v8-to-v9 changelog (which referred to a "port@2" and a
+     "port-select-gpios" that never existed upstream) is gone.
+
+3) Fixes that the v10 draft already carried from the static review of v9:
+
+   - [High] unbalanced mux_control_deselect(): only a mux that is actually
+     selected is deselected, and a failed mux_control_select() records
+     active_port = -1 instead of a stale index.
+   - [High] missing deselect on teardown: dwc3_drd_exit() deselects the mux
+     after cancel_work_sync(&dwc->drd_work), because devm_mux_control_get()
+     only puts the controller on release.
+   - [Medium] the two endpoints and the opposite-mux-state rule are required
+     only when "mux-controls" is present, so single-connector controllers
+     such as qcom/sm8250.dtsi are not rejected.
+   - [Low] both endpoints must carry "usb-role-switch" and "mux-state"; a
+     tree that sets them on endpoint@0 only is rejected.
+
+4) Unchanged: 2/3 (usb: roles: look up role switches attached to a graph
+   endpoint).  No comment was raised on it and the code is identical to v9
+   apart from the series numbering.
+
+Known gaps (stated so that nobody has to guess)
+
+- Which physical receptacle corresponds to mux state 0 and which to 1 is not
+  proven on hardware yet; the board DTS therefore names them "Receptacle A"
+  and "Receptacle B" and does not claim long/short edge.
+- "gpio-mux" drives the select lines low in probe
+  (devm_gpiod_get_array(dev, "mux", GPIOD_OUT_LOW)), so the level left by
+  the firmware is not preserved.  "idle-state" is deliberately omitted: a
+  non-AS_IS idle state would drive the wrong state between
+  mux_control_deselect() and the following mux_control_select().  Making the
+  probe keep the pin as is (GPIOD_ASIS) is a change to drivers/mux/gpio.c and
+  affects the ~70 existing gpio-mux users, so it does not belong in this
+  series; it needs a separate discussion with the mux maintainer.
+- dtbs_check cannot see "idle-state" values: gpio-mux.yaml declares it
+  without a type or bounds, so an out-of-range value is only rejected at
+  probe time.  The gate below therefore does not claim coverage for it.
+- The board DTS is not part of this posting: the Lenovo Legion Y700 Gen 4
+  file is not upstream yet and is posted with its own board series.
+
+Gate results (base: <G0 占位: 基线 tag + full sha>)
+
+  G1 apply       git am                     <G1 占位: n/3，干净（无 fuzz）>
+                 from a pristine worktree of the base above
+  G2 checkpatch  perl scripts/checkpatch.pl --strict --no-signoff --no-tree
+                                            <G2 占位: 1/3 nE/nW/nC（N 行）· 2/3 … · 3/3 …>
+  G3 build       make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- W=1
+                 drivers/usb/dwc3/ drivers/usb/roles/   (CONFIG_MULTIPLEXER=y,
+                 CONFIG_USB_ROLE_SWITCH=y)
+                                            <G3 占位: rc=… warnings=… objects=…>
+  G4 binding     make ARCH=arm64 dt_binding_check   (no DT_SCHEMA_FILES)
+                                            <G4 占位: 诊断数=…>
+  G5 dtbs_check  make ARCH=arm64 CHECK_DTBS=1 qcom/sm8250-mtp.dtb
+                 qcom/sm8650-mtp.dtb qcom/sm8750-mtp.dtb qcom/sm8750-qrd.dtb
+                 (no DT_SCHEMA_FILES)
+                                            <G5 占位: 每份 DTC [C]；USB/dwc3 相关诊断 0；baseline 对照 …>
+  G6 samples     dt-validate -u .../bindings -p processed-schema.json
+                                            <G6 占位: 正样例 0 诊断；负样例 4 类被拒（…）>
+  G7 hardware    not run     <G7 占位: 无上机结论，不声称>
+
+  On the command shapes: DT_SCHEMA_FILES is intentionally not used.  It is
+  passed to dt-validate as "-l", which only keeps schemas whose $id matches
+  and that still select a node themselves; snps,dwc3-common.yaml is a
+  fragment without "select:", so the run reports nothing and looks green.
+  The dtbs_check rule also ends with "|| true", so the result is read from
+  the diagnostics in the output, not from the exit status.
+
+Qianhui Xu (3):
+  dt-bindings: usb: snps,dwc3: describe two connectors on one HS data bus
+  usb: roles: look up role switches attached to a graph endpoint
+  usb: dwc3: select the shared HS data bus with a mux controller
+
+ .../bindings/usb/snps,dwc3-common.yaml        |  99 ++++++++-
+ drivers/usb/dwc3/core.c                       | 116 +++++++++-
+ drivers/usb/dwc3/core.h                       |  43 ++++
+ drivers/usb/dwc3/debugfs.c                    |   4 +
+ drivers/usb/dwc3/drd.c                        | 323 ++++++++++++++++++-
+ drivers/usb/roles/class.c                     |  45 +++
+ 6 files changed, 626 insertions(+), 4 deletions(-)
+
+-- 
+2.53.0
+
+# ======================= 以下为 DRAFT 附录，发信前必须整段删除 =======================
+#
+# §A 未完成 / 阻塞项
+#
+# A.1 【阻塞发信】2/3 缺 AI 披露段：grep -c 'AI-assistance' v10-0002-*.patch = 0，
+#     而 1/3、3/3 都有。二选一：① 2/3 也加同一段（推荐，与 1/3、3/3 一致）；
+#     ② cover 改成如实分述（哪枚 LLM 辅助、哪枚手写）——没有真实依据就不许用。
+# A.2 【阻塞发信】G0–G7 占位未填。
+# A.3 3/3 目前只有 v10-0003-commit-msg.txt（commit message 文本），没有 v10 的 0003 patch 文件；
+#     3/3 代码仍以 ../dwc3-v10-20261118/v10-0003-*.patch 为准（代码不动，只换 commit msg）。
+# A.4 2/3 代码逐字节等于 v9：diff <(sed -n '/^diff --git/,$p' v9-0002) <(… v10-0002) 只差尾部签名行。
+# A.5 G7 上机回归（两口枚举/拔插/角色切换、GPIO29 被 gpio-mux 持有与电平）未做；cover 已写明不声称。
+# A.6 本 cover 的 diffstat 由三枚最终 patch 用 `git apply --stat` 算得：
+#     1/3 = 98+/1-（99 行）、2/3 = 45+、3/3 = 483+/3-（core.c 116、core.h 43、debugfs.c 4、drd.c 323）
+#     ⇒ 合计 626 insertions / 4 deletions / 6 files。三枚任一改动后必须重算并同步此处。
+#
+# §B 各占位的取数命令（填数时逐条实跑，把真实输出写回占位）
+#
+# G0  git -C build/m3v2-7.3rc7 describe --tags --always <base>     # 记 tag + full sha
+# G1  git -C build/m3v2-7.3rc7 worktree add --detach /tmp/dwc3-v10-final <base>
+#     cd /tmp/dwc3-v10-final && git am <本目录最终 3 枚>            # 记 n/3、有无 offset/fuzz
+# G2  perl scripts/checkpatch.pl --strict --no-signoff --no-tree <每枚>  # 记 E/W/C 与总行数
+# G3  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/kbuild-v10-final olddefconfig
+#     make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/kbuild-v10-final -j8 W=1 \
+#          drivers/usb/dwc3/ drivers/usb/roles/                     # 记 rc / warnings / .o 个数
+#     前置：CONFIG_MULTIPLEXER=y CONFIG_USB_ROLE_SWITCH=y（否则 drd.c 的 mux 代码被 #if 掉 ⇒ 门等于没跑）
+#     构建一律套 flock /tmp/pi-heavy-build.lock -c '…' + timeout -k 30 <秒>；禁裸 -j。
+# G4  rm -f Documentation/devicetree/bindings/processed-schema.json
+#     make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/kbuild-v10-final dt_binding_check
+#     记诊断行数；rc 不足以判绿（见正文末段）。
+# G5  rm -f arch/arm64/boot/dts/qcom/{sm8250-mtp,sm8650-mtp,sm8750-mtp,sm8750-qrd}.dtb
+#     make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/kbuild-v10-final CHECK_DTBS=1 -j8 \
+#          qcom/sm8250-mtp.dtb qcom/sm8650-mtp.dtb qcom/sm8750-mtp.dtb qcom/sm8750-qrd.dtb
+#     记法：每份是否 DTC [C]、^arch/.*dtb: 诊断起始行数、其中 USB/dwc3 相关行数；
+#     并跑 baseline 同四份作对照（新增 = 0 才算绿）。不带 DT_SCHEMA_FILES。
+# G6  dt-validate -u Documentation/devicetree/bindings \
+#          -p $PWD/Documentation/devicetree/bindings/processed-schema.json {good,bad,samestate,no-props}.dtb
+#     负样例 4 类：① 两 endpoint 同 mux-state（oneOf）② 缺 endpoint@1（required）
+#                 ③ endpoint@1 缺 usb-role-switch/mux-state（required）④ legacy v8 形状（unevaluatedProperties）
+# G7  需设备，本轮不跑。
+#
+# §C 依据指针（本目录内）
+#   from-v9/README.md                                   v9 已发原文清单 + 两封 Rob 原文定位（1/3 的 "??" 在第 36 行）
+#   from-v9/robh-20261118T153457Z-comment-on-1of3.txt   1/3 全文（"??" + 4 条行内意见）
+#   from-v9/robh-20261118T152739Z-comment-on-3of3.txt   3/3 全文（commit msg 写 why、版本日志放 --- 之后）
+#   README.md §0–§4                                     本轮门禁实测 + §4「DT_SCHEMA_FILES 空转」对照实验
+#   README.md §7–§8                                     elden 真 DTB 进门的 A/B、gpio-mux probe 即驱低的裁决
+#   v10-0001-*.patch / v10-0003-commit-msg.txt          Rob 六条意见的落地处
+#   PITFALLS #696                                       dtbs_check 用 DT_SCHEMA_FILES 假绿

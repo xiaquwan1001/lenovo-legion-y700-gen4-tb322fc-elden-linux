@@ -279,3 +279,102 @@ adb 从不出现（600 s）                      → 读 misc（同前）+ pstor
 - 证据：`reports/artifacts/android-v3-bringup-20261120/{device-online-check,pieces-inventory,bcb-and-qbootctl,gpt0-geometry,superdbg-sha-drift}.txt|.log`、`dryrun-full.log`
 - 跨项目取证（硬规则 12）：`~/hw-stability/evidence/inbox/20261120-y700-elden-pagecache-sha-drift/{MANIFEST.md,observation.txt}`
 - 自检记录：`scripts/android-v3-bringup-walkthrough.sh --verify` = 7/7 件 OK + 16 分片齐备；`--dry-run` rc=0（S1–S5 全部打印计划）
+
+---
+
+## 10. 只读预演回执（2026-11-20 19:07，`--verify` + `--dry-run` 实跑）
+
+**结论数字先**：`--verify` rc=0、**41.36 s**、7/7 件 sha 全 OK + 原厂 16 分片齐备；`--dry-run` rc=0、**50.40 s**、S1–S5 全部打印完毕；**零设备写入**（qdl/fastboot/adb 写命令一条都没发；`[dry]` 行 **52** 条（S1 13 / S2 12 / S3 13 / S4 11 / S5 3）+ 判据行）。设备现态仍是 **fastboot `HA2EXB0E`**（与预演前一致），总线上另一台 `MDX5T20730009849` 在 adb（PITFALLS #371 预期内）。
+
+### 10.1 S1–S5 逐步：命令 / 预期输出 / 失败回落
+
+> 命令均为 `--apply` 真执行形态；`QDL=$HOME/edl/qdl/build/qdl`、`L=$HOME/下载/tb322fc/xbl_s_devprg_ns.melf`、`TAB=root@192.168.7.1`、`S=HA2EXB0E`。
+> **⚠ 手抄注意**：脚本 `run()`/`logc()` 用 `$*` 打印，**远端命令的引号被吞**（见 §10.3 F1）——下面已按真实 argv 加回单引号，照抄请用本表，别照抄 `commands.log`。
+
+**S1 清 BCB + 置 active=a + v1 在机首启（预期 3–5 min；前置需 **Linux 侧**）**
+
+| # | 命令 | 预期输出 | 失败回落 |
+|---|---|---|---|
+|1|`ssh $TAB 'uname -r; findmnt -no SOURCE,LABEL /'`|`6.x-elden` + `/dev/disk/by-partlabel/root…`|ssh 不通 ⇒ 设备不在 Linux（现 fastboot）⇒ 见 §10.2 顺序问题|
+|2|`ssh $TAB 'qbootctl 2>&1 \| head -24; qbootctl -a 2>&1'`|`Active slot: a` + 槽表|为 `b` ⇒ 第 6 步 `--set-active=a`|
+|3|`ssh $TAB 'dd if=/dev/disk/by-partlabel/super bs=4096 count=128'` > `super-head512k.bin`；`python3 scripts/android-super.py list …`|`system_a … 5296 MiB`（= v1 在机）|尺寸对不上 ⇒ 在机不是 v1，先回刷 v1 再谈首启|
+|4|`ssh $TAB 'dd if=/dev/disk/by-partlabel/misc bs=4096 count=4'` > `bcb-before.bin` → `bcb_judge`|`size=16384 nonzero=0 command=''` ⇒ 干净|`boot-recovery`/`bootonce-*` ⇒ **本次样本无效**，先清 0 重来|
+|5|`ssh $TAB 'cp -f /dev/disk/by-partlabel/misc /tmp/misc.bcb.bak; dd if=/dev/zero of=/dev/disk/by-partlabel/misc bs=4096 count=1 conv=fsync'` → 读回 16 KiB|`nonzero=0`|`nonzero≠0` ⇒ **不要 reset**，重做第 5 步|
+|5b|`ssh $TAB 'python3 /tmp/slot-attr.py --allow-wrong-lun --device /dev/sde set a --retry 7 --no-unbootable --successful'`（仅当 byte6 ∉ {0x7a,0x7b}）|byte6 `0x82 → 0x7a`|复位后仍非 0x7a/0x7b ⇒ **不要 reset**（PITFALLS #695）|
+|6|`fastboot -s $S getvar current-slot`；`!=a` 则 `fastboot -s $S --set-active=a`|`a`|回退 = `--set-active=b`（写 GPT 属性，super 零改动）|
+|7|`ssh $TAB 'sync; reboot'` → 轮询 `adb -s $S`（≤600 s）|`sys.boot_completed=1` + `mCurrentFocus` 含 launcher ⇒ SUCCESS|见 §10.1 末 fail 分类表|
+
+**S2 回写原厂 metadata（29 372 416 B；预期 5–8 min；需 EDL）**
+
+| # | 命令 | 预期输出 | 失败回落 |
+|---|---|---|---|
+|1|（件在位，跳过 assemble；缺则）`python3 scripts/android-super.py assemble --xml backup/official-rom-15.10.259/rawprogram_save_persist_unsparse0.xml --label metadata -o out/android-v3-bringup-20261120/metadata_stock.img`|29372416 B，sha `a735fbc7…`|拼装尺寸不符 ⇒ 查 xml 分片连续性（R6 口径 1..8 连续）|
+|2|`fastboot -s $S oem edl` → 等 `lsusb -d 05c6:9008`|EDL 已枚举|120 s 未枚举 ⇒ exit 3 人项（按键/插线）|
+|3|`$QDL -s ufs -R $L read 0/0+6 live-gpt0-primary.bin` → `python3 scripts/android-linux-coexist-check.py --gpt …` + 内联 GPT 解析|`gate super: live 90504..5857671 … OK`、`gate metadata: live 5857704..5874087 … OK`|任一 MISMATCH ⇒ `die` 不写（表变了）|
+|4|`$QDL -s ufs -R $L read 0/5857704+7171 metadata-pre.bin`|回退基线落盘|读失败 ⇒ 不写|
+|5|`$QDL -s ufs -R $L write 0/5857704 metadata_stock.img sha256 0/5857704+7171 read 0/5857704+4096 head16m read 0/5860779+4096 tail16m`|设备端 sha = `a735fbc7…`；head/tail `cmp` 一致|sha 不符或 cmp 不符 ⇒ rc=1，**先怀疑主机读路径**（O_DIRECT/pcache-wash）再怀疑设备|
+|6|BCB 清 0 + 读回（同 S1 第 5 步，走 EDL 写 `0/89992` 4 KiB 零）|`nonzero=0`|≠0 ⇒ 不 reset|
+|7|`$QDL -s ufs $L reset` → 轮询 adb ≤600 s|boot_completed=1 + launcher|fail 分类见下|
+
+**S3 原厂 super 对照（15 607 586 816 B = 14.54 GiB；预期 14–18 min；需 EDL）**
+
+| # | 命令 | 预期输出 | 失败回落 |
+|---|---|---|---|
+|1|`python3 scripts/android-super.py assemble --xml … --label super -o out/android-v3-bringup-20261120/super_stock_contig.img`|**15607586816 B**（=3810446×4096；稀疏落盘 ~12.2 GiB，工作区余 203 G）|尺寸不符 ⇒ 不写|
+|2|`fastboot -s $S oem edl` → 等 9008|EDL|同 S2|
+|3|`$QDL … read 0/0+6` + coexist-check（带 `--super-img`）|GPT 门 OK|MISMATCH ⇒ 不写|
+|4|`$QDL -s ufs -R $L read 0/90504+128 super-head512k-pre.bin`|回退快照|—|
+|5|`$QDL -s ufs -R $L write 0/90504 super_stock_contig.img sha256 0/90504+3810446 read 0/90504+4096 head read 0/3896854+4096 tail`|设备端 sha = 主机 sha；head/tail 一致|不符 ⇒ rc=1 不 reset|
+|6|BCB 清 0 + 读回 → `$QDL -s ufs $L reset`|`nonzero=0`|≠0 ⇒ 不 reset|
+|7|观察 ≤600 s|**原厂进桌面** ⇒ 问题在我们的 super 内容；**原厂也不进** ⇒ 问题在 /data/GPT/设备态|回退：`$QDL -s ufs -R $L write 0/90504 out/android-min-20261118/pkg/super_min.img`（v1，2171264 扇区）|
+
+**S4 二分 v2b（8 741 MiB，system_a 5552 MiB；预期 8–10 min；需 EDL）**
+
+| # | 命令 | 预期输出 | 失败回落 |
+|---|---|---|---|
+|1|`$QDL … write 0/90504 out/android-slim-v2b-20261119/new/super_min_v3.img sha256 0/90504+2237696 read 0/90504+4096 read 0/2324104+4096`|设备端 sha = `98a88ea0…`；head/tail 一致|不符 ⇒ rc=1；回退 = S3 的 v1/原厂件任一路径|
+|2|BCB 清 0 → 读回 → `reset` → 观察|同三条判据|—|
+|3|读法|v2b 成功 ⇒ 18 个 leaf 包不是原因（删池/AI 才是）；失败 ⇒ 走「只占位不删」臂|—|
+
+**S5 日志通道 `console=ttyGS0`（零写盘，`fastboot boot`；需 fastboot 现态）**
+
+| # | 命令 | 预期输出 | 失败回落 |
+|---|---|---|---|
+|1|（件已在位 100663296 B；O_DIRECT sha = **`0dad04f1d2f41fc2126eb2bda045adec8c8dce3ad95535442e53369dfc0280af`**）|sha 稳定两次|漂移 ⇒ 主机读路径/硬件存疑（硬规则 12），不上机|
+|2|`python3 scripts/boot-img-cmdline.py <件> --show \| grep -F console=ttyGS0`|cmdline 含 `console=ttyGS0`|不含 ⇒ 重造件|
+|3|`python3 scripts/boot-img-cmdline.py <件> --verify`|v4 窗口外逐字节全等|非 0 ⇒ 不上机|
+|4|`timeout -k 5 300 fastboot -s $S boot <件>`|`OKAY`|`FAILED (remote: …)` ⇒ 记**需上机项未通过**（AVB hash 失配 / vendor_boot cmdline 优先），不改代码臆测|
+|5|`timeout -k 5 900 cat /dev/ttyACM0 > serial.log`|内核 log 或 Android init 输出|无输出 ⇒ 回退 pstoredump 通道（`pstore_triage`）|
+
+### 10.2 ⚠ 现态阻塞（必须先做物理动作）：S1 在当前 fastboot 现态下 `--apply` 会 **exit 3**
+
+- `S1` 只调 `ensure_linux`，**没有 `ensure_edl` 分支**；`ensure_linux` 在 `APPLY=1 && 现态≠linux` 处直接 `die … 3`。
+  因此 **设备现在 fastboot 在线 ⇒ S1 无法起步**，S1 依赖的三件事（linux 侧取证、BCB 清 0、boot_a 属性复位）**全部拿不到**。
+- 顺序含义（人定，脚本不自适应）：**现在是 fastboot**，唯一免物理动作的入口是 **S5**（`fastboot boot`，零写盘）或 **S2/S3/S4**（`fastboot oem edl` 进 EDL）。
+  要跑 **S1** 必须先让设备进 Linux（启 b 槽 = PSCI vendor reset 路径，`ensure_edl` 里 `systemctl reboot bootloader` 那条）——**属物理动作，须用户执行**。
+- 建议：本轮先从 fastboot 走 **S5**（零写盘、拿串口 log）或 **S2→S3→S4**（EDL 链），S1 留到用户把设备送回 Linux 侧之后。这一条不改脚本，只作为执行顺序的人工裁决记录。
+
+### 10.3 预演暴露的 4 个脚本缺陷（只记录，本轮未改代码）
+
+| 编号 | 现象 | 影响 | 建议改法（下轮） |
+|---|---|---|---|
+|F1|`run()`/`logc()` 用 `$*` 打印，**丢失远端命令的引号**：`ssh $TAB 'uname -r; findmnt …'` 打印成 `ssh … root@192.168.7.1 uname -r; findmnt -no SOURCE,LABEL /`|手抄执行会在**主机**上跑 `findmnt`；`sync; reboot` 打印成裸 `ssh … sync; reboot`|打印用 `printf '%q '` 或把远端命令显示成带单引号的字面量（本报告 §10.1 已手工修正）|
+|F2|`pstore_triage()` 在非 linux 现态**直接 `return 0` 且无 verdict**|S2/S3/S4 全程在 EDL/fastboot 侧失败时，「真失败 vs BCB 污染」的三分类**静默缺失**，日志里看不出「没查」还是「查了干净」|非 linux 时写 `verdict.txt: PSTORE_SKIPPED(state=…)`，让归档自证|
+|F3|dry-run 下 `commands.log` **不完整**（BCB 清 0、boot_a 复位、`--set-active=a` 不进 log，因为走的是 `*)`/dry 分支不走 `run()`）|归档不能当执行清单用（S1 只有 5 行）|dry 分支也 `logc` 一条 `[dry-plan] …`|
+|F4|`bcb_read` 在非 linux/EDL 现态 `: > $out; return 1`，`bcb_judge` 只打「未取到」|`--apply` 时 S1 会以 exit 3 结束，但**日志里看不出是「设备现态不对」而非 BCB 真有问题**|`bcb_read` 失败时把现态写进 `verdict.txt`|
+
+### 10.4 本轮实测数字（来自真实输出）
+
+| 项 | 值 |
+|---|---|
+|`git rev-parse --show-toplevel`|`/home/xuqianhui/y700-elden`（身份相符）|
+|`--verify` 退出码 / 耗时|`0` / **41.36 s**|
+|`--verify` 件校验|7/7 OK（v1 `e3d0d26f…`、v3 `51eae107…`、v3_dbg `8b42f20d…`、v2b `98a88ea0…`、metadata `a735fbc7…`、boot_a `b428a31d…`、linux_boot_b `bdf47f5f…`），两次 O_DIRECT 读 sha 全部一致（无 DRIFT）|
+|原厂分片|`super_1..8` + `metadata_1..8` 齐备|
+|`--dry-run` 退出码 / 耗时|`0` / **50.40 s**|
+|打印的 `[dry]` 行数|**52**（S1 13 / S2 12 / S3 13 / S4 11 / S5 3）；`commands.log` 合计 23 行（dry 下不完整，见 F3）|
+|设备写入数|**0**（无 qdl write / fastboot flash / adb 写；预演后 `fastboot devices` 仍 `HA2EXB0E fastboot`）|
+|缺陷项|0 缺件、0 缺工具；S3 stock super 件按设计**故意缺**（现造，省 12.2 GiB）|
+|S5 件 O_DIRECT sha|`0dad04f1d2f41fc2126eb2bda045adec8c8dce3ad95535442e53369dfc0280af`（100663296 B）|
+|归档目录|`logs/android-v3-S{1..5}-20261120-190709/`（`commands.log` 各 5/6/7/5/0 行）|
+|峰值负载|`uptime` → `load average: 7.85, 6.80, 4.06`（预演为 sha 顺序 I/O，非构建；未取构建锁、未编译）|

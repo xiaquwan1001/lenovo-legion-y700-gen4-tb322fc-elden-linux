@@ -31,6 +31,23 @@ UNPACK=${UNPACK:-$ROOT/scripts/mkbootimg.py}   # 2026-10-17: 由重写的 mkboot
 mkdir -p "$OUT"
 
 die() { echo "[initramfs] FATAL: $*" >&2; exit 1; }
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 [ -f "$INIT" ] || die "唯一真源缺失: $INIT"
 
 # 固定时间戳：默认取真源 init 的 mtime（env 可覆盖）。
@@ -77,7 +94,7 @@ build_slim() {
 	pack "$R" "$OUT/initramfs-slim.cpio.gz"
 	rm -rf "$R"
 	check_init "$OUT/initramfs-slim.cpio.gz" || die "slim 内嵌 /init != 真源"
-	echo "[initramfs] slim → $OUT/initramfs-slim.cpio.gz  $(stat -c%s "$OUT/initramfs-slim.cpio.gz") B  sha=$(sha256sum "$OUT/initramfs-slim.cpio.gz" | cut -c1-16)"
+	echo "[initramfs] slim → $OUT/initramfs-slim.cpio.gz  $(stat -c%s "$OUT/initramfs-slim.cpio.gz") B  sha=$(sha_direct "$OUT/initramfs-slim.cpio.gz" | cut -c1-16)"
 }
 
 build_full() {
@@ -136,7 +153,7 @@ build_full() {
 	mv "$OUT/initramfs-full-elden.cpio.gz.new" "$OUT/initramfs-full-elden.cpio.gz"
 	rm -rf "$R"
 	check_init "$OUT/initramfs-full-elden.cpio.gz" || die "full 内嵌 /init != 真源"
-	echo "[initramfs] full → $OUT/initramfs-full-elden.cpio.gz  $(stat -c%s "$OUT/initramfs-full-elden.cpio.gz") B  sha=$(sha256sum "$OUT/initramfs-full-elden.cpio.gz" | cut -c1-16)"
+	echo "[initramfs] full → $OUT/initramfs-full-elden.cpio.gz  $(stat -c%s "$OUT/initramfs-full-elden.cpio.gz") B  sha=$(sha_direct "$OUT/initramfs-full-elden.cpio.gz" | cut -c1-16)"
 	echo "[initramfs] 基底: $base"
 }
 
@@ -147,9 +164,9 @@ case "${1:-}" in
 		for spec in "slim:initramfs-slim.cpio.gz" "full:initramfs-full-elden.cpio.gz"; do
 			k=${spec%%:*}; f=${spec#*:}
 			[ -f "$OUT/$f" ] || continue
-			before=$(sha256sum "$OUT/$f" | cut -d' ' -f1)
+			before=$(sha_direct "$OUT/$f")
 			case $k in slim) build_slim >/dev/null;; full) build_full >/dev/null;; esac
-			after=$(sha256sum "$OUT/$f" | cut -d' ' -f1)
+			after=$(sha_direct "$OUT/$f")
 			[ "$before" = "$after" ] && echo "[initramfs] $k 可复现 OK ($before)" || die "$k 不可复现: $before != $after"
 		done ;;
 	*) die "用法: $0 <slim|full [BASE]|verify>" ;;

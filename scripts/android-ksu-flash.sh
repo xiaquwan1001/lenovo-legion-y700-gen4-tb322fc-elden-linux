@@ -43,6 +43,23 @@ done
 FB="fastboot"
 [ -n "$SERIAL" ] && FB="fastboot -s $SERIAL"
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 
 # 各模式的「目标件」
 case "$MODE" in
@@ -84,7 +101,10 @@ if [ "$MODE" = backup ]; then
     mkdir -p "$PRE"
     "$QDL" -s ufs "$LOADER" read "$LBA_VBMETA_A" "$PRE/vbmeta_a.bin" \
                                 read "$LBA_INIT_BOOT_A" "$PRE/init_boot_a.bin"
-    sha256sum "$PRE"/vbmeta_a.bin "$PRE"/init_boot_a.bin | tee "$PRE/SHA256SUMS.txt"
+    : > "$PRE/SHA256SUMS.txt"
+    for _f in "$PRE"/vbmeta_a.bin "$PRE"/init_boot_a.bin; do
+      printf '%s  %s\n' "$(sha_direct "$_f")" "$_f" | tee -a "$PRE/SHA256SUMS.txt"
+    done
   fi
   exit 0
 fi

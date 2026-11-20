@@ -6,7 +6,7 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-21）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-20）
 
 > 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
@@ -14,7 +14,7 @@
 
 **做到哪**
 
-0. **🆕 2026-11-21（主机侧，单轮）—— dwc3 v10 的「两连接器」形状第一次进真 elden DTB 的 `dtbs_check` 门，零新增诊断**
+0. **🆕 2026-11-20（主机侧，单轮）—— dwc3 v10 的「两连接器」形状第一次进真 elden DTB 的 `dtbs_check` 门，零新增诊断**
    - elden 板 DTS 补齐 `mux-controls`（`gpio-mux` on `&tlmm 29`）+ `port@0` 两个 endpoint（`mux-state` 0/1）+ 两个 `usb-c-connector`；硬件依据 = 真机 live FDT（`reports/artifacts/uefi-eud-20261101/live-fdt.dts`：`port-select-gpios = <&tlmm 29 …>`、`connector@0/@1`、每口一颗 `fsa4480`）+ vendor overlay 的 `&ucsi` `gpios` 同一条线 + 2026-10-29 双口充电实测。件与门账 = `patches/upstream/dwc3-v10-20261120/elden-dts/` + 同目录 `README.md` §7。
    - **门对照**（`CHECK_DTBS=1`、**不带** `DT_SCHEMA_FILES`）：加之前 3 诊断 / 加之后 3 诊断（**新增 0**，3 条都是板级既有噪声）；两个自造负样例分别 5/2 条 USB 诊断 ⇒ 门真咬得住。**关键修正**：v9 那版「在 `sm8750.dtsi` 里无条件把 `port@0` 拆两 endpoint」会让 mtp/qrd 各多 2 条诊断，已改为 dtsi 只加一个 label、板级 `/delete-node/` 重写。
    - 新坑 **#696**（`PITFALLS/sessions/328-…`）：`DT_SCHEMA_FILES` 对**无 `select:` 的公共片段**恒空转；另修 `DEVICE` §1.4 SMB1501 地址错（`@0x42/@0x43` 是 `fsa4480`）。

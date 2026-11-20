@@ -31,6 +31,23 @@
 #   * 写顺序 = **先备表后主表**：中途掉电只会留下「新备表 + 旧主表」，主表仍自洽可比。
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# sha_direct <文件>：**O_DIRECT 直读**算 sha256（绕过页缓存），工具回退 buffered 时 shell 侧
+# 兜底并打 WARN。为什么必须 O_DIRECT（2026-11-20 实测）：页缓存被污染时 buffered 连读多次
+# 「稳定但错」（v1 件 637a9965… vs 真值 e3d0d26f…），旧「双 sha256 硬门」抓不到。
+# 工具：scripts/odirect-sha.py（--tsv 第 3 列 = sha）；取证：reports/odirect-sha-gate-20261120.md。
+ODIRECT_SHA=${ODIRECT_SHA:-$(cd "$(dirname "$0")/.." && pwd)/scripts/odirect-sha.py}
+sha_direct() {
+	local f=$1 out v
+	[ -n "$f" ] && [ -e "$f" ] || { printf '%s\n' ""; return 0; }
+	out=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv "$f" 2>&1)
+	v=$(printf '%s\n' "$out" | awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" != 64 ]; then
+		v=$(sha256sum "$f" | cut -d' ' -f1)
+		echo "WARN sha_direct: $f 未走 O_DIRECT（$out），退回 buffered（结果可能被页缓存污染）" >&2
+	fi
+	printf '%s\n' "$v"
+}
+
 LUN=""; MAIN=""; BACKUP=""; APPLY=0; ENTER_EDL=0; RESTORE=""; DO_RESET=0
 SN=${SN:-HA2EXB0E}
 LOADER=${LOADER:-$HOME/下载/tb322fc/xbl_s_devprg_ns.melf}
@@ -104,8 +121,8 @@ PY
 BKP_START=$((ALT_LBA-4))
 
 echo "== 计划（LUN${LUN}）=="
-echo "  主表   写入 LBA 0..5              $(basename "$MAIN")  ${msz} B  sha=$(sha256sum "$MAIN" | cut -c1-16)"
-echo "  备表   写入 LBA ${BKP_START}..${ALT_LBA}   $(basename "$BACKUP")  ${bsz} B  sha=$(sha256sum "$BACKUP" | cut -c1-16)"
+echo "  主表   写入 LBA 0..5              $(basename "$MAIN")  ${msz} B  sha=$(sha_direct "$MAIN" | cut -c1-16)"
+echo "  备表   写入 LBA ${BKP_START}..${ALT_LBA}   $(basename "$BACKUP")  ${bsz} B  sha=$(sha_direct "$BACKUP" | cut -c1-16)"
 echo "  分区数（新表有效条目）= ${NPARTS}   扇区 = 4096 B"
 echo "  表校验 = ${TBLCHK}"
 if [ "$APPLY" -eq 0 ]; then
@@ -187,14 +204,14 @@ timeout -k 10 420 "$QDL" -s ufs -R "$LOADER" \
 	sha256 "$LUN/$BKP_START+5" \
 	2>&1 | tee "$READDIR/qdl.log" | tail -14
 if [ -s "$READDIR/pre-write-primary.bin" ]; then
-	echo "回退基线: $READDIR/pre-write-primary.bin sha=$(sha256sum "$READDIR/pre-write-primary.bin" | cut -c1-16)$([ -s "$READDIR/pre-write-backup.bin" ] && echo " + pre-write-backup.bin")"
+	echo "回退基线: $READDIR/pre-write-primary.bin sha=$(sha_direct "$READDIR/pre-write-primary.bin" | cut -c1-16)$([ -s "$READDIR/pre-write-backup.bin" ] && echo " + pre-write-backup.bin")"
 fi
 
 ok=1
 for pair in "main:$MAIN:$READDIR/gpt$LUN-primary.bin" "backup:$BACKUP:$READDIR/gpt$LUN-backup.bin"; do
 	kind=${pair%%:*}; rest=${pair#*:}; want=${rest%%:*}; got=${rest#*:}
 	if [ ! -s "$got" ]; then echo "FAIL $kind 读回缺文件 $got"; ok=0; continue; fi
-	a=$(sha256sum "$want" | cut -d' ' -f1); b=$(sha256sum "$got" | cut -d' ' -f1)
+	a=$(sha_direct "$want"); b=$(sha_direct "$got")
 	if [ "$a" = "$b" ]; then echo "OK   $kind 读回逐字节一致 sha=${a:0:16}"; else echo "FAIL $kind 读回不一致 want=${a:0:16} got=${b:0:16}"; ok=0; fi
 done
 echo "读回件目录: $READDIR（命名 = gpt${LUN}-{primary,backup}.bin，可直接给 gpt-audit 的 --dev）"
@@ -205,7 +222,7 @@ if [ "${#devsha[@]}" -eq 2 ]; then
 	i=0
 	for pair in "main:$MAIN" "backup:$BACKUP"; do
 		kind=${pair%%:*}; want=${pair#*:}
-		h=$(sha256sum "$want" | cut -d' ' -f1)
+		h=$(sha_direct "$want")
 		if [ "$h" = "${devsha[$i]}" ]; then echo "OK   $kind 设备端 sha256 一致 sha=${h:0:16}"
 		else echo "FAIL $kind 设备端 sha256 不符 host=${h:0:16} dev=${devsha[$i]:0:16}"; ok=0; fi
 		i=$((i+1))

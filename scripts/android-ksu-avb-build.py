@@ -27,6 +27,27 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AVBTOOL = os.path.join(REPO, 'tools', 'avbtool.py')
+def odirect_sha(path):
+    """**O_DIRECT 直读** sha256（绕过页缓存）——见 scripts/odirect-sha.py 与
+    reports/odirect-sha-gate-20261120.md。页缓存污染时 buffered 连读多次会「稳定但错」，
+    所以主机侧文件身份一律走它。工具 O_DIRECT 不可用（tmpfs 等）时自己退回 buffered 并打
+    WARN；这里再留一层纯 python buffered 兜底。"""
+    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'odirect-sha.py')
+    try:
+        r = subprocess.run([sys.executable, tool, '--tsv', path],
+                           capture_output=True, text=True, timeout=1800, check=True)
+        cols = r.stdout.splitlines()[0].split('\t')
+        if len(cols) >= 3 and len(cols[2]) == 64:
+            return cols[2]
+        raise ValueError('unexpected tool output: %r' % r.stdout[:120])
+    except Exception as e:  # noqa: BLE001
+        sys.stderr.write('WARN odirect-sha: %s 未走 O_DIRECT（%s），退回 buffered\n' % (path, e))
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for b in iter(lambda: f.read(1 << 20), b''):
+            h.update(b)
+    return h.hexdigest()
+
 
 # stock 259 vbmeta_a 里 init_boot hash descriptor 的 salt（复用 => 描述符只有 size/digest 变）
 INIT_BOOT_SALT = 'eb39718accf62c4b8f0d2af4ce8cc08a8a6b9f2d3ff50606edec597456273761'
@@ -114,7 +135,7 @@ def main():
     # 0) 输入指纹
     print('== inputs')
     for p in (args.stock_init_boot, args.base_vbmeta, ksud, ko, key):
-        h = hashlib.sha256(open(p, 'rb').read()).hexdigest()
+        h = odirect_sha(p)
         print('  %-64s %s' % (os.path.relpath(p, REPO), h))
     ks, rs = bootimg_ramdisk_size(args.stock_init_boot)
     print('  stock init_boot: kernel_size=%d ramdisk_size=%d (kernel=0 => ramdisk-only GKI init_boot)' % (ks, rs))
@@ -244,7 +265,7 @@ def main():
             if not os.path.exists(fp):
                 print('  (skip missing %s)' % n)
                 continue
-            h = hashlib.sha256(open(fp, 'rb').read()).hexdigest()
+            h = odirect_sha(fp)
             print('  %s  %s' % (h, n))
             f.write('%s  %s\n' % (h, n))
     print('SHA256SUMS -> %s' % os.path.join(out, 'SHA256SUMS'))
