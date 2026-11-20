@@ -243,3 +243,40 @@ timeout -k 5 60 bash -n scripts/android-v3-bringup-walkthrough.sh
 | `step10-final-state.log` | 源件未改动（sha `b428a31d…` / mtime 2026-06-18）+ `git status` |
 | `bootimg.h` | AOSP bootimg.h 原文（字段布局引用源，sha256 见 `sha256sum` 输出） |
 | `odirect_compare.py` / `avb_probe.py` | 上面两个独立复核工具（可复跑） |
+
+---
+
+## 11. 2026-11-21 增量：vendor_boot v3/v4 支持 + `--selftest` + 门（主机侧）
+
+> 承接 §6「vendor_boot 侧的 cmdline 常常在真源」：本轮把「另一侧改不了」这个设备窗口风险在主机侧消掉，
+> 并把改写器本身做成机检。
+
+| 项 | 结果 |
+|---|---|
+| 工具能力 | `scripts/boot-img-cmdline.py` 按 magic 自动识别 `ANDROID!`（boot v0/v1/v2/v3/v4）与 **`VNDRBOOT`（vendor_boot v3/v4）**；vendor 侧仍是「等长原地改写」：cmdline 窗口 = **偏移 28、长 2048**（header_size 2112/2128），写后断言窗口外逐字节不变、总长不变 |
+| vendor 解析 | 原厂 `backup/official-rom-15.10.259/vendor_boot.img`：`hv=4 header_size=2128`、`vendor_ramdisk=8633118`、`dtb=6505470`、`ram_table=108(num=1)`、`bootconfig=232`、`tail=85508096`；`--verify` **逐字节全等** |
+| vendor 产物 | `out/android-v3-bringup-20261120/boot-ttygs0-vendor_boot.img`（100663296 B，与原件同长）；cmdline 尾部只多 ` console=ttyGS0`；`vendor_ramdisk/dtb/ramdisk_table/bootconfig/tail` 五段 sha 全 SAME |
+| boot 产物（回归） | `.../boot-ttygs0-boot.img` 重跑同参数 → O_DIRECT sha 仍 **`0dad04f1…`**（与 11-20 件逐字节一致，说明改写确定性） |
+| `--selftest` | 合成镜像自检（不读外部件）：**4 正例**（boot v3/v4、vendor v3/v4 的往返 + append 后窗口外不变 + 大小不变）+ **4 反例**（坏 header_size / 截断件 / 坏 magic / 超长 cmdline 必拒）；`rc=0` |
+| 门 | `check-doctor` **§27**（委托 `--selftest`；产物在位则额外 `--verify`；缺 python3 时 SKIP 不装 PASS），纳入 fast 档 |
+| **边界（仍未变）** | ① vendor 侧件**没有零写盘通道**（`fastboot boot` 只带 boot.img）⇒ 要用它必须刷 `vendor_boot_a`，属知情写盘；② 两侧 cmdline 改动都会让原厂 AVB hash descriptor 失配（OEM 私钥签名，本仓不能重签）⇒ 待上机判据不变（§9） |
+
+复现：
+
+```bash
+python3 scripts/boot-img-cmdline.py --selftest
+python3 scripts/boot-img-cmdline.py backup/official-rom-15.10.259/vendor_boot.img --verify
+python3 scripts/boot-img-cmdline.py backup/official-rom-15.10.259/vendor_boot.img \
+        --append 'console=ttyGS0' -o out/android-v3-bringup-20261120/boot-ttygs0-vendor_boot.img
+scripts/check-doctor.sh --only 27-bootimg-cmdline.sh
+```
+
+**同轮附带修掉的设备窗口阻塞**（与本报告同因：工具在、脚本判「不在」）：
+
+- 本机 PATH 里**没有 `fastboot`**，它在 `~/.local/opt/platform-tools/fastboot`（v37.0.1，记忆 `failures-kernel`）。
+  `scripts/android-v3-bringup-walkthrough.sh` 的前置校验用 `command -v fastboot` ⇒ 实测 `--step S5 --dry-run`
+  **直接以「MISS fastboot」退出**（S1–S5 全被跳过，看着像没装工具）。修法 = 新 `scripts/lib-hosttools.sh`
+  （`hosttool_resolve` + `ensure_hosttools`，幂等把落点目录前置进 PATH、导出 `FB_BIN/ADB_BIN`），
+  walkthrough 前置校验与 `scripts/lib-fastboot.sh` 都改用它；复跑后 front-matter 打印
+  `OK fastboot /home/xuqianhui/.local/opt/platform-tools/fastboot（v37.0.1）`，S5 分支恢复正常。
+  坑号 = `PITFALLS` **#699**。

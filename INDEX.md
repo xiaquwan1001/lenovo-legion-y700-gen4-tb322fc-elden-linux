@@ -20,6 +20,12 @@
      7 项离线判据全过；用同一校验器跑**在机** `vbmeta_b` 得 2 处 FAIL（修复前对照）。
    - **剩**：一次上机验收 `fastboot flash vbmeta_b` + `fastboot boot bootslot-b/boot_b.img`（设备窗口；回退件在 `logs/forensics-20261120-2210/vbmeta_b.img`）；
      `flags=0` 干净链需先有 `dtbo_b` dump。成因/证据 = `reports/vbmeta-b-resign-20261121.md`。
+   - **同轮（设备窗口就绪度）**：① `scripts/boot-img-cmdline.py` 扩到 **vendor_boot v4**（cmdline 窗口 28..2076，
+     等长原地改写）+ `--selftest`（4 正例/4 反例）+ `check-doctor` **§27**；S5 两件已落
+     `out/android-v3-bringup-20261120/boot-ttygs0-{boot,vendor_boot}.img`（vendor 侧五段载荷 sha 全 SAME）。
+     ② **`fastboot` 假 MISS 修掉**（PITFALLS **#699**）：本机 fastboot 在 `~/.local/opt/platform-tools` 而
+     walkthrough 用 `command -v` 判 ⇒ `--step S5 --dry-run` 曾整轮 `MISS` 退出；新 `scripts/lib-hosttools.sh`
+     统一解析（`lib-fastboot.sh` 同改）。
 0. **🆕 2026-11-20 22:00–23:10（U2 HA2EXB0E，当晚目标「恢复到历史最佳」= 达成）— 设备曾卡 fastboot（三层真因已定因并修好）+ PC 声音默认转发到平板**
    - **现态（三次冷起实测，均 ~25 s 直进 Linux，无回落）**：`boot_b` 主启、`qbootctl` = `_b` Active/Successful/**Bootable 全 1**；在机 **vk192**（UTS `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`）；`/` = `/dev/sda17` 190 G（1260 包）；`phoc+phosh` 在；Mesa **26.1.6**；`wlan0` 上网（默认路由）+ `usb0` 192.168.7.1 SSH；六件 mask 在位、`systemctl --failed` 空。
    - **两种门全绿**：`scripts/deploy-desktop-shell.sh --check` = **MISS=0**；`scripts/zero-to-desktop-check.sh` = **S5–S12 全 ok**（S10 之前 MISS 的两项已修：`man-db` 装上、GPU devfreq 真生效 525 MHz/10 ms）。

@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=6ebe37c717078500（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=746de3d84b3edab4（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**340**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 74 / 设备操作 105 / 造件 70 / 取证 46 / 一次性 2 / 公共库 6 / 其它 37
+- 入口总数：**342**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 75 / 设备操作 105 / 造件 70 / 取证 46 / 一次性 2 / 公共库 7 / 其它 37
 - 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -24,7 +24,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（74）
+## 门禁（75）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -49,8 +49,9 @@
 | `scripts/doctor/23-out-manifest.sh` | §23 out/ 造件「报告↔镜像」账本门（委托 scripts/out-manifest-check.py）。 | 5 |
 | `scripts/doctor/24-scripts-index.sh` | §24 scripts/README.md 索引新鲜度门（委托 scripts/gen-scripts-index.py --check）。 | 4 |
 | `scripts/doctor/25-out-status.sh` | §25 out/ 造件生命周期账本门（委托 scripts/out-status.py --check）。 | 4 |
-| `scripts/doctor/26-vbmeta-b-chain.sh` | §26 b 槽自签 AVB 链一致性门（委托 scripts/build-vbmeta-b.sh --check）。 | 2 |
-| `scripts/doctor/_lib.sh` | shellcheck shell=bash | 23 |
+| `scripts/doctor/26-vbmeta-b-chain.sh` | §26 b 槽自签 AVB 链一致性门（委托 scripts/build-vbmeta-b.sh --check）。 | 5 |
+| `scripts/doctor/27-bootimg-cmdline.sh` | §27 boot/vendor_boot cmdline 改写器自检门（委托脚本自带 --selftest）。 | 4 |
+| `scripts/doctor/_lib.sh` | shellcheck shell=bash | 24 |
 | `scripts/doctor/ab-bench.sh` | bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置） | 6 |
 | `scripts/android-apk-pkgname.py` | 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。 | 4 |
 | `scripts/android-ksu-avb-build.py` | 造 KernelSU(LKM) 修补的 init_boot + 与之自洽的 vbmeta_a。 | 9 |
@@ -61,7 +62,7 @@
 | `scripts/cam-load-verify.sh` | 在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。 | 8 |
 | `scripts/check-abi-config.sh` | 内核 .config 的 ABI 敏感项门禁（build/pack-time gate）。 | 35 |
 | `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 45 |
-| `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 295 |
+| `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 298 |
 | `scripts/check-init.sh` | init 单一真源 / 可运行性自检（主机侧，只读） | 12 |
 | `scripts/check-layout.sh` | 顶层布局注册表门（versions/layout.tsv ↔ 磁盘 ↔ INDEX.md） | 24 |
 | `scripts/check-modular-config.sh` | 模块化 config 门禁（第二层，2026-10-26） | 28 |
@@ -230,7 +231,7 @@
 | `scripts/asset-install-linux.sh` | 把 assets/android-20261119/ 里的原厂安卓资产装到 Linux 桌面 | 11 |
 | `scripts/b3b-session-retry.sh` | 零构建实验：在坏发台上重走一次 modeset，看面板是否点亮。 | 7 |
 | `scripts/bench-install.sh` | 设备侧：安装可选基准工具（需要网络） | 11 |
-| `scripts/boot-img-cmdline.py` | 从一个已存在的 boot.img 里取出 kernel/ramdisk/dtb， | 37 |
+| `scripts/boot-img-cmdline.py` | 从一个已存在的 boot.img 里取出 kernel/ramdisk/dtb， | 46 |
 | `scripts/bootimg-replace-kernel.py` | 只替换 Android boot image 的内核段，其余逐字节保留。 | 10 |
 | `scripts/build-athm-probe.sh` | Q26 Step A probe: CONFIG_ATH12K=m single-shot build. | 3 |
 | `scripts/build-boot-slim.sh` | G1-30（= G1-29 路线 C）：最小 initramfs 版 boot.img | 10 |
@@ -246,7 +247,7 @@
 | `scripts/build-phosh-arm64.sh` | 产出带「output power 失败即视为屏亮」修复的 aarch64 phosh | 6 |
 | `scripts/build-phosh-upstream-fix.sh` | 用「上游 main 源树 + 本地补丁」编 aarch64 phosh（验证上游补丁用） | 3 |
 | `scripts/build-sensord.sh` | 编译 eldroid-sensord（C4 数据源 daemon）： | 11 |
-| `scripts/build-vbmeta-b.sh` | 重签 b 槽自签 AVB vbmeta（自签链，把 chain `boot` 指向**现役** avb.key） | 6 |
+| `scripts/build-vbmeta-b.sh` | 重签 b 槽自签 AVB vbmeta（自签链，把 chain `boot` 指向**现役** avb.key） | 14 |
 | `scripts/audio-tplg/build.sh` | 构建 TB322FC 的 AudioReach topology (Lenovo-Y700-Gen4-tplg.bin) | 70 |
 | `scripts/wd-audio-test/build.sh` | Build the Waydroid container-audio test dexes (TestAudio / TestCodec / ListCodecs). | 70 |
 | `scripts/c1-iprule-build.sh` | build the vk95 kernel that enables policy routing | 4 |
@@ -282,7 +283,7 @@
 | `scripts/reports-index.py` | 由文件名 + 首个 `# ` 标题生成 `reports/README.md`（只读报告，只写这一个文件）。 | 16 |
 | `scripts/sd-variant-build.sh` | build one sleep-death (熄屏→关机) candidate kernel + boot.img. | 5 |
 | `scripts/setup-session-greetd.sh` | switch the TB322FC Alpine session between the | 23 |
-| `scripts/sign-boot-b.sh` | Sign a mainline boot image for slot b (self-signed AVB, see bootslot-b/README.md). | 42 |
+| `scripts/sign-boot-b.sh` | Sign a mainline boot image for slot b (self-signed AVB, see bootslot-b/README.md). | 43 |
 | `scripts/uefi-bootimg-dump-v0.py` | dump Android boot image v0 header fields (one line per field) + summary. | 6 |
 | `scripts/uefi-build-variant.sh` | 在 7-mu-lenovo 树上构建一个 **可追溯的 UEFI 变体**（G1-29 线） | 41 |
 | `scripts/uefi-r21-p7-ladder.sh` | UEFI R21「p7 / preamble7」一族镜像的**唯一重建入口**（G1-29 线，纯主机侧） | 151 |
@@ -346,13 +347,14 @@
 | `scripts/android-assets-extract-20261119.py` | 从已上机的精简 system_a.img 提取安卓原厂资产 → assets/android-20261119/ + MANIFEST.tsv | 9 |
 | `scripts/mailbox-cleanup-20261102.py` | USTC mailbox cleanup 2026-11-02. | 12 |
 
-## 公共库（6）
+## 公共库（7）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
 | `scripts/lib-boot-ready.sh` | 「复位/进 fastboot 前的系统就绪门」（host 侧，经 SSH 判定当前运行的系统） | 34 |
 | `scripts/lib-device-lock.sh` | the SINGLE source of the tablet device lock. | 49 |
-| `scripts/lib-fastboot.sh` | fastboot / ssh 设备调用的安全封装（2026-11-09 工具挂死调查产物） | 30 |
+| `scripts/lib-fastboot.sh` | fastboot / ssh 设备调用的安全封装（2026-11-09 工具挂死调查产物） | 34 |
+| `scripts/lib-hosttools.sh` | 主机侧外部工具（fastboot / adb）落点解析（2026-11-21） | 7 |
 | `scripts/lib-serial-source.sh` | 串口日志的唯一采集实现（被 suspend/n5b 等采集脚本 source）。 | 11 |
 | `scripts/lib-ssh.sh` | 设备 SSH 调用的单一实现（选项统一 + 一次往返批量取状态） | 25 |
 | `scripts/lib-wait.sh` | 「等设备到某个状态」的单一实现（check-first + 指数退避 + 换代判据） | 34 |
@@ -362,7 +364,7 @@
 | 入口 | 用途 | 引用 |
 |---|---|---|
 | `scripts/android-launcher-db-trim.py` | 裁剪 /system/etc/launcher.db 的默认桌面布局（纯主机侧、不用 root）。 | 6 |
-| `scripts/android-v3-bringup-walkthrough.sh` | 安卓精简 v3「首启验证」上机执行包（S1–S5，默认 dry-run） | 12 |
+| `scripts/android-v3-bringup-walkthrough.sh` | 安卓精简 v3「首启验证」上机执行包（S1–S5，默认 dry-run） | 13 |
 | `scripts/blackbox.py` | UEFI 早期可见性「DDR 黑匣子」读写/解码工具（主机侧，经 ssh 走设备）。 | 26 |
 | `scripts/deskstack-switch.sh` | 桌面栈整档切换（phoc + phosh 全套），用于 T20/T19 的 A/B 对照 | 3 |
 | `scripts/elden-backlight-floor.sh` | 背光下限守护（防止「看起来像黑屏」） | 19 |
@@ -379,7 +381,7 @@
 | `scripts/lf2-expected.py` | 复算 GRUB LoadFile2 补丁（elden_lf2_*）对同一份 initrd 的期望值。 | 8 |
 | `scripts/mail-append-sent.py` | 把「已发出但 Sent Items 没有账」的邮件补写进 IMAP `Sent Items`。 | 15 |
 | `scripts/mailbox-cleanup-weekly.sh` | 每周邮箱整理（2026-11-02 用户批准）：只删「非我方线程 + 非直接发我 + 早于 7 天」的列表流水。 | 3 |
-| `scripts/odirect-sha.py` | 绕过页缓存（O_DIRECT）算 sha256 的硬门工具。 | 42 |
+| `scripts/odirect-sha.py` | 绕过页缓存（O_DIRECT）算 sha256 的硬门工具。 | 44 |
 | `scripts/openrc-enable.sh` | switch the TB322FC (elden) persistent root from the ad-hoc | 39 |
 | `scripts/partlun.py` | TB322FC 分区名 → UFS LUN 的**静态归属表** + 「同名歧义拒绝」。 | 11 |
 | `scripts/q28-reboot-until-good.sh` | Reboot the tablet until the panel actually inits (Q28 GOOD boot) — bounded. | 7 |

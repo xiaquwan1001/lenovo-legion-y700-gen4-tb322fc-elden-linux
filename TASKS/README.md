@@ -144,7 +144,15 @@
 - **P1 安卓 a 槽**（G2 共存）仍起不来（11-20 11:35 实测）：S2 原厂 `metadata` / S3 原厂 `super` 对照，需设备窗口。
 - **P2 B 档 ~42 G 回收**：等 v3 首启判据（`versions/out-artifacts.tsv` 已标 `pending` 禁删）。
 - **P2 上游 M 系列**：wl2868c v12 / dwc3 v10 / elden DTS v7 / fastrpc v3 按 §7 排队；dwc3 v10 出真补丁需先重建内核树。
-- **已收口备忘**：fastboot 三层真因（#697）、音频/触觉资产（#698）、PC→平板音频常驻（`scripts/as-client-deploy.sh`）。
+- **P1 安卓 a 槽 —— 主机侧就绪度（2026-11-21 补齐，剩的全是设备窗口）**：
+  ① **S5 取证件两侧都能造了**：`scripts/boot-img-cmdline.py` 按 magic 同时支持 boot v4 与 **vendor_boot v4**
+  （cmdline 窗口 28..2076，等长原地改写）；两件已落 `out/android-v3-bringup-20261120/boot-ttygs0-{boot,vendor_boot}.img`
+  （vendor 侧五段载荷 sha 全 SAME、整文件同长）；`--selftest` 4 正例 + 4 反例，挂 `check-doctor` **§27**（fast 档）。
+  ② **`fastboot` 假 MISS 已修**（PITFALLS **#699**）：本机 fastboot 不在 PATH（在 `~/.local/opt/platform-tools`），
+  walkthrough 前置校验原来直接 `MISS` 退出；新 `scripts/lib-hosttools.sh` + `lib-fastboot.sh`/walkthrough 改用它，
+  复跑打印 `OK fastboot …（v37.0.1）`。
+  ③ 仍需设备：S1 清 BCB+槽位、S2 原厂 `metadata`、S3 原厂 `super` 对照、S5 上机判「ABL 认不认 v4 件 + 取哪侧 cmdline」。
+- **已收口备忘**：fastboot 三层真因（#697）、音频/触觉资产（#698）、fastboot 不在 PATH（#699）、PC→平板音频常驻（`scripts/as-client-deploy.sh`）。
 
 **当前口径（2026-10-06 立，2026-11-03 复核）**
 

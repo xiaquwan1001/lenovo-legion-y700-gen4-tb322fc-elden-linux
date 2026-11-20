@@ -224,7 +224,15 @@ preflight() {
 		[ -e "$t" ] || { printf '   MISS  工具 %s\n' "$t"; bad=1; }
 	done
 	command -v python3 >/dev/null || { printf '   MISS  python3\n'; bad=1; }
-	command -v fastboot >/dev/null || { printf '   MISS  fastboot\n'; bad=1; }
+	# fastboot 本机不在 PATH（在 ~/.local/opt/platform-tools）⇒ 必须先解析，否则设备窗口里
+	# 会把自己挡在门外（2026-11-21 实测：S5 dry-run 因这条 MISS 直接退出）。
+	. "$ROOT/scripts/lib-hosttools.sh"
+	ensure_hosttools --quiet
+	if [ -n "${FB_BIN:-}" ]; then
+		printf '   OK    fastboot        %s（%s）\n' "$FB_BIN" "$("$FB_BIN" --version 2>/dev/null | head -1)"
+	else
+		printf '   MISS  fastboot（PATH 与 ~/.local/opt/platform-tools 都没有）\n'; bad=1
+	fi
 	command -v adb >/dev/null || { printf '   MISS  adb\n'; bad=1; }
 	[ -x "$QDL" ] && info "qdl: $QDL" || bad=1
 	info "loader: $LOADER"
@@ -697,10 +705,23 @@ S4() {
 S5() {
 	step_begin S5
 	local want=$ART/boot-ttygs0-boot.img
+	local wvnd=$ART/boot-ttygs0-vendor_boot.img
 	local src=$ROM/boot.img
-	say "S5) 日志通道：console=ttyGS0 的 boot 件（header v4 改写器已就位）"
+	local srcv=$ROM/vendor_boot.img
+	say "S5) 日志通道：console=ttyGS0 的 boot 件（boot v4 + vendor_boot v4 改写器都已就位）"
 	info "件：$want（源 = $src，header v4 / header_size=1584 / cmdline 原为空）"
-	info "造件与验收：reports/bootimg-v4-cmdline-20261120.md（v2 路径回归 = 逐字节不变）"
+	info "件：$wvnd（源 = $srcv，VNDRBOOT v4 / header_size=2128 / cmdline 111 B，原含 console=ttynull）"
+	info "造件与验收：reports/bootimg-v4-cmdline-20261120.md（2026-11-21 增量：vendor_boot 支持 + --selftest）"
+
+	if [ ! -e "$wvnd" ]; then
+		info "vendor_boot 侧件缺（$wvnd）——若需排查「ABL 只取 vendor_boot 侧 cmdline」，主机侧一键造："
+		info "  timeout -k 5 300 python3 scripts/boot-img-cmdline.py $srcv --append 'console=ttyGS0' -o $wvnd"
+		info "  ⚠ vendor_boot 侧**没有零写盘通道**（fastboot boot 只带 boot.img）⇒ 用它必须刷 vendor_boot_a（写盘、需知情）"
+	elif [ "$APPLY" = 1 ]; then
+		run 120 python3 "$ROOT/scripts/boot-img-cmdline.py" "$wvnd" --show
+		run 300 python3 "$ROOT/scripts/boot-img-cmdline.py" "$wvnd" --verify
+		info "vendor_boot 侧件已核（仅取证/备刷；本轮 S5 不刷它）"
+	fi
 
 	if [ ! -e "$want" ]; then
 		warn "S5 不可用（缺件）：$want 不在位"

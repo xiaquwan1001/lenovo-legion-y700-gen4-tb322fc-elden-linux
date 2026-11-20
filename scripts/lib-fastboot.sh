@@ -24,6 +24,12 @@
 
 : "${TAB:=${TABLET:-root@192.168.7.1}}"
 : "${FBTO:=30}"
+
+# 2026-11-21：本机 PATH 里没有 fastboot（在 ~/.local/opt/platform-tools，见 lib-hosttools.sh 头注），
+# 不解析就会让所有 fbx/fbdevices 在设备窗口里报「command not found」而看起来像设备问题。
+. "$(dirname "${BASH_SOURCE[0]}")/lib-hosttools.sh"
+ensure_hosttools --quiet
+FB=${FB_BIN:-fastboot}
 _FB_TMPDIR=${FBTMPDIR:-${TMPDIR:-/tmp}}
 _FB_OUT=""   # 最近一次 fbx 的 stdout（先落文件再读，绝不进管道）
 
@@ -33,7 +39,7 @@ _FB_OUT=""   # 最近一次 fbx 的 stdout（先落文件再读，绝不进管�
 fbx() {
 	[ -n "${SER:-}" ] || { echo "[fbx] SER 为空 — 拒绝裸 fastboot（#371）" >&2; return 64; }
 	local f; f=$(mktemp "$_FB_TMPDIR/fbx.XXXXXX") || return 70
-	timeout -k 2 "$FBTO" fastboot -s "$SER" "$@" >"$f" 2>&1
+	timeout -k 2 "$FBTO" "$FB" -s "$SER" "$@" >"$f" 2>&1
 	local rc=$?
 	_FB_OUT=$(cat "$f")
 	[ -n "${FBX_KEEP:-}" ] || rm -f "$f"
@@ -47,7 +53,7 @@ fbx() {
 fbdevices() {
 	local sn=${1:-${SER:-}}
 	local f; f=$(mktemp "$_FB_TMPDIR/fbd.XXXXXX") || return 70
-	timeout -k 2 10 fastboot devices >"$f" 2>/dev/null
+	timeout -k 2 10 "$FB" devices >"$f" 2>/dev/null
 	local rc=$?
 	_FB_OUT=$(cat "$f")
 	rm -f "$f"
