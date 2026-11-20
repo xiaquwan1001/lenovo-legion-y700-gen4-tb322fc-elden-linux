@@ -1,0 +1,32 @@
+# 上机件清单（主机侧实测，2026-11-20T10:10:32+08:00）
+FILE                                                                    BYTES          MiB SHA256
+out/android-min-20261118/pkg/super_min.img                         8893497344      8481.50 e3d0d26fb3a6f97ec10e4533ea2d675a9693acb42bb10ddb9dd4cb897517e13c
+out/android-slim-v3-20261119/new/super_min_v3.img                  7454326784      7109.00 51eae1075fe159b02946a4e4e5548fa83bb5e861fb441244ac8dddc423bc6440
+out/android-slim-v3-20261119/new/super_dbg.img                     7454326784      7109.00 82d33151bc81b3a3f05d8faf1ae6e434b08621e5efadd668c4bea6491c6ff776
+out/android-slim-v2b-20261119/new/super_min_v3.img                 9165602816      8741.00 98a88ea0aa82283822034d823751a3f3ef30aa44fba723516f6d26abb95adbfc
+out/android-v3-bringup-20261120/metadata_stock.img                   29372416        28.01 a735fbc74abf0d9695a1fc598128acc78184abc710224719825bbe16fca4722e
+backup/official-rom-15.10.259/boot.img                              100663296        96.00 b428a31dadc5db3f91620c1f4114f5ee7702e34e0789ed9bf84a878a49898f20
+out/boot-elden-vk192.img                                             85815296        81.84 bdf47f5f3f8a49e8e1fd77557c10640dec8e00c76e46bd731503e162bbdb841b
+
+## 原厂 super 分片（rawprogram_save_persist_unsparse0.xml，label=super，8 段）
+super_1.img 405504 d30085c8ba5ee1faae7d7a70a3c069372f29c2573c63ff1e39eece412416e9b4
+super_2.img 1650688 7cd080a1667785ed5a5d6dedf3deda192fc6266f49096dbd421298d055844abd
+super_3.img 1041178624 9fa82c7fc4505fdc78c05e0407bec75fe7f1c5633ce486ec2df0aa36143fe976
+super_4.img 12266729472 756f288dace1cbaed3a1412b81d902a26deeb2ef4d6ee778022e3c08cdbd44e2
+super_5.img 12533760 bdd924e82c810a4dd4489e1ef51f21a2dc415e117d4ef0e449243c5ab32b4b63
+super_6.img 598372352 780e33b4ca4f92bc7ae06f98d03d9e44da1aaf1f1d11f6a188ffbe70599fda60
+super_7.img 1536172032 9f3f4057b8b5298f33216d091ff667b8b17f204df82158773316129fcdf91203
+super_8.img 147382272 179419e2e61bd675cdb3942a414421d75d85910888365317bd75383d4800587c
+
+## 原厂 metadata 分片（label=metadata，8 段）
+metadata_1.img 8192 028619ac83da1e7964b3cddd73a7a9b290be5b4f0b9bd8ef0ba88d10719a91d1
+metadata_2.img 32768 84d802b915b437de52f49b326c315439a7c55d65c86be472bf03770716071813
+metadata_3.img 10539008 73c9bed31d53d66485dd5147c9c025b5b1cf1492ec9671bb838ccf0b236fe83d
+metadata_4.img 16384 4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe
+metadata_5.img 24576 de676bae28a480011d3d012db14bef539324e62a841a9627863c689bea168af3
+metadata_6.img 28672 80b7ca8f08eaf9836c032dfd3c831e6e98e5682d4d069efecd95000896411a07
+metadata_7.img 8192 9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47
+metadata_8.img 12288 f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a
+
+## 工作区 libre
+/dev/nvme0n1p2  937G  726G  164G   82% /

@@ -37,6 +37,7 @@
 #   20-rootfs-image.sh 磁盘根镜像门（/init + 网络登入件，坏件必拒）       [全量]
 #   21-write-precheck.sh 写前预检（GPT 快照复验 P0-5 / dump 三值判定 P0-6）  [全量+fast]
 #   22-desktop-chain.py 零到桌面链路门（链件/坑号锚点/手册步连续 + 删包必拒自检）[全量+fast]
+#   23-out-manifest.sh out/ 造件「报告↔镜像」账本门（大件/多镜像必须有报告，arch-audit P0#2）[全量+fast]
 #
 # 验收用环境变量（正常使用无需设置）：
 #   ELF_ROOT=<dir>        被检查的树（默认 = 本脚本上一级）—— A/B 时指向主仓
@@ -53,12 +54,13 @@ SEC_TIMEOUT="${ELF_SEC_TIMEOUT:-600}"
 export ROOT HELPERS
 
 # 子门清单：按输出顺序排列（数字 = 与旧版 §N 对齐）。
-ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 20-rootfs-image.sh 21-write-precheck.sh 22-desktop-chain.py"
+ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 20-rootfs-image.sh 21-write-precheck.sh 22-desktop-chain.py 23-out-manifest.sh"
+# 2026-11-20 加 23（arch-audit P0#2）：out/ 大件/多镜像 ↔ 报告账本门，纯静态 ~1 s，纳入 fast。
 # fast 档 = 旧版 --staged-fast 的语义（§7/§8/§9 + 其后的廉价段）**减去 §12**：
 # 文档/索引提交与内核 .config 无关，那 3.2 s 是纯浪费；手改 .config 的拦截交给收尾轮全量 doctor。
 # 2026-11-07 加 s16（PITFALLS #548）：TASKS §0 手写数字漂移门，只读两个文件 ~0.04 s，纳入 fast。
 # 2026-11-14 加 15（M1）：INDEX §0 核对日期落后于最新会话证据 ⇒ WARN（时间序裁决的门，见 INDEX §2）。
-FAST="s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 21-write-precheck.sh 22-desktop-chain.py"
+FAST="s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 21-write-precheck.sh 22-desktop-chain.py 23-out-manifest.sh"
 
 PROFILE=full
 ONLY=""

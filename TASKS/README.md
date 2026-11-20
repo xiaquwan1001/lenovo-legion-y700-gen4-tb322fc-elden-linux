@@ -135,6 +135,11 @@
 - **boot_b 形态 / 上机纪律 / 归因分层**：只在 `DEVICE/README.md` §1.1、`PITFALLS` #3/#115 维护，本文件不复述。
 
 ### 开放待办（按顺序；需要物理 POR 的排最后）
+- **🆕 2026-11-20 11:xx → 本轮工作面已重排（4 条 lane 产出 + 主机稳定性）**：全账 `.pi/plans/2026-11-20-进度整理与待办规划.md`
+  · 已落盘（主机侧）：A 档回收 **8124 MB**（`out/` 87→75 G）· `check-doctor` **新增 §23 out/ 造件账本门**（`scripts/out-manifest-check.py`，自检+现有树实跑，FAIL=0）· 上游现查一页账 `reports/upstream-recheck-20261120.md`（§7 头已加增量块）· v3 上机执行包 `scripts/android-v3-bringup-walkthrough.sh` + `reports/android-v3-bringup-packet-20261120.md`。
+  · **四个新硬阻塞**：① 原厂 `boot.img` = **header v4**，`scripts/boot-img-cmdline.py` 只支持 v2 ⇒ **S5（`console=ttyGS0` 取证）造不出来**；② `qbootctl -a` 是**只读查询**（设 active = `-s SLOT`）；③ `metadata` 起点 = **5857704**（旧计划 5857672 是 `vbmeta_system_a`）；④ **页缓存污染使 buffered sha256「稳定但错」**（v1 件 `637a9965…` vs O_DIRECT `e3d0d26f…`）⇒ 硬门必须 O_DIRECT。
+  · **设备现态 = 离线**（无 `05c6/18d1` 枚举、`fastboot devices` 空、无 `/dev/ttyACM*`）⇒ 人项「插线+上电」+ `sudo scripts/ncm-host-up.sh`；**`ping 192.168.7.1` 是假阳性**（走手机热点网关）。
+  · **主机稳定性（规则 12，不深挖）**：本机 10:17/10:27 两次 Pi 子进程 SIGSEGV + 页缓存 sha 漂移 + 盘上 super 位翻转；证据已交 `~/hw-stability/evidence/inbox/20261120-y700-elden-{pi-child-upstream-lane-segv,pagecache-sha-drift}/`。
 - **🆕 2026-11-19 22:5x → 掉电链已定因、设备已回最优 Linux 模式（可日用）**
   · **新坑 #694**（全文 `PITFALLS/sessions/326-掉电链定因与systemd.mask救援舱.md`）：进锁屏即整机掉电 = ① live 上停 `droid-juicer` 实测 ~40 s 掉电（#693）；② 其落盘 mask 后顶上来的是 `hexagonrpcd`（#692，高置信未单变量）。掉电样本持久日志只到启动后第 1 秒就断 = 硬挂。
   · **可复用手段**：`scripts/boot-img-cmdline.py --append "systemd.mask=…"` → `fastboot boot` = 零写盘救援舱；进去只做 `systemctl mask` 落盘再 reboot（本次 45 s 到 SSH）。
@@ -564,6 +569,7 @@
 > **★投递批次沿革（2026-10-31 / 11-02 / 11-04 三批）已下沉**：原文逐字在 `TASKS/sessions/2026-11-05-§7投递批次沿革-20261031至20261104.md`；逐封实发件在 `patches/upstream/*/sent/`，投递报告在 `reports/mail-send-*`。
 > **★当前一页 = `reports/upstream-status-20261113.md`（2026-11-13，取代 `-20261105`/`-20261029`）**：逐系列状态 / 归档复核（patchwork，非 cover 计数）/ **我方欠什么** / 复启条件。
 > **★「是否已合并」的三条限定（2026-11-18 定；数据 = `reports/主机侧-B17-20261117.md` §3/§4、`reports/mail-inbox-20261118.md`）**：① 可证的只有 `patchwork: 0 accepted / 0 commit_ref` 这一种形式（305/305 `commit_ref` 空），**不能**外推成「mainline/next 未合并」——维护者直接取件合入而不回信是盲区（本期已用 mainline+next 内容级判定补上，结论仍 0）；② `state`/`tags` 字段不可靠（`state` 会把在审件标 `handled-elsewhere`、`tags` 恒空，R-b 只在 patch 正文里）；③ 判 next 必须取 `next-20261117` 及其后（今日 6 系列 05:20Z 发送晚于 `next-20261116` 快照）。
+> **★2026-11-20 现查增量（patchwork API 直查，压过下表 M3/M8/M10 各行里更早的代次记录）**：一页账 = `reports/upstream-recheck-20261120.md`（子代理产出 + §⑤ 主会话复核）。硬事实：**wl2868c 已到 v12**（`14991614/14991615`，11-17，new）· **dwc3 已到 v9**（`14991612`，11-17，new；binding 枚 `14991613` 上 **Rob Herring 11-18T15:34Z 回复全文只有「??」** ⇒ 不是 ack，是「没看懂/不接受」，且我方 v9 binding 提交信息里留着 `DRAFT: driver (3/3) still uses a GPIO…` ⇒ 欠一次「binding+driver+DTS 三件同时切到 `mux-controls`/`gpio-mux`」的干净重投）· **elden 板 DTS 已到 v7**（`14991580`）· **M10 fastrpc 已到 v3**（`14971025`，11-11）· **M8 现役系列 = 「drm/msm/mdss: reset all block resets described in DT」3 枚（11-13，arm-msm `14980387–14980389` / dri-devel `14980395–14980400`）**，不是 clk dispcc RFC（后者仍只有 10-22 一版 `14907944`/`14907951`）· **camss v2 全 `handled-elsewhere`、`commit_ref` 空 ⇒ 未进 mainline/next**。下表对应行的旧代次描述按本节降级，回填时以本节为准。
 > **外部动向快照 = `reports/upstream-watch-20261113.md`**（2026-11-13：patchwork 线程 12 条 + 待观察 8 条 + 外部仓库 9 条，每条带 URL；lore 全站被 Anubis 反爬拦截，故改用 patchwork REST 取同源数据）。
 > **★历次邮件增量（2026-11-07 → 11-14，5 块：11-08 sashiko 10 条 / mdss v5 回信 / 11-12 reviewer tag 3 个 / 11-11 wl2868c v10 已投 / 11-07 未答项现查）已下沉**：逐字原文在 `TASKS/sessions/2026-11-19-§7头增量块下沉.md`；当时结论均由 `reports/mail-triage-*.md`、`reports/upstream-status-20261113.md`、`patches/upstream/*/SENT.md` 覆盖。
 > **归档复核口径（2026-11-04 起）**：lore `/<list>/<mid>/raw` 返 Anubis 挑战页（HTTP 200 但非原文）⇒ **不得**用 `/raw 200` 当作档证据；一律 **patchwork API** + 按 MID 取 lore `/T/` 线程页，且「N/N 命中」口径 = 「非 cover N/N」。

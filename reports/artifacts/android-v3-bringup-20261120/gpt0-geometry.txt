@@ -1,0 +1,8 @@
+hdr b'EFI PART' my_lba 1 alt_lba 123871231 first_usable 6 last_usable 123871226
+misc                  89992..90247            256 扇区 = 0.001 GiB
+super                 90504..5857671      5767168 扇区 = 22.000 GiB
+vbmeta_system_a     5857672..5857687           16 扇区 = 0.000 GiB
+metadata            5857704..5874087        16384 扇区 = 0.062 GiB
+pstoredump          5939624..5972391        32768 扇区 = 0.125 GiB
+userdata            5972392..73277434    67305043 扇区 = 256.748 GiB
+linux17            73277435..123871226   50593792 扇区 = 193.000 GiB

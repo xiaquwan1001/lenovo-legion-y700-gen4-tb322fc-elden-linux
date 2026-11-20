@@ -1,0 +1,28 @@
+# 采集时间: 2026-11-20T10:10:02+08:00  主机: xuqianhui
+
+## 1) 设备在线判定（全部只读）
+$ lsusb -d 05c6: ; lsusb -d 18d1: ; ls /dev/ttyACM* ; fastboot devices ; adb devices
+ls: cannot access '/dev/ttyACM*': No such file or directory
+List of devices attached
+MDX5T20730009849	device
+
+
+## 2) 主机侧 gadget 网卡（MAC 02:1e:5e:ed:e1:02 = 设备 USB-NCM；缺失 ⇒ 设备未枚举）
+eno1 08:bf:b8:8a:c7:93
+enx027644563e50 02:76:44:56:3e:50
+lo 00:00:00:00:00:00
+tailscale0 
+
+## 3) 192.168.7.1 的 ping 是假阳性（走手机热点网关，不是本机平板）
+$ ip route get 192.168.7.1
+192.168.7.1 via 192.168.42.129 dev enx027644563e50 src 192.168.42.97 uid 1000 
+    cache 
+$ ip neigh show   # ping 后仍只有手机网关，192.168.7.1 不在链路上
+114.214.176.1 dev eno1 lladdr c8:33:e5:8a:5d:45 REACHABLE 
+192.168.42.129 dev enx027644563e50 lladdr d6:23:cd:b1:88:27 REACHABLE 
+114.214.188.102 dev eno1 lladdr 30:13:8b:6c:3e:5e STALE 
+fe80::d423:cdff:feb1:8827 dev enx027644563e50 lladdr d6:23:cd:b1:88:27 router REACHABLE 
+fe80::ca33:e5ff:fe8a:5d45 dev eno1 lladdr c8:33:e5:8a:5d:45 router STALE 
+$ timeout 20 ssh -o BatchMode=yes root@192.168.7.1 true
+ssh: connect to host 192.168.7.1 port 22: Connection timed out
+结论: 无 05c6:9008 / 18d1 / ttyACM / fastboot HA2EXB0E / adb HA2EXB0E / ssh ⇒ 设备离线（未上电或未插线），非坏机

@@ -1,0 +1,26 @@
+## qbootctl 用法（取自 /opt/elden/mobian-rootfs/usr/bin/qbootctl 的 strings；宿主机跑不了 aarch64 二进制）
+qbootctl [-c|-m|-s|-u|-b|-n|-x] [SLOT]
+    <no args>        dump slot info (default)
+    -h               this help text
+    -c               get the current slot
+    -a               get the active slot
+    -b SLOT          check if SLOT is marked as bootable
+    -n SLOT          check if SLOT is marked as successful
+    -x [SLOT]        get the slot suffix for SLOT (default: current)
+    -s SLOT          set to active slot to SLOT
+    -m [SLOT]        mark a boot as successful (default: current)
+
+## BCB 历史件（out/android-slim-v3-20261119/diag/）
+  out/android-slim-v3-20261119/diag/misc-20261119-2030.bin: size=1048576 nonzero=34 first32=b'bootonce-bootloader'
+  out/android-slim-v3-20261119/diag/misc-bcb-after.bin: size=16384 nonzero=0 first32=b''
+  out/android-slim-v3-20261119/diag/misc-before-v1boot.bin: size=16384 nonzero=19 first32=b'bootonce-bootloader'
+
+## git 记载（BCB 清 0 / super 现态=v1）
+100cacb7 docs(android): 收尾——BCB 清 0（原 boot-recovery）、super 现态=v1、v1/v3 liblp blockdev size 差异需拉平
+2f80451e docs(android): v3 上机 3 发未进桌面 + BCB confound 定因进展（logfs/pstoredump/电池/a 槽链复核）
+db4609ac feat(android): 精简 v3 造件 + 共存契约冻结（DEVICE §1.7 / INDEX / TASKS §4）
+
+    docs(android): 收尾——BCB 清 0（原 boot-recovery）、super 现态=v1、v1/v3 liblp blockdev size 差异需拉平
+
+ reports/android-slim-v3-20261119.md | 10 ++++++++++
+ 1 file changed, 10 insertions(+)

@@ -6,7 +6,7 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-19）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-20）
 
 > 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
@@ -14,6 +14,12 @@
 
 **做到哪**
 
+0. **🆕 2026-11-20 11:xx（主机）—— 进度整理轮：4 条 lane 产出落盘、A 档回收 8.1 GB、新增 out/ 造件门禁；**设备现离线（需人项插线+上电）**
+   - **全账** = `.pi/plans/2026-11-20-进度整理与待办规划.md`（现态实测 + 4 lane 产出 + 排好序的待办 + 4 条待拍板）。
+   - **主机侧已落地**：① A 档回收 **8124 MB**（`out/` 87→75 G）；② `check-doctor` **§23 out/ 造件账本门**（`scripts/out-manifest-check.py` + `scripts/out-manifest-exempt.tsv`，含空理由豁免必 FAIL 的反作弊与 4 类 selftest）；③ 上游现查一页账 `reports/upstream-recheck-20261120.md`（**§7 台账落后 1–2 代**：wl2868c 已 v12、dwc3 已 v9 且 Rob Herring 11-18 回「??」、elden DTS v7、fastrpc v3、M8 现役 = mdss block-resets 3 枚），`TASKS §7` 头已加增量块；④ v3 上机执行包 `scripts/android-v3-bringup-walkthrough.sh`（`--dry-run` 默认，父代理复跑 `--verify` 7 件全过）+ `reports/android-v3-bringup-packet-20261120.md`。
+   - **四个新硬阻塞**：原厂 `boot.img` = **header v4** 而 `boot-img-cmdline.py` 只支持 v2（⇒ S5 的 `console=ttyGS0` 取证件造不出来）· `qbootctl -a` 是只读查询（设 active = `-s SLOT`）· `metadata` 起点 = **5857704** · **页缓存污染让 buffered sha256「稳定但错」**（v1 件 `637a9965…` vs O_DIRECT `e3d0d26f…`）⇒ 硬门必须 O_DIRECT。
+   - **设备现态 = offline**（无 `05c6/18d1` 枚举、`fastboot devices` 空、无 `/dev/ttyACM*`）；**`ping 192.168.7.1` 是假阳性**（走手机热点网关）——判在线只看 `DEVICE/README.md` §1.6 五条。需人项：插线 + 上电 → `sudo scripts/ncm-host-up.sh`。
+   - **主机稳定性（规则 12，不深挖）**：本机 10:17/10:27 两次 Pi 子进程 SIGSEGV（MCE=0）、页缓存 sha 漂移、盘上 super 位翻转；证据已交 `~/hw-stability/evidence/inbox/20261120-y700-elden-{pi-child-upstream-lane-segv,pagecache-sha-drift}/`。
 0. **🆕 2026-11-19 22:5x（U2 HA2EXB0E）—— 掉电链定因 + 设备已回「最优 Linux 模式」；全仓 8 代理审计产出落 `reports/audit-20261119/`**
    - **掉电链（新坑 #694）**：22:0x–22:36 连续 3 次「进 Phosh 锁屏即整机掉电」。取证 = 每次 boot 的持久日志只到启动后第 1 秒（≈928 行）就断 ⇒ **硬挂不是优雅关机**（无 `final.target`/`System is powering off`）。定因分层：① **已证实** live 系统上 `systemctl disable --now droid-juicer` ⇒ ~40 s 掉电（#693 同族，**禁止再在 live 上停这两件**）；② **高置信未单变量** = droid-juicer 落盘 mask 后顶上来的 `hexagonrpcd`（#692 attach ADSP 硬崩）。
    - **新机制（可复用）**：`scripts/boot-img-cmdline.py --append "systemd.mask=…"` 造 **零写盘救援舱** → `fastboot boot` 进系统 → 只做 `systemctl mask` 落盘 → 正常 reboot。本次 45 s 到 SSH、`graphical.target` active、无 failed unit。全文 `PITFALLS/sessions/326-掉电链定因与systemd.mask救援舱.md`（索引行 #694）。

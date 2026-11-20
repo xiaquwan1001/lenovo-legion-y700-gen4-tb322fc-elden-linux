@@ -1,0 +1,3 @@
+# out-manifest-exempt.tsv — out/ 造件账本门豁免登记（路径<TAB>理由 ≥10 字，照 §17 反作弊口径）
+# 豁免≠免检：条目仍计入账本统计（--tsv 标 EXEMPT-OK），只是不产生 WARN。空理由 = FAIL。
+out/android-slim-v2b-20261119	中间方案，已被 android-slim-v3-20261119 取代，仅留作 v3 对照基线（arch-audit 20261120 如实登记）
