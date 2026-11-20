@@ -1,0 +1,27 @@
+{
+  "id": "4152078cf7db4ed79331a59e79116223",
+  "name": "y700-gates-G2G6",
+  "task": "先 `git rev-parse --show-toplevel` 确认 /home/xuqianhui/y700-elden，不符则零改动中止。\n\n## 前置：把 check-doctor 弄回 FAIL=0（第 3 条会用到）\n现在 `runs/`（laneAssetCleanup、laneDeviceV3）未在顶层布局登记 ⇒ check-doctor FAIL=1，上一个 lane 只能 `--no-verify` 提交。\n按仓内既有约定把 `runs/` 登记进 layout 注册表 + INDEX 对应行（就地改既有文件，不新建文档），跑 `bash scripts/check-doctor.sh` 要求 **FAIL=0**。\n\n## 主线：dwc3 v10 门禁 G2→G6（唯一构建 lane，-j12）\n**G2 唯一红项已获所有者授权修**：3/3 commit message 第 4 行 78 字符（checkpatch `#37`）。只做**纯折行**，不改内容语义、不改代码 diff：\n1. 改 `patches/upstream/dwc3-v10-20261120/` 下的 `v10-0003-commit-msg.txt`（把该行长句在合理处折到 ≤75 字符，保持段落与 trailer 完整），重生成 3/3 补丁。\n2. 重跑：`hw-heal run drop-caches`（绿则继续，拒则记录后继续）→ 从 G2 起重跑 **G2 → G3 → G4 → G5 → G6**：\n   - G2 `checkpatch --strict --no-signoff --no-tree`（三枚都要 0E/0W/0C 才算绿）\n   - G3 `make -j12 W=1 drivers/usb/{dwc3,roles}`\n   - G4 `dt_binding_check`（**不用 DT_SCHEMA_FILES**，按 README §4 口径）\n   - G5 `CHECK_DTBS=1 make -j12 dtbs`（arm64 + CROSS_COMPILE=aarch64-linux-gnu-）\n   - G6 `dt-validate -p processed-schema.json`\n   每门原始输出落 `patches/upstream/dwc3-v10-20261120/runs/G<n>-*.log`，并在 RUNS.md 记耗时与 rc。\n3. 把 G1（上轮已绿：3/3 干净 am）到 G6 的**实测数字/结论**填进 `v10-0000-cover-letter.DRAFT.patch` 的门禁表（占位换实测，包括 G2 修了哪一行）。\n4. 全部门绿则 commit（`chore(dwc3-v10): G2 折行修正 + G1–G6 实测回填`），工作区保持干净。\n\n## 红线\n- **不发信 / 不 git send-email**（所有者已授权发信，但要等门禁全绿由总管单开 lane）。\n- 某一门红：停在红门，把命令/输出/判据写进 runs/，不要改补丁去凑绿。\n- 不碰设备（y700-device lane 的事）。\n## 全局资源纪律\n- 构建 lane 上限 **-j12**（禁 -j26），全部套 `flock /tmp/pi-heavy-build.lock -c '<cmd>'`；轻活 ≤2 核。\n- 长命令 `timeout -k 30 <秒>`；禁 pkill/killall/kill -9 -f。\n- 随机 SIGSEGV/ICE/同址必崩/产物 sha 漂移 ⇒ 停手标 HW-SUSPECT 报证据路径。\n- 磁盘现 78%（203 G 可用）；若磁盘突然暴涨（今日曾因 /proc/*/maps 写出 154 GB）立刻停手汇报。",
+  "status": "running",
+  "runner": "pi-durable",
+  "kernel": "typescript",
+  "transport": "process",
+  "cwd": "/home/xuqianhui/y700-elden",
+  "model": "custom.ustc-pool/ustc-dsf",
+  "requestedModel": "custom.ustc-pool/ustc-dsf",
+  "thinking": "low",
+  "startedAt": 1795179173726,
+  "updatedAt": 1795181633364,
+  "turns": 77,
+  "toolCalls": 91,
+  "text": "G5 finished (rc=0). Now the baseline control run for the 171 failing DTBs (A/B is the documented green criterion).",
+  "usage": {
+    "input": 85930,
+    "output": 34462,
+    "cacheRead": 5067264,
+    "cacheWrite": 0,
+    "cost": 0.6271184
+  },
+  "logFile": "/home/xuqianhui/.cache/pi-tmp/pi-fabric-runs-Zz5rnD/4152078cf7db4ed79331a59e79116223/events.jsonl",
+  "currentTool": "bash"
+}

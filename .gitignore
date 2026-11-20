@@ -41,6 +41,9 @@
 !/out/*.manifest
 /bootslot-b-u2/
 /logs/
+# /runs = lane 实跑回执工作区（2026-11-20 起；runs/<lane>/REPORT.md + 原始日志/取证件，含 pstoredump 一类百 MB 件）
+# 与 /logs/ 同类：可再生成/体量大 ⇒ 整目录不入库；要长期留存的结论写进 reports/ 或 patches/ 下的 runs/
+/runs/
 /pkgs/
 /pkgs-phosh/
 /pkgs-x86/

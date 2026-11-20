@@ -1,0 +1,20 @@
+先确认仓身份。**你被授权使用真机设备、清理资产**（所有者 2026-11-20 明确放行），但必须按证据走、每步留痕：
+
+**① 资产清理（先做，省磁盘）**：按本项目计划里「B 档可确定作废的 v2b/min（≈23 G）」清单，逐件记录 path+size+sha256 到 `runs/laneAssetCleanup/manifest.tsv`，然后删除；删完 `du -sh out` 与 `df -h /` 前后对比。只删清单里点名的件，任何拿不准的保留并在汇报里列出。
+
+**② 设备 v3 首启**：读 `reports/android-v3-bringup-packet-20261120.md` §10（上一轮预演回执），设备现态 = fastboot（HA2EXB0E）。
+- 先 `fastboot getvar all` 存档到 `runs/laneDeviceV3/getvar-before.txt`（timeout 60）。
+- 现态是 fastboot 时 S1 会 exit 3 ⇒ 按 §10 的结论走可用入口（S2/S3/S4 经 `fastboot oem edl`，或 S5 `fastboot boot` 零写盘）。**每步先用 §10 表格里的真实 argv（含引号）**，不要照抄 `logc` 打印的吞引号版本（F1 缺陷）。
+- 每步执行前把「将执行命令」写进 `runs/laneDeviceV3/steps.log`；失败/超时就停，**不连续重试超过 2 次**，保留设备在可回落状态（b 槽）。
+- **禁** `fastboot flash` 到非 packet 指定分区、禁 `fastboot -w`、禁 qdl 写 EDL 以外的分区表。
+- 结束无论成败都再 `fastboot getvar all`（或 `adb devices`）存 `getvar-after.txt`。
+
+**不做 git 提交**（另一个 lane 正在提交同一仓），只写 runs/ 下文件。汇报里写明设备最终状态（fastboot / linux / android / 无法判定）。
+
+## 全局资源纪律（本轮按**实测**定档，不是申报值）
+- hw-stability 判定（19:06，本 boot）：load-gate 绿、本 boot coredump 0；但同 boot 19 min 已出现 1168 B 零填落盘（写坏与负载无关）⇒ **禁止 -j26 / 禁止无分段长跑**。
+- 因此单 lane 线程上限：**内核构建 -j12、netease 构建 -j6、lobcorp 构建 -j4**，其余 ≤2 核。全局构建仍串行：`flock /tmp/pi-heavy-build.lock -c '<cmd>'`（拿不到就等）。
+- 长命令一律 `timeout -k 30 <秒>`；禁 `pkill`/`killall`/`kill -9 -f`。
+- 出现随机 SIGSEGV/ICE/同址必崩/产物 sha 漂移 ⇒ 停手，列证据路径标 HW-SUSPECT，不自修不 memtest。
+- 只改指派的仓；不新建顶层文档；结尾必须给「做了什么 / 实测数字 / 未完成 / 阻塞 / 峰值 CPU 实测」。
+- 磁盘现在 / 78%（198 G 可用）。今天 19:2x 曾因 hw-stability 的 pcache-guard 把 /proc/*/maps 写成 154 GB 而 ENOSPC，若你看到磁盘突然暴涨，立刻停手并汇报。

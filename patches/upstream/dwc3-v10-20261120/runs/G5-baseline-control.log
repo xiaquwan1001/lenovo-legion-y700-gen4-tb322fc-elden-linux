@@ -1,0 +1,704 @@
+make[1]: 进入目录“/tmp/kbuild-base-g5”
+  DTC [C] arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3.dtb
+  OVL [C] arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-emmc-nand.dtb
+arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-emmc-nand.dtb: flash@0 (spi-nand): Unevaluated properties are not allowed ('spi-rx-buswidth', 'spi-tx-buswidth' were unexpected)
+	from schema $id: http://devicetree.org/schemas/mtd/spi-nand.yaml
+arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-emmc-nand.dtb: flash@0 (spi-nand): spi-rx-buswidth: b'\x00\x00\x00\x04' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-emmc-nand.dtb: flash@0 (spi-nand): spi-tx-buswidth: b'\x00\x00\x00\x04' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  OVL [C] arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-sd-nand.dtb
+arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-sd-nand.dtb: flash@0 (spi-nand): Unevaluated properties are not allowed ('spi-rx-buswidth', 'spi-tx-buswidth' were unexpected)
+	from schema $id: http://devicetree.org/schemas/mtd/spi-nand.yaml
+arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-sd-nand.dtb: flash@0 (spi-nand): spi-rx-buswidth: b'\x00\x00\x00\x04' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-sd-nand.dtb: flash@0 (spi-nand): spi-tx-buswidth: b'\x00\x00\x00\x04' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x.dtb
+arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x.dtb: pcie-2-hog: 'oneOf' conditional failed, one must be fixed:
+	'input' is a required property
+	'output-high' is a required property
+	'output-low' is a required property
+	from schema $id: http://devicetree.org/schemas/gpio/gpio-hog.yaml
+arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x.dtb: pcie-3-hog: 'oneOf' conditional failed, one must be fixed:
+	'input' is a required property
+	'output-high' is a required property
+	'output-low' is a required property
+	from schema $id: http://devicetree.org/schemas/gpio/gpio-hog.yaml
+  OVL [C] arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd.dtb
+  OVL [C] arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd-cn15.dtb
+arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd-cn15.dtb: pcie-2-hog: {'output-low': True, 'output-high': True, 'line-name': ['pcie2-cn15-hog'], 'gpio-hog': True, 'gpios': [[79, 0]], '$nodename': ['pcie-2-hog']} is valid under each of {'required': ['output-low']}, {'required': ['output-high']}
+	from schema $id: http://devicetree.org/schemas/gpio/gpio-hog.yaml
+  OVL [C] arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd-cn18.dtb
+arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-pro-8x-sd-cn18.dtb: pcie-3-hog: {'output-low': True, 'output-high': True, 'line-name': ['pcie3-cn18-hog'], 'gpio-hog': True, 'gpios': [[63, 0]], '$nodename': ['pcie-3-hog']} is valid under each of {'required': ['output-low']}, {'required': ['output-high']}
+	from schema $id: http://devicetree.org/schemas/gpio/gpio-hog.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8173-evb.dtb
+arch/arm64/boot/dts/mediatek/mt8173-evb.dtb: syscon@14000000 (mediatek,mt8173-mmsys): 'assigned-clock-rates', 'assigned-clocks' do not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/arm/mediatek/mediatek,mmsys.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-magneton-sku393216.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-magneton-sku393216.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-magneton-sku393217.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-magneton-sku393217.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-magneton-sku393218.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-magneton-sku393218.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-rusty-sku196608.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-rusty-sku196608.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-squirtle.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-squirtle.dtb: spmi@10015000 (mediatek,mt8186-spmi): Unevaluated properties are not allowed ('interrupts' was unexpected)
+	from schema $id: http://devicetree.org/schemas/spmi/mtk,spmi-mtk-pmif.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-starmie-sku0.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-starmie-sku0.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-starmie-sku1.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-starmie-sku1.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-steelix-sku131072.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-steelix-sku131072.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-steelix-sku131073.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-steelix-sku131073.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-tentacool-sku327681.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-tentacool-sku327681.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-tentacool-sku327683.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-tentacool-sku327683.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-tentacruel-sku262144.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-tentacruel-sku262144.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-tentacruel-sku262148.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-tentacruel-sku262148.dtb: sound (mediatek,mt8186-mt6366-rt1019-rt5682s-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8186-corsola-voltorb.dtb
+arch/arm64/boot/dts/mediatek/mt8186-corsola-voltorb.dtb: spmi@10015000 (mediatek,mt8186-spmi): Unevaluated properties are not allowed ('interrupts' was unexpected)
+	from schema $id: http://devicetree.org/schemas/spmi/mtk,spmi-mtk-pmif.yaml
+arch/arm64/boot/dts/mediatek/mt8186-corsola-voltorb.dtb: sound (mediatek,mt8186-mt6366-rt5682s-max98360-sound): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8186-mt6366-rt1019-rt5682s.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8192-asurada-hayato-r1.dtb
+arch/arm64/boot/dts/mediatek/mt8192-asurada-hayato-r1.dtb: pcie@0,0: wifi@0,0:reg:0:4: 0 was expected
+	from schema $id: http://devicetree.org/schemas/pci/pci-bus-common.yaml
+arch/arm64/boot/dts/mediatek/mt8192-asurada-hayato-r1.dtb: pcie@0,0: wifi@0,0:reg: [[65536, 0, 0, 0, 1048576], [65536, 0, 1048576, 0, 1048576]] is too long
+	from schema $id: http://devicetree.org/schemas/pci/pci-bus-common.yaml
+arch/arm64/boot/dts/mediatek/mt8192-asurada-hayato-r1.dtb: sound (mediatek,mt8192_mt6359_rt1015p_rt5682): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8192-mt6359-rt1015-rt5682.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8192-asurada-spherion-r0.dtb
+arch/arm64/boot/dts/mediatek/mt8192-asurada-spherion-r0.dtb: pcie@0,0: wifi@0,0:reg:0:4: 0 was expected
+	from schema $id: http://devicetree.org/schemas/pci/pci-bus-common.yaml
+arch/arm64/boot/dts/mediatek/mt8192-asurada-spherion-r0.dtb: pcie@0,0: wifi@0,0:reg: [[65536, 0, 0, 0, 1048576], [65536, 0, 1048576, 0, 1048576]] is too long
+	from schema $id: http://devicetree.org/schemas/pci/pci-bus-common.yaml
+arch/arm64/boot/dts/mediatek/mt8192-asurada-spherion-r0.dtb: sound (mediatek,mt8192_mt6359_rt1015p_rt5682): 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/sound/mt8192-mt6359-rt1015-rt5682.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8195-cherry-dojo-r1.dtb
+arch/arm64/boot/dts/mediatek/mt8195-cherry-dojo-r1.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8195-cherry-dojo-r1.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+arch/arm64/boot/dts/mediatek/mt8195-cherry-dojo-r1.dtb: rt1019p (realtek,rt1019p): 'label' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/sound/realtek,rt1015p.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r1.dtb
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r1.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r1.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r1.dtb: rt1019p (realtek,rt1019p): 'label' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/sound/realtek,rt1015p.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r2.dtb
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r2.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r2.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r2.dtb: rt1019p (realtek,rt1019p): 'label' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/sound/realtek,rt1015p.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r3.dtb
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r3.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r3.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+arch/arm64/boot/dts/mediatek/mt8195-cherry-tomato-r3.dtb: rt1019p (realtek,rt1019p): 'label' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/sound/realtek,rt1015p.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8195-demo.dtb
+arch/arm64/boot/dts/mediatek/mt8195-demo.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8195-demo.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8195-evb.dtb
+arch/arm64/boot/dts/mediatek/mt8195-evb.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8195-evb.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8370-grinn-genio-510-sbc.dtb
+arch/arm64/boot/dts/mediatek/mt8370-grinn-genio-510-sbc.dtb: pinctrl@10005000 (mediatek,mt8188-pinctrl): 'pcie-default' does not match any of the regexes: '-hog(-[0-9]+)?$', '-pins$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/pinctrl/mediatek,mt8188-pinctrl.yaml
+arch/arm64/boot/dts/mediatek/mt8370-grinn-genio-510-sbc.dtb: usb@112a1000 (mediatek,mt8188-mtu3): usb@0:hub@1:compatible: ['microchip,usb2513bi'] does not contain items matching the given schema
+	from schema $id: http://devicetree.org/schemas/usb/mediatek,mtu3.yaml
+arch/arm64/boot/dts/mediatek/mt8370-grinn-genio-510-sbc.dtb: usb@0 (mediatek,mt8188-xhci): hub@1:compatible: ['microchip,usb2513bi'] does not contain items matching the given schema
+	from schema $id: http://devicetree.org/schemas/usb/mediatek,mtk-xhci.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8390-grinn-genio-700-sbc.dtb
+arch/arm64/boot/dts/mediatek/mt8390-grinn-genio-700-sbc.dtb: pinctrl@10005000 (mediatek,mt8188-pinctrl): 'pcie-default' does not match any of the regexes: '-hog(-[0-9]+)?$', '-pins$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/pinctrl/mediatek,mt8188-pinctrl.yaml
+arch/arm64/boot/dts/mediatek/mt8390-grinn-genio-700-sbc.dtb: usb@112a1000 (mediatek,mt8188-mtu3): usb@0:hub@1:compatible: ['microchip,usb2513bi'] does not contain items matching the given schema
+	from schema $id: http://devicetree.org/schemas/usb/mediatek,mtu3.yaml
+arch/arm64/boot/dts/mediatek/mt8390-grinn-genio-700-sbc.dtb: usb@0 (mediatek,mt8188-xhci): hub@1:compatible: ['microchip,usb2513bi'] does not contain items matching the given schema
+	from schema $id: http://devicetree.org/schemas/usb/mediatek,mtk-xhci.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8395-genio-1200-evk.dtb
+arch/arm64/boot/dts/mediatek/mt8395-genio-1200-evk.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8395-genio-1200-evk.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8395-genio-1200-evk-ufs.dtb
+arch/arm64/boot/dts/mediatek/mt8395-genio-1200-evk-ufs.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8395-genio-1200-evk-ufs.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8395-kontron-3-5-sbc-i1200.dtb
+arch/arm64/boot/dts/mediatek/mt8395-kontron-3-5-sbc-i1200.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8395-kontron-3-5-sbc-i1200.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8395-radxa-nio-12l.dtb
+arch/arm64/boot/dts/mediatek/mt8395-radxa-nio-12l.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8395-radxa-nio-12l.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+  DTC     arch/arm64/boot/dts/mediatek/mt8395-radxa-nio-12l-8-hd-panel.dtbo
+  OVL [C] arch/arm64/boot/dts/mediatek/mt8395-radxa-nio-12l-8-hd-panel.dtb
+arch/arm64/boot/dts/mediatek/mt8395-radxa-nio-12l-8-hd-panel.dtb: jpeg-decoder@1a040000 (mediatek,mt8195-jpgdec): 'jpgdec@0,0', 'jpgdec@0,10000', 'jpgdec@1,0' do not match any of the regexes: '^jpgdec@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegdec.yaml
+arch/arm64/boot/dts/mediatek/mt8395-radxa-nio-12l-8-hd-panel.dtb: jpeg-encoder@1a030000 (mediatek,mt8195-jpgenc): 'jpgenc@0,0', 'jpgenc@1,0' do not match any of the regexes: '^jpgenc@[0-9a-f]+$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/media/mediatek,mt8195-jpegenc.yaml
+  DTC [C] arch/arm64/boot/dts/mediatek/mt8516-pumpkin.dtb
+arch/arm64/boot/dts/mediatek/mt8516-pumpkin.dtb: syscfg-pctl@10005000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/microchip/sparx5_pcb125.dtb
+arch/arm64/boot/dts/microchip/sparx5_pcb125.dtb: spi@600104000 (microchip,sparx5-spi): Unevaluated properties are not allowed ('reg-shift' was unexpected)
+	from schema $id: http://devicetree.org/schemas/spi/snps,dw-apb-ssi.yaml
+arch/arm64/boot/dts/microchip/sparx5_pcb125.dtb: spi@1 (spi-mux): mux-controls: [[10], [0]] is too long
+	from schema $id: http://devicetree.org/schemas/spi/spi-mux.yaml
+arch/arm64/boot/dts/microchip/sparx5_pcb125.dtb: switch@600000000 (microchip,sparx5-switch): reg-names:1: 'devices' was expected
+	from schema $id: http://devicetree.org/schemas/net/microchip,sparx5-switch.yaml
+arch/arm64/boot/dts/microchip/sparx5_pcb125.dtb: switch@600000000 (microchip,sparx5-switch): 'ethernet-ports' is a required property
+	from schema $id: http://devicetree.org/schemas/net/microchip,sparx5-switch.yaml
+  DTC [C] arch/arm64/boot/dts/microchip/sparx5_pcb134.dtb
+arch/arm64/boot/dts/microchip/sparx5_pcb134.dtb: spi@600104000 (microchip,sparx5-spi): Unevaluated properties are not allowed ('reg-shift' was unexpected)
+	from schema $id: http://devicetree.org/schemas/spi/snps,dw-apb-ssi.yaml
+arch/arm64/boot/dts/microchip/sparx5_pcb134.dtb: switch@600000000 (microchip,sparx5-switch): reg-names:1: 'devices' was expected
+	from schema $id: http://devicetree.org/schemas/net/microchip,sparx5-switch.yaml
+  DTC [C] arch/arm64/boot/dts/microchip/sparx5_pcb134_emmc.dtb
+arch/arm64/boot/dts/microchip/sparx5_pcb134_emmc.dtb: spi@600104000 (microchip,sparx5-spi): Unevaluated properties are not allowed ('reg-shift' was unexpected)
+	from schema $id: http://devicetree.org/schemas/spi/snps,dw-apb-ssi.yaml
+arch/arm64/boot/dts/microchip/sparx5_pcb134_emmc.dtb: switch@600000000 (microchip,sparx5-switch): reg-names:1: 'devices' was expected
+	from schema $id: http://devicetree.org/schemas/net/microchip,sparx5-switch.yaml
+  DTC [C] arch/arm64/boot/dts/microchip/sparx5_pcb135.dtb
+arch/arm64/boot/dts/microchip/sparx5_pcb135.dtb: spi@600104000 (microchip,sparx5-spi): Unevaluated properties are not allowed ('reg-shift' was unexpected)
+	from schema $id: http://devicetree.org/schemas/spi/snps,dw-apb-ssi.yaml
+arch/arm64/boot/dts/microchip/sparx5_pcb135.dtb: switch@600000000 (microchip,sparx5-switch): reg-names:1: 'devices' was expected
+	from schema $id: http://devicetree.org/schemas/net/microchip,sparx5-switch.yaml
+  DTC [C] arch/arm64/boot/dts/microchip/sparx5_pcb135_emmc.dtb
+arch/arm64/boot/dts/microchip/sparx5_pcb135_emmc.dtb: spi@600104000 (microchip,sparx5-spi): Unevaluated properties are not allowed ('reg-shift' was unexpected)
+	from schema $id: http://devicetree.org/schemas/spi/snps,dw-apb-ssi.yaml
+arch/arm64/boot/dts/microchip/sparx5_pcb135_emmc.dtb: switch@600000000 (microchip,sparx5-switch): reg-names:1: 'devices' was expected
+	from schema $id: http://devicetree.org/schemas/net/microchip,sparx5-switch.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra132-norrin.dtb
+arch/arm64/boot/dts/nvidia/tegra132-norrin.dtb: /i2c@7000d000/pmic@40: failed to match any schema with compatible: ['ams,as3722']
+arch/arm64/boot/dts/nvidia/tegra132-norrin.dtb: sd0: ams,ext-control: b'\x00\x00\x00\x02' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra132-norrin.dtb: sd1: ams,ext-control: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra132-norrin.dtb: ldo0: ams,ext-control: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra186-p2771-0000.dtb
+arch/arm64/boot/dts/nvidia/tegra186-p2771-0000.dtb: /ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra186-p2771-0000.dtb: /ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra186-p2771-0000.dtb: ethernet@2490000 (nvidia,tegra186-eqos): snps,write-requests: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra186-p2771-0000.dtb: ethernet@2490000 (nvidia,tegra186-eqos): snps,read-requests: b'\x00\x00\x00\x03' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra186-p2771-0000.dtb: ethernet@2490000 (nvidia,tegra186-eqos): snps,burst-map: b'\x00\x00\x00\x07' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra186-p3509-0000+p3636-0001.dtb
+arch/arm64/boot/dts/nvidia/tegra186-p3509-0000+p3636-0001.dtb: /ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra186-p3509-0000+p3636-0001.dtb: /ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra186-p3509-0000+p3636-0001.dtb: ethernet@2490000 (nvidia,tegra186-eqos): snps,write-requests: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra186-p3509-0000+p3636-0001.dtb: ethernet@2490000 (nvidia,tegra186-eqos): snps,read-requests: b'\x00\x00\x00\x03' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra186-p3509-0000+p3636-0001.dtb: ethernet@2490000 (nvidia,tegra186-eqos): snps,burst-map: b'\x00\x00\x00\x07' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra194-lenovo-thinkedge-se70.dtb
+arch/arm64/boot/dts/nvidia/tegra194-lenovo-thinkedge-se70.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-lenovo-thinkedge-se70.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-lenovo-thinkedge-se70.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-lenovo-thinkedge-se70.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,write-requests: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra194-lenovo-thinkedge-se70.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,read-requests: b'\x00\x00\x00\x03' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra194-lenovo-thinkedge-se70.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,burst-map: b'\x00\x00\x00\x07' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra194-p2972-0000.dtb
+arch/arm64/boot/dts/nvidia/tegra194-p2972-0000.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p2972-0000.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p2972-0000.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p2972-0000.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,write-requests: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra194-p2972-0000.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,read-requests: b'\x00\x00\x00\x03' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra194-p2972-0000.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,burst-map: b'\x00\x00\x00\x07' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0000.dtb
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0000.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0000.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0000.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0000.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,write-requests: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0000.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,read-requests: b'\x00\x00\x00\x03' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0000.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,burst-map: b'\x00\x00\x00\x07' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0001.dtb
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0001.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0001.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0001.dtb: /bus@0/ethernet@2490000: failed to match any schema with compatible: ['nvidia,tegra194-eqos', 'nvidia,tegra186-eqos', 'snps,dwc-qos-ethernet-4.10']
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0001.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,write-requests: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0001.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,read-requests: b'\x00\x00\x00\x03' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/nvidia/tegra194-p3509-0000+p3668-0001.dtb: ethernet@2490000 (nvidia,tegra194-eqos): snps,burst-map: b'\x00\x00\x00\x07' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra210-p2371-0000.dtb
+arch/arm64/boot/dts/nvidia/tegra210-p2371-0000.dtb: cpu@0 (arm,cortex-a57): 'operating-points' is a dependency of 'clock-latency'
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2371-0000.dtb: cpu@0 (arm,cortex-a57): Unevaluated properties are not allowed ('clock-latency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra210-p2371-2180.dtb
+arch/arm64/boot/dts/nvidia/tegra210-p2371-2180.dtb: cpu@0 (arm,cortex-a57): 'operating-points' is a dependency of 'clock-latency'
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2371-2180.dtb: cpu@0 (arm,cortex-a57): Unevaluated properties are not allowed ('clock-latency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra210-p2571.dtb
+arch/arm64/boot/dts/nvidia/tegra210-p2571.dtb: cpu@0 (arm,cortex-a57): 'operating-points' is a dependency of 'clock-latency'
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2571.dtb: cpu@0 (arm,cortex-a57): Unevaluated properties are not allowed ('clock-latency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra210-p2894-0050-a08.dtb
+arch/arm64/boot/dts/nvidia/tegra210-p2894-0050-a08.dtb: pmic@3c (maxim,max77620): 'max77620-hog' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/mfd/maxim,max77620.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2894-0050-a08.dtb: pmic@3c (maxim,max77620): fps: '#address-cells', '#size-cells' do not match any of the regexes: '^fps[0-2]$', '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/mfd/maxim,max77620.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2894-0050-a08.dtb: pmic@3c (maxim,max77620): fps:fps0: 'reg' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/mfd/maxim,max77620.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2894-0050-a08.dtb: pmic@3c (maxim,max77620): fps:fps1: 'reg' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/mfd/maxim,max77620.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2894-0050-a08.dtb: pmic@3c (maxim,max77620): fps:fps2: 'reg' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/mfd/maxim,max77620.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2894-0050-a08.dtb: cpu@0 (arm,cortex-a57): 'operating-points' is a dependency of 'clock-latency'
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p2894-0050-a08.dtb: cpu@0 (arm,cortex-a57): Unevaluated properties are not allowed ('clock-latency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra210-p3450-0000.dtb
+arch/arm64/boot/dts/nvidia/tegra210-p3450-0000.dtb: pmic@3c (maxim,max77620): regulators:ldo4: Unevaluated properties are not allowed ('regulator-disable-active-discharge' was unexpected)
+	from schema $id: http://devicetree.org/schemas/mfd/maxim,max77620.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p3450-0000.dtb: cpu@0 (arm,cortex-a57): 'operating-points' is a dependency of 'clock-latency'
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p3450-0000.dtb: cpu@0 (arm,cortex-a57): Unevaluated properties are not allowed ('clock-latency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra210-p3541-0000.dtb
+arch/arm64/boot/dts/nvidia/tegra210-p3541-0000.dtb: pmic@3c (maxim,max77620): regulators:ldo4: Unevaluated properties are not allowed ('regulator-disable-active-discharge' was unexpected)
+	from schema $id: http://devicetree.org/schemas/mfd/maxim,max77620.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p3541-0000.dtb: cpu@0 (arm,cortex-a57): 'operating-points' is a dependency of 'clock-latency'
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+arch/arm64/boot/dts/nvidia/tegra210-p3541-0000.dtb: cpu@0 (arm,cortex-a57): Unevaluated properties are not allowed ('clock-latency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra210-smaug.dtb
+arch/arm64/boot/dts/nvidia/tegra210-smaug.dtb: padctl@7009f000 (nvidia,tegra210-xusb-padctl): ports:usb2-0: 'role-switch-default-mode' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/phy/nvidia,tegra210-xusb-padctl.yaml
+arch/arm64/boot/dts/nvidia/tegra210-smaug.dtb: padctl@7009f000 (nvidia,tegra210-xusb-padctl): ports:usb2-0: 'connector' is a dependency of 'usb-role-switch'
+	from schema $id: http://devicetree.org/schemas/phy/nvidia,tegra210-xusb-padctl.yaml
+arch/arm64/boot/dts/nvidia/tegra210-smaug.dtb: cpu@0 (arm,cortex-a57): 'operating-points' is a dependency of 'clock-latency'
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+arch/arm64/boot/dts/nvidia/tegra210-smaug.dtb: cpu@0 (arm,cortex-a57): Unevaluated properties are not allowed ('clock-latency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/arm/cpus.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra234-p3768-0000+p3767-0000.dtb
+arch/arm64/boot/dts/nvidia/tegra234-p3768-0000+p3767-0000.dtb: padctl@3520000 (nvidia,tegra234-xusb-padctl): ports:usb2-0: 'oneOf' conditional failed, one must be fixed:
+	'connector' is a required property
+	'port' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/nvidia,tegra194-xusb-padctl.yaml
+  DTC [C] arch/arm64/boot/dts/nvidia/tegra234-p3768-0000+p3767-0005.dtb
+arch/arm64/boot/dts/nvidia/tegra234-p3768-0000+p3767-0005.dtb: padctl@3520000 (nvidia,tegra234-xusb-padctl): ports:usb2-0: 'oneOf' conditional failed, one must be fixed:
+	'connector' is a required property
+	'port' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/nvidia,tegra194-xusb-padctl.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/apq8096-db820c.dtb
+arch/arm64/boot/dts/qcom/apq8096-db820c.dtb: usb@6af8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+arch/arm64/boot/dts/qcom/apq8096-db820c.dtb: usb@76f8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+arch/arm64/boot/dts/qcom/apq8096-db820c.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/apq8096-ifc6640.dtb
+arch/arm64/boot/dts/qcom/apq8096-ifc6640.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/apq8096sg-db820c.dtb
+arch/arm64/boot/dts/qcom/apq8096sg-db820c.dtb: usb@6af8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+arch/arm64/boot/dts/qcom/apq8096sg-db820c.dtb: usb@76f8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+arch/arm64/boot/dts/qcom/apq8096sg-db820c.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/ipq6018-cp01-c1.dtb
+arch/arm64/boot/dts/qcom/ipq6018-cp01-c1.dtb: qusb@59000 (qcom,ipq6018-qusb2-phy): 'vdd-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/ipq6018-cp01-c1.dtb: qusb@59000 (qcom,ipq6018-qusb2-phy): 'vdda-pll-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/ipq6018-cp01-c1.dtb: qusb@59000 (qcom,ipq6018-qusb2-phy): 'vdda-phy-dpdm-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/ipq6018-cp01-c1.dtb: /soc@0/remoteproc@cd00000: failed to match any schema with compatible: ['qcom,ipq6018-wcss-pil']
+  DTC [C] arch/arm64/boot/dts/qcom/ipq8074-hk01.dtb
+arch/arm64/boot/dts/qcom/ipq8074-hk01.dtb: phy@59000 (qcom,ipq8074-qusb2-phy): 'vdd-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/ipq8074-hk01.dtb: phy@59000 (qcom,ipq8074-qusb2-phy): 'vdda-pll-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/ipq8074-hk01.dtb: phy@59000 (qcom,ipq8074-qusb2-phy): 'vdda-phy-dpdm-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/ipq8074-hk01.dtb: phy@79000 (qcom,ipq8074-qusb2-phy): 'vdd-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/ipq8074-hk01.dtb: phy@79000 (qcom,ipq8074-qusb2-phy): 'vdda-pll-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/ipq8074-hk01.dtb: phy@79000 (qcom,ipq8074-qusb2-phy): 'vdda-phy-dpdm-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8953-flipkart-rimob.dtb
+arch/arm64/boot/dts/qcom/msm8953-flipkart-rimob.dtb: panel@0 (flipkart,rimob-panel-nt35532-cs): compatible: ['flipkart,rimob-panel-nt35532-cs'] is too short
+	from schema $id: http://devicetree.org/schemas/display/panel/novatek,nt35532.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996-mtp.dtb
+arch/arm64/boot/dts/qcom/msm8996-mtp.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996-oneplus3.dtb
+arch/arm64/boot/dts/qcom/msm8996-oneplus3.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996-oneplus3t.dtb
+arch/arm64/boot/dts/qcom/msm8996-oneplus3t.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-natrium.dtb
+arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-natrium.dtb: panel@0 (jdi,fhd-r63452): 'power-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/display/panel/panel-simple-dsi.yaml
+arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-natrium.dtb: usb@6af8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-natrium.dtb: phy@7411000 (qcom,msm8996-qusb2-phy): 'vdd-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-natrium.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-scorpio.dtb
+arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-scorpio.dtb: usb@6af8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-scorpio.dtb: phy@7411000 (qcom,msm8996-qusb2-phy): 'vdd-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/msm8996pro-xiaomi-scorpio.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996-sony-xperia-tone-dora.dtb
+arch/arm64/boot/dts/qcom/msm8996-sony-xperia-tone-dora.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996-sony-xperia-tone-kagura.dtb
+arch/arm64/boot/dts/qcom/msm8996-sony-xperia-tone-kagura.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996-sony-xperia-tone-keyaki.dtb
+arch/arm64/boot/dts/qcom/msm8996-sony-xperia-tone-keyaki.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/msm8996-xiaomi-gemini.dtb
+arch/arm64/boot/dts/qcom/msm8996-xiaomi-gemini.dtb: panel@0 (jdi,fhd-r63452): 'power-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/display/panel/panel-simple-dsi.yaml
+arch/arm64/boot/dts/qcom/msm8996-xiaomi-gemini.dtb: usb@6af8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+arch/arm64/boot/dts/qcom/msm8996-xiaomi-gemini.dtb: phy@7411000 (qcom,msm8996-qusb2-phy): 'vdd-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/phy/qcom,qusb2-phy.yaml
+arch/arm64/boot/dts/qcom/msm8996-xiaomi-gemini.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/sdm845-lg-judyln.dtb
+arch/arm64/boot/dts/qcom/sdm845-lg-judyln.dtb: panel@0 (lg,sw49410-lh609qh1): compatible:0: 'lg,sw49410-lh609qh1' is not one of ['ampire,am-1280800n3tzqw-t00h', 'ampire,am-1280800w8tzqw-t00h', 'ampire,am-480272h3tmqw-t01h', 'ampire,am-800480l1tmqw-t00h', 'ampire,am-800480n3tzqw-00h', 'ampire,am800480r3tmqwa1h', 'ampire,am800600p5tmqw-tb8h', 'auo,b101aw03', 'auo,b101xtn01', 'auo,b116xw03', 'auo,g070vvn01', 'auo,g101evn010', 'auo,g104sn02', 'auo,g104stn01', 'auo,g121ean01', 'auo,g156xtn01', 'auo,p238han01', 'auo,p320hvn03', 'avic,tm070ddh03', 'boe,av101hdt-a10', 'boe,bp082wx1-100', 'boe,bp101wx1-100', 'boe,ev121wxm-n10-1850', 'boe,hv070wsa-100', 'cct,cmt430b19n00', 'cdtech,s043wq26h-ct7', 'cdtech,s070pws19hp-fc21', 'cdtech,s070swv29hg-dc44', 'cdtech,s070wv95-ct16', 'chefree,ch101olhlwh-002', 'chunghwa,claa101wa01a', 'chunghwa,claa101wb01', 'chunghwa,claa101wb03', 'dataimage,fg040346dsswbg04', 'dataimage,fg1001l0dsswmg01', 'dataimage,scf0700c48ggu18', 'displaytech,dt050btft-pts', 'dlc,dlc1010gig', 'edt,et035012dm6', 'edt,et057023udba', 'edt,et057090dhu', 'edt,et070080dh6', 'edt,etm0350g0dh6', 'edt,etm043080dh6gp', 'edt,etm0430g0dh6', 'edt,etm070080bdh6', 'edt,etm070080dh6', 'edt,etm070080edh6', 'edt,etm0700g0bdh6', 'edt,etm0700g0dh6', 'edt,etm0700g0edh6', 'edt,etml0700y5dha', 'edt,etml1010g3dra', 'edt,etmv570g2dhu', 'eink,vb3300-kca', 'evervision,vgg644804', 'evervision,vgg804821', 'foxlink,fl500wvr00-a0t', 'frida,frd350h54004', 'giantplus,gpg48273qs5', 'giantplus,gpm940b0', 'hannstar,hsd070pww1', 'hannstar,hsd100pxn1', 'hannstar,hsd156juw2', 'hit,tx23d38vm0caa', 'innolux,at043tn24', 'innolux,at070tn92', 'innolux,g070ace-l01', 'innolux,g070ace-lh3', 'innolux,g070y2-l01', 'innolux,g070y2-t02', 'innolux,g101ice-l01', 'innolux,g121i1-l01', 'innolux,g121x1-l03', 'innolux,g121xce-l01', 'innolux,g150xge-l05', 'innolux,n133hse-ea1', 'innolux,n156bge-l21', 'innolux,zj070na-01p', 'jutouch,jt070tm041', 'jutouch,jt101tm023', 'koe,tx14d24vm1bpa', 'koe,tx31d200vm0baa', 'kyo,tcg070wvlq', 'kyo,tcg121xglp', 'lemaker,bl035-rgb-002', 'lg,lb070wv8', 'lg,sw49410', 'logictechno,lt161010-2nhc', 'logictechno,lt161010-2nhr', 'logictechno,lt170410-2whc', 'logictechno,lttd800480070-l2rt', 'logictechno,lttd800480070-l6wh-rt', 'microchip,ac69t88a', 'mitsubishi,aa070mc01-ca1', 'mitsubishi,aa084xe01', 'multi-inno,mi0700a2t-30', 'multi-inno,mi0700s4t-6', 'multi-inno,mi0800ft-9', 'multi-inno,mi1010ait-1cp', 'multi-inno,mi1010z1t-1cp11', 'nec,nl12880bc20-05', 'nec,nl4827hc19-05b', 'nec,nl6448bc33-70c', 'netron-dy,e231732', 'newhaven,nhd-4.3-480272ef-atxl', 'nlt,nl12880bc20-spwg-24', 'nlt,nl13676bc25-03f', 'nvd,9128', 'okaya,rs800480t-7x0gp', 'olimex,lcd-olinuxino-43-ts', 'olimex,lcd-olinuxino-5-cts', 'ontat,kd50g21-40nt-a1', 'ontat,yx700wv03', 'ortustech,com37h3m05dtc', 'ortustech,com37h3m99dtc', 'ortustech,com43h4m85ulc', 'osddisplays,osd070t1718-19ts', 'osddisplays,osd101t2045-53ts', 'powertip,ph128800t004-zza01', 'powertip,ph128800t006-zhc01', 'powertip,ph800480t013-idf02', 'powertip,ph800480t032-zhc19', 'primeview,pm070wl4', 'qiaodian,qd43003c0-40', 'qishenglong,gopher2b-lcd', 'raystar,rff500f-awh-dnn', 'rocktech,rk101ii01d-ct', 'rocktech,rk070er9427', 'rocktech,rk043fn48h', 'samsung,ltl101al01', 'samsung,ltl106al01', 'samsung,ltn101nt05', 'satoz,sat050at40h12r2', 'sharp,lq035q7db03', 'sharp,lq070y3dg3b', 'sharp,lq101k1ly04', 'sharp,ls020b1dd01d', 'shelly,sca07010-bfn-lnn', 'starry,kr070pe2t', 'startek,kd070hdfld092', 'startek,kd070wvfpa', 'team-source-display,tst043015cmhx', 'tianma,p0700wxf1mbaa', 'tianma,tm050rdh03', 'tianma,tm070jdhg30', 'tianma,tm070jdhg34-00', 'tianma,tm070jvhg33', 'tianma,tm070rvhg71', 'topland,tian-g07017-01', 'toshiba,lt089ac29000', 'tpk,f07a-0102', 'tpk,f10a-0102', 'truly,tft320240-229-e', 'urt,umsh-8596md-t', 'urt,umsh-8596md-1t', 'urt,umsh-8596md-7t', 'urt,umsh-8596md-11t', 'urt,umsh-8596md-19t', 'urt,umsh-8596md-20t', 'vivax,tpc9150-panel', 'vxt,vl050-8048nt-c01', 'waveshare,10.1inch-c-panel', 'waveshare,11.9inch-panel', 'waveshare,13.3inch-panel', 'waveshare,2.8inch-panel', 'waveshare,3.4inch-c-panel', 'waveshare,4.0inch-panel', 'waveshare,4.0inch-c-panel', 'waveshare,5.0inch-c-panel', 'waveshare,5.0inch-d-panel', 'waveshare,6.25inch-panel', 'waveshare,7.0inch-c-panel', 'waveshare,7.0inch-e-panel', 'waveshare,7.0inch-h-panel', 'waveshare,7.9inch-panel', 'waveshare,8.0inch-c-panel', 'waveshare,8.8inch-panel', 'winstar,wf35ltiacd', 'yes-optoelectronics,ytc700tlag-05-201c']
+	from schema $id: http://devicetree.org/schemas/display/panel/panel-simple.yaml
+arch/arm64/boot/dts/qcom/sdm845-lg-judyln.dtb: panel@0 (lg,sw49410-lh609qh1): compatible: ['lg,sw49410-lh609qh1', 'lg,sw49410'] is too long
+	from schema $id: http://devicetree.org/schemas/display/panel/panel-simple.yaml
+arch/arm64/boot/dts/qcom/sdm845-lg-judyln.dtb: panel@0 (lg,sw49410-lh609qh1): 'power-supply' is a required property
+	from schema $id: http://devicetree.org/schemas/display/panel/panel-simple.yaml
+arch/arm64/boot/dts/qcom/sdm845-lg-judyln.dtb: panel@0 (lg,sw49410-lh609qh1): Unevaluated properties are not allowed ('reg', 'vsn-supply', 'vsp-supply' were unexpected)
+	from schema $id: http://devicetree.org/schemas/display/panel/panel-simple.yaml
+arch/arm64/boot/dts/qcom/sdm845-lg-judyln.dtb: /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0: failed to match any schema with compatible: ['lg,sw49410-lh609qh1', 'lg,sw49410']
+  DTC [C] arch/arm64/boot/dts/qcom/sdm845-sony-xperia-tama-akari.dtb
+arch/arm64/boot/dts/qcom/sdm845-sony-xperia-tama-akari.dtb: touchscreen@2c (syna,rmi4-i2c): Unevaluated properties are not allowed ('incell-supply' was unexpected)
+	from schema $id: http://devicetree.org/schemas/input/syna,rmi4.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/sdm845-sony-xperia-tama-apollo.dtb
+arch/arm64/boot/dts/qcom/sdm845-sony-xperia-tama-apollo.dtb: touchscreen@2c (syna,rmi4-i2c): Unevaluated properties are not allowed ('incell-supply' was unexpected)
+	from schema $id: http://devicetree.org/schemas/input/syna,rmi4.yaml
+  DTC [C] arch/arm64/boot/dts/qcom/sdm845-xiaomi-polaris.dtb
+arch/arm64/boot/dts/qcom/sdm845-xiaomi-polaris.dtb: /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0: failed to match any schema with compatible: ['jdi,fhd-nt35596s']
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1293-ds418j.dtb
+arch/arm64/boot/dts/realtek/rtd1293-ds418j.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1293-ds418j.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1293-ds418j.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1293-ds418j.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1293-ds418j.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1295-mele-v9.dtb
+arch/arm64/boot/dts/realtek/rtd1295-mele-v9.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-mele-v9.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-mele-v9.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-mele-v9.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-mele-v9.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1295-probox2-ava.dtb
+arch/arm64/boot/dts/realtek/rtd1295-probox2-ava.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-probox2-ava.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-probox2-ava.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-probox2-ava.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-probox2-ava.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1295-xnano-x5.dtb
+arch/arm64/boot/dts/realtek/rtd1295-xnano-x5.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-xnano-x5.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-xnano-x5.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-xnano-x5.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-xnano-x5.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1295-zidoo-x9s.dtb
+arch/arm64/boot/dts/realtek/rtd1295-zidoo-x9s.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-zidoo-x9s.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-zidoo-x9s.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-zidoo-x9s.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1295-zidoo-x9s.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1296-ds418.dtb
+arch/arm64/boot/dts/realtek/rtd1296-ds418.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1296-ds418.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1296-ds418.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1296-ds418.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1296-ds418.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1395-bpi-m4.dtb
+arch/arm64/boot/dts/realtek/rtd1395-bpi-m4.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1395-bpi-m4.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1395-bpi-m4.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1395-bpi-m4.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1395-bpi-m4.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1395-lionskin.dtb
+arch/arm64/boot/dts/realtek/rtd1395-lionskin.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1395-lionskin.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1395-lionskin.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1395-lionskin.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1395-lionskin.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/realtek/rtd1619-mjolnir.dtb
+arch/arm64/boot/dts/realtek/rtd1619-mjolnir.dtb: syscon@0 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1619-mjolnir.dtb: syscon@7000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1619-mjolnir.dtb: syscon@1a000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1619-mjolnir.dtb: syscon@1b000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+arch/arm64/boot/dts/realtek/rtd1619-mjolnir.dtb: syscon@1d000 (syscon): compatible: ['syscon', 'simple-mfd'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/renesas/r8a779g3-sparrow-hawk.dtb
+  DTC     arch/arm64/boot/dts/renesas/r8a779g3-sparrow-hawk-ws-2ch-canfd.dtbo
+  OVL [C] arch/arm64/boot/dts/renesas/r8a779g3-sparrow-hawk-ws-2ch-canfd.dtb
+arch/arm64/boot/dts/renesas/r8a779g3-sparrow-hawk-ws-2ch-canfd.dtb: spi-ws-2ch-canfd (spi-gpio): $nodename:0: 'spi-ws-2ch-canfd' does not match '^spi(@.*|-([0-9]|[1-9][0-9]+))?$'
+	from schema $id: http://devicetree.org/schemas/spi/spi-gpio.yaml
+arch/arm64/boot/dts/renesas/r8a779g3-sparrow-hawk-ws-2ch-canfd.dtb: spi-ws-2ch-canfd (spi-gpio): Unevaluated properties are not allowed ('#address-cells', '#size-cells', 'can@0' were unexpected)
+	from schema $id: http://devicetree.org/schemas/spi/spi-gpio.yaml
+  DTC [C] arch/arm64/boot/dts/renesas/r9a09g011-v2mevk2.dtb
+arch/arm64/boot/dts/renesas/r9a09g011-v2mevk2.dtb: pinctrl@b6250000 (renesas,r9a09g011-pinctrl): sd0: 'anyOf' conditional failed, one must be fixed:
+	'cd', 'ctrl', 'data' do not match any of the regexes: '^pinctrl-[0-9]+$'
+	'power-source' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/pinctrl/renesas,rzv2m-pinctrl.yaml
+arch/arm64/boot/dts/renesas/r9a09g011-v2mevk2.dtb: pinctrl@b6250000 (renesas,r9a09g011-pinctrl): sd0-uhs: 'anyOf' conditional failed, one must be fixed:
+	'cd', 'ctrl', 'data' do not match any of the regexes: '^pinctrl-[0-9]+$'
+	'power-source' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/pinctrl/renesas,rzv2m-pinctrl.yaml
+arch/arm64/boot/dts/renesas/r9a09g011-v2mevk2.dtb: pinctrl@b6250000 (renesas,r9a09g011-pinctrl): emmc: 'anyOf' conditional failed, one must be fixed:
+	'ctrl', 'data' do not match any of the regexes: '^pinctrl-[0-9]+$'
+	'power-source' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/pinctrl/renesas,rzv2m-pinctrl.yaml
+  DTC [C] arch/arm64/boot/dts/renesas/r9a09g047e57-smarc.dtb
+arch/arm64/boot/dts/renesas/r9a09g047e57-smarc.dtb: sound@13c00000 (renesas,r9a09g047-sound): Unevaluated properties are not allowed ('clock-frequency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/sound/renesas,r9a09g047-sound.yaml
+  DTC     arch/arm64/boot/dts/renesas/r9a09g047e57-smarc-cru-csi-ov5645.dtbo
+  OVL [C] arch/arm64/boot/dts/renesas/r9a09g047e57-smarc-cru-csi-ov5645.dtb
+arch/arm64/boot/dts/renesas/r9a09g047e57-smarc-cru-csi-ov5645.dtb: sound@13c00000 (renesas,r9a09g047-sound): Unevaluated properties are not allowed ('clock-frequency' was unexpected)
+	from schema $id: http://devicetree.org/schemas/sound/renesas,r9a09g047-sound.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-eaidk-610.dtb
+arch/arm64/boot/dts/rockchip/rk3399-eaidk-610.dtb: audio-codec@1a (realtek,rt5651): 'hp-det-gpios', 'spk-con-gpio' do not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/sound/realtek,rt5651.yaml
+arch/arm64/boot/dts/rockchip/rk3399-eaidk-610.dtb: typec-portc@22 (fcs,fusb302): 'ports' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+arch/arm64/boot/dts/rockchip/rk3399-eaidk-610.dtb: syscon@ff770000 (rockchip,rk3399-grf): usb2phy@e450: 'port' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/soc/rockchip/grf.yaml
+arch/arm64/boot/dts/rockchip/rk3399-eaidk-610.dtb: syscon@ff770000 (rockchip,rk3399-grf): usb2phy@e450: Unevaluated properties are not allowed ('port' was unexpected)
+	from schema $id: http://devicetree.org/schemas/soc/rockchip/grf.yaml
+arch/arm64/boot/dts/rockchip/rk3399-eaidk-610.dtb: usb2phy@e450 (rockchip,rk3399-usb2phy): 'port' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/phy/rockchip,inno-usb2phy.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-firefly.dtb
+arch/arm64/boot/dts/rockchip/rk3399-firefly.dtb: syscon@ff770000 (rockchip,rk3399-grf): usb2phy@e450: 'port' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/soc/rockchip/grf.yaml
+arch/arm64/boot/dts/rockchip/rk3399-firefly.dtb: syscon@ff770000 (rockchip,rk3399-grf): usb2phy@e450: Unevaluated properties are not allowed ('port' was unexpected)
+	from schema $id: http://devicetree.org/schemas/soc/rockchip/grf.yaml
+arch/arm64/boot/dts/rockchip/rk3399-firefly.dtb: usb2phy@e450 (rockchip,rk3399-usb2phy): 'port' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/phy/rockchip,inno-usb2phy.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-gru-bob.dtb
+arch/arm64/boot/dts/rockchip/rk3399-gru-bob.dtb: usb@fe800000 (rockchip,rk3399-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@'
+	from schema $id: http://devicetree.org/schemas/usb/rockchip,rk3399-dwc3.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-bob.dtb: usb@fe900000 (rockchip,rk3399-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@'
+	from schema $id: http://devicetree.org/schemas/usb/rockchip,rk3399-dwc3.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-bob.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@0' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-bob.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@1' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-gru-kevin.dtb
+arch/arm64/boot/dts/rockchip/rk3399-gru-kevin.dtb: usb@fe800000 (rockchip,rk3399-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@'
+	from schema $id: http://devicetree.org/schemas/usb/rockchip,rk3399-dwc3.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-kevin.dtb: usb@fe900000 (rockchip,rk3399-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@'
+	from schema $id: http://devicetree.org/schemas/usb/rockchip,rk3399-dwc3.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-kevin.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@0' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-kevin.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@1' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-dumo.dtb
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-dumo.dtb: pcie@0,0: wifi@0,0:compatible: ['qcom,ath10k'] does not contain items matching the given schema
+	from schema $id: http://devicetree.org/schemas/pci/pci-bus-common.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-dumo.dtb: pcie@0,0: wifi@0,0:reg: [[0, 0, 0, 0, 0], [50331664, 0, 0, 0, 2097152]] is too long
+	from schema $id: http://devicetree.org/schemas/pci/pci-bus-common.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-dumo.dtb: wifi@0,0 (qcom,ath10k): reg: [[0, 0, 0, 0, 0], [50331664, 0, 0, 0, 2097152]] is too long
+	from schema $id: http://devicetree.org/schemas/net/wireless/qcom,ath10k.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-dumo.dtb: usb@fe800000 (rockchip,rk3399-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@'
+	from schema $id: http://devicetree.org/schemas/usb/rockchip,rk3399-dwc3.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-dumo.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@0' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-dumo.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@1' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-inx.dtb
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-inx.dtb: usb@fe800000 (rockchip,rk3399-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@'
+	from schema $id: http://devicetree.org/schemas/usb/rockchip,rk3399-dwc3.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-inx.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@0' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-inx.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@1' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-kd.dtb
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-kd.dtb: usb@fe800000 (rockchip,rk3399-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@'
+	from schema $id: http://devicetree.org/schemas/usb/rockchip,rk3399-dwc3.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-kd.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@0' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-kd.dtb: dp@fec00000 (rockchip,rk3399-cdn-dp): ports: 'port@1' is a required property
+	from schema $id: http://devicetree.org/schemas/display/rockchip/rockchip,rk3399-cdn-dp.yaml
+arch/arm64/boot/dts/rockchip/rk3399-gru-scarlet-kd.dtb: panel@0 (kingdisplay,kd097d04): 'ports' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/display/panel/panel-simple-dsi.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-hugsun-x99.dtb
+arch/arm64/boot/dts/rockchip/rk3399-hugsun-x99.dtb: bluetooth (brcm,bcm43438-bt): clock-names: 'oneOf' conditional failed, one must be fixed:
+	['ext_clock'] is too short
+	'extclk' was expected
+	'txco' was expected
+	'lpo' was expected
+	from schema $id: http://devicetree.org/schemas/net/bluetooth/brcm,bluetooth.yaml
+arch/arm64/boot/dts/rockchip/rk3399-hugsun-x99.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-leez-p710.dtb
+arch/arm64/boot/dts/rockchip/rk3399-leez-p710.dtb: bluetooth (brcm,bcm43438-bt): clock-names: 'oneOf' conditional failed, one must be fixed:
+	['ext_clock'] is too short
+	'extclk' was expected
+	'txco' was expected
+	'lpo' was expected
+	from schema $id: http://devicetree.org/schemas/net/bluetooth/brcm,bluetooth.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-nanopc-t4.dtb
+arch/arm64/boot/dts/rockchip/rk3399-nanopc-t4.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC     arch/arm64/boot/dts/rockchip/rk3399-nanopc-t4-hd702e.dtbo
+  OVL [C] arch/arm64/boot/dts/rockchip/rk3399-nanopc-t4-hd702e.dtb
+arch/arm64/boot/dts/rockchip/rk3399-nanopc-t4-hd702e.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-nanopi-m4.dtb
+arch/arm64/boot/dts/rockchip/rk3399-nanopi-m4.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-nanopi-neo4.dtb
+arch/arm64/boot/dts/rockchip/rk3399-nanopi-neo4.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-orangepi.dtb
+arch/arm64/boot/dts/rockchip/rk3399-orangepi.dtb: syscon@ff770000 (rockchip,rk3399-grf): usb2phy@e450: 'port' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/soc/rockchip/grf.yaml
+arch/arm64/boot/dts/rockchip/rk3399-orangepi.dtb: syscon@ff770000 (rockchip,rk3399-grf): usb2phy@e450: Unevaluated properties are not allowed ('port' was unexpected)
+	from schema $id: http://devicetree.org/schemas/soc/rockchip/grf.yaml
+arch/arm64/boot/dts/rockchip/rk3399-orangepi.dtb: usb2phy@e450 (rockchip,rk3399-usb2phy): 'port' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/phy/rockchip,inno-usb2phy.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dtb
+arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dtb: syscon@ff770000 (rockchip,rk3399-grf): usb2phy@e450: 'port' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/soc/rockchip/grf.yaml
+arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dtb: syscon@ff770000 (rockchip,rk3399-grf): usb2phy@e450: Unevaluated properties are not allowed ('port' was unexpected)
+	from schema $id: http://devicetree.org/schemas/soc/rockchip/grf.yaml
+arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dtb: usb2phy@e450 (rockchip,rk3399-usb2phy): 'port' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/phy/rockchip,inno-usb2phy.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-rock-4c-plus.dtb
+arch/arm64/boot/dts/rockchip/rk3399-rock-4c-plus.dtb: usb@fe800000 (rockchip,rk3399-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@'
+	from schema $id: http://devicetree.org/schemas/usb/rockchip,rk3399-dwc3.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-rockpro64.dtb
+arch/arm64/boot/dts/rockchip/rk3399-rockpro64.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC     arch/arm64/boot/dts/rockchip/rk3399-rockpro64-screen.dtbo
+  OVL [C] arch/arm64/boot/dts/rockchip/rk3399-rockpro64-screen.dtb
+arch/arm64/boot/dts/rockchip/rk3399-rockpro64-screen.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-rockpro64-v2.dtb
+arch/arm64/boot/dts/rockchip/rk3399-rockpro64-v2.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  OVL [C] arch/arm64/boot/dts/rockchip/rk3399-rockpro64-v2-screen.dtb
+arch/arm64/boot/dts/rockchip/rk3399-rockpro64-v2-screen.dtb: typec-portc@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-roc-pc.dtb
+arch/arm64/boot/dts/rockchip/rk3399-roc-pc.dtb: usb-typec@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+arch/arm64/boot/dts/rockchip/rk3399-roc-pc.dtb: usb-typec@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-roc-pc-mezzanine.dtb
+arch/arm64/boot/dts/rockchip/rk3399-roc-pc-mezzanine.dtb: usb-typec@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+arch/arm64/boot/dts/rockchip/rk3399-roc-pc-mezzanine.dtb: usb-typec@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-roc-pc-plus.dtb
+arch/arm64/boot/dts/rockchip/rk3399-roc-pc-plus.dtb: usb-typec@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-sapphire-excavator.dtb
+arch/arm64/boot/dts/rockchip/rk3399-sapphire-excavator.dtb: rt5651@1a (realtek,rt5651): 'hp-det-gpios', 'spk-con-gpio' do not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/sound/realtek,rt5651.yaml
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3566-pinenote-v1.1.dtb
+arch/arm64/boot/dts/rockchip/rk3566-pinenote-v1.1.dtb: usb2phy@fe8a0000 (r

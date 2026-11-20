@@ -4,14 +4,15 @@
 Two connectors can share one High Speed D+/D- pair only if a multiplexer
 selects which receptacle drives the controller, and that selection has to
 follow the USB mode: leaving it to a board level GPIO means the controller
-can end up driving the data lines of the connector that is not in use, and a
-host or gadget instance cannot be torn down while its own lines are still
+can end up driving the data lines of the connector that is not in use, and
+a host or gadget instance cannot be torn down while its own lines are still
 selected.
 
-A mux controller cannot be read back, so the connector in use at boot cannot
-be detected: the first mode request claims the mux for state 0 instead.  A
-move of the data path to the other connector is a mode switch even when the
-role does not change, which is why it goes through the same worker.
+A mux controller cannot be read back, so the connector in use at boot
+cannot be detected: the first mode request claims the mux for state 0
+instead.  A move of the data path to the other connector is a mode
+switch even when the role does not change, which is why it goes through
+the same worker.
 
 mux_control_select() sleeps while waiting for the controller and
 mux_control_deselect() may sleep as well, so both are only called from
@@ -19,8 +20,9 @@ __dwc3_set_mode() on system_freezable_wq and from dwc3_drd_exit() after the
 mode work has been drained; the role-switch set() callback keeps recording
 the request and never touches the mux.  The mux stays selected between
 switches, since the controller always drives exactly one of the two
-connectors, and it is deselected on unbind.  The arbitration, publication
-ordering and teardown rules of the per-connector role switches are unchanged.
+connectors, and it is deselected on unbind.  The arbitration,
+publication ordering and teardown rules of the per-connector role switches
+are unchanged.
 
 *** AI-assistance disclosure ***
 This patch was prepared with the help of an LLM coding assistant.  The

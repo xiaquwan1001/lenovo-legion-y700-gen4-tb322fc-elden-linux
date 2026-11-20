@@ -1,0 +1,21 @@
+先 `git rev-parse --show-toplevel` 确认 /home/xuqianhui/y700-elden，不符则零改动中止。
+三段，严格按序：
+
+**① 先落盘已有改动（防止编译崩掉工作）**：把当前工作区（INDEX.md、TASKS/README.md、reports/*、scripts/*、patches/upstream/dwc3-v10-20261120/README.md + 新 cover draft）合成一次 commit，message 用 `docs/chore` 前缀描述「TASKS §7 回填 + odirect sha 硬门 13 脚本 + v3 预演 §10 + v10 cover 草稿」。commit 前跑 `bash scripts/check-doctor.sh`，要求 FAIL=0。顺手把 INDEX/TASKS 里残留的 `2026-11-21` 未来日期标签重标为证据支持的日期（无证据就别改，只在汇报里说明）。
+
+**② 平台准备**：`hw-heal run drop-caches`（若策略问/拒，跳过并记录，不要 sudo 硬来）。确认 build/elden-tree 的 HEAD = aebb727447 且 .git/shallow 存在。
+
+**③ dwc3 v10 门禁（唯一构建 lane，-j12，全部套 flock）**：按 patches/upstream/dwc3-v10-20261120/README.md §4 逐门跑并留原始日志到该目录 runs/：
+- G1 `git am` 三枚（先 `git -C build/elden-tree fetch --deepen=50` 以支持 --3way；失败就 `--depth=200` 重取）
+- G2 `checkpatch --strict --no-signoff --no-tree`、G3 `make -j12 W=1 drivers/usb/{dwc3,roles}`、G4 `dt_binding_check`、G5 `CHECK_DTBS=1 make -j12 dtbs`（arm64 + CROSS_COMPILE=aarch64-linux-gnu-）、G6 `dt-validate -p processed-schema.json`；**不用 DT_SCHEMA_FILES**、rc 不作唯一判据（按 README 口径）。
+- 每门把真实数字填进 `v10-0000-cover-letter.DRAFT.patch` 的门禁表（占位换成实测），并给 v10-0002 补上 AI 披露段（与 1/3、3/3 同格式）。
+- 全部门过后再 commit 一次（`chore(dwc3-v10): 门禁 G1–G6 实测回填 + 2/3 AI 披露`）。
+**禁止发信**（发信由下一轮单开 lane，需要你本轮的门禁数字）。任何一门红就停在红门，把命令/输出写进 runs/ 并汇报，不要改补丁内容来凑绿。
+
+## 全局资源纪律（本轮按**实测**定档，不是申报值）
+- hw-stability 判定（19:06，本 boot）：load-gate 绿、本 boot coredump 0；但同 boot 19 min 已出现 1168 B 零填落盘（写坏与负载无关）⇒ **禁止 -j26 / 禁止无分段长跑**。
+- 因此单 lane 线程上限：**内核构建 -j12、netease 构建 -j6、lobcorp 构建 -j4**，其余 ≤2 核。全局构建仍串行：`flock /tmp/pi-heavy-build.lock -c '<cmd>'`（拿不到就等）。
+- 长命令一律 `timeout -k 30 <秒>`；禁 `pkill`/`killall`/`kill -9 -f`。
+- 出现随机 SIGSEGV/ICE/同址必崩/产物 sha 漂移 ⇒ 停手，列证据路径标 HW-SUSPECT，不自修不 memtest。
+- 只改指派的仓；不新建顶层文档；结尾必须给「做了什么 / 实测数字 / 未完成 / 阻塞 / 峰值 CPU 实测」。
+- 磁盘现在 / 78%（198 G 可用）。今天 19:2x 曾因 hw-stability 的 pcache-guard 把 /proc/*/maps 写成 154 GB 而 ENOSPC，若你看到磁盘突然暴涨，立刻停手并汇报。

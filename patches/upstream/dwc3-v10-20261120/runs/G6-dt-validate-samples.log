@@ -1,0 +1,49 @@
+# G6 — dt-validate -p processed-schema.json（2 正 + 4 负），2026-11-21
+# schema : /tmp/kbuild-v10-g2/Documentation/devicetree/bindings/processed-schema.json（G4 同一次产出，5959 schema）
+# 树     : /tmp/dwc3-v10-final @ ea0f09c585（= aebb727447 + 3 枚 v10 补丁，git am 干净）
+# 样例   : /tmp/g6-samples/*.dts（dtc -I dts -O dtb 现场编）；四类负样例 = cover §B G6 口径
+# 命令   : dt-validate -u /tmp/dwc3-v10-final/Documentation/devicetree/bindings -p <schema> <sample>.dtb
+# 判绿   : 正样例 诊断行=0；负样例逐类被拒（消息对得上）；rc 不作判据（本版 dt-validate 恒 rc=0，见 README §0）
+
+=== pos-two-endpoints.dtb   rc=0  诊断行=0
+    
+
+=== pos-no-mux-single.dtb   rc=0  诊断行=0
+    
+
+=== neg1-samestate.dtb   rc=0  诊断行=5
+    neg1-samestate.dtb: usb@a600000 (snps,dwc3): ports:port@0: 'oneOf' conditional failed, one must be fixed:
+    	0 was expected
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+    neg1-samestate.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'ports', 'usb-role-switch' were unexpected)
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+
+=== neg2-missing-endpoint1.dtb   rc=0  诊断行=4
+    neg2-missing-endpoint1.dtb: usb@a600000 (snps,dwc3): ports:port@0: 'endpoint@1' is a required property
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+    neg2-missing-endpoint1.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'ports', 'usb-role-switch' were unexpected)
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+
+=== neg3-missing-endpoint-props.dtb   rc=0  诊断行=6
+    neg3-missing-endpoint-props.dtb: usb@a600000 (snps,dwc3): ports:port@0:endpoint@1: 'usb-role-switch' is a required property
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+    neg3-missing-endpoint-props.dtb: usb@a600000 (snps,dwc3): ports:port@0:endpoint@1: 'mux-state' is a required property
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+    neg3-missing-endpoint-props.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'ports', 'usb-role-switch' were unexpected)
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+
+=== neg4-legacy-v8.dtb   rc=0  诊断行=10
+    neg4-legacy-v8.dtb: usb@a600000 (snps,dwc3): ports:port@0:endpoint@0: False schema does not allow 1
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+    neg4-legacy-v8.dtb: usb@a600000 (snps,dwc3): ports:port@0:endpoint@0: False schema does not allow True
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+    neg4-legacy-v8.dtb: usb@a600000 (snps,dwc3): ports:port@0:endpoint@1: False schema does not allow 0
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+    neg4-legacy-v8.dtb: usb@a600000 (snps,dwc3): ports:port@0:endpoint@1: False schema does not allow True
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+    neg4-legacy-v8.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'ports', 'usb-role-switch' were unexpected)
+    	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+
+# 负样例尾部 'Unevaluated properties … were unexpected' = dtschema 级联：then/oneOf 子 schema 校验失败时
+# 其 properties 不计入 evaluated，父节点 unevaluatedProperties: false 再报一次。只在故意破坏的样例出现，
+# 两个正样例 0 诊断 ⇒ 不是本补丁新增的误伤（对照 README §3 同结论）。

@@ -278,7 +278,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 角度文档 | `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/` `archive/` | track |
 | 源码/补丁/工具 | `scripts/` `tools/` `patches/` `patches-userland/` `reference/` `versions/` `packaging/` `initramfs/` `rootfs/` `probes/` `net/` `waydroid-ota/` `restore-259/` `cycle.sh` `elden-net.sh` `.githooks/` `.gitignore` | track |
 | 证据/备份 | `reports/`（md 入库，大件 ignore）· `backup/`（**不可再生**：删前必须云盘或 bundle 兜底）· `assets/`（原厂安卓资产提取树，2026-11-19 起；专有、仅本机用、不入库，脚本可重建） | track / ignore |
-| 工作区（**可再生成**） | `build/` `out/` `logs/` `bootslot-b/` `env-pass/` `dl-cam/` `wt/` `external/` `geekidos-linux/` `Y700-elden-linux/` + 软链 `linux` | ignore（`build/` 删前先 bundle + 导 diff） |
+| 工作区（**可再生成**） | `build/` `out/` `logs/` `runs/` `bootslot-b/` `env-pass/` `dl-cam/` `wt/` `external/` `geekidos-linux/` `Y700-elden-linux/` + 软链 `linux` | ignore（`build/` 删前先 bundle + 导 diff；`runs/` = lane 实跑回执工作区，2026-11-20 起） |
 | ↳ **2026-11-19 现状** | `build/` 的内核树与 `geekidos-linux/`＋软链 `linux` **已被磁盘清理删除**（`build/` 只剩 phoc/phosh 源码）；重建命令见 `versions/layout.tsv` 表头注释，影响与处置 = `reports/disk-cleanup-20261119-validation-impact.md` | — |
 | AI 大脑 | `.pi/`（规范/并发/编排/技能/记忆/会话；分工见 `.pi/README.md`） | track |
 

@@ -50,6 +50,7 @@ src	.gitignore	track	版本控制边界
 work	build/	ignore	内核构建树/独立仓/worktree（含未提交改动，删除前必须先 bundle + 导 diff，见 RESOURCES §3）
 work	out/	ignore	构建产物（*.manifest 入库）
 work	logs/	ignore	串口/构建/agent 日志
+work	runs/	ignore	lane 实跑回执工作区（2026-11-20 起：runs/<lane>/ = REPORT.md + 原始日志/取证件；与 logs/ 同类工作区，大件不入库，需要入库的结论写进 reports/ 或 patches/ 同名 runs/）
 work	bootslot-b/	ignore	自签 b 槽包（含 avb 私钥，禁止入库）
 work	env-pass/	ignore	过环境里程碑件
 work	dl-cam/	ignore	相机 provider 交叉编译工作区（部分纳管）

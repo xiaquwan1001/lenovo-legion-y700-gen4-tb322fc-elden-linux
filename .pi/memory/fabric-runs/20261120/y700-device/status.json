@@ -1,0 +1,29 @@
+{
+  "id": "9e3d4911f0b74765b292cb1592c5eb5f",
+  "name": "y700-device",
+  "task": "先确认仓身份。**你被授权使用真机设备、清理资产**（所有者 2026-11-20 明确放行），但必须按证据走、每步留痕：\n\n**① 资产清理（先做，省磁盘）**：按本项目计划里「B 档可确定作废的 v2b/min（≈23 G）」清单，逐件记录 path+size+sha256 到 `runs/laneAssetCleanup/manifest.tsv`，然后删除；删完 `du -sh out` 与 `df -h /` 前后对比。只删清单里点名的件，任何拿不准的保留并在汇报里列出。\n\n**② 设备 v3 首启**：读 `reports/android-v3-bringup-packet-20261120.md` §10（上一轮预演回执），设备现态 = fastboot（HA2EXB0E）。\n- 先 `fastboot getvar all` 存档到 `runs/laneDeviceV3/getvar-before.txt`（timeout 60）。\n- 现态是 fastboot 时 S1 会 exit 3 ⇒ 按 §10 的结论走可用入口（S2/S3/S4 经 `fastboot oem edl`，或 S5 `fastboot boot` 零写盘）。**每步先用 §10 表格里的真实 argv（含引号）**，不要照抄 `logc` 打印的吞引号版本（F1 缺陷）。\n- 每步执行前把「将执行命令」写进 `runs/laneDeviceV3/steps.log`；失败/超时就停，**不连续重试超过 2 次**，保留设备在可回落状态（b 槽）。\n- **禁** `fastboot flash` 到非 packet 指定分区、禁 `fastboot -w`、禁 qdl 写 EDL 以外的分区表。\n- 结束无论成败都再 `fastboot getvar all`（或 `adb devices`）存 `getvar-after.txt`。\n\n**不做 git 提交**（另一个 lane 正在提交同一仓），只写 runs/ 下文件。汇报里写明设备最终状态（fastboot / linux / android / 无法判定）。\n\n## 全局资源纪律（本轮按**实测**定档，不是申报值）\n- hw-stability 判定（19:06，本 boot）：load-gate 绿、本 boot coredump 0；但同 boot 19 min 已出现 1168 B 零填落盘（写坏与负载无关）⇒ **禁止 -j26 / 禁止无分段长跑**。\n- 因此单 lane 线程上限：**内核构建 -j12、netease 构建 -j6、lobcorp 构建 -j4**，其余 ≤2 核。全局构建仍串行：`flock /tmp/pi-heavy-build.lock -c '<cmd>'`（拿不到就等）。\n- 长命令一律 `timeout -k 30 <秒>`；禁 `pkill`/`killall`/`kill -9 -f`。\n- 出现随机 SIGSEGV/ICE/同址必崩/产物 sha 漂移 ⇒ 停手，列证据路径标 HW-SUSPECT，不自修不 memtest。\n- 只改指派的仓；不新建顶层文档；结尾必须给「做了什么 / 实测数字 / 未完成 / 阻塞 / 峰值 CPU 实测」。\n- 磁盘现在 / 78%（198 G 可用）。今天 19:2x 曾因 hw-stability 的 pcache-guard 把 /proc/*/maps 写成 154 GB 而 ENOSPC，若你看到磁盘突然暴涨，立刻停手并汇报。",
+  "status": "completed",
+  "runner": "pi-durable",
+  "kernel": "typescript",
+  "transport": "process",
+  "cwd": "/home/xuqianhui/y700-elden",
+  "model": "custom.ustc-pool/ustc-dsf",
+  "requestedModel": "custom.ustc-pool/ustc-dsf",
+  "thinking": "low",
+  "startedAt": 1795176981505,
+  "updatedAt": 1795178488372,
+  "turns": 61,
+  "toolCalls": 73,
+  "text": "仓身份：`/home/xuqianhui/y700-elden`（HEAD `f1113c4c`，含他 lane 未提交改动；未做 git 提交）。\n\n## ① 资产清理 —— **主体被权限挡住，实删仅 668 KB**\n\n- 清点 **2987 件** → `runs/laneAssetCleanup/manifest.tsv`（path/bytes/uid/decision/sha256/note，sha 走 O_DIRECT；36 件 0600-root 取不到，已标注）。\n- **实删 6 件 / 668 273 B**：`df avail 211 468 562 432 → 211 469 225 984 B`，`du -sb out 81 170 576 066 → 81 169 907 793`。\n- **2953 件 / 20.80 GiB(apparent，allocated ≈15.6 GiB) 删不了**：全在 `root:root 0755` 目录（`v2b/{new,work,verify}`、`min/new`）里，非 root 无 unlink 权限——实测一条 EPERM 即停（`delete-attempt.log`）。`sudo` 只免密白名单了 `pi-root` 子命令，没有通用 rm ⇒ 属需外部干预项，未反复试错。\n- **两件大件我主动保留**（拿不准就留）：`min/pkg/super_min.img` 8.89 GB、`v2b/new/super_min_v3.img` 9.17 GB —— packet §10.1/§10.4 与 walkthrough `PIECES` 把它们当 **crit=1 上机件**（S3 回退基线 / S4 二分件 + `--verify` 7/7），删了会让上机包直接 die。\n- 交给你一条命令（已按上述剔除）：`bash runs/laneAssetCleanup/delete-B-tier.sh [--apply]`，预计回收 ≈15.6 GiB。\n\n## ② 设备 v3 首启 —— 设备最终态 **fastboot**（`HA2EXB0E`，current-slot=**b**）\n\n- `getvar-before.txt` / `getvar-after.txt` 双档已存；每步真实 argv（含引号）写在 `steps.log`，未用 `logc` 的吞引号输出。\n- **S1 未跑**（§10.2：现态 fastboot ⇒ exit 3，需先有 Linux）。\n- **S2 执行完成、校验通过，但实为 no-op**：写前 dump 与写入件 **O_DIRECT sha 全等 `a735fbc7…`** ⇒ 设备 metadata 本来就是原厂，**H4「metadata 被 erase」排除**；BCB 读回 nonzero=0。\n- **S5 判「需上机项未通过」**：`fastboot boot` 对本仓 v4 件 `Load Error`；换**未改动的原厂 boot.img 同样 `Load Error`** ⇒ 与 cmdline 改写无关，ABL 不收 96 MiB v4 件走 `fastboot boot`。两发即停。\n- **S3/S4 未跑**（新证据表明失败点在 ABL 侧、未进内核，写 14.5 GiB super 不产生新判据，只会改变回退面）。\n- 新证据 5 条（全部只读留档）：`boot_a` GPT attr byte6=**0x87**（应 0x7a/0x7b，PITFALLS #695 那一类）；`boot_a` 内容=原厂 `b428a31d…` 逐字节；**pstoredump 128 MiB 全 0**（没进内核）；misc 前 16 KiB 全 0（非 BCB）；**b 槽 retry 未被消耗（6→6）⇒ ABL 根本没尝试加载 b**，更像「进 fastboot 的触发条件仍在」（`factory-mode:1`，需你目视按键/线）。\n- 新脚本缺陷 F5：`observe_android` 在 `qdl reset` 后第一拍仍读到 `edl` 就判早失败（`…/verdict.txt`），已自补观察。\n- 未完成/阻塞：Android 首启判据仍未取得；下一步 = 物理确认按键→ 起 b 槽 Linux → 按 S1 5b 复位 `boot_a` 属性 → 再试。\n\n## 资源与安全\n\n无构建（未取 `flock`）；瞬时 load 1.92/2.48/3.09、CPU idle **93.2%**，本轮最大 IO = EDL 读 **43.0 MiB/s**；本 boot MCE/coredump 计数 0；无 SIGSEGV/ICE/产物 sha 漂移（S5 件双读一致）。df 复核 20:39 为 used 690G/avail 200G——**多出的约 3 GB 不是本 lane**（只删 668 KB），应为并发 lane 释放。全程未写 super/boot/vbmeta/userdata，回退件齐备。\n\n收尾: ①主体被 root 权限挡住（实删 668 KB，待 sudo 脚本回收 15.6 GiB）；②设备停在 fastboot(HA2EXB0E, 槽 b)，S2=no-op、S5 判 v4 件不可 `fastboot boot`，新取证指向 boot_a 属性 0x87 + 未进内核。",
+  "usage": {
+    "input": 78347,
+    "output": 42925,
+    "cacheRead": 3750080,
+    "cacheWrite": 0,
+    "cost": 0.49628
+  },
+  "logFile": "/home/xuqianhui/.cache/pi-tmp/pi-fabric-runs-Zz5rnD/9e3d4911f0b74765b292cb1592c5eb5f/events.jsonl",
+  "exitCode": 0,
+  "stderr": "[fabric-hardening] already patched\n",
+  "finishedAt": 1795178488372
+}
