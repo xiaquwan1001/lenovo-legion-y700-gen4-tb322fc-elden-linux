@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：564
+- 报告总数：570
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -15,14 +15,13 @@
 | `mail` | 28 | `mail-inbox-20261118.md` |
 | `q24` | 24 | `q24-n5b-20261023.md` |
 | `gunyah` | 18 | `gunyah-b15-iceland-rmdrv-20261113.md` |
-| `upstream` | 17 | `upstream-delta-20261118.md` |
+| `upstream` | 18 | `upstream-recheck-20261120.md` |
 | `doc` | 16 | `doc-slim-plan-20261118.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
+| `android` | 10 | `android-a-slot-attempt-20261120.md` |
 | `camss` | 9 | `camss-v25-rebase-20261117.md` |
 | `m3v5` | 9 | `m3v5-repack-20261031.md` |
-| `android` | 8 | `android-assets-20261119.md` |
-| `asset` | 8 | `asset-slim-20261112.md` |
 | `b5` | 8 | `b5-preflight-20261029.md` |
 | `droidloom` | 8 | `droidloom-l2-phoc-syncobj-20261111.md` |
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
@@ -51,6 +50,7 @@
 | `kexec` | 3 | `kexec-target-boots-20261024.md` |
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
+| `out` | 3 | `out-status-ledger-20261120.md` |
 | `stale` | 3 | `stale-alpine-audit-docs-20261119.md` |
 | `suspend` | 3 | `suspend-panic-rootcause-20261020.md` |
 | `tablet` | 3 | `tablet-night-runner-dryrun-20261031.md` |
@@ -61,6 +61,7 @@
 | `code` | 2 | `code-boundary-preinject-20261031.md` |
 | `debian` | 2 | `debian-root-accounts-sensors-20261026.md` |
 | `docs` | 2 | `docs-slim-20261114.md` |
+| `dwc3` | 2 | `dwc3-v10-plan-20261120.md` |
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
@@ -70,10 +71,11 @@
 | `local` | 2 | `local-cleanup-q24-q28-20261015.md` |
 | `m8` | 2 | `m8-rsc-ownership-20261031.md` |
 | `modular` | 2 | `modular-driver-audit-20261026.md` |
-| `out` | 2 | `out-uefi-trim-20261106.md` |
+| `pitfalls` | 2 | `pitfalls-body-backfill-20261120.md` |
 | `pstore` | 2 | `pstore-ram-initrd-guard-20261116.md` |
 | `qemu` | 2 | `qemu-full-chain-20261113.md` |
 | `route` | 2 | `route-b-impl-20261108.md` |
+| `scripts` | 2 | `scripts-index-20261120.md` |
 | `session` | 2 | `session-2026-10-13-evening.md` |
 | `t14` | 2 | `t14-s3s4s6-offline-verify-20261114.md` |
 | `t18` | 2 | `t18-charging-timing-20261111.md` |
@@ -91,6 +93,9 @@
 | `b2` | 1 | `b2-camss-0003-recheck-20261113.md` |
 | `backup` | 1 | `backup-triage-20261118.md` |
 | `beacon` | 1 | `beacon-recheck-20261110.md` |
+| `bigfile` | 1 | `bigfile-verdict-20261120.md` |
+| `bootimg` | 1 | `bootimg-v4-cmdline-20261120.md` |
+| `build` | 1 | `build-stage-no-danger-units-20261120.md` |
 | `c0` | 1 | `c0-android-baseline-20261011.md` |
 | `c4` | 1 | `c4-route-c-20261011.md` |
 | `c9` | 1 | `c9-cases-20261013.md` |
@@ -103,7 +108,6 @@
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
 | `dispcc` | 1 | `dispcc-battmgr-20261028.md` |
 | `driver` | 1 | `driver-ab-charging-20261108.md` |
-| `dwc3` | 1 | `dwc3-v9-plan-20261111.md` |
 | `e3` | 1 | `e3-wcn-dyndbg-20261014.md` |
 | `edl` | 1 | `edl-toolchain-survey-20261101.md` |
 | `esp` | 1 | `esp-gpt-apply-automation-20261118.md` |
@@ -126,6 +130,7 @@
 | `motor` | 1 | `motor-haptics-vk127-20261017.md` |
 | `mu` | 1 | `mu-memmap-20261115.md` |
 | `net` | 1 | `net-https-mtu-rootcause-20261018.md` |
+| `odirect` | 1 | `odirect-sha-gate-20261120.md` |
 | `optional` | 1 | `optional-9-applycheck-20261113.md` |
 | `p1` | 1 | `p1-upstream-dsi-20261013.md` |
 | `p2b` | 1 | `p2b-retest-20261014.md` |
@@ -133,13 +138,14 @@
 | `patches` | 1 | `patches-uefi-grading-20261106.md` |
 | `pcie` | 1 | `pcie-l2-static-20261020.md` |
 | `phosh` | 1 | `phosh-mr-power-mode-20261114.md` |
-| `pitfalls` | 1 | `pitfalls-dedup-audit-20261112.md` |
 | `project` | 1 | `project-audit-20261111.md` |
+| `py` | 1 | `py-static-scan-20261120.md` |
 | `qca` | 1 | `qca-fw-download-suspend-20261021.md` |
 | `rebuild` | 1 | `rebuild-corrupt-img-20261102.md` |
 | `replay` | 1 | `replay-2026-10-17-m1-73-vk127.md` |
 | `repo` | 1 | `repo-slim-audit-20261113.md` |
 | `resource` | 1 | `resource-revue-20261119.md` |
+| `shellcheck` | 1 | `shellcheck-fix-20261120.md` |
 | `shutdown` | 1 | `shutdown-greetd-hang-plan-20261030.md` |
 | `sn` | 1 | `sn-anchoring-audit-20261113.md` |
 | `ssot` | 1 | `ssot-merge-20261105-round2.md` |
@@ -360,8 +366,9 @@
 - `gunyah-vmm-first-attempt-20261024.md` — Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 - `gunyah-roadmap-20261021.md` — Gunyah 虚拟化线（拓展项）资产盘点 + 事实核查 + 分阶段规划
 
-## `upstream`（17）
+## `upstream`（18）
 
+- `upstream-recheck-20261120.md` — 上游系列现态复核（patchwork REST，2026-11-20）
 - `upstream-delta-20261118.md` — 上游变化侦察（窗口 2026-11-13 → 2026-11-17，写于 2026-11-17 UTC）
 - `upstream-replies-20261117.md` — 上游邮件 + 主线代码状态核查（2026-11-17）
 - `upstream-74-replay-20261113.md` — 上游 7.4 重放可行性实验 — 2026-11-13
@@ -432,6 +439,19 @@
 - `m3-missing-support-matrix-20261013.md` — M3 缺口矩阵 — 板 DTS 依赖项的上游支持面（2026-10-13）
 - `m3-series-plan-20261013.md` — M3 板支持系列 — 拆分计划与验收口径（2026-10-13）
 
+## `android`（10）
+
+- `android-a-slot-attempt-20261120.md` — Android a 槽首启实测（2026-11-20 11:35–11:50，U2 HA2EXB0E）—— S1 的实测结论
+- `android-v3-bringup-packet-20261120.md` — 安卓精简 v3 首启验证 —— 「上机执行包」（S1–S5，主机侧准备完成，设备零写操作）
+- `android-assets-20261119.md` — 安卓原厂资产 → Linux 可用包（纯主机侧）
+- `android-ksu-avb-20261119.md` — KSU(init_boot) + AVB 自洽 —— 主机侧造件与对账（TB322FC / elden / ZUXOS 1.5.10.259）
+- `android-slim-v2-20261119.md` — 安卓「干净瘦身 v2」+ 卡 ZUXOS 动画静态定因
+- `android-slim-v3-20261119.md` — 安卓「彻底精简 v3」+ 安卓/Linux 双轨共存契约（2026-11-19）
+- `android-min-avb-facts-20261118.md` — 精简安卓全量包的 AVB / 虚拟 A/B / 去预装 事实与风险（S2）
+- `android-super-format-20261118.md` — super 封装格式、工具链与精简额度（S1）
+- `android-compat-20261026.md` — G2 安卓兼容调查（lane F）— 2026-10-26
+- `android-required-resources-audit-20261011.md` — 安卓侧「必须提取资源」审计（U2 · 2026-10-11）
+
 ## `camss`（9）
 
 - `camss-v25-rebase-20261117.md` — camss CSIPHY 2.4.0 delta：按 Bryan 要求重基到 on-list kaanapali v25（主机侧，2026-11-17 下午）
@@ -455,28 +475,6 @@
 - `m3v5-onboard-plan-20261030.md` — M3-1 v5 上机实验组准备（pristine 候选）— 2026-10-30
 - `m3v5-prefetch-regression-20261030.md` — M3-1 v5 投递前独立构建 + 边界回归（pristine 基线）— 2026-10-30（重派轮）
 - `m3v5-pristine-replay-20261030.md` — M3-1 v5 pristine 重放（投递前必修项）—— 2026-10-30
-
-## `android`（8）
-
-- `android-assets-20261119.md` — 安卓原厂资产 → Linux 可用包（纯主机侧）
-- `android-ksu-avb-20261119.md` — KSU(init_boot) + AVB 自洽 —— 主机侧造件与对账（TB322FC / elden / ZUXOS 1.5.10.259）
-- `android-slim-v2-20261119.md` — 安卓「干净瘦身 v2」+ 卡 ZUXOS 动画静态定因
-- `android-slim-v3-20261119.md` — 安卓「彻底精简 v3」+ 安卓/Linux 双轨共存契约（2026-11-19）
-- `android-min-avb-facts-20261118.md` — 精简安卓全量包的 AVB / 虚拟 A/B / 去预装 事实与风险（S2）
-- `android-super-format-20261118.md` — super 封装格式、工具链与精简额度（S1）
-- `android-compat-20261026.md` — G2 安卓兼容调查（lane F）— 2026-10-26
-- `android-required-resources-audit-20261011.md` — 安卓侧「必须提取资源」审计（U2 · 2026-10-11）
-
-## `asset`（8）
-
-- `asset-slim-20261112.md` — 资产/体积精简执行账（2026-11-12，用户「尽可能精简项目体积」）
-- `asset-tidy-exec-20261111.md` — 资产精简执行账（2026-11-11，用户裁决「可以精简删除」）
-- `asset-cleanup-20261110.md` — 2026-11-10 资产清理（用户「先发送，再清理」批准）
-- `asset-cleanup-20261109.md` — 资产清理执行账（2026-11-09）
-- `asset-inventory-20261108.md` — 资产与工具盘点 — 2026-11-08（只读，零删除）
-- `asset-tidy-20261105.md` — 资产清查与删除候选报告 2026-11-05（lane B，只读）
-- `asset-tidy-20261103.md` — 2026-11-03 项目整理：外部资产收拢 / 顶层布局重构 / 精简与纠错
-- `asset-inventory-20261101.md` — 资产盘点报告 2026-11-01（只读盘点）
 
 ## `b5`（8）
 
@@ -702,6 +700,12 @@
 - `m8ab-restart-20261030.md` — M8 A/B 续测（2026-10-30）：基线臂三发正常，坏发未复现
 - `m8ab-build-20261029.md` — M8 v2 真机 A/B 两镜像臂构建报告（lane G，2026-10-29）
 
+## `out`（3）
+
+- `out-status-ledger-20261120.md` — out/ 造件生命周期账本（out-status.py + versions/out-artifacts.tsv）— 2026-11-20
+- `out-uefi-trim-20261106.md` — `out/r21-sbstop` 处置：先记指纹与可复现性缺口（2026-11-06）→ **同日已执行清仓**
+- `out-archive-20261105.md` — `out/` 历史镜像归档执行（2026-11-05）—— 114 件 / 7.66 GiB
+
 ## `stale`（3）
 
 - `stale-alpine-audit-docs-20261119.md` — 文档层「过时 Alpine 件」审计（只读，2026-11-19）
@@ -756,6 +760,11 @@
 - `docs-slim-20261114.md` — 文档入口收敛（第二轮：减少入口 / 去重 / 时间序权重）— 2026-11-14
 - `docs-slim-20261113.md` — 文档精简执行账（2026-11-13）
 
+## `dwc3`（2）
+
+- `dwc3-v10-plan-20261120.md` — dwc3 v9 → v10 备料方案（lane D，2026-11-20）
+- `dwc3-v9-plan-20261111.md` — dwc3 系列 v9 重构方案（Rob Herring 结构性反对 → port@0 双 endpoint + gpio-mux）
+
 ## `f2fs`（2）
 
 - `f2fs-host-bench-20261025.md` — f2fs 主机 loop 台架 + discard 能力实测（G1，2026-10-25）
@@ -801,10 +810,10 @@
 - `modular-driver-audit-20261026.md` — modular-driver-audit — 7.3 日常线（build/vk151）驱动模块化第二层审计
 - `modular-mobian-transition-20261026.md` — 驱动模块化 × Alpine→Mobian 迁移：交界面核对与落点改判（2026-10-26 续）
 
-## `out`（2）
+## `pitfalls`（2）
 
-- `out-uefi-trim-20261106.md` — `out/r21-sbstop` 处置：先记指纹与可复现性缺口（2026-11-06）→ **同日已执行清仓**
-- `out-archive-20261105.md` — `out/` 历史镜像归档执行（2026-11-05）—— 114 件 / 7.66 GiB
+- `pitfalls-body-backfill-20261120.md` — PITFALLS 无正文条目补齐（2026-11-20）
+- `pitfalls-dedup-audit-20261112.md` — PITFALLS 去重审计（2026-11-12）
 
 ## `pstore`（2）
 
@@ -820,6 +829,11 @@
 
 - `route-b-impl-20261108.md` — 路线 B 实现回执 — D1 补丁 + D2 构建（2026-11-08）
 - `route-b-r56-20261108.md` — R56 — ESP-first Loader 面板可见标记 + Pname 修复
+
+## `scripts`（2）
+
+- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
+- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
 
 ## `session`（2）
 
@@ -899,6 +913,18 @@
 
 - `beacon-recheck-20261110.md` — UEFI「落盘信标」线独立复核 — 2026-11-10
 
+## `bigfile`（1）
+
+- `bigfile-verdict-20261120.md` — 大文件裁决：min-avb parts/ 与 rootfs 双副本（2026-11-20）
+
+## `bootimg`（1）
+
+- `bootimg-v4-cmdline-20261120.md` — boot-img-cmdline.py 支持 boot image header v4（lane A / P0-4，主机侧，2026-11-20）
+
+## `build`（1）
+
+- `build-stage-no-danger-units-20261120.md` — lane C：构建器 stage 不装危险件（P0-2，2026-11-20）
+
 ## `c0`（1）
 
 - `c0-android-baseline-20261011.md` — C0「真 Android 对照基线」取证（U2 a 槽 stock，2026-10-11）
@@ -946,10 +972,6 @@
 ## `driver`（1）
 
 - `driver-ab-charging-20261108.md` — 「ESP 启动不充电」A/B 取证：**与启动路径无关，也不是驱动没加载**（2026-11-08）
-
-## `dwc3`（1）
-
-- `dwc3-v9-plan-20261111.md` — dwc3 系列 v9 重构方案（Rob Herring 结构性反对 → port@0 双 endpoint + gpio-mux）
 
 ## `e3`（1）
 
@@ -1039,6 +1061,10 @@
 
 - `net-https-mtu-rootcause-20261018.md` — 设备网络：git / curl / apk 不通 —— 两个独立根因与长期修复
 
+## `odirect`（1）
+
+- `odirect-sha-gate-20261120.md` — O_DIRECT sha 硬门接入报告（P0-5，2026-11-20）
+
 ## `optional`（1）
 
 - `optional-9-applycheck-20261113.md` — 可选 9 条逐枚 `git apply --check`（B11，2026-11-13）
@@ -1067,13 +1093,13 @@
 
 - `phosh-mr-power-mode-20261114.md` — phosh MR 提交材料（T20 / 2026-11-14）
 
-## `pitfalls`（1）
-
-- `pitfalls-dedup-audit-20261112.md` — PITFALLS 去重审计（2026-11-12）
-
 ## `project`（1）
 
 - `project-audit-20261111.md` — 项目整理审计 2026-11-11
+
+## `py`（1）
+
+- `py-static-scan-20261120.md` — Python 静态扫描补盲区（pyflakes / vulture）— 2026-11-20
 
 ## `qca`（1）
 
@@ -1094,6 +1120,10 @@
 ## `resource`（1）
 
 - `resource-revue-20261119.md` — 资源重审 — 按新口径「快速从原厂 Android → 能力完整 Linux」（2026-11-19）
+
+## `shellcheck`（1）
+
+- `shellcheck-fix-20261120.md` — shellcheck 两处复核与全仓复跑（2026-11-20）
 
 ## `shutdown`（1）
 

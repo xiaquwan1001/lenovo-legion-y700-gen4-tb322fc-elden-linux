@@ -1,7 +1,7 @@
 # 2026-11-03 本地 git 树精简合并 + 损坏镜像重建
 
 > 触发：用户「把本地的 git 树开始精简合并」「那个损坏的文件重新建」。
-> 前置：`reports/asset-tidy-20261103.md`（同日项目整理；该轮检出 `out/boot-elden-m3v5-daily.img` 静默损坏）。
+> 前置：`archive/2026-11-19-docs-audit-retired/superseded/asset-tidy-20261103.md`（同日项目整理；该轮检出 `out/boot-elden-m3v5-daily.img` 静默损坏）。
 
 ## 1. 数字结论
 

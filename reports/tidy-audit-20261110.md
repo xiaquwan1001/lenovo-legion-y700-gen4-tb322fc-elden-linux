@@ -35,7 +35,7 @@
 
 | # | 类别 | 路径 | 体量 | 理由 | 建议动作 | 风险 |
 |---|---|---|---|---|---|---|
-| 1 | 删/归档 | `out/r21-sbstop-p54 … p61`（8 代，各 641–642 M） | ≈5.1 G | p54–p61 全部被 p62–p66 取代；**全部已绑 `--gen pNN --verify` 可逐字节复现**（`asset-cleanup-20261109.md §4` 自证） | 删，保留 p62（零写盘成功形态对照）、p66（最新）；p63–p65 若无特别用途同删（≈1.3 G） | 复现依赖 `build/uefi-woa-prep` 工作区完好；删前抽查一次 `--gen p61 --verify` rc=0 |
+| 1 | 删/归档 | `out/r21-sbstop-p54 … p61`（8 代，各 641–642 M） | ≈5.1 G | p54–p61 全部被 p62–p66 取代；**全部已绑 `--gen pNN --verify` 可逐字节复现**（`archive/2026-11-19-docs-audit-retired/superseded/asset-cleanup-20261109.md §4` 自证） | 删，保留 p62（零写盘成功形态对照）、p66（最新）；p63–p65 若无特别用途同删（≈1.3 G） | 复现依赖 `build/uefi-woa-prep` 工作区完好；删前抽查一次 `--gen p61 --verify` rc=0 |
 | 2 | 删/归档 | `out/r21-sbstop-p63`、`-p64`、`-p65`（各 641 M） | ≈1.9 G | flashed 形态全败的中间诊断代，配方+归档件齐全 | 同上 | 无（p66 留即可） |
 | 3 | 合并/精简 | `reports/artifacts/uefi-20261104R*`（21 目录） | ≈458 M | R2–R22 历史二分诊断，结论已进 `PITFALLS`/`TASKS §5` | 归档或删（保留 `uefi-20261104R7-r1` —— 是 p7 配方 manifest 的导出源，`patches/uefi/README §1` 依赖） | **R7 目录勿删**，否则 p7 配方失去逐字来源 |
 | 4 | 归档 | `reports/artifacts/uefi-boot-2026110{1,3}-*`（约 60 个 8.2 M 级串口/读回件） | ≈115 M | 2026-11-01/03 取证，结论已入账 | 归档 | 无 |
@@ -49,7 +49,7 @@
 
 | 清单项 | 状态 | 核实证据 |
 |---|---|---|
-| A：删 `out/r21-sbstop-p8…p36`、`p38…p53`（≈8.8 G） | ✅ **已执行** | `ls out/` 只剩 `r21-sbstop` + p54–p66；commit `c0f1571`；账本 `reports/asset-cleanup-20261109.md` |
+| A：删 `out/r21-sbstop-p8…p36`、`p38…p53`（≈8.8 G） | ✅ **已执行** | `ls out/` 只剩 `r21-sbstop` + p54–p66；commit `c0f1571`；账本 `archive/2026-11-19-docs-audit-retired/superseded/asset-cleanup-20261109.md` |
 | A：删 `out/real-ladder`（1.9 G） | ✅ 已执行 | 同上，`ls` 无此目录 |
 | A：删 `uefi-{ddr,ddrcut,posctrl}` 取证目录 | ✅ 已执行（GPT 双表已先备份） | 同上 + commit 信息「GPT 双表已先备份」 |
 | A：删 `boot-elden-posctrl-markspin*` + `boot-elden.img` | ✅ 基本执行，**残留** `out/boot-elden-posctrl-20261103.img` | `ls out/boot-elden*` |

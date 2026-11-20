@@ -10,7 +10,7 @@
 > 本角度文件夹的策展 SSOT（`README.md`）；`sessions/` 存以会话为单位的进度。标准见 `INDEX.md` §2。
 > **适用 = 任一 TB322FC / elden / SM8750(P) 单元**（台账 `../DEVICE/README.md` §2.2）。它们**物理等价**，
 > 唯一差异 = 容量 → GPT 数值；所有容量相关值**运行时读实际 GPT**。
-> （文件历史：原 `BRINGUP-NEW-TABLET-2026-10-02.md`；“新机接力/旧机留 Android”的角色划分已作废。）
+> （文件历史：原 `BRINGUP-NEW-TABLET-2026-10-02.md`——**件已删，仓内不存在**（2026-11-20 批二标注）；“新机接力/旧机留 Android”的角色划分已作废。）
 >
 > 目标：把一个单元做到 **b 槽直启 mainline + 持久根**（G1 地基）。
 > **默认策略（v3）**：Phase 0–3 **不动 a 槽**（零风险拿数据）；a 槽与 Android 专属分区**可事后回收**给 Linux
@@ -400,7 +400,7 @@ fastboot reboot
 ## 8. 迭代快环（kexec / 模块热载 / Linux→fastboot）
 
 > 2026-10-04 起。目标：把「改一行驱动 → 重启 → fastboot」从 20–40 min 压到 30 s–2 min。
-> 统一入口 **`scripts/iterate.sh`**（根目录 `build.sh`/`pack.sh`/`cycle.sh` 为兼容保留）。
+> 统一入口 **`scripts/iterate.sh`**。~~（根目录 `build.sh`/`pack.sh`/`cycle.sh` 为兼容保留）~~ —— **作废（2026-11-20 批二标注）**：这三个旧 cd 包装脚本已删除，不再存在（`INDEX.md` §4）。
 
 | 环 | 命令 | 何时用 | 代价 |
 |---|---|---|---|

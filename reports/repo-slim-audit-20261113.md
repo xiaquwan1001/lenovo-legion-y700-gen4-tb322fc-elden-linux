@@ -7,7 +7,7 @@
 > **分工（避免重复劳动）**：本文件**不重做**
 > `reports/doc-dedup-audit-20261112.md`（语义级重复）、`reports/docs-slim-20261113.md`（其执行账）、
 > `reports/script-cleanup-audit-20261112.md` / `reports/script-redundancy-audit-20261112.md`（脚本逐条）、
-> `reports/asset-slim-20261112.md` / `reports/external-scan-20261112b.md`。
+> `archive/2026-11-19-docs-audit-retired/superseded/asset-slim-20261112.md` / `reports/external-scan-20261112b.md`。
 > 本文件的增量 = **① 那四份「仍未做/需裁决」项的逐条现查（§6）②体量维度：reports/ 分布 + 增长趋势 + 生成物占比（§5）
 > ③ ≤10 条可立即执行清单（§7）**。§1–§4 是支撑 §7 的账，不与上述报告重叠的只有 P1-1/P1-2/P1-3 与 §2/§4 的门禁盲区。
 

@@ -107,7 +107,7 @@
 - `scripts/check-doc-assets.sh`：**PASS**（`checked=519 missing=0 skipped=13 files=5`）。无需归因。
 - `scripts/check-doctor.sh`：**FAIL=1 / WARN=6**
   - FAIL 1：§5d「内核身份表已过期 → 跑 `scripts/vk-identity.py > versions/vk-kernel-identity.tsv` 并重提交」。归因：11-01 UEFI 轮的写盘（bb1/bb3）改变了 boot_b，未重生成身份表（属 SSOT 更新，留给 SSOT lane）。
-  - WARN 6：① 历史镜像 vk183-fastrpc 无 manifest（registry 前历史留白，已知）；② 62 个账本已登记例外（`uts_dup`/`num_ne_tag`，均有审查理由，见 `vk-ledger-known-issues.tsv`）；③ `boot-elden.img` 无版本号构建拷贝 1 个；④ 疑似死脚本 `uefi-ddr-trial.sh`（11-01 ddr 轮改用 `blackbox.py` + `uefi-boot-trial.sh`，核实后可标 legacy）；⑤ `reports/asset-inventory-20261101.md` 无人引用；⑥ `HISTORY/days` 落后（需跑 `gen-history.sh`，生成物，不属本 lane）。
+  - WARN 6：① 历史镜像 vk183-fastrpc 无 manifest（registry 前历史留白，已知）；② 62 个账本已登记例外（`uts_dup`/`num_ne_tag`，均有审查理由，见 `vk-ledger-known-issues.tsv`）；③ `boot-elden.img` 无版本号构建拷贝 1 个；④ 疑似死脚本 `uefi-ddr-trial.sh`（11-01 ddr 轮改用 `blackbox.py` + `uefi-boot-trial.sh`，核实后可标 legacy）；⑤ `archive/2026-11-19-docs-audit-retired/superseded/asset-inventory-20261101.md` 无人引用；⑥ `HISTORY/days` 落后（需跑 `gen-history.sh`，生成物，不属本 lane）。
 
 ---
 

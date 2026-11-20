@@ -30,7 +30,7 @@
 
 ### 3.1 `backup/official-rom-15.10.259/` super 镜像（15.1 G）—— 压缩可行，仅文档引用
 
-- 依据 `grep -rn "official-rom" scripts/ tools/ .githooks/ versions/ .pi/`：**scripts/tools/.githooks/versions 零命中**；命中全部是文档/记忆（`.pi/memory/MEMORY.md:154` 布局注册表、`.pi/reports/disk-audit-2026-11-15.md`、`.pi/plans/2026-11-03-项目整理.md:13`），另有 `RESOURCES/README.md:192`、`reports/asset-slim-20261112.md:46` 等报告引用。
+- 依据 `grep -rn "official-rom" scripts/ tools/ .githooks/ versions/ .pi/`：**scripts/tools/.githooks/versions 零命中**；命中全部是文档/记忆（`.pi/memory/MEMORY.md:154` 布局注册表、`.pi/reports/disk-audit-2026-11-15.md`、`.pi/plans/2026-11-03-项目整理.md:13`），另有 `RESOURCES/README.md:192`、`archive/2026-11-19-docs-audit-retired/superseded/asset-slim-20261112.md:46` 等报告引用。
 - **结论：无脚本/门禁运行时读取 ⇒ 可改名/压缩**，但压缩后必须同轮改引用（否则布局注册表/check-layout 报 FAIL）。
 - 构成：super_4.img 12.27 G + super_7 1.54 G + super_3 1.04 G + super_6 0.60 G + super_8 0.15 G + NON-HLOS.bin 0.37 G + super_{1,2,5} ~17 M。
 - 建议命令（不强压 NON-HLOS.bin，已是二进制固件；分件压便于单分区解取）：

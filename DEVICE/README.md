@@ -25,6 +25,8 @@
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
 ### 1.1 内核与软件基线
+
+> **注（2026-11-20 批二，A4 判「三代口径叠写」）**：本节按时间**倒序**叠写，★/★★/★★★ 只是不同年代的标记层；**现态 = 日期最新的最顶条目**，其下所有旧条目（含旧「现态」字样）均为历史沿革，读现态不需要往下看。冲突时按 `INDEX.md` §2 时间序裁决。
 - ★★**现态（2026-11-19 13:20 更新，压过下面全部旧口径）= 自建最小 Debian（主线 Linux）+ Phosh 桌面在 slot `_b`**：
   GPT 已恢复双轨（`linux17` 193 GiB @LBA 73277435 + `userdata` 256.7 GiB，主备读回 `80ab46e5…`/`e5f79c0e…`）；
   根 = `out/min-restore-20261119/rootfs-minbase-gadget-20261119.ext4.img`（6 GiB，设备端 sha `abf96ec4…`，

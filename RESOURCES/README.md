@@ -77,7 +77,7 @@
 | **`Project-Aloha/UEFIFirmwareBackup`** → `lenovo-y700g4/BOOT.MXF.2.5.1-00240.1-PAKALA-1/`（480 文件，`3a48f03cf` 2026-04-21） | 从原厂固件提取的 **Y700g4 UEFI DXE 二进制备份**；README §SM8750 Pakala 表：`Lenovo y700 gen4 = lenovo-y700g4`、`Oneplus 13 = oneplus-pjz110`、`Xiaomi Piano = xiaomi-piano` | 上述 `Binaries/` 的来源；也可离线核对设备自带 DXE |
 | **`Project-Silicium/Mu-Silicium`** + `Device-Binaries`（2026-10-22 复核：Mu `42fe5637` / Bin `a1501e0c`） | SM8750 已有**在用**设备：OnePlus 13 `dodge` —— `Status.md` 记 `Display ✅ / Internal Storage ✅ / Mass Storage ✅ / Linux Boot ✅`。关键：其 `UFSDxe` 用**打过补丁的二进制** `UFSDxe.patched.efi`，补丁内容 = 「sleep→wakeup」+「gear check 前强制 link 唤醒」（作者 `sunflower2333`/N1kroks），**正是上游对我们 UFS 失败的答复所指的 UFSDxe 专用补丁** | **G1-29 重试的最小增量**：只换这一个二进制（sha256 与本仓 `reference/upstream-mu-silicium/README.md` 对照），配方见该 README §3 |
 
-> **★2026-11-03 增第二路线（同芯片开源实现）**：`slwyts/Project-SunUEFI`（小米平板 8 Pro = `piano` = **SM8750**）**不加载厂商 `UFSDxe`**，从寄存器层自写 UFS 只读栈（`uefi/core/PianoUfsReadOnlyDma.c` 1138 行 + `PianoUfsProbe.c` 时钟/GDSC 账本），实机 **133 GPT 分区 / 139 BlockIO 句柄 / 7 个只读 SFS 卷**（`docs/archive/storage-usb/blockio-usb-progress.md`）。同一仓库还提供**合体 BOOT 全套**（bootselect + BootShim + 2×4 KiB 请求页 + `RSTRv1` 无损恢复目录 + repack/restore 工具）与**UEFI 屏上可见性方法**（延后原厂 ClockDxe CESTA/media + DCD 初始化、GOP 色块检查点、LoadImage 副本内 trampoline 插桩）。本地克隆已在 `external/ext-repos/sunuefi`（`afe922b`，2026-10-28）。逐条裁决见 **`sessions/2026-11-03-Project-SunUEFI复用盘点.md`**。
+> **★2026-11-03 增第二路线（同芯片开源实现）**：`slwyts/Project-SunUEFI`（小米平板 8 Pro = `piano` = **SM8750**）**不加载厂商 `UFSDxe`**，从寄存器层自写 UFS 只读栈（`uefi/core/PianoUfsReadOnlyDma.c` 1138 行 + `PianoUfsProbe.c` 时钟/GDSC 账本），实机 **133 GPT 分区 / 139 BlockIO 句柄 / 7 个只读 SFS 卷**（`docs/archive/storage-usb/blockio-usb-progress.md`——**外置仓库 `sunuefi` 内路径**，指 `external/ext-repos/sunuefi/docs/…`，非本仓 `docs/`（2026-11-20 批二标注））。同一仓库还提供**合体 BOOT 全套**（bootselect + BootShim + 2×4 KiB 请求页 + `RSTRv1` 无损恢复目录 + repack/restore 工具）与**UEFI 屏上可见性方法**（延后原厂 ClockDxe CESTA/media + DCD 初始化、GOP 色块检查点、LoadImage 副本内 trampoline 插桩）。本地克隆已在 `external/ext-repos/sunuefi`（`afe922b`，2026-10-28）。逐条裁决见 **`sessions/2026-11-03-Project-SunUEFI复用盘点.md`**。
 
 > **要点**：资源已「现成」⇒ G1-29 Route A 由「自造 UEFI」变为「取用 + 主机构建 + 设备侧零写盘 `fastboot boot` 验证」。
 > **⚠ MIGRATION-LOST（2026-10-22 核实）**：2026-10-05 曾落盘 `mu_wide_platforms/`（fork `xiaquwan1001/mu_wide_platforms`，1.0 G，含设备包 391 文件）+ `uefi-firmware-backup/`（`Project-Aloha/UEFIFirmwareBackup`，1.3 G，二者同名驱动 sha256 逐字节一致），**2026-10-17 换机未随迁，本机已不存在** ⇒ 路线 A 重试须先重取。Mu-Silicium 与 `Device-Binaries` 本轮改为**按需取件**（小件快照 + 结论见 `reference/upstream-mu-silicium/`），不再全量 clone。
@@ -211,7 +211,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 ### 2.5 资产瘦身优先级（**已作废，2026-11-03 下沉归档**）
 
 > 原 2026-10-02 的 P 级方案自注「数字大量过期」且**从未执行**，已被 2026-10-23 全量对账（A0–A7）取代：
-> **现行清理纪律 = 本节 §3.3 可清理标记 + `reports/assets-inventory-20261023.md` §5**；2026-11-03 整理 = `reports/asset-tidy-20261103.md`。
+> **现行清理纪律 = 本节 §3.3 可清理标记 + `reports/assets-inventory-20261023.md` §5**；2026-11-03 整理 = `archive/2026-11-19-docs-audit-retired/superseded/asset-tidy-20261103.md`。
 > 历史方案原文 → `sessions/2026-11-03-资产瘦身优先级-1002审计.md`。
 
 
@@ -281,22 +281,22 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 > **② 人读面** `INDEX.md` §2「顶层布局」；**③ 体积**一律现查 `du -sh <路径>`（不写死）。
 > 2026-10-23 那次的 49 行快照与逐项处置说明 → `sessions/2026-11-03-顶层台账快照-20261023.md`；
 > 盘点权威报告 = `reports/assets-inventory-20261023.md`，2026-11-03 整理（外部资产收拢 / 3.0 G 冗余删除 / git 树 450 M→201 M）
-> = `reports/asset-tidy-20261103.md`、`reports/git-tree-consolidation-20261103.md`。**删除纪律见 §3**。
+> = `archive/2026-11-19-docs-audit-retired/superseded/asset-tidy-20261103.md`、`reports/git-tree-consolidation-20261103.md`。**删除纪律见 §3**。
 
 
 ### 3.3 可清理标记（不动手，等确认）
 
 编号对应 `README.md` §2.5 的 P 级；状态：⬜ 未执行 / ◐ 部分 / ✅ 已执行 / ⛔ 无需执行。
 **2026-10-23 复核**：A0–A7 见 `../reports/assets-inventory-20261023.md` §5；**用户 2026-10-23 批准后已全部执行**（执行记录 + 每级 df + 保留理由 = `../archive/topics/清理清单-20261023.md`）。
-**2026-11-05 复核**：全仓逐项盘点（含引用命中/可再生性/前置闸）= `../reports/asset-tidy-20261105.md` + 机器账 `../reports/asset-inventory-20261105.tsv`（56 行，含每行 `verify_cmd`）；文档账目 = `../reports/doc-audit-20261105.md`。本轮**执行了 A8 + B1**（B1 见下表），B2–B4 仍待批。
+**2026-11-05 复核**：全仓逐项盘点（含引用命中/可再生性/前置闸）= `../archive/2026-11-19-docs-audit-retired/superseded/asset-tidy-20261105.md` + 机器账 `../reports/asset-inventory-20261105.tsv`（56 行，含每行 `verify_cmd`）；文档账目 = `../reports/doc-audit-20261105.md`。本轮**执行了 A8 + B1**（B1 见下表），B2–B4 仍待批。
 **2026-11-09 清理轮（用户当面批准「可以删掉冗余文件」）**：删 UEFI **判死世代**镜像目录 `out/r21-sbstop-p8…p53`（44 个目录）+
 `out/real-ladder` + 历史取证目录 `reports/artifacts/uefi-{ddr,ddrcut,posctrl}-2026110{1,3}` 与 `uefi-20261107R33…R40`（6 个）+
 5 个「内核段解不出/无版本号」镜像；**根分区 519 G→508 G**、`out/` 8.8 G、`reports/artifacts/` 2.3 G。
 保留 = `out/r21-sbstop`（p7 基点）+ `out/r21-sbstop-p54…p61`（`--gen` 可复现）。**设备 GPT 原始双表**删前已转存 `backup/lun4-gpt-20261101/`。
-逐项账（含重建入口）= `../reports/asset-cleanup-20261109.md`；候选来源 = `../.pi/plans/2026-11-09-整理候选清单.md`。
+逐项账（含重建入口）= `../archive/2026-11-19-docs-audit-retired/superseded/asset-cleanup-20261109.md`；候选来源 = `../.pi/plans/2026-11-09-整理候选清单.md`。
 
 **2026-11-10 清理轮（用户当面批准「先发送，再清理，最后开始上机」）**：删 `out/r21-sbstop-p54…p61` + `p63…p65`（11 代，各 641 M，全部 `--gen pNN --verify` 可逐字节复现，删前现跑 `--gen p61 --verify` = **PASS**）+ `reports/artifacts/uefi-20261104R*`（R7-r1 除外，它是 p7 配方的导出源）+ 残留 `out/boot-elden-posctrl-20261103.img`；**释放 7.39 GiB**（根分区 558 G→551 G）。保留 = `out/r21-sbstop-p62`（零写盘成功形态对照）+ `p66`（最新世代，待 p67 取代）。
-逐项账（含重建入口）= `../reports/asset-cleanup-20261110.md`；候选来源 = `../reports/tidy-audit-20261110.md` §3。
+逐项账（含重建入口）= `../archive/2026-11-19-docs-audit-retired/superseded/asset-cleanup-20261110.md`；候选来源 = `../reports/tidy-audit-20261110.md` §3。
 
 **2026-11-05 完整性基线（BIOS 静默损坏事件后设）**：`../versions/out-images-sha256-20261105.tsv` = 129 件镜像的 sha256 + 是否入账 + manifest 比对 + 第 7 列 `path`（含 114 件已归档件）；全仓校验报告（重试定性）= `../reports/integrity-audit-20261105.md`。复算须走 `O_DIRECT`（页缓存会给出错哈希，`PITFALLS #513`）：表头注释带完整命令（`awk ... print $1"  "$7` 后逐件 `dd iflag=direct | sha256sum`）。
 

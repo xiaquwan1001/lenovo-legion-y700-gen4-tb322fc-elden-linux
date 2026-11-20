@@ -340,7 +340,7 @@ P2 = 复述但影响面小，或属 `INDEX.md:65` 明示豁免的「公开门面
 
 | 严重度 | 位置 file:line | 现状 | 证据命令 | 建议精确改法 |
 |---|---|---|---|---|
-| **P1** | `TASKS/README.md:168` | H1 行把 `build/` 190.7 G→17 G、`out/` 129→15 件、114 件移档、`.pi/trash` 裁决、`backup` 不上云**全部重抄**（同 §3 的 B1–B4） | `rg -n '129 件' TASKS/README.md RESOURCES/README.md \| cut -c1-80` | `TASKS/README.md:168` → `- **H1 资产清理** —— 已收口；账目与用户裁决（B1–B4）唯一正文 \`RESOURCES/README.md\` §3，执行账 \`reports/asset-tidy-20261105.md\` §7、\`reports/out-archive-20261105.md\`。` |
+| **P1** | `TASKS/README.md:168` | H1 行把 `build/` 190.7 G→17 G、`out/` 129→15 件、114 件移档、`.pi/trash` 裁决、`backup` 不上云**全部重抄**（同 §3 的 B1–B4） | `rg -n '129 件' TASKS/README.md RESOURCES/README.md \| cut -c1-80` | `TASKS/README.md:168` → `- **H1 资产清理** —— 已收口；账目与用户裁决（B1–B4）唯一正文 \`RESOURCES/README.md\` §3，执行账 \`archive/2026-11-19-docs-audit-retired/superseded/asset-tidy-20261105.md\` §7、\`reports/out-archive-20261105.md\`。` |
 | **P1** | `.pi/memory/MEMORY.md:170`、`:180` | 同一批数字与规则各写一遍（另见 3.6） | `rg -n '129 件' .pi/memory/MEMORY.md \| cut -c1-80` | 见 3.6：`:170` 第 ① 句 → 指针；`:180` 保留**机制**（basename 无路径列 → `C=1`），数字换成「结果见 `RESOURCES` §3 B3」。 |
 | **P2** | `RESOURCES/README.md:327`（B3 行）与 `RESOURCES/README.md:374` | `RESOURCES` 内部两处讲同一个 tar/回收站与归档结果 | `rg -n 'cloud-backup-y700-elden-20261016' RESOURCES/README.md \| cut -c1-80` | `:374` → `> 5.07 G 云盘包 tar 的落点与随 A0 回收：见 §3 表 **A0** 行。` |
 
