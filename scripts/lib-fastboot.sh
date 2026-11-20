@@ -65,7 +65,10 @@ fbdevices() {
 sshc() {
 	local tmo=${SSHC_TO:-20}
 	# 最后一个纯数字参数当 timeout（可选）
-	if [ $# -gt 1 ] && [[ "${@: -1}" =~ ^[0-9]+$ ]]; then
+	local last=""
+	if [ $# -gt 1 ]; then last="${@: -1}"; fi
+	# SC2199：`[[ "${@: -1}" =~ ... ]]` 是数组隐式拼接（最后一个参数是 '5 6' 之类会误判），先取值再比
+	if [ $# -gt 1 ] && [[ "$last" =~ ^[0-9]+$ ]]; then
 		tmo=${@: -1}; set -- "${@:1:$(($#-1))}"
 	fi
 	timeout -k 2 "$tmo" ssh -o BatchMode=yes -o ConnectTimeout=8 \

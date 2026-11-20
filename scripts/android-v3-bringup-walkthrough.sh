@@ -327,6 +327,46 @@ ensure_active_a() {
 	esac
 }
 
+# ensure_boot_a_attrs：**上机前必须复位 boot_a 的 GPT 属性**（PITFALLS #695，2026-11-20 实测）
+#   ABL 启 a 失败后会把 boot_a 写成 retry=0 / unbootable=1（byte6=0x82）⇒ 下一次「起不来」可能
+#   只是 ABL 直接跳过 a 槽，跟镜像无关。正常值 = 0x7a（retry=7/succ=1）或 0x7b（OEM 的 bit0 也在）。
+#   ⚠ `qbootctl` 只报 Bootable 0/1，读不出 retry / unbootable ⇒ 必须用 slot-attr.py 读 GPT 属性字节。
+ensure_boot_a_attrs() {
+	local st; st=$(dev_state)
+	if [ "$st" != linux ]; then
+		if [ "$APPLY" = 1 ]; then
+			warn "boot_a 属性复位需要 Linux 侧（当前 $st）—— 在 fastboot 侧改用 slot-attr.py --image 或 --set-active=a"
+		else
+			printf '   [dry] boot_a 属性复位：需 Linux 侧（当前 %s）\n' "$st"
+		fi
+		return 0
+	fi
+	local show_cmd="python3 /tmp/slot-attr.py --allow-wrong-lun --device /dev/sde show 2>/dev/null | sed -n 's/^  boot_a .*byte6=\(0x[0-9a-f][0-9a-f]\).*/\1/p'"
+	if [ "$APPLY" = 1 ]; then
+		run 60 scp -q -o BatchMode=yes -o StrictHostKeyChecking=no \
+			"$ROOT/scripts/slot-attr.py" "$ROOT/scripts/partlun.py" "$TAB:/tmp/"
+	fi
+	local cur=""; cur=$(timeout -k 5 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" "$show_cmd" 2>/dev/null | tr -d '\r')
+	logc "boot_a byte6 现值=${cur:-unknown}"
+	if [ "$APPLY" != 1 ]; then
+		printf '   [dry] 若 != 0x7a/0x7b ⇒ ssh %s \"python3 /tmp/slot-attr.py --allow-wrong-lun --device /dev/sde set a --retry 7 --no-unbootable --successful\"\n' "$TAB"
+		return 0
+	fi
+	case "$cur" in
+		0x7a|0x7b) info "OK   boot_a 属性正常（$cur = retry7/bootable）"; return 0 ;;
+		"") warn "读不到 boot_a 属性（scp/解析失败）⇒ 继续，但结果可能被「ABL 跳过 a 槽」污染" ;;
+		*) info "boot_a byte6=$cur（异常，典型 0x82 = retry0/unbootable）⇒ 复位"
+		   run 90 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
+			'python3 /tmp/slot-attr.py --allow-wrong-lun --device /dev/sde set a --retry 7 --no-unbootable --successful' ;;
+	esac
+	local after=""; after=$(timeout -k 5 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" "$show_cmd" 2>/dev/null | tr -d '\r')
+	case "$after" in
+		0x7a|0x7b) info "OK   boot_a 属性已复位（$cur → $after）" ;;
+		*) warn "boot_a 属性复位后仍为 ${after:-unknown} ⇒ **不要 reset**（先查 PITFALLS #695）"; return 1 ;;
+	esac
+	return 0
+}
+
 # bcb_read <输出件>：把 misc 的 BCB 头（16 KiB）抓到主机
 bcb_read() {
 	local out=$1 st; st=$(dev_state)
@@ -574,6 +614,8 @@ S1() {
 	# 2) BCB 现状 + 清 0 + 读回
 	bcb_read "$STEPLOG/bcb-before.bin"; bcb_judge "$STEPLOG/bcb-before.bin"
 	bcb_clear_verify || return 1
+	# 2b) boot_a GPT 属性（PITFALLS #695：ABL 上次失败会把它写成 retry=0/unbootable=1）
+	ensure_boot_a_attrs || return 1
 	# 3) 槽位：Android 必须先 active=a（b 槽 = Linux）
 	ensure_active_a
 	# 4) 重启并观察
@@ -582,9 +624,9 @@ S1() {
 	observe_android S1; local rc=$?
 	pstore_triage
 	case "$rc" in
-		0) info "S1 结论：进桌面 ⇒ 之前 3 发失败很可能全是 BCB 污染（写进报告后再决定是否还走 S2–S4）" ;;
+		0) info "S1 结论：进桌面 ⇒ 之前 3 发失败至少有一部分是 BCB/ boot_a 属性造成的假失败（PITFALLS #695）；把本次的 BCB 与 boot_a byte6 两个读数写进报告后再决定是否还走 S2–S4" ;;
 		2) info "S1 结论：又落 recovery ⇒ 先读 misc（bcb_read），若 BCB 非 0 则本次样本无效，重做 S1" ;;
-		*) info "S1 结论：起 ZUXOS 动画但不完成 ⇒ 复现「首启卡死」，继续 S2（metadata）" ;;
+		*) info "S1 结论：起 ZUXOS 动画但不完成（或未进桌面就回落 b 槽）⇒ 复现「首启失败」；2026-11-20 实测这一支在 BCB=0 + boot_a 属性已复位的前提下**仍然发生**，所以继续 S2（metadata）而不是回头再怀疑 BCB" ;;
 	esac
 	return 0
 }
