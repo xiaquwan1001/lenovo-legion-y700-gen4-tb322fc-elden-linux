@@ -133,8 +133,14 @@
 - **P0 已收口（用户实测确认，2026-11-20 23:4x）**：**音频出声 + 两侧马达都震** ⇒
   音频/触觉两项驱动态验收通过（判据命令：`pw-play <wav>` as user 1001、`ffrumble /dev/input/event{2,3} 700 0xffff`）。
   备注：靠近场感落后的唯一残留 = **桌面没有触觉触发点**（Phosh 不驱动 FF，只有 Waydroid/HAL 链与 ffrumble 能触发），属「要不要做」而非缺陷。
-- **P1 AVB 债**：`vbmeta_b` 的 chain 公钥是旧的 `fc1e3b33…`，而 `bootslot-b/avb.key` 公钥 = `1e54e86e…`
-  ⇒ `fastboot boot` 必拒（槽位启动靠 `Flags=3` 绕过）。要恢复这条路需重签 `vbmeta_b`（会动 AVB 链，单独排期）。
+- **P1 AVB 债 —— ✅ 主机侧已还（2026-11-21），只剩一次上机验收**：设备在机 `vbmeta_b` 的顶层 key 与 chain `boot:3`
+  都是旧钥 `fc1e3b33…`，而 `boot_b` footer = 现役 `1e54e86e…` ⇒ 自签链自身不自洽。现产出：
+  ① 生成器 `scripts/build-vbmeta-b.sh`（`--check` 离线复核）→ 件 `out/vbmeta-b/vbmeta_b-flags3.img`
+  （65536 B、Flags 3、顶层 + chain 都是 `1e54e86e…`、整链 `verify_image --follow_chain_partitions` rc=0）；
+  ② 门 `check-doctor` **§26**（换钥忘重签 ⇒ FAIL，翻字节反作弊）。
+  **未做/需设备**：刷 `vbmeta_b` 后 `fastboot boot bootslot-b/boot_b.img` 一发（成功 = 债了结；仍失败 = 归因排除本项，
+  `PITFALLS #146` 的三种回话说明机制不只 key 一条）；`flags=0` 干净链需先有 `dtbo_b` dump（本轮不造）。
+  成因/证据/回退 = `reports/vbmeta-b-resign-20261121.md`，口径 = `bootslot-b/README.md` §二。
 - **P1 安卓 a 槽**（G2 共存）仍起不来（11-20 11:35 实测）：S2 原厂 `metadata` / S3 原厂 `super` 对照，需设备窗口。
 - **P2 B 档 ~42 G 回收**：等 v3 首启判据（`versions/out-artifacts.tsv` 已标 `pending` 禁删）。
 - **P2 上游 M 系列**：wl2868c v12 / dwc3 v10 / elden DTS v7 / fastrpc v3 按 §7 排队；dwc3 v10 出真补丁需先重建内核树。

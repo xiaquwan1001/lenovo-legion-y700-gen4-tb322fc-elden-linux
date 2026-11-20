@@ -5,8 +5,12 @@
 #        default: out/boot-elden-vk13.img -> bootslot-b/boot_b.img
 #
 # The signed image is padded to the boot partition size (96 MiB) and carries an
-# AVB hash footer signed with bootslot-b/avb.key; vbmeta_b_flags3.img has the
-# matching chain descriptor for `boot` (key sha1 fc1e3b33...).
+# AVB hash footer signed with bootslot-b/avb.key. The matching vbmeta for slot b
+# (its chain descriptor `boot` must point at the SAME key) is built by
+# scripts/build-vbmeta-b.sh -> out/vbmeta-b/vbmeta_b-flags3.img; its --check mode
+# verifies the whole chain offline (also check-doctor §26).
+# 2026-11-21: 2026-10-18 换钥后 vbmeta_b 没跟着重签 —— 旧注释里那个 fc1e3b33… 是旧钥；
+# 现役 avb.key 公钥 sha1 = 1e54e86e…，详见 reports/vbmeta-b-resign-20261121.md。
 set -eu
 cd "$(dirname "$0")/.."
 IN=${1:-out/boot-elden-vk13.img}

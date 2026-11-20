@@ -21,11 +21,16 @@
 
 | 文件 | 内容 |
 |---|---|
-| `avb.key` / `avb.avbpubkey` | 自签 RSA-4096 密钥（公钥 sha1 `fc1e3b33…`） |
+| `avb.key` / `avb.avbpubkey` | 自签 RSA-4096 密钥（**现役**公钥 sha1 `1e54e86e…`；2026-10-18 换过钥，旧钥 `fc1e3b33…`） |
 | `boot_b.img` | **历史 dump**（2026-09-29 时 = `out/boot-elden-vk12.img` + `add_hash_footer`）；**已被后续 dump 覆盖** ⇒ 切勿按名字当作“当前槽内容”，实际身份见下方《现状》表 |
-| `dtbo_b.img` | `out/dtbo-dummy.img` + `add_hash_footer`（partition `dtbo`，33 554 432 B） |
-| `vbmeta_b_flags3.img` | 自签 vbmeta，**flags=3（verification + hashtree 全关）** ← 首选 |
-| `vbmeta_b_flags0.img` | 自签 vbmeta，flags=0，**带 dtbo hash 描述符 + boot chain 描述符（指向我们的 key）** ← 干净通过 |
+| ~~`dtbo_b.img`~~ | **已不在仓**（空 dtbo 按 G1-29 配方直接写全 0 的 32 MiB 区，不需要此件） |
+| `vbmeta_b_flags3.img` | 自签 vbmeta，**flags=3（verification + hashtree 全关）** ← 首选。**现为生成件**：`scripts/build-vbmeta-b.sh` → `out/vbmeta-b/vbmeta_b-flags3.img`（仓里那份已不在，且是换钥前的 `fc1e3b33…`，**不要再用**） |
+| ~~`vbmeta_b_flags0.img`~~ | 本轮不造：干净链需要**现役 `dtbo_b` 内容 dump** 才能写 dtbo hash 描述符（`reports/vbmeta-b-resign-20261121.md` §3） |
+
+> **2026-11-21 口径（本表为准）**：`vbmeta_b` 与 `boot_b` 必须共用**同一把** `avb.key`。
+> 2026-10-18 换钥后 `vbmeta_b` 没重签 ⇒ 10-18→11-21 这段「自签链不自洽」（顶层 key 与 `chain boot:3`
+> 都指旧钥 `fc1e3b33…`，而 `boot_b` footer 是新钥）。判据 = `scripts/build-vbmeta-b.sh --check` 全绿
+> （= `check-doctor` **§26**），件账 = `out/vbmeta-b/MANIFEST.md`，成因/证据 = `reports/vbmeta-b-resign-20261121.md`。
 
 三个文件的 digest 已互相校验一致（`avbtool verify/info` 通过）。
 `avb.key` 只在本机、只用于这台设备的 b 槽（丢了也能重新生成一套）。
@@ -47,10 +52,10 @@
 ### T1（首选，flags=3）
 ```bash
 cd ~/y700-elden
+scripts/build-vbmeta-b.sh                     # 造件（换钥后必须重跑；--check 只验）
 fastboot --set-active=a                       # 先确认在 a（PITFALLS §60）
-fastboot flash dtbo_b   bootslot-b/dtbo_b.img
 fastboot flash boot_b   bootslot-b/boot_b.img
-fastboot flash vbmeta_b bootslot-b/vbmeta_b_flags3.img
+fastboot flash vbmeta_b out/vbmeta-b/vbmeta_b-flags3.img
 fastboot --set-active=b
 fastboot reboot
 ```
@@ -58,9 +63,11 @@ fastboot reboot
 **失败表现**：回到 fastboot（不是砖）。
 
 ### T2（T1 失败再试，flags=0 干净链）
+> 前置：先有现役 `dtbo_b` 的 dump 才能造 dtbo hash 描述符（`reports/vbmeta-b-resign-20261121.md` §3），
+> 目前**没有 flags=0 件**。
 ```bash
 fastboot --set-active=a
-fastboot flash vbmeta_b bootslot-b/vbmeta_b_flags0.img
+fastboot flash vbmeta_b <flags=0 件（尚无）>
 fastboot --set-active=b
 fastboot reboot
 ```

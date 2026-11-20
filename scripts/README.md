@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=91f053894c31fa2b（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=6ebe37c717078500（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**338**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 73 / 设备操作 105 / 造件 69 / 取证 46 / 一次性 2 / 公共库 6 / 其它 37
+- 入口总数：**340**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 74 / 设备操作 105 / 造件 70 / 取证 46 / 一次性 2 / 公共库 6 / 其它 37
 - 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -24,7 +24,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（73）
+## 门禁（74）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -49,6 +49,7 @@
 | `scripts/doctor/23-out-manifest.sh` | §23 out/ 造件「报告↔镜像」账本门（委托 scripts/out-manifest-check.py）。 | 5 |
 | `scripts/doctor/24-scripts-index.sh` | §24 scripts/README.md 索引新鲜度门（委托 scripts/gen-scripts-index.py --check）。 | 4 |
 | `scripts/doctor/25-out-status.sh` | §25 out/ 造件生命周期账本门（委托 scripts/out-status.py --check）。 | 4 |
+| `scripts/doctor/26-vbmeta-b-chain.sh` | §26 b 槽自签 AVB 链一致性门（委托 scripts/build-vbmeta-b.sh --check）。 | 2 |
 | `scripts/doctor/_lib.sh` | shellcheck shell=bash | 23 |
 | `scripts/doctor/ab-bench.sh` | bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置） | 6 |
 | `scripts/android-apk-pkgname.py` | 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。 | 4 |
@@ -109,7 +110,7 @@
 | `scripts/acm-sh.py` | 通过 USB ACM 的 OOB root shell（/dev/ttyACM1）在设备上跑命令。 | 9 |
 | `scripts/android-ksu-flash.sh` | 刷/回退「KernelSU(LKM) init_boot + 自洽 vbmeta_a」（TB322FC / elden / 259） | 14 |
 | `scripts/arm-window-hunt.sh` | 在坏发成簇的窗口里交替试多个显示臂，直到出现"健康发"。 | 15 |
-| `scripts/as-client-deploy.sh` | 把 Audio Share 的「Linux 客户端」装到平板（TB322FC 主线 Debian） | 2 |
+| `scripts/as-client-deploy.sh` | 把 Audio Share 的「Linux 客户端」装到平板（TB322FC 主线 Debian） | 3 |
 | `scripts/ath12k-load.sh` | Load the ath12k (WCN7861 "Peach") driver as a *module* after boot. | 25 |
 | `scripts/ath12k-retry.sh` | ath12k (WCN7861 "Peach") boot-time re-probe. | 45 |
 | `scripts/audio-alsa-init.sh` | put the Lenovo-Y700-Gen4 (TB322FC/elden) sound card into | 23 |
@@ -125,7 +126,7 @@
 | `scripts/charge-ctl.sh` | battery / charger control for TB322FC (elden), qcom-battmgr. | 27 |
 | `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 23 |
 | `scripts/deploy-camera-modules.sh` | 收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验** | 23 |
-| `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 67 |
+| `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 68 |
 | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 36 |
 | `scripts/deploy-sensord-routec-debian.sh` | 在 **Debian/glibc 根**上安装路线 C 的 Waydroid sensor HAL | 13 |
 | `scripts/deploy-sensord-routec.sh` | build & install the route-C Waydroid sensor HAL | 15 |
@@ -212,7 +213,7 @@
 | `scripts/wd.sh` | 主机侧 Waydroid 快捷控制（**每次 <15s 返回，绝不长等待**） | 11 |
 | `scripts/win-x86-rootfs.sh` | 构建/部署 glibc aarch64 rootfs（Win-x86 转译 PoC 阶段A） | 14 |
 
-## 造件（69）
+## 造件（70）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -245,6 +246,7 @@
 | `scripts/build-phosh-arm64.sh` | 产出带「output power 失败即视为屏亮」修复的 aarch64 phosh | 6 |
 | `scripts/build-phosh-upstream-fix.sh` | 用「上游 main 源树 + 本地补丁」编 aarch64 phosh（验证上游补丁用） | 3 |
 | `scripts/build-sensord.sh` | 编译 eldroid-sensord（C4 数据源 daemon）： | 11 |
+| `scripts/build-vbmeta-b.sh` | 重签 b 槽自签 AVB vbmeta（自签链，把 chain `boot` 指向**现役** avb.key） | 6 |
 | `scripts/audio-tplg/build.sh` | 构建 TB322FC 的 AudioReach topology (Lenovo-Y700-Gen4-tplg.bin) | 70 |
 | `scripts/wd-audio-test/build.sh` | Build the Waydroid container-audio test dexes (TestAudio / TestCodec / ListCodecs). | 70 |
 | `scripts/c1-iprule-build.sh` | build the vk95 kernel that enables policy routing | 4 |

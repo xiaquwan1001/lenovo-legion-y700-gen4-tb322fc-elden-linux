@@ -6,13 +6,21 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-20）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-21）
 
 > 新会话**只读本节**就知道「做到哪、卡什么、下一步」。三行都有日期 + 证据指针；
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
 > 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
 
-0. **🆕 2026-11-20 22:00–23:10（U2 HA2EXB0E，今晚目标「恢复到历史最佳」= 达成）— 设备曾卡 fastboot（三层真因已定因并修好）+ PC 声音默认转发到平板**
+0. **🆕 2026-11-21 早（主机侧，无人值守轮次；设备 offline）—— b 槽 AVB 债还清（造件 + 生成器 + 门）**
+   - **债**：设备在机 `vbmeta_b` 顶层 key 与 chain `boot:3` 都是**旧钥 `fc1e3b33…`**（2026-10-18 换钥后没重签），
+     而 `boot_b` 的 AVB footer 已是现役 `1e54e86e…` ⇒ 自签链自身不自洽（槽位启动只能靠 `Flags=3` 不解析描述符绕过）。
+   - **产出**：`scripts/build-vbmeta-b.sh` → `out/vbmeta-b/vbmeta_b-flags3.img`（65536 B、Flags 3、顶层 + chain 同钥、
+     整链 `verify_image --follow_chain_partitions` rc=0、sha `906e69…`）＋ `check-doctor` **§26**（换钥忘重签⇒FAIL，翻字节反作弊）。
+     7 项离线判据全过；用同一校验器跑**在机** `vbmeta_b` 得 2 处 FAIL（修复前对照）。
+   - **剩**：一次上机验收 `fastboot flash vbmeta_b` + `fastboot boot bootslot-b/boot_b.img`（设备窗口；回退件在 `logs/forensics-20261120-2210/vbmeta_b.img`）；
+     `flags=0` 干净链需先有 `dtbo_b` dump。成因/证据 = `reports/vbmeta-b-resign-20261121.md`。
+0. **🆕 2026-11-20 22:00–23:10（U2 HA2EXB0E，当晚目标「恢复到历史最佳」= 达成）— 设备曾卡 fastboot（三层真因已定因并修好）+ PC 声音默认转发到平板**
    - **现态（三次冷起实测，均 ~25 s 直进 Linux，无回落）**：`boot_b` 主启、`qbootctl` = `_b` Active/Successful/**Bootable 全 1**；在机 **vk192**（UTS `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`）；`/` = `/dev/sda17` 190 G（1260 包）；`phoc+phosh` 在；Mesa **26.1.6**；`wlan0` 上网（默认路由）+ `usb0` 192.168.7.1 SSH；六件 mask 在位、`systemctl --failed` 空。
    - **两种门全绿**：`scripts/deploy-desktop-shell.sh --check` = **MISS=0**；`scripts/zero-to-desktop-check.sh` = **S5–S12 全 ok**（S10 之前 MISS 的两项已修：`man-db` 装上、GPU devfreq 真生效 525 MHz/10 ms）。
    - **fastboot 卡死的三层真因（PITFALLS #697，全文 `PITFALLS/sessions/329-…`）**：① `boot_b` SUCCESSFUL=0 ⇒ ABL 每发抽 retry，7→0 标 UNBOOTABLE 停 fastboot；② `ValidateSlotGuids … Boot GUID 77036CD4… / abl_b GUID 77036CD4…` = 该槽 `boot_*` 与 `abl_*` **type GUID 相同**（出厂 b 侧占位值）；③ `Boot lun: 1 and BootableSlot: _b do not match` = UFS 启动 LUN 未切（**a→LUN1 / b→LUN2**）。机制 = Qualcomm 切槽要**把 type GUID 在两槽间搬家 + 切 LUN**（`boot_control.cpp` `UPDATE_SLOT`）⇒ 「canonical GUID 在哪侧」必须与「哪侧 active」一致。**修法**：切槽只走 `fastboot set_active`；半完成态用 `scripts/gpt-slot-flip-active.py` + `scripts/linux-gpt-apply.sh --lun 4` 补 ACTIVE（写后逐字节/设备端 sha 读回），再 `set_active <同槽>` 触发 LUN 切换，起来后 `qbootctl -m`。
