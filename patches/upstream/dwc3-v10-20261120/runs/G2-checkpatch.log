@@ -1,0 +1,28 @@
+-------------------------------------------------------------------
+v10-0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-on.patch
+-------------------------------------------------------------------
+total: 0 errors, 0 warnings, 0 checks, 115 lines checked
+
+v10-0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-on.patch has no obvious style problems and is ready for submission.
+-------------------------------------------------------------------
+v10-0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch
+-------------------------------------------------------------------
+total: 0 errors, 0 warnings, 0 checks, 63 lines checked
+
+v10-0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch has no obvious style problems and is ready for submission.
+-------------------------------------------------------------------
+v10-0003-usb-dwc3-select-the-shared-HS-data-bus-with-a-mux-co.patch
+-------------------------------------------------------------------
+WARNING: Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+#10: 
+can end up driving the data lines of the connector that is not in use, and a
+
+total: 0 errors, 1 warnings, 0 checks, 618 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+v10-0003-usb-dwc3-select-the-shared-HS-data-bus-with-a-mux-co.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.

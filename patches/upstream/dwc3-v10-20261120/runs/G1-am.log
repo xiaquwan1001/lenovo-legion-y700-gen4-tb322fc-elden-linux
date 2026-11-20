@@ -1,0 +1,3 @@
+应用：dt-bindings: usb: snps,dwc3: describe two connectors on one HS data bus
+应用：usb: roles: look up role switches attached to a graph endpoint
+应用：usb: dwc3: select the shared HS data bus with a mux controller

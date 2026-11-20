@@ -1,5 +1,5 @@
-# DRAFT — 未投递（未 git send-email）。落盘 2026-11-21。
-# 门禁数字全部是占位 <Gx …>，每行末尾写明取自哪条命令；填数前不得发信。
+# DRAFT — 未投递（未 git send-email）。落盘 2026-11-20（本轮实测回填）。
+# 门禁数字：G0/G1/G2 已按 2026-11-20 实测回填；G3–G6 仍为 <Gx …> 占位（门链停在 G2 红门，未跑）。
 # 发信前必做：① 填 G1–G6 占位（用 v10 最终三枚 patch 重跑，见文末附录 §B）；② 2/3 补 AI 披露段（§A.1）；
 #            ③ 删掉 "-- " 之后的中文附录；④ 用 `git format-patch --cover-letter` 重生成，不要手改本文件的 From/Date。
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
@@ -110,12 +110,18 @@ Known gaps (stated so that nobody has to guess)
 - The board DTS is not part of this posting: the Lenovo Legion Y700 Gen 4
   file is not upstream yet and is posted with its own board series.
 
-Gate results (base: <G0 占位: 基线 tag + full sha>)
+Gate results (base: v7.4-rc3 = aebb7274476403040d582c61478df8f4a7bf9cd3)
 
-  G1 apply       git am                     <G1 占位: n/3，干净（无 fuzz）>
-                 from a pristine worktree of the base above
+  G1 apply       git am --3way              3/3 clean, rc=0, no offset/fuzz
+                 on a pristine check-out of the base above (shallow clone
+                 deepened with "git fetch --deepen=50" so --3way can work)
   G2 checkpatch  perl scripts/checkpatch.pl --strict --no-signoff --no-tree
-                                            <G2 占位: 1/3 nE/nW/nC（N 行）· 2/3 … · 3/3 …>
+                 1/3 0E/0W/0C (115 lines) · 2/3 0E/0W/0C (63 lines)
+                 3/3 0E/1W/0C (618 lines)
+                 The single WARNING is "Prefer a maximum 75 chars per line"
+                 on a 78-character line of the 3/3 commit message; the
+                 message text is unchanged from the reviewed draft, so it is
+                 reported here rather than silently rewrapped.
   G3 build       make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- W=1
                  drivers/usb/dwc3/ drivers/usb/roles/   (CONFIG_MULTIPLEXER=y,
                  CONFIG_USB_ROLE_SWITCH=y)
@@ -137,6 +143,8 @@ Gate results (base: <G0 占位: 基线 tag + full sha>)
   The dtbs_check rule also ends with "|| true", so the result is read from
   the diagnostics in the output, not from the exit status.
 
+  G3-G6 were not run in this pass: the chain stops at the G2 warning above.
+
 Qianhui Xu (3):
   dt-bindings: usb: snps,dwc3: describe two connectors on one HS data bus
   usb: roles: look up role switches attached to a graph endpoint
@@ -157,12 +165,13 @@ Qianhui Xu (3):
 #
 # §A 未完成 / 阻塞项
 #
-# A.1 【阻塞发信】2/3 缺 AI 披露段：grep -c 'AI-assistance' v10-0002-*.patch = 0，
-#     而 1/3、3/3 都有。二选一：① 2/3 也加同一段（推荐，与 1/3、3/3 一致）；
-#     ② cover 改成如实分述（哪枚 LLM 辅助、哪枚手写）——没有真实依据就不许用。
-# A.2 【阻塞发信】G0–G7 占位未填。
-# A.3 3/3 目前只有 v10-0003-commit-msg.txt（commit message 文本），没有 v10 的 0003 patch 文件；
-#     3/3 代码仍以 ../dwc3-v10-20261118/v10-0003-*.patch 为准（代码不动，只换 commit msg）。
+# A.1 【已解决 2026-11-20】2/3 已补 AI 披露段（与 1/3、3/3 逐字同格式）：
+#     grep -c 'AI-assistance' v10-0002-*.patch = 1。
+# A.2 【阻塞发信】G3–G7 占位未填（G0/G1/G2 已按 2026-11-20 实测回填）；
+#     门链停在 G2 的 1 条 WARNING（3/3 commit message 有 78 字符行）。修法 = 在
+#     v10-0003-commit-msg.txt 里把那行折到 ≤75 再重生成 3/3 patch，然后从 G2 起重跑。
+# A.3 【已解决 2026-11-20】v10 的 0002/0003 patch 文件已装配在本目录：
+#     0002 = v9 内容 + AI 披露段；0003 = v9 代码 + v10-0003-commit-msg.txt 的 commit message。
 # A.4 2/3 代码逐字节等于 v9：diff <(sed -n '/^diff --git/,$p' v9-0002) <(… v10-0002) 只差尾部签名行。
 # A.5 G7 上机回归（两口枚举/拔插/角色切换、GPIO29 被 gpio-mux 持有与电平）未做；cover 已写明不声称。
 # A.6 本 cover 的 diffstat 由三枚最终 patch 用 `git apply --stat` 算得：
