@@ -28,6 +28,8 @@
 import argparse
 import ast
 import collections
+import hashlib
+import json
 import os
 import re
 import subprocess
@@ -269,7 +271,7 @@ def oneshot_group(path, block):
     return g
 
 
-def collect():
+def collect(scan_refs=True):
     entries = []
     for p in iter_targets():
         block = block_of(p)
@@ -280,6 +282,12 @@ def collect():
             "desc": describe(p, block) or "(无头注释)",
             "group": oneshot_group(p, block),
         })
+    if not scan_refs:
+        # 结构指纹模式：不做引用语料扫描（省 ~5 s，且**不把引用计数算进新鲜度判据**）
+        for e in entries:
+            e["scripts_refs"] = e["docs_refs"] = e["refs"] = 0
+        entries.sort(key=lambda e: (GROUP_ORDER.index(e["group"]), e["name"]))
+        return entries
     names = sorted({e["name"] for e in entries})
     scripts, docs = ref_corpus()
     sc = build_counts(names, scripts)
@@ -308,11 +316,25 @@ def _self_mentions(path, name):
     return sum(1 for ln in text.splitlines() if pat.search(ln))
 
 
+def structural_fp(entries):
+    """新鲜度判据 = **结构**（路径/分组/名字/shebang/头注释一句话），**不含引用计数**。
+    原因（2026-11-20 grow-loop #4 踩两次）：引用数是「全仓文档提到该 basename 的行数」，
+    任何一处文档改动都会让它变 ⇒ 把引用计数算进指纹，等于「改一行文档就要重新生成索引」，
+    门禁立刻变成噪声、人会直接绕开。"""
+    payload = [
+        [e["path"], e["group"], e["name"], e["shebang"], e["desc"]]
+        for e in entries
+    ]
+    blob = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
 def render_md(entries):
     total = len(entries)
     per_group = collections.Counter(e["group"] for e in entries)
     orphans = [e for e in entries if e["refs"] == 0]
     L = []
+    L.append(f"<!-- 结构指纹 fp={structural_fp(entries)}（--check 只比这个；引用计数不进指纹、随生成刷新） -->")
     L.append("<!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。")
     L.append("     重新生成：python3 scripts/gen-scripts-index.py")
     L.append("     过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->")
@@ -418,11 +440,18 @@ def main():
             old = f.read()
 
     if args.check:
-        if old == rendered:
-            print(f"OK scripts/README.md 最新（{len(entries)} 个入口）")
+        want = structural_fp(collect(scan_refs=False))
+        have = ""
+        m = re.search(r"结构指纹 fp=([0-9a-f]{8,64})", old)
+        if m:
+            have = m.group(1)
+        if have == want:
+            extra = "" if old == rendered else "（引用计数已漂移，按设计不判过期；想刷新跑一次生成器）"
+            print(f"OK scripts/README.md 结构最新（{len(entries)} 个入口）{extra}")
             return 0
-        print(f"STALE scripts/README.md 过期（{len(entries)} 个入口）→ "
-              "跑 python3 scripts/gen-scripts-index.py", file=sys.stderr)
+        print(f"STALE scripts/README.md 过期（结构变了：{len(entries)} 个入口，"
+              f"fp {have or '缺失'} → {want}）→ 跑 python3 scripts/gen-scripts-index.py",
+              file=sys.stderr)
         if args.diff:
             import difflib
             sys.stdout.writelines(difflib.unified_diff(
