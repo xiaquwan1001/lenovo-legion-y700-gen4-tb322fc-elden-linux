@@ -14,9 +14,11 @@
 
 **做到哪**
 
-0. **🆕 2026-11-20 11:xx（主机）—— 进度整理轮：4 条 lane 产出落盘、A 档回收 8.1 GB、新增 out/ 造件门禁；**设备现离线（需人项插线+上电）**
+0. **🆕 2026-11-20 全天（主机；grow-loop #1–#5）—— 三份账/三道门落地、累计回收 ~19 GB；a 槽首启实测得新前置条件（PITFALLS #695）；**设备现离线（需人项插线+上电）**
    - **全账** = `.pi/plans/2026-11-20-进度整理与待办规划.md`（现态实测 + 4 lane 产出 + 排好序的待办 + 4 条待拍板）。
    - **主机侧已落地**：① A 档回收 **8124 MB**（`out/` 87→75 G）；② `check-doctor` **§23 out/ 造件账本门**（`scripts/out-manifest-check.py` + `scripts/out-manifest-exempt.tsv`，含空理由豁免必 FAIL 的反作弊与 4 类 selftest）；③ 上游现查一页账 `reports/upstream-recheck-20261120.md`（**§7 台账落后 1–2 代**：wl2868c 已 v12、dwc3 已 v9 且 Rob Herring 11-18 回「??」、elden DTS v7、fastrpc v3、M8 现役 = mdss block-resets 3 枚），`TASKS §7` 头已加增量块；④ v3 上机执行包 `scripts/android-v3-bringup-walkthrough.sh`（`--dry-run` 默认，父代理复跑 `--verify` 7 件全过）+ `reports/android-v3-bringup-packet-20261120.md`；⑤ arch-audit P1#3 收尾：`scripts/README.md` 生成索引（334 入口）挂 `check-doctor` **§24 新鲜度门**（`gen-scripts-index.py --check` + 删行反作弊，只进全量档，设计/验证 = `reports/scripts-index-gate-20261120.md`）。
+   - **11-20 下午续（grow-loop #1–#5，均为主机侧）**：① 大文件裁决 `reports/bigfile-verdict-20261120.md`（`parts/` 15 G 可删已证=官方分片重装后 7/7 逐字节一致；`min-restore` 根**不可删**、`p2` 才是真子集）；② out/ 生命周期账 `versions/out-artifacts.tsv` + **§25**（词表 active/verified/superseded/**pending 禁删**——`slim-v3`、`android-min`(v1 对照)、`slim-v2b`(S4 二分) 三件已标 pending，防止按旧推断误删实验材料）；③ PITFALLS 79 条「正文只在专题报告」回填（**0 孤儿索引行**）；④ py 静态扫描（pyflakes 未用 import 15→0）；⑤ §24 判据改**结构指纹**（文档编辑不再触发，增删脚本仍触发）。
+   - **设备侧实测（a 槽）**：`reports/android-a-slot-attempt-20261120.md` —— v1 在机、BCB 清 0、`boot_a` 属性修复后 reset **仍失败并自动回落 b 槽**（logfs 末条 EBS 13.3 s；pstoredump 无 panic 文本）⇒「BCB 是主因」作废；**新前置条件 = 每次上机前复位 `boot_a` GPT 属性**（`0x82` ⇒ ABL 跳过 a 槽），已机械化进 `walkthrough` S1 的 `ensure_boot_a_attrs()`。
    - **四个新硬阻塞**：原厂 `boot.img` = **header v4** 而 `boot-img-cmdline.py` 只支持 v2（⇒ S5 的 `console=ttyGS0` 取证件造不出来）· `qbootctl -a` 是只读查询（设 active = `-s SLOT`）· `metadata` 起点 = **5857704** · **页缓存污染让 buffered sha256「稳定但错」**（v1 件 `637a9965…` vs O_DIRECT `e3d0d26f…`）⇒ 硬门必须 O_DIRECT。
    - **设备现态 = offline**（无 `05c6/18d1` 枚举、`fastboot devices` 空、无 `/dev/ttyACM*`）；**`ping 192.168.7.1` 是假阳性**（走手机热点网关）——判在线只看 `DEVICE/README.md` §1.6 五条。需人项：插线 + 上电 → `sudo scripts/ncm-host-up.sh`。
    - **主机稳定性（规则 12，不深挖）**：本机 10:17/10:27 两次 Pi 子进程 SIGSEGV（MCE=0）、页缓存 sha 漂移、盘上 super 位翻转；证据已交 `~/hw-stability/evidence/inbox/20261120-y700-elden-{pi-child-upstream-lane-segv,pagecache-sha-drift}/`。
