@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=1e05f9ce66e1452b（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=a0b560e7731dcca8（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -115,8 +115,8 @@
 | `scripts/android-ksu-flash.sh` | 刷/回退「KernelSU(LKM) init_boot + 自洽 vbmeta_a」（TB322FC / elden / 259） | 14 |
 | `scripts/arm-window-hunt.sh` | 在坏发成簇的窗口里交替试多个显示臂，直到出现"健康发"。 | 18 |
 | `scripts/as-client-deploy.sh` | 把 Audio Share 的「Linux 客户端」装到平板（TB322FC 主线 Debian） | 2 |
-| `scripts/ath12k-load.sh` | Load the ath12k (WCN7861 "Peach") driver as a *module* after boot. | 29 |
-| `scripts/ath12k-retry.sh` | ath12k (WCN7861 "Peach") boot-time re-probe. | 46 |
+| `scripts/ath12k-load.sh` | ★★★ RETIRED（2026-11-22 脚本审计批 1，reports/scripts-audit-20261122.md §3）★★★ | 27 |
+| `scripts/ath12k-retry.sh` | ath12k (WCN7861 "Peach") boot-time re-probe. | 49 |
 | `scripts/audio-alsa-init.sh` | put the Lenovo-Y700-Gen4 (TB322FC/elden) sound card into | 23 |
 | `scripts/bl-preunlock-evidence.sh` | 解锁前（locked 状态）零风险取证 + 解锁申请表所需参数打印。 | 11 |
 | `scripts/bl-unlock.sh` | ⚠ 适用前提（2026-10-03 定稿）：**只有 ROM ≤ 1.1.11.073/.076 才存在解锁命令**； | 11 |
@@ -155,7 +155,7 @@
 | `scripts/gpt-minimal-build.py` | 生成「最小可控」GPT（LUN0 减分区 + 单 Linux 大分区；LUN4 只删 Android GKI）。 | 12 |
 | `scripts/gpt-restore-tb322fc.py` | REVERSE the dual-boot GPT surgery on TB322FC LUN0: | 11 |
 | `scripts/gpt-slot-flip-active.py` | 在一对 GPT 表（主表 6 扇区 + 备表 5 扇区）上只改 boot_a/boot_b 的 | 14 |
-| `scripts/gpt-slot-swap-guids.py` | 把 A/B 槽的 **partition type GUID 侧** 搬到指定槽，并按 MarkPtnActive 语义修属性位。 | 2 |
+| `scripts/gpt-slot-swap-guids.py` | 把 A/B 槽的 **partition type GUID 侧** 搬到指定槽，并按 MarkPtnActive 语义修属性位。 | 4 |
 | `scripts/gpt-surgery-tb322fc.py` | shrink `userdata` and append partition(s) on the | 42 |
 | `scripts/greetd-initial-session.sh` | TB322FC session "path A": greetd [initial_session] | 16 |
 | `scripts/host-arm64-chroot.sh` | 在主机上建一个 **arm64 Debian(sid) 构建 chroot**，并可选在里面编 sensord | 15 |
@@ -164,7 +164,7 @@
 | `scripts/kexec-boot.sh` | hot-reload a new kernel WITHOUT fastboot/ABL/AVB. | 34 |
 | `scripts/kexec-bs-cycle.sh` | elden kexec 二分单轮。进 fastboot 只走一个入口：`eldroid-bootctl reboot bootloader` | 25 |
 | `scripts/kexec-diag-test.sh` | 在设备上跑，用 vk65-m{0,1,2,3} 诊断内核定位 kexec 掉电阶段。 | 8 |
-| `scripts/linux-gpt-apply.sh` | 把一对 GPT 表（主表 6 扇区 + 备表 5 扇区）写进指定 LUN，**写后读回对账**。 | 52 |
+| `scripts/linux-gpt-apply.sh` | 把一对 GPT 表（主表 6 扇区 + 备表 5 扇区）写进指定 LUN，**写后读回对账**。 | 55 |
 | `scripts/linux-gpt-dump.sh` | EDL 只读 dump 六 LUN 的 GPT 主表 + 备表（零写盘），并更新 SHA256SUMS。 | 14 |
 | `scripts/m1-73-modules-overlay.sh` | 收口指针（script-redundancy-audit S15，2026-11-13）：设备侧整目录部署的统一实现 = scripts/deploy-modules.sh | 10 |
 | `scripts/make-gpt-only-xml.py` | 从官方 rawprogram*.xml 里**只保留 GPT 两行**，生成「只改分区表」的 xml。 | 6 |
