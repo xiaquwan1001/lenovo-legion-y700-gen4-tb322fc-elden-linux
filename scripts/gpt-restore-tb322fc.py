@@ -137,7 +137,9 @@ def cmd_build(a):
     ents = parse_entries(main, hdr["ent_lba"], hdr["nents"], hdr["entsz"])
     first_usable, last_usable = hdr["first_usable"], hdr["last_usable"]
 
-    ud = next(e for e in ents if e and e["name"] == "userdata")
+    ud = next((e for e in ents if e and e["name"] == "userdata"), None)
+    if ud is None:
+        sys.exit("FAIL: 这张表里没有 userdata 分区 —— 多半拿错了 LUN（本脚本针对 LUN0 的主表）")
     lin = next((e for e in ents if e and e["name"] == a.linux_name), None)
     assert lin is not None, "linux partition not found"
     assert lin["last"] == last_usable, f"linux not last partition ({lin['last']} != {last_usable})"

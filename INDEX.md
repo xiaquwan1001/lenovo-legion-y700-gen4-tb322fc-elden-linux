@@ -48,6 +48,10 @@
      `Completers default=pipe` + `Completers.Pipe.command=/usr/local/bin/elden-pinyin-completer`）：
      GB2312 一级字过滤 + 常用词表 + 高频字首选项 + 索引缓存 ⇒ **冷 215 ms / 热 20 ms**。
    - 设备侧依赖 `python3-pypinyin`（已入 `rootfs/debian/daily-baseline.tsv`）。剩余可选提升 = librime one-shot（词库/整句）。
+   - **脚本整改批 1 已落地**（7/7 DANGEROUS 加 fail-closed 门：`gpt-restore-tb322fc.py` 缺/错表指纹拒绝出件、
+     `gpt-slot-flip-active.py` 写前跑 `ValidateSlotGuids` 判据并指向 `gpt-slot-swap-guids.py`、`ath12k-load.sh` 退役并移出装机名单、
+     `f2fs-migrate.sh`/`dev-*-relabel.sh` 的 SN 与 PARTLABEL 硬门、`n5b-vk64-death-rate.sh` 去掉 `reboot2` 软路径）；
+     全账 = `reports/scripts-hardening-1-20261121.md`（静态验证 + 合成 GPT 夹具实测，零设备接触）。
    - 上游 MR：`mobian1/droid-juicer !46`（`configs/lenovo,elden.toml`，+116 行，CI 跑过；未在硬件验证已在描述里声明）。
 
 0. **🆕 2026-11-21 晚 — 文档现实性核查与收敛**：INDEX/TASKS/DEVICE 死指针 9 处修平（已删目录/归档件/截断文件名）、TASKS §4 11-20/21 长增量块逐字下沉 `TASKS/sessions/2026-11-21-§4增量块下沉.md`；门禁复跑 FAIL=0。全账 = `reports/doc-reality-audit-20261121.md`。
