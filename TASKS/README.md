@@ -156,6 +156,21 @@
   **判别顺序（新）**：① **H5 = 刷原厂 `vbmeta_a`（10 min，需物理键）** → ② 落点当场取 **seg0 logfs + cmdline**（区分 H1/H6/H7）→
   ③ S2 不必再跑（11-20 实测 no-op）、S3（原厂 `super` 对照，14.5 GiB）**降为对照**。
   全账 = `reports/android-a-slot-laneC-20261121.md`（H1–H9 假设表 + 材料核实 + 只读取证 + 一页执行单）+ `logs/a-slot-analysis-20261121/`。
+- **🆕 2026-11-21 下午：UEFI 纯 b 槽（用户方向）+ 发行版路线定 Mobian**
+  · **已落地（不碰现有引导）**：`vendor_boot_b` = FAT32 ESP（`ELDENESP`，**4K 扇区**，Linux 可挂）；`EFI/BOOT/BOOTAA64.EFI` = 自建 GRUB；
+    菜单**外置**在 `linux17:/boot/grub/grub.cfg`（改菜单不碰分区）；`linux17:/boot` 有 `Image`（由 `boot_b` 的 **gz** 内核解压，sha `0a55e52c` = 守卫核）+
+    `initrd.img` + `elden.dtb`；a 槽安卓四件在 `/boot/android-a/`。`boot_b` 未动、回退 = 清 `misc` 后普通重启。
+  · **路 A 实测（零写盘）**：`fastboot boot out/uefi-20261104R21-hostdiag-r1.img` 成功但**屏上有字无菜单** ⇒ Mu 到 DXE/BDS，
+    但 **R21（11-05）早于 R54（11-08）`bdsdxe-esp-first`（`patches/uefi/20261108R54-espfirst/`）** ⇒ BDS 不把我们的 FAT ESP 当候选。
+    期间 b 槽 retry 7→6（successful=yes 未变），设备已回 Linux（24 s）。
+  · **下一步（唯一方向）**：重建带 esp-first 的 Mu（`patches/uefi/p69-recipe.txt` = **84 条补丁**）。两个已查清的障碍：
+    上游 `Project-Silicium/Mu-Silicium` 无 Pakala/y700 平台（在 `sunflower2333/mu_wide_platforms`）⇒ 需两仓合并；
+    补丁基线 `42fe5637` ≠ 新克隆 HEAD `d31c2b8` ⇒ 逐条重放有冲突。起点已留在 `build/uefi-woa-prep/repos/7-mu-lenovo`（295 MB）。
+  · 全账 = `reports/uefi-bslot-plan-20261121.md` §6/§7；造件 = `out/uefi-bslot-20261121/`（`pending`，禁删）。
+- **🆕 2026-11-21 发行版上游化（用户裁决：**选 Mobian**）**：Nura（原 postmarketOS）AI 政策禁生成式 AI 贡献 ⇒ **不可投**；
+  UBports 要 Halium ⇒ 不投；Mobian 唯一可行。**硬缺口 = 内核 LTS 版本账**（Mobian 只收 6.1/6.6/6.12/6.18，我们在 7.3/7.4）⇒
+  第一个动作 = 评估 payload 能否落到 **6.18 LTS**；**不碰内核的第一件可提交物** = `droid-juicer` 配置 + `mobian-recipes` `wip.toml` 条目。
+  全账 = `reports/distro-upstream-feasibility-20261121.md`（主会话已抽验三处一手来源）。
 - **P2 B 档 ~42 G 回收**：等 a 槽首启判据（`versions/out-artifacts.tsv` 四行 `pending` 禁删）。解冻判据 2026-11-21 已重排：先看 **H5（刷原厂 `vbmeta_a`，10 min）** 结果，S3 降为对照 ⇒ `reports/disk-reclaim-20261121.md` §2。
 - **P2 上游 M 系列**：~~wl2868c v12~~ **✅ 已进树（2026-11-21 核实）`regulator.git for-7.5`（`84e67d2ee13f` + `602f57223457`）⇒ 队列剩 dwc3 v10 / elden DTS v7 / fastrpc v3**，按 §7 排队。
   **🆕 dwc3 v10 = SENT-ready（2026-11-21 主机侧跑完全链）**：树不缺（`build/elden-tree` HEAD = `aebb727447` = **v7.4-rc3**，正是 v10 声明基线）⇒ 旧「需先重建内核树」作废；

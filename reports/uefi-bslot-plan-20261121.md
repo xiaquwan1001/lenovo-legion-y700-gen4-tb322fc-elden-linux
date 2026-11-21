@@ -131,3 +131,35 @@ devicetree /boot/android-a/dtb
     （判据：屏上是否出 GRUB 菜单；不出则按电源键长按回 Linux）。**先试这个**。
   - **路 B（数小时，主机侧）**：按 `patches/uefi/p69-recipe.txt` 重建 p69（= p68 + R70 + R54-espfirst + … 约 30 条补丁）。
     代价：`build/uefi-woa-prep/repos/7-mu-lenovo` 树在 11-19 清理时被删 ⇒ 要重取 Mu-Silicium（229 MB）+ 设备二进制后重打补丁。
+
+---
+
+## 7. 路 A 实测（2026-11-21 12:2x，`fastboot boot` 零写盘，用户目视）
+
+**结论：Mu 起来了、屏上有字，但没有菜单 ⇒ BDS 没有把我们的 ESP 当可启动项。**
+
+| 项 | 观测 |
+|---|---|
+| 命令 | `fastboot boot out/uefi-20261104R21-hostdiag-r1.img`（67 198 976 B，`ANDROID!` 头） |
+| fastboot 侧 | `Sending boot.img (65624 KB) OKAY [1.47s]` → `Booting OKAY [10.11s]` |
+| **屏上** | **有文字（Mu/DXE console 输出），无 GRUB 菜单**（用户实看） |
+| 35 s 后设备状态 | 掉回 fastboot，但 **serial 变成 `51318dc0`、`product: sun`**（原来 `HA2EXB0E`）⇒ 这一发没进 Linux，ABL 落回自己的 fastboot |
+| b 槽计数 | 期间 `slot-retry-count:b` **7 → 6**；`slot-successful:b=yes`、`slot-unbootable:b=no` ⇒ 起来后 ABL 自行重置 |
+| 恢复 | `fastboot reboot` → **24 s 回 Linux vk192**；`boot_b` sha 仍 `740d431b…`（未变）、ESP 仍 `UUID 88D0-7871`、`/boot` 四件齐 |
+
+**判读（三条，按置信度）**
+1. **Mu 本体能跑**（有字 ⇒ PrePi→DXE→BDS 至少到 console 阶段），所以"载荷被 ABL 执行"这一环没问题。
+2. **没有菜单的原因 = R21 是 2026-11-05 构建，早于 R54（2026-11-08）的 `bdsdxe-esp-first` 补丁**
+   （`patches/uefi/20261108R54-espfirst/0001-bdsdxe-esp-first.patch`）——那一步才是"先起 ESP 上的
+   `\EFI\BOOT\BOOTAA64.EFI`，找不到再退回 LinuxLoader"。没有它，BDS 只会走 LinuxLoader/LoadImage 路径，
+   我们的 FAT ESP 不在它的候选里。
+3. 不能由此推出"ESP 或 GRUB 有问题"——**这一层还没被验证过**（GRUB 二进制我们还没让任何固件加载过）。
+
+**因此下一步只有一个方向**：拿到带 esp-first 的固件（p59 及之后）。仓内/归档的 Mu 件只到 R21，
+`7-mu-lenovo` 建树（`patches/uefi/p69-recipe.txt`，84 条补丁）在 11-19 清理时被删 ⇒ 需要重建。
+重建的两个现实障碍（本轮查清）：
+- 上游 `Project-Silicium/Mu-Silicium` **没有 Pakala/y700 平台**（平台在 `sunflower2333/mu_wide_platforms`
+  的 `Platforms/PakalaPkg/Device/lenovo-y700g4/`）⇒ 要两仓合并；
+- 84 条补丁是按当时那棵合并树的基线写的，新克隆（HEAD `d31c2b8`）与配方基准 `42fe5637` 不同 ⇒ 逐条重放会有冲突。
+
+`build/uefi-woa-prep/repos/7-mu-lenovo`（295 MB 浅克隆）已留在盘上，作重建起点。
