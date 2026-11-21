@@ -34,7 +34,7 @@
 
 ---
 
-> 模型/别名/并发/限流口径见全局 `~/.pi/agent/rules/cross-project.md` + `~/.pi/agent/fabric.json`（现值真源）+ 技能 `ustc-model-gateway`、`fabric-dispatch-checklist`（本文件不重复）。
+> 模型/别名/并发/限流口径见全局 `~/.pi/agent/rules/cross-project.md` + `~/.pi/agent/custom-providers.json` 与 `~/.pi/agent/settings.json` 的 `subagents` 段（现值真源；fabric.json 已于 2026-11-21 随 fabric 卸载删除）+ 技能 `ustc-model-gateway`、`subagent-dispatch`（本文件不重复）。
 
 ## 项目记忆（2026-11-13 收束：只留「违反即事故」的一行判据；细节在指针处）
 
@@ -47,7 +47,7 @@
 - **不要在本机平板上编译**（过热 → 断电重启到 BL）：内核用 aarch64-linux-gnu，musl 用户态用 `~/toolchains/aarch64-linux-musl-cross`。
 - **自编件替发行版同名包的二进制，只 `install` 会被 apt 静默冲刷**（实测：phoc 被换回原件，功能消失但进程/桌面全正常）。必须 `dpkg-divert --divert <bin>.dpkg-dist` + `apt-mark hold`；脚本 `scripts/phoc-install.sh`，细则 `PITFALLS #654`。
 - 「收尾」= 产物落盘 + SSOT 同步 + 设备安全态 + `check-doctor` **FAIL=0**（WARN 必须逐条列出并归类：本轮修 / 已登记豁免；C 类存量 WARN 不阻塞收尾）+ 工作区 clean（全文 `.pi/AGENT-OPS.md` §5）。
-- 子代理派发口径 = 全局 `AGENTS.md` 硬性规则 8（别名/provider 清单不在本文件重写，现查 `fabric.json`）；本项目编排形状/递归条件见 `.pi/ORCHESTRATION.md` §4。
+- 子代理派发口径 = 全局 `AGENTS.md` 硬性规则 8 + 技能 `subagent-dispatch`（别名/provider 清单不在本文件重写，现查 `custom-providers.json`）；本项目编排形状/递归条件见 `.pi/ORCHESTRATION.md` §4。
 - **其余判据不在本文件**（b 槽签名、双层压缩、kexec 取证、`build/*` 删除前 bundle、geekidos-linux 浅克隆、顶层布局登记、EDL 工具链、Q28 坏发协变量、`.pi/trash` 保护）：
   见 `.pi/memory/`（`MEMORY.md` / `failures-kernel.md` / `failures-device.md` / `notes-display.md`）与 `PITFALLS/`；检索用 `mem <关键词>`。
 
