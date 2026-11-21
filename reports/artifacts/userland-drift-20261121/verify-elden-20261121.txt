@@ -1,0 +1,117 @@
+
+[A. MANIFEST ↔ files/ 自洽]
+  FAIL  /usr/local/bin/q28-race-hunt.sh: 副本 sha 与清单不符（6166fc6fd70d06b0cd11a4bff404651444e0e3e0916a4a63d34f7c1cc316e0bb != 036a6279e9afa1e2a9e5397e511beb8b3d6983a49aac976e3b0f9559bd3fc73f）
+  FAIL  /usr/local/sbin/elden-session-user: 副本 sha 与清单不符（015fbb3ba59619bbc40968464c380f2a27119a878b589045038c36331d98abf9 != 88483d4fb6421a8e9758fd139a2a37e83401cee4b97f0e6f89dc09f36ab95526）
+  FAIL  /usr/local/sbin/time-sync.sh: 副本 sha 与清单不符（f82f3bf406392475b5bffeaa0c8e355b86be0c4d33111ba05a1e5a588890fcb6 != c5736ac00a30fe7357229166bcf416dd36d96aaefb8c36d3af27fce2ca1fcaa1）
+  ok    107 行已核对
+
+[B. ELF 可重建性（sources.tsv）]
+  ok    /usr/local/bin/elden-hapticd ← scripts/elden-hapticd.c
+  ok    /usr/local/bin/eldroid-sensord ← scripts/eldroid-sensord.c
+  ok    /usr/local/bin/ffrumble ← scripts/ffrumble.c
+  ok    /usr/local/bin/waydroid-sensord ← patches-userland/waydroid-sensord-udp/
+  ok    /usr/local/bin/waydroid-sensord-udp ← patches-userland/waydroid-sensord-udp/Makefile
+  ok    /usr/local/bin/elden-ime-focusd ← patches-userland/zh-ime/elden-ime-focusd.c
+  ok    /usr/local/sbin/reboot2 ← rootfs/reboot2.c
+
+[C. services.tsv ↔ 资产对齐]
+  ok    backlight-floor → /usr/local/sbin/elden-backlight-floor.sh（设备副本）
+  ok    bt-alias → /usr/local/sbin/elden-bt-alias.sh（extra）
+  ok    charge-watch → /usr/local/sbin/charge-watch.sh（设备副本）
+  ok    elden-bootlog → /usr/local/sbin/elden-bootlog.sh（extra）
+  ok    elden-hapticd → /usr/local/bin/elden-hapticd（设备副本）
+  ok    elden-powerlog → /usr/local/sbin/elden-powerlog-mark.sh（extra）
+  ok    gunyah-modprobe → /usr/local/sbin/gunyah-modprobe.sh（extra）
+  ok    greetd → /usr/sbin/greetd（包二进制，unit 被我们覆盖）
+  ok    iio-sensor-proxy → /usr/libexec/iio-sensor-proxy（包二进制，unit 被我们覆盖）
+  ok    net-selfheal → /usr/local/sbin/net-selfheal.sh（设备副本）
+  ok    pstore-catch → /usr/local/sbin/pstore-catch.sh（extra）
+  ok    q28-boot-watchdog → /usr/local/sbin/q28-boot-watchdog.sh（设备副本）
+  ok    qbootctl → /usr/local/sbin/qbootctl-mark.sh（设备副本）
+  ok    ssc-udp-relay → /usr/bin/python3 /usr/local/bin/ssc-udp-relay.py（解释器 + 仓库脚本）
+  ok    time-sync → /usr/local/sbin/time-sync.sh（设备副本）
+  ok    waydroid-ipv6 → /usr/local/sbin/waydroid-ipv6（设备副本）
+  ok    net-up → /usr/local/sbin/net-up.sh（设备副本）
+  ok    wifi-scan-refresh → /usr/local/sbin/wifi-scan-refresh.sh（设备副本）
+  ok    ath12k-retry → /usr/local/sbin/ath12k-retry.sh（设备副本）
+  ok    hexagonrpcd-adsp-sensorspd（package：unit 由发行版提供，不校验 exec）
+  ok    waydroid-container（package：unit 由发行版提供，不校验 exec）
+
+[D. 两套 unit 渲染]
+  ok    render.py --check：render: 21 个服务，20 个默认启用
+  ok    unit 结构检查完成（19 个 systemd + 19 个 openrc）
+
+[E. 语义红线（README §服务迁移口径）]
+  ok    qbootctl 默认启用（PITFALLS #181）
+  ok    greetd 有 respawn（PITFALLS #318）
+  ok    iio-sensor-proxy 等 QRTR svc 400（G1-34）
+  ok    wifi-scan-refresh 间隔 150s < 180s（PITFALLS #354）
+  ok    elden-hapticd amplitude 默认 255（TASKS C10）
+  ok    SSC 加速度计 udev 规则在位（ssc-accel + mount matrix，G1-34）
+  ok    shutdown 标记已剥离成独立脚本
+
+[F. 设备逐字比对]
+  根画像 systemd（init-mode=systemd / overlay=无）
+  WARN  /etc/conf.d/backlight-floor: 设备上不存在（期望来源 MANIFEST）
+  WARN  /etc/conf.d/elden-hapticd: 设备上不存在（期望来源 MANIFEST）
+  WARN  /etc/conf.d/greetd: 设备上不存在（期望来源 MANIFEST）
+  WARN  /etc/conf.d/wifi-scan-refresh: 设备上不存在（期望来源 MANIFEST）
+  FAIL  /etc/greetd/config.toml: 设备与仓库副本不一致（设备 25faee9a92e53d96 / 副本 b7925d277f2c13ce）⇒ 需要 sync 并评审
+  WARN  /etc/udev/rules.d/81-libssc-elden.rules: 设备上不存在（期望来源 MANIFEST）
+  WARN  /etc/xdg/autostart/elden-waydroid.desktop: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/bwrap: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/elden-ime-mode: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/elden-ime-toggle: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/eldroid-bootctl: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/feedback: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/q28-race-hunt.sh: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/scale.sh: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/slot-attr.py: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/ssc-udp-relay.py: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/bin/vibrate: 设备上不存在（期望来源 MANIFEST）
+  FAIL  /usr/local/sbin/cam-mode.sh: 设备与仓库副本不一致（设备 55c8f7ad3815d293 / 副本 1262641cd37e967b）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/charge-watch.sh: 设备与仓库副本不一致（设备 5c6ceb322aadaa1d / 副本 4a8870f2dea62021）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/elden-session-user: 设备与仓库副本不一致（设备 015fbb3ba59619bb / 副本 88483d4fb6421a8e）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/net-up.sh: 设备与仓库副本不一致（设备 4dad8ea5eff27bc4 / 副本 c5d4dc3500564d15）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/q28-boot-watchdog.sh: 设备与仓库副本不一致（设备 709e9eb86c65f45e / 副本 a85ec07ac0f6fa76）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/q28-watchdog.sh: 设备与仓库副本不一致（设备 f9cba76ed87be445 / 副本 1149f75c50eef245）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/slot-attr.py: 设备与仓库副本不一致（设备 33a11eef61d65ab3 / 副本 2b004355f911d8bf）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/time-sync.sh: 设备与仓库副本不一致（设备 f82f3bf406392475 / 副本 c5736ac00a30fe73）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/usb-gadget: 设备与仓库副本不一致（设备 7c70e2b991352645 / 副本 ce045a9555132ab8）⇒ 需要 sync 并评审
+  WARN  /usr/local/sbin/waydroid-ipv6: 设备上不存在（期望来源 MANIFEST）
+  FAIL  /usr/local/sbin/waydroid-session.sh: 设备与仓库副本不一致（设备 fa4e2ae0acb83e28 / 副本 2eb901dbe4b81cd4）⇒ 需要 sync 并评审
+  FAIL  /usr/local/sbin/waydroid-ui.sh: 设备与仓库副本不一致（设备 9b176c74380bad0f / 副本 7c0cb0809a8199fd）⇒ 需要 sync 并评审
+  WARN  /usr/local/sbin/elden-bt-alias.sh: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/sbin/pstore-catch.sh: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/sbin/elden-powerlog-mark.sh: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/sbin/elden-bootlog.sh: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/sbin/gunyah-modprobe.sh: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/local/sbin/qbootctl-mark.sh: 设备上不存在（期望来源 MANIFEST）
+  WARN  /usr/share/elden-pinyin/META.json: 设备上不存在（期望来源 MANIFEST）
+  FAIL  /etc/modules-load.d/elden-dma-heap.conf: 设备与仓库副本不一致（设备 d2066c39406adeb9 / 副本 0e69d4a8b6bd43ae）⇒ 需要 sync 并评审
+  WARN  /usr/lib/systemd/system/ath12k-retry.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/backlight-floor.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/bt-alias.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/charge-watch.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/elden-bootlog.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/elden-hapticd.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/elden-powerlog.service: 设备上不存在（期望来源 unit）
+  FAIL  /usr/lib/systemd/system/greetd.service: 设备上的单元与渲染产物不一致（设备 7d1bb4faf31b0cfc / 渲染 5eb095388bc64540）⇒ 重跑 render+部署
+  WARN  /usr/lib/systemd/system/gunyah-modprobe.service: 设备上不存在（期望来源 unit）
+  FAIL  /usr/lib/systemd/system/iio-sensor-proxy.service: 设备上的单元与渲染产物不一致（设备 cd8585c4de1c1f2f / 渲染 2bd870181d411ba5）⇒ 重跑 render+部署
+  WARN  /usr/lib/systemd/system/net-selfheal.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/net-up.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/pstore-catch.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/q28-boot-watchdog.service: 设备上不存在（期望来源 unit）
+  FAIL  /usr/lib/systemd/system/qbootctl.service: 设备上的单元与渲染产物不一致（设备 44098aff828dd614 / 渲染 b78765f4df4f5206）⇒ 重跑 render+部署
+  WARN  /usr/lib/systemd/system/ssc-udp-relay.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/time-sync.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/waydroid-ipv6.service: 设备上不存在（期望来源 unit）
+  WARN  /usr/lib/systemd/system/wifi-scan-refresh.service: 设备上不存在（期望来源 unit）
+  DIFF  /usr/local/bin/elden-ime-focusd: 设备 5cf98e1d7294fe64 ≠ 清单 8bfab82e2d872cd5（重编？）
+  DIFF  /usr/local/bin/ffrumble: 设备 28a20d113f9938da ≠ 清单 cdff41ab8ab00c4f（重编？）
+
+[G. rootfs/build-rootfs.sh 白名单 ⊆ MANIFEST（防第 4 处漂移）]
+  ok    白名单 23 项全部在 MANIFEST 中
+
+==== verify: FAIL=19 WARN=40 ====

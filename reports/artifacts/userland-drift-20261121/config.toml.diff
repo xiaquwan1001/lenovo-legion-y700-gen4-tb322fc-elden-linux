@@ -1,0 +1,11 @@
+--- repo:files/etc/greetd/config.toml
++++ device:/etc/greetd/config.toml
+@@ -1,6 +1,6 @@
+ # /etc/greetd/config.toml — auto-login xuqianhui1001, appliance mode.
+-# PAM (pam_elogind) grants seat/device access via elogind.
+-# Rollback: cp /etc/greetd/config.toml.bak-root /etc/greetd/config.toml
++# PAM (pam_elogind/pam_systemd) grants seat/device access.
++# 2026-11-19 重建：minbase 根（Debian 13 trixie，phosh 0.46 + phoc 0.46 + greetd + seatd）
+ 
+ [terminal]
+ vt = 7

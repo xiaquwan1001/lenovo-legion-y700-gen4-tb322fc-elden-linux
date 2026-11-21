@@ -1,0 +1,6 @@
+--- repo:files/etc/modules-load.d/elden-dma-heap.conf
++++ device:/etc/modules-load.d/elden-dma-heap.conf
+@@ -1,3 +1 @@
+-# 相机软 ISP（libcamera simple pipeline）需要 dma-buf provider：没有 /dev/dma_heap/system
+-# 时 libcamera 直接 "Could not open any dma-buf provider" 并禁用 debayer（2026-11-21 实测）。
+ system_heap

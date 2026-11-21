@@ -1,0 +1,244 @@
+--- repo:files/usr/local/sbin/slot-attr.py
++++ device:/usr/local/sbin/slot-attr.py
+@@ -41,7 +41,6 @@
+ import os
+ import struct
+ import sys
+-import uuid
+ 
+ SECTOR_DEFAULT = 4096
+ AB_OFF = 6          # attribute byte index
+@@ -112,43 +111,17 @@
+ 
+     def _pwrite(self, off, data):
+         os.lseek(self.fd, off, os.SEEK_SET)
+-        view = memoryview(data)
+-        while len(view):          # 块设备 write 可能短写，不循环就会静默丢尾部
+-            n = os.write(self.fd, view)
+-            if n <= 0:
+-                raise OSError(f"{self.src}: short write at {off}")
+-            view = view[n:]
++        os.write(self.fd, data)
+ 
+     def _hdr_off(self, which):
+-        # 备表头位置 = 主表头自述的 alt_lba（不是 size-sector）：整盘镜像/设备两者都对，
+-        # 且主备不一致时能暴露出来而不是「读了个别处的 4096 B」。
+-        return self.sector if which == "primary" else self.alt_lba * self.sector
++        return self.sector if which == "primary" else self.size - self.sector
+ 
+     def _read_headers(self):
+         self.hdr = {}
+-        # 先读主表头拿到 alt_lba，才能定位备表（2026-11-18 审计 R1 P0-④）
+-        raw = self._pread(self.sector, 92)
+-        if raw[:8] != b"EFI PART":
+-            raise SystemExit(f"{self.src}: no GPT signature at primary header (LBA1)")
+-        self.alt_lba = struct.unpack_from("<Q", raw, 32)[0]
+-        if self.alt_lba * self.sector + self.sector > self.size:
+-            raise SystemExit(
+-                f"{self.src}: 主表自述 alt_lba={self.alt_lba} 超出末尾 (size={self.size} B)\n"
+-                "  这份 dump 不是整盘视图：只给「主表+备表拼件」会让备表条目落在 EOF 之外，\n"
+-                "  旧版本于是静默只改主表。请用整盘镜像，或走 linux-gpt-apply.sh --gpt/--backup。")
+-        if self.image_mode:
+-            # 绝对 LBA 定位要求镜像就是整盘视图，否则一律拒绘（避免主备不一致）。
+-            need = (self.alt_lba + 1) * self.sector
+-            if self.size != need:
+-                raise SystemExit(
+-                    f"{self.src}: 镜像尺寸 {self.size} B != (alt_lba+1)*{self.sector} = {need} B。\n"
+-                    "  --image 只接受整盘镜像；只有主备表拼件时请走设备路径（/dev/sde）\n"
+-                    "  或 linux-gpt-apply.sh --lun 4 --gpt <main> --backup <backup> --apply。")
+         for which in ("primary", "backup"):
+             raw = self._pread(self._hdr_off(which), 92)
+             if raw[:8] != b"EFI PART":
+-                raise SystemExit(f"{self.src}: no GPT signature at {which} header "
+-                                 f"(offset {self._hdr_off(which)})")
++                raise SystemExit(f"{self.src}: no GPT signature at {which} header")
+             self.hdr[which] = bytearray(raw)
+         h = self.hdr["primary"]
+         hdr_size = struct.unpack("<I", h[12:16])[0]
+@@ -225,34 +198,12 @@
+     def cmd_show(self):
+         print(f"{self.src}: sector={self.sector} nent={self.nent} esz={self.entsz} "
+               f"prim_entries_lba={self.p_lba} backup_entries_lba={self.b_lba}")
+-        # 2026-11-18 审计 R2 P2-8：旧版只遍历主表 ⇒「show 正常」不等于「两表都对」。
+-        # 现在两张表都读，逐条打印，并在末尾给主备一致性判据（PITFALLS #678）。
+-        prim = {n: ab for _k, n, _b, _e, ab in self.iter_entries("primary")}
+-        try:
+-            back = {n: ab for _k, n, _b, _e, ab in self.iter_entries("backup")}
+-        except SystemExit:
+-            back = {}
+         for k, name, block, ent, ab in self.iter_entries():
+             if name.endswith("_a") or name.endswith("_b"):
+                 d = decode(ab)
+-                b_ab = back.get(name)
+-                tail = ""
+-                if b_ab is None:
+-                    tail = "  backup=MISSING"
+-                elif b_ab != ab:
+-                    db = decode(b_ab)
+-                    tail = (f"  backup=MISMATCH(0x{db['raw']}={db['raw']} retry={db['retry']} "
+-                            f"succ={int(db['successful'])} unbootable={int(db['unbootable'])})")
+                 print(f"  {name:18s} byte6={d['raw']:>4s} retry={d['retry']} "
+                       f"active={int(d['active'])} succ={int(d['successful'])} "
+-                      f"unbootable={int(d['unbootable'])}{tail}")
+-        only_back = sorted(set(back) - set(prim))
+-        diff = sorted(n for n in set(prim) & set(back) if prim[n] != back[n])
+-        if only_back or diff:
+-            print(f"  ⚠ 主备不一致：仅备表有 {only_back[:5] or '无'}；属性/几何不同 {diff[:8] or '无'}"
+-                  f"  ⇒ 判据必须两表一起看（#678）；修表请让本工具写（它写两表并读回校验）")
+-        else:
+-            print("  主备两表一致（entries byte6 与分区名集合相同）")
++                      f"unbootable={int(d['unbootable'])}")
+ 
+     def patch_slot(self, slot, retry, active, successful, unbootable, dry_run):
+         name = "boot_" + slot
+@@ -268,139 +219,23 @@
+             block[off] = new
+             changed[which] = (block, old, new)
+             print(f"  {which:7s} {name} byte6: 0x{old:02x} -> 0x{new:02x}")
+-        if not changed:
+-            # 旧行为：静默 rc=0 并打印「written」——分区名/LUN 选错时等于什么都没做。
+-            raise SystemExit(f"{name}: 主备两表都没有该条目 —— 拒绝静默成功"
+-                             f"（默认 --device /dev/sde = LUN4；用 show 核对）")
+-        if len(changed) != 2:
+-            raise SystemExit(f"{name}: 只有 {'/'.join(sorted(changed))} 表有该条目 —— "
+-                             f"主备表不成对，拒绝写入")
+         if dry_run:
+             print("  (dry-run: nothing written)")
+-            return 0
+-        # 写序：先备表后主表。断电窗口里至少还剩一张自洽的表可被 ABL 使用。
+-        for which in ("backup", "primary"):
+-            self.write_entries(which, changed[which][0])
++            return
++        for which, (block, old, new) in changed.items():
++            self.write_entries(which, block)
+         self.fsync()
+-        self._verify(changed)
+-        print("  written + CRCs fixed + read-back verified (primary & backup)")
+-        return 0
+-
+-    def _verify(self, changed):
+-        """写后读回（P0）：entries 逐字节 + header 里的 entries CRC。"""
+-        for which, (block, _old, _new) in changed.items():
+-            cur = self._pread(self._entries_off(which), self.nent * self.entsz)
+-            if cur != bytes(block):
+-                raise SystemExit(f"{self.src}: {which} entries 读回不一致（写丢/被内核改？）")
+-            h = self._pread(self._hdr_off(which), self.hdr_size)
+-            if h[:8] != b"EFI PART":
+-                raise SystemExit(f"{self.src}: {which} header 读回无 GPT 签名")
+-            if struct.unpack("<I", h[88:92])[0] != binascii.crc32(bytes(block)) & 0xFFFFFFFF:
+-                raise SystemExit(f"{self.src}: {which} header 的 entries CRC 读回不符")
+-            # header CRC 自验（R1）：crc 域自身置 0 后整体算。
+-            hdr_crc = binascii.crc32(bytes(h[:16]) + b"\0\0\0\0" + bytes(h[20:])) & 0xFFFFFFFF
+-            if struct.unpack_from("<I", h, 16)[0] != hdr_crc:
+-                raise SystemExit(f"{self.src}: {which} header CRC 读回不符（表头被写坏）")
+-
+-
+-def selftest():
+-    """合成 64 MiB 整盘 GPT（boot_a=0xf7 / boot_b=0xf3），断言三件事：
+-       ① show 读得出两槽；② mark-successful a 把 0xf7→0x7f 且主备都改；③ 条目缺失必须 rc≠0。"""
+-    import tempfile
+-    ok = True
+-    def bad(msg):
+-        nonlocal ok
+-        ok = False
+-        print(f"  SELFTEST FAIL {msg}")
+-
+-    def build(path):
+-        SEC, NENT, ESZ, total = 4096, 128, 128, 64 * 1024 * 1024
+-        data = bytearray(total)
+-        def ent(name, first, last, attr):
+-            e = bytearray(ESZ)
+-            e[0:16] = uuid.UUID("0fc63daf-8483-4772-8e79-3d69d8477de4").bytes_le
+-            e[16:32] = uuid.uuid4().bytes_le
+-            struct.pack_into("<QQ", e, 32, first, last)
+-            e[54] = attr
+-            e[56:128] = name.encode("utf-16-le")[:72]
+-            return e
+-        ents = [ent("boot_a", 6, 9, 0xF7), ent("boot_b", 10, 13, 0xF3), ent("misc", 14, 15, 0)]
+-        block = bytearray(NENT * ESZ)
+-        for i, e in enumerate(ents):
+-            block[i * ESZ:(i + 1) * ESZ] = e
+-        def hdr(my, alt, entlba):
+-            h = bytearray(92)
+-            h[0:8] = b"EFI PART"
+-            struct.pack_into("<I", h, 8, 0x00010000)
+-            struct.pack_into("<III", h, 12, 92, 0, 0)
+-            struct.pack_into("<QQ", h, 24, my, alt)
+-            struct.pack_into("<QQ", h, 40, 34, total // SEC - 34)
+-            h[56:72] = uuid.UUID("11111111-2222-3333-4444-555555555555").bytes_le
+-            struct.pack_into("<QIII", h, 72, entlba, NENT, ESZ, 0)
+-            struct.pack_into("<I", h, 88, binascii.crc32(bytes(block)) & 0xFFFFFFFF)
+-            struct.pack_into("<I", h, 16, binascii.crc32(bytes(h)) & 0xFFFFFFFF)
+-            return h
+-        last = total // SEC - 1
+-        data[SEC:SEC + 92] = hdr(1, last, 2)
+-        data[2 * SEC:2 * SEC + len(block)] = block
+-        data[(last - 32) * SEC:(last - 32) * SEC + len(block)] = block
+-        data[last * SEC:last * SEC + 92] = hdr(last, 1, last - 32)
+-        open(path, "wb").write(data)
+-
+-    with tempfile.TemporaryDirectory() as d:
+-        img = os.path.join(d, "fake-gpt.img")
+-        build(img)
+-        g = Gpt(img, writable=False)
+-        vals = {n: ab for _k, n, _b, _e, ab in g.iter_entries("primary")}
+-        g.close()
+-        if decode(vals.get("boot_a", 0))["raw"] != "0xf7":
+-            bad("合成盘 boot_a 不是 0xf7（构造错了）")
+-        # ② mark-successful a
+-        rc = patch_and_close(img, slot="a", retry=7, active=True, successful=True, unbootable=False)
+-        if rc != 0:
+-            bad(f"mark-successful a 返回 {rc}")
+-        g = Gpt(img, writable=False)
+-        prim = {n: ab for _k, n, _b, _e, ab in g.iter_entries("primary")}
+-        back = {n: ab for _k, n, _b, _e, ab in g.iter_entries("backup")}
+-        g.close()
+-        if decode(prim["boot_a"])["raw"] != "0x7f" or prim["boot_a"] != back["boot_a"]:
+-            bad(f"mark-successful a 没把主备都改成 0x7f（prim={decode(prim['boot_a'])['raw']}）")
+-        # ③ 条目缺失必须拒绝
+-        with open(img, "r+b") as f:
+-            for base in (2 * SECTOR_DEFAULT, (os.path.getsize(img) // 4096 - 1 - 32) * 4096):
+-                for i in range(128):
+-                    o = base + i * 128
+-                    f.seek(o + 56)
+-                    if f.read(12) == "boot_a".encode("utf-16-le"):
+-                        f.seek(o + 56); f.write(b"\0" * 12)
+-        try:
+-            patch_and_close(img, slot="a", retry=7, active=None, successful=None, unbootable=None)
+-            bad("条目缺失时没有拒绝（旧版本会静默 rc=0）")
+-        except SystemExit:
+-            pass
+-    print(f"== selftest {'OK' if ok else 'FAIL'}（show / mark-successful 主备同改 / 缺条目必拒）")
+-    return 0 if ok else 1
+-
+-
+-def patch_and_close(path, **kw):
+-    from contextlib import closing
+-    with closing(Gpt(path, writable=True)) as g:
+-        return g.patch_slot(kw["slot"], kw["retry"], kw["active"], kw["successful"],
+-                            kw["unbootable"], False)
++        print("  written + CRCs fixed (primary & backup)")
+ 
+ 
+ def main():
+-    # --selftest 必须在 subparser 的 required cmd 之前处理（它不需要 cmd）
+-    if "--selftest" in sys.argv[1:]:
+-        return selftest()
+     ap = argparse.ArgumentParser(description=__doc__,
+                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+     ap.add_argument("--image", help="full GPT image file (LBA0-based) instead of a device")
+     ap.add_argument("--device", default="/dev/sde", help="device node (default /dev/sde = LUN4 boot LUN)")
+     ap.add_argument("--sector", type=int, default=SECTOR_DEFAULT)
+     common = argparse.ArgumentParser(add_help=False)
+-    # default=SUPPRESS so the subparser copy does not override the global flag
+-    common.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS)
++    common.add_argument("--dry-run", action="store_true")
+     ap.add_argument("--dry-run", action="store_true")
+     sub = ap.add_subparsers(dest="cmd", required=True)
+ 
+@@ -437,4 +272,4 @@
+ 
+ 
+ if __name__ == "__main__":
+-    sys.exit(main())
++    main()
