@@ -1,0 +1,125 @@
+# droid-juicer device config — Lenovo Legion Y700 Gen4 (TB322FC), codename "elden"
+#
+# 文件名 = 板级 DT 的第一条 compatible（droid-juicer 按 compatible 找 configs/<compatible>.toml）。
+# 判据：在机 DTB 现读 `compatible = "lenovo,elden", "qcom,sm8750"`
+#       （`out/boot-elden-vk192.img` 内嵌 DTB 解出，见 README §1）。
+#
+# 字段语义来源 = droid-juicer 0.4.3 `src/firmware.rs`（PARTLABEL_DIR / mount_part /
+# process / squash .mdt→.mbn）+ README 的 schema 段；逐字段判据见同目录 README.md。
+#
+# 关键词：partition 写「基名」，droid-juicer 自己会依次试 <part> / <part>_a / <part>_b
+#         （firmware.rs:97-112）⇒ 写 "modem" 即命中本机的 `modem_a`。
+
+[juicer]
+# super 里是动态分区（system/vendor/product/odm/system_ext/*_dlkm）；
+# 本机 GPT 现读 LUN0 第 10 项 = `super`（backup/fw/tb322fc-edl/gpt_main0.bin）。
+dynpart = "super"
+
+firmware = [
+    # ---- A. ADSP / CDSP ------------------------------------------------------
+    # droid-juicer 对 `.mdt` 一律 squash 成单文件 `.mbn`（firmware.rs:305-308），
+    # 不会拷 `.bNN` 分段 ⇒ 产物是 qcom/sm8750/{adsp,adsp_dtb,cdsp,cdsp_dtb}.mbn。
+    # 这要求 DT 用单文件名字（上游 sm8750-mtp.dts 就是这样：
+    # firmware-name = "qcom/sm8750/adsp.mbn"），而我们下游板 DTS 现在写的是
+    # split 的 ".../adsp.mdt" + 段 ⇒ **换 Mobian 前必须改 DT 或自带分段固件包**。
+    # 见 README §3「两个必须先解决的形态冲突」。
+    { partition = "modem", origin = "image", destination = "qcom/sm8750", files = [
+            { name = "adsp.mdt" },
+            { name = "adsp_dtb.mdt" },
+            { name = "cdsp.mdt" },
+            { name = "cdsp_dtb.mdt" },
+        ] },
+
+    # ---- B. GPU（Adreno 830 / gen80000） -------------------------------------
+    # 本机 DT：zap-shader { firmware-name = "qcom/sm8750/gen80000_zap.mbn"; }
+    # aqe/sqe/gmu 由 adreno 驱动按名字请求（不带 .zst；我们自己的包里是 .zst 变体，
+    # 那是镜像侧的压缩选择，droid-juicer 产物是未压缩件）。
+    { partition = "vendor", origin = "firmware", destination = "qcom/sm8750", files = [
+            { name = "gen80000_zap.mbn" },
+            { name = "gen80000_gmu.bin" },
+            { name = "gen80000_sqe.fw" },
+            { name = "gen80000_aqe.fw" },
+        ] },
+
+    # ---- C. 触屏 / 功放 ACF ------------------------------------------------
+    # 触屏：DT firmware-name = "novatek_ts_csot_3k_fw.bin"（nt36536）⇒ 落在 /lib/firmware 根。
+    # 功放：aw88461 驱动要 awinic/y700-gen4-speakers.bin，内容 = vendor 的 aw882xx_acf.bin
+    #      （backup/fw/README.md「功放 ACF」段：拷成该名字后两个 aw88461 probe 成功）。
+    #      注意 rename 不能带 '/'（firmware.rs 用 set_file_name），所以靠 destination 分目录。
+    { partition = "vendor", origin = "firmware", destination = ".", files = [
+            { name = "novatek_ts_csot_3k_fw.bin" },
+        ] },
+    { partition = "vendor", origin = "firmware", destination = "awinic", files = [
+            { name = "aw882xx_acf.bin", rename = "y700-gen4-speakers.bin" },
+        ] },
+
+    # ---- D. WiFi（ath12k, PEACH = WCN7861） --------------------------------
+    # 本机 DT 的 wifi 节点没有 firmware-name ⇒ ath12k 走默认
+    # /lib/firmware/ath12k/PEACH/hw2.0/<file>，需要把 vendor 的 -20 变体改名。
+    # 逐条改名的依据 = 与 out/debian/elden-firmware_1.0~20261028_all.deb 内文件
+    # 逐字节同长（amss 6959168 / aux 61440 / m3 290816 / tmel 56752 / board 125420 /
+    # qdss 6237 / regdb 24278），见 README §2 表。
+    # board-2.bin（2253964 B）是由 bdwlan.e01..e41 拼出来的，droid-juicer 拼不了 ⇒
+    # 本配置只给 board.bin；board-2.bin 必须由我们自己的固件包提供（README §3）。
+    { partition = "modem", origin = "image/peach", destination = "ath12k/PEACH/hw2.0", files = [
+            { name = "amss20.bin", rename = "amss.bin" },
+            { name = "aux_ucode20.elf", rename = "aux_ucode.bin" },
+            { name = "phy_ucode20.elf", rename = "m3.bin" },
+            { name = "bdwlan.elf", rename = "board.bin" },
+            { name = "qdss_trace_config_v2.cfg", rename = "qdss_trace_config.bin" },
+            { name = "regdb.bin" },
+        ] },
+    # tmel.bin 在 peach/ 的上一层（modem `image/` 根），不在 peach/ 里。
+    { partition = "modem", origin = "image", destination = "ath12k/PEACH/hw2.0", files = [
+            { name = "tmel_peach_20.elf", rename = "tmel.bin" },
+        ] },
+
+    # ---- E. 蓝牙（WCN7861, "brh" 家族） ------------------------------------
+    # hci_qca/btqca 不看 DT 名字，代码里拼 `qca/<name>`（backup/fw/elden-firmware
+    # name-map.tsv 实测 dmesg：`QCA Downloading qca/brhbtfw20.tlv`）⇒ 必须落 qca/。
+    # 第 5 个文件 tmel_peach_20.elf 缺则控制器不注册（PITFALLS #454），它在 modem 分区。
+    { partition = "bluetooth", origin = "image", destination = "qca", files = [
+            { name = "brhbtfw20.tlv" },
+            { name = "brhbtnv20.bin" },
+            { name = "brhperifw20.tlv" },
+            { name = "brhperinv20.bin" },
+        ] },
+    { partition = "modem", origin = "image", destination = "qca", files = [
+            { name = "tmel_peach_20.elf" },
+        ] },
+
+    # ---- F0. 传感器 sns_reg.conf（单个文件，绝对 destination） -------------
+    # `folders` 只能整目录，这个文件单独一条；绝对 destination 合法见上方 §F 注释。
+    # TODO(需上机确认): 来源路径在 TB322FC 上未实地 ls（同 §F 的核对命令）。
+    { partition = "vendor", origin = "etc/sensors", destination = "/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors", files = [
+            { name = "sns_reg_config", rename = "sns_reg.conf" },
+        ] },
+]
+
+# ---- F. 传感器 DSP 树（HexagonFS 根，绝对路径） ----------------------------
+# hexagonrpcd 以 `-R /usr/share/qcom/sm8750/LENOVO/TB322FC` 当 served-files 根，
+# 它要的是 sensors/{sns_reg.conf,config/,registry/}（DEVICE/README §1.2 末行 +
+# reports/modular-mobian-transition-20261026.md §4）。`files` 的 destination 用绝对
+# 路径是允许的：firmware.rs:273 = PathBuf::from(extract_path).join(destination)，
+# Rust 的 join 遇绝对路径直接替换前缀 ⇒ 实际落点就是这里。
+#
+# TODO(需上机确认): `vendor/etc/sensors/sns_reg_config` 这条来源在 TB322FC 上未实地
+#   ls 过（本机只验证过设备侧 /usr/share/qcom/... 的产物形态）。核对命令：
+#   `ls /dev/disk/by-partlabel | grep -E 'vendor|odm|persist'` +
+#   `sudo make-dynpart-mappings /dev/disk/by-partlabel/super` 后
+#   `ls /dev/mapper/vendor_a/etc/sensors/ /dev/mapper/odm_a/etc/sensors/`
+#   若在 odm 上，把下面的 partition 改成 "odm"（droid-juicer 会试 odm_a）。
+folders = [
+    { partition = "vendor", destination = "/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors", folders = [
+            { name = "etc/sensors/config" },
+        ] },
+    { partition = "persist", destination = "/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors", folders = [
+            { name = "sensors/registry/registry" },
+        ] },
+]
+
+# 未覆盖、必须由我方固件包（不是 droid-juicer）提供的三件：
+#   1. awinic/y700-gen4-haptic.bin —— 作者自定资产，vendor 无同名牌（backup/fw/README.md）。
+#   2. ath12k/PEACH/hw2.0/board-2.bin —— 由 bdwlan.e01..e41 拼接（2253964 B），工具链在我方。
+#   3. qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin —— 自编 AudioReach 拓扑（源码在 scripts/audio-tplg/）。
+# 另外 qcom/sm8750/adsp*.mbn / cdsp*.mbn 若沿用 split DT 名字，也需要分段文件（本配置只出单文件）。

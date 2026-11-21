@@ -1,0 +1,42 @@
+# mobian-recipes 设备条目草稿 —— Lenovo Legion Y700 Gen4 (TB322FC / elden / SM8750)
+#
+# 有两种落法，字段取值完全相同，判据见同目录 README.md：
+#   (A) 追加到 devices/qcom/configs/wip.toml 的末尾（官方 Porting 页给 wip 设备的入口；本文件就是 A 的片段）
+#   (B) 更干净：新建 devices/qcom/configs/sm8750.toml，把下面 [[device]] 段搬过去，
+#       并删掉 `chipset` 行（文件名即 chipset，见 sm7150.toml：没有 chipset 字段）
+#
+# 字段模板来源：devices/qcom/configs/wip.toml（上游注释原文）+ sm7150.toml（已填样例）
+#   两份都取自 salsa master raw：
+#   https://salsa.debian.org/Mobian-team/mobian-recipes/-/raw/master/devices/qcom/configs/wip.toml
+#   https://salsa.debian.org/Mobian-team/mobian-recipes/-/raw/master/devices/qcom/configs/sm7150.toml
+#   注：本机 curl 直连 salsa 被 TLS 阻断（unexpected eof），只能用 web_fetch 读；gitlab.com/mobian1/mobian-recipes
+#   是 2020 年就归档的旧镜像（仓库描述写着 "archived - moved to salsa"），不能当现行模板。
+# 未确定项一律写 TODO(需上游确认)，不猜。
+
+# The chipset reference as used as the first part of the device-tree file name
+chipset = "sm8750"          # DT 文件名现读 = qcom/sm8750-lenovo-elden.dtb（判据 README §2）
+
+[bootimg]
+# 取值来源 = 我方在机 boot.img 头现解析（out/boot-elden-vk192.img，ANDROID! v0 字段区）：
+#   kernel=0x8000 ramdisk=0x1000000 tags=0x100 pagesize=4096 second=0
+# 与上游 sm7150.toml 的已填样例逐字段相同。
+base = 0x0
+kernel = 0x8000
+ramdisk = 0x1000000
+second = 0
+tags = 0x100
+pagesize = 4096
+# TODO(需上游确认): 我方镜像是 header_version=2，但 dtb_size/dtb_addr 都是 0（DTB 附在 kernel 后，
+#   不走 v2 的独立 DTB 拷贝）。Mobian 的 build.sh 是否接受 version=2 且 dtb=0x0 未验证；
+#   若它强制要求 v2 就带 dtb 段，需要确认 mobian-recipes 生成的镜像能否带外置 DTB。
+
+[[device]]
+vendor = "lenovo"
+model = "elden"
+# 不放 chipset 行：与顶层 chipset 相同（wip.toml 模板注释：仅当不同 SoC 时才写）
+# append：暂不写。我方在机 cmdline 里的 elden_root=LABEL=linux17 / androidboot.slot_suffix=_b 是
+#   本机分区与槽位布局的产物，Mobian 的根设备与槽位由 recipes/镜像流程决定 ⇒ TODO(需上游确认)
+#   只保留必要的内核级 quirk（目前无）。参考：在机 cmdline 现读
+#   console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15
+#   clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux17
+#   androidboot.slot_suffix=_b
