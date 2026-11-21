@@ -65,7 +65,7 @@ _img_n=$(ls out/boot-elden-*.img 2>/dev/null | wc -l)
 if [ "$_cst" = "0" ]; then
   ok "versions/vk-kernel-identity.tsv 与当前镜像/registry/内核 ref 一致"
 elif [ "$_cst" = "2" ]; then
-  warnf "内核身份表降级一致（C=2）：源树 geekidos-linux/ 不在盘，只比了可离线核对的列（build/image/UTS/kbin/src_sha/tree_head）；src_ref、src_tag、号标签等树派生列**不可核** → 逐行登记 versions/kernel-src-archive.tsv（含删除日期/证据/恢复命令），恢复树后重跑 vk-identity.py 并清空该表"
+  warnf "内核身份表降级一致（C=2）：源树 geekidos-linux/ 不在盘或历史残缺（2026-11-21 slim bundle），只比了可离线核对的列（build/image/UTS/kbin/src_sha/tree_head）；src_ref、src_tag、号标签等树派生列**不可核** → 逐行登记 versions/kernel-src-archive.tsv（含删除日期/证据/恢复命令），恢复树后重跑 vk-identity.py 并清空该表"
 elif [ "$_img_n" -eq 0 ]; then
   warnf "内核身份表无法新鲜度比对：out/*.img 为 0（MIGRATION-LOST，见 reports/migration-rebuild-audit-20261017.md P4）——表按历史账保留、不重生成"
 else
