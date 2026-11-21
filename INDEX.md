@@ -12,6 +12,16 @@
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
 > 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
 
+0. **🆕 2026-11-21 深夜收尾 — 待办改「维度制」+ §4 长块下沉 + 中文词库上机**
+   - **TASKS §4 重写为 §4.0 维度总表**（D1 设备日常化 / D2 上游化 / D3 输入与桌面 / D4 安卓共存 / D5 脚本卫生 / D6 文档与踩坑 / D7 UEFI·Gunyah / D8 G3 / D9 主机稳定性）：
+     每行 = 现状一句 + 可派发粒度开放项 + 是否需设备 + 权威指针；**派子代理先读这张表**。11-18→11-21 六个长块逐字下沉
+     `TASKS/sessions/2026-11-21-§4待办区块下沉.md`（TASKS 650→504 行）。
+   - **中文输入 v3 已上机**：pypinyin 单字表 → **CC-CEDICT 125 479 条 + jieba 词频**，按首音节 23 分片共 2.2 MB、80127 键，
+     热 **15–21 ms**（`shijian`→时间/事件/实践、`womens`→我们的，用户实测）；helper 从「没人装」的旧 overlay-aside 目录移入
+     `files/` 并进 `MANIFEST.tsv`（此前 stage 组镜像不会带上它）。提交 `0162dcfb`。
+   - **设备**：vk192 日用态未变（`/`=`sda17` 190 G 用 7.7 G · `ab-mark-successful` enabled · `qbootctl -n b` marked successful）；
+     `hexagonrpcd`/`droid-juicer` 仍 masked。**在跑**：`dwc3-g7-prep` 子代理（主机侧编 7.4-rc3 + 板 DTS + v11 件 → `out/g7-*`）。
+
 0. **🆕 2026-11-21 傍晚（主机侧，无人值守轮次）— dwc3 v11 已 SENT-ready（未投，等放行）**
    - 吃 sashiko 对 v10 的 4 条意见，只动三处（binding mux 分支 `required` 去 `dr_mode`；沿用 11-20 重写版的 `$defs`/非 mux `port@0` 形状；`dwc3_drd_exit()` 的 deselect 移到角色 teardown 之后），G1–G6 全绿（**主会话独立复跑 apply 3/3 + 六枚 blob + checkpatch 0E/0W/0C×3 一致**）；G7 上机未做。
    - **版本账事实**：v10 实投的 1/3 = 11-18 版（yaml blob `57e3c1d9ed03`），11-20 重写版**从未投出** ⇒ sashiko 两条 Low/Medium 针对的是真实内容。
