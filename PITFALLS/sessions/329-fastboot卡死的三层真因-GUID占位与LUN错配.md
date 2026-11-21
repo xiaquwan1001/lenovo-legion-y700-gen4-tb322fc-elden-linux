@@ -57,3 +57,42 @@
 - 证据目录：`logs/forensics-20261120-2210/{boot_b.img,logfs*.bin,misc.bin,vbmeta_a.img,vbmeta_b.img}`、
   `backup/HA2EXB0E-16+512/edl-20261120-22{08,35}/`（两次六 LUN GPT dump）、
   `backup/HA2EXB0E-16+512/edl-apply-readback-20261120-223802/`（写前回退基线）
+
+## 6. 2026-11-21 晚再证（同一坑复发；增量把取证从「猜」变「读源码」）
+
+> 触发：上一轮用 `slot-attr.py --allow-wrong-lun set a --active --retry 7` 单改 ACTIVE 位（= §3① 明确禁止的半完成态），
+> 本轮又连调两次 `fastboot --set-active=b`，设备落到 `ValidateSlotGuids: BootableSlot _b does not have valid guids`。
+> 全账 = `reports/bootloader-slotguid-brick-20261121.md`。
+
+- **1) 判据原文（源码级）**：`Platforms/QcomModulePkg/Library/BootLib/PartitionTableUpdate.c:1542-1602`
+   `ValidateSlotGuids()` 取 `boot_<slot>` 与 `abl_<slot>` 的 `PartitionTypeGUID`，**相同即 `EFI_DEVICE_ERROR`**；
+   同函数随后还有 LUN 判据（UFS: `UfsBootLun` 必须 `0x2 ⇔ _b`、`0x1 ⇔ _a`）。⇒ ②③ 都在同一函数里，
+   谁先命中决定日志是 `does not have valid guids` 还是 `Boot lun … do not match`。
+- **2) `set_active` 的实现**（同文件 `:560-621` `SetActiveSlot`）：对 `GetMultiSlotPartsList()` 里每一对 `X_a`/`X_b`
+   调 `SwapPtnGuid()` 换 type GUID，再对 UFS 切 boot LUN 1↔2，最后 `UpdatePartitionAttributes(PARTITION_GUID)` 写双表。
+   ⇒ **复合动作且非幂等**：连调两次等于换回，但任一次中途没走完（超时 / `getvar` 无回包 / 人工打断）就留半完成态。
+- **3) 不要再在这三件上试**（本轮实测全无效，因为先倒在第②层）：换 `boot_b` 内容、重刷 `vbmeta_b` flags3、
+   写回原厂 `vendor_boot_b` —— 三条都试过，`logfs` 原文一字不变。
+- **4) 取证通道更正**：ABL 日志在 `logfs`（LUN4 LBA 409595）的 **FAT12 卷内 `UEFILOG1.TXT`**，不是裸 strings：
+   `mdir -i logfs.bin ::/` 列目录、`mcopy -i logfs.bin ::/UEFILOG1.TXT .` 取出，再 grep
+   `ValidateSlotGuids|FindBootableSlot|Boot lun|Launching fastboot`。另：`fastboot devices` 有目标 SN 但 `getvar`
+   **无回包** = ABL 半挂，此后连发命令全无效 ⇒ 只能物理长按电源。
+- **5) 修复脚本**：`scripts/recover-lun4-slotguid.sh`（dry-run 默认）—— 探活 → `oem edl` → 读 LUN4 主/备表 →
+   与 `edl-20261120-2208` 基线逐分区比 GUID/几何/ACTIVE（并单打 `boot_<slot> vs abl_<slot>`）→
+   判定「写回基线对表 / 只补属性位 / noop」→ 只经 `scripts/linux-gpt-apply.sh --apply --reset` 写盘。
+   ⚠ GPT 修好后 `boot_b` 要刷 `boot_b-minbase-labellinux-20261119.img`（740d431b，`elden_root=LABEL=linux`），
+   不是 `bootslot-b/boot_b.img`（06c081ca，`LABEL=linux17`，与 11-19 重建后的根 label 不符）。
+
+- **6) `fastboot --set-active` 修不了「GUID 侧 ≠ ACTIVE 侧」**（源码级）：`SwitchPtnSlots()` 只在
+   「请求槽 ≠ 当前 ACTIVE 槽」时被调用（`:1442-1447`），而它把每对 `X_a/X_b` 的 `PartitionTypeGUID`
+   交换一次（`:541-600`）+ 同时改 ACTIVE 位 ⇒ **GUID 侧与 ACTIVE 侧永远同步翻**，
+   `--set-active a` / `--set-active b` 只能把错配原样留着（本轮实测：每次 set_active 后日志一模一样）。
+   唯一修法 = **直接改表**：`scripts/gpt-slot-swap-guids.py`（对每对 X_a/X_b 交换 type GUID 16 字节，
+   与 `SwapPtnGuid()` 等价；再按 `MarkPtnActive()` 写 ACTIVE 位；重算双表 CRC；带单向/往返自检），
+   落盘仍走 `scripts/linux-gpt-apply.sh --lun 4 --apply --reset`（写前 dump + 写后逐字节读回 + 设备端 sha256）。
+- **7) 判「GUID 是否合法」只能看 `PartitionTypeGUID`（条目偏移 0），不是 `UniquePartitionGUID`（偏移 16）**：
+   本机 b 侧未开通，`boot_b`/`abl_b` 的**类型**都是通用占位 `77036CD4-…`（出厂表里 22 个分区共用该类型），
+   而它们的 unique GUID 各不相同 —— 只比 unique GUID 会得出「一切正常」的错结论（本轮先踩了这个）。
+- **8) 成功样本（2026-11-21 17:0x 实测，两次冷起都直进 Linux）**：改表后 `boot_b type=20117f86…`
+   / `abl_b type=bd6928a1…`（不同）⇒ `ValidateSlotGuids` 放行；起来后 `ab-mark-successful.service`
+   置 SUCC 位，`qbootctl -n b` = `SLOT _b: is marked successful`；`deploy-desktop-shell.sh --check` = MISS=0。
