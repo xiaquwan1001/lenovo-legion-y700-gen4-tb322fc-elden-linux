@@ -12,6 +12,15 @@
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
 > 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
 
+0. **🟢 2026-11-21 —— 里程碑：项目第一个上游系列进树（`wl2868c v12` → `regulator.git for-7.5`）**
+   - Mark Brown 已合入：`84e67d2ee13f…`（binding，2 文件）+ `602f57223457…`（driver，4 文件），均 `Author: Qianhui Xu`；
+     上游合并提交 `0216753490ff…`，已在 **linux-next `master`**。**主会话已独立复核**（`git.kernel.org/…/broonie/regulator.git/log/?h=for-7.5` 逐行命中）。
+   - **口径修正（重要）**：patchwork 上 arm-msm 副本 `14991614/14991615` 今天仍 `state=new` / `commit_ref=None` ⇒
+     **「只有一个 project 的 new / commit_ref 空」不构成「未合并」证据**（`TASKS` §7「三条限定」的实发反例）；判合并只能查维护者自己的树 / linux-next 内容级。
+   - 我方动作 = **只剩回填**；邮件全账（窗口 11-15→11-21，人类回帖 5 封 / sashiko 5 封 / 退信 0 / 必须先回 0 件）= `reports/mail-inbox-20261121.md`。
+   - 同轮：**dwc3 v10 已 SENT-ready**（G1–G6 全绿，G7 上机未做，等放行）= `patches/upstream/dwc3-v10-20261120/GATES-20261121.md`。
+   - ⚠️ 另上报（未验证、不自行处置）：11-18 两封 GitHub 安全告警（新细粒度 PAT 创建、第三方 OAuth 应用被授权）——是否本人操作需用户确认（硬规则 2）。
+
 0. **🆕 2026-11-21 早（主机侧，无人值守轮次；设备 offline）—— b 槽 AVB 债还清（造件 + 生成器 + 门）**
    - **债**：设备在机 `vbmeta_b` 顶层 key 与 chain `boot:3` 都是**旧钥 `fc1e3b33…`**（2026-10-18 换钥后没重签），
      而 `boot_b` 的 AVB footer 已是现役 `1e54e86e…` ⇒ 自签链自身不自洽（槽位启动只能靠 `Flags=3` 不解析描述符绕过）。

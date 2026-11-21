@@ -349,3 +349,18 @@ DTS 编译产物 `sm8750-lenovo-elden.dtb` md5 `2d2d92662785a7aa07edb6aba78a9341
 - 待办：2/3 缺 AI 披露段（`grep -c 'AI-assistance' ../dwc3-v10-20261118/v10-0002-*.patch` = 0）；
   3/3 目前只有 `v10-0003-commit-msg.txt`（代码仍用 `../dwc3-v10-20261118/v10-0003-*.patch`）；
   G1–G6 未在最终三枚上重跑；G7 上机未做（cover 已写明不声称）。
+
+---
+
+## 9. 2026-11-21：门链跑完、cover 定稿（**SENT-ready，未投递**）
+
+上面 §0–§8 的占位与「发信前必做」全部作废，以 **`GATES-20261121.md`** 为准。一页摘要：
+
+| 项 | 结果 |
+|---|---|
+| 树 | `build/elden-tree` HEAD = `aebb727447` = **v7.4-rc3**（= v10 声明基线；「本机无内核树」那条 WARN 已过期） |
+| G1–G6 | `git am` **3/3** · checkpatch **0E/0W/0C ×3**（146/63/618 行）· `W=1` **rc=0 / 0 warning / 22 .o（aarch64）** · `dt_binding_check` 全量 **rc=0 / 0 诊断** · `dtbs_check` 四份 **4/4 `DTC [C]` / 0 诊断 / baseline 对照新增 0** · 正样例 0 投诉、负样例 4 类全拒 |
+| G7 | 未做（cover 不声称） |
+| cover | `v10-0000-cover-letter.patch`（`git format-patch --cover-letter` 生成，正文含 AI 披露 + Rob 两封逐条回应 + Known gaps + 上述实数）；DRAFT 附录已删 |
+| 三枚 patch | 正文与 2026-11-18 版**逐字节相同**；diffstat 以 format-patch 现算 = 6 files / 650+/5− |
+| 剩 | **用户放行** → `send-email --dry-run` → `--in-reply-to v9 cover` 覆盖旧线程 → 发后补 SENT.md 并回填 TASKS §7 |

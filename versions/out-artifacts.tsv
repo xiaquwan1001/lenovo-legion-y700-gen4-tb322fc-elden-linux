@@ -12,3 +12,7 @@ out/android-slim-v3-20261119	pending	唯一 final：主机造件+EDL 写入读�
 out/min-restore-20261119	verified	在机恢复件（唯一含 /init 成品，EDL 写入 LBA 73277435 sha abf96ec4… 一致；bigfile-verdict-20261120 B 档「不能删」）	reports/bigfile-verdict-20261120.md	2026-11-20
 out/vbmeta-b	verified	b 槽自签 vbmeta 生成件（flags=3，顶层 key + chain boot:3 = 现役 avb.key 1e54e86e…，整链验签 rc=0）；未上机但离线 7 项判据全过，可复用/可刷	reports/vbmeta-b-resign-20261121.md	2026-11-21
 out/android-v3-bringup-20261120	pending	S1–S5 上机执行包所需件（metadata_stock 28 MiB + S5 两件 boot/vendor_boot 各 96 MiB）；删了设备窗口要重造，等首启判据	reports/android-v3-bringup-packet-20261120.md	2026-11-21
+out/p2-minbase-20261118	superseded	旧 minbase 恢复件（boot-minbase-labellinux.img 82 MiB + rootfs sha 清单），已被 out/min-restore-20261119 完全覆盖（bigfile-verdict B 档「p2 是真子集」）⇒ **2026-11-21 已 mv 到 backup/out-history-20261121/**（归档不删，可回取）	reports/disk-reclaim-20261121.md	2026-11-21
+out/stage-debian	superseded	rootfs overlay 构建中间目录（1891 文件/135 MiB，`rootfs/debian/stage.sh` 可重生）⇒ **2026-11-21 已删**，回收 135 MiB	reports/disk-reclaim-20261121.md	2026-11-21
+out/modstage-vk163	superseded	vk163 模块 staging（1543 文件/89 MiB，`build-kernel.sh` 可重生）⇒ **2026-11-21 已删**	reports/disk-reclaim-20261121.md	2026-11-21
+out/modstage-vk172	superseded	vk172 模块 staging（1652 文件/94 MiB，可重生）⇒ **2026-11-21 已删**	reports/disk-reclaim-20261121.md	2026-11-21

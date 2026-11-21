@@ -1,5 +1,11 @@
 # 上游系列现态复核（patchwork REST，2026-11-20）
 
+> **⚠ 2026-11-21 更正（本文的结论一半作废）**：本文只查了 **linux-arm-msm 一个 project**，因此把
+> `wl2868c v12` 记成「new / `commit_ref` 空」。**实际已被 Mark Brown 合入 `regulator.git for-7.5`**：
+> `84e67d2ee13f…`（binding）+ `602f57223457…`（driver），上游合并提交 `0216753490ff…`，已在 linux-next `master`。
+> ⇒ 本文的「accepted = 0」与表内 `commit_ref` 空一律**不得**当作「未合并」；同一系列的 arm-msm 副本
+> 永远等不到维护者回写（regulator 合入不回写 arm-msm patchwork）。逐封取证与三档分类 = `reports/mail-inbox-20261121.md`。
+
 数据源：patchwork.kernel.org API 1.2，project=linux-arm-msm，只看 API 字段（未抓 lore 正文）。
 脚本：`/tmp/pw-elden.py`（临时，不在 scripts/）。说明：`q=` 搜索只匹配主题，不匹配投稿人姓名，
 所以「我方全量」用 `q=sm8750`/`q=elden`/`q=dwc3`/`q=csiphy`/`q=fastrpc` 取并集后按投稿人 `Qianhui Xu` 过滤得到。
