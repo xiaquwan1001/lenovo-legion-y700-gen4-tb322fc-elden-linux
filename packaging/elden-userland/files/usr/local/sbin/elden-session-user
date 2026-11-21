@@ -16,6 +16,17 @@ export SDL_VIDEODRIVER=wayland
 export CLUTTER_BACKEND=wayland
 export EGL_PLATFORM=surfaceless
 
+# 输入法策略（2026-11-21 用户裁决，落实 11-15 台账 T4）：**GTK 客户端不走 fcitx IM 模块**。
+# 原因 = PITFALLS #618：GTK 走 im-fcitx5.so 时客户端**不发** zwp_text_input_v3.enable
+#   ⇒ phoc 收不到 ⇒ 虚拟键盘（sm.puri.OSK0 / phosh-osk-stub）**不会自动弹**。
+# 代价 = GTK 应用内失去 fcitx 组词（#653 实测本栈 GTK3 本就不建 fcitx IC）⇒ 中文组词延后。
+# 为什么先显式 export QT/XMODIFIERS：im-config 的 /etc/X11/Xsession.d/70im-config_launch
+#   有「已设置则 hands off」分支（`[ -z "$XMODIFIERS" ] && [ -z "$GTK_IM_MODULE" ] …`），
+#   先占住这两个变量它就不会再写回 GTK_IM_MODULE。
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+unset GTK_IM_MODULE 2>/dev/null || true
+
 # T19（2026-11-14）：**不要再让客户端用 dmabuf 修饰符导入**。
 # 本机（msm + freedreno + wlroots 0.20 + phoc 0.59）上，带 `QCOM_COMPRESSED`
 # (=0x0500000000000001) modifier 的 dmabuf 导入会产出：滚动撕裂/抽搐/方格/文字鬼影/

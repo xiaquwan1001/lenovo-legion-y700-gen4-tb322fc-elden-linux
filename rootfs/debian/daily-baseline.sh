@@ -130,25 +130,28 @@ else miss "缺 CJK 字体（fonts-noto-cjk）"; fi
 
 # ---------------------------------------------------------------- 3 输入法
 say "[3. 输入法（fcitx5 + Rime，OSK 槽位留给 phosh-osk-stub）]"
-# ⚠ 2026-11-21 已知口径冲突（未裁决，改本文前先读）：本块写 `GTK_IM_MODULE=fcitx`，
-#   而 2026-11-15 台账裁决 T4 = **摘掉**（`TASKS/sessions/2026-11-15-IME候选回归台账.md` §3c），
-#   理由 = `PITFALLS #618`：GTK 走 fcitx 模块时**不发** `zwp_text_input_v3.enable` ⇒ phoc/OSK 不知该弹；
-#   反向代价 = 去掉后 GTK 客户端就没 fcitx 组词（但 `#653` 实测本栈 GTK3 本就不建 fcitx IC）。
-#   ⇒ 这是「OSK 自动弹」 vs 「GTK 里能中文组词」的**策略二选一**，属于要用户拍板的项，
-#   不得由脚本静默选定。现况：重建根后本脚本会把 T4 的修复写回（`reports/ime-osk-zero-to-usable-20261121.md` §8 G1）。
+# 2026-11-21 用户裁决（落实 11-15 台账 T4）：**GTK_IM_MODULE 一律不设**。
+#   依据 = `PITFALLS #618`：GTK 走 im-fcitx5.so 时客户端**不发** `zwp_text_input_v3.enable`
+#   ⇒ phoc 收不到 ⇒ 虚拟键盘不自动弹；代价 = GTK 应用内无 fcitx 组词（#653 实测本栈 GTK3
+#   本就不建 fcitx IC）⇒ **中文组词延后**。QT/XMODIFIERS 保留，Qt 应用仍可组词。
+#   配带落地：`packaging/elden-userland/files/usr/local/sbin/elden-session-user` 里还额外
+#   `unset GTK_IM_MODULE` + 先占住 QT/XMODIFIERS（im-config 的 70im-config_launch 有
+#   “已设置则 hands off” 分支，不先占它会把 GTK_IM_MODULE 写回去）。
 ENVD=$(P /etc/environment.d/50-elden-ime.conf)
-if [ -f "$ENVD" ] && grep -qx 'GTK_IM_MODULE=fcitx' "$ENVD"; then ok "/etc/environment.d/50-elden-ime.conf"
-elif [ "$CHECK" = 1 ]; then miss "缺 /etc/environment.d/50-elden-ime.conf（GTK/QT_IM_MODULE=fcitx）"
+if [ -f "$ENVD" ] && ! grep -qE '^GTK_IM_MODULE=' "$ENVD" && grep -qx 'QT_IM_MODULE=fcitx' "$ENVD"; then
+	ok "/etc/environment.d/50-elden-ime.conf（无 GTK_IM_MODULE，QT/XMODIFIERS 在）"
+elif [ "$CHECK" = 1 ]; then
+	miss "/etc/environment.d/50-elden-ime.conf 不合策略（应无 GTK_IM_MODULE、有 QT_IM_MODULE=fcitx）"
 else
 	mkdir -p "$(P /etc/environment.d)"
 	cat > "$ENVD" <<'EOF'
-# 输入法：fcitx5 + Rime。Phosh 0.55 的 phosh-osk-stevia 走 zwp_virtual_keyboard
-# （不是 input-method v2），因此 fcitx5 作为 GTK/QT IM 模块参与组词即可。
-GTK_IM_MODULE=fcitx
+# 输入法：fcitx5 + Rime。**GTK_IM_MODULE 故意不设**（2026-11-21 用户裁决：
+# 优先 OSK 自动弹；设 =fcitx 会让 GTK 不发 zwp_text_input_v3.enable，见 PITFALLS #618）。
+# QT/XMODIFIERS 保留 ⇒ Qt 应用仍走 fcitx 组词；中文组词在 GTK 侧延后。
 QT_IM_MODULE=fcitx
 XMODIFIERS=@im=fcitx
 EOF
-	fix "写入 /etc/environment.d/50-elden-ime.conf"
+	fix "写入 /etc/environment.d/50-elden-ime.conf（无 GTK_IM_MODULE）"
 fi
 UNIT=$(P /etc/systemd/user/fcitx5.service)
 if [ -f "$UNIT" ]; then ok "/etc/systemd/user/fcitx5.service"

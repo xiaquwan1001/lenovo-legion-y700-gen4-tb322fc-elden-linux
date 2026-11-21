@@ -88,7 +88,19 @@ out=$(timeout 60 ssh -o BatchMode=yes -o ConnectTimeout=8 "$HOST" "$remote" 2>&1
 # （2026-11-15 实测：im-module 段被吞掉 gtk-3.0 那行 → 误报 FAIL=1）。改用 awk 精确到 EOF。
 sec() { printf '%s\n' "$out" | awk -v s="### $1" '$0==s{f=1;next} /^### /{f=0} f'; }
 
-fails=0; passes=0
+fails=0; passes=0; defers=0
+# 策略（2026-11-21 用户裁决）：`OSK_FIRST=1`（默认）= 优先「虚拟键盘自动弹」，
+# 把「候选窗/kimpanel/waylandim/focusd」这一路需要的项记为 DEFER（延后项），不再计 FAIL。
+# 想按旧口径（候选窗也要求）判就 `OSK_FIRST=0 scripts/ime-candidates-check.sh`。
+OSK_FIRST=${OSK_FIRST:-1}
+chk_defer() { # 在 osk-first 策略下不判 FAIL 的项
+  local name="$1" want="$2" got="$3"
+  if [ "$OSK_FIRST" = 1 ]; then
+    defers=$((defers+1)); [ $QUIET -eq 0 ] && printf 'DEFER %-46s %s（osk-first 策略：中文候选路延后）\n' "$name" "${got:-<空>}"
+  else
+    chk "$name" "$want" "$got"
+  fi
+}
 chk() { # name expected actual -> PASS/FAIL
   local name="$1" want="$2" got="$3"
   if [ "$want" = "$got" ]; then passes=$((passes+1)); [ $QUIET -eq 0 ] && printf 'PASS  %-46s %s\n' "$name" "$got"
@@ -97,8 +109,8 @@ chk() { # name expected actual -> PASS/FAIL
 
 # 1. 只有一个 fcitx5 实例，且带 --disable waylandim（否则与 OSK 抢 input-method 槽位）
 procs=$(sec fcitx5-procs); nproc=$(printf '%s\n' "$procs" | grep -c 'fcitx5')
-chk "fcitx5 实例数(=1)" "1" "$nproc"
-chk "fcitx5 启动参数含 --disable waylandim" "1" "$(printf '%s\n' "$procs" | grep -c -- '--disable waylandim')"
+chk_defer "fcitx5 实例数(=1)" "1" "$nproc"
+chk_defer "fcitx5 启动参数含 --disable waylandim" "1" "$(printf '%s\n' "$procs" | grep -c -- '--disable waylandim')"
 
 # 2. 两条启动路径的 flag 必须一致（#660：D-Bus 激活那条若不带 flag，会拉起第二个实例并在退出时写回 profile）
 uexec=$(sec unit-exec | sed 's/.*argv\[\]=//' | head -1)
@@ -109,9 +121,9 @@ case "$uexec" in
   *) chk "systemd ExecStart 含 --disable waylandim" "yes" "no ($uexec)" ;;
 esac
 case "$dexec" in
-  *--disable*) chk "D-Bus 激活 Exec 也带 --disable waylandim" "yes" "yes" ;;
+  *--disable*) chk_defer "D-Bus 激活 Exec 也带 --disable waylandim" "yes" "yes" ;;
   "") printf 'WARN  %-46s %s\n' "找不到 D-Bus 激活文件" "-" ;;
-  *) chk "D-Bus 激活 Exec 也带 --disable waylandim" "yes" "no ($dexec)" ;;
+  *) chk_defer "D-Bus 激活 Exec 也带 --disable waylandim" "yes" "no ($dexec)" ;;
 esac
 
 # 3. profile 的 Items/0 必须是 rime（新 IC 取 Items/0，DefaultIM 改不了它，#619）
@@ -121,10 +133,10 @@ chk "profile Items/0 = rime" "rime" "$first_im"
 # 4. 首选 UI 必须是 kimpanel（classicui 在 phoc 出不了窗，#619）；fcitx5 里这是 config 的 [Behavior] 段
 #    实证：存在 config 且 CurrentUI=kimpanel 才算过；没有 config = 走默认 classicui = 不出窗
 sel_ui=$(sec fcitx-config | awk '/^CurrentUI=/{print substr($0,11);exit}')
-chk "config CurrentUI = kimpanel" "kimpanel" "$sel_ui"
+chk_defer "config CurrentUI = kimpanel" "kimpanel" "$sel_ui"
 
 # 5. focusd 活着（kimpanel owner）且自己没被 State==0 误收（#653 的闸门已上机）
-chk "elden-ime-focusd 在跑" "1" "$(sec focusd-proc | grep -c 'elden-ime-focusd')"
+chk_defer "elden-ime-focusd 在跑" "1" "$(sec focusd-proc | grep -c 'elden-ime-focusd')"
 owner=$(sec kimpanel-owner | grep -ci 'impanel')
 [ "$owner" -ge 1 ] && chk "org.kde.impanel 有 owner" "yes" "yes" || printf 'WARN  %-46s %s\n' "org.kde.impanel 无 owner（kimpanel 未注册）" "(busctl list 无此名)"
 
@@ -141,6 +153,7 @@ chk "im-fcitx5.so（GTK3/4 IM 模块）在位" "2" "$(sec im-module | grep -c 'i
 chk "OSK 进程在跑（phosh-osk-stub / stevia / squeekboard 任一）" "1" "$(sec osk | grep -cE 'phosh-osk-stub|phosh-osk-stevia|squeekboard')"
 
 echo "---"
-echo "汇总: PASS=$passes FAIL=$fails  （判据正文 = PITFALLS #618/#619/#653/#660）"
+echo "汇总: PASS=$passes FAIL=$fails DEFER=$defers  （策略 OSK_FIRST=$OSK_FIRST；判据正文 = PITFALLS #618/#619/#653/#660）"
+[ "$defers" -gt 0 ] && echo "      DEFER = 2026-11-21 用户裁决「先要键盘能弹、中文组词延后」下暂不判的项；要旧口径用 OSK_FIRST=0 重跑"
 [ $QUIET -eq 0 ] && echo "profile mtime: $(sec profile-mtime)"
 [ "$fails" -eq 0 ] || exit 1
