@@ -131,3 +131,20 @@
   bash reports/artifacts/userland-drift-20261121/fetch-device-copies.sh        # 只读拉取
   for f in reports/artifacts/userland-drift-20261121/*.diff; do cat "$f"; done
   ```
+
+---
+
+## 执行记录（父代理，2026-11-21 22:5x，ssh-only）
+
+| 动作 | 结果 |
+|---|---|
+| §2.1 c 类三行 MANIFEST | 已改（`q28-race-hunt.sh` 6166fc6f/8345、`elden-session-user` 015fbb3b/3704、`time-sync.sh` f82f3bf4/3397）⇒ `verify.sh --offline` **FAIL 3 → 0** |
+| §2.2 b 类的**纯脚本子集**（9 个，不经 render/unit） | 已部署并逐个核对 sha 与仓一致：`cam-mode.sh` 1262641c、`charge-watch.sh` 4a8870f2、`net-up.sh` c5d4dc35、`q28-boot-watchdog.sh` a85ec07a、`q28-watchdog.sh` 1149f75c、`slot-attr.py` 2b004355、`waydroid-session.sh` 2eb901db、`waydroid-ui.sh` 7c0cb080、`/etc/modules-load.d/elden-dma-heap.conf` 0e69d4a8；原件备份在设备 `/root/drift-backup-20261121/` |
+| `slot-attr.py --selftest` | **PASS**：`show` / `mark-successful` 主备同改 / 缺条目必拒，且打印 `written + CRCs fixed + read-back verified (primary & backup)` |
+| 设备健康状况（部署后） | `systemctl --failed` 空、`greetd` active、`ssh` 通、`uptime` 2:19 |
+| 复验 | `verify.sh elden` **FAIL 19 → 5**：剩 `greetd/config.toml`（仅注释，功能等价）、`usb-gadget`（a+b 混合，需人工合并 SN 锚定 + `acm.GS1`）、3 个 **unit 渲染件**替换 |
+
+### 未做（有意留到评审窗口）
+
+- **3 个 unit 不做**：`greetd.service` 换渲染件会把现在能起的组合换掉（seatd 依赖/pre-hook），`iio-sensor-proxy.service` 换后必须现场核 `HasAccelerometer`，`qbootctl.service` 换后要核 `mark-successful` 链 —— 三者要求设备旁有人可回滚，不在「顺手 ssh」范围内。
+- **`usb-gadget` 不合并**：设备侧多出的 `acm.GS1` 是 OOB root shell 通道（安全面决策），仓侧多出 PITFALLS #549 的 SN 锚定；合并要先定「是否保留 GS1」，属用户决策。
