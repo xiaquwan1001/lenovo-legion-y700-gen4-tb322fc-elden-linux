@@ -34,6 +34,9 @@
      结果：两次冷起直进 Linux（vk192、`/`=sda17、`LABEL=linux`）；`ab-mark-successful.service` enabled + `Result=success`；
      `qbootctl -n b` = `is marked successful`；`deploy-desktop-shell.sh --check` **MISS=0**（含新 §13）；`check-doctor` **FAIL=0**。
      回退表 = `backup/HA2EXB0E-16+512/edl-apply-readback-20261121-164957/rollback/`。
+     ⚠ **能力回退要记账**：排查期间 `vendor_boot_b` 被写回**原厂** vendor_boot ⇒ 下午的 **b 槽 FAT32 ESP（UEFI 载体）已不在机**；
+     重做件在 `out/uefi-bslot-20261121/esp4k.img`（+ `esp.img`），重刷 = 一条 `fastboot flash vendor_boot_b`，需一次上机验证；
+     UEFI 那条线本身仍停在「有字没菜单」，恢复优先级低于日常化。
    - 同轮主机侧落地：`rootfs/debian/stage.sh` 新增 **4e**（`units-extra/*.service` 按 `WantedBy=` 建启用软链——此前只给 `*.timer` 建，
      `ab-mark-successful.service` 会「装了不启用」）；`scripts/fix-ab-mark-successful.sh` 重写（`--mark-once/--check/--install/--uninstall`，
      sh/dash/busybox `-n` + shellcheck + `systemd-analyze verify` 全绿）；`scripts/README.md` 已重新生成（346 入口），`check-doctor` **FAIL=0**。
