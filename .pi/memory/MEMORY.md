@@ -150,3 +150,6 @@ y700-elden 用自编件替换**发行版同名包**提供的可执行文件（ph
 
 ---
 **2026-11-19 15:15:58 本会话曾因主机侧故障整体崩掉（pi SIGILL，exit 132）**：不是项目问题——V8_Fatal 在 V8 查 String forwarding table 时 CHECK 失败；会话 jsonl 与 node 二进制两读一致 ⇒ 坏在进程堆。同族证据（11-16 两次 glibc 堆损坏 abort、11-19 14:13 GC 扫堆 SIGSEGV）见 `~/hw-stability/evidence/inbox/20261119-y700-elden-pi-v8fatal/MANIFEST.md`。会话文件完整、已续写，无需修复；只是崩时在飞的两个 fabric 子代理产出丢了。项目侧不再深挖（全局规则 12）。
+
+---
+**发行版上游化的硬门槛（2026-11-21 核实，一手来源）**：**Nura（原 postmarketOS，2026-09-27 改名）明令禁止生成式 AI 参与的贡献**——`docs.nura.eco/policies-and-processes/development/ai-policy.html` 原文「We forbid the use of generative AI tools in Nura… Submitting contributions fully or in part created by generative AI tools to Nura」⇒ 本仓 AI 辅助产出**不能**投 pmaports（与内核列表「披露即可」的口径不同，别混用）。**Mobian 相对宽松**（Debian GR 2026 选出 Option 5「Responsible Use of Generative AI」）、且其 Porting 页原文「Mobian does not package heavily device-specific kernels」+「ships LTS kernel versions（6.1/6.6/6.12/6.18）… propose with the last available LTS」⇒ Mobian 侧**头号缺口是内核版本账**（我们在机是 7.3/7.4 线）。**UBports** 原文「Halium is an indispensible part of an Ubuntu Touch port」（Android 内核 + libhybris）⇒ 与本仓主线 Linux 路线根本冲突，不投。全账 = `reports/distro-upstream-feasibility-20261121.md`。
