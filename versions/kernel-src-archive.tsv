@@ -11,6 +11,11 @@
 #   ⇒ 真实状态是「暂不可核」，不是「核对失败」，也不是「核过没问题」。本表把这句话写死成数据。
 #
 # 判定契约（防静默白名单，改这里之前先读 scripts/vk-identity.py 的 src_archive()）：
+#   · ★2026-11-21 第四态（源树在盘但历史残缺）：按恢复命令从 slim bundle 恢复的树能落全部 refs
+#     与 tip 树/blob，但缺 18 个祖先 commit ⇒ `git rev-list --all` 在断链处 abort ⇒ 每行变
+#     src_unreachable。实测这种「归档本身残缺」与「树被删」同属不可核，故 vk-identity.py 加
+#     `src_tree_partial()`（判据 = rev-list --all rc≠0 或 fsck --connectivity-only 报 broken link）
+#     后**仍按本表降级**；补齐需要网络（`git fetch torvalds`），补完应清空本表。
 #   · 源树在盘（geekidos-linux/ 或 linux/ 软链是 git 仓）⇒ 本表**不生效**，照常全列核对；
 #     此时本表应保持为空（非空 = 陈旧登记，恢复后必须复核并清掉）。
 #   · 源树不在盘 ⇒ 只有本表登记、且 build / image / src_sha **三列与现扫描逐字一致**的行，

@@ -433,6 +433,30 @@ def src_tree_present():
     return False
 
 
+def src_tree_partial():
+    """本机源树在，但历史不全（slim bundle 归档，2026-11-21 实测 18 条祖先断链）。
+
+    为什么需要这个第四态：`backup/git-slim-20261113/*.bundle` 是 `--filter=blob:none` 的瘦包，
+    `git bundle unbundle` 能落全部 refs 与 tip 的树/blob，但 `rev-list --all` 会在断链处 abort
+    ⇒ 每一行都变成 src_unreachable。这与「树被删」同属**不可核**；上面说的「树在但 refs 坏了
+    仍然该 FAIL」指的是**本地 refs 矛盾**，不是**归档本身残缺** —— 后者不因多看几眼而变好，需网络补洞。
+    故只在**登记表完整覆盖**时把它当降级依据（表外新行仍 FAIL）。
+
+    判据（两条都走命令，不看记忆）：`git rev-list --all --count` rc≠0，或
+    `git fsck --connectivity-only` 报 broken link。
+    """
+    p = KERNEL if os.path.isdir(KERNEL) else os.path.join(ROOT, 'linux')
+    if not os.path.isdir(p):
+        return False
+    r = subprocess.run(('git', '-C', p, 'rev-list', '--all', '--count'),
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        return True
+    f = subprocess.run(('git', '-C', p, 'fsck', '--connectivity-only'),
+                       capture_output=True, text=True)
+    return 'broken link' in f.stderr or '损坏的链接' in f.stderr
+
+
 def src_archive():
     """versions/kernel-src-archive.tsv → {build: {'image':…, 'src_sha':…}}。
 
@@ -497,7 +521,10 @@ def gate_lines(rows, skip_names):
     unreadable = []
     known = known_issues()
     # 源树不在盘 ⇒ src_* 是「不可核」而不是「核不上」。只有逐行登记且三列逐字一致的行降级。
-    arch = {} if src_tree_present() else src_archive()
+    # 源树不在盘（2026-11-19）或**在盘但历史残缺**（2026-11-21，slim bundle 18 条祖先断链 ⇒
+    # rev-list --all abort ⇒ 每行 src_unreachable）⇒ src_* 是「不可核」而不是「核不上」。
+    # 只有逐行登记且三列逐字一致的行降级；表外新行仍 FAIL。
+    arch = {} if (src_tree_present() and not src_tree_partial()) else src_archive()
     archived, unregistered = [], []
     # 归档件不在 out/：按 basename 建立“账表 image 列 → 实际路径”的索引，
     # 否则 §5d 的“新构建 vs 存量欠账”归类会把归档件误当存量而放宽。
@@ -549,9 +576,10 @@ def gate_lines(rows, skip_names):
     else:
         out.append(('OK', '生效时刻之后的镜像无硬错（在途豁免 %d 个）' % len(held)))
     if archived:
-        out.append(('WARN', '源树已档（geekidos-linux/ 不在盘，2026-11-19 清理）：%d 行身份**暂不可核**、'
+        out.append(('WARN', '源树不可核（geekidos-linux/ 不在盘，或 2026-11-21 恢复的 slim bundle '
+                            '历史残缺）：%d 行身份**暂不可核**、'
                             '不是核过没问题 —— 逐行登记见 versions/kernel-src-archive.tsv'
-                            '（build/image/src_sha 三列与现扫描逐字一致才降级；恢复命令见该文件头）：%s'
+                            '（build/image/src_sha 三列与现扫描逐字一致才降级；恢复/补齐命令见该文件头）：%s'
                     % (len(archived), ' '.join(archived))))
     if unregistered:
         out.append(('FAIL', '源树缺失且未在 versions/kernel-src-archive.tsv 逐行登记'
@@ -888,7 +916,7 @@ def main():
         # 1=真过期。不许把 2 说成 0：doctor 对 2 报 WARN 并点名不可核的列。
         if fresh(text, skip_names):
             cst = 0
-        elif (not src_tree_present()) and src_archive_complete(rows) \
+        elif (not src_tree_present() or src_tree_partial()) and src_archive_complete(rows) \
                 and fresh(text, skip_names, degraded=True):
             cst = 2
         else:
@@ -898,10 +926,11 @@ def main():
     if check:
         if fresh(text, skip_names):
             return 0
-        if (not src_tree_present()) and src_archive_complete(rows) \
+        if (not src_tree_present() or src_tree_partial()) and src_archive_complete(rows) \
                 and fresh(text, skip_names, degraded=True):
-            print('vk-kernel-identity.tsv 降级一致：只在离线列上比过（源树 geekidos-linux/ 不在盘；'
-                  'src_ref/src_tag 等树派生列不可核）——恢复命令见 versions/kernel-src-archive.tsv',
+            print('vk-kernel-identity.tsv 降级一致：只在离线列上比过（源树在盘但历史不全 ⇒ '
+                  'src_ref/src_tag 等树派生列不可核；补洞需网络）——恢复/补齐命令见 '
+                  'versions/kernel-src-archive.tsv',
                   file=sys.stderr)
             return 0
         print('vk-kernel-identity.tsv 过期：镜像/registry 变了但表未重生成', file=sys.stderr)
