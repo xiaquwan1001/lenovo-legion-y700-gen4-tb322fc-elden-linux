@@ -341,3 +341,19 @@ PY
 | **N7** | 选配：`pos-input-surface.c:290` 去掉中文候选后的尾随空格（重编 `phosh-osk-stub`）| 30 min + 10 min 窗口 | 上屏 = `你好`（无空格），且 `deploy-desktop-shell.sh --check` 仍 `MISS=0` |
 
 收尾: 本轮只读调研完成，产出 `reports/ime-osk-zh-matrix-20261122.md`（C1–C8 判定 + R1–R7 矩阵 + R1 方案/脚本骨架）；关键新事实 = phoc 0.46 无 #615 版本门、`phosh-osk-stub 0.46` 自带 IM+原位候选条+`Completers.Pipe` 外部引擎接口；设备零接触。
+
+---
+
+## 9. 上机补充（2026-11-21 17:0x，主会话；PITFALLS #709）
+
+R1 的**触发模式前置被实测推翻一半**：本机 `phosh-osk-stub 0.46.0-1` 的 `completion-mode`
+枚举只有 **none / hint / manual**，`['always']` 会被 `gsettings` 拒绝（Debian 侧只有 0.46.0-1）。
+
+- 已确认可用：`sm.puri.phosh.osk.Completers default=pipe` + `Completers.Pipe.command=<helper>`（默认 `cat`）；
+  现设 = `completion-mode ['hint','manual']` + pipe + `/usr/local/bin/elden-pinyin-completer`。
+- 已落地 H-a helper：`packaging/elden-userland/rootfs-overlay/usr/local/bin/elden-pinyin-completer`
+  （pypinyin 反查单字 + 常用词表；设备实测 `printf nihao | elden-pinyin-completer` → `你好 / 尼好`）；
+  设备侧依赖 `python3-pypinyin`（0.54.0-1 已装）。
+- 仍缺一步：**每键喂 completer** 需要 1 行源码补丁（`PhoshOskCompletionModeFlags` 加 `ALWAYS`），
+  或验证 GTK3 输入框是否声明 completion hint（决定 `hint` 是否足够）。
+- 人工 2 min 判据（待你）：Firefox 地址栏敲 `nihao` → 候选条出现「你好」→ 点选后中文上屏。

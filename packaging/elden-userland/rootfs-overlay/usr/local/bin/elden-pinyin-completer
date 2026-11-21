@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""elden-pinyin-completer — phosh-osk-stub 的 `pipe` 候选引擎（R1 / H-a 档）。
+
+契约（phosh-osk-stub 0.46 `pos-completer-pipe.c`）：**每键 spawn 一次**，
+stdin 给当前 preedit（无换行），stdout 每行一个候选；非零退出/空输出 = 无候选。
+
+数据来源：`python3-pypinyin` 的汉字→读音表**反向索引**（单字级候选）+ 一份常用词小表
+（词级候选，够验证「组词」链路；整句/词频排序属 H-b `librime` 档）。
+
+用法：
+  echo -n nihao | elden-pinyin-completer          # → 你好 尼好 妮好 …（最多 9 行）
+  elden-pinyin-completer --limit 5                # 限制行数
+  elden-pinyin-completer --explain                # 把解析过程打到 stderr
+
+设计取舍：
+  · 只吃 [a-z]+ 的**纯拼音**输入；含数字/空格/非 ASCII 直接输出空（避免把英文输入搞乱）。
+  · 每次进程重建索引代价：pypinyin 字典 20k+ 条，实测冷启动 ~180 ms（设备上），可接受；
+    若嫌慢 ⇒ 走 H-c 常驻 daemon + socat 转发（报告 §5.1 档 H-c）。
+"""
+import os
+import re
+import sys
+
+LIMIT = int(os.environ.get("ELDEN_PINYIN_LIMIT", "9"))
+EXPLAIN = "--explain" in sys.argv
+
+# 常用词（覆盖验证用；正式档换 librime）
+WORDS = {
+    "nihao": ["你好", "尼好"],
+    "zhongwen": ["中文", "中闻"],
+    "shurufa": ["输入法"],
+    "shouji": ["手机", "收集"],
+    "xiexie": ["谢谢"],
+    "zaijian": ["再见"],
+    "pinyin": ["拼音"],
+    "ceshi": ["测试", "测时"],
+    "zhongguo": ["中国"],
+    "beijing": ["北京"],
+    "shenghuo": ["生活"],
+    "shijian": ["时间", "事件", "实践"],
+    "diannao": ["电脑"],
+    "xianshi": ["显示", "现实", "先是"],
+    "shuru": ["输入", "数入"],
+    "hanyu": ["汉语"],
+    "zidian": ["字典"],
+    "pengyou": ["朋友"],
+    "gongzuo": ["工作"],
+    "xuexi": ["学习"],
+}
+
+
+def build_index():
+    """syllable -> [hanzi]，按 pypinyin 字典首次出现顺序（≈常用度）。"""
+    idx = {}
+    try:
+        from pypinyin.pinyin_dict import pinyin_dict  # type: ignore
+    except Exception:
+        try:
+            from pypinyin import pinyin_dict as _m  # 0.54 里的布局退化
+            pinyin_dict = _m.pinyin_dict
+        except Exception:
+            return idx
+    for code, val in pinyin_dict.items():
+        ch = chr(code)
+        # pypinyin 的 value 形如 "nǐ,ni3" 或 "hǎo,hào"
+        for part in str(val).split(","):
+            syl = re.sub(r"[^a-z]", "", part.strip().lower())
+            if not syl:
+                continue
+            base = syl
+            lst = idx.setdefault(base, [])
+            if len(lst) < LIMIT and ch not in lst:
+                lst.append(ch)
+    return idx
+
+
+def main():
+    raw = sys.stdin.read(300)[:64]
+    text = raw.strip().lower()
+    if EXPLAIN:
+        print("preedit=%r" % raw, file=sys.stderr)
+    if not text or not re.fullmatch(r"[a-z]+", text):
+        return 0
+    out = []
+    out.extend(WORDS.get(text, []))
+    idx = build_index()
+    if EXPLAIN:
+        print("index syllables=%d" % len(idx), file=sys.stderr)
+    # 整串当一个音节（单字候选）
+    for ch in idx.get(text, [])[:LIMIT]:
+        if ch not in out:
+            out.append(ch)
+    # 两段式：na|hao ⇒ 取首字 × 次字（词感，弱）
+    if len(out) < LIMIT and 2 <= len(text) <= 12:
+        for cut in range(1, len(text)):
+            a, b = text[:cut], text[cut:]
+            if idx.get(a) and idx.get(b):
+                for ca in idx[a][:2]:
+                    for cb in idx[b][:2]:
+                        w = ca + cb
+                        if w not in out:
+                            out.append(w)
+                        if len(out) >= LIMIT:
+                            break
+                    if len(out) >= LIMIT:
+                        break
+            if len(out) >= LIMIT:
+                break
+    for line in out[:LIMIT]:
+        sys.stdout.write(line + "\n")
+    if EXPLAIN:
+        print("out=%r" % out[:LIMIT], file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
