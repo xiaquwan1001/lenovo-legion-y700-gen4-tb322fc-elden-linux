@@ -27,4 +27,4 @@ mkbootimg_args=--header_version 2 --os_version 15.0.0 --os_patch_level 2025-08 -
 kernel_git_head=aebb7274476403040d582c61478df8f4a7bf9cd3
 kernel_git_state=dirty
 project_git_head=b1a1dd4e130b01661062557ec0fd0849eef163b3
-verification=NOT_TESTED_ON_DEVICE
+verification=BLOCKED_STRUCTURAL_NO_ROOT_FS

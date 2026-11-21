@@ -37,7 +37,7 @@
 - ~~不写 summary/总结/摘要~~ **该禁令已作废（2026-10-19，用户裁定）**：它只造成 pi agent 文本流解析异常，是错误归因。现在允许收尾短报，但仍要求**交付落盘文件**，回复以「产物路径 + 关键数字」为主（见 `.pi/AGENT-OPS.md` §5/§6）。
 - **编排接口（2026-10-31 起）**：总管 / 一级角色 / 二级叶级三层，协议见 **`ORCHESTRATION.md`**；子代理走 `fabric_exec`（pi-fabric），
   不再用 pi-subagents。并发上限、递归深度、树内配额、模型路由与工具白名单的唯一正文 = **`ORCHESTRATION.md` §3/§4**
-  （数值真源 = 两份 `fabric.json`，改后 `/reload`）；派发排障见全局技能 `fabric-dispatch-checklist`。
+  （模型/thinking 真源 = `~/.pi/agent/settings.json` 的 `subagents` 段）；派发排障见全局技能 `subagent-dispatch`。
 - `sessions/` 不入 git；`sn.img`、`bootslot-b/avb.key` 等敏感物禁止入库。已退场的插件入口（`pi-messenger.json`、`messenger/`、`swarm*.sh`）不再放回本目录 → `archive/2026-10-04-retired-entrypoints/`。
 - 记忆只存**跨会话有用**的偏好/教训/决策，不存可随时重推的临时细节。**项目记忆 = `.pi/memory/`（本仓库内，入库）**：
   `~/.pi/agent/projects-memory/y700-elden` 只是指向它的软链（2026-11-02 变更，此前是仓库外活文件 + `.pi/hermes-memory-mirror/` 镜像，镜像已废弃）。

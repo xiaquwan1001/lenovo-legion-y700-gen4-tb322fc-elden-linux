@@ -120,7 +120,7 @@
   （`physical-exec` / `doc-audit-lead` / `mail-io` / `code-boundary`）→ 可选二级叶级（`impl-worker` / `verify-worker`
   或既有专题卡）。角色卡在 `.pi/agents/`，Fabric 按 `name` 直接读取，正文作子代理 systemPrompt。
 - 子代理 = `fabric_exec`（pi-fabric）里的 `agents.run`/`agents.spawn`，**无守护进程**；2026-10-12 起不再用 pi-subagents。
-- **中断/超时/被 SIGSEGV 杀掉后先 `agents.resume({id})`，不要直接重派**（2026-11-17 起本机已开 `agents.childSession`）：同 runId 续接子代理自己的 transcript，它记得已做的调研与已写的文件；要换模型/换工具/改 cwd、或 run 目录已没（`/tmp` 被清、跨会话、`retainRuns:false` 的会话已关）才重派。细节见全局技能 `fabric-dispatch-checklist` 第 12 步。
+- **中断/超时/被 SIGSEGV 杀掉后先 `agents.resume({id})`，不要直接重派**（2026-11-17 起本机已开 `agents.childSession`）：同 runId 续接子代理自己的 transcript，它记得已做的调研与已写的文件；要换模型/换工具/改 cwd、或 run 目录已没（`/tmp` 被清、跨会话、`retainRuns:false` 的会话已关）才重派。细节见全局已归档的 fabric 派发技能（`_archive/skills/fabric-dispatch-checklist-20261121/`；现行 `subagent-dispatch`） 第 12 步。
 - **worker 自报成功不可信**：编排者必须独立重跑测试与全量回归；二级产物由一级 `ls`/`read` 验证，一级回执由总管复核。
 - **并发上限 / 递归深度 / 树内配额只读 `.pi/ORCHESTRATION.md` §3**（配置真值 = `~/.pi/agent/fabric.json` + `.pi/fabric.json`；改后 `/reload`）。
 - **派工单（2026-10-19 起）**：可以要求子代理回执摘要；但仍优先要求**产物落盘 + 最小回执字段（路径 + 关键数字 + 复现命令）**，避免只回一段话而无文件（旧「禁止 summary」条款已作废，理由见 §5）。
