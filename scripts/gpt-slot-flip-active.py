@@ -57,12 +57,14 @@ def validate_slot_guids(block, base, activate):
     g = type_guid_map(block, base)
     nb, na = "boot_" + activate, "abl_" + activate
     if nb in g and na in g and g[nb] == g[na]:
-        sys.exit(
-            f"rc=3 拒绝：boot_{activate} 与 abl_{activate} 的 type GUID 相同（{g[nb][:13]}…），"
+        print(
+            f"拒绝：boot_{activate} 与 abl_{activate} 的 type GUID 相同（{g[nb][:13]}…），"
             f"= ABL ValidateSlotGuids 必拒的形态；补 ACTIVE 位救不回来（flip 不动 GUID）。\n"
             f"  正确工具：scripts/gpt-slot-swap-guids.py --main <main> --backup <backup> "
             f"--out-prefix <prefix> --to {activate}\n"
-            f"  （它按 SwapPtnGuid 语义把 GUID 侧搬到目标槽；写盘仍走 linux-gpt-apply.sh）")
+            f"  （它按 SwapPtnGuid 语义把 GUID 侧搬到目标槽；写盘仍走 linux-gpt-apply.sh）",
+            file=sys.stderr)
+        sys.exit(3)
     print(f"[guid-check] boot_{activate} vs abl_{activate} type GUID 不同（合法）")
 
 

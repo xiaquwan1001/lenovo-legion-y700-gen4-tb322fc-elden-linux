@@ -41,6 +41,15 @@
      `ab-mark-successful.service` 会「装了不启用」）；`scripts/fix-ab-mark-successful.sh` 重写（`--mark-once/--check/--install/--uninstall`，
      sh/dash/busybox `-n` + shellcheck + `systemd-analyze verify` 全绿）；`scripts/README.md` 已重新生成（346 入口），`check-doctor` **FAIL=0**。
 
+0. **🆕 2026-11-21 傍晚 — OSK 中文输入打通（R1 落地，用户实测可用）**
+   - 现役 `phosh-osk-stub 0.46` 本身就是 IM + 自带候选条：`completion-mode` 只有 none/hint/manual（**无 `always`**，`PITFALLS #709`），
+     `manual` 的入口 = OSK 菜单里的 **「Word completion」** 开关（无 gsettings 键）；打开后敲拼音即出候选、点选上屏中文。
+   - 候选引擎 = `packaging/elden-userland/rootfs-overlay/usr/local/bin/elden-pinyin-completer`（pipe completer，
+     `Completers default=pipe` + `Completers.Pipe.command=/usr/local/bin/elden-pinyin-completer`）：
+     GB2312 一级字过滤 + 常用词表 + 高频字首选项 + 索引缓存 ⇒ **冷 215 ms / 热 20 ms**。
+   - 设备侧依赖 `python3-pypinyin`（已入 `rootfs/debian/daily-baseline.tsv`）。剩余可选提升 = librime one-shot（词库/整句）。
+   - 上游 MR：`mobian1/droid-juicer !46`（`configs/lenovo,elden.toml`，+116 行，CI 跑过；未在硬件验证已在描述里声明）。
+
 0. **🆕 2026-11-21 晚 — 文档现实性核查与收敛**：INDEX/TASKS/DEVICE 死指针 9 处修平（已删目录/归档件/截断文件名）、TASKS §4 11-20/21 长增量块逐字下沉 `TASKS/sessions/2026-11-21-§4增量块下沉.md`；门禁复跑 FAIL=0。全账 = `reports/doc-reality-audit-20261121.md`。
 
 0. **🆕 2026-11-21 下午 — 收尾：UEFI 纯 b 槽基建已落地、路 A 实测“有字没菜单”；发行版路线定在 Mobian**

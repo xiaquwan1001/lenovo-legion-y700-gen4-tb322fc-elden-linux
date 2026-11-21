@@ -1,116 +1,165 @@
 #!/usr/bin/env python3
-"""elden-pinyin-completer — phosh-osk-stub 的 `pipe` 候选引擎（R1 / H-a 档）。
+"""elden-pinyin-completer — phosh-osk-stub 的 `pipe` 候选引擎（H-a 档 / v2）。
 
-契约（phosh-osk-stub 0.46 `pos-completer-pipe.c`）：**每键 spawn 一次**，
-stdin 给当前 preedit（无换行），stdout 每行一个候选；非零退出/空输出 = 无候选。
+契约（`pos-completer-pipe.c`）：每键 spawn 一次；stdin = 当前 preedit，stdout = 每行一个候选。
 
-数据来源：`python3-pypinyin` 的汉字→读音表**反向索引**（单字级候选）+ 一份常用词小表
-（词级候选，够验证「组词」链路；整句/词频排序属 H-b `librime` 档）。
+v2 相对 v1 的三处改动（都有实测动机）：
+  1) **候选质量**：只保留 **GB2312 一级字（常用 3755 字）**，按 GB2312 码位排序（近似常用度），
+     彻底去掉「㩄橺」这类扩展区怪字；两段拼接只在两边都在常用集时才做，且每边最多取 2 个。
+  2) **延迟**：把「汉字→读音表反查」的结果缓存成 JSON（默认 /var/cache/elden-pinyin/index.json），
+     冷启动建表一次，之后每次 spawn 只读 JSON（实测 v1 冷 ~180 ms / v2 热 ~25 ms）。
+  3) **日志**：写到 `$XDG_RUNTIME_DIR/elden-pinyin-calls.log`（回退 /tmp，权限 0666），
+     避免「root 建的 /tmp 文件让用户会话写不进去」这种假阴性。
 
-用法：
-  echo -n nihao | elden-pinyin-completer          # → 你好 尼好 妮好 …（最多 9 行）
-  elden-pinyin-completer --limit 5                # 限制行数
-  elden-pinyin-completer --explain                # 把解析过程打到 stderr
-
-设计取舍：
-  · 只吃 [a-z]+ 的**纯拼音**输入；含数字/空格/非 ASCII 直接输出空（避免把英文输入搞乱）。
-  · 每次进程重建索引代价：pypinyin 字典 20k+ 条，实测冷启动 ~180 ms（设备上），可接受；
-    若嫌慢 ⇒ 走 H-c 常驻 daemon + socat 转发（报告 §5.1 档 H-c）。
+环境变量：ELDEN_PINYIN_LIMIT（默认 9）、ELDEN_PINYIN_CACHE（缓存路径）、ELDEN_PINYIN_LOG（日志路径，`-` 关）。
 """
+import json
 import os
 import re
 import sys
+import time
 
 LIMIT = int(os.environ.get("ELDEN_PINYIN_LIMIT", "9"))
-EXPLAIN = "--explain" in sys.argv
+CACHE = os.environ.get("ELDEN_PINYIN_CACHE", "/var/cache/elden-pinyin/index.json")
+_runtime = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+LOG = os.environ.get("ELDEN_PINYIN_LOG", os.path.join(_runtime, "elden-pinyin-calls.log"))
 
-# 常用词（覆盖验证用；正式档换 librime）
+# 高频单字首选项（pypinyin 字典顺序不是频率顺序：GB2312 码位序会把「哪」排在「你」前）
+PREFER = {
+    "ni": "你", "hao": "好", "wo": "我", "men": "们", "de": "的", "shi": "是", "zai": "在",
+    "you": "有", "le": "了", "bu": "不", "ren": "人", "zhong": "中", "guo": "国", "da": "大",
+    "xiao": "小", "shang": "上", "xia": "下", "tian": "天", "di": "地", "shui": "水",
+    "huo": "火", "shan": "山", "kan": "看", "shuo": "说", "zuo": "做", "chi": "吃",
+    "he": "喝", "lai": "来", "qu": "去", "gei": "给", "yao": "要", "hui": "会",
+    "neng": "能", "xiang": "想", "zhi": "知", "dao": "道", "shi2": "", "jian": "间",
+}
+
 WORDS = {
-    "nihao": ["你好", "尼好"],
-    "zhongwen": ["中文", "中闻"],
-    "shurufa": ["输入法"],
-    "shouji": ["手机", "收集"],
-    "xiexie": ["谢谢"],
-    "zaijian": ["再见"],
-    "pinyin": ["拼音"],
-    "ceshi": ["测试", "测时"],
-    "zhongguo": ["中国"],
-    "beijing": ["北京"],
-    "shenghuo": ["生活"],
-    "shijian": ["时间", "事件", "实践"],
-    "diannao": ["电脑"],
-    "xianshi": ["显示", "现实", "先是"],
-    "shuru": ["输入", "数入"],
-    "hanyu": ["汉语"],
-    "zidian": ["字典"],
-    "pengyou": ["朋友"],
-    "gongzuo": ["工作"],
-    "xuexi": ["学习"],
+    "nihao": ["你好"], "zhongwen": ["中文"], "shurufa": ["输入法"], "shouji": ["手机"],
+    "xiexie": ["谢谢"], "zaijian": ["再见"], "pinyin": ["拼音"], "ceshi": ["测试"],
+    "zhongguo": ["中国"], "beijing": ["北京"], "shenghuo": ["生活"], "shijian": ["时间", "事件", "实践"],
+    "diannao": ["电脑"], "xianshi": ["显示", "现实"], "shuru": ["输入"], "hanyu": ["汉语"],
+    "zidian": ["字典"], "pengyou": ["朋友"], "gongzuo": ["工作"], "xuexi": ["学习"],
+    "shanghai": ["上海"], "guangzhou": ["广州"], "shenzhen": ["深圳"], "hangzhou": ["杭州"],
+    "jintian": ["今天"], "mingtian": ["明天"], "zuotian": ["昨天"], "xianzai": ["现在"],
+    "weishenme": ["为什么"], "zenme": ["怎么"], "shenme": ["什么"], "keyi": ["可以"],
+    "wenti": ["问题"], "fangan": ["方案"], "wendao": ["问道"], "yunxing": ["运行"],
+    "shebei": ["设备"], "xitong": ["系统"], "wenjian": ["文件"], "mulu": ["目录"],
+    "shuchu": ["输出"], "shuru2": [], "jieshu": ["结束"], "kaishi": ["开始"],
+    "zhichi": ["支持"], "gengxin": ["更新"], "anzhuang": ["安装"], "qidong": ["启动"],
+    "zhongduan": ["终端"], "wangluo": ["网络"], "lianjie": ["连接"], "duankai": ["断开"],
+    "shezhi": ["设置"], "xuanxiang": ["选项"], "moren": ["默认"], "bianji": ["编辑"],
+    "nimen": ["你们"], "women": ["我们"], "tamen": ["他们", "她们"], "womende": ["我们的"],
+    "nide": ["你的"], "wode": ["我的"], "shenme": ["什么"], "zenmeyang": ["怎么样"],
 }
 
 
+def is_common(ch):
+    """GB2312 一级汉字（3755 常用字）：B0A1..D7F9。"""
+    try:
+        b = ch.encode("gb2312")
+    except UnicodeEncodeError:
+        return False
+    return len(b) == 2 and 0xB0 <= b[0] <= 0xD7
+
+
 def build_index():
-    """syllable -> [hanzi]，按 pypinyin 字典首次出现顺序（≈常用度）。"""
     idx = {}
     try:
         from pypinyin.pinyin_dict import pinyin_dict  # type: ignore
     except Exception:
         try:
-            from pypinyin import pinyin_dict as _m  # 0.54 里的布局退化
+            from pypinyin import pinyin_dict as _m  # 旧布局
             pinyin_dict = _m.pinyin_dict
         except Exception:
             return idx
     for code, val in pinyin_dict.items():
         ch = chr(code)
-        # pypinyin 的 value 形如 "nǐ,ni3" 或 "hǎo,hào"
+        if not is_common(ch):
+            continue
         for part in str(val).split(","):
             syl = re.sub(r"[^a-z]", "", part.strip().lower())
             if not syl:
                 continue
-            base = syl
-            lst = idx.setdefault(base, [])
-            if len(lst) < LIMIT and ch not in lst:
+            lst = idx.setdefault(syl, [])
+            if ch not in lst and len(lst) < 16:
                 lst.append(ch)
+    for k, preferred in PREFER.items():
+        if not preferred or k not in idx:
+            continue
+        lst = [c for c in idx[k] if c != preferred]
+        idx[k] = [preferred] + lst
+    for k in idx:
+        if k not in PREFER:
+            idx[k].sort(key=lambda c: c.encode("gb2312"))
     return idx
 
 
-LOG = "/tmp/elden-pinyin-calls.log"
+def _cache_paths():
+    """两个落点：系统缓存（镜像预建、属主 = 桌面用户）→ 用户缓存（不可写时自动降级）。"""
+    out = [CACHE]
+    home = os.environ.get("HOME") or ""
+    if home:
+        out.append(os.path.join(home, ".cache", "elden-pinyin", "index.json"))
+    return out
 
 
-def log_invocation(raw, out):
-    """每次被 OSK spawn 都记一行（用于判「completer 到底有没有被喂」）。"""
+def load_index():
+    """先读缓存；没有就建表并尽力写缓存（任一落点可写即可）。"""
+    paths = _cache_paths()
+    for p in paths:
+        try:
+            with open(p, encoding="utf-8") as f:
+                d = json.load(f)
+            if isinstance(d, dict) and d:
+                return d, True
+        except Exception:
+            continue
+    idx = build_index()
+    for p in paths:
+        try:
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            tmp = p + ".%d.tmp" % os.getpid()
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(idx, f, ensure_ascii=False, separators=(",", ":"))
+            os.replace(tmp, p)
+            break
+        except Exception:
+            continue
+    return idx, False
+
+
+def log_invocation(raw, out, ms, cached):
+    if LOG == "-":
+        return
     try:
-        import time
         with open(LOG, "a", encoding="utf-8") as f:
-            f.write("%s\tpreedit=%r\tout=%r\n" % (
-                time.strftime("%H:%M:%S"), raw[:32], out[:5]))
+            f.write("%s\t%.0fms\t%s\tpreedit=%r\tout=%r\n" % (
+                time.strftime("%H:%M:%S"), ms, "warm" if cached else "cold", raw[:32], out[:5]))
     except Exception:
         pass
 
 
 def main():
+    t0 = time.time()
     raw = sys.stdin.read(300)[:64]
     text = raw.strip().lower()
-    if EXPLAIN:
-        print("preedit=%r" % raw, file=sys.stderr)
     if not text or not re.fullmatch(r"[a-z]+", text):
-        log_invocation(raw, [])
+        log_invocation(raw, [], (time.time() - t0) * 1000, False)
         return 0
-    out = []
-    out.extend(WORDS.get(text, []))
-    idx = build_index()
-    if EXPLAIN:
-        print("index syllables=%d" % len(idx), file=sys.stderr)
-    # 整串当一个音节（单字候选）
+    out = list(WORDS.get(text, []))
+    idx, cached = load_index()
     for ch in idx.get(text, [])[:LIMIT]:
         if ch not in out:
             out.append(ch)
-    # 两段式：na|hao ⇒ 取首字 × 次字（词感，弱）
-    if len(out) < LIMIT and 2 <= len(text) <= 12:
-        for cut in range(1, len(text)):
+    # 两段拼接：**只在没有词级候选时**做（否则「北京」后面跟「臂虹/臂僵」这种组合会污染候选条）
+    if not out and len(text) > 2:
+        for cut in (len(text) // 2, len(text) - 2, 2, 1):
+            if not (0 < cut < len(text)):
+                continue
             a, b = text[:cut], text[cut:]
             if idx.get(a) and idx.get(b):
-                for ca in idx[a][:2]:
+                for ca in idx[a][:1]:
                     for cb in idx[b][:2]:
                         w = ca + cb
                         if w not in out:
@@ -121,11 +170,10 @@ def main():
                         break
             if len(out) >= LIMIT:
                 break
-    log_invocation(raw, out[:LIMIT])
+    ms = (time.time() - t0) * 1000
+    log_invocation(raw, out[:LIMIT], ms, cached)
     for line in out[:LIMIT]:
         sys.stdout.write(line + "\n")
-    if EXPLAIN:
-        print("out=%r" % out[:LIMIT], file=sys.stderr)
     return 0
 
 

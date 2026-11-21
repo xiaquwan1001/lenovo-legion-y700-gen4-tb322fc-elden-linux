@@ -15,7 +15,7 @@
 # 用法：bash scripts/n5b-vk64-death-rate.sh [轮数] [图像]
 #
 # ★★ 安全纪律（PITFALLS #363，2026-10-20 实受）★★
-#   本脚本会 reboot2 bootloader / fastboot boot，**直接折腾设备**。
+#   本脚本会重启设备进 fastboot / fastboot boot，**直接折腾设备**。
 #   禁止 `nohup ... &` 无人看管地跑：终端中断不会停它，它会持续把设备重启，
 #   直到耗尽 boot_b 的 slot-retry-count（#150-#152）。
 #   正确用法：前台跑，或 `timeout -k 10 <总秒数> bash $0 <轮数>`。
@@ -56,6 +56,11 @@ trap stop_serial EXIT
 
 SSH() { timeout 25 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -o BatchMode=yes "$DEV" "$@" 2>/dev/null; }
 FB()  { timeout 20 fastboot devices > /tmp/n5b-fbdev.txt 2>/dev/null; grep -q "${SER:-HA2EXB0E}" /tmp/n5b-fbdev.txt; }
+
+# ★ 审计批 1（2026-11-22，reports/scripts-audit-20261122.md §3）：`reboot2 bootloader` 已停用
+#   （TASKS §4 停用令 + PITFALLS #701 实测 Linux→fastboot 软路径全灭）；改用 scripts/to-fastboot.sh:60
+#   口径（sync + systemctl reboot bootloader）。软路径失败 = 停手，需人工物理键，不再 sysrq 逃生。
+REBOOT_FB() { SSH 'sync; systemctl reboot bootloader' >/dev/null 2>&1 || true; }
 
 echo "### N5b start $(date '+%F %T')  rounds=$N  img=$IMG"
 [ -f "$IMG" ] || {
@@ -124,13 +129,13 @@ boot_vk64() {
 		local up w=0
 		up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r')
 		while { [ -z "$up" ] || [ "$up" -lt 60 ]; } && [ $w -lt 90 ]; do
-			echo "  (uptime=${up:-?}s < 60s：等设备稳定再 reboot2，避免 #368)"
+			echo "  (uptime=${up:-?}s < 60s：等设备稳定再发软重启，避免 #368)"
 			sleep 5; w=$((w+5)); up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r')
 		done
 		if [ -z "$up" ]; then echo "  ❌ SSH 不可达且不在 fastboot：需要人工介入"; return 1; fi
-		SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
+		REBOOT_FB
 		local t=0; while [ $t -lt 90 ]; do FB && break; sleep 3; t=$((t+3)); done
-		FB || { echo "  ❌ 进不了 fastboot（需要人按音量- + 电源）"; return 1; }
+		FB || { echo "  ❌ 软路径未进 fastboot（#701：失败即停，不重试）⇒ 需人工按音量- + 电源"; return 1; }
 	fi
 	timeout 120 fastboot boot "$IMG" >/dev/null 2>&1 || { echo "  fastboot boot FAILED"; return 1; }
 	wait_ssh 120 || { echo "  SSH never came up"; return 1; }
@@ -155,28 +160,18 @@ EOF
 }
 
 # 强制重开一次 vk64 RAM 内核（用于「已在 vk64 但显示栈已坏」的 boot，见下方显示健康门）
-# ★ 2026-10-23（PITFALLS #369）：这类 boot 上 `reboot2 bootloader` 会**静默无效**（shutdown 挂住），
-#   实测 4 次里 3 次没重启。⇒ 加两级逃生：30 s 内没进 fastboot 就 SysRq-b 回 boot_b，
-#   再从 boot_b（健康态）走 reboot2 → fastboot。
+# ★ 审计批 1（2026-11-22）：原 sysrq 逃生梯（echo b > /proc/sysrq-trigger）随 #701 停用令删除——
+#   软路径失败就返回 1 停手，设备态留给人工判定，不再盲梯。
 wait_fb() { local t=0; while [ $t -lt "${1:-90}" ]; do FB && return 0; sleep 3; t=$((t+3)); done; return 1; }
 force_reboot_vk64() {
 	local up w=0 t=0
 	up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r')
 	while { [ -z "$up" ] || [ "$up" -lt 60 ]; } && [ $w -lt 90 ]; do sleep 5; w=$((w+5)); up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r'); done
 	if [ -n "$up" ]; then
-		SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
+		REBOOT_FB
 		if ! wait_fb 30; then
-			echo "  (reboot2 30 s 未进 fastboot ⇒ SysRq-b 逃生，PITFALLS #369)"
-			SSH 'sync; echo b > /proc/sysrq-trigger' >/dev/null 2>&1 || true
-			sleep 20
-			if ! wait_fb 20; then
-				# 已回 boot_b：等它稳定后走一次正常 reboot2
-				wait_ssh 180 || return 1
-				up=; w=0
-				while { [ -z "$up" ] || [ "$up" -lt 60 ]; } && [ $w -lt 120 ]; do sleep 5; w=$((w+5)); up=$(SSH 'cut -d. -f1 /proc/uptime' | tr -d '\r'); done
-				SSH 'reboot2 bootloader' >/dev/null 2>&1 || true
-				wait_fb 90 || return 1
-			fi
+			echo "  ❌ 软路径 30 s 未进 fastboot（#701）⇒ 停手；需人工物理键进 fastboot 后再重跑"
+			return 1
 		fi
 	else
 		wait_fb 30 || return 1

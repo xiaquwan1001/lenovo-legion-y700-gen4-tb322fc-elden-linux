@@ -356,4 +356,10 @@ R1 的**触发模式前置被实测推翻一半**：本机 `phosh-osk-stub 0.46.
   设备侧依赖 `python3-pypinyin`（0.54.0-1 已装）。
 - 仍缺一步：**每键喂 completer** 需要 1 行源码补丁（`PhoshOskCompletionModeFlags` 加 `ALWAYS`），
   或验证 GTK3 输入框是否声明 completion hint（决定 `hint` 是否足够）。
-- 人工 2 min 判据（待你）：Firefox 地址栏敲 `nihao` → 候选条出现「你好」→ 点选后中文上屏。
+- **已上机验证可用（2026-11-21 17:4x，用户实测）**：点 OSK 菜单的 **「Word completion」** 后，
+  地址栏敲拼音即出候选并上屏中文 ⇒ R1 管线（英文键盘 → pipe 候选 → 点选上屏）**成立**，
+  不需要切换输入法、不需要改客户端、不需要重编合成器。
+- helper v2（同日）：GB2312 一级字过滤（去掉「㩄橺」这类扩展区怪字）+ 常用词表 + 高频单字首选项 +
+  索引缓存（/var/cache 或 `~/.cache` 自动降级）⇒ **冷 215 ms / 热 20 ms**（v1 每次 ~180 ms 且无缓存）。
+- 仍可提升（可选）：词库规模与联想质量 —— 换 **librime one-shot**（H-b 档，`librime1`+`rime-data`，
+  含词/整句）可解决「词库怪、联想慢」；或常驻 daemon（H-c）把每键 spawn 的固定开销也去掉。

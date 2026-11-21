@@ -59,7 +59,12 @@ sha_direct() {
 	printf '%s\n' "$v"
 }
 
-need_yes() { [ "$YES" = 1 ] || die "$1 会写盘/写槽；确认后加 --yes"; }
+need_yes() {
+	[ "$YES" = 1 ] || die "$1 会写盘/写槽；确认后加 --yes"
+	# ★ 审计批 1（2026-11-22）fail-closed：apply 级阶段必须显式确认目标设备序列号
+	[ -n "${SN:-}" ] || die "$1 是 apply 级阶段，必须显式 SN=<平板序列号> bash $0 $STAGE --yes（对齐 linux-gpt-apply.sh 的 SN 口径）"
+	echo "目标设备 SN=$SN（人工确认这就是你要改的板子）"
+}
 
 # ---------------------------------------------------------------- preflight
 preflight() {
@@ -333,7 +338,14 @@ writeslot() {
 	say "2. 前置：设备必须已在 fastboot；记录槽基线"
 	# 2026-11-09 PITFALLS #584：先落变量再判断（SIGPIPE 会打断 fastboot 通道）
 	_fbd=$(timeout 30 fastboot devices 2>/dev/null)
-	[ -n "$_fbd" ] || die "fastboot 里看不到设备（先 reboot2 bootloader）"
+	[ -n "$_fbd" ] || die "fastboot 里看不到设备（软路径见 scripts/to-fastboot.sh；#701 后需人工物理键）"
+	# ★ 审计批 1（2026-11-22）：写槽前先把现 boot_b dump 下来（写前基线，回退用它）
+	mkdir -p "$WORK"
+	if timeout 120 fastboot fetch boot_b "$WORK/boot_b_before.bin" >/dev/null 2>&1; then
+		echo "  写前 boot_b dump → $WORK/boot_b_before.bin ($(stat -c %s "$WORK/boot_b_before.bin") B)"
+	else
+		warn "fastboot fetch 不可用，写前基线没抓到（继续，但回退只能靠 $signed 重刷）"
+	fi
 	$SSH 'slot-attr.py show 2>/dev/null | grep "boot_b "' 2>/dev/null || \
 		echo "（fastboot 状态下读不到 slot-attr，基线以进入 fastboot 前记录为准）"
 
