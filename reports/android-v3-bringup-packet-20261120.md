@@ -378,3 +378,21 @@ adb 从不出现（600 s）                      → 读 misc（同前）+ pstor
 |S5 件 O_DIRECT sha|`0dad04f1d2f41fc2126eb2bda045adec8c8dce3ad95535442e53369dfc0280af`（100663296 B）|
 |归档目录|`logs/android-v3-S{1..5}-20261120-190709/`（`commands.log` 各 5/6/7/5/0 行）|
 |峰值负载|`uptime` → `load average: 7.85, 6.80, 4.06`（预演为 sha 顺序 I/O，非构建；未取构建锁、未编译）|
+
+---
+
+## 2026-11-21 增量：S1 的两个真缺陷已修（本轮实测踩到，样本作废前拦下）
+
+1. **`ensure_active_a` 在 Linux 侧只打印判据、从不切槽** ⇒ S1 第一次 `--apply` 直接在 `active=_b` 上 `reboot`，
+   跑回 Linux 却被判成「起 ZUXOS 不完成/回落 b 槽」——**样本完全无效**（本轮实测：`qbootctl -a` 全程 `_b`）。
+   而且 Linux 侧**没有**可用切槽原语：`qbootctl -s/-u` 实测都报 `gpt_disk_commit: Invalid args` /
+   `update_slot_attribute: Failed to commit disk`（`PITFALLS #701`，ABL 的 UPDATE_SLOT 还要改 UFS 启动 LUN）。
+   修法 = Linux 侧 **fail-closed**（打印人项：物理键进 fastboot 后 `fastboot -s HA2BOE --set-active=a`），
+   `S1` 对返回值做 `|| return 1`，绝不静默重启造无效样本。
+2. **S1 第 4 步只会 `ssh … reboot`** ⇒ 设备已在 fastboot 时本步空转。修法 = 按 `dev_state` 分支：
+   `fastboot` 侧直接 `fastboot -s $SER reboot`（切完槽就启 a 槽）。
+3. 顺带修 `boot_a` 属性判读：`0x32`（= retry6/bootable）原被当「异常」；现在只有 **bit7(UNBOOTABLE)=1 或 retry=0** 才算异常，
+   其余仅补满 retry 到 7（判据用 python 解位，不再靠字符串猜）。
+
+本轮 S1 实际做成的部分（取证留档 `logs/android-v3-S1-20261121-085647/`）：BCB 清 0 并读回全 0、
+`boot_a` byte6 `0x32 → 0x7a`（主备表都写 + CRC 修 + 读回校验）、active 仍 `_b`（未切，见上）、pstoredump 命中 0（无内核崩溃）。

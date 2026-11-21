@@ -30,6 +30,13 @@
      `qbootctl -u b` 写失败（`gpt_disk_commit: Invalid args`；`-i` 未测）。已交付设备侧 `elden-to-bootloader`
      （能力自检 + BCB 备份/读回校验 + `--clear-bcb`）与主机侧 `scripts/to-bootloader.sh`（三态判据，回 Linux 时自动清 BCB）；
      设备收尾态干净（BCB 全 0、`_b` Active/Succ/Bootable 全 1、graphical active）。全账 = `reports/linux-to-fastboot-20261121.md`。
+   - **★AVB 债已上机验收通过（同日 09:0x，用户物理键进 BL）**：`fastboot flash vbmeta_b out/vbmeta-b/vbmeta_b-flags3.img` = OKAY →
+     `reboot-bootloader` → `fastboot boot <在机件 740d431b…>` = **`Booting OKAY [10 s]` 且真起进 Linux**（ssh 通、`/`=`/dev/sda17`、graphical active）；
+     分区读回 sha `906e6922…` = 主机件。**修复前**同一命令 = `Failed to load/authenticate boot image: Device Error` ⇒ 归因结束。
+     ⚠ 校准：RAM 引导必须用与在机槽一致的件（先拿仓库旧副本试出「只有背光 + 只有 gadget」= 副本不同，不是刷坏）。
+   - **Android S1 的两个真缺陷同日修掉**（本轮实测踩到、样本作废前拦下）：`ensure_active_a` 在 Linux 侧只打印不切槽（且 Linux 侧
+     `qbootctl -s/-u` 实测写失败 #701）⇒ 改 fail-closed + 人项指引；S1 第 4 步补 fastboot 分支（`fastboot reboot` 直接启 a 槽）；
+     `boot_a` byte6 判读改为解位（只有 UNBOOTABLE 或 retry=0 才算异常）。
    - **同轮（设备窗口就绪度）**：① `scripts/boot-img-cmdline.py` 扩到 **vendor_boot v4**（cmdline 窗口 28..2076，
      等长原地改写）+ `--selftest`（4 正例/4 反例）+ `check-doctor` **§27**；S5 两件已落
      `out/android-v3-bringup-20261120/boot-ttygs0-{boot,vendor_boot}.img`（vendor 侧五段载荷 sha 全 SAME）。

@@ -70,3 +70,27 @@ SLOT _b: Failed to set as unbootable
 - **item 3（Android S1–S5）**：执行包 `scripts/android-v3-bringup-walkthrough.sh` 已就绪（本轮另修了前置校验的
   `fastboot` 假 MISS，PITFALLS #699）；仍需物理键进 fastboot，且 `boot_a` 属性每轮上机前必须复位（PITFALLS #695）。
 - 两件事都**会打断当前桌面 1–2 h**，需要你给窗口 + 按键；agent 侧不再盲试软路径。
+
+---
+
+## 5. 追加（同日 09:0x，用户物理键进 BL 后的实测）：**AVB 债 ✅ 了结**
+
+| 步 | 命令 | 结果 |
+|---|---|---|
+| 1 | `fastboot -s HA2EXB0E getvar current-slot` | `b`；`slot-successful:b=yes`、`slot-unbootable:b=no`、`slot-retry-count:b=6` |
+| 2 | `fastboot -s HA2EXB0E flash vbmeta_b out/vbmeta-b/vbmeta_b-flags3.img` | **OKAY**（Sending 64 KB / Writing） |
+| 3 | `fastboot -s HA2EXB0E reboot-bootloader` | OKAY，~6 s 回 fastboot（PITFALLS #650 要求的 ABL 重新初始化） |
+| 4 | `fastboot -s HA2EXB0E boot bootslot-b/boot_b.img`（**仓库旧副本** 06c081ca…） | **`Sending OKAY` / `Booting OKAY [10.107s]`** |
+| 5 | 同一条命令换**在机件**（`logs/forensics-20261120-2210/boot_b.img`，740d431b…） | **`Booting OKAY [10.108s]`** → 18 s 后 `ssh elden-root` 通、`/` = `/dev/sda17`、`graphical.target` active |
+| 6 | 设备侧读回分区：`dd if=/dev/disk/by-partlabel/vbmeta_b bs=4096 count=16 \| sha256sum` | **`906e6922…`（= 主机件逐字节相同）** |
+
+**判据对照（这就是「债」的定义）**：
+- 修复前（2026-11-20 两次实测）：`fastboot boot` → `Failed to load/authenticate boot image: Device Error`。
+- 修复后（本轮）：同一条命令 `OKAY` 并真起进 Linux ⇒ **自签链（vbmeta 顶层 + chain `boot:3` + boot footer）key 不一致就是这条失败的成因**，
+  不再是「归因未定」。
+
+**顺带记一个必须写清的 confound**：第 4 步用仓库旧副本 RAM 引导时，设备只到「背光全亮 + 只有 USB gadget（`1d6b:0104`）、无 IP/sshd/显示」——
+那不是 AVB/不是刷坏的，而是**该副本与在机件不是同一颗**（`06c081ca…` vs `740d431b…`，cmdline/root 标签与 ramdisk 都不同，11-19「找不到根」同族）。
+换回在机件后一次成功。⇒ 以后凡 `fastboot boot` 验证，**只能用与在机槽一致的件**（先 `dd` 出在机件或核对 sha）。
+
+设备收尾态：`fastboot --set-active` 未动（仍 `_b`）、`qbootctl` = `_b` Active/Succ/Bootable 全 1、BCB 全 0、`is-system-running=running`。

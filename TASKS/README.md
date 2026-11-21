@@ -133,7 +133,12 @@
 - **P0 已收口（用户实测确认，2026-11-20 23:4x）**：**音频出声 + 两侧马达都震** ⇒
   音频/触觉两项驱动态验收通过（判据命令：`pw-play <wav>` as user 1001、`ffrumble /dev/input/event{2,3} 700 0xffff`）。
   备注：靠近场感落后的唯一残留 = **桌面没有触觉触发点**（Phosh 不驱动 FF，只有 Waydroid/HAL 链与 ffrumble 能触发），属「要不要做」而非缺陷。
-- **P1 AVB 债 —— ✅ 主机侧已还（2026-11-21），只剩一次上机验收**：设备在机 `vbmeta_b` 的顶层 key 与 chain `boot:3`
+- **P1 AVB 债 —— ✅✅ 已**上机验收通过**（2026-11-21 09:0x，用户物理键进 BL）**：`fastboot flash vbmeta_b out/vbmeta-b/vbmeta_b-flags3.img` = OKAY；
+  `reboot-bootloader` 后 `fastboot boot <在机件>` = **`Booting OKAY [10 s]` 并真起进 Linux**（`ssh` 通、`/` = `/dev/sda17`、graphical active）；
+  分区读回 sha `906e6922…` 与主机件逐字节相同。**修复前**同一条命令是 `Failed to load/authenticate boot image: Device Error`
+  ⇒ 「自签链 key 不一致」就是那条失败的成因（归因结束）。⚠ 验证时必须用**与在机槽一致的件**：本轮先拿仓库旧副本（`06c081ca…`）
+  RAM 引导 ⇒ 只到「背光全亮 + 只有 gadget」，换在机件（`740d431b…`）一次通过。全账 = `reports/linux-to-fastboot-20261121.md` §5。
+  （历史：主机侧造件/生成器/门 = `PITFALLS #696`? 不，见 `reports/vbmeta-b-resign-20261121.md`）：设备在机 `vbmeta_b` 的顶层 key 与 chain `boot:3`
   都是旧钥 `fc1e3b33…`，而 `boot_b` footer = 现役 `1e54e86e…` ⇒ 自签链自身不自洽。现产出：
   ① 生成器 `scripts/build-vbmeta-b.sh`（`--check` 离线复核）→ 件 `out/vbmeta-b/vbmeta_b-flags3.img`
   （65536 B、Flags 3、顶层 + chain 都是 `1e54e86e…`、整链 `verify_image --follow_chain_partitions` rc=0）；

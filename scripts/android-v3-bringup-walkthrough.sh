@@ -315,7 +315,24 @@ ensure_active_a() {
 	case "$st" in
 		linux)
 			run 30 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl -a 2>&1; qbootctl 2>&1 | head -20'
-			info "判据：Active slot: a（只读查询）；若为 b ⇒ 需先切 a（写 GPT 属性，可回退 --set-active=b）"
+			# 2026-11-21 修：原实现在 Linux 侧**只打印判据、从不切槽** ⇒ S1 直接 reboot 回 b 槽，
+			# 却被判成「起 ZUXOS 不完成/回落 b」——整轮样本作废（本轮实测踩到，active 仍是 _b）。
+			# 而且 Linux 侧**没有**可用的切槽原语：`qbootctl -s/-u` 实测都报
+			#   gpt_disk_commit: Invalid args / update_slot_attribute: Failed to commit disk（PITFALLS #701）
+			# 因为 ABL 的 UPDATE_SLOT 还要改 UFS 启动 LUN（bLun），Linux 侧改不了。
+			# ⇒ 正确做法 = 物理键进 fastboot 后 `fastboot -s $SER --set-active=a`（ABL 实现，会同时清
+			#   UNBOOTABLE + 补 retry=7，PITFALLS #677/#697）。这里 fail-closed，绝不静默继续。
+			local cur=""
+			if [ "$APPLY" = 1 ]; then
+				cur=$(timeout -k 5 20 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl -a 2>&1' 2>/dev/null | sed -n 's/^Active slot: _\{0,1\}//p' | tr -d '\r')
+				if [ "$cur" = a ]; then info "OK   active 槽已是 a（无需切换）"; return 0; fi
+				warn "active 槽当前 = ${cur:-未知}，但 Linux 侧无法切槽（#701）⇒ 本步不能继续"
+				info "人项：长按电源 10 s 关机 → 按住【音量上 + 电源】进 fastboot，再跑："
+				info "      timeout 30 fastboot -s $SER --set-active=a && timeout 30 fastboot -s $SER getvar current-slot"
+				info "      然后重跑本步（fastboot 侧会自动切槽并观察首启）"
+				return 1
+			fi
+			info "[dry] Linux 侧切槽不可用（#701）⇒ 届时需先物理键进 fastboot 再 --set-active=a"
 			;;
 		fastboot)
 			run 20 fastboot -s "$SER" getvar current-slot
@@ -363,7 +380,18 @@ ensure_boot_a_attrs() {
 	case "$cur" in
 		0x7a|0x7b) info "OK   boot_a 属性正常（$cur = retry7/bootable）"; return 0 ;;
 		"") warn "读不到 boot_a 属性（scp/解析失败）⇒ 继续，但结果可能被「ABL 跳过 a 槽」污染" ;;
-		*) info "boot_a byte6=$cur（异常，典型 0x82 = retry0/unbootable）⇒ 复位"
+		*)
+			# 2026-11-21 修：只有 bit7(UNBOOTABLE)=1 或 retry(bits3..5)=0 才是真异常。
+			# 0x32 这类值 = retry=6/bootable（ABL 每发抽一次），把它叫「异常」会误导后续判读。
+			if python3 - "$cur" <<'PYCHK'
+import sys
+v = int(sys.argv[1], 16)
+retry = (v >> 3) & 0x7
+unbootable = (v >> 7) & 0x1
+sys.exit(0 if (unbootable or retry == 0) else 1)
+PYCHK
+			then info "boot_a byte6=$cur（UNBOOTABLE 或 retry=0）⇒ 复位"
+			else info "boot_a byte6=$cur（retry=$(( (0x${cur#0x} >> 3) & 7 ))/bootable，非异常）⇒ 仅补满 retry 到 7"; fi
 		   run 90 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
 			'python3 /tmp/slot-attr.py --allow-wrong-lun --device /dev/sde set a --retry 7 --no-unbootable --successful' ;;
 	esac
@@ -625,10 +653,17 @@ S1() {
 	# 2b) boot_a GPT 属性（PITFALLS #695：ABL 上次失败会把它写成 retry=0/unbootable=1）
 	ensure_boot_a_attrs || return 1
 	# 3) 槽位：Android 必须先 active=a（b 槽 = Linux）
-	ensure_active_a
-	# 4) 重启并观察
-	run 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'sync; reboot' || \
-		info "[dry] 之后：从 fastboot 侧 fastboot -s $SER reboot（或 Linux 下 reboot）"
+	ensure_active_a || { warn "S1 中止：active 槽不是 a（切槽需 fastboot，见上）—— 不重启、不产生无效样本"; return 1; }
+	# 4) 重启并观察（2026-11-21 修：fastboot 侧也能跑本步 —— 切完槽直接 `fastboot reboot` 就启 a 槽）
+	case "$(dev_state)" in
+		linux)
+			run 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'sync; reboot' || \
+				info "[dry] 之后：从 fastboot 侧 fastboot -s $SER reboot（或 Linux 下 reboot）" ;;
+		fastboot)
+			info "设备在 fastboot ⇒ 切槽后直接 fastboot reboot 启 a 槽（ABL 会读 GPT active + 启动 LUN）"
+			if [ "$APPLY" = 1 ]; then run 30 fastboot -s "$SER" reboot; else info "[dry] fastboot -s $SER reboot"; fi ;;
+		*) info "现态 $(dev_state)：不在 linux/fastboot ⇒ 无法重启观察，先回 Linux 或进 fastboot" ;;
+	esac
 	observe_android S1; local rc=$?
 	pstore_triage
 	case "$rc" in
