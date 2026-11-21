@@ -20,6 +20,11 @@
      7 项离线判据全过；用同一校验器跑**在机** `vbmeta_b` 得 2 处 FAIL（修复前对照）。
    - **剩**：一次上机验收 `fastboot flash vbmeta_b` + `fastboot boot bootslot-b/boot_b.img`（设备窗口；回退件在 `logs/forensics-20261120-2210/vbmeta_b.img`）；
      `flags=0` 干净链需先有 `dtbo_b` dump。成因/证据 = `reports/vbmeta-b-resign-20261121.md`。
+   - **★设备在线轮（同日 08:3x，`ssh elden-root` 通）**：up 9.1 h / vk192 / b 槽 Linux / `/` 用 7.1 G / **`deploy-desktop-shell.sh --check` = MISS=0**
+     （桌面 + greetd + 音频 Speaker + 触觉 ×2 + 启动队列 mask）。**查出并修掉一个「观测能力丢失」**：T9 采样器在 11-19 重建根后
+     脚本/两枚 unit/`/var/lib/elden` 三样全无 ⇒ 一直是「没数据」（`PITFALLS` **#700**）；已恢复（timer enabled+active，表 20 列对齐）
+     并固化四处（`tick` 模式 + `units-extra/` 手写 timer + `stage.sh` 4d + deploy **§12** + doctor §22 非包锚点）。
+     端到端：一次 `rtcwake -m mem -s 45` 前后各采一行，`suspend_stats` **3/0 → 4/0**、`fail=0`。全账 = `reports/t9-sampler-restored-20261121.md`。
    - **同轮（设备窗口就绪度）**：① `scripts/boot-img-cmdline.py` 扩到 **vendor_boot v4**（cmdline 窗口 28..2076，
      等长原地改写）+ `--selftest`（4 正例/4 反例）+ `check-doctor` **§27**；S5 两件已落
      `out/android-v3-bringup-20261120/boot-ttygs0-{boot,vendor_boot}.img`（vendor 侧五段载荷 sha 全 SAME）。

@@ -1,0 +1,20 @@
+# elden-resource-sample.service — T9「待机/唤醒资源趋势」采样器（oneshot）
+#
+# ⚠️ 本件是**手写**单元（不走 packaging/elden-userland/tools/render.py；那不是生成物）。
+# 原因：render.py 的 class 词表只有 longrun/oneshot/shutdown，没有「timer 对」的语义；
+# 而 T9 采样 = 定时器 + 一次性采样，天然是两枚单元。
+#
+# 承载脚本 = scripts/suspend-resource-sample.sh（设备上装到 /usr/local/sbin/，deploy 脚本负责）。
+# 口径 = 用户 2026-11-13 定：不追精密电流，用「同一设备同一软件跨周期」的资源趋势判退化。
+# 数据 = /var/lib/elden/suspend-resource.tsv（tick 模式幂等：无表先写表头再追加一行）。
+[Unit]
+Description=elden resource sampler (T9: procs/threads/mem/battery/suspend_stats trend)
+Documentation=https://github.com/xiaquwan1001/lenovo-legion-y700-gen4-tb322fc-elden-linux
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /usr/local/sbin/suspend-resource-sample.sh tick
+# 采样器内部对 /sys/power/wakeup_count 已经套了 timeout（PITFALLS #651），这里再加一层兜底：
+TimeoutStartSec=120
+Nice=10

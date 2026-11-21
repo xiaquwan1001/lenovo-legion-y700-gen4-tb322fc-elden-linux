@@ -99,6 +99,28 @@ if [ "$MODE" != check ]; then
 		install -D -m 644 "$u" "$STAGE/usr/lib/systemd/system/$(basename "$u")"
 	done
 
+	# 4d/6 额外手写单元（`rootfs/debian/units-extra/`，不走 render.py）
+	# 为什么单独一条路：render.py 的 class 只有 longrun/oneshot/shutdown，没有「timer 对」语义；
+	# T9 采样器 = timer + oneshot 两枚单元（2026-11-21 补：重建根后 T9 采样器整个消失，
+	# /var/lib/elden 不存 ⇒ 「没数据」看起来像「还没到下结论的时候」，实际是资产丢了）。
+	_extra=$HERE/units-extra
+	if [ -d "$_extra" ]; then
+		_ne=0
+		for u in "$_extra"/*; do
+			[ -f "$u" ] || continue
+			install -D -m 644 "$u" "$STAGE/usr/lib/systemd/system/$(basename "$u")"
+			_ne=$((_ne + 1))
+		done
+		# 默认启用的 timer：建 timers.target.wants 软链（与 systemctl enable 等价、可离线做）
+		for t in "$_extra"/*.timer; do
+			[ -f "$t" ] || continue
+			_bn=$(basename "$t")
+			mkdir -p "$STAGE/etc/systemd/system/timers.target.wants"
+			ln -sfn "/usr/lib/systemd/system/$_bn" "$STAGE/etc/systemd/system/timers.target.wants/$_bn"
+		done
+		ok "额外手写单元: $_ne 个（含 timer 启用软链）→ /usr/lib/systemd/system/"
+	fi
+
 	# 4b/6 启动前置 hook（ExecStartPre 的目标文件）
 	# 为什么必须有这一步（2026-10-26 Debian 根实测）：render.py 把 hooks/<svc>.pre 的**内容**
 	# 内联进 OpenRC initd（Alpine 侧不用额外文件），但系统给 systemd 渲染的是

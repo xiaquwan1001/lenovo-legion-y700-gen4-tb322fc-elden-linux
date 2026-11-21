@@ -11,6 +11,7 @@
 #
 # 用法（设备上）：
 #   sh suspend-resource-sample.sh probe                 # 只打一行当前快照（TSV 到 stdout）
+#   sh suspend-resource-sample.sh tick [OUT]            # 幂等「定时器用」：无表则先写表头，再追加一行
 #   sh suspend-resource-sample.sh cycles 3 45 /tmp/s.tsv # 3 周期，每周期 rtcwake 45 s，追加到 TSV
 #
 # 取数：设备上默认由 systemd timer（elden-resource-sample.timer，30 min）追加到
@@ -44,15 +45,27 @@ for s in waydroid-container phoc phosh sshd; do
 done
 SVC=$(echo "$SVC" | sed 's/,$//')
 
-printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-	"$TS" "$UP" "$LOAD" "$PROCS" "$THREADS" "${MA:-}" "${MF:-}" "${CA:-}" "$SWU" \
-	"${CUR:-}" "${VOLT:-}" "${CC:-}" "${BT:-}" "${CAP:-}" "${ST:-}" "${SS:-}" "${WC:-}" "$TOP" "$SVC" "$(uname -r)"
+HEADER='ts\tup\tload\tprocs\tthreads\tmem_avail\tmem_free\tcached\tswap_used\tbat_uA\tbat_uV\tcharge_counter\tbat_temp_mc\tcapacity\tstatus\tsuspend_success/fail\twakeup_count\ttop5_rss\tkey_services\tuts'
+emit() {
+	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		"$TS" "$UP" "$LOAD" "$PROCS" "$THREADS" "${MA:-}" "${MF:-}" "${CA:-}" "$SWU" \
+		"${CUR:-}" "${VOLT:-}" "${CC:-}" "${BT:-}" "${CAP:-}" "${ST:-}" "${SS:-}" "${WC:-}" "$TOP" "$SVC" "$(uname -r)"
+}
 
 case "${1:-probe}" in
-probe) : ;;
+probe) emit ;;
+tick)
+	# 定时器路径（elden-resource-sample.timer 走这里）：表不存在就先写表头，再追加一行。
+	# 幂等：重复跑只是多一行；目录不在就建（重建根后 /var/lib/elden 会丢）。
+	out=${2:-/var/lib/elden/suspend-resource.tsv}
+	mkdir -p "$(dirname "$out")" 2>/dev/null || true
+	# 注意：$HEADER 里的分隔符是**字面 `\t`**（两字节），必须用 %b 展开；
+	# 用 %s 会把 "ts\\tup\\t..." 原样写进文件（2026-11-21 实测踩到，表头成一行不可分列）。
+	[ -s "$out" ] || printf '%b\n' "$HEADER" > "$out"
+	emit >> "$out" ;;
 cycles)
 	n=${2:-3}; sl=${3:-45}; out=${4:-/tmp/suspend-resource.tsv}
-	[ -f "$out" ] || printf 'ts\tup\tload\tprocs\tthreads\tmem_avail\tmem_free\tcached\tswap_used\tbat_uA\tbat_uV\tcharge_counter\tbat_temp_mc\tcapacity\tstatus\tsuspend_success/fail\twakeup_count\ttop5_rss\tkey_services\tuts\n' > "$out"
+	[ -s "$out" ] || printf '%b\n' "$HEADER" > "$out"
 	i=0
 	while [ "$i" -lt "$n" ]; do
 		i=$((i+1))
@@ -62,5 +75,5 @@ cycles)
 		sh "$0" probe >> "$out"
 	done
 	echo "$out" ;;
-*) echo "用法: $0 [probe|cycles N SECS OUT]" >&2; exit 2 ;;
+*) echo "用法: $0 [probe|tick [OUT]|cycles N SECS OUT]" >&2; exit 2 ;;
 esac

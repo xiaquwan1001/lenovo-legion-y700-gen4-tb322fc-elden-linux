@@ -406,6 +406,50 @@ else
 		|| no "触觉仍缺（haptics=$HAP ffrumble=$HAPTOOL）"
 fi
 
+echo "== 12) T9 资源采样器（重启根必丢：脚本 + timer + /var/lib/elden，2026-11-21 实测） =="
+# 为什么在本脚本里：T9 = 「同一设备同一软件跨 suspend 周期」的资源趋势采样（用户 2026-11-13 口径，
+# 不追精密电流）。它由 scripts/suspend-resource-sample.sh + 两枚手写单元
+# （rootfs/debian/units-extra/elden-resource-sample.{service,timer}）组成，**都不是包**：
+# 11-19 重建根后脚本/单元/数据目录三样全无 ⇒ 设备上"没有数据"被读成"还没到下结论的时候"。
+# 判据四件：脚本在且与仓内逐字节相同 + timer enabled + timer active + TSV ≥1 行（含表头）。
+T9_TSV=/var/lib/elden/suspend-resource.tsv
+T9_SHA_LOCAL=$(sha256sum "$ROOT/scripts/suspend-resource-sample.sh" 2>/dev/null | awk '{print $1}')
+T9_STATE=$("${SSH[@]}" 'set -e
+c=0
+[ -x /usr/local/sbin/suspend-resource-sample.sh ] || c=$((c+1))
+systemctl is-enabled elden-resource-sample.timer 2>/dev/null | grep -qx enabled || c=$((c+1))
+systemctl is-active elden-resource-sample.timer 2>/dev/null | grep -qx active || c=$((c+1))
+[ -s /var/lib/elden/suspend-resource.tsv ] || c=$((c+1))
+echo $c' 2>/dev/null || echo 9)
+T9_SHA_DEV=$("${SSH[@]}" 'sha256sum /usr/local/sbin/suspend-resource-sample.sh 2>/dev/null | awk "{print \$1}"' 2>/dev/null || true)
+if [ "${T9_STATE:-9}" = 0 ] && [ -n "$T9_SHA_LOCAL" ] && [ "$T9_SHA_DEV" = "$T9_SHA_LOCAL" ]; then
+	ok "T9 采样器就绪（timer active，表 $(ssh -o BatchMode=yes "$TAB" "wc -l < $T9_TSV" 2>/dev/null) 行）"
+elif [ "$MODE" = check ]; then
+	no "T9 采样器未就绪（缺件数=$T9_STATE，脚本 sha 设备=${T9_SHA_DEV:-无} 仓内=${T9_SHA_LOCAL:-无}）"
+else
+	timeout -k 3 60 scp "$ROOT/scripts/suspend-resource-sample.sh" "$TAB:/usr/local/sbin/suspend-resource-sample.sh" >/dev/null 2>&1 || true
+	timeout -k 3 60 scp "$ROOT/rootfs/debian/units-extra/elden-resource-sample.service" \
+		"$ROOT/rootfs/debian/units-extra/elden-resource-sample.timer" "$TAB:/etc/systemd/system/" >/dev/null 2>&1 || true
+	"${SSH[@]}" 'set -e
+chmod 755 /usr/local/sbin/suspend-resource-sample.sh
+mkdir -p /var/lib/elden
+systemctl daemon-reload
+systemctl enable --now elden-resource-sample.timer >/dev/null 2>&1
+# 立刻采一行，让判据当场有数（不等 10 min OnBootSec）
+/bin/sh /usr/local/sbin/suspend-resource-sample.sh tick' \
+		&& fix "T9 采样器已装（timer enabled+active，已采首行）" || no "T9 采样器安装失败"
+	T9_STATE=$("${SSH[@]}" 'c=0
+[ -x /usr/local/sbin/suspend-resource-sample.sh ] || c=$((c+1))
+systemctl is-enabled elden-resource-sample.timer 2>/dev/null | grep -qx enabled || c=$((c+1))
+systemctl is-active elden-resource-sample.timer 2>/dev/null | grep -qx active || c=$((c+1))
+[ -s /var/lib/elden/suspend-resource.tsv ] || c=$((c+1))
+echo $c')
+	T9_SHA_DEV=$("${SSH[@]}" 'sha256sum /usr/local/sbin/suspend-resource-sample.sh 2>/dev/null | awk "{print \$1}"')
+	[ "${T9_STATE:-9}" = 0 ] && [ "$T9_SHA_DEV" = "$T9_SHA_LOCAL" ] \
+		&& fix "T9 采样器就绪（脚本 sha 与仓内一致，timer active）" \
+		|| no "T9 采样器仍缺（缺件数=$T9_STATE）"
+fi
+
 echo
 if [ "$missing" -eq 0 ]; then echo "结果: 达标（MISS=0）"; exit 0; fi
 echo "结果: 未达标（MISS=$missing）"; exit 1

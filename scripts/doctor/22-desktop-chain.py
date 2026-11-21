@@ -86,6 +86,17 @@ PKG_REQUIRED = [
 
 # 坑号 → 必须有判据锚点的 (文件, 子串) 列表。子串必须出现在**可执行/可判读**的位置，
 # 只在注释里出现不算（这是 #681 最初的真实缺陷）。
+NONPKG_ANCHORS = [
+    ('scripts/deploy-desktop-shell.sh', 'elden-resource-sample.timer',
+     'T9 采样器 timer 必须由 deploy 脚本落盘，否则重建根后又只剩「没数据」'),
+    ('rootfs/debian/units-extra/elden-resource-sample.timer', 'OnUnitActiveSec=30min',
+     'T9 采样周期（30 min）是「同一 boot ≥3 周期」判据的前提'),
+    ('scripts/suspend-resource-sample.sh', 'tick)',
+     '定时器走 tick 模式（幂等写表头 + 追加一行），删了 unit 就跑不通'),
+    ('rootfs/debian/stage.sh', 'units-extra',
+     '镜像构建也要带这枚 timer（stage 4d），否则重刷根同样丢'),
+]
+
 ANCHORS = [
     ('#681', SCRIPT, 'systemd-udevd', '服务状态判据（不是「装了就行」）'),
     ('#681', SCRIPT, '/dev/dri/card0', '显示链结果判据'),
@@ -133,6 +144,15 @@ def check_static():
             '；'.join('%s=%s' % (p, why) for p, why in PKG_REQUIRED if p in missing)))
     else:
         ok('PKGS 含全部 %d 个必需包（udev/phosh-osk-stub 等）' % len(PKG_REQUIRED))
+    # B2 非包资产锚点（2026-11-21）：重建根丢的是「资产」不是「包」——T9 采样器（脚本+timer+/var/lib/elden）
+    # 在 11-19 重建后整个消失，而设备上"没有数据"会被读成"还没到下结论的时候"。
+    # 这里钉住 deploy 脚本里的 §12 与两枚手写单元的落点，删掉任一处即 FAIL。
+    for rel, needle, why in NONPKG_ANCHORS:
+        body = read(rel) or ''
+        if needle in body:
+            ok('%s 含锚点 `%s`' % (rel, needle))
+        else:
+            bad('%s 缺锚点 `%s`（%s）' % (rel, needle, why))
     for pid, rel, needle, why in ANCHORS:
         body = read(rel) or ''
         if needle in body:

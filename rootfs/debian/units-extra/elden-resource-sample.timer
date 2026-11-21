@@ -1,0 +1,16 @@
+# elden-resource-sample.timer — 每 30 min 采一行（T9 间接资源测量）
+#
+# 周期依据：T9 判据「同一 boot 内 ≥3 周期看趋势」⇒ 30 min 一天 48 点，够看斜率；
+# 太密会把活跃期噪声当趋势。OnBootSec 错开开机抖动，Persistent=no（重启后不补跑历史，
+# 补跑出来的行只有「重启后」语义，混进趋势反而误判）。
+[Unit]
+Description=Periodic elden resource sampler (T9, every 30 min)
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=30min
+AccuracySec=1min
+Persistent=false
+
+[Install]
+WantedBy=timers.target

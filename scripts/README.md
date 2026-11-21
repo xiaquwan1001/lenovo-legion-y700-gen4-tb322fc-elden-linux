@@ -51,7 +51,7 @@
 | `scripts/doctor/25-out-status.sh` | §25 out/ 造件生命周期账本门（委托 scripts/out-status.py --check）。 | 4 |
 | `scripts/doctor/26-vbmeta-b-chain.sh` | §26 b 槽自签 AVB 链一致性门（委托 scripts/build-vbmeta-b.sh --check）。 | 5 |
 | `scripts/doctor/27-bootimg-cmdline.sh` | §27 boot/vendor_boot cmdline 改写器自检门（委托脚本自带 --selftest）。 | 4 |
-| `scripts/doctor/_lib.sh` | shellcheck shell=bash | 24 |
+| `scripts/doctor/_lib.sh` | shellcheck shell=bash | 25 |
 | `scripts/doctor/ab-bench.sh` | bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置） | 6 |
 | `scripts/android-apk-pkgname.py` | 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。 | 4 |
 | `scripts/android-ksu-avb-build.py` | 造 KernelSU(LKM) 修补的 init_boot + 与之自洽的 vbmeta_a。 | 9 |
@@ -127,7 +127,7 @@
 | `scripts/charge-ctl.sh` | battery / charger control for TB322FC (elden), qcom-battmgr. | 27 |
 | `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 23 |
 | `scripts/deploy-camera-modules.sh` | 收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验** | 23 |
-| `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 68 |
+| `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 72 |
 | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 36 |
 | `scripts/deploy-sensord-routec-debian.sh` | 在 **Debian/glibc 根**上安装路线 C 的 Waydroid sensor HAL | 13 |
 | `scripts/deploy-sensord-routec.sh` | build & install the route-C Waydroid sensor HAL | 15 |
@@ -231,7 +231,7 @@
 | `scripts/asset-install-linux.sh` | 把 assets/android-20261119/ 里的原厂安卓资产装到 Linux 桌面 | 11 |
 | `scripts/b3b-session-retry.sh` | 零构建实验：在坏发台上重走一次 modeset，看面板是否点亮。 | 7 |
 | `scripts/bench-install.sh` | 设备侧：安装可选基准工具（需要网络） | 11 |
-| `scripts/boot-img-cmdline.py` | 从一个已存在的 boot.img 里取出 kernel/ramdisk/dtb， | 46 |
+| `scripts/boot-img-cmdline.py` | 从一个已存在的 boot.img 里取出 kernel/ramdisk/dtb， | 49 |
 | `scripts/bootimg-replace-kernel.py` | 只替换 Android boot image 的内核段，其余逐字节保留。 | 10 |
 | `scripts/build-athm-probe.sh` | Q26 Step A probe: CONFIG_ATH12K=m single-shot build. | 3 |
 | `scripts/build-boot-slim.sh` | G1-30（= G1-29 路线 C）：最小 initramfs 版 boot.img | 10 |
@@ -329,7 +329,7 @@
 | `scripts/skewcal-measure.sh` | 一次 M4 SKEW_CAL A/B 出流测量（设备是唯一串行资源 → 单次测量整体包在 device-lock 内）。 | 4 |
 | `scripts/static-scan.py` | check-doctor §6 的静态卫生扫描（bashism / 死脚本）。 | 35 |
 | `scripts/suspend-boot-panic-capture.sh` | 把「CONFIG_SUSPEND=y 后启动即死」(vk128/vk129) 变成可判定的 panic 栈 | 7 |
-| `scripts/suspend-resource-sample.sh` | 待机/唤醒的「间接资源测量」采样器（设备侧，POSIX sh） | 9 |
+| `scripts/suspend-resource-sample.sh` | 待机/唤醒的「间接资源测量」采样器（设备侧，POSIX sh） | 19 |
 | `scripts/t5-q24-capture.sh` | T5：给 Taniya Das（Q24 语境）的三件套采集 | 6 |
 | `scripts/tf-stress.sh` | TF 卡（SDHCI/SDC2）写稳定性压测（在设备上以 root 运行） | 7 |
 | `scripts/thermal-stress.sh` | 温控压测驱动（在设备上运行） | 12 |
@@ -364,7 +364,7 @@
 | 入口 | 用途 | 引用 |
 |---|---|---|
 | `scripts/android-launcher-db-trim.py` | 裁剪 /system/etc/launcher.db 的默认桌面布局（纯主机侧、不用 root）。 | 6 |
-| `scripts/android-v3-bringup-walkthrough.sh` | 安卓精简 v3「首启验证」上机执行包（S1–S5，默认 dry-run） | 13 |
+| `scripts/android-v3-bringup-walkthrough.sh` | 安卓精简 v3「首启验证」上机执行包（S1–S5，默认 dry-run） | 14 |
 | `scripts/blackbox.py` | UEFI 早期可见性「DDR 黑匣子」读写/解码工具（主机侧，经 ssh 走设备）。 | 26 |
 | `scripts/deskstack-switch.sh` | 桌面栈整档切换（phoc + phosh 全套），用于 T20/T19 的 A/B 对照 | 3 |
 | `scripts/elden-backlight-floor.sh` | 背光下限守护（防止「看起来像黑屏」） | 19 |
