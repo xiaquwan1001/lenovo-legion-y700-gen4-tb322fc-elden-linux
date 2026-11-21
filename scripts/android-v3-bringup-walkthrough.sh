@@ -464,8 +464,22 @@ bcb_clear_verify() {
 			run 120 "$QDL" -s ufs -R "$LOADER" write "0/$MISC_LBA" "$STEPLOG/zero4k.bin" read "0/$MISC_LBA+1" "$STEPLOG/bcb-after.bin"
 			[ "$APPLY" = 1 ] || { info "[dry] 之后校验 bcb-after.bin 全 0"; return 0; }
 			;;
+		fastboot)
+			# 2026-11-21 新增：设备在 fastboot 时也能清 BCB —— 4 KiB 零件直接 `fastboot flash misc`。
+			# 依据：① 本机 misc 头 4 KiB 本来就全零（slot 元数据不在这一段，Linux 侧多次清零未影响 qbootctl）；
+			#       ② ABL 只认 misc 头部 bootloader_message ⇒ 写 4 KiB 零即「无 BCB 命令」。
+			# 读回校验：fastboot 读不了分区 ⇒ 用「刷写返回 OKAY + 后续观察是否再落 recovery」当判据，
+			# 并在回到 Linux 后补一次 dd 读回（S1 的 pstore_triage 之后）。
+			head -c 4096 /dev/zero > "$STEPLOG/zero4k.bin"
+			if [ "$APPLY" = 1 ]; then
+				run 60 fastboot -s "$SER" flash misc "$STEPLOG/zero4k.bin"
+				info "判据（fastboot 侧）：刷写返回 OKAY；回 Linux 后补 dd 读回全 0（本步记入归档）"
+				return 0
+			fi
+			info "[dry] fastboot -s $SER flash misc $STEPLOG/zero4k.bin（4 KiB 零 = 无 BCB 命令）"
+			return 0 ;;
 		*)
-			if [ "$APPLY" = 1 ]; then die "清 BCB 需要 linux 或 edl 现态（当前 $st）" 3; fi
+			if [ "$APPLY" = 1 ]; then die "清 BCB 需要 linux / fastboot / edl 现态（当前 $st）" 3; fi
 			printf '   [dry] 清法① Linux: ssh %s "cp -f /dev/disk/by-partlabel/misc /tmp/misc.bcb.bak; dd if=/dev/zero of=/dev/disk/by-partlabel/misc bs=4096 count=1 conv=fsync"\n' "$TAB"
 			printf '   [dry] 清法② EDL:  %s -s ufs -R %s write 0/%s zero4k.bin read 0/%s+1 bcb-after.bin\n' "$QDL" "$LOADER" "$MISC_LBA" "$MISC_LBA"
 			printf '   [dry] 判据：bcb-after.bin nonzero==0（否则不要 reset）\n'
@@ -634,14 +648,26 @@ S1() {
 	step_begin S1
 	say "S1) 清 BCB + 槽位置 a + v1 super 在机的首启观察（预期 3–5 min）"
 	info "前置：v1 super 已在机（2026-11-19 21:3x 回刷，读回 e3d0d26f…）；super 现态需现场再确认"
-	ensure_linux
+	# 2026-11-21：S1 从 fastboot 侧也能跑（BCB 用 fastboot flash misc 清、槽位用 --set-active 切，
+	# 属性复位由 --set-active 顺带完成）；只有 Linux 侧才能读 super 头/pstoredump，那两步按现态降级。
+	local st_s1; st_s1=$(dev_state)
+	if [ "$st_s1" = linux ]; then :; else
+		case "$st_s1" in
+			fastboot) info "现态 fastboot ⇒ 走 fastboot 侧 S1（清 BCB = flash misc 4 KiB 零；切槽 = --set-active）" ;;
+			*) die "S1 需要 linux 或 fastboot（当前 $st_s1）" 3 ;;
+		esac
+	fi
 	# 1) 现态取证
 	run 30 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'uname -r; findmnt -no SOURCE,LABEL /'
 	run 30 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl 2>&1 | head -24; qbootctl -a 2>&1'
 	info "判据：Active slot 行；super 现态由下一步首 512 KiB 解析确认（v1 = system_a 5296 MiB）"
-	run 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
-		'dd if=/dev/disk/by-partlabel/super bs=4096 count=128 2>/dev/null' > "$STEPLOG/super-head512k.bin" 2>/dev/null
-	if [ "$APPLY" = 1 ]; then
+	if [ "$(dev_state)" = linux ]; then
+		run 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
+			'dd if=/dev/disk/by-partlabel/super bs=4096 count=128 2>/dev/null' > "$STEPLOG/super-head512k.bin" 2>/dev/null
+	else
+		info "现态 $(dev_state)：跳读 super 头 512 KiB（fastboot 读不了分区）—— super 现态以主机登记 sha 为准"
+	fi
+	if [ "$APPLY" = 1 ] && [ -s "$STEPLOG/super-head512k.bin" ]; then
 		python3 "$ROOT/scripts/android-super.py" list "$STEPLOG/super-head512k.bin" 2>&1 | head -12 | tee "$STEPLOG/super-state.txt"
 		info "判据：blockdev/分区尺寸 = v1（system_a 5296 MiB）才对得上「v1 在机」"
 	else
@@ -665,7 +691,7 @@ S1() {
 		*) info "现态 $(dev_state)：不在 linux/fastboot ⇒ 无法重启观察，先回 Linux 或进 fastboot" ;;
 	esac
 	observe_android S1; local rc=$?
-	pstore_triage
+	if [ "$(dev_state)" = linux ]; then pstore_triage; else info "现态 $(dev_state)：跳过 pstoredump 取证（需 Linux/EDL）"; fi
 	case "$rc" in
 		0) info "S1 结论：进桌面 ⇒ 之前 3 发失败至少有一部分是 BCB/ boot_a 属性造成的假失败（PITFALLS #695）；把本次的 BCB 与 boot_a byte6 两个读数写进报告后再决定是否还走 S2–S4" ;;
 		2) info "S1 结论：又落 recovery ⇒ 先读 misc（bcb_read），若 BCB 非 0 则本次样本无效，重做 S1" ;;
