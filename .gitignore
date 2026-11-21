@@ -9,6 +9,8 @@
 # ---- 上游 clone / 可重下（含巨大构建产物）----
 # geekidos-linux = 上游 GEEKiDoS/linux（13G，含构建产物）；内核进度以 patches/ 为准
 /geekidos-linux/
+# 软链 linux -> geekidos-linux（2026-11-21 恢复源树时重建；勿入库）
+/linux
 /Y700-elden-linux/
 /stock-src/
 /qdl/

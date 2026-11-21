@@ -4,46 +4,49 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：580
+- 报告总数：602
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
 | 组 | 篇数 | 最近一篇 |
 |---|---|---|
-| `uefi` | 84 | `uefi-grub-initrd-memmap-20261115.md` |
+| `uefi` | 86 | `uefi-bslot-plan-20261121.md` |
 | `q28` | 33 | `q28-ab-rig-20261116.md` |
 | `mail` | 29 | `mail-inbox-20261121.md` |
 | `q24` | 24 | `q24-n5b-20261023.md` |
+| `upstream` | 19 | `upstream-queue-prep-20261121.md` |
+| `doc` | 18 | `doc-audit-night-20261121.md` |
 | `gunyah` | 18 | `gunyah-b15-iceland-rmdrv-20261113.md` |
-| `upstream` | 18 | `upstream-recheck-20261120.md` |
-| `doc` | 16 | `doc-slim-plan-20261118.md` |
+| `android` | 15 | `android-boot-audit-20261122.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
-| `android` | 14 | `android-a-slot-laneC-20261121.md` |
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
 | `camss` | 9 | `camss-v25-rebase-20261117.md` |
 | `m3v5` | 9 | `m3v5-repack-20261031.md` |
 | `b5` | 8 | `b5-preflight-20261029.md` |
 | `droidloom` | 8 | `droidloom-l2-phoc-syncobj-20261111.md` |
+| `ime` | 8 | `ime-osk-zh-matrix-20261122.md` |
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
 | `m6` | 8 | `m6-v2-recut-plan-20261107.md` |
 | `script` | 8 | `script-audit-adb-20261118.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
-| `ime` | 7 | `ime-osk-zero-to-usable-20261121.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `camera` | 6 | `camera-snapshot-window-focus-20261019.md` |
+| `device` | 6 | `device-window-20261121-night.md` |
+| `mobian` | 6 | `mobian-mr-plan-20261122.md` |
 | `userland` | 6 | `userland-dealpine-audit-20261026.md` |
-| `device` | 5 | `device-status-20261119.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
 | `disk` | 4 | `disk-reclaim-20261121.md` |
+| `dwc3` | 4 | `dwc3-g7-prep-20261121.md` |
 | `host` | 4 | `host-stability-20261023.md` |
-| `mobian` | 4 | `mobian-daily-baseline-20261107.md` |
 | `progress` | 4 | `progress-audit-20261118.md` |
 | `q32` | 4 | `q32-matrix-20261024.md` |
 | `research` | 4 | `research-next-20261102.md` |
+| `scripts` | 4 | `scripts-audit-20261122.md` |
 | `主机侧` | 4 | `主机侧-B13-20261117.md` |
+| `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
 | `c3` | 3 | `c3-spic-verdict-20261115.md` |
 | `external` | 3 | `external-scan-20261112.md` |
 | `grub` | 3 | `grub-rehash-20261115.md` |
@@ -51,18 +54,18 @@
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
 | `out` | 3 | `out-status-ledger-20261120.md` |
+| `pitfalls` | 3 | `pitfalls-condense-20261122.md` |
+| `session` | 3 | `session-plan-20261121-night.md` |
 | `stale` | 3 | `stale-alpine-audit-docs-20261119.md` |
 | `suspend` | 3 | `suspend-panic-rootcause-20261020.md` |
 | `t9` | 3 | `t9-sampler-restored-20261121.md` |
 | `tablet` | 3 | `tablet-night-runner-dryrun-20261031.md` |
 | `todo` | 3 | `todo-next-20261118.md` |
 | `aw86927` | 2 | `aw86927-series-20261027.md` |
-| `bootloader` | 2 | `bootloader-alternatives-20261111.md` |
 | `c1` | 2 | `c1-noworkaround-20261013.md` |
 | `code` | 2 | `code-boundary-preinject-20261031.md` |
 | `debian` | 2 | `debian-root-accounts-sensors-20261026.md` |
 | `docs` | 2 | `docs-slim-20261114.md` |
-| `dwc3` | 2 | `dwc3-v10-plan-20261120.md` |
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
@@ -72,12 +75,9 @@
 | `local` | 2 | `local-cleanup-q24-q28-20261015.md` |
 | `m8` | 2 | `m8-rsc-ownership-20261031.md` |
 | `modular` | 2 | `modular-driver-audit-20261026.md` |
-| `pitfalls` | 2 | `pitfalls-body-backfill-20261120.md` |
 | `pstore` | 2 | `pstore-ram-initrd-guard-20261116.md` |
 | `qemu` | 2 | `qemu-full-chain-20261113.md` |
 | `route` | 2 | `route-b-impl-20261108.md` |
-| `scripts` | 2 | `scripts-index-20261120.md` |
-| `session` | 2 | `session-2026-10-13-evening.md` |
 | `t14` | 2 | `t14-s3s4s6-offline-verify-20261114.md` |
 | `t18` | 2 | `t18-charging-timing-20261111.md` |
 | `tasks` | 2 | `tasks-slim-20261107.md` |
@@ -88,11 +88,13 @@
 | `wd` | 2 | `wd-net-baseline-20261011.md` |
 | `BOUNDARY` | 1 | `BOUNDARY-2026-10-10-clean-base.md` |
 | `Q24` | 1 | `Q24-Q28-INDEX.md` |
+| `a` | 1 | `a-slot-h5-three-way-20261121.md` |
 | `assets` | 1 | `assets-inventory-20261023.md` |
 | `b1` | 1 | `b1-csiphy-recheck-20261113.md` |
 | `b2` | 1 | `b2-camss-0003-recheck-20261113.md` |
 | `backup` | 1 | `backup-triage-20261118.md` |
 | `beacon` | 1 | `beacon-recheck-20261110.md` |
+| `best` | 1 | `best-state-and-gap-20261122.md` |
 | `bigfile` | 1 | `bigfile-verdict-20261120.md` |
 | `bootimg` | 1 | `bootimg-v4-cmdline-20261120.md` |
 | `build` | 1 | `build-stage-no-danger-units-20261120.md` |
@@ -104,9 +106,11 @@
 | `consolidation` | 1 | `consolidation-20261014.md` |
 | `container` | 1 | `container-audio-20261011.md` |
 | `counts` | 1 | `counts-gate-20261107.md` |
+| `daily` | 1 | `daily-linux-deploy-20261122.md` |
 | `desktop` | 1 | `desktop-chain-gate-20261119.md` |
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
 | `dispcc` | 1 | `dispcc-battmgr-20261028.md` |
+| `distro` | 1 | `distro-upstream-feasibility-20261121.md` |
 | `driver` | 1 | `driver-ab-charging-20261108.md` |
 | `e3` | 1 | `e3-wcn-dyndbg-20261014.md` |
 | `edl` | 1 | `edl-toolchain-survey-20261101.md` |
@@ -125,6 +129,7 @@
 | `ltbox` | 1 | `ltbox-evaluation-20261118.md` |
 | `m5` | 1 | `m5-dm-default-key-20261013.md` |
 | `mailbox` | 1 | `mailbox-cleanup-20261102.md` |
+| `mainline` | 1 | `mainline-upstream-audit-20261122.md` |
 | `mdss` | 1 | `mdss-int2-evidence-20261113.md` |
 | `migration` | 1 | `migration-rebuild-audit-20261017.md` |
 | `misc` | 1 | `misc-20261117.md` |
@@ -166,8 +171,10 @@
 | `woa` | 1 | `woa-gunyah-survey-20261024.md` |
 | `zh` | 1 | `zh-ime-touch-chinese-20261020.md` |
 
-## `uefi`（84）
+## `uefi`（86）
 
+- `uefi-bslot-plan-20261121.md` — UEFI「纯 b 槽」部署 + GRUB 菜单加 a 槽安卓 —— 可行性与方案（2026-11-21）
+- `uefi-mu-espfirst-replay-20261121.md` — UEFI Mu「带 esp-first」重建 —— 盘点与重放（2026-11-21）
 - `uefi-grub-initrd-memmap-20261115.md` — UEFI(GRUB) 路径 64 MB initrd 交接失败 —— 内存图方向收窄报告
 - `uefi-grub-initrd-rootcause-20261115.md` — GRUB 路径 64 MB initrd 被毁：根因定案（2026-11-15 夜）
 - `uefi-vk188-fbcon-20261112.md` — UEFI 间接引导 · 2026-11-12 收口：GRUB 字号定案、内核可见性通道定案、initrd bug 定案
@@ -348,6 +355,49 @@
 - `q24-stageA-20261012.md` — Q24 阶段 A（安全采集）实测 + 设备挂死事件（2026-10-12）
 - `q24-repro-20261011.md` — Q24 复现 + RPMh 现场取证（2026-10-11）
 
+## `upstream`（19）
+
+- `upstream-queue-prep-20261121.md` — 上游队列备料 / 现查 / 上机执行单（2026-11-21）
+- `upstream-recheck-20261120.md` — 上游系列现态复核（patchwork REST，2026-11-20）
+- `upstream-delta-20261118.md` — 上游变化侦察（窗口 2026-11-13 → 2026-11-17，写于 2026-11-17 UTC）
+- `upstream-replies-20261117.md` — 上游邮件 + 主线代码状态核查（2026-11-17）
+- `upstream-74-replay-20261113.md` — 上游 7.4 重放可行性实验 — 2026-11-13
+- `upstream-inreview-inventory-20261113.md` — 在审系列清单与分诊盲区（B17，2026-11-13）
+- `upstream-status-20261113.md` — 上游化当前一页（2026-11-13）
+- `upstream-watch-20261113.md` — 上游动向观察 2026-10-01 → 2026-11-13
+- `upstream-merge-candidates-20261112.md` — 上游可合并增量评估 — 2026-11-12（lane D）
+- `upstream-delta-20261107.md` — 上游回包增量复核 — 2026-11-07
+- `upstream-dedup-audit-20261027.md` — 全系列 linux-next 去重核对（2026-10-27 晚）
+- `upstream-mail-sm8750-refs-20261023.md` — 上游邮件核查 + 同 SoC 参考面（2026-10-23 晚）
+- `upstream-libcamera-20261017.md` — libcamera 上游提交记录（2026-10-17）
+- `upstream-q24-q28-standard-20261015.md` — Q24 / Q28 在上游化标准下的重新定义（2026-10-15）
+- `upstream-policy-20261013.md` — 上游化策略 — 三问审计与「mainline + 薄下游层」落地（2026-10-13）
+- `upstream-backport-lane-verdict-20261012.md` — 内核上游回移 lane 收尾 —— 裁决报告（elden/lane-upstream）
+- `upstream-hits-20261012.md` — 上游命中与回移审计（7.2.y 稳定 / 7.3 周期 / lore 在途）
+- `upstream-hits-review-20261012.md` — 上游命中审计复核 —— 对 `reports/upstream-hits-20261012.md`（lane/upstream 53fbe5a）的独立核对
+- `upstream-lane-merge-20261012.md` — 上游回移 lane 收尾：按裁决清洗 + 合入基线 + 出日常镜像 — 2026-10-12
+
+## `doc`（18）
+
+- `doc-audit-night-20261121.md` — 文档与踩坑精简（D6 lane）— 死指针 / 重复段 / 索引漂移 — 2026-11-21 夜
+- `doc-reality-audit-20261121.md` — 文档「与进度脱节」核实 + 收敛 — 2026-11-21
+- `doc-slim-plan-20261118.md` — 文档精简方案（只出方案，未改任何 SSOT；2026-11-18）
+- `doc-hygiene-20261117.md` — 文档/工具/工件卫生清理报告 (2026-11-17)
+- `doc-dedup-audit-20261112.md` — 文档重复描述（SSOT 违例）审计 — 2026-11-12
+- `doc-ime-scope-audit-20261111.md` — 文档口径核实：IME / 中文输入 真实进度与剩余动作（2026-11-11）
+- `doc-todo-20261111.md` — 文档整理待办分析（任务 D，2026-11-11，只读）
+- `doc-audit-20261108.md` — 增量文档审计 2026-11-08
+- `doc-audit-20261106.md` — 文档账目审计 — 2026-11-06
+- `doc-audit-20261105.md` — 文档账目审计 2026-11-05（lane C，只读）
+- `doc-slim-20261102.md` — 文档精简 / 清理 / 修正审计（2026-11-02，只出报告，不改正文）
+- `doc-trim-20261102.md` — 文档精简执行报告（2026-11-02，搬家类 P2 + 剩余 P1 落地）
+- `doc-mail-audit-20261101.md` — 文档一致性审计 + 邮件分诊（2026-11-01，只读 lane）
+- `doc-audit-20261031-apply.md` — 应用清单复核 + 增量审计（2026-10-31）
+- `doc-audit-20261030-v2-applylist.md` — 应用清单（总管一次性机械应用）— 源自 `reports/doc-audit-20261030-v2.md`（P0 0 / P1 8 / P2 15）
+- `doc-audit-20261030-v2.md` — 文档审计（增量·v2）2026-10-27 → 2026-10-30 — 状态漂移 / 死链 / 孤儿报告 / SSOT 违例
+- `doc-audit-20261030.md` — 文档缺口/过时/矛盾审计（2026-10-30）
+- `doc-audit-20261026.md` — 文档与资料审计 — 2026-10-26（lane C，`.pi/agents/doc-audit.md` 清单 1–7）
+
 ## `gunyah`（18）
 
 - `gunyah-b15-iceland-rmdrv-20261113.md` — Gunyah B15：iceland 16 补丁正文 + 本机 gh_rm_drv.ko 反汇编（2026-11-13，零设备）
@@ -369,45 +419,23 @@
 - `gunyah-vmm-first-attempt-20261024.md` — Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 - `gunyah-roadmap-20261021.md` — Gunyah 虚拟化线（拓展项）资产盘点 + 事实核查 + 分阶段规划
 
-## `upstream`（18）
+## `android`（15）
 
-- `upstream-recheck-20261120.md` — 上游系列现态复核（patchwork REST，2026-11-20）
-- `upstream-delta-20261118.md` — 上游变化侦察（窗口 2026-11-13 → 2026-11-17，写于 2026-11-17 UTC）
-- `upstream-replies-20261117.md` — 上游邮件 + 主线代码状态核查（2026-11-17）
-- `upstream-74-replay-20261113.md` — 上游 7.4 重放可行性实验 — 2026-11-13
-- `upstream-inreview-inventory-20261113.md` — 在审系列清单与分诊盲区（B17，2026-11-13）
-- `upstream-status-20261113.md` — 上游化当前一页（2026-11-13）
-- `upstream-watch-20261113.md` — 上游动向观察 2026-10-01 → 2026-11-13
-- `upstream-merge-candidates-20261112.md` — 上游可合并增量评估 — 2026-11-12（lane D）
-- `upstream-delta-20261107.md` — 上游回包增量复核 — 2026-11-07
-- `upstream-dedup-audit-20261027.md` — 全系列 linux-next 去重核对（2026-10-27 晚）
-- `upstream-mail-sm8750-refs-20261023.md` — 上游邮件核查 + 同 SoC 参考面（2026-10-23 晚）
-- `upstream-libcamera-20261017.md` — libcamera 上游提交记录（2026-10-17）
-- `upstream-q24-q28-standard-20261015.md` — Q24 / Q28 在上游化标准下的重新定义（2026-10-15）
-- `upstream-policy-20261013.md` — 上游化策略 — 三问审计与「mainline + 薄下游层」落地（2026-10-13）
-- `upstream-backport-lane-verdict-20261012.md` — 内核上游回移 lane 收尾 —— 裁决报告（elden/lane-upstream）
-- `upstream-hits-20261012.md` — 上游命中与回移审计（7.2.y 稳定 / 7.3 周期 / lore 在途）
-- `upstream-hits-review-20261012.md` — 上游命中审计复核 —— 对 `reports/upstream-hits-20261012.md`（lane/upstream 53fbe5a）的独立核对
-- `upstream-lane-merge-20261012.md` — 上游回移 lane 收尾：按裁决清洗 + 合入基线 + 出日常镜像 — 2026-10-12
-
-## `doc`（16）
-
-- `doc-slim-plan-20261118.md` — 文档精简方案（只出方案，未改任何 SSOT；2026-11-18）
-- `doc-hygiene-20261117.md` — 文档/工具/工件卫生清理报告 (2026-11-17)
-- `doc-dedup-audit-20261112.md` — 文档重复描述（SSOT 违例）审计 — 2026-11-12
-- `doc-ime-scope-audit-20261111.md` — 文档口径核实：IME / 中文输入 真实进度与剩余动作（2026-11-11）
-- `doc-todo-20261111.md` — 文档整理待办分析（任务 D，2026-11-11，只读）
-- `doc-audit-20261108.md` — 增量文档审计 2026-11-08
-- `doc-audit-20261106.md` — 文档账目审计 — 2026-11-06
-- `doc-audit-20261105.md` — 文档账目审计 2026-11-05（lane C，只读）
-- `doc-slim-20261102.md` — 文档精简 / 清理 / 修正审计（2026-11-02，只出报告，不改正文）
-- `doc-trim-20261102.md` — 文档精简执行报告（2026-11-02，搬家类 P2 + 剩余 P1 落地）
-- `doc-mail-audit-20261101.md` — 文档一致性审计 + 邮件分诊（2026-11-01，只读 lane）
-- `doc-audit-20261031-apply.md` — 应用清单复核 + 增量审计（2026-10-31）
-- `doc-audit-20261030-v2-applylist.md` — 应用清单（总管一次性机械应用）— 源自 `reports/doc-audit-20261030-v2.md`（P0 0 / P1 8 / P2 15）
-- `doc-audit-20261030-v2.md` — 文档审计（增量·v2）2026-10-27 → 2026-10-30 — 状态漂移 / 死链 / 孤儿报告 / SSOT 违例
-- `doc-audit-20261030.md` — 文档缺口/过时/矛盾审计（2026-10-30）
-- `doc-audit-20261026.md` — 文档与资料审计 — 2026-10-26（lane C，`.pi/agents/doc-audit.md` 清单 1–7）
+- `android-boot-audit-20261122.md` — 安卓「系统起不来」证据链审计（2026-11-22，主机侧只读）
+- `android-a-slot-laneC-20261121.md` — 安卓 a 槽 lane C：机制重判 · 材料核实 · 设备只读取证 · 执行单 · 脚本复核（2026-11-21）
+- `android-a-slot-materials-20261121.md` — a 槽 S2/S3 材料盘点 + 设备只读取证（2026-11-21）
+- `android-a-slot-mech-rejudge-20261121.md` — 安卓 a 槽「落 recovery」机制重判（2026-11-21，只读 lane）
+- `android-a-slot-s2s3-execplan-20261121.md` — a 槽 S2/S3 一页执行单（2026-11-21，self-contained）
+- `android-a-slot-attempt-20261120.md` — Android a 槽首启实测（2026-11-20 11:35–11:50，U2 HA2EXB0E）—— S1 的实测结论
+- `android-v3-bringup-packet-20261120.md` — 安卓精简 v3 首启验证 —— 「上机执行包」（S1–S5，主机侧准备完成，设备零写操作）
+- `android-assets-20261119.md` — 安卓原厂资产 → Linux 可用包（纯主机侧）
+- `android-ksu-avb-20261119.md` — KSU(init_boot) + AVB 自洽 —— 主机侧造件与对账（TB322FC / elden / ZUXOS 1.5.10.259）
+- `android-slim-v2-20261119.md` — 安卓「干净瘦身 v2」+ 卡 ZUXOS 动画静态定因
+- `android-slim-v3-20261119.md` — 安卓「彻底精简 v3」+ 安卓/Linux 双轨共存契约（2026-11-19）
+- `android-min-avb-facts-20261118.md` — 精简安卓全量包的 AVB / 虚拟 A/B / 去预装 事实与风险（S2）
+- `android-super-format-20261118.md` — super 封装格式、工具链与精简额度（S1）
+- `android-compat-20261026.md` — G2 安卓兼容调查（lane F）— 2026-10-26
+- `android-required-resources-audit-20261011.md` — 安卓侧「必须提取资源」审计（U2 · 2026-10-11）
 
 ## `m1`（15）
 
@@ -426,23 +454,6 @@
 - `m1-rebase-7.3rc7-execution-20261013.md` — M1 重基到 7.3-rc7：解冲突与系列完成执行报告（2026-10-13）
 - `m1-rebase-7.3rc7-feasibility-20261013.md` — M1 资产树基线重基可行性评估（7.2.0 血统 → 7.3-rc7）
 - `m1-clean-tree-20261011.md` — M1 干净上游资产树：组装 + 构建验证（2026-10-11）
-
-## `android`（14）
-
-- `android-a-slot-laneC-20261121.md` — 安卓 a 槽 lane C：机制重判 · 材料核实 · 设备只读取证 · 执行单 · 脚本复核（2026-11-21）
-- `android-a-slot-materials-20261121.md` — a 槽 S2/S3 材料盘点 + 设备只读取证（2026-11-21）
-- `android-a-slot-mech-rejudge-20261121.md` — 安卓 a 槽「落 recovery」机制重判（2026-11-21，只读 lane）
-- `android-a-slot-s2s3-execplan-20261121.md` — a 槽 S2/S3 一页执行单（2026-11-21，self-contained）
-- `android-a-slot-attempt-20261120.md` — Android a 槽首启实测（2026-11-20 11:35–11:50，U2 HA2EXB0E）—— S1 的实测结论
-- `android-v3-bringup-packet-20261120.md` — 安卓精简 v3 首启验证 —— 「上机执行包」（S1–S5，主机侧准备完成，设备零写操作）
-- `android-assets-20261119.md` — 安卓原厂资产 → Linux 可用包（纯主机侧）
-- `android-ksu-avb-20261119.md` — KSU(init_boot) + AVB 自洽 —— 主机侧造件与对账（TB322FC / elden / ZUXOS 1.5.10.259）
-- `android-slim-v2-20261119.md` — 安卓「干净瘦身 v2」+ 卡 ZUXOS 动画静态定因
-- `android-slim-v3-20261119.md` — 安卓「彻底精简 v3」+ 安卓/Linux 双轨共存契约（2026-11-19）
-- `android-min-avb-facts-20261118.md` — 精简安卓全量包的 AVB / 虚拟 A/B / 去预装 事实与风险（S2）
-- `android-super-format-20261118.md` — super 封装格式、工具链与精简额度（S1）
-- `android-compat-20261026.md` — G2 安卓兼容调查（lane F）— 2026-10-26
-- `android-required-resources-audit-20261011.md` — 安卓侧「必须提取资源」审计（U2 · 2026-10-11）
 
 ## `m3`（12）
 
@@ -505,6 +516,17 @@
 - `droidloom-build-device-plan-20261030.md` — droidloom 真实构建 + 上机计划（2026-10-31）
 - `droidloom-feasibility-plan-20261030.md` — droidloom 可行性规划（2026-10-30）
 
+## `ime`（8）
+
+- `ime-osk-zh-matrix-20261122.md` — 「键盘弹出」×「中文组词上屏」×「候选窗」——本栈可行路径决策矩阵（2026-11-22）
+- `ime-osk-zero-to-usable-20261121.md` — 从零把「虚拟键盘 + 中文输入 + 候选窗」做到可用 —— 一页 RUNBOOK（考古整理，2026-11-21）
+- `ime-osk-firefox-rootcause-20261112.md` — OSK 不弹的真根因：不是 phoc，是 `GTK_IM_MODULE=fcitx` —— Firefox 实测收口（2026-11-11 晚）
+- `ime-osk-lifecycle-20261112.md` — OSK（虚拟键盘）自动弹出/收起 — 失效面取证与最小处置（2026-11-12）
+- `ime-osk-pop-20261111.md` — IME OSK 不弹 — 上机最小判别链（2026-11-11）
+- `ime-phosh-fcitx5-invest-20261110.md` — 主机侧调研：Phosh(phoc) × fcitx5 × OSK 共存可行性（2026-11-10）
+- `ime-chinese-20261109.md` — 中文输入法可用性收口（2026-11-09）：配置器打不开、没有顶栏指示、切不到中文
+- `ime-osk0-dbus-spec-20261020.md` — 输入法控制面取证：sm.puri.OSK0 / Phosh 驱动链 / fcitx5 kimpanel / wvkbd 0.19.4
+
 ## `m4`（8）
 
 - `m4-camss-v2-20261031.md` — M4 camss v2（v2 0/2）— 撕 2/3、按 Loic 形状重构 3/3（存量修复，不含 SM8750 enable）
@@ -549,16 +571,6 @@
 - `wl2868c-20261028.md` — wl2868c binding（M4-1）重生成与 v2 投递 — 2026-10-28
 - `wl2868c-driver-20261028.md` — wl2868c 驱动本体：基线与上游可接受性 — 2026-10-28
 
-## `ime`（7）
-
-- `ime-osk-zero-to-usable-20261121.md` — 从零把「虚拟键盘 + 中文输入 + 候选窗」做到可用 —— 一页 RUNBOOK（考古整理，2026-11-21）
-- `ime-osk-firefox-rootcause-20261112.md` — OSK 不弹的真根因：不是 phoc，是 `GTK_IM_MODULE=fcitx` —— Firefox 实测收口（2026-11-11 晚）
-- `ime-osk-lifecycle-20261112.md` — OSK（虚拟键盘）自动弹出/收起 — 失效面取证与最小处置（2026-11-12）
-- `ime-osk-pop-20261111.md` — IME OSK 不弹 — 上机最小判别链（2026-11-11）
-- `ime-phosh-fcitx5-invest-20261110.md` — 主机侧调研：Phosh(phoc) × fcitx5 × OSK 共存可行性（2026-11-10）
-- `ime-chinese-20261109.md` — 中文输入法可用性收口（2026-11-09）：配置器打不开、没有顶栏指示、切不到中文
-- `ime-osk0-dbus-spec-20261020.md` — 输入法控制面取证：sm.puri.OSK0 / Phosh 驱动链 / fcitx5 kimpanel / wvkbd 0.19.4
-
 ## `waydroid`（7）
 
 - `waydroid-proxy-err-20261030.md` — Waydroid 容器内浏览器 `ERR_PROXY_CONNECTION_FAILED` — 只读取证
@@ -578,6 +590,24 @@
 - `camera-ae-helper-20261017.md` — 相机 AE 上游正解落地：libcamera sensor helper（s5kjns / gc08a8）
 - `camera-vk127-20261017.md` — 相机在 vk127（M1-7.3 重放线）上跑通 + 容器侧 camera provider 缺口
 
+## `device`（6）
+
+- `device-window-20261121-night.md` — 设备窗口清单（2026-11-21 夜，待用户放行）
+- `device-status-20261119.md` — 设备可用性核查：U2 `HA2EXB0E` —— 「ABL 内存类硬件故障 / 全原厂态等送修 ⇒ 不再上机」作废（2026-11-19）
+- `device-session-20261116-vk192.md` — vk192 上机 + 持久化（2026-11-16）
+- `device-session-20261113-vk191.md` — 设备会话 — 2026-11-13 夜：vk191 ramdisk 零写盘验证 + s2idle 复测
+- `device-window-checklist-20261031.md` — 设备窗口执行单（B 类阻塞合并）— 2026-10-31
+- `device-rescue-and-q28-m1-badboot-20261017.md` — 换机后 P0 抢救 + M1-7.3 线首个 Q28 坏发现场（2026-10-17）
+
+## `mobian`（6）
+
+- `mobian-mr-plan-20261122.md` — Mobian 第一件可提交物 —— 可执行 MR 方案（droid-juicer + mobian-recipes）2026-11-22
+- `mobian-upstream-firstpr-20261121.md` — Mobian 上游化第一件可交付 + 6.18 LTS 可落性静态评估 — 2026-11-21
+- `mobian-daily-baseline-20261107.md` — Mobian(Debian sid) 日用用户态基线补齐 — 2026-11-07
+- `mobian-daily-pkgs-20261107.md` — Debian sid + Phosh 日用必备包清单调研（2026-11-07）
+- `mobian-rootfs-artifacts-20261026.md` — Mobian 迁移物料（第一步）：apt 包映射表 + 自建固件包
+- `mobian-migration-plan-20261021.md` — Mobian（Debian + Phosh）迁移可行性评估与方案 — 只读研究，2026-10-21
+
 ## `userland`（6）
 
 - `userland-dealpine-audit-20261026.md` — 用户态去 Alpine 化审计（T20 补欠账，2026-10-26）
@@ -586,14 +616,6 @@
 - `userland-auto-rotation-toggle-20261011.md` — 用户态新增：自动旋转开/关快速设置磁贴（2026-10-11）
 - `userland-dark-brightness-verify-20261011.md` — 桌面用户态收口：深色/主题（G1-26/27）与亮度滑块（G1-28）—— 上机复核（2026-10-11）
 - `userland-display-scale-refresh-20261011.md` — 用户态显示修正：刷新率固定 165 Hz + 非整数缩放显示 100%（2026-10-11）
-
-## `device`（5）
-
-- `device-status-20261119.md` — 设备可用性核查：U2 `HA2EXB0E` —— 「ABL 内存类硬件故障 / 全原厂态等送修 ⇒ 不再上机」作废（2026-11-19）
-- `device-session-20261116-vk192.md` — vk192 上机 + 持久化（2026-11-16）
-- `device-session-20261113-vk191.md` — 设备会话 — 2026-11-13 夜：vk191 ramdisk 零写盘验证 + s2idle 复测
-- `device-window-checklist-20261031.md` — 设备窗口执行单（B 类阻塞合并）— 2026-10-31
-- `device-rescue-and-q28-m1-badboot-20261017.md` — 换机后 P0 抢救 + M1-7.3 线首个 Q28 坏发现场（2026-10-17）
 
 ## `git`（5）
 
@@ -631,19 +653,19 @@
 - `disk-cleanup-20261116.md` — 磁盘清理第二轮执行账 — 2026-11-16（承接 `reports/disk-cleanup-20261115.md`）
 - `disk-cleanup-20261115.md` — 磁盘清理评估与执行账 — 2026-11-15（第二轮，承接 `.pi/reports/disk-audit-2026-11-15.md`）
 
+## `dwc3`（4）
+
+- `dwc3-g7-prep-20261121.md` — dwc3 v11 · G7 上机件备料（2026-11-21，主机侧）
+- `dwc3-v11-20261121.md` — dwc3 v11：sashiko 4 条逐条判定 + 改补丁 + 门禁（2026-11-21）
+- `dwc3-v10-plan-20261120.md` — dwc3 v9 → v10 备料方案（lane D，2026-11-20）
+- `dwc3-v9-plan-20261111.md` — dwc3 系列 v9 重构方案（Rob Herring 结构性反对 → port@0 双 endpoint + gpio-mux）
+
 ## `host`（4）
 
 - `host-stability-20261023.md` — 宿主机稳定性排查记录（2026-10-23）：从 Godot 崩溃一路查到 CPU 侧
 - `host-file-corruption-20261020.md` — 宿主机构建环境「静默文件损坏」取证（2026-10-19/20）
 - `host-mem-stress-bios-round2-20261020.md` — 新 BIOS 轮（调内存稳定性）压测结论：**未修好**，且拿到 DRAM 级硬证据
 - `host-memory-bitflip-rootcause-20261020.md` — 宿主「静默文件损坏」真因 = 内存页缓存位翻转（非磁盘）
-
-## `mobian`（4）
-
-- `mobian-daily-baseline-20261107.md` — Mobian(Debian sid) 日用用户态基线补齐 — 2026-11-07
-- `mobian-daily-pkgs-20261107.md` — Debian sid + Phosh 日用必备包清单调研（2026-11-07）
-- `mobian-rootfs-artifacts-20261026.md` — Mobian 迁移物料（第一步）：apt 包映射表 + 自建固件包
-- `mobian-migration-plan-20261021.md` — Mobian（Debian + Phosh）迁移可行性评估与方案 — 只读研究，2026-10-21
 
 ## `progress`（4）
 
@@ -666,12 +688,25 @@
 - `research-vertical-y700-lineage-20261101.md` — 纵向同产品线调研：Lenovo Legion Y700 五代（TB-9707F → TB323FU）与 Legion Tab 命名 —— 2026-11-01
 - `research-waydroid-sensors-hal-20261011.md` — 调研：Waydroid 传感器 HAL 的社区/上游经验（2026-10-11）
 
+## `scripts`（4）
+
+- `scripts-audit-20261122.md` — 脚本/工具精简与整理审计（2026-11-22，只读）
+- `scripts-hardening-1-20261121.md` — scripts-hardening-1-20261121.md — 脚本整改批 1（7 个 DANGEROUS）落地记录
+- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
+- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
+
 ## `主机侧`（4）
 
 - `主机侧-B13-20261117.md` — 主机侧 B13 — 脚本欠账清理（2026-11-17）
 - `主机侧-B15-20261117.md` — 主机侧 B15 — Gunyah「两空」：`0xA(MEM_INVALID)` 是「RM 太老」还是状态机 bug（2026-11-17，零设备）
 - `主机侧-B17-20261117.md` — 主机侧 B17 — 分诊盲区（2026-11-17）
 - `主机侧-B18-20261117.md` — 主机侧 B18：libcamera 闪光灯通路 + 闪光灯 NTC 热区（2026-11-17）
+
+## `bootloader`（3）
+
+- `bootloader-slotguid-brick-20261121.md` — 设备停在 BL 的真根因：`ValidateSlotGuids: BootableSlot _b does not have valid guids`（2026-11-21 晚）
+- `bootloader-alternatives-20261111.md` — 替代引导器评估（systemd-boot / Limine）—— EFI-stub 后掉电这个卡点下
+- `bootloader-alternatives-survey-20261030.md` — 开源 bootloader 替代调研（TB322FC / SM8750P / elden）—— 2026-10-31
 
 ## `c3`（3）
 
@@ -715,6 +750,18 @@
 - `out-uefi-trim-20261106.md` — `out/r21-sbstop` 处置：先记指纹与可复现性缺口（2026-11-06）→ **同日已执行清仓**
 - `out-archive-20261105.md` — `out/` 历史镜像归档执行（2026-11-05）—— 114 件 / 7.66 GiB
 
+## `pitfalls`（3）
+
+- `pitfalls-condense-20261122.md` — PITFALLS 踩坑库精简（降噪，不删知识）— 2026-11-22
+- `pitfalls-body-backfill-20261120.md` — PITFALLS 无正文条目补齐（2026-11-20）
+- `pitfalls-dedup-audit-20261112.md` — PITFALLS 去重审计（2026-11-12）
+
+## `session`（3）
+
+- `session-plan-20261121-night.md` — 2026-11-21 晚 — 进度整理 / 待办 / 子代理编队（协调层文件）
+- `session-2026-10-13-evening.md` — 会话记录 — 2026-10-13 晚（M1 重基 + 上游化多片备料 + 新树首次上机）
+- `session-2026-10-13.md` — 2026-10-13 会话小结（设备 4 样本 · 上游 6 封 · 订阅 1 项）
+
 ## `stale`（3）
 
 - `stale-alpine-audit-docs-20261119.md` — 文档层「过时 Alpine 件」审计（只读，2026-11-19）
@@ -750,11 +797,6 @@
 - `aw86927-series-20261027.md` — U4：`aw86927` 固件波形能力 5 提交上游系列草案（2026-10-27）
 - `aw86927-series-v2-20261027.md` — aw86927 系列 v2（无固件路径）构建与门禁（2026-10-27 晚）
 
-## `bootloader`（2）
-
-- `bootloader-alternatives-20261111.md` — 替代引导器评估（systemd-boot / Limine）—— EFI-stub 后掉电这个卡点下
-- `bootloader-alternatives-survey-20261030.md` — 开源 bootloader 替代调研（TB322FC / SM8750P / elden）—— 2026-10-31
-
 ## `c1`（2）
 
 - `c1-noworkaround-20261013.md` — C1 端到端验收：去 workaround 后容器原生出网（vk126-c1）— 2026-10-13
@@ -774,11 +816,6 @@
 
 - `docs-slim-20261114.md` — 文档入口收敛（第二轮：减少入口 / 去重 / 时间序权重）— 2026-11-14
 - `docs-slim-20261113.md` — 文档精简执行账（2026-11-13）
-
-## `dwc3`（2）
-
-- `dwc3-v10-plan-20261120.md` — dwc3 v9 → v10 备料方案（lane D，2026-11-20）
-- `dwc3-v9-plan-20261111.md` — dwc3 系列 v9 重构方案（Rob Herring 结构性反对 → port@0 双 endpoint + gpio-mux）
 
 ## `f2fs`（2）
 
@@ -825,11 +862,6 @@
 - `modular-driver-audit-20261026.md` — modular-driver-audit — 7.3 日常线（build/vk151）驱动模块化第二层审计
 - `modular-mobian-transition-20261026.md` — 驱动模块化 × Alpine→Mobian 迁移：交界面核对与落点改判（2026-10-26 续）
 
-## `pitfalls`（2）
-
-- `pitfalls-body-backfill-20261120.md` — PITFALLS 无正文条目补齐（2026-11-20）
-- `pitfalls-dedup-audit-20261112.md` — PITFALLS 去重审计（2026-11-12）
-
 ## `pstore`（2）
 
 - `pstore-ram-initrd-guard-20261116.md` — pstore/ram 拒绝与 initrd 重叠的 zone —— 落地与门禁（2026-11-16）
@@ -844,16 +876,6 @@
 
 - `route-b-impl-20261108.md` — 路线 B 实现回执 — D1 补丁 + D2 构建（2026-11-08）
 - `route-b-r56-20261108.md` — R56 — ESP-first Loader 面板可见标记 + Pname 修复
-
-## `scripts`（2）
-
-- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
-- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
-
-## `session`（2）
-
-- `session-2026-10-13-evening.md` — 会话记录 — 2026-10-13 晚（M1 重基 + 上游化多片备料 + 新树首次上机）
-- `session-2026-10-13.md` — 2026-10-13 会话小结（设备 4 样本 · 上游 6 封 · 订阅 1 项）
 
 ## `t14`（2）
 
@@ -903,6 +925,10 @@
 
 - `Q24-Q28-INDEX.md` — Q24 + Q28 会话与进度合并台账（2026-10-10 立；**2026-10-13 更新**）
 
+## `a`（1）
+
+- `a-slot-h5-three-way-20261121.md` — 安卓 a 槽：H5 三发对照（2026-11-21 下午，上机，全部失败且现象一致）
+
 ## `assets`（1）
 
 - `assets-inventory-20261023.md` — 资产盘点与台账对账（2026-10-23）
@@ -922,6 +948,10 @@
 ## `beacon`（1）
 
 - `beacon-recheck-20261110.md` — UEFI「落盘信标」线独立复核 — 2026-11-10
+
+## `best`（1）
+
+- `best-state-and-gap-20261122.md` — 历史最佳状态 · 现状差距 · 补全清单（主机侧只读分析，2026-11-21 深夜）
 
 ## `bigfile`（1）
 
@@ -967,6 +997,10 @@
 
 - `counts-gate-20261107.md` — counts-gate-20261107 — 门禁新增「TASKS §0 手写数字 ↔ 计数脚本」子门（s16）
 
+## `daily`（1）
+
+- `daily-linux-deploy-20261122.md` — 设备进入「日常 Linux」的部署件与工具（主机侧改造 + 清单）
+
 ## `desktop`（1）
 
 - `desktop-chain-gate-20261119.md` — 零到桌面链路静态门（check-doctor §22）— 2026-11-19
@@ -978,6 +1012,10 @@
 ## `dispcc`（1）
 
 - `dispcc-battmgr-20261028.md` — dispcc RFC 回信（Taniya Das）+ battmgr vendor repo 核查回信（Konrad Dybcio）— 2026-10-28
+
+## `distro`（1）
+
+- `distro-upstream-feasibility-20261121.md` — 发行版上游化可行性（Nura/pmaports · Mobian · Ubuntu Touch/UBports）— 2026-11-21
 
 ## `driver`（1）
 
@@ -1050,6 +1088,10 @@
 ## `mailbox`（1）
 
 - `mailbox-cleanup-20261102.md` — 邮箱整理执行报告 2026-11-02（xiaqinghuan@mail.ustc.edu.cn @ mail.ustc.edu.cn:993）
+
+## `mainline`（1）
+
+- `mainline-upstream-audit-20261122.md` — 主线上游化审计与评估（四态总账 + 72h 投递顺序）2026-11-22
 
 ## `mdss`（1）
 
