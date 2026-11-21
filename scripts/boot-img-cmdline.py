@@ -261,7 +261,10 @@ def parse(path):
 def verify(path):
     """结构往返自检：用解析结果重新打包，比较除 id 字段外的字节。"""
     p = parse(path)
-    tmp = tempfile.mktemp(suffix=".img")
+    # 用 mkstemp 而不是 mktemp：mktemp 的名字可预测，并发跑（如 check-doctor 并行子门）会互相踩
+    # ⇒ 2026-11-21 全量 doctor 里 §27 出现过一次「--verify rc=2」的假红（单独跑恒定 PASS）。
+    _fd, tmp = tempfile.mkstemp(suffix=".img", prefix="bootimg-verify-")
+    os.close(_fd)
     repack(p, p["cmdline"], tmp)
     a = open(path, "rb").read()
     b = open(tmp, "rb").read()

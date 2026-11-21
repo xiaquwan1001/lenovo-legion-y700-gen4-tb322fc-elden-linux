@@ -396,3 +396,33 @@ adb 从不出现（600 s）                      → 读 misc（同前）+ pstor
 
 本轮 S1 实际做成的部分（取证留档 `logs/android-v3-S1-20261121-085647/`）：BCB 清 0 并读回全 0、
 `boot_a` byte6 `0x32 → 0x7a`（主备表都写 + CRC 修 + 读回校验）、active 仍 `_b`（未切，见上）、pstoredump 命中 0（无内核崩溃）。
+
+---
+
+## 2026-11-21 09:1x–09:2x：S1 两发实跑（结论 + 两条新机制）
+
+### 结论：**a 槽仍起不来，且这次落点是 recovery（不是回落 b 槽）**
+
+| 发 | 前置动作 | 落点 | 证据 |
+|---|---|---|---|
+| ① | `--set-active=a`（Linux 侧没切成，实为 `active=b`）→ `fastboot reboot` … 该发实际只重启回 Linux（见 09:12 前一发） | Linux | — |
+| ② 09:12 | （BCB 状态未知）`--set-active=a` → `fastboot reboot` | **recovery** | `adb devices` = `HA2EXB0E recovery`；logfs：`Loading Image recovery_a` / `Booting from slot (_a)` / `BootLinux: factory_build = 1` |
+| ③ 09:17 | **先 `fastboot flash misc` 写 4 KiB 零（清 BCB）** → `--set-active=a` → `fastboot reboot` | **recovery**（同 ②） | `logs/android-v3-S1-20261121-091754/`（含 zero4k.bin 与命令日志） |
+
+⇒ **清 BCB 之后仍落 recovery** ⇒ ②的落点**不是 BCB 污染**造成的；`--set-active=a` 之后 ABL 就走 recovery_a。
+（alternatively H1「`--set-active` 会让 ABL 自己写 `boot-recovery`」与 H2「a 槽 Android 自身不可启，ABL 以 recovery 兜底」二选一，
+**用 S3（回写原厂 super 对照）判别**：若原厂 super 也落 recovery ⇒ H1/槽位机制；若原厂能起 ⇒ v3 slim 内容问题。）
+
+### 新机制 1：`fastboot flash misc` 可以在 fastboot 侧清 BCB（已固化为 S1 的 fastboot 分支）
+
+`head -c 4096 /dev/zero > zero4k.bin` → `fastboot -s HA2EXB0E flash misc zero4k.bin` = **OKAY**。
+判据：ABL 只认 misc 头部 `bootloader_message`；本机 misc 头 4 KiB 本来全零，Linux 侧多次清零未影响 `qbootctl` 计数区
+（本轮实测：清零后 `qbootctl -m` 仍正常）。回 Linux 后补 `dd` 读回 `nonzero=0`。
+
+### 新机制 2：**recovery 里的 `adb reboot bootloader` 会把 misc 写成 `bootonce-bootloader`**
+
+本轮两次落 recovery 后，用 `adb -s HA2EXB0E reboot bootloader` 出到 fastboot，随后回到 Linux 读 misc 都是
+`bootonce-bootloader`（19 字节）。对照实验：Linux 侧清零后**静置 20 s 仍为 0**、`qbootctl -m` 也不写它
+⇒ 写者 = recovery 的 reboot 处理（不是我们的工具、也不是 Linux）。
+**这解释了 11-19/11-20「EDL 后 misc = bootonce-bootloader」**：那是 recovery/工具链设置的、且 **ABL 并不采纳**（#701）；
+但它会污染「BCB 已清」的判读 ⇒ 纪律：**每次从 recovery 出来都先清 BCB 再谈样本**。
