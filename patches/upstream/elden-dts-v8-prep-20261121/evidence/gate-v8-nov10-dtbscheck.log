@@ -1,0 +1,351 @@
+make[1]: 进入目录“/tmp/kb-v8-check”
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: / (lenovo,elden): compatible: 'oneOf' conditional failed, one must be fixed:
+	['lenovo,elden', 'qcom,sm8750'] is too short
+	'lenovo,elden' is not one of ['qcom,apq8016-sbc', 'schneider,apq8016-hmibsc']
+	'lenovo,elden' is not one of ['asus,sparrow', 'huawei,sturgeon', 'lg,lenok', 'samsung,matisse-wifi', 'samsung,milletwifi']
+	'lenovo,elden' is not one of ['asus,nexus7-flo', 'lg,nexus4-mako', 'sony,xperia-yuga', 'qcom,apq8064-cm-qs600', 'qcom,apq8064-ifc6410']
+	'lenovo,elden' is not one of ['qcom,apq8074-dragonboard']
+	'lenovo,elden' is not one of ['qcom,apq8084-mtp', 'qcom,apq8084-sbc']
+	'qcom,eliza-cqs-evk' was expected
+	'lenovo,elden' is not one of ['sony,karin_windy']
+	'lenovo,elden' is not one of ['arrow,apq8096-db820c', 'inforce,ifc6640']
+	'arrow,apq8096sg-db820c' was expected
+	'lenovo,elden' is not one of ['qcom,eliza-mtp']
+	'lenovo,elden' is not one of ['asus,zenbook-a14-ux3407na', 'asus,zenbook-a16-ux3607oa', 'hp,elitebook-x-g2q', 'lenovo,yoga-slim7x-gen11', 'qcom,glymur-crd', 'qcom,glymur-qcb']
+	'lenovo,elden' is not one of ['8dev,jalapeno', 'alfa-network,ap120c-ac']
+	'lenovo,elden' is not one of ['qcom,ipq4019-ap-dk01.1-c1', 'qcom,ipq4019-ap-dk04.1-c3', 'qcom,ipq4019-ap-dk07.1-c1', 'qcom,ipq4019-ap-dk07.1-c2', 'qcom,ipq4019-dk04.1-c1']
+	'lenovo,elden' is not one of ['qcom,ipq5018-rdp432-c2', 'tplink,archer-ax55-v1']
+	'lenovo,elden' is not one of ['qcom,ipq5210-rdp504']
+	'lenovo,elden' is not one of ['qcom,ipq5332-ap-mi01.2', 'qcom,ipq5332-ap-mi01.3', 'qcom,ipq5332-ap-mi01.6', 'qcom,ipq5332-ap-mi01.9']
+	'lenovo,elden' is not one of ['qcom,ipq5424-rdp466']
+	'lenovo,elden' is not one of ['qcom,ipq6018-cp01', 'qcom,ipq6018-cp01-c1']
+	'lenovo,elden' is not one of ['mikrotik,rb3011', 'qcom,ipq8064-ap148']
+	'lenovo,elden' is not one of ['qcom,ipq8074-hk01', 'qcom,ipq8074-hk10-c1', 'qcom,ipq8074-hk10-c2']
+	'lenovo,elden' is not one of ['qcom,ipq9574-ap-al02-c2', 'qcom,ipq9574-ap-al02-c2-emmc', 'qcom,ipq9574-ap-al02-c6', 'qcom,ipq9574-ap-al02-c7', 'qcom,ipq9574-ap-al02-c7-emmc', 'qcom,ipq9574-ap-al02-c8', 'qcom,ipq9574-ap-al02-c9']
+	'lenovo,elden' is not one of ['qcom,ipq9650-rdp488']
+	'lenovo,elden' is not one of ['qcom,hawi-mtp']
+	'lenovo,elden' is not one of ['qcom,kaanapali-mtp', 'qcom,kaanapali-qrd']
+	'lenovo,elden' is not one of ['qcom,kalambo-crd']
+	'lenovo,elden' is not one of ['qcom,kuno-idp']
+	'lenovo,elden' is not one of ['qcom,mahua-crd']
+	'lenovo,elden' is not one of ['lenovo,thinkpad-t14s-gen7-lcd', 'lenovo,thinkpad-t14s-gen7-oled']
+	'swir,mangoh-green-wp8548' was expected
+	'lenovo,elden' is not one of ['fairphone,fp6', 'nothing,asteroids']
+	'lenovo,elden' is not one of ['microsoft,dempsey', 'microsoft,makepeace', 'microsoft,moneypenny', 'motorola,falcon', 'motorola,titan', 'samsung,ms013g', 'samsung,s3ve3g']
+	'lenovo,elden' is not one of ['htc,memul', 'microsoft,superman-lte', 'microsoft,tesla', 'motorola,peregrine', 'samsung,matisselte', 'sony,eagle']
+	'lenovo,elden' is not one of ['qcom,apq8060-dragonboard', 'qcom,msm8660-surf']
+	'lenovo,elden' is not one of ['acer,a1-724', 'alcatel,idol347', 'asus,z00l', 'gplus,fl8005a', 'huawei,g7', 'lg,c50', 'lg,m216', 'longcheer,l8910', 'longcheer,l8150', 'motorola,harpia', 'motorola,osprey', 'motorola,surnia', 'qcom,msm8916-mtp', 'samsung,a3u-eur', 'samsung,a5u-eur', 'samsung,coreprimeltevzw', 'samsung,e5', 'samsung,e7', 'samsung,fortuna3g', 'samsung,gprimeltecan', 'samsung,grandmax', 'samsung,grandprimelte', 'samsung,gt510', 'samsung,gt58', 'samsung,j3ltetw', 'samsung,j5', 'samsung,j5x', 'samsung,rossa', 'samsung,serranove', 'thwc,uf896', 'thwc,ufi001c', 'wiko,chuppito', 'wingtech,wt86518', 'wingtech,wt86528', 'wingtech,wt88047', 'yiming,uz801-v3']
+	'lenovo,elden' is not one of ['xiaomi,riva', 'xiaomi,rolex', 'xiaomi,tiare']
+	'lenovo,elden' is not one of ['wingtech,wt82918hd']
+	'lenovo,elden' is not one of ['xiaomi,land']
+	'lenovo,elden' is not one of ['asus,z00t', 'huawei,kiwi', 'longcheer,l9100', 'samsung,a7', 'sony,kanuti-tulip', 'square,apq8039-t2', 'wingtech,wt82918', 'wingtech,wt82918hdhw39']
+	'lenovo,elden' is not one of ['generalmobile,shamrock']
+	'lenovo,elden' is not one of ['flipkart,rimob', 'motorola,deen', 'motorola,potter', 'xiaomi,daisy', 'xiaomi,mido', 'xiaomi,tissot', 'xiaomi,vince']
+	'lenovo,elden' is not one of ['sony,kugo-row', 'sony,suzu-row']
+	'lenovo,elden' is not one of ['qcom,msm8960-cdp', 'samsung,expressatt']
+	'lenovo,elden' is not one of ['sony,huashan']
+	'lenovo,elden' is not one of ['lge,hammerhead', 'samsung,hlte', 'sony,xperia-amami', 'sony,xperia-honami', 'sony,xperia-togari']
+	'lenovo,elden' is not one of ['fairphone,fp2', 'htc,m8', 'oneplus,bacon', 'samsung,klte', 'sony,xperia-aries', 'sony,xperia-castor', 'sony,xperia-leo']
+	'lenovo,elden' is not one of ['samsung,kltechn']
+	'lenovo,elden' is not one of ['leeco,s2', 'longcheer,l9360']
+	'lenovo,elden' is not one of ['lg,bullhead', 'lg,h815', 'microsoft,talkman', 'xiaomi,libra']
+	'lenovo,elden' is not one of ['huawei,angler', 'microsoft,cityman', 'sony,ivy-row', 'sony,karin-row', 'sony,satsuki-row', 'sony,sumire-row', 'sony,suzuran-row']
+	'lenovo,elden' is not one of ['oneplus,oneplus3', 'oneplus,oneplus3t', 'qcom,msm8996-mtp', 'sony,dora-row', 'sony,kagura-row', 'sony,keyaki-row', 'xiaomi,gemini']
+	'lenovo,elden' is not one of ['xiaomi,natrium', 'xiaomi,scorpio']
+	'lenovo,elden' is not one of ['asus,novago-tp370ql', 'fxtec,pro1', 'hp,envy-x2', 'lenovo,miix-630', 'oneplus,cheeseburger', 'oneplus,dumpling', 'qcom,msm8998-mtp', 'sony,xperia-lilac', 'sony,xperia-maple', 'sony,xperia-poplar', 'xiaomi,sagit']
+	'lenovo,elden' is not one of ['qcom,iq10-rrd', 'qcom,sa8797p-ride']
+	'lenovo,elden' is not one of ['arduino,imola', 'qcom,qrb2210-rb1']
+	'lenovo,elden' is not one of ['fairphone,fp5', 'particle,tachyon', 'qcom,qcm6490-idp', 'qcom,qcs6490-rb3gen2', 'radxa,dragon-q6a', 'shift,otter', 'thundercomm,minipc-g1iot', 'thundercomm,rubikpi3', 'vicharak,axon-mini']
+	'lenovo,elden' is not one of ['qcom,qcs404-evb-1000', 'qcom,qcs404-evb-4000']
+	'lenovo,elden' is not one of ['arduino,monza', 'qcom,monaco-ac-evk', 'qcom,monaco-evk', 'qcom,qcs8300-ride']
+	'lenovo,elden' is not one of ['qcom,qdu1000-idp', 'qcom,qdu1000-x100']
+	'lenovo,elden' is not one of ['qcom,qru1000-idp']
+	'lenovo,elden' is not one of ['qcom,sa8155p-adp']
+	'lenovo,elden' is not one of ['qcom,sa8295p-adp', 'qcom,sa8540p-ride']
+	'lenovo,elden' is not one of ['qcom,sa8775p-ride', 'qcom,sa8775p-ride-r3']
+	'lenovo,elden' is not one of ['qcom,lemans-evk', 'qcom,qcs9100-ride', 'qcom,qcs9100-ride-r3']
+	'lenovo,elden' is not one of ['qcom,qar2130p']
+	'lenovo,elden' is not one of ['acer,aspire1', 'ecs,liva-qc710', 'qcom,sc7180-idp']
+	'google,coachz-rev1' was expected
+	'google,coachz' was expected
+	'google,coachz-rev1-sku0' was expected
+	'google,coachz-sku0' was expected
+	'google,homestar-rev2' was expected
+	'google,homestar-rev3' was expected
+	'google,homestar' was expected
+	'google,kingoftown-rev0' was expected
+	'google,kingoftown' was expected
+	'google,lazor-rev0' was expected
+	'google,lazor-rev1' was expected
+	'google,lazor-rev3' was expected
+	'google,lazor-rev9' was expected
+	'google,lazor' was expected
+	'google,lazor-rev1-sku2' was expected
+	'google,lazor-rev3-sku2' was expected
+	'google,lazor-rev9-sku2' was expected
+	'google,lazor-sku2' was expected
+	'google,lazor-rev1-sku0' was expected
+	'google,lazor-rev3-sku0' was expected
+	'google,lazor-rev9-sku0' was expected
+	'google,lazor-sku0' was expected
+	'google,lazor-rev4-sku4' was expected
+	'google,lazor-rev9-sku4' was expected
+	'google,lazor-sku4' was expected
+	'google,lazor-rev4-sku5' was expected
+	'google,lazor-rev5-sku5' was expected
+	'google,lazor-rev9-sku6' was expected
+	'google,lazor-sku6' was expected
+	'google,mrbland-rev0-sku0' was expected
+	'google,mrbland-sku1536' was expected
+	'google,mrbland-rev0-sku16' was expected
+	'google,mrbland-sku1024' was expected
+	'google,pazquel-sku5' was expected
+	'google,pazquel-sku1' was expected
+	'google,pazquel-sku6' was expected
+	'google,pazquel-sku0' was expected
+	'google,pazquel-sku22' was expected
+	'google,pazquel-sku21' was expected
+	'google,pompom-rev1' was expected
+	'google,pompom-rev2' was expected
+	'google,pompom' was expected
+	'google,pompom-rev1-sku0' was expected
+	'google,pompom-rev2-sku0' was expected
+	'google,pompom-sku0' was expected
+	'google,quackingstick-sku1537' was expected
+	'google,quackingstick-sku1536' was expected
+	'google,trogdor' was expected
+	'google,trogdor-sku0' was expected
+	'google,wormdingler-rev0-sku16' was expected
+	'google,wormdingler-sku1024' was expected
+	'google,wormdingler-sku1025' was expected
+	'google,wormdingler-rev0-sku0' was expected
+	'google,wormdingler-sku0' was expected
+	'google,wormdingler-sku1' was expected
+	'qcom,sc7280-crd' was expected
+	'google,zoglin' was expected
+	'google,zoglin-sku1536' was expected
+	'qcom,sc7280-idp' was expected
+	'qcom,sc7280-idp2' was expected
+	'google,evoker' was expected
+	'google,evoker-sku512' was expected
+	'google,herobrine' was expected
+	'google,villager-rev0' was expected
+	'google,villager' was expected
+	'google,villager-sku512' was expected
+	'google,zombie' was expected
+	'google,zombie-sku512' was expected
+	'google,zombie-sku2' was expected
+	'google,zombie-sku514' was expected
+	'lenovo,elden' is not one of ['lenovo,flex-5g', 'microsoft,surface-prox', 'qcom,sc8180x-primus']
+	'lenovo,elden' is not one of ['huawei,gaokun3', 'lenovo,thinkpad-x13s', 'microsoft,arcata', 'microsoft,blackrock', 'qcom,sc8280xp-crd', 'qcom,sc8280xp-qrd']
+	'lenovo,elden' is not one of ['inforce,ifc6560']
+	'lenovo,elden' is not one of ['lenovo,tbx605f', 'motorola,ali']
+	'lenovo,elden' is not one of ['sony,discovery-row', 'sony,kirin-row', 'sony,pioneer-row', 'sony,voyager-row']
+	'lenovo,elden' is not one of ['fairphone,fp3', 'motorola,ocean']
+	'lenovo,elden' is not one of ['sony,mermaid-row']
+	'lenovo,elden' is not one of ['xiaomi,lavender']
+	'lenovo,elden' is not one of ['google,sargo']
+	'lenovo,elden' is not one of ['google,bonito-tianma']
+	'lenovo,elden' is not one of ['xiaomi,beryllium-ebbg', 'xiaomi,beryllium-tianma']
+	'lenovo,elden' is not one of ['google,blueline', 'google,crosshatch', 'huawei,planck', 'lenovo,yoga-c630', 'lg,judyln', 'lg,judyp', 'oneplus,enchilada', 'oneplus,fajita', 'qcom,sdm845-mtp', 'shift,axolotl', 'samsung,starqltechn', 'samsung,w737', 'sony,akari-row', 'sony,akatsuki-row', 'sony,apollo-row', 'thundercomm,db845c', 'xiaomi,polaris']
+	'lenovo,elden' is not one of ['qcom,shikra-cqm-evk']
+	'lenovo,elden' is not one of ['qcom,shikra-cqs-evk']
+	'lenovo,elden' is not one of ['qcom,shikra-iqs-evk']
+	'lenovo,elden' is not one of ['qcom,sdx55-mtp', 'qcom,sdx55-telit-fn980-tlb', 'qcom,sdx55-t55']
+	'lenovo,elden' is not one of ['qcom,sdx65-mtp']
+	'lenovo,elden' is not one of ['qcom,sdx75-idp']
+	'lenovo,elden' is not one of ['oneplus,billie2']
+	'lenovo,elden' is not one of ['qcom,qrb4210-rb2']
+	'lenovo,elden' is not one of ['qcom,sm4450-qrd']
+	'lenovo,elden' is not one of ['fxtec,pro1x', 'xiaomi,lemon']
+	'lenovo,elden' is not one of ['lenovo,j606f']
+	'lenovo,elden' is not one of ['sony,pdx201', 'xiaomi,ginkgo', 'xiaomi,laurel-sprout', 'xiaomi,willow']
+	'lenovo,elden' is not one of ['qcom,qcs615-ride', 'qcom,talos-evk']
+	'lenovo,elden' is not one of ['sony,pdx213']
+	'lenovo,elden' is not one of ['sony,pdx225']
+	'lenovo,elden' is not one of ['samsung,a52q', 'samsung,a72q', 'xiaomi,curtana', 'xiaomi,joyeuse']
+	'lenovo,elden' is not one of ['google,sunfish']
+	'lenovo,elden' is not one of ['fairphone,fp4']
+	'lenovo,elden' is not one of ['motorola,dubai', 'nothing,spacewar', 'xiaomi,lisa', 'xiaomi,taoyao']
+	'lenovo,elden' is not one of ['microsoft,surface-duo', 'qcom,sm8150-hdk', 'qcom,sm8150-mtp', 'sony,bahamut-generic', 'sony,griffin-generic']
+	'lenovo,elden' is not one of ['qcom,qrb5165-rb5', 'qcom,sm8250-hdk', 'qcom,sm8250-mtp', 'samsung,r8q', 'samsung,x1q', 'sony,pdx203-generic', 'sony,pdx206-generic', 'xiaomi,elish', 'xiaomi,pipa']
+	'lenovo,elden' is not one of ['microsoft,surface-duo2', 'qcom,sm8350-hdk', 'qcom,sm8350-mtp', 'sony,pdx214-generic', 'sony,pdx215-generic']
+	'lenovo,elden' is not one of ['qcom,sm8450-hdk', 'qcom,sm8450-qrd', 'samsung,r0q', 'sony,pdx223', 'sony,pdx224']
+	'lenovo,elden' is not one of ['qcom,sm8550-hdk', 'qcom,sm8550-mtp', 'qcom,sm8550-qrd', 'samsung,q5q', 'sony,pdx234']
+	'lenovo,elden' is not one of ['imdt,qcs8550-sbc']
+	'lenovo,elden' is not one of ['qcom,qcs8550-aim300-aiot']
+	'lenovo,elden' is not one of ['ayntec,odin2', 'ayntec,odin2mini', 'ayntec,odin2portal', 'ayntec,thor', 'retroidpocket,nova', 'retroidpocket,rp6']
+	'lenovo,elden' is not one of ['ayaneo,pocket-ds', 'qcom,qcs8550-rb5gen2']
+	'lenovo,elden' is not one of ['ayaneo,pocket-s2', 'qcom,sm8650-hdk', 'qcom,sm8650-mtp', 'qcom,sm8650-qrd', 'valve,deckard']
+	'lenovo,elden' is not one of ['qcom,sm8750-mtp', 'qcom,sm8750-qrd']
+	'lenovo,elden' is not one of ['qcom,x1e001de-devkit']
+	'lenovo,elden' is not one of ['lenovo,thinkpad-t14s-lcd', 'lenovo,thinkpad-t14s-oled']
+	'lenovo,elden' is not one of ['medion,sprchrgd14s1', 'tuxedo,elite14gen1']
+	'microsoft,denali-lcd' was expected
+	'lenovo,elden' is not one of ['asus,vivobook-s15', 'asus,zenbook-a14-ux3407ra', 'dell,inspiron-14-plus-7441', 'dell,latitude-7455', 'dell,xps13-9345', 'honor,magicbook-art-14-snapdragon', 'hp,elitebook-ultra-g1q', 'hp,omnibook-x14', 'lenovo,ideacentre-mini-01q8x10', 'lenovo,yoga-slim7x', 'microsoft,romulus13', 'microsoft,romulus15', 'qcom,x1e80100-crd', 'qcom,x1e80100-qcp']
+	'lenovo,elden' is not one of ['qcom,hamoa-iot-evk']
+	'lenovo,elden' is not one of ['advantech,som-db5830']
+	'microsoft,denali-oled' was expected
+	'microsoft,surface-pro-12in' was expected
+	'lenovo,elden' is not one of ['qcom,purwa-iot-evk']
+	'lenovo,elden' is not one of ['asus,zenbook-a14-ux3407qa-lcd', 'asus,zenbook-a14-ux3407qa-oled']
+	'lenovo,elden' is not one of ['asus,vivobook-s15-x1p4', 'hp,omnibook-x14-fe1', 'lenovo,thinkbook-16', 'qcom,x1p42100-crd']
+	'qcom,apq8016' was expected
+	'qcom,apq8026' was expected
+	'qcom,apq8064' was expected
+	'qcom,apq8074' was expected
+	'qcom,apq8084' was expected
+	'qcom,eliza-cqs-som' was expected
+	'qcom,apq8094' was expected
+	'qcom,apq8096-sbc' was expected
+	'arrow,apq8096-db820c' was expected
+	'qcom,eliza' was expected
+	'qcom,glymur' was expected
+	'qcom,ipq4018' was expected
+	'qcom,ipq4019' was expected
+	'qcom,ipq5018' was expected
+	'qcom,ipq5210' was expected
+	'qcom,ipq5332' was expected
+	'qcom,ipq5424' was expected
+	'qcom,ipq6018' was expected
+	'qcom,ipq8064' was expected
+	'qcom,ipq8074' was expected
+	'qcom,ipq9574' was expected
+	'qcom,ipq9650' was expected
+	'qcom,hawi' was expected
+	'qcom,kaanapali' was expected
+	'qcom,kalambo' was expected
+	'qcom,kuno' was expected
+	'qcom,mahua' was expected
+	'lenovo,thinkpad-t14s-gen7' was expected
+	'swir,wp8548' was expected
+	'qcom,milos' was expected
+	'qcom,msm8226' was expected
+	'qcom,msm8926' was expected
+	'qcom,msm8660' was expected
+	'qcom,msm8916' was expected
+	'qcom,msm8917' was expected
+	'qcom,msm8929' was expected
+	'qcom,msm8937' was expected
+	'qcom,msm8939' was expected
+	'qcom,msm8952' was expected
+	'qcom,msm8953' was expected
+	'qcom,msm8956' was expected
+	'qcom,msm8960' was expected
+	'qcom,msm8960t' was expected
+	'qcom,msm8974' was expected
+	'qcom,msm8974pro' was expected
+	'samsung,klte' was expected
+	'qcom,msm8976' was expected
+	'qcom,msm8992' was expected
+	'qcom,msm8994' was expected
+	'qcom,msm8996' was expected
+	'qcom,msm8996pro' was expected
+	'qcom,msm8998' was expected
+	'qcom,nord' was expected
+	'qcom,qrb2210' was expected
+	'qcom,qcm6490' was expected
+	'qcom,qcs404-evb' was expected
+	'qcom,qcs8300' was expected
+	'qcom,qdu1000' was expected
+	'qcom,qru1000' was expected
+	'qcom,sa8155p' was expected
+	'qcom,sa8540p' was expected
+	'qcom,sa8775p' was expected
+	'qcom,qcs9100' was expected
+	'qcom,sar2130p' was expected
+	'qcom,sc7180' was expected
+	'google,coachz-rev2' was expected
+	'google,coachz-rev2-sku0' was expected
+	'google,homestar-rev23' was expected
+	'google,lazor-rev2' was expected
+	'google,lazor-rev4' was expected
+	'google,lazor-rev2-sku2' was expected
+	'google,lazor-rev4-sku2' was expected
+	'google,lazor-rev2-sku0' was expected
+	'google,lazor-rev4-sku0' was expected
+	'google,lazor-rev9-sku10' was expected
+	'google,lazor-sku10' was expected
+	'google,lazor-rev5-sku4' was expected
+	'google,lazor-rev9-sku15' was expected
+	'google,lazor-sku15' was expected
+	'google,lazor-rev5-sku6' was expected
+	'google,lazor-rev9-sku18' was expected
+	'google,lazor-sku18' was expected
+	'google,mrbland-sku768' was expected
+	'google,pazquel-sku4' was expected
+	'google,pazquel-sku2' was expected
+	'google,pazquel-sku20' was expected
+	'google,hoglin-rev3' was expected
+	'google,hoglin' was expected
+	'google,hoglin-sku1536' was expected
+	'google,senor' was expected
+	'google,piglin' was expected
+	'qcom,sc7280' was expected
+	'google,zombie-sku3' was expected
+	'qcom,sc8180x' was expected
+	'qcom,sc8280xp' was expected
+	'qcom,sda660' was expected
+	'qcom,sdm450' was expected
+	'qcom,sdm630' was expected
+	'qcom,sdm632' was expected
+	'qcom,sdm636' was expected
+	'qcom,sdm660' was expected
+	'qcom,sdm670' was expected
+	'google,bonito' was expected
+	'xiaomi,beryllium' was expected
+	'qcom,sdm845' was expected
+	'qcom,shikra-cqm-som' was expected
+	'qcom,shikra-cqs-som' was expected
+	'qcom,shikra-iqs-som' was expected
+	'qcom,sdx55' was expected
+	'qcom,sdx65' was expected
+	'qcom,sdx75' was expected
+	'qcom,sm4250' was expected
+	'qcom,qrb4210' was expected
+	'qcom,sm4450' was expected
+	'qcom,sm6115' was expected
+	'qcom,sm6115p' was expected
+	'qcom,sm6125' was expected
+	'qcom,qcs615' was expected
+	'qcom,sm6350' was expected
+	'qcom,sm6375' was expected
+	'qcom,sm7125' was expected
+	'qcom,sm7150' was expected
+	'qcom,sm7225' was expected
+	'qcom,sm7325' was expected
+	'qcom,sm8150' was expected
+	'qcom,sm8250' was expected
+	'qcom,sm8350' was expected
+	'qcom,sm8450' was expected
+	'qcom,sm8550' was expected
+	'imdt,qcs8550-som' was expected
+	'qcom,qcs8550-aim300' was expected
+	'qcom,qcs8550' was expected
+	'qcom,sm8650' was expected
+	'qcom,x1e001de' was expected
+	'lenovo,thinkpad-t14s' was expected
+	'qcom,x1e78100' was expected
+	'microsoft,denali' was expected
+	'qcom,x1e80100' was expected
+	'qcom,hamoa-iot-som' was expected
+	'advantech,som-6820' was expected
+	'qcom,x1p42100' was expected
+	'qcom,purwa-iot-som' was expected
+	'asus,zenbook-a14-ux3407qa' was expected
+	from schema $id: http://devicetree.org/schemas/arm/qcom.yaml
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: /: failed to match any schema with compatible: ['lenovo,elden', 'qcom,sm8750']
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: /soc@0/geniqup@8c0000/i2c@888000/pmic@2f: failed to match any schema with compatible: ['willsemi,wl2868c']
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: usb@a600000 (qcom,sm8750-dwc3): ports:port@0:endpoint@0: Unevaluated properties are not allowed ('mux-state', 'usb-role-switch' were unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/qcom,snps-dwc3.yaml
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: usb@a600000 (qcom,sm8750-dwc3): ports:port@0:endpoint@1: Unevaluated properties are not allowed ('mux-state', 'usb-role-switch' were unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/qcom,snps-dwc3.yaml
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: usb@a600000 (qcom,sm8750-dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'phy-names', 'phys', 'ports', 'snps,dis-u1-entry-quirk', 'snps,dis-u2-entry-quirk', 'snps,dis_enblslpm_quirk', 'snps,dis_u2_susphy_quirk', 'snps,has-lpm-erratum', 'snps,hird-threshold', 'snps,is-utmi-l1-suspend', 'snps,usb2-gadget-lpm-disable', 'snps,usb2-lpm-disable', 'snps,usb3_lpm_capable', 'tx-fifo-resize', 'usb-role-switch' were unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/qcom,snps-dwc3.yaml
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: endpoint@0: mux-state: b'\x00\x00\x00\x00' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: endpoint@1: mux-state: b'\x00\x00\x00\x01' is not of type 'object', 'integer', 'array', 'boolean', 'null'
+	from schema $id: http://devicetree.org/schemas/dt-core.yaml
+make[1]: 离开目录“/tmp/kb-v8-check”

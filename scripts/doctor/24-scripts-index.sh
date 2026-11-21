@@ -34,19 +34,27 @@ if ! head -5 "$README" | grep -q '本文件由.*gen-scripts-index.py 生成'; th
 fi
 
 # ---- 反作弊自检（两个方向）----
-_bak=""
+# 2026-11-21 重写：① 方向改为**在副本上**改坏指纹 —— 原实现 sed -i 直接改 git 跟踪的
+#   scripts/README.md，靠 `mv` 备份还原；一旦进程被 SIGKILL（外层 timeout -k、Ctrl-C 双击、
+#   宿主 OOM），trap 根本不执行（bash 等前台子进程时 trap 延后）⇒ 真件永久停在 fp=xxxx0000，
+#   门自己制造假 FAIL（实测 FAIL=1~2 + 脏工作区，需 git checkout 才能复原）。
+#   现在：① 读副本、写副本，真件全程只读；② 探针脚本仍要真文件（结构变必须物理可见），
+#   但残留只是一个未跟踪的 zz-doctor-probe.sh，本轮开头无条件 rm 先清，不会污染账本。
 _probe="$ROOT/scripts/zz-doctor-probe.sh"
-cleanup() { [ -n "$_bak" ] && mv -f "$_bak" "$README" 2>/dev/null; rm -f "$_probe" 2>/dev/null; }
+rm -f "$_probe"   # 无条件清上一轮残留（被 SIGKILL 时 trap 不及运行）
+_tmpd=$(mktemp -d "${TMPDIR:-/tmp}/scripts-readme-probe.XXXXXX") || { bad "反作弊自检准备失败：无法建临时目录"; exit 0; }
+cleanup() { rm -rf "$_tmpd" 2>/dev/null; rm -f "$_probe" 2>/dev/null; }
 trap cleanup EXIT INT TERM
-_bak=$(mktemp "${TMPDIR:-/tmp}/scripts-readme-bak.XXXXXX")
-cp -f "$README" "$_bak" || { bad "反作弊自检准备失败：无法备份 scripts/README.md"; exit 0; }
 
-# ① 坏指纹
-sed -i 's/结构指纹 fp=\([0-9a-f]\{4\}\)[0-9a-f]*/结构指纹 fp=\10000/' "$README"
-_rc=0; timeout 60 python3 "$GEN" --check >/dev/null 2>&1 || _rc=$?
-if [ "$_rc" -ne 0 ]; then ok "反作弊①通过（改坏指纹 ⇒ --check rc=$_rc）"
+# ① 坏指纹（在副本上）
+_copy="$_tmpd/README.md"
+cp -f "$README" "$_copy" || { bad "反作弊自检准备失败：无法复制 scripts/README.md"; exit 0; }
+sed -i 's/结构指纹 fp=\([0-9a-f]\{4\}\)[0-9a-f]*/结构指纹 fp=\10000/' "$_copy"
+[ "$(head -1 "$_copy")" != "$(head -1 "$README")" ] || \
+  bad "反作弊自检未生效：副本首行的指纹未被改坏（sed 模式与当前 README 格式不匹配）"
+_rc=0; timeout 60 python3 "$GEN" --check --readme "$_copy" >/dev/null 2>&1 || _rc=$?
+if [ "$_rc" -ne 0 ]; then ok "反作弊①通过（副本上改坏指纹 ⇒ --check rc=$_rc；真件未被触碰）"
 else bad "反作弊①失败：改坏指纹后 --check 仍 rc=0（门空转）"; fi
-mv -f "$_bak" "$README"; _bak=""
 
 # ② 真结构变更：临时加一个脚本
 printf '#!/bin/sh\n# 一次性探针（doctor §24 反作弊用，正常不会存在）\n' > "$_probe"
@@ -57,7 +65,7 @@ rm -f "$_probe"
 _rc=0; timeout 60 python3 "$GEN" --check >/dev/null 2>&1 || _rc=$?
 if [ "$_rc" -eq 0 ]; then ok "反作弊②收尾：撤掉探针后 --check rc=0（可复原）"
 else bad "反作弊②收尾失败：撤掉探针后 --check 仍 rc=$_rc（有残留）"; fi
-trap - EXIT INT TERM
+trap - EXIT INT TERM; rm -rf "$_tmpd" 2>/dev/null
 
 # ---- 现有树实跑 ----
 _rc=0

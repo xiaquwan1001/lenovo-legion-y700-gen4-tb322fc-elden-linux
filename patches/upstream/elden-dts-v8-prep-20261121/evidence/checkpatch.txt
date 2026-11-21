@@ -1,0 +1,11 @@
+=== 0000-dt-bindings-arm-qcom-document-the-Lenovo-Legion-Y700.patch
+total: 0 errors, 0 warnings, 0 checks, 7 lines checked
+=== ../board-dts-single-20261113-sent-20261117/0001-...patch (v7, unchanged)
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+WARNING: DT compatible string "lenovo,elden" appears un-documented -- check ./Documentation/devicetree/bindings/
+WARNING: DT compatible string "willsemi,wl2868c" appears un-documented -- check ./Documentation/devicetree/bindings/
+total: 0 errors, 3 warnings, 0 checks, 136 lines checked
+=== 0001-arm64-dts-qcom-sm8750-label-the-DWC3-High-Speed-port.patch
+total: 0 errors, 0 warnings, 0 checks, 8 lines checked
+=== 0002-arm64-dts-qcom-sm8750-lenovo-elden-describe-the-USB-.patch
+total: 0 errors, 0 warnings, 0 checks, 121 lines checked

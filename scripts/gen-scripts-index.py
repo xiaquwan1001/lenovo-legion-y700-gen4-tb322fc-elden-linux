@@ -419,7 +419,14 @@ def main():
     ap.add_argument("--tsv", nargs="?", const="-", metavar="PATH", help="输出机读 TSV（默认 stdout）")
     ap.add_argument("--diff", action="store_true", help="--check 时打印 diff")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--readme", metavar="PATH", default=None,
+                    help="对账/写入指定的 README（默认 scripts/README.md）。"
+                         "2026-11-21 加：医生 §24 的反作弊必须改坏指纹在**副本**上做，"
+                         "不能就地改 git 跟踪的真件（就地改 + 进程被 SIGKILL ⇒ 真件停在"
+                         "坏指纹，门自己制造假 FAIL，需 git checkout 才能复原）")
     args = ap.parse_args()
+
+    out_md = args.readme or OUT_MD
 
     entries = collect()
     rendered = render_md(entries)
@@ -435,8 +442,8 @@ def main():
         return 0
 
     old = ""
-    if os.path.exists(OUT_MD):
-        with open(OUT_MD, encoding="utf-8") as f:
+    if os.path.exists(out_md):
+        with open(out_md, encoding="utf-8") as f:
             old = f.read()
 
     if args.check:
@@ -447,25 +454,25 @@ def main():
             have = m.group(1)
         if have == want:
             extra = "" if old == rendered else "（引用计数已漂移，按设计不判过期；想刷新跑一次生成器）"
-            print(f"OK scripts/README.md 结构最新（{len(entries)} 个入口）{extra}")
+            print(f"OK {rel(out_md)} 结构最新（{len(entries)} 个入口）{extra}")
             return 0
-        print(f"STALE scripts/README.md 过期（结构变了：{len(entries)} 个入口，"
+        print(f"STALE {rel(out_md)} 过期（结构变了：{len(entries)} 个入口，"
               f"fp {have or '缺失'} → {want}）→ 跑 python3 scripts/gen-scripts-index.py",
               file=sys.stderr)
         if args.diff:
             import difflib
             sys.stdout.writelines(difflib.unified_diff(
                 old.splitlines(True), rendered.splitlines(True),
-                "scripts/README.md (on disk)", "scripts/README.md (generated)"))
+                f"{rel(out_md)} (on disk)", f"{rel(out_md)} (generated)"))
         return 1
 
     if old != rendered:
-        with open(OUT_MD, "w", encoding="utf-8") as f:
+        with open(out_md, "w", encoding="utf-8") as f:
             f.write(rendered)
         if not args.quiet:
-            print(f"wrote {rel(OUT_MD)}（{len(entries)} 个入口）")
+            print(f"wrote {rel(out_md)}（{len(entries)} 个入口）")
     elif not args.quiet:
-        print(f"{rel(OUT_MD)} 已是最新（{len(entries)} 个入口）")
+        print(f"{rel(out_md)} 已是最新（{len(entries)} 个入口）")
     return 0
 
 

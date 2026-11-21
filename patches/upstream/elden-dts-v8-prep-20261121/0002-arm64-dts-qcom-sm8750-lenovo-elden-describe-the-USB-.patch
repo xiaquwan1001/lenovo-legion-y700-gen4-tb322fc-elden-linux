@@ -1,0 +1,157 @@
+From 5c1540289b3155ef615cd68d4f53d3f29cc3a456 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 21 Nov 2026 12:55:53 +0800
+Subject: [PATCH v8 2/2] arm64: dts: qcom: sm8750-lenovo-elden: describe the
+ USB-C receptacles and the HS data mux
+
+The two Type-C receptacles of this tablet share the controller's High Speed
+D+/D- pair through an analog 2:1 mux whose select input is TLMM GPIO 29.
+Describe the mux, the pinctrl state for that line and one usb-c-connector
+per receptacle, and turn port@0 of the DWC3 node into one endpoint per
+receptacle so the role switch code can follow remote-endpoint to the
+connector that is actually in use.
+
+The mux state to receptacle mapping is not known: no schematic sheet names
+GPIO 29 and the two vendor sources disagree about its polarity.  The
+mux-state values below therefore only say that the two endpoints differ,
+which is all the binding requires; the stock firmware drives the same line
+from its UCSI port manager, which is why this is a select and not an
+enable.
+
+Keep idle-state out of the mux node: the role mux deselects the old port
+right before selecting the new one, and any explicit idle state would be
+driven in between, glitching both receptacles.
+---
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 112 ++++++++++++++++++
+ 1 file changed, 112 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+index 73f4452f46..c60556d417 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
++++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+@@ -55,6 +55,72 @@ wl2868c_vsys: regulator-vsys {
+ 		regulator-name = "wl2868c_vsys";
+ 		regulator-always-on;
+ 	};
++
++	/*
++	 * The High Speed D+/D- pair of the USB controller is routed to one of
++	 * the two Type-C receptacles through an analog mux whose select input
++	 * is GPIO 29 (the stock firmware drives the same line from its UCSI
++	 * port manager, so this is a select, not an enable).
++	 *
++	 * The level left by the bootloader survives eusb_mux_state, which only
++	 * programs function and bias and never an output level, but it does not
++	 * survive gpio-mux: that driver requests the line as output-low at probe
++	 * time.  A mux controller cannot be read back, so the level it is put in
++	 * is taken as state 0 and the first select moves the data path.
++	 *
++	 * idle-state is deliberately left out, i.e. MUX_IDLE_AS_IS: the role
++	 * mux deselects the old port immediately before selecting the new one,
++	 * and any other idle state would be driven in between, glitching both
++	 * receptacles.  Keeping the last state on deselect also matches the
++	 * stock firmware, which never parks the line.
++	 */
++	usb_hs_mux: mux-controller {
++		compatible = "gpio-mux";
++		#mux-control-cells = <0>;
++
++		mux-gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&eusb_mux_state>;
++	};
++
++	usb_con_main: connector-main {
++		compatible = "usb-c-connector";
++		power-role = "dual";
++		data-role = "dual";
++
++		ports {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			port@0 {
++				reg = <0>;
++
++				usb_con_main_hs: endpoint {
++					remote-endpoint = <&usb_dwc3_hs>;
++				};
++			};
++		};
++	};
++
++	usb_con_second: connector-second {
++		compatible = "usb-c-connector";
++		power-role = "dual";
++		data-role = "dual";
++
++		ports {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			port@0 {
++				reg = <0>;
++
++				usb_con_second_hs: endpoint {
++					remote-endpoint = <&usb_dwc3_hs2>;
++				};
++			};
++		};
++	};
+ };
+ 
+ &gpi_dma2 {
+@@ -127,3 +193,49 @@ camera_pmic_default: camera-pmic-default-state {
+ 		bias-disable;
+ 	};
+ };
++
++&tlmm {
++	/*
++	 * State of the 2:1 analog mux that selects which receptacle drives the
++	 * High Speed D+/D- pair of the USB controller.  The stock firmware
++	 * leaves the line as is, so no output level is forced here.
++	 */
++	eusb_mux_state: eusb-mux-state {
++		pins = "gpio29";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-down;
++	};
++};
++
++&usb {
++	dr_mode = "otg";
++	mux-controls = <&usb_hs_mux>;
++	status = "okay";
++};
++
++&usb_dwc3_hs_port {
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++	/delete-node/ endpoint;
++
++	/* Receptacle A: selected with mux state 0. */
++	usb_dwc3_hs: endpoint@0 {
++		reg = <0>;
++
++		usb-role-switch;
++		mux-state = <0>;
++		remote-endpoint = <&usb_con_main_hs>;
++	};
++
++	/* Receptacle B: selected with mux state 1. */
++	usb_dwc3_hs2: endpoint@1 {
++		reg = <1>;
++
++		usb-role-switch;
++		mux-state = <1>;
++		remote-endpoint = <&usb_con_second_hs>;
++	};
++};
++
+-- 
+2.53.0
+
