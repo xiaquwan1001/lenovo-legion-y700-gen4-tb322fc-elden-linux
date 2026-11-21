@@ -450,6 +450,49 @@ echo $c')
 		|| no "T9 采样器仍缺（缺件数=$T9_STATE）"
 fi
 
+echo "== 13) A/B 槽自动 mark-successful（重启体检；不置位 ~7 次重启卡 fastboot #181/#697） =="
+# 为什么在本脚本里：SUCCESSFUL 位不置 ⇒ ABL 每次启动扣 tries_remaining，扣到 0 把槽标
+# UNBOOTABLE，设备停在 fastboot（#181），11-20 的「重启又回 fastboot」正是这条（#697）。
+# 件 = scripts/fix-ab-mark-successful.sh（运行期 `--mark-once`，读回校验、不吞错）
+#      + rootfs/debian/units-extra/ab-mark-successful.service（oneshot，Authored 走 /bin/sh 前缀）。
+# 判据五件（--check 只读）：脚本在且 sha 与仓内一致 / 单元在 / is-enabled=enabled /
+#   上一次 Result≠failed / 当前 active 槽 `qbootctl -n` = marked successful。
+# 与 distro 的 qbootctl.service 关系：同语义另一份实现，两者幂等（本单元先只读、已成功零写盘）。
+ABC_SHA_LOCAL=$(sha256sum "$ROOT/scripts/fix-ab-mark-successful.sh" 2>/dev/null | awk '{print $1}')
+ABC_STATE=$("${SSH[@]}" 'c=0
+[ -x /usr/local/sbin/ab-mark-successful ] || c=$((c+1))
+[ -f /etc/systemd/system/ab-mark-successful.service ] || c=$((c+1))
+[ "$(systemctl is-enabled ab-mark-successful.service 2>/dev/null)" = enabled ] || c=$((c+1))
+[ "$(systemctl show -p Result --value ab-mark-successful.service 2>/dev/null)" != failed ] || c=$((c+1))
+s=$(qbootctl -a 2>/dev/null | sed -n "s/.*_\([ab]\)[[:space:]]*$/\1/p" | head -1); s=${s:-b}
+qbootctl -n "$s" 2>/dev/null | grep -q ": is marked successful" || c=$((c+1))
+echo "$c"' 2>/dev/null || echo 9)
+ABC_SHA_DEV=$("${SSH[@]}" 'sha256sum /usr/local/sbin/ab-mark-successful 2>/dev/null | awk "{print \$1}"' 2>/dev/null || true)
+ABC_SLOT=$("${SSH[@]}" 'qbootctl -a 2>/dev/null | sed -n "s/.*_\([ab]\)[[:space:]]*$/\1/p" | head -1' 2>/dev/null || true)
+if [ "${ABC_STATE:-9}" = 0 ] && [ -n "$ABC_SHA_LOCAL" ] && [ "$ABC_SHA_DEV" = "$ABC_SHA_LOCAL" ]; then
+	ok "A/B mark-successful 就绪（单元 enabled、active 槽 _${ABC_SLOT:-?} successful、脚本 sha 与仓内一致）"
+elif [ "$MODE" = check ]; then
+	no "A/B mark-successful 未就绪（缺件数=$ABC_STATE，脚本 sha 设备=${ABC_SHA_DEV:-无} 仓内=${ABC_SHA_LOCAL:-无}，active 槽 _${ABC_SLOT:-?}）"
+else
+	timeout -k 3 60 scp "$ROOT/scripts/fix-ab-mark-successful.sh" "$TAB:/usr/local/sbin/ab-mark-successful" >/dev/null 2>&1 || true
+	timeout -k 3 60 scp "$ROOT/rootfs/debian/units-extra/ab-mark-successful.service" \
+		"$TAB:/etc/systemd/system/ab-mark-successful.service" >/dev/null 2>&1 || true
+	"${SSH[@]}" 'set -e
+chmod 755 /usr/local/sbin/ab-mark-successful
+systemctl daemon-reload
+systemctl enable --now ab-mark-successful.service >/dev/null 2>&1
+systemctl start ab-mark-successful.service >/dev/null 2>&1 || true
+systemctl is-enabled ab-mark-successful.service
+systemctl show -p Result --value ab-mark-successful.service' \
+		&& fix "A/B mark-successful 已装（enable --now + 当场跑一次；日志 journalctl -u ab-mark-successful）" \
+		|| no "A/B mark-successful 安装失败（journalctl -u ab-mark-successful）"
+	ABC_SHA_DEV=$("${SSH[@]}" 'sha256sum /usr/local/sbin/ab-mark-successful 2>/dev/null | awk "{print \$1}"' 2>/dev/null || true)
+	ABC_SLOT=$("${SSH[@]}" 'qbootctl -a 2>/dev/null | sed -n "s/.*_\([ab]\)[[:space:]]*$/\1/p" | head -1' 2>/dev/null || true)
+	[ "$ABC_SHA_DEV" = "$ABC_SHA_LOCAL" ] \
+		&& fix "A/B mark-successful 就绪（脚本 sha 与仓内一致，active 槽 _${ABC_SLOT:-?}）" \
+		|| no "A/B mark-successful 装后仍缺（sha 设备=${ABC_SHA_DEV:-无} 仓内=${ABC_SHA_LOCAL:-无}）"
+fi
+
 echo
 if [ "$missing" -eq 0 ]; then echo "结果: 达标（MISS=0）"; exit 0; fi
 echo "结果: 未达标（MISS=$missing）"; exit 1

@@ -1,0 +1,30 @@
+[Unit]
+# 每次启动把自己所在（active）的 A/B 槽标记为「启动成功」。
+# 为什么必须有（PITFALLS #181 / #697）：SUCCESSFUL 位不置 ⇒ ABL 每次启动扣一次
+# tries_remaining，7 次后把槽标 UNBOOTABLE，设备停在 fastboot。
+# 与 Debian 包自带的 qbootctl.service 的关系：那是**同一语义的另一份实现**
+# （ExecStart=/usr/bin/qbootctl -m，不带槽位 ⇒ 依赖 cmdline 的 androidboot.slot_suffix）。
+# 本单元的差异 = ① 槽位取 `qbootctl -a` 的 **active** 槽（cmdline 的 suffix 在
+# boot.img 里烤死，见 PITFALLS #601，不能当判据）；② 先只读、已成功则不写；
+# ③ 写完**读回校验**，失败即 rc≠0（oneshot 失败 ⇒ systemctl --failed 可见，
+#    deploy-desktop-shell.sh §13 会读 Result）。两者同时跑是幂等的。
+Description=Mark current A/B slot successful (elden; guards retry drain, PITFALLS #181/#697)
+Documentation=file:///usr/local/sbin/ab-mark-successful
+# 排在 distro 单元之后：若它已经标记成功，本单元只做只读校验（零写盘）。
+After=local-fs.target qbootctl.service
+Wants=qbootctl.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+SyslogIdentifier=ab-mark-successful
+# 设备节点/依赖 udev 建 /dev/disk/by-partlabel（PITFALLS #102：qbootctl 早跑会
+# "No slots found"）⇒ 等待逻辑放在脚本内部（10×1 s 上限），不用 ExecStartPre。
+# 走 /bin/sh 前缀（与 elden-resource-sample.service 同形）：这样 stage.sh 门禁 D2
+# 「ExecStart 首个 token 必须存在」在 overlay 树里也能通过（overlay 不含 /usr/local/sbin）。
+ExecStart=/bin/sh /usr/local/sbin/ab-mark-successful --mark-once
+TimeoutStartSec=60
+# 失败可见性：oneshot 非 0 ⇒ unit failed。这里刻意**不写** `-` 前缀、不吞错。
+
+[Install]
+WantedBy=multi-user.target

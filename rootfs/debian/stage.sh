@@ -118,7 +118,22 @@ if [ "$MODE" != check ]; then
 			mkdir -p "$STAGE/etc/systemd/system/timers.target.wants"
 			ln -sfn "/usr/lib/systemd/system/$_bn" "$STAGE/etc/systemd/system/timers.target.wants/$_bn"
 		done
+		# 4e/6 额外手写 **service** 的启用软链（2026-11-21 加）
+		# 为何（daily-linux-deploy 复核）：4d 只给 *.timer 建 wants 软链，
+		# `units-extra/*.service` 会「装了但不启用」—— ab-mark-successful.service 就是这样静默失效的。
+		# 口径 = 只按单元自己的 `WantedBy=` 走（没声明的不凭空启用）。
+		_ns=0
+		for s in "$_extra"/*.service; do
+			[ -f "$s" ] || continue
+			_bn=$(basename "$s")
+			for _tgt in $(sed -n 's/^WantedBy=//p' "$s" | tr ' ' '\n' | sed '/^$/d'); do
+				mkdir -p "$STAGE/etc/systemd/system/$_tgt.wants"
+				ln -sfn "/usr/lib/systemd/system/$_bn" "$STAGE/etc/systemd/system/$_tgt.wants/$_bn"
+				_ns=$((_ns + 1))
+			done
+		done
 		ok "额外手写单元: $_ne 个（含 timer 启用软链）→ /usr/lib/systemd/system/"
+		[ "$_ns" -gt 0 ] && ok "额外手写 service 启用软链: $_ns 条（按各单元 WantedBy=）"
 	fi
 
 	# 4b/6 启动前置 hook（ExecStartPre 的目标文件）
