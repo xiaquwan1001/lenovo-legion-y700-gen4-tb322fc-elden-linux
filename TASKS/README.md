@@ -139,7 +139,11 @@
 ④ UEFI b 槽基建落地（ESP+外置菜单），路 A 实测「有字没菜单」⇒ ~~唯一方向 = 重建带 esp-first 的 Mu~~ **作废（11-21 晚实测）：不需重建——esp-first 的 FD 早已在归档、repack 秒级；84 条补丁重放 OK=84/FAIL=0**（`reports/uefi-mu-espfirst-replay-20261121.md`，原账 `reports/uefi-bslot-plan-20261121.md` §6/§7）；
    **★11-21 晚 p65 上机（零写盘）：UEFI 真交棒起来了（cmdline `elden_bootpath=uefi` = UEFI 专属 token、约 40 s 进桌面、
    ABL logfs `factory_build=0`），但用户目视「没有完整 GRUB 菜单」，且 `efi: UEFI not found` ⇒ 更可能是 Mu 的 LinuxLoader
-   直接读了 `boot_b` 起核，而非 ESP 的 GRUB 那一路**（报告 §7 已记账，未闭合 = BOOTAA64.EFI 是否被执行）；
+   直接读了 `boot_b` 起核，而非 ESP 的 GRUB 那一路**（报告 §7 已记账）；**★11-21 晚 p69 一发 + ESP 探针 cfg token 判据已给出答案：
+   `BOOTAA64.EFI` **没有被执行** —— cmdline 里 `elden_bootpath=uefi` 有（= Mu LinuxLoader 跑到跳转）、ESP cfg 的
+   `elden_esp_grub=20261121T1442` **无**、logfs `R68LOG` 计数 0（而实际喂进去的 FD 里有信标×3）⇒ 走的是「Mu LinuxLoader
+   直接交核」，没走 BDS→ESP→GRUB；下一发区分「RAM 形态 UFS 读不出 ESP」vs「本载荷没进 BDS」= flashed 形态复现**
+   （`reports/uefi-mu-espfirst-replay-20261121.md` §8、PITFALLS #708）；
 ⑤ 发行版定 Mobian（`reports/distro-upstream-feasibility-20261121.md`）；
 ⑥ wl2868c v12 ✅ 进树 `regulator.git for-7.5`；dwc3 v10 SENT-ready 且已投（4 封 250，lore 归档 4/4）；
 ⑦ 输入法/OSK P3：现机 stock trixie，5 FAIL 已修/1 判据过时已修，GTK_IM_MODULE 二选一待用户拍板（`reports/ime-osk-zero-to-usable-20261121.md`）；

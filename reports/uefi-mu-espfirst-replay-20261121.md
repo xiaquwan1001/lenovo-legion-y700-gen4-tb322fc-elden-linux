@@ -253,3 +253,56 @@ ABL 侧 `logfs seg0` 本次记录 = `Fastboot=1` → `Booting from slot (_b)` �
 - ESP 里的 `EFI/BOOT/BOOTAA64.EFI`（我们的 GRUB）到底被 BDS 执行了没有 —— 判据 = 屏上 `[K] esp blk=` / `[K] esp fs=`；
 - 若被执行却没出菜单：是 `grub.cfg` 路径（ESP 用 `/grub/grub.cfg`，而 `linux17:/boot/grub/grub.cfg` 是另一份）
   还是 gfxterm/console 输出没地方显示。
+
+## 8. ★2026-11-21 晚 p69 一发：**BOOTAA64.EFI 没有被执行**（token 判据，决定性）
+
+做法（三重证据，不靠目视）：
+
+1. **ESP 侧 token 判据**：把 ESP 的 `grub/grub.cfg` 与**新写的 `EFI/BOOT/grub.cfg`**（md5 同为 `0750f9e5…`，
+   后者是补上「GRUB 默认 prefix 在 `EFI/BOOT`，原来那份菜单在 `/grub/` 下可能根本读不到」这个缺口）
+   都改成探针菜单：Linux 条目 cmdline 追加 `elden_esp_grub=20261121T1442`。
+   ⇒ **只要 BOOTAA64.EFI（GRUB 2.14-2ubuntu1，`strings` 里 cfg 路径模板 = `%s/grub.cfg`）执行到这份 cfg
+   并起核，`/proc/cmdline` 必然带这个 token。**
+2. **logfs 信标**：`fastboot boot` 前 dump 基线（`R68LOG` 计数 0、md5 `a1b361a4`），跑完再 dump。
+3. **载荷自检**（关键，避免把「件里没有信标」误读成「固件没跑」）：把 boot.img 里 gz 段解开拿到 FD
+   （`45553a4a…`，4194496 B），`uefi-fv-strings.py` 复核 = `R68LOG`×3 / `esp blk=`×1 / `esp fs=`×1 / `R70`×1
+   ⇒ **这次真的把带信标的 p69 载荷喂进去了**（它与归档件 `8f268ff2…` 不同 sha，属 repack 差异）。
+
+实测（`logs/uefi-esp-probe-20261121/`）：
+
+```
+fastboot boot out-p69/uefi-preamble69-r1.img   → Booting OKAY [10.110s]，78 s 后 ssh 通
+/proc/cmdline = … elden_root=LABEL=linux androidboot.slot_suffix=_b
+                  androidboot.serialno=51318dc0 androidboot.baseband=apq
+                  elden_bootpath=uefi initcall_debug
+grep -c elden_esp_grub=20261121T1442 /proc/cmdline → **0**
+logfs: R68LOG 计数 前 0 → 后 **0**（seg0 变了 = ABL 写了本次记录，seg1..3 逐字节不变）
+```
+
+### 8.1 判读（把三个 token 的语义分开，这是本轮最重要的方法论修正）
+
+| 观测 | 能证明什么 | **不能**证明什么 |
+|---|---|---|
+| `elden_bootpath=uefi`（R43 补丁：`UpdateCmdLineParams()` 追加） | **Mu 的 LinuxLoader 跑到了跳转前**，并把内核交出去了 | BDS 跑了、ESP 被枚举、`BOOTAA64.EFI` 被执行 |
+| `elden_bootloader=esp`（路线 B token） | ESP 里的 `boot.img` 被 Mu 读起 | 同上 |
+| ESP `grub.cfg` 里的自定义 token | **`BOOTAA64.EFI` 真的被执行**（唯一硬判据） | — |
+| logfs `R68LOG s<n>:…` | BDS/块设备/FS 枚举那些阶段走到了（且 UFS 写得出） | 只到跳转、没进 BDS 的场合不会写 |
+
+⇒ 本轮：`elden_bootpath=uefi` 有、**ESP token 无**、`R68LOG` 无 ⇒ **本次是 Mu 的 LinuxLoader 直接把内核交出去，
+没走 BDS → ESP → BOOTAA64.EFI 那一路**。所以「没有完整 GRUB 菜单」不是显示问题，是**那条路根本没走**。
+
+### 8.2 现在最可能的机制（下一发要分开的两条）
+
+1. **RAM 形态下 UFS 读不出 ESP**：`R68LOG` 一条都没写，与「UFS 块 IO 在本载荷里没通」同向
+   （信标写 logfs 也走 UFS；写不出 ⇒ 读 ESP 多半也读不出 ⇒ BDS 找不到可启动文件系统）。
+   这与历史吻合：2026-11-10 唯一一次 `s9:esp-ld-ok` 是 **flashed 形态（`boot_a`=p69）**，不是 RAM 形态。
+2. **本载荷压根没进 BDS**（`p69` 走的是「PrePi → LinuxLoader」近路）⇒ ESP 从未被扫。
+
+区分方法（按代价）：**flashed 形态复现一发**（`dtbo_a` 清零 + `boot_a` = p69，零 RAM 依赖，写入量 2 个分区）
+—— 那是历史上唯一证明过 ESP 能被读起的形态；若 flashed 形态同样没有 ESP token，则 2 成立。
+
+### 8.3 现场残留（有意保留，勿当脏数据）
+
+- ESP 里现在是**探针菜单**：`grub/grub.cfg` 与 `EFI/BOOT/grub.cfg`（md5 `0750f9e5…`），原文件备份为
+  同目录 `*.bak-20261121`。8 s 超时后默认起 Linux（`LABEL=linux`）。
+- 好处：以后任何一次「GRUB 真被执行」都会在 cmdline 里留下 `elden_esp_grub=20261121T1442`，一眼可查。
