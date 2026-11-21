@@ -224,3 +224,32 @@ build/uefi-woa-prep/merge-espfirst-20261121/replay.sh          # 需树已在位
 awk -F'\t' '/^#/ {next} {c[$3]++} END {for (k in c) printf "%s=%d\n", k, c[k]}' \
   build/uefi-woa-prep/merge-espfirst-20261121/replay-status.tsv  # 期望 OK=84
 ```
+
+## 7. ★2026-11-21 晚 上机实测（p65 一发，零写盘）：**UEFI 真交棒起来了，但没有完整 GRUB 菜单**
+
+```
+fastboot boot build/uefi-woa-prep/merge-espfirst-20261121/out-p65/uefi-preamble65-r1.img
+  Sending 'boot.img' (65620 KB) OKAY [1.479s] / Booting OKAY [10.063s]
+→ 约 40 s 后 ssh 通、uptime 0 min（新起），root = /dev/sda17 LABEL=linux，graphical.target active
+```
+
+内核侧硬证据（`scripts/uefi-boot-trial.sh:240` 定义：该 token **只有 UEFI R43+ 才写**）：
+
+```
+/proc/cmdline = … elder_root=LABEL=linux androidboot.slot_suffix=_b
+                   androidboot.serialno=51318dc0 androidboot.baseband=apq
+                   elden_bootpath=uefi initcall_debug
+```
+
+ABL 侧 `logfs seg0` 本次记录 = `Fastboot=1` → `Booting from slot (_b)` → `BootLinux: factory_build = 0`
+（= 我们喂进去的 RAM 件，不是原厂件）。
+
+**用户目视：没有出现完整的 GRUB 菜单。** 与内核侧互证的一处不吻合必须记账：
+`dmesg` 有 `efi: UEFI not found.`、`/sys/firmware/efi` 不存在 ⇒ 内核**不是**经 EFI-stub 交接；
+运行 cmdline 也没有 grub.cfg 里的 `root=LABEL=…` / `elden_boot=grub`
+⇒ 更可能是 **Mu 自己的 LinuxLoader 读了 `boot_b` 直接起核**，而不是 ESP 里的 GRUB 菜单那一路。
+
+未闭合（下轮要取的就是这两条）：
+- ESP 里的 `EFI/BOOT/BOOTAA64.EFI`（我们的 GRUB）到底被 BDS 执行了没有 —— 判据 = 屏上 `[K] esp blk=` / `[K] esp fs=`；
+- 若被执行却没出菜单：是 `grub.cfg` 路径（ESP 用 `/grub/grub.cfg`，而 `linux17:/boot/grub/grub.cfg` 是另一份）
+  还是 gfxterm/console 输出没地方显示。
