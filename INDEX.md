@@ -12,6 +12,17 @@
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
 > 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
 
+0. **⚠ 2026-11-21（lane C 只读 + 主会话复核）—— 安卓 a 槽两条旧证据被推翻、判别顺序改写（影响 B 档回收判据）**
+   - **`logfs` 只有 segment 0 会被 ABL 重写**：三份 dump 的 seg1..12+ 与出厂包 `backup/official-rom-15.10.259/logfs_ufs_8mb.bin`
+     **逐段 sha 相同**（`diff segs: [0]`，主会话重跑验证）⇒ 之前引用的 `Loading Image recovery_a` / `Booting from slot (_a)` /
+     `factory_build=1` / `EBS 13311` 全是**出厂遗留**；「ABL 选 recovery_a」= **无证据命题**（`Loading Image <part>` 是每次任务启动的
+     头部探测，b 槽同样有 `recovery_b`；真 recovery 会打 `Recovery:1`）。新坑 = `PITFALLS #703`，`#702` 已就地标更正。
+   - **现态实读**：在机 `super` = **v1**（头 4 MiB `d516ae04…` = `out/android-min-20261118` 件）· a 链除 `vbmeta_a`（`419e01ac…` ≠ 原厂 `55929c15…`）
+     全原厂 · `misc` 前 4 KiB 全 0 · 现役镜像 **vk192**（`uname -r` 里的 `vk189` 是 LOCALVERSION 残留，不是两个版本）。
+   - **判别顺序（新）**：① H5 = 刷原厂 `vbmeta_a`（10 min，**需物理键**）→ ② 落点当场取 **seg0 logfs + cmdline** → ③ S2 不再跑（11-20 实测 no-op）、
+     S3（原厂 `super` 对照 14.5 GiB）**降为对照**。全账 = `reports/android-a-slot-laneC-20261121.md`、证据 = `logs/a-slot-analysis-20261121/`。
+   - 连带：**B 档 37 G `pending` 的解冻判据改由 H5（10 min）先给信号**，不必等 S3。
+
 0. **🟢 2026-11-21 —— 里程碑：项目第一个上游系列进树（`wl2868c v12` → `regulator.git for-7.5`）**
    - Mark Brown 已合入：`84e67d2ee13f…`（binding，2 文件）+ `602f57223457…`（driver，4 文件），均 `Author: Qianhui Xu`；
      上游合并提交 `0216753490ff…`，已在 **linux-next `master`**。**主会话已独立复核**（`git.kernel.org/…/broonie/regulator.git/log/?h=for-7.5` 逐行命中）。

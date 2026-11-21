@@ -719,6 +719,12 @@ pstore_triage() {
 	local d=$STEPLOG
 	local st; st=$(dev_state)
 	[ "$st" = linux ] || { info "pstoredump 三分类需要 Linux 侧（当前 $st）"; return 0; }
+	# 2026-11-21 lane C 复核：本函数为「抓字节不进 run()」绕开了 APPLY 门 ⇒ 旧实现在 --dry-run 下
+	# 也会真读 128 MiB 并打印 `hit=0`（= 把「没执行」显示成「查过且干净」）。属 fail-open，显式跳过。
+	if [ "$APPLY" != 1 ]; then
+		info "[dry] 跳过 pstoredump 抓取（128 MiB，真执行需 --apply）；判据：命中 0 ⇒ 无内核崩溃"
+		return 0
+	fi
 	# 同 super 头：抓数据不要走 run()（run 的 printf 会混进输出文件；旧文件里首行是 `[run] timeout …`）
 	logc "ssh $TAB \"dd if=/dev/disk/by-partlabel/pstoredump bs=1M count=128 | grep -acE 'panic|oops|Unable to handle'\" > $d/pstore-raw.txt"
 	timeout -k 5 120 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
@@ -752,7 +758,9 @@ S1() {
 	run 30 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'uname -r; findmnt -no SOURCE,LABEL /'
 	run 30 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl 2>&1 | head -24; qbootctl -a 2>&1'
 	info "判据：Active slot 行；super 现态由下一步首 512 KiB 解析确认（v1 = system_a 5296 MiB）"
-	if [ "$(dev_state)" = linux ]; then
+	if [ "$(dev_state)" = linux ] && [ "$APPLY" != 1 ]; then
+		info "[dry] 之后就绪（只读）：ssh \"dd if=/dev/disk/by-partlabel/super bs=4096 count=128 iflag=direct\" > super-head512k.bin"
+	elif [ "$(dev_state)" = linux ]; then
 		# ⚠ 抓字节**不要**走 run()：run 会把 `[run] timeout …` 打到 stdout，被 `> 文件` 一起收进去
 		# （2026-11-21 复核实测：08:57/08:59 两份 super-head512k.bin 里混进 156 B 命令文本，
 		#   `android-super.py list` 因此报 `bad geometry magic 0x00000000`，判据变成假阴性）。
@@ -869,6 +877,9 @@ S3() {
 	local rc; observe_android S3; rc=$?
 	pstore_triage
 	info "回退：qdl write 0/$LBA_SUPER out/android-min-20261118/pkg/super_min.img（v1，2171264 扇区）"
+	# 2026-11-21 lane C 复核：dry-run 下 observe_android 直接 return 0 ⇒ 旧实现据此打印
+	# 「原厂 super 能进桌面」结论（未执行被读成通过，fail-open）。结论行只在 --apply 下出现。
+	if [ "$APPLY" != 1 ]; then info "[dry] 结论行省略（未真执行，不产生 verdict）"; return 0; fi
 	case "$rc" in
 		0) info "S3 结论：原厂 super 能进桌面 ⇒ **我们的 v1 super 内容**是变量（需逐分区二分）" ;;
 		*) warn "S3 观测未达成功判据（rc=$rc，见 $STEPLOG/verdict.txt）⇒ 「原厂也不进」成立时才能排除 super 内容"

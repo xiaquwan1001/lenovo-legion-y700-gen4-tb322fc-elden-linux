@@ -1,5 +1,11 @@
 # #702 `--set-active=a` 后 ABL 直接走 recovery_a；而 recovery 里的 `adb reboot bootloader` 会改写 misc BCB
 
+> **⚠ 2026-11-21 更正（#703）**：本条引用的 `logfs` 原文（`Loading Image recovery_a` / `Booting from slot (_a)` /
+> `factory_build = 1`）**不是这次启动产生的** —— `logfs` 只有 **segment 0** 会被 ABL 重写，seg≥1 与出厂包逐段字节相同（`PITFALLS #703`）；
+> 且 `Loading Image <part>` 是每次任务启动的头部探测（b 槽同样有 `recovery_b`），真 recovery 会打 `Recovery:1`。
+> ⇒ 本条**目前剩下的弱证据只有**：`adb devices` 当时枚举为 `HA2EXB0E recovery`（需重现才算硬证）；
+> 「ABL 选 recovery_a」属**无证据命题**。H1/H2 判别改为先做 **H5（刷原厂 `vbmeta_a`）**，见 `reports/android-a-slot-laneC-20261121.md`。
+
 - 日期：2026-11-21（设备在线轮，用户两次物理键进 BL 配合）
 - 现象/判据：
   1. 在 fastboot 里**先** `fastboot flash misc <4 KiB 零>`（OKAY，清 BCB）**再** `fastboot --set-active=a` + `fastboot reboot`

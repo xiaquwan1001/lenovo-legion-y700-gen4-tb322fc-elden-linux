@@ -146,19 +146,21 @@
   **未做/需设备**：刷 `vbmeta_b` 后 `fastboot boot bootslot-b/boot_b.img` 一发（成功 = 债了结；仍失败 = 归因排除本项，
   `PITFALLS #146` 的三种回话说明机制不只 key 一条）；`flags=0` 干净链需先有 `dtbo_b` dump（本轮不造）。
   成因/证据/回退 = `reports/vbmeta-b-resign-20261121.md`，口径 = `bootslot-b/README.md` §二。
-- **P1 安卓 a 槽**（G2 共存）仍起不来 —— **2026-11-21 两发实跑把「BCB 污染」这条候选排掉了**：
-  两发都是「（后一发先 `fastboot flash misc` 清 4 KiB 零）→ `--set-active=a` → `fastboot reboot`」，
-  **亮次都落 recovery**（`adb` = recovery；logfs `Loading Image recovery_a` / `Booting from slot (_a)` /
-  `BootLinux: factory_build = 1`）⇒ 落 recovery 不是 BCB 污染、也不是回落 b 槽。
-  **剩余判别 = 唯一有效实验：S3 回写原厂 `super` 对照**（H1「槽位/ABL 机制」vs H2「v3 slim super 内容问题」；14.5 GiB ≈ 6–12 min，走 `fastboot oem edl` → `qdl`）。S2（原厂 `metadata` 28 MiB）可作轻量前置。
-  两条新机制已入账 `PITFALLS #702`：① fastboot 侧可清 BCB（`fastboot flash misc` 4 KiB 零 = OKAY）；
-  ② **recovery 的 `adb reboot bootloader` 会把 misc 写成 `bootonce-bootloader`**（Linux 侧静置不写）⇒ 从 recovery 出来先清 BCB 再谈样本。
-  全账 = `reports/android-v3-bringup-packet-20261120.md` 2026-11-21 增量段 + `reports/linux-to-fastboot-20261121.md`。
-- **P2 B 档 ~42 G 回收**：等 v3 首启判据（`versions/out-artifacts.tsv` 已标 `pending` 禁删）。
+- **P1 安卓 a 槽**（G2 共存）仍起不来 —— **2026-11-21 两条旧证据被推翻，判别顺序已改**（lane C 只读取证 + 主会话复核）：
+  **① `logfs` 只有 segment 0 会被 ABL 重写，seg≥1 与出厂包 `backup/official-rom-15.10.259/logfs_ufs_8mb.bin` 逐段 sha 相同**（三份 dump 均 `diff segs: [0]`）⇒
+  之前引用的「`Loading Image recovery_a` / `Booting from slot (_a)` / `factory_build=1` / EBS 13311」全是**出厂遗留**，不能当本次启动证据。
+  **② 「ABL 选 recovery_a」= 无证据命题**：`Loading Image <part>` 是每次任务启动的头部探测（b 槽同样有 `recovery_b`），真 recovery 会打 `Recovery:1`。
+  剩下的弱证据只有当时 `adb devices` 枚举为 `recovery`（需重现才算硬证）。新坑 = `PITFALLS #703`（`#702` 的 logfs 证据链已就地标更正）。
+  **现态实读（同日）**：在机 `super` = **v1**（头 4 MiB `d516ae04…` = `out/android-min-20261118` 件，v3 件为 `f7c8a980…`）；
+  a 链除 `vbmeta_a`（`419e01ac…` ≠ 原厂 `55929c15…`）**全是原厂**；`misc` 前 4 KiB 全 0；`boot_a` byte6=`0x32`；现役内核 `uname -r` = **vk189**。
+  **判别顺序（新）**：① **H5 = 刷原厂 `vbmeta_a`（10 min，需物理键）** → ② 落点当场取 **seg0 logfs + cmdline**（区分 H1/H6/H7）→
+  ③ S2 不必再跑（11-20 实测 no-op）、S3（原厂 `super` 对照，14.5 GiB）**降为对照**。
+  全账 = `reports/android-a-slot-laneC-20261121.md`（H1–H9 假设表 + 材料核实 + 只读取证 + 一页执行单）+ `logs/a-slot-analysis-20261121/`。
+- **P2 B 档 ~42 G 回收**：等 a 槽首启判据（`versions/out-artifacts.tsv` 四行 `pending` 禁删）。解冻判据 2026-11-21 已重排：先看 **H5（刷原厂 `vbmeta_a`，10 min）** 结果，S3 降为对照 ⇒ `reports/disk-reclaim-20261121.md` §2。
 - **P2 上游 M 系列**：~~wl2868c v12~~ **✅ 已进树（2026-11-21 核实）`regulator.git for-7.5`（`84e67d2ee13f` + `602f57223457`）⇒ 队列剩 dwc3 v10 / elden DTS v7 / fastrpc v3**，按 §7 排队。
   **🆕 dwc3 v10 = SENT-ready（2026-11-21 主机侧跑完全链）**：树不缺（`build/elden-tree` HEAD = `aebb727447` = **v7.4-rc3**，正是 v10 声明基线）⇒ 旧「需先重建内核树」作废；
   G1 `git am` **3/3**（树 `26f56ef5f5`）· G2 checkpatch **0E/0W/0C ×3**（146/63/618）· G3 `W=1` **rc=0 / 0 warning / 22 `.o` 全 aarch64** · G4 `dt_binding_check` 全量 **rc=0 / 0 诊断** · G5 `dtbs_check` 四份 **4/4 `DTC [C]` / 0 诊辨 / baseline 对照新增 0** · G6 负样例 4 类全拒；**G7 上机未做**。
-  cover 定稿 `patches/upstream/dwc3-v10-20261120/v10-0000-cover-letter.patch`（AI 披露 + Rob 11-18 两封逐条回应 + Known gaps + 实数）；全账 = 同目录 `GATES-20261121.md`。**剩 = 用户放行 → send-email dry-run → `--in-reply-to` v9 cover**。
+  cover 定稿 `patches/upstream/dwc3-v10-20261120/v10-0000-cover-letter.patch`（AI 披露 + Rob 11-18 两封逐条回应 + Known gaps + 实数）；全账 = 同目录 `GATES-20261121.md`。**✅ 已投（2026-11-21T02:21Z，用户放行）**：4 封全 `Result: 250`，`--in-reply-to` v9 cover ⇒ 线程正确；**lore `linux-usb` 已归档 4/4**（`web_fetch` 绕 Anubis 复核，线程页列出 v9+v10 共 8 封）；`linux-devicetree` 副本等 patchwork 摄取（全项目最新件停在 11-20T23:39Z ⇒ 摄取滞后，非投递失败）。全账 = 同目录 `SENT.md`（MID 清单 + 日志）。
 - **P1 安卓 a 槽 —— 主机侧就绪度（2026-11-21 补齐，剩的全是设备窗口）**：
   ① **S5 取证件两侧都能造了**：`scripts/boot-img-cmdline.py` 按 magic 同时支持 boot v4 与 **vendor_boot v4**
   （cmdline 窗口 28..2076，等长原地改写）；两件已落 `out/android-v3-bringup-20261120/boot-ttygs0-{boot,vendor_boot}.img`
@@ -640,6 +642,7 @@
 > **★⚠ 2026-11-21 实发反例（推翻上面的默认读法）**：`wl2868c v12` 的 arm-msm 副本 `14991614/14991615` **今天仍是 `state=new` / `commit_ref=None`**，而它**已被 Mark Brown 合入 `regulator.git for-7.5`**（`84e67d2ee13f` binding + `602f57223457` driver，均 `Author: Qianhui Xu`；合入提交 `0216753490ff`，已在 linux-next `master`）⇒ **「只查一个 project（arm-msm）就把结论定死」会漏真相**；判合并必须查「维护者自己的树」或 linux-next 内容级，且 `commit_ref` 空不构成任何证据。
 > **★2026-11-20 现查增量（patchwork API 直查，压过下表 M3/M8/M10 各行里更早的代次记录）**：一页账 = `reports/upstream-recheck-20261120.md`（子代理产出 + §⑤ 主会话复核）。硬事实：**wl2868c 已到 v12**（`14991614/14991615`，11-17，new）· **dwc3 已到 v9**（`14991612`，11-17，new；binding 枚 `14991613` 上 **Rob Herring 11-18T15:34Z 回复全文只有「??」** ⇒ 不是 ack，是「没看懂/不接受」，且我方 v9 binding 提交信息里留着 `DRAFT: driver (3/3) still uses a GPIO…` ⇒ 欠一次「binding+driver+DTS 三件同时切到 `mux-controls`/`gpio-mux`」的干净重投）· **elden 板 DTS 已到 v7**（`14991580`）· **M10 fastrpc 已到 v3**（`14971025`，11-11）· **M8 现役系列 = 「drm/msm/mdss: reset all block resets described in DT」3 枚（11-13，arm-msm `14980387–14980389` / dri-devel `14980395–14980400`）**，不是 clk dispcc RFC（后者仍只有 10-22 一版 `14907944`/`14907951`）· **camss v2 全 `handled-elsewhere`、`commit_ref` 空 ⇒ 未进 mainline/next**。下表对应行的旧代次描述按本节降级，回填时以本节为准。
 > **★2026-11-21 主机侧增量（dwc3 v10 已 SENT-ready）**：`build/elden-tree` HEAD = `aebb727447` = **v7.4-rc3** 即 v10 声明基线（旧「需先重建内核树」作废），整链重跑实得 `git am` 3/3 · checkpatch 0E/0W/0C×3 · `W=1` rc=0/0 warning/22 `.o` aarch64 · 全量 `dt_binding_check` rc=0/0 诊断 · `dtbs_check` 四份 4/4 `DTC [C]`/0 诊断/baseline 新增 0 · 负样例 4 类全拒；cover 定稿（AI 披露 + Rob 11-18 两封逐条回应 + Known gaps），DRAFT 附录与「1/3 无 `diff --git`」缺陷均消失。**G7 上机仍未做**；发信等用户放行。全账 = `patches/upstream/dwc3-v10-20261120/GATES-20261121.md`。
+> **★2026-11-21 dwc3 v10 已投（用户放行）**：02:21Z 4 封全 `Result: 250`，`--in-reply-to` v9 cover，**lore `linux-usb` 归档 4/4**（线程页同时列出 v9 4 封 + v10 4 封 ⇒ 覆盖旧线程成功）；`linux-devicetree` 副本待 patchwork 摄取（该站全项目最新件停在 11-20T23:39Z = 摄取滞后）。**工具事实更正**：`web_fetch`(Firecrawl) 能直接渲染 `lore.kernel.org/<list>/<MID>/`，**绕过 Anubis**——「lore 全站被 Anubis 拦」只对 curl/裸 HTTP 成立，归档复核不必再只靠 patchwork。全账 = `patches/upstream/dwc3-v10-20261120/{SENT.md,GATES-20261121.md}`。
 > **★🟢 2026-11-21 里程碑：项目第一个上游系列进树 —— `wl2868c v12` 已被 Mark Brown 合入 `regulator.git for-7.5`**：`84e67d2ee13ff7354f86967a64bb982ffa5ae037`（`regulator: dt-bindings: willsemi,wl2868c: …`，2 文件）+ `602f5722345708fb7d4917193724df4c6edc5878`（`regulator: willsemi,wl2868c: add the WL2868C camera PMIC driver`，4 文件），均 `Author: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>`；上游合并提交 `0216753490ffc388aeb07bade2fa13ecb7cc766d`。**主会话独立复核**：`web_fetch git.kernel.org/…/broonie/regulator.git/log/?h=for-7.5` 逐行命中上述三枚（3 days 组）。⇒ 只等 7.5 合并窗口；我方动作只剩「回填文档」。邮件全账 = `reports/mail-inbox-20261121.md`。
 > **外部动向快照 = `reports/upstream-watch-20261113.md`**（2026-11-13：patchwork 线程 12 条 + 待观察 8 条 + 外部仓库 9 条，每条带 URL；lore 全站被 Anubis 反爬拦截，故改用 patchwork REST 取同源数据）。
 > **★历次邮件增量（2026-11-07 → 11-14，5 块：11-08 sashiko 10 条 / mdss v5 回信 / 11-12 reviewer tag 3 个 / 11-11 wl2868c v10 已投 / 11-07 未答项现查）已下沉**：逐字原文在 `TASKS/sessions/2026-11-19-§7头增量块下沉.md`；当时结论均由 `reports/mail-triage-*.md`、`reports/upstream-status-20261113.md`、`patches/upstream/*/SENT.md` 覆盖。

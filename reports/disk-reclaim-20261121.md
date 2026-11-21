@@ -36,6 +36,10 @@
 
 ## 2. 解冻判据（一条命令级判据，判到就走）
 
+> **2026-11-21 更新（`PITFALLS #703`）**：在机 `super` = **v1**（头 4 MiB sha = `out/android-min-20261118` 件），不是 v3；
+> 且“落在 recovery”的证据被推翻 ⇒ 判据顺序改为 **H5（刷原厂 `vbmeta_a`，10 min）** 先给信号，
+> S3（原厂 `super` 对照 14.5 GiB）降为对照。下列 A/B/C 的条件本身不变，只是触发点提前。
+
 **解冻条件 A（首选）**：a 槽首启成功（真 Android 起、`adb` 到 launcher）⇒ 四件全部 `verified`，
 `android-min` / `android-slim-v2b` 转 `superseded` 可删，`slim-v3` 转 `verified` 保留 → 立即回收 **9.6 G**。
 

@@ -75,6 +75,19 @@ read-mail-ustc.py --days 14 --replies-only       # 只看对我们的 Message-ID
 
 ### 5) 复核投递（必做）
 
+**首选（2026-11-21 实测，最省事）**：用 `web_fetch`（Firecrawl）直接渲染线程页，**能过 lore 的 Anubis**：
+
+```
+web_fetch  https://lore.kernel.org/<list>/<MID>/          # list 名：linux-usb / linux-devicetree / lkml …
+```
+
+页面标题 + `Thread overview` 就是归档证据（能直接看到整个线程与 `In-Reply-To` 是否符合预期）。
+判据：① 标题 = 我们的 Subject；② MID 逐字相同；③ 线程页里上一代与本次都在。
+**patchwork 不能当第一判据**：它可能整体摄停几十小时（2026-11-21 实测全项目最新件停在 11-20T23:39Z，
+而同时 lore 已归档）⇒ 看到 patchwork「还没有」时先去看 lore，不要重发。
+
+其它方式：
+
 ```bash
 # 按发件人查（自动过 Anubis PoW）
 python3 ~/.local/bin/lore-query.py "https://lore.kernel.org/linux-arm-msm/?q=f:<你的地址>"
