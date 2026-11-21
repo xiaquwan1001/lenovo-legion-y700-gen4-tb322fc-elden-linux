@@ -16,3 +16,4 @@ out/p2-minbase-20261118	superseded	旧 minbase 恢复件（boot-minbase-labellin
 out/stage-debian	superseded	rootfs overlay 构建中间目录（1891 文件/135 MiB，`rootfs/debian/stage.sh` 可重生）⇒ **2026-11-21 已删**，回收 135 MiB	reports/disk-reclaim-20261121.md	2026-11-21
 out/modstage-vk163	superseded	vk163 模块 staging（1543 文件/89 MiB，`build-kernel.sh` 可重生）⇒ **2026-11-21 已删**	reports/disk-reclaim-20261121.md	2026-11-21
 out/modstage-vk172	superseded	vk172 模块 staging（1652 文件/94 MiB，可重生）⇒ **2026-11-21 已删**	reports/disk-reclaim-20261121.md	2026-11-21
+out/uefi-bslot-20261121	pending	GRUB 直起 a 槽安卓四件（Image 36.7M/initrd.img 9.5M/dtb 6.5M/bootconfig 232B，已拆自 boot_a+init_boot_a+vendor_boot_a）+ 段 2/3 待设备窗口	out/uefi-bslot-20261121/README.md	2026-11-21
