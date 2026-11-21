@@ -27,6 +27,10 @@ IMG=${IMG:-$ROOT/out/boot-elden-vk62.img}
 SSID=${SSID:-P40 Pro}
 OBSERVE=${OBSERVE:-180}
 SSHH=(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 -o BatchMode=yes)
+# ★ #701 fail-closed 门（2026-11-21，reports/linux-to-fastboot-20261121.md）：Linux→BL 三条软路径
+#   实测全灭 ⇒ 本脚本过去在这里指引 `ssh TAB 'reboot2 bootloader'`，跟着做只会普通重启。
+#   现在只探活、不指引软路径；不在 fastboot 即停手要物理键。
+BL_NEED_PHYS='需物理键进 BL，见 reports/linux-to-fastboot-20261121.md'
 S(){ timeout 25 "${SSHH[@]}" "$TAB" "$@" 2>/dev/null; }
 TS=$(date +%Y%m%d-%H%M%S)
 LOGDIR=${LOGDIR:-$ROOT/logs/q26-recheck-$(basename "$IMG" .img)-$TS}
@@ -47,9 +51,14 @@ if [ -z "$FB" ]; then
 	FB=$(timeout 8 fastboot devices 2>/dev/null 9>&- | awk 'NF{print $1; exit}')
 fi
 if [ -z "$FB" ]; then
-	echo "[q26] 未见 fastboot 设备。若设备在 Linux：ssh $TAB 'sync; setsid /usr/local/sbin/reboot2 bootloader'"
-	echo "[q26]   或物理 音量下+电源 进 fastboot；再重跑本脚本。"
-	exit 1
+	# 探活：区分「在 Linux（SSH 可达）」和「完全不可达」，但不提供任何软路径指引（#701）。
+	if S true; then
+		echo "[q26] 设备在 Linux（SSH $TAB 可达）但不在 fastboot —— #701 已实测软路径全灭，本脚本不尝试。"
+	else
+		echo "[q26] 设备既不在 fastboot，SSH（$TAB）探活也失败。"
+	fi
+	echo "[q26] $BL_NEED_PHYS（音量下+电源）；进 BL 后重跑本脚本。"
+	exit 3
 fi
 prod=$(timeout 8 fastboot -s "$FB" getvar product 2>&1 | awk -F': ' '/^product:/{print $2}')
 case "$prod" in

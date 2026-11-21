@@ -1,0 +1,1390 @@
+[    0.000000] [      T0] Booting Linux on physical CPU 0x0000000000 [0x514f0014]
+[    0.000000] [      T0] Linux version 7.4.0-rc3-g7a-dwc3v11-20261121-dirty (elden@y700) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #2 SMP PREEMPT 2026-11-21 00:00:00 UTC
+[    0.000000] [      T0] KASLR enabled
+[    0.000000] [      T0] random: crng init done
+[    0.000000] [      T0] Machine model: Lenovo Legion Y700 Gen4
+[    0.000000] [      T0] printk: debug: ignoring loglevel setting.
+[    0.000000] [      T0] efi: UEFI not found.
+[    0.000000] [      T0] [Firmware Bug]: Kernel image misaligned at boot, please fix your bootloader!
+[    0.000000] [      T0] Reserved memory: created CMA memory pool at 0x00000000f2c00000, size 12 MiB
+[    0.000000] [      T0] OF: reserved mem: initialized node adsp-rpc-remote-heap, compatible id shared-dma-pool
+[    0.000000] [      T0] OF: reserved mem: 0x00000000f2c00000..0x00000000f37fffff (12288 KiB) map reusable adsp-rpc-remote-heap
+[    0.000000] [      T0] OF: reserved mem: 0x0000000080000000..0x0000000080dfffff (14336 KiB) nomap non-reusable gunyah-hyp@80000000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000080e00000..0x0000000080e3ffff (256 KiB) nomap non-reusable cpusys-vm-mem@80e00000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000081200000..0x00000000813fffff (2048 KiB) nomap non-reusable cpucp@81200000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000081a00000..0x0000000081a3ffff (256 KiB) nomap non-reusable xbl-dtlog@81a00000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000081c00000..0x0000000081c5ffff (384 KiB) nomap non-reusable aop-image@81c00000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000081c60000..0x0000000081c7ffff (128 KiB) nomap non-reusable aop-cmd-db@81c60000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000081c80000..0x0000000081cf3fff (464 KiB) nomap non-reusable aop-tme-uefi-merged@81c80000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000081d00000..0x0000000081efffff (2048 KiB) nomap non-reusable smem@81d00000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000081f00000..0x0000000081ffffff (1024 KiB) nomap non-reusable pdp-ns-shared@81f00000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000082000000..0x000000008237ffff (3584 KiB) nomap non-reusable cpucp-scandump@82000000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000082380000..0x000000008239ffff (128 KiB) nomap non-reusable adsp-mhi@82380000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000823a0000..0x00000000823dffff (256 KiB) nomap non-reusable soccp-sdi@823a0000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000823e0000..0x000000008245ffff (512 KiB) nomap non-reusable pmic-minii-dump@823e0000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000824a0000..0x000000008259ffff (1024 KiB) nomap non-reusable pvmfw@824a0000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000082600000..0x00000000826fffff (1024 KiB) nomap non-reusable global-sync@82600000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000082700000..0x00000000827fffff (1024 KiB) nomap non-reusable tz-stat@82700000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000082800000..0x00000000847fffff (32768 KiB) nomap non-reusable qdss@82800000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000084a00000..0x00000000892fffff (74752 KiB) nomap non-reusable dsm-partition-1@84a00000
+[    0.000000] [      T0] OF: reserved mem: 0x0000000089300000..0x0000000089d7ffff (10752 KiB) nomap non-reusable dsm-partition-2@89300000
+[    0.000000] [      T0] OF: reserved mem: 0x000000008ba00000..0x000000009affffff (251904 KiB) nomap non-reusable mpss@8ba00000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009b000000..0x000000009b07ffff (512 KiB) nomap non-reusable q6-mpss-dtb@9b000000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009b080000..0x000000009b08ffff (64 KiB) nomap non-reusable ipa-fw@9b080000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009b090000..0x000000009b099fff (40 KiB) nomap non-reusable ipa-gsi@9b090000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009b09a000..0x000000009b09bfff (8 KiB) nomap non-reusable gpu-micro-code@9b09a000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009b0a0000..0x000000009b27ffff (1920 KiB) nomap non-reusable spss@9b0a0000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009b280000..0x000000009b2bffff (256 KiB) nomap non-reusable spu-tz-shared@9b280000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009b2c0000..0x000000009b2fffff (256 KiB) nomap non-reusable spu-modem-shared@9b2c0000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009b300000..0x000000009bafffff (8192 KiB) nomap non-reusable camera@9b300000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009bb00000..0x000000009c2fffff (8192 KiB) nomap non-reusable camera-2@9bb00000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009c300000..0x000000009cafffff (8192 KiB) nomap non-reusable video@9c300000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009cb00000..0x000000009d1fffff (7168 KiB) nomap non-reusable cvp@9cb00000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009d200000..0x000000009eafffff (25600 KiB) nomap non-reusable cdsp@9d200000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009eb00000..0x000000009eb7ffff (512 KiB) nomap non-reusable q6-cdsp-dtb@9eb00000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009ec00000..0x000000009ed7ffff (1536 KiB) nomap non-reusable soccp@9ec00000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009ed80000..0x000000009edfffff (512 KiB) nomap non-reusable q6-adsp-dtb@9ed80000
+[    0.000000] [      T0] OF: reserved mem: 0x000000009ee00000..0x00000000a287ffff (59904 KiB) nomap non-reusable adspslpi@9ee00000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000b8000000..0x00000000b81bffff (1792 KiB) nomap non-reusable xbl-ramdump@b8000000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000d4e23000..0x00000000d50fffff (2932 KiB) nomap non-reusable hwfence-shbuf@d4e23000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000d8000000..0x00000000d85fffff (6144 KiB) nomap non-reusable tz-merged@d8000000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000f3800000..0x00000000f7bfffff (69632 KiB) nomap non-reusable trust-ui-vm@f3800000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000f7c00000..0x00000000fc7fffff (77824 KiB) nomap non-reusable oem-vm@f7c00000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000ff800000..0x00000000ffffffff (8192 KiB) nomap non-reusable llcc-lpi@ff800000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000c2000000..0x00000000c23fffff (4096 KiB) nomap non-reusable ramoops@c2000000
+[    0.000000] [      T0] OF: reserved mem: 0x00000000fc800000..0x00000000ff2fffff (44032 KiB) nomap non-reusable splash_region
+[    0.000000] [      T0] NUMA: Faking a node at [mem 0x0000000081960000-0x0000000bffffffff]
+[    0.000000] [      T0] NODE_DATA(0) allocated [mem 0xbfe0fd200-0xbfe0ff9ff]
+[    0.000000] [      T0] cma: Reserved 32 MiB at 0x00000000f0c00000
+[    0.000000] [      T0] psci: probing for conduit method from DT.
+[    0.000000] [      T0] psci: PSCIv1.1 detected in firmware.
+[    0.000000] [      T0] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] [      T0] psci: MIGRATE_INFO_TYPE not supported.
+[    0.000000] [      T0] psci: SMC Calling Convention v1.3
+[    0.000000] [      T0] psci: OSI mode supported.
+[    0.000000] [      T0] Zone ranges:
+[    0.000000] [      T0]   DMA      [mem 0x0000000081960000-0x00000000ffffffff]
+[    0.000000] [      T0]   DMA32    empty
+[    0.000000] [      T0]   Normal   [mem 0x0000000100000000-0x0000000bffffffff]
+[    0.000000] [      T0] Movable zone start for each node
+[    0.000000] [      T0] Early memory node ranges
+[    0.000000] [      T0]   node   0: [mem 0x0000000081960000-0x00000000819fffff]
+[    0.000000] [      T0]   node   0: [mem 0x0000000081a40000-0x0000000081bfffff]
+[    0.000000] [      T0]   node   0: [mem 0x0000000081cf4000-0x0000000081cfffff]
+[    0.000000] [      T0]   node   0: [mem 0x0000000082460000-0x000000008249ffff]
+[    0.000000] [      T0]   node   0: [mem 0x0000000084800000-0x00000000849fffff]
+[    0.000000] [      T0]   node   0: [mem 0x0000000089d80000-0x000000008b9fffff]
+[    0.000000] [      T0]   node   0: [mem 0x000000009b09c000-0x000000009b09ffff]
+[    0.000000] [      T0]   node   0: [mem 0x000000009eb80000-0x000000009ebfffff]
+[    0.000000] [      T0]   node   0: [mem 0x00000000a2880000-0x00000000b7ffffff]
+[    0.000000] [      T0]   node   0: [mem 0x00000000b81c0000-0x00000000c1ffffff]
+[    0.000000] [      T0]   node   0: [mem 0x00000000c2400000-0x00000000d4e22fff]
+[    0.000000] [      T0]   node   0: [mem 0x00000000d5100000-0x00000000d7ffffff]
+[    0.000000] [      T0]   node   0: [mem 0x00000000e3720000-0x00000000f37fffff]
+[    0.000000] [      T0]   node   0: [mem 0x00000000ff300000-0x00000000ff7fffff]
+[    0.000000] [      T0]   node   0: [mem 0x0000000880000000-0x00000008af6fffff]
+[    0.000000] [      T0]   node   0: [mem 0x00000008b0000000-0x00000008b54fffff]
+[    0.000000] [      T0]   node   0: [mem 0x00000008c0000000-0x0000000bffffffff]
+[    0.000000] [      T0] Initmem setup node 0 [mem 0x0000000081960000-0x0000000bffffffff]
+[    0.000000] [      T0] On node 0, zone DMA: 6496 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 64 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 244 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 1888 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 9056 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 21376 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 30364 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 15072 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 15488 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 448 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 1024 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 733 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 14112 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone DMA: 47872 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone Normal: 2048 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone Normal: 2304 pages in unavailable ranges
+[    0.000000] [      T0] On node 0, zone Normal: 11008 pages in unavailable ranges
+[    0.000000] [      T0] percpu: Embedded 33 pages/cpu s96600 r8192 d30376 u135168
+[    0.000000] [      T0] pcpu-alloc: s96600 r8192 d30376 u135168 alloc=33*4096
+[    0.000000] [      T0] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+[    0.000000] [      T0] CPU features: detected: Address authentication (architected QARMA5 algorithm)
+[    0.000000] [      T0] CPU features: detected: GICv3 CPU interface
+[    0.000000] [      T0] CPU features: detected: Spectre-v4
+[    0.000000] [      T0] CPU features: detected: Spectre-BHB
+[    0.000000] [      T0] CPU features: detected: Broken CNTVOFF_EL2
+[    0.000000] [      T0] alternatives: applying boot alternatives
+[    0.000000] [      T0] Kernel command line: console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux androidboot.slot_suffix=_b androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.boot_devices=soc/1d84000.ufshc androidboot.serialno=HA2EXB0E androidboot.mode=charger offmode.charge=1 androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=charger androidboot.force_normal_boot=1
+[    0.000000] [      T0] Unknown kernel command line parameters "elden_root=LABEL=linux", will be passed to user space.
+[    0.000000] [      T0] printk: log buffer data + meta data: 1048576 + 3670016 = 4718592 bytes
+[    0.000000] [      T0] Dentry cache hash table entries: 2097152 (order: 12, 16777216 bytes, linear)
+[    0.000000] [      T0] Inode-cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.000000] [      T0] software IO TLB: area num 8.
+[    0.000000] [      T0] software IO TLB: mapped [mem 0x00000000ecc00000-0x00000000f0c00000] (64MB)
+[    0.000000] [      T0] Fallback order for Node 0: 0 
+[    0.000000] [      T0] Built 1 zonelists, mobility grouping on.  Total pages: 3916403
+[    0.000000] [      T0] Policy zone: Normal
+[    0.000000] [      T0] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] [      T0] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.000000] [      T0] ftrace: allocating 82986 entries in 326 pages
+[    0.000000] [      T0] ftrace: allocated 326 pages with 4 groups
+[    0.000000] [      T0] rcu: Preemptible hierarchical RCU implementation.
+[    0.000000] [      T0] rcu: 	RCU event tracing is enabled.
+[    0.000000] [      T0] rcu: 	RCU restricting CPUs from NR_CPUS=512 to nr_cpu_ids=8.
+[    0.000000] [      T0] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000] [      T0] 	Rude variant of Tasks RCU enabled.
+[    0.000000] [      T0] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] [      T0] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] [      T0] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=8
+[    0.000000] [      T0] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] [      T0] RCU Tasks Rude: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] [      T0] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] [      T0] GICv3: 988 SPIs implemented
+[    0.000000] [      T0] GICv3: 1024 Extended SPIs implemented
+[    0.000000] [      T0] Root IRQ handler: gic_handle_irq
+[    0.000000] [      T0] GICv3: GICv3 features: 16 PPIs, DirectLPI
+[    0.000000] [      T0] GICv3: GICD_CTLR.DS=1, SCR_EL3.FIQ=0
+[    0.000000] [      T0] GICv3: Enabling SGIs without active state
+[    0.000000] [      T0] GICv3: CPU0: found redistributor 0 region 0:0x0000000016080000
+[    0.000000] [      T0] ITS [mem 0x16040000-0x1607ffff]
+[    0.000000] [      T0] ITS@0x0000000016040000: Devices Table too large, reduce ids 32->19
+[    0.000000] [      T0] ITS@0x0000000016040000: Devices too large, reduce ITS pages 1024->256
+[    0.000000] [      T0] ITS@0x0000000016040000: allocated 131072 Devices @880800000 (indirect, esz 8, psz 4K, shr 1)
+[    0.000000] [      T0] ITS@0x0000000016040000: allocated 4096 Interrupt Collections @8802df000 (flat, esz 1, psz 4K, shr 1)
+[    0.000000] [      T0] GICv3: using LPI property table @0x0000000880310000
+[    0.000000] [      T0] GICv3: CPU0: using allocated LPI pending table @0x0000000880320000
+[    0.000000] [      T0] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] [      T0] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] [      T0] arch_timer: cp15 timer running at 19.20MHz (virt).
+[    0.000000] [      T0] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
+[    0.000000] [      T0] sched_clock: 56 bits at 19MHz, resolution 52ns, wraps every 4398046511078ns
+[    0.000078] [      T0] arm-pv: using stolen time PV
+[    0.000171] [      T0] Console: colour dummy device 80x25
+[    0.000175] [      T0] printk: legacy console [tty0] enabled
+[    0.000530] [      T0] Calibrating delay loop (skipped), value calculated using timer frequency.. 38.40 BogoMIPS (lpj=76800)
+[    0.000535] [      T0] pid_max: default: 32768 minimum: 301
+[    0.000650] [      T0] VFS: Disk quotas dquot_6.6.0
+[    0.000654] [      T0] VFS: Dquot-cache hash table entries: 512 (4096 bytes)
+[    0.000674] [      T0] Mount-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000687] [      T0] Mountpoint-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000770] [      T0] VFS: Finished mounting rootfs on nullfs
+[    0.001271] [      T1] rcu: Hierarchical SRCU implementation.
+[    0.001274] [      T1] rcu: 	Max phase no-delay instances is 1000.
+[    0.001317] [      T1] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.003353] [      T1] EFI services will not be available.
+[    0.003425] [      T1] smp: Bringing up secondary CPUs ...
+[    0.003682] [      T0] GICv3: CPU1: found redistributor 100 region 0:0x00000000160c0000
+[    0.003755] [      T0] GICv3: CPU1: using allocated LPI pending table @0x0000000880330000
+[    0.003848] [      T0] CPU1: Booted secondary processor 0x0000000100 [0x514f0014]
+[    0.004502] [      T0] GICv3: CPU2: found redistributor 200 region 0:0x0000000016100000
+[    0.004572] [      T0] GICv3: CPU2: using allocated LPI pending table @0x0000000880340000
+[    0.004661] [      T0] CPU2: Booted secondary processor 0x0000000200 [0x514f0014]
+[    0.005288] [      T0] GICv3: CPU3: found redistributor 300 region 0:0x0000000016140000
+[    0.005358] [      T0] GICv3: CPU3: using allocated LPI pending table @0x0000000880350000
+[    0.005447] [      T0] CPU3: Booted secondary processor 0x0000000300 [0x514f0014]
+[    0.006089] [      T0] GICv3: CPU4: found redistributor 400 region 0:0x0000000016180000
+[    0.006159] [      T0] GICv3: CPU4: using allocated LPI pending table @0x0000000880360000
+[    0.006249] [      T0] CPU4: Booted secondary processor 0x0000000400 [0x514f0014]
+[    0.006876] [      T0] GICv3: CPU5: found redistributor 500 region 0:0x00000000161c0000
+[    0.006944] [      T0] GICv3: CPU5: using allocated LPI pending table @0x0000000880370000
+[    0.007033] [      T0] CPU5: Booted secondary processor 0x0000000500 [0x514f0014]
+[    0.009137] [      T0] GICv3: CPU6: found redistributor 10000 region 0:0x0000000016200000
+[    0.009254] [      T0] GICv3: CPU6: using allocated LPI pending table @0x0000000880380000
+[    0.009425] [      T0] CPU6: Booted secondary processor 0x0000010000 [0x513f0014]
+[    0.010231] [      T0] GICv3: CPU7: found redistributor 10100 region 0:0x0000000016240000
+[    0.010329] [      T0] GICv3: CPU7: using allocated LPI pending table @0x0000000880390000
+[    0.010486] [      T0] CPU7: Booted secondary processor 0x0000010100 [0x513f0014]
+[    0.010579] [      T1] smp: Brought up 1 node, 8 CPUs
+[    0.010628] [      T1] SMP: Total of 8 processors activated.
+[    0.010630] [      T1] CPU: All CPU(s) started at EL1
+[    0.010633] [      T1] CPU features: detected: Branch Target Identification
+[    0.010637] [      T1] CPU features: detected: ARMv8.4 Translation Table Level
+[    0.010639] [      T1] CPU features: detected: Instruction cache invalidation not required for I/D coherence
+[    0.010643] [      T1] CPU features: detected: Data cache clean to the PoU not required for I/D coherence
+[    0.010647] [      T1] CPU features: detected: Common not Private translations
+[    0.010649] [      T1] CPU features: detected: CRC32 instructions
+[    0.010652] [      T1] CPU features: detected: Data independent timing control (DIT)
+[    0.010655] [      T1] CPU features: detected: E0PD
+[    0.010657] [      T1] CPU features: detected: Enhanced Counter Virtualization
+[    0.010660] [      T1] CPU features: detected: Enhanced Counter Virtualization (CNTPOFF)
+[    0.010663] [      T1] CPU features: detected: Enhanced Privileged Access Never
+[    0.010666] [      T1] CPU features: detected: Enhanced Virtualization Traps
+[    0.010669] [      T1] CPU features: detected: Fine Grained Traps
+[    0.010672] [      T1] CPU features: detected: Generic authentication (architected QARMA5 algorithm)
+[    0.010675] [      T1] CPU features: detected: RCpc load-acquire (LDAPR)
+[    0.010678] [      T1] CPU features: detected: LSE atomic instructions
+[    0.010681] [      T1] CPU features: detected: Privileged Access Never
+[    0.010684] [      T1] CPU features: detected: PMUv3
+[    0.010686] [      T1] CPU features: detected: RAS Extension Support
+[    0.010689] [      T1] CPU features: detected: RASv1p1 Extension Support
+[    0.010692] [      T1] CPU features: detected: Random Number Generator
+[    0.010694] [      T1] CPU features: detected: Speculation barrier (SB)
+[    0.010697] [      T1] CPU features: detected: Stage-2 Force Write-Back
+[    0.010699] [      T1] CPU features: detected: TLB range maintenance instructions
+[    0.010703] [      T1] CPU features: detected: XNX
+[    0.010706] [      T1] CPU features: detected: Speculative Store Bypassing Safe (SSBS)
+[    0.010760] [      T1] alternatives: applying system-wide alternatives
+[    0.013934] [      T1] CPU features: detected: Activity Monitors Unit (AMU) on CPU0-7
+[    0.013940] [      T1] CPU features: detected: Hardware dirty bit management on CPU0-7
+[    0.014357] [      T1] Memory: 15097272K/15665612K available (27584K kernel code, 11080K rwdata, 19440K rodata, 4672K init, 2695K bss, 508752K reserved, 45056K cma-reserved)
+[    0.014472] [      T1] devtmpfs: initialized
+[    0.020189] [      T1] posixtimers hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.020215] [      T1] futex hash table entries: 2048 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+[    0.020315] [      T1] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.020318] [      T1] 0 pages in range for non-PLT usage
+[    0.020320] [      T1] 507856 pages in range for PLT usage
+[    0.021820] [      T1] DMI: not present or invalid.
+[    0.022822] [      T1] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.023220] [      T1] DMA: preallocated 2048 KiB GFP_KERNEL pool for atomic allocations
+[    0.023436] [      T1] DMA: preallocated 2048 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.023445] [      T1] audit: initializing netlink subsys (disabled)
+[    0.023475] [     T62] audit: type=2000 audit(0.020:1): state=initialized audit_enabled=0 res=1
+[    0.024918] [      T1] thermal_sys: Registered thermal governor 'step_wise'
+[    0.024919] [      T1] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.024941] [      T1] cpuidle: using governor menu
+[    0.024981] [      T1] NET: Registered PF_QIPCRTR protocol family
+[    0.025034] [      T1] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.025102] [      T1] ASID allocator initialised with 65536 entries
+[    0.025970] [      T1] Serial: AMBA PL011 UART driver
+[    0.027330] [      T1] printk: legacy console [ramoops-1] enabled
+[    0.027999] [      T1] pstore: Registered ramoops as persistent store backend
+[    0.028005] [      T1] ramoops: using 0x400000@0xc2000000, ecc: 0
+[    0.028821] [      T1] CPUidle PSCI: Initialized CPU PM domain topology using OSI mode
+[    0.034165] [      T1] /soc@0/clock-controller@af00000: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.034176] [      T1] /soc@0/display-subsystem@ae00000/phy@ae95000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.034185] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae95000
+[    0.034198] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.034210] [      T1] /soc@0/display-subsystem@ae00000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.034218] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000
+[    0.034227] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000
+[    0.034240] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0
+[    0.034253] [      T1] /soc@0/display-subsystem@ae00000/phy@ae97000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.034261] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae97000
+[    0.034273] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae95000
+[    0.034286] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.034299] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000
+[    0.034307] [      T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae96000
+[    0.034331] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae96000
+[    0.034344] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000/panel@0
+[    0.034365] [      T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/dsi@ae94000
+[    0.034378] [      T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.034391] [      T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000
+[    0.034400] [      T1] /soc@0/display-subsystem@ae00000/displayport-controller@af54000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/display-controller@ae01000
+[    0.034410] [      T1] /soc@0/display-subsystem@ae00000/displayport-controller@af54000: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.034422] [      T1] /soc@0/display-subsystem@ae00000/displayport-controller@af54000: Fixed dependency cycle(s) with /soc@0/clock-controller@af00000
+[    0.034435] [      T1] /soc@0/display-subsystem@ae00000/displayport-controller@af54000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000
+[    0.034444] [      T1] /soc@0/phy@88e8000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/displayport-controller@af54000
+[    0.034453] [      T1] /soc@0/usb@a600000: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.034466] [      T1] /soc@0/phy@88e8000: Fixed dependency cycle(s) with /soc@0/usb@a600000
+[    0.034624] [      T1] /soc@0/display-subsystem@ae00000/display-controller@ae01000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/displayport-controller@af54000
+[    0.034634] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae94000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/display-controller@ae01000
+[    0.034685] [      T1] /soc@0/display-subsystem@ae00000/dsi@ae96000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/display-controller@ae01000
+[    0.035530] [      T1] /soc@0/clock-controller@af00000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae95000
+[    0.035859] [      T1] /soc@0/clock-controller@af00000: Fixed dependency cycle(s) with /soc@0/display-subsystem@ae00000/phy@ae97000
+[    0.036184] [      T1] /soc@0/tmc@1004f000: Fixed dependency cycle(s) with /soc@0/ctcu@10001000
+[    0.036191] [      T1] /soc@0/tmc@10048000: Fixed dependency cycle(s) with /soc@0/ctcu@10001000
+[    0.036200] [      T1] /soc@0/replicator@1004e000: Fixed dependency cycle(s) with /soc@0/tmc@10048000
+[    0.036231] [      T1] /soc@0/tmc@1004f000: Fixed dependency cycle(s) with /soc@0/replicator@1004e000
+[    0.036240] [      T1] /soc@0/ctcu@10001000: Fixed dependency cycle(s) with /soc@0/tmc@1004f000
+[    0.036249] [      T1] /soc@0/replicator@1004e000: Fixed dependency cycle(s) with /soc@0/tmc@1004f000
+[    0.036279] [      T1] /soc@0/tmc@10048000: Fixed dependency cycle(s) with /soc@0/replicator@1004e000
+[    0.036288] [      T1] /soc@0/ctcu@10001000: Fixed dependency cycle(s) with /soc@0/tmc@10048000
+[    0.036309] [      T1] /soc@0/funnel@10041000: Fixed dependency cycle(s) with /soc@0/stm@10002000
+[    0.036332] [      T1] /soc@0/stm@10002000: Fixed dependency cycle(s) with /soc@0/funnel@10041000
+[    0.036353] [      T1] /soc@0/funnel@10041000: Fixed dependency cycle(s) with /soc@0/tpda@10004000
+[    0.036375] [      T1] /soc@0/tpda@10004000: Fixed dependency cycle(s) with /soc@0/funnel@10041000
+[    0.036383] [      T1] /soc@0/tpdm@1000f000: Fixed dependency cycle(s) with /soc@0/tpda@10004000
+[    0.036391] [      T1] /soc@0/tpda@10004000: Fixed dependency cycle(s) with /soc@0/tpdm@1000f000
+[    0.036435] [      T1] /soc@0/funnel@10b04000: Fixed dependency cycle(s) with /soc@0/funnel@10041000
+[    0.036448] [      T1] /soc@0/funnel@10041000: Fixed dependency cycle(s) with /soc@0/funnel@10b04000
+[    0.036458] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/funnel@10041000
+[    0.036480] [      T1] /soc@0/funnel@10041000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036495] [      T1] /soc@0/replicator@1004e000: Fixed dependency cycle(s) with /soc@0/replicator@10046000
+[    0.036504] [      T1] /soc@0/replicator@10046000: Fixed dependency cycle(s) with /soc@0/replicator@1004e000
+[    0.036512] [      T1] /soc@0/replicator@10b06000: Fixed dependency cycle(s) with /soc@0/replicator@10046000
+[    0.036542] [      T1] /soc@0/replicator@10046000: Fixed dependency cycle(s) with /soc@0/replicator@10b06000
+[    0.036707] [      T1] /soc@0/tpda@10803000: Fixed dependency cycle(s) with /soc@0/tpdm@10800000
+[    0.036715] [      T1] /soc@0/tpdm@10800000: Fixed dependency cycle(s) with /soc@0/tpda@10803000
+[    0.036749] [      T1] /soc@0/funnel@10804000: Fixed dependency cycle(s) with /soc@0/tpda@10803000
+[    0.036757] [      T1] /soc@0/tpda@10803000: Fixed dependency cycle(s) with /soc@0/funnel@10804000
+[    0.036790] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/funnel@10804000
+[    0.036800] [      T1] /soc@0/funnel@10804000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036831] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@1082c000
+[    0.036845] [      T1] /soc@0/tpdm@1082c000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036872] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@10841000
+[    0.036887] [      T1] /soc@0/tpdm@10841000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.036921] [      T1] /soc@0/tpda@10851000: Fixed dependency cycle(s) with /soc@0/tpdm@1084e000
+[    0.036929] [      T1] /soc@0/tpdm@1084e000: Fixed dependency cycle(s) with /soc@0/tpda@10851000
+[    0.036963] [      T1] /soc@0/tpda@10851000: Fixed dependency cycle(s) with /soc@0/tpdm@1084f000
+[    0.036971] [      T1] /soc@0/tpdm@1084f000: Fixed dependency cycle(s) with /soc@0/tpda@10851000
+[    0.037004] [      T1] /soc@0/tpda@10851000: Fixed dependency cycle(s) with /soc@0/tpdm@10850000
+[    0.037013] [      T1] /soc@0/tpdm@10850000: Fixed dependency cycle(s) with /soc@0/tpda@10851000
+[    0.037045] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpda@10851000
+[    0.037053] [      T1] /soc@0/tpda@10851000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037091] [      T1] /soc@0/tpda@10986000: Fixed dependency cycle(s) with /soc@0/tpdm@10980000
+[    0.037099] [      T1] /soc@0/tpdm@10980000: Fixed dependency cycle(s) with /soc@0/tpda@10986000
+[    0.037132] [      T1] /soc@0/funnel@10987000: Fixed dependency cycle(s) with /soc@0/tpda@10986000
+[    0.037140] [      T1] /soc@0/tpda@10986000: Fixed dependency cycle(s) with /soc@0/funnel@10987000
+[    0.037171] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/funnel@10987000
+[    0.037184] [      T1] /soc@0/funnel@10987000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037210] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a3000
+[    0.037229] [      T1] /soc@0/tpdm@109a3000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037253] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a4000
+[    0.037271] [      T1] /soc@0/tpdm@109a4000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037297] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a5000
+[    0.037313] [      T1] /soc@0/tpdm@109a5000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037338] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a6000
+[    0.037355] [      T1] /soc@0/tpdm@109a6000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037379] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a7000
+[    0.037396] [      T1] /soc@0/tpdm@109a7000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037419] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a8000
+[    0.037438] [      T1] /soc@0/tpdm@109a8000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037461] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109a9000
+[    0.037480] [      T1] /soc@0/tpdm@109a9000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037502] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109aa000
+[    0.037522] [      T1] /soc@0/tpdm@109aa000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037550] [      T1] /soc@0/tpdm@109d0000: Fixed dependency cycle(s) with /soc@0/tn@109ab000
+[    0.037558] [      T1] /soc@0/tn@109ab000: Fixed dependency cycle(s) with /soc@0/tpdm@109d0000
+[    0.037615] [      T1] /soc@0/tmc@10b05000: Fixed dependency cycle(s) with /soc@0/funnel@10b04000
+[    0.037623] [      T1] /soc@0/funnel@10b04000: Fixed dependency cycle(s) with /soc@0/tmc@10b05000
+[    0.037647] [      T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/funnel@10b04000
+[    0.037658] [      T1] /soc@0/funnel@10b04000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037673] [      T1] /soc@0/replicator@10b06000: Fixed dependency cycle(s) with /soc@0/tmc@10b05000
+[    0.037681] [      T1] /soc@0/tmc@10b05000: Fixed dependency cycle(s) with /soc@0/replicator@10b06000
+[    0.037762] [      T1] /soc@0/tpdm@10b0d000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037770] [      T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b0d000
+[    0.037778] [      T1] /soc@0/tpdm@10b0c000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037786] [      T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b0c000
+[    0.037793] [      T1] /soc@0/tpdm@10b0b000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037801] [      T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b0b000
+[    0.037808] [      T1] /soc@0/tpdm@10b0a000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037816] [      T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b0a000
+[    0.037823] [      T1] /soc@0/tpdm@10b09000: Fixed dependency cycle(s) with /soc@0/tpda@10b08000
+[    0.037831] [      T1] /soc@0/tpda@10b08000: Fixed dependency cycle(s) with /soc@0/tpdm@10b09000
+[    0.037986] [      T1] /soc@0/interrupt-controller@16000000: Fixed dependency cycle(s) with /soc@0/interrupt-controller@16000000
+[    0.038015] [      T1] /soc@0/ufs@1d84000: Fixed dependency cycle(s) with /soc@0/phy@1d80000
+[    0.038025] [      T1] /soc@0/phy@1d80000: Fixed dependency cycle(s) with /soc@0/ufs@1d84000
+[    0.052830] [      T1] /tpdm-cdsp-llm: Fixed dependency cycle(s) with /soc@0/tpda@10986000
+[    0.052838] [      T1] /soc@0/tpda@10986000: Fixed dependency cycle(s) with /tpdm-cdsp-llm
+[    0.052975] [      T1] /tpdm-cdsp-llm2: Fixed dependency cycle(s) with /soc@0/tpda@10986000
+[    0.052983] [      T1] /soc@0/tpda@10986000: Fixed dependency cycle(s) with /tpdm-cdsp-llm2
+[    0.053110] [      T1] /tpdm-modem1: Fixed dependency cycle(s) with /soc@0/tpda@10803000
+[    0.053118] [      T1] /soc@0/tpda@10803000: Fixed dependency cycle(s) with /tpdm-modem1
+[    0.053838] [      T1] /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@43: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.053848] [      T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@43
+[    0.053924] [      T1] /soc@0/phy@88e8000: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.053934] [      T1] /soc@0/usb@a600000: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.053954] [      T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.054044] [      T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/usb@a600000
+[    0.054062] [      T1] /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@42: Fixed dependency cycle(s) with /pmic-glink/connector@1
+[    0.054072] [      T1] /pmic-glink/connector@1: Fixed dependency cycle(s) with /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@42
+[    0.054081] [      T1] /soc@0/usb@a600000: Fixed dependency cycle(s) with /pmic-glink/connector@1
+[    0.054231] [      T1] /pmic-glink/connector@1: Fixed dependency cycle(s) with /soc@0/usb@a600000
+[    0.055206] [      T1] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.055212] [      T1] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.055218] [      T1] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.055223] [      T1] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.055229] [      T1] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.055234] [      T1] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.055239] [      T1] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.055244] [      T1] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.055693] [      T1] raid6: using neon recovery algorithm
+[    0.057638] [      T1] iommu: Default domain type: Translated
+[    0.057643] [      T1] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.062074] [      T1] SCSI subsystem initialized
+[    0.062113] [      T1] libata version 3.00 loaded.
+[    0.062218] [      T1] usbcore: registered new interface driver usbfs
+[    0.062233] [      T1] usbcore: registered new interface driver hub
+[    0.062250] [      T1] usbcore: registered new device driver usb
+[    0.062711] [      T1] pps_core: LinuxPPS API ver. 1 registered
+[    0.062716] [      T1] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.062724] [      T1] PTP clock support registered
+[    0.062777] [      T1] EDAC MC: Ver: 3.0.0
+[    0.063287] [      T1] scmi_core: SCMI protocol bus registered
+[    0.063731] [      T1] FPGA manager framework
+[    0.063753] [      T1] Advanced Linux Sound Architecture Driver Initialized.
+[    0.063933] [      T1] Bluetooth: Core ver 2.22
+[    0.063943] [      T1] NET: Registered PF_BLUETOOTH protocol family
+[    0.063948] [      T1] Bluetooth: HCI device and connection manager initialized
+[    0.063953] [      T1] Bluetooth: HCI socket layer initialized
+[    0.063959] [      T1] Bluetooth: L2CAP socket layer initialized
+[    0.063966] [      T1] Bluetooth: SCO socket layer initialized
+[    0.064092] [      T1] vgaarb: loaded
+[    0.064248] [      T1] clocksource: Switched to clocksource arch_sys_counter
+[    0.065921] [      T1] NET: Registered PF_INET protocol family
+[    0.066018] [      T1] IP idents hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.069050] [      T1] tcp_listen_portaddr_hash hash table entries: 8192 (order: 5, 131072 bytes, linear)
+[    0.069139] [      T1] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.069149] [      T1] TCP established hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.069813] [      T1] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    0.071085] [      T1] TCP: Hash tables configured (established 131072 bind 65536)
+[    0.071107] [      T1] UDP hash table entries: 8192 (order: 7, 524288 bytes, linear)
+[    0.071512] [      T1] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.071678] [      T1] RPC: Registered named UNIX socket transport module.
+[    0.071683] [      T1] RPC: Registered udp transport module.
+[    0.071688] [      T1] RPC: Registered tcp transport module.
+[    0.071693] [      T1] RPC: Registered tcp-with-tls transport module.
+[    0.071698] [      T1] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.072013] [      T1] PCI: CLS 0 bytes, default 64
+[    0.072030] [      T1] NET: Registered PF_INET6 protocol family
+[    0.072198] [      T1] Segment Routing with IPv6
+[    0.072208] [      T1] In-situ OAM (IOAM) with IPv6
+[    0.072288] [     T73] Unpacking initramfs...
+[    0.080753] [      T1] Initialise system trusted keyrings
+[    0.080962] [      T1] workingset: timestamp_bits=42 (anon: 37) max_order=22 bucket_order=0 (anon: 0)
+[    0.081072] [      T1] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.081102] [      T1] Key type nfs_keyring registered
+[    0.081247] [      T1] NFS: Registering the id_resolver key type
+[    0.081256] [      T1] Key type id_resolver registered
+[    0.081261] [      T1] Key type id_legacy registered
+[    0.081271] [      T1] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[    0.081278] [      T1] nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+[    0.081814] [      T1] Key type asymmetric registered
+[    0.081820] [      T1] Asymmetric key parser 'x509' registered
+[    0.081833] [      T1] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 240)
+[    0.081840] [      T1] io scheduler mq-deadline registered
+[    0.081845] [      T1] io scheduler kyber registered
+[    0.081859] [      T1] io scheduler bfq registered
+[    0.081932] [      T1] xor: measuring software checksum speed
+[    0.082297] [      T1]    eor3            : 36472 MB/sec
+[    0.082897] [      T1]    32regs          : 22034 MB/sec
+[    0.083497] [      T1]    8regs           : 22034 MB/sec
+[    0.083502] [      T1] xor: using function: eor3 (36472 MB/sec)
+[    0.090270] [      T1] raid6: int64x1  gen()  3879 MB/s
+[    0.095506] [      T1] raid6: int64x2  gen()  5012 MB/s
+[    0.100009] [      T1] raid6: int64x4  gen()  5828 MB/s
+[    0.106065] [      T1] raid6: int64x8  gen()  4377 MB/s
+[    0.110140] [      T1] raid6: neonx1   gen()  6468 MB/s
+[    0.112940] [      T1] raid6: neonx2   gen()  9390 MB/s
+[    0.115295] [      T1] raid6: neonx4   gen() 11168 MB/s
+[    0.117606] [      T1] raid6: neonx8   gen() 11376 MB/s
+[    0.117613] [      T1] raid6: using algorithm neonx8 gen() 11376 MB/s
+[    0.119031] [      T1] raid6: .... xor() 9295 MB/s, rmw enabled
+[    0.132257] [      T1] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.161367] [      T1] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.163423] [      T1] msm_serial: driver initialized
+[    0.163808] [      T1] SuperH (H)SCI(F) driver initialized
+[    0.164000] [      T1] STM32 USART driver initialized
+[    0.171251] [      T1] loop: module loaded
+[    0.171873] [      T1] megasas: 07.734.00.00-rc1
+[    0.174988] [      T1] spmi_pmic_arb c400000.spmi: PMIC arbiter version v7 (0x70020000)
+[    0.196888] [      T1] tun: Universal TUN/TAP device driver, 1.6
+[    0.197314] [      T1] VFIO - User Level meta-driver version: 0.3
+[    0.200423] [      T1] usbcore: registered new interface driver usb-storage
+[    0.212582] [      T1] mousedev: PS/2 mouse device common for all mice
+[    0.214173] [      T1] rtc-pm8xxx c400000.spmi:pmic@0:rtc@6100: registered as rtc0
+[    0.214214] [      T1] rtc-pm8xxx c400000.spmi:pmic@0:rtc@6100: setting system clock to 1970-01-05T23:42:01 UTC (430921)
+[    0.214845] [      T1] i2c_dev: i2c /dev entries driver
+[    0.217978] [      T1] input: pmic_pwrkey as /devices/platform/soc@0/c400000.spmi/spmi-0/0-00/c400000.spmi:pmic@0:pon@1300/c400000.spmi:pmic@0:pon@1300:pwrkey/input/input0
+[    0.218799] [      T1] input: pmic_resin as /devices/platform/soc@0/c400000.spmi/spmi-0/0-00/c400000.spmi:pmic@0:pon@1300/c400000.spmi:pmic@0:pon@1300:resin/input/input1
+[    0.236522] [      T1] Bluetooth: HCI UART driver ver 2.3
+[    0.236532] [      T1] Bluetooth: HCI UART protocol H4 registered
+[    0.236545] [      T1] Bluetooth: HCI UART protocol LL registered
+[    0.236616] [      T1] Bluetooth: HCI UART protocol Broadcom registered
+[    0.236628] [      T1] Bluetooth: HCI UART protocol QCA registered
+[    0.236639] [      T1] Bluetooth: HCI UART protocol Marvell registered
+[    0.242369] [      T1] arm-scmi arm-scmi.1.auto: Using scmi_mailbox_transport
+[    0.242378] [      T1] arm-scmi arm-scmi.1.auto: SCMI max-rx-timeout: 30ms / max-msg-size: 104bytes / max-msg: 20
+[    0.242573] [      T1] arm-scmi arm-scmi.1.auto: SCMI Notifications - Core Enabled.
+[    0.242913] [      T1] arm-scmi arm-scmi.1.auto: SCMI Protocol v2.0 'Qualcomm:' Firmware version 0x20000
+[    0.242976] [      T1] arm-scmi arm-scmi.1.auto: Enabling SCMI Quirk [quirk_perf_level_get_fc_force]
+[    0.243058] [      T1] arm-scmi arm-scmi.1.auto: Enabling SCMI Quirk [quirk_clock_rates_triplet_out_of_spec]
+[    0.249190] [      T1] scmi-perf-domain scmi_dev.3: Initialized 2 performance domains
+[    0.249760] [      T1] cpu cpu0: EM: OPP:384000 is inefficient
+[    0.249881] [      T1] cpu cpu0: EM: created perf domain
+[    0.265007] [      T1] cpu cpu6: EM: created perf domain
+[    0.270821] [      T1] SMCCC: SOC_ID: ARCH_SOC_ID not implemented, skipping ....
+[    0.271043] [      T1] clocksource: arch_mmio_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
+[    0.271048] [      T1] arch-timer-mmio 16800000.timer: mmio timer running at 19.20MHz (virt)
+[    0.271093] [      T1] hid: raw HID events driver (C) Jiri Kosina
+[    0.271156] [      T1] usbcore: registered new interface driver usbhid
+[    0.271159] [      T1] usbhid: USB HID core driver
+[    0.273189] [      T1] hw perfevents: enabled with armv8_pmuv3 PMU driver, 13 (0,80000fff) counters available
+[    0.273303] [     T95] watchdog: NMI not fully supported
+[    0.273306] [     T95] watchdog: Hard watchdog permanently disabled
+[    0.275274] [      T1] Initializing XFRM netlink socket
+[    0.275286] [      T1] NET: Registered PF_PACKET protocol family
+[    0.275290] [      T1] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    0.275294] [      T1] Bluetooth: HIDP socket layer initialized
+[    0.275314] [      T1] Key type dns_resolver registered
+[    0.278233] [      T1] registered taskstats version 1
+[    0.278274] [      T1] Loading compiled-in X.509 certificates
+[    0.279140] [      T1] Demotion targets for Node 0: null
+[    0.279254] [      T1] Btrfs loaded, zoned=no, fsverity=no
+[    0.283590] [    T100] /soc@0/rsc@16500000/regulators-0: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-0/bob2
+[    0.283598] [    T100] /soc@0/rsc@16500000/regulators-0: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-0/bob1
+[    0.283762] [    T100] /soc@0/rsc@16500000/regulators-1: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-1/smps1
+[    0.284205] [    T100] /soc@0/rsc@16500000/regulators-3: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-3/smps3
+[    0.284438] [    T100] /soc@0/rsc@16500000/regulators-1: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-4/smps7
+[    0.284446] [    T100] /soc@0/rsc@16500000/regulators-4: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-1/smps1
+[    0.284455] [    T100] /soc@0/rsc@16500000/regulators-4: Fixed dependency cycle(s) with /soc@0/rsc@16500000/regulators-4/smps7
+[    0.284861] [    T121] vreg_s7i_1p2: Setting 1224000-1340000uV
+[    0.285113] [    T121] vreg_s8i_0p9: Setting 900000-972000uV
+[    0.285251] [    T121] vreg_l1i_1p2: Setting 1200000-1200000uV
+[    0.285398] [    T121] vreg_l2i_1p2: Setting 1200000-1200000uV
+[    0.294888] [    T100] gpio-mux mux-controller: 2-way mux-controller registered
+[    0.299933] [    T123] vreg_s1d_0p97: Setting 880000-1100000uV
+[    0.300346] [    T123] vreg_s3d_1p2: Setting 1200000-1300000uV
+[    0.300442] [    T100] qcom_scm: convention: smc arm 64
+[    0.300609] [    T123] vreg_s4d_0p85: Setting 500000-1036000uV
+[    0.300909] [    T123] vreg_l3d_0p88: Setting 880000-920000uV
+[    0.302928] [    T100] qcom_scm firmware:scm: qseecom: found qseecom with version 0x1402000
+[    0.302934] [    T100] qcom_scm firmware:scm: qseecom: untested machine, skipping
+[    0.304229] [    T100] qcom-ice 1d88000.crypto: Found QC Inline Crypto Engine (ICE) v4.0.3
+[    0.304233] [    T100] qcom-ice 1d88000.crypto: QC Hardware Key Manager (HWKM) version v2
+[    0.304303] [    T100] qcom-ice 1d88000.crypto: Not using HWKM. Supporting raw keys only.
+[    0.304686] [    T100] arm-smmu 3da0000.iommu: probing hardware configuration...
+[    0.304690] [    T100] arm-smmu 3da0000.iommu: SMMUv2 with:
+[    0.304722] [    T100] arm-smmu 3da0000.iommu: 	stage 1 translation
+[    0.304726] [    T100] arm-smmu 3da0000.iommu: 	coherent table walk
+[    0.304729] [    T100] arm-smmu 3da0000.iommu: 	stream matching with 24 register groups
+[    0.304756] [    T100] arm-smmu 3da0000.iommu: 	21 context banks (0 stage-2 only)
+[    0.304785] [    T100] arm-smmu 3da0000.iommu: 	Supported page sizes: 0x61311000
+[    0.304789] [    T100] arm-smmu 3da0000.iommu: 	Stage-1: 48-bit VA -> 36-bit IPA
+[    0.304847] [    T100] arm-smmu 3da0000.iommu: 	preserved 0 boot mappings
+[    0.306788] [    T100] platform 3d00000.gpu: Adding to iommu group 0
+[    0.306870] [    T100] platform 3d6c000.gmu: Adding to iommu group 1
+[    0.308214] [    T100] arm-smmu 15000000.iommu: probing hardware configuration...
+[    0.308218] [    T100] arm-smmu 15000000.iommu: SMMUv2 with:
+[    0.308231] [    T100] arm-smmu 15000000.iommu: 	stage 1 translation
+[    0.308235] [    T100] arm-smmu 15000000.iommu: 	coherent table walk
+[    0.308238] [    T100] arm-smmu 15000000.iommu: 	stream matching with 132 register groups
+[    0.308258] [    T100] arm-smmu 15000000.iommu: 	83 context banks (0 stage-2 only)
+[    0.308379] [    T100] arm-smmu 15000000.iommu: 	Limiting the stream matching groups to 128
+[    0.309378] [    T100] arm-smmu 15000000.iommu: 	Supported page sizes: 0x61311000
+[    0.309382] [    T100] arm-smmu 15000000.iommu: 	Stage-1: 36-bit VA -> 36-bit IPA
+[    0.309410] [    T100] arm-smmu 15000000.iommu: 	preserved 0 boot mappings
+[    0.312221] [    T100] platform 800000.dma-controller: Adding to iommu group 2
+[    0.312279] [    T100] platform 8c0000.geniqup: Adding to iommu group 3
+[    0.312325] [    T100] platform a00000.dma-controller: Adding to iommu group 4
+[    0.312368] [    T100] platform ac0000.geniqup: Adding to iommu group 5
+[    0.312433] [    T100] platform 1dc4000.dma-controller: Adding to iommu group 6
+[    0.312484] [    T100] platform 1dfa000.crypto: Adding to iommu group 6
+[    0.312528] [    T100] platform 8804000.mmc: Adding to iommu group 7
+[    0.312565] [    T100] platform a600000.usb: Adding to iommu group 8
+[    0.312607] [    T100] platform 1d84000.ufs: Adding to iommu group 9
+[    0.313787] [    T100] amba 10048000.tmc: Adding to iommu group 10
+[    0.313833] [    T100] amba 1004f000.tmc: Adding to iommu group 11
+[    0.336534] [    T100] platform ae01000.display-controller: Adding to iommu group 12
+[    0.345570] [    T100] DSI PLL(0) lock failed, status=0x00000000
+[    0.345576] [    T100] PLL(0) lock failed
+[    0.345582] [    T100] ------------[ cut here ]------------
+[    0.345587] [    T100] dsi0_phy_pll_out_dsiclk already disabled
+[    0.345601] [    T100] WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250, CPU#6: kworker/u34:1/100
+[    0.345614] [    T100] Modules linked in:
+[    0.345622] [    T100] CPU: 6 UID: 0 PID: 100 Comm: kworker/u34:1 Not tainted 7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.345629] [    T100] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.345635] [    T100] Workqueue: events_unbound deferred_probe_work_func
+[    0.345644] [    T100] pstate: 614000c5 (nZCv daIF +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.345650] [    T100] pc : clk_core_disable+0x23c/0x250
+[    0.345657] [    T100] lr : clk_core_disable+0x23c/0x250
+[    0.345663] [    T100] sp : ffff800080e83530
+[    0.345668] [    T100] x29: ffff800080e83530 x28: 0000000000000000 x27: 0000000000000000
+[    0.345676] [    T100] x26: 0000000000000000 x25: ffffa0d0105935b0 x24: ffff0008063bd200
+[    0.345682] [    T100] x23: ffffa0d00d6434d8 x22: ffff0008068b0600 x21: 0000000000000000
+[    0.345689] [    T100] x20: 0000000000000000 x19: ffff000800f8da00 x18: 000000000000000a
+[    0.345696] [    T100] x17: ffff000800d0f200 x16: ffffa0d010681908 x15: 0000000000000000
+[    0.345703] [    T100] x14: 0000000000000000 x13: 205d303031542020 x12: 5b5d373835353433
+[    0.345710] [    T100] x11: 206b6c636973645f x10: 74756f5f6c6c705f x9 : ffffa0d00cb9caa0
+[    0.345718] [    T100] x8 : 3fffffffffff7fff x7 : ffffa0d010011c40 x6 : 000000000000023b
+[    0.345725] [    T100] x5 : ffffa0d010011c40 x4 : 0000000000000000 x3 : ffffa0d00fd519d0
+[    0.345732] [    T100] x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff00080257d000
+[    0.345740] [    T100] Call trace:
+[    0.345744] [    T100]  clk_core_disable+0x23c/0x250 (P)
+[    0.345752] [    T100]  __clk_set_parent_after+0xb0/0x110
+[    0.345759] [    T100]  clk_core_reparent_orphans_nolock+0x88/0xd0
+[    0.345764] [    T100]  of_clk_add_hw_provider.part.0+0xa8/0x170
+[    0.345770] [    T100]  devm_of_clk_add_hw_provider+0x98/0x120
+[    0.345775] [    T100]  dsi_phy_driver_probe+0x2f4/0x348
+[    0.345783] [    T100]  platform_probe+0x64/0xb8
+[    0.345789] [    T100]  really_probe+0xc8/0x3f0
+[    0.345794] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.345800] [    T100]  driver_probe_device+0x44/0x128
+[    0.345805] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.345811] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.345818] [    T100]  __device_attach+0xa4/0x1e0
+[    0.345824] [    T100]  device_initial_probe+0x5c/0x88
+[    0.345830] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.345836] [    T100]  bus_probe_device+0x18/0x30
+[    0.345841] [    T100]  device_add+0x608/0x880
+[    0.345848] [    T100]  of_device_add+0x4c/0x70
+[    0.345856] [    T100]  of_platform_device_create_pdata+0xa0/0x160
+[    0.345863] [    T100]  of_platform_bus_create+0x19c/0x550
+[    0.345869] [    T100]  of_platform_populate+0x8c/0x180
+[    0.345875] [    T100]  mdss_probe+0x20c/0x3a0
+[    0.345881] [    T100]  platform_probe+0x64/0xb8
+[    0.345887] [    T100]  really_probe+0xc8/0x3f0
+[    0.345892] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.345897] [    T100]  driver_probe_device+0x44/0x128
+[    0.345903] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.345908] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.345915] [    T100]  __device_attach+0xa4/0x1e0
+[    0.345921] [    T100]  device_initial_probe+0x5c/0x88
+[    0.345927] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.345933] [    T100]  bus_probe_device_deferred+0x34/0x90
+[    0.345938] [    T100]  deferred_probe_work_func+0xbc/0x128
+[    0.345943] [    T100]  process_one_work+0x1a0/0x490
+[    0.345952] [    T100]  worker_thread+0x194/0x318
+[    0.345958] [    T100]  kthread+0x128/0x148
+[    0.345963] [    T100]  ret_from_fork+0x10/0x20
+[    0.345971] [    T100] ---[ end trace 0000000000000000 ]---
+[    0.345976] [    T100] ------------[ cut here ]------------
+[    0.345981] [    T100] dsi0_phy_pll_out_dsiclk already unprepared
+[    0.345990] [    T100] WARNING: drivers/clk/clk.c:1118 at clk_core_unprepare+0x274/0x2a0, CPU#6: kworker/u34:1/100
+[    0.346000] [    T100] Modules linked in:
+[    0.346004] [    T100] CPU: 6 UID: 0 PID: 100 Comm: kworker/u34:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.346012] [    T100] Tainted: [W]=WARN
+[    0.346016] [    T100] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.346020] [    T100] Workqueue: events_unbound deferred_probe_work_func
+[    0.346027] [    T100] pstate: 61400005 (nZCv daif +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.346033] [    T100] pc : clk_core_unprepare+0x274/0x2a0
+[    0.346039] [    T100] lr : clk_core_unprepare+0x274/0x2a0
+[    0.346046] [    T100] sp : ffff800080e83530
+[    0.346050] [    T100] x29: ffff800080e83530 x28: 0000000000000000 x27: 0000000000000000
+[    0.346058] [    T100] x26: 0000000000000000 x25: ffffa0d0105935b0 x24: ffff0008063bd200
+[    0.346065] [    T100] x23: ffffa0d00d6434d8 x22: ffff0008068b0600 x21: 0000000000000000
+[    0.346072] [    T100] x20: 0000000000000000 x19: ffff0008068b0600 x18: 000000000000000a
+[    0.346079] [    T100] x17: ffff000800d0f200 x16: ffffa0d010681908 x15: 0000000000000000
+[    0.346086] [    T100] x14: 0000000000000000 x13: 205d303031542020 x12: 5b5d313839353433
+[    0.346093] [    T100] x11: 6c61206b6c636973 x10: 645f74756f5f6c6c x9 : ffffa0d00cb9caa0
+[    0.346100] [    T100] x8 : 3fffffffffff7fff x7 : ffffa0d010011c40 x6 : 0000000000000277
+[    0.346107] [    T100] x5 : ffffa0d010011c40 x4 : 0000000000000000 x3 : ffffa0d00fd519d0
+[    0.346115] [    T100] x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff00080257d000
+[    0.346122] [    T100] Call trace:
+[    0.346126] [    T100]  clk_core_unprepare+0x274/0x2a0 (P)
+[    0.346133] [    T100]  __clk_set_parent_after+0xc4/0x110
+[    0.346140] [    T100]  clk_core_reparent_orphans_nolock+0x88/0xd0
+[    0.346145] [    T100]  of_clk_add_hw_provider.part.0+0xa8/0x170
+[    0.346151] [    T100]  devm_of_clk_add_hw_provider+0x98/0x120
+[    0.346156] [    T100]  dsi_phy_driver_probe+0x2f4/0x348
+[    0.346163] [    T100]  platform_probe+0x64/0xb8
+[    0.346169] [    T100]  really_probe+0xc8/0x3f0
+[    0.346174] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.346179] [    T100]  driver_probe_device+0x44/0x128
+[    0.346184] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.346190] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.346198] [    T100]  __device_attach+0xa4/0x1e0
+[    0.346203] [    T100]  device_initial_probe+0x5c/0x88
+[    0.346209] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.346216] [    T100]  bus_probe_device+0x18/0x30
+[    0.346221] [    T100]  device_add+0x608/0x880
+[    0.346228] [    T100]  of_device_add+0x4c/0x70
+[    0.346234] [    T100]  of_platform_device_create_pdata+0xa0/0x160
+[    0.346241] [    T100]  of_platform_bus_create+0x19c/0x550
+[    0.346247] [    T100]  of_platform_populate+0x8c/0x180
+[    0.346253] [    T100]  mdss_probe+0x20c/0x3a0
+[    0.346259] [    T100]  platform_probe+0x64/0xb8
+[    0.346265] [    T100]  really_probe+0xc8/0x3f0
+[    0.346271] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.346277] [    T100]  driver_probe_device+0x44/0x128
+[    0.346283] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.346288] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.346295] [    T100]  __device_attach+0xa4/0x1e0
+[    0.346300] [    T100]  device_initial_probe+0x5c/0x88
+[    0.346305] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.346313] [    T100]  bus_probe_device_deferred+0x34/0x90
+[    0.346319] [    T100]  deferred_probe_work_func+0xbc/0x128
+[    0.346324] [    T100]  process_one_work+0x1a0/0x490
+[    0.346331] [    T100]  worker_thread+0x194/0x318
+[    0.346337] [    T100]  kthread+0x128/0x148
+[    0.346342] [    T100]  ret_from_fork+0x10/0x20
+[    0.346349] [    T100] ---[ end trace 0000000000000000 ]---
+[    0.351496] [    T100] DSI PLL(0) lock failed, status=0x00000000
+[    0.351501] [    T100] PLL(0) lock failed
+[    0.351507] [    T100] ------------[ cut here ]------------
+[    0.351511] [    T100] dsi0_phy_pll_out_dsiclk already disabled
+[    0.351521] [    T100] WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250, CPU#6: kworker/u34:1/100
+[    0.351530] [    T100] Modules linked in:
+[    0.351535] [    T100] CPU: 6 UID: 0 PID: 100 Comm: kworker/u34:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.351542] [    T100] Tainted: [W]=WARN
+[    0.351546] [    T100] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.351551] [    T100] Workqueue: events_unbound deferred_probe_work_func
+[    0.351558] [    T100] pstate: 614000c5 (nZCv daIF +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.351564] [    T100] pc : clk_core_disable+0x23c/0x250
+[    0.351571] [    T100] lr : clk_core_disable+0x23c/0x250
+[    0.351578] [    T100] sp : ffff800080e83530
+[    0.351582] [    T100] x29: ffff800080e83530 x28: 0000000000000000 x27: 0000000000000000
+[    0.351589] [    T100] x26: 0000000000000000 x25: ffffa0d0105935b0 x24: ffff0008063bd200
+[    0.351597] [    T100] x23: ffffa0d00d6434d8 x22: ffff0008068b0600 x21: 0000000000000000
+[    0.351604] [    T100] x20: 0000000000000000 x19: ffff000800f8de00 x18: 000000000000000a
+[    0.351611] [    T100] x17: ffff000800d0f200 x16: ffffa0d010681908 x15: 0000000000000000
+[    0.351618] [    T100] x14: 0000000000000000 x13: 205d303031542020 x12: 5b5d313135313533
+[    0.351625] [    T100] x11: 206b6c636973645f x10: 74756f5f6c6c705f x9 : ffffa0d00cb9caa0
+[    0.351633] [    T100] x8 : 3fffffffffff7fff x7 : ffffa0d010011c40 x6 : 00000000000002b6
+[    0.351640] [    T100] x5 : ffffa0d010011c40 x4 : 0000000000000000 x3 : ffffa0d00fd519d0
+[    0.351647] [    T100] x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff00080257d000
+[    0.351654] [    T100] Call trace:
+[    0.351658] [    T100]  clk_core_disable+0x23c/0x250 (P)
+[    0.351665] [    T100]  __clk_set_parent_after+0xb0/0x110
+[    0.351672] [    T100]  clk_core_reparent_orphans_nolock+0x88/0xd0
+[    0.351677] [    T100]  of_clk_add_hw_provider.part.0+0xa8/0x170
+[    0.351682] [    T100]  devm_of_clk_add_hw_provider+0x98/0x120
+[    0.351688] [    T100]  dsi_phy_driver_probe+0x2f4/0x348
+[    0.351694] [    T100]  platform_probe+0x64/0xb8
+[    0.351700] [    T100]  really_probe+0xc8/0x3f0
+[    0.351706] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.351711] [    T100]  driver_probe_device+0x44/0x128
+[    0.351717] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.351722] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.351729] [    T100]  __device_attach+0xa4/0x1e0
+[    0.351735] [    T100]  device_initial_probe+0x5c/0x88
+[    0.351740] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.351747] [    T100]  bus_probe_device+0x18/0x30
+[    0.351752] [    T100]  device_add+0x608/0x880
+[    0.351759] [    T100]  of_device_add+0x4c/0x70
+[    0.351765] [    T100]  of_platform_device_create_pdata+0xa0/0x160
+[    0.351771] [    T100]  of_platform_bus_create+0x19c/0x550
+[    0.351778] [    T100]  of_platform_populate+0x8c/0x180
+[    0.351783] [    T100]  mdss_probe+0x20c/0x3a0
+[    0.351789] [    T100]  platform_probe+0x64/0xb8
+[    0.351796] [    T100]  really_probe+0xc8/0x3f0
+[    0.351801] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.351806] [    T100]  driver_probe_device+0x44/0x128
+[    0.351811] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.351817] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.351824] [    T100]  __device_attach+0xa4/0x1e0
+[    0.351829] [    T100]  device_initial_probe+0x5c/0x88
+[    0.351836] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.351843] [    T100]  bus_probe_device_deferred+0x34/0x90
+[    0.351848] [    T100]  deferred_probe_work_func+0xbc/0x128
+[    0.351853] [    T100]  process_one_work+0x1a0/0x490
+[    0.351859] [    T100]  worker_thread+0x194/0x318
+[    0.351865] [    T100]  kthread+0x128/0x148
+[    0.351871] [    T100]  ret_from_fork+0x10/0x20
+[    0.351878] [    T100] ---[ end trace 0000000000000000 ]---
+[    0.351883] [    T100] ------------[ cut here ]------------
+[    0.351887] [    T100] dsi0_phy_pll_out_dsiclk already unprepared
+[    0.351896] [    T100] WARNING: drivers/clk/clk.c:1118 at clk_core_unprepare+0x274/0x2a0, CPU#6: kworker/u34:1/100
+[    0.351905] [    T100] Modules linked in:
+[    0.351910] [    T100] CPU: 6 UID: 0 PID: 100 Comm: kworker/u34:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.351917] [    T100] Tainted: [W]=WARN
+[    0.351921] [    T100] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.351925] [    T100] Workqueue: events_unbound deferred_probe_work_func
+[    0.351931] [    T100] pstate: 61400005 (nZCv daif +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.351937] [    T100] pc : clk_core_unprepare+0x274/0x2a0
+[    0.351944] [    T100] lr : clk_core_unprepare+0x274/0x2a0
+[    0.351951] [    T100] sp : ffff800080e83530
+[    0.351956] [    T100] x29: ffff800080e83530 x28: 0000000000000000 x27: 0000000000000000
+[    0.351963] [    T100] x26: 0000000000000000 x25: ffffa0d0105935b0 x24: ffff0008063bd200
+[    0.351970] [    T100] x23: ffffa0d00d6434d8 x22: ffff0008068b0600 x21: 0000000000000000
+[    0.351978] [    T100] x20: 0000000000000000 x19: ffff0008068b0600 x18: 000000000000000a
+[    0.351985] [    T100] x17: ffff000800d0f200 x16: ffffa0d010681908 x15: 0000000000000000
+[    0.351992] [    T100] x14: 0000000000000000 x13: 205d303031542020 x12: 5b5d373838313533
+[    0.351999] [    T100] x11: 6c61206b6c636973 x10: 645f74756f5f6c6c x9 : ffffa0d00cb9caa0
+[    0.352006] [    T100] x8 : 3fffffffffff7fff x7 : ffffa0d010011c40 x6 : 00000000000002f3
+[    0.352013] [    T100] x5 : ffffa0d010011c40 x4 : 0000000000000000 x3 : ffffa0d00fd519d0
+[    0.352020] [    T100] x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff00080257d000
+[    0.352028] [    T100] Call trace:
+[    0.352032] [    T100]  clk_core_unprepare+0x274/0x2a0 (P)
+[    0.352039] [    T100]  __clk_set_parent_after+0xc4/0x110
+[    0.352046] [    T100]  clk_core_reparent_orphans_nolock+0x88/0xd0
+[    0.352051] [    T100]  of_clk_add_hw_provider.part.0+0xa8/0x170
+[    0.352057] [    T100]  devm_of_clk_add_hw_provider+0x98/0x120
+[    0.352062] [    T100]  dsi_phy_driver_probe+0x2f4/0x348
+[    0.352068] [    T100]  platform_probe+0x64/0xb8
+[    0.352074] [    T100]  really_probe+0xc8/0x3f0
+[    0.352079] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.352084] [    T100]  driver_probe_device+0x44/0x128
+[    0.352090] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.352095] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.352103] [    T100]  __device_attach+0xa4/0x1e0
+[    0.352109] [    T100]  device_initial_probe+0x5c/0x88
+[    0.352114] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.352120] [    T100]  bus_probe_device+0x18/0x30
+[    0.352126] [    T100]  device_add+0x608/0x880
+[    0.352132] [    T100]  of_device_add+0x4c/0x70
+[    0.352138] [    T100]  of_platform_device_create_pdata+0xa0/0x160
+[    0.352144] [    T100]  of_platform_bus_create+0x19c/0x550
+[    0.352150] [    T100]  of_platform_populate+0x8c/0x180
+[    0.352156] [    T100]  mdss_probe+0x20c/0x3a0
+[    0.352162] [    T100]  platform_probe+0x64/0xb8
+[    0.352168] [    T100]  really_probe+0xc8/0x3f0
+[    0.352173] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.352179] [    T100]  driver_probe_device+0x44/0x128
+[    0.352184] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.352190] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.352196] [    T100]  __device_attach+0xa4/0x1e0
+[    0.352201] [    T100]  device_initial_probe+0x5c/0x88
+[    0.352207] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.352214] [    T100]  bus_probe_device_deferred+0x34/0x90
+[    0.352220] [    T100]  deferred_probe_work_func+0xbc/0x128
+[    0.352225] [    T100]  process_one_work+0x1a0/0x490
+[    0.352231] [    T100]  worker_thread+0x194/0x318
+[    0.352237] [    T100]  kthread+0x128/0x148
+[    0.352243] [    T100]  ret_from_fork+0x10/0x20
+[    0.352250] [    T100] ---[ end trace 0000000000000000 ]---
+[    0.357398] [    T100] DSI PLL(0) lock failed, status=0x00000000
+[    0.357403] [    T100] PLL(0) lock failed
+[    0.357407] [    T100] ------------[ cut here ]------------
+[    0.357411] [    T100] dsi0_phy_pll_out_byteclk already disabled
+[    0.357420] [    T100] WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250, CPU#6: kworker/u34:1/100
+[    0.357428] [    T100] Modules linked in:
+[    0.357432] [    T100] CPU: 6 UID: 0 PID: 100 Comm: kworker/u34:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.357439] [    T100] Tainted: [W]=WARN
+[    0.357442] [    T100] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.357446] [    T100] Workqueue: events_unbound deferred_probe_work_func
+[    0.357452] [    T100] pstate: 614000c5 (nZCv daIF +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.357457] [    T100] pc : clk_core_disable+0x23c/0x250
+[    0.357463] [    T100] lr : clk_core_disable+0x23c/0x250
+[    0.357469] [    T100] sp : ffff800080e83530
+[    0.357473] [    T100] x29: ffff800080e83530 x28: 0000000000000000 x27: 0000000000000000
+[    0.357479] [    T100] x26: 0000000000000000 x25: ffffa0d0105935b0 x24: ffff0008063bd200
+[    0.357485] [    T100] x23: ffffa0d00d6434d8 x22: ffff0008068b0c00 x21: 0000000000000000
+[    0.357492] [    T100] x20: 0000000000000000 x19: ffff000800f87200 x18: 000000000000000a
+[    0.357498] [    T100] x17: ffff000800d0f200 x16: ffffa0d010681908 x15: 0000000000000000
+[    0.357504] [    T100] x14: 0000000000000000 x13: 205d303031542020 x12: 5b5d313134373533
+[    0.357510] [    T100] x11: 206b6c6365747962 x10: 5f74756f5f6c6c70 x9 : ffffa0d00cb9caa0
+[    0.357517] [    T100] x8 : 3fffffffffff7fff x7 : ffffa0d010011c40 x6 : 0000000000000332
+[    0.357523] [    T100] x5 : ffffa0d010011c40 x4 : 0000000000000000 x3 : ffffa0d00fd519d0
+[    0.357530] [    T100] x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff00080257d000
+[    0.357536] [    T100] Call trace:
+[    0.357540] [    T100]  clk_core_disable+0x23c/0x250 (P)
+[    0.357547] [    T100]  __clk_set_parent_after+0xb0/0x110
+[    0.357553] [    T100]  clk_core_reparent_orphans_nolock+0x88/0xd0
+[    0.357558] [    T100]  of_clk_add_hw_provider.part.0+0xa8/0x170
+[    0.357563] [    T100]  devm_of_clk_add_hw_provider+0x98/0x120
+[    0.357568] [    T100]  dsi_phy_driver_probe+0x2f4/0x348
+[    0.357574] [    T100]  platform_probe+0x64/0xb8
+[    0.357579] [    T100]  really_probe+0xc8/0x3f0
+[    0.357583] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.357588] [    T100]  driver_probe_device+0x44/0x128
+[    0.357594] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.357599] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.357605] [    T100]  __device_attach+0xa4/0x1e0
+[    0.357610] [    T100]  device_initial_probe+0x5c/0x88
+[    0.357615] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.357621] [    T100]  bus_probe_device+0x18/0x30
+[    0.357626] [    T100]  device_add+0x608/0x880
+[    0.357632] [    T100]  of_device_add+0x4c/0x70
+[    0.357637] [    T100]  of_platform_device_create_pdata+0xa0/0x160
+[    0.357643] [    T100]  of_platform_bus_create+0x19c/0x550
+[    0.357648] [    T100]  of_platform_populate+0x8c/0x180
+[    0.357654] [    T100]  mdss_probe+0x20c/0x3a0
+[    0.357659] [    T100]  platform_probe+0x64/0xb8
+[    0.357664] [    T100]  really_probe+0xc8/0x3f0
+[    0.357669] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.357674] [    T100]  driver_probe_device+0x44/0x128
+[    0.357679] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.357684] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.357690] [    T100]  __device_attach+0xa4/0x1e0
+[    0.357695] [    T100]  device_initial_probe+0x5c/0x88
+[    0.357700] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.357707] [    T100]  bus_probe_device_deferred+0x34/0x90
+[    0.357711] [    T100]  deferred_probe_work_func+0xbc/0x128
+[    0.357716] [    T100]  process_one_work+0x1a0/0x490
+[    0.357722] [    T100]  worker_thread+0x194/0x318
+[    0.357728] [    T100]  kthread+0x128/0x148
+[    0.357732] [    T100]  ret_from_fork+0x10/0x20
+[    0.357738] [    T100] ---[ end trace 0000000000000000 ]---
+[    0.357742] [    T100] ------------[ cut here ]------------
+[    0.357746] [    T100] dsi0_phy_pll_out_byteclk already unprepared
+[    0.357754] [    T100] WARNING: drivers/clk/clk.c:1118 at clk_core_unprepare+0x274/0x2a0, CPU#6: kworker/u34:1/100
+[    0.357762] [    T100] Modules linked in:
+[    0.357766] [    T100] CPU: 6 UID: 0 PID: 100 Comm: kworker/u34:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.357773] [    T100] Tainted: [W]=WARN
+[    0.357777] [    T100] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.357781] [    T100] Workqueue: events_unbound deferred_probe_work_func
+[    0.357787] [    T100] pstate: 61400005 (nZCv daif +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.357792] [    T100] pc : clk_core_unprepare+0x274/0x2a0
+[    0.357798] [    T100] lr : clk_core_unprepare+0x274/0x2a0
+[    0.357804] [    T100] sp : ffff800080e83530
+[    0.357808] [    T100] x29: ffff800080e83530 x28: 0000000000000000 x27: 0000000000000000
+[    0.357814] [    T100] x26: 0000000000000000 x25: ffffa0d0105935b0 x24: ffff0008063bd200
+[    0.357821] [    T100] x23: ffffa0d00d6434d8 x22: ffff0008068b0c00 x21: 0000000000000000
+[    0.357827] [    T100] x20: 0000000000000000 x19: ffff0008068b0c00 x18: 000000000000000a
+[    0.357834] [    T100] x17: ffff000800d0f200 x16: ffffa0d010681908 x15: 0000000000000000
+[    0.357841] [    T100] x14: 0000000000000000 x13: 205d303031542020 x12: 5b5d363437373533
+[    0.357848] [    T100] x11: 6c61206b6c636574 x10: 79625f74756f5f6c x9 : ffffa0d00cb9caa0
+[    0.357854] [    T100] x8 : 3fffffffffff7fff x7 : ffffa0d010011c40 x6 : 000000000000036f
+[    0.357861] [    T100] x5 : ffffa0d010011c40 x4 : 0000000000000000 x3 : ffffa0d00fd519d0
+[    0.357868] [    T100] x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff00080257d000
+[    0.357874] [    T100] Call trace:
+[    0.357878] [    T100]  clk_core_unprepare+0x274/0x2a0 (P)
+[    0.357884] [    T100]  __clk_set_parent_after+0xc4/0x110
+[    0.357891] [    T100]  clk_core_reparent_orphans_nolock+0x88/0xd0
+[    0.357896] [    T100]  of_clk_add_hw_provider.part.0+0xa8/0x170
+[    0.357901] [    T100]  devm_of_clk_add_hw_provider+0x98/0x120
+[    0.357906] [    T100]  dsi_phy_driver_probe+0x2f4/0x348
+[    0.357911] [    T100]  platform_probe+0x64/0xb8
+[    0.357917] [    T100]  really_probe+0xc8/0x3f0
+[    0.357922] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.357927] [    T100]  driver_probe_device+0x44/0x128
+[    0.357932] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.357937] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.357943] [    T100]  __device_attach+0xa4/0x1e0
+[    0.357948] [    T100]  device_initial_probe+0x5c/0x88
+[    0.357953] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.357959] [    T100]  bus_probe_device+0x18/0x30
+[    0.357964] [    T100]  device_add+0x608/0x880
+[    0.357969] [    T100]  of_device_add+0x4c/0x70
+[    0.357975] [    T100]  of_platform_device_create_pdata+0xa0/0x160
+[    0.357981] [    T100]  of_platform_bus_create+0x19c/0x550
+[    0.357987] [    T100]  of_platform_populate+0x8c/0x180
+[    0.357992] [    T100]  mdss_probe+0x20c/0x3a0
+[    0.357998] [    T100]  platform_probe+0x64/0xb8
+[    0.358003] [    T100]  really_probe+0xc8/0x3f0
+[    0.358008] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.358014] [    T100]  driver_probe_device+0x44/0x128
+[    0.358019] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.358024] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.358030] [    T100]  __device_attach+0xa4/0x1e0
+[    0.358035] [    T100]  device_initial_probe+0x5c/0x88
+[    0.358040] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.358046] [    T100]  bus_probe_device_deferred+0x34/0x90
+[    0.358050] [    T100]  deferred_probe_work_func+0xbc/0x128
+[    0.358055] [    T100]  process_one_work+0x1a0/0x490
+[    0.358061] [    T100]  worker_thread+0x194/0x318
+[    0.358067] [    T100]  kthread+0x128/0x148
+[    0.358072] [    T100]  ret_from_fork+0x10/0x20
+[    0.358078] [    T100] ---[ end trace 0000000000000000 ]---
+[    0.363224] [    T100] DSI PLL(0) lock failed, status=0x00000000
+[    0.363228] [    T100] PLL(0) lock failed
+[    0.363233] [    T100] ------------[ cut here ]------------
+[    0.363236] [    T100] dsi0_phy_pll_out_byteclk already disabled
+[    0.363245] [    T100] WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250, CPU#6: kworker/u34:1/100
+[    0.363253] [    T100] Modules linked in:
+[    0.363257] [    T100] CPU: 6 UID: 0 PID: 100 Comm: kworker/u34:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.363264] [    T100] Tainted: [W]=WARN
+[    0.363267] [    T100] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.363271] [    T100] Workqueue: events_unbound deferred_probe_work_func
+[    0.363277] [    T100] pstate: 614000c5 (nZCv daIF +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.363282] [    T100] pc : clk_core_disable+0x23c/0x250
+[    0.363288] [    T100] lr : clk_core_disable+0x23c/0x250
+[    0.363293] [    T100] sp : ffff800080e83530
+[    0.363298] [    T100] x29: ffff800080e83530 x28: 0000000000000000 x27: 0000000000000000
+[    0.363304] [    T100] x26: 0000000000000000 x25: ffffa0d0105935b0 x24: ffff0008063bd200
+[    0.363311] [    T100] x23: ffffa0d00d6434d8 x22: ffff0008068b0c00 x21: 0000000000000000
+[    0.363317] [    T100] x20: 0000000000000000 x19: ffff000800f80a00 x18: 000000000000000a
+[    0.363324] [    T100] x17: ffff000800d0f200 x16: ffffa0d010681908 x15: 0000000000000000
+[    0.363331] [    T100] x14: 0000000000000000 x13: 205d303031542020 x12: 5b5d363332333633
+[    0.363337] [    T100] x11: 206b6c6365747962 x10: 5f74756f5f6c6c70 x9 : ffffa0d00cb9caa0
+[    0.363344] [    T100] x8 : 3fffffffffff7fff x7 : ffffa0d010011c40 x6 : 00000000000003ae
+[    0.363350] [    T100] x5 : ffffa0d010011c40 x4 : 0000000000000000 x3 : ffffa0d00fd519d0
+[    0.363356] [    T100] x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff00080257d000
+[    0.363363] [    T100] Call trace:
+[    0.363367] [    T100]  clk_core_disable+0x23c/0x250 (P)
+[    0.363373] [    T100]  __clk_set_parent_after+0xb0/0x110
+[    0.363379] [    T100]  clk_core_reparent_orphans_nolock+0x88/0xd0
+[    0.363384] [    T100]  of_clk_add_hw_provider.part.0+0xa8/0x170
+[    0.363389] [    T100]  devm_of_clk_add_hw_provider+0x98/0x120
+[    0.363394] [    T100]  dsi_phy_driver_probe+0x2f4/0x348
+[    0.363399] [    T100]  platform_probe+0x64/0xb8
+[    0.363404] [    T100]  really_probe+0xc8/0x3f0
+[    0.363409] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.363414] [    T100]  driver_probe_device+0x44/0x128
+[    0.363420] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.363424] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.363431] [    T100]  __device_attach+0xa4/0x1e0
+[    0.363436] [    T100]  device_initial_probe+0x5c/0x88
+[    0.363442] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.363448] [    T100]  bus_probe_device+0x18/0x30
+[    0.363453] [    T100]  device_add+0x608/0x880
+[    0.363458] [    T100]  of_device_add+0x4c/0x70
+[    0.363464] [    T100]  of_platform_device_create_pdata+0xa0/0x160
+[    0.363469] [    T100]  of_platform_bus_create+0x19c/0x550
+[    0.363475] [    T100]  of_platform_populate+0x8c/0x180
+[    0.363481] [    T100]  mdss_probe+0x20c/0x3a0
+[    0.363486] [    T100]  platform_probe+0x64/0xb8
+[    0.363492] [    T100]  really_probe+0xc8/0x3f0
+[    0.363496] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.363501] [    T100]  driver_probe_device+0x44/0x128
+[    0.363506] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.363511] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.363517] [    T100]  __device_attach+0xa4/0x1e0
+[    0.363522] [    T100]  device_initial_probe+0x5c/0x88
+[    0.363528] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.363533] [    T100]  bus_probe_device_deferred+0x34/0x90
+[    0.363538] [    T100]  deferred_probe_work_func+0xbc/0x128
+[    0.363543] [    T100]  process_one_work+0x1a0/0x490
+[    0.363549] [    T100]  worker_thread+0x194/0x318
+[    0.363555] [    T100]  kthread+0x128/0x148
+[    0.363560] [    T100]  ret_from_fork+0x10/0x20
+[    0.363565] [    T100] ---[ end trace 0000000000000000 ]---
+[    0.363569] [    T100] ------------[ cut here ]------------
+[    0.363574] [    T100] dsi0_phy_pll_out_byteclk already unprepared
+[    0.363582] [    T100] WARNING: drivers/clk/clk.c:1118 at clk_core_unprepare+0x274/0x2a0, CPU#6: kworker/u34:1/100
+[    0.363590] [    T100] Modules linked in:
+[    0.363595] [    T100] CPU: 6 UID: 0 PID: 100 Comm: kworker/u34:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.363601] [    T100] Tainted: [W]=WARN
+[    0.363604] [    T100] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.363609] [    T100] Workqueue: events_unbound deferred_probe_work_func
+[    0.363614] [    T100] pstate: 61400005 (nZCv daif +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.363620] [    T100] pc : clk_core_unprepare+0x274/0x2a0
+[    0.363626] [    T100] lr : clk_core_unprepare+0x274/0x2a0
+[    0.363633] [    T100] sp : ffff800080e83530
+[    0.363637] [    T100] x29: ffff800080e83530 x28: 0000000000000000 x27: 0000000000000000
+[    0.363643] [    T100] x26: 0000000000000000 x25: ffffa0d0105935b0 x24: ffff0008063bd200
+[    0.363650] [    T100] x23: ffffa0d00d6434d8 x22: ffff0008068b0c00 x21: 0000000000000000
+[    0.363656] [    T100] x20: 0000000000000000 x19: ffff0008068b0c00 x18: 000000000000000a
+[    0.363663] [    T100] x17: ffff000800d0f200 x16: ffffa0d010681908 x15: 0000000000000000
+[    0.363669] [    T100] x14: 0000000000000000 x13: 205d303031542020 x12: 5b5d343735333633
+[    0.363676] [    T100] x11: 6c61206b6c636574 x10: 79625f74756f5f6c x9 : ffffa0d00cb9caa0
+[    0.363682] [    T100] x8 : 3fffffffffff7fff x7 : ffffa0d010011c40 x6 : 00000000000003eb
+[    0.363689] [    T100] x5 : ffffa0d010011c40 x4 : 0000000000000000 x3 : ffffa0d00fd519d0
+[    0.363695] [    T100] x2 : 0000000000000000 x1 : 0000000000000000 x0 : ffff00080257d000
+[    0.363701] [    T100] Call trace:
+[    0.363705] [    T100]  clk_core_unprepare+0x274/0x2a0 (P)
+[    0.363711] [    T100]  __clk_set_parent_after+0xc4/0x110
+[    0.363717] [    T100]  clk_core_reparent_orphans_nolock+0x88/0xd0
+[    0.363721] [    T100]  of_clk_add_hw_provider.part.0+0xa8/0x170
+[    0.363726] [    T100]  devm_of_clk_add_hw_provider+0x98/0x120
+[    0.363731] [    T100]  dsi_phy_driver_probe+0x2f4/0x348
+[    0.363736] [    T100]  platform_probe+0x64/0xb8
+[    0.363742] [    T100]  really_probe+0xc8/0x3f0
+[    0.363746] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.363751] [    T100]  driver_probe_device+0x44/0x128
+[    0.363756] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.363761] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.363767] [    T100]  __device_attach+0xa4/0x1e0
+[    0.363771] [    T100]  device_initial_probe+0x5c/0x88
+[    0.363776] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.363782] [    T100]  bus_probe_device+0x18/0x30
+[    0.363787] [    T100]  device_add+0x608/0x880
+[    0.363792] [    T100]  of_device_add+0x4c/0x70
+[    0.363798] [    T100]  of_platform_device_create_pdata+0xa0/0x160
+[    0.363804] [    T100]  of_platform_bus_create+0x19c/0x550
+[    0.363810] [    T100]  of_platform_populate+0x8c/0x180
+[    0.363816] [    T100]  mdss_probe+0x20c/0x3a0
+[    0.363821] [    T100]  platform_probe+0x64/0xb8
+[    0.363826] [    T100]  really_probe+0xc8/0x3f0
+[    0.363831] [    T100]  __driver_probe_device+0x168/0x1d0
+[    0.363836] [    T100]  driver_probe_device+0x44/0x128
+[    0.363842] [    T100]  __device_attach_driver+0xc4/0x1b8
+[    0.363847] [    T100]  bus_for_each_drv+0x90/0x100
+[    0.363853] [    T100]  __device_attach+0xa4/0x1e0
+[    0.363857] [    T100]  device_initial_probe+0x5c/0x88
+[    0.363862] [    T100]  __bus_probe_device+0x3c/0xa8
+[    0.363869] [    T100]  bus_probe_device_deferred+0x34/0x90
+[    0.363874] [    T100]  deferred_probe_work_func+0xbc/0x128
+[    0.363879] [    T100]  process_one_work+0x1a0/0x490
+[    0.363885] [    T100]  worker_thread+0x194/0x318
+[    0.363890] [    T100]  kthread+0x128/0x148
+[    0.363895] [    T100]  ret_from_fork+0x10/0x20
+[    0.363901] [    T100] ---[ end trace 0000000000000000 ]---
+[    0.368162] [    T100] remoteproc remoteproc0: adsp is available
+[    0.368177] [    T124] remoteproc remoteproc0: powering up adsp
+[    0.369723] [    T100] remoteproc remoteproc1: cdsp is available
+[    0.369733] [    T128] remoteproc remoteproc1: powering up cdsp
+[    0.372187] [    T123] vreg_s1g_0p5: Setting 300000-700000uV
+[    0.372309] [    T123] vreg_s3g_1p8: Setting 1856000-2000000uV
+[    0.372586] [    T125] vreg_s2j_1p1: Setting 1000000-1100000uV
+[    0.372627] [    T123] vreg_s4g_0p75: Setting 300000-900000uV
+[    0.372773] [    T125] vreg_s3j_1p1: Setting 1000000-1100000uV
+[    0.372786] [    T123] vreg_l1g_0p91: Setting 912000-936000uV
+[    0.372947] [    T123] vreg_l2g_1p8: Setting 1200000-1856000uV
+[    0.373128] [    T123] vreg_l3g_1p2: Setting 1200000-1256000uV
+[    0.373451] [    T100] geni_i2c 884000.i2c: Bus frequency not specified, default to 100kHz.
+[    0.373975] [    T100] geni_i2c 888000.i2c: Bus frequency not specified, default to 100kHz.
+[    0.379285] [    T100] 898000.serial: ttyHS1 MMIO:0x0000000000898000 (irq = 211, base_baud = 0) is a MSM
+[    0.379310] [    T100] serial serial0: tty port ttyHS1 registered
+[    0.381175] [    T100] geni_i2c a94000.i2c: Bus frequency not specified, default to 100kHz.
+[    0.381790] [    T100] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+[    0.381835] [    T100] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+[    0.382180] [    T100] geni_i2c a98000.i2c: Bus frequency not specified, default to 100kHz.
+[    0.391282] [     T64] vreg_bob1: Setting 3032000-3992000uV
+[    0.391581] [     T74] vreg_s5f_0p5: Setting 500000-1000000uV
+[    0.391721] [    T100] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 88e8000.phy for /pmic-glink/connector@0
+[    0.391786] [     T74] vreg_l1f_0p88: Setting 880000-920000uV
+[    0.391916] [     T74] vreg_l2f_1p2: Setting 1200000-1200000uV
+[    0.392078] [     T74] vreg_l3f_1p8: Setting 1800000-1800000uV
+[    0.392279] [     T64] vreg_bob2: Setting 3000000-3000000uV
+[    0.393036] [     T64] vreg_l1b_1p8: Setting 1800000-1800000uV
+[    0.393181] [     T64] vreg_l2b_3p0: Setting 3008000-3048000uV
+[    0.393627] [     T64] vreg_l6b_1p8: Setting 1800000-3008000uV
+[    0.393787] [     T64] vreg_l7b_1p8: Setting 1800000-3008000uV
+[    0.394946] [    T121] sdhci_msm 8804000.mmc: Got CD GPIO
+[    0.397889] [    T123] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    0.397897] [    T123] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    0.397903] [    T123] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    0.397907] [    T123] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    0.397917] [    T123] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    0.398513] [    T100] ufshcd-qcom 1d84000.ufs: freq-table-hz property not specified
+[    0.398518] [    T100] ufshcd-qcom 1d84000.ufs: ufshcd_populate_vreg: Unable to find vdd-hba-supply regulator, assuming enabled
+[    0.398533] [    T100] ufshcd-qcom 1d84000.ufs: ufshcd_populate_vreg: Unable to find vccq2-supply regulator, assuming enabled
+[    0.406812] [    T100] ufshcd-qcom 1d84000.ufs: MCQ resource not found in device tree
+[    0.406818] [    T100] ufshcd-qcom 1d84000.ufs: MCQ mode is disabled, err=-19
+[    0.406822] [    T100] scsi host0: ufshcd
+[    0.439860] [     T57] scsi 0:0:0:49488: Well-known LUN    SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.440556] [     T57] scsi 0:0:0:49476: Well-known LUN    SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.441200] [     T57] scsi 0:0:0:49456: Well-known LUN    SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.441946] [     T57] scsi 0:0:0:0: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.442658] [    T123] sd 0:0:0:0: [sda] 123871232 4096-byte logical blocks: (507 GB/473 GiB)
+[    0.442680] [     T57] scsi 0:0:0:1: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.443678] [    T123] sd 0:0:0:0: [sda] Write Protect is off
+[    0.443681] [    T123] sd 0:0:0:0: [sda] Mode Sense: 00 32 00 10
+[    0.445753] [    T123] sd 0:0:0:0: [sda] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    0.445801] [    T123] sd 0:0:0:0: [sda] Preferred minimum I/O size 524288 bytes
+[    0.445807] [    T123] sd 0:0:0:0: [sda] Optimal transfer size 524288 bytes
+[    0.448323] [     T57] scsi 0:0:0:2: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.449351] [    T125] sd 0:0:0:1: [sdb] 5120 4096-byte logical blocks: (21.0 MB/20.0 MiB)
+[    0.450401] [    T125] sd 0:0:0:1: [sdb] Write Protect is off
+[    0.450406] [    T125] sd 0:0:0:1: [sdb] Mode Sense: 00 32 00 10
+[    0.452510] [    T125] sd 0:0:0:1: [sdb] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    0.452555] [    T125] sd 0:0:0:1: [sdb] Preferred minimum I/O size 524288 bytes
+[    0.452559] [    T125] sd 0:0:0:1: [sdb] Optimal transfer size 524288 bytes
+[    0.455082] [     T57] scsi 0:0:0:3: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.456106] [    T180] sd 0:0:0:2: [sdc] 5120 4096-byte logical blocks: (21.0 MB/20.0 MiB)
+[    0.457184] [    T180] sd 0:0:0:2: [sdc] Write Protect is off
+[    0.457189] [    T180] sd 0:0:0:2: [sdc] Mode Sense: 00 32 00 10
+[    0.459294] [    T180] sd 0:0:0:2: [sdc] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    0.459340] [    T180] sd 0:0:0:2: [sdc] Preferred minimum I/O size 524288 bytes
+[    0.459345] [    T180] sd 0:0:0:2: [sdc] Optimal transfer size 524288 bytes
+[    0.461910] [     T57] scsi 0:0:0:4: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.462932] [    T184] sd 0:0:0:3: [sdd] 8192 4096-byte logical blocks: (33.6 MB/32.0 MiB)
+[    0.463991] [    T184] sd 0:0:0:3: [sdd] Write Protect is off
+[    0.463995] [    T184] sd 0:0:0:3: [sdd] Mode Sense: 00 32 00 10
+[    0.466179] [    T184] sd 0:0:0:3: [sdd] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    0.466542] [    T184] sd 0:0:0:3: [sdd] Preferred minimum I/O size 524288 bytes
+[    0.466547] [    T184] sd 0:0:0:3: [sdd] Optimal transfer size 524288 bytes
+[    0.467125] [    T123]  sda: sda1 sda2 sda3 sda4 sda5 sda6 sda7 sda8 sda9 sda10 sda11 sda12 sda13 sda14 sda15 sda16 sda17
+[    0.467587] [    T123] sd 0:0:0:0: [sda] Attached SCSI disk
+[    0.470365] [     T57] scsi 0:0:0:5: Direct-Access     SAMSUNG  KLUFG8RHKF-F0H1  2000 PQ: 0 ANSI: 6
+[    0.470401] [    T187] sd 0:0:0:4: [sde] 1048576 4096-byte logical blocks: (4.29 GB/4.00 GiB)
+[    0.471431] [    T187] sd 0:0:0:4: [sde] Write Protect is off
+[    0.471436] [    T187] sd 0:0:0:4: [sde] Mode Sense: 00 32 00 10
+[    0.473504] [    T187] sd 0:0:0:4: [sde] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    0.473655] [    T187] sd 0:0:0:4: [sde] Preferred minimum I/O size 524288 bytes
+[    0.473661] [    T187] sd 0:0:0:4: [sde] Optimal transfer size 524288 bytes
+[    0.474073] [    T125]  sdb: sdb1 sdb2 sdb3 sdb4 sdb5
+[    0.474178] [    T125] sd 0:0:0:1: [sdb] Attached SCSI disk
+[    0.477283] [    T125] sd 0:0:0:5: [sdf] 8192 4096-byte logical blocks: (33.6 MB/32.0 MiB)
+[    0.478329] [    T125] sd 0:0:0:5: [sdf] Write Protect is off
+[    0.478333] [    T125] sd 0:0:0:5: [sdf] Mode Sense: 00 32 00 10
+[    0.480427] [    T125] sd 0:0:0:5: [sdf] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[    0.480464] [    T125] sd 0:0:0:5: [sdf] Preferred minimum I/O size 524288 bytes
+[    0.480469] [    T125] sd 0:0:0:5: [sdf] Optimal transfer size 524288 bytes
+[    0.481431] [    T180]  sdc: sdc1 sdc2 sdc3 sdc4 sdc5
+[    0.481648] [    T180] sd 0:0:0:2: [sdc] Attached SCSI disk
+[    0.488971] [    T184]  sdd: sdd1 sdd2 sdd3
+[    0.489099] [    T184] sd 0:0:0:3: [sdd] Attached SCSI disk
+[    0.497770] [    T187]  sde: sde1 sde2 sde3 sde4 sde5 sde6 sde7 sde8 sde9 sde10 sde11 sde12 sde13 sde14 sde15 sde16 sde17 sde18 sde19 sde20 sde21 sde22 sde23 sde24 sde25 sde26 sde27 sde28 sde29 sde30 sde31 sde32 sde33 sde34 sde35 sde36 sde37 sde38 sde39 sde40 sde41 sde42 sde43 sde44 sde45 sde46 sde47 sde48 sde49 sde50 sde51 sde52 sde53 sde54 sde55 sde56 sde57 sde58 sde59 sde60 sde61 sde62 sde63 sde64 sde65 sde66 sde67 sde68 sde69 sde70 sde71 sde72 sde73 sde74 sde75 sde76 sde77 sde78
+[    0.499835] [    T187] sd 0:0:0:4: [sde] Attached SCSI disk
+[    0.504909] [    T125]  sdf: sdf1 sdf2 sdf3 sdf4 sdf5
+[    0.504993] [    T125] sd 0:0:0:5: [sdf] Attached SCSI disk
+[    0.592989] [     T73] Freeing initrd memory: 63080K
+[    0.593117] [    T128] remoteproc remoteproc1: Booting fw image qcom/sm8750/cdsp.mdt, size 5084
+[    0.593220] [    T124] remoteproc remoteproc0: Booting fw image qcom/sm8750/adsp.mdt, size 8364
+[    0.625322] [    T121] mmc0: SDHCI controller on 8804000.mmc [8804000.mmc] using ADMA 64-bit
+[    0.656591] [    T100] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier a600000.usb for /pmic-glink/connector@1
+[    0.656620] [    T100] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier a600000.usb for /pmic-glink/connector@0
+[    0.658665] [     T64] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    0.658699] [     T64] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    0.658723] [     T64] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    0.658737] [     T64] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    0.658759] [     T64] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    0.671226] [    T187] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    0.671235] [    T187] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    0.671241] [    T187] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    0.671246] [    T187] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    0.671253] [    T187] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    0.671622] [      T1] input: gpio-keys as /devices/platform/gpio-keys/input/input2
+[    0.671839] [      T1] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    0.674644] [      T1] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    0.674724] [      T1] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    0.674740] [     T96] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[    0.674744] [     T96] cfg80211: failed to load regulatory.db
+[    0.675004] [      T1] clk: Not disabling unused clocks
+[    0.675006] [      T1] PM: genpd: Not disabling unused power domains
+[    0.675020] [      T1] ALSA device list:
+[    0.675023] [      T1]   No soundcards found.
+[    0.681243] [      T1] Freeing unused kernel memory: 4672K
+[    0.689540] [     T64] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    0.689559] [     T64] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    0.689572] [     T64] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    0.689581] [     T64] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    0.689599] [     T64] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    0.698542] [      T1] Checked W+X mappings: passed, no W+X pages found
+[    0.698551] [      T1] Run /init as init process
+[    0.698554] [      T1]   with arguments:
+[    0.698556] [      T1]     /init
+[    0.698558] [      T1]   with environment:
+[    0.698560] [      T1]     HOME=/
+[    0.698562] [      T1]     TERM=linux
+[    0.698564] [      T1]     elden_root=LABEL=linux
+[    0.701726] [     T95] mmc0: new high speed SDXC card at address b368
+[    0.701952] [     T95] mmcblk0: mmc0:b368 CBADS 58.6 GiB
+[    0.702897] [     T95]  mmcblk0: p1
+[    0.705741] [    T187] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    0.705746] [    T187] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    0.705751] [    T187] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    0.705754] [    T187] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    0.705760] [    T187] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    0.764979] [    T128] remoteproc remoteproc1: remote processor cdsp is now up
+[    0.784754] [     T74] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    0.784788] [     T74] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    0.784813] [     T74] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    0.784832] [     T74] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    0.784863] [     T74] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    1.047362] [      T1] [init] WARNING: binderfs unavailable (Waydroid will fail)
+[    1.049103] [      T1] [init] root fs type=tmpfs on_initramfs=1
+[    1.051245] [      T1] [init] sleep policy: mem_sleep=[s2idle] deep
+[    1.052090] [      T1] [init] disk root requested: LABEL=linux
+[    1.171778] [    T124] remoteproc remoteproc0: remote processor adsp is now up
+[    1.177434] [     T73] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    1.177448] [     T73] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    1.177456] [     T73] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    1.177464] [     T73] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    1.177476] [     T73] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    1.214870] [     T74] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    1.214881] [     T74] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    1.214890] [     T74] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    1.214895] [     T74] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    1.214904] [     T74] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    1.229380] [    T257] PDR: Indication received from msm/adsp/charger_pd, state: 0x1fffffff, trans-id: 1
+[    1.238736] [    T257] PDR: Indication received from msm/adsp/audio_pd, state: 0x1fffffff, trans-id: 1
+[    1.238750] [     T91] qcom,apr 6800000.remoteproc:glink-edge.adsp_apps.-1.-1: Adding APR/GPR dev: gprsvc:service:2:1
+[    1.297420] [      T1] [init] resolved LABEL=linux -> /dev/sda17
+[    1.299036] [      T1] [init] root fstype: ext4
+[    1.299064] [      T1] [init] DBG mount start: dev=/dev/sda17 fstype=ext4 target=/newroot cmdline_elden_root=LABEL=linux
+[    1.314835] [    T268] EXT4-fs (sda17): mounted filesystem e9c4b307-f508-4ba8-811f-026847ef1578 r/w with ordered data mode. Quota mode: none.
+[    1.317044] [      T1] [init] DBG mount ok: 12 mounts; newroot has 20 entries
+[    1.319258] [      T1] [init] trace fd opened on newroot/var/tmp/elden-init-trace.log
+[    1.319304] [      T1] [init] switching root to /dev/sda17 (/init)
+[    1.321427] [      T1] [init] DBG newinit: /init size=34584 sha=47af5f7d5400 shebang=#!/bin/sh
+[    1.669873] [      T1] [init] WARNING: binderfs unavailable (Waydroid will fail)
+[    1.672713] [      T1] [init] root fs type=ext2/ext3 on_initramfs=0
+[    1.678367] [      T1] [init] sleep policy: mem_sleep=[s2idle] deep
+[    1.685369] [    T347] [camera] no modules for 7.4.0-rc3-g7a-dwc3v11-20261121-dirty (nothing under /usr/lib/modules/7.4.0-rc3-g7a-dwc3v11-20261121-dirty)
+[    1.688613] [    T357] [payload] no modules for 7.4.0-rc3-g7a-dwc3v11-20261121-dirty
+[    1.689256] [      T1] [init] Alpine rootfs up, kernel 7.4.0-rc3-g7a-dwc3v11-20261121-dirty
+[    1.700237] [    T376] printk: legacy console [ttyGS0] enabled
+[    1.706927] [    T363] configfs-gadget.g1 gadget.0: HOST MAC 02:1e:5e:ed:e1:02
+[    1.706955] [    T363] configfs-gadget.g1 gadget.0: MAC 02:1e:5e:ed:e1:01
+[    1.734412] [    T363] [usb-gadget] bound to a600000.usb
+[    1.738108] [      T1] [init] systemd mode: handing PID1 to /sbin/init
+[    1.738774] [    T361] [init] usb0 up: 192.168.7.1, ssh root@192.168.7.1 (no password)
+[    1.740512] [     T74] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    1.740527] [     T74] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    1.740537] [     T74] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    1.740544] [     T74] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    1.740560] [     T74] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    1.750686] [      T1] systemd[1]: System time advanced to built-in epoch: Tue 2026-04-14 03:38:05 CST
+[    1.754217] [      T1] systemd[1]: systemd 257.13-1~deb13u1 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +SYSVINIT +LIBARCHIVE)
+[    1.754235] [      T1] systemd[1]: Detected architecture arm64.
+[    1.754832] [     T56] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    1.754865] [     T56] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    1.754883] [     T56] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    1.754896] [     T56] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    1.754932] [     T56] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    1.854882] [      T1] systemd[1]: bpf-restrict-fs: BPF LSM hook not enabled in the kernel, BPF LSM not supported.
+[    1.921122] [      T1] systemd[1]: Queued start job for default target graphical.target.
+[    1.937459] [      T1] systemd[1]: Created slice system-getty.slice - Slice /system/getty.
+[    1.937808] [      T1] systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+[    1.938109] [      T1] systemd[1]: Created slice system-serial\x2dgetty.slice - Slice /system/serial-getty.
+[    1.938350] [      T1] systemd[1]: Created slice user.slice - User and Session Slice.
+[    1.938407] [      T1] systemd[1]: Started systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
+[    1.938455] [      T1] systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+[    1.938510] [      T1] systemd[1]: proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point skipped, unmet condition check ConditionPathExists=/proc/sys/fs/binfmt_misc
+[    1.938533] [      T1] systemd[1]: Expecting device dev-ttyGS0.device - /dev/ttyGS0...
+[    1.938581] [      T1] systemd[1]: Reached target nss-user-lookup.target - User and Group Name Lookups.
+[    1.938610] [      T1] systemd[1]: Reached target paths.target - Path Units.
+[    1.938643] [      T1] systemd[1]: Reached target remote-fs.target - Remote File Systems.
+[    1.938670] [      T1] systemd[1]: Reached target slices.target - Slice Units.
+[    1.938701] [      T1] systemd[1]: Reached target swap.target - Swaps.
+[    1.939452] [      T1] systemd[1]: Listening on systemd-creds.socket - Credential Encryption/Decryption.
+[    1.939525] [      T1] systemd[1]: Listening on systemd-initctl.socket - initctl Compatibility Named Pipe.
+[    1.939604] [      T1] systemd[1]: Listening on systemd-journald-dev-log.socket - Journal Socket (/dev/log).
+[    1.939684] [      T1] systemd[1]: Listening on systemd-journald.socket - Journal Sockets.
+[    1.939730] [      T1] systemd[1]: systemd-pcrextend.socket - TPM PCR Measurements skipped, unmet condition check ConditionSecurity=measured-uki
+[    1.939753] [      T1] systemd[1]: systemd-pcrlock.socket - Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[    1.939810] [      T1] systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
+[    1.939872] [      T1] systemd[1]: Listening on systemd-udevd-kernel.socket - udev Kernel Socket.
+[    1.940613] [      T1] systemd[1]: Mounting dev-hugepages.mount - Huge Pages File System...
+[    1.941080] [      T1] systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
+[    1.941572] [      T1] systemd[1]: Mounting run-lock.mount - Legacy Locks Directory /run/lock...
+[    1.942027] [      T1] systemd[1]: Mounting sys-kernel-tracing.mount - Kernel Trace File System...
+[    1.942629] [      T1] systemd[1]: Starting fake-hwclock-load.service - Restore the current clock...
+[    1.942679] [      T1] systemd[1]: kmod-static-nodes.service - Create List of Static Device Nodes skipped, unmet condition check ConditionFileNotEmpty=/lib/modules/7.4.0-rc3-g7a-dwc3v11-20261121-dirty/modules.devname
+[    1.943175] [      T1] systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
+[    1.943525] [      T1] systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+[    1.945425] [      T1] systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
+[    1.945898] [      T1] systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
+[    1.945964] [      T1] systemd[1]: systemd-hibernate-clear.service - Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[    1.947372] [      T1] systemd[1]: Starting systemd-journald.service - Journal Service...
+[    1.948076] [      T1] systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
+[    1.948101] [      T1] systemd[1]: systemd-pcrmachine.service - TPM PCR Machine ID Measurement skipped, unmet condition check ConditionSecurity=measured-uki
+[    1.948527] [      T1] systemd[1]: Starting systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully...
+[    1.948555] [      T1] systemd[1]: systemd-tpm2-setup-early.service - Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[    1.948994] [      T1] systemd[1]: Starting systemd-udev-load-credentials.service - Load udev Rules from Credentials...
+[    1.949371] [      T1] systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
+[    1.950123] [      T1] systemd[1]: Mounted dev-hugepages.mount - Huge Pages File System.
+[    1.950183] [      T1] systemd[1]: Mounted dev-mqueue.mount - POSIX Message Queue File System.
+[    1.950231] [      T1] systemd[1]: Mounted run-lock.mount - Legacy Locks Directory /run/lock.
+[    1.950275] [      T1] systemd[1]: Mounted sys-kernel-tracing.mount - Kernel Trace File System.
+[    1.950379] [      T1] systemd[1]: modprobe@configfs.service: Deactivated successfully.
+[    1.950497] [      T1] systemd[1]: Finished modprobe@configfs.service - Load Kernel Module configfs.
+[    1.950650] [      T1] systemd[1]: modprobe@drm.service: Deactivated successfully.
+[    1.950753] [      T1] systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+[    1.950866] [      T1] systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+[    1.950962] [      T1] systemd[1]: Finished modprobe@efi_pstore.service - Load Kernel Module efi_pstore.
+[    1.951071] [      T1] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[    1.951168] [      T1] systemd[1]: Finished modprobe@fuse.service - Load Kernel Module fuse.
+[    1.951310] [      T1] systemd[1]: sys-fs-fuse-connections.mount - FUSE Control File System skipped, unmet condition check ConditionPathExists=/sys/fs/fuse/connections
+[    1.951519] [      T1] systemd[1]: fake-hwclock-load.service: Deactivated successfully.
+[    1.951637] [      T1] systemd[1]: Finished fake-hwclock-load.service - Restore the current clock.
+[    1.951692] [      T1] systemd[1]: systemd-fsck-root.service - File System Check on Root Device skipped, unmet condition check ConditionPathIsReadWrite=!/
+[    1.952101] [      T1] systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+[    1.954477] [      T1] systemd[1]: Finished systemd-modules-load.service - Load Kernel Modules.
+[    1.955173] [      T1] systemd[1]: Starting systemd-sysctl.service - Apply Kernel Variables...
+[    1.956876] [      T1] systemd[1]: Finished systemd-udev-load-credentials.service - Load udev Rules from Credentials.
+[    1.960075] [      T1] systemd[1]: Finished systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully.
+[    1.961504] [    T432] systemd-journald[432]: Collecting audit messages is disabled.
+[    1.962041] [      T1] systemd[1]: Finished systemd-sysctl.service - Apply Kernel Variables.
+[    1.972264] [    T447] EXT4-fs (sda17): re-mounted e9c4b307-f508-4ba8-811f-026847ef1578.
+[    1.972838] [      T1] systemd[1]: Finished systemd-remount-fs.service - Remount Root and Kernel File Systems.
+[    1.973044] [      T1] systemd[1]: systemd-hwdb-update.service - Rebuild Hardware Database skipped, unmet condition check ConditionNeedsUpdate=/etc
+[    1.973542] [      T1] systemd[1]: Starting systemd-pstore.service - Platform Persistent Storage Archival...
+[    1.973955] [      T1] systemd[1]: Starting systemd-random-seed.service - Load/Save OS Random Seed...
+[    1.973993] [      T1] systemd[1]: systemd-sysusers.service - Create System Users skipped, no trigger condition checks were met.
+[    1.975111] [      T1] systemd[1]: Starting systemd-resolved.service - Network Name Resolution...
+[    1.975502] [      T1] systemd[1]: Starting systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev...
+[    1.975525] [      T1] systemd[1]: systemd-tpm2-setup.service - TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[    1.996367] [      T1] systemd[1]: Started systemd-journald.service - Journal Service.
+[    2.005673] [    T432] systemd-journald[432]: Received client request to flush runtime journal.
+[    2.010520] [    T432] systemd-journald[432]: /var/log/journal/63060d1578094016ad09168f8ddca062/system.journal: Realtime clock jumped backwards relative to last journal entry, rotating.
+[    2.010530] [    T432] systemd-journald[432]: Rotating system journal.
+[    6.370316] [     T91] qcom-apm gprsvc:service:2:1: CMD timeout for [1001021] opcode
+[    6.372042] [     T91] platform 6800000.remoteproc:glink-edge:gpr:service@1:dais: Adding to iommu group 13
+[    6.372890] [     T91] qcom,apr 6800000.remoteproc:glink-edge.adsp_apps.-1.-1: Adding APR/GPR dev: gprsvc:service:2:2
+[    6.382591] [     T74] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    6.382628] [     T74] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    6.382644] [     T74] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    6.382660] [     T74] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    6.382686] [     T74] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[    6.396197] [     T56] qcom-soundwire 7630000.soundwire: dout-ports (0) mismatch with controller (1)
+[    6.396777] [     T56] wcd939x_codec audio-codec: bound sdw:2:0:0217:010e:00:4 (ops wcd_sdw_component_ops)
+[    6.396799] [     T56] wcd939x_codec audio-codec: bound sdw:3:0:0217:010e:00:3 (ops wcd_sdw_component_ops)
+[    6.401894] [     T73] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[    6.401935] [     T73] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[    6.401947] [     T73] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[    6.401955] [     T73] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[    6.401967] [     T73] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[   11.753266] [    T137] platform sound: deferred probe pending: snd-sc8280xp: Secondary MI2S: codec dai not found
+[   11.753301] [    T137] amba 109ab000.tn: deferred probe pending: (reason unknown)
+[   11.753315] [    T137] auxiliary aux_bridge.aux_bridge.0: deferred probe pending: aux_bridge.aux_bridge: failed to acquire drm_bridge
+[   11.753331] [    T137] auxiliary pmic_glink.altmode.0: deferred probe pending: pmic_glink_altmode.pmic_glink_altmode: failed to acquire mode-switch for port: 0
+[   11.753347] [    T137] platform af54000.displayport-controller: deferred probe pending: (reason unknown)
+[   11.753368] [    T137] gcc-sm8750 100000.clock-controller: sync_state() pending due to 1760000.clock-controller
+[   11.753384] [    T137] qnoc-sm8750 interconnect-1: sync_state() pending due to 1dfa000.crypto
+[   11.753399] [    T137] qnoc-sm8750 1700000.interconnect: sync_state() pending due to 1dfa000.crypto
+[   11.753414] [    T137] gxclkctl-kaanapali 3d64000.clock-controller: sync_state() pending due to 3d6c000.gmu
+[   11.753429] [    T137] gcc-sm8750 100000.clock-controller: sync_state() pending due to 3d6c000.gmu
+[   11.753443] [    T137] sm8750-gpucc 3d90000.clock-controller: sync_state() pending due to 3d6c000.gmu
+[   11.753464] [    T137] gcc-sm8750 100000.clock-controller: sync_state() pending due to ade0000.clock-controller
+[   11.753505] [    T137] qnoc-sm8750 1500000.interconnect: sync_state() pending due to 1c00000.pcie
+[   11.753519] [    T137] qnoc-sm8750 interconnect-1: sync_state() pending due to 1c00000.pcie
+[   11.753534] [    T137] qnoc-sm8750 16c0000.interconnect: sync_state() pending due to 1c00000.pcie
+[   11.753548] [    T137] gcc-sm8750 100000.clock-controller: sync_state() pending due to 1c00000.pcie
+[   11.753565] [    T137] qnoc-sm8750 interconnect-1: sync_state() pending due to 240b3400.pmu
+[   11.753580] [    T137] qnoc-sm8750 interconnect-1: sync_state() pending due to 240b7400.pmu
+[   11.753594] [    T137] qnoc-sm8750 24100000.interconnect: sync_state() pending due to 240b7400.pmu
+[   11.753609] [    T137] qnoc-sm8750 24100000.interconnect: sync_state() pending due to 240b3400.pmu
+[   11.753623] [    T137] qnoc-sm8750 24100000.interconnect: sync_state() pending due to 1c00000.pcie
+[   11.753649] [    T137] qcom-rpmhpd 16500000.rsc:power-controller: sync_state() pending due to ade0000.clock-controller
+[   11.753665] [    T137] qcom-rpmhpd 16500000.rsc:power-controller: sync_state() pending due to 1760000.clock-controller
+[   11.753691] [    T137] qcom-rpmhpd 16500000.rsc:power-controller: sync_state() pending due to af54000.displayport-controller
+[   11.753706] [    T137] disp_cc-sm8750 af00000.clock-controller: sync_state() pending due to af54000.displayport-controller
+[   11.755002] [     T64] qcom-pcie 1c00000.pcie: host bridge /soc@0/pcie@1c00000 ranges:
+[   11.755074] [     T64] qcom-pcie 1c00000.pcie:       IO 0x0040200000..0x00402fffff -> 0x0000000000
+[   11.755105] [     T64] qcom-pcie 1c00000.pcie:      MEM 0x0040300000..0x0063ffffff -> 0x0040300000
+[   11.755126] [     T64] qcom-pcie 1c00000.pcie:      MEM 0x0400000000..0x06ffffffff -> 0x0400000000
+[   11.755172] [     T64] qcom-pcie 1c00000.pcie: Memory resource size exceeds max for 32 bits
+[  320.189934] [     T73] ucsi_glink.pmic_glink_ucsi pmic_glink.ucsi.0: PPM init failed, stop trying

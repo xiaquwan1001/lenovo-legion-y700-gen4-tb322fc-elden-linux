@@ -27,4 +27,4 @@ mkbootimg_args=--header_version 2 --os_version 15.0.0 --os_patch_level 2025-08 -
 kernel_git_head=aebb7274476403040d582c61478df8f4a7bf9cd3
 kernel_git_state=dirty
 project_git_head=ff041d4e020c5934c4ddf8e0ee52cd8bcccb9c27
-verification=NOT_TESTED_ON_DEVICE
+verification=PARTIAL_PASS_ON_DEVICE_20261121 (boot+root+2 port role switches+gpio-mux+gadget OK; Type-C devlink cycle blocks port switching; DSI not up by design)

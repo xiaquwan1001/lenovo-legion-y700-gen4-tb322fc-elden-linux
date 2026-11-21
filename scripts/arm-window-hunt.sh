@@ -1,9 +1,9 @@
 #!/bin/bash
 # arm-window-hunt.sh — 在坏发成簇的窗口里交替试多个显示臂，直到出现"健康发"。
 # usage: scripts/arm-window-hunt.sh <wait_s> <label1:img1> [label2:img2 ...]
-# 每发：确保在 fastboot（必要时单次 SSH reboot2 bootloader）→ fastboot boot → 串口抓 WAIT 秒
-#        → 判 L1/L2 → 健康（L1=L2=0）则停在设备上并打印 HEALTHY。
-# 判据只依赖串口（SSH 挂了也能跑）；SSH 只用于复位，单次、带退避。
+# 每发：确认设备已在 fastboot（★#701 后不做软重启：Linux→BL 三条软路径全灭）→
+#        fastboot boot → 串口抓 WAIT 秒 → 判 L1/L2 → 健康（L1=L2=0）则停在设备上并打印 HEALTHY。
+# 判据只依赖串口；SSH 只用于**探活**（判断设备到底在 Linux 还是断线），不再用于复位。
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd); cd "$ROOT"
 WAIT=${1:?usage: arm-window-hunt.sh <wait_s> <label:img>...}; shift
@@ -12,21 +12,18 @@ SSH="ssh -o StrictHostKeyChecking=no -o ConnectionAttempts=1 -o ConnectTimeout=8
 # PITFALLS #584：`fastboot devices | grep -q` 会 SIGPIPE 打断 bulk 通道 ⇒ 只能物理 POR。
 # 必须先取完整输出再在 shell 里判（不要接管道给 grep）。
 in_fastboot() { d=$(timeout 6 fastboot devices 2>/dev/null); case "$d" in *fastboot*) return 0 ;; *) return 1 ;; esac; }
+# ★ #701 fail-closed 门（2026-11-21，reports/linux-to-fastboot-20261121.md）：Linux→fastboot 的
+#   三条软路径（sz reboot2 bootloader / systemctl reboot bootloader / SysRq-b→reboot2）实测全灭。
+#   旧实现在这里"重启一下再继续采样"，实际每发都停在 Linux ⇒ 静默产无效样本。现在只探活、不软重启。
+BL_NEED_PHYS='需物理键进 BL，见 reports/linux-to-fastboot-20261121.md'
 to_fastboot() {
 	in_fastboot && return 0
-	echo "[hunt] 单次 SSH reboot2 bootloader"
-	timeout 20 $SSH 'reboot2 bootloader' >/dev/null 2>&1
-	for i in $(seq 1 10); do in_fastboot && return 0; sleep 4; done
-	# 显示坏态下 reboot2 会挂 DRM cleanup（PITFALLS #253）⇒ 退回 SysRq-b → 日常 → 再进 fastboot
-	echo "[hunt] reboot2 无效，改 SysRq-b（回日常）"
-	timeout 20 $SSH 'echo b > /proc/sysrq-trigger' >/dev/null 2>&1
-	for i in $(seq 1 30); do
-		timeout 12 $SSH 'echo up' 2>/dev/null | grep -q up && break
-		sleep 6
-	done
-	echo "[hunt] 日常已起，再 reboot2 bootloader"
-	timeout 20 $SSH 'reboot2 bootloader' >/dev/null 2>&1
-	for i in $(seq 1 15); do in_fastboot && return 0; sleep 4; done
+	if timeout 15 $SSH 'echo up' 2>/dev/null | grep -q up; then
+		echo "[hunt] 设备在 Linux（SSH 可达）但不在 fastboot —— #701：软重启路径已实测全灭，本节不尝试。"
+	else
+		echo "[hunt] 设备既不在 fastboot，SSH 探活也失败（卡片/正在重启/线缆？）。"
+	fi
+	echo "[hunt] $BL_NEED_PHYS（音量下 + 电源），进 BL 后重跑本脚本。"
 	return 1
 }
 judge() { # $1 = console log
@@ -40,7 +37,7 @@ judge() { # $1 = console log
 for spec in "$@"; do
 	label=${spec%%:*}; img=${spec#*:}
 	echo "=================== $label ==================="
-	if ! to_fastboot; then echo "[hunt] ❌ 无法进入 fastboot（SSH 不可用）——需要物理 POR"; exit 2; fi
+	if ! to_fastboot; then echo "[hunt] ❌ 无法进入 fastboot ⇒ 停手（不产无效样本）：$BL_NEED_PHYS"; exit 2; fi
 	out=$(bash scripts/arm-console-run.sh "$img" "$label" "$WAIT" 2>&1 | tail -6)
 	echo "$out"
 	log=$(echo "$out" | sed -n 's/.*console=\([^ ]*\).*/\1/p')

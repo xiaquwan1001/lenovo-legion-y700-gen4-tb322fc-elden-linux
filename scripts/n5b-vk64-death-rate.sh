@@ -61,6 +61,14 @@ FB()  { timeout 20 fastboot devices > /tmp/n5b-fbdev.txt 2>/dev/null; grep -q "$
 #   （TASKS §4 停用令 + PITFALLS #701 实测 Linux→fastboot 软路径全灭）；改用 scripts/to-fastboot.sh:60
 #   口径（sync + systemctl reboot bootloader）。软路径失败 = 停手，需人工物理键，不再 sysrq 逃生。
 REBOOT_FB() { SSH 'sync; systemctl reboot bootloader' >/dev/null 2>&1 || true; }
+# ★ #701 fail-closed 门（2026-11-21，reports/linux-to-fastboot-20261121.md）：Linux→BL 三条软路径
+#   （reboot2 / systemctl reboot bootloader / SysRq-b）实测全灭 ⇒ 任何"软重启进 fastboot"都不可信。
+#   本文件只保留一次尝试（REBOOT_FB）作为探路，失败即停手并打统一文案，不做重试、不产无效 n。
+BL_NEED_PHYS='需物理键进 BL，见 reports/linux-to-fastboot-20261121.md'
+bl_gate() { # $1 = 场景描述
+	echo "  ❌ $1 —— #701：Linux→fastboot 软路径 2026-11-21 实测全灭"
+	echo "  ⇒ $BL_NEED_PHYS（音量下+电源），再用 fastboot boot 重进 vk64。"
+}
 
 echo "### N5b start $(date '+%F %T')  rounds=$N  img=$IMG"
 [ -f "$IMG" ] || {
@@ -135,7 +143,7 @@ boot_vk64() {
 		if [ -z "$up" ]; then echo "  ❌ SSH 不可达且不在 fastboot：需要人工介入"; return 1; fi
 		REBOOT_FB
 		local t=0; while [ $t -lt 90 ]; do FB && break; sleep 3; t=$((t+3)); done
-		FB || { echo "  ❌ 软路径未进 fastboot（#701：失败即停，不重试）⇒ 需人工按音量- + 电源"; return 1; }
+		FB || { bl_gate "软路径 90 s 未进 fastboot（失败即停，不重试）"; return 1; }
 	fi
 	timeout 120 fastboot boot "$IMG" >/dev/null 2>&1 || { echo "  fastboot boot FAILED"; return 1; }
 	wait_ssh 120 || { echo "  SSH never came up"; return 1; }
@@ -170,7 +178,7 @@ force_reboot_vk64() {
 	if [ -n "$up" ]; then
 		REBOOT_FB
 		if ! wait_fb 30; then
-			echo "  ❌ 软路径 30 s 未进 fastboot（#701）⇒ 停手；需人工物理键进 fastboot 后再重跑"
+			bl_gate "软路径 30 s 未进 fastboot（停手，不重试）"
 			return 1
 		fi
 	else
@@ -198,6 +206,16 @@ if [ "${CHECK_ONLY:-0}" = 1 ]; then
 	echo "== 结束。真跑：bash $0 [轮数] [图像] =="
 	serial_stop
 	exit 0
+fi
+
+# ★ #701 开跑前门：本脚本的每一轮都以「不在 fastboot 就软重启进去」为前提（boot_vk64），
+#   而那条软路径已死 ⇒ 若开跑时设备既不在 fastboot 又 SSH 不可达，任何恢复通道都断，
+#   硬跑只会消耗 boot_b 的 slot-retry-count（#363）并产出无效样本。此处 fail-closed。
+#   放在 --check 之后：--check 是零副作用诊断，设备不可达时也该把现场打出来。
+if ! FB && ! ssh_alive_probe; then
+	echo "  ❌ 开跑前探活失败：设备既不在 fastboot，SSH（$DEV）也不可达"
+	echo "  ⇒ $BL_NEED_PHYS（音量下+电源），再用 fastboot boot 重进 vk64。"
+	exit 5
 fi
 
 if ssh_alive_probe; then
