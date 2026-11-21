@@ -70,7 +70,7 @@
   证据 `reports/device-session-20261116-vk192.md`、`reports/pstore-ram-initrd-guard-20261116.md`。
   - 历史：`vk191` 曾以 **RAM 启动**（`fastboot boot`，kernel/dtb 同 vk190、仅 ramdisk 换成立即 SN 版）在机 2026-11-13→11-16；
     其判据与证据见 `reports/device-session-20261113-vk191.md`（现役已换成 vk192，那条仅供沿革）。
-  - `boot_a` **未动** = UEFI 干净世代 `pc1`（分区 sha `1ca2b8e69167…`，件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）；
+  - `boot_a` **未动** = UEFI 干净世代 `pc1`（分区 sha `1ca2b8e69167…`，件 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`，**目录已删**（2026-11-16 清理，sha 复核 = `reports/disk-cleanup-20261116.md`））；
     要用 UEFI 路先显式 `fastboot set_active a`（该槽 `unbootable=yes` 的历史口径见下方 11-09/11-10 块）。
     **槽属性现态（2026-11-16 14:06 现查，`slot-attr.py show`）**：`boot_a` retry=7 succ=1 active=1 unbootable=0（本轮 a 槽暖启成功 7↓6 → **`mark-successful a` 回 7/1**，不会再递减）；`boot_b` retry=6 succ=1 active=0 ⇒ 已回 `_b`（14:07:48 = 16 s 到 SSH）。
   - **ESP `\EFI\BOOT\BOOTAA64.EFI` 已从 v5（A2 + `panic=0`，会挂住像死机）切回 `v3b-bigfont`**
@@ -105,7 +105,7 @@
     原 11-17 上午现态（活沿革，留作对照）：
     `current-slot=b`、`slot-successful:a/b` **均 no**、`retry-count a=3 / b=0`、`unbootable` 均 no、电池 3406–3408 mV。
     `fastboot continue` → `Failed to load image from partition: Load Error`；`fastboot boot` 对**两份不同镜像**
-    （自研 `out/boot-elden-vk192.img` 与 11-14/15 实测能起的 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`）**3/3 同错**（`Load Error`）；
+    （自研 `out/boot-elden-vk192.img` 与 11-14/15 实测能起的 `out/r21-sbstop-pc1/uefi-preamblec1-r1.img` `40d43397…`（已删，sha 见上））**3/3 同错**（`Load Error`）；
     `fastboot reboot` 与 EDL `reset` 都 20 s 内落回 fastboot。⇒ **镜像/分区/固件已由 11-16 夜 EDL+`qdl` 双工具逐项对账为台账值**
     ⇒ 剩下 ABL 载入/认证通路（**未定因**；18:5x 复核后不再定为硬件，`poke` 那条证据已撤回）。
     全账 = `reports/bl-stuck-20261116.md` §9；按全局规则 12 已上交 `~/hw-stability/evidence/inbox/20261117-y700-elden-bl-load-error/`，**项目内不深挖**。
@@ -183,7 +183,7 @@
 | 固件 | 来源分区 | 本地资产 | 主线通路 | 状态 |
 |---|---|---|---|---|
 | ADSP `adsp.mdt`+`adsp_dtb` | LUN4 `modem_a` | `backup/fw/modem/` | `qcom_q6v5_pas`；DT 期望 `/lib/firmware/qcom/sm8750/adsp.mdt` | ✅ 起（音频 graph 已通） |
-| AudioReach **tplg** | vendor 自研 | 自编 `Lenovo-Y700-Gen4-tplg.bin` | ASoC `q6apm` + `patches/0011` | ✅ 出声+录音（G1-4） |
+| AudioReach **tplg** | vendor 自研 | 自编 `Lenovo-Y700-Gen4-tplg.bin` | ASoC `q6apm` + `patches/0011-q6apm-mi2s-start-graph-at-prepare.patch` | ✅ 出声+录音（G1-4） |
 | CDSP `cdsp.mdt`+seg / `cdsp_dtb.mdt`+seg | `modem_a` | `backup/fw/modem/image/`（**split**；`cdsp_dtb.mbn` 单文件被 TZ 拒） | `qcom_q6v5_pas` + DTS `firmware-name`（split）；固件须在 **initramfs** | ✅ 起（`remoteproc1 running`，2026-10-07，G1-11） |
 | WiFi Peach（`amss.bin`/`bdwlan`/BDF） | `modem_a/peach` | `backup/fw/modem/image/peach/`（两套：在用 `amss20.bin` sha `848a2f04…`；**非-20 `amss.bin` 不兼容**：MHI POWER_ON `-110`） | `ath12k` + MHI 重试补丁 | ✅（**Q26 已关闭**：2026-10-10 用户实机确认关联即可用，见 `TASKS` §5 Q26） |
 | BT（**5 个文件**：`brhbtfw20.tlv`/`brhbtnv20.bin`/`brhperifw20.tlv`/`brhperinv20.bin`/`tmel_peach_20.elf`） | `bluetooth_a` + LUN4 `modem_a/image`（tmel） | `backup/fw/bluetooth/`、`backup/fw/modem/image/tmel_peach_20.elf` | `hci_qca` + IBS 补丁；**WCN7861 外设阶段在代码里要 5 个文件名**（`MODULE_FIRMWARE` 只列后 3 个） | ✅ 配对 + TWS 实听通过（用户 2026-10-06）；**2026-10-28 补：第 5 个 `tmel_peach_20.elf` 缺则控制器不注册**（`Peripheral setup failed: -2`，`PITFALLS #454`），已进 `elden-firmware/local-extras.tsv` + 门禁 A2 |
@@ -385,7 +385,7 @@ timeout 10 ssh -o BatchMode=yes -o ConnectTimeout=5 root@192.168.7.1 'uname -r' 
 | x86 转译 chroot（Ubuntu base + Wine prefix） | **10–15 GB** | `pkgs-x86/`，PoC 已跑通 |
 | guest VM 镜像（Debian / Android / Windows ARM） | **每镜像 20–60 GB** | AOSP AVF `custom_vm.md` 建议 ≥10 GB（2026-11-20 注：AOSP 上游文档，不在本仓；需要时看 AOSP `device/generic/avf` 文档）；Windows 更大 |
 | 设备侧构建（内核树 + 模块 + ccache） | **25–40 GB** | 主机树 605 M + AOSP 树（体量见 `../RESOURCES/README.md` §2.3；AOSP 不在设备侧） |
-| 基准/压测/日志（pstore、perf、worker 日志） | **5–15 GB** | `logs/agent-logs-2026-10-02/` 已 80 M/天 |
+| 基准/压测/日志（pstore、perf、worker 日志） | **5–15 GB** | `logs/agent-logs-2026-10-02/`（已删）曾 80 M/天 |
 | **合计（全都要）** | **约 105–180 GB** | → 512 档可全放；256 档需取舍 |
 
 ### 3.2 决策规则（取代"65/128 GiB 固定值"）
