@@ -15,6 +15,10 @@
 
 ## #331 `fastboot boot` 在本机不生效
 
+> ⚠ 2026-11-22 口径收窄（证据 = `INDEX.md` §0 2026-11-21 AVB 上机验收）：标题里「`fastboot boot` 不生效」**不成立**——
+> `fastboot boot <与在机 boot_b 一致的件>` 实测 `Booting OKAY [10 s]` 且真起进 Linux。本条真因 = **镜像未 AVB 签名 / 与在机槽不一致**
+> （当时 vk128 无签名；后续「仓库旧副本试出只有背光 + 只有 gadget」同属此因）。原结论改读为：「未签名/不同件的 `fastboot boot` 会静默回落磁盘槽」。
+
 `fastboot boot out/boot-elden-vk128.img` 报 `OKAY`，但设备**回落到磁盘 boot_b**。
 判据：在机 `/proc/version` 的构建时间戳仍是旧的（`Oct 17 17:06:17`）。
 ⇒ **必须 `fastboot flash boot_b`**，且需要 AVB 签名（`scripts/sign-boot-b.sh`，

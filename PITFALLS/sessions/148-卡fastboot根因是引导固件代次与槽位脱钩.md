@@ -92,6 +92,9 @@ ABL 按活动槽选择 boot LUN，所以**槽位与 LUN 必须配对**。
 
 ## #485 `logfs` 八成为**工厂模板**，不是本机历史
 
+> 2026-11-22 收口指针：本条方向已被 **#336**（`336-logfs只有第1段被ABL覆写其余是出厂内容.md`）逐段 sha 复核收紧——
+> **只有 seg0 被 ABL 覆写，seg1+ 与出厂包逐字节相同**（`diff segs: [0]`，三份 dump 一致）。判据以 #336 / #703 为准。
+
 本机（U2 `HA2EXB0E`，ECID `0x045A7FD29739`，16+512）的 10 段 `logfs` 里只有 **seg0** 是自己写的；
 seg1–9 的 ECID 是 `0x045AC096892B`（另一台 **12+256**，`UFS INQUIRY ID: SAMSUNG KLUEG4RHKF-F0H1`），
 且与官方包 `/home/xuqianhui/文档/TB322FC_15.10.259/logfs_ufs_8mb.bin` **9/10 段逐字节相同**。

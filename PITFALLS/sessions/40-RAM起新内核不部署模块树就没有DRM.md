@@ -4,6 +4,8 @@
 
 ## #293 `lsmod` 为空 ⇒ DP 控制器永久 `-EPROBE_DEFER` ⇒ DPU 组件集不齐 ⇒ 无 `card0`
 
+> 同根因家族（2026-11-22 指针）：**#681**（`317-minbase根到桌面五个静默失败.md`：minbase 根缺 `udev` ⇒ 模块零自动加载，同一「无 card0」现象）、**#31**（31-…md：缺 `=m` 被误判为代码回归）。「无 card0」先查模块树/udev，再怀疑驱动与 Q28。
+
 - **现象**：`fastboot boot out/boot-elden-vk127.img` 起得来（SSH/WiFi 都通、`uname -r` 正确），
   但 `/dev/dri` **不存在**；`dmesg` 里**完全没有** `msm_dpu … bound ae94000.dsi` 那几行。
   Q28 看门狗 84.9 s 后按「`card=no`」判坏并重启（日志 `Q28 bad boot detected … card=no sig=no`）。

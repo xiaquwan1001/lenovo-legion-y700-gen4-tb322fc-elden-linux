@@ -6,6 +6,7 @@
 
 ## #681 minbase 根缺 `udev` ⇒ 模块零自动加载 ⇒ DPU 聚合永不 bind
 
+> 同根因家族（2026-11-22 指针）：**#293**（`40-RAM起新内核不部署模块树就没有DRM.md`：lsmod 空 ⇒ DPU 永久 defer ⇒ 无 `card0`）。
 - 现象：`/sys/class/drm` 只有 `version`、只有背光；`device_component/ae01000.display-controller` = `aggregate not bound`，
   `ae94000/ae96000.dsi` not bound，`af54000.displayport-controller` 在 `devices_deferred`（`aux_bridge: failed to acquire drm_bridge`）。
 - 真因：`systemd-udevd` 不存在 ⇒ 没有任何模块被 modalias 自动加载 ⇒ fastrpc/ath12k/音频链全缺 ⇒

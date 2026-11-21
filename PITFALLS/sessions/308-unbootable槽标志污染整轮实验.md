@@ -9,6 +9,9 @@
 retry=`(0xf7>>3)&7`=**6**。按 `scripts/slot-attr.py` 头注释与技能 `qbootctl-slot-management` 的口径，**ABL 在 UNBOOTABLE 槽上直接进 fastboot，
 连尝试都不尝试** ⇒ 三发都只是「ABL 拒绝执行」，**不是镜像判据**。
 
+> ⚠ 2026-11-22 收口指针：本条已被 **#678**（`314-boot_b的bit7原厂就是1.md`）按槽收紧——`boot_b` 的 bit7 **原厂就是 1**（`0xf3`/`0xfb`），
+> 「bit7=1 ⇒ UNBOOTABLE」只在 a 槽成立；判读必须先取该槽的原厂基线，再谈 ABL 是否拒执行。
+
 **为什么会有 0xf7**：这个位是 ABL 在「active 槽连续启动失败、retry 计数归零」时自己置的（历史：11-10 起反复 `fastboot boot`/`boot_a` UEFI 实验）。
 之后所有「a 槽能不能起」的实验都是**在污染状态下做的**，谁做的都会得到同一个假结论。
 
