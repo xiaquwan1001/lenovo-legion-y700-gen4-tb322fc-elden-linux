@@ -163,3 +163,11 @@ devicetree /boot/android-a/dtb
 - 84 条补丁是按当时那棵合并树的基线写的，新克隆（HEAD `d31c2b8`）与配方基准 `42fe5637` 不同 ⇒ 逐条重放会有冲突。
 
 `build/uefi-woa-prep/repos/7-mu-lenovo`（295 MB 浅克隆）已留在盘上，作重建起点。
+
+> **⚠ 本节三句已被 2026-11-21 晚实测推翻（见 `reports/uefi-mu-espfirst-replay-20261121.md`）**：
+> ① 「归档的 Mu 件只到 R21」不成立 —— `reports/artifacts/uefi-20261110R70-p69/` 等 p59…p69/pc1/pc2 全在，
+> `p59` 起就含 esp-first，repack 秒级得到可 `fastboot boot` 的件；
+> ② 「需两仓合并」不成立 —— 配方基线是 `mu_wide_platforms@6b6ac42a`，它自己就是合并体；盘上那份
+> `7-mu-lenovo` 现在是 **Mu-Silicium `d31c2b8`（错仓）**，83/84 条补丁目标文件缺失；
+> ③ 「逐条重放会冲突」不成立 —— 正确基线 + 三个子模块上 **84 条补丁 `OK=84`/`FAIL=0`/`--3way` 0 次**（`42fe5637` 不是合法对象）。
+> 树与复现序列 = `build/uefi-woa-prep/merge-espfirst-20261121/`。

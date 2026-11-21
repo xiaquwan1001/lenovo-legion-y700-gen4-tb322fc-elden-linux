@@ -132,7 +132,7 @@
 ① AVB 债 ✅ 上机验收通过（vbmeta_b 重签 + `fastboot boot` 10 s 真进 Linux；`reports/vbmeta-b-resign-20261121.md`）；
 ② 音频 + 两侧马达 ✅ 用户实测确认；
 ③ 安卓 a 槽：logfs「出厂遗留」证据被推翻、判别顺序改 H5 先行（`reports/android-a-slot-laneC-20261121.md`，PITFALLS #703）；
-④ UEFI b 槽基建落地（ESP+外置菜单），路 A 实测「有字没菜单」⇒ 唯一方向 = 重建带 esp-first 的 Mu（`reports/uefi-bslot-plan-20261121.md`）；
+④ UEFI b 槽基建落地（ESP+外置菜单），路 A 实测「有字没菜单」⇒ ~~唯一方向 = 重建带 esp-first 的 Mu~~ **作废（11-21 晚实测）：不需重建——esp-first 的 FD 早已在归档、repack 秒级；84 条补丁重放 OK=84/FAIL=0**（`reports/uefi-mu-espfirst-replay-20261121.md`，原账 `reports/uefi-bslot-plan-20261121.md` §6/§7）；
 ⑤ 发行版定 Mobian（`reports/distro-upstream-feasibility-20261121.md`）；
 ⑥ wl2868c v12 ✅ 进树 `regulator.git for-7.5`；dwc3 v10 SENT-ready 且已投（4 封 250，lore 归档 4/4）；
 ⑦ 输入法/OSK P3：现机 stock trixie，5 FAIL 已修/1 判据过时已修，GTK_IM_MODULE 二选一待用户拍板（`reports/ime-osk-zero-to-usable-20261121.md`）；

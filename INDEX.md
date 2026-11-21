@@ -20,8 +20,10 @@
      `linux17:/boot` 已有 `Image`(64 MB，由 `boot_b` 的 gz 内核解压，sha `0a55e52c` = 守卫核)、`initrd.img`、`elden.dtb`；`a 槽安卓`四件在 `/boot/android-a/`。
      `boot_b` 全程未动（sha `740d431b`）、回退 = 清 `misc` 后普通重启。
    - **路 A（RAM 引导归档 R21 Mu）实测**：`fastboot boot` OKAY，**屏上有字但无 GRUB 菜单** ⇒ Mu 跑到 DXE/BDS，但 **R21（11-05）早于 R54（11-08）的 `bdsdxe-esp-first`**
-     ⇒ BDS 不把我们 FAT ESP 当候选。**⇒ 下一步唯一方向 = 重建带 esp-first 的 Mu（`p69-recipe.txt` 84 条补丁）**，
-     障碍：上游 Mu-Silicium 无 Pakala/y700 平台（在 `mu_wide_platforms`）+ 补丁基线不同。全账 = `reports/uefi-bslot-plan-20261121.md` §6/§7。
+     ⇒ BDS 不把我们 FAT ESP 当候选。**⇒ 下一步 = 换带 esp-first 的载荷（`p65`/`p69`）上机**——**不需重建**：归档 FD 已在盘上、
+     repack 秒级 ⇒ `build/uefi-woa-prep/merge-espfirst-20261121/out-p65/uefi-preamble65-r1.img`（`aa0f0a44…`）；
+     源码树也已重放好（84 条补丁 **OK=84 / FAIL=0**，基线 = `mu_wide_platforms@6b6ac42a`）。全账 = `reports/uefi-mu-espfirst-replay-20261121.md`；
+     原可行性账 = `reports/uefi-bslot-plan-20261121.md` §6/§7。
    - **发行版（用户裁决：选 Mobian）**：Nura（原 pmOS）**AI 政策禁生成式 AI 贡献 ⇒ 不可投**；UBports 要 Halium（Android 内核）⇒ 不投；
      **Mobian 唯一可行**，硬缺口 = **内核 LTS 版本账**（Mobian 只收 6.1/6.6/6.12/6.18，我们在 7.3/7.4）；
      不碰内核的第一件可提交物 = `droid-juicer` 配置 + `mobian-recipes` 的 `wip.toml` 条目。全账 = `reports/distro-upstream-feasibility-20261121.md`。
