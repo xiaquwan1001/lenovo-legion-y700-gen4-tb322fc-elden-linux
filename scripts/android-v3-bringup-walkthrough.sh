@@ -117,15 +117,20 @@ step_begin() {
 }
 logc() { [ -n "$STEPLOG" ] && printf '%s\n' "$*" >> "$STEPLOG/commands.log"; return 0; }
 
+# _q <args...>：把 argv 渲染成**可直接照抄**的 shell 形式（带单引号/转义）。
+# 为什么要：旧实现 `printf … "$*"` 丢掉远端命令的引号，`ssh host 'a; b'` 会打成
+#   `ssh host a; b`（手抄就在**主机**上跑 `b`）——见 reports/android-v3-bringup-packet-20261120.md §10.3 F1。
+_q() { local a; for a in "$@"; do printf '%q ' "$a"; done; }
+
 # run <超时秒> <命令...>：dry-run 只打印；apply 真跑并把输出 tee 进步骤目录
 run() {
 	local secs=$1; shift
-	logc "timeout -k 5 $secs $*"
+	logc "timeout -k 5 $secs $(_q "$@")"
 	if [ "$APPLY" != 1 ]; then
-		printf '   [dry] timeout -k 5 %s %s\n' "$secs" "$*"
+		printf '   [dry] timeout -k 5 %s %s\n' "$secs" "$(_q "$@")"
 		return 0
 	fi
-	printf '   [run] timeout -k 5 %s %s\n' "$secs" "$*"
+	printf '   [run] timeout -k 5 %s %s\n' "$secs" "$(_q "$@")"
 	timeout -k 5 "$secs" "$@"
 }
 
@@ -349,6 +354,51 @@ ensure_active_a() {
 			fi
 			;;
 		*) info "现态 $st：active 槽用 linux 侧 qbootctl -a 或 fastboot getvar current-slot 读" ;;
+	esac
+}
+
+# require_active_a：S2/S3/S4 的**观测有效性**前提（2026-11-21 新增，fail-closed）
+#   实证 1：2026-11-20 20:26 `--step S2` 时 getvar-before = `current-slot:a`；写入后 ABL 启 a 失败，
+#           getvar-after-S2 = `slot-unbootable:a:yes` / `retry a:0` ⇒ 那发观测其实有效（结论=失败）。
+#   实证 2：若 active=b，S2/S3/S4 reset 后只会启 b 槽 Linux，observe 返回 4（FELL_BACK_LINUX），
+#           而旧实现**丢掉 observe 的 rc**⇒ 扫一眼 GL 就当成「原厂件也失败」。⇒ 写盘前必须把 active 置 a，
+#           且不能靠「Linux 侧 qbootctl -s」（PITFALLS #701：还要改 UFS 启动 LUN，Linux 侧必败）。
+require_active_a() {
+	local st; st=$(dev_state)
+	local cur=""
+	case "$st" in
+		fastboot)
+			cur=$(timeout -k 5 20 fastboot -s "$SER" getvar current-slot 2>&1 \
+				| awk -F': ' '/^current-slot/{print $2}' | tr -d '\r')
+			if [ "$cur" = a ]; then info "OK   active 槽已是 a（fastboot getvar）"; return 0; fi
+			if [ "$APPLY" = 1 ]; then
+				info "current-slot=${cur:-未知} ⇒ --set-active=a（写 GPT 属性 + UFS 启动 LUN；回退 = --set-active=b）"
+				run 20 fastboot -s "$SER" --set-active=a
+				cur=$(timeout -k 5 20 fastboot -s "$SER" getvar current-slot 2>&1 \
+					| awk -F': ' '/^current-slot/{print $2}' | tr -d '\r')
+				[ "$cur" = a ] && { info "OK   active=a 已生效"; return 0; }
+				warn "--set-active=a 后 current-slot=${cur:-未知} ⇒ 不写盘（fail-closed）"; return 1
+			fi
+			info "[dry] 若 current-slot != a ⇒ fastboot -s $SER --set-active=a"
+			return 0 ;;
+		linux)
+			[ "$APPLY" = 1 ] || { info "[dry] 读 qbootctl -a；!= a 时需物理键进 fastboot 才能切槽（#701）"; return 0; }
+			cur=$(timeout -k 5 20 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl -a 2>&1' 2>/dev/null \
+				| sed -n 's/^Active slot: _\{0,1\}//p' | tr -d '\r')
+			if [ "$cur" = a ]; then info "OK   active 槽已是 a（qbootctl -a）"; return 0; fi
+			warn "active 槽 = ${cur:-未知}，Linux 侧无法切槽（PITFALLS #701）⇒ **不要在本步写盘/重启**"
+			info "人项：长按电源 10 s → 【音量上 + 电源】进 fastboot → fastboot -s $SER --set-active=a"
+			info "      然后停在 fastboot 里重跑本步（S2/S3/S4 会从 fastboot 进 EDL）"
+			return 1 ;;
+		edl)
+			warn "设备已在 EDL：切 active 槽只能走 fastboot ⇒ 当前无法确认 active=a"
+			[ "$APPLY" = 1 ] && return 1
+			info "[dry] 正规顺序 = 物理键进 fastboot → --set-active=a → fastboot oem edl"
+			return 0 ;;
+		*)
+			warn "无法确认 active=a（设备现态 $st）⇒ fail-closed"
+			[ "$APPLY" = 1 ] && return 1
+			return 0 ;;
 	esac
 }
 
@@ -585,10 +635,18 @@ observe_android() {
 		return 0
 	fi
 	deadline=$(( $(date +%s) + OBS_TO ))
+	local t0; t0=$(date +%s)
 	: > "$d/observe.log"
 	while [ "$(date +%s)" -lt "$deadline" ]; do
 		st=$(dev_state)
 		echo "[$(date +%T)] state=$st" >> "$d/observe.log"
+		# 2026-11-21 新增去抖：`qdl reset` 后设备**可能瞬时重逢 9008**（Firehose 退出中），
+		# 2026-11-20 20:27 的 S2 就把这个瞬态判成 `EARLY_FAIL state=edl`（假结论）。
+		# 观测前 60 s 内的 edl 一律当瞬态，不写 verdict。
+		if [ "$st" = edl ] && [ $(( $(date +%s) - t0 )) -lt 60 ]; then
+			echo "[$(date +%T)] edl 瞬态（reset 后 60 s 内）⇒ 忽略" >> "$d/observe.log"
+			sleep 5; continue
+		fi
 		case "$st" in
 			android)
 				bc=$(timeout -k 5 15 adb -s "$SER" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
@@ -609,9 +667,33 @@ observe_android() {
 				fi
 				;;
 			recovery)
-				timeout -k 5 30 adb -s "$SER" shell 'ls -l /tmp/recovery.log 2>&1' >> "$d/observe.log" 2>&1
-				printf 'RECOVERY 落在 recovery（先读 misc 判 BCB 污染 vs 真失败）\n' > "$d/verdict.txt"
-				info "★落在 recovery ⇒ 立即用 bcb_read 判 confound（这一步是纪律，不是结论）"
+				# 2026-11-21 新增：落 recovery 时**当场**抓三项取证（全程只读，adb 状态只有 recovery 时才可能）：
+				#   ① /proc/cmdline —— 判「ABL 给的是 force_normal_boot=0」还是 userspace 自己选 recovery；
+				#   ② logfs 首 16 块 —— logfs 只保留**最近一次**启动（UEFILOG1.TXT = 64 KiB，单条 ~21 KiB），
+				#      一旦重启就被覆盖（旧三份 11-20 dump 里 9 条 a 槽记录全是 6.0.250606 旧固件遗留，不是我们的实验）；
+				#   ③ /tmp/recovery.log —— recovery 自己的 last_log（adb shell 可能因 SELinux 子进程失败而不可用，故用 exec-out）。
+				for pair in "cmdline:/proc/cmdline" "logfs:/dev/block/by-name/logfs"; do
+					local tag=${pair%%:*} path=${pair#*:}
+					timeout -k 5 30 adb -s "$SER" exec-out "dd if=$path bs=4096 count=16 2>/dev/null" \
+						> "$d/recovery-$tag.bin" 2>/dev/null
+				done
+				timeout -k 5 20 adb -s "$SER" exec-out 'cat /proc/cmdline' > "$d/recovery-cmdline.txt" 2>/dev/null
+				timeout -k 5 20 adb -s "$SER" exec-out 'cat /tmp/recovery.log' > "$d/recovery-last.log" 2>/dev/null
+				timeout -k 5 20 adb -s "$SER" exec-out 'getprop 2>/dev/null | grep -E "^\[ro.boot\."' > "$d/recovery-props.txt" 2>/dev/null
+				timeout -k 5 20 adb -s "$SER" exec-out 'dd if=/dev/block/by-name/logfs bs=4096 count=16 2>/dev/null' \
+					| strings -n 6 > "$d/recovery-logfs.txt" 2>/dev/null
+				{
+					echo "--- /proc/cmdline ---"; head -c 2000 "$d/recovery-cmdline.txt" 2>/dev/null; echo
+					echo "--- logfs（本次启动的 ABL 记录）---"
+					grep -aE 'UEFI Ver|Booting Into|Booting from slot|Loading Image (recovery|boot)_[ab]|Boot lun|Recovery:|Fastboot=|LoadImageAndAuth' \
+						"$d/recovery-logfs.txt" 2>/dev/null | head -12
+				} >> "$d/observe.log" 2>&1
+				if grep -qa 'force_normal_boot=0' "$d/recovery-cmdline.txt" 2>/dev/null; then
+					printf 'RECOVERY 且 cmdline 含 force_normal_boot=0 ⇒ **ABL 选的 recovery**（查 BCB/槽位状态，不是 Android 失败）\n' > "$d/verdict.txt"
+				else
+					printf 'RECOVERY（cmdline 未见 force_normal_boot=0）⇒ userspace 侧选择；看 recovery-logfs.txt / recovery-last.log\n' > "$d/verdict.txt"
+				fi
+				info "★落在 recovery ⇒ 已当场取 cmdline/logfs/recovery.log（$d/），先读 verdict.txt 再下结论"
 				return 2
 				;;
 			fastboot|edl)
@@ -637,10 +719,19 @@ pstore_triage() {
 	local d=$STEPLOG
 	local st; st=$(dev_state)
 	[ "$st" = linux ] || { info "pstoredump 三分类需要 Linux 侧（当前 $st）"; return 0; }
-	run 120 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
-		'dd if=/dev/disk/by-partlabel/pstoredump bs=1M count=128 2>/dev/null | grep -acE "panic|oops|Unable to handle"' > "$d/pstore-grep.txt"
-	[ "$APPLY" = 1 ] && cat "$d/pstore-grep.txt"
-	info "判据：命中 0 ⇒ 无内核崩溃（卡 userspace）；≥1 ⇒ 内核段真失败（贴原文再定因）"
+	# 同 super 头：抓数据不要走 run()（run 的 printf 会混进输出文件；旧文件里首行是 `[run] timeout …`）
+	logc "ssh $TAB \"dd if=/dev/disk/by-partlabel/pstoredump bs=1M count=128 | grep -acE 'panic|oops|Unable to handle'\" > $d/pstore-raw.txt"
+	timeout -k 5 120 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
+		'dd if=/dev/disk/by-partlabel/pstoredump bs=1M count=128 2>/dev/null | grep -acE "panic|oops|Unable to handle"' \
+		> "$d/pstore-raw.txt" 2>/dev/null
+	local n; n=$(tr -dc '0-9' < "$d/pstore-raw.txt" | head -c 9)
+	printf 'hit=%s\n' "${n:-unknown}" > "$d/pstore-grep.txt"
+	cat "$d/pstore-grep.txt"
+	case "${n:-}" in
+		0) info "判据：命中 0 ⇒ 无内核崩溃（卡 userspace）" ;;
+		'') warn "pstoredump 未取到（ssh/解析失败）⇒ 三分类**未做**（不是「干净」）" ;;
+		*) info "判据：命中 $n ⇒ 内核段真失败（贴原文再定因）" ;;
+	esac
 }
 
 # ---------------------------------------------------------------- 步骤
@@ -662,16 +753,38 @@ S1() {
 	run 30 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl 2>&1 | head -24; qbootctl -a 2>&1'
 	info "判据：Active slot 行；super 现态由下一步首 512 KiB 解析确认（v1 = system_a 5296 MiB）"
 	if [ "$(dev_state)" = linux ]; then
-		run 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
-			'dd if=/dev/disk/by-partlabel/super bs=4096 count=128 2>/dev/null' > "$STEPLOG/super-head512k.bin" 2>/dev/null
+		# ⚠ 抓字节**不要**走 run()：run 会把 `[run] timeout …` 打到 stdout，被 `> 文件` 一起收进去
+		# （2026-11-21 复核实测：08:57/08:59 两份 super-head512k.bin 里混进 156 B 命令文本，
+		#   `android-super.py list` 因此报 `bad geometry magic 0x00000000`，判据变成假阴性）。
+		logc "ssh $TAB \"dd if=/dev/disk/by-partlabel/super bs=4096 count=128 iflag=direct\" > $STEPLOG/super-head512k.bin  (只读)"
+		timeout -k 5 60 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
+			'dd if=/dev/disk/by-partlabel/super bs=4096 count=128 iflag=direct 2>/dev/null' \
+			> "$STEPLOG/super-head512k.bin" 2>/dev/null
 	else
 		info "现态 $(dev_state)：跳读 super 头 512 KiB（fastboot 读不了分区）—— super 现态以主机登记 sha 为准"
 	fi
 	if [ "$APPLY" = 1 ] && [ -s "$STEPLOG/super-head512k.bin" ]; then
-		python3 "$ROOT/scripts/android-super.py" list "$STEPLOG/super-head512k.bin" 2>&1 | head -12 | tee "$STEPLOG/super-state.txt"
-		info "判据：blockdev/分区尺寸 = v1（system_a 5296 MiB）才对得上「v1 在机」"
+		# 判据 = 解析 + 首 512 KiB sha 对照登记表（比解析更硬：解析可能对残缺件也「成功」）
+		local head_sha
+		head_sha=$(sha256sum "$STEPLOG/super-head512k.bin" | cut -d' ' -f1)
+		info "super head512k sha256 = ${head_sha:0:16}…（v1=67ff7604… / v3=c6278f8e… / 原厂=12c35980…）"
+		logc "super-head512k sha256=$head_sha"
+		if ! python3 "$ROOT/scripts/android-super.py" list "$STEPLOG/super-head512k.bin" > "$STEPLOG/super-state.txt" 2>&1; then
+			warn "super 头解析失败（$STEPLOG/super-state.txt）⇒ **不要 reset**（fail-closed）"
+			return 1
+		fi
+		head -12 "$STEPLOG/super-state.txt"
+		case "$head_sha" in
+			67ff7604e59f5b70343846572f492d1d0b405a914fda9e4d86a1982affc47479)
+				info "OK   在机 super = v1（= out/android-min-20261118/pkg/super_min.img 首 512 KiB，逐字节）" ;;
+			c6278f8e2646d7d07aaea5f309a50e558dcb42e7833615305ac703bd136ce58d)
+				info "注意 在机 super = **v3**（v3 slim）⇒ S1「v1 在机」前提不成立，先回刷 v1 再谈首启" ;;
+			12c35980e1e809dbb621c6be9dabb51cad777e18fc944bcc4ffec228a611c23d)
+				info "注意 在机 super = **原厂**（metadata 区逐字节 = stock）⇒ 已经不是我们的件" ;;
+			*) warn "super head512k 既不是 v1/v3/原厂（值见上）⇒ 先搞清在机件再 reset（fail-closed）"; return 1 ;;
+		esac
 	else
-		info "[dry] 之后 python3 scripts/android-super.py list $STEPLOG/super-head512k.bin"
+		info "[dry] 之后 python3 scripts/android-super.py list $STEPLOG/super-head512k.bin + head512k sha 对照登记值"
 	fi
 	# 2) BCB 现状 + 清 0 + 读回
 	bcb_read "$STEPLOG/bcb-before.bin"; bcb_judge "$STEPLOG/bcb-before.bin"
@@ -704,6 +817,10 @@ S2() {
 	step_begin S2
 	say "S2) 回写原厂 metadata.img（8 分片拼装 29 372 416 B；预期 5–8 min）"
 	info "目的：排除 H4「metadata 被 erase + super 声明 virtual-ab」"
+	info "⚠ 2026-11-21 已知：S2 已于 2026-11-20 20:26 实跑过一次（logs/android-v3-S2-20261120-202620/）："
+	info "   写前 metadata-pre.bin sha = a735fbc7…（= 原厂件，逐字节）⇒ 写入是 no-op，a 槽仍失败"
+	info "   ⇒ H4 实际上已被排除；本步保留作 sanity/拿新样本，不再指望它能判因"
+	require_active_a || { warn "S2 中止：active 槽不是 a（观测会变成「启回了 Linux」）—— 不写盘"; return 1; }
 	# 组装（复用 scripts/android-super.py assemble；产物落 ART，不碰 backup/）
 	if [ ! -e "$ART/metadata_stock.img" ]; then
 		run 120 python3 "$ROOT/scripts/android-super.py" assemble \
@@ -717,9 +834,11 @@ S2() {
 	run 120 "$QDL" -s ufs -R "$LOADER" read "0/$LBA_METADATA+$METADATA_SECT" "$STEPLOG/metadata-pre.bin"
 	qdl_write_verify "$ART/metadata_stock.img" "$LBA_METADATA" "$METADATA_SECT" "metadata" || return 1
 	bcb_clear_verify || return 1
+	require_active_a || { warn "S2 中止：reset 前 active 不再是 a"; return 1; }
 	run 120 "$QDL" -s ufs "$LOADER" reset
 	local rc; observe_android S2; rc=$?
 	pstore_triage
+	[ "$rc" = 0 ] || { warn "S2 观测未达成功判据（rc=$rc，见 $STEPLOG/verdict.txt）⇒ 本步不算通过"; return 1; }
 	return 0
 }
 
@@ -727,6 +846,10 @@ S3() {
 	step_begin S3
 	say "S3) 刷原厂 super 对照（8 分片拼装 15 607 586 816 B = 14.54 GiB；预期 14–18 min）"
 	info "判据：原厂能进桌面 ⇒ 问题在我们的 super 内容；原厂也不进 ⇒ 问题在 /data/GPT/设备态"
+	info "⚠ 2026-11-21 校正：11-21 在机 super = **v1**（head512k 67ff7604… = out/android-min-20261118 首 512 KiB，"
+	info "   2026-11-20 20:32 设备侧实测）⇒ S3 判的是「我们精简的 super（v1）vs 原厂」，**不是** v3；"
+	info "   v3（51eae107…）在 11-21 的所有 a 槽样本里都不在机，所以「v3 内容问题」至今无样本"
+	require_active_a || { warn "S3 中止：active 槽不是 a（reset 后只会启 Linux，观测无效）—— 不写盘"; return 1; }
 	if [ ! -e "$ART/super_stock_contig.img" ]; then
 		warn "缺件：$ART/super_stock_contig.img（14.54 GiB，稀疏落盘约 12.2 GiB；工作区剩余 $(df -h /home | awk 'NR==2{print $4}')）"
 		run 600 python3 "$ROOT/scripts/android-super.py" assemble \
@@ -741,10 +864,16 @@ S3() {
 	run 120 "$QDL" -s ufs -R "$LOADER" read "0/$LBA_SUPER+128" "$STEPLOG/super-head512k-pre.bin"
 	qdl_write_verify "$ART/super_stock_contig.img" "$LBA_SUPER" 3810446 "stock-super" || return 1
 	bcb_clear_verify || return 1
+	require_active_a || { warn "S3 中止：reset 前 active 不再是 a"; return 1; }
 	run 120 "$QDL" -s ufs "$LOADER" reset
-	observe_android S3
+	local rc; observe_android S3; rc=$?
 	pstore_triage
 	info "回退：qdl write 0/$LBA_SUPER out/android-min-20261118/pkg/super_min.img（v1，2171264 扇区）"
+	case "$rc" in
+		0) info "S3 结论：原厂 super 能进桌面 ⇒ **我们的 v1 super 内容**是变量（需逐分区二分）" ;;
+		*) warn "S3 观测未达成功判据（rc=$rc，见 $STEPLOG/verdict.txt）⇒ 「原厂也不进」成立时才能排除 super 内容"
+		   info "   注意 rc=4（FELL_BACK_LINUX）先查 active 槽，不能当「原厂失败」用"; return 1 ;;
+	esac
 	return 0
 }
 
@@ -752,14 +881,17 @@ S4() {
 	step_begin S4
 	say "S4) 二分：v2b（删池/AI/bgmusic，保留 18 个 leaf 包 = 8 741 MiB；预期 8–10 min）"
 	info "件：out/android-slim-v2b-20261119/new/super_min_v3.img（98a88ea0…，system_a 5552 MiB）"
+	require_active_a || { warn "S4 中止：active 槽不是 a —— 不写盘"; return 1; }
 	ensure_edl
 	live_gpt_gate "$ROOT/out/android-slim-v2b-20261119/new/super_min_v3.img" || return 1
 	qdl_write_verify "$ROOT/out/android-slim-v2b-20261119/new/super_min_v3.img" "$LBA_SUPER" 2237696 "v2b-super" || return 1
 	bcb_clear_verify || return 1
+	require_active_a || { warn "S4 中止：reset 前 active 不再是 a"; return 1; }
 	run 120 "$QDL" -s ufs "$LOADER" reset
-	observe_android S4
+	local rc; observe_android S4; rc=$?
 	pstore_triage
 	info "二分读法：v2b 成功 ⇒ 18 个 leaf 包不是原因（删除池/AI 才是）；v2b 失败 ⇒ 继续「只占位不删」臂"
+	[ "$rc" = 0 ] || { warn "S4 观测未达成功判据（rc=$rc，见 $STEPLOG/verdict.txt）⇒ 本步不算通过"; return 1; }
 	return 0
 }
 
