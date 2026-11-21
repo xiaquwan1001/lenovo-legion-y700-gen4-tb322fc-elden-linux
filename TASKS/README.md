@@ -146,7 +146,14 @@
   **未做/需设备**：刷 `vbmeta_b` 后 `fastboot boot bootslot-b/boot_b.img` 一发（成功 = 债了结；仍失败 = 归因排除本项，
   `PITFALLS #146` 的三种回话说明机制不只 key 一条）；`flags=0` 干净链需先有 `dtbo_b` dump（本轮不造）。
   成因/证据/回退 = `reports/vbmeta-b-resign-20261121.md`，口径 = `bootslot-b/README.md` §二。
-- **P1 安卓 a 槽**（G2 共存）仍起不来（11-20 11:35 实测）：S2 原厂 `metadata` / S3 原厂 `super` 对照，需设备窗口。
+- **P1 安卓 a 槽**（G2 共存）仍起不来 —— **2026-11-21 两发实跑把「BCB 污染」这条候选排掉了**：
+  两发都是「（后一发先 `fastboot flash misc` 清 4 KiB 零）→ `--set-active=a` → `fastboot reboot`」，
+  **亮次都落 recovery**（`adb` = recovery；logfs `Loading Image recovery_a` / `Booting from slot (_a)` /
+  `BootLinux: factory_build = 1`）⇒ 落 recovery 不是 BCB 污染、也不是回落 b 槽。
+  **剩余判别 = 唯一有效实验：S3 回写原厂 `super` 对照**（H1「槽位/ABL 机制」vs H2「v3 slim super 内容问题」；14.5 GiB ≈ 6–12 min，走 `fastboot oem edl` → `qdl`）。S2（原厂 `metadata` 28 MiB）可作轻量前置。
+  两条新机制已入账 `PITFALLS #702`：① fastboot 侧可清 BCB（`fastboot flash misc` 4 KiB 零 = OKAY）；
+  ② **recovery 的 `adb reboot bootloader` 会把 misc 写成 `bootonce-bootloader`**（Linux 侧静置不写）⇒ 从 recovery 出来先清 BCB 再谈样本。
+  全账 = `reports/android-v3-bringup-packet-20261120.md` 2026-11-21 增量段 + `reports/linux-to-fastboot-20261121.md`。
 - **P2 B 档 ~42 G 回收**：等 v3 首启判据（`versions/out-artifacts.tsv` 已标 `pending` 禁删）。
 - **P2 上游 M 系列**：wl2868c v12 / dwc3 v10 / elden DTS v7 / fastrpc v3 按 §7 排队；dwc3 v10 出真补丁需先重建内核树。
 - **P1 安卓 a 槽 —— 主机侧就绪度（2026-11-21 补齐，剩的全是设备窗口）**：
