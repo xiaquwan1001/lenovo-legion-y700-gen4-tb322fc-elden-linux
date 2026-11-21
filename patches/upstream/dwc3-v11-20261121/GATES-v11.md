@@ -64,7 +64,7 @@ ee186d542a1018237d10cc664699fe67096163e5   drivers/usb/roles/class.c
 ```sh
 # ---- G2
 for p in /home/xuqianhui/y700-elden/patches/upstream/dwc3-v11-20261121/v11-000{1,2,3}-*.patch; do
-  perl scripts/checkpatch.pl --strict --no-signoff --no-tree "$p"
+  perl scripts/checkpatch.pl --strict --no-signoff --no-tree - < "$p"    # 必须走 stdin（见 §3 坑 4）
 done
 ```
 
@@ -207,6 +207,12 @@ pos-nonmux-endpoint0.dtb diag=3 ← endpoint@0 缺 usb-role-switch/mux-state（s
 3. **`dt-validate` 的自有退出码也不可信**（本轮新测）：负样例明确报错，`rc` 仍是 **0**
    （`timeout … dt-validate -s $S neg-same-state.dtb; echo $?` → `0`）。判据只能是输出里
    `from schema $id:` 的行数，不能看 rc。这条与 v10 GATES §2 的「镜片」互补。
+
+4. **`checkpatch.pl` 传文件路径 ≠ patch 模式**（2026-11-21 主会话复核时踩到）：`--no-tree` 下把 `.patch`
+   当**参数**传进去，checkpatch 会按「源码文件」读整个 patch，把 diff 里的空上下文行（`" "`）报成
+   `ERROR: TRAILING_WHITESPACE`（3 枚补丁分别得 3/4/27 个假 ERROR，行数也变成 180/106/708）。
+   正确形状 = **stdin**：`perl scripts/checkpatch.pl --strict --no-signoff --no-tree - < "$p"`
+   ⇒ 复核结果 3/3 均 `0 errors, 0 warnings, 0 checks`（115 / 63 / 624 行），与 §0 表一致。
 
 ## 4. 跑不了 / 未跑的门（以及上机要验什么）
 
