@@ -351,7 +351,7 @@ R1 的**触发模式前置被实测推翻一半**：本机 `phosh-osk-stub 0.46.
 
 - 已确认可用：`sm.puri.phosh.osk.Completers default=pipe` + `Completers.Pipe.command=<helper>`（默认 `cat`）；
   现设 = `completion-mode ['hint','manual']` + pipe + `/usr/local/bin/elden-pinyin-completer`。
-- 已落地 H-a helper：`packaging/elden-userland/rootfs-overlay/usr/local/bin/elden-pinyin-completer`
+- 已落地 H-a helper：`packaging/elden-userland/files/usr/local/bin/elden-pinyin-completer`
   （pypinyin 反查单字 + 常用词表；设备实测 `printf nihao | elden-pinyin-completer` → `你好 / 尼好`）；
   设备侧依赖 `python3-pypinyin`（0.54.0-1 已装）。
 - 仍缺一步：**每键喂 completer** 需要 1 行源码补丁（`PhoshOskCompletionModeFlags` 加 `ALWAYS`），

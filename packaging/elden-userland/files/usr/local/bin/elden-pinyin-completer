@@ -11,7 +11,10 @@ v2 相对 v1 的三处改动（都有实测动机）：
   3) **日志**：写到 `$XDG_RUNTIME_DIR/elden-pinyin-calls.log`（回退 /tmp，权限 0666），
      避免「root 建的 /tmp 文件让用户会话写不进去」这种假阴性。
 
-环境变量：ELDEN_PINYIN_LIMIT（默认 9）、ELDEN_PINYIN_CACHE（缓存路径）、ELDEN_PINYIN_LOG（日志路径，`-` 关）。
+词库（v3）：`/usr/share/elden-pinyin/shards/<首音节>.json` = CC-CEDICT 预编译（`scripts/gen-pinyin-lexicon.py`
+生成，jieba 词频排序）；分片缺失时自动退回「单字表 + 两段拼接」。
+
+环境变量：ELDEN_PINYIN_LIMIT（默认 9）、ELDEN_PINYIN_LEX（默认 /usr/share/elden-pinyin）、ELDEN_PINYIN_CACHE（缓存路径）、ELDEN_PINYIN_LOG（日志路径，`-` 关）。
 """
 import json
 import os
@@ -140,6 +143,25 @@ def log_invocation(raw, out, ms, cached):
         pass
 
 
+LEXDIR = os.environ.get("ELDEN_PINYIN_LEX", "/usr/share/elden-pinyin")
+
+
+def load_shard(text):
+    """读 CC-CEDICT 预编译分片（按首音节分文件）⇒ 单键只载 ~200–600 KB。
+
+    分片不存在（镜像未装词库）时返回空 dict，���自动退回「单字 + 两段拼接」的 v2 行为。
+    """
+    if not text:
+        return {}, True
+    p = os.path.join(LEXDIR, "shards", text[0] + ".json")
+    try:
+        with open(p, encoding="utf-8") as f:
+            d = json.load(f)
+        return (d if isinstance(d, dict) else {}), True
+    except Exception:
+        return {}, False
+
+
 def main():
     t0 = time.time()
     raw = sys.stdin.read(300)[:64]
@@ -147,12 +169,20 @@ def main():
     if not text or not re.fullmatch(r"[a-z]+", text):
         log_invocation(raw, [], (time.time() - t0) * 1000, False)
         return 0
-    out = list(WORDS.get(text, []))
+    out = list(WORDS.get(text, []))          # 兜底：词库未装时也能用
+    shard, lex_ok = load_shard(text)
+    for w in shard.get(text, []):            # 词级候选（词频降序）优先
+        if w not in out:
+            out.append(w)
+        if len(out) >= LIMIT:
+            break
     idx, cached = load_index()
-    for ch in idx.get(text, [])[:LIMIT]:
+    for ch in idx.get(text, [])[:LIMIT]:     # 整串当一个音节（单字）
         if ch not in out:
             out.append(ch)
-    # 两段拼接：**只在没有词级候选时**做（否则「北京」后面跟「臂虹/臂僵」这种组合会污染候选条）
+        if len(out) >= LIMIT:
+            break
+    # 两段拼接：**只在没有任何词级候选时**做
     if not out and len(text) > 2:
         for cut in (len(text) // 2, len(text) - 2, 2, 1):
             if not (0 < cut < len(text)):
@@ -171,7 +201,7 @@ def main():
             if len(out) >= LIMIT:
                 break
     ms = (time.time() - t0) * 1000
-    log_invocation(raw, out[:LIMIT], ms, cached)
+    log_invocation(raw, out[:LIMIT], ms, cached and lex_ok)
     for line in out[:LIMIT]:
         sys.stdout.write(line + "\n")
     return 0

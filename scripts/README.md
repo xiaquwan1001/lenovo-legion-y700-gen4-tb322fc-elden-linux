@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=a0b560e7731dcca8（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=dca89da155d1d8f4（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,9 +7,9 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**347**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 78 / 设备操作 107 / 造件 70 / 取证 46 / 一次性 2 / 公共库 7 / 其它 37
-- 引用数为 0 的孤立件：**0**（判定口径见下）
+- 入口总数：**348**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 78 / 设备操作 107 / 造件 71 / 取证 46 / 一次性 2 / 公共库 7 / 其它 37
+- 引用数为 0 的孤立件：**1**（判定口径见下）
 
 ## 判据（怎么读这张表）
 
@@ -113,10 +113,10 @@
 |---|---|---|
 | `scripts/acm-sh.py` | 通过 USB ACM 的 OOB root shell（/dev/ttyACM1）在设备上跑命令。 | 9 |
 | `scripts/android-ksu-flash.sh` | 刷/回退「KernelSU(LKM) init_boot + 自洽 vbmeta_a」（TB322FC / elden / 259） | 14 |
-| `scripts/arm-window-hunt.sh` | 在坏发成簇的窗口里交替试多个显示臂，直到出现"健康发"。 | 18 |
+| `scripts/arm-window-hunt.sh` | 在坏发成簇的窗口里交替试多个显示臂，直到出现"健康发"。 | 19 |
 | `scripts/as-client-deploy.sh` | 把 Audio Share 的「Linux 客户端」装到平板（TB322FC 主线 Debian） | 2 |
-| `scripts/ath12k-load.sh` | ★★★ RETIRED（2026-11-22 脚本审计批 1，reports/scripts-audit-20261122.md §3）★★★ | 27 |
-| `scripts/ath12k-retry.sh` | ath12k (WCN7861 "Peach") boot-time re-probe. | 49 |
+| `scripts/ath12k-load.sh` | ★★★ RETIRED（2026-11-22 脚本审计批 1，reports/scripts-audit-20261122.md §3）★★★ | 32 |
+| `scripts/ath12k-retry.sh` | ath12k (WCN7861 "Peach") boot-time re-probe. | 51 |
 | `scripts/audio-alsa-init.sh` | put the Lenovo-Y700-Gen4 (TB322FC/elden) sound card into | 23 |
 | `scripts/bl-preunlock-evidence.sh` | 解锁前（locked 状态）零风险取证 + 解锁申请表所需参数打印。 | 11 |
 | `scripts/bl-unlock.sh` | ⚠ 适用前提（2026-10-03 定稿）：**只有 ROM ≤ 1.1.11.073/.076 才存在解锁命令**； | 11 |
@@ -137,7 +137,7 @@
 | `scripts/deploy-sensors-hal.sh` | 部署 elden UDP 传感器 HAL 到 Waydroid 容器（C4） | 14 |
 | `scripts/deploy-v4l2loopback.sh` | 为**当前在机内核**（读设备 uname -r）构建并部署 v4l2loopback | 19 |
 | `scripts/deploy-zh-ime.sh` | 部署「触屏唤起的中文输入法」到设备（幂等） | 35 |
-| `scripts/dev-userdata-relabel.sh` | 设备侧（POSIX sh）：把 Android userdata（sda16）就地转成 Linux 数据分区 | 9 |
+| `scripts/dev-userdata-relabel.sh` | 设备侧（POSIX sh）：把 Android userdata（sda16）就地转成 Linux 数据分区 | 12 |
 | `scripts/device-lock.sh` | serialize exclusive access to the tablet across concurrent agents. | 112 |
 | `scripts/device-window-collect.sh` | 设备窗口只读采集包（2026-10-31 执行单配套） | 18 |
 | `scripts/dpms-watch.sh` | Sample the panel / compositor state once a second into /root/dpms-watch.log. | 10 |
@@ -145,7 +145,7 @@
 | `scripts/edl-peek.sh` | 经 bkerler python edl 的 Firehose peek 读物理内存（只读工具，无 poke） | 8 |
 | `scripts/elden-powerlog.initd` | write a durable marker when OpenRC enters the shutdown | 24 |
 | `scripts/eldroid-bootctl` | Linux 侧刷机控制（reboot reason + A/B 槽位元数据）。 | 223 |
-| `scripts/f2fs-migrate.sh` | 路线 A：**缩小 linux17(ext4) + 尾部新建 linux18(f2fs) + 本地复制**（零大文件传输） | 29 |
+| `scripts/f2fs-migrate.sh` | 路线 A：**缩小 linux17(ext4) + 尾部新建 linux18(f2fs) + 本地复制**（零大文件传输） | 33 |
 | `scripts/fix-fstab-samsung.sh` | 给 /mnt/Samsung 的 fstab 条目补 nofail（掉盘不卡开机） | 6 |
 | `scripts/fix-logind-poweroff.sh` | make logind's Power Off / Restart helpers actually | 29 |
 | `scripts/flash-b.sh` | Flash a mainline boot image into slot b *from inside Linux* — no fastboot needed. | 102 |
@@ -153,9 +153,9 @@
 | `scripts/g1-22-dpms-test.sh` | 在设备上定量测试「熄屏（DPMS off）→ 回归」。 | 16 |
 | `scripts/gpt-dump.sh` | 在设备（mainline Linux）上 dump LUN0 GPT 主/备表 | 30 |
 | `scripts/gpt-minimal-build.py` | 生成「最小可控」GPT（LUN0 减分区 + 单 Linux 大分区；LUN4 只删 Android GKI）。 | 12 |
-| `scripts/gpt-restore-tb322fc.py` | REVERSE the dual-boot GPT surgery on TB322FC LUN0: | 11 |
-| `scripts/gpt-slot-flip-active.py` | 在一对 GPT 表（主表 6 扇区 + 备表 5 扇区）上只改 boot_a/boot_b 的 | 14 |
-| `scripts/gpt-slot-swap-guids.py` | 把 A/B 槽的 **partition type GUID 侧** 搬到指定槽，并按 MarkPtnActive 语义修属性位。 | 4 |
+| `scripts/gpt-restore-tb322fc.py` | REVERSE the dual-boot GPT surgery on TB322FC LUN0: | 15 |
+| `scripts/gpt-slot-flip-active.py` | 在一对 GPT 表（主表 6 扇区 + 备表 5 扇区）上只改 boot_a/boot_b 的 | 17 |
+| `scripts/gpt-slot-swap-guids.py` | 把 A/B 槽的 **partition type GUID 侧** 搬到指定槽，并按 MarkPtnActive 语义修属性位。 | 8 |
 | `scripts/gpt-surgery-tb322fc.py` | shrink `userdata` and append partition(s) on the | 42 |
 | `scripts/greetd-initial-session.sh` | TB322FC session "path A": greetd [initial_session] | 16 |
 | `scripts/host-arm64-chroot.sh` | 在主机上建一个 **arm64 Debian(sid) 构建 chroot**，并可选在里面编 sensord | 15 |
@@ -164,7 +164,7 @@
 | `scripts/kexec-boot.sh` | hot-reload a new kernel WITHOUT fastboot/ABL/AVB. | 34 |
 | `scripts/kexec-bs-cycle.sh` | elden kexec 二分单轮。进 fastboot 只走一个入口：`eldroid-bootctl reboot bootloader` | 25 |
 | `scripts/kexec-diag-test.sh` | 在设备上跑，用 vk65-m{0,1,2,3} 诊断内核定位 kexec 掉电阶段。 | 8 |
-| `scripts/linux-gpt-apply.sh` | 把一对 GPT 表（主表 6 扇区 + 备表 5 扇区）写进指定 LUN，**写后读回对账**。 | 55 |
+| `scripts/linux-gpt-apply.sh` | 把一对 GPT 表（主表 6 扇区 + 备表 5 扇区）写进指定 LUN，**写后读回对账**。 | 60 |
 | `scripts/linux-gpt-dump.sh` | EDL 只读 dump 六 LUN 的 GPT 主表 + 备表（零写盘），并更新 SHA256SUMS。 | 14 |
 | `scripts/m1-73-modules-overlay.sh` | 收口指针（script-redundancy-audit S15，2026-11-13）：设备侧整目录部署的统一实现 = scripts/deploy-modules.sh | 10 |
 | `scripts/make-gpt-only-xml.py` | 从官方 rawprogram*.xml 里**只保留 GPT 两行**，生成「只改分区表」的 xml。 | 6 |
@@ -197,7 +197,7 @@
 | `scripts/slot-attr.py` | read/patch the A/B slot metadata stored in the GPT | 289 |
 | `scripts/slotboot-run.sh` | P2「槽位正常启动路径」最小形态上机（2026-11-01） | 19 |
 | `scripts/start-desktop.sh` | Phosh (Wayland) desktop on the TB322FC panel. | 71 |
-| `scripts/to-fastboot.sh` | reliable Linux → fastboot, using the PSCI vendor-reset hook. | 111 |
+| `scripts/to-fastboot.sh` | reliable Linux → fastboot, using the PSCI vendor-reset hook. | 115 |
 | `scripts/uefi-a-slot-prepare.sh` | 让 **a 槽**能跑自研件（G1-29 flashed 形态的前置；幂等） | 41 |
 | `scripts/uefi-flashed-trial.sh` | flashed 形态（写 boot_a）一发的**免屏计时判据**取证（G1-29 线） | 36 |
 | `scripts/uefi-usb-gap.py` | 用 USB 出现/消失时刻给「fastboot boot 之后到底发生了什么」计时。 | 5 |
@@ -219,7 +219,7 @@
 | `scripts/wd.sh` | 主机侧 Waydroid 快捷控制（**每次 <15s 返回，绝不长等待**） | 11 |
 | `scripts/win-x86-rootfs.sh` | 构建/部署 glibc aarch64 rootfs（Win-x86 转译 PoC 阶段A） | 14 |
 
-## 造件（70）
+## 造件（71）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -257,7 +257,7 @@
 | `scripts/wd-audio-test/build.sh` | Build the Waydroid container-audio test dexes (TestAudio / TestCodec / ListCodecs). | 87 |
 | `scripts/c1-iprule-build.sh` | build the vk95 kernel that enables policy routing | 4 |
 | `scripts/detect-memory-corruption.py` | 找出「页缓存里的内容 ≠ 磁盘上的内容」的文件。 | 14 |
-| `scripts/dev-super-relabel.sh` | 设备侧（POSIX sh）：把 Android `super`（sda10，22 GiB 动态分区容器）转成 Linux 分区 | 13 |
+| `scripts/dev-super-relabel.sh` | 设备侧（POSIX sh）：把 Android `super`（sda10，22 GiB 动态分区容器）转成 Linux 分区 | 16 |
 | `scripts/env-build.sh` | shared host build environment for the elden kernel tree. | 55 |
 | `scripts/esp-apply.sh` | 把主机侧目录树「一条命令」组装成 FAT32 镜像并写进 eldenesp 分区（S5 自动化）。 | 23 |
 | `scripts/esp-install-grub.sh` | 把主机侧造好的 standalone GRUB（arm64-efi）装上 ESP 的 \EFI\BOOT\BOOTAA64.EFI | 36 |
@@ -268,6 +268,7 @@
 | `scripts/ffs-extract.py` | 解厂商 UEFI 固件（FV/FFS/section 递归 + LZMA/GUID 段） | 20 |
 | `scripts/gapps-mirror-setup.sh` | 把 GAPPS system 镜像接入本地 OTA 源（生成 GAPPS.json + 软链） | 5 |
 | `scripts/gen-history.sh` | 从 git log 机械生成 HISTORY/days/*.md，并现查统计。 | 130 |
+| `scripts/gen-pinyin-lexicon.py` | 从 CC-CEDICT 生成「拼音 → 词」候选词库（供 elden-pinyin-completer 用）。 | 0 |
 | `scripts/gen-sessions.py` | 从 git show <REV>:RESOURCES.md 的 §4 会话索引机械生成 SESSIONS/ 角度文件夹。 | 21 |
 | `scripts/grub-arm64-arming-build.sh` | 用「嵌入菜单」重打 arm64 GRUB（UEFI 复测用），带自校验 | 12 |
 | `scripts/grub-arm64-cjk-font.sh` | 给 GRUB 嵌入菜单造「中文可用」的主字体（pf2） | 5 |
@@ -300,7 +301,7 @@
 |---|---|---|
 | `scripts/abl-log.sh` | 从在机 Linux 读 ABL/PBL 启动日志（logfs 分区里的 UEFILOG1.TXT） | 13 |
 | `scripts/android-lpdump.py` | 只读解析 Qualcomm 线刷包里的「分段 super」（LP metadata + extents）。 | 13 |
-| `scripts/arm-console-run.sh` | 零写盘启动一个显示臂，用串口内核控制台取证（不依赖 SSH）。 | 20 |
+| `scripts/arm-console-run.sh` | 零写盘启动一个显示臂，用串口内核控制台取证（不依赖 SSH）。 | 21 |
 | `scripts/b5-u2-atomic-timeline.sh` | M6/B5 **U2** 取证门：原子回调时序（零写盘、可复跑） | 8 |
 | `scripts/backup-triage.sh` | backup/ 去重与分级处置（默认 dry-run） | 5 |
 | `scripts/bb-magic-scan.py` | DDR 窗口魔数扫描（0xA5A5A5A5 连续段）。 | 3 |
@@ -319,7 +320,7 @@
 | `scripts/iterate.sh` | 统一迭代入口（日常用它；已于 2026-11 取代并删除根目录 build.sh/pack.sh/cycle.sh）。 | 71 |
 | `scripts/kmsgspy.sh` | capture kernel log to disk with line buffering + frequent sync, so the last | 8 |
 | `scripts/logfs-decode.py` | 解析 `logfs` 分区（8 MiB = 10 × 64 KiB 环形 ABL 日志）。 | 12 |
-| `scripts/n5b-vk64-death-rate.sh` | N5b：在 vk64（7.2 血统）RAM 内核上重复 | 28 |
+| `scripts/n5b-vk64-death-rate.sh` | N5b：在 vk64（7.2 血统）RAM 内核上重复 | 32 |
 | `scripts/out-status.py` | out/ 造件生命周期账本门（2026-11-20，arch-audit P1#6） | 14 |
 | `scripts/q28-clkdiag.sh` | 设备侧**只读**取证：一次冷起后立刻跑，用来区分 | 18 |
 | `scripts/q28-coldboot-collect.sh` | 等一次**真实 POR 冷起**，起来后立刻跑 q28-clkdiag.sh 并归档。 | 9 |
@@ -357,7 +358,7 @@
 | 入口 | 用途 | 引用 |
 |---|---|---|
 | `scripts/lib-boot-ready.sh` | 「复位/进 fastboot 前的系统就绪门」（host 侧，经 SSH 判定当前运行的系统） | 34 |
-| `scripts/lib-device-lock.sh` | the SINGLE source of the tablet device lock. | 51 |
+| `scripts/lib-device-lock.sh` | the SINGLE source of the tablet device lock. | 52 |
 | `scripts/lib-fastboot.sh` | fastboot / ssh 设备调用的安全封装（2026-11-09 工具挂死调查产物） | 33 |
 | `scripts/lib-hosttools.sh` | 主机侧外部工具（fastboot / adb）落点解析（2026-11-21） | 10 |
 | `scripts/lib-serial-source.sh` | 串口日志的唯一采集实现（被 suspend/n5b 等采集脚本 source）。 | 11 |
@@ -405,3 +406,9 @@
 | `scripts/uefi-ddr-trial.sh` | DDR 黑匣子专用上机循环（多条重复，只统计真正交棒的发次） | 22 |
 | `scripts/uefi-oneshot.sh` | 真载荷单档一发：换新 UEFI 会话 → 载 preamble → 打一个 stage → 判读 | 18 |
 | `scripts/win-x86-run.sh` | 在设备 glibc-rootfs chroot 内运行 Win-x86（Box64+Wine）命令 | 11 |
+
+## 孤立件（引用数 = 0）
+
+没有脚本、也没有文档提到这些 basename。**不等于可删**：很多是人手跑的入口。处置建议 = 要么在 `TASKS/README.md` 或某报告里落一条指针（变活），要么标「一次性」并说明留档理由。
+
+- `scripts/gen-pinyin-lexicon.py` — 从 CC-CEDICT 生成「拼音 → 词」候选词库（供 elden-pinyin-completer 用）。

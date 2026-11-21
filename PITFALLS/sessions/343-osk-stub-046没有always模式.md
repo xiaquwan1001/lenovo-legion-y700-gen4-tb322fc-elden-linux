@@ -20,7 +20,7 @@
   `hint` 只在客户端声明 completion hint 时触发（GTK3 多数输入框不声明），`manual` 需 OSK 上的完成键。
 - 真想要「每键都喂」得 **1 行源码补丁**（给 `PhoshOskCompletionModeFlags` 加 `ALWAYS` 并在 `pos-input-surface`
   里把 `POS_COMPLETION_MODE_ALWAYS` 视作常开），或等上游发版 —— **不要**把新版本 README 的参数直接写进本机配置。
-- 已落地（H-a 档 helper）：`packaging/elden-userland/rootfs-overlay/usr/local/bin/elden-pinyin-completer`
+- 已落地（H-a 档 helper）：`packaging/elden-userland/files/usr/local/bin/elden-pinyin-completer`
   （pypinyin 反查单字 + 常用词表；`printf nihao | elden-pinyin-completer` → `你好 / 尼好`），
   契约按 `pos-completer-pipe.c`「**每键 spawn 一次**」实现；设备侧需 `python3-pypinyin`（`apt install` 0.54.0-1 已装）。
 - **`manual` 的入口就是 OSK 菜单里的「Word completion」开关**（GResource `completion-bar.ui` 里的

@@ -49,7 +49,7 @@
 0. **🆕 2026-11-21 傍晚 — OSK 中文输入打通（R1 落地，用户实测可用）**
    - 现役 `phosh-osk-stub 0.46` 本身就是 IM + 自带候选条：`completion-mode` 只有 none/hint/manual（**无 `always`**，`PITFALLS #709`），
      `manual` 的入口 = OSK 菜单里的 **「Word completion」** 开关（无 gsettings 键）；打开后敲拼音即出候选、点选上屏中文。
-   - 候选引擎 = `packaging/elden-userland/rootfs-overlay/usr/local/bin/elden-pinyin-completer`（pipe completer，
+   - 候选引擎 = `packaging/elden-userland/files/usr/local/bin/elden-pinyin-completer`（pipe completer，
      `Completers default=pipe` + `Completers.Pipe.command=/usr/local/bin/elden-pinyin-completer`）：
      GB2312 一级字过滤 + 常用词表 + 高频字首选项 + 索引缓存 ⇒ **冷 215 ms / 热 20 ms**。
    - 设备侧依赖 `python3-pypinyin`（已入 `rootfs/debian/daily-baseline.tsv`）。剩余可选提升 = librime one-shot（词库/整句）。

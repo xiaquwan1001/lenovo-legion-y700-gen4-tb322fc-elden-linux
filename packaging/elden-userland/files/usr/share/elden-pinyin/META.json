@@ -1,0 +1,9 @@
+{
+ "source": "CC-CEDICT",
+ "keys": 80127,
+ "shards": 23,
+ "bytes": 2245676,
+ "per_key": 12,
+ "entries_used": 105166,
+ "lines_skipped": 0
+}
