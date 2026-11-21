@@ -12,6 +12,32 @@
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
 > 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
 
+0. **🆕 2026-11-21 深夜 — 设备停在 BL 的真根因 + 7 路子代理产出（主机侧，零设备接触）**
+   - **设备（P0）**：ABL 日志原文 `ValidateSlotGuids: BootableSlot _b does not have valid guids` ⇒ `FindBootableSlot`/`LoadImageAndAuth`
+     `Device Error` ⇒ `Launching fastboot`。源码级判据 = `PartitionTableUpdate.c:1568`（`boot_<slot>` 与 `abl_<slot>` 的 type GUID 相同即拒），
+     `set_active`（`:560-621`）会整表换 GUID 侧 + 切 UFS boot LUN、**非幂等**。已排除：换 `boot_b` 内容 / 重刷 `vbmeta_b` / 写回原厂 `vendor_boot_b`（三条都试过，日志一字不变）。
+     修复已脚本化 = `scripts/recover-lun4-slotguid.sh`（dry-run 默认；写盘只经 `linux-gpt-apply.sh`，带读回）。
+     ⚠ **GPT 修好后 `boot_b` 要刷 `boot_b-minbase-labellinux-20261119.img`（740d431b，`elden_root=LABEL=linux`）**，不是 `bootslot-b/boot_b.img`（06c081ca，`LABEL=linux17`）。
+     全账 = `reports/bootloader-slotguid-brick-20261121.md`、`PITFALLS #697 §6`（本轮再证）。
+   - **本轮 7 路子代理产出**（均为 2026-11-21 深夜，文件名带 `20261122`）：
+     `reports/scripts-audit-20261122.md`（369 入口：KEEP 344 / STALE 15 / DANGEROUS 7 / BROKEN 3）·
+     `reports/mobian-mr-plan-20261122.md` + `reports/mainline-upstream-audit-20261122.md`（已进树 1 系列、SENT 8 系列、可投 4 件；dwc3 v10 吃 sashiko 4 条须出 v11）·
+     `reports/ime-osk-zh-matrix-20261122.md`（推荐 R1：`phosh-osk-stub` 单栈 + `Completers=pipe` 拼音 helper，2–3 人时）·
+     `reports/daily-linux-deploy-20261122.md`（旧 systemd 分支 9 缺陷；`ab-mark-successful` 重写 + deploy §13）·
+     `reports/pitfalls-condense-20261122.md`（7 文件 +16 行、编号零改动）·
+     `reports/best-state-and-gap-20261122.md`（历史最佳 = 11-20 23:10 态；30 条补全清单 + 8 组互斥）·
+     `reports/android-boot-audit-20261122.md`（H3/H4/H5 排除成立；H1 实为无样本；根因排序 H6 > H7 > H1 > H2）·
+     `reports/session-plan-20261121-night.md`（协调面板：P0/P1/P2 与使用权规则）。
+   - **★P0 已完成（16:42–16:55）**：EDL 实测 b 侧 `boot_b`/`abl_b` 的 **PartitionTypeGUID 同为占位 `77036CD4…`**（只比 unique GUID 会误判正常）；
+     新工具 `scripts/gpt-slot-swap-guids.py` 交换 32 对 `X_a/X_b` 的 type GUID + 写 ACTIVE 位 + 重算双表 CRC（自检：单向/往返），
+     经 `linux-gpt-apply.sh --lun 4 --apply --reset` 写盘（读回+设备端 sha256 全 OK）；`boot_b` 刷 `740d431b`（`LABEL=linux`），**未再调 `--set-active`**。
+     结果：两次冷起直进 Linux（vk192、`/`=sda17、`LABEL=linux`）；`ab-mark-successful.service` enabled + `Result=success`；
+     `qbootctl -n b` = `is marked successful`；`deploy-desktop-shell.sh --check` **MISS=0**（含新 §13）；`check-doctor` **FAIL=0**。
+     回退表 = `backup/HA2EXB0E-16+512/edl-apply-readback-20261121-164957/rollback/`。
+   - 同轮主机侧落地：`rootfs/debian/stage.sh` 新增 **4e**（`units-extra/*.service` 按 `WantedBy=` 建启用软链——此前只给 `*.timer` 建，
+     `ab-mark-successful.service` 会「装了不启用」）；`scripts/fix-ab-mark-successful.sh` 重写（`--mark-once/--check/--install/--uninstall`，
+     sh/dash/busybox `-n` + shellcheck + `systemd-analyze verify` 全绿）；`scripts/README.md` 已重新生成（346 入口），`check-doctor` **FAIL=0**。
+
 0. **🆕 2026-11-21 晚 — 文档现实性核查与收敛**：INDEX/TASKS/DEVICE 死指针 9 处修平（已删目录/归档件/截断文件名）、TASKS §4 11-20/21 长增量块逐字下沉 `TASKS/sessions/2026-11-21-§4增量块下沉.md`；门禁复跑 FAIL=0。全账 = `reports/doc-reality-audit-20261121.md`。
 
 0. **🆕 2026-11-21 下午 — 收尾：UEFI 纯 b 槽基建已落地、路 A 实测“有字没菜单”；发行版路线定在 Mobian**
