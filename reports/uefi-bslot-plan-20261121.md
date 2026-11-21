@@ -97,3 +97,37 @@ devicetree /boot/android-a/dtb
   Linux 直启与回退都只依赖 `boot_b` + `misc`，**不在这次写的范围内**。
 - 物理键仍是唯一进 fastboot 的路（`PITFALLS #701`），所以段 2 必须你在场。
 - 不碰 `uefi_b`/`abl_b`/`xbl_b` 等固件分区（那是引导器本体，写坏 = 变砖，且与本方案无关）。
+
+---
+
+## 6. 2026-11-21 12:0x 实测进展（设备窗口内完成，全部有读回判据）
+
+| 项 | 结果 | 判据 |
+|---|---|---|
+| **ESP 分区落地** | ✅ `vendor_boot_b` 现 = **FAT32 LABEL=ELDENESP / UUID 88D0-7871 / 4K 扇区**，Linux 侧可挂载（96M 用 6.7M） | `blkid` + `mount` + `find /mnt/esp` 见 `EFI/BOOT/BOOTAA64.EFI`、`grub/grub.cfg` |
+| GRUB 件 | ✅ 用 `scripts/grub-arm64-standalone.sh --cfg <外置菜单桩>` 重建 `grubaa64.efi` 6 971 392 B，PE machine=**ARM64** 自校验过 | 模块含 `linux fdt ext2 fat search_label configfile gfxterm font` |
+| 菜单策略 | **外置菜单**：EFI 只做 `search --label linux` → `configfile /boot/grub/grub.cfg` ⇒ 以后改菜单只改 linux17 上的文本，不碰任何分区 | `out/uefi-bslot-20261121/esp/stub-external.cfg` |
+| linux17:/boot 就位 | ✅ `Image` **64 072 192**（由在机 `boot_b` 的 **gz** 内核解压得来，`MZ`+`ARMd` 双头；sha `0a55e52c…` = 11-16 那个守卫核）/ `initrd.img` 64 595 425 / `elden.dtb` 153 129 / `grub/grub.cfg` | `sha256sum` 逐件 + 与 boot_b 解包比对 |
+| 菜单内容 | 4 项：**Linux(vk192)**、**Android(a slot)**、**Android(a slot, verity disabled)**、Reboot/Poweroff | `/boot/grub/grub.cfg` 33 行 |
+| a 槽安卓四件 | ✅ 已在 `linux17:/boot/android-a/`（Image 36.7M / initrd 9.5M / dtb 6.5M / cmdline） | `ls -l` |
+
+### 两个新坑（当天踩到就记）
+
+1. **FAT 扇区大小必须 4096**：`mkfs.vfat` 默认 512 B 扇区 ⇒ 内核直接拒挂
+   （`FAT-fs (sde55): logical sector size too small for device (logical sector size = 512)`）。
+   UFS 逻辑扇区 = 4096 ⇒ 镜像必须 `mkfs.vfat -F 32 -S 4096`。
+2. **boot_b 的内核是 gzip**：`boot_b`（header v2）里 `kernel` 段是 `Image.gz`（21 053 516 B），
+   `gzip.decompress` 后才是 64 072 192 B 的 `Image`（`MZ`+`ARMd`）。GRUB 只能吃解压后的件，
+   所以 `/boot/Image` 必须是解压版；`initrd.img` 保持 gzip（内核自己解）。
+   另外 `dt_size` 字段写的是 **2**（不可用），dtb 要靠 FDT magic `d00dfeed` 搜（本次在偏移 85 659 648，长 153 129）。
+
+### 还差的唯一一件：能读 ESP 的 UEFI 载荷
+
+- 仓里现存 4 个 `out/uefi-20261104*.img` + 归档 39 件都只到 **R21（11-05，host-diag）**，
+  而「先起 ESP 上的 `\EFI\BOOT\BOOTAA64.EFI`」是 **R54（11-08）** 才有的 BdsDxe 补丁
+  （`patches/uefi/20261108R54-espfirst/0001-bdsdxe-esp-first.patch`）⇒ **能读 ESP 的 Mu 件已不可用**。
+- 两条路：
+  - **路 A（10 分钟，零写盘）**：`fastboot boot out/uefi-20261104R21-hostdiag-r1.img` 看它是否仍能枚举 UFS + 读我们的 FAT
+    （判据：屏上是否出 GRUB 菜单；不出则按电源键长按回 Linux）。**先试这个**。
+  - **路 B（数小时，主机侧）**：按 `patches/uefi/p69-recipe.txt` 重建 p69（= p68 + R70 + R54-espfirst + … 约 30 条补丁）。
+    代价：`build/uefi-woa-prep/repos/7-mu-lenovo` 树在 11-19 清理时被删 ⇒ 要重取 Mu-Silicium（229 MB）+ 设备二进制后重打补丁。
