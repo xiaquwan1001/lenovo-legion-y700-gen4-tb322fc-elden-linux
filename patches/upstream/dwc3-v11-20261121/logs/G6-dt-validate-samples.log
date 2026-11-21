@@ -1,0 +1,43 @@
+===== dt-validate -s v11-schema pos-v11.dtb
+rc=0
+
+===== dt-validate -s v11-schema pos-no-dr-mode.dtb
+rc=0
+
+===== dt-validate -s v11-schema pos-nonmux-endpoint.dtb
+rc=0
+
+===== dt-validate -s v11-schema pos-nonmux-endpoint0.dtb
+rc=0
+
+===== dt-validate -s v11-schema neg-same-state.dtb
+neg-same-state.dtb: usb@a600000 (snps,dwc3): ports:port@0: 'oneOf' conditional failed, one must be fixed:
+	1 was expected
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+neg-same-state.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'ports', 'usb-role-switch' were unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+rc=0
+
+===== dt-validate -s v11-schema neg-one-endpoint.dtb
+neg-one-endpoint.dtb: usb@a600000 (snps,dwc3): ports:port@0: 'endpoint@1' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+neg-one-endpoint.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'ports', 'usb-role-switch' were unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+rc=0
+
+===== dt-validate -s v11-schema neg-no-role-props.dtb
+neg-no-role-props.dtb: usb@a600000 (snps,dwc3): ports:port@0:endpoint@1: 'usb-role-switch' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+neg-no-role-props.dtb: usb@a600000 (snps,dwc3): ports:port@0:endpoint@1: 'mux-state' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+neg-no-role-props.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'ports', 'usb-role-switch' were unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+rc=0
+
+===== dt-validate -s v11-schema neg-dr-mode-host.dtb
+neg-dr-mode-host.dtb: usb@a600000 (snps,dwc3): dr_mode:0: 'otg' was expected
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+neg-dr-mode-host.dtb: usb@a600000 (snps,dwc3): Unevaluated properties are not allowed ('dr_mode', 'mux-controls', 'ports', 'usb-role-switch' were unexpected)
+	from schema $id: http://devicetree.org/schemas/usb/snps,dwc3.yaml
+rc=0
+

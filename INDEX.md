@@ -12,6 +12,11 @@
 > 与其它文档冲突时**以本节为准**，冲突处按 §2「时间序裁决」处理（旧说法标作废或直接删）。
 > 数字口径：完成度以 `TASKS/README.md` §0（脚本 `scripts/check-progress-counts.sh --tsv` 现出）为准，本节只摘结论。
 
+0. **🆕 2026-11-21 傍晚（主机侧，无人值守轮次）— dwc3 v11 已 SENT-ready（未投，等放行）**
+   - 吃 sashiko 对 v10 的 4 条意见，只动三处（binding mux 分支 `required` 去 `dr_mode`；沿用 11-20 重写版的 `$defs`/非 mux `port@0` 形状；`dwc3_drd_exit()` 的 deselect 移到角色 teardown 之后），G1–G6 全绿（**主会话独立复跑 apply 3/3 + 六枚 blob + checkpatch 0E/0W/0C×3 一致**）；G7 上机未做。
+   - **版本账事实**：v10 实投的 1/3 = 11-18 版（yaml blob `57e3c1d9ed03`），11-20 重写版**从未投出** ⇒ sashiko 两条 Low/Medium 针对的是真实内容。
+   - 件 = `patches/upstream/dwc3-v11-20261121/`（`MANIFEST.md`、`GATES-v11.md` §5 = 放行清单）+ `reports/dwc3-v11-20261121.md`；0004 板 DTS 继续 hold。
+
 0. **🆕 2026-11-21 深夜 — 设备停在 BL 的真根因 + 7 路子代理产出（主机侧，零设备接触）**
    - **设备（P0）**：ABL 日志原文 `ValidateSlotGuids: BootableSlot _b does not have valid guids` ⇒ `FindBootableSlot`/`LoadImageAndAuth`
      `Device Error` ⇒ `Launching fastboot`。源码级判据 = `PartitionTableUpdate.c:1568`（`boot_<slot>` 与 `abl_<slot>` 的 type GUID 相同即拒），

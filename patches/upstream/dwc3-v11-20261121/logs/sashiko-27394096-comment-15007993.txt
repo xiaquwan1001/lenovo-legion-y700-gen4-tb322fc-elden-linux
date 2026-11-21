@@ -1,0 +1,52 @@
+Thank you for your contribution! Sashiko AI review found 1 potential
+issue to consider:
+- [Medium] usb: dwc3: premature mux deselection before role teardown in
+  dwc3_drd_exit()
+--
+
+commit c2bf2129dd204f48fafe772bcfa69b9f05541e6c
+Author: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+
+usb: dwc3: select the shared HS data bus with a mux controller
+
+This commit adds support for switching a shared High Speed D+/D- data bus
+between two connectors using a mux controller and per-connector USB role
+switches.
+
+> diff --git a/drivers/usb/dwc3/drd.c b/drivers/usb/dwc3/drd.c
+> index f3e37d383627a..f14686dee095e 100644
+> --- a/drivers/usb/dwc3/drd.c
+> +++ b/drivers/usb/dwc3/drd.c
+
+[ ... ]
+
+> @@ -597,6 +914,7 @@ void dwc3_drd_exit(struct dwc3 *dwc)
+>  {
+>  	unsigned long flags;
+>  
+> +	dwc3_role_mux_exit(dwc);
+>  	if (dwc->role_sw)
+>  		usb_role_switch_unregister(dwc->role_sw);
+>  
+> @@ -606,6 +924,9 @@ void dwc3_drd_exit(struct dwc3 *dwc)
+>  
+>  	cancel_work_sync(&dwc->drd_work);
+>  
+> +	/* The mode worker is drained: no switch can select the mux any more. */
+> +	dwc3_role_mux_deselect(dwc);
+> +
+>  	/* debug user might have changed role, clean based on current role */
+>  	switch (dwc->current_dr_role) {
+>  	case DWC3_GCTL_PRTCAP_HOST:
+
+[Severity: Medium]
+Should dwc3_role_mux_deselect() be called after the
+switch (dwc->current_dr_role) block tears down the active host or gadget
+instance?
+
+When the mux controller has an idle state other than MUX_IDLE_AS_IS and
+the active connector is not the idle port, mux_control_deselect() switches
+the High Speed data lines back to the idle state while the host or gadget
+instance is still running.  In __dwc3_set_mode(), dwc3_host_exit() or
+dwc3_gadget_exit() runs before mux_control_deselect() so the active role
+is torn down while its own data lines are still selected.

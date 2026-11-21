@@ -49,7 +49,7 @@ Changes since v10:
  4 files changed, 489 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/usb/dwc3/core.c b/drivers/usb/dwc3/core.c
-index 372737f..ce30979 100644
+index 372737f4750b..ce309792864b 100644
 --- a/drivers/usb/dwc3/core.c
 +++ b/drivers/usb/dwc3/core.c
 @@ -21,6 +21,7 @@
@@ -231,7 +231,7 @@ index 372737f..ce30979 100644
  {
  	struct dwc3		*dwc = dep->dwc;
 diff --git a/drivers/usb/dwc3/core.h b/drivers/usb/dwc3/core.h
-index f3dabb3..e6cf7b2 100644
+index f3dabb37f806..e6cf7b240b23 100644
 --- a/drivers/usb/dwc3/core.h
 +++ b/drivers/usb/dwc3/core.h
 @@ -1008,6 +1008,46 @@ struct dwc3_glue_ops {
@@ -306,7 +306,7 @@ index f3dabb3..e6cf7b2 100644
  
  #define DWC3_IP_IS(_ip)							\
 diff --git a/drivers/usb/dwc3/debugfs.c b/drivers/usb/dwc3/debugfs.c
-index 01ebd73..82e7a33 100644
+index 01ebd73198e0..82e7a334b135 100644
 --- a/drivers/usb/dwc3/debugfs.c
 +++ b/drivers/usb/dwc3/debugfs.c
 @@ -434,6 +434,10 @@ static ssize_t dwc3_mode_write(struct file *file,
@@ -321,7 +321,7 @@ index 01ebd73..82e7a33 100644
  		return -EFAULT;
  
 diff --git a/drivers/usb/dwc3/drd.c b/drivers/usb/dwc3/drd.c
-index f3e37d3..906cac4 100644
+index f3e37d383627..906cac4f3e6e 100644
 --- a/drivers/usb/dwc3/drd.c
 +++ b/drivers/usb/dwc3/drd.c
 @@ -8,6 +8,7 @@

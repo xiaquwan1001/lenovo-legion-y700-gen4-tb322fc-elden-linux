@@ -1,0 +1,6 @@
+make[1]: 进入目录“/tmp/kb-dwc3-v11”
+  DTC [C] arch/arm64/boot/dts/qcom/sm8650-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-qrd.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8250-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+make[1]: 离开目录“/tmp/kb-dwc3-v11”

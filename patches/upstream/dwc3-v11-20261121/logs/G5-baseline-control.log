@@ -1,0 +1,34 @@
+make[1]: 进入目录“/tmp/kb-dwc3-v11-base”
+  SYNC    include/config/auto.conf
+  HOSTCC  scripts/dtc/dtc.o
+  HOSTCC  scripts/dtc/flattree.o
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+  HOSTCC  scripts/dtc/treesource.o
+  HOSTCC  scripts/dtc/srcpos.o
+  HOSTCC  scripts/dtc/checks.o
+  HOSTCC  scripts/dtc/util.o
+  LEX     scripts/dtc/dtc-lexer.lex.c
+  YACC    scripts/dtc/dtc-parser.tab.[ch]
+  HOSTCC  scripts/dtc/libfdt/fdt.o
+  HOSTCC  scripts/dtc/libfdt/fdt_ro.o
+  HOSTCC  scripts/dtc/libfdt/fdt_wip.o
+  HOSTCC  scripts/dtc/libfdt/fdt_sw.o
+  HOSTCC  scripts/dtc/libfdt/fdt_rw.o
+  HOSTCC  scripts/dtc/libfdt/fdt_strerror.o
+  HOSTCC  scripts/dtc/libfdt/fdt_empty_tree.o
+  HOSTCC  scripts/dtc/libfdt/fdt_addresses.o
+  HOSTCC  scripts/dtc/libfdt/fdt_overlay.o
+  HOSTCC  scripts/dtc/fdtoverlay.o
+  UPD     include/config/kernel.release
+  HOSTCC  scripts/dtc/dtc-parser.tab.o
+  HOSTCC  scripts/dtc/dtc-lexer.lex.o
+  HOSTLD  scripts/dtc/fdtoverlay
+  HOSTLD  scripts/dtc/dtc
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-qrd.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8250-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8650-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+make[1]: 离开目录“/tmp/kb-dwc3-v11-base”

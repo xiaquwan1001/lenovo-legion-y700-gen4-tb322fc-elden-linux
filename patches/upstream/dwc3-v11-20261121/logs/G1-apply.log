@@ -1,0 +1,37 @@
+# G1: git apply --check + git apply, base = aebb727447 (v7.4-rc3), tree = /tmp/dwc3-v11-apply
+# date: 2026-11-21T17:45:29+08:00
+--- v11-0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-on.patch
+正在检查补丁 Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml...
+check_rc=0
+apply_rc=0
+--- v11-0002-usb-roles-look-up-role-switches-attached-to-a-graph-endpoint.patch
+正在检查补丁 drivers/usb/roles/class.c...
+check_rc=0
+apply_rc=0
+--- v11-0003-usb-dwc3-select-the-shared-HS-data-bus-with-a-mux-controller.patch
+正在检查补丁 drivers/usb/dwc3/core.c...
+正在检查补丁 drivers/usb/dwc3/core.h...
+正在检查补丁 drivers/usb/dwc3/debugfs.c...
+正在检查补丁 drivers/usb/dwc3/drd.c...
+check_rc=0
+apply_rc=0
+--- git hash-object
+7a9cb5a115a63286cf001d232904ad5bbd81dc2a
+906cac4f3e6e5ac2816fd3611682e40127491edf
+ce309792864b3aa6ba89cffd3e58710ed3c6384e
+e6cf7b240b23eab7d2c1059d5f3a355216653f65
+82e7a334b135821c92921c320ee5a09ec31a0ab4
+ee186d542a1018237d10cc664699fe67096163e5
+--- mailinfo
+Author: Qianhui Xu
+Email: xiaqinghuan@mail.ustc.edu.cn
+Subject: dt-bindings: usb: snps,dwc3: describe two connectors on one HS data bus
+Date: Sat, 21 Nov 2026 18:10:00 +0800
+Author: Qianhui Xu
+Email: xiaqinghuan@mail.ustc.edu.cn
+Subject: usb: roles: look up role switches attached to a graph endpoint
+Date: Sat, 21 Nov 2026 18:10:00 +0800
+Author: Qianhui Xu
+Email: xiaqinghuan@mail.ustc.edu.cn
+Subject: usb: dwc3: select the shared HS data bus with a mux controller
+Date: Sat, 21 Nov 2026 18:10:00 +0800

@@ -58,7 +58,7 @@ Changes since v10:
  1 file changed, 98 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
-index 6c0b8b6..7a9cb5a 100644
+index 6c0b8b653824..7a9cb5a115a6 100644
 --- a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
 +++ b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
 @@ -26,8 +26,49 @@ allOf:
