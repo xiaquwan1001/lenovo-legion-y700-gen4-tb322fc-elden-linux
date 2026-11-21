@@ -23,5 +23,9 @@
 - 已落地（H-a 档 helper）：`packaging/elden-userland/rootfs-overlay/usr/local/bin/elden-pinyin-completer`
   （pypinyin 反查单字 + 常用词表；`printf nihao | elden-pinyin-completer` → `你好 / 尼好`），
   契约按 `pos-completer-pipe.c`「**每键 spawn 一次**」实现；设备侧需 `python3-pypinyin`（`apt install` 0.54.0-1 已装）。
+- **`manual` 的入口就是 OSK 菜单里的「Word completion」开关**（GResource `completion-bar.ui` 里的
+  `GtkModelButton id="word_completion_btn"` → action `win.word-completion`，属性名 `completion-enabled`），
+  没有对应的 gsettings 键 ⇒ 只能点 GUI（☰ 菜单项）。实测：只设 `completion-mode ['hint','manual']` 且不点该开关时，
+  completer **一次都不会被 spawn**（helper 的调用日志为空）。
 - 人工判据（2 min，需真 IC）：Firefox 地址栏敲 `nihao` ⇒ OSK 候选条出现「你好」且点选后中文上屏；
   未验证项 = GTK3 输入框是否会声明 completion hint（决定 `hint` 是否足够）。

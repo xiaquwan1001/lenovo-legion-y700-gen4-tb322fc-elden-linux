@@ -8,15 +8,24 @@ Usage:
       --main env-pass/gpt-20261002/gpt_primary.bin \
       --backup env-pass/gpt-20261002/gpt_backup.bin \
       --out-prefix env-pass/gpt-20261002/restore
-Then on device (root):
+Then on device (root) — 【写后必须读回比对，对齐 linux-gpt-apply.sh 口径】：
   dd if=/sdcard/restore_main0.bin   of=/dev/block/sda bs=4096 seek=0          conv=notrunc
   dd if=/sdcard/restore_backup0.bin of=/dev/block/sda bs=4096 seek=<backup_start_lba> conv=notrunc
   sync
+  dd if=/dev/block/sda bs=4096 count=6 | sha256sum            # 必须与 restore_main0.bin 一致
+  dd if=/dev/block/sda bs=4096 skip=<backup_start_lba> count=5 | sha256sum
 Reboot. Android resizes /data (f2fs) at boot.
 """
-import argparse, binascii, struct, sys, uuid
+import argparse, binascii, hashlib, struct, sys, uuid
 
 SECTOR = 4096
+
+def sha256_file(p):
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 def le_guid(b): return uuid.UUID(bytes_le=bytes(b))
 def guid_le(u): return u.bytes_le
@@ -84,6 +93,25 @@ def build_header(cur, backup, first_usable, last_usable, disk_guid, ent_lba, nen
     return bytes(h)
 
 def cmd_build(a):
+    # ★ fail-closed 门（审计批 1，2026-11-22）：本脚本的产物是设备侧 dd 直接重写 LUN0 主表
+    #   的镜像（恢复 userdata、删 linux 分区）——拿错表 = 抹掉 Linux 根。
+    #   ⇒ 必须显式提供 --expect-fingerprint "<main的sha256>,<backup的sha256>"，
+    #   与输入实算值比对，不符（或未提供）一律拒绝产出。查值命令：
+    #     sha256sum <main> <backup>
+    if not a.expect_fingerprint:
+        sys.exit("FAIL: 缺 --expect-fingerprint。先算指纹再跑：\n"
+                 f"  sha256sum {a.main} {a.backup}\n"
+                 "  然后传 --expect-fingerprint '<main_sha>,<backup_sha>'。拿错表 = 抹 Linux 根，不指纹不出镜像")
+    want = [w.strip().lower() for w in a.expect_fingerprint.split(",")]
+    if len(want) != 2 or any(len(w) != 64 for w in want):
+        sys.exit("FAIL: --expect-fingerprint 格式应为 '<main_sha256>,<backup_sha256>'（两个 64 位 hex，逗号分隔）")
+    got_main, got_backup = sha256_file(a.main), sha256_file(a.backup)
+    if got_main != want[0] or got_backup != want[1]:
+        sys.exit("FAIL: 表指纹不符 —— 拿错表/表已变，拒绝生成恢复镜像\n"
+                 f"  main   实算 {got_main}\n  期望   {want[0]}\n"
+                 f"  backup 实算 {got_backup}\n  期望   {want[1]}\n"
+                 "  若确是新表：重算 sha256sum 后显式传入新指纹（别图省事直接换旧指纹）")
+    print(f"[fingerprint] main={got_main[:16]}… backup={got_backup[:16]}… 与 --expect-fingerprint 一致")
     main = bytearray(open(a.main, "rb").read())
     backup = bytearray(open(a.backup, "rb").read())
     hdr = parse_header(main, SECTOR)
@@ -175,6 +203,8 @@ def main():
     b.add_argument("--linux-name", default="linux")
     b.add_argument("--backup-start-lba", type=int, default=None,
                    help="备表镜像首扇区 LBA（默认由主表 alt_lba 现算 = backup_lba-4）")
+    b.add_argument("--expect-fingerprint", default=None,
+                   help="fail-closed 门：'<main_sha256>,<backup_sha256>'（sha256sum 实算），不符即拒绝产出")
     b.set_defaults(f=cmd_build)
     l = sub.add_parser("list"); l.add_argument("--main", required=True); l.set_defaults(f=cmd_list)
     a = p.parse_args(); a.f(a)

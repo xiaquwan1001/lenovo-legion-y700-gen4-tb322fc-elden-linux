@@ -74,12 +74,27 @@ def build_index():
     return idx
 
 
+LOG = "/tmp/elden-pinyin-calls.log"
+
+
+def log_invocation(raw, out):
+    """每次被 OSK spawn 都记一行（用于判「completer 到底有没有被喂」）。"""
+    try:
+        import time
+        with open(LOG, "a", encoding="utf-8") as f:
+            f.write("%s\tpreedit=%r\tout=%r\n" % (
+                time.strftime("%H:%M:%S"), raw[:32], out[:5]))
+    except Exception:
+        pass
+
+
 def main():
     raw = sys.stdin.read(300)[:64]
     text = raw.strip().lower()
     if EXPLAIN:
         print("preedit=%r" % raw, file=sys.stderr)
     if not text or not re.fullmatch(r"[a-z]+", text):
+        log_invocation(raw, [])
         return 0
     out = []
     out.extend(WORDS.get(text, []))
@@ -106,6 +121,7 @@ def main():
                         break
             if len(out) >= LIMIT:
                 break
+    log_invocation(raw, out[:LIMIT])
     for line in out[:LIMIT]:
         sys.stdout.write(line + "\n")
     if EXPLAIN:

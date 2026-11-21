@@ -42,6 +42,30 @@ def entries_view(block, base):
     return out
 
 
+def type_guid_map(block, base):
+    """name -> type GUID（字符串形式），供 ValidateSlotGuids 判据校验。"""
+    import uuid as _uuid
+    return {name: str(_uuid.UUID(bytes_le=bytes(block[off:off + 16])))
+            for off, name in entries_view(block, base)}
+
+
+def validate_slot_guids(block, base, activate):
+    """★ 写前 GUID 位置校验（审计批 1，2026-11-22）。
+    ABL `ValidateSlotGuids`（PartitionTableUpdate.c:1568）要求 boot_<slot> 与 abl_<slot> 的
+    type GUID **不同**；flip 只动属性位、不动 GUID，若两 GUID 相同（= GUID 侧 ≠ ACTIVE 侧
+    的半完成态），补 ACTIVE 位也救不回来。"""
+    g = type_guid_map(block, base)
+    nb, na = "boot_" + activate, "abl_" + activate
+    if nb in g and na in g and g[nb] == g[na]:
+        sys.exit(
+            f"rc=3 拒绝：boot_{activate} 与 abl_{activate} 的 type GUID 相同（{g[nb][:13]}…），"
+            f"= ABL ValidateSlotGuids 必拒的形态；补 ACTIVE 位救不回来（flip 不动 GUID）。\n"
+            f"  正确工具：scripts/gpt-slot-swap-guids.py --main <main> --backup <backup> "
+            f"--out-prefix <prefix> --to {activate}\n"
+            f"  （它按 SwapPtnGuid 语义把 GUID 侧搬到目标槽；写盘仍走 linux-gpt-apply.sh）")
+    print(f"[guid-check] boot_{activate} vs abl_{activate} type GUID 不同（合法）")
+
+
 def patch(block, base, activate, tag):
     want = "boot_" + activate
     changed = 0
@@ -104,6 +128,8 @@ def main():
     ap.add_argument("--backup", required=True)
     ap.add_argument("--out-prefix", required=True)
     ap.add_argument("--activate", choices=["a", "b"], default="b")
+    ap.add_argument("--apply", action="store_true",
+                    help="危险动作显式确认：默认 dry-run（只打印将改的字节，不落盘）；--apply 才写 <out-prefix>_*.bin")
     args = ap.parse_args()
 
     m = bytearray(open(args.main, "rb").read())
@@ -113,7 +139,10 @@ def main():
     if m[4096:4104] != b"EFI PART" or b[16384:16392] != b"EFI PART":
         sys.exit("输入里没有 GPT 签名（主表头@4096 / 备表头@16384）")
 
-    print(f"[flip] activate=_{args.activate}")
+    # ★ 写前 GUID 位置校验（ValidateSlotGuids 判据）：不过就拒绝，指向 gpt-slot-swap-guids.py
+    validate_slot_guids(m, 8192, args.activate)
+
+    print(f"[flip] activate=_{args.activate}{' (APPLY)' if args.apply else ' (dry-run)'}")
     n = patch(m, 8192, args.activate, "primary")
     n += patch(b, 0, args.activate, "backup")
     if n != 4:
@@ -122,6 +151,10 @@ def main():
     if not verify_crc(m, b):
         sys.exit("CRC 自检失败")
     om, ob = args.out_prefix + "_main.bin", args.out_prefix + "_backup.bin"
+    if not args.apply:
+        print(f"[flip] dry-run：不落盘。确认无误后重跑并加 --apply 写出 {om} / {ob}；"
+              f"写盘走 scripts/linux-gpt-apply.sh（写前对账 + 写后读回）")
+        return
     open(om, "wb").write(m)
     open(ob, "wb").write(b)
     print(f"[flip] wrote {om} ({len(m)} B) / {ob} ({len(b)} B)")

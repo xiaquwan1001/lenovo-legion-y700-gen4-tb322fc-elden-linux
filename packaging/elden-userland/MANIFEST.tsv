@@ -37,7 +37,6 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/bin/waydroid-sensord	elf	22028ffd9a53d2fc48b8227e05a95eb2b0d7245d8db10fb80e052d38257849a5	266200	755	-
 /usr/local/bin/waydroid-sensord-udp	elf	22028ffd9a53d2fc48b8227e05a95eb2b0d7245d8db10fb80e052d38257849a5	266200	755	-
 /usr/local/sbin/99-unmanaged.conf	script	4ec1672cc519b7d6ffde0a887f27c91bb275ece1304bff410bc22c1e93582db1	297	644	files/usr/local/sbin/99-unmanaged.conf
-/usr/local/sbin/ath12k-load.sh	script	37ca2ec077cdbf98b27a0f8921d6a6f597e10715dde9c164b328bf4acb7bc79d	1467	755	files/usr/local/sbin/ath12k-load.sh
 /usr/local/sbin/ath12k-retry.sh	script	d9ad1061f85d5cc01ed0e94672a47babb41e24e94cb86a088ccc52e69e30524d	1514	755	files/usr/local/sbin/ath12k-retry.sh
 /usr/local/sbin/audio-alsa-init.sh	script	8d3d313eb01bd4380607914d9e8e677ee16b9db1dc992db9d0b1664cda8c3cdf	3317	755	files/usr/local/sbin/audio-alsa-init.sh
 /usr/local/sbin/blankspy.sh	script	3ed4fdaa24abc198bd60e4741f6df784754c28f0f0fb776dff4877bc5c6a1e05	1681	755	files/usr/local/sbin/blankspy.sh
