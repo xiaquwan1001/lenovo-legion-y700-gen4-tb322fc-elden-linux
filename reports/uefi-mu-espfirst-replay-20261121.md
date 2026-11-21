@@ -26,7 +26,7 @@
 | 7 | 上游仓现状 | `mu_wide_platforms` 现在**仍带** `Platforms/PakalaPkg/Device/lenovo-y700g4/`（391 个文件） | `git ls-tree -r --name-only FETCH_HEAD \| grep -c lenovo-y700g4` → `391` |
 | 8 | esp-first 已存在于哪些世代 | 配方含 `espfirst` 的世代 = `p59…p69`、`pc1`、`pc1m`、`pc2`；**不含**的最高代 = `p58` | `grep -l espfirst patches/uefi/p*-recipe.txt` |
 | 9 | 盘上已有的 esp-first **固件件** | `reports/artifacts/uefi-20261110R70-p69/`（11-10 14:25，`SM8750_EFI.fd` 4194304 B）解 LZMA 后命中 R54 五条判据串 + R64 + R68 + R70 | `python3 scripts/uefi-fv-strings.py … R70/SM8750_EFI.fd "esp blk=" "[K] pi n=" "[K] espb name=" R68LOG "R70"` → 各 1/1/1/3/1 |
-| 10 | 同法生成的可引导件 | `out-p69/uefi-preamble69-r1.img` `38202e129af58cc9d20881115de192d5f988e05e08ed50a39992a761940c4fcc`（67194880 B）；`out-p65/uefi-preamble65-r1.img` `aa0f0a44921cb85bf2c9c71068cb9e4c5e2a256c5feb42d896ae97ab49c2a254`（67194880 B） | `scripts/uefi-r21-p7-ladder.sh --gen p69 --mkimg-only …` → `assert-ok: header v2, text_offset=0, flags=0xa, shim size literal=0x400000` |
+| 10 | 同法生成的可引导件 | `out-p69/uefi-preamble69-r1.img` `38202e129af58cc9d20881115de192d5f988e05e08ed50a39992a761940c4fcc`（67194880 B）；`out-p65/uefi-preamble65-r1.img` `4d1ebc065558dc935207ca0d8c2cd0182e9ccdb70749cf0cd5adf3d6182e9b8a`（67194880 B，13:21 重生成后口径） | `scripts/uefi-r21-p7-ladder.sh --gen p69 --mkimg-only …` → `assert-ok: header v2, text_offset=0, flags=0xa, shim size literal=0x400000` |
 
 ### 1.1 两仓关系（把「需两仓合并」这条旧表述改掉）
 

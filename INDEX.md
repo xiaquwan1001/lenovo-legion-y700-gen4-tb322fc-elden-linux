@@ -21,7 +21,7 @@
      `boot_b` 全程未动（sha `740d431b`）、回退 = 清 `misc` 后普通重启。
    - **路 A（RAM 引导归档 R21 Mu）实测**：`fastboot boot` OKAY，**屏上有字但无 GRUB 菜单** ⇒ Mu 跑到 DXE/BDS，但 **R21（11-05）早于 R54（11-08）的 `bdsdxe-esp-first`**
      ⇒ BDS 不把我们 FAT ESP 当候选。**⇒ 下一步 = 换带 esp-first 的载荷（`p65`/`p69`）上机**——**不需重建**：归档 FD 已在盘上、
-     repack 秒级 ⇒ `build/uefi-woa-prep/merge-espfirst-20261121/out-p65/uefi-preamble65-r1.img`（`aa0f0a44…`）；
+     repack 秒级 ⇒ `build/uefi-woa-prep/merge-espfirst-20261121/out-p65/uefi-preamble65-r1.img`（`4d1ebc06…`）；
      源码树也已重放好（84 条补丁 **OK=84 / FAIL=0**，基线 = `mu_wide_platforms@6b6ac42a`）。全账 = `reports/uefi-mu-espfirst-replay-20261121.md`；
      原可行性账 = `reports/uefi-bslot-plan-20261121.md` §6/§7。
    - **发行版（用户裁决：选 Mobian）**：Nura（原 pmOS）**AI 政策禁生成式 AI 贡献 ⇒ 不可投**；UBports 要 Halium（Android 内核）⇒ 不投；
