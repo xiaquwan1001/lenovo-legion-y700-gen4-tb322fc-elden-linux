@@ -74,7 +74,7 @@ echo "### phosh-env"
 pid=$(pgrep -x phosh | head -1)
 [ -n "$pid" ] && tr '\0' '\n' < "/proc/$pid/environ" | grep -E '^(GTK|QT)_IM_MODULE=|^XMODIFIERS='
 echo "### osk"
-ps -eo comm,args | grep -E 'squeekboard|phosh-osk-stevia' | grep -v grep
+ps -eo comm,args | grep -E 'squeekboard|phosh-osk-stevia|phosh-osk-stub' | grep -v grep
 echo "### im-module"
 ls /usr/lib/*/gtk-3.0/*/immodules/im-fcitx5.so /usr/lib/*/gtk-4.0/*/immodules/libim-fcitx5.so 2>/dev/null
 EOF
@@ -138,7 +138,7 @@ chk "phosh 环境无 GTK_IM_MODULE=fcitx（#618 遮蔽）" "0" "$shadow"
 
 # 7. 前置依赖件在位
 chk "im-fcitx5.so（GTK3/4 IM 模块）在位" "2" "$(sec im-module | grep -c 'im-fcitx5.so')"
-chk "OSK 进程在跑（stevia 或 squeekboard）" "1" "$(sec osk | grep -cE 'phosh-osk-stevia|squeekboard')"
+chk "OSK 进程在跑（phosh-osk-stub / stevia / squeekboard 任一）" "1" "$(sec osk | grep -cE 'phosh-osk-stub|phosh-osk-stevia|squeekboard')"
 
 echo "---"
 echo "汇总: PASS=$passes FAIL=$fails  （判据正文 = PITFALLS #618/#619/#653/#660）"

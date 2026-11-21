@@ -161,6 +161,13 @@
   **🆕 dwc3 v10 = SENT-ready（2026-11-21 主机侧跑完全链）**：树不缺（`build/elden-tree` HEAD = `aebb727447` = **v7.4-rc3**，正是 v10 声明基线）⇒ 旧「需先重建内核树」作废；
   G1 `git am` **3/3**（树 `26f56ef5f5`）· G2 checkpatch **0E/0W/0C ×3**（146/63/618）· G3 `W=1` **rc=0 / 0 warning / 22 `.o` 全 aarch64** · G4 `dt_binding_check` 全量 **rc=0 / 0 诊断** · G5 `dtbs_check` 四份 **4/4 `DTC [C]` / 0 诊辨 / baseline 对照新增 0** · G6 负样例 4 类全拒；**G7 上机未做**。
   cover 定稿 `patches/upstream/dwc3-v10-20261120/v10-0000-cover-letter.patch`（AI 披露 + Rob 11-18 两封逐条回应 + Known gaps + 实数）；全账 = 同目录 `GATES-20261121.md`。**✅ 已投（2026-11-21T02:21Z，用户放行）**：4 封全 `Result: 250`，`--in-reply-to` v9 cover ⇒ 线程正确；**lore `linux-usb` 已归档 4/4**（`web_fetch` 绕 Anubis 复核，线程页列出 v9+v10 共 8 封）；`linux-devicetree` 副本等 patchwork 摄取（全项目最新件停在 11-20T23:39Z ⇒ 摄取滞后，非投递失败）。全账 = 同目录 `SENT.md`（MID 清单 + 日志）。
+- **P3 输入法/OSK（2026-11-21 lane 考古，全账 = `reports/ime-osk-zero-to-usable-20261121.md`，531 行 P0–P5）**：
+  现机 = **stock trixie**（phoc/phosh **0.46.0**、OSK = `phosh-osk-stub 0.46.0` = 历次报告里的 stevia 同一角色；squeekboard 未装），
+  `scripts/ime-candidates-check.sh` 实跑 **PASS=4 FAIL=6**（11-15 曾 11/0）——5 个 FAIL 是重建根丢失的手工修复（T1 dbus `Exec` 无 `--disable waylandim` / T2 无 `config` ⇒ classicui / T4 `environment.d` 被写回），
+  1 个是脚本判据过时（只认 `stevia|squeekboard`）→ **已修**（现认三者任一）。另：`graphical-session.target` = **inactive** ⇒ fcitx5/focusd `enabled` 却 `inactive`（`org.kde.impanel` 无 owner）。
+  **需用户拍板 1 项（策略二选一，不得由脚本静默选）**：`GTK_IM_MODULE` 取值 ——
+`=fcitx` ⇒ GTK 里能中文组词但 **phoc 收不到 `enable`、OSK 不自动弹**（#618）；**不设** ⇒ OSK 能自动弹但 GTK 无组词（现机 GTK3 本就不建 fcitx IC，#653）。
+  2026-11-15 台账已裁 T4 = 摘掉，但 `rootfs/debian/daily-baseline.sh §3` 仍主动写 `=fcitx`（**正面冲突**）⇒ 已在脚本里就地标注冲突与代价，待裁决后二者取一。
 - **P1 安卓 a 槽 —— 主机侧就绪度（2026-11-21 补齐，剩的全是设备窗口）**：
   ① **S5 取证件两侧都能造了**：`scripts/boot-img-cmdline.py` 按 magic 同时支持 boot v4 与 **vendor_boot v4**
   （cmdline 窗口 28..2076，等长原地改写）；两件已落 `out/android-v3-bringup-20261120/boot-ttygs0-{boot,vendor_boot}.img`

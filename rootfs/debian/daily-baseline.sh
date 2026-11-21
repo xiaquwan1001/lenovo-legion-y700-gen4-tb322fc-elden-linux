@@ -129,7 +129,13 @@ if [ -n "$(find "$(P /usr/share/fonts)" -name 'NotoSansCJK*' -print -quit 2>/dev
 else miss "缺 CJK 字体（fonts-noto-cjk）"; fi
 
 # ---------------------------------------------------------------- 3 输入法
-say "[3. 输入法（fcitx5 + Rime，OSK 槽位留给 phosh-osk-stevia）]"
+say "[3. 输入法（fcitx5 + Rime，OSK 槽位留给 phosh-osk-stub）]"
+# ⚠ 2026-11-21 已知口径冲突（未裁决，改本文前先读）：本块写 `GTK_IM_MODULE=fcitx`，
+#   而 2026-11-15 台账裁决 T4 = **摘掉**（`TASKS/sessions/2026-11-15-IME候选回归台账.md` §3c），
+#   理由 = `PITFALLS #618`：GTK 走 fcitx 模块时**不发** `zwp_text_input_v3.enable` ⇒ phoc/OSK 不知该弹；
+#   反向代价 = 去掉后 GTK 客户端就没 fcitx 组词（但 `#653` 实测本栈 GTK3 本就不建 fcitx IC）。
+#   ⇒ 这是「OSK 自动弹」 vs 「GTK 里能中文组词」的**策略二选一**，属于要用户拍板的项，
+#   不得由脚本静默选定。现况：重建根后本脚本会把 T4 的修复写回（`reports/ime-osk-zero-to-usable-20261121.md` §8 G1）。
 ENVD=$(P /etc/environment.d/50-elden-ime.conf)
 if [ -f "$ENVD" ] && grep -qx 'GTK_IM_MODULE=fcitx' "$ENVD"; then ok "/etc/environment.d/50-elden-ime.conf"
 elif [ "$CHECK" = 1 ]; then miss "缺 /etc/environment.d/50-elden-ime.conf（GTK/QT_IM_MODULE=fcitx）"

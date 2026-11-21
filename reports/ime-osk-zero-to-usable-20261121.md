@@ -13,7 +13,7 @@
 |---|---|---|---|
 | 内核 | `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0` | vk184 / vk189-00002 | 无（用户态无关） |
 | Debian | `13.7`（trixie） | trixie | — |
-| **phoc** | **`0.46.0-1`（发行版原件）** | 0.58.0-1 自编 syncobj / 0.59~rc1 自编 | **我们的 phoc 补丁（#615 版本门、syncobj）**在现机**不存在**；历史「补丁后仍不弹」的判据链要重做 |
+| **phoc** | **`0.46.0-1`（发行版版本号）** | 0.58.0-1 自编 syncobj / 0.59~rc1 自编 | 我们的 phoc 补丁（#615 版本门、syncobj）**在现机几乎肯定不存在**（版本号差两代），但 `dpkg-divert`/`apt-mark` 未核（设备 10:2x 后不可达）⇒ **未验证**；历史「补丁后仍不弹」的判据链要重做 |
 | **phosh** | **`0.46.0-3+deb13u1`** | 0.58.0-1 / 0.59~rc1 | 同上 |
 | **OSK 包** | **`phosh-osk-stub 0.46.0-1`**（`/usr/bin/phosh-osk-stub --allow-replacement`，PID 1466，持有 `sm.puri.OSK0`） | 「`phosh-osk-stevia 0.59~rc1`」/「squeekboard 1.43」 | **名字对不上是同一角色**：`--allow-replacement` + `sm.puri.OSK0` ⇒ 就是历次报告里的「stevia 那一层」；trixie 发行版的包名是 `phosh-osk-stub`。squeekboard **未装**（`dpkg -l squeekboard` 空） |
 | fcitx5 | `5.1.12-2`，进程 `/usr/bin/fcitx5 -d`（**手工起的**，PPID=1，09:21） | unit 拉起 `-r --disable waylandim` | 现机**无** `--disable waylandim`，且 unit `inactive` |
@@ -244,7 +244,7 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
 |---|---|---|---|
 | **`phosh-osk-stub`**（历次报告里的「stevia」） | ✅ **现役那一层** | 现机 `PID 1466 /usr/bin/phosh-osk-stub --allow-replacement`，持有 `sm.puri.OSK0`；`busctl get-property … Visible` → `b false` | **选它**（已装，零成本） |
 | `squeekboard` | 历史可用（Alpine/Phosh 0.55 世代），**现栈未装未验** | `reports/zh-ime-touch-chinese-20261020.md`（那次「全链可用」就是它）；`doc-ime-scope-audit` §1 D 档：上游自述 unmaintained | **不用** |
-| `wvkbd` | ❌ 需单栈（fcitx5 开 waylandim）+ **phoc 带 IM-grab NULL 修复** | `doc-ime-scope-audit` §1 C 档 + `patches-userland/zh-ime/withdrawn/README.md`；`bb1f7465` **不在**在机 phoc（现机还是 0.46 发行版原件） | **不用**（路线已否） |
+| `wvkbd` | ❌ 需单栈（fcitx5 开 waylandim）+ **phoc 带 IM-grab NULL 修复** | `doc-ime-scope-audit` §1 C 档 + `patches-userland/zh-ime/withdrawn/README.md`；`bb1f7465` **不在**在机 phoc（版本号 0.46，未核实 divert，**未验证**） | **不用**（路线已否） |
 | fcitx5 自带 `waylandim` 当 OSK | ❌ 它不画键盘 | 2026-11-09 §3 B 臂实测「能组词、屏幕键盘消失」，当日回退 | **不用** |
 
 ### 5.2 名字分离（不要把四个名字当一个东西）
@@ -398,7 +398,7 @@ sleep 2; … Visible                                                            
 | # | 旧判据 | 为什么现在不成立 | 现状 |
 |---|---|---|---|
 | **G6** | `#618`：「`GTK_IM_MODULE=wayland` ⇒ `Visible=(<true>,)`」 | `#653` 已证：**在 phoc 0.59~rc1 + phosh 0.59~rc1 栈上不再成立**（GTK3 连 fcitx IC 都不建）；现机又是 **0.46** 栈，两代都不可互推 | **未验证**（现机需要真 IC + 一次打字） |
-| **G7** | `#615`：「phoc 已去版本门（`grep -c` 源码 = 0）」 | 现机 phoc = **发行版 0.46.0 原件**，我们的补丁与自编件都不在；0.46 是否含同一 `return` **未在机核实** | 结论上仍安全：**无论门在不在，桥都是必需**（客户端层遮蔽 + 门本身两层串联） |
+| **G7** | `#615`：「phoc 已去版本门（`grep -c` 源码 = 0）」 | 现机 phoc 版本号 = **0.46.0**（`dpkg -l`），我们的补丁/自编件按版本号判断不在；`divert`/`hold`/二进制 sha **未核**，0.46 是否含同一 `return` **未核实** | 结论上仍安全：**无论门在不在，桥都是必需**（客户端层遮蔽 + 门本身两层串联） |
 | **G8** | 「unit `enabled` ⇒ 重登自启」 | 现机 `graphical-session.target` = **inactive**（`ActiveEnterTimestamp` 空）⇒ `WantedBy` 不生效；fcitx5 与 focusd 都 `enabled` 却 `inactive` | 必须显式 `systemctl --user start`，或先修会话 target 的拉起链（**未验证谁该拉**） |
 | **G9** | 候选窗「已通」（11-11 用户目视 + 截图） | `#645` 复核同一张图：**只有 preedit、没有候选窗**；当时的「确认」是被 DBus 里的 `SetLookupTable` 数据误导 | **C 档**（§7） |
 | **G10** | 文档：`apt-list.txt:121` / `pkgmap.tsv:186` 仍把 **squeekboard** 当 OSK | 现栈 OSK = `phosh-osk-stub`，squeekboard **未装**；上游自述 unmaintained | 文档漂移，需改或标注世代 |
