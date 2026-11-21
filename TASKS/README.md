@@ -152,6 +152,13 @@
   walkthrough 前置校验原来直接 `MISS` 退出；新 `scripts/lib-hosttools.sh` + `lib-fastboot.sh`/walkthrough 改用它，
   复跑打印 `OK fastboot …（v37.0.1）`。
   ③ 仍需设备：S1 清 BCB+槽位、S2 原厂 `metadata`、S3 原厂 `super` 对照、S5 上机判「ABL 认不认 v4 件 + 取哪侧 cmdline」。
+  ④ **进 fastboot 只能物理键（2026-11-21 三条软路径实测全灭，`PITFALLS #701`）**：PSCI 钩子缺（#690）·
+     `misc` BCB `bootonce-bootloader` **ABL 不采纳**（写后读回校验通过，仍普通重启；用户目视确认）·
+     `qbootctl -u b` 写失败（`gpt_disk_commit: Invalid args`，要同时改 UFS bLun；`-i` 未测）。
+     工具已交付：设备侧 `/usr/local/sbin/elden-to-bootloader`（能力自检 + 两臂 + BCB 备份/读回校验 + `--clear-bcb`）、
+     主机侧 `scripts/to-bootloader.sh`（fastboot=rc0 / 回 Linux=rc10 且自动清 BCB / 都没有=rc11）。
+     恢复一键进 fastboot 的路线（按代价）= 换回带钩子的核（补丁现成、需重放内核树）> `qbootctl -i -u <slot>`（完后必须 `--set-active` 复原）> EDL。
+     全账 = `reports/linux-to-fastboot-20261121.md`。
 - **已收口备忘**：fastboot 三层真因（#697）、音频/触觉资产（#698）、fastboot 不在 PATH（#699）、PC→平板音频常驻（`scripts/as-client-deploy.sh`）。
 
 **当前口径（2026-10-06 立，2026-11-03 复核）**

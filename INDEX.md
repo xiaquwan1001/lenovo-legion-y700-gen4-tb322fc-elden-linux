@@ -25,6 +25,11 @@
      脚本/两枚 unit/`/var/lib/elden` 三样全无 ⇒ 一直是「没数据」（`PITFALLS` **#700**）；已恢复（timer enabled+active，表 20 列对齐）
      并固化四处（`tick` 模式 + `units-extra/` 手写 timer + `stage.sh` 4d + deploy **§12** + doctor §22 非包锚点）。
      端到端：一次 `rtcwake -m mem -s 45` 前后各采一行，`suspend_stats` **3/0 → 4/0**、`fail=0`。全账 = `reports/t9-sampler-restored-20261121.md`。
+   - **同一设备窗口：Linux→fastboot 三条软路径实测全灭（`PITFALLS` #701）⇒ 上机测试只能物理键**。PSCI 钩子缺（#690）·
+     `misc` BCB `bootonce-bootloader` ABL **不采纳**（写后读回校验通过，仍普通重启，用户目视确认）·
+     `qbootctl -u b` 写失败（`gpt_disk_commit: Invalid args`；`-i` 未测）。已交付设备侧 `elden-to-bootloader`
+     （能力自检 + BCB 备份/读回校验 + `--clear-bcb`）与主机侧 `scripts/to-bootloader.sh`（三态判据，回 Linux 时自动清 BCB）；
+     设备收尾态干净（BCB 全 0、`_b` Active/Succ/Bootable 全 1、graphical active）。全账 = `reports/linux-to-fastboot-20261121.md`。
    - **同轮（设备窗口就绪度）**：① `scripts/boot-img-cmdline.py` 扩到 **vendor_boot v4**（cmdline 窗口 28..2076，
      等长原地改写）+ `--selftest`（4 正例/4 反例）+ `check-doctor` **§27**；S5 两件已落
      `out/android-v3-bringup-20261120/boot-ttygs0-{boot,vendor_boot}.img`（vendor 侧五段载荷 sha 全 SAME）。
