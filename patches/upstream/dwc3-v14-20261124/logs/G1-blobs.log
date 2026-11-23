@@ -1,0 +1,11 @@
+== G1 blob（2026-11-24T07:30:57+08:00）
+dcfa8c3a81c51522928c29b942d936ac45350864
+ee186d542a1018237d10cc664699fe67096163e5
+ce309792864b3aa6ba89cffd3e58710ed3c6384e
+e6cf7b240b23eab7d2c1059d5f3a355216653f65
+82e7a334b135821c92921c320ee5a09ec31a0ab4
+906cac4f3e6e5ac2816fd3611682e40127491edf
+== diffstat base..v14
+ drivers/usb/dwc3/drd.c                             | 329 ++++++++++++++++++++-
+ drivers/usb/roles/class.c                          |  45 +++
+ 6 files changed, 633 insertions(+), 4 deletions(-)

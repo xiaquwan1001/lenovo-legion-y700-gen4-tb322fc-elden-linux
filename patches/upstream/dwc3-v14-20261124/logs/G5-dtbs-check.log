@@ -1,0 +1,7 @@
+make[1]: 进入目录“/tmp/kb-dwc3-v14”
+  UPD     include/config/kernel.release
+  DTC [C] arch/arm64/boot/dts/qcom/sm8250-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8650-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-qrd.dtb
+make[1]: 离开目录“/tmp/kb-dwc3-v14”

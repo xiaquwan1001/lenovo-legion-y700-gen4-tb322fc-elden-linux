@@ -1,0 +1,178 @@
+From 681ca2b82a1f7cfe06e2febc5cd8f1f8eb19900b Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 24 Nov 2026 07:30:17 +0800
+Subject: [PATCH v14 1/3] dt-bindings: usb: snps,dwc3: describe two connectors
+ on one HS data bus
+
+Some designs route two USB Type-C receptacles through one High Speed
+D+/D- pair with a GPIO multiplexer, so only one connector drives the
+controller at a time and the device tree has to say which role-switch
+input and which mux state belongs to each of them.
+
+A mux'ed data stream on one bus is an endpoint of that port in the OF
+graph, not a port of its own, so the two connectors become endpoint@0
+and endpoint@1 of the High Speed port, next to the Super Speed port@1.
+Each endpoint carries "usb-role-switch" and the "mux-state" that
+reaches it, and the multiplexer is referenced with "mux-controls", so
+an existing "gpio-mux" controller is used as is instead of a private
+property.
+
+The High Speed port definition stays optional: a single-connector
+controller keeps describing one plain "endpoint", the two endpoints
+are required only when "mux-controls" is present, and the two states
+must be opposite so that the two connectors cannot both claim the same
+data path.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+
+Changes since v13:
+ - [sashiko, 2026-11-23, Low] "missing maxItems: 1 on mux-controls".
+   Accepted: the shared data bus is driven by one two-state multiplexer, so
+   "mux-controls" now says "maxItems: 1" instead of leaving the number of
+   mux controllers open.
+
+ - [sashiko, same report, Low] "missing endpoint schema under port@0":
+   a plain "port@0/endpoint" could carry undocumented properties and
+   "endpoint@2"/"endpoint@3" were not rejected, because the graph port base
+   intentionally leaves "unevaluatedProperties" open.  Described where it
+   matters, inside the "mux-controls" branch: a mux'ed bus has exactly two
+   data streams, so that branch now rejects a plain "endpoint" and any
+   "endpoint@2"+.  Single-connector controllers keep the generic graph port
+   binding untouched.
+
+ - [sashiko, same report, Low] "contradictory oneOf and redundant mux
+   rules".  Accepted; this one was a real logic error.  The "oneOf" that
+   requires opposite "mux-state" values evaluated both alternatives as true
+   when "mux-state" was absent, so a two-endpoint tree without
+   "mux-controls" failed validation.  The "oneOf" now sits in the
+   "mux-controls" branch, where both properties are required anyway, and the
+   redundant "dependentRequired" and "mux-controls: false" are gone.
+---
+ .../bindings/usb/snps,dwc3-common.yaml        | 100 +++++++++++++++++-
+ 1 file changed, 99 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+index 6c0b8b653824..dcfa8c3a81c5 100644
+--- a/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
++++ b/Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml
+@@ -26,8 +26,78 @@ allOf:
+       $ref: usb.yaml#
+     else:
+       $ref: usb-xhci.yaml#
++  - if:
++      required: [mux-controls]
++    then:
++      # A multiplexed High Speed bus only makes sense when the controller is
++      # dual-role and both connectors can switch their role independently.
++      required: [ports, usb-role-switch]
++      properties:
++        dr_mode:
++          const: otg
++        ports:
++          required: [port@0]
++          properties:
++            port@0:
++              required: ['#address-cells', '#size-cells',
++                         endpoint@0, endpoint@1]
++              # A mux'ed High Speed bus has exactly two connectors, as the
++              # two endpoints of this port; a plain "endpoint" or any further
++              # endpoint would be a third data stream and is not described.
++              properties:
++                endpoint: false
++              patternProperties:
++                '^endpoint@[01]$':
++                  required: [usb-role-switch, mux-state]
++                '^endpoint@([2-9]|[1-9a-f][0-9a-f]+)$': false
++              # The two connectors must claim opposite mux states.  Kept inside
++              # this branch: JSON Schema evaluates "properties" of an absent
++              # property as true, so the same "oneOf" outside the branch would
++              # see both alternatives match when "mux-state" is not used at all.
++              oneOf:
++                - properties:
++                    endpoint@0:
++                      properties:
++                        mux-state:
++                          const: 0
++                    endpoint@1:
++                      properties:
++                        mux-state:
++                          const: 1
++                - properties:
++                    endpoint@0:
++                      properties:
++                        mux-state:
++                          const: 1
++                    endpoint@1:
++                      properties:
++                        mux-state:
++                          const: 0
++    else:
++      # Without a mux the High Speed port keeps the generic graph port
++      # binding, so single-connector controllers are described as before and
++      # the per-connector properties have no meaning.
++      properties:
++        ports:
++          properties:
++            port@0:
++              patternProperties:
++                '^endpoint@[01]$':
++                  properties:
++                    usb-role-switch: false
++                    mux-state: false
+ 
+ properties:
++  mux-controls:
++    $ref: /schemas/types.yaml#/definitions/phandle-array
++    maxItems: 1
++    description:
++      Phandle to the multiplexer that selects which of the two connectors
++      drives the controller's shared High Speed data bus, e.g. a
++      "gpio-mux" controller.  Each connector is described by the endpoint@0
++      or endpoint@1 of "port@0", and the endpoint of that connector carries
++      its own role-switch input and the "mux-state" it is reached in.
++
+   extcon:
+     maxItems: 1
+     deprecated: true
+@@ -411,9 +481,37 @@ properties:
+ 
+     properties:
+       port@0:
+-        $ref: /schemas/graph.yaml#/properties/port
++        # The High Speed port carries the controller's HS data stream.  Two
++        # receptacles sharing one HS D+/D- pair are two mux'ed data streams of
++        # that one stream, so they are two endpoints of this port and not two
++        # ports.  A single-connector controller describes the plain "endpoint"
++        # of the graph binding and is unaffected.
++        $ref: /schemas/graph.yaml#/$defs/port-base
++        unevaluatedProperties: false
+         description: High Speed (HS) data bus.
+ 
++        patternProperties:
++          '^endpoint@[01]$':
++            $ref: /schemas/graph.yaml#/$defs/endpoint-base
++            unevaluatedProperties: false
++
++            properties:
++              usb-role-switch:
++                type: boolean
++                description:
++                  This connector has its own USB role switch, registered
++                  against this endpoint.
++
++              mux-state:
++                $ref: /schemas/types.yaml#/definitions/uint32
++                enum: [0, 1]
++                description:
++                  State of the High Speed data bus multiplexer which connects
++                  this connector to the controller.  The two connectors of one
++                  controller must use different states.
++
++            required: [reg]
++
+       port@1:
+         $ref: /schemas/graph.yaml#/properties/port
+         description: Super Speed (SS) data bus.
+-- 
+2.53.0
+
