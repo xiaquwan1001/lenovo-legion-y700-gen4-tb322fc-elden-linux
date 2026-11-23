@@ -1,0 +1,25 @@
+> 0002-osk-stub-terminal-arrows.patch — phosh-osk-stub 0.46 terminal 布局补方向键 + Home/End
+> 依据：pos-vk-driver.c:54-57 KEY_* 已在符号表；keycodes_common 无 KEY_HOME/KEY_END 条目。
+> 基线：phosh-osk-stub 0.46.0 src/layouts/terminal.json（level 3 rows[3]）与 src/pos-vk-driver.c。
+--- a/src/pos-vk-driver.c
++++ b/src/pos-vk-driver.c
+@@ -130,6 +130,8 @@ static const PosKeycode keycodes_common[] = {
+   { "9", KEY_9, POS_KEYCODE_MODIFIER_NONE },
++  { "KEY_HOME", KEY_HOME, POS_KEYCODE_MODIFIER_NONE },
++  { "KEY_END",  KEY_END,  POS_KEYCODE_MODIFIER_NONE },
+ };
+
+ static const PosKeycode keycodes_terminal[] = {
+--- a/src/layouts/terminal.json
++++ b/src/layouts/terminal.json
+@@ -（level 3 / mode=locked，第 4 行）原:
+         [ [ "<", "‹", "≤", "«" ], [ ">", "›", "≥", "»" ], [ " " ], [ "," ], [ ".", "…" ] ]
+改:
+         [ { "symbol": "KEY_HOME", "label": "⇱", "style": "sys" },
+           { "symbol": "KEY_LEFT", "label": "←", "style": "sys" },
+           { "symbol": "KEY_UP",   "label": "↑", "style": "sys" },
+           { "symbol": "KEY_DOWN", "label": "↓", "style": "sys" },
+           { "symbol": "KEY_RIGHT","label": "→", "style": "sys" },
+           { "symbol": "KEY_END",  "label": "⇲", "style": "sys" },
+           [ " " ], [ "," ], [ ".", "…" ] ]
+（F 层第 2 行尾 "| ¢ € ¥ ^ ° = { }" 后追加 ⇱/⇲ 两键同上；< > 在数字层与该行原有重复，不丢符号。）

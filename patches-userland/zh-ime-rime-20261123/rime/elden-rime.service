@@ -1,0 +1,23 @@
+# elden-rime.service — A 方案（pipe + 常驻守护）的 systemd user unit
+# 安装：cp elden-rime.service ~/.config/systemd/user/ && systemctl --user daemon-reload
+# 启动：systemctl --user enable --now elden-rime
+# 依据：graphical-session.target 在本栈不 active（reports/ime-osk-zero-to-usable-20261121.md §0.3
+#       第 2 步注释），所以用 default.target 而不是 graphical-session.target 做 WantedBy。
+[Unit]
+Description=Elden RIME pinyin candidate daemon (phosh-osk-stub pipe completer backend)
+# 守护崩了自动拉起；OSK 侧客户端对守护缺席是静默退化（英文照打），不阻塞输入
+After=default.target
+
+[Service]
+ExecStart=/usr/local/bin/librime-piped --idle-exit 1800 --verbose
+Restart=on-failure
+RestartSec=2
+# 首次部署 luna_pinyin 词库编译可能数秒，超时放宽
+TimeoutStartSec=60
+# 空闲 1800 s 自退（--idle-exit），由本 unit 的 Restart 策略保证下次按键时被 DBus/socket 激活
+# 注意：socket 不走 systemd socket-activation（守护自己 listen），OSK 客户端 connect 失败
+# 即静默无候选；若要"按键零延迟唤醒"，后续可加 elden-rime.socket（.socket + Accept=no 需改守护
+# 接管 fd，本轮不做，保持零上游改动）。
+
+[Install]
+WantedBy=default.target
