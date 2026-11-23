@@ -1,7 +1,8 @@
 > 0002-osk-stub-terminal-arrows.patch — phosh-osk-stub 0.46 方向键 + Home/End（两处）
 > 依据：pos-vk-driver.c:54-57 KEY_* 已在符号表；keycodes_common 无 KEY_HOME/KEY_END 条目。
 > 内容：① vk-driver 加 KEY_HOME/KEY_END 符号；② terminal 布局 opt+shift 层把方向键行与 ⇱/⇲ 放进去（用户反馈此位置过深）；
->       ③ **2026-11-23 用户要求提级**：us.json 与 terminal.json 的**默认层 row2（zxcvbnm 行，原 7 键、两侧留空）**补齐 ←↑↓→，成为一等公民。
+>       ③ 2026-11-23 曾试把 ←↑↓→ 提到 us/terminal 默认层 row2，**用户实测否决**（挤占 row2 ⇒ 全键盘按键变小、空间利用率反而下降）⇒ 已回退，保留本层入口
+--- a/src/pos-vk-driver.c
 --- a/src/pos-vk-driver.c
 +++ b/src/pos-vk-driver.c
 @@ -83,6 +83,8 @@
@@ -13,76 +14,9 @@
  };
  
  static const PosKeycode keycodes_terminal[] = {
---- a/src/layouts/us.json
-+++ b/src/layouts/us.json
-@@ -120,7 +120,27 @@
-           ],
-           [
-             "m"
--          ]
-+          ],
-+          {
-+            "symbol": "KEY_LEFT",
-+            "label": "←",
-+            "style": "sys"
-+          },
-+          {
-+            "symbol": "KEY_UP",
-+            "label": "↑",
-+            "style": "sys"
-+          },
-+          {
-+            "symbol": "KEY_DOWN",
-+            "label": "↓",
-+            "style": "sys"
-+          },
-+          {
-+            "symbol": "KEY_RIGHT",
-+            "label": "→",
-+            "style": "sys"
-+          }
-         ],
-         [
-           [
-@@ -573,4 +593,4 @@
-   ],
-   "locale": "en",
-   "name": "English United States"
--}
-\ 文件末尾没有换行符
-+}
 --- a/src/layouts/terminal.json
 +++ b/src/layouts/terminal.json
-@@ -134,7 +134,27 @@
-           ],
-           [
-             "m"
--          ]
-+          ],
-+          {
-+            "symbol": "KEY_LEFT",
-+            "label": "←",
-+            "style": "sys"
-+          },
-+          {
-+            "symbol": "KEY_UP",
-+            "label": "↑",
-+            "style": "sys"
-+          },
-+          {
-+            "symbol": "KEY_DOWN",
-+            "label": "↓",
-+            "style": "sys"
-+          },
-+          {
-+            "symbol": "KEY_RIGHT",
-+            "label": "→",
-+            "style": "sys"
-+          }
-         ],
-         [
-           [
-@@ -562,7 +582,17 @@
+@@ -562,7 +562,17 @@
            ],
            [
              "}"
@@ -101,7 +35,7 @@
          ],
          [
            [
-@@ -588,18 +618,36 @@
+@@ -588,18 +598,36 @@
            ]
          ],
          [
@@ -150,3 +84,10 @@
            [
              " "
            ],
+@@ -616,4 +644,4 @@
+   ],
+   "locale": "en",
+   "name": "Terminal Layout"
+-}
++}
+\ 文件末尾没有换行符
