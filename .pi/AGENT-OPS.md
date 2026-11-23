@@ -54,12 +54,13 @@
 - 覆盖 a 槽前确认真机对照取证已归档（2026-10-11 主体已采，指针 `TASKS/README.md §5` Q5）；回收 Android 专属分区需 G1 全绿 + EDL 备份在手。
 - **零写盘优先** `fastboot boot`；严格区分 **`-ram` 纯 RAM 变体（无桌面/服务）** 与**持久变体（RAM 内核 + 磁盘根）**——功能/服务级测试必须用持久变体（`PITFALLS` #92/#93）。
 - **封装脚本**：主机侧构建/打包脚本可跑；**刷写/EDL 命令一律拆单条**（该机对批量/连续命令容错差，见 `PITFALLS` #3）。
-  **进 fastboot 的首选路径 = `ssh elden-root 'sync; reboot bootloader'`**（systemd 正常关机 + PSCI，`PITFALLS` #650）；
-  **2026-11-19 起软路径默认拒绝**（`PITFALLS` #690）：现役 vk192 主线核**无 vendor RESTART2 钩子**，`scripts/to-fastboot.sh` 内部调用的
-  `eldroid-bootctl`（python3 件）与 `python3` 在现役 Debian 根上**都不存在** ⇒ 该脚本 `--boot` 静默失败并白等 90 s；
-  `reboot2 bootloader`、`cycle.sh --fastboot/--soft`（`echo b > /proc/sysrq-trigger` 暖复位）、`uefi-oneshot.sh` 侧入口同样**不再使用**。
-  `scripts/to-fastboot.sh` 只保留 `--flash <img>` 用途（设备内 `dd` 写 `boot_b` 再重启），`--boot` 明确不推荐。
-  **软路径失败即转手工**：长按电源 10 s 断电 → 音量上 + 电源进 fastboot。停手判据 = 发出后 25 s 内 `fastboot devices` 空 +
+  **进 fastboot 的首选路径 = `ssh elden-root 'sync; systemctl reboot bootloader'`**（`PITFALLS` #712，2026-11-23 同启动内对照实测；
+  **不需要** vendor RESTART2 钩子，无钩子的 vk192 上也 ~21 s 进 fastboot）。唯一实现 = `scripts/lib-soft-bootloader.sh`
+  （`soft_to_bootloader [wait_s]`；`scripts/to-fastboot.sh`、`slot-switch.sh`、`q26-recheck.sh`、`arm-window-hunt.sh`、
+  `n5b-vk64-death-rate.sh` 都 source 它）。**`PITFALLS` #690/#701 的「无钩子 ⇒ 软路径不存在 / 只能物理键」已作废**，
+  别再写 fail-closed 门。`reboot2 bootloader`、`cycle.sh --fastboot/--soft`（sysrq 暖复位）仍不使用；
+  `eldroid-bootctl` 已随 Alpine 根退场（现役根无 python3）。
+  **软路径真失败才转手工**：长按电源 10 s 断电 → 音量下 + 电源进 fastboot（用户 2026-10 实操记录，`.pi/memory`）；停手判据 = 发出后 25 s 内 `fastboot devices` 空 +
   `lsusb` 无 `18d1/05c6/1d6b` + SSH 不通 ⇒ 停，不重试，请用户长按电源断电。
 
 ---

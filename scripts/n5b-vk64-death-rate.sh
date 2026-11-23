@@ -81,17 +81,16 @@ trap stop_serial EXIT
 SSH() { timeout 25 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -o BatchMode=yes "$DEV" "$@" 2>/dev/null; }
 FB()  { timeout 20 fastboot devices > /tmp/n5b-fbdev.txt 2>/dev/null; grep -q "${SER:-HA2EXB0E}" /tmp/n5b-fbdev.txt; }
 
-# ★ 审计批 1（2026-11-22，reports/scripts-audit-20261122.md §3）：`reboot2 bootloader` 已停用
-#   （TASKS §4 停用令 + PITFALLS #701 实测 Linux→fastboot 软路径全灭）；改用 scripts/to-fastboot.sh:60
-#   口径（sync + systemctl reboot bootloader）。软路径失败 = 停手，需人工物理键，不再 sysrq 逃生。
-REBOOT_FB() { SSH 'sync; systemctl reboot bootloader' >/dev/null 2>&1 || true; }
-# ★ #701 fail-closed 门（2026-11-21，reports/linux-to-fastboot-20261121.md）：Linux→BL 三条软路径
-#   （reboot2 / systemctl reboot bootloader / SysRq-b）实测全灭 ⇒ 任何"软重启进 fastboot"都不可信。
-#   本文件只保留一次尝试（REBOOT_FB）作为探路，失败即停手并打统一文案，不做重试、不产无效 n。
-BL_NEED_PHYS='需物理键进 BL，见 reports/linux-to-fastboot-20261121.md'
-bl_gate() { # $1 = 场景描述
-	echo "  ❌ $1 —— #701：Linux→fastboot 软路径 2026-11-21 实测全灭"
-	echo "  ⇒ $BL_NEED_PHYS（音量下+电源），再用 fastboot boot 重进 vk64。"
+# ★ 审计批 1（2026-11-22，reports/scripts-audit-20261122.md §3）：`reboot2 bootloader` 已停用，
+#   软路径统一口径 = scripts/lib-soft-bootloader.sh（`sync; systemctl reboot bootloader`）。
+REBOOT_FB() { . "$(dirname "$0")/lib-soft-bootloader.sh"; TAB=$DEV SER=${SER:-HA2EXB0E} soft_to_bootloader "${1:-90}"; }
+# ★ 2026-11-24 更正（PITFALLS #712 + reports/linux-to-bl-vendor-reset-20261123.md §0）：
+#   2026-11-21 的「#701：Linux→BL 三条软路径全灭」实测已作废（`reboot bootloader` 一直可用；
+#   旧错因 = 静态判据 + fail-closed 从未真发命令）。现在**先真发一次软路径**，真失败才停手要物理键。
+BL_NEED_PHYS='软路径本次未进 fastboot，需物理键（PITFALLS #712 仍是首选路径）'
+bl_gate() { # $1 = 场景描述（调用点已在之前真发过 REBOOT_FB，此处只报文案，不重试）
+	echo "  ❌ $1"
+	echo "  ⇒ $BL_NEED_PHYS：音量下+电源，再用 fastboot boot 重进 vk64。"
 }
 
 echo "### N5b start $(date '+%F %T')  rounds=$N  img=$IMG"
@@ -192,8 +191,8 @@ EOF
 }
 
 # 强制重开一次 vk64 RAM 内核（用于「已在 vk64 但显示栈已坏」的 boot，见下方显示健康门）
-# ★ 审计批 1（2026-11-22）：原 sysrq 逃生梯（echo b > /proc/sysrq-trigger）随 #701 停用令删除——
-#   软路径失败就返回 1 停手，设备态留给人工判定，不再盲梯。
+# ★ 审计批 1（2026-11-22）：原 sysrq 逃生梯（echo b > /proc/sysrq-trigger）已删——
+#   软路径统一走 lib-soft-bootloader.sh（#712 实测可用）；失败就返回 1 停手，不盲梯。
 wait_fb() { local t=0; while [ $t -lt "${1:-90}" ]; do FB && return 0; sleep 3; t=$((t+3)); done; return 1; }
 force_reboot_vk64() {
 	local up w=0 t=0
@@ -232,13 +231,13 @@ if [ "${CHECK_ONLY:-0}" = 1 ]; then
 	exit 0
 fi
 
-# ★ #701 开跑前门：本脚本的每一轮都以「不在 fastboot 就软重启进去」为前提（boot_vk64），
-#   而那条软路径已死 ⇒ 若开跑时设备既不在 fastboot 又 SSH 不可达，任何恢复通道都断，
-#   硬跑只会消耗 boot_b 的 slot-retry-count（#363）并产出无效样本。此处 fail-closed。
+# ★ 开跑前门：本脚本的每一轮都以「不在 fastboot 就软重启进去」为前提（boot_vk64），
+#   #712 后软路径可用；但设备既不在 fastboot 又 SSH 不可达时任何恢复通道都断，
+#   硬跑只会消耗 boot_b 的 slot-retry-count（#363）并产出无效样本 ⇒ 此处仍 fail-closed。
 #   放在 --check 之后：--check 是零副作用诊断，设备不可达时也该把现场打出来。
 if ! FB && ! ssh_alive_probe; then
 	echo "  ❌ 开跑前探活失败：设备既不在 fastboot，SSH（$DEV）也不可达"
-	echo "  ⇒ $BL_NEED_PHYS（音量下+电源），再用 fastboot boot 重进 vk64。"
+	echo "  ⇒ $BL_NEED_PHYS：音量下+电源，再用 fastboot boot 重进 vk64。"
 	exit 5
 fi
 

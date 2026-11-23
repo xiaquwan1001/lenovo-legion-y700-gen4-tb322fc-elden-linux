@@ -16,3 +16,14 @@
   主机侧 `scripts/to-bootloader.sh`（三态判据：fastboot=rc0 / 回 Linux=rc10 且自动清 BCB / 都没有=rc11）。
 - 恢复「一键进 fastboot」的三条后续路线（按代价）：换回带钩子的核（补丁现成，需重放内核树）> `qbootctl -i -u <slot>`（故意标不可启，
   成功后必须 `fastboot --set-active=b` 复原，见 #677）> EDL dload-mode（只能进 9008，未真机验证）。
+
+## 2026-11-24 更正（第一条腿作废）
+
+「三条软路径全灭」里**第一条腿**（PSCI 钩子缺 ⇒ 无软路径）已被 **#712**
+（`345-Linux到BL一直可用-推翻只能物理键.md`）推翻：`systemctl reboot bootloader` 一直可用。
+
+- 仍成立：`misc` BCB `bootonce-bootloader` **ABL 不采纳**（写后读回校验通过仍普通重启）；
+  `qbootctl -u b` / `-s` 写失败（`gpt_disk_commit: Invalid args`，要同时改 UFS bLun）⇒ #701 现在只剩
+  「**切槽写原语**不可用」这个含义（切槽仍必须到 fastboot 用 ABL 的 `--set-active`）。
+- 进 fastboot 的唯一实现 = `scripts/lib-soft-bootloader.sh`；脚本层 #701 fail-closed 门已于 2026-11-24 全部删除。
+- 物理键组合：**音量下 + 电源**（用户实操记录）；本条旧正文的「音量上 + 电源」是笔误。

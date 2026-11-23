@@ -27,10 +27,10 @@ IMG=${IMG:-$ROOT/out/boot-elden-vk62.img}
 SSID=${SSID:-P40 Pro}
 OBSERVE=${OBSERVE:-180}
 SSHH=(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=6 -o BatchMode=yes)
-# ★ #701 fail-closed 门（2026-11-21，reports/linux-to-fastboot-20261121.md）：Linux→BL 三条软路径
-#   实测全灭 ⇒ 本脚本过去在这里指引 `ssh TAB 'reboot2 bootloader'`，跟着做只会普通重启。
-#   现在只探活、不指引软路径；不在 fastboot 即停手要物理键。
-BL_NEED_PHYS='需物理键进 BL，见 reports/linux-to-fastboot-20261121.md'
+# ★ 2026-11-24 更正（PITFALLS #712）：2026-11-21 的「#701：Linux→BL 三条软路径全灭」已作废
+#   （`sync; systemctl reboot bootloader` 在无 vendor-reset 钩子的 vk192 上也进 fastboot）。
+#   本脚本先真发一次软路径（lib-soft-bootloader.sh），真失败才停手要物理键。
+BL_NEED_PHYS='软路径本次未进 fastboot，需物理键（音量下+电源；PITFALLS #712 仍是首选路径）'
 S(){ timeout 25 "${SSHH[@]}" "$TAB" "$@" 2>/dev/null; }
 TS=$(date +%Y%m%d-%H%M%S)
 LOGDIR=${LOGDIR:-$ROOT/logs/q26-recheck-$(basename "$IMG" .img)-$TS}
@@ -51,13 +51,19 @@ if [ -z "$FB" ]; then
 	FB=$(timeout 8 fastboot devices 2>/dev/null 9>&- | awk 'NF{print $1; exit}')
 fi
 if [ -z "$FB" ]; then
-	# 探活：区分「在 Linux（SSH 可达）」和「完全不可达」，但不提供任何软路径指引（#701）。
+	# 探活：在 Linux（SSH 可达）就先真发一次软路径（#712），失败才停手。
 	if S true; then
-		echo "[q26] 设备在 Linux（SSH $TAB 可达）但不在 fastboot —— #701 已实测软路径全灭，本脚本不尝试。"
+		echo "[q26] 设备在 Linux（SSH $TAB 可达）→ 走软路径（#712）"
+		. "$(dirname "$0")/lib-soft-bootloader.sh"
+		if soft_to_bootloader; then
+			FB=$(timeout 8 fastboot devices 2>/dev/null | awk 'NF{print $1; exit}')
+		fi
 	else
 		echo "[q26] 设备既不在 fastboot，SSH（$TAB）探活也失败。"
 	fi
-	echo "[q26] $BL_NEED_PHYS（音量下+电源）；进 BL 后重跑本脚本。"
+fi
+if [ -z "$FB" ]; then
+	echo "[q26] $BL_NEED_PHYS；进 BL 后重跑本脚本。"
 	exit 3
 fi
 prod=$(timeout 8 fastboot -s "$FB" getvar product 2>&1 | awk -F': ' '/^product:/{print $2}')

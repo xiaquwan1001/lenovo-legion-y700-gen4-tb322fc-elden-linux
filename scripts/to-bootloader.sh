@@ -1,10 +1,12 @@
 #!/bin/bash
 # to-bootloader.sh — 主机侧「Linux → bootloader」驱动 + 判据（配套设备侧 elden-to-bootloader）
 #
-# 为什么（2026-11-21）：设备窗口里的测试（AVB 债验收 `fastboot flash vbmeta_b`/`fastboot boot`、
-# Android a 槽 S1–S5）都需要进 fastboot，而**现役 vk192 没有 PSCI vendor-reset 钩子**
-# （PITFALLS #690）⇒ 历史上只能人肉长按【音量上 + 电源】。本脚本把两条软路径做成一条命令，
-# 并把「到底哪种臂在这颗核上有效」变成**可复现的判据**（成功 = 目标 SN 出现在 `fastboot devices`）。
+# 为什么（2026-11-21 建，2026-11-24 更正）：设备窗口里的测试（AVB 债验收 `fastboot flash vbmeta_b`/
+# `fastboot boot`、Android a 槽 S1–S5）都需要进 fastboot。★ **PITFALLS #712（2026-11-23 实测）**：
+# 现役 vk192（上游主线核、无 vendor-reset 钩子）上 `sync; systemctl reboot bootloader` 同样进 fastboot
+# ⇒ 2026-11-21 的「#690/#701：软路径全灭、只能人肉长按【音量上 + 电源】」**已作废**。
+# 本脚本仍保留两臂，只因为“哪一臂生效”必须用 `fastboot devices` 里出现目标 SN 来证明：
+# 默认 `--arm auto` 交设备侧 `elden-to-bootloader --auto`（#712 后恒走 psci 臂 = `reboot bootloader`）。
 #
 # 用法：
 #   scripts/to-bootloader.sh                 # 自动选臂（设备侧能力自检决定 psci/bcb）
@@ -105,7 +107,7 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
 	now_up=$(linux_up)
 	if [ -n "$now_up" ] && [ "$now_up" -lt "$UP0" ] 2>/dev/null; then
 		echo "[to-bl] ⚠ 设备回到了 Linux（uptime ${now_up}s < 之前 ${UP0}s）⇒ arm=$ARM 对本核**无效**" >&2
-		echo "[to-bl]   结论登记：$( [ "$ARM" = bcb ] && echo 'BCB bootonce-bootloader 未被 ABL 采纳（与 Q23 一致）' || echo '无 PSCI vendor-reset 钩子（#690）' )" >&2
+		echo "[to-bl]   结论登记：$( [ "$ARM" = bcb ] && echo 'BCB bootonce-bootloader 未被 ABL 采纳（与 Q23 一致）' || echo 'psci 臂本次未生效（#712 路径已实测可用，本次失败按现场记账：查线/供电/ABL）' )" >&2
 		timeout -k 2 10 "${SSH_BASE[@]}" "$DEV_TOOL --clear-bcb" >/dev/null 2>&1 || true
 		exit 10
 	fi

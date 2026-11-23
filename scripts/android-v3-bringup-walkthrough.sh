@@ -325,19 +325,19 @@ ensure_active_a() {
 			# 而且 Linux 侧**没有**可用的切槽原语：`qbootctl -s/-u` 实测都报
 			#   gpt_disk_commit: Invalid args / update_slot_attribute: Failed to commit disk（PITFALLS #701）
 			# 因为 ABL 的 UPDATE_SLOT 还要改 UFS 启动 LUN（bLun），Linux 侧改不了。
-			# ⇒ 正确做法 = 物理键进 fastboot 后 `fastboot -s $SER --set-active=a`（ABL 实现，会同时清
+			# ⇒ 正确做法 = 先软路径进 fastboot（`sync; systemctl reboot bootloader`，PITFALLS #712）后 `fastboot -s $SER --set-active=a`（ABL 实现，会同时清
 			#   UNBOOTABLE + 补 retry=7，PITFALLS #677/#697）。这里 fail-closed，绝不静默继续。
 			local cur=""
 			if [ "$APPLY" = 1 ]; then
 				cur=$(timeout -k 5 20 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl -a 2>&1' 2>/dev/null | sed -n 's/^Active slot: _\{0,1\}//p' | tr -d '\r')
 				if [ "$cur" = a ]; then info "OK   active 槽已是 a（无需切换）"; return 0; fi
 				warn "active 槽当前 = ${cur:-未知}，但 Linux 侧无法切槽（#701）⇒ 本步不能继续"
-				info "人项：长按电源 10 s 关机 → 按住【音量上 + 电源】进 fastboot，再跑："
+				info "人项：先软路径进 fastboot（scripts/lib-soft-bootloader.sh，PITFALLS #712），再跑："
 				info "      timeout 30 fastboot -s $SER --set-active=a && timeout 30 fastboot -s $SER getvar current-slot"
 				info "      然后重跑本步（fastboot 侧会自动切槽并观察首启）"
 				return 1
 			fi
-			info "[dry] Linux 侧切槽不可用（#701）⇒ 届时需先物理键进 fastboot 再 --set-active=a"
+			info "[dry] Linux 侧切槽不可用（#701）⇒ 届时需先进 fastboot（#712 软路径）再 --set-active=a"
 			;;
 		fastboot)
 			run 20 fastboot -s "$SER" getvar current-slot
@@ -382,18 +382,18 @@ require_active_a() {
 			info "[dry] 若 current-slot != a ⇒ fastboot -s $SER --set-active=a"
 			return 0 ;;
 		linux)
-			[ "$APPLY" = 1 ] || { info "[dry] 读 qbootctl -a；!= a 时需物理键进 fastboot 才能切槽（#701）"; return 0; }
+			[ "$APPLY" = 1 ] || { info "[dry] 读 qbootctl -a；!= a 时需先进 fastboot（#712 软路径）才能切槽（#701 指切槽原语）"; return 0; }
 			cur=$(timeout -k 5 20 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'qbootctl -a 2>&1' 2>/dev/null \
 				| sed -n 's/^Active slot: _\{0,1\}//p' | tr -d '\r')
 			if [ "$cur" = a ]; then info "OK   active 槽已是 a（qbootctl -a）"; return 0; fi
 			warn "active 槽 = ${cur:-未知}，Linux 侧无法切槽（PITFALLS #701）⇒ **不要在本步写盘/重启**"
-			info "人项：长按电源 10 s → 【音量上 + 电源】进 fastboot → fastboot -s $SER --set-active=a"
+			info "人项：软路径进 fastboot（#712：sync; systemctl reboot bootloader）→ fastboot -s $SER --set-active=a"
 			info "      然后停在 fastboot 里重跑本步（S2/S3/S4 会从 fastboot 进 EDL）"
 			return 1 ;;
 		edl)
 			warn "设备已在 EDL：切 active 槽只能走 fastboot ⇒ 当前无法确认 active=a"
 			[ "$APPLY" = 1 ] && return 1
-			info "[dry] 正规顺序 = 物理键进 fastboot → --set-active=a → fastboot oem edl"
+			info "[dry] 正规顺序 = 软路径进 fastboot（#712）→ --set-active=a → fastboot oem edl"
 			return 0 ;;
 		*)
 			warn "无法确认 active=a（设备现态 $st）⇒ fail-closed"

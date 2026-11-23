@@ -37,3 +37,15 @@ PSCI `SYSTEM_RESET2` + **vendor reset_type** 的那段是 G1-24 的设备侧钩�
 
 凡是跨「内核能力」的脚本入口（reboot/EDL/suspend/zram…），**先在内核侧取证再写脚本兜底**；
 `|| true` 在设备侧命令上是反模式——它把「这条路径不存在」变成「超时」，而超时会被读成硬件问题（#658 的同类）。
+
+## 2026-11-24 更正（结论作废）
+
+本条结论（「无 vendor RESTART2 钩子 ⇒ Linux→BL/EDL 软路径不存在，只能物理键」）已被 **#712**
+（`345-Linux到BL一直可用-推翻只能物理键.md`，2026-11-23 同启动内对照实测）推翻：
+`sync; systemctl reboot bootloader` 在无钩子的 vk192 上同样进 fastboot（~21 s）。旧错因 = 判据是静态的
+（只比 `kallsyms`）+ 工具 fail-closed 从未真发命令。
+
+- 仍成立：`kallsyms` 有 `psci_sys_reset`、0 个 vendor reset handler —— 但这只是静态事实，不再是动作判据。
+- 处置已删：默认拒绝软路径 / `ALLOW_SOFT_RESET=1` 开关 / 手动作业文案。唯一实现 = `scripts/lib-soft-bootloader.sh`。
+- 物理键组合：**音量下 + 电源**（用户 2026-10 多次实操记录：`.pi/memory/{USER.md,MEMORY.md,failures-kernel.md}`）；
+  本条旧正文写的「音量上 + 电源」是笔误。

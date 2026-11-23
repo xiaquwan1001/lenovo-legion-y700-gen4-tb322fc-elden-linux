@@ -21,7 +21,7 @@
 #     从 boot_a 起来也照样显示 `_b` ⇒ 会给错的槽置成功、真槽继续扣 retry。
 #   · 不再写 LUN4 的 GPT 属性（旧版 `slot-attr.py --device /dev/sde --allow-wrong-lun`）：
 #     `--allow-wrong-lun` 恰好**关掉**了「LUN 不对就拒写」的自检（scripts/slot-attr.py
-#     :403/:431），而现役 Debian 根**没有 python3**（PITFALLS #690）⇒ 那一段在本机
+#     :403/:431），而现役 Debian 根**没有 python3**（PITFALLS #525/#400 同族；#690 是 psci 钩子，别再引）⇒ 那一段在本机
 #     从来是静默 no-op。retry 补写降级为显式 `--retry-topup`（见下）。
 #   · 失败可见：`--mark-once` 写后**读回校验**，不调用 `|| true`；失败 rc≠0 ⇒
 #     oneshot 单元 failed ⇒ `systemctl --failed` / deploy §13 都能看见。
@@ -122,7 +122,7 @@ do_mark_once() {
 			python3 "$SA" set "$s" --retry 7 || warn "slot-attr retry 补写失败（不影响 successful 位）"
 			python3 "$SA" show 2>/dev/null | grep -E '^  boot_[ab] ' | sed 's/^/  /' || true
 		else
-			warn "RETRY_TOPUP=1 但缺 python3 或 $SA ⇒ 跳过（PITFALLS #690：现役根无 python3）"
+			warn "RETRY_TOPUP=1 但缺 python3 或 $SA ⇒ 跳过（现役根无 python3；见 PITFALLS #525/#400）"
 		fi
 	fi
 	return 0

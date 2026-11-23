@@ -1,9 +1,9 @@
 #!/bin/bash
 # arm-window-hunt.sh — 在坏发成簇的窗口里交替试多个显示臂，直到出现"健康发"。
 # usage: scripts/arm-window-hunt.sh <wait_s> <label1:img1> [label2:img2 ...]
-# 每发：确认设备已在 fastboot（★#701 后不做软重启：Linux→BL 三条软路径全灭）→
+# 每发：确保设备已在 fastboot（不在则先走软路径，PITFALLS #712）→
 #        fastboot boot → 串口抓 WAIT 秒 → 判 L1/L2 → 健康（L1=L2=0）则停在设备上并打印 HEALTHY。
-# 判据只依赖串口；SSH 只用于**探活**（判断设备到底在 Linux 还是断线），不再用于复位。
+# 判据只依赖串口；SSH 用于探活 + 软路径复位（#712：`reboot bootloader` 可用）。
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd); cd "$ROOT"
 WAIT=${1:?usage: arm-window-hunt.sh <wait_s> <label:img>...}; shift
@@ -12,18 +12,21 @@ SSH="ssh -o StrictHostKeyChecking=no -o ConnectionAttempts=1 -o ConnectTimeout=8
 # PITFALLS #584：`fastboot devices | grep -q` 会 SIGPIPE 打断 bulk 通道 ⇒ 只能物理 POR。
 # 必须先取完整输出再在 shell 里判（不要接管道给 grep）。
 in_fastboot() { d=$(timeout 6 fastboot devices 2>/dev/null); case "$d" in *fastboot*) return 0 ;; *) return 1 ;; esac; }
-# ★ #701 fail-closed 门（2026-11-21，reports/linux-to-fastboot-20261121.md）：Linux→fastboot 的
-#   三条软路径（sz reboot2 bootloader / systemctl reboot bootloader / SysRq-b→reboot2）实测全灭。
-#   旧实现在这里"重启一下再继续采样"，实际每发都停在 Linux ⇒ 静默产无效样本。现在只探活、不软重启。
-BL_NEED_PHYS='需物理键进 BL，见 reports/linux-to-fastboot-20261121.md'
+# ★ 2026-11-24 更正（PITFALLS #712）：2026-11-21 的「#701 三条软路径全灭」已作废
+#   （`sync; systemctl reboot bootloader` 在无 vendor-reset 钩子的 vk192 上也进 fastboot）。
+#   现在先**真发一次**软路径（lib-soft-bootloader.sh），真失败才停手要物理键。
+BL_NEED_PHYS='软路径本次未进 fastboot，需物理键（音量下+电源；PITFALLS #712 仍是首选路径）'
 to_fastboot() {
 	in_fastboot && return 0
 	if timeout 15 $SSH 'echo up' 2>/dev/null | grep -q up; then
-		echo "[hunt] 设备在 Linux（SSH 可达）但不在 fastboot —— #701：软重启路径已实测全灭，本节不尝试。"
+		echo "[hunt] 设备在 Linux（SSH 可达）→ 走软路径（#712）"
+		. "$ROOT/scripts/lib-soft-bootloader.sh"
+		soft_to_bootloader && { in_fastboot && return 0; }
+		echo "[hunt] ❌ 软路径未进 fastboot"
 	else
 		echo "[hunt] 设备既不在 fastboot，SSH 探活也失败（卡片/正在重启/线缆？）。"
 	fi
-	echo "[hunt] $BL_NEED_PHYS（音量下 + 电源），进 BL 后重跑本脚本。"
+	echo "[hunt] $BL_NEED_PHYS，进 BL 后重跑本脚本。"
 	return 1
 }
 judge() { # $1 = console log

@@ -1,10 +1,10 @@
 #!/bin/bash
-# to-fastboot.sh — reliable Linux → fastboot, using the PSCI vendor-reset hook.
+# to-fastboot.sh — reliable Linux → fastboot（软路径，唯一实现见 scripts/lib-soft-bootloader.sh）
 #
-# （历史入口 `cycle.sh --soft` 已删除；现在软重启走 `scripts/iterate.sh`）plain `reboot -f` no longer reaches fastboot after the
-# b-slot bring-up, and the old misc-BCB path (`cycle.sh --fastboot`) was NOT honoured by ABL.
-# The working path is the PSCI SYSTEM_RESET2 vendor reset added in vk41:
-#     eldroid-bootctl reboot bootloader
+# （历史入口 `cycle.sh --soft` 已删除；现在软重启走 `scripts/iterate.sh`）
+# ★ 2026-11-24（PITFALLS #712）：`sync; systemctl reboot bootloader` 在现役 vk192（无 vendor reset 钩子）
+#   上也进 fastboot（实测 ~21 s），所以本脚本**默认真发**软路径，不再「无钩子就拒绝」。#690/#701 作废。
+#   旧路径 `eldroid-bootctl`（python3 件）已随 Alpine 根退场；misc-BCB 路径 ABL 不采纳。
 #
 # ★ 2026-11-13 实测警告（PITFALLS #650）：`--boot` 这条组合**不推荐**。
 #   本脚本用 `eldroid-bootctl reboot bootloader`（PSCI 暖复位，跳过 systemd 关机序列），
@@ -46,31 +46,20 @@ if [ -n "$FLASH" ]; then
 	bash "$ROOT/scripts/flash-b.sh" "$FLASH"
 fi
 
-echo "[to-fastboot] device -> fastboot (PSCI vendor reset)..."
-# ★★ 2026-11-19 实测修正（PITFALLS #690）：**现役 vk192 是上游主线核，不含 vendor RESTART2 钩子**。
-# 工具 = 只比 kallsyms：`psci_sys_reset` 在、`psci_system_reset2_supported` 在（主线只支持 architectural
-# reset_type），但 qcom/vendor reset 处理函数 = 0 命中；`grep -icE 'restart2|vendor_reset' /proc/kallsyms`
-# 只有无关符号。⇒ `reboot bootloader` / `systemctl reboot bootloader` 退化成**标准 SYSTEM_RESET**，
-# ABL 当普通重启处理、仍按 `_b` 起 Linux——这就是「发了命令设备没动」的真因。
-# 旧实现（`eldroid-bootctl reboot bootloader … || true`）会把这种情形变成静默空等 90 s 后报 timeout，
-# 于是人以为是 USB/按键问题。现在默认**拒绝走软路径**，把手动作业说清楚；确实换回带钩子的核
-# （`elden/vk41-psci-reboot` 一类）时才用 ALLOW_SOFT_RESET=1 打开。
-if [ "${ALLOW_SOFT_RESET:-0}" = 1 ]; then
-	# PITFALLS #628：PSCI 暖复位不发 FIN，已建的 ssh 半开 ⇒ timeout 当成功（复位已经发出）。
-	timeout -k 5 12 $SSH 'sync; systemctl reboot bootloader' >/dev/null 2>&1
-	rc=$?
-	[ "$rc" = 0 ] || [ "$rc" = 124 ] || { echo "[to-fastboot] ❌ 软复位失败 rc=$rc（设备可能仍在 Linux）" >&2; exit 1; }
-else
-	echo "[to-fastboot] ❌ 现役内核无 vendor RESTART2 钩子（#690）⇒ 软路径不可用，不盲发。" >&2
-	echo "[to-fastboot]    手动作业：长按电源 10 s 关机 → 按住【音量上 + 电源】至 fastboot 屏。" >&2
-	echo "[to-fastboot]    或换回带钩子的核后用 ALLOW_SOFT_RESET=1 重跑本脚本。" >&2
+echo "[to-fastboot] device -> fastboot ..."
+# ★★ 2026-11-24 更正（PITFALLS #712，实测见 reports/linux-to-bl-vendor-reset-20261123.md §0）：
+# `sync; systemctl reboot bootloader` 在**无 PSCI vendor-reset 钩子**的现役 vk192 上同样进 fastboot
+# （同启动内对照：无参 `systemctl reboot` 回 Linux，`reboot bootloader` ~21 s 进 fastboot）。
+# ⇒ 2026-11-19 那版「#690：无钩子 ⇒ 拒绝走软路径、直接要物理键」已作废（旧错因 = 只比 kallsyms
+# 的静态判据 + fail-closed 从未真发命令）。现在默认**真发**软路径，失败才打物理键文案。
+# 唯一实现 = scripts/lib-soft-bootloader.sh（别再各写一份）。
+SB_WAIT=${SB_WAIT:-90}
+. "$(dirname "$0")/lib-soft-bootloader.sh"
+if ! soft_to_bootloader "$SB_WAIT"; then
+	echo "[to-fastboot] ❌ 软路径未进 fastboot" >&2
+	bl_phys_hint
 	exit 2
 fi
-
-echo "[to-fastboot] waiting for fastboot..."
-# 2026-11-05：改走 lib-wait（先判后睡 + 退避；旧实现固定 45×2 s，且第一拍必睡满 2 s）。
-. "$(dirname "$0")/lib-wait.sh"
-wait_until "fastboot 上线" 90 wa_fastboot_alive || { echo "[to-fastboot] fastboot timeout — check USB cable / physical keys" >&2; exit 1; }
 echo "[to-fastboot] fastboot ok"
 
 if [ -n "$BOOT" ]; then

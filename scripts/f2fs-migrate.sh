@@ -338,7 +338,7 @@ writeslot() {
 	say "2. 前置：设备必须已在 fastboot；记录槽基线"
 	# 2026-11-09 PITFALLS #584：先落变量再判断（SIGPIPE 会打断 fastboot 通道）
 	_fbd=$(timeout 30 fastboot devices 2>/dev/null)
-	[ -n "$_fbd" ] || die "fastboot 里看不到设备（软路径见 scripts/to-fastboot.sh；#701 后需人工物理键）"
+	[ -n "$_fbd" ] || die "fastboot 里看不到设备（软路径 = scripts/lib-soft-bootloader.sh / to-fastboot.sh，PITFALLS #712；真失败才需人工物理键）"
 	# ★ 审计批 1（2026-11-22）：写槽前先把现 boot_b dump 下来（写前基线，回退用它）
 	mkdir -p "$WORK"
 	if timeout 120 fastboot fetch boot_b "$WORK/boot_b_before.bin" >/dev/null 2>&1; then
