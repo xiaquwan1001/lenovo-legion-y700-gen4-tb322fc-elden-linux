@@ -70,3 +70,36 @@ done
 
 - 未改任何 patch（只判别与记计划）；未发信；未跑重门（编译类留到 v14 备料轮）。
 - M8 mdss v5 / aw86927 的 sashiko 报告仍未逐条判别（老欠账，见 `reports/comm-triage-20261123-b.md` §表）。
+
+## §6 交叉依赖实测：**板件（v9 形状）在 dwc3 v14 binding 下仍然全绿**
+
+v14 把 `port@0` 收紧了（mux 分支内拒绝 plain `endpoint` 与 `endpoint@2+`），而板件正是这条新约束的
+**首个真实消费者** ⇒ 必须确认「v14 进树后板件不会变红」，否则两条系列会互相拖死。
+
+**做法**（零设备、零发信；worktree @ `aebb727447` = 7.4-rc3，逐枚 `git apply`）：
+
+```sh
+git apply patches/upstream/dwc3-v14-20261124/v14-0001-*.patch                     # 新 binding
+git apply patches/upstream/wl2868c-v12-20261117/v12-0001-regulator-dt-bindings-*.patch
+git apply patches/upstream/elden-dts-v8-prep-20261121/0000-dt-bindings-arm-qcom-*.patch
+git apply patches/upstream/board-dts-single-20261113-sent-20261117/0001-*.patch    # v7 板件
+git apply patches/upstream/elden-dts-v8-prep-20261121/0001-*.patch                 # dtsi label
+git apply patches/upstream/elden-dts-v8-prep-20261121/0002-*.patch                 # 板件 mux/两连接器
+make -j26 ARCH=arm64 O=/tmp/kb-v9b defconfig && make -j26 ARCH=arm64 … O=/tmp/kb-v9b dt_binding_check
+make -j26 ARCH=arm64 … O=/tmp/kb-v9b CHECK_DTBS=1 qcom/sm8750-lenovo-elden.dtb \
+     qcom/sm8750-mtp.dtb qcom/sm8750-qrd.dtb
+```
+
+| 判据 | 结果 |
+|---|---|
+| 六枚 `git apply` | 全部 rc=0（`0002` 报 1 条「new blank line at EOF」空白告警，与 v8 prep 原记录一致） |
+| `dt_binding_check`（全量） | **rc=0**，`DTC [C]` **5421** 个（比无 wl2868c binding 的 5420 多 1，因为它带自己的 example），0 条 error/warning 行 |
+| `dtbs_check` 三份 dtb | **3/3 `DTC [C]`，`^arch/.*dtb:` 诊断 0**（elden 0 条 ⇒ v14 的新约束对板件无影响） |
+| elden DTB md5 | **`2d2d92662785a7aa07edb6aba78a9341`** = v10 那轮记录值（binding 只影响校验，不改 DTB 生成结果） |
+
+**结论**：v14 与板件（v9 形状）**互不阻塞**；日志入 `patches/upstream/elden-dts-v8-prep-20261121/evidence/`
+（`gate-v14-binding-20261124.log`、`gate-v14-dtbscheck-3dtb-20261124.log`）。若 v14 进树，v9 可直接按 v8 prep 的
+「方案 B」投（v8 = qcom.yaml + v7 原文；v9 = dtsi label + 板件，1–2 枚）。
+
+**本轮边界**：未重跑 v8 prep 的负样例（同 `mux-state`/去 `mux-controls`）——那两条测的是 DT 自身形状，
+与 binding 版本无关，11-21 结论继续有效。
