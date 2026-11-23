@@ -14,7 +14,7 @@
  * 本文件是**最小可用实现**：不做 premium/预测、不改 preedit 分段显示、
  * 不写用户词典（learn），只有"打字→候选→选词上屏"这一条主链。
  *
- * 接线方式（见同目录 0001-osk-stub-rime-completer.patch 与 meson-hunks.md）：
+ * 接线方式（见同目录 0003-osk-stub-rime-completer-wiring.patch（0.46.0 树 patch -p1 直投，含 B 案 .c/.h + 五文件接线））：
  *   src/completers/pos-completer-rime.{c,h}   ← 本文件
  *   src/meson.build                           ← 加进 pos_sources + rime_dep
  *   src/pos-completer-manager.c               ← init_completer() 里认 "rime"
