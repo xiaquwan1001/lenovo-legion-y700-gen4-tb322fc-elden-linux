@@ -159,3 +159,5 @@ y700-elden 用自编件替换**发行版同名包**提供的可执行文件（ph
 
 ---
 **子代理模型名以 `~/.pi/agent/custom-providers.json` 为准，别信 agent md 里的旧别名**：`custom.ustc-pool` 现只有 `ustc-dsf` / `ustc-dsf2` / `ustc-glm`（2026-11-23 现查）。曾用的 `ustc-qwen` 已下线 ⇒ 派发直接报 `Unknown subagent model 'custom.ustc-pool/ustc-qwen:high'`、lane 立即失败（2026-11-23 实测，`.pi/agents/{code-boundary,doc-audit,doc-audit-lead,verify-worker}.md` 已改 glm、`task-planner.md` 的 `ustc` 改 dsf）。thinking 后缀只认 registry 的 `thinkingLevelMap`（glm = low/high/max，dsf = xhigh→max）。
+---
+页缓存单比特翻转已上交（2026-11-24，doctor §29 首跑抓到）：`out/min-restore-20261119/rootfs-minbase-gadget-20261119.ext4.img` 同一 64 MiB 窗口 buffered 读 vs O_DIRECT 读**差 1 字节**（0x10 vs 0x00，file_offset 82171791），两种读法各 6 次稳定、mtime 未变、无写者、dmesg 无 MCE ⇒ 盘对缓存错。处置 = `out-candidate-sha.py` 判据一律 O_DIRECT（`PITFALLS #513`）；证据 `~/hw-stability/evidence/inbox/20261124-y700-elden-rootfs-minbase-pcache-1byte/`（不在本项目深挖，硬规则 12）。 — 教训：大件 sha 门若用 buffered，会把「稳定但错」的页缓存值当判据
