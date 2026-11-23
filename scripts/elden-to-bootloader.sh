@@ -1,8 +1,17 @@
 #!/bin/sh
 # elden-to-bootloader.sh — 设备侧「Linux → bootloader(fastboot)」单一入口（POSIX sh，可独立跑）
 #
-# 为什么有这个脚本（2026-11-21，用户要求「把成熟的从 Linux 重启到 BL 的脚本部署进去，方便测试」）：
-#   本机历史上只有一条**真正**被 ABL 采纳的软路径 —— vk41 起的最小 PSCI SYSTEM_RESET2 vendor reset 钩子
+# ★2026-11-23 重要更正（实测推翻 PITFALLS #690/#701 的「只能物理键」结论）：
+#   在**无任何 vendor-reset 钩子**的日常核 vk192（7.3.1）上，同一次启动内对照实验：
+#     `systemctl reboot`            → 回 Linux
+#     `systemctl reboot bootloader` → **~21 s 进 fastboot**（`fastboot devices` 见 HA2EXB0E）
+#   7.4-rc3 两枚核（一个带本仓 vendor-reset 补丁、一个**不带**）表现相同 ⇒ **钩子不是必要条件**，
+#   真正起作用的是 `reboot(2)` 的 **cmd 字符串**（systemd 位置参数 → machine_restart(cmd)），
+#   ABL 依该字符串决定进 fastboot。历史结论之所以错，是因为旧工具**默认拒绝**发软命令（fail-closed），
+#   从未真正发出过 `reboot bootloader`。证据 = reports/linux-to-bl-vendor-reset-20261123.md §0。
+#   因此：**默认臂改为直接 `reboot bootloader`**；PSCI 钩子只在与其它方案对比时才有意义。
+#
+# 历史（保留作沿革）：本脚本最初假设只有 vk41 起的 PSCI SYSTEM_RESET2 vendor reset 钩子管用：
 #   （`reboot(2)` reason = bootloader/edl → reset_type 0x80010001/0x80000000；见
 #    patches/kernel-history/*/0003-elden-vk41-minimal-PSCI-SYSTEM_RESET2-vendor-reset-h.patch）。
 #   但**现役 vk192 是上游主线核，不含该钩子**（PITFALLS #690：`psci_system_reset2_supported` 在、
@@ -13,7 +22,7 @@
 #
 # 用法（设备上，root）：
 #   elden-to-bootloader --dry-run            # 只打印将要做的事 + 能力自检结论（不改任何东西）
-#   elden-to-bootloader                      # 自动选臂（有 PSCI 钩子走 PSCI，否则走 BCB）
+#   elden-to-bootloader                      # 自动选臂（2026-11-23 起恒走 psci 臂 = `reboot bootloader`）
 #   elden-to-bootloader --psci               # 强制 PSCI（`systemctl reboot bootloader`）
 #   elden-to-bootloader --bcb                # 强制写 BCB：misc.command="bootonce-bootloader" + reboot
 #   elden-to-bootloader --clear-bcb          # 只把 misc 的 BCB 头 4 KiB 清零（不重启）
@@ -59,13 +68,14 @@ fi
 say "[elden-to-bootloader] 内核 PSCI vendor-reset 钩子: $([ "$HOOK" = 1 ] && echo 有 || echo 无)（UTS $(uname -r)）"
 
 if [ "$MODE" = auto ]; then
-	if [ "$HOOK" = 1 ]; then MODE=psci; else MODE=bcb; fi
-	say "[elden-to-bootloader] 自动选臂: --$MODE"
+	# 2026-11-23 更正：无钩子也走 psci 臂（= `reboot bootloader` 本身即可进 fastboot，实测见头注）
+	MODE=psci
+	say "[elden-to-bootloader] 自动选臂: --$MODE（钩子$([ "$HOOK" = 1 ] && echo 有 || echo 无)，两者都可用）"
 fi
 
 # ---- 臂 1：PSCI（需要内核钩子）----
 if [ "$MODE" = psci ]; then
-	[ "$HOOK" = 1 ] || say "[elden-to-bootloader] 警告：内核无钩子 ⇒ --psci 只会普通重启（#690）"
+	[ "$HOOK" = 1 ] || say "[elden-to-bootloader] 内核无 vendor-reset 钩子，但 \`reboot bootloader\` 仍可进 fastboot（2026-11-23 实测）"
 	if [ "$DRY" = 1 ]; then
 		say "[dry] systemctl reboot bootloader"
 		exit 0
