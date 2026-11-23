@@ -8,7 +8,8 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-23）
 
-> **🆕 2026-11-23 对账（本轮）**：最新会话证据 = 11-23 深夜会话（`ab7efd8c`：dwc3 v12 四枚成稿 + G1–G3 门禁日志；G4–G6 与发信因主机三次 crash 中断）+ 11-23 白天 lane 批（`857047b3`/`c1ce6146`，§4.0 已记）。
+> **🆕 2026-11-23 对账（本轮）**：最新会话证据 = 11-23 深夜会话（`ab7efd8c`：dwc3 v12 四枚成稿 + 门禁日志）+ 11-23 白天 lane 批（`857047b3`/`c1ce6146`，§4.0 已记）。
+> **🆕 2026-11-23 整理轮增量（grow loop #1，轻负载）**：① 前记「G4–G6 中断」被日志推翻 —— `patches/upstream/dwc3-v12-20261123/logs/` 六道门全部完成（G4 `dt_binding_check` RC=0 等）；② G1 主会话独立复验通过（fresh clone `aebb727447` + `git am` 3/3 + 6 枚 blob sha 逐字一致）；③ **dwc3 v12 已投（用户 11-23 放行）**：新线程形态（krzk 裁决），4 封全 250，cover MID `20261123095310.154352-1`，账 = `SENT.md`；lore 复核待下一轮；④ D10 只读通信 lane 已派。
 > **本轮核实（2026-11-23）**：`check-doctor` FAIL=0（WARN=6 全为已登记豁免：源树 slim bundle 态、账本例外、4 枚解不出载荷的旧镜像、本日期条目）；`scripts/README.md` 与 HISTORY days 已重新生成；G1 计数 = 36 完成/37 在册（`check-progress-counts.sh`）。
 > **负载约束（用户 2026-11-23 定）**：新内存到位前避开重负载 —— **暂停**：G4 全量 `dt_binding_check`、任何内核全量编、B 选项重建 daily 树。**可做（轻）**：G5/G6 门、D10 通信 lane（只读）、D6 文档卫生、aw86927 Tested-by 备料。
 > **新内存到位后的接续清单**（11-23 会话已落盘）：① dwc3 v12 G4（断点日志在 `logs/`，从断点续跑不重做）→ G5/G6 → 发信 → lore 复核；② 设备 BL 窗一次做完：G7 换口重测（先部署整套 `/lib/modules`）+ H2 十条判据 + D1 时间基线上机；③ aw86927 三枚 `Tested-by` 收进 haptics 下版。主机当日三次 panic 证据已上交 hw-stability（`evidence/inbox/20261123-host-crash-day-vmcore/`），项目侧不深挖。
