@@ -231,3 +231,23 @@ pos-nonmux-endpoint0.dtb diag=3 ← endpoint@0 缺 usb-role-switch/mux-state（s
 4. `v11-0001`/`v11-0003` 顶部的 `From 0000…` 行是占位（内容改过，v10 的 commit hash 已不对应）；
    放行时由 `git am` 重新成 commit 后 `git format-patch` 现生成，会填真 hash。
 5. 0004（板 DTS，GPIO 29 + 双 endpoint）继续 hold。
+
+## §3 2026-11-24 投递前复验（主机侧，零设备；只重跑廉价门 G1/G2 + mailinfo）
+
+**为什么**：v11 是 SENT-ready 但**等放行**的件；11-23~24 期间仓里动过 `scripts/`、`PITFALLS`、
+`reports/`，且本机有页缓存/位翻转取证 ⇒ 投递前必须现证「件本身没漂、树基线没漂」。
+
+| 门 | 命令 | 结果 |
+|---|---|---|
+| G0 基线 | `git -C build/elden-tree rev-parse --short=10 HEAD` | **`aebb727447` = v7.4-rc3**（与 v10/v11 声明基线同一 commit，未漂） |
+| G1 落树 | `git worktree add --detach /tmp/dwc3-v11-reverify aebb727447` + `git apply` ×3 | **3/3 干净（无 offset/fuzz）** |
+| G1 blob 判据 | `git hash-object` ×6 | yaml `7a9cb5a115a6` · drd.c `906cac4f3e6e` · core.c `ce30979286` · core.h `e6cf7b240b` · debugfs.c `82e7a334b1` · roles/class.c `ee186d542a` —— **与 v11 归档值逐个相同** |
+| G2 checkpatch | `checkpatch.pl --strict --no-signoff --no-tree --no-summary` ×3 | **0 条（0E/0W/0C）×3** |
+| mailinfo | `git mailinfo` ×4（cover + 3） | 4/4 解析出 `Author: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>`；Subject 序列 `[PATCH v11 0/3] …1/3 …2/3 …3/3` 连续、编号自洽 |
+| 收尾 | `git worktree remove --force /tmp/dwc3-v11-reverify` | 临时 worktree 已删（`worktree list` 无残留） |
+
+**未重跑**：G3（`W=1` 编译）/ G4（`dt_binding_check`）/ G5（`dtbs_check`）/ G6（正负样例，约 20+ min 的重门）——
+它们的输入（三枚 patch 的 blob + 树基线 commit）本轮逐字节确认未变，11-21 的实测结论仍然成立；
+若投递前还想再钉一次，命令见本文 §2，注意 `make -j26` 起步（AGENTS 构建纪律）。
+
+**结论**：v11 系列**仍可直接投递**，无需重出件；缺口只剩 G7（运行期，需上机）与用户放行。
