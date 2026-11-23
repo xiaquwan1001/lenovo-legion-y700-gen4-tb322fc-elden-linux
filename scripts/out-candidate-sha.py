@@ -9,6 +9,11 @@ pending/superseded 状态 ↔ 磁盘），**没有一道门核对「账本里的
 判据（只认**机器可读**的记录，避免猜）：
   1. `<dir>/SHA256SUMS*`（非 .md）：经典 `sha  path`（两空格）或 TSV `path \\t size \\t sha`
   2. `<dir>/*.sha256` 侧车：`sha  path`（path 可写相对 dir 或仓库相对）
+  3. `versions/out-candidate-sha.tsv`（入库身份账）：`path \t sha`
+判据口径 = **O_DIRECT 直读**（`scripts/odirect-sha.py --require-odirect`）。原因：本机有页缓存单比特翻转
+的取证（2026-11-24 本门首跑就抓到一枚 6.4 GB 件的 buffered/O_DIRECT 差 1 字节，见
+`~/hw-stability/evidence/inbox/20261124-y700-elden-rootfs-minbase-pcache-1byte/`），buffered 值会稳定但错。
+取不到 O_DIRECT 真值 ⇒ 记 WARN「未判」，绝不拿 buffered 当判据（PITFALLS #513）。
   3. 记录里的 path 解析：以 `out/` 开头 ⇒ 相对仓库根，否则相对该 dir
 三态：记录存在且一致 = OK；记录存在但不一致 = **FAIL**；件存在但没有任何记录 = **WARN**；
       记录指向的件不存在 = WARN（记录腐坏，但不阻塞上机判断）。
@@ -22,6 +27,7 @@ pending/superseded 状态 ↔ 磁盘），**没有一道门核对「账本里的
 import hashlib
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -29,9 +35,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LEDGER = os.path.join(ROOT, "versions", "out-artifacts.tsv")
 SHA_LEDGER = os.path.join(ROOT, "versions", "out-candidate-sha.tsv")
 CANDIDATE_STATES = ("active", "pending", "verified")
+USE_BUFFERED = False  # selftest 的小件用 buffered；正式 --check 一律 O_DIRECT
+
+
+ODIRECT_TOOL = os.path.join(ROOT, "scripts", "odirect-sha.py")
 
 
 def sha256_file(path, chunk=1 << 20):
+    """兜底用的 buffered 口径。**只用于 selftest 的小件**；判据一律走 sha_odirect()。"""
     h = hashlib.sha256()
     with open(path, "rb") as f:
         while True:
@@ -40,6 +51,22 @@ def sha256_file(path, chunk=1 << 20):
                 break
             h.update(b)
     return h.hexdigest()
+
+
+def sha_odirect(path):
+    """O_DIRECT 直读 sha（PITFALLS #513：页缓存会稳定但错）。取不到真值 → None（调用方判 WARN）。"""
+    try:
+        r = subprocess.run([sys.executable, ODIRECT_TOOL, "--tsv", "--require-odirect", path],
+                           capture_output=True, text=True, timeout=3600)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    for ln in r.stdout.splitlines():
+        f = ln.split("\t")
+        if len(f) >= 3 and _looks_like_sha(f[2].strip()):
+            return f[2].strip()
+    return None
 
 
 def _looks_like_sha(s):
@@ -105,7 +132,9 @@ def parse_sha_ledger(path=SHA_LEDGER, root=ROOT):
     return recs
 
 
-def check(check_root=ROOT, ledger=LEDGER, verbose=True):
+def check(check_root=ROOT, ledger=LEDGER, verbose=True, use_buffered=False):
+    global USE_BUFFERED
+    USE_BUFFERED = use_buffered
     fails, warns, oks = [], [], []
     dirs = []
     try:
@@ -136,7 +165,10 @@ def check(check_root=ROOT, ledger=LEDGER, verbose=True):
             if not got:
                 warns.append(f"{rel}/{n}：没有任何 sha 记录（.sha256 / SHA256SUMS*）")
                 continue
-            act = sha256_file(ap)
+            act = sha_odirect(ap) if not USE_BUFFERED else sha256_file(ap)
+            if act is None:
+                warns.append(f"{rel}/{n}：读不到 O_DIRECT 真值 ⇒ 未判（#513；buffered 不作判据）")
+                continue
             # 多条记录（目录侧车 + 入库账本）之间也必须一致：任一条与实物不符即 FAIL
             bad = [(sh, src) for sh, src in got if sh != act]
             if not bad:
@@ -154,7 +186,10 @@ def check(check_root=ROOT, ledger=LEDGER, verbose=True):
             if not os.path.exists(ap):
                 warns.append(f"{rel}：记录指向不存在的 {os.path.relpath(ap, check_root)}（{lst[0][1]}）")
                 continue
-            act = sha256_file(ap)
+            act = sha_odirect(ap) if not USE_BUFFERED else sha256_file(ap)
+            if act is None:
+                warns.append(f"{os.path.relpath(ap, check_root)}：读不到 O_DIRECT 真值 ⇒ 未判（#513）")
+                continue
             if act != lst[0][0]:
                 fails.append(f"{os.path.relpath(ap, check_root)}  sha 不一致：件={act[:16]}… 记录={lst[0][0][:16]}…（{lst[0][1]}）")
             else:
@@ -213,7 +248,7 @@ def selftest():
                 f.write(f"{os.path.relpath(d, tmp)}\t{'verified' if 'good' in d or 'classic' in d or 'tsv' in d else 'pending'}\ttest\n")
             f.write("out/not-there\tpending\tmissing dir\n")
 
-        res, err, rc = check(check_root=tmp, ledger=ledger, verbose=False)
+        res, err, rc = check(check_root=tmp, ledger=ledger, verbose=False, use_buffered=True)
         oks, warns, fails = res if res else ([], err or [], [])
         n_ok_good = sum(1 for x in oks if "good-1/boot.img" in x or "classic-1/boot.img" in x or "tsv-1/esp.img" in x)
         n_bad = sum(1 for x in fails if "bad-1/boot.img" in x)
