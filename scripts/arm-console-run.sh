@@ -4,6 +4,11 @@
 # 设备必须已在 fastboot。输出 logs/arm-<label>-<ts>/{console.log,verdict.txt,...}
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd); cd "$ROOT"
+# ★ 2026-11-24（审计 §3 未做项 #1/#2 收口）：主机 fastboot 不在 PATH（#699）⇒ 统一走 lib-hosttools
+. "$ROOT/scripts/lib-hosttools.sh"
+ensure_hosttools --quiet
+[ -n "${FB_BIN:-}" ] || { echo "[arm] ❌ 宿主机找不到 fastboot（lib-hosttools 已查 PATH 与 ~/.local/opt/platform-tools）" >&2; exit 2; }
+
 IMG=${1:?usage: arm-console-run.sh <boot.img> <label> [wait_s]}
 LABEL=${2:?}
 WAIT=${3:-200}
@@ -16,7 +21,7 @@ LOG=$OUT/console.log; : > "$LOG"
 # `fastboot boot` 失败。
 # 改成「取值式」：一次收全量输出到变量，再判空（不接任何管道）；同一发输出直接复用为
 # fastboot-before.txt（不再为了打印多叫一次 fastboot）。
-FB_OUT=$(timeout -k 5 10 fastboot devices 2>&1); FB_RC=$?
+FB_OUT=$(timeout -k 5 10 "$FB_BIN" devices 2>&1); FB_RC=$?
 case "$FB_OUT" in
 *fastboot*) : ;;
 *)
@@ -31,22 +36,21 @@ esac
 printf '%s\n' "$FB_OUT" > "$OUT/fastboot-before.txt"
 
 # 先清掉遗留的串口读进程（tty 只能被一个读者持有，否则 boot 日志抓不到）
-for p in $(pgrep -f 'cat /dev/tty[A]CM0' 2>/dev/null); do kill "$p" 2>/dev/null; done
+for p in $(pgrep -f 'serial-tap.py --port /dev/tty[A]CM0' 2>/dev/null); do kill "$p" 2>/dev/null; done
 sleep 1
 
-# 串口读线程：设备重启后 tty 会消失/重建，循环重连；只读，不写入设备
+# 串口读线程：2026-11-24 换 serial-tap.py（PITFALLS #622：`cat $TTY` 循环在 ttyACM 无数据时
+# open/close 狂抖、真数据 0 行 ⇒ 用它会得到假阴性判定）。serial-tap = 一次 open 长期持有 + select，
+# 设备侧 gadget 重建时只重开一次。只读，不写入设备。
 (
-	while :; do
-		[ -e "$TTY" ] && cat "$TTY" >> "$LOG" 2>/dev/null
-		sleep 1
-	done
-) &
+	exec python3 "$ROOT/scripts/serial-tap.py" --port "$TTY" --out "$LOG"
+) >"$OUT/serial-tap.out" 2>&1 &
 RD=$!
 echo "$RD" > "$OUT/reader.pid"
 trap 'kill "$RD" 2>/dev/null' EXIT
 
 echo "[arm] boot $IMG  (label=$LABEL, wait=${WAIT}s)"
-timeout 200 fastboot boot "$IMG" 2>&1 | tail -2 | tee "$OUT/fastboot-boot.log"
+timeout 200 "$FB_BIN" boot "$IMG" 2>&1 | tail -2 | tee "$OUT/fastboot-boot.log"
 sleep "$WAIT"
 kill "$RD" 2>/dev/null
 sed -i 's/\r$//' "$LOG" 2>/dev/null
