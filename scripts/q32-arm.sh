@@ -159,10 +159,11 @@ for k in $(seq 1 "$N"); do
 	echo "  serial_off=$SERIAL_OFF ($(basename "$SERIAL_LOG"))"
 	case "$ARM" in
 	w1)
-		echo "→ 暖复位 W1：eldroid-bootctl reboot bootloader → fastboot reboot"
+		echo "→ 暖复位 W1：软路径 reboot bootloader（#712）→ fastboot reboot"
 		RESET_KIND=warm
 		S 'sync' 30 || true
-		S 'eldroid-bootctl reboot bootloader' 15 || true   # 不接 `|| reboot bootloader`：busybox reboot 无 reason，会把设备留在不确定态
+		. "$ROOT/scripts/lib-soft-bootloader.sh"
+		soft_to_bootloader 30 || true   # 成败由下方 fastboot_wait 统一判
 		if ! fastboot_wait; then echo "❌ fastboot 没出现（PITFALLS #143 / 通道丢失）" >&2; exit 1; fi
 		echo "  fastboot 在；发 fastboot reboot（单条，不接管道）"
 		fastboot reboot >/dev/null 2>&1 || true

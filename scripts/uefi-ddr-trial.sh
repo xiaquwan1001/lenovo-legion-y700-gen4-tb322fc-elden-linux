@@ -36,8 +36,8 @@ for n in $(seq 1 "$SHOTS"); do
   echo "--- shot $n/$SHOTS ---" | tee -a "$OUT/summary.txt"
   if ! wait_ssh; then echo "  [skip] ssh 不在（设备不在 Linux）" | tee -a "$OUT/summary.txt"; continue; fi
   for pa in $WINDOWS; do python3 scripts/blackbox.py prep --pa "$pa" >/dev/null 2>&1; done
-  timeout 30 $SSH 'nohup eldroid-bootctl reboot bootloader >/dev/null 2>&1 & true' >/dev/null 2>&1
-  sleep 12; wait_fb || { echo "  [fail] fastboot 没起来（PITFALLS #368，需要物理断电）" | tee -a "$OUT/summary.txt"; break; }
+  . "$(dirname "$0")/lib-soft-bootloader.sh"; TAB=${TAB:-root@192.168.7.1} soft_to_bootloader 30 || true
+  sleep 2; wait_fb || { echo "  [fail] fastboot 没起来（PITFALLS #368，需要物理断电）" | tee -a "$OUT/summary.txt"; break; }
   # #584：输出不进管道（SIGPIPE 会打断设备侧 bulk 通道）
   FBTO=120 fbx boot "$IMG"; bt=$(printf '%s ' "$_FB_OUT" | tr '\n' ' ')
   case "$bt" in

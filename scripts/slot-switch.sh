@@ -16,8 +16,9 @@
 #   · fastboot 命令一律单条（PITFALLS #3）；本脚本已拆单条。
 #   · b 槽回 Linux 后自动跑 scripts/fix-ab-mark-successful.sh（PITFALLS #181：
 #     不置 BOOT_SUCCESSFUL ⇒ 每次启动扣 retry，~7 次卡 fastboot）。
-#   · Linux → fastboot 走 eldroid-bootctl（PSCI RESTART2），不用 `reboot bootloader`
-#     （OpenRC 下会变成 halt+VBUS 自开机，PITFALLS #150–#152 一类）。
+#   · Linux → fastboot 软路径 = scripts/lib-soft-bootloader.sh（`sync; systemctl reboot bootloader`，
+#     PITFALLS #712；不需要 vendor-reset 钩子）。旧 eldroid-bootctl 路径已废（python3 件、现役根无 python3；
+#     PITFALLS #150–#152 的 halt+VBUS 是 OpenRC 时代 `reboot` 无参的坑，与带 reason 的 reboot 无关）。
 #   · 切槽会写 GPT：脚本每次写前把 fastboot 侧当前槽读回并打印；回退 = 再切回。
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1

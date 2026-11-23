@@ -117,8 +117,9 @@ grep -q . "$OUTDIR/ssh-pre.txt" || say "WARN: ssh pre-state empty"
 if fb_ok; then
 	say "already in fastboot"
 else
-	say "ssh -> reboot bootloader (eldroid-bootctl)"
-	S 'sync; eldroid-bootctl reboot bootloader' >/dev/null 2>&1
+	say "ssh -> reboot bootloader（软路径，PITFALLS #712）"
+	. "$(dirname "$0")/lib-soft-bootloader.sh"
+	soft_to_bootloader 30 || true   # 成败由下方 fb_ok 轮询统一判
 	for i in $(seq 1 45); do
 		sleep 2
 		fb_ok && { say "fastboot up after ~$((i*2))s"; break; }

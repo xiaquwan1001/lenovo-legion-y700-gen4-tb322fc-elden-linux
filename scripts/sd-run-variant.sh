@@ -31,8 +31,10 @@ exec > >(tee -a "$LOG") 2>&1
 
 # 1) switch to bootloader (only if currently in Linux)
 if timeout 12 $SSH 'true' 2>/dev/null; then
-	echo "[run] Linux reachable -> reboot bootloader (eldroid-bootctl)"
-	timeout 15 $SSH 'sync; eldroid-bootctl reboot bootloader' || true   # 无 reason 的 busybox reboot 不作兜底
+	echo "[run] Linux reachable -> 软路径进 bootloader（PITFALLS #712）"
+	# 设备侧 eldroid-bootctl 是 python3 件、现役根无 python3 ⇒ 改走唯一实现
+	. "$ROOT/scripts/lib-soft-bootloader.sh"
+	TAB=root@$DEV soft_to_bootloader 30 || true   # 失败交给下方 fastboot 轮询统一判
 else
 	echo "[run] SSH not reachable (already fastboot / other session?)"
 fi

@@ -59,6 +59,8 @@ echo "[flash-recovery] readback sha256=$RB"
 echo "[flash-recovery] OK"
 
 if [ "$REBOOT" = 1 ]; then
-	echo "[flash-recovery] reboot recovery ..."
-	$SSHO "$TAB" 'eldroid-bootctl reboot recovery' || true
+	# 2026-11-24：设备侧 eldroid-bootctl 是 python3 件、现役根无 python3 ⇒ 优先 systemd；
+	# `reboot recovery` 的 ABL 采纳性**未实测**（只实测过 `reboot bootloader`，PITFALLS #712）⇒ 失败不拦。
+	echo "[flash-recovery] reboot recovery ...（未实测路径，失败请手工进 recovery）"
+	$SSHO "$TAB" 'sync; systemctl reboot recovery' || true
 fi

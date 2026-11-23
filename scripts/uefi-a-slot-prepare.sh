@@ -93,10 +93,9 @@ fi
 fbd() { local f l; f=$(mktemp /tmp/fbd.XXXXXX); timeout -k 2 8 fastboot devices >"$f" 2>/dev/null
 	l=$(awk 'NF{print $1}' "$f" | grep -x -- "$SER" || true); rm -f "$f"; [ -n "$l" ]; }
 if fbd; then say "已在 fastboot"; else
-	say "Linux → fastboot"
-	timeout -k 3 20 ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=no \
-		-o UserKnownHostsFile=/dev/null "${TAB:-root@192.168.7.1}" \
-		'nohup /usr/local/bin/eldroid-bootctl reboot bootloader >/dev/null 2>&1 || true' >/dev/null 2>&1
+	say "Linux → fastboot（软路径，PITFALLS #712）"
+	. "$(dirname "$0")/lib-soft-bootloader.sh"
+	SER="$SER" soft_to_bootloader 45 || true   # 成败由下方 fbd 轮询统一判
 	for i in $(seq 1 30); do fbd && break; sleep 3; done
 	fbd || { say "90 s 内没进 fastboot"; exit 5; }
 fi

@@ -221,8 +221,9 @@ ensure_abl_fastboot() {
 	have_ser "${ABL_SER:-$(devices | head -1)}" && return 0
 	# 若设备还在 Linux（U2），用项目既有入口切 fastboot；不在 Linux 就不猜，直接报错
 	if timeout -k 3 8 ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=6 "$TAB" true 2>/dev/null; then
-		say "ssh 可用 ⇒ reboot bootloader"
-		timeout -k 5 20 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'sync; eldroid-bootctl reboot bootloader' >/dev/null 2>&1
+		say "ssh 可用 ⇒ 软路径 reboot bootloader（#712）"
+		. "$(dirname "$0")/lib-soft-bootloader.sh"
+		soft_to_bootloader 30 || true   # 成败由下方 devices 轮询统一判
 		for i in $(seq 1 45); do sleep 2; devices | grep -q . && { say "fastboot 起来 ~$((i*2))s"; return 0; }; done
 	fi
 	devices | grep -q . && return 0
