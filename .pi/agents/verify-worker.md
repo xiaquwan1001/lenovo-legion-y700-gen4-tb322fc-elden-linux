@@ -1,7 +1,7 @@
 ---
 name: verify-worker
 description: 二级叶级复核：只读独立重跑门禁/命令/证据核对，输出 PASS-FAIL 矩阵；不写代码，不可再派发
-model: custom.ustc-pool/ustc-qwen
+model: custom.ustc-pool/ustc-glm
 timeoutMs: 7200000
 thinking: medium
 ---

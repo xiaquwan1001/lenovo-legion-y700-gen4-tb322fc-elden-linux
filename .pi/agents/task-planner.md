@@ -1,7 +1,7 @@
 ---
 name: task-planner
 description: 一级角色·下一批任务规划：读台账/未解/审计与研究产出，产出可验收的候选批次（不改 SSOT）；可派 ≤3 个二级
-model: custom.ustc-pool/ustc
+model: custom.ustc-pool/ustc-dsf
 timeoutMs: 7200000
 thinking: high
 ---

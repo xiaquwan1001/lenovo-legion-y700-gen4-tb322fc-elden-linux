@@ -153,3 +153,9 @@ y700-elden 用自编件替换**发行版同名包**提供的可执行文件（ph
 
 ---
 **发行版上游化的硬门槛（2026-11-21 核实，一手来源）**：**Nura（原 postmarketOS，2026-09-27 改名）明令禁止生成式 AI 参与的贡献**——`docs.nura.eco/policies-and-processes/development/ai-policy.html` 原文「We forbid the use of generative AI tools in Nura… Submitting contributions fully or in part created by generative AI tools to Nura」⇒ 本仓 AI 辅助产出**不能**投 pmaports（与内核列表「披露即可」的口径不同，别混用）。**Mobian 相对宽松**（Debian GR 2026 选出 Option 5「Responsible Use of Generative AI」）、且其 Porting 页原文「Mobian does not package heavily device-specific kernels」+「ships LTS kernel versions（6.1/6.6/6.12/6.18）… propose with the last available LTS」⇒ Mobian 侧**头号缺口是内核版本账**（我们在机是 7.3/7.4 线）。**UBports** 原文「Halium is an indispensible part of an Ubuntu Touch port」（Android 内核 + libhybris）⇒ 与本仓主线 Linux 路线根本冲突，不投。全账 = `reports/distro-upstream-feasibility-20261121.md`。
+
+---
+**派发常设 lane（用户 2026-11-23 定）**：每轮并行派发**至少一条通信 lane** 负责 ① 邮件 INBOX（`~/.local/bin/` 的 USTC 发送侧 + `reports/mail-inbox-*.md` 口径，`timeout -k` + `--noproxy '*'`）② 我方在 **Mobian（gitlab.com/mobian1/*、salsa.debian.org/Mobian-team/*，含 droid-juicer MR）** 与 **phosh/phoc（gitlab.gnome.org/World/Phosh/*，MR 材料 `reports/phosh-mr-power-mode-20261114.md`）** 的 MR/issue 回复状态。判据 = 逐条给 URL + `state`/`notes`/最后回复时间 + 是否要我方动作；只读，**不回复不外发**（发信/推 MR 仍需用户放行）。派发面 = `TASKS/README.md` §4.0 维度表（D10）。
+
+---
+**子代理模型名以 `~/.pi/agent/custom-providers.json` 为准，别信 agent md 里的旧别名**：`custom.ustc-pool` 现只有 `ustc-dsf` / `ustc-dsf2` / `ustc-glm`（2026-11-23 现查）。曾用的 `ustc-qwen` 已下线 ⇒ 派发直接报 `Unknown subagent model 'custom.ustc-pool/ustc-qwen:high'`、lane 立即失败（2026-11-23 实测，`.pi/agents/{code-boundary,doc-audit,doc-audit-lead,verify-worker}.md` 已改 glm、`task-planner.md` 的 `ustc` 改 dsf）。thinking 后缀只认 registry 的 `thinkingLevelMap`（glm = low/high/max，dsf = xhigh→max）。

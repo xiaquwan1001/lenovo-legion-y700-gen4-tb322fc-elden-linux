@@ -1,7 +1,7 @@
 ---
 name: doc-audit-lead
 description: 一级角色·文档审计：状态漂移/死链/编号/SSOT 违例/孤儿报告/资源台账；只出报告不改 README；可派 ≤3 个二级分角度并行
-model: custom.ustc-pool/ustc-qwen
+model: custom.ustc-pool/ustc-glm
 timeoutMs: 7200000
 thinking: high
 ---
