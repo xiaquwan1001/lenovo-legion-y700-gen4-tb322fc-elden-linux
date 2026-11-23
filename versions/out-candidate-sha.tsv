@@ -1,0 +1,18 @@
+# 上机候选件的 sha 身份账（2026-11-24 立；out/ 二进制不入库，身份记录入库）
+
+# 格式：<仓库相对路径> TAB <sha256>   ——由 scripts/out-candidate-sha.py --check 消费（doctor §29）
+
+# 写入纪律：值必须来自两次独立读取一致的结果（O_DIRECT 优先；本机有单字节翻转取证），重出该件后同步更新本行。
+
+out/min-restore-20261119/boot-nodp-linux.img	7908e3f17ef3a39420cca9511efc10684d88fe17363892d4cf700967f39e4fa9
+out/min-restore-20261119/boot-nodp-test.img	022698a16880bb509cf5a610d7229f588fd218387846ee72f298be398db9d36a
+out/min-restore-20261119/boot-test-sda17.img	49fb973828118a25e01497bd102ef2f47bbe4442d7bb8034bbc3b22b4114e358
+out/min-restore-20261119/rootfs-minbase-gadget-20261119.ext4.img	abf96ec47067b642677e47f33441be48bd17a6be914a3cba2fffb8ec3c9ee604
+out/android-v3-bringup-20261120/boot-ttygs0-boot.img	0dad04f1d2f41fc2126eb2bda045adec8c8dce3ad95535442e53369dfc0280af
+out/android-v3-bringup-20261120/boot-ttygs0-vendor_boot.img	f63baa37cae93553d062909c95c08717b958e7639d401af267e14e748aa20616
+out/android-v3-bringup-20261120/metadata_stock.img	a735fbc74abf0d9695a1fc598128acc78184abc710224719825bbe16fca4722e
+out/uefi-bslot-20261121/esp.img	f25e7c8cf0001cfa5aec7809c5b91dc787ec2bca7e08e66969c156c2bb75a848
+out/uefi-bslot-20261121/esp4k.img	af97b799153fc5207cee83f579d03267855d6273bf0de347991656a51ffc46bd
+out/g7-20261121/boot.img	00912631825bc33a8b88efd0365f5b90d336c7d0f36dbd32dd1e7386cb6ffba2
+out/g7-20261121/boot-with-rolehook.img	727bb55f55efd93f40d810c0e965b640d8e12204a039b9885247598470a9760e
+out/vbmeta-b/vbmeta_b-flags3.img	906e69221701805c3d84890f80b9df59d3d13767331d87f7fe8cccdbde09678c
