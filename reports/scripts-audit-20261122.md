@@ -22,6 +22,29 @@
 6. STALE 15 个 = 上轮已登记未落地头注（sleep-*、headless waydroid、serial-*）+ 日期名一次性件 + 绑死 U1 备份路径的 2 个脚本 + 已 supersede 的 v2 计划器。
 7. 无任何文件在本轮被删除/移动/修改；整改全部为「补丁建议」，见 §5 分批计划。
 
+## §0.1 2026-11-24 复核（本报告 §2 抽样 17 行 + §结论 1/3/4 的现状）
+
+> 结论先行：**本报告的「3 个 P0/P1 未修」与「新 BROKEN 3 个」已全部收口**（脚本层改动在
+> `36/0d470e2f/cbbf1d9d` 等提交里）。下表逐行给现证据，供下一轮直接引用而不再复算。
+> 口径：只复核本报告点名的行；**KEEP/STALE/DANGEROUS 的全量分类数字未重算**（要重算请按 §1 方法全量跑）。
+
+| §2 # | 文件 | 2026-11-22 判 | 2026-11-24 现状 + 证据 |
+|---|---|---|---|
+| 1 | `ath12k-load.sh` | DANGEROUS（bind 写路径） | **已修**：`:34` `DEVNAME=$(basename "$DEV")`、`:55` `printf '%s' "$DEVNAME" > "$DRV/bind"` |
+| 2 | `arm-console-run.sh` | BROKEN（#584 管道） | **已修**：`fastboot devices` 取值式，另接 `lib-hosttools`（`ensure_hosttools` + `$FB_BIN`）与 `serial-tap.py`（#622） |
+| 7 | `q28-por-rounds.sh` | STALE（v1 devprobe） | **已修**：3 处引用 `q28-devprobe2.sh`，缺 `l1=/l2=` 即判 INVALID-PROBE |
+| 10 | `n5b-vk64-death-rate.sh` | DANGEROUS（`reboot2 bootloader`） | **已修**：改走 `lib-soft-bootloader.sh`（#712），sysrq 逃生梯已删 |
+| 11 | `arm-window-hunt.sh` | BROKEN（`reboot2`） | **已修**：`soft_to_bootloader` + 保留串口判据 |
+| 12 | `q26-recheck.sh` | BROKEN（指引死路径） | **已修**：先真发软路径（#712），失败才要物理键 |
+| 13 | `gpt-restore-tb322fc.py` | DANGEROUS（无表指纹门） | **已修**：`:9` 必填 `--expect-fingerprint` + `:156` TB322FC 表指纹门（默认开，2026-11-23 审计批 3） |
+| 6 | `m1-73-modules-overlay.sh` | STALE（建议归档） | **已不存在**（脚本清理轮删除） |
+| 9 | `deploy-sensord-routec.sh` | STALE（Alpine 专用） | **已不存在**（同上） |
+| 3/4/5/8/14/15 | trial / kbuild-sanity / check-abi-config / fix-ab / linux-gpt-apply / flash-b·flash-recovery | KEEP（已修或本就合格） | 维持 KEEP；本轮另给 `lib-hosttools.sh` 加 `dev_present`（#584 取值式在线判据）并让 esp-apply/linux-gpt-* 使用 |
+
+**§结论 1/3/4 的现状**：③「3 个 P0/P1 未修」→ 0；④「新 BROKEN 3（arm-window-hunt/q26-recheck/n5b）」→ 0；
+① 的全量计数（KEEP 344 / STALE 15 / DANGEROUS 7 / BROKEN 3）**已过期**（入口数 369→347，另 2 个 STALE 文件已删、
+3 个 BROKEN 已修）——需要新基线时重跑 §1 方法，别引用旧数字。
+
 ## §1 方法
 
 1. 枚举：`find scripts tools packaging/elden-userland rootfs/debian -maxdepth 2 -type f` 过滤 `*.sh|*.py|*.c|*.initd`，去二进制/`__pycache__` ⇒ **369 个入口**（`scripts/` 340 + `tools/` 9 + `packaging` 6 + `rootfs/debian` 14，TSV 现查）。
@@ -33,13 +56,13 @@
 
 | # | 文件 | 判 | 依据（file:line） |
 |---|---|---|---|
-| 1 | `scripts/ath12k-load.sh` | DANGEROUS | `MANIFEST.tsv:40` 仍装机；全仓零调用点；`:35` 把**设备路径**写进 `driver/bind`，而 `ath12k-retry.sh:50-51` NOTE 明写 bind 只吃设备名 ⇒ 被调用必静默失效（`2>/dev/null` 吞错）。上轮 P0 原样未修 |
+| 1 | `scripts/ath12k-load.sh` | DANGEROUS | `MANIFEST.tsv:40` 仍装机；全仓零调用点；`:35` 把**设备路径**写进 `driver/bind`，而 `ath12k-retry.sh:50-51` NOTE 明写 bind 只吃设备名 ⇒ 被调用必静默失效（`2>/dev/null` 吞错）。上轮 P0 原样未修（**已修，见 §0.1**） |
 | 2 | `scripts/arm-console-run.sh` | BROKEN | `:14` `fastboot devices \| grep -q .` = #584 SIGPIPE 模式原样；上轮只修了 arm-window-hunt/uefi-ddr-trial，这个漏网仍漏 |
 | 3 | `scripts/trial.sh` | KEEP | 上轮说 `:186` 有 #584 模式——现 `grep -n 'fastboot devices'` 只剩 `:249` 的取值式（`timeout … fastboot devices 2>&1`），`186` 行已是参数解析 ⇒ **已修** |
 | 4 | `scripts/kbuild-sanity.sh` | KEEP | `:23` 自述「收编进 hw-stability 后去掉了 y700 默认 build/m1-73」，`:31` `KDIR=` 必填、`:47` 空即退 ⇒ 上轮「默认对不存在树检查」已修 |
 | 5 | `scripts/check-abi-config.sh` | KEEP | `:62` 注释明写「不再写死 build/m1-73，改 patches/current-tree」⇒ 28 处 `build/*` 死引用里最硬的一处已消 |
 | 6 | `scripts/m1-73-modules-overlay.sh` | STALE | 头部有 S15 收口指针（历史/专用形态）；目标树 `build/m1-73` 不存在（`build/` 现仅 `elden-tree`）⇒ 建议归档 |
-| 7 | `scripts/q28-por-rounds.sh` | STALE | `:99` 仍 `< scripts/q28-devprobe.sh`（v1 storm_sig 单计数）；`q28-devprobe2.sh:3-6` 自述 v1 混 L1/L2 ⇒ 上轮 P1 未修，POR 轮次判据失真 |
+| 7 | `scripts/q28-por-rounds.sh` | STALE | `:99` 仍 `< scripts/q28-devprobe.sh`（v1 storm_sig 单计数）；`q28-devprobe2.sh:3-6` 自述 v1 混 L1/L2 ⇒ 上轮 P1 未修，POR 轮次判据失真（**已修，见 §0.1**） |
 | 8 | `scripts/fix-ab-mark-successful.sh` | KEEP | 上轮判「Alpine 专用、Debian 根第一步 exit 1」已过时：`:17-22` 新增 Debian/systemd 分支（2026-11-21），从 `/proc/cmdline` 取槽位并复位 tries_remaining ⇒ **已修** |
 | 9 | `scripts/deploy-sensord-routec.sh` | STALE | Alpine/musl 安装器；现役根 Debian（INDEX §0 2026-11-20）；`-debian.sh` 是真源（#431） |
 | 10 | `scripts/n5b-vk64-death-rate.sh` | DANGEROUS | `:131` 仍发 `SSH 'reboot2 bootloader'`（TASKS §4 停用令 + #701 实测全灭）；`:167-179` 手工 sysrq 逃生梯仍在 |
