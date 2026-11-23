@@ -118,13 +118,13 @@
 
 ---
 
-## 6. 推荐下一轮动作排序
+## 6. 推荐下一轮动作排序（2026-11-23 晚状态更新：①②④ 已收口）
 
-1. **收口 §4.1 矛盾**（5 min，主机侧）：把 Rb §1.5 部署配方的 `['always']` 改为 `['hint','manual']`（或标注"0.46 无 always，走 manual 开关"），并在 `reports/ime-rime-backend-20261123.md` 加一行勘误指针 → 本文件。
-2. **补 A 案守护链接产物**（主机侧，~30 min）：临时装 `librime-dev`（或容器内）把 `librime-piped` 链成 aarch64 可执行，连同 sha 记入 `verify/aarch64/`；不跑全量编译。
-3. **设备窗口批 1（A 案升级，15 min）**：§2-A 四步 + `verify/ime-zh-rime-verify.sh`；记录 R1–R5 + 与现役 pypinyin helper 的候选质量/延迟对比（`nihao/shijian/womens` 三键对照）。
-4. **B 案接线补丁落盘**（主机侧 1–2 h，可在等窗口时做）：产出 `0003-…wiring.patch`；**但重编执行推迟**到 Debian/Mobian 换 stevia 前的最后一个 0.46 窗口，与 haptic `0001`、layout `0002` 合并为一次 divert 批（H2/H3/L1/L2 四判据同窗口收）。
-5. **持续跟踪**（并入 D10 lane）：watch `World/Phosh/stevia` 的 pipe completer 相关 issue/MR 与 DebianOnMobile 的 stevia 上传节奏；phoc "Cancel preedit on submit" 进 trixie 时重跑 R3/R4。
+1. ~~收口 §4.1 矛盾~~ ✅（`4fc3ee72`）
+2. ~~补 A 案守护链接产物~~ ✅（`ded9b2a6`，`verify/aarch64/librime-piped`）
+3. **设备窗口批 1（A 案升级，15 min）** —— 待上机（唯一 gate = 设备窗口）
+4. ~~B 案接线补丁落盘~~ ✅（`68b88d00` + `313320b6`，`rime/0003-osk-stub-rime-completer-wiring.patch`，0.46.0 干树 -p1 复验；**重编执行仍推迟**到 0.46 最后窗口，与 haptic/layout 同批 divert）
+5. 持续跟踪（并入 D10 lane）：watch stevia pipe completer 与 DebianOnMobile 节奏；phoc preedit 修复进 trixie 时重跑 R3/R4。
 
 ---
 
