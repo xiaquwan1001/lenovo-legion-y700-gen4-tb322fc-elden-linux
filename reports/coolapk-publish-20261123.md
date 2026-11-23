@@ -12,3 +12,8 @@
 
 - 三篇均 code=200、`dateline_text=刚刚`；`adminInfo=动态审核后可见`（正常审核流）
 - 发布脚本：`/tmp/publish.py`（JSON-RPC over MCP，60s 冷却内建）
+
+## 发布后核查（2026-11-23 20:3x）
+- 三篇在线：feed_detail block_status=0、`dateline_text=23分钟前`；互动数初始 0（正常）
+- 注意：帖面「设备」显示账号挂的 Redmi K70（账号级设置），正文首篇已写明 Y700 四代——如介意可后续 coolapk_update_feed 或改账号设备名
+- v13 lore 复核：投出 ~1.5h 尚未入索引（v11/v12 均已在档）；`!46` pipeline #2 success（ea9fe3d5）；INBOX 0 回复
