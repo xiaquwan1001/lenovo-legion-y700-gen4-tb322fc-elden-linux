@@ -4,7 +4,10 @@
 #
 # 背景：同一动作（把 .ko 弄到设备 /lib/modules/<UTS>）曾有三种互不兼容的实现：
 #   - scripts/mod-loop.sh:73            tar 管道（无备份、无读回）
-#   - scripts/m1-73-modules-overlay.sh  只拷 2 个 .ko 进 cpio overlay（不同产物形态，保留）
+#   - scripts/m1-73-modules-overlay.sh  只拷 2 个 .ko 进 cpio overlay（不同产物形态）
+#       ★ 2026-11-23（D5 批 4，reports/scripts-hardening-4-20261123.md §2）：**已归档** →
+#         archive/scripts-stale-20261123/m1-73-modules-overlay.sh（目标树 build/m1-upstream/clean-tree-73
+#         已不存在 ⇒ 不可执行；真源 = 本脚本）。此处只留历史指针，勿再当活入口。
 #   - scripts/deploy-camera-modules.sh  相机 tar（自备传输/无备份）
 # 硬约束（AGENTS.md 项目记忆）：RAM 起新核前必须先部署整套 /lib/modules/<UTS>，否则所有 =m 驱动 defer。
 #

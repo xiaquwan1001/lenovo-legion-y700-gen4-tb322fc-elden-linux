@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""USTC mailbox cleanup 2026-11-02.
+"""★ STALE 复判（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。
+  审计 TSV 判为「2026-11-02 邮箱清理一次性 → 归档」，本轮**否掉**该判定：
+  它不是一次性件，而是 `scripts/mailbox-cleanup-weekly.sh` 的**活依赖**（:24 `--backup`、:28 `--delete --aggressive`）
+  ⇒ 归档会把周度清理变脑死。文件名带日期只是历史命名（与 reports/mailbox-cleanup-20261102.md 同批）。
+  使用纪律：删除阶段必须带 `--dry-run` 先看计数；密码只走 GNOME keyring（secret-tool），不落盘。
+
+USTC mailbox cleanup 2026-11-02.
 
 Three stages:
   --backup    dump INBOX / Junk E-mail / Sent Items to ~/Mail/ustc-backup-20261102/<folder>.mbox (BODY.PEEK)

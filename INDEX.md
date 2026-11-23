@@ -138,7 +138,7 @@
 0. **🆕 2026-11-20 22:00–23:10（U2 HA2EXB0E，当晚目标「恢复到历史最佳」= 达成）— 设备曾卡 fastboot（三层真因已定因并修好）+ PC 声音默认转发到平板**
    - **现态（三次冷起实测，均 ~25 s 直进 Linux，无回落）**：`boot_b` 主启、`qbootctl` = `_b` Active/Successful/**Bootable 全 1**；在机 **vk192**（UTS `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`）；`/` = `/dev/sda17` 190 G（1260 包）；`phoc+phosh` 在；Mesa **26.1.6**；`wlan0` 上网（默认路由）+ `usb0` 192.168.7.1 SSH；六件 mask 在位、`systemctl --failed` 空。
    - **两种门全绿**：`scripts/deploy-desktop-shell.sh --check` = **MISS=0**；`scripts/zero-to-desktop-check.sh` = **S5–S12 全 ok**（S10 之前 MISS 的两项已修：`man-db` 装上、GPU devfreq 真生效 525 MHz/10 ms）。
-   - **fastboot 卡死的三层真因（PITFALLS #697，全文 `PITFALLS/sessions/329-…`）**：① `boot_b` SUCCESSFUL=0 ⇒ ABL 每发抽 retry，7→0 标 UNBOOTABLE 停 fastboot；② `ValidateSlotGuids … Boot GUID 77036CD4… / abl_b GUID 77036CD4…` = 该槽 `boot_*` 与 `abl_*` **type GUID 相同**（出厂 b 侧占位值）；③ `Boot lun: 1 and BootableSlot: _b do not match` = UFS 启动 LUN 未切（**a→LUN1 / b→LUN2**）。机制 = Qualcomm 切槽要**把 type GUID 在两槽间搬家 + 切 LUN**（`boot_control.cpp` `UPDATE_SLOT`）⇒ 「canonical GUID 在哪侧」必须与「哪侧 active」一致。**修法**：切槽只走 `fastboot set_active`；半完成态用 `scripts/gpt-slot-flip-active.py` + `scripts/linux-gpt-apply.sh --lun 4` 补 ACTIVE（写后逐字节/设备端 sha 读回），再 `set_active <同槽>` 触发 LUN 切换，起来后 `qbootctl -m`。
+   - **fastboot 卡死的三层真因（PITFALLS #697，全文 `PITFALLS/sessions/329-fastboot卡死的三层真因-GUID占位与LUN错配.md`）**：① `boot_b` SUCCESSFUL=0 ⇒ ABL 每发抽 retry，7→0 标 UNBOOTABLE 停 fastboot；② `ValidateSlotGuids … Boot GUID 77036CD4… / abl_b GUID 77036CD4…` = 该槽 `boot_*` 与 `abl_*` **type GUID 相同**（出厂 b 侧占位值）；③ `Boot lun: 1 and BootableSlot: _b do not match` = UFS 启动 LUN 未切（**a→LUN1 / b→LUN2**）。机制 = Qualcomm 切槽要**把 type GUID 在两槽间搬家 + 切 LUN**（`boot_control.cpp` `UPDATE_SLOT`）⇒ 「canonical GUID 在哪侧」必须与「哪侧 active」一致。**修法**：切槽只走 `fastboot set_active`；半完成态用 `scripts/gpt-slot-flip-active.py` + `scripts/linux-gpt-apply.sh --lun 4` 补 ACTIVE（写后逐字节/设备端 sha 读回），再 `set_active <同槽>` 触发 LUN 切换，起来后 `qbootctl -m`。
    - **PC → 平板音频（新功能，默认常驻两端）**：上游 `mkckr0/audio-share` 只有 Android 客户端 ⇒ 自写 Linux 客户端 `rootfs/debian/audio-share/as-client.c`（协议逐字节取自上游 `NetClient.kt`：TCP 命令字 1/2/3 + protobuf AudioFormat + UDP PCM），musl 静态交叉编译，装机/体检 = **`scripts/as-client-deploy.sh [--check]`**。主机侧改成 user unit `audio-share-server.service`（`as-cmd --bind=0.0.0.0`，原来只绑手机网段 192.168.42.97 ⇒ 平板连不进）+ ufw 放行 192.168.7.0/24 的 65530/tcp,udp。设备侧 user unit `audio-share-client.service` → 192.168.7.9:65530，实测 **384 KB/s = f32/2ch/48 kHz 满速**，冷起自动连（`systemctl --user is-active` = active）。
    - **顺带修掉两个静默坑**：`deploy-desktop-shell.sh` §8 原来只 `test -f` unit ⇒ 「unit 在、脚本被删、运行值还是 160 MHz/50 ms」也报 ok（现改四件同验：脚本 + unit enabled + min_freq≥525 MHz + polling=10）；设备 `/home/xuqianhui1001/.config/systemd/user` 属主是 root ⇒ 用户级 enable 失败（已 chown）。
    - **驱动/功能面补回（用户点出「恢复历史最佳还包括驱动」后）**：音频真因 = 重建根丢了**自研资产**而非驱动 ——
@@ -146,14 +146,14 @@
      补后 Sink = **`内置音频 Speaker playback`**、`audio-alsa-init.sh` 出 `mm1[on,off] L[400] R[400]`、`pw-play` rc=0。
      触觉 = 驱动 `aw86927`+haptics-v3 在、两枚 FF 节点在，缺的是 `ffrumble` 基线工具（`ffrumble /dev/input/event{2,3} 700 0xffff` 两轮阳性）。**两项均已用户实测确认**（扬声器出声 + 两侧马达都震）。
      两项已机械化进 `deploy-desktop-shell.sh` **§10/§11**（多件同验），冷起后仍绿（PITFALLS **#698**）。
-   - **证据**：`logs/forensics-20261120-2210/`（boot_b 96 MiB、logfs×3、misc、vbmeta_a/b）、`backup/HA2EXB0E-16+512/edl-20261120-22{08,35}/`（两次六 LUN GPT dump）、`…/edl-apply-readback-20261120-223802/`（写前回退基线）；工作账 = `.pi/plans/2026-11-20-恢复到历史最佳.md`。
+   - **证据**：`logs/forensics-20261120-2210/`（boot_b 96 MiB、logfs×3、misc、vbmeta_a/b）、`backup/HA2EXB0E-16+512/edl-20261120-22{08,35}/`（两次六 LUN GPT dump）、`…/edl-apply-readback-20261120-223802/`（写前回退基线，全名 `backup/HA2EXB0E-16+512/edl-apply-readback-20261120-223802/`）；工作账 = `.pi/plans/2026-11-20-恢复到历史最佳.md`。
 
 **做到哪**
 
 0. **🆕 2026-11-20（主机侧，单轮）—— dwc3 v10 的「两连接器」形状第一次进真 elden DTB 的 `dtbs_check` 门，零新增诊断**
    - elden 板 DTS 补齐 `mux-controls`（`gpio-mux` on `&tlmm 29`）+ `port@0` 两个 endpoint（`mux-state` 0/1）+ 两个 `usb-c-connector`；硬件依据 = 真机 live FDT（`reports/artifacts/uefi-eud-20261101/live-fdt.dts`：`port-select-gpios = <&tlmm 29 …>`、`connector@0/@1`、每口一颗 `fsa4480`）+ vendor overlay 的 `&ucsi` `gpios` 同一条线 + 2026-10-29 双口充电实测。件与门账 = `patches/upstream/dwc3-v10-20261120/elden-dts/` + 同目录 `README.md` §7。
    - **门对照**（`CHECK_DTBS=1`、**不带** `DT_SCHEMA_FILES`）：加之前 3 诊断 / 加之后 3 诊断（**新增 0**，3 条都是板级既有噪声）；两个自造负样例分别 5/2 条 USB 诊断 ⇒ 门真咬得住。**关键修正**：v9 那版「在 `sm8750.dtsi` 里无条件把 `port@0` 拆两 endpoint」会让 mtp/qrd 各多 2 条诊断，已改为 dtsi 只加一个 label、板级 `/delete-node/` 重写。
-   - 新坑 **#696**（`PITFALLS/sessions/328-…`）：`DT_SCHEMA_FILES` 对**无 `select:` 的公共片段**恒空转；另修 `DEVICE` §1.4 SMB1501 地址错（`@0x42/@0x43` 是 `fsa4480`）。
+   - 新坑 **#696**（`PITFALLS/sessions/328-dtbs_check加DT_SCHEMA_FILES对无select公共片段恒空转.md`）：`DT_SCHEMA_FILES` 对**无 `select:` 的公共片段**恒空转；另修 `DEVICE` §1.4 SMB1501 地址错（`@0x42/@0x43` 是 `fsa4480`）。
    - **未做**：上机（mux 实际切换/两口枚举）；GPIO 29 的语义/极性/0↔口对应仍无硬件证据（子代理复核降级）；`gpio-mux` probe 即驱低 ⇒ 「保留厂商开机态」需改驱动或换表达。
 0. **🆕 2026-11-20 全天（主机；grow-loop #1–#5）—— 三份账/三道门落地、累计回收 ~19 GB；a 槽首启实测得新前置条件（PITFALLS #695）；**设备现离线（需人项插线+上电）**
    - **全账** = `.pi/plans/2026-11-20-进度整理与待办规划.md`（现态实测 + 4 lane 产出 + 排好序的待办 + 4 条待拍板）。
@@ -202,7 +202,7 @@
    - **槽位收口**：设备无 python3 ⇒ dd LUN4 主备 GPT → 主机 `slot-attr.py --image` 打补丁（`boot_b` 0x3f→0x7f）→ 写回读回一致
      ⇒ **`fastboot getvar slot-successful:b` = yes**（unbootable=no、retry=7）；件 = `reports/artifacts/slotattr-20261119/`。
    - ~~**遗留小项**：设备 RTC 不保持（重启回 4-13）；wlan0 DOWN 待连网；Phosh 桌面未起~~ **三项均已处置（2026-11-19 13:20，见上条）**：时钟 = `time-sync.sh` 修 + 路由就位补跑；网络 = 自愈路由 + DNS 上游；桌面 = greetd/phoc/phosh 起来（GPU 渲染）。
-   - 全账 = `TASKS/sessions/2026-11-19-显示修复=minbase缺udev.md`（+ 上篇 `…-显示nodp实验与RAM路径复核.md`：
+   - 全账 = `TASKS/sessions/2026-11-19-显示修复=minbase缺udev.md`（+ 上篇 `TASKS/sessions/2026-11-19-显示nodp实验与RAM路径复核.md`：
      11-18 两次 RAM 启动失败真因 = cmdline 根标签 `linux17` vs 实际 `linux`，RAM 路径本身是好的）。
 0. **🆕 2026-11-19 深夜（U2 HA2EXB0E）—— 主线 Linux 已重建到「能登入」；~~显示仍缺~~（已于同日下午修复，见上条）；安卓面零改动**
    - **旧 `linux17` 数据确认丢失**：EDL 只读采样 6 点（起点 73277435 及 +10/+50/+134/+275/+359 GiB）非零字节 **全 0**；

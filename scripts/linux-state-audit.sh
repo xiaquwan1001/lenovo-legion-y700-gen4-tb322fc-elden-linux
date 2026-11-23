@@ -1,4 +1,11 @@
 #!/bin/sh
+# ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。
+#   不归档的理由：它是「Linux 进度被改后怎么查」的**活入口**，INDEX.md:239,260,358 与
+#   RUNBOOK-BRINGUP/{LINUX-STATE-REPRO,ZERO-TO-DESKTOP,GPT-MINIMAL-DESIGN}.md 都直接指它（归档会成批悬挂）。
+#   ⚠ 已知债务（本轮**未修**，属审计 §5 批 2 第 9 条）：A/H 段的 GPT 基线路径写死单机序列号/容量档
+#     `backup/HA2EXB0E-16+512/`（:86-91，U1）⇒ 在别的单元/U2 布局上会整段报 MISSING（不是缺陷而是前提不符）。
+#     修法 = `--sn` / `--unit` 参数化（默认保留现值，行为不变），待单独一轮 + 真机复核。
+#
 # linux-state-audit.sh — 「Linux 进度」8 项状态的只读体检（主机侧 + 设备侧），永不做写操作。
 #
 # 配套文档：RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md（§2 = 8 项清单，§3 = 复现步骤）

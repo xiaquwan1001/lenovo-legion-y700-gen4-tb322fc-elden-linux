@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：602
+- 报告总数：610
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -12,10 +12,10 @@
 |---|---|---|
 | `uefi` | 86 | `uefi-bslot-plan-20261121.md` |
 | `q28` | 33 | `q28-ab-rig-20261116.md` |
-| `mail` | 29 | `mail-inbox-20261121.md` |
+| `mail` | 30 | `mail-inbox-20261121.md` |
 | `q24` | 24 | `q24-n5b-20261023.md` |
+| `doc` | 19 | `doc-audit-20261123.md` |
 | `upstream` | 19 | `upstream-queue-prep-20261121.md` |
-| `doc` | 18 | `doc-audit-night-20261121.md` |
 | `gunyah` | 18 | `gunyah-b15-iceland-rmdrv-20261113.md` |
 | `android` | 15 | `android-boot-audit-20261122.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
@@ -29,12 +29,13 @@
 | `m6` | 8 | `m6-v2-recut-plan-20261107.md` |
 | `script` | 8 | `script-audit-adb-20261118.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
+| `camera` | 7 | `camera-restore-20261121.md` |
+| `mobian` | 7 | `mobian-firstmr-20261123.md` |
+| `userland` | 7 | `userland-drift-audit-20261121.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
-| `camera` | 6 | `camera-snapshot-window-focus-20261019.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
-| `mobian` | 6 | `mobian-mr-plan-20261122.md` |
-| `userland` | 6 | `userland-dealpine-audit-20261026.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
+| `scripts` | 5 | `scripts-audit-20261122.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
@@ -44,7 +45,6 @@
 | `progress` | 4 | `progress-audit-20261118.md` |
 | `q32` | 4 | `q32-matrix-20261024.md` |
 | `research` | 4 | `research-next-20261102.md` |
-| `scripts` | 4 | `scripts-audit-20261122.md` |
 | `主机侧` | 4 | `主机侧-B13-20261117.md` |
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
 | `c3` | 3 | `c3-spic-verdict-20261115.md` |
@@ -69,6 +69,7 @@
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
+| `g7` | 2 | `g7-routeA-20261121.md` |
 | `integrity` | 2 | `integrity-h2-20261111.md` |
 | `kernel` | 2 | `kernel-rebase-cost-20261107.md` |
 | `lanes` | 2 | `lanes-consolidated-20261101.md` |
@@ -296,9 +297,10 @@
 - `q28-dossier-B-mail-external.md` — Q28 类现象 — 邮件与外部资料档（B 卷）
 - `q28-dossier-C-device-evidence.md` — Q28 dossier-C —— 设备实测证据（watchdog 日志 / journal 全 boot / dmesg / sysfs）
 
-## `mail`（29）
+## `mail`（30）
 
 - `mail-inbox-20261121.md` — 上游邮件收件核查（窗口 2026-11-15T00:00Z → 2026-11-21T02:00Z）
+- `mail-triage-20261121-night.md` — 邮件/上游 夜间分诊（2026-11-21T02:00Z → 13:10Z，只收信与核对、**零发信**）
 - `mail-inbox-20261118.md` — 上游邮件收件核查（截止 2026-11-17 13:40 UTC / 11-17 21:40 CST）
 - `mail-draft-check-20261117.md` — 投递前静态核对工具 `scripts/mail-draft-check.py` + 一处真缺陷修复（2026-11-17 早）
 - `mail-send-20261114-mdss-v5.md` — M8 mdss v5 + 回 sashiko/Konrad（2026-11-14，**已发送**）
@@ -355,6 +357,28 @@
 - `q24-stageA-20261012.md` — Q24 阶段 A（安全采集）实测 + 设备挂死事件（2026-10-12）
 - `q24-repro-20261011.md` — Q24 复现 + RPMh 现场取证（2026-10-11）
 
+## `doc`（19）
+
+- `doc-audit-20261123.md` — 文档卫生审计（D6 lane C 重派）— 2026-11-23
+- `doc-audit-night-20261121.md` — 文档与踩坑精简（D6 lane）— 死指针 / 重复段 / 索引漂移 — 2026-11-21 夜
+- `doc-reality-audit-20261121.md` — 文档「与进度脱节」核实 + 收敛 — 2026-11-21
+- `doc-slim-plan-20261118.md` — 文档精简方案（只出方案，未改任何 SSOT；2026-11-18）
+- `doc-hygiene-20261117.md` — 文档/工具/工件卫生清理报告 (2026-11-17)
+- `doc-dedup-audit-20261112.md` — 文档重复描述（SSOT 违例）审计 — 2026-11-12
+- `doc-ime-scope-audit-20261111.md` — 文档口径核实：IME / 中文输入 真实进度与剩余动作（2026-11-11）
+- `doc-todo-20261111.md` — 文档整理待办分析（任务 D，2026-11-11，只读）
+- `doc-audit-20261108.md` — 增量文档审计 2026-11-08
+- `doc-audit-20261106.md` — 文档账目审计 — 2026-11-06
+- `doc-audit-20261105.md` — 文档账目审计 2026-11-05（lane C，只读）
+- `doc-slim-20261102.md` — 文档精简 / 清理 / 修正审计（2026-11-02，只出报告，不改正文）
+- `doc-trim-20261102.md` — 文档精简执行报告（2026-11-02，搬家类 P2 + 剩余 P1 落地）
+- `doc-mail-audit-20261101.md` — 文档一致性审计 + 邮件分诊（2026-11-01，只读 lane）
+- `doc-audit-20261031-apply.md` — 应用清单复核 + 增量审计（2026-10-31）
+- `doc-audit-20261030-v2-applylist.md` — 应用清单（总管一次性机械应用）— 源自 `reports/doc-audit-20261030-v2.md`（P0 0 / P1 8 / P2 15）
+- `doc-audit-20261030-v2.md` — 文档审计（增量·v2）2026-10-27 → 2026-10-30 — 状态漂移 / 死链 / 孤儿报告 / SSOT 违例
+- `doc-audit-20261030.md` — 文档缺口/过时/矛盾审计（2026-10-30）
+- `doc-audit-20261026.md` — 文档与资料审计 — 2026-10-26（lane C，`.pi/agents/doc-audit.md` 清单 1–7）
+
 ## `upstream`（19）
 
 - `upstream-queue-prep-20261121.md` — 上游队列备料 / 现查 / 上机执行单（2026-11-21）
@@ -376,27 +400,6 @@
 - `upstream-hits-20261012.md` — 上游命中与回移审计（7.2.y 稳定 / 7.3 周期 / lore 在途）
 - `upstream-hits-review-20261012.md` — 上游命中审计复核 —— 对 `reports/upstream-hits-20261012.md`（lane/upstream 53fbe5a）的独立核对
 - `upstream-lane-merge-20261012.md` — 上游回移 lane 收尾：按裁决清洗 + 合入基线 + 出日常镜像 — 2026-10-12
-
-## `doc`（18）
-
-- `doc-audit-night-20261121.md` — 文档与踩坑精简（D6 lane）— 死指针 / 重复段 / 索引漂移 — 2026-11-21 夜
-- `doc-reality-audit-20261121.md` — 文档「与进度脱节」核实 + 收敛 — 2026-11-21
-- `doc-slim-plan-20261118.md` — 文档精简方案（只出方案，未改任何 SSOT；2026-11-18）
-- `doc-hygiene-20261117.md` — 文档/工具/工件卫生清理报告 (2026-11-17)
-- `doc-dedup-audit-20261112.md` — 文档重复描述（SSOT 违例）审计 — 2026-11-12
-- `doc-ime-scope-audit-20261111.md` — 文档口径核实：IME / 中文输入 真实进度与剩余动作（2026-11-11）
-- `doc-todo-20261111.md` — 文档整理待办分析（任务 D，2026-11-11，只读）
-- `doc-audit-20261108.md` — 增量文档审计 2026-11-08
-- `doc-audit-20261106.md` — 文档账目审计 — 2026-11-06
-- `doc-audit-20261105.md` — 文档账目审计 2026-11-05（lane C，只读）
-- `doc-slim-20261102.md` — 文档精简 / 清理 / 修正审计（2026-11-02，只出报告，不改正文）
-- `doc-trim-20261102.md` — 文档精简执行报告（2026-11-02，搬家类 P2 + 剩余 P1 落地）
-- `doc-mail-audit-20261101.md` — 文档一致性审计 + 邮件分诊（2026-11-01，只读 lane）
-- `doc-audit-20261031-apply.md` — 应用清单复核 + 增量审计（2026-10-31）
-- `doc-audit-20261030-v2-applylist.md` — 应用清单（总管一次性机械应用）— 源自 `reports/doc-audit-20261030-v2.md`（P0 0 / P1 8 / P2 15）
-- `doc-audit-20261030-v2.md` — 文档审计（增量·v2）2026-10-27 → 2026-10-30 — 状态漂移 / 死链 / 孤儿报告 / SSOT 违例
-- `doc-audit-20261030.md` — 文档缺口/过时/矛盾审计（2026-10-30）
-- `doc-audit-20261026.md` — 文档与资料审计 — 2026-10-26（lane C，`.pi/agents/doc-audit.md` 清单 1–7）
 
 ## `gunyah`（18）
 
@@ -571,6 +574,36 @@
 - `wl2868c-20261028.md` — wl2868c binding（M4-1）重生成与 v2 投递 — 2026-10-28
 - `wl2868c-driver-20261028.md` — wl2868c 驱动本体：基线与上游可接受性 — 2026-10-28
 
+## `camera`（7）
+
+- `camera-restore-20261121.md` — 相机栈恢复（stock trixie 回退后，2026-11-21 22:0x–22:1x）
+- `camera-snapshot-window-focus-20261019.md` — 相机 App（GNOME Snapshot 50）一直转圈：真根因 = 窗口拿不到焦点（2026-10-19）
+- `camera-app-portal-rootcause-20261018.md` — 相机 App（GNOME Snapshot 50）不出画面：根因 = Camera portal 缺后端（2026-10-18）
+- `camera-linux-vk127-20261018-agc-rootcause.md` — Linux 侧相机成像「黑帧」真根因 = AGC exposureTarget 不可达（2026-10-18 晚）
+- `camera-linux-vk127-20261018.md` — Linux 侧相机在 7.3 vk127 上出流成功 + 冷起无桌面（greetd 崩）修复（2026-10-18）
+- `camera-ae-helper-20261017.md` — 相机 AE 上游正解落地：libcamera sensor helper（s5kjns / gc08a8）
+- `camera-vk127-20261017.md` — 相机在 vk127（M1-7.3 重放线）上跑通 + 容器侧 camera provider 缺口
+
+## `mobian`（7）
+
+- `mobian-firstmr-20261123.md` — Mobian 第一件 MR 备料完成 —— droid-juicer `configs/lenovo,elden.toml` 成品化（2026-11-23）
+- `mobian-mr-plan-20261122.md` — Mobian 第一件可提交物 —— 可执行 MR 方案（droid-juicer + mobian-recipes）2026-11-22
+- `mobian-upstream-firstpr-20261121.md` — Mobian 上游化第一件可交付 + 6.18 LTS 可落性静态评估 — 2026-11-21
+- `mobian-daily-baseline-20261107.md` — Mobian(Debian sid) 日用用户态基线补齐 — 2026-11-07
+- `mobian-daily-pkgs-20261107.md` — Debian sid + Phosh 日用必备包清单调研（2026-11-07）
+- `mobian-rootfs-artifacts-20261026.md` — Mobian 迁移物料（第一步）：apt 包映射表 + 自建固件包
+- `mobian-migration-plan-20261021.md` — Mobian（Debian + Phosh）迁移可行性评估与方案 — 只读研究，2026-10-21
+
+## `userland`（7）
+
+- `userland-drift-audit-20261121.md` — 用户态部署漂移只读审计（2026-11-21）
+- `userland-dealpine-audit-20261026.md` — 用户态去 Alpine 化审计（T20 补欠账，2026-10-26）
+- `userland-service-consolidation-20261025.md` — 用户态入口收敛（`/init` ↔ `local.d` ↔ 服务管理器）2026-10-25
+- `userland-service-inventory-20261025.md` — 用户态驱动/服务独立固化 — 审计与落地（2026-10-25）
+- `userland-auto-rotation-toggle-20261011.md` — 用户态新增：自动旋转开/关快速设置磁贴（2026-10-11）
+- `userland-dark-brightness-verify-20261011.md` — 桌面用户态收口：深色/主题（G1-26/27）与亮度滑块（G1-28）—— 上机复核（2026-10-11）
+- `userland-display-scale-refresh-20261011.md` — 用户态显示修正：刷新率固定 165 Hz + 非整数缩放显示 100%（2026-10-11）
+
 ## `waydroid`（7）
 
 - `waydroid-proxy-err-20261030.md` — Waydroid 容器内浏览器 `ERR_PROXY_CONNECTION_FAILED` — 只读取证
@@ -581,15 +614,6 @@
 - `waydroid-haptics-20261013.md` — Waydroid 马达透传（vibrator HAL → aw86927 FF）— 2026-10-13 实测
 - `waydroid-sensors-next-20261011.md` — 调查：Waydroid 传感器『下一步到底做什么』（2026-10-11，只读）
 
-## `camera`（6）
-
-- `camera-snapshot-window-focus-20261019.md` — 相机 App（GNOME Snapshot 50）一直转圈：真根因 = 窗口拿不到焦点（2026-10-19）
-- `camera-app-portal-rootcause-20261018.md` — 相机 App（GNOME Snapshot 50）不出画面：根因 = Camera portal 缺后端（2026-10-18）
-- `camera-linux-vk127-20261018-agc-rootcause.md` — Linux 侧相机成像「黑帧」真根因 = AGC exposureTarget 不可达（2026-10-18 晚）
-- `camera-linux-vk127-20261018.md` — Linux 侧相机在 7.3 vk127 上出流成功 + 冷起无桌面（greetd 崩）修复（2026-10-18）
-- `camera-ae-helper-20261017.md` — 相机 AE 上游正解落地：libcamera sensor helper（s5kjns / gc08a8）
-- `camera-vk127-20261017.md` — 相机在 vk127（M1-7.3 重放线）上跑通 + 容器侧 camera provider 缺口
-
 ## `device`（6）
 
 - `device-window-20261121-night.md` — 设备窗口清单（2026-11-21 夜，待用户放行）
@@ -599,24 +623,6 @@
 - `device-window-checklist-20261031.md` — 设备窗口执行单（B 类阻塞合并）— 2026-10-31
 - `device-rescue-and-q28-m1-badboot-20261017.md` — 换机后 P0 抢救 + M1-7.3 线首个 Q28 坏发现场（2026-10-17）
 
-## `mobian`（6）
-
-- `mobian-mr-plan-20261122.md` — Mobian 第一件可提交物 —— 可执行 MR 方案（droid-juicer + mobian-recipes）2026-11-22
-- `mobian-upstream-firstpr-20261121.md` — Mobian 上游化第一件可交付 + 6.18 LTS 可落性静态评估 — 2026-11-21
-- `mobian-daily-baseline-20261107.md` — Mobian(Debian sid) 日用用户态基线补齐 — 2026-11-07
-- `mobian-daily-pkgs-20261107.md` — Debian sid + Phosh 日用必备包清单调研（2026-11-07）
-- `mobian-rootfs-artifacts-20261026.md` — Mobian 迁移物料（第一步）：apt 包映射表 + 自建固件包
-- `mobian-migration-plan-20261021.md` — Mobian（Debian + Phosh）迁移可行性评估与方案 — 只读研究，2026-10-21
-
-## `userland`（6）
-
-- `userland-dealpine-audit-20261026.md` — 用户态去 Alpine 化审计（T20 补欠账，2026-10-26）
-- `userland-service-consolidation-20261025.md` — 用户态入口收敛（`/init` ↔ `local.d` ↔ 服务管理器）2026-10-25
-- `userland-service-inventory-20261025.md` — 用户态驱动/服务独立固化 — 审计与落地（2026-10-25）
-- `userland-auto-rotation-toggle-20261011.md` — 用户态新增：自动旋转开/关快速设置磁贴（2026-10-11）
-- `userland-dark-brightness-verify-20261011.md` — 桌面用户态收口：深色/主题（G1-26/27）与亮度滑块（G1-28）—— 上机复核（2026-10-11）
-- `userland-display-scale-refresh-20261011.md` — 用户态显示修正：刷新率固定 165 Hz + 非整数缩放显示 100%（2026-10-11）
-
 ## `git`（5）
 
 - `git-slim-exec-20261113.md` — git 树整理执行账 — 2026-11-13（第二轮）
@@ -624,6 +630,14 @@
 - `git-tree-audit-20261113.md` — Git 树整合审计（嵌套仓 / 被跟踪大件 / 垃圾面）— 2026-11-13
 - `git-tree-merge-20261111.md` — 内核 git 树合并/差分分析（geekidos-linux × wt/reb-731）— 2026-11-11
 - `git-tree-consolidation-20261103.md` — 2026-11-03 本地 git 树精简合并 + 损坏镜像重建
+
+## `scripts`（5）
+
+- `scripts-audit-20261122.md` — 脚本/工具精简与整理审计（2026-11-22，只读）
+- `scripts-hardening-1-20261121.md` — scripts-hardening-1-20261121.md — 脚本整改批 1（7 个 DANGEROUS）落地记录
+- `scripts-hardening-2-20261121.md` — scripts-hardening-2-20261121.md — 脚本整改批 2（D5 小批：build-kernel 守卫假阳性 + 3 个 BROKEN 加 #701 门）
+- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
+- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
 
 ## `audit`（4）
 
@@ -687,13 +701,6 @@
 - `research-horizontal-sm8750-20261101.md` — 横向同芯片调研：SM8750/SM8750P 平台上的 Linux/UEFI 真机进展（截至 2026-11-01）
 - `research-vertical-y700-lineage-20261101.md` — 纵向同产品线调研：Lenovo Legion Y700 五代（TB-9707F → TB323FU）与 Legion Tab 命名 —— 2026-11-01
 - `research-waydroid-sensors-hal-20261011.md` — 调研：Waydroid 传感器 HAL 的社区/上游经验（2026-10-11）
-
-## `scripts`（4）
-
-- `scripts-audit-20261122.md` — 脚本/工具精简与整理审计（2026-11-22，只读）
-- `scripts-hardening-1-20261121.md` — scripts-hardening-1-20261121.md — 脚本整改批 1（7 个 DANGEROUS）落地记录
-- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
-- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
 
 ## `主机侧`（4）
 
@@ -831,6 +838,11 @@
 
 - `g3-steam-screenshot-paths-20261029.md` — G3 Steam 判据②「截图」路径清单 + captive-portal 绕过草案（2026-10-29，纯主机）
 - `g3-steam-20261028.md` — G3 第一批：Steam 客户端起到登录界面（2026-10-28，持设备）
+
+## `g7`（2）
+
+- `g7-routeA-20261121.md` — G7 上机件 · 路线 A（`7.4-rc3` + dwc3 v11 pristine + daily 使能面，只动 DTS）— 2026-11-21（主机侧）
+- `g7-routeA-ondevice-20261121.md` — G7 上机实测 #1 —— 路线 A 件（`boot-elden-g7a.img`）· 2026-11-21 23:13–23:35 CST
 
 ## `integrity`（2）
 

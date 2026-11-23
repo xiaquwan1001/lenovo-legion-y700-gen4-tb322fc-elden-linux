@@ -1,4 +1,10 @@
 #!/bin/bash
+# ★ SUPERSEDED-BY（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。
+#   后继实现 = `scripts/android-slim-v3-build.sh`（v3 = v2-B 删全集 + 空目录占位 + 布局裁剪 + 重建 ext4 后 e2fsck/round-trip），
+#   它才是真正出件的构建器；本件是 **v2 的「只打印不落盘」计划器**，作为 v2 口径的记录与体积活码器仍可只读重跑。
+#   为何不删：`DEVICE/README.md:288` 与 `TASKS/sessions/*` 仍把它当作「需用户确认的 apply 类清单」范例引用
+#   （devices 默认 dry-run 口径的标杆），归档会让那些指针变悬挂。新工作请直接用 v3。
+#
 # android-slim-v2-plan.sh — 「安卓干净瘦身 v2」计划器（主机侧；默认只打印，不写任何东西）
 #
 # 背景：v1（out/android-min-20261118/new/system_a.img，5.0 GiB，已上机两发 boot_completed=1）

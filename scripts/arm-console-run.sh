@@ -11,10 +11,24 @@ TTY=${TTY:-/dev/ttyACM0}
 OUT=logs/arm-$LABEL-$(date +%Y%m%d-%H%M%S); mkdir -p "$OUT"
 LOG=$OUT/console.log; : > "$LOG"
 
-if ! fastboot devices 2>/dev/null | grep -q .; then
-	echo "[arm] ❌ 设备不在 fastboot（需要物理 POR / Vol-+Power）" >&2; exit 2
-fi
-timeout -k 2 10 fastboot devices | tee "$OUT/fastboot-before.txt"
+# ★ #584（PITFALLS #584）：此处原为「fastboot devices 取不到全量就交给 grep -q 判空」的管道写法
+# —— 管道把 SIGPIPE 送回 fastboot 客户端，打断设备侧 bulk 通道 ⇒ 之后 `fastboot devices` 恒空、
+# `fastboot boot` 失败。
+# 改成「取值式」：一次收全量输出到变量，再判空（不接任何管道）；同一发输出直接复用为
+# fastboot-before.txt（不再为了打印多叫一次 fastboot）。
+FB_OUT=$(timeout -k 5 10 fastboot devices 2>&1); FB_RC=$?
+case "$FB_OUT" in
+*fastboot*) : ;;
+*)
+	case "$FB_RC" in
+	127) echo "[arm] ❌ 宿主机找不到 fastboot（#699：在 ~/.local/opt/platform-tools/fastboot）" >&2 ;;
+	124) echo "[arm] ❌ fastboot devices 超时（10 s）——USB/bulk 通道卡住，先物理 POR 再试" >&2 ;;
+	*)   echo "[arm] ❌ 设备不在 fastboot（需要物理 POR / Vol-+Power）" >&2 ;;
+	esac
+	printf 'rc=%s raw=%s\n' "$FB_RC" "${FB_OUT:-<空>}" >&2
+	exit 2 ;;
+esac
+printf '%s\n' "$FB_OUT" > "$OUT/fastboot-before.txt"
 
 # 先清掉遗留的串口读进程（tty 只能被一个读者持有，否则 boot 日志抓不到）
 for p in $(pgrep -f 'cat /dev/tty[A]CM0' 2>/dev/null); do kill "$p" 2>/dev/null; done
@@ -37,10 +51,12 @@ sleep "$WAIT"
 kill "$RD" 2>/dev/null
 sed -i 's/\r$//' "$LOG" 2>/dev/null
 
-L1=$(grep -Ec 'command DMA timeout|bonded command DMA failed|Failed to initialize panel|sending dcs data .* failed' "$LOG" 2>/dev/null || echo 0)
-L2=$(grep -Ec 'ctl [0-9]+ reset failure|frame done timeout|vblank wait timed out|vblank timeout' "$LOG" 2>/dev/null || echo 0)
-PANEL=$(grep -c 'panel prepared' "$LOG" 2>/dev/null || echo 0)
-UTS=$(grep -m1 -o '7\.[0-9][^ ]*' "$LOG" 2>/dev/null || echo unknown)
+# grep -c 无命中时自己就打印 0（rc=1），旧写法 `|| echo 0` 会把它变成 "0\n0" ⇒
+# `[ "$L1" -gt 0 ]` 报「需要整数」、verdict.txt 里写出 "L1=0⏎0"（判据被污染）。
+L1=$(grep -Ec 'command DMA timeout|bonded command DMA failed|Failed to initialize panel|sending dcs data .* failed' "$LOG" 2>/dev/null); [ -n "$L1" ] || L1=0
+L2=$(grep -Ec 'ctl [0-9]+ reset failure|frame done timeout|vblank wait timed out|vblank timeout' "$LOG" 2>/dev/null); [ -n "$L2" ] || L2=0
+PANEL=$(grep -c 'panel prepared' "$LOG" 2>/dev/null); [ -n "$PANEL" ] || PANEL=0
+UTS=$(grep -m1 -o '7\.[0-9][^ ]*' "$LOG" 2>/dev/null); [ -n "$UTS" ] || UTS=unknown
 if [ "$L1" -gt 0 ]; then V=L1FAIL; elif [ "$L2" -gt 0 ]; then V=L2STORM; else V=NO-SIGNATURE; fi
 {
 	echo "label=$LABEL"

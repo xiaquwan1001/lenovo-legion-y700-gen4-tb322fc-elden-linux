@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""从已上机的精简 system_a.img 提取安卓原厂资产 → assets/android-20261119/ + MANIFEST.tsv
+"""★ STALE 复判（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。
+  审计 TSV 判为「文件名带日期的一次性产物 → 归档」，本轮**否掉**该判定，凭据两条：
+    ① 它是 `assets/android-20261119/`（319 MB，已 gitignore，**不进版本控制**）的**唯一重建路径**——
+       `scripts/asset-install-linux.sh:108` 的报错文案直接要求先跑本件；
+    ② assets 树一旦丢（磁盘/位翻转/换机）就没有第二份，归档后再想重建要重写一遍提取器。
+  使用口径：按「一次性”用——只在需要重建/新增资产时跑，不进日常流程；产物账目 = reports/android-assets-20261119.md。
+  依赖提醒：主源 `out/android-min-20261118/new/system_a.img` 属 `out/`（不入库，得从 backup/ 重造）⇒ 本件不是自包含的。
+
+从已上机的精简 system_a.img 提取安卓原厂资产 → assets/android-20261119/ + MANIFEST.tsv
 
 纯主机侧、无 root：只用 debugfs 读 ext4 镜像（不 loop mount），zipfile 读 apk。
 主源  = out/android-min-20261118/new/system_a.img（5.0 GiB ext4，已上机件）

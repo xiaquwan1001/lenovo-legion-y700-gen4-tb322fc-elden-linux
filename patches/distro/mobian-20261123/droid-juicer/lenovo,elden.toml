@@ -1,0 +1,89 @@
+# droid-juicer device config for the Lenovo Legion Y700 Gen4 (TB322FC).
+#
+# Filename = first entry of the board DT "compatible" property
+# ("lenovo,elden", "qcom,sm8750"), which is how droid-juicer looks configs up.
+#
+# Notes:
+# - "partition" values are GPT partlabel base names; droid-juicer tries
+#   <part>, <part>_a and <part>_b in turn, and this device uses slot "_a".
+# - ADSP and CDSP are deliberately NOT listed here. Their DT firmware names
+#   use the split "qcom/sm8750/{adsp,cdsp}.mdt" + "*_dtb.mdt" form, and a
+#   single-file "cdsp_dtb.mbn" (which is what droid-juicer would produce by
+#   squashing a .mdt input) is rejected by the secure world on this board.
+#   The split blobs are shipped by the board firmware package instead.
+
+[juicer]
+# Dynamic partitions (system/vendor/product/odm/...) live in "super".
+dynpart = "super"
+
+firmware = [
+    # GPU (Adreno 830): zap-shader firmware-name in the board DT is
+    # "qcom/sm8750/gen80000_zap.mbn"; the adreno driver requests the
+    # gmu/sqe/aqe files by fixed name in the same directory.
+    { partition = "vendor", origin = "firmware", destination = "qcom/sm8750", files = [
+            { name = "gen80000_zap.mbn" },
+            { name = "gen80000_gmu.bin" },
+            { name = "gen80000_sqe.fw" },
+            { name = "gen80000_aqe.fw" },
+        ] },
+    # Touch controller: nt36536 DT firmware-name, lands in the firmware root.
+    { partition = "vendor", origin = "firmware", destination = ".", files = [
+            { name = "novatek_ts_csot_3k_fw.bin" },
+        ] },
+    # Speaker amplifier (aw88461): driver requests
+    # "awinic/y700-gen4-speakers.bin"; the stock file is aw882xx_acf.bin.
+    { partition = "vendor", origin = "firmware", destination = "awinic", files = [
+            { name = "aw882xx_acf.bin", rename = "y700-gen4-speakers.bin" },
+        ] },
+    # WiFi (ath12k, WCN7861 "PEACH"): the stock files use the "-20" suffix
+    # variants; ath12k expects the unsuffixed names under ath12k/PEACH/hw2.0.
+    # board-2.bin (assembled from bdwlan.e01..e41) cannot be produced by
+    # droid-juicer and is shipped by the board firmware package; board.bin
+    # is the ath12k fallback.
+    { partition = "modem", origin = "image/peach", destination = "ath12k/PEACH/hw2.0", files = [
+            { name = "amss20.bin", rename = "amss.bin" },
+            { name = "aux_ucode20.elf", rename = "aux_ucode.bin" },
+            { name = "phy_ucode20.elf", rename = "m3.bin" },
+            { name = "bdwlan.elf", rename = "board.bin" },
+            { name = "qdss_trace_config_v2.cfg", rename = "qdss_trace_config.bin" },
+            { name = "regdb.bin" },
+        ] },
+    # tmel.bin sits one level above peach/ in the modem partition.
+    { partition = "modem", origin = "image", destination = "ath12k/PEACH/hw2.0", files = [
+            { name = "tmel_peach_20.elf", rename = "tmel.bin" },
+        ] },
+    # Bluetooth (WCN7861, "brh" family): btqca hardcodes the "qca/" prefix.
+    # tmel_peach_20.elf is required for the controller to register at all;
+    # it lives in the modem partition.
+    { partition = "bluetooth", origin = "image", destination = "qca", files = [
+            { name = "brhbtfw20.tlv" },
+            { name = "brhbtnv20.bin" },
+            { name = "brhperifw20.tlv" },
+            { name = "brhperinv20.bin" },
+        ] },
+    { partition = "modem", origin = "image", destination = "qca", files = [
+            { name = "tmel_peach_20.elf" },
+        ] },
+    # Sensors DSP tree for hexagonrpcd, served from
+    # /usr/share/qcom/sm8750/LENOVO/TB322FC. Absolute destinations override
+    # the extract_path prefix (Path::join semantics).
+    { partition = "vendor", origin = "etc/sensors", destination = "/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors", files = [
+            { name = "sns_reg_config", rename = "sns_reg.conf" },
+        ] },
+]
+
+folders = [
+    { partition = "vendor", destination = "/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors", folders = [
+            { name = "etc/sensors/config" },
+        ] },
+    { partition = "persist", destination = "/usr/share/qcom/sm8750/LENOVO/TB322FC/sensors", folders = [
+            { name = "sensors/registry/registry" },
+        ] },
+]
+
+# Deliberately not covered here (self-authored / derived assets, not vendor
+# extractable, shipped by the board firmware package instead):
+# - awinic/y700-gen4-haptic.bin (self-authored asset, no stock counterpart)
+# - ath12k/PEACH/hw2.0/board-2.bin (assembled from bdwlan.e01..e41)
+# - qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin (self-built AudioReach topology)
+# - qcom/sm8750/{adsp,cdsp}{,_dtb}.mbn (split .mdt+.bNN form required, see top)

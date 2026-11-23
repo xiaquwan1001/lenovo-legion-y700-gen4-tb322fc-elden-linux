@@ -1,4 +1,10 @@
 #!/bin/sh
+# ★ LEGACY（2026-11-23 头注落地，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：同 sleep-bisect.sh
+#   （PITFALLS/sessions/15-过时期废弃功能缺陷登记.md:37 §15.2，2026-10-08 登记）：**不删，降为 legacy**；
+#   ✓ 新扫测用主机侧 `scripts/sleep-sweep.sh`。保留理由同 sleep-bisect.sh（设备侧真机工具 +
+#   随 rootfs 发设备：packaging/elden-userland/MANIFEST.tsv:65 / sync-from-device.sh:36 / rootfs/debian/svc-deps.tsv）。
+#   ⚠ 已知写死 `/sys/class/drm/card0`（PITFALLS/sessions/303-…:35）：card1 误判环境下本件的结论无效。
+#
 # sleep-cumulative.sh — 累积式加载相机模块组，每加一组就真实熄屏一次。
 # 第一个致死的组 = 元凶（或最小致死集合）。配合 camdp-nocam 载具
 # （cmdline elden_nocamera=1，/init 不自动加载相机模块）使用。

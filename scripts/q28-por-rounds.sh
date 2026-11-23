@@ -3,7 +3,7 @@
 #
 # 与 q28-coldboot-collect.sh 的区别：
 #   · 连续取 N 轮（默认 2），每轮之间**等用户下一次断电**，不用手工重跑；
-#   · 每轮同时落三样东西：clkdiag 全量、devprobe 三态判定、`reports/trials/*.json` 记录；
+#   · 每轮同时落三样东西：clkdiag 全量、devprobe v2 判定（L1/L2 分开）、`reports/trials/*.json` 记录；
 #   · 判据口径固定在 `reports/q28-dpu-intf-next-20261023.md` §2（4 个数）。
 #
 # 用法：
@@ -96,21 +96,36 @@ for k in $(seq 0 $((N - 1))); do
 	mkdir -p "$LOGDIR"
 	$SSH "$T" 'uname -a; cat /proc/uptime; cat /proc/cmdline' > "$LOGDIR/env.txt" 2>&1
 	$SSH "$T" 'dmesg' > "$LOGDIR/dmesg.txt" 2>&1
-	$SSH "$T" 'sh -s' < "$ROOT/scripts/q28-devprobe.sh" > "$LOGDIR/probe.txt" 2>&1
-	VERDICT=$(grep -oE 'VERDICT=[A-Z]+' "$LOGDIR/probe.txt" | head -1 | cut -d= -f2)
+	# ★ P1（审计批 3，2026-11-23）：取样器由 v1 `q28-devprobe.sh` 换成 v2 `q28-devprobe2.sh`。
+	#   v1 把所有 DPU/DSI 报错并成一个 storm_sig ⇒ L1（面板/DSI 真失败，本平台唯一真 Q28 坏起）
+	#   与 L2（下游 DPU 瞬时噪声）混计，POR 轮次判据失真。v2 分 L1/L2 并带 session 字段。
+	#   字段名核对：输出必须含 l1= 与 l2=（缺 ⇒ 取样器没跑起来，本发判 INVALID-PROBE 且不入 trial 表）。
+	$SSH "$T" 'sh -s' < "$ROOT/scripts/q28-devprobe2.sh" > "$LOGDIR/probe.txt" 2>&1
+	if ! grep -qE 'l1=[0-9]+' "$LOGDIR/probe.txt" 2>/dev/null || ! grep -qE 'l2=[0-9]+' "$LOGDIR/probe.txt" 2>/dev/null; then
+		VERDICT=INVALID-PROBE
+		echo "  ⚠ 取样器输出缺 l1=/l2= 字段（v2 q28-devprobe2.sh 没跑起来？）⇒ 本发判 INVALID-PROBE，不写 trial 表" >&2
+	else
+		# 取值式（#584 同类：不接 `| head -1`，awk 单进程一次取完；[A-Z-]+ 容纳 GOOD-NOSESSION）
+		VERDICT=$(awk 'match($0,/VERDICT=[A-Z][A-Z-]*/){print substr($0,RSTART+8,RLENGTH-8); exit}' "$LOGDIR/probe.txt")
+	fi
+	L1=$(awk 'match($0,/l1=[0-9]+/){print substr($0,RSTART+3,RLENGTH-3); exit}' "$LOGDIR/probe.txt")
+	L2=$(awk 'match($0,/l2=[0-9]+/){print substr($0,RSTART+3,RLENGTH-3); exit}' "$LOGDIR/probe.txt")
 	[ -n "$VERDICT" ] || VERDICT=UNKNOWN
 	printf 'boot_id=%s\nimage=%s\n' "$BID" "$(basename "$IMAGE")" > "$LOGDIR/README.txt"
 	cp -f "$ROOT/$OUT_REL" "$LOGDIR/" 2>/dev/null
 	cp -f "$ROOT/$Q32_REL" "$LOGDIR/" 2>/dev/null
 
 	# ---- 3) trial 记录（与其它冷起样本同表，便于事后统计）----
-	TAB="$T" bash "$ROOT/scripts/trial.sh" record --label "q28por-r$R" --image "$IMAGE" \
+	if [ "$VERDICT" = INVALID-PROBE ]; then
+		echo "  ⚠ 本发不计入样本（probe 无效）；原始件留在 $LOGDIR 供排查" >&2
+	elif ! TAB="$T" bash "$ROOT/scripts/trial.sh" record --label "q28por-r$R" --image "$IMAGE" \
 		--reset por --deploy none --probe none --verdict "$VERDICT" --logdir "$LOGDIR" \
-		--note "Q28 真 POR 同口径样本（boot_id=$B8，clkdiag=$OUT_REL）" >/dev/null 2>&1 || \
+		--note "Q28 真 POR 同口径样本（boot_id=$B8，clkdiag=$OUT_REL，devprobe=v2）" >/dev/null 2>&1; then
 		echo "  ⚠ trial 记录失败（继续）" >&2
+	fi
 
 	# ---- 4) 打印判据四数（reports/q28-dpu-intf-next-20261023.md §2）----
-	echo "[POR] VERDICT=$VERDICT  产物: $OUT_REL"
+	echo "[POR] VERDICT=$VERDICT  L1=${L1:-?} L2=${L2:-?}  产物: $OUT_REL"
 	grep -E '^(command DMA timeout|peer command DMA timeout|DSI_PLL_lockfail|reset failure|STORM|recovery is not complete|failed to acquire mdss resets)' \
 		"$ROOT/$OUT_REL" | sed 's/^/    /'
 	echo "    -- pclk/byte parent+rate（判据 1、2）:"
@@ -125,6 +140,6 @@ for k in $(seq 0 $((N - 1))); do
 	R=$((R0 + k))
 	f=$(ls -t "$ROOT"/reports/artifacts/q28-clkdiag-r$R-*.txt 2>/dev/null | head -1)
 	[ -n "$f" ] || continue
-	v=$(grep -oE 'VERDICT=[A-Z]+' "$ROOT/reports/trials/"*"q28por-r$R/probe.txt" 2>/dev/null | head -1 | cut -d= -f2)
+	v=$(awk 'match($0,/VERDICT=[A-Z][A-Z-]*/){print substr($0,RSTART+8,RLENGTH-8); exit}' "$ROOT/reports/trials/"*"q28por-r$R/probe.txt" 2>/dev/null)
 	printf '  r%s  %-14s %s\n' "$R" "${v:-?}" "$(basename "$f")"
 done

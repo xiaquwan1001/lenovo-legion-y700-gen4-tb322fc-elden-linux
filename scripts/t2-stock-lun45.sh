@@ -1,4 +1,11 @@
 #!/bin/sh
+# ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留为取证指针，不归档**。
+#   不归档的理由：RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md:146 + TASKS/README.md 把本件当「卡 BL 后一条命令恢复」的
+#   入口；它是 2026-11-17/18 那次**真恢复成功**的现场驱动程序（不可重建的一次性经验）。
+#   ❗ 再启用硬约束（qdl 全 LUN 覆写是全仓最高危动作之一）：必须先过 `scripts/rawprogram-preflight.py`
+#   + 写前六 LUN GPT dump（本件的 `-R`/rc 判据只解决会话生命周期，**不**解决「拿错包/拿错单元」）。
+#     旧日志 = reports/artifacts/bl-stuck-20261118/flash/T2.log；坑见 PITFALLS #674/#675。
+#
 # T2: 按 LUN 刷原厂（LUN4 全套 + LUN0 全套），日志到 artifacts/bl-stuck-20261118/flash/T2.log
 # 由 agent 2026-11-17 19:4x 驱动；用户口径「先做前两步，只有推到 T3 全量线刷才告知用户」。
 #
