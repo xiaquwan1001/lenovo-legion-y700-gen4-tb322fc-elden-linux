@@ -17,6 +17,9 @@
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 SN=${SN:-HA2EXB0E}
+# 主机工具落点 + 在线判据统一（PITFALLS #584 禁 `fastboot devices | grep -q`；#699 fastboot 不在 PATH）
+. "$(dirname "$0")/lib-hosttools.sh"
+ensure_hosttools --quiet
 LOADER=${LOADER:-$HOME/下载/tb322fc/xbl_s_devprg_ns.melf}
 QDL=${QDL:-$HOME/edl/qdl/build/qdl}
 OUT=""; ENTER_EDL=0; RESET_AFTER=0
@@ -37,9 +40,9 @@ mkdir -p "$OUT"
 device_lock_acquire
 
 if [ "$ENTER_EDL" -eq 1 ]; then
-	if timeout -k 5 6 adb devices | awk '{print $1}' | grep -qx "$SN"; then
+	if dev_present adb "$SN"; then
 		timeout -k 5 20 adb -s "$SN" reboot edl || true
-	elif timeout -k 5 8 fastboot devices | awk '{print $1}' | grep -qx "$SN"; then
+	elif dev_present fastboot "$SN"; then
 		timeout -k 5 20 fastboot -s "$SN" oem edl || true
 	fi
 	sleep 8

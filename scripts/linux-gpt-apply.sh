@@ -50,6 +50,9 @@ sha_direct() {
 
 LUN=""; MAIN=""; BACKUP=""; APPLY=0; ENTER_EDL=0; RESTORE=""; DO_RESET=0
 SN=${SN:-HA2EXB0E}
+# 主机工具落点 + 在线判据统一（PITFALLS #584 禁 `fastboot devices | grep -q`；#699 fastboot 不在 PATH）
+. "$(dirname "$0")/lib-hosttools.sh"
+ensure_hosttools --quiet
 LOADER=${LOADER:-$HOME/下载/tb322fc/xbl_s_devprg_ns.melf}
 QDL=${QDL:-$HOME/edl/qdl/build/qdl}
 READDIR=${READDIR:-$ROOT/backup/$SN-16+512/edl-apply-readback-$(date +%Y%m%d-%H%M%S)}
@@ -135,9 +138,9 @@ fi
 device_lock_acquire
 
 if [ "$ENTER_EDL" -eq 1 ]; then
-	if timeout -k 5 6 adb devices | awk '{print $1}' | grep -qx "$SN"; then
+	if dev_present adb "$SN"; then
 		echo "[edl] adb reboot edl ($SN)"; timeout -k 5 20 adb -s "$SN" reboot edl || true
-	elif timeout -k 5 8 fastboot devices | awk '{print $1}' | grep -qx "$SN"; then
+	elif dev_present fastboot "$SN"; then
 		echo "[edl] fastboot oem edl ($SN)"; timeout -k 5 20 fastboot -s "$SN" oem edl || true
 	else
 		echo "!! 设备既不在 adb 也不在 fastboot；请人工进 EDL 后再跑（不加 --enter-edl）" >&2; exit 1

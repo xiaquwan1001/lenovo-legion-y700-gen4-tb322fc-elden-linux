@@ -142,7 +142,7 @@
 | `scripts/edl-peek.sh` | 经 bkerler python edl 的 Firehose peek 读物理内存（只读工具，无 poke） | 8 |
 | `scripts/elden-powerlog.initd` | write a durable marker when OpenRC enters the shutdown | 24 |
 | `scripts/elden-to-bootloader.sh` | 设备侧「Linux → bootloader(fastboot)」单一入口（POSIX sh，可独立跑） | 8 |
-| `scripts/eldroid-bootctl` | Linux 侧刷机控制（reboot reason + A/B 槽位元数据）。 | 208 |
+| `scripts/eldroid-bootctl` | Linux 侧刷机控制（reboot reason + A/B 槽位元数据）。 | 209 |
 | `scripts/f2fs-migrate.sh` | 路线 A：**缩小 linux17(ext4) + 尾部新建 linux18(f2fs) + 本地复制**（零大文件传输） | 33 |
 | `scripts/fix-fstab-samsung.sh` | 给 /mnt/Samsung 的 fstab 条目补 nofail（掉盘不卡开机） | 6 |
 | `scripts/fix-logind-poweroff.sh` | make logind's Power Off / Restart helpers actually | 29 |
@@ -187,7 +187,7 @@
 | `scripts/serial-probe.sh` | 独占串口并「敲一下」：把当前 ttyACM0 的输出与回声抓下来 | 6 |
 | `scripts/serial-run.sh` | 通过设备 USB CDC-ACM 串口 (/dev/ttyACM0) 执行一条命令并打印回显 | 18 |
 | `scripts/serial-sysrq.py` | 通过 USB 串口控制台发 SysRq（免物理断电复位/取栈）。 | 5 |
-| `scripts/serial-tap.py` | 稳定的设备串口落盘（替代 serial-logger.sh 的 cat 循环） | 25 |
+| `scripts/serial-tap.py` | 稳定的设备串口落盘（替代 serial-logger.sh 的 cat 循环） | 28 |
 | `scripts/sleep-bisect.sh` | ★ LEGACY（2026-11-23 头注落地，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）： | 15 |
 | `scripts/sleep-cumulative.sh` | ★ LEGACY（2026-11-23 头注落地，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：同 sleep-bisect.sh | 10 |
 | `scripts/sleep-sweep.sh` | 主机侧自动扫掠：设 camera.conf → 反复重启 → 每次真实熄屏 → 记 存活/掉电。 | 27 |
@@ -358,7 +358,7 @@
 | `scripts/lib-boot-ready.sh` | 「复位/进 fastboot 前的系统就绪门」（host 侧，经 SSH 判定当前运行的系统） | 34 |
 | `scripts/lib-device-lock.sh` | the SINGLE source of the tablet device lock. | 52 |
 | `scripts/lib-fastboot.sh` | fastboot / ssh 设备调用的安全封装（2026-11-09 工具挂死调查产物） | 33 |
-| `scripts/lib-hosttools.sh` | 主机侧外部工具（fastboot / adb）落点解析（2026-11-21） | 11 |
+| `scripts/lib-hosttools.sh` | 主机侧外部工具（fastboot / adb）落点解析（2026-11-21） | 15 |
 | `scripts/lib-serial-source.sh` | 串口日志的唯一采集实现（被 suspend/n5b 等采集脚本 source）。 | 11 |
 | `scripts/lib-soft-bootloader.sh` | Linux → bootloader 软路径（唯一实现；2026-11-24 按 PITFALLS #712 重写） | 30 |
 | `scripts/lib-ssh.sh` | 设备 SSH 调用的单一实现（选项统一 + 一次往返批量取状态） | 26 |

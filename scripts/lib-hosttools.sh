@@ -18,6 +18,17 @@
 #   （系统 adb 34 与 37 混用时 adb server 会自报版本不符并重启一次，属预期）。
 # 只做**查找与 PATH 前置**，不下载、不安装、不改系统。
 
+# dev_present <fastboot|adb> <SN> —— 该 SN 是否在线（**先收全量输出再判**）
+#   为什么要这个函数：`fastboot devices | grep -q` 会把 SIGPIPE 送回 fastboot 客户端、打断设备侧
+#   bulk 通道（PITFALLS #584：之后 `fastboot devices` 恒空、只能物理 POR）。这里把输出先落进变量，
+#   管道只接在 shell 变量上，不碰 fastboot 的 stdout。
+dev_present() {
+	local tool=$1 sn=$2 out bin
+	if [ "$tool" = adb ]; then bin=${ADB_BIN:-adb}; out=$(timeout -k 5 6 "$bin" devices 2>/dev/null)
+	else bin=${FB_BIN:-fastboot}; out=$(timeout -k 5 8 "$bin" devices 2>/dev/null); fi
+	printf '%s\n' "$out" | awk 'NF{print $1}' | grep -qx -- "$sn"
+}
+
 hosttool_resolve() { # $1=name → 打印绝对路径；找不到 rc=1
 	local name=$1 cand
 	for cand in \
