@@ -127,3 +127,16 @@ curl -sS --noproxy '*' "https://gitlab.com/api/v4/projects/mobian1%2Fdroid-juice
 - `debian/` 打包目录在 qcom-linux 样例分支的落点仍未实证（11-21 TODO 沿袭）；候选 2 开工第一天必须先解。
 - !46 中文注释变体 vs 11-23 英文成品的「哪份为准」未拍板（维护者要求改动时会立刻撞上）。
 - recipes qcom 设备面 11 个月零合并 + droid-juicer 三个 Draft 长期挂起 ⇒ 上游吞吐慢是常态，预期管理按「周级静默正常」。
+
+---
+
+## 后记（2026-11-23 晚，用户裁决执行）
+
+- **用户裁决**：「mobian 侧内容先英文后中文；编译任务往后」。
+- **已执行**：!46 分支 `configs/lenovo-elden` 已 force-update `2dead7c`（中文注释 23 条目）→
+  `ea9fe3d`（**英文注释 22 条目** = `patches/distro/mobian-20261123/droid-juicer/lenovo,elden.toml`，
+  tomllib 解析过；push 走 SSH，规则 14）。API 复核：MR state=opened、head sha=ea9fe3d5、
+  merge_status=unchecked（等 fork pipeline 重跑）。中文版备份 = `/tmp/mobian/zh-backup.toml`，
+  仓内存档 `patches/distro/mobian-20261121/droid-juicer/`（如仍有）。
+- 「后中文」= 中文注释版本留作后续（如维护者接受 MR 后再补注/或仅留仓内档），不主动推第二版。
+- 推送命令：`git push -f origin configs/lenovo-elden`（clone = git@gitlab.com:xiaquwan1001/droid-juicer.git）。
