@@ -86,7 +86,7 @@ scp verify/aarch64/librime-piped verify/aarch64/elden-rime-completer \
     rime/elden-rime.service  root@192.168.7.1:/usr/local/bin/…   # + unit 到 /etc/systemd/user/
 # 设备（su 到桌面用户）：
 apt install librime1 librime-data
-gsettings set sm.puri.phosh.osk completion-mode "['always']"
+gsettings set sm.puri.phosh.osk completion-mode "['hint','manual']"   # 勘误 2026-11-23：0.46 枚举仅 none/hint/manual，无 always（PITFALLS #709；原 ['always'] 照抄静默无效）；manual 的开关在 OSK 菜单 "Word completion"。详见 reports/ime-native-audit-20261123.md §4
 gsettings set sm.puri.phosh.osk.Completers default "pipe"
 gsettings set sm.puri.phosh.osk.Completers.Pipe command "/usr/local/bin/elden-rime-completer"
 systemctl --user daemon-reload && systemctl --user enable --now elden-rime
