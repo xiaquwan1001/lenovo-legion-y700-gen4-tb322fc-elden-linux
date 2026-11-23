@@ -9,6 +9,12 @@
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-23）
 
 > **🆕 2026-11-23 对账（本轮）**：最新会话证据 = 11-23 深夜会话（`ab7efd8c`：dwc3 v12 四枚成稿 + 门禁日志）+ 11-23 白天 lane 批（`857047b3`/`c1ce6146`，§4.0 已记）。
+> **🆕 2026-11-23 晚收尾块（grow loop 全天汇总；逐项证据在对应 report/SENT）**：
+> ① **dwc3 v13 已投**（用户放行；答 greg k-h 08:20Z）：新线程 4 封 250，cover MID `20261123110858.538884-1`；三枚 patch 与 v12 逐字节同，cover 补全 v4–v12 changelog；G1/G2 实跑净，G3–G6 沿用 v12，G4 重跑后延（编译后延裁决）；lore 摄取滞后待复核（投出 ~2h 未入索引，v11/v12 均在档）；账 = `patches/upstream/dwc3-v13-20261123/`。
+> ② **Mobian !46 内容英文化已推**（用户裁决「先英文后中文」）：force-update `2dead7c→ea9fe3d`（英文 22 条目，tomllib 过，SSH push，API 复核 head 已切，pipeline #2 success）；中文版留仓档作后续；D2 下一步三候选见 `reports/mobian-upstream-audit-b-20261123.md`。
+> ③ **酷安三篇已发布**（用户授权直发，MCP bridge，65s 冷却）：feed `75235220/75235246/75235266`，配图现拍 phosh 桌面（`assets/coolapk-20261123/`）；发布后核查 block=0；账 = `reports/coolapk-publish-20261123.md`。
+> ④ **osk-stub 0.46.0 rime 批 chroot 编译成功**（用户解锁 8 核；实际 j4 过，j8 并发下 qemu-user 派生子进程无输出假死）：产物 `out/osk-stub-rime-20261123/`（B案 wiring+震动+方向键三补丁，NEEDED librime.so.1，sha `d7a0f9fe…`，DEPLOY.md 含 divert 六步）——**设备窗一次 divert 打齐 H2 十条判据的全部物料已就绪**；顺带修正 0003 wiring 两缺陷 + haptic/layout 补丁 hunk 计数重生成（`patches-userland/zh-ime-rime-20261123/`）。
+> ⑤ 主机新工具 `~/.local/bin/egress-switch`（校园网/平板 USB 共享网切换，metric 机制）；trixie arm64 chroot 编译环境 = `/tmp/trixie-sysroot/`（789 包闭包，可复用）。
 > **🆕 2026-11-23 通信 lane b 轮（D10，只读）**：**Greg Kroah-Hartman 首次回人（08:20Z，Re: v11 3/3）**——唯一要求 = **changelog 必须列全此前所有版本**；v12（09:53Z 已发，lore 已归档）投法两条已修好但 changelog 仍只有 "Changes since v10" ⇒ **v13 硬欠账 = 补全 v9 及更早历代 changelog**（本系列 lore 可见 v4/v5/v7/v8/v9/v10）；建议等 sashiko 对 v12 的报告一并处理，投递仍按 §7 批准制。其余线程零变化；Mobian !46 三天 0 note（mergeable、CI success）。全账 = `reports/comm-triage-20261123-b.md`。
 > **🆕 2026-11-23 整理轮增量（grow loop #1，轻负载）**：① 前记「G4–G6 中断」被日志推翻 —— `patches/upstream/dwc3-v12-20261123/logs/` 六道门全部完成（G4 `dt_binding_check` RC=0 等）；② G1 主会话独立复验通过（fresh clone `aebb727447` + `git am` 3/3 + 6 枚 blob sha 逐字一致）；③ **dwc3 v12 已投（用户 11-23 放行）**：新线程形态（krzk 裁决），4 封全 250，cover MID `20261123095310.154352-1`，账 = `SENT.md`；lore 复核待下一轮；④ D10 只读通信 lane 已派。
 > **本轮核实（2026-11-23）**：`check-doctor` FAIL=0（WARN=6 全为已登记豁免：源树 slim bundle 态、账本例外、4 枚解不出载荷的旧镜像、本日期条目）；`scripts/README.md` 与 HISTORY days 已重新生成；G1 计数 = 36 完成/37 在册（`check-progress-counts.sh`）。
