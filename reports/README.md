@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：610
+- 报告总数：616
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -21,21 +21,21 @@
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
 | `camss` | 9 | `camss-v25-rebase-20261117.md` |
+| `ime` | 9 | `ime-rime-backend-20261123.md` |
 | `m3v5` | 9 | `m3v5-repack-20261031.md` |
 | `b5` | 8 | `b5-preflight-20261029.md` |
 | `droidloom` | 8 | `droidloom-l2-phoc-syncobj-20261111.md` |
-| `ime` | 8 | `ime-osk-zh-matrix-20261122.md` |
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
 | `m6` | 8 | `m6-v2-recut-plan-20261107.md` |
 | `script` | 8 | `script-audit-adb-20261118.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
 | `camera` | 7 | `camera-restore-20261121.md` |
 | `mobian` | 7 | `mobian-firstmr-20261123.md` |
+| `scripts` | 7 | `scripts-hardening-3-20261123.md` |
 | `userland` | 7 | `userland-drift-audit-20261121.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
-| `scripts` | 5 | `scripts-audit-20261122.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
@@ -49,6 +49,7 @@
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
 | `c3` | 3 | `c3-spic-verdict-20261115.md` |
 | `external` | 3 | `external-scan-20261112.md` |
+| `g7` | 3 | `g7-routeA-dtfix-20261123.md` |
 | `grub` | 3 | `grub-rehash-20261115.md` |
 | `kexec` | 3 | `kexec-target-boots-20261024.md` |
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
@@ -69,7 +70,6 @@
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
-| `g7` | 2 | `g7-routeA-20261121.md` |
 | `integrity` | 2 | `integrity-h2-20261111.md` |
 | `kernel` | 2 | `kernel-rebase-cost-20261107.md` |
 | `lanes` | 2 | `lanes-consolidated-20261101.md` |
@@ -104,9 +104,11 @@
 | `c9` | 1 | `c9-cases-20261013.md` |
 | `closeout` | 1 | `closeout-q29-backlight-camera-20261023.md` |
 | `cloud` | 1 | `cloud-backup-manifest-20261016.md` |
+| `comm` | 1 | `comm-triage-20261123.md` |
 | `consolidation` | 1 | `consolidation-20261014.md` |
 | `container` | 1 | `container-audio-20261011.md` |
 | `counts` | 1 | `counts-gate-20261107.md` |
+| `d1` | 1 | `d1-host-side-20261123.md` |
 | `daily` | 1 | `daily-linux-deploy-20261122.md` |
 | `desktop` | 1 | `desktop-chain-gate-20261119.md` |
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
@@ -485,6 +487,18 @@
 - `camss-v3-vs-upstream-v6-20261029.md` — camss v3 候选 × 上游高通 v6 逐枚对照 — 2026-10-29
 - `camss-upstream-response-20261028.md` — camss（M4）上游回信与元数据整改 — 2026-10-28
 
+## `ime`（9）
+
+- `ime-rime-backend-20261123.md` — RIME 候选后端 + OSK 震动 + 方向键 —— lane H 收尾报告（2026-11-23）
+- `ime-osk-zh-matrix-20261122.md` — 「键盘弹出」×「中文组词上屏」×「候选窗」——本栈可行路径决策矩阵（2026-11-22）
+- `ime-osk-zero-to-usable-20261121.md` — 从零把「虚拟键盘 + 中文输入 + 候选窗」做到可用 —— 一页 RUNBOOK（考古整理，2026-11-21）
+- `ime-osk-firefox-rootcause-20261112.md` — OSK 不弹的真根因：不是 phoc，是 `GTK_IM_MODULE=fcitx` —— Firefox 实测收口（2026-11-11 晚）
+- `ime-osk-lifecycle-20261112.md` — OSK（虚拟键盘）自动弹出/收起 — 失效面取证与最小处置（2026-11-12）
+- `ime-osk-pop-20261111.md` — IME OSK 不弹 — 上机最小判别链（2026-11-11）
+- `ime-phosh-fcitx5-invest-20261110.md` — 主机侧调研：Phosh(phoc) × fcitx5 × OSK 共存可行性（2026-11-10）
+- `ime-chinese-20261109.md` — 中文输入法可用性收口（2026-11-09）：配置器打不开、没有顶栏指示、切不到中文
+- `ime-osk0-dbus-spec-20261020.md` — 输入法控制面取证：sm.puri.OSK0 / Phosh 驱动链 / fcitx5 kimpanel / wvkbd 0.19.4
+
 ## `m3v5`（9）
 
 - `m3v5-repack-20261031.md` — M3v5 补齐投递形态（cover + base-commit）—— 2026-10-31
@@ -518,17 +532,6 @@
 - `droidloom-feasibility-20261108.md` — droidloom 可行性复核（2026-11-08）——在线增量 + 四门槛判定
 - `droidloom-build-device-plan-20261030.md` — droidloom 真实构建 + 上机计划（2026-10-31）
 - `droidloom-feasibility-plan-20261030.md` — droidloom 可行性规划（2026-10-30）
-
-## `ime`（8）
-
-- `ime-osk-zh-matrix-20261122.md` — 「键盘弹出」×「中文组词上屏」×「候选窗」——本栈可行路径决策矩阵（2026-11-22）
-- `ime-osk-zero-to-usable-20261121.md` — 从零把「虚拟键盘 + 中文输入 + 候选窗」做到可用 —— 一页 RUNBOOK（考古整理，2026-11-21）
-- `ime-osk-firefox-rootcause-20261112.md` — OSK 不弹的真根因：不是 phoc，是 `GTK_IM_MODULE=fcitx` —— Firefox 实测收口（2026-11-11 晚）
-- `ime-osk-lifecycle-20261112.md` — OSK（虚拟键盘）自动弹出/收起 — 失效面取证与最小处置（2026-11-12）
-- `ime-osk-pop-20261111.md` — IME OSK 不弹 — 上机最小判别链（2026-11-11）
-- `ime-phosh-fcitx5-invest-20261110.md` — 主机侧调研：Phosh(phoc) × fcitx5 × OSK 共存可行性（2026-11-10）
-- `ime-chinese-20261109.md` — 中文输入法可用性收口（2026-11-09）：配置器打不开、没有顶栏指示、切不到中文
-- `ime-osk0-dbus-spec-20261020.md` — 输入法控制面取证：sm.puri.OSK0 / Phosh 驱动链 / fcitx5 kimpanel / wvkbd 0.19.4
 
 ## `m4`（8）
 
@@ -594,6 +597,16 @@
 - `mobian-rootfs-artifacts-20261026.md` — Mobian 迁移物料（第一步）：apt 包映射表 + 自建固件包
 - `mobian-migration-plan-20261021.md` — Mobian（Debian + Phosh）迁移可行性评估与方案 — 只读研究，2026-10-21
 
+## `scripts`（7）
+
+- `scripts-hardening-3-20261123.md` — reports/scripts-hardening-3-20261123.md — 脚本整改批 3（D5：3 个未修 P0/P1 + gpt-restore fail-closed 表指纹门）
+- `scripts-hardening-4-20261123.md` — reports/scripts-hardening-4-20261123.md — 脚本整改批 4（D5：STALE 15 收口 + O_DIRECT 硬门 ×6）
+- `scripts-audit-20261122.md` — 脚本/工具精简与整理审计（2026-11-22，只读）
+- `scripts-hardening-1-20261121.md` — scripts-hardening-1-20261121.md — 脚本整改批 1（7 个 DANGEROUS）落地记录
+- `scripts-hardening-2-20261121.md` — scripts-hardening-2-20261121.md — 脚本整改批 2（D5 小批：build-kernel 守卫假阳性 + 3 个 BROKEN 加 #701 门）
+- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
+- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
+
 ## `userland`（7）
 
 - `userland-drift-audit-20261121.md` — 用户态部署漂移只读审计（2026-11-21）
@@ -630,14 +643,6 @@
 - `git-tree-audit-20261113.md` — Git 树整合审计（嵌套仓 / 被跟踪大件 / 垃圾面）— 2026-11-13
 - `git-tree-merge-20261111.md` — 内核 git 树合并/差分分析（geekidos-linux × wt/reb-731）— 2026-11-11
 - `git-tree-consolidation-20261103.md` — 2026-11-03 本地 git 树精简合并 + 损坏镜像重建
-
-## `scripts`（5）
-
-- `scripts-audit-20261122.md` — 脚本/工具精简与整理审计（2026-11-22，只读）
-- `scripts-hardening-1-20261121.md` — scripts-hardening-1-20261121.md — 脚本整改批 1（7 个 DANGEROUS）落地记录
-- `scripts-hardening-2-20261121.md` — scripts-hardening-2-20261121.md — 脚本整改批 2（D5 小批：build-kernel 守卫假阳性 + 3 个 BROKEN 加 #701 门）
-- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
-- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
 
 ## `audit`（4）
 
@@ -726,6 +731,12 @@
 - `external-scan-20261112.md` — 外部动向扫描 2026-11-12（窗口：2026-11-09 → 2026-11-12 16:35 CST）
 - `external-scan-20261112b.md` — 外部动向扫描 2026-11-12b（窗口：2026-11-12 16:35 CST → 2026-11-12 17:35 CST）
 - `external-scan-20261109.md` — 外部动向扫描 2026-11-09（窗口：2026-11-08 → 2026-11-09 14:30 CST）
+
+## `g7`（3）
+
+- `g7-routeA-dtfix-20261123.md` — G7 路线 A · DTS devlink 环修复（g7a2 · rev2）—— 2026-11-23
+- `g7-routeA-20261121.md` — G7 上机件 · 路线 A（`7.4-rc3` + dwc3 v11 pristine + daily 使能面，只动 DTS）— 2026-11-21（主机侧）
+- `g7-routeA-ondevice-20261121.md` — G7 上机实测 #1 —— 路线 A 件（`boot-elden-g7a.img`）· 2026-11-21 23:13–23:35 CST
 
 ## `grub`（3）
 
@@ -838,11 +849,6 @@
 
 - `g3-steam-screenshot-paths-20261029.md` — G3 Steam 判据②「截图」路径清单 + captive-portal 绕过草案（2026-10-29，纯主机）
 - `g3-steam-20261028.md` — G3 第一批：Steam 客户端起到登录界面（2026-10-28，持设备）
-
-## `g7`（2）
-
-- `g7-routeA-20261121.md` — G7 上机件 · 路线 A（`7.4-rc3` + dwc3 v11 pristine + daily 使能面，只动 DTS）— 2026-11-21（主机侧）
-- `g7-routeA-ondevice-20261121.md` — G7 上机实测 #1 —— 路线 A 件（`boot-elden-g7a.img`）· 2026-11-21 23:13–23:35 CST
 
 ## `integrity`（2）
 
@@ -997,6 +1003,10 @@
 
 - `cloud-backup-manifest-20261016.md` — 云盘备份清单 — 本机独有 / 不可重下的二进制（2026-10-16）
 
+## `comm`（1）
+
+- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
+
 ## `consolidation`（1）
 
 - `consolidation-20261014.md` — 文档/代码整理与归档总结 — 2026-10-14
@@ -1008,6 +1018,10 @@
 ## `counts`（1）
 
 - `counts-gate-20261107.md` — counts-gate-20261107 — 门禁新增「TASKS §0 手写数字 ↔ 计数脚本」子门（s16）
+
+## `d1`（1）
+
+- `d1-host-side-20261123.md` — D1 主机侧：hexagonrpcd 不进构建器 + 时间基线自愈（2026-11-23）
 
 ## `daily`（1）
 
