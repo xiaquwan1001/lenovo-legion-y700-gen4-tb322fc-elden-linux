@@ -1,0 +1,7 @@
+== BEFORE snapshot 2026-11-23T21:10:56+08:00 ==
+uname=7.4.0-rc3-g7a-dwc3v11-20261121-dirty
+a600000.usb-port0-role-switch role=[] waiting=1
+a600000.usb-port1-role-switch role=[] waiting=1
+/sys/class/typec/port0 data=host [device] power=source [sink]
+/sys/class/typec/port1 data=host [device] power=source [sink]
+devlink180=15
