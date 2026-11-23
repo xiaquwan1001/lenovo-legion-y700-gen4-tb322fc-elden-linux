@@ -3,23 +3,89 @@
 > 基线：phosh-osk-stub 0.46.0 src/layouts/terminal.json（level 3 rows[3]）与 src/pos-vk-driver.c。
 --- a/src/pos-vk-driver.c
 +++ b/src/pos-vk-driver.c
-@@ -130,6 +130,8 @@ static const PosKeycode keycodes_common[] = {
+@@ -83,6 +83,8 @@
+   { "7", KEY_7, POS_KEYCODE_MODIFIER_NONE },
+   { "8", KEY_8, POS_KEYCODE_MODIFIER_NONE },
    { "9", KEY_9, POS_KEYCODE_MODIFIER_NONE },
 +  { "KEY_HOME", KEY_HOME, POS_KEYCODE_MODIFIER_NONE },
 +  { "KEY_END",  KEY_END,  POS_KEYCODE_MODIFIER_NONE },
  };
-
+ 
  static const PosKeycode keycodes_terminal[] = {
 --- a/src/layouts/terminal.json
 +++ b/src/layouts/terminal.json
-@@ -（level 3 / mode=locked，第 4 行）原:
-         [ [ "<", "‹", "≤", "«" ], [ ">", "›", "≥", "»" ], [ " " ], [ "," ], [ ".", "…" ] ]
-改:
-         [ { "symbol": "KEY_HOME", "label": "⇱", "style": "sys" },
-           { "symbol": "KEY_LEFT", "label": "←", "style": "sys" },
-           { "symbol": "KEY_UP",   "label": "↑", "style": "sys" },
-           { "symbol": "KEY_DOWN", "label": "↓", "style": "sys" },
-           { "symbol": "KEY_RIGHT","label": "→", "style": "sys" },
-           { "symbol": "KEY_END",  "label": "⇲", "style": "sys" },
-           [ " " ], [ "," ], [ ".", "…" ] ]
-（F 层第 2 行尾 "| ¢ € ¥ ^ ° = { }" 后追加 ⇱/⇲ 两键同上；< > 在数字层与该行原有重复，不丢符号。）
+@@ -562,7 +562,17 @@
+           ],
+           [
+             "}"
+-          ]
++          ],
++          {
++            "symbol": "KEY_HOME",
++            "label": "⇱",
++            "style": "sys"
++          },
++          {
++            "symbol": "KEY_END",
++            "label": "⇲",
++            "style": "sys"
++          }
+         ],
+         [
+           [
+@@ -588,18 +598,36 @@
+           ]
+         ],
+         [
+-          [
+-            "<",
+-            "‹",
+-            "≤",
+-            "«"
+-          ],
+-          [
+-            ">",
+-            "›",
+-            "≥",
+-            "»"
+-          ],
++          {
++            "symbol": "KEY_HOME",
++            "label": "⇱",
++            "style": "sys"
++          },
++          {
++            "symbol": "KEY_LEFT",
++            "label": "←",
++            "style": "sys"
++          },
++          {
++            "symbol": "KEY_UP",
++            "label": "↑",
++            "style": "sys"
++          },
++          {
++            "symbol": "KEY_DOWN",
++            "label": "↓",
++            "style": "sys"
++          },
++          {
++            "symbol": "KEY_RIGHT",
++            "label": "→",
++            "style": "sys"
++          },
++          {
++            "symbol": "KEY_END",
++            "label": "⇲",
++            "style": "sys"
++          },
+           [
+             " "
+           ],
+@@ -616,4 +644,4 @@
+   ],
+   "locale": "en",
+   "name": "Terminal Layout"
+-}
++}
+\ 文件末尾没有换行符

@@ -4,10 +4,10 @@
 > 幅度/时长默认 30 ms / 0x3333，ELDEN_OSK_HAPTIC_MS / ELDEN_OSK_HAPTIC_MAG 覆盖。
 --- a/src/pos-input-surface.c
 +++ b/src/pos-input-surface.c
-@@ -390,9 +390,21 @@ on_osk_key_symbol (PosInputSurface *self, const char *symbol)
-
+@@ -386,6 +386,20 @@
+ 
    g_debug ("Key: '%s' symbol", symbol);
-
+ 
 +  /* elden: per-keypress haptic feedback (env-gated; no env = upstream behavior) */
 +  {
 +    const char *hdev = g_getenv ("ELDEN_OSK_HAPTIC_DEV");
@@ -18,7 +18,7 @@
 +        hdev,
 +        g_getenv ("ELDEN_OSK_HAPTIC_MS")  ?: "30",
 +        g_getenv ("ELDEN_OSK_HAPTIC_MAG") ?: "0x3333");
-+      g_spawn_command_line_async (cmd, NULL); /* fire-and-forget; 失败静默 */
++      g_spawn_command_line_async (cmd, NULL); /* fire-and-forget */
 +    }
 +  }
 +

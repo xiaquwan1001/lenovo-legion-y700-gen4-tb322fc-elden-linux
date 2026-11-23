@@ -1,6 +1,17 @@
+diff -ruN a/data/completers/rime.desktop.in b/data/completers/rime.desktop.in
+--- a/data/completers/rime.desktop.in	1970-01-01 08:00:00.000000000 +0800
++++ b/data/completers/rime.desktop.in	2026-11-23 20:09:35.524948874 +0800
+@@ -0,0 +1,7 @@
++[Completer]
++# Translators: Do not translate the Id. It's an internal name
++Id=rime
++# Translators: Do not translate the name. It's the name of a library
++Name=Rime
++Description=The Rime completer provides syllable-based Chinese input via librime
++Comment=Configure the shared/user data directories via GSettings
 diff -ruN a/data/sm.puri.phosh.osk.gschema.xml b/data/sm.puri.phosh.osk.gschema.xml
 --- a/data/sm.puri.phosh.osk.gschema.xml	2025-03-30 18:00:09.000000000 +0800
-+++ b/data/sm.puri.phosh.osk.gschema.xml	2026-11-23 18:57:28.678742915 +0800
++++ b/data/sm.puri.phosh.osk.gschema.xml	2026-11-23 19:49:04.168601270 +0800
 @@ -89,4 +89,26 @@
      </key>
    </schema>
@@ -30,7 +41,7 @@ diff -ruN a/data/sm.puri.phosh.osk.gschema.xml b/data/sm.puri.phosh.osk.gschema.
  </schemalist>
 diff -ruN a/meson.build b/meson.build
 --- a/meson.build	2025-03-30 18:00:09.000000000 +0800
-+++ b/meson.build	2026-11-23 18:57:28.678613068 +0800
++++ b/meson.build	2026-11-23 20:04:27.227955839 +0800
 @@ -134,6 +134,9 @@
    presage_dep = cc.find_library('presage', required: false)
  endif
@@ -41,7 +52,21 @@ diff -ruN a/meson.build b/meson.build
  
  completers = []
  if presage_dep.found()
-@@ -158,6 +161,7 @@
+@@ -145,6 +148,13 @@
+   completers += ['hunspell']
+ endif
+ 
++if have_rime
++  completers += ['rime']
++  if completers.length() == 1
++    default_completer = 'rime'
++  endif
++endif
++
+ if completers.length() == 0
+   error('No usable completer found')
+ endif
+@@ -158,6 +168,7 @@
  config_h.set('POS_HAVE_PRESAGE', presage_dep.found())
  config_h.set('POS_HAVE_PRESAGE2', presage2_dep.found())
  config_h.set('POS_HAVE_VARNAM', varnam_dep.found())
@@ -51,7 +76,7 @@ diff -ruN a/meson.build b/meson.build
  configure_file(output: 'pos-config.h', configuration: config_h)
 diff -ruN a/meson_options.txt b/meson_options.txt
 --- a/meson_options.txt	2025-03-30 18:00:09.000000000 +0800
-+++ b/meson_options.txt	2026-11-23 18:57:28.678525827 +0800
++++ b/meson_options.txt	2026-11-23 19:49:04.168392251 +0800
 @@ -14,3 +14,8 @@
  option('man',
         type: 'boolean', value : false,
@@ -63,7 +88,7 @@ diff -ruN a/meson_options.txt b/meson_options.txt
 +       description: 'Whether to compile the librime based completer')
 diff -ruN a/src/completers/meson.build b/src/completers/meson.build
 --- a/src/completers/meson.build	2025-03-30 18:00:09.000000000 +0800
-+++ b/src/completers/meson.build	2026-11-23 18:57:28.678663188 +0800
++++ b/src/completers/meson.build	2026-11-23 19:49:04.168526324 +0800
 @@ -118,12 +118,37 @@
    libpos_completer_varnam_dep = declare_dependency()
  endif
@@ -119,7 +144,7 @@ diff -ruN a/src/completers/meson.build b/src/completers/meson.build
  )
 diff -ruN a/src/completers/pos-completer-rime.c b/src/completers/pos-completer-rime.c
 --- a/src/completers/pos-completer-rime.c	1970-01-01 08:00:00.000000000 +0800
-+++ b/src/completers/pos-completer-rime.c	2026-11-23 18:57:28.667485974 +0800
++++ b/src/completers/pos-completer-rime.c	2026-11-23 19:49:04.160898969 +0800
 @@ -0,0 +1,400 @@
 +/* SPDX-License-Identifier: GPL-3.0-or-later
 + *
@@ -523,7 +548,7 @@ diff -ruN a/src/completers/pos-completer-rime.c b/src/completers/pos-completer-r
 +}
 diff -ruN a/src/completers/pos-completer-rime.h b/src/completers/pos-completer-rime.h
 --- a/src/completers/pos-completer-rime.h	1970-01-01 08:00:00.000000000 +0800
-+++ b/src/completers/pos-completer-rime.h	2026-11-23 18:57:28.667541535 +0800
++++ b/src/completers/pos-completer-rime.h	2026-11-23 19:49:04.160923716 +0800
 @@ -0,0 +1,18 @@
 +/* SPDX-License-Identifier: GPL-3.0-or-later
 + *
@@ -545,7 +570,7 @@ diff -ruN a/src/completers/pos-completer-rime.h b/src/completers/pos-completer-r
 +G_END_DECLS
 diff -ruN a/src/pos-completer-manager.c b/src/pos-completer-manager.c
 --- a/src/pos-completer-manager.c	2025-03-30 18:00:09.000000000 +0800
-+++ b/src/pos-completer-manager.c	2026-11-23 18:57:28.678704821 +0800
++++ b/src/pos-completer-manager.c	2026-11-23 19:49:04.168568900 +0800
 @@ -22,6 +22,9 @@
  #ifdef POS_HAVE_VARNAM
  # include "completers/pos-completer-varnam.h"
