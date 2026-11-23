@@ -1,0 +1,72 @@
+# 上游状态现查 + sashiko 对 dwc3 v13 的三条 [Low] 判别（2026-11-24 无人值守轮）
+
+> 一页结论：**系列仍在维护者视野内**（dwc3 v13 = 在档最新代，arm-msm `new` / DT 侧 1/3 `needs-ack`、2/3+3/3
+> `handled-elsewhere`，`commit_ref` 全空）；**sashiko 11-23 11:29Z 对 v13 1/3 给了 3 条 [Low]**，全部
+> 落在 dt-binding 一处文件；**三条经判别都成立**，其中第 3 条（`oneOf` 在无 `mux-controls` 时必然失败）
+> 是逻辑错误 ⇒ 需要 v14，且只需重出 1/3，2/3、3/3 与 v12/v13 逐字节相同。
+
+## §1 现查方法与可复现命令（本轮踩到的 API 事实）
+
+| 事 | 结论 |
+|---|---|
+| patchwork `?q=` / `?name__icontains=` / `?since=` | **全部被忽略**（返回 2009 年的无关件）⇒ 别用这些参数判「有没有更新」 |
+| 可用过滤 | `?submitter=<id>`（本邮箱 submitter id = **226107**）、`?msgid=<MID>`、单件 `/patches/<id>/` |
+| 分页 | `per_page=100` 升序，**必须翻到最后一页**才是最新代（page=5 返回 404 即到底） |
+| lore | `curl` 直取被 Anubis 挡（403）；**`web_fetch`（Firecrawl）可读**单件页与 `?q=...` 搜索页 |
+
+```sh
+# 全量本人的件（4 页，升序）：
+for pg in 1 2 3 4; do
+  curl -sS -x http://127.0.0.1:7890 "https://patchwork.kernel.org/api/1.2/patches/?submitter=226107&per_page=100&page=$pg"
+done
+# sashiko 对 v13 的报告（lore 搜索结果页 → 正文）：
+#   https://lore.kernel.org/linux-devicetree/?q=sashiko+%22v13+1%2F3%22&x=A
+```
+
+## §2 在档各系列的 patchwork 现状（2026-11-24 现查）
+
+| 系列 | 最新代 | 状态（arm-msm / DT 侧） | `commit_ref` | 判读 |
+|---|---|---|---|---|
+| dwc3 双连接器 | **v13**（11-23 11:08Z，`15012435/6/7` + DT `15012445/8/46`） | `new` / `needs-ack`(1/3)·`handled-elsewhere`(2/3,3/3) | 空 | 在审；v12 全 `superseded` |
+| wl2868c | v12（`14991614/5`） | `new` | 空 | **已合入 `regulator.git for-7.5`**（11-21 实证）⇒ patchwork `new` 是盲区，别据此判未合 |
+| elden 板 DTS | v7（`14991580`，11-17） | `new` | 空 | v8 备料已在仓（`patches/upstream/elden-dts-v8-prep-20261121/`），**未投**（等放行） |
+| M10 fastrpc non-secure-domain | v3（`14971025`，11-11） | `new` | 空 | 13 天无回复；可考虑礼貌 ping（需放行） |
+| aw86927 触觉 | v2（11-17，6 枚） | arm-msm `new`；input/DT 侧 `handled-elsewhere`/`not-applicable` | 空 | 在审 |
+
+## §3 sashiko 对 v13 1/3 的三条 [Low]：逐条判别
+
+原文（lore，`sashiko-bot@kernel.org`，2026-11-23 11:29Z；sashiko 报 2/3、3/3 无问题）：
+
+**① `mux-controls` 缺 `maxItems: 1`** —— 本地用 `$ref: /schemas/types.yaml#/definitions/phandle-array`，
+数量不受限；`mux-consumer.yaml` 已有全局定义。
+→ **成立（低）**。修法：`maxItems: 1`（或直接 `$ref: mux-consumer.yaml` 的定义）。一行改动。
+
+**② `port@0` 换成 `graph.yaml#/$defs/port-base` 后，未给 `endpoint` 显式 schema** ——
+`port-base` 用 `^endpoint(@[0-9a-f]+)?$` 匹配 `endpoint-base`，而 `endpoint-base` **故意不写**
+`unevaluatedProperties: false`；于是单连接器的 `port@0/endpoint` 可携带任意未文档化属性（含
+`usb-role-switch`/`mux-state`）而不报错，且 `endpoint@2/@3` 不被拒。
+→ **成立（低）**，但修法要权衡：给 `endpoint` 也加 `unevaluatedProperties: false` 会让「单连接器
++ 厂商私有属性」的既有树报错（上游有先例依赖宽松）。**倾向修法**：`patternProperties` 收紧为
+`'^endpoint(@[01])?$'`（拒绝 endpoint@2+），并对 `endpoint`（无 reg 的 plain 形态）保留宽松；
+或者只在 `required: [mux-controls]` 分支里加 `endpoint: false`/端点集合约束。**要一次 dtbs_check 全量验证再定**。
+
+**③ `oneOf`（两连接器 mux-state 互斥）在**没有** `mux-controls` 时必然失败** —— JSON Schema 里
+`properties` 对缺失属性恒为真 ⇒ 两个分支同时匹配 ⇒ `oneOf` 崩。另外顶层 `if/then/else` 已经把
+「有 mux ⇒ 两端点必须带 `usb-role-switch`+`mux-state`；无 mux ⇒ 二者禁用」说全了，故
+`dependentRequired` 与 else 分支的 `mux-controls: false` 是冗余。
+→ **成立（逻辑错误）**。修法：把 `if: required: [endpoint@0, endpoint@1] / then: oneOf…` 搬进
+**`then:`（有 mux-controls）分支内部**，或给 `oneOf` 每个分支加 `required: [mux-state]`；同时删
+`dependentRequired` 与 `mux-controls: false`。**这条必须修**（否则未来任何「两连接器但没写 mux」的树
+都会被错误拒绝，属行为回归）。
+
+## §4 处置与下一步（主机侧，未投递）
+
+1. **v14 只需重出 1/3**：2/3、3/3 与 v12/v13 逐字节相同（已两次复核 blob）。
+2. 修 ①③（确定性 bug）+ ②（按 §3 权衡，先跑全量 `dt_binding_check` + 四份 `dtbs_check` 看是否引入回归）。
+3. 门链沿用 G1/G2（快），G3–G6 重跑（`make -j26` 起步；G4/G5 约 10–20 min）。
+4. **投递仍按 `TASKS/README.md` §7「按系列逐次批准」**：v14 出件后等用户放行再发。
+
+## §5 本轮未做
+
+- 未改任何 patch（只判别与记计划）；未发信；未跑重门（编译类留到 v14 备料轮）。
+- M8 mdss v5 / aw86927 的 sashiko 报告仍未逐条判别（老欠账，见 `reports/comm-triage-20261123-b.md` §表）。
