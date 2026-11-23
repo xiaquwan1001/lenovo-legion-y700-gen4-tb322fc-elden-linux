@@ -57,4 +57,4 @@ make -j26 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/kb-dwc3-v14 CHECK_D
 - **G3（`W=1` 编译）未重跑**：2/3、3/3 与 v13 逐字节相同，1/3 只动 binding ⇒ 编译面零变化。
 - **未投递**：按 `TASKS/README.md` §7「按系列逐次批准」，等用户放行。投递命令与收件人见
   `../../patches/upstream/dwc3-v12-20261123/SENT.md`（同一套），只是文件名换成 `v14-000*.patch`。
-- 临时 worktree `/tmp/dwc3-v14`、`/tmp/dwc3-v13ctl` 与两个 `O=` 构建目录留在 /tmp，未入库。
+- 临时 worktree `/tmp/dwc3-v14`、`/tmp/dwc3-v13ctl` 与两个 `O=` 构建目录**已在收尾时删除**（`git worktree list` 无残留）。
