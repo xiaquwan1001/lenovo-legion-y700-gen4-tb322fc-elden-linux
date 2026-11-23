@@ -2,9 +2,9 @@
 # ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。
 #   不归档的理由：它是「Linux 进度被改后怎么查」的**活入口**，INDEX.md:239,260,358 与
 #   RUNBOOK-BRINGUP/{LINUX-STATE-REPRO,ZERO-TO-DESKTOP,GPT-MINIMAL-DESIGN}.md 都直接指它（归档会成批悬挂）。
-#   ⚠ 已知债务（本轮**未修**，属审计 §5 批 2 第 9 条）：A/H 段的 GPT 基线路径写死单机序列号/容量档
-#     `backup/HA2EXB0E-16+512/`（:86-91，U1）⇒ 在别的单元/U2 布局上会整段报 MISSING（不是缺陷而是前提不符）。
-#     修法 = `--sn` / `--unit` 参数化（默认保留现值，行为不变），待单独一轮 + 真机复核。
+#   ✅ 设备等价（2026-11-24 修，原审计 §5 批 2 第 9 条）：A/H 段的 GPT 基线/独有分区 dump 改为
+#     **运行时发现**所有 `backup/<SN>-<容量档>/` 目录（形状必须含 '+'）并逐单元检查 ⇒ 换单元/U2 布局
+#     不再整段假 MISSING；新增单元只需把件放进去，无需改脚本。
 #
 # linux-state-audit.sh — 「Linux 进度」8 项状态的只读体检（主机侧 + 设备侧），永不做写操作。
 #
@@ -49,6 +49,9 @@ sha_direct() {   # sha_direct <文件> → 64 位 sha256；文件不存在 → �
 # 测试接缝：ODIRECT_SHA_LIB_ONLY=1 ⇒ 只定义函数、不进主流程（反例用例不碰设备）
 [ "${ODIRECT_SHA_LIB_ONLY:-0}" = 1 ] && { return 0 2>/dev/null || exit 0; }
 SN=${SN:-HA2EXB0E}
+# 设备等价：备份目录名 = backup/<SN>-<容量档>/（含 '+'），逐单元发现而不是写死单机
+UNITS=""
+for _d in backup/*+*/; do [ -d "$_d" ] && UNITS="$UNITS ${_d%/}"; done
 PKG=${PKG:-$HOME/文档/TB322FC_15.10.259}
 LOADER=${LOADER:-$HOME/下载/tb322fc/xbl_s_devprg_ns.melf}
 QDL=${QDL:-$HOME/edl/qdl/build/qdl}
@@ -121,13 +124,20 @@ check_file boot-elden-vk192 out/boot-elden-vk192.img bdf47f5f
 check_file vbmeta_b backup/vbmeta_b-20261110.img e974ebab
 check_file dtbo-dummy out/dtbo-dummy.img ad7facb2
 
-sec "A/H. GPT 基线与回退件"
-check_file gpt_main0基线 backup/HA2EXB0E-16+512/gpt_main0.bin
-check_file gpt_backup0基线 backup/HA2EXB0E-16+512/gpt_backup0.bin
-check_file gpt_new_main0 backup/HA2EXB0E-16+512/gpt_new_main0.bin
+sec "A/H. GPT 基线与回退件（逐单元：backup/<SN>-<容量档>/）"
+[ -n "$UNITS" ] || { emit "单元备份目录" WARN "backup/*+*/ 一个都没有（换单元？先 ls backup/）"; cnt WARN; }
+for _u in $UNITS; do
+  _ub=$(basename "$_u")
+  check_file "gpt_main0基线[$_ub]" "$_u/gpt_main0.bin"
+  check_file "gpt_backup0基线[$_ub]" "$_u/gpt_backup0.bin"
+  check_file "gpt_new_main0[$_ub]" "$_u/gpt_new_main0.bin"
+done
 if [ -d backup/stock-259 ]; then emit stock-259 OK "$(ls backup/stock-259 | wc -l) 件 / $(size_h backup/stock-259)"; else emit stock-259 MISSING backup/stock-259; cnt MISSING; fi
 if [ -d backup/official-rom-15.10.259 ]; then emit "官方全量包" OK "backup/official-rom-15.10.259 ($(size_h backup/official-rom-15.10.259))"; else emit "官方全量包" WARN "未见 backup/official-rom-15.10.259（软链？）"; cnt WARN; fi
-if [ -d backup/HA2EXB0E-16+512/unique ]; then emit "独有分区 dump" OK "unique/ $(size_h backup/HA2EXB0E-16+512/unique)"; else emit "独有分区 dump" WARN "无 unique/"; cnt WARN; fi
+for _u in $UNITS; do
+  _ub=$(basename "$_u")
+  if [ -d "$_u/unique" ]; then emit "独有分区 dump[$_ub]" OK "unique/ $(size_h "$_u/unique")"; else emit "独有分区 dump[$_ub]" WARN "无 unique/"; cnt WARN; fi
+done
 
 sec "E. ESP 源件（GRUB/Loader/boot.img）"
 ls out/grub-arm64-*/ out/grub-*/ 2>/dev/null | head -0

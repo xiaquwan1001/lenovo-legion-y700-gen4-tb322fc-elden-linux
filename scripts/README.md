@@ -187,7 +187,7 @@
 | `scripts/serial-probe.sh` | 独占串口并「敲一下」：把当前 ttyACM0 的输出与回声抓下来 | 6 |
 | `scripts/serial-run.sh` | 通过设备 USB CDC-ACM 串口 (/dev/ttyACM0) 执行一条命令并打印回显 | 18 |
 | `scripts/serial-sysrq.py` | 通过 USB 串口控制台发 SysRq（免物理断电复位/取栈）。 | 5 |
-| `scripts/serial-tap.py` | 稳定的设备串口落盘（替代 serial-logger.sh 的 cat 循环） | 24 |
+| `scripts/serial-tap.py` | 稳定的设备串口落盘（替代 serial-logger.sh 的 cat 循环） | 25 |
 | `scripts/sleep-bisect.sh` | ★ LEGACY（2026-11-23 头注落地，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）： | 15 |
 | `scripts/sleep-cumulative.sh` | ★ LEGACY（2026-11-23 头注落地，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：同 sleep-bisect.sh | 10 |
 | `scripts/sleep-sweep.sh` | 主机侧自动扫掠：设 camera.conf → 反复重启 → 每次真实熄屏 → 记 存活/掉电。 | 27 |
@@ -276,7 +276,7 @@
 | `scripts/manifest-from-image.py` | 从**镜像本身**重建 `.manifest`（源树已删/丢失时用）。 | 8 |
 | `scripts/mesa-build.sh` | 只构建 Waydroid vendor 需要的 Mesa/gralloc 模块（比 make vendorimage 快得多） | 18 |
 | `scripts/mkbootimg.py` | minimal AOSP boot image v2 builder (elden project vendored copy). | 77 |
-| `scripts/pack-cloud-backup.sh` | ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 11 |
+| `scripts/pack-cloud-backup.sh` | ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 12 |
 | `scripts/phoc-build-launch.sh` | 以 root 在**独立 session** 里启动 build-phoc-arm64.sh（脱离调用者的进程组， | 3 |
 | `scripts/phoc-install.sh` | 把自编 phoc 装到设备并**钉住**，防 apt 覆盖（PITFALLS #654） | 21 |
 | `scripts/phosh-install.sh` | 把自编 phosh 装到设备并**钉住**，防 apt 覆盖（同 PITFALLS #654 的 phoc 做法） | 4 |
@@ -315,7 +315,7 @@
 | `scripts/gui-stress.sh` | 给 PITFALLS #106「进桌面后整机卡死」造**真实** GUI/GPU 负载。 | 7 |
 | `scripts/iterate.sh` | 统一迭代入口（日常用它；已于 2026-11 取代并删除根目录 build.sh/pack.sh/cycle.sh）。 | 71 |
 | `scripts/kmsgspy.sh` | capture kernel log to disk with line buffering + frequent sync, so the last | 8 |
-| `scripts/linux-state-audit.sh` | ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 38 |
+| `scripts/linux-state-audit.sh` | ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 39 |
 | `scripts/logfs-decode.py` | 解析 `logfs` 分区（8 MiB = 10 × 64 KiB 环形 ABL 日志）。 | 12 |
 | `scripts/n5b-vk64-death-rate.sh` | N5b：在 vk64（7.2 血统）RAM 内核上重复 | 44 |
 | `scripts/out-status.py` | out/ 造件生命周期账本门（2026-11-20，arch-audit P1#6） | 14 |

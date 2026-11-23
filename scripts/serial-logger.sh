@@ -4,8 +4,7 @@
 #   日志里只有 opened/closed 标记、真数据 0 行；另有孤儿 `cat` 占住 /dev/ttyACM0 的已知隐患
 #   （.pi/memory/failures-device.md:95）。⇒ 用它取 panic / Q28 坏发证据会得出**假阴性**。
 #   ✓ 取证真源 = `python3 scripts/serial-tap.py`（一次 open 长期持有 + select + 断线重开一次）。
-#   ⚠ 未做但应做（不在本轮写域）：`DEVICE/README.md:176` 仍把本件当「主机串口 logger」主入口指针，
-#     应改为 serial-tap.py（审计 §5 批 3 第 12 条，上轮 P1 未落地）。
+#   ✓ 2026-11-24：`DEVICE/README.md` 的「主机串口 logger」指针已改为 serial-tap.py（审计 §5 批 3 第 12 条收口）。
 #
 # serial-logger.sh — 跨重启自动重连抓取平板调试串口 (ttyACM)。
 # 用法: scripts/serial-logger.sh [LOGPATH]  (默认 logs/serial-<ts>.log)

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。
 #   不归档的理由：RESOURCES/README.md:259 把它当作「不可重下大二进制 → 云盘」的**唯一打包器**指针（§3 git 边界口径）。
-#   ⚠ 已知债务（本轮**未修**，属审计 §5 批 2 第 9 条）：T1/T2 清单逐条写死单机序列号/容量档 `backup/HA2EXB0E-16+512/`
-#     （:31-…，U1）⇒ 换单元（或 U2 布局）时其余单元的文件**根本不在清单里**，跑出来会是一个看似完整、实则漏件的上传包
-#     —— 这是「设备等价破坏」类错误，不是美观问题。修法 = `backup/<SN>-<容量档>/` 通配或 `--unit` 参数化（默认保留现值）。
-#     在参数化落地前：**换单元上云必须逐条手改 T1/T2 并对照 `ls backup/`**，不要直接信本脚本产出的目录清单。
+#   ✅ 设备等价（2026-11-24 修，原审计 §5 批 2 第 9 条）：T1 的单元件不再写死 `backup/HA2EXB0E-16+512/`，
+#     改为**运行时发现**所有 `backup/<SN>-<容量档>/` 目录并逐单元展开（含缺失项照样列出，(缺失) 可见）；
+#     新增单元只需把件放进去，无需改脚本。
 #
 # pack-cloud-backup.sh — 把「本机独有、不可重下」的二进制整理成一个可直接上传云盘的目录
 #
@@ -34,22 +33,31 @@ WBD=${WAYDROID_BUILD_DIR:-"/mnt/Samsung/waydroid-build"}
 
 # ---- T1：不可再生 ----
 # 每行 = 相对 $ROOT 的路径，或以 / 开头的绝对路径
-T1=(
-	"backup/HA2EXB0E-16+512/unique"        # 21 个设备独有分区（EDL 包不含 ⇒ 刷机不恢复）
-	"backup/HA2EXB0E-16+512/pre-unlock"    # 解锁前基线取证（Widevine L1 / by-name / getprop）
-	"backup/HA2EXB0E-16+512/c0-baseline"   # Android 侧身份/DRM/传感器/分区基线
-	"backup/HA2EXB0E-16+512/current-259"   # 1.5.10.259 现场态（by-name/cmdline/getprop/df）
-	"backup/HA2EXB0E-16+512/stock"         # U2 降级前原厂 b 槽分区（259）
-	"backup/HA2EXB0E-16+512/boot_b-before-vk72-20261009.img"
-	"backup/HA2EXB0E-16+512/boot_b-before-vk94-20261011.img"
-	"backup/HA2EXB0E-16+512/gpt_main0.bin"
-	"backup/HA2EXB0E-16+512/gpt_backup0.bin"
-	"backup/HA2EXB0E-16+512/gpt_new_main0.bin"
-	"backup/HA2EXB0E-16+512/gpt_new_backup0.bin"
-	"backup/HA2EXB0E-16+512/gpt_post-surgery_main0.bin"
-	"backup/HA2EXB0E-16+512/gpt_post-surgery_backup0.bin"
-	"backup/HA2EXB0E-16+512/sn.img"         # ⚠ 含本机序列号（敏感：只上自己的云盘）
-	"backup/HA2EXB0E-16+512/sn-neko-zuxos.img"
+# ---- 单元目录发现（设备等价：身份 = (SN, hwboardid, 容量)，目录名 = backup/<SN>-<容量档>/）----
+# 只认「<SN>-<容量档>」形状（必须含 '+'，如 HA2EXB0E-16+512）；其余 backup/ 子目录不是单元
+UNIT_DIRS=()
+for d in "$ROOT"/backup/*+*/; do
+	[ -d "$d" ] || continue
+	_u=${d#"$ROOT"/}; UNIT_DIRS+=("${_u%/}")
+done
+[ "${#UNIT_DIRS[@]}" -gt 0 ] || echo "[pack] ⚠ 没找到任何 backup/<SN>-<容量档>/ 目录 ⇒ 单元独有件不会进清单（换单元？先 ls backup/）" >&2
+T1_UNIT_FILES=(
+	unique        # 设备独有分区（EDL 包不含 ⇒ 刷机不恢复）
+	pre-unlock    # 解锁前基线取证（Widevine L1 / by-name / getprop）
+	c0-baseline   # Android 侧身份/DRM/传感器/分区基线
+	current-259   # 1.5.10.259 现场态（by-name/cmdline/getprop/df）
+	stock         # 降级前原厂 b 槽分区
+	boot_b-before-vk72-20261009.img
+	boot_b-before-vk94-20261011.img
+	gpt_main0.bin gpt_backup0.bin gpt_new_main0.bin gpt_new_backup0.bin
+	gpt_post-surgery_main0.bin gpt_post-surgery_backup0.bin
+	sn.img sn-neko-zuxos.img   # ⚠ 含本机序列号（敏感：只上自己的云盘）
+)
+T1=()
+for _u in "${UNIT_DIRS[@]}"; do
+	for _f in "${T1_UNIT_FILES[@]}"; do T1+=("$_u/$_f"); done
+done
+T1+=(
 	"backup/gpt"                           # 234 GiB 档 GPT 快照（禁跨容量档复用）
 	"backup/misc"                          # misc / devinfo / uefivarstore
 	"backup/sde-gpt-head.bin"
@@ -163,7 +171,7 @@ cat > "$DEST/README.md" <<'README_EOF'
 
 ## ⚠ 敏感
 
-`T1-irreplaceable/backup/HA2EXB0E-16+512/sn.img`、`sn-neko-zuxos.img`，以及
+`T1-irreplaceable/backup/<SN>-<容量档>/sn.img`、`sn-neko-zuxos.img`（逐单元），以及
 `y700四代工具/` 内含的解锁模板文件含**本机序列号**。只放自己的私有云盘，别公开分享。
 README_EOF
 

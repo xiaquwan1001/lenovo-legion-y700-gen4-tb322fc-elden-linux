@@ -206,9 +206,12 @@ python3 scripts/gen-scripts-index.py --check   # → 仅报 scripts/README.md �
 
 1. `scripts/README.md` 结构指纹过期（`gen-scripts-index.py --check` 报 346 入口 fp 漂移）——索引 owner 的职责，
    本轮不代跑（归档/头注都会触发，跑一次即收敛），留给 lane 收口。
-2. `DEVICE/README.md:176` serial-logger 指针未改 serial-tap.py（审计 §5 批 3 第 12 条；DEVICE 写域外，头注已披露）。
+2. ~~`DEVICE/README.md:176` serial-logger 指针未改 serial-tap.py~~ **已收口（2026-11-24）**：DEVICE 指针改 serial-tap.py，serial-logger 头注同步。
 3. 设备侧读回仍 buffered（§3 残留段）；`rambuild.sh`/`uefi-build-variant.sh` 未接门（判据强度弱，§3 落选说明）。
-4. `linux-state-audit.sh`/`pack-cloud-backup.sh` 的 U1 路径参数化（审计批 2 第 9 条）仍未做——头注已披露，待真机复核轮。
+4. ~~`linux-state-audit.sh`/`pack-cloud-backup.sh` 的 U1 路径参数化（审计批 2 第 9 条）仍未做~~ **已落（2026-11-24）**：
+   两件都改为运行时发现 `backup/*+*/`（= `<SN>-<容量档>`）并逐单元展开；新增单元零改动即进清单。
+   离线验证：`pack-cloud-backup.sh --list` 与 `linux-state-audit.sh --host` 在真单元输出与改前一致；
+   临时造 `backup/TESTSN-8+128/` 后两件都按新单元逐项列出（含 MISSING），验后已删。真机复核仍待设备上线。
 5. O_DIRECT 在本机 ext4/tmpfs 均可用 ⇒ 「O_DIRECT 不可用」的拒真反例只能用 /proc 节点构造；
    tmpfs 场景的保护逻辑与 /proc 同一代码路径（工具层 `ok=False → rc=90`），但未在本机实测到 tmpfs 拒绝的现场。
 6. 测试接缝限制：交互式 `bash -c ". ./flash-b.sh"`（无 caller 文件）里 `${BASH_SOURCE[0]:-$0}` 锚不到本仓
