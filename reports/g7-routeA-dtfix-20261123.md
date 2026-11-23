@@ -73,3 +73,20 @@ timeout -k 5 120 fastboot boot out/g7-routeA-dtfix-20261123/boot-elden-g7a2.img
 - 出口门脚本 `dtgraph-check.py`（rev2）四条断言：① 子图内 `remote-endpoint` 无单向（dtc graph_endpoint 规则）；② 子图非 graph 依赖无环；③ dwc3 endpoint@0/@1 + mux-state 0/1 + 每个 connector 指向自己的 dwc3 endpoint / SS PHY（仅 connector@0）/ 自己的 typec mux；④ **同一段代码在树内上游 `sm8750-mtp.dtb`、`sm8650-hdk.dtb` 上也全 PASS**（基线对照，防止判据比上游严）。文件头写明判据出处（dtc 规则 + `DL_FLAG_CYCLE` 放行 + 上游同款）。
 - 两版 dtbs 日志：`dtbscheck-before.log`（routeA-20261121 基线，36 条）、`dtbscheck-after.log`（rev2，32 条，graph_endpoint=0）。one-way 变体的 32 条日志已被 rev2 覆盖（其 5 条 graph_endpoint 新增即失败原因，见 §1）。
 - **单向变体被否的记录**：单向虽能让旧脚本（「子图无环」口径）绿，但违反 dtc graph 约定、上游不可接受（M 系列/§7 门），且 dtbs 新增 5 条诊断 ⇒ 否。双向变体 dtbs 32 < 基线 36、上游同形 ⇒ 采纳（主会话 2026-11-23 裁决）。
+
+## §6 2026-11-24 上机前完整性复核（主机侧，零设备；只读）
+
+设备窗口还没开，先把「这枚件到底是哪儿来的、能不能复现」钉死（11-19 磁盘清理后 `build/` 只剩部分树，
+最怕的是「件在、配方没了」或者「DTB 与 DTS 已经不对应」）。全部命令可原样重放：
+
+| # | 判据 | 命令 | 结果 |
+|---|---|---|---|
+| 1 | 归档自洽 | `cd out/g7-routeA-dtfix-20261123 && sha256sum -c SHA256SUMS` | 10/10 OK |
+| 2 | **DTB 可复现** | `cpp -nostdinc -I build/g7a-tree/arch/arm64/boot/dts/qcom -I build/g7a-tree/include -undef -D__DTS__ -x assembler-with-cpp out/…/sm8750-lenovo-elden.dts -o /tmp/x.dts.pre && dtc -q -I dts -O dtb -o /tmp/x.dtb /tmp/x.dts.pre` | `/tmp/x.dtb` sha = **`dedc81bf…`**（与归档 DTB **逐字节相同**） |
+| 3 | 归档 DTS == 树里 DTS | `sha256sum build/g7a-tree/.../sm8750-lenovo-elden.dts out/…/sm8750-lenovo-elden.dts` | 两处都是 `eeb78f0b…` |
+| 4 | 镜像内载荷 == manifest | `python3 scripts/mkbootimg.py --unpack out/…/boot-elden-g7a2.img --unpack-dir /tmp/u` | dtb `dedc81bf…` / kernel(gz) `138dc1ad…` / ramdisk `3282ae6c…`，三者与 manifest 的 `dtb_sha256` / `kernel_sha256` / `ramdisk_sha256` **逐个相同** |
+| 5 | 内核载荷解压后 == manifest | `gunzip -c /tmp/u/kernel \| sha256sum` | `a7a9068b…` = manifest `kernel_payload_sha256` |
+| 6 | cmdline == manifest | `mkbootimg.py --unpack` 打印的 cmdline | 与 manifest `mkbootimg_args` 里的 `--cmdline` 逐字相同 |
+
+结论：**这枚 `boot-elden-g7a2.img` 是可复现的**（DTS→DTB→镜像三级一致），上机只需 `fastboot boot`
+（零写盘）；§3 的判据表不变。仍未做 = 真机上机（设备离线）。
