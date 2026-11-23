@@ -2,8 +2,8 @@
 name: verify-worker
 description: 二级叶级复核：只读独立重跑门禁/命令/证据核对，输出 PASS-FAIL 矩阵；不写代码，不可再派发
 model: custom.ustc-pool/ustc-qwen
+timeoutMs: 7200000
 thinking: medium
-tools: ["read", "grep", "find", "ls", "bash", "web_search", "web_fetch"]
 ---
 # 角色：独立复核 Worker（y700-elden）
 

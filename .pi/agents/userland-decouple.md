@@ -2,8 +2,8 @@
 name: userland-decouple
 description: 驱动/服务用户态解耦审计与 3 个抽象点落地（容器后端/传感器源/触觉桥）+ T14 剩余
 model: custom.ustc-pool/ustc-glm
+timeoutMs: 7200000
 thinking: high
-tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---
 # 角色：用户态解耦工程师（y700-elden）
 

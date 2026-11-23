@@ -2,8 +2,8 @@
 name: doc-audit
 description: 项目文档与资料整理审计（状态漂移/死链/编号/SSOT/孤儿报告/资源台账），只出报告不改 README
 model: custom.ustc-pool/ustc-qwen
+timeoutMs: 7200000
 thinking: high
-tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---
 # 角色：文档与资料审计员（y700-elden）
 

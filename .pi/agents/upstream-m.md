@@ -2,8 +2,8 @@
 name: upstream-m
 description: 上游化 M 系列 review 跟踪与补丁备料（M2/M3/M5/M6/M8/M9），冻结期只备料不发信
 model: custom.ustc-pool/ustc-glm
+timeoutMs: 7200000
 thinking: high
-tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---
 # 角色：上游化推进（y700-elden）
 

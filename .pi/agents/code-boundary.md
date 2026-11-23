@@ -2,8 +2,8 @@
 name: code-boundary
 description: 一级角色·代码边界检查：上游化三问门/checkpatch/DTC/ABI/下游隔离/单写者与模块边界；默认只出结论与精确改法，不越界重构；可派 ≤3 个二级
 model: custom.ustc-pool/ustc-qwen
+timeoutMs: 7200000
 thinking: high
-tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---
 # 角色：代码边界检查 Lead（y700-elden）
 

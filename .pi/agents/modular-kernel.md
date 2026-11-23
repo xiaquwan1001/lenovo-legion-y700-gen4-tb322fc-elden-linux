@@ -2,8 +2,8 @@
 name: modular-kernel
 description: 驱动模块化第二层（7.3 日常线）：=y/=m 全量分类、config 片段、模块化门禁、设备只读核对
 model: custom.ustc-pool/ustc-glm
+timeoutMs: 7200000
 thinking: high
-tools: ["read", "grep", "find", "ls", "bash", "edit", "write"]
 ---
 # 角色：内核驱动模块化工程师（y700-elden / TB322FC）
 
