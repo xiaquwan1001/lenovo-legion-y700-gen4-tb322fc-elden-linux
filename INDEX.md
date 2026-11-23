@@ -9,6 +9,7 @@
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-23）
 
 > **🆕 2026-11-23 对账（本轮）**：最新会话证据 = 11-23 深夜会话（`ab7efd8c`：dwc3 v12 四枚成稿 + 门禁日志）+ 11-23 白天 lane 批（`857047b3`/`c1ce6146`，§4.0 已记）。
+> **🆕 2026-11-23 通信 lane b 轮（D10，只读）**：**Greg Kroah-Hartman 首次回人（08:20Z，Re: v11 3/3）**——唯一要求 = **changelog 必须列全此前所有版本**；v12（09:53Z 已发，lore 已归档）投法两条已修好但 changelog 仍只有 "Changes since v10" ⇒ **v13 硬欠账 = 补全 v9 及更早历代 changelog**（本系列 lore 可见 v4/v5/v7/v8/v9/v10）；建议等 sashiko 对 v12 的报告一并处理，投递仍按 §7 批准制。其余线程零变化；Mobian !46 三天 0 note（mergeable、CI success）。全账 = `reports/comm-triage-20261123-b.md`。
 > **🆕 2026-11-23 整理轮增量（grow loop #1，轻负载）**：① 前记「G4–G6 中断」被日志推翻 —— `patches/upstream/dwc3-v12-20261123/logs/` 六道门全部完成（G4 `dt_binding_check` RC=0 等）；② G1 主会话独立复验通过（fresh clone `aebb727447` + `git am` 3/3 + 6 枚 blob sha 逐字一致）；③ **dwc3 v12 已投（用户 11-23 放行）**：新线程形态（krzk 裁决），4 封全 250，cover MID `20261123095310.154352-1`，账 = `SENT.md`；lore 复核待下一轮；④ D10 只读通信 lane 已派。
 > **本轮核实（2026-11-23）**：`check-doctor` FAIL=0（WARN=6 全为已登记豁免：源树 slim bundle 态、账本例外、4 枚解不出载荷的旧镜像、本日期条目）；`scripts/README.md` 与 HISTORY days 已重新生成；G1 计数 = 36 完成/37 在册（`check-progress-counts.sh`）。
 > **负载约束（用户 2026-11-23 定）**：新内存到位前避开重负载 —— **暂停**：G4 全量 `dt_binding_check`、任何内核全量编、B 选项重建 daily 树。**可做（轻）**：G5/G6 门、D10 通信 lane（只读）、D6 文档卫生、aw86927 Tested-by 备料。
