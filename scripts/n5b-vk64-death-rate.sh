@@ -35,6 +35,30 @@ exec > >(tee -a "$LOG") 2>&1
 # 串口采集统一走 lib（relay 常驻日志 优先；#359）。死亡瞬间 dmesg 是 T5 唯一的完整记录。
 . "$(dirname "$0")/lib-serial-source.sh"
 
+# ★ O_DIRECT 硬门（PITFALLS #513；2026-11-23 D5 批 4 / reports/scripts-hardening-4-20261123.md §3）
+# 镜像 sha（--check 打印 + 认件）是**上机身份**⇒ buffered 读可能给「稳定但错」的页缓存副本
+# ⇒ 拿不到 O_DIRECT 就拒绝（rc=90）；降级取证：ODIRECT_SHA_ALLOW_BUFFERED=1（告警）。
+ODIRECT_SHA=${ODIRECT_SHA:-$ROOT/scripts/odirect-sha.py}
+sha_direct() {   # sha_direct <文件> → 64 位 sha256；文件不存在 → 空；拿不到真值 → rc=90
+	local f=$1 v
+	[ -n "$f" ] && [ -e "$f" ] || return 0
+	v=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv --require-odirect "$f" 2>/dev/null \
+		| awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" -ne 64 ]; then
+		if [ "${ODIRECT_SHA_ALLOW_BUFFERED:-0}" = 1 ]; then
+			v=$(sha256sum "$f" | cut -d' ' -f1)
+			echo "WARN sha_direct: $f 未走 O_DIRECT ⇒ buffered 值 $v（ODIRECT_SHA_ALLOW_BUFFERED=1；判据不可信，#513）" >&2
+		else
+			echo "REFUSE sha_direct: $f 拿不到 O_DIRECT 结果 ⇒ 不作判据（#513）" >&2
+			echo "        降级取证：ODIRECT_SHA_ALLOW_BUFFERED=1 重跑（值只能当线索）" >&2
+			return 90
+		fi
+	fi
+	printf '%s\n' "$v"
+}
+# 测试接缝：ODIRECT_SHA_LIB_ONLY=1 ⇒ 只定义函数、不进主流程（反例用例不碰设备）
+[ "${ODIRECT_SHA_LIB_ONLY:-0}" = 1 ] && { return 0 2>/dev/null || exit 0; }
+
 # 串口常驻记录：Q24 是 SoC 级硬复位 + pstore 空（#197），死亡瞬间的 dmesg 事后拿不到，
 # 只能在死亡发生时由串口抓（console=ttyGS0 -> 宿主 /dev/ttyACM0）。T5 要交的「完整 dmesg」全靠这条。
 start_serial() {
@@ -200,7 +224,7 @@ if [ "${CHECK_ONLY:-0}" = 1 ]; then
 	printf '  串口采集    : '; if serial_source_probe; then :; else echo "❌ 不可用 ⇒ 死亡瞬间 dmesg 拿不到（T5 数据不完整）"; fi
 	printf '  设备可达    : '; if ssh_alive_probe; then echo "SSH ok ($(SSH 'uname -r' | tr -d '\r'))"; else echo "不可达（需先进 Linux）"; fi
 	printf '  fastboot    : '; if FB; then echo "ok"; else echo '不在 fastboot（fastboot boot 需要它）'; fi
-	printf '  镜像        : '; if [ -f "$IMG" ]; then echo "$IMG ($(stat -c %s "$IMG") B, sha256 $(sha256sum "$IMG" | cut -c1-16)…)"; else echo "❌ 缺 $IMG"; fi
+	printf '  镜像        : '; if [ -f "$IMG" ]; then IMG_SHA16=$(sha_direct "$IMG" | cut -c1-16) || exit 90; echo "$IMG ($(stat -c %s "$IMG") B, sha256(O_DIRECT) $IMG_SHA16…)"; else echo "❌ 缺 $IMG"; fi
 	printf '  镜像 UTS    : '; img_uts "$IMG"; echo
 	preflight_device || true
 	echo "== 结束。真跑：bash $0 [轮数] [图像] =="

@@ -65,7 +65,10 @@ while IFS=$'\x1f' read -r apk action debian note; do
 	for p in $debian; do
 		case "$p" in
 			linux-image-*|firmware-qcom-soc*) bad "禁用包被映射进来: $apk -> $p"; continue ;;
-			hexagonrpcd) bad "永不安装的包被映射进来: hexagonrpcd（attach ADSP 硬崩整机，PITFALLS #692/#694）"; continue ;;
+			# 2026-11-23：精确名 → 前缀匹配（hexagonrpcd-dbgsym 等变体也不得过）；
+			# 同一门在 F 段（daily-baseline 行）与 E 段（svc-deps providers）重复 —— 那两处
+			# 原先不设防，加一行 hexagonrpcd 到 daily-baseline.tsv 就能绕过本门。
+			hexagonrpcd*) bad "永不安装的包被映射进来: $p（attach ADSP 硬崩整机，PITFALLS #692/#694）"; continue ;;
 		esac
 		printf '%s\n' "$p" >> "$tmp_apt"
 		v=$(apt_show "$p")
@@ -86,6 +89,9 @@ ndaily=0; np2=0; ndmiss=0
 if [ -f "$DAILY" ]; then
 	while IFS=$'\t' read -r pkg prio cat reason; do
 		case "$pkg" in ''|\#*) continue ;; esac
+		case "$pkg" in
+			hexagonrpcd*) bad "daily-baseline: 永不安装的包混进日用基线: $pkg（PITFALLS #692/#694）"; continue ;;
+		esac
 		case "$prio" in
 			P0|P1)
 				ndaily=$((ndaily+1)); printf '%s\n' "$pkg" >> "$tmp_apt"
@@ -160,6 +166,8 @@ if [ -f "$DEPS" ]; then
 		[ -n "${providers:-}" ] || { bad "E 行缺 providers: $what"; continue; }
 		for p in $providers; do
 			case "$p" in
+				# 2026-11-23：svc-deps providers 同一道 hexagonrpcd 门（见 B/C 段注释）
+				hexagonrpcd*) bad "E 永不安装的包被声明为 provider: $p（$what，PITFALLS #692/#694）"; continue ;;
 			own:*)
 				name=${p#own:}
 				if ! compgen -G "$OWNDEB/${name}_*.deb" >/dev/null; then

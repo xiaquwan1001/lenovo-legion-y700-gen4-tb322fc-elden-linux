@@ -24,6 +24,30 @@ set -u
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT" || exit 2
+
+# ★ O_DIRECT 硬门（PITFALLS #513；2026-11-23 D5 批 4 / reports/scripts-hardening-4-20261123.md §3）
+# 本件的 sha 是**台账漂移判据**（与 INDEX/基线登记值比对）⇒ buffered 读可能给「稳定但错」的
+# 页缓存副本，把好件报成 DRIFT（或反之）⇒ 拿不到 O_DIRECT 就不下结论：一律报 NO-ODIRECT。
+# 纯 POSIX sh（/bin/sh=dash，不用 local）；降级取证：ODIRECT_SHA_ALLOW_BUFFERED=1（告警）。
+ODIRECT_SHA=${ODIRECT_SHA:-$ROOT/scripts/odirect-sha.py}
+sha_direct() {   # sha_direct <文件> → 64 位 sha256；文件不存在 → 空；拿不到真值 → rc=90
+  _sf=$1
+  [ -n "$_sf" ] && [ -e "$_sf" ] || return 0
+  _sv=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv --require-odirect "$_sf" 2>/dev/null \
+    | awk -F'\t' 'NR==1{print $3}')
+  if [ -z "$_sv" ] || [ "${#_sv}" -ne 64 ]; then
+    if [ "${ODIRECT_SHA_ALLOW_BUFFERED:-0}" = 1 ]; then
+      _sv=$(sha256sum "$_sf" | cut -d' ' -f1)
+      echo "WARN sha_direct: $_sf 未走 O_DIRECT ⇒ buffered 值 $_sv（判据不可信，#513）" >&2
+    else
+      echo "REFUSE sha_direct: $_sf 拿不到 O_DIRECT 结果 ⇒ 不作判据（#513）" >&2
+      return 90
+    fi
+  fi
+  printf '%s\n' "$_sv"
+}
+# 测试接缝：ODIRECT_SHA_LIB_ONLY=1 ⇒ 只定义函数、不进主流程（反例用例不碰设备）
+[ "${ODIRECT_SHA_LIB_ONLY:-0}" = 1 ] && { return 0 2>/dev/null || exit 0; }
 SN=${SN:-HA2EXB0E}
 PKG=${PKG:-$HOME/文档/TB322FC_15.10.259}
 LOADER=${LOADER:-$HOME/下载/tb322fc/xbl_s_devprg_ns.melf}
@@ -52,11 +76,19 @@ sec() { [ -z "$SNAP" ] && printf '\n== %s ==\n' "$1"; }
 cnt() { # cnt <STATUS>  # 计缺失/漂移
   case "$1" in MISSING|DRIFT) miss=$((miss+1)) ;; WARN|UNKNOWN) warn=$((warn+1)) ;; esac
 }
-sha8() { [ -f "$1" ] && sha256sum "$1" 2>/dev/null | cut -c1-16 || echo MISSING; }
+sha8() { # <文件> → 16 位前缀；缺件 → MISSING；拿不到 O_DIRECT → NO-ODIRECT（不下结论）
+  [ -f "$1" ] || { echo MISSING; return 0; }
+  _s8=$(sha_direct "$1" | cut -c1-16)
+  if [ -n "$_s8" ]; then echo "$_s8"; else echo NO-ODIRECT; fi
+}
 check_file() { # check_file <名字> <路径> [台账前缀]
   p=$2; e=${3:-}
   if [ ! -f "$p" ]; then emit "$1" MISSING "$p"; cnt MISSING; return; fi
   s=$(sha8 "$p")
+  if [ "$s" = NO-ODIRECT ]; then
+    emit "$1" UNKNOWN "$p  读不到 O_DIRECT（#513：buffered 值不作判据；降级：ODIRECT_SHA_ALLOW_BUFFERED=1）"
+    cnt UNKNOWN; return
+  fi
   if [ -n "$e" ]; then
     case "$s" in "$e"*) emit "$1" OK "$p  sha=$s（=台账 $e…）" ;;
       *) emit "$1" DRIFT "$p  sha=$s ≠台账 $e…"; cnt DRIFT ;; esac
@@ -168,7 +200,8 @@ if [ "$MODE" = device ]; then
       for f in "$D/gpt0-lba0-33.bin" "$D/gpt4-lba0-33.bin"; do
         sz=$(stat -c%s "$f" 2>/dev/null || echo 0)
         case $sz in
-          17408|139264) emit "EDL读:$(basename "$f")" OK "size=$sz sha256=$(sha256sum "$f" | cut -c1-16)" ;;
+          17408|139264) _edls=$(sha_direct "$f" | cut -c1-16); [ -n "$_edls" ] || _edls=NO-ODIRECT
+            emit "EDL读:$(basename "$f")" OK "size=$sz sha256=$_edls" ;;
           *) emit "EDL读:$(basename "$f")" UNKNOWN "size=$sz（既非 34*512 也非 34*4096 ⇒ 表不完整/单位错）"; cnt UNKNOWN; rc=1 ;;
         esac
       done

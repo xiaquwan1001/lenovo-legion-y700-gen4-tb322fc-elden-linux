@@ -163,6 +163,10 @@
 > 一行 = 一个「大方向」。**派子代理先读本表**：按维度派、不同维度可并行（主机侧），同维度内 ≤2 lane；
 > 需设备的一律由主会话串行执行。每 lane 交付物必须落 `reports/` + 一句可复核判据。
 > 详细沿革（11-18 → 11-21 六个长块）已逐字下沉 → `TASKS/sessions/2026-11-21-§4待办区块下沉.md`。
+>
+> **★常设 lane（用户 2026-11-23 定，硬规则）**：每轮并行派发**至少一条通信 lane（D10）** —— 查邮件 INBOX + 我方在 **Mobian（gitlab.com/mobian1/*、salsa.debian.org/Mobian-team/*、droid-juicer MR）** 与 **phosh/phoc（gitlab.gnome.org/World/Phosh/*）** 的 MR/issue 回复；**只读，不回复不外发**（发信/推 MR 仍按 §7 逐次放行）。
+>
+> **★2026-11-23 派发（并行 4 lane + D10，全主机侧、零设备）**：A = **D2 G7 路线 A 第二步**（解除 `connector@0/1 ↔ typec-mux@42/43` devlink 环 → 新 DTB/镜像；出口门 = 静态 phandle 图无环 + `dtc` okay ≥34 + `dtbs_check` 新增 0；报告 `reports/g7-routeA-dtfix-20261123.md`）· B = **D5 批 3**（`ath12k-load.sh` bind 设备名、`arm-console-run.sh` #584 SIGPIPE、`q28-por-rounds.sh` P1、`gpt-restore-tb322fc.py` fail-closed 表指纹门；`reports/scripts-hardening-3-20261123.md`）· C = **D6 文档卫生**（`docs-health` 清零 + PITFALLS DEMOTE 只测算不搬；`reports/doc-audit-20261123.md`）· D = **D2 Mobian 首件**（droid-juicer `configs/lenovo,elden.toml` 成品 + MR 描述，不投；`reports/mobian-firstmr-20261123.md`）· E = **D10 通信**（`reports/comm-triage-20261123.md`）。**主机负载口径（用户 2026-11-23 放行）**：新 CPU（i7-14700KF / 28 线程）允许更高并行 ⇒ 跨维度 lane 上限 2→4，编译仍 `-j26` 起（留交互核）。
 
 | # | 维度 | 现状一句（2026-11-21 实测） | 开放项（可派发粒度） | 需设备 | 权威指针 |
 |---|---|---|---|---|---|
@@ -174,6 +178,7 @@
 | **D6** | 文档与踩坑精简 | PITFALLS 降噪一轮（7 文件 +16 行、编号零改动）；TASKS §4 本轮改为维度表；`check-doctor` FAIL=0 | ① PITFALLS 是否 DEMOTE 到 `.pi/memory`（体积收益先算）② `docs-health --brief` 死指针/重复段清零 ③ §5 Q 表与 §7 增量块继续下沉 | 否 | `reports/pitfalls-condense-20261122.md`、`PITFALLS/README.md` |
 | **D7** | UEFI / Gunyah（非主线） | Mu esp-first 重放 OK=84/FAIL=0；p69 证 `BOOTAA64.EFI` **未被执行**（走 Mu LinuxLoader 直接交核）；Gunyah 已结项 | ① 区分「RAM 形态 UFS 读不出 ESP」vs「本载荷没进 BDS」= flashed 形态复现 ② BDS/GRUB 菜单屏上取证 ③ `boot_a` 冷起回归 | 是 | `reports/uefi-mu-espfirst-replay-20261121.md` §8、`reports/uefi-dtbo-a-rootcause-20261110.md` |
 | **D8** | G3 x86 / Steam | 官方 ARM64 Steam 已到登录界面；Box64+Wine PoC 通 | x86 游戏端到端（FEX/box64 层接入 + 图形/音频/性能验收） | 是 | `reports/g3-steam-20261028.md`、TASKS §3 |
+| **D10** | **通信跟踪（常设，每轮必派）** | 邮件 INBOX / lore / patchwork 与 Mobian·phosh GitLab 回复面（2026-11-21 夜 triage 后未复扫） | ① 邮件 INBOX 增量（11-22 起）+ lore/patchwork 归档复核（口径 = 维护者自己的树或 linux-next 内容级，**不看 `commit_ref` 空值**）② Mobian：`mobian1/droid-juicer` MR/issue 状态、`Mobian-team/mobian-recipes`、我方 MR 是否有维护者回复 ③ phosh/phoc（gitlab.gnome.org）我方 MR 材料（`reports/phosh-mr-power-mode-20261114.md`）推送前置与上游 #302 状态 ④ 只读：**不回复、不外发、不推 MR** | 否 | `reports/mail-inbox-20261121.md`、`reports/mail-triage-20261121-night.md`、`reports/mobian-mr-plan-20261122.md`、`reports/phosh-mr-power-mode-20261114.md` |
 | **D9** | 主机稳定性与取证 | 页缓存 sha 漂移 + Pi 子进程 SIGSEGV 两批证据已上交；O_DIRECT 门在 `odirect-sha.py` | ① 13 脚本接 O_DIRECT（同 D5④，不重复派）② Q28 根因仍未解释（结项=运营判断），T1–T3 动作 ③ 新证据按规则 12 只记账不深挖 | 否 | `reports/q28-DOSSIER.md` §t、`~/hw-stability/AGENTS.md` |
 
 **维度互斥/依赖**：D1 必须先于 D7（ESP 在机的面）；D3④ 与 D1 共用一次上机窗；D4 与 D1 争同一收发窗口（**分时**）；D2 的 G7 与 D4 不可同轮（都要 a/b 槽控制权）。

@@ -90,6 +90,9 @@ wl-clipboard	P0	截图剪贴板	Wayland 剪贴板 CLI（wl-copy/wl-paste）；SS
 wtype	P1	截图剪贴板	Wayland 虚拟键盘注入（自动化取证的唯一按键通道）
 grim	P1	截图剪贴板	截图（Phosh 自带 UI，CLI 取证用；bring-up 已装）
 
+## ---- 时间基线 ----
+fake-hwclock	P0	时间基线	硬件 RTC 断电归零且不可写（hwclock -w → RTC_SET_TIME 拒绝，q28-DOSSIER §t T1：RTC=1970-01-08）；冷启时钟停在假值 ⇒ TLS/journal 时间戳全歪。设备 2026-11-16 已手工装（t-2 T1 已执行），此行防重建根回归；配合 elden-time-baseline.service（网络 UP → set-ntp → 等 NTPSynchronized，见 scripts/elden-time-baseline.sh）
+
 ## ---- 可选（P2，不自动安装）----
 fonts-noto-cjk-extra	P2	locale与字体	多字重 CJK（装后 ~210MB），只在排版/阅读需求高时加
 pavucontrol	P2	音频	图形音量控制（Phosh 有快捷面板，这个用于路由细调）

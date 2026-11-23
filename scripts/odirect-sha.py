@@ -8,8 +8,12 @@
 用法：
   odirect-sha.py <file> [<file>...]     # 逐件输出 TSV: path<TAB>bytes<TAB>sha256
   odirect-sha.py --compare <file> [...] # buffered + O_DIRECT 各算一遍；不一致 rc=1
+  odirect-sha.py --require-odirect <file> [...]  # 硬门：任一文件回退 buffered ⇒ 不出该行且 rc=90
   odirect-sha.py --selftest             # 自建 ≥4 MiB 临时文件断言两口径一致
 O_DIRECT 不可用（如某些 tmpfs）时：退回 buffered 并在 stderr 打 WARN。
+★ 2026-11-23（D5 批 4 / reports/scripts-hardening-4-20261123.md §3）：调用方是「拿 sha 当
+  身份/判据」的脚本时一律加 --require-odirect —— 默认的 WARN+回退会把「稳定但错」的页缓存
+  值静默送进判据（PITFALLS #513）；硬门把「读不到真值」变成显式失败（rc=90）。
 """
 import sys, os, hashlib, mmap, argparse
 
@@ -112,6 +116,8 @@ def main():
     ap.add_argument("--compare", action="store_true",
                     help="同时算 buffered 与 O_DIRECT，报差异（不一致 rc=1）")
     ap.add_argument("--tsv", action="store_true", help="同默认 TSV 输出")
+    ap.add_argument("--require-odirect", action="store_true",
+                    help="硬门：任一文件 O_DIRECT 不可用（只能 buffered）⇒ 不输出该行且 rc=90")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("files", nargs="*")
     a = ap.parse_args()
@@ -124,6 +130,12 @@ def main():
     rc = 0
     for p in a.files:
         sha, n, ok, node = sha_odirect(p)
+        if a.require_odirect and not ok:
+            # 硬门：宁可失败，也不让 buffered 值冒充分身份（PITFALLS #513）
+            sys.stderr.write(f"REFUSE odirect-sha: {p} 只能 buffered 读 ⇒ 不作判据"
+                             f"（要降级请去掉 --require-odirect；那时值只能当线索）\n")
+            rc = 90
+            continue
         if a.compare:
             bsha, bn = sha_buffered(p)
             same = "SAME" if bsha == sha else "DIFF"

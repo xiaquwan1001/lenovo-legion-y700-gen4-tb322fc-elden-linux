@@ -23,16 +23,25 @@
 #   * 无口令账户（passwd -S → NP）无法用口令走 sudo，故写 NOPASSWD；有口令账户只进 sudo 组。
 set -uo pipefail
 
+# 2026-11-23 修复：原实现 = `for a in "$@"` + 每轮尾部 `shift`。for 的词表在循环开始时
+# 就已展开，shift 只改位置参数不改词表 ⇒ `--root DIR`（空格形）的 DIR 会被当成下一轮
+# 的 a 撞上 `*)` 退出 rc=2（且 stderr 被 `2>/dev/null` 吞掉）；build-rootfs.sh:231 用的
+# 恰是空格形 ⇒ 构建侧 daily-baseline 配置段一直是 no-op（被 `|| say warn` 掩盖）。
+# 改法 = 数组下标遍历，取值参数显式 +2。
 ROOT=""; CHECK=0; USER_NAME=xuqianhui1001
-for a in "$@"; do case "$a" in
-	--root) ROOT="$2"; shift ;;
-	--root=*) ROOT="${a#--root=}" ;;
-	--user) USER_NAME="$2"; shift ;;
-	--user=*) USER_NAME="${a#--user=}" ;;
-	--check) CHECK=1 ;;
-	-h|--help) sed -n '2,30p' "$0"; exit 0 ;;
-	*) echo "未知参数: $a" >&2; exit 2 ;;
-esac; shift; done 2>/dev/null || true
+_args=("$@"); _i=0
+while [ "$_i" -lt "${#_args[@]}" ]; do
+	case "${_args[$_i]}" in
+		--root) ROOT="${_args[$_i+1]}"; _i=$((_i+2)); continue ;;
+		--root=*) ROOT="${_args[$_i]#--root=}" ;;
+		--user) USER_NAME="${_args[$_i+1]}"; _i=$((_i+2)); continue ;;
+		--user=*) USER_NAME="${_args[$_i]#--user=}" ;;
+		--check) CHECK=1 ;;
+		-h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+		*) echo "未知参数: ${_args[$_i]}" >&2; exit 2 ;;
+	esac
+	_i=$((_i+1))
+done
 
 R=${ROOT%/}
 P() { printf '%s%s\n' "$R" "$1"; }
@@ -353,6 +362,88 @@ else
 	# min_freq 允许 ≥ 目标值（有人手工抬更高时不回退）
 	if [ -n "${cur_min:-}" ] && [ "$cur_min" -ge "$GPU_MIN" ] 2>/dev/null; then ok "min_freq = ${cur_min} Hz (≥ ${GPU_MIN})"
 	else setv "$GPU/min_freq" "$cur_min" "$GPU_MIN"; fi
+fi
+
+# --------------------------------------- 6 hexagonrpcd 不得可自启（D1-②，2026-11-23）
+# 背景：hexagonrpcd 0.4.0 `-s` attach ADSP sensorspd 实测硬崩整机（无 Oops/pstore，journal
+# 截断，PITFALLS #692/#694）⇒ 政策 = **构建器不装**（pkgmap.tsv drop 行 + check-pkgmap 门禁，
+# 2026-11-20 落，stage.sh §5 P0-2 构建期无条件 mask 兜底）+ **在机保持 mask**（等串口/ramoops
+# 取证通道建好再评估）。本节补最后一道：不管包从哪条路径进来（旧 chroot 残留 / 未来依赖链
+# 变动 / 手工 apt install），unit 都不得可自启。幂等：未装 → ok；装了且已 mask → ok；
+# 装了未 mask → --check 报 MISS / fix 落 mask（**不卸载**，保留二进制供取证；
+# 卸载 = 手工 `apt-get purge hexagonrpcd`，见 reports/d1-host-side-20261123.md 回退节）。
+say "[6. hexagonrpcd 不得可自启（builder 不装 / 在机 mask）]"
+HXD=$(P /usr/bin/hexagonrpcd)
+HXU=$(P /etc/systemd/system/hexagonrpcd.service)
+if [ ! -e "$HXD" ]; then
+	ok "hexagonrpcd 未安装（构建器不装政策，pkgmap.tsv drop）"
+elif [ -L "$HXU" ] && [ "$(readlink "$HXU")" = /dev/null ]; then
+	ok "hexagonrpcd 已安装但 unit 已 mask（取证通道未建前的预期态）"
+elif [ "$CHECK" = 1 ]; then
+	miss "hexagonrpcd 已安装且未 mask（-s attach ADSP 硬崩整机，PITFALLS #692/#694）"
+else
+	mkdir -p "$(dirname "$HXU")"
+	if ln -sfn /dev/null "$HXU"; then fix "mask hexagonrpcd.service（→ /dev/null）"
+	else miss "mask hexagonrpcd.service 失败（手工: ln -sfn /dev/null $HXU）"; fi
+fi
+
+# --------------------------------------- 7 时间基线自愈（D1-④，q28-DOSSIER §t T1）
+# 背景：硬件 RTC 断电归零且**不可写**（hwclock -w → RTC_SET_TIME 拒绝）⇒ 冷启时钟停在假值。
+# 设备 2026-11-16 已手工装 fake-hwclock（DOSSIER t-2 T1），但不在任何基线表 ⇒ 重建根回归。
+# 本节把「时间基线四件套」并进巡检：chrony enabled / fake-hwclock 装并 enabled /
+# elden-time-baseline.service（网络 UP → set-ntp → 等 NTPSynchronized）在位并 enabled。
+# 装包不在这里（本脚本只做配置）：fake-hwclock 由 daily-baseline.tsv P0 行进构建/设备 apt 侧。
+say "[7. 时间基线自愈（chrony + fake-hwclock + elden-time-baseline）]"
+if [ -x "$(P /usr/sbin/chronyd)" ]; then ok "chrony 已安装"
+else miss "chrony 未安装（pkgmap.tsv map chrony）"; fi
+WANTS=$(P /etc/systemd/system/multi-user.target.wants)
+if [ -e "$WANTS/chrony.service" ] || [ -e "$(P /etc/systemd/system/chronyd.service)" ]; then
+	ok "chrony NTP 入口已 enable（chronyd.service 别名 / wants 链接）"
+elif [ "$CHECK" = 1 ]; then
+	miss "chrony NTP 未 enable（冷启不会自动校时）"
+else
+	mkdir -p "$WANTS"
+	if ln -sfn /usr/lib/systemd/system/chrony.service "$WANTS/chrony.service"; then fix "enable chrony.service"
+	else miss "enable chrony.service 失败"; fi
+fi
+FHBIN=""
+for b in /usr/sbin/fake-hwclock /sbin/fake-hwclock /usr/bin/fake-hwclock; do
+	[ -x "$(P $b)" ] && { FHBIN=$b; break; }
+done
+if [ -n "$FHBIN" ]; then
+	ok "fake-hwclock 已安装（$FHBIN，RTC 不可写的冷启兜底）"
+	FHW=""
+	for u in /usr/lib/systemd/system/fake-hwclock.service /lib/systemd/system/fake-hwclock.service; do
+		[ -e "$(P $u)" ] && { FHW=$u; break; }
+	done
+	if [ -z "$FHW" ]; then ok "fake-hwclock 无包内单元（设备侧自定义 load.service/save.timer 形态，不处理）"
+	elif [ -e "$WANTS/fake-hwclock.service" ] || [ -n "$(find "$(P /etc/systemd/system)" -maxdepth 2 -name 'fake-hwclock*' 2>/dev/null | head -1)" ]; then
+		ok "fake-hwclock 启动入口已 enable"
+	elif [ "$CHECK" = 1 ]; then
+		miss "fake-hwclock.service 未 enable（冷启不恢复时间）"
+	else
+		mkdir -p "$WANTS"; ln -sfn "$FHW" "$WANTS/fake-hwclock.service" && fix "enable fake-hwclock.service" \
+			|| miss "enable fake-hwclock.service 失败（该单元若为 static，手工建 wants 链接）"
+	fi
+else
+	if [ "$CHECK" = 1 ]; then
+		miss "fake-hwclock 未安装（daily-baseline.tsv P0 行；设备 11-16 已手工装，重建根会回归）"
+	else
+		warnf "fake-hwclock 未安装（本脚本不装包；apt-get install fake-hwclock，包在 daily-baseline.tsv）"
+	fi
+fi
+TBU=""
+for u in /etc/systemd/system/elden-time-baseline.service /usr/lib/systemd/system/elden-time-baseline.service; do
+	[ -f "$(P $u)" ] && { TBU=$u; break; }
+done
+if [ -z "$TBU" ]; then
+	warnf "elden-time-baseline.service 未部署（上机配方：scp rootfs/debian/units-extra/elden-time-baseline.service → /etc/systemd/system/；scp scripts/elden-time-baseline.sh → /usr/local/sbin/ chmod 755；ln -sfn ../elden-time-baseline.service /etc/systemd/system/multi-user.target.wants/）"
+else
+	ok "elden-time-baseline.service 在位（$TBU）"
+	if [ -e "$WANTS/elden-time-baseline.service" ]; then ok "elden-time-baseline.service 已 enable"
+	elif [ "$CHECK" = 1 ]; then miss "elden-time-baseline.service 未 enable（网络 UP 后不会自愈）"
+	else mkdir -p "$WANTS"; ln -sfn ../elden-time-baseline.service "$WANTS/elden-time-baseline.service" && fix "enable elden-time-baseline.service" \
+		|| miss "enable elden-time-baseline.service 失败"; fi
 fi
 
 say ""

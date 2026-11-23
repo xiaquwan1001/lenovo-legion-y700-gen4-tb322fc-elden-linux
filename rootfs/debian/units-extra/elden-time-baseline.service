@@ -1,0 +1,19 @@
+[Unit]
+Description=Elden time baseline self-heal (network up -> NTP on -> wait NTPSynchronized)
+Documentation=file:///usr/share/doc/chrony/README.Debian
+# 为什么存在（D1-④ / q28-DOSSIER §t T1）：硬件 RTC 断电归零且不可写，冷启时钟停在假值。
+# 本单元在网络可用后确保 NTP 打开并等到同步；fake-hwclock（另一兜底）只解决「开机早期」，
+# 本单元解决「联网之后」，两者互补。
+Wants=network-online.target
+After=network-online.target chrony.service
+# 目标根没装 chrony 时不跑（判据文件，pkgmap.tsv map chrony 保证在位）
+ConditionPathExists=/usr/sbin/chronyd
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/elden-time-baseline.sh
+# 内部等待上限 180 s + set-ntp/enable 开销，300 s 留余量
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

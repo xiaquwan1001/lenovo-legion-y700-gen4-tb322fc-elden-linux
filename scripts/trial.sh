@@ -38,6 +38,31 @@ SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 $TAB"
 S() { timeout "${2:-25}" $SSH "$1" 2>/dev/null; }
 ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
+# ★ O_DIRECT 硬门（PITFALLS #513；2026-11-23 D5 批 4 / reports/scripts-hardening-4-20261123.md §3）
+# record 里的 image_sha256 是「同一发/同一个件」的身份字段（后续报告/台账靠它认件）⇒
+# buffered 读可能给「稳定但错」的页缓存副本 ⇒ 拿不到 O_DIRECT 就**不写 record**（rc=90）。
+# 降级取证：ODIRECT_SHA_ALLOW_BUFFERED=1（告警 + buffered 值，只当线索）。
+ODIRECT_SHA=${ODIRECT_SHA:-$ROOT/scripts/odirect-sha.py}
+sha_direct() {   # sha_direct <文件> → 64 位 sha256；文件不存在 → 空；拿不到真值 → rc=90
+	local f=$1 v
+	[ -n "$f" ] && [ -e "$f" ] || return 0
+	v=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv --require-odirect "$f" 2>/dev/null \
+		| awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" -ne 64 ]; then
+		if [ "${ODIRECT_SHA_ALLOW_BUFFERED:-0}" = 1 ]; then
+			v=$(sha256sum "$f" | cut -d' ' -f1)
+			echo "WARN sha_direct: $f 未走 O_DIRECT ⇒ buffered 值 $v（ODIRECT_SHA_ALLOW_BUFFERED=1；判据不可信，#513）" >&2
+		else
+			echo "REFUSE sha_direct: $f 拿不到 O_DIRECT 结果 ⇒ 不作判据（#513：buffered 可能是稳定但错的页缓存副本）" >&2
+			echo "        降级取证：ODIRECT_SHA_ALLOW_BUFFERED=1 重跑（值只能当线索）" >&2
+			return 90
+		fi
+	fi
+	printf '%s\n' "$v"
+}
+# 测试接缝：ODIRECT_SHA_LIB_ONLY=1 ⇒ 只定义函数、不进主流程（反例用例不碰设备）
+[ "${ODIRECT_SHA_LIB_ONLY:-0}" = 1 ] && { return 0 2>/dev/null || exit 0; }
+
 usage() { sed -n '2,26p' "$0"; }
 
 require_reset() {
@@ -98,7 +123,14 @@ write_record() {
 	# 等描述性镜像名同样有 manifest，旧的 "$(_vk …)" 推导会得到空名 ⇒ 身份字段全丢）
 	local mf="${IMAGE%.img}.manifest"
 	local img_sha kernel_uts kernel_payload config_sha dtb_sha
-	img_sha=$([ -e "$IMAGE" ] && sha256sum "$IMAGE" | cut -d' ' -f1 || echo "(absent)")
+	img_sha=""
+	if [ -e "$IMAGE" ]; then
+		# #513 硬门：身份字段必须 O_DIRECT；拿不到就拒绝写 record（不要一个可能错的 sha 进台账）
+		img_sha=$(sha_direct "$IMAGE") || exit 90
+		[ -n "$img_sha" ] || { echo "REFUSE trial: $IMAGE 读不到 sha ⇒ 不写 record" >&2; exit 90; }
+	else
+		img_sha="(absent)"
+	fi
 	if [ -f "$mf" ]; then
 		kernel_uts=$(mfval kernel_uts "$mf")
 		kernel_payload=$(mfval kernel_payload_sha256 "$mf")

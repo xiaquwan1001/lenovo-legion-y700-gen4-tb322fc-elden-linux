@@ -26,6 +26,29 @@
 #   · 总时限由 `--max-wait`（默认 300 s）兜住，超时即判 indeterminate 并落现场。
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# ★ O_DIRECT 硬门（PITFALLS #513；2026-11-23 D5 批 4 / reports/scripts-hardening-4-20261123.md §3）
+# IMGSHA 是本发的**刷写身份**（写进 timing.txt / 后续报告靠它认件）⇒ 拿不到 O_DIRECT
+# 就**不刷**（rc=90）；降级取证：ODIRECT_SHA_ALLOW_BUFFERED=1（告警 + buffered 值）。
+ODIRECT_SHA=${ODIRECT_SHA:-$ROOT/scripts/odirect-sha.py}
+sha_direct() {   # sha_direct <文件> → 64 位 sha256；文件不存在 → 空；拿不到真值 → rc=90
+	local f=$1 v
+	[ -n "$f" ] && [ -e "$f" ] || return 0
+	v=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv --require-odirect "$f" 2>/dev/null \
+		| awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" -ne 64 ]; then
+		if [ "${ODIRECT_SHA_ALLOW_BUFFERED:-0}" = 1 ]; then
+			v=$(sha256sum "$f" | cut -d' ' -f1)
+			echo "WARN sha_direct: $f 未走 O_DIRECT ⇒ buffered 值 $v（ODIRECT_SHA_ALLOW_BUFFERED=1；判据不可信，#513）" >&2
+		else
+			echo "REFUSE sha_direct: $f 拿不到 O_DIRECT 结果 ⇒ 不刷、不记身份（#513）" >&2
+			echo "        降级取证：ODIRECT_SHA_ALLOW_BUFFERED=1 重跑（值只能当线索）" >&2
+			return 90
+		fi
+	fi
+	printf '%s\n' "$v"
+}
+# 测试接缝：ODIRECT_SHA_LIB_ONLY=1 ⇒ 只定义函数、不进主流程（反例用例不碰设备）
+[ "${ODIRECT_SHA_LIB_ONLY:-0}" = 1 ] && { return 0 2>/dev/null || exit 0; }
 SER=${SER:-}
 PRODUCT_MATCH=${PRODUCT_MATCH:-elden}
 IMG=""; LABEL=""; OUTDIR=""; MAXWAIT=${MAXWAIT:-300}; DO_REBOOT=1; EXPECT_KERNEL=""; PART=${PART:-boot_a}
@@ -49,7 +72,8 @@ done
 [ -n "$IMG" ] && [ -f "$IMG" ] || { echo "--image required (existing file)" >&2; exit 2; }
 [ -n "$LABEL" ] || { echo "--label required" >&2; exit 2; }
 IMG=$(cd "$(dirname "$IMG")" && pwd)/$(basename "$IMG")
-IMGSHA=$(sha256sum "$IMG" | awk '{print $1}')
+IMGSHA=$(sha_direct "$IMG") || exit 90
+[ -n "$IMGSHA" ] || { echo "REFUSE: $IMG 读不到 sha（O_DIRECT 硬门）" >&2; exit 90; }
 IMGSZ=$(stat -c %s "$IMG")
 OUTDIR=${OUTDIR:-$ROOT/reports/artifacts/uefi-flashed-$(date +%Y%m%d-%H%M%S)-$LABEL}
 mkdir -p "$OUTDIR"
@@ -164,7 +188,7 @@ logfs_verdict() { # pre/post sha 对比 → 打印 logfs=new-record | no-new-rec
 }
 
 say "== 目标 $LABEL ; 件 $IMG"
-say "   件 sha256=$IMGSHA size=$IMGSZ B"
+say "   件 sha256=$IMGSHA size=$IMGSZ B（sha 走 O_DIRECT 直读，#513）"
 say "   取证目录 $OUTDIR"
 
 # ---- B13 §3（2026-11-17）：a 槽目标的 dtbo 前置 ----

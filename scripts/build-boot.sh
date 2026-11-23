@@ -19,6 +19,31 @@ ROOTFS=$OUT/initramfs-root
 VERSION=${VERSION:-vk28}
 mkdir -p "$OUT"
 
+# ★ O_DIRECT 硬门（PITFALLS #513；2026-11-23 D5 批 4 / reports/scripts-hardening-4-20261123.md §3）
+# 本件打印的 sha256 是**产物身份**（下一步就被 fastboot/kexec 刷/热重启的那一个图）⇒
+# buffered 读可能给「稳定但错」的页缓存副本 ⇒ 默认拒绝（rc=90），显式
+# ODIRECT_SHA_ALLOW_BUFFERED=1 才降级为告警（值只能当线索）。
+ODIRECT_SHA=${ODIRECT_SHA:-$ROOT/scripts/odirect-sha.py}
+sha_direct() {   # sha_direct <文件> → 64 位 sha256；文件不存在 → 空；拿不到真值 → rc=90
+	local f=$1 v
+	[ -n "$f" ] && [ -e "$f" ] || return 0
+	v=$(timeout -k 10 1800 python3 "$ODIRECT_SHA" --tsv --require-odirect "$f" 2>/dev/null \
+		| awk -F'\t' 'NR==1{print $3}')
+	if [ -z "$v" ] || [ "${#v}" -ne 64 ]; then
+		if [ "${ODIRECT_SHA_ALLOW_BUFFERED:-0}" = 1 ]; then
+			v=$(sha256sum "$f" | cut -d' ' -f1)
+			echo "WARN sha_direct: $f 未走 O_DIRECT ⇒ buffered 值 $v（ODIRECT_SHA_ALLOW_BUFFERED=1；判据不可信，#513）" >&2
+		else
+			echo "REFUSE sha_direct: $f 拿不到 O_DIRECT 结果 ⇒ 不发布该身份（#513：buffered 可能是稳定但错的页缓存副本）" >&2
+			echo "        降级取证：ODIRECT_SHA_ALLOW_BUFFERED=1 重跑（值只能当线索）" >&2
+			return 90
+		fi
+	fi
+	printf '%s\n' "$v"
+}
+# 测试接缝：ODIRECT_SHA_LIB_ONLY=1 ⇒ 只定义函数、不进主流程
+[ "${ODIRECT_SHA_LIB_ONLY:-0}" = 1 ] && { return 0 2>/dev/null || exit 0; }
+
 KERNEL=${KERNEL_IMG:-$KDIR/arch/arm64/boot/Image.gz}
 DTB=${DTB_FILE:-$KDIR/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb}
 for f in "$KERNEL" "$DTB" "$IRAM/busybox" "$IRAM/init" "$IRAM/usb-gadget"; do
@@ -98,7 +123,9 @@ python3 "$MKBOOTIMG" "${MKBOOTIMG_ARGS[@]}"
 cp -a "$OUT/boot-elden-$VERSION.img" "$OUT/boot-elden.img"
 echo
 ls -la "$OUT/boot-elden-$VERSION.img"
-echo "sha256: $(sha256sum "$OUT/boot-elden-$VERSION.img" | cut -d' ' -f1)"
+# #513 硬门：产物身份走 O_DIRECT（拿不到就 rc=90，而不是印一个可能错的 sha）
+BSHA=$(sha_direct "$OUT/boot-elden-$VERSION.img") || exit 90
+echo "sha256: $BSHA（O_DIRECT 直读）"
 
 # --- 记录 manifest（可复现/审计，提交进 git）--------------------------
 RAMDISK_FILE=$RAMDISK MKBOOTIMG_ARGS="${MKBOOTIMG_ARGS[*]}" CMDLINE="$CMDLINE" KDIR="$KDIR" \
