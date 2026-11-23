@@ -36,6 +36,7 @@
 | `rime/elden-rime.service` | `c62f58c9` | ✅ | A 案 user unit（`WantedBy=default.target`，非 graphical-session） |
 | `verify/include/rime_api.h` | `6eb56291` | ✅ | librime 1.16.1 原版头（编译用，免装 librime-dev） |
 | `verify/aarch64/elden-rime-completer` | `cd8f7ffc` | ✅ | aarch64 静态薄客户端（已链接，可直接部署） |
+| `verify/aarch64/librime-piped` | `b29e7dc0` | ✅ **（2026-11-23 补齐，A 案造件缺口已关）** | aarch64 动态守护：NEEDED = librime.so.1 + libc.so.6；对 Debian trixie `librime1t64 1.17.0` 链接（设备 `apt install librime1` 即得）；主机 qemu 用户态探针受本地环境怪癖限制未跑（静态件同法可跑），行为级验证归设备侧 R1 |
 | `verify/ime-zh-rime-verify.sh` | `f59db81f` | ✅（read 直读复核） | 上机判据 R1–R6 自动化脚本（设备侧，`--apply`） |
 | `haptic/0001-osk-stub-keypress-haptic-hook.patch` | `53b87057` | ✅（read 直读复核） | OSK 每键震动钩子（env 门，~12 行） |
 | `haptic/README.md` | `e6d893c6` | ✅ | 部署/回退（divert+hold）+ drop-in 配方 |
@@ -66,7 +67,7 @@
    `apt install librime1 librime-data`；
    `scp verify/aarch64/elden-rime-completer rime/librime-piped（需先链接出守护二进制，见第 3 步注） root@…:/usr/local/bin/`；
    `rime/elden-rime.service` → `/etc/systemd/user/`。
-   ⚠ 注：`verify/aarch64/` 现只有**薄客户端**完整链接产物；守护 `librime-piped` 只有 `.o`（对象级），**完整链接需 librime 库**——主机装 `librime-dev` 或在设备/容器里链一次（Rb §1.3"打包路线"）。这是 A 案唯一的**造件缺口**。
+   ⚠ 注：~~`verify/aarch64/` 现只有**薄客户端**完整链接产物~~ **2026-11-23 已补齐**：`verify/aarch64/librime-piped`（sha256 `b29e7dc088418d33…`，trixie librime 1.17.0 arm64 链接 sysroot = `/tmp/rime-sysroot`，`-Wl,--allow-shlib-undefined`；A 案造件缺口关闭，§1 表新增行）
 3. **起守护**：`systemctl --user daemon-reload && systemctl --user enable --now elden-rime`
    （首次启动有词库编译，数秒；`graphical-session.target` 在本栈 inactive，unit 故意挂 `default.target`，Z §0.3）。
 4. **跑判据脚本**：`sh verify/ime-zh-rime-verify.sh`（设备侧，R1–R6 自动判）。
