@@ -162,9 +162,9 @@ DTS 多变量实验纪律（2026-10-07 两次踩坑教训）：每轮实验跑�
 ---
 本机（xuqianhui1001）内核树 `make syncconfig`/`olddefconfig` 会把 `.config` 的 QCOM 子树整体弄丢（实测 2026-10-07：`CONFIG_ARCH_QCOM` 消失，build-kernel.sh 报 `ERROR: CONFIG_ARCH_QCOM missing in .config (corrupted by olddefconfig?)`，.config 从 321948 B 掉到 244347 B）。恢复源 = `patches/config-vk50-modular`（Oct 4，模块化相机配置，321948 B）或 `patches/config-vk40-bringup`。另：想让 `uname -r` 里带上 `vk47clean` 中缀（对齐磁盘模块目录）需显式设 LOCALVERSION，仅 checkout bd114ca33 只会得到 `7.2.0-debug-gbd114ca335e1`。 — Failed: 重编 release 时 syncconfig 破坏关键 config，且 LOCALVERSION 中缀不会自动出现
 ---
-dp5 基线（内核 26cd13b1c）上执行 `ssh … 'sync; reboot bootloader'` 后设备从 USB 完全消失（fastboot devices 空、lsusb 无 18d1、无 enx*、无 /dev/ttyACM*）——该内核不含 vk41 的 PSCI SYSTEM_RESET2 vendor-reset 钩子，`reboot bootloader` 不生效。教训：在非 vk41 派生内核上要用 `reboot2 bootloader`（/sbin/reboot 被包装）+ 等 ~20s 再用 fastboot devices 判定，不要用裸 `reboot bootloader`。
+dp5 基线（内核 26cd13b1c）上执行 `ssh … 'sync; reboot bootloader'` 后设备从 USB 完全消失（fastboot devices 空、lsusb 无 18d1、无 enx*、无 /dev/ttyACM*）——当时归因为「内核不含 vk41 的 PSCI SYSTEM_RESET2 vendor-reset 钩子」，**该归因已作废（PITFALLS #712，2026-11-23 同启动内对照：无钩子核上 `reboot bootloader` 一样进 fastboot ~21 s）**；教训保留 = 发出后等 ~20–30 s 再判 `fastboot devices`，别用「没立刻出现」当失败。
 ---
-本机 USB-NCM 调试链路重载：设备侧 `reboot bootloader` 后若内核缺 vk41 的 PSCI SYSTEM_RESET2 钩子（如 dp5 内核 26cd13b1c），设备会从 USB 完全消失（非 fastboot 未枚举，而是无任何 USB 设备：lsusb 无 Google/18d1、无 enx*、无 /dev/ttyACM*、SSH 超时）⇒ 必须用户物理进 fastboot。另外主机侧 USB-NCM 网卡名会变（本轮见 enx021e5eede102 配到 192.168.7.9/24 等），ping/ssh 前先 `ip -br a` 找当前 enx 名；设备侧的 `sync; reboot bootloader` 属于有风险的链，执行前先确认目标内核是否带 reboot-bootloader 钩子。
+本机 USB-NCM 调试链路重载：设备侧 `reboot bootloader` 后若内核缺 vk41 的 PSCI SYSTEM_RESET2 钩子（如 dp5 内核 26cd13b1c），设备会从 USB 完全消失（非 fastboot 未枚举，而是无任何 USB 设备：lsusb 无 Google/18d1、无 enx*、无 /dev/ttyACM*、SSH 超时）⇒ 必须用户物理进 fastboot。另外主机侧 USB-NCM 网卡名会变（本轮见 enx021e5eede102 配到 192.168.7.9/24 等），ping/ssh 前先 `ip -br a` 找当前 enx 名；`sync; reboot bootloader` 本身可用（PITFALLS #712，无需钩子）；本条现象若复现按「未见 fastboot」记账，不要据此回改「只能物理键」。
 ---
 熄屏掉电（Q24）二分协议教训：用「载具启动后 rmmod 全部相机模块，再只加载一个子集」做二分不可靠——rmmod 卸载不干净（本轮 CAM_LOADED_AFTER_UNLOAD=6，camss 栈仍在），致死的可能是残留模块而非被测子集，结论作废。更稳协议 = 做「不自动加载相机」的 camdp 变体（改 RAM initramfs 里的 /init 去掉 camera-modules-load 调用），再累积式加载、每次加载后真实熄屏，第一个致死的加载项即元凶——只有最后一次致掉电，前面安全，减少用户的物理恢复次数。
 ---

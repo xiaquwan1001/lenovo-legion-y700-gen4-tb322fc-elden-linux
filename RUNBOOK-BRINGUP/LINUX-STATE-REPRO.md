@@ -230,8 +230,9 @@ python3 scripts/slot-attr.py --image back4.bin mark-successful b     # 改两份
 # 写完必须回读复核：主备 byte[6] 都含 0x40，且 `fastboot getvar slot-successful:b` = yes
 ```
 
-> 同一文件里的 **Linux→fastboot 软路径已不成立**（见 §2.5 切换表 + PITFALLS `#690`）：
-> 现役 vk192 主线核无 vendor RESTART2 钩子 ⇒ 进制 fastboot 只能手工按键。
+> **Linux→fastboot 软路径可用（更正 2026-11-24，PITFALLS `#712`）**：`ssh … 'sync; systemctl reboot bootloader'`
+> 在无 vendor-reset 钩子的现役 vk192 上也进 fastboot（~21 s）⇒ 不再需要手工按键；唯一实现 = `scripts/lib-soft-bootloader.sh`。
+> `#690` 旧结论（无钩子 ⇒ 软路径不成立）仅保留为静态事实，已不作动作判据。
 
 ### S8 冷起 + 验收
 
