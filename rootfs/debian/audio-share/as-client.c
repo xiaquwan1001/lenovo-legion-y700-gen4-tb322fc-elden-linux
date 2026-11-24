@@ -1,26 +1,39 @@
 /*
- * as-client.c — Audio Share (mkckr0/audio-share) 的 Linux 客户端
+ * as-client.c — Audio Share (mkckr0/audio-share) Linux client
  *
- * 为什么有它：上游只提供 Android 客户端（as-cmd 是服务端）。平板跑主线 Debian，
- * 要在 Linux 上收 PC 的系统声音，就得自己实现这套协议。
+ * Copyright 2024-2025 the audio-share contributors
+ * Licensed under the Apache License, Version 2.0
  *
- * 协议（逐字节依据 android-app/app/src/main/java/.../service/{NetClient,NetworkIO}.kt）：
- *   TCP 65530：
- *     1) client → srv  : int32le CMD_GET_FORMAT(1)
- *        srv → client  : int32le 1, int32le size, size 字节 protobuf AudioFormat
- *                        AudioFormat{ encoding=1(varint,1 f32/2 u8/3 s16/4 s24/5 s32),
- *                                     channels=2(varint), sample_rate=3(varint) }
- *     2) client → srv  : int32le CMD_START_PLAY(2)
- *        srv → client  : int32le 2, int32le id   (id>0)
- *     3) UDP：client 绑本地随机端口，先发 int32le id 到 srv:65530，
- *        之后服务端往该端口推原始 PCM 数据报（格式 = 步骤 1 的 AudioFormat）
- *     4) 心跳：srv 在 TCP 上发 int32le CMD_HEARTBEAT(3)，client 原样回 3；
- *        5 s 内没回会被服务端踢，所以本端 10 s 收不到心跳即重连。
- *   PWM 回放：把 PCM 直接喂 `pw-cat --playback --raw -`（PipeWire）。
+ * Why it exists: upstream ships a Windows/Linux *server* (`as-cmd`) and an
+ * Android client only. This file is the other end of the wire for plain
+ * Linux boxes (desktop, SBC, ARM tablet running a mainline-kernel distro).
+ * It is intentionally dependency free: hand-rolled protobuf parsing and
+ * PipeWire playback delegated to `pw-cat` (part of pipewire-bin).
  *
- * 用法： as-client <host> [port] [--verbose]
- * 退出码：只在参数错误/无法 spawn pw-cat 时非零；断线一律内部重连。
+ * Wire protocol — byte-exact reference is the Android app sources
+ * (android-app/.../service/{NetClient,NetworkIO}.kt) and docs/protocol.md.
+ * All integers are little endian int32.
+ *
+ *   TCP (default port 65530):
+ *     1) client -> srv : CMD_GET_FORMAT(1)
+ *        srv -> client : 1, size, <size bytes protobuf AudioFormat>
+ *                        AudioFormat{ encoding=1 (varint: 1=f32 2=u8 3=s16
+ *                                                     4=s24 5=s32),
+ *                                     channels=2 (varint),
+ *                                     sample_rate=3 (varint) }
+ *     2) client -> srv : CMD_START_PLAY(2)
+ *        srv -> client : 2, id (id > 0)
+ *     3) UDP: client binds an ephemeral port, sends `id` to srv:port once,
+ *        afterwards the server pushes raw PCM datagrams to it.
+ *     4) Heartbeat: srv sends CMD_HEARTBEAT(3) on TCP every 3 s, client must
+ *        echo 3; a peer silent for 5 s is dropped by the server. This client
+ *        treats 10 s without a heartbeat as a dead link and reconnects.
+ *   Playback: PCM is piped straight into `pw-cat --playback --raw -` (PipeWire).
+ *
+ * Usage: as-client <host> [port] [--target <sink>] [--latency <ms>] [-v]
+ * Exit status: non-zero only on bad arguments; link loss reconnects forever.
  */
+
 #define _GNU_SOURCE
 #include <arpa/inet.h>
 #include <errno.h>
@@ -48,8 +61,11 @@
 #define DEFAULT_PORT 65530
 #define CONNECT_TIMEOUT_MS 3000
 #define HEARTBEAT_TIMEOUT_MS 10000
+#define RECONNECT_DELAY_MS 3000
 
 static int g_verbose;
+static const char *g_target;  /* pw-cat --target (sink name or node id) */
+static const char *g_latency; /* pw-cat --latency */
 
 static void logmsg(const char *fmt, ...)
 {
@@ -70,6 +86,14 @@ static int64_t now_ms(void)
 	return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
+static void sleep_ms(int64_t ms)
+{
+	struct timespec ts = { .tv_sec = (time_t)(ms / 1000),
+			       .tv_nsec = (long)(ms % 1000) * 1000000L };
+	while (nanosleep(&ts, &ts) && errno == EINTR)
+		;
+}
+
 static void write_le32(uint8_t *p, uint32_t v)
 {
 	p[0] = v & 0xff;
@@ -84,7 +108,7 @@ static uint32_t read_le32(const uint8_t *p)
 	       ((uint32_t)p[3] << 24);
 }
 
-/* 读满 n 字节；返回 0 成功，非 0 表示连接断开/超时（由 poll 控制） */
+/* Read exactly n bytes; 0 on success, -1 when the peer went away. */
 static int read_full(int fd, void *buf, size_t n)
 {
 	uint8_t *p = buf;
@@ -126,7 +150,7 @@ static int send_cmd(int fd, uint32_t cmd)
 	return write_full(fd, b, 4);
 }
 
-/* 带超时的 connect */
+/* connect() with a timeout, trying every address getaddrinfo() returns. */
 static int tcp_connect(const char *host, int port)
 {
 	struct addrinfo hints, *res = NULL, *ai;
@@ -138,7 +162,7 @@ static int tcp_connect(const char *host, int port)
 	hints.ai_socktype = SOCK_STREAM;
 	snprintf(portstr, sizeof portstr, "%d", port);
 	if (getaddrinfo(host, portstr, &hints, &res) != 0 || !res) {
-		logmsg("getaddrinfo(%s) 失败", host);
+		logmsg("getaddrinfo(%s) failed", host);
 		return -1;
 	}
 	for (ai = res; ai; ai = ai->ai_next) {
@@ -169,16 +193,16 @@ static int tcp_connect(const char *host, int port)
 			fd = -1;
 			continue;
 		}
-		fcntl(fd, F_SETFL, flags); /* 回到阻塞，读用 poll 控制 */
+		fcntl(fd, F_SETFL, flags); /* back to blocking; poll() gates reads */
 		break;
 	}
 	freeaddrinfo(res);
 	return fd;
 }
 
-/* ---- protobuf AudioFormat 的最小解析（3 个 varint 字段，够用且不需要 libprotobuf） ---- */
+/* ---- minimal protobuf reader for AudioFormat (3 varint fields) ---- */
 struct audio_format {
-	uint32_t encoding; /* 1 f32 / 2 u8 / 3 s16 / 4 s24 / 5 s32；0 = invalid */
+	uint32_t encoding; /* 1 f32 / 2 u8 / 3 s16 / 4 s24 / 5 s32; 0 = invalid */
 	uint32_t channels;
 	uint32_t sample_rate;
 };
@@ -211,7 +235,7 @@ static int parse_audio_format(const uint8_t *buf, size_t len, struct audio_forma
 			return -1;
 		uint32_t field = (uint32_t)(key >> 3);
 		uint32_t wire = (uint32_t)(key & 7);
-		if (wire != 0) /* 只处理 varint 字段；本 message 全是 varint */
+		if (wire != 0) /* every field of this message is varint */
 			return -1;
 		if (pb_varint(buf, len, &off, &val))
 			return -1;
@@ -249,7 +273,7 @@ static int player_start(const struct audio_format *fmt, struct player *p)
 	snprintf(ch, sizeof ch, "%u", fmt->channels);
 	const char *fp = encoding_name(fmt->encoding);
 	if (!fp) {
-		logmsg("不支持的 encoding=%u", fmt->encoding);
+		logmsg("unsupported encoding=%u", fmt->encoding);
 		return -1;
 	}
 	int pipefd[2];
@@ -266,8 +290,28 @@ static int player_start(const struct audio_format *fmt, struct player *p)
 		close(pipefd[0]);
 		close(pipefd[1]);
 		signal(SIGPIPE, SIG_DFL);
-		execlp("pw-cat", "pw-cat", "--playback", "--raw", "--format", fp,
-		       "--rate", rate, "--channels", ch, "-", (char *)NULL);
+		const char *argv[32];
+		int n = 0;
+		argv[n++] = "pw-cat";
+		argv[n++] = "--playback";
+		argv[n++] = "--raw";
+		argv[n++] = "--format";
+		argv[n++] = fp;
+		argv[n++] = "--rate";
+		argv[n++] = rate;
+		argv[n++] = "--channels";
+		argv[n++] = ch;
+		if (g_latency) {
+			argv[n++] = "--latency";
+			argv[n++] = g_latency;
+		}
+		if (g_target) {
+			argv[n++] = "--target";
+			argv[n++] = g_target;
+		}
+		argv[n++] = "-";
+		argv[n] = NULL;
+		execvp("pw-cat", (char *const *)argv);
 		_exit(127);
 	}
 	close(pipefd[0]);
@@ -286,7 +330,7 @@ static void player_stop(struct player *p)
 		for (int i = 0; i < 20; i++) {
 			if (waitpid(p->pid, &st, WNOHANG) == p->pid)
 				return;
-			usleep(50000);
+			sleep_ms(50);
 		}
 		kill(p->pid, SIGKILL);
 		waitpid(p->pid, &st, 0);
@@ -295,7 +339,7 @@ static void player_stop(struct player *p)
 	p->pid = -1;
 }
 
-/* 一次会话：握手 + UDP 收流。返回时调用方重连。 */
+/* One session: handshake, then receive PCM until the link dies. */
 static void run_session(const char *host, int port)
 {
 	uint8_t b4[4];
@@ -303,10 +347,10 @@ static void run_session(const char *host, int port)
 
 	int tfd = tcp_connect(host, port);
 	if (tfd < 0) {
-		logmsg("TCP 连不上 %s:%d", host, port);
+		logmsg("cannot connect TCP %s:%d", host, port);
 		return;
 	}
-	logmsg("TCP 已连 %s:%d", host, port);
+	logmsg("TCP connected %s:%d", host, port);
 
 	/* 1) GET_FORMAT */
 	if (send_cmd(tfd, CMD_GET_FORMAT)) {
@@ -319,7 +363,7 @@ static void run_session(const char *host, int port)
 	}
 	cmd = read_le32(b4);
 	if (cmd != CMD_GET_FORMAT) {
-		logmsg("GET_FORMAT 回包异常 cmd=%u", cmd);
+		logmsg("unexpected GET_FORMAT reply cmd=%u", cmd);
 		close(tfd);
 		return;
 	}
@@ -329,7 +373,9 @@ static void run_session(const char *host, int port)
 	}
 	uint32_t sz = read_le32(b4);
 	if (sz == 0 || sz > 4096) {
-		logmsg("AudioFormat 尺寸异常 %u", sz);
+		/* Upstream sends an empty AudioFormat when its capture thread has no
+		 * audio endpoint (see README "Extra Setups for No Audio Endpoint"). */
+		logmsg("bad AudioFormat size %u (server has no audio endpoint?)", sz);
 		close(tfd);
 		return;
 	}
@@ -341,13 +387,13 @@ static void run_session(const char *host, int port)
 	}
 	struct audio_format fmt;
 	if (parse_audio_format(pb, sz, &fmt)) {
-		logmsg("AudioFormat 解析失败");
+		logmsg("failed to parse AudioFormat");
 		free(pb);
 		close(tfd);
 		return;
 	}
 	free(pb);
-	logmsg("格式：encoding=%s(%u) channels=%u rate=%u",
+	logmsg("format: encoding=%s(%u) channels=%u rate=%u",
 	       encoding_name(fmt.encoding) ? encoding_name(fmt.encoding) : "?",
 	       fmt.encoding, fmt.channels, fmt.sample_rate);
 
@@ -362,7 +408,7 @@ static void run_session(const char *host, int port)
 	}
 	cmd = read_le32(b4);
 	if (cmd != CMD_START_PLAY) {
-		logmsg("START_PLAY 回包异常 cmd=%u", cmd);
+		logmsg("unexpected START_PLAY reply cmd=%u", cmd);
 		close(tfd);
 		return;
 	}
@@ -372,13 +418,13 @@ static void run_session(const char *host, int port)
 	}
 	uint32_t id = read_le32(b4);
 	if ((int32_t)id <= 0) {
-		logmsg("START_PLAY id 无效 %d", (int32_t)id);
+		logmsg("invalid START_PLAY id %d", (int32_t)id);
 		close(tfd);
 		return;
 	}
-	logmsg("播放会话 id=%d", (int32_t)id);
+	logmsg("play session id=%d", (int32_t)id);
 
-	/* 3) UDP 通道：绑定后先发 id */
+	/* 3) UDP channel: bind, then announce the id */
 	struct sockaddr_in srv;
 	memset(&srv, 0, sizeof srv);
 	srv.sin_family = AF_INET;
@@ -413,16 +459,16 @@ static void run_session(const char *host, int port)
 	uint8_t idb[4];
 	write_le32(idb, id);
 	if (sendto(ufd, idb, 4, 0, (struct sockaddr *)&srv, sizeof srv) < 0) {
-		logmsg("UDP 发 id 失败：%s", strerror(errno));
+		logmsg("failed to send UDP id: %s", strerror(errno));
 		close(ufd);
 		close(tfd);
 		return;
 	}
 
-	/* 4) 起播放器 */
+	/* 4) start the player */
 	struct player pl = { .pid = -1, .wfd = -1 };
 	if (player_start(&fmt, &pl)) {
-		logmsg("pw-cat 起不来");
+		logmsg("cannot spawn pw-cat");
 		close(ufd);
 		close(tfd);
 		return;
@@ -431,15 +477,20 @@ static void run_session(const char *host, int port)
 	int64_t last_hb = now_ms();
 	int64_t last_stat = last_hb, bytes = 0;
 	uint8_t *pcm = malloc(65536);
-	int rc = 0;
+	if (!pcm) {
+		player_stop(&pl);
+		close(ufd);
+		close(tfd);
+		return;
+	}
 
 	while (1) {
 		if (g_verbose && now_ms() - last_stat >= 2000) {
-			logmsg("已收 PCM %lld 字节", (long long)bytes);
+			logmsg("received %lld bytes of PCM", (long long)bytes);
 			last_stat = now_ms();
 		}
 		if (now_ms() - last_hb > HEARTBEAT_TIMEOUT_MS) {
-			logmsg("心跳超时（%.0f s），重连",
+			logmsg("heartbeat timeout (%.0f s), reconnecting",
 			       (double)(now_ms() - last_hb) / 1000.0);
 			break;
 		}
@@ -451,7 +502,7 @@ static void run_session(const char *host, int port)
 		if (pr < 0) {
 			if (errno == EINTR)
 				continue;
-			logmsg("poll 失败：%s", strerror(errno));
+			logmsg("poll failed: %s", strerror(errno));
 			break;
 		}
 		if (pr == 0)
@@ -459,18 +510,18 @@ static void run_session(const char *host, int port)
 
 		if (pfds[0].revents & (POLLIN | POLLHUP | POLLERR)) {
 			if (read_full(tfd, b4, 4)) {
-				logmsg("TCP 断开");
+				logmsg("TCP closed");
 				break;
 			}
 			cmd = read_le32(b4);
 			if (cmd == CMD_HEARTBEAT) {
 				last_hb = now_ms();
 				if (send_cmd(tfd, CMD_HEARTBEAT)) {
-					logmsg("回心跳失败");
+					logmsg("failed to echo heartbeat");
 					break;
 				}
 			} else if (g_verbose) {
-				logmsg("忽略 CMD=%u", cmd);
+				logmsg("ignoring CMD=%u", cmd);
 			}
 		}
 		if (pfds[1].revents & POLLIN) {
@@ -480,18 +531,29 @@ static void run_session(const char *host, int port)
 			if (n > 0 && from.sin_addr.s_addr == srv.sin_addr.s_addr) {
 				bytes += n;
 				if (pl.wfd >= 0 && write_full(pl.wfd, pcm, (size_t)n)) {
-					logmsg("写 pw-cat 失败：%s", strerror(errno));
+					logmsg("write to pw-cat failed: %s", strerror(errno));
 					break;
 				}
 			}
 		}
 	}
 
+	if (g_verbose)
+		logmsg("session ended after %lld bytes", (long long)bytes);
 	free(pcm);
 	player_stop(&pl);
 	close(ufd);
 	close(tfd);
-	(void)rc;
+}
+
+static void usage(FILE *out)
+{
+	fprintf(out,
+		"usage: as-client <host> [port] [options]\n"
+		"  -t, --target <name>   play into this PipeWire sink (pw-cat --target)\n"
+		"  -l, --latency <ms>    requested sink latency (pw-cat --latency)\n"
+		"  -v, --verbose         log PCM byte counters\n"
+		"  -h, --help            show this help\n");
 }
 
 int main(int argc, char **argv)
@@ -503,28 +565,46 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v")) {
 			g_verbose = 1;
 		} else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
-			printf("用法: as-client <host> [port] [--verbose]\n");
+			usage(stdout);
 			return 0;
-		} else if (!host) {
-			host = argv[i];
-		} else {
-			port = atoi(argv[i]);
-			if (port <= 0 || port > 65535) {
-				fprintf(stderr, "端口无效：%s\n", argv[i]);
+		} else if (!strcmp(argv[i], "--target") || !strcmp(argv[i], "-t")) {
+			if (++i >= argc) {
+				usage(stderr);
 				return 2;
 			}
+			g_target = argv[i];
+		} else if (!strcmp(argv[i], "--latency") || !strcmp(argv[i], "-l")) {
+			if (++i >= argc) {
+				usage(stderr);
+				return 2;
+			}
+			g_latency = argv[i];
+		} else if (!host) {
+			if (argv[i][0] == '-') {
+				usage(stderr);
+				return 2;
+			}
+			host = argv[i];
+		} else {
+			char *end = NULL;
+			long p = strtol(argv[i], &end, 10);
+			if (!end || *end || p <= 0 || p > 65535) {
+				fprintf(stderr, "invalid port: %s\n", argv[i]);
+				return 2;
+			}
+			port = (int)p;
 		}
 	}
 	if (!host) {
-		fprintf(stderr, "用法: as-client <host> [port] [--verbose]\n");
+		usage(stderr);
 		return 2;
 	}
 
 	signal(SIGPIPE, SIG_IGN);
-	logmsg("目标 %s:%d", host, port);
+	logmsg("target %s:%d", host, port);
 	while (1) {
 		run_session(host, port);
-		sleep(3);
+		sleep_ms(RECONNECT_DELAY_MS);
 	}
 	return 0;
 }

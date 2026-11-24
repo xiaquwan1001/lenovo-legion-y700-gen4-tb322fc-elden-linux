@@ -9,6 +9,8 @@
 #   UDP: 客户端绑随机端口，先发 int32le id 到 srv:65530，之后服务端推原始 PCM 数据报
 #   心跳: 服务端 TCP 发 3，客户端原样回 3（5 s 内不回会被踢）
 # 客户端源码 = rootfs/debian/audio-share/as-client.c（musl 静态交叉编译，设备侧零依赖）。
+# **源码 SSOT = 上游 fork `xiaquwan1001/audio-share` 的 `linux-client/as-client.c`**（含 Makefile/unit/README）；
+# 本仓同名文件是镜像，改客户端先改 fork 再同步回来（2026-11-24 收编，两份已逐字节对齐）。
 #
 # 主机侧配套（一次性，本脚本不代做）：
 #   ① PC 服务：`%h/bin/as-cmd` 必须绑 **0.0.0.0**（历史手工实例只绑手机网段 192.168.42.97，
