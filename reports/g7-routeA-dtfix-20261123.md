@@ -125,10 +125,25 @@ WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250
 Workqueue: events_unbound deferred_probe_work_func   （t=0.32 s，随后 clk_core_unprepare 同栈反复）
 ```
 
-判读：**不是 routeA DTS 独有的新鲜 bug** —— 8 条来自 `dsi_phy_driver_probe` 的 orphan 重挂（上游 clk 框架
-既有形态），34 条来自显示栈没起来时的 vblank 等待（本件本来就不带显示使能面）。⇒ 结论仍成立（本件不作为
-上机候选继续），但归因从「routeA DTS 的时钟引用错」下调为「显示面期望差 + 上游 clk 框架 WARN」；
-若要证死，需要一棵**只带上游骨架、不带 routeA DTS 改动**的 7.4-rc3 对照（下次出件时加做）。
+判读（2026-11-24 二次归因，从日志现查）：两类 WARN 是**同一个根的两种症状** —— 先看 dmesg 里的前置行：
+
+```
+[0.320314] DSI PLL(0) lock failed, status=0x00000000
+[0.320327] dsi0_phy_pll_out_dsiclk already disabled
+[0.320468]  dsi_phy_driver_probe+0x2f4/0x348
+[0.320542]  mdss_probe+0x20c/0x3a0
+[0.326036] DSI PLL(0) lock failed, status=0x00000000   （重复）
+```
+
+⇒ **DSI PLL 根本没锁上**（`status=0x0`）：
+8 条 `clk_core_disable/unprepare` = PLL out clock 已 disabled/unprepared 时 `dsi_phy_driver_probe` 的收尾路径
+再关一次（orphan 重挂只是它的栈形状）；34 条 `drm_crtc_wait_one_vblank` = DPU 在**没有可用 display pipe** 的
+情况下等 vblank 超时。两者都是「本件显示面不带 bring-up」的必然结果，**不是 USB/mux 改动引入的回归**。
+`mdss_probe` 那一栈还说明 mdss 侧 reset/时钟路径本身跑到了（与 M8 系列相关，可作旁证）。
+
+⇒ 结论（本件不作上机候选继续）不变；「clk 引用错」的假设**撤回**。若要证死「PLL 锁不上是 routeA DTS 缺项」，
+下一步应对比 routeA DTS 与 daily DTS 的 `dsi@ae94000`/`phy@ae95000` 子树（regulator、`vdda`-类 supply、
+`assigned-clocks`），而不是先怀疑 clock consumer。
 
 ### 结论与下一步
 
