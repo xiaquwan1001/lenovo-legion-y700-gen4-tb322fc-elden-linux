@@ -49,7 +49,7 @@
 - 「收尾」= 产物落盘 + SSOT 同步 + 设备安全态 + `check-doctor` **FAIL=0**（WARN 必须逐条列出并归类：本轮修 / 已登记豁免；C 类存量 WARN 不阻塞收尾）+ 工作区 clean（全文 `.pi/AGENT-OPS.md` §5）。
 - 子代理派发口径 = 全局 `AGENTS.md` 硬性规则 8 + 技能 `subagent-dispatch`（别名/provider 清单不在本文件重写，现查 `custom-providers.json`）；本项目编排形状/递归条件见 `.pi/ORCHESTRATION.md` §4。
 - **其余判据不在本文件**（b 槽签名、双层压缩、kexec 取证、`build/*` 删除前 bundle、geekidos-linux 浅克隆、顶层布局登记、EDL 工具链、Q28 坏发协变量、`.pi/trash` 保护）：
-  见 `.pi/memory/`（`MEMORY.md` / `failures-kernel.md` / `failures-device.md` / `notes-display.md`）与 `PITFALLS/`；检索用 `mem <关键词>`。
+  见 `.pi/memory/`（`MEMORY.md` / `failures-kernel.md` / `failures-device.md` / `notes-display.md` / `notes-q28-vk127-20261017-18.md`〔Q28/vk127 线历史，2026-11-24 拆出〕）与 `PITFALLS/`；检索用 `mem <关键词>`。
 
 ## 细节
 
