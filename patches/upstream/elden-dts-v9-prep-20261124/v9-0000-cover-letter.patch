@@ -1,0 +1,69 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 24 Nov 2026 00:00:00 +0800
+Subject: [PATCH v9 0/2] arm64: dts: qcom: describe the USB-C receptacles of the Lenovo Y700 Gen4
+
+*** AI-assistance disclosure ***
+This series was prepared with the help of an LLM coding assistant.  The
+author reviewed every line, checked every quoted claim against the tree and
+ran the gates quoted below; the design decisions and any errors are the
+author's.
+
+The Lenovo Legion Y700 Gen 4 (SM8750) has two USB Type-C receptacles that
+share the controller's High Speed D+/D- pair through an analog 2:1 mux
+whose select input is TLMM GPIO 29.  This series labels the DWC3 High Speed
+port node in sm8750.dtsi, then describes the mux, the select line and one
+usb-c-connector per receptacle in the board file, with one endpoint per
+receptacle on port@0 so the role switch code can follow remote-endpoint to
+the connector that is actually in use.
+
+Dependency: this series needs the DWC3 two-connector binding ("usb: dwc3:
+support two connectors sharing one HS data bus", posted separately).  The
+binding adds "mux-controls", "mux-state" and "usb-role-switch" on the
+endpoints of port@0; without it the board file is reported with
+"mux-controls", "mux-state" and "usb-role-switch" as unexpected properties.
+The board series of 2026-11-17 ("arm64: dts: qcom: sm8750-lenovo-elden: add
+Lenovo Legion Y700 Gen 4", v7) deliberately did not describe USB at all;
+this series adds that part now that the binding exists.
+
+Known gaps (stated so that nobody has to guess)
+
+- Which receptacle corresponds to mux state 0 and which to 1 is not proven
+  on hardware: no schematic sheet names GPIO 29 and the two vendor sources
+  disagree about its polarity.  The two states only say that the endpoints
+  differ, which is what the binding requires.
+- The mux node carries no "idle-state": the role mux deselects the old port
+  right before selecting the new one, and an explicit idle state would be
+  driven in between, glitching both receptacles.
+- Which USB role belongs to which connector at boot is left to the role
+  switch of each connector; no runtime testing of the mux path is claimed
+  for this version.
+
+Gate results (base: v7.4-rc3 = aebb7274476403040d582c61478df8f4a7bf9cd3)
+
+  G1 apply       git apply --check + apply on a pristine check-out of the
+                 base, on top of the dwc3 binding and the WL2868C binding:
+                 2/2 clean, rc=0
+  G2 checkpatch  perl scripts/checkpatch.pl --strict --no-signoff --no-tree
+                 1/2 0E/0W/0C (8 lines) ; 2/2 0E/0W/0C (121 lines)
+  G4 binding     make ARCH=arm64 dt_binding_check   (no DT_SCHEMA_FILES)
+                 rc=0, no diagnostics; 5421 example DTC [C]
+  G5 dtbs_check  make ARCH=arm64 CHECK_DTBS=1 qcom/sm8750-lenovo-elden.dtb
+                 qcom/sm8750-mtp.dtb qcom/sm8750-qrd.dtb
+                 3/3 DTC [C], 0 diagnostics for each of the three
+  G6 samples     board DTB rebuilt from this series + the dwc3 binding
+                 gives the same dtb as the earlier run (md5
+                 2d2d92662785a7aa07edb6aba78a9341)
+  G7 hardware    not run
+
+Qianhui Xu (2):
+  arm64: dts: qcom: sm8750: label the DWC3 High Speed port node
+  arm64: dts: qcom: sm8750-lenovo-elden: describe the USB-C receptacles and
+    the HS data mux
+
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 112 ++++++++++++++++++
+ arch/arm64/boot/dts/qcom/sm8750.dtsi          |   2 +-
+ 2 files changed, 113 insertions(+), 1 deletion(-)
+
+--
+2.53.0

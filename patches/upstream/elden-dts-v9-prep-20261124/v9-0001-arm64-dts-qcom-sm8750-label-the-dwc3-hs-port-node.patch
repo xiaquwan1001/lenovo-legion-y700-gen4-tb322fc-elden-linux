@@ -1,0 +1,32 @@
+From 17c0cee0ea76b2d23bec89d3266c000bd5acd74a Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 21 Nov 2026 12:55:53 +0800
+Subject: [PATCH v9 1/2] arm64: dts: qcom: sm8750: label the DWC3 High Speed
+ port node
+
+Boards that route the controller's High Speed D+/D- pair through a mux
+need to extend port@0 with one endpoint per receptacle.  Give the node a
+label so those boards can do that with a phandle reference instead of a
+node path.
+
+No functional change.
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index cf947acc57..03f1347a39 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -3211,7 +3211,7 @@ ports {
+ 				#address-cells = <1>;
+ 				#size-cells = <0>;
+ 
+-				port@0 {
++				usb_dwc3_hs_port: port@0 {
+ 					reg = <0>;
+ 
+ 					usb_dwc3_hs: endpoint {
+-- 
+2.53.0
+
