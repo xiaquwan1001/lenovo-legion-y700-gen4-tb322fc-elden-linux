@@ -145,9 +145,31 @@ Workqueue: events_unbound deferred_probe_work_func   （t=0.32 s，随后 clk_co
 下一步应对比 routeA DTS 与 daily DTS 的 `dsi@ae94000`/`phy@ae95000` 子树（regulator、`vdda`-类 supply、
 `assigned-clocks`），而不是先怀疑 clock consumer。
 
-### 结论与下一步
+### ★ 2026-11-24 追加更正：判据 1 的期望值本身写错了
 
-1. **本件不作为「可用上机候选」继续**：主判据 1 未归零，且新增 clk WARN 风暴（45 vs 1）。
+在同一天的日常核 vk189 上现查同一判据（`dmesg | grep "Failed to create device link"`）：
+
+```
+2× qcom_pmic_glink … with supplier a600000.usb
+1× qcom_pmic_glink … with supplier 5-0042
+1× qcom_pmic_glink … with supplier 5-0043
+1× qcom_pmic_glink … with supplier 88e8000.phy
+1× msm_dsi ae94000.dsi … with supplier ae96000.dsi
+（合计 8 条，两个 boot 阶段各出现一次）
+```
+
+⇒ **这族 `Failed to create device link (0x180)` 在 downstream 日常核上本来就有**（含 `a600000.usb` 作 supplier
+的那两条）。所以 §3 判据 1 写的「= 0」是**不可达的错期望**；正确判据应是**「不高于基线」**：
+
+| 口径 | 基线 vk189 | 候选 g7a2 | 判定 |
+|---|---|---|---|
+| `Failed to create device link` 条数 | 8 | 7 | **无新增（少 1）** ⇒ 通过 |
+
+### 结论与下一步（2026-11-24 更正后）
+
+1. **flight-2 在 USB 判据上是通过的**：判据 0 / 1（按「不高于基线」口径）/ 2 / 4 / 5 全过；**只有判据 3（换口→mux 切换）未测**，
+   因为观测面缺失（class 无 `mux_state`、debugfs 无输出）。
+2. ~~本件不作为「可用上机候选」继续~~ ← 该结论作废。当前结论：**本件可作为 USB 面候选**，但要把显示侧 WARN 与判据 3 的观测面补齐。
 2. 主机侧下一步（不需要设备）：
    - 把 45 条 WARN 逐条归类（`grep -A2 "WARNING:"` 的调用栈前缀 → 哪个 driver 的 deferred probe），
      定位到具体 clock consumer，再在 routeA DTS/驱动侧修；
