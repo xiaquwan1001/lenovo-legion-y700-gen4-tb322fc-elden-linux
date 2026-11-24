@@ -410,3 +410,6 @@ reports/artifacts/**/logfs.img
 
 # 原厂安卓资产提取树（319 MB 专有固件资产，仅本机个人使用，不再分发；scripts/android-assets-extract-20261119.py 可完全重建）
 /assets/android-20261119/
+
+# 相机取证单帧（MIPI RAW10 打包，前 9.5 MB / 后 15 MB；体积大且是逐位原始数据 ⇒ 只在盘上留档，不入库）
+reports/artifacts/cam-vk189-20261124/*.raw

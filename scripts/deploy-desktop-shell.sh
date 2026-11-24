@@ -67,7 +67,10 @@ echo "== 2) 包盘点 =="
 for p in $PKGS; do
 	st=$("${SSH[@]}" "dpkg-query -W -f='\${Status}' $p 2>/dev/null")
 	case "$st" in
-		*"install ok installed") ok "$p" ;;
+		# ★2026-11-24：`apt-mark hold` 会把 Status 首字段从 `install` 变成 `hold`
+		# （我们用 divert+hold 装自编 osk-stub/phoc，PITFALLS #654）⇒ 只锁 `" ok installed"`，
+		# 否则每日门会因「我们自己做的正确动作」常红（实测 phosh-osk-stub 假 MISS）。
+		*" ok installed") ok "$p" ;;
 		*)
 			if [ "$MODE" = check ]; then no "$p"; else
 				"${SSH[@]}" "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $p >/tmp/apt-$p.log 2>&1" \
@@ -491,6 +494,45 @@ systemctl show -p Result --value ab-mark-successful.service' \
 	[ "$ABC_SHA_DEV" = "$ABC_SHA_LOCAL" ] \
 		&& fix "A/B mark-successful 就绪（脚本 sha 与仓内一致，active 槽 _${ABC_SLOT:-?}）" \
 		|| no "A/B mark-successful 装后仍缺（sha 设备=${ABC_SHA_DEV:-无} 仓内=${ABC_SHA_LOCAL:-无}）"
+fi
+
+# ---------------------------------------------------------------------------
+# 14) 输入法候选后端（RIME / B 案件）—— PITFALLS #713
+# 为什么要有：B 案 rime 件装好后「打字零候选」的**唯一**原因是
+#   `sm.puri.phosh.osk.Completers.Rime user-data` 是空串 ⇒ 我们的 completer 把空值原样塞给
+#   `RimeTraits.user_data_dir` ⇒ librime 每次 `deployment_tasks.cc:90 Error creating user data dir:`，
+#   schema 从未建成。UI 上没有任何报错，只有 journal 里那一行（冒号后为空 = 空路径指纹）。
+# 判据三件（缺一即 MISS）：
+#   ① 用户目录存在且属主 = 会话用户（`~/.local` 在重建根后可能是 root，见 #713 连带项）
+#   ② gsettings `user-data` = 该目录（dconf 持久化，冷启动存活）
+#   ③ 部署产物在（`<user-data>/build/*.prism.bin` 至少一个）——这是「librime 真跑过」的痕迹，
+#      只看 gsettings 会把「设了但一次没跑」当成好。
+# 注意：查 gsettings 必须用会话用户 + 会话总线；以 root 无总线查会得到假值（''）。
+IME_RIME_USERDIR=""
+IME_RIME_TAB=$("${SSH[@]}" 'echo "$(id -un 1001 2>/dev/null):$(id -u 1001 2>/dev/null)"' 2>/dev/null || true)
+IME_RIME_U=${IME_RIME_TAB%%:*}; IME_RIME_UID=${IME_RIME_TAB##*:}
+if [ -z "$IME_RIME_U" ] || [ -z "$IME_RIME_UID" ]; then
+	ime_state=9; ime_dir=""; ime_set=""
+else
+	ime_dir="/home/$IME_RIME_U/.local/share/rime"
+	ime_state=$("${SSH[@]}" "c=0
+[ -d '$ime_dir' ] && [ \"\$(stat -c %U '$ime_dir')\" = '$IME_RIME_U' ] || c=\$((c+1))
+v=\$(su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings get sm.puri.phosh.osk.Completers.Rime user-data' 2>/dev/null | tr -d \"'\")
+[ \"\$v\" = '$ime_dir' ] || c=\$((c+1))
+ls '$ime_dir'/build/*.prism.bin >/dev/null 2>&1 || c=\$((c+1))
+echo \$c" 2>/dev/null || echo 9)
+	ime_set=$("${SSH[@]}" "su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings get sm.puri.phosh.osk.Completers.Rime user-data' 2>/dev/null" 2>/dev/null || true)
+fi
+echo "== 14) 输入法候选后端（RIME；#713：user-data 空串 ⇒ 候选静默为空）=="
+if [ "${ime_state:-9}" = 0 ]; then
+	ok "RIME 候选后端就绪（$ime_dir 属主正确、gsettings 指它、build/*.prism.bin 在）"
+elif [ "$MODE" = check ]; then
+	no "RIME 候选后端未就绪（缺件数=${ime_state:-9}，gsettings user-data=${ime_set:-查不到}，应为 ${ime_dir:-?}）"
+else
+	"${SSH[@]}" "install -d -o $IME_RIME_U -g $IME_RIME_U '$ime_dir'
+su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings set sm.puri.phosh.osk.Completers.Rime user-data $ime_dir'
+pkill -x phosh-osk-stub || true" >/dev/null 2>&1 || true
+	fix "RIME 候选后端已配（目录+属主+gsettings；osk-stub 已重启，phosh 按需重拉后 build/ 会出现）"
 fi
 
 echo

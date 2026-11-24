@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：629
+- 报告总数：631
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -105,6 +105,7 @@
 | `c0` | 1 | `c0-android-baseline-20261011.md` |
 | `c4` | 1 | `c4-route-c-20261011.md` |
 | `c9` | 1 | `c9-cases-20261013.md` |
+| `cam` | 1 | `cam-vk189-baseline-20261124.md` |
 | `closeout` | 1 | `closeout-q29-backlight-camera-20261023.md` |
 | `cloud` | 1 | `cloud-backup-manifest-20261016.md` |
 | `consolidation` | 1 | `consolidation-20261014.md` |
@@ -112,6 +113,7 @@
 | `coolapk` | 1 | `coolapk-publish-20261123.md` |
 | `counts` | 1 | `counts-gate-20261107.md` |
 | `d1` | 1 | `d1-host-side-20261123.md` |
+| `d3` | 1 | `d3-rime-ondevice-20261124.md` |
 | `daily` | 1 | `daily-linux-deploy-20261122.md` |
 | `desktop` | 1 | `desktop-chain-gate-20261119.md` |
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
@@ -1020,6 +1022,10 @@
 
 - `c9-cases-20261013.md` — C9 验收用例整理（U1–U10）— 2026-10-13
 
+## `cam`（1）
+
+- `cam-vk189-baseline-20261124.md` — G1-5 相机基线复测（vk189 日常核，2026-11-24 设备窗轮）
+
 ## `closeout`（1）
 
 - `closeout-q29-backlight-camera-20261023.md` — 收尾三项（2026-10-23 晚，无需物理 POR）：Q29 Mesa bind、背光下限、容器相机通路
@@ -1047,6 +1053,10 @@
 ## `d1`（1）
 
 - `d1-host-side-20261123.md` — D1 主机侧：hexagonrpcd 不进构建器 + 时间基线自愈（2026-11-23）
+
+## `d3`（1）
+
+- `d3-rime-ondevice-20261124.md` — D3 收口：RIME 候选后端在机可用 —— 根因 = `Completers.Rime.user-data` 是空串（2026-11-24 设备窗轮）
 
 ## `daily`（1）
 

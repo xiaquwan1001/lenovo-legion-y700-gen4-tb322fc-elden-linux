@@ -8,6 +8,23 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-24）
 
+> **🆕 2026-11-24 下午 设备窗轮（用户「可以上机」；3 项实测 + 2 条门修复）**：
+> ① **D3 收口：RIME 候选在机可用** —— 真因不是「没部署」（B 案件 11-23 就装好了、divert/hold 在位、`Completers default='rime'`），
+> 而是 **`sm.puri.phosh.osk.Completers.Rime user-data` 是空串** ⇒ 源码把空值原样塞给 `RimeTraits.user_data_dir` ⇒ librime 每发
+> `deployment_tasks.cc:90 Error creating user data dir:`（**冒号后为空**就是空路径指纹）⇒ schema 从未建成 ⇒ 候选恒空且 UI 无任何报错。
+> 修法零重编：建 `~/.local/share/rime`（属主会话用户）+ `gsettings set … user-data <该目录>` + 重启 osk-stub ⇒ osk-stub 自己填出 24 个
+> `luna_pinyin*` 档、错误消失、**它持有 `luna_pinyin.userdb/LOCK`**（外部进程开同库报 `Resource temporarily unavailable` = 真在用）；
+> 同一对目录跑 `librime-piped --oneshot nihao` = **你好/妳好/逆号/拟好/你**。**剩 = 屏上真打字/震动/方向键三条需人手**（设备在锁屏，无 `/dev/uinput`）。
+> 全账 `reports/d3-rime-ondevice-20261124.md`；新坑 **PITFALLS #713/#714**。
+> ② **G1-5 相机基线复核通过（vk189 日常核，11-19 重建根后首次）**：前摄 `gc08a8` 3264×2448 / 后摄 `s5kjns` 4080×3072，
+> 10 帧 `rc=0`、60 帧实测 **27.52 / 27.58 fps**、单帧解包后 distinct **892 / 681**（非黑非恒定）、dmesg 零新增错误；
+> 顺带把重建根丢的 `v4l-utils` 装回。角色定位写清：这**不能**充当 camss CSIPHY v2 的「上机出流回归」（在机核无该补丁、也无 7.4 板 DTS）。
+> `reports/cam-vk189-baseline-20261124.md`。
+> ③ **两道门修复**：`deploy-desktop-shell.sh` §2 包状态判据改 `*" ok installed"`（`apt-mark hold` 会把首词变 `hold`，我们自己 divert+hold
+> 的正确动作让门常红 = #714）；`ab-mark-successful` 脚本 sha 真漂移已重部署 ⇒ **`--check` MISS=0**（本轮起，此前 2 条）。
+> ④ 设备现态：vk189 在机、`/`=`sda17`、桌面/音频/触觉/T9 采样器/槽位体检全 ok、Wi-Fi `ustcnet 114.214.195.94`、电池 69%。
+> 本轮未做（有意）：camss 出流回归（结构性不可做，见 ②）、D2 G7/板件 v9（等 binding 进树）、D4 安卓 a 槽（需 a/b 槽窗口）、D7 UEFI flashed 复现（用户裁决往后排）。
+
 > **🆕 2026-11-24 12:5x 放行执行轮（用户「全部放行」）**：① **aw86927 v4 已投**（12:50 CST / 04:50Z，7 封全 250，
 > cover `<20261124045040.559317-1>`，账 `patches/upstream/aw86927-v4-prep-20261124/SENT.md`；lore 摄取按已知 ≥1 h 延迟复核）。
 > ② **dwc3 v14 误重投并已更正**：v14 其实 01:50Z 已投（`SENT.md` 在案、lore 已归档），本轮 README「未投递」误导导致 04:52Z 又发一套
