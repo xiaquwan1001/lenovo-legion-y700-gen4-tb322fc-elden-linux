@@ -138,7 +138,16 @@ if [ -n "$(find "$(P /usr/share/fonts)" -name 'NotoSansCJK*' -print -quit 2>/dev
 else miss "缺 CJK 字体（fonts-noto-cjk）"; fi
 
 # ---------------------------------------------------------------- 3 输入法
-say "[3. 输入法（fcitx5 + Rime，OSK 槽位留给 phosh-osk-stub）]"
+# ★2026-11-24 单栈裁决（PITFALLS #716，用户报「输入法键盘无法唤起」当日实测）：
+#   默认 IME 栈 = **phosh-osk-stub（我们的 divert+hold 自编件）+ B 案 RIME completer**，
+#   fcitx5 整套（unit 自启 / indicator / toggle / focusd）退为 `--rollback` 资源、**默认不启用**。
+#   原因两条且都实测：① 应用网格里点 `Fcitx 5` = 用默认参数起 fcitx5（waylandim 已加载）⇒ 抢
+#   `zwp_input_method_v2` 槽 ⇒ osk-stub 只印 `Input method unavailable`、键盘永久不弹；
+#   ② 两栈同时在册时，排障会先撞协议层，浪费整轮时间。
+#   收敛工具 = `scripts/ime-single-stack.sh --check|--apply|--rollback`；要回老路则
+#   `IME_STACK=fcitx bash daily-baseline.sh`（或直接跑 ime-single-stack.sh --rollback）。
+IME_STACK=${IME_STACK:-osk}
+say "[3. 输入法（单栈=$IME_STACK：osk = phosh-osk-stub + RIME completer；fcitx = 老路）]"
 # 2026-11-21 用户裁决（落实 11-15 台账 T4）：**GTK_IM_MODULE 一律不设**。
 #   依据 = `PITFALLS #618`：GTK 走 im-fcitx5.so 时客户端**不发** `zwp_text_input_v3.enable`
 #   ⇒ phoc 收不到 ⇒ 虚拟键盘不自动弹；代价 = GTK 应用内无 fcitx 组词（#653 实测本栈 GTK3
@@ -186,12 +195,20 @@ EOF
 	fix "写入 /etc/systemd/user/fcitx5.service"
 fi
 LINK=$(P /etc/systemd/user/graphical-session.target.wants/fcitx5.service)
-if [ -L "$LINK" ]; then ok "fcitx5 已 enable（graphical-session.target.wants）"
-elif [ "$CHECK" = 1 ]; then miss "fcitx5 未 enable（登录后不会自启）"
+if [ "$IME_STACK" = fcitx ]; then
+	if [ -L "$LINK" ]; then ok "fcitx5 已 enable（graphical-session.target.wants）"
+	elif [ "$CHECK" = 1 ]; then miss "fcitx5 未 enable（登录后不会自启；IME_STACK=fcitx 时这是 MISS）"
+	else
+		# 用系统级 wants 而不是 ~/.config：构建 chroot 里没有用户 home，构建/现场同一路径生效
+		mkdir -p "$(dirname "$LINK")"
+		ln -sf /etc/systemd/user/fcitx5.service "$LINK" && fix "enable fcitx5（graphical-session.target.wants）"
+	fi
 else
-	# 用系统级 wants 而不是 ~/.config：构建 chroot 里没有用户 home，构建/现场同一路径生效
-	mkdir -p "$(dirname "$LINK")"
-	ln -sf /etc/systemd/user/fcitx5.service "$LINK" && fix "enable fcitx5（graphical-session.target.wants）"
+	# 单栈（osk）：fcitx5 **不得**自启，否则会抢 IM 槽（PITFALLS #716）
+	if [ -L "$LINK" ]; then
+		if [ "$CHECK" = 1 ]; then miss "fcitx5 仍有自启链接（单栈下会抢 zwp_input_method_v2 槽；跑 scripts/ime-single-stack.sh --apply）"
+		else rm -f "$LINK" && fix "移除 fcitx5 自启链接（单栈）"; fi
+	else ok "fcitx5 未自启（单栈；IME_STACK=$IME_STACK）"; fi
 fi
 
 # ---------------------------------------------------------------- 3b 输入法可用性（触摸可达的中/英开关 + 配置器）
@@ -211,7 +228,12 @@ elif [ -f "$IMESRC/fcitx5-ime-toggle" ]; then
 	mkdir -p "$(dirname "$TOGGLEBIN")"
 	install -m 0755 "$IMESRC/fcitx5-ime-toggle" "$TOGGLEBIN" && fix "装中/英切换脚本"
 else warnf "缺源文件 $IMESRC/fcitx5-ime-toggle（跳过）"; fi
-if [ -f "$TOGGLEDESK" ]; then ok "应用网格图标已装（中/英切换）"
+if [ -f "$TOGGLEDESK" ] && [ "${IME_STACK:-osk}" = osk ]; then
+	# 单栈（osk）：中/英切换走 osk-stub 自身布局，fcitx5 不在跑 ⇒ 这个图标点了只会报「输入法未就绪」
+	if grep -qs '^NoDisplay=true' "$TOGGLEDESK"; then ok "应用网格「输入法 中/英」已隐藏（单栈）"
+	elif [ "$CHECK" = 1 ]; then miss "「输入法 中/英」图标仍可见（单栈下无效；跑 scripts/ime-single-stack.sh --apply）"
+	else printf '\nNoDisplay=true\n' >> "$TOGGLEDESK" && fix "隐藏「输入法 中/英」图标（单栈）"; fi
+elif [ -f "$TOGGLEDESK" ]; then ok "应用网格图标已装（中/英切换）"
 elif [ "$CHECK" = 1 ]; then miss "缺 $TOGGLEDESK"
 elif [ -f "$IMESRC/fcitx5-ime-toggle.desktop" ]; then
 	mkdir -p "$(dirname "$TOGGLEDESK")"
@@ -263,11 +285,19 @@ elif [ -f "$IMESRC/elden-ime-focusd.service" ]; then
 	mkdir -p "$(dirname "$FOCUSDUNIT")"
 	install -m 0644 "$IMESRC/elden-ime-focusd.service" "$FOCUSDUNIT" && fix "装 focusd user unit"
 else warnf "缺源文件 $IMESRC/elden-ime-focusd.service（跳过）"; fi
-if [ -L "$FOCUSDLINK" ]; then ok "focusd 已 enable（graphical-session.target.wants）"
-elif [ "$CHECK" = 1 ]; then miss "focusd 未 enable（重登后不会自启）"
+if [ "${IME_STACK:-osk}" = fcitx ]; then
+	if [ -L "$FOCUSDLINK" ]; then ok "focusd 已 enable（graphical-session.target.wants）"
+	elif [ "$CHECK" = 1 ]; then miss "focusd 未 enable（重登后不会自启）"
+	else
+		mkdir -p "$(dirname "$FOCUSDLINK")"
+		ln -sf ../elden-ime-focusd.service "$FOCUSDLINK" && fix "enable focusd（graphical-session.target.wants）"
+	fi
 else
-	mkdir -p "$(dirname "$FOCUSDLINK")"
-	ln -sf ../elden-ime-focusd.service "$FOCUSDLINK" && fix "enable focusd（graphical-session.target.wants）"
+	# 单栈（osk）：kimpanel 桥没有 fcitx5 可听 ⇒ 常驻件只是误导（PITFALLS #716）
+	if [ -L "$FOCUSDLINK" ]; then
+		if [ "$CHECK" = 1 ]; then miss "focusd 仍有自启链接（单栈下无 kimpanel 信号源；跑 scripts/ime-single-stack.sh --apply）"
+		else rm -f "$FOCUSDLINK" && fix "移除 focusd 自启链接（单栈）"; fi
+	else ok "focusd 未自启（单栈）"; fi
 fi
 
 # ---------------------------------------------------------------- 3b3 候选/preedit 浮条（**已撤下，2026-11-13**）

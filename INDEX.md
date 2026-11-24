@@ -8,6 +8,17 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-24）
 
+> **🆕 2026-11-24 22:xx 二轮设备窗（用户报「输入法键盘无法唤起」；已修好并收敛成单栈）**：
+> 真因两条（`PITFALLS #716`）——① **`org.gnome.desktop.a11y.applications screen-keyboard-enabled=false`**（11-19 重建根的默认值）
+> ⇒ `phosh-osk-stub.c:221-238` 无条件 `visible=FALSE`，收到 `zwp_input_method_v2.activate` 也不弹；
+> ② **老路 fcitx5 与新路 osk-stub+RIME 两套部署并存**，应用网格里点 `Fcitx 5` 就用默认参数起 fcitx5（`waylandim` 已加载）抢走 IM 槽
+> ⇒ osk-stub 只印 `Input method unavailable`、layer surface 恒 `margin -200`（而 D-Bus `Visible` 仍可读 true ⇒ 别拿它当「在屏上」证据）。
+> 处置已落地：**`scripts/ime-single-stack.sh --check|--apply|--rollback`**（7 判据：a11y key / `Completers=rime` / user-data / fcitx5 不自启 /
+> indicator+focusd 不自启 / 网格入口 NoDisplay / osk-stub 健康）+ `deploy-desktop-shell.sh` §14 第 ④ 项 + `daily-baseline.sh` §3 加 `IME_STACK`（默认 `osk`）。
+> 设备现态：单栈成立（FAIL=0）、fcitx5 `masked`、Firefox 地址栏聚焦即弹键盘（grim 截图）；**未决** = OSK 内候选条显示时机（0.46 `completion-mode` 只有 none/hint/manual，HINT 需客户端 hint，`#709` 同源）。
+> 全账 = `reports/ime-single-stack-20261124.md`；同轮工具事实：`/dev/uinput` + `tools/uinput-touch.c`（已入库）可注入**真实触摸**（锁屏 PIN、点输入框都实测可用）；`phoc 0.46` **没有** `#615` 的版本门；
+> `pkill` osk-stub 过多会打光 gnome-session required-component 重启预算（OSK 无 D-Bus service 文件 ⇒ 只能 `systemctl restart greetd` 恢复）。
+
 > **🆕 2026-11-24 下午 设备窗轮（用户「可以上机」；3 项实测 + 2 条门修复）**：
 > ① **D3 收口：RIME 候选在机可用** —— 真因不是「没部署」（B 案件 11-23 就装好了、divert/hold 在位、`Completers default='rime'`），
 > 而是 **`sm.puri.phosh.osk.Completers.Rime user-data` 是空串** ⇒ 源码把空值原样塞给 `RimeTraits.user_data_dir` ⇒ librime 每发
