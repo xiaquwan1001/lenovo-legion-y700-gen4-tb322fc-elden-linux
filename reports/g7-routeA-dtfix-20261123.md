@@ -109,16 +109,26 @@ timeout -k 5 120 fastboot boot out/g7-routeA-dtfix-20261123/boot-elden-g7a2.img
 
 ### ★ 本轮发现（回归，优先级高于上面未达成项）
 
-**`WARNING` 计数：g7a2 = 45 条，vk189 基线 = 1 条。** 首条为
+**内核 `WARNING` 计数：g7a2 = 42 条，vk189 基线 = 0 条**（基线的 1 条 "WARNING:" 是 initramfs 脚本打印的
+`payload-modules-load failed/timed out`，不是内核 WARN）。42 条的构成（逐条归类，`grep "WARNING:" | sed | uniq -c`）：
+
+| 条数 | 位置 | 触发面 |
+|---|---|---|
+| **34** | `drivers/gpu/drm/drm_vblank.c:1329` `drm_crtc_wait_one_vblank` | DPU/DSI vblank 等待超时（Q28 L2 家族；routeA 件显示栈本就没起来） |
+| **8** | `drivers/clk/clk.c:1259`/`:1118` `clk_core_disable`/`clk_core_unprepare` | `dsi_phy_driver_probe` → `of_clk_add_hw_provider` → `clk_core_reparent_orphans_nolock` ⇒ **DSI PHY 注册自己的 clock provider 时重挂 orphan** 的上游已知形态 |
+| （另 3 条非内核） | initramfs | `payload-modules-load` 1 + `binderfs unavailable` 2（Waydroid 相关，日常核同样有 1 条） |
+
+首条 clk WARN 的完整栈（`artifacts/g7-flight2-20261124/g7a2-dmesg.txt`）：
 
 ```
 WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250
 Workqueue: events_unbound deferred_probe_work_func   （t=0.32 s，随后 clk_core_unprepare 同栈反复）
 ```
 
-即 `deferred_probe` 里对未使能/未 prepare 的 clock 做 disable/unprepare ⇒ **Linux 7.4-rc3 + routeA DTS 的
-probe 顺序/时钟引用有问题**（与 vk189 的 downstream DTS 不同）。这条既可能是 routeA DTS 少给/多给了某个 clock，
-也可能是 7.4-rc3 上游此类 WARN 本来就有（本机无从对照第三棵树）。
+判读：**不是 routeA DTS 独有的新鲜 bug** —— 8 条来自 `dsi_phy_driver_probe` 的 orphan 重挂（上游 clk 框架
+既有形态），34 条来自显示栈没起来时的 vblank 等待（本件本来就不带显示使能面）。⇒ 结论仍成立（本件不作为
+上机候选继续），但归因从「routeA DTS 的时钟引用错」下调为「显示面期望差 + 上游 clk 框架 WARN」；
+若要证死，需要一棵**只带上游骨架、不带 routeA DTS 改动**的 7.4-rc3 对照（下次出件时加做）。
 
 ### 结论与下一步
 
