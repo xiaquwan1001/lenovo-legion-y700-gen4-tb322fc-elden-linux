@@ -8,4 +8,5 @@
 - 门/依赖的交叉账：`../../reports/upstream-recheck-20261124.md` §6。
 - 与 v8 prep 的关系：内容逐字节相同（只改 `[PATCH v9 N/2]` 标号），按 v8 prep 的「方案 B」拆出；
   v8 本身 = `../elden-dts-v8-prep-20261121/0000`（qcom.yaml）+ v7 原文，与本目录无关。
-- 投递：**未发**；放行后按 `../dwc3-v12-20261123/SENT.md` 的收件人一套、投 `v9-000*.patch`（新线程 3 封）。
+- 投递：**未发**。放行后 `bash SEND.sh`（默认 dry-run，`--yes` 才真发；2026-11-24 已 dry-run 通过 = 3 封格式/smtp 配置 OK）。
+  前置硬条件 = **dwc3 binding 先进树**（脚本第 0 步会提醒，但机上无法自动判断）。
