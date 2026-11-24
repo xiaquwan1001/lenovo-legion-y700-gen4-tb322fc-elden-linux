@@ -191,6 +191,21 @@ else
 	fix "C7 已重启 osk-stub（phosh 会在需要键盘时按需重拉）"
 fi
 
+# ------------------------------------------------------------------ C8 每键震动（haptic 钩子必须在件）
+# 2026-11-24 教训：重编 osk-stub 时只乘了 0003/0004/0005、**漏了** haptic 0001 与 layout 0002，
+# 结果「震动悄无声息地没了」，而文档还写着"未上机"。判据 = 装的那颗二进制里必须有钩子字符串
+# + 会话环境有开关 + 马达 FF 节点在。
+HAPBIN=$(cnt "strings /usr/bin/phosh-osk-stub 2>/dev/null | grep -c ELDEN_OSK_HAPTIC")
+HAPENV=$(cnt "grep -c '^ELDEN_OSK_HAPTIC_DEV=' /etc/environment")
+HAPDEV=$(cnt "test -e /dev/input/event2 && echo yes || echo no")
+if [ "${HAPBIN:-0}" -ge 1 ] 2>/dev/null && [ "${HAPENV:-0}" -ge 1 ] 2>/dev/null && [ "$HAPDEV" = yes ]; then
+	ok "C8 每键震动在位（二进制含钩子、/etc/environment 有开关、/dev/input/event2 在）"
+elif [ "$MODE" = check ]; then
+	no "C8 每键震动缺失（二进制钩子字符串=${HAPBIN:-?} /etc/environment 行=${HAPENV:-?} event2=${HAPDEV:-?}）⇒ 重编 osk-stub 时漏了 haptic 0001；重编按 patches-userland/zh-ime-rime-20261123/BUILD.md 全乘"
+else
+	warn "C8 每键震动缺失：需按 BUILD.md 重编（脚本不自动重编）"
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then
 	echo "结果: 单栈成立（FAIL=0）"

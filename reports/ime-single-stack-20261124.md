@@ -90,10 +90,25 @@ upstream 的 hunspell/presage 行为零变化。
 点「你」⇒ journal `completion: 你`、URL 栏得到「你 」。件 = `out/osk-stub-rime-always-20261124/`
 （sha256 `3278264cacbe9ed3d463661e85c5d44757db2b49d88c07dcb4c6167fe621933b`）。
 
-## 5b. 仍需人手
+## 5b. 每键震动：**早已上机**（本轮更正 + 补一条判据）
 
-- 每键震动（`aw86927` 的 OSK 钩子 patch 仍未上机）。
-- 长句连续选词 / 退格音节回退的观感。
+- 事实：`/etc/environment` 里有 `ELDEN_OSK_HAPTIC_DEV=/dev/input/event2` + `_MS=30` + `_MAG=0x3333`，
+  11-23 与 11-24 的 osk-stub 件里都带着 `haptic/0001` 钩子（`strings … | grep -c ELDEN_OSK_HAPTIC` = 3）。
+  **本轮我做「候选条常显」重编时漏打 haptic/layout 两枚补丁 ⇒ 震动静默消失**，装上去的件 grep = 0；
+  用户先发现，我才补回（现行件 sha256 `c415a63e…`，grep = 3）。
+- 触发验证（可复跑）：`python3` 读 `/dev/input/event2` 7 s，同时用 `uinput-touch` 点 3 个键 ⇒
+  捕获到 `EV_FF (type 0x15) code=0 (FF_RUMBLE) value=1` ⇒ 钩子真的每键 upload/play。
+- 新判据：`scripts/ime-single-stack.sh` **C8**（二进制含钩子 + `/etc/environment` 开关 + `event2` 在）；
+  重编配方写成 `patches-userland/zh-ime-rime-20261123/BUILD.md`（五枚补丁顺序 + 出厂自检 grep）。
+- 仍需人手：只差**手感标定**（太轻/太重改 `ELDEN_OSK_HAPTIC_MAG`）。
+
+## 5c. 明日待办（用户 2026-11-24 点名）
+
+候选条现在**固定间距 + 固定个数**（最多 9 个铺满一行），没有「右划展开/翻页」：
+- 期望：候选条可横向滑动看更多候选 / 右划展开成多行；
+- 落点估计：`pos-completion-bar.c`（0.46 用 GtkBox 平铺，无滚动）+ RIME completer 的 `limit=9`；
+  要做的是「横向滚动容器（GtkScrolledWindow/hdy carousel）+ 手势」或「末位放『更多』按钮翻页」；
+- 验收：候选 >5 时能滑到第 6 个以后并选中；不误触键盘行；不破坏 preedit。
 
 ## 6. 工具事实（同轮，供下次省时间）
 
