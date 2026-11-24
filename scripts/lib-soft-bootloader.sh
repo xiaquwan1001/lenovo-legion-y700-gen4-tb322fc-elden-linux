@@ -25,6 +25,21 @@
 
 SOFT_BL_WAIT=${SOFT_BL_WAIT:-90}
 
+# ★ 2026-11-24 实机踩到：本机会话的 PATH 里**没有 fastboot**（在 ~/.local/opt/platform-tools），
+#   旧代码用裸 `fastboot devices` ⇒ sb_fb_alive 恒假 ⇒ 明明进了 fastboot 也报「软路径失效」。
+#   iPad式兜底：FB_BIN → PATH → 两个常见落点；都没有才退回裸名（由调用方报错）。
+_sb_fb_bin() {
+	[ -n "${_SB_FB_BIN:-}" ] && { printf '%s\n' "$_SB_FB_BIN"; return 0; }
+	local c
+	c=$(command -v fastboot 2>/dev/null || true)
+	[ -n "$c" ] || c=""
+	for c in "$c" "${HOME:-/root}/.local/opt/platform-tools/fastboot" /usr/lib/android-sdk/platform-tools/fastboot; do
+		[ -n "$c" ] && [ -x "$c" ] && { _SB_FB_BIN=$c; printf '%s\n' "$c"; return 0; }
+	done
+	_SB_FB_BIN=fastboot
+	printf '%s\n' fastboot
+}
+
 # sb_reboot_cmd —— 打印本机该用的「带 bootloader reason 的 reboot」命令
 #   systemd ≥ 257 用 `--reboot-argument=`（位置参数已移除），老版本用位置参数；
 #   探测走一次 ssh（结果缓存在 _SB_REBOOT_CMD，同一进程内只探一次）。
@@ -47,7 +62,7 @@ sb_reboot_cmd() {
 # sb_fb_alive —— fastboot 通道上有（可选：指定 SN 的）设备
 sb_fb_alive() {
 	local d
-	d=$(timeout 6 fastboot devices 2>/dev/null) || true
+	d=$(timeout 6 "$(_sb_fb_bin)" devices 2>/dev/null) || true
 	if [ -n "${SER:-}" ]; then
 		case "$d" in *"$SER"*) return 0 ;; *) return 1 ;; esac
 	fi

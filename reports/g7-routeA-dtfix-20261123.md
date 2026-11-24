@@ -170,7 +170,20 @@ Workqueue: events_unbound deferred_probe_work_func   （t=0.32 s，随后 clk_co
 1. **flight-2 在 USB 判据上是通过的**：判据 0 / 1（按「不高于基线」口径）/ 2 / 4 / 5 全过；**只有判据 3（换口→mux 切换）未测**，
    因为观测面缺失（class 无 `mux_state`、debugfs 无输出）。
 2. ~~本件不作为「可用上机候选」继续~~ ← 该结论作废。当前结论：**本件可作为 USB 面候选**，但要把显示侧 WARN 与判据 3 的观测面补齐。
-2. 主机侧下一步（不需要设备）：
+2. **判据 3 的观测面已找到（2026-11-24 第二次上机验证，零写盘）** —— mux state 不进 sysfs/debugfs，
+   但**选择线本身可读**：
+
+   ```sh
+   $ grep -E ' gpio29 ' /sys/kernel/debug/gpio
+    gpio29  : out low  func0 2mA pull down       # = mux state 0（dwc3 侧 sysfs 只暴露 muxchip0，无 mux_state）
+   ```
+
+   即判据 3 的判法 = **插拔前/后各读一次该行**，`out low` ↔ `out high` 翻转即「换口 → mux 切换」成立；
+   `typec` 侧的 `data_role` 两个 port 都显示 `host [device]`（无 partner 时的常态，不作出结论）。
+   **注意**：别用 `echo … > /sys/class/typec/port0/data_role` 去模拟——角色一切换，`usb0` 上的 ssh 通道就断了，
+   恢复要人工断电，不值当。
+
+3. 主机侧下一步（不需要设备）：
    - 把 45 条 WARN 逐条归类（`grep -A2 "WARNING:"` 的调用栈前缀 → 哪个 driver 的 deferred probe），
      定位到具体 clock consumer，再在 routeA DTS/驱动侧修；
    - devlink 那 7 条要单列：它们与 flight-1 的 6 条同族（`qcom_pmic_glink` ↔ `fsa4480`/`dwc3`），
