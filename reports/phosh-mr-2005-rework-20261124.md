@@ -46,11 +46,24 @@ nm /tmp/monitor-test.o → U phosh_wayland_get_zwlr_output_power_manager_v1（= 
 
 事后已把该构建树的 `monitor.c` 还原（md5 与备份一致）。**未做**：整包 link / 上机（设备不在；CI 会跑完整流水线）。
 
-## 4. 尚未完成 —— 需用户手做（API 不可达）
+## 3b. ✅ 全部完成（用户提示 keyring + 代理后，2026-11-24 14:4x–15:0x）
 
-- `https://gitlab.gnome.org/api/v4/*` 从本机出口 **一律 406**（Fastly 拦；11-14 时曾 200，现已变），
-  且 `~/.config/glab-cli` 里**没有 gitlab.gnome.org 的 token** ⇒ agent 无法改 MR 描述、无法发评论。
-  （只有 SSH 通，已被用来 force-push 分支。）
+- **凭据**：keyring 里有 `git: https//gitlab.gnome.org (xuqianhui1001)`（`secret-tool search --all host gitlab.gnome.org`），
+  取用方式 `secret-tool lookup protocol https user xuqianhui1001 host gitlab.gnome.org` → 直接当 `PRIVATE-TOKEN` 用（**未落盘**）。
+- **网络**：`gitlab.gnome.org` 直连仍 406；**走 bettbox 混合端口 7890 即 200**（控制端口 9090 切节点实测：
+  香港WAP-优化2 / 日本JP-HY2 / 美国USLA-A / 台湾-优化 = 200，新加坡SG-A = 406 ⇒ 个别节点被 Fastly 拦，换节点即可）。
+  节点用完已切回 `香港WAP-优化2`。
+- **已做**：① MR 描述改写为短版（883 字符，原 1960）；② 回帖 `note id 2945304`（"Reworked as suggested…"）；
+  ③ 修 CI 的 `check-style`：两轮 —— 第一轮 `g_warning (` 空格 + 续行对齐；第二轮 uncrustify 要求
+  `wlr_output_power_handle_failed (void                        *data,` 的函数签名对齐（上游自己不动这个函数就不会出现该提示）。
+- **pipeline 1152598（sha `5300355a`）**：全部自动 job **success**（check-style / commit-log-check / build ×3 /
+  unit-test / integration / package:deb / coverage …），状态显示 `manual` 只因 `abi-compliance-checker`、
+  `unit-test:native-alpinestack-edge` 等**需人工点**的 job。
+- 提交：fork 分支 `monitor-power-mode-unavailable` = `5300355a`（force-push，MR 已同步）。
+
+## 4.（历史）尚未完成 —— 曾因 API 不可达需用户手做
+
+- ~~API 406 / 无 token~~ **已被 §3b 解决（keyring token + 代理 7890）**。以下文案仅作留档。
 - **① MR 描述建议改成（短，回应「太啰嗦」）**：
 
 ```
