@@ -6,7 +6,21 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-23）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-24）
+
+> **🆕 2026-11-24（无人值守轮 + 一次用户放行的设备窗口；逐项证据在对应 report / SENT / GATES）**：
+> ① **上游**：`dwc3 v14` 已投（4×250，cover `<20261124015002.1426767-1>`，`linux-devicetree` 已归档 4/4；只修 sashiko 对 v13 1/3 的三条 [Low]）；
+> `aw86927 v3` 已投（7×250，cover `<20261124015028.1427393-1>`；[High] unbind 竞态 + [Low] message，只改 6/6）；
+> **但 aw86927 v3 在 `linux-input`/`linux-devicetree` 与 marc/mail-archive 三处都查不到** ⇒ 归档异常待查（假设见 `patches/upstream/aw86927-v3-prep-20261124/SENT.md`，**不要重投整套**）；
+> `M8 mdss v5` 已 ping（1×250，读树现查三枚仍未合入）；`板件 v9` 备料完成但**按住未发**（依赖 dwc3 binding 先进树）。
+> ② **设备**（用户放行窗口）：`vendor_boot_b` 已重刷为 ESP（读回 sha `af97b799…`、`blkid` = `ELDENESP/88D0-7871/4096`，原厂件备份 `backup/pre-esp-flash-20261124/`）；
+> G7 `g7a2` 两次零写盘上机：起机/role-switch/UDC/typec 全过，**判据 1 按「不高于基线」口径通过**（7 vs 基线 8，§3 原文「=0」是错期望），
+> 显示侧 42 条 WARN 归因 DSI PLL 未锁；**判据 3（换口→mux）仍未测**（需插拔线缆；观测面已解决 = `scripts/g7-mux-probe.sh` 读 `gpio29` 电平）。
+> ③ **两个真 bug 修掉**：systemd 257 移除了 `reboot` 位置参数（`systemctl reboot bootloader` 报 `Too many arguments.` 且设备不动 ⇒ 改 `--reboot-argument=`，`lib-soft-bootloader.sh` 按版本探测）；
+> 该库 `sb_fb_alive` 用裸 `fastboot`（本机 PATH 无此件）⇒ 明明进了 fastboot 也报「软路径失效」，已按 `FB_BIN→PATH→常见落点` 解析。
+> ④ **新门 2 个**：doctor §28（软路径库自检 6/6 + 反作弊 + 禁 `eldroid-bootctl` 回归）、§29（上机候选件 sha 账目，**首跑即抓到页缓存单比特翻转**，证据已上交
+> `~/hw-stability/evidence/inbox/20261124-y700-elden-rootfs-minbase-pcache-1byte/`；判据一律 O_DIRECT）。
+> ⑤ **待用户**（人不在时不要做）：判据 3 插拔测试；`板件 v9` 放行（等 v14 进树）。
 
 > **🆕 2026-11-23 对账（本轮）**：最新会话证据 = 11-23 深夜会话（`ab7efd8c`：dwc3 v12 四枚成稿 + 门禁日志）+ 11-23 白天 lane 批（`857047b3`/`c1ce6146`，§4.0 已记）。
 > **🆕 2026-11-23 深夜（上机 + 重大更正）**：① **方向键** 提级尝试（us/terminal 默认层 row2 加 ←↑↓→）经用户实测**否决并回退**（挤占 row2 ⇒ 全键盘变窄、空间利用率下降）；现役 OSK 件 `cde21b9c…`；② **每键震动 ✅ 用户实测有震动**（根因 = `environment.d` 对 greetd/phosh 链无效，改 `/etc/environment` + `restart greetd`）；③ **RIME 输入法 ✅ 用户实测可用**（B 案 wiring + librime，进程加载 `luna_pinyin.table.bin`）；④ **vk192「漂移」= 误报**（该件 UTS 本身就写 vk189-suspend，判别特征 nftables 已验）；boot_b 归位标准 vk192 件（`LABEL=linux17`→`LABEL=linux` 等长改写 + 签名 + 读回 + 冷起）；⑤ **充电「回归」= 假象**：PD 长边供电 + 短边数据并行工作，单口接 PC 时固件把 `input_current_limit` 锁 100 mA（写 2 A 被重置）；⑥ 🚨 **PITFALLS #712 更正**：`systemctl reboot bootloader` 在**无 vendor-reset 钩子**的 vk192 上同样进 fastboot（同启动内对照：无参 reboot 回 Linux、`reboot bootloader` 进 fastboot）⇒ **#690/#701 的「只能物理键」作废**，旧错因 = 静态判据 + 工具 fail-closed 从未真发命令；`elden-to-bootloader --auto` 已恒走 psci 臂并部署；⑦ `patches/local/psci-vendor-reset-20261123/` 入栈（对 `reboot edl` 可能仍有用，**非进 fastboot 必要条件**）；`out/g7-reset-20261123/` 含带钩子件 `647784b7…` 与对照件 `f79dcbcb…`。全账 = `reports/linux-to-bl-vendor-reset-20261123.md`、`reports/onkernel-20261123-h2.md`。
