@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=8e032f09a1011cb7（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=18073966713ec6b7（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**350**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 78 / 设备操作 105 / 造件 71 / 取证 49 / 一次性 2 / 公共库 8 / 其它 37
+- 入口总数：**351**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 78 / 设备操作 105 / 造件 71 / 取证 50 / 一次性 2 / 公共库 8 / 其它 37
 - 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -177,7 +177,7 @@
 | `scripts/net-up.sh` | net-up.sh (NM) — bring up WiFi at boot via NetworkManager, with the old | 47 |
 | `scripts/oob-gs1-activate.sh` | 在设备上把 USB gadget 重新 bind，启用第二个 ACM(acm.GS1) | 5 |
 | `scripts/package-camera-modules.sh` | build out/camera-modules-<KV>.tar.gz from a | 13 |
-| `scripts/payload-modules-load.sh` | load the modularized payload drivers (ATH12K, QDSP6 | 33 |
+| `scripts/payload-modules-load.sh` | load the modularized payload drivers (ATH12K, QDSP6 | 34 |
 | `scripts/probe-camera-sensors.sh` | TB322FC (elden/SM8750) 相机 + 传感器 只读探测 | 8 |
 | `scripts/q26-recheck.sh` | Q26 vk62 单变量复核（主机侧，零写盘 fastboot boot）。 | 30 |
 | `scripts/recover-lun4-slotguid.sh` | 修「ABL 报 ValidateSlotGuids: BootableSlot _<x> does not have valid guids ⇒ 掉 fastboot」。 | 4 |
@@ -293,7 +293,7 @@
 | `scripts/uefi-r21-p7-ladder.sh` | UEFI R21「p7 / preamble7」一族镜像的**唯一重建入口**（G1-29 线，纯主机侧） | 154 |
 | `scripts/uefi-repack-v2aligned.py` | 把 UEFI payload（BootShim + FD）打成一个 **ABL 会真跳进去** 的 boot.img。 | 22 |
 
-## 取证（49）
+## 取证（50）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -312,6 +312,7 @@
 | `scripts/display-drop-forensics.sh` | 设备侧「桌面显示栈自发掉线」一次抓全 | 3 |
 | `scripts/f2fs-host-bench.sh` | f2fs vs ext4 的主机 loop 台架（G1，零设备写盘） | 3 |
 | `scripts/fb-survey.py` | 事后从 DRAM 读回 splash_region，还原 shim 的「整屏纯色」执行轨迹。 | 4 |
+| `scripts/g7-mux-probe.sh` | 读「USB HS 数据 mux 的选择线（TLMM GPIO29）」，给 G7 的「换口 → mux 切换」判据用 | 1 |
 | `scripts/grubfat-inspect.sh` | 引导链取证（四代 TB322FC / 三代 TB321FU 通用，可参考 BOOTCHAIN-2026-10-05） | 12 |
 | `scripts/gui-freeze-watch.sh` | 抓 PITFALLS #106「进 GUI 后整机卡死」的现行。 | 6 |
 | `scripts/gui-stress.sh` | 给 PITFALLS #106「进桌面后整机卡死」造**真实** GUI/GPU 负载。 | 7 |

@@ -178,6 +178,8 @@ Workqueue: events_unbound deferred_probe_work_func   （t=0.32 s，随后 clk_co
     gpio29  : out low  func0 2mA pull down       # = mux state 0（dwc3 侧 sysfs 只暴露 muxchip0，无 mux_state）
    ```
 
+   工具：`scripts/g7-mux-probe.sh`（只读；`--watch 60` 在插拔期间只打印变化行，TSV 含时间 / gpio29 电平 /
+   两个 port 的 `data_role` / `port0 orientation`）。实机在 vk189 与 g7a2 上各验过一次读数。
    即判据 3 的判法 = **插拔前/后各读一次该行**，`out low` ↔ `out high` 翻转即「换口 → mux 切换」成立；
    `typec` 侧的 `data_role` 两个 port 都显示 `host [device]`（无 partner 时的常态，不作出结论）。
    **注意**：别用 `echo … > /sys/class/typec/port0/data_role` 去模拟——角色一切换，`usb0` 上的 ssh 通道就断了，
