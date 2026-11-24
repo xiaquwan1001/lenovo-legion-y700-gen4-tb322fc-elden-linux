@@ -117,3 +117,22 @@ make -j26 ARCH=arm64 … O=/tmp/kb-v9b CHECK_DTBS=1 qcom/sm8750-lenovo-elden.dtb
 2. `[PATCH v3 07/11] drm/msm: mdss: Add support for MDSS on Nord`（Nabige Aala，11-16）
    —— 与我们 M8 2/3 改的**同一个 `msm_mdss.c`**。
 投 v14 / M8 后续代次前先看这两条是否进树。
+
+## §8 M8（mdss 三枚）合入状态现查（2026-11-24，直接读上游文件，不看 patchwork 状态字段）
+
+patchwork 的 `state`/`commit_ref` 已知不可靠（wl2868c 合入后仍 `new`）⇒ 这里直接读树：
+
+| 判据 | 命令（`git.kernel.org` `plain`，linux-next master 与 torvalds master 各一份） | 结果 |
+|---|---|---|
+| 2/3 驱动「按 DT 复位全部 block reset」 | `.../next/linux-next.git/plain/drivers/gpu/drm/msm/msm_mdss.c` | **未合入**：全文只有 `reset_control_get_optional_exclusive(dev, NULL)` 一处（`:326-345`），没有遍历 `resets` 的块复位逻辑 |
+| 1/3 binding「additional block resets」 | `.../next/.../Documentation/devicetree/bindings/display/msm/mdss-common.yaml` | **未合入**：`resets:` 仍是单条 `items: - description: MDSS_CORE reset`（`:86-88`） |
+| 3/3 sm8750 第二个 MDSS 块 | `.../next/.../arch/arm64/boot/dts/qcom/sm8750.dtsi` | **未合入**：`grep -c 'mdss@ae01000'` = **0**（只有 `display-subsystem@ae00000` @3352） |
+
+（torvalds master 的 `msm_mdss.c` 与 linux-next **逐字节同 size=15679**，即两条线都还没进。）
+
+**判读**：v5 于 2026-11-13 23:48Z 投出、带 **3 个 Reviewed-by**（Abel Vesa / Dmitry Baryshkov / Konrad Dybcio），
+到 2026-11-24 已 **~10 天**仍在两条树之外 ⇒ 属于「等 msm 维护者批量 pull」的正常窗口，但也可以问一句。
+**是否 ping / 改投 `dri-devel` —— 需要用户裁决**（发信按 §7 逐系列批准）。
+
+**同文件外部在途**：`[PATCH v3 07/11] drm/msm: mdss: Add support for MDSS on Nord`（Nabige Aala，11-16，sashiko 已回）
+也改 `msm_mdss.c`；若它先进树，我们 2/3 需要 rebase（不是冲突，是相邻 hunk）。
