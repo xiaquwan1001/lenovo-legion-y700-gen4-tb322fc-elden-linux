@@ -12,15 +12,17 @@
   §4 = 按 linux-next master 2026-11-24 快照复验，6/6 上下文已按该基线重生成后干净）
 - **lore 复核（2026-11-24 01:53 / 02:20 UTC 两次实测）**：`linux-input` 与 `linux-devicetree` **两侧都 `not found`**。
   对照：26 秒前投的 dwc3 v14 已 `linux-devicetree` 归档 4/4 ⇒ 不是本机通道问题，也不是同一时段的普遍滞后。
-- **2026-11-24 02:35 UTC（发信 ~45 min）三处交叉验证**：
-  - `lore.kernel.org/linux-input/…-2-…` → `not found`；`lore.kernel.org/linux-devicetree/…` → `not found`；
-  - `patchwork.kernel.org/api/1.2/patches/?msgid=…-1-/-2-` → **hits 0**（patchwork 也没有 ⇒ 不是"lore 慢"）；
-  - `marc.info` 404、`mail-archive` 「Not Found」。
-  ⇒ **结论：这批邮件没有到达 vger 归档链路**（同分钟投出的 dwc3 v14 已归档 ⇒ 排除本机通道/普遍滞后）。
-- 发送侧证据：`git send-email` 对 7 封各报 `Result: 250`；收件人解析正确（含 `linux-input@vger.kernel.org`）。
-- **最可能假设**：`linux-input` 是「订阅者才能投」的列表（vger 审核队列，或静默丢弃非订阅者）。
-  v2 于 11-17 曾归档成功 ⇒ 订阅可能在期间失效。
-- **待用户**（人不在时不做）：核实/恢复 `linux-input` 订阅，或改用 `dmitry.torokhov@gmail.com` 直投 + 论坛转贴。
-  **不要重投整套 7 封**（会制造重复线程）；若最终要重发，只补一封 cover 说明「v3 已发但未进归档」并附
-  `b4` 或 `lore` 之外的链接。
+- **★2026-11-24 03:0x UTC 更正（是摄取延迟，不是投递失败）**：同一批邮件此时已在 `linux-input` 归档
+  （3/6、4/6、5/6、6/6 + sashiko 回复，时间戳 `01:50:38–02:03:12Z`）。
+  02:35Z 判的「这批邮件没有到达 vger 归档链路」**作废**；真实成因 = input 子系统侧摄取延迟 **>1 h**
+  （同分钟投出的 dwc3 v14 在 devel 侧 26 s 归档，属列表差异）。**⇒ 不要按「订阅失效」去改订阅或补投。**
+  判据与全过程：`reports/comm-triage-20261124-c.md` §1。
+- **v3 已收到 sashiko 4 条意见（2026-11-24T02:03:12Z）**：**[High] patch 6 缺 `Signed-off-by:` = 真实**
+  （`grep -c '^Signed-off-by:' v3-0006-*.patch` = 0，其余 5 件各 = 1）⇒ **必须出 v4**；
+  另 2 条 Medium 也成立（devres 动作对未初始化 `play_work` 调 `disable_work_sync`；`close()` 里
+  `level=0` 让 memless timer 重排 play_work），1 条 Low（注释/commit message 措辞 + `Changes since v2:` 位置）。
+  逐条判别：`reports/comm-triage-20261124-c.md` §2。
+- **历史（已作废，保留作沿革）**：2026-11-24 02:35Z 三处交叉验证（`linux-input`/`linux-devicetree` `not found`、
+  patchwork `hits 0`、marc/mail-archive 404）当时判「未到 vger」；**这些判据的时效不足 1 h，不可再作结论依据。**
+  发送侧证据仍成立：`git send-email` 7 封各 `Result: 250`，收件人解析正确（含 `linux-input@vger.kernel.org`）。
 - **发送命令**：`bash SEND.sh --yes`

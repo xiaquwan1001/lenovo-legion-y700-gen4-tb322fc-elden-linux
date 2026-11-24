@@ -16,7 +16,7 @@
 > **🆕 2026-11-24（无人值守轮 + 一次用户放行的设备窗口；逐项证据在对应 report / SENT / GATES）**：
 > ① **上游**：`dwc3 v14` 已投（4×250，cover `<20261124015002.1426767-1>`，`linux-devicetree` 已归档 4/4；只修 sashiko 对 v13 1/3 的三条 [Low]）；
 > `aw86927 v3` 已投（7×250，cover `<20261124015028.1427393-1>`；[High] unbind 竞态 + [Low] message，只改 6/6）；
-> **但 aw86927 v3 在 `linux-input`/`linux-devicetree` 与 marc/mail-archive 三处都查不到** ⇒ 归档异常待查（假设见 `patches/upstream/aw86927-v3-prep-20261124/SENT.md`，**不要重投整套**）；
+> ~~**但 aw86927 v3 三处都查不到**~~ **已更正（03:0xZ 复扫）= 摄取延迟 >1 h，不是投递失败**：v3 已在 `linux-input` 归档（`01:50:38–02:03:12Z`），且 **sashiko 02:03Z 给了 4 条意见**，其中 **[High] patch 6 缺 `Signed-off-by:` 现查为真**（`grep -c` = 0，其余 5 件 = 1）⇒ **必须出 v4**（另 2 Medium 也成立），逐条判别 `reports/comm-triage-20261124-c.md` §2；**不要重投整套 7 封**；
 > `M8 mdss v5` 已 ping（1×250，读树现查三枚仍未合入）；`板件 v9` 备料完成但**按住未发**（依赖 dwc3 binding 先进树）。
 > ② **设备**（用户放行窗口）：`vendor_boot_b` 已重刷为 ESP（读回 sha `af97b799…`、`blkid` = `ELDENESP/88D0-7871/4096`，原厂件备份 `backup/pre-esp-flash-20261124/`）；
 > G7 `g7a2` 两次零写盘上机：起机/role-switch/UDC/typec 全过，**判据 1 按「不高于基线」口径通过**（7 vs 基线 8，§3 原文「=0」是错期望），
