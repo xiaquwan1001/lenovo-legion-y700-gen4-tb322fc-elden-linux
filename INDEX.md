@@ -16,8 +16,12 @@
 > ③ **phosh !2005 按 guidog 意见重写并 force-push**（fork 分支 `283c9e8`，替代 `88a0e23`）：删 `output_power_unavailable` 字段
 > ⇒ `monitor.h` 零改动；`failed` 里置「屏亮」+ 丢弃僵尸 proxy；`phosh_monitor_set_power_save_mode()` 每次重试拿 proxy（正是 guidog 要的
 > 「retry on next press」）。编译门 = 用项目既有 phosh 0.58 构建树的**原样 `-Werror` 全套**做 aarch64 交叉编译，0 warning（报告
-> `reports/phosh-mr-2005-rework-20261124.md`）。**MR 描述/回帖仍待用户手做**（`gitlab.gnome.org/api` 从本机出口 406 + glab 无该站 token，
-> 仅 SSH 可用），文案见报告 §4。
+> `reports/phosh-mr-2005-rework-20261124.md`）。**MR 描述/回帖已办完（14:4x–15:0x，用户提示 keyring + 代理后）**：keyring 里已有 gitlab token（`secret-tool lookup
+> protocol https user xuqianhui1001 host gitlab.gnome.org`）+ **bettbox 混合端口 7890**（直连 406，走代理 200；节点实测
+> 香港WAP-优化2/日本JP-HY2/美国USLA-A/台湾-优化 = 200，新加坡SG-A = 406 ⇒ 换节点即可，用完已切回香港WAP-优化2）⇒ 描述改短
+> （1960→883）、回帖 `note 2945304`、顺手修掉 CI `check-style`（`g_warning (` 空格 / 续行对齐 / uncrustify 要求的签名对齐）⇒
+> **pipeline 1152598（`5300355a`）全部自动 job success**（check-style/commit-log/build×3/unit/integration/deb 包），
+> 页面显示 `manual` 只是 `abi-compliance-checker` 等需人工点的 job。报告 `reports/phosh-mr-2005-rework-20261124.md` §3b。
 
 > **🆕 2026-11-24 11:4x 轻负载轮（本轮）**：**aw86927 v4 备料完成、门禁全绿、未投（等放行）** —— `patches/upstream/aw86927-v4-prep-20261124/`（7 封含 cover）；
 > 6/6 重写处置 sashiko 对 v3 的四条（[High] 补 `Signed-off-by`、[Medium] `INIT_WORK` 提前到 devres 动作前、[Medium] 新增 `enabled` 闸门堵 close() 后 timer 重启播、[Low] 措辞/changelog 位置），
