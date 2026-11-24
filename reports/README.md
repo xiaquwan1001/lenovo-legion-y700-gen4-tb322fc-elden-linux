@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：631
+- 报告总数：633
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -35,11 +35,11 @@
 | `userland` | 7 | `userland-drift-audit-20261121.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
+| `comm` | 5 | `comm-triage-20261124-c.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
-| `comm` | 4 | `comm-triage-20261124-c.md` |
 | `disk` | 4 | `disk-reclaim-20261121.md` |
 | `dwc3` | 4 | `dwc3-g7-prep-20261121.md` |
 | `g7` | 4 | `g7-flip-ondevice-20261123.md` |
@@ -158,6 +158,7 @@
 | `replay` | 1 | `replay-2026-10-17-m1-73-vk127.md` |
 | `repo` | 1 | `repo-slim-audit-20261113.md` |
 | `resource` | 1 | `resource-revue-20261119.md` |
+| `rime` | 1 | `rime-completer-userdir-20261124.md` |
 | `shellcheck` | 1 | `shellcheck-fix-20261120.md` |
 | `shutdown` | 1 | `shutdown-greetd-hang-plan-20261030.md` |
 | `sn` | 1 | `sn-anchoring-audit-20261113.md` |
@@ -644,6 +645,14 @@
 - `device-window-checklist-20261031.md` — 设备窗口执行单（B 类阻塞合并）— 2026-10-31
 - `device-rescue-and-q28-m1-badboot-20261017.md` — 换机后 P0 抢救 + M1-7.3 线首个 Q28 坏发现场（2026-10-17）
 
+## `comm`（5）
+
+- `comm-triage-20261124-c.md` — 通信 lane 复扫（2026-11-24 03:0xZ / 11:0x CST）— D10 只读
+- `comm-triage-20261124-d.md` — 通信 lane 复扫（2026-11-24 11:5x CST）— D10 只读，第 2 轮
+- `comm-triage-20261124-e.md` — 通信 lane 复扫（2026-11-24 05:00Z → 08:30Z）— E 轮，只读
+- `comm-triage-20261123-b.md` — D10 通信跟踪（b 轮，下午）2026-11-23
+- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
+
 ## `git`（5）
 
 - `git-slim-exec-20261113.md` — git 树整理执行账 — 2026-11-13（第二轮）
@@ -672,13 +681,6 @@
 - `c5-u7-container-camera-20261028.md` — C5/U7 容器相机：从「需装 APK」推进到「HAL 静态元数据为空」——真卡点换人（2026-10-28）
 - `c5-u7-gralloc-device-20261028.md` — C5/U7 容器相机 gralloc 崩溃：设备侧判别 E1/E2 与最小修法（2026-10-28）
 - `c5-u7-gralloc-layout-20261028.md` — C5/U7 容器相机「帧交给图形层」崩溃：gralloc 布局定位（2026-10-28）
-
-## `comm`（4）
-
-- `comm-triage-20261124-c.md` — 通信 lane 复扫（2026-11-24 03:0xZ / 11:0x CST）— D10 只读
-- `comm-triage-20261124-d.md` — 通信 lane 复扫（2026-11-24 11:5x CST）— D10 只读，第 2 轮
-- `comm-triage-20261123-b.md` — D10 通信跟踪（b 轮，下午）2026-11-23
-- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
 
 ## `disk`（4）
 
@@ -1233,6 +1235,10 @@
 ## `resource`（1）
 
 - `resource-revue-20261119.md` — 资源重审 — 按新口径「快速从原厂 Android → 能力完整 Linux」（2026-11-19）
+
+## `rime`（1）
+
+- `rime-completer-userdir-20261124.md` — Rime completer 的 user-data：真因、`deployment_tasks.cc:90` 语义、修复与免触摸验证（2026-11-24 D3 主机侧）
 
 ## `shellcheck`（1）
 

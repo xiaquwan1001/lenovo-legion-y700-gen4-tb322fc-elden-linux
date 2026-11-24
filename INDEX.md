@@ -15,7 +15,14 @@
 > 修法零重编：建 `~/.local/share/rime`（属主会话用户）+ `gsettings set … user-data <该目录>` + 重启 osk-stub ⇒ osk-stub 自己填出 24 个
 > `luna_pinyin*` 档、错误消失、**它持有 `luna_pinyin.userdb/LOCK`**（外部进程开同库报 `Resource temporarily unavailable` = 真在用）；
 > 同一对目录跑 `librime-piped --oneshot nihao` = **你好/妳好/逆号/拟好/你**。**剩 = 屏上真打字/震动/方向键三条需人手**（设备在锁屏，无 `/dev/uinput`）。
-> 全账 `reports/d3-rime-ondevice-20261124.md`；新坑 **PITFALLS #713/#714**。
+> ★**同日更正（跨 lane 裁决，主会话已改文档）**：初版写「该错误 ⇒ 候选恒空」**过强**。主机侧 lane 用**设备同版本 librime 1.13.1**
+> 做隔离实验：空 user dir 下 `nihao` **照样出 5 个候选**（走 `librime-data` 预编译 bin 回退）⇒ 该错误真正破坏的是
+> **用户词典/用户定制/installation_id 持久化 + 部署产物落进进程 cwd**。修复动作与「部署真的成功」的证据不变，但
+> 「屏上候选条」判断仍需人手（修复前也有候选，屏上不易区分）。
+> 全账 `reports/d3-rime-ondevice-20261124.md`（§0b 更正）、`reports/rime-completer-userdir-20261124.md`；新坑 **PITFALLS #713/#714/#715**。
+> ★**#715：设备「不能注入触摸」已过时** —— `/dev/uinput`（`CONFIG_INPUT_UINPUT=m`）+ `ydotoold`+`ydotool`+`wtype`+`grim` 全在：
+> `wtype` 能真打字、`ydotool` 能做指针（绝对坐标 0..65535）、自建 `INPUT_PROP_DIRECT` 虚拟触摸屏能被 phosh 当触摸（本轮实测点开 Firefox 下拉/导航）。
+> 但 `ydotoold` 的虚拟设备算**键盘** ⇒ OSK 永不展开（`ignore-hw-keyboards true` 实测未即时生效），`loginctl unlock-sessions` 解不了锁屏。
 > ② **G1-5 相机基线复核通过（vk189 日常核，11-19 重建根后首次）**：前摄 `gc08a8` 3264×2448 / 后摄 `s5kjns` 4080×3072，
 > 10 帧 `rc=0`、60 帧实测 **27.52 / 27.58 fps**、单帧解包后 distinct **892 / 681**（非黑非恒定）、dmesg 零新增错误；
 > 顺带把重建根丢的 `v4l-utils` 装回。角色定位写清：这**不能**充当 camss CSIPHY v2 的「上机出流回归」（在机核无该补丁、也无 7.4 板 DTS）。

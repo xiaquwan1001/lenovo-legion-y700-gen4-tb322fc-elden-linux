@@ -9,11 +9,26 @@
 | 项 | 结论 | 判据（可复跑） |
 |---|---|---|
 | **B 案 rime 件是否已部署** | **早就部署完了**（不是待办）——`/usr/bin/phosh-osk-stub` md5 = `2c040ca7…` = `out/osk-stub-rime-20261123/phosh-osk-stub`；`dpkg-divert` 在；gschema + `rime.completer` 均我方件；`Completers default = 'rime'` | 见 §2 表 |
-| **真缺陷（唯一）** | `sm.puri.phosh.osk.Completers.Rime user-data = ''` ⇒ 我们的 completer 把空串直接塞给 `RimeTraits.user_data_dir` ⇒ librime 每发都 `deployment_tasks.cc:90 Error creating user data dir:`（日志里冒号后**为空**正是空路径的指纹）⇒ 用户词典/部署从未建成 ⇒ 候选空 | `journalctl _COMM=phosh-osk-stub \| grep 'Error creating user data dir'` |
+| **真缺陷（唯一）** | `sm.puri.phosh.osk.Completers.Rime user-data = ''` ⇒ 我们的 completer 把空串直接塞给 `RimeTraits.user_data_dir` ⇒ librime 每发都 `deployment_tasks.cc:90 Error creating user data dir:`（日志里冒号后**为空**正是空路径的指纹）⇒ **用户词典/用户定制/installation_id 从未持久化，且部署产物写进进程 cwd**（⚠ 本行原写「⇒ 候选空」，**2026-11-24 已更正**：见下方 §0b） | `journalctl _COMM=phosh-osk-stub \| grep 'Error creating user data dir'` |
 | **修法（零重编）** | `install -d ~/.local/share/rime` + `gsettings set … user-data /home/xuqianhui1001/.local/share/rime` + 让 osk-stub 重启 | §3 |
 | **修复后证据** | `~/.local/share/rime/` 被 osk-stub 自己填出 **24 个文件**（`build/luna_pinyin*.{prism,table,reverse}.bin` 等，属主 `xuqianhui1001`，mtime = 重启当刻）；journal 里该错误消失；**osk-stub 持有 `luna_pinyin.userdb/LOCK`**（拿独立进程去开同一 userdb 会 `Resource temporarily unavailable` = 它真的在用 RIME） | §4 |
 | **候选真的出得来** | 用仓内 A 案守护件（静态构建的 aarch64 `librime-piped --oneshot`）以**同一对 shared/user 目录**跑：`nihao` ⇒ **你好 / 妳好 / 逆号 / 拟好 / 你**（rc=0） | §4 |
 | **仍缺（需人手）** | 屏上真打字（输入框内 `nihao` → 候选条 → 空格/数字选词）、每键震动、方向键三条观感判据；设备当前停在**锁屏**（无 `/dev/uinput`，agent 无法注入手势） | §5 |
+
+## 0b. ★更正（2026-11-24，跨 lane 裁决）：该错误 ≠ 候选为空
+
+并行车道 `reports/rime-completer-userdir-20261124.md` §3.3 用**设备同版本 librime 1.13.1（arm64）**做了三段对照实验：
+
+- `user_data_dir=""` ⇒ 那条 ERROR 照出，但 `nihao` **仍出 5 个候选**（`你好/妳好/逆號/擬好/你`）；
+  候选来自 Debian `librime-data` 的**预编译 bin**（`/usr/share/rime-data/build/*.bin`，`FallbackResourceResolver` 回退，`src/rime/resource.cc:36-45`）。
+- 因此本报告初版 §0 把「ERROR ⇒ 候选空」写成因果**是过度推断**，已就地改正。真实危害两条：
+  ① 用户词典/用户定制/`installation_id` **不持久化**（学过的词、词频、自定义短语全丢，且每次开机重新部署）；
+  ② 部署产物落到**进程 cwd**（osk-stub 由 phosh 拉起，cwd 不在用户目录 ⇒ 目录污染 + 换会话即丢）。
+- **仍然成立**的部分：修复动作与修复后证据（`user-data` 指向真实目录 ⇒ 错误消失、`build/` 24 档落位、osk-stub 独占 `luna_pinyin.userdb/LOCK`）
+  ——那是「部署真的成功了」的正面证据，与「候选是否出得来」是两件事，别混说。
+
+⇒ 由此，**D3 的「屏上候选条」判断仍需人手确认**（因为「修复后候选更好用」与「修复前已有候选」在屏上不易区分）；
+真正可自动判的 D3 判据 = 上面的 three-level 证据 + `deploy-desktop-shell.sh --check` §14。
 
 ## 1. 为什么这是「收口」而不是「又一轮调研」
 
