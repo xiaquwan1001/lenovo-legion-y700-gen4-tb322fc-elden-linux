@@ -1,0 +1,3 @@
+Sending 'boot.img' (83916 KB)                      OKAY [  1.927s]
+Booting                                            OKAY [ 10.107s]
+Finished. Total time: 12.074s

@@ -433,7 +433,7 @@ bash scripts/iterate.sh kernel --boot       # 全量重编一次；此后驱动�
 - 取证与根因分析：`archive/topics/KEXEC-2026-10-05.md`。
 
 **Linux → fastboot**（必要时）：
-- **主路径 = `ssh elden-root 'sync; systemctl reboot bootloader'`**（`PITFALLS` #712，2026-11-23 同启动内对照实测：**不需要** vendor-reset 钩子，无钩子的 vk192 上 ~21 s 进 fastboot）。唯一实现 = `scripts/lib-soft-bootloader.sh`（`scripts/to-fastboot.sh`、`slot-switch.sh`、`q26-recheck.sh`、`arm-window-hunt.sh`、`n5b-vk64-death-rate.sh` 都 source 它）。
+- **主路径 = `ssh elden-root 'sync; systemctl reboot --reboot-argument=bootloader'`**（★2026-11-24 实机：systemd 257 移除了 reboot 位置参数，旧写法 `Too many arguments.` 且不动设备）（`PITFALLS` #712，2026-11-23 同启动内对照实测：**不需要** vendor-reset 钩子，无钩子的 vk192 上 ~21 s 进 fastboot）。唯一实现 = `scripts/lib-soft-bootloader.sh`（`scripts/to-fastboot.sh`、`slot-switch.sh`、`q26-recheck.sh`、`arm-window-hunt.sh`、`n5b-vk64-death-rate.sh` 都 source 它）。
 - ⛔ **作废（2026-11-24，`PITFALLS` #712）**：2026-11-19 那条「现役 vk192 无 vendor RESTART2 钩子 ⇒ 软路径不存在、白等 90 s」是**错的**（旧判据只看 kallsyms 静态事实 + 工具 fail-closed 从未真发命令）。仍成立的两小点：`cycle.sh --soft`（sysrq-b 暖复位）不落 fastboot、`cycle.sh --fastboot`（misc BCB）ABL 不认（`PITFALLS` #65/#66）；`eldroid-bootctl` 已随 Alpine 根退场（现役根无 python3）。
 - **软路径真失败 ⇒ 手工**：长按电源 10 s 断电 → 音量下 + 电源进 fastboot。
 - `scripts/to-fastboot.sh --flash <img>` 仍可用（先在 Linux 内 `dd` 写 boot_b 再重启，无需主机 fastboot 参与写盘）；`--boot` 不推荐。

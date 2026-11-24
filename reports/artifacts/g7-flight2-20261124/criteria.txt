@@ -1,0 +1,32 @@
+== 1 devlink:
+7
+== 1b fixed cycles:
+137
+== 2 role switches:
+/sys/class/usb_role/a600000.usb-port0-role-switch
+/sys/class/usb_role/a600000.usb-port1-role-switch
+== 3 mux:
+/sys/class/mux/muxchip0
+  /sys/class/mux/muxchip0 state=
+== 4 gadget:
+a600000.usb
+== 5 typec:
+port0
+port0-partner
+port1
+  /sys/class/typec/port0 role=host [device] power=source [sink]
+  /sys/class/typec/port0-partner role= power=
+  /sys/class/typec/port1 role=host [device] power=source [sink]
+== 6 fsa4480/dwc3:
+[   11.040174] [    T127] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   11.040202] [    T127] CPU: 5 UID: 0 PID: 127 Comm: kworker/5:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[   12.064286] [    T127] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   12.064346] [    T127] CPU: 5 UID: 0 PID: 127 Comm: kworker/5:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[   13.088243] [    T127] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   13.088353] [    T127] CPU: 5 UID: 0 PID: 127 Comm: kworker/5:1 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[   14.658777] [    T723] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   14.658863] [    T723] CPU: 0 UID: 0 PID: 723 Comm: kworker/0:4 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[   15.810612] [    T723] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   15.810697] [    T723] CPU: 0 UID: 0 PID: 723 Comm: kworker/0:4 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[   16.834674] [    T723] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   16.834761] [    T723] CPU: 0 UID: 0 PID: 723 Comm: kworker/0:4 Tainted: G        W           7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 

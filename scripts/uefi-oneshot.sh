@@ -39,7 +39,7 @@ d=$(timeout 6 "$S" devices 2>/dev/null); if [ "${d#*$ABL}" = "$d" ]; then
 				sleep 4
 			done
 			timeout 25 ssh -o BatchMode=yes -o StrictHostKeyChecking=no \
-				"${TAB:-root@192.168.7.1}" 'sync; systemctl reboot bootloader' >/dev/null 2>&1
+				"${TAB:-root@192.168.7.1}" 'sync; systemctl reboot --reboot-argument=bootloader 2>/dev/null || sync; systemctl reboot bootloader' >/dev/null 2>&1
 			wait_serial "$ABL" 40
 		}
 	fi

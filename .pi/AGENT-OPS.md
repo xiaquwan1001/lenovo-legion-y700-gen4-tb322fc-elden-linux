@@ -54,7 +54,9 @@
 - 覆盖 a 槽前确认真机对照取证已归档（2026-10-11 主体已采，指针 `TASKS/README.md §5` Q5）；回收 Android 专属分区需 G1 全绿 + EDL 备份在手。
 - **零写盘优先** `fastboot boot`；严格区分 **`-ram` 纯 RAM 变体（无桌面/服务）** 与**持久变体（RAM 内核 + 磁盘根）**——功能/服务级测试必须用持久变体（`PITFALLS` #92/#93）。
 - **封装脚本**：主机侧构建/打包脚本可跑；**刷写/EDL 命令一律拆单条**（该机对批量/连续命令容错差，见 `PITFALLS` #3）。
-  **进 fastboot 的首选路径 = `ssh elden-root 'sync; systemctl reboot bootloader'`**（`PITFALLS` #712，2026-11-23 同启动内对照实测；
+  **进 fastboot 的首选路径 = `ssh elden-root 'sync; systemctl reboot --reboot-argument=bootloader'`**
+  （★2026-11-24 实机：现役根 systemd 257 **移除了 reboot 位置参数**，`systemctl reboot bootloader` 报 `Too many arguments.` 且设备不动；
+  唯一实现 `scripts/lib-soft-bootloader.sh` 会探测 systemctl 能力自动选形态）（`PITFALLS` #712，2026-11-23 同启动内对照实测；
   **不需要** vendor RESTART2 钩子，无钩子的 vk192 上也 ~21 s 进 fastboot）。唯一实现 = `scripts/lib-soft-bootloader.sh`
   （`soft_to_bootloader [wait_s]`；`scripts/to-fastboot.sh`、`slot-switch.sh`、`q26-recheck.sh`、`arm-window-hunt.sh`、
   `n5b-vk64-death-rate.sh` 都 source 它）。**`PITFALLS` #690/#701 的「无钩子 ⇒ 软路径不存在 / 只能物理键」已作废**，

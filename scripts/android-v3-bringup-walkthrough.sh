@@ -278,7 +278,9 @@ ensure_edl() {
 			;;
 		linux)
 			# Linux → fastboot 走 PSCI vendor reset（PITFALLS #150–#152：不用 reboot bootloader）
-			run 120 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" 'sync; systemctl reboot bootloader'
+			# systemd 257 起 reboot 位置参数被移除 ⇒ --reboot-argument；老 root 回退位置参数
+			run 120 ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$TAB" \
+				'sync; systemctl reboot --reboot-argument=bootloader 2>/dev/null || sync; systemctl reboot bootloader'
 			[ "$APPLY" = 1 ] || { info "[dry] 之后等 fastboot → fastboot -s $SER oem edl"; return 0; }
 			local i
 			for i in $(seq 1 60); do

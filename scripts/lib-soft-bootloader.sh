@@ -1,6 +1,11 @@
 #!/bin/bash
 # lib-soft-bootloader.sh — Linux → bootloader 软路径（唯一实现；2026-11-24 按 PITFALLS #712 重写）
 #
+# ★ 2026-11-24 实机更正（**必须先看**）：现役根 systemd 257（Debian trixie）**移除了 `reboot` 的位置参数**，
+#   `systemctl reboot bootloader` 直接报 `Too many arguments.`、rc=1、设备不动；正确写法是
+#   `systemctl reboot --reboot-argument=bootloader`（同机实测 rc=0、~9 s 进 fastboot）。
+#   本库据此**探测 systemctl 能力**再选形态（老 systemd 仍走位置参数），见 sb_reboot_cmd()。
+#
 # 判据来源：PITFALLS #712（2026-11-23 同启动内对照实测，`reports/linux-to-bl-vendor-reset-20261123.md` §0）
 #   `sync; systemctl reboot bootloader`（= reboot(2) 带 cmd 串）在**无 PSCI vendor-reset 钩子**的
 #   现役 vk192 上也进 fastboot（~21 s；同启动内无参 `systemctl reboot` 回 Linux 作对照）。
@@ -20,6 +25,25 @@
 
 SOFT_BL_WAIT=${SOFT_BL_WAIT:-90}
 
+# sb_reboot_cmd —— 打印本机该用的「带 bootloader reason 的 reboot」命令
+#   systemd ≥ 257 用 `--reboot-argument=`（位置参数已移除），老版本用位置参数；
+#   探测走一次 ssh（结果缓存在 _SB_REBOOT_CMD，同一进程内只探一次）。
+sb_reboot_cmd() {
+	if [ -n "${_SB_REBOOT_CMD:-}" ]; then printf '%s\n' "$_SB_REBOOT_CMD"; return 0; fi
+	local tab=${TAB:-root@192.168.7.1} probe
+	if probe=$(timeout -k 5 15 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -o BatchMode=yes \
+		"$tab" 'systemctl reboot --help 2>/dev/null | grep -c -- --reboot-argument' 2>/dev/null); then
+		case "${probe:-0}" in
+			0) _SB_REBOOT_CMD='sync; systemctl reboot bootloader' ;;
+			*) _SB_REBOOT_CMD='sync; systemctl reboot --reboot-argument=bootloader' ;;
+		esac
+	else
+		# 探不到（ssh 就没通）⇒ 给新形态；真正的失败由调用方按 rc 报
+		_SB_REBOOT_CMD='sync; systemctl reboot --reboot-argument=bootloader'
+	fi
+	printf '%s\n' "$_SB_REBOOT_CMD"
+}
+
 # sb_fb_alive —— fastboot 通道上有（可选：指定 SN 的）设备
 sb_fb_alive() {
 	local d
@@ -32,11 +56,12 @@ sb_fb_alive() {
 
 # soft_to_bootloader [wait_s]
 soft_to_bootloader() {
-	local wait_s=${1:-$SOFT_BL_WAIT} t=0 rc tab=${TAB:-root@192.168.7.1}
+	local wait_s=${1:-$SOFT_BL_WAIT} t=0 rc tab=${TAB:-root@192.168.7.1} cmd
 	sb_fb_alive && return 0
-	echo "[soft-bl] Linux → bootloader：ssh $tab 'sync; systemctl reboot bootloader'（#712 路径）" >&2
+	cmd=$(sb_reboot_cmd)
+	echo "[soft-bl] Linux → bootloader：ssh $tab '$cmd'（#712 路径；systemd 257 用 --reboot-argument）" >&2
 	timeout -k 5 12 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=8 -o BatchMode=yes \
-		"$tab" 'sync; systemctl reboot bootloader' >/dev/null 2>&1
+		"$tab" "$cmd" >/dev/null 2>&1
 	rc=$?
 	case "$rc" in
 		0|124) : ;;   # 0 = 正常退出；124 = 热复位不发 FIN（#628），命令已发出
@@ -105,6 +130,21 @@ EOF
 touch "$SB_FB_FLAG"; exit "$(cat "$SB_SSH_RC")"
 EOF
 	chmod +x "$tmp/bin/ssh2marker"
+	# sb_reboot_cmd 的形态探测（不依赖 fastboot）
+	cat > "$tmp/bin/ssh" <<'EOF2'
+#!/bin/bash
+echo "1"
+EOF2
+	chmod +x "$tmp/bin/ssh"
+	c1=$( (PATH="$tmp/bin:$PATH"; export PATH; TAB=root@127.0.0.1; . "$0"; sb_reboot_cmd) )
+	case "$c1" in *--reboot-argument=bootloader*) pass=$((pass+1)); echo "[selftest] reboot-cmd-new PASS" ;; *) echo "[selftest] reboot-cmd-new FAIL: $c1" ;; esac
+	total=$((total+1))
+	printf '#!/bin/bash\necho "0"\n' > "$tmp/bin/ssh"; chmod +x "$tmp/bin/ssh"
+	c2=$( (PATH="$tmp/bin:$PATH"; export PATH; TAB=root@127.0.0.1; . "$0"; sb_reboot_cmd) )
+	case "$c2" in *"reboot bootloader") pass=$((pass+1)); echo "[selftest] reboot-cmd-legacy PASS" ;; *) echo "[selftest] reboot-cmd-legacy FAIL: $c2" ;; esac
+	total=$((total+1))
+	cp "$tmp/bin/ssh2marker" "$tmp/bin/ssh" 2>/dev/null || true
+
 	run_case "already-fastboot" 0 always 255 1
 	cp "$tmp/bin/ssh2marker" "$tmp/bin/ssh"
 	run_case "ssh-124-then-up"  0 after  124 0

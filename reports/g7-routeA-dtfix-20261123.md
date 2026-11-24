@@ -90,3 +90,44 @@ timeout -k 5 120 fastboot boot out/g7-routeA-dtfix-20261123/boot-elden-g7a2.img
 
 结论：**这枚 `boot-elden-g7a2.img` 是可复现的**（DTS→DTB→镜像三级一致），上机只需 `fastboot boot`
 （零写盘）；§3 的判据表不变。仍未做 = 真机上机（设备离线）。
+
+## §7 flight-2 上机结果（2026-11-24，用户放行设备窗口；零写盘）
+
+命令：`fastboot -s HA2EXB0E boot out/g7-routeA-dtfix-20261123/boot-elden-g7a2.img`（件 sha `79164085…` 与 §0 一致，
+本轮再次 `sha256sum` 核对）。起机后采证，采完 `systemctl reboot` 回日常核（**已确认回到
+`7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`、`/`=`sda17`**）。原始日志 = `artifacts/g7-flight2-20261124/`。
+
+| 判据（§3） | 期望 | 实测（g7a2） | 日常核 vk189 对照 | 结论 |
+|---|---|---|---|---|
+| 0 起机 | `7.4.0-rc3-g7a-dwc3v11…` + `/`=`sda17` | ✅ `7.4.0-rc3-g7a-dwc3v11-20261121-dirty`、`/dev/sda17`、ssh 15 s 可达 | — | **通过** |
+| 1 `Failed to create device link` | **= 0** | **7 条**（`qcom_pmic_glink` → `5-0042`/`5-0043`/`88e8000.phy`/`a600000.usb`，含两个 connector） | **8 条**（同类） | **未达成**（比基线少 1，但没清零；`Fixed dependency cycle(s)` 137 条属允许项） |
+| 2 role switch | 两个 switch、`waiting_for_supplier` 全 0 | ✅ `a600000.usb-port0/port1-role-switch`，两者 `waiting_for_supplier=0` | 同样两个、同为 0 | **通过但不具区分力**（基线本来就 0） |
+| 3 换口 → mux 切换 | mux state 翻转 | **未测**（要插拔线缆，需人工） | — | 待做 |
+| 4 gadget | `/sys/class/udc` 有 `a600000.usb` | ✅ | 同 | **通过** |
+| 5 Type-C 面 | `port0`/`port1` 在 | ✅ `port0`、`port0-partner`、`port1`（`data_role=host [device]`、`orientation` port0=reverse / port1=空） | 同三件 | 通过 |
+| — mux 可观测性 | 能读 state | ✗ `/sys/class/mux/muxchip0` 只有 `device/of_node/power/...`，无 `mux_state`；`/sys/kernel/debug/mux/` 为空（debugfs 已挂） | — | 判据 3 的观测面本身要先补 |
+
+### ★ 本轮发现（回归，优先级高于上面未达成项）
+
+**`WARNING` 计数：g7a2 = 45 条，vk189 基线 = 1 条。** 首条为
+
+```
+WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250
+Workqueue: events_unbound deferred_probe_work_func   （t=0.32 s，随后 clk_core_unprepare 同栈反复）
+```
+
+即 `deferred_probe` 里对未使能/未 prepare 的 clock 做 disable/unprepare ⇒ **Linux 7.4-rc3 + routeA DTS 的
+probe 顺序/时钟引用有问题**（与 vk189 的 downstream DTS 不同）。这条既可能是 routeA DTS 少给/多给了某个 clock，
+也可能是 7.4-rc3 上游此类 WARN 本来就有（本机无从对照第三棵树）。
+
+### 结论与下一步
+
+1. **本件不作为「可用上机候选」继续**：主判据 1 未归零，且新增 clk WARN 风暴（45 vs 1）。
+2. 主机侧下一步（不需要设备）：
+   - 把 45 条 WARN 逐条归类（`grep -A2 "WARNING:"` 的调用栈前缀 → 哪个 driver 的 deferred probe），
+     定位到具体 clock consumer，再在 routeA DTS/驱动侧修；
+   - devlink 那 7 条要单列：它们与 flight-1 的 6 条同族（`qcom_pmic_glink` ↔ `fsa4480`/`dwc3`），
+     §2 里「双向 endpoint 就能消掉」的判断**被本轮否证** —— 需要新的假设（例如 devlink 失败是
+     supplier 尚未注册时的时序问题，而不是 DT 环）。
+3. 判据 3（换口）要等 mux state 的观测面补上（class 无 `mux_state`，debugfs 也没输出）⇒ 先用
+   `gpioget`/pinctrl 读 GPIO29 电平做代理判据。

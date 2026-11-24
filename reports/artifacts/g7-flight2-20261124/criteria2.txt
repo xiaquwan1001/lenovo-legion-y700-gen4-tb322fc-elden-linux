@@ -1,0 +1,37 @@
+== devlink failures (7):
+      1 [    T543] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+      1 [    T543] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+      1 [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+      1 [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+      1 [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 88e8000.phy for /pmic-glink/connector@0
+      1 [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier a600000.usb for /pmic-glink/connector@0
+      1 [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier a600000.usb for /pmic-glink/connector@1
+== typec related devlink:
+[    0.354635] [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+[    0.354666] [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+[    0.364110] [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 88e8000.phy for /pmic-glink/connector@0
+[    0.664612] [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier a600000.usb for /pmic-glink/connector@1
+[    0.664624] [     T95] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier a600000.usb for /pmic-glink/connector@0
+[    3.827286] [    T543] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+[    3.855847] [    T543] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+== role switch files:
+  /sys/class/usb_role/a600000.usb-port0-role-switch/
+
+  /sys/class/usb_role/a600000.usb-port1-role-switch/
+
+== mux files:
+device
+of_node
+power
+subsystem
+uevent
+  /sys/class/mux/muxchip0/device=
+  /sys/class/mux/muxchip0/of_node=
+  /sys/class/mux/muxchip0/power=
+  /sys/class/mux/muxchip0/subsystem=
+  /sys/class/mux/muxchip0/uevent=DEVTYPE=mux-chip
+OF_NAME=mux-controller
+== WARN 文本（前 3 条）:
+[    0.320338] [     T95] WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250, CPU#1: kworker/u33:5/95
+[    0.320441] [     T95] Call trace:
+[    0.320629] [     T95] WARNING: drivers/clk/clk.c:1118 at clk_core_unprepare+0x274/0x2a0, CPU#1: kworker/u33:5/95

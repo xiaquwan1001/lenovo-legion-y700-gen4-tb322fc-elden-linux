@@ -1,0 +1,7 @@
+vk189 baseline:
+1
+8
+141
+  a600000.usb-port0-role-switch wfs=0
+  a600000.usb-port1-role-switch wfs=0
+port0 port0-partner port1 

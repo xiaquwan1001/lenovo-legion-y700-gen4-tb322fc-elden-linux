@@ -238,7 +238,9 @@ if fastboot_devices_has_target; then
 else
 	if sshc 'true' 15; then
 		say "  ssh 可达 → 发 reboot bootloader（软路径，PITFALLS #712）"
-		sshc 'sync; systemctl reboot bootloader' 12 || true   # 124/超时 = 命令已发出（#628）
+		# systemd 257 起 reboot 位置参数被移除（`Too many arguments.`）⇒ 用 --reboot-argument；
+		# 老 root 回退位置参数。124/超时 = 命令已发出（#628）
+		sshc 'sync; systemctl reboot --reboot-argument=bootloader 2>/dev/null || sync; systemctl reboot bootloader' 12 || true
 	else
 		say "  ⚠ ssh 不可达（设备不在 Linux，或 USB-NCM 刚抖过）——仍继续等 fastboot"
 	fi

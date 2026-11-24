@@ -4,7 +4,7 @@
 # （PITFALLS #712 推翻 #690/#701 后的收口，2026-11-24 已接进 10+ 个脚本），但它自己的 --selftest 之前
 # 不属于任何门 ⇒ 改坏了只有上机时才会发现（而「上机」正是最贵的环节）。
 # 本门钉三件事：
-#   ① 库自检必须 4/4 通过（已在 fastboot / rc=0 / rc=124 视为已发出 / 不可达 / 始终不上线）；
+#   ① 库自检必须 6/6 通过（含 systemd reboot 形态探测：≥257 用 --reboot-argument、老版本用位置参数）；
 #   ② 反作弊：把库里「rc=124 视为已发出」那条删掉后自检**必须**变红（否则说明自检是死门）；
 #   ③ 反回归：不许再有脚本调设备侧 `eldroid-bootctl reboot bootloader`（python3 件，现役 Debian 根无
 #      python3 ⇒ `|| true` 静默 no-op；2026-11-24 已逐处换成软路径库）。
@@ -21,8 +21,8 @@ fi
 # ① 库自检
 _rc=0
 _out=$(timeout 180 bash "$LIB" --selftest 2>&1) || _rc=$?
-if [ "$_rc" -eq 0 ] && printf '%s' "$_out" | grep -q 'selftest 4/4 PASS'; then
-  ok "自检 4/4 通过（已在 fastboot / rc=0 / rc=124 视已发出 / 不可达 / 始终不上线）"
+if [ "$_rc" -eq 0 ] && printf '%s' "$_out" | grep -q 'selftest 6/6 PASS'; then
+  ok "自检 6/6 通过（已在 fastboot / rc=0 / rc=124 视已发出 / 不可达 / 始终不上线 / reboot-cmd 两形态）"
 else
   bad "lib-soft-bootloader --selftest 失败（rc=$_rc）：$(printf '%s' "$_out" | grep -E 'FAIL|ERROR' | head -2 | tr '\n' ' ')"
 fi

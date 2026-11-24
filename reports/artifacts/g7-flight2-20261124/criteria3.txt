@@ -1,0 +1,26 @@
+== usb_role class entries:
+  /sys/class/usb_role/a600000.usb-port0-role-switch/
+device power subsystem uevent waiting_for_supplier 
+  /sys/class/usb_role/a600000.usb-port1-role-switch/
+device power subsystem uevent waiting_for_supplier 
+== debugfs mux:
+== dwc3 drd/role:
+bind
+module
+uevent
+device
+== typec ports:
+  /sys/class/typec/port0: data_role=host [device] power_role=source [sink] orientation=reverse
+  /sys/class/typec/port1: data_role=host [device] power_role=source [sink] orientation=
+== gpio29 (mux select):
+== dmesg | grep -iE "role switch|role-switch|dwc3.*mux|fsa4480" | tail -8:
+[   23.617982] [    T723] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   24.661985] [    T723] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   25.762573] [    T723] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   26.786012] [    T723] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   28.354600] [     T34] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   29.378496] [     T34] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   30.402493] [     T34] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+[   31.448167] [     T34] Modules linked in: fsa4480 fastrpc rpmsg_ctrl icc_bwmon coresight_stm stm_p_basic qcomtee stm_core coresight_tmc coresight_cti coresight_replicator coresight_funnel coresight bridge stp llc fuse leds_qcom_flash v4l2_flash_led_class led_class_flash qcom_camss videobuf2_dma_sg v4l2_fwnode videobuf2_memops videobuf2_v4l2 videobuf2_common v4l2_async videodev mc i2c_qcom_cci cambistmclkcc_sm8750 camcc_sm8750 system_heap
+== lsmod usb:
+fsa4480                16384  8

@@ -77,11 +77,17 @@ fi
 if [ "$MODE" = psci ]; then
 	[ "$HOOK" = 1 ] || say "[elden-to-bootloader] 内核无 vendor-reset 钩子，但 \`reboot bootloader\` 仍可进 fastboot（2026-11-23 实测）"
 	if [ "$DRY" = 1 ]; then
-		say "[dry] systemctl reboot bootloader"
+		say "[dry] systemctl reboot --reboot-argument=bootloader（systemd <257 回退位置参数）"
 		exit 0
 	fi
 	sync
-	exec systemctl reboot bootloader
+	# systemd 257+ 用 --reboot-argument（位置参数会报 "Too many arguments." 且 rc=1、设备不动）；
+	# 老 root 没有这个选项 ⇒ 回退位置参数。不用 exec：exec 之后回退分支根本不成立。
+	if ! systemctl reboot --reboot-argument=bootloader 2>/dev/null; then
+		say "[elden-to-bootloader] --reboot-argument 不被接受，回退位置参数形态"
+		systemctl reboot bootloader
+	fi
+	exit 0
 fi
 
 # ---- 臂 2：BCB（bootonce-bootloader）----

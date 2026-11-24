@@ -70,7 +70,7 @@
 | 从 | 到 | 动作 | 注意 |
 |---|---|---|---|
 | Linux | 重启回 Linux | `ssh … 'systemctl reboot'` 或物理长按 | 主机的 `192.168.7.3/24` 地址**随 gadget 重建消失**，每次都要重加（S5） |
-| Linux | fastboot | `ssh … 'systemctl reboot bootloader'`（内核 `psci-reboot` 钩子，G1-24；历史上 `reboot2 bootloader` 22 s 进 fastboot） | **minbase 根没有 `reboot2`/`eldroid-bootctl`**（那两个是 Alpine 期件）⇒ 用 systemd 的 reboot arg；若不吃参数，退 `fastboot oem edl` 已不可用 ⇒ 走 ACM 串口 `reboot -f bootloader` |
+| Linux | fastboot | `ssh … 'systemctl reboot --reboot-argument=bootloader'`（内核 `psci-reboot` 钩子，G1-24；历史上 `reboot2 bootloader` 22 s 进 fastboot） | **minbase 根没有 `reboot2`/`eldroid-bootctl`**（那两个是 Alpine 期件）⇒ 用 systemd 的 reboot arg；若不吃参数，退 `fastboot oem edl` 已不可用 ⇒ 走 ACM 串口 `reboot -f bootloader` |
 | fastboot | EDL | `fastboot -s $SN oem edl` | 会话一次性（`#675`） |
 | Android | fastboot/EDL | `adb reboot bootloader` / `adb reboot edl` | 先 `adb devices` 确认是本机 |
 | 任意 | Linux（持久） | `fastboot -s $SN reboot`（走 `_b`，`slot-successful:b=yes`） | 回 Linux 后 45 s 内 gadget 必枚举（`lsusb \| grep 1d6b:0104`） |
@@ -230,7 +230,8 @@ python3 scripts/slot-attr.py --image back4.bin mark-successful b     # 改两份
 # 写完必须回读复核：主备 byte[6] 都含 0x40，且 `fastboot getvar slot-successful:b` = yes
 ```
 
-> **Linux→fastboot 软路径可用（更正 2026-11-24，PITFALLS `#712`）**：`ssh … 'sync; systemctl reboot bootloader'`
+> **Linux→fastboot 软路径可用（更正 2026-11-24，PITFALLS `#712`）**：`ssh … 'sync; systemctl reboot --reboot-argument=bootloader'`
+> （systemd 257 起 reboot 位置参数被移除；老 root 用位置参数，`scripts/lib-soft-bootloader.sh` 自动探测）
 > 在无 vendor-reset 钩子的现役 vk192 上也进 fastboot（~21 s）⇒ 不再需要手工按键；唯一实现 = `scripts/lib-soft-bootloader.sh`。
 > `#690` 旧结论（无钩子 ⇒ 软路径不成立）仅保留为静态事实，已不作动作判据。
 

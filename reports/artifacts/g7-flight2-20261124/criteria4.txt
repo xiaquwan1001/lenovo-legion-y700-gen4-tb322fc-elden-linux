@@ -1,0 +1,31 @@
+== waiting_for_supplier:
+  a600000.usb-port0-role-switch=0
+  a600000.usb-port1-role-switch=0
+== debugfs mounted:
+1
+asoc
+bcm7271-uart
+bdi
+block
+bluetooth
+== WARN 计数:
+41
+== 首条 WARN 栈:
+[    0.320338] [     T95] WARNING: drivers/clk/clk.c:1259 at clk_core_disable+0x23c/0x250, CPU#1: kworker/u33:5/95
+[    0.320348] [     T95] Modules linked in:
+[    0.320354] [     T95] CPU: 1 UID: 0 PID: 95 Comm: kworker/u33:5 Not tainted 7.4.0-rc3-g7a-dwc3v11-20261121-dirty #2 PREEMPT 
+[    0.320360] [     T95] Hardware name: Lenovo Legion Y700 Gen4 (DT)
+[    0.320364] [     T95] Workqueue: events_unbound deferred_probe_work_func
+[    0.320371] [     T95] pstate: 614000c5 (nZCv daIF +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    0.320375] [     T95] pc : clk_core_disable+0x23c/0x250
+[    0.320380] [     T95] lr : clk_core_disable+0x23c/0x250
+[    0.320385] [     T95] sp : ffff800080e3b530
+[    0.320388] [     T95] x29: ffff800080e3b530 x28: 0000000000000000 x27: 0000000000000000
+[    0.320394] [     T95] x26: 0000000000000000 x25: ffffd2c89bb935b0 x24: ffff0008043c4500
+[    0.320399] [     T95] x23: ffffd2c898c434d8 x22: ffff000804224000 x21: 0000000000000000
+[    0.320404] [     T95] x20: 0000000000000000 x19: ffff000802efea00 x18: 000000000000000a
+[    0.320409] [     T95] x17: 6e6f632d79616c70 x16: ffffd2c89bc81908 x15: 0000000000000000
+[    0.320415] [     T95] x14: 0000000000000000 x13: 205d353954202020 x12: 5b5d373233303233
+[    0.320420] [     T95] x11: 206b6c636973645f x10: 74756f5f6c6c705f x9 : ffffd2c89819caa0
+[    0.320425] [     T95] x8 : 3fffffffffff7fff x7 : ffffd2c89b611c40 x6 : 000000000000023d
+[    0.320431] [     T95] x5 : ffffd2c89b611c40 x4 : 0000000000000000 x3 : ffffd2c89b3519d0
