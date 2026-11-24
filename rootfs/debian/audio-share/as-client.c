@@ -315,6 +315,10 @@ static int player_start(const struct audio_format *fmt, struct player *p)
 		_exit(127);
 	}
 	close(pipefd[0]);
+	/* Never block on the player: a stalled pw-cat (sink reconfigure, device
+	 * resume) must not starve the TCP heartbeat or the session gets kicked. */
+	int flags = fcntl(pipefd[1], F_GETFL, 0);
+	fcntl(pipefd[1], F_SETFL, flags | O_NONBLOCK);
 	p->pid = pid;
 	p->wfd = pipefd[1];
 	return 0;
@@ -476,6 +480,7 @@ static void run_session(const char *host, int port)
 
 	int64_t last_hb = now_ms();
 	int64_t last_stat = last_hb, bytes = 0;
+	size_t dropped = 0;
 	uint8_t *pcm = malloc(65536);
 	if (!pcm) {
 		player_stop(&pl);
@@ -486,7 +491,8 @@ static void run_session(const char *host, int port)
 
 	while (1) {
 		if (g_verbose && now_ms() - last_stat >= 2000) {
-			logmsg("received %lld bytes of PCM", (long long)bytes);
+			logmsg("received %lld bytes of PCM%s", (long long)bytes,
+			       dropped ? " (dropped: player back-pressure)" : "");
 			last_stat = now_ms();
 		}
 		if (now_ms() - last_hb > HEARTBEAT_TIMEOUT_MS) {
@@ -530,14 +536,29 @@ static void run_session(const char *host, int port)
 			ssize_t n = recvfrom(ufd, pcm, 65536, 0, (struct sockaddr *)&from, &fl);
 			if (n > 0 && from.sin_addr.s_addr == srv.sin_addr.s_addr) {
 				bytes += n;
-				if (pl.wfd >= 0 && write_full(pl.wfd, pcm, (size_t)n)) {
-					logmsg("write to pw-cat failed: %s", strerror(errno));
-					break;
+				/* Best effort: if the player cannot keep up, drop audio
+				 * rather than block the receive loop (keeps heartbeats). */
+				size_t off = 0;
+				while (pl.wfd >= 0 && off < (size_t)n) {
+					ssize_t w = write(pl.wfd, pcm + off, (size_t)n - off);
+					if (w > 0) {
+						off += (size_t)w;
+					} else if (w < 0 && errno == EINTR) {
+						continue;
+					} else if (w < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+						dropped += (size_t)n - off;
+						break;
+					} else {
+						logmsg("write to pw-cat failed: %s", strerror(errno));
+						n = 0;
+						goto session_done;
+					}
 				}
 			}
 		}
 	}
 
+session_done:
 	if (g_verbose)
 		logmsg("session ended after %lld bytes", (long long)bytes);
 	free(pcm);

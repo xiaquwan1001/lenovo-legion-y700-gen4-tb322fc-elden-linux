@@ -507,6 +507,10 @@ fi
 #   ② gsettings `user-data` = 该目录（dconf 持久化，冷启动存活）
 #   ③ 部署产物在（`<user-data>/build/*.prism.bin` 至少一个）——这是「librime 真跑过」的痕迹，
 #      只看 gsettings 会把「设了但一次没跑」当成好。
+#   ④ **`org.gnome.desktop.a11y.applications screen-keyboard-enabled` = true**
+#      （2026-11-24 实测：false 时 osk-stub 的 `set_surface_prop_surface_visible()` 无条件把
+#       visible 置 FALSE ⇒ 收到 `zwp_input_method_v2.activate` 也不弹，用户报「键盘唤不起来」的
+#       真根因；重建根后该项默认 false，所以必须进日常门）
 # 注意：查 gsettings 必须用会话用户 + 会话总线；以 root 无总线查会得到假值（''）。
 IME_RIME_USERDIR=""
 IME_RIME_TAB=$("${SSH[@]}" 'echo "$(id -un 1001 2>/dev/null):$(id -u 1001 2>/dev/null)"' 2>/dev/null || true)
@@ -520,17 +524,20 @@ else
 v=\$(su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings get sm.puri.phosh.osk.Completers.Rime user-data' 2>/dev/null | tr -d \"'\")
 [ \"\$v\" = '$ime_dir' ] || c=\$((c+1))
 ls '$ime_dir'/build/*.prism.bin >/dev/null 2>&1 || c=\$((c+1))
+ske=\$(su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings get org.gnome.desktop.a11y.applications screen-keyboard-enabled' 2>/dev/null | tr -d \"'\")
+[ \"\$ske\" = true ] || c=\$((c+1))
 echo \$c" 2>/dev/null || echo 9)
 	ime_set=$("${SSH[@]}" "su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings get sm.puri.phosh.osk.Completers.Rime user-data' 2>/dev/null" 2>/dev/null || true)
 fi
 echo "== 14) 输入法候选后端（RIME；#713：user-data 空串 ⇒ 候选静默为空）=="
 if [ "${ime_state:-9}" = 0 ]; then
-	ok "RIME 候选后端就绪（$ime_dir 属主正确、gsettings 指它、build/*.prism.bin 在）"
+	ok "RIME 候选后端就绪（$ime_dir 属主正确、gsettings 指它、build/*.prism.bin 在、screen-keyboard-enabled=true）"
 elif [ "$MODE" = check ]; then
 	no "RIME 候选后端未就绪（缺件数=${ime_state:-9}，gsettings user-data=${ime_set:-查不到}，应为 ${ime_dir:-?}）"
 else
 	"${SSH[@]}" "install -d -o $IME_RIME_U -g $IME_RIME_U '$ime_dir'
 su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings set sm.puri.phosh.osk.Completers.Rime user-data $ime_dir'
+su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled true'
 pkill -x phosh-osk-stub || true" >/dev/null 2>&1 || true
 	fix "RIME 候选后端已配（目录+属主+gsettings；osk-stub 已重启，phosh 按需重拉后 build/ 会出现）"
 fi

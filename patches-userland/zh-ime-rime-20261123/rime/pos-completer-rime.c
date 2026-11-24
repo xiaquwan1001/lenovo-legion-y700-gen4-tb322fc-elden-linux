@@ -27,7 +27,10 @@
 #include "pos-completer-priv.h"
 #include "pos-completer-rime.h"
 
+#include <errno.h>
+
 #include <gio/gio.h>
+#include <glib/gstdio.h>
 #include <rime_api.h>
 
 #define XK_BACKSPACE 0xff08
@@ -355,6 +358,21 @@ pos_completer_rime_init (PosCompleterRime *self)
   shared = g_settings_get_string (self->settings, "shared-data");
   user = g_settings_get_string (self->settings, "user-data");
   schema = g_settings_get_string (self->settings, "schema");
+
+  /* Empty user-data means "use the XDG default" rather than "no user data":
+   * librime takes a non-NULL empty string as a real (empty) path and its
+   * deployment then fails with "Error creating user data dir:" on every
+   * start, silently losing the user dictionary. A failure to create the
+   * directory is non-fatal: we only lose persistence, not the keyboard.
+   */
+  if (*user == '\0') {
+    g_free (user);
+    user = g_build_filename (g_get_user_data_dir (), "rime", NULL);
+    if (g_mkdir_with_parents (user, 0700) < 0)
+      g_warning ("Rime: can't create user data dir '%s': %s; "
+                 "the user dictionary won't persist",
+                 user, g_strerror (errno));
+  }
 
   RIME_STRUCT_INIT (RimeTraits, traits);
   traits.shared_data_dir = shared;

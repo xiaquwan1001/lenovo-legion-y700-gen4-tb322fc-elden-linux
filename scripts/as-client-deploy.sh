@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
-# as-client-deploy.sh — 把 Audio Share 的「Linux 客户端」装到平板（TB322FC 主线 Debian）
+# as-client-deploy.sh — 把 Audio Share 的 Linux 客户端（deb 包：as-client + GUI + 图标 + user unit）装到平板
 #
-# 为什么需要（2026-11-20）：上游 mkckr0/audio-share 只发 Android 客户端，`as-cmd` 是服务端。
-# 平板跑主线 Debian ⇒ 得自己实现协议那一端。协议逐字节依据 = 上游 Android 源码
+# 现状（2026-11-24 起）：客户端以 **deb 包** 交付，源码在**上游 fork** `xiaquwan1001/audio-share`
+# 的 `linux-client/`（本仓 `rootfs/debian/audio-share/as-client.c` 只是镜像）。本脚本 =
+# 主机交叉编 deb → 推到平板 → `dpkg -i` → 写配置 → 起 user unit。
+#
+#   包内容：/usr/bin/as-client（musl 静态，零运行时库）
+#           /usr/bin/audio-share-gui（GTK3 + python3-gi，桌面图标点开即用）
+#           /usr/bin/audio-share-client-run（读 config.json 的 wrapper）
+#           /usr/share/applications/audio-share-client.desktop + hicolor/scalable 图标
+#           /usr/lib/systemd/user/audio-share-client.service（开机自连）
+#   配置：/home/<dev-user>/.config/audio-share-client/config.json {host,port,target,latency,autostart}
+#
+# 为什么有自己实现的那一端（2026-11-20）：上游 mkckr0/audio-share 只发 Android 客户端，
+# `as-cmd` 是服务端。协议逐字节依据 = 上游 Android 源码
 # `android-app/.../service/{NetClient,NetworkIO}.kt`：
 #   TCP: int32le CMD_GET_FORMAT(1) → int32le 1 + int32le size + protobuf AudioFormat
 #        int32le CMD_START_PLAY(2) → int32le 2 + int32le id
 #   UDP: 客户端绑随机端口，先发 int32le id 到 srv:65530，之后服务端推原始 PCM 数据报
 #   心跳: 服务端 TCP 发 3，客户端原样回 3（5 s 内不回会被踢）
-# 客户端源码 = rootfs/debian/audio-share/as-client.c（musl 静态交叉编译，设备侧零依赖）。
-# **源码 SSOT = 上游 fork `xiaquwan1001/audio-share` 的 `linux-client/as-client.c`**（含 Makefile/unit/README）；
-# 本仓同名文件是镜像，改客户端先改 fork 再同步回来（2026-11-24 收编，两份已逐字节对齐）。
 #
 # 主机侧配套（一次性，本脚本不代做）：
 #   ① PC 服务：`%h/bin/as-cmd` 必须绑 **0.0.0.0**（历史手工实例只绑手机网段 192.168.42.97，
@@ -18,11 +26,15 @@
 #        ~/.config/systemd/user/audio-share-server.service
 #        ExecStart=%h/bin/as-cmd --bind=0.0.0.0 ; Restart=always ; WantedBy=default.target
 #   ② 防火墙：`ufw allow from 192.168.7.0/24 to any port 65530 proto tcp` / `... proto udp`
+#   ③ 冷起无声判据：`as-cmd` 采集线程只在启动时枚举一次 sink，空则永久退出（服务照旧
+#      listening、客户端照旧重连并刷 `AudioFormat 尺寸异常 0`）⇒ 确认 `as-cmd -l` 有 sink
+#      后重启 audio-share-server。上游未修。
 #
 # 用法：
-#   scripts/as-client-deploy.sh --check        # 只读体检（二进制/单元/运行值/连通）
-#   scripts/as-client-deploy.sh               # 真装（编译 → scp → 写 unit → enable --now）
+#   scripts/as-client-deploy.sh --check        # 只读体检（包/入口/GUI/单元/运行值/端到端）
+#   scripts/as-client-deploy.sh               # 真装（建 deb → scp → dpkg -i → 配置 → 起服务）
 #   AS_HOST=192.168.7.9 AS_PORT=65530 TAB=root@192.168.7.1 scripts/as-client-deploy.sh
+#   FORK_DIR=~/forks/audio-share SKIP_BUILD=1 scripts/as-client-deploy.sh   # 复用现成 deb
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 TAB=${TAB:-root@192.168.7.1}
@@ -30,15 +42,14 @@ AS_HOST=${AS_HOST:-192.168.7.9}    # 主机 USB-NCM 侧地址（NM 连接 elden-
 AS_PORT=${AS_PORT:-65530}
 DEV_USER=${DEV_USER:-xuqianhui1001}
 DEV_UID=${DEV_UID:-1001}
-CC=${CC:-$HOME/toolchains/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc}
-SRC=$ROOT/rootfs/debian/audio-share/as-client.c
-BIN=$ROOT/out/as-client-aarch64
+FORK_DIR=${FORK_DIR:-$HOME/forks/audio-share}
+PKG=audio-share-client
 MODE=apply
 
 case "${1:-}" in
 --check) MODE=check ;;
 --apply|"") MODE=apply ;;
--h|--help) sed -n '2,32p' "$0"; exit 0 ;;
+-h|--help) sed -n '2,42p' "$0"; exit 0 ;;
 *) echo "未知参数 $1（--check / --apply）" >&2; exit 2 ;;
 esac
 
@@ -51,63 +62,65 @@ fix() { say FIX "$1"; }
 userctl() { "${SSH[@]}" "runuser -u $DEV_USER -- env XDG_RUNTIME_DIR=/run/user/$DEV_UID systemctl --user $*"; }
 
 if [ "$MODE" = check ]; then
-	bin=$("${SSH[@]}" 'test -x /usr/local/bin/as-client && echo 1 || echo 0')
-	unit=$("${SSH[@]}" 'test -f /etc/systemd/user/audio-share-client.service && echo 1 || echo 0')
+	pkg=$("${SSH[@]}" "dpkg -s $PKG >/dev/null 2>&1 && echo 1 || echo 0")
+	ver=$("${SSH[@]}" "dpkg-query -W -f='\${Version}' $PKG 2>/dev/null || true")
+	bin=$("${SSH[@]}" 'test -x /usr/bin/as-client && echo 1 || echo 0')
+	gui=$("${SSH[@]}" 'test -x /usr/bin/audio-share-gui && echo 1 || echo 0')
+	entry=$("${SSH[@]}" 'test -f /usr/share/applications/audio-share-client.desktop && echo 1 || echo 0')
+	icon=$("${SSH[@]}" 'test -f /usr/share/icons/hicolor/scalable/apps/audio-share-client.svg && echo 1 || echo 0')
+	unit=$("${SSH[@]}" 'test -f /usr/lib/systemd/user/audio-share-client.service && echo 1 || echo 0')
+	legacy=$("${SSH[@]}" 'test -f /etc/systemd/user/audio-share-client.service && echo 1 || echo 0')
+	cfg=$("${SSH[@]}" "cat /home/$DEV_USER/.config/audio-share-client/config.json 2>/dev/null | tr -d '\n ' || true")
 	act=$(userctl is-active audio-share-client 2>/dev/null || echo unknown)
-	tags=$("${SSH[@]}" "runuser -u $DEV_USER -- env XDG_RUNTIME_DIR=/run/user/$DEV_UID journalctl --user-unit audio-share-client -n 40 --no-pager -q 2>/dev/null | grep -cE 'TCP 已连|播放会话' || true")
-	[ "${bin:-0}" = 1 ] && ok "设备侧 /usr/local/bin/as-client 在" || no "设备侧没有 as-client"
-	[ "${unit:-0}" = 1 ] && ok "user unit audio-share-client.service 在" || no "缺 user unit"
+	tags=$("${SSH[@]}" "runuser -u $DEV_USER -- env XDG_RUNTIME_DIR=/run/user/$DEV_UID journalctl --user-unit audio-share-client -n 40 --no-pager -q 2>/dev/null | grep -cE 'TCP connected|play session' || true")
+	pw=$("${SSH[@]}" "runuser -u $DEV_USER -- env XDG_RUNTIME_DIR=/run/user/$DEV_UID wpctl status 2>/dev/null | grep -c 'pw-cat' || true")
+
+	[ "${pkg:-0}" = 1 ] && ok "包 $PKG 已装（${ver:-?}）" || no "未安装 $PKG（跑本脚本，或 dpkg -i dist/${PKG}_*_arm64.deb）"
+	[ "${bin:-0}" = 1 ] && ok "/usr/bin/as-client 在" || no "缺 /usr/bin/as-client"
+	[ "${gui:-0}" = 1 ] && ok "GUI 在（桌面图标点开即用）" || no "缺 /usr/bin/audio-share-gui"
+	[ "${entry:-0}" = 1 ] && ok "桌面入口在" || no "缺 .desktop 入口"
+	[ "${icon:-0}" = 1 ] && ok "图标在" || no "缺 hicolor 图标"
+	[ "${unit:-0}" = 1 ] && ok "打包 user unit 在" || no "缺 /usr/lib/systemd/user 单元"
+	[ "${legacy:-0}" = 0 ] && ok "无 /etc 旧单元覆盖" || no "存在 /etc/systemd/user 旧单元（覆盖包内单元，应删）"
+	[ -n "${cfg:-}" ] && ok "配置：$cfg" || no "缺 config.json（GUI 第一次打开会生成）"
 	[ "${act:-}" = active ] && ok "audio-share-client 运行中（连 $AS_HOST:$AS_PORT）" || no "audio-share-client 未运行（$act）"
 	[ "${tags:-0}" -ge 1 ] && ok "日志里有连接/会话记录（$tags 行）" || no "日志里没有连上过的记录"
+	[ "${pw:-0}" -ge 1 ] && ok "设备 PipeWire 里有 pw-cat 流（端到端通）" || no "设备 PipeWire 里没有 pw-cat 流"
 	exit 0
 fi
 
-[ -x "$CC" ] || { echo "缺交叉编译器：$CC" >&2; exit 1; }
+if [ "${SKIP_BUILD:-0}" != 1 ]; then
+	[ -d "$FORK_DIR/linux-client" ] || { echo "缺 fork：$FORK_DIR（设 FORK_DIR=…）" >&2; exit 1; }
+	echo "== 1) 建 deb（arm64，musl 静态 as-client + GTK GUI）"
+	(cd "$FORK_DIR/linux-client" && ./deb/build-deb.sh) | tail -3
+fi
+DEB=$(ls -t "$FORK_DIR"/dist/${PKG}_*_arm64.deb 2>/dev/null | head -1)
+[ -n "${DEB:-}" ] && [ -f "$DEB" ] || { echo "找不到 deb（$FORK_DIR/dist）" >&2; exit 1; }
 
-echo "== 1) 交叉编译（musl 静态，设备侧零依赖）"
-"$CC" -static -O2 -Wall -Wextra -o "$BIN" "$SRC"
-ls -l "$BIN"
+echo "== 2) 推包 + dpkg -i"
+timeout -k 3 120 scp -o BatchMode=yes -q "$DEB" "$TAB:/tmp/"
+"${SSH[@]}" "dpkg -i /tmp/$(basename "$DEB") 2>&1 | tail -4"
 
-echo "== 2) 部署二进制 + user unit"
-# ETXTBSY：直接 scp 覆盖正在运行的二进制会 "dest open: Failure" ⇒ 先传 /tmp 再 mv（rename 不受影响）
-timeout -k 3 60 scp -o BatchMode=yes "$BIN" "$TAB:/tmp/as-client.new"
-# unit 在本地生成再传：远端 heredoc 里嵌 $AS_HOST 会出现「双引号/单引号嵌套」老坑（实测踩过）
-UNIT=$(mktemp)
-trap 'rm -f "$UNIT"' EXIT
-cat > "$UNIT" <<EOF
-[Unit]
-Description=Audio Share client (receive PC audio → device speaker)
-Documentation=https://github.com/mkckr0/audio-share
-After=pipewire.service wireplumber.service
-Wants=pipewire.service
-
-[Service]
-Environment=AS_HOST=$AS_HOST
-Environment=AS_PORT=$AS_PORT
-EnvironmentFile=-/etc/default/audio-share-client
-ExecStart=/bin/sh -c 'exec /usr/local/bin/as-client "\$AS_HOST" "\$AS_PORT"'
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=default.target
-EOF
-timeout -k 3 60 scp -o BatchMode=yes "$UNIT" "$TAB:/tmp/audio-share-client.service.new"
+echo "== 3) 迁到包内单元（清旧覆盖）+ 写配置"
 "${SSH[@]}" "set -e
-chmod 755 /tmp/as-client.new; mv -f /tmp/as-client.new /usr/local/bin/as-client
-chmod 644 /tmp/audio-share-client.service.new
-mv -f /tmp/audio-share-client.service.new /etc/systemd/user/audio-share-client.service
-systemctl daemon-reload
-chown -R $DEV_USER:$DEV_USER /home/$DEV_USER/.config/systemd 2>/dev/null || true"
-fix "已写 /usr/local/bin/as-client + /etc/systemd/user/audio-share-client.service"
+if [ -f /etc/systemd/user/audio-share-client.service ]; then
+  mv /etc/systemd/user/audio-share-client.service /root/audio-share-client.service.pre-deb
+fi
+if [ -f /usr/local/bin/as-client ]; then
+  mv /usr/local/bin/as-client /root/as-client.pre-deb
+fi
+install -d -o $DEV_USER -g $DEV_USER /home/$DEV_USER/.config/audio-share-client
+printf '{\n  \"host\": \"%s\",\n  \"port\": %s,\n  \"target\": \"\",\n  \"latency\": \"\",\n  \"autostart\": true\n}\n' '$AS_HOST' '$AS_PORT' > /home/$DEV_USER/.config/audio-share-client/config.json
+chown $DEV_USER:$DEV_USER /home/$DEV_USER/.config/audio-share-client/config.json"
 
-echo "== 3) 以桌面用户启用（PipeWire 在同一 user manager 里）"
+echo "== 4) 以桌面用户启用（PipeWire 在同一 user manager 里）"
 userctl daemon-reload >/dev/null
-userctl enable --now audio-share-client.service >/dev/null
-sleep 3
+userctl enable audio-share-client.service >/dev/null
+userctl restart audio-share-client.service >/dev/null
+sleep 4
 act=$(userctl is-active audio-share-client 2>/dev/null || true)
 [ "$act" = active ] && fix "audio-share-client active（$AS_HOST:$AS_PORT）" || no "启用后仍未 active（$act）"
 
-echo "== 4) 反向自检（最近日志）"
+echo "== 5) 反向自检（最近日志）"
 "${SSH[@]}" "runuser -u $DEV_USER -- env XDG_RUNTIME_DIR=/run/user/$DEV_UID journalctl --user-unit audio-share-client -n 6 --no-pager -q" | tail -6
 echo "== 完成。主机侧记得：as-cmd 绑 0.0.0.0 + ufw 放行 192.168.7.0/24 的 $AS_PORT/tcp,udp"

@@ -1,0 +1,55 @@
+diff --git a/data/sm.puri.phosh.osk.gschema.xml b/data/sm.puri.phosh.osk.gschema.xml
+index 191aa30..ba21ec6 100644
+--- a/data/sm.puri.phosh.osk.gschema.xml
++++ b/data/sm.puri.phosh.osk.gschema.xml
+@@ -99,9 +99,11 @@
+     </key>
+     <key name='user-data' type='s'>
+       <default>''</default>
+-      <summary>Directory for Rime's per-user data. Empty disables the user dictionary.
++      <summary>Directory for Rime's per-user data.
+       </summary>
+-      <description/>
++      <description>Empty uses the XDG default directory ($XDG_DATA_HOME/rime,
++        usually ~/.local/share/rime), so the user dictionary still persists.
++      </description>
+     </key>
+     <key name='schema' type='s'>
+       <default>'luna_pinyin'</default>
+diff --git a/src/completers/pos-completer-rime.c b/src/completers/pos-completer-rime.c
+index fc553f8..069100a 100644
+--- a/src/completers/pos-completer-rime.c
++++ b/src/completers/pos-completer-rime.c
+@@ -27,7 +27,10 @@
+ #include "pos-completer-priv.h"
+ #include "pos-completer-rime.h"
+ 
++#include <errno.h>
++
+ #include <gio/gio.h>
++#include <glib/gstdio.h>
+ #include <rime_api.h>
+ 
+ #define XK_BACKSPACE 0xff08
+@@ -356,6 +359,21 @@ pos_completer_rime_init (PosCompleterRime *self)
+   user = g_settings_get_string (self->settings, "user-data");
+   schema = g_settings_get_string (self->settings, "schema");
+ 
++  /* Empty user-data means "use the XDG default" rather than "no user data":
++   * librime takes a non-NULL empty string as a real (empty) path and its
++   * deployment then fails with "Error creating user data dir:" on every
++   * start, silently losing the user dictionary. A failure to create the
++   * directory is non-fatal: we only lose persistence, not the keyboard.
++   */
++  if (*user == '\0') {
++    g_free (user);
++    user = g_build_filename (g_get_user_data_dir (), "rime", NULL);
++    if (g_mkdir_with_parents (user, 0700) < 0)
++      g_warning ("Rime: can't create user data dir '%s': %s; "
++                 "the user dictionary won't persist",
++                 user, g_strerror (errno));
++  }
++
+   RIME_STRUCT_INIT (RimeTraits, traits);
+   traits.shared_data_dir = shared;
+   traits.user_data_dir = user;
