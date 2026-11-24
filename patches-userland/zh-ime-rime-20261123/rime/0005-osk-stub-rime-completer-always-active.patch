@@ -1,0 +1,50 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] osk-stub: keep self-composing completers (Rime) active on every keystroke
+
+---
+The 0.46 completion modes are 'none', 'manual' and 'hint'.
+'hint' enables completion only when the client advertises
+ZWP_TEXT_INPUT_V3_CONTENT_HINT_COMPLETION, which e.g. the Firefox URL bar
+never does, so a completer that composes by itself (the Rime completer)
+never receives any keystroke and can't offer candidates.
+
+Treat such completers as always active. No new gsettings value is needed
+(adding an enum value would need a compatible compiled schema) and the
+behaviour of the bundled hunspell/presage completers is unchanged.
+---
+--- a/src/pos-input-surface.c
++++ b/src/pos-input-surface.c
+@@ -2012,6 +2012,23 @@
+   return self->screen_keyboard_enabled;
+ }
+ 
++/* Completers that do the composition themselves (e.g. Rime) cannot rely on the
++   client advertising ZWP_TEXT_INPUT_V3_CONTENT_HINT_COMPLETION - many clients
++   (Firefox's URL bar among them) never set that hint.  Keep such completers
++   active on every keystroke so they can drive their own preedit. */
++static gboolean
++completer_composes_by_itself (PosCompleter *completer)
++{
++  const char *name;
++
++  if (completer == NULL)
++    return FALSE;
++
++  name = pos_completer_get_name (completer);
++
++  return g_strcmp0 (name, "Rime") == 0;
++}
++
+ gboolean
+ pos_input_surface_is_completer_active (PosInputSurface *self)
+ {
+@@ -2025,6 +2042,9 @@
+   if (pos_input_method_get_active (self->input_method) == FALSE)
+     return FALSE;
+ 
++  if (completer_composes_by_itself (self->completer))
++    return TRUE;
++
+   /* Layout has an "implicit" completer (e.g. varnam) */
+   child = hdy_deck_get_visible_child (self->deck);
+   if (POS_IS_OSK_WIDGET (child) &&

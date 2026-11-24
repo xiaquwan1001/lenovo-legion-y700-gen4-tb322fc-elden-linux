@@ -72,14 +72,28 @@ $HOME/.local/share/rime/build = 24 档
   `Error creating user data dir`；随后复原（`user-data` 指回原路径、备份目录回位）。
 - 旧件留在设备 `/root/osk-stub-backup-20261124`（sha256 `cde21b9c…`），回退 = `install` 回去 + `pkill -x phosh-osk-stub`。
 
-## 5. 仍未决（不是回归，记在 D3）
+## 5. 候选条：已修（2026-11-24 23:1x 收口）
 
-- **OSK 内候选条的显示时机**：0.46 的 `completion-mode` 只有 `none/hint/manual`（`PITFALLS #709`）；
-  `hint` 需客户端 text-input `CONTENT_HINT_COMPLETION`（Firefox 地址栏不给），`manual` 需用户点键盘上的
-  word-completion 键。本轮在 Firefox 里点 `nihao` **没看到候选条**，但 RIME 后端本身在跑
-  （`luna_pinyin.userdb` 被 osk-stub 持有、`build/` 24 档、`librime-piped --oneshot nihao` 出 5 个候选）。
-  ⇒ 下一步是 UX/补丁取一：源码加 `ALWAYS` 档，或给 layout 显式放 word-completion 键，或文档写清「先点灯泡」。
-- 人肉判据只剩两条：屏上真打字选词、每键震动（`aw86927` 的 OSK 钩子 patch 仍未上机）。
+原「点 `nihao` 没候选条」不是 RIME 后端问题，而是 0.46 的完成度门：`completion-mode` 只有
+`none/hint/manual`，`hint` 要客户端发 `ZWP_TEXT_INPUT_V3_CONTENT_HINT_COMPLETION`（Firefox 地址栏不发），
+`manual` 要用户先点 word-completion 键 ⇒ **自组词的 completer 一个键也收不到**。
+
+改法（`patches-userland/zh-ime-rime-20261123/rime/0005-osk-stub-rime-completer-always-active.patch`，+17/−0）：
+在 `pos-input-surface.c` 加 `completer_composes_by_itself()`（按 `pos_completer_get_name()` 判 `"rime"`，
+注意实参是**小写** `"rime"`，我第一次写成 `"Rime"` 白跑一轮），`pos_input_surface_is_completer_active()`
+对这种 completer 直接返回 TRUE ⇒ 每键都喂给 completer、候选条常显。
+**不改 gschema**：新增 `always` 枚举值需要一份能解析该值的 compiled schema（`gsettings` CLI 会报
+「提供的值不在有效范围内」，实测 `set_flags(['always'])` 与 `dval uint32` 都不通），改法反而更小、
+upstream 的 hunspell/presage 行为零变化。
+
+设备实测（rabuild + divert 已就位）：Firefox 地址栏 → 键 `n i` ⇒ 候选条出 **你 / 拟 / 尼 / 泥 / 呢**，
+点「你」⇒ journal `completion: 你`、URL 栏得到「你 」。件 = `out/osk-stub-rime-always-20261124/`
+（sha256 `3278264cacbe9ed3d463661e85c5d44757db2b49d88c07dcb4c6167fe621933b`）。
+
+## 5b. 仍需人手
+
+- 每键震动（`aw86927` 的 OSK 钩子 patch 仍未上机）。
+- 长句连续选词 / 退格音节回退的观感。
 
 ## 6. 工具事实（同轮，供下次省时间）
 
