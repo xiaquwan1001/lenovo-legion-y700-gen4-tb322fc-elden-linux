@@ -1,0 +1,114 @@
+From 283c9e8fb7a61a79d638da0dd20a9624b1ae48c6 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 24 Nov 2026 13:11:48 +0800
+Subject: [PATCH] monitor: Keep power save state consistent when output power
+ setup fails
+
+phosh requests a zwlr_output_power_v1 object for each output in
+phosh_monitor_constructed(). That request can be refused: wlroots allows a
+single power object per output, so when another client already owns one for
+the panel, phosh gets the "failed" event and the object becomes inert.
+
+wlr_output_power_handle_failed() only logged a warning. PhoshMonitor then
+kept its initial PHOSH_MONITOR_POWER_SAVE_MODE_OFF, and
+PhoshScreenSaverManager derives "active" from that value:
+
+  active = (mode == PHOSH_MONITOR_POWER_SAVE_MODE_OFF);
+
+so the shell came up considering the panel already blanked. "active" never
+changed again (no further mode events can arrive) and
+on_power_button_pressed() returns early for both halves of the key press
+while it stays TRUE.
+
+Drop the object in the failed handler and set the mode to "on", the only
+state consistent with us being able to draw. To get power control back once
+the other client goes away, phosh_monitor_set_power_save_mode() requests a
+fresh object when it has none: if the request succeeds the output is driven
+as asked, and if it is refused again the failed handler keeps the state in
+sync so the power button and idle blanking keep working. Whether the panel
+really blanks is then up to whichever client holds the object.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ src/monitor/monitor.c | 43 ++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 42 insertions(+), 1 deletion(-)
+
+diff --git a/src/monitor/monitor.c b/src/monitor/monitor.c
+index 237aba2..e2c8ec1 100644
+--- a/src/monitor/monitor.c
++++ b/src/monitor/monitor.c
+@@ -261,6 +261,17 @@ wlr_output_power_handle_mode(void *data,
+ }
+ 
+ 
++static void
++phosh_monitor_set_power_mode (PhoshMonitor *self, PhoshMonitorPowerSaveMode mode)
++{
++  if (self->power_mode == mode)
++    return;
++
++  self->power_mode = mode;
++  g_object_notify_by_pspec (G_OBJECT (self), props[PHOSH_MONITOR_PROP_POWER_MODE]);
++}
++
++
+ static void
+ wlr_output_power_handle_failed(void *data,
+                                struct zwlr_output_power_v1 *output_power)
+@@ -268,7 +279,18 @@ wlr_output_power_handle_failed(void *data,
+   PhoshMonitor *self = PHOSH_MONITOR (data);
+ 
+   g_return_if_fail (PHOSH_IS_MONITOR (self));
++
+   g_warning("Failed to set output power mode for %s\n", self->name);
++
++  /* Another client holds the single power object for this output, so the
++   * request was refused and the object is inert from now on. Drop it and
++   * assume the output is on, the only state consistent with us being able to
++   * draw, since a monitor that starts out as blanked disables the power
++   * button and idle blanking for the whole session. A later
++   * phosh_monitor_set_power_save_mode() asks for a fresh object, so power
++   * control comes back once the other client is gone. */
++  g_clear_pointer (&self->wlr_output_power, zwlr_output_power_v1_destroy);
++  phosh_monitor_set_power_mode (self, PHOSH_MONITOR_POWER_SAVE_MODE_ON);
+ }
+ 
+ 
+@@ -627,7 +649,6 @@ phosh_monitor_set_power_save_mode (PhoshMonitor *self, PhoshMonitorPowerSaveMode
+ 
+   g_return_if_fail (PHOSH_IS_MONITOR (self));
+   g_return_if_fail (phosh_monitor_is_configured (self));
+-  g_return_if_fail (self->wlr_output_power);
+ 
+   switch (mode) {
+   case PHOSH_MONITOR_POWER_SAVE_MODE_OFF:
+@@ -640,6 +661,26 @@ phosh_monitor_set_power_save_mode (PhoshMonitor *self, PhoshMonitorPowerSaveMode
+     g_return_if_reached ();
+   }
+ 
++  /* A previous request may have been refused, which destroyed the object; ask
++   * for a new one. If the client that held it went away we get power control
++   * back and drive the output from here on. If the request is refused again
++   * the failed handler runs and keeps the local state in sync without
++   * touching the panel, so the screen saver manager, the power button and
++   * idle blanking stay usable. */
++  if (!self->wlr_output_power) {
++    struct zwlr_output_power_manager_v1 *power_manager;
++
++    power_manager = phosh_wayland_get_zwlr_output_power_manager_v1 (phosh_wayland_get_default ());
++    self->wlr_output_power = zwlr_output_power_manager_v1_get_output_power (power_manager,
++                                                                           self->wl_output);
++    if (!self->wlr_output_power) {
++      phosh_monitor_set_power_mode (self, mode);
++      return;
++    }
++    zwlr_output_power_v1_add_listener (self->wlr_output_power,
++                                       &wlr_output_power_listener_v1, self);
++  }
++
+   zwlr_output_power_v1_set_mode (self->wlr_output_power, wl_mode);
+ }
+ 
+-- 
+2.53.0
+

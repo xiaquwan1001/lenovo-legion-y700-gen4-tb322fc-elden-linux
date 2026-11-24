@@ -1,0 +1,210 @@
+v4-0000-cover-letter.patch
+v4-0001-Input-aw86927-fix-the-7-V-boost-reference-for-AW8693.patch
+v4-0002-Input-aw86927-widen-the-AW86938-boost-mode-mask.patch
+v4-0003-dt-bindings-input-awinic-aw86927-document-the-AW8693.patch
+v4-0004-Input-aw86927-add-support-for-Awinic-AW86937.patch
+v4-0005-Input-aw86927-handle-the-AW8693X-play-and-boost-regi.patch
+v4-0006-Input-aw86927-stop-playback-over-suspend-close-and-s.patch
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.torokhov@gmail.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-input@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: dmitry.torokhov@gmail.com
+Cc: robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-input@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v4 0/6] Input: aw86927 - add AW86937 support and fix the AW8693X layout
+Date: Tue, 24 Nov 2026 12:50:34 +0800
+Message-ID: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.torokhov@gmail.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-input@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: dmitry.torokhov@gmail.com
+Cc: robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-input@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v4 1/6] Input: aw86927 - fix the 7 V boost reference for AW86938
+Date: Tue, 24 Nov 2026 12:50:35 +0800
+Message-ID: <20261124045040.559317-2-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.torokhov@gmail.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-input@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: dmitry.torokhov@gmail.com
+Cc: robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-input@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v4 2/6] Input: aw86927 - widen the AW86938 boost mode mask
+Date: Tue, 24 Nov 2026 12:50:36 +0800
+Message-ID: <20261124045040.559317-3-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+(body) Adding cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com> from line 'Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>'
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.torokhov@gmail.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-input@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+RCPT TO:<krzysztof.kozlowski@oss.qualcomm.com>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: dmitry.torokhov@gmail.com
+Cc: robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-input@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Subject: [PATCH v4 3/6] dt-bindings: input: awinic,aw86927: document the AW86937 variant
+Date: Tue, 24 Nov 2026 12:50:37 +0800
+Message-ID: <20261124045040.559317-4-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+(body) Adding cc: Joonhoe Kim <26rote@gmail.com> from line 'Tested-by: Joonhoe Kim <26rote@gmail.com> # Lenovo Y700 Gen 5 (TB323FU)'
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.torokhov@gmail.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-input@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+RCPT TO:<26rote@gmail.com>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: dmitry.torokhov@gmail.com
+Cc: robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-input@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Joonhoe Kim <26rote@gmail.com>
+Subject: [PATCH v4 4/6] Input: aw86927 - add support for Awinic AW86937
+Date: Tue, 24 Nov 2026 12:50:38 +0800
+Message-ID: <20261124045040.559317-5-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+(body) Adding cc: Joonhoe Kim <26rote@gmail.com> from line 'Tested-by: Joonhoe Kim <26rote@gmail.com> # Lenovo Y700 Gen 5 (TB323FU)'
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.torokhov@gmail.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-input@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+RCPT TO:<26rote@gmail.com>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: dmitry.torokhov@gmail.com
+Cc: robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-input@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Joonhoe Kim <26rote@gmail.com>
+Subject: [PATCH v4 5/6] Input: aw86927 - handle the AW8693X play and boost register layout
+Date: Tue, 24 Nov 2026 12:50:39 +0800
+Message-ID: <20261124045040.559317-6-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dmitry.torokhov@gmail.com>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-input@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: dmitry.torokhov@gmail.com
+Cc: robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-input@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v4 6/6] Input: aw86927 - stop playback over suspend, close and shutdown
+Date: Tue, 24 Nov 2026 12:50:40 +0800
+Message-ID: <20261124045040.559317-7-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261124045040.559317-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 

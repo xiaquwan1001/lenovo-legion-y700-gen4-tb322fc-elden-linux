@@ -114,3 +114,15 @@ scale 8/3 is advertised as 2.6666667461395264 but reported as
 
 agent 可以帮你：生成最终 `git format-patch`（给定姓名/邮箱后）、写 MR 描述/回复 reviewer、按反馈改补丁。
 agent 不做：填账号密码/token、代点提交。
+
+---
+
+## 2026-11-24 更新：phosh power-save 补丁已按上游意见重写（MR !2005 第二轮）
+
+- 旧 `0001-monitor-keep-power-save-state-consistent.patch`（用 `output_power_unavailable` 字段）**已被取代**，
+  改由 `0001-monitor-Keep-power-save-state-consistent-when-output.patch`（+44/−1，只改 `monitor.c`）：
+  `failed` 里置「屏亮」并**丢弃** proxy，`phosh_monitor_set_power_save_mode()` 每次请求时**重试**拿 proxy
+  —— 正是 guidog 2026-11-14 的意见。
+- 上游分支已 force-update（fork `xuqianhui1001/phosh`，`283c9e8`，MR !2005）；编译门见
+  `../../reports/phosh-mr-2005-rework-20261124.md` §3（aarch64 + phosh 自己的 `-Werror` 全套，0 warning）。
+- **MR 描述与回帖仍待用户手做**（`gitlab.gnome.org/api` 从本机出口 406、无 token），文案在报告 §4。

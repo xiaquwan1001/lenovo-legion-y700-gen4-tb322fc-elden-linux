@@ -8,6 +8,17 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-24）
 
+> **🆕 2026-11-24 12:5x 放行执行轮（用户「全部放行」）**：① **aw86927 v4 已投**（12:50 CST / 04:50Z，7 封全 250，
+> cover `<20261124045040.559317-1>`，账 `patches/upstream/aw86927-v4-prep-20261124/SENT.md`；lore 摄取按已知 ≥1 h 延迟复核）。
+> ② **dwc3 v14 误重投并已更正**：v14 其实 01:50Z 已投（`SENT.md` 在案、lore 已归档），本轮 README「未投递」误导导致 04:52Z 又发一套
+> （4×250，cover `20261124045220.595001-1`）；04:54Z 在同线程发更正「请忽略本线程、以 01:50Z 线程为准」（250）。
+> 教训：投递前必须查本目录 `SENT.md` + lore，README 的「未投」不等于事实（已写进该目录 `SENT.md` §事故记录）。
+> ③ **phosh !2005 按 guidog 意见重写并 force-push**（fork 分支 `283c9e8`，替代 `88a0e23`）：删 `output_power_unavailable` 字段
+> ⇒ `monitor.h` 零改动；`failed` 里置「屏亮」+ 丢弃僵尸 proxy；`phosh_monitor_set_power_save_mode()` 每次重试拿 proxy（正是 guidog 要的
+> 「retry on next press」）。编译门 = 用项目既有 phosh 0.58 构建树的**原样 `-Werror` 全套**做 aarch64 交叉编译，0 warning（报告
+> `reports/phosh-mr-2005-rework-20261124.md`）。**MR 描述/回帖仍待用户手做**（`gitlab.gnome.org/api` 从本机出口 406 + glab 无该站 token，
+> 仅 SSH 可用），文案见报告 §4。
+
 > **🆕 2026-11-24 11:4x 轻负载轮（本轮）**：**aw86927 v4 备料完成、门禁全绿、未投（等放行）** —— `patches/upstream/aw86927-v4-prep-20261124/`（7 封含 cover）；
 > 6/6 重写处置 sashiko 对 v3 的四条（[High] 补 `Signed-off-by`、[Medium] `INIT_WORK` 提前到 devres 动作前、[Medium] 新增 `enabled` 闸门堵 close() 后 timer 重启播、[Low] 措辞/changelog 位置），
 > 4/6·5/6 收 Joonhoe Kim 的 `Tested-by`（判据 = 与已投 v2 对应两枚 **diff 正文逐字节相同**，只有 hunk 偏移因基线换 7.4-rc3 而变），**6/6 因实质改动故意不收 tag**（已在 cover 请其复测）；
