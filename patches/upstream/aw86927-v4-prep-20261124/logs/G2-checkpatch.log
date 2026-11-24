@@ -1,0 +1,38 @@
+WARNING: Unknown commit id 'df53055c540f', maybe rebased or not pulled?
+#15: 
+Fixes: df53055c540f ("Input: aw86927 - add support for Awinic AW86938")
+
+total: 0 errors, 1 warnings, 0 checks, 8 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/tmp/aw4-export/0001-Input-aw86927-fix-the-7-V-boost-reference-for-AW8693.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+WARNING: Unknown commit id 'df53055c540f', maybe rebased or not pulled?
+#13: 
+Fixes: df53055c540f ("Input: aw86927 - add support for Awinic AW86938")
+
+total: 0 errors, 1 warnings, 0 checks, 8 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/tmp/aw4-export/0002-Input-aw86927-widen-the-AW86938-boost-mode-mask.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+total: 0 errors, 0 warnings, 0 checks, 7 lines checked
+
+/tmp/aw4-export/0003-dt-bindings-input-awinic-aw86927-document-the-AW8693.patch has no obvious style problems and is ready for submission.
+total: 0 errors, 0 warnings, 0 checks, 30 lines checked
+
+/tmp/aw4-export/0004-Input-aw86927-add-support-for-Awinic-AW86937.patch has no obvious style problems and is ready for submission.
+total: 0 errors, 0 warnings, 0 checks, 112 lines checked
+
+/tmp/aw4-export/0005-Input-aw86927-handle-the-AW8693X-play-and-boost-regi.patch has no obvious style problems and is ready for submission.
+total: 0 errors, 0 warnings, 0 checks, 210 lines checked
+
+/tmp/aw4-export/0006-Input-aw86927-stop-playback-over-suspend-close-and-s.patch has no obvious style problems and is ready for submission.

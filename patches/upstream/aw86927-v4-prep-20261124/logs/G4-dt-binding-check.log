@@ -1,0 +1,8 @@
+make[1]: 进入目录“/tmp/kb-aw-v4”
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  CHKDT   /tmp/aw4-apply/Documentation/devicetree/bindings
+  LINT    /tmp/aw4-apply/Documentation/devicetree/bindings
+  STYLE   /tmp/aw4-apply/Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/input/awinic,aw86927.example.dts
+  DTC [C] Documentation/devicetree/bindings/input/awinic,aw86927.example.dtb
+make[1]: 离开目录“/tmp/kb-aw-v4”

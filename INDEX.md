@@ -8,6 +8,13 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-24）
 
+> **🆕 2026-11-24 11:4x 轻负载轮（本轮）**：**aw86927 v4 备料完成、门禁全绿、未投（等放行）** —— `patches/upstream/aw86927-v4-prep-20261124/`（7 封含 cover）；
+> 6/6 重写处置 sashiko 对 v3 的四条（[High] 补 `Signed-off-by`、[Medium] `INIT_WORK` 提前到 devres 动作前、[Medium] 新增 `enabled` 闸门堵 close() 后 timer 重启播、[Low] 措辞/changelog 位置），
+> 4/6·5/6 收 Joonhoe Kim 的 `Tested-by`（判据 = 与已投 v2 对应两枚 **diff 正文逐字节相同**，只有 hunk 偏移因基线换 7.4-rc3 而变），**6/6 因实质改动故意不收 tag**（已在 cover 请其复测）；
+> 门禁：G1 6/6 干净落树 · G2 checkpatch 0 ERROR（2 条已知 `Unknown commit id` 假阳性）· G3 `W=1` 编 `drivers/input/misc/aw86927.o` rc=0/0 warning · G4 `dt_binding_check` rc=0（单 schema，32 s）· G6 mailinfo 7/7；账 = `GATES-v4.md`。
+> 投递 = 只剩放行（`bash SEND.sh --yes`，dry-run 已过）。v3 目录已标「被 v4 取代」。
+> 负载口径：全程 `-j16`（用户 11-23 定「新内存到位前避开重负载」），编译仅单 `.o` + 单 schema，未跑全量编。
+
 > **🆕 2026-11-24 轻负载轮（旧内存未换 ⇒ 零编译，只有符号守卫 `--selftest` 与静态门）**：上一会话四条 lane 的产物本轮**独立复核后入库** ——
 > D5⑤ `build-kernel.sh` DSI 守卫修好（上游符号真名 `msm_dsi_host_cmd_xfer_commit`，`--selftest` 4/4，现查 `build/elden-tree` 树内核实）；
 > D2② Mobian recipes 备料包冻结（`gate.sh` 5/5，硬前置 = 内核 deb）；`n5b-vk64-death-rate.sh` 加 RETIRED 头、`scripts/README.md` 重生成一致（351 入口）。

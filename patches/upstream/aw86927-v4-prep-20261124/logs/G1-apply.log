@@ -1,0 +1,6 @@
+OK   0001-Input-aw86927-fix-the-7-V-boost-reference-for-AW8693.patch
+OK   0002-Input-aw86927-widen-the-AW86938-boost-mode-mask.patch
+OK   0003-dt-bindings-input-awinic-aw86927-document-the-AW8693.patch
+OK   0004-Input-aw86927-add-support-for-Awinic-AW86937.patch
+OK   0005-Input-aw86927-handle-the-AW8693X-play-and-boost-regi.patch
+OK   0006-Input-aw86927-stop-playback-over-suspend-close-and-s.patch

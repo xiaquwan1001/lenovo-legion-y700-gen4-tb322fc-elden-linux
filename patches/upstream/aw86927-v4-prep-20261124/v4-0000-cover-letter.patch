@@ -1,0 +1,88 @@
+From 377104c5fa93e52f1f989ba3bddd085b778a13e6 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 24 Nov 2026 11:38:00 +0800
+Subject: [PATCH v4 0/6] Input: aw86927 - add AW86937 support and fix the AW8693X layout
+
+*** AI-assistance disclosure ***
+This cover letter and the six patches below were prepared with the help
+of an LLM coding assistant.  The author reviewed every line, ran every
+gate quoted in this letter himself, and takes full responsibility for
+the content.
+
+This series adds support for the Awinic AW86937 LRA haptic IC on top of
+the existing AW86927/AW86938 driver, fixes two register definitions that
+are wrong on the AW8693x parts, and stops playback over suspend, close
+and shutdown.
+
+Patch 1 fixes the 7 V boost reference value that the AW86938 support
+introduced (0x11 programs 9 V, not 7 V).  Patch 2 widens the AW86938
+boost mode mask: the field is two bits wide at 6:5, so the existing
+one-bit mask leaves bit 6 untouched when the driver selects bypass.
+Patch 3 documents the awinic,aw86937 compatible as another member of the
+AW86927 fallback group; detection stays on the chip ID, so no new
+of_device_id entry is added.  Patch 4 adds the chip ID and init path.
+Patch 5 handles the AW8693x register layout differences (auto-boost bit,
+two-bit boost mode, VBAT mode and the two-step stop handshake).  Patch 6
+parks the part in standby on suspend, refuses new effects while the
+device is closed or suspended, asserts reset on shutdown, and drains the
+work item from a devres action so that unbind and probe failure unwind
+stop playback too.
+
+What changed in v4
+==================
+
+Only 6/6 changed.  All four points of Sashiko's v3 review (2026-11-24
+02:03Z) are addressed:
+
+  - [High] "commit message without Signed-off-by": the trailer is back.
+    The patch is generated as part of the series again, so it also keeps
+    the usual 76-column wrapping that was mangled in v3.
+  - [Medium] "uninitialized work_struct in aw86927_reset()": INIT_WORK()
+    now runs before devm_add_action_or_reset(), so the devres action can
+    no longer reach disable_work_sync() with play_work.func == NULL.
+  - [Medium] "race in aw86927_close() allows the timer to restart
+    playback": close() clears a new "enabled" flag under the input event
+    lock before the work item is drained, and aw86927_haptics_play()
+    ignores effects while that flag (or "suspended") is clear.  A memless
+    effect timer that fires around close() therefore cannot queue
+    play_work again after the driver stopped the chip; a new ->open()
+    callback sets the flag again.
+  - [Low] comment and commit message wording now describe standby rather
+    than power-down/reset, and "Changes since v3" sits below the
+    separator.
+
+Patches 4/6 and 5/6 now carry the Tested-by tag that Joonhoe Kim sent for
+the corresponding v2 patches: the code in them is unchanged since v2 (the
+hunks only shift because the series is rebased onto v7.4-rc3), and he
+tested it on a Lenovo Y700 Gen 5 (TB323FU) with two AW86937, including an
+s2idle round trip.  Patch 6 has changed both in v3 and in v4, so his tag
+for the old version is deliberately not carried there; a re-test of v4
+6/6 would be welcome.
+
+The AW86937 has no hardware in hand: the register data comes from the
+vendor driver and the part datasheet, and the commit message does not
+claim otherwise.
+
+Gates for this version: the six patches apply cleanly to v7.4-rc3
+(aebb727447); checkpatch.pl --strict reports 0 errors and 0 style
+warnings (the only two warnings are "Unknown commit id
+'df53055c540f'" for the Fixes: tag, which resolves in the input tree but
+not in a mainline tag); W=1 compile of drivers/input/misc/aw86927.o for
+arm64 (defconfig + CONFIG_INPUT_AW86927=y) with 0 warnings and 0 errors.
+
+
+Qianhui Xu (6):
+  Input: aw86927 - fix the 7 V boost reference for AW86938
+  Input: aw86927 - widen the AW86938 boost mode mask
+  dt-bindings: input: awinic,aw86927: document the AW86937 variant
+  Input: aw86927 - add support for Awinic AW86937
+  Input: aw86927 - handle the AW8693X play and boost register layout
+  Input: aw86927 - stop playback over suspend, close and shutdown
+
+ .../bindings/input/awinic,aw86927.yaml        |   1 +
+ drivers/input/misc/aw86927.c                  | 195 +++++++++++++++---
+ 2 files changed, 170 insertions(+), 26 deletions(-)
+
+-- 
+2.53.0
+
