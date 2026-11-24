@@ -25,7 +25,7 @@
   备份目录 `backup/<SN>-<容量档>/`；**禁用** `new-tablet` 与「两轨分机」旧口径。
 - **存储**：Linux 容量按项目体量一次给足（`DEVICE/README.md` §3），扩容首选回收 Android 专属分区；不写死配置。
 - **文档 SSOT**：唯一入口 `INDEX.md`（其 §0 = 状态摘要，§2「入口阶梯」= 阅读顺序 + 时间序权重）；分层与清单见 `INDEX.md` §2。
-- **构建限并发**：主机 28 线程，但**编译一律保留 2 个 P 核给交互**，且预算与本机其它项目共享 ⇒ 开编前 `build-slot take y700-elden:<任务> --jobs N`（或 `build-slot run y700-elden:<任务> -- make -j$SLOT_JOBS`），结束 `build-slot drop`；别手写 `make -j26`（还有别的项目在同时编）。
+- **构建抢槽位**：开编前 `build-slot take y700-elden:<任务> --jobs N`、收工 `build-slot drop`（预算/口径 = 全局规则 17，本文件不重写）。
 - **上机先过 QEMU**：凡是要烧设备/人肉看屏/`fastboot` 的验证，先写一条 QEMU 对照（`scripts/qemu-full-chain-smoke.sh`，单轮 ~35 s），
   QEMU 判不了的面（真外设、EFI-stub 差异、电源域）显式写「需上机」。调研结论 = `reports/qemu-usage-survey-20261112.md`（`-M virt,acpi=off`、`ramfb` 能出字、`virtio-gpu` 不能）。
 - **上游发信（2026-10-31 用户授权，已实测一次）**：**允许 agent 代写回信/cover**（含回应维护者「not with LLM」那类线程），**前提三件**：
