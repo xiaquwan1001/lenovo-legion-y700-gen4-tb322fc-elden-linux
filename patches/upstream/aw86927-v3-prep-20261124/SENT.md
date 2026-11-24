@@ -10,5 +10,6 @@
   ② message 与代码对齐（suspend 只 standby、shutdown 只 reset）。
 - **门禁**：`GATES-v3.md`（G1 6/6 干净落树；G2 checkpatch 0E/0W/0C ×6；G3 `W=1` 编译 rc=0/0 warning；
   §4 = 按 linux-next master 2026-11-24 快照复验，6/6 上下文已按该基线重生成后干净）
-- **lore 复核**：待摄取后按 MID 查 `https://lore.kernel.org/linux-input/<MID>/` 与 `/linux-devicetree/<MID>/`
+- **lore 复核（2026-11-24 01:53 UTC 实测）**：`linux-input` **尚未摄取**（`not found`，发信后 ~1 min，正常窗口 5–15 min）；
+  稍后按 MID 复查 `linux-input` 与 `linux-devicetree`。
 - **发送命令**：`bash SEND.sh --yes`
