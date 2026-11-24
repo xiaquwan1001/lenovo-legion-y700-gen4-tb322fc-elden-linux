@@ -23,14 +23,15 @@ ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 #   1) B5/daily：msm_dsi_host_bonded_cmd_{trigger,xfer}（2026-10-27 重构后对外名）
 #      或 file-static 的 dsi_bonded_cmd_trigger。
 #   2) 上游等价：pristine 上游树（如 7.4-rc3，未叠 patches/local/b5-resoc-20261027）
-#      没有 bonded 名，但有上游 DSI 锚点（msm_dsi_host_init / msm_dsi_modeset_init / …）
-#      ⇒ 视为通过。
+#      没有 bonded 名，但有上游 DSI 锚点（msm_dsi_host_init / msm_dsi_modeset_init /
+#      msm_dsi_host_cmd_xfer_commit / dsi_dev_probe —— 2026-11-24 树内核实于
+#      build/elden-tree(7.4-rc3) 与 build/g7b-vk185(7.3+B5)）⇒ 视为通过。
 #   3) 都没有 ⇒ DEAD（DRM_MSM 没进）。
 # 语义：qcom 平台两项仍是**子串**匹配（gcc_sm8750 实际符号是 gcc_sm8750_probe）；
 # DSI 项一律 ERE 且锁到「空白 + 行尾」，避免误命中更长的名字。
 SYM_DSI_B5='msm_dsi_host_bonded_cmd_trigger|msm_dsi_host_bonded_cmd_xfer|dsi_bonded_cmd_trigger'
-SYM_DSI_UP='msm_dsi_host_init|msm_dsi_host_modeset_init|msm_dsi_modeset_init|msm_dsi_host_xfer_commit|dsi_dev_probe'
-SYM_DSI_UP_NAMES='msm_dsi_host_init msm_dsi_host_modeset_init msm_dsi_modeset_init msm_dsi_host_xfer_commit dsi_dev_probe'
+SYM_DSI_UP='msm_dsi_host_init|msm_dsi_host_modeset_init|msm_dsi_modeset_init|msm_dsi_host_cmd_xfer_commit|dsi_dev_probe'
+SYM_DSI_UP_NAMES='msm_dsi_host_init msm_dsi_host_modeset_init msm_dsi_modeset_init msm_dsi_host_cmd_xfer_commit dsi_dev_probe'
 
 # sym_hit <System.map> <ERE 备选> —— System.map 第 3 列是符号名，锁「空白 + 行尾」。
 sym_hit() { grep -qE "[[:space:]]($2)\$" "$1"; }
@@ -79,7 +80,7 @@ ffff800080c305c8 t gcc_sm8750_regs_configure
 ffff800080cc2068 t rpmh_rsc_probe
 ffff800080c41000 T msm_dsi_host_init
 ffff800080c41100 T msm_dsi_modeset_init
-ffff800080c41200 T msm_dsi_host_xfer_commit
+ffff800080c41200 T msm_dsi_host_cmd_xfer_commit
 EOF
   # 场景 3：真死内核（ARCH_QCOM 被 olddefconfig 剥掉）
   cat > "$tmp/dead.map" <<'EOF'

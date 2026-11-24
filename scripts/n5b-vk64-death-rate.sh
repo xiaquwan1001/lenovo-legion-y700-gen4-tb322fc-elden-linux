@@ -2,6 +2,10 @@
 # n5b-vk64-death-rate.sh — N5b：在 vk64（7.2 血统）RAM 内核上重复
 #   「完整相机栈 + 真实 dpms On->Off 熄屏」配方，测量致死率。
 #
+# ★ RETIRED（2026-11-24）：Q24 已于 2026-10-23 结项（根因 = 上游 rpmhpd skip-retention，7.3 线免疫；
+#   TASKS §5 Q24 / G1-22），本脚本不再作为取样入口。只留作历史配方与 #288/#363 判据的原文出处；
+#   真要复活必须先读 PITFALLS #712（软路径 = `sync; systemctl reboot bootloader`，不再需要物理键）。
+#
 # 背景：reports/q24-n5-vk64-death-reproduced-20261015.md（第 2 发致死，n=2）
 #   对照：reports/q24-n2prime-both-arms-survive-20261015.md（M1-7.3 上 12 发全存活）
 #

@@ -144,7 +144,7 @@
 | `scripts/edl-peek.sh` | 经 bkerler python edl 的 Firehose peek 读物理内存（只读工具，无 poke） | 8 |
 | `scripts/elden-powerlog.initd` | write a durable marker when OpenRC enters the shutdown | 24 |
 | `scripts/elden-to-bootloader.sh` | 设备侧「Linux → bootloader(fastboot)」单一入口（POSIX sh，可独立跑） | 8 |
-| `scripts/eldroid-bootctl` | Linux 侧刷机控制（reboot reason + A/B 槽位元数据）。 | 217 |
+| `scripts/eldroid-bootctl` | Linux 侧刷机控制（reboot reason + A/B 槽位元数据）。 | 218 |
 | `scripts/f2fs-migrate.sh` | 路线 A：**缩小 linux17(ext4) + 尾部新建 linux18(f2fs) + 本地复制**（零大文件传输） | 33 |
 | `scripts/fix-fstab-samsung.sh` | 给 /mnt/Samsung 的 fstab 条目补 nofail（掉盘不卡开机） | 6 |
 | `scripts/fix-logind-poweroff.sh` | make logind's Power Off / Restart helpers actually | 29 |
@@ -312,7 +312,7 @@
 | `scripts/display-drop-forensics.sh` | 设备侧「桌面显示栈自发掉线」一次抓全 | 3 |
 | `scripts/f2fs-host-bench.sh` | f2fs vs ext4 的主机 loop 台架（G1，零设备写盘） | 3 |
 | `scripts/fb-survey.py` | 事后从 DRAM 读回 splash_region，还原 shim 的「整屏纯色」执行轨迹。 | 4 |
-| `scripts/g7-mux-probe.sh` | 读「USB HS 数据 mux 的选择线（TLMM GPIO29）」，给 G7 的「换口 → mux 切换」判据用 | 1 |
+| `scripts/g7-mux-probe.sh` | 读「USB HS 数据 mux 的选择线（TLMM GPIO29）」，给 G7 的「换口 → mux 切换」判据用 | 3 |
 | `scripts/grubfat-inspect.sh` | 引导链取证（四代 TB322FC / 三代 TB321FU 通用，可参考 BOOTCHAIN-2026-10-05） | 12 |
 | `scripts/gui-freeze-watch.sh` | 抓 PITFALLS #106「进 GUI 后整机卡死」的现行。 | 6 |
 | `scripts/gui-stress.sh` | 给 PITFALLS #106「进桌面后整机卡死」造**真实** GUI/GPU 负载。 | 7 |
@@ -364,7 +364,7 @@
 | `scripts/lib-fastboot.sh` | fastboot / ssh 设备调用的安全封装（2026-11-09 工具挂死调查产物） | 33 |
 | `scripts/lib-hosttools.sh` | 主机侧外部工具（fastboot / adb）落点解析（2026-11-21） | 16 |
 | `scripts/lib-serial-source.sh` | 串口日志的唯一采集实现（被 suspend/n5b 等采集脚本 source）。 | 11 |
-| `scripts/lib-soft-bootloader.sh` | Linux → bootloader 软路径（唯一实现；2026-11-24 按 PITFALLS #712 重写） | 37 |
+| `scripts/lib-soft-bootloader.sh` | Linux → bootloader 软路径（唯一实现；2026-11-24 按 PITFALLS #712 重写） | 38 |
 | `scripts/lib-ssh.sh` | 设备 SSH 调用的单一实现（选项统一 + 一次往返批量取状态） | 26 |
 | `scripts/lib-wait.sh` | 「等设备到某个状态」的单一实现（check-first + 指数退避 + 换代判据） | 35 |
 

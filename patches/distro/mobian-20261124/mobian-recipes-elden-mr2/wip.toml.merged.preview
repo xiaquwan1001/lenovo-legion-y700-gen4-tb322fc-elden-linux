@@ -1,0 +1,77 @@
+# This file is to be filled in with the appropriate parameters for your device
+# It is used both to identify the device-tree file name and to construct the
+# boot image.
+
+# The chipset reference as used as the first part of the device-tree file name
+# (e.g. "sdm845")
+chipset = ""
+
+# Boot image parameters: load addresses and block device sector size
+# Those parameters can be extracted from an existing boot image by
+# running `abootimg -i <image>`, for example
+[bootimg]
+base = 0x0
+kernel = 0x0
+ramdisk = 0x0
+second = 0x0
+tags = 0x0
+pagesize = 0
+# OPTIONAL: uncomment if the device needs to use a v2 format bootimg, which
+# embeds a separate copy of the DTB (not relying on the one appended to the
+# kernel image)
+# version = 2
+# dtb = 0x0
+
+# Device-specific parameters: those are mostly used to identify the device, and
+# especially the device-tree file to use, which is constructed this way:
+#   qcom/<chipset>-<vendor>-<model>[-<variant>].dtb
+#
+# It is also possible to set additional cmdline parameters using the "append"
+# entry, in case kernel-level quirks are needed which have corresponding cmdline
+# options
+[[device]]
+vendor = ""
+model = ""
+# OPTIONAL: uncomment if this device uses a different SoC than the one mentioned
+# in the top-level `chipset` variable (or if this top-level variable is missing)
+# chipset = ""
+# OPTIONAL: uncomment if there are several variants of the same model needing
+# different device-tree files (e.q. "xiaomi-beryllium" has variants "ebbg" and
+# "tianma")
+# variant = ""
+# OPTIONAL: uncomment if additional cmdline parameters are needed
+# append = ""
+# OPTIONAL: uncomment if device uses different bootimg parameters
+# bootimg = {version = 2, base = 0x0, kernel = 0x0, ramdisk = 0x0, dtb = 0x0, second = 0x0, tags = 0x0, pagesize = 4096 }
+# mobian-recipes `devices/qcom/configs/wip.toml` 追加片段
+# —— Lenovo Legion Y700 Gen4 (TB322FC / elden / SM8750)
+#
+# ★ 本 MR 不含：这是**将来同批件**（MR-2）的草稿，不随第一件 droid-juicer config MR 提交。
+#   依据 = reports/mobian-mr-plan-20261122.md §3.3：wip 条目单独提交是死条目
+#   （qcom-wip 不带内核包，没有 linux-image-*-sm8750 .deb 建不出可启镜像，
+#   且改 devices/qcom/* 会触发 CI qcom job，提交即红）。
+#   MR-2 的同批件 = 本片段 + devices/qcom/droid-juicer/lenovo,elden.toml 副本
+#   + devices/qcom/packages/linux-image-*-sm8750 .deb（内核分支工件）。
+#
+# 与 11-21 草稿（patches/distro/mobian-20261121/mobian-recipes/wip.toml.snippet）的差异：
+#   - `chipset = "sm8750"` **必须写在 [[device]] 里**（11-22 报告结论 #3：
+#     wip.toml 顶层 chipset = ""，jq 把空串当真值，bootloader.sh:46,54 会拼出
+#     `qcom/-lenovo-elden.dtb`；顶层 [bootimg] 段不动）。
+#   - 11-21 的三个 TODO（version/dtb/append）已按 11-22 报告结论 #4 关闭：
+#     都不写 —— 不带 dtb 字段时 recipes 走 `cat vmlinuz dtb > kernel` + v0 header
+#     （bootloader.sh:84,88，= 全部 wip qcom 设备的默认）；append 由
+#     bootloader.sh:59,90-92 自拼（mobile.root=/mobile.qcomsoc=/init=）。
+#
+# 落法：追加到上游 devices/qcom/configs/wip.toml 末尾
+# （https://salsa.debian.org/Mobian-team/mobian-recipes/-/raw/master/devices/qcom/configs/wip.toml）。
+# 字段判据：
+#   vendor/model = 在机 DTB compatible = "lenovo,elden", "qcom,sm8750"
+#     （out/boot-elden-vk192.img 内嵌 FDT 解出，dtc 复跑见 11-21 README §1）
+#   chipset = 板 DTS 文件名 sm8750-lenovo-elden.dts 的第一段（bootloader.sh:66 拼名规则）
+
+[[device]]
+vendor = "lenovo"
+model = "elden"
+# top-level `chipset` is empty in wip.toml and jq treats "" as truthy
+# (bootloader.sh:46,54), so the per-device value is mandatory here.
+chipset = "sm8750"

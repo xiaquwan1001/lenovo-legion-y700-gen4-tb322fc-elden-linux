@@ -8,6 +8,10 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-24）
 
+> **🆕 2026-11-24 轻负载轮（旧内存未换 ⇒ 零编译，只有符号守卫 `--selftest` 与静态门）**：上一会话四条 lane 的产物本轮**独立复核后入库** ——
+> D5⑤ `build-kernel.sh` DSI 守卫修好（上游符号真名 `msm_dsi_host_cmd_xfer_commit`，`--selftest` 4/4，现查 `build/elden-tree` 树内核实）；
+> D2② Mobian recipes 备料包冻结（`gate.sh` 5/5，硬前置 = 内核 deb）；`n5b-vk64-death-rate.sh` 加 RETIRED 头、`scripts/README.md` 重生成一致（351 入口）。
+> `check-doctor` FAIL=0 / WARN=7（全为已登记豁免：源树不可核、账本例外、4 枚解不出载荷的旧镜像、无版本号拷贝、降级一致、无构建树；本轮新增的两条指针已补）。
 > **🆕 2026-11-24（无人值守轮 + 一次用户放行的设备窗口；逐项证据在对应 report / SENT / GATES）**：
 > ① **上游**：`dwc3 v14` 已投（4×250，cover `<20261124015002.1426767-1>`，`linux-devicetree` 已归档 4/4；只修 sashiko 对 v13 1/3 的三条 [Low]）；
 > `aw86927 v3` 已投（7×250，cover `<20261124015028.1427393-1>`；[High] unbind 竞态 + [Low] message，只改 6/6）；
