@@ -103,3 +103,17 @@ make -j26 ARCH=arm64 … O=/tmp/kb-v9b CHECK_DTBS=1 qcom/sm8750-lenovo-elden.dtb
 
 **本轮边界**：未重跑 v8 prep 的负样例（同 `mux-state`/去 `mux-controls`）——那两条测的是 DT 自身形状，
 与 binding 版本无关，11-21 结论继续有效。
+
+## §7 两条「sashiko 未判别」老欠账的现查结果（2026-11-24，网络恢复后补）
+
+| 系列 | 现查结论 | 处置 |
+|---|---|---|
+| **M8 mdss v5**（`patches/upstream/m8-mdss-v5-20261114/`） | **lore 上不存在 sashiko 对 v5 的报告**：`/linux-arm-msm/?q=sashiko+"reset all block resets"` 只命中我们自己的回信（11-17 04:17Z）；`/all/?q=sashiko+...since:2026-11-14` 也没有 mdss 相关条目 ⇒ 这条「欠账」是**记账错误**，不是漏判别 | 关掉该欠账（`reports/comm-triage-20261123-b.md` §表 的注脚以本节为准） |
+| **aw86927 v2**（`patches/upstream/haptics-v2-20261117/`） | **有报告未判别**：sashiko 对 **v2 6/6** 于 2026-11-17 05:46Z 给 **1×[High] + 1×[Low]**（`/all/?q=sashiko+aw86927`）。**[High] 成立**：devres 动作只拉 reset、不排空 `play_work`，inhibited 设备 unbind 时 `input_close_device()` 被跳过而 flush 会重排队 ⇒ worker 可能写已释放的 regmap（use-after-free 形状）。[Low] 也成立：message 说 suspend/shutdown 都 stop+reset，代码只各做一半 | **已出 v3 备料** `patches/upstream/aw86927-v3-prep-20261124/`（只改 6/6：devres 动作先 `disable_work_sync` 再拉 reset，shutdown 复用同一 helper；message 对齐）。G1 6/6 干净、G2 checkpatch 0E/0W/0C ×6、G3 `W=1` 编译 rc=0/0 warning（7.4-rc3 基线）。**未投递，等放行** |
+
+**副作用情报（下一轮用）**：同一次搜索看到两处**同文件外部改动**，将来会影响我们的 rebase：
+1. `[PATCH v2] dt-bindings: usb: snps,dwc3-common: Document usb-psy-name`（Venkat Yadlapati，11-22，sashiko 已回）
+   —— 与我们 dwc3 v14 改的**同一个 binding 文件**。
+2. `[PATCH v3 07/11] drm/msm: mdss: Add support for MDSS on Nord`（Nabige Aala，11-16）
+   —— 与我们 M8 2/3 改的**同一个 `msm_mdss.c`**。
+投 v14 / M8 后续代次前先看这两条是否进树。

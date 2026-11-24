@@ -51,7 +51,7 @@
 |---|---|---|
 | elden DTS v7 | `20261117052029.31900-1`（patchwork `14991580`，state=new）；维护者树/next 无文件；comments=0 | 无 |
 | M10 fastrpc v3 | `20261111035731.940893-1`（`14971025`，new）；`sm8750.dtsi` adsp 仍无 `non-secure-domain`；静默 12 天 | 无 |
-| M8 mdss v5 | 3/3 在档；`msm-next` `msm_mdss.c` 未合入；sashiko 报告未逐条判别（PATCHES 侧欠账） | 无 |
+| M8 mdss v5 | 3/3 在档；`msm-next` `msm_mdss.c` 未合入；~~sashiko 报告未逐条判别（PATCHES 侧欠账）~~ **2026-11-24 现查：lore 上根本没有 sashiko 对 v5 的报告 ⇒ 该欠账是记账错误，已关**（`reports/upstream-recheck-20261124.md` §7） | 无 |
 | wl2868c | v12（regulator）11-17 发出；`TASKS/README.md:478` 文档回填已完成 | 无 |
 | aw86927 v2 | Joonhoe Kim 三枚 Tested-by 待收进 v3 备料（上午轮 A2，未变） | 无 |
 

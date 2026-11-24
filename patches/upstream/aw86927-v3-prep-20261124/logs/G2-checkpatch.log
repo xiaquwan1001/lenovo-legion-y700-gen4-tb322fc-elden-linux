@@ -1,0 +1,24 @@
+===== v3-0001-Input-aw86927-fix-the-7-V-boost-reference-for-AW8693.patch
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+===== v3-0002-Input-aw86927-widen-the-AW86938-boost-mode-mask.patch
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+===== v3-0003-dt-bindings-input-awinic-aw86927-document-the-AW8693.patch
+total: 0 errors, 0 warnings, 0 checks, 7 lines checked
+
+patches/upstream/aw86927-v3-prep-20261124/v3-0003-dt-bindings-input-awinic-aw86927-document-the-AW8693.patch has no obvious style problems and is ready for submission.
+===== v3-0004-Input-aw86927-add-support-for-Awinic-AW86937.patch
+total: 0 errors, 0 warnings, 0 checks, 30 lines checked
+
+patches/upstream/aw86927-v3-prep-20261124/v3-0004-Input-aw86927-add-support-for-Awinic-AW86937.patch has no obvious style problems and is ready for submission.
+===== v3-0005-Input-aw86927-handle-the-AW8693X-play-and-boost-regi.patch
+total: 0 errors, 0 warnings, 0 checks, 112 lines checked
+
+patches/upstream/aw86927-v3-prep-20261124/v3-0005-Input-aw86927-handle-the-AW8693X-play-and-boost-regi.patch has no obvious style problems and is ready for submission.
+===== v3-0006-Input-aw86927-stop-playback-over-suspend-and-on-shut.patch
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
