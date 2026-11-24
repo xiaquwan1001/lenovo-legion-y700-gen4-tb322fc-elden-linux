@@ -1,26 +1,36 @@
-From 95f780934b6fb9435f1ae7f5387eca624fe96832 Mon Sep 17 00:00:00 2001
+From d8a11362551afe164d4be8ff843e7ea6265ce207 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Tue, 24 Nov 2026 08:37:52 +0800
-Subject: [PATCH v3 6/6] Input: aw86927 - stop playback over suspend and on
+Date: Tue, 24 Nov 2026 08:46:03 +0800
+Subject: [PATCH v3] Input: aw86927 - stop playback over suspend and on
  shutdown
 
-Playback is not stopped across system sleep or shutdown: an effect that is
-being played when the system suspends keeps the chip driving the actuator,
+Playback is not stopped across system sleep or shutdown: an effect
+  that is
+being played when the system suspends keeps the chip driving the
+  actuator,
 and nothing holds the chip in reset on shutdown or unbind.
 
 Park the chip in standby on suspend (resume leaves it in reset, as probe
-does), assert reset on shutdown, and drain the work item in a devres action
-so it runs on unbind as well: the memless effect timer can queue the work
-again when input_close_device() is skipped for an inhibited device, and the
+does), assert reset on shutdown, and drain the work item in a devres
+action
+so it runs on unbind as well: the memless effect timer can queue the
+  work
+again when input_close_device() is skipped for an inhibited device, and
+the
 work must not reach the regmap after the device is gone.
 Changes since v2:
- - [sashiko, 2026-11-17, High] "race in aw86927_close() and unbind queues
-   play_work after stop": the devres action now drains the work item before
-   asserting reset, so an effect timer that re-queued the work (inhibited
-   device, or a flush interrupted by a signal) cannot reach the regmap after
+ - [sashiko, 2026-11-17, High] "race in aw86927_close() and unbind
+  queues
+   play_work after stop": the devres action now drains the work item
+  before
+   asserting reset, so an effect timer that re-queued the work
+  (inhibited
+   device, or a flush interrupted by a signal) cannot reach the regmap
+  after
    the device is gone.  aw86927_shutdown() calls the same helper.
  - [sashiko, same report, Low] "commit message and comment mismatch on
-   suspend/shutdown": the message now states that suspend parks the chip in
+   suspend/shutdown": the message now states that suspend parks the
+  chip in
    standby without asserting reset and shutdown asserts reset without a
    separate stop, which is what the code does.
 ---
@@ -28,18 +38,18 @@ Changes since v2:
  1 file changed, 79 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/input/misc/aw86927.c b/drivers/input/misc/aw86927.c
-index 1dbcba798831..74ecedbc9da0 100644
+index 42ae123808b6..a84cada8f570 100644
 --- a/drivers/input/misc/aw86927.c
 +++ b/drivers/input/misc/aw86927.c
-@@ -14,6 +14,7 @@
- #include <linux/i2c.h>
+@@ -15,6 +15,7 @@
+ #include <linux/interrupt.h>
  #include <linux/input.h>
  #include <linux/module.h>
 +#include <linux/pm.h>
  #include <linux/regmap.h>
  #include <linux/regulator/consumer.h>
  #include <linux/types.h>
-@@ -203,6 +204,7 @@ struct aw86927_data {
+@@ -204,6 +205,7 @@ struct aw86927_data {
  	struct i2c_client *client;
  	struct regmap *regmap;
  	struct gpio_desc *reset_gpio;
@@ -47,7 +57,7 @@ index 1dbcba798831..74ecedbc9da0 100644
  	u16 level;
  };
  
-@@ -365,22 +367,26 @@ static int aw86927_haptics_play(struct input_dev *dev, void *data, struct ff_eff
+@@ -366,22 +368,26 @@ static int aw86927_haptics_play(struct input_dev *dev, void *data, struct ff_eff
  	struct aw86927_data *haptics = input_get_drvdata(dev);
  	int level;
  
@@ -77,7 +87,7 @@ index 1dbcba798831..74ecedbc9da0 100644
  {
  	int err;
  
-@@ -425,7 +431,8 @@ static int aw86927_play_sine(struct aw86927_data *haptics)
+@@ -426,7 +432,8 @@ static int aw86927_play_sine(struct aw86927_data *haptics)
  	if (err)
  		return err;
  
@@ -87,7 +97,7 @@ index 1dbcba798831..74ecedbc9da0 100644
  	if (err)
  		return err;
  
-@@ -444,6 +451,7 @@ static void aw86927_close(struct input_dev *input)
+@@ -445,6 +452,7 @@ static void aw86927_close(struct input_dev *input)
  	int err;
  
  	cancel_work_sync(&haptics->play_work);
@@ -95,7 +105,7 @@ index 1dbcba798831..74ecedbc9da0 100644
  
  	err = aw86927_stop(haptics);
  	if (err)
-@@ -455,10 +463,11 @@ static void aw86927_haptics_play_work(struct work_struct *work)
+@@ -456,10 +464,11 @@ static void aw86927_haptics_play_work(struct work_struct *work)
  	struct aw86927_data *haptics =
  		container_of(work, struct aw86927_data, play_work);
  	struct device *dev = &haptics->client->dev;
@@ -109,7 +119,7 @@ index 1dbcba798831..74ecedbc9da0 100644
  	else
  		err = aw86927_stop(haptics);
  
-@@ -800,6 +809,20 @@ static int aw86927_detect(struct aw86927_data *haptics)
+@@ -801,6 +810,20 @@ static int aw86927_detect(struct aw86927_data *haptics)
  	return 0;
  }
  
@@ -130,7 +140,7 @@ index 1dbcba798831..74ecedbc9da0 100644
  static int aw86927_probe(struct i2c_client *client)
  {
  	struct aw86927_data *haptics;
-@@ -828,6 +851,10 @@ static int aw86927_probe(struct i2c_client *client)
+@@ -829,6 +852,10 @@ static int aw86927_probe(struct i2c_client *client)
  		return dev_err_probe(haptics->dev, PTR_ERR(haptics->reset_gpio),
  				     "Failed to get reset gpio\n");
  
@@ -141,7 +151,7 @@ index 1dbcba798831..74ecedbc9da0 100644
  	/* Hardware reset */
  	aw86927_hw_reset(haptics);
  
-@@ -899,6 +926,50 @@ static int aw86927_probe(struct i2c_client *client)
+@@ -900,6 +927,50 @@ static int aw86927_probe(struct i2c_client *client)
  	return 0;
  }
  
@@ -192,7 +202,7 @@ index 1dbcba798831..74ecedbc9da0 100644
  static const struct of_device_id aw86927_of_id[] = {
  	{ .compatible = "awinic,aw86927" },
  	{ /* sentinel */ }
-@@ -910,8 +981,10 @@ static struct i2c_driver aw86927_driver = {
+@@ -911,8 +982,10 @@ static struct i2c_driver aw86927_driver = {
  	.driver = {
  		.name = "aw86927-haptics",
  		.of_match_table = aw86927_of_id,

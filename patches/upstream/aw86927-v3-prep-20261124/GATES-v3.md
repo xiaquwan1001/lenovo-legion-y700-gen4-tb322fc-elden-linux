@@ -45,3 +45,21 @@ make -j26 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/kb-aw-v3 W=1 driver
   `git apply` + `W=1`，因为维护者树以 linux-next 为准。
 - 未做上机验证（触觉实际行为，尤其 suspend/shutdown 路径）。
 - 临时 worktree / `O=` 构建目录**已在收尾时删除**。
+
+## 4. 2026-11-24 追加：按 **linux-next master**（v2 的原基线）复验
+
+本地无 linux-next 树，用 `git.kernel.org` 的 `plain` 接口取两枚目标文件（`drivers/input/misc/aw86927.c`、
+`Documentation/devicetree/bindings/input/awinic,aw86927.yaml`，2026-11-24 快照）搭一个最小 git 树再 `git apply`：
+
+| 项 | 结果 |
+|---|---|
+| 1–5 落树 | **5/5 干净** |
+| 6/6 落树（**原 v2 上下文**） | **失败**：`#include` 块漂了 1 行（linux-next 在 10-27 之后加过 include） |
+| 6/6 落树（**本轮重生成的上下文**） | **干净**（`patch --fuzz=3` 先验只偏移 1 行/0 语义改动，然后按新基线重出 `git format-patch`） |
+| checkpatch（在**内核树内**跑，`--strict --no-signoff --no-tree`） | 6 枚 **0 条**真问题（唯一 1 条是「Unknown commit id `df53055c540f`」，因为最小树没有内核历史；在真树里可解析） |
+
+⚠ **方法论坑（新记）**：不要在本项目仓里对内核补丁跑 checkpatch —— 目标文件不在本仓，checkpatch 会把
+**补丁文件自身**当目标，报一堆假 `trailing whitespace`（本轮先被它误导了一次）。必须在内核树内跑。
+
+⇒ v3 的 6/6 已按 linux-next master 2026-11-24 的上下文重生成（`index` 行与 hunk 偏移随之更新），
+content 与"v2 内容 + 两处修复"一致；1–5 未改动。
