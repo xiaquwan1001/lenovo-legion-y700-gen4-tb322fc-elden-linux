@@ -1,0 +1,300 @@
+[    4.396796] [     T96] pci 0000:01:00.0: BAR 0 [mem 0x00000000-0x001fffff 64bit]
+[    4.396834] [     T96] pci 0000:01:00.0: BAR 2 [mem 0x00000000-0x00007fff 64bit]
+[    4.397599] [     T96] pci 0000:01:00.0: PME# supported from D0 D3hot D3cold
+[    4.398468] [     T96] pci 0000:01:00.0: Adding to iommu group 15
+[    4.403481] [     T96] pci 0000:01:00.0: ASPM: default states L0s L1
+[    4.403681] [     T96] pci 0000:00:00.0: bridge window [io  0x1000-0x0fff] to [bus 01-ff] add_size 1000
+[    4.403709] [     T96] pci 0000:00:00.0: bridge window [mem 0x00100000-0x000fffff 64bit pref] to [bus 01-ff] add_size 200000 add_align 100000
+[    4.403742] [     T96] pci 0000:00:00.0: bridge window [mem 0x40300000-0x405fffff]: assigned
+[    4.403763] [     T96] pci 0000:00:00.0: bridge window [mem 0x400000000-0x4001fffff 64bit pref]: assigned
+[    4.403782] [     T96] pci 0000:00:00.0: BAR 0 [mem 0x40600000-0x40600fff]: assigned
+[    4.403803] [     T96] pci 0000:00:00.0: bridge window [io  0x1000-0x1fff]: assigned
+[    4.403827] [     T96] pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+[    4.403944] [     T96] pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]: assigned
+[    4.404061] [     T96] pci 0000:00:00.0: PCI bridge to [bus 01-ff]
+[    4.404077] [     T96] pci 0000:00:00.0:   bridge window [io  0x1000-0x1fff]
+[    4.404096] [     T96] pci 0000:00:00.0:   bridge window [mem 0x40300000-0x405fffff]
+[    4.404115] [     T96] pci 0000:00:00.0:   bridge window [mem 0x400000000-0x4001fffff 64bit pref]
+[    4.404136] [     T96] pci_bus 0000:00: resource 4 [io  0x0000-0xfffff]
+[    4.404153] [     T96] pci_bus 0000:00: resource 5 [mem 0x40300000-0x63ffffff]
+[    4.404170] [     T96] pci_bus 0000:00: resource 6 [mem 0x400000000-0x6ffffffff]
+[    4.404186] [     T96] pci_bus 0000:01: resource 0 [io  0x1000-0x1fff]
+[    4.404201] [     T96] pci_bus 0000:01: resource 1 [mem 0x40300000-0x405fffff]
+[    4.404217] [     T96] pci_bus 0000:01: resource 2 [mem 0x400000000-0x4001fffff 64bit pref]
+[    4.423402] [     T96] pcieport 0000:00:00.0: PME: Signaling with IRQ 234
+[    4.423891] [     T96] pcieport 0000:00:00.0: AER: enabled with IRQ 234
+[    4.425438] [     T96] ath12k_wifi7_pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+[    4.425557] [     T96] ath12k_wifi7_pci 0000:01:00.0: enabling device (0000 -> 0002)
+[    4.425631] [     T96] ath12k_wifi7_pci 0000:01:00.0: Wi-Fi 7 Hardware name: peach hw2.0
+[    4.428283] [     T96] ath12k_wifi7_pci 0000:01:00.0: MSI vectors: 32
+[    4.484878] [     T96] mhi mhi0: Requested to power ON
+[    4.484893] [     T96] mhi mhi0: Power on setup success
+[    4.565748] [    T178] mhi mhi0: Wait for device to enter SBL or Mission mode
+[    6.367478] [    T153] qcom-apm gprsvc:service:2:3: CMD timeout for [1001021] opcode
+[    6.373926] [     T89] Bluetooth: hci0: QCA Product ID   :0x00000021
+[    6.373937] [     T89] Bluetooth: hci0: QCA SOC Version  :0x40210200
+[    6.373944] [     T89] Bluetooth: hci0: QCA ROM Version  :0x00000200
+[    6.373951] [     T89] Bluetooth: hci0: QCA Patch Version:0x00006d58
+[    6.373957] [     T89] Bluetooth: hci0: QCA controller version 0x02000200
+[    6.373964] [     T89] Bluetooth: hci0: QCA Downloading qca/brhbtfw20.tlv
+[    6.397394] [    T181] rx_macro 6ac0000.codec: Driver needs fixing: Unsorted reg_defaults, sorting the copy
+[    6.402183] [    T181] qcom-soundwire 7630000.soundwire: dout-ports (0) mismatch with controller (1)
+[    6.402544] [    T181] wcd939x_codec audio-codec: bound sdw:2:0:0217:010e:00:4 (ops wcd_sdw_component_ops)
+[    6.402551] [    T181] wcd939x_codec audio-codec: bound sdw:3:0:0217:010e:00:3 (ops wcd_sdw_component_ops)
+[    6.404398] [    T181] wsa_macro 6aa0000.codec: Driver needs fixing: Unsorted reg_defaults, sorting the copy
+[    6.405201] [    T181] wsa_macro 6b00000.codec: Driver needs fixing: Unsorted reg_defaults, sorting the copy
+[    6.406256] [    T181] snd-sc8280xp sound: ASoC: Parent card not yet available, widget card binding deferred
+[    6.440197] [    T181] ALSA: Control name 'stream0.vol_ctrl0 MultiMedia1 Playback Volume' truncated to 'stream0.vol_ctrl0 MultiMedia1 Playback Volu'
+[    6.440230] [    T181] ALSA: Control name 'stream1.vol_ctrl1 MultiMedia2 Playback Volume' truncated to 'stream1.vol_ctrl1 MultiMedia2 Playback Volu'
+[    6.441586] [    T181] input: Lenovo-Y700-Gen4 Headset Jack as /devices/platform/sound/sound/card0/input7
+[    7.647582] [     T96] ath12k_wifi7_pci 0000:01:00.0: failed to set mhi state: POWER_ON(2)
+[    7.647606] [     T96] ath12k_wifi7_pci 0000:01:00.0: failed to start mhi: -110
+[    7.647616] [     T96] ath12k_wifi7_pci 0000:01:00.0: failed to power up :-110
+[    7.647979] [     T96] ath12k_wifi7_pci 0000:01:00.0: failed to create soc 0 core: -110
+[    7.648008] [     T96] ath12k_wifi7_pci 0000:01:00.0: unable to create hw group
+[    7.648026] [     T96] ath12k_wifi7_pci 0000:01:00.0: failed to init core: -110
+[    7.660289] [     T96] ath12k_wifi7_pci 0000:01:00.0: probe with driver ath12k_wifi7_pci failed with error -110
+[    7.663045] [      T1] Freeing unused kernel memory: 4608K
+[    7.663090] [      T1] Run /init as init process
+[    7.663093] [      T1]   with arguments:
+[    7.663096] [      T1]     /init
+[    7.663099] [      T1]   with environment:
+[    7.663101] [      T1]     HOME=/
+[    7.663104] [      T1]     TERM=linux
+[    7.663107] [      T1]     elden_root=LABEL=linux
+[    7.701803] [      T1] [init] root fs type=tmpfs on_initramfs=1
+[    7.703555] [      T1] [init] sleep policy: mem_sleep=[s2idle] deep
+[    7.704432] [      T1] [init] disk root requested: LABEL=linux
+[    7.971614] [      T1] [init] resolved LABEL=linux -> /dev/sda17
+[    7.973004] [      T1] [init] root fstype: ext4
+[    7.973029] [      T1] [init] DBG mount start: dev=/dev/sda17 fstype=ext4 target=/newroot cmdline_elden_root=LABEL=linux
+[    7.987198] [    T266] EXT4-fs (sda17): mounted filesystem e9c4b307-f508-4ba8-811f-026847ef1578 r/w with ordered data mode. Quota mode: none.
+[    7.989127] [      T1] [init] DBG mount ok: 13 mounts; newroot has 21 entries
+[    7.991096] [      T1] [init] trace fd opened on newroot/var/tmp/elden-init-trace.log
+[    7.991128] [      T1] [init] switching root to /dev/sda17 (/init)
+[    7.992737] [      T1] [init] DBG newinit: /init size=34584 sha=47af5f7d5400 shebang=#!/bin/sh
+[    8.020242] [      T1] [init] root fs type=ext2/ext3 on_initramfs=0
+[    8.025791] [      T1] [init] sleep policy: mem_sleep=[s2idle] deep
+[    9.022811] [    T334] [camera] loaded system_heap
+[    9.029254] [    T334] [camera] loaded camcc-sm8750
+[    9.032567] [    T334] [camera] loaded cambistmclkcc-sm8750
+[    9.037403] [    T334] [camera] loaded i2c-qcom-cci
+[    9.042369] [    T375] camera_ldo1: Bringing 1200000uV into 1128000-1128000uV
+[    9.046206] [    T375] camera_ldo2: Bringing 1200000uV into 1288000-1288000uV
+[    9.050000] [    T375] camera_ldo3: Bringing 2800000uV into 2816000-2816000uV
+[    9.053802] [    T375] camera_ldo4: Bringing 2800000uV into 2824000-2824000uV
+[    9.057646] [    T375] camera_ldo5: Bringing 2800000uV into 2808000-2808000uV
+[    9.062979] [    T375] camera_ldo7: Bringing 2800000uV into 1800000-1800000uV
+[    9.066748] [    T334] [camera] loaded wl2868c-regulator
+[    9.070866] [    T382] mc: Linux media interface: v0.10
+[    9.082243] [    T382] videodev: Linux video capture interface: v2.00
+[    9.121100] [    T334] [camera] loaded qcom-camss
+[    9.126216] [    T334] [camera] loaded leds-qcom-flash
+[    9.129522] [    T334] [camera] loaded gt9764
+[    9.179996] [    T334] [camera] loaded s5kjns
+[    9.235861] [    T334] [camera] loaded gc08a8
+[    9.239163] [    T334] [camera] done: 1 media, 17 video nodes
+[    9.357233] [    T423] /usr/local/sbin/payload-modules-load.sh: 30: 
+[    9.357237] [    T423] Bad substitution
+
+[    9.357414] [      T1] [init] WARNING: payload-modules-load failed/timed out
+[    9.357912] [      T1] [init] Alpine rootfs up, kernel 7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0
+[    9.370684] [    T450] printk: legacy console [ttyGS0] enabled
+[    9.373409] [    T430] configfs-gadget.g1 gadget.0: HOST MAC 02:1e:5e:ed:e1:02
+[    9.373416] [    T430] configfs-gadget.g1 gadget.0: MAC 02:1e:5e:ed:e1:01
+[    9.398073] [      T1] [init] systemd mode: handing PID1 to /sbin/init
+[    9.398675] [    T430] [usb-gadget] bound to a600000.usb
+[    9.404845] [    T428] [init] usb0 up: 192.168.7.1, ssh root@192.168.7.1 (no password)
+[    9.425755] [      T1] systemd[1]: System time advanced to built-in epoch: Tue 2026-04-14 03:38:05 CST
+[    9.430512] [      T1] systemd[1]: systemd 257.13-1~deb13u1 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON -UTMP +SYSVINIT +LIBARCHIVE)
+[    9.430540] [      T1] systemd[1]: Detected architecture arm64.
+[    9.502372] [      T1] systemd[1]: bpf-restrict-fs: BPF LSM hook not enabled in the kernel, BPF LSM not supported.
+[    9.573331] [      T1] systemd[1]: Queued start job for default target graphical.target.
+[    9.598146] [      T1] systemd[1]: Created slice system-getty.slice - Slice /system/getty.
+[    9.598495] [      T1] systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+[    9.598775] [      T1] systemd[1]: Created slice system-serial\x2dgetty.slice - Slice /system/serial-getty.
+[    9.599000] [      T1] systemd[1]: Created slice user.slice - User and Session Slice.
+[    9.599049] [      T1] systemd[1]: Started systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
+[    9.599092] [      T1] systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+[    9.599144] [      T1] systemd[1]: proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point skipped, unmet condition check ConditionPathExists=/proc/sys/fs/binfmt_misc
+[    9.599167] [      T1] systemd[1]: Expecting device dev-ttyGS0.device - /dev/ttyGS0...
+[    9.599207] [      T1] systemd[1]: Reached target nss-user-lookup.target - User and Group Name Lookups.
+[    9.599236] [      T1] systemd[1]: Reached target paths.target - Path Units.
+[    9.599281] [      T1] systemd[1]: Reached target remote-fs.target - Remote File Systems.
+[    9.599305] [      T1] systemd[1]: Reached target slices.target - Slice Units.
+[    9.599332] [      T1] systemd[1]: Reached target swap.target - Swaps.
+[    9.600194] [      T1] systemd[1]: Listening on systemd-creds.socket - Credential Encryption/Decryption.
+[    9.600287] [      T1] systemd[1]: Listening on systemd-initctl.socket - initctl Compatibility Named Pipe.
+[    9.600370] [      T1] systemd[1]: Listening on systemd-journald-dev-log.socket - Journal Socket (/dev/log).
+[    9.600449] [      T1] systemd[1]: Listening on systemd-journald.socket - Journal Sockets.
+[    9.600494] [      T1] systemd[1]: systemd-pcrextend.socket - TPM PCR Measurements skipped, unmet condition check ConditionSecurity=measured-uki
+[    9.600515] [      T1] systemd[1]: systemd-pcrlock.socket - Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[    9.600573] [      T1] systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
+[    9.600632] [      T1] systemd[1]: Listening on systemd-udevd-kernel.socket - udev Kernel Socket.
+[    9.601703] [      T1] systemd[1]: Mounting dev-hugepages.mount - Huge Pages File System...
+[    9.602414] [      T1] systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
+[    9.603113] [      T1] systemd[1]: Mounting run-lock.mount - Legacy Locks Directory /run/lock...
+[    9.603877] [      T1] systemd[1]: Mounting sys-kernel-tracing.mount - Kernel Trace File System...
+[    9.604821] [      T1] systemd[1]: Starting fake-hwclock-load.service - Restore the current clock...
+[    9.605645] [      T1] systemd[1]: Starting kmod-static-nodes.service - Create List of Static Device Nodes...
+[    9.606091] [      T1] systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
+[    9.607513] [      T1] systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+[    9.608193] [      T1] systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
+[    9.608671] [      T1] systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
+[    9.608742] [      T1] systemd[1]: systemd-hibernate-clear.service - Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[    9.610326] [      T1] systemd[1]: Starting systemd-journald.service - Journal Service...
+[    9.611773] [      T1] systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
+[    9.611802] [      T1] systemd[1]: systemd-pcrmachine.service - TPM PCR Machine ID Measurement skipped, unmet condition check ConditionSecurity=measured-uki
+[    9.611848] [      T1] systemd[1]: systemd-tpm2-setup-early.service - Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[    9.612251] [      T1] systemd[1]: Starting systemd-udev-load-credentials.service - Load udev Rules from Credentials...
+[    9.612679] [      T1] systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
+[    9.613365] [      T1] systemd[1]: Mounted dev-hugepages.mount - Huge Pages File System.
+[    9.613420] [      T1] systemd[1]: Mounted dev-mqueue.mount - POSIX Message Queue File System.
+[    9.613463] [      T1] systemd[1]: Mounted run-lock.mount - Legacy Locks Directory /run/lock.
+[    9.613504] [      T1] systemd[1]: Mounted sys-kernel-tracing.mount - Kernel Trace File System.
+[    9.613647] [      T1] systemd[1]: Finished kmod-static-nodes.service - Create List of Static Device Nodes.
+[    9.613774] [      T1] systemd[1]: modprobe@configfs.service: Deactivated successfully.
+[    9.613858] [      T1] systemd[1]: Finished modprobe@configfs.service - Load Kernel Module configfs.
+[    9.613963] [      T1] systemd[1]: modprobe@drm.service: Deactivated successfully.
+[    9.614042] [      T1] systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+[    9.614137] [      T1] systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+[    9.614228] [      T1] systemd[1]: Finished modprobe@efi_pstore.service - Load Kernel Module efi_pstore.
+[    9.614938] [      T1] systemd[1]: Starting systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully...
+[    9.620750] [      T1] systemd[1]: fake-hwclock-load.service: Deactivated successfully.
+[    9.620866] [      T1] systemd[1]: Finished fake-hwclock-load.service - Restore the current clock.
+[    9.620980] [      T1] systemd[1]: systemd-fsck-root.service - File System Check on Root Device skipped, unmet condition check ConditionPathIsReadWrite=!/
+[    9.621386] [      T1] systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+[    9.624392] [      T1] systemd[1]: Finished systemd-modules-load.service - Load Kernel Modules.
+[    9.624925] [      T1] systemd[1]: Starting systemd-sysctl.service - Apply Kernel Variables...
+[    9.625823] [      T1] systemd[1]: Finished systemd-udev-load-credentials.service - Load udev Rules from Credentials.
+[    9.626280] [    T539] fuse: init (API version 7.46)
+[    9.626734] [      T1] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[    9.626842] [      T1] systemd[1]: Finished modprobe@fuse.service - Load Kernel Module fuse.
+[    9.627358] [      T1] systemd[1]: Mounting sys-fs-fuse-connections.mount - FUSE Control File System...
+[    9.628601] [    T540] systemd-journald[540]: Collecting audit messages is disabled.
+[    9.631593] [      T1] systemd[1]: Finished systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully.
+[    9.632051] [      T1] systemd[1]: Finished systemd-sysctl.service - Apply Kernel Variables.
+[    9.632322] [      T1] systemd[1]: Mounted sys-fs-fuse-connections.mount - FUSE Control File System.
+[    9.645588] [      T1] systemd[1]: Started systemd-journald.service - Journal Service.
+[    9.671363] [    T556] EXT4-fs (sda17): re-mounted e9c4b307-f508-4ba8-811f-026847ef1578.
+[    9.706650] [    T540] systemd-journald[540]: Received client request to flush runtime journal.
+[    9.720159] [    T540] systemd-journald[540]: /var/log/journal/63060d1578094016ad09168f8ddca062/system.journal: Realtime clock jumped backwards relative to last journal entry, rotating.
+[    9.720181] [    T540] systemd-journald[540]: Rotating system journal.
+[   10.025713] [    T718] bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+[   10.181681] [    T619]  cs_system_cfg: CoreSight Configuration manager initialised
+[   10.199394] [    T615] coresight cti_sys0: CTI initialized
+[   10.199503] [    T615] coresight cti_sys1: CTI initialized
+[   10.203135] [    T626] coresight stm0: STM32 initialized
+[   10.264231] [    T616] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: no reserved DMA memory for FASTRPC
+[   10.264836] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@1: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.265248] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@1: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.265292] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@2: SMR mask 0x20 out of range for SMMU (0x2)
+[   10.265638] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@2: SMR mask 0x20 out of range for SMMU (0x2)
+[   10.266582] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@3: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.266823] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@3: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.269254] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@4: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.269699] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@4: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.269722] [    T620] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+[   10.269766] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@5: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.270442] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@5: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.270937] [    T628] qcomtee: QTEE version 5.2.0
+[   10.270995] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@6: SMR mask 0x20 out of range for SMMU (0x2)
+[   10.271782] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@6: SMR mask 0x20 out of range for SMMU (0x2)
+[   10.272049] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@7: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.272498] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@7: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.272553] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@8: SMR mask 0x20 out of range for SMMU (0x2)
+[   10.272817] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@8: SMR mask 0x20 out of range for SMMU (0x2)
+[   10.272895] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@12: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.273157] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@12: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.273268] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@13: SMR mask 0x20 out of range for SMMU (0x2)
+[   10.273636] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@13: SMR mask 0x20 out of range for SMMU (0x2)
+[   10.273670] [    T616] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@14: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.274174] [    T616] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@14: SMR mask 0x40 out of range for SMMU (0x2)
+[   10.275959] [    T616] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: assigned reserved memory node adsp-rpc-remote-heap
+[   10.299542] [    T620] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+[   10.304332] [    T616] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@3: Adding to iommu group 16
+[   10.314643] [    T616] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@4: Adding to iommu group 17
+[   10.315885] [    T616] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@5: Adding to iommu group 18
+[   10.322178] [    T616] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@6: Adding to iommu group 19
+[   10.323685] [    T138] msm_dpu ae01000.display-controller: bound ae94000.dsi (ops dsi_ops)
+[   10.323701] [    T138] msm_dpu ae01000.display-controller: bound ae96000.dsi (ops dsi_ops)
+[   10.324416] [    T616] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@7: Adding to iommu group 20
+[   10.325644] [    T138] msm_dpu ae01000.display-controller: bound af54000.displayport-controller (ops msm_dp_display_comp_ops)
+[   10.325687] [    T616] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@8: Adding to iommu group 21
+[   10.325836] [    T138] adreno 3d00000.gpu: supply vdd not found, using dummy regulator
+[   10.325861] [    T138] adreno 3d00000.gpu: supply vddcx not found, using dummy regulator
+[   10.360391] [    T138] msm_dpu ae01000.display-controller: bound 3d00000.gpu (ops a3xx_ops)
+[   10.360941] [    T138] [drm:dpu_kms_hw_init:1173] dpu hardware revision:0xc0000000
+[   10.361076] [    T138] msm_dpu ae01000.display-controller: boot framebuffer mapped before SID switch: iova=0x00000000fc800000 size=2b00000 translated=0x00000000fc800000
+[   10.361106] [    T138] msm_dpu ae01000.display-controller: [drm] reserved boot framebuffer IOVA 0xfc800000+0x2b00000
+[   10.379274] [    T138] [drm] Initialized msm 1.13.0 for ae01000.display-controller on minor 0
+[   10.381098] [    T138] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_sqe.fw from new location
+[   10.381681] [    T138] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_gmu.bin from new location
+[   10.381918] [    T138] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_aqe.fw from new location
+[   10.382463] [    T138] [drm] Loaded GMU firmware v5.1.25
+[   10.430403] [    T138] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[   10.430697] [    T138] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+[   10.653140] [    T138] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+[   10.654519] [     T86] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+[   10.654524] [     T86] novatek-nvt36xxx-spi spi0.0: NT36536 identification: engineering reset
+[   10.655490] [    T138] Console: switching to colour frame buffer device 119x95
+[   10.668608] [    T138] msm_dpu ae01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+[   10.673220] [     T86] novatek-nvt36xxx-spi spi0.0: trim ID 15 0e 00 23 65 03
+[   10.673426] [     T86] novatek-nvt36xxx-spi spi0.0: NT36536 hardware cascade=1 strap=02
+[   10.673442] [     T86] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+[   10.856845] [     T86] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+[   10.856949] [     T86] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+[   10.857125] [     T86] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+[   10.867405] [     T86] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+[   11.529640] [   T1040] input: ydotoold virtual device as /devices/virtual/input/input8
+[   11.664573] [   T1037]  MultiMedia2 Playback: ASoC: no backend DAIs enabled for MultiMedia2 Playback, possibly missing ALSA mixer-based routing or UCM profile
+[   12.787682] [   T1252] rfkill: input handler disabled
+[   16.022793] [   T1571] pci 0000:01:00.0: [17cb:110e] type 00 class 0x028000 PCIe Endpoint
+[   16.023174] [   T1571] pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]
+[   16.023196] [   T1571] pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]
+[   16.023949] [   T1571] pci 0000:01:00.0: PME# supported from D0 D3hot D3cold
+[   16.024764] [   T1571] pci 0000:01:00.0: Adding to iommu group 15
+[   16.024925] [   T1571] pci 0000:01:00.0: ASPM: default states L0s L1
+[   16.025093] [   T1571] pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+[   16.025183] [   T1571] pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]: assigned
+[   16.026110] [   T1571] ath12k_wifi7_pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+[   16.026304] [   T1571] ath12k_wifi7_pci 0000:01:00.0: Wi-Fi 7 Hardware name: peach hw2.0
+[   16.028557] [   T1571] ath12k_wifi7_pci 0000:01:00.0: MSI vectors: 32
+[   16.085440] [   T1571] mhi mhi0: Requested to power ON
+[   16.085469] [   T1571] mhi mhi0: Power on setup success
+[   16.167258] [    T153] mhi mhi0: Wait for device to enter SBL or Mission mode
+[   16.589586] [    T123] ath12k_wifi7_pci 0000:01:00.0: chip_id 0x2 chip_family 0x4 board_id 0xff soc_id 0x40210200
+[   16.589606] [    T123] ath12k_wifi7_pci 0000:01:00.0: fw_version 0x100effff fw_build_timestamp 2025-05-29 06:58 fw_build_id QC_IMAGE_VERSION_STRING=WLAN.GNG.1.0-03869-QCAGNGSWPL_V1.0_V2.0_SILICONZ-1.108007.3.112099.4
+[   16.589612] [    T123] ath12k_wifi7_pci 0000:01:00.0: fw_caps 0xf
+[   16.605938] [    T123] ath12k_wifi7_pci 0000:01:00.0: qmi TME-L power-on hardware-restricted (stock-compatible, continuing)
+[   16.646256] [    T123] ath12k_wifi7_pci 0000:01:00.0: qmi AUX_UC request succeeded
+[   16.653137] [    T123] ath12k_wifi7_pci 0000:01:00.0: qmi FW_INIT_DONE received: hang_offset_valid=0 hang_offset=0 hang_length_valid=0 hang_length=0 soft_sku_valid=1 soft_sku=0x1
+[   20.451783] [     T98] amba 109ab000.tn: deferred probe pending: (reason unknown)
+[   20.451795] [     T98] qnoc-sm8750 interconnect-1: sync_state() pending due to 1dfa000.crypto
+[   20.451799] [     T98] qnoc-sm8750 1700000.interconnect: sync_state() pending due to 1dfa000.crypto
+[   20.451804] [     T98] gcc-sm8750 100000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   20.451808] [     T98] gxclkctl-kaanapali 3d64000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   20.451811] [     T98] sm8750-gpucc 3d90000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   22.255833] [    T925] wlan0: authenticate with 30:5f:77:13:2d:e0 (local address=02:00:82:b2:f8:3a)
+[   22.255855] [    T925] wlan0: send auth to 30:5f:77:13:2d:e0 (try 1/3)
+[   22.261120] [    T909] wlan0: authenticated
+[   22.263221] [    T909] wlan0: associate with 30:5f:77:13:2d:e0 (try 1/3)
+[   22.269266] [    T138] wlan0: RX AssocResp from 30:5f:77:13:2d:e0 (capab=0x8001 status=0 aid=4)
+[   22.283034] [    T138] wlan0: associated
+[   28.820637] [    T909] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: 400000
+[   28.820669] [    T909] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
+[   28.883243] [    T909] [drm:dpu_encoder_phys_vid_wait_for_commit_done:550] [dpu error]vblank timeout: 400000
+[   28.883265] [    T909] [drm:dpu_kms_wait_for_commit_done:531] [dpu error]wait for commit done returned -110
+[   29.099788] [     T89] Bluetooth: hci0: QCA Downloading qca/brhbtnv20.bin
+[   29.455463] [     T89] Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_DEF
+[   29.456022] [     T89] Bluetooth: hci0: QCA setup on UART is completed
+[   29.456061] [     T89] Bluetooth: hci0: HFP non-HCI data transport is supported
+[   29.635394] [    T917] Bluetooth: MGMT ver 1.23
+[   29.640240] [   T1703] NET: Registered PF_ALG protocol family
+[   61.617258] [   T1790] input: ydotoold virtual device as /devices/virtual/input/input9
+[  334.578975] [   T2224] input: ydotoold virtual device as /devices/virtual/input/input10
+[  587.403823] [   T2631] input: ydotoold virtual device as /devices/virtual/input/input11
+[  626.966711] [   T2822] input: ydotoold virtual device as /devices/virtual/input/input12
+[  679.097720] [   T3897] input: ydotoold virtual device as /devices/virtual/input/input13
+[  717.513083] [   T4013] input: ydotoold virtual device as /devices/virtual/input/input14
+[  764.538333] [   T4153] input: ydotoold virtual device as /devices/virtual/input/input15

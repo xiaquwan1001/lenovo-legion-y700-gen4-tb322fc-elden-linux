@@ -1,0 +1,3 @@
+s "poweroff"
+s "suspend"
+s "suspend"

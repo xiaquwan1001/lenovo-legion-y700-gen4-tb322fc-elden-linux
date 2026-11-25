@@ -1,0 +1,41 @@
+Module                  Size  Used by
+af_alg                 28672  0
+uinput                 20480  2
+fsa4480                16384  8
+fastrpc                45056  0
+rpmsg_ctrl             12288  0
+icc_bwmon              28672  0
+stm_p_basic            12288  0
+coresight_stm          24576  0
+qcomtee                36864  0
+stm_core               32768  2 coresight_stm,stm_p_basic
+coresight_cti          40960  0
+coresight_tmc          61440  0
+coresight_replicator    20480  0
+coresight_funnel       20480  0
+coresight              98304  5 coresight_tmc,coresight_stm,coresight_cti,coresight_replicator,coresight_funnel
+bridge                319488  0
+stp                    12288  1 bridge
+llc                    16384  2 bridge,stp
+fuse                  229376  3
+gc08a8                 24576  1
+s5kjns                 20480  1
+v4l2_cci               12288  2 gc08a8,s5kjns
+gt9764                 12288  1
+leds_qcom_flash        20480  0
+v4l2_flash_led_class    12288  2 leds_qcom_flash
+led_class_flash        16384  2 v4l2_flash_led_class,leds_qcom_flash
+qcom_camss            696320  0
+videobuf2_dma_sg       20480  1 qcom_camss
+v4l2_fwnode            32768  3 qcom_camss,gc08a8,s5kjns
+videobuf2_memops       16384  1 videobuf2_dma_sg
+videobuf2_v4l2         32768  1 qcom_camss
+videobuf2_common       73728  4 qcom_camss,videobuf2_v4l2,videobuf2_dma_sg,videobuf2_memops
+v4l2_async             28672  6 gt9764,v4l2_fwnode,v4l2_flash_led_class,qcom_camss,gc08a8,s5kjns
+videodev              335872  8 v4l2_async,gt9764,v4l2_fwnode,v4l2_flash_led_class,qcom_camss,gc08a8,videobuf2_v4l2,s5kjns
+mc                     86016  9 v4l2_async,gt9764,videodev,v4l2_flash_led_class,qcom_camss,gc08a8,videobuf2_v4l2,videobuf2_common,s5kjns
+wl2868c_regulator      12288  8
+i2c_qcom_cci           20480  0
+cambistmclkcc_sm8750    16384  2
+camcc_sm8750           61440  74
+system_heap            12288  0

@@ -1,0 +1,11 @@
+WHO            UID  USER          PID  COMM           WHAT                                                     WHY                                       MODE
+ModemManager   0    root          919  ModemManager   sleep                                                    ModemManager needs to reset devices       delay
+NetworkManager 0    root          915  NetworkManager sleep                                                    NetworkManager needs to turn off networks delay
+UPower         0    root          1188 upowerd        sleep                                                    Pause device polling                      delay
+xuqianhui1001  1001 xuqianhui1001 1158 phosh          handle-power-key                                         Phosh handling power key                  block
+xuqianhui1001  1001 xuqianhui1001 1249 gsd-media-keys handle-power-key:handle-suspend-key:handle-hibernate-key GNOME handling keypresses                 block
+xuqianhui1001  1001 xuqianhui1001 1249 gsd-media-keys sleep                                                    GNOME handling keypresses                 delay
+xuqianhui1001  1001 xuqianhui1001 1310 gsd-power      sleep                                                    GNOME needs to lock the screen            delay
+xuqianhui1001  1001 xuqianhui1001 1158 phosh          sleep                                                    Phosh handling suspend                    delay
+
+8 inhibitors listed.
