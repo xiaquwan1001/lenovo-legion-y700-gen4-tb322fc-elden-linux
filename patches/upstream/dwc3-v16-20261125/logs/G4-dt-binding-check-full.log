@@ -1,0 +1,29 @@
+# `make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=<build> dt_binding_check` 全量日志（裁剪版）
+# 原始日志 10848 行 / 880 KB。原始里 5420 行是 `DTC [C]` 逐样例回显，其余是 HOSTCC/LEX 之类编译噪声；
+# 本文件保留：rc、DTC 计数、全部含 error/warning 的行（本轮为 0 行）、以及首尾各 10 行。
+# DTC [C] 计数 = 5420
+# 含 error/warning 的行数 = 0
+
+---- 首 10 行 ----
+make[1]: 进入目录“/tmp/kb-dwc3-v16”
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  CHKDT   /tmp/dwc3-v16/Documentation/devicetree/bindings
+  LINT    /tmp/dwc3-v16/Documentation/devicetree/bindings
+  STYLE   /tmp/dwc3-v16/Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/power/riscv,rpmi-mpxy-device-power.example.dts
+  DTEX    Documentation/devicetree/bindings/power/mediatek,power-controller.example.dts
+  DTEX    Documentation/devicetree/bindings/power/ti,smartreflex.example.dts
+  DTEX    Documentation/devicetree/bindings/power/supply/maxim,max17201.example.dts
+  DTEX    Documentation/devicetree/bindings/power/supply/adc-battery.example.dts
+---- 含 error/warning 的行（应为空） ----
+---- 末 10 行 ----
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,sm8550-rpmh.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,qdu1000-rpmh.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,kaanapali-rpmh.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,sc8280xp-rpmh.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,maili-rpmh.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,rpm.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,hawi-rpmh.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,sdx75-rpmh.example.dtb
+make[1]: 离开目录“/tmp/kb-dwc3-v16”

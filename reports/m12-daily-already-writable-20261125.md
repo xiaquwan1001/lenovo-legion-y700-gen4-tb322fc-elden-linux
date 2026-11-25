@@ -56,3 +56,26 @@ echo 100000 > $B/input_current_limit          # 还原（或直接拔插）
 - **M12 行**：`backport be5e7367bceb 30 行` 从「必做」降级为「**先上机验，失败才做**」；若只是 gate 差异（例如
   `adapter_type` 停在 UNKNOWN 导致 `-EINVAL`），则要改的是**本地 gate**，不是 backport 上游件。
 - **§7 上游化**：M12 仍维持 ⛔（上游已被 `be5e7367bceb` 覆盖），不投。
+
+---
+
+## 5. 上机裁决结果（2026-11-25 19:55 CST，**已执行**）
+
+设备在 BL，用户放行上机。`fastboot boot out/boot-elden-vk192.img` 第一发**卡在 initramfs（只有背光）**——根因不是 Q28，
+而是该镜像 cmdline 里 `elden_root=LABEL=linux17`，而 2026-11-18 磁盘重建后 **`/dev/sda17` 的 LABEL 已改为 `linux`**
+（`blkid` 实证）。改用 `out/boot-elden-vk192.img` 的 `--set` 重打包件（**已按 PITFALLS #728 记账后删除**，可再生）（`scripts/boot-img-cmdline.py --set` 只改 cmdline，
+kernel/ramdisk/dtb 三段 sha 与原件逐字节相同）后未再走 fastboot，而是 `reboot -f` 回 `boot_b`（其 cmdline 已是 `LABEL=linux`），
+在**在机日常核** `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`（vk192）上直接采判据：
+
+| 判据 | 实测 | 结论 |
+|---|---|---|
+| `ls -l qcom-battmgr-usb/input_current_limit` | `-rw-r--r-- root root` | 有写属性（0444 才会是只读） |
+| `usb_type` 当前值 | `[SDP]`（`grep -o '\[.*\]'`） | 与 `PITFALLS #726` 一致 |
+| 写 900000 / 500000 → 读回 | **rc=0，读回 900000 / 500000** | **写入口存在**（M12「backport 30 行」待办 **永久划掉**） |
+| `dmesg | grep -c 'unknown message'` | **0** | `0x33` 应答 case 已在树内（payload 版实现） |
+| **限流是否真落到充电电流**（30 s × 10 样本） | 500 mA 档 `current_now` = **−101…−117 mA**（净放电）<br>900 mA 档 = **+45…+287 mA**（转充电） | **成立**：同一 SDP 端口下只改 ICL 就能从净放电翻到充电 |
+
+原始日志：`reports/artifacts/devicewin-20261125/{m12-icl-write.txt,m12-icl-ab.txt,psy-uevent.txt}`。
+
+**因此 D14 的操作面结论更新为**：数据线（PC 的 SDP）默认 100 mA 仍会导致净放电，但**本机可以自己写 ICL 到 900 mA 解决**，
+不需要 PD 主机、不需要 hub、不需要内核 backport —— 需要的只是一个「开机后把 ICL 抬到 500–900 mA」的用户态动作（下一轮做成 service/dispatcher 即可）。

@@ -1,0 +1,23 @@
+# config-gunyah-wdt-20261125.fragment — D19 遗留项：把 Gunyah hyp watchdog 做成可上机候选核件
+#
+# 用途：日常线 build/daily（7.3.1 + payload v2）默认 `# CONFIG_GUNYAH_WATCHDOG is not set`，
+#       本片段把它开成模块，得到「内核 + gunyah_wdt.ko」的可上机件（reports/d19-gunyah-wdt-20261125.md）。
+#
+# 合并方式（片段不入 SSOT .config；收工后 .config sha256 = 34c7d658… 必须复原）：
+#   cd build/daily && scripts/config -m GUNYAH_WATCHDOG \
+#     && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+#   （或 merge_config.sh 后 olddefconfig；两次 olddefconfig 结果必须逐字相同）
+#
+# 为什么只有一行、不带连带的依赖：
+#   drivers/watchdog/Kconfig:2382  `config GUNYAH_WATCHDOG`
+#       depends on ARCH_QCOM || COMPILE_TEST   → 日常线已 CONFIG_ARCH_QCOM=y
+#       depends on HAVE_ARM_SMCCC             → 日常线已 CONFIG_HAVE_ARM_SMCCC=y
+#       select WATCHDOG_CORE                  → 日常线已 CONFIG_WATCHDOG=y / CONFIG_WATCHDOG_CORE=y
+#   ⇒ 无「必须连带开」的依赖项，故不额外增加变量（单变量可归因）。
+#
+# 刻意不开（列出来防后人再犹豫，理由见报告 §风险与未知）：
+#   - CONFIG_WATCHDOG_SYSFS：不是本驱动的依赖；开了会顺带给所有 watchdog 加 sysfs 面，
+#     属另一个变量。代价 = 本件上机后 `wdctl` 无 `/sys/class/watchdog/watchdog0` 可读，
+#     只能用 `dmesg` + `/dev/watchdog*` + 实际复位来判。
+#   - CONFIG_WATCHDOG_NOWAYOUT：开了就无法 `rmmod`/关狗，与「无人循环里先短超时试」互相打架。
+CONFIG_GUNYAH_WATCHDOG=m

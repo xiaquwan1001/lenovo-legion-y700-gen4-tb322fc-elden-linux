@@ -1,0 +1,48 @@
+==UTS==
+7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0
+8e3f7085-4d38-4878-9c01-69e59427f95e
+ 19:53:47 up 0 min,  2 users,  load average: 1.95, 0.61, 0.21
+==POWER==
+freeze mem
+[s2idle] deep
+[none] core processors platform devices freezer
+0
+==SUSPEND_STATS==
+success=0 fail=0 last_failed_dev= last_failed_errno=0 last_failed_step= 
+==GENPD_HEAD==
+domain                          status          children        performance
+    /device                         runtime status                  managed by
+------------------------------------------------------------------------------
+cam_cc_tfe_2_gdsc               off-0                           0
+    genpd:2:ad27000.isp             suspended                   0           SW
+cam_cc_tfe_1_gdsc               off-0                           0
+    genpd:1:ad27000.isp             suspended                   0           SW
+cam_cc_tfe_0_gdsc               off-0                           0
+    genpd:0:ad27000.isp             suspended                   0           SW
+cam_cc_ofe_gdsc                 off-0                           0
+cam_cc_ipe_0_gdsc               off-0                           0
+cam_cc_titan_top_gdsc           off-0                           0
+                                                cam_cc_ipe_0_gdsc, cam_cc_ofe_gdsc, cam_cc_tfe_0_gdsc, cam_cc_tfe_1_gdsc, cam_cc_tfe_2_gdsc
+    ac7b000.cci                     suspended                   0           SW
+    ac7c000.cci                     suspended                   0           SW
+    genpd:3:ad27000.isp             suspended                   0           SW
+    11-0056                         suspended                   0           SW
+    12-0031                         suspended                   0           SW
+NCC1_1                          on                              0
+NCC0_0                          on                              0
+==DEVFREQ==
+1d84000.ufs cur=100000000 min=100000000 max=403000000 gov=simple_ondemand poll=60
+3d00000.gpu cur=525000000 min=525000000 max=1100000000 gov=simple_ondemand poll=10
+==RPROC==
+remoteproc0 name=adsp state=running
+remoteproc1 name=cdsp state=running
+==CPUIDLE==
+psci_idle
+state0:WFI usage=54355
+state1:cpu-sleep-0 usage=26324
+==WAKEUP_SOURCES==
+name		active_count	event_count	wakeup_count	expire_count	active_since	total_time	max_time	last_change	prevent_suspend_time
+22
+==PM_WAKEUP_IRQ==
+cat: /sys/power/pm_wakeup_irq: 没有可用的数据
+rc=1

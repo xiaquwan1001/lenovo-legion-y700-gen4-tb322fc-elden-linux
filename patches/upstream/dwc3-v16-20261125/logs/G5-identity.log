@@ -1,0 +1,50 @@
+# G5: 2/3、3/3 与 v15 的逐字节/逐 id 校验（2026-11-25T12:08Z）
+# 口径同 v14→v15：patch 内容 = 文件里 'diff --git' 起的全部行；头部（From/Date/Subject）由生成器重写，不算内容。
+
+## 2/3  v15=v15-0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch
+     v16=v16-0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch
+  cmp(diff 段) = 相同（cmp 静默）；sha256 = daa8e9365529164f…（与 v15 CHECKLIST 记的同一值）
+  git patch-id --stable v15 = 5688adec43eaaf40467ab0093e3be3d39e561a22
+  git patch-id --stable v16 = 5688adec43eaaf40467ab0093e3be3d39e561a22
+  整文件 diff 的变动行（只应有生成器头部 3 行 + v15→v16 版本号）:
+    -From 0382a241ff8ab3f790bf24ea25ed58b69b9d06f6 Mon Sep 17 00:00:00 2001
+    +From e2cde8f9d2bfb1039dd86e5aa03f5c0600d55ebc Mon Sep 17 00:00:00 2001
+    -Date: Wed, 25 Nov 2026 16:00:00 +0800
+    -Subject: [PATCH v15 2/3] usb: roles: look up role switches attached to a graph
+    +Date: Wed, 25 Nov 2026 19:45:00 +0800
+    +Subject: [PATCH v16 2/3] usb: roles: look up role switches attached to a graph
+  整文件差异行数 = 6
+
+## 3/3  v15=v15-0003-usb-dwc3-select-the-shared-HS-data-bus-with-a-mux-co.patch
+     v16=v16-0003-usb-dwc3-select-the-shared-HS-data-bus-with-a-mux-co.patch
+  cmp(diff 段) = 相同（cmp 静默）；sha256 = 83eae25253cffc12…（与 v15 CHECKLIST 记的同一值）
+  git patch-id --stable v15 = 60721b9fb7fb2777b8707c7b045f5d3011807434
+  git patch-id --stable v16 = 60721b9fb7fb2777b8707c7b045f5d3011807434
+  整文件 diff 的变动行（只应有生成器头部 3 行 + v15→v16 版本号）:
+    -From b8d501045b8c0f0f452a51a50d0599cfc38fe838 Mon Sep 17 00:00:00 2001
+    +From 7276c1afc8894e99e8ae3dfa45ef6abdc0117f8f Mon Sep 17 00:00:00 2001
+    -Date: Wed, 25 Nov 2026 16:00:00 +0800
+    -Subject: [PATCH v15 3/3] usb: dwc3: select the shared HS data bus with a mux
+    +Date: Wed, 25 Nov 2026 19:45:00 +0800
+    +Subject: [PATCH v16 3/3] usb: dwc3: select the shared HS data bus with a mux
+  整文件差异行数 = 6
+
+## 1/3（唯一改动的一枚；v15 patch-id 与 2/3、3/3 不同是预期的）
+  patch-id v15 = aa6ed734239b40469b3f412f7dff910585a6880c
+  patch-id v16 = 4aa77681f9b6c17d4b15582202a85028b3f1af9d
+  diff 段 cmp = 不同（预期：1/3 本轮有改动）
+  1/3 diff 段相对 v15 的全部变动行:
+    -index 6c0b8b653824..dcfa8c3a81c5 100644
+    +index 6c0b8b653824..1f23840fd1f2 100644
+    -@@ -26,8 +26,78 @@ allOf:
+    +@@ -26,8 +26,84 @@ allOf:
+    -+                '^endpoint@([2-9]|[1-9a-f][0-9a-f]+)$': false
+    ++                '^endpoint@([2-9a-f]|[0-9a-f]{2,})$': false
+    ++              # "port-base" leaves "unevaluatedProperties" open on a plain
+    ++              # "endpoint" child, so without a mux the generic graph port
+    ++              # binding is used here: its endpoint schema rejects
+    ++              # "usb-role-switch" and "mux-state" instead of taking them
+    ++              # silently.
+    ++              $ref: /schemas/graph.yaml#/properties/port
+    -@@ -411,9 +481,37 @@ properties:
+    +@@ -411,9 +487,37 @@ properties:

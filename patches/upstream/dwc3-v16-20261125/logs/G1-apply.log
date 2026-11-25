@@ -1,0 +1,38 @@
+# G1: 在 build/elden-tree 的 aebb727447 (v7.4-rc3) 干净 worktree 上 git am v16 三枚（2026-11-25T12:07Z）
+# worktree: /tmp/dwc3-v16（git worktree add --detach /tmp/dwc3-v16 aebb727447）
+
+$ git reset --hard aebb727447 && git clean -fd  -> 0 个改动
+$ git am v16-0001 ... v16-0003
+应用：dt-bindings: usb: snps,dwc3: describe two connectors on one HS data bus
+应用：usb: roles: look up role switches attached to a graph endpoint
+应用：usb: dwc3: select the shared HS data bus with a mux controller
+rc=0
+
+$ git log --oneline -4
+01713a386b17 usb: dwc3: select the shared HS data bus with a mux controller
+d3be378ffe0e usb: roles: look up role switches attached to a graph endpoint
+8069ee39e51a dt-bindings: usb: snps,dwc3: describe two connectors on one HS data bus
+aebb72744764 Linux 7.4-rc3
+
+# 后像 blob vs patch index 右值
+Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml 1f23840fd1f2188fec4df1e394854443e55f4755
+drivers/usb/roles/class.c                                  ee186d542a1018237d10cc664699fe67096163e5
+drivers/usb/dwc3/core.c                                    ce309792864b3aa6ba89cffd3e58710ed3c6384e
+drivers/usb/dwc3/core.h                                    e6cf7b240b23eab7d2c1059d5f3a355216653f65
+drivers/usb/dwc3/debugfs.c                                 82e7a334b135821c92921c320ee5a09ec31a0ab4
+drivers/usb/dwc3/drd.c                                     906cac4f3e6e5ac2816fd3611682e40127491edf
+
+# 前像 blob（基线 aebb727447）vs patch index 左值
+Documentation/devicetree/bindings/usb/snps,dwc3-common.yaml 6c0b8b6538246adf746fe7ccd6df936131c61444
+drivers/usb/roles/class.c                                  edec139b68b52f26d3480649bb45bbf230d24cad
+drivers/usb/dwc3/core.c                                    372737f4750b10329117138f38269b527ed1867f
+drivers/usb/dwc3/core.h                                    f3dabb37f806b6f5b8f7b1bd49f9eeabede1ad63
+drivers/usb/dwc3/debugfs.c                                 01ebd73198e03770b66ea948a9beb932470b6911
+drivers/usb/dwc3/drd.c                                     f3e37d383627a5c0ff05d5e9762a9426b440f66e
+
+# 1/3 commit message（git am 后应无 changelog）
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+
+
+# commit message 里 'Changes since' 命中数：0+0+0

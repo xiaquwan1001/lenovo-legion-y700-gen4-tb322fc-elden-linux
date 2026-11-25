@@ -1,0 +1,26 @@
+make[1]: 进入目录“/tmp/kb-dwc3-v16”
+  UPD     include/config/kernel.release
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  DTC [C] arch/arm64/boot/dts/qcom/sm8250-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/qdu1000-idp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/apq8096-db820c.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sc8280xp-crd.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sdm845-db845c.dtb
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3588-rock-5b.dtb
+  DTC [C] arch/arm64/boot/dts/rockchip/rk3399-roc-pc.dtb
+  DTC [C] arch/arm64/boot/dts/freescale/imx8mp-evk.dtb
+arch/arm64/boot/dts/rockchip/rk3399-roc-pc.dtb: usb-typec@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+arch/arm64/boot/dts/rockchip/rk3399-roc-pc.dtb: usb-typec@22 (fcs,fusb302): 'connector' is a required property
+	from schema $id: http://devicetree.org/schemas/usb/fcs,fusb302.yaml
+  DTC [C] arch/arm64/boot/dts/allwinner/sun50i-h6-pine-h64.dtb
+  DTC [C] arch/arm64/boot/dts/xilinx/zynqmp-zcu104-revA.dtb
+arch/arm64/boot/dts/qcom/apq8096-db820c.dtb: usb@6af8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+arch/arm64/boot/dts/qcom/apq8096-db820c.dtb: usb@76f8800 (qcom,msm8996-dwc3): 'extcon' does not match any of the regexes: '^pinctrl-[0-9]+$', '^usb@[0-9a-f]+$'
+	from schema $id: http://devicetree.org/schemas/usb/qcom,dwc3.yaml
+  DTC [C] arch/arm64/boot/dts/ti/k3-am62a7-sk.dtb
+arch/arm64/boot/dts/qcom/apq8096-db820c.dtb: syscon@9a10000 (syscon): compatible: ['syscon'] is too short
+	from schema $id: http://devicetree.org/schemas/mfd/syscon-common.yaml
+  DTC [C] arch/arm64/boot/dts/exynos/exynos5433-tm2.dtb
+make[1]: 离开目录“/tmp/kb-dwc3-v16”

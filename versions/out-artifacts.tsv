@@ -18,3 +18,4 @@ out/modstage-vk163	superseded	vk163 模块 staging（1543 文件/89 MiB，`build
 out/modstage-vk172	superseded	vk172 模块 staging（1652 文件/94 MiB，可重生）⇒ **2026-11-21 已删**	reports/disk-reclaim-20261121.md	2026-11-21
 out/uefi-bslot-20261121	pending	GRUB 直起 a 槽安卓四件（Image 36.7M/initrd.img 9.5M/dtb 6.5M/bootconfig 232B，已拆自 boot_a+init_boot_a+vendor_boot_a）+ 段 2/3 待设备窗口	out/uefi-bslot-20261121/README.md	2026-11-21
 out/g7-20261121	pending	**dwc3 v11 G7 上机件**（boot.img 00912631825bc33a + rolehook 变体 727bb55f；7.4-rc3 worktree，只覆盖 USB 面）；禁删，等 G7 上机或「v11 落 daily 面」裁决	reports/dwc3-g7-prep-20261121.md	2026-11-21
+out/gunyah-wdt-20261125	verified	D19 看门狗候选核件：零写盘上机起机 OK + gunyah_wdt.ko insmod/ioctl 全通，但过期测试**不复位**（hyp 空实现）⇒ 仅作证据件，不进每日配置	reports/d19-gunyah-wdt-20261125.md	2026-11-25

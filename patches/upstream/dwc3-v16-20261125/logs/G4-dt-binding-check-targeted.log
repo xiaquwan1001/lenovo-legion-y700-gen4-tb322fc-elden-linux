@@ -1,0 +1,7 @@
+make[1]: 进入目录“/tmp/kb-dwc3-v16”
+  CHKDT   /tmp/dwc3-v16/Documentation/devicetree/bindings
+  LINT    /tmp/dwc3-v16/Documentation/devicetree/bindings
+  STYLE   /tmp/dwc3-v16/Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/usb/snps,dwc3.example.dts
+  DTC [C] Documentation/devicetree/bindings/usb/snps,dwc3.example.dtb
+make[1]: 离开目录“/tmp/kb-dwc3-v16”

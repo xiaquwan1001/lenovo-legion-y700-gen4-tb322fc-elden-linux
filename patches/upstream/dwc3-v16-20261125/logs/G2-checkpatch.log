@@ -1,0 +1,18 @@
+# G2: checkpatch --strict（必须喂 stdin，直接给路径会被当源码解析；PITFALLS #725）
+# 命令：perl build/elden-tree/scripts/checkpatch.pl --no-tree --strict --no-signoff - < <patch>
+
+=== v16-0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-on.patch
+total: 0 errors, 0 warnings, 0 checks, 122 lines checked
+
+"[PATCH v16 1/3] dt-bindings: usb: snps,dwc3: describe two connectors" has no obvious style problems and is ready for submission.
+
+=== v16-0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch
+total: 0 errors, 0 warnings, 0 checks, 63 lines checked
+
+"[PATCH v16 2/3] usb: roles: look up role switches attached to a graph" has no obvious style problems and is ready for submission.
+
+=== v16-0003-usb-dwc3-select-the-shared-HS-data-bus-with-a-mux-co.patch
+total: 0 errors, 0 warnings, 0 checks, 624 lines checked
+
+"[PATCH v16 3/3] usb: dwc3: select the shared HS data bus with a mux" has no obvious style problems and is ready for submission.
+

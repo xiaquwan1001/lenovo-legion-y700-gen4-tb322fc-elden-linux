@@ -1,0 +1,30 @@
+==PSY==
+== qcom-battmgr-bat
+== qcom-battmgr-usb
+== qcom-battmgr-wls
+== ucsi-source-psy-pmic_glink.ucsi.01
+== ucsi-source-psy-pmic_glink.ucsi.02
+==TYPEC==
+port0
+port0-partner
+port1
+-- /sys/class/typec/port0
+host [device]
+source [sink]
+reverse
+-- /sys/class/typec/port0-partner
+-- /sys/class/typec/port1
+host [device]
+source [sink]
+==USB_ROLE==
+a600000.usb-port0-role-switch= waiting=0
+a600000.usb-port1-role-switch= waiting=0
+==UDC==
+high-speed
+configured
+usb0             UP             192.168.7.1/24 fe80::1e:5eff:feed:e101/64 
+==DP==
+/sys/class/drm/card0-DP-1/status=disconnected
+/sys/class/drm/card0-DSI-1/status=connected
+/sys/class/drm/card0-Writeback-1/status=unknown
+==MUX==

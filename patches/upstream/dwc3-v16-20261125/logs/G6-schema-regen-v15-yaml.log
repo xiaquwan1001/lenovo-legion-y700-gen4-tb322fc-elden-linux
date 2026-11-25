@@ -1,0 +1,15 @@
+make[1]: 进入目录“/tmp/kb-dwc3-v16”
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  CHKDT   /tmp/dwc3-v16/Documentation/devicetree/bindings
+  LINT    /tmp/dwc3-v16/Documentation/devicetree/bindings
+  STYLE   /tmp/dwc3-v16/Documentation/devicetree/bindings
+usage: yamllint [-h] [-c CONFIG_FILE | -d CONFIG_DATA] [--list-files]
+                [-f {parsable,standard,colored,github,auto}] [-s]
+                [--no-warnings] [-v]
+                (- | FILE_OR_DIR ...)
+yamllint: error: one of the arguments FILE_OR_DIR - is required
+usage: dt-check-style [-h] [--mode {relaxed,strict,stricter}] [-j N]
+                      [--list-rules]
+                      [file ...]
+dt-check-style: error: no input files
+make[1]: 离开目录“/tmp/kb-dwc3-v16”
