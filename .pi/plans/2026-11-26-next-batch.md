@@ -5,6 +5,16 @@
 > - 在跑 lane（workflow a1c02737-9bc9-44ff-954d-ceec7c1a9555）：① comm-triage（mail-io/ustc-dsf，run ed015237）② droidloom-deb（impl-worker/ustc-dsf2，run cf033857）③ device-s2idle（physical-exec/ustc-dsf，run 9dc7c4d6，设备独占）——各自产出见 lane 内 task；完成由主会话复核（规则 7）后统一 commit+push。
 > - 未派：B5 APSS watchdog 静态复核（下一 cohort）、C3 键盘 GUI 遗留 UI（设备空闲窗）、C1 上机（等 B5）。
 > - git：检查点同轮提交推送，领先=0。
+
+> ★晨批 checkpoint（2026-11-26 06:0x–06:5xCST，新会话）：
+> - **应用户要求派的 4 lane 全部完成并已独立复核**（规则 7：关键数字我亲自重跑）：
+>   ① **lane G gunyah** → `reports/gunyah-lane-20261126.md`（子 VM 已结项、gunyah_wdt 早已在主线无上游化空间、素材在但移植树已删）；台账新增 **D21**。
+>   ② **lane S 传感器说法核实** → `reports/sensor-claim-verify-20261126.md`（内核/DTB/fastrpc/QRTR 四层健康，缺口全在 Debian 用户态；**svc 400 在 hexagonrpcd mask 下已注册** ⇒ 可绕 #692 验出数）；台账新增 **D22**。
+>   ③ **lane M B4 通信复扫** → `reports/comm-triage-20261126.md`（dwc3 v16 sashiko 全绿；elden DTS v8 有 Krzysztof 意见需回应；**IMAP 与 phosh API 因 keyring 锁无法核验，已如实记录错误码**）。
+>   ④ **lane W B5 APSS watchdog 静态复核** → `reports/b5-apss-wdt-static-review-20261126.md`（基址 `0x16410000` 可信中等偏强，无 reserved-memory 冲突，上机判据清单已出）；D19 行已回填。
+> - **B1 droidloom deb 收尾（自做，已提交推送 `315f482f`）**：runtime 补 `libwayland-server0` 依赖（三个 host 二进制 ELF NEEDED 实证）+ `build.sh` 交叉 sysroot 绝对化（PITFALLS **#730**）；amd64/arm64 **双架构重建**，sha 入账 `reports/artifacts/droidloom-deb-20261126.sha256`。
+> - **需用户**：① GDM 停在登录界面 ⇒ keyring 锁定 ⇒ IMAP/phosh token 取不出（解锁图形会话即可）② 传感器步骤 C（纯用户态 libssc 验 SSC 出数）需放行（无串口/ramoops 取证通道）。
+> - 未派/未做：C2 s2idle 日常化（需设备窗）、C1 APSS wdt 上机（待判据执行）、D16 传感器 unit 接回。
 > 来源：TASKS §4.0 维度表（2026-11-25 深夜口径）+ 最近 3 轮会话结论 + `reports/upstream-status-20261125.md` / `reports/dwc3-v16-20261125.md`。
 > 本文件只做整理与派发计划，不执行。设备锁串行、主机侧并行；投递类一律逐次等用户放行。
 
