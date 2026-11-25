@@ -24,6 +24,7 @@ depend() {
 }
 
 start_pre() {
+	#!/bin/sh
 	# hooks/wifi-scan-refresh.pre — 启动前置（等价原 initd 的 start_pre 的 checkpath）
 	#
 	# ⚠️ /run/wifi-scan-refresh.pid 里是 **supervise-daemon 自己的 pid**（不是子进程 pid）。

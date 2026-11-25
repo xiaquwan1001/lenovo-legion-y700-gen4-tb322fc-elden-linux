@@ -1,3 +1,4 @@
+#!/bin/sh
 # hooks/greetd.pre — 启动前置（等价原 /etc/init.d/greetd 的 start_pre）
 #
 # 原 start_pre 用 OpenRC 的 `checkpath` 建 greetd 用户 home 与日志文件。

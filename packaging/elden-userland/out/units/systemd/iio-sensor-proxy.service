@@ -10,8 +10,7 @@ Type=simple
 ExecStartPre=/usr/local/libexec/elden/iio-sensor-proxy.pre
 ExecStart=/usr/libexec/iio-sensor-proxy
 EnvironmentFile=-/etc/conf.d/iio-sensor-proxy
-Restart=always
-RestartSec=5
+Restart=no
 
 [Install]
 WantedBy=graphical.target

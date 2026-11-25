@@ -1,3 +1,4 @@
+#!/bin/sh
 # hooks/elden-hapticd.pre — 启动前置（原 /etc/init.d/elden-hapticd 的 start_pre，逐字搬迁）
 # 由 OpenRC 的 start_pre() 或 systemd 的 ExecStartPre= 执行；必须是 POSIX sh、幂等、以 root 运行。
 

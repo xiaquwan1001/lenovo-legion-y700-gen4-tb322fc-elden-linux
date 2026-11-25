@@ -14,9 +14,6 @@ command_background="yes"
 pidfile="/run/iio-sensor-proxy.pid"
 output_log="-"
 error_log="-"
-supervisor="supervise-daemon"
-respawn_delay_seconds=5
-respawn_max=10
 depend() {
 	need dbus
 	after hexagonrpcd-adsp-sensorspd
