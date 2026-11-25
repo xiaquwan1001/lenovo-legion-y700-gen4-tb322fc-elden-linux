@@ -91,9 +91,20 @@ if [ "$DRY" = 1 ]; then
 fi
 
 # ---- 3) 发（nohup 后 ssh 会断，属预期）----
+# ★2026-11-25（PITFALLS #723）：这条 ssh 必须**把设备侧日志的结局检查一遍** —— 历史上设备侧因参数名
+#   不匹配（`--auto` 未实现）第一行 die，而这里 `>/dev/null 2>&1 || true` 把「参数错误」与「设备无反应」
+#   混成同一个现象，白等 150 s。现在：3 s 后日志里仍有 FAIL/未知参数 ⇒ 直接报错退出，不进入等待。
 echo "[to-bl] 发重启（arm=$ARM）：设备会断连，随后等 fastboot…"
 timeout -k 5 20 "${SSH_BASE[@]}" "nohup $DEV_TOOL --$ARM >/tmp/elden-to-bl.log 2>&1 &" >/dev/null 2>&1 || true
 sleep 3
+_dev_log=$(timeout -k 2 10 "${SSH_BASE[@]}" "cat /tmp/elden-to-bl.log 2>/dev/null" 2>/dev/null || true)
+case "$_dev_log" in
+	*FAIL*|*未知参数*|*"not found"*)
+		echo "[to-bl] ❌ 设备侧工具报错（重启没发出去）—— 原文：" >&2
+		printf '%s\n' "$_dev_log" | sed 's/^/[to-bl]   /' >&2
+		echo "[to-bl] ⇒ 先修工具/参数（见 PITFALLS #723），别等超时" >&2
+		exit 2 ;;
+esac
 
 # ---- 4) 等判据 ----
 deadline=$(( $(date +%s) + WAIT ))

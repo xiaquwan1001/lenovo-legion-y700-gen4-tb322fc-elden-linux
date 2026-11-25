@@ -45,6 +45,7 @@ die() { printf '[elden-to-bootloader] FAIL %s\n' "$*" >&2; exit "${2:-1}"; }
 for a in "$@"; do
 	case "$a" in
 		--dry-run) DRY=1 ;;
+		--auto) MODE=auto ;;   # 2026-11-25 修：主机侧 to-bootloader.sh 一直传 --auto，设备侧却拒收 ⇒ 软路径静默不执行（实测「没反应」）
 		--psci) MODE=psci ;;
 		--bcb) MODE=bcb ;;
 		--clear-bcb) MODE=clear ;;

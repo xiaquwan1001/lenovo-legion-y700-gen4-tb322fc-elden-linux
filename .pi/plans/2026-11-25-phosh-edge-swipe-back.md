@@ -1,5 +1,7 @@
 # 2026-11-25 · Phosh/Phoc「边缘内滑 = Back / pop 当前应用」方案（只读规划 lane）
 
+> **§0 是现在的执行口径（2026-11-25 更新：路线① 已实现并在设备端到端 PASS）；§1–§5 是原始规划与取证，保留不改，冲突时以 §0 为准。**
+
 > **数字**：现查社区/上游项目 **14 个**（上游 2 = phoc/phosh；社区 4 = phosh-overlay-gestures/lisgd/sxmo-utils/pmOS；补充 8 = wlrctl/dotool/wtype/wvkbd/ikit/niri/sway/gnome-shell）；上游 phoc/phosh **MR·issue 21 个**（12 issue + 9 MR，全部给 URL/日期）；候选路线 **3 条**；推荐 **1 条**（路线 ①：lisgd + 最小 uinput KEY_BACK + phoc 既有 close keybinding，30 分钟 PoC）。
 >
 > **口径**
@@ -7,6 +9,159 @@
 > - 源码取证基于本机缓存 **`/tmp/ph046/phoc-0.46.0/`、`/tmp/ph046/phosh-0.46.0/`**（0.46.0 原版；`/tmp` 可能被清，见 §5 风险 R6）。`external/phoc-work/phoc` 是 **0.55.1**（Alpine 线，`patches-userland/build-phoc-phosh.sh` 的 `PHOC_VER=0.55.1`），行号与 0.46 不同，勿混用。
 > - 所有外部 URL **访问日期 = 2026-11-25**。GitLab 走本机代理（`--noproxy '*'` 对 gitlab.gnome.org 会 406/重置）；sourcehut 的 `/log`、`/commit` 页被 Anubis 拦（418），只能取到 refs 页的相对时间，已如实标注。
 > - 本 lane **未 ssh、未改既有文件、未发信**；本文件是唯一新增物。
+
+---
+
+## 0. 执行口径（当前状态，2026-11-25 更新）
+
+### 0.1 目标
+
+设备 TB322FC / SM8750P（Debian trixie，**phoc 0.46.0-1 / phosh 0.46.0-3**）纯触屏、无硬件返回键、无导航栏：
+**屏幕左（或右）边缘向内单指滑动 = 关闭当前焦点窗口**，覆盖 Firefox / foot / Waydroid 容器窗口。
+
+明确**不做**：不是浏览器「页面后退」（Firefox 不认 `KEY_BACK`，要后退只能在应用层做）；不是 Android「返回一层」（容器内 back = 路线③，未并入）；不碰 top/bottom 边缘（phosh 的 top-panel/home bar 拖拽已占用，见 §2 路线②冲突面）。
+
+### 0.2 走哪条路线、为什么（结论未变 = 路线①）
+
+**路线①（零 phoc 改动）**：`lisgd` 旁路读触摸屏 evdev 判边缘滑动 → `uinput-back`（uinput 设备，**只广告 `KEY_BACK`+`EV_SYN`**）→ xkb 把 evdev 158 映射为 `XF86Back` → 命中 phoc 既有 `org.gnome.desktop.wm.keybindings close` → `phoc_view_close()`。
+
+理由：① 不动 phoc/phosh ⇒ 回退 = 停一个服务 + 还原一条 gsettings，phoc 升级不用 rebase；② 全链路已实测 GREEN（见 0.3），不需要试错预算；③ 它同时把「要不要上路线②」的三个判据（双动作 / 误触 / OSK 被压）变成可测的量。
+路线②（phoc 内部手势，`cursor.c` 挂点见 §2/附录 C、~120–200 行 C + 重编 phoc + `dpkg-divert`）**不上**：上游 phoc **#125 自 2020-04-09 open 至今无对应 MR**，且设备版是 0.46 而仓内 `PHOC_VER=0.55.1`（行号不同、需另取源码）。
+路线③（`waydroid shell -- input keyevent 4`，需 root helper）**不上为默认**：只覆盖容器、焦点误判会把 Back 发错目标；宿主 `KEY_BACK` 是否被 Waydroid 转发成 Android back 仍未实测（见 0.6 R6）。
+
+### 0.3 现状：已实现 + 已验（仓内件 / 设备实测）
+
+| 环节 | 件 | 状态 |
+|---|---|---|
+| 注入器 | `tools/uinput-back.c` + `tools/uinput-back-build.sh`（aarch64 static） | 已入库；`libinput debug-events --show-keycodes` 见 `elden-back KEYBOARD_KEY KEY_BACK(158) pressed/released` |
+| 触摸注入测试器 | `tools/uinput-touch.c`（`tap` / `swipe` / **`hold-swipe X1 Y1 X2 Y2 [attach_ms] [steps]`**，默认 attach 6000 ms） | 已入库 |
+| 手势 daemon | `packaging/elden-userland/files/usr/local/bin/lisgd-edge-swipe`（按 `N: Name=` 找触摸屏节点、按 DRM modes 读分辨率，`ELDEN_TOUCH_NODE`/`ELDEN_SCREEN_GEOM`/`ELDEN_SWIPE_EDGES` 可覆盖） | 已入库；`systemctl is-active lisgd-edge-swipe` = active+enabled |
+| unit | `packaging/elden-userland/out/units/{systemd,openrc}/lisgd-edge-swipe`（源 = `services.tsv`；日志 `/var/log/lisgd-edge-swipe.log`） | 已入库 |
+| 键绑定并入 | `scripts/deploy-desktop-shell.sh §15`（幂等把 `XF86Back` 并进 `close`，读回用 GVariant 解析，字串子串不算命中；并判 `lisgd`/`uinput-back` 在位） | 已入库 |
+
+实测结论（设备，2026-11-25）：
+- **计划里的关键前提当年写错了**：`gsettings get …wm.keybindings close` 实际 = **`['<Alt>F4']`**（不含 `XF86Back`）⇒ 只发 `KEY_BACK` 时 foot 窗口 **1→1（不关）**；把 `close` 改成 `['<Alt>F4','XF86Back']` 后同一次发键 **2→1（关了）** ⇒ phoc 0.46 的 xkb keymap 确实把 158 映射成 `XF86Back`，binding 也吃得下。**「先验 A1 再验手势」这一步因此是必需的，不是形式。**
+- **端到端**：`lisgd -d <触摸屏节点> -g "1,LR,L,*,R,/usr/local/bin/uinput-back"`，用 `hold-swipe` 从左边缘 (8,1500)→(700,1500) 一扫 ⇒ lisgd 日志 `Swipe distance=[691.98]; degrees=[90.00] … Execute /usr/local/bin/uinput-back` ⇒ foot **1→0**。
+- **左右两侧都开**：helper 手势表 = `1,LR,L,*` + `1,RL,R,*`；注入复验：右边缘 RL **1→0**、左边缘 LR **1→0**、中部竖划 **1→1（不误触）**。
+- 服务级复验 PASS（把 `ELDEN_TOUCH_NODE` 指到注入设备跑一遍）。
+
+### 0.4 零 phoc 改动的 30 分钟 PoC（命令级，可原样复跑=回归跑）
+
+前置：设备上以**会话用户 1001**执行（`XDG_RUNTIME_DIR=/run/user/1001`、`DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus`）。
+⚠️ **设备 reboot 会清 `/tmp`** ⇒ 测试工具必须装在 `/usr/local/bin`，否则注入变**静默 no-op**，症状看起来像「手势失效」（已在设备上踩过）。
+
+**步骤 0（2 min）取证 + 备份原值**
+```sh
+gsettings get org.gnome.desktop.wm.keybindings close      # 记原值，出厂 = ['<Alt>F4']
+gsettings get org.gnome.desktop.a11y.applications screen-keyboard-enabled   # 必须 true（PITFALLS #716 成因①）
+dpkg -l phoc phosh | tail -n +6                            # 期望 0.46.0-1 / 0.46.0-3
+dpkg -l lisgd | tail -1                                   # 实测 0.3.7-1+b1
+command -v lisgd uinput-back                              # 缺则先跑 tools/uinput-back-build.sh + 部署
+grep -A6 'N: Name="NVTCapacitiveTouchScreen"' /proc/bus/input/devices   # 期望 Handlers 含 event4
+```
+
+**步骤 1（3 min）把 `XF86Back` 幂等并入 `close`**
+```sh
+python3 - <<'EOF'
+import subprocess, ast
+k, s = "org.gnome.desktop.wm.keybindings", "close"
+cur = ast.literal_eval(subprocess.check_output(["gsettings", "get", k, s]).decode().strip())
+if "XF86Back" not in cur:
+    cur.append("XF86Back")
+    subprocess.check_call(["gsettings", "set", k, s, str(cur)])
+print(cur)
+EOF
+gsettings get org.gnome.desktop.wm.keybindings close        # 期望 ['<Alt>F4', 'XF86Back']
+```
+（同一逻辑的仓内实现在 `scripts/deploy-desktop-shell.sh §15`。）
+
+**步骤 2（5 min）先验「发 KEY_BACK 就能关窗」（不涉及手势；**失败即止步**，说明注入/绑定问题不是手势问题）**
+```sh
+uinput-back --list                    # 只打印将广告的能力：应只有 KEY_BACK / EV_SYN
+wlrctl toplevel list > /tmp/before
+uinput-back && sleep 0.5
+wlrctl toplevel list > /tmp/after
+diff /tmp/before /tmp/after           # 期望目标 title 消失、行数 -1（实测 foot 2→1）
+```
+失败时：查 `gsettings` 是否跑在**会话总线**（不是 root 的 dconf）；再试 `uinput-back --combo alt-f4`（只广告 `KEY_LEFTALT`+`KEY_F4`，同样不算 hw keyboard）。
+
+**步骤 3（10 min）接 lisgd，用注入触摸端到端跑**
+```sh
+# 前台跑便于看日志；-d 必须是步骤 0 找到的触摸屏节点
+lisgd -d /dev/input/event4 -w 1904 -h 3042 -t 60 -m 800 -v \
+      -g "1,LR,L,*,R,/usr/local/bin/uinput-back"
+# 另一路注入设备；hold-swipe = 先建虚拟触摸屏等 attach（默认 6000 ms）再划
+tools/uinput-touch hold-swipe 8 1500 700 1500 8000
+```
+期望：lisgd 打印 `Swipe distance=[691.98]; degrees=[90.00] … Execute …`，`wlrctl toplevel list` 行数 -1。
+> ⚠️ **attach 窗口要对齐**：lisgd 刚启动还没认到新设备时给 10 s 不够，**给 20 s 才稳**（服务刚重启时尤其）。
+
+**步骤 4（5 min）固化态校验（已在位则只做校验）**
+```sh
+systemctl is-enabled lisgd-edge-swipe; systemctl is-active lisgd-edge-swipe  # enabled / active
+tail -n 20 /var/log/lisgd-edge-swipe.log      # 期望 node=/dev/input/event4 geom=1904x3042
+cat /etc/conf.d/lisgd-edge-swipe 2>/dev/null  # ELDEN_SWIPE_EDGES 默认 LR（左右都开）
+```
+
+**步骤 5（5 min）不误触 + 回退演练**
+```sh
+tools/uinput-touch hold-swipe 900 1500 900 400 8000   # 中部竖划：期望 foot 1→1（实测 PASS）
+systemctl disable --now lisgd-edge-swipe              # 回退演练（演练完恢复）
+gsettings set org.gnome.desktop.wm.keybindings close "['<Alt>F4']"
+```
+
+**失败判据（出现即停，别硬撑）**
+
+| 现象 | 判据 | 处置 |
+|---|---|---|
+| 步骤 2 不关窗 | A1 失败，且 `--combo alt-f4` 也失败 | gsettings 未在会话总线生效 / `close` 未注册 ⇒ 转路线② |
+| lisgd 打不开设备 | stderr `EACCES` / `EBUSY` / `No such device` | `EACCES` ⇒ `input` 组或 udev 规则；`EBUSY` ⇒ 设备被独占（`PITFALLS #656` 同源）⇒ 路线①不可行 |
+| A1 过但手势不过 | 手势日志有 Execute 但窗口不关 | 应用抢焦点/双动作 ⇒ 改 `P`（pressed）+`-T 60`，或路线②吞事件 |
+| OSK 不再弹 | `journalctl -b \| grep "elden-back.*a keyboard device"` 有输出 | 设备被 udev 标成 `ID_INPUT_KEYBOARD` ⇒ 修 uinput 能力位；别用 `ignore-hw-keyboards` 硬扛（`PITFALLS #715` 实测未即时生效） |
+
+### 0.5 验收判据（可自动判的部分；当前全绿）
+
+| ID | 判据 | 命令 | 期望 / 实测 |
+|---|---|---|---|
+| **A0** | 前提在位 | `close` 经 GVariant 解析后**含** `XF86Back`（字串子串不算，`['<Control>XF86BackX']` 必须判 MISS）；`dpkg -l phoc` = 0.46.0-1；`command -v lisgd uinput-back` | 0 退出 |
+| **A1** | 直接注入能关焦点窗 | `wlrctl toplevel list` 前后 diff + `uinput-back` | 行数 -1（**实测 PASS**） |
+| **A2a** | 左边缘手势能关 | `hold-swipe 8 1500 700 1500 8000` + lisgd `degrees=[90.00]` | 行数 -1（**实测 PASS**，foot 1→0） |
+| **A2b** | 右边缘手势能关 | `hold-swipe 1900 1500 1200 1500` | 行数 -1（**实测 PASS**，1→0） |
+| **A3** | 不误触：中部竖划 | `hold-swipe 900 1500 900 400 8000`，lisgd 不打印 Execute | 行数不变（**实测 PASS**，1→1） |
+| **A4** | 注入设备不算 hw keyboard | 开 `phoc-input-device` 日志域（`gdbus call --session --dest mobi.phosh.Phoc.DebugControl … LogDomains`）后跑 `uinput-back`，`journalctl -b \| grep "elden-back"` | **not** a keyboard device |
+| **A5** | 服务态 | `systemctl is-enabled/is-active lisgd-edge-swipe`；日志有 node/geom 行 | enabled / active（**实测 PASS**） |
+| **A6** | 无崩溃 | `coredumpctl list --since "-10 min" \| grep -c phoc` | 0 |
+
+> A4 的「udev 归类」主机侧已实测只打 `ID_INPUT_KEY`（无 `ID_INPUT_KEYBOARD`），设备侧仍需复核一次。
+
+### 0.6 回退办法（按代价从小到大）
+
+```sh
+systemctl disable --now lisgd-edge-swipe                                      # 1) 停手势 daemon
+gsettings set org.gnome.desktop.wm.keybindings close "['<Alt>F4']"              # 2) 还原绑定（保留 Alt+F4）
+rm -f /usr/local/bin/{uinput-back,lisgd-edge-swipe,elden-swipe-back,elden-swipe-back-left,elden-swipe-back-right}   # 3) 卸件
+```
+4) 判据自检：重跑 `scripts/deploy-desktop-shell.sh §15` 会报 MISS（A0 红），**不会静默留半套**。
+回退**不需要**重装 phoc/phosh —— 本方案根本没改它们（这是选路线①的主要理由）。
+
+### 0.7 需要人做的部分（**仅剩这三条**）
+
+| ID | 场景 | 通过标准 |
+|---|---|---|
+| **H1** | 真人真机：左边缘（≤10 px 起手）内滑 60–120 px，再右边缘一次 | 窗口关闭；无黑屏/白屏残留；确认手感（左右两侧已注入验过） |
+| **H2** | 点输入框弹出 OSK 后：① 在 OSK 键区左边缘滑 ② 屏幕左侧空白区滑 | ① 不关窗、OSK 不消失 ② 关窗后重点输入框 OSK **仍能弹**（证明无 KEYBOARD 能力残留） |
+| **H3** | 全屏视频/全屏 Firefox 播放中内滑；锁屏 / 概览 / 无焦点时内滑 | 关的是播放窗口（不是暂停/只退全屏）；锁屏与概览下**无任何动作** |
+
+### 0.8 风险与未决
+
+- **R1 语义**：实现的是「关当前窗口」= Alt+F4 等价，不是页面后退、不是 Android 返回一层。
+- **R2 双动作**：lisgd 不消费触摸 ⇒ 应用仍收到这次滑动（Firefox 页面横移、GTK 侧栏/轮播被拖、地图平移）。缓解 = 收窄起手区（`-s`）；根治需路线②吞事件。
+- **R3 旋转/缩放**：lisgd `-w/-h` 与 phoc scale 不一致时边缘/阈值要重算；`-o` 只支持 90° 步进。helper 已改成按 DRM modes 读分辨率，旋转后仍需复核。
+- **R4 设备生命周期**：suspend/resume、event 节点编号变化 ⇒ helper 每次启动按 `N: Name=` 重找节点（已实现），仍需 unit `Restart=` 兜底。
+- **R5 attach 时序**：注入设备存活期 vs lisgd 认设备的延迟要对齐（10 s 不够、20 s 稳）。
+- **R6 Waydroid**：宿主 `KEY_BACK` 是否被转发成 Android back **未实测**；若不转发只能走路线③（需 root helper，是否常驻要人拍板）。
+- **R7 许可**：lisgd = MIT（可用可改）；`vacuumbeef/phosh-overlay-gestures` **无 LICENSE**（只读思路，不可复制代码）；sxmo-utils = AGPL-3.0（只参考配置思路）。
+- **R8 上游**：phoc #125 是唯一合适锚点、5 年半无实现；若上游化要先谈设计（边缘宽/阈值/关对话框还是关 toplevel/是否可配），且须基于 Debian 0.46 而非仓内 `PHOC_VER=0.55.1` 的件。
 
 ---
 
@@ -135,7 +290,7 @@ lisgd -d /dev/input/eventN -w 1904 -h 3042 -t 60 -m 400 -r 20 \
 
 ---
 
-## 3. 验收判据
+## 3. 验收判据（原始规划；**以 §0.5 为准**，本条保留 A4/A7 等更细的取证写法）
 
 ### 3.1 可脚本化（自动）
 
@@ -165,7 +320,7 @@ lisgd -d /dev/input/eventN -w 1904 -h 3042 -t 60 -m 400 -r 20 \
 
 ---
 
-## 4. 推荐路线 + 30 分钟 PoC
+## 4. 推荐路线 + 30 分钟 PoC（原始规划；**以 §0.4 为准**，本条保留当时的失败判据与 udev 兜底讨论）
 
 **推荐：路线 ①**。理由：不动 phoc/phosh（回退 = 停 daemon + 恢复 gsettings），能 30 分钟内证伪/证实核心假设，且可把「是否值得上路线 ②」的判据（双动作/误触/OSK）先量出来。
 
@@ -279,7 +434,7 @@ command   : shell 命令
       -m 超时 ms（默认 800）、-o 旋转 0..3、-w/-h 屏幕宽高、-s 边缘缩放
 ```
 
-## 附录 B：`tools/uinput-back.c` 草案（PoC 用；**本 lane 未落此文件**）
+## 附录 B：`tools/uinput-back.c` 最初草案（**已实现并入库**，现役件见 `tools/uinput-back.c`：多了 `--repeat/--delay-ms/--list/--dry-run`，`CREATE_SETTLE_MS=400`）
 
 ```c
 /* uinput-back — 只广告 KEY_BACK 的虚拟键盘，按一次即销毁。
