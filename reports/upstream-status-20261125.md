@@ -22,7 +22,7 @@
 
 | 系列 | 最新代次 | 上次动作 | 现在等谁 | 我方欠 |
 |---|---|---|---|---|
-| **dwc3 双 connector**（M3） | **v15**（3 枚 + cover） | 2026-11-25T08:12Z 投出，**`linux-usb` 已进 Cc**（Greg 11-24 的第二条要求），1/3–3/3 与 v14 diff 段逐字节相同，cover 新增「Testing on hardware」段 | Greg KH / Thinh Nguyen | 只等回信；被要求「先有板 DTS 再谈」时口径 = 见 §4 |
+| **dwc3 双 connector**（M3） | **v16**（3 枚 + cover，2026-11-26T14:23Z 投） | sashiko 对 v15 的 2 条 [Low] 全修，2/3、3/3 逐字节同；cover MID `20261125142309.3265777-1` | Greg KH / Thinh Nguyen / sashiko | 只等回信；被要求「先有板 DTS 再谈」时口径 = elden 板 DTS v8 已投 |
 | **elden 板 DTS**（M3-DTS） | v7 在档（`14991580`，0 回复）；**v8 备料就绪** | 2026-11-25 晚建 v8 包（补 `qcom.yaml` + 板件=v7 原文，门禁全绿，`SEND.sh` dry-run `Result: OK`） | **用户放行**（§7 逐系列批准） | 放行后 `bash SEND.sh --send`；另需 Pengyu 指定 trailer 形式（`Co-developed-by` 不代签） |
 | **M8 mdss 块复位** | v5（3 枚，3 R-b） | 11-24T15:15Z ping **退信**（`dmitry.baryshkov@linaro.org` 死地址）⇒ 11-25T02:23Z **换现址补发**（`dmitry.baryshkov@oss.qualcomm.com`，lore 已归档） | Dmitry / Konrad / Bjorn | 等回信；上机两枚形状与 `0xa000` 单变量仍**未证**（`reports/mdss-int2-evidence-20261113.md` §2.3） |
 | **M10 fastrpc non-secure** | v3 | 同上换址补发（`srini@kernel.org` 在 Cc） | Konrad + Ekansh/Dmitry/Srini | 技术欠账 0，等回信 |
