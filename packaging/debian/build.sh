@@ -233,6 +233,10 @@ stage_runtime_from_source() {
     if [[ $rust_target != x86_64-unknown-linux-gnu ]]; then
         [[ -n $sysroot && -d $sysroot/usr/lib/aarch64-linux-gnu/pkgconfig ]] ||
             die "--arch $deb_arch needs --sysroot: run debian/cross-arm64.sh first"
+        # cargo runs in the Droidloom checkout, so a relative --sysroot would make
+        # PKG_CONFIG_LIBDIR resolve against that cwd and pkg-config would report
+        # "Package wayland-server was not found". Pin it to an absolute path.
+        sysroot=$(cd "$sysroot" && pwd)
         command -v aarch64-linux-gnu-gcc >/dev/null ||
             die "--arch $deb_arch needs aarch64-linux-gnu-gcc (gcc-aarch64-linux-gnu)"
         rustc --print target-libdir --target "$rust_target" >/dev/null 2>&1 ||
