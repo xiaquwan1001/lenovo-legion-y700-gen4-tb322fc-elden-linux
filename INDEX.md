@@ -376,7 +376,7 @@
    **GRUB 路径断点已在 2026-11-15 夜定案**：Mu UEFI 把 initrd buffer 分配进 DTB 的 `ramoops@c2000000`（8 MB `no-map`），内核 `t=0.0269 s` 就把它注册成 printk 控制台 ⇒ 每行 console 写进那 8 MB ⇒ initrd 被内核自己覆盖 ⇒ 解包 ~120 ms `broken padding`；A/B 单变量（只删 ramoops 节点）= 起进 SSH 32 s、`sum=0x5c53688e` = 主机期望值。修法优先级 = 内核 `pstore/ram` 拒绝重叠 zone（可上游）> GRUB 先占位 > 挪 ramoops。→ `reports/uefi-dtbo-a-rootcause-20261110.md`、`reports/uefi-grub-initrd-rootcause-20261115.md`（§5 另列两条修法）、复现件 `patches/local/uefi-initrd-probe-20261115/`、`PITFALLS #665/#666`、`TASKS` §5 沿革索引「2026-11-10 / 11-15」行。
 5. **桌面层两回归已闭环（2026-11-14 晚）**：**T20 电源键短按不熄屏**根因 = `zwlr_output_power_v1` 每屏只许一个请求者，phosh 的第二个请求被 `send_failed` 且资源被销毁 ⇒ `power_mode` 停在 `OFF` ⇒ 屏保管理器 `active` 恒 TRUE、press/release 双短路；修 = phoc（wlroots 放行多请求者）+ phosh（failed 回退为 ON）两枚自编件，已上机验收（短按熄屏/再按亮屏、长按菜单正常）。**T19 撕裂**仍停在「根因层 = 带 modifier 的 dmabuf 导入已锁定、缺 mesa 26.2.5 A/B」。
    → `TASKS/sessions/2026-11-14-T20-电源键不熄屏.md` §7、`PITFALLS` #371、`scripts/{phoc,phosh}-install.sh`
-6. **上游**（2026-11-17 更新）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**、**dsi/phy v2 已发**（11-16 22:50/23:03 两发 `250`；`/linux-arm-msm/`+`/linux-kernel/`+`/dri-devel/` 三处归档、正文字节一致；错前缀那封由第二封自述）；dwc3 v9 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**；**唯一在档未发 = Q28 证据回帖**（已修「折行 Cc 会漏发 5 人」）。→ `reports/upstream-status-20261113.md`、`TASKS` §7。
+6. **上游**（2026-11-17 更新）：**mdss v5 已发**（答 sashiko `0xa000` 独立域质疑，3/3 只收窄 message）、**wl2868c v11 已发**、**dsi/phy v2 已发**（11-16 22:50/23:03 两发 `250`；`/linux-arm-msm/`+`/linux-kernel/`+`/dri-devel/` 三处归档、正文字节一致；错前缀那封由第二封自述）；dwc3 v9 / gamma v2 / haptics v2 / board DTS 单提交 = **备料在档、等批准**；**唯一在档未发 = Q28 证据回帖**（已修「折行 Cc 会漏发 5 人」）。→ `reports/upstream-status-20261125.md`、`TASKS` §7。
    **★2026-11-17 联网核查（子代理，全账 `reports/upstream-replies-20261117.md`）**：在飞 4 系列**只有 1 个收到人回** = wl2868c v11（Rob 11-16 15:10 UTC：**v11 漏带他的 R-b** ⇒ 下一版补 tag）；pstore v1 / dsi-phy v2 / mdss v5 **零人回**。
    另有两封改变前提的信：① **Bryan 对我方 camss CSIPHY RFC 回信（11-15 17:44 UTC）** —— 先基于 on-list 的 Hangxiang **v25**/Qualcomm **v7** 工作，并直言我方邮件「LLM output…干难懂」；② **`qcom,nsessions` 已于 11-16 被上游合入废弃**（`641dd7dd0f68`）。我方相关主线合入 = 0；同家族上一代 Kaanapali PHY 3 枚已进 phy-next。
    **★2026-11-17 12:17 Q28 证据回帖已发（用户放行）**：`Message-ID <179488903160.260870.8168848839719897744@mail.ustc.edu.cn>`，`/linux-arm-msm/`+`/dri-devel/`+`/lkml/` 三处归档、正文逐字节相同（`sha256 4fe84148…`）⇒ **在档未发件已清零**；下一批 = 6 个待发系列（含新增 `wl2868c v12`）。
@@ -580,7 +580,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 要查什么 | 去哪 |
 |---|---|
 | 任务台账 / 未解（Q 表）/ 待办 / 上游化（M 系列） | `TASKS/README.md` §1–§2 / §5 / §4 / §7 |
-| 上游投递现状（当前一页） | `reports/upstream-status-20261113.md` |
+| 上游投递现状（当前一页） | `reports/upstream-status-20261125.md` |
 | 在机内核 / 槽位 / 单元台账 / 存储策略 | `DEVICE/README.md` §1.1 / §2.2 / §3 |
 | 动手前的坑 | `PITFALLS/README.md` §0 + 索引 |
 | 从原厂到 b 槽直启的操作步骤 | `RUNBOOK-BRINGUP/README.md`（Phase −1…9） |
