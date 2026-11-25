@@ -58,11 +58,23 @@ fi
 
 echo "lisgd-edge-swipe: node=$NODE geom=${W}x${H} threshold=${ELDEN_SWIPE_THRESHOLD:-60} timeout=${ELDEN_SWIPE_TIMEOUT_MS:-800}ms cmd=$BACK_CMD"
 
-# 手势表：单指、Left→Right、只认左边缘（edge=L）、距离不限（*）、抬手时执行（R）。
-# 竖划（UD/DU）与屏幕中间的横划都不匹配 ⇒ 不会误触滚动/翻页；判据见 TASKS §4 D13。
+# 手势表（2026-11-25 用户实测左边缘通过后加右边缘）：
+#   ① 单指 Left→Right、只认**左**边缘（edge=L）  = 返回
+#   ② 单指 Right→Left、只认**右**边缘（edge=R）  = 返回（左右手/左右持握都顺手）
+#   竖划（UD/DU）与屏幕中间的横划都不匹配 ⇒ 不误触滚动/翻页；判据见 TASKS §4 D13。
+#   两侧都要时用 ELDEN_SWIPE_EDGES 控制（默认 LR = 左右都开；=L 只左；=R 只右）。
+GARGS=""
+case "${ELDEN_SWIPE_EDGES:-LR}" in
+	*L*) GARGS="$GARGS -g 1,LR,L,*,R,$BACK_CMD" ;;
+esac
+case "${ELDEN_SWIPE_EDGES:-LR}" in
+	*R*) GARGS="$GARGS -g 1,RL,R,*,R,$BACK_CMD" ;;
+esac
+[ -n "$GARGS" ] || { echo "lisgd-edge-swipe: ELDEN_SWIPE_EDGES=${ELDEN_SWIPE_EDGES} 不含 L/R" >&2; exit 1; }
+# shellcheck disable=SC2086  # GARGS 需要按空格拆成多组 -g
 exec lisgd \
 	-d "$NODE" \
 	-w "$W" -h "$H" \
 	-t "${ELDEN_SWIPE_THRESHOLD:-60}" \
 	-m "${ELDEN_SWIPE_TIMEOUT_MS:-800}" \
-	-g "1,LR,L,*,R,$BACK_CMD"
+	$GARGS
