@@ -13,9 +13,17 @@
 #   ELDEN_HAPTIC_MAG        默认 0x8000（约一半力度；0xffff 最强）
 set -u
 BACK=${ELDEN_BACK_CMD:-/usr/local/bin/uinput-back}
+# 左右边缘各用一只马达（设备上 aw86927 ×2 = event2/event3），手感更「有方向感」。
+# ELDEN_SWIPE_EDGE 由 lisgd 手势表的选择器传：side=L / side=R；未传则用 event2。
+case "${ELDEN_SWIPE_EDGE:-L}" in
+	R) HDEV_DEFAULT=/dev/input/event3 ;;
+	*) HDEV_DEFAULT=/dev/input/event2 ;;
+esac
 if [ "${ELDEN_SWIPE_HAPTIC:-1}" = 1 ] && command -v ffrumble >/dev/null 2>&1; then
-	# 失败不影响返回：马达不在/节点变了都不该让手势失效
-	ffrumble "${ELDEN_HAPTIC_DEV:-/dev/input/event2}" \
-	         "${ELDEN_HAPTIC_MS:-25}" "${ELDEN_HAPTIC_MAG:-0x8000}" >/dev/null 2>&1 || true
+	# ⚠️ 必须后台：ffrumble 内部会 `sleep(ms+50)` 才退出（scripts/ffrumble.c），
+	# 前台调用会把「关窗」推迟 ms+50；setsid+& 让振动与 KEY_BACK 并行，时序不变。
+	# 失败不影响返回：马达不在/节点变了都不该让手势失效。
+	setsid ffrumble "${ELDEN_HAPTIC_DEV:-$HDEV_DEFAULT}" \
+	        "${ELDEN_HAPTIC_MS:-25}" "${ELDEN_HAPTIC_MAG:-0x8000}" >/dev/null 2>&1 &
 fi
 exec "$BACK"

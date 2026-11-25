@@ -1,0 +1,4 @@
+#!/bin/sh
+# 薄包装：lisgd 回调不走 shell，无法带 `VAR=value cmd` 前缀 ⇒ 用一个脚本固化本条边缘的马达节点。
+# left 边缘 = /dev/input/event2（设备上 aw86927 有两只马达：event2 / event3）
+ELDEN_SWIPE_EDGE=L ELDEN_HAPTIC_DEV=/dev/input/event2 exec /usr/local/bin/elden-swipe-back "$@"

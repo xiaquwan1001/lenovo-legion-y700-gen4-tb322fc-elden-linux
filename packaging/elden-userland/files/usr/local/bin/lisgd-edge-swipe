@@ -46,6 +46,10 @@ W=${GEOM%%x*}
 H=${GEOM##*x}
 
 BACK_CMD=${ELDEN_BACK_CMD:-/usr/local/bin/elden-swipe-back}
+# lisgd 用 fork+exec（**不经 shell**）执行回调 ⇒ 不能用 `ENV=.. cmd` 前缀形式（实测会静默不执行）。
+# 故按左右各给一个薄包装：左用 event2、右用 event3（两只马达）。
+BACK_L=${ELDEN_BACK_CMD_L:-/usr/local/bin/elden-swipe-back-left}
+BACK_R=${ELDEN_BACK_CMD_R:-/usr/local/bin/elden-swipe-back-right}
 if [ ! -x "$BACK_CMD" ]; then
 	echo "lisgd-edge-swipe: $BACK_CMD 不存在/不可执行；先跑 tools/uinput-back-build.sh 并部署" >&2
 	exit 1
@@ -65,10 +69,10 @@ echo "lisgd-edge-swipe: node=$NODE geom=${W}x${H} threshold=${ELDEN_SWIPE_THRESH
 #   两侧都要时用 ELDEN_SWIPE_EDGES 控制（默认 LR = 左右都开；=L 只左；=R 只右）。
 GARGS=""
 case "${ELDEN_SWIPE_EDGES:-LR}" in
-	*L*) GARGS="$GARGS -g 1,LR,L,*,R,$BACK_CMD" ;;
+	*L*) GARGS="$GARGS -g 1,LR,L,*,R,$BACK_L" ;;
 esac
 case "${ELDEN_SWIPE_EDGES:-LR}" in
-	*R*) GARGS="$GARGS -g 1,RL,R,*,R,$BACK_CMD" ;;
+	*R*) GARGS="$GARGS -g 1,RL,R,*,R,$BACK_R" ;;
 esac
 [ -n "$GARGS" ] || { echo "lisgd-edge-swipe: ELDEN_SWIPE_EDGES=${ELDEN_SWIPE_EDGES} 不含 L/R" >&2; exit 1; }
 # shellcheck disable=SC2086  # GARGS 需要按空格拆成多组 -g
