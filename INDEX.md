@@ -26,7 +26,9 @@
 > 同族 `WDT=PDP−0x10000`），vendor DT/reserved-memory **无冲突**，上机判据清单 §4（头号风险 = hyp/TZ 独占则 `readl(WDT_STS)` 同步外部中止）。
 > ⑤ **通信复扫**（`reports/comm-triage-20261126.md`）：dwc3 v16 拿到 sashiko 首个「no issues」；M8/M10 换址补发进档 0 回音；
 > **IMAP 收件侧与 phosh API 因 keyring 锁无法核验（如实记错误码）**。
-> ⑥ **droidloom Debian 包收尾**：runtime 缺 `libwayland-server0` 实证补齐 + 交叉 `--sysroot` 绝对化（**`PITFALLS #730`**），双架构重建。
+> ⑥ **传感器落地件已备**：`scripts/deploy-ssc-sensors.sh`（`--check` 只读体检矩阵 / `--from-debian` 官方包 + sha256 / `--dry-run` / `--rollback`，
+> 全程不碰 `hexagonrpcd*`）——放行后一条命令即可上机验 SSC 出数。
+> ⑦ **droidloom Debian 包收尾**：runtime 缺 `libwayland-server0` 实证补齐 + 交叉 `--sysroot` 绝对化（**`PITFALLS #730`**），双架构重建。
 
 > **🆕 2026-11-25 夜 2（四项点名调查轮，零设备：平板不在线）**：4 lane 全收口 + 1 条派生构建 lane。
 > ① **Mobian/phosh 上游化 + 通信**（`reports/mobian-phosh-upstream-20261125.md`）：增量窗口**人类评审 0 封**，机器人给
