@@ -196,6 +196,8 @@ nohup sh /tmp/pm-sample.sh 3600 /var/lib/elden/pm/$(date +%Y%m%d-%H%M).tsv >/dev
 > 另：`rtcwake -m mem` / `wakealarm +N` 各跑一次后 `suspend_stats.success` 0→2、`fail=0`、`boot_id` 未变
 > ⇒ **s2idle 挂起/恢复链路在 vk189 上是通的**，只是驻留只有 1.6–1.9 s（RTC 停在 1970 ⇒ 闹钟提前触发，见 `PITFALLS #719`）。
 > ⇒ 优先级 1 的判据从「能不能挂起」改成「**能不能驻留 ≥5 min 并正常唤醒**」。
+> **S4 复测（2026-11-25T03:05:17Z→03:10:17Z）= PASS**：`echo +300 > /sys/class/rtc/rtc0/wakealarm` 后写 `mem`，驻留**整 300 s**、`suspend_stats.success` 2→3、`fail=0`、`boot_id` 未变 ⇒ **M1 的「5 min 驻留」判据已满足**（早先 1.6/1.9 s 的短驻留是 `rtcwake -s` 在 RTC=1970 下的假闹钟）。
+> **S1 屏亮 idle 基线本轮作废**：采样窗内设备在**快充**（`current_now` 均值 **+4.70 A**、21 W、capacity 90→95%），不是放电态 ⇒ 功耗数字全部无效。测量必须在「拔掉所有 VBUS、`qcom-battmgr-usb/online=0`」时做（S0 硬门）。
 
 ## 4. 优先级建议
 
