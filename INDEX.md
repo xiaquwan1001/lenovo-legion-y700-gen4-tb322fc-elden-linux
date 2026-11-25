@@ -8,6 +8,24 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-25）
 
+> **🆕 2026-11-25 傍晚（上游面轮）：dwc3 v15 已投 + 全系列重复性核查 + M12 结项**：
+> ① **dwc3 双连接器 `[PATCH v15 0/3]` 已投**（08:12Z，4×250，cover `<20261125081219.3661014-1@mail.ustc.edu.cn>`）：
+> **`linux-usb` 已补进 Cc**（v12–v14 缺的正是它，Greg 11-24 的第二条要求），新线程；1/3–3/3 与 v14
+> **diff 段 `cmp` 逐字节相同**（patch-id `aa6ed734`/`5688adec`/`60721b9f`，只换 Date+Subject），只有 cover 是新的；
+> Greg 第一条（真机测试）落成 cover 的 `Testing on hardware` 段（`reports/g7-routeA-dtfix-20261123.md` §8：role switch
+> `waiting_for_supplier=0` ×2、`muxchip0` 注册、HS gadget 在 connector0 枚举、devlink 7≤基线 8）+ 显式 `Not tested`（物理换口未做）。
+> lore 复核 `linux-usb` 线程 4/4 归档。全账 `patches/upstream/dwc3-v15-20261125/{SENT.md,CHECKLIST.md,logs/}`。
+> ② **全系列重复性核查 = `reports/dup-check-20261125.md`（触发 = M12 撞车：我方补丁与已收录的 `be5e7367bceb` 重复）⇒ 2 停 5 继续**：
+> **⛔ M3-DTS 板件 v8/v9 备料停投** —— **Pengyu Luo 2026-07-26 已投同一个 `sm8750-lenovo-elden.dts`**（1170 行骨架，
+> 且他同期把该机 NT36536 面板推进 qcom for-next）；**⛔ M4 csiphy 2.4.0 v2 不再作独立系列** —— 上游 Wenmeng v7 `[06/23]`
+> 已把 `qcom,sm8750-csi2-phy` 定到 kaanapali（2.3.0 表）并带 Bryan R-b，我方只剩「13 条值差 / 净行为 4 条 0x0000 写」的 delta 素材。
+> 继续的 5 个 = dwc3 / M8 mdss / M10 fastrpc / M11 pstore / aw86927。
+> ③ **M12 充电控制链结项 = 已被上游覆盖**：Joonhoe Kim 2026-10-07 的 `[PATCH] power: supply: qcom_battmgr: Allow setting
+> the USB input current limit` 被 Sebastian Reichel **2026-11-08 收录为 `be5e7367bceb`**（30 行，与我方 `0001` 语义逐条相同）
+> ⇒ 我方系列作废（`patches/upstream/charger-icl-20261125/` 标 ⛔、`SEND.sh` exit 99），**只留作本机 backport 参考**
+> （`upstream-be5e7367bceb.patch`）；本机 A/B 判据与脚本（`probes/m12-icl-ab.sh` / `-upstream.sh`）保留可复用。
+> 教训 = `PITFALLS #724`（查缺口必须查维护者树）· 工具事实 = `PITFALLS #725`（checkpatch 喂 stdin，别传文件路径）。
+
 > **🆕 2026-11-25 上午（断电续轮）：三件收口 + 两条定性**：
 > ① **候选条可翻页**：`0006-osk-stub-completion-bar-paging.patch`（`GtkScrolledWindow` + 最小按钮宽 + `‹ ›` 翻页）+ RIME
 > `menu/page_size: 20`（`~/.local/share/rime/default.custom.yaml`）⇒ 设备实测点 `›` 候选翻页（中/种/周/重/仲 → 州/众/钟/锺/忠）；

@@ -1,0 +1,130 @@
+v15-0000-cover-letter.patch
+v15-0001-dt-bindings-usb-snps-dwc3-describe-two-connectors-on.patch
+v15-0002-usb-roles-look-up-role-switches-attached-to-a-graph-.patch
+v15-0003-usb-dwc3-select-the-shared-HS-data-bus-with-a-mux-co.patch
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<Thinh.Nguyen@synopsys.com>
+RCPT TO:<gregkh@linuxfoundation.org>
+RCPT TO:<linux-usb@vger.kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Thinh.Nguyen@synopsys.com
+Cc: gregkh@linuxfoundation.org,
+	linux-usb@vger.kernel.org,
+	robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v15 0/3] usb: dwc3: support two connectors sharing one HS data bus
+Date: Wed, 25 Nov 2026 16:04:01 +0800
+Message-ID: <20261125080404.3553652-1-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<Thinh.Nguyen@synopsys.com>
+RCPT TO:<gregkh@linuxfoundation.org>
+RCPT TO:<linux-usb@vger.kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Thinh.Nguyen@synopsys.com
+Cc: gregkh@linuxfoundation.org,
+	linux-usb@vger.kernel.org,
+	robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v15 1/3] dt-bindings: usb: snps,dwc3: describe two connectors on one HS data bus
+Date: Wed, 25 Nov 2026 16:04:02 +0800
+Message-ID: <20261125080404.3553652-2-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261125080404.3553652-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261125080404.3553652-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<Thinh.Nguyen@synopsys.com>
+RCPT TO:<gregkh@linuxfoundation.org>
+RCPT TO:<linux-usb@vger.kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Thinh.Nguyen@synopsys.com
+Cc: gregkh@linuxfoundation.org,
+	linux-usb@vger.kernel.org,
+	robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v15 2/3] usb: roles: look up role switches attached to a graph endpoint
+Date: Wed, 25 Nov 2026 16:04:03 +0800
+Message-ID: <20261125080404.3553652-3-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261125080404.3553652-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261125080404.3553652-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<Thinh.Nguyen@synopsys.com>
+RCPT TO:<gregkh@linuxfoundation.org>
+RCPT TO:<linux-usb@vger.kernel.org>
+RCPT TO:<robh@kernel.org>
+RCPT TO:<krzk+dt@kernel.org>
+RCPT TO:<conor+dt@kernel.org>
+RCPT TO:<devicetree@vger.kernel.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: Thinh.Nguyen@synopsys.com
+Cc: gregkh@linuxfoundation.org,
+	linux-usb@vger.kernel.org,
+	robh@kernel.org,
+	krzk+dt@kernel.org,
+	conor+dt@kernel.org,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v15 3/3] usb: dwc3: select the shared HS data bus with a mux controller
+Date: Wed, 25 Nov 2026 16:04:04 +0800
+Message-ID: <20261125080404.3553652-4-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261125080404.3553652-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261125080404.3553652-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
