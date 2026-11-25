@@ -110,7 +110,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/bin/elden-swipe-back	script	4702d9691e2faa7f5396829609590e2e7c00068d5f6b700d55c8338c030c9524	1885	755	files/usr/local/bin/elden-swipe-back
 /usr/local/bin/elden-swipe-back-left	script	7729fb070e13d3f3c5da0303511983d52c2eceab21dad20a166d89d5a50b7819	327	755	files/usr/local/bin/elden-swipe-back-left
 /usr/local/bin/elden-swipe-back-right	script	64c9fbbf28e69f3c04e2cee2dc35607951e88dfda0c83a2ab1746ff6091cca18	328	755	files/usr/local/bin/elden-swipe-back-right
-/usr/local/bin/elden-keyboard-settings	script	aa70559ebbc43fa702836d17f9bf9707b4feab842e4157dbe2e18a42fb191daa	10591	755	files/usr/local/bin/elden-keyboard-settings
+/usr/local/bin/elden-keyboard-settings	script	eaa018e25cf4cff36eefbd79c53b8fcf76f1f381723b003e575e70bd6739eea5	10993	755	files/usr/local/bin/elden-keyboard-settings
 /usr/local/sbin/elden-keyboard-apply	script	3ad1d8d96d63cf00cf14d24054b8bc997f370e19412321fbe67410207d80368b	1971	755	files/usr/local/sbin/elden-keyboard-apply
 /usr/share/applications/elden-keyboard-settings.desktop	data	916273cb7b1e85fb75b5475884e9cf162d6b2a5c91240bc96ea860fdbf9125e4	265	644	files/usr/share/applications/elden-keyboard-settings.desktop
 /etc/elden-keyboard.conf	config	909d6a2d6e19f10dc10ba26f123d01e0e682b65f5a01fc3bfc4f73cbd81df3db	726	644	files/etc/elden-keyboard.conf

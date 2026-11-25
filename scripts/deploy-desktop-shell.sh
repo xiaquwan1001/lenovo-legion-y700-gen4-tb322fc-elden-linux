@@ -678,6 +678,37 @@ else
 		fix "已装 /usr/local/bin/uinput-back（源 $UIBC）" || no "装 uinput-back 失败"
 fi
 
+# ---------------------------------------------------------------------------
+# 16) 「键盘设置」GUI（D18：震动时长/幅度 + 词库引擎切换）—— 2026-11-25 实机验通
+# 为什么要有：这两项以前只存在于 README/会话里（改 /etc/environment 手写、gsettings 手敲），
+#   用户侧没有入口；而 /etc/environment 是 root 文件，桌面用户改不了 ⇒ 面板 + 幂等 apply 分离。
+# 三件判据（缺一即 MISS）：
+#   ① 四个文件在位（app / apply / .desktop / conf），且 app 的 sha 与仓内一致（防半装）
+#   ② `elden-keyboard-apply --check` rc=0（conf 可解析、能算出要写的键值）
+#   ③ 应用 import 得动 GTK4 + Adw（缺 gir1.2-gtk-4.0 / gir1.2-adw-1 时界面起不来，且报错只在 stderr）
+KS_DIR=$ROOT/packaging/elden-userland/files
+KS_APP_SHA=$(sha256sum "$KS_DIR/usr/local/bin/elden-keyboard-settings" 2>/dev/null | awk '{print $1}')
+_ks_bad=$("${SSH[@]}" 'for f in /usr/local/bin/elden-keyboard-settings /usr/local/sbin/elden-keyboard-apply /usr/share/applications/elden-keyboard-settings.desktop /etc/elden-keyboard.conf; do [ -e "$f" ] || echo "MISS $f"; done; command -v python3 >/dev/null || echo "MISS python3"' 2>/dev/null || true)
+_ks_sha=$("${SSH[@]}" 'sha256sum /usr/local/bin/elden-keyboard-settings 2>/dev/null | awk "{print \$1}"' 2>/dev/null || true)
+_ks_apply=$("${SSH[@]}" 'sh /usr/local/sbin/elden-keyboard-apply --check >/dev/null 2>&1; echo $?' 2>/dev/null || echo 1)
+_ks_gi=$("${SSH[@]}" 'python3 -c "import gi;gi.require_version(\"Gtk\",\"4.0\");gi.require_version(\"Adw\",\"1\")" >/dev/null 2>&1; echo $?' 2>/dev/null || echo 1)
+if [ -z "$_ks_bad" ] && [ "$_ks_sha" = "$KS_APP_SHA" ] && [ "$_ks_apply" = 0 ] && [ "$_ks_gi" = 0 ]; then
+	ok "键盘设置就绪（四件在位 + app sha 一致 + apply --check rc=0 + GTK4/Adw 可导入）"
+elif [ "$MODE" = check ]; then
+	[ -n "$_ks_bad" ] && no "键盘设置缺件：$_ks_bad"
+	[ "$_ks_sha" != "$KS_APP_SHA" ] && no "键盘设置 app 与仓内不一致（设备 ${_ks_sha:-空} / 仓内 ${KS_APP_SHA:-空}）⇒ 重跑本脚本"
+	[ "$_ks_apply" != 0 ] && no "elden-keyboard-apply --check 失败（conf 语法或权限）"
+	[ "$_ks_gi" != 0 ] && no "缺 GTK4/Adw 的 gir（apt install gir1.2-gtk-4.0 gir1.2-adw-1 python3-gi-cairo）"
+else
+	"${SSH[@]}" 'DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gir1.2-gtk-4.0 gir1.2-adw-1 python3-gi-cairo >/tmp/apt-gtk4.log 2>&1' || true
+	"${SCP[@]}" "$KS_DIR/usr/local/bin/elden-keyboard-settings" "$TAB:/usr/local/bin/elden-keyboard-settings" &&
+	"${SCP[@]}" "$KS_DIR/usr/local/sbin/elden-keyboard-apply" "$TAB:/usr/local/sbin/elden-keyboard-apply" &&
+	"${SCP[@]}" "$KS_DIR/usr/share/applications/elden-keyboard-settings.desktop" "$TAB:/usr/share/applications/elden-keyboard-settings.desktop" &&
+	"${SCP[@]}" "$KS_DIR/etc/elden-keyboard.conf" "$TAB:/etc/elden-keyboard.conf" &&
+	"${SSH[@]}" 'chmod 755 /usr/local/bin/elden-keyboard-settings /usr/local/sbin/elden-keyboard-apply; chmod 644 /etc/elden-keyboard.conf /usr/share/applications/elden-keyboard-settings.desktop' &&
+		fix "已装键盘设置四件（app/apply/.desktop/conf）" || no "装键盘设置失败"
+fi
+
 echo
 if [ "$missing" -eq 0 ]; then echo "结果: 达标（MISS=0）"; exit 0; fi
 echo "结果: 未达标（MISS=$missing）"; exit 1

@@ -19,7 +19,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, Gtk  # noqa: E402
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
 
 APP_ID = "org.elden.KeyboardSettings"
 CONF_PATH = "/etc/elden-keyboard.conf"
@@ -263,6 +263,14 @@ class App(Adw.Application):
     def do_activate(self):
         self.win = self.props.active_window or SettingsWindow(self)
         self.win.present()
+        # 不要一开窗就把焦点给输入框：屏上键盘会立刻弹出来挡住半屏（2026-11-25 真机实测）。
+        # 用 idle 回调把焦点清掉，用户点哪一项再聚焦（也不会影响滚动/手势）。
+        GLib.idle_add(self._clear_focus)
+
+    def _clear_focus(self):
+        if self.win is not None:
+            self.win.set_focus(None)
+        return False
 
 
 def main():

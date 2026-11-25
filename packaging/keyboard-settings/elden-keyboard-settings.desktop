@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=键盘设置
+GenericName=Keyboard Settings
+Comment=调整屏幕键盘震动与词库引擎
+Exec=elden-keyboard-settings
+Icon=input-keyboard
+Categories=Settings;
+NoDisplay=false
+Terminal=false
+StartupNotify=true
