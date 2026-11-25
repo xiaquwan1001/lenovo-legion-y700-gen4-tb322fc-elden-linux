@@ -7,8 +7,8 @@ configured, but the Battery Management (battmgr) firmware does not classify
 such a port: it reports usb_type "Unknown" and keeps the USB input current
 limit at 100 mA, the value that applies before configuration.  On the
 Lenovo Legion Y700 Gen4 (SM8750, TB322FC) the USB link is high speed and
-configured, yet with a data cable to a PC the device runs a net discharge of
-about 0.8 A while the battery status still reads "Charging"; that status
+configured, yet with a data cable to a PC the device runs a net discharge
+of about 0.8 A while the battery status still reads "Charging"; that status
 field mirrors the firmware's charge-enable state, not the direction of the
 current.
 
@@ -20,7 +20,7 @@ protocol the driver already reads does exist in the driver, though:
 BATTMGR_USB_PROPERTY_SET (0x33) and USB_INPUT_CURR_LIMIT (5) are defined in
 qcom_battmgr.c and were never referenced, the property request helper and
 the request/response payloads are in place, and the battery power supply
-has had set_property since the driver was merged.
+already has a writable property through its own set_property callback.
 
 Patch 1/1 wires that up for the sm8350 variant.  set_property for
 POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT sends opcode 0x33 with property 5;

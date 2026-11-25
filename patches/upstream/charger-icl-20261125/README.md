@@ -1,4 +1,24 @@
-# charger-icl-20261125 —— `qcom_battmgr` USB 输入限流可写（**备料完成，未投递，等放行**）
+# charger-icl-20261125 —— `qcom_battmgr` USB 输入限流可写（⛔ **2026-11-25 判：已被上游覆盖，不投**）
+
+> ## ⛔ 2026-11-25 裁决：**本系列作废（重复上游已合入的实现）**
+>
+> **Joonhoe Kim `[PATCH] power: supply: qcom_battmgr: Allow setting the USB input current limit`
+> （2026-10-07 投）已被 Sebastian Reichel 于 2026-11-08 收录为 `be5e7367bceb`
+> （`sre/linux-power-supply.git`，30 行，set_property + is_writeable + `case BATTMGR_USB_PROPERTY_SET`，
+> 与本目录 `0001` 的 diff 语义**逐条相同**；`Assisted-by: LLM`）。**
+> ⇒ 我方 `0001` 若投出必然是 NAK/重复。**本目录只保留作「本地 backport 参考」**：
+> 现役日常核（7.3.1 血统）里没有该 30 行，要在设备上写字，就把 `be5e7367bceb` backport 进日常线。
+>
+> 证据（2026-11-25 现查）：`https://git.kernel.org/pub/scm/linux/kernel/git/sre/linux-power-supply.git/commit/?id=be5e7367bcebc6f51c5ab809e1898eb716ff4409`
+> （committer 2026-11-08，`Link: https://patch.msgid.link/20261007123939.1679-1-26rote@gmail.com`）；
+> 同族后续 = Venkat Yadlapati `[PATCH v2 0/2] … Apply the USB host current limit early`（2026-11-23，
+> `phone-devel`/`linux-pm`，builder 在其上补「早下发 + 只对 SDP/CDP/PD 生效」）。
+> 我方独有增量（`[500 mA, max(current_max, 900 mA)]` clamp）**不足以单独成系列**，若要提，只作
+> 对 `be5e7367bceb` 的 `[PATCH] …: clamp the requested limit` 小补丁，且要先看 Venkat v2 的结果。
+>
+> 教训进 `PITFALLS #724`：立项「上游缺口」前必须查**维护者树的最新提交**，只查 lore/patchwork 会漏
+> （本例 10-07 已投、11-08 已收录，而 patchwork 上 arm-msm 侧一直显示 `new`）。
+
 
 > 状态：**v1 系列已成型，只等放行**。投递冻结期 = `../README.md` §3；真发要用户按
 > `TASKS/README.md` §7「按系列逐次批准」放行。投递动作 = `bash SEND.sh`（默认 dry-run）→

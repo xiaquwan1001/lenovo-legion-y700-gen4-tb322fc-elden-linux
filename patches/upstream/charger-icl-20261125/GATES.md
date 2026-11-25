@@ -15,7 +15,8 @@
 | G3 编译 | `/tmp/m12-gates` + `O=/tmp/kb-m12`：`make -j8 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig` 然后 `… O=/tmp/kb-m12 W=1 drivers/power/supply/qcom_battmgr.o` | **rc=0，0 warning / 0 error**；产物 `ELF 64-bit LSB relocatable, ARM aarch64`；`.config` 里 `CONFIG_BATTERY_QCOM_BATTMGR=m`（来自 `arch/arm64/configs/defconfig`，未手改） |
 | G4 变体边界 | `git diff` 复核 `sc8280xp/x1e80100` 相关 desc 与 `:1730/:1710` 注册点 | 未动；新回调对两变体显式 `-EINVAL`（补丁内 `battmgr->variant ==` 判定） |
 | G5 收件人 | 在**树根**跑 `<tree>/scripts/get_maintainer.pl --no-git-fallback --no-rolestats 0001-*.patch` | `sre@kernel.org` / `linux-arm-msm@vger.kernel.org` / `linux-pm@vger.kernel.org` / `linux-kernel@vger.kernel.org`（**无** Bjorn/Konrad ⇒ 列 `README.md` §3 待裁决） |
-| G6 cover 自查 | cover 是否含 what/why + A/B 表 + 三条边界 + AI 披露在 `---` 之下 | 逐条对照 = **4/4 在**（披露段起于第 121 行 `---` 之后） |
+| G6 cover 自查 | ① cover 是否含 what/why + A/B 表 + 三条边界 + AI 披露在 `---` 之下；② 空目录 patch 模式跑 `checkpatch --strict --no-tree 0000-*.patch` | ① 逐条对照 = **4/4 在**（披露段在 tearline 之下，位置用 `grep -n '^---$' 0000-*.patch` 现查）；② cover = **0 errors, 0 warnings**（"no obvious style problems and is ready for submission"） |
+| G6′ 投递 dry-run | `bash SEND.sh`（默认 dry-run） | **rc=0**：2/2 封邮件解析 OK、smtp 配置齐（`smtp.ustc.edu.cn:465`）、4 个 RCPT 全 `Result: OK`；件内 `[PATCH v2]` 触发**非致命告警**（首投前必须做 §4 第 4 步） |
 | G7 上机 A/B | 今日未重跑（需设备；按纪律不碰） | 昨日结果 = `TASKS` §7 M12 行 + `README.md` §2：clamp 两端对、`unknown message` = 0、A/B 两轮可重复；**边界见 cover 第三条** |
 
 ## 2. 复跑命令（逐条可复制）
@@ -44,6 +45,12 @@ file /tmp/kb-m12/drivers/power/supply/qcom_battmgr.o
 
 # G5：收件人（必须在树根，否则 get_maintainer 直接报 "not a kernel tree"）
 cd "$TREE" && ./scripts/get_maintainer.pl --no-git-fallback --no-rolestats "$SER"/0001-*.patch
+
+# G6′：投递 dry-run（默认 dry-run，不发信）
+bash "$SER"/SEND.sh
+
+# 收尾：清临时件（否则 worktree 残留）
+git -C "$TREE" worktree remove --force /tmp/m12-gates; rm -rf /tmp/kb-m12
 ```
 
 ## 3. G2 为什么是红的，以及「0E/0W」是怎么来的
