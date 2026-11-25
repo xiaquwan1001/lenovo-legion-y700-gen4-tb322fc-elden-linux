@@ -1,0 +1,32 @@
+> 0002-osk-stub-keypress-sound-hook.patch — phosh-osk-stub 0.46 每键按键音钩子（env 开关）
+> 基线：phosh-osk-stub 0.46.0 src/pos-input-surface.c，pos_input_surface_notify_key_press()（:236）
+> 选点说明：notify_key_press() 是所有按键路径（click hook / keypad / emoji / OSK symbol）的
+> 公共汇聚点，一次按键恰好触发一次 ⇒ 一次 spawn；且与 haptic 补丁（on_osk_key_symbol :387）
+> 不在同一 hunk，两个补丁叠加共存，互不 return 掉。
+> 语义：ELDEN_OSK_SOUND 未设或 ≠1 ⇒ 与上游逐字节一致；=1 ⇒ 每键 spawn 一次
+> ELDEN_OSK_SOUND_CMD（默认 /usr/local/bin/osk-keysound，薄包装调 pw-play/paplay），
+> 音量 ELDEN_OSK_SOUND_VOL（0-100，透传给包装脚本）。fire-and-forget，失败静默。
+--- a/src/pos-input-surface.c
++++ b/src/pos-input-surface.c
+@@ -236,6 +236,21 @@ static void
+ pos_input_surface_notify_key_press (PosInputSurface *self)
+ {
+   g_autoptr (LfbEvent) event = NULL;
++
++  /* elden: per-keypress key sound (env-gated; no env = upstream behavior) */
++  {
++    const char *snd = g_getenv ("ELDEN_OSK_SOUND");
++
++    if (snd && strcmp (snd, "1") == 0) {
++      const char *vol = g_getenv ("ELDEN_OSK_SOUND_VOL");
++
++      if (vol && *vol)
++        g_setenv ("ELDEN_OSK_KEYSOUND_VOL", vol, TRUE);
++      g_spawn_command_line_async (
++        g_getenv ("ELDEN_OSK_SOUND_CMD") ?: "/usr/local/bin/osk-keysound",
++        NULL); /* fire-and-forget, silent on failure */
++    }
++  }
+ 
+   g_assert (POS_IS_INPUT_SURFACE (self));
+ 
