@@ -1,0 +1,42 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: droidloom
+Source: https://github.com/denialwm/droidloom
+
+Files: *
+Copyright: Droidloom contributors
+License: GPL-3.0-or-later
+ This program is free software: you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free Software
+ Foundation, either version 3 of the License, or (at your option) any later
+ version.
+ .
+ This program is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ details.
+ .
+ On Debian systems the complete text of the GNU General Public License version
+ 3 is in /usr/share/common-licenses/GPL-3.
+ .
+ The full text is also shipped in every binary package under
+ /usr/share/licenses/<package>/LICENSES/.
+
+Files: usr/lib/droidloom/runtime/* usr/lib/droidloom/images/*
+Copyright: The Android Open Source Project
+License: Apache-2.0 and LicenseRef-Android
+ Android components are distributed under the Android and Apache-2.0
+ licenses.  The generated notice collection is shipped as
+ /usr/share/licenses/droidloom-image/Android-NOTICE.xml.gz and
+ /usr/share/licenses/droidloom-base/Android-NOTICE.xml.gz.
+
+Files: usr/lib/droidloom/runtime/egl/* usr/lib/droidloom/runtime/*/libEGL*
+Copyright: Mesa contributors
+License: MIT
+ Mesa is distributed under the MIT license; its license text and the notice
+ collection are shipped in /usr/share/licenses/droidloom-image/.
+
+Files: usr/share/licenses/droidloom-runtime/rust/*
+Copyright: the individual Cargo crate authors
+License: permissive
+ Each dependency's own notice files are shipped verbatim; the inventory is
+ /usr/share/licenses/droidloom-runtime/rust/index.json.

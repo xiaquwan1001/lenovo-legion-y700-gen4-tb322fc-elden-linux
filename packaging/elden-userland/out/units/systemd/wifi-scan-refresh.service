@@ -9,7 +9,7 @@ After=NetworkManager.service
 Type=simple
 ExecStartPre=/usr/local/libexec/elden/wifi-scan-refresh.pre
 ExecStart=/usr/local/sbin/wifi-scan-refresh.sh --loop
-Environment="WIFI_SCAN_INTERVAL=150"
+Environment="WIFI_SCAN_INTERVAL=170"
 EnvironmentFile=-/etc/conf.d/wifi-scan-refresh
 Restart=always
 RestartSec=5

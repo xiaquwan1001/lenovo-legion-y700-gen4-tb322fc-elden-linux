@@ -1,0 +1,16 @@
+#!/bin/sh
+# Stop the cell lockstep with the runtime: a half-replaced image set must never
+# be started. Mirrors packaging/arch/60-droidloom-upgrade.hook.
+set -e
+
+helper=/usr/lib/droidloom/droidloom-package-helper
+
+case "$1" in
+upgrade)
+	if [ -x "$helper" ]; then
+		"$helper" before-upgrade
+	fi
+	;;
+esac
+
+exit 0

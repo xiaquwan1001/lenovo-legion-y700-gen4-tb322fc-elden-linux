@@ -1,0 +1,19 @@
+#!/bin/sh
+# The Android images are replaced as one unit with droidloom-runtime; this is
+# the Debian counterpart of packaging/arch/90-droidloom-installed.hook.
+set -e
+
+helper=/usr/lib/droidloom/droidloom-package-helper
+
+case "$1" in
+configure)
+	if [ -x "$helper" ]; then
+		if ! "$helper" after-install; then
+			echo "droidloom-image: package setup did not finish;" \
+				"run 'droidloomctl start' as your desktop user to retry" >&2
+		fi
+	fi
+	;;
+esac
+
+exit 0

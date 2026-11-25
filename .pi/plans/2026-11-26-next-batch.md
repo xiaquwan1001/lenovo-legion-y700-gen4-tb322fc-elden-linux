@@ -1,5 +1,10 @@
 # 下一批任务书（2026-11-26 整理）
 
+> ★执行状态 checkpoint（2026-11-26 23:1x，主会话落盘）：
+> - 已完成：20+3 提交双远端推送清零；dwc3 v16 已投（4×250，lore 命中，`patches/upstream/dwc3-v16-20261125/SENT.md`）；投递全面放行+提交推送绑定已入册（`TASKS §7` / `.pi/AGENT-OPS.md §3`）；droidloom-base 903 MB 验证入账（sha `reports/artifacts/droidloom-base-0.1.0-49.sha256`）；rayburst hang 取证报告入库（TASKS 新 D20 行）；D6③ 文档下沉完成（−16 KB，7 个 session 文件，check-doctor FAIL=0）。
+> - 在跑 lane（workflow a1c02737-9bc9-44ff-954d-ceec7c1a9555）：① comm-triage（mail-io/ustc-dsf，run ed015237）② droidloom-deb（impl-worker/ustc-dsf2，run cf033857）③ device-s2idle（physical-exec/ustc-dsf，run 9dc7c4d6，设备独占）——各自产出见 lane 内 task；完成由主会话复核（规则 7）后统一 commit+push。
+> - 未派：B5 APSS watchdog 静态复核（下一 cohort）、C3 键盘 GUI 遗留 UI（设备空闲窗）、C1 上机（等 B5）。
+> - git：检查点同轮提交推送，领先=0。
 > 来源：TASKS §4.0 维度表（2026-11-25 深夜口径）+ 最近 3 轮会话结论 + `reports/upstream-status-20261125.md` / `reports/dwc3-v16-20261125.md`。
 > 本文件只做整理与派发计划，不执行。设备锁串行、主机侧并行；投递类一律逐次等用户放行。
 

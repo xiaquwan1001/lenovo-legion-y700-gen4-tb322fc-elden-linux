@@ -1,0 +1,8 @@
+droidloom (0.1.0-49) unstable; urgency=medium
+
+  * Package release 49 of Droidloom for Debian based hosts.
+  * Split the host runtime, the Android runtime images and the rarely changing
+    Android partitions into droidloom-runtime, droidloom-image and
+    droidloom-base, mirroring the Arch Linux package names.
+
+ -- Droidloom packaging <packaging@droidloom.invalid>  Wed, 25 Nov 2026 23:10:45 +0800

@@ -1,0 +1,56 @@
+#!/usr/bin/make -f
+# Debian build entry point.
+#
+# The Android images Droidloom ships cannot be compiled from this checkout: the
+# AOSP build that tools/droidloom-package drives produces them (see
+# docs/BUILDING.md). Debian packaging therefore packs a staged payload, exactly
+# like packaging/arch/PKGBUILD.in:
+#
+#   dpkg-buildpackage -b -uc -us -d DROIDLOOM_PAYLOAD=/path/to/payload
+#
+# Without a payload the runtime package alone is built from this checkout, for
+# the host architecture. The supported route for both is debian/build.sh, which
+# needs neither debhelper nor root:
+#
+#   packaging/debian/build.sh [--payload DIR] [--arch amd64|arm64] [--verify]
+#
+# This file exists so a conventional tooling run (dpkg-buildpackage) stages the
+# same trees; debian/build.sh --stage fills debian/tmp/{runtime,image,base} and
+# the *.install files map them into the binary packages.
+
+export DH_VERBOSE = 1
+
+DROIDLOOM_JOBS ?= $(shell nproc)
+DROIDLOOM_PAYLOAD ?=
+DROIDLOOM_ARCH ?=
+DROIDLOOM_REUSE ?=
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	rm -rf debian/tmp debian/droidloom-runtime debian/droidloom-image \
+		debian/droidloom-base debian/.debhelper debian/files
+
+override_dh_auto_configure:
+	# Nothing to configure: the packaging stages an already resolved tree.
+
+override_dh_auto_build:
+	debian/build.sh --stage debian/tmp --jobs $(DROIDLOOM_JOBS) \
+		$(if $(DROIDLOOM_PAYLOAD),--payload $(DROIDLOOM_PAYLOAD)) \
+		$(if $(DROIDLOOM_ARCH),--arch $(DROIDLOOM_ARCH)) \
+		$(if $(DROIDLOOM_REUSE),--no-build)
+
+override_dh_auto_test:
+	# The upstream test suite needs an Android build. Packaging lifecycle tests
+	# live in packaging/tests and in `droidloom-package check`.
+
+override_dh_auto_install:
+	# debian/build.sh already filled debian/tmp.
+
+override_dh_builddeb:
+	dh_builddeb -- -Zzstd
+
+.PHONY: override_dh_auto_clean override_dh_auto_configure \
+	override_dh_auto_build override_dh_auto_test override_dh_auto_install \
+	override_dh_builddeb

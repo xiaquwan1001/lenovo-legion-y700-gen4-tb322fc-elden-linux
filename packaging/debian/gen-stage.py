@@ -16,6 +16,7 @@ Usage: gen-stage.py <subcommand> ... ; run with no arguments for help.
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -181,24 +182,30 @@ def paragraphs(path):
 def control(template, package, version, architecture, mode, base_version, output):
     """Emit one binary package's control paragraph.
 
-    ``mode`` is ``payload`` when the matching image/base packages are built
+    ``mode`` is ``payload`` when the matching image and base packages are built
     beside this one, and ``source`` when only the runtime tree exists: the
-    Android image dependency is then a recommendation, because the images come
-    from a separate payload build rather than from this checkout.
+    Android image dependency then becomes a recommendation, because the images
+    come from a separate payload build rather than from this checkout.
     """
-    source = None
     stanza = None
+    source = None
     for block in paragraphs(template):
-        if block.startswith("Source:"):
+        first = block.splitlines()[0].strip()
+        if first.startswith("Source:"):
             source = block
-        elif block.splitlines()[0].strip() == f"Package: {package}":
+        elif first == f"Package: {package}":
             stanza = block
-    if source is None or stanza is None:
+    if stanza is None or source is None:
         die(f"{template} has no Source or Package: {package} paragraph")
+    maintainer = next(
+        (line for line in source.splitlines() if line.startswith("Maintainer:")),
+        "Maintainer: Droidloom packaging <packaging@droidloom.invalid>",
+    )
     lines = []
     for line in stanza.splitlines():
         if line.startswith("Depends:"):
             if mode == "source":
+                line = line.replace("droidloom-image (= @VERSION@), ", "")
                 line = line.replace(", droidloom-image (= @VERSION@)", "")
                 if line.strip() == "Depends:":
                     continue
@@ -208,17 +215,76 @@ def control(template, package, version, architecture, mode, base_version, output
             line = f"Recommends: droidloom-image (= {version})"
         lines.append(
             line.replace("@ARCH@", architecture)
-            .replace("@VERSION@", version)
             .replace("@BASE_VERSION@", base_version)
+            .replace("@VERSION@", version)
         )
-    body = "\n".join(lines).rstrip("\n")
+    if not any(line.startswith("Maintainer:") for line in lines):
+        lines.append(maintainer)
     with open(output, "w", encoding="utf-8") as target:
-        target.write(
-            source.replace("@VERSION@", version).replace("@BASE_VERSION@", base_version)
-            + "\n\n"
-            + body
-            + "\n"
-        )
+        target.write("\n".join(lines).rstrip("\n") + "\n")
+
+
+DEPENDENCY = re.compile(
+    r"^(?P<name>[^\s:()]+)(?::[a-z0-9]+)?"
+    r"(?:\s*\(\s*(?P<operator>[<>=]+)\s*(?P<version>[^)\s]+)\s*\))?$"
+)
+
+
+def installed_version(package):
+    """The installed version of a package, or None when it is not installed."""
+    query = subprocess.run(
+        ["dpkg-query", "-W", "-f", "${Status}|${Version}", package],
+        capture_output=True,
+        text=True,
+    )
+    if query.returncode != 0:
+        return None
+    status, _, version = query.stdout.partition("|")
+    return version if "installed" in status.split() else None
+
+
+def version_satisfies(have, operator, want):
+    if not operator:
+        return True
+    return (
+        subprocess.run(
+            ["dpkg", "--compare-versions", have, operator, want],
+            capture_output=True,
+        ).returncode
+        == 0
+    )
+
+
+def depends(control):
+    """Report the Depends groups no installed package satisfies.
+
+    ``dpkg -i --dry-run`` stops at "unpack": it never evaluates dependencies,
+    so the acceptance check needs this instead of trusting its exit status.
+    """
+    unmet = []
+    with open(control, encoding="utf-8") as source:
+        for line in source:
+            if not line.lower().startswith("depends:"):
+                continue
+            for group in line.split(":", 1)[1].split(","):
+                satisfied = False
+                for alternative in (part.strip() for part in group.split("|")):
+                    match = DEPENDENCY.match(alternative)
+                    if match is None:
+                        die(f"cannot read dependency: {alternative!r}")
+                    have = installed_version(match["name"])
+                    if have and version_satisfies(
+                        have, match["operator"], match["version"]
+                    ):
+                        satisfied = True
+                        break
+                if not satisfied:
+                    unmet.append(group.strip())
+    if unmet:
+        for group in unmet:
+            print(f"unmet dependency: {group}", file=sys.stderr)
+        raise SystemExit(1)
+    print("dependencies satisfied")
 
 
 def main(argv):
@@ -234,6 +300,8 @@ def main(argv):
         licenses(*arguments)
     elif command == "control" and len(arguments) == 7:
         control(*arguments)
+    elif command == "depends" and len(arguments) == 1:
+        depends(*arguments)
     else:
         print(__doc__, file=sys.stderr)
         raise SystemExit(2)

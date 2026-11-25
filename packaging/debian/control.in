@@ -1,0 +1,51 @@
+Source: droidloom
+Section: misc
+Priority: optional
+Maintainer: Droidloom packaging <packaging@droidloom.invalid>
+Build-Depends: cargo (>= 1.85), rustc, pkg-config, debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/denialwm/droidloom
+Vcs-Git: https://github.com/denialwm/droidloom
+Vcs-Browser: https://github.com/denialwm/droidloom
+
+Package: droidloom-runtime
+Architecture: @ARCH@
+Depends: droidloom-image (= @VERSION@), libc6, libgcc-s1, libgbm1, libxkbcommon0, libwayland-client0, libdrm2, libegl1, libpipewire-0.3-0t64 | libpipewire-0.3-0, pipewire, libvulkan1, libgl1-mesa-dri, systemd, polkitd | policykit-1, util-linux, e2fsprogs, iproute2, nftables, iptables, adb, tar, zstd
+Recommends: @IMAGE_RECOMMENDS@
+Suggests: wireplumber
+Description: Android applications in native Wayland windows (host runtime)
+ Droidloom runs Android on the host as a private cell and presents each
+ Android window as an ordinary Wayland surface, handled by the desktop's own
+ compositor.
+ .
+ This package carries the privileged cell daemon (droidloomd), the
+ droidloomctl lifecycle command, the presenter (droidloom-wayland), the audio,
+ GPU, device and application services, the systemd units, the polkit action
+ and the portable cell recipe. Android itself comes from droidloom-image and
+ droidloom-base.
+
+Package: droidloom-image
+Architecture: @ARCH@
+Depends: droidloom-base (= @BASE_VERSION@), libc6, libgcc-s1
+Description: Android applications in native Wayland windows (Android runtime)
+ Droidloom runs Android on the host as a private cell and presents each
+ Android window as an ordinary Wayland surface, handled by the desktop's own
+ compositor.
+ .
+ This package carries the Android system services Droidloom builds from
+ source, the Mesa and ANGLE libraries the cell loads, the framework images and
+ the vendor partition. It is installed and replaced as one unit together with
+ droidloom-runtime.
+
+Package: droidloom-base
+Architecture: @ARCH@
+Description: Android applications in native Wayland windows (Android partitions)
+ Droidloom runs Android on the host as a private cell and presents each
+ Android window as an ordinary Wayland surface, handled by the desktop's own
+ compositor.
+ .
+ This package carries the Android partitions that change only with the pinned
+ Android base (system, system_ext and product), so a runtime or vendor update
+ need not republish them. It is published only when those partitions change
+ and never carries user data.

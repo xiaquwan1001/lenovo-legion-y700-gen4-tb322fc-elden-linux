@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+remove|purge)
+	# The units are gone; keep systemd's view of them consistent. Android
+	# application data and personal configuration are retained by design.
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload || true
+	fi
+	;;
+esac
+
+exit 0

@@ -20,17 +20,19 @@
 # 未连接/连接中 NM 自己每 ≤120 s 扫一次（SCAN_INTERVAL_SEC_MAX），不叠加。
 #
 # 间隔必须 < 180 s（supplicant 的 bss_expiration_age），否则过期清缓存仍会发生；
-# 默认 150 s。全信道扫描本机约 5.6–8.4 s（110 信道），≈4–6% 占空比。
+# 默认 **170 s**（2026-11-26 C2：150→170，贴 180 上限省电；全信道扫描本机约 5.6–8.4 s
+#   / 110 信道 ⇒ 170 s 档 ≈3.3–4.9% 占空比，150 s 档 ≈3.7–5.6%）。
+#   判据/记录：reports/d11-suspend-daily-20261126.md §③
 #
 # usage:
 #   wifi-scan-refresh.sh            # 常驻循环（OpenRC 服务用法）
 #   wifi-scan-refresh.sh --once     # 只做一轮（装完/调试用）
 #   wifi-scan-refresh.sh --check    # 只报状态，不扫描；退出码 = 0
 #   wifi-scan-refresh.sh --quiet    # 循环时不打日志
-# 环境变量：WIFI_SCAN_INTERVAL（秒，默认 150），通常来自 /etc/conf.d/wifi-scan-refresh
+# 环境变量：WIFI_SCAN_INTERVAL（秒，默认 170），通常来自 /etc/conf.d/wifi-scan-refresh
 set -u
 
-INTERVAL="${WIFI_SCAN_INTERVAL:-150}"
+INTERVAL="${WIFI_SCAN_INTERVAL:-170}"
 MODE=loop
 QUIET=0
 

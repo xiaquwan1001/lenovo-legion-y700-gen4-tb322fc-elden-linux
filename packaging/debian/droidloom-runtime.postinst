@@ -1,0 +1,20 @@
+#!/bin/sh
+# Debian counterpart of packaging/arch/90-droidloom-installed.hook.
+set -e
+
+helper=/usr/lib/droidloom/droidloom-package-helper
+
+case "$1" in
+configure)
+	if [ -x "$helper" ]; then
+		# Arch runs this after the transaction, where a failure does not fail
+		# the transaction: warn instead of leaving the package unconfigured.
+		if ! "$helper" after-install; then
+			echo "droidloom-runtime: package setup did not finish;" \
+				"run 'droidloomctl start' as your desktop user to retry" >&2
+		fi
+	fi
+	;;
+esac
+
+exit 0

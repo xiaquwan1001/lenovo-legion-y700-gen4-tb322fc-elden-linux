@@ -1,0 +1,22 @@
+#!/bin/sh
+# Debian counterpart of packaging/arch/60-droidloom-upgrade.hook and
+# 60-droidloom-remove.hook: those hooks abort the transaction on failure, so a
+# failure here stops the replacement or removal too.
+set -e
+
+helper=/usr/lib/droidloom/droidloom-package-helper
+
+case "$1" in
+upgrade)
+	if [ -x "$helper" ]; then
+		"$helper" before-upgrade
+	fi
+	;;
+remove|deconfigure)
+	if [ -x "$helper" ]; then
+		"$helper" before-remove
+	fi
+	;;
+esac
+
+exit 0

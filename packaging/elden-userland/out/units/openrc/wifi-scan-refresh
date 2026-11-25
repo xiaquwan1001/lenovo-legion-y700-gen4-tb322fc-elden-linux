@@ -6,7 +6,7 @@ description="Periodic NetworkManager scan while connected, keeps the AP candidat
 
 # 参数：conf.d 覆盖 services.tsv 里的默认值（同一份 conf.d 两种 init 都读）
 [ -f "/etc/conf.d/wifi-scan-refresh" ] && . "/etc/conf.d/wifi-scan-refresh"
-: "${WIFI_SCAN_INTERVAL:=150}"
+: "${WIFI_SCAN_INTERVAL:=170}"
 export WIFI_SCAN_INTERVAL
 
 command="/usr/local/sbin/wifi-scan-refresh.sh"
