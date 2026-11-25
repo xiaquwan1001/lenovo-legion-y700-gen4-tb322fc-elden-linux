@@ -106,4 +106,5 @@ dst	kind	sha256	size	mode	repo_src
 /usr/share/elden-pinyin/META.json	data	0a335765af01671246672ff1809de19f7ea4d4aee42fd5e7d7a3f1b4895569c7	139	644	files/usr/share/elden-pinyin/META.json
 /etc/udev/rules.d/70-elden-dma-heap.rules	udev-rule	4fa512367f7602581703e977f4ca1eaed42199faf8ae15f1a7f47986daced955	50	644	files/etc/udev/rules.d/70-elden-dma-heap.rules
 /etc/modules-load.d/elden-dma-heap.conf	config	0e69d4a8b6bd43aeb3a076ce2b1fe828675e108b3a77ed6f26d4ee5c9dd81554	217	644	files/etc/modules-load.d/elden-dma-heap.conf
-/usr/local/bin/lisgd-edge-swipe	script	388cc37c442f424e1c1afebd8932482d3e50529d9d4fa9742b50798badfbe882	3307	755	files/usr/local/bin/lisgd-edge-swipe
+/usr/local/bin/lisgd-edge-swipe	script	392827702c9d51d83744979e4b5a10a0de9406a4c209388646fcdf7eab381388	3312	755	files/usr/local/bin/lisgd-edge-swipe
+/usr/local/bin/elden-swipe-back	script	d94e5a3e3539409a066f70471ca80e612e8d4dc9ff42d367b90d9bdb81414f4b	1366	755	files/usr/local/bin/elden-swipe-back

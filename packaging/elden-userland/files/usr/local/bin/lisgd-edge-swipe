@@ -45,7 +45,7 @@ esac
 W=${GEOM%%x*}
 H=${GEOM##*x}
 
-BACK_CMD=${ELDEN_BACK_CMD:-/usr/local/bin/uinput-back}
+BACK_CMD=${ELDEN_BACK_CMD:-/usr/local/bin/elden-swipe-back}
 if [ ! -x "$BACK_CMD" ]; then
 	echo "lisgd-edge-swipe: $BACK_CMD 不存在/不可执行；先跑 tools/uinput-back-build.sh 并部署" >&2
 	exit 1

@@ -1,0 +1,21 @@
+#!/bin/sh
+# elden-swipe-back — 手势「返回」的组合动作：先给触觉反馈，再发 KEY_BACK。
+#
+# 为什么要这一层：lisgd 的手势回调只能是一条命令。视觉反馈（layer-shell 位移条）需要
+# 自写客户端（见 .pi/plans/2026-11-25-gesture-visual-feedback.md），而**触觉反馈现在就能给**：
+# 手机侧滑返回最直接的「手感」就是到边缘时的一次短振。这一层把「振一下 + 返回」绑成一条命令，
+# 关窗时序不受影响（ffrumble 是 fire-and-forget，不阻塞、不等待内核回调）。
+#
+# 旋钮（都可 env 覆盖，便于日后接进键盘/手势设置 GUI）：
+#   ELDEN_SWIPE_HAPTIC=0    关掉触觉（只返回）
+#   ELDEN_HAPTIC_DEV        默认 /dev/input/event2（aw86927 主马达；设备上有两个 FF 节点）
+#   ELDEN_HAPTIC_MS         默认 25 ms（越短越「咔」，越长越「嗡」）
+#   ELDEN_HAPTIC_MAG        默认 0x8000（约一半力度；0xffff 最强）
+set -u
+BACK=${ELDEN_BACK_CMD:-/usr/local/bin/uinput-back}
+if [ "${ELDEN_SWIPE_HAPTIC:-1}" = 1 ] && command -v ffrumble >/dev/null 2>&1; then
+	# 失败不影响返回：马达不在/节点变了都不该让手势失效
+	ffrumble "${ELDEN_HAPTIC_DEV:-/dev/input/event2}" \
+	         "${ELDEN_HAPTIC_MS:-25}" "${ELDEN_HAPTIC_MAG:-0x8000}" >/dev/null 2>&1 || true
+fi
+exec "$BACK"

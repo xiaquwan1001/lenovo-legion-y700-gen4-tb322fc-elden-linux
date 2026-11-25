@@ -62,3 +62,43 @@
 3. **变体与回归**：`sc8280xp/x1e80100` 变体（`:1710` 注册点）不受影响；PD 充电器下
    `usb_type=PD` + ADSP 自管限流行为不变；`checkpatch --strict` 0E/0W（按
    `patches/upstream/README.md` §1 的**临时空目录**写法复跑，勿在仓库根跑）。
+
+## 6. 补丁产物与编译/上机验证计划（补充段，20261125 lane 起草）
+
+补丁：`0001-power-supply-qcom_battmgr-allow-writing-input-current-limit.patch`
+（sm8350 USB psy 加 `.set_property`/`.property_is_writeable`，仅支持
+`POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT`，借 `BATTMGR_USB_PROPERTY_SET (0x33)`
++ `USB_INPUT_CURR_LIMIT (5)` 走既有 `qcom_battmgr_request_property()`；
+值 clamp 到 `[500 mA, max(current_max, 900 mA)]`（µA），ADSP 错误码透传 errno，
+成功后刷新缓存 `usb.current_limit`。sc8280xp/x1e80100 变体不动。）
+
+编译（本 lane 不执行）：
+
+```sh
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- drivers/power/supply/qcom_battmgr.o
+```
+
+上机验证（由有刷机权限的环节执行；§5 三条证据即验收标准）：
+
+```sh
+adb shell cat /sys/class/power_supply/qcom-battmgr-usb/input_current_limit  # 默认 ~100 mA
+adb shell sh -c 'echo 500000 > /sys/class/power_supply/qcom-battmgr-usb/input_current_limit'
+adb shell cat /sys/class/power_supply/qcom-battmgr-usb/input_current_limit  # 应回读 500000
+adb shell sh -c 'echo 10000 > /sys/class/power_supply/qcom-battmgr-usb/input_current_limit'  # clamp 到 500000
+adb shell dmesg | grep -iE 'battmgr|pmic_glink'   # ADSP 拒绝应见 errno 传播，无静默
+# 之后按 §5.2 触发插拔，确认不被 ADSP 覆盖
+```
+
+checkpatch 注意点：
+
+- 本补丁为手写（fake index/base-100），`checkpatch --strict` 可能报
+  "does not apply/version" 类噪音；投递前用 `git format-patch` 重生成消除。
+- 跑法：`scripts/checkpatch.pl --no-tree --strict <patch>`（在临时空目录按
+  `patches/upstream/README.md` §1 写法，勿在仓库根跑）。
+- `clamp()` 换行保 80 列；case 缩进用 tab，与树内现风格一致。
+- 投递时 commit message 需含 §4 提纲要点并 Cc §3 受众。
+
+最大不确定点：ADSP 是否真正接受 `BATTMGR_USB_PROPERTY_SET` + 属性 5 报文
+（帧格式/编号源自树内常量与逆向，未真机确认）。若被拒，write 应返回
+ADSP 错误码（常为 -EINVAL）且回读不变——补丁会原样透传，不静默。

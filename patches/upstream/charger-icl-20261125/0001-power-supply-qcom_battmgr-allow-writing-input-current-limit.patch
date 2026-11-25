@@ -1,6 +1,6 @@
-From e1d2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0 Mon Sep 17 00:00:00 2001
+From 8359c69d3262aeeb044f989808b740cd1aa148b4 Mon Sep 17 00:00:00 2001
 From: Y700 Elden Lane <kernel@local>
-Date: Wed, 25 Nov 2026 00:00:00 +0800
+Date: Wed, 25 Nov 2026 13:03:05 +0800
 Subject: [PATCH] power: supply: qcom_battmgr: allow writing
  INPUT_CURRENT_LIMIT on the USB supply
 
@@ -17,35 +17,34 @@ limit clamped to a very conservative default (reported as 100 mA on
 several devices).  Until the USB stack negotiates a higher budget the
 firmware throttles charging to that value, which means slow charging
 and, on battery-only operation, a device that discharges faster than it
-charges.  Userspace (e.g. upower, thermald-style daemons, or USB PD
-policy handling outside the kernel) needs a way to raise the limit to
-match what the attached adapter actually supplies.
+charges.  Userspace (e.g. upower or thermal/USB-PD policy daemons)
+needs a way to raise the limit to match what the attached adapter
+actually supplies.
 
 Add a set_property callback for the sm8350 USB power supply that sends
 BATTMGR_USB_PROPERTY_SET with property USB_INPUT_CURR_LIMIT, using the
 existing qcom_battmgr_request_property() helper and the property
-request message that is already used for other write paths (battery
-charge-control thresholds).  The requested value is clamped to the
-range [USB_INPUT_CURR_LIMIT_MIN, current_max] before it is sent, with a
-conservative 900 mA fallback when the firmware has not reported a
-CURRENT_MAX yet, because the ADSP rejects out-of-range requests and a
-large negative errno from the firmware is the only feedback.  Errors
-from the firmware are propagated to the caller instead of being
-silently dropped.
+request message that is already used for the battery charge-control
+thresholds.  The requested value is clamped to the range
+[USB_INPUT_CURR_LIMIT_MIN, current_max] before it is sent, with a
+conservative 900 mA fallback when the firmware has not reported
+CURRENT_MAX yet, because the ADSP rejects out-of-range requests and the
+firmware error code is the only feedback.  Errors from the firmware are
+propagated to the caller instead of being silently dropped.
 
 The sc8280xp variant of the USB supply does not expose
 INPUT_CURRENT_LIMIT at all, so it is left untouched.
 
 Signed-off-by: Y700 Elden Lane <kernel@local>
 ---
- drivers/power/supply/qcom_battmgr.c | 50 +++++++++++++++++++++++++++++
- 1 file changed, 50 insertions(+)
+ drivers/power/supply/qcom_battmgr.c | 51 +++++++++++++++++++++++++++++
+ 1 file changed, 51 insertions(+)
 
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 1111111..2222222 100644
+index 58e238e6fb..e183f725f0 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
-@@ -1067,6 +1067,54 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
+@@ -1044,6 +1044,55 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
  	return 0;
  }
  
@@ -101,16 +100,15 @@ index 1111111..2222222 100644
  static const enum power_supply_property sc8280xp_usb_props[] = {
  	POWER_SUPPLY_PROP_ONLINE,
  };
-@@ -1085,6 +1133,8 @@ static const struct power_supply_desc sm8350_usb_psy_desc = {
+@@ -1082,6 +1131,8 @@ static const struct power_supply_desc sm8350_usb_psy_desc = {
+ 	.properties = sm8350_usb_props,
  	.num_properties = ARRAY_SIZE(sm8350_usb_props),
  	.get_property = qcom_battmgr_usb_get_property,
- 	.usb_types = BIT(POWER_SUPPLY_USB_TYPE_UNKNOWN) |
 +	.set_property = qcom_battmgr_usb_set_property,
 +	.property_is_writeable = qcom_battmgr_usb_is_writeable,
-+	.usb_types = BIT(POWER_SUPPLY_USB_TYPE_UNKNOWN) |
+ 	.usb_types = BIT(POWER_SUPPLY_USB_TYPE_UNKNOWN) |
  		     BIT(POWER_SUPPLY_USB_TYPE_SDP)     |
- 		     BIT(POWER_SUPPLY_USB_TYPE_CDP)     |
- 		     BIT(POWER_SUPPLY_USB_TYPE_ACA)     |
+ 		     BIT(POWER_SUPPLY_USB_TYPE_DCP)     |
 -- 
-2.43.0
+2.53.0
 
