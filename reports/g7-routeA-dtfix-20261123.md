@@ -193,3 +193,29 @@ Workqueue: events_unbound deferred_probe_work_func   （t=0.32 s，随后 clk_co
      supplier 尚未注册时的时序问题，而不是 DT 环）。
 3. 判据 3（换口）要等 mux state 的观测面补上（class 无 `mux_state`，debugfs 也没输出）⇒ 先用
    `gpioget`/pinctrl 读 GPIO29 电平做代理判据。
+
+## §8 第三次采集（2026-11-25，**无人值守闭环**里跑的两发对照）
+
+> 通道：`scripts/autotest-cycle.sh`（`fastboot boot` 零写盘 → 等就绪 45 s → 设备侧探针 → 回 BL）。
+> 探针 = `probes/g7-dwc3.sh`（只读）；两发**同一脚本同一轮**，唯一变量 = 镜像。
+> 日志：`runs/autotest-20261125T073500Z-g7base/round1-test.txt`（日常核）、
+> `runs/autotest-20261125T073655Z-g7a2b/round1-test.txt`（g7a2）。
+> 起因：Greg KH 2026-11-24 对 dwc3 v14 的唯一硬要求 =「先在真机上测过再重投」。
+
+| 判据 | 日常核 vk192（基线） | g7a2（`boot-elden-g7a2.img`，sha `79164085…`） | 判读 |
+|---|---|---|---|
+| `Failed to create device link` | **8** | **7** | **≤ 基线**；g7a2 少的那条是 `msm_dsi ↔ panel@0`（该核显示栈没起来，见下 WARN）。⇒ **§3 判据 1 的「=0」定得比基线严，应改为「≤ 日常基线，且不新增 pmic_glink 族」** |
+| 同上：pmic_glink 族构成 | 7 条（`5-0042`/`5-0043`/`88e8000.phy`/`a600000.usb` ×2 connector，重复一轮） | 7 条（同族同形） | **既有状态，非本系列引入** |
+| `Fixed dependency cycle` | 141 | 137 | 允许项（`FWLINK_FLAG_CYCLE`，§2） |
+| usb_role 两个 switch | `a600000.usb-port0/port1-role-switch`，`waiting_for_supplier` 全 **0** | 同 | 通过（无区分力：基线本就 0） |
+| gadget/`/sys/class/udc` | `a600000.usb` | 同 | **HS 数据总线确实被选中**（有一台口在跑 gadget，就是挂着 ssh 的那条） |
+| typec port0/port1 | `port0` `data_role=host [device]` `orientation=reverse`；`port1` 同形、orientation 空；partner 1 个 | 同 | 通过 |
+| `/sys/class/mux` | **空** | **`muxchip0`** | g7a2 真把 mux 设备建出来了（mux 路径存在的直接证据） |
+| `mux_state` 可观测面 | 无 | 仍无（class 无属性、`/sys/kernel/debug/mux` 空） | 观测面缺口**未解决**；代理判据 = GPIO29 电平（§7 已给 `scripts/g7-mux-probe.sh`） |
+| 内核 `WARNING:` / `call trace` | 1 / 0 | **58 / 55** | **g7a2 显示栈回归**（drm vblank 等待族，§7 已记 34 条，本轮 58 条）⇒ 与本系列无关，但是该件「不能日常用」的原因 |
+| `systemctl --failed` | 0 | 0 | 通过 |
+
+**结论（可用于上游 cover 的「Testing」段）**：本机的**硬件上**跑过 —— 两个 role switch 都绑定（`waiting_for_supplier=0`）、
+`mux` 设备注册、HS gadget 在连接器 0 上正常枚举；`Failed to create device link` **不新增**（7 ≤ 基线 8）。
+**未覆盖**：两连接器之间的**物理换口**（需要人把线插到另一个口），因此「mux state 随插拔翻转」这条只剩 GPIO29 代理判据，
+未取得翻转样本。另有独立缺陷：g7a2 件本身显示栈 WARN 58 条（与本系列无关）。

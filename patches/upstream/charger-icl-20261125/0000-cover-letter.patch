@@ -1,0 +1,107 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH 0/1] power: supply: qcom_battmgr: allow writing the USB
+ input current limit
+
+A USB 2.0 host port (SDP) may supply 500 mA once the device behind it is
+configured, but the Battery Management (battmgr) firmware does not classify
+such a port: it reports usb_type "Unknown" and keeps the USB input current
+limit at 100 mA, the value that applies before configuration.  On the
+Lenovo Legion Y700 Gen4 (SM8750, TB322FC) the USB link is high speed and
+configured, yet with a data cable to a PC the device runs a net discharge of
+about 0.8 A while the battery status still reads "Charging"; that status
+field mirrors the firmware's charge-enable state, not the direction of the
+current.
+
+Nothing in mainline can change that limit.  qcom-battmgr-usb exports
+POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT read-only, and the vendor charger
+driver rides a PMIC glink owner that does not exist upstream, so the only
+way to raise the limit today is firmware policy.  The write half of the
+protocol the driver already reads does exist in the driver, though:
+BATTMGR_USB_PROPERTY_SET (0x33) and USB_INPUT_CURR_LIMIT (5) are defined in
+qcom_battmgr.c and were never referenced, the property request helper and
+the request/response payloads are in place, and the battery power supply
+has had set_property since the driver was merged.
+
+Patch 1/1 wires that up for the sm8350 variant.  set_property for
+POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT sends opcode 0x33 with property 5;
+the requested value is kept inside [500 mA, max(CURRENT_MAX, 900 mA)]
+because the firmware rejects values outside its range; firmware errors are
+returned to the caller instead of being dropped; and the ack for opcode
+0x33 is handled in both variant callbacks, so a successful write is no
+longer logged as "unknown message 0x33".  sc8280xp and x1e80100 are left
+untouched and return -EINVAL.
+
+Measured on the device with one kernel built from this series and booted
+with "fastboot boot" (nothing written to storage), data cable to a USB 2.0
+host port.  First column is the value written to input_current_limit and
+the readback; the third column is qcom-battmgr-bat's current_now, sampled
+five times per step, 4 s apart:
+
+  write     readback   current_now (mA)
+  500000    500000     -155,    0, -115, -166, -160
+  900000    900000     -161, -274, -482, -488, -495
+  500000    500000     -492, -204, -102, -139, -140
+  900000    900000     -152, -362, -505, -523, -527
+
+"unknown message" lines in dmesg over the whole run: 0.  Requests outside
+the range are clamped by the driver rather than rejected silently: writing
+1500000 reads back 900000, writing 250000 reads back 500000.  Each step
+carries the tail of the previous setting in its first samples, so the last
+samples of a step are the ones to compare.
+
+Three boundaries on what this proves:
+
+  1. BATTMGR_USB_PROPERTY_SET is not a documented interface.  We know the
+     firmware accepts opcode 0x33 with property 5 and acts on it because
+     the reply stops being reported as an unknown message and because the
+     reported battery current follows the requested limit repeatably across
+     two rounds.  There is no firmware documentation behind that opcode and
+     property number; if someone knows the real contract, this driver would
+     rather follow it.
+
+  2. The measurements come from a throwaway test kernel booted with
+     "fastboot boot", not from the kernel this device runs day to day.  The
+     patch is not part of any shipped payload yet.
+
+  3. The 900 mA steps cannot be shown to be honoured end to end: a USB 2.0
+     SDP port may supply at most 500 mA, so this host caps the current near
+     500 mA whichever value the firmware was asked for.  The series claims
+     that the limit is accepted and applied, not that the whole advertised
+     range is reachable on an SDP port.
+
+Not tested, and therefore not claimed:
+
+  - sc8280xp and x1e80100 variants: compile only.  The new callback returns
+    -EINVAL for them on purpose, so their behaviour cannot change.
+  - The limit was not re-read after an unplug/re-plug.  Nothing in the
+    driver re-applies it, so if the firmware resets the limit on a new
+    charger notification, userspace has to write it again; which of the two
+    happens was not measured.
+  - Charge time and port-side current were not measured; only the values
+    the battery power supply reports.
+
+Open questions:
+
+  - Is the 500 mA floor the right place for kernel policy, or should the
+    driver clamp only to the firmware's CURRENT_MAX and leave a lower limit
+    to userspace?
+  - If the limit is firmware state that a charger notification can reset,
+    should the driver re-apply the last written value on
+    NOTIF_USB_PROPERTY (0x32), or is that userspace's job?
+
+---
+*** AI-assistance disclosure ***
+This series was prepared with the help of an LLM coding assistant.  The
+author reviewed every line of the patch, built the kernel, ran it on the
+device and re-ran the gates quoted here; the design decisions, the
+measurements and any errors are the author's.
+
+Gates on the base tree (Linux 7.4-rc3, aebb727447):
+  - git apply --check and git am: clean, no offsets or fuzz.
+  - perl scripts/checkpatch.pl --strict --no-tree, run in an empty
+    directory so that the patch itself is checked: 0 errors, 1 warning (a
+    spelling suggestion inside the commit message).
+  - make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- W=1
+    drivers/power/supply/qcom_battmgr.o: rc=0, 0 warnings, aarch64
+    relocatable (CONFIG_BATTERY_QCOM_BATTMGR=m from
+    arch/arm64/configs/defconfig).
