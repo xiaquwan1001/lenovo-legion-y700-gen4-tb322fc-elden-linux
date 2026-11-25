@@ -28,6 +28,18 @@ parse() {
                 # conf 键 HAPTIC_* -> /etc/environment 键 ELDEN_OSK_HAPTIC_*
                 echo "ELDEN_OSK_$key=$val"
                 ;;
+            SOUND=*|SOUND_VOL=*)
+                key=${line%%=*}; val=${line#*=}
+                case "$val" in *[!A-Za-z0-9]*) fail "bad value for $key: $val" ;; esac
+                # 2026-11-25 加：按键声音（osk-stub sound/0002 钩子读 ELDEN_OSK_SOUND，
+                # 播放器 osk-keysound 读 ELDEN_OSK_SOUND_VOL）。SOUND=0/1，SOUND_VOL=0..100
+                case "$key" in
+                    SOUND)     [ "$val" = 0 ] || [ "$val" = 1 ] || fail "SOUND 只能是 0 或 1（给 $val）"
+                               echo "ELDEN_OSK_SOUND=$val" ;;
+                    SOUND_VOL) [ "$val" -le 100 ] || fail "SOUND_VOL 必须 0..100（给 $val）"
+                               echo "ELDEN_OSK_SOUND_VOL=$val" ;;
+                esac
+                ;;
         esac
     done < "$CONF"
 }

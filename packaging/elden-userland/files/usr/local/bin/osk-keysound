@@ -7,7 +7,18 @@
 #   * 音量 0-100 由 `ELDEN_OSK_SOUND_VOL` 给（设置 GUI 的旋钮），换算成播放器的 volume 参数；
 #   * 所有失败一律 exit 0：按键声音永远不能拖慢/打断打字。
 set -u
-VOL=${ELDEN_OSK_SOUND_VOL:-60}
+# 开关的**真源**是 /etc/elden-keyboard.conf（GUI 每次改都立即生效）；
+# env 只作覆盖/强制关闭（ELDEN_OSK_SOUND=0 优先）。
+CONF=${ELDEN_KEYBOARD_CONF:-/etc/elden-keyboard.conf}
+if [ "${ELDEN_OSK_SOUND:-1}" = 0 ]; then exit 0; fi
+if [ -r "$CONF" ]; then
+    on=$(sed -n 's/^SOUND=//p' "$CONF" 2>/dev/null | head -1)
+    [ "${on:-0}" = 1 ] || exit 0
+else
+    exit 0
+fi
+VOL=${ELDEN_OSK_SOUND_VOL:-$(sed -n 's/^SOUND_VOL=//p' "$CONF" 2>/dev/null | head -1)}
+VOL=${VOL:-60}
 SND=${ELDEN_OSK_SOUND_FILE:-/usr/share/sounds/gnome/default/alerts/click.ogg}
 case "$VOL" in ''|*[!0-9]*) VOL=60 ;; esac
 [ "$VOL" -gt 100 ] && VOL=100
