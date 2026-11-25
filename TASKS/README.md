@@ -186,6 +186,7 @@
 | **D9** | 主机稳定性与取证 | 页缓存 sha 漂移 + Pi 子进程 SIGSEGV 两批证据已上交；O_DIRECT 门在 `odirect-sha.py` | ① 13 脚本接 O_DIRECT（同 D5④，不重复派）② Q28 根因仍未解释（结项=运营判断），T1–T3 动作 ③ 新证据按规则 12 只记账不深挖 | 否 | `reports/q28-DOSSIER.md` §t、`~/hw-stability/AGENTS.md` |
 | **D11** | **设备发热 / 功耗** | 首轮受控基线已采：空载 cpuss 39.9–40.3 °C / Firefox 静置 39.2–44.2 °C / 重度交互窗 54–59 °C；调频正常（95% 时间 556 MHz）、无限流、无失控进程 | ① H1 `MESA_EXTENSION_OVERRIDE` 禁 dmabuf modifier ⇒ CPU 合成放大（A/B 见报告 §2）② H2 GPU devfreq 是否顶格 ③ H3 WebRender 是否落 LLVMpipe | 是（需设备窗） | `reports/thermal-baseline-20261125.md`、`logs/20261124-thermal-firefox/capture.txt` |
 | **D12** | **会话整体重启风险（Firefox「崩溃」真因）** | ✅ 定型：Firefox 的崩溃注解是 `Error reading events from display: 断开的管道`（EPIPE）= **合成器/会话先死**；`journalctl -b -1` 显示 23:27:00 `greetd: session closed` → 重拉会话。强相关 = 同会话内反复 `pkill -x phosh-osk-stub`（`sm.puri.OSK0` 是 `phosh.session` 的 RequiredComponents） | 纪律已写进 `PITFALLS #716`/报告：**同会话 pkill osk-stub ≤1 次**，要多次迭代就 `systemctl restart greetd`；观察会话死亡看 `greetd` 的 `session closed` | 否（已收口） | `reports/firefox-crash-20261125.md` |
+| **D13** | **Phosh 边缘侧滑返回手势** | 🟡 **规划 lane 未完成**（2026-11-25 01:0x 派出的 worker 仍在跑；上一轮同任务被断电打断）| 下一轮照 `.pi/lanes/20261125-phosh-edge-swipe-back-brief.md` 重派（worker / `custom.ustc-pool/ustc-dsf2`，允许联网，禁止上机）；产出 = `.pi/plans/2026-11-25-phosh-edge-swipe-back.md`（上游现状 / 三路线 / 验收判据 / 30 min PoC）| 是（需设备窗做 PoC） | `.pi/lanes/20261125-phosh-edge-swipe-back-brief.md`、`reports/thermal-baseline-20261125.md` 同批 |
 
 **维度互斥/依赖**：D1 必须先于 D7（ESP 在机的面）；D3④ 与 D1 共用一次上机窗；D4 与 D1 争同一收发窗口（**分时**）；D2 的 G7 与 D4 不可同轮（都要 a/b 槽控制权）。
 
