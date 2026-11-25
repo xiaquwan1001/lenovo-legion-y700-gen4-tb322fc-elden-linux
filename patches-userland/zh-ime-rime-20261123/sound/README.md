@@ -26,3 +26,24 @@
 ## 回滚
 `git apply -R sound/0002-osk-stub-keypress-sound-hook.patch` 重编；或直接还原
 `/root/osk-stub-backup-20261124` 的备份件（见 BUILD.md 部署节）。运行时回滚 = unset `ELDEN_OSK_SOUND`。
+
+## 2026-11-25 上机结果（用户确认）
+
+- 产物：`out/osk-sound-20261125/phosh-osk-stub-v2`（aarch64；`strings` 里 `ELDEN_OSK_SOUND`=3、`ELDEN_OSK_HAPTIC`=3）
+- 设备：已装到 `/usr/bin/phosh-osk-stub`（回退件 `/root/osk-stub-backup-20261125-v1`）
+- 开关：`/etc/elden-keyboard.conf` 的 `SOUND=1` / `SOUND_VOL=60` —— **包装脚本每次按键现读该文件**，改完立刻生效（不需要重启会话）
+- 用户实测：**有声音** ✅
+
+## 编译要点（复现）
+
+sysroot 里的 `glib-compile-resources` 是 aarch64 件，跑不起来（`qemu-aarch64: Could not open /lib/ld-linux-aarch64.so.1`）
+⇒ meson 必须叠一个 overlay cross-file，把该工具指回宿主：
+
+```sh
+meson setup "$B" --cross-file /tmp/trixie-sysroot/cross.txt --cross-file /tmp/cross-hosttools.ini \
+      -Drime=true -Dman=false -Dgtk_doc=false -Dtests=false
+```
+
+`/tmp/cross-hosttools.ini` 内容 = `[binaries] glib-compile-resources = '/usr/bin/glib-compile-resources'`
++ `c_args/c_link_args` 加 `--sysroot=/tmp/trixie-sysroot/root` 与
+`-Wno-error=format-nonliteral -Wno-error=declaration-after-statement`（rime 补丁的既有告警，与本轮新代码无关）。

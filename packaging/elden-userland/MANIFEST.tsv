@@ -113,5 +113,5 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/bin/elden-keyboard-settings	script	eaa018e25cf4cff36eefbd79c53b8fcf76f1f381723b003e575e70bd6739eea5	10993	755	files/usr/local/bin/elden-keyboard-settings
 /usr/local/sbin/elden-keyboard-apply	script	12f3c93ee1685de774d6b4871b337eb22654148f3c8da138ebb3d6d3390f3f6c	2746	755	files/usr/local/sbin/elden-keyboard-apply
 /usr/share/applications/elden-keyboard-settings.desktop	data	916273cb7b1e85fb75b5475884e9cf162d6b2a5c91240bc96ea860fdbf9125e4	265	644	files/usr/share/applications/elden-keyboard-settings.desktop
-/etc/elden-keyboard.conf	config	ec9bd483814211d86a61c22b2963d326f2da22f0e8fad25117306219d7bfad53	950	644	files/etc/elden-keyboard.conf
-/usr/local/bin/osk-keysound	script	b73728ab64d79d6a4106c6ff1f5685ce06080c6f08fb9a5e57ce9a2ccc585821	1128	755	files/usr/local/bin/osk-keysound
+/etc/elden-keyboard.conf	config	8e9cebc605a3f8e4eb456007080a52ac9b45859dd203ea51d2b78d54b44d0615	946	644	files/etc/elden-keyboard.conf
+/usr/local/bin/osk-keysound	script	e7050ef9fdceb38e37fbe176eaf4385c935a391bbaafe29c6ae8510c36fcb7be	1595	755	files/usr/local/bin/osk-keysound
