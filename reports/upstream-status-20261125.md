@@ -26,7 +26,7 @@
 | **elden 板 DTS**（M3-DTS） | v7 在档（`14991580`，0 回复）；**v8 备料就绪** | 2026-11-25 晚建 v8 包（补 `qcom.yaml` + 板件=v7 原文，门禁全绿，`SEND.sh` dry-run `Result: OK`） | **用户放行**（§7 逐系列批准） | 放行后 `bash SEND.sh --send`；另需 Pengyu 指定 trailer 形式（`Co-developed-by` 不代签） |
 | **M8 mdss 块复位** | v5（3 枚，3 R-b） | 11-24T15:15Z ping **退信**（`dmitry.baryshkov@linaro.org` 死地址）⇒ 11-25T02:23Z **换现址补发**（`dmitry.baryshkov@oss.qualcomm.com`，lore 已归档） | Dmitry / Konrad / Bjorn | 等回信；上机两枚形状与 `0xa000` 单变量仍**未证**（`reports/mdss-int2-evidence-20261113.md` §2.3） |
 | **M10 fastrpc non-secure** | v3 | 同上换址补发（`srini@kernel.org` 在 Cc） | Konrad + Ekansh/Dmitry/Srini | 技术欠账 0，等回信 |
-| **M11 pstore initrd 重叠** | v1（2 枚） | 2026-11-16T04:00Z 投出后**静默 ≈9 天、零回复** | Kees Cook / linux-pstore | **到点礼貌 ping**（下一个对外动作候选） |
+| **M11 pstore initrd 重叠** | v1（2 枚） | 2026-11-16T04:00Z 投出后**静默 ≈9 天、零回复** | Kees Cook / linux-pstore | ping **已于 2026-11-25T09:07Z 发出**（`out/mail-20261125/ping-pstore-initrd-overlap.txt`，In-Reply-To v1 cover，三问 + 愿出 v2）⇒ 等回信 |
 | **aw86927 AW86937**（M4 收窄） | v4（7 封） | 2026-11-24T04:50Z 投出（答 sashiko 4 条 + 收 Joonhoe `Tested-by`） | Dmitry Torokhov | 等回信；v4 之后 0 封回复（11-25 现查 lore） |
 | **dsi phy PLL_SYSTEM_MUXES**（M6-L1） | v2 | 2026-11-16 两发（首封漏前缀已在正文自述） | Dmitry / linux-arm-msm | 等回信 |
 
