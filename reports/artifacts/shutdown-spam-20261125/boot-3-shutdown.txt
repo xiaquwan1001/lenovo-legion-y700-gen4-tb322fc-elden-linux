@@ -1,0 +1,62 @@
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+== boot -3: shutdown phase
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
+11月 25 20:06:41 elden systemd[1]: systemd-ask-password-wall.path: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+11月 25 20:06:41 elden systemd[1]: Stopped target slices.target - Slice Units.
+11月 25 20:06:41 elden systemd[1]: Removed slice user.slice - User and Session Slice.
+11月 25 20:06:41 elden systemd[1]: user.slice: Consumed 39.329s CPU time, 1.1G memory peak.
+11月 25 20:06:41 elden systemd[1]: Stopped target sockets.target - Socket Units.
+11月 25 20:06:41 elden systemd[1]: avahi-daemon.socket: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Closed avahi-daemon.socket - Avahi mDNS/DNS-SD Stack Activation Socket.
+11月 25 20:06:41 elden systemd[1]: dbus.socket: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Closed dbus.socket - D-Bus System Message Bus Socket.
+11月 25 20:06:41 elden systemd[1]: sshd-unix-local.socket: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Closed sshd-unix-local.socket - OpenSSH Server Socket (systemd-ssh-generator, AF_UNIX Local).
+11月 25 20:06:41 elden systemd[1]: systemd-hostnamed.socket: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Closed systemd-hostnamed.socket - Hostname Service Socket.
+11月 25 20:06:41 elden systemd[1]: Stopped target sysinit.target - System Initialization.
+11月 25 20:06:41 elden systemd[1]: Stopping systemd-backlight@backlight:aw99706-backlight.service - Load/Save Screen Backlight Brightness of backlight:aw99706-backlight...
+11月 25 20:06:41 elden systemd[1]: Stopping systemd-resolved.service - Network Name Resolution...
+11月 25 20:06:41 elden systemd[1]: systemd-tmpfiles-setup.service: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-tmpfiles-setup.service - Create System Files and Directories.
+11月 25 20:06:41 elden systemd[1]: Stopped target local-fs.target - Local File Systems.
+11月 25 20:06:41 elden systemd[1]: Stopped target local-fs-pre.target - Preparation for Local File Systems.
+11月 25 20:06:41 elden systemd[1]: Unmounting run-lock.mount - Legacy Locks Directory /run/lock...
+11月 25 20:06:41 elden systemd[1]: Unmounting tmp.mount - Temporary Directory /tmp...
+11月 25 20:06:41 elden systemd[1]: systemd-tmpfiles-setup-dev.service: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev.
+11月 25 20:06:41 elden systemd[1]: systemd-tmpfiles-setup-dev-early.service: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully.
+11月 25 20:06:41 elden systemd[1]: Received SIGRTMIN+20 from PID 3109 (plymouthd).
+11月 25 20:06:41 elden systemd[1]: run-lock.mount: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Unmounted run-lock.mount - Legacy Locks Directory /run/lock.
+11月 25 20:06:41 elden systemd[1]: tmp.mount: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Unmounted tmp.mount - Temporary Directory /tmp.
+11月 25 20:06:41 elden systemd[1]: Stopped target swap.target - Swaps.
+11月 25 20:06:41 elden systemd[1]: Reached target umount.target - Unmount All Filesystems.
+11月 25 20:06:41 elden systemd[1]: systemd-backlight@backlight:aw99706-backlight.service: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-backlight@backlight:aw99706-backlight.service - Load/Save Screen Backlight Brightness of backlight:aw99706-backlight.
+11月 25 20:06:41 elden systemd[1]: Removed slice system-systemd\x2dbacklight.slice - Slice /system/systemd-backlight.
+11月 25 20:06:41 elden systemd[1]: systemd-remount-fs.service: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-remount-fs.service - Remount Root and Kernel File Systems.
+11月 25 20:06:41 elden systemd[1]: Received SIGRTMIN+20 from PID 3109 (plymouthd).
+11月 25 20:06:41 elden systemd[1]: systemd-resolved.service: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-resolved.service - Network Name Resolution.
+11月 25 20:06:41 elden systemd[1]: systemd-sysctl.service: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-sysctl.service - Apply Kernel Variables.
+11月 25 20:06:41 elden systemd[1]: systemd-modules-load.service: Deactivated successfully.
+11月 25 20:06:41 elden systemd[1]: Stopped systemd-modules-load.service - Load Kernel Modules.
+11月 25 20:06:41 elden systemd[1]: Reached target shutdown.target - System Shutdown.
+11月 25 20:06:41 elden systemd[1]: Reached target final.target - Late Shutdown Services.
+11月 25 20:06:46 elden systemd[1]: Started plymouth-reboot.service - Show Plymouth Reboot Screen.
+11月 25 20:06:46 elden systemd[1]: plymouth-switch-root-initramfs.service - Tell Plymouth To Jump To initramfs skipped, no trigger condition checks were met.
+11月 25 20:06:46 elden systemd[1]: systemd-reboot.service: Deactivated successfully.
+11月 25 20:06:46 elden systemd[1]: Finished systemd-reboot.service - System Reboot.
+11月 25 20:06:46 elden systemd[1]: Reached target reboot.target - System Reboot.
+11月 25 20:06:46 elden systemd[1]: Shutting down.
+11月 25 20:06:46 elden systemd-shutdown[1]: Syncing filesystems and block devices.
+11月 25 20:06:47 elden systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+11月 25 20:06:47 elden systemd-journald[536]: Received SIGTERM from PID 1 (systemd-shutdow).
+11月 25 20:06:47 elden udhcpd[469]: received SIGTERM
+11月 25 20:06:47 elden systemd-journald[536]: Journal stopped

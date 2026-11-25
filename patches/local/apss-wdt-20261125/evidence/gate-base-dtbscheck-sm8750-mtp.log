@@ -1,0 +1,4 @@
+make[1]: 进入目录“/tmp/kb-apss-base”
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+make[1]: 离开目录“/tmp/kb-apss-base”

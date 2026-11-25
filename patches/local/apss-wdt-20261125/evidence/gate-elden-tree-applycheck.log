@@ -1,0 +1,4 @@
+# tree = build/elden-tree HEAD aebb7274476403040d582c61478df8f4a7bf9cd3
+# git apply --check:
+OK 0001-dt-bindings-watchdog-qcom-add-sm8750-apss-wdt.patch
+OK 0002-arm64-dts-qcom-sm8750-add-apss-watchdog.patch

@@ -1,0 +1,18 @@
+[build] CROSS_COMPILE=ccache aarch64-linux-gnu-
+[build] targets: dtbs
+make: 进入目录“/home/xuqianhui/y700-elden/build/daily”
+  SYNC    include/config/auto.conf
+  UPD     include/config/kernel.release
+  DTC     arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+  DTC     arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+  DTC     arch/arm64/boot/dts/qcom/sm8750-qrd.dtb
+make: 离开目录“/home/xuqianhui/y700-elden/build/daily”
+-rw-rw-r-- 1 xuqianhui xuqianhui 21057216 Nov 25 19:29 /home/xuqianhui/y700-elden/build/daily/arch/arm64/boot/Image.gz
+-rw-rw-r-- 1 xuqianhui xuqianhui   153253 Nov 25 20:55 /home/xuqianhui/y700-elden/build/daily/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+[build] symbol guard OK: gcc_sm8750 / DSI bonded（旧名或 B5 重构后名）/ rpmh present in /home/xuqianhui/y700-elden/build/daily/System.map
+Cacheable calls:   225305 / 306678 (73.47%)
+  Hits:             53458 / 225305 (23.73%)
+    Direct:         30909 /  53458 (57.82%)
+    Preprocessed:   22549 /  53458 (42.18%)
+  Misses:          171847 / 225305 (76.27%)
+Uncacheable calls:  81373 / 306678 (26.53%)

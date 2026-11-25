@@ -1,0 +1,9 @@
+make[1]: 进入目录“/tmp/kb-apss-patched”
+  CHKDT   /tmp/apss-wdt-base/Documentation/devicetree/bindings
+  LINT    /tmp/apss-wdt-base/Documentation/devicetree/bindings
+...
+5420
+DTC lines total (above)
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,hawi-rpmh.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,sdx75-rpmh.example.dtb
+make[1]: 离开目录“/tmp/kb-apss-patched”

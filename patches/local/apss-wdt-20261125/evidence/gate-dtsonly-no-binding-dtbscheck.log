@@ -1,0 +1,15 @@
+make[1]: 进入目录“/tmp/kb-apss-dtsonly”
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+arch/arm64/boot/dts/qcom/sm8750-mtp.dtb: watchdog@16410000 (qcom,apss-wdt-sm8750): compatible: 'oneOf' conditional failed, one must be fixed:
+	['qcom,apss-wdt-sm8750', 'qcom,kpss-wdt'] is too long
+	['qcom,apss-wdt-sm8750', 'qcom,kpss-wdt'] is too short
+	'qcom,apss-wdt-sm8750' is not one of ['qcom,apss-wdt-glymur', 'qcom,apss-wdt-hawi', 'qcom,kpss-wdt-ipq4019', 'qcom,apss-wdt-ipq5018', 'qcom,apss-wdt-ipq5210', 'qcom,apss-wdt-ipq5332', 'qcom,apss-wdt-ipq5424', 'qcom,apss-wdt-ipq9574', 'qcom,apss-wdt-ipq9650', 'qcom,apss-wdt-kaanapali', 'qcom,apss-wdt-maili', 'qcom,apss-wdt-msm8226', 'qcom,apss-wdt-msm8974', 'qcom,apss-wdt-msm8994', 'qcom,apss-wdt-nord', 'qcom,apss-wdt-qcm2290', 'qcom,apss-wdt-qcs404', 'qcom,apss-wdt-qcs615', 'qcom,apss-wdt-qcs8300', 'qcom,apss-wdt-sa8255p', 'qcom,apss-wdt-sa8775p', 'qcom,apss-wdt-sc7180', 'qcom,apss-wdt-sc7280', 'qcom,apss-wdt-sc8180x', 'qcom,apss-wdt-sc8280xp', 'qcom,apss-wdt-sdm845', 'qcom,apss-wdt-sdx55', 'qcom,apss-wdt-sdx65', 'qcom,apss-wdt-shikra', 'qcom,apss-wdt-sm6115', 'qcom,apss-wdt-sm6350', 'qcom,apss-wdt-sm8150', 'qcom,apss-wdt-sm8250', 'qcom,apss-wdt-x1e80100']
+	'qcom,kpss-wdt' was expected
+	'qcom,scss-timer' was expected
+	'qcom,apss-wdt-sm8750' is not one of ['qcom,kpss-wdt-apq8064', 'qcom,kpss-wdt-ipq8064', 'qcom,kpss-wdt-mdm9615', 'qcom,kpss-wdt-msm8960']
+	'qcom,msm-timer' was expected
+	'qcom,kpss-timer' was expected
+	from schema $id: http://devicetree.org/schemas/watchdog/qcom-wdt.yaml
+arch/arm64/boot/dts/qcom/sm8750-mtp.dtb: /soc@0/watchdog@16410000: failed to match any schema with compatible: ['qcom,apss-wdt-sm8750', 'qcom,kpss-wdt']
+make[1]: 离开目录“/tmp/kb-apss-dtsonly”

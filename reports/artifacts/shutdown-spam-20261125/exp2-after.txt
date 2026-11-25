@@ -1,0 +1,42 @@
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+== hb tail (when did writes stop?)
+20:39:27.513185205
+20:39:27.614750568
+20:39:27.716837861
+20:39:27.818899216
+20:39:27.921113489
+91
+== kmsg2 size
+1617
+2026-11-25 20:39:21.749813552 +0800
+6,1030,29560476,-,caller=T1713;NET: Registered PF_ALG protocol family
+6,1031,53786022,-,caller=T1787;input: ydotoold virtual device as /devices/virtual/input/input9
+6,1032,123556545,-,caller=T2333;input: elden-back as /devices/virtual/input/input10
+6,1033,139804353,-,caller=T2399;input: ydotoold virtual device as /devices/virtual/input/input11
+12,1034,155336312,-,caller=T2465;marker2
+== journal previous boot tail (non-kernel)
+11月 25 20:39:34 elden systemd[1]: Removed slice system-systemd\x2dbacklight.slice - Slice /system/systemd-backlight.
+11月 25 20:39:34 elden systemd[1]: Stopped target swap.target - Swaps.
+11月 25 20:39:34 elden systemd[1]: Reached target umount.target - Unmount All Filesystems.
+11月 25 20:39:34 elden systemd[1]: systemd-remount-fs.service: Deactivated successfully.
+11月 25 20:39:34 elden systemd[1]: Stopped systemd-remount-fs.service - Remount Root and Kernel File Systems.
+11月 25 20:39:34 elden systemd[1]: Received SIGRTMIN+20 from PID 2884 (plymouthd).
+11月 25 20:39:34 elden systemd[1]: systemd-resolved.service: Deactivated successfully.
+11月 25 20:39:34 elden systemd[1]: Stopped systemd-resolved.service - Network Name Resolution.
+11月 25 20:39:34 elden systemd[1]: systemd-sysctl.service: Deactivated successfully.
+11月 25 20:39:34 elden systemd[1]: Stopped systemd-sysctl.service - Apply Kernel Variables.
+11月 25 20:39:34 elden systemd[1]: systemd-modules-load.service: Deactivated successfully.
+11月 25 20:39:34 elden systemd[1]: Stopped systemd-modules-load.service - Load Kernel Modules.
+11月 25 20:39:34 elden systemd[1]: Reached target shutdown.target - System Shutdown.
+11月 25 20:39:34 elden systemd[1]: Reached target final.target - Late Shutdown Services.
+11月 25 20:39:35 elden systemd[1]: Started plymouth-reboot.service - Show Plymouth Reboot Screen.
+11月 25 20:39:35 elden systemd[1]: plymouth-switch-root-initramfs.service - Tell Plymouth To Jump To initramfs skipped, no trigger condition checks were met.
+11月 25 20:39:35 elden systemd[1]: systemd-reboot.service: Deactivated successfully.
+11月 25 20:39:35 elden systemd[1]: Finished systemd-reboot.service - System Reboot.
+11月 25 20:39:35 elden systemd[1]: Reached target reboot.target - System Reboot.
+11月 25 20:39:35 elden systemd[1]: Shutting down.
+11月 25 20:39:35 elden systemd-shutdown[1]: Syncing filesystems and block devices.
+11月 25 20:39:35 elden systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+11月 25 20:39:35 elden systemd-journald[541]: Received SIGTERM from PID 1 (systemd-shutdow).
+11月 25 20:39:35 elden udhcpd[479]: received SIGTERM
+11月 25 20:39:35 elden systemd-journald[541]: Journal stopped

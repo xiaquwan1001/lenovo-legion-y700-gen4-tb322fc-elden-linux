@@ -1,0 +1,9 @@
+# post-work tree state (2026-11-25)
+## build/elden-tree
+HEAD aebb7274476403040d582c61478df8f4a7bf9cd3
+status: ''
+config: ls: cannot access 'build/elden-tree/.config': No such file or directory
+## build/daily
+HEAD 4da9a8b69fc85fb1dd100c63f5a1b02eb730571a
+status: ''
+config-sha 34c7d658d4eee4aa073ecf2f2ed9ca5d58c5ad22caca794334c007e468aa34fe  build/daily/.config

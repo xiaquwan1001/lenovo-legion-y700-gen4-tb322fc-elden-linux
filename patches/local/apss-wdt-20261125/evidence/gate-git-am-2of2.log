@@ -1,0 +1,6 @@
+# base = aebb7274476403040d582c61478df8f4a7bf9cd3 (7.4-rc3)
+应用：dt-bindings: watchdog: qcom: add SM8750 APSS watchdog
+应用：arm64: dts: qcom: sm8750: add APSS watchdog
+d941cdd25a8b arm64: dts: qcom: sm8750: add APSS watchdog
+859518c754f3 dt-bindings: watchdog: qcom: add SM8750 APSS watchdog
+aebb72744764 Linux 7.4-rc3

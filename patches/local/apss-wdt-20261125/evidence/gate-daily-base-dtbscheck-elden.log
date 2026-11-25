@@ -1,0 +1,5 @@
+make: 进入目录“/home/xuqianhui/y700-elden/build/daily”
+  SYNC    include/config/auto.conf
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+make: 离开目录“/home/xuqianhui/y700-elden/build/daily”

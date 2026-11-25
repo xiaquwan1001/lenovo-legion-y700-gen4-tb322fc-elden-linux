@@ -1,0 +1,184 @@
+frames: 87
+  0 up=323.95   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  1 up=324.16   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  2 up=324.36   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  3 up=324.56   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  4 up=324.77   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  5 up=324.97   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  6 up=325.17   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  7 up=325.37   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  8 up=325.58   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+  9 up=325.78   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 10 up=325.98   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 11 up=326.18   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 12 up=326.39   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 13 up=326.59   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 14 up=326.79   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 15 up=327.00   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 16 up=327.20   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 17 up=327.40   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 18 up=327.60   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 19 up=327.81   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 20 up=328.01   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 21 up=328.21   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 22 up=328.42   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 23 up=328.62   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 24 up=328.82   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 25 up=329.02   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 26 up=329.23   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 27 up=329.43   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 28 up=329.63   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 29 up=329.83   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 30 up=330.04   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 31 up=330.24   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 32 up=330.44   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 33 up=330.65   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 34 up=330.85   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 35 up=331.05   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 36 up=331.25   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 37 up=331.46   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 38 up=331.66   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 39 up=331.86   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 40 up=332.06   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 41 up=332.27   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 42 up=332.47   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 43 up=332.67   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 44 up=332.88   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 45 up=333.08   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 46 up=333.28   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 47 up=333.48   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 48 up=333.69   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 49 up=333.89   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 50 up=334.09   rows=95 cols=119 ltgrey:4491,white:1126,green:70 | first: [   10.173712][  T633] platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb
+ 51 up=334.30   rows=95 cols=119 ltgrey:1498,white:735,green:42 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 52 up=334.50   rows=95 cols=119 ltgrey:1855,white:921,green:58 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 53 up=334.70   rows=95 cols=119 ltgrey:2029,white:1021,green:70 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 54 up=334.90   rows=95 cols=119 ltgrey:2827,white:1465,green:98 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 55 up=335.10   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 56 up=335.31   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 57 up=335.51   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 58 up=335.71   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 59 up=335.91   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 60 up=336.12   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 61 up=336.32   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 62 up=336.52   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 63 up=336.73   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 64 up=336.93   rows=95 cols=119 ltgrey:2941,white:1533,green:104 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 65 up=337.13   rows=95 cols=119 ltgrey:2979,white:1533,green:104,0c:1 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 66 up=337.33   rows=95 cols=119 ltgrey:2979,white:1533,green:104,0c:1 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 67 up=337.54   rows=95 cols=119 ltgrey:2979,white:1533,green:104,0c:1 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 68 up=337.74   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 69 up=337.94   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 70 up=338.15   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 71 up=338.35   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 72 up=338.55   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 73 up=338.76   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 74 up=338.96   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 75 up=339.17   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 76 up=339.37   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 77 up=339.57   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:2 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 78 up=339.78   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:1 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 79 up=339.98   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:1 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 80 up=340.19   rows=95 cols=119 ltgrey:2979,white:1533,green:104,red:1 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 81 up=340.39   rows=95 cols=119 ltgrey:3293,white:1696,green:118 | first:          Stopping systemd-random-seed.service - Load/Save OS Random Seed...
+ 82 up=340.59   rows=95 cols=119 cyan:4936,ltgrey:103,white:68,green:2 | first: GICv3: CPU3: found redistributor 300 region 0:0x0000000016140000
+ 83 up=340.80   rows=95 cols=119 cyan:4378 | first: /soc@0/rsc@16500000/regulators-1: Fixed dependency cycle(s) with /soc@0/rsc@1650
+ 84 up=341.01   rows=95 cols=119 cyan:4538 | first: vreg_l2f_1p2: Setting 1200000-1200000uV
+ 85 up=341.21   rows=95 cols=119 cyan:6606 | first: systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+ 86 up=341.42   rows=95 cols=119 cyan:4347,ltgrey:657,white:395,green:34 | first: msm_dpu ae01000.display-controller: [drm] reserved boot framebuffer IOVA 0xfc800
+
+===== LAST FRAME (uptime 341.42) with per-line attribute =====
+00 [cyan  ] msm_dpu ae01000.display-controller: [drm] reserved boot framebuffer IOVA 0xfc800000+0x2b00000
+01 [cyan  ] [drm] Initialized msm 1.13.0 for ae01000.display-controller on minor 0
+02 [cyan  ] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_sqe.fw from new location
+03 [cyan  ] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_gmu.bin from new location
+04 [cyan  ] msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_aqe.fw from new location
+05 [cyan  ] [drm] Loaded GMU firmware v5.1.25
+06 [cyan  ] msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (b
+07 [cyan  ] onded=1 dsc=1 wide=1)
+08 [cyan  ] msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (b
+09 [cyan  ] onded=1 dsc=1 wide=1)
+10 [cyan  ] novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+11 [cyan  ] novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+12 [cyan  ] novatek-nvt36xxx-spi spi0.0: NT36536 identification: engineering reset
+13 [cyan  ] Console: switching to colour frame buffer device 119x95
+14 [cyan  ] novatek-nvt36xxx-spi spi0.0: trim ID 15 0e 00 23 65 03
+15 [cyan  ] novatek-nvt36xxx-spi spi0.0: NT36536 hardware cascade=1 strap=02
+16 [cyan  ] novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+17 [cyan  ] msm_dpu ae01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+18 [cyan  ] novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+19 [cyan  ] novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+20 [cyan  ] novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+21 [cyan  ] novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+22 [cyan  ] input: ydotoold virtual device as /devices/virtual/input/input8
+23 [cyan  ]  MultiMedia2 Playback: ASoC: no backend DAIs enabled for MultiMedia2 Playback, possibly missing ALSA mixer-based routin
+24 [cyan  ] g or UCM profile
+25 [cyan  ] rfkill: input handler disabled
+26 [cyan  ] pci 0000:01:00.0: [17cb:110e] type 00 class 0x028000 PCIe Endpoint
+27 [cyan  ] pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]
+28 [cyan  ] pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]
+29 [cyan  ] pci 0000:01:00.0: PME# supported from D0 D3hot D3cold
+30 [cyan  ] pci 0000:01:00.0: Adding to iommu group 15
+31 [cyan  ] pci 0000:01:00.0: ASPM: default states L0s L1
+32 [cyan  ] pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+33 [cyan  ] pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]: assigned
+34 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+35 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: Wi-Fi 7 Hardware name: peach hw2.0
+36 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: MSI vectors: 32
+37 [cyan  ] mhi mhi0: Requested to power ON
+38 [cyan  ] mhi mhi0: Power on setup success
+39 [cyan  ] mhi mhi0: Wait for device to enter SBL or Mission mode
+40 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: chip_id 0x2 chip_family 0x4 board_id 0xff soc_id 0x40210200
+41 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: fw_version 0x100effff fw_build_timestamp 2025-05-29 06:58 fw_build_id QC_IMAGE_VERSION_S
+42 [cyan  ] TRING=WLAN.GNG.1.0-03869-QCAGNGSWPL_V1.0_V2.0_SILICONZ-1.108007.3.112099.4
+43 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: fw_caps 0xf
+44 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: qmi TME-L power-on hardware-restricted (stock-compatible, continuing)
+45 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: qmi AUX_UC request succeeded
+46 [cyan  ] ath12k_wifi7_pci 0000:01:00.0: qmi FW_INIT_DONE received: hang_offset_valid=0 hang_offset=0 hang_length_valid=0 hang_le
+47 [cyan  ] ngth=0 soft_sku_valid=1 soft_sku=0x1
+48 [cyan  ] input: ydotoold virtual device as /devices/virtual/input/input9
+49 [cyan  ] amba 109ab000.tn: deferred probe pending: (reason unknown)
+50 [cyan  ] qnoc-sm8750 interconnect-1: sync_state() pending due to 1dfa000.crypto
+51 [cyan  ] qnoc-sm8750 1700000.interconnect: sync_state() pending due to 1dfa000.crypto
+52 [cyan  ] gcc-sm8750 100000.clock-controller: sync_state() pending due to 3d37000.gmu
+53 [cyan  ] gxclkctl-kaanapali 3d64000.clock-controller: sync_state() pending due to 3d37000.gmu
+54 [cyan  ] sm8750-gpucc 3d90000.clock-controller: sync_state() pending due to 3d37000.gmu
+55 [cyan  ] wlan0: authenticate with 30:5f:77:13:2d:e0 (local address=02:00:82:b2:f8:3a)
+56 [cyan  ] wlan0: send auth to 30:5f:77:13:2d:e0 (try 1/3)
+57 [cyan  ] wlan0: authenticated
+58 [cyan  ] wlan0: associate with 30:5f:77:13:2d:e0 (try 1/3)
+59 [cyan  ] wlan0: RX AssocResp from 30:5f:77:13:2d:e0 (capab=0x8001 status=0 aid=4)
+60 [cyan  ] wlan0: associated
+61 [cyan  ] Bluetooth: hci0: QCA Downloading qca/brhbtnv20.bin
+62 [cyan  ] Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_
+63 [cyan  ] DEF
+64 [cyan  ] Bluetooth: hci0: QCA setup on UART is completed
+65 [cyan  ] Bluetooth: hci0: HFP non-HCI data transport is supported
+66 [cyan  ] Bluetooth: MGMT ver 1.23
+67 [cyan  ] NET: Registered PF_ALG protocol family
+68 [cyan  ] input: ydotoold virtual device as /devices/virtual/input/input10
+69 [cyan  ] input: ydotoold virtual device as /devices/virtual/input/input11
+70 [cyan  ] input: ydotoold virtual device as /devices/virtual/input/input12
+71 [cyan  ] input: ydotoold virtual device as /devices/virtual/input/input13
+72 [cyan  ] input: ydotoold virtual device as /devices/virtual/input/input14
+73 [cyan  ] marker3
+74 [cyan  ] rfkill: input handler enabled
+75 [cyan  ] wlan0: deauthenticating from 30:5f:77:13:2d:e0 by local choice (Reason: 3=DEAUTH_LEAVING)
+76 [ltgrey]          Unmounting tmp.mount - Temporary Directory /tmp...
+77 [ltgrey] [  OK  ] Stopped systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev.
+78 [ltgrey] [  OK  ] Stopped systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully.
+79 [ltgrey] [  OK  ] Unmounted run-lock.mount - Legacy Locks Directory /run/lock.
+80 [ltgrey] [  OK  ] Unmounted tmp.mount - Temporary Directory /tmp.
+81 [ltgrey] [  OK  ] Stopped systemd-backlight@backlight:aw99706-backlight..n Backlight Brightness of backlight:aw99706-backlight.
+82 [ltgrey] [  OK  ] Removed slice system-systemd\x2dbacklight.slice - Slice /system/systemd-backlight.
+83 [ltgrey] [  OK  ] Stopped target swap.target - Swaps.
+84 [ltgrey] [  OK  ] Reached target umount.target - Unmount All Filesystems.
+85 [ltgrey] [  OK  ] Stopped systemd-remount-fs.service - Remount Root and Kernel File Systems.
+86 [ltgrey] [  OK  ] Stopped systemd-resolved.service - Network Name Resolution.
+87 [ltgrey] [  OK  ] Stopped systemd-sysctl.service - Apply Kernel Variables.
+88 [ltgrey] [  OK  ] Stopped systemd-modules-load.service - Load Kernel Modules.
+89 [ltgrey] [  OK  ] Reached target shutdown.target - System Shutdown.
+90 [ltgrey] [  OK  ] Reached target final.target - Late Shutdown Services.
+91 [ltgrey] [  OK  ] Started plymouth-reboot.service - Show Plymouth Reboot Screen.
+92 [ltgrey] [  OK  ] Finished systemd-reboot.service - System Reboot.
+93 [ltgrey] [  OK  ] Reached target reboot.target - System Reboot.

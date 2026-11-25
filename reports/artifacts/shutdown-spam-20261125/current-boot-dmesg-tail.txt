@@ -1,0 +1,30 @@
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+[   16.757408] [    T147] ath12k_wifi7_pci 0000:01:00.0: qmi AUX_UC request succeeded
+[   16.764387] [    T147] ath12k_wifi7_pci 0000:01:00.0: qmi FW_INIT_DONE received: hang_offset_valid=0 hang_offset=0 hang_length_valid=0 hang_length=0 soft_sku_valid=1 soft_sku=0x1
+[   20.704111] [     T33] amba 109ab000.tn: deferred probe pending: (reason unknown)
+[   20.704151] [     T33] qnoc-sm8750 interconnect-1: sync_state() pending due to 1dfa000.crypto
+[   20.704157] [     T33] qnoc-sm8750 1700000.interconnect: sync_state() pending due to 1dfa000.crypto
+[   20.704167] [     T33] gcc-sm8750 100000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   20.704171] [     T33] gxclkctl-kaanapali 3d64000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   20.704174] [     T33] sm8750-gpucc 3d90000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   22.359361] [    T924] wlan0: authenticate with 30:5f:77:13:2d:e0 (local address=02:00:82:b2:f8:3a)
+[   22.359375] [    T924] wlan0: send auth to 30:5f:77:13:2d:e0 (try 1/3)
+[   22.364976] [    T177] wlan0: authenticated
+[   22.370340] [     T97] wlan0: associate with 30:5f:77:13:2d:e0 (try 1/3)
+[   22.377528] [    T177] wlan0: RX AssocResp from 30:5f:77:13:2d:e0 (capab=0x8001 status=0 aid=4)
+[   22.392112] [    T177] wlan0: associated
+[   29.094850] [     T87] Bluetooth: hci0: QCA Downloading qca/brhbtnv20.bin
+[   29.431426] [     T87] Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_DEF
+[   29.431875] [     T87] Bluetooth: hci0: QCA setup on UART is completed
+[   29.431910] [     T87] Bluetooth: hci0: HFP non-HCI data transport is supported
+[   29.610514] [    T916] Bluetooth: MGMT ver 1.23
+[   29.615837] [   T1699] NET: Registered PF_ALG protocol family
+[   85.691774] [   T1811] input: ydotoold virtual device as /devices/virtual/input/input9
+[  792.732551] [   T2826] input: ydotoold virtual device as /devices/virtual/input/input10
+[  834.511910] [   T3056] input: ydotoold virtual device as /devices/virtual/input/input11
+[  868.128182] [   T3176] input: ydotoold virtual device as /devices/virtual/input/input12
+[  994.788178] [   T3402] input: ydotoold virtual device as /devices/virtual/input/input13
+== ps plymouth
+0
+== cryptsetup/lvm?
+312

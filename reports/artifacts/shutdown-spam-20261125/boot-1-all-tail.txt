@@ -1,0 +1,42 @@
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+11月 25 20:19:16.238639 elden systemd[1]: Stopped target local-fs.target - Local File Systems.
+11月 25 20:19:16.238667 elden systemd[1]: Stopped target local-fs-pre.target - Preparation for Local File Systems.
+11月 25 20:19:16.239036 elden systemd[1]: Unmounting run-lock.mount - Legacy Locks Directory /run/lock...
+11月 25 20:19:16.239751 elden systemd[1]: Unmounting tmp.mount - Temporary Directory /tmp...
+11月 25 20:19:16.241354 elden systemd[1]: systemd-tmpfiles-setup-dev.service: Deactivated successfully.
+11月 25 20:19:16.241386 elden systemd[1]: Stopped systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev.
+11月 25 20:19:16.241486 elden systemd[1]: systemd-tmpfiles-setup-dev-early.service: Deactivated successfully.
+11月 25 20:19:16.241505 elden systemd[1]: Stopped systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully.
+11月 25 20:19:16.242112 elden systemd[1]: Received SIGRTMIN+20 from PID 2377 (plymouthd).
+11月 25 20:19:16.243724 elden systemd[1]: run-lock.mount: Deactivated successfully.
+11月 25 20:19:16.243848 elden systemd[1]: Unmounted run-lock.mount - Legacy Locks Directory /run/lock.
+11月 25 20:19:16.243946 elden systemd[1]: tmp.mount: Deactivated successfully.
+11月 25 20:19:16.244044 elden systemd[1]: Unmounted tmp.mount - Temporary Directory /tmp.
+11月 25 20:19:16.244185 elden systemd[1]: systemd-backlight@backlight:aw99706-backlight.service: Deactivated successfully.
+11月 25 20:19:16.244269 elden systemd[1]: Stopped systemd-backlight@backlight:aw99706-backlight.service - Load/Save Screen Backlight Brightness of backlight:aw99706-backlight.
+11月 25 20:19:16.245105 elden systemd[1]: Removed slice system-systemd\x2dbacklight.slice - Slice /system/systemd-backlight.
+11月 25 20:19:16.245139 elden systemd[1]: Stopped target swap.target - Swaps.
+11月 25 20:19:16.245172 elden systemd[1]: Reached target umount.target - Unmount All Filesystems.
+11月 25 20:19:16.245193 elden systemd[1]: systemd-remount-fs.service: Deactivated successfully.
+11月 25 20:19:16.245214 elden systemd[1]: Stopped systemd-remount-fs.service - Remount Root and Kernel File Systems.
+11月 25 20:19:16.255225 elden systemd[1]: Received SIGRTMIN+20 from PID 2377 (plymouthd).
+11月 25 20:19:16.285780 elden systemd[1]: systemd-resolved.service: Deactivated successfully.
+11月 25 20:19:16.285962 elden systemd[1]: Stopped systemd-resolved.service - Network Name Resolution.
+11月 25 20:19:16.287158 elden systemd[1]: systemd-sysctl.service: Deactivated successfully.
+11月 25 20:19:16.287194 elden systemd[1]: Stopped systemd-sysctl.service - Apply Kernel Variables.
+11月 25 20:19:16.287454 elden systemd[1]: systemd-modules-load.service: Deactivated successfully.
+11月 25 20:19:16.287487 elden systemd[1]: Stopped systemd-modules-load.service - Load Kernel Modules.
+11月 25 20:19:16.288437 elden systemd[1]: Reached target shutdown.target - System Shutdown.
+11月 25 20:19:16.289311 elden systemd[1]: Reached target final.target - Late Shutdown Services.
+11月 25 20:19:17.187537 elden systemd[1]: Started plymouth-reboot.service - Show Plymouth Reboot Screen.
+11月 25 20:19:17.188686 elden systemd[1]: plymouth-switch-root-initramfs.service - Tell Plymouth To Jump To initramfs skipped, no trigger condition checks were met.
+11月 25 20:19:17.188756 elden systemd[1]: systemd-reboot.service: Deactivated successfully.
+11月 25 20:19:17.188773 elden systemd[1]: Finished systemd-reboot.service - System Reboot.
+11月 25 20:19:17.189567 elden systemd[1]: Reached target reboot.target - System Reboot.
+11月 25 20:19:17.190595 elden systemd[1]: Shutting down.
+11月 25 20:19:17.226250 elden systemd-shutdown[1]: Syncing filesystems and block devices.
+11月 25 20:19:17.257130 elden systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+11月 25 20:19:17.257264 elden systemd-journald[537]: Received SIGTERM from PID 1 (systemd-shutdow).
+11月 25 20:19:17.255286 elden udhcpd[479]: received SIGTERM
+11月 25 20:19:17.257460 elden systemd-journald[537]: Journal stopped
+=== BOOT -1 ALL non-kernel tail end marker

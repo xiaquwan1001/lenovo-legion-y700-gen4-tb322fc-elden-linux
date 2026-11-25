@@ -1,0 +1,29 @@
+From 532e409f6a86955e2c260381cf8908a810f8cfa0 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 25 Nov 2026 20:51:59 +0800
+Subject: [PATCH 1/2] dt-bindings: watchdog: qcom: add SM8750 APSS watchdog
+
+Document the qcom,apss-wdt-sm8750 compatible.  The APSS watchdog block on
+SM8750 uses the existing KPSS register layout and therefore keeps the
+qcom,kpss-wdt fallback, like the other SoCs already listed here.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ Documentation/devicetree/bindings/watchdog/qcom-wdt.yaml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/watchdog/qcom-wdt.yaml b/Documentation/devicetree/bindings/watchdog/qcom-wdt.yaml
+index 4ff61102e407..8cd8331608ba 100644
+--- a/Documentation/devicetree/bindings/watchdog/qcom-wdt.yaml
++++ b/Documentation/devicetree/bindings/watchdog/qcom-wdt.yaml
+@@ -50,6 +50,7 @@ properties:
+               - qcom,apss-wdt-sm6350
+               - qcom,apss-wdt-sm8150
+               - qcom,apss-wdt-sm8250
++              - qcom,apss-wdt-sm8750
+               - qcom,apss-wdt-x1e80100
+           - const: qcom,kpss-wdt
+       - const: qcom,kpss-wdt
+-- 
+2.53.0
+

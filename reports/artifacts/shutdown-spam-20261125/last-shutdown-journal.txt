@@ -1,0 +1,46 @@
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+11月 25 20:45:30.335475 elden systemd[1]: Stopping systemd-backlight@backlight:aw99706-backlight.service - Load/Save Screen Backlight Brightness of backlight:aw99706-backlight...
+11月 25 20:45:30.335509 elden systemd[1]: systemd-pstore.service: Deactivated successfully.
+11月 25 20:45:30.335538 elden systemd[1]: Stopped systemd-pstore.service - Platform Persistent Storage Archival.
+11月 25 20:45:30.335639 elden systemd[1]: Stopping systemd-resolved.service - Network Name Resolution...
+11月 25 20:45:30.335670 elden systemd[1]: systemd-tmpfiles-setup.service: Deactivated successfully.
+11月 25 20:45:30.335697 elden systemd[1]: Stopped systemd-tmpfiles-setup.service - Create System Files and Directories.
+11月 25 20:45:30.335739 elden systemd[1]: Stopped target local-fs.target - Local File Systems.
+11月 25 20:45:30.335766 elden systemd[1]: Stopped target local-fs-pre.target - Preparation for Local File Systems.
+11月 25 20:45:30.336207 elden systemd[1]: Unmounting run-lock.mount - Legacy Locks Directory /run/lock...
+11月 25 20:45:30.338839 elden systemd[1]: Unmounting tmp.mount - Temporary Directory /tmp...
+11月 25 20:45:30.338873 elden systemd[1]: systemd-tmpfiles-setup-dev.service: Deactivated successfully.
+11月 25 20:45:30.338900 elden systemd[1]: Stopped systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev.
+11月 25 20:45:30.338940 elden systemd[1]: systemd-tmpfiles-setup-dev-early.service: Deactivated successfully.
+11月 25 20:45:30.338960 elden systemd[1]: Stopped systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully.
+11月 25 20:45:30.339518 elden systemd[1]: Received SIGRTMIN+20 from PID 3032 (plymouthd).
+11月 25 20:45:30.340945 elden systemd[1]: run-lock.mount: Deactivated successfully.
+11月 25 20:45:30.341070 elden systemd[1]: Unmounted run-lock.mount - Legacy Locks Directory /run/lock.
+11月 25 20:45:30.341158 elden systemd[1]: tmp.mount: Deactivated successfully.
+11月 25 20:45:30.341252 elden systemd[1]: Unmounted tmp.mount - Temporary Directory /tmp.
+11月 25 20:45:30.341797 elden systemd[1]: systemd-backlight@backlight:aw99706-backlight.service: Deactivated successfully.
+11月 25 20:45:30.341888 elden systemd[1]: Stopped systemd-backlight@backlight:aw99706-backlight.service - Load/Save Screen Backlight Brightness of backlight:aw99706-backlight.
+11月 25 20:45:30.342291 elden systemd[1]: Removed slice system-systemd\x2dbacklight.slice - Slice /system/systemd-backlight.
+11月 25 20:45:30.342327 elden systemd[1]: Stopped target swap.target - Swaps.
+11月 25 20:45:30.342356 elden systemd[1]: Reached target umount.target - Unmount All Filesystems.
+11月 25 20:45:30.342378 elden systemd[1]: systemd-remount-fs.service: Deactivated successfully.
+11月 25 20:45:30.342400 elden systemd[1]: Stopped systemd-remount-fs.service - Remount Root and Kernel File Systems.
+11月 25 20:45:30.352775 elden systemd[1]: Received SIGRTMIN+20 from PID 3032 (plymouthd).
+11月 25 20:45:30.362774 elden systemd[1]: systemd-resolved.service: Deactivated successfully.
+11月 25 20:45:30.362925 elden systemd[1]: Stopped systemd-resolved.service - Network Name Resolution.
+11月 25 20:45:30.364703 elden systemd[1]: systemd-sysctl.service: Deactivated successfully.
+11月 25 20:45:30.364737 elden systemd[1]: Stopped systemd-sysctl.service - Apply Kernel Variables.
+11月 25 20:45:30.364785 elden systemd[1]: systemd-modules-load.service: Deactivated successfully.
+11月 25 20:45:30.364974 elden systemd[1]: Stopped systemd-modules-load.service - Load Kernel Modules.
+11月 25 20:45:30.365049 elden systemd[1]: Reached target shutdown.target - System Shutdown.
+11月 25 20:45:30.365101 elden systemd[1]: Reached target final.target - Late Shutdown Services.
+11月 25 20:45:31.286522 elden systemd[1]: Started plymouth-reboot.service - Show Plymouth Reboot Screen.
+11月 25 20:45:31.287641 elden systemd[1]: plymouth-switch-root-initramfs.service - Tell Plymouth To Jump To initramfs skipped, no trigger condition checks were met.
+11月 25 20:45:31.287714 elden systemd[1]: systemd-reboot.service: Deactivated successfully.
+11月 25 20:45:31.287729 elden systemd[1]: Finished systemd-reboot.service - System Reboot.
+11月 25 20:45:31.288489 elden systemd[1]: Reached target reboot.target - System Reboot.
+11月 25 20:45:31.289550 elden systemd[1]: Shutting down.
+11月 25 20:45:31.364850 elden systemd-shutdown[1]: Syncing filesystems and block devices.
+11月 25 20:45:31.412891 elden systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+11月 25 20:45:31.420024 elden udhcpd[489]: received SIGTERM
+11月 25 20:45:31.422928 elden systemd-journald[547]: Journal stopped

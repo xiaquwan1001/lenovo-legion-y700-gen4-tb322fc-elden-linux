@@ -1,0 +1,7 @@
+make[1]: 进入目录“/tmp/kb-apss-patched”
+  CHKDT   /tmp/apss-wdt-base/Documentation/devicetree/bindings
+  LINT    /tmp/apss-wdt-base/Documentation/devicetree/bindings
+  STYLE   /tmp/apss-wdt-base/Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/watchdog/qcom-wdt.example.dts
+  DTC [C] Documentation/devicetree/bindings/watchdog/qcom-wdt.example.dtb
+make[1]: 离开目录“/tmp/kb-apss-patched”

@@ -1,0 +1,37 @@
+From 91e8236d54aa72333725618224e70c14abe9fee5 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Wed, 25 Nov 2026 20:51:59 +0800
+Subject: [PATCH 2/2] arm64: dts: qcom: sm8750: add APSS watchdog
+
+Add the APSS watchdog timer.  It sits at 0x16410000 in the APSS register
+block, next to the CPuCP mailbox, and is clocked by the 32 kHz always-on
+sleep clock.  The block uses the KPSS register layout, so the driver is
+matched through the qcom,kpss-wdt fallback.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index cf947acc5760..154d9f2111eb 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -6001,6 +6001,14 @@ opp-403000000 {
+ 			};
+ 		};
+ 
++		watchdog@16410000 {
++			compatible = "qcom,apss-wdt-sm8750", "qcom,kpss-wdt";
++			reg = <0x0 0x16410000 0x0 0x1000>;
++			clocks = <&sleep_clk>;
++			interrupts = <GIC_SPI 0 IRQ_TYPE_EDGE_RISING>;
++			status = "okay";
++		};
++
+ 		cpucp_mbox: mailbox@16430000 {
+ 			compatible = "qcom,sm8750-cpucp-mbox", "qcom,x1e80100-cpucp-mbox";
+ 			reg = <0x0 0x16430000 0x0 0x8000>, <0x0 0x17830000 0x0 0x8000>;
+-- 
+2.53.0
+

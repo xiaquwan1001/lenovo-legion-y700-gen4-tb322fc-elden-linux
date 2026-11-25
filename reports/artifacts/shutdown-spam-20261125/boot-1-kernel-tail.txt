@@ -1,0 +1,121 @@
+Warning: Permanently added '192.168.7.1' (ED25519) to the list of known hosts.
+11月 25 20:16:54 elden systemd-journald[537]: Rotating system journal.
+11月 25 20:16:54 elden kernel: bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+11月 25 20:16:54 elden kernel:  cs_system_cfg: CoreSight Configuration manager initialised
+11月 25 20:16:54 elden kernel: coresight cti_sys0: CTI initialized
+11月 25 20:16:54 elden kernel: coresight cti_sys1: CTI initialized
+11月 25 20:16:54 elden kernel: coresight stm0: STM32 initialized
+11月 25 20:16:54 elden kernel: qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: no reserved DMA memory for FASTRPC
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@1: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcomtee: QTEE version 5.2.0
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@1: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@2: SMR mask 0x20 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@2: SMR mask 0x20 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@3: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@3: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@4: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@4: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@5: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@5: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@6: SMR mask 0x20 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@6: SMR mask 0x20 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@7: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@7: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@8: SMR mask 0x20 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@8: SMR mask 0x20 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@12: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@12: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@13: SMR mask 0x20 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@13: SMR mask 0x20 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+11月 25 20:16:54 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@14: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@14: SMR mask 0x40 out of range for SMMU (0x2)
+11月 25 20:16:54 elden kernel: qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: assigned reserved memory node adsp-rpc-remote-heap
+11月 25 20:16:54 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@3: Adding to iommu group 16
+11月 25 20:16:54 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@4: Adding to iommu group 17
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: bound ae94000.dsi (ops dsi_ops)
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: bound ae96000.dsi (ops dsi_ops)
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: bound af54000.displayport-controller (ops msm_dp_display_comp_ops)
+11月 25 20:16:54 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@5: Adding to iommu group 18
+11月 25 20:16:54 elden kernel: adreno 3d00000.gpu: supply vdd not found, using dummy regulator
+11月 25 20:16:54 elden kernel: adreno 3d00000.gpu: supply vddcx not found, using dummy regulator
+11月 25 20:16:54 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@6: Adding to iommu group 19
+11月 25 20:16:54 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@7: Adding to iommu group 20
+11月 25 20:16:54 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@8: Adding to iommu group 21
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: bound 3d00000.gpu (ops a3xx_ops)
+11月 25 20:16:54 elden kernel: [drm:dpu_kms_hw_init:1173] dpu hardware revision:0xc0000000
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: boot framebuffer mapped before SID switch: iova=0x00000000fc800000 size=2b00000 translated=0x00000000fc800000
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: [drm] reserved boot framebuffer IOVA 0xfc800000+0x2b00000
+11月 25 20:16:54 elden kernel: [drm] Initialized msm 1.13.0 for ae01000.display-controller on minor 0
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_sqe.fw from new location
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_gmu.bin from new location
+11月 25 20:16:54 elden kernel: msm_dpu ae01000.display-controller: [drm:adreno_request_fw] loaded qcom/gen80000_aqe.fw from new location
+11月 25 20:16:54 elden kernel: [drm] Loaded GMU firmware v5.1.25
+11月 25 20:16:54 elden kernel: msm_dsi ae94000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+11月 25 20:16:54 elden kernel: msm_dsi ae96000.dsi: timing 1904x3040@165Hz clk=1064606 htot=2068 vtot=3120 -> h_total=336 ha=[32..286] v_total=3120 (bonded=1 dsc=1 wide=1)
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: panel prepared: scheduling firmware upload
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: host-downloading 4 partitions with cascade auto-copy
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: NT36536 identification: engineering reset
+11月 25 20:16:55 elden kernel: Console: switching to colour frame buffer device 119x95
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: trim ID 15 0e 00 23 65 03
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: NT36536 hardware cascade=1 strap=02
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: chip identified: starting firmware download
+11月 25 20:16:55 elden kernel: msm_dpu ae01000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: firmware SRAM transfer complete
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: cascade auto-copy complete
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: firmware boot-ready asserted
+11月 25 20:16:55 elden kernel: novatek-nvt36xxx-spi spi0.0: firmware version 1a.01 event protocol f1 PID 6097
+11月 25 20:16:55 elden kernel: input: ydotoold virtual device as /devices/virtual/input/input8
+11月 25 20:16:55 elden kernel: qcom-soundwire 6ad0000.soundwire: qcom_swrm_irq_handler: SWR bus clsh detected
+11月 25 20:16:56 elden kernel:  MultiMedia2 Playback: ASoC: no backend DAIs enabled for MultiMedia2 Playback, possibly missing ALSA mixer-based routing or UCM profile
+11月 25 20:16:57 elden kernel: rfkill: input handler disabled
+11月 25 20:17:00 elden kernel: pci 0000:01:00.0: [17cb:110e] type 00 class 0x028000 PCIe Endpoint
+11月 25 20:17:00 elden kernel: pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]
+11月 25 20:17:00 elden kernel: pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]
+11月 25 20:17:00 elden kernel: pci 0000:01:00.0: PME# supported from D0 D3hot D3cold
+11月 25 20:17:00 elden kernel: pci 0000:01:00.0: Adding to iommu group 15
+11月 25 20:17:00 elden kernel: pci 0000:01:00.0: ASPM: default states L0s L1
+11月 25 20:17:00 elden kernel: pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+11月 25 20:17:00 elden kernel: pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]: assigned
+11月 25 20:17:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+11月 25 20:17:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: Wi-Fi 7 Hardware name: peach hw2.0
+11月 25 20:17:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: MSI vectors: 32
+11月 25 20:17:00 elden kernel: mhi mhi0: Requested to power ON
+11月 25 20:17:00 elden kernel: mhi mhi0: Power on setup success
+11月 25 20:17:00 elden kernel: mhi mhi0: Wait for device to enter SBL or Mission mode
+11月 25 20:17:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: chip_id 0x2 chip_family 0x4 board_id 0xff soc_id 0x40210200
+11月 25 20:17:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: fw_version 0x100effff fw_build_timestamp 2025-05-29 06:58 fw_build_id QC_IMAGE_VERSION_STRING=WLAN.GNG.1.0-03869-QCAGNGSWPL_V1.0_V2.0_SILICONZ-1.108007.3.112099.4
+11月 25 20:17:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: fw_caps 0xf
+11月 25 20:17:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi TME-L power-on hardware-restricted (stock-compatible, continuing)
+11月 25 20:17:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi AUX_UC request succeeded
+11月 25 20:17:01 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi FW_INIT_DONE received: hang_offset_valid=0 hang_offset=0 hang_length_valid=0 hang_length=0 soft_sku_valid=1 soft_sku=0x1
+11月 25 20:17:04 elden kernel: amba 109ab000.tn: deferred probe pending: (reason unknown)
+11月 25 20:17:04 elden kernel: qnoc-sm8750 interconnect-1: sync_state() pending due to 1dfa000.crypto
+11月 25 20:17:04 elden kernel: qnoc-sm8750 1700000.interconnect: sync_state() pending due to 1dfa000.crypto
+11月 25 20:17:04 elden kernel: gcc-sm8750 100000.clock-controller: sync_state() pending due to 3d37000.gmu
+11月 25 20:17:04 elden kernel: gxclkctl-kaanapali 3d64000.clock-controller: sync_state() pending due to 3d37000.gmu
+11月 25 20:17:04 elden kernel: sm8750-gpucc 3d90000.clock-controller: sync_state() pending due to 3d37000.gmu
+11月 25 20:17:06 elden kernel: wlan0: authenticate with 30:5f:77:13:2d:e0 (local address=02:00:82:b2:f8:3a)
+11月 25 20:17:06 elden kernel: wlan0: send auth to 30:5f:77:13:2d:e0 (try 1/3)
+11月 25 20:17:06 elden kernel: wlan0: authenticated
+11月 25 20:17:06 elden kernel: wlan0: associate with 30:5f:77:13:2d:e0 (try 1/3)
+11月 25 20:17:06 elden kernel: wlan0: RX AssocResp from 30:5f:77:13:2d:e0 (capab=0x8001 status=0 aid=4)
+11月 25 20:17:06 elden kernel: wlan0: associated
+11月 25 20:17:13 elden kernel: input: ydotoold virtual device as /devices/virtual/input/input9
+11月 25 20:17:13 elden kernel: Bluetooth: hci0: QCA Downloading qca/brhbtnv20.bin
+11月 25 20:17:13 elden kernel: Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_DEF
+11月 25 20:17:13 elden kernel: Bluetooth: hci0: QCA setup on UART is completed
+11月 25 20:17:13 elden kernel: Bluetooth: hci0: HFP non-HCI data transport is supported
+11月 25 20:17:13 elden kernel: Bluetooth: MGMT ver 1.23
+11月 25 20:17:13 elden kernel: NET: Registered PF_ALG protocol family
+11月 25 20:18:08 elden kernel: input: ydotoold virtual device as /devices/virtual/input/input10
+11月 25 20:18:20 elden kernel: input: ydotoold virtual device as /devices/virtual/input/input11
+11月 25 20:18:38 elden kernel: input: ydotoold virtual device as /devices/virtual/input/input12
+11月 25 20:18:57 elden kernel: input: ydotoold virtual device as /devices/virtual/input/input13
+11月 25 20:19:09 elden kernel: input: ydotoold virtual device as /devices/virtual/input/input14
+11月 25 20:19:09 elden kernel: rfkill: input handler enabled
+11月 25 20:19:10 elden kernel: wlan0: deauthenticating from 30:5f:77:13:2d:e0 by local choice (Reason: 3=DEAUTH_LEAVING)
+11月 25 20:19:17 elden systemd-shutdown[1]: Syncing filesystems and block devices.
+11月 25 20:19:17 elden systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+11月 25 20:19:17 elden systemd-journald[537]: Received SIGTERM from PID 1 (systemd-shutdow).
