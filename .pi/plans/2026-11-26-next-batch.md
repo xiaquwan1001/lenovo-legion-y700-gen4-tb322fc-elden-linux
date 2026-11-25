@@ -69,3 +69,16 @@
 ## 3. 收尾门
 
 每轮：`check-doctor` FAIL=0 + WARN 归类；产物落 `reports/`+台账回填 TASKS §4.0/§7；工作区 clean；设备回安全态（vk189 在机、充电中、无残留实验内核）。
+
+## 用户回座后三件事（2026-11-26 07:5x 落盘；每件都已备成一条命令）
+
+1. **解锁图形会话（GDM 登录）** —— 一次解锁同时解开三件被 keyring 挡住的活：
+   - IMAP 收件侧复扫（`reports/comm-triage-20261126.md` 里 A/J 行记的是 `KeyringLocked`）
+   - phosh !2005 现查（GitLab API 406 + CAPTCHA，token 在 keyring）
+   - **elden 板 DTS v9 投递**：`cd patches/upstream/elden-dts-v9-20261126 && bash SEND.sh --send`
+     （本地六段断言 + `--dry-run` 3 封 `Result: OK` 已过；发完记 `SENT.md` + lore 复核）
+2. **放行传感器上机**（唯一可能硬崩的步骤，脚本已备）：
+   `bash scripts/deploy-ssc-sensors.sh --from-debian`（装 libssc2/libssc-bin/iio-sensor-proxy 3.9 + udev 规则 + pin/hold；
+   不碰 `hexagonrpcd*`）→ 再跑 `--check` 看 15 项矩阵；回退 `--rollback`。
+   前置建议（非必须）：先把串口/ramoops 取证通道建好，因 `/dev/ttyACM0` 是 USB gadget、硬崩会连证据一起没。
+3. **C2 电源日常化**（需人按键）：电源键短按 = 挂起（s2idle 已闭环），顺带 `cam-mode.sh off` 日常化 + `wifi-scan-refresh` 150→170 s。
