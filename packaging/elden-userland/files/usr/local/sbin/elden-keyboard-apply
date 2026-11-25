@@ -1,0 +1,58 @@
+#!/bin/sh
+# elden-keyboard-apply — 把 /etc/elden-keyboard.conf 的键盘项并进 /etc/environment
+# POSIX sh，幂等：重复执行结果一致；失败非零退出。
+# 用法：elden-keyboard-apply [--check]   (--check 只读，不写任何文件)
+# 须以 root 运行（通常经 pkexec 触发）。
+set -u
+
+CONF=/etc/elden-keyboard.conf
+ENV=/etc/environment
+CHECK=0
+[ "${1:-}" = "--check" ] && CHECK=1
+
+fail() { echo "elden-keyboard-apply: ERROR: $*" >&2; exit 1; }
+
+[ -r "$CONF" ] || fail "cannot read $CONF"
+[ -r "$ENV" ]  || fail "cannot read $ENV"
+
+# 只接受已知白名单键；值过滤掉空白
+parse() {
+    while IFS= read -r line; do
+        case "$line" in
+            ''|\#*) continue ;;
+        esac
+        case "$line" in
+            HAPTIC_MS=*|HAPTIC_MAG=*|HAPTIC_DEV=*)
+                key=${line%%=*}; val=${line#*=}
+                case "$val" in *[!A-Za-z0-9x/]*) fail "bad value for $key: $val" ;; esac
+                # conf 键 HAPTIC_* -> /etc/environment 键 ELDEN_OSK_HAPTIC_*
+                echo "ELDEN_OSK_$key=$val"
+                ;;
+        esac
+    done < "$CONF"
+}
+
+NEW=$(parse) || exit 1
+[ -n "$NEW" ] || fail "no recognized keys in $CONF"
+
+TMP="$ENV.apply.$$"
+if [ "$CHECK" -eq 0 ]; then
+    # 逐键替换已有行，缺失的追加；无则拷贝原文件
+    if ! cp "$ENV" "$TMP"; then fail "cannot write $ENV"; fi
+    echo "$NEW" | while IFS= read -r kv; do
+        k=${kv%%=*}
+        # 先删旧行（按完整环境键名 ELDEN_OSK_*）
+        grep -v "^$k=" "$TMP" > "$TMP.new" && mv "$TMP.new" "$TMP"
+        echo "$kv" >> "$TMP"
+    done
+    if ! chmod 644 "$TMP"; then rm -f "$TMP"; fail "chmod failed"; fi
+    if ! mv "$TMP" "$ENV"; then rm -f "$TMP"; fail "cannot replace $ENV"; fi
+    echo "elden-keyboard-apply: updated $ENV with:"
+    echo "$NEW"
+fi
+# --check 模式：报告将要写入的键值
+if [ "$CHECK" -eq 1 ]; then
+    echo "elden-keyboard-apply --check: would write:"
+    echo "$NEW"
+fi
+exit 0

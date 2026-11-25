@@ -1,0 +1,276 @@
+#!/usr/bin/env python3
+"""键盘设置 (Elden Keyboard Settings) — GTK4 + libadwaita, v1.
+
+范围（仅两项，勿扩张）：
+  1. 震动强度/时长：写 /etc/elden-keyboard.conf 并调用 elden-keyboard-apply
+     把值同步进 /etc/environment（ELDEN_OSK_HAPTIC_{MS,MAG}；DEV 只读展示）。
+  2. 词库引擎切换：gsettings sm.puri.phosh.osk Completers default
+     （rime | pipe | none），实时生效，但换引擎细化参数需重启 osk-stub。
+
+v1 硬约束：不在应用里重启会话 / greetd / phosh。
+"""
+
+import os
+import shutil
+import subprocess
+import sys
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gio, Gtk  # noqa: E402
+
+APP_ID = "org.elden.KeyboardSettings"
+CONF_PATH = "/etc/elden-keyboard.conf"
+APPLY_PATH = "/usr/local/sbin/elden-keyboard-apply"
+
+# 设计文档（.pi/plans/2026-11-25-keyboard-settings-gui.md §1.2）取证：
+# osk-stub 0.46 的 schema id 是 sm.puri.phosh.osk，不是 sm.puri.OSK0。
+# ⚠️ 2026-11-25 设备实测更正：`Completers` 是**独立 schema**（`sm.puri.phosh.osk.Completers`），
+# 用 `gsettings get sm.puri.phosh.osk Completers default` 会只打印用法帮助（schema 不可重定位到子键）
+# ⇒ 必须把 schema id 写成 `sm.puri.phosh.osk.Completers`、键名 `default`。
+GSCHEMA = "sm.puri.phosh.osk.Completers"
+GKEY = "default"
+ENGINES = ["rime", "pipe", "none"]
+ENGINE_LABELS = {"rime": "RIME（拼音词库）", "pipe": "pipe（外部补全器）", "none": "none（无补全）"}
+
+HAPTIC_DEFAULTS = {"HAPTIC_MS": "30", "HAPTIC_MAG": "0x3333"}
+MAG_CHOICES = {"弱 0x2000": "0x2000", "中 0x3333": "0x3333", "强 0x6666": "0x6666"}
+
+
+def read_conf():
+    """读 /etc/elden-keyboard.conf（缺文件用默认值）。"""
+    vals = dict(HAPTIC_DEFAULTS)
+    try:
+        with open(CONF_PATH, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                if k in vals:
+                    vals[k] = v.strip()
+    except OSError:
+        pass
+    return vals
+
+
+def read_dev():
+    """ELDEN_OSK_HAPTIC_DEV 只读展示（来自 conf；不在 v1 可写范围）。"""
+    try:
+        with open(CONF_PATH, "r", encoding="utf-8") as fh:
+            for line in fh:
+                if line.startswith("HAPTIC_DEV="):
+                    return line.partition("=")[2].strip()
+    except OSError:
+        pass
+    return "（未设置，走补丁默认）"
+
+
+def read_engine():
+    """读 gsettings 当前 Completers default；读不到返回 None。"""
+    try:
+        out = subprocess.run(
+            ["gsettings", "get", GSCHEMA, GKEY],
+            check=True, capture_output=True, text=True, timeout=5,
+        ).stdout.strip().strip("'\"")
+        return out if out in ENGINES or out == "" else out
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def set_engine(value):
+    subprocess.run(
+        ["gsettings", "set", GSCHEMA, GKEY, value],
+        check=True, capture_output=True, text=True, timeout=5,
+    )
+
+
+def write_conf(vals):
+    """写 conf 文件：root 直写，否则经 pkexec 提权。返回 (ok, errmsg)。"""
+    lines = [
+        "# /etc/elden-keyboard.conf — 键盘设置（本应用维护）",
+        "# HAPTIC_MS  震动时长（毫秒，十进制，建议 20-60）",
+        "# HAPTIC_MAG 震动幅度（0x2000/0x3333/0x6666 或 0-0xffff）",
+        "# HAPTIC_DEV 马达节点（只读展示，v1 不在此修改；如 /dev/input/event2）",
+        "",
+        f"HAPTIC_MS={vals['HAPTIC_MS']}",
+        f"HAPTIC_MAG={vals['HAPTIC_MAG']}",
+    ]
+    body = "\n".join(lines) + "\n"
+    if os.geteuid() == 0:
+        try:
+            with open(CONF_PATH, "w", encoding="utf-8") as fh:
+                fh.write(body)
+        except OSError as e:
+            return False, f"写 {CONF_PATH} 失败：{e}"
+    else:
+        try:
+            subprocess.run(
+                ["pkexec", "tee", CONF_PATH],
+                input=body, check=True, capture_output=True, text=True, timeout=60,
+            )
+        except FileNotFoundError:
+            return False, "找不到 pkexec，且当前不是 root，无法写入 " + CONF_PATH
+        except subprocess.CalledProcessError as e:
+            return False, f"pkexec 写 {CONF_PATH} 失败（rc={e.returncode}）：{e.stderr.strip()}"
+        except subprocess.SubprocessError as e:
+            return False, f"pkexec 调用失败：{e}"
+    return True, ""
+
+
+def run_apply():
+    """调用 elden-keyboard-apply 把 conf 并进 /etc/environment。"""
+    if not os.path.exists(APPLY_PATH):
+        return False, f"未找到 {APPLY_PATH}（请先安装 apply 脚本）"
+    if os.access(APPLY_PATH, os.X_OK) and _can_write_env():
+        argv = [APPLY_PATH]
+    else:
+        argv = ["pkexec", APPLY_PATH]
+    try:
+        r = subprocess.run(argv, capture_output=True, text=True, timeout=60)
+    except FileNotFoundError:
+        return False, "找不到 pkexec，无法提权执行 apply"
+    except subprocess.SubprocessError as e:
+        return False, f"apply 调用失败：{e}"
+    if r.returncode != 0:
+        return False, f"apply 失败（rc={r.returncode}）：{r.stderr.strip() or r.stdout.strip()}"
+    return True, ""
+
+
+def _can_write_env():
+    try:
+        return os.access("/etc/environment", os.W_OK)
+    except OSError:
+        return False
+
+
+class SettingsWindow(Adw.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="键盘设置", default_width=560)
+        self.set_icon_name("input-keyboard")
+
+        page = Adw.PreferencesPage()
+        self.toast = Adw.ToastOverlay()
+        self.toast.set_child(page)
+        self.set_content(self.toast)
+
+        # ---- 组 1：震动 ----
+        g1 = Adw.PreferencesGroup(title="震动", description="写入 /etc/elden-keyboard.conf，"
+                                  "由 elden-keyboard-apply 同步到 /etc/environment；需重新登录会话生效。")
+        self.conf = read_conf()
+
+        self.ms_row = Adw.EntryRow(title="震动时长（毫秒，建议 20–60）")
+        self.ms_row.set_text(self.conf["HAPTIC_MS"])
+        g1.add(self.ms_row)
+
+        self.mag_row = Adw.ComboRow(title="震动幅度")
+        store = Gtk.StringList.new(list(MAG_CHOICES))
+        self.mag_row.set_model(store)
+        if self.conf["HAPTIC_MAG"] in MAG_CHOICES.values():
+            self.mag_row.set_selected(list(MAG_CHOICES.values()).index(self.conf["HAPTIC_MAG"]))
+        g1.add(self.mag_row)
+
+        dev_row = Adw.ActionRow(title="当前马达节点（只读）")
+        dev_row.add_suffix(Gtk.Label(label=read_dev(), css_classes=["dim-label"]))
+        g1.add(dev_row)
+
+        eff1 = Adw.ActionRow(title="当前生效值（/etc/environment）")
+        self.env_label = Gtk.Label(label=self._probe_env(), css_classes=["dim-label"])
+        eff1.add_suffix(self.env_label)
+        g1.add(eff1)
+
+        btn1 = Gtk.Button(label="应用震动设置", css_classes=["suggested-action"])
+        btn1.connect("clicked", self.on_apply_haptic)
+        g1.add(btn1)
+        page.add(g1)
+
+        # ---- 组 2：输入引擎 ----
+        g2 = Adw.PreferencesGroup(title="输入引擎", description="切换实时生效；"
+                                  "更换引擎细化参数（词库目录/每页候选）后需重启会话才对 osk-stub 生效。")
+        cur = read_engine()
+        self.engine_row = Adw.ComboRow(title="补全引擎")
+        self.engine_row.set_model(Gtk.StringList.new([ENGINE_LABELS[e] for e in ENGINES]))
+        if cur in ENGINES:
+            self.engine_row.set_selected(ENGINES.index(cur))
+        g2.add(self.engine_row)
+
+        eff2 = Adw.ActionRow(title="当前生效值（gsettings）")
+        eff2.add_suffix(Gtk.Label(label=cur or "（读取失败）", css_classes=["dim-label"]))
+        g2.add(eff2)
+
+        warn = Adw.ActionRow(title="提示：改词库/候选数等细化参数后，需重启会话才生效",
+                             css_classes=["warning"])
+        warn.add_suffix(Gtk.Label(label="⚠", css_classes=["dim-label"]))
+        g2.add(warn)
+
+        btn2 = Gtk.Button(label="切换引擎")
+        btn2.connect("clicked", self.on_apply_engine)
+        g2.add(btn2)
+        page.add(g2)
+
+    @staticmethod
+    def _probe_env():
+        try:
+            with open("/etc/environment", "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.startswith("ELDEN_OSK_HAPTIC_MS="):
+                        ms = line.partition("=")[2].strip()
+                        return f"HAPTIC_MS={ms}"
+        except OSError:
+            pass
+        return "（未找到，需先应用并重新登录）"
+
+    def _toast(self, msg, is_err=False):
+        t = Adw.Toast(title=msg, timeout=4)
+        if is_err:
+            t.set_priority(Adw.ToastPriority.HIGH)
+        self.toast.add_toast(t)
+
+    def on_apply_haptic(self, _btn):
+        ms = self.ms_row.get_text().strip()
+        if not (ms.isdigit() and 1 <= int(ms) <= 500):
+            self._toast("时长必须是 1–500 的整数毫秒", True)
+            return
+        vals = {"HAPTIC_MS": ms, "HAPTIC_MAG": list(MAG_CHOICES.values())[self.mag_row.get_selected()]}
+        ok, err = write_conf(vals)
+        if not ok:
+            self._toast(err, True)
+            return
+        ok, err = run_apply()
+        if not ok:
+            self._toast("conf 已写，但同步失败：" + err, True)
+            return
+        self.env_label.set_text(f"HAPTIC_MS={ms}")
+        self._toast("已写入并同步；重新登录后生效")
+
+    def on_apply_engine(self, _btn):
+        engine = ENGINES[self.engine_row.get_selected()]
+        try:
+            set_engine(engine)
+        except (OSError, subprocess.SubprocessError) as e:
+            self._toast(f"切换失败：{e}", True)
+            return
+        self._toast(f"已切换到 {ENGINE_LABELS[engine]}；引擎选择实时生效")
+
+
+class App(Adw.Application):
+    def __init__(self):
+        super().__init__(application_id=APP_ID)
+        self.win = None
+
+    def do_activate(self):
+        self.win = self.props.active_window or SettingsWindow(self)
+        self.win.present()
+
+
+def main():
+    if shutil.which("gsettings") is None:
+        print("错误：找不到 gsettings（请在设备会话内运行）", file=sys.stderr)
+        return 1
+    return App().run(None)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
