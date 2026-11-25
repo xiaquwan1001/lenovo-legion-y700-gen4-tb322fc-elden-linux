@@ -7,4 +7,8 @@
 #       **`build/daily`** —— 在机内核 vk184→vk190 全部出自这棵树（7.3.1 + payload v2，
 #       原指针会让裸跑 build-kernel/iterate 编出另一棵树的核，属 PITFALLS #162 同类静默错树）。
 # 换树时只改这一行（并同步 DEVICE/README 内核树一节）；临时覆盖用 KDIR=。
+# 2026-11-25 重建（磁盘清理后 build/ 曾整体缺失）：worktree @ 4da9a8b69fc8（vk184/vk189 的源头，
+#   UTS 7.3.1-debug-vk189-suspend-g4da9a8b69fc8）+ patches/config-daily-c3-uinput-20261113；
+#   门禁 = check-modular-config.sh 3 PASS、build-kernel.sh Image.gz 编译通过（符号守卫 OK）。
+#   复建命令见 reports/warn-remediation-20261125.md §2。
 build/daily

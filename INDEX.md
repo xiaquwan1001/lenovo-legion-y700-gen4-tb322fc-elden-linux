@@ -8,6 +8,17 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-25）
 
+> **🆕 2026-11-25 夜（放行轮）：板 DTS v8 已投 + WARN 6→3 + 日常线重新可编**：
+> ① **elden 板 DTS `[PATCH v8 0/2]` 已投**（09:13Z，3×250，cover `<20261125091309.124354-1@…>`）：1/2 补 `qcom.yaml`
+> `lenovo,elden`（v7 漏的那行），2/2 = v7 板件原文；**Cc 里带上 Pengyu Luo**（关系声明需他在线程里）。
+> ② **`check-doctor` WARN 6 → 3**（全账 `reports/warn-remediation-20261125.md`）：`posctrl-markspin` 4 件移入
+> `backup/out-history-20261105/retired-uefi-posctrl/`（UEFI 正控载荷、非内核，不删只退出扫描面）、删无版本号
+> `out/boot-elden.img`、**重建 `build/daily`**（worktree @ `4da9a8b69fc8` + `config-daily-c3-uinput-20261113`）
+> ⇒ 模块化门禁 3 PASS、`Image.gz` 真编译通过（21 057 110 B，符号守卫 OK，UTS `7.3.1-debug-vk189-suspend-g4da9a8b69fc8`）。
+> 剩下 3 条 = 源树不可核（断链 sha 已指名，网络取不到 ⇒ 不可复刻）/ vk 账本已登记例外 / 身份表降级一致（前者的连体）。
+> ③ **坑：`PITFALLS #727`** —— partial clone 上查缺失对象会**静默联网回填**，代理链路挂死时表现为「命令永久卡住」；
+> 只读核对一律 `GIT_NO_LAZY_FETCH=1`。
+
 > **🆕 2026-11-25 傍晚（上游面轮）：dwc3 v15 已投 + 全系列重复性核查 + M12 结项**：
 > ① **dwc3 双连接器 `[PATCH v15 0/3]` 已投**（08:12Z，4×250，cover `<20261125081219.3661014-1@mail.ustc.edu.cn>`）：
 > **`linux-usb` 已补进 Cc**（v12–v14 缺的正是它，Greg 11-24 的第二条要求），新线程；1/3–3/3 与 v14

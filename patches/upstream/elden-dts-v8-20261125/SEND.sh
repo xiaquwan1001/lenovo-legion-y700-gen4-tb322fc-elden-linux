@@ -59,24 +59,28 @@ for p in "${PATCHES[@]}"; do
 done
 
 echo "== 5) git send-email --dry-run"
-CMD=(git send-email --dry-run --no-chain-reply-to --thread
+COMMON=(git send-email --confirm=never --no-annotate --no-chain-reply-to --thread
 	--to="$TO" --cc="$CC" --suppress-cc=all --no-signed-off-cc
 	--transfer-encoding=8bit)
-if [ "$SEND" = 1 ]; then
-	echo "  ⚠ 真发模式：去掉 --dry-run 后执行"
-	CMD=("${CMD[@]/--dry-run/}")
-fi
-"${CMD[@]}" "${PATCHES[@]}" 2>&1 | tail -20
-rc=${PIPESTATUS[0]}
-echo "  send-email rc=$rc"
-[ "$rc" = 0 ] || exit "$rc"
+mkdir -p logs
+DRY=logs/dry-run-$(date +%Y%m%d-%H%M%S).txt
+timeout 300 "${COMMON[@]}" --dry-run "${PATCHES[@]}" > "$DRY" 2>&1
+rc=$?
+grep -E '^(To|Cc|Subject|Message-ID|Result):' "$DRY" | sed 's/^/  /' | head -30
+echo "  send-email dry-run rc=$rc（日志 $DRY）"
+[ "$rc" = 0 ] || { echo "❌ dry-run 失败，停了"; tail -15 "$DRY"; exit 1; }
 
-if [ "$SEND" = 1 ]; then
-	echo "== 6) 落投递日志"
-	ts=$(date +%Y%m%d-%H%M%S)
-	{ echo "channel=USTC smtp"; echo "to=$TO"; echo "cc=$CC";
-	  sha256sum "${PATCHES[@]}"; } > "logs/sent-$ts.txt"
-	echo "  写 logs/sent-$ts.txt；lore 归档复核见 README §5"
-else
+if [ "$SEND" = 0 ]; then
 	echo "== 6) dry-run 结束（未发）。放行后：bash SEND.sh --send"
+	exit 0
 fi
+
+echo "== 6) 真发"
+SENT=logs/sent-$(date +%Y%m%d-%H%M%S).txt
+timeout 600 "${COMMON[@]}" "${PATCHES[@]}" > "$SENT" 2>&1
+rc=$?
+grep -E '^(Result|Message-ID):' "$SENT" | sed 's/^/  /'
+echo "  send-email rc=$rc（日志 $SENT）"
+[ "$rc" = 0 ] || exit "$rc"
+sha256sum "${PATCHES[@]}" > "$SENT.sha256"
+echo "→ 发完：① 记 SENT.md（MID + Result + lore 命中）② 更新 TASKS §7 / reports/upstream-status-*"

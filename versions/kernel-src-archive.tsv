@@ -37,6 +37,17 @@
 #        并清空本表（源树在盘时它不该有行）、把 versions/layout.tsv 的两行登记加回去。
 #   （bundle 只含 refs/heads/elden-archive/* 等本地线 140 个 ref；上游 pristine 历史仍需 torvalds remote。）
 #
+#
+# ★2026-11-25 晚：断链 sha 已指名，且做了浅层重建实验（结论 = 不可复刻，维持降级）
+#   · a2795d9c65bd（stable 7.3.1 的父提交）= 可取回：git fetch --depth=1 --filter=tree:0 <stable> <sha>
+#   · 32c6462381ca（v7.2-elden 基座 ba28ec16 的父提交）= gregkh/linux、torvalds/linux、GEEKiDoS/linux
+#     三处都取不到 ⇒ 该对象只存在于当年本地历史，网络无法补齐。
+#   · 实验：新建 327 MB 仓（stable depth=100 + unbundle 140 refs + shallow 边界）后 rev-list --all rc=0，
+#     但 vk-identity 转全量核对立刻报 11 条 src_unreachable/src_missing —— 因为 replay-731 开发线的
+#     分支 ref 从未归档（对象在、ref 不在；硬造 ref = 自己给自己发证明）⇒ 退回原树，保留本表降级。
+#   · 复跑：GIT_NO_LAZY_FETCH=1 git -C geekidos-linux rev-list --all --count（现 rc≠0）
+#           python3 scripts/vk-identity.py --gate（现 0 FAIL） / --check（现「降级一致」）
+#   全账 = reports/warn-remediation-20261125.md
 # 影响面与处理记录：reports/disk-cleanup-20261119-validation-impact.md
 #
 build	image	src_sha
