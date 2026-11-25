@@ -1,6 +1,14 @@
 # Debian 根 ①：accounts-daemon 竞态 + ADSP fastrpc 非安全域（`/dev/fastrpc-adsp`）
 
 > 2026-10-26 23:0x · 零写盘（`fastboot boot` vk177 + 现场改 overlay）· 设备 = U2 `HA2EXB0E`
+>
+> **★口径更正（2026-11-26）：本文件 §0 表末行与 §4 的「SSC svc 400 未在 QRTR 注册」作废。**
+> 该说法只在 hexagonrpcd 未成功 attach 的那次启动里看到，且当轮 `qrtr-tools` 未装、pre hook 判据本身就不可信。
+> 现行事实（实测两次）：① **2026-10-27** `qrtr-lookup` 有 `400 Snapdragon Sensor Core service`、`ssccli --sensor accelerometer` 出真值，
+> `HasAccelerometer=false` 的真因是 **iio-sensor-proxy 3.9 的 SSC 发现没 accel**（`TASKS/sessions/2026-11-02-T1-T22-收口台账.md` T22 ⑩）；
+> ② **2026-11-26** 在 `hexagonrpcd.service` 仍 **masked**、`journalctl -b \| grep -c hexagonrpcd = 0` 的条件下，`qrtr-lookup` 同样有
+> `400 … Snapdragon Sensor Core service` ⇒ **svc 400 的注册不依赖我们的 hexagonrpcd**（`reports/sensor-claim-verify-20261126.md` §2.2）。
+> 因此「传感器要恢复必须先解决 #692」这一因果也被削弱：可先用纯用户态 libssc 验出数。
 
 ## 0. 结论（先数字）
 
@@ -10,7 +18,7 @@
 | `/dev/fastrpc-adsp` | **不存在**（只有 `-adsp-secure`） | **存在** | `ls /dev/fastrpc-*` |
 | `hexagonrpcd` | `failed`（`Could not open FastRPC node`） | **active**（常驻） | `systemctl is-active hexagonrpcd` |
 | `iio-sensor-proxy` | failed/不动 | **active**，`HasAmbientLight=true` | `gdbus introspect … SensorProxy` |
-| 加速度计/陀螺（SSC svc 400） | — | ⬜ **仍未上**（`HasAccelerometer=false`，`qrtr` 里没有 svc 400） | 同上 |
+| 加速度计/陀螺（SSC svc 400） | — | ⬜ **仍未上**（`HasAccelerometer=false`；**★2026-11-26 更正：svc 400 当时已注册，真因是 iio-sensor-proxy 无 accel 发现，见文首更正块**） | 同上 |
 
 ## 1. accounts-daemon：`/run/systemd/seats` 与 logind 的冷起竞态
 
@@ -64,7 +72,7 @@ DT 里两个 fastrpc 节点的属性集不同：
 
 ## 4. 剩余（G1-34 本体，未收口）
 
-- **SSC svc 400 未在 QRTR 注册** ⇒ `HasAccelerometer=false`；`iio-sensor-proxy.pre` 打
+- ~~**SSC svc 400 未在 QRTR 注册** ⇒ `HasAccelerometer=false`~~ **（2026-11-26 作废，见文首更正块：svc 400 实测已注册）**；`iio-sensor-proxy.pre` 打
   `QRTR svc 400 (SSC) not seen after 60s; starting anyway`。
 - 早期日志里有 `Unexpected buffer count: 1f050100`（协议/版本不匹配的候选）与大量
   `Could not open /vendor/etc/sensors/config/*.json`（补了映射后仍在，说明 DSP 请求的文件名不在我们
