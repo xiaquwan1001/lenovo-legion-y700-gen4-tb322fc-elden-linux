@@ -1,0 +1,17 @@
+== 1) 件数 / 代次
+  v9-0000-cover-letter.patch  →  [PATCH v9 0/2] arm64: dts: qcom: sm8750-lenovo-elden: add the Lenovo
+  v9-0001-dt-bindings-arm-qcom-document-the-Lenovo-Legion-Y700.patch  →  [PATCH v9 1/2] dt-bindings: arm: qcom: document the Lenovo Legion
+  v9-0002-arm64-dts-qcom-sm8750-lenovo-elden-add-Lenovo-Legion-Y700-Gen4.patch  →  [PATCH v9 2/2] arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion
+== 2) 与 v8 的 diff 段逐字节相同（v9 只许改文字）
+  1/2 diff 段 cmp 相同（8f1d00e2b9f5cfc4…）
+  2/2 diff 段 cmp 相同（02df60f48c782954…）
+== 3) cover 必含「显式等 binding」段（Krzysztof 2026-11-25 12:03:08Z 要求）
+  cover 六段断言全中 ✅
+  位置：第 12 行（前 30 行内）✅
+== 4) 2/2 changelog 也写了同一件事
+  2/2 'Changes in v9' 含依赖声明 ✅
+== 5) 线程形状（v8/v16 口径 = 新线程）
+  新线程（cover 无 In-Reply-To/References）✅
+== 6) 行宽 / 非 ASCII
+  全部 ≤998 且纯 ASCII ✅
+== 本地检查结束（未发、未连 SMTP）。下一步：--dry-run 或 --send

@@ -1,0 +1,5 @@
+make[1]: 进入目录“/tmp/v9build”
+  CHKDT   /tmp/v9wt/Documentation/devicetree/bindings
+  LINT    /tmp/v9wt/Documentation/devicetree/bindings
+  STYLE   /tmp/v9wt/Documentation/devicetree/bindings
+make[1]: 离开目录“/tmp/v9build”

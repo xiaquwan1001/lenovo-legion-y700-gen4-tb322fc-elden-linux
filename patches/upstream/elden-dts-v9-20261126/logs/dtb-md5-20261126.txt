@@ -1,0 +1,2 @@
+4707d3defd057e70e3aa5216320ac777  arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+ecc158767f04c8facf5fde6735b339da  arch/arm64/boot/dts/qcom/sm8750-mtp.dtb

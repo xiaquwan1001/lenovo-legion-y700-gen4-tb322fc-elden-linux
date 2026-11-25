@@ -1,0 +1,25 @@
+# make -j28 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/v9build dt_binding_check  (全量，无 DT_SCHEMA_FILES)
+# 基线 = build/elden-tree worktree @ aebb727447 (v7.4-rc3) + v9-0001 + v9-0002
+# 跑于 2026-11-26 (UTC 2026-11-25T22:47:13Z)；rc=0
+# 本文件 = 摘要（原始 stdout 881 KB 全是 'DTC [C]' 逐 schema 行，未入库；按下面命令可重放）
+#
+rc=0
+DTC [C] 计数 = 5420
+Error/error:/警告行计数 = 0
+
+== 头部（CHKDT/LINT/STYLE 三联 = yaml 语法+lint+style 全过）==
+make[1]: 进入目录“/tmp/v9build”
+  HOSTCC  scripts/dtc/dtc.o
+  HOSTCC  scripts/dtc/flattree.o
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+
+== 尾部 ==
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,msm8998-bwmon.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,hawi-rpmh.example.dtb
+  DTC [C] Documentation/devicetree/bindings/interconnect/qcom,sdx75-rpmh.example.dtb
+make[1]: 离开目录“/tmp/v9build”
+
+== 与 arm/qcom.yaml 相关（应无输出）==
+（无命中 = 无 error/warn 指向该文件）

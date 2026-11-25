@@ -1,0 +1,17 @@
+# G11: git am 路线（维护者实际取件方式）—— 与 git apply 路线交叉验证
+# worktree = build/elden-tree @ aebb727447 (v7.4-rc3)，2026-11-26
+# 命令: git am --keep-cr v9-0001-*.patch v9-0002-*.patch
+应用：dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4
+应用：arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700 Gen4, a Qualcomm SM8750-based tablet
+# git log --oneline -3
+1a1fe8cdc082 arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700 Gen4, a Qualcomm SM8750-based tablet
+98caf6d4f1c2 dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4
+aebb72744764 Linux 7.4-rc3
+# 提交日期（来自 patch 头，v9 = 2026-11-26 21:00:00 +0800）
+2026-11-26 21:00:00 +0800  (2/2)
+2026-11-26 21:00:00 +0800  (1/2)
+# 落树 blob（= patch index 右值）
+a32cfb30a1 / e0b65a36c5 / 73f4452f46
+# 该树 defconfig 后编译单 dtb: rc=0
+  DTC     arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+# DTB md5 = 4707d3defd057e70e3aa5216320ac777  ← 与 G7（git apply 路线）逐字节相同

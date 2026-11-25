@@ -1,0 +1,3 @@
+total: 0 errors, 0 warnings, 0 checks, 7 lines checked
+
+"[PATCH v9 1/2] dt-bindings: arm: qcom: document the Lenovo Legion" has no obvious style problems and is ready for submission.

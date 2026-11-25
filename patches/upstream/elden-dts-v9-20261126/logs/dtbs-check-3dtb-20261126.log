@@ -1,0 +1,7 @@
+make[1]: 进入目录“/tmp/v9build”
+  UPD     include/config/kernel.release
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-qrd.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb: /soc@0/geniqup@8c0000/i2c@888000/pmic@2f: failed to match any schema with compatible: ['willsemi,wl2868c']
+make[1]: 离开目录“/tmp/v9build”

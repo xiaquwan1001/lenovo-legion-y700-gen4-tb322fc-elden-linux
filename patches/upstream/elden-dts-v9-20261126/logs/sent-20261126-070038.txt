@@ -1,0 +1,5 @@
+v9-0000-cover-letter.patch
+v9-0001-dt-bindings-arm-qcom-document-the-Lenovo-Legion-Y700.patch
+v9-0002-arm64-dts-qcom-sm8750-lenovo-elden-add-Lenovo-Legion-Y700-Gen4.patch
+fatal: could not read Password for 'smtp://xiaqinghuan%40mail.ustc.edu.cn@smtp.ustc.edu.cn:465': 没有那个设备或地址
+credential fill: command returned error: 128

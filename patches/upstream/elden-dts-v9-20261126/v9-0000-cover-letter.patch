@@ -1,0 +1,116 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Thu, 26 Nov 2026 21:00:00 +0800
+Subject: [PATCH v9 0/2] arm64: dts: qcom: sm8750-lenovo-elden: add the Lenovo
+ Legion Y700 Gen4
+
+Adds the device tree for the Lenovo Legion Y700 Gen4 (TB322FC), an SM8750
+tablet, and the board compatible it needs.  The device tree is byte for
+byte the one posted as v7 and v8; v9 changes this letter and the changelog
+of 2/2, nothing else.
+
+Waiting on bindings
+===================
+Stated up front, as requested:
+
+  2/2 waits on willsemi,wl2868c
+    Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+    Landed as 84e67d2ee13f (binding) and 602f57223457 (driver) in
+    regulator.git for-7.5; not in v7.4-rc3, the base of this series.  It
+    appears in mainline with the 7.5 merge window.
+
+  Merge order
+    1/2 (arm/qcom.yaml) has no dependency and can be applied right away.
+    2/2 only after the binding above is in the tree.  Taking 1/2 now and
+    2/2 after 7.5-rc1 is fine with me and needs no repost.
+
+  Cost of taking 2/2 early
+    Measured on v7.4-rc3, not assumed: with the binding applied on top,
+    dtbs_check reports 0 diagnostics for this board; without it, exactly
+    one, from that compatible:
+
+      sm8750-lenovo-elden.dtb: /soc@0/geniqup@8c0000/i2c@888000/pmic@2f:
+      failed to match any schema with compatible: ['willsemi,wl2868c']
+
+The USB Type-C receptacles are not part of this series for the same
+reason: they wait on another binding, which is in review and not merged:
+
+  [PATCH v16 0/3] usb: dwc3: support two connectors sharing one HS data bus
+  https://lore.kernel.org/linux-usb/20261125142309.3265777-1-xiaqinghuan@mail.ustc.edu.cn/
+
+The two patches
+===============
+1/2 documents "lenovo,elden" in the Qualcomm board binding.  Without that
+line dtbs_check rejects the board's root node, so a tree that builds still
+fails validation; it is the line v7 forgot.
+2/2 is the board itself, in one commit as asked in the v6 review:
+compatible, chassis type, the GPIO ranges the boot firmware reserves, the
+board clocks the SM8750 dtsi consumes, and the WL2868C camera PMIC on
+i2c10 with the voltages the stock firmware programs.
+
+Relation to Pengyu Luo's posting
+================================
+The board file was posted by Pengyu Luo in July ("[PATCH v2 0/2] Introduce
+Lenovo Legion Y700 Gen4"), which is at changes-requested with no v3.  We
+agreed on 2026-10-25 that I send it, with him in the loop, so this
+supersedes his v2.  The line in 1/2 is his: say which trailer form is
+wanted and I will add it (Co-developed-by needs his Signed-off-by too).
+
+Not described, not claimed
+==========================
+Wi-Fi/Bluetooth, camera sensors, ADSP sensors, audio, USB Type-C.  Neither
+the SPMI PMICs, the RPMh regulators nor the console are described, so this
+board description boots nothing by itself; that is the v6 comment, still
+true and not addressed here.
+
+Checks: v7.4-rc3 (aebb727447) worktree, 2026-11-26
+==================================================
+- git apply 1/2, 2/2: clean, no offset, no fuzz; resulting blobs equal the
+  patch "index" lines (qcom.yaml a32cfb30a1, Makefile e0b65a36c5, board
+  file 73f4452f46).
+- checkpatch.pl --strict --no-signoff: 1/2 0 errors 0 warnings 0 checks;
+  2/2 0 errors 1 warning 0 checks, the warning being the new-file
+  "does MAINTAINERS need updating?" prompt.
+- dt_binding_check, full tree: rc=0, no lint/style errors (5420 schemas)
+  and no output for arm/qcom.yaml.
+- dtbs_check with CHECK_DTBS=1 on sm8750-lenovo-elden, sm8750-mtp and
+  sm8750-qrd: three builds; diagnostics 1 / 0 / 0, and 0 for the board
+  once the willsemi,wl2868c binding above is applied.
+- No boot claim: the tablet runs a vendor 7.3 kernel and this tree was not
+  booted on it.
+
+Disclosure: prepared with an LLM coding assistant; the trees, the checks
+and every number in this letter were run and read by the author, who is
+responsible for the content.
+
+Qianhui Xu
+---
+Changes since v8
+ (v8: https://lore.kernel.org/all/20261125091309.124354-1-xiaqinghuan@mail.ustc.edu.cn/)
+- The letter now says "this series waits on bindings" explicitly, on its
+  own section, and names them: willsemi,wl2868c, its file, the commits it
+  landed as, which tree, and the merge order for 1/2 and 2/2.  The rest of
+  the letter is cut accordingly (Krzysztof: "should be explicit about
+  waiting on bindings, instead of wall of text").
+- 2/2's changelog says the same thing on the patch itself.
+- 2/2 also answers the two [Medium] notes sashiko posted against v8 2/2:
+  the willsemi,wl2868c schema is the binding above (it arrives with 7.5 and
+  needs nothing from this series), and the absent SPMI PMIC / RPMh
+  regulators / console / storage nodes are the "not described" section of
+  this letter, as in v6 - out of scope here.
+- No diff change: 1/2 is unchanged since v8 and 2/2's diff is
+  byte-identical to v7 and v8 (cmp on the "diff --git" section).
+
+Qianhui Xu (2):
+  dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4
+  arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700 Gen4, a
+    Qualcomm SM8750-based tablet
+
+ .../devicetree/bindings/arm/qcom.yaml         |   1 +
+ arch/arm64/boot/dts/qcom/Makefile             |   1 +
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 129 +++++++++++++
+ 3 files changed, 131 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+
+-- 
+2.53.0
