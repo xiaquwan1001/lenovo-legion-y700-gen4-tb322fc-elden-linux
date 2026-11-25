@@ -156,3 +156,19 @@ make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CHECK_DTBS=1 -j4 \
 | `before-vs-v8.diff` | v7 板文件 → v8 板文件的 unified diff（125 行，2 hunk） |
 | `evidence/` | 8 份门日志 + `checkpatch.txt`（`gate-v8-final-3dtb` / `gate-v8-nov10-*` / `gate-neg-*` / `gate-binding-v8` / `gate-with-{qcomyaml,all-prereq}`） |
 | `SHA256SUMS` | 本目录全部文件的 sha256 |
+
+---
+
+## 6. 投前必补：与 Pengyu Luo v2 的关系（2026-11-25 加，来源 = `reports/dup-check-20261125.md` 附节）
+
+**本目录目前完全没有提到 `[PATCH v2 0/2] Introduce Lenovo Legion Y700 Gen4`（Pengyu Luo，2026-07-26，
+新建的正是同一个文件），这是投前硬缺口** —— 不写会被当成「重复造板件」。
+
+1. **不停投**：对方已于 **2026-10-25** 把板 DTS 归口移交我方（「squash them and send the whole thing your way」），
+   且其 v2 = `changes-requested`、无 v3、未合入（`reports/research-vertical-y700-lineage-20261101.md` §2.4/§5.1）。
+2. **cover 必写三件**：
+   - 本系列 **supersedes** 其 `[PATCH v2 0/2]`（附 lore 链接 + 双方移交共识的表述）；
+   - 继承自他 v2 的事实（NT36536 面板节点、`dsiclk_sel=0` 等）标注 `Co-developed-by: Pengyu Luo <mitltlatltl@gmail.com>`
+     —— 内核要求每个 `Co-developed-by` 有对应 `Signed-off-by`，落文时**逐条注明来源链接**，署名口径以其回复为准；
+   - 我方全功能增量（wl2868c / camss / mdss reset / 触觉 / 背光 / tplg）单列一句话，避免「骨架 vs 全功能」误读。
+3. 未查项：其 v2 在 Konrad 队列的**末态**（withdrawn / 仍排队）。判据 = lore 线程末条，**不用 patchwork `state`**（`PITFALLS #724`）。
