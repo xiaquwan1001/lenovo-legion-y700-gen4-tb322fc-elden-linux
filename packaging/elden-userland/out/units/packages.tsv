@@ -1,4 +1,6 @@
 # 包自带 unit（我们**不**渲染，迁移后只需确认已安装 + enable）
 # name<TAB>exec<TAB>desc
+iio-sensor-proxy	/usr/libexec/iio-sensor-proxy	iio-sensor-proxy (patched: waits for QRTR svc 400 = SSC)。**2026-11-25 改回 package**：我们的渲染不支持 `Type=dbus`+`BusName=`，而该 daemon 无传感器时**正常退出 0** ⇒ 用 Type=simple 会把「正常退出」变无限重启；发行版 unit 是 dbus 激活、行为正确。`hooks/iio-sensor-proxy.pre`（等 QRTR svc 400）**暂挂**，等 render 支持 dbus 类型 + `PITFALLS #692`（hexagonrpcd masked）解决后再接回
+qbootctl	/usr/bin/qbootctl	Mark the current A/B slot successful (PITFALLS #181: without it, ~7 reboots end in fastboot)。**2026-11-25 改回 package**：设备实际跑发行版 unit（`ExecStart=/usr/bin/qbootctl -m`，依赖 cmdline suffix）；我们自己的 `/usr/local/sbin/qbootctl-mark.sh` 从未部署、且语义已被 `ab-mark-successful`（active 槽 + 读回校验 + 交叉校验）覆盖 ⇒ 不再渲染 override，避免「渲染件与设备永远不一致」的假红。
 hexagonrpcd-adsp-sensorspd	/usr/bin/hexagonrpcd-adsp-sensorspd	ADSP sensorspd service (QRTR svc 400) — package-provided
 waydroid-container	/usr/bin/waydroid	Waydroid container manager — package-provided
