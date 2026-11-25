@@ -90,10 +90,33 @@ fi
 
 # ------------------------------------------------------------------ C1 screen-keyboard-enabled
 SKE=$(as_user "gsettings get org.gnome.desktop.a11y.applications screen-keyboard-enabled" 2>/dev/null | tr -d "'")
-if [ "$SKE" = true ]; then ok "C1 screen-keyboard-enabled=true"
-elif [ "$MODE" = check ]; then no "C1 screen-keyboard-enabled=${SKE:-查不到}（false ⇒ osk-stub 收到 activate 也不弹，phosh-osk-stub.c:221-238）"
-else as_user "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled true" >/dev/null \
-	&& fix "C1 已设 screen-keyboard-enabled=true"; fi
+# 2026-11-25：只写 dconf 用户库不够 —— 2026-11-24 设过 true，**断电重启后回落到 false**（键盘又不弹）。
+# 改用 system-db + lock 钉死（dconf 的 key 锁 ⇒ 任何会话都改不动），且可跨重启。
+LOCKF=/etc/dconf/db/local.d/locks/00-elden-ime
+SYSF=/etc/dconf/db/local.d/00-elden-ime
+locked=no
+S "grep -qs screen-keyboard-enabled $LOCKF && test -f /etc/dconf/db/local && echo yes || echo no" 12 >/tmp/.c1lock 2>/dev/null
+[ "$(cat /tmp/.c1lock 2>/dev/null)" = yes ] && locked=yes
+if [ "$SKE" = true ] && [ "$locked" = yes ]; then ok "C1 screen-keyboard-enabled=true（system-db 已锁）"
+elif [ "$MODE" = check ]; then no "C1 screen-keyboard-enabled=${SKE:-查不到} lock=${locked}（false 或没锁 ⇒ osk-stub 收到 activate 也不弹 / 重启就回落，phosh-osk-stub.c:221-238）"
+else
+	S --stdin 90 <<EOS
+set -u
+mkdir -p /etc/dconf/db/local.d/locks /etc/dconf/profile
+grep -qs '^system-db:local' /etc/dconf/profile/user || printf 'user-db:user\nsystem-db:local\n' >> /etc/dconf/profile/user
+cat > $SYSF <<'D'
+[org/gnome/desktop/a11y/applications]
+screen-keyboard-enabled=true
+D
+cat > $LOCKF <<'L'
+/org/gnome/desktop/a11y/applications/screen-keyboard-enabled
+L
+command -v dconf >/dev/null 2>&1 || apt-get install -y --no-install-recommends dconf-cli >/dev/null 2>&1 || true
+dconf update >/dev/null 2>&1 || true
+EOS
+	as_user "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled true" >/dev/null 2>&1 || true
+	fix "C1 已用 system-db+lock 钉住 screen-keyboard-enabled=true（dconf-cli 缺失时自动装）"
+fi
 
 # ------------------------------------------------------------------ C2 候选后端 = rime
 COMP=$(as_user "gsettings get sm.puri.phosh.osk.Completers default" 2>/dev/null | tr -d "'")
@@ -204,6 +227,24 @@ elif [ "$MODE" = check ]; then
 	no "C8 每键震动缺失（二进制钩子字符串=${HAPBIN:-?} /etc/environment 行=${HAPENV:-?} event2=${HAPDEV:-?}）⇒ 重编 osk-stub 时漏了 haptic 0001；重编按 patches-userland/zh-ime-rime-20261123/BUILD.md 全乘"
 else
 	warn "C8 每键震动缺失：需按 BUILD.md 重编（脚本不自动重编）"
+fi
+
+# ------------------------------------------------------------------ C9 候选条可翻页（RIME page_size）
+# 2026-11-25：候选条改成 GtkScrolledWindow + ‹ › 翻页（0006 patch），但每页候选数由 RIME 的
+# `menu/page_size` 决定（默认 5 ⇒ 「固定 5 个、剩下的看不到」）。用户级 custom 文件把它抬到 20。
+PSF=/home/$U/.local/share/rime/default.custom.yaml
+PS=$(cnt "grep -s 'menu/page_size' $PSF | head -1")
+if echo "${PS:-}" | grep -qE 'page_size:\s*([1-9][0-9]|[6-9])\b'; then
+	ok "C9 RIME 每页候选数已抬（$PSF: $PS）"
+elif [ "$MODE" = check ]; then
+	no "C9 候选每页仍是默认 5（${PS:-缺 $PSF}）⇒ 候选条翻页按钮只能翻出 5 个一组；写 menu/page_size: 20"
+else
+	S --stdin 40 <<EOS
+install -d -o $U -g ${G:-$U} /home/$U/.local/share/rime
+printf 'patch:\n  menu/page_size: 20\n' > $PSF
+chown $U:${G:-$U} $PSF
+EOS
+	fix "C9 已写 $PSF（menu/page_size: 20；osk-stub 下次启动生效）"
 fi
 
 echo

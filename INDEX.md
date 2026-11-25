@@ -8,6 +8,20 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-24）
 
+> **🆕 2026-11-25 上午（断电续轮）：三件收口 + 两条定性**：
+> ① **候选条可翻页**：`0006-osk-stub-completion-bar-paging.patch`（`GtkScrolledWindow` + 最小按钮宽 + `‹ ›` 翻页）+ RIME
+> `menu/page_size: 20`（`~/.local/share/rime/default.custom.yaml`）⇒ 设备实测点 `›` 候选翻页（中/种/周/重/仲 → 州/众/钟/锺/忠）；
+> 判据 `ime-single-stack.sh` C9。
+> ② **`screen-keyboard-enabled` 断电后回落 false（键盘又不弹）⇒ 改用 dconf `system-db` + key lock 钉死**（需 `dconf-cli`；
+> 现在 `gsettings set … false` 报「键不可写」）；`ime-single-stack.sh` C1 同时判锁。
+> ③ **「Firefox 崩溃」定性 = 合成器/会话先死**：崩溃注解 `Error reading events from display: 断开的管道`（EPIPE），
+> `journalctl -b -1` 见 23:27:00 `greetd: session closed` ⇒ 强相关 = 同会话反复 `pkill -x phosh-osk-stub`
+> （`sm.puri.OSK0` 是 `phosh.session` 的 RequiredComponents）。纪律：同会话 pkill ≤1 次，要多次迭代就 `systemctl restart greetd`。
+> 全账 `reports/firefox-crash-20261125.md`、`PITFALLS #716`。
+> ④ **发热首轮受控基线**：空载 cpuss 39.9–40.3 °C / Firefox 静置 39.2–44.2 °C / 重度交互窗 54–59 °C；调频正常（95% 时间 556 MHz）、
+> 无限流、无失控进程 ⇒ 目前是**负载相关**；三条待验假设与采样协议 = `reports/thermal-baseline-20261125.md`（`TASKS` D11）。
+> ⑤ 侧滑返回手势 lane 已重派（上一轮子代理被断电打断）。
+
 > **🆕 2026-11-24 22:xx 二轮设备窗（用户报「输入法键盘无法唤起」；已修好并收敛成单栈）**：
 > 真因两条（`PITFALLS #716`）——① **`org.gnome.desktop.a11y.applications screen-keyboard-enabled=false`**（11-19 重建根的默认值）
 > ⇒ `phosh-osk-stub.c:221-238` 无条件 `visible=FALSE`，收到 `zwp_input_method_v2.activate` 也不弹；

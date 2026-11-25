@@ -1,0 +1,155 @@
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH] osk-stub: make the completion bar scrollable with page buttons
+
+---
+The completion bar packed all completions into a homogeneous GtkBox, so
+candidates got an equal share of the screen width (long ones ellipsized);
+page too long candidates were simply unreachable on a touch-only phone.
+
+Wrap the buttons in a horizontally scrollable GtkScrolledWindow with a
+minimum button width, and add prev/next page buttons that shift the
+adjustment by one viewport. Page size stays a completer property; the Rime
+completer raises its own limit so a page holds more than a handful.
+---
+--- a/src/ui/completion-bar.ui
++++ b/src/ui/completion-bar.ui
+@@ -3,7 +3,20 @@
+   <requires lib="gtk+" version="3.20"/>
+   <template class="PosCompletionBar" parent="GtkBox">
+     <property name="visible">1</property>
+-    <property name="height-request">32</property>
++    <property name="height-request">40</property>
++    <child>
++      <object class="GtkButton" id="page_prev">
++        <property name="visible">1</property>
++        <property name="halign">start</property>
++        <property name="relief">none</property>
++        <child>
++          <object class="GtkImage">
++            <property name="visible">1</property>
++            <property name="icon-name">go-previous-symbolic</property>
++          </object>
++        </child>
++      </object>
++    </child>
+     <child>
+       <object class="GtkButton">
+         <property name="visible">1</property>
+@@ -18,10 +31,36 @@
+       </object>
+     </child>
+     <child>
+-      <object class="GtkBox" id="buttons">
++      <object class="GtkScrolledWindow" id="scrolled">
+         <property name="visible">1</property>
+         <property name="hexpand">1</property>
+-        <property name="homogeneous">1</property>
++        <property name="vexpand">0</property>
++        <property name="hscrollbar-policy">external</property>
++        <property name="vscrollbar-policy">never</property>
++        <property name="kinetic-scrolling">1</property>
++        <property name="overlay-scrolling">1</property>
++        <property name="propagate-natural-height">1</property>
++        <child>
++          <object class="GtkBox" id="buttons">
++            <property name="visible">1</property>
++            <property name="hexpand">1</property>
++            <property name="spacing">6</property>
++            <property name="homogeneous">0</property>
++          </object>
++        </child>
++      </object>
++    </child>
++    <child>
++      <object class="GtkButton" id="page_next">
++        <property name="visible">1</property>
++        <property name="halign">end</property>
++        <property name="relief">none</property>
++        <child>
++          <object class="GtkImage">
++            <property name="visible">1</property>
++            <property name="icon-name">go-next-symbolic</property>
++          </object>
++        </child>
+       </object>
+     </child>
+   </template>
+--- a/src/pos-completion-bar.c
++++ b/src/pos-completion-bar.c
+@@ -28,6 +28,9 @@
+   GtkBox                parent;
+ 
+   GtkWidget            *buttons;
++  GtkWidget            *scrolled;
++  GtkWidget            *page_prev;
++  GtkWidget            *page_next;
+ };
+ G_DEFINE_TYPE (PosCompletionBar, pos_completion_bar, GTK_TYPE_BOX)
+ 
+@@ -48,15 +51,42 @@
+   gtk_widget_class_set_template_from_resource (widget_class,
+                                                "/mobi/phosh/osk-stub/ui/completion-bar.ui");
+   gtk_widget_class_bind_template_child (widget_class, PosCompletionBar, buttons);
++  gtk_widget_class_bind_template_child (widget_class, PosCompletionBar, scrolled);
++  gtk_widget_class_bind_template_child (widget_class, PosCompletionBar, page_prev);
++  gtk_widget_class_bind_template_child (widget_class, PosCompletionBar, page_next);
+ 
+   gtk_widget_class_set_css_name (widget_class, "pos-completion-bar");
+ }
+ 
+ 
++/* 一页 = 视口宽度；触摸端不靠拖拽（layer surface 上拖拽易被合成器吞掉），
++   改成左右两颗翻页按钮，确定性更好，也让「候选很多时」可点到达。 */
++static void
++on_page_clicked (GtkButton *btn, PosCompletionBar *self)
++{
++  GtkAdjustment *adj;
++  gdouble step;
++  gboolean forward;
++
++  adj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (self->scrolled));
++  if (adj == NULL)
++    return;
++
++  forward = (GTK_WIDGET (btn) == self->page_next);
++  step = gtk_adjustment_get_page_size (adj);
++
++  gtk_adjustment_set_value (adj,
++                            gtk_adjustment_get_value (adj) + (forward ? step : -step));
++}
++
++
+ static void
+ pos_completion_bar_init (PosCompletionBar *self)
+ {
+   gtk_widget_init_template (GTK_WIDGET (self));
++
++  g_signal_connect (self->page_prev, "clicked", G_CALLBACK (on_page_clicked), self);
++  g_signal_connect (self->page_next, "clicked", G_CALLBACK (on_page_clicked), self);
+ }
+ 
+ 
+@@ -100,9 +130,12 @@
+                         "ellipsize", PANGO_ELLIPSIZE_MIDDLE,
+                         "visible", TRUE,
+                         NULL);
++    /* 候选条现在是横向可滑动的：给每颗按钮一个最小宽度，否则非 homogeneous
++     * 布局下会被 Gtk+ 压成等分宽度、长候选被省略号吃掉。 */
+     btn = g_object_new (GTK_TYPE_BUTTON,
+                         "child", lbl,
+                         "visible", TRUE,
++                        "width-request", 96,
+                         NULL);
+     g_object_set_data_full (G_OBJECT (btn), "pos-text", g_strdup (completions[i]), g_free);
+ 
+--- a/src/completers/pos-completer-rime.c
++++ b/src/completers/pos-completer-rime.c
+@@ -348,7 +348,7 @@
+ 
+   self->preedit = g_string_new (NULL);
+   self->name = "rime";
+-  self->limit = 9;
++  self->limit = 20;
+   self->settings = g_settings_new ("sm.puri.phosh.osk.Completers.Rime");
+ 
+   self->api = rime_get_api ();
