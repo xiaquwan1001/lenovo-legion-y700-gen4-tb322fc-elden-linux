@@ -28,6 +28,7 @@
 - **构建抢槽位**：开编前 `build-slot take y700-elden:<任务> --jobs N`、收工 `build-slot drop`（预算/口径 = 全局规则 17，本文件不重写）。
 - **上机先过 QEMU**：凡是要烧设备/人肉看屏/`fastboot` 的验证，先写一条 QEMU 对照（`scripts/qemu-full-chain-smoke.sh`，单轮 ~35 s），
   QEMU 判不了的面（真外设、EFI-stub 差异、电源域）显式写「需上机」。调研结论 = `reports/qemu-usage-survey-20261112.md`（`-M virt,acpi=off`、`ramfb` 能出字、`virtio-gpu` 不能）。
+- **能力缺口默认上游化（2026-11-25 用户定）**：上游缺能力/驱动/控制链/接口时（范例 = 数据线 SDP 只 100 mA，mainline 无 charger 控制链），默认动作 = 查上游是否已有人在做 + 按 `TASKS/README.md` §7 口径**尝试提 PR/MR/issue**（内核邮件系列 / GitLab MR / GitHub PR），并把「缺口」写成台账待办行；本机规避只作「上游未合入前的临时手段」与之并列记录，不得用规避替代立项。投递仍按 §7 逐次批准，立项/备料/门禁/文本起草不等放行。
 - **上游发信（2026-10-31 用户授权，已实测一次）**：**允许 agent 代写回信/cover**（含回应维护者「not with LLM」那类线程），**前提三件**：
   ① 开头如实披露 AI 辅助（作者本人校对；内容/测量/决定归作者）；② 每条论断附可复现证据（引用 + 命令/数据）；③ 逐条回应 reviewer 意见，不遗漏、不说套话。
   投递仍按 `TASKS/README.md` §7「按系列逐次批准」；范例 = `out/mail-20261031/{re-krzysztof-wl2868c.txt,claims.tsv,self-review.md}`（Sent[207]）。
