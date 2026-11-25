@@ -62,10 +62,25 @@ warn() { printf '[%s] WARN %s\n' "$TAG" "$*" >&2; }
 die()  { printf '[%s] FAIL %s\n' "$TAG" "$*" >&2; exit "${2:-1}"; }
 
 # ---- 槽位判据：active 槽（ABL 权威），回退 cmdline，最后回退 b ----
+# 2026-11-25 加固：开机早期 `qbootctl -a` 可能给出**与 cmdline 矛盾**的答案（实测读到 _a 而实际在 _b，
+# 见 D17）。槽位判错会去标「另一个槽」的 SUCCESSFUL 位，比不标危险 ⇒ 这里做三件事：
+#   ① 连续读 2 次要求一致（去掉瞬时错读）；② 与 cmdline 交叉校验；③ 矛盾时不写、只报警。
+cur_slot_cmdline() {
+	[ -r "$CMDLINE" ] || return 0
+	sed -n 's/.*androidboot\.slot_suffix=_\?\([ab]\).*/\1/p' "$CMDLINE" 2>/dev/null | head -1
+}
 cur_slot() {
-	_s=$($QBOOTCTL -a 2>/dev/null | sed -n 's/.*_\([ab]\)[[:space:]]*$/\1/p' | head -1)
-	if [ -z "$_s" ] && [ -r "$CMDLINE" ]; then
-		_s=$(sed -n 's/.*androidboot\.slot_suffix=_\?\([ab]\).*/\1/p' "$CMDLINE" 2>/dev/null | head -1)
+	_prev= _s=
+	_i=0
+	while [ "$_i" -lt 3 ]; do
+		_s=$($QBOOTCTL -a 2>/dev/null | sed -n 's/.*_\([ab]\)[[:space:]]*$/\1/p' | head -1)
+		[ -n "$_s" ] && [ "$_s" = "$_prev" ] && break
+		_prev=$_s
+		_i=$((_i + 1))
+		[ "$_i" -lt 3 ] && sleep 2
+	done
+	if [ -z "$_s" ]; then
+		_s=$(cur_slot_cmdline)
 	fi
 	[ -n "$_s" ] || _s=b
 	printf '%s' "$_s"
@@ -99,7 +114,13 @@ do_mark_once() {
 	command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ] || warn "不在 systemd 下运行（仅提示）"
 
 	s=$(cur_slot)
-	say "active 槽 = _$s（判据: $QBOOTCTL -a，回退 $CMDLINE，末位回退 b）"
+	_clslot=$(cur_slot_cmdline)
+	say "active 槽 = _$s（判据: $QBOOTCTL -a，回退 $CMDLINE，末位回退 b；cmdline 说 _${_clslot}）"
+	if [ -n "${_clslot}" ] && [ "${_clslot}" != "$s" ]; then
+		# 宁可这一次不置位（下一轮启动会再试），也不要标错槽 —— 标错槽 = 把坏槽标成 good。
+		warn "槽位判据自相矛盾（qbootctl -a = _$s，cmdline = _${_clslot}）⇒ **本次不写**，请查 GPT 槽属性/qbootctl（D17）"
+		return 0
+	fi
 
 	wait_partlabel "$s" || warn "10 s 内没等到 /dev/disk/by-partlabel/boot_$s（分区表/udev 异常）"
 
