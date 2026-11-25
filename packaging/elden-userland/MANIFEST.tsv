@@ -79,6 +79,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/elden-bootlog.sh	script	43051f7e650dcd29c0332ad0aa66a78c6896157e3767611dac6118a36b78dea4	727	755	files/usr/local/sbin/elden-bootlog.sh
 /usr/local/sbin/gunyah-modprobe.sh	script	6917db43c83d4fd5605f5deaa74ec3c42b5955437df881c6a868ce62dd20c40e	822	755	files/usr/local/sbin/gunyah-modprobe.sh
 /usr/local/sbin/qbootctl-mark.sh	script	f414483acbb7f4e2d57a64b5645cfee63ae9771bfef0123c99380c5519a3663f	2705	755	files/usr/local/sbin/qbootctl-mark.sh
+/etc/systemd/system/qbootctl.service.d/override.conf	systemd-unit	0a1acab3075b04350b66b8fffcfdf4707218ddf4a65b8c5b379fa68f645983c9	674	644	files/etc/systemd/system/qbootctl.service.d/override.conf
 /usr/local/bin/elden-pinyin-completer	script	d7392e918163692d034f9451ebff3504ae544a9a571ba6330112f5472e3c4cec	8938	755	files/usr/local/bin/elden-pinyin-completer
 /usr/share/elden-pinyin/shards/a.json	data	065b56eeabdb422fbb4bd5aeddbfaa08cfd194da9b6ea4df065e97050fac5f84	31552	644	files/usr/share/elden-pinyin/shards/a.json
 /usr/share/elden-pinyin/shards/b.json	data	bb0c459911d2f776024ab46fad9bf7f4095d8af350c6880a875c9cb63de56b6b	135360	644	files/usr/share/elden-pinyin/shards/b.json
