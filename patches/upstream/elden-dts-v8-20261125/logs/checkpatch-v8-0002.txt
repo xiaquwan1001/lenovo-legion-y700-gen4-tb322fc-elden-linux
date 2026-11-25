@@ -1,0 +1,13 @@
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+#45: 
+new file mode 100644
+
+total: 0 errors, 1 warnings, 0 checks, 136 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+"[PATCH v8 2/2] arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion" has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
