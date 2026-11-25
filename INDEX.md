@@ -24,6 +24,11 @@
 > the USB input current limit` 被 Sebastian Reichel **2026-11-08 收录为 `be5e7367bceb`**（30 行，与我方 `0001` 语义逐条相同）
 > ⇒ 我方系列作废（`patches/upstream/charger-icl-20261125/` 标 ⛔、`SEND.sh` exit 99），**只留作本机 backport 参考**
 > （`upstream-be5e7367bceb.patch`）；本机 A/B 判据与脚本（`probes/m12-icl-ab.sh` / `-upstream.sh`）保留可复用。
+> **★ 同晚上机复核：上游件与 Venkat v2 都已实测通过** —— 零写盘 `fastboot boot` 三发（`out/m12-upstream-20261125/`），
+> 写 900000↔500000 回读一致、`unknown message`=0、`usb_type` 门放行；顺带把 `Tested-by` 回给 Venkat
+> （`out/mail-20261125/re-venkat-battmgr-v2.txt`，08:14Z 投出，lore 摄取未到）。
+> 同轮取证更正：`usb_type=Unknown [SDP] …` 的现场值是 **SDP**（方括号里才是当前值）⇒ 「ADSP 判 Unknown」作废，
+> 见 `reports/m12-upstream-test-20261125.md` + `PITFALLS #726`。
 > 教训 = `PITFALLS #724`（查缺口必须查维护者树）· 工具事实 = `PITFALLS #725`（checkpatch 喂 stdin，别传文件路径）。
 
 > **🆕 2026-11-25 上午（断电续轮）：三件收口 + 两条定性**：

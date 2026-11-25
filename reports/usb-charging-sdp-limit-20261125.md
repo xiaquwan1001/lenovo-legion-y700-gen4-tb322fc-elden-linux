@@ -2,6 +2,11 @@
 
 > 触发：用户观察到「数据线连接时没有拿到保底 500 mA 的充电标志」。本轮实测复现并定因。
 > 设备：TB322FC / 在机 `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0` / `/`=`/dev/sda17`。
+>
+> **⚠ 2026-11-25 晚更正（`PITFALLS #726`，`reports/m12-upstream-test-20261125.md` §4）**：本文件与
+> `usb-charging-sdp-limit` 里「ADSP 把非 PD 源判成 `usb_type=Unknown`」这句**作废** —— sysfs 的
+> `Unknown [SDP] DCP …` 是「可用集 + 方括号里的当前值」，现场值其实是 **`SDP`**。
+> 保留的结论：「SDP 下固件默认 `input_current_limit=100000` ⇒ 必须显式抬限」，且 mainline 原本无写路径。
 
 ## 0. 一句话结论
 
