@@ -1,0 +1,24 @@
+#!/bin/sh
+# osk-keysound — 屏上键盘的「按键声音」（osk-stub `sound/0002` 钩子每条按键调它一次）。
+#
+# 设计取舍：
+#   * 用**系统已有**的音效（`/usr/share/sounds/gnome/default/alerts/click.ogg`），不往仓库塞二进制音频；
+#   * `pw-play`（PipeWire）优先、`paplay` 兜底 —— 两者都在设备上；都没有就静默退出（不影响打字）；
+#   * 音量 0-100 由 `ELDEN_OSK_SOUND_VOL` 给（设置 GUI 的旋钮），换算成播放器的 volume 参数；
+#   * 所有失败一律 exit 0：按键声音永远不能拖慢/打断打字。
+set -u
+VOL=${ELDEN_OSK_SOUND_VOL:-60}
+SND=${ELDEN_OSK_SOUND_FILE:-/usr/share/sounds/gnome/default/alerts/click.ogg}
+case "$VOL" in ''|*[!0-9]*) VOL=60 ;; esac
+[ "$VOL" -gt 100 ] && VOL=100
+[ -r "$SND" ] || exit 0
+case "$VOL" in
+	100) FRAC=1.0 ;;
+	*)   FRAC=$(printf '0.%02d' "$VOL") ;;
+esac
+if command -v pw-play >/dev/null 2>&1; then
+	exec pw-play --volume "$FRAC" "$SND" >/dev/null 2>&1 || exit 0
+elif command -v paplay >/dev/null 2>&1; then
+	exec paplay --volume="$((VOL * 655))" "$SND" >/dev/null 2>&1 || exit 0
+fi
+exit 0
