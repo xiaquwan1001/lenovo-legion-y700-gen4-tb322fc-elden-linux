@@ -28,3 +28,11 @@ systemctl reboot --reboot-argument=bootloader     # 正确形态
 
 - 一律用 `systemctl reboot --reboot-argument=bootloader`（systemd <257 再回退位置参数）。
 - 上机前先跑设备侧脚本的 `--dry-run` 看它到底要发什么，别只信注释。
+
+## 附：`fastboot boot` 测试核的「只背光」现象（2026-11-25 实测）
+
+G7 线测试核（`7.4.0-rc3-g7a-dwc3v11-reset-20261123-dirty`）经 `fastboot boot` 起机后，
+**有一次只亮背光、屏上无画面**（phoc 未出图），而 SSH（USB 192.168.7.1）正常。
+⇒ 纪律：**`fastboot boot` 只用于短测，测完立刻 `systemctl reboot` 回正常槽**；不要在测试核上
+停留做长采样（本轮就因为在那颗核上采样被中断而让屏停在背光）。
+`systemctl reboot` 后回到 vk189，`phoc/phosh` 正常、锁屏可见（截图取证）。

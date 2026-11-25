@@ -1,47 +1,36 @@
-From 8359c69d3262aeeb044f989808b740cd1aa148b4 Mon Sep 17 00:00:00 2001
-From: Y700 Elden Lane <kernel@local>
-Date: Wed, 25 Nov 2026 13:03:05 +0800
-Subject: [PATCH] power: supply: qcom_battmgr: allow writing
- INPUT_CURRENT_LIMIT on the USB supply
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH v2] power: supply: qcom_battmgr: allow writing USB input current limit
 
 The Battery Management (battmgr) service on SM8350 and later platforms
 advertises a USB input current limit property (BATTMGR property
 USB_INPUT_CURR_LIMIT, id 5), and the driver already reads and caches it
 through BATTMGR_USB_PROPERTY_GET.  The corresponding write opcode,
 BATTMGR_USB_PROPERTY_SET (0x33), is defined in the driver but has never
-been wired up, so userspace can only read the limit that the firmware
-reports.
+been wired up, so userspace can only read the limit the firmware reports.
 
-On these platforms the ADSP/firmware boots with the USB input current
-limit clamped to a very conservative default (reported as 100 mA on
-several devices).  Until the USB stack negotiates a higher budget the
-firmware throttles charging to that value, which means slow charging
-and, on battery-only operation, a device that discharges faster than it
-charges.  Userspace (e.g. upower or thermal/USB-PD policy daemons)
-needs a way to raise the limit to match what the attached adapter
-actually supplies.
+On these platforms the firmware boots with the USB input current limit
+clamped to a very conservative default (reported as 100 mA on several
+devices) until the USB stack negotiates a higher budget.  Userspace (e.g.
+upower or a thermal/USB-PD policy daemon) needs a way to raise the limit
+to match what the attached adapter actually supplies.
 
 Add a set_property callback for the sm8350 USB power supply that sends
 BATTMGR_USB_PROPERTY_SET with property USB_INPUT_CURR_LIMIT, using the
-existing qcom_battmgr_request_property() helper and the property
-request message that is already used for the battery charge-control
-thresholds.  The requested value is clamped to the range
-[USB_INPUT_CURR_LIMIT_MIN, current_max] before it is sent, with a
+existing qcom_battmgr_request_property() helper.  The requested value is
+clamped to [500 mA, max(current_max, 900 mA)] before it is sent, with the
 conservative 900 mA fallback when the firmware has not reported
-CURRENT_MAX yet, because the ADSP rejects out-of-range requests and the
-firmware error code is the only feedback.  Errors from the firmware are
-propagated to the caller instead of being silently dropped.
+CURRENT_MAX yet, because the ADSP rejects out-of-range requests.  Errors
+from the firmware are propagated to the caller instead of being silently
+dropped, and the acknowledgement of BATTMGR_USB_PROPERTY_SET is handled
+so it no longer shows up as "unknown message".
 
-The sc8280xp variant of the USB supply does not expose
-INPUT_CURRENT_LIMIT at all, so it is left untouched.
+Tested on a Lenovo Legion Y700 Gen4 (SM8750): the request is acknowledged
+by the ADSP and the value reads back through the property.
 
-Signed-off-by: Y700 Elden Lane <kernel@local>
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
- drivers/power/supply/qcom_battmgr.c | 51 +++++++++++++++++++++++++++++
- 1 file changed, 51 insertions(+)
-
 diff --git a/drivers/power/supply/qcom_battmgr.c b/drivers/power/supply/qcom_battmgr.c
-index 58e238e6fb..e183f725f0 100644
+index 58e238e6fb..f5fefd31f8 100644
 --- a/drivers/power/supply/qcom_battmgr.c
 +++ b/drivers/power/supply/qcom_battmgr.c
 @@ -1044,6 +1044,55 @@ static int qcom_battmgr_usb_get_property(struct power_supply *psy,
@@ -109,6 +98,29 @@ index 58e238e6fb..e183f725f0 100644
  	.usb_types = BIT(POWER_SUPPLY_USB_TYPE_UNKNOWN) |
  		     BIT(POWER_SUPPLY_USB_TYPE_SDP)     |
  		     BIT(POWER_SUPPLY_USB_TYPE_DCP)     |
--- 
-2.53.0
-
+@@ -1381,6 +1432,12 @@ static void qcom_battmgr_sc8280xp_callback(struct qcom_battmgr *battmgr,
+ 		battmgr->status.charge_time = le32_to_cpu(resp->time);
+ 		break;
+ 	case BATTMGR_CHG_CTRL_LIMIT_EN:
++	case BATTMGR_USB_PROPERTY_SET:
++		/* Ack of our own USB_INPUT_CURR_LIMIT write (see
++		 * qcom_battmgr_usb_set_property()); without this case the
++		 * firmware reply is reported as an unknown message and the
++		 * error code carried by the ack is lost.
++		 */
+ 		battmgr->error = 0;
+ 		break;
+ 	default:
+@@ -1585,6 +1642,12 @@ static void qcom_battmgr_sm8350_callback(struct qcom_battmgr *battmgr,
+ 		break;
+ 	case BATTMGR_REQUEST_NOTIFICATION:
+ 	case BATTMGR_CHG_CTRL_LIMIT_EN:
++	case BATTMGR_USB_PROPERTY_SET:
++		/* Ack of our own USB_INPUT_CURR_LIMIT write (see
++		 * qcom_battmgr_usb_set_property()); without this case the
++		 * firmware reply is reported as an unknown message and the
++		 * error code carried by the ack is lost.
++		 */
+ 		battmgr->error = 0;
+ 		break;
+ 	default:
