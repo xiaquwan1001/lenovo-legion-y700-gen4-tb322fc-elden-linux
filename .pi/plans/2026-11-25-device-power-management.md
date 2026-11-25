@@ -188,6 +188,15 @@ nohup sh /tmp/pm-sample.sh 3600 /var/lib/elden/pm/$(date +%Y%m%d-%H%M).tsv >/dev
 
 ---
 
+
+> **★2026-11-25 上机实测更正（父代理，vk189）**：本文 §2.1/§7 的「固件未宣告 OSI ⇒ Linux 不可管集群」**不成立**——
+> `dmesg` 实测 `psci: OSI mode supported.` + `CPUidle PSCI: Initialized CPU PM domain topology using OSI mode`
+> ⇒ **OSI 已启用、`domain-idle-states` 生效**，`cpu0` 只有 2 个 state 是「CPU 电源域状态优先」的正常现象。
+> 因此「强制 OSI」不是待办（已满足），也不该把「集群不可管」写进结论。
+> 另：`rtcwake -m mem` / `wakealarm +N` 各跑一次后 `suspend_stats.success` 0→2、`fail=0`、`boot_id` 未变
+> ⇒ **s2idle 挂起/恢复链路在 vk189 上是通的**，只是驻留只有 1.6–1.9 s（RTC 停在 1970 ⇒ 闹钟提前触发，见 `PITFALLS #719`）。
+> ⇒ 优先级 1 的判据从「能不能挂起」改成「**能不能驻留 ≥5 min 并正常唤醒**」。
+
 ## 4. 优先级建议
 
 ### 先做（3 条）
