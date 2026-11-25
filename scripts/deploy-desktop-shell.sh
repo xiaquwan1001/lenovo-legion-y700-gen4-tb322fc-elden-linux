@@ -27,6 +27,7 @@
 #   c) `systemctl is-active greetd` = active；`phoc`+`phosh`+`phosh-osk-stub` 三进程在
 #   d) `grim` 截图 > 20 KB（黑底转圈那种只有 ~33 KB 且**没有顶栏**，靠人眼/字节双门，
 #      脚本只判字节；顶栏判据见 PITFALLS 新增条）
+#   e) 「返回」关窗链在位（§15）：`wm.keybindings close` 解析后含 'XF86Back' + lisgd + uinput-back
 #
 # 回归门：scripts/doctor/22-desktop-chain.py（check-doctor §22）静态校验「包集/服务/坑号/手册步」
 #   四者不漂移——例如有人从 PKGS 里删掉 udev 或 phosh-osk-stub，§22 立刻 FAIL。
@@ -540,6 +541,141 @@ su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_A
 su -l $IME_RIME_U -c 'XDG_RUNTIME_DIR=/run/user/$IME_RIME_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$IME_RIME_UID/bus gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled true'
 pkill -x phosh-osk-stub || true" >/dev/null 2>&1 || true
 	fix "RIME 候选后端已配（目录+属主+gsettings；osk-stub 已重启，phosh 按需重拉后 build/ 会出现）"
+fi
+
+# ---------------------------------------------------------------------------
+# 15) 「返回」关窗链（lisgd → uinput-back → KEY_BACK → wm close）—— 2026-11-25 实机验通
+# 为什么要有：phoc 0.46 **没有**内置「返回」手势，关当前窗口的唯一入口是 gsettings
+#   `org.gnome.desktop.wm.keybindings close`，而它的出厂默认值只有 `['<Alt>F4']`
+#   （平板上没有 Alt+F4 这枚键 ⇒ 等于「关不掉」）。
+#   链 = lisgd（边缘滑动，apt trixie `0.3.7-1+b1`）→ /usr/local/bin/uinput-back
+#   （uinput 发 KEY_BACK）→ xkb 把 KEY_BACK 映射成 `XF86Back` → phoc 执行 close。
+#   实测指纹：XF86Back **不在** close 里时同一次按键窗口不关；幂等并入后同一次按键 foot 1→0。
+#   ⇒ 三件缺任何一件，「滑动返回关窗」都是静默失效（没有任何界面报错），所以进日常门。
+# 判据三件（缺一即 MISS）：
+#   ① close 绑定**解析后**含 'XF86Back'。判据读 gsettings 输出后用 python3 按 GVariant
+#      **列表元素**比对；不做全文 grep：`['<Alt>F4']` 这类默认值/改写串很容易假命中，
+#      而 `['<Control>XF86BackX']` 这种「字串里带 XF86Back 但按出来不是它」的也必须算 MISS。
+#   ② `command -v lisgd`（手势事件源；运行态归会话管，本脚本只判「在位」）
+#   ③ `command -v uinput-back`（真正发 KEY_BACK 的件；源件 = out/tools/uinput-back，
+#      由 tools/uinput-back-build.sh 产出）
+command -v python3 >/dev/null 2>&1 || { echo "缺主机 python3（§15 判据要解析 gsettings 输出）" >&2; exit 2; }
+
+# close_has_xf86back — 判据①的纯函数：stdin 吃 `gsettings get … close` 的原始文本，
+# 退出码 0=列表里有 XF86Back / 1=没有 / 2=读不懂（读不懂**不算**命中）。
+close_has_xf86back() {
+	python3 -c '
+import ast, sys
+raw = sys.stdin.read().strip()
+if raw.startswith("@as "):        # gsettings 空数组会打成 `@as []`
+    raw = raw[4:].strip()
+try:
+    val = ast.literal_eval(raw)
+except Exception:
+    sys.exit(2)
+if not isinstance(val, (list, tuple)):
+    sys.exit(2)
+sys.exit(0 if "XF86Back" in [str(v) for v in val] else 1)
+'
+}
+
+# xf86back_judge_selftest — 反例自检（对齐本仓「判据必须能被反例打红」的口径）：
+# 合成样本、纯内存、临时变量，**不碰设备真值**。必须同时证明：
+#   正例 `['<Alt>F4', 'XF86Back']` → 0；
+#   反例 出厂默认 `['<Alt>F4']` / 空 `@as []` / 子串 `['<Control>XF86BackX']` → 1（=判据会报 MISS）；
+#   垃圾输入 `not-a-list` → 2（读不懂不得当成命中）。
+xf86back_judge_selftest() {
+	local bad=0 s exp got
+	while IFS='|' read -r s exp; do
+		got=$(printf '%s' "$s" | close_has_xf86back >/dev/null 2>&1; echo $?)
+		if [ "$got" != "$exp" ]; then
+			printf '  FAIL 判据反例：样本=%s 期望退出码=%s 实得=%s\n' "$s" "$exp" "$got"
+			bad=$((bad + 1))
+		fi
+	done <<'EOSELF'
+['<Alt>F4', 'XF86Back']|0
+['<Alt>F4']|1
+@as []|1
+['<Control>XF86BackX']|1
+not-a-list|2
+EOSELF
+	echo "$bad"
+}
+JUDGE_BAD=$(xf86back_judge_selftest)
+if [ "${JUDGE_BAD:-1}" = 0 ]; then
+	ok "§15 判据反例自检通过（1 正例 + 4 反例：默认 ['<Alt>F4'] / 空 / 子串 / 垃圾都必须非 0）"
+else
+	no "§15 判据反例自检失败（$JUDGE_BAD 个样本判错 ⇒ close_has_xf86back 本身坏了，先修脚本）"
+fi
+
+# dev_gsettings — 以**会话用户 + 会话总线**查/写 gsettings（root 无会话总线会得到假值，见 §14）
+dev_gsettings() {
+	"${SSH[@]}" "su -l $DEV_USER -c 'XDG_RUNTIME_DIR=/run/user/$DEV_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$DEV_UID/bus gsettings $1'" 2>/dev/null || true
+}
+# WM_CLOSE_SH — 设备侧幂等写回件：已有 'XF86Back' 就**零写盘**，否则把默认值里的 `@as` 前缀
+# 与方括号剥掉再追加一枚（不改写用户已有的其它绑定）。设备侧 POSIX sh（整文件写入后 `sh` 跑）。
+# 写回口径（幂等）：`gsettings set org.gnome.desktop.wm.keybindings close "[<原有项>, 'XF86Back']"`。
+WM_CLOSE_SH=$(cat <<'EOS'
+#!/bin/sh
+# /tmp/elden-wm-close-back.sh — 幂等：把 XF86Back 并入 org.gnome.desktop.wm.keybindings close。
+set -eu
+KEY=org.gnome.desktop.wm.keybindings
+cur=$(gsettings get "$KEY" close)
+case "$cur" in
+	*"'XF86Back'") echo "already=1 $cur"; exit 0 ;;
+esac
+inner=$(printf '%s' "$cur" | sed -e 's/^@as //' -e 's/^\[//' -e 's/\]$//')
+if [ -z "$inner" ]; then new="['XF86Back']"; else new="[$inner, 'XF86Back']"; fi
+gsettings set "$KEY" close "$new"
+echo "already=0 $new"
+EOS
+)
+echo "== 15) 「返回」关窗链（§15：wm close 含 XF86Back + lisgd + uinput-back）=="
+
+# ① close 绑定
+CLOSE_RAW=$(dev_gsettings 'get org.gnome.desktop.wm.keybindings close')
+printf '%s' "$CLOSE_RAW" | close_has_xf86back >/dev/null 2>&1; close_ok=$?
+if [ "$close_ok" = 0 ]; then
+	ok "wm close 解析后含 XF86Back（现 $CLOSE_RAW）"
+elif [ "$MODE" = check ]; then
+	no "wm close 解析后不含 XF86Back（现 ${CLOSE_RAW:-查不到}，close_ok=$close_ok）⇒ 返回键关不了窗"
+else
+	printf '%s\n' "$WM_CLOSE_SH" | "${SSH[@]}" 'cat > /tmp/elden-wm-close-back.sh' &&
+		"${SSH[@]}" "su -l $DEV_USER -c 'XDG_RUNTIME_DIR=/run/user/$DEV_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$DEV_UID/bus sh /tmp/elden-wm-close-back.sh'" >/tmp/elden-wm-close-back.log 2>&1 || true
+	CLOSE_RAW=$(dev_gsettings 'get org.gnome.desktop.wm.keybindings close')
+	printf '%s' "$CLOSE_RAW" | close_has_xf86back >/dev/null 2>&1; close_ok=$?
+	if [ "$close_ok" = 0 ]; then
+		fix "已把 XF86Back 并入 wm close（现 $CLOSE_RAW；$(tail -1 /tmp/elden-wm-close-back.log 2>/dev/null)）"
+	else
+		no "并入 XF86Back 后仍不达标（现 ${CLOSE_RAW:-查不到}；主机 /tmp/elden-wm-close-back.log）"
+	fi
+fi
+
+# ② lisgd（apt；trixie = 0.3.7-1+b1）
+LISGD_BIN=$("${SSH[@]}" 'command -v lisgd 2>/dev/null' 2>/dev/null || true)
+if [ -n "$LISGD_BIN" ]; then
+	ok "lisgd 在位（$LISGD_BIN）"
+elif [ "$MODE" = check ]; then
+	no "缺 lisgd（滑动返回的事件源；apt 包 lisgd，trixie 0.3.7-1+b1）"
+else
+	"${SSH[@]}" 'DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends lisgd >/tmp/apt-lisgd.log 2>&1' || true
+	LISGD_BIN=$("${SSH[@]}" 'command -v lisgd 2>/dev/null' 2>/dev/null || true)
+	[ -n "$LISGD_BIN" ] && fix "已装 lisgd（$LISGD_BIN）" || no "装 lisgd 失败（设备 /tmp/apt-lisgd.log）"
+fi
+
+# ③ uinput-back（仓内自编件，不是包）
+UIBC=$ROOT/out/tools/uinput-back
+UIB_BIN=$("${SSH[@]}" 'command -v uinput-back 2>/dev/null' 2>/dev/null || true)
+if [ -n "$UIB_BIN" ]; then
+	ok "uinput-back 在位（$UIB_BIN）"
+elif [ "$MODE" = check ]; then
+	no "缺 uinput-back（发 KEY_BACK 的那一半；应由本脚本从 out/tools/uinput-back 装）"
+elif [ ! -f "$UIBC" ]; then
+	no "缺源件 $UIBC ⇒ 先跑 tools/uinput-back-build.sh 再重跑本脚本（拒绝装占位件）"
+else
+	"${SCP[@]}" "$UIBC" "$TAB:/usr/local/bin/uinput-back" &&
+		"${SSH[@]}" 'chmod 755 /usr/local/bin/uinput-back && command -v uinput-back >/dev/null 2>&1' &&
+		fix "已装 /usr/local/bin/uinput-back（源 $UIBC）" || no "装 uinput-back 失败"
 fi
 
 echo

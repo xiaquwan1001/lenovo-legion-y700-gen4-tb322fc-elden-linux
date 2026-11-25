@@ -41,3 +41,4 @@ wifi-scan-refresh	ours	longrun	Periodic NetworkManager scan while connected, kee
 ath12k-retry	ours	oneshot	Re-bind ath12k PCI devices that failed first probe	/usr/local/sbin/ath12k-retry.sh			/var/log/ath12k-retry.log	0	fs-local	fs-local		multi-user.target	1
 hexagonrpcd-adsp-sensorspd	package	longrun	ADSP sensorspd service (QRTR svc 400) — package-provided	/usr/bin/hexagonrpcd-adsp-sensorspd			-	5				multi-user.target	1
 waydroid-container	package	longrun	Waydroid container manager — package-provided	/usr/bin/waydroid	container start		-	5	container-host	container-host		multi-user.target	1
+lisgd-edge-swipe	ours	longrun	Left-edge swipe-back gesture daemon (lisgd -> uinput-back KEY_BACK; needs wm.keybindings close to include XF86Back)	/usr/local/bin/lisgd-edge-swipe		ELDEN_SWIPE_THRESHOLD=60;ELDEN_SWIPE_TIMEOUT_MS=800	/var/log/lisgd-edge-swipe.log	5	session-bus	greetd		graphical.target	0

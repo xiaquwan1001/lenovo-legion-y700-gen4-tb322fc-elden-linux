@@ -1,0 +1,68 @@
+#!/bin/sh
+# lisgd-edge-swipe — 边缘侧滑返回（D13 路线①）：监听触摸屏 evdev，左边缘内滑 = KEY_BACK。
+#
+# 为什么不用 phoc 内部手势：上游 phoc issue #125（2020 开到现在）没有实现，也没有在审 MR；
+# 零改动的做法 = lisgd 判边缘滑动 → 跑 `uinput-back`（只广告 KEY_BACK 的 uinput 设备）→
+# xkb 把 158 映射成 XF86Back → 命中 phoc 既有 `org.gnome.desktop.wm.keybindings close`。
+# ⚠️ 前提：`wm.keybindings close` 必须含 `XF86Back`（默认只有 `<Alt>F4`），由
+#    `scripts/deploy-desktop-shell.sh` 负责并入。判据出处 `TASKS/README.md` §4 D13。
+#
+# 不硬编码任何设备节点/分辨率：节点按输入设备名从 /proc/bus/input/devices 找，
+# 分辨率从 DRM 的 modes 读；两者都可用环境变量覆盖（调试用）。
+set -eu
+
+TOUCH_NAME=${ELDEN_TOUCH_NAME:-NVTCapacitiveTouchScreen}
+NODE=${ELDEN_TOUCH_NODE:-}
+
+if [ -z "$NODE" ]; then
+	NODE=$(awk -v n="$TOUCH_NAME" '
+		index($0, "N: Name=\"" n "\"") > 0 { hit = 1; next }
+		hit && /^H: Handlers=/ {
+			for (i = 1; i <= NF; i++) if ($i ~ /^event/) { print "/dev/input/" $i; exit }
+		}' /proc/bus/input/devices)
+fi
+
+if [ -z "$NODE" ] || [ ! -e "$NODE" ]; then
+	echo "lisgd-edge-swipe: 找不到触摸屏节点（name=$TOUCH_NAME，NODE=${NODE:-空}）" >&2
+	echo "  复核：grep -A6 'N: Name=\"$TOUCH_NAME\"' /proc/bus/input/devices" >&2
+	exit 1
+fi
+
+GEOM=${ELDEN_SCREEN_GEOM:-}
+if [ -z "$GEOM" ]; then
+	for m in /sys/class/drm/card*-*/modes; do
+		[ -r "$m" ] || continue
+		g=$(head -1 "$m" 2>/dev/null | cut -d' ' -f1)
+		case "$g" in
+			*[0-9]x[0-9]*) GEOM=$g; break ;;
+		esac
+	done
+fi
+case "$GEOM" in
+	*[0-9]x[0-9]*) ;;
+	*) echo "lisgd-edge-swipe: 读不到面板分辨率（ELDEN_SCREEN_GEOM=WxH 可覆盖）" >&2; exit 1 ;;
+esac
+W=${GEOM%%x*}
+H=${GEOM##*x}
+
+BACK_CMD=${ELDEN_BACK_CMD:-/usr/local/bin/uinput-back}
+if [ ! -x "$BACK_CMD" ]; then
+	echo "lisgd-edge-swipe: $BACK_CMD 不存在/不可执行；先跑 tools/uinput-back-build.sh 并部署" >&2
+	exit 1
+fi
+
+if ! command -v lisgd >/dev/null 2>&1; then
+	echo "lisgd-edge-swipe: 未安装 lisgd（Debian trixie: apt-get install -y lisgd）" >&2
+	exit 1
+fi
+
+echo "lisgd-edge-swipe: node=$NODE geom=${W}x${H} threshold=${ELDEN_SWIPE_THRESHOLD:-60} timeout=${ELDEN_SWIPE_TIMEOUT_MS:-800}ms cmd=$BACK_CMD"
+
+# 手势表：单指、Left→Right、只认左边缘（edge=L）、距离不限（*）、抬手时执行（R）。
+# 竖划（UD/DU）与屏幕中间的横划都不匹配 ⇒ 不会误触滚动/翻页；判据见 TASKS §4 D13。
+exec lisgd \
+	-d "$NODE" \
+	-w "$W" -h "$H" \
+	-t "${ELDEN_SWIPE_THRESHOLD:-60}" \
+	-m "${ELDEN_SWIPE_TIMEOUT_MS:-800}" \
+	-g "1,LR,L,*,R,$BACK_CMD"
