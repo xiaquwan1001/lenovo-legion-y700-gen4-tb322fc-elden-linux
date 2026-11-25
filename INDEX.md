@@ -6,7 +6,27 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-25）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26）
+
+> **🆕 2026-11-26 晨（无人值守轮，设备在线但四 lane 均只读）**：
+> ① **gunyah 线分界写死（TASKS **D21**，`reports/gunyah-lane-20261126.md`）**：主线 `drivers/virt/gunyah` 仍不存在
+> （driver 系列停 2024-02 v17）⇒ 无接收面不投；`gunyah_wdt` **早已在主线**（`drivers/watchdog/gunyah_wdt.c`）且本机 hyp 空实现
+> ⇒ 既不能当看门狗也无上游化空间；移植树 `build/gunyah-port`/`out/gunyah-73` 已随 11-25 清理消失 ⇒ 任何上机读回先要重建（≈0.5 天）。
+> ② **「传感器驱动有问题」核实（TASKS **D22**，`reports/sensor-claim-verify-20261126.md`）= 部分成立但归因层错**：内核/DTB/fastrpc/QRTR
+> 四层实测健康（`qcom,non-secure-domain` 是真在 DTB 的 0 长 boolean、`/dev/fastrpc-adsp` owner=`fastrpc:fastrpc`、
+> `qrtr-lookup` 有 **400 SSC**，而 `journalctl -b \| grep -c hexagonrpcd` = 0）⇒ **推翻**旧报告「svc 400 未注册」；
+> 真缺口 = trixie `iio-sensor-proxy 3.7-3` 无 libssc + 部署层四件未装。**用户态备料已出**（`reports/sensor-libssc-prep-20261126.md`）：
+> Debian testing/unstable **已有官方 SSC 版包**（`iio-sensor-proxy 3.9-1` NEEDED `libssc.so.2` + `libssc 0.4.4-2.1`，ABI 对 trixie 兼容）
+> ⇒ 路线 A 零构建；路线 B 本机交叉构成功。卡点 = udev 规则仍不认 `ssc-accel`（`PITFALLS #451`）。
+> ③ **elden 板 DTS v9 已备料、本地门禁全绿、但未投出**：回应 Krzysztof「cover/changelog 必须明写 waiting on bindings」
+> ⇒ cover 第 12 行专节；补丁 diff 与 v8 逐字节相同；`dt_binding_check` rc=0/5420 DTC、`dtbs_check` elden 诊断 1→0（加 wl2868c binding）。
+> **真发失败 = keyring Login collection 锁定**（`fatal: could not read Password for smtp://…`）⇒ 解锁后一条命令
+> `bash patches/upstream/elden-dts-v9-20261126/SEND.sh --send`。
+> ④ **B5 APSS watchdog 静态复核**（`reports/b5-apss-wdt-static-review-20261126.md`）：`0x16410000` 双推收敛（XBL XPU 表 +
+> 同族 `WDT=PDP−0x10000`），vendor DT/reserved-memory **无冲突**，上机判据清单 §4（头号风险 = hyp/TZ 独占则 `readl(WDT_STS)` 同步外部中止）。
+> ⑤ **通信复扫**（`reports/comm-triage-20261126.md`）：dwc3 v16 拿到 sashiko 首个「no issues」；M8/M10 换址补发进档 0 回音；
+> **IMAP 收件侧与 phosh API 因 keyring 锁无法核验（如实记错误码）**。
+> ⑥ **droidloom Debian 包收尾**：runtime 缺 `libwayland-server0` 实证补齐 + 交叉 `--sysroot` 绝对化（**`PITFALLS #730`**），双架构重建。
 
 > **🆕 2026-11-25 夜 2（四项点名调查轮，零设备：平板不在线）**：4 lane 全收口 + 1 条派生构建 lane。
 > ① **Mobian/phosh 上游化 + 通信**（`reports/mobian-phosh-upstream-20261125.md`）：增量窗口**人类评审 0 封**，机器人给
