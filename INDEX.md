@@ -8,6 +8,18 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-25）
 
+> **🆕 2026-11-25 夜 2（四项点名调查轮，零设备：平板不在线）**：4 lane 全收口 + 1 条派生构建 lane。
+> ① **Mobian/phosh 上游化 + 通信**（`reports/mobian-phosh-upstream-20261125.md`）：增量窗口**人类评审 0 封**，机器人给
+> **dwc3 v15 2×`[Low]` ⇒ 待出 v16**、**elden 板 v8 2×`[Medium]`（不改 DT，已入 cover）**；`abel.vesa@linaro.org` 死地址（下次用 OSS 址）；
+> Mobian `droid-juicer !46` 人类 0 note / 48 h 无变化、`mobian-recipes` qcom 三处目录仍空、**7.x staging 可用但 0 条 sm8750 分支**；
+> phoc `#125`（edge-swipe-back）自 2020 仍无 MR ⇒ 我们的 lisgd 路线仍最优。**外部门（需用户）＝ IMAP 存储层自 03:44:39Z 冻结**。
+> ② **droidloom × GMS × 目标 APK**（`reports/droidloom-app-compat-20261125.md`）：登录已验证 / Integrity 免责 / 商店落 `uncertified`；
+> **Limbus 现役装法起不来（只有 split 包）**，且实物里发现 Firebase 12.6 + `credentials-play-services-auth`（无 GMS 时首启风险）；小红书预期能起但相机/定位/输入/推送缺件。
+> 实物件 = `~/apk-20261125/`（自 vivo V2454A 提出，含 sha 账）。
+> ③ **电源**（`reports/power-on-demand-20261125.md`）：四个观测面（`pm_test`/`wakeup_sources`/`pm_wakeup_irq`/`pm_print_times`）+ 已合指进 PLAN。
+> ④ **长短边 USB 总账**（`reports/usb-ports-consolidation-20261125.md`）⇒ 派生 **M12 口径更正**：日常线源码本就带可写 ICL（`reports/m12-daily-already-writable-20261125.md`）。
+> ⑤ **D19 看门狗缺口有了候选解**：`gunyah_wdt`（SMCCC vendor-hyp）在树、设备有 `gunyah-wdt` 平台设备 ⇒ 仅需 `CONFIG_GUNYAH_WATCHDOG=m`；候选核件 lane 已派（`out/gunyah-wdt-20261125/`）。
+
 > **🆕 2026-11-25 夜（放行轮）：板 DTS v8 已投 + WARN 6→3 + 日常线重新可编**：
 > ① **elden 板 DTS `[PATCH v8 0/2]` 已投**（09:13Z，3×250，cover `<20261125091309.124354-1@…>`）：1/2 补 `qcom.yaml`
 > `lenovo,elden`（v7 漏的那行），2/2 = v7 板件原文；**Cc 里带上 Pengyu Luo**（关系声明需他在线程里）。

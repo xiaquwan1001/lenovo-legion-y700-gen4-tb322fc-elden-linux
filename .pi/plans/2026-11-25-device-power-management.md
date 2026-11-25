@@ -4,6 +4,14 @@
 > 本文件唯一写入 = 本文件自身。所有「设备侧命令」都是给**上机窗**照做的，本轮一条都没跑。
 > 父代理已在设备上采到只读基线（2026-11-25 09:1x，在机 `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`），
 > 本文把它当**现状**（不再写成「待核」），并在 §7 标明一处与仓库历史的**口径差异**。
+>
+> **★2026-11-25 19:xx 增量（第二份，不让本文吸收）**：`reports/power-on-demand-20261125.md`（407 行）
+> —— 主题 = 「按需使用节点 + 休眠」的深化，与本文**互补**而非替代：新增四个观测/操作面
+> （**N1** `/sys/power/pm_test` 分级试挂，可在**零失联**前提下跑完整 suspend/resume 回调；**N2** debugfs `wakeup_sources` 总账
+> （谁能唤醒 + `prevent_sleep_time`）；**N3** `/sys/power/pm_wakeup_irq` 定位唤醒源 IRQ；**N4** `pm_print_times` 量化恢复时延），
+> 以及一条**否定结论**：`suspend_stats/{last,total,max}_hw_sleep` 只由 x86 PMC 写入（`kernel/power/main.c:442`）⇒ 本机恒 0，
+> **不能当 s2idle 驻留时长**，驻留判据只能取 dmesg `PM: suspend entry/exit` 的单调时钟差。
+> 上机窗执行顺序建议：先跑它的 §1.0 只读普查（`/tmp/pm-census.txt`，≈2 min）与 §4 阶段 1.0/1.1，再用本文 §3 的序列。
 
 ## 0. 前提与一句话摘要
 
