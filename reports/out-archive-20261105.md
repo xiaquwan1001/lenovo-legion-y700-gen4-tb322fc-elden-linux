@@ -32,6 +32,8 @@
 
 ## 2. 保留集（15 件 / 1.12 GiB）与判据
 
+> **★2026-11-25 增量**：`scripts/out-archive.py` 的 `KEEP` 表补登 **`boot-elden-vk189.img`**（当前在机 daily，`uname -r` = `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`）与 **`boot-elden-vk192.img`**（回退件，`INDEX` §0 11-23 块）。补前 dry-run 会把这 2 件判为「归档候选」= 误归档在机件；补后 dry-run = 保留 16 件 / 归档 8 件（572 MiB）。本表与脚本 `KEEP` 必须同步（脚本注释口径）。
+
 | 保留件 | 理由（出处） |
 |---|---|
 | `boot-elden.img` | `scripts/build-boot.sh` 默认输出名，每次构建重生（`unversioned` NOTE 类） |

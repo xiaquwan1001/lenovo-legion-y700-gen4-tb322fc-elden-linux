@@ -45,6 +45,10 @@ KEEP = {
     # vk182-camssv3、vk183-fastrpc（传感器/fastrpc 上机件）
     'boot-elden-vk172.img', 'boot-elden-vk173.img', 'boot-elden-vk181-daily.img',
     'boot-elden-vk182-camssv3.img', 'boot-elden-vk183-fastrpc.img',
+    # ★2026-11-25 补登（KEEP 表过时修正）：vk189 = 当前在机 daily（`uname -r` =
+    # 7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0，TASKS §4 D1）；vk192 = 回退件
+    # （INDEX §0 11-23 块「vk192 日用态未变」）。两者旧表都没有 ⇒ 旧表会误归档。
+    'boot-elden-vk189.img', 'boot-elden-vk192.img',
     # M3-1 线（RESOURCES §3 / reports/m3v5-onboard-plan-20261030.md 在引）
     'boot-elden-m3v5-onboard.img', 'boot-elden-m3v5-onboard-b.img',
     'boot-elden-m3v5-f2.img',
