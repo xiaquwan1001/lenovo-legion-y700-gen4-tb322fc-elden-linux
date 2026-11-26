@@ -16,11 +16,16 @@
 #   log          日志/回执工作区
 # 判据：`bash scripts/cache-audit.sh --check`（存在性 + 物理根 + 软链指向一致）；体积现查 `--sizes`。
 # 仓库外但属于本项目的缓存（不进本表行，故不受 cache-audit 检查；口径同源）：
-#   `~/.cache/ccache-elden`  编译缓存 19 G（`scripts/env-build.sh`；2026-11-26 上限 20 G→60 G，
-#                            依据 = 99.94% 占满 + 431 次 cleanup + 命中率 23.7%）；**跨内核树可复用**，删了只会慢
+#   `~/.cache/ccache-elden`  编译缓存 20.7 G / 上限 60 G（`scripts/env-build.sh`；2026-11-26 上限 20→60 G，
+#                            依据 = 99.94% 占满 + 431 次 cleanup + 命中率 23.3%）；**跨内核树可复用**，删了只会慢。
+#                            **2026-11-26 实测缺陷**：`ccache.conf` 只有 max_size ⇒ `hash_dir` 默认 true，
+#                            O= 树绝对路径进 key ⇒ `g7a-tree`/`g7-tree`/`daily`/`wt/*` 之间互不命中；
+#                            修法 = `hash_dir = false` + `CCACHE_BASEDIR = $HOME/elden-cache/build`
+#                            （改后旧键全废、须一次性重填 ~30–60 min ⇒ **需用户批**，别顺手开）。
+#                            同轮否定项：跨树 `.o` 字节去重无效（27,039 个 `.o` 仅 79~89 个 sha 相同 = 0.3%，hardlink 无用）。
 #   `~/toolchains/`          aarch64 交叉工具链（musl 323 M）；全机共享，不属本仓
 path	physical	class	size	regen	share	note
-build/	~/elden-cache/build/	cache-build	36G	`scripts/build-kernel.sh`（源码 + config 重编，~30–60 min）	项目私有（同机同线可复用；与 .config/UTS 绑定）	删前先 bundle + 导 diff（RESOURCES §3）
+build/	~/elden-cache/build/	cache-build	32G	`scripts/build-kernel.sh`（源码 + config 重编，~30–60 min）	项目私有（同机同线可复用；与 .config/UTS 绑定）	删前先 bundle + 导 diff（RESOURCES §3）；2026-11-26 复查：g7a 链接产物（11-25 16:01 `g7a2b` 重链后）3.36 G 复删 + B-2 `Module.symvers` 已归档 `out/g7-reset-20261123/`
 geekidos-linux/	~/elden-cache/src/geekidos-linux	clone	6.4G	`git fetch`；slim bundle 恢复配方 = `versions/layout.tsv` 表头注释	**同机可共享**	上游 GEEKiDoS/linux，供 vk 版本账/DTB 指纹反查
 Y700-elden-linux/	~/elden-cache/src/Y700-elden-linux	clone	28M	重新 clone	同机可共享 / 可删	旧迭代上游 clone
 external/	~/elden-cache/src/external	workdir	895M	按需重取（AOSP 头 / VNDK / ext-repos 克隆）	**同机跨项目可共享**	`$HOME` 七条软链（LTBox/alpine-sysroot/aosp-vndk33/ext-repos/lc-cross/mesa-out/phoc-work）指向其子目录
