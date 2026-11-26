@@ -8,6 +8,10 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（06:0x CST 无人值守轮））
 
+> **★★ 2026-11-27（收口）：主线 Linux 上传感器已`可用`** —— `HasAccelerometer/HasAmbientLight/HasProximity` 三 **true**、
+> `ssccli --sensor accelerometer` 连续出值（X≈-1.17 Y≈-0.66 Z≈9.55 m/s²）。全账 = `reports/sensors-ssc-restored-20261127.md`
+> （真因链：droid-juicer 配置 0 字节占位 + `hexagonrpcd` 的 `-R` 布局不匹配 ⇒ DSP 断言 ⇒ 本板整机复位；换真 vendor 配置 + 扁平 `-R` 树 + udev/代理接线即恢复。新 `PITFALLS #741`）。
+
 > **🆕 2026-11-27 06:0x（无人值守轮：`#692` 后续① 收口 + D10 复扫 + ABL logfs 判据纠偏）**：
 > ① **「补齐 ADSP 的 PD 依赖」被否证（不做）**：主线 PDR + in-kernel pd-mapper 齐全（`qcom_pd_mapper.c:665` 把 `qcom,sm8750`
 > 映射到 `sm8550_domains`），**本机实测** `PDR: Indication received from msm/adsp/audio_pd|charger_pd`（UP）、`q6apm` 已绑、声卡 `card0` 在
