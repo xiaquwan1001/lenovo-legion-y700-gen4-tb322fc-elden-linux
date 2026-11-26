@@ -1,5 +1,5 @@
 diff --git a/hexagonrpcd/apps_std.c b/hexagonrpcd/apps_std.c
-index 7172bf0..0e584d6 100644
+index 7172bf0..13c3b95 100644
 --- a/hexagonrpcd/apps_std.c
 +++ b/hexagonrpcd/apps_std.c
 @@ -120,6 +120,106 @@ static uint32_t apps_std_fread(void *data,
@@ -136,10 +136,13 @@ index 7172bf0..0e584d6 100644
  	{
  		.def = &apps_std_fseek_def,
  		.impl = apps_std_fseek,
-@@ -465,10 +571,22 @@ static const struct fastrpc_function_impl apps_std_procs[] = {
+@@ -465,10 +571,25 @@ static const struct fastrpc_function_impl apps_std_procs[] = {
  		.def = &apps_std_stat_def,
  		.impl = apps_std_stat,
  	},
++	/* methods 32/33 (ftrunc/frename) still unimplemented */
++	{ .def = NULL, .impl = NULL, },
++	{ .def = NULL, .impl = NULL, },
 +	{
 +		.def = &apps_std_fopen_fd_def,
 +		.impl = apps_std_fopen_fd,
@@ -157,7 +160,7 @@ index 7172bf0..0e584d6 100644
  const struct fastrpc_interface apps_std_interface = {
  	.name = "apps_std",
 -	.n_procs = 32,
-+	.n_procs = 57,
++	.n_procs = 37,
  	.procs = apps_std_procs,
  };
 diff --git a/hexagonrpcd/interface/apps_std.c b/hexagonrpcd/interface/apps_std.c
