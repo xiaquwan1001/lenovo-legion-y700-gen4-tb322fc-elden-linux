@@ -1,4 +1,5 @@
 # 通信 lane 增量复扫（2026-11-25 01:45Z → 2026-11-25 22:11Z）— B4，只读
+> **后继轮次**：同日 04:20Z 的 D10 lane 复扫 = `reports/comm-triage-20261126-d10.md`（本文件的 IMAP/phosh 两个「无法核验」面已被它结案；人类回信计数以 D10 为准）。
 
 > **只读纪律**：未发信 / 未推 MR / 未改任何既有文件；唯一写入 = 本文件。
 > 外部命令一律 `timeout -k`（lore 走 web_fetch/lget 重试 + 内容校验；patchwork 走 Anubis PoW）。
