@@ -57,6 +57,22 @@ while IFS= read -r p; do
 	grep -qxF "$p" "$work" || { echo "FAIL: 顶层条目未登记（versions/layout.tsv）：$p"; fail=1; }
 done < <(ls -A1)
 
+# 4) vcs 列有机器语义（2026-11-26 架构审计 A2）：`ignore` 是「默认不入库」，
+#   不是「一个都不许入库」（README/小文本证据/manifest 有意入库）—— 所以判据取两条硬红线：
+#   ① `vcs=ignore` 的条目下不得有 **≥5 MiB** 的 tracked 文件（那是「大件误入库」）；
+#   ② 不得有真·器件/内核件后缀（.img/.bin/.mbn/.elf/.ko）被 tracked。
+#   此前 vcs 列是纯装饰（唯一校验是 zone/列/重复），台账说 `cache ignore` 的 `dl-cam/`
+#   实际有 231 件入库、无人发现。
+#   注意：本段必须用进程替換（< <(...)）而不是管道 —— 管道里的 FAIL 只在子 shell 生效，门就哑了。
+while IFS= read -r p; do
+	[ -n "$p" ] || continue
+	[ -e "$p" ] || continue
+	big=$(git ls-files -z -- "$p" 2>/dev/null | xargs -0 -r stat -c '%s %n' 2>/dev/null | awk -v L=5242880 '$1 >= L {printf "%s (%s B), ", $2, $1}')
+	[ -n "$big" ] && { echo "FAIL: vcs=ignore 的 $p 下有 tracked 大件（≥5 MiB，应改 vcs=track 或加 .gitignore）：${big%, }"; fail=1; }
+	bin=$(git ls-files -- "$p" 2>/dev/null | grep -E '\.(img|bin|mbn|elf|ko)$' | tr '\n' ' ')
+	[ -n "$bin" ] && { echo "FAIL: vcs=ignore 的 $p 下有器件/内核件被 tracked：$bin"; fail=1; }
+done < <(awk -F'\t' '!/^#/ && NF>=4 && $1!="zone" && $3=="ignore" {print $2}' "$TSV")
+
 if [ $fail -eq 0 ]; then
 	echo "PASS: 布局注册表一致（entries=$(wc -l <"$work")）"
 else

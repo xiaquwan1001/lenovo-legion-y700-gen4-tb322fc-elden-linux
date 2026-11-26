@@ -28,7 +28,7 @@ main ──base/<date>-<sha>──┬── lane/c3-id    (worktree) ── comm
 3. **不 rebase / 不 merge main 进 lane**：lane 只从 baseline 前进；需要上游新基线时由父决定是否重开 lane。
 4. **内核改动必走 worktree**：`geekidos-linux`（13 G）绝不在主 checkout 上多 agent 同时改。
 5. **设备是单一串行资源**：所有上机/刷写/复现任务用 `scripts/device-lock.sh` 串行，任何时刻只有一个 lane 持设备。
-6. **并发上限 / 递归深度 / 树内配额只读 `.pi/ORCHESTRATION.md` §3**（配置真值 = 两份 `fabric.json`）。
+6. **并发上限 / 递归深度 / 树内配额只读 `.pi/ORCHESTRATION.md` §3**（配置真值 = `~/.pi/agent/settings.json` 的 `subagents` 段；`fabric.json` 已随 pi-fabric 卸载删除）。
 
 ## 3. 提交信息（子代理可区分）
 

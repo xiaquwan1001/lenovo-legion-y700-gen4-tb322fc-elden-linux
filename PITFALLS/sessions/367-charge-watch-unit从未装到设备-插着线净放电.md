@@ -68,3 +68,18 @@ SAG v_bus=4470000 uV < 4600000 x3 -> drop ICL to 700000 uA (protect host port)
   设备 `--check` MISS 3→0 且幂等。
 - 通则：**保护阈值必须用本机实测的「坏」分布定**，照规范值（4.75/4.60 V）定会把正常负载判成故障，
   而误降档的代价（净放电）比它要防的风险（端口 OCP）更常发生。
+
+## 追加（2026-11-26 20:2x，整理轮复核）：三档表只对 **SDP-only** 成立，短边 PD 在位时是另一档
+
+本页与 `INDEX.md` §0 ⑨ 记的「900 mA 上限 / `v_bus` 4.40 V floor」是**长边数据线（SDP）单口**的实测档。
+当晚复核时是**双口同插**（长边数据 + 短边 PD），现查设备读数与三档表不同：
+
+```
+usb_type = Unknown [SDP] … C PD PD_DRP PD_PPS      ← PD 契约在
+input_current_limit = 2000000  current_max = 2000000  voltage_now = 5681000   ← PD 5.68 V 顶档
+bat.current_now = +80000 µA  bat.capacity = 98%                            ← 正在充
+```
+
+⇒ **判据**：读「充不充得进」前先看 `usb_type` 里有没有 `PD`。有 PD 时 ADSP 走 PD 契约（5 V 以上、2 A 顶档），
+`charge-watch` 的 SDP 阶梯（100/500/900 mA）与 4.40 V sag guard **都不是决定项**；
+拿三档表去套 PD 现场会误判成「门坏了」。`charge-watch` 日志佐证：`17:20:19 usb node appeared after 0 s`。

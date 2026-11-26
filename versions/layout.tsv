@@ -4,7 +4,9 @@
 # 列：zone <TAB> path <TAB> vcs <TAB> 职责（一句话；详情指向领域层文档）
 # zone 取值：entry(入口) doc(角度文档) evidence(证据/备份) src(源码/补丁/工具) work(工作区,gitignore)
 #           cache(可再生缓存/可共享克隆：物理不在仓库目录内，仓库只留软链；账 = versions/cache-ledger.tsv) ai(AI 大脑)
-# vcs：track = 入 git；ignore = 按 .gitignore 排除（台账见 RESOURCES/README.md §3）
+# vcs：track = 入 git；ignore = 按 .gitignore 排除（台账见 RESOURCES/README.md §3）。
+#      ignore 是「**默认不入库**」语义，不是「一个都不许入库」：小的文本证据、README、
+#      out/*.manifest 等带有意入库（2026-11-26 审计 A2 机器化为 check-layout.sh 第 4 步）。
 zone	path	vcs	note
 entry	AGENTS.md	track	项目身份：机型唯一性、G1–G3 目标与优先级、核心原则
 entry	INDEX.md	track	唯一入口：入口阶梯/布局/路由/§0 现状摘要/快速命令

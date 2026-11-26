@@ -61,7 +61,8 @@ SEC_TIMEOUT="${ELF_SEC_TIMEOUT:-600}"
 export ROOT HELPERS
 
 # 子门清单：按输出顺序排列（数字 = 与旧版 §N 对齐）。
-ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 20-rootfs-image.sh 21-write-precheck.sh 22-desktop-chain.py 23-out-manifest.sh 24-scripts-index.sh 25-out-status.sh 26-vbmeta-b-chain.sh 27-bootimg-cmdline.sh 28-soft-bl-selftest.sh 29-out-candidate-sha.sh 30-tasks-routing.py"
+ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 20-rootfs-image.sh 21-write-precheck.sh 22-desktop-chain.py 23-out-manifest.sh 24-scripts-index.sh 25-out-status.sh 26-vbmeta-b-chain.sh 27-bootimg-cmdline.sh 28-soft-bl-selftest.sh 29-out-candidate-sha.sh 30-tasks-routing.py 31-reports-index.sh"
+# 2026-11-26 加 31（架构审计 A17）：reports/README.md 生成索引过期门（694 篇的唯一查全入口，此前无门、实测漂 60 篇），--check 只读标题 ~1 s，只进全量档。
 # 2026-11-20 加 25（arch-audit P1#6）：out/ 生命周期账本门（active/verified/superseded/pending ↔ 磁盘），全量 du 一遍 out/ ~2 s，只进全量档。
 # 2026-11-21 加 26（TASKS §4 P1 AVB 债）：b 槽自签链门（顶层 key + chain boot:3 + 整链验签 + 翻字节反作弊），~1 s，只进全量档。
 # 2026-11-21 加 27：S5 取证件链的 cmdline 改写器自检（合成镜像 4 正例 + 4 反例，~1 s，纳入 fast）。

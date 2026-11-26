@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=e2b51bf26f33aa00（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=34f497f58a908ba7（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**359**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 80 / 设备操作 109 / 造件 71 / 取证 51 / 一次性 3 / 公共库 8 / 其它 37
+- 入口总数：**360**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 81 / 设备操作 109 / 造件 71 / 取证 51 / 一次性 3 / 公共库 8 / 其它 37
 - 引用数为 0 的孤立件：**1**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -24,7 +24,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（80）
+## 门禁（81）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -54,6 +54,7 @@
 | `scripts/doctor/28-soft-bl-selftest.sh` | §28 Linux→bootloader 软路径门（lib-soft-bootloader 自检 + 反作弊 + 反回归） | 3 |
 | `scripts/doctor/29-out-candidate-sha.sh` | §29 上机候选件 sha 账目门（委托 scripts/out-candidate-sha.py --check） | 2 |
 | `scripts/doctor/30-tasks-routing.py` | TASKS 台账「章节路由」门（2026-11-26 拆分后新增） | 3 |
+| `scripts/doctor/31-reports-index.sh` | §31 reports/README.md 新鲜度门（委托 scripts/reports-index.py --check）。 | 1 |
 | `scripts/doctor/_lib.sh` | shellcheck shell=bash | 27 |
 | `scripts/doctor/ab-bench.sh` | bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置） | 6 |
 | `scripts/android-apk-pkgname.py` | 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。 | 3 |
@@ -77,7 +78,7 @@
 | `scripts/deploy-bt-suspend-guard.sh` | 把 BT suspend 保护钩子部署到设备并验证。 | 8 |
 | `scripts/driver-snapshot-diff.sh` | 比对两次 driver-snapshot.sh 的输出，按「变了什么」排序输出。 | 5 |
 | `scripts/dump-verdict.py` | 「这次 dump 失败了吗？还是分区真的不存在？」的唯一判据。 | 14 |
-| `scripts/gen-scripts-index.py` | 生成 scripts/ 索引（scripts/README.md + 机读 TSV），可重跑、可挂门。 | 44 |
+| `scripts/gen-scripts-index.py` | 生成 scripts/ 索引（scripts/README.md + 机读 TSV），可重跑、可挂门。 | 45 |
 | `scripts/gpt-audit-tb322fc.py` | 把设备 GPT 主表 dump（EDL 只读得到）与官方 259 包逐字节对账。 | 19 |
 | `scripts/gpt-preflight.py` | 写盘前的 GPT「快照复验」（纯主机、无 USB、不碰设备）。 | 16 |
 | `scripts/hide-android-partitions-selftest.sh` | 离线自测（全部在 /tmp 沙盒里跑，不碰 /etc、不碰设备） | 5 |
@@ -105,7 +106,7 @@
 | `scripts/uefi-fv-strings.py` | 在 UEFI FD 的**内层（LZMA 压缩的）FVMAIN** 里搜 ASCII 字串。 | 20 |
 | `scripts/verify-tree-integrity.py` | 校验某个 git 工作树/仓库里所有 tracked 文件的内容完整性。 | 16 |
 | `scripts/vk-identity.py` | 构建号(vkN/语义名) ↔ 内核二进制 ↔ 内核源提交 的对齐表生成器。 | 107 |
-| `scripts/wake-screen.sh` | 让 SSH 会话可以直接把平板屏幕从「合成器熄屏」状态叫回来。 | 1 |
+| `scripts/wake-screen.sh` | 让 SSH 会话可以直接把平板屏幕从「合成器熄屏」状态叫回来。 | 5 |
 | `scripts/wd-c1-verify.dev.sh` | RUN ON DEVICE (as root). 验证 vk103（IPv4+IPv6 多路由表）下 | 6 |
 | `scripts/zero-to-desktop-check.sh` | 「起机 → 桌面」这一段（RUNBOOK S5–S12）的一条命令自检 | 18 |
 
@@ -120,7 +121,7 @@
 | `scripts/ath12k-load.sh` | ★★★ RETIRED（2026-11-22 脚本审计批 1，reports/scripts-audit-20261122.md §3）★★★ | 42 |
 | `scripts/ath12k-retry.sh` | ath12k (WCN7861 "Peach") boot-time re-probe. | 54 |
 | `scripts/audio-alsa-init.sh` | put the Lenovo-Y700-Gen4 (TB322FC/elden) sound card into | 23 |
-| `scripts/autotest-cycle.sh` | 「BL → 零写盘上机 → 跑测试 → 回 BL」的自主循环驱动（可无人值守连跑） | 21 |
+| `scripts/autotest-cycle.sh` | 「BL → 零写盘上机 → 跑测试 → 回 BL」的自主循环驱动（可无人值守连跑） | 22 |
 | `scripts/bl-preunlock-evidence.sh` | 解锁前（locked 状态）零风险取证 + 解锁申请表所需参数打印。 | 11 |
 | `scripts/bl-unlock.sh` | ⚠ 适用前提（2026-10-03 定稿）：**只有 ROM ≤ 1.1.11.073/.076 才存在解锁命令**； | 12 |
 | `scripts/bt-link-test.sh` | BR/EDR 数据链路只读诊断（y700-elden / WCN7861 Brahma v2） | 14 |
@@ -133,7 +134,7 @@
 | `scripts/charge-ctl.sh` | battery / charger control for TB322FC (elden), qcom-battmgr. | 39 |
 | `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 44 |
 | `scripts/deploy-camera-modules.sh` | 收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验** | 25 |
-| `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 139 |
+| `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 141 |
 | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 41 |
 | `scripts/deploy-sensord-routec-debian.sh` | 在 **Debian/glibc 根**上安装路线 C 的 Waydroid sensor HAL | 14 |
 | `scripts/deploy-sensors-hal.sh` | 部署 elden UDP 传感器 HAL 到 Waydroid 容器（C4） | 14 |

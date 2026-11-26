@@ -6,7 +6,14 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26）
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26（20:3x CST 复核））
+
+> **🆕 2026-11-26 夜 2（整理轮：三条审计 + 6 处门禁加固；**计划 = `.pi/plans/2026-11-27-整理三线派工.md`**）**：
+> ① **架构审计**（`reports/arch-audit-20261127.md`，18 条，父代理逐条复核）：P0 两条 = 顶层杂件 `=50KB`（已移 `/tmp`）与 **`fabric.json` 双说法**（`.pi/AGENT-OPS.md`/`.pi/ORCHESTRATION.md`/`.pi/CONCURRENCY.md` 仍写「配置真值」）⇒ 已改口 `settings.json` 的 `subagents` 段 + 删 `.pi/fabric.json`/`.pi/fabric/`。
+> ② **门禁加固（本轮已落地并各带阴性对照）**：**§31 reports 索引门**（新建 `scripts/doctor/31-reports-index.sh`；此前 694 篇的唯一查全入口**无门**且漂 60 篇）· **死脚本门不再被自吞**（`static-scan.py` 的 `SELF_OUTPUT` 加 `scripts/README.md`；父代理用 tracked 孤儿探针实证「重建索引即从 DEAD 消失」）· **资产门前缀绕道收紧**（`check-doc-assets.sh`：宽前缀 `scripts/ch…`/`patches/0…` 现判 MISSING，真截断 `PITFALLS/sessions/01` 仍过）· **`layout.tsv` 的 `vcs` 列有语义**（`ignore` 区不得有 ≥5 MiB 或 `.img/.bin/.mbn/.elf/.ko` 的 tracked 件）。
+> ③ **文件去重**（`reports/fs-dedup-20261127.md`）：`backup/` 内 10 组同 sha 大件中 **7 组早已同 inode**（上轮 `disk-audit` 的「9.9 G 待回收」**已不成立**），本轮再硬链 1 对（hyp 8 MiB，inode/nlink/sha 三向复核）；`out/`/`runs/`/`bootslot-b/` 按判据不动。`.pi/sessions/` gzip 收益 23.9% 但 `sessfind`/`recent-sessions.sh`/doctor §15 全按 `*.jsonl` 硬匹配 ⇒ **先改工具再压**（未做）。
+> ④ **文档精简计划**（`.pi/plans/2026-11-27-文档精简拆分归档.md`，6 批）：最大三批 = INDEX §0 下沉（~80 KB）· PITFALLS 索引瘦身（~130 KB，需你裁定裁剪幅度）· `reports/artifacts` Top15 tar.zst（~385 MiB）。**口径修正**：全仓 tracked md = **2229**（旧记 1356 少算）；`docs-health` 154 篇是**刻意只覆盖 agent 脑袋层**（1.1% 不是缺口）。
+> ⑤ **进度复核（本轮独立重跑，非采信文档）**：`check-doctor` **FAIL=0 / WARN=3**（存量三条）· `docs-health` 0/0/154 · G1 **36/37** / G2 **10/13** · 设备在机 vk192 镜件、`--failed`=0、`hexagonrpcd*`/`iio-sensor-proxy` 仍 masked。**一处分歧已澄清**：现 `input_current_limit=2000000`、`voltage_now=5.68 V`、电池 **+80 mA**（98%）——短边 PD 在位时 charge-watch 顶到 2 A 顶档，`PITFALLS #734` 的 900 mA/4.40 V 是 **SDP-only** 档，非矛盾。
 
 > **🆕 2026-11-26 晚（droidloom 可用化 + 面板唤醒通道；**现役待办 = `TASKS/NEXT.md` §4.0a**）**：
 > ① **droidloom 装上并可用**：0.1.0-49 正式摊装（cell + 开机自启），**cell 联网修复**（captive-portal 探针改 vivo 204 + 独立 nft `ip dl_dns_redirect` 把 cell DNS 转校内 resolver + 解禁 `Droidloom` 网络）⇒ `dumpsys connectivity` = `VALIDATED`、宿主 `adb devices` 出 `10.177.0.2:5555 device:droidloom`（**从此 UI 问题可 adb 自动化复现**）。

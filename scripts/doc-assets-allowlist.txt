@@ -18,3 +18,4 @@ scripts/module.lds	实指内核树内 arch/arm64/kernel/module.lds，非本仓�
 rootfs-vk127.cpio.gz	PITFALLS 里指 out/rootfs-vk127.cpio.gz（out/ 不入库，实际件在 out/ 下）
 reports/artifacts/uefi-20261107R39R40-p45/	2026-11-09 清理轮删除（判死世代，p45 结论已入 TASKS §5；重建需按 p45-recipe.txt），见 reports/asset-cleanup-20261109.md
 reports/artifacts/uefi-20261104R21-hostdiag/	2026-11-10 清理轮删除（R21 世代判死；结论在 reports/uefi-noavb-dtbo-bootchain-20261104R.md，重建按 25 条补丁序列）见 reports/asset-cleanup-20261110.md
+scripts/check-userland-mirror.sh	TASKS/NEXT.md §4.0a T9 的**待建**门（用户态镜像一致性，2026-11-26 架构审计 A9/A10），未落地前引用属计划件

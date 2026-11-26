@@ -105,6 +105,10 @@
 | **T6** | 传感器 `#692`：假说 A 未判 —— 试验核只注册 `/dev/fastrpc-adsp-secure`、**无 `/dev/fastrpc-adsp`** | 补 `qcom,non-secure-domain` 到试验 DTB 重编后重跑 `-s` 二值测试 | 需设备窗 + 构建槽 | `reports/sensors-692-backport-test-20261126.md` §4 |
 | **T7** | 上游：v11 备料已在（`cover-scope-section.txt`），**等下个真实修订触发**再发（不回 sashiko 机器人线程） | 维护者提同一问题或新 review 到达 | upstream-gated | `reports/dts-v10-sashiko-20261126.md` |
 | **T8** | `elden-wake` 纳入 `deploy-desktop-shell.sh --check`（与 udev/phosh/phoc 同级判据） | 设备 `--check` 幂等命中该判据 | 无 | `reports/panel-wake-service-20261126.md` §4 |
+| **T9** | 用户态镜像一致性门：新建 `scripts/check-userland-mirror.sh`（`packaging/elden-userland/files/**` ↔ `scripts/**`/`rootfs/persistent-overlay/**`，28 对同内容 + 13 组同名漂移），并把它与 `packaging/elden-userland/tools/verify.sh` 挂进 doctor | 新建门三态自测过 + doctor 多一节；漂移组逐组判定「谁是权威」 | **13 组漂移的权威归属需用户裁定**（`init` 380 行差、`charge-watch.sh`/`time-sync.sh`/`net-up.sh` 是已上线服务件） | `reports/arch-audit-20261127.md` A9/A10 |
+| **T10** | `reports/` 孤児与入库边界：468 篇无角度 README 指针按「已吸收标 `archived=` / 有价值补一行」批处理；`.gitignore` 的 173 条逐目录规则改「`reports/artifacts/**` 整体 ignore + `!` 白名单 md」 | 孤児比例从 32.5% 降到 ≥60% 有指针；`git status` 不再因新 artifacts 目录默认入库而脏 | **改入库边界需用户确认** | `reports/arch-audit-20261127.md` A16 |
+| **T11** | `INDEX.md` §0 旧块下沉（§0 现占全文 80.6%、每会话必读）：早于 2026-11-25 的 27 块逐字搬 `archive/topics/`，§0 收敛到 ≤120 行 | `check-doctor` §15/§30 仍绿；§0 保留近 3 天 + 指针 | 无（有 TASKS 拆分同型范式） | `.pi/plans/2026-11-27-文档精简拆分归档.md` B1 |
+| **T12** | `.pi/sessions/` gzip 回收 ≈0.60 GiB：先把 `sessfind`/`sess`/`recent-sessions.sh`/`doctor/15-timeline.sh`/`gen-sessions.py` 的 `*.jsonl` 硬匹配改成「`.jsonl` + `.jsonl.gz`」再批量压 | 改工具后旧会话仍可检索（抽 3 个样本）+ 实际回收字节入账 | 无（但**先改工具**，否则断历史检索） | `reports/fs-dedup-20261127.md` §B3 |
 
 ### 4.1 常设项（每轮/每收尾都做，不占维度）
 - **H1 资产清理** —— 正文 = `RESOURCES/README.md` §3；**2026-11-25 用户授权轮已实删 79 G**（`/tmp` 本项目 8 件 + `build/` 链接产物，`/` 82%→73%），执行记录与「明确不删」清单 = `reports/disk-cleanup-20261125.md`，取证 = `reports/tmp-forensics-20261125.md` / `reports/build-residue-verify-20261125.md`；`out-archive.py` KEEP 表同日修正（vk189/vk192 免误归档）。

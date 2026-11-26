@@ -35,7 +35,11 @@ import sys
 TEXT_EXT = ('.md', '.sh', '.py', '.tsv', '.json')
 
 # 本工具自己的输出不得进语料：否则清单表会把每个脚本名都「引用」一次（--inventory 自吞）。
-SELF_OUTPUT = ('versions/scripts-inventory.tsv',)
+# 2026-11-26 架构审计 A8（父会话用 tracked 孤儿探针实证）：`scripts/README.md` 是 359 行**生成的全量清单**，
+# 同样会把每个脚本名「引用」一次 ⇒ 任何孤儿脚本一旦重新生成索引就从 DEAD 里消失（门空转）。
+# 实证（父会话 2026-11-26）：`git add -N scripts/zz-orphan-*.sh` 造 tracked 孤儿 → DEAD 命中；
+# 跑 gen-scripts-index.py 把名字收进索引后 → DEAD `-`（= 被索引自吞）。
+SELF_OUTPUT = ('versions/scripts-inventory.tsv', 'scripts/README.md')
 BASHISM_PAT = re.compile(r"\[\[(?!:)|declare -|[A-Za-z_][A-Za-z0-9_]*=\(")
 
 

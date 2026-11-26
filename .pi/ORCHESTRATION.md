@@ -40,7 +40,8 @@
 - `agents.maxPerExecution: 16` —— 单次 `fabric_exec` 最多启动 16 个子代理。
 - **树内配额（策略，非配置）**：总管同时 ≤ **4 个 L1**；每个 L1 同时 ≤ **3 个 L2**；
   合计 ≤ 4 + 4×3 = **16**。L2 不得再派（深度与工具双重保证，见 §4）。
-- 值真源 = `~/.pi/agent/fabric.json`（全局）+ `.pi/fabric.json`（本项目覆盖）。**改后必须 `/reload` 才生效。**
+- 值真源 = `~/.pi/agent/settings.json` 的 `subagents` 段（全局）+ 本项目 `.pi/settings.json`（覆盖）；provider/模型清单 = `~/.pi/agent/custom-providers.json`。
+  **fabric.json 已于 2026-11-21 随 pi-fabric 卸载删除**（本项目 `.pi/fabric.json` 一并删除，2026-11-26 审计 A12）。**改后必须 `/reload` 才生效。**
 
 ---
 
@@ -134,8 +135,8 @@ const r = await agents.run({
 
 ## 9. 自检清单（改配置/角色卡后跑一遍）
 
-1. `python3 -m json.tool ~/.pi/agent/fabric.json` 与 `.pi/fabric.json` 通过；两处 `maxDepth=2`、`maxConcurrent=16`。
-2. `fabric_exec` 里 `agents.definitions()`：新角色卡出现在列表且 `error` 为空；`tools`/`model` 如期。
+1. `python3 -m json.tool ~/.pi/agent/settings.json` 通过；`subagents.defaultModel` 指向 `custom.ustc-pool/*`（禁 `deepseek/*`、`custom.nexavlinks-com/*`），并发上限 = pi-subagents 的 `maxConcurrent`（现查值，不在此写死）。
+2. 新角色卡（`.pi/agents/*.md`）能被 `subagent` 工具按名字解析；`model`/`thinking` 如期（未知模型会报 `Unknown subagent model` ⇒ 需 `/reload`）。
 3. 冒烟：总管派 1 个 L1（`recursive: true`），L1 再派 1 个 L2 跑一条 `echo` 并回传——证明深度 2 与递归工具授权可用。
 4. 冒烟后核对行数为 `depth: 2`（L2）、`PI_FABRIC_DEPTH` 递增，且 L2 不具备 `fabric_exec`。
 5. `/reload` 后改动才进入运行中的会话；`scripts/check-doctor.sh` FAIL=0；`git commit`。

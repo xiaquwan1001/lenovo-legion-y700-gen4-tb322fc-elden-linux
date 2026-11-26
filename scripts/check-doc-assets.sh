@@ -9,7 +9,8 @@
 #
 # 判据：扫指定文档里被反引号包住的 `patches/...` `reports/...` `scripts/...` 等 token，
 #       逐个检查存在性；**前缀截断**（如 `patches/0011`、`patches/dt/0002`）按 glob 前缀解析，
-#       命中即算存在；带通配/占位符（`*` `{` `<` `…`）的 token 跳过。
+#       命中即算存在（2026-11-26 收紧：前缀命中数 >3 视为宽前缀 ⇒ 判 MISSING，见审计 A15）；
+#       带通配/占位符（`*` `{` `<` `…`）的 token 跳过。
 # 豁免：scripts/doc-assets-allowlist.txt，每行 `<path><TAB><理由>`。
 #
 # 用法：
@@ -74,8 +75,14 @@ for f in "${files[@]}"; do
 		if [ -e "$tok" ]; then
 			continue
 		fi
-		# 前缀截断（`patches/0011` 指 0011-*.patch）按 glob 解析；目录同样适用
-		if compgen -G "${tok}*" >/dev/null 2>&1; then
+		# 前缀截断（`patches/0011` 指 0011-*.patch）按 glob 解析；目录同样适用。
+		# 2026-11-26 架构审计 A15：原实现只要「前缀存在」就 continue，于是任意短前缀都算命中
+		# （实测新建一个 md 写 `scripts/ch` / `reports/uefi` / `patches/0` → checked=3 missing=0 PASS，
+		# 而真 GitLab 路径全不存在）⇒ 门实际上只验「有个同前缀的东西」。
+		# 现收紧为「前缀命中数 ≤3」：真前缀截断（`PITFALLS/sessions/01`、`patches/uefi/20261106R31`）
+		# 实测 n=1 仍通过；`scripts/ch*`、`patches/0*`、`reports/uefi*` 这类宽前缀命中一片 ⇒ 判 MISSING。
+		glob_n=$(compgen -G "${tok}*" 2>/dev/null | wc -l)
+		if [ "$glob_n" -ge 1 ] && [ "$glob_n" -le 3 ]; then
 			continue
 		fi
 		if is_allowed "$tok"; then
