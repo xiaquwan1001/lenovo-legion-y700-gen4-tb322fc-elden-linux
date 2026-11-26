@@ -26,9 +26,14 @@
 > 同族 `WDT=PDP−0x10000`），vendor DT/reserved-memory **无冲突**，上机判据清单 §4（头号风险 = hyp/TZ 独占则 `readl(WDT_STS)` 同步外部中止）。
 > ⑤ **通信复扫**（`reports/comm-triage-20261126.md`）：dwc3 v16 拿到 sashiko 首个「no issues」；M8/M10 换址补发进档 0 回音；
 > **IMAP 收件侧与 phosh API 因 keyring 锁无法核验（如实记错误码）**。
-> ⑥ **传感器落地件已备**：`scripts/deploy-ssc-sensors.sh`（`--check` 只读体检矩阵 / `--from-debian` 官方包 + sha256 / `--dry-run` / `--rollback`，
+> ⑥ **传感器上机尝试 = 装包成功、出数失败，且 #692 已复现（2026-11-26 08:2x，用户放行后执行）**：`libssc2`/`libssc-bin`/`iio-sensor-proxy 3.9-1` + udev 规则都到位，
+> 但 iio-sensor-proxy 报 **`'registry' sensor unavailable … is hexagonrpcd running?`** ⇒ **registry 由 hexagonrpcd 供给，纯用户态 libssc 绕不开 #692**（早轮设想否证）；
+> 手动 `start hexagonrpcd`（带 `-s`）当场硬崩，又因其 **本来就 enabled** 而我 `unmask` 时未 `disable` ⇒ **5 次「phosh 转圈→关机」启动循环**（`PITFALLS #732`），
+> 已用零写盘救援 + initramfs SSH 挂 `sda17` 修根恢复安全态（`hexagonrpcd*`/`iio-sensor-proxy` 全 masked、`--failed`=0、桌面正常）。
+> **前置硬门 = 先建取证通道（物理串口或修 ramoops）**；全账 `reports/sensor-ssc-deploy-20261126.md`。
+> ⑦ **传感器落地件已备**：`scripts/deploy-ssc-sensors.sh`（`--check` 只读体检矩阵 / `--from-debian` 官方包 + sha256 / `--dry-run` / `--rollback`，
 > 全程不碰 `hexagonrpcd*`）——放行后一条命令即可上机验 SSC 出数。
-> ⑦ **droidloom Debian 包收尾**：runtime 缺 `libwayland-server0` 实证补齐 + 交叉 `--sysroot` 绝对化（**`PITFALLS #730`**），双架构重建。
+> ⑧ **droidloom Debian 包收尾**：runtime 缺 `libwayland-server0` 实证补齐 + 交叉 `--sysroot` 绝对化（**`PITFALLS #730`**），双架构重建。
 
 > **🆕 2026-11-25 夜 2（四项点名调查轮，零设备：平板不在线）**：4 lane 全收口 + 1 条派生构建 lane。
 > ① **Mobian/phosh 上游化 + 通信**（`reports/mobian-phosh-upstream-20261125.md`）：增量窗口**人类评审 0 封**，机器人给

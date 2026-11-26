@@ -1,0 +1,8 @@
+[ssc-deploy] TARGET=root@192.168.7.1 MODE=exec
+[ssc-deploy] hexagonrpcd=masked（安全态，保持不动；本脚本全程不碰 hexagonrpcd*）
+[ssc-deploy] ① 从 Debian pool 取官方 arm64 包（设备侧 curl，timeout 包裹）
+DOWNLOADED
+iio-sensor-proxy_3.9-1_arm64.deb a05d3fb33323183b847e9264f57485b278fbc42f9854119edfdcd20db1b589d0  libssc2_0.4.4-2.1_arm64.deb b1c2b9c0a3232f2b79b0fb7fbf517283c5c36d5662bb95974752ea4b82f592a8  libssc-bin_0.4.4-2.1_arm64.deb: 打开或读取失败
+sha256sum: 'iio-sensor-proxy_3.9-1_arm64.deb a05d3fb33323183b847e9264f57485b278fbc42f9854119edfdcd20db1b589d0  libssc2_0.4.4-2.1_arm64.deb b1c2b9c0a3232f2b79b0fb7fbf517283c5c36d5662bb95974752ea4b82f592a8  libssc-bin_0.4.4-2.1_arm64.deb': 没有那个文件或目录
+sha256sum: 警告：1 个列出的文件无法读取
+[ssc-deploy] FATAL: sha256 校验失败

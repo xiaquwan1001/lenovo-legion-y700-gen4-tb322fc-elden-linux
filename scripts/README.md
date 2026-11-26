@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=8498c6bf2a735c71（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=2896521c5119c125（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**355**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 78 / 设备操作 108 / 造件 71 / 取证 50 / 一次性 3 / 公共库 8 / 其它 37
+- 入口总数：**356**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 78 / 设备操作 109 / 造件 71 / 取证 50 / 一次性 3 / 公共库 8 / 其它 37
 - 引用数为 0 的孤立件：**2**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -107,7 +107,7 @@
 | `scripts/wd-c1-verify.dev.sh` | RUN ON DEVICE (as root). 验证 vk103（IPv4+IPv6 多路由表）下 | 6 |
 | `scripts/zero-to-desktop-check.sh` | 「起机 → 桌面」这一段（RUNBOOK S5–S12）的一条命令自检 | 18 |
 
-## 设备操作（108）
+## 设备操作（109）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -125,7 +125,7 @@
 | `scripts/bt-up.sh` | bring up Bluetooth at boot on the TB322FC (elden). | 18 |
 | `scripts/build-hapticd.sh` | 交叉编译 elden-hapticd（Waydroid 马达透传宿主 daemon） | 11 |
 | `scripts/cam-loopback.sh` | 把 mainline 相机（libcamera 软 ISP）转发到一个 v4l2loopback 节点。 | 47 |
-| `scripts/cam-mode.sh` | elden 上「相机 ⇄ 熄屏」互斥的操作口径（在设备上当 root 跑） | 109 |
+| `scripts/cam-mode.sh` | elden 上「相机 ⇄ 熄屏」互斥的操作口径（在设备上当 root 跑） | 110 |
 | `scripts/camera-modules-load.sh` | bring up the mainline camera stack on TB322FC. | 71 |
 | `scripts/camera-stream-up.sh` | 在设备上把 camss 采集链路配置到可出流（幂等）。 | 29 |
 | `scripts/charge-ctl.sh` | battery / charger control for TB322FC (elden), qcom-battmgr. | 34 |
@@ -135,7 +135,7 @@
 | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 41 |
 | `scripts/deploy-sensord-routec-debian.sh` | 在 **Debian/glibc 根**上安装路线 C 的 Waydroid sensor HAL | 14 |
 | `scripts/deploy-sensors-hal.sh` | 部署 elden UDP 传感器 HAL 到 Waydroid 容器（C4） | 14 |
-| `scripts/deploy-ssc-sensors.sh` | 在 Y700 (TB322FC, Debian trixie) 上部署 SSC 传感器用户态栈 | 0 |
+| `scripts/deploy-ssc-sensors.sh` | 在 Y700 (TB322FC, Debian trixie) 上部署 SSC 传感器用户态栈 | 5 |
 | `scripts/deploy-v4l2loopback.sh` | 为**当前在机内核**（读设备 uname -r）构建并部署 v4l2loopback | 19 |
 | `scripts/deploy-zh-ime.sh` | 部署「触屏唤起的中文输入法」到设备（幂等） | 37 |
 | `scripts/dev-userdata-relabel.sh` | 设备侧（POSIX sh）：把 Android userdata（sda16）就地转成 Linux 数据分区 | 12 |
@@ -186,6 +186,7 @@
 | `scripts/recover-lun4-slotguid.sh` | 修「ABL 报 ValidateSlotGuids: BootableSlot _<x> does not have valid guids ⇒ 掉 fastboot」。 | 4 |
 | `scripts/rootfs-minbase-build.sh` | 最小 Debian 根（GPT-minimal 路线的 A6 前置件）驱动脚本 | 13 |
 | `scripts/serial-capture.sh` | 等 USB 串口节点出现后把内容落盘（给「设备 boot 起来但不知道卡在哪」用） | 6 |
+| `scripts/serial-cmd.py` | 通过 /dev/ttyACM0 串口与设备 shell 交互：发一组命令，抓输出存文件。 | 0 |
 | `scripts/serial-fanout.sh` | 读一个 tty 并把内容追加到文件（供 systemd 常驻运行）。 | 8 |
 | `scripts/serial-log.sh` | ★ STALE 复判（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 12 |
 | `scripts/serial-logger.sh` | ★ RETIRED-for-forensics（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留文件，但退出「取证工具」序列**。 | 44 |
@@ -419,4 +420,4 @@
 没有脚本、也没有文档提到这些 basename。**不等于可删**：很多是人手跑的入口。处置建议 = 要么在 `TASKS/README.md` 或某报告里落一条指针（变活），要么标「一次性」并说明留档理由。
 
 - `scripts/mailbox-quota-reclaim-20261125.py` — 邮箱到 2 万封上限后的「按规则回收」（2026-11-25 用户授权）。
-- `scripts/deploy-ssc-sensors.sh` — 在 Y700 (TB322FC, Debian trixie) 上部署 SSC 传感器用户态栈
+- `scripts/serial-cmd.py` — 通过 /dev/ttyACM0 串口与设备 shell 交互：发一组命令，抓输出存文件。

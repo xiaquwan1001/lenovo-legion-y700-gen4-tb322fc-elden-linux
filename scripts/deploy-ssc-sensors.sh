@@ -167,6 +167,15 @@ rollback)
 exec|dryrun)
 	say "TARGET=$TARGET MODE=$MODE"
 	# ⛔ 硬禁令自证：只读检查 hexagonrpcd，不动它
+	# 2026-11-26 事故（PITFALLS #732）：hexagonrpcd 在 default.target.wants/ 里**本来就 enabled**，
+	# 当时人工 `unmask` 后忘了 disable ⇒ `-s` 每次开机自启 ⇒ 5 次启动硬崩循环。
+	# 本脚本从不 unmask/disable/enable 它；这里额外只读报出「是否 enabled」，让操作者别误 `unmask`。
+	hw=$(rsh 'ls /etc/systemd/system/*.wants/hexagonrpcd.service 2>/dev/null | wc -l')
+	if [ "${hw:-0}" -ge 1 ]; then
+		say "WARN: /etc/systemd/system/*.wants/ 里有 hexagonrpcd.service 链接（= enabled）。"
+		say "      ⇒ **永远不要**为了一次尝试去 unmask 它（那会恢复每次开机自启 + '-s' attach sensorspd ⇒ PITFALLS #732）。"
+		say "      要试只能：保持 masked，单次 systemctl start，且先建取证通道。"
+	fi
 	hstate=$(rsh 'systemctl is-enabled hexagonrpcd 2>&1')
 	if [ "$hstate" = masked ]; then
 		say "hexagonrpcd=masked（安全态，保持不动；本脚本全程不碰 hexagonrpcd*）"
@@ -186,7 +195,11 @@ curl -fsSL --retry 2 -o $DEB_LIBSSC2 $DEBIAN_POOL/libs/libssc/$DEB_LIBSSC2 && \
 curl -fsSL --retry 2 -o $DEB_LIBSSCBIN $DEBIAN_POOL/libs/libssc/$DEB_LIBSSCBIN && echo DOWNLOADED" \
 			|| die "Debian pool 下载失败"
 		# sha256 校验（官方包固定值，防半截下载/替换）
-		rd "cd $stage && echo '$SHA_IIO  $DEB_IIO' '$SHA_LIBSSC2  $DEB_LIBSSC2' '$SHA_LIBSSCBIN  $DEB_LIBSSCBIN' | sha256sum -c -" \
+		# 逐件校验：每件一行 "HASH  FILE" 喂给 sha256sum -c。
+		# 2026-11-26 实测：早期版本把三组合并成一个 echo（引号嵌套）⇒ 远端把它当**一个文件名**，
+		# 报 "iio-sensor-proxy_…deb  a05d…  libssc2…: 打开或读取失败" 并 FATAL。
+		rd "cd $stage && \
+printf '%s  %s\\n' $SHA_IIO $DEB_IIO $SHA_LIBSSC2 $DEB_LIBSSC2 $SHA_LIBSSCBIN $DEB_LIBSSCBIN | sha256sum -c -" \
 			|| die "sha256 校验失败"
 	elif [ -n "$PKG_DIR" ]; then
 		[ -d "$PKG_DIR" ] || die "--pkg-dir $PKG_DIR 不是目录"
