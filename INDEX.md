@@ -19,7 +19,8 @@
 > · **传感器 #692 根因到「双缺陷链」**（`reports/sensors-hexagonrpcd-20261126.md`）：`-s` = 一次 `INIT_ATTACH_SNS`，文件是 sensorspd 反向来取；真凶候选 ① 内核 `fastrpc_get_args` 对 `SENSORS_PD` 仍走 context bank（`build/daily:1102`）而**上游三处树（torvalds master / char-misc-next / char-misc-linus）都没有那 1 行修复**（父代理现查 → patchwork `handled-elsewhere` 但树上无痕）② hexagonrpcd（真上游 = `github.com/linux-msm/hexagonrpc`，**不是** Codeberg）无写支持 + listener 输入缓冲 256 B 上限 ⇒ registry 写必失败。另纠正：#733 后「pstore 空」不再能当非 AP panic 的证据。
 > · **Gunyah = 裁定不做、不进日常线**（`reports/gunyah-daily-line-20261126.md`，§9 = 父代理复核表）：进不了不是卡点而是结构事实（上游 `drivers/virt` 无目录、patchwork 系列 0），移植树已删、每级内核 0.3–0.5 人日周期性支出且「跑子 VM」已终局不可行；止损判据 R1/R2/R3 写死。
 > · **v10 sashiko 两条 Medium 裁定 (A)**（`reports/dts-v10-sashiko-20261126.md`）：都不算新缺陷（binding 等 7.5、core 节点自 v6 起声明不含），**合照 qcom 惯例**（`sm8750-mtp` 首版带 PMIC/RPMh/console，UFS +4 个月、USB +11 个月）⇒ 不改 DTS、不回机器人，文本已备 `patches/upstream/elden-dts-v11-20261126/cover-scope-section.txt`。
-> ⑦ **在跑**：lane D（droidloom 重装 + Limbus/小红书，持设备锁）+ lane S2（fastrpc 1 行回移试验核 + 零写盘 `fastboot boot` 直测假说 A）。
+> ⑦ **droidloom 重装收口（lane D，`reports/droidloom-deploy-20261126.md`）**：上游 **0.1.0-49** 三包正式摊装（`/opt/dl-test` 手工摊装已不存在），doctor `ready=True blockers=0`、cell `Android is ready`、开机自启；**小红书装上且上屏**（`IndexActivityV2` 1440x2400）但 **cell 无网**；**Limbus 三 split 安装成功却启动即被 AppSealing（INKA）杀**。两个缺口已派：lane D2（cell 无网根因 + 修法）与 lane D3（AppSealing 二值结论）。台账 = `TASKS/G2.md` 新块。
+> ⑧ **在跑**：lane S2（fastrpc 1 行回移试验核 + `fastboot boot` 零写盘直测假说 A，占设备）、D2/D3（只读/静态）。
 
 > **🆕 2026-11-26 晨（无人值守轮，设备在线但四 lane 均只读）**：
 > ① **gunyah 线分界写死（TASKS **D21**，`reports/gunyah-lane-20261126.md`）**：主线 `drivers/virt/gunyah` 仍不存在
