@@ -6,7 +6,21 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26（23:2x CST 上机实测轮））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（06:0x CST 无人值守轮））
+
+> **🆕 2026-11-27 06:0x（无人值守轮：`#692` 后续① 收口 + D10 复扫 + ABL logfs 判据纠偏）**：
+> ① **「补齐 ADSP 的 PD 依赖」被否证（不做）**：主线 PDR + in-kernel pd-mapper 齐全（`qcom_pd_mapper.c:665` 把 `qcom,sm8750`
+> 映射到 `sm8550_domains`），**本机实测** `PDR: Indication received from msm/adsp/audio_pd|charger_pd`（UP）、`q6apm` 已绑、声卡 `card0` 在
+> ⇒ PD 链路四件齐全；而主线 PDR **没有「关 PD」接口**、`qcom_pas_stop()` 不碰 PD，pd-mapper 注销发生在 stop **之后**；
+> **同 SoC 反例**（Xiaomi Pad 8 Pro / `piano`，mainline 7.2.10）= `remoteproc0 stop→start` 与 ADSP SSR 都不复位整机 ⇒ 本机复位归**板级 PMIC/AOP/TZ**
+> （他方 issue 已由父代理读原文核）。全账 = `reports/sensors-adsp-pd-pdr-20261127.md`（lane 调研 + 父代理逐条重跑）；T6 已改写。
+> ② **ABL logfs 判据纠偏（新 `PITFALLS #738`）**：本机 `UEFILOG1.TXT` 目录项 size = **65536（只留最近一次启动）**，
+> `reports/uefi-observability-pivot-20261101.md` 的「10 段环形可回溯」在本机现态**不成立**（9 段是陈旧 `_a` 残留）；
+> 且 23:11 那次（= #692 最后复位的回落启动）ABL 记的 `Reset by PSHOLD / Hard Reset` 与正常重启同款 ⇒ **该字段不能判根因**（#184/#182）。
+> 证据 = `reports/artifacts/sensors-692-logfs-20261127/`（logfs 8 MiB + 只读采集）。
+> ③ **D10 复扫**（`reports/comm-triage-20261127.md`）：窗口内**人类评审新增 0 条**；四个上游系列封数与上轮逐一相同、不建议催；
+> `mobian1/droid-juicer !46` 逐字段不变（notes=0）；**新工具事实** = `lore-kernel.gnuweeb.org` 是免 Anubis 的 lore 镜像。
+> **退信面仍未核**（GNOME keyring 锁：`secret-tool: Cannot get secret of a locked object`）⇒ 需用户登录图形会话解锁。
 
 > **🆕 2026-11-26 23:1x（用户放行上机后接续：`#692` 假说 A **被实验否证**）**：三次零写盘 `fastboot boot` 试验核（`out/fastrpc1-20261126/` sha `2050cf6c…`）+ 在机 vk192 对照，共 6 发实测（报告 §8）：
 > ① **先补上一班漏的采集**：试验核 `/dev/fastrpc-adsp`（非 secure）**在**、`qrtr 400` 在、ADSP `running` ⇒ `qcom,non-secure-domain` 生效，旧阻塞项消除（且并不依赖补丁）。

@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：694
+- 报告总数：696
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -22,10 +22,10 @@
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
 | `ime` | 11 | `ime-single-stack-20261124.md` |
+| `comm` | 10 | `comm-triage-20261127.md` |
 | `mobian` | 10 | `mobian-phosh-upstream-20261125.md` |
 | `b5` | 9 | `b5-apss-wdt-static-review-20261126.md` |
 | `camss` | 9 | `camss-v25-rebase-20261117.md` |
-| `comm` | 9 | `comm-triage-20261126-d10.md` |
 | `m3v5` | 9 | `m3v5-repack-20261031.md` |
 | `m6` | 9 | `m6-dsi-phy-v3-20261126.md` |
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
@@ -62,6 +62,7 @@
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
 | `pitfalls` | 3 | `pitfalls-condense-20261122.md` |
 | `sensor` | 3 | `sensor-claim-verify-20261126.md` |
+| `sensors` | 3 | `sensors-adsp-pd-pdr-20261127.md` |
 | `session` | 3 | `session-plan-20261121-night.md` |
 | `stale` | 3 | `stale-alpine-audit-docs-20261119.md` |
 | `t9` | 3 | `t9-sampler-restored-20261121.md` |
@@ -90,7 +91,6 @@
 | `qemu` | 2 | `qemu-full-chain-20261113.md` |
 | `repo` | 2 | `repo-slim-candidates-20261125.md` |
 | `route` | 2 | `route-b-impl-20261108.md` |
-| `sensors` | 2 | `sensors-692-backport-test-20261126.md` |
 | `shutdown` | 2 | `shutdown-console-spam-20261125.md` |
 | `t14` | 2 | `t14-s3s4s6-offline-verify-20261114.md` |
 | `t18` | 2 | `t18-charging-timing-20261111.md` |
@@ -540,6 +540,19 @@
 - `ime-chinese-20261109.md` — 中文输入法可用性收口（2026-11-09）：配置器打不开、没有顶栏指示、切不到中文
 - `ime-osk0-dbus-spec-20261020.md` — 输入法控制面取证：sm.puri.OSK0 / Phosh 驱动链 / fcitx5 kimpanel / wvkbd 0.19.4
 
+## `comm`（10）
+
+- `comm-triage-20261127.md` — 通信复扫 D10（2026-11-26T05:55Z → ≈22:0xZ）— 只读
+- `comm-triage-20261126-d10.md` — D10 通信 lane 复扫（2026-11-25T11:25Z → 2026-11-26T04:20Z）— 只读
+- `comm-triage-20261126-d11.md` — 通信复扫 D11（2026-11-26T04:20Z → 05:55Z + GitLab 面）— 只读
+- `comm-triage-20261126.md` — 通信 lane 增量复扫（2026-11-25 01:45Z → 2026-11-25 22:11Z）— B4，只读
+- `comm-triage-20261125.md` — 通信 lane 增量复扫（2026-11-24 08:00Z → 2026-11-25 01:45Z）— D10，只读
+- `comm-triage-20261124-c.md` — 通信 lane 复扫（2026-11-24 03:0xZ / 11:0x CST）— D10 只读
+- `comm-triage-20261124-d.md` — 通信 lane 复扫（2026-11-24 11:5x CST）— D10 只读，第 2 轮
+- `comm-triage-20261124-e.md` — 通信 lane 复扫（2026-11-24 05:00Z → 08:30Z）— E 轮，只读
+- `comm-triage-20261123-b.md` — D10 通信跟踪（b 轮，下午）2026-11-23
+- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
+
 ## `mobian`（10）
 
 - `mobian-phosh-upstream-20261125.md` — Mobian/phosh 上游化进度 + 通信增量复扫（D10）— 2026-11-25
@@ -576,18 +589,6 @@
 - `camss-v3-reply-draft-20261029.md` — camss 线程回信（2026-10-29，**已发送**）
 - `camss-v3-vs-upstream-v6-20261029.md` — camss v3 候选 × 上游高通 v6 逐枚对照 — 2026-10-29
 - `camss-upstream-response-20261028.md` — camss（M4）上游回信与元数据整改 — 2026-10-28
-
-## `comm`（9）
-
-- `comm-triage-20261126-d10.md` — D10 通信 lane 复扫（2026-11-25T11:25Z → 2026-11-26T04:20Z）— 只读
-- `comm-triage-20261126-d11.md` — 通信复扫 D11（2026-11-26T04:20Z → 05:55Z + GitLab 面）— 只读
-- `comm-triage-20261126.md` — 通信 lane 增量复扫（2026-11-25 01:45Z → 2026-11-25 22:11Z）— B4，只读
-- `comm-triage-20261125.md` — 通信 lane 增量复扫（2026-11-24 08:00Z → 2026-11-25 01:45Z）— D10，只读
-- `comm-triage-20261124-c.md` — 通信 lane 复扫（2026-11-24 03:0xZ / 11:0x CST）— D10 只读
-- `comm-triage-20261124-d.md` — 通信 lane 复扫（2026-11-24 11:5x CST）— D10 只读，第 2 轮
-- `comm-triage-20261124-e.md` — 通信 lane 复扫（2026-11-24 05:00Z → 08:30Z）— E 轮，只读
-- `comm-triage-20261123-b.md` — D10 通信跟踪（b 轮，下午）2026-11-23
-- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
 
 ## `m3v5`（9）
 
@@ -871,6 +872,12 @@
 - `sensor-libssc-prep-20261126.md` — 传感器用户态备料：libssc + iio-sensor-proxy(SSC) arm64 包（lane L · 主机侧，零设备）
 - `sensor-ssc-deploy-20261126.md` — SSC 传感器用户态部署尝试（2026-11-26 08:2x–09:1x）—— 装包成功、出数失败、**并触发一次可复现的启动硬崩循环**
 
+## `sensors`（3）
+
+- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
+- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
+- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
+
 ## `session`（3）
 
 - `session-plan-20261121-night.md` — 2026-11-21 晚 — 进度整理 / 待办 / 子代理编队（协调层文件）
@@ -1015,11 +1022,6 @@
 
 - `route-b-impl-20261108.md` — 路线 B 实现回执 — D1 补丁 + D2 构建（2026-11-08）
 - `route-b-r56-20261108.md` — R56 — ESP-first Loader 面板可见标记 + Pname 修复
-
-## `sensors`（2）
-
-- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
-- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
 
 ## `shutdown`（2）
 
