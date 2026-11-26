@@ -24,6 +24,12 @@
 | 主机 | `xuqianhui`（Ubuntu 26.04；旧文档里的 `5700g-x8664` 是历史名，2026-11 起不再使用），交叉链 gcc-15 / avbtool / mkbootimg / dtc 齐；设备地址 USB-NCM `192.168.7.1` |
 | 设备访问（2026-11-08 补全） | **两个账户都已装主机公钥（`~/.ssh/id_rsa`）** ⇒ 不会因「忘了用 root」误判设备离线：`ssh elden` = 用户 `xuqianhui1001`（属 `sudo`，`sudo -n` 免密）/ `ssh elden-root` = `root`（别名在主机 `~/.ssh/config`）。`sshd`：`PubkeyAuthentication yes`、`PasswordAuthentication yes`、`PermitRootLogin prohibit-password`。Android 槽时走 `adb`（`10AF5J0FHQ0039G`），Linux 槽跑 `sshd` |
 
+### 1.1a 面板熄屏的 SSH 唤醒（2026-11-26 加）
+
+- **判据**：idle 熄屏时 `dpms=On` / `bl_power=0` / `status=connected` **三条 sysfs 全指向「亮」**，`adb screencap` 也可能返回成功图（140 KB）⇒ **唯一判据 = 合成器出帧**（`grim` 成功且 PNG > 60 KB）。详见 `PITFALLS #735`。
+- **唤醒**：`ssh elden 'elden-wake'`（用户）或 `ssh elden-root 'touch /run/elden-wake.trigger'`（服务 `elden-wake.path`，enabled）。脚本 SSOT = `scripts/wake-screen.sh`（`--check` / `--selftest`）；报告 = `reports/panel-wake-service-20261126.md`。
+- **纪律**：任何「取不到画面/复验失败」的结论之前，先唤醒再看一眼，否则会把熄屏误判成功能坏。
+
 ### 1.1 内核与软件基线
 
 > **注（2026-11-20 批二，A4 判「三代口径叠写」）**：本节按时间**倒序**叠写，★/★★/★★★ 只是不同年代的标记层；**现态 = 日期最新的最顶条目**，其下所有旧条目（含旧「现态」字样）均为历史沿革，读现态不需要往下看。冲突时按 `INDEX.md` §2 时间序裁决。
