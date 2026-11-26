@@ -1,0 +1,48 @@
+=== -1 kernel tail ===
+2026-11-26T22:37:42+08:00 elden kernel: Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_DEF
+2026-11-26T22:37:42+08:00 elden kernel: Bluetooth: hci0: QCA setup on UART is completed
+2026-11-26T22:37:42+08:00 elden kernel: Bluetooth: hci0: HFP non-HCI data transport is supported
+2026-11-26T22:37:42+08:00 elden kernel: Bluetooth: MGMT ver 1.23
+2026-11-26T22:37:54+08:00 elden kernel: pci 0000:01:00.0: [17cb:110e] type 00 class 0x028000 PCIe Endpoint
+2026-11-26T22:37:54+08:00 elden kernel: pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]
+2026-11-26T22:37:54+08:00 elden kernel: pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]
+2026-11-26T22:37:54+08:00 elden kernel: pci 0000:01:00.0: PME# supported from D0 D3hot D3cold
+2026-11-26T22:37:54+08:00 elden kernel: pci 0000:01:00.0: Adding to iommu group 21
+2026-11-26T22:37:54+08:00 elden kernel: pci 0000:01:00.0: ASPM: default states L0s L1
+2026-11-26T22:37:54+08:00 elden kernel: pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+2026-11-26T22:37:54+08:00 elden kernel: pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]: assigned
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: Wi-Fi 7 Hardware name: peach hw2.0
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: MSI vectors: 32
+2026-11-26T22:37:54+08:00 elden kernel: mhi mhi0: Requested to power ON
+2026-11-26T22:37:54+08:00 elden kernel: mhi mhi0: Power on setup success
+2026-11-26T22:37:54+08:00 elden kernel: mhi mhi0: Wait for device to enter SBL or Mission mode
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: chip_id 0x2 chip_family 0x4 board_id 0xff soc_id 0x40210200
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: fw_version 0x100effff fw_build_timestamp 2025-05-29 06:58 fw_build_id QC_IMAGE_VERSION_STRING=WLAN.GNG.1.0-03869-QCAGNGSWPL_V1.0_V2.0_SILICONZ-1.108007.3.112099.4
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: fw_caps 0xf
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi TME-L power-on hardware-restricted (stock-compatible, continuing)
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi AUX_UC request succeeded
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi FW_INIT_DONE received: hang_offset_valid=0 hang_offset=0 hang_length_valid=0 hang_length=0 soft_sku_valid=1 soft_sku=0x1
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: authenticate with 30:5f:77:13:2d:e0 (local address=02:00:82:b2:f8:3a)
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: send auth to 30:5f:77:13:2d:e0 (try 1/3)
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: authenticated
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: associate with 30:5f:77:13:2d:e0 (try 1/3)
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: RX AssocResp from 30:5f:77:13:2d:e0 (capab=0x8001 status=0 aid=1)
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: associated
+=== -1 fault/panic grep ===
+48
+11月 26 22:37:21 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@5: SMR mask 0x40 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@5: SMR mask 0x40 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@6: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@6: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@7: SMR mask 0x40 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@7: SMR mask 0x40 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@8: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@8: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@12: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@12: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@13: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@13: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@14: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:21 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@14: SMR mask 0x20 out of range for SMMU (0x2)
+11月 26 22:37:22 elden rtkit-daemon[1075]: Watchdog thread running.

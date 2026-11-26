@@ -1,0 +1,9 @@
+# snapshot-before 2026-11-26T22:37:07+08:00
+7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0
+running
+0
+Active slot: _b
+crw-rw---- 1 fastrpc fastrpc 10, 264 11月26日 21:52 /dev/fastrpc-adsp
+masked
+masked
+1

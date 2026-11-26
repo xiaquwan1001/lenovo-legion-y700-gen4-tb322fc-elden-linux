@@ -6,7 +6,13 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26（22:2x CST 收尾轮复核））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26（23:2x CST 上机实测轮））
+
+> **🆕 2026-11-26 23:1x（用户放行上机后接续：`#692` 假说 A **被实验否证**）**：三次零写盘 `fastboot boot` 试验核（`out/fastrpc1-20261126/` sha `2050cf6c…`）+ 在机 vk192 对照，共 6 发实测（报告 §8）：
+> ① **先补上一班漏的采集**：试验核 `/dev/fastrpc-adsp`（非 secure）**在**、`qrtr 400` 在、ADSP `running` ⇒ `qcom,non-secure-domain` 生效，旧阻塞项消除（且并不依赖补丁）。
+> ② **决定性结果**：`hexagonrpcd … -s` 在**打了 remote-heap 补丁的核**上 **2/2 静默硬复位整机**，在**未打补丁的在机 vk192** 上**同样复位**（C1）⇒ 补丁既非原因也非解药；不带 `-s` 时同一核完全正常（rc=0）。
+> ③ **机制**：ADSP `remoteproc stop`（**不跑 hexagonrpcd**）**同样 1–2 s 静默复位**（C2，2/2，且 `echo` 本身未返回 = 卡在停止握手），而 **CDSP stop/start 全绿**（C3）⇒ 复位在 Linux 之外（PMIC/引导层或安全监控），**ADSP 故障与 ADSP 停止共用这条路**。崩时串口 relay **零行**（探针证明通道本来通）、磁盘日志因未回写全丢、`pstore` 空、APSS 硬看门狗启动即禁用。
+> ④ **收口**：按 S 报告 §6.3 止损，内核侧停手；`PITFALLS **#737`** 立条（含「禁在本机 stop ADSP」）；TASKS **T6** 已改写为「止损 + 三条后续（PD 依赖/ DSP 侧证据/ 用户态离线推）」。设备已回在机旧核、`--failed`=0、`hexagonrpcd`/`iio-sensor-proxy` 仍 masked、slot `_b`。
 
 > **🆕 2026-11-26 22:2x（网关额度中断后的收尾轮；本段全部数字为收尾轮独立重跑）**：
 > ① **门禁**：`check-doctor` **FAIL=0 / WARN=3**（均为存量：① slim bundle 源树不可核 ⇒ 67 行身份「暂不可核」② `vk-ledger-known-issues.tsv` 已登记例外 ③ 身份表降级一致 C=2）；本轮修掉两条 FAIL（scripts 索引过期 / 其反作弊②残留）并清掉 `out/boot-elden.img` 重复副本（与 fastrpc1 同 sha `2050cf6c…`，21:51 构建副产物）。

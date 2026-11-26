@@ -1,0 +1,26 @@
+7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0
+ -3 6c3395aee2ee407badbab9f74772e462 Thu 2026-11-26 22:37:21 CST Thu 2026-11-26 22:39:22 CST
+ -2 ae4bb089b68c435e81a3d6f840382863 Thu 2026-11-26 22:37:21 CST Thu 2026-11-26 22:41:51 CST
+ -1 d53e32aa646741cab0d7e6feca90ce2d Thu 2026-11-26 22:41:49 CST Thu 2026-11-26 22:42:23 CST
+  0 50b9b6884ebf485782c3fbc1837f9ea9 Thu 2026-11-26 22:41:49 CST Thu 2026-11-26 22:41:58 CST
+=== last boot kernel tail ===
+2026-11-26T22:41:58+08:00 elden kernel: qnoc-sm8750 interconnect-1: sync_state() pending due to 240b3400.pmu
+2026-11-26T22:41:58+08:00 elden kernel: qnoc-sm8750 interconnect-1: sync_state() pending due to 240b7400.pmu
+2026-11-26T22:41:58+08:00 elden kernel: qnoc-sm8750 24100000.interconnect: sync_state() pending due to 240b7400.pmu
+2026-11-26T22:41:58+08:00 elden kernel: qnoc-sm8750 24100000.interconnect: sync_state() pending due to 240b3400.pmu
+2026-11-26T22:41:58+08:00 elden kernel: qnoc-sm8750 24100000.interconnect: sync_state() pending due to ad27000.isp
+2026-11-26T22:41:58+08:00 elden kernel: qcom-rpmhpd 16500000.rsc:power-controller: sync_state() pending due to af54000.displayport-controller
+2026-11-26T22:41:58+08:00 elden kernel: disp_cc-sm8750 af00000.clock-controller: sync_state() pending due to af54000.displayport-controller
+2026-11-26T22:42:10+08:00 elden kernel: Bluetooth: hci0: QCA Downloading qca/brhbtnv20.bin
+2026-11-26T22:42:10+08:00 elden kernel: Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_DEF
+2026-11-26T22:42:10+08:00 elden kernel: Bluetooth: hci0: QCA setup on UART is completed
+2026-11-26T22:42:10+08:00 elden kernel: Bluetooth: hci0: HFP non-HCI data transport is supported
+2026-11-26T22:42:10+08:00 elden kernel: Bluetooth: MGMT ver 1.23
+=== last boot last lines ===
+2026-11-26T22:42:18+08:00 elden systemd[1443]: ydotool.service: Failed with result 'exit-code'.
+2026-11-26T22:42:18+08:00 elden systemd[1443]: Failed to start ydotool.service - Starts ydotoold service.
+2026-11-26T22:42:20+08:00 elden audio-share-client-run[1039]: [as-client] TCP connected 192.168.7.9:65530
+2026-11-26T22:42:20+08:00 elden audio-share-client-run[1039]: [as-client] bad AudioFormat size 0 (server has no audio endpoint?)
+2026-11-26T22:42:23+08:00 elden audio-share-client-run[1039]: [as-client] TCP connected 192.168.7.9:65530
+2026-11-26T22:42:23+08:00 elden audio-share-client-run[1039]: [as-client] bad AudioFormat size 0 (server has no audio endpoint?)
+=== pstore ===

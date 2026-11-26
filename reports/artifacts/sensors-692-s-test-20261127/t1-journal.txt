@@ -1,0 +1,33 @@
+# journal after test1 2026-11-26T22:39:04+08:00
+2026-11-26T22:37:21+08:00 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@8: SMR mask 0x20 out of range for SMMU (0x2)
+2026-11-26T22:37:21+08:00 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@8: SMR mask 0x20 out of range for SMMU (0x2)
+2026-11-26T22:37:21+08:00 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@12: SMR mask 0x20 out of range for SMMU (0x2)
+2026-11-26T22:37:21+08:00 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@12: SMR mask 0x20 out of range for SMMU (0x2)
+2026-11-26T22:37:21+08:00 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@13: SMR mask 0x20 out of range for SMMU (0x2)
+2026-11-26T22:37:21+08:00 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@13: SMR mask 0x20 out of range for SMMU (0x2)
+2026-11-26T22:37:21+08:00 elden kernel: platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@14: SMR mask 0x20 out of range for SMMU (0x2)
+2026-11-26T22:37:21+08:00 elden kernel: qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@14: SMR mask 0x20 out of range for SMMU (0x2)
+2026-11-26T22:37:21+08:00 elden kernel: remoteproc remoteproc0: remote processor adsp is now up
+2026-11-26T22:37:21+08:00 elden kernel: qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: assigned reserved memory node adsp-rpc-remote-heap
+2026-11-26T22:37:21+08:00 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@3: Adding to iommu group 14
+2026-11-26T22:37:21+08:00 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@4: Adding to iommu group 15
+2026-11-26T22:37:21+08:00 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@5: Adding to iommu group 16
+2026-11-26T22:37:21+08:00 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@6: Adding to iommu group 17
+2026-11-26T22:37:21+08:00 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@7: Adding to iommu group 18
+2026-11-26T22:37:21+08:00 elden kernel: platform 6800000.remoteproc:glink-edge:fastrpc:compute-cb@8: Adding to iommu group 19
+2026-11-26T22:37:21+08:00 elden kernel: PDR: Indication received from msm/adsp/charger_pd, state: 0x1fffffff, trans-id: 1
+2026-11-26T22:37:21+08:00 elden kernel: PDR: Indication received from msm/adsp/audio_pd, state: 0x1fffffff, trans-id: 1
+2026-11-26T22:37:21+08:00 elden kernel: qcom,apr 6800000.remoteproc:glink-edge.adsp_apps.-1.-1: Adding APR/GPR dev: gprsvc:service:2:3
+2026-11-26T22:37:21+08:00 elden kernel: platform 6800000.remoteproc:glink-edge:gpr:service@3:dais: Adding to iommu group 20
+2026-11-26T22:37:21+08:00 elden kernel: qcom,apr 6800000.remoteproc:glink-edge.adsp_apps.-1.-1: Adding APR/GPR dev: gprsvc:service:2:7
+2026-11-26T22:37:21+08:00 elden unknown: [camera] no modules for 7.3.1-debug-vk189-suspend-fastrpc1-g4da9a8b69fc8-dirty (nothing under /usr/lib/modules/7.3.1-debug-vk189-suspend-fastrpc1-g4da9a8b69fc8-dirty)
+2026-11-26T22:37:21+08:00 elden unknown: [payload] no modules for 7.3.1-debug-vk189-suspend-fastrpc1-g4da9a8b69fc8-dirty
+2026-11-26T22:37:21+08:00 elden unknown: [init] Alpine rootfs up, kernel 7.3.1-debug-vk189-suspend-fastrpc1-g4da9a8b69fc8-dirty
+2026-11-26T22:37:21+08:00 elden systemd[1]: kmod-static-nodes.service - Create List of Static Device Nodes skipped, unmet condition check ConditionFileNotEmpty=/lib/modules/7.3.1-debug-vk189-suspend-fastrpc1-g4da9a8b69fc8-dirty/modules.devname
+--- state ---
+running
+[   47.822736] [    T948] wlan0: send auth to 30:5f:77:13:2d:e0 (try 1/3)
+[   47.827932] [    T209] wlan0: authenticated
+[   47.829473] [     T75] wlan0: associate with 30:5f:77:13:2d:e0 (try 1/3)
+[   47.895884] [    T209] wlan0: RX AssocResp from 30:5f:77:13:2d:e0 (capab=0x8001 status=0 aid=1)
+[   47.915508] [    T209] wlan0: associated

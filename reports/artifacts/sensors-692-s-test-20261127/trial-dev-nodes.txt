@@ -1,0 +1,16 @@
+# trial-kernel state 2026-11-26T22:38:35+08:00
+7.3.1-debug-vk189-suspend-fastrpc1-g4da9a8b69fc8-dirty
+--- /dev ---
+crw-rw---- 1 fastrpc fastrpc 10, 261 11月26日 22:37 /dev/fastrpc-adsp
+--- qrtr 400 ---
+      400       1        0    5    21 Snapdragon Sensor Core service
+--- remoteproc ---
+/sys/class/remoteproc/remoteproc0/name: adsp
+/sys/class/remoteproc/remoteproc1/name: cdsp
+/sys/class/remoteproc/remoteproc0/state: running
+/sys/class/remoteproc/remoteproc1/state: running
+--- failed ---
+● lxc-net.service loaded failed failed LXC network bridge setup
+● lxcfs.service   loaded failed failed FUSE filesystem for LXC
+--- dmesg fastrpc ---
+[    1.257470] [    T153] qcom,fastrpc 6800000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: assigned reserved memory node adsp-rpc-remote-heap

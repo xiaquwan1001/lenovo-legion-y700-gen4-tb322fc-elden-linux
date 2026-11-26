@@ -1,0 +1,8 @@
+=== C3：CDSP（remoteproc1，空闲）stop/start 对照 2026-11-26T23:11:44+08:00 ===
+cdsp-before=running
+stop-rc=0
+cdsp-after-stop=offline
+start-rc=0
+cdsp-after-start=running
+adsp=running
+[host] rc=0

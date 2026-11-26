@@ -1,0 +1,14 @@
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: fw_caps 0xf
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi TME-L power-on hardware-restricted (stock-compatible, continuing)
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi AUX_UC request succeeded
+2026-11-26T22:37:54+08:00 elden kernel: ath12k_wifi7_pci 0000:01:00.0: qmi FW_INIT_DONE received: hang_offset_valid=0 hang_offset=0 hang_length_valid=0 hang_length=0 soft_sku_valid=1 soft_sku=0x1
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: authenticate with 30:5f:77:13:2d:e0 (local address=02:00:82:b2:f8:3a)
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: send auth to 30:5f:77:13:2d:e0 (try 1/3)
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: authenticated
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: associate with 30:5f:77:13:2d:e0 (try 1/3)
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: RX AssocResp from 30:5f:77:13:2d:e0 (capab=0x8001 status=0 aid=1)
+2026-11-26T22:38:00+08:00 elden kernel: wlan0: associated
+# test2 (-s) 2026-11-26T22:39:25+08:00
+[local] ssh after test rc=124
+Read from remote host 192.168.7.1: Connection reset by peer
+client_loop: send disconnect: Broken pipe

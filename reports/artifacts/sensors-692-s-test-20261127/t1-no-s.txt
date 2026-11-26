@@ -1,0 +1,4 @@
+# test1 (no -s) 2026-11-26T22:38:55+08:00
+Unexpected buffer count: 1f050100
+Starting /usr/libexec/hexagonrpc/hexagonrpcd (INIT_ATTACH) on /dev/fastrpc-adsp
+rc=0

@@ -1,0 +1,4 @@
+=== C2 复现：仅 echo stop ADSP（不跑 hexagonrpcd）2026-11-26T23:10:55+08:00 ===
+state-before=running
+writing stop...
+[host] ssh rc=124

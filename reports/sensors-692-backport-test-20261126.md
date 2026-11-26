@@ -103,3 +103,58 @@ sha256sum out/fastrpc1-20261126/boot-elden-fastrpc1.img    # 2050cf6c…（O_DIR
 2. 上机后先取证 `ls -l /dev/fastrpc-adsp /dev/fastrpc-adsp-secure`、`qrtr-lookup | grep 400`、`remoteproc0/state`（**这三个必须先于 -s 采集**，本轮就是漏了这一条使得 DTB 修复效果无实证）。
 3. 再跑 §4 测试 1/2（`timeout -k 5 30 /usr/libexec/hexagonrpc/hexagonrpcd -f /dev/fastrpc-adsp -d adsp`，真二进制不带 wrapper）。
 4. 崩则按 #732 零写盘自回；不崩则假说 A 证实、进入 hexagonrpc 侧写支持讨论。
+
+---
+
+## 8. 上机实测（2026-11-26 22:37–23:12 CST；用户放行「允许上机」后接续）—— 结论：假说 A 被**实验否证**，且 `-s` 不能当内核侧判据
+
+**三次零写盘上机，全部 `fastboot boot out/fastrpc1-20261126/boot-elden-fastrpc1.img`（sha `2050cf6c…`），复位后自动落 `boot_b` 在机旧核，没写任何分区。**
+
+### 8.1 先补上上一班漏掉的第一手采集（DTB 修复是否生效）
+
+| 判据 | 试验核（`fastrpc1-g4da9a8b69fc8-dirty`） | 在机 vk192（对照） |
+|---|---|---|
+| `/dev/fastrpc-adsp`（非 secure） | **在**，`crw-rw---- fastrpc fastrpc 10, 261` | 在，`10, 264` |
+| `/dev/fastrpc-adsp-secure` | 不存在 | 不存在 |
+| `qrtr-lookup \| grep 400` | `400 … Snapdragon Sensor Core service` | 1 条 |
+| ADSP/CDSP state | 均 `running` | 均 `running` |
+| `dmesg` 补丁痕迹 | `assigned reserved memory node adsp-rpc-remote-heap` | 同（该行是 remote-heap 被 fastrpc 认领，非补丁独有） |
+
+⇒ **`qcom,non-secure-domain` 生效**，上一班「无 `/dev/fastrpc-adsp`」的阻塞项已消；这一项本身不依赖补丁。
+
+### 8.2 决定性测试（三次上机、两个核）
+
+| # | 内核 | 命令 | 结果 |
+|---|---|---|---|
+| T1 | 试验核 | `hexagonrpcd -f /dev/fastrpc-adsp -d adsp`（**不带 `-s`**） | rc=0（打印 `Unexpected buffer count: 1f050100` 后退出），**整机无恙**，ADSP 仍 `running` |
+| T2-a | 试验核 | 同上 **+ `-s`** | **1–2 s 内 SSH 全断、整机复位**（自动回 `boot_b`） |
+| T2-b | 试验核（重上机后复跑） | 同上 **+ `-s`** | 同上，**2/2 复现** |
+| T3 | 试验核 | 同上 **+ `-s`**（后台 detached，附 `dmesg -w > /var/log/dmesg-s.log`） | 同上；**复位后 `dmesg-s.log` 为空**（未回写，随复位蒸发） |
+| **C1** | **在机 vk192（无 fastrpc 补丁）** | 同上 **+ `-s`** | **同样 1–2 s 内复位** ⇒ 补丁不改变该现象 |
+| **C2** | 在机 vk192 | `echo stop > /sys/class/remoteproc/remoteproc0/state`（ADSP，**不跑 hexagonrpc**） | **同样静默复位**（2/2）；`echo` 自身未返回 ⇒ 卡在 `rproc_shutdown()` 停止握手 |
+| **C3** | 在机 vk192 | `remoteproc1`（**CDSP**）`stop`→`offline`→`start`→`running` | **全绿，rc=0，整机无恙** |
+
+### 8.3 为什么崩时「一行日志都没有」（已逐项排除）
+
+- 主机串口 relay（`elden-serial-logger.service` → `/var/log/elden-serial/ttyACM0.log`，`console=ttyGS0`）崩前**通道正常**：探针 `echo __serialprobe_… > /dev/ttyGS0` 1 s 内落盘；**崩的那一刻 relay 零新增行**（无 panic / 无 `Unhandled context fault` / 无 WDT bark）。
+- 设备侧磁盘日志无效：`dmesg -w > /var/log/dmesg-s.log` 复位后为空（写回缓存未落地）。
+- `pstore` 空（#733 已知）；`journalctl -b -1` 末行只是复位前数秒的寻常 service 行；启动横幅明确 **`watchdog: Hard watchdog permanently disabled`**（APSS 硬看门狗不参与）。
+- ⇒ 复位发生在 **Linux 之外**（PMIC/引导层看门狗或安全监控强制复位），且 **ADSP 故障（`-s`）与 ADSP 停止（`stop`）共用这条路**；CDSP 不走这条路。
+
+### 8.4 结论（二值）
+
+- **假说 A（SENSORS_PD 消息缓冲走 context bank ⇒ attach 即 SMMU fault ⇒ 崩）：否证。**
+  理由：把上游那 1 行 remote-heap 补丁带进内核后，`-s` **照样崩**（2/2）；而**不带 `-s` 时同一内核完全正常**——补丁既没制造问题，也没解决问题。
+  更强的理由：连「完全不涉及 fastrpc 消息缓冲」的 ADSP `stop` 都崩 ⇒ `-s` 崩的现象**不是**由「消息缓冲落在哪个 bank」决定。
+- **`-s` 这一动作在当前软硬件上是「不可诊断的探针」**：任何 ADSP 侧故障都表现为同一条静默整机复位，Linux 侧拿不到任何差别信息。
+- 已按 S 报告 §6.3 的止损执行：**传感器 #692 内核侧实验到此停手**，不进 hexagonrpc 写支持（那是用户态侧，与本次崩溃无因果证据）。本条危险动作已登记 `PITFALLS #737`（含「禁在本机 stop ADSP」）。
+
+### 8.5 后续若要继续（按优先级，均需新授权）
+
+1. **DSP 侧证据**：走 Qualcomm 的 ramdump/QMI-PDR 路径拿 ADSP 崩溃原因（mainline 无此链路，工作量级 ≥ 数日）；或用**不受 SoC 复位影响**的采集（本机 ttyGS0 也会断 ⇒ 需物理 UART 或板外逻辑分析仪）。
+2. **给 ADSP 的 PD 依赖补齐**（audio_pd/charger_pd 先 PDR 再 stop），使 `stop` 不再拖死整机 —— 这是**独立于传感器**的内核缺口，也是「本次崩溃能否被诊断」的前置条件。
+3. 用户态侧（hexagonrpc 的 registry 写支持 / listener 256 B 输入缓冲）仍可离线推进，但**不要**再用 `-s` 当验收判据。
+
+### 8.6 证据文件
+
+`reports/artifacts/sensors-692-s-test-20261127/`：`snapshot-before.txt`、`trial-dev-nodes.txt`（8.1 全部）、`t1-no-s.txt`、`t1-journal.txt`、`t2b-crash-journal.txt`、`c1-production-launch.txt`、`c2-adsp-stopped.txt`、`c2b-stop-only.txt`、`c3-cdsp-stop.txt`、`t3-launch.txt`。
