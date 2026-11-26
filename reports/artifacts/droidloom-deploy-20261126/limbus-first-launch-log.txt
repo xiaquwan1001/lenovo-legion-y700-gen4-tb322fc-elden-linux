@@ -1,0 +1,57 @@
+Waiting for Droidloom to respond; another request may be in progress (up to 250 seconds).
+--------- beginning of main
+11-26 07:06:32.186  1816  1859 D EventGDTLogger: Session Event Type: SESSION_START
+11-26 07:06:32.186  1816  1859 D SessionFirelogPublisher: Successfully logged Session Start event.
+11-26 07:06:32.187  1890  1890 D Zygote  : Forked child process 1910
+11-26 07:06:32.187  1910  1910 I Zygote  : seccomp disabled by setenforce 0
+11-26 07:06:32.187  1910  1910 E libprocessgroup: set_timerslack_ns write failed: Read-only file system
+11-26 07:06:32.193  1920  1920 I Zygote  : Process 1920 created for com.ProjectMoon.LimbusCompany:alert_dialog
+11-26 07:06:32.193  1920  1920 I ny:alert_dialog: Using generational CollectorTypeCC GC.
+11-26 07:06:32.194  1920  1920 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+11-26 07:06:32.197  1920  1920 W ny:alert_dialog: Failed to find entry 'classes.dex': Entry not found
+11-26 07:06:32.198  1920  1920 W ny:alert_dialog: Failed to find entry 'classes.dex': Entry not found
+11-26 07:06:32.198  1920  1920 D nativeloader: Configuring clns-9 for other apk /data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/base.apk:/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/split_UnityDataAssetPack.apk:/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/split_config.arm64_v8a.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/lib/arm64:/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/base.apk!/lib/arm64-v8a:/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/split_UnityDataAssetPack.apk!/lib/arm64-v8a:/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/split_config.arm64_v8a.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.ProjectMoon.LimbusCompany
+11-26 07:06:32.199  1920  1920 V GraphicsEnvironment: Currently set values for:
+11-26 07:06:32.199  1920  1920 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+11-26 07:06:32.199  1920  1920 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+11-26 07:06:32.199  1920  1920 V GraphicsEnvironment: com.ProjectMoon.LimbusCompany is not listed in per-application setting
+11-26 07:06:32.199  1920  1920 V GraphicsEnvironment: No ANGLE packages installed.
+11-26 07:06:32.199  1920  1920 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+--------- beginning of system
+11-26 07:06:32.201  1920  1932 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+11-26 07:06:32.202  1920  1920 D DesktopExperienceFlags: Toggle override initialized to: false
+11-26 07:06:32.202  1920  1932 D vulkan  : searching for layers in '/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/lib/arm64'
+11-26 07:06:32.202  1920  1932 D vulkan  : searching for layers in '/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/base.apk!/lib/arm64-v8a'
+11-26 07:06:32.203  1920  1932 D vulkan  : searching for layers in '/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/split_UnityDataAssetPack.apk!/lib/arm64-v8a'
+11-26 07:06:32.203  1920  1932 D vulkan  : searching for layers in '/data/app/~~RmaVZYV_c_yCfp-Lz1n8qw==/com.ProjectMoon.LimbusCompany-xPZaFFK6AItflHz_Qcp7qQ==/split_config.arm64_v8a.apk!/lib/arm64-v8a'
+11-26 07:06:32.203  1816  1879 I Process : Sending signal. PID: 1816 SIG: 9
+11-26 07:06:32.204  1920  1932 I MESA    : Using IMapper 5 API
+11-26 07:06:32.205  1920  1920 D CompatChangeReporter: Compat change id reported: 377864165; UID 10105; state: ENABLED
+11-26 07:06:32.207  1920  1920 W HWUI    : Unknown dataspace 0
+11-26 07:06:32.213  1920  1920 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@9d4415c
+11-26 07:06:32.214  1920  1920 D VRI[AppSealingAlertDialog]: WindowInsets changed: 1416x799 statusBars:[0,48,0,0] navigationBars:[0,0,0,24] mandatorySystemGestures:[0,0,0,24] 
+11-26 07:06:32.214  1920  1920 I HWUI    : Using FreeType backend (prop=Auto)
+11-26 07:06:32.215  1920  1920 I Surface : Creating surface for consumer unnamed-1920-0 with slotExpansion=1 for 64 slots
+11-26 07:06:32.216  1920  1920 I Surface : Creating surface for consumer VRI[AppSealingAlertDialog]#0(BLAST Consumer)0 with slotExpansion=1 for 64 slots
+11-26 07:06:32.334  1920  1920 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+11-26 07:06:32.336  1920  1920 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@87c2f63
+11-26 07:06:32.340  1920  1920 D InsetsController: hide(ime())
+11-26 07:06:32.340  1920  1920 I ImeTracker: com.ProjectMoon.LimbusCompany:e3f33895: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+11-26 07:06:32.345  1920  1920 D VRI[AppSealingAlertDialog]: WindowInsets changed: 480x800 
+11-26 07:06:32.472  1920  1920 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+11-26 07:06:32.475  1920  1920 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@ae00cc1
+11-26 07:06:32.485  1920  1920 D VRI[AppSealingAlertDialog]: WindowInsets changed: 400x300 
+11-26 07:06:32.613  1920  1920 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+11-26 07:06:32.616  1920  1920 D ViewRootImpl: Skipping stats log for color mode
+11-26 07:06:32.634  1920  1920 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@4aaf4dd
+11-26 07:06:32.634  1920  1920 D VRI[AppSealingAlertDialog]: WindowInsets changed: 400x300 statusBars:[0,145,0,0] navigationBars:[0,0,0,72] mandatorySystemGestures:[0,0,0,72] 
+11-26 07:06:32.637  1920  1920 I Surface : Creating surface for consumer unnamed-1920-1 with slotExpansion=1 for 64 slots
+11-26 07:06:32.637  1920  1920 I Surface : Creating surface for consumer VRI[AppSealingAlertDialog]#1(BLAST Consumer)1 with slotExpansion=1 for 64 slots
+11-26 07:06:32.650  1920  1920 D InsetsController: hide(ime())
+11-26 07:06:32.650  1920  1920 I ImeTracker: com.ProjectMoon.LimbusCompany:45aef4c7: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+11-26 07:06:33.201  1890  1890 I Zygote  : Process 1910 exited due to signal 9 (Killed)
+11-26 07:06:35.203  1920  1920 I Process : Sending signal. PID: 1816 SIG: 9
+11-26 07:06:35.337  1920  1920 I Process : Sending signal. PID: 1816 SIG: 9
+11-26 07:06:35.475  1920  1920 I Process : Sending signal. PID: 1816 SIG: 9
+11-26 07:06:35.622  1920  1920 I Process : Sending signal. PID: 1816 SIG: 9
+11-26 07:06:42.653  1920  1958 I Process : Sending signal. PID: 1920 SIG: 9

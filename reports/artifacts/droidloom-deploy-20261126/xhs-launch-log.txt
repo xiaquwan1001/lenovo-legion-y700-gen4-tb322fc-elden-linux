@@ -1,0 +1,197 @@
+Waiting for Droidloom to respond; another request may be in progress (up to 250 seconds).
+--------- beginning of main
+11-26 07:24:45.739  1481  1481 I libc    : SetHeapTaggingLevel: tag level set to 0
+11-26 07:24:45.739  1481  1481 I Zygote  : Process 1481 created for com.xingin.xhs
+11-26 07:24:45.740  1481  1481 I com.xingin.xhs: Using generational CollectorTypeCC GC.
+11-26 07:24:45.741  1481  1481 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+11-26 07:24:45.744  1481  1481 D ApplicationLoaders: Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+11-26 07:24:45.744  1481  1481 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+11-26 07:24:45.744  1481  1481 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.sidecar.jar
+11-26 07:24:45.747  1481  1481 D nativeloader: Configuring clns-9 for other apk /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64:/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.xingin.xhs
+11-26 07:24:45.750  1481  1481 V GraphicsEnvironment: Currently set values for:
+11-26 07:24:45.750  1481  1481 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+11-26 07:24:45.750  1481  1481 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+11-26 07:24:45.750  1481  1481 V GraphicsEnvironment: com.xingin.xhs is not listed in per-application setting
+11-26 07:24:45.750  1481  1481 V GraphicsEnvironment: No special selections for ANGLE, returning default driver choice
+11-26 07:24:45.750  1481  1481 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+11-26 07:24:45.759  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry-record.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.759  1481  1481 I sentry_hook_tag: sentry_crash_record nativeInit /data/user/0/com.xingin.xhs/files/sentry-record/, 9.49.1, 9491803
+11-26 07:24:45.759  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libshadowhook.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.760  1481  1481 E shadowhook_tag: shadowhook version 1.1.1: shadowhook init(mode: SHARED, debuggable: false), return: 0, real-init: yes
+11-26 07:24:45.760  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libbytehook.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes12.dex): ok
+11-26 07:24:45.760  1481  1481 W bytehook_tag: bytehook init, mode 0, debug 0, return 0
+11-26 07:24:45.760  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry-hook.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.760  1481  1481 I sentry_hook_tag: arch: arm64
+11-26 07:24:45.760  1481  1481 I sentry_hook_tag: set_hook_array idx: 0, name: libsentry.so
+11-26 07:24:45.760  1481  1481 I sentry_hook_tag: set_hook_array idx: 1, name: libsgmainso
+11-26 07:24:45.760  1481  1481 I sentry_hook_tag: set_hook_array idx: 2, name: libsentry-gwp-asan.so
+11-26 07:24:45.760  1481  1481 I sentry_hook_tag: >>>> 提前注册主要 so = libsentry.so
+11-26 07:24:45.760  1481  1481 I sentry_hook_tag: >>>> 提前注册主要 so = libsentry-gwp-asan.so
+11-26 07:24:45.761  1481  1481 I sentry_hook_tag: >>>>> monitor_anr pid: 1481, tid: 1481
+11-26 07:24:45.761  1481  1494 I sentry_hook_tag: >>>>> bsg_monitor_anrs pid: 1481, tid: 1494
+11-26 07:24:45.761  1481  1481 I sentry_hook_tag: allow_filter_for_hook_all hook 0 libsentry.so
+11-26 07:24:45.761  1481  1481 I sentry_hook_tag: >>>>> hooked. stub: fffeb8e20b60, status: 0, caller_path_name: /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so, sym_name: sigaction, new_func: fffcd0f156b4, prev_func: ffffac924350, arg: 0
+11-26 07:24:45.761  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.761  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry-fd-monitor.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 需要代理  6, new: 0xffffcd82e410, old: 0xfffcce0260e8, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal] signal = 6
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal]--replace sig = 6, path = /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so, new = 0xffffcd82e410
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 需要代理  7, new: 0xffffcd82e410, old: 0xfffcce026110, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal] signal = 7
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal]--replace sig = 7, path = /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so, new = 0xffffcd82e410
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 需要代理  8, new: 0xffffcd82e410, old: 0xfffcce026138, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal] signal = 8
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal]--replace sig = 8, path = /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so, new = 0xffffcd82e410
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 需要代理  4, new: 0xffffcd82e410, old: 0xfffcce026160, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal] signal = 4
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal]--replace sig = 4, path = /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so, new = 0xffffcd82e410
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 需要代理  11, new: 0xffffcd82e410, old: 0xfffcce026188, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal] signal = 11
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal]--replace sig = 11, path = /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so, new = 0xffffcd82e410
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 需要代理  5, new: 0xffffcd82e410, old: 0xfffcce0261b0, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal] signal = 5
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal]--replace sig = 5, path = /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so, new = 0xffffcd82e410
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 不处理  31, new: 0xffffcd82e410, old: 0xfffcce0261d8, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 不处理r 0, new: 0xffffcd82e410, old: 0xfffcce0261d8
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 不处理  16, new: 0xffffcd82e410, old: 0xfffcce026200, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 不处理r 0, new: 0xffffcd82e410, old: 0xfffcce026200
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> 需要代理  3, new: 0xffffcd82e3e0, old: 0xfffcce027738, /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal_anr] signal anr = 3
+11-26 07:24:45.762  1481  1481 I sentry_hook_tag: >>>> [register_signal_anr]--replace sig = 3, path = /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libsentry.so, new = 0xffffcd82e3e0
+11-26 07:24:45.762  1481  1481 I SentryPlus: 开始初始化
+11-26 07:24:45.763  1481  1481 I HiddenApiBypass: init: useHiddenApiBypass:true, enableLSPass:true, exemptAll:true, exemptAllResult:true
+11-26 07:24:45.767  1481  1499 I HiddenApiBypass: addHiddenApiExemptions: exemptAll, ignore
+11-26 07:24:45.770  1481  1481 I MMKV    : Disable checkProcessMode()
+11-26 07:24:45.770  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libmmkv2.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.770  1481  1481 I MMKV    : current API level = 37, libc++_shared=0
+11-26 07:24:45.770  1481  1481 I MMKV    : <MMKV.cpp:167::initialize> version v1.3.2, page size 4096, arch arm64-v8a
+11-26 07:24:45.770  1481  1481 I MMKV    : <MMKV.cpp:178::initialize> armv8 AES instructions is supported
+11-26 07:24:45.770  1481  1481 I MMKV    : <MMKV.cpp:186::initialize> armv8 CRC32 instructions is supported
+11-26 07:24:45.770  1481  1481 I MMKV    : <MMKV.cpp:226::initializeMMKV> root dir: /data/user/0/com.xingin.xhs/files/mmkv
+11-26 07:24:45.774  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libxy_experiment.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.774  1481  1481 D nativec_ab_c: xy_experiment.so , call JNI_OnLoad 
+11-26 07:24:45.774  1481  1481 I nativec_ab_c: method initXyExperimentGlobalRef begin
+11-26 07:24:45.774  1481  1481 I nativec_ab_c: method initXyExperimentGlobalRef success
+11-26 07:24:45.775  1481  1481 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libxy_configcenter.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.775  1481  1481 D nativec_config_c: xy_configcenter.so , call JNI_OnLoad 
+11-26 07:24:45.775  1481  1481 I nativec_config_c: method initXyConfigCenterGlobalRef begin
+11-26 07:24:45.775  1481  1481 I nativec_config_c: method initXyConfigCenterGlobalRef success
+11-26 07:24:45.776  1481  1511 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libxylog.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.777  1481  1515 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libnetdiagnose.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.778  1481  1515 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libxyhttpdns.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
+11-26 07:24:45.779  1481  1481 I AGConnectProvider: AGConnectInitializeProvider#onCreate
+11-26 07:24:45.779  1481  1481 I AGConnectInstance: AGConnectInstance#initialize
+11-26 07:24:45.779  1481  1481 W AGC_Instance: agc sdk initialize
+11-26 07:24:45.779  1481  1481 I AGC_Registrar: getServices
+11-26 07:24:45.779  1481  1481 I AGC_Registrar: services:0
+11-26 07:24:45.779  1481  1481 D AGC_Instance: AGConnectInstanceImpl init
+11-26 07:24:45.779  1481  1481 D AGC_ServiceRepository: addService start
+11-26 07:24:45.779  1481  1481 D AGC_ServiceRepository: addService end
+11-26 07:24:45.779  1481  1481 D AGC_ServiceRepository: addService start
+11-26 07:24:45.779  1481  1481 D AGC_Instance: AGConnectInstanceImpl init end
+11-26 07:24:45.779  1481  1481 I AGC_Instance: initFinish callback start
+11-26 07:24:45.779  1481  1481 I AGC_Instance: AGC SDK initialize end
+11-26 07:24:45.781  1481  1481 E SENTRY_SESSION: startNewSession sessionId=9e83d63aeb57472caf1ab6a1c54d2608-000
+11-26 07:24:45.784  1481  1519 W System.err: java.lang.RuntimeException: Font asset not found /data/user/0/com.xingin.xhs/files/xhs_font/font_normal.ttf
+11-26 07:24:45.784  1481  1519 W System.err: 	at android.graphics.Typeface.createFromFile(Typeface.java:1231)
+11-26 07:24:45.784  1481  1519 W System.err: 	at android.graphics.Typeface.createFromFile(Typeface.java:1245)
+11-26 07:24:45.784  1481  1519 W System.err: 	at asd.i.execute(SourceFile:35)
+11-26 07:24:45.784  1481  1519 W System.err: 	at hdc.i.run(SourceFile:141)
+11-26 07:24:45.784  1481  1519 W System.err: 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:520)
+11-26 07:24:45.784  1481  1519 W System.err: 	at java.util.concurrent.FutureTask.run(FutureTask.java:328)
+11-26 07:24:45.784  1481  1519 W System.err: 	at g7c.g.o(SourceFile:13)
+11-26 07:24:45.784  1481  1519 W System.err: 	at g7c.k.o(SourceFile:168)
+11-26 07:24:45.784  1481  1519 W System.err: 	at g7c.g.run(SourceFile:63)
+11-26 07:24:45.784  1481  1519 W System.err: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
+11-26 07:24:45.784  1481  1519 W System.err: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+11-26 07:24:45.784  1481  1519 W System.err: 	at java.lang.Thread.run(Thread.java:1572)
+11-26 07:24:45.784  1481  1519 W System.err: 	at hdc.a.run(SourceFile:13)
+11-26 07:24:45.785  1481  1481 W System  : ClassLoader referenced unknown path: 
+11-26 07:24:45.785  1481  1481 W com.xingin.xhs: Unsupported class loader: java.lang.Class<com.xingin.petal.core.load.SplitDelegateClassloader2>
+--------- beginning of system
+11-26 07:24:45.793  1481  1481 W Looper  : Loop again would have the queued messages be executed before this one completed.
+11-26 07:24:45.811  1481  1528 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+11-26 07:24:45.812  1481  1481 D DesktopExperienceFlags: Toggle override initialized to: false
+11-26 07:24:45.812  1481  1528 D vulkan  : searching for layers in '/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64'
+11-26 07:24:45.812  1481  1481 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+11-26 07:24:45.813  1481  1528 D vulkan  : searching for layers in '/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!/lib/arm64-v8a'
+11-26 07:24:45.815  1481  1481 D CompatChangeReporter: Compat change id reported: 377864165; UID 10104; state: ENABLED
+11-26 07:24:45.816  1481  1528 I MESA    : Using IMapper 5 API
+11-26 07:24:45.820  1481  1481 I AppCompatDelegate: The Activity's LayoutInflater already has a Factory installed so we can not install AppCompat's
+11-26 07:24:45.827  1481  1481 I ChannelReaderUtil: getChannelByV2 , channel = Vivo
+11-26 07:24:45.827  1481  1481 I AppCompatDelegate: The Activity's LayoutInflater already has a Factory installed so we can not install AppCompat's
+11-26 07:24:45.833  1481  1481 E com.xingin.xhs: Invalid resource ID 0x00000000.
+11-26 07:24:45.838  1481  1481 W HWUI    : Unknown dataspace 0
+11-26 07:24:45.844  1481  1481 E com.xingin.xhs: Invalid resource ID 0x00000000.
+11-26 07:24:45.849  1481  1481 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@5f3ce28
+11-26 07:24:45.849  1481  1481 I HWUI    : Using FreeType backend (prop=Auto)
+11-26 07:24:45.850  1481  1481 I Surface : Creating surface for consumer unnamed-1481-0 with slotExpansion=1 for 64 slots
+11-26 07:24:45.851  1481  1481 I Surface : Creating surface for consumer VRI[IndexActivityV2]#0(BLAST Consumer)0 with slotExpansion=1 for 64 slots
+11-26 07:24:45.855  1481  1481 D VRI[IndexActivityV2]: WindowInsets changed: 1440x2400 statusBars:[0,48,0,0] navigationBars:[0,0,0,24] mandatorySystemGestures:[0,0,0,24] 
+11-26 07:24:45.855  1481  1481 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@76f460f
+11-26 07:24:45.856  1481  1481 I Surface : Creating surface for consumer unnamed-1481-1 with slotExpansion=1 for 64 slots
+11-26 07:24:45.856  1481  1481 I Surface : Creating surface for consumer VRI[IndexActivityV2]#1(BLAST Consumer)1 with slotExpansion=1 for 64 slots
+11-26 07:24:45.889  1481  1481 D VRI[IndexActivityV2]: WindowInsets changed: 480x800 
+11-26 07:24:45.906  1481  1481 D InsetsController: hide(ime())
+11-26 07:24:45.906  1481  1481 I ImeTracker: com.xingin.xhs:5817118d: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+11-26 07:24:45.944  1481  1481 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+11-26 07:24:45.945  1481  1481 D ViewRootImpl: Skipping stats log for color mode
+11-26 07:24:45.946  1481  1481 E WindowManager: android.view.WindowLeaked: Activity com.xingin.xhs.index.v2.IndexActivityV2 has leaked window com.android.internal.policy.DecorView{1ced4ab V.E...... R....... 0,0-388,575 aid=1073741824}[IndexActivityV2] that was originally added here
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.view.ViewRootImpl.<init>(ViewRootImpl.java:1418)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.view.ViewRootImpl.<init>(ViewRootImpl.java:1404)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:502)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:188)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.Dialog.show(Dialog.java:352)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at bza.c.a(SourceFile:241)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.xhs.index.v2.splash.SplashV2Controller.onAttach(SourceFile:267)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at ne7.c.attach(SourceFile:11)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at ne7.o.attach(SourceFile:6)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at ne7.o.attach(SourceFile:1)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.foundation.framework.v2.LCBActivity.onCreate$___twin___(SourceFile:26)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.foundation.framework.v2.LCBActivity.access$000(SourceFile:0)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.foundation.framework.v2.LCBActivity.onCreate(SourceFile:13)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.android.redutils.base.XhsActivity.onCreate$___twin___(SourceFile:241)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.android.redutils.base.XhsActivity.access$000(SourceFile:0)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.android.redutils.base.XhsActivity.onCreate(SourceFile:24)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.xhs.index.v2.IndexActivityV2.de(SourceFile:1311)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.xingin.xhs.index.v2.IndexActivityV2.onCreate(SourceFile:24)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.Activity.performCreate(Activity.java:9340)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.Activity.performCreate(Activity.java:9318)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1543)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4559)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4781)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:224)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:133)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:103)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3032)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Handler.dispatchMessageImpl(Handler.java:142)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Looper.loopOnce(Looper.java:296)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Looper.loop(Looper.java:397)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at i4e.c$a.run(SourceFile:1)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Handler.handleCallback(Handler.java:1095)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Handler.dispatchMessageImpl(Handler.java:135)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Looper.loopOnce(Looper.java:296)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.os.Looper.loop(Looper.java:397)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at android.app.ActivityThread.main(ActivityThread.java:9523)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at java.lang.reflect.Method.invoke(Native Method)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:575)
+11-26 07:24:45.946  1481  1481 E WindowManager: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:939)
+11-26 07:24:45.950  1481  1481 I AppCompatDelegate: The Activity's LayoutInflater already has a Factory installed so we can not install AppCompat's
+11-26 07:24:45.951  1481  1481 I AppCompatDelegate: The Activity's LayoutInflater already has a Factory installed so we can not install AppCompat's
+11-26 07:24:45.954  1481  1481 E com.xingin.xhs: Invalid resource ID 0x00000000.
+11-26 07:24:45.961  1481  1481 E com.xingin.xhs: Invalid resource ID 0x00000000.
+11-26 07:24:45.962  1481  1481 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+11-26 07:24:45.963  1481  1481 D ViewRootImpl: Skipping stats log for color mode
+11-26 07:24:45.964  1481  1481 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@c46cb47
+11-26 07:24:45.964  1481  1481 I Surface : Creating surface for consumer unnamed-1481-2 with slotExpansion=1 for 64 slots
+11-26 07:24:45.965  1481  1481 I Surface : Creating surface for consumer VRI[IndexActivityV2]#2(BLAST Consumer)2 with slotExpansion=1 for 64 slots
+11-26 07:24:45.966  1481  1481 D VRI[IndexActivityV2]: WindowInsets changed: 480x800 statusBars:[0,145,0,0] navigationBars:[0,0,0,72] mandatorySystemGestures:[0,0,0,72] 
+11-26 07:24:45.966  1481  1481 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@b5a7c1a
+11-26 07:24:45.967  1481  1481 I Surface : Creating surface for consumer unnamed-1481-3 with slotExpansion=1 for 64 slots
+11-26 07:24:45.967  1481  1481 I Surface : Creating surface for consumer VRI[IndexActivityV2]#3(BLAST Consumer)3 with slotExpansion=1 for 64 slots
+11-26 07:24:45.991  1481  1481 D InsetsController: hide(ime())
+11-26 07:24:45.991  1481  1481 I ImeTracker: com.xingin.xhs:35efc969: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+11-26 07:24:46.019  1481  1481 D VRI[IndexActivityV2]: WindowInsets changed: 1440x2400 

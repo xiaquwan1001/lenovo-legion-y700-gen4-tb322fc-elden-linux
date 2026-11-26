@@ -1,0 +1,250 @@
+{
+  "android_file_overrides": [
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libaudiobase.so",
+      "target": "/system/lib64/libaudiobase.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libEGL.so",
+      "target": "/system/lib64/libEGL.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libEGL_angle.so",
+      "target": "/system/lib64/libEGL_angle.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libGLESv1_CM_angle.so",
+      "target": "/system/lib64/libGLESv1_CM_angle.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libGLESv2_angle.so",
+      "target": "/system/lib64/libGLESv2_angle.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/systemui/SystemUI.apk",
+      "target": "/system_ext/priv-app/SystemUI/SystemUI.apk"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/framework/services.jar",
+      "target": "/system/framework/services.jar"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/framework/oat/arm64",
+      "target": "/system/framework/oat/arm64"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/ime/droidloom-framework.rc",
+      "target": "/vendor/etc/init/droidloom-framework.rc"
+    },
+    {
+      "source": "/usr/lib/droidloom/storage/vold",
+      "target": "/system/bin/vold"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libbinder.so",
+      "target": "/system/lib64/libbinder.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/bin/servicemanager",
+      "target": "/system/bin/servicemanager"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/lmkd-first-pixels.rc",
+      "target": "/system/etc/init/lmkd.rc"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/bin/droidloom-lmkd-compat",
+      "target": "/system/bin/lmkd"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/netd-mainline-bpf.rc",
+      "target": "/system/etc/init/netd.rc"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/bin/netd-cell-policy",
+      "target": "/system/bin/netd"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/init-classpath-first-pixels.rc",
+      "target": "/system/etc/init/hw/init.rc"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libmeminfo.so",
+      "target": "/system/lib64/libmeminfo.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/overrides/vendor/build.prop",
+      "target": "/vendor/build.prop"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/bin/surfaceflinger",
+      "target": "/system/bin/surfaceflinger"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/etc/init/droidloom-composer.rc",
+      "target": "/vendor/etc/init/droidloom-composer.rc"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/bin/android.hardware.graphics.composer3-service.droidloom",
+      "target": "/vendor/bin/hw/android.hardware.graphics.composer3-service.droidloom"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_surface_bridge.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_surface_bridge.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_task_control.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_task_control.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_composer_aidl.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_composer_aidl.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_syncobj.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_syncobj.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_denial_ipc.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_denial_ipc.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_composer.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_composer.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_minigbm.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_minigbm.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_denial_protocol.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_denial_protocol.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_transport.dylib.so",
+      "target": "/vendor/lib64/libdroidloom_transport.dylib.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/vintf/compatibility_matrix.device.xml",
+      "target": "/system/etc/vintf/compatibility_matrix.device.xml"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libdroidloom_selinux_compat.so",
+      "target": "/vendor/lib64/libdroidloom_selinux_compat.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libinputflinger.so",
+      "target": "/system/lib64/libinputflinger.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/egl/libEGL_mesa.so",
+      "target": "/vendor/lib64/egl/libEGL_mesa.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/egl/libGLESv1_CM_mesa.so",
+      "target": "/vendor/lib64/egl/libGLESv1_CM_mesa.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/egl/libGLESv2_mesa.so",
+      "target": "/vendor/lib64/egl/libGLESv2_mesa.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libminigbm_gralloc.so",
+      "target": "/vendor/lib64/libminigbm_gralloc.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/lib64/libgallium_dri.so",
+      "target": "/vendor/lib64/libgallium_dri.so"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/app/Browser2"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/app/Calendar"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/app/Camera2"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/priv-app/Contacts"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/app/DeskClock"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/priv-app/Dialer"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/app/Gallery2"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/app/messaging"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/product/app/QuickSearchBox"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/system/priv-app/PrivateSpace"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/removed-app",
+      "target": "/system_ext/priv-app/ThreadNetworkDemoApp"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/no-su",
+      "target": "/system/xbin"
+    }
+  ],
+  "android_init": "/usr/lib/droidloom/current/bin/droidloom-android-init",
+  "android_runtime_directories": [
+    {
+      "source": "/usr/lib/droidloom/current/ime",
+      "target": "/droidloom/ime"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/compat/classpath-compat",
+      "target": "/droidloom/classpath-compat"
+    },
+    {
+      "source": "/usr/lib/droidloom/current/wifi",
+      "target": "/droidloom/wifi"
+    }
+  ],
+  "data_dir": "/var/lib/droidloom/users/1001/data",
+  "denial_socket": "/run/user/1001/droidloom/native-bridge.sock",
+  "graphics_backend": "drm",
+  "host_uid": 1001,
+  "image_dir": "/usr/lib/droidloom/images",
+  "render_node": "/dev/dri/renderD128",
+  "runtime_dir": "/run/droidloom/cells/u1001",
+  "share_user_folders": true,
+  "shared_storage_directories": [],
+  "subordinate_gids": {
+    "count": 100000,
+    "start": 300000
+  },
+  "subordinate_uids": {
+    "count": 100000,
+    "start": 300000
+  },
+  "vendor_image": "/usr/lib/droidloom/images/images/vendor.raw.img"
+}---
+DROIDLOOM_HOST_PEER_PID=0
+DROIDLOOM_HOST_PEER_UID=1000
+DROIDLOOM_HOST_PEER_GID=1000
+DROIDLOOM_RENDER_NODE=/dev/dri/renderD128
+---
+xuqianhui1001:100000:65536
+xuqianhui1001:300000:100000
+xuqianhui1001:100000:65536
+xuqianhui1001:300000:100000

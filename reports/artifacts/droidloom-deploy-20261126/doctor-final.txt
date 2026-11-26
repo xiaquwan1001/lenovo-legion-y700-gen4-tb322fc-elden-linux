@@ -1,0 +1,57 @@
+Droidloom host capability report
+Host: Linux 7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0 (aarch64)
+User: xuqianhui1001
+Result: READY (0 blockers)
+
+[PASS] Linux shared-kernel host [required]
+  - kernel reports "Linux"
+
+[PASS] Architecture-matched native execution [required]
+  - host is aarch64; native image contract is aarch64
+
+[PASS] CPU features the Android image uses [required]
+  - the Android image needs no optional CPU features
+
+[PASS] Required Linux namespaces [required]
+  - observed namespace handles: user, pid, mnt, ipc, uts, net, cgroup
+
+[PASS] Private Binder filesystem [required]
+  - CONFIG_ANDROID_BINDERFS is enabled in /proc/config.gz
+  - binderfs is listed in /proc/filesystems
+
+[PASS] Cgroup v2 resource control for the cell [required]
+  - /sys/fs/cgroup/system.slice/droidloomd.service/cgroup.controllers: cpuset cpu io memory pids
+  - controllers the cell needs missing: none
+
+[PASS] Cgroup v2 freezer
+  - observed /sys/fs/cgroup/sys-fs-fuse-connections.mount/cgroup.freeze
+
+[PASS] Seccomp filtering [required]
+  - CONFIG_SECCOMP_FILTER is enabled in /proc/config.gz
+  - available actions: kill_process kill_thread trap errno user_notif trace log allow
+
+[PASS] Private veth and nftables networking [required]
+  - CONFIG_VETH is module in /proc/config.gz
+  - CONFIG_NF_TABLES is enabled in /proc/config.gz
+  - veth runtime/module evidence: true
+  - nf_tables runtime/module evidence: true
+
+[PASS] DRM render-only GPU access [required]
+  - /dev/dri/renderD128 (driver msm_dpu)
+
+[PASS] DMA-BUF and sync_file primitives [required]
+  - CONFIG_DMA_SHARED_BUFFER is enabled in /proc/config.gz
+  - CONFIG_SYNC_FILE is enabled in /proc/config.gz
+  - DMA-BUF runtime evidence: true
+  - sync_file runtime/config evidence: true
+
+[PASS] DMA-BUF heaps
+  - CONFIG_DMABUF_HEAPS is enabled in /proc/config.gz
+  - /dev/dma_heap exists: true
+
+[PASS] Synthetic cell filesystem support [required]
+  - required filesystems missing: none
+
+[WARN] Host LSM hardening
+  - active LSMs: capability
+  Remedy: Treat compromise of the full Android cell as outside the primary boundary until a host LSM policy or hardened VM fallback is available.

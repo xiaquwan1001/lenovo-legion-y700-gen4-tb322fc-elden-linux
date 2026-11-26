@@ -1,0 +1,5 @@
+listed 4 Android applications
+LimbusCompany	com.ProjectMoon.LimbusCompany/com.ProjectMoon.LimbusCompany.LimbusCompanyActivity
+Files	com.android.documentsui/com.android.documentsui.LauncherActivity
+Settings	com.android.settings/com.android.settings.Settings
+rednote	com.xingin.xhs/com.xingin.xhs.index.v2.IndexActivityV2

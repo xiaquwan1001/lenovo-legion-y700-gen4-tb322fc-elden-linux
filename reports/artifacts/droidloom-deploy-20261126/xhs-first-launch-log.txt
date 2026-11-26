@@ -1,0 +1,68 @@
+Waiting for Droidloom to respond; another request may be in progress (up to 250 seconds).
+--------- beginning of main
+11-26 07:04:11.108  1636  1636 D VRI[IndexActivityV2]: WindowInsets changed: 480x800 
+--------- beginning of system
+11-26 07:04:11.127  1636  1636 D InsetsController: hide(ime())
+11-26 07:04:11.127  1636  1636 I ImeTracker: com.xingin.xhs:d70910bc: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+11-26 07:04:11.169  1636  1636 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+11-26 07:04:11.170  1636  1636 D ViewRootImpl: Skipping stats log for color mode
+11-26 07:04:11.171  1636  1636 E WindowManager: android.view.WindowLeaked: Activity com.xingin.xhs.index.v2.IndexActivityV2 has leaked window com.android.internal.policy.DecorView{6510a7b V.E...... R....... 0,0-388,575 aid=1073741824}[IndexActivityV2] that was originally added here
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.view.ViewRootImpl.<init>(ViewRootImpl.java:1418)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.view.ViewRootImpl.<init>(ViewRootImpl.java:1404)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:502)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:188)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.Dialog.show(Dialog.java:352)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at bza.c.a(SourceFile:241)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.xhs.index.v2.splash.SplashV2Controller.onAttach(SourceFile:267)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at ne7.c.attach(SourceFile:11)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at ne7.o.attach(SourceFile:6)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at ne7.o.attach(SourceFile:1)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.foundation.framework.v2.LCBActivity.onCreate$___twin___(SourceFile:26)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.foundation.framework.v2.LCBActivity.access$000(SourceFile:0)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.foundation.framework.v2.LCBActivity.onCreate(SourceFile:13)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.android.redutils.base.XhsActivity.onCreate$___twin___(SourceFile:241)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.android.redutils.base.XhsActivity.access$000(SourceFile:0)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.android.redutils.base.XhsActivity.onCreate(SourceFile:24)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.xhs.index.v2.IndexActivityV2.de(SourceFile:1311)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.xingin.xhs.index.v2.IndexActivityV2.onCreate(SourceFile:24)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.Activity.performCreate(Activity.java:9340)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.Activity.performCreate(Activity.java:9318)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1543)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4559)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4781)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:224)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:133)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:103)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3032)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Handler.dispatchMessageImpl(Handler.java:142)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Looper.loopOnce(Looper.java:296)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Looper.loop(Looper.java:397)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at i4e.c$a.run(SourceFile:1)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Handler.handleCallback(Handler.java:1095)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Handler.dispatchMessageImpl(Handler.java:135)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Looper.loopOnce(Looper.java:296)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.os.Looper.loop(Looper.java:397)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at android.app.ActivityThread.main(ActivityThread.java:9523)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at java.lang.reflect.Method.invoke(Native Method)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:575)
+11-26 07:04:11.171  1636  1636 E WindowManager: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:939)
+11-26 07:04:11.174  1636  1636 I AppCompatDelegate: The Activity's LayoutInflater already has a Factory installed so we can not install AppCompat's
+11-26 07:04:11.174  1636  1636 I AppCompatDelegate: The Activity's LayoutInflater already has a Factory installed so we can not install AppCompat's
+11-26 07:04:11.178  1636  1636 E com.xingin.xhs: Invalid resource ID 0x00000000.
+11-26 07:04:11.184  1636  1636 E com.xingin.xhs: Invalid resource ID 0x00000000.
+11-26 07:04:11.186  1636  1636 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): null
+11-26 07:04:11.187  1636  1636 D ViewRootImpl: Skipping stats log for color mode
+11-26 07:04:11.188  1636  1636 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@8f63a70
+11-26 07:04:11.189  1636  1636 I Surface : Creating surface for consumer unnamed-1636-2 with slotExpansion=1 for 64 slots
+11-26 07:04:11.189  1636  1636 I Surface : Creating surface for consumer VRI[IndexActivityV2]#2(BLAST Consumer)2 with slotExpansion=1 for 64 slots
+11-26 07:04:11.190  1636  1636 D VRI[IndexActivityV2]: WindowInsets changed: 480x800 statusBars:[0,145,0,0] navigationBars:[0,0,0,72] mandatorySystemGestures:[0,0,0,72] 
+11-26 07:04:11.190  1636  1636 D WindowOnBackDispatcher: setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@65973f7
+11-26 07:04:11.191  1636  1636 I Surface : Creating surface for consumer unnamed-1636-3 with slotExpansion=1 for 64 slots
+11-26 07:04:11.191  1636  1636 I Surface : Creating surface for consumer VRI[IndexActivityV2]#3(BLAST Consumer)3 with slotExpansion=1 for 64 slots
+11-26 07:04:11.216  1636  1636 D InsetsController: hide(ime())
+11-26 07:04:11.216  1636  1636 I ImeTracker: com.xingin.xhs:ce31cac4: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+11-26 07:04:11.238  1636  1636 D VRI[IndexActivityV2]: WindowInsets changed: 1440x2400 
+11-26 07:04:21.540  1636  1649 D nativeloader: Load /data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/lib/arm64/libun7zip.so using class loader ns clns-9 (caller=/data/app/~~uL5DNlVG8IP2cW3W_xRUhA==/com.xingin.xhs-80tsNQHjVB7ia13tJf-PIQ==/base.apk!classes13.dex): ok
