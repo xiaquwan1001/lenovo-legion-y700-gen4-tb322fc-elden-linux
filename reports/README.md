@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：696
+- 报告总数：697
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -168,6 +168,7 @@
 | `patch` | 1 | `patch-delivery-audit-20261107.md` |
 | `patches` | 1 | `patches-uefi-grading-20261106.md` |
 | `pcie` | 1 | `pcie-l2-static-20261020.md` |
+| `pmic` | 1 | `pmic-pon-reset-reason-20261127.md` |
 | `power` | 1 | `power-on-demand-20261125.md` |
 | `project` | 1 | `project-audit-20261111.md` |
 | `py` | 1 | `py-static-scan-20261120.md` |
@@ -1338,6 +1339,10 @@
 ## `pcie`（1）
 
 - `pcie-l2-static-20261020.md` — T9 阻塞项静态分析：qcom-pcie L2 进入超时（主机侧只读，未上机）
+
+## `pmic`（1）
+
+- `pmic-pon-reset-reason-20261127.md` — V2 取证（`#692`/`#737` 复位源）：PMIC PON reason 通道在本机**不存在**，且它判不了根因
 
 ## `power`（1）
 

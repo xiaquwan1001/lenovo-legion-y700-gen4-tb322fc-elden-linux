@@ -18,6 +18,11 @@
 > `reports/uefi-observability-pivot-20261101.md` 的「10 段环形可回溯」在本机现态**不成立**（9 段是陈旧 `_a` 残留）；
 > 且 23:11 那次（= #692 最后复位的回落启动）ABL 记的 `Reset by PSHOLD / Hard Reset` 与正常重启同款 ⇒ **该字段不能判根因**（#184/#182）。
 > 证据 = `reports/artifacts/sensors-692-logfs-20261127/`（logfs 8 MiB + 只读采集）。
+> ①b **V2 取证（PMIC PON 侧）已做、且判不了根因**：主线 `qcom-pon` 只写 reboot-mode magic、**不读任何 reason 寄存器**；
+> 用户态也没路（`regmap` debugfs 无 `access`、`registers` 是缓存值 ⇒ 新 `PITFALLS #739`）。ABL 留的 `Reset by PSHOLD`
+> ⇒ 可排除「PMIC 看门狗」一支，但 PS_HOLD 分不清 AOP/TZ 谁拉的低 ⇒ H2a/H3 **在 PMIC 侧不可分**，该通道到此为止。
+> 上游缺口登记（不立项、不提）：主线缺 PON reason ABI（通用 `power_on_reason.h` 已存在），但 `qcom-pon` 正被 SPMI sub-device 系列（v8–v10）大改 ⇒ 等合并后再评估。
+> 全账 = `reports/pmic-pon-reset-reason-20261127.md`。
 > ③ **D10 复扫**（`reports/comm-triage-20261127.md`）：窗口内**人类评审新增 0 条**；四个上游系列封数与上轮逐一相同、不建议催；
 > `mobian1/droid-juicer !46` 逐字段不变（notes=0）；**新工具事实** = `lore-kernel.gnuweeb.org` 是免 Anubis 的 lore 镜像。
 > **退信面仍未核**（GNOME keyring 锁：`secret-tool: Cannot get secret of a locked object`）⇒ 需用户登录图形会话解锁。
