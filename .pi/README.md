@@ -1,6 +1,9 @@
 # .pi/ — 项目的 AI 大脑（技能 / 记忆 / 子代理 / 会话）
 
 > 分层与 SSOT 见根目录 `INDEX.md` §2。本文件只说明 `.pi/` 内部各目录的分工与纳管状态。
+> **本表 = `.pi/` 的登记处（2026-11-26 审计 A4）**：新增/删除子项先改本表再落盘；
+> 已退场：`tmp-tasks/`（2026-11-05 三张 lane 任务卡，正文已归档 `../archive/plans-tmp-tasks-20261105.md`）、
+> `fabric/` + `fabric.json`（pi-fabric 2026-11-21 卸载后残留，2026-11-26 删除）、`agents/*.bak-alias-1112`（同日删 24 件）。
 > 全局（`~/.pi/agent/`）与项目（本目录）**叠加加载**，由工作目录决定，无需切换 profile。
 
 ## 目录分工
@@ -22,6 +25,9 @@
 | `agents/` | **子代理角色卡（提示词源）**：一级 Lead（`physical-exec`/`doc-audit-lead`/`mail-io`/`code-boundary`）+ 二级叶级（`impl-worker`/`verify-worker`）+ 既有专题卡 | ✅ track | pi-fabric **会按 `name` 直接读取**本目录 `*.md`（正文作 systemPrompt，`tools`/`model` 可被调用覆盖）；派工时也可只传 `agent` 名 |
 | ~~`workflows/`~~ | ✅ **已清空移除（2026-10-12）**：pi-subagents workflow 脚本（5 个）+ `plans/*-workflow.js`（5 个）已移入 `archive/2026-10-12-retired-pi-subagents-workflows/` | — | 旧方言已废弃、仅供追溯；复用须按 fabric 重写（`agents.run`/`Promise.allSettled`），**不要原地改语法** |
 | `sessions/` | 会话轨迹 `*.jsonl`（运行时产物） | ❌ ignore | **逐会话快照档案见 `../SESSIONS/`**（检索用 `sessfind <关键词>` / `sessidx` / `/resume`，`session_search` 工具已不存在）；归档策略见 `../RESOURCES/README.md` §3。2026-11-02 已把 `~/.pi/agent/sessions/` 下残余的本项目会话（含旧 home 路径 `/home/xuqianhui1001/y700-elden` 起步的）并回本目录，全局不再留副本 |
+| `reports/` | `.pi/` 自己的审计/清理产物（非领域层报告；领域层报告在 `../reports/`） | ✅ track | 2026-11-26 审计 A4 登记进表 |
+| `rambuild/` | 内存盘构建区的清单快照（`manifest.tsv`） | ✅ track | 同上 |
+| `mcp.json` | MCP 服务器配置（37 B，当前为空壳） | ✅ track | 同上 |
 
 ## `missions/` vs `agents/`（易混）
 

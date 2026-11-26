@@ -1,2 +1,0 @@
-== /proc/bootconfig
-== /proc/device-tree/chosen/bootargs

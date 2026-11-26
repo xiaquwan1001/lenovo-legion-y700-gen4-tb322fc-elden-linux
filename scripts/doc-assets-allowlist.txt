@@ -19,3 +19,13 @@ rootfs-vk127.cpio.gz	PITFALLS 里指 out/rootfs-vk127.cpio.gz（out/ 不入库�
 reports/artifacts/uefi-20261107R39R40-p45/	2026-11-09 清理轮删除（判死世代，p45 结论已入 TASKS §5；重建需按 p45-recipe.txt），见 reports/asset-cleanup-20261109.md
 reports/artifacts/uefi-20261104R21-hostdiag/	2026-11-10 清理轮删除（R21 世代判死；结论在 reports/uefi-noavb-dtbo-bootchain-20261104R.md，重建按 25 条补丁序列）见 reports/asset-cleanup-20261110.md
 scripts/check-userland-mirror.sh	TASKS/NEXT.md §4.0a T9 的**待建**门（用户态镜像一致性，2026-11-26 架构审计 A9/A10），未落地前引用属计划件
+reports/artifacts/bl-stuck-20261117/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/uefi-edl-read-20261101/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/bl-stuck-20261116/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/uefi-20261107R49-p54/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/uefi-20261106R19-fbconsole/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/cam-vk189-20261124/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/uefi-20261107R42-p47/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/uefi-20261107R41-p46/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/uefi-20261107R43-p48/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）
+reports/artifacts/uefi-20261107R44-p50/	2026-11-26 整理轮 B4 已 tar.zst 归档到 archive/artifacts/（清单 archive/artifacts/MANIFEST.tsv，zstd -t + 逐文件 sha 核过）

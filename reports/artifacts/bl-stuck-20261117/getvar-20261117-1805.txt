@@ -1,7 +1,0 @@
-current-slot: a
-slot-unbootable:a: no
-slot-unbootable:b: no
-slot-retry-count:a: 7
-slot-retry-count:b: 6
-slot-successful:a: no
-slot-successful:b: no
