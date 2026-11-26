@@ -3,7 +3,7 @@
 #
 # 为什么需要它（2026-11-14 M1）：项目文档曾多次与会话实测结论不一致（文档写 A、会话已实测为 B），
 # 每轮靠人肉考古才发现 ⇒ 硬规则里要求开工先核实最近 2–3 轮。手工做这件事要：
-#   ① 从 .pi/sessions/*.jsonl 里翻最后一条 assistant 收尾汇报；
+#   ① 从 .pi/sessions/*.jsonl[.gz] 里翻最后一条 assistant 收尾汇报（2026-11-26 起老会话可 gzip）；
 #   ② 再看各角度 sessions/ 下最新的几篇（★SSOT 待并入字段）。
 # 本脚本把这两步合成一条命令，输出**只给结论与指针**，不复述正文。
 #
@@ -29,14 +29,15 @@ done
 echo "== 最近 $n 轮 pi 会话（结论摘要；正文 = .pi/sessions/*.jsonl）=="
 if [ "$files_only" -eq 0 ] && command -v python3 >/dev/null 2>&1; then
   ELDEN_ROOT="$root" ELDEN_N="$n" python3 - <<'PY'
-import glob, json, os
+import glob, gzip, json, os
 root, n = os.environ['ELDEN_ROOT'], int(os.environ['ELDEN_N'])
-paths = sorted(glob.glob(os.path.join(root, '.pi/sessions/*.jsonl')), key=os.path.getmtime)[-n:]
+paths = sorted(glob.glob(os.path.join(root, '.pi/sessions/*.jsonl')) + glob.glob(os.path.join(root, '.pi/sessions/*.jsonl.gz')), key=os.path.getmtime)[-n:]
 if not paths:
-    print('  （无 .pi/sessions/*.jsonl：新克隆或会话未落在项目目录）')
+    print('  （无 .pi/sessions/*.jsonl[.gz]：新克隆或会话未落在项目目录）')
 for p in paths:
     msgs = []
-    with open(p, encoding='utf-8', errors='replace') as fh:
+    _op = gzip.open(p, 'rt', encoding='utf-8', errors='replace') if p.endswith('.gz') else open(p, encoding='utf-8', errors='replace')
+    with _op as fh:
         for line in fh:
             line = line.strip()
             if not line:

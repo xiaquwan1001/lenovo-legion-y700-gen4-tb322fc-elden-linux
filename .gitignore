@@ -170,12 +170,41 @@ reports/trials/*/*.bin
 /reference/gunyah-refs/**/*.b64
 
 # 96 MiB 签名槽位镜像不入库（可重建）
-reports/artifacts/uefi-ddr-20261101/*.img
+# ---- reports/artifacts/ 统一口径（2026-11-26 整理轮 T10 收敛；原 173 条逐目录规则合并为此块）----
+# 判据：artifacts 只入库「可读证据」（md/txt/清单/patch/diff/小图）。
+# 日志（.log/.out/.err）与二进制一律不入库 —— 个别需要入库的日志用 `git add -f` 显式放行。
+# 已入库的历史件保持 tracked（gitignore 不追溯）；新增件按本块判定；旧逐目录规则见 git 历史。
+reports/artifacts/**
+!reports/artifacts/
+!reports/artifacts/**/
+!reports/artifacts/**/*.md
+!reports/artifacts/**/*.txt
+!reports/artifacts/**/*.tsv
+!reports/artifacts/**/*.json
+!reports/artifacts/**/*.sha256
+!reports/artifacts/**/*.sums
+!reports/artifacts/**/*.diff
+!reports/artifacts/**/*.patch
+!reports/artifacts/**/*.dts
+!reports/artifacts/**/*.dtsi
+!reports/artifacts/**/*.c
+!reports/artifacts/**/*.h
+!reports/artifacts/**/*.sh
+!reports/artifacts/**/*.cfg
+!reports/artifacts/**/*.conf
+!reports/artifacts/**/*.ini
+!reports/artifacts/**/*.csv
+!reports/artifacts/**/*.yaml
+!reports/artifacts/**/*.yml
+!reports/artifacts/**/*.png
+!reports/artifacts/**/*.jpg
+!reports/artifacts/**/*.jpeg
+!reports/artifacts/**/*.svg
+# 抓取缓存（patchwork/lore 原始 JSON，可重抓）不入库 —— 放在白名单之后，最后匹配优先
+reports/artifacts/**/cache/
 # 2026-11-03：UEFI 切断回落实验的 96 MiB boot_b 备份同样不入库（唯一账 = 该目录 SHA256SUMS.img）
-reports/artifacts/uefi-ddrcut-20261101/*.img
 
 # EDL 只读取证件：二进制本体不入库（README + SHA256SUMS 是唯一账，33 MB 可由 SHA 对账重抓）
-/reports/artifacts/uefi-edl-read-20261101/*.bin
 
 # ---- 项目记忆（2026-11-02 收归仓库内 .pi/memory/）----
 # hermes 自动滚动的派生历史不入库（.recovery-* / .retired-*）
@@ -185,211 +214,48 @@ reports/artifacts/uefi-ddrcut-20261101/*.img
 # ---- 2026-11-04：UEFI DXE 轮 11+1 个变体构建件（合计 ~226 MB）----
 # 每个变体目录只入库「可复现身份三件」= BootShim.bin + manifest.txt + SHA256SUMS；
 # 其余重件由 manifest + scripts/uefi-build-variant.sh 可重建，不入库。
-reports/artifacts/uefi-dxe*-20261104/*.img
-reports/artifacts/uefi-dxe*-20261104/*.gz
-reports/artifacts/uefi-dxe*-20261104/*.fd
-reports/artifacts/uefi-dxe*-20261104/*payload*
-reports/artifacts/uefi-dxe*-20261104/kernel.bin
-reports/artifacts/uefi-fixcopylen-20261104/*.img
-reports/artifacts/uefi-fixcopylen-20261104/*.gz
-reports/artifacts/uefi-fixcopylen-20261104/*.fd
-reports/artifacts/uefi-fixcopylen-20261104/*payload*
-reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 
 # ---- 2026-11-05 脚本审计工具链的缓存（可再生，勿入库）----
 /.cache/
 
 # UEFI 世代归档（2026-11-06）：payload-v2aligned* 每次 repack 都会重写，可由 FD + BootShim 重生成
-/reports/artifacts/uefi-20261106R8-vsstop35/payload-v2aligned*
-/reports/artifacts/uefi-20261106R9-gateout/payload-v2aligned*
 
-/reports/artifacts/uefi-20261106R13-ebnbanners/payload-v2aligned*
 
 # ---- 2026-11-06 深夜 UEFI 世代归档（R14..R24，11 个变体 ≈270 MB）----
 # 只入库「可复现身份三件」= BootShim.bin + manifest.txt + SHA256SUMS；
 # FD / kernel.bin / payload / build.log 均可由 p14…p24-recipe.txt + scripts/uefi-r21-p7-ladder.sh --rebuild 重建。
 # （gitignore 不支持 {a,b} 花括号，必须逐类写 glob）
-/reports/artifacts/uefi-20261106R1[4-9]-*/*.fd
-/reports/artifacts/uefi-20261106R1[4-9]-*/*.gz
-/reports/artifacts/uefi-20261106R1[4-9]-*/*.img
-/reports/artifacts/uefi-20261106R1[4-9]-*/*payload*
-/reports/artifacts/uefi-20261106R1[4-9]-*/kernel.bin
-/reports/artifacts/uefi-20261106R1[4-9]-*/build.log
-/reports/artifacts/uefi-20261106R2[0-4]-*/*.fd
-/reports/artifacts/uefi-20261106R2[0-4]-*/*.gz
-/reports/artifacts/uefi-20261106R2[0-4]-*/*.img
-/reports/artifacts/uefi-20261106R2[0-4]-*/*payload*
-/reports/artifacts/uefi-20261106R2[0-4]-*/kernel.bin
-/reports/artifacts/uefi-20261106R2[0-4]-*/build.log
 # 2026-11-06 夜 UEFI 线（p25–p33）构建产物：只留 manifest/SHA256SUMS/BootShim.bin，其余是二进制
-/reports/artifacts/uefi-20261106R1[7-9]-*/*.efi
-/reports/artifacts/uefi-20261106R1[7-9]-*/*.fd
-/reports/artifacts/uefi-20261106R1[7-9]-*/*.img
-/reports/artifacts/uefi-20261106R1[7-9]-*/*.gz
-/reports/artifacts/uefi-20261106R1[7-9]-*/bootpayload.bin
-/reports/artifacts/uefi-20261106R1[7-9]-*/kernel.bin
-/reports/artifacts/uefi-20261106R1[7-9]-*/payload-v2aligned.bin
-/reports/artifacts/uefi-20261106R1[7-9]-*/build.log
-/reports/artifacts/uefi-20261106R2[0-8]-*/*.efi
-/reports/artifacts/uefi-20261106R2[0-8]-*/*.fd
-/reports/artifacts/uefi-20261106R2[0-8]-*/*.img
-/reports/artifacts/uefi-20261106R2[0-8]-*/*.gz
-/reports/artifacts/uefi-20261106R2[0-8]-*/bootpayload.bin
-/reports/artifacts/uefi-20261106R2[0-8]-*/kernel.bin
-/reports/artifacts/uefi-20261106R2[0-8]-*/payload-v2aligned.bin
-/reports/artifacts/uefi-20261106R2[0-8]-*/build.log
 # 2026-11-06 深夜 UEFI 线（p34–p36，R29R30/R31/R32）：产物在 build/ 子目录
 # 入库同前：只留 BootShim.bin + manifest.txt + SHA256SUMS（可复现身份三件）
-/reports/artifacts/uefi-20261106R29R30-p34/build*.fd
-/reports/artifacts/uefi-20261106R29R30-p34/build*.gz
-/reports/artifacts/uefi-20261106R29R30-p34/build*.img
-/reports/artifacts/uefi-20261106R29R30-p34/build*.bin
-/reports/artifacts/uefi-20261106R29R30-p34/build*.efi
-/reports/artifacts/uefi-20261106R29R30-p34/build*.log
-/reports/artifacts/uefi-20261106R31-p35c/build*.fd
-/reports/artifacts/uefi-20261106R31-p35c/build*.gz
-/reports/artifacts/uefi-20261106R31-p35c/build*.img
-/reports/artifacts/uefi-20261106R31-p35c/build*.bin
-/reports/artifacts/uefi-20261106R31-p35c/build*.efi
-/reports/artifacts/uefi-20261106R31-p35c/build*.log
-/reports/artifacts/uefi-20261106R32-p36e/build*.fd
-/reports/artifacts/uefi-20261106R32-p36e/build*.gz
-/reports/artifacts/uefi-20261106R32-p36e/build*.img
-/reports/artifacts/uefi-20261106R32-p36e/build*.bin
-/reports/artifacts/uefi-20261106R32-p36e/build*.efi
-/reports/artifacts/uefi-20261106R32-p36e/build*.log
 
 # 2026-11-07 UEFI p38 世代（R33）构建归档：二进制可由 p38-recipe.txt + uefi-r21-p7-ladder.sh --rebuild 重建；
 # 只留 manifest/SHA256SUMS，加上 obj/LinuxLoader.{efi,map}（静态复核要用的 DWARF-free 反汇编输入）
-/reports/artifacts/uefi-20261107R33-p38/*.fd
-/reports/artifacts/uefi-20261107R33-p38/*.img
-/reports/artifacts/uefi-20261107R33-p38/*.gz
-/reports/artifacts/uefi-20261107R33-p38/*payload*
-/reports/artifacts/uefi-20261107R33-p38/kernel.bin
-/reports/artifacts/uefi-20261107R33-p38/build.log
 
 # 2026-11-07 UEFI p39..p43 世代构建归档（同 R33 口径：只留 manifest/SHA256SUMS + obj/LinuxLoader.{efi,map}）
-/reports/artifacts/uefi-20261107R3[4-9]-p4*/*.fd
-/reports/artifacts/uefi-20261107R3[4-9]-p4*/*.img
-/reports/artifacts/uefi-20261107R3[4-9]-p4*/*.gz
-/reports/artifacts/uefi-20261107R3[4-9]-p4*/*payload*
-/reports/artifacts/uefi-20261107R3[4-9]-p4*/kernel.bin
-/reports/artifacts/uefi-20261107R3[4-9]-p4*/build.log
-/reports/artifacts/uefi-20261107R34-p39/*.fd
-/reports/artifacts/uefi-20261107R34-p39/*.img
-/reports/artifacts/uefi-20261107R34-p39/*.gz
-/reports/artifacts/uefi-20261107R34-p39/*payload*
-/reports/artifacts/uefi-20261107R34-p39/kernel.bin
-/reports/artifacts/uefi-20261107R34-p39/build.log
 
 # 2026-11-07 深夜 UEFI p45/p46（R39R40 / R41）：目录命名带多重代号，逐目录写 glob
 # 入库仍只留可复现身份三件（BootShim.bin / manifest.txt / SHA256SUMS）+ recipe + p45 的 obj/LinuxLoader.{efi,map}
-/reports/artifacts/uefi-20261107R39R40-p45/SM8750_EFI.fd
-/reports/artifacts/uefi-20261107R39R40-p45/*.img
-/reports/artifacts/uefi-20261107R39R40-p45/*.gz
-/reports/artifacts/uefi-20261107R39R40-p45/*payload*
-/reports/artifacts/uefi-20261107R39R40-p45/kernel.bin
-/reports/artifacts/uefi-20261107R39R40-p45/build.log
-/reports/artifacts/uefi-20261107R41-p46/SM8750_EFI.fd
-/reports/artifacts/uefi-20261107R41-p46/*.img
-/reports/artifacts/uefi-20261107R41-p46/*.gz
-/reports/artifacts/uefi-20261107R41-p46/*payload*
-/reports/artifacts/uefi-20261107R41-p46/kernel.bin
-/reports/artifacts/uefi-20261107R41-p46/build.log
 
 # 2026-11-07 深夜 UEFI R42/R43（p47/p48/p49）构建归档：只入库 BootShim.bin + manifest + SHA256SUMS + recipe
-/reports/artifacts/uefi-20261107R42-p47/*.fd
-/reports/artifacts/uefi-20261107R42-p47/*.img
-/reports/artifacts/uefi-20261107R42-p47/*.gz
-/reports/artifacts/uefi-20261107R42-p47/*payload*
-/reports/artifacts/uefi-20261107R42-p47/kernel.bin
-/reports/artifacts/uefi-20261107R42-p47/build.log
-/reports/artifacts/uefi-20261107R43-p48/*.fd
-/reports/artifacts/uefi-20261107R43-p48/*.img
-/reports/artifacts/uefi-20261107R43-p48/*.gz
-/reports/artifacts/uefi-20261107R43-p48/*payload*
-/reports/artifacts/uefi-20261107R43-p48/kernel.bin
-/reports/artifacts/uefi-20261107R43-p48/build.log
-/reports/artifacts/uefi-20261107R43b-p49/*.fd
-/reports/artifacts/uefi-20261107R43b-p49/*.img
-/reports/artifacts/uefi-20261107R43b-p49/*.gz
-/reports/artifacts/uefi-20261107R43b-p49/*payload*
-/reports/artifacts/uefi-20261107R43b-p49/kernel.bin
-/reports/artifacts/uefi-20261107R43b-p49/build.log
 
 # 2026-11-07 夜 UEFI R44（p50）：同口径，只入库 BootShim.bin + manifest.txt + SHA256SUMS
-/reports/artifacts/uefi-20261107R44-p50/*.fd
-/reports/artifacts/uefi-20261107R44-p50/*.img
-/reports/artifacts/uefi-20261107R44-p50/*.gz
-/reports/artifacts/uefi-20261107R44-p50/*payload*
-/reports/artifacts/uefi-20261107R44-p50/kernel.bin
-/reports/artifacts/uefi-20261107R44-p50/build.log
 # 2026-11-07 夜上机证据（p49/p50）：logfs.img 8 MiB 原始分区镜像不入库（可设备侧 dd 重取），
 # 文本解码件（abl-log.txt）、ssh-pre/post、usb-watch、boot.txt 全入库
-/reports/artifacts/uefi-boot-20261107-193644/logfs.img
-/reports/artifacts/uefi-boot-20261107-195415/logfs.img
 # 2026-11-07 夜 UEFI p51–p53 世代：构建归档只留身份三件；失败内核 console 原件（数百 KB）入库（判读用）
-/reports/artifacts/uefi-20261107R45-p51/*.fd
-/reports/artifacts/uefi-20261107R45-p51/*.img
-/reports/artifacts/uefi-20261107R45-p51/*.gz
-/reports/artifacts/uefi-20261107R45-p51/*payload*
-/reports/artifacts/uefi-20261107R45-p51/kernel.bin
-/reports/artifacts/uefi-20261107R45-p51/build.log
-/reports/artifacts/uefi-20261107R47-p52/*.fd
-/reports/artifacts/uefi-20261107R47-p52/*.img
-/reports/artifacts/uefi-20261107R47-p52/*.gz
-/reports/artifacts/uefi-20261107R47-p52/*payload*
-/reports/artifacts/uefi-20261107R47-p52/kernel.bin
-/reports/artifacts/uefi-20261107R47-p52/build.log
-/reports/artifacts/uefi-20261107R48-p53/*.fd
-/reports/artifacts/uefi-20261107R48-p53/*.img
-/reports/artifacts/uefi-20261107R48-p53/*.gz
-/reports/artifacts/uefi-20261107R48-p53/*payload*
-/reports/artifacts/uefi-20261107R48-p53/kernel.bin
-/reports/artifacts/uefi-20261107R48-p53/build.log
 # 上机证据里的 logfs.img（8 MiB 原始分区镜像）不入库，文本解码件入库
-/reports/artifacts/uefi-boot-*/*.img
-/reports/artifacts/uefi-20261107R49-p54/*.fd
-/reports/artifacts/uefi-20261107R49-p54/*.img
-/reports/artifacts/uefi-20261107R49-p54/*.gz
-/reports/artifacts/uefi-20261107R49-p54/*payload*
-/reports/artifacts/uefi-20261107R49-p54/kernel.bin
-/reports/artifacts/uefi-20261107R49-p54/build.log
-/reports/artifacts/uefi-20261107R50-p55/*.fd
-/reports/artifacts/uefi-20261107R50-p55/*.img
-/reports/artifacts/uefi-20261107R50-p55/*.gz
-/reports/artifacts/uefi-20261107R50-p55/*payload*
-/reports/artifacts/uefi-20261107R50-p55/kernel.bin
-/reports/artifacts/uefi-20261107R50-p55/build.log
-/reports/artifacts/uefi-20261107R51-p56/*.fd
-/reports/artifacts/uefi-20261107R51-p56/*.img
-/reports/artifacts/uefi-20261107R51-p56/*.gz
-/reports/artifacts/uefi-20261107R51-p56/*payload*
-/reports/artifacts/uefi-20261107R51-p56/kernel.bin
-/reports/artifacts/uefi-20261107R51-p56/build.log
-/reports/artifacts/uefi-20261107R52-p57/*.fd
-/reports/artifacts/uefi-20261107R52-p57/*.img
-/reports/artifacts/uefi-20261107R52-p57/*.gz
-/reports/artifacts/uefi-20261107R52-p57/*payload*
-/reports/artifacts/uefi-20261107R52-p57/kernel.bin
-/reports/artifacts/uefi-20261107R52-p57/build.log
 
 # ---- 2026-11-10：flashed 形态试验目录（scripts/uefi-flashed-trial.sh）----
 # 每个目录两份 8 MiB logfs 全量快照（pre/post）= 17 MB，且本轮已证明「失败那一发不写记录、
 # pre/post 除 slot0 外逐字节相同」⇒ binary 本身信息量极低。只留文本 + 一份 logfs-sha256.txt
 # （记录两份快照的 sha，据此可判断「是否变过」），重跑同一条命令即可复现。
-/reports/artifacts/uefi-flashed-*/logfs-*.bin
 
 # ---- 2026-11-10 深夜：`dtbo_a` 根因试验目录 ----
 # 每个 trial 目录两份 8 MiB logfs 全量快照；本轮已证明「logfs 对最近启动根本不写、前后逐字节相同」
 # ⇒ binary 信息量为 0，只留文本取证（sha 记在 logfs-sha256.txt）
-/reports/artifacts/*/logfs-*.bin
 
 # 2026-11-12：UEFI logfs 8 MiB 取证件（23 个 artifact 目录 / 32 件 / 256 MB）载荷已压缩归档为
 # 各目录 payloads.tar.zst（256 MB → 0.6 MB），原件不再入库；账目见同目录 SHA256SUMS.logfs。
-reports/artifacts/**/logfs*.bin
-reports/artifacts/**/logfs*.boot
-reports/artifacts/**/logfs.img
 
 # 2026-11-13：`.pi/**` 的模型别名改写留了逐文件备份（`*.bak-alias-1112`，用户要求**有意保留在盘**，
 # 但不入库——它们是同一批配置改写的一次性快照，重生成成本≈0）
@@ -399,20 +265,13 @@ reports/artifacts/**/logfs.img
 # 判据：单件 >1 MiB（实测 277 件 / 823.9 MiB，占主仓被跟踪体积 88%）。
 # 可核验性保留：各目录 SHA256SUMS 仍入库；out/ 侧同名 manifest 仍入库；
 # 历史版本仍可从 git 历史取回（git show <commit>:<path>），磁盘上文件未删。
-/reports/artifacts/**/*.fd
-/reports/artifacts/**/*.img
-/reports/artifacts/**/*.bin
-/reports/artifacts/**/*.gz
-/reports/artifacts/**/*.log
 
 # B17 分诊取证：patchwork/cgit 原始响应用缓存目录（9 MB，可用 artifacts/b17-20261117/fetch_pw.py 重下）
-/reports/artifacts/b17-20261117/cache/
 
 # 原厂安卓资产提取树（319 MB 专有固件资产，仅本机个人使用，不再分发；scripts/android-assets-extract-20261119.py 可完全重建）
 /assets/android-20261119/
 
 # 相机取证单帧（MIPI RAW10 打包，前 9.5 MB / 后 15 MB；体积大且是逐位原始数据 ⇒ 只在盘上留档，不入库）
-reports/artifacts/cam-vk189-20261124/*.raw
 
 # 2026-11-26 缓存搬家：可再生的大件物理位置移到 ~/elden-cache/（见 versions/cache-ledger.tsv）
 # 仓库里只留软链；下面用「无尾斜杠」形式才能匹配软链（带 / 的 pattern 只匹配真目录）

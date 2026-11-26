@@ -53,7 +53,7 @@ for i in row_ln:
 pat = {}
 for d in (os.path.join(ROOT, '.pi/sessions'),
           os.path.join(ROOT, '.pi/sessions/--home-xuqianhui1001-y700-elden--')):
-    for f in glob.glob(os.path.join(d, '*.jsonl')):
+    for f in (glob.glob(os.path.join(d, '*.jsonl')) + glob.glob(os.path.join(d, '*.jsonl.gz'))):
         m = re.search(r'_([0-9a-f]{8})-', os.path.basename(f))
         if m:
             pat.setdefault(m.group(1), []).append(os.path.relpath(f, ROOT))
@@ -97,10 +97,17 @@ for r in rows:
     used.add(fn)
     r['file'] = fn
 
+# 2026-11-26 修：`--check` 必须**只读**。原实现把「清空目录 + 重写 171 个档案」放在
+# `if '--check' in sys.argv` 守卫**之前** ⇒ 跑一次「校验」会把全目录删了重写
+# （实测：把「当日提交 N 条」全刷成 0、`session_search` 刷成 `scripts/sess.sh`，然后 §3 校验
+# 拿新写的内容对源块 = 自己给自己盖章）。现在先置 _CHECK_ONLY，删/写一律跳过。
+_CHECK_ONLY = '--check' in sys.argv
+
 # ---- 写 sessions/*.md ----
-os.makedirs(SDIR, exist_ok=True)
-for f in glob.glob(os.path.join(SDIR, '*.md')):
-    os.remove(f)
+if not _CHECK_ONLY:                 # 2026-11-26：--check 只读，不删不写（原实现会先清空目录再重写）
+    os.makedirs(SDIR, exist_ok=True)
+    for f in glob.glob(os.path.join(SDIR, '*.md')):
+        os.remove(f)
 
 SESSION_TMPL = """# {date} · {name}
 
@@ -142,6 +149,7 @@ SESSION_TMPL = """# {date} · {name}
 > 生成：`scripts/gen-sessions.py`（机械生成，勿手改）。源：`git show {rev}:{src}` §4 会话索引。
 """
 
+
 for r in rows:
     d = r['date']
     daynote = (f"当日提交 **{commits.get(d, 0)}** 条" if d in days_exist
@@ -153,6 +161,8 @@ for r in rows:
         risk=r['risk'] if r['risk'] not in ('', '-') else '—',
         nfile=len(disks), disk='\n'.join(f'  - `{p}`' for p in disks),
         concl=r['concl'], daynote=daynote, rev=REV, src=SRCNAME)
+    if _CHECK_ONLY:
+        continue
     with open(os.path.join(SDIR, r['file']), 'w', encoding='utf-8') as fh:
         fh.write(body)
 
@@ -319,7 +329,7 @@ def _check():
     print('== CHECK', 'PASS' if ok else 'FAIL')
     return 0 if ok else 1
 
-if '--check' in sys.argv:
+if _CHECK_ONLY:
     sys.exit(_check())
 
 readme = README.format(rev=REV, src=SRCNAME, n=len(rows), stat=BLK_STAT,

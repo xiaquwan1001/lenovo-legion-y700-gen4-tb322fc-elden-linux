@@ -5,7 +5,7 @@
 #
 # 判据（只用文件名/文件内容，不联网、不读 jsonl 正文）：
 #   ① INDEX.md 有 `## 0. 现在一页` 段且含 `核对日期：YYYY-MM-DD`           ⇒ 缺则 FAIL（入口失效）
-#   ② 该日期 ≥ 最新会话证据日期（*/sessions/*.md 文件名日期 + .pi/sessions/*.jsonl 文件名日期）
+#   ② 该日期 ≥ 最新会话证据日期（*/sessions/*.md 文件名日期 + .pi/sessions/*.jsonl[.gz] 文件名日期）
 #      ⇒ 落后则 WARN（不阻塞提交，但不许装作没看见：跑 scripts/recent-sessions.sh N 对账后刷新日期）
 . "$(dirname "$0")/_lib.sh"
 
@@ -32,11 +32,11 @@ ok "INDEX.md §0 现在一页存在，核对日期 = $_claim"
 # 最新会话证据日期：两条来源取最大（文件名里就带日期，不依赖 mtime——clone/checkout 会重置它）
 _latest=$( {
   ls "$ROOT"/*/sessions/*.md 2>/dev/null | sed -n 's#.*/\(20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)-.*#\1#p'
-  ls "$ROOT"/.pi/sessions/*.jsonl 2>/dev/null | sed -n 's#.*/\(20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)T.*#\1#p'
+  ls "$ROOT"/.pi/sessions/*.jsonl "$ROOT"/.pi/sessions/*.jsonl.gz 2>/dev/null | sed -n 's#.*/\(20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)T.*#\1#p'
 } | sort | tail -1 )
 
 if [ -z "$_latest" ]; then
-  warnf "未找到会话证据（*/sessions/*.md 或 .pi/sessions/*.jsonl），跳过新旧比较"
+  warnf "未找到会话证据（*/sessions/*.md 或 .pi/sessions/*.jsonl[.gz]），跳过新旧比较"
 elif [ "$_latest" \> "$_claim" ]; then
   warnf "INDEX §0 核对日期（$_claim）落后于最新会话证据（$_latest）：先跑 scripts/recent-sessions.sh 3 对账，再把 §0 改成一致并刷新日期"
 else
