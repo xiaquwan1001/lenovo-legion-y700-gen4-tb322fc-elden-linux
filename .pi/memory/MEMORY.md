@@ -118,3 +118,4 @@ y700-elden PC→平板音频（audio-share）2026-11-24 收编：Linux 客户端
 
 ---
 **上游能力缺口一律先尝试上游化（用户 2026-11-25 定，本项目全适用）**：凡是「上游缺某能力/驱动/控制链/接口」的缺口（范例 = D14 数据线 SDP 只有 100 mA，根因是 mainline 没有 charger 控制链：`qcom-battmgr` USB psy 只读、缺 vendor 的 `qti_battery_charger` 链），**默认动作 = ①先查上游/社区是否已有人在解决（lore/patchwork/GitLab/GitHub issue+MR 现查）②按 `TASKS/README.md` §7 口径尝试提 PR/MR/issue（内核 = 邮件补丁系列；GNOME/Mobian = GitLab MR；社区项目 = GitHub PR/issue）③把「缺口」作为待办行写进台账**。本机规避（改 sysfs、加本地补丁、换硬件接法）只算「上游未合入前的临时手段」，必须与缺口行**并列**记录，不得用规避替代立项。投递仍受 §7「按系列逐次由用户批准」约束（发信/建 MR/开 issue 前要一次放行），但**立项、备料、门禁、issue/MR 文本起草不必等放行**。判据出处：D14 定因轮（`reports/usb-charging-sdp-limit-20261125.md` §4）。
+§ **headless UI 截图能力（2026-11-27 装）**：平板已装 `xvfb x11-apps imagemagick`（`--no-install-recommends`）⇒ arm64 Flutter/GTK 应用可 `Xvfb :99 + GDK_BACKEND=x11 + import -window root` 无头截图取证，不必占 phosh 的 seat0；用法与坑见 `projects-memory/Bettbox/MEMORY.md`。
