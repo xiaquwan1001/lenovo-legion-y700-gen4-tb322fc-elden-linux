@@ -29,6 +29,7 @@ ENTRY = ['INDEX.md', 'AGENTS.md', 'README.md', 'PROGRESS.md',
          '.pi/AGENT-OPS.md', '.pi/README.md', '.pi/ORCHESTRATION.md',
          'TASKS/README.md', 'TASKS/G1.md', 'TASKS/G2.md', 'TASKS/NEXT.md',
          'TASKS/GAPS.md', 'TASKS/ANDROID-COMPAT.md', 'TASKS/UPSTREAM.md',
+         'TASKS/dim/README.md',
          'PITFALLS/README.md', 'DEVICE/README.md',
          'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md',
          'SESSIONS/README.md', 'HISTORY/README.md']
@@ -264,8 +265,12 @@ emit('IDXROW', IDXROW)
 TBL = []
 TBL_DOCS = ['TASKS/README.md', 'TASKS/G1.md', 'TASKS/G2.md', 'TASKS/NEXT.md',
             'TASKS/GAPS.md', 'TASKS/ANDROID-COMPAT.md', 'TASKS/UPSTREAM.md',
+            'TASKS/dim/README.md',   # §4.0 维度索引（2026-11-26）
             'PITFALLS/README.md', 'DEVICE/README.md',
             'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md', 'INDEX.md']
+# 维度文件（TASKS/dim/D##.md）= §4.0 原行逐字搬家，表格结构同样要管
+TBL_DOCS += [os.path.relpath(p, root)
+             for p in sorted(glob.glob(os.path.join(root, 'TASKS/dim/D*.md')))]
 for rel in TBL_DOCS:
     p = os.path.join(root, rel)
     if not os.path.isfile(p):

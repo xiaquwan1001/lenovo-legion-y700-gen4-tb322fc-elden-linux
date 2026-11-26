@@ -37,13 +37,13 @@
 |---|---|---|---|
 | §1 | `TASKS/G1.md` | G1 任务分解（Linux 功能完整 + 原厂固件；34 KB） | `## 1. G1 任务分解…` |
 | §2 · §3 | `TASKS/G2.md` | G2 任务分解 + 已作废/合并的旧任务线（23 KB） | `## 2. G2 任务分解…` |
-| §4 | `TASKS/NEXT.md` | 下一步（按顺序，含并行项；68 KB，第二轮可再按日期块细分） | `## 4. 下一步…` |
+| §4 | `TASKS/NEXT.md` + `TASKS/dim/` | 下一步与「维度总表」短表（17.6 KB）；23 个维度的现状/开放项/需设备/指针在 `TASKS/dim/D##.md`（拆分前原行逐字，索引 `TASKS/dim/README.md`） | `## 4. 下一步…` |
 | §5 | `TASKS/GAPS.md` | 查漏补缺（GAPS / Q 表；32 KB） | `## 5. 查漏补缺…` |
 | §6 | `TASKS/ANDROID-COMPAT.md` | G2 安卓兼容方案（ANDROID-COMPAT；14 KB） | `## 6. G2 安卓兼容方案…` |
 | §7 | `TASKS/UPSTREAM.md` | 上游化任务（M 系列台账；31 KB） | `## 7. 上游化任务…` |
 
 **机器消费入口（别手数）**：`scripts/check-progress-counts.sh` 读 `TASKS/G1.md` + `TASKS/G2.md` 的行内标记现算
-⇒ `scripts/doctor/s16-tasks-counts.py` 与本文件 §0 手写数字比对；`scripts/check-doc-assets.sh` 默认扫描本文件 + 全部 6 章；
+⇒ `scripts/doctor/s16-tasks-counts.py` 与本文件 §0 手写数字比对；`scripts/check-doc-assets.sh` 默认扫描本文件 + 6 章 + `TASKS/dim/*.md`；
 `scripts/doctor/s07-08-docs.py` 的入口/表格门同样覆盖 6 章。
 
 ## 维护纪律（拆分后不变）

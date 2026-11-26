@@ -28,6 +28,8 @@ default_files() {
 	         TASKS/GAPS.md TASKS/ANDROID-COMPAT.md TASKS/UPSTREAM.md; do
 		[ -f "$f" ] && printf '%s\n' "$f"
 	done
+	# 维度文件 = §4.0 表原行逐字搬家（2026-11-26），资产路径同样要校验
+	ls TASKS/dim/*.md 2>/dev/null
 	[ -f INDEX.md ] && printf '%s\n' INDEX.md
 	[ -f DEVICE/README.md ] && printf '%s\n' DEVICE/README.md
 	[ -f PITFALLS/README.md ] && printf '%s\n' PITFALLS/README.md
