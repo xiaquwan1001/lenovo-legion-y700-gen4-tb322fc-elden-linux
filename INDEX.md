@@ -17,7 +17,11 @@
 > `.pi/memory/failures-kernel.md` 199 KB / 346 条按主题拆 7 件（每件 ≤47 KB，`mem -t project` 跨件命中不变）；
 > `reports/artifacts` Top16 试验目录 **449 MB → 45 MB**（tar.zst，抽样逐文件 sha 复核后才删原件，清单 `archive/artifacts/MANIFEST.tsv`）；
 > 并清 `.pi` 残留（24 个 `*.bak-alias-1112`、`tmp-tasks/` 3 张任务卡归档、`reports/ rambuild/ mcp.json` 补登记）。
-> 全账 = `.pi/plans/2026-11-27-文档精简拆分归档.md` §7（含两项未做：T12 sessions gzip、T10 reports 孤儿）。
+> 全账 = `.pi/plans/2026-11-27-文档精简拆分归档.md` §7。**随后放行两项**：T12 会话归档 gzip 工具先行 + 只压 >30 天
+> ⇒ `.pi/sessions` **1.08 G → 666 M**（省 373 MiB，`/resume` 仍只见近期）；T10 `reports/artifacts` 的 173 条 gitignore
+> 规则收敛成 32 行统一块（ignored 条目数前后同为 542，探针 `.img` 忽略 / `.md` 可见）；顺带修掉 `gen-sessions.py --check`
+> **先清空再重写、守卫在最后**的门级缺陷（`PITFALLS #736`：跑「校验」会被自己盖章，还实测把 171 篇刷成 D 后恢复）。
+> **仍未做**：468 篇无角度指针的报告补指针（NEXT T10 右列）。
 > ③ **文件去重**（`reports/fs-dedup-20261127.md`）：`backup/` 内 10 组同 sha 大件中 **7 组早已同 inode**（上轮 `disk-audit` 的「9.9 G 待回收」**已不成立**），本轮再硬链 1 对（hyp 8 MiB，inode/nlink/sha 三向复核）；`out/`/`runs/`/`bootslot-b/` 按判据不动。`.pi/sessions/` gzip 收益 23.9% 但 `sessfind`/`recent-sessions.sh`/doctor §15 全按 `*.jsonl` 硬匹配 ⇒ **先改工具再压**（未做）。
 > ④ **文档精简计划**（`.pi/plans/2026-11-27-文档精简拆分归档.md`，6 批）：最大三批 = INDEX §0 下沉（~80 KB）· PITFALLS 索引瘦身（~130 KB，需你裁定裁剪幅度）· `reports/artifacts` Top15 tar.zst（~385 MiB）。**口径修正**：全仓 tracked md = **2229**（旧记 1356 少算）；`docs-health` 154 篇是**刻意只覆盖 agent 脑袋层**（1.1% 不是缺口）。
 > ⑤ **进度复核（本轮独立重跑，非采信文档）**：`check-doctor` **FAIL=0 / WARN=3**（存量三条）· `docs-health` 0/0/154 · G1 **36/37** / G2 **10/13** · 设备在机 vk192 镜件、`--failed`=0、`hexagonrpcd*`/`iio-sensor-proxy` 仍 masked。**一处分歧已澄清**：现 `input_current_limit=2000000`、`voltage_now=5.68 V`、电池 **+80 mA**（98%）——短边 PD 在位时 charge-watch 顶到 2 A 顶档，`PITFALLS #734` 的 900 mA/4.40 V 是 **SDP-only** 档，非矛盾。
