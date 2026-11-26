@@ -1,0 +1,12 @@
+=== TRIAL4 START 22:43:44Z^M
+Starting /usr/local/bin/hexagonrpcd-v (INIT_ATTACH_SNS) on /dev/fastrpc-adsp^M
+Could not open /vendor/etc/sensors/sns_reg_config: No such file or directory^M
+Could not open /vendor/etc/sensors/config/json.lst: No such file or directory^M
+Could not open oemconfig.so: No such file or directory^M
+[  340.991439][  T124] PDM: service 'qsh_process' crash: 'EF:qsh_process:0x4:sns_registry_4:0x74:sns_registry_senso'
+[  341.003720][  T127] qcom_q6v5_pas 6800000.remoteproc: fatal error received: err_qdi.c:1215:EF:qsh_process:0x4:sns_registry_4:0x74:sns_registry_sensor.c:309:SNS_RC_SUCCESS == rc
+[  341.003783][  T127] remoteproc remoteproc0: crash detected in adsp: type fatal error
+[  341.003928][   T55] remoteproc remoteproc0: handling crash #1 in adsp
+[  341.003956][   T55] remoteproc remoteproc0: recovering adsp
+Could not fetch next FastRPC message: Broken pipe^M
+[  341.008398][  T166] ucsi_glink.pmic_glink_ucsi pmic_glink.ucsi.0: failed to send UCSI write request: -5

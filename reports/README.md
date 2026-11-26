@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：699
+- 报告总数：700
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -39,6 +39,7 @@
 | `disk` | 6 | `disk-audit-20261126.md` |
 | `dwc3` | 5 | `dwc3-v16-20261125.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
+| `sensors` | 5 | `sensors-692-attach-crash-serial-20261127.md` |
 | `usb` | 5 | `usb-charging-dualport-20261126.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
@@ -49,7 +50,6 @@
 | `progress` | 4 | `progress-audit-20261118.md` |
 | `q32` | 4 | `q32-matrix-20261024.md` |
 | `research` | 4 | `research-next-20261102.md` |
-| `sensors` | 4 | `sensors-692-attach-crash-serial-20261127.md` |
 | `suspend` | 4 | `suspend-s2idle-20261125.md` |
 | `主机侧` | 4 | `主机侧-B13-20261117.md` |
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
@@ -723,6 +723,14 @@
 - `git-tree-merge-20261111.md` — 内核 git 树合并/差分分析（geekidos-linux × wt/reb-731）— 2026-11-11
 - `git-tree-consolidation-20261103.md` — 2026-11-03 本地 git 树精简合并 + 损坏镜像重建
 
+## `sensors`（5）
+
+- `sensors-692-attach-crash-serial-20261127.md` — `#692` 上机两发（2026-11-27）+ **串口第一次抓到崩溃现场**：Linux 看到了 ADSP fatal error 并进入 SSR recovery，随后 ms 级整机复位
+- `sensors-692-file-root-20261127.md` — `#692` 又推进两层：`-R` 文件树布局对上了，但**给 DSP 的 sensor config/registry 全是 0 字节占位**（+ 一条会毁掉二进制的采集坑）
+- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
+- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
+- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
+
 ## `usb`（5）
 
 - `usb-charging-dualport-20261126.md` — 双口同插「插着充不进电」定因与修复（2026-11-26，U1 在机）
@@ -793,13 +801,6 @@
 - `research-horizontal-sm8750-20261101.md` — 横向同芯片调研：SM8750/SM8750P 平台上的 Linux/UEFI 真机进展（截至 2026-11-01）
 - `research-vertical-y700-lineage-20261101.md` — 纵向同产品线调研：Lenovo Legion Y700 五代（TB-9707F → TB323FU）与 Legion Tab 命名 —— 2026-11-01
 - `research-waydroid-sensors-hal-20261011.md` — 调研：Waydroid 传感器 HAL 的社区/上游经验（2026-10-11）
-
-## `sensors`（4）
-
-- `sensors-692-attach-crash-serial-20261127.md` — `#692` 上机两发（2026-11-27）+ **串口第一次抓到崩溃现场**：Linux 看到了 ADSP fatal error 并进入 SSR recovery，随后 ms 级整机复位
-- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
-- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
-- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
 
 ## `suspend`（4）
 

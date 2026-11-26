@@ -24,6 +24,11 @@
 > `reports/uefi-observability-pivot-20261101.md` 的「10 段环形可回溯」在本机现态**不成立**（9 段是陈旧 `_a` 残留）；
 > 且 23:11 那次（= #692 最后复位的回落启动）ABL 记的 `Reset by PSHOLD / Hard Reset` 与正常重启同款 ⇒ **该字段不能判根因**（#184/#182）。
 > 证据 = `reports/artifacts/sensors-692-logfs-20261127/`（logfs 8 MiB + 只读采集）。
+> ①e **同轮续 3 发（trial3/4/5）**：`hexagonrpcd 0.5.0` 的 `-R` 树是**扁平布局**（`<R>/sensors/{config,registry,sns_reg.conf}`、`dsp/<dsp>`），
+> 与 droid-juicer 的 Android 布局不符（trial4 三个 `Could not open` 的真因）；按扁平布局重建后**文件服务全绿**（trial5），
+> 但 DSP 仍断言 ⇒ 真因是 **droid-juicer 抽出的 sensor config/registry 几乎全是 0 字节占位**（`sns_reg_config`/`json.lst` 均 0 B，139 个 config 只有 1 个非空）。
+> 新 `PITFALLS #740`：`scp` 后未 `sync` 就复位 ⇒ 文件尺寸不变、内容全 0（trial3 的「跑不起来」真因）。
+> 下一步 = 从官方 ROM 的 `super_1..8.img`（按 `rawprogram*.xml` 的 start_sector 稀疏拼回）`lpunpack` 出 `vendor` 取真配置。全账 = `reports/sensors-692-file-root-20261127.md`。
 > ①d **上机 2 发（2026-11-27）+ 串口第一次抓到崩溃现场**：`-s` 时 DSP 断言 `sns_registry_sensor.c:309`，内核**看到了** fatal error
 > 并进入 `recovering adsp`，整机死在其后的 PAS 关停/重启段 ⇒ **`#737` 的「串口零行 ⇒ 复位在 Linux 之外」作废**（已在该条追加修订）。
 > 本轮补丁（假成功 fwrite）**不足** ⇒ T13 下一步 = apps_std 全方法假成功。另记采集坑：`nohup … >/dev/ttyGS0` 会被 nohup 改写到 `nohup.out`（用户态日志全丢）。

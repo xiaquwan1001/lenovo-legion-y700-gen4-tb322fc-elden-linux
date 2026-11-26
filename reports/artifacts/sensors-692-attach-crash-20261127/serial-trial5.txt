@@ -1,0 +1,12 @@
+=== TRIAL5 START 22:45:27Z^M
+Starting /usr/local/bin/hexagonrpcd-v (INIT_ATTACH_SNS) on /dev/fastrpc-adsp^M
+openat($ADSP_LIBRARY_PATH, /vendor/etc/sensors/sns_reg_config, r) -> 2^M
+read(2, 512) -> 0^M
+Could not open oemconfig.so: No such file or directory^M
+stat(/vendor/etc/sensors/sns_reg_config)^M
+stat(/vendor/etc/sensors/config/json.lst)^M
+[   72.409003][  T122] PDM: service 'qsh_process' crash: 'EF:qsh_process:0x4:sns_registry_4:0x74:sns_registry_senso'
+[   72.419704][  T125] qcom_q6v5_pas 6800000.remoteproc: fatal error received: err_qdi.c:1215:EF:qsh_process:0x4:sns_registry_4:0x74:sns_registry_sensor.c:309:SNS_RC_SUCCESS == rc
+[   72.419749][  T125] remoteproc remoteproc0: crash detected in adsp: type fatal error
+[   72.419863][   T97] remoteproc remoteproc0: handling crash #1 in adsp
+[   72.419876][   T97] remoteproc remoteproc0: recovering adsp
