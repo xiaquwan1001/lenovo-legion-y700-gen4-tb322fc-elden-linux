@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：704
+- 报告总数：705
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -79,6 +79,7 @@
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
+| `hexagonrpcd` | 2 | `hexagonrpcd-heap-oob-20261127.md` |
 | `integrity` | 2 | `integrity-h2-20261111.md` |
 | `kernel` | 2 | `kernel-rebase-cost-20261107.md` |
 | `lanes` | 2 | `lanes-consolidated-20261101.md` |
@@ -144,7 +145,6 @@
 | `gpu` | 1 | `gpu-minfreq-ab-20261125.md` |
 | `greetd` | 1 | `greetd-stop-verify-20261031.md` |
 | `hexagonrpc` | 1 | `hexagonrpc-upstream-registry-write-20261127.md` |
-| `hexagonrpcd` | 1 | `hexagonrpcd-heap-oob-20261127.md` |
 | `hide` | 1 | `hide-android-partitions-20261119.md` |
 | `init` | 1 | `init-systemd-vs-openrc-20261011.md` |
 | `joonhoe` | 1 | `joonhoe-kim-contact-20261019.md` |
@@ -971,6 +971,11 @@
 - `g3-steam-screenshot-paths-20261029.md` — G3 Steam 判据②「截图」路径清单 + captive-portal 绕过草案（2026-10-29，纯主机）
 - `g3-steam-20261028.md` — G3 第一批：Steam 客户端起到登录界面（2026-10-28，持设备）
 
+## `hexagonrpcd`（2）
+
+- `hexagonrpcd-heap-oob-20261127.md` — 堆/全局越界定位并修好（ASan）：`apps_std` 方法表**按索引 dispatch**，新增方法必须占对下标
+- `hexagonrpcd-writable-overlay-wip-20261127.md` — 可写 overlay 后端（WIP）：代码就位、**未部署**——卡在「某个方法的参数个数与 def 不符」
+
 ## `integrity`（2）
 
 - `integrity-h2-20261111.md` — H2 完整性巡检报告 — 2026-11-11
@@ -1250,10 +1255,6 @@
 ## `hexagonrpc`（1）
 
 - `hexagonrpc-upstream-registry-write-20261127.md` — `#692` 真根因落到用户态：hexagonrpcd 无 registry 写支持（上游 issue #29 同源），且**我们这代板子把它放大成整机复位**
-
-## `hexagonrpcd`（1）
-
-- `hexagonrpcd-heap-oob-20261127.md` — 堆/全局越界定位并修好（ASan）：`apps_std` 方法表**按索引 dispatch**，新增方法必须占对下标
 
 ## `hide`（1）
 

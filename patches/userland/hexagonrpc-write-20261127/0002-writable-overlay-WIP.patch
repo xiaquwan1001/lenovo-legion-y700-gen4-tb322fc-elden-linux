@@ -1,0 +1,805 @@
+diff -ruN base-0001/hexagonrpcd/apps_std.c hrpcd-patch/hexagonrpcd/apps_std.c
+--- base-0001/hexagonrpcd/apps_std.c	2026-11-27 07:27:04.790053359 +0800
++++ hrpcd-patch/hexagonrpcd/apps_std.c	2026-11-27 07:24:07.948968804 +0800
+@@ -28,6 +28,7 @@
+ #include <unistd.h>
+ 
+ #include "hexagonfs.h"
++#include "overlay.h"
+ #include "interface/apps_std.h"
+ #include "iobuffer.h"
+ #include "listener.h"
+@@ -73,6 +74,9 @@
+ 	const uint32_t *first_in = inbufs[0].p;
+ 	int ret;
+ 
++	if (overlay_is_fd(*first_in))
++		return overlay_close(*first_in) ? AEE_EFAILED : 0;
++
+ 	ret = hexagonfs_close(ctx->fds, *first_in);
+ 	if (ret) {
+ 		fprintf(stderr, "Could not close: %s\n", strerror(-ret));
+@@ -101,8 +105,11 @@
+ 	} *first_out = outbufs[0].p;
+ 	ssize_t ret;
+ 
+-	ret = hexagonfs_read(ctx->fds, first_in->fd,
+-			     first_in->buf_size, outbufs[1].p);
++	if (overlay_is_fd(first_in->fd))
++		ret = overlay_read(first_in->fd, outbufs[1].p, first_in->buf_size);
++	else
++		ret = hexagonfs_read(ctx->fds, first_in->fd,
++				     first_in->buf_size, outbufs[1].p);
+ 	if (ret < 0) {
+ 		fprintf(stderr, "Could not read file: %s\n", strerror(-ret));
+ 		return AEE_EFAILED;
+@@ -139,16 +146,64 @@
+ 		uint32_t is_eof;
+ 	} *first_out = outbufs[0].p;
+ 
+-#ifdef HEXAGONRPC_VERBOSE
+-	printf("write(%u, %u) -> faked\n", first_in->fd, first_in->buf_size);
+-#endif
++	if (overlay_is_fd(first_in->fd)) {
++		ssize_t n = overlay_write(first_in->fd, inbufs[1].p,
++					  first_in->buf_size);
++
++		if (n < 0) {
++			fprintf(stderr, "Could not write file: %s\n",
++					strerror(-n));
++			return AEE_EFAILED;
++		}
+ 
++		first_out->written = n;
++		first_out->is_eof = 0;
++
++		return 0;
++	}
++
++	/* No overlay backend: report success without persisting. */
+ 	first_out->written = first_in->buf_size;
+ 	first_out->is_eof = 0;
+ 
+ 	return 0;
+ }
+ 
++/*
++ * Copy a file from the read-only mapped tree into the overlay (if it is not
++ * there yet), so the DSP can then write to it.
++ */
++static int apps_std_copyup(struct apps_std_ctx *ctx, const char *vpath)
++{
++	struct stat st;
++	char buf[4096];
++	ssize_t n;
++	int fd, src, ret;
++
++	if (overlay_stat(vpath, &st) == 0)
++		return 0;
++
++	src = hexagonfs_openat(ctx->fds, ctx->rootfd, ctx->rootfd, vpath);
++	if (src < 0)
++		return 0;	/* nothing to copy: DSP is creating a new file */
++
++	ret = overlay_open(vpath, false, true, &fd);
++	if (ret)
++		goto out_close;
++
++	while ((n = hexagonfs_read(ctx->fds, src, sizeof(buf), buf)) > 0) {
++		if (overlay_write(fd, buf, n) != n) {
++			ret = -EIO;
++			break;
++		}
++	}
++
++	overlay_close(fd);
++out_close:
++	hexagonfs_close(ctx->fds, src);
++	return ret;
++}
++
+ static uint32_t apps_std_fopen_fd(void *data,
+ 				  const struct fastrpc_io_buffer *inbufs,
+ 				  struct fastrpc_io_buffer *outbufs)
+@@ -235,7 +290,10 @@
+ 
+ 	whence = apps_std_whence_table[first_in->whence];
+ 
+-	ret = hexagonfs_lseek(ctx->fds, first_in->fd, first_in->pos, whence);
++	if (overlay_is_fd(first_in->fd))
++		ret = overlay_seek(first_in->fd, first_in->pos, whence);
++	else
++		ret = hexagonfs_lseek(ctx->fds, first_in->fd, first_in->pos, whence);
+ 	if (ret) {
+ 		fprintf(stderr, "Could not seek stream: %s\n", strerror(-ret));
+ 		return AEE_EFAILED;
+@@ -257,7 +315,7 @@
+ 	struct apps_std_ctx *ctx = data;
+ 	uint32_t *out = outbufs[0].p;
+ 	char rw_mode;
+-	int dirfd, fd;
++	int dirfd, fd, ret;
+ 
+ 	// The name and environment variable must also be NULL-terminated
+ 	if (((const char *) inbufs[1].p)[inbufs[1].s - 1] != 0
+@@ -266,13 +324,22 @@
+ 		return AEE_EBADPARM;
+ 
+ 	rw_mode = ((const char *) inbufs[4].p)[0];
+-	if (rw_mode == 'w' || rw_mode == 'a') {
+-		/*
+-		 * Read-only backend: allow the open (firmware refuses to attach
+-		 * otherwise) and let fwrite() report success without persisting.
+-		 */
+-		fprintf(stderr, "Opening %s for writing (writes are discarded)\n",
+-				(const char *) inbufs[3].p);
++	if ((rw_mode == 'w' || rw_mode == 'a') && overlay_enabled()) {
++		ret = apps_std_copyup(ctx, inbufs[3].p);
++		if (ret)
++			fprintf(stderr, "Could not copy up %s: %s\n",
++					(const char *) inbufs[3].p, strerror(-ret));
++
++		ret = overlay_open(inbufs[3].p, rw_mode == 'a', true, &fd);
++		if (ret) {
++			fprintf(stderr, "Could not open %s for writing: %s\n",
++					(const char *) inbufs[3].p,
++					strerror(-ret));
++			return AEE_EFAILED;
++		}
++
++		*out = (uint32_t) fd;
++		return 0;
+ 	}
+ 
+ 	if (!strcmp(inbufs[1].p, "ADSP_LIBRARY_PATH")) {
+@@ -508,88 +575,170 @@
+ 	free(iface);
+ }
+ 
++static uint32_t apps_std_ftell(void *data,
++			       const struct fastrpc_io_buffer *inbufs,
++			       struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const uint32_t *fd = inbufs[0].p;
++	uint32_t *out = outbufs[0].p;
++	off_t pos;
++
++	if (overlay_is_fd(*fd)) {
++		pos = lseek(*fd - OVERLAY_FD_BASE, 0, SEEK_CUR);
++	} else {
++		struct stat st;
++
++		if (hexagonfs_fstat(ctx->fds, *fd, &st))
++			return AEE_EFAILED;
++		pos = 0;	/* mapped files are read sequentially */
++	}
++
++	if (pos < 0)
++		return AEE_EFAILED;
++
++	*out = (uint32_t) pos;
++	return 0;
++}
++
++static uint32_t apps_std_flen(void *data,
++			      const struct fastrpc_io_buffer *inbufs,
++			      struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const uint32_t *fd = inbufs[0].p;
++	uint64_t *out = outbufs[0].p;
++	struct stat st;
++
++	if (overlay_is_fd(*fd)) {
++		if (fstat(*fd - OVERLAY_FD_BASE, &st) < 0)
++			return AEE_EFAILED;
++	} else if (hexagonfs_fstat(ctx->fds, *fd, &st)) {
++		return AEE_EFAILED;
++	}
++
++	*out = (uint64_t) st.st_size;
++	return 0;
++}
++
++static uint32_t apps_std_fileExists(void *data,
++				    const struct fastrpc_io_buffer *inbufs,
++				    struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const char *path = inbufs[0].p;
++	uint32_t *out = outbufs[0].p;
++	struct stat st;
++	int fd;
++
++	if (overlay_stat(path, &st) == 0) {
++		*out = 1;
++		return 0;
++	}
++
++	fd = hexagonfs_openat(ctx->fds, ctx->rootfd, ctx->rootfd, path);
++	if (fd < 0) {
++		*out = 0;
++		return 0;
++	}
++
++	hexagonfs_close(ctx->fds, fd);
++	*out = 1;
++
++	return 0;
++}
++
++static uint32_t apps_std_fsync(void *data,
++			       const struct fastrpc_io_buffer *inbufs,
++			       struct fastrpc_io_buffer *outbufs)
++{
++	const uint32_t *fd = inbufs[0].p;
++
++	if (!overlay_is_fd(*fd))
++		return 0;
++
++	return overlay_fsync(*fd) ? AEE_EFAILED : 0;
++}
++
++static uint32_t apps_std_fremove(void *data,
++				 const struct fastrpc_io_buffer *inbufs,
++				 struct fastrpc_io_buffer *outbufs)
++{
++	const char *path = inbufs[0].p;
++
++	if (overlay_remove(path) && errno != ENOENT)
++		return AEE_EFAILED;
++
++	return 0;
++}
++
++static uint32_t apps_std_mkdir(void *data,
++			       const struct fastrpc_io_buffer *inbufs,
++			       struct fastrpc_io_buffer *outbufs)
++{
++	const char *path = inbufs[0].p;
++
++	return overlay_mkdir(path) ? AEE_EFAILED : 0;
++}
++
++static uint32_t apps_std_rmdir(void *data,
++			       const struct fastrpc_io_buffer *inbufs,
++			       struct fastrpc_io_buffer *outbufs)
++{
++	const char *path = inbufs[0].p;
++
++	if (overlay_rmdir(path) && errno != ENOENT)
++		return AEE_EFAILED;
++
++	return 0;
++}
++
++static uint32_t apps_std_ftrunc(void *data,
++				const struct fastrpc_io_buffer *inbufs,
++				struct fastrpc_io_buffer *outbufs)
++{
++	const struct {
++		uint32_t fd;
++		uint32_t len;
++	} *in = inbufs[0].p;
++
++	if (!overlay_is_fd(in->fd))
++		return AEE_EUNSUPPORTED;
++
++	return overlay_ftrunc(in->fd, in->len) ? AEE_EFAILED : 0;
++}
++
++static uint32_t apps_std_frename(void *data,
++				 const struct fastrpc_io_buffer *inbufs,
++				 struct fastrpc_io_buffer *outbufs)
++{
++	const char *from = inbufs[0].p;
++	const char *to = inbufs[1].p;
++
++	return overlay_rename(from, to) ? AEE_EFAILED : 0;
++}
++
+ static const struct fastrpc_function_impl apps_std_procs[] = {
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_fflush_def,
+-		.impl = apps_std_fflush,
+-	},
+-	{
+-		.def = &apps_std_fclose_def,
+-		.impl = apps_std_fclose,
+-	},
+-	{
+-		.def = &apps_std_fread_def,
+-		.impl = apps_std_fread,
+-	},
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_fwrite_def,
+-		.impl = apps_std_fwrite,
+-	},
+-	{
+-		.def = &apps_std_fseek_def,
+-		.impl = apps_std_fseek,
+-	},
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_fopen_with_env_def,
+-		.impl = apps_std_fopen_with_env,
+-	},
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_opendir_def,
+-		.impl = apps_std_opendir,
+-	},
+-	{
+-		.def = &apps_std_closedir_def,
+-		.impl = apps_std_closedir,
+-	},
+-	{
+-		.def = &apps_std_readdir_def,
+-		.impl = apps_std_readdir,
+-	},
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_stat_def,
+-		.impl = apps_std_stat,
+-	},
+-	/* methods 32/33 (ftrunc/frename) still unimplemented */
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_fopen_fd_def,
+-		.impl = apps_std_fopen_fd,
+-	},
+-	{
+-		.def = &apps_std_fclose_fd_def,
+-		.impl = apps_std_fclose_fd,
+-	},
+-	{
+-		.def = &apps_std_fopen_with_env_fd_def,
+-		.impl = apps_std_fopen_with_env_fd,
+-	},
++	[2] = { .def = &apps_std_fflush_def, .impl = apps_std_fflush },
++	[3] = { .def = &apps_std_fclose_def, .impl = apps_std_fclose },
++	[4] = { .def = &apps_std_fread_def, .impl = apps_std_fread },
++	[5] = { .def = &apps_std_fwrite_def, .impl = apps_std_fwrite },
++	[9] = { .def = &apps_std_fseek_def, .impl = apps_std_fseek },
++	[19] = { .def = &apps_std_fopen_with_env_def, .impl = apps_std_fopen_with_env },
++	[23] = { .def = &apps_std_fsync_def, .impl = apps_std_fsync },
++	[24] = { .def = &apps_std_fremove_def, .impl = apps_std_fremove },
++	[26] = { .def = &apps_std_opendir_def, .impl = apps_std_opendir },
++	[27] = { .def = &apps_std_closedir_def, .impl = apps_std_closedir },
++	[28] = { .def = &apps_std_readdir_def, .impl = apps_std_readdir },
++	[31] = { .def = &apps_std_stat_def, .impl = apps_std_stat },
++	[34] = { .def = &apps_std_fopen_fd_def, .impl = apps_std_fopen_fd },
++	[35] = { .def = &apps_std_fclose_fd_def, .impl = apps_std_fclose_fd },
++	[36] = { .def = &apps_std_fopen_with_env_fd_def, .impl = apps_std_fopen_with_env_fd },
+ };
+ 
++
+ const struct fastrpc_interface apps_std_interface = {
+ 	.name = "apps_std",
+-	.n_procs = 37,
++	.n_procs = 37, /* = table length; indexes follow the AOSP apps_std IDL */
+ 	.procs = apps_std_procs,
+ };
+diff -ruN base-0001/hexagonrpcd/interface/apps_std.c hrpcd-patch/hexagonrpcd/interface/apps_std.c
+--- base-0001/hexagonrpcd/interface/apps_std.c	2026-11-27 07:27:04.790053359 +0800
++++ hrpcd-patch/hexagonrpcd/interface/apps_std.c	2026-11-27 07:22:24.673748836 +0800
+@@ -135,6 +135,29 @@
+ 	.inner_types = NULL,
+ };
+ 
++#define APPS_STD_SIMPLE_DEF(sym, id, ...)				\
++	static struct hrpc_arg_def_interp4 sym##_args[] = { __VA_ARGS__ };	\
++	const struct hrpc_method_def_interp4 sym##_def = {			\
++		.msg_id = id,							\
++		.n_args = HRPC_ARRAY_SIZE(sym##_args),				\
++		.args = sym##_args,						\
++		.n_inner_types = 0,						\
++		.inner_types = NULL,						\
++	}
++
++#define W	{ HRPC_ARG_WORD, sizeof(uint32_t) }
++#define S	{ HRPC_ARG_BLOB_SEQ, sizeof(char) }
++#define O	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) }
++
++APPS_STD_SIMPLE_DEF(apps_std_ftell, 8, W, O);
++APPS_STD_SIMPLE_DEF(apps_std_flen, 10, W, O);
++APPS_STD_SIMPLE_DEF(apps_std_fileExists, 22, S, O);
++APPS_STD_SIMPLE_DEF(apps_std_fsync, 23, W);
++APPS_STD_SIMPLE_DEF(apps_std_fremove, 24, S);
++APPS_STD_SIMPLE_DEF(apps_std_rmdir, 30, S);
++APPS_STD_SIMPLE_DEF(apps_std_ftrunc, 32, W, W);
++APPS_STD_SIMPLE_DEF(apps_std_frename, 33, S, S);
++
+ static struct hrpc_arg_def_interp4 apps_std_fseek_args[] = {
+ 	{ HRPC_ARG_WORD, sizeof(uint32_t) },
+ 	{ HRPC_ARG_WORD, sizeof(uint32_t) },
+diff -ruN base-0001/hexagonrpcd/interface/apps_std.h hrpcd-patch/hexagonrpcd/interface/apps_std.h
+--- base-0001/hexagonrpcd/interface/apps_std.h	2026-11-27 07:27:04.790108156 +0800
++++ hrpcd-patch/hexagonrpcd/interface/apps_std.h	2026-11-27 07:22:05.102693252 +0800
+@@ -36,6 +36,15 @@
+ extern struct hrpc_method_def_interp4 apps_std_readdir_def;
+ extern struct hrpc_method_def_interp4 apps_std_mkdir_def;
+ extern struct hrpc_method_def_interp4 apps_std_stat_def;
++extern struct hrpc_method_def_interp4 apps_std_ftell_def;
++extern struct hrpc_method_def_interp4 apps_std_flen_def;
++extern struct hrpc_method_def_interp4 apps_std_fileExists_def;
++extern struct hrpc_method_def_interp4 apps_std_fsync_def;
++extern struct hrpc_method_def_interp4 apps_std_fremove_def;
++extern struct hrpc_method_def_interp4 apps_std_mkdir_def;
++extern struct hrpc_method_def_interp4 apps_std_rmdir_def;
++extern struct hrpc_method_def_interp4 apps_std_ftrunc_def;
++extern struct hrpc_method_def_interp4 apps_std_frename_def;
+ extern struct hrpc_method_def_interp4 apps_std_fopen_fd_def;
+ extern struct hrpc_method_def_interp4 apps_std_fclose_fd_def;
+ extern struct hrpc_method_def_interp4 apps_std_fopen_with_env_fd_def;
+diff -ruN base-0001/hexagonrpcd/listener.c hrpcd-patch/hexagonrpcd/listener.c
+--- base-0001/hexagonrpcd/listener.c	2026-11-27 07:27:04.790108156 +0800
++++ hrpcd-patch/hexagonrpcd/listener.c	2026-11-27 07:27:04.775068625 +0800
+@@ -552,7 +552,8 @@
+ 	ret = count_sizes4(impl->def, REMOTE_SCALARS_INBUFS(sc),
+ 			   REMOTE_SCALARS_OUTBUFS(sc), decoded);
+ 	if (ret) {
+-		fprintf(stderr, "Method invoked with less arguments than expected\n");
++		fprintf(stderr, "Method %u invoked with less arguments than expected\n",
++				method);
+ 		*result = AEE_EBADPARM;
+ 		return 1;
+ 	}
+diff -ruN base-0001/hexagonrpcd/meson.build hrpcd-patch/hexagonrpcd/meson.build
+--- base-0001/hexagonrpcd/meson.build	2026-11-27 07:27:04.785838435 +0800
++++ hrpcd-patch/hexagonrpcd/meson.build	2026-11-27 07:22:21.220498687 +0800
+@@ -8,6 +8,7 @@
+   'hexagonfs.c',
+   'hexagonfs_mapped.c',
+   'hexagonfs_plat_subtype_name.c',
++  'overlay.c',
+   'hexagonfs_virt_dir.c',
+   'iobuffer.c',
+   'listener.c',
+diff -ruN base-0001/hexagonrpcd/overlay.c hrpcd-patch/hexagonrpcd/overlay.c
+--- base-0001/hexagonrpcd/overlay.c	1970-01-01 08:00:00.000000000 +0800
++++ hrpcd-patch/hexagonrpcd/overlay.c	2026-11-27 07:21:55.559635795 +0800
+@@ -0,0 +1,220 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++/*
++ * Writable overlay backend for hexagonrpcd.
++ *
++ * The DSP writes its sensor registry through the apps_std file service.  The
++ * mapped HexagonFS backend is read-only, so all writes are redirected into a
++ * real directory (root given by HEXAGONRPC_OVERLAY or -O), using the virtual
++ * path as the relative path.  Reads consult the overlay first and fall back to
++ * the mapped tree in the caller.
++ */
++#include <errno.h>
++#include <limits.h>
++
++#ifndef PATH_MAX_LEN
++#define PATH_MAX_LEN PATH_MAX
++#endif
++#include <fcntl.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++#include "overlay.h"
++
++static char *overlay_root;
++
++int overlay_init(const char *dir)
++{
++	if (dir == NULL || dir[0] == '\0')
++		return -EINVAL;
++
++	overlay_root = realpath(dir, NULL);
++	if (overlay_root == NULL) {
++		if (mkdir(dir, 0755) < 0 && errno != EEXIST)
++			return -errno;
++		overlay_root = realpath(dir, NULL);
++		if (overlay_root == NULL)
++			return -errno;
++	}
++
++	return 0;
++}
++
++bool overlay_enabled(void)
++{
++	return overlay_root != NULL;
++}
++
++bool overlay_is_fd(int fd)
++{
++	return overlay_enabled() && fd >= OVERLAY_FD_BASE;
++}
++
++const char *overlay_phys_path(const char *vpath)
++{
++	static char path[PATH_MAX_LEN];
++	const char *rel = vpath;
++
++	while (*rel == '/')
++		rel++;
++
++	if ((size_t) snprintf(path, sizeof(path), "%s/%s", overlay_root, rel)
++	    >= sizeof(path))
++		return NULL;
++
++	return path;
++}
++
++/* Create all parent directories of an overlay-relative path. */
++static int mkdir_parents(const char *vpath)
++{
++	char path[PATH_MAX_LEN];
++	const char *rel = vpath;
++	char *slash;
++
++	while (*rel == '/')
++		rel++;
++
++	if ((size_t) snprintf(path, sizeof(path), "%s/%s", overlay_root, rel)
++	    >= sizeof(path))
++		return -ENAMETOOLONG;
++
++	for (slash = strchr(path + strlen(overlay_root) + 1, '/'); slash != NULL;
++	     slash = strchr(slash + 1, '/')) {
++		*slash = '\0';
++		if (mkdir(path, 0755) < 0 && errno != EEXIST)
++			return -errno;
++		*slash = '/';
++	}
++
++	return 0;
++}
++
++int overlay_stat(const char *vpath, struct stat *st)
++{
++	const char *path = overlay_phys_path(vpath);
++
++	if (path == NULL)
++		return -ENAMETOOLONG;
++	if (stat(path, st) < 0)
++		return -errno;
++
++	return 0;
++}
++
++int overlay_open(const char *vpath, bool append, bool create, int *fd_out)
++{
++	const char *path = overlay_phys_path(vpath);
++	int flags = O_RDWR;
++	int fd, ret;
++
++	if (path == NULL)
++		return -ENAMETOOLONG;
++
++	ret = mkdir_parents(vpath);
++	if (ret)
++		return ret;
++
++	if (create)
++		flags |= O_CREAT;
++	if (append)
++		flags |= O_APPEND;
++
++	fd = open(path, flags, 0644);
++	if (fd < 0)
++		return -errno;
++
++	*fd_out = fd + OVERLAY_FD_BASE;
++
++	return 0;
++}
++
++int overlay_close(int fd)
++{
++	return close(fd - OVERLAY_FD_BASE) < 0 ? -errno : 0;
++}
++
++ssize_t overlay_read(int fd, void *buf, size_t n)
++{
++	ssize_t ret = read(fd - OVERLAY_FD_BASE, buf, n);
++
++	return ret < 0 ? -errno : ret;
++}
++
++ssize_t overlay_write(int fd, const void *buf, size_t n)
++{
++	ssize_t ret = write(fd - OVERLAY_FD_BASE, buf, n);
++
++	return ret < 0 ? -errno : ret;
++}
++
++int overlay_seek(int fd, off_t off, int whence)
++{
++	return lseek(fd - OVERLAY_FD_BASE, off, whence) < 0 ? -errno : 0;
++}
++
++int overlay_fsync(int fd)
++{
++	return fsync(fd - OVERLAY_FD_BASE) < 0 ? -errno : 0;
++}
++
++int overlay_ftrunc(int fd, off_t len)
++{
++	return ftruncate(fd - OVERLAY_FD_BASE, len) < 0 ? -errno : 0;
++}
++
++int overlay_remove(const char *vpath)
++{
++	const char *path = overlay_phys_path(vpath);
++
++	if (path == NULL)
++		return -ENAMETOOLONG;
++	if (unlink(path) < 0)
++		return -errno;
++	return 0;
++}
++
++int overlay_rename(const char *oldpath, const char *newpath)
++{
++	const char *from = overlay_phys_path(oldpath);
++	char to_buf[PATH_MAX_LEN];
++	int ret;
++
++	if (from == NULL)
++		return -ENAMETOOLONG;
++
++	ret = mkdir_parents(newpath);
++	if (ret)
++		return ret;
++
++	snprintf(to_buf, sizeof(to_buf), "%s", overlay_phys_path(newpath));
++	if (rename(from, to_buf) < 0)
++		return -errno;
++
++	return 0;
++}
++
++int overlay_mkdir(const char *vpath)
++{
++	const char *path = overlay_phys_path(vpath);
++
++	if (path == NULL)
++		return -ENAMETOOLONG;
++	if (mkdir(path, 0755) < 0 && errno != EEXIST)
++		return -errno;
++	return 0;
++}
++
++int overlay_rmdir(const char *vpath)
++{
++	const char *path = overlay_phys_path(vpath);
++
++	if (path == NULL)
++		return -ENAMETOOLONG;
++	if (rmdir(path) < 0)
++		return -errno;
++	return 0;
++}
+diff -ruN base-0001/hexagonrpcd/overlay.h hrpcd-patch/hexagonrpcd/overlay.h
+--- base-0001/hexagonrpcd/overlay.h	1970-01-01 08:00:00.000000000 +0800
++++ hrpcd-patch/hexagonrpcd/overlay.h	2026-11-27 07:21:51.503517494 +0800
+@@ -0,0 +1,38 @@
++/* SPDX-License-Identifier: GPL-3.0-or-later */
++#ifndef OVERLAY_H
++#define OVERLAY_H
++
++#include <stdbool.h>
++#include <stddef.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++
++/*
++ * Writable overlay for the HexagonFS: the DSP opens some files (its sensor
++ * registry) for writing.  The mapped backend is read-only, so writes go to a
++ * real directory tree instead, mirrored by the virtual (DSP-visible) path.
++ * File descriptors handed out here are offset by OVERLAY_FD_BASE so the
++ * existing virtual-fd dispatch keeps working.
++ */
++#define OVERLAY_FD_BASE 1000
++
++int overlay_init(const char *dir);
++bool overlay_enabled(void);
++bool overlay_is_fd(int fd);
++
++const char *overlay_phys_path(const char *vpath);
++
++int overlay_open(const char *vpath, bool append, bool create, int *fd_out);
++int overlay_close(int fd);
++ssize_t overlay_read(int fd, void *buf, size_t n);
++ssize_t overlay_write(int fd, const void *buf, size_t n);
++int overlay_seek(int fd, off_t off, int whence);
++int overlay_fsync(int fd);
++int overlay_ftrunc(int fd, off_t len);
++int overlay_remove(const char *vpath);
++int overlay_rename(const char *oldpath, const char *newpath);
++int overlay_mkdir(const char *vpath);
++int overlay_rmdir(const char *vpath);
++int overlay_stat(const char *vpath, struct stat *st);
++
++#endif /* OVERLAY_H */
+diff -ruN base-0001/hexagonrpcd/rpcd.c hrpcd-patch/hexagonrpcd/rpcd.c
+--- base-0001/hexagonrpcd/rpcd.c	2026-11-27 07:27:04.785848932 +0800
++++ hrpcd-patch/hexagonrpcd/rpcd.c	2026-11-27 07:22:21.213262092 +0800
+@@ -43,6 +43,7 @@
+ #include "listener.h"
+ #include "localctl.h"
+ #include "rpcd_builder.h"
++#include "overlay.h"
+ 
+ static int register_fastrpc_listener(int fd)
+ {
+@@ -77,6 +78,7 @@
+ 	       "\t-f DEVICE\tFastRPC device node to attach to\n"
+ 	       "\t-p PROGRAM\tRun client program with shared file descriptor\n"
+ 	       "\t-R DIR\t\tRoot directory of served files (default: /usr/share/qcom/)\n"
++	       "\t-O DIR\t\tWritable overlay directory for DSP file writes\n"
+ 	       "\t-s\t\tAttach to sensorspd\n"
+ 	       "\t-h\t\tPrint help and exit\n");
+ }
+@@ -350,6 +352,7 @@
+ 	const char *device_dir = "/usr/share/qcom/";
+ 	const char *dsp = "";
+ 	const char *create_shell = NULL;
++	const char *overlay_dir = NULL;
+ 	const char *guessed_device_dir;
+ 	const char **progs;
+ 	pid_t *pids;
+@@ -373,7 +376,7 @@
+ 	if (guessed_device_dir != NULL)
+ 		device_dir = guessed_device_dir;
+ 
+-	while ((opt = getopt(argc, argv, "c:d:f:p:R:sh")) != -1) {
++	while ((opt = getopt(argc, argv, "c:d:f:p:R:O:sh")) != -1) {
+ 		switch (opt) {
+ 			case 'c':
+ 				create_shell = optarg;
+@@ -391,6 +394,9 @@
+ 			case 'R':
+ 				device_dir = optarg;
+ 				break;
++			case 'O':
++				overlay_dir = optarg;
++				break;
+ 			case 's':
+ 				attach_sns = true;
+ 				break;
+@@ -417,6 +423,13 @@
+ 		goto err_free_pids;
+ 	}
+ 
++	if (overlay_dir != NULL) {
++		ret = overlay_init(overlay_dir);
++		if (ret)
++			fprintf(stderr, "Could not initialize write overlay %s: %s\n",
++					overlay_dir, strerror(-ret));
++	}
++
+ 	if (attach_sns)
+ 		ret = ioctl(fd, FASTRPC_IOCTL_INIT_ATTACH_SNS, NULL);
+ 	else if (create_shell != NULL)
