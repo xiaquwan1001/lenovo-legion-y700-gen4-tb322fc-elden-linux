@@ -14,6 +14,12 @@
 > ⇒ PD 链路四件齐全；而主线 PDR **没有「关 PD」接口**、`qcom_pas_stop()` 不碰 PD，pd-mapper 注销发生在 stop **之后**；
 > **同 SoC 反例**（Xiaomi Pad 8 Pro / `piano`，mainline 7.2.10）= `remoteproc0 stop→start` 与 ADSP SSR 都不复位整机 ⇒ 本机复位归**板级 PMIC/AOP/TZ**
 > （他方 issue 已由父代理读原文核）。全账 = `reports/sensors-adsp-pd-pdr-20261127.md`（lane 调研 + 父代理逐条重跑）；T6 已改写。
+> ①c **`#692` 真根因落到用户态（上游 issue #29 同源）**：sensors PD attach 时要写 `/persist/sensors/registry/**`，
+> hexagonrpcd（主线和在机包）**一律拒绝写**、且 listener 输入缓冲只有 256 B ⇒ DSP 断言 `sns_registry`；
+> 同族机器 X1P42100 只掉 ADSP（rproc SSR），我们板子**静默硬复位整机** ⇒ 又一条板级复位策略的独立佐证。
+> 最小补丁草稿已落 `patches/userland/hexagonrpc-write-20261127/`（v0.5.0 +87 行，本机 `meson test` 3/3 OK，**未上机**）；
+> 新待办 **T13** = 交叉编译 + 上机三态判据（预期一次整机复位）。全账 = `reports/hexagonrpc-upstream-registry-write-20261127.md`。
+> 顺带纠正：设备上是 **`hexagonrpcd 0.3.2-2`**（非文档所写 0.4.0），`/usr/bin/hexagonrpcd` 是 Debian shell wrapper，**无参调用自动补 `-s`**。
 > ② **ABL logfs 判据纠偏（新 `PITFALLS #738`）**：本机 `UEFILOG1.TXT` 目录项 size = **65536（只留最近一次启动）**，
 > `reports/uefi-observability-pivot-20261101.md` 的「10 段环形可回溯」在本机现态**不成立**（9 段是陈旧 `_a` 残留）；
 > 且 23:11 那次（= #692 最后复位的回落启动）ABL 记的 `Reset by PSHOLD / Hard Reset` 与正常重启同款 ⇒ **该字段不能判根因**（#184/#182）。

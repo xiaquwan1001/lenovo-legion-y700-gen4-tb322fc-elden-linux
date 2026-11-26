@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：697
+- 报告总数：698
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -143,6 +143,7 @@
 | `g1` | 1 | `g1-23-windows-20261026.md` |
 | `gpu` | 1 | `gpu-minfreq-ab-20261125.md` |
 | `greetd` | 1 | `greetd-stop-verify-20261031.md` |
+| `hexagonrpc` | 1 | `hexagonrpc-upstream-registry-write-20261127.md` |
 | `hide` | 1 | `hide-android-partitions-20261119.md` |
 | `init` | 1 | `init-systemd-vs-openrc-20261011.md` |
 | `joonhoe` | 1 | `joonhoe-kim-contact-20261019.md` |
@@ -1239,6 +1240,10 @@
 ## `greetd`（1）
 
 - `greetd-stop-verify-20261031.md` — greetd 关机卡死修复现状核对（2026-10-31）
+
+## `hexagonrpc`（1）
+
+- `hexagonrpc-upstream-registry-write-20261127.md` — `#692` 真根因落到用户态：hexagonrpcd 无 registry 写支持（上游 issue #29 同源），且**我们这代板子把它放大成整机复位**
 
 ## `hide`（1）
 
