@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=2896521c5119c125（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=acf15890964649e9（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,9 +7,9 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**356**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 78 / 设备操作 109 / 造件 71 / 取证 50 / 一次性 3 / 公共库 8 / 其它 37
-- 引用数为 0 的孤立件：**2**（判定口径见下）
+- 入口总数：**357**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 79 / 设备操作 109 / 造件 71 / 取证 50 / 一次性 3 / 公共库 8 / 其它 37
+- 引用数为 0 的孤立件：**1**（判定口径见下）
 
 ## 判据（怎么读这张表）
 
@@ -24,7 +24,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（78）
+## 门禁（79）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -53,6 +53,7 @@
 | `scripts/doctor/27-bootimg-cmdline.sh` | §27 boot/vendor_boot cmdline 改写器自检门（委托脚本自带 --selftest）。 | 4 |
 | `scripts/doctor/28-soft-bl-selftest.sh` | §28 Linux→bootloader 软路径门（lib-soft-bootloader 自检 + 反作弊 + 反回归） | 3 |
 | `scripts/doctor/29-out-candidate-sha.sh` | §29 上机候选件 sha 账目门（委托 scripts/out-candidate-sha.py --check） | 2 |
+| `scripts/doctor/30-tasks-routing.py` | TASKS 台账「章节路由」门（2026-11-26 拆分后新增） | 3 |
 | `scripts/doctor/_lib.sh` | shellcheck shell=bash | 27 |
 | `scripts/doctor/ab-bench.sh` | bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置） | 6 |
 | `scripts/android-apk-pkgname.py` | 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。 | 3 |
@@ -63,12 +64,12 @@
 | `scripts/assert-kernel-sane.sh` | 打包前的「内核身份 / 存活」硬门（pack-time gate）。 | 35 |
 | `scripts/cam-load-verify.sh` | 在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。 | 8 |
 | `scripts/check-abi-config.sh` | 内核 .config 的 ABI 敏感项门禁（build/pack-time gate）。 | 37 |
-| `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 50 |
+| `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 51 |
 | `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 316 |
 | `scripts/check-init.sh` | init 单一真源 / 可运行性自检（主机侧，只读） | 12 |
 | `scripts/check-layout.sh` | 顶层布局注册表门（versions/layout.tsv ↔ 磁盘 ↔ INDEX.md） | 24 |
 | `scripts/check-modular-config.sh` | 模块化 config 门禁（第二层，2026-10-26） | 29 |
-| `scripts/check-progress-counts.sh` | 从 TASKS/README.md §1/§2 的行内状态标记现算完成度 | 77 |
+| `scripts/check-progress-counts.sh` | 从 TASKS/README.md §1/§2 的行内状态标记现算完成度 | 79 |
 | `scripts/check-project-memory.sh` | 校验「项目记忆就在仓库里」这条链路没断 | 8 |
 | `scripts/check-series-selfcontained.sh` | 补丁系列自足性门禁（派工单 M3-v5 2026-10-31） | 38 |
 | `scripts/check-sessions.sh` | 独立校验 SESSIONS/（不依赖 gen-sessions.py 的实现细节） | 23 |
@@ -90,8 +91,8 @@
 | `scripts/out-manifest-check.py` | out/ 造件「报告↔镜像」账本门（2026-11-20，arch-audit P0#2） | 14 |
 | `scripts/rawprogram-preflight.py` | 线刷包 rawprogram XML 的**写前**几何预检（纯主机、无 USB）。 | 16 |
 | `scripts/rootfs-image-check.py` | 磁盘根 ext4 镜像「能不能起 / 能不能登入」的写前门（主机侧，只读） | 6 |
-| `scripts/doctor/s07-08-docs.py` | check-doctor §7/§8 入口文档与索引对账（纯文本判据）。 | 32 |
-| `scripts/doctor/s16-tasks-counts.py` | check-doctor §16：TASKS §0 手写数字 ↔ 计数脚本自动比对。 | 14 |
+| `scripts/doctor/s07-08-docs.py` | check-doctor §7/§8 入口文档与索引对账（纯文本判据）。 | 33 |
+| `scripts/doctor/s16-tasks-counts.py` | check-doctor §16：TASKS §0 手写数字 ↔ 计数脚本自动比对。 | 15 |
 | `scripts/sleep-policy.sh` | 设备「待机策略」开关：待机（关屏）时是否允许 SSH/网络继续可用 | 1 |
 | `scripts/slot-switch.sh` | A/B 槽位「一键往返切换 + 槽属性自检」（../TASKS/README.md §2 C7） | 66 |
 | `scripts/t14-rebuild.sh` | T14「Mobian 换根重建 recipe」可执行化（2026-11-13，主机侧，零设备动作） | 3 |
@@ -128,14 +129,14 @@
 | `scripts/cam-mode.sh` | elden 上「相机 ⇄ 熄屏」互斥的操作口径（在设备上当 root 跑） | 110 |
 | `scripts/camera-modules-load.sh` | bring up the mainline camera stack on TB322FC. | 71 |
 | `scripts/camera-stream-up.sh` | 在设备上把 camss 采集链路配置到可出流（幂等）。 | 29 |
-| `scripts/charge-ctl.sh` | battery / charger control for TB322FC (elden), qcom-battmgr. | 34 |
-| `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 29 |
+| `scripts/charge-ctl.sh` | battery / charger control for TB322FC (elden), qcom-battmgr. | 39 |
+| `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 44 |
 | `scripts/deploy-camera-modules.sh` | 收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验** | 25 |
-| `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 131 |
+| `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 136 |
 | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 41 |
 | `scripts/deploy-sensord-routec-debian.sh` | 在 **Debian/glibc 根**上安装路线 C 的 Waydroid sensor HAL | 14 |
 | `scripts/deploy-sensors-hal.sh` | 部署 elden UDP 传感器 HAL 到 Waydroid 容器（C4） | 14 |
-| `scripts/deploy-ssc-sensors.sh` | 在 Y700 (TB322FC, Debian trixie) 上部署 SSC 传感器用户态栈 | 5 |
+| `scripts/deploy-ssc-sensors.sh` | 在 Y700 (TB322FC, Debian trixie) 上部署 SSC 传感器用户态栈 | 8 |
 | `scripts/deploy-v4l2loopback.sh` | 为**当前在机内核**（读设备 uname -r）构建并部署 v4l2loopback | 19 |
 | `scripts/deploy-zh-ime.sh` | 部署「触屏唤起的中文输入法」到设备（幂等） | 37 |
 | `scripts/dev-userdata-relabel.sh` | 设备侧（POSIX sh）：把 Android userdata（sda16）就地转成 Linux 数据分区 | 12 |
@@ -186,7 +187,7 @@
 | `scripts/recover-lun4-slotguid.sh` | 修「ABL 报 ValidateSlotGuids: BootableSlot _<x> does not have valid guids ⇒ 掉 fastboot」。 | 4 |
 | `scripts/rootfs-minbase-build.sh` | 最小 Debian 根（GPT-minimal 路线的 A6 前置件）驱动脚本 | 13 |
 | `scripts/serial-capture.sh` | 等 USB 串口节点出现后把内容落盘（给「设备 boot 起来但不知道卡在哪」用） | 6 |
-| `scripts/serial-cmd.py` | 通过 /dev/ttyACM0 串口与设备 shell 交互：发一组命令，抓输出存文件。 | 0 |
+| `scripts/serial-cmd.py` | 通过 /dev/ttyACM0 串口与设备 shell 交互：发一组命令，抓输出存文件。 | 1 |
 | `scripts/serial-fanout.sh` | 读一个 tty 并把内容追加到文件（供 systemd 常驻运行）。 | 8 |
 | `scripts/serial-log.sh` | ★ STALE 复判（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 12 |
 | `scripts/serial-logger.sh` | ★ RETIRED-for-forensics（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留文件，但退出「取证工具」序列**。 | 44 |
@@ -281,7 +282,7 @@
 | `scripts/lore-fetch-raw.py` | 按 Message-ID 直接从 lore 取 raw（自动过 Anubis PoW）。 | 53 |
 | `scripts/manifest-from-image.py` | 从**镜像本身**重建 `.manifest`（源树已删/丢失时用）。 | 8 |
 | `scripts/mesa-build.sh` | 只构建 Waydroid vendor 需要的 Mesa/gralloc 模块（比 make vendorimage 快得多） | 18 |
-| `scripts/mkbootimg.py` | minimal AOSP boot image v2 builder (elden project vendored copy). | 80 |
+| `scripts/mkbootimg.py` | minimal AOSP boot image v2 builder (elden project vendored copy). | 81 |
 | `scripts/pack-cloud-backup.sh` | ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 12 |
 | `scripts/phoc-build-launch.sh` | 以 root 在**独立 session** 里启动 build-phoc-arm64.sh（脱离调用者的进程组， | 3 |
 | `scripts/phoc-install.sh` | 把自编 phoc 装到设备并**钉住**，防 apt 覆盖（PITFALLS #654） | 24 |
@@ -420,4 +421,3 @@
 没有脚本、也没有文档提到这些 basename。**不等于可删**：很多是人手跑的入口。处置建议 = 要么在 `TASKS/README.md` 或某报告里落一条指针（变活），要么标「一次性」并说明留档理由。
 
 - `scripts/mailbox-quota-reclaim-20261125.py` — 邮箱到 2 万封上限后的「按规则回收」（2026-11-25 用户授权）。
-- `scripts/serial-cmd.py` — 通过 /dev/ttyACM0 串口与设备 shell 交互：发一组命令，抓输出存文件。
