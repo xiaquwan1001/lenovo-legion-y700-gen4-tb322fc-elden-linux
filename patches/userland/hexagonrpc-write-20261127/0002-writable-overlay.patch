@@ -1,6 +1,6 @@
 diff -ruN base-0001/hexagonrpcd/apps_std.c hrpcd-patch/hexagonrpcd/apps_std.c
 --- base-0001/hexagonrpcd/apps_std.c	2026-11-27 07:27:04.790053359 +0800
-+++ hrpcd-patch/hexagonrpcd/apps_std.c	2026-11-27 07:24:07.948968804 +0800
++++ hrpcd-patch/hexagonrpcd/apps_std.c	2026-11-27 07:31:33.032349749 +0800
 @@ -28,6 +28,7 @@
  #include <unistd.h>
  
@@ -152,7 +152,7 @@ diff -ruN base-0001/hexagonrpcd/apps_std.c hrpcd-patch/hexagonrpcd/apps_std.c
  	}
  
  	if (!strcmp(inbufs[1].p, "ADSP_LIBRARY_PATH")) {
-@@ -508,88 +575,170 @@
+@@ -508,88 +575,171 @@
  	free(iface);
  }
  
@@ -389,6 +389,7 @@ diff -ruN base-0001/hexagonrpcd/apps_std.c hrpcd-patch/hexagonrpcd/apps_std.c
 +	[27] = { .def = &apps_std_closedir_def, .impl = apps_std_closedir },
 +	[28] = { .def = &apps_std_readdir_def, .impl = apps_std_readdir },
 +	[31] = { .def = &apps_std_stat_def, .impl = apps_std_stat },
++	[33] = { .def = &apps_std_frename_def, .impl = apps_std_frename },
 +	[34] = { .def = &apps_std_fopen_fd_def, .impl = apps_std_fopen_fd },
 +	[35] = { .def = &apps_std_fclose_fd_def, .impl = apps_std_fclose_fd },
 +	[36] = { .def = &apps_std_fopen_with_env_fd_def, .impl = apps_std_fopen_with_env_fd },
@@ -403,7 +404,16 @@ diff -ruN base-0001/hexagonrpcd/apps_std.c hrpcd-patch/hexagonrpcd/apps_std.c
  };
 diff -ruN base-0001/hexagonrpcd/interface/apps_std.c hrpcd-patch/hexagonrpcd/interface/apps_std.c
 --- base-0001/hexagonrpcd/interface/apps_std.c	2026-11-27 07:27:04.790053359 +0800
-+++ hrpcd-patch/hexagonrpcd/interface/apps_std.c	2026-11-27 07:22:24.673748836 +0800
++++ hrpcd-patch/hexagonrpcd/interface/apps_std.c	2026-11-27 07:30:00.616749943 +0800
+@@ -76,7 +76,7 @@
+ };
+ 
+ static struct hrpc_arg_def_interp4 apps_std_fwrite_args[] = {
+-	{ HRPC_ARG_WORD, sizeof(uint32_t) },
++	/* prim buffer: [fd][buf_size]; then one extra input buffer holds data */
+ 	{ HRPC_ARG_WORD, sizeof(uint32_t) },
+ 	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
+ 	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
 @@ -135,6 +135,29 @@
  	.inner_types = NULL,
  };
@@ -455,17 +465,48 @@ diff -ruN base-0001/hexagonrpcd/interface/apps_std.h hrpcd-patch/hexagonrpcd/int
  extern struct hrpc_method_def_interp4 apps_std_fopen_with_env_fd_def;
 diff -ruN base-0001/hexagonrpcd/listener.c hrpcd-patch/hexagonrpcd/listener.c
 --- base-0001/hexagonrpcd/listener.c	2026-11-27 07:27:04.790108156 +0800
-+++ hrpcd-patch/hexagonrpcd/listener.c	2026-11-27 07:27:04.775068625 +0800
-@@ -552,7 +552,8 @@
++++ hrpcd-patch/hexagonrpcd/listener.c	2026-11-27 07:31:33.024203243 +0800
+@@ -24,6 +24,7 @@
+ #include <libhexagonrpc/hexagonrpc.h>
+ #include <stddef.h>
+ #include <stdint.h>
++#include <stdlib.h>
+ #include <stdio.h>
+ 
+ #include "interface/adsp_listener.h"
+@@ -552,9 +553,30 @@
  	ret = count_sizes4(impl->def, REMOTE_SCALARS_INBUFS(sc),
  			   REMOTE_SCALARS_OUTBUFS(sc), decoded);
  	if (ret) {
 -		fprintf(stderr, "Method invoked with less arguments than expected\n");
-+		fprintf(stderr, "Method %u invoked with less arguments than expected\n",
-+				method);
++		/*
++		 * The signature we have does not match what the DSP sent.  Reply
++		 * with an error but keep serving: aborting here would tear down
++		 * the whole listener and leave the DSP half-attached.
++		 */
++		uint8_t n_out = REMOTE_SCALARS_OUTBUFS(sc);
++		uint8_t i;
++
++		fprintf(stderr, "Method %u invoked with %u/%u buffers, signature mismatch\n",
++				method, REMOTE_SCALARS_INBUFS(sc), n_out);
++
++		*returned = calloc(n_out, sizeof(struct fastrpc_io_buffer));
++		if (*returned == NULL) {
++			*result = AEE_ENOMEMORY;
++			return 1;
++		}
++
++		for (i = 0; i < n_out; i++) {
++			(*returned)[i].s = sizeof(uint32_t);
++			(*returned)[i].p = calloc(1, sizeof(uint32_t));
++		}
++
  		*result = AEE_EBADPARM;
- 		return 1;
+-		return 1;
++		return 0;
  	}
+ 
+ 	*returned = alloc_outbufs4(impl->def, decoded,
 diff -ruN base-0001/hexagonrpcd/meson.build hrpcd-patch/hexagonrpcd/meson.build
 --- base-0001/hexagonrpcd/meson.build	2026-11-27 07:27:04.785838435 +0800
 +++ hrpcd-patch/hexagonrpcd/meson.build	2026-11-27 07:22:21.220498687 +0800

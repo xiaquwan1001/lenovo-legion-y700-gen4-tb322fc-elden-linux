@@ -23,3 +23,18 @@
   git clone --depth 1 https://github.com/linux-msm/hexagonrpc /tmp/hrpcd && cd /tmp/hrpcd
   git apply /path/to/0001-hexagonrpcd-allow-registry-writes-and-large-inbufs.patch
   ```
+
+## 0002-writable-overlay.patch（**已部署，2026-11-27**）
+
+在 0001 之上加一个**真可写 overlay**：`-O DIR`（设备上 `/var/lib/hexagonrpc`，`fastrpc:fastrpc`）。
+- `hexagonrpcd/overlay.{c,h}`：overlay 根 + 父目录自动创建 + `stat/open/read/write/seek/fsync/ftrunc/remove/rename/mkdir/rmdir`。
+- `apps_std`：写模式打开→先 `copyup()`（把 mapped 树的原文拷进 overlay，不存在则建空）→ `open(O_RDWR[|O_APPEND])`；
+  返回 fd 加 `OVERLAY_FD_BASE(1000)` 与虚拟 fd 区分；`fread/fwrite/fseek/fclose/fsync` 按区间分派。
+- 方法表改成**指定下标初始化**（`[N] = {...}`），并补 `fwrite(5)/ftell(8)/flen(10)/fileExists(22)/fsync(23)/fremove(24)/frename(33)`；
+  **`fwrite` 的 def 是 `WORD(fd) + BLOB_SEQ(data) + OUT_BLOB + OUT_BLOB`**——`in sequence<byte>` 的 size word 就在 prim buffer 里，
+  定义里**不能再多写一个 WORD**（这是本轮上机报 `Method 5 invoked with less arguments` 的真因）。
+- `listener.c`：**签名不匹配不再 abort 整个监听循环**（回复 `AEE_EBADPARM` + 4 字节零 outbuf 继续服务），
+  这样某个方法签名猜错不会把 DSP 挂在半 attach 状态（也是本轮能继续迭代的关键）。
+
+实测（设备，`2026-11-27`）：`elden-sensorspd` active、`NRestarts=0`、三属性 true、`ssccli` 连续出值；
+overlay 里出现真实写入 —— `cam_registry_dump.txt` 18.6 KB、`fstempfile` 14.3 KB、`sns_reg_version` 9 B、`registry/DIR` 3 B。

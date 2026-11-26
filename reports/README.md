@@ -974,7 +974,7 @@
 ## `hexagonrpcd`（2）
 
 - `hexagonrpcd-heap-oob-20261127.md` — 堆/全局越界定位并修好（ASan）：`apps_std` 方法表**按索引 dispatch**，新增方法必须占对下标
-- `hexagonrpcd-writable-overlay-wip-20261127.md` — 可写 overlay 后端（WIP）：代码就位、**未部署**——卡在「某个方法的参数个数与 def 不符」
+- `hexagonrpcd-writable-overlay-20261127.md` — ★ 可写 overlay 落地：DSP 的 registry 写入**真落盘**（+ 传感器仍全绿）
 
 ## `integrity`（2）
 

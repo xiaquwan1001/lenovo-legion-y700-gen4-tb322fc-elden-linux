@@ -1,5 +1,5 @@
 [Unit]
-Description=hexagonrpcd (patched: flat -R tree) for elden SSC sensors
+Description=hexagonrpcd (patched: flat -R tree + write overlay) for elden SSC sensors
 After=local-fs.target
 StartLimitIntervalSec=120
 StartLimitBurst=5
@@ -7,7 +7,7 @@ StartLimitBurst=5
 [Service]
 Type=simple
 ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do [ -e /dev/fastrpc-adsp ] && exit 0; sleep 1; done; exit 1'
-ExecStart=/usr/local/bin/hexagonrpcd-patched -f /dev/fastrpc-adsp -d adsp -s -R /var/lib/hrpcd-root/
+ExecStart=/usr/local/bin/hexagonrpcd-patched -f /dev/fastrpc-adsp -d adsp -s -R /var/lib/hrpcd-root/ -O /var/lib/hexagonrpc
 Restart=on-failure
 RestartSec=5
 User=fastrpc

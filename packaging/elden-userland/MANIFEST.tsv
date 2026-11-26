@@ -19,7 +19,7 @@ dst	kind	sha256	size	mode	repo_src
 /etc/local.d/elden-bootlog.start	locald	4b3f9ccbe383a1224e7cc7d85640903eefbe05bf1c6fffd0aa839cc3d648cdc9	76	755	files/etc/local.d/elden-bootlog.start
 /etc/local.d/elden-bringup.start	locald	111b2e4cfb666a2202928bfd7aa93396b7bc2f6e08a269b2218e617cdc09dcfb	117	755	files/etc/local.d/elden-bringup.start
 /etc/modules-load.d/elden-dma-heap.conf	config	0e69d4a8b6bd43aeb3a076ce2b1fe828675e108b3a77ed6f26d4ee5c9dd81554	217	644	files/etc/modules-load.d/elden-dma-heap.conf
-/etc/systemd/system/elden-sensorspd.service	unit	f90072007e97f56c3d65d06562f55a41e052ebfb1b3aeaccfcb8c8bc8343f90e	473	644	files/etc/systemd/system/elden-sensorspd.service
+/etc/systemd/system/elden-sensorspd.service	unit	aabb036ab7d2638e130b9006004c610ebadcbbc4866ed855c4bcf538715e7553	512	644	files/etc/systemd/system/elden-sensorspd.service
 /etc/systemd/system/qbootctl.service.d/override.conf	systemd-unit	0a1acab3075b04350b66b8fffcfdf4707218ddf4a65b8c5b379fa68f645983c9	674	644	files/etc/systemd/system/qbootctl.service.d/override.conf
 /etc/udev/rules.d/70-elden-dma-heap.rules	udev-rule	4fa512367f7602581703e977f4ca1eaed42199faf8ae15f1a7f47986daced955	50	644	files/etc/udev/rules.d/70-elden-dma-heap.rules
 /etc/udev/rules.d/81-libssc-elden.rules	udev-rule	8d3429f8ff46ecfc6bdb4e3d6c52e328fecfe543d8bf77dfffe2e2eeaac1b127	1247	644	files/etc/udev/rules.d/81-libssc-elden.rules

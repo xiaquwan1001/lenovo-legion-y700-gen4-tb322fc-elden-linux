@@ -16,8 +16,10 @@
 > 那个堆损坏**已由 ASan 定位并修好**（`#742`：`apps_std_procs[]` 按方法号当索引，我们的 34/35/36 占了 32/33/34 + `n_procs` 57 ⇒ 越界），
 > 设备现态 `NRestarts=0`、三属性仍 true。剩唯一功能缺口 = **真写后端**（registry 持久化）。
 > 全账 = `reports/sensors-ssc-persistent-20261127.md` + `reports/hexagonrpcd-heap-oob-20261127.md`。
-> **可写 overlay（registry 持久化）** 已写但**未部署**（`Method … less arguments than expected` 卡住，设备已回可用版）：
-> `reports/hexagonrpcd-writable-overlay-wip-20261127.md` + `patches/userland/hexagonrpc-write-20261127/0002-writable-overlay-WIP.patch`。
+> **可写 overlay（registry 持久化）已交付**：`-O /var/lib/hexagonrpc` + copy-up + 真 fwrite/frename/fsync；
+> 设备实测 overlay 里出现真写入（`cam_registry_dump.txt` 18.6 KB / `fstempfile` 14.3 KB / `sns_reg_version` 9 B），
+> 传感器三属性仍 true、`NRestarts=0`。关键坑两条 = `fwrite` 的 `in sequence<byte>` size word 别重复计入 def、签名不匹配不要 abort 监听。
+> 全账 = `reports/hexagonrpcd-writable-overlay-20261127.md` + `patches/userland/hexagonrpc-write-20261127/0002-writable-overlay.patch`。
 
 > **🆕 2026-11-27 06:0x（无人值守轮：`#692` 后续① 收口 + D10 复扫 + ABL logfs 判据纠偏）**：
 > ① **「补齐 ADSP 的 PD 依赖」被否证（不做）**：主线 PDR + in-kernel pd-mapper 齐全（`qcom_pd_mapper.c:665` 把 `qcom,sm8750`
