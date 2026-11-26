@@ -1,0 +1,25 @@
+# 上游 for-7.5 现抓（2026-11-26，git.kernel.org，model=plain/ ?h=for-7.5 与 cgit patch/ ?id=）
+# binding commit = 84e67d2ee13f / driver commit = 602f57223457
+# 抓取件：merged-for-7.5-willsemi,wl2868c.yaml（99 行）、merged-for-7.5-wl2868c-regulator.c（301 行）
+# 与本地 v12 对照：yaml 逐字节相同；driver 逐字节相同（diff 空）
+
+From 84e67d2ee13ff7354f86967a64bb982ffa5ae037 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Tue, 17 Nov 2026 13:22:56 +0800
+Subject: regulator: dt-bindings: willsemi,wl2868c: add the WL2868C camera PMIC
+
+The WL2868C is an I2C-controlled camera power management IC from Will
+Semiconductor. It provides seven programmable LDOs: LDO1 and LDO2 are fed
+from a shared VIN12 input and cover 0.496 V to 1.512 V, LDO3 and LDO4 share
+VIN34, and LDO5 to LDO7 each have their own input, covering 1.504 V to
+3.544 V. All outputs are programmable in 8 mV steps and are gated by
+per-output enable bits with a chip-wide SYS_EN master. The chip also
+exposes an optional active-low RST_N input.
+
+VIN7 and VSYS are both inputs of the internal control logic, which is
+powered from the higher of the two voltages, so a device tree has to
+describe at least one of them. The remaining inputs only feed LDOs, so
+they stay optional: an input can be left unconnected when the outputs it
+feeds are unused on a given board.
+
+The example enables ldo1, which is fed from VIN12, so it also describes

@@ -10,8 +10,7 @@ Qualcomm board binding.
 Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
 Changes in v10:
-- Unchanged. The copy posted as v9 1/2 was Acked-by Krzysztof Kozlowski;
-  the trailer is not part of this resend.
+- Unchanged since v9.
  Documentation/devicetree/bindings/arm/qcom.yaml | 1 +
  1 file changed, 1 insertion(+)
 

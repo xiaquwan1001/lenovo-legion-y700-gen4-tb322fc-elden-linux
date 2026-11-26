@@ -16,11 +16,13 @@ sensor AVDD, LDO4 the rear sensor AVDD, LDO5 the VCM VDD, LDO7 the DOVDD of
 both sensors and the VCM VDDIO, all at fixed voltages including the offsets
 programmed by the stock firmware.  LDO6 is not wired out on this board.
 
-The camera PMIC is fed from the always-on system rail of the tablet: VSYS
-powers its control logic and its I2C interface, and VIN12, VIN34, VIN5 and
-VIN7 feed the LDOs this board uses.  The SPMI PMICs that generate that rail
-are not described yet, so all five inputs point at one fixed regulator
-standing in for it.  VIN6 is left out together with LDO6.
+The camera PMIC has five inputs on this board: VSYS, which powers its
+control logic and its I2C interface, and VIN12, VIN34, VIN5 and VIN7, which
+feed the LDOs in use.  The SPMI PMICs that generate those rails are not
+described yet, so all five are modelled as one always-on fixed regulator
+standing in for them; the board's actual input wiring is not documented in
+the sources this file was derived from.  VIN6 is left out together with
+LDO6.
 
 This is one logical action - "add this new hardware" - so the board and the
 regulators it carries are described in a single commit.
@@ -60,7 +62,7 @@ new file mode 100644
 index 0000000000..d8e9ab1272
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
-@@ -0,0 +1,135 @@
+@@ -0,0 +1,136 @@
 +// SPDX-License-Identifier: BSD-3-Clause
 +/*
 + * Copyright (c) 2026, Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
@@ -109,11 +111,12 @@ index 0000000000..d8e9ab1272
 +	};
 +
 +	/*
-+	 * The camera PMIC is fed from the always-on system rail of the tablet:
-+	 * VSYS, which powers its control logic and its I2C interface, and the
-+	 * four LDO inputs.  The SPMI PMICs that generate this rail are not
-+	 * described yet, so it is modelled as a fixed regulator without a
-+	 * voltage constraint.
++	 * Always-on input rail of the camera PMIC: VSYS (control logic and
++	 * I2C) and the four LDO inputs.  The SPMI PMICs that generate it are
++	 * not described yet, so it is modelled as one fixed regulator without
++	 * a voltage constraint, standing in for those rails; the board's
++	 * actual input wiring is not documented in the sources this file
++	 * derives from.
 +	 */
 +	wl2868c_vsys: regulator-vsys {
 +		compatible = "regulator-fixed";
