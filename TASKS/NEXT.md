@@ -85,11 +85,26 @@
 | **D21** | Gunyah 线现状 （拓展项，用户 2026-11-26 要求「至少一个 lane 负责 gunyah」） | ✅ | `TASKS/dim/D21.md` |
 | **D22** | 核实「传感器驱动有问题」这个说法（用户 2026-11-26 要求单独 lane 核实） | ✅ | `TASKS/dim/D22.md` |
 | **D23** | 崩溃取证通道（用户 2026-11-26「先修取证」） | ⛔ | `TASKS/dim/D23.md` |
-| **D24** | droidloom 附属仓库整理 + 上游缺陷/社区分叉评估（用户 2026-11-26 设常设 lane） | 🟡 | `TASKS/dim/D24.md` |
+| **D24** | droidloom 附属仓库整理 + 上游缺陷/社区分叉评估（用户 2026-11-26 设常设 lane；**首轮已收口 2026-11-26，待办见行内**） | 🟡 | `TASKS/dim/D24.md` |
 
 > **★2026-11-25 重启验收**：`systemctl reboot` 后新 `boot_id`、up 1 min，`lisgd-edge-swipe` **active + enabled**（lisgd 自动盯上真触屏 `event4`）、`wm.keybindings close` 仍是 `['<Alt>F4', 'XF86Back']`（dconf 持久）、`systemctl --failed` 仅已知 `qbootctl` ⇒ **常驻与持久化都成立**，不依赖会话手工启动。 另测**自愈**：`kill -9 lisgd` ⇒ 8 s 内被 systemd 重拉（新 pid，服务仍 active）⇒ `Restart=always` 生效。、`.pi/lanes/20261125-phosh-edge-swipe-back-brief.md` |
 
 **维度互斥/依赖**：D1 必须先于 D7（ESP 在机的面）；D3④ 与 D1 共用一次上机窗；D4 与 D1 争同一收发窗口（**分时**）；D2 的 G7 与 D4 不可同轮（都要 a/b 槽控制权）。
+
+### 4.0a 现役待办（2026-11-26 收尾时点；**唯一权威 = 本节 + 各行指针**）
+
+> 只列「下一步可执行」的项；已完成项不在这里复述（它们在各维度文件与 `reports/`）。每条 ≤ 半天，除非标注。
+
+| # | 待办 | 判据（怎么算做完） | 阻塞/前置 | 指针 |
+|---|---|---|---|---|
+| **T1** | droidloom：给上游 `#48` 补我方复现数据（校园网封校外 UDP/53、探针 204 实测、`10.177.0.2` 在线证据） | 评论发出 + `reports/droidloom-cell-network-20261126.md` §8 记 issue URL | **需用户点头**（外部发帖） | `reports/droidloom-upstream-lane-20261126.md` §D2-1 |
+| **T2** | droidloom：试 `EvilBorsch/droidloom` `eb/main`（ahead 24）——`.deb` 或只取 3 patch（`--forward-signals` / host resolvers / quick stop）重编 runtime | ① cell 仍 `Android is ready`；② **删掉 `/usr/local/bin/unshare` 后仍能起**；③ lease DNS = 宿主 resolver ⇒ 可删 `ip dl_dns_redirect` | 需备份当前 runtime；可回退 | 同上 §D2-2 + §D3 |
+| **T3** | droidloom：IME 主因判定实验（占位 IME 状态机缺陷 vs 宿主缺 `denial_text_input_panel_manager_v1`） | `wayland-info \| grep -c denial_text_input_panel` 与「换 sway/headless 后 `showSoftInput` 是否成功」三选一定论 | 现已有绕行（Fossify IME），不阻塞使用 | `reports/droidloom-ime-keyboard-20261126.md` §5、D24 §D2-3 |
+| **T4** | droidloom：把 cell DNS 重定向做成**跨重启持久**（独立 systemd unit，additive） | 重启后 `nft list ruleset \| grep dl_dns_redirect` 命中且 cell `VALIDATED` | T2 若落地可整件删 | `reports/droidloom-cell-network-20261126.md` §8 待办 |
+| **T5** | droidloom：中文输入（Fossify 无中文布局）+ 整机重启后默认 IME 持久性实测 | 重启后默认 IME 仍 Fossify；中文可输入 | 需一次重启窗 | `reports/droidloom-real-ime-20261126.md` 残余风险 |
+| **T6** | 传感器 `#692`：假说 A 未判 —— 试验核只注册 `/dev/fastrpc-adsp-secure`、**无 `/dev/fastrpc-adsp`** | 补 `qcom,non-secure-domain` 到试验 DTB 重编后重跑 `-s` 二值测试 | 需设备窗 + 构建槽 | `reports/sensors-692-backport-test-20261126.md` §4 |
+| **T7** | 上游：v11 备料已在（`cover-scope-section.txt`），**等下个真实修订触发**再发（不回 sashiko 机器人线程） | 维护者提同一问题或新 review 到达 | upstream-gated | `reports/dts-v10-sashiko-20261126.md` |
+| **T8** | `elden-wake` 纳入 `deploy-desktop-shell.sh --check`（与 udev/phosh/phoc 同级判据） | 设备 `--check` 幂等命中该判据 | 无 | `reports/panel-wake-service-20261126.md` §4 |
 
 ### 4.1 常设项（每轮/每收尾都做，不占维度）
 - **H1 资产清理** —— 正文 = `RESOURCES/README.md` §3；**2026-11-25 用户授权轮已实删 79 G**（`/tmp` 本项目 8 件 + `build/` 链接产物，`/` 82%→73%），执行记录与「明确不删」清单 = `reports/disk-cleanup-20261125.md`，取证 = `reports/tmp-forensics-20261125.md` / `reports/build-residue-verify-20261125.md`；`out-archive.py` KEEP 表同日修正（vk189/vk192 免误归档）。

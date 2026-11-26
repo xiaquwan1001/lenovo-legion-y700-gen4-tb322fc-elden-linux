@@ -8,6 +8,11 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26）
 
+> **🆕 2026-11-26 晚（droidloom 可用化 + 面板唤醒通道；**现役待办 = `TASKS/NEXT.md` §4.0a**）**：
+> ① **droidloom 装上并可用**：0.1.0-49 正式摊装（cell + 开机自启），**cell 联网修复**（captive-portal 探针改 vivo 204 + 独立 nft `ip dl_dns_redirect` 把 cell DNS 转校内 resolver + 解禁 `Droidloom` 网络）⇒ `dumpsys connectivity` = `VALIDATED`、宿主 `adb devices` 出 `10.177.0.2:5555 device:droidloom`（**从此 UI 问题可 adb 自动化复现**）。
+> ② **小红书**：全屏真因 = droidloom 按包名给「非可调整 App」分配手机尺寸窗口 ⇒ 修法 = `~xuqianhui1001/.config/droidloom/window-policy-v1.json` 的 **per-app 覆写**（1904x3040），实测窗口 `1902x3039`；**键盘**真因 = 占位 IME `onFailed at PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE` ⇒ 绕行 = 装 **Fossify Keyboard** 并切默认 IME（占位器保留可回退），三轮「输入-失焦-再点」9 图全过；**Limbus** 命中 AppSealing `Root_Detection=1`（非 emulator）⇒ 不投（Steam 版能跑）。
+> ③ **面板熄屏的 SSH 唤醒通道**（`PITFALLS #735`）：熄屏时 `dpms=On`/`bl_power=0`/`connected` 三条 sysfs 会骗人、`screencap` 也仍返回成功图 ⇒ **唯一判据 = 合成器出帧**（`grim` 成功且 >60 KB）；唤醒 = 注入输入事件。已落 `scripts/wake-screen.sh` + 设备 `elden-wake.path/.service`（enabled）⇒ `ssh elden 'elden-wake'` / `ssh elden-root 'touch /run/elden-wake.trigger'`，两种熄屏状态（停帧 / 真 DPMS off）均 0.7 s 内唤醒。
+> ④ **D24 常设 lane 首轮收口**（`TASKS/dim/D24.md`、`reports/droidloom-upstream-lane-20261126.md`）：上游 29 open / **27 fork**，`EvilBorsch/droidloom` `eb/main` **ahead 24** 逐条命中我方两个本地规避（`unshare --forward-signals`、host resolvers）⇒ 结论 **「只当实验」**、不作 G2 主线；升级风险表见 §D3。
 > **🆕 2026-11-26 午后（上游两件投出 + 三线攻坚派工 + 首轮三条收口）**：
 > ① **M6 DSI-PHY v3 与 elden 板 DTS v10 已投**（`05:20:54Z` / `05:20:58–05:21:04Z`，全 250，lore 两处 3/3 命中）：M6 v3 带 Jianfeng Liu 的第三方 `Tested-by`（diff 与 v2 逐字节相同）；
 > v10 的 1/2 补回 Krzysztof 对 v8 给的 `Acked-by`、2/2 修 sashiko 指出的 `pmic@2f` 缺 `vin12/vin34/vin5/vin7-supply`（同指 `wl2868c_vsys` stand-in）。
