@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：700
+- 报告总数：701
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -37,9 +37,9 @@
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
 | `disk` | 6 | `disk-audit-20261126.md` |
+| `sensors` | 6 | `sensors-692-attach-crash-serial-20261127.md` |
 | `dwc3` | 5 | `dwc3-v16-20261125.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
-| `sensors` | 5 | `sensors-692-attach-crash-serial-20261127.md` |
 | `usb` | 5 | `usb-charging-dualport-20261126.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
@@ -707,6 +707,15 @@
 - `disk-cleanup-20261116.md` — 磁盘清理第二轮执行账 — 2026-11-16（承接 `reports/disk-cleanup-20261115.md`）
 - `disk-cleanup-20261115.md` — 磁盘清理评估与执行账 — 2026-11-15（第二轮，承接 `.pi/reports/disk-audit-2026-11-15.md`）
 
+## `sensors`（6）
+
+- `sensors-692-attach-crash-serial-20261127.md` — `#692` 上机两发（2026-11-27）+ **串口第一次抓到崩溃现场**：Linux 看到了 ADSP fatal error 并进入 SSR recovery，随后 ms 级整机复位
+- `sensors-692-file-root-20261127.md` — `#692` 又推进两层：`-R` 文件树布局对上了，但**给 DSP 的 sensor config/registry 全是 0 字节占位**（+ 一条会毁掉二进制的采集坑）
+- `sensors-692-real-configs-20261127.md` — `#692` 突破：换上**真 vendor sensor 配置**后，`-s` 不再复位整机（ADSP 存活）
+- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
+- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
+- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
+
 ## `dwc3`（5）
 
 - `dwc3-v16-20261125.md` — dwc3 v16 备料处置报告（2026-11-25）——**未投递，等放行**
@@ -722,14 +731,6 @@
 - `git-tree-audit-20261113.md` — Git 树整合审计（嵌套仓 / 被跟踪大件 / 垃圾面）— 2026-11-13
 - `git-tree-merge-20261111.md` — 内核 git 树合并/差分分析（geekidos-linux × wt/reb-731）— 2026-11-11
 - `git-tree-consolidation-20261103.md` — 2026-11-03 本地 git 树精简合并 + 损坏镜像重建
-
-## `sensors`（5）
-
-- `sensors-692-attach-crash-serial-20261127.md` — `#692` 上机两发（2026-11-27）+ **串口第一次抓到崩溃现场**：Linux 看到了 ADSP fatal error 并进入 SSR recovery，随后 ms 级整机复位
-- `sensors-692-file-root-20261127.md` — `#692` 又推进两层：`-R` 文件树布局对上了，但**给 DSP 的 sensor config/registry 全是 0 字节占位**（+ 一条会毁掉二进制的采集坑）
-- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
-- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
-- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
 
 ## `usb`（5）
 

@@ -24,6 +24,11 @@
 > `reports/uefi-observability-pivot-20261101.md` 的「10 段环形可回溯」在本机现态**不成立**（9 段是陈旧 `_a` 残留）；
 > 且 23:11 那次（= #692 最后复位的回落启动）ABL 记的 `Reset by PSHOLD / Hard Reset` 与正常重启同款 ⇒ **该字段不能判根因**（#184/#182）。
 > 证据 = `reports/artifacts/sensors-692-logfs-20261127/`（logfs 8 MiB + 只读采集）。
+> ①f **★换上真 vendor 配置后 `-s` 不再复位整机**（trial6，2026-11-27）：官方 ROM `super_1..8` 按 `rawprogram*.xml` 的 start_sector
+> 稀疏拼回 22 GB → `lpunpack -p vendor_a` → `debugfs rdump /etc/sensors`（`out/vendor-extract-20261127/`，本地不入库）；
+> 真 `config/`（139 json）+ 真 `sns_reg.conf` + 扁平 `-R` 树 ⇒ **0 条 `PDM crash`、ADSP 一直 running**。
+> 残余：①真写后端（`hexagonfs_mapped` 只读，现在 registry 是 343 条 0 字节骨架）②`-s` 后进程自退（同 boot 二次 attach 会 `Could not register ADSP default listener`）
+> ③宿主缺 `81-libssc-elden.rules` 且 `iio-sensor-proxy` masked。全账 = `reports/sensors-692-real-configs-20261127.md`，T13 已重写。
 > ①e **同轮续 3 发（trial3/4/5）**：`hexagonrpcd 0.5.0` 的 `-R` 树是**扁平布局**（`<R>/sensors/{config,registry,sns_reg.conf}`、`dsp/<dsp>`），
 > 与 droid-juicer 的 Android 布局不符（trial4 三个 `Could not open` 的真因）；按扁平布局重建后**文件服务全绿**（trial5），
 > 但 DSP 仍断言 ⇒ 真因是 **droid-juicer 抽出的 sensor config/registry 几乎全是 0 字节占位**（`sns_reg_config`/`json.lst` 均 0 B，139 个 config 只有 1 个非空）。
