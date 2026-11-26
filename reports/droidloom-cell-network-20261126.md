@@ -155,3 +155,18 @@ nsenter -t $AIP -m -n -p -- /system/bin/cmd wifi connect-network "Droidloom" ope
 
 **结果（判据逐条命中）**：cell `wlan0 10.177.0.2/30` + 默认路由；`dumpsys connectivity` = `Active default network: 100 … IS_VALIDATED`；宿主 `adb devices -l` ⇒ `10.177.0.2:5555  device … device:droidloom`。
 **待办**：DNS 表跨重启不持久 ⇒ 需独立 systemd unit（additive）；若换到 lane D24 建议的 fork（`EvilBorsch`，已实现 lease 带宿主 resolver）则该表可整件删除。
+
+---
+
+## §9 重启后回归实测（2026-11-26T14:0x–14:2xZ / CST 22:0x，网关中断后的收尾复核）
+
+**触发**：上轮 21:52 的试验核 boot 之后设备自然回 boot_b，本段是「重 boot 后 §8 的修复还在不在」的实测。
+
+| 判据 | 实测 | 结论 |
+|---|---|---|
+| `nft list ruleset \| grep -c dl_dns_redirect` | **0** | §8-2 的 DNS 重定向表**不跨重启**（T4 判据「重启后命中」= **FAIL**，已实测而非推测） |
+| droidloom 是否自启 | `systemctl is-enabled droidloomd` = disabled（系统 scope）；真正的 cell 起停件 = **user 1001 的 user manager** 下的 `droidloom.service`/`droidloom-*.socket`，`WantedBy=graphical-session.target`；该 target 在本栈 **inactive**（已知 P1）⇒ 重 boot 后 journal 里 droidloom 记录 **0 条** | deploy 报告的「开机自启」**在重 boot 后不成立**；需 `su xuqianhui1001 -c "systemctl --user start droidloom.service"`（本轮实测可起来） |
+| cell 起后链路 | cell `wlan0@if5 UP 10.177.0.2/30`；宿主 `dlh1001@if2 UP 10.177.0.1/30`；两侧 `/30` 路由都在；宿主 `ping 10.177.0.2` **100% 丢包**；`adb devices` 无 `10.177.0.2:5555` | 地址面齐全但**链路不通**（此前同态）；不能用 ping/adb 当「cell 网络好」的判据 |
+| 总线干扰 | `adb devices` 里 `MDX5T20730009849` = 华为 ELS-AN00（非本机，`PITFALLS #371`） | adb 侧判据一律显式 `-s 10.177.0.2:5555` / `device:droidloom` |
+
+**净结论**：§8 的三步修复（captive 探针 / nft DNS 表 / `cmd wifi connect-network`）是**会话内一次性**的，重 boot 后全部要重做 ⇒ T4（持久化）与 T5（重启后 IME/默认项）都必须拿「重 boot 后重启命」当判据，本轮 T4 已判 FAIL。

@@ -1,0 +1,25 @@
+11月 26 21:59:47 elden systemd[3165]: ydotool.service: Main process exited, code=exited, status=2/INVALIDARGUMENT
+11月 26 21:59:47 elden systemd[3165]: ydotool.service: Failed with result 'exit-code'.
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Scheduled restart job, restart counter is at 3.
+11月 26 21:59:48 elden systemd[3165]: Started ydotool.service - Starts ydotoold service.
+11月 26 21:59:48 elden ydotoold[3220]: failed to open uinput device: No such file or directory
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Main process exited, code=exited, status=2/INVALIDARGUMENT
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Failed with result 'exit-code'.
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Scheduled restart job, restart counter is at 4.
+11月 26 21:59:48 elden systemd[3165]: Started ydotool.service - Starts ydotoold service.
+11月 26 21:59:48 elden ydotoold[3222]: failed to open uinput device: No such file or directory
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Main process exited, code=exited, status=2/INVALIDARGUMENT
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Failed with result 'exit-code'.
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Scheduled restart job, restart counter is at 5.
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Start request repeated too quickly.
+11月 26 21:59:48 elden systemd[3165]: ydotool.service: Failed with result 'exit-code'.
+11月 26 21:59:48 elden systemd[3165]: Failed to start ydotool.service - Starts ydotoold service.
+11月 26 21:59:49 elden audio-share-client-run[1085]: [as-client] TCP connected 192.168.7.9:65530
+11月 26 21:59:49 elden audio-share-client-run[1085]: [as-client] bad AudioFormat size 0 (server has no audio endpoint?)
+11月 26 21:59:52 elden audio-share-client-run[1085]: [as-client] TCP connected 192.168.7.9:65530
+11月 26 21:59:52 elden audio-share-client-run[1085]: [as-client] bad AudioFormat size 0 (server has no audio endpoint?)
+11月 26 21:59:53 elden phoc[3123]: [backend/backend.c:253] Found 0 GPUs, cannot create backend
+11月 26 21:59:53 elden phoc[3123]: [backend/backend.c:363] failed to add backend 'drm'
+11月 26 21:59:53 elden phoc[3123]: Failed to create server: Could not create backend
+11月 26 21:59:55 elden audio-share-client-run[1085]: [as-client] TCP connected 192.168.7.9:65530
+11月 26 21:59:55 elden audio-share-client-run[1085]: [as-client] bad AudioFormat size 0 (server has no audio endpoint?)

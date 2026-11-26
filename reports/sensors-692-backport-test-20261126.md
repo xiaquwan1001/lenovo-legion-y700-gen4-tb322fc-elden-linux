@@ -1,7 +1,7 @@
 # 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
 
-> 状态：**阶段一完成；阶段二进行中（试验核已上机，决定性测试未跑）**。
-> 假说 A（SENSORS_PD 消息缓冲走 context bank ⇒ attach 即 SMMU fault）：**未判**。
+> 状态：**阶段一完成；阶段二两次上机完成；决定性测试 -s 未跑（第三班截止）；设备已回在机旧内核**（2026-11-26 22:2x 收尾轮复核）。
+> 假说 A（SENSORS_PD 消息缓冲走 context bank ⇒ attach 即 SMMU fault）：**未判**（三次 boot 的 journal 里 `hexagonrpcd` 均 0 行 ⇒ 崩溃面从未触碰）。
 > 过程台账 = `.pi/lanes/20261126-sensors-692-test.md`；证据 = `reports/artifacts/sensors-692-backport-20261126/`。
 > 本文由 runner 截止（600 s 交割）写入，交割说明见 §5。
 
@@ -13,7 +13,7 @@
   门禁全绿：`git apply --check` rc=0；checkpatch **0E/0W**；`fastrpc.o` 编过（反汇编确认 `cmp #0x2`(SENSORS_PD) 分支在产物里）；符号守卫 OK；UTS 与在机可区分。
 - **阶段二（上机）**：试验核已两次经 `fastboot boot` **零写盘**上机成功，`uname -r` = `7.3.1-debug-vk189-suspend-fastrpc1-g4da9a8b69fc8-dirty`。
   途中发现并修复一个**上机阻塞项**：试验 DTB 缺 D22/M10 的 `qcom,non-secure-domain`（ADSP fastrpc 节点）⇒ 首次 boot 只有 `/dev/fastrpc-adsp-secure`、无 `/dev/fastrpc-adsp`。已在 worktree 内补上该属性并重出 boot.img（现役在机件含此修复，属在机载荷的组成部分，非新增实验变量）。
-- **决定性测试（`-s` 崩溃面）未执行** —— runner 截止。设备现停在试验核上（安全，见 §5）。
+- **决定性测试（`-s` 崩溃面）未执行** —— 两次上机（16:47 / 21:52，均 `fastboot boot` 零写盘）都只到「内核起来 + fastrpc 通道注册」就结束，第三班（21:52 那次）未跑任何 `hexagonrpcd` 命令；见 §7。设备已于 2026-11-26 22:18 前后回到在机旧内核（`…-00005-g4bdf1711b5c0`）。
 
 ## 1. 产物（全部真实存在）
 
@@ -79,3 +79,27 @@ sha256sum out/fastrpc1-20261126/boot-elden-fastrpc1.img    # 2050cf6c…（O_DIR
 `out/boot-elden-fastrpc1.img` **已移到** `out/fastrpc1-20261126/boot-elden-fastrpc1.img`（sha256 `2050cf6c8bd93db8db3caa4414eb0020310250a5413cccc0f0c941b45ae4dc70`）。
 原因：`check-doctor` §5 扫 `out/*.img` 顶级文件，未登记件会报 `[FAIL] 内核身份表已过期`；本项目惯例是把出件放进带日期的子目录（同 `out/gunyah-wdt-20261125/`）。
 **注意**：该核的结论未变——试验核只注册 `/dev/fastrpc-adsp-secure`、**没有 `/dev/fastrpc-adsp`**，`-s` 假说 A 未判；下一步要么补 `qcom,non-secure-domain` 到试验 DTB 重编，要么改用「在机 vk192 + 模块方式」验证。
+
+---
+
+## 7. 收尾轮（父代理，2026-11-26T14:2xZ / CST 22:2x；网关额度中断后）
+
+**独立重跑的事实（不采信上轮叙述）**：
+
+| 项 | 现查 | 判据/命令 |
+|---|---|---|
+| 设备当前内核 | `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`（在机旧核，非试验核） | `ssh elden uname -r` |
+| 试验核上机记录 | journal `boot -1`（21:52:37 起，`fastrpc1-g4da9a8b69fc8-dirty` 内核串） | `journalctl -b -1` |
+| `-s` 崩溃面 | **三次 boot 全部 `hexagonrpcd` 0 行** ⇒ 决定性测试从未跑（boot -1/-2/0：0/0/0） | `journalctl -b $b \| grep -ic hexagonrpcd` |
+| 补丁语义在试验核产物内 | `boot -1` 有 `qcom,fastrpc 6800000.remoteproc:…: assigned reserved memory node adsp-rpc-remote-heap`（RPC remote heap 被认领）+ SMR `mask out of range` 警告（cb 自带、与补丁无关，旧核同样有） | 证据 = `reports/artifacts/sensors-692-trial-20261127/journal-b-1-fastrpc.txt` |
+| `/dev/fastrpc-adsp` 是否出现 | **无记录**（-s 测试前未采集 `ls -l /dev/fastrpc-adsp`）⇒ 「补 DTB 后是否成功注册非 secure 节点」仍未实证 | — |
+| 设备安全态 | systemd `--failed`=0；`phoc`/`phosh` 各 1；`hexagonrpcd`/`iio-sensor-proxy` = masked；slot `_b` | 22:22 CST 快照 |
+| 产物归档 | 证据 3 件 → `reports/artifacts/sensors-692-trial-20261127/`；boot.img+manifest → `out/fastrpc1-20261126/`（O_DIRECT 两读一致 sha `2050cf6c…`）；已登记 `versions/out-candidate-sha.tsv` | 探针见本文件 §1 |
+
+**结论**：S2 工单的价值停在「补丁 + DTB 修复 + 可上机件已备好、两次零写盘上机验证内核可起」。**假说 A 依旧是未判**，不是否定。
+
+**下一班的最小剩余动作**（不需重建）：
+1. `fastboot boot out/fastrpc1-20261126/boot-elden-fastrpc1.img`（sha `2050cf6c…`，已含 `qcom,non-secure-domain`）。
+2. 上机后先取证 `ls -l /dev/fastrpc-adsp /dev/fastrpc-adsp-secure`、`qrtr-lookup | grep 400`、`remoteproc0/state`（**这三个必须先于 -s 采集**，本轮就是漏了这一条使得 DTB 修复效果无实证）。
+3. 再跑 §4 测试 1/2（`timeout -k 5 30 /usr/libexec/hexagonrpc/hexagonrpcd -f /dev/fastrpc-adsp -d adsp`，真二进制不带 wrapper）。
+4. 崩则按 #732 零写盘自回；不崩则假说 A 证实、进入 hexagonrpc 侧写支持讨论。

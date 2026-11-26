@@ -1,0 +1,50 @@
+[   18.148729] [    T161] qnoc-sm8750 1700000.interconnect: sync_state() pending due to 1dfa000.crypto
+[   18.148748] [    T161] qnoc-sm8750 interconnect-1: sync_state() pending due to ad27000.isp
+[   18.148762] [    T161] qnoc-sm8750 1780000.interconnect: sync_state() pending due to ad27000.isp
+[   18.148775] [    T161] qnoc-sm8750 1600000.interconnect: sync_state() pending due to ad27000.isp
+[   18.148788] [    T161] gcc-sm8750 100000.clock-controller: sync_state() pending due to ad27000.isp
+[   18.148803] [    T161] gcc-sm8750 100000.clock-controller: sync_state() pending due to ade0000.clock-controller
+[   18.148817] [    T161] gcc-sm8750 100000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   18.148830] [    T161] gxclkctl-kaanapali 3d64000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   18.148843] [    T161] sm8750-gpucc 3d90000.clock-controller: sync_state() pending due to 3d37000.gmu
+[   18.148887] [    T161] qcom-rpmhpd 16500000.rsc:power-controller: sync_state() pending due to ade0000.clock-controller
+[   18.148901] [    T161] qcom-rpmhpd 16500000.rsc:power-controller: sync_state() pending due to 1760000.clock-controller
+[   18.148915] [    T161] qnoc-sm8750 interconnect-1: sync_state() pending due to 240b3400.pmu
+[   18.148929] [    T161] qnoc-sm8750 interconnect-1: sync_state() pending due to 240b7400.pmu
+[   18.148943] [    T161] qnoc-sm8750 24100000.interconnect: sync_state() pending due to 240b7400.pmu
+[   18.148956] [    T161] qnoc-sm8750 24100000.interconnect: sync_state() pending due to 240b3400.pmu
+[   18.148970] [    T161] qnoc-sm8750 24100000.interconnect: sync_state() pending due to ad27000.isp
+[   18.149006] [    T161] qcom-rpmhpd 16500000.rsc:power-controller: sync_state() pending due to af54000.displayport-controller
+[   18.149020] [    T161] disp_cc-sm8750 af00000.clock-controller: sync_state() pending due to af54000.displayport-controller
+[   29.838703] [     T87] Bluetooth: hci0: QCA Downloading qca/brhbtnv20.bin
+[   30.213727] [     T87] Bluetooth: hci0: QCA FW build version: BTFW.BRAHMA.2.0.0-00306-PATCHZ-1_DEF NVM_LABEL:BTFW.BRAHMA.2.0.0-00262-PATCHZ-1_DEF
+[   30.214164] [     T87] Bluetooth: hci0: QCA setup on UART is completed
+[   30.214209] [     T87] Bluetooth: hci0: HFP non-HCI data transport is supported
+[   30.422681] [    T930] Bluetooth: MGMT ver 1.23
+[   41.446690] [   T1480] pci 0000:01:00.0: [17cb:110e] type 00 class 0x028000 PCIe Endpoint
+[   41.447094] [   T1480] pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]
+[   41.447121] [   T1480] pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]
+[   41.447899] [   T1480] pci 0000:01:00.0: PME# supported from D0 D3hot D3cold
+[   41.448730] [   T1480] pci 0000:01:00.0: Adding to iommu group 21
+[   41.448907] [   T1480] pci 0000:01:00.0: ASPM: default states L0s L1
+[   41.449079] [   T1480] pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+[   41.449173] [   T1480] pci 0000:01:00.0: BAR 2 [mem 0x40300000-0x40307fff 64bit]: assigned
+[   41.452206] [   T1480] ath12k_wifi7_pci 0000:01:00.0: BAR 0 [mem 0x40400000-0x405fffff 64bit]: assigned
+[   41.452396] [   T1480] ath12k_wifi7_pci 0000:01:00.0: Wi-Fi 7 Hardware name: peach hw2.0
+[   41.454812] [   T1480] ath12k_wifi7_pci 0000:01:00.0: MSI vectors: 32
+[   41.517377] [   T1480] mhi mhi0: Requested to power ON
+[   41.517398] [   T1480] mhi mhi0: Power on setup success
+[   41.612747] [     T87] mhi mhi0: Wait for device to enter SBL or Mission mode
+[   42.037344] [    T124] ath12k_wifi7_pci 0000:01:00.0: chip_id 0x2 chip_family 0x4 board_id 0xff soc_id 0x40210200
+[   42.037400] [    T124] ath12k_wifi7_pci 0000:01:00.0: fw_version 0x100effff fw_build_timestamp 2025-05-29 06:58 fw_build_id QC_IMAGE_VERSION_STRING=WLAN.GNG.1.0-03869-QCAGNGSWPL_V1.0_V2.0_SILICONZ-1.108007.3.112099.4
+[   42.037417] [    T124] ath12k_wifi7_pci 0000:01:00.0: fw_caps 0xf
+[   42.055082] [    T124] ath12k_wifi7_pci 0000:01:00.0: qmi TME-L power-on hardware-restricted (stock-compatible, continuing)
+[   42.103257] [    T124] ath12k_wifi7_pci 0000:01:00.0: qmi AUX_UC request succeeded
+[   42.110959] [    T124] ath12k_wifi7_pci 0000:01:00.0: qmi FW_INIT_DONE received: hang_offset_valid=0 hang_offset=0 hang_length_valid=0 hang_length=0 soft_sku_valid=1 soft_sku=0x1
+[   47.888371] [    T938] wlan0: authenticate with 30:5f:77:13:2d:e0 (local address=02:00:82:b2:f8:3a)
+[   47.888427] [    T938] wlan0: send auth to 30:5f:77:13:2d:e0 (try 1/3)
+[   47.902180] [   T1184] wlan0: authenticated
+[   47.910355] [    T189] wlan0: associate with 30:5f:77:13:2d:e0 (try 1/3)
+[   47.915912] [   T1184] wlan0: RX AssocResp from 30:5f:77:13:2d:e0 (capab=0x8001 status=0 aid=2)
+[   47.931943] [   T1184] wlan0: associated
+[  324.343382] [   T1916] ucsi_glink.pmic_glink_ucsi pmic_glink.ucsi.0: PPM init failed, stop trying
