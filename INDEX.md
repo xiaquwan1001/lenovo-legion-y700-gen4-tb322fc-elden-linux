@@ -18,14 +18,15 @@
 > 真缺口 = trixie `iio-sensor-proxy 3.7-3` 无 libssc + 部署层四件未装。**用户态备料已出**（`reports/sensor-libssc-prep-20261126.md`）：
 > Debian testing/unstable **已有官方 SSC 版包**（`iio-sensor-proxy 3.9-1` NEEDED `libssc.so.2` + `libssc 0.4.4-2.1`，ABI 对 trixie 兼容）
 > ⇒ 路线 A 零构建；路线 B 本机交叉构成功。卡点 = udev 规则仍不认 `ssc-accel`（`PITFALLS #451`）。
-> ③ **elden 板 DTS v9 已备料、本地门禁全绿、但未投出**：回应 Krzysztof「cover/changelog 必须明写 waiting on bindings」
+> ③ **elden 板 DTS v9 已投出（2026-11-26T00:21:57Z，3/3 `Result: 250`）**：回应 Krzysztof「cover/changelog 必须明写 waiting on bindings」
 > ⇒ cover 第 12 行专节；补丁 diff 与 v8 逐字节相同；`dt_binding_check` rc=0/5420 DTC、`dtbs_check` elden 诊断 1→0（加 wl2868c binding）。
-> **真发失败 = keyring Login collection 锁定**（`fatal: could not read Password for smtp://…`）⇒ 解锁后一条命令
-> `bash patches/upstream/elden-dts-v9-20261126/SEND.sh --send`。
+> **lore `linux-arm-msm` 三封全命中**（父代理用 Firefox 渲染独立复核；curl 直取/走代理均 Anubis 403）。
+> 沿革：07:00 CST 首次 `--send` 被 keyring Login collection 锁挡住（`fatal: could not read Password for smtp://…`），用户登录图形会话后重跑即通。
+> 台账 = `patches/upstream/elden-dts-v9-20261126/SENT.md`；下一步 = 盯 review（1/2 可先合，2/2 等 7.5-rc1）。
 > ④ **B5 APSS watchdog 静态复核**（`reports/b5-apss-wdt-static-review-20261126.md`）：`0x16410000` 双推收敛（XBL XPU 表 +
 > 同族 `WDT=PDP−0x10000`），vendor DT/reserved-memory **无冲突**，上机判据清单 §4（头号风险 = hyp/TZ 独占则 `readl(WDT_STS)` 同步外部中止）。
 > ⑤ **通信复扫**（`reports/comm-triage-20261126.md`）：dwc3 v16 拿到 sashiko 首个「no issues」；M8/M10 换址补发进档 0 回音；
-> **IMAP 收件侧与 phosh API 因 keyring 锁无法核验（如实记错误码）**。
+> **IMAP 收件侧与 phosh API 因 keyring 锁无法核验（如实记错误码）** ⇒ **2026-11-26T02:4xZ 图形会话已登录（seat0/tty2 + gnome-keyring 在跑）⇒ 这两项下一轮可直接补核**。
 > ⑥ **传感器上机尝试 = 装包成功、出数失败，且 #692 已复现（2026-11-26 08:2x，用户放行后执行）**：`libssc2`/`libssc-bin`/`iio-sensor-proxy 3.9-1` + udev 规则都到位，
 > 但 iio-sensor-proxy 报 **`'registry' sensor unavailable … is hexagonrpcd running?`** ⇒ **registry 由 hexagonrpcd 供给，纯用户态 libssc 绕不开 #692**（早轮设想否证）；
 > 手动 `start hexagonrpcd`（带 `-s`）当场硬崩，又因其 **本来就 enabled** 而我 `unmask` 时未 `disable` ⇒ **5 次「phosh 转圈→关机」启动循环**（`PITFALLS #732`），
@@ -34,6 +35,9 @@
 > ⑦ **传感器落地件已备**：`scripts/deploy-ssc-sensors.sh`（`--check` 只读体检矩阵 / `--from-debian` 官方包 + sha256 / `--dry-run` / `--rollback`，
 > 全程不碰 `hexagonrpcd*`）——放行后一条命令即可上机验 SSC 出数。
 > ⑧ **droidloom Debian 包收尾**：runtime 缺 `libwayland-server0` 实证补齐 + 交叉 `--sysroot` 绝对化（**`PITFALLS #730`**），双架构重建。
+> ⑨ **「插着线却充不进电」已定因并修好（2026-11-26 10:5x CST，`PITFALLS #734` + `reports/usb-charging-dualport-20261126.md`）**：长边数据线（连 PC）+ 短边 PD 线时，ADSP 只从长边 SDP 取电且默认 `ICL=100000` ⇒ 电池 **−770 mA**；
+> 真根因 = **`charge-watch` 服务从未装到设备**（脚本在、unit `not-found`，并根丢启动接线）；三档实测：100 mA −770 mA / **500 mA 仍 −270 mA** / 900 mA **+126…137 mA**。
+> 已装 unit 并 `enable --now`，ICL 被顶到 900 mA 且≤ 2 s 自愈（代价 = 超规范取电、`v_bus` 洼到 4.52 V）。遗留 = 入部署面 + 洼地保护 + 反向接法实测。
 
 > **🆕 2026-11-25 夜 2（四项点名调查轮，零设备：平板不在线）**：4 lane 全收口 + 1 条派生构建 lane。
 > ① **Mobian/phosh 上游化 + 通信**（`reports/mobian-phosh-upstream-20261125.md`）：增量窗口**人类评审 0 封**，机器人给
