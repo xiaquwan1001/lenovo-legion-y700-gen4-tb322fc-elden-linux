@@ -1,0 +1,13 @@
+--- /tmp/v9-dtb.dts	2026-11-26 12:57:58.849318535 +0800
++++ /tmp/v10-dtb.dts	2026-11-26 12:57:58.854318498 +0800
+@@ -794,6 +794,10 @@
+ 					reset-gpios = <0x36 0x7e 0x01>;
+ 					pinctrl-names = "default";
+ 					pinctrl-0 = <0x37>;
++					vin12-supply = <0x38>;
++					vin34-supply = <0x38>;
++					vin5-supply = <0x38>;
++					vin7-supply = <0x38>;
+ 					vsys-supply = <0x38>;
+ 
+ 					regulators {

@@ -47,6 +47,11 @@ checked=0
 while IFS=$'\t' read -r p ph cl sz rg sh nt; do
 	checked=$((checked + 1))
 	pc=${p%/}          # 去掉尾斜杠：`[ -L "build/" ]` 恒假（bash 会跟随后再看），软链判定必须用裸名
+	case "$sz" in *已删*)
+		# 历史行：件已按用户授权删除（体积列标「已删」），只核对「仓库内」形态不再是软链
+		[ -L "$pc" ] && { echo "FAIL: $p 台账标已删，但磁盘上是软链 → $(readlink "$pc")"; fail=1; }
+		continue ;;
+	esac
 	if [ ! -e "$pc" ]; then
 		echo "FAIL: 台账登记但磁盘不存在：$p"; fail=1; continue
 	fi

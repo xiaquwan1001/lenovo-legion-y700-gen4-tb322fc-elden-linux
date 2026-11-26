@@ -1,0 +1,9 @@
+应用：dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4
+应用：arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700 Gen4, a Qualcomm SM8750-based tablet
+44c4370eb3d4 2026-11-26 21:00:00 +0800 arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700 Gen4, a Qualcomm SM8750-based tablet
+ee467f16e0a5 2026-11-26 21:00:00 +0800 dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4
+defconfig rc=0
+  DTC     arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+make[1]: 离开目录“/tmp/v10amb”
+build rc=0
+50f7cede1d01a45f9c1eb647b4577cc4  /tmp/v10amb/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb

@@ -1,0 +1,154 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Thu, 26 Nov 2026 21:00:00 +0800
+Subject: [PATCH v10 0/2] arm64: dts: qcom: sm8750-lenovo-elden: add the Lenovo
+ Legion Y700 Gen4
+
+Adds the device tree for the Lenovo Legion Y700 Gen4 (TB322FC), an SM8750
+tablet, and the board compatible it needs.
+
+v10 changes one thing: the camera PMIC on i2c10 now describes its inputs.
+1/2 is unchanged since v8 and needs no re-review.
+
+Waiting on bindings
+===================
+2/2 waits on willsemi,wl2868c
+  Documentation/devicetree/bindings/regulator/willsemi,wl2868c.yaml
+  Landed as 84e67d2ee13f (binding) and 602f57223457 (driver) in
+  regulator.git for-7.5; not in v7.4-rc3, the base of this series.
+  Merge order: 1/2 has no dependency and can be applied right away, 2/2
+  only after the binding is in the tree.  Taking 1/2 now and 2/2 after
+  7.5-rc1 is fine with me and needs no repost.
+
+  Cost of taking 2/2 early, measured on v7.4-rc3: with the binding applied
+  on top, dtbs_check reports 0 diagnostics for this board; without it,
+  exactly one, "failed to match any schema with compatible:
+  ['willsemi,wl2868c']" on pmic@2f.
+
+The two patches
+===============
+1/2 documents "lenovo,elden" in the Qualcomm board binding.  Without that
+line dtbs_check rejects the board's root node, so a tree that builds still
+fails validation; it is the line v7 forgot.  Unchanged since v8.
+
+2/2 is the board itself, in one commit as asked in the v6 review:
+compatible, chassis type, the GPIO ranges the boot firmware reserves, the
+board clocks the SM8750 dtsi consumes, and the WL2868C camera PMIC on
+i2c10 with the voltages the stock firmware programs.
+
+What v10 changes in 2/2
+=======================
+The WL2868C node declared no input supply although this board drives six
+of its seven outputs, which the binding only allows for inputs whose
+outputs are unused.  It now declares them:
+
+	vin12-supply = <&wl2868c_vsys>;
+	vin34-supply = <&wl2868c_vsys>;
+	vin5-supply  = <&wl2868c_vsys>;
+	vin7-supply  = <&wl2868c_vsys>;
+
+All four point at the same fixed regulator that vsys-supply already used.
+That is not a shortcut: the four LDO inputs and the VSYS pin of this chip
+are fed from the tablet's always-on system rail, and that rail is modelled
+once, as a regulator-fixed without voltage constraints, because the SPMI
+PMICs that generate it are not described yet.  When they are, the rail and
+these properties move to the real regulator in one step, exactly as
+vsys-supply will.  Declaring the same supply phandle for several inputs of
+one chip is the shape the isl9305 binding has used for years
+(Documentation/devicetree/bindings/regulator/isl9305.txt: VINDCD1-supply,
+VINDCD2-supply, VINLDO1-supply and VINLDO2-supply all point at
+&system_power).
+
+VIN6 is not declared, in line with LDO6 being not wired out on this board;
+the LDO6 node is absent too, as in v9.
+
+Note what this does and does not change at runtime.  The driver only
+enables the control supply (vsys, falling back to vin7), so the board
+already worked with the inputs undeclared: the regulator core substitutes
+a dummy supply for an undeclared input and nothing fails.  What the
+properties change is the description: the DT now records where the LDO
+inputs come from instead of leaving that unstated.
+
+Review response: v9 2/2
+=======================
+sashiko posted three [Medium] notes against v9 2/2, all three answered
+here; only the third one needed a change.
+
+1. "missing willsemi,wl2868c binding schema in target tree"
+   True of the base, and deliberate: the binding is 84e67d2ee13f in
+   regulator.git for-7.5 and arrives with the 7.5 merge window.  The
+   dependency and the merge order are at the top of this letter; nothing
+   in this series can change it.
+
+2. "missing core boot and power nodes in sm8750-lenovo-elden.dts"
+   Correct, and out of scope: the SPMI PMICs, the RPMh regulators and the
+   console are the "not described, not claimed" part of this board, as
+   stated since v6.  This series adds the board skeleton and the camera
+   PMIC; a tree with this applied builds and validates but boots nothing
+   by itself.
+
+3. "missing vin*-supply properties on pmic@2f for active LDOs"
+   Accepted, fixed in v10: see "What v10 changes in 2/2".  LDO1, LDO2
+   (VIN12), LDO3, LDO4 (VIN34), LDO5 (VIN5) and LDO7 (VIN7) are all used
+   by this board, so all four inputs are now declared.  The binding keeps
+   them optional because they need not be described when the outputs they
+   feed are unused, which is not this board's case.
+
+Not described, not claimed
+==========================
+Wi-Fi/Bluetooth, camera sensors, ADSP sensors, audio, USB Type-C.  Neither
+the SPMI PMICs, the RPMh regulators nor the console are described, so this
+board description boots nothing by itself; that is the v6 comment, still
+true and not addressed here.
+
+Checks: v7.4-rc3 (aebb727447) worktree, 2026-11-26
+==================================================
+- git apply 1/2, 2/2: clean, no offset, no fuzz; git am on the same base:
+  both commits applied, resulting blobs equal the patch "index" lines
+  (qcom.yaml a32cfb30a1, Makefile e0b65a36c5, board file d8e9ab1272).
+- checkpatch.pl --strict --no-signoff: 1/2 and 2/2 both 0 errors 0
+  warnings 0 checks.
+- dtbs_check with CHECK_DTBS=1 on sm8750-lenovo-elden, sm8750-mtp and
+  sm8750-qrd, with the willsemi,wl2868c binding applied: three builds,
+  0 diagnostics for all three, the board included.
+- DTB of the board differs from v9's only in the five supply properties
+  and the regulator comment: both DTBs decompiled and diffed.
+- No boot claim: the tablet runs a vendor 7.3 kernel and this tree was not
+  booted on it.
+
+Disclosure: prepared with an LLM coding assistant; the trees, the checks
+and every number in this letter were run and read by the author, who is
+responsible for the content.
+
+Qianhui Xu
+---
+
+Changes since v9
+ (v9: https://lore.kernel.org/all/20261126002157.1954799-1-xiaqinghuan@mail.ustc.edu.cn/)
+- 2/2 declares the camera PMIC inputs now: vin12-supply, vin34-supply,
+  vin5-supply and vin7-supply, all pointing at the always-on system rail
+  that vsys-supply already used, plus a comment saying which pins that
+  rail feeds.  Reported against v9 2/2: "missing vin*-supply properties on
+  pmic@2f for active LDOs".  Why the four share one phandle, and what it
+  does and does not change at runtime, is in "What v10 changes in 2/2".
+- The letter answers the other two [Medium] notes of that review (binding
+  absent from the base tree, boot/power nodes absent) in "Review
+  response", and keeps the "Waiting on bindings" section Krzysztof asked
+  for in v8.
+- Nothing else changed: 1/2 is unchanged since v8 and needs no re-review;
+  2/2's compatible, clocks, LDO voltages and reserved GPIO ranges are
+  unchanged since v9.
+
+Qianhui Xu (2):
+  dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4
+  arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700 Gen4, a
+    Qualcomm SM8750-based tablet
+
+ .../devicetree/bindings/arm/qcom.yaml         |   1 +
+ arch/arm64/boot/dts/qcom/Makefile             |   1 +
+ .../boot/dts/qcom/sm8750-lenovo-elden.dts     | 135 ++++++++++++++++++
+ 3 files changed, 137 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts
+
+-- 
+2.53.0

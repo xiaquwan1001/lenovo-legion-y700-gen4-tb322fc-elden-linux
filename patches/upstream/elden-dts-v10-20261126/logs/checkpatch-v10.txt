@@ -1,0 +1,18 @@
+== v10-0001  ==
+total: 0 errors, 0 warnings, 0 checks, 7 lines checked
+
+"[PATCH v10 1/2] dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4" has no obvious style problems and is ready for submission.
+== v10-0002  ==
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+#59: 
+new file mode 100644
+
+total: 0 errors, 1 warnings, 0 checks, 142 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+"[PATCH v10 2/2] arm64: dts: qcom: sm8750-lenovo-elden: add Lenovo Legion Y700" has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.

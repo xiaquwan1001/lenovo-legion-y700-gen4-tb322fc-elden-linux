@@ -1,0 +1,6 @@
+make[1]: 进入目录“/tmp/v10build”
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/sm8750-qrd.dtb
+make[1]: 离开目录“/tmp/v10build”

@@ -8,7 +8,7 @@
 
 | # | 候选 | 可回收 | 可逆性 | 我的建议 |
 |---|---|---|---|---|
-| A | `out/` 三个 Android 镜像构建工作区（`android-slim-v3-20261119` 29 G、`android-min-20261118` 8.5 G、`android-slim-v2b-20261119` 1.1 G） | **38.6 G** | 脚本可重建（~1–2 h，需 super/原厂件）；**删除不可逆** | **推荐删**（保留 `out/min-restore-20261119` 2.5 G 那份不可再生集）；**等你一句话** |
+| A | `out/` 三个 Android 镜像构建工作区（`android-slim-v3-20261119` 29 G、`android-min-20261118` 8.5 G、`android-slim-v2b-20261119` 1.1 G） | **38.6 G** | 脚本可重建（~1–2 h，需 super/原厂件）；**删除不可逆** | **✅ 已执行（2026-11-26 用户授权）**：三件已删，38.6 G 回收；账 = `reports/out-android-purge-20261126.md`，删前 sha 清单 = `reports/artifacts/out-android-purge-20261126.sha256` |
 | B | 内容重复的大件（19 组，sha256 完全相同） | **9.9 G** | `cp -l` 建硬链即回收，物理数据还在（**可逆**） | 谨慎：boot/镜像件**可能被脚本原地改写** ⇒ 就地改写会同时破坏两份。建议只对 `backup/` 内两两重复做硬链，`out/`/`runs/` 的按 A 一起清 |
 | C | `.pi/sessions/`（378 个 jsonl，1.0 G） | **~0.45 G** | gzip 实测最大件降到 43%；**需先确认 `sessfind`/`session-librarian` 能读 .gz** | 先做 1 个文件的工具兼容验证，再批量（本轮未动） |
 | D | `reports/artifacts/`（2.0 G） | ~0.3 G | 归档（顶部 8 目录 ≈ 300 MB，结论已入 md） | 低优先：先 A，再谈这个 |

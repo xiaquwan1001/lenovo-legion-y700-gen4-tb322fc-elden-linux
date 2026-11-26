@@ -1,0 +1,9 @@
+apply 路线（/tmp/v10build，G4）：
+50f7cede1d01a45f9c1eb647b4577cc4  arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+ecc158767f04c8facf5fde6735b339da  arch/arm64/boot/dts/qcom/sm8750-mtp.dtb
+
+am 路线（/tmp/v10amb，G6）：
+50f7cede1d01a45f9c1eb647b4577cc4  arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dtb
+
+v9 记录值（对照）：4707d3defd057e70e3aa5216320ac777 / ecc158767f04c8facf5fde6735b339da
+v9 复现（/tmp/v9b，本机重编同基线同补丁）：4707d3defd057e70e3aa5216320ac777

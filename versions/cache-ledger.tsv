@@ -25,11 +25,11 @@ geekidos-linux/	~/elden-cache/src/geekidos-linux	clone	6.4G	`git fetch`；slim b
 Y700-elden-linux/	~/elden-cache/src/Y700-elden-linux	clone	28M	重新 clone	同机可共享 / 可删	旧迭代上游 clone
 external/	~/elden-cache/src/external	workdir	895M	按需重取（AOSP 头 / VNDK / ext-repos 克隆）	**同机跨项目可共享**	`$HOME` 七条软链（LTBox/alpine-sysroot/aosp-vndk33/ext-repos/lc-cross/mesa-out/phoc-work）指向其子目录
 dl-cam/	仓库内	workdir	630M	AOSP/NDK 头 + 中间产物重取（配方见 `TASKS/sessions/`）	同机可共享（头/克隆）+ 可再生	仓库内 = 231 个纳管源件（tracked）+ 12 条软链指向 `~/elden-cache/src/dl-cam/{aosp,donor,gen,gen-aidl,gen-aidl-src,gen-aidl.sh,hw-interfaces,libhidl,out-cam,sysroot,vdump,vendor-cam-l1d.img}`
-out/android-slim-v3-20261119/	仓库内	cache-build	29G	`scripts/android-slim-v3-build.sh`（分片重打包，~1–2 h，需 super/原厂件）	项目私有	**删前需用户批准**；无 sha 账（非候选启动件），是 Android 镜像构建工作区
-out/android-min-20261118/	仓库内	cache-build	8.5G	`scripts/android-min-build.sh`（~40–80 min）	项目私有	**删前需用户批准**
+out/android-slim-v3-20261119/	仓库内	cache-build	0（已删）	`scripts/android-slim-v3-build.sh`（分片重打包，~1–2 h，需 super/原厂件）	项目私有	**2026-11-26 用户授权删除**；清单 = `reports/artifacts/out-android-purge-20261126.sha256`
+out/android-min-20261118/	仓库内	cache-build	0（已删）	`scripts/android-min-build.sh`（~40–80 min）	项目私有	**2026-11-26 用户授权删除**
 out/min-restore-20261119/	仓库内	artifact	2.5G	**不可再生**（最小可恢复集：含已验候选件 `boot-nodp-linux.img` 等，见 doctor §29 账）	项目私有	删前先看 `versions/out-candidate-sha.tsv`
-out/android-slim-v2b-20261119/	仓库内	cache-build	1.1G	`scripts/android-slim-v2-plan.sh` + `android-slim-v3-build.sh`	项目私有	可删（v3 已取代）
-out/	仓库内	artifact	45G	**件不可再生**（造件 sha 账 = `versions/out-candidate-sha.tsv`，门 doctor §23/§25/§29）；其中 39 G 是 Android 镜像构建工作区（见下面三行，可再生）	项目私有	归档只走 `scripts/out-archive.py`（默认 dry-run；2026-11-26 dry-run = 8 件/572 MiB 待归档）；39 G 工作区删除**需用户批准**
+out/android-slim-v2b-20261119/	仓库内	cache-build	0（已删）	`scripts/android-slim-v2-plan.sh` + `android-slim-v3-build.sh`	项目私有	**2026-11-26 用户授权删除**（v3 已取代）
+out/	仓库内	artifact	7.1G	**件不可再生**（造件 sha 账 = `versions/out-candidate-sha.tsv`，门 doctor §23/§25/§29）；其中 39 G 曾是 Android 镜像构建工作区（2026-11-26 已删，见下面三行）	项目私有	归档只走 `scripts/out-archive.py`（默认 dry-run；2026-11-26 dry-run = 8 件/572 MiB 待归档）；39 G 工作区删除**需用户批准**
 backup/	仓库内	backup	29G	**不可再生**（原厂 dump/固件/线刷包）	**禁止外发**	删前必须云盘或 bundle 兜底（RESOURCES §3）
 bootslot-b/	仓库内	secret	1.8G	可重签（需 `bootslot-b/avb.key`）	**含私钥，禁止外发**	见 doctor §26
 assets/	仓库内	asset	323M	`scripts/android-assets-extract-20261119.py` 可重建	**禁止外发**（专有固件）	见 reports/android-assets-20261119.md
