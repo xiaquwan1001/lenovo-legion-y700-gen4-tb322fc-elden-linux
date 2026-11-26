@@ -1,0 +1,54 @@
+Scope of this series, and what follows
+======================================
+2/2 adds the board skeleton and the camera PMIC, and nothing else.  This is
+deliberate and it is unchanged since v6: the tree this series adds has never
+been booted on the tablet, which runs a vendor 7.3 kernel with the vendor
+device tree.  Everything in 2/2 is therefore what can be checked by building
+it and running it through the schema, and nothing more.
+
+What is where:
+
+  board clocks, reserved GPIO ranges, camera PMIC on i2c10   this series, 2/2
+  SPMI PMICs and the RPMh regulators under apps_rsc          next series
+  console, storage (UFS), USB                                after that
+  Wi-Fi/Bluetooth, sensors, audio, display                   later, each with
+                                                             its own bindings
+
+The power and storage descriptions are not here because they cannot be
+exercised from this tree yet, and because two series they depend on are still
+in flight: the dual-role USB controller (PCIE/USB-C) series and the pstore
+reserved-memory work.  In numbers: the SPMI/RPMh part alone is about 450 lines
+of regulator description on this board, with no consumer in this file.
+
+Nothing in this letter asks the reader to take the missing parts on trust:
+a kernel built with this device tree comes up and can be inspected, but it
+does not reach a console, a root file system or a USB port.  That is the same
+sentence as v6 and it is still true.
+
+---
+
+Changelog line for 2/2 (put this in the tear-off area, right under the
+"Changes in vN:" heading):
+
+- Scope is unchanged: this commit is the board skeleton and the camera PMIC
+  only.  SPMI PMICs and RPMh regulators follow in a "board power" series,
+  console/storage/USB after that; see "Scope of this series, and what
+  follows" in the cover letter.
+
+Optional single line for the "Waiting on bindings" section (hardens the
+evidence without adding prose):
+
+  The binding is in next-20261125 already and therefore in mainline from the
+  7.5 merge window; the base of this series, v7.4-rc3, predates it.  Nothing
+  here can change that, and taking 2/2 after 7.5-rc1 needs no repost.
+
+---
+
+Editor notes (do not paste into the letter):
+- Keep the section ABOVE or right next to "Waiting on bindings"; Krzysztof
+  asked for the dependency statement to be up front, not at the end.
+- Do not argue with the AI reviewer by name; state scope, not rebuttals.
+- The 450-line figure is from the downstream board file, apps_rsc block,
+  lines 855-1299 (see reports/dts-v10-sashiko-20261126.md section 5.2).
+- Do not claim boot, do not claim a date, do not promise which series comes
+  first between "power" and "console/storage/USB" if that is still open.
