@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Thu, 26 Nov 2026 21:00:00 +0800
+Subject: [PATCH v10 1/2] dt-bindings: arm: qcom: document the Lenovo Legion Y700 Gen4
+
+The Lenovo Legion Y700 Gen4 is an SM8750 tablet that ships with the
+lenovo,elden board compatible. Add it to the SM8750 section of the
+Qualcomm board binding.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+Changes in v10:
+- Unchanged. The copy posted as v9 1/2 was Acked-by Krzysztof Kozlowski;
+  the trailer is not part of this resend.
+ Documentation/devicetree/bindings/arm/qcom.yaml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/arm/qcom.yaml b/Documentation/devicetree/bindings/arm/qcom.yaml
+index 121ca557ce..a32cfb30a1 100644
+--- a/Documentation/devicetree/bindings/arm/qcom.yaml
++++ b/Documentation/devicetree/bindings/arm/qcom.yaml
+@@ -1220,6 +1220,7 @@ properties:
+ 
+       - items:
+           - enum:
++              - lenovo,elden
+               - qcom,sm8750-mtp
+               - qcom,sm8750-qrd
+           - const: qcom,sm8750
+-- 
+2.53.0
+
