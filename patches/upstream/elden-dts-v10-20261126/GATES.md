@@ -233,3 +233,20 @@ build rc=0
 
 > 附带一条工具事实：`git worktree add /tmp/v10check` 在 `/tmp` 被清空后会留下「丢失但已注册」的
 > worktree，必须 `git worktree prune` 才能重建（否则 `fatal: 是一个丢失但已经注册的工作区`）。
+
+### 12.4 补 `Acked-by`（2026-11-26 投前）
+
+Krzysztof 对 v8 `1/2` 的 `Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>`
+（`2026-11-25T12:04:02Z`）**早于 v9 投出约 12 h** 却没进 v9 ⇒ 本版补进 `1/2` 的 `Signed-off-by` 之后，
+`Changes in v10` 一并写明。重跑：`git apply --check` rc=0、checkpatch `0E/0W/0C`（7 行）、`SHA256SUMS` 重算。
+
+### 12.5 投出后复盘：两处未同步（已记入 SENT.md）
+
+1. **cover 未同步措辞**：commit/DTS 注释改成了 stand-in，但 `cover.txt` 仍写「four LDO inputs and the VSYS pin … are fed from
+   the tablet's always-on system rail … not a shortcut」= **推断按事实陈述**。信已发出，无法撤回；
+   处置 = 记录 + 被问时如实回答「无原理图，是建模假设，DTS 内已写明 stand-in」。
+2. **cover 的 checkpatch 说法比实测乐观**：cover 写「1/2 and 2/2 both 0 errors 0 warnings 0 checks」，
+   实测 2/2 = **0E/1W/0C**（MAINTAINERS 提示）。以本文 §12.3 为准。
+
+**流程教训**：改「补丁正文措辞」时必须把 **cover/letter** 一起扫（`grep -n '<删除的原句片段>' cover.txt`），
+否则最显眼的那封信恰好留着被删掉的说法。下一系列投前把这一条加进 SEND.sh 断言。

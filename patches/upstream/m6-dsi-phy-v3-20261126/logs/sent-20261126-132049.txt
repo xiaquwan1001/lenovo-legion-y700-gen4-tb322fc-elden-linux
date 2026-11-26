@@ -1,0 +1,40 @@
+0001-drm-msm-dsi-phy-program-PLL_SYSTEM_MUXES-on-the-firs.patch
+(mbox) Adding cc: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn> from line 'From: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>'
+(body) Adding cc: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn> from line 'Signed-off-by: Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>'
+(body) Adding cc: Jianfeng Liu <liujianfeng1994@gmail.com> from line 'Tested-by: Jianfeng Liu <liujianfeng1994@gmail.com>'
+OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<dri-devel@lists.freedesktop.org>
+RCPT TO:<linux-arm-msm@vger.kernel.org>
+RCPT TO:<freedreno@lists.freedesktop.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+RCPT TO:<robin.clark@oss.qualcomm.com>
+RCPT TO:<lumag@kernel.org>
+RCPT TO:<abhinav.kumar@linux.dev>
+RCPT TO:<jesszhan0024@gmail.com>
+RCPT TO:<sean@poorly.run>
+RCPT TO:<marijn.suijten@somainline.org>
+RCPT TO:<liujianfeng1994@gmail.com>
+RCPT TO:<xiaqinghuan@mail.ustc.edu.cn>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: dri-devel@lists.freedesktop.org,
+	linux-arm-msm@vger.kernel.org
+Cc: freedreno@lists.freedesktop.org,
+	linux-kernel@vger.kernel.org,
+	robin.clark@oss.qualcomm.com,
+	lumag@kernel.org,
+	abhinav.kumar@linux.dev,
+	jesszhan0024@gmail.com,
+	sean@poorly.run,
+	marijn.suijten@somainline.org,
+	liujianfeng1994@gmail.com,
+	Xu Qianhui <xiaqinghuan@mail.ustc.edu.cn>
+Subject: [PATCH v3] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable
+Date: Thu, 26 Nov 2026 13:20:49 +0800
+Message-ID: <20261126052049.1544229-1-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: 250 

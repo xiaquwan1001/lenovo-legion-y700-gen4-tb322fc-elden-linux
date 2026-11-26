@@ -8,9 +8,11 @@ lenovo,elden board compatible. Add it to the SM8750 section of the
 Qualcomm board binding.
 
 Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
 ---
 Changes in v10:
-- Unchanged since v9.
+- Unchanged since v9.  Carry the Acked-by Krzysztof gave on v8 1/2
+  (2026-11-25T12:04:02Z): v9 was posted after it but missed the tag.
  Documentation/devicetree/bindings/arm/qcom.yaml | 1 +
  1 file changed, 1 insertion(+)
 

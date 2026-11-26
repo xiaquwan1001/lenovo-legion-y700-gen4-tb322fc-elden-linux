@@ -3,5 +3,5 @@
 0ec779aaf56aab9176af3832764f0526712cd7ada17a6b1b36c1d2272decfe46  SEND.sh
 81170d874d9ea82627cebc8a30806504ac9c4aec5e4a8e788081a3ff4f8e846a  cover.txt
 b3f84bcb955672209e03aa17ee10e8cecc1f0f83b147b928392d7dcde11780e1  v10-0000-cover-letter.patch
-ecee4c8d030533011b9e5b870471f86eefbb1df60348b2f1a4849911a1b549bf  v10-0001-dt-bindings-arm-qcom-document-the-Lenovo-Legion-Y700.patch
+2c5b0bee548f26f8033b67393724897a89e11d86f6680da5737baeffa2a37306  v10-0001-dt-bindings-arm-qcom-document-the-Lenovo-Legion-Y700.patch
 32fc2ac8340c7ef410a3f7f541dccd48eb3c596205cd98ca692c8a02773a8abe  v10-0002-arm64-dts-qcom-sm8750-lenovo-elden-add-Lenovo-Legion-Y700-Gen4.patch
