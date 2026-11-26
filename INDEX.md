@@ -11,6 +11,9 @@
 > **★★ 2026-11-27（收口）：主线 Linux 上传感器已`可用`** —— `HasAccelerometer/HasAmbientLight/HasProximity` 三 **true**、
 > `ssccli --sensor accelerometer` 连续出值（X≈-1.17 Y≈-0.66 Z≈9.55 m/s²）。全账 = `reports/sensors-ssc-restored-20261127.md`
 > （真因链：droid-juicer 配置 0 字节占位 + `hexagonrpcd` 的 `-R` 布局不匹配 ⇒ DSP 断言 ⇒ 本板整机复位；换真 vendor 配置 + 扁平 `-R` 树 + udev/代理接线即恢复。新 `PITFALLS #741`）。
+> **已做到开机自动生效**：`elden-sensorspd.service`（`/usr/local/bin/hexagonrpcd-patched` + 扁平 `-R` 树）+ `iio-sensor-proxy` enabled，
+> 真重启后三属性仍 true、`ssccli` 连续出值。已知残留：attach 末尾一次 `free(): invalid next size`（systemd 自动重拉，不影响出数），
+> 下一步用 ASan 定位 + 真写后端（registry 持久化）。全账 = `reports/sensors-ssc-persistent-20261127.md`。
 
 > **🆕 2026-11-27 06:0x（无人值守轮：`#692` 后续① 收口 + D10 复扫 + ABL logfs 判据纠偏）**：
 > ① **「补齐 ADSP 的 PD 依赖」被否证（不做）**：主线 PDR + in-kernel pd-mapper 齐全（`qcom_pd_mapper.c:665` 把 `qcom,sm8750`

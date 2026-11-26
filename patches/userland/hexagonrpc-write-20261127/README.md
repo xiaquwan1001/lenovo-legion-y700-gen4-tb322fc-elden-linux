@@ -4,11 +4,13 @@
 - 动机：`reports/hexagonrpc-upstream-registry-write-20261127.md`。SM8750 的 sensors PD 在 attach 时要写
   `/persist/sensors/registry/**`，v0.5.0 的 `apps_std_fopen_with_env()` 对 `w`/`a` 直接 `AEE_EUNSUPPORTED` ⇒ DSP 断言
   （我们这代板子表现为**整机静默复位**，`PITFALLS #737`；同族 X1P42100 表现为 ADSP SSR，见上游 issue #29）。
-- 本补丁做四件（**87 行**，最小面）：
+- 本补丁做六件（**369 行 diff / 约 190 行代码**）：
   1. `apps_std_fopen_with_env()`：`w`/`a` 不再拒绝（仍以只读方式打开；写内容**不落盘**）。
   2. 新增 `apps_std_fwrite`（method 5）与 `apps_std_fwrite_def`：恒返回 `written = buf_size, is_eof = 0`（假成功）。
   3. `listener.c`：输入缓冲 `char inbufs[256]` → **堆上 512 KiB**（`HRPC_INBUFS_MAX`），>256 B 的 registry 内容不再被拒。
   4. `rpcd_builder.c`：`/persist/sensors/registry/` 下**补挂** `sns_reg_version`、`parsed_file_list.csv`（原只挂 `registry/` 子目录）。
+  5. 新增 `fopen_fd`(34)/`fclose_fd`(35)/`fopen_with_env_fd`(36) 三个方法的实现（DSP 在 attach 末尾必调 36，未实现会让服务退出）。
+  6. `apps_std_interface.n_procs` 32 → 57（否则 method 34–36 在查表前就被当越界拒掉）。
 - 验证（本机）：`meson setup /tmp/hrpcd-build . && ninja -C /tmp/hrpcd-build` **全绿**；`meson test` **3/3 OK**
   （`iobuffer`/`hexagonfs`/`hexagonrpc`）。**未上机、未交叉编译到 aarch64。**
 - 已知局限（务必先读再上机）：

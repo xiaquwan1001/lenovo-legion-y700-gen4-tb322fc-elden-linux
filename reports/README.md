@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：702
+- 报告总数：703
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -30,10 +30,10 @@
 | `m6` | 9 | `m6-dsi-phy-v3-20261126.md` |
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
 | `script` | 8 | `script-audit-adb-20261118.md` |
+| `sensors` | 8 | `sensors-692-attach-crash-serial-20261127.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
 | `camera` | 7 | `camera-restore-20261121.md` |
 | `scripts` | 7 | `scripts-hardening-3-20261123.md` |
-| `sensors` | 7 | `sensors-692-attach-crash-serial-20261127.md` |
 | `userland` | 7 | `userland-drift-audit-20261121.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
@@ -638,6 +638,17 @@
 - `script-tidy-20261106.md` — 脚本 / 工具整理（2026-11-06 第四轮）
 - `script-audit-20261105.md` — 脚本工具审计与提速（2026-11-05）
 
+## `sensors`（8）
+
+- `sensors-692-attach-crash-serial-20261127.md` — `#692` 上机两发（2026-11-27）+ **串口第一次抓到崩溃现场**：Linux 看到了 ADSP fatal error 并进入 SSR recovery，随后 ms 级整机复位
+- `sensors-692-file-root-20261127.md` — `#692` 又推进两层：`-R` 文件树布局对上了，但**给 DSP 的 sensor config/registry 全是 0 字节占位**（+ 一条会毁掉二进制的采集坑）
+- `sensors-692-real-configs-20261127.md` — `#692` 突破：换上**真 vendor sensor 配置**后，`-s` 不再复位整机（ADSP 存活）
+- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
+- `sensors-ssc-persistent-20261127.md` — 传感器"开机自动恢复"落地 + 一个已知堆损坏（`free(): invalid next size`）
+- `sensors-ssc-restored-20261127.md` — ★ 传感器回来了：主线 Linux 上 SSC 三属性全 true + `ssccli` 出真值（2026-11-27 收口）
+- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
+- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
+
 ## `wl2868c`（8）
 
 - `wl2868c-v10-landed-20261111.md` — wl2868c v10 落地 + 投递报告（2026-11-11）
@@ -668,16 +679,6 @@
 - `scripts-hardening-2-20261121.md` — scripts-hardening-2-20261121.md — 脚本整改批 2（D5 小批：build-kernel 守卫假阳性 + 3 个 BROKEN 加 #701 门）
 - `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
 - `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
-
-## `sensors`（7）
-
-- `sensors-692-attach-crash-serial-20261127.md` — `#692` 上机两发（2026-11-27）+ **串口第一次抓到崩溃现场**：Linux 看到了 ADSP fatal error 并进入 SSR recovery，随后 ms 级整机复位
-- `sensors-692-file-root-20261127.md` — `#692` 又推进两层：`-R` 文件树布局对上了，但**给 DSP 的 sensor config/registry 全是 0 字节占位**（+ 一条会毁掉二进制的采集坑）
-- `sensors-692-real-configs-20261127.md` — `#692` 突破：换上**真 vendor sensor 配置**后，`-s` 不再复位整机（ADSP 存活）
-- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
-- `sensors-ssc-restored-20261127.md` — ★ 传感器回来了：主线 Linux 上 SSC 三属性全 true + `ssccli` 出真值（2026-11-27 收口）
-- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
-- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
 
 ## `userland`（7）
 

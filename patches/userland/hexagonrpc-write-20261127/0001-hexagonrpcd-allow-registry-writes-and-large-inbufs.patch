@@ -1,8 +1,8 @@
 diff --git a/hexagonrpcd/apps_std.c b/hexagonrpcd/apps_std.c
-index 7172bf0..01adb34 100644
+index 7172bf0..0e584d6 100644
 --- a/hexagonrpcd/apps_std.c
 +++ b/hexagonrpcd/apps_std.c
-@@ -120,6 +120,35 @@ static uint32_t apps_std_fread(void *data,
+@@ -120,6 +120,106 @@ static uint32_t apps_std_fread(void *data,
  	return 0;
  }
  
@@ -35,10 +35,81 @@ index 7172bf0..01adb34 100644
 +	return 0;
 +}
 +
++static uint32_t apps_std_fopen_fd(void *data,
++				  const struct fastrpc_io_buffer *inbufs,
++				  struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	uint32_t *out = outbufs[0].p;
++	int fd;
++
++	fd = hexagonfs_openat(ctx->fds, ctx->rootfd, ctx->rootfd, inbufs[0].p);
++	if (fd < 0) {
++		fprintf(stderr, "Could not open %s: %s\n",
++				(const char *) inbufs[0].p, strerror(errno));
++		return AEE_EFAILED;
++	}
++
++	out[0] = fd;
++	out[1] = 0;
++
++	return 0;
++}
++
++static uint32_t apps_std_fclose_fd(void *data,
++				   const struct fastrpc_io_buffer *inbufs,
++				   struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const uint32_t *fd = inbufs[0].p;
++
++	return hexagonfs_close(ctx->fds, *fd) ? AEE_EFAILED : 0;
++}
++
++static uint32_t apps_std_fopen_with_env_fd(void *data,
++					   const struct fastrpc_io_buffer *inbufs,
++					   struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	uint32_t *out = outbufs[0].p;
++	char rw_mode;
++	int dirfd, fd;
++
++	rw_mode = ((const char *) inbufs[3].p)[0];
++	if (rw_mode == 'w' || rw_mode == 'a')
++		fprintf(stderr, "Opening %s for writing (writes are discarded)\n",
++				(const char *) inbufs[2].p);
++
++	if (!strcmp(inbufs[0].p, "ADSP_LIBRARY_PATH")) {
++		dirfd = ctx->adsp_library_dirfd;
++	} else if (!strcmp(inbufs[0].p, "ADSP_AVS_CFG_PATH")) {
++		dirfd = ctx->adsp_avs_cfg_dirfd;
++	} else {
++		fprintf(stderr, "Unknown search directory %s\n",
++				(const char *) inbufs[0].p);
++		return AEE_EBADPARM;
++	}
++
++	if (dirfd < 0)
++		return AEE_EFAILED;
++
++	fd = hexagonfs_openat(ctx->fds, ctx->rootfd, dirfd, inbufs[2].p);
++	if (fd < 0) {
++		fprintf(stderr, "Could not open %s: %s\n",
++				(const char *) inbufs[2].p, strerror(errno));
++		return AEE_EFAILED;
++	}
++
++	out[0] = fd;
++	out[1] = 0;
++
++	return 0;
++}
++
  static uint32_t apps_std_fseek(void *data,
  			       const struct fastrpc_io_buffer *inbufs,
  			       struct fastrpc_io_buffer *outbufs)
-@@ -167,9 +196,12 @@ static uint32_t apps_std_fopen_with_env(void *data,
+@@ -167,9 +267,12 @@ static uint32_t apps_std_fopen_with_env(void *data,
  
  	rw_mode = ((const char *) inbufs[4].p)[0];
  	if (rw_mode == 'w' || rw_mode == 'a') {
@@ -53,7 +124,7 @@ index 7172bf0..01adb34 100644
  	}
  
  	if (!strcmp(inbufs[1].p, "ADSP_LIBRARY_PATH")) {
-@@ -423,7 +455,10 @@ static const struct fastrpc_function_impl apps_std_procs[] = {
+@@ -423,7 +526,10 @@ static const struct fastrpc_function_impl apps_std_procs[] = {
  	{ .def = NULL, .impl = NULL, },
  	{ .def = NULL, .impl = NULL, },
  	{ .def = NULL, .impl = NULL, },
@@ -65,11 +136,35 @@ index 7172bf0..01adb34 100644
  	{
  		.def = &apps_std_fseek_def,
  		.impl = apps_std_fseek,
+@@ -465,10 +571,22 @@ static const struct fastrpc_function_impl apps_std_procs[] = {
+ 		.def = &apps_std_stat_def,
+ 		.impl = apps_std_stat,
+ 	},
++	{
++		.def = &apps_std_fopen_fd_def,
++		.impl = apps_std_fopen_fd,
++	},
++	{
++		.def = &apps_std_fclose_fd_def,
++		.impl = apps_std_fclose_fd,
++	},
++	{
++		.def = &apps_std_fopen_with_env_fd_def,
++		.impl = apps_std_fopen_with_env_fd,
++	},
+ };
+ 
+ const struct fastrpc_interface apps_std_interface = {
+ 	.name = "apps_std",
+-	.n_procs = 32,
++	.n_procs = 57,
+ 	.procs = apps_std_procs,
+ };
 diff --git a/hexagonrpcd/interface/apps_std.c b/hexagonrpcd/interface/apps_std.c
-index 67b3ace..2a04d6d 100644
+index 67b3ace..2173e5b 100644
 --- a/hexagonrpcd/interface/apps_std.c
 +++ b/hexagonrpcd/interface/apps_std.c
-@@ -75,6 +75,22 @@ const struct hrpc_method_def_interp4 apps_std_fread_def = {
+@@ -75,6 +75,66 @@ const struct hrpc_method_def_interp4 apps_std_fread_def = {
  	.inner_types = NULL,
  };
  
@@ -89,11 +184,55 @@ index 67b3ace..2a04d6d 100644
 +	.inner_types = NULL,
 +};
 +
++static struct hrpc_arg_def_interp4 apps_std_fopen_fd_args[] = {
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++};
++
++const struct hrpc_method_def_interp4 apps_std_fopen_fd_def = {
++	.msg_id = 34,
++	.n_args = HRPC_ARRAY_SIZE(apps_std_fopen_fd_args),
++	.args = apps_std_fopen_fd_args,
++	.n_inner_types = 0,
++	.inner_types = NULL,
++};
++
++static struct hrpc_arg_def_interp4 apps_std_fclose_fd_args[] = {
++	{ HRPC_ARG_WORD, sizeof(uint32_t) },
++};
++
++const struct hrpc_method_def_interp4 apps_std_fclose_fd_def = {
++	.msg_id = 35,
++	.n_args = HRPC_ARRAY_SIZE(apps_std_fclose_fd_args),
++	.args = apps_std_fclose_fd_args,
++	.n_inner_types = 0,
++	.inner_types = NULL,
++};
++
++static struct hrpc_arg_def_interp4 apps_std_fopen_with_env_fd_args[] = {
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++};
++
++const struct hrpc_method_def_interp4 apps_std_fopen_with_env_fd_def = {
++	.msg_id = 36,
++	.n_args = HRPC_ARRAY_SIZE(apps_std_fopen_with_env_fd_args),
++	.args = apps_std_fopen_with_env_fd_args,
++	.n_inner_types = 0,
++	.inner_types = NULL,
++};
++
  static struct hrpc_arg_def_interp4 apps_std_fseek_args[] = {
  	{ HRPC_ARG_WORD, sizeof(uint32_t) },
  	{ HRPC_ARG_WORD, sizeof(uint32_t) },
 diff --git a/hexagonrpcd/interface/apps_std.h b/hexagonrpcd/interface/apps_std.h
-index b80a1ca..a333c35 100644
+index b80a1ca..51512d6 100644
 --- a/hexagonrpcd/interface/apps_std.h
 +++ b/hexagonrpcd/interface/apps_std.h
 @@ -28,6 +28,7 @@ extern struct hrpc_method_def_interp4 apps_std_freopen_def;
@@ -104,6 +243,15 @@ index b80a1ca..a333c35 100644
  extern struct hrpc_method_def_interp4 apps_std_fseek_def;
  extern struct hrpc_method_def_interp4 apps_std_fopen_with_env_def;
  extern struct hrpc_method_def_interp4 apps_std_opendir_def;
+@@ -35,5 +36,8 @@ extern struct hrpc_method_def_interp4 apps_std_closedir_def;
+ extern struct hrpc_method_def_interp4 apps_std_readdir_def;
+ extern struct hrpc_method_def_interp4 apps_std_mkdir_def;
+ extern struct hrpc_method_def_interp4 apps_std_stat_def;
++extern struct hrpc_method_def_interp4 apps_std_fopen_fd_def;
++extern struct hrpc_method_def_interp4 apps_std_fclose_fd_def;
++extern struct hrpc_method_def_interp4 apps_std_fopen_with_env_fd_def;
+ 
+ #endif /* INTERFACE_APPS_STD_H */
 diff --git a/hexagonrpcd/listener.c b/hexagonrpcd/listener.c
 index 3414974..afb4cb6 100644
 --- a/hexagonrpcd/listener.c
@@ -209,3 +357,13 @@ index d374958..d2941b2 100644
  					)
  				)
  		      );
+diff --git a/libhexagonrpc/meson.build b/libhexagonrpc/meson.build
+index 6811853..56e2a30 100644
+--- a/libhexagonrpc/meson.build
++++ b/libhexagonrpc/meson.build
+@@ -1,4 +1,4 @@
+-libhexagonrpc = shared_library('hexagonrpc',
++libhexagonrpc = library('hexagonrpc',
+   'error.c',
+   'handle.c',
+   'hexagonrpc.c',
