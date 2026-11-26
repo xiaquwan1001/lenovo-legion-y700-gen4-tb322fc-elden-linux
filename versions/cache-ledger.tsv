@@ -15,6 +15,10 @@
 #   secret       含私钥/签名件（禁止外发）
 #   log          日志/回执工作区
 # 判据：`bash scripts/cache-audit.sh --check`（存在性 + 物理根 + 软链指向一致）；体积现查 `--sizes`。
+# 仓库外但属于本项目的缓存（不进本表行，故不受 cache-audit 检查；口径同源）：
+#   `~/.cache/ccache-elden`  编译缓存 19 G（`scripts/env-build.sh`；2026-11-26 上限 20 G→60 G，
+#                            依据 = 99.94% 占满 + 431 次 cleanup + 命中率 23.7%）；**跨内核树可复用**，删了只会慢
+#   `~/toolchains/`          aarch64 交叉工具链（musl 323 M）；全机共享，不属本仓
 path	physical	class	size	regen	share	note
 build/	~/elden-cache/build/	cache-build	36G	`scripts/build-kernel.sh`（源码 + config 重编，~30–60 min）	项目私有（同机同线可复用；与 .config/UTS 绑定）	删前先 bundle + 导 diff（RESOURCES §3）
 geekidos-linux/	~/elden-cache/src/geekidos-linux	clone	6.4G	`git fetch`；slim bundle 恢复配方 = `versions/layout.tsv` 表头注释	**同机可共享**	上游 GEEKiDoS/linux，供 vk 版本账/DTB 指纹反查

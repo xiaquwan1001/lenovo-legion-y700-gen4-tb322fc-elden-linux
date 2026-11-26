@@ -14,7 +14,9 @@ export PATH="$HOME/bin:$PATH"
 : "${ROOT:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 : "${ARCH:=arm64}"
 : "${CCACHE_DIR:=$HOME/.cache/ccache-elden}"
-: "${CCACHE_MAXSIZE:=20G}"
+: "${CCACHE_MAXSIZE:=60G}"   # 2026-11-26 实测：20 G 上限被吃满（99.94%）、累计 431 次 cleanup、
+#                     命中率仅 23.7% ⇒ 容量不足在自我驱逐。60 G 的依据 = 现占用 19 G + 一次全量
+#                     7.3/7.4 树对象约 15–20 G（本机 / 203 G 空闲）。调小请先看 `ccache -s` 的 Cleanups。
 
 # Reproducibility metadata baked into `uname -v`.
 : "${KBUILD_BUILD_USER:=elden}"

@@ -239,7 +239,8 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 - **纳管（track）**：文档、脚本、内核补丁与 config、AI 记忆/技能/任务、小体积证据。
 - **排除（ignore）**：上游 clone、构建产物、可再生成物、大二进制 dump、运行时状态、设备敏感数据。
 - git 仓库根 = 本目录；分支 `main`。上游内核树 `geekidos-linux/` **不是** submodule，其进度以 `patches/` 为准。
-- **缓存与工作区的归属（2026-11-26 起）**：可再生/同机可共享的大件（内核构建树 `build/`、上游克隆 `geekidos-linux/` `Y700-elden-linux/`、第三方工作区 `external/`、相机交叉编译 `dl-cam/`）物理在 **`~/elden-cache/`**，仓库里只有软链或纳管源件；**「能不能删 / 能不能共享 / 怎么重建」只读 `versions/cache-ledger.tsv`**（核对 = `scripts/cache-audit.sh --check`，布局 zone=cache 见 `versions/layout.tsv`）。剩余空间候选（`out/` 39 G 可再生工作区、19 组重复 9.9 G、`.pi/sessions` 压缩）= `reports/disk-audit-20261126.md`（只读审计，删除需用户批准）。
+- **缓存与工作区的归属（2026-11-26 起）**：可再生/同机可共享的大件（内核构建树 `build/`、上游克隆 `geekidos-linux/` `Y700-elden-linux/`、第三方工作区 `external/`、相机交叉编译 `dl-cam/`）物理在 **`~/elden-cache/`**，仓库里只有软链或纳管源件；**「能不能删 / 能不能共享 / 怎么重建」只读 `versions/cache-ledger.tsv`**（核对 = `scripts/cache-audit.sh --check`，布局 zone=cache 见 `versions/layout.tsv`）。
+  仓库外的同类缓存：`~/.cache/ccache-elden`（编译缓存 19 G，`scripts/env-build.sh` 上限已按实测 20 G→60 G）、`~/toolchains/`（aarch64 交叉工具链，全机共享）——两者删掉只影响速度，不影响正确性。剩余空间候选（`out/` 39 G 可再生工作区、19 组重复 9.9 G、`.pi/sessions` 压缩）= `reports/disk-audit-20261126.md`（只读审计，删除需用户批准）。
 - **异地备份（2026-10-04 起）**：顶层仓 `origin` = `git@git.ustc.edu.cn:xqh/y700-elden`（@xqh，SSH key `~/.ssh/id_ed25519_gitlab_ustc`，全分支+标签）——**这条仍然现役**。
   - ⚠️ **2026-10-24 起 `origin/main` 有意落后**（用户裁定「暂时落后」）：本地历史因剔除一个 2.75 GB 的
     `reports/trials/*/serial-delta.log`（曾触发 GitHub 100 MB 拒收）被重写，`origin/main` 是**保护分支**拒绝 force push，
