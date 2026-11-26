@@ -8,6 +8,14 @@
 
 ## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26）
 
+> **🆕 2026-11-26 午后（上游两件投出 + 三线攻坚派工）**：
+> ① **M6 DSI-PHY v3 与 elden 板 DTS v10 已投**（`05:20:54Z` / `05:20:58–05:21:04Z`，全 250，lore 两处 3/3 命中）：M6 v3 带 Jianfeng Liu 的第三方 `Tested-by`（diff 与 v2 逐字节相同）；
+> v10 的 1/2 补回 Krzysztof 对 v8 给的 `Acked-by`、2/2 修 sashiko 指出的 `pmic@2f` 缺 `vin12/vin34/vin5/vin7-supply`（同指 `wl2868c_vsys` stand-in）。
+> ② **sashiko 对 v10 2/2 的 2×`[Medium]` 均不需动作**：binding 不在目标树（等 `regulator.git for-7.5`，cover 已专节写明）、缺 core boot/电源节点（cover 已声明本版不含）⇒ **不回机器人线程**。
+> ③ **GitLab 面**（`--noproxy` 公开 API + phoc issue 渲染页现查）：`droid-juicer !46` 人类 note **0**、74 h 零变化（仓库队列月级，不催）；phoc `#125` 最后 note 仍 **2023-02-17**、open MR **13**（!827 于 11-25 更新待核）。
+> ④ **三线攻坚已派 4 lane（并行）**：传感器（#692 = `hexagonrpcd -s` 一 start 就硬崩的根因 + 零崩溃风险验证计划）、Gunyah（进不进日常线 + 成本）、droidloom（重装 + Limbus split / 小红书部署）、v10 sashiko 裁决（有/无 core 节点惯例核对）。派工单 = `.pi/plans/2026-11-26-三线攻坚派工.md`。
+> ⑤ 运维：16 个未推提交已补推 GitHub + USTC；`check-doctor` **FAIL=0 / WARN=3**（存量三条）；设备 U2 在线、在机 **vk192 镜件**（UTS `7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`）、`--failed`=0、`hexagonrpcd*`/`iio-sensor-proxy` 仍 masked（#732 后的安全态）。全账 = `reports/comm-triage-20261126-d11.md`。
+
 > **🆕 2026-11-26 晨（无人值守轮，设备在线但四 lane 均只读）**：
 > ① **gunyah 线分界写死（TASKS **D21**，`reports/gunyah-lane-20261126.md`）**：主线 `drivers/virt/gunyah` 仍不存在
 > （driver 系列停 2024-02 v17）⇒ 无接收面不投；`gunyah_wdt` **早已在主线**（`drivers/watchdog/gunyah_wdt.c`）且本机 hyp 空实现
