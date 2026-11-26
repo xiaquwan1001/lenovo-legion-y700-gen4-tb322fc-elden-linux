@@ -584,7 +584,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | **会话档案（逐会话）** | **`SESSIONS/`** | ⚠ **已冻结的历史快照（2026-10-15 起不再增补）**：`README.md` = 索引表/统计/内核时间线 + `sessions/YYYY-MM-DD-<名称>.md`。**新会话一律不进本目录**；会话身份与全文检索 = pi 原生会话（`scripts/sess.sh` / `/resume`）。此处保留仅为档案 + `check-sessions.sh` 校验基准 |
 | **git 提交史（逐提交）** | **`HISTORY/`** | 提交视角权威：`README.md` = 规范/查询入口（**不写死数字**）+ `days/YYYY-MM-DD.md`（机械生成）。统计现查 `scripts/gen-history.sh --stats` |
 
-### 顶层布局（4 区 + AI 大脑；**逐项 = 机器表**）
+### 顶层布局（5 区 + AI 大脑；**逐项 = 机器表**）
 
 > **机器真源 = `versions/layout.tsv`**（人读 `scripts/check-layout.sh --list`），门 = `check-layout.sh`（`check-doctor.sh` §14：
 > **每条路径必须在本节出现且磁盘存在**）。规则：**根目录新增条目先登记 `versions/layout.tsv`**，未登记即 FAIL。
@@ -596,8 +596,9 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 角度文档 | `DEVICE/` `TASKS/` `RESOURCES/` `RUNBOOK-BRINGUP/` `PITFALLS/` `SESSIONS/` `HISTORY/` `archive/` | track |
 | 源码/补丁/工具 | `scripts/` `tools/` `patches/` `patches-userland/` `reference/` `versions/` `packaging/` `initramfs/` `rootfs/` `probes/` `net/` `waydroid-ota/` `restore-259/` `cycle.sh` `elden-net.sh` `.githooks/` `.gitignore` | track |
 | 证据/备份 | `reports/`（md 入库，大件 ignore）· `backup/`（**不可再生**：删前必须云盘或 bundle 兜底）· `assets/`（原厂安卓资产提取树，2026-11-19 起；专有、仅本机用、不入库，脚本可重建） | track / ignore |
-| 工作区（**可再生成**） | `build/` `out/` `logs/` `runs/` `bootslot-b/` `env-pass/` `dl-cam/` `wt/` `external/` `geekidos-linux/` `Y700-elden-linux/` + 软链 `linux` | ignore（`build/` 删前先 bundle + 导 diff；`runs/` = lane 实跑回执工作区，2026-11-20 起） |
-| ↳ **2026-11-19 现状** | `build/` 的内核树与 `geekidos-linux/`＋软链 `linux` **已被磁盘清理删除**（`build/` 只剩 phoc/phosh 源码）；重建命令见 `versions/layout.tsv` 表头注释，影响与处置 = `reports/disk-cleanup-20261119-validation-impact.md` | — |
+| 工作区（**可再生成**） | `out/` `logs/` `runs/` `bootslot-b/` `env-pass/` `dl-cam/` `wt/` + 软链 `linux` | ignore（`runs/` = lane 实跑回执工作区，2026-11-20 起） |
+| **缓存（可再生 / 同机可共享；物理在 `~/elden-cache/`）** | `build/`（36 G 内核树）· `geekidos-linux/`（6.4 G 上游克隆）· `Y700-elden-linux/`（28 M 旧克隆）· `external/`（895 M 第三方工作区）· `dl-cam/`（630 M 相机交叉编译，仓库内只留 231 纳管源件 + 12 软链） | ignore（**台账 = `versions/cache-ledger.tsv`**：逐条「能不能删 / 能不能共享 / 怎么重建」；门 = `scripts/cache-audit.sh --check`） |
+| ↳ **现状（2026-11-26）** | ① 11-19 清理掉的内核树与上游克隆已于 11-21 恢复（恢复配方见 `versions/layout.tsv` 表头）；② **11-26 缓存搬家**：上表五个缓存目录物理移到 `~/elden-cache/`，仓库只留软链 ⇒ 仓库目录 123 G → **80 G**；逐条判读 = `versions/cache-ledger.tsv` | — |
 | AI 大脑 | `.pi/`（规范/并发/编排/技能/记忆/会话；分工见 `.pi/README.md`） | track |
 
 
@@ -617,7 +618,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
   **§7 入口文档完整性（围栏·截断·证据指针泄漏）** / **§8 索引↔磁盘对账（编号撞车·索引行超长）** /
   **§9 SESSIONS 快照** / **§10 HISTORY 对账** / **§11 提交钩子生效性** / **§14 顶层布局注册表** /
   **§15 时间序健康（§0 核对日期 vs 最新会话证据；见 §2「时间序裁决」）**）。
-  顶层布局真源 = **`versions/layout.tsv`**（项数现查 `scripts/check-layout.sh --list | wc -l`；4 区：入口/文档 · 源码/补丁 · 证据/备份 · 工作区；人读面 = 本节「顶层布局」表，门 = `scripts/check-layout.sh`）。
+  顶层布局真源 = **`versions/layout.tsv`**（项数现查 `scripts/check-layout.sh --list | wc -l`；5 区：入口/文档 · 源码/补丁 · 证据/备份 · 工作区 · 缓存（`~/elden-cache/`，台账 `versions/cache-ledger.tsv`）；人读面 = 本节「顶层布局」表，门 = `scripts/check-layout.sh`）。
   **入库前门已接线**（`core.hooksPath=.githooks`）：`pre-commit` 跑 `--staged-fast`（§7/§8/§9/§10/§11/§13/§14，实测亚秒级（量级见 `reports/script-audit-20261105.md`）；§12 内核 config 门不在这一档）。
   全量 `scripts/check-doctor.sh` 现为**并发子门**（`scripts/doctor/`），稳态 **~1.4 s**（旧版单体串行 12.5 s）；口径与实测见 `reports/script-audit-20261105.md`。
 - **打包前门**：`scripts/assert-kernel-sane.sh`（config 锚点 / System.map 符号 / UTS 对齐 / 非陈旧 / **§1b ABI 敏感项**，后者调 `scripts/check-abi-config.sh` 比对 SSOT config 的 27 项）。

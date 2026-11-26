@@ -8,10 +8,10 @@
 
 # ---- 上游 clone / 可重下（含巨大构建产物）----
 # geekidos-linux = 上游 GEEKiDoS/linux（13G，含构建产物）；内核进度以 patches/ 为准
-/geekidos-linux/
+/geekidos-linux
 # 软链 linux -> geekidos-linux（2026-11-21 恢复源树时重建；勿入库）
 /linux
-/Y700-elden-linux/
+/Y700-elden-linux
 /stock-src/
 /qdl/
 # /tools 用 /* 而非整目录忽略（同 /out 的理由）：整目录忽略会让 `!` 复活失效。
@@ -34,10 +34,10 @@
 
 # ---- 构建产物 / 可再生成 ----
 # /build = 2026-10-10 起内核构建目录（scripts/build-kernel.sh 工作区，~4G 可再生）
-/build/
+/build
 # 2026-11-02 起 lane 工作树与外部工作区归项目内（不再散落 $HOME）
 /wt/
-/external/
+/external
 # /out 用 /* 而非整目录忽略：否则 `!` 无法复活子文件（git 规则）；manifest 是可复现指纹，要入库
 /out/*
 !/out/*.manifest
@@ -240,24 +240,24 @@ reports/artifacts/uefi-fixcopylen-20261104/kernel.bin
 /reports/artifacts/uefi-20261106R2[0-8]-*/build.log
 # 2026-11-06 深夜 UEFI 线（p34–p36，R29R30/R31/R32）：产物在 build/ 子目录
 # 入库同前：只留 BootShim.bin + manifest.txt + SHA256SUMS（可复现身份三件）
-/reports/artifacts/uefi-20261106R29R30-p34/build/*.fd
-/reports/artifacts/uefi-20261106R29R30-p34/build/*.gz
-/reports/artifacts/uefi-20261106R29R30-p34/build/*.img
-/reports/artifacts/uefi-20261106R29R30-p34/build/*.bin
-/reports/artifacts/uefi-20261106R29R30-p34/build/*.efi
-/reports/artifacts/uefi-20261106R29R30-p34/build/*.log
-/reports/artifacts/uefi-20261106R31-p35c/build/*.fd
-/reports/artifacts/uefi-20261106R31-p35c/build/*.gz
-/reports/artifacts/uefi-20261106R31-p35c/build/*.img
-/reports/artifacts/uefi-20261106R31-p35c/build/*.bin
-/reports/artifacts/uefi-20261106R31-p35c/build/*.efi
-/reports/artifacts/uefi-20261106R31-p35c/build/*.log
-/reports/artifacts/uefi-20261106R32-p36e/build/*.fd
-/reports/artifacts/uefi-20261106R32-p36e/build/*.gz
-/reports/artifacts/uefi-20261106R32-p36e/build/*.img
-/reports/artifacts/uefi-20261106R32-p36e/build/*.bin
-/reports/artifacts/uefi-20261106R32-p36e/build/*.efi
-/reports/artifacts/uefi-20261106R32-p36e/build/*.log
+/reports/artifacts/uefi-20261106R29R30-p34/build*.fd
+/reports/artifacts/uefi-20261106R29R30-p34/build*.gz
+/reports/artifacts/uefi-20261106R29R30-p34/build*.img
+/reports/artifacts/uefi-20261106R29R30-p34/build*.bin
+/reports/artifacts/uefi-20261106R29R30-p34/build*.efi
+/reports/artifacts/uefi-20261106R29R30-p34/build*.log
+/reports/artifacts/uefi-20261106R31-p35c/build*.fd
+/reports/artifacts/uefi-20261106R31-p35c/build*.gz
+/reports/artifacts/uefi-20261106R31-p35c/build*.img
+/reports/artifacts/uefi-20261106R31-p35c/build*.bin
+/reports/artifacts/uefi-20261106R31-p35c/build*.efi
+/reports/artifacts/uefi-20261106R31-p35c/build*.log
+/reports/artifacts/uefi-20261106R32-p36e/build*.fd
+/reports/artifacts/uefi-20261106R32-p36e/build*.gz
+/reports/artifacts/uefi-20261106R32-p36e/build*.img
+/reports/artifacts/uefi-20261106R32-p36e/build*.bin
+/reports/artifacts/uefi-20261106R32-p36e/build*.efi
+/reports/artifacts/uefi-20261106R32-p36e/build*.log
 
 # 2026-11-07 UEFI p38 世代（R33）构建归档：二进制可由 p38-recipe.txt + uefi-r21-p7-ladder.sh --rebuild 重建；
 # 只留 manifest/SHA256SUMS，加上 obj/LinuxLoader.{efi,map}（静态复核要用的 DWARF-free 反汇编输入）
@@ -413,3 +413,18 @@ reports/artifacts/**/logfs.img
 
 # 相机取证单帧（MIPI RAW10 打包，前 9.5 MB / 后 15 MB；体积大且是逐位原始数据 ⇒ 只在盘上留档，不入库）
 reports/artifacts/cam-vk189-20261124/*.raw
+
+# 2026-11-26 缓存搬家：可再生的大件物理位置移到 ~/elden-cache/（见 versions/cache-ledger.tsv）
+# 仓库里只留软链；下面用「无尾斜杠」形式才能匹配软链（带 / 的 pattern 只匹配真目录）
+/dl-cam/aosp
+/dl-cam/donor
+/dl-cam/gen
+/dl-cam/gen-aidl
+/dl-cam/gen-aidl-src
+/dl-cam/gen-aidl.sh
+/dl-cam/hw-interfaces
+/dl-cam/libhidl
+/dl-cam/out-cam
+/dl-cam/sysroot
+/dl-cam/vdump
+/dl-cam/vendor-cam-l1d.img

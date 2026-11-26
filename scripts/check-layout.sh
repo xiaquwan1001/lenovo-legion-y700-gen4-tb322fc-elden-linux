@@ -3,7 +3,7 @@
 #
 # 立此脚本的原因（2026-11-03 项目整理）：
 #   根目录条目会随专题自发增长（213 G 工作区已有 46 项），没有注册表就没有「哪些是工作区、
-#   哪些是源码、哪些是不可再生备份」的稳定口径，新会话无法判断能否删除、能否入库。
+#   哪些是源码、哪些是不可再生备份、哪些是可再生/可共享缓存」的稳定口径，新会话无法判断能否删除、能否入库。
 #   同时防止两类漂移：① 新目录未登记就落盘；② 台账登记了但磁盘已不存在（死路径）。
 #
 # 判据（任一 FAIL 即退出码 1）：
@@ -16,7 +16,7 @@ cd "$(dirname "$0")/.." || exit 1
 
 TSV=versions/layout.tsv
 INDEX=INDEX.md
-ZONES="entry doc evidence src work ai"
+ZONES="entry doc evidence src work cache ai"
 
 [ -f "$TSV" ] || { echo "FAIL: $TSV 缺失"; exit 1; }
 [ -f "$INDEX" ] || { echo "FAIL: $INDEX 缺失"; exit 1; }

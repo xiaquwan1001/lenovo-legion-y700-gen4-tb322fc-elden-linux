@@ -2,7 +2,8 @@
 #
 # 规则：仓库根目录的**每个**顶层条目都必须在此登记（`.git` 除外）；新增目录/文件先加行、再落盘。
 # 列：zone <TAB> path <TAB> vcs <TAB> 职责（一句话；详情指向领域层文档）
-# zone 取值：entry(入口) doc(角度文档) evidence(证据/备份) src(源码/补丁/工具) work(工作区,gitignore) ai(AI 大脑)
+# zone 取值：entry(入口) doc(角度文档) evidence(证据/备份) src(源码/补丁/工具) work(工作区,gitignore)
+#           cache(可再生缓存/可共享克隆：物理不在仓库目录内，仓库只留软链；账 = versions/cache-ledger.tsv) ai(AI 大脑)
 # vcs：track = 入 git；ignore = 按 .gitignore 排除（台账见 RESOURCES/README.md §3）
 zone	path	vcs	note
 entry	AGENTS.md	track	项目身份：机型唯一性、G1–G3 目标与优先级、核心原则
@@ -49,16 +50,16 @@ src	.gitignore	track	版本控制边界
 #   git clone --filter=blob:none backup/git-slim-20261113/geekidos-all-20261113.bundle geekidos-linux
 #   git -C geekidos-linux remote add torvalds https://github.com/GEEKiDoS/linux   # pristine 历史按需取 blob
 #   ln -sfn geekidos-linux linux
-work	build/	ignore	内核构建树/独立仓/worktree（含未提交改动，删除前必须先 bundle + 导 diff，见 RESOURCES §3）
-work	geekidos-linux/	ignore	上游 GEEKiDoS/linux 源树（2026-11-21 已恢复：bundle 是 slim 包，`git clone` 因 18 条祖先断链失败，实际走 `git init + git bundle unbundle + git update-ref --stdin`；供 vk 版本账/DTB 指纹反查，构建仍用 build/）
+cache	build/	ignore	内核构建树（物理 = `~/elden-cache/build/`；可再生：源码+config 重编 ~30–60 min；2026-11-26 搬出仓库，见 versions/cache-ledger.tsv）
+cache	geekidos-linux/	ignore	上游 GEEKiDoS/linux 源树（物理 = `~/elden-cache/src/geekidos-linux`；同机可共享的只读克隆；恢复配方见本文件表头；供 vk 版本账/DTB 指纹反查，构建用 build/）
 work	linux	ignore	软链 linux -> geekidos-linux（git 化约定，勿入库）
 work	out/	ignore	构建产物（*.manifest 入库）
 work	logs/	ignore	串口/构建/agent 日志
 work	runs/	ignore	lane 实跑回执工作区（2026-11-20 起：runs/<lane>/ = REPORT.md + 原始日志/取证件；与 logs/ 同类工作区，大件不入库，需要入库的结论写进 reports/ 或 patches/ 同名 runs/）
 work	bootslot-b/	ignore	自签 b 槽包（含 avb 私钥，禁止入库）
 work	env-pass/	ignore	过环境里程碑件
-work	dl-cam/	ignore	相机 provider 交叉编译工作区（部分纳管）
+cache	dl-cam/	ignore	相机 provider 交叉编译工作区（物理大件 = `~/elden-cache/src/dl-cam/`，仓库内只保留 231 个纳管源件 + 12 条软链；见 versions/cache-ledger.tsv）
 work	wt/	ignore	lane git worktree（scripts/lane.sh WT_ROOT）
-work	external/	ignore	外部构建工作区（$HOME 同名软链指回此处）
-work	Y700-elden-linux/	ignore	旧迭代上游 clone
+cache	external/	ignore	外部构建工作区/第三方克隆（物理 = `~/elden-cache/src/external`；跨项目可共享；$HOME 的 LTBox/alpine-sysroot/aosp-vndk33/ext-repos/lc-cross/mesa-out/phoc-work 七条软链指向此处的子目录）
+cache	Y700-elden-linux/	ignore	旧迭代上游 clone（物理 = `~/elden-cache/src/Y700-elden-linux`；可删，重取即可）
 ai	.pi/	track	AI 大脑：行为规范/并发/编排/技能/记忆/会话（分工见 .pi/README.md）

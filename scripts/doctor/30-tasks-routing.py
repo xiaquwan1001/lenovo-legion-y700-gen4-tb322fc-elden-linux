@@ -24,6 +24,7 @@
 import os
 import re
 import sys
+import glob
 import tempfile
 
 ARGS = sys.argv[1:]
@@ -44,6 +45,8 @@ LIVE_DIRS = [('.pi', ('.md',)), ('scripts', ('.sh', '.py')),
 
 RE_ROUTE = re.compile(r'^\|\s*([§\d\s·]+)\|\s*`(TASKS/[A-Za-z0-9._-]+\.md)`')
 RE_REF = re.compile(r'TASKS/README\.md[`\s]*§\s*(\d+)')
+# §4.0 维度短表 → TASKS/dim/D##.md（2026-11-26 第二轮拆分：双向对账防孤儿/悬空）
+RE_DIM = re.compile(r'`(TASKS/dim/(D\d+)\.md)`')
 
 
 def read(path):
@@ -150,6 +153,27 @@ def check(root, verbose=True):
                       '%d 处悬空（路由表无该号）：%s' % (len(dangling), '；'.join(dangling[:8]))))
     else:
         oks.append(('活面 §N 引用可解析', '%d 文件 / %d 处引用，全部命中' % (scanned, cited)))
+
+    # ---- 维度文件双向对账（NEXT.md §4.0 短表 ↔ TASKS/dim/*.md ↔ dim/README.md 索引）----
+    next_txt = read(os.path.join(root, 'TASKS/NEXT.md'))
+    if next_txt is None:
+        fails.append(('维度文件可对账', 'TASKS/NEXT.md 不存在（§4 是维度总表入口）'))
+        return fails, oks
+    cited_dims = set(RE_DIM.findall(next_txt))
+    on_disk = sorted(os.path.basename(p2) for p2 in
+                     glob.glob(os.path.join(root, 'TASKS/dim/D*.md')))
+    ptr_files = {f for f, _ in cited_dims}
+    dangling_dim = sorted(ptr_files - set('TASKS/dim/' + x for x in on_disk))
+    orphan_dim = sorted(set(on_disk) - {os.path.basename(f) for f in ptr_files})
+    idx_txt = read(os.path.join(root, 'TASKS/dim/README.md')) or ''
+    idx_dims = {os.path.basename(f) for f in ptr_files if f in idx_txt}
+    if dangling_dim or orphan_dim or len(idx_dims) != len(ptr_files):
+        fails.append(('维度文件可对账',
+                      '悬空指针 %s / 孤儿文件 %s / 索引缺 %d 条'
+                      % (dangling_dim or '-', orphan_dim or '-', len(ptr_files) - len(idx_dims))))
+    else:
+        oks.append(('维度文件可对账', 'NEXT.md 指针 %d = 磁盘 %d = 索引 %d'
+                    % (len(ptr_files), len(on_disk), len(idx_dims))))
     return fails, oks
 
 
@@ -178,6 +202,9 @@ def selftest():
             d, 'INDEX.md', '见 `TASKS/README.md` ' + '\u00a79' + '\n'), True),
         ('反例 D：章节文件标题号不对', lambda d: _write(d, 'TASKS/C4.md', '## 9. 错号\n'), True),
         ('反例 E：路由表整块缺失', lambda d: _write(d, README, '# 没有路由表\n'), True),
+        ('反例 F：dim 指针悬空（文件不存在）', lambda d: _write(
+            d, 'TASKS/NEXT.md', '| **D1** | x | ✅ | `TASKS/dim/D1.md` |\n`TASKS/dim/D9.md`\n'), True),
+        ('反例 G：dim 孤儿文件（无指针）', lambda d: _write(d, 'TASKS/dim/D7.md', '## 7\n'), True),
     ]:
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, 'TASKS'), exist_ok=True)
@@ -185,6 +212,9 @@ def selftest():
             _write(d, 'INDEX.md', '见 `TASKS/README.md` §0 / §7\n')
             for n in REQUIRED:
                 _write(d, 'TASKS/C%d.md' % n, '## %d. 第 %d 章\n' % (n, n))
+            _write(d, 'TASKS/NEXT.md', '| **D1** | x | ✅ | `TASKS/dim/D1.md` |\n')
+            _write(d, 'TASKS/dim/D1.md', '## 1\n')
+            _write(d, 'TASKS/dim/README.md', '见 `TASKS/dim/D1.md`\n')
             mutate(d)
             fails, _ = check(d)
             got_fail = bool(fails)

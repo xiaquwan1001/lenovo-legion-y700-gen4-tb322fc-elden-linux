@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=acf15890964649e9（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=11a190fb5efeb158（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**357**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 79 / 设备操作 109 / 造件 71 / 取证 50 / 一次性 3 / 公共库 8 / 其它 37
+- 入口总数：**358**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 79 / 设备操作 109 / 造件 71 / 取证 51 / 一次性 3 / 公共库 8 / 其它 37
 - 引用数为 0 的孤立件：**1**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -298,7 +298,7 @@
 | `scripts/uefi-r21-p7-ladder.sh` | UEFI R21「p7 / preamble7」一族镜像的**唯一重建入口**（G1-29 线，纯主机侧） | 154 |
 | `scripts/uefi-repack-v2aligned.py` | 把 UEFI payload（BootShim + FD）打成一个 **ABL 会真跳进去** 的 boot.img。 | 23 |
 
-## 取证（50）
+## 取证（51）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -312,6 +312,7 @@
 | `scripts/blackout-passive-scan.sh` | 黑屏期诊断：被动扫描（只听 beacon）能否听到该 AP | 6 |
 | `scripts/blankspy.sh` | one-second forensic heartbeat around screen blank (G1-22/Q24). | 14 |
 | `scripts/c0-android-evidence.sh` | C0「真 Android 对照取证」采集器 | 12 |
+| `scripts/cache-audit.sh` | 缓存/工作区台账核对（versions/cache-ledger.tsv ↔ 磁盘 ↔ 软链指向） | 2 |
 | `scripts/deskstack-sample.sh` | A 臂采样：屏幕保护状态机 + 背光/DPMS + 按键计数。POSIX sh，整文件 scp 到 /tmp 再跑。 | 3 |
 | `scripts/devlogs.sh` | runtime log capture for feature bring-up/verification. | 13 |
 | `scripts/display-drop-forensics.sh` | 设备侧「桌面显示栈自发掉线」一次抓全 | 3 |
