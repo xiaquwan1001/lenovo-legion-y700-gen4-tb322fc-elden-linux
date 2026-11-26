@@ -85,6 +85,7 @@
 | **D21** | Gunyah 线现状 （拓展项，用户 2026-11-26 要求「至少一个 lane 负责 gunyah」） | ✅ | `TASKS/dim/D21.md` |
 | **D22** | 核实「传感器驱动有问题」这个说法（用户 2026-11-26 要求单独 lane 核实） | ✅ | `TASKS/dim/D22.md` |
 | **D23** | 崩溃取证通道（用户 2026-11-26「先修取证」） | ⛔ | `TASKS/dim/D23.md` |
+| **D24** | droidloom 附属仓库整理 + 上游缺陷/社区分叉评估（用户 2026-11-26 设常设 lane） | 🟡 | `TASKS/dim/D24.md` |
 
 > **★2026-11-25 重启验收**：`systemctl reboot` 后新 `boot_id`、up 1 min，`lisgd-edge-swipe` **active + enabled**（lisgd 自动盯上真触屏 `event4`）、`wm.keybindings close` 仍是 `['<Alt>F4', 'XF86Back']`（dconf 持久）、`systemctl --failed` 仅已知 `qbootctl` ⇒ **常驻与持久化都成立**，不依赖会话手工启动。 另测**自愈**：`kill -9 lisgd` ⇒ 8 s 内被 systemd 重拉（新 pid，服务仍 active）⇒ `Restart=always` 生效。、`.pi/lanes/20261125-phosh-edge-swipe-back-brief.md` |
 
