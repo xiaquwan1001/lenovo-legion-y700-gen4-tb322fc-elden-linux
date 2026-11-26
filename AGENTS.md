@@ -50,12 +50,12 @@
 - 「收尾」= 产物落盘 + SSOT 同步 + 设备安全态 + `check-doctor` **FAIL=0**（WARN 必须逐条列出并归类：本轮修 / 已登记豁免；C 类存量 WARN 不阻塞收尾）+ 工作区 clean（全文 `.pi/AGENT-OPS.md` §5）。
 - 子代理派发口径 = 全局 `AGENTS.md` 硬性规则 8 + 技能 `subagent-dispatch`（别名/provider 清单不在本文件重写，现查 `custom-providers.json`）；本项目编排形状/递归条件见 `.pi/ORCHESTRATION.md` §4。
 - **其余判据不在本文件**（b 槽签名、双层压缩、kexec 取证、`build/*` 删除前 bundle、geekidos-linux 浅克隆、顶层布局登记、EDL 工具链、Q28 坏发协变量、`.pi/trash` 保护）：
-  见 `.pi/memory/`（`MEMORY.md` / `failures-kernel.md` / `failures-device.md` / `notes-display.md` / `notes-q28-vk127-20261017-18.md`〔Q28/vk127 线历史，2026-11-24 拆出〕）与 `PITFALLS/`；检索用 `mem <关键词>`。
+  见 `.pi/memory/`（`MEMORY.md` / `failures-kernel*.md` / `failures-device.md` / `notes-display.md` / `notes-q28-vk127-20261017-18.md`〔Q28/vk127 线历史，2026-11-24 拆出〕）与 `PITFALLS/`；检索用 `mem <关键词>`。
 
 ## 细节
 
 - vk127 baseline / EDL / layout / git 修复 / 门禁的成对事实与脚本指针：`.pi/memory/MEMORY.md`（2026-11-17 拆后约 47 KB）。
 - 相机 / C5 / Waydroid 容器（HAL、IPA、AE、vendor.img）：`.pi/memory/notes-camera-waydroid.md`；2026-10-17 换机/迁移/重建：`.pi/memory/notes-migration.md`。
 - 81 条设备侧细粒度坑（Alpine/busybox、Waydroid 容器状态机、codec/audio/camera、SSH 部署）：`.pi/memory/failures-device.md`（条目数现查：`grep -c '^---$'`）。
-- 346 条刷机/AVB/kexec/EDK2-Mu/UEFI/内核打包证据与寄存器级细节：`.pi/memory/failures-kernel.md`（同上现查）。
+- 刷机/AVB/kexec/EDK2-Mu/UEFI/内核打包证据与寄存器级细节：`.pi/memory/failures-kernel-{boot-uefi,boot-flash,slot-avb,display,gpu-comp,power-io,misc}.md`（2026-11-26 按主题拆分，每件 ≤50 KB，条目/条数**现查** `grep -c '^---$' .pi/memory/failures-kernel-*.md`；索引件 = `failures-kernel.md`）。
 - 协作口径（物理 POR、目视纠正、按字母顺序执行、电话/观测节奏）：`.pi/memory/USER.md`。
