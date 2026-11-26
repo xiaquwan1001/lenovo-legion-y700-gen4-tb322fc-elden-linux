@@ -140,3 +140,18 @@ nsenter -t $AIP -m -n -p -- /system/bin/cmd wifi connect-network "Droidloom" ope
 ## 7. 产物指针
 
 - 本报告 = 本工单唯一领域写入。证据全部内嵌（§2 表）；源码依据 = `~/src/droidloom`（572e1c5）：`runtime/droidloom-supervisor/src/{development_network,dhcp_responder}.rs`、`android/wifi/{include/droidloom/wifi_access_point.h,droidloom-supplicant/supplicant.cpp}`、`android/framework/droidloom-systemui/src/com/android/systemui/wifi/WifiProvisioning.java`；上游文档 = docs/INSTALL.md；上游缺陷 = denialwm/droidloom#48。
+
+
+---
+
+## §8 已修（同日 18:2xZ 实测，父代理执行）
+
+按本文件 §4 顺序落地（**先 DNS 后解禁**）：
+
+1. cell 内三条 `settings put global captive_portal_{http,https,fallback}_url = wifi.vivo.com.cn/generate_204`（持久，落 `/data/system/users/0/settings_global.xml`）。
+2. 宿主独立 nft 表（**不写进 `droidloom_u1001*`**，否则 cell stop 被 supervisor 整表删）：
+   `ip dl_dns_redirect`，`hook prerouting priority dstnat`，规则 `iifname "dlh1001" ip saddr 10.177.0.2 udp/tcp dport 53 dnat to 202.38.64.18`。
+3. cell 内 `cmd wifi connect-network Droidloom open`。
+
+**结果（判据逐条命中）**：cell `wlan0 10.177.0.2/30` + 默认路由；`dumpsys connectivity` = `Active default network: 100 … IS_VALIDATED`；宿主 `adb devices -l` ⇒ `10.177.0.2:5555  device … device:droidloom`。
+**待办**：DNS 表跨重启不持久 ⇒ 需独立 systemd unit（additive）；若换到 lane D24 建议的 fork（`EvilBorsch`，已实现 lease 带宿主 resolver）则该表可整件删除。

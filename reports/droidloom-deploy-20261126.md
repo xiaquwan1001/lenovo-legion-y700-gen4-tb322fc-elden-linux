@@ -110,3 +110,12 @@ ssh elden-root 'systemctl stop droidloomd; rm -rf /usr/lib/droidloom /usr/bin/dr
 - 本报告 = 唯一领域写入；证据目录 `reports/artifacts/droidloom-deploy-20261126/`（doctor-final / applications-list / xhs-launch-log / limbus-appsealing-log / limbus-first-launch-log / tcpdump-no-cell-traffic / device-config-snapshot / dl-49-sha256 / boot-log-sample）。
 - 设备侧保留件：`/opt/dl-pkgs/`（三个 zst，重装免下）、`/usr/local/bin/unshare`、`/etc/sub{uid,gid}` 追加行、`/home/xuqianhui1001/dl-apps/{limbus,xhs}`（APK 原件）。
 - 设备锁：lane `droidloom-deploy-d`，收工 release。
+
+
+---
+
+## D24 首轮对账（2026-11-26 晚）：本节两条缺口已各自收口
+
+- **§5 缺口-1「cell 无网」= 已修**（探针改 vivo + 独立 nft DNS 重定向 + 解禁 `Droidloom`），实测 `VALIDATED` 且 `adb` 端点在线 ⇒ 详见 `reports/droidloom-cell-network-20261126.md` §8。
+- **小红书画面不全 = 已修**（per-app 窗口覆写）⇒ `reports/droidloom-display-sizing-20261126.md` 末节。
+- **键盘不可用 = 已绕开**（装真 IME）⇒ `reports/droidloom-ime-keyboard-20261126.md` §5；根因未根治，属 `TASKS/dim/D24.md`。

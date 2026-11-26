@@ -73,3 +73,12 @@ adb -s device:droidloom exec-out screencap -p > /tmp/x.png   # 直接看画面
 
 - **键盘整轮唤不出**（上一轮症状）的叠加因素已排除并修好：`phosh-osk-stub` 曾丢失 well-known 名 `sm.puri.OSK0`（phosh 报 `Unable to toggle OSK: … not provided by any .service files`），重启后由 pid 149969 持有；但**它只解释「整轮不响应」**，不解释本轮「输入一个字符后缩回」。
 - 小红书**全屏**修复（`window-policy-v1.json` per-app 覆写）与 cell **联网**修复（nft DNS 重定向 + captive-portal 探针 + 解禁 `Droidloom` 网络）与本 bug 无关，均已生效（`dumpsys connectivity` = `VALIDATED`，`adb` 端点 `device:droidloom`）。
+
+
+---
+
+## 5. 已绕开（同日晚，lane D6 实测）
+
+- 给 cell 装了 **Fossify Keyboard v1.9.1**（`org.fossify.keyboard_14.apk`，F-Droid 官方源，sha256 `e326885c08b68212fd9fdda9be8a4fa492d5daba7ff37bb4ff4511826f40a8d0`），默认 IME 切到 `org.fossify.keyboard/.services.SimpleKeyboardIME`，**占位器保留未禁用**。
+- 验收：三轮「点框-输入-失焦-再点」9 张截图全过、`mInputShown=true` 6/6、字段累积 `113→333`、切换后 `onFailed at PHASE_IME_ON_SHOW` = 0。详见 `reports/droidloom-real-ime-20261126.md`。
+- **根因仍未根治**（属 D24 范围）；D24 首轮补充一条候选解释：宿主合成器可能缺 `denial_text_input_panel_manager_v1`（`wayland-info | grep -c denial_text_input_panel` = 0 即为该假设的判据之一），与「占位 IME 状态机缺陷」并列，**尚未判定哪一个是主因**。

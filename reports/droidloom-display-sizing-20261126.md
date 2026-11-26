@@ -52,3 +52,23 @@
 
 `denialwm/droidloom` 的 `KNOWN_ISSUES.md` 只写了「revision 7 起强制 force-resizable，让不可调整窗口的 App 进桌面窗口模式；**不保证每个 App 能正确处理任意窗口尺寸**」。
 我方现象是它自己把 Android task 的 1440x2400 原样映射成窗口、且**不提供 per-app 全屏开关**（`window-mode` 只有 fit-output / windowed 两档，windowed 用全局 W/H）⇒ 值得提一条 issue：「per-app fullscreen / per-app explicit size 缺失；默认 freeform bounds 会把手机 App 的同意弹窗截断」。
+
+
+---
+
+## D24 首轮对账（2026-11-26 晚，父代理落）
+
+- **§3「未做的决定性实验」与 §4「不提供 per-app 全屏开关」已被取代**：`droidloomctl` 虽无 per-app 子命令，但 `~xuqianhui1001/.config/droidloom/window-policy-v1.json` 的 `applications.<pkg>` **就是设计内的 per-app 覆写**，实测已把小红书置为 `1902x3039`。§3 的两条实验（关 `force_resizable_activities` / `task resize`）**属诊断手段，不是解**，不要再当解法用。
+- **可复制的配置模板**（≤1 页，按 lane D24 行动 4）：
+
+```json
+{
+  "schema": 1,
+  "default": { "mode": "windowed", "size": { "width": 1904, "height": 3040 } },
+  "applications": {
+    "com.xingin.xhs": { "mode": "windowed", "size": { "width": 1904, "height": 3040 } }
+  }
+}
+```
+
+  回退 = `cp window-policy-v1.json.bak-20261126 window-policy-v1.json` + `droidloomctl restart`（**以用户 1001 身份**跑；root 跑会写 `/root/.config` 而静默失效）。
