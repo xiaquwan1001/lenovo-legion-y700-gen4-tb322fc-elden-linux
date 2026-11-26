@@ -1,0 +1,2 @@
+    mCurClient=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}
+      mInputShown=false

@@ -1,0 +1,2 @@
+org.fossify.keyboard/.services.SimpleKeyboardIME
+com.android.droidloom.ime/.HostInputMethod

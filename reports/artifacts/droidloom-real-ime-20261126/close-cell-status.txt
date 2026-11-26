@@ -1,0 +1,1 @@
+cell u1001 is running from /etc/droidloom/cell.json; Android is ready

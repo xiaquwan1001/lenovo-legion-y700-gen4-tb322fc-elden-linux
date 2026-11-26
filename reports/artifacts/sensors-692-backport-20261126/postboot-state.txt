@@ -1,0 +1,6 @@
+starting
+2
+ls: 无法访问 '/dev/fastrpc-adsp': 没有那个文件或目录
+running
+adsp
+52

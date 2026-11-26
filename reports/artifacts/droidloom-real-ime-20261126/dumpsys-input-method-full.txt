@@ -1,0 +1,1174 @@
+Input Method Manager Service state:
+  mSystemReady=true
+  mInteractive=true
+  mConcurrentMultiUserModeEnabled=false
+  mPreventImeStartupUnlessTextEditor=false
+  mCurrentImeUserId=0
+  mStylusIds=
+  mMenuController:
+  mClientController:
+    ClientState{56b81a8 mUid=10102 mPid=960 mSelfReportedDisplayId=0}:
+      client=com.android.server.inputmethod.IInputMethodClientInvoker@3794c1
+      fallbackInputConnection=com.android.internal.inputmethod.IRemoteInputConnection$Stub$Proxy@5435466
+      sessionRequested=false
+      sessionRequestedForAccessibility=false
+      curSession=null
+      selfReportedDisplayId=0
+      uid=10102
+      pid=960
+    ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}:
+      client=com.android.server.inputmethod.IInputMethodClientInvoker@e4633a7
+      fallbackInputConnection=com.android.internal.inputmethod.IRemoteInputConnection$Stub$Proxy@1cb1054
+      sessionRequested=false
+      sessionRequestedForAccessibility=true
+      curSession=SessionState{uid=10103 pid=782 ime=f0a66f7 session=6c08fb1 channel=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0} userId=0}
+      selfReportedDisplayId=0
+      uid=10103
+      pid=782
+    ClientState{4986343 mUid=10016 mPid=1015 mSelfReportedDisplayId=0}:
+      client=com.android.server.inputmethod.IInputMethodClientInvoker@bf2ddc0
+      fallbackInputConnection=com.android.internal.inputmethod.IRemoteInputConnection$Stub$Proxy@8791af9
+      sessionRequested=false
+      sessionRequestedForAccessibility=false
+      curSession=null
+      selfReportedDisplayId=0
+      uid=10016
+      pid=1015
+    ClientState{d39d866 mUid=10106 mPid=20233 mSelfReportedDisplayId=0}:
+      client=com.android.server.inputmethod.IInputMethodClientInvoker@67467a7
+      fallbackInputConnection=com.android.internal.inputmethod.IRemoteInputConnection$Stub$Proxy@94f3454
+      sessionRequested=false
+      sessionRequestedForAccessibility=false
+      curSession=null
+      selfReportedDisplayId=0
+      uid=10106
+      pid=20233
+    ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0}:
+      client=com.android.server.inputmethod.IInputMethodClientInvoker@5a30ffd
+      fallbackInputConnection=com.android.internal.inputmethod.IRemoteInputConnection$Stub$Proxy@ffb14f2
+      sessionRequested=false
+      sessionRequestedForAccessibility=false
+      curSession=SessionState{uid=10104 pid=15756 ime=f0a66f7 session=cd74964 channel=ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0} userId=0}
+      selfReportedDisplayId=0
+      uid=10104
+      pid=15756
+  mUserDataRepository:
+    userId=0
+      unlocked=true
+      hasMainConnection=true
+      hasVisibleConnection=false
+      boundToMethod=true
+      curClient=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}
+      curEditorInfo:
+        inputType=0x0 imeOptions=0x0 privateImeOptions=null
+        actionLabel=null actionId=0
+        initialSelStart=-1 initialSelEnd=-1 initialToolType=0 initialCapsMode=0x0
+        hintText=null label=null
+        packageName=com.android.droidloom.home autofillId=0 fieldId=0 fieldName=null
+        hintLocales=null
+        supportedHandwritingGestureTypes=(none)
+        supportedHandwritingGesturePreviewTypes=(none)
+        isStylusHandwritingEnabled=false
+        writingToolsEnabled=true
+        contentMimeTypes=null
+      imeBindingState:
+        mFocusedWindow=android.os.BinderProxy@d8916
+        mFocusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+        mFocusedWindowClient=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}
+      enabledSession=SessionState{uid=10103 pid=782 ime=f0a66f7 session=6c08fb1 channel=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0} userId=0}
+      inFullscreenMode=false
+      imeDrawsNavBar=false
+      imeSwitcherMenuVisible=false
+      switchingController:
+        mRotationList:
+          Static order:
+            i=0 item=ImeSubtypeListItem{mImeName=Droidloom host keyboard mSubtypeName=null mSubtypeShortLabel=null mSubtypeIconResId=0 mLayoutName=null mSubtypeIndex=-1 mShowInImeSwitcherMenu=true mIsAuxiliary=false mSuitableForHardware=true}
+            i=1 item=ImeSubtypeListItem{mImeName=Fossify Keyboard mSubtypeName= mSubtypeShortLabel= mSubtypeIconResId=0 mLayoutName= mSubtypeIndex=0 mShowInImeSwitcherMenu=true mIsAuxiliary=false mSuitableForHardware=false}
+          Recency order:
+            i=0 item=ImeSubtypeListItem{mImeName=Fossify Keyboard mSubtypeName= mSubtypeShortLabel= mSubtypeIconResId=0 mLayoutName= mSubtypeIndex=0 mShowInImeSwitcherMenu=true mIsAuxiliary=false mSuitableForHardware=false}
+            i=1 item=ImeSubtypeListItem{mImeName=Droidloom host keyboard mSubtypeName=null mSubtypeShortLabel=null mSubtypeIconResId=0 mLayoutName=null mSubtypeIndex=-1 mShowInImeSwitcherMenu=true mIsAuxiliary=false mSuitableForHardware=true}
+        mEnabledItems:
+          i=0 item=ImeSubtypeListItem{mImeName=Droidloom host keyboard mSubtypeName=null mSubtypeShortLabel=null mSubtypeIconResId=0 mLayoutName=null mSubtypeIndex=-1 mShowInImeSwitcherMenu=true mIsAuxiliary=false mSuitableForHardware=true}
+          i=1 item=ImeSubtypeListItem{mImeName=Fossify Keyboard mSubtypeName= mSubtypeShortLabel= mSubtypeIconResId=0 mLayoutName= mSubtypeIndex=0 mShowInImeSwitcherMenu=true mIsAuxiliary=false mSuitableForHardware=false}
+        User action since last switch: true
+      mLastEnabledInputMethodsStr=com.android.inputmethod.latin/.LatinIME:com.android.droidloom.ime/.HostInputMethod:org.fossify.keyboard/.services.SimpleKeyboardIME
+      active computer control input connections on display ids:[]
+  mStartInputHistory:
+    StartInput #0:
+      time=2026-11-26 09:28:59.100 (timestamp=503415) reason=SESSION_CREATED_BY_IME restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d8916 [com.android.droidloom.home] targetUserId=0 targetDisplayId=0 clientBindSeq=1
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #1:
+      time=2026-11-26 09:29:28.687 (timestamp=533001) reason=SESSION_CREATED_BY_IME restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@b664f04 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=2
+      softInputMode=STATE_ALWAYS_HIDDEN|ADJUST_NOTHING|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #2:
+      time=2026-11-26 09:29:28.723 (timestamp=533038) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@8b7ca0 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=3
+      softInputMode=STATE_ALWAYS_HIDDEN|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #3:
+      time=2026-11-26 09:29:32.239 (timestamp=536554) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d8916 [com.android.droidloom.home] targetUserId=0 targetDisplayId=0 clientBindSeq=4
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #4:
+      time=2026-11-26 09:39:19.601 (timestamp=1123915) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@2eddb1a [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=5
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #5:
+      time=2026-11-26 09:39:22.507 (timestamp=1126822) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@13f783b [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=6
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #6:
+      time=2026-11-26 09:39:22.580 (timestamp=1126895) reason=CHECK_FOCUS restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@13f783b [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=7
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x200002 imeOptions=0x6 fieldId=0x7f0920e8 fieldName=null actionId=0 actionLabel=null
+    StartInput #7:
+      time=2026-11-26 09:46:18.940 (timestamp=1543254) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d8916 [com.android.droidloom.home] targetUserId=0 targetDisplayId=0 clientBindSeq=8
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #8:
+      time=2026-11-26 10:20:56.077 (timestamp=3620391) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@13f783b [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=9
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x200002 imeOptions=0x6 fieldId=0x7f0920e8 fieldName=null actionId=0 actionLabel=null
+    StartInput #9:
+      time=2026-11-26 10:20:56.079 (timestamp=3620393) reason=CHECK_FOCUS restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@13f783b [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=10
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x200002 imeOptions=0x6 fieldId=0x7f0920e8 fieldName=null actionId=0 actionLabel=null
+    StartInput #10:
+      time=2026-11-26 10:23:52.322 (timestamp=3796636) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d8916 [com.android.droidloom.home] targetUserId=0 targetDisplayId=0 clientBindSeq=11
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #11:
+      time=2026-11-26 10:23:53.348 (timestamp=3797662) reason=SESSION_CREATED_BY_IME restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@27ba7a6 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=12
+      softInputMode=STATE_ALWAYS_HIDDEN|ADJUST_NOTHING|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #12:
+      time=2026-11-26 10:23:53.402 (timestamp=3797717) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@e0ee265 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=13
+      softInputMode=STATE_ALWAYS_HIDDEN|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #13:
+      time=2026-11-26 10:23:58.408 (timestamp=3802723) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@2786ee0 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=14
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #14:
+      time=2026-11-26 10:24:00.802 (timestamp=3805117) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@b0d4f35 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=15
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #15:
+      time=2026-11-26 10:24:00.867 (timestamp=3805182) reason=CHECK_FOCUS restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@b0d4f35 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=16
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x200002 imeOptions=0x6 fieldId=0x7f0920e8 fieldName=null actionId=0 actionLabel=null
+    StartInput #16:
+      time=2026-11-26 10:27:39.855 (timestamp=4024169) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d8916 [com.android.droidloom.home] targetUserId=0 targetDisplayId=0 clientBindSeq=17
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #17:
+      time=2026-11-26 10:27:43.716 (timestamp=4028030) reason=SESSION_CREATED_BY_IME restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@6501e09 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=18
+      softInputMode=STATE_ALWAYS_HIDDEN|ADJUST_NOTHING|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #18:
+      time=2026-11-26 10:27:43.768 (timestamp=4028083) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@e20c922 [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=19
+      softInputMode=STATE_ALWAYS_HIDDEN|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #19:
+      time=2026-11-26 10:27:48.751 (timestamp=4033065) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@9277b8f [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=20
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #20:
+      time=2026-11-26 10:27:50.775 (timestamp=4035090) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d5c350d [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=21
+      softInputMode=STATE_ALWAYS_HIDDEN|ADJUST_PAN|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #21:
+      time=2026-11-26 10:27:53.506 (timestamp=4037820) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@9277b8f [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=22
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #22:
+      time=2026-11-26 10:27:56.863 (timestamp=4041177) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d93c67e [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=23
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #23:
+      time=2026-11-26 10:27:56.922 (timestamp=4041236) reason=CHECK_FOCUS restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d93c67e [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=24
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x200002 imeOptions=0x6 fieldId=0x7f0920e8 fieldName=null actionId=0 actionLabel=null
+    StartInput #24:
+      time=2026-11-26 10:35:44.965 (timestamp=4509279) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d8916 [com.android.droidloom.home] targetUserId=0 targetDisplayId=0 clientBindSeq=25
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+    StartInput #25:
+      time=2026-11-26 10:37:20.437 (timestamp=4604752) reason=WINDOW_FOCUS_GAIN restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d93c67e [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=26
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x200002 imeOptions=0x6 fieldId=0x7f0920e8 fieldName=null actionId=0 actionLabel=null
+    StartInput #26:
+      time=2026-11-26 10:37:20.439 (timestamp=4604753) reason=CHECK_FOCUS restarting=false
+      imeToken=android.os.Binder@3b65c08 [com.android.droidloom.ime/.HostInputMethod] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d93c67e [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=27
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x200002 imeOptions=0x6 fieldId=0x7f0920e8 fieldName=null actionId=0 actionLabel=null
+    StartInput #27:
+      time=2026-11-26 10:40:26.949 (timestamp=4791264) reason=SESSION_CREATED_BY_IME restarting=false
+      imeToken=android.os.Binder@e5c1d1f [org.fossify.keyboard/.services.SimpleKeyboardIME] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d93c67e [com.xingin.xhs] targetUserId=0 targetDisplayId=0 clientBindSeq=29
+      softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+      inputType=0x200002 imeOptions=0x6 fieldId=0x7f0920e8 fieldName=null actionId=0 actionLabel=null
+    StartInput #28:
+      time=2026-11-26 10:42:23.936 (timestamp=4908250) reason=SESSION_CREATED_BY_IME restarting=false
+      imeToken=android.os.Binder@e5c1d1f [org.fossify.keyboard/.services.SimpleKeyboardIME] imeUserId=0 imeDisplayId=0
+      targetWin=android.os.BinderProxy@d8916 [com.android.droidloom.home] targetUserId=0 targetDisplayId=0 clientBindSeq=30
+      softInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      inputType=0x0 imeOptions=0x0 fieldId=0x0 fieldName=null actionId=0 actionLabel=null
+  mSoftInputShowHideHistory:
+    SoftInputShowHide[0] #12:
+      time=2026-11-26 10:21:02.497 (timestamp=3626811)
+      reason=HIDE_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{e3bc2cc mUid=10104 mPid=1451 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #13:
+      time=2026-11-26 10:21:05.855 (timestamp=3630170)
+      reason=SHOW_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{e3bc2cc mUid=10104 mPid=1451 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #14:
+      time=2026-11-26 10:21:36.840 (timestamp=3661154)
+      reason=HIDE_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{e3bc2cc mUid=10104 mPid=1451 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #15:
+      time=2026-11-26 10:21:38.416 (timestamp=3662730)
+      reason=SHOW_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{e3bc2cc mUid=10104 mPid=1451 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #16:
+      time=2026-11-26 10:23:50.945 (timestamp=3795259)
+      reason=HIDE_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{e3bc2cc mUid=10104 mPid=1451 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #17:
+      time=2026-11-26 10:24:00.869 (timestamp=3805183)
+      reason=SHOW_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{26dc030 mUid=10104 mPid=13132 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{acb0fca u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{acb0fca u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{acb0fca u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{acb0fca u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{acb0fca u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=0 privateImeOptions=null fieldId (viewId)=0
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #18:
+      time=2026-11-26 10:27:39.858 (timestamp=4024172)
+      reason=HIDE_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      requestWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeLayeringTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeInputTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeControlTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeParentName=ActivityRecord{158577190 u0 com.android.droidloom.home/.HomeActivity t2}
+      editorInfo: inputType=0 privateImeOptions=null fieldId (viewId)=0
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+    SoftInputShowHide[0] #19:
+      time=2026-11-26 10:27:56.923 (timestamp=4041238)
+      reason=SHOW_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=0 privateImeOptions=null fieldId (viewId)=0
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #20:
+      time=2026-11-26 10:30:41.264 (timestamp=4205578)
+      reason=HIDE_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=0 privateImeOptions=null fieldId (viewId)=0
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #21:
+      time=2026-11-26 10:30:41.632 (timestamp=4205947)
+      reason=SHOW_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=0 privateImeOptions=null fieldId (viewId)=0
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #22:
+      time=2026-11-26 10:35:44.965 (timestamp=4509279)
+      reason=HIDE_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      requestWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeLayeringTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeInputTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=0 privateImeOptions=null fieldId (viewId)=0
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+    SoftInputShowHide[0] #23:
+      time=2026-11-26 10:37:20.438 (timestamp=4604752)
+      reason=SHOW_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeControlTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeParentName=ActivityRecord{158577190 u0 com.android.droidloom.home/.HomeActivity t2}
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #24:
+      time=2026-11-26 10:37:20.439 (timestamp=4604754)
+      reason=SHOW_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #25:
+      time=2026-11-26 10:37:20.501 (timestamp=4604816)
+      reason=HIDE_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #26:
+      time=2026-11-26 10:41:01.478 (timestamp=4825792)
+      reason=SHOW_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{db440b1 mUid=10104 mPid=15756 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeLayeringTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeInputTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeControlTargetName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      imeParentName=ImePlaceholder:13:14@81216301
+      editorInfo: inputType=2097154 privateImeOptions=null fieldId (viewId)=2131304680
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+    SoftInputShowHide[0] #27:
+      time=2026-11-26 10:42:23.939 (timestamp=4908254)
+      reason=HIDE_SOFT_INPUT inFullscreenMode=false
+      requestClient=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}
+      focusedWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      requestWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeLayeringTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeInputTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeControlTargetName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      imeParentName=ActivityRecord{158577190 u0 com.android.droidloom.home/.HomeActivity t2}
+      editorInfo: inputType=0 privateImeOptions=null fieldId (viewId)=0
+      focusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+  mImeTrackerService#History:
+    mActiveEntries: 0 elements
+    mCompletedEntries: 105 elements
+      #0 TYPE_HIDE - STATUS_CANCEL - com.android.droidloom.home:b624f0ce (1ms):
+        startTime=2026-11-26 09:28:58.293 (timestamp=502607) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #1 TYPE_HIDE - STATUS_CANCEL - system_server:b41934e0 (0ms):
+        startTime=2026-11-26 09:28:59.100 (timestamp=503414) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #2 TYPE_HIDE - STATUS_CANCEL - system_server:145b1c3 (1ms):
+        startTime=2026-11-26 09:28:59.101 (timestamp=503415) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #3 TYPE_HIDE - STATUS_CANCEL - system_server:248242e7 (0ms):
+        startTime=2026-11-26 09:29:28.688 (timestamp=533002) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #4 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:322e13f8 (0ms):
+        startTime=2026-11-26 09:29:28.709 (timestamp=533024) ORIGIN_CLIENT
+        reason=HIDE_WINDOW_LOST_FOCUS PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #5 TYPE_HIDE - STATUS_CANCEL - system_server:6611c41e (0ms):
+        startTime=2026-11-26 09:29:28.711 (timestamp=533025) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #6 TYPE_HIDE - STATUS_CANCEL - system_server:7b360b27 (0ms):
+        startTime=2026-11-26 09:29:28.724 (timestamp=533038) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #7 TYPE_HIDE - STATUS_CANCEL - com.android.droidloom.home:bd8f7686 (1ms):
+        startTime=2026-11-26 09:29:32.239 (timestamp=536553) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #8 TYPE_HIDE - STATUS_CANCEL - system_server:9b0882ef (1ms):
+        startTime=2026-11-26 09:29:32.241 (timestamp=536555) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #9 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:d0414c3c (0ms):
+        startTime=2026-11-26 09:29:32.269 (timestamp=536583) ORIGIN_CLIENT
+        reason=HIDE_WINDOW_LOST_FOCUS PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #10 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:278f9498 (0ms):
+        startTime=2026-11-26 09:39:19.601 (timestamp=1123915) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #11 TYPE_HIDE - STATUS_CANCEL - system_server:cd46d2ef (0ms):
+        startTime=2026-11-26 09:39:19.602 (timestamp=1123916) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #12 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:75905d9a (0ms):
+        startTime=2026-11-26 09:39:22.507 (timestamp=1126822) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #13 TYPE_HIDE - STATUS_CANCEL - system_server:385e51f0 (0ms):
+        startTime=2026-11-26 09:39:22.508 (timestamp=1126822) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #14 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:d7ee4b2e (3ms):
+        startTime=2026-11-26 09:39:22.579 (timestamp=1126894) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #16 TYPE_HIDE - STATUS_SUCCESS - system_server:1839fc86 (1ms):
+        startTime=2026-11-26 09:41:08.444 (timestamp=1232758) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #17 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:7bcdb9 (3ms):
+        startTime=2026-11-26 09:41:09.200 (timestamp=1233515) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=not set
+      #18 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:5f7de1c6 (1ms):
+        startTime=2026-11-26 09:41:10.320 (timestamp=1234634) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #20 TYPE_HIDE - STATUS_SUCCESS - system_server:5481434c (1ms):
+        startTime=2026-11-26 09:41:10.636 (timestamp=1234951) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #21 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:cafb4901 (3ms):
+        startTime=2026-11-26 09:41:11.542 (timestamp=1235856) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=not set
+      #22 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:dd842ed9 (0ms):
+        startTime=2026-11-26 09:41:12.588 (timestamp=1236902) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #24 TYPE_HIDE - STATUS_SUCCESS - system_server:37d6dcad (1ms):
+        startTime=2026-11-26 09:41:12.886 (timestamp=1237200) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #25 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:bfd8235a (3ms):
+        startTime=2026-11-26 09:41:13.263 (timestamp=1237577) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=not set
+      #27 TYPE_HIDE - STATUS_SUCCESS - system_server:c6335259 (0ms):
+        startTime=2026-11-26 09:41:13.681 (timestamp=1237996) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #28 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:a1f3b93a (3ms):
+        startTime=2026-11-26 09:41:14.843 (timestamp=1239158) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #15 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:f72cf901 (10010ms):
+        startTime=2026-11-26 09:41:08.443 (timestamp=1232758) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 09:41:08.444
+        userId=0 displayId=0
+        requestWindowName=not set
+      #19 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:428597b4 (10002ms):
+        startTime=2026-11-26 09:41:10.636 (timestamp=1234950) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 09:41:10.636
+        userId=0 displayId=0
+        requestWindowName=not set
+      #23 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:5280ca64 (10003ms):
+        startTime=2026-11-26 09:41:12.885 (timestamp=1237200) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 09:41:12.886
+        userId=0 displayId=0
+        requestWindowName=not set
+      #26 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:f6749b93 (10001ms):
+        startTime=2026-11-26 09:41:13.681 (timestamp=1237995) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 09:41:13.681
+        userId=0 displayId=0
+        requestWindowName=not set
+      #29 TYPE_HIDE - STATUS_CANCEL - com.android.droidloom.home:1936416a (0ms):
+        startTime=2026-11-26 09:46:18.939 (timestamp=1543254) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #30 TYPE_HIDE - STATUS_SUCCESS - system_server:88eb3158 (1ms):
+        startTime=2026-11-26 09:46:18.940 (timestamp=1543255) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      #31 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:6844a963 (1ms):
+        startTime=2026-11-26 10:20:56.077 (timestamp=3620391) ORIGIN_SERVER
+        reason=ATTACH_NEW_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #33 TYPE_SHOW - STATUS_CANCEL - system_server:21d8c224 (1ms):
+        startTime=2026-11-26 10:20:56.078 (timestamp=3620392) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_ALREADY_VISIBLE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #32 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:ffd32928 (1ms):
+        startTime=2026-11-26 10:20:56.077 (timestamp=3620392) ORIGIN_SERVER
+        reason=SHOW_RESTORE_IME_VISIBILITY PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #34 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:a44a4784 (1ms):
+        startTime=2026-11-26 10:20:56.079 (timestamp=3620393) ORIGIN_SERVER
+        reason=ATTACH_NEW_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #35 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:dfc0aec8 (0ms):
+        startTime=2026-11-26 10:20:57.597 (timestamp=3621912) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #36 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:5fc92a16 (0ms):
+        startTime=2026-11-26 10:21:00.230 (timestamp=3624545) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #37 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:e5a49215 (0ms):
+        startTime=2026-11-26 10:21:01.990 (timestamp=3626305) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #39 TYPE_HIDE - STATUS_SUCCESS - system_server:7cc5028d (2ms):
+        startTime=2026-11-26 10:21:02.496 (timestamp=3626810) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #40 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:eaf8988f (0ms):
+        startTime=2026-11-26 10:21:05.404 (timestamp=3629719) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #41 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:9242a69d (2ms):
+        startTime=2026-11-26 10:21:05.854 (timestamp=3630168) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #38 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:a5b480e9 (10008ms):
+        startTime=2026-11-26 10:21:02.496 (timestamp=3626810) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 10:21:02.496
+        userId=0 displayId=0
+        requestWindowName=not set
+      #43 TYPE_HIDE - STATUS_SUCCESS - system_server:c11419ef (1ms):
+        startTime=2026-11-26 10:21:36.837 (timestamp=3661151) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #44 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:a11a0713 (1ms):
+        startTime=2026-11-26 10:21:38.415 (timestamp=3662729) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=not set
+      #42 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:ef14dc2 (10012ms):
+        startTime=2026-11-26 10:21:36.836 (timestamp=3661151) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 10:21:36.837
+        userId=0 displayId=0
+        requestWindowName=not set
+      #45 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:40138298 (1ms):
+        startTime=2026-11-26 10:23:50.323 (timestamp=3794637) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #47 TYPE_HIDE - STATUS_SUCCESS - system_server:8b6f7401 (1ms):
+        startTime=2026-11-26 10:23:50.945 (timestamp=3795259) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=Window{74a5b58 u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #48 TYPE_HIDE - STATUS_CANCEL - com.android.droidloom.home:8d3d2079 (0ms):
+        startTime=2026-11-26 10:23:52.321 (timestamp=3796636) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #49 TYPE_HIDE - STATUS_CANCEL - system_server:71470bbd (0ms):
+        startTime=2026-11-26 10:23:52.322 (timestamp=3796636) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #50 TYPE_HIDE - STATUS_CANCEL - system_server:dde3146e (0ms):
+        startTime=2026-11-26 10:23:53.349 (timestamp=3797664) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #51 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:d2756496 (0ms):
+        startTime=2026-11-26 10:23:53.380 (timestamp=3797695) ORIGIN_CLIENT
+        reason=HIDE_WINDOW_LOST_FOCUS PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #52 TYPE_HIDE - STATUS_CANCEL - system_server:be9beaeb (0ms):
+        startTime=2026-11-26 10:23:53.381 (timestamp=3797696) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #53 TYPE_HIDE - STATUS_CANCEL - system_server:6cfa63ac (1ms):
+        startTime=2026-11-26 10:23:53.403 (timestamp=3797717) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #54 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:8b01a8e7 (0ms):
+        startTime=2026-11-26 10:23:58.404 (timestamp=3802719) ORIGIN_CLIENT
+        reason=HIDE_WINDOW_LOST_FOCUS PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #55 TYPE_HIDE - STATUS_CANCEL - system_server:e317ea87 (1ms):
+        startTime=2026-11-26 10:23:58.407 (timestamp=3802721) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #56 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:b8d959d8 (0ms):
+        startTime=2026-11-26 10:23:58.408 (timestamp=3802723) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #57 TYPE_HIDE - STATUS_CANCEL - system_server:1a17c803 (1ms):
+        startTime=2026-11-26 10:23:58.409 (timestamp=3802723) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #58 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:b568c668 (0ms):
+        startTime=2026-11-26 10:24:00.802 (timestamp=3805117) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #59 TYPE_HIDE - STATUS_CANCEL - system_server:8c674a80 (0ms):
+        startTime=2026-11-26 10:24:00.803 (timestamp=3805117) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #60 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:c3222c72 (3ms):
+        startTime=2026-11-26 10:24:00.866 (timestamp=3805181) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{acb0fca u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #46 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:7b6668d (10000ms):
+        startTime=2026-11-26 10:23:50.944 (timestamp=3795259) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 10:23:50.945
+        userId=0 displayId=0
+        requestWindowName=not set
+      #61 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:e2b0a0bb (0ms):
+        startTime=2026-11-26 10:24:03.175 (timestamp=3807490) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #62 TYPE_HIDE - STATUS_CANCEL - com.android.droidloom.home:67106238 (0ms):
+        startTime=2026-11-26 10:27:39.854 (timestamp=4024169) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #63 TYPE_HIDE - STATUS_SUCCESS - system_server:eb47d84c (1ms):
+        startTime=2026-11-26 10:27:39.857 (timestamp=4024171) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_NOTIFY_IME_VISIBILITY_CHANGED_FROM_CLIENT
+        userId=-10000 displayId=0
+        requestWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      #64 TYPE_HIDE - STATUS_CANCEL - system_server:a1669cf0 (1ms):
+        startTime=2026-11-26 10:27:39.857 (timestamp=4024172) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #65 TYPE_HIDE - STATUS_CANCEL - system_server:953aa928 (0ms):
+        startTime=2026-11-26 10:27:43.717 (timestamp=4028032) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #66 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:10829d9b (0ms):
+        startTime=2026-11-26 10:27:43.746 (timestamp=4028060) ORIGIN_CLIENT
+        reason=HIDE_WINDOW_LOST_FOCUS PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #67 TYPE_HIDE - STATUS_CANCEL - system_server:6f670377 (0ms):
+        startTime=2026-11-26 10:27:43.747 (timestamp=4028061) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #68 TYPE_HIDE - STATUS_CANCEL - system_server:204b0df (0ms):
+        startTime=2026-11-26 10:27:43.769 (timestamp=4028084) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #69 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:b770dc72 (0ms):
+        startTime=2026-11-26 10:27:48.750 (timestamp=4033065) ORIGIN_CLIENT
+        reason=HIDE_WINDOW_LOST_FOCUS PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #71 TYPE_HIDE - STATUS_CANCEL - system_server:588bb8e6 (0ms):
+        startTime=2026-11-26 10:27:48.752 (timestamp=4033066) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #70 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:2240af2c (3ms):
+        startTime=2026-11-26 10:27:48.751 (timestamp=4033065) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #72 TYPE_HIDE - STATUS_CANCEL - system_server:51cf5a8b (0ms):
+        startTime=2026-11-26 10:27:50.776 (timestamp=4035090) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #73 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:5e624e0e (0ms):
+        startTime=2026-11-26 10:27:53.481 (timestamp=4037795) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #74 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:c8ce92db (0ms):
+        startTime=2026-11-26 10:27:53.505 (timestamp=4037819) ORIGIN_CLIENT
+        reason=HIDE_WINDOW_LOST_FOCUS PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #76 TYPE_HIDE - STATUS_CANCEL - system_server:7e0615b0 (0ms):
+        startTime=2026-11-26 10:27:53.507 (timestamp=4037821) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #75 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:7cf2228c (16ms):
+        startTime=2026-11-26 10:27:53.506 (timestamp=4037820) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #77 TYPE_HIDE - STATUS_CANCEL - com.xingin.xhs:42b982e4 (0ms):
+        startTime=2026-11-26 10:27:56.863 (timestamp=4041177) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #78 TYPE_HIDE - STATUS_CANCEL - system_server:3492fbba (0ms):
+        startTime=2026-11-26 10:27:56.864 (timestamp=4041179) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #79 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:56735832 (3ms):
+        startTime=2026-11-26 10:27:56.921 (timestamp=4041235) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #81 TYPE_HIDE - STATUS_SUCCESS - system_server:4abf3313 (0ms):
+        startTime=2026-11-26 10:30:41.263 (timestamp=4205577) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #82 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:70a320cd (2ms):
+        startTime=2026-11-26 10:30:41.630 (timestamp=4205945) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #80 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:14520983 (10010ms):
+        startTime=2026-11-26 10:30:41.262 (timestamp=4205577) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 10:30:41.262
+        userId=0 displayId=0
+        requestWindowName=not set
+      #83 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:bdae5c67 (0ms):
+        startTime=2026-11-26 10:31:18.654 (timestamp=4242968) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #84 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:b2867a70 (0ms):
+        startTime=2026-11-26 10:31:24.141 (timestamp=4248455) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #85 TYPE_HIDE - STATUS_CANCEL - com.android.droidloom.home:6c824943 (0ms):
+        startTime=2026-11-26 10:35:44.964 (timestamp=4509279) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #86 TYPE_HIDE - STATUS_SUCCESS - com.android.droidloom.home:c25da237 (1ms):
+        startTime=2026-11-26 10:35:44.965 (timestamp=4509279) ORIGIN_SERVER
+        reason=HIDE_SOFT_INPUT PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=0 displayId=0
+        requestWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      #87 TYPE_HIDE - STATUS_CANCEL - system_server:66be3993 (1ms):
+        startTime=2026-11-26 10:35:44.966 (timestamp=4509280) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #88 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:73b3217b (0ms):
+        startTime=2026-11-26 10:37:20.437 (timestamp=4604752) ORIGIN_SERVER
+        reason=ATTACH_NEW_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #89 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:211af12b (1ms):
+        startTime=2026-11-26 10:37:20.438 (timestamp=4604752) ORIGIN_SERVER
+        reason=SHOW_RESTORE_IME_VISIBILITY PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+        userId=0 displayId=0
+        requestWindowName=not set
+      #90 TYPE_SHOW - STATUS_CANCEL - system_server:f6c8a32c (1ms):
+        startTime=2026-11-26 10:37:20.438 (timestamp=4604753) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_ALREADY_VISIBLE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #91 TYPE_SHOW - STATUS_FAIL - com.xingin.xhs:bb28154f (1ms):
+        startTime=2026-11-26 10:37:20.439 (timestamp=4604753) ORIGIN_SERVER
+        reason=ATTACH_NEW_INPUT PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE
+        userId=0 displayId=0
+        requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #93 TYPE_HIDE - STATUS_SUCCESS - system_server:5b06015 (1ms):
+        startTime=2026-11-26 10:37:20.500 (timestamp=4604815) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #92 TYPE_HIDE - STATUS_TIMEOUT - com.xingin.xhs:f3d8814e (10000ms):
+        startTime=2026-11-26 10:37:20.500 (timestamp=4604815) ORIGIN_CLIENT
+        reason=HIDE_SOFT_INPUT PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES lastProgressTime=2026-11-26 10:37:20.500
+        userId=0 displayId=0
+        requestWindowName=not set
+      #94 TYPE_HIDE - STATUS_CANCEL - system_server:66829111 (0ms):
+        startTime=2026-11-26 10:40:26.949 (timestamp=4791263) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_SERVER_SHOULD_HIDE
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #95 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:395a4821 (58ms):
+        startTime=2026-11-26 10:41:01.477 (timestamp=4825791) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_SERVER_POST_LAYOUT_NOTIFY_CONTROLS_CHANGED
+        userId=0 displayId=0
+        requestWindowName=Window{1da17df u0 com.xingin.xhs/com.xingin.login.activity.LoginActivity}
+      #96 TYPE_SHOW - STATUS_SUCCESS - system_server:9f5dba97 (214ms):
+        startTime=2026-11-26 10:41:01.554 (timestamp=4825868) ORIGIN_SERVER
+        reason=CONTROLS_CHANGED PHASE_CLIENT_ANIMATION_FINISHED_SHOW
+        userId=-10000 displayId=0
+        requestWindowName=not set
+      #97 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:554dec1b (0ms):
+        startTime=2026-11-26 10:41:07.144 (timestamp=4831458) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_APPLY_ANIMATION
+        userId=0 displayId=0
+        requestWindowName=not set
+      #98 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:5215091a (0ms):
+        startTime=2026-11-26 10:41:10.020 (timestamp=4834334) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_APPLY_ANIMATION
+        userId=0 displayId=0
+        requestWindowName=not set
+      #99 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:8147e73f (0ms):
+        startTime=2026-11-26 10:41:15.691 (timestamp=4840006) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_APPLY_ANIMATION
+        userId=0 displayId=0
+        requestWindowName=not set
+      #100 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:52ba1ff0 (0ms):
+        startTime=2026-11-26 10:41:18.600 (timestamp=4842915) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_APPLY_ANIMATION
+        userId=0 displayId=0
+        requestWindowName=not set
+      #101 TYPE_SHOW - STATUS_CANCEL - com.xingin.xhs:104442eb (0ms):
+        startTime=2026-11-26 10:41:24.260 (timestamp=4848574) ORIGIN_CLIENT
+        reason=SHOW_SOFT_INPUT PHASE_CLIENT_APPLY_ANIMATION
+        userId=0 displayId=0
+        requestWindowName=not set
+      #102 TYPE_HIDE - STATUS_CANCEL - com.android.droidloom.home:f86a6ae1 (0ms):
+        startTime=2026-11-26 10:42:23.935 (timestamp=4908249) ORIGIN_SERVER
+        reason=HIDE_UNSPECIFIED_WINDOW PHASE_CLIENT_ALREADY_HIDDEN
+        userId=0 displayId=0
+        requestWindowName=not set
+      #103 TYPE_HIDE - STATUS_SUCCESS - system_server:9414c9a3 (4ms):
+        startTime=2026-11-26 10:42:23.937 (timestamp=4908251) ORIGIN_SERVER
+        reason=IME_REQUESTED_CHANGED_LISTENER PHASE_IME_NOTIFY_IME_VISIBILITY_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=Window{5bc9ad8 u0 com.android.droidloom.home/com.android.droidloom.home.HomeActivity}
+      #104 TYPE_SHOW - STATUS_CANCEL - system_server:742b7132 (0ms):
+        startTime=2026-11-26 10:42:23.946 (timestamp=4908260) ORIGIN_SERVER
+        reason=CONTROLS_CHANGED PHASE_CLIENT_ON_CONTROLS_CHANGED
+        userId=-10000 displayId=0
+        requestWindowName=not set
+  UserId=0
+    mBindingController:
+      mSelectedImeId=org.fossify.keyboard/.services.SimpleKeyboardIME
+      mCurrentSubtype=android.view.inputmethod.InputMethodSubtype@7608c9d8
+      mCurSeq=30
+      mCurImeId=org.fossify.keyboard/.services.SimpleKeyboardIME
+      mBackgroundConnection=null
+      mMainConnection=com.android.server.inputmethod.InputMethodBindingController$MainConnection@ad119c2
+      mVisibleConnection=null
+      mCurToken=android.os.Binder@e5c1d1f
+      mCurDisplayId=0
+      mActive=true
+      mCurHostInputToken=null
+      mCurImeIntent=Intent { act=android.view.InputMethod xflg=0x4 cmp=org.fossify.keyboard/.services.SimpleKeyboardIME (has extras) }
+      mCurIme=com.android.server.inputmethod.IInputMethodInvoker@375d743
+      mImeWindowVis=0
+      mBackDisposition=0
+      mSelectedDisplayId=0
+      mDeviceId=0
+      mSupportsStylusHw=false
+      mSupportsConnectionlessStylusHw=false
+    mCurClient=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}
+    mFocusedWindowPerceptible={android.os.BinderProxy@d93c67e=true, android.os.BinderProxy@2eddb1a=true, android.os.BinderProxy@b0d4f35=true, android.os.BinderProxy@d5c350d=true, android.os.BinderProxy@27ba7a6=true, android.os.BinderProxy@13f783b=true, android.os.BinderProxy@9277b8f=true, android.os.BinderProxy@6501e09=true, android.os.BinderProxy@e0ee265=true, android.os.BinderProxy@2786ee0=true, android.os.BinderProxy@e20c922=true, null=true, android.os.BinderProxy@d8916=false}
+    mImeBindingState:
+      mFocusedWindow=android.os.BinderProxy@d8916
+      mFocusedWindowSoftInputMode=STATE_UNSPECIFIED|ADJUST_PAN
+      mFocusedWindowClient=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0}
+    mBoundToMethod=true
+    mEnabledSession=SessionState{uid=10103 pid=782 ime=f0a66f7 session=6c08fb1 channel=ClientState{92a9165 mUid=10103 mPid=782 mSelfReportedDisplayId=0} userId=0}
+    mVisibilityStateComputer:
+      mImeHiddenByDisplayPolicy=false
+      mInputShown=false
+      mLastImeTargetWindow=android.os.BinderProxy@d8916
+    mInFullscreenMode=false
+    mEnabledA11ySessions={}
+    Input Methods:
+      InputMethod #0:
+        mId=org.fossify.keyboard/.services.SimpleKeyboardIME mSettingsActivityName=org.fossify.keyboard.activities.SettingsActivity mLanguageSettingsActivityName=null mIsVrOnly=false mIsVirtualDeviceOnly=false mSupportsSwitchingToNextInputMethod=false mInlineSuggestionsEnabled=true mSupportsInlineSuggestionsWithTouchExploration=false mSuppressesSpellChecker=false mShowInInputMethodPicker=true mSupportsStylusHandwriting=false mSupportsConnectionlessStylusHandwriting=false mStylusHandwritingSettingsActivityAttr=null
+        mIsDefaultResId=0x0
+        Service:
+          priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=false
+          ServiceInfo:
+            name=org.fossify.keyboard.services.SimpleKeyboardIME
+            packageName=org.fossify.keyboard
+            labelRes=0x7f110052 nonLocalizedLabel=null icon=0x0 banner=0x0
+            enabled=true exported=true directBootAware=true
+            permission=android.permission.BIND_INPUT_METHOD
+            flags=0x0
+            ApplicationInfo:
+              name=org.fossify.keyboard.App
+              packageName=org.fossify.keyboard
+              labelRes=0x7f110050 nonLocalizedLabel=null icon=0x7f0f0000 banner=0x0
+              className=org.fossify.keyboard.App
+              processName=org.fossify.keyboard
+              taskAffinity=org.fossify.keyboard
+              uid=10106 flags=0x20c9be44 privateFlags=0x8c001100 theme=0x7f12000d
+              requiresSmallestWidthDp=0 compatibleWidthLimitDp=0 largestWidthLimitDp=0
+              sourceDir=/data/app/~~qJpZCGWoD4tcD6CSw4ZfMg==/org.fossify.keyboard-921YDjfL9dHJjyXNWOAfPg==/base.apk
+              seinfo=default:targetSdkVersion=36
+              seinfoUser=:complete
+              dataDir=/data/user/0/org.fossify.keyboard
+              deviceProtectedDataDir=/data/user_de/0/org.fossify.keyboard
+              credentialProtectedDataDir=/data/user/0/org.fossify.keyboard
+              enabled=true minSdkVersion=26 targetSdkVersion=36 versionCode=14 targetSandboxVersion=1
+              supportsRtl=true
+              fullBackupContent=true
+              crossProfile=false
+              category=7
+              HiddenApiEnforcementPolicy=2
+              usesNonSdkApi=false
+              allowsPlaybackCapture=true
+              nativeHeapZeroInitialized=0
+              localeConfigRes=0x7f140000
+              enableOnBackInvokedCallback=true
+              allowCrossUidActivitySwitchFromBelow=true
+              mPageSizeAppCompatFlags=0
+              isAppLockSupported=false
+              isAppLockEnabled=false
+              createTimestamp=4791222
+        InputMethodSubtype array: count=1
+          InputMethodSubtype #0:
+            mSubtypeNameOverride= mSubtypeShortLabel= mLayoutLabelNonLocalized= mPkLanguageTag= mPkLayoutType= mSubtypeId=0 mSubtypeLocale= mSubtypeLanguageTag= mSubtypeMode=Keyboard mIsAuxiliary=false mOverridesImplicitlyEnabledSubtype=false mIsAsciiCapable=false mSubtypeHashCode=1980287448
+      InputMethod #1:
+        mId=com.android.droidloom.ime/.HostInputMethod mSettingsActivityName=null mLanguageSettingsActivityName=null mIsVrOnly=false mIsVirtualDeviceOnly=false mSupportsSwitchingToNextInputMethod=false mInlineSuggestionsEnabled=false mSupportsInlineSuggestionsWithTouchExploration=false mSuppressesSpellChecker=false mShowInInputMethodPicker=true mSupportsStylusHandwriting=false mSupportsConnectionlessStylusHandwriting=false mStylusHandwritingSettingsActivityAttr=null
+        mIsDefaultResId=0x0
+        Service:
+          priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=false
+          ServiceInfo:
+            name=com.android.droidloom.ime.HostInputMethod
+            packageName=com.android.droidloom.ime
+            enabled=true exported=true directBootAware=false
+            permission=android.permission.BIND_INPUT_METHOD
+            flags=0x0
+            ApplicationInfo:
+              packageName=com.android.droidloom.ime
+              labelRes=0x0 nonLocalizedLabel=Droidloom host keyboard icon=0x0 banner=0x0
+              processName=com.android.droidloom.ime
+              taskAffinity=com.android.droidloom.ime
+              uid=10102 flags=0x30883e44 privateFlags=0x8c001000 theme=0x0
+              requiresSmallestWidthDp=0 compatibleWidthLimitDp=0 largestWidthLimitDp=0
+              sourceDir=/data/app/~~4yqZG5bHrKIA62XGmhywLQ==/com.android.droidloom.ime-BIbWH3FG3phDAFLQ_Mxv3Q==/base.apk
+              seinfo=default:targetSdkVersion=37
+              seinfoUser=:complete
+              dataDir=/data/user/0/com.android.droidloom.ime
+              deviceProtectedDataDir=/data/user_de/0/com.android.droidloom.ime
+              credentialProtectedDataDir=/data/user/0/com.android.droidloom.ime
+              enabled=true minSdkVersion=31 targetSdkVersion=37 versionCode=1 targetSandboxVersion=1
+              supportsRtl=false
+              fullBackupContent=true
+              crossProfile=false
+              HiddenApiEnforcementPolicy=2
+              usesNonSdkApi=false
+              allowsPlaybackCapture=true
+              nativeHeapZeroInitialized=0
+              enableOnBackInvokedCallback=true
+              allowCrossUidActivitySwitchFromBelow=true
+              mPageSizeAppCompatFlags=0
+              isAppLockSupported=false
+              isAppLockEnabled=false
+              createTimestamp=4791222
+        InputMethodSubtype array: count=0
+
+Input method client state for android.view.inputmethod.InputMethodManager@6a8aa58:
+  mFallbackInputConnection=RemoteInputConnectionImpl{connection=android.view.inputmethod.BaseInputConnection@1c787b1 mDeactivateRequested=false mServedView=null}
+  mActive=true mRestartOnNextWindowFocus=false mBindSequence=30 mCurImeId=org.fossify.keyboard/.services.SimpleKeyboardIME
+  mFullscreenMode=false
+  mCurMethod=com.android.internal.inputmethod.IInputMethodSession$Stub$Proxy@132e496
+  mCurRootView=android.view.ViewRootImpl@3492728
+  mServedView=com.android.internal.policy.DecorView{6553817 V.E...... R.....I. 0,0-1904,3040 aid=1073741824}[HomeActivity]
+  mNextServedView=com.android.internal.policy.DecorView{6553817 V.E...... R.....I. 0,0-1904,3040 aid=1073741824}[HomeActivity]
+  mServedConnecting=false
+  mCurrentEditorInfo:
+    inputType=0x0 imeOptions=0x0 privateImeOptions=null
+    actionLabel=null actionId=0
+    initialSelStart=-1 initialSelEnd=-1 initialToolType=0 initialCapsMode=0x0
+    hintText=null label=null
+    packageName=com.android.droidloom.home autofillId=0 fieldId=0 fieldName=null
+    hintLocales=null
+    supportedHandwritingGestureTypes=(none)
+    supportedHandwritingGesturePreviewTypes=(none)
+    isStylusHandwritingEnabled=false
+    writingToolsEnabled=true
+    contentMimeTypes=null
+  mServedInputConnection=null
+  mServedInputConnectionHandler=null
+  mLastPendingStartSeqId=-1
+  mCompletions=null
+  mCursorRect=Rect(0, 0 - 0, 0)
+  mCursorSelStart=0 mCursorSelEnd=0 mCursorCandStart=0 mCursorCandEnd=0
+  ImeBackCallbackProxy:
+    mImeCallbacks: []
+
+Input method service state for org.fossify.keyboard.services.SimpleKeyboardIME@fc11bbe:
+  mViewsCreated=true
+  mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false
+  Configuration={1.0 ?mcc0mnc [en_US] ldltr sw442dp w442dp h705dp 690dpi nrml compactNeeded port night finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1904, 3040) mAppBounds=Rect(0, 0 - 1904, 3040) mMaxBounds=Rect(0, 0 - 1904, 3040) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.6 fontWeightAdjustment=0}
+  mToken=android.os.BinderProxy@153acc2
+  mInputBinding=InputBinding{android.os.BinderProxy@b912b20 / uid 10103 / pid 782}
+  mInputConnection=RemoteInputConnection{idHash=#2b34cd9}
+  mStartedInputConnection=null
+  mInputStarted=true mInputViewStarted=false mCandidatesViewStarted=false
+  mInputEditorInfo:
+    inputType=0x0 imeOptions=0x0 privateImeOptions=null
+    actionLabel=null actionId=0
+    initialSelStart=-1 initialSelEnd=-1 initialToolType=0 initialCapsMode=0x0
+    hintText=null label=null
+    packageName=com.android.droidloom.home autofillId=0 fieldId=0 fieldName=null
+    hintLocales=null
+    supportedHandwritingGestureTypes=(none)
+    supportedHandwritingGesturePreviewTypes=(none)
+    isStylusHandwritingEnabled=false
+    writingToolsEnabled=true
+    contentMimeTypes=null
+  mShowInputRequested=false mLastShowInputRequested=false mShowInputFlags=0x0
+  mCandidatesVisibility=4 mFullscreenApplied=true mIsFullscreen=false mExtractViewHidden=false
+  mExtractedText: null
+  mExtractedToken=0
+  mIsInputViewShown=true mStatusIcon=0
+  Last computed insets:
+    contentTopInsets=0 visibleTopInsets=0 touchableInsets=2 touchableRegion=SkRegion()
+  mSettingsObserver=SettingsObserver{mShowImeWithHardKeyboard=2}
+  mNavigationBarController={mImeDrawsImeNavBar=false mNavigationBarFrame=null mShowImeSwitcherButton=false mImeSwitcherButtonEnabled=true mCustomImeSwitcherButtonRequestedVisible=false mAppearance=0x0 mDarkIntensity=0.0 mDrawLegacyNavigationBarBackground=false}
+  mBackCallbackRegistered=false

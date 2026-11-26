@@ -1,0 +1,38 @@
+From: Piyush Raj Chouhan <pc1598@mainlining.org>
+Date: Sat,  3 Oct 2026 20:35:59 +0530
+Subject: [PATCH v2] misc: fastrpc: Allocate message buffer from remote heap for sensors PD
+Message-ID: <20261003150559.6926-2-pc1598@mainlining.org>
+
+From: Robin Snyders <robin@snyders.xyz>
+
+The sensors protection domain reaches the message buffer directly rather
+than through its context bank, so it requires an allocation from the
+reserved remote heap memory pool. Using a context-bank buffer allocation
+leaves the DSP addressing memory that is not mapped in its address space,
+triggering an SMMU context fault (e.g. 0x1fffff000) or bus stall.
+
+Ensure the remote heap is used for SENSORS_PD invocations even when
+a stream ID (sid) is present.
+
+Signed-off-by: Robin Snyders <robin@snyders.xyz>
+Signed-off-by: Piyush Raj Chouhan <pc1598@mainlining.org>
+---
+ drivers/misc/fastrpc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/misc/fastrpc.c b/drivers/misc/fastrpc.c
+index d4fac2caca86..8f39f4bed20e 100644
+--- a/drivers/misc/fastrpc.c
++++ b/drivers/misc/fastrpc.c
+@@ -1099,7 +1099,7 @@ static int fastrpc_get_args(u32 kernel, struct fastrpc_invoke_ctx *ctx)
+ 
+ 	ctx->msg_sz = pkt_size;
+ 
+-	if (ctx->fl->sctx->sid)
++	if (ctx->fl->sctx->sid && ctx->fl->pd != SENSORS_PD)
+ 		err = fastrpc_buf_alloc(ctx->fl, dev, pkt_size, &ctx->buf);
+ 	else
+ 		err = fastrpc_remote_heap_alloc(ctx->fl, dev, pkt_size, &ctx->buf);
+-- 
+2.55.0
+

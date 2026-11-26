@@ -1,0 +1,46 @@
+[    0.000000] [      T0] Linux version 7.3.1-debug-vk189-suspend-fastrpc1-g4da9a8b69fc8-dirty (elden@y700) (aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, GNU ld (GNU Binutils for Ubuntu) 2.46) #1 SMP PREEMPT Thu Nov 26 16:06:53 CST 2026
+[    0.066264] [      T1] /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@43: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.066278] [      T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@43
+[    0.066375] [      T1] /soc@0/phy@88e8000: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.066391] [      T1] /soc@0/usb@a600000: Fixed dependency cycle(s) with /pmic-glink/connector@0
+[    0.066413] [      T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/phy@88e8000
+[    0.066538] [      T1] /pmic-glink/connector@0: Fixed dependency cycle(s) with /soc@0/usb@a600000
+[    0.066555] [      T1] /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@42: Fixed dependency cycle(s) with /pmic-glink/connector@1
+[    0.066569] [      T1] /pmic-glink/connector@1: Fixed dependency cycle(s) with /soc@0/geniqup@ac0000/i2c@a94000/typec-mux@42
+[    0.066578] [      T1] /soc@0/usb@a600000: Fixed dependency cycle(s) with /pmic-glink/connector@1
+[    0.066789] [      T1] /pmic-glink/connector@1: Fixed dependency cycle(s) with /soc@0/usb@a600000
+[    0.371974] [     T92] remoteproc remoteproc0: adsp is available
+[    0.372953] [     T92] remoteproc remoteproc1: cdsp is available
+[    0.375469] [     T92] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 88e8000.phy for /pmic-glink/connector@0
+[    0.607362] [     T97] remoteproc remoteproc1: powering up cdsp
+[    0.607375] [     T97] remoteproc remoteproc1: Booting fw image qcom/sm8750/cdsp.mdt, size 5084
+[    0.607419] [    T130] remoteproc remoteproc0: powering up adsp
+[    0.607428] [    T130] remoteproc remoteproc0: Booting fw image qcom/sm8750/adsp.mdt, size 8364
+[    0.704933] [     T92] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0042 for /pmic-glink/connector@1
+[    0.704955] [     T92] qcom_pmic_glink pmic-glink: Failed to create device link (0x180) with supplier 5-0043 for /pmic-glink/connector@0
+[    0.762630] [     T97] remoteproc remoteproc1: remote processor cdsp is now up
+[    0.771510] [     T10] qcom,fastrpc 32300000.remoteproc:glink-edge.fastrpcglink-apps-dsp.-1.-1: no reserved DMA memory for FASTRPC
+[    0.771995] [     T10] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@1: SMR mask 0x40 out of range for SMMU (0x2)
+[    0.772396] [     T10] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@1: SMR mask 0x40 out of range for SMMU (0x2)
+[    0.772434] [     T10] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@2: SMR mask 0x20 out of range for SMMU (0x2)
+[    0.772659] [     T10] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@2: SMR mask 0x20 out of range for SMMU (0x2)
+[    0.772690] [     T10] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@3: SMR mask 0x40 out of range for SMMU (0x2)
+[    0.772919] [     T10] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@3: SMR mask 0x40 out of range for SMMU (0x2)
+[    0.772950] [     T10] platform 32300000.remoteproc:glink-edge:fastrpc:compute-cb@4: SMR mask 0x40 out of range for SMMU (0x2)
+[    0.773204] [     T10] qcom,fastrpc-cb 32300000.remoteproc:glink-edge:fastrpc:compute-cb@4: SMR mask 0x40 out of range for SMMU (0x2)
+===SM===
+[    0.000000] [      T0] Kernel command line: console=ttyGS0,115200 console=tty0 loglevel=8 ignore_loglevel printk.devkmsg=on panic=15 clk_ignore_unused pd_ignore_unused arm-smmu.disable_bypass=0 elden_root=LABEL=linux androidboot.slot_suffix=_b androidboot.verifiedbootstate=orange androidboot.keymaster=1  androidboot.bootdevice=1d84000.ufshc androidboot.fstab_suffix=default androidboot.boot_devices=soc/1d84000.ufshc androidboot.serialno=HA2EXB0E androidboot.baseband=apq msm_drm.dsi_display0=qcom,mdss_dsi_elden_nt36523_csot_3k_dsc_vid: hqsysfs.pcba_stage=SOVP hqsysfs.pcba_config=PRC ufsffu.boot_mode=normal androidboot.force_normal_boot=1
+[    0.000545] [      T0] pid_max: default: 32768 minimum: 301
+[    0.071861] [      T1] iommu: Default domain type: Translated
+[    0.081601] [      T1] PCI: CLS 0 bytes, default 64
+[    0.314364] [     T92] arm-smmu 3da0000.iommu: probing hardware configuration...
+[    0.314367] [     T92] arm-smmu 3da0000.iommu: SMMUv2 with:
+[    0.314406] [     T92] arm-smmu 3da0000.iommu: 	stage 1 translation
+[    0.314409] [     T92] arm-smmu 3da0000.iommu: 	coherent table walk
+[    0.314411] [     T92] arm-smmu 3da0000.iommu: 	stream matching with 24 register groups
+[    0.314441] [     T92] arm-smmu 3da0000.iommu: 	21 context banks (0 stage-2 only)
+[    0.314472] [     T92] arm-smmu 3da0000.iommu: 	Supported page sizes: 0x61311000
+[    0.314474] [     T92] arm-smmu 3da0000.iommu: 	Stage-1: 48-bit VA -> 36-bit IPA
+[    0.314545] [     T92] arm-smmu 3da0000.iommu: 	preserved 0 boot mappings
+[    0.318123] [     T92] arm-smmu 15000000.iommu: probing hardware configuration...
+[    0.318126] [     T92] arm-smmu 15000000.iommu: SMMUv2 with:

@@ -1,0 +1,1 @@
+com.android.inputmethod.latin/.LatinIME:com.android.droidloom.ime/.HostInputMethod
