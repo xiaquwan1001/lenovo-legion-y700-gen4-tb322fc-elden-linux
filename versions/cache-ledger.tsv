@@ -30,6 +30,9 @@ backup/	仓库内	backup	29G	**不可再生**（原厂 dump/固件/线刷包）	
 bootslot-b/	仓库内	secret	1.8G	可重签（需 `bootslot-b/avb.key`）	**含私钥，禁止外发**	见 doctor §26
 assets/	仓库内	asset	323M	`scripts/android-assets-extract-20261119.py` 可重建	**禁止外发**（专有固件）	见 reports/android-assets-20261119.md
 reports/	仓库内	doc	2.0G	md 入库；`reports/artifacts/` 下大件按 .gitignore	项目私有	报告必须被引用（doctor §8f）
+.pi/sessions/	仓库内	artifact	1.0G	**不可再生**（会话原文 = 结论溯源；`sessfind`/session-librarian 依赖）	个人私有（**禁止外发**：含对话与凭据片段）	可压缩：378 个 jsonl，实测最大件 gzip -1 后 ≈43% ⇒ 全量约 −0.45 G；**动手前先确认 sessfind/session-librarian 能读 .gz**
+reports/artifacts/	仓库内	artifact	2.0G	部分可重建（截图/串口日志；结论已入 `reports/*.md`）	项目私有	归档候选（顶部 8 个目录 ≈ 300M：`bl-stuck-20261116/17`、`uefi-edl-read-20261101`、`uefi-*p5x`），删除需用户批准
+.git/	仓库内	track	418M	**不可再生**（本地历史；`origin/main` 有意落后）	项目私有	不要动；瘦身只走 git bundle 备份后再 filter-repo
 logs/	仓库内	log	635M	可再生	项目私有	串口/构建/agent 日志
 runs/	仓库内	log	493M	可再生	项目私有	lane 实跑回执（runs/<lane>/REPORT.md + 原始日志）
 wt/	仓库内	workdir	17M	`scripts/lane.sh` 重建 worktree	项目私有	lane git worktree（git 链接，不能搬）
