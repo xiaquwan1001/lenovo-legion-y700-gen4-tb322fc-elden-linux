@@ -27,7 +27,9 @@ root = _root_from_argv or (_sys.argv[1] if len(_sys.argv) > 1 and not _sys.argv[
 # 受管入口文件（人类/agent 的第一落点）；改动此清单需同步 INDEX.md §2。
 ENTRY = ['INDEX.md', 'AGENTS.md', 'README.md', 'PROGRESS.md',
          '.pi/AGENT-OPS.md', '.pi/README.md', '.pi/ORCHESTRATION.md',
-         'TASKS/README.md', 'PITFALLS/README.md', 'DEVICE/README.md',
+         'TASKS/README.md', 'TASKS/G1.md', 'TASKS/G2.md', 'TASKS/NEXT.md',
+         'TASKS/GAPS.md', 'TASKS/ANDROID-COMPAT.md', 'TASKS/UPSTREAM.md',
+         'PITFALLS/README.md', 'DEVICE/README.md',
          'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md',
          'SESSIONS/README.md', 'HISTORY/README.md']
 fence, leak, tail = [], [], []
@@ -260,7 +262,9 @@ emit('IDXROW', IDXROW)
 # 整段叙事（续行不以 `|` 开头）⇒ 源文件看着能读，渲染出来该行后半截 + 其后**全部数据行**
 # 降级为纯文本段落；同时 grep/表格解析工具会读丢内容。这是「人肉可读但机器不可读」的静默故障。
 TBL = []
-TBL_DOCS = ['TASKS/README.md', 'PITFALLS/README.md', 'DEVICE/README.md',
+TBL_DOCS = ['TASKS/README.md', 'TASKS/G1.md', 'TASKS/G2.md', 'TASKS/NEXT.md',
+            'TASKS/GAPS.md', 'TASKS/ANDROID-COMPAT.md', 'TASKS/UPSTREAM.md',
+            'PITFALLS/README.md', 'DEVICE/README.md',
             'RESOURCES/README.md', 'RUNBOOK-BRINGUP/README.md', 'INDEX.md']
 for rel in TBL_DOCS:
     p = os.path.join(root, rel)

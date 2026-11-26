@@ -19,11 +19,29 @@ MODE=${1:-}
 exec python3 - "$ROOT" "$MODE" <<'PY'
 import re, sys
 root, mode = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 else '')
-lines = open(root + '/TASKS/README.md', encoding='utf-8').read().split('\n')
+TASKS = root + '/TASKS/'
 
-def section(start, end):
-    s = next(i for i, l in enumerate(lines) if l.startswith(start))
-    e = next(i for i, l in enumerate(lines) if l.startswith(end) and i > s)
+def load_doc(name):
+    """§1 = TASKS/G1.md、§2/§3 = TASKS/G2.md（2026-11-26 拆分）；
+    未迁移的树仍回退 TASKS/README.md，正则与口径完全不变。"""
+    for p in (TASKS + name, TASKS + 'README.md'):
+        try:
+            return p, open(p, encoding='utf-8').read().split('\n')
+        except OSError:
+            continue
+    return TASKS + name, []
+
+def section(doc, lines, start, end=None):
+    try:
+        s = next(i for i, l in enumerate(lines) if l.startswith(start))
+    except StopIteration:
+        sys.exit('FAIL: %s 里找不到章节标题 %r（拆分后标题行必须逐字保留）' % (doc, start))
+    if end is None:          # 章节在文件末尾（G1.md 只有 §1）
+        return lines[s:]
+    try:
+        e = next(i for i, l in enumerate(lines) if l.startswith(end) and i > s)
+    except StopIteration:
+        sys.exit('FAIL: %s 里 %r 之后找不到 %r' % (doc, start, end))
     return lines[s:e]
 
 EMOJI = ['✅', '🟢', '🎯', '🟡', '🆕', '⬜', '❌', '⛔']
@@ -59,8 +77,10 @@ def ratio(tally, rows, label):
                 complete=done, partial=partial,
                 detail=' '.join('%s%d' % (k, tally[k]) for k in EMOJI if k in tally))
 
-g1 = ratio(*scan(section('## 1. G1', '## 2. G2'), r'^\| ?\*{0,2}(G1-|[✅🟢🎯🟡🆕⬜❌⛔].*G1-)'), 'G1')
-g2 = ratio(*scan(section('## 2. G2', '## 3. '), r'^\| ?\*{0,2}C\d'), 'G2')
+d1, l1 = load_doc('G1.md')
+d2, l2 = load_doc('G2.md')
+g1 = ratio(*scan(section(d1, l1, '## 1. G1'), r'^\| ?\*{0,2}(G1-|[✅🟢🎯🟡🆕⬜❌⛔].*G1-)'), 'G1')
+g2 = ratio(*scan(section(d2, l2, '## 2. G2', '## 3. '), r'^\| ?\*{0,2}C\d'), 'G2')
 
 rows = [g1, g2]
 if mode == '--tsv':

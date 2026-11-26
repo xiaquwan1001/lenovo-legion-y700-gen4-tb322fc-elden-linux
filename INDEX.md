@@ -507,7 +507,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 2. **可用角度 5 个**：`TASKS/`（任务/进度/未解）、`PITFALLS/`（踩坑）、`DEVICE/`（单元/镜像状态）、`RESOURCES/`（资产/资源）、`RUNBOOK-BRINGUP/`（bringup 流程与相变记录）。
    `SESSIONS/` **冻结不写**；`HISTORY/` 由脚本生成**不手写**；`RUNBOOK-BRINGUP/` 已有正文（Phase −1…9 + `sessions/`），属可写角度。跨角度时写**主角度**一个文件，其余角度补一行指针。
 3. 文件头只写 6 个字段：`日期 / pi 会话 id / 主题 / 结论 / 证据指针 / ★SSOT 待并入`。`pi 会话 id` 取 `$PI_SESSION_ID`。
-4. **状态数字只改一处**：`TASKS/README.md` §0（总览）/ §5（Q 行）。其它任何地方**不写状态数字**，只写指针。
+4. **状态数字只改一处**：`TASKS/README.md` §0（总览）/ `TASKS/GAPS.md` §5（Q 行）。任务行状态标记在 `TASKS/G1.md`/`G2.md`（2026-11-26 拆分，README 留路由表）。其它任何地方**不写状态数字**，只写指针。
 5. **会话全文不复述、不复制**——它就在 `.pi/sessions/*.jsonl`；文件里只放「结论 + 指向证据的路径/命令」。
 6. **索引只放一句话主题**：`PITFALLS/README.md` 的索引行 ≤800 B，结论/命令/数字一律在正文。超长会被 `check-doctor §8` 判 FAIL。
 7. **不写死计数**：任何「共 N 条 / N 个文件 / N 个提交」都必须现查（`scripts/gen-history.sh --stats`、`ls`、`check-doctor §8`）。写死必漂，且漂了没人发现。
@@ -535,7 +535,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 | 1 | **`scripts/recent-sessions.sh 3`** + `*/sessions/` 最新 2 篇的「结论 / ★SSOT 待并入」 | **比任何 README 新**：本轮及上两轮的实测结论 |
 | 2 | **`.pi/AGENT-OPS.md` §0**（开工三件事）→ §1–§5 | 行为唯一入口；§0 直接要求先做第 1 行 |
 | 3 | **`PITFALLS/README.md` §0**（零号纪律）+ 索引 | 动手前必查的既有结论 |
-| 4 | **`TASKS/README.md`** §0 / §4 / §5 / §7 | 状态数字与台账的唯一出处 |
+| 4 | **`TASKS/README.md`**（索引：§0 数字 + 章节路由）→ `TASKS/{G1,G2,NEXT,GAPS,ANDROID-COMPAT,UPSTREAM}.md` | 状态数字与台账的唯一出处；§1–§7 正文在章文件，`§N` 旧写法按 README 路由表解析（2026-11-26 拆分） |
 | 5 | `DEVICE` §1.1（在机）/ `RESOURCES` §3（资产）/ `RUNBOOK-BRINGUP`（步骤） | 按需展开 |
 | 5b | **`RUNBOOK-BRINGUP/LINUX-STATE-REPRO.md`**（＋`scripts/linux-state-audit.sh`） | **设备状态被改后重建 Linux 的唯一入口**：8 项清单 / S0–S9 步骤 / 卡 BL 误判防护 / 反向回 Android |
 | 5b2 | **`RUNBOOK-BRINGUP/ZERO-TO-DESKTOP.md`**（＋`scripts/deploy-desktop-shell.sh`） | **EDL/fastboot → 可用桌面的端到端链路（2026-11-19 实测）**：S1–S12 每步命令/判据/失败形态/回退 + 一页速查 + 溯源表 |
@@ -634,7 +634,7 @@ scripts/check-doctor.sh --only 15      # §15：本节「核对日期」是否�
 
 | 要查什么 | 去哪 |
 |---|---|
-| 任务台账 / 未解（Q 表）/ 待办 / 上游化（M 系列） | `TASKS/README.md` §1–§2 / §5 / §4 / §7 |
+| 任务台账 / 未解（Q 表）/ 待办 / 上游化（M 系列） | `TASKS/README.md`（§0 + 路由表）→ `TASKS/G1.md`、`G2.md`、`NEXT.md`(§4)、`GAPS.md`(§5)、`UPSTREAM.md`(§7)、`ANDROID-COMPAT.md`(§6) |
 | 上游投递现状（当前一页） | `reports/upstream-status-20261125.md` |
 | 在机内核 / 槽位 / 单元台账 / 存储策略 | `DEVICE/README.md` §1.1 / §2.2 / §3 |
 | 动手前的坑 | `PITFALLS/README.md` §0 + 索引 |

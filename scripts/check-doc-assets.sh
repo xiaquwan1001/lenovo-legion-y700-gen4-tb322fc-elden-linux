@@ -22,7 +22,12 @@ cd "$(dirname "$0")/.." || exit 1
 ALLOWLIST=scripts/doc-assets-allowlist.txt
 
 default_files() {
-	[ -f TASKS/README.md ] && printf '%s\n' TASKS/README.md
+	# TASKS 台账 2026-11-26 拆为「索引 + 章节」：README 只留 §0 与路由表，
+	# §1–§7 正文在下列章节文件里，必须逐个扫（§7 的资产路径不能失去校验）。
+	for f in TASKS/README.md TASKS/G1.md TASKS/G2.md TASKS/NEXT.md \
+	         TASKS/GAPS.md TASKS/ANDROID-COMPAT.md TASKS/UPSTREAM.md; do
+		[ -f "$f" ] && printf '%s\n' "$f"
+	done
 	[ -f INDEX.md ] && printf '%s\n' INDEX.md
 	[ -f DEVICE/README.md ] && printf '%s\n' DEVICE/README.md
 	[ -f PITFALLS/README.md ] && printf '%s\n' PITFALLS/README.md
