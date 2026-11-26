@@ -144,8 +144,8 @@
 | C0 真机取证 | `scripts/c0-android-evidence.sh`（adb 采身份/DRM/传感器/分区，输出 `backup/<SN>-<档>/c0-baseline/` + SHA256SUMS；手工项见脚本尾提示） |
 | 磁盘/挂载工具 | `qemu-img`/`qemu-nbd` 已装（A13 ✅）；fstab nofail 已修（A18 ✅） |
 | **UEFI 变体构建 / p7 阶梯（G1-29）** | `scripts/uefi-build-variant.sh`（唯一构建入口，配方进 manifest）、`scripts/uefi-repack-v2aligned.py`（payload → boot v2/base0）、`scripts/uefi-r21-p7-ladder.sh`（**p7 一族唯一重建入口**：`--list/--verify/--mkimg-only[--rebuild]`，配方 = `patches/uefi/p7-recipe.txt`）、`scripts/uefi-sbstop-patch.py`（cmdline 令牌，`--probe N` 写第二个令牌 `sbprobe=N`）。**逐目录分级**（活/已废）= `../versions/patches-uefi-status.tsv`，人读面 = `../patches/uefi/README.md` |
-| **全量脚本** | 上表仅列构建/刷机链骨干；**全量清单 = `../versions/scripts-inventory.tsv`**（2026-11-06 起，机器生成：`python3 scripts/static-scan.py --inventory`，列 = path/行数/字节/live/hist/verdict；`HIST-ONLY` = 只能从历史记录得知的入口，`UNREFERENCED` 需人工裁决，见 `../PITFALLS/sessions/15-过时废弃功能缺陷登记.md` §15.1）；人读面 = `ls scripts/*.sh`（含快环 `scripts/iterate.sh` 四档环、`mod-loop/kexec-boot/to-fastboot/flash-b/cycle` 均自锁、`device-lock.sh` 设备锁、`build-manifest.sh` 版本指纹、`audio-alsa-init.sh` 裸 ALSA 路由、`apply-kernel-fragment.sh` 模块化片段等） |
-| 低频但现役的诊断件（2026-11-06 补登记） | `rootfs/vk-probe.py`（ctypes 直调 Vulkan loader 枚举物理设备，本机无 `vulkan-tools`；G1-8 基准用）、`initramfs/probe-device.sh`（initramfs 内 DT/`msm-id`/`board-id`/reserved-memory 一次性 dump，bring-up 现场用）、`scripts/rambuild.sh`（内存盘构建区助手，设计见 `.pi/plans/2026-10-15_081500-内存盘构建区规划.md`）——这三件在 `scripts-inventory.tsv` 里无 live 引用，**不是废件** |
+| **全量脚本** | 上表仅列构建/刷机链骨干；**全量清单 = `versions/scripts-inventory.tsv`**（2026-11-06 起，机器生成：`python3 scripts/static-scan.py --inventory`，列 = path/行数/字节/live/hist/verdict；`HIST-ONLY` = 只能从历史记录得知的入口，`UNREFERENCED` 需人工裁决，见 `../PITFALLS/sessions/15-过时废弃功能缺陷登记.md` §15.1）；人读面 = `ls scripts/*.sh`（含快环 `scripts/iterate.sh` 四档环、`mod-loop/kexec-boot/to-fastboot/flash-b/cycle` 均自锁、`device-lock.sh` 设备锁、`build-manifest.sh` 版本指纹、`audio-alsa-init.sh` 裸 ALSA 路由、`apply-kernel-fragment.sh` 模块化片段等） |
+| 低频但现役的诊断件（2026-11-06 补登记） | `rootfs/vk-probe.py`（ctypes 直调 Vulkan loader 枚举物理设备，本机无 `vulkan-tools`；G1-8 基准用）、`initramfs/probe-device.sh`（initramfs 内 DT/`msm-id`/`board-id`/reserved-memory 一次性 dump，bring-up 现场用）、`scripts/rambuild.sh`（内存盘构建区助手，设计见 `.pi/plans/2026-10-15_081500-内存盘构建区规划.md`）——这三件在 `versions/scripts-inventory.tsv` 里无 live 引用，**不是废件** |
 
 ### 2.2 可上机资产（**设备无关**，任一单元通用）
 
@@ -200,7 +200,7 @@
 
 ### 2.4 归档区（本轮合并结果，不再更新）
 
-`archive/2026-10-02-merged/`：`MISSION-SCOPE.md`、`DEVICES.md`、`ANDROID-COMPAT-PLAN.md`、
+`archive/2026-10-02-merged/`：`MISSION-SCOPE.md`、`archive/2026-10-02-merged/DEVICES.md`、`ANDROID-COMPAT-PLAN.md`、
 `ROUTE-DECISION-2026-10-02.md`、`PLAN-NODEV-2026-10-02.md`、`DOCS-CHANGELOG-2026-10-02.md`
 —— 内容已并入 `../DEVICE/README.md` / `../TASKS/README.md` / `../TASKS/README.md §6` / `../TASKS/README.md §5` / `README.md`，仅留原文以便追溯。
 
@@ -239,7 +239,7 @@ L2 原厂 system 修剪（super 拆包 → debugfs 删包 → e2fsck → splice 
 - **纳管（track）**：文档、脚本、内核补丁与 config、AI 记忆/技能/任务、小体积证据。
 - **排除（ignore）**：上游 clone、构建产物、可再生成物、大二进制 dump、运行时状态、设备敏感数据。
 - git 仓库根 = 本目录；分支 `main`。上游内核树 `geekidos-linux/` **不是** submodule，其进度以 `patches/` 为准。
-- **缓存与工作区的归属（2026-11-26 起）**：可再生/同机可共享的大件（内核构建树 `build/`、上游克隆 `geekidos-linux/` `Y700-elden-linux/`、第三方工作区 `external/`、相机交叉编译 `dl-cam/`）物理在 **`~/elden-cache/`**，仓库里只有软链或纳管源件；**「能不能删 / 能不能共享 / 怎么重建」只读 `versions/cache-ledger.tsv`**（核对 = `scripts/cache-audit.sh --check`，布局 zone=cache 见 `versions/layout.tsv`）。
+- **缓存与工作区的归属（2026-11-26 起）**：可再生/同机可共享的大件（内核构建树 `build/`、上游克隆 `geekidos-linux/` `Y700-elden-linux/`、第三方工作区 `external/`、相机交叉编译 `dl-cam/`）物理在 **`~/elden-cache/`**，仓库里只有软链或纳管源件；**「能不能删 / 能不能共享 / 怎么重建」只读 `versions/cache-ledger.tsv`**（核对 = `scripts/cache-audit.sh --check`，布局 zone=cache 见 `versions/layout.tsv`）。剩余空间候选（`out/` 39 G 可再生工作区、19 组重复 9.9 G、`.pi/sessions` 压缩）= `reports/disk-audit-20261126.md`（只读审计，删除需用户批准）。
 - **异地备份（2026-10-04 起）**：顶层仓 `origin` = `git@git.ustc.edu.cn:xqh/y700-elden`（@xqh，SSH key `~/.ssh/id_ed25519_gitlab_ustc`，全分支+标签）——**这条仍然现役**。
   - ⚠️ **2026-10-24 起 `origin/main` 有意落后**（用户裁定「暂时落后」）：本地历史因剔除一个 2.75 GB 的
     `reports/trials/*/serial-delta.log`（曾触发 GitHub 100 MB 拒收）被重写，`origin/main` 是**保护分支**拒绝 force push，
