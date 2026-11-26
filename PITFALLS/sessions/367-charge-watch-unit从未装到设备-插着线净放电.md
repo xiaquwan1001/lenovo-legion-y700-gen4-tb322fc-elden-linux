@@ -49,3 +49,22 @@ systemctl is-active  charge-watch.service  → inactive
 不要查驱动、不要查 ADSP；并根/换 init 系统之后，所有「由 `/init` 拉起」的脚本都要重新接一遍 systemd。
 
 详情与命令块：`reports/usb-charging-dualport-20261126.md`；上游侧（ICL 可写来源）= `reports/m12-daily-already-writable-20261125.md`。
+
+## 追加（同日 11:2x，同一条链的第二课）：洼地阈值不能用「USB 规范电压」当门
+
+第一版 sag guard 写「连续 3 次 `v_bus` < **4.60 V** 就降档」⇒ 上机立刻触发：
+
+```
+SAG v_bus=4470000 uV < 4600000 x3 -> drop ICL to 700000 uA (protect host port)
+```
+
+降档后电池又回到 **−284 mA**（净放电），而同一根线 900 mA 档已稳定跑 3 min、`v_bus` 4.47–4.52 V 从未被端口掐断
+⇒ **4.5 V 附近是这台 PC 端口在 891 mA 下的稳态 droop，不是塌陷**。
+
+- 处置：`SAG_UV=4.40 V`（真塌陷才算）、`ICL_FLOOR=500 mA`（端口优先，此档可能仍净放电 = 已知代价）、
+  `RECOVER_UV=4.60 V × 15 次`、`MAX_TRIES=2`。改后 60 s × 12 采样：ICL 恒定 900 mA、零降档、电池 +32…75 mA。
+- 判据自证：`bash scripts/charge-watch.sh --selftest`（假 sysfs 驱动真状态机，7 组 10 断言全 PASS）。
+- 部署面：`deploy-desktop-shell.sh` **§17**（脚本逐字节一致 / unit enabled+active / online 时 ICL≥500000），
+  设备 `--check` MISS 3→0 且幂等。
+- 通则：**保护阈值必须用本机实测的「坏」分布定**，照规范值（4.75/4.60 V）定会把正常负载判成故障，
+  而误降档的代价（净放电）比它要防的风险（端口 OCP）更常发生。

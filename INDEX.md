@@ -37,7 +37,8 @@
 > ⑧ **droidloom Debian 包收尾**：runtime 缺 `libwayland-server0` 实证补齐 + 交叉 `--sysroot` 绝对化（**`PITFALLS #730`**），双架构重建。
 > ⑨ **「插着线却充不进电」已定因并修好（2026-11-26 10:5x CST，`PITFALLS #734` + `reports/usb-charging-dualport-20261126.md`）**：长边数据线（连 PC）+ 短边 PD 线时，ADSP 只从长边 SDP 取电且默认 `ICL=100000` ⇒ 电池 **−770 mA**；
 > 真根因 = **`charge-watch` 服务从未装到设备**（脚本在、unit `not-found`，并根丢启动接线）；三档实测：100 mA −770 mA / **500 mA 仍 −270 mA** / 900 mA **+126…137 mA**。
-> 已装 unit 并 `enable --now`，ICL 被顶到 900 mA 且≤ 2 s 自愈（代价 = 超规范取电、`v_bus` 洼到 4.52 V）。遗留 = 入部署面 + 洼地保护 + 反向接法实测。
+> 已装 unit 并 `enable --now`，ICL 被顶到 900 mA 且 ≤2 s 自愈（代价 = 超规范取电、`v_bus` 4.45–4.52 V）。
+> **11:2x 收尾**：sag guard 已加且**阈值被上机数据改过**（4.60 V 是误判线 ⇒ 4.40 V / floor 500 mA，`--selftest` 10 断言），`deploy-desktop-shell.sh` **§17** 把三件判据固化（设备 `--check` MISS 3→0 幂等）⇒ 重建根不会再丢。剩 = 反向接法需人插拔实测。
 
 > **🆕 2026-11-25 夜 2（四项点名调查轮，零设备：平板不在线）**：4 lane 全收口 + 1 条派生构建 lane。
 > ① **Mobian/phosh 上游化 + 通信**（`reports/mobian-phosh-upstream-20261125.md`）：增量窗口**人类评审 0 封**，机器人给

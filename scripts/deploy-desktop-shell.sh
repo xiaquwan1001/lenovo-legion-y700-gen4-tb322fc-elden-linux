@@ -709,6 +709,71 @@ else
 		fix "已装键盘设置四件（app/apply/.desktop/conf）" || no "装键盘设置失败"
 fi
 
+
+# ---------------------------------------------------------------------------
+# 17) 充电链（ICL self-heal）—— 2026-11-26 实机定因（PITFALLS #734）
+# 为什么要有：ADSP 对 SDP 默认 `input_current_limit = 100000`（100 mA），而系统负载 ≈0.8 A
+#   ⇒ 「插着线净放电 −770 mA」。仓里早有 `charge-watch.sh`（轮询顶回 `current_max`）与
+#   `charge-icl-fix.sh`（udev 事件一次性顶回），但并根到 Debian+systemd 后**没有任何 unit /
+#   udev 规则接它们**（脚本在、接线丢）⇒ 默认状态就是净放电。本节点把接线补齐并加判据。
+# 三件判据（缺一即 MISS）：
+#   ① 两脚本在位且与仓内**逐字节相同**（防「半装旧版」：旧版没有洼地保护）
+#   ② `charge-watch.service` = enabled + active（脚本存在 ≠ 服务在跑）
+#   ③ online 时 `input_current_limit == current_max`（或已按洼地保护降到 floor 且日志有记录）
+CW_DEV=/usr/local/sbin/charge-watch.sh
+CICL_DEV=/usr/local/sbin/charge-icl-fix.sh
+CWRULE=/etc/udev/rules.d/90-elden-charge.rules
+CW_SHA=$(sha256sum "$ROOT/scripts/charge-watch.sh" | awk '{print $1}')
+CICL_SHA=$(sha256sum "$ROOT/rootfs/debian/usr-local-sbin/charge-icl-fix.sh" | awk '{print $1}')
+echo "== 17) 充电链（#734：charge-watch + udev 事件路，缺一即净放电）=="
+_cw_sha=$("${SSH[@]}" "sha256sum $CW_DEV 2>/dev/null | awk '{print \$1}'" 2>/dev/null || true)
+_cicl_sha=$("${SSH[@]}" "sha256sum $CICL_DEV 2>/dev/null | awk '{print \$1}'" 2>/dev/null || true)
+_cw_en=$("${SSH[@]}" 'systemctl is-enabled charge-watch.service 2>/dev/null' 2>/dev/null || true)
+_cw_ac=$("${SSH[@]}" 'systemctl is-active charge-watch.service 2>/dev/null' 2>/dev/null || true)
+_rule=$("${SSH[@]}" "[ -f $CWRULE ] && echo yes || echo no" 2>/dev/null || true)
+_icl=$("${SSH[@]}" 'echo "$(cat /sys/class/power_supply/qcom-battmgr-usb/input_current_limit 2>/dev/null) $(cat /sys/class/power_supply/qcom-battmgr-usb/current_max 2>/dev/null) $(cat /sys/class/power_supply/qcom-battmgr-usb/online 2>/dev/null)"' 2>/dev/null || true)
+set -- $_icl; ICL_NOW=${1:-}; ICL_MAX=${2:-}; USB_ONLINE=${3:-}
+if [ "$MODE" = check ]; then
+	[ "$_cw_sha" = "$CW_SHA" ] && ok "charge-watch.sh 与仓内一致（${CW_SHA%${CW_SHA#???????}}…）" || no "charge-watch.sh 与仓内不一致（设备 ${_cw_sha:-缺} / 仓内 $CW_SHA）⇒ 顶不回 ICL 或没有洼地保护"
+	[ "$_cicl_sha" = "$CICL_SHA" ] && ok "charge-icl-fix.sh 与仓内一致" || no "charge-icl-fix.sh 缺或与仓内不一致（udev 事件路）"
+	[ "$_rule" = yes ] && ok "$CWRULE 在位" || no "缺 udev 规则 $CWRULE（插拔后 1 s 内不会顶回）"
+	if [ "$_cw_en" = enabled ] && [ "$_cw_ac" = active ]; then ok "charge-watch.service enabled+active"
+	else no "charge-watch.service 状态 = ${_cw_en:-?}/${_cw_ac:-?}（脚本在但没人跑 = 就是 #734 的现场）"; fi
+	if [ "$USB_ONLINE" = 1 ]; then
+		if [ -n "$ICL_NOW" ] && [ -n "$ICL_MAX" ] && [ "$ICL_NOW" -ge 500000 ]; then
+			ok "ICL=$ICL_NOW（max=$ICL_MAX）⇒ 插着线应净充电（>500 mA 档；100 mA 档必净放电）"
+		else no "online 但 ICL=${ICL_NOW:-?} < 500000 ⇒ 净放电（见 reports/usb-charging-dualport-20261126.md）"; fi
+	else ok "USB 未接（online=$USB_ONLINE），不判 ICL"; fi
+else
+	need_restart=0
+	if [ "$_cw_sha" != "$CW_SHA" ]; then
+		"${SCP[@]}" "$ROOT/scripts/charge-watch.sh" "$TAB:$CW_DEV" && \
+			"${SSH[@]}" "chmod 755 $CW_DEV" && { fix "已更新 charge-watch.sh"; need_restart=1; } || no "更新 charge-watch.sh 失败"
+	fi
+	if [ "$_cicl_sha" != "$CICL_SHA" ]; then
+		"${SCP[@]}" "$ROOT/rootfs/debian/usr-local-sbin/charge-icl-fix.sh" "$TAB:$CICL_DEV" && \
+			"${SSH[@]}" "chmod 755 $CICL_DEV" && fix "已更新 charge-icl-fix.sh" || no "更新 charge-icl-fix.sh 失败"
+	fi
+	if [ "$_rule" != yes ]; then
+		"${SSH[@]}" 'mkdir -p /etc/udev/rules.d' &&
+			"${SCP[@]}" "$ROOT/rootfs/debian/udev/90-elden-charge.rules" "$TAB:$CWRULE" &&
+			"${SSH[@]}" 'udevadm control --reload-rules >/dev/null 2>&1 || true' &&
+			fix "已装 udev 规则 $CWRULE（源 rootfs/debian/udev/）并 reload" || no "装 udev 规则失败"
+	fi
+	"${SSH[@]}" 'install -m 644 /dev/stdin /etc/systemd/system/charge-watch.service' <"$ROOT/packaging/elden-userland/out/units/systemd/charge-watch.service" &&
+		"${SSH[@]}" 'systemctl daemon-reload; systemctl enable charge-watch.service >/dev/null 2>&1; systemctl restart charge-watch.service' &&
+		fix "charge-watch.service 已装/启用/重启（含洼地保护版）" || no "装/启用 charge-watch.service 失败"
+	[ "$need_restart" = 0 ] || fix "（脚本已更新，服务已随上面 restart 生效）"
+	sleep 3
+	_icl=$("${SSH[@]}" 'echo "$(cat /sys/class/power_supply/qcom-battmgr-usb/input_current_limit 2>/dev/null) $(cat /sys/class/power_supply/qcom-battmgr-usb/current_max 2>/dev/null) $(cat /sys/class/power_supply/qcom-battmgr-usb/online 2>/dev/null)"' 2>/dev/null || true)
+	set -- $_icl; ICL_NOW=${1:-}; ICL_MAX=${2:-}; USB_ONLINE=${3:-}
+	if [ "$USB_ONLINE" = 1 ] && [ -n "$ICL_NOW" ] && [ "$ICL_NOW" -ge 500000 ]; then
+		ok "ICL 已顶到 $ICL_NOW（max=$ICL_MAX）"
+	else
+		[ "$USB_ONLINE" = 1 ] && no "online 但 ICL 仍 ${ICL_NOW:-?}（查 /run/charge-watch.log）" || ok "USB 未接（online=$USB_ONLINE），不判 ICL"
+	fi
+fi
+
 echo
 if [ "$missing" -eq 0 ]; then echo "结果: 达标（MISS=0）"; exit 0; fi
 echo "结果: 未达标（MISS=$missing）"; exit 1

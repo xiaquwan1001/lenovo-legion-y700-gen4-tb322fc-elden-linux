@@ -76,8 +76,8 @@ ssh elden-root 'install -m 644 /tmp/charge-watch.service /etc/systemd/system/ &&
 | 项 | 分类 | 说明 |
 |---|---|---|
 | 短边 PD 不取电 | `upstream-gated`（ADSP） | Q35 已判「不再投入」；AP 侧只能观测（`ucsi.02 current_max=0`），要改得 ADSP/厂商给选口接口 |
-| 900 mA 超规范取电 + `v_bus` 4.52 V 洼地 | `local-actionable` | 候选：`charge-watch.sh` 加电压洼地保护（连续 N 次 < 4.60 V 就降到 700000），需先在 2–3 台不同 PC 端口采 `v_bus` 分布 |
-| 日常化路径 | `local-actionable` | unit 已在设备但**不在** `deploy-desktop-shell.sh`/`stage.sh` 的部署面 ⇒ 重建根会再丢一次；应把 unit 装进部署脚本并加判据（`is-enabled` + `ICL == current_max`） |
+| ~~900 mA 超规范取电 + `v_bus` 4.52 V 洼地~~ | ✅ **已做（2026-11-26 11:2x CST）** | `scripts/charge-watch.sh` 加 sag guard（见 §7）；**阈值口径被上机数据改过一次**（4.60 V → 4.40 V） |
+| ~~日常化路径~~ | ✅ **已做（2026-11-26 11:2x CST）** | `deploy-desktop-shell.sh` **§17** 固化三件（脚本逐字节一致 + unit enabled/active + ICL 判据），`--check` 实测 **MISS 3 → 0**；重建根不会再丢 |
 | 更优物理组合（免改内核） | `human-gated`（要插拔） | 反向接法：**数据线插短边 + PD 线插长边**（`usb-ports-consolidation-20261125.md` §2 记录 ≈1.9 A、非快充）；或只插短边 PD（46 W，SSH 断） |
 
 ## 6. 常用只读命令
@@ -89,3 +89,40 @@ cat $U/input_current_limit $U/current_max
 cat $B/current_now $B/capacity           # battery 电流 >0 = 充电
 systemctl is-enabled charge-watch.service; tail -5 /run/charge-watch.log
 ```
+
+## 7. 洼地保护 + 部署面固化（2026-11-26 11:2x CST，本轮收尾）
+
+### 7.1 阈值被上机数据改过：4.60 V 是**误判线**
+
+第一版把「连续 3 次 `v_bus` < 4.60 V」当超载 ⇒ 上机立刻触发：
+
+```
+11:20:28 SAG v_bus=4470000 uV < 4600000 x3 -> drop ICL to 700000 uA
+```
+
+降档后实测 **电池 −284 mA（又变净放电）**，而同一根线 900 mA 档已稳定跑过 3 min（4.47–4.52 V 从未被 OCP 掐断）
+⇒ **4.5 V 附近是本机 PC 端口在 891 mA 下的稳态 droop，不是塌陷**。改成：
+
+| 参数 | 值 | 依据 |
+|---|---|---|
+| `SAG_UV` | **4 400 000**（4.40 V） | 只在真塌陷时降档（4.5 V 稳态必须放行） |
+| `ICL_FLOOR` | **500 000** | 降档取 SDP 规范上限，端口优先；此档可能仍净放电 = 已知代价 |
+| `RECOVER_UV` / `RECOVER_SAMPLES` | 4.60 V / 15 次（≈30 s） | 稳定恢复才抬回 |
+| `MAX_TRIES` | 2 | 一次插着期最多试 2 次，避免反复顶档抖 |
+
+改后实测（60 s × 12 采样）：`ICL=900000` 恒定、`v_bus` 4.445–4.475 V、电池 **+32…+75 mA**、**零降档记录**。
+
+### 7.2 判据自证（`--selftest`，假 sysfs 驱动真状态机）
+
+`bash scripts/charge-watch.sh --selftest` ⇒ **10 断言 / 7 组全 PASS**：首次顶档、3 次洼地降档、降档幂等、
+恢复后抬回 + 尝试计数、二次降档/抬回、`MAX_TRIES` 用尽后保持 floor、拔线复位后重新顶档。
+（用 `USB=`/`BAT=`/`LOG=` 环境变量指向 `mktemp -d` 假节点，不碰真硬件。）
+
+### 7.3 部署面：`deploy-desktop-shell.sh` **§17**
+
+三件判据（缺一即 MISS）：① 两脚本与仓内**逐字节一致** ② `charge-watch.service` enabled+active
+③ online 时 `ICL ≥ 500000`。设备实测 **MISS 3 → 0**（补齐 `charge-watch.sh` 新版 + `charge-icl-fix.sh`
++ `rootfs/debian/udev/90-elden-charge.rules`），`--check` 复跑幂等 0。
+
+⚠ 注意：`#734` 里「脚本在 ≠ 服务在」这个形态在 `--check` 上是**一条独立判据**（②），
+不能靠 ① 或 ③ 兜住——① 只证明文件对，③ 只证明当下值对（手动写过一次也满足）。
