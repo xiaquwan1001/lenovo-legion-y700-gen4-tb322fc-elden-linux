@@ -6,7 +6,13 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26（20:3x CST 复核））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-26（22:2x CST 收尾轮复核））
+
+> **🆕 2026-11-26 22:2x（网关额度中断后的收尾轮；本段全部数字为收尾轮独立重跑）**：
+> ① **门禁**：`check-doctor` **FAIL=0 / WARN=3**（均为存量：① slim bundle 源树不可核 ⇒ 67 行身份「暂不可核」② `vk-ledger-known-issues.tsv` 已登记例外 ③ 身份表降级一致 C=2）；本轮修掉两条 FAIL（scripts 索引过期 / 其反作弊②残留）并清掉 `out/boot-elden.img` 重复副本（与 fastrpc1 同 sha `2050cf6c…`，21:51 构建副产物）。
+> ② **传感器 #692 工单（S2）真相**：假说 A **仍未判**，而且不是被否定 —— `journalctl -b` 的 **-1/-2/0 三 boot 中 `hexagonrpcd` 计数 0/0/0**（上轮 21:52 只完成「第二次上机 + 证据采集」，决定性 `-s` 从未跑）；补丁语义在试验核里可证（`assigned reserved memory node adsp-rpc-remote-heap`），但**补 DTB 后 `/dev/fastrpc-adsp` 是否真出现没采** ⇒ 已写成下一班第一条命令。产物归位：`out/fastrpc1-20261126/`（sha `2050cf6c…` O_DIRECT 两读一致，已登记 `versions/out-candidate-sha.tsv`），证据 `reports/artifacts/sensors-692-trial-20261127/`；设备已回在机旧核（`…-00005-g4bdf1711b5c0`）。全账 = `reports/sensors-692-backport-test-20261126.md` §7。
+> ③ **droidloom 重 boot 后回归（新实测）**：`nft dl_dns_redirect` = **0 条**（T4 判据实测 FAIL）；「开机自启」**不成立** —— 真正的起停件是 **user 1001** 的 `droidloom.service`（`WantedBy=graphical-session.target`，该 target inactive），手工起后 cell 地址面齐全（两侧 `/30`）但 `ping` 100% 丢包、`adb 10.177.0.2:5555` 不在；总线上的 `MDX5T20730009849` = 华为 ELS-AN00（非本机）。见 `reports/droidloom-cell-network-20261126.md` §9。
+> ④ **T10 口径落地**：`scripts/reports-orphan-check.py`（13 条反作弊自测全过，`--check` 可当门）⇒ 三刻度实测 readme 50/694、top 143/694、**all 536/694（孤儿 158）**；A16 的「468 篇 / 32.5%」在三种语料上都复现不出来，**以 all 刻度 158 为唯一口径**，剩余工作 = 补 158 篇指针（`TASKS/NEXT.md` T10）。
 
 > **🆕 2026-11-26 夜 2（整理轮：三条审计 + 6 处门禁加固；**计划 = `.pi/plans/2026-11-27-整理三线派工.md`**）**：
 > ① **架构审计**（`reports/arch-audit-20261127.md`，18 条，父代理逐条复核）：P0 两条 = 顶层杂件 `=50KB`（已移 `/tmp`）与 **`fabric.json` 双说法**（`.pi/AGENT-OPS.md`/`.pi/ORCHESTRATION.md`/`.pi/CONCURRENCY.md` 仍写「配置真值」）⇒ 已改口 `settings.json` 的 `subagents` 段 + 删 `.pi/fabric.json`/`.pi/fabric/`。
