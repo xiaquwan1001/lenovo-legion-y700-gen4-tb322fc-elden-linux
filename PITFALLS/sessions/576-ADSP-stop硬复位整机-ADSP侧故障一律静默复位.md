@@ -27,3 +27,21 @@
   - **危险动作登记**：本机**不要** `echo stop > …/remoteproc0/state`（ADSP）；要验证 stop/start 语义请用 CDSP（remoteproc1）或带 PD 依赖的 PDR 路径。
 - 备注：想拿 ADSP 侧证据必须走 **DSP 侧**（ramdump / QMI-PDR 原因）或多留一路**独立于 SoC 复位**的采集（本机 ttyGS0 也随复位断），
   仅靠再加一路 Linux 侧日志（文件/串口）**不可能**——这点已由「串口有产出但崩时零行 + 文件全丢」两侧实测钉死。
+
+## 2026-11-27 修订（上机两发，串口第一次抓到现场）
+
+- **「串口零行 ⇒ 复位在 Linux 之外」这条推论作废**。本轮 `setsid hexagonrpcd-v … -s`（打过写支持补丁）时串口（`console=ttyGS0` + 主机 relay）抓到：
+  ```
+  PDM: service 'qsh_process' crash: '…sns_registry_4:0x74:sns_registry_sensor.c:309…'
+  qcom_q6v5_pas 6800000.remoteproc: fatal error received: …sns_registry_sensor.c:309…
+  remoteproc remoteproc0: crash detected in adsp: type fatal error
+  remoteproc remoteproc0: handling crash #1 in adsp
+  remoteproc remoteproc0: recovering adsp
+  ucsi_glink…: failed to send UCSI write request: -5      ← 之后串口中断 = 整机复位
+  ```
+  ⇒ 内核**看到了** ADSP 断言并进入 SSR 恢复；整机死在**恢复动作（PAS shutdown/restart）那一段**。
+  之前几次「零行」更可能是 relay 窗口/路径没覆盖（那几次是 `stop` 路径、崩点更早），**不能**再拿它证明「Linux 不参与」。
+- 采集方式订正：`nohup <cmd> >/dev/ttyGS0` 会被 nohup 判成「stdout 是终端」而改写到 `nohup.out`（本轮用户态日志全丢）
+  ⇒ 串口采样写 `setsid <cmd> </dev/null >/dev/ttyGS0 2>&1 &`。
+- 新的一手事实：SM8750 上 `-s` 的断言点是 DSP 侧 `sns_registry_sensor.c:309`（早前一次抓到同类 `:279`），与上游 `linux-msm/hexagonrpc#29` 同族。
+  全账 = `reports/sensors-692-attach-crash-serial-20261127.md`。

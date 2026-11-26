@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：698
+- 报告总数：699
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -49,6 +49,7 @@
 | `progress` | 4 | `progress-audit-20261118.md` |
 | `q32` | 4 | `q32-matrix-20261024.md` |
 | `research` | 4 | `research-next-20261102.md` |
+| `sensors` | 4 | `sensors-692-attach-crash-serial-20261127.md` |
 | `suspend` | 4 | `suspend-s2idle-20261125.md` |
 | `主机侧` | 4 | `主机侧-B13-20261117.md` |
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
@@ -62,7 +63,6 @@
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
 | `pitfalls` | 3 | `pitfalls-condense-20261122.md` |
 | `sensor` | 3 | `sensor-claim-verify-20261126.md` |
-| `sensors` | 3 | `sensors-adsp-pd-pdr-20261127.md` |
 | `session` | 3 | `session-plan-20261121-night.md` |
 | `stale` | 3 | `stale-alpine-audit-docs-20261119.md` |
 | `t9` | 3 | `t9-sampler-restored-20261121.md` |
@@ -794,6 +794,13 @@
 - `research-vertical-y700-lineage-20261101.md` — 纵向同产品线调研：Lenovo Legion Y700 五代（TB-9707F → TB323FU）与 Legion Tab 命名 —— 2026-11-01
 - `research-waydroid-sensors-hal-20261011.md` — 调研：Waydroid 传感器 HAL 的社区/上游经验（2026-10-11）
 
+## `sensors`（4）
+
+- `sensors-692-attach-crash-serial-20261127.md` — `#692` 上机两发（2026-11-27）+ **串口第一次抓到崩溃现场**：Linux 看到了 ADSP fatal error 并进入 SSR recovery，随后 ms 级整机复位
+- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
+- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
+- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
+
 ## `suspend`（4）
 
 - `suspend-s2idle-20261125.md` — s2idle 驻留 + `pm_test` 三级试挂：首次上机通过（2026-11-25 19:5x–20:0x）
@@ -873,12 +880,6 @@
 - `sensor-claim-verify-20261126.md` — 「传感器驱动有问题」说法核实（lane S · 设备只读）
 - `sensor-libssc-prep-20261126.md` — 传感器用户态备料：libssc + iio-sensor-proxy(SSC) arm64 包（lane L · 主机侧，零设备）
 - `sensor-ssc-deploy-20261126.md` — SSC 传感器用户态部署尝试（2026-11-26 08:2x–09:1x）—— 装包成功、出数失败、**并触发一次可复现的启动硬崩循环**
-
-## `sensors`（3）
-
-- `sensors-adsp-pd-pdr-20261127.md` — 传感器 #692 后续① 收口：「补齐 ADSP 的 PD 依赖」不是主线缺口（lane 报告 + 父代理上机复核）
-- `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
-- `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
 
 ## `session`（3）
 

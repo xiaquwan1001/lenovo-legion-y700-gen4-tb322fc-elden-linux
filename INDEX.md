@@ -24,6 +24,10 @@
 > `reports/uefi-observability-pivot-20261101.md` 的「10 段环形可回溯」在本机现态**不成立**（9 段是陈旧 `_a` 残留）；
 > 且 23:11 那次（= #692 最后复位的回落启动）ABL 记的 `Reset by PSHOLD / Hard Reset` 与正常重启同款 ⇒ **该字段不能判根因**（#184/#182）。
 > 证据 = `reports/artifacts/sensors-692-logfs-20261127/`（logfs 8 MiB + 只读采集）。
+> ①d **上机 2 发（2026-11-27）+ 串口第一次抓到崩溃现场**：`-s` 时 DSP 断言 `sns_registry_sensor.c:309`，内核**看到了** fatal error
+> 并进入 `recovering adsp`，整机死在其后的 PAS 关停/重启段 ⇒ **`#737` 的「串口零行 ⇒ 复位在 Linux 之外」作废**（已在该条追加修订）。
+> 本轮补丁（假成功 fwrite）**不足** ⇒ T13 下一步 = apps_std 全方法假成功。另记采集坑：`nohup … >/dev/ttyGS0` 会被 nohup 改写到 `nohup.out`（用户态日志全丢）。
+> 全账 = `reports/sensors-692-attach-crash-serial-20261127.md`。
 > ①b **V2 取证（PMIC PON 侧）已做、且判不了根因**：主线 `qcom-pon` 只写 reboot-mode magic、**不读任何 reason 寄存器**；
 > 用户态也没路（`regmap` debugfs 无 `access`、`registers` 是缓存值 ⇒ 新 `PITFALLS #739`）。ABL 留的 `Reset by PSHOLD`
 > ⇒ 可排除「PMIC 看门狗」一支，但 PS_HOLD 分不清 AOP/TZ 谁拉的低 ⇒ H2a/H3 **在 PMIC 侧不可分**，该通道到此为止。
