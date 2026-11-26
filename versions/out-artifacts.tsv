@@ -19,3 +19,5 @@ out/modstage-vk172	superseded	vk172 模块 staging（1652 文件/94 MiB，可重
 out/uefi-bslot-20261121	pending	GRUB 直起 a 槽安卓四件（Image 36.7M/initrd.img 9.5M/dtb 6.5M/bootconfig 232B，已拆自 boot_a+init_boot_a+vendor_boot_a）+ 段 2/3 待设备窗口	out/uefi-bslot-20261121/README.md	2026-11-21
 out/g7-20261121	pending	**dwc3 v11 G7 上机件**（boot.img 00912631825bc33a + rolehook 变体 727bb55f；7.4-rc3 worktree，只覆盖 USB 面）；禁删，等 G7 上机或「v11 落 daily 面」裁决	reports/dwc3-g7-prep-20261121.md	2026-11-21
 out/gunyah-wdt-20261125	verified	D19 看门狗候选核件：零写盘上机起机 OK + gunyah_wdt.ko insmod/ioctl 全通，但过期测试**不复位**（hyp 空实现）⇒ 仅作证据件，不进每日配置	reports/d19-gunyah-wdt-20261125.md	2026-11-25
+out/evidence-20261126	pending	**取证通道实验件**（4 个 boot.img，各 82 MiB：cmdline-only / DTB ecc-size=16 / tty0-only / probe）。kernel+ramdisk 与 vk192 逐字节相同，只改 cmdline 与 ramoops DT 节点；用途 = 验证 ramoops 能否跨复位取证（结论 = 不能，见报告）	reports/evidence-channel-20261126.md	2026-11-26
+out/rescue-20261126	pending	**零写盘救援镜件**（`boot-rescue-sscmask.img`，cmdline 追加 `systemd.mask=…`；kernel/ramdisk/dtb 与 vk192 逐字节相同）——用于「开机即崩」的另一条路（注意：其 cmdline 的 `elden_root=LABEL=linux17` 与现根 LABEL `linux` 不符，会落 initramfs，见 PITFALLS #732）	reports/sensor-ssc-deploy-20261126.md	2026-11-26
