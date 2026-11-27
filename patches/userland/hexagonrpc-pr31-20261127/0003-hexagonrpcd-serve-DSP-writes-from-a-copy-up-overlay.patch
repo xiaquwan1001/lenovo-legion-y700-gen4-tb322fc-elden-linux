@@ -1,6 +1,6 @@
-From 315158e3ebbd9abe9ae991a104567025915e2258 Mon Sep 17 00:00:00 2001
+From 7e5f067cccc4ded3db1886c81b7b0a648c14c05c Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Fri, 27 Nov 2026 10:26:59 +0800
+Date: Fri, 27 Nov 2026 11:00:50 +0800
 Subject: [PATCH 3/6] hexagonrpcd: serve DSP writes from a copy-up overlay
 
 The mapped HexagonFS backend is read-only, so a firmware that rewrites its
@@ -13,8 +13,10 @@ layer to the HexagonFS instead of special-casing writes in apps_std:
   the DSP sees what it wrote; everything else still comes from -R, including
   directories and the virtual entries.
 - hexagonfs_openat_write() copies the -R file into the overlay first (the
-  copy-up), then opens the overlay file read/write.  Files that only exist
-  below -R cannot be removed or renamed; the call fails with EPERM.
+  copy-up), then opens the overlay file read/write.  'a' appends; 'w'
+  must *not* truncate (this firmware reopens its registry for writing
+  several times, O_TRUNC loses the earlier content).  Files that only
+  exist below -R cannot be removed or renamed; the call fails with EPERM.
 - File descriptors carry their DSP-visible path (hexagonfs_fd.vpath) and the
   backends allocate them zeroed, so the path can be maintained centrally.
 
@@ -32,7 +34,7 @@ reproduced the measurements on the hardware and takes responsibility for it.
 
 Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
- hexagonrpcd/apps_std.c           | 246 +++++++++++++++++++-------
+ hexagonrpcd/apps_std.c           | 253 ++++++++++++++++++++-------
  hexagonrpcd/hexagonfs.c          | 286 ++++++++++++++++++++++++++++++-
  hexagonrpcd/hexagonfs.h          |  20 +++
  hexagonrpcd/hexagonfs_mapped.c   |   2 +-
@@ -42,13 +44,13 @@ Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
  hexagonrpcd/overlay.c            | 174 +++++++++++++++++++
  hexagonrpcd/overlay.h            |  32 ++++
  tests/meson.build                |   2 +
- 10 files changed, 857 insertions(+), 73 deletions(-)
+ 10 files changed, 864 insertions(+), 73 deletions(-)
  create mode 100644 hexagonrpcd/hexagonfs_overlay.c
  create mode 100644 hexagonrpcd/overlay.c
  create mode 100644 hexagonrpcd/overlay.h
 
 diff --git a/hexagonrpcd/apps_std.c b/hexagonrpcd/apps_std.c
-index 7172bf0..05e5ef2 100644
+index 7172bf0..ddd39c4 100644
 --- a/hexagonrpcd/apps_std.c
 +++ b/hexagonrpcd/apps_std.c
 @@ -20,6 +20,7 @@
@@ -180,7 +182,7 @@ index 7172bf0..05e5ef2 100644
  static uint32_t apps_std_fseek(void *data,
  			       const struct fastrpc_io_buffer *inbufs,
  			       struct fastrpc_io_buffer *outbufs)
-@@ -167,9 +282,21 @@ static uint32_t apps_std_fopen_with_env(void *data,
+@@ -167,9 +282,28 @@ static uint32_t apps_std_fopen_with_env(void *data,
  
  	rw_mode = ((const char *) inbufs[4].p)[0];
  	if (rw_mode == 'w' || rw_mode == 'a') {
@@ -190,6 +192,13 @@ index 7172bf0..05e5ef2 100644
 +		if (!hexagonfs_overlay_enabled())
 +			return AEE_EUNSUPPORTED;
 +
++		/*
++		 * 'w' does not truncate the copied-up file: this firmware
++		 * reopens the same file for writing several times while it
++		 * builds its registry, so O_TRUNC loses everything written
++		 * before (measured: the registry shrank and the accelerometer
++		 * and proximity sensors disappeared from the sensor list).
++		 */
 +		fd = hexagonfs_openat_write(ctx->fds, ctx->rootfd, ctx->rootfd,
 +					    inbufs[3].p,
 +					    rw_mode == 'a' ? O_APPEND : 0);
@@ -205,7 +214,7 @@ index 7172bf0..05e5ef2 100644
  	}
  
  	if (!strcmp(inbufs[1].p, "ADSP_LIBRARY_PATH")) {
-@@ -405,70 +532,63 @@ void fastrpc_apps_std_deinit(struct fastrpc_interface *iface)
+@@ -405,70 +539,63 @@ void fastrpc_apps_std_deinit(struct fastrpc_interface *iface)
  	free(iface);
  }
  

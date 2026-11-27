@@ -1,6 +1,6 @@
-From 1ebd3898dacebd28925a9d8920cdda253f696857 Mon Sep 17 00:00:00 2001
+From be972b8b7b1e5fc1ebe41179724d0f59b448c79e Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Fri, 27 Nov 2026 10:27:07 +0800
+Date: Fri, 27 Nov 2026 11:00:50 +0800
 Subject: [PATCH 4/6] hexagonrpcd: add -O DIR for the writable overlay
 
 Document it in the man page together with the copy-up rules: the -R tree is

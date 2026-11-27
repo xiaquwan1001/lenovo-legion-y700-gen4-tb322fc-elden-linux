@@ -7,12 +7,12 @@
 
 | 项 | 值 |
 |---|---|
-| PR | #31（draft → **ready for review**），6 提交，17 文件 **+1277/−81** |
+| PR | #31（**ready for review**），6 提交，17 文件 **+1272/−81** |
 | 每提交构建+测试 | **6/6 绿**；全仓 `ninja test` **4/4**（新增 `overlay` 用例）；编译告警 **0** |
 | GitHub 门 | **DCO pass**；`Build+test` = `action_required`（首次贡献需维护者批准跑 workflow） |
 | 上机 | TB322FC 真重启：`active` / `NRestarts=0` / `--failed` 空 / 三属性 true / `ssccli` Z≈±9.54 |
 | overlay 真写入 | `cam_registry_dump.txt` 18628 B、`fstempfile` 6851 B、`sns_reg_version` 9 B、`registry/DIR` 3 B |
-| 部署二进制 | sha256 `0a8ef526…a8afd92d7`（回滚件 `.bak-20261127` = `4a7946b2…c192f7f`） |
+| 部署二进制 | sha256 `32a7d2c4…3ec47fce20`（回滚件 `.bak-20261127` = `4a7946b2…c192f7f`） |
 
 ## 1. 为什么必须换层次
 
@@ -32,6 +32,19 @@
 **正常 boot 不会触发写**：`rpcd_builder` 已把 `-R/sensors/registry/sns_reg_version` 挂出来，DSP 读到就认为 registry 已持久化、不重写。
 首轮把 overlay 目录清空重启后 40 分钟里 `find /var/lib/hexagonrpc -type f` 为空、而传感器仍全绿 —— 不是写失败，是**没进入写路径**。
 把 `sns_reg_version` 从 `-R` 树临时移走（等价 first attach）后重启，4 个文件立刻出现，验完已还原。
+
+## 2b. `'w'` 的 A/B：**不能截断**（PITFALLS #744）
+
+同一能跑通的二进制，只把 `'w'` 的打开方式从「不截断」改成 `O_TRUNC`，重启后：
+
+| 变体 | `fstempfile` | `cam_registry_dump.txt` | iio 三属性 |
+|---|---|---|---|
+| 不截断 | **6851 B** | 18628 B | 全 true |
+| `O_TRUNC` | 699 B | 未生成 | `HasAccelerometer`/`HasProximity` = **false**（环境光仍 true） |
+
+两种变体下 `ssccli --sensor accelerometer` **都能出值**（DSP 侧另有内存副本）⇒ 「传感器能用」**不是**写侧正确的判据，
+必须看 overlay 文件字节数 + 三属性。根因：固件对同一 registry 文件**反复 `fopen("w")` 续写**。
+代码已回退为不截断，并在 `apps_std.c` 里写明原因。
 
 ## 3. 部署坑（会在发行版里复现）
 

@@ -10,6 +10,7 @@
 | `usr/local/sbin/pstore-catch.sh` | `/etc/init.d/pstore-catch` 的内联 `start()` | 同上（原脚本 33 行里 20 行是逻辑） |
 | `usr/local/sbin/elden-bt-alias.sh` | `/etc/local.d/elden-bringup.start` 的内联子 shell | 让「蓝牙别名」成为独立可失败单元，而不是一个大 oneshot 里的一行 |
 | `usr/local/sbin/elden-bootlog.sh` | `/etc/local.d/elden-bootlog.start` | 整文件搬（原本就是独立脚本，只是没进仓库） |
+| `etc/tmpfiles.d/hexagonrpc.conf` | 2026-11-27 新增（设备上无） | `hexagonrpcd -O` 的 overlay 目录必须在服务启动前存在且对 `fastrpc` 可写，否则写侧**静默关闭**（`reports/hexagonrpcd-overlay-hexagonfs-20261127.md` §3） |
 
 ## 已知缺口（本目录暂不能补的）
 

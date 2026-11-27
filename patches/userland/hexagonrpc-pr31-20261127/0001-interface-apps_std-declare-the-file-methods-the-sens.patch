@@ -1,6 +1,6 @@
-From 9875cd6fdbff4195c507ccea592391e11540c48e Mon Sep 17 00:00:00 2001
+From 620f39314f2e817a547e1f3406864e7de1a9a61b Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Fri, 27 Nov 2026 10:26:27 +0800
+Date: Fri, 27 Nov 2026 11:00:50 +0800
 Subject: [PATCH 1/6] interface/apps_std: declare the file methods the sensors
  PD uses
 

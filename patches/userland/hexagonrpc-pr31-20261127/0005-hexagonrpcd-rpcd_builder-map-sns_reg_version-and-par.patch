@@ -1,6 +1,6 @@
-From d25c89713598c6ada6133a2a39966e13e5e95786 Mon Sep 17 00:00:00 2001
+From 894ef56f9d3f9241bfbde6d72e6a2e4ea6beb0d5 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Fri, 27 Nov 2026 10:27:08 +0800
+Date: Fri, 27 Nov 2026 11:00:50 +0800
 Subject: [PATCH 5/6] hexagonrpcd: rpcd_builder: map sns_reg_version and
  parsed_file_list.csv
 

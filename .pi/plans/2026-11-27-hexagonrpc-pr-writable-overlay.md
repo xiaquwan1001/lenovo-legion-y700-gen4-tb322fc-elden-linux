@@ -80,6 +80,17 @@
 - PR #31 已 **ready for review**；正文含本节数字；DCO pass、CI 等维护者批准。
 - 补丁原文入库 `patches/userland/hexagonrpc-pr31-20261127/`；报告 `reports/hexagonrpcd-overlay-hexagonfs-20261127.md`；双推 `d19b530da`；`check-doctor` FAIL=0 / WARN=3（存量 C 类）。
 
+## 8b. 2026-11-27 第四轮（tmpfiles + `'w'` A/B）
+
+- `packaging/elden-userland/extra/etc/tmpfiles.d/hexagonrpc.conf` 新增（系统侧预建 `/var/lib/hexagonrpc 0755 fastrpc fastrpc`），
+  `extra/README.md` 登记；非 systemd 侧等价物写在文件注释里（initd `start_pre: install -d`）。
+- **`'w'` 的 A/B 定案：不能 `O_TRUNC`** → `PITFALLS #744`；现象 = `fstempfile` 6851→699 B、`HasAccelerometer/HasProximity` 变 false，
+  但 `ssccli` 仍出值（所以判据必须看 overlay 字节数 + 三属性）。
+- 分支重写为不截断版本（`5aed5eb`），逐提交构建+测试 6/6 绿；**最终二进制 sha `32a7d2c4…3ec47fce20`** 已部署并真重启复验：
+  三属性全 true、`NRestarts=0`、overlay 18628/6851/9/3 B。
+- PR 正文更新（A/B 数据 + 新 sha）；补丁原文按最终分支重新导出。
+- `verify.sh` 现存 2 条 FAIL 是本轮之前就有的设备/仓库漂移（`qbootctl.service.d/override.conf`、`charge-watch.sh`），未处理，登记在此。
+
 ## 9. 下一轮候选
 
 1. 本仓补 `packaging/elden-userland/files/etc/tmpfiles.d/hexagonrpc.conf`（`d /var/lib/hexagonrpc 0755 fastrpc fastrpc -`），避免装机时踩上面那条坑。

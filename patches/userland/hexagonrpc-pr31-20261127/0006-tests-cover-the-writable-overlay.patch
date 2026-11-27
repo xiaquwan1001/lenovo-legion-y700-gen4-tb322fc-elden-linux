@@ -1,6 +1,6 @@
-From 75f869d9bbce193c209af7d88c43dedf2e956620 Mon Sep 17 00:00:00 2001
+From 5aed5eb5ddea07b6f87a0a58bffc4c52b39774d3 Mon Sep 17 00:00:00 2001
 From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
-Date: Fri, 27 Nov 2026 10:27:08 +0800
+Date: Fri, 27 Nov 2026 11:00:50 +0800
 Subject: [PATCH 6/6] tests: cover the writable overlay
 
 Add a test that exercises the path the sensors PD takes: open a file for
@@ -14,29 +14,11 @@ reproduced the measurements on the hardware and takes responsibility for it.
 
 Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
- hexagonrpcd/apps_std.c |   6 ++
- tests/meson.build      |  11 ++
- tests/test_overlay.c   | 235 +++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 252 insertions(+)
+ tests/meson.build    |  11 ++
+ tests/test_overlay.c | 235 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 246 insertions(+)
  create mode 100644 tests/test_overlay.c
 
-diff --git a/hexagonrpcd/apps_std.c b/hexagonrpcd/apps_std.c
-index 05e5ef2..09b31e6 100644
---- a/hexagonrpcd/apps_std.c
-+++ b/hexagonrpcd/apps_std.c
-@@ -285,6 +285,12 @@ static uint32_t apps_std_fopen_with_env(void *data,
- 		if (!hexagonfs_overlay_enabled())
- 			return AEE_EUNSUPPORTED;
- 
-+		/*
-+		 * Note: 'w' does not truncate the copied-up file.  The
-+		 * firmware rewrites the file from offset 0 and this is the
-+		 * behaviour that was verified on hardware; truncating would be
-+		 * the more obvious choice but has not been tested yet.
-+		 */
- 		fd = hexagonfs_openat_write(ctx->fds, ctx->rootfd, ctx->rootfd,
- 					    inbufs[3].p,
- 					    rw_mode == 'a' ? O_APPEND : 0);
 diff --git a/tests/meson.build b/tests/meson.build
 index b0300ad..b30796b 100644
 --- a/tests/meson.build
