@@ -37,6 +37,8 @@ out() { if [ "$TSV" = 1 ]; then printf '%s\t%s\t%s\n' "$1" "$2" "$3"; else print
 
 # ---- 1. CONFIG 面（桶②③ 的根因多半在这里）----------------------------------
 cfg_section() {
+	# 判据来源 = **在机内核**的 config（不是构建树）；换核后重跑才有意义
+	printf '%-34s %-12s %s\n' '（在机内核实测）' "$(run 'uname -r')" 'config 取自 /proc/config.gz'
 	run 'zcat /proc/config.gz 2>/dev/null || cat /boot/config-$(uname -r) 2>/dev/null' > /tmp/cap-cfg.$$ || true
 	[ -s /tmp/cap-cfg.$$ ] || { echo "（取不到内核 config）" >&2; return; }
 	# 符号=期望（y/m/-）：- 表示「不要求」
@@ -53,13 +55,13 @@ cfg_section() {
 		out "$sym" "${cur}" "$verdict  [$blk]"
 	done <<-'EOF'
 		CONFIG_VIDEO_QCOM_IRIS	m	iris 视频解码
-		CONFIG_NFC_ST21NFCA_I2C	m	NFC ST21NFCA
+		CONFIG_NFC_ST21NFCA_I2C	-	NFC：本机无硬件（G1-10 ❌），不投入
 		CONFIG_HW_RANDOM_QCOM	m	硬件 TRNG
-		CONFIG_CRYPTO_DEV_QCE	m	QCE 加密引擎
+		CONFIG_CRYPTO_DEV_QCE	-	QCE：上游 BROKEN 开不出（drivers/crypto/Kconfig:529）
 		CONFIG_CORESIGHT_CTCU	m	CTCU 相机测试单元
 		CONFIG_CORESIGHT_TPDM	m	Coresight TPDM
 		CONFIG_CORESIGHT_TNOC	m	Coresight TNOC
-		CONFIG_ATH12K	m	WiFi 期望=m 便于重载
+		CONFIG_ATH12K	-	WiFi 裁决保持 =y（开机即起，见 CAPABILITIES §3 C8）
 		CONFIG_GUNYAH	-	Gunyah 已裁决不投入
 EOF
 	# 说明：`(absent)` = 该符号**根本没出现在 .config** 里，两种成因要分开看 ——

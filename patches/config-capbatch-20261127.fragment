@@ -1,0 +1,20 @@
+# 能力集合补完 · 配置批（2026-11-27，T22 / DEVICE/CAPABILITIES.md §2）
+#
+# 目标：把「桶② 有驱动未部署」里**纯增量、零开机时序风险**的几块打开（全部 =m，
+# 只多编几个模块，不改任何 built-in 驱动的加载顺序）：
+#   HW_RANDOM_QCOM   → qcom-rng.ko，匹配 DT `10c3000.rng`（compatible qcom,trng）
+#                       现状由 smccc_trng 兜底（SMC），开了才有真硬件熵源
+#   CORESIGHT_CTCU   → coresight-ctcu.ko（相机子系统辅块，`10001000.ctcu`）
+#   CORESIGHT_TPDM   → coresight-tpdm.ko（21 个 .tpdm/.tpda amba 节点）
+#   CORESIGHT_TNOC   → coresight-tnoc.ko（`109ab000.tn`，当前 deferred probe）
+#
+# 刻意**不**放进本批：
+#   CRYPTO_DEV_QCE      —— 上游 `depends on (BROKEN && ARCH_QCOM) || COMPILE_TEST`
+#                          （drivers/crypto/Kconfig:529，注释明写与 secure world 抢硬件）
+#                          ⇒ 真机 ARCH_QCOM 下开不出来，属**上游 BROKEN**，不是我们的缺口
+#   ATH12K y→m          —— WiFi 需开机即起（initramfs 不装模块），改 =m 会把时序风险
+#                          搬进 early boot；MHI 竞态已有 ath12k-load.sh 兜底
+CONFIG_HW_RANDOM_QCOM=m
+CONFIG_CORESIGHT_CTCU=m
+CONFIG_CORESIGHT_TPDM=m
+CONFIG_CORESIGHT_TNOC=m

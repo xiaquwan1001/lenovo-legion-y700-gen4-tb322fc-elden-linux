@@ -9,7 +9,7 @@
 #   3) 串口有 `Run /init as init process`
 #   4) 串口有 `Console: switching to colour frame buffer device`（-device ramfb 下 fbcon 有后端）
 #
-# 用法：bash scripts/qemu-full-chain-smoke.sh [--keep] [IMAGE] [INITRD]
+# 用法：bash scripts/qemu-full-chain-smoke.sh [--keep] [IMAGE] [INITRD]   （BOOT_WAIT=150 秒上限）
 #   IMAGE   默认 out/vk188-bootfiles/Image（vk188 sysfbfb）
 #   INITRD  默认 out/initramfs-slim.cpio.gz（thin initrd，QEMU 无 UDC/无 linux17，够判据）
 #   --keep  保留 /tmp/qfc 工作区与 qemu 进程（调试用）
@@ -75,9 +75,20 @@ timeout 180 $QEMU -M virt,acpi=off -cpu cortex-a72 -m 2048 -smp 4 \
   -display none -device ramfb -serial file:$W/serial.log \
   -monitor unix:$W/mon.sock,server,nowait >/dev/null 2>&1 &
 QPID=$!
-# 等 Linux version（GRUB 菜单 2 s + EFI ~5 s + 内核 ~15 s）
-for _ in $(seq 1 36); do grep -q "Linux version" $W/serial.log 2>/dev/null && break; sleep 5; done
+# 等到「判据都出现」或超时再杀（★ 2026-11-27 修：原实现一看到 `Linux version` 就 kill，
+# 而 J3/J4 发生在 20–40 s 之后 ⇒ 两条判据**结构上不可能 PASS**，基线同样 2/4（假红）。
+# 现在的语义：轮询到 J3+J4 都出现（提前收工）或 BOOT_WAIT 秒到点；两种都只杀 QEMU，不改判据。）
+BOOT_WAIT=${BOOT_WAIT:-150}
+_t0=$(date +%s)
+for _ in $(seq 1 $((BOOT_WAIT / 3))); do
+	[ -e $W/serial.log ] || { sleep 3; continue; }
+	grep -aq "Run /init as init process" $W/serial.log 2>/dev/null && \
+	  grep -aq "Console: switching to colour" $W/serial.log 2>/dev/null && break
+	[ $(( $(date +%s) - _t0 )) -ge "$BOOT_WAIT" ] && break
+	sleep 3
+done
 kill $QPID 2>/dev/null; wait $QPID 2>/dev/null
+echo "[qemu] 用时 $(( $(date +%s) - _t0 )) s（上限 ${BOOT_WAIT}s）"
 
 # 4) 判据
 pass=0

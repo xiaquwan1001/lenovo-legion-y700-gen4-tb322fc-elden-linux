@@ -13,8 +13,9 @@
 | 桶 | 块数 | 内容 |
 |---|---|---|
 | ① 无驱动 | **4** | SPSS/SPU 安全核、SOCCOP remoteproc、PMIC `hv-haptics`、vendor `bl@11`/`bias@3e`（用途未知）——**四块均已裁决不投入**，见 §5 |
-| ② 有驱动未部署 | **6** | iris(VPU)、硬件 TRNG、QCE、CTCU、Coresight TPDM/TNOC、传感器中枢(SLPI/QRMI)（NFC 已移出，见 §3 C6） |
-| ③ 未模块化 | **2** | `CONFIG_ATH12K=y`（defconfig 是 `=m`）、相机 CC/PLL 家族 `=y` 与其余 `=m` 混编 |
+| ② 有驱动未部署 | **5** | iris(VPU)、硬件 TRNG、CTCU、Coresight TPDM/TNOC、传感器中枢(SLPI/QRMI)（NFC 移出见 §3 C6；**QCE 移出见 §3 C7**） |
+| ⏳ 已开 CONFIG 待上机 | **4** | TRNG / CTCU / TPDM / TNOC 已于 2026-11-27 编进 vk194（`=m` + 模块已部署），**只差一次真机启动验收** |
+| ③ 未模块化 | **1** | 相机 CC/PLL 家族 `=y` 与其余 `=m` 混编（`ATH12K=y` 经裁决保留，见 §3 C8） |
 | ④ 未上游化 | **8 类** | iris DTS、novatek 触屏、aw88461 功放、WCN7861(WiFi+BT)、GPS/`gmu@3d37000` 形态、传感器 fastrpc 1 行、tplg、相机 sm8750 camss |
 | ⑤ 已达成 | **17** | 见 §1 |
 | 固件 | 请求 **27/27 在位**；linux-firmware 逐字覆盖 **5/27**；**3 块 16 件不可分发**（WCN7861 全家/触屏/awinic 本机 ACF）|
@@ -37,10 +38,10 @@
 | 10 | 相机 PMIC wl2868c | `10-002f`→`wl2868c` | 无 | 已进 linux-next | ⑤ |
 | 11 | 闪光灯 PM8550 flash LED | 主线节点 okay | 无 | — | ⑤ |
 | 12 | ~~NFC ST21NFCA~~ | **不成立：本机无 NFC 硬件**（G1-10 取证五条：vendor 无 `android.hardware.nfc.xml`、无 HAL 库/固件、`elden.dts` 的 `st21nfc` 是总线 disabled 的共用模板）。`CONFIG_NFC_ST21NFCA*` 未开、DT `i2c@a80000` 两边都 disabled 与此一致 | 无 | 驱动在树（mac80211 之外的上游件） | ❌ 取消（不是桶②） |
-| 13 | 硬件 TRNG（`10c3000.rng`） | `CONFIG_HW_RANDOM_QCOM` **未开**（defconfig `=m`），现由 `smccc_trng` 兜底 | 无 | 无 | **②** |
-| 14 | QCE 加密引擎（`1dfa000.crypto`） | 三处 config **均无该符号** ⇒ 纯软算 | 无 | 无 | **②** |
-| 15 | CTCU（`10001000.ctcu`） | `CONFIG_CORESIGHT_CTCU` **未开**，驱动在树 | 无 | 无 | **②** |
-| 16 | Coresight TPDM/TPDA/TNOC（28 amba 设备） | `CONFIG_CORESIGHT_TPDM/TNOC` **未开** | 无 | 无 | **②**（诊断能力） |
+| 13 | 硬件 TRNG（`10c3000.rng`） | `CONFIG_HW_RANDOM_QCOM=m` **已开**（vk194，模块已部署）；在机仍是 `smccc_trng` 兜底 | 无 | 无 | ⏳ 待上机（判据 `rng_current=qcom_trng`） |
+| 14 | ~~QCE 加密引擎（`1dfa000.crypto`）~~ | **上游 BROKEN**：`depends on (BROKEN && ARCH_QCOM) \|\| COMPILE_TEST`（`drivers/crypto/Kconfig:529`）⇒ 真机开不出来 | 无 | 无 | ⛔ 不是缺口（见 §3 C7） |
+| 15 | CTCU（`10001000.ctcu`） | `CONFIG_CORESIGHT_CTCU=m` **已开**（vk194） | 无 | 无 | ⏳ 待上机 |
+| 16 | Coresight TPDM/TPDA/TNOC（28 amba 设备） | `CONFIG_CORESIGHT_{TPDM,TNOC}=m` **已开**（vk194） | 无 | 无 | ⏳ 待上机（诊断能力） |
 | 17 | Modem（`remoteproc@4080000`） | DT disabled，本机 `baseband=apq`，无 modem 固件 | 无 | — | 不足（不投入） |
 | 18 | SPSS/SPU 安全核 | 主线无任何 spss 驱动 | — | — | **①**（不投入） |
 | 19 | SOCCOP remoteproc | `q6v5_pas` 无 sm8750 compatible | — | — | **①**（无消费方） |
@@ -50,7 +51,7 @@
 | 23 | USB dwc3 + Type-C/DP altmode（fsa4480×2、ptn3222、UCSI） | 全部绑定，双连接器件 v16 在飞 | 无 | dwc3 v16 / DTS v10 在飞 | ⑤+④ |
 | 24 | UFS | `1d84000.ufs`→`ufshcd-qcom` | 无 | — | ⑤ |
 | 25 | microSD | `mmc0` 在册 | 无 | — | ⑤ |
-| 26 | PCIe + WiFi（ath12k / WCN7861 PEACH） | `01:00.0`→`ath12k_wifi7_pci`，`wlan0` up；`CONFIG_ATH12K=y` | `ath12k/PEACH/hw2.0/*` 8 件（厂商 BDF，**不可分发**） | WCN7861 支持树外 | ⑤+**③**+④ |
+| 26 | PCIe + WiFi（ath12k / WCN7861 PEACH） | `01:00.0`→`ath12k_wifi7_pci`，`wlan0` up；`CONFIG_ATH12K=y`（**已裁决保持 `=y`**，见 §3 C8） | `ath12k/PEACH/hw2.0/*` 8 件（厂商 BDF，**不可分发**） | WCN7861 支持树外 | ⑤+④ |
 | 27 | 蓝牙 WCN7861（BRAHMA） | `hci0` 起，`QCA setup on UART is completed` | `qca/brh*` 5 件（不可分发，Q34 已闭环） | btqca/hci_qca 树外 | ⑤+④ |
 | 28 | PMIC/regulator/thermal/ADC/RTC | 55 thermal zone、`qcom-rpmh-regulator`×6、`rtc-pm8xxx` | 无 | — | ⑤ |
 | 29 | ADSP/CDSP + FastRPC（17 cb） | `remoteproc0/1 running` | split `.mdt` 全在；ADSP 与上游**不同构建**、CDSP **同 sha** | `non-secure-domain` 1 行在飞（M10） | ⑤+④ |
@@ -59,7 +60,7 @@
 
 ## 2. 可执行下一步（按成本升序）
 
-- **开 CONFIG（重编一次内核，可合并成一批）**：`CONFIG_HW_RANDOM_QCOM=m`、`CONFIG_CRYPTO_DEV_QCE=m`（+`_*`）、`CONFIG_CORESIGHT_{CTCU,TPDM,TNOC}=m`、`CONFIG_ATH12K=m`；验收 = `scripts/capability-audit.sh config` 无 `MISSING`、对应 `/sys/bus/platform/devices/*` 出现 driver 链接、`rng_current` 变 `qcom_trng`、`sync_state pending due to 1dfa000.crypto` 消失。
+- **开 CONFIG（第一批 ✅ 已编进 vk194，2026-11-27）**：`CONFIG_HW_RANDOM_QCOM=m` + `CONFIG_CORESIGHT_{CTCU,TPDM,TNOC}=m`（片段 `patches/config-capbatch-20261127.fragment`，报告 `reports/capbatch-vk194-20261127.md`）。**剩余动作 = 一次真机启动验收**（判据见报告 §4；`scripts/capability-audit.sh config` 现应只剩 **0 条** `MISSING`）。
   ⚠ 先 `make olddefconfig` 再读符号：在机 `build/daily/.config` 是 **11-16** 生成的，而 `st21nfca` 文件 **11-25** 才进树 ⇒ 现在跑 `grep ST21NFCA .config` 是 `(absent)`，属于「config 早于树内容」而不是「树里没驱动」（`scripts/capability-audit.sh` 已把这两种成因分开提示）。
 - ~~NFC~~：**不投入** —— 本机无 NFC 硬件（G1-10 已取消）。别再因为「DT 里有 `nfc@8` 节点」去开 CONFIG（那是多 SKU 共用模板，且 `&i2c0` 使能曾致硬关机 `PITFALLS #108`）。
 - **iris**：把工作树里 `&iris{okay}` 的板级覆盖提交进 DTS 系列，并换用上游 `vpu35_p4.mbn`（同文件名）后做一次上机验 TZ 签名（Q36 三件套的 ③）。
@@ -75,6 +76,8 @@
 | `aw99706` / `phy-nxp-ptn3222` 未上游 | **均已在 torvalds master**（2026-11-27 现取 200），④ 只剩本地 delta |
 | Q36「`/dev/video*` 零个 ⇒ 无硬件解码」 | 17 个 video **全是相机**；`dmesg\|grep -ci iris`=0 ⇒ iris 仍不可用，但**判据要换成 DT status + iris 日志** |
 | lane A 把 NFC 记为「桶② 有驱动未部署」 | **推翻**：本机**无 NFC 硬件**（`TASKS/G1.md` G1-10 = ❌，五条取证 + `PITFALLS #108`；vendor DT 里 `st21nfc` 是**总线 disabled 的共用模板**）⇒ 该行改 ❌，桶② 计数 7→6 |
+| CAPABILITIES 曾把 QCE 记为「桶② 未开 CONFIG」 | **降级**：上游 `CRYPTO_DEV_QCE` 明确 `depends on (BROKEN && ARCH_QCOM)`（`drivers/crypto/Kconfig:529`，注释写与 secure world 抢硬件）⇒ **真机开不出来**，属上游 BROKEN，不是我们的缺口（`reports/capbatch-vk194-20261127.md` §0） |
+| CAPABILITIES 曾建议 `ATH12K y→m` | **撤回**：WiFi 需开机即起（initramfs 不装模块），改 `=m` 会把时序风险搬进 early boot；MHI 竞态已有 `ath12k-load.sh` 兜底 ⇒ **保持 `=y`** |
 | 我方 `gmu@3d37000/0x68000` 疑为 payload bug | **vendor DT 就是这个值**；差异方向反了（该问主线 `3d6c000` 是否适用本板） |
 
 ## 4. 复现入口
