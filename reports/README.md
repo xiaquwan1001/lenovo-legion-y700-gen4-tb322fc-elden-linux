@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：741
+- 报告总数：742
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -128,6 +128,7 @@
 | `consolidation` | 1 | `consolidation-20261014.md` |
 | `container` | 1 | `container-audio-20261011.md` |
 | `coolapk` | 1 | `coolapk-publish-20261123.md` |
+| `coresight` | 1 | `coresight-list-subscribe-20261127.md` |
 | `counts` | 1 | `counts-gate-20261107.md` |
 | `d1` | 1 | `d1-host-side-20261123.md` |
 | `daily` | 1 | `daily-linux-deploy-20261122.md` |
@@ -1223,6 +1224,10 @@
 ## `coolapk`（1）
 
 - `coolapk-publish-20261123.md` — 酷安发布记录（2026-11-23）
+
+## `coresight`（1）
+
+- `coresight-list-subscribe-20261127.md` — 订阅 `coresight@lists.linaro.org` —— 网页操作指引（2026-11-27 晚，人工接手）
 
 ## `counts`（1）
 
