@@ -6,6 +6,11 @@
 # 7.2.0-debug-vk47clean-gbd114ca335e1 so the .ko vermagic lines up for the probe.
 #
 # Runs under a hard deadline (timeout -k) per project long-run discipline.
+#
+# RETIRED 2026-11-27：Q26 Step A 一次性质询件（Q26 已于 2026-10-10 关闭）；基座 worktree
+#   wt-athm / wt-wifibmiss 已不在本机，且路径硬编码换机前的 /home/xuqianhui1001 ⇒ 不可原地重建；
+#   全仓 0 活调用点 ⇒ 保留文件不删（配方/判据仍可读）。
+#   分类依据：reports/scripts-ref-audit-20261127.md（T14 / arch-audit A7）。
 set -uo pipefail
 ROOT=/home/xuqianhui1001/y700-elden
 K=/home/xuqianhui1001/wt-athm

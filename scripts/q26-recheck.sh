@@ -20,6 +20,11 @@
 #   IMG=out/boot-elden-vk63.img scripts/q26-recheck.sh   # 复测对照（vk63 已知干净）
 #   SSID="P40 Pro" OBSERVE=180 scripts/q26-recheck.sh
 # Env: TAB(=root@192.168.7.1) IMG SSID OBSERVE(观察窗秒,默认180) LOGDIR
+#
+# RETIRED 2026-11-27：Q26 已于 2026-10-10 用户实机关闭（TASKS/GAPS.md §Q26「✅ 已关闭」）；
+#   输入 out/boot-elden-vk62.img、out/Image-vk47clean.gz 已随磁盘清理不在盘（只余 .manifest），
+#   全仓 0 活调用点 ⇒ 保留文件不删，仅作历史判据参考；再跑须先重建 vk62 件。
+#   分类依据：reports/scripts-ref-audit-20261127.md（T14 / arch-audit A7）。
 set -uo pipefail
 ROOT=${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 TAB=${TAB:-root@192.168.7.1}

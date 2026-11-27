@@ -136,10 +136,10 @@
 | EDL 工具链（**源码自建，单根目录 `~/edl/`**，2026-11-03 重编） | **不再用 apt/.deb 打包版**（qdl 2.4-3 与 edl-ng 1.6.0 均已于 2026-11-03 卸载）。① **`~/edl/qdl`** = `linux-msm/qdl` **v2.9** 源码（干净构建，`qdl/build/qdl`，`~/.local/bin/qdl` 软链）——整包 `rawprogram`/`flashmap`/sparse/`sha256`/`--skipblock`/`--dry-run`/512·4096 扇区探测，**仍未上机**；② `~/edl/edl-ng` = `strongtz/edl-ng` 源码（`v1.6.0-2-g4a658ee`，提供 `printgpt`/`read-part`/`write-part`/`erase-*`/`reset`/`ramdump`；**本机无 dotnet，暂不可构建**，已真机验证的是旧 .deb 安装态，取证结论仍有效）；③ `~/edl/bkerler-edl`（含 `.venv`）= `peek` 族/Diag/loader 检索备胎；④ `~/edl/qdlrs` 只观察；⑤ `~/edl/survey` = 调研 issue 快照。loader：`~/下载/tb322fc/xbl_s_devprg_ns.melf`。构建依赖已装 `libusb-1.0-0-dev`（不再需 sysroot）。说明/追新/清理记录见 `~/edl/README.md`；选型与勘误见 `reports/edl-toolchain-survey-20261101.md`（§6/§7） |
 | locked 链构建（路 C） | `scripts/build-locked-chain.sh`（testkey 重打全链，从本单元 stock dump 自动读参数）+ `scripts/extract-avbpubkey.py`（从 AVB 镜像提公钥 blob，大端 header）。⚠ 原厂受信 key 2597c218 的 AOSP testkey 在本机已丢失（`env-pass/keys/` 目录不存在，`env-pass` 被 `.gitignore` 排除） |
 | 设备端操作 | `scripts/{flash-b,thermal-watch,thermal-stress,bench-run,bench-install,serial-run,serial-log,oob-gs1-activate,win-x86-rootfs,win-x86-run,waydroid-proxy-setup,charge-ctl,charge-watch}.sh`、`scripts/wd-net-baseline.dev.sh`（设备侧 Waydroid 网络基线采集：`ip rule`/table 99·1002/网关 ping/出网 curl/netd 错误） |
-| Q28 显示取证 + 跨重启串口抓取（2026-10-09/10 新增） | `archive/2026-10-15-retired-scripts/q28-boot-cycle.sh`（温启→零写盘 `fastboot boot` 诊断内核→取证，单轮 GOOD/BAD，SSH over USB-NCM，本机无 adbd）、`archive/2026-10-15-retired-scripts/q28-ab-delay.sh`（同时间窗 base/exp 各 N 轮统计坏发率，判 delay 能否压制 Q28）、`archive/2026-10-15-retired-scripts/q28-verdict.sh`（串口日志三层判 GOOD/BAD：L1 cmd-DMA/panel-init、L2 ctl-reset/frame-done/vblank）、`archive/2026-10-15-retired-scripts/q28-devprobe.sh`（设备端三态 NOCARD/STORM/GOOD，POSIX sh，只数风暴签名会把「无 card0」误判 GOOD）、`archive/2026-10-15-retired-scripts/q28-race-hunt.sh`（设备端 rpm tracepoints 密集复现 power-on 竞态、零构建）、`scripts/serial-logger.sh`（ttyACM 跨重启自动重连抓取，pid `/tmp/q28_serial_logger.pid`）。**⚠️MIGRATION-LOST(2026-10-17)：本行的 `q28-boot-cycle.sh` / `q28-ab-delay.sh` / `q28-verdict.sh` / `q28-race-hunt.sh` 四个脚本本机已无**（2026-10-17 换机未随迁）⇒ 按 `TASKS` §5 Q28 配方重放；现存只有 `archive/2026-10-15-retired-scripts/q28-devprobe{,2}.sh` |
+| Q28 显示取证 + 跨重启串口抓取（2026-10-09/10 新增） | `archive/2026-10-15-retired-scripts/` 下的 `q28-boot-cycle.sh`（温启→零写盘 `fastboot boot` 诊断内核→取证，单轮 GOOD/BAD，SSH over USB-NCM，本机无 adbd）、`q28-ab-delay.sh`（同时间窗 base/exp 各 N 轮统计坏发率，判 delay 能否压制 Q28）、`q28-verdict.sh`（串口日志三层判 GOOD/BAD：L1 cmd-DMA/panel-init、L2 ctl-reset/frame-done/vblank）、`q28-devprobe.sh`（设备端三态 NOCARD/STORM/GOOD，POSIX sh，只数风暴签名会把「无 card0」误判 GOOD）、`q28-race-hunt.sh`（设备端 rpm tracepoints 密集复现 power-on 竞态、零构建）、`scripts/serial-logger.sh`（ttyACM 跨重启自动重连抓取，pid `/tmp/q28_serial_logger.pid`）。**⚠️归档复核（2026-11-27，更正原「MIGRATION-LOST 本机已无」说法）**：上列 5 个归档件**逐字仍在** `archive/2026-10-15-retired-scripts/`（2026-10-17 随迁到位），`scripts/` 下无活入口 = 已退场；温启取证**现役替代 = `scripts/q28-reboot-until-good.sh`**，三态探头现役 = `scripts/q28-devprobe{,2}.sh`（在 `scripts/`，不在 archive）；重放配方见 `TASKS/README.md` §5 Q28 行 |
 | BL 解锁（**未解锁单元前置**） | `scripts/bl-preunlock-evidence.sh`（locked 基线取证 + 打印申请表两项）、`scripts/bl-unlock.sh`（校 SN → `flash unlock` → `oem unlock-go`，逐条执行） | U2 基线已采：`backup/HA2EXB0E-16+512/pre-unlock/`（Widevine **L1**、by-name 119 项、传感器清单、getprop 全量 + SHA256SUMS） |
 | **C10 马达透传链** | `scripts/elden-hapticd.c`（宿主桥 daemon：aw86927 FF_RUMBLE + `--amp-a/--amp-b` 每侧强度 + `amplitude` 缩放 + 自清 `activate`）+ `scripts/build-hapticd.sh` + `scripts/waydroid-haptics-setup.sh`（桥部署/验证）+ `patches-userland/waydroid-haptics-aidl/`（自编 **AIDL V2** vibrator HAL 源码）+ `scripts/waydroid-haptics-aidl-deploy.sh`（零写盘 bind 部署）+ `patches-userland/elden-vibration-overlay/`（静态 RRO：Settings 强度档位 1→3）+ `scripts/waydroid-haptics-bake-patch.py` / `waydroid-haptics-bake-vendor.sh`（**固化进 vendor.img**：`m vendorimage` → 原子替换 → 验证）; 设备侧 `/usr/local/bin/elden-hapticd` + `/etc/init.d/elden-hapticd` + `/etc/conf.d/elden-hapticd` | 2026-10-13 上机验收：零 bind 挂载的固化态 + 幅度/cancel/每侧强度实测；回退镜像 `vendor.img.bak-elden-haptics-20261013-115055` |
-| C4 传感器链 | `scripts/eldroid-sensord.c`（数据源 daemon：fake/stdin→UDP，selftest 7/7）+ `scripts/build-sensord.sh`（native+aarch64 static）+ `scripts/deploy-sensors-hal.sh`（Waydroid overlay 部署）+ `env-pass/scripts/sensor-send-termux.sh`（真值转发） |
+| C4 传感器链 | `scripts/eldroid-sensord.c`（数据源 daemon：fake/stdin→UDP，selftest 7/7）+ `scripts/build-sensord.sh`（native+aarch64 static）+ `scripts/deploy-sensors-hal.sh`（Waydroid overlay 部署）+ `env-pass/scripts/` 下的 `sensor-send-termux.sh`（真值转发；文件真在，2026-11-27 核） |
 | AVF 离线提取 | `scripts/extract-avf-assets.sh`（从原厂 system 镜像 debugfs 取 crosvm/vm/microdroid_kernel/u-boot.bin，无需设备） |
 | C0 真机取证 | `scripts/c0-android-evidence.sh`（adb 采身份/DRM/传感器/分区，输出 `backup/<SN>-<档>/c0-baseline/` + SHA256SUMS；手工项见脚本尾提示） |
 | 磁盘/挂载工具 | `qemu-img`/`qemu-nbd` 已装（A13 ✅）；fstab nofail 已修（A18 ✅） |
@@ -169,7 +169,7 @@
 | 固件子集 | `backup/fw/{vendor,modem,bluetooth,dspso,gen80000_*}` | 见 `backup/fw/README.md` |
 | AVF 资产（**离线提取，不需设备**） | `backup/avf/`：`com.android.virt.apex` + `apex_payload.img` + `bin/{crosvm,vm,virtmgr,virtualizationservice,vmnic,vfio_handler,fd_server,early_virtmgr}` + `etc-fs/{microdroid_kernel(6.6.77-android15-8),microdroid_super.img,microdroid_vbmeta.img,microdroid_initrd_{normal,debuggable}.img,u-boot.bin,rialto.bin}` + SHA256SUMS | ✅ 2026-10-04 从原厂 259 镜像 `/mnt/Samsung/l2/system_a.pristine.img` 离线提取；`scripts/extract-avf-assets.sh` 可复原；crosvm 含 Gunyah/Geniezone/KVM 后端 → **GAPS Q13 资产部分已闭** |
 | 过环境栈 | `env-pass/`（模块 + `repack_module_zip.py` + 检测器 APK + 内核产物） | Native Detector = normal |
-| env-pass provision | `env-pass/scripts/envpass-provision.sh`（状态预检+自动 repack+幂等，A17） | --check 干跑通过 |
+| env-pass provision | `env-pass/scripts/` 下的 `envpass-provision.sh`（状态预检+自动 repack+幂等，A17；文件真在，2026-11-27 核） | --check 干跑通过 |
 | C4 HAL 产物 | `waydroid-build/out/.../vendor/bin/hw/android.hardware.sensors@1.0-service.waydroid`（25 KB，UDP 实现）+ overlay 部署脚本 | 已编译（2026-10-03，32 s）；上机后用 `deploy-sensors-hal.sh` |
 
 ### 2.3 主机大容量资产（占盘大户，勿误删）
@@ -363,7 +363,7 @@ git log --oneline -10
 | 资产树 | `build/`（原 ~4 G） | ✅ **已重建（2026-10-23：40 G / 7 棵）**，但**不是纯可再生** | 两独立仓含本地独有 commit（`base-7.2` 的 `master`/`elden-payload-v2`、`m3v2-7.3rc7` 的 `m3v2`/`replay-m1-73-vk127`）；回收前先 bundle（`reports/assets-inventory-20261023.md` §4.1） |
 | 镜像 | `out/*.img`（`vk42–vk126`）+ 归档件 | ◐ **部分重建**：现查 `ls out/*.img back backup/out-history-*/\*.img 2>/dev/null \| wc -l`（2026-11-05 归档后 = `out/` 15 + 归档 114 = 129；vk130/vk131 仅剩 `.manifest`，A4 已删其 `.img`） | 旧号仍缺；`.manifest` 220 个；台架臂不可复跑（在机 b 槽 + `backup/HA2EXB0E` 各留 1 份）；历史镜像路径见 `backup/out-history-20261105/ARCHIVE.tsv` |
 | 日志/工具 | `logs/`、`tools/` | ✅ **2026-11-06 `tools/` 已入库**（`.gitignore` 由整目录 `/tools/` 改为 `/tools/*` + 白名单：`avbtool.py`、`l2-extract/`、`gunyah-modules/` 源码；构建产物 `.dtb/.bin/vmmtest` 仍挡；20 个文本文件）；`tools/mkbootimg/` 空壳（只剩 pyc）已删，打包器在 `scripts/mkbootimg.py` | `tools/` 原 232 K → 现 1.0 M（多出来的是 `avbtool.py` 204 K + gunyah 源码）；`wd-audio-test` 仍未迁（C6 工具，`reports/container-audio-20261011.md`） |
-| Q28 取证脚本 | `archive/2026-10-15-retired-scripts/q28-boot-cycle.sh`、`archive/2026-10-15-retired-scripts/q28-ab-delay.sh`、`archive/2026-10-15-retired-scripts/q28-verdict.sh`、`archive/2026-10-15-retired-scripts/q28-race-hunt.sh` | ⚠️MIGRATION-LOST（2026-10-17；**2026-11-02 复核仍缺**，现存只有 `archive/2026-10-15-retired-scripts/q28-devprobe{,2}.sh`） | Q28 取证/采样链的**重放配方**在 `TASKS/README.md` §5 的 Q28 行；§2.1 表内引用处已就地带 `⚠️MIGRATION-LOST` 注 |
+| Q28 取证脚本 | `archive/2026-10-15-retired-scripts/` 下的 `q28-boot-cycle.sh`、`q28-ab-delay.sh`、`q28-verdict.sh`、`q28-race-hunt.sh` | ✅**在盘（2026-11-27 复核：四件逐字仍在 archive，原「MIGRATION-LOST／仍缺」标注已更正）**；活入口已退场，现役替代 = `scripts/q28-reboot-until-good.sh`；三态探头 = `scripts/q28-devprobe{,2}.sh`（在 `scripts/`） | Q28 取证/采样链的**重放配方**在 `TASKS/README.md` §5 的 Q28 行；§2.1 表内引用处已同步更正为「归档件在盘、活入口退场」（2026-11-27） |
 | 签名密钥 | AOSP testkey `env-pass/keys/testkey_rsa4096.pem`（`env-pass/` 整目录不入 git） | ⚠️MIGRATION-LOST（2026-10-17；**2026-11-02 复核本机已无该目录**） | 现役 b 槽自签密钥 = **`bootslot-b/avb.key`**（`scripts/sign-boot-b.sh:14` 实际取值）；locked 全链重打 = `scripts/build-locked-chain.sh`；§2.1 表内引用处已就地带注 |
 | 可重下 | `edk2-*`、`mu_wide_platforms`、`uefi-firmware-backup`、`qdl`、`twrp`、`pkgs*`、`probe`、`rootfs/{alpine,dl,debs}` | LOST-REDOWNLOADABLE（2026-10-23：仍均为空） | 重下/重建，非硬伤 |
 
@@ -394,3 +394,69 @@ git log --oneline -10
 > 一律用 `scripts/sess.sh`（已包好 `PI_SESSION_DIR`），或 `/resume`。
 
 各角度的会话进度见 `<角度>/sessions/YYYY-MM-DD-<主题>.md`；**逐会话历史快照（已冻结）**见 `SESSIONS/`（仅档案，不再增补）。
+
+---
+
+## 5. 脚本角度指针（`scripts/` 里「只出现在生成索引里」的可用件）
+
+> **立此节原因**：T14 / `reports/arch-audit-20261127.md` A7 实测——`scripts/` 现查 **363 个入口**，只有 **144 个**被 14 份活面文档提到，
+> 其余 **219 个**只能靠**生成物** `scripts/README.md` 找到；而生成物是机器全量清单、不是语义入口（「一半脚本只能靠索引找到」= 每个会话固定的重造轮子成本）。
+>
+> 分类依据与逐条结论：`reports/scripts-ref-audit-20261127.md`（184 个 plain 孤儿三分类 + 7 条死引用逐条处置 + 复现命令）。
+>
+> **本节的收录口径**（三分类里的②「补指针」）：只收**仍可重跑、值得被找到**的件，每行 = 脚本名 + 真的干什么 + 何时用。
+> ① 已退场件（3 件，见报告分类表）在各脚本头有 `RETIRED 2026-11-27：<原因>` 行，**不动文件、不删文件**，也不出现在本节；
+> ③ 被其它脚本 source/调用 的内部件、单次实验执行器**不收**（全量逐条结论见上述报告的分类表）。
+> 本节只加指针，**不新立任何判据**；脚本行为以脚本自身头注释与 `--help` 为准。
+
+| 面 | 脚本 | 干什么 / 何时用 |
+|---|---|---|
+| 串口证据通道（USB-CDC-ACM `/dev/ttyACM0`；SSH/ADB 都不通时唯一通道） | `scripts/serial-run.sh` | 发一条命令并打回显——想先确认「设备 shell 还活着吗」。 |
+| | `scripts/serial-cmd.py` | 发一组命令、输出落文件——需要留证的多命令小批。 |
+| | `scripts/serial-probe.sh` | 独占串口「敲一下」，抓当前输出+回声——判串口是否被别的进程占着。 |
+| | `scripts/serial-capture.sh` | 等 ttyACM 节点出现就把内容落盘——重启后「设备起来了但不知道卡在哪」的取证入口。 |
+| | `scripts/serial-sysrq.py` | 经串口发 SysRq——免物理断电复位/取栈（显示栈坏时的逃生路）。 |
+| UEFI / ESP / GRUB | `scripts/esp-apply.sh` | 把主机侧目录树一条命令组 FAT32 镜像并写进 eldenesp 分区——改完 ESP 内容（Loader/grub.cfg）成批落盘时。 |
+| | `scripts/esp-put-loader.sh` | 把一份 Loader.efi 放到设备 ESP 的 `/EFI/elden/`——换 UEFI Loader 件。 |
+| | `scripts/grub-bootfiles.sh` | 从 Android boot.img 取「GRUB 直接启动」所需三件、可选落设备 `/boot`——走 GRUB 路线备料。 |
+| | `scripts/grubenv-set.sh` | 在设备上直接改 GRUB `grubenv`（不依赖设备装 grub-editenv）——切默认启动臂 / 改 next_entry。 |
+| | `scripts/uefi-grubcfg-arming.sh` | 把 `/boot/grub/grub.cfg` 的默认臂改成可诊断的 UEFI 复测臂——上机前把「下次起来是哪个臂」钉死。 |
+| | `scripts/uefi-logfs-read.py` | 经 fastboot `oem sbread` 读回 UEFI 持久化 logfs 尾部 16 KiB——判「我们的固件执行到哪一步」（信标）。 |
+| | `scripts/ffs-extract.py` | 解厂商 UEFI 固件（FV/FFS/section 递归 + LZMA/GUID 段）——要看清固件里到底有哪些 DXE/驱动。 |
+| | `scripts/uefi-fv-strings.py` | 在 UEFI FD 的**内层（LZMA 压缩的）FVMAIN** 里搜 ASCII 字串——确认某串/某模块是否真在固件里。 |
+| | `scripts/uefi-bootimg-dump-v0.py` | dump Android boot image v0 header 各字段 + 汇总——核对段布局/尺寸。 |
+| | `scripts/uefi-usb-gap.py` | 用 USB 出现/消失时刻给「`fastboot boot` 之后到底发生了什么」计时——boot 了没起来的时间线。 |
+| Android 镜像面（线刷包 / ext4 / super） | `scripts/android-img-inventory.py` | 只读遍历 Android ext4 分区镜像出 TSV 清单（路径/类型/权限/大小）——盘点某分区里有什么。 |
+| | `scripts/android-img-grepmap.py` | 在 ext4 镜像里按字面串定位「哪个文件含有它」（不需 root/loop）——查串/查残留。 |
+| | `scripts/android-ext4-slim-test.py` | 在**副本**上删掉指定分区子树、量真实可回收块数——评估瘦身能省多少（动副本，不动原件）。 |
+| | `scripts/android-lpdump.py` | 只读解析 Qualcomm 线刷包里的「分段 super」（LP metadata + extents）——看 super 结构。 |
+| | `scripts/android-rom-segassemble.py` | 按 XML 把「一个分区被拆成多段」的 img 拼回整分区——拿到分段线刷包要整镜像时。 |
+| | `scripts/android-min-build.sh` | 「最小安卓全量线刷包」构建器（stage 化、可重入）——重建最小 Android 包。 |
+| | `scripts/android-ksu-avb-build.py` | 造 KernelSU(LKM) 修补的 init_boot + 与之自洽的 vbmeta_a——重做 KSU 根方案。 |
+| 内核 / 模块 / 部署 | `scripts/switch-kernel-abi.sh` | 内核镜像 + 模块树**一起**原子切换——两套 ABI 变体来回（避免 vermagic 错配，见 PITFALLS #367）。 |
+| | `scripts/check-init.sh` | `/init` 单一真源 / 可运行性自检（主机侧只读）——改完 `/init` 先自检再上机。 |
+| | `scripts/deploy-v4l2loopback.sh` | 为**当前在机内核**构建并部署 v4l2loopback——容器/相机面需要 loopback 设备时。 |
+| | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备同名路径——内核没换、只换模块。 |
+| | `scripts/deploy-bt-suspend-guard.sh` | 把 BT suspend 保护钩子部署到设备并验证——出现「suspend 后蓝牙消失」时。 |
+| | `scripts/rootfs-minbase-build.sh` | 最小 Debian 根（GPT-minimal 路线 A6 前置件）驱动脚本——重造最小根。 |
+| 设备体检 / 电源 | `scripts/thermal-stress.sh` | 温控压测驱动（在设备上跑）——验证降频/温控策略。 |
+| | `scripts/suspend-drain-rate.sh` | 量化「相机栈在位 + 真 suspend」的掉电率（%/h）——电源回归。 |
+| | `scripts/sleep-policy.sh` | 设备「待机策略」开关：关屏时是否允许 SSH/网络继续可用——换待机口径。 |
+| | `scripts/cam-load-verify.sh` | 设备上 root 加载相机模块栈并前后对拍——相机面回归（Q24 口径：加载后不要熄屏）。 |
+| | `scripts/ime-candidates-check.sh` | 中文候选窗「可出候选」判据的只读体检（2026-11-15 立）——输入法面回归。 |
+| | `scripts/probe-camera-sensors.sh` | 相机 + 传感器只读探测——新单元/换机后摸底。 |
+| | `scripts/dpms-watch.sh` | 每秒采面板/合成器状态到 `/root/dpms-watch.log`——熄屏/黑屏取证。 |
+| 上游 / 词库 | `scripts/lore-fetch-raw.py` | 按 Message-ID 直接从 lore 取 raw（自动过 Anubis PoW）——需要上游邮件原文/附件补丁。 |
+| | `scripts/gen-pinyin-lexicon.py` | 从 CC-CEDICT 生成「拼音 → 词」候选词库（供 `elden-pinyin-completer`）——换/扩词库时；`--check` 可验。 |
+| Waydroid 容器 | `scripts/wd.sh` | 主机侧 Waydroid 快捷控制（每次 <15 s 返回，绝不长等待）——日常起停/查询。 |
+| | `scripts/waydroid-proxy-setup.sh` | 让容器访问 Google（复用主机 Clash 代理）——容器内要外网时。 |
+| | `scripts/waydroid-ota-serve.sh` | 本地 Waydroid OTA（system+vendor）经 USB-Net 发给平板——重装/升级容器镜像。 |
+| 存储 / 分区改造 | `scripts/f2fs-migrate.sh` | 路线 A：缩小 linux17(ext4) + 尾部新建 linux18(f2fs) + 本地复制（零大文件传输）——迁 f2fs。 |
+| | `scripts/f2fs-host-bench.sh` | f2fs vs ext4 的**主机 loop** 台架（零设备写盘）——迁移前先量。 |
+| | `scripts/dev-userdata-relabel.sh` | 设备侧（POSIX sh）把 Android userdata（sda16）就地转 Linux 数据分区——单机改造。 |
+| | `scripts/dev-super-relabel.sh` | 设备侧（POSIX sh）把 Android `super`（sda10，22 GiB 动态分区容器）转 Linux 分区——同上。 |
+| | `scripts/recover-lun4-slotguid.sh` | 修「ABL 报 `ValidateSlotGuids … does not have valid guids` ⇒ 掉 fastboot」——刷槽后起不来。 |
+| | `scripts/backup-triage.sh` | `backup/` 去重与分级处置（默认 dry-run）——备份目录涨起来时。 |
+| | `scripts/hide-android-partitions-selftest.sh` | 离线自测（全在 `/tmp` 沙盒，不碰 `/etc`、不碰设备）——改隐藏分区逻辑后先自测。 |
+| 取证 / 解码 | `scripts/logfs-decode.py` | 解析 `logfs` 分区（8 MiB = 10 × 64 KiB 环形 ABL 日志）——读 ABL/固件执行信标（2026-11-27 传感器取证用过）。 |
+| | `scripts/display-drop-forensics.sh` | 设备侧「桌面显示栈自发掉线」一次抓全——显示面复发时。 |

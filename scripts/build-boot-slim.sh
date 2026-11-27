@@ -10,6 +10,11 @@
 #
 # ★ 必读：内核与磁盘 /lib/modules 必须同版本，否则相机/音频等模块全部加载失败。
 #   本脚本只负责「打小镜像」，不负责重建内核/模块；内核版本取当前内核树 Image.gz。
+#
+# RETIRED 2026-11-27：G1-30 已口径更正为「slim 不作日常启动」（TASKS/G1.md §1 G1-30：vk60 实机
+#   进桌面但外设全不可用，归因=最小 initramfs 无 /lib/firmware）；输入 linux/arch/arm64/boot/Image.gz
+#   已不在盘，全仓 0 活调用点 ⇒ 保留文件不删。
+#   分类依据：reports/scripts-ref-audit-20261127.md（T14 / arch-audit A7）。
 set -eu
 ROOT=${ROOT:-$HOME/y700-elden}
 VERSION=${VERSION:?usage: VERSION=vkNN-slim sh scripts/build-boot-slim.sh}
