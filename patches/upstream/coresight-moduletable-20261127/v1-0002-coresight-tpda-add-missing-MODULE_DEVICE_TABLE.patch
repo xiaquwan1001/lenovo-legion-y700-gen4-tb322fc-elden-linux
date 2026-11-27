@@ -1,0 +1,35 @@
+From 659be80d8a4d1442ef224dbf40d61f75e3fd1841 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 19:40:00 +0800
+Subject: [PATCH 2/2] coresight: tpda: add missing MODULE_DEVICE_TABLE()
+
+TPDA is an AMBA driver, but its ID table is not exported either, so the
+module has no "amba:" modalias and udev never autoloads it.  On SM8750
+five tpda devices stay unbound until coresight-tpda is loaded by hand,
+even though the IDs in tpda_ids match.
+
+*** AI-assistance disclosure ***
+This patch was prepared with the help of an LLM coding assistant.  The
+author reviewed every line and ran the commands quoted in the cover
+letter.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ drivers/hwtracing/coresight/coresight-tpda.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/hwtracing/coresight/coresight-tpda.c b/drivers/hwtracing/coresight/coresight-tpda.c
+index 89c8f71f0aff0..5d622d7b88f8a 100644
+--- a/drivers/hwtracing/coresight/coresight-tpda.c
++++ b/drivers/hwtracing/coresight/coresight-tpda.c
+@@ -622,6 +622,7 @@ static const struct amba_id tpda_ids[] = {
+ 	},
+ 	{ 0, 0, NULL },
+ };
++MODULE_DEVICE_TABLE(amba, tpda_ids);
+ 
+ static struct amba_driver tpda_driver = {
+ 	.drv = {
+-- 
+2.53.0
+

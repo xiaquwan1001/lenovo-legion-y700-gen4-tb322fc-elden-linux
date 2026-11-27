@@ -1,4 +1,7 @@
 # 上游化当前一页（2026-11-25）
+> **★ 2026-11-27 增量**：新开两系列 v1（`coresight MODULE_DEVICE_TABLE` / `sm8750 TNOC periphid+binding`），各 3×250 已投；
+> 最新状态以 `reports/upstream-coresight-fixes-20261127.md` §5 与两目录 `SENT.md` 为准。
+
 
 > 取代 `reports/upstream-status-20261113.md`（11-13 版留作沿革；11-17/11-21/11-24 的投递批次见 `TASKS/README.md` §7 头与各 `patches/upstream/*/SENT.md`）。
 > 只写「逐系列状态 / 我方欠什么 / 复启条件」；证据指针在行内。**patchwork `state` 一律不作证据**（`PITFALLS #724`）。

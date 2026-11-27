@@ -1,0 +1,52 @@
+From 186d9c158daa9a5ed72dea8eb9b96feac3372278 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 19:40:00 +0800
+Subject: [PATCH 1/2] dt-bindings: arm: qcom,coresight-tnoc: allow the AMBA
+ periphid
+
+TNOC is an AMBA device, so its node may need "arm,primecell-periphid"
+when the ID read back by the AMBA core does not match what the driver
+expects (SM8750 reads 0x00000000).  The binding sets
+additionalProperties: false without pulling in the PrimeCell schema, so
+the property is rejected by dtbs_check.
+
+Reference /schemas/arm/primecell.yaml# like the other CoreSight AMBA
+bindings and switch the root to unevaluatedProperties: false so the
+referenced properties are accepted while unknown ones are still
+rejected.
+
+*** AI-assistance disclosure ***
+This patch was prepared with the help of an LLM coding assistant.  The
+author reviewed every line and ran dt_binding_check and dtbs_check.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ .../devicetree/bindings/arm/qcom,coresight-tnoc.yaml         | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/arm/qcom,coresight-tnoc.yaml b/Documentation/devicetree/bindings/arm/qcom,coresight-tnoc.yaml
+index 37147124449e5..279ce384caa57 100644
+--- a/Documentation/devicetree/bindings/arm/qcom,coresight-tnoc.yaml
++++ b/Documentation/devicetree/bindings/arm/qcom,coresight-tnoc.yaml
+@@ -32,6 +32,9 @@ select:
+   required:
+     - compatible
+ 
++allOf:
++  - $ref: /schemas/arm/primecell.yaml#
++
+ properties:
+   $nodename:
+     pattern: "^tn(@[0-9a-f]+)$"
+@@ -78,7 +81,7 @@ required:
+   - in-ports
+   - out-ports
+ 
+-additionalProperties: false
++unevaluatedProperties: false
+ 
+ examples:
+   - |
+-- 
+2.53.0
+

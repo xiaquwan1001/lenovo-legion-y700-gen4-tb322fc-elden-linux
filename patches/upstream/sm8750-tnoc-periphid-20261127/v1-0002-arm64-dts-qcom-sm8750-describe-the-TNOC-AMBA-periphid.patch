@@ -1,0 +1,38 @@
+From cf5bd788d4bfc736dc8d3ecf72013d8cd83d3449 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 19:40:00 +0800
+Subject: [PATCH 2/2] arm64: dts: qcom: sm8750: describe the TNOC AMBA periphid
+
+The trace NOC at 109ab000 is an AMBA device, but without
+"arm,primecell-periphid" the AMBA core reads its ID as 0x00000000 on
+this platform, so coresight-tnoc (which matches 0x000f0c00/0x001f0c00
+with mask 0x00ffff00) never probes and the node is reported as
+"deferred probe pending: (reason unknown)".
+
+The value is the one the driver expects for this integration and the
+same way sm8250 describes its funnel.  Add it so the TNOC binds.
+
+*** AI-assistance disclosure ***
+This patch was prepared with the help of an LLM coding assistant.  The
+author reviewed every line and verified the binding on hardware.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ arch/arm64/boot/dts/qcom/sm8750.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8750.dtsi b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+index 01eee5c2adcce..585a22eccb303 100644
+--- a/arch/arm64/boot/dts/qcom/sm8750.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8750.dtsi
+@@ -5366,6 +5366,7 @@ tpdm_rdpm_cmb2_out: endpoint {
+ 		tn@109ab000 {
+ 			compatible = "qcom,coresight-tnoc", "arm,primecell";
+ 			reg = <0x0 0x109ab000 0x0 0x4200>;
++			arm,primecell-periphid = <0x000f0c00>;
+ 
+ 			clocks = <&aoss_qmp>;
+ 			clock-names = "apb_pclk";
+-- 
+2.53.0
+

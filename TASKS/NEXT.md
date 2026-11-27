@@ -79,6 +79,14 @@
 
 | # | 项 | 结果（判据可复核） | 指针 |
 |---|---|---|---|
+| 1 | `reboot2` 过时开关退役 | 真件留档（sha `0c68ee5f…`）+ PATH 换 810 B 拒绝壳（`rc=1`）；`scripts/retire-reboot2.sh` 幂等；rootfs 重建会装回 ⇒ 重建后重跑 | `PITFALLS #749`、`reports/upstream-coresight-fixes-20261127.md` §1 |
+| 2 | CTCU/TPDA 缺 `MODULE_DEVICE_TABLE`（上游缺陷） | v1 已投 3×250（cover `<20261127113137.931578-1-…>`）；checkpatch 0E/0W/0C；真机 alias + 自动加载 | `patches/upstream/coresight-moduletable-20261127/`（README/GATES/SENT） |
+| 3 | SM8750 TNOC 缺 periphid（连带 binding） | v1 已投 3×250（cover `<20261127113158.932414-1-…>`）；dtbs_check/dt_binding_check/checkpatch 全绿；上机 AMBA 未绑定 0/28 | `patches/upstream/sm8750-tnoc-periphid-20261127/` |
+| 4 | vk196 持久化部署 | `flash-b.sh` 首次写盘 → `boot_b` 持久跑 vk196；`qbootctl` `_b Active/Successful/Bootable=1`；回滚件 `bootslot-b/boot_b-device-20261127-vk192.img`（sha `68d3dc46…`） | `versions/vk-registry.tsv`、`reports/upstream-coresight-fixes-20261127.md` §4 |
+
+
+| # | 项 | 结果（判据可复核） | 指针 |
+|---|---|---|---|
 | **N1** | **用户态镜像 13 组「待裁定权威归属」** | ✅ **全部裁定并落地**：门 `同 sha 配对 20→35 ｜ 漂移 WARN 14→0 ｜ FAIL 0`；`verify.sh --offline` FAIL=0；doctor §32 绿；`--selftest` 仍能判红 | `reports/userland-mirror-adjudication-20261127.md` |
 | **N2** | **D16 「渲染了但设备上没有」34 条** | ✅ 分类 34/34（部署 18｜豁免 13｜退役 3）→ **设备侧已装 13 件、启用 7 个单元**（backlight-floor / net-selfheal / wifi-scan-refresh / elden-bootlog / pstore-catch / elden-powerlog + 配置），`verify.sh` 在线 **WARN 34→5**（剩 5 = 依赖 `waydroid init` 的那组）；3 件加 `RETIRED` 头并从 MANIFEST 摘除；13 条豁免进新文件 `tools/verify-f-waivers.tsv` | `reports/d16-unit-deploy-classify-20261127.md` |
 | **N3** | **T8 `elden-wake` 纳入部署门** | ✅ `deploy-desktop-shell.sh` 新增 §18 四件判据（两 unit sha / path enabled / path active / helper 可执行且 sha），`--check` 两次输出完全一致、MISS=0 | `reports/t8-elden-wake-check-20261127.md` |

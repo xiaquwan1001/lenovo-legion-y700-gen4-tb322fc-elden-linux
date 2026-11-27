@@ -6,7 +6,15 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（17:1x CST 黄昏轮：能力集合补完 + 串口双读者修复））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（19:4x CST 晚轮：vk196 持久化 + `reboot2` 退役 + 两上游系列已投））
+
+> **★ 2026-11-27 晚轮（vk196 持久化部署 + `reboot2` 退役 + Coresight 两处上游缺陷已投）**：
+> ① `boot_b` **首次写盘** = vk196（payload 与已验收 vk195 **逐字节同**：`Image.gz 9728a751…`/DTB `ce27003e…`/img `d702a93f…`；
+> 差别只在两枚 coresight 模块带 `of:`/`amba:` alias），重启后 `uname` 命中、`qbootctl` `_b succ=1`、AMBA 未绑定 0、显示/WiFi/音频/相机/输入/ADSP+CDSP/TRNG 全绿；
+> **撤掉 `/etc/modules-load.d/elden-coresight.conf` 后仍自动加载**（证明 alias 生效）。
+> ② `reboot2` 真件留档 + PATH 换拒绝壳（`scripts/retire-reboot2.sh`，幂等；rootfs 重建后须重跑），`PITFALLS #749`。
+> ③ 上游 v1 已投两系列各 3×250：`coresight: ctcu/tpda add missing MODULE_DEVICE_TABLE`（`<20261127113137.931578-1-…>`）、
+> `arm64: dts: qcom: sm8750: TNOC periphid` + binding（`<20261127113158.932414-1-…>`）。全账 `reports/upstream-coresight-fixes-20261127.md`。
 
 > **★ 2026-11-27 黄昏轮（能力集合补完 + 串口双读者修复）**：两 lane 只读审计（驱动/DT 面 + 固件面）合成 **`DEVICE/CAPABILITIES.md`**：
 > 31 个硬件块 × 五桶（①无驱动 4 ②有驱动未部署 7 ③未模块化 2 ④未上游化 8 类 ⑤已达成 17）；固件 **27/27 在位**、linux-firmware 逐字覆盖 **5/27**、**3 块 16 件不可分发**（WCN7861/触屏/awinic ACF）。

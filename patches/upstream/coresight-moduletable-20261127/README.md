@@ -1,49 +1,40 @@
-# coresight MODULE_DEVICE_TABLE 缺失 + SM8750 TNOC periphid —— 上游候补（2026-11-27）
+# coresight CTCU/TPDA 缺 MODULE_DEVICE_TABLE —— v1（2026-11-27）
 
-> 来源：`reports/capbatch-vk194-20261127.md` §7（实机证据）。目标 = 让这两个驱动**编成模块后能被 udev 自动加载**，
-> 以及让 TNOC 的 amba id 能被匹配（否则 `AMBA_ID=0` 恒 unbound）。
-> **投递未发生**（按 `TASKS/README.md` §7 逐系列批准）。
+> 来源：`reports/capbatch-vk194-20261127.md` §7、`reports/upstream-coresight-fixes-20261127.md`
+> 状态：**v1 备料完成，门禁全绿**（见 `GATES.md`）。投递走 `SEND.sh`（默认 dry-run）。
+> 口径：`TASKS/README.md` §7 —— 用户 2026-11-26 全面放行，备料+门禁全绿即可投。
+> （本目录此前的 `0001`/`0002` 裸 diff 已由 `v1-*` 正式件取代；TNOC 的 DTS 部分已拆到
+> `../sm8750-tnoc-periphid-20261127/`，因为它还要求 binding 改动，收件人不同。）
 
-## 1. 两个补丁
+## 1. 缺陷
 
-| 文件 | 内容 | 上游现状 |
+| 驱动 | 缺陷 | 证据（同一台 SM8750，vk195/vk196） |
 |---|---|---|
-| `0001-coresight-add-missing-MODULE_DEVICE_TABLE.patch` | `coresight-tpda.c` 加 `MODULE_DEVICE_TABLE(amba, tpda_ids);`；`coresight-ctcu-core.c` 加 `MODULE_DEVICE_TABLE(of, ctcu_match);` | 两者都**没有**该宏（`git grep MODULE_DEVICE_TABLE drivers/hwtracing/coresight/` 只有 tnoc/tpdm 有） |
-| `0002-arm64-dts-sm8750-tnoc-periphid.patch` | `sm8750.dtsi` 的 `tn@109ab000` 加 `arm,primecell-periphid = <0x000f0c00>;` | 上游 `sm8750.dtsi:5366` 与 `kaanapali.dtsi:5134` 都缺；缺了就 `AMBA_ID=00000000` |
+| `coresight-ctcu` | `ctcu_match[]`（只有 `qcom,sa8775p-ctcu`，SM8750 节点以 `qcom,sm8750-ctcu` 回退匹配它）**没有** `MODULE_DEVICE_TABLE(of, ctcu_match)` ⇒ 编成模块无 `of:` alias ⇒ udev 不会自动加载 | `lsmod \| grep -c coresight_ctcu` = 0；`modinfo -F alias coresight-ctcu` = 空；手动 `modprobe` 后 `10001000.ctcu` 立即绑定 |
+| `coresight-tpda` | `tpda_ids[]`（amba）同样没导出 ⇒ 无 `amba:` modalias | 5 个 tpda 节点不绑；手动 `modprobe coresight-tpda` 后立即绑定 |
 
-## 2. 实测证据（为什么这不是「猜」）
+## 2. 补丁（v1）
 
-设备 vk194（= 只开了 4 个 CONFIG，未加这两枚补丁）：
+| 文件 | 内容 |
+|---|---|
+| `v1-0000-cover-letter.patch` | [PATCH 0/2] coresight: add missing MODULE_DEVICE_TABLE() for CTCU and TPDA |
+| `v1-0001-coresight-ctcu-add-missing-MODULE_DEVICE_TABLE.patch` | +`MODULE_DEVICE_TABLE(of, ctcu_match);` |
+| `v1-0002-coresight-tpda-add-missing-MODULE_DEVICE_TABLE.patch` | +`MODULE_DEVICE_TABLE(amba, tpda_ids);` |
 
-```
-# 1) 模块有、能绑定、但永不自动加载
-$ lsmod | grep -c coresight_ctcu        → 0        # 开机后没加载
-$ sudo modprobe coresight-ctcu && readlink -f /sys/bus/platform/devices/10001000.ctcu/driver
-  → .../drivers/coresight-ctcu                     # 手动加载后立即绑定
-$ sudo modinfo -F alias coresight-ctcu  → 空       # 没有 of: alias
-$ sudo modinfo -F alias coresight-tpda  → 空       # 没有 amba: alias
+基线 = `build/daily` HEAD `4da9a8b69fc85`（Linux 7.3.1）；上游 7.4-rc3（`build/elden-tree`）同样缺这两行。
 
-# 2) TNOC：硬件 PID 读回 0 ⇒ amba 表永不匹配
-$ cat /sys/bus/amba/devices/109ab000.tn/uevent
-  AMBA_ID=00000000   MODALIAS=amba:d00000000
-$ sudo modprobe coresight-tnoc && ls -l /sys/bus/amba/devices/109ab000.tn/driver
-  → 无（仍未绑定；`deferred probe pending: (reason unknown)`）
-# 加 periphid 后（vk195）：
-$ readlink /sys/bus/amba/devices/109ab000.tn/driver | xargs basename
-  → coresight-trace-noc                            # 自动加载 + 绑定
-```
+## 3. 实测（打上补丁后）
 
-vk195 汇总：**amba 未绑定 28 → 0**（TPDM 22 + TPDA 5 + TNOC 1 + CTCU 1）。
+- 模块 alias：`of:N*T*Cqcom,sa8775p-ctcu` / `amba:d???F0F??`（`modinfo -F alias`）。
+- **撤掉 `/etc/modules-load.d/elden-coresight.conf` 后开机自动加载**：
+  `lsmod` 有 `coresight_ctcu` + `coresight_tpda`，`/sys/bus/amba/devices/*` 未绑定数 = **0**。
+- 该兜底文件即由本缺陷产生，上游合入后可删（本机已移除，见 `reports/upstream-coresight-fixes-20261127.md` §3）。
 
-## 3. 本地现状（在生效中）
+## 4. 收件人
 
-- 两个补丁已 apply 在 `build/daily` 工作区（下次构建即产出「有 alias」的模块）。
-- vk195 那发用的是「未打补丁的模块 + `/etc/modules-load.d/elden-coresight.conf`」的兜底；上游合入后该文件可删。
-- TNOC 的 DT 行已在 vk195 的 DTB 里。
+`TO` = Suzuki K Poulose；`Cc` = Mike Leach / James Clark / Leo Yan / Alexander Shishkin /
+`coresight@lists.linaro.org` / `linux-arm-kernel` / `linux-kernel`（`SEND.sh` 内固化）。
 
-## 4. 投递前还要做
+## 5. 投递后
 
-1. `git format-patch` 化（补 `Signed-off-by`、commit message：为什么只有模块化才暴露 —— 这些驱动长期被当 built-in 用）。
-2. `checkpatch.pl --strict` + `dtbs_check`（0002 会触发 binding 检查，`arm,primecell-periphid` 是通用属性，倾向上游能过）。
-3. 收件人建议：Coresight 维护者（Suzuki K Poulose / Mike Leach / Leo Yan）+ 设备树侧（Bjorn Andersson / Konrad Dybcio）。
-4. 与 `TASKS/UPSTREAM.md` §7 的 M 系列排同一批（需用户放行）。
+`SENT.md` 记 cover MID + 每封 Result；lore 复核 `coresight` 与 `linux-arm-kernel` 两处。

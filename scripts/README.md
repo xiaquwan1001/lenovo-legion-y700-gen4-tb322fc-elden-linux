@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=e820061301941e3b（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=6a3edd8ab2214604（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**365**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 86 / 设备操作 109 / 造件 71 / 取证 52 / 一次性 3 / 公共库 8 / 其它 36
+- 入口总数：**366**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 87 / 设备操作 109 / 造件 71 / 取证 52 / 一次性 3 / 公共库 8 / 其它 36
 - 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -24,7 +24,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（86）
+## 门禁（87）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -95,6 +95,7 @@
 | `scripts/out-manifest-check.py` | out/ 造件「报告↔镜像」账本门（2026-11-20，arch-audit P0#2） | 14 |
 | `scripts/rawprogram-preflight.py` | 线刷包 rawprogram XML 的**写前**几何预检（纯主机、无 USB）。 | 16 |
 | `scripts/reports-orphan-check.py` | `reports/*.md` 是否被「角度层」指针引用（可复跑判据 + 反作弊 + 自测）。 | 16 |
+| `scripts/retire-reboot2.sh` | 把设备上的 `/usr/local/sbin/reboot2` 换成「拒绝壳」（幂等；2026-11-27） | 3 |
 | `scripts/rootfs-image-check.py` | 磁盘根 ext4 镜像「能不能起 / 能不能登入」的写前门（主机侧，只读） | 6 |
 | `scripts/doctor/s07-08-docs.py` | check-doctor §7/§8 入口文档与索引对账（纯文本判据）。 | 41 |
 | `scripts/doctor/s16-tasks-counts.py` | check-doctor §16：TASKS §0 手写数字 ↔ 计数脚本自动比对。 | 15 |
@@ -158,7 +159,7 @@
 | `scripts/f2fs-migrate.sh` | 路线 A：**缩小 linux17(ext4) + 尾部新建 linux18(f2fs) + 本地复制**（零大文件传输） | 34 |
 | `scripts/fix-fstab-samsung.sh` | 给 /mnt/Samsung 的 fstab 条目补 nofail（掉盘不卡开机） | 6 |
 | `scripts/fix-logind-poweroff.sh` | make logind's Power Off / Restart helpers actually | 30 |
-| `scripts/flash-b.sh` | Flash a mainline boot image into slot b *from inside Linux* — no fastboot needed. | 109 |
+| `scripts/flash-b.sh` | Flash a mainline boot image into slot b *from inside Linux* — no fastboot needed. | 111 |
 | `scripts/flash-recovery.sh` | 从 Linux 里把镜像写进 recovery 分区（默认 recovery_b），无需 fastboot。 | 29 |
 | `scripts/g1-22-dpms-test.sh` | 在设备上定量测试「熄屏（DPMS off）→ 回归」。 | 17 |
 | `scripts/gpt-dump.sh` | 在设备（mainline Linux）上 dump LUN0 GPT 主/备表 | 30 |
@@ -250,7 +251,7 @@
 | `scripts/bootimg-replace-kernel.py` | 只替换 Android boot image 的内核段，其余逐字节保留。 | 16 |
 | `scripts/build-athm-probe.sh` | Q26 Step A probe: CONFIG_ATH12K=m single-shot build. | 5 |
 | `scripts/build-boot-slim.sh` | G1-30（= G1-29 路线 C）：最小 initramfs 版 boot.img | 13 |
-| `scripts/build-boot.sh` | 打包 fastboot 可启动 boot.img（kernel + Alpine rootfs ramdisk + DTB） | 162 |
+| `scripts/build-boot.sh` | 打包 fastboot 可启动 boot.img（kernel + Alpine rootfs ramdisk + DTB） | 163 |
 | `scripts/build-ffrumble.sh` | 交叉编译 ffrumble（aw86927 FF_RUMBLE 宿主侧阳性对照工具） | 13 |
 | `scripts/build-initramfs.sh` | 可复现地构建 initramfs 资产（唯一真源 = initramfs/init） | 31 |
 | `scripts/build-kernel.sh` | rebuild kernel/DTB for TB322FC (elden), with ccache. | 128 |
