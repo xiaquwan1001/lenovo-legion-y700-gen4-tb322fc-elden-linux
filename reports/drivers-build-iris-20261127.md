@@ -82,3 +82,14 @@ PY
    判据 = `bash -n initramfs/init` + 在 QEMU 链上跑到 `[init] DBG mount start`（`scripts/qemu-full-chain-smoke.sh`，单轮 ~35 s，不用上机）。
 2. 用 vk195（单变量 DTB）做**一次** `fastboot boot`，串口侧用 `scripts/serial-console.sh tail -f` 盯着；若再落 shell，现场可直接读。
 3. iris 阳性后再谈「补 6 类真缺口」与「相机栈上游化」（后者是 §7 M 系列量级的工作）。
+
+## §6 收尾备注（WARN 归类，2026-11-27）
+
+`check-doctor` 现存 **FAIL=0 / WARN=4**，逐条归类：
+
+| WARN | 归类 |
+|---|---|
+| 源树不可核（67 行身份暂不可核） | **已登记豁免（C 类存量）**：`geekidos-linux/` 不在盘，逐行见 `versions/kernel-src-archive.tsv` |
+| 账本已登记的例外（`uts_dup*`） | **已登记豁免**：`versions/vk-ledger-known-issues.tsv` |
+| 内核身份表降级一致（C=2） | 同第一条（同一根的派生显示） |
+| `build/daily/vmlinux 取不到 of_node 偏移（pahole 无该成员？）` | **本轮修的副作用（预期）**：`CONFIG_DEBUG_INFO_NONE` 后 vmlinux 无 DWARF ⇒ pahole 读不到结构体偏移。判据 = 要这份偏移就临时编 debug 版，或改用 BTF（`DEBUG_INFO_BTF=y` 只留类型信息，体积远小于 DWARF）。**不是缺陷**，已在报告登记 |
