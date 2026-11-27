@@ -13,8 +13,7 @@
 | 桶 | 块数 | 内容 |
 |---|---|---|
 | ① 无驱动 | **4** | SPSS/SPU 安全核、SOCCOP remoteproc、PMIC `hv-haptics`、vendor `bl@11`/`bias@3e`（用途未知）——**四块均已裁决不投入**，见 §5 |
-| ② 有驱动未部署 | **5** | iris(VPU)、硬件 TRNG、CTCU、Coresight TPDM/TNOC、传感器中枢(SLPI/QRMI)（NFC 移出见 §3 C6；**QCE 移出见 §3 C7**） |
-| ⏳ 已开 CONFIG 待上机 | **4** | TRNG / CTCU / TPDM / TNOC 已于 2026-11-27 编进 vk194（`=m` + 模块已部署），**只差一次真机启动验收** |
+| ② 有驱动未部署 | **2** | iris(VPU，DT 上游默认 disabled)、传感器中枢(SLPI/QRMI)（NFC 见 §3 C6、QCE 见 §3 C7，均已移出） |
 | ③ 未模块化 | **1** | 相机 CC/PLL 家族 `=y` 与其余 `=m` 混编（`ATH12K=y` 经裁决保留，见 §3 C8） |
 | ④ 未上游化 | **8 类** | iris DTS、novatek 触屏、aw88461 功放、WCN7861(WiFi+BT)、GPS/`gmu@3d37000` 形态、传感器 fastrpc 1 行、tplg、相机 sm8750 camss |
 | ⑤ 已达成 | **17** | 见 §1 |
@@ -38,10 +37,10 @@
 | 10 | 相机 PMIC wl2868c | `10-002f`→`wl2868c` | 无 | 已进 linux-next | ⑤ |
 | 11 | 闪光灯 PM8550 flash LED | 主线节点 okay | 无 | — | ⑤ |
 | 12 | ~~NFC ST21NFCA~~ | **不成立：本机无 NFC 硬件**（G1-10 取证五条：vendor 无 `android.hardware.nfc.xml`、无 HAL 库/固件、`elden.dts` 的 `st21nfc` 是总线 disabled 的共用模板）。`CONFIG_NFC_ST21NFCA*` 未开、DT `i2c@a80000` 两边都 disabled 与此一致 | 无 | 驱动在树（mac80211 之外的上游件） | ❌ 取消（不是桶②） |
-| 13 | 硬件 TRNG（`10c3000.rng`） | `CONFIG_HW_RANDOM_QCOM=m` **已开**（vk194，模块已部署）；在机仍是 `smccc_trng` 兜底 | 无 | 无 | ⏳ 待上机（判据 `rng_current=qcom_trng`） |
+| 13 | 硬件 TRNG（`10c3000.rng`） | `CONFIG_HW_RANDOM_QCOM=m`；**上机验过**：`driver → qcom_rng`、`rng_available = smccc_trng qcom_hwrng`，切到 `qcom_hwrng` 后 `/dev/hwrng` 出真随机字节（默认仍由 `smccc_trng` 优先，两者都是硬件 TRNG） | 无 | 无 | ✅（vk194/vk195） |
 | 14 | ~~QCE 加密引擎（`1dfa000.crypto`）~~ | **上游 BROKEN**：`depends on (BROKEN && ARCH_QCOM) \|\| COMPILE_TEST`（`drivers/crypto/Kconfig:529`）⇒ 真机开不出来 | 无 | 无 | ⛔ 不是缺口（见 §3 C7） |
-| 15 | CTCU（`10001000.ctcu`） | `CONFIG_CORESIGHT_CTCU=m` **已开**（vk194） | 无 | 无 | ⏳ 待上机 |
-| 16 | Coresight TPDM/TPDA/TNOC（28 amba 设备） | `CONFIG_CORESIGHT_{TPDM,TNOC}=m` **已开**（vk194） | 无 | 无 | ⏳ 待上机（诊断能力） |
+| 15 | CTCU（`10001000.ctcu`） | `CONFIG_CORESIGHT_CTCU=m`；**上机验过绑定**，但该驱动**上游缺 `MODULE_DEVICE_TABLE(of)`** ⇒ 不自动加载，靠 `/etc/modules-load.d/elden-coresight.conf` 兜 | 无 | 两行宏待投（§7 报告、`patches/upstream/coresight-moduletable-20261127/`） | ✅（带本地规避） |
+| 16 | Coresight TPDM/TPDA/TNOC（41 amba 设备） | `CONFIG_CORESIGHT_{TPDM,TPDA,TNOC}=m`；**vk195 上机 amba 未绑定 28 → 0**（TPDM 22 + TPDA 5 + TNOC 1 + CTCU 1）。TPDA 是**独立驱动**（首轮漏配）；TNOC 还须 DT `arm,primecell-periphid`（否则 `AMBA_ID=0` 永不匹配）；TPDA 同样缺 `MODULE_DEVICE_TABLE(amba)` | 无 | TNOC 的 DT 行与两行宏同批待投 | ✅（带本地规避） |
 | 17 | Modem（`remoteproc@4080000`） | DT disabled，本机 `baseband=apq`，无 modem 固件 | 无 | — | 不足（不投入） |
 | 18 | SPSS/SPU 安全核 | 主线无任何 spss 驱动 | — | — | **①**（不投入） |
 | 19 | SOCCOP remoteproc | `q6v5_pas` 无 sm8750 compatible | — | — | **①**（无消费方） |
@@ -60,7 +59,8 @@
 
 ## 2. 可执行下一步（按成本升序）
 
-- **开 CONFIG（第一批 ✅ 已编进 vk194，2026-11-27）**：`CONFIG_HW_RANDOM_QCOM=m` + `CONFIG_CORESIGHT_{CTCU,TPDM,TNOC}=m`（片段 `patches/config-capbatch-20261127.fragment`，报告 `reports/capbatch-vk194-20261127.md`）。**剩余动作 = 一次真机启动验收**（判据见报告 §4；`scripts/capability-audit.sh config` 现应只剩 **0 条** `MISSING`）。
+- **开 CONFIG（第一批 ✅ 已编进 vk194/vk195 并上机验收，2026-11-27）**：`CONFIG_HW_RANDOM_QCOM=m` + `CONFIG_CORESIGHT_{CTCU,TPDM,TPDA,TNOC}=m`；`scripts/capability-audit.sh config` 现 **0 条 MISSING**，amba 未绑定 **0**（报告 `reports/capbatch-vk194-20261127.md` §6/§7）。
+- **上游化（新增，两行宏 + 一行 DT）**：`coresight-tpda` / `coresight-ctcu` 补 `MODULE_DEVICE_TABLE`；`sm8750.dtsi`（与 kaanapali 同族）的 `tn@` 补 `arm,primecell-periphid`。草稿已在 `patches/upstream/coresight-moduletable-20261127/`。
   ⚠ 先 `make olddefconfig` 再读符号：在机 `build/daily/.config` 是 **11-16** 生成的，而 `st21nfca` 文件 **11-25** 才进树 ⇒ 现在跑 `grep ST21NFCA .config` 是 `(absent)`，属于「config 早于树内容」而不是「树里没驱动」（`scripts/capability-audit.sh` 已把这两种成因分开提示）。
 - ~~NFC~~：**不投入** —— 本机无 NFC 硬件（G1-10 已取消）。别再因为「DT 里有 `nfc@8` 节点」去开 CONFIG（那是多 SKU 共用模板，且 `&i2c0` 使能曾致硬关机 `PITFALLS #108`）。
 - **iris**：把工作树里 `&iris{okay}` 的板级覆盖提交进 DTS 系列，并换用上游 `vpu35_p4.mbn`（同文件名）后做一次上机验 TZ 签名（Q36 三件套的 ③）。

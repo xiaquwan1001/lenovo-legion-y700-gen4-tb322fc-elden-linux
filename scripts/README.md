@@ -65,7 +65,7 @@
 | `scripts/android-slim-v3-build.sh` | RETIRED 2026-11-27：v3 super 已写入并 EDL 读回校验通过（一次性构建器），配方与判据在 reports/android-slim-v3-20261119.md；替代/复核：该报告 §7/§8；可复核：reports/disk-audit-20261126.md | 20 |
 | `scripts/assert-kernel-sane.sh` | 打包前的「内核身份 / 存活」硬门（pack-time gate）。 | 35 |
 | `scripts/cam-load-verify.sh` | 在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。 | 11 |
-| `scripts/capability-audit.sh` | 设备能力集合的**只读**现查（DEVICE/CAPABILITIES.md 的复现入口） | 7 |
+| `scripts/capability-audit.sh` | 设备能力集合的**只读**现查（DEVICE/CAPABILITIES.md 的复现入口） | 8 |
 | `scripts/check-abi-config.sh` | 内核 .config 的 ABI 敏感项门禁（build/pack-time gate）。 | 38 |
 | `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 65 |
 | `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 351 |
@@ -140,7 +140,7 @@
 | `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 67 |
 | `scripts/deploy-camera-modules.sh` | 收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验** | 28 |
 | `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 145 |
-| `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 46 |
+| `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 48 |
 | `scripts/deploy-sensord-routec-debian.sh` | 在 **Debian/glibc 根**上安装路线 C 的 Waydroid sensor HAL | 15 |
 | `scripts/deploy-sensors-hal.sh` | 部署 elden UDP 传感器 HAL 到 Waydroid 容器（C4） | 14 |
 | `scripts/deploy-ssc-sensors.sh` | 在 Y700 (TB322FC, Debian trixie) 上部署 SSC 传感器用户态栈 | 8 |
@@ -208,7 +208,7 @@
 | `scripts/slot-attr.py` | read/patch the A/B slot metadata stored in the GPT | 301 |
 | `scripts/slotboot-run.sh` | RETIRED 2026-11-27：P2 槽位正常启动路径单次上机（2026-11-01），产物在 reports/artifacts/uefi-slotboot-20261101；可复核：reports/lanes-consolidated-20261101.md | 22 |
 | `scripts/start-desktop.sh` | Phosh (Wayland) desktop on the TB322FC panel. | 74 |
-| `scripts/to-fastboot.sh` | reliable Linux → fastboot（软路径，唯一实现见 scripts/lib-soft-bootloader.sh） | 112 |
+| `scripts/to-fastboot.sh` | reliable Linux → fastboot（软路径，唯一实现见 scripts/lib-soft-bootloader.sh） | 114 |
 | `scripts/uefi-a-slot-prepare.sh` | 让 **a 槽**能跑自研件（G1-29 flashed 形态的前置；幂等） | 40 |
 | `scripts/uefi-flashed-trial.sh` | flashed 形态（写 boot_a）一发的**免屏计时判据**取证（G1-29 线） | 42 |
 | `scripts/uefi-usb-gap.py` | 用 USB 出现/消失时刻给「fastboot boot 之后到底发生了什么」计时。 | 7 |
@@ -242,7 +242,7 @@
 | `scripts/android-slim-v2-plan.sh` | ★ SUPERSEDED-BY（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 20 |
 | `scripts/android-super-scan.py` | forensic scan of a super partition that was shipped as | 13 |
 | `scripts/android-super.py` | read/inspect Android dynamic-partition ("super") images. | 66 |
-| `scripts/apply-kernel-fragment.sh` | 把配置片段合并进内核树 .config，并导出新快照 | 34 |
+| `scripts/apply-kernel-fragment.sh` | 把配置片段合并进内核树 .config，并导出新快照 | 35 |
 | `scripts/asset-install-linux.sh` | 把 assets/android-20261119/ 里的原厂安卓资产装到 Linux 桌面 | 20 |
 | `scripts/b3b-session-retry.sh` | RETIRED 2026-11-27：B3-b 用户态重启会话对照，单次实验，判据与结果在 reports/q28-b1-firstsample-20261015.md；可复核：reports/script-cleanup-audit-20261112.md | 9 |
 | `scripts/bench-install.sh` | 设备侧：安装可选基准工具（需要网络） | 11 |
@@ -250,10 +250,10 @@
 | `scripts/bootimg-replace-kernel.py` | 只替换 Android boot image 的内核段，其余逐字节保留。 | 16 |
 | `scripts/build-athm-probe.sh` | Q26 Step A probe: CONFIG_ATH12K=m single-shot build. | 5 |
 | `scripts/build-boot-slim.sh` | G1-30（= G1-29 路线 C）：最小 initramfs 版 boot.img | 13 |
-| `scripts/build-boot.sh` | 打包 fastboot 可启动 boot.img（kernel + Alpine rootfs ramdisk + DTB） | 161 |
+| `scripts/build-boot.sh` | 打包 fastboot 可启动 boot.img（kernel + Alpine rootfs ramdisk + DTB） | 162 |
 | `scripts/build-ffrumble.sh` | 交叉编译 ffrumble（aw86927 FF_RUMBLE 宿主侧阳性对照工具） | 13 |
 | `scripts/build-initramfs.sh` | 可复现地构建 initramfs 资产（唯一真源 = initramfs/init） | 31 |
-| `scripts/build-kernel.sh` | rebuild kernel/DTB for TB322FC (elden), with ccache. | 127 |
+| `scripts/build-kernel.sh` | rebuild kernel/DTB for TB322FC (elden), with ccache. | 128 |
 | `scripts/build-locked-chain.sh` | 为 **BL locked** 单元生成 b 槽 mainline 自洽链（AOSP testkey） | 26 |
 | `scripts/build-manifest.sh` | record everything needed to identify/rebuild a boot image. | 31 |
 | `scripts/build-modular-overlay.sh` | layer the modularized payload driver bundle | 14 |
@@ -344,7 +344,7 @@
 | `scripts/q28-por-rounds.sh` | 取 N 发**真实 POR 冷起**的 Q28 同口径样本（每发 = 用户一次断电开机）。 | 34 |
 | `scripts/q28-watchdog.sh` | 主机侧管理：把 Q28 运营兜底看门狗装到设备/开关/查状态。 | 68 |
 | `scripts/q32-boot-evidence.sh` | Q32（暖起 vs 冷起）**只读取证**：把「本次启动的复位深度」与 | 12 |
-| `scripts/qemu-full-chain-smoke.sh` | QEMU 复刻「AAVMF → GRUB → EFI-stub → vk188 内核 → 串口 dmesg」全链 | 13 |
+| `scripts/qemu-full-chain-smoke.sh` | QEMU 复刻「AAVMF → GRUB → EFI-stub → vk188 内核 → 串口 dmesg」全链 | 14 |
 | `scripts/skewcal-frame-stats.sh` | RETIRED 2026-11-27：M4 SKEW_CAL A/B 帧统计一次性测量件，结论已落 reports/ 相机系列报告；可复核：reports/audit-20261119/A3-scripts-audit.tsv | 7 |
 | `scripts/skewcal-measure.sh` | RETIRED 2026-11-27：M4 SKEW_CAL A/B 出流测量执行器（同上一轮一次性测量），结论已落 reports/；可复核：reports/audit-20261119/A3-scripts-audit.tsv | 6 |
 | `scripts/static-scan.py` | check-doctor §6 的静态卫生扫描（bashism / 死脚本）。 | 46 |
