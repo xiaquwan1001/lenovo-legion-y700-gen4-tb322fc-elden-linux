@@ -22,7 +22,7 @@
 name	init	class	desc	exec	args	env	log	respawn	need	after	before	wantedby	enabled
 backlight-floor	ours	longrun	Clamp AW99706 backlight above a floor so a GOOD panel never looks black	/usr/local/sbin/elden-backlight-floor.sh	--loop 20	BACKLIGHT_FLOOR=1024	/var/log/backlight-floor.log	10	fs-local	fs-local		multi-user.target	1
 bt-alias	ours	oneshot	Set the Bluetooth adapter alias/power once btqca firmware has loaded	/usr/local/sbin/elden-bt-alias.sh		BT_ALIAS=elden	/var/log/bt-alias.log	0	bluetooth-stack	bluetooth-stack		multi-user.target	1
-cam-mode-off	ours	oneshot	Force the daily CAM-OFF state at boot: unload the camera stack so blank/suspend stays safe (cam-in-place + blank = Q24 power-off combo)	/usr/local/sbin/cam-mode.sh	off		/var/log/cam-mode-off.log	0	fs-local			multi-user.target	1
+cam-mode-off	ours	oneshot	手动策略件（Q24 结项后不再默认启用）：把相机栈卸载以回到「熄屏绝对安全」的旧策略；默认相机常驻见 camera-modules	/usr/local/sbin/cam-mode.sh	off		/var/log/cam-mode-off.log	0	fs-local			multi-user.target	0
 charge-watch	ours	longrun	Keep charging policy at runtime (charge-ctl loop)	/usr/local/sbin/charge-watch.sh			/var/log/charge-watch.log	10	dev-manager	dev-manager		multi-user.target	1
 elden-bootlog	ours	oneshot	Per-boot evidence snapshot keyed by boot_id	/usr/local/sbin/elden-bootlog.sh			-	0	fs-local	fs-local		multi-user.target	1
 elden-hapticd	ours	longrun	Waydroid vibrator bridge (aw86927 FF_RUMBLE)	/usr/local/bin/elden-hapticd	--dir /run/elden-haptic/leds/vibrator --verbose ${HAPTIC_ARGS}	HAPTIC_ARGS=--amp-a 0xffff --amp-b 0xffff	/var/log/elden-hapticd.log	5	fs-local	fs-local	container-backend	multi-user.target	1
@@ -43,3 +43,4 @@ ath12k-retry	ours	oneshot	Re-bind ath12k PCI devices that failed first probe	/us
 hexagonrpcd-adsp-sensorspd	package	longrun	ADSP sensorspd service (QRTR svc 400) — package-provided	/usr/bin/hexagonrpcd-adsp-sensorspd			-	5				multi-user.target	1
 waydroid-container	package	longrun	Waydroid container manager — package-provided	/usr/bin/waydroid	container start		-	5	container-host	container-host		multi-user.target	1
 lisgd-edge-swipe	ours	longrun	Left-edge swipe-back gesture daemon (lisgd -> uinput-back KEY_BACK; needs wm.keybindings close to include XF86Back)	/usr/local/bin/lisgd-edge-swipe		ELDEN_SWIPE_THRESHOLD=60;ELDEN_SWIPE_TIMEOUT_MS=800	/var/log/lisgd-edge-swipe.log	5	session-bus	greetd		graphical.target	0
+camera-modules	ours	oneshot	把相机栈在开机时加载（Q24/G1-22 结项：7.3 上游 rpmhpd.active_only 已保证「相机常驻 + 熄屏」安全；判据见 reports/q24-cam-on-retire-20261127.md）	/usr/local/sbin/camera-modules-load.sh			/var/log/camera-modules.log	0	fs-local			multi-user.target	1

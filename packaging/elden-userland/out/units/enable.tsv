@@ -2,7 +2,6 @@
 # name<TAB>openrc-runlevel<TAB>systemd-target
 backlight-floor	default	multi-user.target
 bt-alias	default	multi-user.target
-cam-mode-off	default	multi-user.target
 charge-watch	default	multi-user.target
 elden-bootlog	default	multi-user.target
 elden-hapticd	default	multi-user.target
@@ -21,3 +20,4 @@ wifi-scan-refresh	default	multi-user.target
 ath12k-retry	default	multi-user.target
 hexagonrpcd-adsp-sensorspd	default	multi-user.target
 waydroid-container	default	multi-user.target
+camera-modules	default	multi-user.target

@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：728
+- 报告总数：729
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -13,7 +13,7 @@
 | `uefi` | 86 | `uefi-bslot-plan-20261121.md` |
 | `q28` | 33 | `q28-ab-rig-20261116.md` |
 | `mail` | 30 | `mail-inbox-20261121.md` |
-| `q24` | 24 | `q24-n5b-20261023.md` |
+| `q24` | 25 | `q24-cam-on-retire-20261127.md` |
 | `upstream` | 22 | `upstream-status-20261125.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
@@ -368,8 +368,9 @@
 - `mail-triage-20261017.md` — 邮箱通道验证 + 新邮件分诊（2026-10-17）
 - `mail-lists-subscription-20261013.md` — 值得订阅/追踪的邮件列表与信息源 — elden 项目（2026-10-13）
 
-## `q24`（24）
+## `q24`（25）
 
+- `q24-cam-on-retire-20261127.md` — Q24「相机常驻 + 熄屏」实测 → `cam-mode-off` 退役、改默认相机常驻（2026-11-27）
 - `q24-n5b-20261023.md` — Q24 / N5b 扩样（vk64 台架）— 2026-10-23
 - `q24-retention-arm-invalid-20261023.md` — Q24 · vk149（retention 臂）实测：**未取得有效 Q24 样本**（2026-10-23）
 - `q24-retention-rootcause-20261023.md` — Q24 根因指名：7.2 血统缺上游 `skip retention by default`（2026-10-23）

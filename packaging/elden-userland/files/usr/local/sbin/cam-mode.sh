@@ -1,8 +1,13 @@
 #!/bin/sh
 # cam-mode.sh — elden 上「相机 ⇄ 熄屏」互斥的操作口径（在设备上当 root 跑）
 #
-# 为什么需要它（2026-10-09 深夜，用户实机确认）：**相机模块在位时熄屏掉电是常态**，
-# 不是低概率间歇（Q24/H2 亦未根治）。所以两者必须显式二选一，不能靠"应该不会碰到"。
+# ★ 2026-11-27 起默认策略改了（Q24/G1-22 结项）：**相机常驻**（开机由 camera-modules.service 加载），
+#   熄屏/挂起安全性由 7.3 上游 rpmhpd `active_only`（sleep vote 置 0 = skip retention）保证；
+#   实测证据 = reports/q24-cam-on-retire-20261127.md（相机栈在位 + DPMS off 连续 10 min，boot_id 未变、video=17 稳定）。
+#   本脚本保留为**手动策略件**：`off` 仍是「要把相机栈彻底卸掉（例如长时间待机/取证）」时的开关，不再在开机默认执行。
+#
+# 历史（2026-10-09 深夜，用户实机确认）：相机模块在位时熄屏掉电曾是常态（Q24/H2 未根治），
+#   当时只能两者显式二选一；该前提已随上游修复消失。
 #
 # 用法：
 #   sh cam-mode.sh status              # 只读：当前处于哪一态 + 风险提示
@@ -65,9 +70,9 @@ status(){
 	echo "camera modules = $(cam_n)   media = $(ls /dev/media* 2>/dev/null | wc -l)   video = $(ls /dev/video* 2>/dev/null | wc -l)"
 	echo "dpms = $(DPMS)   idle-delay = $(GS get org.gnome.desktop.session idle-delay)"
 	if [ "$(cam_n)" -gt 0 ]; then
-		echo "==> 状态 = CAM-ON：**不要熄屏**（相机在位时熄屏掉电是常态）"
+		echo "==> 状态 = CAM-ON：相机常驻（2026-11-27 起默认态；熄屏安全，Q24 结项判据见 reports/q24-cam-on-retire-20261127.md）"
 	else
-		echo "==> 状态 = CAM-OFF：熄屏安全（相机栈不在位）"
+		echo "==> 状态 = CAM-OFF：相机栈已卸载（手动策略态；默认不再在开机执行）"
 	fi
 }
 blank_disable(){
