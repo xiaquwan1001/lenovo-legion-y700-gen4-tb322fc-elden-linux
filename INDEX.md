@@ -6,7 +6,14 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（19:4x CST 晚轮：vk196 持久化 + `reboot2` 退役 + 两上游系列已投））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（22:2x CST 深夜轮：Q36 硬件解码打通（backport 1222157）+ T26 收口））
+
+> **★★ 2026-11-27 深夜轮（Q36 硬件解码打通 + T26 收口；上机，零写盘）**：
+> ① **Q36 已解** —— backport 上游 patchwork **1222157**（Neil Armstrong，11 贴，未合入）到日常树（`patch -p1 --fuzz=3`；我方树老 6 周，`git apply` 从 03 起失败；唯一缺符号 `iris_vb2_signal_eos()` 本地补 4 行），
+> **只重编 `qcom-iris.ko`、不换内核不改 DT** ⇒ H.264 `frame=90` / HEVC `frame=90`、无 `decode error`、**framemd5 与软解逐帧 90/90 零不一致**。
+> **根因表述更正**：`:393` 少判 `PSC_LAST` **不是修复点**（backport 后该行未变），真修复 = 系列 09/10 的 `early_capture`/`drc_unsignalled` 分支（零尺寸 `PSC_LAST` 走重入队，不置 ERROR）。
+> ② **T26 收口，真因是我方自己** —— `/etc/modprobe.d/elden-blacklist-iris.conf`（`blacklist qcom-iris` 实验保险丝）⇒ alias/udev/kmod 全正常但被静默跳过；改名 `.disabled` 后 `udevadm trigger` 即加载，**冷启实测自动加载 + `/dev/video17` 权限变 `crw-rw----+`（uaccess ACL，普通用户可直用）**；未用 `modules-load.d`。
+> 产物 = `out/iris-backport-1222157/`（ko sha `9b815bc359012c1b…`）+ 组合补丁 `patches/backport-iris-drc-1222157/`；全账 `reports/iris-backport-1222157-20261127.md`。残留：Moonlight 判据未验（需 Sunshine + 真串流）、给 Neil 的 `Tested-by:` 未发、上游合入后应撤 backport。
 
 > **★ 2026-11-27 晚轮（vk196 持久化部署 + `reboot2` 退役 + Coresight 两处上游缺陷已投）**：
 > ① `boot_b` **首次写盘** = vk196（payload 与已验收 vk195 **逐字节同**：`Image.gz 9728a751…`/DTB `ce27003e…`/img `d702a93f…`；

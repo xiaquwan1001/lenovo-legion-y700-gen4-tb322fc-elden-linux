@@ -1,0 +1,2615 @@
+From patchwork Wed Nov 25 13:09:28 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022070
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.49
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612179;
+	b=1+wy9lHh6sEt3OIAyBokSvLbKmmGaAuPf83eBiEJ3FPiaCprJSIspSbE0Bt2CXcwC+Hy
+	 GoG81QlqexJqmXGfCdR6lJTmRXKaMuhvIE9EQmRlshuJA64ZP+0lCqt1/5uPKmTTBQfv0
+	 bYT+PC8W3ytodz6d39IOmCHYsRT55V9/JdhtC0+b+nm2pKEVTfxmSLRvelhMQAedM1yLh
+	 5Ak320bnst7sUNRoeov+VnKglVYwztxcsRoPZgO4+XBmlw9CFqfj1hQSoVrKVvsF1hN38
+	 T/tt6HiLaiLTBvJw2Y9DbU5u5oZ6eS+Y7bgRpPCXfEPQH3b/62jNaz9SRzg61aphmeg==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612179;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=gm2/ObuxDVgUAne35bqkJz27tcih45Pf//RuGwaqhd0=;
+	b=JiCuvrPDtIcHURNIXmh8pg4onVQ1BBcWa4TX5T1LAtdNIy+ydQLcaw6q7V065cy6vw+p
+	 WmkFcqn3sFYiXpCTo+ltHR4LRRDBRVpKEsJ6qpqiFhX8nEuD+IY1GpSt5BXN3kwdkAzG8
+	 Ovg+Av4c0z1U9m9vFxVbn0T5LaZVywSnIMd9QuTNWLJ2U5oR6J4E9Ju6nD6cBC5lZVREr
+	 JJvKx7ewL4daUYKSOJtMSFo17lrX0dyJJx6iBX7q+c0fJhQg1K9CLT4P/Issf1uX+YyTN
+	 DhdMCvlT0X/Kj5wRmdorNaqBJdXyE3wrrbLjRtCGePUbEt55kFHTezgVo00LUvQGRZw==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=lG6It37v;
+	arc=none smtp.remote-ip=209.85.221.49
+Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com
+ [209.85.221.49])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C564606A329
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:39 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3C564606A329
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=lG6It37v
+Received: by mail-wr1-f49.google.com with SMTP id
+ ffacd0b85a97d-4acb44dcd7bso5028990f8f.0
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:39 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612177; x=1796216977;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=gm2/ObuxDVgUAne35bqkJz27tcih45Pf//RuGwaqhd0=;
+        b=lG6It37vJI1yamReOdJgOu4DK+G/otcskTVwxP4z2pIcqBlDCabM5BnM30nJmEsu1i
+         icfnRjApC/nuwIhQP/PQiJEFGNG4NXjQi8qT4sf8e0k0gIRioJ2GgvbGIsg2ZjI5ef27
+         7V2InBkbuOSqyWYlm9Q9x3BIp2/BHpJivZqr5z43RbQX5qUi0DKNLH+b4HN8VJiWxFCa
+         1P7y5u08FIEpYYIkpSk6QDJs1K+u2ZnI8XJYzF1HcTeRRT/MvwP+AdVjh/6oh6G++unW
+         qDMfPr1wjyiO7rqqDzUfNGQ4YMibBX2rPInuHQl/M7JEypT21/dxVmdtLquKzlHSnKyb
+         rbxw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612177; x=1796216977;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=gm2/ObuxDVgUAne35bqkJz27tcih45Pf//RuGwaqhd0=;
+        b=FNlMtOFHq+oMs7cGU9Q5cylCdXuDI9tVAIkKMrlIVZlnIA06b5/R9hPLj4Ur90tp8i
+         HkBrDA8vFmqVGx74pUcP+VLNS48nsDUMlHnf63z28kvyi1buoifoRogdT0a34Q/5PoZs
+         m2JMZUj5OWGeYHdSW9gaTyn6zYJ4h//57lc7LxcAZ4z1YAxi3faJK8nQU1F6GqGoKOfQ
+         pnEV74Q/HBdPgowaFDowfOvrmjqxSdgqlTSaSjAal6GxyXHJu1PxNHyC/uanOs7W+MSw
+         ZosX4oraHOk2327/OzxRymXqU9OPgx01p6fLfABV23orexSqrMySj7wicO/KKEQ6hSO7
+         uhPw==
+X-Gm-Message-State: APuU4Z+KgMqvsTEtV/z5sCjsCsHJCgLVZIXk8wUkC28iCxPCkJnJM04K
+	Bz6rfdfp0j2XIIJLCsuneuCr1w+2/O137TFczsQ194e2PBzneBDlCHEmBOmotl5+xyU=
+X-Gm-Gg: AZFdTZfrjGx/jviN1asTUEa8GsumW508ErwHYTqxNJwW2aHbQcfXvpS9J0KmqUkt5Y2
+	QmdE85qtDqg8/JhvpgqeN6V4TNW+H67UQH9fwySHE1RUGxYuOEBM6zGo+65F56rNxvbZuxHai0q
+	6MRnF8lTuxYl0GyhDhBU385ccPUY/Fzgvh4XXsf95n40UTy+IpQsDxBi4cEVWGo7eZX9GZAWHVe
+	Swovq2qn5KqsM3RCJbUfnV8BAmhgQuI2IsCUjXHbZVKRUaSYGfeJrjwLeua5hIjYkXck8gFTxT4
+	LJGlAsrYxT9rZePDTjNsy4fMmZiFobVrlTAFF3qgrXgQzugIDBzxYwPHmGyj0XtMcxr+2lXk51k
+	8s2rU6zyyLElpqG6xAey1YujWMqa+MN94NGbCHmyjfxqp9RF+c/lFHkW7beBlG4nFi18shJctMx
+	gGlQj0HQlMTOR+n+/PeIuJhcAILioBC7iRmAsSoIrMEF3tOc3uwT0Z3wLF4wR4pDXrbWV1svhp4
+	tdEVCbS0MuNjg8adW1E3Er+BCrxat3GAe7o8eelRYI3WEPRTR+2xPcx0VEpzIGpqc1RC+HK/+ou
+	0b41ov0RajMUFXnOD4Ejofabpu7AWIAKu8f3j81haIHWKqKQM6PX3a6B7tAlywb9+r+AHtM=
+X-Received: by 2002:a5d:5f51:0:b0:48e:f10:ceb8 with SMTP id
+ ffacd0b85a97d-4abb2168e0emr36120520f8f.11.1795612177309;
+        Wed, 25 Nov 2026 05:09:37 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:37 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:28 +0100
+Subject: [PATCH 01/11] media: iris: vdec: accept V4L2_DEC_CMD_START on a
+ running decoder
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-1-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1399;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=u9wQoclOz0uA+9WaQA0dbU1U3jch7fedoVMeG3ZnpKY=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4LQk+Q+UXmBx4UgVks0ZzBgcSVpIQ+k3gbiAfy
+ xeSJArmJAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeCwAKCRB33NvayMhJ0Q+AEA
+ DCYIOVh40OZ30H4xA20IfLQLl2JsnIHa8iLhGa53IkzMZW2GZs8FY/GWfG2wlFSridLk6xlfIbzl+g
+ iCfrgefirxxj1DCxbcNj6UbUwtbR+0VGQ0JxEukC6JkqMSxce3qeeGzCX19zGakp7asQFeRNRvqNFp
+ OEBErh1Qe7pjMLWDf+UWYlzrpSEXOt9FHa9ddPI9++0tBiGR398VI78IcFI6nrMkHENiN0CyvE2Abr
+ p017BwkbmqP841VUUCF3kzzpwqHuDCYabkr1IvoluitWxFZWFcZ4Do3gbuD4/XXSG9QtKOaA7riWoa
+ E1F6RptUxHicK6o4NynaJ4B+5FKxHgTTBqvvEfj/3n5dob4fPs21MDmlaFSxn7cMAUWJ8ALpyJWtVP
+ JbGULrl+GOwi5/nBiJDYLo8CnXy+sUNlzjh5JJQvXKzb3nMvshrLSFaI+xweGE0FNNugW1KOaWocnj
+ OW2FYckeJolHmF7ZpzHxaPzIz/NF3wrikcyAm7AS+0iMrfFl6hV2uQIW+JILS9q7i5ZZxmOkvBkziq
+ ic8+HmVuqE98NoL5+9TSawkWm4I+MCgFPi/CcrG4fzr0DzwaaTNfgUWSSkIYu3n1cdLNc2/luTlKH7
+ c0MzE+e6wDHxpg8T8PGeibcuIaNHLVu00rGmD1hJ4ZA751+KrjN14OkyXf9A==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+V4L2_DEC_CMD_START on a running decoder is not an error: the specification
+only makes it fail with -EBUSY while a drain is in progress, and
+v4l2_m2m_decoder_cmd() returns 0 for it.
+
+iris_allow_cmd() only accepts START while a source change or a drain is
+pending. v4l2-compliance completes a source change with
+STREAMOFF/STREAMON(CAPTURE), which restarts the decoder, then sends START
+and fails on the -EBUSY.
+
+Return 0 for START when no source change or drain is pending.
+
+Fixes: d09100763bed ("media: iris: add support for drain sequence")
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ drivers/media/platform/qcom/iris/iris_vidc.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_vidc.c b/drivers/media/platform/qcom/iris/iris_vidc.c
+index 931221564a33..7b5a607f94ba 100644
+--- a/drivers/media/platform/qcom/iris/iris_vidc.c
++++ b/drivers/media/platform/qcom/iris/iris_vidc.c
+@@ -601,6 +601,11 @@ static int iris_dec_cmd(struct file *filp, void *fh,
+ 	if (inst->state == IRIS_INST_DEINIT)
+ 		goto unlock;
+ 
++	/* No source change or drain to resume */
++	if (dec->cmd == V4L2_DEC_CMD_START && inst->state != IRIS_INST_ERROR &&
++	    !(inst->sub_state & (IRIS_INST_SUB_DRC | IRIS_INST_SUB_DRAIN)))
++		goto unlock;
++
+ 	if (!iris_allow_cmd(inst, dec->cmd)) {
+ 		ret = -EBUSY;
+ 		goto unlock;
+
+From patchwork Wed Nov 25 13:09:29 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022071
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.51
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612180;
+	b=clryBGFL5Bf0pMOf57IYd8nDekkKxwScFoT2ZchOoILvCFnCZEYa/3f9pseFJbMBGYpi
+	 x07BDA0bz51at9IGy7r1NlojeXFdNZq19aQT7rAOs2we6JG4SXefGTV3EwhyMvV0eS+bC
+	 hX5mnFpF+q2e0K1yM+nmS4T5VgIg/sEErj3nzIYtLB7XWGWuicCKpktazI3z1i22s80ku
+	 nguvzCIP5fLCv8VcP+eDk+d56WyKjBMFrCiOO3QHvtzaHGjfPwumB89yVSPXs0eXs6DbJ
+	 qzar0lRIIGQDAV3QLgAq4OqsC2+X06B3aq1kkBCM391byF1yAvUYV8dowYeutsnh3ew==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612180;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=7j+iyCxJKN1obNbNOrxIJ9oVQ476N5sWokxiMnxruLE=;
+	b=ruBE17yowsxHNwLjKOeiyinzD7+ZquGtCVXW9wuCTSLWJhBSGEZZoNgbL+qguix5XSEf
+	 dFm6MNtbsDtYxcV3gpG4RxNvEJ9YkENDexNTlneq/+Ts/XNUriIJw2Fid2uFVSmo3kWR0
+	 gso9TdOVl29zA0EHhQTmx31clMOYRMcTImYOuifAOtWqxdn/uiyBTIYxkKWYp8EwmVncK
+	 nGjLeJdBH0IawyOOen9SHOI3MqPNGAbSY9R4EBScpaizfcP1zCG1S3Au/lcd94ymUqsPP
+	 ItVCJKOkaJskySswzJt6B+A9aUyuZ9xq9L9ffYwdxh6l/m0LNOThZR0mTSoDiWpTS1A==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=EhTKowDz;
+	arc=none smtp.remote-ip=209.85.221.51
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com
+ [209.85.221.51])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6276606A333
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:39 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B6276606A333
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=EhTKowDz
+Received: by mail-wr1-f51.google.com with SMTP id
+ ffacd0b85a97d-491f34b4e0fso2634696f8f.2
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:39 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612178; x=1796216978;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=7j+iyCxJKN1obNbNOrxIJ9oVQ476N5sWokxiMnxruLE=;
+        b=EhTKowDzx6/OG0YjNneQAMFEi+zARg4WGBIsT73NISRMszHlnLPf5l5cx5TzD2ezUb
+         s2W2+f3j/Wn6uPBJrWaqKaPjDV2uyYKqWZT7uoujvPXSp9cGUPa8Vbl8epCEMRQyouX9
+         4klf8CEjRg6EvSi//IMzYTQAxGSYuRMerSwMW6oUMPT5mvS5l9/2gmuHPuGJvW2tD/Ec
+         vC2ol8AqF/R9Vv58JmUyHY8OzHzGe5n8uDc6Zyon8hFgs5/+woUzGbpkZKzsS6+oVaTM
+         IyzW94/Ia4Y4YeqAxxorrNZDMfjd7SCgqCugaX8tBOnyJ4p4DoPB6dqXNIDPLEnobJdQ
+         1fzw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612178; x=1796216978;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=7j+iyCxJKN1obNbNOrxIJ9oVQ476N5sWokxiMnxruLE=;
+        b=V2tTvCvdllQ4P3UckYfsFUGoRlgpqP3GVFc4p6RSJ4OXMaHlS0kSwFHoC+KGsG/77+
+         w/dxvKOaI0A2N4APGZxEm2iQaGptw0G8+Ib8tDCQ1/UV75WueUNkWXTGCDAdFaTAqUEf
+         pFW7PwzgRzl1sZy1avtRHiYfFAxFybwfdLo/jjkY2bdRA4T/9mZC8XOs7A6PpxDEunWF
+         VA+8tfbXooE9PlLSoNnvqes1iuO3GxSYjHPsYUiYAPNkxsRmQLaleL9gcuP7phBtjWt8
+         C4JQt5gFrtf5GPm3i3vba3SmqID2GEIgkxXBzDs7BWIy+49AV5fIuz+pivDTahaBi5zK
+         wJyg==
+X-Gm-Message-State: APuU4Z+PqRL8jkWrc/ts7bH8mcXOz5Apqad+Q2wE7KcJIEzy11Fcnsq0
+	tkjYzYNz9xj4g2SzzFfcGneOu1JfWoKN9cye1f4zX7vkW/8moBdF6kFav9QGn0wh2/o=
+X-Gm-Gg: AZFdTZe93FrP5Nutd1mN2EO9oCjhQ9RMtoNpUBTPTDuuENe4nVoX5vw0MisUdbk9C79
+	qmZmCKv3OWli+F0r/5sFHt/2cX5NYd0hCN7YlYLRKfJ8Ly1K9Ul+KCpjD+5mTTmmqT25wwGI+ts
+	P6bcU8a/mopKtqDzMouzA91Fab8ciOy+ZWaNCn1hmBuWAsgjiMGm3RnCUtzNei5UDKnj6baKwzq
+	DApNc4vIN6+36xc5azZSu2rMJbuXC4L/OEDVDzfM4fJ2JzZ672rQFEyAhVHona7ZqnT9v2+TwOQ
+	5DQ+nibvB5JH1FPfHpm/iRF/2t8M6Wy9qcDwJAJIqUG208aWcCfQXSbWXeaxzlgCOou1OojRbgX
+	mA1SLlpnQH+68/FbbWxodKWaAfZdHi7ebZL/Tv1jPzqrGJXX/UXMp8WX5+WQhs5kmsxWQWA+fhY
+	I2Vbrx/ZMrDG03m4fpsPTELSzqxbCP7s7hP307M4R6cjHXn7d0ThYZeH3rTT53I0m3vJFUlX3yb
+	dcIT0Hfv8j2PpmIi94DaHcf7S83iLJIU5K8KcebaQPYyxyEXfu8UsdoOEyyWgoaeUx9VDnFcMZx
+	y4PfMHfLrzDs3gjMzkFpNrJeth9mCjVLfKou5y7Uw2P9B4Kth2cY+YhipK09Unfxbpv6Cl8=
+X-Received: by 2002:a05:6000:4808:b0:4a9:760f:1843 with SMTP id
+ ffacd0b85a97d-4abb0d51e12mr34353972f8f.27.1795612178043;
+        Wed, 25 Nov 2026 05:09:38 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.37
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:37 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:29 +0100
+Subject: [PATCH 02/11] media: iris: restart the buffer sequence numbers at
+ each STREAMON
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-2-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1383;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=xfhCJPfj+HQzhgU+bAL70IYvzzbzMmf2vG9VFnrCgEI=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4LYofO1WutbbJhxzJ+OJv8HgNEJH3O1B4oanNz
+ fraYMzGJAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeCwAKCRB33NvayMhJ0aaBD/
+ 9M80Ada0ARWG+VVjmaT6D6TG4wJjyYnva6RYZn/tiSxtwnQK1rhi2r1MDPYV0d8I/WP9ny/TDJvjvu
+ 5Dxr0M+DQ5p8KUbKdWvD5FcpmAGTNetvnuHacIggt/t2Inh5UgBbSoUaSnSQS8Lr4x0dGG8caaDxjV
+ 64jWkmyOYy+Bo1VP4KO1FK0iEXJutNU74sNUUExOHA5xjgvla3oejxb6UgU3nPBl9+nZ5unKfZrVji
+ 4bJ3Vs9TX9j0uwcxaQB8fROT8Xcx9K5udbBjMNySnSJYuP029dAdgHOaWnq7oBqG/hAouaXeELTIMd
+ Qx3nBvSSKd1KiXI4JdiwqSsLqQgCdHOAAAyeXPZ2LnlFOwXYdGkV9vWrXX12I7zL7UOc8YBrsh8zuK
+ H9i7b327qEvUKem1+E0Q1lVaOHgMaf8P3WfiNV+oEhe45PdqmiQyMtHPnCl3N9vC/j4qsllxPivq4k
+ 3nxSG6InU2hDJzdcgtq6PMrwE5BhIRGQ+rrb/CQy/tf4wHFHl5t4lgoKi2Ypgty55CyqMjOviR4rPJ
+ 0UwamQtYXJB6sEYK2j6Zx5p+D/DDpiZnGDKUkW3a2u6nhdW2W/LdmNs2MP/svpk0deuS/3K54/0bMG
+ mHPwzElSMl/0HfJ0IWKnYl6SEZ5kG3/KSVFGhVvQN50yxWbnenaSluHVpdeA==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+The buffer sequence count starts at zero when a queue starts streaming.
+The OUTPUT and CAPTURE counters are only zeroed when the instance is
+allocated, so after a STREAMOFF/STREAMON on either queue, e.g. to complete
+a source change or for a seek, v4l2-compliance warns:
+
+  warn: v4l2-test-buffers.cpp(470): got sequence number 12, expected 0
+
+Reset the counter of a queue when it starts streaming.
+
+Fixes: 17f2a485ca67 ("media: iris: implement vb2 ops for buf_queue and firmware response")
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ drivers/media/platform/qcom/iris/iris_vb2.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_vb2.c b/drivers/media/platform/qcom/iris/iris_vb2.c
+index 2460778c408d..426810c848a4 100644
+--- a/drivers/media/platform/qcom/iris/iris_vb2.c
++++ b/drivers/media/platform/qcom/iris/iris_vb2.c
+@@ -181,11 +181,13 @@ int iris_vb2_start_streaming(struct vb2_queue *q, unsigned int count)
+ 		goto error;
+ 
+ 	if (V4L2_TYPE_IS_OUTPUT(q->type)) {
++		inst->sequence_out = 0;
+ 		if (inst->domain == DECODER)
+ 			ret = iris_vdec_streamon_input(inst);
+ 		else
+ 			ret = iris_venc_streamon_input(inst);
+ 	} else if (V4L2_TYPE_IS_CAPTURE(q->type)) {
++		inst->sequence_cap = 0;
+ 		if (inst->domain == DECODER)
+ 			ret = iris_vdec_streamon_output(inst);
+ 		else
+
+From patchwork Wed Nov 25 13:09:30 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022072
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.50
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612181;
+	b=AAkDqTk0rSPF66/UkLbQ3wdG2TOA3hPlgCKClStTHJHYz5q279WTFe29q0zDRmiMzqMf
+	 9oseJJUxe+2ThmNZGUspKw6UZ4/KmMm92pNDGPFEVNdADnOLEMbOCjinxMlD2QTjYatqw
+	 +FjYX/gHlUqRtGDV+Mv3LhOcW5p/AuEqWGys9vKbsgAHtVlxuVJJncXnp9IxNQUHrf9Dh
+	 5Yz36F31g0NkoU1kZbi4cH47zj4fb3HcuCK0V75Uz8UZ375Y0zC+qF/jjtBS7HvrzUWR5
+	 DjSapglK++ZDEOBtb80tA+JxHseaQ3gBkfhagjHmq/jZtTPz0Q9t7J9S6IK2VQoBOHQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612181;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=1JnaOvzbLcP2sNcJP976acP71/2cngYyNJU+YtGyJdk=;
+	b=yLGHjvjSEnsdL5lAUkvl7ouPQlFN9WACyYAD8ZkG8vxeq9E/Rf+JBREf1+WAZgpWLlh6
+	 Wj/S0w2cfQSL/bGSeelB/6wdYCrKzTQLxnjpcZuywMol0lEpu0VYCzlaV/wK+ARF0gPgv
+	 na40XHW/L+saApLebFYEH8v+a9XfWZKjj2tk2ofSEpPmZeSr6mF0zLSQIuUF5zAty2+wg
+	 5HK13WIS0kW8nlYIGHFVgrH0DJh+I6Ev41/EgDsNLwSLwhoQTMg3gJfxjlbQ86ZD80maS
+	 pi+E7kw+GRcjwQCAHA3snJrrRFrMs67suyzrC7Dza88TCJfeVGy9G/KXUT21iir24FA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=EbaI0mzv;
+	arc=none smtp.remote-ip=209.85.221.50
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com
+ [209.85.221.50])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6B0D606A686
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A6B0D606A686
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=EbaI0mzv
+Received: by mail-wr1-f50.google.com with SMTP id
+ ffacd0b85a97d-498f5fa5103so3416859f8f.2
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:40 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612179; x=1796216979;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=1JnaOvzbLcP2sNcJP976acP71/2cngYyNJU+YtGyJdk=;
+        b=EbaI0mzv9QD673NFTbDjtC8hootssIeqFAp+yVWUM17sBxfOH9Ky93rUtaqMVmDcGu
+         jVgWphl8Z8s4K8Ru/UixvMwj2E+cugNqVG+PWjCkyHU2FMrahqn+ZdI98Owi7wscYJxA
+         bhpR/WxYFp1kjnPJH0PXi1KMrYmiT+tVkLm+46VLyhTW97BA99B14AIT3ofwtXpPeFnS
+         JHOta2tooiSV04y7D4s4jm1muYBKsQpHF/Sy14h0x3NUgXhorXjrk2FhiWuBXrxYyBZg
+         KE75pcKUKq2NOzN3IefjdQkGIwyg9dGIFqIvxOXCk04Os7xamg+q2+U8a/jDOpJLuQ2t
+         5r8Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612179; x=1796216979;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=1JnaOvzbLcP2sNcJP976acP71/2cngYyNJU+YtGyJdk=;
+        b=VZi0m2ezXYavLEFTAKA4gTUHUUBx0xjr5hJpjJ8h915r7RGTI8sNqVk18Hp8iXJ9Zo
+         CD4D+aaZFXxIsrluz2gF2ptUg+bHjROPoGyn4kF7iCV2NoieoncpH4iFoD8H3/AojPYs
+         Fz2S65f2ULQd90R6YbDZITMxVYJMv3Mmu93uw14VdT4fHzRP8q40JzYw8iP2X7CIBN5l
+         wBYTFoRn2uAQG8ZpTqYRa3OLnb1y+z1OK8bz5UT8VmOJ4fN0hM6OVe4zZR4CVpKcTTFd
+         /vWq8gFcqi/DuUDl02bKfn2hfYqMIpkpJs2akPaaAQOvSZ1tuGNj6awGaX6cw8pz+bcB
+         29ig==
+X-Gm-Message-State: APuU4Z+4bs0QuIOhjsnkxEYHrjCBujV3hk3rJnH643M8mM1vEXHXwYMk
+	xeB+xFgGw4q3PAXIcLN/RXzST91ZJMer5dPRd6rYua2EXNJKClxGJIbRG6sNhkkMWIs=
+X-Gm-Gg: AZFdTZeiqMpQ1k6j1BSKxJHzPAx7+72noV9a9Kip4shtMz/HZyWmqL+/P3HPy3cJBhd
+	VidPumu0cUUv+uD5Q73DMwDGbJf7pO6WpulRmOb6MJl8DnbThxdlJhwf6SoGZ6wHSKhkjb7IZK8
+	Qe13mlbkxI8yJBh28frSPQGnyTx3Q7EjdAQJLCyaOxEOlichYWwd6IhpwXCmKOJDVsZJduGgyTt
+	ub8Pnoxx6pLR5nPDi8wfUNAL8qlduOptOMvC3E0dmg+qA1yBINBvl9Au0MdftgwdC392yoDQXgc
+	N+qFh9g81aqLZ9WwC2q8Y3Y9bzHX27ob48w/DvqEY4PDjTTj67kxThi28S1jVpH8j9zLhKOoc8j
+	ON+4vEFaWINa4I8Bq4U8vgwx8UKVOFI9Qg7k6na2V38qiPGTMSeoAUwH63aOKOd28Hl+9so7HLb
+	RiJ4J5PSmQZ4RUKZVx21HjOTBZd/cbkH1gusY/rqCXMUsIdveELEmv9DVhkAjP2pZX9NzT1rlr3
+	mZdQkk87Gy6Vd0fxMSJdK6xzBX6GeOYalVkZdN8x2YCPfiE6tuSDq7mm+F68r3Ua5f0ic+T7zyJ
+	IKkwAOz9W08Mw70Y1/1Wzm+IrqiZ874C99/525nIdPB6fkcncw==
+X-Received: by 2002:a5d:5888:0:b0:492:5ef7:5d98 with SMTP id
+ ffacd0b85a97d-4abb6651686mr32474274f8f.38.1795612178820;
+        Wed, 25 Nov 2026 05:09:38 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.38
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:38 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:30 +0100
+Subject: [PATCH 03/11] media: iris: vdec: update the minimum CAPTURE buffer
+ count on S_FMT
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-3-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=6575;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=nYHUBJsHcHafB3LNG5mNYke12OYzvMxrg+k8D9QxsnQ=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4MXnN1nigUPpWW3dPL+MKiiCTJHAKjfUO9u/UY
+ oJgrCM6JAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDAAKCRB33NvayMhJ0bj8D/
+ 4iDBarraz5ico7ycdwYYlX1R1NgLLT5oViAQt8WW89zNnpOQiCfTHzKUw7RaYpoGBng1e48pnHWofO
+ V3YE3iIWkRk1nXq8V3kT7V0OcRN9tOg6yhHAidAodKjYZ7gMWJg1nbsn98wKsRuQIePSiAuYCILrn+
+ rRoyMTWUnjM4skJqegaFFG6EqexPAqrpJEANY+YmdDHcb/ydebr69u2GCBmAAIDSNsbi5/26f0Vq6A
+ GbRDs7SIvz5A0MczQzlET2cynDY4nlgAQQ7lXFojqLduQ7aOFGo1VCg0KpNysbIa6yjZEfYuDv4rGp
+ iFwx/9z8iYYN9RYMxGZDzblO1sQL+dNFVktSeUSJkw6PAlNwOKxYKxEuCV+I9UIgpAfqAS4f3ss4R0
+ DSm4eJ44iRrxBNmpxcqZfm6PwLTlDmkZYQRXVj3zm/uj36JAG0Mniuy8QySnpVa0e0LEmhXfN71RGX
+ TyhxhnQTxsOl/Ybhp624KISG9FcQXYcMfIbpYY1YMaG6o6wnq+y8kFM+hJl2wfYyfr0wMcZ1bhFNOn
+ 8xSiVjtEUGEyGcE+552iCzv6TeOXNXg2IkDdvcH+tSrnVHYkDkqRxEhEGg9Vs90fjkxzAfg7bE1Brm
+ Y0Kysqx5HhCBsEw6+wuaxT/pttcMU1+5eR7qqtm3y7rNeQ7R0oJzpx6V+PDQ==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+V4L2_CID_MIN_BUFFERS_FOR_CAPTURE and the CAPTURE queue
+min_reqbufs_allocation are only updated on a source change. Until then
+they keep the default of 4 while S_FMT already computed a minimum of 9
+for VP9 and 11 for AV1, so a client that allocates CAPTURE buffers
+before the first source change gets fewer than the decoder needs.
+
+After a new S_FMT(OUTPUT), the firmware count of the previous stream
+also still sizes the CAPTURE minimum, the internal buffers and the
+minimum output count sent to the firmware for the new stream.
+
+Update both whenever the minimum is computed, and reset the firmware
+count on S_FMT(OUTPUT).
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../media/platform/qcom/iris/iris_hfi_gen1_response.c    |  9 +--------
+ .../media/platform/qcom/iris/iris_hfi_gen2_response.c    |  9 +--------
+ drivers/media/platform/qcom/iris/iris_vdec.c             | 16 ++++++++++++++++
+ drivers/media/platform/qcom/iris/iris_vdec.h             |  1 +
+ 4 files changed, 19 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c
+index ffa98139f0eb..70b97902ca2d 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c
+@@ -32,8 +32,6 @@ static void iris_hfi_gen1_read_changed_params(struct iris_inst *inst,
+ 	struct hfi_bit_depth *pixel_depth;
+ 	struct hfi_pic_struct *pic_struct;
+ 	struct hfi_framesize *frame_sz;
+-	struct vb2_queue *dst_q;
+-	struct v4l2_ctrl *ctrl;
+ 	u32 full_range, ptype;
+ 
+ 	do {
+@@ -158,12 +156,7 @@ static void iris_hfi_gen1_read_changed_params(struct iris_inst *inst,
+ 	inst->fw_min_count = event.buf_count;
+ 	inst->buffers[BUF_OUTPUT].min_count = iris_vpu_buf_count(inst, BUF_OUTPUT);
+ 	inst->buffers[BUF_OUTPUT].size = pixmp_op->plane_fmt[0].sizeimage;
+-	ctrl = v4l2_ctrl_find(&inst->ctrl_handler, V4L2_CID_MIN_BUFFERS_FOR_CAPTURE);
+-	if (ctrl)
+-		v4l2_ctrl_s_ctrl(ctrl, inst->buffers[BUF_OUTPUT].min_count);
+-
+-	dst_q = v4l2_m2m_get_dst_vq(inst->m2m_ctx);
+-	dst_q->min_reqbufs_allocation = inst->buffers[BUF_OUTPUT].min_count;
++	iris_vdec_update_min_capture_bufs(inst);
+ 
+ 	if (event.bit_depth || !event.pic_struct) {
+ 		dev_err(core->dev, "unsupported content, bit depth: %x, pic_struct = %x\n",
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+index b4fe9066fcb8..baaab9608da0 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+@@ -537,8 +537,6 @@ static void iris_hfi_gen2_read_input_subcr_params(struct iris_inst *inst)
+ 	u32 video_signal_type_present_flag;
+ 	struct iris_core *core = inst->core;
+ 	u32 full_range, width, height;
+-	struct vb2_queue *dst_q;
+-	struct v4l2_ctrl *ctrl;
+ 
+ 	subsc_params = inst_hfi_gen2->src_subcr_params;
+ 	width = (subsc_params.bitstream_resolution &
+@@ -661,12 +659,7 @@ static void iris_hfi_gen2_read_input_subcr_params(struct iris_inst *inst)
+ 	inst->fw_min_count = subsc_params.fw_min_count;
+ 	inst->buffers[BUF_OUTPUT].min_count = iris_vpu_buf_count(inst, BUF_OUTPUT);
+ 	inst->buffers[BUF_OUTPUT].size = pixmp_op->plane_fmt[0].sizeimage;
+-	ctrl = v4l2_ctrl_find(&inst->ctrl_handler, V4L2_CID_MIN_BUFFERS_FOR_CAPTURE);
+-	if (ctrl)
+-		v4l2_ctrl_s_ctrl(ctrl, inst->buffers[BUF_OUTPUT].min_count);
+-
+-	dst_q = v4l2_m2m_get_dst_vq(inst->m2m_ctx);
+-	dst_q->min_reqbufs_allocation = inst->buffers[BUF_OUTPUT].min_count;
++	iris_vdec_update_min_capture_bufs(inst);
+ }
+ 
+ static int iris_hfi_gen2_handle_src_change(struct iris_inst *inst,
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.c b/drivers/media/platform/qcom/iris/iris_vdec.c
+index 472e8e50830d..656e69d2c942 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.c
++++ b/drivers/media/platform/qcom/iris/iris_vdec.c
+@@ -63,6 +63,18 @@ int iris_vdec_inst_init(struct iris_inst *inst)
+ 	return iris_ctrls_init(inst);
+ }
+ 
++void iris_vdec_update_min_capture_bufs(struct iris_inst *inst)
++{
++	u32 count = inst->buffers[BUF_OUTPUT].min_count;
++	struct v4l2_ctrl *ctrl;
++
++	ctrl = v4l2_ctrl_find(&inst->ctrl_handler, V4L2_CID_MIN_BUFFERS_FOR_CAPTURE);
++	if (ctrl)
++		v4l2_ctrl_s_ctrl(ctrl, count);
++
++	v4l2_m2m_get_dst_vq(inst->m2m_ctx)->min_reqbufs_allocation = count;
++}
++
+ static const u32 iris_vdec_formats_cap[] = {
+ 	V4L2_PIX_FMT_NV12,
+ 	V4L2_PIX_FMT_QC08C,
+@@ -271,6 +283,8 @@ int iris_vdec_s_fmt(struct iris_inst *inst, struct v4l2_format *f)
+ 		fmt->type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+ 		fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
+ 		inst->codec = fmt->fmt.pix_mp.pixelformat;
++		/* the firmware count is the one of the previous stream */
++		inst->fw_min_count = 0;
+ 		codec_align = inst->codec == V4L2_PIX_FMT_HEVC ? 32 : 16;
+ 		fmt->fmt.pix_mp.width = ALIGN(f->fmt.pix_mp.width, codec_align);
+ 		fmt->fmt.pix_mp.height = ALIGN(f->fmt.pix_mp.height, codec_align);
+@@ -294,6 +308,7 @@ int iris_vdec_s_fmt(struct iris_inst *inst, struct v4l2_format *f)
+ 		/* Update capture format based on new ip w/h */
+ 		iris_vdec_set_capture_size(inst, f->fmt.pix_mp.width,
+ 					   f->fmt.pix_mp.height);
++		iris_vdec_update_min_capture_bufs(inst);
+ 
+ 		inst->crop.left = 0;
+ 		inst->crop.top = 0;
+@@ -310,6 +325,7 @@ int iris_vdec_s_fmt(struct iris_inst *inst, struct v4l2_format *f)
+ 		fmt->fmt.pix_mp.num_planes = 1;
+ 		iris_vdec_set_capture_size(inst, f->fmt.pix_mp.width,
+ 					   f->fmt.pix_mp.height);
++		iris_vdec_update_min_capture_bufs(inst);
+ 
+ 		inst->crop.top = 0;
+ 		inst->crop.left = 0;
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.h b/drivers/media/platform/qcom/iris/iris_vdec.h
+index 5123d2a340e1..4b903da58056 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.h
++++ b/drivers/media/platform/qcom/iris/iris_vdec.h
+@@ -15,6 +15,7 @@ int iris_vdec_s_fmt(struct iris_inst *inst, struct v4l2_format *f);
+ int iris_vdec_validate_format(struct iris_inst *inst, u32 pixelformat);
+ int iris_vdec_subscribe_event(struct iris_inst *inst, const struct v4l2_event_subscription *sub);
+ void iris_vdec_src_change(struct iris_inst *inst);
++void iris_vdec_update_min_capture_bufs(struct iris_inst *inst);
+ int iris_vdec_streamon_input(struct iris_inst *inst);
+ int iris_vdec_streamon_output(struct iris_inst *inst);
+ int iris_vdec_qbuf(struct iris_inst *inst, struct vb2_v4l2_buffer *vbuf);
+
+From patchwork Wed Nov 25 13:09:31 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022073
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.50
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612181;
+	b=5JRgXJKZ0FuMmvPA2CL115YoXQyHLDShPkfS2pArIoefVajsZLHmMnEnP9Ff55X8miiz
+	 nif5MNyvisFEsXFHXwriGqos4bNqg/3eUMPVhFZIom7oN7GCrSJm9Kwu6b1jTxx3A2gMb
+	 2UqPI2TQ5I8P3OXduXqi2XswJRcFZAieHQMXy0APYlRFwoeMEig4ctZ+7zvVC9989dnWT
+	 OMQOpitYSB63pGJde/8B1cis8hdZCmkgxZ1Q62WSPifpJCVdhA9D3KrTHGcNaHG4ORD1i
+	 ZYmsj8VmenUTaEoUTpzEEYEgSEa1p5isiV664W4VHna6X8sWH4bWS7nDxhCvs7wDGEA==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612181;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=ZywXvAFwEUemsHrXzBdGIC783yZetHpR4bFqH72y36I=;
+	b=yauQZPdKNrbJ8zi/DENGqi7zNtBb21SnqDa5nZ9//IJsnJAR+/uuo4TzZ0aJUKpNrEmY
+	 iJjTh/Lg2s1F9G/Ti8o9DfPlofItE6Y7GDvTTrksLEKdFnciiEmoh6cnj7GOhiAbF7KWp
+	 cFooCIk04Rs69XSBOvcrwrSzxjNMRZwHsnFzIZpCChkxRIfZvhJHPPGR1ESRZOphNdpKX
+	 jZM2l/cAGaS78lMux8wirOpK+2FLytNNFv4tDC2wRiQk5dtefcG+lPZxDct28rAoHQKS2
+	 0rv81YDrrfQw7p8vuLmmarbV+FiBi2DqSDO9FBzJQbHC/AUrwk28A25yKR/iA6WqLww==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=zJ6rQHCP;
+	arc=none smtp.remote-ip=209.85.221.50
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com
+ [209.85.221.50])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63C98606A68C
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 63C98606A68C
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=zJ6rQHCP
+Received: by mail-wr1-f50.google.com with SMTP id
+ ffacd0b85a97d-4a32576da88so3309500f8f.3
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:41 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612180; x=1796216980;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=ZywXvAFwEUemsHrXzBdGIC783yZetHpR4bFqH72y36I=;
+        b=zJ6rQHCPTWeIZccDhVH8VVgj6p5RW2zDrOgCbmsXc8UsmGoV9gQZatNWBwGL0guapv
+         tkgTWJSV6lKpsiwyc+yee2I8+cJXUrNoro2q4hgqSyAFnCAEjPd5h1oLlyFdffW3Y4ZD
+         /2LnlTOJ6ad1PdnH1cr0NRLmv+Jztq+XB1XMRaDPoUQGSo/LCtPNg/fw3ndTnPLaZg6u
+         FVUaxFOzaSuAjVIe9WpmDpVbVFioYRYzrlT8RLGz4PaSkfaP836fFrdbiskG5+rmVerR
+         WrV1xhpyrcAqeaVJLb2Q8M9rn4nbOhXQNlSJlxC08CCMe6HhO+KBoD33pxU2IuFEe8uQ
+         noBA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612180; x=1796216980;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=ZywXvAFwEUemsHrXzBdGIC783yZetHpR4bFqH72y36I=;
+        b=FEr6RdOP5HO4Mj6W3PQMxnYFq6MG2UkQiscYerMObrrFQRxXcI54qMgzUWiyqzp5nH
+         0XBmijbJtUhVqP96oUC+BC/XxpYfiLpnhDw4p4VLH3cI7FC746L0YQziAmnlZRw4RCH1
+         v0x9gUYWjchyK2WP3DgfhxP5JvxdEHPK6I/ARNf07Ms8c2QNpdSL91f3TxjAjImVxKTE
+         Asniw1kGUr4xn4OQQusMG7Unkipd5Ck9TAPMYBwxk8oEL/9+GTAF+E25jAyzgOEI3UiT
+         kxfYxJf7dLKp/g8XlTCBSGumifVGroHhCp4zI3T2P18aGyrgNxLhYIbNce/H1aBJadr7
+         RiMA==
+X-Gm-Message-State: APuU4Z9qsnEfl+f3Z0jKs/ZBKRNHG+VH1pqP1WH6Gco1u2z6T8TUgwY3
+	uj/Qn8impdyuges5rq8rbJdcLRpKphba+X3i1yKFCSF3RoUPYpQ2p/VyMONnf5B5uXA=
+X-Gm-Gg: AZFdTZe1tOHLmt00wDpCqPPf0flFIwEW9Qs/l4kyFHqnKIGJoSOm15t9QUZwKT3PNAw
+	I/snWnBZ/ftEvUNV+qZfmz43kl9ksxvqSed/IlvOf8CKxG3zcr9hTFCoT3WJ22V4zbfTLCzStue
+	GSh8qGKnfWW1OCyT7VHgErTqgQb6AL6hwxb4iUAtiDjkcX3gWyoDKAaJlFp7047OsJQeOgV8Hy7
+	OOpzBt9mc45YwWwtmvE2v/WWrCPsEWcbjaJr3qbR/0cPfoxAtpPSsxpOERK30Fl3q5Yu7L6W02N
+	WVd4j8XvHRTfHEZ9qIIsytCP+yA4lAJZ2ZKluqa/gNSUKqGW4GuppUIBOPlqMLmLZtk++DlhXcg
+	Z1Vhqx2Fw1c4thFO4EkjClDmDuB/ZuJLR7eVqBRbP+EmbzsZR8t1cS+aqRKWux4z4ZN042r9R87
+	ryjArldycpw6h4EvwdBT5KZ16DkFxghl1wt9K/+CGbK4JkBl4Sa1hmx/04Zo8N5Jgd5sOVIvAgy
+	1uRHo5973kHJAobcZvklZEKCiqvxLhrwWN/i2HFbdKnN0kjOq26BYD0+Tn+zW3sKO2Ly9vsJTNu
+	r+VRZEJhl4mpXNnCL1G+3S7eTOJL+5Ql72WgoxwRzhm304Qh7Hjy3tR1+IyPoaTFtX6NJG8=
+X-Received: by 2002:a05:6000:2385:b0:497:9e2a:b1e with SMTP id
+ ffacd0b85a97d-4abb36787a4mr37263053f8f.9.1795612179580;
+        Wed, 25 Nov 2026 05:09:39 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.38
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:39 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:31 +0100
+Subject: [PATCH 04/11] media: iris: vdec: reconfigure the decoder on START
+ after a source change
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-4-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=5363;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=BQVsChRVKEsJHf555U+Pt2d3yuSUpYK6rZfR2Io/x8U=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4M0rmGalmZwbvcuBax3f7Sn+I5qKyFHbxoUCKq
+ f85qjVqJAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDAAKCRB33NvayMhJ0aRaD/
+ 4sS8XwmgW1nY7NeT9lwRAmWJTGVRDqqmoFzKzJxsK5+ubCT3REyeTYgMWT9weJF4TwAJt8kqAVWAHF
+ 3N6LbMogWbeKWPwByCxFx0/Ah5YWUENjAaj3ApWHE9LjBr3mkLy5eyIVlnL22pGfJSGLiEhI6gtmkw
+ aqoOMnrazNALDNrhpeF96+/CuuU8es6FOXzTWZ0IIOhaam2y3f7cCpz6FfHt9tWi6j+5s1UA6Ncrnx
+ wPVR3J7gxCPrFvWfKhPyA2O16BbWST1oYjGWVmk9KjrOM2IJxFlaygU1KzspFXnCrsG0U1FrKQnM0Q
+ ZG6KMJ2Co9XurxqhtEOzDH7FRF4uTKzA/LkbOBA/FrHCmljNRcz0A8fW0HlwlB3ntBkU2E3NVsBqvM
+ 4jB5raNFvAiQZ20sbX+HkNXb2aSCEEZD/rgBkGZrHZ01KrPum3IDowCGiaDO3ohtJDW38uY4DeEaB5
+ qs+d3gsTjFoBGZFjfVZ6Kq+6X+OmgXwq5YzZr0DLsPkTBAPyu/P83f4nyCMTBmk8Gq405L9zzqLjOy
+ NMLF5QNxusJPNp8eX3olguZmHcAU6txRCeECKATzk6a+hadnnlunZYnxs5siuQx/ZPNxFDb30HQNTQ
+ /32NPRKyAGKsr5kc3NZEA1d/hN/XvseRBbk/T/liz985lG2winYrE0YsbSmw==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+The specification lets the client complete a source change with
+V4L2_DEC_CMD_START when the allocated CAPTURE buffers fit the new format.
+iris_vdec_start_cmd() then only resumes the firmware ports, without the
+configuration STREAMON(CAPTURE) sends for the new stream, and the
+decoder:
+
+- writes the following frames with the stride and scanline of the
+  previous resolution;
+- fails to resume with HFI_ERROR_INSUFFICIENT_RESOURCES when the input
+  internal buffers are too small for the new resolution, and the instance
+  goes to the error state.
+
+Before resuming, send the CAPTURE port configuration, reallocate the input
+internal buffers, set stage and pipe, and add DPB buffers of the new size
+up to the minimum count of the new stream. The attached DPB buffers are
+kept: the firmware fails to release them while the CAPTURE port is
+paused.
+
+Fixes: 84e17adae3e3 ("media: iris: add support for dynamic resolution change")
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ drivers/media/platform/qcom/iris/iris_buffer.c | 37 ++++++++++++++++++++++++++
+ drivers/media/platform/qcom/iris/iris_buffer.h |  1 +
+ drivers/media/platform/qcom/iris/iris_vdec.c   | 29 ++++++++++++++++++++
+ 3 files changed, 67 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_buffer.c b/drivers/media/platform/qcom/iris/iris_buffer.c
+index 178e50eadcf7..38bdf366b384 100644
+--- a/drivers/media/platform/qcom/iris/iris_buffer.c
++++ b/drivers/media/platform/qcom/iris/iris_buffer.c
+@@ -747,6 +747,43 @@ static int iris_release_input_internal_buffers(struct iris_inst *inst)
+ 	return 0;
+ }
+ 
++/*
++ * Buffers the firmware holds are kept: it fails to release them while the
++ * CAPTURE port is paused. Only buffers of the new size count for the minimum.
++ */
++int iris_alloc_and_queue_additional_output_int_bufs(struct iris_inst *inst)
++{
++	u32 internal_buffer_count, i, count, fit;
++	const u32 *internal_buf_type;
++	struct iris_buffers *buffers;
++	struct iris_buffer *buf;
++	int ret;
++
++	iris_get_int_buf_tbl(inst, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE,
++			     &internal_buf_type, &internal_buffer_count);
++
++	for (i = 0; i < internal_buffer_count; i++) {
++		buffers = &inst->buffers[internal_buf_type[i]];
++		iris_fill_internal_buf_info(inst, internal_buf_type[i]);
++
++		count = 0;
++		fit = 0;
++		list_for_each_entry(buf, &buffers->list, list) {
++			count++;
++			if (buf->buffer_size >= buffers->size)
++				fit++;
++		}
++
++		for (; fit < buffers->min_count; fit++, count++) {
++			ret = iris_create_internal_buffer(inst, internal_buf_type[i], count);
++			if (ret)
++				return ret;
++		}
++	}
++
++	return iris_queue_internal_buffers(inst, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
++}
++
+ int iris_alloc_and_queue_persist_bufs(struct iris_inst *inst, enum iris_buffer_type buffer_type)
+ {
+ 	struct iris_buffers *buffers = &inst->buffers[buffer_type];
+diff --git a/drivers/media/platform/qcom/iris/iris_buffer.h b/drivers/media/platform/qcom/iris/iris_buffer.h
+index a8d2002e00ee..7cf69046f036 100644
+--- a/drivers/media/platform/qcom/iris/iris_buffer.h
++++ b/drivers/media/platform/qcom/iris/iris_buffer.h
+@@ -117,6 +117,7 @@ int iris_destroy_all_internal_buffers(struct iris_inst *inst, u32 plane);
+ int iris_destroy_dequeued_internal_buffers(struct iris_inst *inst, u32 plane);
+ int iris_alloc_and_queue_persist_bufs(struct iris_inst *inst, enum iris_buffer_type buf_type);
+ int iris_alloc_and_queue_input_int_bufs(struct iris_inst *inst);
++int iris_alloc_and_queue_additional_output_int_bufs(struct iris_inst *inst);
+ int iris_queue_buffer(struct iris_inst *inst, struct iris_buffer *buf);
+ int iris_queue_deferred_buffers(struct iris_inst *inst, enum iris_buffer_type buf_type);
+ int iris_vb2_buffer_done(struct iris_inst *inst, struct iris_buffer *buf);
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.c b/drivers/media/platform/qcom/iris/iris_vdec.c
+index 656e69d2c942..d35a1eb62d30 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.c
++++ b/drivers/media/platform/qcom/iris/iris_vdec.c
+@@ -495,6 +495,31 @@ int iris_vdec_qbuf(struct iris_inst *inst, struct vb2_v4l2_buffer *vbuf)
+ 	return iris_queue_buffer(inst, buf);
+ }
+ 
++/* Configure the firmware for the new stream, as on STREAMON(CAPTURE) */
++static int iris_vdec_drc_reconfigure(struct iris_inst *inst)
++{
++	const struct iris_hfi_session_ops *hfi_ops = inst->hfi_session_ops;
++	int ret;
++
++	ret = hfi_ops->session_set_config_params(inst, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
++	if (ret)
++		return ret;
++
++	ret = iris_alloc_and_queue_input_int_bufs(inst);
++	if (ret)
++		return ret;
++
++	ret = iris_set_stage(inst, STAGE);
++	if (ret)
++		return ret;
++
++	ret = iris_set_pipe(inst, PIPE);
++	if (ret)
++		return ret;
++
++	return iris_alloc_and_queue_additional_output_int_bufs(inst);
++}
++
+ int iris_vdec_start_cmd(struct iris_inst *inst)
+ {
+ 	const struct iris_hfi_session_ops *hfi_ops = inst->hfi_session_ops;
+@@ -506,6 +531,10 @@ int iris_vdec_start_cmd(struct iris_inst *inst)
+ 
+ 	if (inst->sub_state & IRIS_INST_SUB_DRC &&
+ 	    inst->sub_state & IRIS_INST_SUB_DRC_LAST) {
++		ret = iris_vdec_drc_reconfigure(inst);
++		if (ret)
++			return ret;
++
+ 		vb2_clear_last_buffer_dequeued(dst_vq);
+ 		clear_sub_state = IRIS_INST_SUB_DRC | IRIS_INST_SUB_DRC_LAST;
+ 
+
+From patchwork Wed Nov 25 13:09:32 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022074
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.50
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612182;
+	b=nhHdBGUNIFGL4nSBvjG9ZJWNJgGRPuKf3wr3rXxT/ua6bmFl+l6NtB9GWhoGAG1nk+rw
+	 ubRyJ0XPEVttmd8xTQAIO3jBbTNZsw0H2w7i3uFZLy1n70kITyzOzbfH9nrDdslSmwBSr
+	 e7ovHQMRMyrh3eGXa64nlsZ3ZyZ1Cyja3r6Mz09vtfB51gqFOWDeHpmh/E0kxVPiKP+Q/
+	 wSq3WyuCOIlbWoBeFxYEZ5d9hEpKCwS2UbWMs17dZ0ENRkUIBcGp78dyBlSG9KwfRM02N
+	 CyLWp2M++tJYeAo+DO1Af4haNUYoyouwbRlTEi2naG1XFt+4Tf5uWEAwXG72+QTKy/w==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612182;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=2EHKdHn/evGY492frENpI73JPa/bXks6zV07Z8DP8Pw=;
+	b=3lU5x86LgDWha2xu4PCbbv8jajhGpPbslZHPQZ5S6IhxlTNjgtqwRLlJ3zClPLxfHpJt
+	 dJNHNLl2UmAo8i6gLsTHJNNIqtWCsGTYJaq9gooSlBT+aqi+ISKZ+srNmgl0igNALqJ1+
+	 aY3mVt5kuOI9olk15pYuLv9HbdMCSXK45iDWE74nQJ8Ub4+px+L1l63eXFEl8zJ59rj1a
+	 N307wsKVD9iXDu486Y3blClKwHwrbd1Cs/L5tAJMKsachdw8y3VTgF3iD5buh7AsEnu9p
+	 cSBon1J3X8Yb18jdm9Ce51yRNWEtEF+WVuuCb978TD/qMIDT4ros4yJoYfXG3k3jK/g==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=vYA1hCDh;
+	arc=none smtp.remote-ip=209.85.221.50
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com
+ [209.85.221.50])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 150BC606A696
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:42 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 150BC606A696
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=vYA1hCDh
+Received: by mail-wr1-f50.google.com with SMTP id
+ ffacd0b85a97d-492fcbfaa88so3737516f8f.3
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:41 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612180; x=1796216980;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=2EHKdHn/evGY492frENpI73JPa/bXks6zV07Z8DP8Pw=;
+        b=vYA1hCDhxbqq8jX8v6q4FvQcD93zZWBJJHXYAYeBP5c2mK3U3/hl2LnFmPwyROHNtx
+         6DpZbwAlederrAA1sq4fYGgBaDqHKfjoouMfKijW9rJgbMtkGyxNsgB4smlJaPrr7XL2
+         pR0fBbTDILsqlBU+c9HSs/N6fP1nWaer+d3k9yXQYBT09TjuF7xQt0SZ+YQHx653vZm+
+         /2CyEzRkJMCv/X8m1CewFLHq7IlClY5KIYexjseoa0seYGoqzpmku0CTSZr8uofgXoML
+         X24RIES7iNZ389hc18/EzFwaFHZzI61Zt9nQIov3trM7+JCJSPUrCJ4Z/ybmLLTeNaSR
+         RRvA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612180; x=1796216980;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=2EHKdHn/evGY492frENpI73JPa/bXks6zV07Z8DP8Pw=;
+        b=UxcD40W6t+Y2LfKYDvhYoy9/kel4P7x3w3jfmFV113rzC4oFfxsDCv5fLH95CzFk2v
+         8YlTgj/9ui76DX5dHIL4W7w3qjoCz/CYkbSRz8saX8ThQZoUY9eMAT8TsYlN124mLw4e
+         Bv6F1uUqzDSL05kWiAbBUjdDKy0fvgqOXhfaUETosRFOls7vXKoXjjzvaz02Kv3gUUsd
+         0VjlR+jkjHC032Eg1uC1muvdvIiWYJjbXj18HJW080SyFN27AxufoGxVoizCEG4QnUMe
+         O22a39Ge8Vjamx957vZfc2w++Mps+uqmo+Wcknh9N/nHprp+N6e30H/WqLOQcxoyCyoQ
+         rLzA==
+X-Gm-Message-State: APuU4Z82UmHQfoWS68Ik3YjZPIeQxjOzcDVAQh1jumKu8cj6PRGvhZLJ
+	v+GcC+5tIIN5/mNnLuQDnhokxIKPZVDWIrULSGFjZXAGNTPnSxHRkHyy9E9KztYjX0U=
+X-Gm-Gg: AZFdTZd9J4iVkZFG/rTrOmbv46WSrfAhjAy1h/fCd+Z7MF/R/vSR5G+dROm6vyCo73A
+	Ur6KAyhUJNeJFQV3REWlMDqYDsbiwbeN6XQbRUnYARSl9EwsTGJJLXz7BznrYYuX4mai9X26Wrs
+	rmtAgnjKku/A9C2pHAkzZKyKkMJjtT4+RKVSRUgnOTi2d5xgidzLGnO0oYV34L99wKv3gQUbyzz
+	3sF0nhF7NFY4PTT9D3tzZrC7sVG2oOSzVxM9fnrOoC/MkUNycKVKhs0BrMfXoN55/hfOE4QG6sN
+	KyPbmSpf589R4i2lOTzYx4q51D0GWQzFbVWUYYwOxGV9Qe7wGXD55tl7c7gHQaYTRGQOqiHwRdY
+	4oa50fMQTUUvUY9NRUlwHlTOm5VL/v/eZSJ70fhg1Uph7kc5VD5tcx71Yq/xjtNlUWHhjKCjxDM
+	nSI/xHhIbnrEw/TP4C80PEqd7hLSGQv0QYxvC4h53+pFSF2NMPV/FpYSJbu1nazKR7iSZFEbvuQ
+	aYijIPfXvteR1HGjNBAjZ8ddL+E5cXBbItBhI6KMKjxgflmamP+FcSNrXVZmV3Th+5c9cX7QzEK
+	IF0HGDtp21i2/rU2aBt+nmbgDxBeaDH0NsAltZoNH7dtib55Lg==
+X-Received: by 2002:a05:6000:2903:b0:4b7:70aa:4553 with SMTP id
+ ffacd0b85a97d-4b770aa4574mr10550337f8f.38.1795612180312;
+        Wed, 25 Nov 2026 05:09:40 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.39
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:40 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:32 +0100
+Subject: [PATCH 05/11] media: iris: clear the stopped state when the
+ decoder resumes
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-5-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=2030;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=f3feV/1DMgSfL2CmzIHAP9+r71wRu+v9Ez6CcCCVkxs=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4MfTtWqMX7j9xdtH+gM3bx8COMHUn9f775o8YT
+ TYEMpjOJAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDAAKCRB33NvayMhJ0SZrD/
+ 4896I7D8wrXyxCNszgiSlEvqG7vrw5O+eNY4f+lErpVTdGJNplXM7tNsFXj5fzdfa9v/mpwpGLHTSQ
+ 6Q3zojETOdDH1osgRbayKKmlzjl+mQwxew7O/FSEeGOhBu0BBh8h5kOT3O9/Ui5d0lqG83IqiJdBxE
+ 40guhE2NyR5r1WJnBiawQqddxDogbkFw2hqoo0GMn3GB+OOoGQzcZS12GKl9NrtjANXcTHfJchJ4Y2
+ cDDjj6QjdkCHgYbs75rrmCS1UN3cOweIQS93ro1Ep0bxuwiIaxOzP0i3dlRRSjsrMMJz4c3yT1i5as
+ yz8RA+Qm+GeW9atog85dadQkIHVy6Vwt29lB20S5ROxFEFDOJuDLb6zdLiHGVW2Pqn7U0UC8TFsjIC
+ 9C6BxNz+5Tbc7wKAypjnBwNqDvz1XFKz2TwFFdAu2u8T2XJOwL+6eoMJNqK0NgG3Z09Lmu8G15Mnxc
+ CtkwMoTbDerlvAeDICg3LxMMYsoxxUs9rODxDjfaS83GKNsmqaa0zCi2AI4x5dg+pSqTb1wwog0C96
+ aS8TC4zKVbK6YYEVPzNcyy4cWJeSuSif8DSJVPIQjEUOsazUmq7frVCD+4QEargK1fn6Aqk3VrKaYz
+ l+RNoIIPtVBZ9dFlVJ435IIdY/Ho79qNx/bcFTJ6oHleSQ0EwKjwBGp9vaHw==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+V4L2_DEC_CMD_START resumes the decoder after a drain or a source change
+but leaves inst->last_buffer_dequeued and the m2m stopped state set, and
+STREAMON(CAPTURE) leaves the m2m stopped state set:
+
+- the LAST buffer of the next drain or source change is not flagged on
+  gen1, and iris_vb2_buf_queue() does not return one either;
+- iris_vb2_signal_eos() does not signal V4L2_EVENT_EOS at the end of the
+  next drain.
+
+Clear both on START, and the m2m stopped state on STREAMON(CAPTURE),
+which already clears inst->last_buffer_dequeued.
+
+Fixes: d09100763bed ("media: iris: add support for drain sequence")
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ drivers/media/platform/qcom/iris/iris_common.c | 1 +
+ drivers/media/platform/qcom/iris/iris_vdec.c   | 9 ++++++++-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_common.c b/drivers/media/platform/qcom/iris/iris_common.c
+index 25836561bcf3..61634df56797 100644
+--- a/drivers/media/platform/qcom/iris/iris_common.c
++++ b/drivers/media/platform/qcom/iris/iris_common.c
+@@ -151,6 +151,7 @@ int iris_process_streamon_output(struct iris_inst *inst)
+ 		return ret;
+ 
+ 	inst->last_buffer_dequeued = false;
++	v4l2_m2m_clear_state(inst->m2m_ctx);
+ 
+ 	return iris_inst_change_sub_state(inst, clear_sub_state, 0);
+ }
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.c b/drivers/media/platform/qcom/iris/iris_vdec.c
+index d35a1eb62d30..6369370a04a2 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.c
++++ b/drivers/media/platform/qcom/iris/iris_vdec.c
+@@ -584,7 +584,14 @@ int iris_vdec_start_cmd(struct iris_inst *inst)
+ 		return -EBUSY;
+ 	}
+ 
+-	return iris_inst_change_sub_state(inst, clear_sub_state, 0);
++	ret = iris_inst_change_sub_state(inst, clear_sub_state, 0);
++	if (ret)
++		return ret;
++
++	inst->last_buffer_dequeued = false;
++	v4l2_m2m_clear_state(inst->m2m_ctx);
++
++	return 0;
+ }
+ 
+ int iris_vdec_stop_cmd(struct iris_inst *inst)
+
+From patchwork Wed Nov 25 13:09:33 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022080
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.128.45
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612183;
+	b=FYVSMeAxn/tn7thEgSZmmxeuwRDgCBtGD6QMgSdZAdiYBgdjGqiPFSCNMW3/h/9h9orA
+	 MUuRhrbUDjP3DZ4D0dA5KyelKOwZjVry+sYa0zNGo5+OIfC9QoqVNupuW6BxteSo21A4T
+	 41w2wBE5Qws0CG7p1qNq6DtXYBrLKqph99lgvgEk7gNz0IKEna/S9C8R9fNkw9/TxJWkk
+	 OYRrSiGCFfgux/zuLDMog1vIGfSauP1mE+0x4krK2n5mqvRAg8zTzNXdY01lVkViwl8WS
+	 1JodUFO2nXt8bomOK5QKt01YZRBgvgORkiprhhDFFBLNwdSuUckTj6gat1uN07yKOKQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612183;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=RfHhL82RSFRjqGArWKhGQj6Yg+HmOa+wEbBl0/BNQSY=;
+	b=AvQUAYC1/eUxZL0a2k7qFH38Lz9N/RKAdMcrLf6eIGwMahkOvZCtZSMlWxfNOMaXdOxp
+	 uI244QOT/L5L4nMTZpdp6kgG3G0Na7jTwZJvKgraY6QNvi2WVIsPuqFatG80hz4bOUbbP
+	 9eCdV/PYS9jdsFprrWB9v2nVcFERHYsApgeS157RSYku9/Y0HadTlHGS79tDHuBJL4YBa
+	 w9kdOFQxvTwkTWjggheyb34n8flStFWFN4ybFrpSPYrN4VGWX/wNtps14mjU2xtYDsgSQ
+	 buQwB+Nm7SMl6xn699giWibT0RyOdFGWyb86l1ELTY4TrQvGkYTKXRXOMrQ6p64kqaw==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=BYQjLBys;
+	arc=none smtp.remote-ip=209.85.128.45
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com
+ [209.85.128.45])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C70DC606A69E
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:42 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C70DC606A69E
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=BYQjLBys
+Received: by mail-wm1-f45.google.com with SMTP id
+ 5b1f17b1804b1-4bb702a7548so50934965e9.1
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:42 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612181; x=1796216981;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=RfHhL82RSFRjqGArWKhGQj6Yg+HmOa+wEbBl0/BNQSY=;
+        b=BYQjLByshvYup1afxoovlswzHwO7sw+gOfUhvGWnOBLiEFGatTIa+gjBj8kHWoTLwZ
+         wXQWF/pguqda6tnXS+ovNwO6/s1L+fTvZubypwm28C8R4qs5VLh9QTK2zjfcQ7S9BMQr
+         C4XYws3RYOreeXQMR4c+Qmydcj2WueWHlZaIRbl8gb0rtoDOHrj77Py06EcrRbWvLQgq
+         6XOwY7oPUqqHgGOlpt+QtOeZgDS6xdIIneLP60gsojD39cRUwMmHWCyciOa8lSSEnK8C
+         DpcBLLyuP1X9XT4seoTfPq+Hsj48v3IeI5IGcTA8xs305ru2h/W/wwCI4Cu7AzcyxNSc
+         xM0g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612181; x=1796216981;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=RfHhL82RSFRjqGArWKhGQj6Yg+HmOa+wEbBl0/BNQSY=;
+        b=GFtfmaMoXsVKRv84zOsFXLpv9fixToBweJpVoZtrCuwi0Dd3YaOErfkJ2PjGupzhJP
+         /XGbJ4tzDRoI5QxMuFxGLGI3Pv/4SKL7RnO294QYSS4mN0InxiqjMIoUsR7MvDZ7Lezr
+         Vrb0lve0rPa/eWAEjSdSp4RHeUqAKT7ByUpsv0GooZLp9GorbxPrxCFPBH+CyfTNa57S
+         7Lst9AoPG50m4+AZ+btkKNEmWAG1khAnK6A+6ot9FquhrlOWTe5JgUTef/Nx15GklNXm
+         xVTgUSixycRwmXzk7u2QOvesxvfm4QFZqSVK7iGF+GW0A+YGnmLTA/Oj0k3npLFCmnpw
+         K9VA==
+X-Gm-Message-State: APuU4Z+w2EgtOL3K9zMxJ8t21HF6geYCx9e7MkGNPD16+Lt3JuAFx7Lq
+	RVSh25XoJig+ZWEQHEB2y4+UpbYTqOcDOLSEln58umh5Jsav5/CTTAWtGEXXb+e8EoY=
+X-Gm-Gg: AZFdTZdmE4lfJzWY9qcH1IxhaQOdzc+3h5+DLTxRyIUlQMrqo+OfkAKvbJZ5UPNpxhp
+	nIx87yPO7mSYg17H6BLjJ7FVhM1WfNSmuKa4j0utm5Tawi0t5YvxE7Bgppf/Pg0uOizOSuXurSj
+	AR2CV8dEkgqx9OlI+LyZqCYr3AEPzGcfVJ8wfJ5bL12GFT+dQV8SRQh46yn57MXT8EGtb311Pr9
+	dSTLw4/3UBVXoNKafaEObwSr58nwwVO4s19s7L1cppAFFtI6h6Fh8/EkNon7VdPqNET1hxv74kN
+	z9FJkdWn3Ip2ka5lFQ+V4/mOPkNIUMv0M5CgVl2BiaA6elO2iiKmmseVnI8zdO1su7P+GaDkNZl
+	TPOxNVxzDX+QZiqYxnijUOs7BjuDReJbud7Fkyt/cDItAPeb9UvT+5VT6a7uhBCWnyTe9sM5/He
+	AsiB47xwR3bYkPDfh8QFGv328PIMkpeiPvQXLcl1Dcj87R76+BIjVwWY0NPbIs+B5XNVPz31KMz
+	yl9igTnjUNgsRU7s/C1s0PIunQbu/T/TCXWGqnQ1qyOba/D8RXhoTMteEPzetfyoSYG8aUFcl0q
+	o5uACqWxeInSm0x2jPIaVPCaV7BarYs2bWyrzsIEhbNOtbCXUCA5AmMOg8xonePYQJkBepg=
+X-Received: by 2002:a05:6000:299c:20b0:4a7:ed95:7ca2 with SMTP id
+ ffacd0b85a97d-4abb7b5c76bmr25510841f8f.52.1795612181073;
+        Wed, 25 Nov 2026 05:09:41 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:40 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:33 +0100
+Subject: [PATCH 06/11] media: iris: don't return a spurious LAST buffer
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-6-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=2834;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=IvGdaBlzk5dfXTzAfmZyUO599GL97WDoGnlQcbGakoE=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4NrT45CsJj1ahd31s4XC+tkoLO0ByJUkmz36wd
+ jxj9tAmJAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDQAKCRB33NvayMhJ0XqVD/
+ 4p3Krf5847lLitqU98qSwwWLE6LU3+QzmqhxNOrnQdyug8Zs9AGWtN5uqAXw6WxtY9IJVAC+5UHG17
+ gI3/G3XnWpGerbO3ELtW3MryBglQhZBVg4FzoG+4I2NkPMtArLRnKVY83z4llHzg0sC4/cjf/gdVms
+ lEHqH7i3IJR2BVr6jBuB8DieEpBjmdW8muwlnR1eX0HrTxiMR8s8dmkQMtj+XlT8ab2MZNrDsXvfj3
+ zu+344reDAk3TbKsbYaqVQAeMHs/B/q3sdX3PTeTJ7sGHkdwt2UO9qsW9TsOn3XjxP5hyddmMXmqwz
+ 3icugIDwOHnOzJBMAHqzh36CKCEmhm5UGyDFZcVH6jhdj/BIPsRGoKaFJ72kYlgLzYjc1E6OYNr4mZ
+ nifKynvd9UQ306dIimWWCfP0ouk+8aldSo8gXbnb2/0gT0Yi9dSdmkOXdfFv0DFfUrv829u4pk8XZW
+ Ajt93WbejNTbQrHWxZQLCfFdvAljy2kKK78V7xRqqG6EfCkeQc0tYGj1PqrXIzOIMEektg7KEtVwI8
+ PcIFNLbjyVSOzZ0xEXBp7PWYDEKTnfPnK7uSDMaq0fTBmZcniUTxQMpRrprTXAiWI/EFhMnkikccxW
+ wcl/pgOaZgnl9qwEmyQujupbUsH5ooC1rpXlXgbGe1osXhMLVcz8kEqznb+g==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+While a source change or a drain is pending and inst->last_buffer_dequeued
+is not set, iris_vb2_buf_queue() returns a queued CAPTURE buffer as an
+empty LAST buffer. The client then gets a LAST buffer the specification
+does not expect in two cases:
+
+- iris_process_streamon_input() clears last_buffer_dequeued on every
+  STREAMON(OUTPUT). After a seek done while a source change is pending
+  and its LAST buffer was dequeued, the next queued CAPTURE buffer is
+  returned as a second LAST buffer;
+
+- vb2 calls buf_queue() for the buffers queued before STREAMON(CAPTURE)
+  before start_streaming(), which completes the pending source change or
+  drain. One of them is returned as LAST although that STREAMON resumes
+  the decoder.
+
+Keep last_buffer_dequeued on STREAMON(OUTPUT) while a source change is
+pending, and only return a LAST buffer from iris_vb2_buf_queue() once
+start_streaming() has been called.
+
+Fixes: f15cb8652b4f ("media: iris: Improve last flag handling")
+Fixes: 92e007ca5ab6 ("media: iris: Add V4L2 streaming support for encoder video device")
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ drivers/media/platform/qcom/iris/iris_common.c | 4 +++-
+ drivers/media/platform/qcom/iris/iris_vb2.c    | 7 ++++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_common.c b/drivers/media/platform/qcom/iris/iris_common.c
+index 61634df56797..c3712a29ca85 100644
+--- a/drivers/media/platform/qcom/iris/iris_common.c
++++ b/drivers/media/platform/qcom/iris/iris_common.c
+@@ -83,7 +83,9 @@ int iris_process_streamon_input(struct iris_inst *inst)
+ 	if (ret)
+ 		return ret;
+ 
+-	inst->last_buffer_dequeued = false;
++	/* A seek does not complete a pending source change */
++	if (!(inst->domain == DECODER && inst->sub_state & IRIS_INST_SUB_DRC))
++		inst->last_buffer_dequeued = false;
+ 
+ 	return iris_inst_change_sub_state(inst, 0, set_sub_state);
+ }
+diff --git a/drivers/media/platform/qcom/iris/iris_vb2.c b/drivers/media/platform/qcom/iris/iris_vb2.c
+index 426810c848a4..b56c855567a6 100644
+--- a/drivers/media/platform/qcom/iris/iris_vb2.c
++++ b/drivers/media/platform/qcom/iris/iris_vb2.c
+@@ -335,7 +335,12 @@ void iris_vb2_buf_queue(struct vb2_buffer *vb2)
+ 		goto exit;
+ 	}
+ 
+-	if (!inst->last_buffer_dequeued && V4L2_TYPE_IS_CAPTURE(vb2->vb2_queue->type)) {
++	/*
++	 * Buffers queued before STREAMON(CAPTURE) come here before
++	 * start_streaming(), which completes the source change or drain.
++	 */
++	if (!inst->last_buffer_dequeued && V4L2_TYPE_IS_CAPTURE(vb2->vb2_queue->type) &&
++	    vb2_start_streaming_called(vb2->vb2_queue)) {
+ 		if ((inst->sub_state & IRIS_INST_SUB_DRC &&
+ 		     inst->sub_state & IRIS_INST_SUB_DRC_LAST) ||
+ 		    (inst->sub_state & IRIS_INST_SUB_DRAIN &&
+
+From patchwork Wed Nov 25 13:09:34 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022076
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.51
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612184;
+	b=ImIJUlXp1n65RqqDnCzFaP52dg43ol8uqo61xtgZRBKZpB689mxcAg3YGpNuhru+FZKW
+	 WldorwBOqKvTHGs9cQAQu/A8YQNtnaISmMtcjqScPHM2pplxMmTv//Gj2lAl8rBYGkm/X
+	 NizlXcU6xUPF52Slq9fn+0s0QuyfPZAaQ/9jclqpCx14r+mFARRJ5aOW7q/x8eLi0YfXH
+	 JN75jvIhtTS/pwZvNK3qI+hC0qL32q+D2P4OYbhSpgAkNsqu7Xkl+9BS6tW+v59+sorU6
+	 2hDE5g2rqRq9NMCLe2rS39B4BJ0AkBTXwmxPeCh3zhT4g/c79fn/sZbnfz9JJISf6NA==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612184;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=5hJOZPh/5l5UdrXHXCid+x1ivyDC+76FSFPhdCC5yu0=;
+	b=RTeBwaic7s0eokCZvxLSF7i1BlNteybuS62Q5D1q/gsYx90o9oVhnSH4t80RGHBXPZYD
+	 6Cuc1iPl7vj0iaz8LENPSzDI/jB0Mw/4jgvlv0hTFLGJSMC9r0EWGD3ficpCDX6ud+32D
+	 MYnrSs3gxpPt8TRAB05uw5jc2uPVxQAOzc8h0L/zM82e/ahILMdLBG+JHPQ3r52zIz1rT
+	 qPnUJ8jd2u8tZESbWs1YfPvhUXhocCI1FkWKqwH4NiIqd18SUaeBAD+X9qFuLKBdrZuRr
+	 YEA/57BAYZC1CrKa70ihI3P6uSoOFnxwUvZkDP3oWIoNFWUR6z7bfYXjiSkkT7sXX4Q==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=g1nQPDDX;
+	arc=none smtp.remote-ip=209.85.221.51
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com
+ [209.85.221.51])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B09C6606A686
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B09C6606A686
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=g1nQPDDX
+Received: by mail-wr1-f51.google.com with SMTP id
+ ffacd0b85a97d-490d59c3edaso3920198f8f.1
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:43 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612182; x=1796216982;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=5hJOZPh/5l5UdrXHXCid+x1ivyDC+76FSFPhdCC5yu0=;
+        b=g1nQPDDX04Vxpww6Er2sE9ytuJNuAQ9lJtgYioCqmn0L7hVF/hiZ6BBZE8SWDabzUL
+         XLZnYfLxiGTnV9Z6EXekUZkeONoYtSAncfaiHBI0f3wzugckAa/BoKdoOIPHGl65nAC1
+         +x9c931pcN/lqSkd0nU4gssrSMeHHN+4W+e/Hr7dy+6WJb+5si/J2cbvE5PIbg3g9+SW
+         8brArqIxDrowvKqDyK40FBHP8oJkry5mwQigkzU658nvRTUD+ZylJiwj9y3g9MV+r4+e
+         rZkwtdun2HAEbBkPhtE3j6ZFJsXKGMAr1GbHL8XtR3DwueoHSxM6OVrGYZMz23Xj2RUR
+         fj2g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612182; x=1796216982;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=5hJOZPh/5l5UdrXHXCid+x1ivyDC+76FSFPhdCC5yu0=;
+        b=sOBK5lEPUMESZ6RZsdoI2KBn6HVqns0+JF1ur/FP9eX4xILb/ARdgCbDqRnuJR6QkU
+         V+rwL1ckPpdXAW7et7fC22wwug2pIuwv/JxYFSxbi7D0rCWy3ouv3yJWMB80vu3yjT98
+         hvp3A/5GQlTPNyVYqUUcBkBD9+esFqRCaRYeadzp94Z5kVWKBfIIjhSe536zjXTLmt4t
+         SObJL0QXFeS+TOrfI74UuVbn8uZLsx+YPeWDKb+tBX6yX+UagKKYmMcit1lQaQcxpJSY
+         ZlFw3CvtTqN32fybhxxXoTG/6Q8RSY70DUUzWEvtV5uQVZwhnFwoyR+s+9AIBnf1gBPT
+         SUKg==
+X-Gm-Message-State: APuU4Z+iRctNlYpm2ToYJa5IEsy1iHHrPx+VoDYSC0qfHjpws4MeX+GK
+	aNpwbDlzm3hOBVxHcTOU7ZrsLtgBedT043aTzJLBrc5A5II6os43a4QxzDL1EYfuzsA=
+X-Gm-Gg: AZFdTZe447qud5NFndurFV66sypDj5Dc5+Bd1wO/y4o2syCZU4NhFtx/VWBtMI36xwu
+	ytuBhGy9sSqnUnLqud1a57FZgqkhyrmvEzD84P/sule/UZZYj+YwAZyjH2LSGffOzLKTP1m2bk9
+	1aI6UT0lPVTZcVxFSQwZ5eXKBH9sAlTQsv2zVe5NLtRo96IWLK92nyZHzFe1j/iCi74jmw5uwhK
+	tSAhbRPkjOhMO8gvUc+KtgawqV1RL3wFuXSTTxc/ird5N/3uhXnVFqPA/ZM8TM0BEo7i9NI7CeZ
+	xtofXymZBW8JWo0MUB7VNKpZdq93Efe4WZBda2433UiKMjhulbdgeCXSV7b2yjLGJZy/mSJG/g9
+	j+NjcVaOq58etXTVf2UBW1Q7HWoeGe57GYCTxapZM+MgKC0X/spiK66U3UPj0jeTr+Bb3uYHNXq
+	Q+5Ay69qxg9VirUAhVmowkVzdgFh0XyeZ0NCkzeS0uebhmAHW+38n9EQSPzDGCqIJMjm5i2mvds
+	I9g5OXZE+xE9RFpmZNQrPatTcSfibEuxpU6jeQTylz7Ew7NyeefuaCMAnmCwOxnaYp7hcwyFNa8
+	/o3fMG0XixEy86Yf7yLAhR8dIkJ+xpkjIigTKbemuY9ePvhevQ==
+X-Received: by 2002:a05:6000:29d2:b0:4ab:240a:1728 with SMTP id
+ ffacd0b85a97d-4ab240a175fmr29526374f8f.14.1795612181767;
+        Wed, 25 Nov 2026 05:09:41 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.41
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:41 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:34 +0100
+Subject: [PATCH 07/11] media: iris: vdec: keep the visible rectangle on
+ S_FMT(CAPTURE)
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-7-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1966;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=fzj9jbO7RKAl1gqzXLKKHSc4/O1EN7DAcCHOZIrHtSI=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4NlY15xlYI4xJlC/oMKF/paFhgg5A803Z7aHNZ
+ omc0bGuJAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDQAKCRB33NvayMhJ0YdpEA
+ DOBoSQpULuewnBlrfApGT/Ahko9iO59t5gI7NZg1vU8Ooq/tQM69Sy3+I8wgJms1h5V6bVsBMvBPY4
+ gf575wqAF9kKVlIg7onxmVDIiRrhyuWdmzmOPVrWrg5tISrucHPJubkl7wrzTMAVtCqKpSpDblZX/R
+ r/9vxOn3q3f/bLDVZB8oldWlgQPd5geOW++ByLlj6XJyxsTG30UjC/PB1Pvs/stHwJrKVgmOCpsjXQ
+ pqv28k740GLsQwt4PE2m14WnvmkXFDyJY7NkZ0E+BbxyFGBDyPtXbKrp6BNEuNVAtuz1BPKPiEelHu
+ 9M/+NTeBNE4wS8iMMWFyLEx8aV8V1CyH7uq/dqVbP/Wz5zZM+M2p45eswUC+XKglHuR3eAsp8wCsay
+ ug9et7J0st6oNpf0JW3lLuFZ7vRqAIv+ygMZcZcxsHTnFHydD3+sRkH+nHlVN6Sl3PrSoBO/RsDuiu
+ Hv/ANhN4QWUQitXVIdhw1HSf26kZLCxYtk0u23jfVtNIKkGQH3wwXbUsnthn8Yfsm25RhYBONEIZ1r
+ CJAS4TmL5SN+W+sa/FxipTSFiEs+Kjx9KvxPWYkTN87PAE9N5B8ORZ6vusH6mMyXH+zHvQSEGlRqdO
+ Dp6vF3b+N8uaCADaywC/QCNN1nIq6/EZn0Jqt+lFg3eXi+MzRgsYIm7dC1bw==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+S_FMT(CAPTURE) sets inst->crop to the requested CAPTURE size, which
+try_fmt sets to the coded resolution. inst->crop is the visible rectangle
+of the stream: VIDIOC_G_SELECTION returns it for the CROP and COMPOSE
+targets, and gen2 sends it as input crop offsets on STREAMON(OUTPUT).
+
+A client following the specification calls S_FMT(CAPTURE) with the
+format from G_FMT after a source change. The selection targets then
+return the coded resolution instead of the visible rectangle, e.g.
+1920x1088 for a 1920x1080 H.264 stream, and the next STREAMON(OUTPUT),
+e.g. for a seek, programs crop offsets that do not match the stream.
+
+Only bound the visible rectangle by the new CAPTURE size.
+
+Fixes: b530b95de22c ("media: iris: implement s_fmt, g_fmt and try_fmt ioctls")
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ drivers/media/platform/qcom/iris/iris_vdec.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.c b/drivers/media/platform/qcom/iris/iris_vdec.c
+index 6369370a04a2..f7f3171ed6ad 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.c
++++ b/drivers/media/platform/qcom/iris/iris_vdec.c
+@@ -327,10 +327,13 @@ int iris_vdec_s_fmt(struct iris_inst *inst, struct v4l2_format *f)
+ 					   f->fmt.pix_mp.height);
+ 		iris_vdec_update_min_capture_bufs(inst);
+ 
+-		inst->crop.top = 0;
+-		inst->crop.left = 0;
+-		inst->crop.width = f->fmt.pix_mp.width;
+-		inst->crop.height = f->fmt.pix_mp.height;
++		/* inst->crop is the visible rectangle of the stream */
++		inst->crop.left = min(inst->crop.left, fmt->fmt.pix_mp.width);
++		inst->crop.top = min(inst->crop.top, fmt->fmt.pix_mp.height);
++		inst->crop.width = min(inst->crop.width,
++				       fmt->fmt.pix_mp.width - inst->crop.left);
++		inst->crop.height = min(inst->crop.height,
++					fmt->fmt.pix_mp.height - inst->crop.top);
+ 		break;
+ 	default:
+ 		return -EINVAL;
+
+From patchwork Wed Nov 25 13:09:35 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022075
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.53
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612184;
+	b=jpcSNDpzs9TCygciyuytR/XIx6FO883aWyAflf8hmEMsTRDLcsF7qBaun9MdPWZmvMGF
+	 gyOe/eXKcsK+kfipQsZkQJxrHU02QxDreS+/r6KUBlaLrNchKdT3m9xvXRuwx6zqfP2Rc
+	 61ifVs5h029cXX5c5K3M1JDTOG7rq4WFcIEeVrc5t3BTKSfZER+nQlQczcc8clN5MkUT4
+	 KHj0P684O2cCKMxmygKMKYvlC22/i4zH2StarB5lNtUQSDss1ufoBPpKu1XCAPKhoVQ2K
+	 arM+NSNzXGoTB+AgpyebKYQP0Za9eZ2uBmva88Coc4uWM/+dXTtzLv/W1HVpkEqvEng==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612184;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=6nt5vf5KokLLxQ+cPVaRnbgcc7SXudDJDjw2fVauZM4=;
+	b=Kld3CIYZFty8Mz2xA8LRp3vp1CXVlX+Cenmuod7AUH9E0t38CBu8vFJdVFaW9NodWOA7
+	 20qreuWFy5nofLsapwRvjUKSVQJWkvn+5FmAjAO+2Malnoy4rKmO/OVUIzeuz6w8b+uMl
+	 qDXR4WzcpXorMJ/Vm1ZV24VnesMPTs7f4Reem5hdg2DQaRjbWzt5TT0Q/M8rpEnQRH1y2
+	 qcasO3cFxUg+xYSbwoMhNLtPQvcS3P4H3+gfQp7V/RVu4k3VpD4FMTY/eZDosNRrTxEyD
+	 0vgZ4XJUcCNPwZfxrdEQMYiNKqRupnziPWfEbui3jj+9IpmryTA3mZMMJ1/UReepTzg==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=W0Nl54nU;
+	arc=none smtp.remote-ip=209.85.221.53
+Received: from mail-wr1-f53.google.com (mail-wr1-f53.google.com
+ [209.85.221.53])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69E04606A69F
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 69E04606A69F
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=W0Nl54nU
+Received: by mail-wr1-f53.google.com with SMTP id
+ ffacd0b85a97d-4a2f4ca0dcfso3289928f8f.1
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:44 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612183; x=1796216983;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=6nt5vf5KokLLxQ+cPVaRnbgcc7SXudDJDjw2fVauZM4=;
+        b=W0Nl54nUMNTPHRGQUs2F4KEn4U/JhdOtCc5yG3eRglGdwbkEAWguHiqR3LdleBUH9S
+         jkK3V+tX8AMyOFxVUEUBI5uQ6JlCJj6Y9awLSMnOUPvGQJO0ZL/EDXofb8TSitH7Pn/s
+         zaIN+qhaXjft6fBscW/lmYYuUOkLo8gGjaCa8M/WF/mc15vC4E5XfzMVZvoqIk8BpfsQ
+         28TfcWrAWmYqiIH979QsGOcPRyzJ5dNekmHP14byA7CkAinIuNyTAHKnE5v4mQxnqFkZ
+         hD8W3mMgHydMHTxRmI1S2HXOxeaf8GIAZ+eaeUwIUfMgzEansAOjT59Kwq3JUN/hOFr7
+         KQ8Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612183; x=1796216983;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=6nt5vf5KokLLxQ+cPVaRnbgcc7SXudDJDjw2fVauZM4=;
+        b=Iggle8FvImiHv9wj436iIASlspjKu+SFhItL6QhG/afJbguxvyRf7p3TIjhF4fWD3j
+         w2WRhphldU6naidv92G9und90EZg624tIzttWlIsKoWd3r6unn5+wYdM2jRh7m95Rf01
+         RQ4rPIi/cKfILfUg4qlpq3aO44yfmD1MuBeTvbdS944g/alNnfxTts08yx7pDc/iQZxR
+         1BfJra4F2hOTvvT9Uep+rZfAE0ODtck4ldFo+Y5iRxPwGDjS0IRlVmIPiwy8b/ea02nM
+         KRY0Yrg2YM5sPhETNzKn74j+byzy11fdMMbUpf7KzstJkNooDzSe0fJtJRJ75IBHjjE+
+         Ye0Q==
+X-Gm-Message-State: APuU4Z8P59zFWP7Iol0eogxHEnifBEFg1kGvMOJIn30u5bxqcEkenU8R
+	n1nclm/2AnMgns07kBxhM721It1Xd8gVgzkJNwjWlaczzrGCWUeyPouyqKnsvW+Loeo=
+X-Gm-Gg: AZFdTZcoga8m7KawkhW9A7st5RAArjurfSR+RuKOW1170XnS/BlFcm5WMVDPtpdas8p
+	VhOXyftbnUqlfUZgkfy/9xVqHp+koPZLLQmCkjo3n+zoUYaF8z1lE2cJCaPI0gWNjl5LwaNo2aF
+	GnUqzwyuNKW6PbLpVVu0EoVAhzgsWeBCI5Gawuq0+DU4JZvNEkJYpkSllzqkyjusUPH97sr5Am8
+	gPGVcHL/ZNOk03BUrklfNespivw3gVXZgIrOezTCQuOEpWJT5p2qiamimTHho696/RU9vl7foFn
+	qICfRQrklZiP8ZxAXHY7CdFbgOGwbcnHP3ZEEeXYvlLy2NBBLsTN1pQFWK6vbifMNCXtvprct3j
+	TSPRvLouLCQyuPWan7bmS7DXAlesH4mTF7xSMuJKoZPFoWYCX0shrNUoGOplcO+LwS+PZfoob2Y
+	WqoByNOnOaYykI9kKL5MIocM3mFlhlo4GF/PFz7K+o13WXx52WJ5Cmfxv+pXDIvFIhFTo10ZUO+
+	Vnkktg6LYMJUMqIZsvAgvr7IeVHCLZnZsohUCDtL5gNtcYGFk1uCkLjo1//DdkvYwbyzrW13/Ci
+	wBoQEPiKnjf8a0tJwJxiWabDBf3DBvdNoIpVaCi5ZK8Si5d8IA==
+X-Received: by 2002:a05:600c:848d:b0:4bb:6b6b:fbaa with SMTP id
+ 5b1f17b1804b1-4bb8880fd0amr363558955e9.16.1795612182478;
+        Wed, 25 Nov 2026 05:09:42 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.41
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:42 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:35 +0100
+Subject: [PATCH 08/11] media: iris: gen2: don't align the decoder input
+ resolution
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-8-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1777;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=e8Wr0UiZuc5JjFlR6D5E0/SBg/8WVj1e4lATwe/KlYo=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4OgWld3b27tgVUFjv8MZLSCeZgjw45bMoRKG4j
+ t3ErWL6JAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDgAKCRB33NvayMhJ0VOaD/
+ 9a2ozu5tyM5PWl81YUUlW9pjajRaMg1Vu3Lzo2XWzwb5fCoxKDwU6x6jfZWwlRkbW4JXW7omw5l8uM
+ yoS6cjmdj9isj9pg50fCEcDPm3fcf5wBUbYvc/3/Arkc4S1bGNl6s+IymhL5EWRhNdKSmi7sn2PRVe
+ zRewJX0YiwLFjLZQqG5N2XbJxuD1HpazYD2q8StKeX9bVBMv76G4SxtDa/4j6QOnLNhaQHkwRAaTlD
+ N5qx7mxg/bLDUSsZN8kBXW65eSSNzhKYp8dmCQmZzt5Ac++wnWve2yL4kcP4P7qIvX+Zs7wi5IusPz
+ Ts4tH8tHjbt7xejz5PboJOiqXDzkVXQPGQw6j+RpWG3xVu0Y3XXB5+yn9GSvs3IX3EZUzWMHmXcbI4
+ l11+gPxNKvHjwCfM801tEtVK/57dpmn5rPrGGZhLRFDb1lRAZNrxDsvCZ2Y3yIURh8OZVXFl8dkX5m
+ 2MHnzAMZj5AWFfdoAh/qv9JoTQBV36ZuY0ExmcRnC9l+gFhmLuxhJKhtAG38bPWgrT3y6sTYPoL/zd
+ HNdyF7Be01rl89y1UicBcpF4/BTEOmI11bpVZNWLocgaNBRneaY4DbprcSVG3eGPYhNk4XACmFonBb
+ XFG/k2dMKQe0pcYfOJFpfFar7GLsVG7AFYXPk9eUnN8B/1Z+jH0PK3doeaWw==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+Since commit 49a940f37de3 ("media: qcom: iris: Add rotation support for
+encoder"), the decoder input resolution sent to the firmware is aligned
+to 16, or 32 for HEVC.
+
+For VP9 and AV1 the firmware reports the visible size as bitstream
+resolution, and ignores the input crop offsets. After a source change
+to a size that is not aligned, the STREAMON(OUTPUT) of a seek programs
+a resolution that differs from the stream. The firmware then raises a
+settings change for the next frame on the input port only, without the
+PSC_LAST buffer that ends a source change, and decoding stalls.
+
+Send the decoder input resolution as reported, as before that commit.
+
+Fixes: 49a940f37de3 ("media: qcom: iris: Add rotation support for encoder")
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
+index 9464543836c0..608fc405ea05 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_command.c
+@@ -197,9 +197,10 @@ static int iris_hfi_gen2_set_bitstream_resolution(struct iris_inst *inst, u32 pl
+ 	u32 resolution;
+ 
+ 	if (inst->domain == DECODER) {
++		/* Send the resolution as reported by the firmware */
+ 		width = inst->fmt_src->fmt.pix_mp.width;
+ 		height = inst->fmt_src->fmt.pix_mp.height;
+-		resolution = iris_hfi_get_aligned_resolution(inst, width, height);
++		resolution = width << 16 | height;
+ 		inst_hfi_gen2->src_subcr_params.bitstream_resolution = resolution;
+ 		payload_type = HFI_PAYLOAD_U32;
+ 	} else {
+
+From patchwork Wed Nov 25 13:09:36 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022078
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.43
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612186;
+	b=GggBFVgPqadLgS0LYc9hlL6Jp7bSiOh1vJJE0TJTdcV2l75FdJWGB0RVZzeyAvNjCl2A
+	 t0cTSlRkl2DVvMqOJ0lj39+klTmwlBlA11t/J/AADdnTM1XOB5BB/Y8pFJYVKvU+28fW7
+	 sxuF+GlDEdvLEuEBYNQmEkiFR6m5mvF16724HkImYVbqgFzV/Da0ejJHUzswms78WoS3P
+	 B2h/7AF2+FHDceJmunSMz54JJe2ZgiAs3X/dNGHDoMfpA8Jae5srFCMzBSKKEoPTeHIyK
+	 zdRkr3e+9Vh15v/5N2OxiWeJBhUon7hfU/Dk9MSx3kEgIOHIXcy/eyqNqSWKBQH4lUA==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612186;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=cS7r7rCOCdLGahd/IAOlqFcl4cZmu++khrbmV7i67eo=;
+	b=Fmgt3BG75coK9LjQ3sMi+JABJmXg9F5JeBacnA5ONJFtExhfsMpqJdm+ZBLLBYX7/qcx
+	 klSyPceScf78coBPFEIVBHgVoL/mk4Tosj4r8TpdjKDSKZgOE9Weu3c+Yayc1o+/6CdU4
+	 n37Gvifu9XHx0g4WN7aHSvQiW2vSh1pqAUmte7JiT5M56emG3x39shXUsn4EHtoepZLlj
+	 QQ7dvJ33GWBj31ppDv9DUupeVC/vj6BGm7dh0dOJ93na3sxHLXQoBCDWEZ2/3ePVJD4eF
+	 uKNHCdmqsssnt5ABBoS40cnje1eyrXNSYqsiUucrTEkwgjry8SwNVBrKEFQ1SDLqP9A==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=gKx408+z;
+	arc=none smtp.remote-ip=209.85.221.43
+Received: from mail-wr1-f43.google.com (mail-wr1-f43.google.com
+ [209.85.221.43])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB4F8606A6A2
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DB4F8606A6A2
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=gKx408+z
+Received: by mail-wr1-f43.google.com with SMTP id
+ ffacd0b85a97d-490d59c3edaso3920235f8f.1
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:44 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612183; x=1796216983;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=cS7r7rCOCdLGahd/IAOlqFcl4cZmu++khrbmV7i67eo=;
+        b=gKx408+zAon9pAYt77YI9EFyQ6u1C+XrGOmV5M702Fm7yg1jTsyKNCrRaE21JmbZu3
+         +9n/28sfST86qkE9SqWybj8xofZAaq8w970msxTBtfiVXZRDDaWezf4rsB5ZgLiVGVgD
+         udTi+hRF/Ur1/PQgJOpgiLq/NvpsksaqA8tEXHQexUBLexkyiJ87369MeEiL2SowcbK9
+         q0+WFoeWKQaBN6RYMv6z6cblOUf8RmWtYGcz5+uqfRXcVxy2Y8t076KfAxPC5Lt6aWOo
+         uWrmjzORjURQLtTjPnpwoOvcBTHHWP3pElbQHRRxE48iBafxPYECg4aArG+wlLnfGx6O
+         vC+g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612183; x=1796216983;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=cS7r7rCOCdLGahd/IAOlqFcl4cZmu++khrbmV7i67eo=;
+        b=s7FpkZSjh2iY8zOJlowaQQSCjEEHISzNZRYUnQQcQ03Vk30eAx6DJiLbLcG4MykE5G
+         5GEa2HsTp0ty0zocYQTurCf+0mxhmi3am91QCRzyiEazQDTs4bSniJa189u/Je/50iDK
+         QxTh+6LtB9HweV6RnNLgVfnOu2zzFbE+c9gb8WPgZXZQDeO3NAtUSzUMja3Raobgcslz
+         AmoK9jks2BapaQEqxXsqPx0WV1dMAl89e4r3uSRWpr3Kzwnn4jT1RJrwQjwY/K/GmvAu
+         UTBJIYLBOpm5LhTtYa34F8/D5PoyLy2tiWqcGTFwUZsF/waHtPbum0Fho/HnSA0xyBoz
+         t0Jg==
+X-Gm-Message-State: APuU4Z+CDD9Dn5iAL6+crJH+pWtznYFG1qccDZGvjtXvePCy9y71lOns
+	ynDD64HPP8Yi1MtH8H29iGHYVvIH37xKR0j8Vn3lOIZVbMr6xzXHutJ5gYcL3qJRBLs=
+X-Gm-Gg: AZFdTZcSRXqv8LDTwGNu3vGysUF4zkETZuzpH1viH6BtHZWB8SXMVhfa35vkkR+zQPG
+	TcvMyQ1rABUjzP9NUpmUk89B+YT/suDX64Ea1+7Azi0gVT8h/QAaCXZyUUoAk1WpkgxCtgo1/9o
+	1rFQtOlwqwZbHHB9LEhRZACGFNYi/4TI2Rviz1KwXPxXGAlR6qiIYcfpnItQbG4mNvdSTQlURay
+	rUYAV0oausFCwBav9/XEGVd8hmIGCfLQf4HO+zW0n9tDJla98XAtdR9seOdnkgO3LX2bvb/m0DR
+	2EZLIMfWEokvH1yH5xgNckIi3bmhUqYT3bgDl7WGposfwjhGj6wc5wWaAA8MRyTbMCqauea6koS
+	INFvy3zO1THo0HLLynKd2oDhDjgP4BkjR4/p+hXm5K49uN48UZmVg4+icJXg3ZW8rXsXFUNsCNw
+	17lrdJI3neA5+9ZJVIYeK65v1u3v8Bk1Vtlm3QgMuGszhlviiPJlUNwkbnCF3GO21yX0MJ+V5Ev
+	GaBwqnPcUZBVFXsRIBQ1oyTJ1UUo1w9a3kxRVyc2u+G7WLL1n3e5TVv0b5o9/q/SC3RJvcEEegH
+	xuX04jKv9UxZuvun/SNo875/EFCui/EQu74z6uCYbOzE7/bTCLI=
+X-Received: by 2002:a05:6000:40e0:b0:4b8:6c3e:95f5 with SMTP id
+ ffacd0b85a97d-4b86c3e984cmr7309630f8f.30.1795612183200;
+        Wed, 25 Nov 2026 05:09:43 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.42
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:42 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:36 +0100
+Subject: [PATCH 09/11] media: iris: vdec: resume an unchanged VP9 settings
+ change after a seek
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-9-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=10846;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=PAb54xWwMH3AV7bxWLoqg7GcttWtQHKqGajir65iu+s=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4OTUF1RTxRGb3UXtPdMtkj3Y4Zk3YFgPz/BitT
+ Kv3Aha+JAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDgAKCRB33NvayMhJ0QW2EA
+ CbuRM9299XSt5zf6FehkMTwf/CigUNXrI6D9W6HGbcIzlzWEQJ5/vI1rjOvFSd8/sAFcUJHMfSKhwq
+ vnBP3ws/bA4PoXNv19vHbDT7MA0d4XNAbfw6G38/SAu7RA5QzEe/MaPTUL1MbHmrYQdxdUSurtsN8v
+ bPnIyvUWaJPPIHf7Hjd/xeK0kzYIU2svylC7oGuD+LKA7fvpR8RCoQBCqw6fnJ+fCx0u6KvIShUrIB
+ EJ2V7OIFZRbvcfNDBHU1FFYvG350p7GWZJnIWgrG0p5LRpHl4t3YrIgHUMSIc/pA1+oo6NrXKNgppZ
+ q49QwxMKVGQc0MauGJ+QiNAe1XwkvBQf+An4c2pzqWU4p5sSp5kVEQXuklg/FyJ9da7rLGnX6kVeC+
+ XpL7vo3bjyHpeZhTYArA71bt5RR5c0ePsAuNcstQjTytqPR3x+t/HSXsIHFbeehY0/ZlnaFNwAuI3A
+ MCwtT/4WSxX67gVbNcVAuCKDjS3q5J739pR9OHU1FzBBJJoOGvcFKXUAdSLWBWoxRCsj6OxGWW79n9
+ qSD8Xa6oMzakE66WfSg6ZtjVUtCNo2iz000agsLHWZQHkrQWq6+KNjHPqg+GgtDleJT+0xhtni8+le
+ Gl+POVi7vTs7QYpBCMmbP7Tknv35STwjr868UciSNYsuiGY47VWx5TTtqZOA==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+After a seek, the VP9 firmware raises an input port settings change for
+the next keyframe even when the stream format did not change, then only
+waits for the input port to be resumed: no PSC_LAST buffer follows. The
+driver signals it as a source change, and a client following the
+specification waits forever for the LAST buffer.
+
+When such a settings change leaves the CAPTURE format, the colorimetry,
+the visible rectangle and the minimum CAPTURE buffer count unchanged, the
+client has nothing to reconfigure: resume the input port without
+signalling it. Other codecs pause the output port for any settings
+change and need the full source change sequence.
+
+The check is armed by STREAMON(OUTPUT) while CAPTURE streams, and ends
+when a settings change is resumed without being signalled or OUTPUT is
+stopped. Frames decoded before the seek can be returned after it, so a
+decoded frame does not end it.
+
+The settings change for the bitstream queued before a seek can arrive
+while STREAMOFF(OUTPUT) waits, without the instance lock, for the firmware
+to stop the input port. Keep the check armed until the stop completes and
+do not resume the input port then: the next STREAMON(OUTPUT) restarts it.
+
+Should the firmware still pause the output port, resume it and do not
+return the PSC_LAST buffer as LAST.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../platform/qcom/iris/iris_hfi_gen2_response.c    | 28 ++++++++++-
+ drivers/media/platform/qcom/iris/iris_instance.h   |  6 +++
+ drivers/media/platform/qcom/iris/iris_vb2.c        | 10 ++++
+ drivers/media/platform/qcom/iris/iris_vdec.c       | 57 ++++++++++++++++++++++
+ drivers/media/platform/qcom/iris/iris_vdec.h       |  5 ++
+ 5 files changed, 104 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+index baaab9608da0..4f685efbeae9 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+@@ -350,8 +350,8 @@ static int iris_hfi_gen2_handle_output_buffer(struct iris_inst *inst,
+ {
+ 	struct v4l2_m2m_ctx *m2m_ctx = inst->m2m_ctx;
+ 	struct v4l2_m2m_buffer *m2m_buffer, *n;
++	bool found = false, unsignalled_psc_last = false;
+ 	struct iris_buffer *buf;
+-	bool found = false;
+ 	int ret;
+ 
+ 	if (hfi_buffer->flags & HFI_BUF_FW_FLAG_LAST) {
+@@ -360,7 +360,15 @@ static int iris_hfi_gen2_handle_output_buffer(struct iris_inst *inst,
+ 			return ret;
+ 	}
+ 
+-	if (hfi_buffer->flags & HFI_BUF_FW_FLAG_PSC_LAST) {
++	/* The firmware may still pause the output port after an input resume */
++	if ((hfi_buffer->flags & HFI_BUF_FW_FLAG_PSC_LAST) && inst->drc_resumed_in_place &&
++	    !(inst->sub_state & IRIS_INST_SUB_DRC)) {
++		ret = inst->hfi_session_ops->session_resume_drc(inst,
++							       V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
++		if (ret)
++			return ret;
++		unsignalled_psc_last = true;
++	} else if (hfi_buffer->flags & HFI_BUF_FW_FLAG_PSC_LAST) {
+ 		ret = iris_inst_sub_state_change_drc_last(inst);
+ 		if (ret)
+ 			return ret;
+@@ -381,6 +389,14 @@ static int iris_hfi_gen2_handle_output_buffer(struct iris_inst *inst,
+ 	if (!(buf->attr & BUF_ATTR_QUEUED))
+ 		return -EINVAL;
+ 
++	if (unsignalled_psc_last) {
++		inst->drc_resumed_in_place = false;
++		if (!hfi_buffer->data_size) {
++			buf->attr &= ~BUF_ATTR_QUEUED;
++			return iris_queue_buffer(inst, buf);
++		}
++	}
++
+ 	buf->data_offset = hfi_buffer->data_offset;
+ 	buf->data_size = hfi_buffer->data_size;
+ 	buf->timestamp = hfi_buffer->timestamp;
+@@ -389,6 +405,8 @@ static int iris_hfi_gen2_handle_output_buffer(struct iris_inst *inst,
+ 	buf->attr |= BUF_ATTR_DEQUEUED;
+ 
+ 	buf->flags = iris_hfi_gen2_get_driver_buffer_flags(inst, hfi_buffer->flags);
++	if (unsignalled_psc_last)
++		buf->flags &= ~V4L2_BUF_FLAG_LAST;
+ 
+ 	/*
+ 	 * The empty buffer that ends a drain (LAST) or a source change
+@@ -665,6 +683,9 @@ static void iris_hfi_gen2_read_input_subcr_params(struct iris_inst *inst)
+ static int iris_hfi_gen2_handle_src_change(struct iris_inst *inst,
+ 					   struct iris_hfi_packet *pkt)
+ {
++	struct v4l2_pix_format_mplane old_fmt = inst->fmt_dst->fmt.pix_mp;
++	u32 old_min_count = inst->buffers[BUF_OUTPUT].min_count;
++	struct iris_hfi_rect_desc old_crop = inst->crop;
+ 	int ret;
+ 
+ 	if (pkt->port != HFI_PORT_BITSTREAM)
+@@ -675,6 +696,9 @@ static int iris_hfi_gen2_handle_src_change(struct iris_inst *inst,
+ 		return ret;
+ 
+ 	iris_hfi_gen2_read_input_subcr_params(inst);
++	if (iris_vdec_src_change_after_seek(inst, &old_fmt, &old_crop, old_min_count))
++		return iris_vdec_src_change_resume_input(inst);
++
+ 	iris_vdec_src_change(inst);
+ 
+ 	return 0;
+diff --git a/drivers/media/platform/qcom/iris/iris_instance.h b/drivers/media/platform/qcom/iris/iris_instance.h
+index d852299d3f05..53693bc53a8e 100644
+--- a/drivers/media/platform/qcom/iris/iris_instance.h
++++ b/drivers/media/platform/qcom/iris/iris_instance.h
+@@ -57,6 +57,9 @@ struct iris_hfi_session_ops;
+  * @metadata_idx: index for metadata buffer
+  * @codec: codec type
+  * @last_buffer_dequeued: a flag to indicate that last buffer is sent by driver
++ * @vp9_seek_psc: a VP9 seek may raise a settings change that changes nothing
++ * @drc_resumed_in_place: a settings change was not signalled, its PSC_LAST may follow
++ * @input_stopping: STREAMOFF(OUTPUT) waits for the firmware to stop the input
+  * @drc_wq: woken when IRIS_INST_SUB_DRC_LAST is set
+  * @last_buf_ns: start time of received input buffer for current one second FPS window
+  * @frame_counter: input buffer counter for current one second FPS window
+@@ -106,6 +109,9 @@ struct iris_inst {
+ 	u32				metadata_idx;
+ 	u32				codec;
+ 	bool				last_buffer_dequeued;
++	bool				vp9_seek_psc;
++	bool				drc_resumed_in_place;
++	bool				input_stopping;
+ 	wait_queue_head_t		drc_wq;
+ 	u64				last_buf_ns;
+ 	u32				frame_counter;
+diff --git a/drivers/media/platform/qcom/iris/iris_vb2.c b/drivers/media/platform/qcom/iris/iris_vb2.c
+index b56c855567a6..c19de89945e3 100644
+--- a/drivers/media/platform/qcom/iris/iris_vb2.c
++++ b/drivers/media/platform/qcom/iris/iris_vb2.c
+@@ -262,11 +262,21 @@ void iris_vb2_stop_streaming(struct vb2_queue *q)
+ 
+ 	mutex_lock(&inst->lock);
+ 
++	inst->drc_resumed_in_place = false;
++
+ 	if (!V4L2_TYPE_IS_OUTPUT(q->type) &&
+ 	    !V4L2_TYPE_IS_CAPTURE(q->type))
+ 		goto exit;
+ 
++	/*
++	 * The lock is released while the firmware stops the port: a settings
++	 * change for the flushed bitstream can still be handled meanwhile.
++	 */
++	inst->input_stopping = V4L2_TYPE_IS_OUTPUT(q->type);
+ 	ret = iris_session_streamoff(inst, q->type);
++	inst->input_stopping = false;
++	if (V4L2_TYPE_IS_OUTPUT(q->type))
++		inst->vp9_seek_psc = false;
+ 	if (ret)
+ 		goto exit;
+ 
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.c b/drivers/media/platform/qcom/iris/iris_vdec.c
+index f7f3171ed6ad..edd58c0dd4a5 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.c
++++ b/drivers/media/platform/qcom/iris/iris_vdec.c
+@@ -375,6 +375,60 @@ int iris_vdec_subscribe_event(struct iris_inst *inst, const struct v4l2_event_su
+ 	return ret;
+ }
+ 
++static bool iris_vdec_capture_fmt_unchanged(struct iris_inst *inst,
++					    const struct v4l2_pix_format_mplane *old_fmt)
++{
++	const struct v4l2_pix_format_mplane *fmt = &inst->fmt_dst->fmt.pix_mp;
++
++	return fmt->pixelformat == old_fmt->pixelformat &&
++	       fmt->width == old_fmt->width && fmt->height == old_fmt->height &&
++	       fmt->plane_fmt[0].bytesperline == old_fmt->plane_fmt[0].bytesperline &&
++	       fmt->plane_fmt[0].sizeimage == old_fmt->plane_fmt[0].sizeimage;
++}
++
++/*
++ * After a seek, the VP9 firmware raises an input port settings change for the
++ * next keyframe even if nothing changed, then only waits for the input port to
++ * be resumed: no PSC_LAST buffer follows.
++ */
++bool iris_vdec_src_change_after_seek(struct iris_inst *inst,
++				     const struct v4l2_pix_format_mplane *old_fmt,
++				     const struct iris_hfi_rect_desc *old_crop,
++				     u32 old_min_count)
++{
++	/* A pending drain goes on once the input port resumes */
++	if (!inst->vp9_seek_psc || inst->state != IRIS_INST_STREAMING ||
++	    (inst->sub_state & ~IRIS_INST_SUB_DRAIN) !=
++	    (IRIS_INST_SUB_DRC | IRIS_INST_SUB_INPUT_PAUSE))
++		return false;
++
++	return iris_vdec_capture_fmt_unchanged(inst, old_fmt) &&
++	       inst->fmt_dst->fmt.pix_mp.colorspace == old_fmt->colorspace &&
++	       inst->fmt_dst->fmt.pix_mp.xfer_func == old_fmt->xfer_func &&
++	       inst->fmt_dst->fmt.pix_mp.ycbcr_enc == old_fmt->ycbcr_enc &&
++	       inst->fmt_dst->fmt.pix_mp.quantization == old_fmt->quantization &&
++	       !memcmp(&inst->crop, old_crop, sizeof(*old_crop)) &&
++	       inst->buffers[BUF_OUTPUT].min_count <= old_min_count;
++}
++
++int iris_vdec_src_change_resume_input(struct iris_inst *inst)
++{
++	int ret;
++
++	inst->vp9_seek_psc = false;
++	inst->drc_resumed_in_place = true;
++
++	/* The STREAMON(OUTPUT) following the stop restarts the input port */
++	if (!inst->input_stopping) {
++		ret = inst->hfi_session_ops->session_resume_drc(inst,
++							       V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
++		if (ret)
++			return ret;
++	}
++
++	return iris_inst_change_sub_state(inst, IRIS_INST_SUB_DRC | IRIS_INST_SUB_INPUT_PAUSE, 0);
++}
++
+ void iris_vdec_src_change(struct iris_inst *inst)
+ {
+ 	struct v4l2_m2m_ctx *m2m_ctx = inst->m2m_ctx;
+@@ -418,6 +472,9 @@ int iris_vdec_streamon_input(struct iris_inst *inst)
+ 
+ 	inst->frame_counter = 0;
+ 
++	inst->vp9_seek_psc = inst->codec == V4L2_PIX_FMT_VP9 &&
++			     vb2_is_streaming(v4l2_m2m_get_dst_vq(inst->m2m_ctx));
++
+ 	return iris_process_streamon_input(inst);
+ }
+ 
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.h b/drivers/media/platform/qcom/iris/iris_vdec.h
+index 4b903da58056..5b55354cc25f 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.h
++++ b/drivers/media/platform/qcom/iris/iris_vdec.h
+@@ -15,6 +15,11 @@ int iris_vdec_s_fmt(struct iris_inst *inst, struct v4l2_format *f);
+ int iris_vdec_validate_format(struct iris_inst *inst, u32 pixelformat);
+ int iris_vdec_subscribe_event(struct iris_inst *inst, const struct v4l2_event_subscription *sub);
+ void iris_vdec_src_change(struct iris_inst *inst);
++bool iris_vdec_src_change_after_seek(struct iris_inst *inst,
++				     const struct v4l2_pix_format_mplane *old_fmt,
++				     const struct iris_hfi_rect_desc *old_crop,
++				     u32 old_min_count);
++int iris_vdec_src_change_resume_input(struct iris_inst *inst);
+ void iris_vdec_update_min_capture_bufs(struct iris_inst *inst);
+ int iris_vdec_streamon_input(struct iris_inst *inst);
+ int iris_vdec_streamon_output(struct iris_inst *inst);
+
+From patchwork Wed Nov 25 13:09:37 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022077
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.47
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612186;
+	b=jJTcR4mD0lfoIN0eCM+WUdbeU3FgBeC9XoyaULe6ZSsw+AKRR0nQid+H105mTc/FaLjX
+	 6ObLORtIojNgCy9zJqrGUCOZ7x3hwQu8yylOAVnblB/VpAQXza1776wIx8r9asbFhTP3Y
+	 s1LVyzUOu6VCl8VF0EDyz5kLTmogMTXPTXj+dZFR6qBSMhsJmgxXbgoI81SgXERk28fE+
+	 9vtmc2x7Va3e4tJA71sG/Va8NsK6qKBnEpuh7qj+x9QEFRLTLuXF0+9c17TGX/L58a4M1
+	 oYhwAsOBiGNNkhnETMLAlwZE+QZsnq8ek7bySDRy546ClvuF4YHy1lcbtwEyyg3YkLQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612186;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=ypqh5JLbCUVt2KcUVLNuP+rQ4zNQNHHdmlYnlEePayU=;
+	b=b3sd2USb5aZ8JmQwei5DK6CYYVhoHQ04ejtEPURvxedStMHMpg0meQuu3n0Z16i2M39r
+	 OENb3Zpf9YcWsahzwcIHOdvqXZjA5e1ldJkjLZfygomlxsrj7s8pwX7Ahu295rOFbWASc
+	 uSusH23ykj5r6y/9w5OmTWTclq5Zrrij++5ACt7dUSIpyDKb3xOgk7Mh0eYnkhUfxbM35
+	 E1I/aFjKvxz/6a668ZX50fuN/fh1EUSeY/yNW2RCgzPOeo1WczAU3fpSQPPRe0SfAbns7
+	 HrNI0XrMzy/mOaf4PlK+juUHcEPyq9qqwIxiliCik0V7pyDmiLNqRKvrxPZRf1KhDnw==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=ydfbX6EE;
+	arc=none smtp.remote-ip=209.85.221.47
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com
+ [209.85.221.47])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 910C8606A334
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 910C8606A334
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=ydfbX6EE
+Received: by mail-wr1-f47.google.com with SMTP id
+ ffacd0b85a97d-498f5fa5103so3416929f8f.2
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:45 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612184; x=1796216984;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=ypqh5JLbCUVt2KcUVLNuP+rQ4zNQNHHdmlYnlEePayU=;
+        b=ydfbX6EEUyA6kOfo5SHQSouYrbT+xJHGNZP6kIP6FfHZnn4Tl02dL13W2DNy4a17+l
+         RdtsOXVJg7FwXNBC9T48uLY594gNMNws0s9iqgC/iz51ukAox8gRgPNzRXUXnVneLQSr
+         ImQUB840GSE1RnoPF9f5WbVZY6R/SKKm1OVyfmufTL1pSaIvfFImt1GFAGo4dM00yp7d
+         KmriN234kDfLJKOuRNwDZli9KzVea1cmsCQ5Y6/PZ70SqochQGX1+QX9gN3X2qxmsrqF
+         0bWieMhw5/D7eXbS10m4uYSVY7eeYiEW76iCvdF9patEY72cDhYVAWPS62l05Q2vRHw/
+         Wl9Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612184; x=1796216984;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=ypqh5JLbCUVt2KcUVLNuP+rQ4zNQNHHdmlYnlEePayU=;
+        b=JyYqU9hOOCxqz+1OXQPutfm7knYyHwGQtTF82VkXGD0Cpq/u+jnM+SJbSz4SAKttPC
+         hH//uUxKXCqsIkpQdW3T8Usy4UrEH20UztxX9SyBSfKgDCXcWkHcDLXcV3iPewldo3GK
+         JoJrxC4HmFWNxG/JlnZajNIF9s/cTSHc2QzoSJ0XjZkMTBxpYLTdTRp7cuUqm5llm+eS
+         elsKs1vrMC8AyfrRZoKLbsb6xCAcSYfO1rxXTgHBqN0zMP3cZsn52lsMiC5Hyner2xWi
+         h1PMBZ1aYNa7lLQXn0CrnB/Tk9U4ceZi3YF3sOyACjKVQgy+Pvzxk6ZQKiHvKwCg3RV1
+         90dw==
+X-Gm-Message-State: APuU4Z8A1qdEStUDlc7oGmUnvVo+FIbh21d+KYz+MTb4fvQgj7WPlmBt
+	xM4zVAsXtMU/Xj8TiwGfCYytDjX1ObjeTNtamlw/Npdxc+3vyl7IoSjop+T8Jb/I3Sg=
+X-Gm-Gg: AZFdTZczmIY5QTAYCds9k2o8pI05b9fr2/RMMMLYDsanpzsGptxFndw4P8R5UDEy10u
+	ImuXTaFbVmFzGTgO7Tau3HGQS2FnmrLou3aBf/jh3GZ0pntMuZqtuT8jfWm46xGcEmCbZQNYfnl
+	Jwdludw3IJcsV9NL+ZwxugDUNMp7VO2JfpegxK7VweIb60DF9mox0NDXF5v46YNtqcPJxi7dsvL
+	Zbui8eTkBISzAG7lUYq12qTQwJyrgIobmKTjHOyukhCSSpOibLl+N6VJ9DlCn/dCa8XySvJ1zr3
+	gSgIsumEf0MNQQwb44I+QENUor6STl+0e0qe9ihQzSuXHrfi6QUVdUu9tk7bOYArFmNflQ9bzvs
+	bLeika3eFOHaEl/sj2W1YFXq02ys8jh1VAzcbf17q9zz89mn5zTRKIOvInnABO1dVsdbLna1hw8
+	V5fTYhwv4RWYxIsma7KXiE3ynsiT2AiJLgHgibRfnLUBAcwEOUkK51isZu28t9DusF6izfOL7Zs
+	PunJCNXZ1iM6WSGRvFgbjYWVzZ+qcYy/QKvfAw+b2IX2KlPMv/XNx0axmY6XXG122o+tAGQnL3S
+	mKcT45zfXAJKAvNLXRIHr5YeVVYK+fKhR/AvVAqToZTLwbesFsGblVsHyC2cetiYz1qhDf4=
+X-Received: by 2002:a05:6000:2b87:b0:487:13f:f612 with SMTP id
+ ffacd0b85a97d-4abb6095d9bmr20744901f8f.37.1795612183928;
+        Wed, 25 Nov 2026 05:09:43 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.43
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:43 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:37 +0100
+Subject: [PATCH 10/11] media: iris: vdec: complete an unchanged first
+ settings change for FFmpeg
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-10-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=8134;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=y134dMdSyY/lJDzxDWcwo8wMGRX8FYxyYyA/TkY9KNY=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4PmLaXF1N15brpwa/cavzXN1kWHbTEC1dk0BHO
+ /3IEcFKJAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDwAKCRB33NvayMhJ0bWaD/
+ 4xyXWwuq9ZBHQz5LQIWqLR9yaTDoG0bcO9XdgUbDvsk3eyTmlCk+9hpkLX+UZ/FaKQr9D61mw8OXfN
+ kbPs6sg4KogikrXzgrAu27w3Sb8km+vCFXtbEPLGmtmetwncr0DQ6+PR13nlzHxzCTs+sOQoIDdWnD
+ 65uwAu8ThhK9GWw2RZ277luXIcUWRea1Iuq/ETiWcZmSvKIqcNT7jM+XL8KTzj4XOg1PcjT47u8ZpT
+ /WPvlzFs4tqPIsc/QOXO0w0UG5BeMw03sK3h9J/KPuztwNj2nuAkDTEe8jQOsfZDfMGklnBBfLJKw7
+ phBnKmE6kDTVemKKZjFJaJBpHQLlV/FHFpZroivzQO+Z0CMAkazNhlwl7cweVqbae7Ecq3ID53ioDl
+ R/UFk1Xok/cgmTo2mWxofzTCfxZCQfnJR5GpCSKy27MNkKMN4BaHEwBwhJbMItYQsFZp/s/u/TprLK
+ mau9zETLk1oggdmxe+kiXC+GmxkFxz9z5eeGYNqiyr27YnFEWz7qaLeM0p24WVC96mZTjsVVd3Jsqy
+ nU1ASNmrkKnkEg6s6ET9ric7aSEF+vhCWzrzWt76+JBG4zA9XN2QlK2SC5EbGF9yKoqVQR/tdFiyx+
+ G04mr3VvdBbaXSXhwykyiSDcxTfL8F6YBCZ4uBgezP3+wdbHMBvBgFLOM22A==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+FFmpeg starts CAPTURE with the size from the container, before the
+decoder reports the stream format. When the firmware parses the first
+sequence header after that, its settings change pauses the output port
+and ends with a PSC_LAST buffer, and the driver signals a source change
+even if the CAPTURE format did not change.
+
+FFmpeg then sees an unchanged format and sends V4L2_DEC_CMD_START at
+once, which fails with -EBUSY as the LAST buffer did not come yet, and
+takes the LAST buffer for the end of the stream: it outputs an empty
+frame and stops decoding.
+
+When the first settings change after such an early STREAMON(CAPTURE)
+leaves the CAPTURE format unchanged and the allocated CAPTURE buffers
+sufficient, do not signal it, and complete it on its PSC_LAST buffer as
+V4L2_DEC_CMD_START does. The visible rectangle and the colorimetry, which
+the client could not know yet, are updated without an event. If a queue
+is stopped before the PSC_LAST buffer, signal the source change.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../platform/qcom/iris/iris_hfi_gen2_response.c    | 16 ++++++++++
+ drivers/media/platform/qcom/iris/iris_instance.h   |  4 +++
+ drivers/media/platform/qcom/iris/iris_vb2.c        |  5 +++
+ drivers/media/platform/qcom/iris/iris_vdec.c       | 37 ++++++++++++++++++++++
+ drivers/media/platform/qcom/iris/iris_vdec.h       |  3 ++
+ 5 files changed, 65 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+index 4f685efbeae9..b1c4e68de2db 100644
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen2_response.c
+@@ -368,11 +368,18 @@ static int iris_hfi_gen2_handle_output_buffer(struct iris_inst *inst,
+ 		if (ret)
+ 			return ret;
+ 		unsignalled_psc_last = true;
++	} else if ((hfi_buffer->flags & HFI_BUF_FW_FLAG_PSC_LAST) && inst->drc_unsignalled) {
++		ret = iris_vdec_src_change_complete(inst);
++		if (ret)
++			return ret;
++		unsignalled_psc_last = true;
+ 	} else if (hfi_buffer->flags & HFI_BUF_FW_FLAG_PSC_LAST) {
+ 		ret = iris_inst_sub_state_change_drc_last(inst);
+ 		if (ret)
+ 			return ret;
+ 	}
++	if (hfi_buffer->data_size)
++		inst->early_capture = false;
+ 
+ 	v4l2_m2m_for_each_dst_buf_safe(m2m_ctx, m2m_buffer, n) {
+ 		buf = to_iris_buffer(&m2m_buffer->vb);
+@@ -686,11 +693,15 @@ static int iris_hfi_gen2_handle_src_change(struct iris_inst *inst,
+ 	struct v4l2_pix_format_mplane old_fmt = inst->fmt_dst->fmt.pix_mp;
+ 	u32 old_min_count = inst->buffers[BUF_OUTPUT].min_count;
+ 	struct iris_hfi_rect_desc old_crop = inst->crop;
++	bool early_capture;
+ 	int ret;
+ 
+ 	if (pkt->port != HFI_PORT_BITSTREAM)
+ 		return 0;
+ 
++	early_capture = inst->early_capture;
++	inst->early_capture = false;
++
+ 	ret = iris_inst_sub_state_change_drc(inst);
+ 	if (ret)
+ 		return ret;
+@@ -699,6 +710,11 @@ static int iris_hfi_gen2_handle_src_change(struct iris_inst *inst,
+ 	if (iris_vdec_src_change_after_seek(inst, &old_fmt, &old_crop, old_min_count))
+ 		return iris_vdec_src_change_resume_input(inst);
+ 
++	if (early_capture && iris_vdec_first_src_change_unchanged(inst, &old_fmt)) {
++		inst->drc_unsignalled = true;
++		return 0;
++	}
++
+ 	iris_vdec_src_change(inst);
+ 
+ 	return 0;
+diff --git a/drivers/media/platform/qcom/iris/iris_instance.h b/drivers/media/platform/qcom/iris/iris_instance.h
+index 53693bc53a8e..b85f7ad460bf 100644
+--- a/drivers/media/platform/qcom/iris/iris_instance.h
++++ b/drivers/media/platform/qcom/iris/iris_instance.h
+@@ -60,6 +60,8 @@ struct iris_hfi_session_ops;
+  * @vp9_seek_psc: a VP9 seek may raise a settings change that changes nothing
+  * @drc_resumed_in_place: a settings change was not signalled, its PSC_LAST may follow
+  * @input_stopping: STREAMOFF(OUTPUT) waits for the firmware to stop the input
++ * @early_capture: CAPTURE was started before the first settings change
++ * @drc_unsignalled: an unsignalled settings change waits for its PSC_LAST
+  * @drc_wq: woken when IRIS_INST_SUB_DRC_LAST is set
+  * @last_buf_ns: start time of received input buffer for current one second FPS window
+  * @frame_counter: input buffer counter for current one second FPS window
+@@ -112,6 +114,8 @@ struct iris_inst {
+ 	bool				vp9_seek_psc;
+ 	bool				drc_resumed_in_place;
+ 	bool				input_stopping;
++	bool				early_capture;
++	bool				drc_unsignalled;
+ 	wait_queue_head_t		drc_wq;
+ 	u64				last_buf_ns;
+ 	u32				frame_counter;
+diff --git a/drivers/media/platform/qcom/iris/iris_vb2.c b/drivers/media/platform/qcom/iris/iris_vb2.c
+index c19de89945e3..f83ea1a5f5ba 100644
+--- a/drivers/media/platform/qcom/iris/iris_vb2.c
++++ b/drivers/media/platform/qcom/iris/iris_vb2.c
+@@ -263,6 +263,11 @@ void iris_vb2_stop_streaming(struct vb2_queue *q)
+ 	mutex_lock(&inst->lock);
+ 
+ 	inst->drc_resumed_in_place = false;
++	inst->early_capture = false;
++	if (inst->drc_unsignalled) {
++		inst->drc_unsignalled = false;
++		iris_vdec_src_change(inst);
++	}
+ 
+ 	if (!V4L2_TYPE_IS_OUTPUT(q->type) &&
+ 	    !V4L2_TYPE_IS_CAPTURE(q->type))
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.c b/drivers/media/platform/qcom/iris/iris_vdec.c
+index edd58c0dd4a5..8512693e3ff3 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.c
++++ b/drivers/media/platform/qcom/iris/iris_vdec.c
+@@ -429,6 +429,36 @@ int iris_vdec_src_change_resume_input(struct iris_inst *inst)
+ 	return iris_inst_change_sub_state(inst, IRIS_INST_SUB_DRC | IRIS_INST_SUB_INPUT_PAUSE, 0);
+ }
+ 
++/*
++ * A client may start CAPTURE before the first settings change, with the size
++ * from the container as FFmpeg does. That settings change pauses the output
++ * port and ends with a PSC_LAST buffer even if it changes nothing.
++ */
++bool iris_vdec_first_src_change_unchanged(struct iris_inst *inst,
++					  const struct v4l2_pix_format_mplane *old_fmt)
++{
++	struct vb2_queue *dst_q = v4l2_m2m_get_dst_vq(inst->m2m_ctx);
++
++	return inst->state == IRIS_INST_STREAMING &&
++	       inst->sub_state == (IRIS_INST_SUB_DRC | IRIS_INST_SUB_INPUT_PAUSE) &&
++	       iris_vdec_capture_fmt_unchanged(inst, old_fmt) &&
++	       inst->buffers[BUF_OUTPUT].min_count <= vb2_get_num_buffers(dst_q);
++}
++
++/* Complete an unsignalled settings change on its PSC_LAST buffer */
++int iris_vdec_src_change_complete(struct iris_inst *inst)
++{
++	int ret;
++
++	inst->drc_unsignalled = false;
++
++	ret = iris_inst_sub_state_change_drc_last(inst);
++	if (ret)
++		return ret;
++
++	return iris_vdec_start_cmd(inst);
++}
++
+ void iris_vdec_src_change(struct iris_inst *inst)
+ {
+ 	struct v4l2_m2m_ctx *m2m_ctx = inst->m2m_ctx;
+@@ -483,6 +513,13 @@ int iris_vdec_streamon_output(struct iris_inst *inst)
+ 	const struct iris_hfi_session_ops *hfi_ops = inst->hfi_session_ops;
+ 	int ret;
+ 
++	/* On gen2, fw_min_count is only set by a settings change */
++	inst->early_capture = inst->state == IRIS_INST_INPUT_STREAMING &&
++			      !inst->fw_min_count &&
++			      !(inst->sub_state & (IRIS_INST_SUB_FIRST_IPSC |
++						   IRIS_INST_SUB_DRC |
++						   IRIS_INST_SUB_DRAIN));
++
+ 	ret = hfi_ops->session_set_config_params(inst, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
+ 	if (ret)
+ 		return ret;
+diff --git a/drivers/media/platform/qcom/iris/iris_vdec.h b/drivers/media/platform/qcom/iris/iris_vdec.h
+index 5b55354cc25f..24dadee0a19c 100644
+--- a/drivers/media/platform/qcom/iris/iris_vdec.h
++++ b/drivers/media/platform/qcom/iris/iris_vdec.h
+@@ -20,6 +20,9 @@ bool iris_vdec_src_change_after_seek(struct iris_inst *inst,
+ 				     const struct iris_hfi_rect_desc *old_crop,
+ 				     u32 old_min_count);
+ int iris_vdec_src_change_resume_input(struct iris_inst *inst);
++bool iris_vdec_first_src_change_unchanged(struct iris_inst *inst,
++					  const struct v4l2_pix_format_mplane *old_fmt);
++int iris_vdec_src_change_complete(struct iris_inst *inst);
+ void iris_vdec_update_min_capture_bufs(struct iris_inst *inst);
+ int iris_vdec_streamon_input(struct iris_inst *inst);
+ int iris_vdec_streamon_output(struct iris_inst *inst);
+
+From patchwork Wed Nov 25 13:09:38 2026
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Neil Armstrong <neil.armstrong@linaro.org>
+X-Patchwork-Id: 15022079
+Authentication-Results: smtp.subspace.kernel.org;
+ arc=none smtp.remote-ip=209.85.221.54
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795612186;
+	b=XcNSPgteLIjMJ8D1YMY2sN5iAcmEtGwldr33m/CN8PLqDAlmqDL/mzzLadXA0mZ7kDvg
+	 HLl0VpFOPo41y+oYc305OlaipQiQbH7OO/bre44lAeysMNppeDm7jp9gAdkiZEp6K78Ov
+	 77c7F2Wal5a13+sZuAKYaZH4vphdcUZU9zEdFwr1pPHG95OMM41JbypQRJ/5sZlVhd6o9
+	 1HSQxBI9FAWRSzgaWmOuI5QyoNfCzpOLjsq2dd2YH1YAYA5XeLNsFiVbAJHG+xmZUag/d
+	 DMr0t2rbcwN9Wv+xOreLtuRl3tx6xFYDZKuZPRaQuTMXTxG7gbNNSbXlOTVPuXDLoIA==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795612186;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=Tbq3WArIKfshci62hPLXBd6m9hDUDlRFQ7rBlDH7S9g=;
+	b=4XkoIsMXOc4sgxik5EbXJxKdMXakS6wlpm5wyQAXbaCiOUfZfZdoOsgsMIbEHy5D/GKj
+	 EJvWku9sLOYcSqeZxtDgpIv2C62AbCEZoFB9weBrzUBv9t9r1LM9ANzDPPR/9DNYgrNoj
+	 XUeg4ylqQ4FLM9Ud362ffrbBQ3fA7RjnIa2D3w7Ow1UQz0DwUsDKZ+PkiuE6RzklmNWpu
+	 muNWKs5whn+aUhtNSSk6in0ngMdk5eEEFglvnUk2Wa77U/mq3Byi1ujxTItucVXWsYoXD
+	 iYjKqQsY4H9R0yaaNWC9jcKMWGaV0wnGDi0AcknMuHBVYIMcshYRR7j6OUdV7yfCvEw==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org;
+	dmarc=pass header.from=linaro.org;
+	spf=pass smtp.mailfrom=linaro.org;
+	dkim=pass header.d=linaro.org header.i=@linaro.org header.a=rsa-sha256
+ header.s=google header.b=eW32hupK;
+	arc=none smtp.remote-ip=209.85.221.54
+Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com
+ [209.85.221.54])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest
+ SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 629A5606A6A3
+	for <linux-media@vger.kernel.org>; Wed, 25 Nov 2026 13:09:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 629A5606A6A3
+Authentication-Results: smtp.subspace.kernel.org;
+ dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+ spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org
+ header.a=rsa-sha256 header.s=google header.b=eW32hupK
+Received: by mail-wr1-f54.google.com with SMTP id
+ ffacd0b85a97d-4a2f4ca0dcfso3289952f8f.1
+        for <linux-media@vger.kernel.org>;
+ Wed, 25 Nov 2026 05:09:46 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1795612185; x=1796216985;
+ darn=vger.kernel.org;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=Tbq3WArIKfshci62hPLXBd6m9hDUDlRFQ7rBlDH7S9g=;
+        b=eW32hupKCdsxdS9qiRfXt8Mx8t+jXTwM1HVS1XKXBrr0sZ2GVqOs5NrZnlyHATrIZb
+         brqiWcj2erewxmMGn2pBRz+tp4593jq5R3fPl+r1DeR1b7jpNNRVWWhHsTAgxaaZSXmm
+         HsxQITQpCCIRm0najVXKNpQPOgMplIDzKF/gkq+SNtUBy4aWgVFfFzimQzswjMPeih5F
+         4bFiYeXVnP7FpLG87E8UtWj4fRrMpel4j4FpuyHXS0uxIguWrrMo4zRPdEkCEEMwYdyO
+         Q70jEYOWeTvVEKLlf0XxV1OxeyIBSZ7b3IL+Lmshdga1UJIoVpD6vjHba732S6nKQ2J7
+         pUhA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795612185; x=1796216985;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=Tbq3WArIKfshci62hPLXBd6m9hDUDlRFQ7rBlDH7S9g=;
+        b=XcNq/I+o2Qii3NFd9Et8oBCgKRM0qp8H5MgjNcAUc3ygQi3gAw8ZlEwD4sVwnds/q7
+         G7yG0wwta4VoxPo7Q/9ptnnn/4Yw1g0gILQK2OyfdvuHSOToWFY8/g1zBY3RA7ABvCji
+         zlONpgeyfVtfWIKrTSC/yo37UsoOi2suj4sYOdGSqNZ9Q8wqTL/uO27JRsZqcaKgCt9s
+         pGK5H33C27OoujFIcQCb7Q7ICZmuHyOWaF7mh0eVK8fZhYn0tEog1dJUn65ifzAT0N+W
+         Y1EKSHzFx7s/rYManUfWL3QrvjXUtxqhRyP5/LxoWYMI87JLI4qqfgyzSayocDGm3zdY
+         yg+A==
+X-Gm-Message-State: APuU4Z84ix+fCMsL2IIu00UciBb46hXnpO42QzGoQdcPDP3w+unbOkDa
+	l/dn3Fn3YIs3AkMOwzuuN0ooRX67ut064fcTTaYAxi1s2nZ3rP3oGXs8qn4Cpy/Pfr0=
+X-Gm-Gg: AZFdTZfClZu2EkctU35AQCRIkKyLAFto65whtWPirEdxjk9uR3c565qB1hxZ/PzIT6C
+	NDRUkiU4PSghyupPm0/xzAd15xddRYqWb5DkVMA9szdx9B40f+hUm6nxFtwSuWUJWgNFp0G9Iq2
+	3QI5NaLTiXB9rj84jUVIHQJDGdJTFbI0aSowMwCHlEyGaGYU370fk/+0KoRUYvp06qc5c3JEO2F
+	avHOqiwg1cPKF3UlTU6JG5d10EZhK/0mEgfHLbB2mUpCSE782aHaB1yiDbBDOe5f2jBV74ONUKX
+	Xsp4ZLrJf+HiLpsRglUAm7uOC+LgGhKwze2ebnCn2cyieU4zA7bMZPftlbnqCgxHqkH7VHAQRJE
+	H1LFkp6UXn9fLqNWMwpvV9hXsClpeV9QAdEAPaZkkJbvB0z/av4SEY8s6iek43LvdBO4HSdQfxD
+	zUl8FcqfMFnTSAm/EFGV+y/a1QcjkI2HJxcaxD2Qg07wsMI91K2ziULi6nERIm5irLndFIklECN
+	uqWW08EGfBMK3xG+GigbDwA5uO8IRvE9vMSx7E2IArBStLTmQOOPmn7h3fseg9nOTM+Fh1r56XO
+	h/1yn3XLjZepaMgYyZiEr8gh0DcPFpdv8Iq3Ng6baj+Ca1nDmQ==
+X-Received: by 2002:a05:6000:288c:b0:4b4:2ce4:6dc1 with SMTP id
+ ffacd0b85a97d-4b42ce46e7cmr16774660f8f.44.1795612184622;
+        Wed, 25 Nov 2026 05:09:44 -0800 (PST)
+Received: from arrakeen.starnux.net ([2a01:e0a:106d:1080:8261:5fff:fe11:bdda])
+        by smtp.gmail.com with ESMTPSA id
+ ffacd0b85a97d-4ab658e2c8csm35240355f8f.2.2026.11.25.05.09.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 05:09:44 -0800 (PST)
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 25 Nov 2026 14:09:38 +0100
+Subject: [PATCH 11/11] media: iris: record the LAST buffer returned with an
+ error
+X-Mailing-List: linux-media@vger.kernel.org
+List-Id: <linux-media.vger.kernel.org>
+List-Post: <mailto:linux-media@vger.kernel.org>
+List-Help: <mailto:linux-media+help@vger.kernel.org>
+List-Subscribe: <mailto:linux-media+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-media+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-media+owner@vger.kernel.org>
+Precedence: list
+MIME-Version: 1.0
+Message-Id: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-11-58b9f6b3fe86@linaro.org>
+References: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+In-Reply-To: 
+ <20261125-topic-iris-decoder-drc-fixes-v1-0-58b9f6b3fe86@linaro.org>
+To: Vikash Garodia <vikash.garodia@oss.qualcomm.com>,
+ Dikshita Agarwal <dikshita.agarwal@oss.qualcomm.com>,
+ Abhinav Kumar <abhinav.kumar@linux.dev>, Bryan O'Donoghue <bod@kernel.org>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Stefan Schmidt <stefan.schmidt@linaro.org>,
+ Hans Verkuil <hverkuil@kernel.org>, Vedang Nagar <quic_vnagar@quicinc.com>,
+ Wangao Wang <wangao.wang@oss.qualcomm.com>,
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ Bryan O'Donoghue <bryan.odonoghue@linaro.org>,
+ Neil Armstrong <neil.armstrong@linaro.org>
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1445;
+ i=neil.armstrong@linaro.org; h=from:subject:message-id;
+ bh=fpGCW1w6dJjhk8t6QuHx8IDTWoFL99bE+EV2naxWqHI=;
+ b=owEBbQKS/ZANAwAKAXfc29rIyEnRAcsmYgBrBt4PULAdNJCktlHUSosC8YCjaC6SZvkTGl6mH6KL
+ wW8B1I2JAjMEAAEKAB0WIQQ9U8YmyFYF/h30LIt33NvayMhJ0QUCawbeDwAKCRB33NvayMhJ0ZstEA
+ DEIz3NUZ/hgsVctmVX2LgyCkOUFHaQW4KPS/Q+AocRwkK4ypqI1NzYP+EZrILd1f3MfWCOZzfcUgHq
+ Gp6pEr6yKFQBCQvQdfchV0G14tiz/+G27ud4amwXPu+f0+F2MHvm8llG15OGSpn/fKwHF5P26lEGPx
+ 6fd8BFReoK/BG0sgv1AzW+peKUvdHsS6dBkZAgJjZcrOr5XrRPZmco4NS1kGN0EwrdyOoZ2j7i1jQn
+ yUT0X2ouyQBNTyGGwza+468jCWX/NjYBKBy2VDAK8nVhjJ4b1hIC4wCE9z6lBA2g1duMnOXlzTw/BP
+ ISG6B46OxotDGc3imoRtd59RpwMH84uKNQPv4nVUkmNG4QYK7lEjWizhVdWQ8yejKy+w35GIf7hotJ
+ Alq2/ThKBj5W18nduzWm15dzs4lnXvXOzXbOAmQ8sl7S+iYO3xN4XYblMu41Quz1CEItd3bqedNCLy
+ xPin6YJKdTKAty0YUg0qUwAJgWjesxghO9Qw17RHmvaL3BB/Gdns655fXAJYJ77zJ9pz62zWAr/W2X
+ t+oN1i/mtuwYZtyYYcbI57O3O4EmaFGVb0r0ouZwp5EH0l0Wgr0OHIyIA2MuXWqwdoT/FY2t3lzLem
+ 196vC3GHvkbOqFDh0QvvCuqQQCFKgam8StvV3R0Hh6ut8x3kt0bq/tji80ug==
+X-Developer-Key: i=neil.armstrong@linaro.org; a=openpgp;
+ fpr=89EC3D058446217450F22848169AB7B1A4CFF8AE
+
+The empty buffer that ends a drain or a source change can come with
+V4L2_BUF_FLAG_ERROR, e.g. from the frame information of a frame flushed
+by a seek. iris_vb2_buffer_done() returns it without setting
+inst->last_buffer_dequeued, nor signalling the end of a drain.
+
+A client following the specification may queue its CAPTURE buffers again
+before V4L2_DEC_CMD_START. iris_vb2_buf_queue() then returns one of them
+as a second LAST buffer, as none was recorded for the pending source
+change.
+
+Record the LAST buffer whatever its state.
+
+Fixes: b791dcfcba3a ("media: iris: Add handling for corrupt and drop frames")
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ drivers/media/platform/qcom/iris/iris_buffer.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/iris/iris_buffer.c b/drivers/media/platform/qcom/iris/iris_buffer.c
+index 38bdf366b384..b9ec8d0cce83 100644
+--- a/drivers/media/platform/qcom/iris/iris_buffer.c
++++ b/drivers/media/platform/qcom/iris/iris_buffer.c
+@@ -951,6 +951,10 @@ int iris_vb2_buffer_done(struct iris_inst *inst, struct iris_buffer *buf)
+ 	vbuf->flags |= buf->flags;
+ 
+ 	if (buf->flags & V4L2_BUF_FLAG_ERROR) {
++		if (vbuf->flags & V4L2_BUF_FLAG_LAST) {
++			iris_vb2_signal_eos(inst);
++			inst->last_buffer_dequeued = true;
++		}
+ 		state = VB2_BUF_STATE_ERROR;
+ 		vb2_set_plane_payload(vb2, 0, 0);
+ 		vb2->timestamp = 0;
