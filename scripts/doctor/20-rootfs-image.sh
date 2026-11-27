@@ -34,9 +34,25 @@ else
     ok "仓内无已知坏件 fixture（跳过反作弊实跑）"
   fi
 
+  # 已知好件是**冻结的历史快照**（2026-11-19 镜像），它的 /init 只能跟「当时的真源」比：
+  # 夹具旁边就存着注入原件 init.inject（= 34584 B）。若拿**活的** initramfs/init 当 expect，
+  # 真源每改一次（例如 2026-11-27 修 respawn ttyGS0 双读者）这条门就红一次，而镜像本身并没有坏
+  # ⇒ 判据要绑在「镜像 vs 注入原件」上；真源与注入原件之间的漂移单独报 WARN（附两侧 md5/size，
+  # 让人知道「该更新夹具了」而不是「镜像坏了」）。
+  PIN=$(dirname "$GOOD")/init.inject
+  if [ -f "$PIN" ]; then
+    _pi=$(md5sum "$PIN" 2>/dev/null | cut -d' ' -f1)
+    _ri=$(md5sum "$ROOT/initramfs/init" 2>/dev/null | cut -d' ' -f1)
+    if [ "$_pi" != "$_ri" ]; then
+      warnf "夹具 /init 与真源已漂移（夹具 $(wc -c <"$PIN") B md5 ${_pi:0:8}… vs 真源 $(wc -c <"$ROOT/initramfs/init") B md5 ${_ri:0:8}…）⇒ 夹具是历史快照，属预期；要重新采样就重建 fixture 并替换 init.inject"
+    fi
+  else
+    PIN="$ROOT/initramfs/init"
+    warnf "夹具旁无 init.inject，退回与活真源比（真源一改这条门就会红）"
+  fi
   if [ -n "$GOOD" ] && [ -f "$GOOD" ]; then
     if _g=$(timeout 180 python3 "$CHK" "$GOOD" --profile net \
-             --expect-init "$ROOT/initramfs/init" --strict-init 2>&1); then
+             --expect-init "$PIN" --strict-init 2>&1); then
       # 只有真跑到「/init 同源」那一条才算这节有牙齿（stub 检查器会让它消失）
       if printf '%s' "$_g" | grep -q '/init == '; then
         ok "已知好件通过（$(basename "$GOOD")：$(printf '%s' "$_g" | grep -c '\[ok\]') 项 ok，/init 与真源同字节）"

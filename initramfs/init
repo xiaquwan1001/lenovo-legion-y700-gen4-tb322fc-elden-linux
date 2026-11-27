@@ -641,7 +641,18 @@ fi
 # Serial consoles: ttyGS0 is the kernel console, ttyGS1 is an out-of-band root
 # shell whose echo is not mixed into dmesg.  respawn() just waits if the device
 # has not been created yet.
-respawn ttyGS0 &
+#
+# ★ 2026-11-27：ttyGS0 上**只在没有原生 init 接管时**才挂 shell。磁盘根 + systemd/openrc
+#   时 systemd 自己起 serial-getty@ttyGS0（登录提示），若这里也 respawn 一个 root shell，
+#   同一条 tty 就有**两个读者**：输入被随机一方吃掉，表现为「命令有时执行、有时被当成
+#   用户名（接着要密码）」。实测现场（2026-11-27 16:11，vk189）：/dev/ttyGS0 同时挂着
+#   systemd 的 agetty(2884) 与本脚本 respawn 出的 /bin/sh(2890)，其父 = 本脚本的子 shell(460，
+#   fd1 指向已删除的 initramfs /dev/console ⇒ 跨 switch_root 存活)。
+#   ttyGS1 不受影响：没有别的 getty 抢它，它才是设计上的 out-of-band root shell
+#   （主机侧 /dev/ttyACM1，scripts/serial-run.sh 走这条）。
+if [ "$on_initramfs" = 1 ] || [ "$init_mode" = legacy ]; then
+	respawn ttyGS0 &
+fi
 respawn ttyGS1 &
 
 if [ "$on_initramfs" = 0 ]; then

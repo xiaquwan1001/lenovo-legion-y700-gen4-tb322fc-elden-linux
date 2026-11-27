@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：729
+- 报告总数：730
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -150,6 +150,7 @@
 | `greetd` | 1 | `greetd-stop-verify-20261031.md` |
 | `hexagonrpc` | 1 | `hexagonrpc-upstream-registry-write-20261127.md` |
 | `hide` | 1 | `hide-android-partitions-20261119.md` |
+| `hw` | 1 | `hw-capability-drivers-20261127.md` |
 | `hwdec` | 1 | `hwdec-iris-sm8750-feasibility-20261127.md` |
 | `init` | 1 | `init-systemd-vs-openrc-20261011.md` |
 | `joonhoe` | 1 | `joonhoe-kim-contact-20261019.md` |
@@ -1299,6 +1300,10 @@
 ## `hide`（1）
 
 - `hide-android-partitions-20261119.md` — 在文件管理器侧栏隐藏只读 Android / 持久化分区 — 机制调研 + 脚本 + 上机判据
+
+## `hw`（1）
+
+- `hw-capability-drivers-20261127.md` — 硬件能力集合 × 驱动面审计（lane A）— 2026-11-27
 
 ## `hwdec`（1）
 
