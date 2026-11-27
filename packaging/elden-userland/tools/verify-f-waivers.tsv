@@ -15,3 +15,8 @@
 /usr/local/bin/vibrate	人手手感校准件，运行时由 ffrumble 承担（报告 §3 #27）
 /usr/local/sbin/elden-bt-alias.sh	随 bt-alias.service（报告 §3 #29）
 /usr/share/elden-pinyin/META.json	运行时（elden-pinyin-completer）只读 shards/ 与 /var/cache 索引，不读 META.json（报告 §3 #34）
+/etc/systemd/system/waydroid-ipv6.service	设备侧 `waydroid status` = "not initialized"（2026-11-27 现查）；现役安卓路线已转 droidloom（T15 待升级 0.1.0-51），Waydroid 这套随 G2 路线重启用时才装
+/usr/local/sbin/waydroid-ipv6	同 waydroid-ipv6.service（waydroid 未初始化）
+/etc/systemd/system/ssc-udp-relay.service	依赖 waydroid0 上的 SSC 中继；waydroid 未初始化 ⇒ 无消费者（同族见 D22 传感器已走宿主 iio 路线）
+/usr/local/bin/ssc-udp-relay.py	同 ssc-udp-relay.service
+/etc/xdg/autostart/elden-waydroid.desktop	消费者 waydroid-session.sh 在，但 waydroid 未初始化 ⇒ 自动启动无意义；随 G2 路线一起恢复
