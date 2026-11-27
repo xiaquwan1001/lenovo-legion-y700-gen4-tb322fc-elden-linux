@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：716
+- 报告总数：717
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -51,6 +51,7 @@
 | `q32` | 4 | `q32-matrix-20261024.md` |
 | `research` | 4 | `research-next-20261102.md` |
 | `suspend` | 4 | `suspend-s2idle-20261125.md` |
+| `tasks` | 4 | `tasks-next-sink-20261127.md` |
 | `主机侧` | 4 | `主机侧-B13-20261117.md` |
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
 | `build` | 3 | `build-residue-verify-20261125.md` |
@@ -68,7 +69,6 @@
 | `stale` | 3 | `stale-alpine-audit-docs-20261119.md` |
 | `t9` | 3 | `t9-sampler-restored-20261121.md` |
 | `tablet` | 3 | `tablet-night-runner-dryrun-20261031.md` |
-| `tasks` | 3 | `tasks-next-sink-20261127.md` |
 | `todo` | 3 | `todo-next-20261118.md` |
 | `aw86927` | 2 | `aw86927-series-20261027.md` |
 | `c1` | 2 | `c1-noworkaround-20261013.md` |
@@ -821,6 +821,13 @@
 - `suspend-pcie-l2-blocker-20261020.md` — suspend 待不住的真根因：`qcom-pcie` L2 进入超时 ⇒ WiFi 重探 ⇒ 立即唤醒（2026-10-20）
 - `suspend-enable-vk128-vk129-fail-20261018.md` — 开启 CONFIG_SUSPEND 的两次尝试都失败（vk128 / vk129）——2026-10-18 晚
 
+## `tasks`（4）
+
+- `tasks-next-sink-20261127.md` — §4.0 久积叙事下沉：`TASKS/NEXT.md` 28,906 → 21,107 B（6 块逐字搬走，零改写）
+- `tasks-upstream-sink-20261127.md` — §7/§5 增量叙事下沉：`TASKS/UPSTREAM.md` 29,009 → 26,631 B（2 块逐字搬走，零改写；GAPS §5 = 0 块可搬）
+- `tasks-slim-20261107.md` — tasks-slim-20261107 — 任务 C：10 个超长表格单元格下沉复核
+- `tasks-narrative-archive-20261019.md` — TASKS §1/§2「长叙事」归档（2026-10-19 表格结构修复时搬出）
+
 ## `主机侧`（4）
 
 - `主机侧-B13-20261117.md` — 主机侧 B13 — 脚本欠账清理（2026-11-17）
@@ -923,12 +930,6 @@
 - `tablet-night-runner-dryrun-20261031.md` — 平板夜间通道干跑（2026-10-31）
 - `tablet-dev-env-20261030.md` — 平板开发环境落地（tablet-offload，2026-10-30）
 - `tablet-offload-plan-20261030.md` — 平板断电续作与分担方案（容量 / 同步 / 离线包 / 夜间运行）
-
-## `tasks`（3）
-
-- `tasks-next-sink-20261127.md` — §4.0 久积叙事下沉：`TASKS/NEXT.md` 28,906 → 21,107 B（6 块逐字搬走，零改写）
-- `tasks-slim-20261107.md` — tasks-slim-20261107 — 任务 C：10 个超长表格单元格下沉复核
-- `tasks-narrative-archive-20261019.md` — TASKS §1/§2「长叙事」归档（2026-10-19 表格结构修复时搬出）
 
 ## `todo`（3）
 
