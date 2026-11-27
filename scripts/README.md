@@ -65,10 +65,10 @@
 | `scripts/android-slim-v3-build.sh` | RETIRED 2026-11-27：v3 super 已写入并 EDL 读回校验通过（一次性构建器），配方与判据在 reports/android-slim-v3-20261119.md；替代/复核：该报告 §7/§8；可复核：reports/disk-audit-20261126.md | 20 |
 | `scripts/assert-kernel-sane.sh` | 打包前的「内核身份 / 存活」硬门（pack-time gate）。 | 35 |
 | `scripts/cam-load-verify.sh` | 在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。 | 11 |
-| `scripts/capability-audit.sh` | 设备能力集合的**只读**现查（DEVICE/CAPABILITIES.md 的复现入口） | 1 |
+| `scripts/capability-audit.sh` | 设备能力集合的**只读**现查（DEVICE/CAPABILITIES.md 的复现入口） | 8 |
 | `scripts/check-abi-config.sh` | 内核 .config 的 ABI 敏感项门禁（build/pack-time gate）。 | 38 |
 | `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 65 |
-| `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 349 |
+| `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 350 |
 | `scripts/check-init.sh` | init 单一真源 / 可运行性自检（主机侧，只读） | 14 |
 | `scripts/check-layout.sh` | 顶层布局注册表门（versions/layout.tsv ↔ 磁盘 ↔ INDEX.md） | 41 |
 | `scripts/check-modular-config.sh` | 模块化 config 门禁（第二层，2026-10-26） | 31 |
@@ -263,8 +263,8 @@
 | `scripts/build-phosh-upstream-fix.sh` | 用「上游 main 源树 + 本地补丁」编 aarch64 phosh（验证上游补丁用） | 7 |
 | `scripts/build-sensord.sh` | 编译 eldroid-sensord（C4 数据源 daemon）： | 11 |
 | `scripts/build-vbmeta-b.sh` | 重签 b 槽自签 AVB vbmeta（自签链，把 chain `boot` 指向**现役** avb.key） | 14 |
-| `scripts/audio-tplg/build.sh` | 构建 TB322FC 的 AudioReach topology (Lenovo-Y700-Gen4-tplg.bin) | 97 |
-| `scripts/wd-audio-test/build.sh` | Build the Waydroid container-audio test dexes (TestAudio / TestCodec / ListCodecs). | 97 |
+| `scripts/audio-tplg/build.sh` | 构建 TB322FC 的 AudioReach topology (Lenovo-Y700-Gen4-tplg.bin) | 105 |
+| `scripts/wd-audio-test/build.sh` | Build the Waydroid container-audio test dexes (TestAudio / TestCodec / ListCodecs). | 105 |
 | `scripts/c1-iprule-build.sh` | RETIRED 2026-11-27：C1 策略路由内核（vk95 一发）一次性构建器，C1 已由 vk103/vk126 落地，配方在 TASKS/reports C1 记录；可复核：reports/c1-iprule-vk95-20261011.md | 6 |
 | `scripts/detect-memory-corruption.py` | 找出「页缓存里的内容 ≠ 磁盘上的内容」的文件。 | 14 |
 | `scripts/dev-super-relabel.sh` | 设备侧（POSIX sh）：把 Android `super`（sda10，22 GiB 动态分区容器）转成 Linux 分区 | 18 |
