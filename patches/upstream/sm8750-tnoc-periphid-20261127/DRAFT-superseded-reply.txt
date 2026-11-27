@@ -1,0 +1,50 @@
+Subject: Re: [PATCH 0/2] arm64: dts: qcom: sm8750: describe the TNOC AMBA periphid
+In-Reply-To: <20261127113158.932414-1-xiaqinghuan@mail.ustc.edu.cn>
+To: Jie Gan <quic_jiegan@quicinc.com>
+Cc: Konrad Dybcio <konradybcio@kernel.org>, Abel Vesa <abel.vesa@linaro.org>,
+    Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>,
+    Conor Dooley <conor+dt@kernel.org>, devicetree@vger.kernel.org,
+    linux-arm-msm@vger.kernel.org, linux-kernel@vger.kernel.org
+
+[Not sending yet — DRAFT, awaiting operator approval. See "How this text was
+produced" below.]
+
+Hi Jie,
+
+Please drop my series above as a duplicate: your "[PATCH 0/4] Fix the
+TraceNoC probe issue on QCOM platform" (2026-11-18, patchwork series
+1214623) already covers both of my patches -- [1/4] relaxes the binding
+the same way and [3/4] adds the very same periphid to sm8750.
+
+Evidence, if a reviewer wants to skip the comparison:
+
+- my [2/2] hunk:  `tn@109ab000 { ... arm,primecell-periphid = <0x000f0c00>; }`
+  in arch/arm64/boot/dts/qcom/sm8750.dtsi;
+  your [3/4] touches the same node with the same value.
+- my [1/2] hunk: the `arm,primecell-periphid` allowance in
+  Documentation/devicetree/bindings/arm/coresight-tnoc.yaml;
+  your [1/4] does the same.
+- patchwork: my 1224353 (arm-msm) / 1224354 (devicetree), your 1214623
+  (still `new`, with Abel's and Konrad's Reviewed-by).
+
+Your series is the better vehicle: it covers kaanapali and glymur in the
+same pass, and it already carries the trailers. Nothing in my copy is
+worth keeping.
+
+One data point you may want to fold into v2 (or ignore if you already
+have it): on SM8750 hardware the node is `tn@109ab000` and, before the
+property is present, AMBA reports it as unbound -- after adding
+`arm,primecell-periphid = <0x000f0c00>` the driver binds and all 28
+CoreSight AMBA devices reach bound state (28 -> 0 unbound) on the Lenovo
+Legion Y700 Gen4 (TB322FC / SM8750P), kernel 7.3.1. That is a relative
+comparison on one board, not a claim about your patch series.
+
+Sorry for the noise and thanks for the prior work.
+
+Best regards,
+Qianhui Xu
+
+---
+How this text was produced: written with AI assistance (LLM), reviewed and
+edited by me; the measurements quoted are mine and reproducible; the decision
+to withdraw is mine.

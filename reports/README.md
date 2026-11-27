@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：734
+- 报告总数：735
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -75,6 +75,7 @@
 | `aw86927` | 2 | `aw86927-series-20261027.md` |
 | `c1` | 2 | `c1-noworkaround-20261013.md` |
 | `code` | 2 | `code-boundary-preinject-20261031.md` |
+| `comms` | 2 | `comms-track-20261127-c.md` |
 | `d19` | 2 | `d19-apss-wdt-prep-20261125.md` |
 | `d3` | 2 | `d3-ime-userdir-fallback-20261124.md` |
 | `debian` | 2 | `debian-root-accounts-sensors-20261026.md` |
@@ -123,7 +124,6 @@
 | `capbatch` | 1 | `capbatch-vk194-20261127.md` |
 | `closeout` | 1 | `closeout-q29-backlight-camera-20261023.md` |
 | `cloud` | 1 | `cloud-backup-manifest-20261016.md` |
-| `comms` | 1 | `comms-track-20261127.md` |
 | `consolidation` | 1 | `consolidation-20261014.md` |
 | `container` | 1 | `container-audio-20261011.md` |
 | `coolapk` | 1 | `coolapk-publish-20261123.md` |
@@ -977,6 +977,11 @@
 - `code-boundary-preinject-20261031.md` — code-boundary 投递前静态门禁独立复核 — 2026-10-31
 - `code-style-and-duty-overlap-audit-20261030.md` — 代码风格 / 上游规范 / 职责重复 / 需求对齐 审计（L5）
 
+## `comms`（2）
+
+- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
+- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
+
 ## `d19`（2）
 
 - `d19-apss-wdt-prep-20261125.md` — D19 候选②：SM8750 APSS watchdog —— DT(+binding) 备料（2026-11-25，**不投递**）
@@ -1196,10 +1201,6 @@
 ## `cloud`（1）
 
 - `cloud-backup-manifest-20261016.md` — 云盘备份清单 — 本机独有 / 不可重下的二进制（2026-10-16）
-
-## `comms`（1）
-
-- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
 
 ## `consolidation`（1）
 

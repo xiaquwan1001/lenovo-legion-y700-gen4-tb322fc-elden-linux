@@ -1,0 +1,10 @@
+### cmd: cd /tmp/kn-am (worktree @ aebb72744764) && git am v1-0001-*.patch
+### 注：cover (v1-0000) 无 diff，git am 必然报「补丁为空」——邮件封面的正常形态，b4/维护者不 apply 封面。
+应用：arm64: dts: qcom: kaanapali: describe the TNOC AMBA periphid
+rc=0
+0b76e6860881 arm64: dts: qcom: kaanapali: describe the TNOC AMBA periphid
+author=Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+subject=arm64: dts: qcom: kaanapali: describe the TNOC AMBA periphid
+
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 1 +
+ 1 file changed, 1 insertion(+)

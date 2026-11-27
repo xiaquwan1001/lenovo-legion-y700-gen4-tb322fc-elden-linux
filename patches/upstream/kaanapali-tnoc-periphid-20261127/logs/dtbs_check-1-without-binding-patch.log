@@ -1,0 +1,33 @@
+### cmd: make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CHECK_DTBS=1 -j4 qcom/kaanapali-mtp.dtb qcom/kaanapali-qrd.dtb
+### tree: /tmp/kn-wt @ 4e5193b9f63f arm64: dts: qcom: kaanapali: describe the TNOC AMBA periphid (binding patch NOT applied — 负对照)
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+  HOSTCC  scripts/dtc/treesource.o
+  HOSTCC  scripts/dtc/srcpos.o
+  HOSTCC  scripts/dtc/checks.o
+  HOSTCC  scripts/dtc/util.o
+  LEX     scripts/dtc/dtc-lexer.lex.c
+  YACC    scripts/dtc/dtc-parser.tab.[ch]
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  HOSTCC  scripts/dtc/libfdt/fdt.o
+  HOSTCC  scripts/dtc/libfdt/fdt_ro.o
+  HOSTCC  scripts/dtc/libfdt/fdt_wip.o
+  HOSTCC  scripts/dtc/libfdt/fdt_sw.o
+  HOSTCC  scripts/dtc/libfdt/fdt_rw.o
+  HOSTCC  scripts/dtc/libfdt/fdt_strerror.o
+  HOSTCC  scripts/dtc/libfdt/fdt_empty_tree.o
+  HOSTCC  scripts/dtc/libfdt/fdt_addresses.o
+  HOSTCC  scripts/dtc/libfdt/fdt_overlay.o
+  HOSTCC  scripts/dtc/fdtoverlay.o
+  HOSTCC  scripts/dtc/dtc-lexer.lex.o
+  HOSTCC  scripts/dtc/dtc-parser.tab.o
+  HOSTLD  scripts/dtc/fdtoverlay
+  HOSTLD  scripts/dtc/dtc
+  DTC [C] arch/arm64/boot/dts/qcom/kaanapali-qrd.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/kaanapali-mtp.dtb
+arch/arm64/boot/dts/qcom/kaanapali-qrd.dtb: tn@111b8000 (qcom,coresight-tnoc): 'arm,primecell-periphid' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/arm/qcom,coresight-tnoc.yaml
+arch/arm64/boot/dts/qcom/kaanapali-mtp.dtb: tn@111b8000 (qcom,coresight-tnoc): 'arm,primecell-periphid' does not match any of the regexes: '^pinctrl-[0-9]+$'
+	from schema $id: http://devicetree.org/schemas/arm/qcom,coresight-tnoc.yaml
+rc=0

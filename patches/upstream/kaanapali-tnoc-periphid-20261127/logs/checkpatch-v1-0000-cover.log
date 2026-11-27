@@ -1,0 +1,5 @@
+### cmd: perl scripts/checkpatch.pl --strict --no-signoff v1-0000-cover-letter.patch（改稿后重跑）
+total: 0 errors, 0 warnings, 0 checks, 0 lines checked
+
+v1-0000-cover-letter.patch has no obvious style problems and is ready for submission.
+rc=0

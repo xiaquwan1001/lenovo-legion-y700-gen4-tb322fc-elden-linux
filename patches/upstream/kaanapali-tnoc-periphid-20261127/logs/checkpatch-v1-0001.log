@@ -1,0 +1,5 @@
+### cmd: perl /tmp/kn-wt/scripts/checkpatch.pl --strict --no-signoff v1-0001-arm64-dts-qcom-kaanapali-describe-the-TNOC-AMBA-periphid.patch
+total: 0 errors, 0 warnings, 0 checks, 7 lines checked
+
+v1-0001-arm64-dts-qcom-kaanapali-describe-the-TNOC-AMBA-periphid.patch has no obvious style problems and is ready for submission.
+rc=0

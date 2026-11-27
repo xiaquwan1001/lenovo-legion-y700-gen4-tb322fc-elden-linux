@@ -1,0 +1,8 @@
+### cmd: make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dt_binding_check DT_SCHEMA_FILES=Documentation/devicetree/bindings/arm/qcom,coresight-tnoc.yaml
+### tree: /tmp/kn-wt @ 4e5193b9f63f arm64: dts: qcom: kaanapali: describe the TNOC AMBA periphid + 工作区已 apply sm8750 v1-0001 (binding)
+  CHKDT   ./Documentation/devicetree/bindings
+  LINT    ./Documentation/devicetree/bindings
+  STYLE   ./Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/arm/qcom,coresight-tnoc.example.dts
+  DTC [C] Documentation/devicetree/bindings/arm/qcom,coresight-tnoc.example.dtb
+rc=0

@@ -1,0 +1,41 @@
+From 4e5193b9f63f876f9767b00f7dd2bc942314faa7 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 20:28:17 +0800
+Subject: [PATCH 1/1] arm64: dts: qcom: kaanapali: describe the TNOC AMBA
+ periphid
+
+The aggregator TNOC at 111b8000 is an AMBA device, but its node carries
+no "arm,primecell-periphid", so the AMBA core falls back to whatever
+the integration leaves in the peripheral ID register.  As observed on
+SM8750, whose TNOC is wired up the same way, that reads back as
+0x00000000 and coresight-tnoc (which matches 0x000f0c00/0x001f0c00 with
+mask 0x00ffff00) then never probes, leaving the node as
+"deferred probe pending: (reason unknown)".
+
+Describe the ID the driver expects, as is already done for the SM8750
+TNOC and for the SM8250 funnels.
+
+*** AI-assistance disclosure ***
+This patch was prepared with the help of an LLM coding assistant.  The
+author reviewed every line and ran dtbs_check and checkpatch.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/kaanapali.dtsi b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+index e48a179d0722..f9ae46b90d16 100644
+--- a/arch/arm64/boot/dts/qcom/kaanapali.dtsi
++++ b/arch/arm64/boot/dts/qcom/kaanapali.dtsi
+@@ -5416,6 +5416,7 @@ tpdm_pcie_rscc_out: endpoint {
+ 		tn@111b8000 {
+ 			compatible = "qcom,coresight-tnoc", "arm,primecell";
+ 			reg = <0x0 0x111b8000 0x0 0x4200>;
++			arm,primecell-periphid = <0x000f0c00>;
+ 
+ 			clocks = <&aoss_qmp>;
+ 			clock-names = "apb_pclk";
+-- 
+2.53.0
+

@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 20:40:00 +0800
+Subject: [PATCH 0/1] arm64: dts: qcom: kaanapali: describe the TNOC AMBA
+ periphid
+
+Hi,
+
+the aggregator TNOC of SM8850/kaanapali, tn@111b8000, is an AMBA device
+with no "arm,primecell-periphid" in its node.  The AMBA core then takes
+whatever the integration leaves in the peripheral ID register; on SM8750,
+whose TNOC is wired up the same way, that reads back as 0x00000000, the
+coresight-tnoc amba id table (0x000f0c00/0x001f0c00, mask 0x00ffff00)
+never matches, and the node is left as "deferred probe pending: (reason
+unknown)".  kaanapali has the same node shape and the same missing
+property, so describe the ID the driver expects.  The rest of the node
+(compatible, reg size, aoss_qmp clock, in/out-ports layout) has the same
+shape as SM8750; only the port list differs.
+
+Only the DTS changes here: the binding side is shared with SM8750 and
+the same relaxation was posted as patch 1/4 of Jie Gan's "Fix the
+TraceNoC probe issue on QCOM platform"
+
+  <20261118-fix-tracenoc-probe-v1-1-0298dc5f05ac@oss.qualcomm.com>
+
+(qcom,coresight-tnoc: allow arm,primecell-periphid), and as patch 1/2 of
+the SM8750 series
+
+  <20261127113158.932414-2-xiaqinghuan@mail.ustc.edu.cn>
+
+Without such a change qcom,coresight-tnoc.yaml still has
+additionalProperties: false and dtbs_check rejects the new property.
+
+Note for the maintainers: this patch is the same change as patch 2/4 of
+that series, which is already under review, so please treat this one as
+superseded unless the platform-bus approach taken in "Fix traceNoC probe
+issue on multiple QCOM platforms" is dropped instead.
+
+Testing: no kaanapali hardware here, so the check is limited to the
+bindings side.  With the binding patch applied, dtbs_check on
+kaanapali-mtp.dtb and kaanapali-qrd.dtb is silent; without it, both
+report "'arm,primecell-periphid' does not match any of the regexes" for
+tn@111b8000, which is the same diagnostic SM8750 produced before its
+fix.  dt_binding_check of the yaml passes and checkpatch --strict is
+clean.  The runtime half of the argument - AMBA_ID reads 0, the driver
+never matches, and adding the property makes the device bind - was
+verified on SM8750 hardware (0 of 28 CoreSight AMBA devices unbound
+afterwards).
+
+*** AI-assistance disclosure ***
+This series was prepared with the help of an LLM coding assistant.  The
+author reviewed every line and ran the checks reproduced above.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+
+Qianhui Xu (1):
+  arm64: dts: qcom: kaanapali: describe the TNOC AMBA periphid
+
+ arch/arm64/boot/dts/qcom/kaanapali.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+-- 
+2.53.0
+

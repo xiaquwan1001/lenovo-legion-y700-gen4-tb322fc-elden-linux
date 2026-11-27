@@ -1,0 +1,7 @@
+### cmd: make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CHECK_DTBS=1 -j4 qcom/kaanapali-mtp.dtb qcom/kaanapali-qrd.dtb
+### tree: /tmp/kn-wt @ 4e5193b9f63f arm64: dts: qcom: kaanapali: describe the TNOC AMBA periphid + 工作区已 apply sm8750 v1-0001 (binding)
+  UPD     include/config/kernel.release
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+  DTC [C] arch/arm64/boot/dts/qcom/kaanapali-qrd.dtb
+  DTC [C] arch/arm64/boot/dts/qcom/kaanapali-mtp.dtb
+rc=0

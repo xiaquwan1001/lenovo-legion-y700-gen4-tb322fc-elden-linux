@@ -1,0 +1,43 @@
+# patchwork 查证原始记录（2026-11-27，project=92 linux-arm-msm；API /api/1.2/）
+
+## 查询命令
+curl --get --data-urlencode 'q=tnoc' --data 'project=92' --data 'per_page=100' https://patchwork.kernel.org/api/1.2/patches/
+
+## 命中（2026-11 之后，state 原样）
+2026-11-10	in-next	id=14966084	[v7,1/5] dt-bindings: arm: coresight-tnoc: Bind on platform bus instead of AMBA
+2026-11-10	in-next	id=14966085	[v7,2/5] coresight: tnoc: Bind Aggregator TNOC on the platform bus
+2026-11-10	in-next	id=14966088	[v7,5/5] arm64: dts: qcom: glymur: use Aggregator TNOC compatible
+2026-11-18	handled-elsewhere	id=14995780	[1/4] dt-bindings: arm: coresight-tnoc: Allow arm,primecell-periphid
+2026-11-18	new	id=14995783	[4/4] arm64: dts: qcom: glymur: use Aggregator TNOC compatible
+2026-11-27	new	id=15029445	[2/2] arm64: dts: qcom: sm8750: describe the TNOC AMBA periphid
+2026-11-27	new	id=15029446	[1/2] dt-bindings: arm: qcom,coresight-tnoc: allow the AMBA periphid
+
+## series 1206568 = [v7,0/5] Fix traceNoC probe issue on multiple QCOM platforms (2026-11-10)
+  14966084 2026-11-10T01:21 [v7,1/5] dt-bindings: arm: coresight-tnoc: Bind on platform bus instead of AMBA
+  14966085 2026-11-10T01:21 [v7,2/5] coresight: tnoc: Bind Aggregator TNOC on the platform bus
+  14966086 2026-11-10T01:21 [v7,3/5] arm64: dts: qcom: kaanapali: bind traceNoC on the platform bus
+  14966087 2026-11-10T01:21 [v7,4/5] arm64: dts: qcom: sm8750: bind traceNoC on the platform bus
+  14966088 2026-11-10T01:21 [v7,5/5] arm64: dts: qcom: glymur: use Aggregator TNOC compatible
+
+## series 1214623 = [0/4] Fix the TraceNoC probe issue on QCOM platform (2026-11-18)
+  14995780 2026-11-18T07:01 [1/4] dt-bindings: arm: coresight-tnoc: Allow arm,primecell-periphid
+  14995781 2026-11-18T07:01 [2/4] arm64: dts: qcom: kaanapali: add periphid for traceNoC
+  14995782 2026-11-18T07:01 [3/4] arm64: dts: qcom: sm8750: add periphid for traceNoC
+  14995783 2026-11-18T07:01 [4/4] arm64: dts: qcom: glymur: use Aggregator TNOC compatible
+
+## 各 patch 的 state（单条 API）
+  14966084  in-next           2026-11-10T01:21:14          [v7,1/5] dt-bindings: arm: coresight-tnoc: Bind on platform bus instead of AMBA
+  14966085  in-next           2026-11-10T01:21:15          [v7,2/5] coresight: tnoc: Bind Aggregator TNOC on the platform bus
+  14966086  in-next           2026-11-10T01:21:16          [v7,3/5] arm64: dts: qcom: kaanapali: bind traceNoC on the platform bus
+  14966087  in-next           2026-11-10T01:21:17          [v7,4/5] arm64: dts: qcom: sm8750: bind traceNoC on the platform bus
+  14966088  in-next           2026-11-10T01:21:18          [v7,5/5] arm64: dts: qcom: glymur: use Aggregator TNOC compatible
+  14995780  handled-elsewhere 2026-11-18T07:01:43          [1/4] dt-bindings: arm: coresight-tnoc: Allow arm,primecell-periphid
+  14995781  new               2026-11-18T07:01:44          [2/4] arm64: dts: qcom: kaanapali: add periphid for traceNoC
+  14995782  new               2026-11-18T07:01:45          [3/4] arm64: dts: qcom: sm8750: add periphid for traceNoC
+  14995783  new               2026-11-18T07:01:46          [4/4] arm64: dts: qcom: glymur: use Aggregator TNOC compatible
+
+## reviewer 回帖（14995781 / 14995782，全文见下）
+  14995781 2026-11-20 -> abel.vesa@oss.qualcomm.com
+  14995781 2026-11-25 -> konrad.dybcio@oss.qualcomm.com
+  14995782 2026-11-20 -> abel.vesa@oss.qualcomm.com
+  14995782 2026-11-25 -> konrad.dybcio@oss.qualcomm.com
