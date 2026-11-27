@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：坏发窗口多臂交替的一次性取证执行器，配方与结论在 reports/ 显示臂相关报告；可复核：reports/scripts-hardening-2-20261121.md
 # arm-window-hunt.sh — 在坏发成簇的窗口里交替试多个显示臂，直到出现"健康发"。
 # usage: scripts/arm-window-hunt.sh <wait_s> <label1:img1> [label2:img2 ...]
 # 每发：确保设备已在 fastboot（不在则先走软路径，PITFALLS #712）→

@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：2026-10-31 执行单配套的一次性窗口取证采集包，产物已在 reports/artifacts/device-window-20261031/；可复核：reports/script-audit-ssh-20261118.md
 # device-window-collect.sh — 设备窗口只读采集包（2026-10-31 执行单配套）
 #
 # 一次采齐所有「读回型」判据，输出到 reports/artifacts/device-window-20261031/。

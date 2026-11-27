@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# RETIRED 2026-11-27：GRUB LF2 补丁期望值复算器，只服务 elden_lf2_* 补丁当时验证，根因定案在 reports/uefi-grub-initrd-rootcause-20261115.md；可复核：reports/pstore-ram-initrd-guard-20261116.md
 """lf2-expected.py — 复算 GRUB LoadFile2 补丁（elden_lf2_*）对同一份 initrd 的期望值。
 
 抽样规则必须与 /tmp/grub-patch/grub-core/loader/efi/linux.c 里的

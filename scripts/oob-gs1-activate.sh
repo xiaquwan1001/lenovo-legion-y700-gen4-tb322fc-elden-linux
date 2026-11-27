@@ -1,4 +1,5 @@
 #!/bin/sh
+# RETIRED 2026-11-27：USB gadget acm.GS1 的一次性激活件（设备侧已激活完成，initramfs/usb-gadget 已含 GS1）；可复核：reports/audit-20261119/A3-scripts-audit.tsv
 # oob-gs1-activate.sh — 在设备上把 USB gadget 重新 bind，启用第二个 ACM(acm.GS1)
 # 作为带外 root shell 通道，并自愈 NCM 网络（重启 gadget 会打断 usb0/SSH）。
 #

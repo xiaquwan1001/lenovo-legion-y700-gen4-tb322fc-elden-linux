@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：Q32 暖起 vs 冷起三臂实验单发执行器，实验已完成，配方在 reports/q32-warm-vs-cold-preresearch-20261023.md；可复核：reports/主机侧-B13-20261117.md
 # q32-arm.sh — Q32 三臂实验的单发执行器（暖起 vs 冷起）。
 #
 # 背景：reports/q32-warm-vs-cold-preresearch-20261023.md（§2 复位入口 / §3 ABL 交接 framebuffer / §5 三臂）

@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：M4 SKEW_CAL A/B 出流测量执行器（同上一轮一次性测量），结论已落 reports/；可复核：reports/audit-20261119/A3-scripts-audit.tsv
 # skewcal-measure.sh — 一次 M4 SKEW_CAL A/B 出流测量（设备是唯一串行资源 → 单次测量整体包在 device-lock 内）。
 #
 # usage: scripts/skewcal-measure.sh <label> [frames]

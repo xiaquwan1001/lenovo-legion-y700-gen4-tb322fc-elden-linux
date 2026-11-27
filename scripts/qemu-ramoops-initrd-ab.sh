@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：ramoops 盖 initrd 的 QEMU 单轮回归，根因与守卫已定案 reports/uefi-grub-initrd-rootcause-20261115.md；可复核：reports/pstore-ram-initrd-guard-20261116.md
 # qemu-ramoops-initrd-ab.sh — QEMU 复现「ramoops zone 盖住 initrd ⇒ 内核自己的 console
 # 写坏 initrd」并用内核守卫（fs/pstore/ram.c: ramoops_skip_zone）拦住它的单轮回归。
 #

@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：sleep-death 候选零写上机执行器，该轮变体实验已完成，配方在 reports/ sleepdeath 系列报告；可复核：reports/主机侧-B13-20261117.md
 # sd-run-variant.sh — boot one sleep-death (熄屏→关机) candidate zero-write and
 # collect quantitative evidence.  Host-side driver; device actions are performed
 # by this script only when the device is free (another session may hold it).

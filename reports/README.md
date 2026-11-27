@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：714
+- 报告总数：715
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -28,9 +28,9 @@
 | `camss` | 9 | `camss-v25-rebase-20261117.md` |
 | `m3v5` | 9 | `m3v5-repack-20261031.md` |
 | `m6` | 9 | `m6-dsi-phy-v3-20261126.md` |
+| `scripts` | 9 | `scripts-ref-audit-20261127.md` |
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
 | `script` | 8 | `script-audit-adb-20261118.md` |
-| `scripts` | 8 | `scripts-ref-audit-20261127.md` |
 | `sensors` | 8 | `sensors-692-attach-crash-serial-20261127.md` |
 | `userland` | 8 | `userland-mirror-gate-20261127.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
@@ -622,6 +622,18 @@
 - `m6-debian-candidate-boot-nousb-20261026.md` — M6 首次上机：Debian 目标根候选镜像 `fastboot boot` 后设备**全程无 USB**（未收口）
 - `m6-switch-root-breakpoint-resolved-20261026.md` — M6 / T19 断点已解：不是 switch_root 内部，是 Debian 根缺 `switch_root` symlink
 
+## `scripts`（9）
+
+- `scripts-ref-audit-20261127.md` — reports/scripts-ref-audit-20261127.md — `scripts/` 引用面收口（T14 / `arch-audit-20261127.md` A7）
+- `scripts-ref-audit-t16-20261127.md` — T16：62 条误分类脚本重判（2026-11-27）
+- `scripts-hardening-3-20261123.md` — reports/scripts-hardening-3-20261123.md — 脚本整改批 3（D5：3 个未修 P0/P1 + gpt-restore fail-closed 表指纹门）
+- `scripts-hardening-4-20261123.md` — reports/scripts-hardening-4-20261123.md — 脚本整改批 4（D5：STALE 15 收口 + O_DIRECT 硬门 ×6）
+- `scripts-audit-20261122.md` — 脚本/工具精简与整理审计（2026-11-22，只读）
+- `scripts-hardening-1-20261121.md` — scripts-hardening-1-20261121.md — 脚本整改批 1（7 个 DANGEROUS）落地记录
+- `scripts-hardening-2-20261121.md` — scripts-hardening-2-20261121.md — 脚本整改批 2（D5 小批：build-kernel 守卫假阳性 + 3 个 BROKEN 加 #701 门）
+- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
+- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
+
 ## `m4`（8）
 
 - `m4-camss-v2-20261031.md` — M4 camss v2（v2 0/2）— 撕 2/3、按 Loic 形状重构 3/3（存量修复，不含 SM8750 enable）
@@ -643,17 +655,6 @@
 - `script-redundancy-audit-20261112.md` — 脚本冗余审计：reboot → fastboot 入口 + 其它脚本过时缺陷（lane E）
 - `script-tidy-20261106.md` — 脚本 / 工具整理（2026-11-06 第四轮）
 - `script-audit-20261105.md` — 脚本工具审计与提速（2026-11-05）
-
-## `scripts`（8）
-
-- `scripts-ref-audit-20261127.md` — reports/scripts-ref-audit-20261127.md — `scripts/` 引用面收口（T14 / `arch-audit-20261127.md` A7）
-- `scripts-hardening-3-20261123.md` — reports/scripts-hardening-3-20261123.md — 脚本整改批 3（D5：3 个未修 P0/P1 + gpt-restore fail-closed 表指纹门）
-- `scripts-hardening-4-20261123.md` — reports/scripts-hardening-4-20261123.md — 脚本整改批 4（D5：STALE 15 收口 + O_DIRECT 硬门 ×6）
-- `scripts-audit-20261122.md` — 脚本/工具精简与整理审计（2026-11-22，只读）
-- `scripts-hardening-1-20261121.md` — scripts-hardening-1-20261121.md — 脚本整改批 1（7 个 DANGEROUS）落地记录
-- `scripts-hardening-2-20261121.md` — scripts-hardening-2-20261121.md — 脚本整改批 2（D5 小批：build-kernel 守卫假阳性 + 3 个 BROKEN 加 #701 门）
-- `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
-- `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
 
 ## `sensors`（8）
 

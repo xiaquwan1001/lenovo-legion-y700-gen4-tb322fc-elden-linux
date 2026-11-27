@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# RETIRED 2026-11-27：本机 loader 无 peek 支持必然失败（PITFALLS #486 定案，脚本头已注明），DDR 回读走 reports/uefi-ddr-fallback-plan-20261101.md §1.4 路径；替代：fastboot boot Linux + probes/blackbox；可复核：reports/ltbox-evaluation-20261118.md
 # edl-peek.sh — 经 bkerler python edl 的 Firehose peek 读物理内存（只读工具，无 poke）
 # 用法: scripts/edl-peek.sh <hex-addr> <length-bytes> [outfile]
 # 前置: 设备处于 9008 (05c6:9008)；udev 规则 99-edl.rules 已放行。

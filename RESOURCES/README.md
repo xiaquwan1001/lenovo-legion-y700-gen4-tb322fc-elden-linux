@@ -403,6 +403,7 @@ git log --oneline -10
 > 其余 **219 个**只能靠**生成物** `scripts/README.md` 找到；而生成物是机器全量清单、不是语义入口（「一半脚本只能靠索引找到」= 每个会话固定的重造轮子成本）。
 >
 > 分类依据与逐条结论：`reports/scripts-ref-audit-20261127.md`（184 个 plain 孤儿三分类 + 7 条死引用逐条处置 + 复现命令）。
+> T16 复核（2026-11-27）：上一轮误判为 ③ 的 62 条已重判，① 退役 37 / ② 补指针 25（即本节新立面与补行）、0 条 ③，逐条表见 `reports/scripts-ref-audit-t16-20261127.md`。
 >
 > **本节的收录口径**（三分类里的②「补指针」）：只收**仍可重跑、值得被找到**的件，每行 = 脚本名 + 真的干什么 + 何时用。
 > ① 已退场件（3 件，见报告分类表）在各脚本头有 `RETIRED 2026-11-27：<原因>` 行，**不动文件、不删文件**，也不出现在本节；
@@ -416,6 +417,9 @@ git log --oneline -10
 | | `scripts/serial-probe.sh` | 独占串口「敲一下」，抓当前输出+回声——判串口是否被别的进程占着。 |
 | | `scripts/serial-capture.sh` | 等 ttyACM 节点出现就把内容落盘——重启后「设备起来了但不知道卡在哪」的取证入口。 |
 | | `scripts/serial-sysrq.py` | 经串口发 SysRq——免物理断电复位/取栈（显示栈坏时的逃生路）。 |
+| UEFI / ESP / GRUB（T16 补 2026-11-27） | `scripts/grubfat-build-uefi-bootimg.sh` | 把可自举 UEFI 卷包成 Android boot.img（路线 A 打壳步骤）——重造间接引导 boot.img 时。 |
+| | `scripts/uefi-oneshot.sh` | 真载荷单档一发（一会话一发，PITFALLS #523 同族）——UEFI 阶梯复发时的新会话单发判读。 |
+| | `scripts/uefi-r21-sbstop-ladder.sh` | R21 sbstop=N 阶梯（宿主可读 `diag st=Aborted last=[K] stop=N`）——DXE→BootLinux 落点取证复发时。 |
 | UEFI / ESP / GRUB | `scripts/esp-apply.sh` | 把主机侧目录树一条命令组 FAT32 镜像并写进 eldenesp 分区——改完 ESP 内容（Loader/grub.cfg）成批落盘时。 |
 | | `scripts/esp-put-loader.sh` | 把一份 Loader.efi 放到设备 ESP 的 `/EFI/elden/`——换 UEFI Loader 件。 |
 | | `scripts/grub-bootfiles.sh` | 从 Android boot.img 取「GRUB 直接启动」所需三件、可选落设备 `/boot`——走 GRUB 路线备料。 |
@@ -433,12 +437,15 @@ git log --oneline -10
 | | `scripts/android-rom-segassemble.py` | 按 XML 把「一个分区被拆成多段」的 img 拼回整分区——拿到分段线刷包要整镜像时。 |
 | | `scripts/android-min-build.sh` | 「最小安卓全量线刷包」构建器（stage 化、可重入）——重建最小 Android 包。 |
 | | `scripts/android-ksu-avb-build.py` | 造 KernelSU(LKM) 修补的 init_boot + 与之自洽的 vbmeta_a——重做 KSU 根方案。 |
+| 内核 / 模块 / 部署（T16 补 2026-11-27） | `scripts/deploy-camera-modules.sh` | 不刷 boot、不重启，向运行中设备部署相机模块栈（ABI 门 + loader + 依赖序加载）——设备已起旧镜像时的兜底路径。 |
+| | `scripts/manifest-from-image.py` | 从镜像本身重建 `.manifest`（源树已删时防假身份，PITFALLS #131/#162）——build-manifest.sh 跑不了时。 |
 | 内核 / 模块 / 部署 | `scripts/switch-kernel-abi.sh` | 内核镜像 + 模块树**一起**原子切换——两套 ABI 变体来回（避免 vermagic 错配，见 PITFALLS #367）。 |
 | | `scripts/check-init.sh` | `/init` 单一真源 / 可运行性自检（主机侧只读）——改完 `/init` 先自检再上机。 |
 | | `scripts/deploy-v4l2loopback.sh` | 为**当前在机内核**构建并部署 v4l2loopback——容器/相机面需要 loopback 设备时。 |
 | | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备同名路径——内核没换、只换模块。 |
 | | `scripts/deploy-bt-suspend-guard.sh` | 把 BT suspend 保护钩子部署到设备并验证——出现「suspend 后蓝牙消失」时。 |
 | | `scripts/rootfs-minbase-build.sh` | 最小 Debian 根（GPT-minimal 路线 A6 前置件）驱动脚本——重造最小根。 |
+| 设备体检 / 电源（T16 补 2026-11-27） | `scripts/keep-awake.sh` | 设备侧一键关熄屏/挂起（不加载相机栈、不存档原值）——只要设备保持清醒时；优先路径仍是 cam-mode.sh on。 |
 | 设备体检 / 电源 | `scripts/thermal-stress.sh` | 温控压测驱动（在设备上跑）——验证降频/温控策略。 |
 | | `scripts/suspend-drain-rate.sh` | 量化「相机栈在位 + 真 suspend」的掉电率（%/h）——电源回归。 |
 | | `scripts/sleep-policy.sh` | 设备「待机策略」开关：关屏时是否允许 SSH/网络继续可用——换待机口径。 |
@@ -446,8 +453,14 @@ git log --oneline -10
 | | `scripts/ime-candidates-check.sh` | 中文候选窗「可出候选」判据的只读体检（2026-11-15 立）——输入法面回归。 |
 | | `scripts/probe-camera-sensors.sh` | 相机 + 传感器只读探测——新单元/换机后摸底。 |
 | | `scripts/dpms-watch.sh` | 每秒采面板/合成器状态到 `/root/dpms-watch.log`——熄屏/黑屏取证。 |
+| 桌面栈构建 / 调试（T16 新立面 2026-11-27） | `scripts/build-phosh-upstream-fix.sh` | 用上游 main 源树 + 本地补丁编 aarch64 phosh——验证 upstream/*.patch 可上机件时。 |
+| | `scripts/phoc-build-launch.sh` | root 独立 session 启动 build-phoc-arm64.sh（脱离调用者进程组，日志 /tmp/phoc-build.log）——编 phoc 不想被 sudo_exec/tmux 退出连杀时。 |
+| | `scripts/glycin-bwrap-shim.sh` | 在 bwrap 前装 shim 让 glycin 判定沙箱不可用、退直跑 loader——修 gdk-pixbuf 2.44 断言杀 phosh 时。 |
 | 上游 / 词库 | `scripts/lore-fetch-raw.py` | 按 Message-ID 直接从 lore 取 raw（自动过 Anubis PoW）——需要上游邮件原文/附件补丁。 |
 | | `scripts/gen-pinyin-lexicon.py` | 从 CC-CEDICT 生成「拼音 → 词」候选词库（供 `elden-pinyin-completer`）——换/扩词库时；`--check` 可验。 |
+| Waydroid 容器（T16 补 2026-11-27） | `scripts/waydroid-cam-restart.sh` | vendor.img 换件后用**真实桌面会话**重启 Waydroid 栈——容器镜像/相机改完的标准重启路径。 |
+| | `scripts/waydroid-headless-start.sh` | headless weston 起 Waydroid（⚠ 仅 Q28 坏发无合成器时；正常态用上一条）——脚本头有场景限定头注。 |
+| | `scripts/gapps-mirror-setup.sh` | 把 GAPPS system 镜像接入本地 OTA 源（GAPPS.json + 软链）——重配 OTA 源时。 |
 | Waydroid 容器 | `scripts/wd.sh` | 主机侧 Waydroid 快捷控制（每次 <15 s 返回，绝不长等待）——日常起停/查询。 |
 | | `scripts/waydroid-proxy-setup.sh` | 让容器访问 Google（复用主机 Clash 代理）——容器内要外网时。 |
 | | `scripts/waydroid-ota-serve.sh` | 本地 Waydroid OTA（system+vendor）经 USB-Net 发给平板——重装/升级容器镜像。 |
@@ -458,5 +471,18 @@ git log --oneline -10
 | | `scripts/recover-lun4-slotguid.sh` | 修「ABL 报 `ValidateSlotGuids … does not have valid guids` ⇒ 掉 fastboot」——刷槽后起不来。 |
 | | `scripts/backup-triage.sh` | `backup/` 去重与分级处置（默认 dry-run）——备份目录涨起来时。 |
 | | `scripts/hide-android-partitions-selftest.sh` | 离线自测（全在 `/tmp` 沙盒，不碰 `/etc`、不碰设备）——改隐藏分区逻辑后先自测。 |
+| 取证 / 解码（T16 补 2026-11-27） | `scripts/devlogs.sh` | 设备日志快照统一入口（pull/pstore/tail：串口 + ramoops + 用户态日志）——bring-up/回归取证先跑它。 |
+| | `scripts/driver-snapshot.sh` | 一次上机采齐驱动/子系统状态快照（设备侧或经 ssh）——两次启动 A/B 之前各采一份。 |
+| | `scripts/driver-snapshot-diff.sh` | 比对两份 driver-snapshot 输出、按「变了什么」排序（rc 0/1 可脚本化）——配上一条用。 |
+| | `scripts/gui-freeze-watch.sh` | 抓「进 GUI 整机卡死」现行：串口 + 5 s 心跳双通道（PITFALLS #106）——冻结复发时挂上再复位。 |
+| | `scripts/hk-save-decrypt.py` | Hollow Knight 存档 AES-256-ECB 解/加密（公钥固定）——非设备件，游戏存档取证时。 |
 | 取证 / 解码 | `scripts/logfs-decode.py` | 解析 `logfs` 分区（8 MiB = 10 × 64 KiB 环形 ABL 日志）——读 ABL/固件执行信标（2026-11-27 传感器取证用过）。 |
 | | `scripts/display-drop-forensics.sh` | 设备侧「桌面显示栈自发掉线」一次抓全——显示面复发时。 |
+| 自检 / 门禁（T16 新立面 2026-11-27） | `scripts/check-series-selfcontained.sh` | 补丁系列自足性门禁（干净 worktree 逐枚 apply/am，`--self-test` 可验）——发上游前先过它。 |
+| | `scripts/test-lib-wait.sh` | lib-wait.sh + lib-ssh.sh 的 stub 注入自检（不需要设备）——改等待/换代判据后必跑。 |
+| | `scripts/test-bt-guard.sh` | 50-elden-bt-guard 钩子的注入式单元测试（伪造 dmesg/rfkill，不动真机 BT）——改钩子后必跑。 |
+| 主机环境（T16 新立面 2026-11-27） | `scripts/net-egress.sh` | 主机出口选择：教育网有线 vs 热点 wifi 显式路由（test/mirrors 模式）——下载慢、怀疑走错出口时。 |
+| | `scripts/host-mem-build-stress.sh` | 用真实构建压测宿主内存（无 ECC 机位翻转排查，配 kbuild-sanity.sh）——疑似内存坏时。 |
+| Win-x86 转译 PoC（T16 新立面 2026-11-27） | `scripts/fetch-x86-assets.sh` | 下载 Win-x86 转译 PoC 离线资产到 pkgs-x86/（双路径 + precheck）——重配 box64/wine 环境时。 |
+| | `scripts/win-x86-rootfs.sh` | 构建/部署 glibc aarch64 rootfs（build/deploy/debootstrap）——重造 PoC 根时。 |
+| | `scripts/win-x86-run.sh` | 在设备 glibc-rootfs chroot 内跑 Box64+Wine（自带 fork 风暴防护）——PoC 上机执行入口。 |

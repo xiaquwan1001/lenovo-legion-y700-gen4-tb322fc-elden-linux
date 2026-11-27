@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：vk77-modular ramdisk 补 payload 钩子的一次性打包器（教训已入 PITFALLS §0 纪律 4），配方在 reports/；可复核：reports/scripts-index-20261120.md
 # build-payload-hook.sh — 往已有 ramdisk 追加「payload 加载钩子」最小层
 #
 # 背景（2026-10-09 教训）：vk77-modular 的 /init 里已有 payload 钩子，但**打包时漏了

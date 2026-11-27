@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：vk65-m{0..3} 诊断内核定位 kexec 掉电阶段的一次性执行器，结论已落 reports/；可复核：reports/script-audit-ssh-20261118.md
 # kexec-diag-test.sh — 在设备上跑，用 vk65-m{0,1,2,3} 诊断内核定位 kexec 掉电阶段。
 #
 # 前提：当前运行的就是带 [KD] 诊断 hook 的内核（vk65-mX，cmdline 含 kexec_dbg=N）。

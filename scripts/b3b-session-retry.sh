@@ -1,4 +1,5 @@
 #!/bin/sh
+# RETIRED 2026-11-27：B3-b 用户态重启会话对照，单次实验，判据与结果在 reports/q28-b1-firstsample-20261015.md；可复核：reports/script-cleanup-audit-20261112.md
 # b3b-session-retry.sh — 零构建实验：在坏发台上重走一次 modeset，看面板是否点亮。
 #
 # 动机：B1 首样本证明「让失败非致命」不够，缺的是「谁发起重试」

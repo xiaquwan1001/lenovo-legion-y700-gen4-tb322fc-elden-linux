@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：v3 super 已写入并 EDL 读回校验通过（一次性构建器），配方与判据在 reports/android-slim-v3-20261119.md；替代/复核：该报告 §7/§8；可复核：reports/disk-audit-20261126.md
 # android-slim-v3-build.sh — 安卓「彻底精简 + 无占位 + 可共存」system/super 构建器（主机侧，需 root）
 #
 # v3 = v2-B（删全部 /system/preinstall 池与 etc/AI/bgmusic）+ 一批「无用功能」leaf 包；

@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：等一次真 POR 冷起并归档 q28-clkdiag 的一次性取证执行器，产物已在 reports/artifacts/；可复核：reports/主机侧-B13-20261117.md
 # q28-coldboot-collect.sh — 等一次**真实 POR 冷起**，起来后立刻跑 q28-clkdiag.sh 并归档。
 #
 # 用法： scripts/q28-coldboot-collect.sh <round> [等��秒数=600]

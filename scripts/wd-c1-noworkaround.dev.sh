@@ -1,4 +1,5 @@
 #!/bin/sh
+# RETIRED 2026-11-27：C1 验收一次性设备侧执行件，C1 已由 vk126+ 内核落地收口；可复核：reports/c1-noworkaround-20261013.md
 # wd-c1-noworkaround.dev.sh — C1 验收（**在设备上以 root 运行**）
 #
 # 目的：禁用「容器默认路由 workaround」（blank_screen.rc bind-mount + ip route replace default）

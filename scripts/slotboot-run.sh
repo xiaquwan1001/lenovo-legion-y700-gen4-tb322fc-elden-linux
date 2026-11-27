@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：P2 槽位正常启动路径单次上机（2026-11-01），产物在 reports/artifacts/uefi-slotboot-20261101；可复核：reports/lanes-consolidated-20261101.md
 # slotboot-run.sh — P2「槽位正常启动路径」最小形态上机（2026-11-01）
 #   1) 把 marks 载荷写进 boot_b（96 MiB，AVB testkey），读回校验
 #   2) reboot（正常 boot 路径，不走 fastboot boot）

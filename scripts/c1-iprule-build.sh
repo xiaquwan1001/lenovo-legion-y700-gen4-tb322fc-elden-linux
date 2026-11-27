@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：C1 策略路由内核（vk95 一发）一次性构建器，C1 已由 vk103/vk126 落地，配方在 TASKS/reports C1 记录；可复核：reports/c1-iprule-vk95-20261011.md
 # c1-iprule-build.sh — build the vk95 kernel that enables policy routing
 # (CONFIG_IP_ADVANCED_ROUTER / IP_MULTIPLE_TABLES) so Android netd can install
 # the container default route natively (TASKS §5 Q2 / C1).

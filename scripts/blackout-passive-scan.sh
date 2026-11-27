@@ -1,4 +1,5 @@
 #!/bin/sh
+# RETIRED 2026-11-27：黑屏期 wlan0 beacon 被动扫描，单次诊断，结论已落 reports/；可复核：reports/audit-20261119/A3-scripts-audit.tsv
 # 黑屏期诊断：被动扫描（只听 beacon）能否听到该 AP
 BR() { iw dev wlan0 station dump 2>/dev/null | grep "beacon rx" | tr -d " \t" | cut -d: -f2; }
 LOST() { dmesg | grep -ac "Connection to AP 00:00"; }

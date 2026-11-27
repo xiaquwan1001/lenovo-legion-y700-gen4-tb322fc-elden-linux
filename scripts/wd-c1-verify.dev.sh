@@ -1,4 +1,5 @@
 #!/bin/sh
+# RETIRED 2026-11-27：vk103 netd per-network 路由验证的一次性设备侧执行件，C1 已收口；可复核：reports/stale-alpine-audit-scripts-20261119.md
 # wd-c1-verify.dev.sh — RUN ON DEVICE (as root). 验证 vk103（IPv4+IPv6 多路由表）下
 # netd 是否自建 per-network 路由（= 去 workaround）。**不注入任何 workaround 路由**。
 set -u

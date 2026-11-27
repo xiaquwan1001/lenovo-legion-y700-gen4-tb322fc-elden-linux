@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：给 Taniya Das 的三件套一次性采集（2026-10 交付完成），产物已随上游线程存档；可复核：reports/script-cleanup-audit-20261112.md
 # t5-q24-capture.sh — T5：给 Taniya Das（Q24 语境）的三件套采集
 #
 # 交付物（对应她 2026-10-13 09:03 UTC 的原话请求）：

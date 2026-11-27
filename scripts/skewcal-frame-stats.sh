@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：M4 SKEW_CAL A/B 帧统计一次性测量件，结论已落 reports/ 相机系列报告；可复核：reports/audit-20261119/A3-scripts-audit.tsv
 # skewcal-frame-stats.sh — 在锁内抓 N 帧存设备 /tmp，再用 python3 统计（distinct/stddev/非零占比）。
 # 目的：fps/错误计数相同不代表像素正确；SKEW_CAL 影响的是链路采样相位。
 # usage: scripts/skewcal-frame-stats.sh <label> [frames]

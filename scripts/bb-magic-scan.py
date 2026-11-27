@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# RETIRED 2026-11-27：DDR 黑匣子窗口魔数扫描的一次性取证执行器，配方在 reports/uefi-ddr-* 系列报告；可复核：reports/uefi-posctrl-20261103-summary.md
 """bb-magic-scan.py — DDR 窗口魔数扫描（0xA5A5A5A5 连续段）。
 
 为什么：整页 0xFF 判据会被 splash/图像/日志数据污染（2026-11-03 15:1x 实测 19%–37%），

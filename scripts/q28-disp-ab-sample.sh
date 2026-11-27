@@ -1,4 +1,5 @@
 #!/bin/sh
+# RETIRED 2026-11-27：Q28 显示初始化补丁 A/B 冷起采样执行器，各臂样本已做完，配方在 reports/q28-disp-init-ab-20261022.md；可复核：reports/q28-v2-mdss-reset-20261023.md
 # q28-disp-ab-sample.sh — 取「一发」Q28 显示初始化补丁 A/B 冷起样本。
 #
 # 背景：armadaos-freedom 的 0154（dispcc probe 复位活显示 BCR）+ 0155（DSI PHY

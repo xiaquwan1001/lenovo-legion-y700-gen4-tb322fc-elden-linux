@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# RETIRED 2026-11-27：BootShim splash_region 颜色轨迹的一次性事后取证（2026-11-04 M1–M3 已判读），配方在 reports/ UEFI shim 报告；可复核：reports/uefi-payload-execution-20261104.md
 """fb-survey.py — 事后从 DRAM 读回 splash_region，还原 shim 的「整屏纯色」执行轨迹。
 
 背景（2026-11-04）：BootShim 在每个里程碑把整块 `splash_region`（DT 里

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# RETIRED 2026-11-27：「GPT 回原厂」对照用的一次性 xml 生成器，对照已完成（本仓六 LUN dump 在档），配方在 reports/；可复核：reports/script-audit-edl-20261118.md
 """make-gpt-only-xml.py — 从官方 rawprogram*.xml 里**只保留 GPT 两行**，生成「只改分区表」的 xml。
 
 为什么需要它：真正的 `qdl rawprogram*.xml` 会连数据分区一起写（super/userdata 十几 GiB、

@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：B5/U2 原子回调时序取证门，一次性取证，判据在 reports/b5-per-soc-cfg-design-20261027.md；可复核：reports/artifacts/tablet-offload-20261030/l2a-dep-grep-3.log
 # b5-u2-atomic-timeline.sh — M6/B5 **U2** 取证门：原子回调时序（零写盘、可复跑）
 #
 # 背景：B5（bonded-DSI per-SoC cfg）把厂商非原子桥回调 `.enable/.disable` 映射到

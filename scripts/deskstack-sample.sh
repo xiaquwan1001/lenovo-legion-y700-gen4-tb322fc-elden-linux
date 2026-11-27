@@ -1,4 +1,5 @@
 #!/bin/sh
+# RETIRED 2026-11-27：A 臂熄屏状态机单次采样包，2026-11-14 对照已做完，配方在 reports/ 桌面栈对照报告；可复核：reports/scripts-index-20261120.md
 # A 臂采样：屏幕保护状态机 + 背光/DPMS + 按键计数。POSIX sh，整文件 scp 到 /tmp 再跑。
 # 用法：AIDLE_SECS=420 OUT=/tmp/a58-idle.tsv sh /tmp/deskstack-sample.sh
 OUT=${OUT:-/tmp/a58-idle.tsv}

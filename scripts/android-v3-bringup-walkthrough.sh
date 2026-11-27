@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：v3 首启验证 S1–S5 执行包，只服务 2026-11-19 那轮 bring-up，配方在 reports/android-slim-v3-20261119.md；可复核：reports/android-a-slot-mech-rejudge-20261121.md
 # android-v3-bringup-walkthrough.sh — 安卓精简 v3「首启验证」上机执行包（S1–S5，默认 dry-run）
 #
 # 背景（2026-11-19，`reports/android-slim-v3-20261119.md` §7/§8 + `INDEX.md` §0）：

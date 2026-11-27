@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：DDR 黑匣子上机循环，该轮取证已完成，配方与判据在 reports/uefi-ddr-* 系列报告；可复核：reports/doc-slim-20261102.md
 # uefi-ddr-trial.sh — DDR 黑匣子专用上机循环（多条重复，只统计真正交棒的发次）
 #
 # 背景（2026-11-01 实测）：本机 ABL 对 `fastboot boot` 的接受/拒绝**非确定性** —— 同一份

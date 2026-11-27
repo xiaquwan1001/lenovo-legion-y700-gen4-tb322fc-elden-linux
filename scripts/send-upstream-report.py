@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# RETIRED 2026-11-27：cambistmclkcc 上游报告+patch 的一次性发送件（已发出），存档在 mail.ustc 与 reports/；可复核：reports/audit-20261119/A3-scripts-audit.tsv
 # send-upstream-report.py — 发送 cambistmclkcc 上游报告 + patch 到 linux-arm-msm
 # 凭据：环境变量 OUTLOOK_APP_PASSWORD（不写盘、不进 git）
 import smtplib, sys, os

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# RETIRED 2026-11-27：2026-11-25 用户授权的一次性邮箱回收（文件名即日期戳），规则与执行结果见该轮会话记录；可复核：reports/arch-audit-20261127.md
 """mailbox-quota-reclaim-20261125.py — 邮箱到 2 万封上限后的「按规则回收」（2026-11-25 用户授权）。
 
 为什么新写而不是调 `mailbox-cleanup-20261102.py`：后者的 KEEP-HUMAN 用的是「发件域白名单」，

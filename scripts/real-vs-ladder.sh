@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：VS_STOP 阶梯旧版执行器，已被现役 uefi-r21-sbstop-ladder.sh（宿主可读判据）取代；替代：scripts/uefi-r21-sbstop-ladder.sh；可复核：reports/script-cleanup-audit-20261112.md
 # real-vs-ladder.sh — 在**真内核载荷**上跑 VS_STOP 阶梯（p17 件，零写盘）
 #
 # 为什么要它：2026-11-06 之前所有 sbstop= 阶梯的"载荷"都是 UEFI preamble 模板（ladder 脚本

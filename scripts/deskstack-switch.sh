@@ -1,4 +1,5 @@
 #!/bin/sh
+# RETIRED 2026-11-27：0.58 vs 0.59 桌面栈整档 A/B 对照执行器，对照已完成，配方在 reports/；可复核：reports/scripts-index-20261120.md
 # deskstack-switch.sh — 桌面栈整档切换（phoc + phosh 全套），用于 T20/T19 的 A/B 对照
 #
 # 背景（2026-11-14）：设备桌面栈是混装 —— phosh 三包 0.58.0-1，phoc/portal/osk 0.59~rc1。

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# RETIRED 2026-11-27：kexec 掉电二分单轮执行器，二分已收敛，配方与结论在 reports/ kexec 系列报告；可复核：reports/script-redundancy-audit-20261112.md
 # elden kexec 二分单轮。进 fastboot 的软路径统一走 scripts/lib-soft-bootloader.sh（PITFALLS #712）
 #  （设备侧 eldroid-bootctl 是 python3 件、现役 Debian 根无 python3 ⇒ 旧调用一直是静默 no-op）
   # （脚本内部已挂 6 s sysrq-b 看门狗；**不要再叠加** sysrq-b —— 两个复位请求落同一关机窗口

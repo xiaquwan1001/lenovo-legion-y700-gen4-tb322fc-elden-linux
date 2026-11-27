@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：sleep-death 候选内核/boot.img 一次性构建器（wt-sleepdeath worktree 口径），实验已完成；可复核：reports/artifacts/tablet-offload-20261030/l2a-offline-packages.md
 # sd-variant-build.sh — build one sleep-death (熄屏→关机) candidate kernel + boot.img.
 #
 # Base = wt-sleepdeath worktree (checked out at vk47 / bd114ca33, = vk47clean source).

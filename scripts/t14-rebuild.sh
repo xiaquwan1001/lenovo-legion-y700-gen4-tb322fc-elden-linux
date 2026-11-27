@@ -1,4 +1,5 @@
 #!/bin/bash
+# RETIRED 2026-11-27：T14 Mobian 换根重建 recipe 可执行化，T14 已收口，配方权威在 reports/t14-userland-recipe-20261111.md §3；配方：reports/t14-userland-recipe-20261111.md；可复核：reports/scripts-index-20261120.md
 # t14-rebuild.sh — T14「Mobian 换根重建 recipe」可执行化（2026-11-13，主机侧，零设备动作）
 #
 # 依据：reports/t14-userland-recipe-20261111.md §3（P0 → R1 → R2 → R3 → R4）。
