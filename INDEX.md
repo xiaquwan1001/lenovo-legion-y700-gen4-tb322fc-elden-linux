@@ -54,6 +54,9 @@
 > ⑥ 收尾门：`check-doctor` **FAIL=0 / WARN=3**（三条 C 类存量：源树不可核 67 行、账本登记例外、身份表降级一致）；`docs-health` **0/0/0**；
 > `check-progress-counts` **G1 36/37 · G2 10/13**；`reports-orphan-check --check` **rc=0（710/710）**；`git fsck` rc=0。
 
+> **⚠ 2026-11-27 20:1x 现态**：设备被换到内核 `7.3.1-debug-vk189-suspend-g4da9a8b69fc8-dirty`（`build/daily` 直出）后 **`/dev/fastrpc-adsp` 不存在**
+> （该 DTB 缺 adsp fastrpc 的 `qcom,non-secure-domain` = G1-34 的已知回归形态）⇒ **传感器当前不起**；`elden-sensorspd` 已改 oneshot + 有界等待，
+> 不再重启循环（`NRestarts=0`、`Result=success`）。换回带该节点的内核即自动恢复，无需手工。详见 `reports/sensors-ssc-persistent-20261127.md` 修订节。
 > **★★ 2026-11-27（收口）：主线 Linux 上传感器已`可用`** —— `HasAccelerometer/HasAmbientLight/HasProximity` 三 **true**、
 > `ssccli --sensor accelerometer` 连续出值（X≈-1.17 Y≈-0.66 Z≈9.55 m/s²）。全账 = `reports/sensors-ssc-restored-20261127.md`
 > （真因链：droid-juicer 配置 0 字节占位 + `hexagonrpcd` 的 `-R` 布局不匹配 ⇒ DSP 断言 ⇒ 本板整机复位；换真 vendor 配置 + 扁平 `-R` 树 + udev/代理接线即恢复。新 `PITFALLS #741`）。

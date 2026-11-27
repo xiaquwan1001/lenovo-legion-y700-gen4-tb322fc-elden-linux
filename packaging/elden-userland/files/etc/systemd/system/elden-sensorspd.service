@@ -1,15 +1,21 @@
 [Unit]
 Description=hexagonrpcd (patched: flat -R tree + write overlay) for elden SSC sensors
 After=local-fs.target
-StartLimitIntervalSec=120
-StartLimitBurst=5
+StartLimitIntervalSec=300
+StartLimitBurst=3
 
 [Service]
-Type=simple
-ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do [ -e /dev/fastrpc-adsp ] && exit 0; sleep 1; done; exit 1'
-ExecStart=/usr/local/bin/hexagonrpcd-patched -f /dev/fastrpc-adsp -d adsp -s -R /var/lib/hrpcd-root/ -O /var/lib/hexagonrpc
+# The FastRPC node only exists when the running kernel's DTB has the ADSP
+# fastrpc non-secure-domain node (see PITFALLS #741 / TASKS G1-34).  Never
+# enter a restart loop when it is missing: wait a bounded time, then finish
+# successfully without attaching (a later boot with a fixed kernel will do it).
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/elden-sensorspd-start
+TimeoutStartSec=180
 Restart=on-failure
-RestartSec=5
+RestartPreventExitStatus=1
+RestartSec=10
 User=fastrpc
 Group=fastrpc
 

@@ -41,3 +41,23 @@ ssh elden 'systemctl show -p NRestarts elden-sensorspd'                # 目前 
    临时缓解已经有效（`Restart=on-failure`），但**不该留在设备上**。
 2. **真写后端**（registry 持久化）：`hexagonfs_mapped` 只读 ⇒ copy-on-write 到 `/var/lib/hexagonrpc/`；`fwrite/ftrunc/fremove/frename/mkdir/rmdir/fsync` 真实现。
 3. 上游：#29 仍 open；我们现在的「0 字节占位 + 扁平布局 + 真配置」三条经验可直接回帖（**需用户放行**）。
+
+---
+
+## 修订（2026-11-27 20:1x，接续轮）：unit 改 **oneshot + 有界等待**，禁止重启循环
+
+**现场**：设备被换到内核 `7.3.1-debug-vk189-suspend-g4da9a8b69fc8-dirty`（`build/daily` 直出）后，**`/dev/fastrpc-adsp` 不存在**
+（该构建的 DTB 没有 adsp fastrpc 的 `qcom,non-secure-domain`，即 G1-34/vk190 修过的那条回归），
+原 unit 的 `ExecStartPre` 等 60 s 后 `exit 1` ⇒ `Restart=on-failure` 每 ~65 s 重启一次，**实测累积 `NRestarts=47`**。
+
+**改法**（已落到设备与仓库副本）：
+- `Type=oneshot` + `RemainAfterExit=yes` + `Type` 之外新增启动脚本 `/usr/local/sbin/elden-sensorspd-start`：
+  最多等 **90 s** 的 `/dev/fastrpc-adsp`，等到就 `exec hexagonrpcd-patched … -s -R … -O …`；
+  等不到就打印一行「kernel DT lacks adsp fastrpc non-secure-domain? - skipping attach」并 **`exit 0`**（成功结束，不进失败态）。
+- `Restart=on-failure` + `RestartPreventExitStatus=1` + `StartLimitBurst=3/300 s`：真正的失败也不会打成无限循环。
+- 验收（设备现态）：`systemctl is-active elden-sensorspd` = `active (exited)`、`NRestarts=0`、`Result=success`、`--failed` = 0，
+  日志明确写下缺节点的原因。
+
+**含义**：传感器现在**不起来**，因为当前内核没有该设备节点——这不是 sensor 栈回归，而是**内核 DT 缺项**（G1-34 的已知回归形态）。
+换回带 `qcom,non-secure-domain` 的内核（或给该构建补上该节点）后，本 unit 会在开机自动 attach（脚本等节点，最多 90 s），
+无需任何手工步骤。

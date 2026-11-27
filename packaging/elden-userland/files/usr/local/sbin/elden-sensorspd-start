@@ -1,0 +1,17 @@
+#!/bin/sh
+# Attach hexagonrpcd to the sensors PD once.  The listener slot is single-use
+# per AP boot, so this runs as a oneshot and the daemon is expected to exit
+# after the DSP finished its attach (PITFALLS #741).
+DEV=/dev/fastrpc-adsp
+i=0
+while [ ! -e "$DEV" ]; do
+	i=$((i + 1))
+	if [ "$i" -ge 90 ]; then
+		echo "elden-sensorspd: $DEV missing after 90 s (kernel DT lacks adsp fastrpc non-secure-domain?) - skipping attach" >&2
+		exit 0
+	fi
+	sleep 1
+done
+
+exec /usr/local/bin/hexagonrpcd-patched -f "$DEV" -d adsp -s \
+	-R /var/lib/hrpcd-root/ -O /var/lib/hexagonrpc
