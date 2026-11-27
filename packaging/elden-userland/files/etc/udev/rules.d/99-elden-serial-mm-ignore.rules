@@ -1,0 +1,6 @@
+# 2026-11-27：本机的 USB 复合 gadget（Lenovo TB322FC mainline，1d6b:0104 的 CDC-ACM）
+# 是**调试串口**（ttyGS0 = 内核 console、ttyGS1 = OOB root shell），不是调制解调器。
+# 不屏蔽的话 ModemManager 会打开它并往里灌 AT（日志实见 `/bin/sh: AT: not found` 成片），
+# 既污染 console，也和 scripts/serial-fanout.sh 抢独占打开（`Device or resource busy`）。
+SUBSYSTEM=="usb", ATTR{idVendor}=="1d6b", ATTR{idProduct}=="0104", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", KERNEL=="ttyACM[0-9]*", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1"

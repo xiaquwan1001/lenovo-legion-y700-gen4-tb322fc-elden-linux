@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：725
+- 报告总数：728
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -56,6 +56,7 @@
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
 | `build` | 3 | `build-residue-verify-20261125.md` |
 | `c3` | 3 | `c3-spic-verdict-20261115.md` |
+| `driver` | 3 | `driver-gap-device-audit-20261127.md` |
 | `external` | 3 | `external-scan-20261112.md` |
 | `grub` | 3 | `grub-rehash-20261115.md` |
 | `hexagonrpcd` | 3 | `hexagonrpcd-heap-oob-20261127.md` |
@@ -132,7 +133,7 @@
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
 | `dispcc` | 1 | `dispcc-battmgr-20261028.md` |
 | `distro` | 1 | `distro-upstream-feasibility-20261121.md` |
-| `driver` | 1 | `driver-ab-charging-20261108.md` |
+| `drivers` | 1 | `drivers-build-iris-20261127.md` |
 | `dup` | 1 | `dup-check-20261125.md` |
 | `e3` | 1 | `e3-wcn-dyndbg-20261014.md` |
 | `edl` | 1 | `edl-toolchain-survey-20261101.md` |
@@ -860,6 +861,12 @@
 - `c3-pi-tiers-closeout-20261110.md` — C3 收口（2026-11-10）：Play Integrity 三档 × Widevine 等级的**书面结论**
 - `c3-identity-drm-20261013.md` — C3 身份/DRM 取证（Waydroid 容器 / lineage_waydroid_arm64_only A13）— 2026-10-13
 
+## `driver`（3）
+
+- `driver-gap-device-audit-20261127.md` — 设备侧驱动缺口审计 — 2026-11-27（只读）
+- `driver-upstream-audit-20261127.md` — 驱动上游化审计 — SM8750 / vk189（2026-11-27）
+- `driver-ab-charging-20261108.md` — 「ESP 启动不充电」A/B 取证：**与启动路径无关，也不是驱动没加载**（2026-11-08）
+
 ## `external`（3）
 
 - `external-scan-20261112.md` — 外部动向扫描 2026-11-12（窗口：2026-11-09 → 2026-11-12 16:35 CST）
@@ -1224,9 +1231,9 @@
 
 - `distro-upstream-feasibility-20261121.md` — 发行版上游化可行性（Nura/pmaports · Mobian · Ubuntu Touch/UBports）— 2026-11-21
 
-## `driver`（1）
+## `drivers`（1）
 
-- `driver-ab-charging-20261108.md` — 「ESP 启动不充电」A/B 取证：**与启动路径无关，也不是驱动没加载**（2026-11-08）
+- `drivers-build-iris-20261127.md` — 驱动补完轮：审计结论 + 编译配置 + iris 上机（2026-11-27 下午）
 
 ## `dup`（1）
 

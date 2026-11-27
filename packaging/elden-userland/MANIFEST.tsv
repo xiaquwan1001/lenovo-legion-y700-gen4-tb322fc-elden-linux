@@ -114,3 +114,4 @@ dst	kind	sha256	size	mode	repo_src
 /usr/share/elden-pinyin/shards/x.json	data	a0f9f0b7f01e921a988f6f55966ee5ad822fc64416f00e573cc41ae0d2e267f1	131215	644	files/usr/share/elden-pinyin/shards/x.json
 /usr/share/elden-pinyin/shards/y.json	data	8d32a48a1530519ff7791bd1f60a357e84b5acba676d2d2229c1e3d056054658	166992	644	files/usr/share/elden-pinyin/shards/y.json
 /usr/share/elden-pinyin/shards/z.json	data	9f86024fcd819a2a19085157f367e41457883e95d3361fcfca9f33f0afe1217d	178416	644	files/usr/share/elden-pinyin/shards/z.json
+/etc/udev/rules.d/99-elden-serial-mm-ignore.rules	config	a12e21917078fe42eeffb78facdda4672a5619b79486e1b9ca5a8725ef4d570c	611	644	files/etc/udev/rules.d/99-elden-serial-mm-ignore.rules
