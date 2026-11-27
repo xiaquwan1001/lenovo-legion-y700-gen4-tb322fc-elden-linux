@@ -64,17 +64,17 @@
 
 | 路径 | 设备 0.46 | 上游 main |
 |---|---|---|
-| text-input `enable` → `activate_osk()` | `handle_text_input_enable()` `:224-243`，**无版本门**，直接 `send_activate` + `elevate_osk`（`:240-242`） | `:243-264`，带 **版本门** `if (wl_resource_get_version(...) >= ZWP_TEXT_INPUT_V3_SHOW_INPUT_PANEL_SINCE_VERSION) return;`（`:257-262`） |
+| text-input `enable` → `activate_osk()` | `handle_text_input_enable()` `:224-243`，**无版本门**，直接 `send_activate` + `elevate_osk`（`:240-242`） | `:243-264`，带 **版本门** `if (wl_resource_get_version(...) >= ZWP_TEXT_INPUT_V3_SHOW_INPUT_PANEL_SINCE_VERSION) return;`（`:258-261`） |
 | text-input `show_input_panel` | **不监听**（0.46 无此 listener） | `handle_text_input_show_input_panel()` `:268-285`（`g_debug "Explcit request to show input panel"`） |
-| 汇聚点 | `activate_osk()`（0.46 内联） | `activate_osk()` `:231-239` = `wlr_input_method_v2_send_activate()` + `relay_send_im_done()` + `elevate_osk()` |
+| 汇聚点 | `activate_osk()`（0.46 内联，`:240-242`） | `activate_osk()` `:231-239`（`send_activate :235`、`elevate_osk :238`） |
 
 ### 1.3 收回（hide）
 
 | 路径 | 设备 0.46 | 上游 main |
 |---|---|---|
-| `disable` | `handle_text_input_disable()` `:314-320` → `relay_disable_text_input()` `:266-280` → `send_deactivate` + `im_done` | `:372-379` / `:308-322` |
+| `disable` | `handle_text_input_disable()` `:314-320` → `relay_disable_text_input()` `:266-280` → `send_deactivate` + `im_done` | `:372-378` / `:308-321` |
 | `hide_input_panel` | **不监听** | `handle_text_input_hide_input_panel()` `:325-332` |
-| 焦点离开 | `text_input_relay_unset_focus()` `:302-310`：先 `submit_preedit()`（`:287-300`），再 `disable` + `send_leave` | `:361-366` / `:336-359` |
+| 焦点离开 | `text_input_relay_unset_focus()` `:303-310`：先 `submit_preedit()`（`:283-299`），再 `disable` + `send_leave` | `:361-368` / `:336-357` |
 | IM 客户端销毁 | `handle_im_destroy` 把焦点表面存成 `pending_focused_surface` 等 IM 回来 | 同形 `:170-190` |
 
 **注意**：`deactivate` 只是**信号**，phoc 自己**不碰 OSK 的可见性**；OSK 收 `deactivate` 后自行收键盘
@@ -135,7 +135,8 @@ phoc 同一函数里留着一行 **`/* TODO: pass intent, display popup size */`
 ### 1.8 phosh：shell 不参与（两代同形）
 
 - `src/osk-manager.c` **0.46 与 0.59 都是 322 行**，行为一致：只代理 `sm.puri.OSK0` 的
-  `Visible`/`SetVisible`（`:100-110`、`:314-321`）、跟随 `screen-keyboard-enabled`（`:148-153`）、锁屏强制隐藏（`:176-181`）。
+  `Visible`/`SetVisible`（`set_visible_real() :100-110`、`phosh_osk_manager_set_visible() :314-321`）、跟随
+  `screen-keyboard-enabled`（`:136-152`）、锁屏强制隐藏（`:178-180`）。
 - 注释原文（0.46 `:28`、0.59 同）：*“there's no way to ensure keyboard state via this interface as it just
   uses DBus to express preference”*；`:165` *“Just need to sync the property, osk shows/hides itself”*。
 - `grep -rn 'text_input|input_method|popup_surface' phosh/src/*.c` = **0 命中**（main 全树）。
@@ -150,7 +151,7 @@ phoc 同一函数里留着一行 **`/* TODO: pass intent, display popup size */`
 | **G2** | 任何「走 IM 协议的候选窗」在本栈**必然不可见**（本轮未上机复现，属源码级必然性） | phoc `src/` 无 popup 处理（§1.6） | **phoc**（合成器职责） | **真缺口 A**：上游 #77 未做。对我们是**能力储备**，不是当日 blocker |
 | **G3** | 锁屏/系统弹层上 OSK 被压住（上游 #302 原样现象：`pkexec echo test` 前 OSK 不置顶）；本栈未专门复现 | `elevate_osk` 对 toplevel no-op（`input-method-relay.c:49-51`）＋ `update_osk` 跳过 `focused_layer==NULL`（`layer-shell.c:479`） | **phoc** | **真缺口 C**：上游 4 年未动；修法与 A 同函数族，**建议等 A 落地时一起提交**（否则两次 rebase） |
 | **G4** | 「点输入框 OSK 不弹」 | 本轮不重推：已定因 = 无 `zwp_text_input_v3` 客户端（`GTK_IM_MODULE=fcitx` 遮蔽），见 **I1 §7.2** + Z §0-C1 | **下游配置 + shell 策略** | **不是协议缺**（I1 已裁）；不在本报告范围 |
-| **G5** | 锁屏上键盘被手动收起后**再也唤不回来**（点同一个已聚焦输入框无效） | stevia `handle_activate()` 开头 `if (self->pending->active == TRUE) return;`（`pos-input-method.c:93-95`）⇒ 重复 activate 被吞 | **OSK（stevia）** | ⚠️ 上游**已在修**：**!334**（Henry-Hiles，2026-11-25，opened）。我们不投 |
+| **G5** | 锁屏上键盘被手动收起后**再也唤不回来**（点同一个已聚焦输入框无效） | stevia `handle_activate()` 开头 `if (self->pending->active == TRUE) return;`（`pos-input-method.c:89-96`，判据行 `:96`）⇒ 重复 activate 被吞 | **OSK（stevia）** | ⚠️ 上游**已在修**：**!334**（Henry-Hiles，2026-11-25，opened）。我们不投 |
 | **G6** | 数字/电话/密码框不切布局（假如某客户端只发 hint 不发 purpose 之外的信号） | 链通（§1.5）；但 `inhibit-osk` / `no-emoji` / `sensitive-data` 三 hint **未实现** | **OSK（stevia）** | ⚠️ 上游 **#117** open（2026-10-04）；**!329** 已 merged 铺好位域。我们不投 |
 | **G7** | 混合键鼠 + OSK 同时用（内屏键盘与外接键盘共存）行为未定义 | stevia **不实现** `grab_keyboard`（stevia #120 open）；phoc 侧已实现（!419）并已修 NULL 解引用（!820） | **OSK（stevia）** | ⚠️ 上游 #120 open。我们不投 |
 | **G8** | （相邻，**不同栈**）Android 侧 IME `showSoftInput` 永不完成、无键盘 —— `droidloom` 内置 placeholder IME | 不在 phosh/phoc：`reports/artifacts/droidloom-ime-issue-20261127/body.md` | **Android 容器（droidloom）+ 宿主 text-input 能力协商** | 与 #77 **无关**，不要合并叙事；该 issue 另线处理 |

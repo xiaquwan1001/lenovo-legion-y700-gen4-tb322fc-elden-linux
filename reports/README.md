@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：747
+- 报告总数：749
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -47,6 +47,7 @@
 | `g7` | 4 | `g7-flip-ondevice-20261123.md` |
 | `host` | 4 | `host-stability-20261023.md` |
 | `out` | 4 | `out-android-purge-20261126.md` |
+| `phosh` | 4 | `phosh-gestures-assessment-20261128.md` |
 | `progress` | 4 | `progress-audit-20261118.md` |
 | `q32` | 4 | `q32-matrix-20261024.md` |
 | `research` | 4 | `research-next-20261102.md` |
@@ -56,6 +57,7 @@
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
 | `build` | 3 | `build-residue-verify-20261125.md` |
 | `c3` | 3 | `c3-spic-verdict-20261115.md` |
+| `comms` | 3 | `comms-track-20261128.md` |
 | `driver` | 3 | `driver-gap-device-audit-20261127.md` |
 | `external` | 3 | `external-scan-20261112.md` |
 | `grub` | 3 | `grub-rehash-20261115.md` |
@@ -64,7 +66,6 @@
 | `m12` | 3 | `m12-charger-upstream-20261125.md` |
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
-| `phosh` | 3 | `phosh-gestures-assessment-20261128.md` |
 | `pitfalls` | 3 | `pitfalls-condense-20261122.md` |
 | `rayburst` | 3 | `rayburst-ab-20261127.md` |
 | `sensor` | 3 | `sensor-claim-verify-20261126.md` |
@@ -76,7 +77,6 @@
 | `aw86927` | 2 | `aw86927-series-20261027.md` |
 | `c1` | 2 | `c1-noworkaround-20261013.md` |
 | `code` | 2 | `code-boundary-preinject-20261031.md` |
-| `comms` | 2 | `comms-track-20261127-c.md` |
 | `d16` | 2 | `d16-sensorproxy-sync-20261127.md` |
 | `d19` | 2 | `d19-apss-wdt-prep-20261125.md` |
 | `d3` | 2 | `d3-ime-userdir-fallback-20261124.md` |
@@ -815,6 +815,13 @@
 - `out-uefi-trim-20261106.md` — `out/r21-sbstop` 处置：先记指纹与可复现性缺口（2026-11-06）→ **同日已执行清仓**
 - `out-archive-20261105.md` — `out/` 历史镜像归档执行（2026-11-05）—— 114 件 / 7.66 GiB
 
+## `phosh`（4）
+
+- `phosh-gestures-assessment-20261128.md` — T29 上游化评估（主机侧那半）· phosh/phoc 手势导航交互 + 视觉效果
+- `phosh-ime-popup-research-20261128.md` — phosh/phoc「输入法弹窗 / 键盘意图」上游化调研 — 2026-11-28
+- `phosh-mr-2005-rework-20261124.md` — phosh !2005 第二轮（2026-11-24，按 guidog 意见重写）
+- `phosh-mr-power-mode-20261114.md` — phosh MR 提交材料（T20 / 2026-11-14）
+
 ## `progress`（4）
 
 - `progress-audit-20261118.md` — 进度审计（只读复核）：文档 vs 会话 vs 实测
@@ -875,6 +882,12 @@
 - `c3-pi-tiers-closeout-20261110.md` — C3 收口（2026-11-10）：Play Integrity 三档 × Widevine 等级的**书面结论**
 - `c3-identity-drm-20261013.md` — C3 身份/DRM 取证（Waydroid 容器 / lineage_waydroid_arm64_only A13）— 2026-10-13
 
+## `comms`（3）
+
+- `comms-track-20261128.md` — D10 通信跟踪（窗口 `2026-11-26T22:02Z` → `2026-11-27T22:17Z`）— 邮件 / lore / Mobian / phosh / GitHub（只读）
+- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
+- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
+
 ## `driver`（3）
 
 - `driver-gap-device-audit-20261127.md` — 设备侧驱动缺口审计 — 2026-11-27（只读）
@@ -922,12 +935,6 @@
 - `m8ab-readback-bootb-20261031.md` — M8 收尾：boot_b 完整读回备份（2026-10-31）
 - `m8ab-restart-20261030.md` — M8 A/B 续测（2026-10-30）：基线臂三发正常，坏发未复现
 - `m8ab-build-20261029.md` — M8 v2 真机 A/B 两镜像臂构建报告（lane G，2026-10-29）
-
-## `phosh`（3）
-
-- `phosh-gestures-assessment-20261128.md` — T29 上游化评估（主机侧那半）· phosh/phoc 手势导航交互 + 视觉效果
-- `phosh-mr-2005-rework-20261124.md` — phosh !2005 第二轮（2026-11-24，按 guidog 意见重写）
-- `phosh-mr-power-mode-20261114.md` — phosh MR 提交材料（T20 / 2026-11-14）
 
 ## `pitfalls`（3）
 
@@ -991,11 +998,6 @@
 
 - `code-boundary-preinject-20261031.md` — code-boundary 投递前静态门禁独立复核 — 2026-10-31
 - `code-style-and-duty-overlap-audit-20261030.md` — 代码风格 / 上游规范 / 职责重复 / 需求对齐 审计（L5）
-
-## `comms`（2）
-
-- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
-- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
 
 ## `d16`（2）
 
