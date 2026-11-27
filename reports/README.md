@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：744
+- 报告总数：745
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -15,7 +15,7 @@
 | `mail` | 30 | `mail-inbox-20261121.md` |
 | `q24` | 25 | `q24-cam-on-retire-20261127.md` |
 | `upstream` | 24 | `upstream-coresight-fixes-20261127.md` |
-| `droidloom` | 21 | `droidloom-local-patches-20261127.md` |
+| `droidloom` | 22 | `droidloom-local-patches-20261127.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
 | `android` | 15 | `android-boot-audit-20261122.md` |
@@ -430,11 +430,12 @@
 - `upstream-hits-review-20261012.md` — 上游命中审计复核 —— 对 `reports/upstream-hits-20261012.md`（lane/upstream 53fbe5a）的独立核对
 - `upstream-lane-merge-20261012.md` — 上游回移 lane 收尾：按裁决清洗 + 合入基线 + 出日常镜像 — 2026-10-12
 
-## `droidloom`（21）
+## `droidloom`（22）
 
 - `droidloom-local-patches-20261127.md` — droidloom 本地 patch 备料 — 2026-11-27（D24 lane）
 - `droidloom-release-download-verify-20261127.md` — droidloom release 资产下载验证 + 「rayburst 报无效」取证（2026-11-27，父代理亲测）
 - `droidloom-t2-patches-t5-ime-20261127.md` — droidloom 本地 patch 落地（T2）+ 真重启后 IME 持久性（T5）—— 2026-11-27 深夜，上机
+- `droidloom-trime-default-20261127.md` — droidloom：Trime 落成默认中文输入法（T30）—— 2026-11-27 深夜，纯 adb 无人值守
 - `droidloom-upgrade-51-ime-20261127.md` — droidloom 0.1.0-49 → 0.1.0-51 升级 + 占位 IME 复判（T15/T3 收口，2026-11-27 晚，父代理上机）
 - `droidloom-upstream-cluster-20261127.md` — droidloom 上游缺陷聚类 + 社区分叉评估（D24 第二轮，主机侧，2026-11-27）
 - `droidloom-cell-network-20261126.md` — droidloom cell 无网根因（工单 D2）——U2 平板，2026-11-26
