@@ -11,5 +11,5 @@
   - patch3 : `<20261127152024.2149804-4-xiaqinghuan@mail.ustc.edu.cn>`
 - **正文/AI 披露**：cover letter 已含「AI assistance was used… I reviewed every change… measurements are mine」。
 - **三件前提**：① AI 披露 ✅ ② 可复现证据（v4l2-compliance 39/48→47/48、REPORT.md 有代码位置与复现）✅ ③ 无 reviewer 意见可逐条回应（首次投递）N/A。
-- **lore 复核**（发后补）：见下 §lore。
+- **lore 复核**：✅ 已归档 4 封（cover + 3 patch），线程正确 —— https://lore.kernel.org/linux-media/20261127152024.2149804-1-xiaqinghuan@mail.ustc.edu.cn/ （Thread overview: 4 messages）。
 - **回滚/撤回**：内核列表无法撤回，若需更正只能回信 self-NACK 或发 v2。
