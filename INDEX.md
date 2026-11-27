@@ -16,6 +16,7 @@
 > ③ **T2 本地 patch 3/4 落地（上机验收全绿）** —— 002 去 `--forward-signals` + 003 宿主 resolver 进 lease + 004 `runuser` 路径，承接二进制是 **`droidloomd`**（只换 `droidloom-supervisor` 不生效）；判据 = cell `Android is ready`、删 `/usr/local/bin/unshare` 后仍起、cell `DnsAddresses` 前两条 = 宿主 resolver 且 `dl_dns_redirect` = 0 + cell 内 `ping www.ustc.edu.cn` 直通。**残留 = 001 `WifiProvisioning` 自愈**（属 Android systemui，要跑包构建器，>1 GiB 下载红线 ⇒ 待裁决）。T4（DNS 重定向持久化）随之作废。
 > ④ **T5**：真重启后默认 IME 仍 Fossify ✅；中文输入 🟡（装 Trime 3.3.13 可注册/可切换，但首启要 SetupActivity 且 `Skip starting rime: storage not available!` ⇒ 已恢复 Fossify，下次需有人值守 10 分钟并裁决「英文/中文」取一）。
 > ⑤ **外发已发并报备**：droidloom issue #48 补充复现数据 <https://github.com/denialwm/droidloom/issues/48#issuecomment-7221182777>（正文 sha `7d621ce4…`，已隐去宿主 IP/校名/校内 DNS，`SENT.md` 记账）。
+> ⑥ **v4l2-compliance driver-quality 系列（草稿，未发）** —— 判为与 1222157 **不重叠**；3 贴落地后 `v4l2-compliance -d /dev/video17` **39过/9败 → 47过/1败**（bus_info 前缀 / colorspace 默认 / crop-compose seed；REQBUFS 由 backport 副产物修好）；残留 1 = `MIN_BUFFERS_FOR_CAPTURE` 在 SUBSCRIBE_EVENT 子测试找不到（控件其实已在，需细定位，未臆造补丁）。解码无回归（framemd5 0 mismatch）。产物 `patches/upstream/v4l2-compliance-iris-20261127/`（含 REPORT.md、SEND.sh dry-run）。
 > 产物 = `out/iris-backport-1222157/`（ko sha `9b815bc359012c1b…`）+ 组合补丁 `patches/backport-iris-drc-1222157/`；全账 `reports/iris-backport-1222157-20261127.md`。残留：Moonlight 判据未验（需 Sunshine + 真串流）、给 Neil 的 `Tested-by:` 未发、上游合入后应撤 backport。
 
 > **★ 2026-11-27 晚轮（vk196 持久化部署 + `reboot2` 退役 + Coresight 两处上游缺陷已投）**：

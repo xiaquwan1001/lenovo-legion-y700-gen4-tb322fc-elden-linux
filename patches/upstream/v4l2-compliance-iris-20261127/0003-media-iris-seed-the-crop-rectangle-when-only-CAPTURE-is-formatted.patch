@@ -1,0 +1,56 @@
+From: Elden Upstream <upstream@example.invalid>
+Subject: [PATCH 3/3] media: iris: seed the crop rectangle when only CAPTURE is formatted
+
+After the source-change rework iris_vdec_s_fmt() keeps inst->crop as the
+visible rectangle of the stream and clamps it against the CAPTURE size:
+
+	inst->crop.width = min(inst->crop.width, fmt->width - inst->crop.left);
+
+inst->crop is zero-initialised and only seeded by S_FMT(OUTPUT). A client
+that formats only the CAPTURE queue (which v4l2-compliance does) therefore
+keeps a 0x0 crop and G_SELECTION reports width/height 0:
+
+  fail: v4l2-test-formats.cpp(1617): !sel_crop.r.width || !sel_crop.r.height
+  fail: v4l2-test-formats.cpp(1769): !sel_compose.r.width || !sel_compose.r.height
+
+Fall back to the CAPTURE dimensions when the rectangle has not been seeded
+yet, preserving the clamp for the normal OUTPUT-then-CAPTURE order.
+
+Signed-off-by: Elden Upstream <upstream@example.invalid>
+---
+ drivers/media/platform/qcom/iris/iris_vdec.c | 25 +++++++++++++++++++++----
+ 1 file changed, 21 insertions(+), 4 deletions(-)
+
+--- a/drivers/media/platform/qcom/iris/iris_vdec.c
++++ b/drivers/media/platform/qcom/iris/iris_vdec.c
+@@ -318,13 +318,23 @@
+ 		inst->buffers[BUF_OUTPUT].min_count = iris_vpu_buf_count(inst, BUF_OUTPUT);
+ 		inst->buffers[BUF_OUTPUT].size = fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
+ 
+-		/* inst->crop is the visible rectangle of the stream */
+-		inst->crop.left = min(inst->crop.left, fmt->fmt.pix_mp.width);
+-		inst->crop.top = min(inst->crop.top, fmt->fmt.pix_mp.height);
+-		inst->crop.width = min(inst->crop.width,
+-				       fmt->fmt.pix_mp.width - inst->crop.left);
+-		inst->crop.height = min(inst->crop.height,
+-					fmt->fmt.pix_mp.height - inst->crop.top);
++		/* inst->crop is the visible rectangle of the stream. Until an OUTPUT
++		 * format has seeded it, fall back to the CAPTURE dimensions so a
++		 * standalone S_FMT(CAPTURE) still reports a usable crop.
++		 */
++		if (!inst->crop.width || !inst->crop.height) {
++			inst->crop.left = 0;
++			inst->crop.top = 0;
++			inst->crop.width = fmt->fmt.pix_mp.width;
++			inst->crop.height = fmt->fmt.pix_mp.height;
++		} else {
++			inst->crop.left = min(inst->crop.left, fmt->fmt.pix_mp.width);
++			inst->crop.top = min(inst->crop.top, fmt->fmt.pix_mp.height);
++			inst->crop.width = min(inst->crop.width,
++					       fmt->fmt.pix_mp.width - inst->crop.left);
++			inst->crop.height = min(inst->crop.height,
++						fmt->fmt.pix_mp.height - inst->crop.top);
++		}
+ 		break;
+ 	default:
+ 		return -EINVAL;
