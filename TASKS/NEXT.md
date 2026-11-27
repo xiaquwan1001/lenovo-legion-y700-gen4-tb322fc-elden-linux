@@ -63,7 +63,7 @@
 | **D13** | Phosh 边缘侧滑返回手势 | 🟡 | `TASKS/dim/D13.md` |
 | **D14** | 数据线(SDP) 充电限流 100 mA ⇒ 净放电 | 🟡 | `TASKS/dim/D14.md` |
 | **D15** | 每次输入测试都拉起新的 Firefox 窗（用户 2026-11-25 报） | 🟢 | `TASKS/dim/D15.md` |
-| **D16** | 我们自己 patch 过的 systemd 单元没部署到设备（`verify.sh` 的 5 条 FAIL 背后） | 🆕 | `TASKS/dim/D16.md` |
+| **D16** | 我们自己 patch 过的 systemd 单元没部署到设备（`verify.sh` 的 5 条 FAIL 背后） | ✅（2026-11-27 晚：传感器竞态固化成 `elden-sensorproxy-sync` + deploy §19 四件判据，真重启与失败路径双验） | `TASKS/dim/D16.md` |
 | **D17** | 开机早期两个 A/B 守护单元都踩「块设备还没枚举」 | 🆕 | `TASKS/dim/D17.md` |
 | **D18** | 自研「键盘设置」GUI（用户 2026-11-25 提：震动强度 / 词库引擎 / 按键声音 / 自定义功能键） | 🟡 | `TASKS/dim/D18.md` |
 | **D20** | 下载通道（rayburst/aria2）GitHub release 302+SAS hang | 🟡 | `TASKS/dim/D20.md` |
