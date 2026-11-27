@@ -1,0 +1,17 @@
+# verify-f-waivers.tsv — F 段（设备逐字比对）的「已裁定不入设备」豁免表
+# 格式：path<TAB>理由（理由必须带可复核判据）
+# 落地依据：reports/d16-unit-deploy-classify-20261127.md（逐条带设备实测命令与输出）
+# 注意：豁免 ≠ PASS。verify 汇总里仍会打印 info，且数量计入 skipped。
+/etc/systemd/system/ath12k-retry.service	已被设备侧 ath12k-rescan.service 覆盖（is-enabled=enabled，11:07:17 status=0/SUCCESS，wlan0 connected）
+/etc/systemd/system/bt-alias.service	alias 已持久化且当前 rfkill soft blocked=yes，是否要蓝牙待用户裁定（报告 §3 #3）
+/etc/systemd/system/gunyah-modprobe.service	gunyah 驱动未进本内核树，有意不部署（enabled=0，报告 §3 #7）
+/usr/local/sbin/gunyah-modprobe.sh	同 gunyah-modprobe.service（报告 §3 #31）
+/etc/systemd/system/net-up.service	NM autoconnect 已拉起 wlan0；/init 该调用只在 legacy 分支（报告 §3 #9）
+/etc/systemd/system/time-sync.service	chrony.service enabled+active、timedatectl synchronized: yes、stratum 3（报告 §3 #13）
+/etc/conf.d/greetd	发行版 greetd.service:12 自带 LIBSEAT_BACKEND=seatd（报告 §3 #18）
+/usr/local/bin/bwrap	本 boot journal 无 glycin/gdk-pixbuf 症状（0 命中），phosh 稳定（报告 §3 #20）
+/usr/local/bin/elden-ime-toggle	sm.puri.OSK0 owner 存在但无调用者/无 .desktop，是否要入口待裁定（报告 §3 #22）
+/usr/local/bin/q28-race-hunt.sh	人手取证工具，非服务、无常驻消费者（报告 §3 #25）
+/usr/local/bin/vibrate	人手手感校准件，运行时由 ffrumble 承担（报告 §3 #27）
+/usr/local/sbin/elden-bt-alias.sh	随 bt-alias.service（报告 §3 #29）
+/usr/share/elden-pinyin/META.json	运行时（elden-pinyin-completer）只读 shards/ 与 /var/cache 索引，不读 META.json（报告 §3 #34）

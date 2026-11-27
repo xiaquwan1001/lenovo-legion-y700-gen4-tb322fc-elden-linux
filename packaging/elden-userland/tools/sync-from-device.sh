@@ -8,6 +8,14 @@
 #
 # 不做：不写设备、不 ssh 到容器、不改任何 rootfs。
 #
+# ⚠️ 2026-11-27：`files/` **不只是设备快照**，它同时是装机源（MANIFEST.tsv 的 repo_src 全指向它）。
+#   13 组同名不同内容已逐组裁定（reports/userland-mirror-adjudication-20261127.md），其中
+#   方向 A 的 8 件（scale.sh / slot-attr.py / ath12k-load.sh / charge-watch.sh / openrc-enable.sh /
+#   q28-watchdog.sh / sleep-{bisect,cumulative}.sh）+ usb-gadget 是「权威源更新、设备待部署」。
+#   ⇒ 本脚本全量重拉会把这些件**拉回设备旧版**、把权威源的新修法丢掉。
+#   跑之前先 `bash scripts/check-userland-mirror.sh --check`：若那几件是 WARN「设备待部署」，
+#   要么先部署再拉，要么按报告 §5 U1 跳过它们。
+#
 # 用法：bash tools/sync-from-device.sh [user@host]
 set -uo pipefail
 

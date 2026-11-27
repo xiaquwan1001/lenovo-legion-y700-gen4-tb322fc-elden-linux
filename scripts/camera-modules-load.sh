@@ -43,6 +43,7 @@ fi
 
 KV=$(uname -r)
 MODDIR=/lib/modules/$KV
+MODDIR=$(readlink -f "$MODDIR")
 # 判“有没有模块”不能要求 kernel/ 前缀：`M=<dir> modules_install` 装出来的布局就是没有
 # kernel/（2026-10-09 深夜 mod-loop 的 tar 刚栽在同一件事上，今天相机线又被它误挡一次）。
 # 按目录下实际存在 .ko 判。

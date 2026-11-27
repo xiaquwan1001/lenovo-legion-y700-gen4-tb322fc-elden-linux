@@ -3,7 +3,7 @@
 # （arch-audit-20261127 A9/A10；只进全量档。只读：verify.sh --offline 零设备写、
 #   派生 out/units 幂等再生成且字节同 git；镜像门 --check 纯内存比对。）
 set -u
-ROOT="${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 
 echo '== 32. 用户态镜像一致性 + packaging verify 接线（A9/A10） =='
 ok()   { printf '  [ok] %s\n' "$*"; }
@@ -18,7 +18,7 @@ else
   case $rc in
     0) summary=$(grep '汇总：' <<<"$out" | head -1 | sed 's/^汇总：//')
        ok "镜像一致性门 PASS（$summary）"
-       info "白名单漂移逐组 WARN 与 13 组『待用户裁定权威归属』明细见："
+       info "13 组同名不同内容已于 2026-11-27 逐组裁定（明细 reports/userland-mirror-adjudication-20261127.md）："
        info "  bash scripts/check-userland-mirror.sh --check ／ --diff <名> ／ reports/userland-mirror-gate-20261127.md" ;;
     1) grep '^\  \[FAIL\]' <<<"$out" | head -5
        fail "镜像一致性门：存在白名单外的同名不同内容漂移（rc=1）" ;;

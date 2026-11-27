@@ -75,6 +75,19 @@
 
 **维度互斥/依赖**：D1 必须先于 D7（ESP 在机的面）；D3④ 与 D1 共用一次上机窗；D4 与 D1 争同一收发窗口（**分时**）；D2 的 G7 与 D4 不可同轮（都要 a/b 槽控制权）。
 
+### 4.0a★ 2026-11-27 本轮收口（结论一行账；正文在指针处，本节不再展开）
+
+| # | 项 | 结果（判据可复核） | 指针 |
+|---|---|---|---|
+| **N1** | **用户态镜像 13 组「待裁定权威归属」** | ✅ **全部裁定并落地**：门 `同 sha 配对 20→35 ｜ 漂移 WARN 14→0 ｜ FAIL 0`；`verify.sh --offline` FAIL=0；doctor §32 绿；`--selftest` 仍能判红 | `reports/userland-mirror-adjudication-20261127.md` |
+| **N2** | **D16 「渲染了但设备上没有」34 条** | ✅ 分类 34/34（部署 18｜豁免 13｜退役 3）→ **设备侧已装 13 件、启用 7 个单元**（backlight-floor / net-selfheal / wifi-scan-refresh / elden-bootlog / pstore-catch / elden-powerlog + 配置），`verify.sh` 在线 **WARN 34→5**（剩 5 = 依赖 `waydroid init` 的那组）；3 件加 `RETIRED` 头并从 MANIFEST 摘除；13 条豁免进新文件 `tools/verify-f-waivers.tsv` | `reports/d16-unit-deploy-classify-20261127.md` |
+| **N3** | **T8 `elden-wake` 纳入部署门** | ✅ `deploy-desktop-shell.sh` 新增 §18 四件判据（两 unit sha / path enabled / path active / helper 可执行且 sha），`--check` 两次输出完全一致、MISS=0 | `reports/t8-elden-wake-check-20261127.md` |
+| **N4** | **Moonlight 客户端（G3 载体件）** | ✅ **部署 + 配对 + 起流全通**：V+ 6.5.7 aarch64 AppImage 入 `/opt/moonlight-vplus`；Sunshine 侧 PIN 提交成功（新 API 要 `pairing_id`）；设备起 Desktop 流成功（**FFmpeg 软解**，日志 `FFmpeg-based video decoder chosen`）。⚠️ 硬件解码 = 另立 **Q36**（`/dev/video*` 零个、iris 节点 disabled） | `reports/moonlight-client-deploy-20261127.md` |
+| **N5** | **硬件视频解码（iris/SM8750）** | 🆕 **备料完成、未启用**：vendor 镜像抽出 6 个 VPU 固件，`vpu35_4v.mbn`（signed，2 392 776 B，`vfw-3.5:rel0030`）= 与 `sm8750_data → iris_vpu35_p4_gen2_desc` 同代；**设备已装 `/lib/firmware/qcom/vpu/vpu35_p4.mbn`**；驱动 `of_match` 有 `qcom,sm8750-iris`、无 HFI 版本门，真门 = `qcom_pas_auth_and_reset(PAS 9)`；**唯一阻塞 = 板级 DTS 要 `&iris { status="okay" }` + 重编 DTB/打 boot.img**（需一次重启窗） | `TASKS/GAPS.md` **Q36**、`reports/hwdec-iris-sm8750-feasibility-20261127.md` |
+| **N6** | **D20 下载通道空等** | ✅ **主假设被否证**：降连接数无效（20 连接与 1 连接都 4/4 完整）；真因 = **HTTP 403（SAS 过期）+ `max-tries=0` 无限重试**（`status=active`、0 字节、RPC `errorMessage` 恒空）。落地建议 = `~/.local/share/dev.aninsomniacy.rayburst/config.json` 的 `preferences.maxTries: 5`（**待用户点头**，属改本机工具配置） | `reports/rayburst-redirect-ab-20261127.md` |
+| **N7** | **D24 droidloom 本地 patch** | ✅ 4 条 patch 落 `patches/local/droidloom-local-20261127/`，在 release 51 源码上 `git apply --check` 按序 **4/4 通过**（003 依赖 002） | `reports/droidloom-local-patches-20261127.md` |
+| **N8** | **D10 通信（常设）** | ✅ 窗口 05:55–06:06Z：**0 封新人类信**、7 条在飞系列人类零回复、Mobian `!46` 96 h 无变化、droidloom 四条非我方；**唯一需用户放行** = phosh `!2005` 回 guidog（含 AI 披露要求） | `reports/comms-track-20261127.md` |
+
 ### 4.0a 现役待办（2026-11-26 收尾时点；**唯一权威 = 本节 + 各行指针**）
 
 > 只列「下一步可执行」的项；已完成项不在这里复述（它们在各维度文件与 `reports/`）。每条 ≤ 半天，除非标注。

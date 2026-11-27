@@ -1,0 +1,146 @@
+# Patch: supervisor: stop Android without unshare --forward-signals
+# Source:  https://github.com/EvilBorsch/droidloom/commit/5380af354f4a1d027d365f58c26a481bf2676064
+# Author:  EvilBorsch <44337169+EvilBorsch@users.noreply.github.com>
+# Date:    2026-11-22T08:21:24Z
+# Why:     `unshare --forward-signals` requires util-linux >= 2.42. Debian trixie
+#          ships 2.41.5; Android never starts ("unrecognized option"). Our host is
+#          on Debian/Mobian aarch64 with util-linux 2.41.5, confirmed by
+#          `unshare --forward-signals true` failing standalone. Upstream main
+#          (development.rs:493) still has --forward-signals as of release 51.
+#          This patch replaces it with direct pidfd-based SIGTERM to Android PID 1.
+# Retire:  When `strings /usr/bin/droidloom-supervisor | grep -c forward-signals` == 0
+#          (i.e., upstream drops the flag, or upstream's minimum util-linux is >= 2.42
+#          and Debian ships it).
+From 5380af354f4a1d027d365f58c26a481bf2676064 Mon Sep 17 00:00:00 2001
+From: EvilBorsch <44337169+EvilBorsch@users.noreply.github.com>
+Date: Sun, 22 Nov 2026 11:21:24 +0300
+Subject: [PATCH] supervisor: stop Android without unshare --forward-signals
+
+`unshare --forward-signals` is new in util-linux 2.42. Debian 13 and
+Ubuntu 26.04 ship 2.41, where unshare refuses the option and Android never
+starts ("unrecognized option '--forward-signals'", seen on Ubuntu 26.04
+with util-linux 2.41.3).
+
+The option only served stop(): SIGTERM to the namespace owner reached
+Android PID 1, and unshare --fork exited after it, so stop() waited for
+Android's own shutdown before tearing down the network. Send SIGTERM to
+Android PID 1 directly instead, through a pidfd opened on the owner's one
+child and checked to still be its child, so a reused PID is never
+signalled. unshare --fork exits when its child does, so the wait covers
+the same shutdown with any util-linux. Before unshare has forked, the
+owner's own SIGTERM ends it and --kill-child=TERM passes the signal on,
+as before.
+
+cargo check, the supervisor's 141 library tests and clippy (no new
+findings) pass; not yet run on a device.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../droidloom-supervisor/src/development.rs   | 80 ++++++++++++++++++-
+ 1 file changed, 78 insertions(+), 2 deletions(-)
+
+diff --git a/runtime/droidloom-supervisor/src/development.rs b/runtime/droidloom-supervisor/src/development.rs
+index 8c21430..5d5c363 100644
+--- a/runtime/droidloom-supervisor/src/development.rs
++++ b/runtime/droidloom-supervisor/src/development.rs
+@@ -380,7 +380,16 @@ impl DevelopmentCell {
+             .map_err(|source| io_error("poll Android namespace process before stopping", source))?
+             .is_none()
+         {
+-            signal_process(self.child.id(), libc::SIGTERM)?;
++            // Android PID 1 shuts down on SIGTERM, and `unshare --fork`
++            // exits once it has, so the wait below covers Android's own
++            // shutdown. Signal it directly: `unshare --forward-signals`,
++            // which would pass the owner's SIGTERM on, needs util-linux
++            // 2.42, newer than Debian 13 and Ubuntu 26.04 ship. Before
++            // unshare has forked, the owner's own SIGTERM ends it and
++            // --kill-child=TERM passes the signal on.
++            if !signal_namespace_init(self.child.id(), libc::SIGTERM)? {
++                signal_process(self.child.id(), libc::SIGTERM)?;
++            }
+             let deadline = Instant::now() + Duration::from_secs(10);
+             while Instant::now() < deadline {
+                 if self
+@@ -490,7 +499,6 @@ pub fn start_development_cell(
+             OsStr::new("--uts"),
+             OsStr::new("--fork"),
+             OsStr::new("--kill-child=TERM"),
+-            OsStr::new("--forward-signals"),
+             OsStr::new("--propagation=private"),
+             entry_executable.as_os_str(),
+             OsStr::new("development-enter"),
+@@ -559,6 +567,74 @@ pub fn recover_development_cell(spec: &CellSpec) -> Result<(), DevelopmentError>
+     cleanup_runtime_directory(spec)
+ }
+ 
++/// The parent PID of a process, from `/proc/PID/stat`.
++fn parent_pid(pid: u32) -> Option<u32> {
++    let stat = fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
++    // The command name may hold spaces and parentheses: the fields after it
++    // follow the last ") ", state first.
++    let (_, rest) = stat.rsplit_once(") ")?;
++    rest.split_ascii_whitespace().nth(1)?.parse().ok()
++}
++
++/// The namespace's PID 1: the one child `unshare --fork` started.
++fn namespace_init(owner: u32) -> Option<u32> {
++    fs::read_dir("/proc")
++        .ok()?
++        .flatten()
++        .filter_map(|entry| entry.file_name().to_str()?.parse::<u32>().ok())
++        .find(|&pid| parent_pid(pid) == Some(owner))
++}
++
++/// Sends `signal` to the namespace's PID 1 through a pidfd, so a PID reused
++/// after the lookup is never signalled. False when the owner has no child.
++fn signal_namespace_init(owner: u32, signal: libc::c_int) -> Result<bool, DevelopmentError> {
++    let Some(init) = namespace_init(owner) else {
++        return Ok(false);
++    };
++    let pid = i32::try_from(init).map_err(|_| {
++        DevelopmentError::InvalidInput("Android init PID exceeds Linux pid_t".into())
++    })?;
++    // SAFETY: pidfd_open takes scalar arguments and returns a fresh descriptor.
++    let fd = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0) };
++    if fd < 0 {
++        let error = io::Error::last_os_error();
++        return if error.raw_os_error() == Some(libc::ESRCH) {
++            Ok(false)
++        } else {
++            Err(io_error("open Android init", error))
++        };
++    }
++    let fd = i32::try_from(fd)
++        .map_err(|_| DevelopmentError::InvalidInput("pidfd exceeds a file descriptor".into()))?;
++    // SAFETY: successful pidfd_open transferred ownership of this descriptor.
++    let fd = unsafe { OwnedFd::from_raw_fd(fd) };
++    // The descriptor names the process that had the PID when it was opened:
++    // it is the namespace's PID 1 only if the owner is still its parent.
++    if parent_pid(init) != Some(owner) {
++        return Ok(false);
++    }
++    // SAFETY: a valid pidfd, a signal number and no siginfo.
++    let result = unsafe {
++        libc::syscall(
++            libc::SYS_pidfd_send_signal,
++            fd.as_raw_fd(),
++            signal,
++            std::ptr::null::<libc::siginfo_t>(),
++            0,
++        )
++    };
++    if result == 0 {
++        Ok(true)
++    } else {
++        let error = io::Error::last_os_error();
++        if error.raw_os_error() == Some(libc::ESRCH) {
++            Ok(false)
++        } else {
++            Err(io_error("signal Android init", error))
++        }
++    }
++}
++
+ fn signal_process(pid: u32, signal: libc::c_int) -> Result<(), DevelopmentError> {
+     let pid = i32::try_from(pid).map_err(|_| {
+         DevelopmentError::InvalidInput("namespace owner PID exceeds Linux pid_t".into())

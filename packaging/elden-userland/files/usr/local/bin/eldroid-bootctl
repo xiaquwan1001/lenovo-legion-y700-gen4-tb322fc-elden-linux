@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# RETIRED 2026-11-27（D16 分类轮，reports/d16-unit-deploy-classify-20261127.md §4）：
+#   消费者已退场（现役 = elden-to-bootloader + ab-mark-successful；doctor/28 有反回归门禁），
+#   已从 packaging MANIFEST 摘除；保留文件仅为历史取证。
 """eldroid-bootctl — Linux 侧刷机控制（reboot reason + A/B 槽位元数据）。
 
 运行在设备的 mainline Linux 里（root）。两块能力：

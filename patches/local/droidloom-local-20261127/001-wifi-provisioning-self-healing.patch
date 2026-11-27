@@ -1,0 +1,163 @@
+# Patch: WifiProvisioning self-healing network re-enable
+# Source:  https://github.com/gotakllc/droidloom/commit/4e995f2ae33ec8689c862b9f5e79c91fecb02bad
+# Author:  Doctor Logix <doctor.logix@gmail.com> (= upstream maintainer doctorlogix)
+# Date:    2026-11-26T20:07:17Z
+# Why:     Fixes #48 root cause 1: one-shot wifi_provisioned bit never re-checks;
+#          SSID stays permanently disabled after captive-portal validation failure.
+#          This commit (author = maintainer, committer = mdelsalto) replaces the bit
+#          with NETWORK_STATE_CHANGED/WIFI_STATE_CHANGED listeners + enableNetwork(true).
+#          Not yet in denialwm/droidloom:main as of release 51 (4df8af9).
+# Retire:  When upstream main contains self-healing WifiProvisioning (grep -q "reconnect"
+#          in WifiProvisioning.java succeeds AND grep -q "getBoolean.*DONE.*false" fails).
+diff --git a/android/framework/droidloom-systemui/src/com/android/systemui/wifi/WifiProvisioning.java b/android/framework/droidloom-systemui/src/com/android/systemui/wifi/WifiProvisioning.java
+index f92981c5..4529afcf 100644
+--- a/android/framework/droidloom-systemui/src/com/android/systemui/wifi/WifiProvisioning.java
++++ b/android/framework/droidloom-systemui/src/com/android/systemui/wifi/WifiProvisioning.java
+@@ -5,23 +5,23 @@
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+-import android.content.SharedPreferences;
+ import android.net.wifi.WifiConfiguration;
++import android.net.wifi.WifiInfo;
+ import android.net.wifi.WifiManager;
++import android.net.wifi.SupplicantState;
+ import android.os.Handler;
+ import android.os.Looper;
+ import android.os.UserManager;
+ import android.util.Log;
+ 
+ /**
+- * Joins the cell to Droidloom's access point once: saves the open network
+- * "Droidloom" and turns Wi-Fi on. Cells from before Wi-Fi had it off and no
+- * network saved. After that the user's choices stand, as on any phone.
++ * Keeps the cell joined to Droidloom's host link. Android may restore a saved
++ * network disabled, or start before credential-encrypted Wi-Fi storage is
++ * available, so a one-shot "provisioned" bit is not sufficient.
+  */
+ public final class WifiProvisioning {
+     private static final String TAG = "DroidloomWifi";
+     private static final String SSID = "\"Droidloom\"";
+-    private static final String DONE = "wifi_provisioned";
+     // Wi-Fi reads its saved networks after the user unlocks; until then
+     // addNetwork fails, so a few attempts follow the unlock.
+     private static final long RETRY_MS = 2000;
+@@ -29,24 +29,33 @@ public final class WifiProvisioning {
+ 
+     private final Context context;
+     private final Handler main = new Handler(Looper.getMainLooper());
+-    private final SharedPreferences preferences;
+     private BroadcastReceiver unlocked;
++    private BroadcastReceiver connectionChanged;
+     private int attempts;
+ 
+     public WifiProvisioning(Context context) {
+         this.context = context;
+-        preferences = context.getSharedPreferences("droidloom-wifi", Context.MODE_PRIVATE);
+     }
+ 
+     public void start() {
+-        if (preferences.getBoolean(DONE, false)) return;
++        connectionChanged = new BroadcastReceiver() {
++            @Override public void onReceive(Context context, Intent intent) {
++                attempts = 0;
++                main.removeCallbacksAndMessages(null);
++                main.postDelayed(WifiProvisioning.this::attempt, RETRY_MS);
++            }
++        };
++        IntentFilter connectivity = new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION);
++        connectivity.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
++        context.registerReceiver(connectionChanged, connectivity, Context.RECEIVER_NOT_EXPORTED);
+         if (context.getSystemService(UserManager.class).isUserUnlocked()) {
+             main.post(this::attempt);
+             return;
+         }
+         unlocked = new BroadcastReceiver() {
+             @Override public void onReceive(Context context, Intent intent) {
+-                close();
++                context.unregisterReceiver(unlocked);
++                unlocked = null;
+                 attempt();
+             }
+         };
+@@ -57,31 +66,63 @@ public void start() {
+     public void close() {
+         if (unlocked != null) context.unregisterReceiver(unlocked);
+         unlocked = null;
++        if (connectionChanged != null) context.unregisterReceiver(connectionChanged);
++        connectionChanged = null;
+         main.removeCallbacksAndMessages(null);
+     }
+ 
+     private void attempt() {
+         WifiManager wifi = context.getSystemService(WifiManager.class);
++        WifiInfo current = wifi.getConnectionInfo();
++        if (SSID.equals(current.getSSID())
++                && current.getSupplicantState() == SupplicantState.COMPLETED) {
++            attempts = 0;
++            return;
++        }
++        if (!wifi.isWifiEnabled()) {
++            wifi.setWifiEnabled(true);
++            retry();
++            return;
++        }
++
++        int networkId = savedDroidloomNetwork(wifi);
++        if (networkId < 0) networkId = addDroidloomNetwork(wifi);
++        if (networkId < 0) {
++            retry();
++            return;
++        }
++
++        // disableOthers=true selects the network now. Passing false merely
++        // marks it enabled and can leave a restored cell disconnected forever.
++        if (!wifi.enableNetwork(networkId, true) || !wifi.reconnect()) {
++            retry();
++            return;
++        }
++        Log.i(TAG, "Wi-Fi on, Droidloom network selected");
++    }
++
++    private int savedDroidloomNetwork(WifiManager wifi) {
++        for (WifiConfiguration config : wifi.getConfiguredNetworks()) {
++            if (SSID.equals(config.SSID)) return config.networkId;
++        }
++        return -1;
++    }
++
++    private int addDroidloomNetwork(WifiManager wifi) {
+         WifiConfiguration config = new WifiConfiguration();
+         config.SSID = SSID;
+         config.setSecurityParams(WifiConfiguration.SECURITY_TYPE_OPEN);
+         // The link's address is the cell's own; a random one would only be
+         // refused by the missing vendor HAL.
+         config.macRandomizationSetting = WifiConfiguration.RANDOMIZATION_NONE;
+-        int networkId = wifi.addNetwork(config);
+-        if (networkId < 0) {
+-            if (++attempts < ATTEMPTS) {
+-                main.postDelayed(this::attempt, RETRY_MS);
+-            } else {
+-                Log.e(TAG, "Wi-Fi did not accept the Droidloom network");
+-            }
+-            return;
++        return wifi.addNetwork(config);
++    }
++
++    private void retry() {
++        if (++attempts < ATTEMPTS) {
++            main.postDelayed(this::attempt, RETRY_MS);
++        } else {
++            Log.e(TAG, "Wi-Fi did not reconnect to the Droidloom network");
+         }
+-        // addNetwork saves a network disabled; auto-join skips it until it is
+-        // enabled, as Settings does when the user saves one.
+-        wifi.enableNetwork(networkId, false);
+-        wifi.setWifiEnabled(true);
+-        preferences.edit().putBoolean(DONE, true).apply();
+-        Log.i(TAG, "Wi-Fi on, network Droidloom saved");
+     }
+ }
+
+-- 
+2.47.1

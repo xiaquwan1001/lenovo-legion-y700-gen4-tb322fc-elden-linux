@@ -1,6 +1,10 @@
 #!/bin/sh
 # Bring up a USB composite gadget: CDC-NCM (network, Windows 11 in-box
-# UsbNcm driver) + CDC-ACM (serial, kernel console via console=ttyGS0).
+# UsbNcm driver) + two CDC-ACM ports:
+#   GS0 = kernel console (matched by console=ttyGS0)  -> host /dev/ttyACM0
+#   GS1 = out-of-band root shell (respawn getty)      -> host /dev/ttyACM1
+# Keeping them separate means the interactive shell is not polluted by
+# dmesg/printk traffic (and vice versa).
 G=/sys/kernel/config/usb_gadget/g1
 
 wait_udc() {
@@ -58,8 +62,12 @@ start() {
 	mkdir -p functions/acm.GS0
 	echo 1 > functions/acm.GS0/console 2>/dev/null
 
+	# GS1: OOB shell channel (no console flag -> not the printk console)
+	mkdir -p functions/acm.GS1
+
 	ln -s functions/ncm.usb0 configs/c.1/
 	ln -s functions/acm.GS0  configs/c.1/
+	ln -s functions/acm.GS1  configs/c.1/
 
 	echo "$UDC" > UDC
 	echo "[usb-gadget] bound to $UDC" > /dev/kmsg
@@ -70,9 +78,9 @@ stop() {
 	UDC=$(ls /sys/class/udc | head -n1)
 	cd "$G"
 	echo "" > UDC
-	rm -f configs/c.1/ncm.usb0 configs/c.1/acm.GS0
+	rm -f configs/c.1/ncm.usb0 configs/c.1/acm.GS0 configs/c.1/acm.GS1
 	rmdir configs/c.1/strings/0x409 configs/c.1
-	rmdir functions/ncm.usb0 functions/acm.GS0
+	rmdir functions/ncm.usb0 functions/acm.GS0 functions/acm.GS1
 	rmdir strings/0x409
 	cd /
 	rmdir "$G"

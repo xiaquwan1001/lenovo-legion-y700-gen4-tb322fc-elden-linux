@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：717
+- 报告总数：725
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -17,7 +17,7 @@
 | `upstream` | 22 | `upstream-status-20261125.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
-| `droidloom` | 18 | `droidloom-release-download-verify-20261127.md` |
+| `droidloom` | 19 | `droidloom-local-patches-20261127.md` |
 | `android` | 15 | `android-boot-audit-20261122.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
 | `comm` | 12 | `comm-triage-20261127-b.md` |
@@ -29,10 +29,10 @@
 | `m3v5` | 9 | `m3v5-repack-20261031.md` |
 | `m6` | 9 | `m6-dsi-phy-v3-20261126.md` |
 | `scripts` | 9 | `scripts-ref-audit-20261127.md` |
+| `userland` | 9 | `userland-mirror-adjudication-20261127.md` |
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
 | `script` | 8 | `script-audit-adb-20261118.md` |
 | `sensors` | 8 | `sensors-692-attach-crash-serial-20261127.md` |
-| `userland` | 8 | `userland-mirror-gate-20261127.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
 | `camera` | 7 | `camera-restore-20261121.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
@@ -64,6 +64,7 @@
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
 | `pitfalls` | 3 | `pitfalls-condense-20261122.md` |
+| `rayburst` | 3 | `rayburst-ab-20261127.md` |
 | `sensor` | 3 | `sensor-claim-verify-20261126.md` |
 | `session` | 3 | `session-plan-20261121-night.md` |
 | `stale` | 3 | `stale-alpine-audit-docs-20261119.md` |
@@ -91,7 +92,6 @@
 | `phosh` | 2 | `phosh-mr-2005-rework-20261124.md` |
 | `pstore` | 2 | `pstore-ram-initrd-guard-20261116.md` |
 | `qemu` | 2 | `qemu-full-chain-20261113.md` |
-| `rayburst` | 2 | `rayburst-ab-20261127.md` |
 | `repo` | 2 | `repo-slim-candidates-20261125.md` |
 | `route` | 2 | `route-b-impl-20261108.md` |
 | `shutdown` | 2 | `shutdown-console-spam-20261125.md` |
@@ -120,11 +120,13 @@
 | `cam` | 1 | `cam-vk189-baseline-20261124.md` |
 | `closeout` | 1 | `closeout-q29-backlight-camera-20261023.md` |
 | `cloud` | 1 | `cloud-backup-manifest-20261016.md` |
+| `comms` | 1 | `comms-track-20261127.md` |
 | `consolidation` | 1 | `consolidation-20261014.md` |
 | `container` | 1 | `container-audio-20261011.md` |
 | `coolapk` | 1 | `coolapk-publish-20261123.md` |
 | `counts` | 1 | `counts-gate-20261107.md` |
 | `d1` | 1 | `d1-host-side-20261123.md` |
+| `d16` | 1 | `d16-unit-deploy-classify-20261127.md` |
 | `daily` | 1 | `daily-linux-deploy-20261122.md` |
 | `desktop` | 1 | `desktop-chain-gate-20261119.md` |
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
@@ -147,6 +149,7 @@
 | `greetd` | 1 | `greetd-stop-verify-20261031.md` |
 | `hexagonrpc` | 1 | `hexagonrpc-upstream-registry-write-20261127.md` |
 | `hide` | 1 | `hide-android-partitions-20261119.md` |
+| `hwdec` | 1 | `hwdec-iris-sm8750-feasibility-20261127.md` |
 | `init` | 1 | `init-systemd-vs-openrc-20261011.md` |
 | `joonhoe` | 1 | `joonhoe-kim-contact-20261019.md` |
 | `lane` | 1 | `lane-reboot2-audit-20261014.md` |
@@ -159,6 +162,7 @@
 | `mdss` | 1 | `mdss-int2-evidence-20261113.md` |
 | `migration` | 1 | `migration-rebuild-audit-20261017.md` |
 | `misc` | 1 | `misc-20261117.md` |
+| `moonlight` | 1 | `moonlight-client-deploy-20261127.md` |
 | `motor` | 1 | `motor-haptics-vk127-20261017.md` |
 | `mu` | 1 | `mu-memmap-20261115.md` |
 | `net` | 1 | `net-https-mtu-rootcause-20261018.md` |
@@ -186,6 +190,7 @@
 | `sn` | 1 | `sn-anchoring-audit-20261113.md` |
 | `ssot` | 1 | `ssot-merge-20261105-round2.md` |
 | `t5` | 1 | `t5-q24-dataset-20261020.md` |
+| `t8` | 1 | `t8-elden-wake-check-20261127.md` |
 | `task` | 1 | `task-inventory-20261107.md` |
 | `tf` | 1 | `tf-g16-retest-20261026.md` |
 | `thermal` | 1 | `thermal-baseline-20261125.md` |
@@ -460,8 +465,9 @@
 - `gunyah-vmm-first-attempt-20261024.md` — Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 - `gunyah-roadmap-20261021.md` — Gunyah 虚拟化线（拓展项）资产盘点 + 事实核查 + 分阶段规划
 
-## `droidloom`（18）
+## `droidloom`（19）
 
+- `droidloom-local-patches-20261127.md` — droidloom 本地 patch 备料 — 2026-11-27（D24 lane）
 - `droidloom-release-download-verify-20261127.md` — droidloom release 资产下载验证 + 「rayburst 报无效」取证（2026-11-27，父代理亲测）
 - `droidloom-upstream-cluster-20261127.md` — droidloom 上游缺陷聚类 + 社区分叉评估（D24 第二轮，主机侧，2026-11-27）
 - `droidloom-cell-network-20261126.md` — droidloom cell 无网根因（工单 D2）——U2 平板，2026-11-26
@@ -634,6 +640,18 @@
 - `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
 - `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
 
+## `userland`（9）
+
+- `userland-mirror-adjudication-20261127.md` — 用户态镜像 13 组同名不同内容 —— 逐组裁定（2026-11-27，父代理）
+- `userland-mirror-gate-20261127.md` — 用户态镜像一致性门（T9，A9/A10）— 2026-11-27
+- `userland-drift-audit-20261121.md` — 用户态部署漂移只读审计（2026-11-21）
+- `userland-dealpine-audit-20261026.md` — 用户态去 Alpine 化审计（T20 补欠账，2026-10-26）
+- `userland-service-consolidation-20261025.md` — 用户态入口收敛（`/init` ↔ `local.d` ↔ 服务管理器）2026-10-25
+- `userland-service-inventory-20261025.md` — 用户态驱动/服务独立固化 — 审计与落地（2026-10-25）
+- `userland-auto-rotation-toggle-20261011.md` — 用户态新增：自动旋转开/关快速设置磁贴（2026-10-11）
+- `userland-dark-brightness-verify-20261011.md` — 桌面用户态收口：深色/主题（G1-26/27）与亮度滑块（G1-28）—— 上机复核（2026-10-11）
+- `userland-display-scale-refresh-20261011.md` — 用户态显示修正：刷新率固定 165 Hz + 非整数缩放显示 100%（2026-10-11）
+
 ## `m4`（8）
 
 - `m4-camss-v2-20261031.md` — M4 camss v2（v2 0/2）— 撕 2/3、按 Loic 形状重构 3/3（存量修复，不含 SM8750 enable）
@@ -666,17 +684,6 @@
 - `sensors-ssc-restored-20261127.md` — ★ 传感器回来了：主线 Linux 上 SSC 三属性全 true + `ssccli` 出真值（2026-11-27 收口）
 - `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
 - `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
-
-## `userland`（8）
-
-- `userland-mirror-gate-20261127.md` — 用户态镜像一致性门（T9，A9/A10）— 2026-11-27
-- `userland-drift-audit-20261121.md` — 用户态部署漂移只读审计（2026-11-21）
-- `userland-dealpine-audit-20261026.md` — 用户态去 Alpine 化审计（T20 补欠账，2026-10-26）
-- `userland-service-consolidation-20261025.md` — 用户态入口收敛（`/init` ↔ `local.d` ↔ 服务管理器）2026-10-25
-- `userland-service-inventory-20261025.md` — 用户态驱动/服务独立固化 — 审计与落地（2026-10-25）
-- `userland-auto-rotation-toggle-20261011.md` — 用户态新增：自动旋转开/关快速设置磁贴（2026-10-11）
-- `userland-dark-brightness-verify-20261011.md` — 桌面用户态收口：深色/主题（G1-26/27）与亮度滑块（G1-28）—— 上机复核（2026-10-11）
-- `userland-display-scale-refresh-20261011.md` — 用户态显示修正：刷新率固定 165 Hz + 非整数缩放显示 100%（2026-10-11）
 
 ## `wl2868c`（8）
 
@@ -901,6 +908,12 @@
 - `pitfalls-body-backfill-20261120.md` — PITFALLS 无正文条目补齐（2026-11-20）
 - `pitfalls-dedup-audit-20261112.md` — PITFALLS 去重审计（2026-11-12）
 
+## `rayburst`（3）
+
+- `rayburst-ab-20261127.md` — rayburst/aria2 GitHub release 下载 hang 的 A/B 复现与定位（D20，2026-11-27）
+- `rayburst-redirect-ab-20261127.md` — rayburst / aria2-next「GitHub release 302→Azure SAS 空等 0 字节」三档 A/B（D20，2026-11-27）
+- `rayburst-redirect-hang-20261126.md` — rayburst 下载 GitHub release hang 取证（2026-11-26，只读取证）
+
 ## `sensor`（3）
 
 - `sensor-claim-verify-20261126.md` — 「传感器驱动有问题」说法核实（lane S · 设备只读）
@@ -1042,11 +1055,6 @@
 - `qemu-full-chain-20261113.md` — B16：QEMU 复刻 GRUB → vk188 → 串口 dmesg 全链（2026-11-13，主机侧）
 - `qemu-usage-survey-20261112.md` — QEMU 可用于哪些排错面 —— 技术评估（2026-11-12）
 
-## `rayburst`（2）
-
-- `rayburst-ab-20261127.md` — rayburst/aria2 GitHub release 下载 hang 的 A/B 复现与定位（D20，2026-11-27）
-- `rayburst-redirect-hang-20261126.md` — rayburst 下载 GitHub release hang 取证（2026-11-26，只读取证）
-
 ## `repo`（2）
 
 - `repo-slim-candidates-20261125.md` — 仓库瘦身盘点（只读盘点 lane）— 2026-11-25
@@ -1168,6 +1176,10 @@
 
 - `cloud-backup-manifest-20261016.md` — 云盘备份清单 — 本机独有 / 不可重下的二进制（2026-10-16）
 
+## `comms`（1）
+
+- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
+
 ## `consolidation`（1）
 
 - `consolidation-20261014.md` — 文档/代码整理与归档总结 — 2026-10-14
@@ -1187,6 +1199,10 @@
 ## `d1`（1）
 
 - `d1-host-side-20261123.md` — D1 主机侧：hexagonrpcd 不进构建器 + 时间基线自愈（2026-11-23）
+
+## `d16`（1）
+
+- `d16-unit-deploy-classify-20261127.md` — D16 — `verify.sh` 在线档 34 条「设备上不存在」逐条分类（2026-11-27）
 
 ## `daily`（1）
 
@@ -1276,6 +1292,10 @@
 
 - `hide-android-partitions-20261119.md` — 在文件管理器侧栏隐藏只读 Android / 持久化分区 — 机制调研 + 脚本 + 上机判据
 
+## `hwdec`（1）
+
+- `hwdec-iris-sm8750-feasibility-20261127.md` — Y700(TB322FC / SM8750) 主线硬件视频解码（qcom iris）可行性 + 上机备料
+
 ## `init`（1）
 
 - `init-systemd-vs-openrc-20261011.md` — init/systemd vs OpenRC 调查 — 只读，2026-10-11
@@ -1323,6 +1343,10 @@
 ## `misc`（1）
 
 - `misc-20261117.md` — 零碎小任务 lane — 2026-11-17
+
+## `moonlight`（1）
+
+- `moonlight-client-deploy-20261127.md` — Moonlight V+ 客户端部署报告（Y700 四代 / elden / TB322FC）— 2026-11-27
 
 ## `motor`（1）
 
@@ -1431,6 +1455,10 @@
 ## `t5`（1）
 
 - `t5-q24-dataset-20261020.md` — T5 / Q24 —— 给 Taniya Das 的三件套数据集（2026-10-20 采集，已投递）
+
+## `t8`（1）
+
+- `t8-elden-wake-check-20261127.md` — T8：`elden-wake` 纳入 `deploy-desktop-shell.sh --check`（2026-11-27）
 
 ## `task`（1）
 

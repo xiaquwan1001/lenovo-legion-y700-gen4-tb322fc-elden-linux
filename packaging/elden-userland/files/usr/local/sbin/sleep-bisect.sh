@@ -1,4 +1,11 @@
 #!/bin/sh
+# ★ LEGACY（2026-11-23 头注落地，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：
+#   PITFALLS/sessions/15-过时期废弃功能缺陷登记.md:37（§15.2，2026-10-08 登记）判：**不删，降为 legacy**。
+#   ✓ 新扫测一律用主机侧 `scripts/sleep-sweep.sh`（Q24 / 相机⇄熄屏线）。
+#   保留理由：设备侧**真机模块二分**工具（配合 camdp-nocam 载具只能上机跑，主机侧扫测代替不了），
+#   而且它随 rootfs 发到设备（packaging/elden-userland/MANIFEST.tsv:64 + tools/sync-from-device.sh:36）
+#   ⇒ 归档会把装机面与设备侧 /usr/local/sbin 同步列表一起弄断。
+#
 # sleep-bisect.sh — 在设备上做「相机模块 ⇄ 熄屏掉电」最小模块集二分。
 #
 # 用法（设备上）：sleep-bisect.sh "system_heap"

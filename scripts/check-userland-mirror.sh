@@ -20,7 +20,7 @@ set -uo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 FILES_DIR="$REPO/packaging/elden-userland/files"
-POOL_DIRS=("$REPO/scripts" "$REPO/rootfs/persistent-overlay")
+POOL_DIRS=("$REPO/scripts" "$REPO/rootfs/persistent-overlay" "$REPO/initramfs")
 
 # ---------------------------------------------------------------------------
 # 漂移白名单（按文件名）。每条都必须写「待用户裁定权威归属」。
@@ -28,20 +28,28 @@ POOL_DIRS=("$REPO/scripts" "$REPO/rootfs/persistent-overlay")
 # files 内部 bin/sbin 两份同 sha，故 14 个漂移对 = 13 组）。
 # 同内容对若日后变成不同内容而名字不在此表 ⇒ 直接 FAIL（防门空转）。
 # ---------------------------------------------------------------------------
+# 2026-11-27 已逐组裁定（13 组 → 全部同 sha；判据与证据 = reports/userland-mirror-adjudication-20261127.md）：
+#   方向 A（scripts/ 权威 → files/ 刷成部署源，设备侧仍是旧版待部署）= scale.sh / slot-attr.py /
+#     ath12k-load.sh / charge-watch.sh / openrc-enable.sh / q28-watchdog.sh / sleep-{bisect,cumulative}.sh；
+#   方向 B（files/ == 设备，已上机验证的更新件回灌权威源）= net-up.sh / time-sync.sh /
+#     q28-boot-watchdog.sh / camera-modules-load.sh / init（三处同 sha：files = initramfs = overlay）。
+# 保留白名单条目：`sync-from-device.sh` 会把 files/ 拉回设备现态（方向 A 的那几件设备还是旧版），
+# 届时应为 WARN「设备待部署」而不是 FAIL；同条目若再次漂移仍带着这条理由，人一眼能认出是已知面。
 WHITELIST=(
-  "init|files/init ↔ rootfs/persistent-overlay/init|待用户裁定权威归属：两份不同代的 /init（380 行差），装错即起不来"
-  "scale.sh|files/usr/local/bin ↔ scripts/|待用户裁定权威归属：10 行差"
-  "slot-attr.py|files/usr/local/{bin,sbin} ↔ scripts/|待用户裁定权威归属：25 行差；packaging 内部 bin/sbin 两份同 sha"
-  "ath12k-load.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：已上线服务件，34 行差"
-  "camera-modules-load.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：3 行差"
-  "charge-watch.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：已上线服务件，189 行差（最大服务件漂移）"
-  "net-up.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：已上线服务件，38 行差"
-  "openrc-enable.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：8 行差"
-  "q28-boot-watchdog.sh|files/usr/local/sbin ↔ rootfs/persistent-overlay/|待用户裁定权威归属：20 行差（arch-audit B4：不知道设备跑的是哪份）"
-  "q28-watchdog.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：已上线服务件，52 行差"
-  "sleep-bisect.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：9 行差"
-  "sleep-cumulative.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：8 行差"
-  "time-sync.sh|files/usr/local/sbin ↔ scripts/|待用户裁定权威归属：已上线服务件，43 行差"
+  "init|files/init ↔ rootfs/persistent-overlay/init ↔ initramfs/init|已裁定 2026-11-27：SSOT = initramfs/init（== 设备 47af5f7d），overlay 副本已回灌同 sha；再漂移即 FAIL 面"
+  "scale.sh|files/usr/local/bin ↔ scripts/|已裁定：scripts/ 权威（含 WAYLAND_DISPLAY + 非整数 scale 警告），设备待部署"
+  "slot-attr.py|files/usr/local/{bin,sbin} ↔ scripts/|已裁定：scripts/ 权威（LUN 归属闸），设备待部署；bin/sbin 两份同步"
+  "ath12k-load.sh|files/usr/local/sbin ↔ scripts/|已裁定：scripts/ 为 RETIRED 存根（真源 ath12k-retry.sh），设备旧版待清"
+  "camera-modules-load.sh|files/usr/local/sbin ↔ scripts/|已裁定：files/ == 设备（带 readlink -f），已回灌 scripts/"
+  "charge-watch.sh|files/usr/local/sbin ↔ scripts/|已裁定：scripts/ == 设备（sag guard 版，2026-11-26 已装），files/ 已刷成部署源"
+  "net-up.sh|files/usr/local/sbin ↔ scripts/|已裁定：files/ == 设备（wifi_iface() 动态探测），已回灌 scripts/（旧 scripts 版写死 wlan0）"
+  "openrc-enable.sh|files/usr/local/sbin ↔ scripts/|已裁定：scripts/ 权威（wifi-scan-refresh 进 DEFAULT），设备待部署（OpenRC 期件）"
+  "q28-boot-watchdog.sh|files/usr/local/sbin ↔ rootfs/persistent-overlay/|已裁定：files/ == 设备（cardN 判据），已回灌 overlay"
+  "q28-watchdog.sh|files/usr/local/sbin ↔ scripts/|已裁定：scripts/ 权威（2026-11-17 版），设备待部署"
+  "sleep-bisect.sh|files/usr/local/sbin ↔ scripts/|已裁定：scripts/ 权威（LEGACY 头注），设备待部署"
+  "sleep-cumulative.sh|files/usr/local/sbin ↔ scripts/|已裁定：scripts/ 权威（LEGACY 头注），设备待部署"
+  "time-sync.sh|files/usr/local/sbin ↔ scripts/|已裁定：files/ == 设备（flock + 12×20 s 重试 + HTTP Date 兜底），已回灌 scripts/"
+  "usb-gadget|files/usr/local/sbin ↔ initramfs/|已裁定 2026-11-27：initramfs/usb-gadget 权威（含 acm.GS1 OOB shell），files/ 已刷新为部署源；设备 GS1 尚未激活（/sys/class/tty 只有 1 个 ttyGS）"
 )
 
 wl_lookup() { # $1=文件名 → 命中打印表项，否则空

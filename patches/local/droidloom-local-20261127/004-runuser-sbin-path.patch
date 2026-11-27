@@ -1,0 +1,64 @@
+# Patch: package-support: find runuser in /usr/sbin too
+# Source:  https://github.com/EvilBorsch/droidloom/commit/201000a7a50f3bc3f6f15d7b4e6449bd75d2136e
+# Author:  EvilBorsch <44337169+EvilBorsch@users.noreply.github.com>
+# Date:    2026-11-21T22:35:20Z
+# Why:     Upstream hardcodes /usr/bin/runuser (Arch-only path). Debian/Ubuntu install
+#          it as /usr/sbin/runuser. Our Debian trixie has it only in /usr/sbin.
+#          The before-upgrade/before-remove hooks call runuser -> ENOENT -> abort.
+#          Upstream main (package-support/main.rs:429,479) still uses /usr/bin/runuser
+#          in release 51.
+# Retire:  When `grep -c '"/usr/sbin/runuser"' runtime/droidloom-package-support/src/main.rs`
+#          > 0 on upstream main (upstream merged the dual-path fix).
+From 201000a7a50f3bc3f6f15d7b4e6449bd75d2136e Mon Sep 17 00:00:00 2001
+From: EvilBorsch <44337169+EvilBorsch@users.noreply.github.com>
+Date: Sun, 22 Nov 2026 01:35:20 +0300
+Subject: [PATCH] package-support: Find runuser in /usr/sbin too
+
+Debian and Ubuntu install runuser as /usr/sbin/runuser; only Arch Linux,
+which merged sbin into bin, has /usr/bin/runuser. The helper's
+before-upgrade and before-remove steps call runuser to stop the user's
+services and to remove the exported launchers, so on Debian and Ubuntu
+they fail with ENOENT and abort the package transaction whenever the
+user's session bus exists. Take runuser from either system path; never
+from PATH, since the helper runs as root.
+
+Checked with cargo check -p droidloom-package-support (x86_64, Rust 1.98.0); not tested on a device.
+---
+ runtime/droidloom-package-support/src/main.rs | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/runtime/droidloom-package-support/src/main.rs b/runtime/droidloom-package-support/src/main.rs
+index 6dc3419c..f77af692 100644
+--- a/runtime/droidloom-package-support/src/main.rs
++++ b/runtime/droidloom-package-support/src/main.rs
+@@ -424,9 +424,20 @@ fn gpu(choice: Option<GpuChoice>) -> Result<()> {
+     println!("Restart Droidloom to use it: droidloomctl restart");
+     Ok(())
+ }
++/// runuser is /usr/bin/runuser on Arch Linux but /usr/sbin/runuser on Debian
++/// and Ubuntu, which have not merged sbin into bin. This helper runs as root,
++/// so it takes runuser only from these two system paths, never from PATH.
++fn runuser() -> Result<&'static str> {
++    for path in ["/usr/bin/runuser", "/usr/sbin/runuser"] {
++        if Path::new(path).is_file() {
++            return Ok(path);
++        }
++    }
++    Err("runuser is in neither /usr/bin nor /usr/sbin".into())
++}
+ fn user_command(uid: u32, executable: &str) -> Result<Command> {
+     let account = user(uid)?;
+-    let mut command = Command::new("/usr/bin/runuser");
++    let mut command = Command::new(runuser()?);
+     command
+         .args(["-u", &account.name, "--", "/usr/bin/env"])
+         .arg(format!("XDG_RUNTIME_DIR=/run/user/{uid}"))
+@@ -476,7 +487,7 @@ fn before(remove: bool) -> Result<()> {
+         if let Some(value) = optional_json(Path::new(STATE))? {
+             let state: SetupState = serde_json::from_value(value)?;
+             let account = user(state.uid)?;
+-            run(Command::new("/usr/bin/runuser")
++            run(Command::new(runuser()?)
+                 .args(["-u", &account.name, "--", "/usr/bin/env"])
+                 .arg(format!("XDG_DATA_HOME={}", state.data_home.display()))
+                 .arg(format!("XDG_STATE_HOME={}", state.state_home.display()))

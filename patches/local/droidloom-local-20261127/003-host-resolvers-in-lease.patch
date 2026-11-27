@@ -1,0 +1,446 @@
+# Patch: supervisor: host resolvers in the DHCP lease + power-off stop
+# Source:  https://github.com/EvilBorsch/droidloom/commit/2712d37c58d38ef4f1d4586ef07e5d1596ea7246
+# Author:  EvilBorsch <44337169+EvilBorsch@users.noreply.github.com>
+# Date:    2026-11-22T10:23:16Z
+# Why:     Root cause 2 of our cell-offline bug (#48 secondary): DHCP lease hardcodes
+#          dns:[1.1.1.1, 8.8.8.8]. Our campus network forwards UDP/53 ONLY to the
+#          on-campus resolver; 1.1.1.1/8.8.8.8 timeout => Android marks SSID
+#          NO_INTERNET_PERMANENT. This patch reads host's /run/systemd/resolve/resolv.conf
+#          or /etc/resolv.conf and puts those resolvers first in the lease.
+#          Also changes stop sequence: SIGTERM -> power-off (CAP_SYS_BOOT makes init
+#          ignore SIGTERM; setprop sys.powerctl=shutdown is correct).
+# Depends: Must be applied AFTER 002-remove-forward-signals.patch (context in
+#          development.rs assumes 5380af3's signal_namespace_init() is present).
+# Retire:  When cell's `dumpsys connectivity` shows DNS != 1.1.1.1/8.8.8.8 without
+#          manual nft redirect (i.e., upstream lease reads host resolvers).
+#          Check: `strings /usr/bin/droidloom-supervisor | grep -c resolv.conf` > 0.
+From 2712d37c58d38ef4f1d4586ef07e5d1596ea7246 Mon Sep 17 00:00:00 2001
+From: EvilBorsch <44337169+EvilBorsch@users.noreply.github.com>
+Date: Sun, 22 Nov 2026 13:23:16 +0300
+Subject: [PATCH] supervisor: host resolvers in the lease, stop Android by
+ powering it off
+
+Two faults seen on a OnePlus Pad 3 running Ubuntu 26.04:
+
+The DHCP lease named only 1.1.1.1 and 8.8.8.8. The tablet's network drops
+plain DNS to both (its provider answers only from its own resolvers),
+though DNS over TLS to them works. Android's first Internet check runs
+before its encrypted DNS is up, so both probes timed out after 12.5 s
+(NetworkMonitor: PROBE_DNS ... FAIL ... Timeout), the saved network became
+NETWORK_SELECTION_DISABLED_NO_INTERNET_PERMANENT, and from the next start
+Android no longer joined it: apps were offline. The lease now lists the
+resolvers the host's network gave the host (systemd-resolved's upstream
+list, else /etc/resolv.conf; IPv4, not loopback; at most two) before the
+public ones, four at most.
+
+Stopping took 14 s: Android's init has CAP_SYS_BOOT in the cell, so it
+installs no SIGTERM handler, and the kernel drops a signal that a PID
+namespace's init does not handle. The SIGTERM of the previous commit, like
+the one unshare --forward-signals would have passed on, did nothing, and
+stop() ran into its 10 s deadline and killed the owner. Ask Android to
+power off instead (setprop sys.powerctl shutdown through nsenter, as the
+other control commands run): init shuts down and its reboot call ends the
+PID namespace. Done by hand on the tablet, Android's init was gone 337 ms
+after the request.
+
+The supervisor's library tests pass (143, two new). Not yet run on the
+tablet as a built runtime.
+
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+---
+ .../droidloom-supervisor/src/development.rs   | 84 ++++++-----------
+ .../src/development_network.rs                | 89 ++++++++++++++++---
+ .../src/dhcp_responder.rs                     | 79 +++++++++++-----
+ 3 files changed, 162 insertions(+), 90 deletions(-)
+
+diff --git a/runtime/droidloom-supervisor/src/development.rs b/runtime/droidloom-supervisor/src/development.rs
+index 5d5c363..2a776cb 100644
+--- a/runtime/droidloom-supervisor/src/development.rs
++++ b/runtime/droidloom-supervisor/src/development.rs
+@@ -380,14 +380,19 @@ impl DevelopmentCell {
+             .map_err(|source| io_error("poll Android namespace process before stopping", source))?
+             .is_none()
+         {
+-            // Android PID 1 shuts down on SIGTERM, and `unshare --fork`
+-            // exits once it has, so the wait below covers Android's own
+-            // shutdown. Signal it directly: `unshare --forward-signals`,
+-            // which would pass the owner's SIGTERM on, needs util-linux
+-            // 2.42, newer than Debian 13 and Ubuntu 26.04 ship. Before
+-            // unshare has forked, the owner's own SIGTERM ends it and
+-            // --kill-child=TERM passes the signal on.
+-            if !signal_namespace_init(self.child.id(), libc::SIGTERM)? {
++            // Ask Android to power itself off, as its own power menu does:
++            // init stops its services, syncs, and its reboot call ends the
++            // PID namespace, so `unshare --fork` exits and the wait below
++            // sees a clean shutdown (about a third of a second on a tablet).
++            // SIGTERM does not do that: Android's init has CAP_SYS_BOOT here
++            // and so installs no SIGTERM handler, and the kernel drops a
++            // signal a namespace's init does not handle. Passing the owner's
++            // SIGTERM on with `unshare --forward-signals`, which also needs
++            // util-linux 2.42, only ran into the deadline below. Before
++            // Android's init runs there is nothing to ask: end the owner,
++            // whose --kill-child=TERM ends its child.
++            let asked = namespace_init(self.child.id()).is_some_and(request_android_power_off);
++            if !asked {
+                 signal_process(self.child.id(), libc::SIGTERM)?;
+             }
+             let deadline = Instant::now() + Duration::from_secs(10);
+@@ -585,54 +590,21 @@ fn namespace_init(owner: u32) -> Option<u32> {
+         .find(|&pid| parent_pid(pid) == Some(owner))
+ }
+ 
+-/// Sends `signal` to the namespace's PID 1 through a pidfd, so a PID reused
+-/// after the lookup is never signalled. False when the owner has no child.
+-fn signal_namespace_init(owner: u32, signal: libc::c_int) -> Result<bool, DevelopmentError> {
+-    let Some(init) = namespace_init(owner) else {
+-        return Ok(false);
+-    };
+-    let pid = i32::try_from(init).map_err(|_| {
+-        DevelopmentError::InvalidInput("Android init PID exceeds Linux pid_t".into())
+-    })?;
+-    // SAFETY: pidfd_open takes scalar arguments and returns a fresh descriptor.
+-    let fd = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0) };
+-    if fd < 0 {
+-        let error = io::Error::last_os_error();
+-        return if error.raw_os_error() == Some(libc::ESRCH) {
+-            Ok(false)
+-        } else {
+-            Err(io_error("open Android init", error))
+-        };
+-    }
+-    let fd = i32::try_from(fd)
+-        .map_err(|_| DevelopmentError::InvalidInput("pidfd exceeds a file descriptor".into()))?;
+-    // SAFETY: successful pidfd_open transferred ownership of this descriptor.
+-    let fd = unsafe { OwnedFd::from_raw_fd(fd) };
+-    // The descriptor names the process that had the PID when it was opened:
+-    // it is the namespace's PID 1 only if the owner is still its parent.
+-    if parent_pid(init) != Some(owner) {
+-        return Ok(false);
+-    }
+-    // SAFETY: a valid pidfd, a signal number and no siginfo.
+-    let result = unsafe {
+-        libc::syscall(
+-            libc::SYS_pidfd_send_signal,
+-            fd.as_raw_fd(),
+-            signal,
+-            std::ptr::null::<libc::siginfo_t>(),
+-            0,
+-        )
+-    };
+-    if result == 0 {
+-        Ok(true)
+-    } else {
+-        let error = io::Error::last_os_error();
+-        if error.raw_os_error() == Some(libc::ESRCH) {
+-            Ok(false)
+-        } else {
+-            Err(io_error("signal Android init", error))
+-        }
+-    }
++/// Asks Android's init, host PID `init`, to shut Android down and power off;
++/// false when the request could not be made.
++fn request_android_power_off(init: u32) -> bool {
++    droidloom_cpu_placement::command("/usr/bin/timeout")
++        .args(["--kill-after=1s", "5s", "/usr/bin/nsenter", "--target"])
++        .arg(init.to_string())
++        .args([
++            "--mount", "--uts", "--ipc", "--net", "--pid", "--cgroup", "--root", "--wd", "--",
++            "/system/bin/setprop", "sys.powerctl", "shutdown",
++        ])
++        .stdin(std::process::Stdio::null())
++        .stdout(std::process::Stdio::null())
++        .stderr(std::process::Stdio::null())
++        .status()
++        .is_ok_and(|status| status.success())
+ }
+ 
+ fn signal_process(pid: u32, signal: libc::c_int) -> Result<(), DevelopmentError> {
+diff --git a/runtime/droidloom-supervisor/src/development_network.rs b/runtime/droidloom-supervisor/src/development_network.rs
+index 600e66c..3a5b2d2 100644
+--- a/runtime/droidloom-supervisor/src/development_network.rs
++++ b/runtime/droidloom-supervisor/src/development_network.rs
+@@ -16,7 +16,7 @@ use std::process::Stdio;
+ 
+ use crate::CellSpec;
+ use crate::development::DevelopmentError;
+-use crate::dhcp_responder::{DhcpResponder, Lease};
++use crate::dhcp_responder::{DhcpResponder, Lease, Resolvers};
+ 
+ const HOST_IPV4_CIDR: &str = "10.177.0.1/30";
+ const CELL_IPV4_CIDR: &str = "10.177.0.2/32";
+@@ -24,14 +24,55 @@ const CELL_INTERFACE: &str = "wlan0";
+ // Locally administered, so it never names real hardware. Android keeps one
+ // address for its Wi-Fi interface across cell starts.
+ const CELL_MAC: &str = "02:64:6c:00:00:02";
+-// The lease DHCP gives the cell: the address above, the host as its gateway,
+-// public resolvers so the cell does not depend on the host's resolver.
+-const LEASE: Lease = Lease {
+-    server: Ipv4Addr::new(10, 177, 0, 1),
+-    client: Ipv4Addr::new(10, 177, 0, 2),
+-    prefix_len: 30,
+-    dns: [Ipv4Addr::new(1, 1, 1, 1), Ipv4Addr::new(8, 8, 8, 8)],
+-};
++const LEASE_SERVER: Ipv4Addr = Ipv4Addr::new(10, 177, 0, 1);
++const LEASE_CLIENT: Ipv4Addr = Ipv4Addr::new(10, 177, 0, 2);
++const LEASE_PREFIX_LEN: u8 = 30;
++// Resolvers every network should reach. The cell does not use the host's own
++// resolver process, so it does not depend on one.
++const PUBLIC_RESOLVERS: [Ipv4Addr; 2] = [Ipv4Addr::new(1, 1, 1, 1), Ipv4Addr::new(8, 8, 8, 8)];
++// Where the host's network names its resolvers: systemd-resolved's list of
++// the servers it forwards to, then the classic file.
++const HOST_RESOLVER_FILES: [&str; 2] = ["/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"];
++
++/// The lease DHCP gives the cell: its address, the host as its gateway, and
++/// resolvers: those the host's network gave the host, then the public ones.
++/// Some networks answer DNS only from their own resolvers and drop queries
++/// to 1.1.1.1 and 8.8.8.8. Android then fails its first Internet check,
++/// before its encrypted DNS is up, marks the network as without Internet
++/// for good and no longer joins it by itself.
++fn lease() -> Lease {
++    let host = HOST_RESOLVER_FILES
++        .iter()
++        .find_map(|path| {
++            let servers = host_resolvers(&fs::read_to_string(path).ok()?);
++            (!servers.is_empty()).then_some(servers)
++        })
++        .unwrap_or_default();
++    let mut servers = host.into_iter().take(2).chain(PUBLIC_RESOLVERS);
++    let first = servers.next().unwrap_or(PUBLIC_RESOLVERS[0]);
++    Lease {
++        server: LEASE_SERVER,
++        client: LEASE_CLIENT,
++        prefix_len: LEASE_PREFIX_LEN,
++        dns: Resolvers::new(first, servers),
++    }
++}
++
++/// The IPv4 resolvers a resolv.conf names that the cell can reach through
++/// the host: not the host's own stub on a loopback address.
++fn host_resolvers(resolv_conf: &str) -> Vec<Ipv4Addr> {
++    resolv_conf
++        .lines()
++        .filter_map(|line| {
++            let mut words = line.split_whitespace();
++            (words.next() == Some("nameserver")).then(|| words.next())?
++        })
++        .filter_map(|server| server.parse::<Ipv4Addr>().ok())
++        .filter(|server| {
++            !server.is_loopback() && !server.is_unspecified() && !server.is_link_local()
++        })
++        .collect()
++}
+ const IPV4_FORWARD_PATH: &str = "/proc/sys/net/ipv4/ip_forward";
+ const IPV4_FORWARD_STATE_FILE: &str = "host-ipv4-forward.before";
+ const NETNS_DIR: &str = "/run/netns";
+@@ -104,7 +145,7 @@ impl DevelopmentNetwork {
+     fn setup(&mut self) -> Result<(), DevelopmentError> {
+         self.setup_links()?;
+         self.dhcp = Some(
+-            DhcpResponder::start(&self.names.host_interface, LEASE)
++            DhcpResponder::start(&self.names.host_interface, lease())
+                 .map_err(|source| io_error("answer DHCP on the cell link", source))?,
+         );
+         self.enable_forwarding()?;
+@@ -493,9 +534,33 @@ mod tests {
+         assert_eq!(CELL_IPV4_CIDR, "10.177.0.2/32");
+         // DHCP hands out exactly the address the firewall rules name.
+         assert_eq!(
+-            format!("{}/{}", LEASE.server, LEASE.prefix_len),
++            format!("{LEASE_SERVER}/{LEASE_PREFIX_LEN}"),
+             HOST_IPV4_CIDR
+         );
+-        assert_eq!(format!("{}/32", LEASE.client), CELL_IPV4_CIDR);
++        assert_eq!(format!("{LEASE_CLIENT}/32"), CELL_IPV4_CIDR);
++    }
++
++    #[test]
++    fn host_resolvers_are_the_ipv4_servers_the_cell_can_reach() {
++        let conf = "# made by a resolver\nnameserver 127.0.0.53\noptions edns0\n\
++                    nameserver 192.168.0.1\nnameserver fe80::1%wlan0\n\
++                    nameserver 217.10.39.4 # comment\nnameserver 0.0.0.0\nnameserver\n";
++        assert_eq!(
++            host_resolvers(conf),
++            [Ipv4Addr::new(192, 168, 0, 1), Ipv4Addr::new(217, 10, 39, 4)]
++        );
++        assert!(host_resolvers("nameserver 127.0.0.53\n").is_empty());
++    }
++
++    #[test]
++    fn a_lease_lists_each_resolver_once_and_at_most_four() {
++        let public = PUBLIC_RESOLVERS;
++        let resolvers = Resolvers::new(public[0], [public[1], public[0], public[1]]);
++        assert_eq!(resolvers.as_slice(), public);
++        let many = Resolvers::new(
++            Ipv4Addr::new(10, 0, 0, 1),
++            (2..9).map(|n| Ipv4Addr::new(10, 0, 0, n)),
++        );
++        assert_eq!(many.as_slice().len(), Resolvers::MAX);
+     }
+ }
+diff --git a/runtime/droidloom-supervisor/src/dhcp_responder.rs b/runtime/droidloom-supervisor/src/dhcp_responder.rs
+index 32e6c05..c85a0db 100644
+--- a/runtime/droidloom-supervisor/src/dhcp_responder.rs
++++ b/runtime/droidloom-supervisor/src/dhcp_responder.rs
+@@ -49,7 +49,38 @@ pub(crate) struct Lease {
+     pub(crate) server: Ipv4Addr,
+     pub(crate) client: Ipv4Addr,
+     pub(crate) prefix_len: u8,
+-    pub(crate) dns: [Ipv4Addr; 2],
++    pub(crate) dns: Resolvers,
++}
++
++/// The resolvers of a lease, in the order the cell tries them: at least one,
++/// at most [`Resolvers::MAX`].
++#[derive(Clone, Copy, Debug, Eq, PartialEq)]
++pub(crate) struct Resolvers {
++    servers: [Ipv4Addr; Resolvers::MAX],
++    len: usize,
++}
++
++impl Resolvers {
++    pub(crate) const MAX: usize = 4;
++
++    /// `first`, then those of `rest` not listed yet, up to [`Self::MAX`].
++    pub(crate) fn new(first: Ipv4Addr, rest: impl IntoIterator<Item = Ipv4Addr>) -> Self {
++        let mut resolvers = Self {
++            servers: [first; Self::MAX],
++            len: 1,
++        };
++        for server in rest {
++            if resolvers.len < Self::MAX && !resolvers.as_slice().contains(&server) {
++                resolvers.servers[resolvers.len] = server;
++                resolvers.len += 1;
++            }
++        }
++        resolvers
++    }
++
++    pub(crate) fn as_slice(&self) -> &[Ipv4Addr] {
++        &self.servers[..self.len]
++    }
+ }
+ 
+ /// Answers DHCP on one host interface until dropped.
+@@ -311,8 +342,10 @@ fn reply(request: &[u8], lease: Lease) -> Option<Reply> {
+         payload.extend_from_slice(&mask.to_be_bytes());
+         payload.extend_from_slice(&[OPTION_ROUTER, 4]);
+         payload.extend_from_slice(&lease.server.octets());
+-        payload.extend_from_slice(&[OPTION_DNS, 8]);
+-        for server in lease.dns {
++        let resolvers = lease.dns.as_slice();
++        // At most Resolvers::MAX addresses of four bytes: fits the length byte.
++        payload.extend_from_slice(&[OPTION_DNS, (resolvers.len() * 4) as u8]);
++        for server in resolvers {
+             payload.extend_from_slice(&server.octets());
+         }
+     }
+@@ -427,12 +460,14 @@ fn checksum(parts: &[&[u8]]) -> u16 {
+ mod tests {
+     use super::*;
+ 
+-    const LEASE: Lease = Lease {
+-        server: Ipv4Addr::new(10, 177, 0, 1),
+-        client: Ipv4Addr::new(10, 177, 0, 2),
+-        prefix_len: 30,
+-        dns: [Ipv4Addr::new(1, 1, 1, 1), Ipv4Addr::new(8, 8, 8, 8)],
+-    };
++    fn lease() -> Lease {
++        Lease {
++            server: Ipv4Addr::new(10, 177, 0, 1),
++            client: Ipv4Addr::new(10, 177, 0, 2),
++            prefix_len: 30,
++            dns: Resolvers::new(Ipv4Addr::new(1, 1, 1, 1), [Ipv4Addr::new(8, 8, 8, 8)]),
++        }
++    }
+     const MAC: [u8; 6] = [0x02, 0x64, 0x6c, 0, 0, 2];
+ 
+     fn request(message_type: u8, extra: &[u8]) -> Vec<u8> {
+@@ -472,7 +507,7 @@ mod tests {
+ 
+     #[test]
+     fn discover_gets_the_cell_lease() {
+-        let offer = reply(&request(DISCOVER, &[]), LEASE).expect("offer");
++        let offer = reply(&request(DISCOVER, &[]), lease()).expect("offer");
+         assert_eq!(option(&offer, OPTION_MESSAGE_TYPE), Some(vec![OFFER]));
+         assert_eq!(offer.payload[4..8], [1, 2, 3, 4]);
+         assert_eq!(offer.payload[16..20], [10, 177, 0, 2]);
+@@ -488,7 +523,7 @@ mod tests {
+         );
+         assert_eq!(option(&offer, OPTION_SERVER_ID), Some(vec![10, 177, 0, 1]));
+         assert!(offer.payload.len() >= BOOTP_MIN_LEN);
+-        assert_eq!((offer.destination, offer.mac), (LEASE.client, MAC));
++        assert_eq!((offer.destination, offer.mac), (lease().client, MAC));
+     }
+ 
+     #[test]
+@@ -507,7 +542,7 @@ mod tests {
+             0,
+             1,
+         ];
+-        let ack = reply(&request(REQUEST, &wanted), LEASE).expect("ack");
++        let ack = reply(&request(REQUEST, &wanted), lease()).expect("ack");
+         assert_eq!(option(&ack, OPTION_MESSAGE_TYPE), Some(vec![ACK]));
+         assert_eq!(
+             option(&ack, OPTION_LEASE_TIME),
+@@ -515,29 +550,29 @@ mod tests {
+         );
+ 
+         let other = [OPTION_REQUESTED_ADDRESS, 4, 192, 168, 1, 50];
+-        let nak = reply(&request(REQUEST, &other), LEASE).expect("nak");
++        let nak = reply(&request(REQUEST, &other), lease()).expect("nak");
+         assert_eq!(option(&nak, OPTION_MESSAGE_TYPE), Some(vec![NAK]));
+         assert_eq!(nak.payload[16..20], [0, 0, 0, 0]);
+         assert_eq!((nak.destination, nak.mac), (Ipv4Addr::BROADCAST, [0xff; 6]));
+ 
+         let elsewhere = [OPTION_SERVER_ID, 4, 192, 168, 1, 1];
+-        assert_eq!(reply(&request(REQUEST, &elsewhere), LEASE), None);
++        assert_eq!(reply(&request(REQUEST, &elsewhere), lease()), None);
+     }
+ 
+     #[test]
+     fn renewal_from_a_bound_client_is_unicast() {
+         let mut renew = request(REQUEST, &[]);
+         renew[12..16].copy_from_slice(&[10, 177, 0, 2]);
+-        let ack = reply(&renew, LEASE).expect("ack");
++        let ack = reply(&renew, lease()).expect("ack");
+         assert_eq!(option(&ack, OPTION_MESSAGE_TYPE), Some(vec![ACK]));
+-        assert_eq!((ack.destination, ack.mac), (LEASE.client, MAC));
++        assert_eq!((ack.destination, ack.mac), (lease().client, MAC));
+     }
+ 
+     #[test]
+     fn broadcast_flag_is_honoured() {
+         let mut discover = request(DISCOVER, &[]);
+         discover[10] = 0x80;
+-        let offer = reply(&discover, LEASE).expect("offer");
++        let offer = reply(&discover, lease()).expect("offer");
+         assert_eq!(
+             (offer.destination, offer.mac),
+             (Ipv4Addr::BROADCAST, [0xff; 6])
+@@ -548,7 +583,7 @@ mod tests {
+     #[test]
+     fn replies_round_trip_through_the_ip_and_udp_headers() {
+         let payload = request(DISCOVER, &[]);
+-        let packet = udp_packet(LEASE.client, LEASE.server, &payload);
++        let packet = udp_packet(lease().client, lease().server, &payload);
+         assert_eq!(checksum(&[&packet[..20]]), 0);
+         // A reply addressed back to the server port parses as a request again.
+         let mut to_server = packet.clone();
+@@ -559,13 +594,13 @@ mod tests {
+ 
+     #[test]
+     fn malformed_messages_are_ignored() {
+-        assert_eq!(reply(&[], LEASE), None);
++        assert_eq!(reply(&[], lease()), None);
+         let mut wrong_cookie = request(DISCOVER, &[]);
+         wrong_cookie[BOOTP_FIXED_LEN] = 0;
+-        assert_eq!(reply(&wrong_cookie, LEASE), None);
++        assert_eq!(reply(&wrong_cookie, lease()), None);
+         let mut truncated = request(DISCOVER, &[]);
+         truncated.truncate(BOOTP_FIXED_LEN + 6);
+-        assert_eq!(reply(&truncated, LEASE), None);
+-        assert_eq!(reply(&request(7, &[]), LEASE), None);
++        assert_eq!(reply(&truncated, lease()), None);
++        assert_eq!(reply(&request(7, &[]), lease()), None);
+     }
+ }

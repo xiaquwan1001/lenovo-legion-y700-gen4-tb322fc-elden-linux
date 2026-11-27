@@ -5,7 +5,10 @@
 # 未修。第二次启动独立地约 50% 成功 ⇒ 自动重启可把可用性从 ~50% 提到 ~75%。
 # 这条**不改根因**，只是运营兜底。详见 PITFALLS #228。
 #
-# 判据：bad = (无图形会话 OR 无 /sys/class/drm/card0) AND (无 card0 或 命中 Q28 dmesg 特征)
+# 判据：bad = (无图形会话 OR 无 DRM card) AND (无 DRM card 或 命中 Q28 dmesg 特征)
+#   ★DRM card 不能只认 card0（2026-11-16 实测）：走 UEFI/GRUB 路径时 efifb 先注册成 DRM card0 再注销，
+#     msm 拿到的是 **card1**，旧判据 `[ -e /sys/class/drm/card0 ]` 会把一次完全正常的启动
+#     （phoc+phosh 已起、card1-DSI-1 在）判成「坏发」并自动重启 ⇒ 现改为「存在任一 cardN」即算有卡，并把卡名写进日志。
 #   特征 = command DMA timeout | Failed to initialize panel | vblank wait timed out
 # 全部满足才重启；成功启动（有会话）⇒ 计数清零；重启次数跨启动计数、上限 MAX。
 #
@@ -35,9 +38,15 @@ have_session() {
 	pgrep -x phosh >/dev/null 2>&1 && return 0
 	return 1
 }
+# 列出存在的 DRM 主卡（cardN）：b 槽直启 = card0；UEFI/GRUB 路径 = card1（见头部注释）。
+drm_cards() {
+	for d in /sys/class/drm/card[0-9] /sys/class/drm/card[0-9][0-9]; do
+		if [ -e "$d" ]; then printf '%s ' "${d##*/}"; fi
+	done
+}
 have_card() {
 	case "$SELFTEST" in nocard) return 1 ;; card) return 0 ;; esac
-	[ -e /sys/class/drm/card0 ]
+	drm_cards | grep -q .
 }
 q28_sig() {
 	[ "$SELFTEST" = sig ] && return 0
@@ -70,6 +79,7 @@ fi
 
 sess=no; have_session && sess=yes
 card=no; have_card && card=yes
+cards=$(drm_cards)
 sig=no;  q28_sig && sig=yes
 if [ "$sess" = yes ] && [ "$card" = yes ]; then
 	log "settled with session+card -> nothing to do"
@@ -80,12 +90,12 @@ if [ "$card" = yes ] && [ "$sig" = no ]; then
 	exit 0
 fi
 if [ "$cnt" -ge "$MAX" ]; then
-	log "Q28 bad boot (sess=$sess card=$card sig=$sig) but retry budget exhausted ($cnt>=$MAX) -> staying up for diagnosis"
+	log "Q28 bad boot (sess=$sess card=$card cards=[$cards] sig=$sig) but retry budget exhausted ($cnt>=$MAX) -> staying up for diagnosis"
 	exit 0
 fi
 
 echo $((cnt + 1)) > "$STATE/count" 2>/dev/null || true
-log "Q28 bad boot detected (attempt $((cnt + 1))/$MAX sess=$sess card=$card sig=$sig selftest=${SELFTEST:-none}) -> normal reboot"
+log "Q28 bad boot detected (attempt $((cnt + 1))/$MAX sess=$sess card=$card cards=[$cards] sig=$sig selftest=${SELFTEST:-none}) -> normal reboot"
 if [ "$DRYRUN" = 1 ]; then log "DRYRUN=1 -> not rebooting"; exit 0; fi
 sync
 # 能力自检：老版 reboot2（2026-09-28 前）无参 = 进 fastboot（PITFALLS #229）⇒ 必须先确认

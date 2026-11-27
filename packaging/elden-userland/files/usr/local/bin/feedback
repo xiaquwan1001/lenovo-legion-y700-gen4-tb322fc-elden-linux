@@ -1,4 +1,7 @@
 #!/bin/sh
+# RETIRED 2026-11-27（D16 分类轮，reports/d16-unit-deploy-classify-20261127.md §4）：
+#   本件在现役 Debian/systemd 根上没有可用消费者，已从 MANIFEST 摘除（不再装机）。
+#   保留文件仅为历史取证；要复活先给出消费者与判据。
 # trigger a feedbackd event on the phosh session bus. usage: feedback [event]
 ev=${1:-button-pressed}
 PID=$(ps -o pid=,comm= | awk '$2=="phosh"{print $1; exit}')

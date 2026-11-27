@@ -349,6 +349,14 @@ probe_profile() {   # → systemd | openrc
   echo "${m%%[!a-z]*}"
 }
 
+# F 段豁免表（2026-11-27）：path<TAB>理由。只用于「已逐条裁定过、不该在设备上」的期望项
+# （判据与证据 = reports/d16-unit-deploy-classify-20261127.md）。豁免 = 跳过并 info，不算 PASS 也不算 FAIL。
+WAIVERS_F="$HERE/tools/verify-f-waivers.tsv"
+f_waived() { # $1=path → 命中打印理由
+  [ -f "$WAIVERS_F" ] || return 1
+  awk -F'\t' -v p="$1" '$1==p {print $2; found=1; exit} END{exit !found}' "$WAIVERS_F"
+}
+
 # 期望表：path<TAB>expected_sha<TAB>origin
 build_expect() {
   local dst kind sha size mode repo_src p h origin f
@@ -365,7 +373,9 @@ build_expect() {
   if [ "$ROOT_PROFILE" = "systemd" ]; then
     for f in "$HERE"/out/units/systemd/*.service; do
       [ -f "$f" ] || continue
-      p=/usr/lib/systemd/system/$(basename "$f"); h=$(sha256sum "$f" | cut -d' ' -f1); origin=unit
+      # 2026-11-27：我们自己的单元在 Debian 根上装到 /etc/systemd/system（deploy-desktop-shell.sh 的目标），
+      # 不是 /usr/lib/systemd/system（那是发行版包的位置）⇒ 期望路径改 /etc；比对时两个位置都接受（见下）。
+      p=/etc/systemd/system/$(basename "$f"); h=$(sha256sum "$f" | cut -d' ' -f1); origin=unit
       if [ -n "$STAGE" ] && [ -f "$STAGE$p" ]; then h=$(sha256sum "$STAGE$p" | cut -d' ' -f1); origin=overlay; fi
       printf '%s\t%s\t%s\n' "$p" "$h" "$origin"
     done
@@ -404,13 +414,23 @@ elif [ -n "$LOCAL_ROOT" ] || ssh -o BatchMode=yes -o ConnectTimeout=6 "$SSH_TARG
   exp=/tmp/.verify_exp.$$
   build_expect >"$exp"
   declare -A GOT=()
-  while IFS=$'\t' read -r h p; do GOT[$p]=$h; done < <(cut -f1 "$exp" | fetch_shas)
+  # 单元两个位置都要取：/etc/systemd/system（我们的）与 /usr/lib/systemd/system（发行版同名件的别名）
+  while IFS=$'\t' read -r h p; do GOT[$p]=$h; done < <(
+    { cut -f1 "$exp"
+      cut -f1 "$exp" | grep '^/etc/systemd/system/' | sed 's|^/etc/systemd/system/|/usr/lib/systemd/system/|'
+    } | sort -u | fetch_shas)
 
   drift=0; gone=0; checked=0; skipped=0
   while IFS=$'\t' read -r p h origin; do
     [ -n "$p" ] || continue
     checked=$((checked + 1))
+    if why=$(f_waived "$p"); then
+      info "豁免 $p：$why"; skipped=$((skipped + 1)); continue
+    fi
     got=${GOT[$p]:-}
+    if [ -z "$got" ] && [ "${p#/etc/systemd/system/}" != "$p" ]; then
+      got=${GOT[/usr/lib/systemd/system/${p#/etc/systemd/system/}]:-}
+    fi
     if [ -z "$got" ]; then
       if [ "$ROOT_PROFILE" = "systemd" ] && is_openrc_only "$p"; then skipped=$((skipped + 1)); continue; fi
       warn "$p: 设备上不存在（期望来源 $origin）"; gone=$((gone + 1))

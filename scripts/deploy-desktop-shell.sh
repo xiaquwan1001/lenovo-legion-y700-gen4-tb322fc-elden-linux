@@ -774,6 +774,106 @@ else
 	fi
 fi
 
+# ---------------------------------------------------------------------------
+# 18) 面板唤醒通道（elden-wake.path / .service）—— 2026-11-27 立
+# 为什么要有（reports/panel-wake-service-20261126.md §4 的待办）：熄屏时 dpms=On / bl_power=0 /
+#   status=connected 全是「亮」的假象（PITFALLS #735），唯一判据是合成器能不能出帧；
+#   `ssh elden 'elden-wake'`（或 touch /run/elden-wake.trigger）是那条 SSH 唤醒通道的服务端。
+#   2026-11-26 它是**手工 additive 装到设备**的：仓内唯一源件是 scripts/wake-screen.sh，
+#   两个 unit **从未进仓** ⇒ 重建根后通道静默消失，而 deploy 门一路 ok。
+# 本节把两个 unit 的逐字节内容收进本脚本（口径同 §15 的 WM_CLOSE_SH：仓内即 SSOT，
+#   `grep -rn elden-wake packaging/` 为空 = packaging 里根本没有它），判据才能拿 sha 直接比。
+# 四件判据（缺一即 MISS）：
+#   ① 两个 unit 在设备上且 sha 与本脚本 heredoc 渲染出的**逐字节相同**（防半装/手改）
+#   ② `systemctl is-enabled elden-wake.path` = enabled（重开机能自动回来）
+#   ③ `systemctl is-active elden-wake.path` = active——path unit 的 active 语义 = 「正在监控
+#      PathExists」；服务本体 elden-wake.service 是 Type=oneshot ⇒ 平时 static/inactive 是**正确**
+#      状态，不判它 active（判了就会永远假红）
+#   ④ /usr/local/bin/elden-wake 在位、可执行，且 sha == 仓内 scripts/wake-screen.sh（源件唯一）
+EW_PATH_UNIT=/etc/systemd/system/elden-wake.path
+EW_SVC_UNIT=/etc/systemd/system/elden-wake.service
+EW_BIN=/usr/local/bin/elden-wake
+EW_SRC=$ROOT/scripts/wake-screen.sh
+EW_BIN_SHA=$(sha256sum "$EW_SRC" 2>/dev/null | cut -d' ' -f1)
+EW_TMP=$(mktemp -d)
+trap 'rm -rf "$EW_TMP"' EXIT
+cat >"$EW_TMP/elden-wake.path" <<'EOSEWPATH'
+[Unit]
+Description=Trigger elden-wake.service when /run/elden-wake.trigger is touched
+
+[Path]
+PathExists=/run/elden-wake.trigger
+Unit=elden-wake.service
+
+[Install]
+WantedBy=paths.target
+EOSEWPATH
+cat >"$EW_TMP/elden-wake.service" <<'EOSEWSVC'
+[Unit]
+Description=Wake the panel from compositor idle blank (SSH-triggerable, one-shot)
+After=graphical.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/elden-wake
+# 触发文件必须由服务自己消费掉，否则 path unit 会立刻重触发（2026-11-26 实测 start-limit-hit）
+ExecStartPost=-/bin/rm -f /run/elden-wake.trigger
+RemainAfterExit=no
+EOSEWSVC
+EW_PATH_SHA=$(sha256sum "$EW_TMP/elden-wake.path" | cut -d' ' -f1)
+EW_SVC_SHA=$(sha256sum "$EW_TMP/elden-wake.service" | cut -d' ' -f1)
+echo "== 18) 面板唤醒通道（elden-wake.path/.service：SSH 触发熄屏唤醒）=="
+_ew_path_sha=$("${SSH[@]}" "sha256sum $EW_PATH_UNIT 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+_ew_svc_sha=$("${SSH[@]}" "sha256sum $EW_SVC_UNIT 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+_ew_bin_sha=$("${SSH[@]}" "sha256sum $EW_BIN 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+_ew_bin_x=$("${SSH[@]}" "test -x $EW_BIN && echo yes || echo no" 2>/dev/null || true)
+_ew_en=$("${SSH[@]}" 'systemctl is-enabled elden-wake.path 2>/dev/null' 2>/dev/null || true)
+_ew_ac=$("${SSH[@]}" 'systemctl is-active elden-wake.path 2>/dev/null' 2>/dev/null || true)
+if [ "$MODE" = check ]; then
+	[ -z "$EW_BIN_SHA" ] && no "缺源件 $EW_SRC ⇒ 无法判定设备件 sha"
+	[ "$_ew_path_sha" = "$EW_PATH_SHA" ] && ok "elden-wake.path 与仓内 §18 渲染一致（${EW_PATH_SHA%${EW_PATH_SHA#????????}}…）" \
+		|| no "elden-wake.path 缺或与仓内不一致（设备 ${_ew_path_sha:-缺} / 仓内 ${EW_PATH_SHA:-?}）⇒ 重跑本脚本"
+	[ "$_ew_svc_sha" = "$EW_SVC_SHA" ] && ok "elden-wake.service 与仓内 §18 渲染一致" \
+		|| no "elden-wake.service 缺或与仓内不一致（设备 ${_ew_svc_sha:-缺} / 仓内 ${EW_SVC_SHA:-?}）⇒ 重跑本脚本"
+	if [ "$_ew_en" = enabled ] && [ "$_ew_ac" = active ]; then
+		ok "elden-wake.path enabled+active（监控 /run/elden-wake.trigger 中）"
+	else
+		no "elden-wake.path 状态 = ${_ew_en:-?}/${_ew_ac:-?}（要 enabled + active：enabled 保重启后回来，active 才是真在监控）"
+	fi
+	if [ "$_ew_bin_x" = yes ] && [ -n "$_ew_bin_sha" ] && [ "$_ew_bin_sha" = "$EW_BIN_SHA" ]; then
+		ok "$EW_BIN 在位可执行且与 scripts/wake-screen.sh 一致"
+	elif [ "$_ew_bin_x" != yes ]; then
+		no "缺 $EW_BIN 或不可执行 ⇒ SSH 唤醒通道没落地"
+	else
+		no "$EW_BIN 与仓内不一致（设备 ${_ew_bin_sha:-缺} / 仓内 ${EW_BIN_SHA:-?}）⇒ 旧版唤醒脚本"
+	fi
+else
+	if [ "$_ew_path_sha" != "$EW_PATH_SHA" ] || [ "$_ew_svc_sha" != "$EW_SVC_SHA" ]; then
+		"${SCP[@]}" "$EW_TMP/elden-wake.path" "$TAB:$EW_PATH_UNIT" &&
+		"${SCP[@]}" "$EW_TMP/elden-wake.service" "$TAB:$EW_SVC_UNIT" &&
+			"${SSH[@]}" "chmod 644 $EW_PATH_UNIT $EW_SVC_UNIT; systemctl daemon-reload" &&
+			fix "已装 elden-wake.path/.service（源 = 本脚本 §18 heredoc）" || no "装 elden-wake unit 失败"
+	fi
+	if [ -z "$EW_BIN_SHA" ]; then
+		no "缺源件 $EW_SRC ⇒ 拒绝装占位件"
+	elif [ "$_ew_bin_sha" != "$EW_BIN_SHA" ] || [ "$_ew_bin_x" != yes ]; then
+		"${SCP[@]}" "$EW_SRC" "$TAB:$EW_BIN" &&
+			"${SSH[@]}" "chmod 755 $EW_BIN" && fix "已装/更新 $EW_BIN（源 scripts/wake-screen.sh）" || no "装 $EW_BIN 失败"
+	fi
+	# enable --now 幂等：已 enabled 不改、已 active 不重启（不碰 /run/elden-wake.trigger）
+	"${SSH[@]}" 'systemctl enable --now elden-wake.path >/dev/null 2>&1; systemctl is-enabled elden-wake.path; systemctl is-active elden-wake.path' >/dev/null 2>&1 \
+		&& fix "elden-wake.path 已 enabled+active" || no "enable --now elden-wake.path 失败"
+	_ew_path_sha=$("${SSH[@]}" "sha256sum $EW_PATH_UNIT 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+	_ew_svc_sha=$("${SSH[@]}" "sha256sum $EW_SVC_UNIT 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+	_ew_bin_sha=$("${SSH[@]}" "sha256sum $EW_BIN 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+	_ew_en=$("${SSH[@]}" 'systemctl is-enabled elden-wake.path 2>/dev/null' 2>/dev/null || true)
+	_ew_ac=$("${SSH[@]}" 'systemctl is-active elden-wake.path 2>/dev/null' 2>/dev/null || true)
+	{ [ "$_ew_path_sha" = "$EW_PATH_SHA" ] && [ "$_ew_svc_sha" = "$EW_SVC_SHA" ] \
+		&& [ "$_ew_bin_sha" = "$EW_BIN_SHA" ] && [ "$_ew_en" = enabled ] && [ "$_ew_ac" = active ]; } \
+		&& ok "面板唤醒通道就绪（两 unit sha 一致 + bin sha 一致 + enabled+active）" \
+		|| no "装完仍不达标（${_ew_en:-?}/${_ew_ac:-?}；逐一对照 §18 四件判据）"
+fi
+
 echo
 if [ "$missing" -eq 0 ]; then echo "结果: 达标（MISS=0）"; exit 0; fi
 echo "结果: 未达标（MISS=$missing）"; exit 1
