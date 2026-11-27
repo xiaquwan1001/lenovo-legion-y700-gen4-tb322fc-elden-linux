@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=64cbbcc02262aa0e（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=8af32f301d9c8d8d（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,9 +7,9 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**361**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 82 / 设备操作 109 / 造件 71 / 取证 51 / 一次性 3 / 公共库 8 / 其它 37
-- 引用数为 0 的孤立件：**1**（判定口径见下）
+- 入口总数：**363**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 84 / 设备操作 109 / 造件 71 / 取证 51 / 一次性 3 / 公共库 8 / 其它 37
+- 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
 
@@ -24,7 +24,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（82）
+## 门禁（84）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -55,6 +55,7 @@
 | `scripts/doctor/29-out-candidate-sha.sh` | §29 上机候选件 sha 账目门（委托 scripts/out-candidate-sha.py --check） | 2 |
 | `scripts/doctor/30-tasks-routing.py` | TASKS 台账「章节路由」门（2026-11-26 拆分后新增） | 4 |
 | `scripts/doctor/31-reports-index.sh` | §31 reports/README.md 新鲜度门（委托 scripts/reports-index.py --check）。 | 5 |
+| `scripts/doctor/32-userland-mirror.sh` | 用户态镜像一致性门 + packaging verify.sh --offline 接线 | 2 |
 | `scripts/doctor/_lib.sh` | shellcheck shell=bash | 30 |
 | `scripts/doctor/ab-bench.sh` | bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置） | 8 |
 | `scripts/android-apk-pkgname.py` | 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。 | 3 |
@@ -65,20 +66,21 @@
 | `scripts/assert-kernel-sane.sh` | 打包前的「内核身份 / 存活」硬门（pack-time gate）。 | 35 |
 | `scripts/cam-load-verify.sh` | 在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。 | 8 |
 | `scripts/check-abi-config.sh` | 内核 .config 的 ABI 敏感项门禁（build/pack-time gate）。 | 38 |
-| `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 61 |
-| `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 333 |
+| `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 62 |
+| `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 335 |
 | `scripts/check-init.sh` | init 单一真源 / 可运行性自检（主机侧，只读） | 12 |
 | `scripts/check-layout.sh` | 顶层布局注册表门（versions/layout.tsv ↔ 磁盘 ↔ INDEX.md） | 41 |
 | `scripts/check-modular-config.sh` | 模块化 config 门禁（第二层，2026-10-26） | 30 |
-| `scripts/check-progress-counts.sh` | 从 TASKS/README.md §1/§2 的行内状态标记现算完成度 | 78 |
+| `scripts/check-progress-counts.sh` | 从 TASKS/README.md §1/§2 的行内状态标记现算完成度 | 79 |
 | `scripts/check-project-memory.sh` | 校验「项目记忆就在仓库里」这条链路没断 | 8 |
 | `scripts/check-series-selfcontained.sh` | 补丁系列自足性门禁（派工单 M3-v5 2026-10-31） | 37 |
 | `scripts/check-sessions.sh` | 独立校验 SESSIONS/（不依赖 gen-sessions.py 的实现细节） | 23 |
 | `scripts/check-shell-hygiene.py` | 设备命令静态卫生门（2026-11-18，来自四板块脚本审查） | 14 |
+| `scripts/check-userland-mirror.sh` | 用户态镜像一致性门（arch-audit-20261127 A9/A10） | 5 |
 | `scripts/deploy-bt-suspend-guard.sh` | 把 BT suspend 保护钩子部署到设备并验证。 | 8 |
 | `scripts/driver-snapshot-diff.sh` | 比对两次 driver-snapshot.sh 的输出，按「变了什么」排序输出。 | 5 |
 | `scripts/dump-verdict.py` | 「这次 dump 失败了吗？还是分区真的不存在？」的唯一判据。 | 15 |
-| `scripts/gen-scripts-index.py` | 生成 scripts/ 索引（scripts/README.md + 机读 TSV），可重跑、可挂门。 | 47 |
+| `scripts/gen-scripts-index.py` | 生成 scripts/ 索引（scripts/README.md + 机读 TSV），可重跑、可挂门。 | 49 |
 | `scripts/gpt-audit-tb322fc.py` | 把设备 GPT 主表 dump（EDL 只读得到）与官方 259 包逐字节对账。 | 19 |
 | `scripts/gpt-preflight.py` | 写盘前的 GPT「快照复验」（纯主机、无 USB、不碰设备）。 | 17 |
 | `scripts/hide-android-partitions-selftest.sh` | 离线自测（全部在 /tmp 沙盒里跑，不碰 /etc、不碰设备） | 5 |
@@ -91,9 +93,9 @@
 | `scripts/out-archive.py` | out/*.img 归档器 —— out/ 只留在用件与取证件，历史镜像 mv 到 backup/out-history-<date>/。 | 48 |
 | `scripts/out-manifest-check.py` | out/ 造件「报告↔镜像」账本门（2026-11-20，arch-audit P0#2） | 13 |
 | `scripts/rawprogram-preflight.py` | 线刷包 rawprogram XML 的**写前**几何预检（纯主机、无 USB）。 | 16 |
-| `scripts/reports-orphan-check.py` | `reports/*.md` 是否被「角度层」指针引用（可复跑判据 + 反作弊 + 自测）。 | 0 |
+| `scripts/reports-orphan-check.py` | `reports/*.md` 是否被「角度层」指针引用（可复跑判据 + 反作弊 + 自测）。 | 5 |
 | `scripts/rootfs-image-check.py` | 磁盘根 ext4 镜像「能不能起 / 能不能登入」的写前门（主机侧，只读） | 5 |
-| `scripts/doctor/s07-08-docs.py` | check-doctor §7/§8 入口文档与索引对账（纯文本判据）。 | 40 |
+| `scripts/doctor/s07-08-docs.py` | check-doctor §7/§8 入口文档与索引对账（纯文本判据）。 | 41 |
 | `scripts/doctor/s16-tasks-counts.py` | check-doctor §16：TASKS §0 手写数字 ↔ 计数脚本自动比对。 | 15 |
 | `scripts/sleep-policy.sh` | 设备「待机策略」开关：待机（关屏）时是否允许 SSH/网络继续可用 | 1 |
 | `scripts/slot-switch.sh` | A/B 槽位「一键往返切换 + 槽属性自检」（../TASKS/README.md §2 C7） | 66 |
@@ -133,7 +135,7 @@
 | `scripts/camera-modules-load.sh` | bring up the mainline camera stack on TB322FC. | 72 |
 | `scripts/camera-stream-up.sh` | 在设备上把 camss 采集链路配置到可出流（幂等）。 | 29 |
 | `scripts/charge-ctl.sh` | battery / charger control for TB322FC (elden), qcom-battmgr. | 41 |
-| `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 49 |
+| `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 50 |
 | `scripts/deploy-camera-modules.sh` | 收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验** | 25 |
 | `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 128 |
 | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 42 |
@@ -273,7 +275,7 @@
 | `scripts/fetch-x86-assets.sh` | 主机侧下载 Win-x86 转译 PoC 所需离线资产到 pkgs-x86/ | 7 |
 | `scripts/ffs-extract.py` | 解厂商 UEFI 固件（FV/FFS/section 递归 + LZMA/GUID 段） | 21 |
 | `scripts/gapps-mirror-setup.sh` | 把 GAPPS system 镜像接入本地 OTA 源（生成 GAPPS.json + 软链） | 5 |
-| `scripts/gen-history.sh` | 从 git log 机械生成 HISTORY/days/*.md，并现查统计。 | 135 |
+| `scripts/gen-history.sh` | 从 git log 机械生成 HISTORY/days/*.md，并现查统计。 | 136 |
 | `scripts/gen-pinyin-lexicon.py` | 从 CC-CEDICT 生成「拼音 → 词」候选词库（供 elden-pinyin-completer 用）。 | 5 |
 | `scripts/gen-sessions.py` | 从 git show <REV>:RESOURCES.md 的 §4 会话索引机械生成 SESSIONS/ 角度文件夹。 | 25 |
 | `scripts/grub-arm64-arming-build.sh` | 用「嵌入菜单」重打 arm64 GRUB（UEFI 复测用），带自校验 | 12 |
@@ -292,7 +294,7 @@
 | `scripts/phosh-install.sh` | 把自编 phosh 装到设备并**钉住**，防 apt 覆盖（同 PITFALLS #654 的 phoc 做法） | 4 |
 | `scripts/rambuild.sh` | 内存盘构建区（RAM build scratch）辅助（见 .pi/plans/2026-10-15_081500-内存盘构建区规划.md） | 6 |
 | `scripts/rebuild-vk64-image.sh` | 重建 Q24/N5b 台架镜像 out/boot-elden-vk64.img | 25 |
-| `scripts/reports-index.py` | 由文件名 + 首个 `# ` 标题生成 `reports/README.md`（只读报告，只写这一个文件）。 | 35 |
+| `scripts/reports-index.py` | 由文件名 + 首个 `# ` 标题生成 `reports/README.md`（只读报告，只写这一个文件）。 | 36 |
 | `scripts/sd-variant-build.sh` | build one sleep-death (熄屏→关机) candidate kernel + boot.img. | 5 |
 | `scripts/setup-session-greetd.sh` | switch the TB322FC Alpine session between the | 24 |
 | `scripts/sign-boot-b.sh` | Sign a mainline boot image for slot b (self-signed AVB, see bootslot-b/README.md). | 45 |
@@ -328,7 +330,7 @@
 | `scripts/iterate.sh` | 统一迭代入口（日常用它；已于 2026-11 取代并删除根目录 build.sh/pack.sh/cycle.sh）。 | 71 |
 | `scripts/kmsgspy.sh` | capture kernel log to disk with line buffering + frequent sync, so the last | 10 |
 | `scripts/linux-state-audit.sh` | ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 37 |
-| `scripts/logfs-decode.py` | 解析 `logfs` 分区（8 MiB = 10 × 64 KiB 环形 ABL 日志）。 | 11 |
+| `scripts/logfs-decode.py` | 解析 `logfs` 分区（8 MiB = 10 × 64 KiB 环形 ABL 日志）。 | 12 |
 | `scripts/n5b-vk64-death-rate.sh` | N5b：在 vk64（7.2 血统）RAM 内核上重复 | 44 |
 | `scripts/out-candidate-sha.py` | 「上机候选件」的 sha 账目门（out/ 生命周期账本 ↔ 件 ↔ 记录）。 | 7 |
 | `scripts/out-status.py` | out/ 造件生命周期账本门（2026-11-20，arch-audit P1#6） | 15 |
@@ -343,7 +345,7 @@
 | `scripts/qemu-full-chain-smoke.sh` | QEMU 复刻「AAVMF → GRUB → EFI-stub → vk188 内核 → 串口 dmesg」全链 | 12 |
 | `scripts/skewcal-frame-stats.sh` | 在锁内抓 N 帧存设备 /tmp，再用 python3 统计（distinct/stddev/非零占比）。 | 4 |
 | `scripts/skewcal-measure.sh` | 一次 M4 SKEW_CAL A/B 出流测量（设备是唯一串行资源 → 单次测量整体包在 device-lock 内）。 | 4 |
-| `scripts/static-scan.py` | check-doctor §6 的静态卫生扫描（bashism / 死脚本）。 | 45 |
+| `scripts/static-scan.py` | check-doctor §6 的静态卫生扫描（bashism / 死脚本）。 | 46 |
 | `scripts/suspend-boot-panic-capture.sh` | 把「CONFIG_SUSPEND=y 后启动即死」(vk128/vk129) 变成可判定的 panic 栈 | 8 |
 | `scripts/suspend-resource-sample.sh` | 待机/唤醒的「间接资源测量」采样器（设备侧，POSIX sh） | 26 |
 | `scripts/t2-stock-lun45.sh` | ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留为取证指针，不归档**。 | 25 |
@@ -419,9 +421,3 @@
 | `scripts/uefi-ddr-trial.sh` | DDR 黑匣子专用上机循环（多条重复，只统计真正交棒的发次） | 24 |
 | `scripts/uefi-oneshot.sh` | 真载荷单档一发：换新 UEFI 会话 → 载 preamble → 打一个 stage → 判读 | 17 |
 | `scripts/win-x86-run.sh` | 在设备 glibc-rootfs chroot 内运行 Win-x86（Box64+Wine）命令 | 11 |
-
-## 孤立件（引用数 = 0）
-
-没有脚本、也没有文档提到这些 basename。**不等于可删**：很多是人手跑的入口。处置建议 = 要么在 `TASKS/README.md` 或某报告里落一条指针（变活），要么标「一次性」并说明留档理由。
-
-- `scripts/reports-orphan-check.py` — `reports/*.md` 是否被「角度层」指针引用（可复跑判据 + 反作弊 + 自测）。

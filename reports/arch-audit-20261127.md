@@ -651,3 +651,25 @@ $ git status --short
 - **T12** = `.pi/sessions/` gzip（先改 `sessfind` 等 5 处 `*.jsonl` 硬匹配，见 `reports/fs-dedup-20261127.md` §B3）
 - **未动**：A11 的 24 个 `.pi/agents/*.bak-alias-1112`（`.gitignore` 明示用户有意保留）、A6 的 `RUNBOOK-BRINGUP/sessions` 存废、
   A7 的 166 个 plain 孤儿分类（本轮只确认门已修好，分类需逐脚本判）。
+
+---
+
+## 7. 2026-11-27 复核轮（父会话现查，本节只记「§6.3 之后的实际状态变化」）
+
+> 口径同 §6：下列每条都是父会话当场重跑命令的结果，不采信任何 worker 自述。设备不在线（`adb devices` 只有 vivo V2454A、
+> `fastboot devices` 只有 P40pro，U2 `HA2EXB0E` 无 ssh），本轮**零设备接触**。
+
+| 项 | §6.3 记的状态 | 2026-11-27 现查 | 结论 |
+|---|---|---|---|
+| **A11**（`.pi/agents/*.bak-alias-1112` 24 个 / `.pi/tmp-tasks/` 3 件） | 「未动，需用户裁定」 | `ls .pi/agents/*.bak-alias-1112` = **0**、`ls .pi/tmp-tasks` = **不存在**；全仓 `*.bak*` 现余 4 件（`bootslot-b/boot_b.bak-20261123-*.img`、`out/gunyah-wdt-20261125/config-before-wdt.bak`、`initramfs/init.bak-{20260930,beforedbus-20260930}`，均为**有意保留的镜像/init 备份**） | **A11 结项**：待裁定的 24+3 件已不在盘（本来就是 untracked），无需用户裁定 |
+| **A6**（`RUNBOOK-BRINGUP/sessions/` 存废） | 「需用户裁定」 | 目录仍在盘 | 仍待用户裁定 |
+| **A7**（scripts 清单 vs 文档引用：166 plain 孤儿 + 7 死引用） | 「未动」 | `python3 scripts/gen-scripts-index.py --check` → `361 个入口`（引用计数已漂移） | **仍成立**，已转 `TASKS/NEXT.md` §4.0a **T14** |
+| **A8** | 已落地（`SELF_OUTPUT` 加 `scripts/README.md`） | `python3 scripts/static-scan.py --tsv \| awk '$1=="DEAD"'` 仍 `-` | ✅ 与 §6.2-③ 的判读一致（历史脚本都被语料提过；危害在未来） |
+| **A15** | 已落地（前缀 glob 收紧为「命中数 ≤3」） | `grep -n 'compgen -G' scripts/check-doc-assets.sh` → 84 行仍是收紧后的版本 | ✅ |
+| **A9 / A10** | 转 T9 | `ls scripts/check-userland-mirror.sh` = **不存在**；`grep -c elden-userland scripts/check-doctor.sh` = 0 | **仍成立**（本轮派 lane 建门） |
+| **A16** | 转 T10 | `python3 scripts/reports-orphan-check.py --check` → rc=1，**165/706 孤儿（76.6% 有指针）**（原记 158/694 是旧时点） | **仍成立**（本轮派 lane 回填；数字已回填进 §4.0a T10 行） |
+| **A18** | 转 T11 | `git log` 已有 `ca787f3f`：INDEX 122 744 → **44 416 B**；现 57 348 B（11-26/11-27 增量回填属「近 3 天保留」口径） | **T11 结项（滚动执行）** |
+
+**收尾门（本轮基线，供下一轮比对）**：`check-doctor.sh` = **FAIL=0 / WARN=3**（三条均 C 类存量：源树不可核 67 行、
+`vk-ledger-known-issues.tsv` 登记例外、内核身份表降级一致）；`docs-health --brief` = **0/0/0**（161 文档 / 14 项目）；
+`check-progress-counts.sh` = **G1 36/37、G2 10/13**；`git fsck` rc=0（仅悬空对象）；`/` 用量 68%。

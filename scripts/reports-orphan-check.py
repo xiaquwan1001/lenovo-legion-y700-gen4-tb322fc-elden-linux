@@ -50,8 +50,16 @@ ANGLES = ['DEVICE', 'TASKS', 'RESOURCES', 'RUNBOOK-BRINGUP', 'PITFALLS', 'SESSIO
 SCALES = ('readme', 'top', 'all')
 MAX_NAMES_PER_LINE = 4     # 实测真实 README 单行最多 4 个报告名（PITFALLS 去重审计那行）
 PROSE_MIN = 8              # 去掉路径后至少还剩这么多个非空白字符
+PROSE_LONG = 40            # 一行点名 >MAX 个报告时，必须有一段 ≥40 字的真说明（表格行/多指针聚合行）
+# 反作弊 3：整句都一样的「空用途」不算说明（2026-11-27 实测：165 行批量回填全写成同一句
+# 「记录该次主题核验的结论与证据」，字数够但零信息 —— 判据门被自己的字数阈值绕过了）
+GENERIC_PURPOSES = (
+    '记录该次主题核验的结论与证据', '见报告', '见上文', '相关报告', '其他', '同上', '待补', 'todo',
+)
+# 反作弊 4：同一用途���多复用 N 次（一模一样的一行复制 165 遍也不算指针）
+PURPOSE_DUP_MAX = 3
 
-RE_MDTOK = re.compile(r'\S*\.md\b')
+RE_MDTOK = re.compile(r"[A-Za-z0-9_./-]*\.md\b")
 RE_SECNO = re.compile(r'§\s*\d+(?:\.\d+)*')
 # 只留「人写的字」：去掉 markdown 装饰与标点，剩的字符数才代表一句说明
 RE_DECOR = re.compile(r'[`*_>|#\-–—~=+•·:：()\[\]{}<>,，.。、;；!！?？/\\\'"]+')
@@ -113,15 +121,23 @@ def line_has_pointer(line, name):
     if stripped.startswith('#') or stripped.startswith('```'):
         return False, 'heading-or-fence'
     n_names = len(set(RE_MDTOK.findall(line)))
-    if n_names > MAX_NAMES_PER_LINE:
+    purpose = line_purpose(line)
+    n_prose = len(purpose)
+    if n_names > MAX_NAMES_PER_LINE and n_prose < PROSE_LONG:
         return False, 'too-many-names(%d>%d)' % (n_names, MAX_NAMES_PER_LINE)
+    if n_prose < PROSE_MIN:
+        return False, 'no-purpose-sentence(%d<%d)' % (n_prose, PROSE_MIN)
+    if purpose.lower().rstrip('.。;；') in GENERIC_PURPOSES:
+        return False, 'generic-purpose'
+    return True, 'ok'
+
+
+def line_purpose(line):
+    """从一行里去掉路径/§号/装饰后剩下的「人写的字」（归一化：去所有空白）。"""
     residue = RE_MDTOK.sub(' ', line)
     residue = RE_SECNO.sub(' ', residue)
     residue = RE_DECOR.sub(' ', residue)
-    n_prose = len(''.join(residue.split()))
-    if n_prose < PROSE_MIN:
-        return False, 'no-purpose-sentence(%d<%d)' % (n_prose, PROSE_MIN)
-    return True, 'ok'
+    return ''.join(residue.split())
 
 
 def scan(root, scale, names=None):
@@ -142,6 +158,13 @@ def scan(root, scale, names=None):
                 ok, _why = line_has_pointer(line, n)
                 if ok:
                     hits[n].append((rel, i, line.strip()[:160]))
+    # 反作弊 4：跨语料统计用途句，超过 PURPOSE_DUP_MAX 次的整行作废（保留原因可查）
+    from collections import Counter
+    dup = Counter(line_purpose(h[2]) for v in hits.values() for h in v)
+    over = {p for p, c in dup.items() if c > PURPOSE_DUP_MAX}
+    if over:
+        for n, v in hits.items():
+            hits[n] = [h for h in v if line_purpose(h[2]) not in over]
     return hits
 
 
@@ -226,6 +249,12 @@ _SELF_CASES = [
     ('一条说明 + 两个路径仍算指针（≤4）', 'DEVICE/README.md',
      '# 设备\n\n- **去重审计：13 组重复已收敛为指针** —— `reports/zz-g.md` + `reports/zz-h.md`\n',
      'zz-g.md', True, 'ok'),
+    ('空用途句（字数够但没信息）必须判红', 'DEVICE/README.md',
+     '# 设备\n\n- `reports/zz-i.md` 记录该次主题核验的结论与证据。\n', 'zz-i.md', False, 'generic-purpose'),
+    ('同一用途句复制超限（>3 次）必须判红', 'TASKS/README.md',
+     '# 任务\n\n' + ''.join('- 某一批次的归档：同一句用途反复粘贴 `reports/zz-j.md`\n'
+                            for _ in range(5)),
+     'zz-j.md', False, 'dup-purpose'),
 ]
 
 
@@ -249,9 +278,11 @@ def _mk_tree(base, cases, extra=None):
 
 def selftest(verbose=True):
     fails = 0
+    nchk = 0
 
     def chk(cond, label, detail=''):
-        nonlocal fails
+        nonlocal fails, nchk
+        nchk += 1
         if cond:
             if verbose:
                 print('  [ok]   %s%s' % (label, ('  — ' + detail) if detail else ''))
@@ -313,8 +344,7 @@ def selftest(verbose=True):
         hits_r = scan(d, 'readme', ['zz-gz.md'])
         chk(not hits_r['zz-gz.md'], '刻度: 同一篇在 readme 刻度上仍是孤儿（三刻度互不污染）')
 
-    print('\nSELFTEST: %d 条断言，FAIL=%d' % (
-        len(_SELF_CASES) + 6, fails))
+    print('\nSELFTEST: %d 条断言，FAIL=%d' % (nchk, fails))
     return 0 if fails == 0 else 1
 
 

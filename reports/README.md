@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：706
+- 报告总数：710
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -17,12 +17,12 @@
 | `upstream` | 22 | `upstream-status-20261125.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
-| `droidloom` | 16 | `droidloom-cell-network-20261126.md` |
+| `droidloom` | 17 | `droidloom-upstream-cluster-20261127.md` |
 | `android` | 15 | `android-boot-audit-20261122.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
+| `comm` | 11 | `comm-triage-20261127-b.md` |
 | `ime` | 11 | `ime-single-stack-20261124.md` |
-| `comm` | 10 | `comm-triage-20261127.md` |
 | `mobian` | 10 | `mobian-phosh-upstream-20261125.md` |
 | `b5` | 9 | `b5-apss-wdt-static-review-20261126.md` |
 | `camss` | 9 | `camss-v25-rebase-20261117.md` |
@@ -31,10 +31,10 @@
 | `m4` | 8 | `m4-camss-v2-20261031.md` |
 | `script` | 8 | `script-audit-adb-20261118.md` |
 | `sensors` | 8 | `sensors-692-attach-crash-serial-20261127.md` |
+| `userland` | 8 | `userland-mirror-gate-20261127.md` |
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
 | `camera` | 7 | `camera-restore-20261121.md` |
 | `scripts` | 7 | `scripts-hardening-3-20261123.md` |
-| `userland` | 7 | `userland-drift-audit-20261121.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
 | `disk` | 6 | `disk-audit-20261126.md` |
@@ -179,6 +179,7 @@
 | `reboot` | 1 | `reboot-bootloader-by-kernel-20261125.md` |
 | `rebuild` | 1 | `rebuild-corrupt-img-20261102.md` |
 | `replay` | 1 | `replay-2026-10-17-m1-73-vk127.md` |
+| `reports` | 1 | `reports-index-backfill-20261127.md` |
 | `resource` | 1 | `resource-revue-20261119.md` |
 | `rime` | 1 | `rime-completer-userdir-20261124.md` |
 | `shellcheck` | 1 | `shellcheck-fix-20261120.md` |
@@ -459,8 +460,9 @@
 - `gunyah-vmm-first-attempt-20261024.md` — Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 - `gunyah-roadmap-20261021.md` — Gunyah 虚拟化线（拓展项）资产盘点 + 事实核查 + 分阶段规划
 
-## `droidloom`（16）
+## `droidloom`（17）
 
+- `droidloom-upstream-cluster-20261127.md` — droidloom 上游缺陷聚类 + 社区分叉评估（D24 第二轮，主机侧，2026-11-27）
 - `droidloom-cell-network-20261126.md` — droidloom cell 无网根因（工单 D2）——U2 平板，2026-11-26
 - `droidloom-deploy-20261126.md` — droidloom 部署（工单 D）——U2 平板 TB322FC，2026-11-26
 - `droidloom-display-sizing-20261126.md` — droidloom 小红书「画面不全 / 同意弹窗被截断」定位（2026-11-26，父代理上机）
@@ -529,6 +531,20 @@
 - `m3-missing-support-matrix-20261013.md` — M3 缺口矩阵 — 板 DTS 依赖项的上游支持面（2026-10-13）
 - `m3-series-plan-20261013.md` — M3 板支持系列 — 拆分计划与验收口径（2026-10-13）
 
+## `comm`（11）
+
+- `comm-triage-20261127-b.md` — 通信复扫 D10-b（窗口 `2026-11-27T01:10Z` → `2026-11-27T03:29Z`）— 只读
+- `comm-triage-20261127.md` — 通信复扫 D10（2026-11-26T05:55Z → ≈22:0xZ）— 只读
+- `comm-triage-20261126-d10.md` — D10 通信 lane 复扫（2026-11-25T11:25Z → 2026-11-26T04:20Z）— 只读
+- `comm-triage-20261126-d11.md` — 通信复扫 D11（2026-11-26T04:20Z → 05:55Z + GitLab 面）— 只读
+- `comm-triage-20261126.md` — 通信 lane 增量复扫（2026-11-25 01:45Z → 2026-11-25 22:11Z）— B4，只读
+- `comm-triage-20261125.md` — 通信 lane 增量复扫（2026-11-24 08:00Z → 2026-11-25 01:45Z）— D10，只读
+- `comm-triage-20261124-c.md` — 通信 lane 复扫（2026-11-24 03:0xZ / 11:0x CST）— D10 只读
+- `comm-triage-20261124-d.md` — 通信 lane 复扫（2026-11-24 11:5x CST）— D10 只读，第 2 轮
+- `comm-triage-20261124-e.md` — 通信 lane 复扫（2026-11-24 05:00Z → 08:30Z）— E 轮，只读
+- `comm-triage-20261123-b.md` — D10 通信跟踪（b 轮，下午）2026-11-23
+- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
+
 ## `ime`（11）
 
 - `ime-single-stack-20261124.md` — 中文输入法「键盘唤不起来」——根因 + 单栈收敛（2026-11-24 二轮设备窗）
@@ -542,19 +558,6 @@
 - `ime-phosh-fcitx5-invest-20261110.md` — 主机侧调研：Phosh(phoc) × fcitx5 × OSK 共存可行性（2026-11-10）
 - `ime-chinese-20261109.md` — 中文输入法可用性收口（2026-11-09）：配置器打不开、没有顶栏指示、切不到中文
 - `ime-osk0-dbus-spec-20261020.md` — 输入法控制面取证：sm.puri.OSK0 / Phosh 驱动链 / fcitx5 kimpanel / wvkbd 0.19.4
-
-## `comm`（10）
-
-- `comm-triage-20261127.md` — 通信复扫 D10（2026-11-26T05:55Z → ≈22:0xZ）— 只读
-- `comm-triage-20261126-d10.md` — D10 通信 lane 复扫（2026-11-25T11:25Z → 2026-11-26T04:20Z）— 只读
-- `comm-triage-20261126-d11.md` — 通信复扫 D11（2026-11-26T04:20Z → 05:55Z + GitLab 面）— 只读
-- `comm-triage-20261126.md` — 通信 lane 增量复扫（2026-11-25 01:45Z → 2026-11-25 22:11Z）— B4，只读
-- `comm-triage-20261125.md` — 通信 lane 增量复扫（2026-11-24 08:00Z → 2026-11-25 01:45Z）— D10，只读
-- `comm-triage-20261124-c.md` — 通信 lane 复扫（2026-11-24 03:0xZ / 11:0x CST）— D10 只读
-- `comm-triage-20261124-d.md` — 通信 lane 复扫（2026-11-24 11:5x CST）— D10 只读，第 2 轮
-- `comm-triage-20261124-e.md` — 通信 lane 复扫（2026-11-24 05:00Z → 08:30Z）— E 轮，只读
-- `comm-triage-20261123-b.md` — D10 通信跟踪（b 轮，下午）2026-11-23
-- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
 
 ## `mobian`（10）
 
@@ -650,6 +653,17 @@
 - `sensors-692-backport-test-20261126.md` — 工单 S2 — fastrpc SENSORS_PD 回移试验核（传感器 #692 根因假设检验）· 2026-11-26
 - `sensors-hexagonrpcd-20261126.md` — 工单 S：`hexagonrpcd -s` 开机即硬崩的根因分析与落地路线（2026-11-26）
 
+## `userland`（8）
+
+- `userland-mirror-gate-20261127.md` — 用户态镜像一致性门（T9，A9/A10）— 2026-11-27
+- `userland-drift-audit-20261121.md` — 用户态部署漂移只读审计（2026-11-21）
+- `userland-dealpine-audit-20261026.md` — 用户态去 Alpine 化审计（T20 补欠账，2026-10-26）
+- `userland-service-consolidation-20261025.md` — 用户态入口收敛（`/init` ↔ `local.d` ↔ 服务管理器）2026-10-25
+- `userland-service-inventory-20261025.md` — 用户态驱动/服务独立固化 — 审计与落地（2026-10-25）
+- `userland-auto-rotation-toggle-20261011.md` — 用户态新增：自动旋转开/关快速设置磁贴（2026-10-11）
+- `userland-dark-brightness-verify-20261011.md` — 桌面用户态收口：深色/主题（G1-26/27）与亮度滑块（G1-28）—— 上机复核（2026-10-11）
+- `userland-display-scale-refresh-20261011.md` — 用户态显示修正：刷新率固定 165 Hz + 非整数缩放显示 100%（2026-10-11）
+
 ## `wl2868c`（8）
 
 - `wl2868c-v10-landed-20261111.md` — wl2868c v10 落地 + 投递报告（2026-11-11）
@@ -680,16 +694,6 @@
 - `scripts-hardening-2-20261121.md` — scripts-hardening-2-20261121.md — 脚本整改批 2（D5 小批：build-kernel 守卫假阳性 + 3 个 BROKEN 加 #701 门）
 - `scripts-index-20261120.md` — scripts/ 索引（arch-audit P1#3）— 生成器 + 地图
 - `scripts-index-gate-20261120.md` — scripts/README.md 索引新鲜度门（check-doctor §24）— 2026-11-20
-
-## `userland`（7）
-
-- `userland-drift-audit-20261121.md` — 用户态部署漂移只读审计（2026-11-21）
-- `userland-dealpine-audit-20261026.md` — 用户态去 Alpine 化审计（T20 补欠账，2026-10-26）
-- `userland-service-consolidation-20261025.md` — 用户态入口收敛（`/init` ↔ `local.d` ↔ 服务管理器）2026-10-25
-- `userland-service-inventory-20261025.md` — 用户态驱动/服务独立固化 — 审计与落地（2026-10-25）
-- `userland-auto-rotation-toggle-20261011.md` — 用户态新增：自动旋转开/关快速设置磁贴（2026-10-11）
-- `userland-dark-brightness-verify-20261011.md` — 桌面用户态收口：深色/主题（G1-26/27）与亮度滑块（G1-28）—— 上机复核（2026-10-11）
-- `userland-display-scale-refresh-20261011.md` — 用户态显示修正：刷新率固定 165 Hz + 非整数缩放显示 100%（2026-10-11）
 
 ## `waydroid`（7）
 
@@ -1392,6 +1396,10 @@
 ## `replay`（1）
 
 - `replay-2026-10-17-m1-73-vk127.md` — T3/T4 执行记录：M1-7.3 重放 + vk127 镜像（2026-10-17）
+
+## `reports`（1）
+
+- `reports-index-backfill-20261127.md` — 报告索引回填与判据门证据（2026-11-27 11:23 CST）
 
 ## `resource`（1）
 

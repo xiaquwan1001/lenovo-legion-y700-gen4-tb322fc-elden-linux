@@ -6,7 +6,24 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（06:0x CST 无人值守轮））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（12:0x CST 四 lane 收口轮））
+
+> **★★ 2026-11-27 午间轮（四 lane 收口 + 文档核实 + 判据门加固，**零设备接触**）**
+> **设备离线**：`adb devices` 只有 `10AF5J0FHQ0039G`（vivo V2454A）、`fastboot devices` 只有 `MDX5T20730009849`（P40pro），U2 `HA2EXB0E` 无 ssh ⇒ 本轮全主机侧。
+> ① **文档核实**（父代理逐条重跑，不采信文档自述）：T11 其实早已由 `ca787f3f` 落地（INDEX 122 744 → 44 416 B）、T10 数字由 158/694 更正为 **165/706**、
+> 审计 A11 的 24 个 `.pi/agents/*.bak-alias-1112` 已不在盘 ⇒ **A11 结项**、审计 A7（scripts 孤儿 ~166 + 死引用 7）此前漏进台账 ⇒ 新开 **T14**；全部落 `reports/arch-audit-20261127.md` 新 §7。
+> ② **T9 用户态镜像门交付**：`scripts/check-userland-mirror.sh`（三态 + `--selftest`）+ doctor **§32** 接 `verify.sh --offline`；
+> 现查 同 sha 配对 **20** ｜ 白名单漂移 **14 对 = 13 组** ｜ 未登记漂移 **0** ｜ 设备专有件 78（父代理自行 sha256 复算一致）。残留 = 13 组「谁是权威」需用户裁定
+> （反直觉三条：`init`/`time-sync.sh`/`net-up.sh` 是 **`files/`（设备快照）更新**）。`reports/userland-mirror-gate-20261127.md`。
+> ③ **T10 收口 710/710**，但过程抓到**假绿**：子代理把 165 行写成同一句模板用途（字数够、零信息）⇒ 父代理加固判据（空句黑名单 + 同句复用 >3 次作废 +
+> 行点名 >4 个报告需另附 ≥40 字说明 + 路径 token 正则收紧），重扫露出 32 篇后逐篇改用报告自身 H1 标题 ⇒ `--check` rc=0 / `--selftest` 15 条断言。
+> 教训入库 `PITFALLS #745`。索引 10 篇在 `TASKS/sessions/2026-11-27-reports索引-*.md`。
+> ④ **D10 复扫（窗口 11-27T01:10Z→03:2xZ）**：人类 **0** / 机器人 **0** / 我方新增欠账 **0**；四个在飞系列**内容级全未进树**（next-20261126 `a9c48428cbd8`、torvalds 7.4.0-rc4）；
+> `hexagonrpc` PR #31 = OPEN / `MERGEABLE`+`UNSTABLE`、+1279−81/17 文件/6 提交、reviews 0/comments 0、**`Build+test` 5 次全 `action_required`**（首次贡献待维护者批准，非我方问题）。全账 `reports/comm-triage-20261127-b.md`。
+> ⑤ **D24 第二轮（主机侧）**：上游 open **33**、fork **29**；四条缺陷只有 1 条被既有 issue 覆盖（`#48`）；**「宿主缺 `denial_text_input_panel_manager_v1`」被否证**（上游用普通 `zwp_text_input_v3`）⇒ 改 T3 判据；
+> 裁决 = **不整包跟 fork，只 cherry-pick 4 条 patch**（`patches/local/`）+ **先把 49 升到上游 51 再判 IME**（`4df8af9`）。`reports/droidloom-upstream-cluster-20261127.md`。
+> ⑥ 收尾门：`check-doctor` **FAIL=0 / WARN=3**（三条 C 类存量：源树不可核 67 行、账本登记例外、身份表降级一致）；`docs-health` **0/0/0**；
+> `check-progress-counts` **G1 36/37 · G2 10/13**；`reports-orphan-check --check` **rc=0（710/710）**；`git fsck` rc=0。
 
 > **★★ 2026-11-27（收口）：主线 Linux 上传感器已`可用`** —— `HasAccelerometer/HasAmbientLight/HasProximity` 三 **true**、
 > `ssccli --sensor accelerometer` 连续出值（X≈-1.17 Y≈-0.66 Z≈9.55 m/s²）。全账 = `reports/sensors-ssc-restored-20261127.md`
