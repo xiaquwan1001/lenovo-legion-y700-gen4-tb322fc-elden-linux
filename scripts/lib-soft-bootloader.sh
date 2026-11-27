@@ -121,6 +121,14 @@ case "$SB_FB_MODE" in
 esac
 EOF
 	chmod +x "$tmp/bin/ssh" "$tmp/bin/fastboot"
+	# 2026-11-27 提速（判据不变，实测单次 --selftest 6.1 s → 0.1 s）：最贵段 = 「软路径发出但
+	# fastboot 始终不上线 ⇒ 超时失败」用例的固定 sleep 3 × 2 拍；打桩 no-op sleep 后走同样的
+	# 轮询拍数/同一代码路径，断言不动。打桩目录就是本自测已有的 ssh/fastboot 桩目录。
+	cat > "$tmp/bin/sleep" <<'EOF'
+#!/bin/bash
+:   # no-op（仅 selftest 用）
+EOF
+	chmod +x "$tmp/bin/sleep"
 	run_case() { # $1=名字 $2=期望rc $3=fb_mode $4=ssh_rc $5=是否预置 fastboot 标记
 		total=$((total + 1))
 		: > "$tmp/log"; rm -f "$tmp/fbflag"

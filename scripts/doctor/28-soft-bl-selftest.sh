@@ -8,6 +8,10 @@
 #   ② 反作弊：把库里「rc=124 视为已发出」那条删掉后自检**必须**变红（否则说明自检是死门）；
 #   ③ 反回归：不许再有脚本调设备侧 `eldroid-bootctl reboot bootloader`（python3 件，现役 Debian 根无
 #      python3 ⇒ `|| true` 静默 no-op；2026-11-24 已逐处换成软路径库）。
+# 2026-11-27 提速（判据不变，实测 12.3 s → <0.5 s）：profile 出最贵段 = 库 --selftest 里
+#   「软路径发出但 fastboot 始终不上线 ⇒ 超时失败」用例的固定 sleep 3 × 2 拍
+#   （单次 --selftest 6.1 s，本门真件 + 反作弊坏副本各跑一遍）。库自测把 no-op sleep 打进
+#   已有的桩目录（与 ssh/fastboot 桩同法），生产行为零改动，断言与反作弊全保留。
 . "$(dirname "$0")/_lib.sh"
 
 section '28. Linux→bootloader 软路径（lib-soft-bootloader 自检 + 反作弊 + 禁 eldroid-bootctl）'

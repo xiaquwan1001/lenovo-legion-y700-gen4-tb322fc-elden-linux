@@ -81,6 +81,10 @@
   （旧版正是它让每次提交白付 3.2 s）；手改 `.config` 由收尾轮**全量** doctor 兜住。
   **提交被拦时先修，不要习惯性 `--no-verify`**；确需绕过用 `ELDEN_HOOK_SKIP=1`（如大批量归档搬迁）。
   收尾仍要跑**全量** `scripts/check-doctor.sh`（并发子门，稳态 ~1.4 s；见 `reports/script-audit-20261105.md`）。
+  > 2026-11-27 复测现值：30 子门规模下旧数已失效（争用口径实测 full 24.1 s / fast 12.3 s，同机另有
+  > lane 占 -j22）；同日门禁改造后（§24 廉价结构指纹路径 + §28 selftest 桩 + §27 verify 并发）：
+  > full **14.5 s**（load1=35）／fast **3.0 s**（load1=35）；idle: not-measured。逐子门秒数与软阈值
+  > WARN（fast>5 s／full>10 s 只 WARN）已打进 doctor 输出与 `--json`（secs/total），防止再次静默回归。
 - **归因分层**：报「驱动/内核坏」前先分清 initramfs/rootfs 打包（C）与用户态配置（D）（`PITFALLS` #115）。
 - **提交+推送绑定**（2026-11-26 用户定，硬规则）：本地 commit 后**必须同轮推送**（github + origin 双远端），不留领先提交过夜——背景 = 本机多次资产丢失事故（`build/`、`m1/*` refs 未随迁等）。收尾门含「`git log --oneline @{u}..main` = 0」。批量积压时按主题分批推（每批推送前后对账 hash）。
 - **主线优先**（服务上游化）：厂商私有 compatible 先找主线等效驱动，只补 DT/config/固件命名；主线没有则分「架构性不可做 / 私有 / 可自研」，只立第三类。

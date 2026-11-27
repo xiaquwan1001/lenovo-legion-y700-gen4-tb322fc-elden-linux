@@ -383,6 +383,7 @@
   顶层布局真源 = **`versions/layout.tsv`**（项数现查 `scripts/check-layout.sh --list | wc -l`；5 区：入口/文档 · 源码/补丁 · 证据/备份 · 工作区 · 缓存（`~/elden-cache/`，台账 `versions/cache-ledger.tsv`）；人读面 = 本节「顶层布局」表，门 = `scripts/check-layout.sh`）。
   **入库前门已接线**（`core.hooksPath=.githooks`）：`pre-commit` 跑 `--staged-fast`（§7/§8/§9/§10/§11/§13/§14，实测亚秒级（量级见 `reports/script-audit-20261105.md`）；§12 内核 config 门不在这一档）。
   全量 `scripts/check-doctor.sh` 现为**并发子门**（`scripts/doctor/`），稳态 **~1.4 s**（旧版单体串行 12.5 s）；口径与实测见 `reports/script-audit-20261105.md`。
+  > 2026-11-27 复测现值：30 子门规模下旧数已失效；同日门禁改造后争用口径（同机另有 lane）full **14.5 s**（load1=35）／`--staged-fast` **3.0 s**；idle: not-measured。逐子门秒数 + 软阈值 WARN（fast>5 s/full>10 s）已打进 doctor 输出与 `--json`（`secs`/`total`）。
 - **打包前门**：`scripts/assert-kernel-sane.sh`（config 锚点 / System.map 符号 / UTS 对齐 / 非陈旧 / **§1b ABI 敏感项**，后者调 `scripts/check-abi-config.sh` 比对 SSOT config 的 27 项）。
 - 版本对账：**`versions/vk-kernel-identity.tsv`**（构建号 ↔ 内核二进制 ↔ 源提交，含每个镜像的失真标记）。
   它是本目录**唯一入 git 的派生表**（破例理由：兼作版本欠账账本）；由 `scripts/vk-identity.py` 重生成，

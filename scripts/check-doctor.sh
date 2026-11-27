@@ -38,7 +38,7 @@
 #   21-write-precheck.sh 写前预检（GPT 快照复验 P0-5 / dump 三值判定 P0-6）  [全量+fast]
 #   22-desktop-chain.py 零到桌面链路门（链件/坑号锚点/手册步连续 + 删包必拒自检）[全量+fast]
 #   23-out-manifest.sh out/ 造件「报告↔镜像」账本门（大件/多镜像必须有报告，arch-audit P0#2）[全量+fast]
-#   24-scripts-index.sh scripts/README.md 索引新鲜度（生成器 --check 对账 + 反作弊，arch-audit P1#3）[全量]
+#   24-scripts-index.sh scripts/README.md 索引新鲜度（生成器 --check-struct 结构指纹对账 + 反作弊，arch-audit P1#3）[全量]
 #   25-out-status.sh out/ 造件生命周期账本门（active/verified/superseded/pending，arch-audit P1#6）[全量]
 #   26-vbmeta-b-chain.sh b 槽自签 AVB 链一致性（vbmeta_b ↔ avb.key ↔ boot_b，换钥漂移门）[全量]
 #   27-bootimg-cmdline.sh boot/vendor_boot cmdline 等长改写器（4 正例 + 4 反例自检）[全量+fast]
@@ -69,6 +69,7 @@ ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs
 # 2026-11-21 加 26（TASKS §4 P1 AVB 债）：b 槽自签链门（顶层 key + chain boot:3 + 整链验签 + 翻字节反作弊），~1 s，只进全量档。
 # 2026-11-21 加 27：S5 取证件链的 cmdline 改写器自检（合成镜像 4 正例 + 4 反例，~1 s，纳入 fast）。
 # 2026-11-20 加 24（arch-audit P1#3 收尾件）：scripts/README.md 生成索引过期门，--check 全量重建 ~5 s，只进全量档。
+#   （2026-11-27 改走 --check-struct 廉价结构指纹路径，判据不变，实测本门 ~1.5 s；详见子门头注释。）
 # 2026-11-20 加 23（arch-audit P0#2）：out/ 大件/多镜像 ↔ 报告账本门，纯静态 ~1 s，纳入 fast。
 # fast 档 = 旧版 --staged-fast 的语义（§7/§8/§9 + 其后的廉价段）**减去 §12**：
 # 文档/索引提交与内核 .config 无关，那 3.2 s 是纯浪费；手改 .config 的拦截交给收尾轮全量 doctor。
@@ -128,18 +129,39 @@ fi
 # ---- 并发调度：子门互不共享状态（§5 只读镜像 / §6+§7/8 只读文本 / §12 只在 mktemp 里跑
 #      olddefconfig / §5f 只读 vmlinux），因此可全部同时起。输出各自落盘后按固定顺序拼接，
 #      所以并发不会打乱报告顺序，也不会让某一段的输出插进另一段。
+# 2026-11-27 加墙钟观测（30 子门后 full 已拖到 24 s，文档还写 1.4 s ⇒ 静默回归 18 倍无人知）：
+#   逐子门计时（后台启动前取 t0、wait 后取 t1），① `== <子门> ==` 行尾追加秒数（人读）；
+#   ② 汇总行加总墙钟；③ --json 加 "secs"/{…} 与 "total"；④ 软阈值 WARN（fast > 5 s /
+#   full > 10 s，只 WARN 不 FAIL）——判定契约不变：判据仍只看子门输出的 [ok]/[FAIL]/[warn] 行。
+declare -A START_NS SECS_MS
+T_ALL0=$(date +%s%N)
 pids=""
 for s in $LIST; do
   f="$SELFDIR/doctor/$s"
   out="$TMP/$s.out"
   if [ ! -f "$f" ]; then
     printf '\n== %s ==\n  [FAIL] 子门脚本缺失: %s\n' "$s" "$f" > "$out"
+    SECS_MS[$s]=0
     continue
   fi
-  ( cd "$ROOT" && timeout "$SEC_TIMEOUT" "$f" ) > "$out" 2>&1 &
-  pids="$pids $!:"
+  START_NS[$s]=$(date +%s%N)
+  # 结束时刻由子门自己的后台子 shell 落盘（不能用「wait 返回后取 now」：先 wait 完长件后，
+  # 早退件的 wait 立即返回，那样量出来的是「轮到它的时间」而不是它自己的耗时，实测全被拖成总墙钟）
+  ( cd "$ROOT" && { timeout "$SEC_TIMEOUT" "$f"; date +%s%N > "$TMP/$s.end"; } ) > "$out" 2>&1 &
+  pids="$pids $!|$s"
 done
-for p in $pids; do wait "${p%:}"; done
+for p in $pids; do
+  wait "${p%|*}"
+  s="${p#*|}"
+  if [ -s "$TMP/$s.end" ]; then
+    SECS_MS[$s]=$(( ($(cat "$TMP/$s.end") - ${START_NS[$s]}) / 1000000 ))
+  else
+    SECS_MS[$s]=$(( ($(date +%s%N) - ${START_NS[$s]}) / 1000000 ))   # 被 SIGKILL 等异常：退化近似
+  fi
+done
+TOTAL_MS=$(( ($(date +%s%N) - T_ALL0) / 1000000 ))
+case "$PROFILE" in fast) THR_MS=5000 ;; *) THR_MS=10000 ;; esac
+THR_S=$((THR_MS / 1000))
 
 # ---- 按固定顺序输出 + 统计 ----
 fail=0
@@ -149,6 +171,17 @@ for s in $LIST; do
   if [ ! -s "$out" ]; then
     printf '\n== %s ==\n  [warn] 子门无输出（超时 %ss 或异常退出？单独跑一次看）\n' "$s" "$SEC_TIMEOUT" > "$out"
   fi
+  ms="${SECS_MS[$s]:-0}"
+  # 软阈值：只 WARN 不 FAIL（防「下次再静默回归 18 倍」；计入口径与子门自身的 [warn] 相同）
+  if [ "$ms" -gt "$THR_MS" ]; then
+    printf '  [warn] 子门墙钟 %d.%03ds > 软阈值 %ds（只提醒不拦截；上次静默回归：§24 2 s → 23 s）\n' \
+      "$((ms / 1000))" "$((ms % 1000))" "$((THR_MS / 1000))" >> "$out"
+  fi
+  if [ "$JSON" != 1 ]; then
+    secs=$(printf '%d.%03d' "$((ms / 1000))" "$((ms % 1000))")
+    # 段头行尾追加秒数（兼容 `== … ==` 与 `== …==` 两种标题尾；判据行不动）
+    sed -i "0,/^== /s/^== \(.*[^ ]\) *==$/== \1 ==（${secs}s）/" "$out"
+  fi
   cat "$out"
   fail=$((fail + $(grep -c '^  \[FAIL\]' "$out")))
   warn=$((warn + $(grep -c '^  \[warn\]' "$out")))
@@ -156,13 +189,22 @@ done
 
 if [ "$JSON" = 1 ]; then
   secs=""
+  json_secs=""
   for s in $LIST; do
     secs="$secs${secs:+,}\"$s\""
+    ms="${SECS_MS[$s]:-0}"
+    json_secs="$json_secs${json_secs:+,}\"$s\":$(printf '%d.%03d' "$((ms / 1000))" "$((ms % 1000))")"
   done
-  printf '{"fail":%d,"warn":%d,"profile":"%s","sections":[%s]}\n' \
-    "$fail" "$warn" "$PROFILE" "$secs"
+  printf '{"fail":%d,"warn":%d,"profile":"%s","total":%s,"secs":{%s},"sections":[%s]}\n' \
+    "$fail" "$warn" "$PROFILE" \
+    "$(printf '%d.%03d' "$((TOTAL_MS / 1000))" "$((TOTAL_MS % 1000))")" \
+    "$json_secs" "$secs"
 else
   echo
-  echo "== 汇总: FAIL=$fail  WARN=$warn =="
+  echo "== 汇总: FAIL=$fail  WARN=$warn  墙钟=$(printf '%d.%03d' "$((TOTAL_MS / 1000))" "$((TOTAL_MS % 1000))")s（软阈值 full>${THR_S}s/fast>5s 只 WARN） =="
+  for s in $LIST; do   # 逐子门秒数（固定顺序；段头没接上秒数的（如一体多节件）在这里兜底可见）
+    ms="${SECS_MS[$s]:-0}"
+    printf '  %s %d.%03ds\n' "$s" "$((ms / 1000))" "$((ms % 1000))"
+  done
 fi
 [ "$fail" -eq 0 ] && exit 0 || exit 1

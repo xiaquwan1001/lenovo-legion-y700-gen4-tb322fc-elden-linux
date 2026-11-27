@@ -9,7 +9,12 @@
 # 反作弊（照 §17/§23 口径，门空转比没有门更糟）：两个方向各验一次 ——
 #   ① 坏 fp（改坏 README 头里的指纹十六进制）⇒ --check 必须 rc≠0；
 #   ② 真结构变更（临时放一个 scripts/zz-doctor-probe.sh）⇒ --check 必须 rc≠0，撤掉后必须 rc=0。
-# 两处都无条件还原（trap 兜底）。耗时 ~2 s（结构模式不扫引用语料）⇒ 只进 ALL 档，不进 FAST。
+# 两处都无条件还原（trap 兜底）。
+# 2026-11-27 改走 --check-struct：新鲜度判据本就是**结构指纹**（入口清单/分组/shebang/头注释，
+#   生成器自己 docstring/structural_fp() 的口径），不含引用计数；旧写法每次 --check 先全量渲染
+#   （含全仓引用语料扫描）再另算一次指纹，本门共调 4 次 ⇒ 实测 23.1 s（full 档唯一关键路径）。
+#   --check-struct 只算指纹，判据**不弱化**（增/删/改头注释仍红，由反作弊①②+阴性控制钉住）；
+#   实测本门 ~1.5 s。
 . "$(dirname "$0")/_lib.sh"
 
 section '24. scripts/README.md 索引新鲜度（生成器 ↔ 磁盘对账）'
@@ -52,24 +57,24 @@ cp -f "$README" "$_copy" || { bad "反作弊自检准备失败：无法复制 sc
 sed -i 's/结构指纹 fp=\([0-9a-f]\{4\}\)[0-9a-f]*/结构指纹 fp=\10000/' "$_copy"
 [ "$(head -1 "$_copy")" != "$(head -1 "$README")" ] || \
   bad "反作弊自检未生效：副本首行的指纹未被改坏（sed 模式与当前 README 格式不匹配）"
-_rc=0; timeout 60 python3 "$GEN" --check --readme "$_copy" >/dev/null 2>&1 || _rc=$?
+_rc=0; timeout 60 python3 "$GEN" --check-struct --readme "$_copy" >/dev/null 2>&1 || _rc=$?
 if [ "$_rc" -ne 0 ]; then ok "反作弊①通过（副本上改坏指纹 ⇒ --check rc=$_rc；真件未被触碰）"
 else bad "反作弊①失败：改坏指纹后 --check 仍 rc=0（门空转）"; fi
 
 # ② 真结构变更：临时加一个脚本
 printf '#!/bin/sh\n# 一次性探针（doctor §24 反作弊用，正常不会存在）\n' > "$_probe"
-_rc=0; timeout 60 python3 "$GEN" --check >/dev/null 2>&1 || _rc=$?
+_rc=0; timeout 60 python3 "$GEN" --check-struct >/dev/null 2>&1 || _rc=$?
 if [ "$_rc" -ne 0 ]; then ok "反作弊②通过（新增脚本 ⇒ --check rc=$_rc，门在读磁盘）"
 else bad "反作弊②失败：新增 scripts/$(basename "$_probe") 后 --check 仍 rc=0（门没看磁盘）"; fi
 rm -f "$_probe"
-_rc=0; timeout 60 python3 "$GEN" --check >/dev/null 2>&1 || _rc=$?
+_rc=0; timeout 60 python3 "$GEN" --check-struct >/dev/null 2>&1 || _rc=$?
 if [ "$_rc" -eq 0 ]; then ok "反作弊②收尾：撤掉探针后 --check rc=0（可复原）"
 else bad "反作弊②收尾失败：撤掉探针后 --check 仍 rc=$_rc（有残留）"; fi
 trap - EXIT INT TERM; rm -rf "$_tmpd" 2>/dev/null
 
-# ---- 现有树实跑 ----
+# ---- 现有树实跑（同走廉价结构路径；引用计数漂移按设计不判过期）----
 _rc=0
-_out=$(timeout 120 python3 "$GEN" --check 2>&1) || _rc=$?
+_out=$(timeout 120 python3 "$GEN" --check-struct 2>&1) || _rc=$?
 if [ "$_rc" -eq 0 ]; then
   ok "scripts/README.md 最新（$_out）"
 else

@@ -11,6 +11,7 @@
 用法：
   gen-scripts-index.py                 # 重新生成 scripts/README.md
   gen-scripts-index.py --check         # README 过期则 rc=1（不写文件；用于门禁）
+  gen-scripts-index.py --check-struct  # 只做结构指纹对账（跳过全仓引用语料扫描；门禁用）
   gen-scripts-index.py --tsv           # TSV 打到 stdout（机读）
   gen-scripts-index.py --tsv PATH      # TSV 写到 PATH
   gen-scripts-index.py --diff          # 过期时打印 unified diff（配合 --check 调试）
@@ -21,6 +22,9 @@
     `名字 — 描述` 形式取破折号之后；无注释块 ⇒ 空（README 里显示 `(无头注释)`）
   · 被引用次数：对**仓库受版本控制的文本文件**做一次全量正则扫描（见 REF_EXT/REF_SKIP），
     按 basename 记「提及行数」；拆成 scripts_refs（其它脚本）与 docs_refs（其余文本）
+  · 新鲜度判据 = **结构指纹**（入口清单/分组/shebang/头注释），**不含引用计数**（见
+    structural_fp() 与 2026-11-20 grow-loop #4 的教训）⇒ --check-struct 可以只算指纹、
+    跳过引用语料扫描（门禁 §24 的反作弊 + 主检查全走它，省 ~90% 墙钟，判据不变）
   · 分组：见 GROUPS（优先序，命中即定组；另见 classify()）
   · 排除自身：本生成器与生成的 README 永不进引用语料（否则计数自增、--check 永不收敛）
 """
@@ -416,6 +420,9 @@ def render_tsv(entries):
 def main():
     ap = argparse.ArgumentParser(description="生成 scripts/ 索引")
     ap.add_argument("--check", action="store_true", help="README 过期则 rc=1，不写文件")
+    ap.add_argument("--check-struct", action="store_true",
+                    help="只做结构指纹对账（新鲜度判据本就是结构指纹，不含引用计数），"
+                         "跳过全仓引用语料扫描 ⇒ 门禁高频路径用这个；rc=1 = 结构过期")
     ap.add_argument("--tsv", nargs="?", const="-", metavar="PATH", help="输出机读 TSV（默认 stdout）")
     ap.add_argument("--diff", action="store_true", help="--check 时打印 diff")
     ap.add_argument("--quiet", action="store_true")
@@ -427,6 +434,28 @@ def main():
     args = ap.parse_args()
 
     out_md = args.readme or OUT_MD
+
+    # 2026-11-27 加 --check-struct：门禁（doctor §24）的新鲜度判据只有结构指纹，
+    # 全量 collect()（渲染 + 引用计数）在门禁路径上是纯浪费（每次 ~5 s × 4 次调用）。
+    if args.check_struct:
+        entries_s = collect(scan_refs=False)
+        old = ""
+        if os.path.exists(out_md):
+            with open(out_md, encoding="utf-8") as f:
+                old = f.read()
+        want = structural_fp(entries_s)
+        have = ""
+        m = re.search(r"结构指纹 fp=([0-9a-f]{8,64})", old)
+        if m:
+            have = m.group(1)
+        if have == want:
+            print(f"OK {rel(out_md)} 结构最新（结构指纹模式，{len(entries_s)} 个入口；"
+                  f"不校验引用计数）")
+            return 0
+        print(f"STALE {rel(out_md)} 过期（结构变了：{len(entries_s)} 个入口，"
+              f"fp {have or '缺失'} → {want}）→ 跑 python3 scripts/gen-scripts-index.py",
+              file=sys.stderr)
+        return 1
 
     entries = collect()
     rendered = render_md(entries)

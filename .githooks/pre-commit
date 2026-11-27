@@ -9,6 +9,8 @@
 #
 # 跑的检查 = check-doctor 的 §7 + §8 + §9 所对应的判据（不跑昂贵的 §5 vk 镜像扫描）。
 #   快速路径由 check-doctor 的 `--staged-fast` 提供：只做 §7/§8/§9，墙钟 ~0.2 s。
+#   （2026-11-27 复测现值：fast 档现扩到 17 子门，争用口径（load1=35，同机另有 lane）实测 ~3.0 s；
+#    idle: not-measured。逐子门秒数见 doctor 输出；软阈值 fast>5 s 只 WARN。）
 #
 # 绕过：ELDEN_HOOK_SKIP=1 git commit ...   （例如大批量归档搬迁时）
 #       或 `git commit --no-verify`（全局跳过所有钩子）
