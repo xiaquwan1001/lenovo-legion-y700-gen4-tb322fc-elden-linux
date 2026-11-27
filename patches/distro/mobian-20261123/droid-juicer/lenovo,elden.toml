@@ -17,11 +17,17 @@
 dynpart = "super"
 
 firmware = [
-    # GPU (Adreno 830): zap-shader firmware-name in the board DT is
-    # "qcom/sm8750/gen80000_zap.mbn"; the adreno driver requests the
-    # gmu/sqe/aqe files by fixed name in the same directory.
+    # GPU zap-shader: the board DT firmware-name is "qcom/sm8750/gen80000_zap.mbn",
+    # so ONLY the zap goes to qcom/sm8750 (2026-11-27 audit §3.5).
     { partition = "vendor", origin = "firmware", destination = "qcom/sm8750", files = [
             { name = "gen80000_zap.mbn" },
+        ] },
+    # GPU GMU/SQE/AQE: adreno_request_fw tries "qcom/<name>" first, and its legacy
+    # fallback is the bare "<name>" — it NEVER reads "qcom/sm8750/gen80000_*".
+    # The old destination "qcom/sm8750" here was wrong (pure droid-juicer installs
+    # would leave the GPU dead); device dmesg confirms the driver loads
+    # qcom/gen80000_{sqe,gmu,aqe} "from new location".
+    { partition = "vendor", origin = "firmware", destination = "qcom", files = [
             { name = "gen80000_gmu.bin" },
             { name = "gen80000_sqe.fw" },
             { name = "gen80000_aqe.fw" },

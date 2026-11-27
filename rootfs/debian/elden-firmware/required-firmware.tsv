@@ -1,0 +1,49 @@
+# required-firmware.tsv — 本机固件能力集合 SSOT（TB322FC / SM8750P, mainline Linux）
+# 真源: reports/hw-capability-firmware-20261127.md §2.3（真实固件请求集）/ §3（逐项定因）。
+# 之后加硬件块只改本文件 + 重跑 build.sh 的 A2 门禁；不要在脚本里另维护一份名单。
+#
+# 列（TAB 分隔，8 列）:
+#   path          相对 /lib/firmware 的路径。split 固件写两种行式，脚本据此区分：
+#                  · 精确行  qcom/sm8750/adsp.mdt        → 判据 -f $root/$path（或 $path.zst）
+#                  · 通配行  qcom/sm8750/adsp.b[0-9][0-9] → 路径含 [*?[ 即按 glob（compgen -G），
+#                    要求至少命中 1 个文件（分段随 .mdt 成对存在）
+#   class         DT(设备树 firmware-name) | MODULE_FIRMWARE(驱动宏声明) | DRIVER_CODE(驱动代码硬编码名)
+#                 | USERSPACE(用户态读，也在 /lib/firmware) | REGDB(法规库，非固件)
+#   owner         硬件块
+#   local         yes/no  本机 /lib/firmware 是否在位（local=no 的行缺件时记 MISS(vendor)，不阻塞出包）
+#   upstream      yes/no  上游 linux-firmware 是否有**逐字同名**件（Link: 别名也算）
+#   upstream_note 版本或 Link: 说明，一句
+#   shippable     yes/no  能否对外再分发（厂商签名/设备专属校准件 = no；上游同源/自编 = yes）
+#   why           一句（≤80 字）：为什么不可分发 / 为什么自编 / 形态差异
+path	class	owner	local	upstream	upstream_note	shippable	why
+qcom/sm8750/adsp.mdt	DT	ADSP	yes	no	上游仅单文件 adsp.mbn（LPAIDSP.HT.1.2.c2-00080-PAKALA-1，版本分支不同）	no	stock split 件（LUN4 modem_a）；TZ 只吃 split，勿盲换单文件
+qcom/sm8750/adsp.b[0-9][0-9]	DT	ADSP	yes	no	同 adsp.mdt（55 个分段，与 .mdt 成对）	no	stock split 分段；上游无此形态
+qcom/sm8750/adsp_dtb.mdt	DT	ADSP	yes	no	上游单文件 adsp_dtb.mbn sha 不同（1ce7d14a vs d4e02b0e）	no	与 ADSP 主体同步差异，须成对替换才有意义
+qcom/sm8750/adsp_dtb.b[0-9][0-9]	DT	ADSP	yes	no	同 adsp_dtb.mdt（3 个分段）	no	stock split 分段
+qcom/sm8750/cdsp.mdt	DT	CDSP	yes	no	上游 cdsp.mbn 与本机逐字节相同（CDSP.HT.3.1-00889）但路径/形态不同	no	内容=上游同源；TZ 只吃 split，改单文件需上机验证（-22 先例）
+qcom/sm8750/cdsp.b[0-9][0-9]	DT	CDSP	yes	no	同 cdsp.mdt（15 个分段）	no	stock split 分段
+qcom/sm8750/cdsp_dtb.mdt	DT	CDSP	yes	no	上游 cdsp_dtb.mbn 逐字节相同（6531a722）但为单文件形态	no	单文件 .mbn 被 TZ 拒 -22（DEVICE §1.2 实录）
+qcom/sm8750/cdsp_dtb.b[0-9][0-9]	DT	CDSP	yes	no	同 cdsp_dtb.mdt（3 个分段）	no	stock split 分段
+qcom/sm8750/gen80000_zap.mbn	DT	GPU	yes	yes	WHENCE :7348 v0.02；不同 build 同 12088 B	yes	上游已有，可换上游件（当前用 vendor 分区 gpu/ 件）
+qcom/gen80000_gmu.bin	DRIVER_CODE	GPU	yes	yes	上游同 sha 1ad8175e（WHENCE :7342-7346）	yes	上游同源可分发；注意驱动只读 qcom/<name>，legacy 回退是裸 <name>
+qcom/gen80000_sqe.fw	DRIVER_CODE	GPU	yes	yes	上游同 sha 30ee3301（WHENCE :7342-7346）	yes	同上；qcom/sm8750/ 下另一份同名旧版驱动不读（§3.5）
+qcom/gen80000_aqe.fw	DRIVER_CODE	GPU	yes	yes	上游同 sha 67562ad5（WHENCE :7342-7346）	yes	同上
+qcom/vpu/vpu35_p4.mbn	DRIVER_CODE	iris	yes	yes	上游 vpu35_p4_s7.mbn + Link: qcom/vpu/vpu35_p4.mbn，VIDEO.VPU.3.5-0040	yes	本机件是 vendor vpu35_4v.mbn 改名（rel0030），建议换上游更新版再上机验
+qcom/sm8750/Lenovo-Y700-Gen4-tplg.bin	USERSPACE	audio	yes	no	上游仅 SM8750-MTP/QRD-tplg.bin，非本板音路	yes	自编（scripts/audio-tplg）；包内副本为旧版，重打包前须 re-stage（§3.7）
+ath12k/PEACH/hw2.0/amss.bin	DRIVER_CODE	WiFi	yes	no	上游无 ath12k/PEACH 目录（只有 IPQ5424/QCC2072/QCN9274/WCN7850）	no	stock modem_a/image/peach amss20.bin 改名；厂商签名不可分发
+ath12k/PEACH/hw2.0/m3.bin	DRIVER_CODE	WiFi	yes	no	同上	no	stock phy_ucode20.elf 改名；厂商件
+ath12k/PEACH/hw2.0/board-2.bin	DRIVER_CODE	WiFi	yes	no	无上游；设备专属校准 BDF（2253964 B）	no	不可分发；勿用 WCN7850 通用 BDF 顶替（-110 实录）
+ath12k/PEACH/hw2.0/board.bin	DRIVER_CODE	WiFi	yes	no	无上游（上游 BDF 属 WCN7850 目录）	no	stock bdwlan.elf 改名（ath12k fallback）
+ath12k/PEACH/hw2.0/regdb.bin	DRIVER_CODE	WiFi	yes	no	无上游	no	stock peach 目录件；厂商件
+ath12k/PEACH/hw2.0/tmel.bin	DRIVER_CODE	WiFi	yes	no	无上游（全库无 tmel）	no	= qca/tmel_peach_20.elf 同 sha；stock modem_a
+ath12k/PEACH/hw2.0/aux_ucode.bin	DRIVER_CODE	WiFi	yes	no	无上游	no	stock aux_ucode20.elf 改名；厂商件
+ath12k/PEACH/hw2.0/qdss_trace_config.bin	DRIVER_CODE	WiFi	yes	no	无上游	no	stock qdss_trace_config_v2.cfg 改名；只影响 coredump 抓取
+qca/brhbtfw20.tlv	DRIVER_CODE	BT	yes	no	上游 WCN7850 是 hmt*（HAMILTON），无 brh*；无 tmel	no	stock bluetooth_a/image；btqca 代码硬编码名，不在 MODULE_FIRMWARE 里
+qca/brhbtnv20.bin	DRIVER_CODE	BT	yes	no	同上	no	stock bluetooth_a/image；厂商签名不可分发
+qca/brhperifw20.tlv	MODULE_FIRMWARE	BT	yes	no	同上（hci_qca.c MODULE_FIRMWARE 声明）	no	stock bluetooth_a/image；厂商件
+qca/brhperinv20.bin	MODULE_FIRMWARE	BT	yes	no	同上	no	stock bluetooth_a/image；厂商件
+qca/tmel_peach_20.elf	MODULE_FIRMWARE	BT	yes	no	全库无 tmel；缺它 = Peripheral setup failed -2（Q34）	no	stock modem_a/image/tmel_peach_20.elf；厂商签名不可分发
+awinic/y700-gen4-haptic.bin	DT	haptic	yes	no	上游仅 awinic/aw88399_acf_17aa39*（8 件）	no	自定/无源件（vendor 无同名）；上游化须先说清 profile 合法性（§3.6）
+awinic/y700-gen4-speakers.bin	DT	amp	yes	no	无上游同名	no	vendor aw882xx_acf.bin 改名（内容含 aw88461）；不可再分发
+novatek_ts_csot_3k_fw.bin	DT	touch	yes	no	上游 WHENCE 无 novatek 字样	no	面板批次专属不可分发；上游方向=驱动允许包外/无固件运行
+regulatory.db	REGDB	wlan	yes	no	属 wireless-regdb（Debian 包），不属 linux-firmware	yes	非固件：启动 -2 是时序/符号链问题（§3.9），非缺件

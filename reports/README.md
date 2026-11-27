@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：731
+- 报告总数：732
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -143,6 +143,7 @@
 | `evidence` | 1 | `evidence-channel-20261126.md` |
 | `f1` | 1 | `f1-f3-wcn-firstprobe-20261014.md` |
 | `firefox` | 1 | `firefox-crash-20261125.md` |
+| `firmware` | 1 | `firmware-gate-a2-20261127.md` |
 | `front` | 1 | `front-camera-flash-20261019.md` |
 | `fs` | 1 | `fs-dedup-20261127.md` |
 | `g0` | 1 | `g0-fstype-zero-write-20261025.md` |
@@ -1273,6 +1274,10 @@
 ## `firefox`（1）
 
 - `firefox-crash-20261125.md` — 「Firefox 刚刚崩溃」取证：**不是 Firefox 的 bug，是合成器/会话先死了**（2026-11-25）
+
+## `firmware`（1）
+
+- `firmware-gate-a2-20261127.md` — 固件能力集合 → 机器门禁（A2 落地）— 2026-11-27
 
 ## `front`（1）
 

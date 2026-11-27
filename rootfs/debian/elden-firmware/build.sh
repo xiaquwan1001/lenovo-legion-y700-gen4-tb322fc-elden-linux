@@ -10,12 +10,16 @@
 #
 # 用法：
 #   bash build.sh --check                 # 只做 DTS↔源树 一致性检查（默认源 = 设备 /lib/firmware）
+#   bash build.sh --check-fw-only         # 只跑 A2 固件门禁（required-firmware.tsv ∪ MODULE_FIRMWARE）
 #   bash build.sh --stage                 # 从源树取文件到 out/debian/firmware-root/
 #   bash build.sh --deb                   # 打 deb（隐含 --stage）
 #   bash build.sh --all                   # check + stage + deb + 包内复核
 #   SRC=/path/to/firmware bash build.sh --check          # 用本地目录当源（离线）
 #   DEV=root@192.168.7.1 bash build.sh --all             # 换设备
 #   bash build.sh --check --dts-only                     # 只检查 DT 列表（不查文件）
+#   KDIR=/path/to/kernel-tree bash build.sh --check-fw-only
+#     A2 的内核树解析顺序：显式 KDIR= → build/daily → 仓库内最新 build/*/.config 树（按 mtime）
+#     → 都没有则打 SKIP A2（未找到内核树），MODULE_FIRMWARE 一段跳过、清单一段照查。
 #
 # 判据（--all 全过才 rc=0）：
 #   A 每条 DT firmware-name 在包里都有（.mdt 需带 .bNN 分段；允许 .zst 压缩变体）
@@ -34,6 +38,9 @@ PKG=elden-firmware
 DTS="$ROOT/build/vk151/arch/arm64/boot/dts/qcom/sm8750-lenovo-elden.dts"
 DTSI="$ROOT/build/vk151/arch/arm64/boot/dts/qcom/sm8750.dtsi"
 DTS_ONLY=0
+REQUIRED_FW_TSV="$HERE/required-firmware.tsv"   # 本机固件能力集合 SSOT（清单格式见文件头注释）
+A2_STATUS=ok                                     # ok | skip（skip 不计为通过，也不 FAIL）
+KDIR_RESOLVED=""
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'FAIL  %s\n' "$*" >&2; exit 1; }
@@ -44,7 +51,8 @@ for a in "$@"; do case "$a" in
 	--stage) MODE=stage ;;
 	--deb) MODE=deb ;;
 	--all) MODE=all ;;
-	-h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+	--check-fw-only) MODE=fwonly ;;
+	-h|--help) sed -n '2,36p' "$0"; exit 0 ;;
 	*) die "未知参数 $a" ;;
 esac; done
 MODE=${MODE:-check}
@@ -230,40 +238,108 @@ check_files() { # $1 = local|remote ；$2 = 本地源树根（mode=local 时用�
 # 口径：只查**本机厂商前缀**（qca/ qcom/ ath12k/ awinic/ novatek），避免把全内核
 # 上千条通用固件（iwlwifi/rtl/…）拉进来。判据 = 前缀命中且不在包清单/暂存树里就 FAIL。
 VENDOR_FW_PREFIXES='qca/|qcom/|ath12k/|awinic/|novatek'
-driver_required() { # 输出内核树里 MODULE_FIRMWARE() 的厂商固件名
-	local tree=${KDIR:-$ROOT/build/vk151}
-	# ⚠ 用 -e 而不是 -d：`build/vk151` 是 **git worktree**，它的 `.git` 是**文件**不是目录
-	# ⇒ 用 -d 判断会静默 return 0，A2 门禁永远"通过"（2026-10-28 实测踩到，与
-	# PITFALLS #452 同一类：门禁自己静默跳过，比没有门禁更危险）。
-	if [ ! -e "$tree/.git" ]; then
-		say "  WARN 内核树 $tree 不是 git 仓库，A2 无法校验（请显式 KDIR=）" >&2
-		return 0
+resolve_kdir() { # A2 内核树解析：显式 KDIR= → build/daily → 最新 build/*/.config（按 mtime）
+	# ⚠ 树存在性判据用 -e：git worktree 的 `.git` 是**文件**不是目录，用 -d 会静默误判
+	# （2026-10-28 实测，PITFALLS #452 同类）。解析失败时置 A2_STATUS=skip 并打 SKIP 文案，
+	# 由调用方按 SKIP 计数 —— 不许再像 2026-11-27 前那样 WARN + return 0 混进"通过"。
+	local d best="" bt=0 t
+	if [ -n "${KDIR:-}" ]; then
+		KDIR_RESOLVED=$KDIR
+	elif [ -e "$ROOT/build/daily/.git" ]; then
+		KDIR_RESOLVED="$ROOT/build/daily"
+	else
+		for d in "$ROOT"/build/*/; do
+			[ -e "$d.config" ] || continue
+			t=$(stat -c %Y "$d.config" 2>/dev/null) || t=0
+			if [ "$t" -gt "$bt" ]; then bt=$t; best=$d; fi
+		done
+		KDIR_RESOLVED=${best%/}
 	fi
-	( cd "$tree" && git grep -h -o 'MODULE_FIRMWARE("[^"]*")' -- drivers/ 2>/dev/null ) \
+	# SKIP 文案走 stderr：driver_required 的 stdout 被 check_driver_fw 重定向进临时清单，
+	# 走 stdout 会把 SKIP 行当固件路径混进门禁（2026-11-27 自测 c 抓到）
+	if [ -z "$KDIR_RESOLVED" ] || [ ! -d "$KDIR_RESOLVED" ]; then
+		A2_STATUS=skip
+		say "  SKIP A2（未找到内核树；用 KDIR= 指定）" >&2
+		return 1
+	fi
+	if [ ! -e "$KDIR_RESOLVED/.git" ]; then
+		A2_STATUS=skip
+		say "  SKIP A2（内核树 $KDIR_RESOLVED 不是 git 仓库，无法 git grep；用 KDIR= 指定）" >&2
+		return 1
+	fi
+	return 0
+}
+
+driver_required() { # 输出内核树里 MODULE_FIRMWARE() 的厂商固件名（解析失败 = 空 + A2_STATUS=skip）
+	resolve_kdir || return 1
+	( cd "$KDIR_RESOLVED" && git grep -h -o 'MODULE_FIRMWARE("[^"]*")' -- drivers/ 2>/dev/null ) \
 		| sed 's/MODULE_FIRMWARE("//;s/")$//' \
 		| grep -E "^($VENDOR_FW_PREFIXES)" | sort -u
 }
 
 check_driver_fw() { # $1 = 待检树的 /lib/firmware 根（暂存树或源树）
-	local root=$1 fail=0 n=0
-	local list; list=$(mktemp)
-	driver_required > "$list"
-	if [ ! -s "$list" ]; then
-		say "  （内核树无厂商 MODULE_FIRMWARE 条目，跳过 A2）"
-		rm -f "$list"; return 0
+	# 覆盖面 = MODULE_FIRMWARE()（树存在时）∪ required-firmware.tsv（SSOT，格式见该文件头）。
+	# 三态：ok / MISS（本机该有但没进包，计 FAIL）/ MISS(vendor)（local=no，本机本来就没有，单列不 FAIL）。
+	local root=$1 fail=0 m=0 k=0 vendor=0 path class local_flag meta hit
+	local mlist klist uni; mlist=$(mktemp); klist=$(mktemp); uni=$(mktemp)
+	# RETURN trap 里 local 已出栈，必须现场展开（2026-11-27 实测：单引号版报 unbound）
+	trap "rm -f $mlist $klist $uni" RETURN
+	A2_STATUS=ok
+	if driver_required > "$mlist"; then
+		m=$(grep -c . "$mlist") || m=0
 	fi
-	while IFS= read -r fw; do
-		[ -n "$fw" ] || continue
-		n=$((n+1))
-		if [ -f "$root/$fw" ] || [ -f "$root/$fw.zst" ]; then
-			say "  ok   $fw（驱动声明）"
-		else
-			say "  MISS $fw（驱动 MODULE_FIRMWARE 声明，但包里没有）"; fail=$((fail+1))
+	# 内核树 SKIP 时只跳过 MODULE_FIRMWARE 一段；清单一段不依赖内核树，照查。
+	if [ -f "$REQUIRED_FW_TSV" ]; then
+		awk -F'\t' '$1 !~ /^(#|$)/ && $1 != "path" {print $1}' "$REQUIRED_FW_TSV" > "$klist"
+		k=$(grep -c . "$klist") || k=0
+	else
+		say "  WARN 缺 $REQUIRED_FW_TSV，清单覆盖面降级为仅 MODULE_FIRMWARE"
+	fi
+	cat "$mlist" "$klist" | grep -v '^$' | sort -u > "$uni"
+	say "  清单覆盖 $(grep -c . "$uni") 条（MODULE_FIRMWARE $m + 清单 $k）"
+	while IFS= read -r path; do
+		[ -n "$path" ] || continue
+		class=""; local_flag=""
+		if [ -f "$REQUIRED_FW_TSV" ]; then
+			meta=$(awk -F'\t' -v p="$path" '$1==p {print $2"/"$4; exit}' "$REQUIRED_FW_TSV")
+			class=${meta%%/*}; local_flag=${meta#*/}
 		fi
-	done < "$list"
-	rm -f "$list"
-	say "  驱动声明固件 $n 条，缺 $fail 条"
+		# USERSPACE 类（tplg 等）确实在 /lib/firmware，照查；REGDB 属 wireless-regdb/Debian 包
+		# （本机是 /etc/alternatives 符号链，本包永不 ship），只登记不作为门禁判据
+		case "$class" in
+			REGDB) say "  skip $path（REGDB 类：Debian wireless-regdb 管，非本包域）"; continue ;;
+			USERSPACE) case "$path" in /*) say "  skip $path（USERSPACE 类，非 /lib/firmware 域）"; continue ;; esac ;;
+		esac
+		hit=0
+		case "$path" in
+			# 通配行（路径含 [ ] * ?）：至少命中 1 个文件；.zst 变体不适用（分段从不压缩）
+			*\[*|*\]*|*\**|*\?*) compgen -G "$root/$path" >/dev/null 2>&1 && hit=1 ;;
+			*) { [ -f "$root/$path" ] || [ -f "$root/$path.zst" ]; } && hit=1 ;;
+		esac
+		if [ "$hit" = 1 ]; then
+			say "  ok   $path"
+		elif [ "$local_flag" = no ]; then
+			say "  MISS(vendor) $path（厂商件，本机也缺）"; vendor=$((vendor+1))
+		else
+			say "  MISS $path"; fail=$((fail+1))
+		fi
+	done < "$uni"
+	say "  A2 合计 $(grep -c . "$uni") 条：FAIL=$fail MISS(vendor)=$vendor"
+	[ "$A2_STATUS" = skip ] && say "  （MODULE_FIRMWARE 段已 SKIP，覆盖面不含内核树声明）"
 	return $fail
+}
+
+check_fw_only() { # --check-fw-only：只跑 A2 门禁。SRC=本地目录；否则拉设备源树到临时目录（只读）
+	local root=${SRC:-}
+	if [ -z "$root" ]; then
+		root=$(mktemp -d); FWONLY_ROOT=$root
+		local list; list=$(mktemp); src_list > "$list"
+		# 先跑 src_list（它会设自己的 EXIT trap）再覆盖，否则临时根会被泄露
+		trap 'rm -rf "${FWONLY_ROOT:-}"' EXIT
+		src_fetch "$list" "$root"
+		rm -f "$list"
+	fi
+	check_driver_fw "$root"
 }
 
 stage() {
@@ -324,8 +400,8 @@ stage() {
 	 Generated by rootfs/debian/elden-firmware/build.sh from ${SRC:-$DEV}.
 	EOF
 	say "  暂存大小 $(du -sh "$STAGE/lib/firmware" | cut -f1)"
-	# A2：驱动 MODULE_FIRMWARE 声明的厂商固件必须也落下（2026-10-27 补，见函数注释）
-	check_driver_fw "$STAGE/lib/firmware" || die "驱动声明的固件没进包（见上面 MISS 行）"
+	# A2：MODULE_FIRMWARE ∪ required-firmware.tsv 都必须落在暂存树（见函数注释）
+	check_driver_fw "$STAGE/lib/firmware" || die "固件门禁 A2 失败（见上面 MISS 行；SKIP 不阻塞）"
 }
 
 deb() {
@@ -365,9 +441,10 @@ check)
 	if [ -n "$SRC" ]; then
 		check_files local "$SRC" && check_driver_fw "$SRC"
 	else
-		check_files remote && { say "  （remote 模式：A2 在 stage/deb 阶段对暂存树校验）"; }
+		check_files remote && { say "  （remote 模式：A2 用 --check-fw-only 单跑，或在 stage/deb 阶段对暂存树校验）"; }
 	fi
 	;;
+fwonly) check_fw_only ;;
 stage) stage ;;
 deb)   stage; deb ;;
 all)   { [ -n "$SRC" ] && check_files local "$SRC" || check_files remote; } || die "DT 固件检查失败（先修 DT 名或补固件）"

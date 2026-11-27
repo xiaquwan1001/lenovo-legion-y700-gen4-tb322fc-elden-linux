@@ -63,7 +63,7 @@
   ⚠ 先 `make olddefconfig` 再读符号：在机 `build/daily/.config` 是 **11-16** 生成的，而 `st21nfca` 文件 **11-25** 才进树 ⇒ 现在跑 `grep ST21NFCA .config` 是 `(absent)`，属于「config 早于树内容」而不是「树里没驱动」（`scripts/capability-audit.sh` 已把这两种成因分开提示）。
 - ~~NFC~~：**不投入** —— 本机无 NFC 硬件（G1-10 已取消）。别再因为「DT 里有 `nfc@8` 节点」去开 CONFIG（那是多 SKU 共用模板，且 `&i2c0` 使能曾致硬关机 `PITFALLS #108`）。
 - **iris**：把工作树里 `&iris{okay}` 的板级覆盖提交进 DTS 系列，并换用上游 `vpu35_p4.mbn`（同文件名）后做一次上机验 TZ 签名（Q36 三件套的 ③）。
-- **固件门禁**：A2 曾因默认 `KDIR=build/vk151` 消失而**静默失效**（覆盖面 3/27）⇒ 正在补 `required-firmware.tsv` 清单 + KDIR 解析（lane C，产物 `reports/firmware-gate-a2-20261127.md`）。
+- **固件门禁（已落地 2026-11-27）**：A2 曾因默认 `KDIR=build/vk151` 消失而**静默失效**（覆盖面 3/27）⇒ 现为 `MODULE_FIRMWARE ∪ required-firmware.tsv`（31 条），KDIR 三级解析、失败打 **`SKIP A2`**（不再假装通过），三态 `ok / MISS / MISS(vendor)`；门有牙齿已自测（删 `qca/tmel_peach_20.elf` ⇒ 恰好 1 条 MISS、rc=1）。清单 = `rootfs/debian/elden-firmware/required-firmware.tsv`（加硬件只改它），报告 `reports/firmware-gate-a2-20261127.md`。
 - **不投入（已有裁决，逐项理由与重开条件见 §5）**：TEE/SPU、Gunyah、PMIH010x、FM/ST54、NFC、Modem、SOCCOP、vendor `bl@11`/`bias@3e`、双口快充选口、suspend 掉电率量化。
 
 ## 3. 本轮纠错（对 11-27 两份旧审计，别再用旧结论）
@@ -85,7 +85,8 @@ bash scripts/capability-audit.sh                   # 全部（CONFIG/绑定/固�
 bash scripts/capability-audit.sh --tsv             # 机读
 bash scripts/capability-audit.sh config|bind|fw    # 单段
 # 固件面
-bash rootfs/debian/elden-firmware/build.sh --check-fw-only    # lane C 落地后可用
+bash rootfs/debian/elden-firmware/build.sh --check-fw-only   # A2 固件门禁（31 条，含厂商件三态）
+bash rootfs/debian/elden-firmware/build.sh --check-fw-only SRC=<本地固件目录>   # 离线
 # 门禁
 bash scripts/check-doctor.sh
 ```
